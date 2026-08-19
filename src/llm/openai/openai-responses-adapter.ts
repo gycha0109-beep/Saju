@@ -26,6 +26,27 @@ export type OpenAIResponsesAdapterErrorCode =
   | 'OUTPUT_MISSING'
   | 'OUTPUT_JSON_INVALID';
 
+interface OpenAIErrorContext {
+  status?: number;
+  requestId?: string;
+  responseId?: string;
+  cause?: unknown;
+}
+
+function errorContext(
+  status?: number,
+  requestId?: string,
+  responseId?: string,
+  cause?: unknown,
+): OpenAIErrorContext {
+  return {
+    ...(status === undefined ? {} : { status }),
+    ...(requestId === undefined ? {} : { requestId }),
+    ...(responseId === undefined ? {} : { responseId }),
+    ...(cause === undefined ? {} : { cause }),
+  };
+}
+
 export class OpenAIResponsesAdapterError extends Error {
   readonly code: OpenAIResponsesAdapterErrorCode;
   readonly status?: number;
@@ -35,12 +56,7 @@ export class OpenAIResponsesAdapterError extends Error {
   constructor(
     code: OpenAIResponsesAdapterErrorCode,
     message: string,
-    context: {
-      status?: number;
-      requestId?: string;
-      responseId?: string;
-      cause?: unknown;
-    } = {},
+    context: OpenAIErrorContext = {},
   ) {
     super(message, context.cause === undefined ? undefined : { cause: context.cause });
     this.name = 'OpenAIResponsesAdapterError';
@@ -152,16 +168,17 @@ function extractResponseId(body: OpenAIResponseBody): string | undefined {
 }
 
 function extractOutputText(body: OpenAIResponseBody, requestId?: string): string {
+  const responseId = extractResponseId(body);
   if (!Array.isArray(body.output)) {
     throw new OpenAIResponsesAdapterError(
       'OUTPUT_MISSING',
       'OpenAI response did not contain an output array.',
-      { requestId, responseId: extractResponseId(body) },
+      errorContext(undefined, requestId, responseId),
     );
   }
 
   const textParts: string[] = [];
-  const refusals: string[] = [];
+  let refused = false;
 
   for (const rawItem of body.output) {
     const item = rawItem as OpenAIOutputMessage;
@@ -170,7 +187,7 @@ function extractOutputText(body: OpenAIResponseBody, requestId?: string): string
     for (const rawContent of item.content) {
       const content = rawContent as OpenAIOutputContent;
       if (content.type === 'refusal' && typeof content.refusal === 'string') {
-        refusals.push(content.refusal);
+        refused = true;
       }
       if (content.type === 'output_text' && typeof content.text === 'string') {
         textParts.push(content.text);
@@ -178,11 +195,11 @@ function extractOutputText(body: OpenAIResponseBody, requestId?: string): string
     }
   }
 
-  if (refusals.length > 0) {
+  if (refused) {
     throw new OpenAIResponsesAdapterError(
       'RESPONSE_REFUSED',
-      `OpenAI refused the narrative request: ${refusals.join(' ')}`,
-      { requestId, responseId: extractResponseId(body) },
+      'OpenAI refused the narrative request.',
+      errorContext(undefined, requestId, responseId),
     );
   }
 
@@ -190,7 +207,7 @@ function extractOutputText(body: OpenAIResponseBody, requestId?: string): string
     throw new OpenAIResponsesAdapterError(
       'OUTPUT_MISSING',
       'OpenAI response contained no output_text content.',
-      { requestId, responseId: extractResponseId(body) },
+      errorContext(undefined, requestId, responseId),
     );
   }
 
@@ -211,8 +228,8 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
 
   private readonly apiKey: string;
   private readonly endpoint: string;
-  private readonly organization?: string;
-  private readonly project?: string;
+  private readonly organization: string | undefined;
+  private readonly project: string | undefined;
   private readonly reasoningEffort: OpenAIReasoningEffort;
   private readonly verbosity: OpenAITextVerbosity;
   private readonly defaultMaxOutputTokens: number;
@@ -340,7 +357,7 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
       throw new OpenAIResponsesAdapterError(
         'RESPONSE_INVALID',
         'OpenAI response body was not valid JSON.',
-        { status: response.status, requestId, cause },
+        errorContext(response.status, requestId, undefined, cause),
       );
     }
 
@@ -348,7 +365,7 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
       throw new OpenAIResponsesAdapterError(
         'HTTP_ERROR',
         safeErrorMessage(responseBody),
-        { status: response.status, requestId },
+        errorContext(response.status, requestId),
       );
     }
 
@@ -358,7 +375,7 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
       throw new OpenAIResponsesAdapterError(
         'RESPONSE_INCOMPLETE',
         `OpenAI response status was ${String(parsedBody.status)} instead of completed.`,
-        { status: response.status, requestId, responseId },
+        errorContext(response.status, requestId, responseId),
       );
     }
 
@@ -369,7 +386,7 @@ export class OpenAIResponsesNarrativeAdapter implements NarrativeModelAdapter {
       throw new OpenAIResponsesAdapterError(
         'OUTPUT_JSON_INVALID',
         'OpenAI Structured Output text was not valid JSON.',
-        { status: response.status, requestId, responseId, cause },
+        errorContext(response.status, requestId, responseId, cause),
       );
     }
   }
