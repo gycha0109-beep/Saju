@@ -127,14 +127,14 @@ function initialClaimIds(
   return selected;
 }
 
-function relationAddsContext(relation: ClaimRelation): boolean {
-  return (
-    relation.relation === 'contradicts' ||
-    relation.relation === 'qualifies' ||
-    relation.relation === 'supports' ||
-    relation.relation === 'depends_on' ||
-    relation.relation === 'derived_from'
-  );
+function addContextClaim(
+  selected: Set<string>,
+  active: ReadonlyMap<string, InterpretationClaim>,
+  claimId: string,
+): boolean {
+  if (!active.has(claimId) || selected.has(claimId)) return false;
+  selected.add(claimId);
+  return true;
 }
 
 function expandClaimContext(
@@ -152,30 +152,39 @@ function expandClaimContext(
       const claim = active.get(claimId);
       if (claim === undefined) continue;
       for (const upstreamClaimId of claim.upstreamClaimRefs) {
-        if (active.has(upstreamClaimId) && !selected.has(upstreamClaimId)) {
-          selected.add(upstreamClaimId);
-          changed = true;
-        }
+        if (addContextClaim(selected, active, upstreamClaimId)) changed = true;
       }
     }
 
     for (const relation of execution.claimRelations) {
-      if (!relationAddsContext(relation)) continue;
-      if (
-        selected.has(relation.fromClaimId) &&
-        active.has(relation.toClaimId) &&
-        !selected.has(relation.toClaimId)
-      ) {
-        selected.add(relation.toClaimId);
-        changed = true;
-      }
-      if (
-        selected.has(relation.toClaimId) &&
-        active.has(relation.fromClaimId) &&
-        !selected.has(relation.fromClaimId)
-      ) {
-        selected.add(relation.fromClaimId);
-        changed = true;
+      switch (relation.relation) {
+        case 'depends_on':
+        case 'derived_from':
+          if (
+            selected.has(relation.fromClaimId) &&
+            addContextClaim(selected, active, relation.toClaimId)
+          ) {
+            changed = true;
+          }
+          break;
+        case 'contradicts':
+        case 'qualifies':
+        case 'supports':
+          if (
+            selected.has(relation.fromClaimId) &&
+            addContextClaim(selected, active, relation.toClaimId)
+          ) {
+            changed = true;
+          }
+          if (
+            selected.has(relation.toClaimId) &&
+            addContextClaim(selected, active, relation.fromClaimId)
+          ) {
+            changed = true;
+          }
+          break;
+        case 'supersedes':
+          break;
       }
     }
   }
