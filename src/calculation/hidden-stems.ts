@@ -40,7 +40,9 @@ const RAW_HIDDEN_STEM_MEMBERSHIP: Readonly<Record<EarthlyBranch, readonly Heaven
 };
 
 function canonicalStemOrder(stems: readonly HeavenlyStem[]): readonly HeavenlyStem[] {
-  return [...stems].sort((left, right) => STEM_ORDER.indexOf(left) - STEM_ORDER.indexOf(right));
+  return Object.freeze(
+    [...stems].sort((left, right) => STEM_ORDER.indexOf(left) - STEM_ORDER.indexOf(right)),
+  );
 }
 
 export const HIDDEN_STEM_MEMBERSHIP: Readonly<Record<EarthlyBranch, readonly HeavenlyStem[]>> = Object.freeze(
@@ -61,8 +63,12 @@ function canonicalize(value: unknown): unknown {
   );
 }
 
+function stableSerialize(value: unknown): string {
+  return JSON.stringify(canonicalize(value)) ?? 'undefined';
+}
+
 export const HIDDEN_STEM_MEMBERSHIP_CONTENT_HASH = createHash('sha256')
-  .update(JSON.stringify(canonicalize(HIDDEN_STEM_MEMBERSHIP)))
+  .update(stableSerialize(HIDDEN_STEM_MEMBERSHIP))
   .digest('hex');
 
 export function getHiddenStemMembership(branch: EarthlyBranch): readonly HeavenlyStem[] {
@@ -197,14 +203,12 @@ export function enrichCanonicalHiddenStems(snapshot: CanonicalSajuSnapshot): Can
   const hiddenStems = hiddenStemChart(snapshot);
   const calculationHash = createHash('sha256')
     .update(
-      JSON.stringify(
-        canonicalize({
-          baseCalculationHash: snapshot.calculationHash,
-          schemaVersion: ENRICHED_CANONICAL_SCHEMA_VERSION,
-          hiddenStemMembershipVersion: HIDDEN_STEM_MEMBERSHIP_VERSION,
-          hiddenStemMembershipContentHash: HIDDEN_STEM_MEMBERSHIP_CONTENT_HASH,
-        }),
-      ),
+      stableSerialize({
+        baseCalculationHash: snapshot.calculationHash,
+        schemaVersion: ENRICHED_CANONICAL_SCHEMA_VERSION,
+        hiddenStemMembershipVersion: HIDDEN_STEM_MEMBERSHIP_VERSION,
+        hiddenStemMembershipContentHash: HIDDEN_STEM_MEMBERSHIP_CONTENT_HASH,
+      }),
     )
     .digest('hex');
   const snapshotId = `saju_${calculationHash.slice(0, 24)}`;
