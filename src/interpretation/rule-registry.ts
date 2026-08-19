@@ -4,9 +4,11 @@ import type {
   VersionedRef,
 } from '../contracts/common.js';
 import type {
+  ContentAddressedReviewAttestationRef,
   ContentAddressedSourceRef,
   InterpretationPack,
   MethodologyDefinition,
+  ReviewAttestation,
   RuleDefinition,
   RuleRegistrySnapshot,
   SourceReference,
@@ -16,10 +18,13 @@ export type RegistryConfigurationErrorCode =
   | 'DUPLICATE_RULE_VERSION'
   | 'DUPLICATE_METHODOLOGY_VERSION'
   | 'DUPLICATE_SOURCE_ID'
+  | 'DUPLICATE_REVIEW_ATTESTATION_ID'
   | 'PACK_METHODOLOGY_MISSING'
   | 'PACK_METHODOLOGY_VERSION_MISMATCH'
   | 'RULE_SOURCE_MISSING'
-  | 'METHODOLOGY_SOURCE_MISSING';
+  | 'METHODOLOGY_SOURCE_MISSING'
+  | 'REVIEW_ATTESTATION_INVALID'
+  | 'REVIEW_ATTESTATION_SUBJECT_MISMATCH';
 
 export class RegistryConfigurationError extends Error {
   readonly code: RegistryConfigurationErrorCode;
@@ -35,6 +40,7 @@ export interface RuleRegistryInput {
   rules: readonly RuleDefinition[];
   methodologies: readonly MethodologyDefinition[];
   sources?: readonly SourceReference[];
+  reviewAttestations?: readonly ReviewAttestation[];
 }
 
 export interface ResolvedRuleRegistrySnapshot {
@@ -43,6 +49,7 @@ export interface ResolvedRuleRegistrySnapshot {
   rules: readonly RuleDefinition[];
   methodologies: readonly MethodologyDefinition[];
   sources: readonly SourceReference[];
+  reviewAttestations: readonly ReviewAttestation[];
 }
 
 function canonicalize(value: unknown): unknown {
@@ -86,6 +93,15 @@ function sourceContentRef(source: SourceReference): ContentAddressedSourceRef {
   return { sourceId: source.sourceId, contentHash: deterministicContentHash(source) };
 }
 
+function reviewContentRef(
+  attestation: ReviewAttestation,
+): ContentAddressedReviewAttestationRef {
+  return {
+    attestationId: attestation.attestationId,
+    contentHash: deterministicContentHash(attestation),
+  };
+}
+
 function ensureUniqueVersions<T>(
   values: readonly T[],
   toRef: (value: T) => VersionedRef,
@@ -111,6 +127,31 @@ function ensureUniqueSources(sources: readonly SourceReference[]): void {
       );
     }
     seen.add(source.sourceId);
+  }
+}
+
+function ensureUniqueReviewAttestations(attestations: readonly ReviewAttestation[]): void {
+  const seen = new Set<string>();
+  for (const attestation of attestations) {
+    if (attestation.attestationId.trim().length === 0 || attestation.reviewerId.trim().length === 0) {
+      throw new RegistryConfigurationError(
+        'REVIEW_ATTESTATION_INVALID',
+        'Review attestation requires non-empty attestationId and reviewerId.',
+      );
+    }
+    if (Number.isNaN(Date.parse(attestation.reviewedAt))) {
+      throw new RegistryConfigurationError(
+        'REVIEW_ATTESTATION_INVALID',
+        `Review attestation ${attestation.attestationId} has invalid reviewedAt.`,
+      );
+    }
+    if (seen.has(attestation.attestationId)) {
+      throw new RegistryConfigurationError(
+        'DUPLICATE_REVIEW_ATTESTATION_ID',
+        `Duplicate review attestation: ${attestation.attestationId}`,
+      );
+    }
+    seen.add(attestation.attestationId);
   }
 }
 
@@ -198,12 +239,53 @@ function stableSources(sources: readonly SourceReference[]): readonly SourceRefe
   return [...sources].sort((left, right) => left.sourceId.localeCompare(right.sourceId));
 }
 
+function stableReviewAttestations(
+  attestations: readonly ReviewAttestation[],
+): readonly ReviewAttestation[] {
+  return [...attestations].sort((left, right) => left.attestationId.localeCompare(right.attestationId));
+}
+
+function ensureReviewSubjectBindings(
+  attestations: readonly ReviewAttestation[],
+  rules: readonly RuleDefinition[],
+  methodologies: readonly MethodologyDefinition[],
+): void {
+  const ruleContent = new Map(
+    rules.map((rule) => [
+      versionKey(ruleRef(rule)),
+      contentAddressed(ruleRef(rule), rule),
+    ]),
+  );
+  const methodologyContent = new Map(
+    methodologies.map((methodology) => [
+      versionKey(methodologyRef(methodology)),
+      contentAddressed(methodologyRef(methodology), methodology),
+    ]),
+  );
+
+  for (const attestation of attestations) {
+    const key = versionKey(attestation.subjectRef);
+    const expected =
+      attestation.subjectType === 'rule' ? ruleContent.get(key) : methodologyContent.get(key);
+    if (
+      expected === undefined ||
+      expected.contentHash !== attestation.subjectRef.contentHash
+    ) {
+      throw new RegistryConfigurationError(
+        'REVIEW_ATTESTATION_SUBJECT_MISMATCH',
+        `Review attestation ${attestation.attestationId} does not bind the current ${attestation.subjectType} content ${key}.`,
+      );
+    }
+  }
+}
+
 export function createRuleRegistrySnapshot(
   input: RuleRegistryInput,
   pack: InterpretationPack,
   createdAt = '1970-01-01T00:00:00.000Z',
 ): ResolvedRuleRegistrySnapshot {
   const sources = input.sources ?? [];
+  const reviewAttestations = input.reviewAttestations ?? [];
   ensureUniqueVersions(input.rules, ruleRef, 'DUPLICATE_RULE_VERSION');
   ensureUniqueVersions(
     input.methodologies,
@@ -211,23 +293,28 @@ export function createRuleRegistrySnapshot(
     'DUPLICATE_METHODOLOGY_VERSION',
   );
   ensureUniqueSources(sources);
+  ensureUniqueReviewAttestations(reviewAttestations);
   ensureSourceReferences(input.rules, input.methodologies, sources);
 
   const rules = stableRules(input.rules);
   const methodologies = stableMethodologies(resolvePackMethodologies(pack, input.methodologies));
   const stableSourceList = stableSources(sources);
+  const stableReviews = stableReviewAttestations(reviewAttestations);
+  ensureReviewSubjectBindings(stableReviews, rules, methodologies);
 
   const ruleRefs = rules.map((rule) => contentAddressed(ruleRef(rule), rule));
   const methodologyRefs = methodologies.map((methodology) =>
     contentAddressed(methodologyRef(methodology), methodology),
   );
   const sourceRefs = stableSourceList.map(sourceContentRef);
+  const reviewRefs = stableReviews.map(reviewContentRef);
   const packRef = contentAddressed({ id: pack.packId, version: pack.version }, pack);
 
   const registryMaterial = {
     rules: ruleRefs,
     methodologies: methodologyRefs,
     sources: sourceRefs,
+    reviewAttestations: reviewRefs,
     packRef,
   };
   const registrySnapshotId = `registry_${deterministicContentHash(registryMaterial).slice(0, 24)}`;
@@ -239,11 +326,13 @@ export function createRuleRegistrySnapshot(
       rules: ruleRefs,
       methodologies: methodologyRefs,
       sources: sourceRefs,
+      reviewAttestations: reviewRefs,
       packRef,
     },
     pack,
     rules,
     methodologies,
     sources: stableSourceList,
+    reviewAttestations: stableReviews,
   };
 }
