@@ -27,27 +27,51 @@ S12 Engine MVP Scope & Implementation Plan
 
 ### Implementation
 
-I0/I1 구현 foundation을 시작했습니다.
+현재 I0~I6 foundation이 구현되어 있습니다.
 
-현재 코드에 포함된 범위:
+```text
+I0  Repository / Tooling Bootstrap          STRICT CLOSED
+I1  Domain Contracts                       STRICT CLOSED
+I2  Manseryeok Adapter                     IMPLEMENTED / VERIFIED
+I3  Calculation Verification               IN PROGRESS
+I4  Unknown-Time Scenario Planner          STRICT CLOSED
+I5  Interpretation Runtime Foundation      STRICT CLOSED
+I6  Claim Graph / Interpretation Run       STRICT CLOSED
+I7  Source-backed Research Rule Pack       NEXT
+I8  Narrative Foundation
+I9  LLM Adapter
+I10 Developer Harness E2E
+```
 
-- Node/TypeScript project scaffold
-- strict compiler configuration
-- ESLint / Prettier / Vitest configuration
-- GitHub Actions CI workflow
-- versioned common references
-- explicit `resolved / ambiguous / unavailable` fact states
-- `BirthInput`
-- `CalculationPolicySnapshot`
+현재 코드에 포함된 주요 범위:
+
+- Node 24 / TypeScript 6 strict project foundation
+- reproducible `package-lock.json` + `npm ci` CI gate
+- explicit `resolved / ambiguous / unavailable` FactState
+- `BirthInput` / `CalculationPolicySnapshot`
 - `CanonicalSajuSnapshot`
-- Rule / Methodology / Interpretation Pack contracts
-- RuleEvaluation / InterpretationClaim / ClaimRelation contracts
-- grounded Narrative contracts
-- channel-neutral `ReadingArtifact`
-- runtime boundary validation
-- unknown birth time regression tests
+- `manseryeok` v2.0.0 calculation adapter
+- lunar / leap-month conversion boundary
+- midnight / jasi / splitJasi day-boundary policies
+- true-solar-time options
+- Korean historical standard-time / DST handling through the pinned calculation core
+- Solar Term context
+- unknown-birth-time 1,440-minute enumeration without fabricated noon input
+- deterministic CalculationScenario compression
+- versioned Rule / Methodology / InterpretationPack registry
+- content-addressed rules, methodologies, packs, and source references
+- deterministic dependency DAG
+- restricted declarative Rule evaluator
+- scenario-preserving Rule execution
+- InterpretationClaim / ClaimRelation graph
+- conflict preservation and deterministic relation IDs
+- exact `ruleId@version` execution binding
+- Claim Graph integrity gate
+- ExecutionCompleteness propagation
+- deterministic InterpretationRun identity
+- Claim-level EvidenceIndex
 
-아직 `manseryeok` 계산 호출은 연결하지 않았습니다. I0/I1 검증 후 I2에서 Adapter를 구현합니다.
+아직 **실제 명리 해석 규칙을 production authority로 넣지는 않았습니다.** I7부터 출처 기반 research rule corpus를 구축합니다.
 
 ## 핵심 원칙
 
@@ -66,9 +90,11 @@ I0/I1 구현 foundation을 시작했습니다.
    - 서로 다른 방법론의 claim을 평균내거나 덮어쓰지 않습니다.
 6. **Interpretation Engine은 deterministic 합니다.**
    - 동일 Snapshot/Pack/Registry/Engine version은 동일한 claim graph를 만들어야 합니다.
-7. **LLM은 Evidence Bundle 밖의 명리 규칙을 생성하지 않습니다.**
+7. **Scenario를 몰래 합치지 않습니다.**
+   - 출생시간 미상 등으로 발생한 후보 scenario는 명시적으로 격리합니다.
+8. **LLM은 Evidence Bundle 밖의 명리 규칙을 생성하지 않습니다.**
    - 설명, 비교, 요약, 질문응답, 문장화에 한정합니다.
-8. **근거 없는 정확도 숫자를 만들지 않습니다.**
+9. **근거 없는 정확도 숫자를 만들지 않습니다.**
    - 계산 정확도, 명리 해석 일관성, 실제 미래 예측 정확도를 별개로 취급합니다.
 
 ## 목표 아키텍처
@@ -77,11 +103,11 @@ I0/I1 구현 foundation을 시작했습니다.
 Birth Input
   -> Input Validation / Normalization
   -> Calculation Planner
-  -> Deterministic Calculation Adapter
+  -> Manseryeok Adapter
   -> Canonical Saju Snapshot
   -> Derived Structural Facts
-  -> Interpretation Execution Plan
-  -> Versioned Rules / Method Packs
+  -> Versioned Rule Registry / Method Packs
+  -> Deterministic Execution Plan
   -> Rule Evaluations
   -> Interpretation Claims + Claim Relations
   -> Integrity / Completeness Gate
@@ -92,15 +118,25 @@ Birth Input
   -> Delivery Adapter
 ```
 
-## 계산 코어 후보
+## 계산 코어
 
-결정론적 계산 코어의 우선 후보는 [`yhj1024/manseryeok`](https://github.com/yhj1024/manseryeok) v2.0.0입니다.
+현재 결정론적 계산 adapter는 [`yhj1024/manseryeok`](https://github.com/yhj1024/manseryeok) **v2.0.0**에 pin되어 있습니다.
 
-명화는 upstream 반환 타입을 내부 canonical schema로 직접 노출하지 않습니다. I2에서 Adapter 뒤에 격리합니다.
+명화는 upstream 반환 타입을 public Core contract로 노출하지 않습니다. 모든 결과는 명화의 Canonical Saju schema로 변환합니다.
+
+검증 authority는 upstream regression과 분리합니다.
+
+```text
+Tier A  authoritative / primary reference
+Tier B  independent institutional reference
+Tier C  cross-engine concordance
+Tier D  upstream regression
+Tier E  Myeonghwa internal regression
+```
+
+현재 KASI / IANA 기반 fixture provenance를 별도로 관리하며 I3에서 authoritative corpus를 계속 확장합니다.
 
 ## 구현 Toolchain Baseline
-
-현재 I0 baseline:
 
 ```text
 Node.js            24 LTS
@@ -135,8 +171,13 @@ TypeScript 7은 stable이지만 현재 lint/tooling 공식 지원 상태를 고�
 - [10. Delivery / UX Contract](docs/product/10-delivery-ux-contract.md)
 - [11. Persistence / Privacy / Security](docs/security/11-persistence-privacy-security.md)
 - [12. Engine MVP Scope & Implementation Plan](docs/implementation/12-mvp-scope-and-implementation-plan.md)
+- [I0/I1 Foundation Status](docs/implementation/i0-i1-foundation-status.md)
+- [I3 Calculation Verification Status](docs/implementation/i3-calculation-verification-status.md)
+- [I4 Unknown-Time Status](docs/implementation/i4-unknown-time-status.md)
+- [I5 Rule Engine Foundation Status](docs/implementation/i5-rule-engine-foundation-status.md)
+- [I6 Claim Graph / Runtime Status](docs/implementation/i6-claim-graph-runtime-status.md)
 
-### Decisions
+### Decisions / Research
 
 - [ADR-0001 — Layered Saju Engine](docs/decisions/ADR-0001-layered-saju-engine.md)
 - [ADR-0002 — Provenance-Aware Interpretation Rules](docs/decisions/ADR-0002-provenance-aware-interpretation.md)
@@ -144,34 +185,16 @@ TypeScript 7은 stable이지만 현재 lint/tooling 공식 지원 상태를 고�
 - [ADR-0004 — Initial Toolchain Baseline](docs/decisions/ADR-0004-toolchain-baseline.md)
 - [Open-source Engine Baseline](docs/research/open-source-engine-baseline.md)
 
-## 구현 Roadmap
-
-```text
-I0  Repository / Tooling Bootstrap          IN PROGRESS
-I1  Domain Contracts                       IN PROGRESS
-I2  Manseryeok Adapter
-I3  Calculation Verification
-I4  Unknown-Time Scenario Planner
-I5  Interpretation Runtime Skeleton
-I6  Claim Graph
-I7  Source-backed Research Rule Pack
-I8  Narrative Foundation
-I9  LLM Adapter
-I10 Developer Harness E2E
-```
-
-I0/I1은 외부 계산 엔진을 호출하지 않고 architecture contract를 executable code로 고정하는 단계입니다.
-
 ## 현재 미결정 사항
 
 ### Calculation Methodology
 
-- 명화 표준 `dayBoundary`
+- 명화 production 표준 `dayBoundary`
 - 진태양시 기본 적용 여부
-- 균시차/역사적 DST 정책
-- 대운 시작점 방법론
+- 균시차/역사적 DST 기본 정책
+- 대운 시작점의 최종 노출 정책
 - 한국 외 출생 초기 지원 여부
-- KASI 등 primary-source golden fixture 확보 방식
+- 추가 primary-source golden fixture 확보 범위
 
 ### Interpretation Content
 
@@ -186,4 +209,4 @@ I0/I1은 외부 계산 엔진을 호출하지 않고 architecture contract를 ex
 - 웹 / 운영자 프로그램 / standalone / report-template 중 최종 전달 형태
 - 회원/결제/재방문 구조
 
-이 항목들은 Core 구현을 임의로 막지 않되, production 결과를 확정하기 전에 근거와 정책을 별도로 고정합니다.
+이 항목들은 Core infrastructure 구현을 임의로 막지 않되, production 결과를 확정하기 전에 근거와 정책을 별도로 고정합니다.
