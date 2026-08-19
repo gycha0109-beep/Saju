@@ -22,6 +22,9 @@
    - 결정론적 계산 충돌과 해석 관점 차이를 구분합니다.
 5. **과학적 예측 정확성을 과장하지 않습니다.**
    - 계산 정확도, 명리 해석 일관성, 실제 미래 예측 정확도를 별개의 문제로 취급합니다.
+6. **모르는 입력을 임의값으로 채우지 않습니다.**
+   - 출생시간 미상은 `12:00` 같은 가짜 값으로 대체하지 않습니다.
+   - 경계에 따라 결과가 둘 이상 가능하면 `ambiguous` 상태로 보존합니다.
 
 ## 계산 코어 후보
 
@@ -34,7 +37,8 @@
 ```text
 Birth Input
   -> Input Normalization
-  -> Deterministic Calculation
+  -> Calculation Planner
+  -> Deterministic Calculation Adapter
   -> Canonical Saju Snapshot
   -> Interpretation Rules
   -> Interpretation Claims
@@ -47,16 +51,18 @@ Birth Input
 - [01. Domain Boundaries](docs/architecture/01-domain-boundaries.md)
 - [02. Canonical Saju Schema](docs/architecture/02-canonical-saju-schema.md)
 - [03. Calculation Policy](docs/architecture/03-calculation-policy.md)
+- [04. Calculation Adapter Contract](docs/architecture/04-calculation-adapter-contract.md)
+- [05. Golden Fixture / Verification Strategy](docs/verification/05-golden-fixture-strategy.md)
 - [ADR-0001 — Layered Saju Engine](docs/decisions/ADR-0001-layered-saju-engine.md)
 - [Open-source Engine Baseline](docs/research/open-source-engine-baseline.md)
 
 ## 설계 순서
 
 1. Domain Boundary / Architecture — **작성**
-2. Canonical Saju Schema — **초안 작성**
+2. Canonical Saju Schema — **초안 작성 / uncertainty 모델 보강**
 3. Calculation Policy Specification — **초안 작성**
-4. Calculation Adapter Contract
-5. Golden Fixture / Verification Design
+4. Calculation Adapter Contract — **초안 작성**
+5. Golden Fixture / Verification Design — **초안 작성**
 6. Interpretation Taxonomy
 7. Rule & Provenance Schema
 8. Interpretation Engine Design
@@ -65,4 +71,14 @@ Birth Input
 11. Persistence / Privacy / Security
 12. MVP Scope 및 구현 계획
 
-다음 단계에서는 현재 초안의 open question을 검증하면서 Calculation Adapter Contract와 Golden Fixture 설계로 진행합니다.
+## 현재 핵심 미결정 사항
+
+- 명화 표준 `dayBoundary`
+- 진태양시 기본 적용 여부
+- 균시차/역사적 DST 정책
+- 대운 시작점 방법론
+- 한국 외 출생 초기 지원 여부
+- unknown-time partial derived fact 범위
+- KASI 등 primary source 기반 golden fixture 확보 방식
+
+이 항목들은 구현 convenience가 아니라 방법론과 검증 근거를 기준으로 결정합니다.
