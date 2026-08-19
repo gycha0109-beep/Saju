@@ -73,6 +73,16 @@ export function deterministicContentHash(value: unknown): string {
   return createHash('sha256').update(serialized).digest('hex');
 }
 
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value as Record<string, unknown>)) deepFreeze(child);
+  return Object.freeze(value);
+}
+
+function immutableClone<T>(value: T): T {
+  return deepFreeze(structuredClone(value));
+}
+
 function versionKey(ref: VersionedRef): string {
   return `${ref.id}@${ref.version}`;
 }
@@ -251,10 +261,7 @@ function ensureReviewSubjectBindings(
   methodologies: readonly MethodologyDefinition[],
 ): void {
   const ruleContent = new Map(
-    rules.map((rule) => [
-      versionKey(ruleRef(rule)),
-      contentAddressed(ruleRef(rule), rule),
-    ]),
+    rules.map((rule) => [versionKey(ruleRef(rule)), contentAddressed(ruleRef(rule), rule)]),
   );
   const methodologyContent = new Map(
     methodologies.map((methodology) => [
@@ -267,10 +274,7 @@ function ensureReviewSubjectBindings(
     const key = versionKey(attestation.subjectRef);
     const expected =
       attestation.subjectType === 'rule' ? ruleContent.get(key) : methodologyContent.get(key);
-    if (
-      expected === undefined ||
-      expected.contentHash !== attestation.subjectRef.contentHash
-    ) {
+    if (expected === undefined || expected.contentHash !== attestation.subjectRef.contentHash) {
       throw new RegistryConfigurationError(
         'REVIEW_ATTESTATION_SUBJECT_MISMATCH',
         `Review attestation ${attestation.attestationId} does not bind the current ${attestation.subjectType} content ${key}.`,
@@ -279,60 +283,131 @@ function ensureReviewSubjectBindings(
   }
 }
 
+function registryMaterialFor(
+  rules: readonly ContentAddressedVersionedRef[],
+  methodologies: readonly ContentAddressedVersionedRef[],
+  sources: readonly ContentAddressedSourceRef[],
+  reviewAttestations: readonly ContentAddressedReviewAttestationRef[],
+  packRef: ContentAddressedVersionedRef,
+) {
+  return { rules, methodologies, sources, reviewAttestations, packRef };
+}
+
+export function verifyResolvedRegistryContentIntegrity(
+  registry: ResolvedRuleRegistrySnapshot,
+): readonly string[] {
+  const errors: string[] = [];
+  const expectedRules = stableRules(registry.rules).map((rule) => contentAddressed(ruleRef(rule), rule));
+  const expectedMethodologies = stableMethodologies(registry.methodologies).map((methodology) =>
+    contentAddressed(methodologyRef(methodology), methodology),
+  );
+  const expectedSources = stableSources(registry.sources).map(sourceContentRef);
+  const expectedReviews = stableReviewAttestations(registry.reviewAttestations).map(reviewContentRef);
+  const expectedPackRef = contentAddressed(
+    { id: registry.pack.packId, version: registry.pack.version },
+    registry.pack,
+  );
+
+  if (deterministicContentHash(expectedRules) !== deterministicContentHash(registry.snapshot.rules)) {
+    errors.push('rule content differs from registry snapshot');
+  }
+  if (
+    deterministicContentHash(expectedMethodologies) !==
+    deterministicContentHash(registry.snapshot.methodologies)
+  ) {
+    errors.push('methodology content differs from registry snapshot');
+  }
+  if (deterministicContentHash(expectedSources) !== deterministicContentHash(registry.snapshot.sources)) {
+    errors.push('source content differs from registry snapshot');
+  }
+  if (
+    deterministicContentHash(expectedReviews) !==
+    deterministicContentHash(registry.snapshot.reviewAttestations)
+  ) {
+    errors.push('review attestation content differs from registry snapshot');
+  }
+  if (deterministicContentHash(expectedPackRef) !== deterministicContentHash(registry.snapshot.packRef)) {
+    errors.push('pack content differs from registry snapshot');
+  }
+
+  const expectedRegistryId = `registry_${deterministicContentHash(
+    registryMaterialFor(
+      expectedRules,
+      expectedMethodologies,
+      expectedSources,
+      expectedReviews,
+      expectedPackRef,
+    ),
+  ).slice(0, 24)}`;
+  if (expectedRegistryId !== registry.snapshot.registrySnapshotId) {
+    errors.push('registrySnapshotId does not match resolved content');
+  }
+  return errors.sort();
+}
+
 export function createRuleRegistrySnapshot(
   input: RuleRegistryInput,
   pack: InterpretationPack,
   createdAt = '1970-01-01T00:00:00.000Z',
 ): ResolvedRuleRegistrySnapshot {
-  const sources = input.sources ?? [];
-  const reviewAttestations = input.reviewAttestations ?? [];
-  ensureUniqueVersions(input.rules, ruleRef, 'DUPLICATE_RULE_VERSION');
+  const rulesInput = immutableClone([...input.rules]);
+  const methodologiesInput = immutableClone([...input.methodologies]);
+  const sourcesInput = immutableClone([...(input.sources ?? [])]);
+  const reviewsInput = immutableClone([...(input.reviewAttestations ?? [])]);
+  const packInput = immutableClone(pack);
+
+  ensureUniqueVersions(rulesInput, ruleRef, 'DUPLICATE_RULE_VERSION');
   ensureUniqueVersions(
-    input.methodologies,
+    methodologiesInput,
     methodologyRef,
     'DUPLICATE_METHODOLOGY_VERSION',
   );
-  ensureUniqueSources(sources);
-  ensureUniqueReviewAttestations(reviewAttestations);
-  ensureSourceReferences(input.rules, input.methodologies, sources);
+  ensureUniqueSources(sourcesInput);
+  ensureUniqueReviewAttestations(reviewsInput);
+  ensureSourceReferences(rulesInput, methodologiesInput, sourcesInput);
 
-  const rules = stableRules(input.rules);
-  const methodologies = stableMethodologies(resolvePackMethodologies(pack, input.methodologies));
-  const stableSourceList = stableSources(sources);
-  const stableReviews = stableReviewAttestations(reviewAttestations);
-  ensureReviewSubjectBindings(stableReviews, rules, methodologies);
-
-  const ruleRefs = rules.map((rule) => contentAddressed(ruleRef(rule), rule));
-  const methodologyRefs = methodologies.map((methodology) =>
-    contentAddressed(methodologyRef(methodology), methodology),
+  const rules = immutableClone(stableRules(rulesInput));
+  const methodologies = immutableClone(
+    stableMethodologies(resolvePackMethodologies(packInput, methodologiesInput)),
   );
-  const sourceRefs = stableSourceList.map(sourceContentRef);
-  const reviewRefs = stableReviews.map(reviewContentRef);
-  const packRef = contentAddressed({ id: pack.packId, version: pack.version }, pack);
+  const sources = immutableClone(stableSources(sourcesInput));
+  const reviewAttestations = immutableClone(stableReviewAttestations(reviewsInput));
+  ensureReviewSubjectBindings(reviewAttestations, rules, methodologies);
 
-  const registryMaterial = {
+  const ruleRefs = immutableClone(rules.map((rule) => contentAddressed(ruleRef(rule), rule)));
+  const methodologyRefs = immutableClone(
+    methodologies.map((methodology) => contentAddressed(methodologyRef(methodology), methodology)),
+  );
+  const sourceRefs = immutableClone(sources.map(sourceContentRef));
+  const reviewRefs = immutableClone(reviewAttestations.map(reviewContentRef));
+  const packRef = immutableClone(
+    contentAddressed({ id: packInput.packId, version: packInput.version }, packInput),
+  );
+
+  const registryMaterial = registryMaterialFor(
+    ruleRefs,
+    methodologyRefs,
+    sourceRefs,
+    reviewRefs,
+    packRef,
+  );
+  const registrySnapshotId = `registry_${deterministicContentHash(registryMaterial).slice(0, 24)}`;
+  const snapshot = immutableClone({
+    registrySnapshotId,
+    createdAt,
     rules: ruleRefs,
     methodologies: methodologyRefs,
     sources: sourceRefs,
     reviewAttestations: reviewRefs,
     packRef,
-  };
-  const registrySnapshotId = `registry_${deterministicContentHash(registryMaterial).slice(0, 24)}`;
+  } satisfies RuleRegistrySnapshot);
 
-  return {
-    snapshot: {
-      registrySnapshotId,
-      createdAt,
-      rules: ruleRefs,
-      methodologies: methodologyRefs,
-      sources: sourceRefs,
-      reviewAttestations: reviewRefs,
-      packRef,
-    },
-    pack,
+  return deepFreeze({
+    snapshot,
+    pack: packInput,
     rules,
     methodologies,
-    sources: stableSourceList,
-    reviewAttestations: stableReviews,
-  };
+    sources,
+    reviewAttestations,
+  });
 }
