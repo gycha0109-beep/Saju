@@ -22,10 +22,10 @@ import {
   type ResolvedRuleRegistrySnapshot,
 } from './rule-registry.js';
 
-const INTERPRETATION_ENGINE_VERSION = '0.2.0';
+const INTERPRETATION_ENGINE_VERSION = '0.3.0';
 const DERIVED_FACT_SET_VERSION = 'myeonghwa-derived-facts-v1.1';
 export const INTERPRETATION_AUTHORIZATION_POLICY_VERSION =
-  'myeonghwa-interpretation-authorization-v1';
+  'myeonghwa-interpretation-authorization-v2';
 
 export interface InterpretationRunOptions {
   requestId?: string;
