@@ -17,7 +17,9 @@ export type NarrativeGroundingViolationCode =
   | 'UNKNOWN_DISCLOSURE_REF'
   | 'INACTIVE_CLAIM_REF'
   | 'AMBIGUOUS_FACT_AS_DETERMINISTIC'
+  | 'DETERMINISTIC_ASSERTION_WITH_CLAIM'
   | 'INTERPRETATION_WITHOUT_CLAIM'
+  | 'FUTURE_TENDENCY_WITHOUT_TIME_DYNAMIC_CLAIM'
   | 'METHODOLOGY_REF_MISSING'
   | 'METHODOLOGY_REF_MISMATCH'
   | 'COMPARISON_CLAIM_MISMATCH'
@@ -134,6 +136,16 @@ function validateAssertion(
     referencedClaims.push(claim);
   }
 
+  if (assertion.epistemicType === 'deterministic_fact' && referencedClaims.length > 0) {
+    violation(
+      violations,
+      'DETERMINISTIC_ASSERTION_WITH_CLAIM',
+      'Deterministic fact assertions cannot use interpretation claims as authority.',
+      sectionId,
+      blockIndex,
+    );
+  }
+
   if (
     assertion.epistemicType !== 'deterministic_fact' &&
     !assertion.evidenceRefs.some((ref) => ref.sourceType === 'claim')
@@ -142,6 +154,20 @@ function validateAssertion(
       violations,
       'INTERPRETATION_WITHOUT_CLAIM',
       `${assertion.epistemicType} assertion requires claim evidence.`,
+      sectionId,
+      blockIndex,
+    );
+  }
+
+  if (
+    assertion.epistemicType === 'future_tendency' &&
+    referencedClaims.length > 0 &&
+    !referencedClaims.some((claim) => claim.taxonomy.tier === 'T9')
+  ) {
+    violation(
+      violations,
+      'FUTURE_TENDENCY_WITHOUT_TIME_DYNAMIC_CLAIM',
+      'Future-tendency assertions require at least one selected T9 time-dynamic claim.',
       sectionId,
       blockIndex,
     );
@@ -263,7 +289,10 @@ function validateDisclosureRefs(
 function allDisclosures(draft: NarrativeDraft) {
   return draft.sections.flatMap((section) =>
     section.blocks
-      .filter((block): block is Extract<NarrativeBlock, { type: 'disclosure' }> => block.type === 'disclosure')
+      .filter(
+        (block): block is Extract<NarrativeBlock, { type: 'disclosure' }> =>
+          block.type === 'disclosure',
+      )
       .map((block) => ({ sectionId: section.sectionId, block })),
   );
 }
@@ -294,7 +323,9 @@ function enforceMandatoryDisclosures(
   );
   for (const relation of bundle.claimRelations) {
     if (relation.relation !== 'contradicts') continue;
-    if (!conflictDisclosures.some(({ block }) => block.relatedRefs.includes(relation.relationId))) {
+    if (
+      !conflictDisclosures.some(({ block }) => block.relatedRefs.includes(relation.relationId))
+    ) {
       violation(
         violations,
         'CONFLICT_DISCLOSURE_MISSING',
@@ -303,7 +334,9 @@ function enforceMandatoryDisclosures(
     }
   }
 
-  const scopeDisclosures = disclosures.filter(({ block }) => block.disclosureType === 'scope_limitation');
+  const scopeDisclosures = disclosures.filter(
+    ({ block }) => block.disclosureType === 'scope_limitation',
+  );
   for (const claim of bundle.claims) {
     if (!claim.claimType.includes('SCOPE-GUARD')) continue;
     if (!scopeDisclosures.some(({ block }) => block.relatedRefs.includes(claim.claimId))) {
