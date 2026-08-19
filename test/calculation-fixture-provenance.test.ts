@@ -4,7 +4,7 @@ import {
   IANA_1955_STANDARD_TIME_FIXTURE,
   IANA_1988_DST_FIXTURE,
   KASI_2024_LICHUN_FIXTURE,
-  KASI_2024_LUNAR_NEW_YEAR_FIXTURE,
+  KASI_OFFICIAL_LUNAR_FIXTURES,
   UPSTREAM_1992_GOLDEN_FIXTURE,
   type FixtureProvenance,
   type FixtureSource,
@@ -23,7 +23,7 @@ function assertResolvable(provenance: FixtureProvenance): void {
 describe('calculation fixture provenance', () => {
   test('every checked fixture resolves all source references', () => {
     for (const fixture of [
-      KASI_2024_LUNAR_NEW_YEAR_FIXTURE,
+      ...KASI_OFFICIAL_LUNAR_FIXTURES,
       KASI_2024_LICHUN_FIXTURE,
       IANA_1955_STANDARD_TIME_FIXTURE,
       IANA_1988_DST_FIXTURE,
@@ -33,12 +33,31 @@ describe('calculation fixture provenance', () => {
     }
   });
 
-  test('official KASI lunar fixture is backed by an independent Tier A announcement', () => {
-    const source = sourcesById.get(KASI_2024_LUNAR_NEW_YEAR_FIXTURE.provenance.sourceIds[0]);
-    expect(source?.sourceTier).toBe('A');
-    expect(source?.authorityClass).toBe('official_announcement');
-    expect(source?.independentFromManseryeok).toBe(true);
-    expect(KASI_2024_LUNAR_NEW_YEAR_FIXTURE.provenance.reviewStatus).toBe('verified');
+  test('all official KASI lunar fixtures are independent verified Tier A announcements', () => {
+    expect(KASI_OFFICIAL_LUNAR_FIXTURES).toHaveLength(12);
+    for (const fixture of KASI_OFFICIAL_LUNAR_FIXTURES) {
+      const source = sourcesById.get(fixture.provenance.sourceIds[0]);
+      expect(source?.sourceTier).toBe('A');
+      expect(source?.authorityClass).toBe('official_announcement');
+      expect(source?.independentFromManseryeok).toBe(true);
+      expect(fixture.provenance.reviewStatus).toBe('verified');
+    }
+  });
+
+  test('official lunar corpus spans six consecutive almanac years and two lunar anchors per year', () => {
+    const years = new Set(KASI_OFFICIAL_LUNAR_FIXTURES.map((fixture) => fixture.input.date.year));
+    expect([...years].sort()).toEqual([2021, 2022, 2023, 2024, 2025, 2026]);
+
+    for (const year of years) {
+      const yearFixtures = KASI_OFFICIAL_LUNAR_FIXTURES.filter(
+        (fixture) => fixture.input.date.year === year,
+      );
+      expect(yearFixtures).toHaveLength(2);
+      expect(yearFixtures.map((fixture) => `${fixture.input.date.month}-${fixture.input.date.day}`).sort()).toEqual([
+        '1-1',
+        '8-15',
+      ]);
+    }
   });
 
   test('KASI calendar-data Lichun fixture remains provisional until official almanac text is parsed', () => {
