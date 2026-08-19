@@ -71,6 +71,11 @@ export interface SourceReference {
   notes?: string;
 }
 
+export interface ContentAddressedSourceRef {
+  sourceId: string;
+  contentHash: string;
+}
+
 export interface MethodologyDefinition {
   methodologyId: string;
   version: string;
@@ -278,6 +283,7 @@ export interface RuleRegistrySnapshot {
   createdAt: string;
   rules: readonly ContentAddressedVersionedRef[];
   methodologies: readonly ContentAddressedVersionedRef[];
+  sources: readonly ContentAddressedSourceRef[];
   packRef: ContentAddressedVersionedRef;
 }
 
