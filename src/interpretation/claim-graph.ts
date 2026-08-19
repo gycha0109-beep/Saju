@@ -6,9 +6,11 @@ import type {
   RuleDefinition,
   RuleEvaluation,
 } from '../contracts/interpretation.js';
-import type { ResolvedRuleRegistrySnapshot } from './rule-registry.js';
+import { deterministicContentHash, type ResolvedRuleRegistrySnapshot } from './rule-registry.js';
 
 const FORBIDDEN_PATH_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
+
+type ClaimRelationDraft = Omit<ClaimRelation, 'relationId'>;
 
 export interface ClaimGraphIntegrityResult {
   valid: boolean;
@@ -46,16 +48,25 @@ function scenarioCompatible(left: InterpretationClaim, right: InterpretationClai
   );
 }
 
-function relationKey(relation: ClaimRelation): string {
+function relationContentKey(relation: ClaimRelationDraft): string {
   return `${relation.fromClaimId}>${relation.toClaimId}:${relation.relation}:${relation.reason ?? ''}`;
+}
+
+function relationSortKey(relation: ClaimRelation): string {
+  return `${relationContentKey(relation)}:${relation.relationId}`;
 }
 
 function addRelation(
   relations: Map<string, ClaimRelation>,
-  relation: ClaimRelation,
+  draft: ClaimRelationDraft,
 ): void {
-  if (relation.fromClaimId === relation.toClaimId) return;
-  relations.set(relationKey(relation), relation);
+  if (draft.fromClaimId === draft.toClaimId) return;
+  const key = relationContentKey(draft);
+  const relation: ClaimRelation = {
+    relationId: `relation_${deterministicContentHash(draft).slice(0, 24)}`,
+    ...draft,
+  };
+  relations.set(key, relation);
 }
 
 function addSymmetricContradiction(
@@ -156,7 +167,7 @@ export function buildClaimRelations(
     }
   }
 
-  return [...relations.values()].sort((left, right) => relationKey(left).localeCompare(relationKey(right)));
+  return [...relations.values()].sort((left, right) => relationSortKey(left).localeCompare(relationSortKey(right)));
 }
 
 function duplicateIds(values: readonly string[]): string[] {
