@@ -7,6 +7,11 @@ import type {
   SourceReference,
 } from '../contracts/interpretation.js';
 import {
+  reviewerIsTrustedForLevel,
+  reviewerTrustPolicyRef,
+  type ReviewerTrustContext,
+} from './reviewer-trust.js';
+import {
   deterministicContentHash,
   verifyResolvedRegistryContentIntegrity,
   type ResolvedRuleRegistrySnapshot,
@@ -20,6 +25,7 @@ export type ExecutionPlanErrorCode =
   | 'RULE_NOT_EXECUTABLE_FOR_PACK'
   | 'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK'
   | 'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK'
+  | 'REVIEWER_TRUST_CONTEXT_REQUIRED'
   | 'REVIEW_ATTESTATION_NOT_AUTHORIZED_FOR_PACK'
   | 'RULE_METHODOLOGY_NOT_ENABLED'
   | 'RULE_VERSION_SELECTION_AMBIGUOUS'
@@ -53,6 +59,7 @@ export interface InterpretationExecutionPlan {
   executionPlanId: string;
   registrySnapshotId: string;
   packRef: ContentAddressedVersionedRef;
+  reviewerTrustPolicyRef?: ContentAddressedVersionedRef;
   orderedRuleRefs: readonly ContentAddressedVersionedRef[];
   dependencyEdges: readonly RuleDependencyEdge[];
   stages: readonly ExecutionPlanStage[];
@@ -174,16 +181,36 @@ function latestReview(attestations: readonly ReviewAttestation[]): ReviewAttesta
   }).at(-1);
 }
 
+function requireReviewerTrustContext(
+  registry: ResolvedRuleRegistrySnapshot,
+  trustContext: ReviewerTrustContext | undefined,
+): ReviewerTrustContext {
+  if (trustContext !== undefined) return trustContext;
+  throw new ExecutionPlanError(
+    'REVIEWER_TRUST_CONTEXT_REQUIRED',
+    `${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version} requires an externally supplied reviewer trust policy.`,
+  );
+}
+
 function assertReviewAuthorization(
   registry: ResolvedRuleRegistrySnapshot,
   subjectType: ReviewAttestation['subjectType'],
   subjectRef: ContentAddressedVersionedRef,
+  trustContext: ReviewerTrustContext | undefined,
 ): void {
   if (registry.pack.status === 'research') return;
 
-  const exact = exactReviewAttestations(registry, subjectType, subjectRef);
-  const domain = exact.filter((attestation) => attestation.reviewLevel === 'domain');
-  const internal = exact.filter((attestation) => attestation.reviewLevel === 'internal');
+  const trustedContext = requireReviewerTrustContext(registry, trustContext);
+  const exactTrusted = exactReviewAttestations(registry, subjectType, subjectRef).filter(
+    (attestation) =>
+      reviewerIsTrustedForLevel(
+        trustedContext,
+        attestation.reviewerId,
+        attestation.reviewLevel,
+      ),
+  );
+  const domain = exactTrusted.filter((attestation) => attestation.reviewLevel === 'domain');
+  const internal = exactTrusted.filter((attestation) => attestation.reviewLevel === 'internal');
   const governing =
     registry.pack.status === 'production'
       ? latestReview(domain)
@@ -192,14 +219,17 @@ function assertReviewAuthorization(
   if (governing?.decision !== 'approved') {
     throw new ExecutionPlanError(
       'REVIEW_ATTESTATION_NOT_AUTHORIZED_FOR_PACK',
-      `${subjectType} ${subjectRef.id}@${subjectRef.version} content ${subjectRef.contentHash.slice(0, 12)} lacks a current approved ${
+      `${subjectType} ${subjectRef.id}@${subjectRef.version} content ${subjectRef.contentHash.slice(0, 12)} lacks a current approved trusted ${
         registry.pack.status === 'production' ? 'domain' : 'internal/domain'
       } review attestation for ${registry.pack.status}.`,
     );
   }
 }
 
-function assertMethodologyAuthorization(registry: ResolvedRuleRegistrySnapshot): void {
+function assertMethodologyAuthorization(
+  registry: ResolvedRuleRegistrySnapshot,
+  trustContext: ReviewerTrustContext | undefined,
+): void {
   const sources = sourceIndex(registry);
   for (const methodology of registry.methodologies) {
     if (!methodologyStatusAllowed(methodology, registry.pack)) {
@@ -238,6 +268,7 @@ function assertMethodologyAuthorization(registry: ResolvedRuleRegistrySnapshot):
       registry,
       'methodology',
       contentRefForMethodology(registry, methodology),
+      trustContext,
     );
   }
 }
@@ -340,6 +371,7 @@ function assertSingleSelectedVersion(rules: readonly RuleDefinition[]): void {
 
 function selectRules(
   registry: ResolvedRuleRegistrySnapshot,
+  trustContext: ReviewerTrustContext | undefined,
 ): readonly RuleDefinition[] {
   if (registry.pack.status === 'deprecated') {
     throw new ExecutionPlanError(
@@ -348,7 +380,7 @@ function selectRules(
     );
   }
 
-  assertMethodologyAuthorization(registry);
+  assertMethodologyAuthorization(registry, trustContext);
 
   const enabledSets = new Set(registry.pack.enabledRuleSets);
   const disabled = new Set(registry.pack.disabledRuleIds ?? []);
@@ -379,7 +411,7 @@ function selectRules(
 
     assertRuleQualityAuthorization(rule, registry.pack);
     assertRuleSourceAuthorization(rule, registry);
-    assertReviewAuthorization(registry, 'rule', contentRefFor(registry, ref(rule)));
+    assertReviewAuthorization(registry, 'rule', contentRefFor(registry, ref(rule)), trustContext);
   }
 
   return sortRules(selected);
@@ -528,9 +560,10 @@ function contentRefFor(
 
 export function buildInterpretationExecutionPlan(
   registry: ResolvedRuleRegistrySnapshot,
+  trustContext?: ReviewerTrustContext,
 ): InterpretationExecutionPlan {
   assertRegistryContentIntegrity(registry);
-  const rules = selectRules(registry);
+  const rules = selectRules(registry, trustContext);
   const edges = uniqueEdges([
     ...explicitDependencies(rules),
     ...claimDependencies(rules),
@@ -541,10 +574,15 @@ export function buildInterpretationExecutionPlan(
     ruleRefs: stage.refs.map((value) => contentRefFor(registry, value)),
   }));
   const orderedRuleRefs = stages.flatMap((stage) => stage.ruleRefs);
+  const trustPolicyRef =
+    registry.pack.status === 'research' || trustContext === undefined
+      ? undefined
+      : reviewerTrustPolicyRef(trustContext);
 
   const planMaterial = {
     registrySnapshotId: registry.snapshot.registrySnapshotId,
     packRef: registry.snapshot.packRef,
+    reviewerTrustPolicyRef: trustPolicyRef,
     orderedRuleRefs,
     dependencyEdges: edges,
     stages,
@@ -555,6 +593,7 @@ export function buildInterpretationExecutionPlan(
     executionPlanId: `plan_${planHash.slice(0, 24)}`,
     registrySnapshotId: registry.snapshot.registrySnapshotId,
     packRef: registry.snapshot.packRef,
+    ...(trustPolicyRef === undefined ? {} : { reviewerTrustPolicyRef: trustPolicyRef }),
     orderedRuleRefs,
     dependencyEdges: edges,
     stages,
