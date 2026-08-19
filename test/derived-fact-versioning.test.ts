@@ -22,7 +22,7 @@ const policy: CalculationPolicySnapshot = {
 };
 
 describe('derived fact and interpretation authority versioning', () => {
-  test('records current derived-fact and interpretation authorization revisions', () => {
+  test('records current derived-fact and exact-attestation authorization revisions', () => {
     const snapshot = calculateCanonicalSajuSnapshot(
       {
         calendarType: 'solar',
@@ -37,8 +37,12 @@ describe('derived fact and interpretation authority versioning', () => {
     expect(snapshot.schemaVersion).toBe('saju-canonical-v1.1');
     expect(snapshot.derivedFacts.hiddenStems).toBeDefined();
     expect(result.run.derivedFactSetVersion).toBe('myeonghwa-derived-facts-v1.1');
-    expect(result.run.interpretationEngineVersion).toBe('0.3.0');
-    expect(result.run.authorizationPolicyVersion).toBe(INTERPRETATION_AUTHORIZATION_POLICY_VERSION);
-    expect(result.run.authorizationPolicyVersion).toBe('myeonghwa-interpretation-authorization-v2');
+    expect(result.run.interpretationEngineVersion).toBe('0.5.0');
+    expect(result.run.authorizationPolicyVersion).toBe(
+      INTERPRETATION_AUTHORIZATION_POLICY_VERSION,
+    );
+    expect(result.run.authorizationPolicyVersion).toBe(
+      'myeonghwa-interpretation-authorization-v4',
+    );
   });
 });
