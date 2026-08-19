@@ -24,8 +24,20 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Detect project manifest
+        id: project
+        shell: bash
+        run: |
+          if [ -f package.json ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install dependencies
+        if: steps.project.outputs.present == 'true'
         run: npm install --no-audit --no-fund
 
       - name: Verify
+        if: steps.project.outputs.present == 'true'
         run: npm run check
