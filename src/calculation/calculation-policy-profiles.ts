@@ -21,10 +21,13 @@ export type CalculationPolicyProfileId =
   | 'solar-split-jasi-sensitivity-v1';
 
 export type CalculationPolicyProfileRole = 'engineering_reference' | 'sensitivity_only';
+export type CalculationPolicyProfileUnavailableReason =
+  | 'BIRTHPLACE_LONGITUDE_REQUIRED'
+  | 'SUPPORTED_BIRTHPLACE_TIMEZONE_REQUIRED';
 
 export type CalculationPolicyProfileAvailability =
   | { status: 'available'; policy: CalculationPolicySnapshot }
-  | { status: 'unavailable'; reasonCode: 'BIRTHPLACE_LONGITUDE_REQUIRED' };
+  | { status: 'unavailable'; reasonCode: CalculationPolicyProfileUnavailableReason };
 
 export interface CalculationPolicyProfile {
   profileId: CalculationPolicyProfileId;
@@ -47,7 +50,7 @@ export type CalculationPolicyCandidateResult =
   | {
       profile: CalculationPolicyProfile;
       status: 'unavailable';
-      reasonCode: 'BIRTHPLACE_LONGITUDE_REQUIRED';
+      reasonCode: CalculationPolicyProfileUnavailableReason;
     }
   | {
       profile: CalculationPolicyProfile;
@@ -68,6 +71,7 @@ export interface CalculationPolicySensitivityReport {
 }
 
 const REFERENCE_PROFILE_ID = 'civil-midnight-reference-v1' as const;
+const SUPPORTED_BIRTHPLACE_TIMEZONE = 'Asia/Seoul';
 
 function civilPolicy(
   profileId: CalculationPolicyProfileId,
@@ -83,7 +87,7 @@ function civilPolicy(
       applyEquationOfTime: false,
       applyHistoricalDst: false,
     },
-    timeZonePolicy: { source: 'service-default', timeZone: 'Asia/Seoul' },
+    timeZonePolicy: { source: 'service-default', timeZone: SUPPORTED_BIRTHPLACE_TIMEZONE },
     unknownBirthTimePolicy: 'preserve-unknown-and-enumerate-boundaries',
   };
 }
@@ -102,7 +106,7 @@ function solarPolicy(
       applyEquationOfTime: true,
       applyHistoricalDst: true,
     },
-    timeZonePolicy: { source: 'service-default', timeZone: 'Asia/Seoul' },
+    timeZonePolicy: { source: 'service-default', timeZone: SUPPORTED_BIRTHPLACE_TIMEZONE },
     unknownBirthTimePolicy: 'preserve-unknown-and-enumerate-boundaries',
   };
 }
@@ -125,16 +129,21 @@ function profile(
   };
 }
 
-export function buildCalculationPolicyProfiles(input: BirthInput): readonly CalculationPolicyProfile[] {
-  const solarAvailable = input.birthplace?.longitude !== undefined;
-  const solarAvailability = (
-    profileId: CalculationPolicyProfileId,
-    dayBoundary: CalculationPolicySnapshot['dayBoundary'],
-  ): CalculationPolicyProfileAvailability =>
-    solarAvailable
-      ? { status: 'available', policy: solarPolicy(profileId, dayBoundary) }
-      : { status: 'unavailable', reasonCode: 'BIRTHPLACE_LONGITUDE_REQUIRED' };
+function solarAvailability(
+  input: BirthInput,
+  profileId: CalculationPolicyProfileId,
+  dayBoundary: CalculationPolicySnapshot['dayBoundary'],
+): CalculationPolicyProfileAvailability {
+  if (input.birthplace?.longitude === undefined) {
+    return { status: 'unavailable', reasonCode: 'BIRTHPLACE_LONGITUDE_REQUIRED' };
+  }
+  if (input.birthplace.timeZone !== SUPPORTED_BIRTHPLACE_TIMEZONE) {
+    return { status: 'unavailable', reasonCode: 'SUPPORTED_BIRTHPLACE_TIMEZONE_REQUIRED' };
+  }
+  return { status: 'available', policy: solarPolicy(profileId, dayBoundary) };
+}
 
+export function buildCalculationPolicyProfiles(input: BirthInput): readonly CalculationPolicyProfile[] {
   return [
     profile(
       REFERENCE_PROFILE_ID,
@@ -165,21 +174,21 @@ export function buildCalculationPolicyProfiles(input: BirthInput): readonly Calc
       'sensitivity_only',
       'apparent_solar_time',
       'midnight',
-      solarAvailability('solar-midnight-sensitivity-v1', 'midnight'),
+      solarAvailability(input, 'solar-midnight-sensitivity-v1', 'midnight'),
     ),
     profile(
       'solar-jasi-sensitivity-v1',
       'sensitivity_only',
       'apparent_solar_time',
       'jasi',
-      solarAvailability('solar-jasi-sensitivity-v1', 'jasi'),
+      solarAvailability(input, 'solar-jasi-sensitivity-v1', 'jasi'),
     ),
     profile(
       'solar-split-jasi-sensitivity-v1',
       'sensitivity_only',
       'apparent_solar_time',
       'splitJasi',
-      solarAvailability('solar-split-jasi-sensitivity-v1', 'splitJasi'),
+      solarAvailability(input, 'solar-split-jasi-sensitivity-v1', 'splitJasi'),
     ),
   ];
 }
