@@ -36,7 +36,6 @@ export const I7_RESEARCH_SOURCES = Object.freeze({
     sourceType: 'classical_text',
     title: '五行大義',
     author: '蕭吉',
-    publicationYear: undefined,
     language: 'zh-Hant',
     locator: {
       volume: '卷二',
