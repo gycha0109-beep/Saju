@@ -8,7 +8,9 @@ export type NarrativePurpose =
   | 'method_comparison';
 
 export interface SelectedFact {
+  ref: string;
   path: string;
+  scenarioRef?: string;
   fact: FactState<unknown>;
 }
 
@@ -21,6 +23,9 @@ export interface SourceSummary {
 export interface NarrativeEvidenceBundle {
   requestId: string;
   purpose: NarrativePurpose;
+  snapshotId: string;
+  interpretationRunId: string;
+  registrySnapshotId: string;
   canonicalFacts: readonly SelectedFact[];
   claims: readonly InterpretationClaim[];
   claimRelations: readonly ClaimRelation[];
