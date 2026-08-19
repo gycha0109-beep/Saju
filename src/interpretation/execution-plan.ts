@@ -9,8 +9,10 @@ import {
 } from './rule-registry.js';
 
 export type ExecutionPlanErrorCode =
+  | 'PACK_NOT_EXECUTABLE'
   | 'RULE_NOT_EXECUTABLE_FOR_PACK'
   | 'RULE_METHODOLOGY_NOT_ENABLED'
+  | 'RULE_VERSION_SELECTION_AMBIGUOUS'
   | 'RULE_DEPENDENCY_MISSING'
   | 'CLAIM_DEPENDENCY_MISSING'
   | 'EXECUTION_PLAN_INVALID_CYCLE';
@@ -69,9 +71,33 @@ function allowedStatus(rule: RuleDefinition, pack: InterpretationPack): boolean 
   return rule.status === 'active' || rule.status === 'reviewed' || rule.status === 'research';
 }
 
+function assertSingleSelectedVersion(rules: readonly RuleDefinition[]): void {
+  const versionsByRuleId = new Map<string, Set<string>>();
+  for (const rule of rules) {
+    const versions = versionsByRuleId.get(rule.ruleId) ?? new Set<string>();
+    versions.add(rule.version);
+    versionsByRuleId.set(rule.ruleId, versions);
+  }
+
+  for (const [ruleId, versions] of versionsByRuleId) {
+    if (versions.size <= 1) continue;
+    throw new ExecutionPlanError(
+      'RULE_VERSION_SELECTION_AMBIGUOUS',
+      `Pack selection resolves multiple versions for ${ruleId}: ${[...versions].sort().join(', ')}`,
+    );
+  }
+}
+
 function selectRules(
   registry: ResolvedRuleRegistrySnapshot,
 ): readonly RuleDefinition[] {
+  if (registry.pack.status === 'deprecated') {
+    throw new ExecutionPlanError(
+      'PACK_NOT_EXECUTABLE',
+      `Deprecated pack ${registry.pack.packId}@${registry.pack.version} cannot be executed.`,
+    );
+  }
+
   const enabledSets = new Set(registry.pack.enabledRuleSets);
   const disabled = new Set(registry.pack.disabledRuleIds ?? []);
   const enabledMethodologies = new Set(
@@ -81,6 +107,8 @@ function selectRules(
   const selected = registry.rules.filter(
     (rule) => enabledSets.has(rule.ruleSetId) && !disabled.has(rule.ruleId),
   );
+
+  assertSingleSelectedVersion(selected);
 
   for (const rule of selected) {
     if (!allowedStatus(rule, registry.pack)) {
