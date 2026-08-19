@@ -20,6 +20,14 @@ function assertResolvable(provenance: FixtureProvenance): void {
   }
 }
 
+function firstSourceId(provenance: FixtureProvenance): string {
+  const sourceId = provenance.sourceIds[0];
+  if (sourceId === undefined) {
+    throw new Error('fixture provenance requires at least one source');
+  }
+  return sourceId;
+}
+
 describe('calculation fixture provenance', () => {
   test('every checked fixture resolves all source references', () => {
     for (const fixture of [
@@ -36,7 +44,7 @@ describe('calculation fixture provenance', () => {
   test('all official KASI lunar fixtures are independent verified Tier A announcements', () => {
     expect(KASI_OFFICIAL_LUNAR_FIXTURES).toHaveLength(12);
     for (const fixture of KASI_OFFICIAL_LUNAR_FIXTURES) {
-      const source = sourcesById.get(fixture.provenance.sourceIds[0]);
+      const source = sourcesById.get(firstSourceId(fixture.provenance));
       expect(source?.sourceTier).toBe('A');
       expect(source?.authorityClass).toBe('official_announcement');
       expect(source?.independentFromManseryeok).toBe(true);
@@ -53,15 +61,16 @@ describe('calculation fixture provenance', () => {
         (fixture) => fixture.input.date.year === year,
       );
       expect(yearFixtures).toHaveLength(2);
-      expect(yearFixtures.map((fixture) => `${fixture.input.date.month}-${fixture.input.date.day}`).sort()).toEqual([
-        '1-1',
-        '8-15',
-      ]);
+      expect(
+        yearFixtures
+          .map((fixture) => `${fixture.input.date.month}-${fixture.input.date.day}`)
+          .sort(),
+      ).toEqual(['1-1', '8-15']);
     }
   });
 
   test('KASI calendar-data Lichun fixture remains provisional until official almanac text is parsed', () => {
-    const source = sourcesById.get(KASI_2024_LICHUN_FIXTURE.provenance.sourceIds[0]);
+    const source = sourcesById.get(firstSourceId(KASI_2024_LICHUN_FIXTURE.provenance));
     expect(source?.sourceTier).toBe('B');
     expect(source?.authorityClass).toBe('primary_institution_reference');
     expect(KASI_2024_LICHUN_FIXTURE.provenance.reviewStatus).toBe('provisional');
@@ -69,7 +78,7 @@ describe('calculation fixture provenance', () => {
 
   test('IANA historical-time fixtures are primary software references, not upstream regressions', () => {
     for (const fixture of [IANA_1955_STANDARD_TIME_FIXTURE, IANA_1988_DST_FIXTURE]) {
-      const source = sourcesById.get(fixture.provenance.sourceIds[0]);
+      const source = sourcesById.get(firstSourceId(fixture.provenance));
       expect(source?.sourceTier).toBe('A');
       expect(source?.authorityClass).toBe('primary_software_reference');
       expect(source?.independentFromManseryeok).toBe(true);
@@ -77,7 +86,7 @@ describe('calculation fixture provenance', () => {
   });
 
   test('upstream golden data can never masquerade as Tier A authority', () => {
-    const source = sourcesById.get(UPSTREAM_1992_GOLDEN_FIXTURE.provenance.sourceIds[0]);
+    const source = sourcesById.get(firstSourceId(UPSTREAM_1992_GOLDEN_FIXTURE.provenance));
     expect(source?.sourceTier).toBe('D');
     expect(source?.authorityClass).toBe('upstream_regression');
     expect(source?.independentFromManseryeok).toBe(false);
