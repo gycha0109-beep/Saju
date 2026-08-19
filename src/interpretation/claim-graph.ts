@@ -36,8 +36,15 @@ function pathExists(root: unknown, path: string): boolean {
   return true;
 }
 
-function primaryRuleId(claim: InterpretationClaim): string | undefined {
-  return claim.ruleRefs[0]?.ruleId;
+function primaryRuleRef(
+  claim: InterpretationClaim,
+): { ruleId: string; version: string } | undefined {
+  const ref = claim.ruleRefs[0];
+  return ref === undefined ? undefined : { ruleId: ref.ruleId, version: ref.version };
+}
+
+function ruleRefKey(ruleId: string, version: string): string {
+  return `${ruleId}@${version}`;
 }
 
 function scenarioCompatible(left: InterpretationClaim, right: InterpretationClaim): boolean {
@@ -97,14 +104,8 @@ function claimsByRule(claims: readonly InterpretationClaim[]): ReadonlyMap<strin
   return result;
 }
 
-function rulesById(rules: readonly RuleDefinition[]): ReadonlyMap<string, RuleDefinition[]> {
-  const result = new Map<string, RuleDefinition[]>();
-  for (const rule of rules) {
-    const values = result.get(rule.ruleId) ?? [];
-    values.push(rule);
-    result.set(rule.ruleId, values);
-  }
-  return result;
+function rulesByRef(rules: readonly RuleDefinition[]): ReadonlyMap<string, RuleDefinition> {
+  return new Map(rules.map((rule) => [ruleRefKey(rule.ruleId, rule.version), rule]));
 }
 
 function canonicalConflictReason(leftRuleId: string, rightRuleId: string): string {
@@ -118,7 +119,7 @@ export function buildClaimRelations(
   const relations = new Map<string, ClaimRelation>();
   const claimById = new Map(claims.map((claim) => [claim.claimId, claim]));
   const byRule = claimsByRule(claims);
-  const ruleIndex = rulesById(rules);
+  const ruleIndex = rulesByRef(rules);
 
   for (const claim of claims) {
     for (const upstreamClaimId of claim.upstreamClaimRefs) {
@@ -132,47 +133,48 @@ export function buildClaimRelations(
       }
     }
 
-    const ruleId = primaryRuleId(claim);
-    if (ruleId === undefined) continue;
-    for (const rule of ruleIndex.get(ruleId) ?? []) {
-      for (const targetRuleId of rule.relations?.requires ?? []) {
-        for (const target of byRule.get(targetRuleId) ?? []) {
-          if (!scenarioCompatible(claim, target)) continue;
-          addRelation(relations, {
-            fromClaimId: claim.claimId,
-            toClaimId: target.claimId,
-            relation: 'depends_on',
-            reason: `rule_requires:${targetRuleId}`,
-          });
-        }
-      }
+    const sourceRuleRef = primaryRuleRef(claim);
+    if (sourceRuleRef === undefined) continue;
+    const rule = ruleIndex.get(ruleRefKey(sourceRuleRef.ruleId, sourceRuleRef.version));
+    if (rule === undefined) continue;
 
-      const conflictTargetRuleIds = new Set([
-        ...(rule.relations?.conflictsWith ?? []),
-        ...(rule.relations?.mutuallyExclusiveWith ?? []),
-      ]);
-      for (const targetRuleId of conflictTargetRuleIds) {
-        for (const target of byRule.get(targetRuleId) ?? []) {
-          if (!scenarioCompatible(claim, target)) continue;
-          addSymmetricContradiction(
-            relations,
-            claim,
-            target,
-            canonicalConflictReason(rule.ruleId, targetRuleId),
-          );
-        }
+    for (const targetRuleId of rule.relations?.requires ?? []) {
+      for (const target of byRule.get(targetRuleId) ?? []) {
+        if (!scenarioCompatible(claim, target)) continue;
+        addRelation(relations, {
+          fromClaimId: claim.claimId,
+          toClaimId: target.claimId,
+          relation: 'depends_on',
+          reason: `rule_requires:${targetRuleId}`,
+        });
       }
+    }
 
-      for (const targetRuleId of rule.relations?.supersedes ?? []) {
-        for (const target of byRule.get(targetRuleId) ?? []) {
-          if (!scenarioCompatible(claim, target)) continue;
-          addRelation(relations, {
-            fromClaimId: claim.claimId,
-            toClaimId: target.claimId,
-            relation: 'supersedes',
-            reason: `rule_supersedes:${targetRuleId}`,
-          });
-        }
+    const conflictTargetRuleIds = new Set([
+      ...(rule.relations?.conflictsWith ?? []),
+      ...(rule.relations?.mutuallyExclusiveWith ?? []),
+    ]);
+    for (const targetRuleId of conflictTargetRuleIds) {
+      for (const target of byRule.get(targetRuleId) ?? []) {
+        if (!scenarioCompatible(claim, target)) continue;
+        addSymmetricContradiction(
+          relations,
+          claim,
+          target,
+          canonicalConflictReason(rule.ruleId, targetRuleId),
+        );
+      }
+    }
+
+    for (const targetRuleId of rule.relations?.supersedes ?? []) {
+      for (const target of byRule.get(targetRuleId) ?? []) {
+        if (!scenarioCompatible(claim, target)) continue;
+        addRelation(relations, {
+          fromClaimId: claim.claimId,
+          toClaimId: target.claimId,
+          relation: 'supersedes',
+          reason: `rule_supersedes:${targetRuleId}`,
+        });
       }
     }
   }
