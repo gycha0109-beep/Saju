@@ -8,7 +8,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify:
@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -38,13 +40,18 @@ jobs:
         if: steps.project.outputs.present == 'true'
         run: npm install --no-audit --no-fund
 
-      - name: Upload generated lockfile
-        if: steps.project.outputs.present == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: package-lock
-          path: package-lock.json
-          retention-days: 1
+      - name: Commit generated lockfile
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/agent/') && steps.project.outputs.present == 'true'
+        shell: bash
+        run: |
+          if git ls-files --error-unmatch package-lock.json >/dev/null 2>&1 && git diff --quiet -- package-lock.json; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "Lock npm dependencies"
+          git push origin HEAD:${GITHUB_REF_NAME}
 
       - name: Verify
         if: steps.project.outputs.present == 'true'
