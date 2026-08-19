@@ -3,3 +3,5 @@ export * from './calculation/calculation-engine.js';
 export * from './interpretation/rule-registry.js';
 export * from './interpretation/execution-plan.js';
 export * from './interpretation/rule-evaluator.js';
+export * from './interpretation/claim-graph.js';
+export * from './interpretation/interpretation-engine.js';
