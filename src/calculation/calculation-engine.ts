@@ -15,12 +15,18 @@ import {
 const SOLAR_TERM_MIN_YEAR = 1800;
 const SOLAR_TERM_MAX_YEAR = 2300;
 const FIXED_KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const DEFAULT_MAX_SCENARIO_COUNT = 32;
 
 export type CalculationErrorCode =
   | 'INVALID_INPUT'
   | 'UNSUPPORTED_POLICY'
   | 'OUTSIDE_SUPPORTED_RANGE'
+  | 'SCENARIO_LIMIT_EXCEEDED'
   | 'CALCULATION_FAILED';
+
+export interface CalculationEngineOptions extends CalculationAdapterOptions {
+  maxScenarioCount?: number;
+}
 
 export class MyeonghwaCalculationError extends Error {
   readonly code: CalculationErrorCode;
@@ -169,13 +175,38 @@ function translatedError(error: unknown): MyeonghwaCalculationError {
   return new MyeonghwaCalculationError('CALCULATION_FAILED', message, error);
 }
 
+function scenarioLimit(options: CalculationEngineOptions): number {
+  const value = options.maxScenarioCount ?? DEFAULT_MAX_SCENARIO_COUNT;
+  if (!Number.isInteger(value) || value < 1) {
+    throw new MyeonghwaCalculationError(
+      'INVALID_INPUT',
+      `maxScenarioCount must be a positive integer: ${String(value)}`,
+    );
+  }
+  return value;
+}
+
+function enforceScenarioLimit(
+  snapshot: CanonicalSajuSnapshot,
+  options: CalculationEngineOptions,
+): void {
+  const limit = scenarioLimit(options);
+  if (snapshot.scenarios.length > limit) {
+    throw new MyeonghwaCalculationError(
+      'SCENARIO_LIMIT_EXCEEDED',
+      `Calculation produced ${snapshot.scenarios.length} scenarios, exceeding configured limit ${limit}.`,
+    );
+  }
+}
+
 export function calculateCanonicalSajuSnapshot(
   input: BirthInput,
   policy: CalculationPolicySnapshot,
-  options: CalculationAdapterOptions = {},
+  options: CalculationEngineOptions = {},
 ): CanonicalSajuSnapshot {
   try {
     const snapshot = calculateAdapterSnapshot(input, policy, options);
+    enforceScenarioLimit(snapshot, options);
     const solarTermContext = buildSolarTermContext(snapshot, policy);
     return solarTermContext === undefined ? snapshot : { ...snapshot, solarTermContext };
   } catch (error) {
@@ -184,4 +215,3 @@ export function calculateCanonicalSajuSnapshot(
 }
 
 export { manseryeokAdapterMetadata };
-export type { CalculationAdapterOptions };
