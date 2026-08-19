@@ -10,6 +10,7 @@ import {
   assertBirthInput,
   assertCalculationPolicySnapshot,
 } from '../contracts/runtime-validation.js';
+import { enrichCanonicalHiddenStems } from './hidden-stems.js';
 import {
   calculateCanonicalSajuSnapshot as calculateAdapterSnapshot,
   manseryeokAdapterMetadata,
@@ -242,7 +243,8 @@ export function calculateCanonicalSajuSnapshot(
     assertBirthInput(input);
     assertCalculationPolicySnapshot(policy);
     enforceHistoricalCivilTimeSupport(input, policy);
-    const snapshot = calculateAdapterSnapshot(input, policy, options);
+    const adapterSnapshot = calculateAdapterSnapshot(input, policy, options);
+    const snapshot = enrichCanonicalHiddenStems(adapterSnapshot);
     enforceScenarioLimit(snapshot, options);
     const solarTermContext = buildSolarTermContext(snapshot, policy);
     return solarTermContext === undefined ? snapshot : { ...snapshot, solarTermContext };
