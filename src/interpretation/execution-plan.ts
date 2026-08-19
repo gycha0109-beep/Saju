@@ -3,6 +3,7 @@ import type {
   InterpretationPack,
   MethodologyDefinition,
   RuleDefinition,
+  SourceReference,
 } from '../contracts/interpretation.js';
 import {
   deterministicContentHash,
@@ -12,8 +13,10 @@ import {
 export type ExecutionPlanErrorCode =
   | 'PACK_NOT_EXECUTABLE'
   | 'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK'
+  | 'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK'
   | 'RULE_NOT_EXECUTABLE_FOR_PACK'
   | 'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK'
+  | 'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK'
   | 'RULE_METHODOLOGY_NOT_ENABLED'
   | 'RULE_VERSION_SELECTION_AMBIGUOUS'
   | 'RULE_DEPENDENCY_MISSING'
@@ -109,8 +112,18 @@ const STAGING_PROVENANCE = new Set<RuleDefinition['quality']['provenanceQuality'
   'secondary_only',
   'single_practitioner',
 ]);
+const PRODUCTION_SOURCE_TIERS = new Set<SourceReference['provenanceTier']>([
+  'primary',
+  'scholarly_secondary',
+  'cross_reference',
+]);
+
+function sourceIndex(registry: ResolvedRuleRegistrySnapshot): ReadonlyMap<string, SourceReference> {
+  return new Map(registry.sources.map((source) => [source.sourceId, source]));
+}
 
 function assertMethodologyAuthorization(registry: ResolvedRuleRegistrySnapshot): void {
+  const sources = sourceIndex(registry);
   for (const methodology of registry.methodologies) {
     if (!methodologyStatusAllowed(methodology, registry.pack)) {
       throw new ExecutionPlanError(
@@ -123,9 +136,26 @@ function assertMethodologyAuthorization(registry: ResolvedRuleRegistrySnapshot):
       methodology.sourceIds.length === 0
     ) {
       throw new ExecutionPlanError(
-        'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK',
+        'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
         `${methodology.methodologyId}@${methodology.version} has no source references and cannot enter ${registry.pack.status}.`,
       );
+    }
+    if (registry.pack.status === 'production') {
+      const unauthorized = methodology.sourceIds
+        .map((sourceId) => sources.get(sourceId))
+        .filter(
+          (source): source is SourceReference =>
+            source !== undefined && !PRODUCTION_SOURCE_TIERS.has(source.provenanceTier),
+        );
+      if (unauthorized.length > 0) {
+        throw new ExecutionPlanError(
+          'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+          `${methodology.methodologyId}@${methodology.version} references production-disallowed source tiers: ${unauthorized
+            .map((source) => `${source.sourceId}:${source.provenanceTier}`)
+            .sort()
+            .join(', ')}`,
+        );
+      }
     }
   }
 }
@@ -158,6 +188,53 @@ function assertRuleQualityAuthorization(rule: RuleDefinition, pack: Interpretati
     throw new ExecutionPlanError(
       'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK',
       `${rule.ruleId}@${rule.version} quality is not production-authorized: reviewer=${rule.quality.reviewerStatus}, tests=${rule.quality.testCoverage}, provenance=${rule.quality.provenanceQuality}`,
+    );
+  }
+}
+
+function assertRuleSourceAuthorization(
+  rule: RuleDefinition,
+  registry: ResolvedRuleRegistrySnapshot,
+): void {
+  if (registry.pack.status === 'research') return;
+  const sourceIds = [...new Set(rule.sourceRefs.map((sourceRef) => sourceRef.sourceId))];
+  if (sourceIds.length === 0) {
+    throw new ExecutionPlanError(
+      'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+      `${rule.ruleId}@${rule.version} has no source references and cannot enter ${registry.pack.status}.`,
+    );
+  }
+  if (registry.pack.status !== 'production') return;
+
+  const sources = sourceIndex(registry);
+  const resolvedSources = sourceIds
+    .map((sourceId) => sources.get(sourceId))
+    .filter((source): source is SourceReference => source !== undefined);
+  const unauthorized = resolvedSources.filter(
+    (source) => !PRODUCTION_SOURCE_TIERS.has(source.provenanceTier),
+  );
+  if (unauthorized.length > 0) {
+    throw new ExecutionPlanError(
+      'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+      `${rule.ruleId}@${rule.version} references production-disallowed source tiers: ${unauthorized
+        .map((source) => `${source.sourceId}:${source.provenanceTier}`)
+        .sort()
+        .join(', ')}`,
+    );
+  }
+  if (rule.quality.provenanceQuality === 'multi_source_supported' && sourceIds.length < 2) {
+    throw new ExecutionPlanError(
+      'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+      `${rule.ruleId}@${rule.version} declares multi_source_supported but references only ${sourceIds.length} distinct source(s).`,
+    );
+  }
+  if (
+    rule.quality.provenanceQuality === 'primary_supported' &&
+    !resolvedSources.some((source) => source.provenanceTier === 'primary')
+  ) {
+    throw new ExecutionPlanError(
+      'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+      `${rule.ruleId}@${rule.version} declares primary_supported but references no primary-tier source.`,
     );
   }
 }
@@ -219,6 +296,7 @@ function selectRules(
     }
 
     assertRuleQualityAuthorization(rule, registry.pack);
+    assertRuleSourceAuthorization(rule, registry);
   }
 
   return sortRules(selected);
