@@ -44,6 +44,19 @@ describe('calculation policy profiles', () => {
     expect(report.materiallySensitive).toBe(false);
   });
 
+  test('solar-time profiles require the currently supported Asia/Seoul birthplace timezone', () => {
+    const profiles = buildCalculationPolicyProfiles(
+      baseInput({ birthplace: { longitude: 100.5, timeZone: 'Asia/Bangkok' } }),
+    );
+    const solarProfiles = profiles.filter((profile) => profile.clockBasis === 'apparent_solar_time');
+    for (const profile of solarProfiles) {
+      expect(profile.availability).toEqual({
+        status: 'unavailable',
+        reasonCode: 'SUPPORTED_BIRTHPLACE_TIMEZONE_REQUIRED',
+      });
+    }
+  });
+
   test('23:30 civil-time birth exposes day-boundary material sensitivity', () => {
     const report = runCalculationPolicySensitivity(
       baseInput({ time: { known: true, hour: 23, minute: 30 } }),
