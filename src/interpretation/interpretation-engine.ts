@@ -22,8 +22,10 @@ import {
   type ResolvedRuleRegistrySnapshot,
 } from './rule-registry.js';
 
-const INTERPRETATION_ENGINE_VERSION = '0.1.0';
+const INTERPRETATION_ENGINE_VERSION = '0.2.0';
 const DERIVED_FACT_SET_VERSION = 'myeonghwa-derived-facts-v1.1';
+export const INTERPRETATION_AUTHORIZATION_POLICY_VERSION =
+  'myeonghwa-interpretation-authorization-v1';
 
 export interface InterpretationRunOptions {
   requestId?: string;
@@ -187,6 +189,7 @@ function makeRunHash(
     compositionPolicyRef: registry.pack.compositionPolicyRef,
     derivedFactSetVersion: DERIVED_FACT_SET_VERSION,
     interpretationEngineVersion: INTERPRETATION_ENGINE_VERSION,
+    authorizationPolicyVersion: INTERPRETATION_AUTHORIZATION_POLICY_VERSION,
     evaluations: evaluations.map(stableEvaluationRecord),
     claims,
     relations,
@@ -271,6 +274,7 @@ export function runInterpretation(
     compositionPolicyRef: registry.pack.compositionPolicyRef,
     derivedFactSetVersion: DERIVED_FACT_SET_VERSION,
     interpretationEngineVersion: INTERPRETATION_ENGINE_VERSION,
+    authorizationPolicyVersion: INTERPRETATION_AUTHORIZATION_POLICY_VERSION,
     startedAt: timestamp,
     completedAt: timestamp,
     status,
