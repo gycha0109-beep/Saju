@@ -337,6 +337,7 @@ export interface InterpretationRun {
   derivedFactSetVersion: string;
   interpretationEngineVersion: string;
   authorizationPolicyVersion: string;
+  reviewerTrustPolicyRef?: ContentAddressedVersionedRef;
   startedAt: string;
   completedAt?: string;
   status: 'completed' | 'partial' | 'failed';
