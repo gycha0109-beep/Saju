@@ -81,11 +81,11 @@ function baseRule(overrides: Partial<RuleDefinition> = {}): RuleDefinition {
       },
     ],
     quality: {
-      provenanceQuality: 'internal',
+      provenanceQuality: 'unknown',
       testCoverage: 'unit',
       methodologyStability: 'experimental',
       reviewerStatus: 'internal_reviewed',
-    } as RuleDefinition['quality'],
+    },
     status: 'research',
     ...overrides,
   };
@@ -193,10 +193,11 @@ describe('rule evaluator', () => {
   });
 
   test('required interpretation claim dependency is explicit and traceable', () => {
+    const stableSnapshot = snapshot();
     const upstream: InterpretationClaim = {
       claimId: 'claim-upstream',
       schemaVersion: 'test',
-      snapshotId: snapshot().snapshotId,
+      snapshotId: stableSnapshot.snapshotId,
       taxonomy: { tier: 'T1', category: 'synthetic' },
       claimType: 'CLAIM-UPSTREAM',
       subject: 'upstream',
@@ -224,11 +225,16 @@ describe('rule evaluator', () => {
         left: { kind: 'input', key: 'upstream' },
         right: { kind: 'literal', value: 'ready' },
       },
-      output: { claimType: 'CLAIM-CONSUMER', subject: 'consumer', predicate: 'ready', value: true },
+      output: {
+        claimType: 'CLAIM-CONSUMER',
+        subject: 'consumer',
+        predicate: 'ready',
+        value: true,
+      },
     });
 
     const result = evaluateRule(consumer, {
-      snapshot: snapshot(),
+      snapshot: stableSnapshot,
       pack,
       existingClaims: [upstream],
     });
@@ -255,13 +261,14 @@ describe('rule evaluator', () => {
   });
 
   test('evaluation and claim identities are reproducible independently of evaluatedAt', () => {
+    const stableSnapshot = snapshot();
     const first = evaluateRule(baseRule(), {
-      snapshot: snapshot(),
+      snapshot: stableSnapshot,
       pack,
       now: new Date('2026-08-19T01:00:00.000Z'),
     });
     const second = evaluateRule(baseRule(), {
-      snapshot: snapshot(),
+      snapshot: stableSnapshot,
       pack,
       now: new Date('2026-08-20T01:00:00.000Z'),
     });
