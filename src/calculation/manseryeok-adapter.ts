@@ -357,7 +357,7 @@ function provenance(policy: CalculationPolicySnapshot): CanonicalSajuSnapshot['p
 }
 
 function knownCompleteness(cycle: FactState<LuckCycleFact>): Completeness {
-  const resolvedPaths = [
+  const resolvedPaths: string[] = [
     'pillars.year', 'pillars.month', 'pillars.day', 'pillars.hour',
     'derivedFacts.dayMaster', 'derivedFacts.tenGods',
     'derivedFacts.voidBranches', 'derivedFacts.fiveElementCounts',
