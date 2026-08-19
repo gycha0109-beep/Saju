@@ -12,6 +12,21 @@ export interface HistoricalTimeAuthoritySource {
 }
 
 export const HISTORICAL_TIME_AUTHORITY_SOURCES = {
+  korea1908StandardTimeDecree: {
+    sourceId: 'SRC-KR-GAZETTE-1908-STANDARD-TIME',
+    title: '大韓國標準時에關한件 — 칙령 제5호, 관보 제3994호',
+    organization: '대한민국사연구소 한국근대사료DB / 대한제국 관보',
+    url: 'https://db.history.go.kr/modern/gb/level.do?levelId=gbdh_1908_02_11_a03994_00010',
+    authorityKind: 'primary_legal_reference',
+    retrievedAt: '2026-08-19',
+    supports: [
+      '127 degrees 30 minutes east mean time defined as national standard time',
+      'legal effective date 1908-04-01',
+      'the decree describes this meridian time as the previously customary Seoul time',
+    ],
+    notes:
+      '1908-04-01 이전에는 이 칙령에 따른 국가 표준시 제도가 아직 시행되지 않았다. 명화는 그 이전 civil-time history를 +09:00으로 추정하지 않는다.',
+  },
   korea1954StandardMeridianLaw: {
     sourceId: 'SRC-KR-LAW-1954-STANDARD-MERIDIAN',
     title: '표준자오선변경에관한건 — 대통령령 제876호',
@@ -51,11 +66,14 @@ export const HISTORICAL_TIME_AUTHORITY_SOURCES = {
     authorityKind: 'primary_software_reference',
     retrievedAt: '2026-08-19',
     supports: [
+      'Asia/Seoul LMT +08:27:52 before 1908-04-01',
+      'Asia/Seoul +08:30 from 1908-04-01',
+      'Asia/Seoul +09:00 from 1912-01-01',
       'Asia/Seoul +08:30 from 1954-03-21',
       'Asia/Seoul +09:00 from 1961-08-10',
     ],
     notes:
-      '소프트웨어 시간대 구현의 primary reference로 사용하며, 대한민국 법령 원자료와 교차확인한다.',
+      '소프트웨어 시간대 구현의 primary reference로 사용한다. tzdb 자체도 역사 자료가 절대적 법적 authority는 아니라고 경고하므로, 가능한 구간은 한국 법령/관보 원자료와 교차확인한다.',
   },
 } as const satisfies Record<string, HistoricalTimeAuthoritySource>;
 
@@ -67,6 +85,25 @@ function birthInput(year: number, month: number, day: number): BirthInput {
     sexForTraditionalCalculation: 'unspecified',
   };
 }
+
+export const PRE_1908_HISTORICAL_TIME_UNSUPPORTED_FIXTURE = {
+  fixtureId: 'CAL-TZ-PRE-1908-HISTORICAL-UNSUPPORTED',
+  input: {
+    calendarType: 'solar',
+    date: { year: 1907, month: 12, day: 1 },
+    time: { known: true, hour: 22, minute: 40 },
+    sexForTraditionalCalculation: 'unspecified',
+  } satisfies BirthInput,
+  expectedErrorCode: 'UNSUPPORTED_POLICY',
+  provenance: {
+    sourceIds: [
+      HISTORICAL_TIME_AUTHORITY_SOURCES.korea1908StandardTimeDecree.sourceId,
+      HISTORICAL_TIME_AUTHORITY_SOURCES.ianaTzdb2026cAsia.sourceId,
+    ],
+    reason:
+      'The pinned upstream historical-time table falls back to UTC+09:00 before its first 1908 epoch, while IANA represents Seoul with LMT +08:27:52 and the Korean legal national-standard-time regime begins on 1908-04-01. Myeonghwa must not silently choose the upstream +09:00 fallback as historical authority.',
+  },
+} as const;
 
 export const KOREA_1954_STANDARD_TIME_TRANSITION_FIXTURE = {
   fixtureId: 'CAL-TZ-KR-LAW-IANA-1954-TRANSITION',
