@@ -259,6 +259,15 @@ export interface ClaimRelation {
   reason?: string;
 }
 
+export interface EvidenceIndexEntry {
+  claimId: string;
+  factRefs: readonly string[];
+  upstreamClaimRefs: readonly string[];
+  sourceRefs: readonly string[];
+  ruleRefs: readonly VersionedRef[];
+  methodologyRef: VersionedRef;
+}
+
 export interface ClaimTypeDefinition {
   claimType: string;
   valueSchemaRef: string;
