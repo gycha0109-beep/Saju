@@ -8,10 +8,12 @@ import type {
 } from '../contracts/interpretation.js';
 import {
   deterministicContentHash,
+  verifyResolvedRegistryContentIntegrity,
   type ResolvedRuleRegistrySnapshot,
 } from './rule-registry.js';
 
 export type ExecutionPlanErrorCode =
+  | 'REGISTRY_CONTENT_INTEGRITY_FAILED'
   | 'PACK_NOT_EXECUTABLE'
   | 'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK'
   | 'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK'
@@ -70,6 +72,15 @@ function sortRules(rules: readonly RuleDefinition[]): RuleDefinition[] {
     const idOrder = left.ruleId.localeCompare(right.ruleId);
     return idOrder === 0 ? left.version.localeCompare(right.version) : idOrder;
   });
+}
+
+function assertRegistryContentIntegrity(registry: ResolvedRuleRegistrySnapshot): void {
+  const errors = verifyResolvedRegistryContentIntegrity(registry);
+  if (errors.length === 0) return;
+  throw new ExecutionPlanError(
+    'REGISTRY_CONTENT_INTEGRITY_FAILED',
+    `Resolved interpretation registry content does not match its snapshot: ${errors.join('; ')}`,
+  );
 }
 
 function allowedStatus(rule: RuleDefinition, pack: InterpretationPack): boolean {
@@ -518,6 +529,7 @@ function contentRefFor(
 export function buildInterpretationExecutionPlan(
   registry: ResolvedRuleRegistrySnapshot,
 ): InterpretationExecutionPlan {
+  assertRegistryContentIntegrity(registry);
   const rules = selectRules(registry);
   const edges = uniqueEdges([
     ...explicitDependencies(rules),
