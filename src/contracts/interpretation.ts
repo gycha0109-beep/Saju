@@ -204,6 +204,7 @@ export interface RuleEvaluation {
   evaluationId: string;
   ruleRef: VersionedRef;
   snapshotId: string;
+  scenarioRef?: string;
   interpretationPackRef: VersionedRef;
   status: RuleEvaluationStatus;
   inputRefs: readonly {
