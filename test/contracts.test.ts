@@ -1,11 +1,15 @@
 import { describe, expect, test } from 'vitest';
-import type { BirthInput } from '../src/contracts/calculation.js';
+import type { BirthInput, CalculationPolicySnapshot } from '../src/contracts/calculation.js';
 import {
   ambiguous,
   assertVersionedRef,
   resolved,
   unavailable,
 } from '../src/contracts/common.js';
+import {
+  assertBirthInput,
+  assertCalculationPolicySnapshot,
+} from '../src/contracts/runtime-validation.js';
 
 describe('FactState constructors', () => {
   test('creates a resolved fact without inventing additional state', () => {
@@ -59,7 +63,74 @@ describe('BirthInput contract', () => {
       sexForTraditionalCalculation: 'unspecified',
     } satisfies BirthInput;
 
+    assertBirthInput(input);
+
     expect(input.time.known).toBe(false);
     expect('hour' in input.time).toBe(false);
+  });
+
+  test('rejects fabricated clock values when birth time is unknown', () => {
+    expect(() =>
+      assertBirthInput({
+        calendarType: 'solar',
+        date: { year: 1992, month: 10, day: 24 },
+        time: { known: false, hour: 12, minute: 0 },
+      }),
+    ).toThrow(TypeError);
+  });
+
+  test('rejects leap-month state on solar input', () => {
+    expect(() =>
+      assertBirthInput({
+        calendarType: 'solar',
+        date: { year: 1992, month: 10, day: 24 },
+        time: { known: true, hour: 5, minute: 30 },
+        isLeapMonth: true,
+      }),
+    ).toThrow(TypeError);
+  });
+});
+
+describe('CalculationPolicySnapshot runtime assertion', () => {
+  test('accepts an explicit reproducible calculation policy', () => {
+    const policy = {
+      policyId: 'myeonghwa-calculation-policy',
+      policyVersion: '0.1.0',
+      dayBoundary: 'midnight',
+      trueSolarTime: {
+        enabled: false,
+        longitudeSource: 'not-applicable',
+        applyEquationOfTime: false,
+        applyHistoricalDst: true,
+      },
+      timeZonePolicy: {
+        source: 'service-default',
+        timeZone: 'Asia/Seoul',
+      },
+      unknownBirthTimePolicy: 'preserve-unknown-and-enumerate-boundaries',
+    } satisfies CalculationPolicySnapshot;
+
+    expect(() => assertCalculationPolicySnapshot(policy)).not.toThrow();
+  });
+
+  test('rejects an unsupported day boundary', () => {
+    expect(() =>
+      assertCalculationPolicySnapshot({
+        policyId: 'myeonghwa-calculation-policy',
+        policyVersion: '0.1.0',
+        dayBoundary: 'guess',
+        trueSolarTime: {
+          enabled: false,
+          longitudeSource: 'not-applicable',
+          applyEquationOfTime: false,
+          applyHistoricalDst: true,
+        },
+        timeZonePolicy: {
+          source: 'service-default',
+          timeZone: 'Asia/Seoul',
+        },
+        unknownBirthTimePolicy: 'preserve-unknown-and-enumerate-boundaries',
+      }),
+    ).toThrow(TypeError);
   });
 });
