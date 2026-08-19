@@ -3,8 +3,10 @@ import {
   ExecutionPlanError,
   buildInterpretationExecutionPlan,
   createRuleRegistrySnapshot,
+  deterministicContentHash,
   type InterpretationPack,
   type MethodologyDefinition,
+  type ReviewAttestation,
   type RuleDefinition,
   type SourceReference,
 } from '../src/index.js';
@@ -14,20 +16,37 @@ const sourceA: SourceReference = {
   sourceType: 'paper',
   title: 'Synthetic I15 authorization fixture A',
   provenanceTier: 'scholarly_secondary',
-  rights: { copyrightStatus: 'unknown', reusePolicy: 'metadata_only' },
 };
 const sourceB: SourceReference = {
   sourceId: 'SOURCE-I15-SYNTHETIC-B',
   sourceType: 'paper',
   title: 'Synthetic I15 authorization fixture B',
   provenanceTier: 'scholarly_secondary',
-  rights: { copyrightStatus: 'unknown', reusePolicy: 'metadata_only' },
 };
 const internalSource: SourceReference = {
   sourceId: 'SOURCE-I15-INTERNAL',
   sourceType: 'internal_research',
   title: 'Synthetic internal source',
   provenanceTier: 'internal',
+};
+
+const researchQuality: RuleDefinition['quality'] = {
+  provenanceQuality: 'unknown',
+  testCoverage: 'none',
+  methodologyStability: 'experimental',
+  reviewerStatus: 'unreviewed',
+};
+const stagingQuality: RuleDefinition['quality'] = {
+  provenanceQuality: 'secondary_only',
+  testCoverage: 'unit',
+  methodologyStability: 'contested',
+  reviewerStatus: 'internal_reviewed',
+};
+const productionQuality: RuleDefinition['quality'] = {
+  provenanceQuality: 'multi_source_supported',
+  testCoverage: 'fixture_matrix',
+  methodologyStability: 'stable_within_method',
+  reviewerStatus: 'domain_reviewed',
 };
 
 function methodology(
@@ -77,7 +96,6 @@ function rule(
       subject: 'synthetic',
       predicate: 'authorization_fixture',
       value: true,
-      polarity: 'neutral',
     },
     sourceRefs: [
       { sourceId: sourceA.sourceId, supportType: 'implementation_reference' },
@@ -103,47 +121,77 @@ function pack(status: InterpretationPack['status']): InterpretationPack {
   };
 }
 
+function approvedReviews(
+  packStatus: InterpretationPack['status'],
+  method: MethodologyDefinition,
+  candidateRule: RuleDefinition,
+): readonly ReviewAttestation[] {
+  if (packStatus === 'research' || packStatus === 'deprecated') return [];
+  const reviewLevel = packStatus === 'production' ? 'domain' : 'internal';
+  return [
+    {
+      attestationId: `ATTEST-I15-${packStatus}-METHOD`,
+      subjectType: 'methodology',
+      subjectRef: {
+        id: method.methodologyId,
+        version: method.version,
+        contentHash: deterministicContentHash(method),
+      },
+      reviewLevel,
+      reviewerId: `synthetic-${reviewLevel}-reviewer`,
+      reviewedAt: '2026-08-19T00:00:00.000Z',
+      decision: 'approved',
+    },
+    {
+      attestationId: `ATTEST-I15-${packStatus}-RULE`,
+      subjectType: 'rule',
+      subjectRef: {
+        id: candidateRule.ruleId,
+        version: candidateRule.version,
+        contentHash: deterministicContentHash(candidateRule),
+      },
+      reviewLevel,
+      reviewerId: `synthetic-${reviewLevel}-reviewer`,
+      reviewedAt: '2026-08-19T00:00:00.000Z',
+      decision: 'approved',
+    },
+  ];
+}
+
+function makeRegistry(options: {
+  packStatus: InterpretationPack['status'];
+  method: MethodologyDefinition;
+  candidateRule: RuleDefinition;
+  sources: readonly SourceReference[];
+  reviews?: readonly ReviewAttestation[];
+}) {
+  return createRuleRegistrySnapshot(
+    {
+      rules: [options.candidateRule],
+      methodologies: [options.method],
+      sources: options.sources,
+      reviewAttestations:
+        options.reviews ?? approvedReviews(options.packStatus, options.method, options.candidateRule),
+    },
+    pack(options.packStatus),
+  );
+}
+
 function registry(
   packStatus: InterpretationPack['status'],
   methodStatus: MethodologyDefinition['status'],
   ruleStatus: RuleDefinition['status'],
   quality: RuleDefinition['quality'],
 ) {
-  return createRuleRegistrySnapshot(
-    {
-      rules: [rule(ruleStatus, quality)],
-      methodologies: [methodology(methodStatus)],
-      sources: [sourceA, sourceB],
-    },
-    pack(packStatus),
-  );
+  return makeRegistry({
+    packStatus,
+    method: methodology(methodStatus),
+    candidateRule: rule(ruleStatus, quality),
+    sources: [sourceA, sourceB],
+  });
 }
 
-const researchQuality: RuleDefinition['quality'] = {
-  provenanceQuality: 'unknown',
-  testCoverage: 'none',
-  methodologyStability: 'experimental',
-  reviewerStatus: 'unreviewed',
-};
-
-const stagingQuality: RuleDefinition['quality'] = {
-  provenanceQuality: 'secondary_only',
-  testCoverage: 'unit',
-  methodologyStability: 'contested',
-  reviewerStatus: 'internal_reviewed',
-};
-
-const productionQuality: RuleDefinition['quality'] = {
-  provenanceQuality: 'multi_source_supported',
-  testCoverage: 'fixture_matrix',
-  methodologyStability: 'stable_within_method',
-  reviewerStatus: 'domain_reviewed',
-};
-
-function expectPlanError(
-  action: () => unknown,
-  code: ExecutionPlanError['code'],
-): void {
+function expectPlanError(action: () => unknown, code: ExecutionPlanError['code']): void {
   try {
     action();
     throw new Error(`Expected ExecutionPlanError ${code}`);
@@ -156,13 +204,14 @@ function expectPlanError(
 
 describe('I15 production interpretation authorization gate', () => {
   test('research packs retain research/unreviewed execution behavior', () => {
-    const plan = buildInterpretationExecutionPlan(
-      registry('research', 'research', 'research', researchQuality),
-    );
-    expect(plan.orderedRuleRefs).toHaveLength(1);
+    expect(
+      buildInterpretationExecutionPlan(
+        registry('research', 'research', 'research', researchQuality),
+      ).orderedRuleRefs,
+    ).toHaveLength(1);
   });
 
-  test('production rejects a research methodology even if a rule is active', () => {
+  test('production rejects research methodology before rule activation can matter', () => {
     expectPlanError(
       () =>
         buildInterpretationExecutionPlan(
@@ -172,7 +221,7 @@ describe('I15 production interpretation authorization gate', () => {
     );
   });
 
-  test('production rejects an active rule that has not received domain review', () => {
+  test('production rejects active rules without domain-reviewed quality metadata', () => {
     expectPlanError(
       () =>
         buildInterpretationExecutionPlan(
@@ -185,7 +234,7 @@ describe('I15 production interpretation authorization gate', () => {
     );
   });
 
-  test('production rejects inadequate tests and heuristic provenance independently of active status', () => {
+  test('production rejects inadequate tests and heuristic quality provenance', () => {
     expectPlanError(
       () =>
         buildInterpretationExecutionPlan(
@@ -196,7 +245,6 @@ describe('I15 production interpretation authorization gate', () => {
         ),
       'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK',
     );
-
     expectPlanError(
       () =>
         buildInterpretationExecutionPlan(
@@ -209,21 +257,23 @@ describe('I15 production interpretation authorization gate', () => {
     );
   });
 
-  test('production accepts only an explicitly active and domain-reviewed high-evidence fixture', () => {
-    const plan = buildInterpretationExecutionPlan(
-      registry('production', 'active', 'active', productionQuality),
-    );
-    expect(plan.orderedRuleRefs).toHaveLength(1);
+  test('production accepts active, domain-reviewed, fixture-tested, multi-source synthetic content with exact approvals', () => {
+    expect(
+      buildInterpretationExecutionPlan(
+        registry('production', 'active', 'active', productionQuality),
+      ).orderedRuleRefs,
+    ).toHaveLength(1);
   });
 
   test('staging permits reviewed methodology plus internally reviewed unit-tested non-heuristic rule', () => {
-    const plan = buildInterpretationExecutionPlan(
-      registry('staging', 'reviewed', 'reviewed', stagingQuality),
-    );
-    expect(plan.orderedRuleRefs).toHaveLength(1);
+    expect(
+      buildInterpretationExecutionPlan(
+        registry('staging', 'reviewed', 'reviewed', stagingQuality),
+      ).orderedRuleRefs,
+    ).toHaveLength(1);
   });
 
-  test('staging rejects research methodology and heuristic or unknown rule provenance', () => {
+  test('staging rejects research methodology and heuristic quality provenance', () => {
     expectPlanError(
       () =>
         buildInterpretationExecutionPlan(
@@ -231,7 +281,6 @@ describe('I15 production interpretation authorization gate', () => {
         ),
       'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK',
     );
-
     expectPlanError(
       () =>
         buildInterpretationExecutionPlan(
@@ -244,16 +293,15 @@ describe('I15 production interpretation authorization gate', () => {
     );
   });
 
-  test('production methodology must carry at least one explicit source reference', () => {
-    const withoutSources = createRuleRegistrySnapshot(
-      {
-        rules: [rule('active', productionQuality, { sourceRefs: [] })],
-        methodologies: [methodology('active', { sourceIds: [] })],
-        sources: [],
-      },
-      pack('production'),
-    );
-
+  test('production methodology must carry explicit sources', () => {
+    const method = methodology('active', { sourceIds: [] });
+    const candidateRule = rule('active', productionQuality, { sourceRefs: [] });
+    const withoutSources = makeRegistry({
+      packStatus: 'production',
+      method,
+      candidateRule,
+      sources: [],
+    });
     expectPlanError(
       () => buildInterpretationExecutionPlan(withoutSources),
       'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
@@ -261,44 +309,38 @@ describe('I15 production interpretation authorization gate', () => {
   });
 
   test('production cross-checks multi-source declaration against actual source count', () => {
-    const singleSource = createRuleRegistrySnapshot(
-      {
-        rules: [
-          rule('active', productionQuality, {
-            sourceRefs: [{ sourceId: sourceA.sourceId, supportType: 'implementation_reference' }],
-          }),
-        ],
-        methodologies: [methodology('active', { sourceIds: [sourceA.sourceId] })],
-        sources: [sourceA],
-      },
-      pack('production'),
-    );
-
+    const method = methodology('active', { sourceIds: [sourceA.sourceId] });
+    const candidateRule = rule('active', productionQuality, {
+      sourceRefs: [{ sourceId: sourceA.sourceId, supportType: 'implementation_reference' }],
+    });
+    const singleSource = makeRegistry({
+      packStatus: 'production',
+      method,
+      candidateRule,
+      sources: [sourceA],
+    });
     expectPlanError(
       () => buildInterpretationExecutionPlan(singleSource),
       'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
     );
   });
 
-  test('production rejects internal source tiers even when metadata claims high quality', () => {
-    const internalRegistry = createRuleRegistrySnapshot(
-      {
-        rules: [
-          rule('active', productionQuality, {
-            sourceRefs: [
-              { sourceId: sourceA.sourceId, supportType: 'implementation_reference' },
-              { sourceId: internalSource.sourceId, supportType: 'implementation_reference' },
-            ],
-          }),
-        ],
-        methodologies: [
-          methodology('active', { sourceIds: [sourceA.sourceId, internalSource.sourceId] }),
-        ],
-        sources: [sourceA, internalSource],
-      },
-      pack('production'),
-    );
-
+  test('production rejects internal source tiers even when quality metadata claims high evidence', () => {
+    const method = methodology('active', {
+      sourceIds: [sourceA.sourceId, internalSource.sourceId],
+    });
+    const candidateRule = rule('active', productionQuality, {
+      sourceRefs: [
+        { sourceId: sourceA.sourceId, supportType: 'implementation_reference' },
+        { sourceId: internalSource.sourceId, supportType: 'implementation_reference' },
+      ],
+    });
+    const internalRegistry = makeRegistry({
+      packStatus: 'production',
+      method,
+      candidateRule,
+      sources: [sourceA, internalSource],
+    });
     expectPlanError(
       () => buildInterpretationExecutionPlan(internalRegistry),
       'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
