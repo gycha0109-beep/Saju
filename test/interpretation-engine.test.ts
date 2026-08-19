@@ -42,7 +42,7 @@ const methodology: MethodologyDefinition = {
   assumptions: [],
   requiredFactTypes: ['pillars.day'],
   sourceIds: [source.sourceId],
-  status: 'active',
+  status: 'research',
 };
 
 const pack: InterpretationPack = {
@@ -54,7 +54,7 @@ const pack: InterpretationPack = {
   conflictPolicy: 'preserve_all',
   ambiguityPolicy: 'propagate',
   compositionPolicyRef: { id: 'COMPOSITION-SYNTHETIC', version: '1.0.0' },
-  status: 'production',
+  status: 'research',
 };
 
 function knownSnapshot() {
@@ -141,9 +141,9 @@ function rule(
       provenanceQuality: 'unknown',
       testCoverage: 'unit',
       methodologyStability: 'experimental',
-      reviewerStatus: 'internal_reviewed',
+      reviewerStatus: 'unreviewed',
     },
-    status: 'active',
+    status: 'research',
     ...(options.conflictsWith === undefined
       ? {}
       : { relations: { conflictsWith: options.conflictsWith } }),
