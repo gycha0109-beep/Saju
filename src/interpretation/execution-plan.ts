@@ -7,8 +7,8 @@ import type {
   SourceReference,
 } from '../contracts/interpretation.js';
 import {
-  reviewerIsTrustedForLevel,
   reviewerTrustPolicyRef,
+  reviewerTrustsAttestation,
   type ReviewerTrustContext,
 } from './reviewer-trust.js';
 import {
@@ -66,53 +66,6 @@ export interface InterpretationExecutionPlan {
   planHash: string;
 }
 
-function ref(rule: RuleDefinition): VersionedRef {
-  return { id: rule.ruleId, version: rule.version };
-}
-
-function refKey(value: VersionedRef): string {
-  return `${value.id}@${value.version}`;
-}
-
-function sortRules(rules: readonly RuleDefinition[]): RuleDefinition[] {
-  return [...rules].sort((left, right) => {
-    const idOrder = left.ruleId.localeCompare(right.ruleId);
-    return idOrder === 0 ? left.version.localeCompare(right.version) : idOrder;
-  });
-}
-
-function assertRegistryContentIntegrity(registry: ResolvedRuleRegistrySnapshot): void {
-  const errors = verifyResolvedRegistryContentIntegrity(registry);
-  if (errors.length === 0) return;
-  throw new ExecutionPlanError(
-    'REGISTRY_CONTENT_INTEGRITY_FAILED',
-    `Resolved interpretation registry content does not match its snapshot: ${errors.join('; ')}`,
-  );
-}
-
-function allowedStatus(rule: RuleDefinition, pack: InterpretationPack): boolean {
-  if (rule.status === 'rejected' || rule.status === 'deprecated') return false;
-  if (pack.status === 'production') return rule.status === 'active';
-  if (pack.status === 'staging') return rule.status === 'active' || rule.status === 'reviewed';
-  return rule.status === 'active' || rule.status === 'reviewed' || rule.status === 'research';
-}
-
-function methodologyStatusAllowed(
-  methodology: MethodologyDefinition,
-  pack: InterpretationPack,
-): boolean {
-  if (methodology.status === 'deprecated') return false;
-  if (pack.status === 'production') return methodology.status === 'active';
-  if (pack.status === 'staging') {
-    return methodology.status === 'active' || methodology.status === 'reviewed';
-  }
-  return (
-    methodology.status === 'active' ||
-    methodology.status === 'reviewed' ||
-    methodology.status === 'research'
-  );
-}
-
 const PRODUCTION_TEST_COVERAGE = new Set<RuleDefinition['quality']['testCoverage']>([
   'fixture_matrix',
   'regression_suite',
@@ -138,8 +91,54 @@ const PRODUCTION_SOURCE_TIERS = new Set<SourceReference['provenanceTier']>([
   'cross_reference',
 ]);
 
-function sourceIndex(registry: ResolvedRuleRegistrySnapshot): ReadonlyMap<string, SourceReference> {
-  return new Map(registry.sources.map((source) => [source.sourceId, source]));
+function ref(rule: RuleDefinition): VersionedRef {
+  return { id: rule.ruleId, version: rule.version };
+}
+
+function refKey(value: VersionedRef): string {
+  return `${value.id}@${value.version}`;
+}
+
+function sortRules(rules: readonly RuleDefinition[]): RuleDefinition[] {
+  return [...rules].sort((left, right) => {
+    const idOrder = left.ruleId.localeCompare(right.ruleId);
+    return idOrder === 0 ? left.version.localeCompare(right.version) : idOrder;
+  });
+}
+
+function assertRegistryContentIntegrity(registry: ResolvedRuleRegistrySnapshot): void {
+  const errors = verifyResolvedRegistryContentIntegrity(registry);
+  if (errors.length === 0) return;
+  throw new ExecutionPlanError(
+    'REGISTRY_CONTENT_INTEGRITY_FAILED',
+    `Resolved interpretation registry content does not match its snapshot: ${errors.join('; ')}`,
+  );
+}
+
+function requirePromotedTrustContext(
+  registry: ResolvedRuleRegistrySnapshot,
+  trustContext: ReviewerTrustContext | undefined,
+): ReviewerTrustContext | undefined {
+  if (registry.pack.status === 'research') return undefined;
+  if (registry.pack.status === 'deprecated') return trustContext;
+  if (trustContext !== undefined) return trustContext;
+  throw new ExecutionPlanError(
+    'REVIEWER_TRUST_CONTEXT_REQUIRED',
+    `${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version} requires an externally supplied reviewer trust policy.`,
+  );
+}
+
+function contentRefFor(
+  registry: ResolvedRuleRegistrySnapshot,
+  versioned: VersionedRef,
+): ContentAddressedVersionedRef {
+  const found = registry.snapshot.rules.find(
+    (candidate) => candidate.id === versioned.id && candidate.version === versioned.version,
+  );
+  if (found === undefined) {
+    throw new Error(`Registry snapshot missing content ref ${refKey(versioned)}`);
+  }
+  return found;
 }
 
 function contentRefForMethodology(
@@ -158,18 +157,8 @@ function contentRefForMethodology(
   return found;
 }
 
-function exactReviewAttestations(
-  registry: ResolvedRuleRegistrySnapshot,
-  subjectType: ReviewAttestation['subjectType'],
-  subjectRef: ContentAddressedVersionedRef,
-): readonly ReviewAttestation[] {
-  return registry.reviewAttestations.filter(
-    (attestation) =>
-      attestation.subjectType === subjectType &&
-      attestation.subjectRef.id === subjectRef.id &&
-      attestation.subjectRef.version === subjectRef.version &&
-      attestation.subjectRef.contentHash === subjectRef.contentHash,
-  );
+function sourceIndex(registry: ResolvedRuleRegistrySnapshot): ReadonlyMap<string, SourceReference> {
+  return new Map(registry.sources.map((source) => [source.sourceId, source]));
 }
 
 function latestReview(attestations: readonly ReviewAttestation[]): ReviewAttestation | undefined {
@@ -181,17 +170,6 @@ function latestReview(attestations: readonly ReviewAttestation[]): ReviewAttesta
   }).at(-1);
 }
 
-function requireReviewerTrustContext(
-  registry: ResolvedRuleRegistrySnapshot,
-  trustContext: ReviewerTrustContext | undefined,
-): ReviewerTrustContext {
-  if (trustContext !== undefined) return trustContext;
-  throw new ExecutionPlanError(
-    'REVIEWER_TRUST_CONTEXT_REQUIRED',
-    `${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version} requires an externally supplied reviewer trust policy.`,
-  );
-}
-
 function assertReviewAuthorization(
   registry: ResolvedRuleRegistrySnapshot,
   subjectType: ReviewAttestation['subjectType'],
@@ -199,18 +177,23 @@ function assertReviewAuthorization(
   trustContext: ReviewerTrustContext | undefined,
 ): void {
   if (registry.pack.status === 'research') return;
+  if (trustContext === undefined) {
+    throw new ExecutionPlanError(
+      'REVIEWER_TRUST_CONTEXT_REQUIRED',
+      `${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version} requires reviewer trust context.`,
+    );
+  }
 
-  const trustedContext = requireReviewerTrustContext(registry, trustContext);
-  const exactTrusted = exactReviewAttestations(registry, subjectType, subjectRef).filter(
+  const trusted = registry.reviewAttestations.filter(
     (attestation) =>
-      reviewerIsTrustedForLevel(
-        trustedContext,
-        attestation.reviewerId,
-        attestation.reviewLevel,
-      ),
+      attestation.subjectType === subjectType &&
+      attestation.subjectRef.id === subjectRef.id &&
+      attestation.subjectRef.version === subjectRef.version &&
+      attestation.subjectRef.contentHash === subjectRef.contentHash &&
+      reviewerTrustsAttestation(trustContext, attestation),
   );
-  const domain = exactTrusted.filter((attestation) => attestation.reviewLevel === 'domain');
-  const internal = exactTrusted.filter((attestation) => attestation.reviewLevel === 'internal');
+  const domain = trusted.filter((attestation) => attestation.reviewLevel === 'domain');
+  const internal = trusted.filter((attestation) => attestation.reviewLevel === 'internal');
   const governing =
     registry.pack.status === 'production'
       ? latestReview(domain)
@@ -219,11 +202,27 @@ function assertReviewAuthorization(
   if (governing?.decision !== 'approved') {
     throw new ExecutionPlanError(
       'REVIEW_ATTESTATION_NOT_AUTHORIZED_FOR_PACK',
-      `${subjectType} ${subjectRef.id}@${subjectRef.version} content ${subjectRef.contentHash.slice(0, 12)} lacks a current approved trusted ${
+      `${subjectType} ${subjectRef.id}@${subjectRef.version} content ${subjectRef.contentHash.slice(0, 12)} lacks a current approved trust-pinned ${
         registry.pack.status === 'production' ? 'domain' : 'internal/domain'
-      } review attestation for ${registry.pack.status}.`,
+      } attestation for ${registry.pack.status}.`,
     );
   }
+}
+
+function methodologyStatusAllowed(
+  methodology: MethodologyDefinition,
+  pack: InterpretationPack,
+): boolean {
+  if (methodology.status === 'deprecated') return false;
+  if (pack.status === 'production') return methodology.status === 'active';
+  if (pack.status === 'staging') {
+    return methodology.status === 'active' || methodology.status === 'reviewed';
+  }
+  return (
+    methodology.status === 'active' ||
+    methodology.status === 'reviewed' ||
+    methodology.status === 'research'
+  );
 }
 
 function assertMethodologyAuthorization(
@@ -273,9 +272,15 @@ function assertMethodologyAuthorization(
   }
 }
 
+function allowedRuleStatus(rule: RuleDefinition, pack: InterpretationPack): boolean {
+  if (rule.status === 'rejected' || rule.status === 'deprecated') return false;
+  if (pack.status === 'production') return rule.status === 'active';
+  if (pack.status === 'staging') return rule.status === 'active' || rule.status === 'reviewed';
+  return rule.status === 'active' || rule.status === 'reviewed' || rule.status === 'research';
+}
+
 function assertRuleQualityAuthorization(rule: RuleDefinition, pack: InterpretationPack): void {
   if (pack.status === 'research') return;
-
   if (pack.status === 'staging') {
     const reviewerAllowed =
       rule.quality.reviewerStatus === 'internal_reviewed' ||
@@ -292,7 +297,6 @@ function assertRuleQualityAuthorization(rule: RuleDefinition, pack: Interpretati
     }
     return;
   }
-
   if (
     rule.quality.reviewerStatus !== 'domain_reviewed' ||
     !PRODUCTION_TEST_COVERAGE.has(rule.quality.testCoverage) ||
@@ -359,7 +363,6 @@ function assertSingleSelectedVersion(rules: readonly RuleDefinition[]): void {
     versions.add(rule.version);
     versionsByRuleId.set(rule.ruleId, versions);
   }
-
   for (const [ruleId, versions] of versionsByRuleId) {
     if (versions.size <= 1) continue;
     throw new ExecutionPlanError(
@@ -373,60 +376,44 @@ function selectRules(
   registry: ResolvedRuleRegistrySnapshot,
   trustContext: ReviewerTrustContext | undefined,
 ): readonly RuleDefinition[] {
-  if (registry.pack.status === 'deprecated') {
-    throw new ExecutionPlanError(
-      'PACK_NOT_EXECUTABLE',
-      `Deprecated pack ${registry.pack.packId}@${registry.pack.version} cannot be executed.`,
-    );
-  }
-
   assertMethodologyAuthorization(registry, trustContext);
-
   const enabledSets = new Set(registry.pack.enabledRuleSets);
   const disabled = new Set(registry.pack.disabledRuleIds ?? []);
   const enabledMethodologies = new Set(
     registry.pack.methodologyRefs.map((methodology) => `${methodology.id}@${methodology.version}`),
   );
-
   const selected = registry.rules.filter(
     (rule) => enabledSets.has(rule.ruleSetId) && !disabled.has(rule.ruleId),
   );
-
   assertSingleSelectedVersion(selected);
 
   for (const rule of selected) {
-    if (!allowedStatus(rule, registry.pack)) {
+    if (!allowedRuleStatus(rule, registry.pack)) {
       throw new ExecutionPlanError(
         'RULE_NOT_EXECUTABLE_FOR_PACK',
         `${rule.ruleId}@${rule.version} (${rule.status}) is not executable in ${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version}`,
       );
     }
-
     if (!enabledMethodologies.has(`${rule.methodologyRef.id}@${rule.methodologyRef.version}`)) {
       throw new ExecutionPlanError(
         'RULE_METHODOLOGY_NOT_ENABLED',
         `${rule.ruleId}@${rule.version} requires methodology ${rule.methodologyRef.id}@${rule.methodologyRef.version} outside the pack`,
       );
     }
-
     assertRuleQualityAuthorization(rule, registry.pack);
     assertRuleSourceAuthorization(rule, registry);
     assertReviewAuthorization(registry, 'rule', contentRefFor(registry, ref(rule)), trustContext);
   }
-
   return sortRules(selected);
 }
 
-function explicitDependencies(
-  rules: readonly RuleDefinition[],
-): readonly RuleDependencyEdge[] {
+function explicitDependencies(rules: readonly RuleDefinition[]): readonly RuleDependencyEdge[] {
   const byId = new Map<string, RuleDefinition[]>();
   for (const rule of rules) {
     const values = byId.get(rule.ruleId) ?? [];
     values.push(rule);
     byId.set(rule.ruleId, values);
   }
-
   const edges: RuleDependencyEdge[] = [];
   for (const rule of rules) {
     for (const dependencyId of rule.relations?.requires ?? []) {
@@ -449,16 +436,13 @@ function explicitDependencies(
   return edges;
 }
 
-function claimDependencies(
-  rules: readonly RuleDefinition[],
-): readonly RuleDependencyEdge[] {
+function claimDependencies(rules: readonly RuleDefinition[]): readonly RuleDependencyEdge[] {
   const producersByClaim = new Map<string, RuleDefinition[]>();
   for (const rule of rules) {
     const producers = producersByClaim.get(rule.output.claimType) ?? [];
     producers.push(rule);
     producersByClaim.set(rule.output.claimType, producers);
   }
-
   const edges: RuleDependencyEdge[] = [];
   for (const rule of rules) {
     for (const input of rule.inputs) {
@@ -504,35 +488,23 @@ function buildStages(
 ): readonly { rules: readonly RuleDefinition[]; refs: readonly VersionedRef[] }[] {
   const ruleByKey = new Map(rules.map((rule) => [refKey(ref(rule)), rule]));
   const incoming = new Map<string, Set<string>>();
-  const outgoing = new Map<string, Set<string>>();
-
-  for (const key of ruleByKey.keys()) {
-    incoming.set(key, new Set());
-    outgoing.set(key, new Set());
-  }
+  for (const key of ruleByKey.keys()) incoming.set(key, new Set());
   for (const edge of edges) {
-    const from = refKey(edge.fromRuleRef);
-    const to = refKey(edge.toRuleRef);
-    incoming.get(to)?.add(from);
-    outgoing.get(from)?.add(to);
+    incoming.get(refKey(edge.toRuleRef))?.add(refKey(edge.fromRuleRef));
   }
 
   const remaining = new Set(ruleByKey.keys());
   const stages: { rules: readonly RuleDefinition[]; refs: readonly VersionedRef[] }[] = [];
-
   while (remaining.size > 0) {
     const ready = [...remaining]
       .filter((key) => [...(incoming.get(key) ?? [])].every((dependency) => !remaining.has(dependency)))
       .sort();
-
     if (ready.length === 0) {
-      const cycleMembers = [...remaining].sort().join(', ');
       throw new ExecutionPlanError(
         'EXECUTION_PLAN_INVALID_CYCLE',
-        `Interpretation rule dependency cycle detected among: ${cycleMembers}`,
+        `Interpretation rule dependency cycle detected among: ${[...remaining].sort().join(', ')}`,
       );
     }
-
     const stageRules = ready.map((key) => {
       const rule = ruleByKey.get(key);
       if (rule === undefined) throw new Error(`Internal planner error for ${key}`);
@@ -541,21 +513,7 @@ function buildStages(
     stages.push({ rules: stageRules, refs: stageRules.map(ref) });
     for (const key of ready) remaining.delete(key);
   }
-
   return stages;
-}
-
-function contentRefFor(
-  registry: ResolvedRuleRegistrySnapshot,
-  versioned: VersionedRef,
-): ContentAddressedVersionedRef {
-  const found = registry.snapshot.rules.find(
-    (candidate) => candidate.id === versioned.id && candidate.version === versioned.version,
-  );
-  if (found === undefined) {
-    throw new Error(`Registry snapshot missing content ref ${refKey(versioned)}`);
-  }
-  return found;
 }
 
 export function buildInterpretationExecutionPlan(
@@ -563,11 +521,16 @@ export function buildInterpretationExecutionPlan(
   trustContext?: ReviewerTrustContext,
 ): InterpretationExecutionPlan {
   assertRegistryContentIntegrity(registry);
-  const rules = selectRules(registry, trustContext);
-  const edges = uniqueEdges([
-    ...explicitDependencies(rules),
-    ...claimDependencies(rules),
-  ]);
+  if (registry.pack.status === 'deprecated') {
+    throw new ExecutionPlanError(
+      'PACK_NOT_EXECUTABLE',
+      `Deprecated pack ${registry.pack.packId}@${registry.pack.version} cannot be executed.`,
+    );
+  }
+
+  const promotedTrustContext = requirePromotedTrustContext(registry, trustContext);
+  const rules = selectRules(registry, promotedTrustContext);
+  const edges = uniqueEdges([...explicitDependencies(rules), ...claimDependencies(rules)]);
   const staged = buildStages(rules, edges);
   const stages: ExecutionPlanStage[] = staged.map((stage, stageIndex) => ({
     stageIndex,
@@ -575,10 +538,9 @@ export function buildInterpretationExecutionPlan(
   }));
   const orderedRuleRefs = stages.flatMap((stage) => stage.ruleRefs);
   const trustPolicyRef =
-    registry.pack.status === 'research' || trustContext === undefined
+    registry.pack.status === 'research' || promotedTrustContext === undefined
       ? undefined
-      : reviewerTrustPolicyRef(trustContext);
-
+      : reviewerTrustPolicyRef(promotedTrustContext);
   const planMaterial = {
     registrySnapshotId: registry.snapshot.registrySnapshotId,
     packRef: registry.snapshot.packRef,
