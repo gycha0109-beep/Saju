@@ -7,9 +7,10 @@ import {
   KASI_2024_LUNAR_NEW_YEAR_FIXTURE,
   UPSTREAM_1992_GOLDEN_FIXTURE,
   type FixtureProvenance,
+  type FixtureSource,
 } from './fixtures/calculation-fixtures.js';
 
-const sourcesById = new Map(
+const sourcesById = new Map<string, FixtureSource>(
   Object.values(CALCULATION_FIXTURE_SOURCES).map((source) => [source.sourceId, source]),
 );
 
