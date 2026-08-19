@@ -315,6 +315,7 @@ export interface InterpretationRun {
   compositionPolicyRef: VersionedRef;
   derivedFactSetVersion: string;
   interpretationEngineVersion: string;
+  authorizationPolicyVersion: string;
   startedAt: string;
   completedAt?: string;
   status: 'completed' | 'partial' | 'failed';
