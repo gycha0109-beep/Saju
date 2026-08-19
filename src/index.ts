@@ -4,6 +4,7 @@ export * from './calculation/calculation-policy-profiles.js';
 export * from './calculation/hidden-stems.js';
 export * from './calculation/structural-relations.js';
 export * from './interpretation/rule-registry.js';
+export * from './interpretation/reviewer-trust.js';
 export * from './interpretation/execution-plan.js';
 export * from './interpretation/rule-evaluator.js';
 export * from './interpretation/claim-graph.js';
