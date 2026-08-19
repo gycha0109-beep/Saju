@@ -3,6 +3,7 @@ import type {
   InterpretationPack,
   MethodologyDefinition,
   ReviewAttestation,
+  ReviewerTrustContext,
   RuleDefinition,
   SourceReference,
 } from '../src/index.js';
@@ -94,18 +95,13 @@ function rule(
       reviewerStatus: 'unreviewed',
     },
     status: options.status ?? 'research',
-    ...(options.requires === undefined
-      ? {}
-      : { relations: { requires: options.requires } }),
+    ...(options.requires === undefined ? {} : { relations: { requires: options.requires } }),
   };
 }
 
 function registry(rules: readonly RuleDefinition[], selectedPack = pack) {
   return createRuleRegistrySnapshot(
-    {
-      rules,
-      methodologies: [methodology],
-    },
+    { rules, methodologies: [methodology] },
     selectedPack,
     '2026-08-19T00:00:00.000Z',
   );
@@ -126,7 +122,7 @@ const productionSources: readonly SourceReference[] = [
   },
 ];
 
-function productionResearchRuleRegistry() {
+function productionResearchRuleFixture() {
   const productionMethodology: MethodologyDefinition = {
     ...methodology,
     sourceIds: productionSources.map((source) => source.sourceId),
@@ -184,8 +180,19 @@ function productionResearchRuleRegistry() {
       decision: 'approved',
     },
   ];
-
-  return createRuleRegistrySnapshot(
+  const trust: ReviewerTrustContext = {
+    policyId: 'TRUST-PLANNER-PRODUCTION',
+    version: '2.0.0',
+    grants: [
+      {
+        reviewerId: 'synthetic-domain-reviewer',
+        allowedReviewLevels: ['domain'],
+        trustedAttestationContentHashes: reviews.map(deterministicContentHash),
+        status: 'active',
+      },
+    ],
+  };
+  const selectedRegistry = createRuleRegistrySnapshot(
     {
       rules: [researchRule],
       methodologies: [productionMethodology],
@@ -195,23 +202,21 @@ function productionResearchRuleRegistry() {
     productionPack,
     '2026-08-19T00:00:00.000Z',
   );
+  return { registry: selectedRegistry, trust };
 }
 
 describe('rule registry snapshots', () => {
   test('registry identity is independent of registration order', () => {
     const a = rule('RULE-A', 'CLAIM-A');
     const b = rule('RULE-B', 'CLAIM-B');
-
     const forward = registry([a, b]);
     const reverse = registry([b, a]);
-
     expect(forward.snapshot.registrySnapshotId).toBe(reverse.snapshot.registrySnapshotId);
     expect(forward.snapshot.rules).toEqual(reverse.snapshot.rules);
   });
 
   test('duplicate rule id/version is rejected before planning', () => {
     const duplicate = rule('RULE-DUPLICATE', 'CLAIM-X');
-
     expect(() => registry([duplicate, duplicate])).toThrow(RegistryConfigurationError);
     try {
       registry([duplicate, duplicate]);
@@ -225,7 +230,6 @@ describe('rule registry snapshots', () => {
       ...pack,
       methodologyRefs: [{ id: methodology.methodologyId, version: '9.9.9' }],
     };
-
     expect(() => registry([rule('RULE-A', 'CLAIM-A')], mismatchedPack)).toThrow(
       RegistryConfigurationError,
     );
@@ -240,17 +244,15 @@ describe('rule registry snapshots', () => {
 });
 
 describe('interpretation execution DAG', () => {
-  test('claim dependency creates a deterministic producer-before-consumer stage', () => {
+  test('claim dependency creates deterministic producer-before-consumer stages', () => {
     const producer = rule('RULE-PRODUCER', 'CLAIM-BASE');
     const consumer = rule('RULE-CONSUMER', 'CLAIM-SYNTH', {
       requiredClaimType: 'CLAIM-BASE',
     });
-
     const plan = buildInterpretationExecutionPlan(registry([consumer, producer]));
-
     expect(plan.stages).toHaveLength(2);
-    expect(plan.stages[0]?.ruleRefs.map((ref) => ref.id)).toEqual(['RULE-PRODUCER']);
-    expect(plan.stages[1]?.ruleRefs.map((ref) => ref.id)).toEqual(['RULE-CONSUMER']);
+    expect(plan.stages[0]?.ruleRefs.map((value) => value.id)).toEqual(['RULE-PRODUCER']);
+    expect(plan.stages[1]?.ruleRefs.map((value) => value.id)).toEqual(['RULE-CONSUMER']);
     expect(plan.dependencyEdges).toEqual([
       expect.objectContaining({
         fromRuleRef: { id: 'RULE-PRODUCER', version: '1.0.0' },
@@ -261,44 +263,33 @@ describe('interpretation execution DAG', () => {
     ]);
   });
 
-  test('independent rules have stable lexical ordering inside a stage', () => {
-    const plan = buildInterpretationExecutionPlan(
-      registry([
-        rule('RULE-Z', 'CLAIM-Z'),
-        rule('RULE-A', 'CLAIM-A'),
-        rule('RULE-M', 'CLAIM-M'),
-      ]),
-    );
-
-    expect(plan.stages).toHaveLength(1);
-    expect(plan.orderedRuleRefs.map((ref) => ref.id)).toEqual(['RULE-A', 'RULE-M', 'RULE-Z']);
-  });
-
-  test('same logical registry yields identical execution-plan identity', () => {
+  test('independent rules have stable lexical ordering and identity', () => {
     const rules = [
-      rule('RULE-PRODUCER', 'CLAIM-BASE'),
-      rule('RULE-CONSUMER', 'CLAIM-SYNTH', { requiredClaimType: 'CLAIM-BASE' }),
+      rule('RULE-Z', 'CLAIM-Z'),
+      rule('RULE-A', 'CLAIM-A'),
+      rule('RULE-M', 'CLAIM-M'),
     ];
-
-    const first = buildInterpretationExecutionPlan(registry(rules));
-    const second = buildInterpretationExecutionPlan(registry([...rules].reverse()));
-
-    expect(first.executionPlanId).toBe(second.executionPlanId);
-    expect(first.planHash).toBe(second.planHash);
-    expect(first).toEqual(second);
+    const forward = buildInterpretationExecutionPlan(registry(rules));
+    const reverse = buildInterpretationExecutionPlan(registry([...rules].reverse()));
+    expect(forward.orderedRuleRefs.map((value) => value.id)).toEqual([
+      'RULE-A',
+      'RULE-M',
+      'RULE-Z',
+    ]);
+    expect(forward.executionPlanId).toBe(reverse.executionPlanId);
+    expect(forward.planHash).toBe(reverse.planHash);
   });
 
-  test('explicit dependency cycle is rejected instead of choosing an arbitrary order', () => {
+  test('explicit dependency cycle is rejected', () => {
     const a = rule('RULE-A', 'CLAIM-A', { requires: ['RULE-B'] });
     const b = rule('RULE-B', 'CLAIM-B', { requires: ['RULE-A'] });
-
-    expect(() => buildInterpretationExecutionPlan(registry([a, b]))).toThrow(
-      ExecutionPlanError,
-    );
     try {
       buildInterpretationExecutionPlan(registry([a, b]));
+      throw new Error('Expected cycle failure');
     } catch (error) {
-      expect((error as ExecutionPlanError).code).toBe('EXECUTION_PLAN_INVALID_CYCLE');
+      expect(error).toBeInstanceOf(ExecutionPlanError);
+      if (!(error instanceof ExecutionPlanError)) throw error;
+      expect(error.code).toBe('EXECUTION_PLAN_INVALID_CYCLE');
     }
   });
 
@@ -306,38 +297,37 @@ describe('interpretation execution DAG', () => {
     const consumer = rule('RULE-CONSUMER', 'CLAIM-SYNTH', {
       requiredClaimType: 'CLAIM-NOT-PRODUCED',
     });
-
-    expect(() => buildInterpretationExecutionPlan(registry([consumer]))).toThrow(
-      ExecutionPlanError,
-    );
     try {
       buildInterpretationExecutionPlan(registry([consumer]));
+      throw new Error('Expected claim dependency failure');
     } catch (error) {
-      expect((error as ExecutionPlanError).code).toBe('CLAIM_DEPENDENCY_MISSING');
+      expect(error).toBeInstanceOf(ExecutionPlanError);
+      if (!(error instanceof ExecutionPlanError)) throw error;
+      expect(error.code).toBe('CLAIM_DEPENDENCY_MISSING');
     }
   });
 
-  test('production pack rejects research rules even when every other authorization prerequisite is satisfied', () => {
-    expect(() =>
-      buildInterpretationExecutionPlan(productionResearchRuleRegistry()),
-    ).toThrow(ExecutionPlanError);
+  test('production rejects research rules after every trust prerequisite is satisfied', () => {
+    const selected = productionResearchRuleFixture();
     try {
-      buildInterpretationExecutionPlan(productionResearchRuleRegistry());
+      buildInterpretationExecutionPlan(selected.registry, selected.trust);
+      throw new Error('Expected production rule-status failure');
     } catch (error) {
-      expect((error as ExecutionPlanError).code).toBe('RULE_NOT_EXECUTABLE_FOR_PACK');
+      expect(error).toBeInstanceOf(ExecutionPlanError);
+      if (!(error instanceof ExecutionPlanError)) throw error;
+      expect(error.code).toBe('RULE_NOT_EXECUTABLE_FOR_PACK');
     }
   });
 
-  test('deprecated packs cannot execute even with selected rules', () => {
+  test('deprecated packs cannot execute', () => {
     const deprecatedPack: InterpretationPack = { ...pack, status: 'deprecated' };
-
-    expect(() =>
-      buildInterpretationExecutionPlan(registry([rule('RULE-A', 'CLAIM-A')], deprecatedPack)),
-    ).toThrow(ExecutionPlanError);
     try {
       buildInterpretationExecutionPlan(registry([rule('RULE-A', 'CLAIM-A')], deprecatedPack));
+      throw new Error('Expected deprecated-pack failure');
     } catch (error) {
-      expect((error as ExecutionPlanError).code).toBe('PACK_NOT_EXECUTABLE');
+      expect(error).toBeInstanceOf(ExecutionPlanError);
+      if (!(error instanceof ExecutionPlanError)) throw error;
+      expect(error.code).toBe('PACK_NOT_EXECUTABLE');
     }
   });
 
@@ -348,14 +338,13 @@ describe('interpretation execution DAG', () => {
       version: '2.0.0',
       output: { ...v1.output, claimType: 'CLAIM-V2' },
     };
-
-    expect(() => buildInterpretationExecutionPlan(registry([v1, v2]))).toThrow(
-      ExecutionPlanError,
-    );
     try {
       buildInterpretationExecutionPlan(registry([v1, v2]));
+      throw new Error('Expected rule-version failure');
     } catch (error) {
-      expect((error as ExecutionPlanError).code).toBe('RULE_VERSION_SELECTION_AMBIGUOUS');
+      expect(error).toBeInstanceOf(ExecutionPlanError);
+      if (!(error instanceof ExecutionPlanError)) throw error;
+      expect(error.code).toBe('RULE_VERSION_SELECTION_AMBIGUOUS');
     }
   });
 
@@ -368,7 +357,6 @@ describe('interpretation execution DAG', () => {
       ...pack,
       disabledRuleIds: ['RULE-PRODUCER'],
     };
-
     expect(() =>
       buildInterpretationExecutionPlan(registry([producer, consumer], disabledProducerPack)),
     ).toThrow(ExecutionPlanError);
