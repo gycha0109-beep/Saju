@@ -23,7 +23,7 @@ import {
 } from './rule-registry.js';
 
 const INTERPRETATION_ENGINE_VERSION = '0.1.0';
-const DERIVED_FACT_SET_VERSION = 'myeonghwa-derived-facts-v1';
+const DERIVED_FACT_SET_VERSION = 'myeonghwa-derived-facts-v1.1';
 
 export interface InterpretationRunOptions {
   requestId?: string;
