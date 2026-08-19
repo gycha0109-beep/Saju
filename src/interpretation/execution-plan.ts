@@ -2,6 +2,7 @@ import type { ContentAddressedVersionedRef, VersionedRef } from '../contracts/co
 import type {
   InterpretationPack,
   MethodologyDefinition,
+  ReviewAttestation,
   RuleDefinition,
   SourceReference,
 } from '../contracts/interpretation.js';
@@ -17,6 +18,7 @@ export type ExecutionPlanErrorCode =
   | 'RULE_NOT_EXECUTABLE_FOR_PACK'
   | 'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK'
   | 'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK'
+  | 'REVIEW_ATTESTATION_NOT_AUTHORIZED_FOR_PACK'
   | 'RULE_METHODOLOGY_NOT_ENABLED'
   | 'RULE_VERSION_SELECTION_AMBIGUOUS'
   | 'RULE_DEPENDENCY_MISSING'
@@ -122,6 +124,70 @@ function sourceIndex(registry: ResolvedRuleRegistrySnapshot): ReadonlyMap<string
   return new Map(registry.sources.map((source) => [source.sourceId, source]));
 }
 
+function contentRefForMethodology(
+  registry: ResolvedRuleRegistrySnapshot,
+  methodology: MethodologyDefinition,
+): ContentAddressedVersionedRef {
+  const found = registry.snapshot.methodologies.find(
+    (candidate) =>
+      candidate.id === methodology.methodologyId && candidate.version === methodology.version,
+  );
+  if (found === undefined) {
+    throw new Error(
+      `Registry snapshot missing methodology content ref ${methodology.methodologyId}@${methodology.version}`,
+    );
+  }
+  return found;
+}
+
+function exactReviewAttestations(
+  registry: ResolvedRuleRegistrySnapshot,
+  subjectType: ReviewAttestation['subjectType'],
+  subjectRef: ContentAddressedVersionedRef,
+): readonly ReviewAttestation[] {
+  return registry.reviewAttestations.filter(
+    (attestation) =>
+      attestation.subjectType === subjectType &&
+      attestation.subjectRef.id === subjectRef.id &&
+      attestation.subjectRef.version === subjectRef.version &&
+      attestation.subjectRef.contentHash === subjectRef.contentHash,
+  );
+}
+
+function latestReview(attestations: readonly ReviewAttestation[]): ReviewAttestation | undefined {
+  return [...attestations].sort((left, right) => {
+    const timeOrder = Date.parse(left.reviewedAt) - Date.parse(right.reviewedAt);
+    return timeOrder === 0
+      ? left.attestationId.localeCompare(right.attestationId)
+      : timeOrder;
+  }).at(-1);
+}
+
+function assertReviewAuthorization(
+  registry: ResolvedRuleRegistrySnapshot,
+  subjectType: ReviewAttestation['subjectType'],
+  subjectRef: ContentAddressedVersionedRef,
+): void {
+  if (registry.pack.status === 'research') return;
+
+  const exact = exactReviewAttestations(registry, subjectType, subjectRef);
+  const domain = exact.filter((attestation) => attestation.reviewLevel === 'domain');
+  const internal = exact.filter((attestation) => attestation.reviewLevel === 'internal');
+  const governing =
+    registry.pack.status === 'production'
+      ? latestReview(domain)
+      : latestReview(domain) ?? latestReview(internal);
+
+  if (governing?.decision !== 'approved') {
+    throw new ExecutionPlanError(
+      'REVIEW_ATTESTATION_NOT_AUTHORIZED_FOR_PACK',
+      `${subjectType} ${subjectRef.id}@${subjectRef.version} content ${subjectRef.contentHash.slice(0, 12)} lacks a current approved ${
+        registry.pack.status === 'production' ? 'domain' : 'internal/domain'
+      } review attestation for ${registry.pack.status}.`,
+    );
+  }
+}
+
 function assertMethodologyAuthorization(registry: ResolvedRuleRegistrySnapshot): void {
   const sources = sourceIndex(registry);
   for (const methodology of registry.methodologies) {
@@ -157,6 +223,11 @@ function assertMethodologyAuthorization(registry: ResolvedRuleRegistrySnapshot):
         );
       }
     }
+    assertReviewAuthorization(
+      registry,
+      'methodology',
+      contentRefForMethodology(registry, methodology),
+    );
   }
 }
 
@@ -297,6 +368,7 @@ function selectRules(
 
     assertRuleQualityAuthorization(rule, registry.pack);
     assertRuleSourceAuthorization(rule, registry);
+    assertReviewAuthorization(registry, 'rule', contentRefFor(registry, ref(rule)));
   }
 
   return sortRules(selected);
