@@ -241,6 +241,31 @@ describe('interpretation execution DAG', () => {
     }
   });
 
+  test('deprecated packs cannot execute even with active rules', () => {
+    const deprecatedPack: InterpretationPack = { ...pack, status: 'deprecated' };
+
+    expect(() =>
+      buildInterpretationExecutionPlan(registry([rule('RULE-A', 'CLAIM-A')], deprecatedPack)),
+    ).toThrow(ExecutionPlanError);
+    try {
+      buildInterpretationExecutionPlan(registry([rule('RULE-A', 'CLAIM-A')], deprecatedPack));
+    } catch (error) {
+      expect((error as ExecutionPlanError).code).toBe('PACK_NOT_EXECUTABLE');
+    }
+  });
+
+  test('multiple selected versions of the same rule id fail closed', () => {
+    const v1 = rule('RULE-VERSIONED', 'CLAIM-V1');
+    const v2: RuleDefinition = { ...v1, version: '2.0.0', output: { ...v1.output, claimType: 'CLAIM-V2' } };
+
+    expect(() => buildInterpretationExecutionPlan(registry([v1, v2]))).toThrow(ExecutionPlanError);
+    try {
+      buildInterpretationExecutionPlan(registry([v1, v2]));
+    } catch (error) {
+      expect((error as ExecutionPlanError).code).toBe('RULE_VERSION_SELECTION_AMBIGUOUS');
+    }
+  });
+
   test('disabling a producer makes its consumer dependency unresolved', () => {
     const producer = rule('RULE-PRODUCER', 'CLAIM-BASE');
     const consumer = rule('RULE-CONSUMER', 'CLAIM-SYNTH', {
