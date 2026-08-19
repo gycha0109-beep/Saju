@@ -34,17 +34,9 @@ jobs:
             echo "present=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Install dependencies
+      - name: Install locked dependencies
         if: steps.project.outputs.present == 'true'
-        run: npm install --no-audit --no-fund
-
-      - name: Upload generated lockfile
-        if: steps.project.outputs.present == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: package-lock
-          path: package-lock.json
-          retention-days: 1
+        run: npm ci --no-audit --no-fund
 
       - name: Verify
         if: steps.project.outputs.present == 'true'
