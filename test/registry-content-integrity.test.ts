@@ -106,13 +106,16 @@ describe('content-addressed registry runtime integrity', () => {
 
   test('resolved authority objects are deeply frozen at runtime', () => {
     const resolved = registry();
+    const firstRule = resolved.rules[0];
+    if (firstRule === undefined) throw new Error('fixture requires one rule');
+
     expect(Object.isFrozen(resolved)).toBe(true);
     expect(Object.isFrozen(resolved.rules)).toBe(true);
-    expect(Object.isFrozen(resolved.rules[0])).toBe(true);
+    expect(Object.isFrozen(firstRule)).toBe(true);
     expect(Object.isFrozen(resolved.snapshot)).toBe(true);
 
     expect(() => {
-      (resolved.rules[0] as { title: string }).title = 'tampered';
+      (firstRule as { title: string }).title = 'tampered';
     }).toThrow(TypeError);
   });
 
