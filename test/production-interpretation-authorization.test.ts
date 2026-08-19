@@ -7,6 +7,7 @@ import {
   type InterpretationPack,
   type MethodologyDefinition,
   type ReviewAttestation,
+  type ReviewerTrustContext,
   type RuleDefinition,
   type SourceReference,
 } from '../src/index.js';
@@ -28,6 +29,23 @@ const internalSource: SourceReference = {
   sourceType: 'internal_research',
   title: 'Synthetic internal source',
   provenanceTier: 'internal',
+};
+
+const trustContext: ReviewerTrustContext = {
+  policyId: 'TRUST-I15-SYNTHETIC',
+  version: '1.0.0',
+  grants: [
+    {
+      reviewerId: 'synthetic-domain-reviewer',
+      allowedReviewLevels: ['domain'],
+      status: 'active',
+    },
+    {
+      reviewerId: 'synthetic-internal-reviewer',
+      allowedReviewLevels: ['internal'],
+      status: 'active',
+    },
+  ],
 };
 
 const researchQuality: RuleDefinition['quality'] = {
@@ -191,6 +209,10 @@ function registry(
   });
 }
 
+function plan(registryValue: ReturnType<typeof registry> | ReturnType<typeof makeRegistry>) {
+  return buildInterpretationExecutionPlan(registryValue, trustContext);
+}
+
 function expectPlanError(action: () => unknown, code: ExecutionPlanError['code']): void {
   try {
     action();
@@ -202,21 +224,29 @@ function expectPlanError(action: () => unknown, code: ExecutionPlanError['code']
   }
 }
 
-describe('I15 production interpretation authorization gate', () => {
-  test('research packs retain research/unreviewed execution behavior', () => {
-    expect(
-      buildInterpretationExecutionPlan(
-        registry('research', 'research', 'research', researchQuality),
-      ).orderedRuleRefs,
-    ).toHaveLength(1);
+describe('I15/I17 production interpretation authorization gate', () => {
+  test('research packs retain research/unreviewed behavior and ignore reviewer trust policy for plan identity', () => {
+    const selected = registry('research', 'research', 'research', researchQuality);
+    const withoutTrust = buildInterpretationExecutionPlan(selected);
+    const withTrust = plan(selected);
+    expect(withoutTrust.orderedRuleRefs).toHaveLength(1);
+    expect(withTrust.executionPlanId).toBe(withoutTrust.executionPlanId);
+    expect(withTrust.reviewerTrustPolicyRef).toBeUndefined();
+  });
+
+  test('promoted active methodology requires an explicit reviewer trust context', () => {
+    expectPlanError(
+      () =>
+        buildInterpretationExecutionPlan(
+          registry('production', 'active', 'active', productionQuality),
+        ),
+      'REVIEWER_TRUST_CONTEXT_REQUIRED',
+    );
   });
 
   test('production rejects research methodology before rule activation can matter', () => {
     expectPlanError(
-      () =>
-        buildInterpretationExecutionPlan(
-          registry('production', 'research', 'active', productionQuality),
-        ),
+      () => plan(registry('production', 'research', 'active', productionQuality)),
       'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK',
     );
   });
@@ -224,7 +254,7 @@ describe('I15 production interpretation authorization gate', () => {
   test('production rejects active rules without domain-reviewed quality metadata', () => {
     expectPlanError(
       () =>
-        buildInterpretationExecutionPlan(
+        plan(
           registry('production', 'active', 'active', {
             ...productionQuality,
             reviewerStatus: 'internal_reviewed',
@@ -237,7 +267,7 @@ describe('I15 production interpretation authorization gate', () => {
   test('production rejects inadequate tests and heuristic quality provenance', () => {
     expectPlanError(
       () =>
-        buildInterpretationExecutionPlan(
+        plan(
           registry('production', 'active', 'active', {
             ...productionQuality,
             testCoverage: 'unit',
@@ -247,7 +277,7 @@ describe('I15 production interpretation authorization gate', () => {
     );
     expectPlanError(
       () =>
-        buildInterpretationExecutionPlan(
+        plan(
           registry('production', 'active', 'active', {
             ...productionQuality,
             provenanceQuality: 'heuristic',
@@ -257,33 +287,30 @@ describe('I15 production interpretation authorization gate', () => {
     );
   });
 
-  test('production accepts active, domain-reviewed, fixture-tested, multi-source synthetic content with exact approvals', () => {
-    expect(
-      buildInterpretationExecutionPlan(
-        registry('production', 'active', 'active', productionQuality),
-      ).orderedRuleRefs,
-    ).toHaveLength(1);
+  test('production accepts active domain-reviewed high-evidence content only under trusted exact approvals', () => {
+    const executionPlan = plan(
+      registry('production', 'active', 'active', productionQuality),
+    );
+    expect(executionPlan.orderedRuleRefs).toHaveLength(1);
+    expect(executionPlan.reviewerTrustPolicyRef?.id).toBe(trustContext.policyId);
+    expect(executionPlan.reviewerTrustPolicyRef?.version).toBe(trustContext.version);
+    expect(executionPlan.reviewerTrustPolicyRef?.contentHash).toHaveLength(64);
   });
 
   test('staging permits reviewed methodology plus internally reviewed unit-tested non-heuristic rule', () => {
     expect(
-      buildInterpretationExecutionPlan(
-        registry('staging', 'reviewed', 'reviewed', stagingQuality),
-      ).orderedRuleRefs,
+      plan(registry('staging', 'reviewed', 'reviewed', stagingQuality)).orderedRuleRefs,
     ).toHaveLength(1);
   });
 
   test('staging rejects research methodology and heuristic quality provenance', () => {
     expectPlanError(
-      () =>
-        buildInterpretationExecutionPlan(
-          registry('staging', 'research', 'reviewed', stagingQuality),
-        ),
+      () => plan(registry('staging', 'research', 'reviewed', stagingQuality)),
       'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK',
     );
     expectPlanError(
       () =>
-        buildInterpretationExecutionPlan(
+        plan(
           registry('staging', 'reviewed', 'reviewed', {
             ...stagingQuality,
             provenanceQuality: 'heuristic',
@@ -303,7 +330,7 @@ describe('I15 production interpretation authorization gate', () => {
       sources: [],
     });
     expectPlanError(
-      () => buildInterpretationExecutionPlan(withoutSources),
+      () => plan(withoutSources),
       'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
     );
   });
@@ -320,7 +347,7 @@ describe('I15 production interpretation authorization gate', () => {
       sources: [sourceA],
     });
     expectPlanError(
-      () => buildInterpretationExecutionPlan(singleSource),
+      () => plan(singleSource),
       'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
     );
   });
@@ -342,7 +369,7 @@ describe('I15 production interpretation authorization gate', () => {
       sources: [sourceA, internalSource],
     });
     expectPlanError(
-      () => buildInterpretationExecutionPlan(internalRegistry),
+      () => plan(internalRegistry),
       'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
     );
   });
