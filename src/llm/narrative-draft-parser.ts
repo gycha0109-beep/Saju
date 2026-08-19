@@ -100,7 +100,10 @@ function parseAssertion(
 ): NarrativeAssertion | undefined {
   const text = requiredString(record, 'text', path, violations);
   const rawEpistemic = record.epistemicType;
-  if (typeof rawEpistemic !== 'string' || !epistemicTypes.has(rawEpistemic as NarrativeEpistemicType)) {
+  if (
+    typeof rawEpistemic !== 'string' ||
+    !epistemicTypes.has(rawEpistemic as NarrativeEpistemicType)
+  ) {
     violations.push({ path: `${path}.epistemicType`, message: 'Invalid epistemic type.' });
   }
 
@@ -160,6 +163,9 @@ function parseComparison(
   if (!Array.isArray(rawPerspectives)) {
     violations.push({ path: `${path}.perspectives`, message: 'Expected perspective array.' });
   } else {
+    if (rawPerspectives.length === 0) {
+      violations.push({ path: `${path}.perspectives`, message: 'Comparison requires at least one perspective.' });
+    }
     rawPerspectives.forEach((item, index) => {
       const itemPath = `${path}.perspectives[${index}]`;
       if (!isRecord(item)) {
@@ -305,6 +311,9 @@ function parseSection(
   if (!Array.isArray(rawBlocks)) {
     violations.push({ path: `${path}.blocks`, message: 'Expected narrative block array.' });
   } else {
+    if (rawBlocks.length === 0) {
+      violations.push({ path: `${path}.blocks`, message: 'Narrative section requires at least one block.' });
+    }
     rawBlocks.forEach((block, index) => {
       const parsed = parseBlock(block, `${path}.blocks[${index}]`, violations);
       if (parsed !== undefined) blocks.push(parsed);
@@ -360,6 +369,9 @@ export function parseNarrativeDraft(value: unknown): NarrativeDraftParseResult {
   if (!Array.isArray(rawSections)) {
     violations.push({ path: '$.sections', message: 'Expected section array.' });
   } else {
+    if (rawSections.length === 0) {
+      violations.push({ path: '$.sections', message: 'NarrativeDraft requires at least one section.' });
+    }
     rawSections.forEach((section, index) => {
       const parsed = parseSection(section, `$.sections[${index}]`, violations);
       if (parsed !== undefined) sections.push(parsed);
