@@ -107,6 +107,10 @@ function rulesById(rules: readonly RuleDefinition[]): ReadonlyMap<string, RuleDe
   return result;
 }
 
+function canonicalConflictReason(leftRuleId: string, rightRuleId: string): string {
+  return `rule_conflict:${[leftRuleId, rightRuleId].sort().join('<->')}`;
+}
+
 export function buildClaimRelations(
   claims: readonly InterpretationClaim[],
   rules: readonly RuleDefinition[],
@@ -143,13 +147,19 @@ export function buildClaimRelations(
         }
       }
 
-      for (const targetRuleId of [
+      const conflictTargetRuleIds = new Set([
         ...(rule.relations?.conflictsWith ?? []),
         ...(rule.relations?.mutuallyExclusiveWith ?? []),
-      ]) {
+      ]);
+      for (const targetRuleId of conflictTargetRuleIds) {
         for (const target of byRule.get(targetRuleId) ?? []) {
           if (!scenarioCompatible(claim, target)) continue;
-          addSymmetricContradiction(relations, claim, target, `rule_conflict:${targetRuleId}`);
+          addSymmetricContradiction(
+            relations,
+            claim,
+            target,
+            canonicalConflictReason(rule.ruleId, targetRuleId),
+          );
         }
       }
 
