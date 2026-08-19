@@ -8,3 +8,4 @@ export * from './interpretation/interpretation-engine.js';
 export * from './research/index.js';
 export * from './narrative/index.js';
 export * from './llm/index.js';
+export * from './reading/index.js';
