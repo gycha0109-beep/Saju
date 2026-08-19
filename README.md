@@ -27,7 +27,7 @@ S12 Engine MVP Scope & Implementation Plan
 
 ### Implementation
 
-현재 I0~I9A foundation이 구현되어 있습니다.
+Engine runtime의 I0~I10 코드 경로가 연결되었습니다. 다만 I3 authoritative corpus expansion과 production interpretation/content gate는 별도로 열려 있습니다.
 
 ```text
 I0  Repository / Tooling Bootstrap          STRICT CLOSED
@@ -40,25 +40,64 @@ I6  Claim Graph / Interpretation Run       STRICT CLOSED
 I7  Source-backed Research Rule Pack       STRICT CLOSED (RESEARCH ONLY)
 I8  Narrative Foundation                   STRICT CLOSED
 I9A Provider-neutral LLM Runtime           STRICT CLOSED
-I9B Production Provider Adapter            USER DECISION REQUIRED
-I10 Developer Harness E2E
+I9B OpenAI Responses Adapter               IMPLEMENTED / CONTRACT VERIFIED
+    Live OpenAI validation                 PENDING CREDENTIAL
+I10 Developer Harness E2E                  STRICT CLOSED
 ```
 
-현재 코드에 포함된 주요 범위:
+현재 판정:
+
+```text
+ENGINE_MVP_RUNTIME_CODE_PATH = COMPLETE CANDIDATE
+PRODUCTION_SAJU_PRODUCT      = NOT YET AUTHORIZED
+```
+
+## 구현된 전체 경로
+
+```text
+Birth Input
+  -> Runtime Validation / CalculationPolicy
+  -> Manseryeok Adapter v2.0.0
+  -> Canonical Saju Snapshot
+  -> Unknown-time Scenario Preservation
+  -> Versioned Rule Registry / Method Pack
+  -> Deterministic Execution Plan
+  -> Rule Evaluations
+  -> Interpretation Claims + Claim Relations
+  -> Integrity / Completeness Gate
+  -> Narrative Evidence Bundle
+  -> Provider-neutral NarrativeModelAdapter
+  -> OpenAI Responses Adapter (optional injected provider)
+  -> Untrusted Structured Output
+  -> Runtime NarrativeDraft Parser
+  -> Grounding Validator
+  -> At Most One Constrained Repair
+  -> Deterministic Fallback
+  -> NarrativeRun
+  -> ReadingArtifact
+  -> Future Delivery Adapter
+```
+
+## 현재 코드에 포함된 주요 범위
+
+### Calculation
 
 - Node 24 / TypeScript 6 strict project foundation
 - reproducible `package-lock.json` + `npm ci` CI gate
 - explicit `resolved / ambiguous / unavailable` FactState
 - `BirthInput` / `CalculationPolicySnapshot`
 - `CanonicalSajuSnapshot`
-- `manseryeok` v2.0.0 calculation adapter
+- `manseryeok` v2.0.0 pinned adapter
 - lunar / leap-month conversion boundary
 - midnight / jasi / splitJasi day-boundary policies
 - true-solar-time options
-- Korean historical standard-time / DST handling through the pinned calculation core
+- Korean historical standard-time / DST behavior through the pinned calculation core
 - Solar Term context
 - unknown-birth-time 1,440-minute enumeration without fabricated noon input
 - deterministic CalculationScenario compression
+
+### Interpretation
+
 - versioned Rule / Methodology / InterpretationPack registry
 - content-addressed rules, methodologies, packs, and source references
 - deterministic dependency DAG
@@ -66,92 +105,113 @@ I10 Developer Harness E2E
 - safe nested RuleOperand projection
 - scenario-preserving Rule execution
 - InterpretationClaim / ClaimRelation graph
-- conflict preservation and deterministic relation IDs
 - exact `ruleId@version` execution binding
+- conflict preservation and deterministic relation IDs
 - Claim Graph integrity gate
 - ExecutionCompleteness propagation
 - deterministic InterpretationRun identity
 - Claim-level EvidenceIndex
 - source-backed I7 research-only seasonal-support signal pack
 - mandatory scope-guard claim preventing month-only signal overreach
+
+### Narrative / LLM
+
 - scenario-addressable NarrativeEvidenceBundle
 - targeted evidence minimization
-- deterministic narrative grounding validator
+- deterministic grounding validator
 - mandatory ambiguity / conflict / scope disclosures
 - deterministic model-independent narrative fallback
 - provider-neutral structured model adapter contract
-- prompt compiler with separated authority instructions and user data
-- runtime parser for untrusted model output
-- exact one-repair policy for invalid model output
+- prompt compiler separating authority instructions from user/evidence data
+- runtime parser for untrusted provider output
+- exact one-repair policy
 - provider failure / invalid repair deterministic fallback
 - deterministic NarrativeRun audit identity
-- T9 gate for future-tendency narrative assertions
+- T9 gate for future-tendency assertions
 
-아직 **실제 명리 해석 규칙을 production authority로 승인하지 않았습니다.** I7 corpus는 research-only이며 production pack으로 단순 승격할 수 없도록 fail-closed 되어 있습니다.
+### OpenAI I9B adapter
 
-또한 실제 production LLM provider/model/API credential은 아직 선택하지 않았습니다. I9A는 provider-neutral runtime만 검증한 상태입니다.
+첫 production-provider baseline은 OpenAI Responses API로 선택했습니다.
+
+```text
+provider              OpenAI
+endpoint              /v1/responses
+default model         gpt-5.6-terra
+structured output     json_schema / strict=true
+reasoning effort      low
+text verbosity        medium
+store                  false
+```
+
+OpenAI SDK를 runtime dependency로 추가하지 않고 Node 24 native `fetch`를 사용합니다.
+
+Provider output은 Structured Outputs를 사용하더라도 authority로 신뢰하지 않습니다.
+
+```text
+OpenAI output
+ -> JSON parse
+ -> Myeonghwa NarrativeDraft parser
+ -> Grounding Validator
+ -> accepted OR fallback
+```
+
+실제 OpenAI API key를 사용한 live provider validation은 아직 수행하지 않았습니다. `store=false` 또한 Zero Data Retention과 동일한 의미로 취급하지 않습니다.
+
+### Reading / Developer Harness
+
+`ReadingArtifact` assembler와 developer-only E2E harness를 구현했습니다.
+
+```text
+runDeveloperHarness()
+ -> snapshot
+ -> interpretation
+ -> evidence
+ -> narrative
+ -> reading
+```
+
+Provider는 주입식이므로 CI에서는 deterministic fixture provider로 전체 경로를 검증합니다.
+
+검증된 E2E 경로:
+
+```text
+normal grounded path
+provider outage -> deterministic fallback
+unknown birth time -> ambiguity preserved to ReadingArtifact
+content identity reproducibility across audit timestamps
+```
 
 ## 핵심 원칙
 
 1. **계산과 해석을 분리합니다.**
-   - 생년월일시에서 도출되는 결정론적 계산값은 Calculation Layer가 담당합니다.
+   - 결정론적 계산값은 Calculation Layer가 담당합니다.
    - 용신·신살·성격·직업·재물·관계 등의 해석은 Interpretation Layer가 담당합니다.
    - LLM은 계산 authority가 아닙니다.
 2. **모르는 입력을 임의값으로 채우지 않습니다.**
    - 출생시간 미상은 `12:00` 같은 가짜 값으로 대체하지 않습니다.
    - 하나의 값을 안전하게 확정할 수 없으면 ambiguity를 보존합니다.
-3. **계산 결과는 재현 가능해야 합니다.**
-   - 엔진, adapter, 계산 정책, schema version을 기록합니다.
+3. **결과는 재현 가능해야 합니다.**
+   - 엔진, adapter, 계산 정책, schema, Rule/Pack, prompt compiler, model metadata를 기록합니다.
 4. **해석은 provenance-aware rule로 관리합니다.**
    - 규칙별 출처, 방법론, 버전, 품질 상태를 추적합니다.
 5. **유파 차이를 오류로 취급하지 않습니다.**
    - 서로 다른 방법론의 claim을 평균내거나 덮어쓰지 않습니다.
-6. **Interpretation Engine은 deterministic 합니다.**
-   - 동일 Snapshot/Pack/Registry/Engine version은 동일한 claim graph를 만들어야 합니다.
-7. **Scenario를 몰래 합치지 않습니다.**
+6. **Scenario를 몰래 합치지 않습니다.**
    - 출생시간 미상 등으로 발생한 후보 scenario는 명시적으로 격리합니다.
-8. **Narrative는 Evidence Bundle 밖으로 나가지 않습니다.**
-   - Evidence Selector는 필요한 claim/fact/context만 선택합니다.
-   - ambiguous fact, conflict, scope guard는 disclosure 없이 사용자 주장으로 숨길 수 없습니다.
-9. **LLM은 Evidence Bundle 밖의 명리 규칙을 생성하지 않습니다.**
-   - 설명, 비교, 요약, 질문응답, 문장화에 한정합니다.
-   - provider 출력은 `unknown`으로 취급하고 runtime parser + grounding validator를 통과해야 합니다.
-10. **모델 실패는 authority 완화의 이유가 아닙니다.**
-    - invalid output은 최대 한 번 repair합니다.
-    - repair 실패나 provider failure은 deterministic fallback으로 종료합니다.
-11. **근거 없는 정확도 숫자를 만들지 않습니다.**
+7. **Narrative는 Evidence Bundle 밖으로 나가지 않습니다.**
+   - ambiguous fact, conflict, scope guard는 required disclosure 없이 숨길 수 없습니다.
+8. **Provider output을 신뢰하지 않습니다.**
+   - provider 결과는 `unknown`으로 받고 parser + grounding validator를 통과해야 합니다.
+9. **모델 실패는 authority 완화의 이유가 아닙니다.**
+   - invalid output은 최대 한 번 repair하며 이후 deterministic fallback으로 종료합니다.
+10. **근거 없는 정확도 숫자를 만들지 않습니다.**
     - 계산 정확도, 명리 해석 일관성, 실제 미래 예측 정확도를 별개로 취급합니다.
-
-## 목표 아키텍처
-
-```text
-Birth Input
-  -> Input Validation / Normalization
-  -> Calculation Planner
-  -> Manseryeok Adapter
-  -> Canonical Saju Snapshot
-  -> Derived Structural Facts
-  -> Versioned Rule Registry / Method Packs
-  -> Deterministic Execution Plan
-  -> Rule Evaluations
-  -> Interpretation Claims + Claim Relations
-  -> Integrity / Completeness Gate
-  -> Narrative Evidence Bundle
-  -> provider-neutral Structured Model Adapter
-  -> untrusted NarrativeDraft output
-  -> Runtime Parser
-  -> Grounding / Policy Validation
-  -> at most one constrained repair
-  -> deterministic fallback if required
-  -> ReadingArtifact
-  -> Delivery Adapter
-```
 
 ## 계산 코어
 
 현재 결정론적 계산 adapter는 [`yhj1024/manseryeok`](https://github.com/yhj1024/manseryeok) **v2.0.0**에 pin되어 있습니다.
 
-명화는 upstream 반환 타입을 public Core contract로 노출하지 않습니다. 모든 결과는 명화의 Canonical Saju schema로 변환합니다.
+명화는 upstream 반환 타입을 public Core contract로 노출하지 않습니다. 모든 결과는 명화 Canonical Saju schema로 변환합니다.
 
 검증 authority는 upstream regression과 분리합니다.
 
@@ -167,7 +227,7 @@ Tier E  Myeonghwa internal regression
 
 ## Interpretation Research
 
-I7에서 첫 source-backed corpus를 추가했지만 **research-only**입니다.
+I7의 첫 source-backed corpus는 **research-only**입니다.
 
 현재 범위:
 
@@ -178,7 +238,7 @@ day stem element
 -> seasonal support signal
 ```
 
-가능한 출력도 다음으로 제한합니다.
+가능한 출력:
 
 ```text
 same-element support signal
@@ -186,7 +246,7 @@ generating-element support signal
 overall-strength scope guard
 ```
 
-다음은 아직 출력하지 않습니다.
+아직 production 출력하지 않는 범위:
 
 ```text
 final strong / weak classification
@@ -196,53 +256,25 @@ career / wealth / relationship / health prediction
 future-event prediction
 ```
 
-## Narrative Foundation
+## 최신 검증 gate
 
-I8은 LLM 없이 먼저 narrative authority boundary를 구현했습니다.
-
-```text
-InterpretationRun
--> Evidence Selector
--> scenario-addressable NarrativeEvidenceBundle
--> Grounding Validator
--> deterministic fallback
-```
-
-다음은 deterministic validation fail 대상입니다.
+I10 E2E close gate:
 
 ```text
-unknown evidence ref
-inactive claim evidence
-ambiguous fact asserted as deterministic
-interpretation claim relabeled as deterministic fact
-future tendency without a T9 time-dynamic claim
-missing methodology attribution
-missing calculation ambiguity disclosure
-missing conflict disclosure
-missing scope-limitation disclosure
+CI run number: 250
+run id:        32212973712
+
+npm ci:        PASS
+lint:          PASS
+TS6 typecheck: PASS
+Vitest:        PASS
+build:         PASS
+
+Test files:    20 passed
+Tests:         127 passed
 ```
 
-Targeted reading은 upstream dependency와 material relation만 포함하며 downstream claim을 역으로 끌어오지 않습니다.
-
-## Provider-neutral LLM Runtime
-
-I9A는 특정 LLM 회사나 SDK에 종속되지 않는 실행 경계를 구현했습니다.
-
-```text
-GroundedNarrativeRequest
--> Prompt Compiler
--> NarrativeModelAdapter
--> provider output: unknown
--> NarrativeDraft Parser
--> Grounding Validator
--> one repair maximum
--> deterministic fallback
--> NarrativeRun
-```
-
-User text와 source/evidence 문자열은 prompt authority instructions와 분리하여 data로 전달합니다.
-
-실제 provider가 예외를 내면 repair를 시도하지 않고 deterministic fallback으로 종료합니다. Provider가 정상 응답했지만 구조적으로 잘못된 값을 반환하면 정확히 한 번 repair합니다. 세 번째 모델 호출은 없습니다.
+I9B OpenAI adapter 자체는 CI #236에서 10개의 provider-contract test를 포함해 검증되었습니다.
 
 ## 구현 Toolchain Baseline
 
@@ -254,8 +286,6 @@ typescript-eslint  8.66.0
 Prettier           3.9.6
 Vitest             4.1.10
 ```
-
-TypeScript 7은 stable이지만 현재 lint/tooling 공식 지원 상태를 고려해 초기 baseline에서는 보류합니다. 근거와 upgrade policy는 ADR-0004에 기록합니다.
 
 ## 주요 문서
 
@@ -286,7 +316,9 @@ TypeScript 7은 stable이지만 현재 lint/tooling 공식 지원 상태를 고�
 - [I6 Claim Graph / Runtime Status](docs/implementation/i6-claim-graph-runtime-status.md)
 - [I7 Source-backed Research Pack Status](docs/implementation/i7-source-backed-research-pack-status.md)
 - [I8 Narrative Foundation Status](docs/implementation/i8-narrative-foundation-status.md)
-- [I9 Provider-neutral LLM Runtime Status](docs/implementation/i9-provider-neutral-llm-runtime-status.md)
+- [I9A Provider-neutral LLM Runtime Status](docs/implementation/i9-provider-neutral-llm-runtime-status.md)
+- [I9B OpenAI Responses Adapter Status](docs/implementation/i9b-openai-responses-adapter-status.md)
+- [I10 Developer Harness E2E Status](docs/implementation/i10-developer-harness-e2e-status.md)
 
 ### Decisions / Research
 
@@ -296,36 +328,38 @@ TypeScript 7은 stable이지만 현재 lint/tooling 공식 지원 상태를 고�
 - [ADR-0004 — Initial Toolchain Baseline](docs/decisions/ADR-0004-toolchain-baseline.md)
 - [Open-source Engine Baseline](docs/research/open-source-engine-baseline.md)
 
-## 현재 미결정 사항
+## 현재 open gate
 
-### Calculation Methodology
+### Calculation
 
 - 명화 production 표준 `dayBoundary`
 - 진태양시 기본 적용 여부
 - 균시차/역사적 DST 기본 정책
 - 대운 시작점의 최종 노출 정책
 - 한국 외 출생 초기 지원 여부
-- 추가 primary-source golden fixture 확보 범위
+- I3 additional authoritative / primary-source golden fixture corpus
 
 ### Interpretation Content
 
-- 신강/신약 기본 Method Pack authority
+- 신강/신약 production Method Pack authority
 - 격국/특수격 범위
 - 용신 방법론별 출처와 노출 정책
 - 기본 신살 allowlist
-- production Rule의 domain review 수준
+- production Rule domain review 수준
 
-### LLM / Narrative
+### LLM / Operations
 
-- **production LLM provider / model (I9B decision gate)**
-- provider credential strategy
-- provider-specific structured-output adapter
-- provider-specific retry/quota/error mapping
+- OpenAI API credential strategy
+- live `gpt-5.6-terra` Structured Outputs validation
+- provider snapshot model pinning / upgrade policy
+- latency / token / cost baseline
+- account-level retention / ZDR policy if required
 - semantic overstatement detector 범위
 
 ### Product
 
 - 웹 / 운영자 프로그램 / standalone / report-template 중 최종 전달 형태
 - 회원/결제/재방문 구조
+- delivery/security/privacy operating policy
 
-이 항목들은 Core infrastructure 구현을 임의로 막지 않되, production 결과를 확정하기 전에 근거와 정책을 별도로 고정합니다.
+이 open gate들은 Core runtime의 구조적 구현을 무효화하지 않지만, **production 사주 서비스 출시 권한과는 별도**입니다.
