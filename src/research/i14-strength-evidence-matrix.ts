@@ -2,6 +2,7 @@ import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import type { InterpretationClaim, RuleEvaluation } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import { I14_STRENGTH_EVIDENCE_COMPOSITE_PACK } from './i14-strength-evidence-registry.js';
 
 export const I14_STRENGTH_EVIDENCE_MATRIX_SCHEMA_VERSION = 'myeonghwa-strength-evidence-matrix-v1';
 
@@ -47,7 +48,11 @@ function evidenceKind(claim: InterpretationClaim): string | undefined {
 function executionState(evaluations: readonly RuleEvaluation[]): StrengthEvidenceExecutionState {
   if (evaluations.length === 0) return 'not_evaluated';
   if (evaluations.some((evaluation) => evaluation.status === 'error')) return 'failed';
-  if (evaluations.some((evaluation) => evaluation.status !== 'matched' && evaluation.status !== 'not_matched')) {
+  if (
+    evaluations.some(
+      (evaluation) => evaluation.status !== 'matched' && evaluation.status !== 'not_matched',
+    )
+  ) {
     return 'partial';
   }
   return 'complete';
@@ -62,8 +67,12 @@ function scenarioMatrix(
   scenarioRef: string | undefined,
 ): StrengthEvidenceScenarioMatrix {
   const claims = execution.claims.filter((claim) => claim.scenarioRef === scenarioRef);
-  const evaluations = execution.evaluations.filter((evaluation) => evaluation.scenarioRef === scenarioRef);
-  const evidenceClaims = claims.filter((claim) => claim.claimType === 'DAY_MASTER_STRENGTH_EVIDENCE');
+  const evaluations = execution.evaluations.filter(
+    (evaluation) => evaluation.scenarioRef === scenarioRef,
+  );
+  const evidenceClaims = claims.filter(
+    (claim) => claim.claimType === 'DAY_MASTER_STRENGTH_EVIDENCE',
+  );
 
   return {
     basis: scenarioRef === undefined ? 'canonical' : 'scenario',
@@ -71,11 +80,15 @@ function scenarioMatrix(
     executionState: executionState(evaluations),
     evaluationIds: evaluations.map((evaluation) => evaluation.evaluationId).sort(),
     blockedEvaluationIds: evaluations
-      .filter((evaluation) => evaluation.status !== 'matched' && evaluation.status !== 'not_matched')
+      .filter(
+        (evaluation) => evaluation.status !== 'matched' && evaluation.status !== 'not_matched',
+      )
       .map((evaluation) => evaluation.evaluationId)
       .sort(),
     seasonalSupportSignalClaimIds: sortedClaimIds(
-      claims.filter((claim) => claim.claimType === 'CLAIM-DAY-MASTER-SEASONAL-SUPPORT-SIGNAL'),
+      claims.filter(
+        (claim) => claim.claimType === 'CLAIM-DAY-MASTER-SEASONAL-SUPPORT-SIGNAL',
+      ),
     ),
     visibleStemEvidenceClaimIds: sortedClaimIds(
       evidenceClaims.filter((claim) => evidenceKind(claim) === 'visible_stem_relation'),
@@ -98,23 +111,81 @@ function scenarioMatrix(
   };
 }
 
-export function buildI14StrengthEvidenceMatrix(
+function expectedScenarioRefs(snapshot: CanonicalSajuSnapshot): readonly (string | undefined)[] {
+  return snapshot.scenarios.length === 0
+    ? [undefined]
+    : snapshot.scenarios.map((scenario) => scenario.scenarioId).sort();
+}
+
+function assertExpectedScenarioBindings(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
-): StrengthEvidenceMatrix {
+): readonly (string | undefined)[] {
+  const expected = expectedScenarioRefs(snapshot);
+  const expectedSet = new Set(expected);
+
+  for (const evaluation of execution.evaluations) {
+    if (!expectedSet.has(evaluation.scenarioRef)) {
+      throw new Error(
+        `Strength evidence matrix encountered unexpected evaluation scenarioRef: ${String(
+          evaluation.scenarioRef,
+        )}`,
+      );
+    }
+  }
+  for (const claim of execution.claims) {
+    if (!expectedSet.has(claim.scenarioRef)) {
+      throw new Error(
+        `Strength evidence matrix encountered unexpected claim scenarioRef: ${String(
+          claim.scenarioRef,
+        )}`,
+      );
+    }
+  }
+  for (const scenarioRef of expected) {
+    if (!execution.evaluations.some((evaluation) => evaluation.scenarioRef === scenarioRef)) {
+      throw new Error(
+        `Strength evidence matrix is missing evaluation coverage for scenarioRef: ${String(
+          scenarioRef,
+        )}`,
+      );
+    }
+  }
+
+  return expected;
+}
+
+function validateExecutionBinding(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+): readonly (string | undefined)[] {
   if (execution.run.snapshotId !== snapshot.snapshotId) {
-    throw new Error(`Strength evidence matrix snapshot mismatch: ${snapshot.snapshotId} != ${execution.run.snapshotId}`);
+    throw new Error(
+      `Strength evidence matrix snapshot mismatch: ${snapshot.snapshotId} != ${execution.run.snapshotId}`,
+    );
   }
   if (execution.run.registrySnapshotId !== execution.executionPlan.registrySnapshotId) {
     throw new Error('Strength evidence matrix requires one internally consistent interpretation run.');
   }
+  if (
+    execution.run.packRef.id !== I14_STRENGTH_EVIDENCE_COMPOSITE_PACK.packId ||
+    execution.run.packRef.version !== I14_STRENGTH_EVIDENCE_COMPOSITE_PACK.version
+  ) {
+    throw new Error(
+      `Strength evidence matrix requires ${I14_STRENGTH_EVIDENCE_COMPOSITE_PACK.packId}@${I14_STRENGTH_EVIDENCE_COMPOSITE_PACK.version}.`,
+    );
+  }
   if (!execution.integrity.valid) {
     throw new Error('Strength evidence matrix cannot be built from an invalid claim graph.');
   }
+  return assertExpectedScenarioBindings(snapshot, execution);
+}
 
-  const scenarioRefs = snapshot.scenarios.length === 0
-    ? [undefined]
-    : snapshot.scenarios.map((scenario) => scenario.scenarioId).sort();
+export function buildI14StrengthEvidenceMatrix(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+): StrengthEvidenceMatrix {
+  const scenarioRefs = validateExecutionBinding(snapshot, execution);
   const scenarios = scenarioRefs.map((scenarioRef) => scenarioMatrix(execution, scenarioRef));
   const matrixMaterial = {
     schemaVersion: I14_STRENGTH_EVIDENCE_MATRIX_SCHEMA_VERSION,
