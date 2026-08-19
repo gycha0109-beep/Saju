@@ -23,10 +23,10 @@ import {
   type ResolvedRuleRegistrySnapshot,
 } from './rule-registry.js';
 
-const INTERPRETATION_ENGINE_VERSION = '0.4.0';
+const INTERPRETATION_ENGINE_VERSION = '0.5.0';
 const DERIVED_FACT_SET_VERSION = 'myeonghwa-derived-facts-v1.1';
 export const INTERPRETATION_AUTHORIZATION_POLICY_VERSION =
-  'myeonghwa-interpretation-authorization-v3';
+  'myeonghwa-interpretation-authorization-v4';
 
 export interface InterpretationRunOptions {
   requestId?: string;
@@ -52,9 +52,7 @@ function ruleKey(ruleId: string, version: string): string {
 }
 
 function ruleIndex(registry: ResolvedRuleRegistrySnapshot): ReadonlyMap<string, RuleDefinition> {
-  return new Map(
-    registry.rules.map((rule) => [ruleKey(rule.ruleId, rule.version), rule]),
-  );
+  return new Map(registry.rules.map((rule) => [ruleKey(rule.ruleId, rule.version), rule]));
 }
 
 function scenarioOverrides(
@@ -106,9 +104,7 @@ function relationIntegrityErrors(
   const relationIds = new Set<string>();
 
   for (const relation of relations) {
-    if (relationIds.has(relation.relationId)) {
-      errors.push(`duplicate relationId: ${relation.relationId}`);
-    }
+    if (relationIds.has(relation.relationId)) errors.push(`duplicate relationId: ${relation.relationId}`);
     relationIds.add(relation.relationId);
     if (!claimIds.has(relation.fromClaimId)) {
       errors.push(`relation ${relation.relationId} references missing from-claim ${relation.fromClaimId}`);
@@ -144,7 +140,6 @@ function executionCompleteness(
   }
 
   if (!integrityValid) reasons.add('claim_graph_integrity_failed');
-
   const blockedCoreGroups = [...blocked].sort();
   const completedCoreGroups = selectedRuleSets.filter((group) => !blocked.has(group));
   const state: ExecutionCompleteness['state'] = !integrityValid
@@ -261,11 +256,12 @@ export function runInterpretation(
     claimRelations,
   );
   const interpretationRunId = `interpretation_${runHash.slice(0, 24)}`;
-  const status: InterpretationRun['status'] = completeness.state === 'complete'
-    ? 'completed'
-    : completeness.state === 'partial'
-      ? 'partial'
-      : 'failed';
+  const status: InterpretationRun['status'] =
+    completeness.state === 'complete'
+      ? 'completed'
+      : completeness.state === 'partial'
+        ? 'partial'
+        : 'failed';
   const timestamp = now.toISOString();
   const run: InterpretationRun = {
     interpretationRunId,
