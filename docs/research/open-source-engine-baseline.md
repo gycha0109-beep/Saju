@@ -141,25 +141,140 @@ Code reuse: hold pending license/provenance review
 
 ---
 
-## 3. 명화의 기본 조합
+## 3. 후보 C — `golbin/ssaju`
+
+Repository: https://github.com/golbin/ssaju
+
+### 현재 위치
+
+2026년에 공개된 TypeScript 사주 라이브러리로, 기능 범위와 LLM용 출력은 풍부하다. 그러나 **명화의 결정론적 계산 authority로는 `manseryeok`보다 우선하지 않는다.**
+
+현재 `package.json` 기준 버전은 `0.2.0`이다.
+
+### 확인된 장점
+
+- TypeScript
+- MIT LICENSE 실제 존재
+- package-lock 존재
+- runtime dependency 0
+- 양/음력 변환
+- 4주 계산
+- 입춘/절기 계산
+- 한국 DST 테이블 처리
+- 경도 기반 Local Mean Time 옵션
+- 십신·공망·대운·세운·월운·12운성·관계·신살·격국·용신까지 넓은 기능
+- `toCompact()` / `toMarkdown()` 같은 LLM/UI 편의 출력
+- golden/boundary 성격의 테스트가 존재
+
+### 명화 기준의 핵심 문제
+
+#### 1. 출생시간 미상 처리
+
+`normalizeInput()`은 `hour`가 없으면 `12`, `minute`이 없으면 `0`을 자동 주입한다.
+
+즉:
+
+```text
+unknown birth time -> 12:00
+```
+
+이 기본 정책은 명화의 `unknown != fabricated noon` 원칙과 직접 충돌한다.
+
+#### 2. 성별 기본값
+
+성별 입력이 없으면 `여`를 기본값으로 주입한다. 대운 등 성별 의존 계산에서 입력 부재를 사실상 특정 값으로 확정할 위험이 있다.
+
+#### 3. 진태양시가 아니라 Local Mean Time
+
+옵션은 `(longitude - standardLongitude) * 4분` 방식의 경도 보정이다. `manseryeok`의 진태양시 옵션처럼 균시차(Equation of Time)를 함께 다루는 구조가 아니다.
+
+#### 4. 절기 authority
+
+절기 시각은 임베드된 정본 절입표가 아니라 태양 황경을 자체 계산하고 Newton-like 반복으로 절입 순간을 근사한다.
+
+이 접근 자체가 잘못이라는 뜻은 아니지만, 명화의 계산 authority로 채택하려면 KASI 또는 독립적인 천문 reference와 별도 전수 검증이 필요하다.
+
+#### 5. 계산과 해석의 제품 API 결합
+
+`calculateSaju()`가 내부에서:
+
+```text
+normalize/calculate four pillars
+-> analyzeChart
+-> ten gods / relations / daeun / seyun / wolun
+-> gyeokguk / yongsin / interpretation-oriented output
+```
+
+까지 한 번에 반환한다.
+
+내부 파일은 `manse.ts`와 `analyze.ts`로 나뉘어 있지만 public product API는 명화가 의도한 Calculation Fact / Interpretation Claim 경계보다 넓다.
+
+#### 6. CI gate 확인 부족
+
+현재 repository root에서 `.github` workflow는 확인되지 않았다. `package.json`에는 test/typecheck/build script가 있지만 publish/CI gate가 `manseryeok`만큼 명확하지 않다.
+
+### 명화에서의 사용 가능성
+
+- 독립 교차검산 후보
+- 기능 taxonomy 참고
+- 관계/12운성/신살/운세 기능 조사 참고
+- LLM compact representation 아이디어 참고
+
+### 권장하지 않는 사용 방식
+
+- `calculateSaju()` 결과 전체를 canonical data로 채택
+- 시간 미상 입력을 그대로 호출
+- `advanced.gyeokguk`, `advanced.yongsin`을 명화 authority로 채택
+- LMT 보정을 진태양시와 동일 취급
+
+### 잠정 평가
+
+```text
+Role: Cross-validation / Feature Reference
+Calculation Authority: below manseryeok
+Adoption: no (primary core)
+Code reuse: selective only
+```
+
+---
+
+## 4. 현재 계산 코어 우선순위
+
+```text
+Primary candidate
+  1. yhj1024/manseryeok v2.0.0
+
+Independent / secondary comparison
+  2. golbin/ssaju v0.2.0
+
+Interpretation reference
+  3. hjsh200219/fortuneteller v1.2.0
+```
+
+이 순위는 별 개수나 기능 수가 아니라 **명화의 authority boundary, uncertainty 보존, 검증 가능성, 계산/해석 분리 적합성**을 기준으로 한다.
+
+---
+
+## 5. 명화의 기본 조합
 
 현재 설계 기준은 다음과 같다.
 
 ```text
 Birth Input
   -> Calculation Policy
-  -> manseryeok Adapter (candidate)
+  -> manseryeok Adapter (primary candidate)
   -> Canonical Saju Snapshot
+  -> optional independent cross-check
   -> Myeonghwa-owned Interpretation Rule Registry
   -> Interpretation Claims
   -> Grounded LLM Narrative
 ```
 
-`fortuneteller`는 위 pipeline에 런타임 dependency로 들어가지 않는다.
+`fortuneteller`와 `ssaju`의 분석 결과 전체는 위 pipeline에 계산 authority dependency로 들어가지 않는다.
 
 ---
 
-## 4. 채택 전 필수 검증
+## 6. 채택 전 필수 검증
 
 `manseryeok`을 실제 dependency로 추가하기 전에 다음을 완료한다.
 
