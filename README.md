@@ -62,6 +62,7 @@ Birth Input
 - [06. Interpretation Taxonomy](docs/interpretation/06-interpretation-taxonomy.md)
 - [07. Rule & Provenance Schema](docs/interpretation/07-rule-provenance-schema.md)
 - [ADR-0001 — Layered Saju Engine](docs/decisions/ADR-0001-layered-saju-engine.md)
+- [ADR-0002 — Provenance-Aware Interpretation Rules](docs/decisions/ADR-0002-provenance-aware-interpretation.md)
 - [Open-source Engine Baseline](docs/research/open-source-engine-baseline.md)
 
 ## 설계 순서
