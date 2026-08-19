@@ -27,7 +27,7 @@ S12 Engine MVP Scope & Implementation Plan
 
 ### Implementation
 
-현재 I0~I8 foundation이 구현되어 있습니다.
+현재 I0~I9A foundation이 구현되어 있습니다.
 
 ```text
 I0  Repository / Tooling Bootstrap          STRICT CLOSED
@@ -39,7 +39,8 @@ I5  Interpretation Runtime Foundation      STRICT CLOSED
 I6  Claim Graph / Interpretation Run       STRICT CLOSED
 I7  Source-backed Research Rule Pack       STRICT CLOSED (RESEARCH ONLY)
 I8  Narrative Foundation                   STRICT CLOSED
-I9  LLM Adapter                            NEXT
+I9A Provider-neutral LLM Runtime           STRICT CLOSED
+I9B Production Provider Adapter            USER DECISION REQUIRED
 I10 Developer Harness E2E
 ```
 
@@ -78,8 +79,17 @@ I10 Developer Harness E2E
 - deterministic narrative grounding validator
 - mandatory ambiguity / conflict / scope disclosures
 - deterministic model-independent narrative fallback
+- provider-neutral structured model adapter contract
+- prompt compiler with separated authority instructions and user data
+- runtime parser for untrusted model output
+- exact one-repair policy for invalid model output
+- provider failure / invalid repair deterministic fallback
+- deterministic NarrativeRun audit identity
+- T9 gate for future-tendency narrative assertions
 
 아직 **실제 명리 해석 규칙을 production authority로 승인하지 않았습니다.** I7 corpus는 research-only이며 production pack으로 단순 승격할 수 없도록 fail-closed 되어 있습니다.
+
+또한 실제 production LLM provider/model/API credential은 아직 선택하지 않았습니다. I9A는 provider-neutral runtime만 검증한 상태입니다.
 
 ## 핵심 원칙
 
@@ -105,8 +115,12 @@ I10 Developer Harness E2E
    - ambiguous fact, conflict, scope guard는 disclosure 없이 사용자 주장으로 숨길 수 없습니다.
 9. **LLM은 Evidence Bundle 밖의 명리 규칙을 생성하지 않습니다.**
    - 설명, 비교, 요약, 질문응답, 문장화에 한정합니다.
-10. **근거 없는 정확도 숫자를 만들지 않습니다.**
-   - 계산 정확도, 명리 해석 일관성, 실제 미래 예측 정확도를 별개로 취급합니다.
+   - provider 출력은 `unknown`으로 취급하고 runtime parser + grounding validator를 통과해야 합니다.
+10. **모델 실패는 authority 완화의 이유가 아닙니다.**
+    - invalid output은 최대 한 번 repair합니다.
+    - repair 실패나 provider failure은 deterministic fallback으로 종료합니다.
+11. **근거 없는 정확도 숫자를 만들지 않습니다.**
+    - 계산 정확도, 명리 해석 일관성, 실제 미래 예측 정확도를 별개로 취급합니다.
 
 ## 목표 아키텍처
 
@@ -123,8 +137,11 @@ Birth Input
   -> Interpretation Claims + Claim Relations
   -> Integrity / Completeness Gate
   -> Narrative Evidence Bundle
-  -> Grounded LLM Structured Draft
+  -> provider-neutral Structured Model Adapter
+  -> untrusted NarrativeDraft output
+  -> Runtime Parser
   -> Grounding / Policy Validation
+  -> at most one constrained repair
   -> deterministic fallback if required
   -> ReadingArtifact
   -> Delivery Adapter
@@ -197,6 +214,8 @@ InterpretationRun
 unknown evidence ref
 inactive claim evidence
 ambiguous fact asserted as deterministic
+interpretation claim relabeled as deterministic fact
+future tendency without a T9 time-dynamic claim
 missing methodology attribution
 missing calculation ambiguity disclosure
 missing conflict disclosure
@@ -204,6 +223,26 @@ missing scope-limitation disclosure
 ```
 
 Targeted reading은 upstream dependency와 material relation만 포함하며 downstream claim을 역으로 끌어오지 않습니다.
+
+## Provider-neutral LLM Runtime
+
+I9A는 특정 LLM 회사나 SDK에 종속되지 않는 실행 경계를 구현했습니다.
+
+```text
+GroundedNarrativeRequest
+-> Prompt Compiler
+-> NarrativeModelAdapter
+-> provider output: unknown
+-> NarrativeDraft Parser
+-> Grounding Validator
+-> one repair maximum
+-> deterministic fallback
+-> NarrativeRun
+```
+
+User text와 source/evidence 문자열은 prompt authority instructions와 분리하여 data로 전달합니다.
+
+실제 provider가 예외를 내면 repair를 시도하지 않고 deterministic fallback으로 종료합니다. Provider가 정상 응답했지만 구조적으로 잘못된 값을 반환하면 정확히 한 번 repair합니다. 세 번째 모델 호출은 없습니다.
 
 ## 구현 Toolchain Baseline
 
@@ -247,6 +286,7 @@ TypeScript 7은 stable이지만 현재 lint/tooling 공식 지원 상태를 고�
 - [I6 Claim Graph / Runtime Status](docs/implementation/i6-claim-graph-runtime-status.md)
 - [I7 Source-backed Research Pack Status](docs/implementation/i7-source-backed-research-pack-status.md)
 - [I8 Narrative Foundation Status](docs/implementation/i8-narrative-foundation-status.md)
+- [I9 Provider-neutral LLM Runtime Status](docs/implementation/i9-provider-neutral-llm-runtime-status.md)
 
 ### Decisions / Research
 
@@ -277,10 +317,11 @@ TypeScript 7은 stable이지만 현재 lint/tooling 공식 지원 상태를 고�
 
 ### LLM / Narrative
 
-- production LLM provider / model
+- **production LLM provider / model (I9B decision gate)**
 - provider credential strategy
+- provider-specific structured-output adapter
+- provider-specific retry/quota/error mapping
 - semantic overstatement detector 범위
-- one-repair policy의 provider별 구현
 
 ### Product
 
