@@ -2,7 +2,9 @@ import { describe, expect, test } from 'vitest';
 import type {
   InterpretationPack,
   MethodologyDefinition,
+  ReviewAttestation,
   RuleDefinition,
+  SourceReference,
 } from '../src/index.js';
 import {
   ExecutionPlanError,
@@ -11,6 +13,7 @@ import {
 import {
   RegistryConfigurationError,
   createRuleRegistrySnapshot,
+  deterministicContentHash,
 } from '../src/interpretation/rule-registry.js';
 
 const methodology: MethodologyDefinition = {
@@ -22,7 +25,7 @@ const methodology: MethodologyDefinition = {
   assumptions: [],
   requiredFactTypes: [],
   sourceIds: [],
-  status: 'active',
+  status: 'research',
 };
 
 const pack: InterpretationPack = {
@@ -34,7 +37,7 @@ const pack: InterpretationPack = {
   conflictPolicy: 'preserve_all',
   ambiguityPolicy: 'propagate',
   compositionPolicyRef: { id: 'COMPOSITION-SYNTHETIC', version: '1.0.0' },
-  status: 'production',
+  status: 'research',
 };
 
 function rule(
@@ -88,9 +91,9 @@ function rule(
       provenanceQuality: 'unknown',
       testCoverage: 'unit',
       methodologyStability: 'experimental',
-      reviewerStatus: 'internal_reviewed',
+      reviewerStatus: 'unreviewed',
     },
-    status: options.status ?? 'active',
+    status: options.status ?? 'research',
     ...(options.requires === undefined
       ? {}
       : { relations: { requires: options.requires } }),
@@ -104,6 +107,92 @@ function registry(rules: readonly RuleDefinition[], selectedPack = pack) {
       methodologies: [methodology],
     },
     selectedPack,
+    '2026-08-19T00:00:00.000Z',
+  );
+}
+
+const productionSources: readonly SourceReference[] = [
+  {
+    sourceId: 'SOURCE-PLANNER-PROD-A',
+    sourceType: 'paper',
+    title: 'Synthetic production planner source A',
+    provenanceTier: 'scholarly_secondary',
+  },
+  {
+    sourceId: 'SOURCE-PLANNER-PROD-B',
+    sourceType: 'paper',
+    title: 'Synthetic production planner source B',
+    provenanceTier: 'scholarly_secondary',
+  },
+];
+
+function productionResearchRuleRegistry() {
+  const productionMethodology: MethodologyDefinition = {
+    ...methodology,
+    sourceIds: productionSources.map((source) => source.sourceId),
+    status: 'active',
+  };
+  const researchRule: RuleDefinition = {
+    ...rule('RULE-RESEARCH', 'CLAIM-RESEARCH', { status: 'research' }),
+    methodologyRef: {
+      id: productionMethodology.methodologyId,
+      version: productionMethodology.version,
+    },
+    sourceRefs: productionSources.map((source) => ({
+      sourceId: source.sourceId,
+      supportType: 'implementation_reference' as const,
+    })),
+    quality: {
+      provenanceQuality: 'multi_source_supported',
+      testCoverage: 'fixture_matrix',
+      methodologyStability: 'stable_within_method',
+      reviewerStatus: 'domain_reviewed',
+    },
+  };
+  const productionPack: InterpretationPack = {
+    ...pack,
+    methodologyRefs: [
+      { id: productionMethodology.methodologyId, version: productionMethodology.version },
+    ],
+    status: 'production',
+  };
+  const reviews: readonly ReviewAttestation[] = [
+    {
+      attestationId: 'ATTEST-PLANNER-PROD-METHOD',
+      subjectType: 'methodology',
+      subjectRef: {
+        id: productionMethodology.methodologyId,
+        version: productionMethodology.version,
+        contentHash: deterministicContentHash(productionMethodology),
+      },
+      reviewLevel: 'domain',
+      reviewerId: 'synthetic-domain-reviewer',
+      reviewedAt: '2026-08-19T00:00:00.000Z',
+      decision: 'approved',
+    },
+    {
+      attestationId: 'ATTEST-PLANNER-PROD-RULE',
+      subjectType: 'rule',
+      subjectRef: {
+        id: researchRule.ruleId,
+        version: researchRule.version,
+        contentHash: deterministicContentHash(researchRule),
+      },
+      reviewLevel: 'domain',
+      reviewerId: 'synthetic-domain-reviewer',
+      reviewedAt: '2026-08-19T00:00:00.000Z',
+      decision: 'approved',
+    },
+  ];
+
+  return createRuleRegistrySnapshot(
+    {
+      rules: [researchRule],
+      methodologies: [productionMethodology],
+      sources: productionSources,
+      reviewAttestations: reviews,
+    },
+    productionPack,
     '2026-08-19T00:00:00.000Z',
   );
 }
@@ -228,20 +317,18 @@ describe('interpretation execution DAG', () => {
     }
   });
 
-  test('production pack rejects research rules even if the rule set is enabled', () => {
-    const researchRule = rule('RULE-RESEARCH', 'CLAIM-RESEARCH', { status: 'research' });
-
-    expect(() => buildInterpretationExecutionPlan(registry([researchRule]))).toThrow(
-      ExecutionPlanError,
-    );
+  test('production pack rejects research rules even when every other authorization prerequisite is satisfied', () => {
+    expect(() =>
+      buildInterpretationExecutionPlan(productionResearchRuleRegistry()),
+    ).toThrow(ExecutionPlanError);
     try {
-      buildInterpretationExecutionPlan(registry([researchRule]));
+      buildInterpretationExecutionPlan(productionResearchRuleRegistry());
     } catch (error) {
       expect((error as ExecutionPlanError).code).toBe('RULE_NOT_EXECUTABLE_FOR_PACK');
     }
   });
 
-  test('deprecated packs cannot execute even with active rules', () => {
+  test('deprecated packs cannot execute even with selected rules', () => {
     const deprecatedPack: InterpretationPack = { ...pack, status: 'deprecated' };
 
     expect(() =>
@@ -256,9 +343,15 @@ describe('interpretation execution DAG', () => {
 
   test('multiple selected versions of the same rule id fail closed', () => {
     const v1 = rule('RULE-VERSIONED', 'CLAIM-V1');
-    const v2: RuleDefinition = { ...v1, version: '2.0.0', output: { ...v1.output, claimType: 'CLAIM-V2' } };
+    const v2: RuleDefinition = {
+      ...v1,
+      version: '2.0.0',
+      output: { ...v1.output, claimType: 'CLAIM-V2' },
+    };
 
-    expect(() => buildInterpretationExecutionPlan(registry([v1, v2]))).toThrow(ExecutionPlanError);
+    expect(() => buildInterpretationExecutionPlan(registry([v1, v2]))).toThrow(
+      ExecutionPlanError,
+    );
     try {
       buildInterpretationExecutionPlan(registry([v1, v2]));
     } catch (error) {
