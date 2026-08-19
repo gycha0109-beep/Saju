@@ -128,7 +128,7 @@ export const OPENAI_NARRATIVE_DRAFT_JSON_SCHEMA = {
           blocks: {
             type: 'array',
             items: {
-              oneOf: [assertionSchema, comparisonSchema, disclosureSchema, transitionSchema],
+              anyOf: [assertionSchema, comparisonSchema, disclosureSchema, transitionSchema],
             },
           },
         },
