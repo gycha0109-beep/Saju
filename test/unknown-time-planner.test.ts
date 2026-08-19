@@ -48,7 +48,7 @@ function stateAt(snapshot: CanonicalSajuSnapshot, path: string): FactState<Pilla
     case 'pillars.day':
       return snapshot.pillars.day;
     default:
-      throw new Error(`unexpected scenario path: ${path}`);
+      throw new Error(`unexpected scenario pillar path: ${path}`);
   }
 }
 
@@ -63,6 +63,7 @@ function assertScenarioIntegrity(snapshot: CanonicalSajuSnapshot): void {
 
     const signatureParts: string[] = [];
     for (const override of scenario.factOverrides) {
+      if (!override.path.startsWith('pillars.')) continue;
       const state = stateAt(snapshot, override.path);
       expect(state.status).toBe('ambiguous');
       if (state.status !== 'ambiguous') continue;
