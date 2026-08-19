@@ -128,11 +128,13 @@ function executionCompleteness(
   const selectedRuleSets = [...new Set(registry.pack.enabledRuleSets)].sort();
   const blocked = new Set<string>();
   const reasons = new Set<string>();
-  const ruleSetByRuleId = new Map(registry.rules.map((rule) => [rule.ruleId, rule.ruleSetId]));
+  const ruleSetByRuleRef = new Map(
+    registry.rules.map((rule) => [ruleKey(rule.ruleId, rule.version), rule.ruleSetId]),
+  );
 
   for (const evaluation of evaluations) {
     if (evaluation.status === 'matched' || evaluation.status === 'not_matched') continue;
-    const ruleSetId = ruleSetByRuleId.get(evaluation.ruleRef.id);
+    const ruleSetId = ruleSetByRuleRef.get(ruleKey(evaluation.ruleRef.id, evaluation.ruleRef.version));
     if (ruleSetId !== undefined) blocked.add(ruleSetId);
     reasons.add(`${evaluation.ruleRef.id}:${evaluation.status}`);
   }
@@ -198,6 +200,13 @@ export function runInterpretation(
   const now = options.now ?? new Date();
   const plan = buildInterpretationExecutionPlan(registry);
   const rules = ruleIndex(registry);
+  const plannedRules = plan.orderedRuleRefs.map((ruleRef) => {
+    const rule = rules.get(ruleKey(ruleRef.id, ruleRef.version));
+    if (rule === undefined) {
+      throw new Error(`Execution plan references missing resolved rule ${ruleRef.id}@${ruleRef.version}`);
+    }
+    return rule;
+  });
   const evaluations: RuleEvaluation[] = [];
   const claims: InterpretationClaim[] = [];
 
@@ -225,7 +234,7 @@ export function runInterpretation(
     left.evaluationId.localeCompare(right.evaluationId),
   );
   const sortedClaims = [...claims].sort((left, right) => left.claimId.localeCompare(right.claimId));
-  const claimRelations = buildClaimRelations(sortedClaims, registry.rules);
+  const claimRelations = buildClaimRelations(sortedClaims, plannedRules);
   const graphIntegrity = validateClaimGraphIntegrity(
     snapshot,
     registry,
