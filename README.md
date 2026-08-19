@@ -27,7 +27,7 @@ S12 Engine MVP Scope & Implementation Plan
 
 ### Implementation
 
-현재 I0~I6 foundation이 구현되어 있습니다.
+현재 I0~I8 foundation이 구현되어 있습니다.
 
 ```text
 I0  Repository / Tooling Bootstrap          STRICT CLOSED
@@ -37,9 +37,9 @@ I3  Calculation Verification               IN PROGRESS
 I4  Unknown-Time Scenario Planner          STRICT CLOSED
 I5  Interpretation Runtime Foundation      STRICT CLOSED
 I6  Claim Graph / Interpretation Run       STRICT CLOSED
-I7  Source-backed Research Rule Pack       NEXT
-I8  Narrative Foundation
-I9  LLM Adapter
+I7  Source-backed Research Rule Pack       STRICT CLOSED (RESEARCH ONLY)
+I8  Narrative Foundation                   STRICT CLOSED
+I9  LLM Adapter                            NEXT
 I10 Developer Harness E2E
 ```
 
@@ -62,6 +62,7 @@ I10 Developer Harness E2E
 - content-addressed rules, methodologies, packs, and source references
 - deterministic dependency DAG
 - restricted declarative Rule evaluator
+- safe nested RuleOperand projection
 - scenario-preserving Rule execution
 - InterpretationClaim / ClaimRelation graph
 - conflict preservation and deterministic relation IDs
@@ -70,8 +71,15 @@ I10 Developer Harness E2E
 - ExecutionCompleteness propagation
 - deterministic InterpretationRun identity
 - Claim-level EvidenceIndex
+- source-backed I7 research-only seasonal-support signal pack
+- mandatory scope-guard claim preventing month-only signal overreach
+- scenario-addressable NarrativeEvidenceBundle
+- targeted evidence minimization
+- deterministic narrative grounding validator
+- mandatory ambiguity / conflict / scope disclosures
+- deterministic model-independent narrative fallback
 
-아직 **실제 명리 해석 규칙을 production authority로 넣지는 않았습니다.** I7부터 출처 기반 research rule corpus를 구축합니다.
+아직 **실제 명리 해석 규칙을 production authority로 승인하지 않았습니다.** I7 corpus는 research-only이며 production pack으로 단순 승격할 수 없도록 fail-closed 되어 있습니다.
 
 ## 핵심 원칙
 
@@ -92,9 +100,12 @@ I10 Developer Harness E2E
    - 동일 Snapshot/Pack/Registry/Engine version은 동일한 claim graph를 만들어야 합니다.
 7. **Scenario를 몰래 합치지 않습니다.**
    - 출생시간 미상 등으로 발생한 후보 scenario는 명시적으로 격리합니다.
-8. **LLM은 Evidence Bundle 밖의 명리 규칙을 생성하지 않습니다.**
+8. **Narrative는 Evidence Bundle 밖으로 나가지 않습니다.**
+   - Evidence Selector는 필요한 claim/fact/context만 선택합니다.
+   - ambiguous fact, conflict, scope guard는 disclosure 없이 사용자 주장으로 숨길 수 없습니다.
+9. **LLM은 Evidence Bundle 밖의 명리 규칙을 생성하지 않습니다.**
    - 설명, 비교, 요약, 질문응답, 문장화에 한정합니다.
-9. **근거 없는 정확도 숫자를 만들지 않습니다.**
+10. **근거 없는 정확도 숫자를 만들지 않습니다.**
    - 계산 정확도, 명리 해석 일관성, 실제 미래 예측 정확도를 별개로 취급합니다.
 
 ## 목표 아키텍처
@@ -114,6 +125,7 @@ Birth Input
   -> Narrative Evidence Bundle
   -> Grounded LLM Structured Draft
   -> Grounding / Policy Validation
+  -> deterministic fallback if required
   -> ReadingArtifact
   -> Delivery Adapter
 ```
@@ -135,6 +147,63 @@ Tier E  Myeonghwa internal regression
 ```
 
 현재 KASI / IANA 기반 fixture provenance를 별도로 관리하며 I3에서 authoritative corpus를 계속 확장합니다.
+
+## Interpretation Research
+
+I7에서 첫 source-backed corpus를 추가했지만 **research-only**입니다.
+
+현재 범위:
+
+```text
+month branch elemental context
++
+day stem element
+-> seasonal support signal
+```
+
+가능한 출력도 다음으로 제한합니다.
+
+```text
+same-element support signal
+generating-element support signal
+overall-strength scope guard
+```
+
+다음은 아직 출력하지 않습니다.
+
+```text
+final strong / weak classification
+yongshin
+gyeokguk
+career / wealth / relationship / health prediction
+future-event prediction
+```
+
+## Narrative Foundation
+
+I8은 LLM 없이 먼저 narrative authority boundary를 구현했습니다.
+
+```text
+InterpretationRun
+-> Evidence Selector
+-> scenario-addressable NarrativeEvidenceBundle
+-> Grounding Validator
+-> deterministic fallback
+```
+
+다음은 deterministic validation fail 대상입니다.
+
+```text
+unknown evidence ref
+inactive claim evidence
+ambiguous fact asserted as deterministic
+missing methodology attribution
+missing calculation ambiguity disclosure
+missing conflict disclosure
+missing scope-limitation disclosure
+```
+
+Targeted reading은 upstream dependency와 material relation만 포함하며 downstream claim을 역으로 끌어오지 않습니다.
 
 ## 구현 Toolchain Baseline
 
@@ -176,6 +245,8 @@ TypeScript 7은 stable이지만 현재 lint/tooling 공식 지원 상태를 고�
 - [I4 Unknown-Time Status](docs/implementation/i4-unknown-time-status.md)
 - [I5 Rule Engine Foundation Status](docs/implementation/i5-rule-engine-foundation-status.md)
 - [I6 Claim Graph / Runtime Status](docs/implementation/i6-claim-graph-runtime-status.md)
+- [I7 Source-backed Research Pack Status](docs/implementation/i7-source-backed-research-pack-status.md)
+- [I8 Narrative Foundation Status](docs/implementation/i8-narrative-foundation-status.md)
 
 ### Decisions / Research
 
@@ -203,6 +274,13 @@ TypeScript 7은 stable이지만 현재 lint/tooling 공식 지원 상태를 고�
 - 용신 방법론별 출처와 노출 정책
 - 기본 신살 allowlist
 - production Rule의 domain review 수준
+
+### LLM / Narrative
+
+- production LLM provider / model
+- provider credential strategy
+- semantic overstatement detector 범위
+- one-repair policy의 provider별 구현
 
 ### Product
 
