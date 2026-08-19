@@ -19,6 +19,8 @@ import {
 const FORBIDDEN_PATH_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
 
 export type EvidenceSelectionErrorCode =
+  | 'RUN_SNAPSHOT_MISMATCH'
+  | 'RUN_REGISTRY_MISMATCH'
   | 'TARGET_CLAIMS_REQUIRED'
   | 'TARGET_CLAIM_NOT_FOUND'
   | 'FACT_PATH_NOT_FOUND'
@@ -159,11 +161,19 @@ function expandClaimContext(
 
     for (const relation of execution.claimRelations) {
       if (!relationAddsContext(relation)) continue;
-      if (selected.has(relation.fromClaimId) && active.has(relation.toClaimId) && !selected.has(relation.toClaimId)) {
+      if (
+        selected.has(relation.fromClaimId) &&
+        active.has(relation.toClaimId) &&
+        !selected.has(relation.toClaimId)
+      ) {
         selected.add(relation.toClaimId);
         changed = true;
       }
-      if (selected.has(relation.toClaimId) && active.has(relation.fromClaimId) && !selected.has(relation.fromClaimId)) {
+      if (
+        selected.has(relation.toClaimId) &&
+        active.has(relation.fromClaimId) &&
+        !selected.has(relation.fromClaimId)
+      ) {
         selected.add(relation.fromClaimId);
         changed = true;
       }
@@ -288,13 +298,13 @@ export function buildNarrativeEvidenceBundle(
 ): BuiltNarrativeEvidenceBundle {
   if (execution.run.snapshotId !== snapshot.snapshotId) {
     throw new EvidenceSelectionError(
-      'FACT_PATH_NOT_FOUND',
+      'RUN_SNAPSHOT_MISMATCH',
       `Interpretation run snapshot ${execution.run.snapshotId} does not match ${snapshot.snapshotId}.`,
     );
   }
   if (execution.run.registrySnapshotId !== registry.snapshot.registrySnapshotId) {
     throw new EvidenceSelectionError(
-      'SOURCE_NOT_FOUND',
+      'RUN_REGISTRY_MISMATCH',
       'Interpretation run and Registry Snapshot identities do not match.',
     );
   }
