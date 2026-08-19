@@ -1,6 +1,7 @@
 import type { ContentAddressedVersionedRef, VersionedRef } from '../contracts/common.js';
 import type {
   InterpretationPack,
+  MethodologyDefinition,
   RuleDefinition,
 } from '../contracts/interpretation.js';
 import {
@@ -10,7 +11,9 @@ import {
 
 export type ExecutionPlanErrorCode =
   | 'PACK_NOT_EXECUTABLE'
+  | 'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK'
   | 'RULE_NOT_EXECUTABLE_FOR_PACK'
+  | 'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK'
   | 'RULE_METHODOLOGY_NOT_ENABLED'
   | 'RULE_VERSION_SELECTION_AMBIGUOUS'
   | 'RULE_DEPENDENCY_MISSING'
@@ -71,6 +74,94 @@ function allowedStatus(rule: RuleDefinition, pack: InterpretationPack): boolean 
   return rule.status === 'active' || rule.status === 'reviewed' || rule.status === 'research';
 }
 
+function methodologyStatusAllowed(
+  methodology: MethodologyDefinition,
+  pack: InterpretationPack,
+): boolean {
+  if (methodology.status === 'deprecated') return false;
+  if (pack.status === 'production') return methodology.status === 'active';
+  if (pack.status === 'staging') {
+    return methodology.status === 'active' || methodology.status === 'reviewed';
+  }
+  return (
+    methodology.status === 'active' ||
+    methodology.status === 'reviewed' ||
+    methodology.status === 'research'
+  );
+}
+
+const PRODUCTION_TEST_COVERAGE = new Set<RuleDefinition['quality']['testCoverage']>([
+  'fixture_matrix',
+  'regression_suite',
+]);
+const STAGING_TEST_COVERAGE = new Set<RuleDefinition['quality']['testCoverage']>([
+  'unit',
+  'fixture_matrix',
+  'regression_suite',
+]);
+const PRODUCTION_PROVENANCE = new Set<RuleDefinition['quality']['provenanceQuality']>([
+  'primary_supported',
+  'multi_source_supported',
+]);
+const STAGING_PROVENANCE = new Set<RuleDefinition['quality']['provenanceQuality']>([
+  'primary_supported',
+  'multi_source_supported',
+  'secondary_only',
+  'single_practitioner',
+]);
+
+function assertMethodologyAuthorization(registry: ResolvedRuleRegistrySnapshot): void {
+  for (const methodology of registry.methodologies) {
+    if (!methodologyStatusAllowed(methodology, registry.pack)) {
+      throw new ExecutionPlanError(
+        'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK',
+        `${methodology.methodologyId}@${methodology.version} (${methodology.status}) is not executable in ${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version}`,
+      );
+    }
+    if (
+      (registry.pack.status === 'staging' || registry.pack.status === 'production') &&
+      methodology.sourceIds.length === 0
+    ) {
+      throw new ExecutionPlanError(
+        'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK',
+        `${methodology.methodologyId}@${methodology.version} has no source references and cannot enter ${registry.pack.status}.`,
+      );
+    }
+  }
+}
+
+function assertRuleQualityAuthorization(rule: RuleDefinition, pack: InterpretationPack): void {
+  if (pack.status === 'research') return;
+
+  if (pack.status === 'staging') {
+    const reviewerAllowed =
+      rule.quality.reviewerStatus === 'internal_reviewed' ||
+      rule.quality.reviewerStatus === 'domain_reviewed';
+    if (
+      !reviewerAllowed ||
+      !STAGING_TEST_COVERAGE.has(rule.quality.testCoverage) ||
+      !STAGING_PROVENANCE.has(rule.quality.provenanceQuality)
+    ) {
+      throw new ExecutionPlanError(
+        'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK',
+        `${rule.ruleId}@${rule.version} quality is not staging-authorized: reviewer=${rule.quality.reviewerStatus}, tests=${rule.quality.testCoverage}, provenance=${rule.quality.provenanceQuality}`,
+      );
+    }
+    return;
+  }
+
+  if (
+    rule.quality.reviewerStatus !== 'domain_reviewed' ||
+    !PRODUCTION_TEST_COVERAGE.has(rule.quality.testCoverage) ||
+    !PRODUCTION_PROVENANCE.has(rule.quality.provenanceQuality)
+  ) {
+    throw new ExecutionPlanError(
+      'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK',
+      `${rule.ruleId}@${rule.version} quality is not production-authorized: reviewer=${rule.quality.reviewerStatus}, tests=${rule.quality.testCoverage}, provenance=${rule.quality.provenanceQuality}`,
+    );
+  }
+}
+
 function assertSingleSelectedVersion(rules: readonly RuleDefinition[]): void {
   const versionsByRuleId = new Map<string, Set<string>>();
   for (const rule of rules) {
@@ -98,6 +189,8 @@ function selectRules(
     );
   }
 
+  assertMethodologyAuthorization(registry);
+
   const enabledSets = new Set(registry.pack.enabledRuleSets);
   const disabled = new Set(registry.pack.disabledRuleIds ?? []);
   const enabledMethodologies = new Set(
@@ -124,6 +217,8 @@ function selectRules(
         `${rule.ruleId}@${rule.version} requires methodology ${rule.methodologyRef.id}@${rule.methodologyRef.version} outside the pack`,
       );
     }
+
+    assertRuleQualityAuthorization(rule, registry.pack);
   }
 
   return sortRules(selected);
