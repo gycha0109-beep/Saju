@@ -27,8 +27,12 @@
 6. **모르는 입력을 임의값으로 채우지 않습니다.**
    - 출생시간 미상은 `12:00` 같은 가짜 값으로 대체하지 않습니다.
    - 경계에 따라 결과가 둘 이상 가능하면 `ambiguous` 상태로 보존합니다.
-7. **LLM은 근거 bundle 밖의 명리 규칙을 생성하지 않습니다.**
+7. **Interpretation Engine은 deterministic 해야 합니다.**
+   - 동일한 Snapshot/Pack/Registry/Engine version 조합은 동일한 claim graph를 생성해야 합니다.
+   - Rule 실행은 등록 순서가 아니라 dependency DAG를 따릅니다.
+8. **LLM은 근거 bundle 밖의 명리 규칙을 생성하지 않습니다.**
    - Canonical Fact와 Interpretation Claim을 선택·설명·비교·문장화하는 역할로 제한합니다.
+   - 구조화 출력과 grounding validation을 통과한 Narrative만 사용자에게 전달합니다.
 
 ## 계산 코어 후보
 
@@ -45,10 +49,14 @@ Birth Input
   -> Deterministic Calculation Adapter
   -> Canonical Saju Snapshot
   -> Derived Structural Facts
-  -> Interpretation Rules / Method Packs
+  -> Interpretation Execution Plan
+  -> Versioned Rules / Method Packs
+  -> Rule Evaluations
   -> Interpretation Claims + Claim Relations
+  -> Integrity / Completeness Gate
   -> Narrative Evidence Bundle
-  -> Grounded LLM Narrative
+  -> Grounded LLM Structured Draft
+  -> Grounding / Policy Validation
   -> Delivery Channel (미정)
 ```
 
@@ -61,8 +69,11 @@ Birth Input
 - [05. Golden Fixture / Verification Strategy](docs/verification/05-golden-fixture-strategy.md)
 - [06. Interpretation Taxonomy](docs/interpretation/06-interpretation-taxonomy.md)
 - [07. Rule & Provenance Schema](docs/interpretation/07-rule-provenance-schema.md)
+- [08. Interpretation Engine Design](docs/interpretation/08-interpretation-engine-design.md)
+- [09. LLM Grounding Contract](docs/llm/09-llm-grounding-contract.md)
 - [ADR-0001 — Layered Saju Engine](docs/decisions/ADR-0001-layered-saju-engine.md)
 - [ADR-0002 — Provenance-Aware Interpretation Rules](docs/decisions/ADR-0002-provenance-aware-interpretation.md)
+- [ADR-0003 — Deterministic Interpretation & Grounded LLM](docs/decisions/ADR-0003-deterministic-interpretation-and-grounded-llm.md)
 - [Open-source Engine Baseline](docs/research/open-source-engine-baseline.md)
 
 ## 설계 순서
@@ -74,8 +85,8 @@ Birth Input
 5. Golden Fixture / Verification Design — **초안 작성**
 6. Interpretation Taxonomy — **초안 작성**
 7. Rule & Provenance Schema — **초안 작성**
-8. Interpretation Engine Design
-9. LLM Grounding Contract
+8. Interpretation Engine Design — **초안 작성**
+9. LLM Grounding Contract — **초안 작성**
 10. Product Delivery / UX
 11. Persistence / Privacy / Security
 12. MVP Scope 및 구현 계획
@@ -101,4 +112,13 @@ Birth Input
 - 사용자-facing domain synthesis 범위와 과도한 단정 방지 정책
 - production Rule의 domain expert review 수준
 
-이 항목들은 구현 convenience가 아니라 방법론과 검증 근거를 기준으로 결정합니다.
+### Runtime / Narrative
+
+- production `maxScenarioCount`
+- core/optional Rule Group 구체 목록
+- claim type별 materiality 정책
+- Narrative structured-output provider 선정
+- semantic grounding validator의 초기 구현 범위
+- deterministic fallback의 사용자-facing 범위
+
+이 항목들은 구현 convenience가 아니라 방법론, 검증 근거, 재현성, 사용자 안전성을 기준으로 결정합니다.
