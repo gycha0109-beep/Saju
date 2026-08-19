@@ -14,25 +14,25 @@ export interface FactCandidate<T> {
 }
 
 export interface ResolvedFact<T> {
-  state: 'resolved';
+  status: 'resolved';
   value: T;
 }
 
 export interface AmbiguousFact<T> {
-  state: 'ambiguous';
+  status: 'ambiguous';
   candidates: readonly FactCandidate<T>[];
   reasonCodes: readonly string[];
 }
 
 export interface UnavailableFact {
-  state: 'unavailable';
+  status: 'unavailable';
   reasonCode: string;
 }
 
 export type FactState<T> = ResolvedFact<T> | AmbiguousFact<T> | UnavailableFact;
 
 export function resolved<T>(value: T): ResolvedFact<T> {
-  return { state: 'resolved', value };
+  return { status: 'resolved', value };
 }
 
 export function ambiguous<T>(
@@ -47,7 +47,7 @@ export function ambiguous<T>(
     throw new RangeError('An ambiguous fact requires at least one reason code.');
   }
 
-  return { state: 'ambiguous', candidates, reasonCodes };
+  return { status: 'ambiguous', candidates, reasonCodes };
 }
 
 export function unavailable(reasonCode: string): UnavailableFact {
@@ -55,7 +55,7 @@ export function unavailable(reasonCode: string): UnavailableFact {
     throw new RangeError('An unavailable fact requires a non-empty reason code.');
   }
 
-  return { state: 'unavailable', reasonCode };
+  return { status: 'unavailable', reasonCode };
 }
 
 export function assertVersionedRef(value: unknown): asserts value is VersionedRef {
