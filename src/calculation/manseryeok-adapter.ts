@@ -118,10 +118,10 @@ function stableStringify(value: unknown): string {
   return JSON.stringify(canonicalize(value));
 }
 
-function calculateIdentity(input: BirthInput, policy: CalculationPolicySnapshot): {
-  calculationHash: string;
-  snapshotId: string;
-} {
+function calculateIdentity(
+  input: BirthInput,
+  policy: CalculationPolicySnapshot,
+): { calculationHash: string; snapshotId: string } {
   const material = {
     input,
     policy,
@@ -167,6 +167,14 @@ function pillarKey(pillar: PillarFact): string {
 
 function arrayKey(values: readonly string[]): string {
   return values.join('|');
+}
+
+function requireSingle<T>(values: readonly T[], description: string): T {
+  const value = values[0];
+  if (values.length !== 1 || value === undefined) {
+    throw new Error(`${description} requires exactly one value.`);
+  }
+  return value;
 }
 
 function resolveLongitude(input: BirthInput, policy: CalculationPolicySnapshot): number | undefined {
@@ -219,9 +227,7 @@ function toManseryeokBirthInfo(
   hour: number,
   minute: number,
 ): ManseryeokBirthInfo {
-  const longitude = resolveLongitude(input, policy);
   const sex = input.sexForTraditionalCalculation;
-
   const base: ManseryeokBirthInfo = {
     year: input.date.year,
     month: input.date.month,
@@ -238,6 +244,7 @@ function toManseryeokBirthInfo(
   }
 
   if (policy.trueSolarTime.enabled) {
+    const longitude = resolveLongitude(input, policy) ?? DEFAULT_KOREA_LONGITUDE;
     base.trueSolarTime = {
       longitude,
       applyEquationOfTime: policy.trueSolarTime.applyEquationOfTime,
@@ -286,6 +293,11 @@ function buildAppliedCorrections(
   });
 
   corrections.push({
+    type: 'historical-standard-time',
+    applied: policy.trueSolarTime.enabled && policy.trueSolarTime.applyHistoricalDst,
+  });
+
+  corrections.push({
     type: 'historical-dst',
     applied: policy.trueSolarTime.enabled && policy.trueSolarTime.applyHistoricalDst,
   });
@@ -316,9 +328,7 @@ function buildNormalizedKnown(
       : {}),
     clockTime: resolved({ hour: input.time.hour, minute: input.time.minute }),
     ...(policy.trueSolarTime.enabled
-      ? {
-          correctedSolarTime: unavailable('upstream-corrected-time-not-exposed'),
-        }
+      ? { correctedSolarTime: unavailable('upstream-corrected-time-not-exposed') }
       : {}),
     timeZone: policy.timeZonePolicy.timeZone,
     appliedCorrections: buildAppliedCorrections(input, policy),
@@ -342,9 +352,7 @@ function buildNormalizedUnknown(
       : {}),
     clockTime: unavailable(UNKNOWN_TIME_REASON),
     ...(policy.trueSolarTime.enabled
-      ? {
-          correctedSolarTime: unavailable(UNKNOWN_TIME_REASON),
-        }
+      ? { correctedSolarTime: unavailable(UNKNOWN_TIME_REASON) }
       : {}),
     timeZone: policy.timeZonePolicy.timeZone,
     appliedCorrections: buildAppliedCorrections(input, policy),
@@ -520,8 +528,11 @@ function uniquePillarCandidates(
 }
 
 function pillarFactState(candidates: readonly UniquePillarCandidate[]): FactState<PillarFact> {
+  if (candidates.length === 0) {
+    return unavailable('engine-returned-no-candidates');
+  }
   if (candidates.length === 1) {
-    return resolved(candidates[0].value);
+    return resolved(requireSingle(candidates, 'Resolved pillar candidate').value);
   }
 
   const factCandidates: FactCandidate<PillarFact>[] = candidates.map((candidate) => ({
@@ -546,7 +557,7 @@ function deriveDayMaster(day: FactState<PillarFact>): FactState<StemFact> {
   }
   const stems = [...unique.values()];
   if (stems.length === 1) {
-    return resolved(stems[0]);
+    return resolved(requireSingle(stems, 'Resolved day-master candidate'));
   }
 
   return ambiguous(
@@ -569,8 +580,11 @@ function voidBranchesFromObservations(
   }
 
   const values = [...unique.values()];
+  if (values.length === 0) {
+    return unavailable('engine-returned-no-candidates');
+  }
   if (values.length === 1) {
-    return resolved(values[0]);
+    return resolved(requireSingle(values, 'Resolved void-branch candidate'));
   }
 
   return ambiguous(
@@ -748,7 +762,7 @@ export function calculateCanonicalSajuSnapshot(
   assertAdapterPolicySupported(inputValue, policyValue);
 
   if (inputValue.time.known) {
-    return calculateKnown(inputValue as BirthInput & { time: { known: true; hour: number; minute: number } }, policyValue, options);
+    return calculateKnown(inputValue, policyValue, options);
   }
 
   return calculateUnknown(inputValue, policyValue, options);
