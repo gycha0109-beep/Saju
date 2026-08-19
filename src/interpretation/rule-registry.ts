@@ -46,6 +46,10 @@ export interface ResolvedRuleRegistrySnapshot {
 }
 
 function canonicalize(value: unknown): unknown {
+  if (value === undefined) return { $undefined: true };
+  if (typeof value === 'number' && !Number.isFinite(value)) {
+    return { $number: String(value) };
+  }
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value === null || typeof value !== 'object') return value;
 
@@ -53,13 +57,13 @@ function canonicalize(value: unknown): unknown {
   return Object.fromEntries(
     Object.keys(record)
       .sort()
-      .filter((key) => record[key] !== undefined)
       .map((key) => [key, canonicalize(record[key])]),
   );
 }
 
 export function deterministicContentHash(value: unknown): string {
-  return createHash('sha256').update(JSON.stringify(canonicalize(value))).digest('hex');
+  const serialized = JSON.stringify(canonicalize(value));
+  return createHash('sha256').update(serialized).digest('hex');
 }
 
 function versionKey(ref: VersionedRef): string {
