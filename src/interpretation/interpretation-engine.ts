@@ -16,20 +16,22 @@ import {
   buildInterpretationExecutionPlan,
   type InterpretationExecutionPlan,
 } from './execution-plan.js';
+import type { ReviewerTrustContext } from './reviewer-trust.js';
 import { evaluateRule } from './rule-evaluator.js';
 import {
   deterministicContentHash,
   type ResolvedRuleRegistrySnapshot,
 } from './rule-registry.js';
 
-const INTERPRETATION_ENGINE_VERSION = '0.3.0';
+const INTERPRETATION_ENGINE_VERSION = '0.4.0';
 const DERIVED_FACT_SET_VERSION = 'myeonghwa-derived-facts-v1.1';
 export const INTERPRETATION_AUTHORIZATION_POLICY_VERSION =
-  'myeonghwa-interpretation-authorization-v2';
+  'myeonghwa-interpretation-authorization-v3';
 
 export interface InterpretationRunOptions {
   requestId?: string;
   now?: Date;
+  reviewerTrustContext?: ReviewerTrustContext;
 }
 
 export interface InterpretationExecutionResult {
@@ -190,6 +192,7 @@ function makeRunHash(
     derivedFactSetVersion: DERIVED_FACT_SET_VERSION,
     interpretationEngineVersion: INTERPRETATION_ENGINE_VERSION,
     authorizationPolicyVersion: INTERPRETATION_AUTHORIZATION_POLICY_VERSION,
+    reviewerTrustPolicyRef: plan.reviewerTrustPolicyRef,
     evaluations: evaluations.map(stableEvaluationRecord),
     claims,
     relations,
@@ -202,7 +205,7 @@ export function runInterpretation(
   options: InterpretationRunOptions = {},
 ): InterpretationExecutionResult {
   const now = options.now ?? new Date();
-  const plan = buildInterpretationExecutionPlan(registry);
+  const plan = buildInterpretationExecutionPlan(registry, options.reviewerTrustContext);
   const rules = ruleIndex(registry);
   const plannedRules = plan.orderedRuleRefs.map((ruleRef) => {
     const rule = rules.get(ruleKey(ruleRef.id, ruleRef.version));
@@ -275,6 +278,9 @@ export function runInterpretation(
     derivedFactSetVersion: DERIVED_FACT_SET_VERSION,
     interpretationEngineVersion: INTERPRETATION_ENGINE_VERSION,
     authorizationPolicyVersion: INTERPRETATION_AUTHORIZATION_POLICY_VERSION,
+    ...(plan.reviewerTrustPolicyRef === undefined
+      ? {}
+      : { reviewerTrustPolicyRef: plan.reviewerTrustPolicyRef }),
     startedAt: timestamp,
     completedAt: timestamp,
     status,
