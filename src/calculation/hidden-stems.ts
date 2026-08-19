@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { getVoidBranches } from 'manseryeok';
 import { ambiguous, resolved, unavailable, type FactCandidate, type FactState } from '../contracts/common.js';
 import type {
   CalculationScenario,
@@ -134,13 +135,33 @@ function enrichScenarioOverrides(
       candidateId: `hidden-stems:${slot}:${stems.join('-')}`,
       value: stems,
     });
+
+    if (slot === 'day') {
+      additional.push(
+        {
+          path: 'derivedFacts.dayMaster',
+          candidateId: `day-master:${pillar.stem.value}`,
+          value: pillar.stem,
+        },
+        {
+          path: 'derivedFacts.voidBranches',
+          candidateId: `void-branches:${pillar.stem.value}${pillar.branch.value}`,
+          value: [...getVoidBranches(pillar.stem.value, pillar.branch.value)],
+        },
+      );
+    }
+  }
+
+  const deduplicated = new Map<string, CalculationScenario['factOverrides'][number]>();
+  for (const override of [...scenario.factOverrides, ...additional]) {
+    deduplicated.set(override.path, override);
   }
 
   return {
     ...scenario,
     scenarioId: `${newSnapshotId}:scenario:${scenarioIndex + 1}`,
     snapshotId: newSnapshotId,
-    factOverrides: [...scenario.factOverrides, ...additional],
+    factOverrides: [...deduplicated.values()].sort((left, right) => left.path.localeCompare(right.path)),
   };
 }
 
