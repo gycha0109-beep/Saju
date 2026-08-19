@@ -42,11 +42,19 @@ Birth Input
   -> Delivery Channel (미정)
 ```
 
+## 설계 문서
+
+- [01. Domain Boundaries](docs/architecture/01-domain-boundaries.md)
+- [02. Canonical Saju Schema](docs/architecture/02-canonical-saju-schema.md)
+- [03. Calculation Policy](docs/architecture/03-calculation-policy.md)
+- [ADR-0001 — Layered Saju Engine](docs/decisions/ADR-0001-layered-saju-engine.md)
+- [Open-source Engine Baseline](docs/research/open-source-engine-baseline.md)
+
 ## 설계 순서
 
-1. Domain Boundary / Architecture
-2. Canonical Saju Schema
-3. Calculation Policy Specification
+1. Domain Boundary / Architecture — **작성**
+2. Canonical Saju Schema — **초안 작성**
+3. Calculation Policy Specification — **초안 작성**
 4. Calculation Adapter Contract
 5. Golden Fixture / Verification Design
 6. Interpretation Taxonomy
@@ -57,4 +65,4 @@ Birth Input
 11. Persistence / Privacy / Security
 12. MVP Scope 및 구현 계획
 
-상세 설계는 `docs/`에 누적합니다.
+다음 단계에서는 현재 초안의 open question을 검증하면서 Calculation Adapter Contract와 Golden Fixture 설계로 진행합니다.
