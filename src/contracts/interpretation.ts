@@ -118,7 +118,7 @@ export interface RuleInputRequirement {
 }
 
 export type RuleOperand =
-  | { kind: 'input'; key: string }
+  | { kind: 'input'; key: string; path?: string }
   | { kind: 'literal'; value: unknown };
 
 export type RuleExpression =
