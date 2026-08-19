@@ -220,6 +220,7 @@ function semanticView(snapshot: CanonicalSajuSnapshot): Record<(typeof SENSITIVI
 }
 
 function stableValue(value: unknown): string {
+  if (value === undefined) return 'undefined';
   if (Array.isArray(value)) return `[${value.map(stableValue).join(',')}]`;
   if (value !== null && typeof value === 'object') {
     const record = value as Record<string, unknown>;
@@ -228,7 +229,7 @@ function stableValue(value: unknown): string {
       .map((key) => `${JSON.stringify(key)}:${stableValue(record[key])}`)
       .join(',')}}`;
   }
-  return JSON.stringify(value);
+  return JSON.stringify(value) ?? 'undefined';
 }
 
 function semanticChartHash(snapshot: CanonicalSajuSnapshot): string {
