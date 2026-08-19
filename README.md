@@ -20,11 +20,15 @@
    - 규칙별 provenance, 유파/방법론, 버전을 추적할 수 있게 설계합니다.
 4. **유파 차이를 오류로 취급하지 않습니다.**
    - 결정론적 계산 충돌과 해석 관점 차이를 구분합니다.
+   - 상충하는 해석 claim은 평균내거나 덮어쓰지 않고 관계를 보존합니다.
 5. **과학적 예측 정확성을 과장하지 않습니다.**
    - 계산 정확도, 명리 해석 일관성, 실제 미래 예측 정확도를 별개의 문제로 취급합니다.
+   - 근거 없는 운세/궁합 숫자 점수를 품질 지표처럼 사용하지 않습니다.
 6. **모르는 입력을 임의값으로 채우지 않습니다.**
    - 출생시간 미상은 `12:00` 같은 가짜 값으로 대체하지 않습니다.
    - 경계에 따라 결과가 둘 이상 가능하면 `ambiguous` 상태로 보존합니다.
+7. **LLM은 근거 bundle 밖의 명리 규칙을 생성하지 않습니다.**
+   - Canonical Fact와 Interpretation Claim을 선택·설명·비교·문장화하는 역할로 제한합니다.
 
 ## 계산 코어 후보
 
@@ -40,8 +44,10 @@ Birth Input
   -> Calculation Planner
   -> Deterministic Calculation Adapter
   -> Canonical Saju Snapshot
-  -> Interpretation Rules
-  -> Interpretation Claims
+  -> Derived Structural Facts
+  -> Interpretation Rules / Method Packs
+  -> Interpretation Claims + Claim Relations
+  -> Narrative Evidence Bundle
   -> Grounded LLM Narrative
   -> Delivery Channel (미정)
 ```
@@ -53,6 +59,8 @@ Birth Input
 - [03. Calculation Policy](docs/architecture/03-calculation-policy.md)
 - [04. Calculation Adapter Contract](docs/architecture/04-calculation-adapter-contract.md)
 - [05. Golden Fixture / Verification Strategy](docs/verification/05-golden-fixture-strategy.md)
+- [06. Interpretation Taxonomy](docs/interpretation/06-interpretation-taxonomy.md)
+- [07. Rule & Provenance Schema](docs/interpretation/07-rule-provenance-schema.md)
 - [ADR-0001 — Layered Saju Engine](docs/decisions/ADR-0001-layered-saju-engine.md)
 - [Open-source Engine Baseline](docs/research/open-source-engine-baseline.md)
 
@@ -63,8 +71,8 @@ Birth Input
 3. Calculation Policy Specification — **초안 작성**
 4. Calculation Adapter Contract — **초안 작성**
 5. Golden Fixture / Verification Design — **초안 작성**
-6. Interpretation Taxonomy
-7. Rule & Provenance Schema
+6. Interpretation Taxonomy — **초안 작성**
+7. Rule & Provenance Schema — **초안 작성**
 8. Interpretation Engine Design
 9. LLM Grounding Contract
 10. Product Delivery / UX
@@ -73,6 +81,8 @@ Birth Input
 
 ## 현재 핵심 미결정 사항
 
+### Calculation
+
 - 명화 표준 `dayBoundary`
 - 진태양시 기본 적용 여부
 - 균시차/역사적 DST 정책
@@ -80,5 +90,14 @@ Birth Input
 - 한국 외 출생 초기 지원 여부
 - unknown-time partial derived fact 범위
 - KASI 등 primary source 기반 golden fixture 확보 방식
+
+### Interpretation
+
+- 신강/신약 기본 Method Pack의 authority 및 구체 규칙
+- 격국 체계와 특수격 포함 범위
+- 용신 방법론별 출처 및 우선 노출 방식
+- 기본 제공 신살 allowlist
+- 사용자-facing domain synthesis 범위와 과도한 단정 방지 정책
+- production Rule의 domain expert review 수준
 
 이 항목들은 구현 convenience가 아니라 방법론과 검증 근거를 기준으로 결정합니다.
