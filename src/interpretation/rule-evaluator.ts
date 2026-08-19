@@ -414,6 +414,7 @@ export function evaluateRule(
     evaluationId: id,
     ruleRef: { id: rule.ruleId, version: rule.version } satisfies VersionedRef,
     snapshotId: context.snapshot.snapshotId,
+    ...(context.scenarioRef === undefined ? {} : { scenarioRef: context.scenarioRef }),
     interpretationPackRef: { id: context.pack.packId, version: context.pack.version },
     inputRefs: resolution.inputs.map((input) => input.inputRef),
     evaluatedAt: (context.now ?? new Date()).toISOString(),
