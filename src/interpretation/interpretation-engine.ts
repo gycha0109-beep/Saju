@@ -163,6 +163,7 @@ function stableEvaluationRecord(evaluation: RuleEvaluation) {
     evaluationId: evaluation.evaluationId,
     ruleRef: evaluation.ruleRef,
     snapshotId: evaluation.snapshotId,
+    scenarioRef: evaluation.scenarioRef,
     interpretationPackRef: evaluation.interpretationPackRef,
     status: evaluation.status,
     inputRefs: evaluation.inputRefs,
