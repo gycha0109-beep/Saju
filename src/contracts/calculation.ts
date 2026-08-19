@@ -164,10 +164,18 @@ export interface TenGodChartFact {
   hour: TenGodTargetFact;
 }
 
+export interface HiddenStemChartFact {
+  year: FactState<readonly HeavenlyStem[]>;
+  month: FactState<readonly HeavenlyStem[]>;
+  day: FactState<readonly HeavenlyStem[]>;
+  hour: FactState<readonly HeavenlyStem[]>;
+}
+
 export interface DerivedFacts {
   dayMaster: FactState<StemFact>;
   tenGods: FactState<TenGodChartFact>;
   voidBranches: FactState<readonly EarthlyBranch[]>;
+  hiddenStems: HiddenStemChartFact;
   fiveElementCounts?: FactState<Readonly<Record<FiveElement, number>>>;
 }
 
