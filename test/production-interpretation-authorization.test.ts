@@ -9,12 +9,25 @@ import {
   type SourceReference,
 } from '../src/index.js';
 
-const source: SourceReference = {
-  sourceId: 'SOURCE-I15-SYNTHETIC',
-  sourceType: 'internal_research',
-  title: 'Synthetic I15 authorization fixture',
-  provenanceTier: 'internal',
+const sourceA: SourceReference = {
+  sourceId: 'SOURCE-I15-SYNTHETIC-A',
+  sourceType: 'paper',
+  title: 'Synthetic I15 authorization fixture A',
+  provenanceTier: 'scholarly_secondary',
   rights: { copyrightStatus: 'unknown', reusePolicy: 'metadata_only' },
+};
+const sourceB: SourceReference = {
+  sourceId: 'SOURCE-I15-SYNTHETIC-B',
+  sourceType: 'paper',
+  title: 'Synthetic I15 authorization fixture B',
+  provenanceTier: 'scholarly_secondary',
+  rights: { copyrightStatus: 'unknown', reusePolicy: 'metadata_only' },
+};
+const internalSource: SourceReference = {
+  sourceId: 'SOURCE-I15-INTERNAL',
+  sourceType: 'internal_research',
+  title: 'Synthetic internal source',
+  provenanceTier: 'internal',
 };
 
 function methodology(
@@ -29,7 +42,7 @@ function methodology(
     description: 'Infrastructure-only fixture; no Saju domain authority.',
     assumptions: ['Synthetic test only.'],
     requiredFactTypes: ['pillars.day'],
-    sourceIds: [source.sourceId],
+    sourceIds: [sourceA.sourceId, sourceB.sourceId],
     status,
     ...overrides,
   };
@@ -38,6 +51,7 @@ function methodology(
 function rule(
   status: RuleDefinition['status'],
   quality: RuleDefinition['quality'],
+  overrides: Partial<RuleDefinition> = {},
 ): RuleDefinition {
   return {
     ruleId: 'RULE-I15-SYNTHETIC',
@@ -65,9 +79,13 @@ function rule(
       value: true,
       polarity: 'neutral',
     },
-    sourceRefs: [{ sourceId: source.sourceId, supportType: 'implementation_reference' }],
+    sourceRefs: [
+      { sourceId: sourceA.sourceId, supportType: 'implementation_reference' },
+      { sourceId: sourceB.sourceId, supportType: 'implementation_reference' },
+    ],
     quality,
     status,
+    ...overrides,
   };
 }
 
@@ -95,7 +113,7 @@ function registry(
     {
       rules: [rule(ruleStatus, quality)],
       methodologies: [methodology(methodStatus)],
-      sources: [source],
+      sources: [sourceA, sourceB],
     },
     pack(packStatus),
   );
@@ -229,12 +247,7 @@ describe('I15 production interpretation authorization gate', () => {
   test('production methodology must carry at least one explicit source reference', () => {
     const withoutSources = createRuleRegistrySnapshot(
       {
-        rules: [
-          {
-            ...rule('active', productionQuality),
-            sourceRefs: [],
-          },
-        ],
+        rules: [rule('active', productionQuality, { sourceRefs: [] })],
         methodologies: [methodology('active', { sourceIds: [] })],
         sources: [],
       },
@@ -243,7 +256,52 @@ describe('I15 production interpretation authorization gate', () => {
 
     expectPlanError(
       () => buildInterpretationExecutionPlan(withoutSources),
-      'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK',
+      'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+    );
+  });
+
+  test('production cross-checks multi-source declaration against actual source count', () => {
+    const singleSource = createRuleRegistrySnapshot(
+      {
+        rules: [
+          rule('active', productionQuality, {
+            sourceRefs: [{ sourceId: sourceA.sourceId, supportType: 'implementation_reference' }],
+          }),
+        ],
+        methodologies: [methodology('active', { sourceIds: [sourceA.sourceId] })],
+        sources: [sourceA],
+      },
+      pack('production'),
+    );
+
+    expectPlanError(
+      () => buildInterpretationExecutionPlan(singleSource),
+      'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+    );
+  });
+
+  test('production rejects internal source tiers even when metadata claims high quality', () => {
+    const internalRegistry = createRuleRegistrySnapshot(
+      {
+        rules: [
+          rule('active', productionQuality, {
+            sourceRefs: [
+              { sourceId: sourceA.sourceId, supportType: 'implementation_reference' },
+              { sourceId: internalSource.sourceId, supportType: 'implementation_reference' },
+            ],
+          }),
+        ],
+        methodologies: [
+          methodology('active', { sourceIds: [sourceA.sourceId, internalSource.sourceId] }),
+        ],
+        sources: [sourceA, internalSource],
+      },
+      pack('production'),
+    );
+
+    expectPlanError(
+      () => buildInterpretationExecutionPlan(internalRegistry),
+      'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
     );
   });
 });
