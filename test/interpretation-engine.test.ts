@@ -261,6 +261,51 @@ describe('interpretation execution and claim graph', () => {
     );
     expect(result.integrity.valid).toBe(true);
   });
+
+  test('base-context consumers cannot collapse scenario-specific claims into one input', () => {
+    const snapshot = unknownJasiSnapshot();
+    const producer = rule('RULE-SCENARIO-PRODUCER', 'CLAIM-SCENARIO', 'scenario', {
+      ambiguityBehavior: 'scenario_preserving',
+    });
+    const consumer = rule('RULE-BASE-CONSUMER', 'CLAIM-CONSUMER', 'consumer', {
+      requiredClaimType: 'CLAIM-SCENARIO',
+    });
+
+    const result = runInterpretation(snapshot, registry([producer, consumer]));
+    const consumerEvaluation = result.evaluations.find(
+      (evaluation) => evaluation.ruleRef.id === 'RULE-BASE-CONSUMER',
+    );
+
+    expect(result.claims.filter((claim) => claim.claimType === 'CLAIM-SCENARIO')).toHaveLength(
+      snapshot.scenarios.length,
+    );
+    expect(result.claims.some((claim) => claim.claimType === 'CLAIM-CONSUMER')).toBe(false);
+    expect(consumerEvaluation?.status).toBe('skipped_dependency_unresolved');
+    expect(result.run.status).toBe('partial');
+  });
+
+  test('evaluator errors propagate to partial execution completeness', () => {
+    const base = rule('RULE-ERROR', 'CLAIM-ERROR', 'never-emitted');
+    const failing: RuleDefinition = {
+      ...base,
+      condition: {
+        op: 'gt',
+        left: { kind: 'input', key: 'day' },
+        right: { kind: 'literal', value: 1 },
+      },
+    };
+
+    const result = runInterpretation(knownSnapshot(), registry([failing]));
+
+    expect(result.integrity.valid).toBe(true);
+    expect(result.evaluations).toHaveLength(1);
+    expect(result.evaluations[0]?.status).toBe('error');
+    expect(result.claims).toHaveLength(0);
+    expect(result.run.status).toBe('partial');
+    expect(result.run.completeness.state).toBe('partial');
+    expect(result.run.completeness.blockedCoreGroups).toEqual(['runtime']);
+    expect(result.run.completeness.reasons).toContain('RULE-ERROR:error');
+  });
 });
 
 describe('registry provenance integrity', () => {
