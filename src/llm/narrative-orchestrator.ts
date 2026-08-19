@@ -211,7 +211,7 @@ export async function generateGroundedNarrative(
   }
 
   const violations: string[] = [...first.violations];
-  if (!first.providerError && first.rawOutput !== undefined) {
+  if (!first.providerError) {
     const repairContext: NarrativeRepairContext = {
       previousOutput: first.rawOutput,
       violations: first.violations,
