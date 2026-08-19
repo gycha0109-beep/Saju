@@ -10,7 +10,7 @@ import {
   IANA_1955_STANDARD_TIME_FIXTURE,
   IANA_1988_DST_FIXTURE,
   KASI_2024_LICHUN_FIXTURE,
-  KASI_2024_LUNAR_NEW_YEAR_FIXTURE,
+  KASI_OFFICIAL_LUNAR_FIXTURES,
   UPSTREAM_1992_GOLDEN_FIXTURE,
 } from './fixtures/calculation-fixtures.js';
 
@@ -42,17 +42,19 @@ function hourBranch(state: FactState<PillarFact>): string {
 }
 
 describe('provenance-aware calculation fixtures', () => {
-  test(KASI_2024_LUNAR_NEW_YEAR_FIXTURE.fixtureId, () => {
-    const snapshot = calculateCanonicalSajuSnapshot(
-      KASI_2024_LUNAR_NEW_YEAR_FIXTURE.input,
-      DEFAULT_CALCULATION_POLICY,
-    );
+  for (const fixture of KASI_OFFICIAL_LUNAR_FIXTURES) {
+    test(fixture.fixtureId, () => {
+      const snapshot = calculateCanonicalSajuSnapshot(
+        fixture.input,
+        DEFAULT_CALCULATION_POLICY,
+      );
 
-    expect(snapshot.normalized.solarDate).toEqual({
-      status: 'resolved',
-      value: KASI_2024_LUNAR_NEW_YEAR_FIXTURE.expectedSolarDate,
+      expect(snapshot.normalized.solarDate).toEqual({
+        status: 'resolved',
+        value: fixture.expectedSolarDate,
+      });
     });
-  });
+  }
 
   test(KASI_2024_LICHUN_FIXTURE.fixtureId, () => {
     const snapshot = calculateCanonicalSajuSnapshot(
