@@ -27,13 +27,14 @@ S12 Engine MVP Scope & Implementation Plan
 
 ### Implementation
 
-Engine runtime의 I0~I10 코드 경로가 연결되었습니다. 다만 I3 authoritative corpus expansion과 production interpretation/content gate는 별도로 열려 있습니다.
+Engine runtime의 I0~I10 코드 경로와 현재 calculation release baseline이 닫혔습니다. 더 넓은 공식 원자료 축적은 I3B 비차단 validation track으로 계속합니다.
 
 ```text
 I0  Repository / Tooling Bootstrap          STRICT CLOSED
 I1  Domain Contracts                       STRICT CLOSED
 I2  Manseryeok Adapter                     IMPLEMENTED / VERIFIED
-I3  Calculation Verification               IN PROGRESS
+I3A Calculation Release Baseline           STRICT CLOSED
+I3B Authority Corpus Expansion             ACTIVE / NON-BLOCKING
 I4  Unknown-Time Scenario Planner          STRICT CLOSED
 I5  Interpretation Runtime Foundation      STRICT CLOSED
 I6  Claim Graph / Interpretation Run       STRICT CLOSED
@@ -48,8 +49,10 @@ I10 Developer Harness E2E                  STRICT CLOSED
 현재 판정:
 
 ```text
-ENGINE_MVP_RUNTIME_CODE_PATH = COMPLETE CANDIDATE
-PRODUCTION_SAJU_PRODUCT      = NOT YET AUTHORIZED
+ENGINE_MVP_RUNTIME_CODE_PATH       = COMPLETE CANDIDATE
+CALCULATION_RELEASE_BASELINE       = STRICT CLOSED
+PRODUCTION_INTERPRETATION_CONTENT  = NOT YET AUTHORIZED
+PRODUCTION_SAJU_PRODUCT            = NOT YET AUTHORIZED
 ```
 
 ## 구현된 전체 경로
@@ -91,10 +94,18 @@ Birth Input
 - lunar / leap-month conversion boundary
 - midnight / jasi / splitJasi day-boundary policies
 - true-solar-time options
-- Korean historical standard-time / DST behavior through the pinned calculation core
+- Korean historical standard-time / DST handling through the pinned calculation core
 - Solar Term context
 - unknown-birth-time 1,440-minute enumeration without fabricated noon input
 - deterministic CalculationScenario compression
+- 2021~2026 KASI official lunar anchors: 12 Tier A fixtures
+- KASI institutional 6-year Lichun + 2024 monthly Jie minute-boundary corpus
+- KASI institutional leap-month and day-ganji anchors
+- Korean 1908/1954/1961 primary legal time references + IANA cross-check
+- pre-1908 historical civil-time correction fail-closed guard
+- 60-day sexagenary progression property test
+- exhaustive 100 stem-to-stem Ten-God relations
+- exhaustive 60 day-pillar void-branch mappings
 
 ### Interpretation
 
@@ -192,19 +203,21 @@ content identity reproducibility across audit timestamps
    - 하나의 값을 안전하게 확정할 수 없으면 ambiguity를 보존합니다.
 3. **결과는 재현 가능해야 합니다.**
    - 엔진, adapter, 계산 정책, schema, Rule/Pack, prompt compiler, model metadata를 기록합니다.
-4. **해석은 provenance-aware rule로 관리합니다.**
+4. **검증하지 못한 historical correction은 추정하지 않습니다.**
+   - 1908-04-01 이전 한국 historical civil-time correction은 현재 fail-closed 합니다.
+5. **해석은 provenance-aware rule로 관리합니다.**
    - 규칙별 출처, 방법론, 버전, 품질 상태를 추적합니다.
-5. **유파 차이를 오류로 취급하지 않습니다.**
+6. **유파 차이를 오류로 취급하지 않습니다.**
    - 서로 다른 방법론의 claim을 평균내거나 덮어쓰지 않습니다.
-6. **Scenario를 몰래 합치지 않습니다.**
+7. **Scenario를 몰래 합치지 않습니다.**
    - 출생시간 미상 등으로 발생한 후보 scenario는 명시적으로 격리합니다.
-7. **Narrative는 Evidence Bundle 밖으로 나가지 않습니다.**
+8. **Narrative는 Evidence Bundle 밖으로 나가지 않습니다.**
    - ambiguous fact, conflict, scope guard는 required disclosure 없이 숨길 수 없습니다.
-8. **Provider output을 신뢰하지 않습니다.**
+9. **Provider output을 신뢰하지 않습니다.**
    - provider 결과는 `unknown`으로 받고 parser + grounding validator를 통과해야 합니다.
-9. **모델 실패는 authority 완화의 이유가 아닙니다.**
-   - invalid output은 최대 한 번 repair하며 이후 deterministic fallback으로 종료합니다.
-10. **근거 없는 정확도 숫자를 만들지 않습니다.**
+10. **모델 실패는 authority 완화의 이유가 아닙니다.**
+    - invalid output은 최대 한 번 repair하며 이후 deterministic fallback으로 종료합니다.
+11. **근거 없는 정확도 숫자를 만들지 않습니다.**
     - 계산 정확도, 명리 해석 일관성, 실제 미래 예측 정확도를 별개로 취급합니다.
 
 ## 계산 코어
@@ -223,7 +236,7 @@ Tier D  upstream regression
 Tier E  Myeonghwa internal regression
 ```
 
-현재 KASI / IANA 기반 fixture provenance를 별도로 관리하며 I3에서 authoritative corpus를 계속 확장합니다.
+I3A release baseline은 닫혔고, I3B에서는 공식 절기 원문·추가 윤달·역사자료·대운 계산 근거를 계속 확장합니다. I3B 확장은 이미 닫힌 I3A를 자동으로 reopen하지 않습니다.
 
 ## Interpretation Research
 
@@ -258,11 +271,13 @@ future-event prediction
 
 ## 최신 검증 gate
 
-I10 E2E close gate:
+I3A close + 전체 runtime regression gate:
 
 ```text
-CI run number: 250
-run id:        32212973712
+HEAD:          4ae4e084d227e8959a20313467803e803498c3bb
+CI run number: 285
+run id:        32217659759
+job id:        95962091692
 
 npm ci:        PASS
 lint:          PASS
@@ -270,11 +285,11 @@ TS6 typecheck: PASS
 Vitest:        PASS
 build:         PASS
 
-Test files:    20 passed
-Tests:         127 passed
+Test files:    26 passed
+Tests:         174 passed
 ```
 
-I9B OpenAI adapter 자체는 CI #236에서 10개의 provider-contract test를 포함해 검증되었습니다.
+I9B OpenAI adapter 자체는 provider-contract tests를 포함하며, I10 developer E2E도 동일 전체 regression suite에 포함됩니다.
 
 ## 구현 Toolchain Baseline
 
@@ -330,14 +345,14 @@ Vitest             4.1.10
 
 ## 현재 open gate
 
-### Calculation
+### Calculation Policy / Authority Expansion
 
 - 명화 production 표준 `dayBoundary`
 - 진태양시 기본 적용 여부
 - 균시차/역사적 DST 기본 정책
 - 대운 시작점의 최종 노출 정책
 - 한국 외 출생 초기 지원 여부
-- I3 additional authoritative / primary-source golden fixture corpus
+- I3B official solar-term / leap-month / historical authority expansion
 
 ### Interpretation Content
 
