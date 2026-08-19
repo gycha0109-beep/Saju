@@ -288,12 +288,33 @@ export interface CompositionPolicy {
   }[];
 }
 
+export type ReviewSubjectType = 'methodology' | 'rule';
+export type ReviewLevel = 'internal' | 'domain';
+export type ReviewDecision = 'approved' | 'rejected';
+
+export interface ReviewAttestation {
+  attestationId: string;
+  subjectType: ReviewSubjectType;
+  subjectRef: ContentAddressedVersionedRef;
+  reviewLevel: ReviewLevel;
+  reviewerId: string;
+  reviewedAt: string;
+  decision: ReviewDecision;
+  notes?: string;
+}
+
+export interface ContentAddressedReviewAttestationRef {
+  attestationId: string;
+  contentHash: string;
+}
+
 export interface RuleRegistrySnapshot {
   registrySnapshotId: string;
   createdAt: string;
   rules: readonly ContentAddressedVersionedRef[];
   methodologies: readonly ContentAddressedVersionedRef[];
   sources: readonly ContentAddressedSourceRef[];
+  reviewAttestations: readonly ContentAddressedReviewAttestationRef[];
   packRef: ContentAddressedVersionedRef;
 }
 
