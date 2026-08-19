@@ -4,6 +4,7 @@ import type {
   VersionedRef,
 } from '../contracts/common.js';
 import type {
+  ContentAddressedSourceRef,
   InterpretationPack,
   MethodologyDefinition,
   RuleDefinition,
@@ -16,7 +17,9 @@ export type RegistryConfigurationErrorCode =
   | 'DUPLICATE_METHODOLOGY_VERSION'
   | 'DUPLICATE_SOURCE_ID'
   | 'PACK_METHODOLOGY_MISSING'
-  | 'PACK_METHODOLOGY_VERSION_MISMATCH';
+  | 'PACK_METHODOLOGY_VERSION_MISMATCH'
+  | 'RULE_SOURCE_MISSING'
+  | 'METHODOLOGY_SOURCE_MISSING';
 
 export class RegistryConfigurationError extends Error {
   readonly code: RegistryConfigurationErrorCode;
@@ -75,6 +78,10 @@ function contentAddressed(ref: VersionedRef, value: unknown): ContentAddressedVe
   return { ...ref, contentHash: deterministicContentHash(value) };
 }
 
+function sourceContentRef(source: SourceReference): ContentAddressedSourceRef {
+  return { sourceId: source.sourceId, contentHash: deterministicContentHash(source) };
+}
+
 function ensureUniqueVersions<T>(
   values: readonly T[],
   toRef: (value: T) => VersionedRef,
@@ -100,6 +107,36 @@ function ensureUniqueSources(sources: readonly SourceReference[]): void {
       );
     }
     seen.add(source.sourceId);
+  }
+}
+
+function ensureSourceReferences(
+  rules: readonly RuleDefinition[],
+  methodologies: readonly MethodologyDefinition[],
+  sources: readonly SourceReference[],
+): void {
+  const sourceIds = new Set(sources.map((source) => source.sourceId));
+
+  for (const methodology of methodologies) {
+    for (const sourceId of methodology.sourceIds) {
+      if (!sourceIds.has(sourceId)) {
+        throw new RegistryConfigurationError(
+          'METHODOLOGY_SOURCE_MISSING',
+          `Methodology ${methodology.methodologyId}@${methodology.version} references missing source ${sourceId}`,
+        );
+      }
+    }
+  }
+
+  for (const rule of rules) {
+    for (const sourceRef of rule.sourceRefs) {
+      if (!sourceIds.has(sourceRef.sourceId)) {
+        throw new RegistryConfigurationError(
+          'RULE_SOURCE_MISSING',
+          `Rule ${rule.ruleId}@${rule.version} references missing source ${sourceRef.sourceId}`,
+        );
+      }
+    }
   }
 }
 
@@ -170,6 +207,7 @@ export function createRuleRegistrySnapshot(
     'DUPLICATE_METHODOLOGY_VERSION',
   );
   ensureUniqueSources(sources);
+  ensureSourceReferences(input.rules, input.methodologies, sources);
 
   const rules = stableRules(input.rules);
   const methodologies = stableMethodologies(resolvePackMethodologies(pack, input.methodologies));
@@ -179,11 +217,13 @@ export function createRuleRegistrySnapshot(
   const methodologyRefs = methodologies.map((methodology) =>
     contentAddressed(methodologyRef(methodology), methodology),
   );
+  const sourceRefs = stableSourceList.map(sourceContentRef);
   const packRef = contentAddressed({ id: pack.packId, version: pack.version }, pack);
 
   const registryMaterial = {
     rules: ruleRefs,
     methodologies: methodologyRefs,
+    sources: sourceRefs,
     packRef,
   };
   const registrySnapshotId = `registry_${deterministicContentHash(registryMaterial).slice(0, 24)}`;
@@ -194,6 +234,7 @@ export function createRuleRegistrySnapshot(
       createdAt,
       rules: ruleRefs,
       methodologies: methodologyRefs,
+      sources: sourceRefs,
       packRef,
     },
     pack,
