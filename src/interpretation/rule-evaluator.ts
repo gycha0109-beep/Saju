@@ -79,7 +79,10 @@ function deepEqual(left: unknown, right: unknown): boolean {
 
 function operandValue(operand: RuleOperand, inputs: ReadonlyMap<string, unknown>): unknown {
   if (operand.kind === 'literal') return operand.value;
-  return inputs.get(operand.key);
+  const input = inputs.get(operand.key);
+  if (operand.path === undefined) return input;
+  const projected = getPath(input, operand.path);
+  return projected.found ? projected.value : undefined;
 }
 
 function compareNumeric(
