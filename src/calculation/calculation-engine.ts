@@ -1,4 +1,4 @@
-import { getSolarTerm, getSolarTermsOfYear, type SolarTerm } from 'manseryeok';
+import { getSolarTerm, getSolarTermsOfYear, lunarToSolar, type SolarTerm } from 'manseryeok';
 import type {
   BirthInput,
   CalculationPolicySnapshot,
@@ -6,6 +6,10 @@ import type {
   SolarTermContext,
   SolarTermFact,
 } from '../contracts/calculation.js';
+import {
+  assertBirthInput,
+  assertCalculationPolicySnapshot,
+} from '../contracts/runtime-validation.js';
 import {
   calculateCanonicalSajuSnapshot as calculateAdapterSnapshot,
   manseryeokAdapterMetadata,
@@ -16,6 +20,8 @@ const SOLAR_TERM_MIN_YEAR = 1800;
 const SOLAR_TERM_MAX_YEAR = 2300;
 const FIXED_KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 const DEFAULT_MAX_SCENARIO_COUNT = 32;
+const HISTORICAL_CIVIL_TIME_MIN_DATE = 19080401;
+const HISTORICAL_CIVIL_TIME_MIN_DATE_LABEL = '1908-04-01';
 
 export type CalculationErrorCode =
   | 'INVALID_INPUT'
@@ -81,6 +87,34 @@ function historicalSeoulDateTime(date: Date): LocalDateTime {
 
 function useHistoricalCivilTime(policy: CalculationPolicySnapshot): boolean {
   return policy.trueSolarTime.enabled && policy.trueSolarTime.applyHistoricalDst;
+}
+
+function inputSolarDate(input: BirthInput): { year: number; month: number; day: number } {
+  if (input.calendarType === 'solar') return input.date;
+  return lunarToSolar(
+    input.date.year,
+    input.date.month,
+    input.date.day,
+    input.isLeapMonth ?? false,
+  );
+}
+
+function dateKey(date: { year: number; month: number; day: number }): number {
+  return date.year * 10000 + date.month * 100 + date.day;
+}
+
+function enforceHistoricalCivilTimeSupport(
+  input: BirthInput,
+  policy: CalculationPolicySnapshot,
+): void {
+  if (!useHistoricalCivilTime(policy)) return;
+  const solarDate = inputSolarDate(input);
+  if (dateKey(solarDate) >= HISTORICAL_CIVIL_TIME_MIN_DATE) return;
+
+  throw new MyeonghwaCalculationError(
+    'UNSUPPORTED_POLICY',
+    `Historical Korean civil-time correction is not supported before ${HISTORICAL_CIVIL_TIME_MIN_DATE_LABEL}; the pinned calculation core falls back to UTC+09:00 before its first historical epoch while independent historical references do not support treating that fallback as authoritative.`,
+  );
 }
 
 function termLocalDateTime(term: SolarTerm, policy: CalculationPolicySnapshot): LocalDateTime {
@@ -205,6 +239,9 @@ export function calculateCanonicalSajuSnapshot(
   options: CalculationEngineOptions = {},
 ): CanonicalSajuSnapshot {
   try {
+    assertBirthInput(input);
+    assertCalculationPolicySnapshot(policy);
+    enforceHistoricalCivilTimeSupport(input, policy);
     const snapshot = calculateAdapterSnapshot(input, policy, options);
     enforceScenarioLimit(snapshot, options);
     const solarTermContext = buildSolarTermContext(snapshot, policy);
@@ -213,5 +250,10 @@ export function calculateCanonicalSajuSnapshot(
     throw translatedError(error);
   }
 }
+
+export const calculationHistoricalCivilTimeSupport = Object.freeze({
+  earliestSupportedSolarDate: HISTORICAL_CIVIL_TIME_MIN_DATE_LABEL,
+  behaviorBeforeEarliestSupportedDate: 'reject' as const,
+});
 
 export { manseryeokAdapterMetadata };
