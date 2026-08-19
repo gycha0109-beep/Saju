@@ -135,7 +135,10 @@ export function evaluateRuleExpression(
   }
 }
 
-function acceptedStatus(requirement: RuleInputRequirement, status: FactState<unknown>['status']): boolean {
+function acceptedStatus(
+  requirement: RuleInputRequirement,
+  status: FactState<unknown>['status'],
+): boolean {
   return requirement.acceptedStatuses === undefined || requirement.acceptedStatuses.includes(status);
 }
 
@@ -252,6 +255,14 @@ function resolveFactInput(
   };
 }
 
+function claimVisibleInContext(
+  claim: InterpretationClaim,
+  scenarioRef: string | undefined,
+): boolean {
+  if (scenarioRef === undefined) return claim.scenarioRef === undefined;
+  return claim.scenarioRef === undefined || claim.scenarioRef === scenarioRef;
+}
+
 function resolveClaimInput(
   requirement: RuleInputRequirement,
   context: RuleEvaluationContext,
@@ -261,9 +272,7 @@ function resolveClaimInput(
       (claim) =>
         claim.state === 'active' &&
         claim.claimType === requirement.pathOrClaimType &&
-        (context.scenarioRef === undefined ||
-          claim.scenarioRef === undefined ||
-          claim.scenarioRef === context.scenarioRef),
+        claimVisibleInContext(claim, context.scenarioRef),
     )
     .sort((left, right) => left.claimId.localeCompare(right.claimId));
 
@@ -283,7 +292,10 @@ function resolveClaimInput(
     };
   }
 
-  const value = matchingClaims.length === 1 ? matchingClaims[0]?.value : matchingClaims.map((claim) => claim.value);
+  const value =
+    matchingClaims.length === 1
+      ? matchingClaims[0]?.value
+      : matchingClaims.map((claim) => claim.value);
   return {
     status: 'ready',
     inputs: [
@@ -316,6 +328,14 @@ function resolveInputs(rule: RuleDefinition, context: RuleEvaluationContext): In
   return { status: 'ready', inputs };
 }
 
+function ruleContentHash(rule: RuleDefinition): string {
+  return deterministicContentHash(rule);
+}
+
+function packContentHash(pack: InterpretationPack): string {
+  return deterministicContentHash(pack);
+}
+
 function evaluationId(
   rule: RuleDefinition,
   context: RuleEvaluationContext,
@@ -325,7 +345,9 @@ function evaluationId(
     snapshotId: context.snapshot.snapshotId,
     scenarioRef: context.scenarioRef,
     packRef: { id: context.pack.packId, version: context.pack.version },
+    packContentHash: packContentHash(context.pack),
     ruleRef: { id: rule.ruleId, version: rule.version },
+    ruleContentHash: ruleContentHash(rule),
     inputs: resolvedInputs.map((input) => ({ key: input.key, value: input.value })),
   });
   return `eval_${hash.slice(0, 24)}`;
@@ -337,13 +359,20 @@ function emitClaim(
   resolvedInputs: readonly ResolvedInput[],
   id: string,
 ): InterpretationClaim {
-  const factRefs = [...new Set(resolvedInputs.flatMap((input) => (input.factRef === undefined ? [] : [input.factRef])))].sort();
-  const upstreamClaimRefs = [...new Set(resolvedInputs.flatMap((input) => input.upstreamClaimRefs))].sort();
+  const factRefs = [
+    ...new Set(
+      resolvedInputs.flatMap((input) => (input.factRef === undefined ? [] : [input.factRef])),
+    ),
+  ].sort();
+  const upstreamClaimRefs = [
+    ...new Set(resolvedInputs.flatMap((input) => input.upstreamClaimRefs)),
+  ].sort();
   const sourceRefs = [...new Set(rule.sourceRefs.map((source) => source.sourceId))].sort();
   const claimMaterial = {
     snapshotId: context.snapshot.snapshotId,
     scenarioRef: context.scenarioRef,
     ruleRef: { id: rule.ruleId, version: rule.version },
+    ruleContentHash: ruleContentHash(rule),
     methodologyRef: rule.methodologyRef,
     output: rule.output,
     factRefs,
