@@ -3,6 +3,8 @@ import {
   calculateCanonicalSajuSnapshot,
   type BirthInput,
   type CalculationPolicySnapshot,
+  type FactState,
+  type PillarFact,
 } from '../src/index.js';
 
 function policy(
@@ -27,11 +29,33 @@ function policy(
   };
 }
 
-function pillarText(state: ReturnType<typeof calculateCanonicalSajuSnapshot>['pillars']['year']): string {
+function trueSolarPolicy(
+  applyHistoricalDst: boolean,
+  longitude = 126.978,
+): CalculationPolicySnapshot {
+  return policy({
+    trueSolarTime: {
+      enabled: true,
+      longitudeSource: 'manual',
+      longitude,
+      applyEquationOfTime: true,
+      applyHistoricalDst,
+    },
+  });
+}
+
+function pillarText(state: FactState<PillarFact>): string {
   if (state.status !== 'resolved') {
     throw new Error(`expected resolved pillar but got ${state.status}`);
   }
   return `${state.value.stem.value}${state.value.branch.value}`;
+}
+
+function pillarBranch(state: FactState<PillarFact>): string {
+  if (state.status !== 'resolved') {
+    throw new Error(`expected resolved pillar but got ${state.status}`);
+  }
+  return state.value.branch.value;
 }
 
 describe('manseryeok adapter — known time', () => {
@@ -80,6 +104,158 @@ describe('manseryeok adapter — known time', () => {
     expect(first.calculationHash).toBe(second.calculationHash);
     expect(first.createdAt).not.toBe(second.createdAt);
   });
+
+  test('preserves missing traditional sex as unavailable luck-cycle data', () => {
+    const snapshot = calculateCanonicalSajuSnapshot(
+      {
+        calendarType: 'solar',
+        date: { year: 1992, month: 10, day: 24 },
+        time: { known: true, hour: 5, minute: 30 },
+        sexForTraditionalCalculation: 'unspecified',
+      },
+      policy(),
+    );
+
+    expect(snapshot.luckCycle).toEqual({
+      status: 'unavailable',
+      reasonCode: 'traditional-sex-not-provided',
+    });
+  });
+});
+
+describe('manseryeok adapter — lunar calendar', () => {
+  test('maps an upstream lunar golden fixture', () => {
+    const snapshot = calculateCanonicalSajuSnapshot(
+      {
+        calendarType: 'lunar',
+        date: { year: 2006, month: 8, day: 20 },
+        isLeapMonth: false,
+        time: { known: true, hour: 6, minute: 38 },
+        sexForTraditionalCalculation: 'unspecified',
+      },
+      policy(),
+    );
+
+    expect(pillarText(snapshot.pillars.year)).toBe('병술');
+    expect(pillarText(snapshot.pillars.month)).toBe('무술');
+    expect(pillarText(snapshot.pillars.day)).toBe('계유');
+    expect(pillarText(snapshot.pillars.hour)).toBe('을묘');
+    expect(snapshot.normalized.solarDate).toMatchObject({ status: 'resolved' });
+    expect(snapshot.normalized.lunarDate).toEqual({
+      status: 'resolved',
+      value: { year: 2006, month: 8, day: 20, isLeapMonth: false },
+    });
+  });
+
+  test('leap-lunar input produces the same pillars as its equivalent solar date', () => {
+    const lunar = calculateCanonicalSajuSnapshot(
+      {
+        calendarType: 'lunar',
+        date: { year: 2020, month: 4, day: 1 },
+        isLeapMonth: true,
+        time: { known: true, hour: 12, minute: 0 },
+        sexForTraditionalCalculation: 'unspecified',
+      },
+      policy(),
+    );
+    const solar = calculateCanonicalSajuSnapshot(
+      {
+        calendarType: 'solar',
+        date: { year: 2020, month: 5, day: 23 },
+        time: { known: true, hour: 12, minute: 0 },
+        sexForTraditionalCalculation: 'unspecified',
+      },
+      policy(),
+    );
+
+    expect(lunar.normalized.solarDate).toEqual({
+      status: 'resolved',
+      value: { year: 2020, month: 5, day: 23 },
+    });
+    expect(lunar.pillars).toEqual(solar.pillars);
+  });
+});
+
+describe('manseryeok adapter — day boundary policies', () => {
+  const input: BirthInput = {
+    calendarType: 'solar',
+    date: { year: 2024, month: 3, day: 10 },
+    time: { known: true, hour: 23, minute: 30 },
+    sexForTraditionalCalculation: 'unspecified',
+  };
+
+  test('preserves all three upstream jasi methodologies without collapsing them', () => {
+    const midnight = calculateCanonicalSajuSnapshot(input, policy({ dayBoundary: 'midnight' }));
+    const jasi = calculateCanonicalSajuSnapshot(input, policy({ dayBoundary: 'jasi' }));
+    const split = calculateCanonicalSajuSnapshot(input, policy({ dayBoundary: 'splitJasi' }));
+
+    expect([pillarText(midnight.pillars.day), pillarText(midnight.pillars.hour)]).toEqual([
+      '계유',
+      '임자',
+    ]);
+    expect([pillarText(jasi.pillars.day), pillarText(jasi.pillars.hour)]).toEqual([
+      '갑술',
+      '갑자',
+    ]);
+    expect([pillarText(split.pillars.day), pillarText(split.pillars.hour)]).toEqual([
+      '계유',
+      '갑자',
+    ]);
+  });
+});
+
+describe('manseryeok adapter — true solar time and historical civil time', () => {
+  test('true solar time can move a birth across a two-hour branch boundary', () => {
+    const input: BirthInput = {
+      calendarType: 'solar',
+      date: { year: 1990, month: 5, day: 15 },
+      time: { known: true, hour: 7, minute: 5 },
+      sexForTraditionalCalculation: 'unspecified',
+    };
+
+    const off = calculateCanonicalSajuSnapshot(input, policy());
+    const on = calculateCanonicalSajuSnapshot(input, trueSolarPolicy(true));
+
+    expect(pillarBranch(off.pillars.hour)).toBe('진');
+    expect(pillarBranch(on.pillars.hour)).toBe('묘');
+    expect(on.normalized.correctedSolarTime).toEqual({
+      status: 'unavailable',
+      reasonCode: 'upstream-corrected-time-not-exposed',
+    });
+  });
+
+  test('1988 DST treatment changes a boundary-sensitive hour pillar', () => {
+    const input: BirthInput = {
+      calendarType: 'solar',
+      date: { year: 1988, month: 8, day: 15 },
+      time: { known: true, hour: 9, minute: 50 },
+      sexForTraditionalCalculation: 'unspecified',
+    };
+
+    const withHistorical = calculateCanonicalSajuSnapshot(input, trueSolarPolicy(true));
+    const withoutHistorical = calculateCanonicalSajuSnapshot(input, trueSolarPolicy(false));
+
+    expect(pillarBranch(withHistorical.pillars.hour)).toBe('진');
+    expect(pillarBranch(withoutHistorical.pillars.hour)).toBe('사');
+    expect(pillarText(withHistorical.pillars.hour)).not.toBe(
+      pillarText(withoutHistorical.pillars.hour),
+    );
+  });
+
+  test('1955 historical +08:30 standard time can change a boundary-sensitive hour pillar', () => {
+    const input: BirthInput = {
+      calendarType: 'solar',
+      date: { year: 1955, month: 1, day: 15 },
+      time: { known: true, hour: 9, minute: 15 },
+      sexForTraditionalCalculation: 'unspecified',
+    };
+
+    const withHistorical = calculateCanonicalSajuSnapshot(input, trueSolarPolicy(true));
+    const withoutHistorical = calculateCanonicalSajuSnapshot(input, trueSolarPolicy(false));
+
+    expect(pillarBranch(withHistorical.pillars.hour)).toBe('사');
+    expect(pillarBranch(withoutHistorical.pillars.hour)).toBe('진');
+  });
 });
 
 describe('manseryeok adapter — unknown time', () => {
@@ -112,13 +288,13 @@ describe('manseryeok adapter — unknown time', () => {
       sexForTraditionalCalculation: 'unspecified',
     };
 
-    const snapshot = calculateCanonicalSajuSnapshot(
-      input,
-      policy({ dayBoundary: 'jasi' }),
-    );
+    const snapshot = calculateCanonicalSajuSnapshot(input, policy({ dayBoundary: 'jasi' }));
 
     expect(snapshot.pillars.day.status).toBe('ambiguous');
-    expect(snapshot.derivedFacts.dayMaster.status === 'resolved' || snapshot.derivedFacts.dayMaster.status === 'ambiguous').toBe(true);
+    expect(
+      snapshot.derivedFacts.dayMaster.status === 'resolved' ||
+        snapshot.derivedFacts.dayMaster.status === 'ambiguous',
+    ).toBe(true);
     expect(snapshot.scenarios.length).toBeGreaterThan(1);
     expect(snapshot.completeness.ambiguousPaths).toContain('pillars.day');
   });
@@ -139,7 +315,7 @@ describe('manseryeok adapter — unknown time', () => {
   });
 });
 
-describe('manseryeok adapter — policy boundary', () => {
+describe('manseryeok adapter — validation and supported range', () => {
   test('rejects unsupported non-Seoul timezone instead of silently reinterpreting input', () => {
     const input: BirthInput = {
       calendarType: 'solar',
@@ -152,10 +328,7 @@ describe('manseryeok adapter — policy boundary', () => {
       calculateCanonicalSajuSnapshot(
         input,
         policy({
-          timeZonePolicy: {
-            source: 'manual',
-            timeZone: 'Asia/Tokyo',
-          },
+          timeZonePolicy: { source: 'manual', timeZone: 'Asia/Tokyo' },
         }),
       ),
     ).toThrow(RangeError);
@@ -181,6 +354,50 @@ describe('manseryeok adapter — policy boundary', () => {
             applyHistoricalDst: true,
           },
         }),
+      ),
+    ).toThrow(RangeError);
+  });
+
+  test('passes upstream solar range boundaries and rejects one year beyond them', () => {
+    for (const year of [1800, 2300]) {
+      expect(() =>
+        calculateCanonicalSajuSnapshot(
+          {
+            calendarType: 'solar',
+            date: { year, month: 6, day: 15 },
+            time: { known: true, hour: 12, minute: 0 },
+            sexForTraditionalCalculation: 'unspecified',
+          },
+          policy(),
+        ),
+      ).not.toThrow();
+    }
+
+    for (const year of [1799, 2301]) {
+      expect(() =>
+        calculateCanonicalSajuSnapshot(
+          {
+            calendarType: 'solar',
+            date: { year, month: 6, day: 15 },
+            time: { known: true, hour: 12, minute: 0 },
+            sexForTraditionalCalculation: 'unspecified',
+          },
+          policy(),
+        ),
+      ).toThrow(RangeError);
+    }
+  });
+
+  test('rejects invalid Gregorian dates through the upstream validation boundary', () => {
+    expect(() =>
+      calculateCanonicalSajuSnapshot(
+        {
+          calendarType: 'solar',
+          date: { year: 2023, month: 2, day: 29 },
+          time: { known: true, hour: 12, minute: 0 },
+          sexForTraditionalCalculation: 'unspecified',
+        },
+        policy(),
       ),
     ).toThrow(RangeError);
   });
