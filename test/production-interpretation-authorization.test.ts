@@ -31,23 +31,6 @@ const internalSource: SourceReference = {
   provenanceTier: 'internal',
 };
 
-const trustContext: ReviewerTrustContext = {
-  policyId: 'TRUST-I15-SYNTHETIC',
-  version: '1.0.0',
-  grants: [
-    {
-      reviewerId: 'synthetic-domain-reviewer',
-      allowedReviewLevels: ['domain'],
-      status: 'active',
-    },
-    {
-      reviewerId: 'synthetic-internal-reviewer',
-      allowedReviewLevels: ['internal'],
-      status: 'active',
-    },
-  ],
-};
-
 const researchQuality: RuleDefinition['quality'] = {
   provenanceQuality: 'unknown',
   testCoverage: 'none',
@@ -176,32 +159,53 @@ function approvedReviews(
   ];
 }
 
-function makeRegistry(options: {
+function trustFor(reviews: readonly ReviewAttestation[]): ReviewerTrustContext {
+  const byReviewer = new Map<string, ReviewAttestation[]>();
+  for (const review of reviews) {
+    const values = byReviewer.get(review.reviewerId) ?? [];
+    values.push(review);
+    byReviewer.set(review.reviewerId, values);
+  }
+  return {
+    policyId: 'TRUST-I15-SYNTHETIC',
+    version: '2.0.0',
+    grants: [...byReviewer.entries()].map(([reviewerId, reviewerReviews]) => ({
+      reviewerId,
+      allowedReviewLevels: [...new Set(reviewerReviews.map((review) => review.reviewLevel))],
+      trustedAttestationContentHashes: reviewerReviews.map(deterministicContentHash),
+      status: 'active' as const,
+    })),
+  };
+}
+
+function makeFixture(options: {
   packStatus: InterpretationPack['status'];
   method: MethodologyDefinition;
   candidateRule: RuleDefinition;
   sources: readonly SourceReference[];
   reviews?: readonly ReviewAttestation[];
 }) {
-  return createRuleRegistrySnapshot(
+  const reviews =
+    options.reviews ?? approvedReviews(options.packStatus, options.method, options.candidateRule);
+  const registry = createRuleRegistrySnapshot(
     {
       rules: [options.candidateRule],
       methodologies: [options.method],
       sources: options.sources,
-      reviewAttestations:
-        options.reviews ?? approvedReviews(options.packStatus, options.method, options.candidateRule),
+      reviewAttestations: reviews,
     },
     pack(options.packStatus),
   );
+  return { registry, trust: trustFor(reviews) };
 }
 
-function registry(
+function fixture(
   packStatus: InterpretationPack['status'],
   methodStatus: MethodologyDefinition['status'],
   ruleStatus: RuleDefinition['status'],
   quality: RuleDefinition['quality'],
 ) {
-  return makeRegistry({
+  return makeFixture({
     packStatus,
     method: methodology(methodStatus),
     candidateRule: rule(ruleStatus, quality),
@@ -209,8 +213,8 @@ function registry(
   });
 }
 
-function plan(registryValue: ReturnType<typeof registry> | ReturnType<typeof makeRegistry>) {
-  return buildInterpretationExecutionPlan(registryValue, trustContext);
+function plan(value: ReturnType<typeof fixture> | ReturnType<typeof makeFixture>) {
+  return buildInterpretationExecutionPlan(value.registry, value.trust);
 }
 
 function expectPlanError(action: () => unknown, code: ExecutionPlanError['code']): void {
@@ -225,50 +229,45 @@ function expectPlanError(action: () => unknown, code: ExecutionPlanError['code']
 }
 
 describe('I15/I17 production interpretation authorization gate', () => {
-  test('research packs retain research/unreviewed behavior and ignore reviewer trust policy for plan identity', () => {
-    const selected = registry('research', 'research', 'research', researchQuality);
-    const withoutTrust = buildInterpretationExecutionPlan(selected);
+  test('research behavior is unchanged and trust policy does not enter plan identity', () => {
+    const selected = fixture('research', 'research', 'research', researchQuality);
+    const withoutTrust = buildInterpretationExecutionPlan(selected.registry);
     const withTrust = plan(selected);
     expect(withoutTrust.orderedRuleRefs).toHaveLength(1);
     expect(withTrust.executionPlanId).toBe(withoutTrust.executionPlanId);
     expect(withTrust.reviewerTrustPolicyRef).toBeUndefined();
   });
 
-  test('promoted active methodology requires an explicit reviewer trust context', () => {
+  test('promoted pack requires trust context before content selection can bypass it', () => {
+    const selected = fixture('production', 'active', 'active', productionQuality);
     expectPlanError(
-      () =>
-        buildInterpretationExecutionPlan(
-          registry('production', 'active', 'active', productionQuality),
-        ),
+      () => buildInterpretationExecutionPlan(selected.registry),
       'REVIEWER_TRUST_CONTEXT_REQUIRED',
     );
   });
 
   test('production rejects research methodology before rule activation can matter', () => {
     expectPlanError(
-      () => plan(registry('production', 'research', 'active', productionQuality)),
+      () => plan(fixture('production', 'research', 'active', productionQuality)),
       'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK',
     );
   });
 
-  test('production rejects active rules without domain-reviewed quality metadata', () => {
+  test('production rejects inadequate reviewer, tests, and heuristic provenance quality', () => {
     expectPlanError(
       () =>
         plan(
-          registry('production', 'active', 'active', {
+          fixture('production', 'active', 'active', {
             ...productionQuality,
             reviewerStatus: 'internal_reviewed',
           }),
         ),
       'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK',
     );
-  });
-
-  test('production rejects inadequate tests and heuristic quality provenance', () => {
     expectPlanError(
       () =>
         plan(
-          registry('production', 'active', 'active', {
+          fixture('production', 'active', 'active', {
             ...productionQuality,
             testCoverage: 'unit',
           }),
@@ -278,7 +277,7 @@ describe('I15/I17 production interpretation authorization gate', () => {
     expectPlanError(
       () =>
         plan(
-          registry('production', 'active', 'active', {
+          fixture('production', 'active', 'active', {
             ...productionQuality,
             provenanceQuality: 'heuristic',
           }),
@@ -287,31 +286,27 @@ describe('I15/I17 production interpretation authorization gate', () => {
     );
   });
 
-  test('production accepts active domain-reviewed high-evidence content only under trusted exact approvals', () => {
-    const executionPlan = plan(
-      registry('production', 'active', 'active', productionQuality),
-    );
+  test('production accepts high-evidence content only under exact trust-pinned approvals', () => {
+    const selected = fixture('production', 'active', 'active', productionQuality);
+    const executionPlan = plan(selected);
     expect(executionPlan.orderedRuleRefs).toHaveLength(1);
-    expect(executionPlan.reviewerTrustPolicyRef?.id).toBe(trustContext.policyId);
-    expect(executionPlan.reviewerTrustPolicyRef?.version).toBe(trustContext.version);
+    expect(executionPlan.reviewerTrustPolicyRef?.id).toBe(selected.trust.policyId);
     expect(executionPlan.reviewerTrustPolicyRef?.contentHash).toHaveLength(64);
   });
 
-  test('staging permits reviewed methodology plus internally reviewed unit-tested non-heuristic rule', () => {
-    expect(
-      plan(registry('staging', 'reviewed', 'reviewed', stagingQuality)).orderedRuleRefs,
-    ).toHaveLength(1);
+  test('staging permits reviewed internally approved unit-tested non-heuristic content', () => {
+    expect(plan(fixture('staging', 'reviewed', 'reviewed', stagingQuality)).orderedRuleRefs).toHaveLength(1);
   });
 
-  test('staging rejects research methodology and heuristic quality provenance', () => {
+  test('staging rejects research methodology and heuristic rule provenance', () => {
     expectPlanError(
-      () => plan(registry('staging', 'research', 'reviewed', stagingQuality)),
+      () => plan(fixture('staging', 'research', 'reviewed', stagingQuality)),
       'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK',
     );
     expectPlanError(
       () =>
         plan(
-          registry('staging', 'reviewed', 'reviewed', {
+          fixture('staging', 'reviewed', 'reviewed', {
             ...stagingQuality,
             provenanceQuality: 'heuristic',
           }),
@@ -321,56 +316,41 @@ describe('I15/I17 production interpretation authorization gate', () => {
   });
 
   test('production methodology must carry explicit sources', () => {
-    const method = methodology('active', { sourceIds: [] });
-    const candidateRule = rule('active', productionQuality, { sourceRefs: [] });
-    const withoutSources = makeRegistry({
+    const selected = makeFixture({
       packStatus: 'production',
-      method,
-      candidateRule,
+      method: methodology('active', { sourceIds: [] }),
+      candidateRule: rule('active', productionQuality, { sourceRefs: [] }),
       sources: [],
     });
-    expectPlanError(
-      () => plan(withoutSources),
-      'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
-    );
+    expectPlanError(() => plan(selected), 'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK');
   });
 
   test('production cross-checks multi-source declaration against actual source count', () => {
-    const method = methodology('active', { sourceIds: [sourceA.sourceId] });
-    const candidateRule = rule('active', productionQuality, {
-      sourceRefs: [{ sourceId: sourceA.sourceId, supportType: 'implementation_reference' }],
-    });
-    const singleSource = makeRegistry({
+    const selected = makeFixture({
       packStatus: 'production',
-      method,
-      candidateRule,
+      method: methodology('active', { sourceIds: [sourceA.sourceId] }),
+      candidateRule: rule('active', productionQuality, {
+        sourceRefs: [{ sourceId: sourceA.sourceId, supportType: 'implementation_reference' }],
+      }),
       sources: [sourceA],
     });
-    expectPlanError(
-      () => plan(singleSource),
-      'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
-    );
+    expectPlanError(() => plan(selected), 'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK');
   });
 
-  test('production rejects internal source tiers even when quality metadata claims high evidence', () => {
-    const method = methodology('active', {
-      sourceIds: [sourceA.sourceId, internalSource.sourceId],
-    });
-    const candidateRule = rule('active', productionQuality, {
-      sourceRefs: [
-        { sourceId: sourceA.sourceId, supportType: 'implementation_reference' },
-        { sourceId: internalSource.sourceId, supportType: 'implementation_reference' },
-      ],
-    });
-    const internalRegistry = makeRegistry({
+  test('production rejects internal source tiers despite high-evidence metadata', () => {
+    const selected = makeFixture({
       packStatus: 'production',
-      method,
-      candidateRule,
+      method: methodology('active', {
+        sourceIds: [sourceA.sourceId, internalSource.sourceId],
+      }),
+      candidateRule: rule('active', productionQuality, {
+        sourceRefs: [
+          { sourceId: sourceA.sourceId, supportType: 'implementation_reference' },
+          { sourceId: internalSource.sourceId, supportType: 'implementation_reference' },
+        ],
+      }),
       sources: [sourceA, internalSource],
     });
-    expectPlanError(
-      () => plan(internalRegistry),
-      'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
-    );
+    expectPlanError(() => plan(selected), 'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK');
   });
 });
