@@ -175,7 +175,7 @@ export interface DerivedFacts {
   dayMaster: FactState<StemFact>;
   tenGods: FactState<TenGodChartFact>;
   voidBranches: FactState<readonly EarthlyBranch[]>;
-  hiddenStems: HiddenStemChartFact;
+  hiddenStems?: HiddenStemChartFact;
   fiveElementCounts?: FactState<Readonly<Record<FiveElement, number>>>;
 }
 
