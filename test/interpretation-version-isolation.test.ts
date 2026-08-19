@@ -40,7 +40,7 @@ const methodology: MethodologyDefinition = {
   assumptions: [],
   requiredFactTypes: ['pillars.day'],
   sourceIds: [source.sourceId],
-  status: 'active',
+  status: 'research',
 };
 
 const pack: InterpretationPack = {
@@ -52,7 +52,7 @@ const pack: InterpretationPack = {
   conflictPolicy: 'preserve_all',
   ambiguityPolicy: 'propagate',
   compositionPolicyRef: { id: 'COMPOSITION-VERSION-ISOLATION', version: '1.0.0' },
-  status: 'production',
+  status: 'research',
 };
 
 function snapshot() {
@@ -99,9 +99,9 @@ function activeRule(ruleId: string, claimType: string): RuleDefinition {
       provenanceQuality: 'unknown',
       testCoverage: 'unit',
       methodologyStability: 'experimental',
-      reviewerStatus: 'internal_reviewed',
+      reviewerStatus: 'unreviewed',
     },
-    status: 'active',
+    status: 'research',
   };
 }
 
