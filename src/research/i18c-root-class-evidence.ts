@@ -1,8 +1,4 @@
-import type {
-  EarthlyBranch,
-  FiveElement,
-  HeavenlyStem,
-} from '../contracts/calculation.js';
+import type { EarthlyBranch, FiveElement, HeavenlyStem } from '../contracts/calculation.js';
 import type {
   InterpretationPack,
   MethodologyDefinition,
@@ -17,7 +13,6 @@ const METHOD_ID = 'M-STRENGTH-FUYI-INTRINSIC-ROOT-CLASS';
 const METHOD_VERSION = '0.1.0-research';
 const ROOT_RULE_SET = 'i18c-intrinsic-root-class-evidence';
 const GUARD_RULE_SET = 'i18c-root-class-scope-guard';
-
 const PILLAR_SLOTS = ['year', 'month', 'day', 'hour'] as const;
 const NON_EARTH_ELEMENTS = ['목', '화', '금', '수'] as const satisfies readonly FiveElement[];
 const STORAGE_BRANCHES = ['진', '술', '축', '미'] as const satisfies readonly EarthlyBranch[];
@@ -30,7 +25,9 @@ const STEMS_BY_ELEMENT: Readonly<Record<FiveElement, readonly HeavenlyStem[]>> =
   수: ['임', '계'],
 });
 
-const STRONG_ROOT_BRANCHES: Readonly<Record<(typeof NON_EARTH_ELEMENTS)[number], readonly EarthlyBranch[]>> = Object.freeze({
+const STRONG_ROOT_BRANCHES: Readonly<
+  Record<(typeof NON_EARTH_ELEMENTS)[number], readonly EarthlyBranch[]>
+> = Object.freeze({
   목: ['해', '인', '묘'],
   화: ['인', '사', '오'],
   금: ['사', '신', '유'],
@@ -42,7 +39,7 @@ export type IntrinsicRootClass =
   | 'residual_storage_candidate'
   | 'earth_root_class_unresolved';
 
-export const I18C_XIEJI_SOURCE: SourceReference = Object.freeze({
+const xiejiSource: SourceReference = {
   sourceId: 'SRC-I18C-XIEJI-FIVE-ELEMENT-GROWTH',
   sourceType: 'classical_text',
   title: '欽定協紀辨方書 — 五行長生說',
@@ -54,9 +51,10 @@ export const I18C_XIEJI_SOURCE: SourceReference = Object.freeze({
     reusePolicy: 'metadata_only',
   },
   notes:
-    'Used only to cross-reference five-element birth-stage locations. The text also records competing earth birth-stage treatments, so earth root class is intentionally left unresolved.',
-});
+    'Used only to cross-reference five-element birth-stage locations. The text records competing earth birth-stage treatments, so earth root class is intentionally unresolved.',
+};
 
+export const I18C_XIEJI_SOURCE: SourceReference = Object.freeze(xiejiSource);
 export const I18C_ROOT_CLASS_SOURCES: readonly SourceReference[] = Object.freeze([
   INTERPRETATION_METHODOLOGY_SOURCES.ditianSuiChanwei,
   I18C_XIEJI_SOURCE,
@@ -79,21 +77,21 @@ function branchesContainingElement(element: FiveElement): readonly EarthlyBranch
 
 function residualBranches(element: (typeof NON_EARTH_ELEMENTS)[number]): readonly EarthlyBranch[] {
   const strong = new Set(STRONG_ROOT_BRANCHES[element]);
-  const contains = new Set(branchesContainingElement(element));
-  return STORAGE_BRANCHES.filter((branch) => contains.has(branch) && !strong.has(branch));
+  const containing = new Set(branchesContainingElement(element));
+  return STORAGE_BRANCHES.filter((branch) => containing.has(branch) && !strong.has(branch));
 }
 
 function sourceRefs(): RuleDefinition['sourceRefs'] {
   return [
     {
       sourceId: INTERPRETATION_METHODOLOGY_SOURCES.ditianSuiChanwei.sourceId,
-      supportType: 'direct_basis' as const,
+      supportType: 'direct_basis',
       notes:
-        'Distinguishes heavier longsheng/lu/wang roots from lighter storage/residual roots and warns that root presence/effect cannot be reduced to naive seasonal or visible-stem counting.',
+        'Distinguishes heavier longsheng/lu/wang roots from lighter storage/residual roots without reducing them to numeric weights.',
     },
     {
       sourceId: I18C_XIEJI_SOURCE.sourceId,
-      supportType: 'corroboration' as const,
+      supportType: 'corroboration',
       notes:
         'Cross-references five-element birth-stage locations and preserves the documented earth-stage disagreement as unresolved.',
     },
@@ -106,12 +104,12 @@ export const I18C_ROOT_CLASS_METHODOLOGY: MethodologyDefinition = Object.freeze(
   family: 'day_master_strength',
   name: 'Intrinsic root-class candidate taxonomy (research)',
   description:
-    'Classifies same-element branch roots into source-backed intrinsic candidate classes before structural relation effects are considered. It deliberately leaves earth root class unresolved and never emits a numeric root weight or final strength.',
+    'Classifies same-element branch roots into source-backed intrinsic candidate classes before structural relation effects. Earth remains unresolved and no numeric weight or final strength is emitted.',
   assumptions: [
-    'Longsheng/lu/wang-style roots and storage/residual roots are not treated as equivalent.',
-    'The class describes an intrinsic root candidate before clash/combination/transformation effects.',
-    'Earth birth-stage treatments are not silently collapsed; earth root class remains unresolved in this version.',
-    'No class is converted to a numeric score.',
+    'Longsheng/lu/wang-style roots and storage/residual roots are not equivalent.',
+    'Intrinsic root class precedes clash/combination/transformation effect analysis.',
+    'Competing earth birth-stage treatments are not silently collapsed.',
+    'No root class is converted to a numeric score.',
   ],
   requiredFactTypes: ['derivedFacts.dayMaster', 'derivedFacts.hiddenStems'],
   optionalFactTypes: ['stem_branch_relations', 'root_effect_after_relations'],
@@ -166,7 +164,7 @@ function rootRule(
     methodologyRef: { id: METHOD_ID, version: METHOD_VERSION },
     title: `${slot} ${dayMasterElement} intrinsic root class: ${rootClass}`,
     description:
-      'Records an intrinsic same-element root class candidate before structural relation effects. The output is non-numeric and non-conclusive.',
+      'Records an intrinsic same-element root class candidate before structural relation effects. Output remains non-numeric and non-conclusive.',
     inputs: baseInputs(slot),
     condition: {
       op: 'and',
@@ -226,15 +224,11 @@ const SCOPE_GUARD: RuleDefinition = {
   ruleId: 'RULE-I18C-ROOT-CLASS-SCOPE-GUARD',
   version: METHOD_VERSION,
   ruleSetId: GUARD_RULE_SET,
-  taxonomy: {
-    tier: 'T2',
-    category: 'day_master_strength',
-    subcategory: 'scope_guard',
-  },
+  taxonomy: { tier: 'T2', category: 'day_master_strength', subcategory: 'scope_guard' },
   methodologyRef: { id: METHOD_ID, version: METHOD_VERSION },
   title: 'Intrinsic root class is not effective root strength',
   description:
-    'Prevents intrinsic root-class candidates from being interpreted as post-relation root effect, numeric weight, or final day-master strength.',
+    'Prevents intrinsic root-class candidates from becoming post-relation root effect, numeric weight, or final day-master strength.',
   inputs: [
     {
       key: 'dayMaster',
