@@ -20,3 +20,4 @@ export * from './i20d-clash-rescue-router.js';
 export * from './i21-support-precedence-policy.js';
 export * from './i22-support-composition-frontier.js';
 export * from './i23-strength-decision-readiness.js';
+export * from './i24-challenge-mechanism-composition.js';
