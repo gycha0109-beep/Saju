@@ -47,3 +47,4 @@ export * from './i38-challenge-target-combination-condition-applicability-method
 export * from './i39-challenge-target-combination-condition-evidence.js';
 export * from './i40-challenge-combination-condition-composition-precedence-methodology-review.js';
 export * from './i41-challenge-combination-condition-dependency-graph.js';
+export * from './i42-challenge-target-stem-transformation-scope-methodology-review.js';
