@@ -26,3 +26,4 @@ export * from './i25-challenge-effect-methodology-review.js';
 export * from './i26-challenge-context-availability.js';
 export * from './i26-challenge-context-availability-v2.js';
 export * from './i27-challenge-mechanism-force-evidence.js';
+export * from './i28-challenge-target-root-quality-methodology-review.js';
