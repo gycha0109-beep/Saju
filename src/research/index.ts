@@ -28,6 +28,7 @@ export * from './i26-challenge-context-availability-v2.js';
 export * from './i26-challenge-context-availability-v3.js';
 export * from './i26-challenge-context-availability-v4.js';
 export * from './i26-challenge-context-availability-v5.js';
+export * from './i26-challenge-context-availability-v6.js';
 export * from './i27-challenge-mechanism-force-evidence.js';
 export * from './i28-challenge-target-root-quality-methodology-review.js';
 export * from './i29-challenge-target-intrinsic-root-evidence.js';
