@@ -78,7 +78,7 @@ function contiguousThreeCombinationPillars(): StructuralPillarInput {
     year: pillar('병', '인'),
     month: pillar('정', '오'),
     day: pillar('갑', '술'),
-    hour: pillar('경', '신'),
+    hour: pillar('경', '축'),
   };
 }
 
