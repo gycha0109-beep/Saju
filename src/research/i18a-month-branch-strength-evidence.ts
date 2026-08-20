@@ -55,7 +55,9 @@ function monthElementForRelation(
       ? GENERATES[element] === dayElement
       : CONTROLS[element] === dayElement,
   );
-  if (source === undefined) throw new Error(`Unable to resolve ${relation} element for ${dayElement}`);
+  if (source === undefined) {
+    throw new Error(`Unable to resolve ${relation} element for ${dayElement}`);
+  }
   return source;
 }
 
@@ -145,7 +147,7 @@ function relationRules(): readonly RuleDefinition[] {
         ],
         condition: {
           op: 'and' as const,
-          conditions: [
+          expressions: [
             {
               op: 'eq' as const,
               left: { kind: 'input' as const, key: 'dayMaster', path: 'element' },
@@ -217,7 +219,7 @@ const SCOPE_GUARD_RULE: RuleDefinition = {
   ],
   condition: {
     op: 'and',
-    conditions: [
+    expressions: [
       { op: 'exists', value: { kind: 'input', key: 'dayMaster' } },
       { op: 'exists', value: { kind: 'input', key: 'monthPillar' } },
     ],
