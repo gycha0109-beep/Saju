@@ -11,6 +11,7 @@ import {
   runInterpretation,
   type CalculationPolicySnapshot,
   type FiveElement,
+  type ReviewerTrustContext,
 } from '../src/index.js';
 
 const policy: CalculationPolicySnapshot = {
@@ -25,6 +26,12 @@ const policy: CalculationPolicySnapshot = {
   },
   timeZonePolicy: { source: 'service-default', timeZone: 'Asia/Seoul' },
   unknownBirthTimePolicy: 'preserve-unknown-and-enumerate-boundaries',
+};
+
+const emptyTrustContext: ReviewerTrustContext = {
+  policyId: 'TRUST-I7-PROMOTION-REGRESSION',
+  version: '1.0.0',
+  grants: [],
 };
 
 const generatingParent: Readonly<Record<FiveElement, FiveElement>> = {
@@ -77,11 +84,22 @@ describe('I7 source-backed research pack', () => {
       productionPack,
     );
 
-    expect(() => runInterpretation(knownSnapshot(3, 10), registry)).toThrow(ExecutionPlanError);
     try {
       runInterpretation(knownSnapshot(3, 10), registry);
+      throw new Error('expected reviewer trust requirement');
     } catch (error) {
-      expect((error as ExecutionPlanError).code).toBe('RULE_NOT_EXECUTABLE_FOR_PACK');
+      expect(error).toBeInstanceOf(ExecutionPlanError);
+      expect((error as ExecutionPlanError).code).toBe('REVIEWER_TRUST_CONTEXT_REQUIRED');
+    }
+
+    try {
+      runInterpretation(knownSnapshot(3, 10), registry, {
+        reviewerTrustContext: emptyTrustContext,
+      });
+      throw new Error('expected research methodology rejection');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ExecutionPlanError);
+      expect((error as ExecutionPlanError).code).toBe('METHODOLOGY_NOT_EXECUTABLE_FOR_PACK');
     }
   });
 
