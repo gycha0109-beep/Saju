@@ -44,3 +44,4 @@ export * from './i36-challenge-target-combination-transformation-policy-methodol
 export * from './i37-challenge-target-combination-transformation-reference.js';
 export * from './i38-challenge-target-combination-condition-applicability-methodology-review.js';
 export * from './i39-challenge-target-combination-condition-evidence.js';
+export * from './i40-challenge-combination-condition-composition-precedence-methodology-review.js';
