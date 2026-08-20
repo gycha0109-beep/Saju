@@ -259,6 +259,7 @@ function evidenceItem(
   reference: ChallengeTargetTransformationReferenceItem | undefined,
   pillars: StructuralPillarInput,
 ): ChallengeTargetCombinationConditionEvidenceItem {
+  const branchCondition = threeBranchCondition(candidate, reference, pillars);
   return {
     mechanism: candidate.mechanism,
     targetElement: candidate.targetElement,
@@ -279,9 +280,7 @@ function evidenceItem(
       supportInterferenceEffect: 'not_resolved',
     },
     competingRelationTopology: candidate.competingRelationTopology,
-    ...(candidate.relationKind === 'branch_three_combination'
-      ? { threeBranchCondition: threeBranchCondition(candidate, reference, pillars) }
-      : {}),
+    ...(branchCondition === undefined ? {} : { threeBranchCondition: branchCondition }),
     sixCombinationConventionState:
       candidate.relationKind === 'branch_six_combination'
         ? 'UNIFORM_TRANSFORMATION_CONVENTION_UNRESOLVED_SCOPE_MISMATCH'
