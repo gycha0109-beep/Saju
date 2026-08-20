@@ -38,3 +38,4 @@ export * from './i32-challenge-target-clash-dependency-methodology-review.js';
 export * from './i33-challenge-target-clash-dependency-evidence.js';
 export * from './i34-challenge-target-combination-dependency-methodology-review.js';
 export * from './i35-challenge-target-combination-dependency-evidence.js';
+export * from './i36-challenge-target-combination-transformation-policy-methodology-review.js';
