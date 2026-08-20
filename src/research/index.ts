@@ -51,3 +51,4 @@ export * from './i40-challenge-combination-condition-composition-precedence-meth
 export * from './i41-challenge-combination-condition-dependency-graph.js';
 export * from './i42-challenge-target-stem-transformation-scope-methodology-review.js';
 export * from './i43-challenge-root-six-combination-transformation-convention-scope-methodology-review.js';
+export * from './i44-challenge-root-three-combination-effective-bureau-qualification-methodology-review.js';
