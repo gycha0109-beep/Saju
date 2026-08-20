@@ -1,9 +1,7 @@
 import type {
   CanonicalSajuSnapshot,
-  EarthlyBranch,
   FiveElement,
   HeavenlyStem,
-  PillarFact,
 } from '../contracts/calculation.js';
 import {
   deriveStructuralRelationCandidates,
@@ -17,7 +15,6 @@ import { INTERPRETATION_METHODOLOGY_SOURCES } from './interpretation-methodology
 export const I18E_SPECIAL_PATTERN_ROUTER_VERSION = 'myeonghwa-special-pattern-review-router-v1';
 
 const PILLAR_SLOTS = ['year', 'month', 'day', 'hour'] as const satisfies readonly PillarSlot[];
-const ELEMENTS = ['목', '화', '토', '금', '수'] as const satisfies readonly FiveElement[];
 
 const STEM_ELEMENT: Readonly<Record<HeavenlyStem, FiveElement>> = Object.freeze({
   갑: '목',
@@ -38,14 +35,6 @@ const GENERATES: Readonly<Record<FiveElement, FiveElement>> = Object.freeze({
   토: '금',
   금: '수',
   수: '목',
-});
-
-const CONTROLS: Readonly<Record<FiveElement, FiveElement>> = Object.freeze({
-  목: '토',
-  화: '금',
-  토: '수',
-  금: '목',
-  수: '화',
 });
 
 export type SpecialPatternReviewSignal =
