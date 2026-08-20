@@ -41,3 +41,4 @@ export * from './i34-challenge-target-combination-dependency-methodology-review.
 export * from './i35-challenge-target-combination-dependency-evidence.js';
 export * from './i36-challenge-target-combination-transformation-policy-methodology-review.js';
 export * from './i37-challenge-target-combination-transformation-reference.js';
+export * from './i38-challenge-target-combination-condition-applicability-methodology-review.js';
