@@ -17,3 +17,4 @@ export * from './i20-relative-force-evidence.js';
 export * from './i20b-clash-seasonal-advantage.js';
 export * from './i20c-clash-support-context.js';
 export * from './i20d-clash-rescue-router.js';
+export * from './i21-support-precedence-policy.js';
