@@ -9,3 +9,4 @@ export * from './i18-strength-classification-review-v3.js';
 export * from './i18a-month-branch-strength-evidence.js';
 export * from './i18b-hidden-challenge-strength-evidence.js';
 export * from './i18c-root-class-evidence.js';
+export * from './i18d-root-relation-review.js';
