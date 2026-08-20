@@ -23,3 +23,4 @@ export * from './i23-strength-decision-readiness.js';
 export * from './i23-strength-decision-readiness-v2.js';
 export * from './i24-challenge-mechanism-composition.js';
 export * from './i25-challenge-effect-methodology-review.js';
+export * from './i26-challenge-context-availability.js';
