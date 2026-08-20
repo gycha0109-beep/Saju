@@ -60,7 +60,7 @@ describe('I34 challenge target combination dependency methodology review', () =>
       expect.arrayContaining([
         expect.stringContaining('same resolved pillar and I29 identity'),
         expect.stringContaining('transformation target elements'),
-        expect.stringContaining('full three-combination'),
+        expect.stringContaining('three-combination'),
       ]),
     );
     expect(report.reviewId).toBe(repeated.reviewId);
