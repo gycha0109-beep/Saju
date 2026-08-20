@@ -134,8 +134,8 @@ function commonContextNodes(
     ]),
     node('SUPPORT_INTERFERENCE_CONTEXT', 'EVIDENCE_OBSERVED', [
       ...item.supportInterference.participantContexts.flatMap((participant) => [
-        ...participant.sameElementStemPositions.map((position) => `same-stem:${position}`),
-        ...participant.resourceStemPositions.map((position) => `resource-stem:${position}`),
+        ...participant.visibleSameElementStemPositions.map((position) => `same-stem:${position}`),
+        ...participant.visibleResourceStemPositions.map((position) => `resource-stem:${position}`),
         ...participant.sameElementBranchPositions.map((position) => `same-branch:${position}`),
         ...participant.resourceBranchPositions.map((position) => `resource-branch:${position}`),
       ]),
