@@ -22,3 +22,4 @@ export * from './i22-support-composition-frontier.js';
 export * from './i23-strength-decision-readiness.js';
 export * from './i23-strength-decision-readiness-v2.js';
 export * from './i24-challenge-mechanism-composition.js';
+export * from './i25-challenge-effect-methodology-review.js';
