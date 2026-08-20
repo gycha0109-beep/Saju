@@ -30,3 +30,4 @@ export * from './i27-challenge-mechanism-force-evidence.js';
 export * from './i28-challenge-target-root-quality-methodology-review.js';
 export * from './i29-challenge-target-intrinsic-root-evidence.js';
 export * from './i30-challenge-target-post-relation-root-state-methodology-review.js';
+export * from './i31-challenge-target-relation-participation-evidence.js';
