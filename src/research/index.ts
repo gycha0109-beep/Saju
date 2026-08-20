@@ -12,3 +12,4 @@ export * from './i18b-hidden-challenge-strength-evidence.js';
 export * from './i18c-root-class-evidence.js';
 export * from './i18d-root-relation-review.js';
 export * from './i18e-special-pattern-review-router.js';
+export * from './i19-post-relation-root-effect-review.js';
