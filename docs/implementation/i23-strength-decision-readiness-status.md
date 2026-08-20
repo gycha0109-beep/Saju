@@ -7,25 +7,38 @@ I23 Non-Numeric Strength Decision Readiness Graph
 = STRICT CLOSED / RESEARCH ONLY / CLASSIFIER BLOCKED
 ```
 
-I23 closes only the deterministic readiness/stop-reason contract.
+I23 closes only the deterministic readiness/stop-reason contract. It does not authorize a strong/weak result.
 
-It does not authorize a strong/weak result.
+## v1 capability
 
-## Implemented
+The v1 graph introduced deterministic priority and blockers for:
 
-- upstream report identity binding,
-- input/scenario indeterminate priority,
-- special-pattern routing priority,
-- post-relation root blocker propagation,
-- incomparable support-frontier blocker propagation,
-- resource-support unresolved blocker propagation,
-- earth-root unresolved blocker propagation,
-- post-relation-root precedence blocker propagation,
-- clash-rescue unresolved blocker propagation,
-- always-visible missing support-effect/challenge-composition/classifier-policy blockers,
-- deterministic blocker ordering,
-- deterministic report identity,
-- no strong/weak output enum.
+- input/scenario indeterminacy,
+- special-pattern routing,
+- post-relation root effects,
+- incomparable support frontier,
+- resource/earth/post-relation support gaps,
+- rescue effects,
+- support-effect verdict,
+- missing challenge composition,
+- missing classifier policy.
+
+## v2 capability after I24
+
+I24 supplies explicit challenge mechanism composition, so v2 does not retain the obsolete:
+
+```text
+CHALLENGE_EFFECT_COMPOSITION_MISSING
+```
+
+Instead it preserves the more precise blockers:
+
+```text
+CHALLENGE_EFFECT_VERDICT_UNRESOLVED
+CHALLENGE_MECHANISM_PRECEDENCE_UNRESOLVED   # only when mixed mechanisms coexist
+```
+
+This change means mechanism identity/composition exists; it does **not** mean challenge effect has been solved.
 
 ## Terminal states
 
@@ -53,33 +66,42 @@ strongWeakVerdict = not_emitted
 
 ## Verification
 
+v1 code gate:
+
 ```text
 HEAD:          e1148ed0fa7889016f72931efadeb70b5edf0eff
 CI run number: 433
-result:        SUCCESS
-
-lint:          PASS
-TS6 typecheck: PASS
 Vitest:        57 files / 313 tests PASS
 build:         PASS
 ```
 
-## Current primary methodology blocker
-
-The support side now has membership evidence, a limited source-backed precedence policy, and a partial-order frontier.
-
-The challenge side does not yet have an equivalent effect/composition substrate.
+challenge-aware v2 code gate:
 
 ```text
-CHALLENGE_EFFECT_COMPOSITION_MISSING
+HEAD:          827bdefe6b2abbd7eb148fe664366ccc8c9090a4
+CI run number: 443
+result:        SUCCESS
+
+lint:          PASS
+TS6 typecheck: PASS
+Vitest:        59 files / 323 tests PASS
+build:         PASS
 ```
 
-must therefore remain a hard blocker.
+## Current primary methodology blockers
 
-## Next gate
+The graph now distinguishes evidence/composition availability from effect resolution.
 
 ```text
-I24 — Challenge-Side Effect Composition Methodology Review
+SUPPORT_EFFECT_VERDICT_UNRESOLVED
+CHALLENGE_EFFECT_VERDICT_UNRESOLVED
+CHALLENGE_MECHANISM_PRECEDENCE_UNRESOLVED_WHERE_MIXED
+POST_RELATION_ROOT_EFFECT_UNRESOLVED_WHERE_ROUTED
+RESCUE_EFFECT_UNRESOLVED_WHERE_ROUTED
+EARTH_ROOT_CLASS_UNRESOLVED_WHERE_PRESENT
+CLASSIFIER_POLICY_NOT_AUTHORIZED
 ```
 
-I24 must remain non-numeric and relation-aware. It must not assume that output, wealth, and officer/control evidence are globally interchangeable or additive. It must begin by determining which comparisons, if any, are actually source-supported and which combinations must remain incomparable.
+## Next dependency
+
+I24 and I25 move challenge-side work from missing composition to relation-specific effect-context review. I23 remains classifier-blocked until those effects and the other upstream blockers are methodologically resolved.
