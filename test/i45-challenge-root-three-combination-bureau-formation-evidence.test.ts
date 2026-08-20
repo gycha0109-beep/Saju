@@ -59,7 +59,7 @@ function contiguousThreePillars(): StructuralPillarInput {
 
 function separatedNoLeadOutThreePillars(): StructuralPillarInput {
   return {
-    year: pillar('경', '인'),
+    year: pillar('무', '인'),
     month: pillar('임', '자'),
     day: pillar('갑', '오'),
     hour: pillar('계', '술'),
@@ -110,7 +110,7 @@ describe('I45 challenge root three-combination structural bureau formation evide
     const evidence = conditionEvidence(separatedNoLeadOutThreePillars());
     const policy = buildI44ChallengeRootThreeCombinationEffectiveBureauQualificationMethodologyReview();
     const report = buildI45ChallengeRootThreeCombinationBureauFormationEvidence(evidence, policy);
-    const output = report.items.find((item) => item.mechanism === 'OUTPUT_LEAKAGE');
+    const output = report.items.find((item) => item.mechanism === 'WEALTH_EXPENDITURE_CONTROL');
 
     expect(output?.formationState).toBe('STRUCTURAL_BUREAU_FORMED');
     expect(output?.adjacencyState).toBe('SEPARATED_WITH_GAP');
@@ -123,7 +123,7 @@ describe('I45 challenge root three-combination structural bureau formation evide
     const evidence = conditionEvidence(separatedNoLeadOutThreePillars());
     const policy = buildI44ChallengeRootThreeCombinationEffectiveBureauQualificationMethodologyReview();
     const report = buildI45ChallengeRootThreeCombinationBureauFormationEvidence(evidence, policy);
-    const output = report.items.find((item) => item.mechanism === 'OUTPUT_LEAKAGE');
+    const output = report.items.find((item) => item.mechanism === 'WEALTH_EXPENDITURE_CONTROL');
 
     expect(output?.clashTopology.length).toBeGreaterThan(0);
     expect(output?.clashCanBreakOrDamageBureau).toBe(true);
