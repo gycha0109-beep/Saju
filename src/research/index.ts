@@ -14,3 +14,4 @@ export * from './i18d-root-relation-review.js';
 export * from './i18e-special-pattern-review-router.js';
 export * from './i19-post-relation-root-effect-review.js';
 export * from './i20-relative-force-evidence.js';
+export * from './i20b-clash-seasonal-advantage.js';
