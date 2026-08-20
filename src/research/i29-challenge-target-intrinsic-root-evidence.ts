@@ -17,8 +17,8 @@ export const I29_CHALLENGE_TARGET_INTRINSIC_ROOT_EVIDENCE_VERSION =
   'myeonghwa-challenge-target-intrinsic-root-evidence-v1';
 
 const PILLAR_SLOTS = ['year', 'month', 'day', 'hour'] as const satisfies readonly PillarSlot[];
-const NON_EARTH_ELEMENTS = ['목', '화', '금', '수'] as const satisfies readonly FiveElement[];
-const STORAGE_BRANCHES = ['진', '술', '축', '미'] as const satisfies readonly EarthlyBranch[];
+const STORAGE_BRANCH_SET: ReadonlySet<EarthlyBranch> = new Set(['진', '술', '축', '미']);
+type NonEarthElement = Exclude<FiveElement, '토'>;
 
 const STEMS_BY_ELEMENT: Readonly<Record<FiveElement, readonly HeavenlyStem[]>> = Object.freeze({
   목: ['갑', '을'],
@@ -29,7 +29,7 @@ const STEMS_BY_ELEMENT: Readonly<Record<FiveElement, readonly HeavenlyStem[]>> =
 });
 
 const NON_EARTH_BIRTH_LU_WANG_BRANCH_LOCATORS: Readonly<
-  Record<(typeof NON_EARTH_ELEMENTS)[number], readonly EarthlyBranch[]>
+  Record<NonEarthElement, readonly EarthlyBranch[]>
 > = Object.freeze({
   목: ['해', '인', '묘'],
   화: ['인', '사', '오'],
@@ -123,7 +123,7 @@ function classifyCandidateBranch(
   if (NON_EARTH_BIRTH_LU_WANG_BRANCH_LOCATORS[targetElement].includes(branch)) {
     return 'target_birth_lu_wang_root_candidate';
   }
-  if (STORAGE_BRANCHES.includes(branch)) return 'target_storage_residual_root_candidate';
+  if (STORAGE_BRANCH_SET.has(branch)) return 'target_storage_residual_root_candidate';
   return undefined;
 }
 
