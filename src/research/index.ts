@@ -33,3 +33,4 @@ export * from './i29-challenge-target-intrinsic-root-evidence.js';
 export * from './i30-challenge-target-post-relation-root-state-methodology-review.js';
 export * from './i31-challenge-target-relation-participation-evidence.js';
 export * from './i32-challenge-target-clash-dependency-methodology-review.js';
+export * from './i33-challenge-target-clash-dependency-evidence.js';
