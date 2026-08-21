@@ -118,7 +118,7 @@ function i65(): ChallengeCombinationSupportChannelDispatchedRelationCurrentChart
     classificationAuthorized: false,
     numericScoringAuthorized: false,
     notes: [],
-  } as ChallengeCombinationSupportChannelDispatchedRelationCurrentChartSettlementSubstrateVerificationEvidenceReport;
+  } as unknown as ChallengeCombinationSupportChannelDispatchedRelationCurrentChartSettlementSubstrateVerificationEvidenceReport;
 }
 
 function conditionItem(
