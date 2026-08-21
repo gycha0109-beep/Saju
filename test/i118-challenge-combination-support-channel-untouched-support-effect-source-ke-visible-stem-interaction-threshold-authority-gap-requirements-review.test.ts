@@ -7,7 +7,7 @@ import {
 const SOURCE_ID = 'source_chenyuan_sizhu_yuce_rumen_1995_isbn9787805922515';
 
 function i117(
-  overrides: Partial<ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemEffectiveInteractionEligibilityMethodologyReviewReport> = {},
+  overrides: Record<string, unknown> = {},
 ): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemEffectiveInteractionEligibilityMethodologyReviewReport {
   const base = {
     reviewId: 'i117_i118_fixture',
