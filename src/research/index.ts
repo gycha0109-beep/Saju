@@ -71,3 +71,4 @@ export * from './i53-challenge-combination-support-channel-activation-persistenc
 export * from './i54-challenge-combination-support-channel-contest-topology-evidence.js';
 export * from './i55-challenge-combination-support-channel-contest-settlement-methodology-review.js';
 export * from './i56-challenge-combination-support-channel-settlement-dependency-evidence.js';
+export * from './i57-challenge-combination-support-channel-existing-settlement-authority-applicability-review.js';
