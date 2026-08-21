@@ -191,8 +191,7 @@ export function routeI55ChallengeCombinationSupportChannelContestSettlement(
     (candidate) => candidate.contestTopologyState === topologyState,
   );
   if (route === undefined) {
-    const exhaustive: never = topologyState;
-    throw new Error(`Unsupported I55 contest topology state: ${exhaustive}`);
+    throw new Error(`Unsupported I55 contest topology state: ${String(topologyState)}`);
   }
   return route;
 }
