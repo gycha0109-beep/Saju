@@ -95,3 +95,4 @@ export * from './i72-challenge-combination-support-channel-pair-local-clash-part
 export * from './i73-challenge-combination-support-channel-pair-local-clash-participant-support-source-settlement-dependency-circularity-methodology-review.js';
 export * from './i74-challenge-combination-support-channel-pair-local-clash-participant-support-source-settlement-dependency-evidence.js';
 export * from './i75-challenge-combination-support-channel-pair-local-clash-participant-support-source-settlement-dependency-resolution-readiness-review.js';
+export * from './i76-challenge-combination-support-channel-relation-kind-specific-combination-binding-interaction-settlement-methodology-review.js';
