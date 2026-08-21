@@ -33,10 +33,6 @@ export interface ChallengeContextAvailabilityV18Report {
   notes: readonly string[];
 }
 
-const STEM_ACTIVATION_GAP =
-  'challenge-target stem-combination support-channel activation/persistence';
-const ROOT_ACTIVATION_GAP =
-  'challenge-root combination support-channel activation/persistence';
 const STEM_CONTEST_SETTLEMENT_GAP =
   'challenge-target stem-combination support-channel contest outcome/persistence settlement';
 const ROOT_CONTEST_SETTLEMENT_GAP =
