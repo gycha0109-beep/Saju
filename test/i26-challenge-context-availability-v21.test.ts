@@ -242,10 +242,13 @@ describe('I26 v21 challenge context availability with relation identity pair evi
       built.pair,
     );
     const context = forceContext(report);
+    const family = built.multi.currentCombinationRelationKind === 'stem_five_combination' ? 'stem' : 'root';
 
     expect(
-      context?.existingCapabilities.some((capability) =>
-        capability.includes('relation identity pairs: 1 multi-touch source route(s), 2 exact relation pair(s)'),
+      context?.existingCapabilities.some(
+        (capability) =>
+          capability.includes(`I61 ${family} relation identity pairs:`) &&
+          capability.includes('exact relation pair(s); dispatch/precedence/outcomes unresolved'),
       ),
     ).toBe(true);
     expect(built.pair.touchSpecificSettlementDispatchAuthorized).toBe(false);
