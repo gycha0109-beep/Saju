@@ -86,3 +86,4 @@ export * from './i63-challenge-combination-support-channel-touch-specific-settle
 export * from './i64-challenge-combination-support-channel-dispatched-relation-current-chart-settlement-substrate-verification-methodology-review.js';
 export * from './i65-challenge-combination-support-channel-dispatched-relation-current-chart-settlement-substrate-verification-evidence.js';
 export * from './i66-challenge-combination-support-channel-dispatched-relation-settlement-outcome-resolution-readiness-review.js';
+export * from './i67-challenge-combination-support-channel-pair-local-clash-relative-force-settlement-methodology-review.js';
