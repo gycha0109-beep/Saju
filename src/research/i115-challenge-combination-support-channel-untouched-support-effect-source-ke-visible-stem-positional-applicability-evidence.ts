@@ -275,8 +275,9 @@ function materialize(
     }
     const sourceIndex = PILLAR_INDEX[binding.sourcePillarSlot];
     const targetIndex = PILLAR_INDEX[binding.targetPillarSlot];
-    const distance = Math.abs(sourceIndex - targetIndex);
-    if (distance !== 1 && distance !== 2 && distance !== 3) return null;
+    const rawDistance = Math.abs(sourceIndex - targetIndex);
+    if (rawDistance !== 1 && rawDistance !== 2 && rawDistance !== 3) return null;
+    const distance = rawDistance as 1 | 2 | 3;
     const mapping = mappingByDistance(i114, distance);
     if (mapping === undefined) return null;
 
