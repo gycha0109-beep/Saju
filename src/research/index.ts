@@ -61,7 +61,7 @@ export * from './i37-challenge-target-combination-transformation-reference.js';
 export * from './i38-challenge-target-combination-condition-applicability-methodology-review.js';
 export * from './i39-challenge-target-combination-condition-evidence.js';
 export * from './i40-challenge-combination-condition-composition-precedence-methodology-review.js';
-export * from './i41-challenge-combination-condition-dependency-graph.js';
+export * from './i41-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-authority-candidate-discovery-evidence.js';
 export * from './i42-challenge-target-stem-transformation-scope-methodology-review.js';
 export * from './i43-challenge-root-six-combination-transformation-convention-scope-methodology-review.js';
 export * from './i44-challenge-root-three-combination-effective-bureau-qualification-methodology-review.js';
@@ -140,3 +140,4 @@ export * from './i116-challenge-combination-support-channel-untouched-support-ef
 export * from './i117-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-effective-interaction-eligibility-methodology-review.js';
 export * from './i118-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-authority-gap-requirements-review.js';
 export * from './i119-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-authority-acquisition-readiness-review.js';
+export * from './i120-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-authority-candidate-discovery-evidence.js';
