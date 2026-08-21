@@ -89,3 +89,4 @@ export * from './i66-challenge-combination-support-channel-dispatched-relation-s
 export * from './i67-challenge-combination-support-channel-pair-local-clash-relative-force-settlement-methodology-review.js';
 export * from './i68-challenge-combination-support-channel-pair-local-clash-relative-force-comparative-evidence.js';
 export * from './i69-challenge-combination-support-channel-pair-local-clash-relative-force-promotion-readiness-review.js';
+export * from './i70-challenge-combination-support-channel-pair-local-clash-participant-effective-support-readiness-review.js';
