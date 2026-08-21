@@ -108,9 +108,11 @@ describe('I88 untouched support effect authority candidate discovery and registr
 
   test('rejects a discovered candidate when the exact locator is absent', () => {
     const candidate = i88VerifiedDitiansuiTiyongCandidate();
+    const { locator, ...sourceReferenceWithoutLocator } = candidate.sourceReference;
+    void locator;
     const invalid: I88DiscoveredAuthorityCandidateInput = {
       ...candidate,
-      sourceReference: { ...candidate.sourceReference, locator: undefined },
+      sourceReference: sourceReferenceWithoutLocator,
       exactLocatorStatement: '',
     };
     const report =
