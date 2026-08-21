@@ -8,22 +8,22 @@ import {
   type ChallengeTargetCombinationDependencyEvidenceReport,
 } from '../src/index.js';
 
+type Dependency =
+  | 'CURRENT_COMBINATION_BINDING_INTERACTION_SETTLEMENT'
+  | 'CLASH_RELATIVE_FORCE_SETTLEMENT'
+  | 'CLASH_RESCUE_SETTLEMENT_WHERE_APPLICABLE'
+  | 'CLASH_INTERACTION_SETTLEMENT'
+  | 'COMPETING_COMBINATION_BINDING_INTERACTION_SETTLEMENT'
+  | 'TOUCH_SPECIFIC_RELATION_SETTLEMENT'
+  | 'COMPETING_RELATION_SETTLEMENT';
+
 function i58(
-  dependency:
-    | 'CURRENT_COMBINATION_BINDING_INTERACTION_SETTLEMENT'
-    | 'CLASH_RELATIVE_FORCE_SETTLEMENT'
-    | 'CLASH_RESCUE_SETTLEMENT_WHERE_APPLICABLE'
-    | 'CLASH_INTERACTION_SETTLEMENT'
-    | 'COMPETING_COMBINATION_BINDING_INTERACTION_SETTLEMENT'
-    | 'TOUCH_SPECIFIC_RELATION_SETTLEMENT'
-    | 'COMPETING_RELATION_SETTLEMENT',
+  dependency: Dependency,
   options: {
     currentKind?: 'stem_five_combination' | 'branch_six_combination' | 'branch_three_combination';
     topology?: 'CURRENT_COMBINATION_PARTICIPATION' | 'COMPETING_CLASH_TOUCH' | 'COMPETING_COMBINATION_TOUCH' | 'MULTIPLE_TRACKED_RELATION_TOUCHES';
     touchIds?: readonly string[];
     touchKinds?: readonly ('branch_clash' | 'stem_five_combination' | 'branch_six_combination' | 'branch_three_combination')[];
-    sourceComponent?: 'stem' | 'branch';
-    sourceValue?: string;
   } = {},
 ): ChallengeCombinationSupportChannelExistingSettlementAuthorityApplicabilityEvidenceReport {
   const touchIds = options.touchIds ?? ['clash-1'];
@@ -44,8 +44,8 @@ function i58(
         targetParticipantValue: '술',
         supportChannelKind: 'RESOURCE_GENERATION_SUPPORT_CHANNEL',
         sourcePillar: 'month',
-        sourceComponent: options.sourceComponent ?? 'branch',
-        sourceValue: options.sourceValue ?? '해',
+        sourceComponent: 'branch',
+        sourceValue: '해',
         contestTopologyState: options.topology ?? 'COMPETING_CLASH_TOUCH',
         touchingRelationIds: touchIds,
         touchingRelationKinds: touchKinds,
@@ -64,8 +64,7 @@ function i58(
                     ? 'NARROW_BUREAU_STATE_AUTHORITY_NOT_GENERIC_SUPPORT_CHANNEL_SETTLEMENT'
                     : 'SUBSTRATE_REUSE_ONLY_OUTCOME_UNRESOLVED',
             authorityRefs: [],
-            reusableSubstrateAvailable:
-              dependency !== 'TOUCH_SPECIFIC_RELATION_SETTLEMENT',
+            reusableSubstrateAvailable: dependency !== 'TOUCH_SPECIFIC_RELATION_SETTLEMENT',
             currentChartSettlementSubstrateVerified: false,
             settlementOutcomeResolved: false,
           },
@@ -102,90 +101,19 @@ function i58(
 function i33(exact = true): ChallengeTargetClashDependencyEvidenceReport {
   return {
     reportId: exact ? 'i33-exact' : 'i33-mismatch',
-    evidenceVersion: 'fixture',
     status: 'RESOLVED_DEPENDENCY_EVIDENCE',
-    upstreamI29ReportId: 'i29',
-    upstreamI31ReportId: 'i31',
-    monthBranch: '해',
-    commandElement: '수',
     candidates: [
       {
         mechanism: 'OUTPUT_LEAKAGE',
-        targetElement: '화',
-        targetRootCandidatePosition: 'day',
-        targetRootCandidateBranch: '술',
-        targetRootCandidateClass: 'RESIDUAL_QI_ROOT',
         clashRelationId: exact ? 'clash-1' : 'other-clash',
         participants: [
-          {
-            role: 'TARGET_ROOT_CANDIDATE',
-            position: 'day',
-            branch: '술',
-            branchElement: '토',
-            seasonalPhase: '囚',
-            visibleSameElementStemPositions: [],
-            visibleResourceStemPositions: [],
-            sameElementBranchPositions: ['day'],
-            additionalSameElementBranchSupportPositions: [],
-            resourceBranchPositions: [],
-            supportEffect: 'not_resolved',
-            relativeForceVerdict: 'not_determined',
-            numericWeight: 'not_assigned',
-          },
-          {
-            role: 'CLASH_COUNTERPART',
-            position: 'month',
-            branch: '해',
-            branchElement: '수',
-            seasonalPhase: '旺',
-            visibleSameElementStemPositions: [],
-            visibleResourceStemPositions: [],
-            sameElementBranchPositions: ['month'],
-            additionalSameElementBranchSupportPositions: [],
-            resourceBranchPositions: [],
-            supportEffect: 'not_resolved',
-            relativeForceVerdict: 'not_determined',
-            numericWeight: 'not_assigned',
-          },
+          { position: 'day', branch: '술' },
+          { position: 'month', branch: '해' },
         ],
-        seasonalAdvantageCandidate: 'CLASH_COUNTERPART',
-        rescueTopologyCandidates: [
-          {
-            rescueRelationId: 'rescue-1',
-            rescueKind: 'SIX_COMBINATION_RESCUE_CANDIDATE',
-            sharedClashParticipantPositions: ['month'],
-            rescueStrength: 'not_evaluated',
-            rescueEffect: 'not_resolved',
-            clashSettlement: 'not_determined',
-          },
-        ],
-        earthTargetRootEffectResolutionAuthorized: false,
-        relativeBranchForceVerdict: 'not_determined',
-        supportEffectVerdict: 'not_resolved',
-        clashWinnerVerdict: 'not_determined',
-        rescueEffectVerdict: 'not_resolved',
-        clashSettlementVerdict: 'not_determined',
-        targetPostRelationRootState: 'not_determined',
-        effectiveMechanismForceVerdict: 'not_determined',
-        relationSpecificUsefulnessHarmfulness: 'not_determined',
-        numericScore: 'not_assigned',
+        rescueTopologyCandidates: [{ rescueRelationId: 'rescue-1' }],
       },
     ],
-    lowerLevelI20ReportContractReused: false,
-    lowerLevelI20bReportContractReused: false,
-    lowerLevelI20cReportContractReused: false,
-    lowerLevelI20dReportContractReused: false,
-    hiddenOnlyTargetClashRootEffectAuthorized: false,
-    earthTargetRootEffectResolutionAuthorized: false,
-    relativeBranchForceVerdict: 'not_determined',
-    clashWinnerVerdict: 'not_determined',
-    targetPostRelationRootState: 'not_determined',
-    effectiveMechanismForceVerdict: 'not_determined',
-    relationSpecificUsefulnessHarmfulness: 'not_determined',
-    classificationAuthorized: false,
-    numericScoringAuthorized: false,
-    notes: [],
-  };
+  } as unknown as ChallengeTargetClashDependencyEvidenceReport;
 }
 
 function i35(
@@ -194,155 +122,55 @@ function i35(
 ): ChallengeTargetCombinationDependencyEvidenceReport {
   return {
     reportId: `i35-${relationId}`,
-    evidenceVersion: 'fixture',
     status: 'RESOLVED_DEPENDENCY_EVIDENCE',
-    upstreamI29ReportId: 'i29',
-    upstreamI31ReportId: 'i31',
-    monthBranch: '해',
-    commandElement: '수',
     candidates: [
       {
         mechanism: 'OUTPUT_LEAKAGE',
-        targetElement: '화',
-        subjectKind: 'TARGET_ROOT_CANDIDATE',
-        subjectPosition: 'day',
-        subjectValue: '술',
-        rootCandidateClass: 'RESIDUAL_QI_ROOT',
         relationId,
         relationKind,
-        relationArity: relationKind === 'branch_three_combination' ? 3 : 2,
-        relationSourceIds: [],
         participants: [
-          {
-            pillar: 'month',
-            component: 'branch',
-            value: '해',
-            element: '수',
-            seasonalPhase: '旺',
-            visibleSameElementStemPositions: [],
-            visibleResourceStemPositions: [],
-            sameElementBranchPositions: ['month'],
-            resourceBranchPositions: [],
-            supportInterferenceEffect: 'not_resolved',
-            numericWeight: 'not_assigned',
-          },
-          {
-            pillar: 'day',
-            component: 'branch',
-            value: '술',
-            element: '토',
-            seasonalPhase: '囚',
-            visibleSameElementStemPositions: [],
-            visibleResourceStemPositions: [],
-            sameElementBranchPositions: ['day'],
-            resourceBranchPositions: [],
-            supportInterferenceEffect: 'not_resolved',
-            numericWeight: 'not_assigned',
-          },
+          { pillar: 'month', component: 'branch', value: '해' },
+          { pillar: 'day', component: 'branch', value: '술' },
         ],
-        monthBranch: '해',
-        commandElement: '수',
-        targetElementSeasonalPhase: '休',
-        structuralMembershipComplete: true,
-        transformationEstablished: false,
-        transformationTargetElement: 'not_emitted',
-        completeSupportInterferenceModelAvailable: false,
-        competingRelationTopology: [],
-        combinationTransformationConditions: 'not_resolved',
-        combinationEffectVerdict: 'not_determined',
-        targetPostRelationRootState: 'not_determined',
-        effectiveMechanismForceVerdict: 'not_determined',
-        relationSpecificUsefulnessHarmfulness: 'not_determined',
-        numericScore: 'not_assigned',
       },
     ],
-    transformationTargetElementEmissionAuthorized: false,
-    completeSupportInterferenceModelAvailable: false,
-    hiddenOnlyTargetCombinationRootEffectAuthorized: false,
-    earthTargetCombinationRootEffectAuthorized: false,
-    combinationEffectVerdict: 'not_determined',
-    targetPostRelationRootState: 'not_determined',
-    effectiveMechanismForceVerdict: 'not_determined',
-    relationSpecificUsefulnessHarmfulness: 'not_determined',
-    classificationAuthorized: false,
-    numericScoringAuthorized: false,
-    notes: [],
-  };
+  } as unknown as ChallengeTargetCombinationDependencyEvidenceReport;
 }
 
 function i47(exact = true): ChallengeRootThreeCombinationClashPlacementSettlementEvidenceReport {
   return {
     reportId: exact ? 'i47-exact' : 'i47-mismatch',
-    evidenceVersion: 'fixture',
     status: 'RESOLVED_CLASH_PLACEMENT_SETTLEMENT_EVIDENCE',
-    upstreamI45ReportId: 'i45',
-    upstreamI46ReviewId: 'i46',
     items: [
       {
         mechanism: 'OUTPUT_LEAKAGE',
         formationRelationId: exact ? 'current-combination' : 'other-combination',
-        bureauParticipantPositions: ['year', 'day', 'hour'],
-        bureauSpanStart: 'year',
-        bureauSpanEnd: 'hour',
-        formationState: 'STRUCTURAL_BUREAU_FORMED',
         clashes: [
           {
             clashRelationId: exact ? 'clash-1' : 'other-clash',
             clashedBureauParticipantPosition: 'day',
             clashCounterpartPosition: 'month',
-            bureauSpanStart: 'year',
-            bureauSpanEnd: 'hour',
-            counterpartEmbeddedWithinBureauSpan: true,
-            counterpartTightToClashedParticipant: true,
-            placementClass: 'EMBEDDED_WITHIN_BUREAU_SPAN_TIGHT_TO_CLASHED_PARTICIPANT',
-            settlement: 'DIRECT_BUREAU_BREAK_AUTHORIZED',
-            deterministicBureauState: 'BROKEN_BY_TIGHT_EMBEDDED_CLASH',
-            damageMagnitude: 'not_assigned',
-            numericWeight: 'not_assigned',
           },
         ],
-        trackedClashCount: 1,
-        directBreakCount: 1,
-        postInteractionBureauState: 'BROKEN_BY_TIGHT_EMBEDDED_CLASH',
-        postInteractionBureauStateBasis: 'SINGLE_SOURCE_BOUNDED_TIGHT_EMBEDDED_CLASH',
-        genericIntactOrDamagedVerdict: 'not_determined',
-        seasonalOverrideResolved: false,
-        supportOverrideResolved: false,
-        targetPostRelationRootState: 'not_determined',
-        effectiveMechanismForceVerdict: 'not_determined',
-        relationSpecificUsefulnessHarmfulness: 'not_determined',
-        numericScore: 'not_assigned',
+        postInteractionBureauState: exact
+          ? 'BROKEN_BY_TIGHT_EMBEDDED_CLASH'
+          : 'not_determined',
       },
     ],
-    placementClassificationAvailable: true,
-    tightEmbeddedBreakStateEmissionAuthorized: true,
-    genericPostInteractionBureauStateEmissionAuthorized: false,
-    damagedBureauMagnitudeClassificationAuthorized: false,
-    multipleClashAggregationAuthorized: false,
-    targetPostRelationRootState: 'not_determined',
-    effectiveMechanismForceVerdict: 'not_determined',
-    relationSpecificUsefulnessHarmfulness: 'not_determined',
-    classificationAuthorized: false,
-    numericScoringAuthorized: false,
-    notes: [],
-  };
+  } as unknown as ChallengeRootThreeCombinationClashPlacementSettlementEvidenceReport;
 }
 
 const methodology =
   buildI59ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationMethodologyReview();
 
 describe('I60 current-chart settlement substrate verification evidence', () => {
-  test('verifies exact I33 clash and rescue substrate without resolving relative force, rescue effect, or settlement outcome', () => {
+  test('verifies exact I33 clash and rescue substrate without resolving outcomes', () => {
     for (const dependency of [
       'CLASH_RELATIVE_FORCE_SETTLEMENT',
       'CLASH_RESCUE_SETTLEMENT_WHERE_APPLICABLE',
     ] as const) {
       const result = buildI60ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationEvidence(
-        i58(dependency),
-        methodology,
-        i33(true),
-        i35(),
-        i47(false),
+        i58(dependency), methodology, i33(true), i35(), i47(false),
       );
       const verification = result.items[0]?.dependencyVerification[0];
 
@@ -355,13 +183,9 @@ describe('I60 current-chart settlement substrate verification evidence', () => {
     }
   });
 
-  test('rejects I33 reuse when the exact clash identity does not match the support source route', () => {
+  test('rejects I33 reuse when exact clash identity does not match', () => {
     const result = buildI60ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationEvidence(
-      i58('CLASH_RELATIVE_FORCE_SETTLEMENT'),
-      methodology,
-      i33(false),
-      i35(),
-      i47(false),
+      i58('CLASH_RELATIVE_FORCE_SETTLEMENT'), methodology, i33(false), i35(), i47(false),
     );
     const verification = result.items[0]?.dependencyVerification[0];
 
@@ -375,22 +199,14 @@ describe('I60 current-chart settlement substrate verification evidence', () => {
         topology: 'CURRENT_COMBINATION_PARTICIPATION',
         touchIds: ['current-combination'],
         touchKinds: ['branch_six_combination'],
-      }),
-      methodology,
-      i33(false),
-      i35('current-combination'),
-      i47(false),
+      }), methodology, i33(false), i35('current-combination'), i47(false),
     );
     const competing = buildI60ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationEvidence(
       i58('COMPETING_COMBINATION_BINDING_INTERACTION_SETTLEMENT', {
         topology: 'COMPETING_COMBINATION_TOUCH',
         touchIds: ['competing-combination'],
         touchKinds: ['branch_six_combination'],
-      }),
-      methodology,
-      i33(false),
-      i35('competing-combination'),
-      i47(false),
+      }), methodology, i33(false), i35('competing-combination'), i47(false),
     );
 
     expect(current.items[0]?.dependencyVerification[0]?.currentChartSettlementSubstrateVerified).toBe(true);
@@ -401,10 +217,7 @@ describe('I60 current-chart settlement substrate verification evidence', () => {
   test('preserves exact I47 bureau break as narrow context while refusing support-source destruction', () => {
     const result = buildI60ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationEvidence(
       i58('CLASH_INTERACTION_SETTLEMENT', { currentKind: 'branch_three_combination' }),
-      methodology,
-      i33(true),
-      i35('current-combination', 'branch_three_combination'),
-      i47(true),
+      methodology, i33(true), i35('current-combination', 'branch_three_combination'), i47(true),
     );
     const verification = result.items[0]?.dependencyVerification[0];
 
@@ -417,27 +230,16 @@ describe('I60 current-chart settlement substrate verification evidence', () => {
   });
 
   test('keeps multi-touch pairing and competing-relation precedence fail-closed', () => {
+    const options = {
+      topology: 'MULTIPLE_TRACKED_RELATION_TOUCHES' as const,
+      touchIds: ['clash-1', 'competing-combination'],
+      touchKinds: ['branch_clash', 'branch_six_combination'] as const,
+    };
     const multi = buildI60ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationEvidence(
-      i58('TOUCH_SPECIFIC_RELATION_SETTLEMENT', {
-        topology: 'MULTIPLE_TRACKED_RELATION_TOUCHES',
-        touchIds: ['clash-1', 'competing-combination'],
-        touchKinds: ['branch_clash', 'branch_six_combination'],
-      }),
-      methodology,
-      i33(true),
-      i35('competing-combination'),
-      i47(false),
+      i58('TOUCH_SPECIFIC_RELATION_SETTLEMENT', options), methodology, i33(true), i35('competing-combination'), i47(false),
     );
     const precedence = buildI60ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationEvidence(
-      i58('COMPETING_RELATION_SETTLEMENT', {
-        topology: 'MULTIPLE_TRACKED_RELATION_TOUCHES',
-        touchIds: ['clash-1', 'competing-combination'],
-        touchKinds: ['branch_clash', 'branch_six_combination'],
-      }),
-      methodology,
-      i33(true),
-      i35('competing-combination'),
-      i47(false),
+      i58('COMPETING_RELATION_SETTLEMENT', options), methodology, i33(true), i35('competing-combination'), i47(false),
     );
 
     expect(multi.items[0]?.dependencyVerification[0]?.verificationStatus).toBe('BLOCKED_MULTI_TOUCH_PAIRING');
@@ -449,11 +251,7 @@ describe('I60 current-chart settlement substrate verification evidence', () => {
   test('fails closed on non-canonical I59 and leaves force/scoring/classification guards closed', () => {
     const modified = { ...methodology, reviewId: `${methodology.reviewId}_other` };
     const result = buildI60ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationEvidence(
-      i58('CLASH_RELATIVE_FORCE_SETTLEMENT'),
-      modified,
-      i33(true),
-      i35(),
-      i47(false),
+      i58('CLASH_RELATIVE_FORCE_SETTLEMENT'), modified, i33(true), i35(), i47(false),
     );
 
     expect(result.status).toBe('I59_METHODOLOGY_NOT_AUTHORIZED');
@@ -463,20 +261,12 @@ describe('I60 current-chart settlement substrate verification evidence', () => {
     expect(result.numericScoringAuthorized).toBe(false);
   });
 
-  test('is deterministic and keeps verified substrate strictly below all settlement/effect verdicts', () => {
+  test('is deterministic and keeps verified substrate strictly below settlement/effect verdicts', () => {
     const first = buildI60ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationEvidence(
-      i58('CLASH_RELATIVE_FORCE_SETTLEMENT'),
-      methodology,
-      i33(true),
-      i35(),
-      i47(false),
+      i58('CLASH_RELATIVE_FORCE_SETTLEMENT'), methodology, i33(true), i35(), i47(false),
     );
     const second = buildI60ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationEvidence(
-      i58('CLASH_RELATIVE_FORCE_SETTLEMENT'),
-      methodology,
-      i33(true),
-      i35(),
-      i47(false),
+      i58('CLASH_RELATIVE_FORCE_SETTLEMENT'), methodology, i33(true), i35(), i47(false),
     );
 
     expect(first.reportId).toBe(second.reportId);
