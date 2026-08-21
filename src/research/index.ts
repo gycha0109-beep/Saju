@@ -74,3 +74,4 @@ export * from './i55-challenge-combination-support-channel-contest-settlement-me
 export * from './i56-challenge-combination-support-channel-settlement-dependency-evidence.js';
 export * from './i57-challenge-combination-support-channel-existing-settlement-authority-applicability-review.js';
 export * from './i58-challenge-combination-support-channel-existing-settlement-authority-applicability-evidence.js';
+export * from './i59-challenge-combination-support-channel-current-chart-settlement-substrate-verification-methodology-review.js';
