@@ -122,7 +122,7 @@ function i65(i33ReportId: string): ChallengeCombinationSupportChannelDispatchedR
             relationId: 'clash-a',
             relationKind: 'branch_clash',
             isCurrentCombinationRelation: false,
-            dispatchClass: 'COMPETING_CLASH_DISPATCH',
+            dispatchClass: 'COMPETING_CLASH_SETTLEMENT_ROUTE',
             dependencyVerification: [
               {
                 dependency: 'CLASH_RELATIVE_FORCE_SETTLEMENT',
