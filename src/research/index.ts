@@ -110,3 +110,4 @@ export * from './i86-challenge-combination-support-channel-untouched-support-eff
 export * from './i87-challenge-combination-support-channel-untouched-support-effect-authority-candidate-registration-contract.js';
 export * from './i88-challenge-combination-support-channel-untouched-support-effect-authority-candidate-discovery-registration-evidence.js';
 export * from './i89-challenge-combination-support-channel-untouched-support-effect-authority-candidate-i84-requirement-coverage-evidence.js';
+export * from './i90-challenge-combination-support-channel-untouched-support-effect-missing-requirement-targeted-authority-discovery-readiness-review.js';
