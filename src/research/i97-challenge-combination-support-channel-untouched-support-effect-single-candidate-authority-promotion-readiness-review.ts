@@ -5,6 +5,15 @@ import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSingleCand
 export const I97_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_UNTOUCHED_SUPPORT_EFFECT_SINGLE_CANDIDATE_AUTHORITY_PROMOTION_READINESS_REVIEW_VERSION =
   'myeonghwa-challenge-combination-support-channel-untouched-support-effect-single-candidate-authority-promotion-readiness-review-v1';
 
+const EXPECTED_REQUIREMENT_IDS = Object.freeze([
+  'EXPLICIT_POST_INTERACTION_UNTOUCHED_SOURCE_RULE',
+  'STRUCTURAL_PRESENCE_VS_EFFECT_SEPARATION',
+  'SOURCE_POSITION_APPLICABILITY_AND_EXCEPTIONS',
+  'SUPPORT_KIND_APPLICABILITY_WITHOUT_PRECEDENCE_OR_WEIGHT',
+  'UNTOUCHED_PERSISTENCE_STATE_SEMANTICS',
+  'INDEPENDENT_PROVENANCE_BASIS',
+] as const);
+
 export interface ChallengeCombinationSupportChannelUntouchedSupportEffectSingleCandidateAuthorityPromotionReadinessReviewReport {
   reviewId: string;
   reviewVersion: string;
@@ -92,8 +101,23 @@ function exactI96Accepted(
       'SINGLE_REGISTERED_CANDIDATE_SATISFIES_ALL_I84_REQUIREMENTS_PROMOTION_REVIEW_REQUIRED' &&
     i96.candidateRegistrationId !== null &&
     i96.candidateSourceId !== null &&
-    i96.evaluatedRequirementCount === 6 &&
-    i96.satisfiedRequirementCount === 6 &&
+    i96.coverage.length === EXPECTED_REQUIREMENT_IDS.length &&
+    i96.coverage.every(
+      (item, index) =>
+        item.requirementId === EXPECTED_REQUIREMENT_IDS[index] &&
+        item.coverageState === 'SUPPORTED_BY_REGISTERED_EVIDENCE' &&
+        item.countsAsSatisfiedForI84 &&
+        item.evidenceComesFromSameRegisteredCandidate &&
+        item.priorCandidateCoverageBorrowed === false &&
+        item.absenceOfTrackedContestAloneMaySubstitute === false &&
+        item.supportDirectionAloneMaySubstitute === false &&
+        item.genericNoTouchMayBePromotedToActive === false &&
+        item.genericNoTouchMayBePromotedToPersisted === false &&
+        item.genericNoTouchMayBePromotedToEffectiveSupport === false &&
+        item.numericCalibrationMaySubstitute === false,
+    ) &&
+    i96.evaluatedRequirementCount === EXPECTED_REQUIREMENT_IDS.length &&
+    i96.satisfiedRequirementCount === EXPECTED_REQUIREMENT_IDS.length &&
     i96.partialRequirementCount === 0 &&
     i96.unsupportedRequirementCount === 0 &&
     i96.allSixRequirementsEvaluated &&
@@ -207,7 +231,7 @@ export function buildI97ChallengeCombinationSupportChannelUntouchedSupportEffect
       recommendedNextGate:
         'UNTOUCHED_SUPPORT_EFFECT_SINGLE_CANDIDATE_I84_FULL_COVERAGE_EVALUATION_EVIDENCE',
       notes: [
-        'I97 remains fail-closed unless I96 has exact six-of-six coverage with conditional-not-default persistence semantics and every executable/promotion guard still false.',
+        'I97 remains fail-closed unless I96 has exact six-of-six same-candidate coverage with conditional-not-default persistence semantics and every executable/promotion guard still false.',
       ],
     });
   }
