@@ -10,7 +10,7 @@ function baseItem(
   dependencies: ChallengeCombinationSupportChannelSettlementDependencyEvidenceItem['requiredSettlementDependencies'],
 ): ChallengeCombinationSupportChannelSettlementDependencyEvidenceItem {
   return {
-    mechanism: 'OUTPUT_CHALLENGE',
+    mechanism: 'OUTPUT_LEAKAGE',
     currentCombinationRelationId: 'relation-current',
     currentCombinationRelationKind: 'branch_six_combination',
     targetParticipantPillar: 'day',
