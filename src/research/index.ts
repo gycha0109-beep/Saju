@@ -118,3 +118,4 @@ export * from './i94-challenge-combination-support-channel-untouched-support-eff
 export * from './i95-challenge-combination-support-channel-untouched-support-effect-single-candidate-full-coverage-authority-discovery-evidence.js';
 export * from './i96-challenge-combination-support-channel-untouched-support-effect-single-candidate-i84-full-coverage-evaluation-evidence.js';
 export * from './i97-challenge-combination-support-channel-untouched-support-effect-single-candidate-authority-promotion-readiness-review.js';
+export * from './i98-challenge-combination-support-channel-untouched-support-effect-conditional-persistence-methodology-definition-contract.js';
