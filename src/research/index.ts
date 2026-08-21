@@ -72,3 +72,4 @@ export * from './i54-challenge-combination-support-channel-contest-topology-evid
 export * from './i55-challenge-combination-support-channel-contest-settlement-methodology-review.js';
 export * from './i56-challenge-combination-support-channel-settlement-dependency-evidence.js';
 export * from './i57-challenge-combination-support-channel-existing-settlement-authority-applicability-review.js';
+export * from './i58-challenge-combination-support-channel-existing-settlement-authority-applicability-evidence.js';
