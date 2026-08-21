@@ -121,3 +121,4 @@ export * from './i97-challenge-combination-support-channel-untouched-support-eff
 export * from './i98-challenge-combination-support-channel-untouched-support-effect-conditional-persistence-methodology-definition-contract.js';
 export * from './i99-challenge-combination-support-channel-untouched-support-effect-source-relation-vocabulary-repository-binding-review.js';
 export * from './i100-challenge-combination-support-channel-untouched-support-effect-source-vocabulary-taxonomy-gap-requirements-review.js';
+export * from './i101-challenge-combination-support-channel-untouched-support-effect-minimal-source-vocabulary-taxonomy-implementation-readiness-review.js';
