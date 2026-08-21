@@ -97,3 +97,4 @@ export * from './i74-challenge-combination-support-channel-pair-local-clash-part
 export * from './i75-challenge-combination-support-channel-pair-local-clash-participant-support-source-settlement-dependency-resolution-readiness-review.js';
 export * from './i76-challenge-combination-support-channel-relation-kind-specific-combination-binding-interaction-settlement-methodology-review.js';
 export * from './i77-challenge-combination-support-channel-relation-kind-specific-combination-interaction-evidence.js';
+export * from './i78-challenge-combination-support-channel-relation-kind-specific-combination-interaction-outcome-promotion-readiness-review.js';
