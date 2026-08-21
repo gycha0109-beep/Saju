@@ -126,3 +126,4 @@ export * from './i102-challenge-combination-support-channel-untouched-support-ef
 export * from './i103-challenge-combination-support-channel-untouched-support-effect-existing-substrate-source-vocabulary-binding-evidence.js';
 export * from './i104-challenge-combination-support-channel-untouched-support-effect-existing-substrate-source-vocabulary-binding-promotion-readiness-review.js';
 export * from './i105-challenge-combination-support-channel-untouched-support-effect-blocked-vocabulary-authority-acquisition-readiness-review.js';
+export * from './i106-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-candidate-discovery-readiness-review.js';
