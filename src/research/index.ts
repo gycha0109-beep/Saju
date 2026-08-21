@@ -122,3 +122,4 @@ export * from './i98-challenge-combination-support-channel-untouched-support-eff
 export * from './i99-challenge-combination-support-channel-untouched-support-effect-source-relation-vocabulary-repository-binding-review.js';
 export * from './i100-challenge-combination-support-channel-untouched-support-effect-source-vocabulary-taxonomy-gap-requirements-review.js';
 export * from './i101-challenge-combination-support-channel-untouched-support-effect-minimal-source-vocabulary-taxonomy-implementation-readiness-review.js';
+export * from './i102-challenge-combination-support-channel-untouched-support-effect-existing-substrate-source-vocabulary-adapter-contract.js';
