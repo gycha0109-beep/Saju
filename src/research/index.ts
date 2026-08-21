@@ -131,3 +131,4 @@ export * from './i107-challenge-combination-support-channel-untouched-support-ef
 export * from './i108-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-requirement-coverage-evaluation-evidence.js';
 export * from './i109-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-promotion-readiness-review.js';
 export * from './i110-challenge-combination-support-channel-untouched-support-effect-source-ke-directional-evidence-adapter-contract.js';
+export * from './i111-challenge-combination-support-channel-untouched-support-effect-source-ke-directional-evidence-binding-evidence.js';
