@@ -181,7 +181,8 @@ describe('I95 untouched support effect single-candidate full-coverage authority 
 
   test('rejects a plausible candidate if its exact locator is absent', () => {
     const candidate = i95VerifiedChenYuanSizhuYuceCandidate();
-    const { locator: _locator, ...sourceWithoutLocator } = candidate.sourceReference;
+    const sourceWithoutLocator = { ...candidate.sourceReference };
+    delete sourceWithoutLocator.locator;
     const invalid: I88DiscoveredAuthorityCandidateInput = {
       ...candidate,
       sourceReference: sourceWithoutLocator,
