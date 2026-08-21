@@ -301,7 +301,7 @@ export function buildI107ChallengeCombinationSupportChannelUntouchedSupportEffec
     source.publicationYear === 1995 &&
     source.language === 'zh-Hans' &&
     source.provenanceTier === 'practitioner_secondary' &&
-    source.rights.reusePolicy === 'paraphrase_only';
+    source.rights?.reusePolicy === 'paraphrase_only';
 
   if (!sourceIdentityAccepted || evidence.length !== 4 || evidence.some((item, index) => item.requirement !== REQUIREMENTS[index])) {
     return finalized({
