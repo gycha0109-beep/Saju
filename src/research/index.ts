@@ -91,3 +91,4 @@ export * from './i68-challenge-combination-support-channel-pair-local-clash-rela
 export * from './i69-challenge-combination-support-channel-pair-local-clash-relative-force-promotion-readiness-review.js';
 export * from './i70-challenge-combination-support-channel-pair-local-clash-participant-effective-support-readiness-review.js';
 export * from './i71-challenge-combination-support-channel-pair-local-clash-participant-support-source-contest-topology-methodology-review.js';
+export * from './i72-challenge-combination-support-channel-pair-local-clash-participant-support-source-contest-topology-evidence.js';
