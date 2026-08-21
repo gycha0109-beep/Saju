@@ -82,3 +82,4 @@ export * from './i60-challenge-combination-support-channel-current-chart-settlem
 export * from './i61-challenge-combination-support-channel-relation-identity-pair-evidence.js';
 export * from './i62-challenge-combination-support-channel-touch-specific-settlement-dispatch-methodology-review.js';
 export * from './i63-challenge-combination-support-channel-touch-specific-settlement-dispatch-evidence.js';
+export * from './i64-challenge-combination-support-channel-dispatched-relation-current-chart-settlement-substrate-verification-methodology-review.js';
