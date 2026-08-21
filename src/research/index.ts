@@ -105,3 +105,4 @@ export * from './i81-challenge-combination-support-channel-branch-three-narrow-p
 export * from './i82-challenge-combination-support-channel-no-tracked-relation-support-effect-readiness-review.js';
 export * from './i83-challenge-combination-support-channel-no-tracked-relation-support-effect-authority-gap-review.js';
 export * from './i84-challenge-combination-support-channel-untouched-support-effect-additional-authority-requirements-review.js';
+export * from './i85-challenge-combination-support-channel-untouched-support-effect-authority-candidate-inventory.js';
