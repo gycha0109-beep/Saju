@@ -129,7 +129,7 @@ describe('I122 source 克 targeted 无力 boundary authority discovery evidence'
 
     expect(wei).toBeDefined();
     expect(wei?.sourceReference.publicationYear).toBe(1935);
-    expect(wei?.sourceReference.provenanceTier).toBe('historical_primary');
+    expect(wei?.sourceReference.provenanceTier).toBe('primary');
     expect(wei?.literalWuLiObserved).toBe(false);
     expect(wei?.explicitConditionalInteractionBoundaryObserved).toBe(true);
     expect(report.weiQianliSameWorkWuLiLocatorVerified).toBe(false);
