@@ -15,6 +15,9 @@ const frozenDerivativeIds = [
 function validI159(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemainingOriginGapTargetedDiscoveryReadinessReviewReport {
   return {
     reviewId: 'i159_fixture',
+    reviewVersion:
+      'myeonghwa-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-remaining-origin-gap-targeted-discovery-readiness-review-v1',
+    upstreamI158ReviewId: 'i158_fixture',
     status:
       'RESOLVED_SOURCE_KE_VISIBLE_STEM_THRESHOLD_MULTI_SOURCE_COMPOSITION_PROVENANCE_INDEPENDENCE_REMAINING_ORIGIN_GAP_TARGETED_DISCOVERY_READINESS_REVIEW',
     decision:
@@ -88,7 +91,8 @@ function validI159(): ChallengeCombinationSupportChannelUntouchedSupportEffectSo
     hiddenStemAuthorityGap: 'SOURCE_KE_HIDDEN_STEM_INTERACTION_ELIGIBILITY_AUTHORITY_NOT_ESTABLISHED',
     recommendedNextGate:
       'UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_VISIBLE_STEM_INTERACTION_THRESHOLD_MULTI_SOURCE_COMPOSITION_PROVENANCE_INDEPENDENCE_REMAINING_ORIGIN_GAP_TARGETED_DISCOVERY_EVIDENCE',
-  } as ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemainingOriginGapTargetedDiscoveryReadinessReviewReport;
+    notes: ['fixture'],
+  };
 }
 
 describe('I160 remaining provenance origin-gap targeted discovery evidence', () => {
@@ -118,7 +122,7 @@ describe('I160 remaining provenance origin-gap targeted discovery evidence', () 
 
   it('records Wei generic traditional dependence without inventing a target-specific predecessor or negative finding', () => {
     const report = buildI160ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemainingOriginGapTargetedDiscoveryEvidence(validI159());
-    const wei = report.originGapDiscoveryEvidenceRecords[0];
+    const wei = report.originGapDiscoveryEvidenceRecords[0]!;
 
     expect(wei.evidenceId).toBe('evidence_wei_qianli_far_position_cannot_ke');
     expect(wei.lineageClass).toBe('GENERIC_TRADITIONAL_DEPENDENCE_EXACT_TARGET_LINEAGE_UNRESOLVED');
@@ -131,7 +135,7 @@ describe('I160 remaining provenance origin-gap targeted discovery evidence', () 
 
   it('pushes the Wu public witness boundary to 2007-03-22 while preserving upstream-origin uncertainty', () => {
     const report = buildI160ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemainingOriginGapTargetedDiscoveryEvidence(validI159());
-    const wu = report.originGapDiscoveryEvidenceRecords[1];
+    const wu = report.originGapDiscoveryEvidenceRecords[1]!;
 
     expect(wu.evidenceId).toBe('evidence_wu_huaiyun_taxonomy_remote_and_operational_examples');
     expect(wu.earliestWitnessOrEditionFinding).toContain('2007-03-22');
@@ -142,7 +146,7 @@ describe('I160 remaining provenance origin-gap targeted discovery evidence', () 
 
   it('keeps Mingdeng unresolved and refuses to convert exact-phrase search silence into a negative finding', () => {
     const report = buildI160ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemainingOriginGapTargetedDiscoveryEvidence(validI159());
-    const mingdeng = report.originGapDiscoveryEvidenceRecords[2];
+    const mingdeng = report.originGapDiscoveryEvidenceRecords[2]!;
 
     expect(mingdeng.evidenceId).toBe('evidence_mingdeng_generic_youli_wuli_criteria');
     expect(mingdeng.earliestWitnessOrEditionFinding).toContain('2022-08-05');
@@ -185,7 +189,7 @@ describe('I160 remaining provenance origin-gap targeted discovery evidence', () 
 
   it('fails closed if the I159 discovery authorization boundary is mutated', () => {
     const mutated = validI159();
-    const target = mutated.originGapDiscoveryTargets[0];
+    const target = mutated.originGapDiscoveryTargets[0]!;
     const invalid = {
       ...mutated,
       originGapDiscoveryTargets: [
