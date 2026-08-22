@@ -56,10 +56,10 @@ export interface ChallengeCombinationSupportChannelUntouchedSupportEffectSourceK
   exactI143ScopePackageAccepted: boolean;
   readinessAndPackageIdentityMatch: boolean;
   adjudicationResults: readonly I148ScopeCompatibilityAdjudicationResult[];
-  adjudicationResultCount: 6 | 0;
-  compatibleScopeOnlyCount: 5 | 0;
-  rejectedScopeMismatchCount: 1 | 0;
-  unresolvedScopeCount: 0 | 6;
+  adjudicationResultCount: number;
+  compatibleScopeOnlyCount: number;
+  rejectedScopeMismatchCount: number;
+  unresolvedScopeCount: number;
   scopeCompatibilityFullyAdjudicated: boolean;
   allAcceptedScopeResultsRemainNonSatisfactionFindings: boolean;
   genericForceSubstitutionRejected: boolean;
@@ -372,10 +372,10 @@ export function buildI148ChallengeCombinationSupportChannelUntouchedSupportEffec
       exactI143ScopePackageAccepted: true,
       readinessAndPackageIdentityMatch: true,
       adjudicationResults: results,
-      adjudicationResultCount: 0,
-      compatibleScopeOnlyCount: 0,
-      rejectedScopeMismatchCount: 0,
-      unresolvedScopeCount: 6,
+      adjudicationResultCount: results.length,
+      compatibleScopeOnlyCount: compatibleCount,
+      rejectedScopeMismatchCount: rejectedCount,
+      unresolvedScopeCount: unresolvedCount,
       scopeCompatibilityFullyAdjudicated: false,
       allAcceptedScopeResultsRemainNonSatisfactionFindings: results.every(
         (result) => result.requirementSatisfactionFindingMade === false,
