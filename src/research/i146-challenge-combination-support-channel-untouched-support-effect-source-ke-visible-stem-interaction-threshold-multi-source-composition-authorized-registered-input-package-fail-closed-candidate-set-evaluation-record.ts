@@ -49,7 +49,7 @@ export interface ChallengeCombinationSupportChannelUntouchedSupportEffectSourceK
   authorizationAndPackageIdentityMatch: boolean;
   evaluationState: 'COMPLETED_FAIL_CLOSED' | 'NOT_PERFORMED';
   authorizationConsumedByThisEvaluationRecord: boolean;
-  authorizationReusableAfterThisRecord: false;
+  authorizationReusableAfterThisRecord: boolean;
   evaluationStepRecords: readonly I146EvaluationStepRecord[];
   evaluationStepCount: 9;
   passedStepCount: 3 | 0;
@@ -145,6 +145,10 @@ function exactI145Accepted(
 function exactI143Accepted(
   i143: ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionCandidateSetEvidenceRebindingAdjudicationInputMaterializationRecordReport,
 ): boolean {
+  const candidateIdsUnique =
+    i143.candidateManifest !== null &&
+    new Set(i143.candidateManifest.candidateIds).size === i143.candidateManifest.candidateIds.length;
+
   const exactRequirementOwnership =
     i143.requirementOwnershipBindings.length === I143_I118_REQUIREMENT_IDS.length &&
     I143_I118_REQUIREMENT_IDS.every(
@@ -156,24 +160,29 @@ function exactI143Accepted(
           (binding) =>
             binding.i118RequirementId === requirementId &&
             binding.owningEvidenceIds.length > 0 &&
+            binding.owningEvidenceIds.every((evidenceId) =>
+              i143.evidenceRebindingRecords.some((record) => record.evidenceId === evidenceId),
+            ) &&
             binding.satisfactionFindingMade === false,
         ),
     );
 
-  const exactEvidenceBindings = i143.evidenceRebindingRecords.every(
-    (record) =>
-      i143.candidateManifest?.candidateIds.includes(record.candidateId) === true &&
-      i143.witnessIdentityBindings.some(
-        (binding) =>
-          binding.witnessId === record.witnessId &&
-          binding.sourceId === record.sourceId &&
-          binding.normalizedCandidateId === record.candidateId &&
-          binding.reproducible &&
-          binding.stableLocator.length > 0,
-      ) &&
-      record.locator.length > 0 &&
-      record.bindingState === 'REGISTERED_INPUT_NOT_ADJUDICATED',
-  );
+  const exactEvidenceBindings =
+    i143.evidenceRebindingRecords.length > 0 &&
+    i143.evidenceRebindingRecords.every(
+      (record) =>
+        i143.candidateManifest?.candidateIds.includes(record.candidateId) === true &&
+        i143.witnessIdentityBindings.some(
+          (binding) =>
+            binding.witnessId === record.witnessId &&
+            binding.sourceId === record.sourceId &&
+            binding.normalizedCandidateId === record.candidateId &&
+            binding.reproducible &&
+            binding.stableLocator.length > 0,
+        ) &&
+        record.locator.length > 0 &&
+        record.bindingState === 'REGISTERED_INPUT_NOT_ADJUDICATED',
+    );
 
   return (
     i143.status ===
@@ -192,9 +201,14 @@ function exactI143Accepted(
     i143.exactI142ReadinessAccepted &&
     i143.candidateManifest !== null &&
     i143.candidateManifest.candidateCount === 6 &&
+    i143.candidateManifest.candidateIds.length === 6 &&
+    candidateIdsUnique &&
     i143.candidateManifest.frozen &&
     i143.candidateManifest.candidateSetId === i143.candidateSetId &&
     i143.candidateManifest.adoptionId === i143.adoptionId &&
+    i143.witnessIdentityBindingCount === i143.witnessIdentityBindings.length &&
+    i143.evidenceRebindingRecordCount === i143.evidenceRebindingRecords.length &&
+    i143.requirementOwnershipBindingCount === i143.requirementOwnershipBindings.length &&
     i143.allEightArtifactClassesMaterialized &&
     i143.allSixI118RequirementsHaveExplicitOwnershipBindings &&
     i143.everyEvidenceRecordBindsFrozenCandidateSourceWitnessLocator &&
@@ -243,22 +257,34 @@ function identitiesMatch(
   );
 }
 
+function passReason(stepId: I132PolicyEvaluationStepId): string {
+  switch (stepId) {
+    case 'POLICY_REGISTRATION_CHECK':
+      return 'EXACT_REGISTERED_POLICY_AND_EVALUATION_AUTHORIZATION_ACCEPTED';
+    case 'EVIDENCE_BINDING_INTEGRITY_CHECK':
+      return 'REGISTERED_EVIDENCE_AND_WITNESS_BINDING_INTEGRITY_ACCEPTED';
+    case 'REQUIREMENT_OWNERSHIP_CHECK':
+      return 'ALL_SIX_I118_REQUIREMENTS_HAVE_EXPLICIT_NON_SATISFACTION_OWNERSHIP_BINDINGS';
+    default:
+      return 'PASS_REASON_NOT_APPLICABLE_TO_THIS_STEP';
+  }
+}
+
 function failedClosedSteps(): readonly I146EvaluationStepRecord[] {
   return I144_BINDING_EVALUATION_STEP_IDS.map((stepId, index) => {
     const order = index + 1;
-    if (order <= 3) {
-      const reasons = [
-        'EXACT_REGISTERED_POLICY_AND_EVALUATION_AUTHORIZATION_ACCEPTED',
-        'REGISTERED_EVIDENCE_AND_WITNESS_BINDING_INTEGRITY_ACCEPTED',
-        'ALL_SIX_I118_REQUIREMENTS_HAVE_EXPLICIT_NON_SATISFACTION_OWNERSHIP_BINDINGS',
-      ] as const;
+    if (
+      stepId === 'POLICY_REGISTRATION_CHECK' ||
+      stepId === 'EVIDENCE_BINDING_INTEGRITY_CHECK' ||
+      stepId === 'REQUIREMENT_OWNERSHIP_CHECK'
+    ) {
       return {
         stepId,
         order,
         mandatory: true,
         failClosed: true,
         state: 'PASS',
-        reason: reasons[index],
+        reason: passReason(stepId),
       };
     }
     if (stepId === 'SCOPE_COMPATIBILITY_CHECK') {
@@ -321,7 +347,6 @@ export function buildI146ChallengeCombinationSupportChannelUntouchedSupportEffec
     adoptionVersion: 'v1-adoption' as const,
     candidateSetVersion: 'v1-candidate-set' as const,
     inputPackageVersion: 'v1-input-package' as const,
-    authorizationReusableAfterThisRecord: false as const,
     candidateSetAdmissibilityEstablishedByThisGate: false as const,
     scopeCompatibilityAdjudicatedByThisGate: false as const,
     provenanceIndependenceAdjudicatedByThisGate: false as const,
@@ -358,6 +383,7 @@ export function buildI146ChallengeCombinationSupportChannelUntouchedSupportEffec
       authorizationAndPackageIdentityMatch: false,
       evaluationState: 'NOT_PERFORMED',
       authorizationConsumedByThisEvaluationRecord: false,
+      authorizationReusableAfterThisRecord: authorizationAccepted,
       evaluationStepRecords: unauthorizedSteps(),
       evaluationStepCount: 9,
       passedStepCount: 0,
@@ -400,6 +426,7 @@ export function buildI146ChallengeCombinationSupportChannelUntouchedSupportEffec
     authorizationAndPackageIdentityMatch: true,
     evaluationState: 'COMPLETED_FAIL_CLOSED',
     authorizationConsumedByThisEvaluationRecord: true,
+    authorizationReusableAfterThisRecord: false,
     evaluationStepRecords: steps,
     evaluationStepCount: 9,
     passedStepCount: 3,
