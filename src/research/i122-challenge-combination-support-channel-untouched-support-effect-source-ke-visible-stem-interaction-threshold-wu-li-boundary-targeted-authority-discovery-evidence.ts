@@ -120,7 +120,7 @@ function sourceWeiQianli(): SourceReference {
     },
     url: 'https://commons.wikimedia.org/wiki/File:NLC416-01jh000372-10197_%E5%8D%83%E9%87%8C%E5%91%BD%E7%A8%BF.pdf',
     accessedAt: '2026-08-22',
-    provenanceTier: 'historical_primary',
+    provenanceTier: 'primary',
     notes:
       'Wikimedia Commons identifies this as a mechanical scan sourced from the National Library of China, author 韋千里, publisher 韋氏命苑, 民國24[1935], 123 pages. The same work is strong on 克力较轻 versus 不能相克, but targeted reinspection did not verify a same-work 無力 semantic-boundary locator.',
   };
