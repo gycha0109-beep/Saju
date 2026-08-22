@@ -145,3 +145,4 @@ export * from './i121-challenge-combination-support-channel-untouched-support-ef
 export * from './i122-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-wu-li-boundary-targeted-authority-discovery-evidence.js';
 export * from './i123-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-candidate-set-composition-policy-readiness-review.js';
 export * from './i124-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-single-candidate-full-six-rediscovery-readiness-review.js';
+export * from './i125-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-single-candidate-full-six-rediscovery-evidence.js';
