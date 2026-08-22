@@ -110,11 +110,6 @@ const REQUIREMENT_IDS = Object.freeze([
   'INDEPENDENT_NORMATIVE_PROVENANCE',
 ] as const satisfies readonly I118ThresholdAuthorityRequirementId[]);
 
-const PARTIAL_REQUIREMENT_IDS = Object.freeze([
-  'VISIBLE_STEM_POSITION_SCOPE_AND_POSITION_CLASS_APPLICABILITY',
-  'WU_LI_BOUNDARY_SEMANTICS_AND_EXCEPTIONS',
-] as const satisfies readonly I118ThresholdAuthorityRequirementId[]);
-
 const CANDIDATE_SOURCE_ID =
   'source_wu_huaiyun_yinyang_wuxing_bazi_yucexue_chuji_scribd_733612933';
 
@@ -125,23 +120,6 @@ function finalized(
     evidenceId: `challenge_combination_support_channel_untouched_support_ke_visible_stem_threshold_full_six_coverage_${deterministicContentHash(material).slice(0, 24)}`,
     ...material,
   };
-}
-
-function exactLocatorSet(items: readonly I125RequirementLocatorObservation[]): boolean {
-  return (
-    items.length === 6 &&
-    items.every(
-      (item, index) =>
-        item.requirementId === REQUIREMENT_IDS[index] &&
-        item.sameCandidate &&
-        item.exactRelevantLocatorVerified &&
-        item.locator.trim().length > 0 &&
-        item.sourceAnchor.trim().length > 0 &&
-        item.relevanceStatement.trim().length > 0 &&
-        item.requirementCoverageEvaluated === false &&
-        item.countsAsRequirementSatisfied === false,
-    )
-  );
 }
 
 function exactI125Accepted(
@@ -170,7 +148,18 @@ function exactI125Accepted(
     i125.candidateRegisteredUnderI124 &&
     i125.registeredCandidateCount === 1 &&
     i125.requirementLocatorCount === 6 &&
-    exactLocatorSet(i125.requirementLocatorObservations) &&
+    i125.requirementLocatorObservations.length === 6 &&
+    i125.requirementLocatorObservations.every(
+      (item, index) =>
+        item.requirementId === REQUIREMENT_IDS[index] &&
+        item.sameCandidate &&
+        item.exactRelevantLocatorVerified &&
+        item.locator.trim().length > 0 &&
+        item.sourceAnchor.trim().length > 0 &&
+        item.relevanceStatement.trim().length > 0 &&
+        item.requirementCoverageEvaluated === false &&
+        item.countsAsRequirementSatisfied === false,
+    ) &&
     i125.allObservationsSameCandidate &&
     i125.allObservationsExactAndReproducible &&
     i125.literalWuLiObservedInCandidate &&
@@ -202,41 +191,21 @@ function exactI125Accepted(
   );
 }
 
-function supported(
+function coverageItem(
   item: I125RequirementLocatorObservation,
+  coverageState: I126ThresholdRequirementCoverageState,
   evidenceBasis: readonly string[],
   limitingReason: string,
 ): I126ThresholdRequirementCoverageEvidence {
   return {
     requirementId: item.requirementId,
-    coverageState: 'SUPPORTED_BY_REGISTERED_EVIDENCE',
+    coverageState,
     evidenceLocator: item.locator,
     sourceAnchor: item.sourceAnchor,
     evidenceBasis,
     limitingReason,
-    countsAsSatisfiedForThresholdAuthorityCoverage: true,
-    sameRegisteredCandidateOnly: true,
-    priorCandidateCoverageBorrowed: false,
-    crossCandidateCompositionMaySubstitute: false,
-    modelSynthesisMaySubstitute: false,
-    numericCalibrationMaySubstitute: false,
-    workedExampleMayBeGeneralizedBeyondSourceScope: false,
-  };
-}
-
-function partial(
-  item: I125RequirementLocatorObservation,
-  evidenceBasis: readonly string[],
-  limitingReason: string,
-): I126ThresholdRequirementCoverageEvidence {
-  return {
-    requirementId: item.requirementId,
-    coverageState: 'PARTIAL_SCOPED_SUPPORT_ONLY',
-    evidenceLocator: item.locator,
-    sourceAnchor: item.sourceAnchor,
-    evidenceBasis,
-    limitingReason,
-    countsAsSatisfiedForThresholdAuthorityCoverage: false,
+    countsAsSatisfiedForThresholdAuthorityCoverage:
+      coverageState === 'SUPPORTED_BY_REGISTERED_EVIDENCE',
     sameRegisteredCandidateOnly: true,
     priorCandidateCoverageBorrowed: false,
     crossCandidateCompositionMaySubstitute: false,
@@ -251,58 +220,64 @@ function assess(
 ): I126ThresholdRequirementCoverageEvidence {
   switch (item.requirementId) {
     case 'EXPLICIT_BINARY_EFFECTIVE_INTERACTION_SEMANTICS':
-      return supported(
+      return coverageItem(
         item,
+        'SUPPORTED_BY_REGISTERED_EVIDENCE',
         [
-          'The same 天干相克 section distinguishes ordinary 克 from source-local terminal treatment: a rootless weak controller that is itself controlled is described as 有等于无.',
-          'The same section also states that the five heavenly-stem combination pairs are 论合而不论克 while the remaining pairs 仍以克论.',
+          'The same 天干相克 section distinguishes ordinary 克 from a terminal source-local state through 有等于无.',
+          'The same section also distinguishes five-combination pairs as 论合而不论克 while the remaining pairs 仍以克论.',
         ],
-        'This satisfies existence of source-local binary/terminal semantics only. It does not by itself establish the repository-wide visible-stem position threshold.',
+        'This supports source-local binary/terminal semantics but does not itself create a repository-wide position threshold.',
       );
     case 'VISIBLE_STEM_POSITION_SCOPE_AND_POSITION_CLASS_APPLICABILITY':
-      return partial(
+      return coverageItem(
         item,
+        'PARTIAL_SCOPED_SUPPORT_ONLY',
         [
-          'The source explicitly scopes the discussion to 天干相克 and states that neighboring positions have larger 克 force while remote positions have smaller 克 force.',
-          'Worked examples show remote-position cases that are 无力遥克 / 无力克伐, but the same work also contains remote 克/遥制 examples with operative effects.',
+          'The source explicitly scopes the discussion to 天干相克 and states neighboring positions have larger 克 force while remote positions have smaller 克 force.',
+          'Within the same work, remote cases include both ineffective specified control and operative remote control, so distance is contextual rather than Boolean by itself.',
         ],
-        'The source does not state an exhaustive source-local predicate mapping visible-stem positional classes to Boolean effective-interaction eligibility. Remote position is a force/context factor, not a standalone binary rule.',
+        'No exhaustive source-local predicate maps visible-stem positional classes to Boolean effective-interaction eligibility.',
       );
     case 'QUALITATIVE_FORCE_VS_BINARY_ELIGIBILITY_SEPARATION':
-      return supported(
+      return coverageItem(
         item,
+        'SUPPORTED_BY_REGISTERED_EVIDENCE',
         [
-          'One continuous 天干相克 passage separately uses 克力较大 / 克力较小 for graded force and 有等于无 for terminal ineffectiveness under an additional compound condition.',
-          'The source therefore does not collapse every weaker or remote relation into the terminal state.',
+          'A continuous source passage separately uses 克力较大 / 克力较小 for graded force and 有等于无 for terminal ineffectiveness under an additional condition.',
+          'The source therefore does not equate every weaker or remote relation with the terminal state.',
         ],
-        'The separation is qualitative and normative, not numeric. No quantitative weight or cutoff is authorized.',
+        'This is a qualitative normative distinction only; no numeric cutoff or weight is authorized.',
       );
     case 'WU_LI_BOUNDARY_SEMANTICS_AND_EXCEPTIONS':
-      return partial(
+      return coverageItem(
         item,
+        'PARTIAL_SCOPED_SUPPORT_ONLY',
         [
-          'The same authored work uses 无力远征, 无力遥克, and 地位远隔、无力克伐 in concrete visible-stem examples and states the immediate downstream consequence in those examples.',
-          'These examples establish source-local instances of an ineffective specified remote action without importing a definition from another candidate.',
+          'The same work uses 无力远征, 无力遥克, and 无力克伐 in visible-stem examples and immediately states consequences in those examples.',
+          'Those examples establish source-local ineffective specified actions without borrowing semantic equivalence from another candidate.',
         ],
-        'The source does not provide a general definition stating whether 无力 universally means no interaction, zero effect, negligible force, or another state, nor an exhaustive exception boundary. Worked examples cannot be generalized into a universal Boolean threshold.',
+        'The work does not give a general definition of 无力 as universally no interaction, zero effect, negligible force, or another single state, nor an exhaustive exception boundary.',
       );
     case 'CONTEXT_AND_EXCEPTION_CONDITIONS':
-      return supported(
+      return coverageItem(
         item,
+        'SUPPORTED_BY_REGISTERED_EVIDENCE',
         [
-          'The 天干相克 passage explicitly varies 克 force by position, root state, sitting strength, party strength, and yin/yang relation.',
-          'It also provides a five-combination override: the specified five pairs are treated as 合 rather than 克, while worked examples show additional interference and transformation context.',
+          'The source varies 克 force by position, root state, sitting strength, party strength, and yin/yang relation.',
+          'It also gives the five-combination override and worked contextual interactions that alter treatment.',
         ],
-        'These conditions satisfy contextual and exception treatment, but they do not create a numeric or universal settlement algorithm.',
+        'Context coverage does not create a universal numeric or settlement algorithm.',
       );
     case 'INDEPENDENT_NORMATIVE_PROVENANCE':
-      return supported(
+      return coverageItem(
         item,
+        'SUPPORTED_BY_REGISTERED_EVIDENCE',
         [
-          'The registered witness identifies an authored standalone training text, 吴怀云, the work title, textbook level, chapter structure, and a stable digital witness identifier.',
-          'Independent catalog/index surfaces corroborate the existence of 吴怀云 初级教材 as a distinct work; the authority content evaluated here remains the registered same-work witness rather than search snippets or model synthesis.',
+          'The registered witness identifies 吴怀云, the standalone training-text title, textbook level, chapter structure, and stable digital witness identifier.',
+          'Independent catalog/index surfaces corroborate the work identity; the normative content evaluated remains the registered same-work witness.',
         ],
-        'This satisfies independent identifiable normative provenance for research coverage. Source class alone still cannot authorize production or promotion.',
+        'Research provenance sufficiency does not make source class alone sufficient for production or promotion.',
       );
   }
 }
@@ -387,16 +362,14 @@ export function buildI126ChallengeCombinationSupportChannelUntouchedSupportEffec
       recommendedNextGate:
         'UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_VISIBLE_STEM_INTERACTION_THRESHOLD_SINGLE_CANDIDATE_FULL_SIX_REDISCOVERY_EVIDENCE',
       notes: [
-        'I126 requires the exact resolved I125 single-candidate registration evidence before evaluating any I118 requirement.',
+        'I126 requires exact resolved I125 registration evidence before requirement coverage can be evaluated.',
       ],
     });
   }
 
   const coverage = i125.requirementLocatorObservations.map(assess);
   const satisfiedRequirementCount = coverage.filter(
-    (item) =>
-      item.coverageState === 'SUPPORTED_BY_REGISTERED_EVIDENCE' &&
-      item.countsAsSatisfiedForThresholdAuthorityCoverage,
+    (item) => item.countsAsSatisfiedForThresholdAuthorityCoverage,
   ).length;
   const partialRequirementIds = coverage
     .filter((item) => item.coverageState === 'PARTIAL_SCOPED_SUPPORT_ONLY')
@@ -452,11 +425,10 @@ export function buildI126ChallengeCombinationSupportChannelUntouchedSupportEffec
     recommendedNextGate:
       'UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_VISIBLE_STEM_INTERACTION_THRESHOLD_TWO_PARTIAL_REQUIREMENT_TARGETED_AUTHORITY_DISCOVERY_READINESS_REVIEW',
     notes: [
-      'I126 evaluates requirement satisfaction, not mere locator presence. Four requirements are supported; two remain partial and therefore mandatory full-six coverage is not achieved.',
-      'The source clearly distinguishes graded 克 force from terminal/none treatment and supplies context exceptions, but it does not provide an exhaustive position-to-Boolean predicate.',
-      'Source-local 无力 examples show concrete inability to perform a specified remote action, yet the work does not explicitly define 无力 as one universal semantic state with exhaustive exceptions.',
-      'Because all six I118 requirements are mandatory, 4/6 support cannot authorize threshold authority, an effective interaction set, damage evaluation, scoring, classification, or production interpretation.',
-      'The next gate may target only the two partial requirements while preserving the single-candidate/full-six and no-cross-source-composition contract.',
+      'I126 evaluates requirement satisfaction rather than locator presence. Four requirements are supported and two remain partial.',
+      'Distance and positional language are source-local force/context evidence, not an exhaustive Boolean eligibility predicate.',
+      'The same-work 无力 examples have concrete consequences but do not define one universal semantic state with exhaustive exceptions.',
+      'Because all six I118 requirements are mandatory, 4/6 support cannot authorize threshold authority, interaction-set resolution, damage evaluation, scoring, classification, or production interpretation.',
     ],
   });
 }
