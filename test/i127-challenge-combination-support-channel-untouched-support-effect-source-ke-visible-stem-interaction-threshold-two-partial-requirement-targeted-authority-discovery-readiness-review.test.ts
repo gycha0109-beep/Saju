@@ -106,8 +106,8 @@ describe('I127 source 克 visible-stem threshold two-partial targeted discovery 
 
   test('freezes explicit target questions rather than treating topical relevance as satisfaction', () => {
     const report = buildI127ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdTwoPartialRequirementTargetedAuthorityDiscoveryReadinessReview(i126());
-    const position = report.targetRequirements[0];
-    const wuLi = report.targetRequirements[1];
+    const position = report.targetRequirements[0]!;
+    const wuLi = report.targetRequirements[1]!;
 
     expect(position.requirementId).toBe(
       'VISIBLE_STEM_POSITION_SCOPE_AND_POSITION_CLASS_APPLICABILITY',
