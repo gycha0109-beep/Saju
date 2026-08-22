@@ -42,6 +42,7 @@ export * from './research/i154-challenge-combination-support-channel-untouched-s
 export * from './research/i155-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-adjudication-readiness-review.js';
 export * from './research/i156-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-derivative-relationship-authority-discovery-readiness-review.js';
 export * from './research/i157-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-derivative-relationship-authority-discovery-evidence.js';
+export * from './research/i158-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-derivative-relationship-discovery-evidence-adequacy-adjudication-readiness-review.js';
 export * from './narrative/index.js';
 export * from './llm/index.js';
 export * from './reading/index.js';
