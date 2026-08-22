@@ -1,5 +1,8 @@
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
-import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredInputPackageEvaluationAuthorizationReadinessReviewReport } from './i144-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-input-package-evaluation-authorization-readiness-review.js';
+import {
+  I144_BINDING_EVALUATION_STEP_IDS,
+  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredInputPackageEvaluationAuthorizationReadinessReviewReport,
+} from './i144-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-input-package-evaluation-authorization-readiness-review.js';
 
 export const I145_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_VISIBLE_STEM_INTERACTION_THRESHOLD_MULTI_SOURCE_COMPOSITION_REGISTERED_INPUT_PACKAGE_EVALUATION_AUTHORIZATION_CONTRACT_VERSION =
   'myeonghwa-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-input-package-evaluation-authorization-contract-v1';
@@ -70,6 +73,12 @@ export interface ChallengeCombinationSupportChannelUntouchedSupportEffectSourceK
 function exactI144Accepted(
   i144: ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredInputPackageEvaluationAuthorizationReadinessReviewReport,
 ): boolean {
+  const exactBindingEvaluationStepIds =
+    i144.bindingEvaluationStepIds.length === I144_BINDING_EVALUATION_STEP_IDS.length &&
+    i144.bindingEvaluationStepIds.every(
+      (stepId, index) => stepId === I144_BINDING_EVALUATION_STEP_IDS[index],
+    );
+
   return (
     i144.status ===
       'RESOLVED_SOURCE_KE_VISIBLE_STEM_THRESHOLD_MULTI_SOURCE_COMPOSITION_REGISTERED_INPUT_PACKAGE_EVALUATION_AUTHORIZATION_READINESS_REVIEW' &&
@@ -94,6 +103,7 @@ function exactI144Accepted(
     i144.unresolvedProvenanceInputsPresent &&
     i144.unresolvedSemanticBridgeInputsPresent &&
     i144.unresolvedContradictionInputsPresent &&
+    exactBindingEvaluationStepIds &&
     i144.bindingEvaluationStepCount === 9 &&
     i144.allEvaluationStepsMandatoryAndFailClosed &&
     i144.evaluationMustConsumeExactRegisteredPackageId &&
