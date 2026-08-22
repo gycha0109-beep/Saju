@@ -91,7 +91,7 @@ describe('I123 source 克 visible-stem threshold candidate-set composition readi
     expect(report.singleCandidateFullSixRediscoveryRequiredUnderCurrentContract).toBe(true);
     expect(report.fullSixCandidateCount).toBe(0);
     expect(report.registeredCandidateCount).toBe(0);
-    expect(report.noCandidateMayBePromotedByThisGate).toBe(false);
+    expect(report.noCandidateMayBePromotedByThisGate).toBe(true);
   });
 
   test('forbids literal-plus-boundary union and inferred cross-source semantic equivalence', () => {
