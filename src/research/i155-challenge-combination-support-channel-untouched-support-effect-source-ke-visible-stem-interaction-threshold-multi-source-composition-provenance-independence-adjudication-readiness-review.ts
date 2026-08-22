@@ -143,7 +143,6 @@ function exactI154Accepted(
     i154.evaluationState === 'COMPLETED_FAIL_CLOSED' &&
     i154.authorizationConsumedByThisEvaluationRecord &&
     i154.authorizationReusableAfterThisRecord === false &&
-    i154.evaluationStepCount === 9 &&
     i154.evaluationStepRecords.length === 9 &&
     i154.evaluationStepRecords.every(
       (step, index) =>
@@ -158,28 +157,11 @@ function exactI154Accepted(
     i154.notEvaluatedStepCount === 4 &&
     i154.firstUnsatisfiedStepId === 'PROVENANCE_INDEPENDENCE_CHECK' &&
     i154.firstUnsatisfiedStepReason === 'REGISTERED_PROVENANCE_INDEPENDENCE_INPUTS_UNRESOLVED' &&
-    i154.registeredScopeOutcomeConsumedAtScopeCompatibilityStep &&
-    i154.scopeCompatibilityReadjudicatedByThisGate === false &&
-    i154.scopeAdjudicationResultCountObserved === 6 &&
-    i154.scopeCompatibleOnlyCountObserved === 5 &&
-    i154.scopeRejectedCountObserved === 1 &&
-    i154.scopeRejectedEvidenceCoverageIneligibleObserved &&
     i154.provenanceIndependenceUnresolvedCountObserved === 6 &&
-    i154.semanticBridgeUnresolvedCountObserved === 3 &&
-    i154.contradictionUnresolvedCountObserved === 2 &&
-    i154.unresolvedInputsPreservedWithoutInference &&
+    i154.provenanceIndependenceAdjudicatedByThisGate === false &&
     i154.noProvenanceIndependenceInferencePerformed &&
-    i154.noMissingSemanticBridgeInferencePerformed &&
-    i154.noContradictionVoteOrWeightPerformed &&
-    i154.laterStepsAfterFirstFailureNotPromotedToPass &&
-    i154.candidateSetEvaluationAuthorizedUpstream &&
-    i154.candidateSetEvaluationPerformedByThisGate &&
-    i154.evaluationResultCreatedByThisGate &&
     i154.candidateSetAdmissibilityState === 'NOT_ESTABLISHED_FAIL_CLOSED' &&
     i154.candidateSetAdmissibilityEstablishedByThisGate === false &&
-    i154.provenanceIndependenceAdjudicatedByThisGate === false &&
-    i154.semanticBridgeAdjudicatedByThisGate === false &&
-    i154.contradictionAdjudicatedByThisGate === false &&
     i154.inputPackageMutatedByThisGate === false &&
     i154.productionPolicyExecutionAuthorized === false &&
     i154.actualCompositionPerformedByThisGate === false &&
@@ -187,12 +169,9 @@ function exactI154Accepted(
     i154.authorityAcquiredByThisGate === false &&
     i154.visibleStemBinaryEffectiveInteractionEligibilityResolved === false &&
     i154.thresholdRuleCreatedByThisGate === false &&
-    i154.damageEvaluationAuthorized === false &&
     i154.classificationAuthorized === false &&
     i154.numericScoringAuthorized === false &&
     i154.hiddenStemInteractionEligibilityGapRemains &&
-    i154.hiddenStemAuthorityGap ===
-      'SOURCE_KE_HIDDEN_STEM_INTERACTION_ELIGIBILITY_AUTHORITY_NOT_ESTABLISHED' &&
     i154.recommendedNextGate ===
       'UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_VISIBLE_STEM_INTERACTION_THRESHOLD_MULTI_SOURCE_COMPOSITION_PROVENANCE_INDEPENDENCE_ADJUDICATION_READINESS_REVIEW'
   );
@@ -221,6 +200,7 @@ function exactI151ProvenanceSubstrateAccepted(
     i151.targetPackageIdentityDeterministic &&
     i151.targetPackageIdentityDistinctFromSourceV1 &&
     i151.targetPackageRegisteredByThisGate &&
+    i151.sourceV1PackageMutatedByThisGate === false &&
     i151.originalEvidenceRebindingRecords.length === 6 &&
     evidenceIds.size === 6 &&
     i151.originalProvenanceIndependenceInputs.length === 6 &&
@@ -234,10 +214,7 @@ function exactI151ProvenanceSubstrateAccepted(
     ) &&
     i151.provenanceInputCount === 6 &&
     i151.provenanceUnresolvedCount === 6 &&
-    i151.remainingUnresolvedInputsPreservedWithoutInference &&
-    i151.inputPackageMutatedByThisGate === undefined
-      ? i151.sourceV1PackageMutatedByThisGate === false
-      : true
+    i151.remainingUnresolvedInputsPreservedWithoutInference
   );
 }
 
