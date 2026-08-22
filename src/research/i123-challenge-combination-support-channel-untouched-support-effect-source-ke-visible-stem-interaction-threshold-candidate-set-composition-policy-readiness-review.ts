@@ -37,7 +37,7 @@ export interface ChallengeCombinationSupportChannelUntouchedSupportEffectSourceK
   singleCandidateFullSixRediscoveryRequiredUnderCurrentContract: boolean;
   priorCandidatesMayBeRetainedAsResearchContext: boolean;
   priorCandidatesMayBeAggregatedForThresholdVerdict: false;
-  noCandidateMayBePromotedByThisGate: false;
+  noCandidateMayBePromotedByThisGate: true;
   visibleStemBinaryEffectiveInteractionEligibilityResolved: false;
   effectiveInteractionSetResolved: false;
   thresholdRuleCreatedByThisGate: false;
@@ -151,7 +151,7 @@ function common(
     newNormativeCompositionPolicyAuthorizedByThisGate: false as const,
     newNormativeCompositionPolicyRequirementsFrozenByThisGate: false as const,
     priorCandidatesMayBeAggregatedForThresholdVerdict: false as const,
-    noCandidateMayBePromotedByThisGate: false as const,
+    noCandidateMayBePromotedByThisGate: true as const,
     visibleStemBinaryEffectiveInteractionEligibilityResolved: false as const,
     effectiveInteractionSetResolved: false as const,
     thresholdRuleCreatedByThisGate: false as const,
