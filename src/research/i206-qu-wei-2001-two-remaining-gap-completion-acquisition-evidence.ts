@@ -250,7 +250,9 @@ function evidenceRecords(): readonly I206AcquisitionPathEvidenceRecord[] {
       contextualEvidenceAcquired: true,
       qualifyingGapResolutionEvidenceAcquired: false,
       resolvedGapIds: Object.freeze([]),
-      unresolvedGapIds: Object.freeze(['QU_WEI_2001_CANONICAL_WITNESS_NORMALIZATION_GAP']),
+      unresolvedGapIds: Object.freeze<I206RemainingGapId[]>([
+        'QU_WEI_2001_CANONICAL_WITNESS_NORMALIZATION_GAP',
+      ]),
     },
     {
       pathId: 'CANONICALLY_BOUND_2001_TARGET_SECTION_FACSIMILE_AND_2001_2003_SEQUENCE_COMPARISON_ACQUISITION',
@@ -270,7 +272,9 @@ function evidenceRecords(): readonly I206AcquisitionPathEvidenceRecord[] {
       contextualEvidenceAcquired: true,
       qualifyingGapResolutionEvidenceAcquired: false,
       resolvedGapIds: Object.freeze([]),
-      unresolvedGapIds: Object.freeze(['QU_WEI_2001_EXACT_TARGET_PASSAGE_BINDING_GAP']),
+      unresolvedGapIds: Object.freeze<I206RemainingGapId[]>([
+        'QU_WEI_2001_EXACT_TARGET_PASSAGE_BINDING_GAP',
+      ]),
     },
   ]);
 }
