@@ -28,7 +28,7 @@ const validI242 = () => {
 };
 
 describe('I243 Yuding Suijinlu canonical/provenance/admissibility acquisition evidence', () => {
-  it('executes the exact I242 five-path acquisition boundary and records eight direct public evidence records', () => {
+  it('executes the exact I242 five-path boundary and separates direct evidence from one search-index lead', () => {
     const report = buildI243ChallengeCombinationSupportChannelCompetingRelationSettlementYudingSuijinluFourGapCanonicalProvenanceAdmissibilityAcquisitionEvidence(validI242());
     expect(report.status).toBe('RESOLVED_COMPETING_RELATION_SETTLEMENT_YUDING_SUIJINLU_FOUR_GAP_CANONICAL_PROVENANCE_ADMISSIBILITY_ACQUISITION_EVIDENCE');
     expect(report.exactI242BoundaryAccepted).toBe(true);
@@ -36,8 +36,12 @@ describe('I243 Yuding Suijinlu canonical/provenance/admissibility acquisition ev
     expect(report.executedAcquisitionPathCount).toBe(5);
     expect(I243_EVIDENCE_RECORD_IDS).toHaveLength(8);
     expect(report.evidenceRecordCount).toBe(8);
-    expect(report.directPublicEvidenceRecordCount).toBe(8);
-    expect(report.searchSnippetOnlyEvidenceCount).toBe(0);
+    expect(report.directPublicEvidenceRecordCount).toBe(7);
+    expect(report.searchSnippetOnlyEvidenceCount).toBe(1);
+    const udn = report.evidenceRecords.find((record) => record.recordId === 'UDN_2012_YUDING_ZIPING_VOLUME5_TEXT_WITNESS');
+    expect(udn?.directPublicContext).toBe(false);
+    expect(udn?.searchSnippetOnly).toBe(true);
+    expect(udn?.evidenceClass).toBe('SEARCH_INDEX_VOLUME_BOUND_TEXT_LEAD');
   });
 
   it('establishes the modern 2011 published-edition bibliographic identity', () => {
@@ -142,6 +146,8 @@ describe('I243 Yuding Suijinlu canonical/provenance/admissibility acquisition ev
     expect(report.acquisitionExecuted).toBe(false);
     expect(report.executedAcquisitionPathCount).toBe(0);
     expect(report.evidenceRecordCount).toBe(0);
+    expect(report.directPublicEvidenceRecordCount).toBe(0);
+    expect(report.searchSnippetOnlyEvidenceCount).toBe(0);
     expect(report.modern2011EditionBibliographicIdentityEstablished).toBe(false);
     expect(report.remainingAdmissibilityGapCount).toBe(0);
     expect(report.authorityGap).toBe('UPSTREAM_INVALID');

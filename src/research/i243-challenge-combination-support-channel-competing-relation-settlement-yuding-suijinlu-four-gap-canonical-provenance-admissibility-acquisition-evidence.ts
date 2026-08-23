@@ -31,10 +31,10 @@ export interface I243EvidenceRecord {
     | 'STRUCTURED_BOOK_TOC_TRANSCRIPTION'
     | 'DATE_VERIFIED_REPOST_WITH_EXPLICIT_ORIGINAL_LINK'
     | 'DATE_VERIFIED_PUBLIC_TEXT_WITNESS'
-    | 'VOLUME_BOUND_PUBLIC_TEXT_WITNESS'
+    | 'SEARCH_INDEX_VOLUME_BOUND_TEXT_LEAD'
     | 'EDITORIAL_DIGITIZATION_STATEMENT';
-  directPublicContext: true;
-  searchSnippetOnly: false;
+  directPublicContext: boolean;
+  searchSnippetOnly: boolean;
   finding: string;
 }
 
@@ -55,8 +55,8 @@ export interface I243ChallengeCombinationSupportChannelCompetingRelationSettleme
   executedAcquisitionPathCount: 5 | 0;
   evidenceRecords: readonly I243EvidenceRecord[];
   evidenceRecordCount: 8 | 0;
-  directPublicEvidenceRecordCount: 8 | 0;
-  searchSnippetOnlyEvidenceCount: 0;
+  directPublicEvidenceRecordCount: 7 | 0;
+  searchSnippetOnlyEvidenceCount: 1 | 0;
   modern2011EditionBibliographicIdentityEstablished: boolean;
   modern2011EditionTitle: '御定子平' | 'NOT_ESTABLISHED';
   modern2011EditionEditor: '郑同点校' | 'NOT_ESTABLISHED';
@@ -225,10 +225,10 @@ function evidenceRecords(): readonly I243EvidenceRecord[] {
     {
       recordId: 'UDN_2012_YUDING_ZIPING_VOLUME5_TEXT_WITNESS',
       locator: 'https://blog.udn.com/article/article_print.jsp?f_ART_ID=6954363&f_CODE=1787006780127&uid=DejaVu',
-      evidenceClass: 'VOLUME_BOUND_PUBLIC_TEXT_WITNESS',
-      directPublicContext: true,
-      searchSnippetOnly: false,
-      finding: 'Public page titled 《御定子平》卷五 preserves the target 三合 / 得局失垣 text family, supporting volume-level association but not a primary facsimile.',
+      evidenceClass: 'SEARCH_INDEX_VOLUME_BOUND_TEXT_LEAD',
+      directPublicContext: false,
+      searchSnippetOnly: true,
+      finding: 'Search-index result for a page titled 《御定子平》卷五 exposed the target 三合 / 得局失垣 text family, but direct page fetch was unavailable in this gate; retained as a lead only and never used for canonical exact-passage binding.',
     },
     {
       recordId: 'SUANZHUN_2022_YUDING_ZIPING_DIGITIZATION_EDITORIAL_STATEMENT',
@@ -267,8 +267,8 @@ export function buildI243ChallengeCombinationSupportChannelCompetingRelationSett
     executedAcquisitionPathCount: accepted ? 5 : 0,
     evidenceRecords: records,
     evidenceRecordCount: accepted ? 8 : 0,
-    directPublicEvidenceRecordCount: accepted ? 8 : 0,
-    searchSnippetOnlyEvidenceCount: 0,
+    directPublicEvidenceRecordCount: accepted ? 7 : 0,
+    searchSnippetOnlyEvidenceCount: accepted ? 1 : 0,
     modern2011EditionBibliographicIdentityEstablished: accepted,
     modern2011EditionTitle: accepted ? '御定子平' : 'NOT_ESTABLISHED',
     modern2011EditionEditor: accepted ? '郑同点校' : 'NOT_ESTABLISHED',
@@ -364,6 +364,7 @@ export function buildI243ChallengeCombinationSupportChannelCompetingRelationSett
       ? Object.freeze([
           'I243 establishes the modern 2011 published edition identity but deliberately does not equate that bibliographic identity with a directly verified palace-manuscript shelfmark or facsimile.',
           'The explicit Sina 原文地址 relation is treated as direct derivative evidence for the 2012 repost only; chronology is not used to infer the 2019 witness chain or provenance independence.',
+          'The UDN result is retained as search-index lead context only because direct page retrieval failed; it is not counted as direct evidence or used for exact canonical passage binding.',
           'Public full-text witnesses strongly stabilize the Suijinlu text family, but same-text repetition is not counted as independent normative authority.',
           'No negative or exhaustion finding is created from failure to acquire the palace manuscript or exact 2011 print page in this pass.',
         ])
