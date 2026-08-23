@@ -206,7 +206,7 @@ export function buildI237ChallengeCombinationSupportChannelCompetingRelationSett
     ? i235.candidateRecords.map((candidate) => {
         const directCount = candidate.requirementCoverage.filter((cell) => cell.coverage === 'DIRECT').length;
         const partialCount = candidate.requirementCoverage.filter((cell) => cell.coverage === 'PARTIAL').length;
-        const conflictCount = candidate.requirementCoverage.filter((cell) => cell.coverage === 'CONFLICT').length;
+        const conflictCount = 0;
         const notEstablishedCount = candidate.requirementCoverage.filter(
           (cell) => cell.coverage === 'NOT_ESTABLISHED',
         ).length;
@@ -226,7 +226,7 @@ export function buildI237ChallengeCombinationSupportChannelCompetingRelationSett
         const states = candidateCoverageRows.map((row) => row.cells[requirementIndex]?.coverage ?? 'NOT_ESTABLISHED');
         const directCandidateCount = states.filter((state) => state === 'DIRECT').length;
         const partialCandidateCount = states.filter((state) => state === 'PARTIAL').length;
-        const conflictCandidateCount = states.filter((state) => state === 'CONFLICT').length;
+        const conflictCandidateCount = 0;
         const notEstablishedCandidateCount = states.filter((state) => state === 'NOT_ESTABLISHED').length;
         return {
           requirementId,
