@@ -14,7 +14,6 @@ export const I240_DISCOVERY_CANDIDATE_IDS = Object.freeze([
   'SHEN_XIAOZHAN_ZIPING_ZHENQUAN_ORIGINAL_CH5_DASHU_HTML',
 ] as const);
 export type I240DiscoveryCandidateId = (typeof I240_DISCOVERY_CANDIDATE_IDS)[number];
-
 export type I240ResidualCoverage = 'DIRECT' | 'PARTIAL' | 'NOT_ESTABLISHED';
 
 export interface I240ResidualCoverageCell {
@@ -135,16 +134,14 @@ function exactI239Accepted(
   i239: I239ChallengeCombinationSupportChannelCompetingRelationSettlementThreeResidualRequirementTargetedAuthorityDiscoveryReadinessReviewReport,
 ): boolean {
   return (
-    i239.status ===
-      'RESOLVED_COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_REQUIREMENT_TARGETED_AUTHORITY_DISCOVERY_READINESS_REVIEW' &&
-    i239.decision ===
-      'THREE_RESIDUAL_REQUIREMENTS_FIVE_TARGETED_DISCOVERY_PATHS_EIGHTEEN_CONTROLS_FROZEN_DIRECT_RULE_LEVEL_EVIDENCE_ONLY_NO_DISCOVERY_EXECUTED_NO_AUTHORITY_PROMOTION' &&
+    i239.status === 'RESOLVED_COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_REQUIREMENT_TARGETED_AUTHORITY_DISCOVERY_READINESS_REVIEW' &&
+    i239.decision === 'THREE_RESIDUAL_REQUIREMENTS_FIVE_TARGETED_DISCOVERY_PATHS_EIGHTEEN_CONTROLS_FROZEN_DIRECT_RULE_LEVEL_EVIDENCE_ONLY_NO_DISCOVERY_EXECUTED_NO_AUTHORITY_PROMOTION' &&
     i239.exactI238BoundaryAccepted &&
     i239.residualRequirementCount === 3 &&
-    i239.residualRequirementIds.length === I238_RESIDUAL_REQUIREMENT_IDS.length &&
+    i239.residualRequirementIds.length === 3 &&
     i239.residualRequirementIds.every((id, index) => id === I238_RESIDUAL_REQUIREMENT_IDS[index]) &&
     i239.discoveryPathCount === 5 &&
-    i239.discoveryPathIds.length === I239_TARGETED_DISCOVERY_PATH_IDS.length &&
+    i239.discoveryPathIds.length === 5 &&
     i239.discoveryPathIds.every((id, index) => id === I239_TARGETED_DISCOVERY_PATH_IDS[index]) &&
     i239.discoveryControlCount === 18 &&
     i239.discoveryContractFrozen &&
@@ -188,14 +185,21 @@ function exactI239Accepted(
     i239.negativeFindingCreatedByThisGate === false &&
     i239.discoveryExhaustionClaimed === false &&
     i239.corpusExhaustionClaimed === false &&
-    i239.recommendedNextGate ===
-      'COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_REQUIREMENT_TARGETED_AUTHORITY_DISCOVERY_EVIDENCE'
+    i239.recommendedNextGate === 'COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_REQUIREMENT_TARGETED_AUTHORITY_DISCOVERY_EVIDENCE'
   );
 }
 
+function coverage(
+  requirementId: (typeof I238_RESIDUAL_REQUIREMENT_IDS)[number],
+  state: I240ResidualCoverage,
+  directRuleSignal: string,
+): I240ResidualCoverageCell {
+  return { requirementId, coverage: state, directRuleSignal };
+}
+
 function candidateRecords(): readonly I240TargetedDiscoveryCandidateRecord[] {
-  const residualIds = I238_RESIDUAL_REQUIREMENT_IDS;
-  return Object.freeze([
+  const [role, precedence, unresolved] = I238_RESIDUAL_REQUIREMENT_IDS;
+  const records: I240TargetedDiscoveryCandidateRecord[] = [
     {
       candidateId: 'YUDING_ZIPING_KOUSHOU_SUIJINLU_HEYIX_2019_HTML',
       sourceTitle: '四柱八字算命御定子平口授碎金炉秘本',
@@ -211,21 +215,9 @@ function candidateRecords(): readonly I240TargetedDiscoveryCandidateRecord[] {
       embeddedUpstreamAttributionObserved: false,
       embeddedUpstreamAttributionVerifiedByThisGate: false,
       residualCoverage: Object.freeze([
-        {
-          requirementId: residualIds[0],
-          coverage: 'DIRECT',
-          directRuleSignal: 'The text explicitly says competing stems take the front and not the back (侭前而不侭后) and distinguishes first-use role selection.',
-        },
-        {
-          requirementId: residualIds[1],
-          coverage: 'DIRECT',
-          directRuleSignal: 'The text gives explicit precedence rules such as 三合力大于六合 / 侭三不侭二 and separately names resulting states such as 得局失垣 / 失局得垣.',
-        },
-        {
-          requirementId: residualIds[2],
-          coverage: 'DIRECT',
-          directRuleSignal: 'The text explicitly states 合者不合 under a competing-combination condition and the bounded rule 一不合两，两不冲一.',
-        },
+        coverage(role, 'DIRECT', 'Direct rule: 侭前而不侭后 / 先用而不先主 explicitly selects the operative relation against the competing relation.'),
+        coverage(precedence, 'DIRECT', 'Direct rules: 三合力大于六合 and 侭三不侭二; separate outcome states include 得局失垣 / 失局得垣.'),
+        coverage(unresolved, 'DIRECT', 'Direct conflict disposition: 合者不合 under争合 plus 一不合两，两不冲一.'),
       ]),
       allThreeResidualsDirectCandidateLocal: true,
       directResidualCount: 3,
@@ -236,7 +228,7 @@ function candidateRecords(): readonly I240TargetedDiscoveryCandidateRecord[] {
       candidateId: 'YUDING_ZIPING_MIBEN_SINA_2012_REPOST_HTML',
       sourceTitle: '[转载]<御定子平>秘本三篇',
       sourceLocator: 'https://blog.sina.com.cn/s/blog_9b6237b80101b70z.html',
-      publishedContext: 'Sina repost / 2012-09-24 03:03:47; page embeds an upstream 2011-12-23 timestamp and 尚慈居士 attribution without independently verifying that upstream source',
+      publishedContext: 'Sina repost / 2012-09-24 03:03:47; embeds 2011-12-23 and 尚慈居士 attribution without independent upstream verification',
       directlyOpenedHtmlContext: true,
       sourceBoundRuleTextObserved: true,
       leadOnly: false,
@@ -247,21 +239,9 @@ function candidateRecords(): readonly I240TargetedDiscoveryCandidateRecord[] {
       embeddedUpstreamAttributionObserved: true,
       embeddedUpstreamAttributionVerifiedByThisGate: false,
       residualCoverage: Object.freeze([
-        {
-          requirementId: residualIds[0],
-          coverage: 'DIRECT',
-          directRuleSignal: 'The repost directly preserves 侭前而不侭后 / 先用而不先主 as an explicit competing-role selection rule.',
-        },
-        {
-          requirementId: residualIds[1],
-          coverage: 'DIRECT',
-          directRuleSignal: 'The repost directly preserves 侭三不侭二 and then separately defines 得局失垣 / 失局得垣 as resulting relation states.',
-        },
-        {
-          requirementId: residualIds[2],
-          coverage: 'DIRECT',
-          directRuleSignal: 'The repost directly preserves 合者不合 for争合 and the explicit 一不合两，两不冲一 boundary.',
-        },
+        coverage(role, 'DIRECT', 'The repost directly preserves 侭前而不侭后 / 先用而不先主.'),
+        coverage(precedence, 'DIRECT', 'The repost directly preserves 侭三不侭二 and separate 得局失垣 / 失局得垣 outcomes.'),
+        coverage(unresolved, 'DIRECT', 'The repost directly preserves 合者不合 and 一不合两，两不冲一.'),
       ]),
       allThreeResidualsDirectCandidateLocal: true,
       directResidualCount: 3,
@@ -283,35 +263,21 @@ function candidateRecords(): readonly I240TargetedDiscoveryCandidateRecord[] {
       embeddedUpstreamAttributionObserved: false,
       embeddedUpstreamAttributionVerifiedByThisGate: false,
       residualCoverage: Object.freeze([
-        {
-          requirementId: residualIds[0],
-          coverage: 'DIRECT',
-          directRuleSignal: 'The text explicitly states 月上之乙先去合庚，而日干反不能合, directly distinguishing the selected relation from the competing relation by position.',
-        },
-        {
-          requirementId: residualIds[1],
-          coverage: 'PARTIAL',
-          directRuleSignal: 'The passage states a first relation and blocked second relation, but does not separately define a general precedence-operation layer and a general outcome-state vocabulary.',
-        },
-        {
-          requirementId: residualIds[2],
-          coverage: 'NOT_ESTABLISHED',
-          directRuleSignal: 'The passage discusses争合妒合 and隔位 exceptions but does not state a general tie/conflict/unresolved fail-closed disposition.',
-        },
+        coverage(role, 'DIRECT', 'Direct text: 月上之乙先去合庚，而日干反不能合 explicitly distinguishes selected and competing relations by position.'),
+        coverage(precedence, 'PARTIAL', 'A first relation and blocked second relation are stated, but no general precedence-operation versus outcome-state vocabulary is separately defined.'),
+        coverage(unresolved, 'NOT_ESTABLISHED', 'The chapter discusses争合妒合 and隔位 exceptions but does not state a general unresolved fail-closed disposition.'),
       ]),
       allThreeResidualsDirectCandidateLocal: false,
       directResidualCount: 1,
       partialResidualCount: 1,
       notEstablishedResidualCount: 1,
     },
-  ]);
+  ];
+  return Object.freeze(records);
 }
 
 function finalized(
-  material: Omit<
-    I240ChallengeCombinationSupportChannelCompetingRelationSettlementThreeResidualRequirementTargetedAuthorityDiscoveryEvidenceReport,
-    'evidenceId'
-  >,
+  material: Omit<I240ChallengeCombinationSupportChannelCompetingRelationSettlementThreeResidualRequirementTargetedAuthorityDiscoveryEvidenceReport, 'evidenceId'>,
 ): I240ChallengeCombinationSupportChannelCompetingRelationSettlementThreeResidualRequirementTargetedAuthorityDiscoveryEvidenceReport {
   return {
     evidenceId: `i240_competing_relation_three_residual_discovery_${deterministicContentHash(material).slice(0, 24)}`,
@@ -325,14 +291,9 @@ export function buildI240ChallengeCombinationSupportChannelCompetingRelationSett
   const accepted = exactI239Accepted(i239);
   const records = accepted ? candidateRecords() : Object.freeze([]);
   return finalized({
-    evidenceVersion:
-      I240_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_REQUIREMENT_TARGETED_AUTHORITY_DISCOVERY_EVIDENCE_VERSION,
-    status: accepted
-      ? 'RESOLVED_COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_REQUIREMENT_TARGETED_AUTHORITY_DISCOVERY_EVIDENCE'
-      : 'I239_TARGETED_DISCOVERY_BOUNDARY_INVALID',
-    decision: accepted
-      ? 'FIVE_TARGETED_PATHS_EXECUTED_TWO_SAME_TEXT_YUDING_SUIJINLU_WITNESSES_DIRECTLY_COVER_ALL_THREE_RESIDUALS_ONE_ZIPING_ZHENQUAN_DIRECT_ROLE_MAPPING_WITNESS_OBSERVED_THREE_RESIDUAL_DIRECT_COVERAGE_CLASSES_MATERIALLY_IMPROVED_SOURCE_RELATIONSHIP_AND_ADMISSIBILITY_NOT_ADJUDICATED_NO_UNION_NO_PROMOTION'
-      : 'COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_TARGETED_DISCOVERY_NOT_EXECUTED',
+    evidenceVersion: I240_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_REQUIREMENT_TARGETED_AUTHORITY_DISCOVERY_EVIDENCE_VERSION,
+    status: accepted ? 'RESOLVED_COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_REQUIREMENT_TARGETED_AUTHORITY_DISCOVERY_EVIDENCE' : 'I239_TARGETED_DISCOVERY_BOUNDARY_INVALID',
+    decision: accepted ? 'FIVE_TARGETED_PATHS_EXECUTED_TWO_SAME_TEXT_YUDING_SUIJINLU_WITNESSES_DIRECTLY_COVER_ALL_THREE_RESIDUALS_ONE_ZIPING_ZHENQUAN_DIRECT_ROLE_MAPPING_WITNESS_OBSERVED_THREE_RESIDUAL_DIRECT_COVERAGE_CLASSES_MATERIALLY_IMPROVED_SOURCE_RELATIONSHIP_AND_ADMISSIBILITY_NOT_ADJUDICATED_NO_UNION_NO_PROMOTION' : 'COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_TARGETED_DISCOVERY_NOT_EXECUTED',
     upstreamI239ReviewId: i239.reviewId,
     exactI239BoundaryAccepted: accepted,
     targetScope: 'MULTIPLE_TRACKED_RELATION_TOUCHES_COMPETING_RELATION_SETTLEMENT',
@@ -403,16 +364,14 @@ export function buildI240ChallengeCombinationSupportChannelCompetingRelationSett
     negativeFindingCreatedByThisGate: false,
     discoveryExhaustionClaimed: false,
     corpusExhaustionClaimed: false,
-    recommendedNextGate: accepted
-      ? 'COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_TARGETED_DISCOVERY_EVIDENCE_ADEQUACY_SOURCE_RELATIONSHIP_ADMISSIBILITY_REASSESSMENT_REVIEW'
-      : 'COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_REQUIREMENT_TARGETED_AUTHORITY_DISCOVERY_EVIDENCE',
+    recommendedNextGate: accepted ? 'COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_TARGETED_DISCOVERY_EVIDENCE_ADEQUACY_SOURCE_RELATIONSHIP_ADMISSIBILITY_REASSESSMENT_REVIEW' : 'COMPETING_RELATION_SETTLEMENT_THREE_RESIDUAL_REQUIREMENT_TARGETED_AUTHORITY_DISCOVERY_EVIDENCE',
     notes: accepted
       ? Object.freeze([
           'Two directly opened HTML witnesses preserve the same 御定子平/口授碎金炉 rule family and each candidate-locally supplies DIRECT text for all three I238 residual requirements.',
-          'The two 御定子平 witnesses are not treated as independent authorities. Their exact derivative or provenance relationship is explicitly left unadjudicated.',
-          'The 2012 Sina repost directly exposes its repost timestamp and embeds an earlier 2011-12-23 timestamp plus 尚慈居士 attribution, but I240 does not verify that embedded upstream attribution as an original or canonical witness.',
-          'A separate 子平真诠 chapter-5 HTML transcription independently supplies direct role-selection wording for requirement 3, while requirements 5 and 7 remain partial/not-established in that candidate.',
-          'Observed three-residual direct coverage is a discovery result only and cannot close the settlement authority gap without a separate evidence-adequacy/source-relationship/admissibility gate.',
+          'The two 御定子平 witnesses are not treated as independent authorities; derivative and provenance relationships remain unadjudicated.',
+          'The 2012 Sina repost exposes its repost timestamp and embeds an earlier 2011-12-23 timestamp plus 尚慈居士 attribution, but I240 does not verify that embedded upstream attribution as original or canonical.',
+          'A separate 子平真诠 chapter-5 HTML transcription independently supplies direct role-selection wording for requirement 3 while remaining conservative on requirements 5 and 7.',
+          'Three-residual direct coverage is a discovery result only and cannot close the authority gap before evidence-adequacy/source-relationship/admissibility review.',
         ])
       : Object.freeze(['I240 fails closed unless the exact I239 targeted-discovery boundary is preserved.']),
   });
