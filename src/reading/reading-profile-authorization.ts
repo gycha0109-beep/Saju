@@ -6,6 +6,7 @@ import {
   deterministicContentHash,
   type ResolvedRuleRegistrySnapshot,
 } from '../interpretation/rule-registry.js';
+import { EvidenceSelectionError } from '../narrative/evidence-selector.js';
 import {
   buildReadingCompositionEvidence as buildUngovernedReadingCompositionEvidence,
   resolveDomainReadingProfile,
@@ -217,6 +218,25 @@ function normalizedIntent(intent: ReadingIntent): ReadingIntent {
   };
 }
 
+function assertCompositionIdentity(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+): void {
+  if (execution.run.snapshotId !== snapshot.snapshotId) {
+    throw new EvidenceSelectionError(
+      'RUN_SNAPSHOT_MISMATCH',
+      `Interpretation run snapshot ${execution.run.snapshotId} does not match ${snapshot.snapshotId}.`,
+    );
+  }
+  if (execution.run.registrySnapshotId !== registry.snapshot.registrySnapshotId) {
+    throw new EvidenceSelectionError(
+      'RUN_REGISTRY_MISMATCH',
+      'Interpretation run and Registry Snapshot identities do not match.',
+    );
+  }
+}
+
 function authorizationBinding(
   resolution: ReadingProfileSelectionAuthorizationResolution,
 ): AuthorizedReadingEvidenceSelection['profileAuthorization'] {
@@ -238,7 +258,8 @@ function bindAuthorization(
     ...selection,
     ...(selection.profileRef === undefined && profileRef !== undefined ? { profileRef } : {}),
   };
-  const { selectionId: _priorSelectionId, ...identityMaterial } = base;
+  const { selectionId: priorSelectionId, ...identityMaterial } = base;
+  void priorSelectionId;
   const profileAuthorization = authorizationBinding(resolution);
   return {
     ...base,
@@ -300,6 +321,11 @@ export function buildReadingCompositionEvidence(
   request: ReadingRequest,
   options: ReadingCompositionOptions,
 ): GovernedReadingCompositionEvidenceResult {
+  if (options.narrativePolicyVersion.trim().length === 0) {
+    throw new TypeError('narrativePolicyVersion must be a non-empty string.');
+  }
+  assertCompositionIdentity(snapshot, execution, registry);
+
   const resolvedProfile = resolveDomainReadingProfile(request.intent);
   if (resolvedProfile === undefined) {
     const base = buildUngovernedReadingCompositionEvidence(
