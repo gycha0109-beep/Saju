@@ -191,11 +191,17 @@ function buildNarrativeRequest(
   options: ProductReadingIntegrationOptions,
 ): GroundedNarrativeRequest | undefined {
   if (normalization.request === undefined || composition.evidence === undefined) return undefined;
+  const intent = normalization.request.intent;
+  const requestedSection =
+    intent.relationshipScope === undefined
+      ? `${intent.domain}:${intent.temporalScope}`
+      : `${intent.domain}:${intent.temporalScope}:${intent.relationshipScope}`;
   return {
     requestId: normalization.request.requestId,
     purpose: composition.evidence.bundle.purpose,
     evidenceBundle: composition.evidence.bundle,
     userRequest: {
+      ...(intent.domain === 'question_specific' ? {} : { requestedSection }),
       ...(normalization.request.question === undefined
         ? {}
         : { question: normalization.request.question }),
