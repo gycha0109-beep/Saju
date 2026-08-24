@@ -1,8 +1,8 @@
 # Myeonghwa Production Composition Root
 
-Status: `BLOCKED_AUTHORITY_REQUIRED`
+Status: `BLOCKED_INTERPRETATION_AUTHORITY_REQUIRED`
 
-The product host is structurally implemented, but a deployable production runtime must not select calculation or interpretation authority implicitly. This stage adds the single governed composition boundary that will eventually assemble the Host only after exact production authority is available.
+The product host is structurally implemented. The production composition root assembles it only after exact calculation authority, interpretation authority, and deployment narrative configuration are available.
 
 ## Runtime path
 
@@ -18,21 +18,25 @@ Production deployment configuration
 
 ## Calculation authority
 
-The existing calculation policy profiles remain reference/sensitivity profiles and explicitly declare:
+ADR-0006 separately authorized the Myeonghwa V1 product default:
 
 ```text
-productionDefaultAuthorized = false
+calculationPolicyId = myeonghwa-production-civil-midnight-v1
+clock basis         = civil time
+day boundary        = midnight
+true solar          = OFF
+time zone            = Asia/Seoul
 ```
 
-Therefore the production composition root does not choose `civil-midnight-reference-v1` or any other existing profile as a production default.
+The existing `civil-midnight-reference-v1` remains an engineering reference with `productionDefaultAuthorized=false`. The production identity and authority grant are separate from the research/reference profile list.
 
-The production authority manifest is an in-repository allowlist with no runtime mutation or registration API. It is intentionally empty in this stage. Adding an entry requires a separate governed repository change that binds an exact `CalculationPolicySnapshot` to an authority record.
+The production composition root may select the governed V1 default when deployment omits `calculationPolicyId`. Explicitly requesting an unregistered calculation policy still fails closed.
 
 Current state:
 
 ```text
-authorized production calculation policy count = 0
-production calculation default                  = NONE
+authorized production calculation policy count = 1
+production calculation default                  = myeonghwa-production-civil-midnight-v1
 ```
 
 ## Interpretation authority
@@ -45,9 +49,11 @@ registry.pack.status = production
 existing buildInterpretationExecutionPlan() authorization preflight = PASS
 ```
 
-The preflight preserves the existing production requirements, including content integrity, executable methodology/rule status, source quality, reviewer trust, and approved trust-pinned domain attestations.
+The preflight preserves the existing production requirements, including content integrity, executable methodology/rule status, source quality, reviewer trust, and trust-pinned approved domain attestations.
 
 Changing a research pack's `status` field to `production` does not authorize it. The existing interpretation authorization gate still runs and fails closed.
+
+As of the production interpretation authority audit recorded in `22-production-interpretation-authority-audit.md`, no repository-backed real Saju domain registry satisfies those requirements. Synthetic production fixtures prove the authorization mechanism only and are not product authority.
 
 ## Narrative/runtime configuration
 
@@ -63,7 +69,7 @@ These values are runtime configuration only and do not grant calculation or inte
 
 ## Public package surface
 
-The package adds:
+The package exposes:
 
 ```text
 myeonghwa-saju-engine/production-runtime
@@ -81,22 +87,22 @@ createAuthorizedMyeonghwaProductionHost()
 
 ## Current blockers
 
-The authoritative current state remains:
+The authoritative current state is:
 
 ```text
-AUTHORIZED PRODUCTION CALCULATION POLICY = MISSING
+AUTHORIZED PRODUCTION CALCULATION POLICY = YES / V1 C-OPTION
 AUTHORIZED PRODUCTION INTERPRETATION REGISTRY = MISSING
 DEPLOYMENT NARRATIVE CONFIGURATION = APPLICATION RESPONSIBILITY
 PUBLIC PRODUCTION HOST = BLOCKED
 ```
 
-This stage does not create a production interpretation rule, authorize a strength classifier, authorize numeric scoring, activate shinsal, authorize pillar-domain semantics, or change any existing research HOLD/SUSPENDED state.
+This composition boundary does not create a production interpretation rule, authorize a strength classifier, authorize numeric scoring, activate Shinsal, authorize pillar-domain semantics, or change any existing research HOLD/SUSPENDED state.
 
 ## Reopen condition
 
-The production composition root becomes capable of returning `ready` only after separate governed work supplies:
+The production composition root can return `ready` only after governed work supplies:
 
-1. an exact authorized calculation policy manifest entry;
+1. the already-authorized calculation policy grant;
 2. a resolved `production` interpretation registry that passes the existing authorization preflight;
 3. deployment narrative and reading configuration.
 
