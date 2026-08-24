@@ -7,16 +7,16 @@ import {
   runInterpretation,
 } from '../dist/index.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
-import { createRelationshipNatalReadingCandidateRegistry } from '../dist/research/relationship-natal-reading-candidate.js';
+import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
 
-const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v8';
+const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v9';
 const SCOPE_GUARD_CLAIM_TYPE = 'GENERAL_NATAL_USEFUL_READING_SCOPE-GUARD';
 const smokeMode = process.env.MYEONGHWA_PREVIEW_SMOKE === '1';
 const fetchRequest = globalThis.fetch.bind(globalThis);
 
 const narrativePolicy = {
   policyId: RESEARCH_PREVIEW_VERSION,
-  version: '8.0.0-preview',
+  version: '9.0.0-preview',
   language: 'ko',
   certaintyPolicy: {
     deterministicFacts: 'direct',
@@ -89,6 +89,11 @@ function relationshipKind(claim) {
   return typeof value.relationshipKind === 'string' ? value.relationshipKind : undefined;
 }
 
+function businessKind(claim) {
+  const value = valueRecord(claim);
+  return typeof value.businessKind === 'string' ? value.businessKind : undefined;
+}
+
 function consumerText(claim) {
   const mapped = CONSUMER_COPY[claim.claimType];
   if (mapped !== undefined) return mapped;
@@ -132,6 +137,10 @@ function wealthClaimsOfKind(claims, kind) {
 
 function relationshipClaimsOfKind(claims, kind) {
   return claims.filter((claim) => relationshipKind(claim) === kind);
+}
+
+function businessClaimsOfKind(claims, kind) {
+  return claims.filter((claim) => businessKind(claim) === kind);
 }
 
 function sectionFromClaims(sectionId, title, claims) {
@@ -375,6 +384,71 @@ function relationshipNatalPreviewDraft(evidence, relationshipClaims) {
   };
 }
 
+function businessNatalPreviewDraft(evidence, businessClaims) {
+  const preferredSummary = [
+    'BUSINESS_NATAL_CONCLUSION_OUTPUT_WEALTH_OFFICER_OPERATING_LOOP',
+    'BUSINESS_NATAL_CONCLUSION_PEER_OFFICER_PARTNER_DECISION_RIGHTS',
+    'BUSINESS_NATAL_CONCLUSION_RESOURCE_OUTPUT_ANALYZE_THEN_EXPERIMENT',
+  ];
+  const summaryClaim =
+    preferredSummary
+      .map((claimType) => businessClaims.find((claim) => claim.claimType === claimType))
+      .find(Boolean) ?? businessClaims[0];
+  if (summaryClaim === undefined) {
+    throw new Error('Business natal preview emitted no business conclusion.');
+  }
+
+  const remaining =
+    businessClaims.length === 1
+      ? businessClaims
+      : businessClaims.filter((claim) => claim.claimId !== summaryClaim.claimId);
+  const uncertainty = businessClaimsOfKind(remaining, 'uncertainty');
+  const decisionExecution = businessClaimsOfKind(remaining, 'decision_execution');
+  const allocation = businessClaimsOfKind(remaining, 'allocation');
+  const partnership = businessClaimsOfKind(remaining, 'partnership');
+  const accountability = businessClaimsOfKind(remaining, 'accountability');
+  const pressure = businessClaimsOfKind(remaining, 'pressure');
+  const friction = businessClaimsOfKind(remaining, 'friction');
+
+  const sections = [
+    {
+      sectionId: 'research-preview-business-core',
+      title: '사업운 핵심',
+      blocks: [...ambiguityBlocks(evidence), assertion(summaryClaim)],
+    },
+    sectionFromClaims('research-preview-business-uncertainty', '불확실성을 다루는 방식', uncertainty),
+    sectionFromClaims(
+      'research-preview-business-decision-execution',
+      '결정하고 실행하는 방식',
+      decisionExecution,
+    ),
+    sectionFromClaims('research-preview-business-allocation', '자원을 배분하는 방식', allocation),
+    sectionFromClaims('research-preview-business-partnership', '파트너와 역할을 나눌 때', partnership),
+    sectionFromClaims('research-preview-business-accountability', '책임과 운영 기준', accountability),
+    sectionFromClaims('research-preview-business-pressure', '성과 압박을 받을 때', pressure),
+    sectionFromClaims('research-preview-business-friction', '사업에서 주의할 점', friction),
+  ].filter(Boolean);
+
+  sections.push({
+    sectionId: 'research-preview-business-scope',
+    title: '참고',
+    blocks: [
+      {
+        type: 'disclosure',
+        disclosureType: 'scope_limitation',
+        text: '이 사업운은 태어난 사주에서 보이는 불확실성, 의사결정, 실행, 자원 배분, 공동사업 역할과 운영 압박을 다루는 경향을 보는 풀이입니다. 사업가 적성 여부를 판정하거나 특정 업종을 지정하고, 창업 성공·매출·수익·투자·자금조달·폐업 여부나 미래의 사업 시기를 예측하지 않습니다.',
+        relatedRefs: [summaryClaim.claimId],
+      },
+    ],
+  });
+
+  return {
+    schemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
+    requestId: evidence.requestId,
+    sections,
+  };
+}
+
 function previewDraft(prompt) {
   const evidence = prompt.evidence;
   const requestedSection = prompt.userRequest?.requestedSection;
@@ -419,6 +493,18 @@ function previewDraft(prompt) {
     }
     return relationshipNatalPreviewDraft(evidence, relationshipClaims);
   }
+  if (requestedSection === 'business:natal') {
+    const businessClaims = evidence.claims.filter(
+      (claim) =>
+        claim.taxonomy.tier === 'T8' &&
+        claim.taxonomy.category === 'business' &&
+        claim.predicate === 'business_conclusion',
+    );
+    if (businessClaims.length === 0) {
+      throw new Error('Business natal preview request has no business conclusion evidence.');
+    }
+    return businessNatalPreviewDraft(evidence, businessClaims);
+  }
 
   throw new Error(`Unsupported research preview section: ${String(requestedSection)}`);
 }
@@ -442,7 +528,7 @@ const dependencies = {
     });
   },
   interpret(snapshot) {
-    const registry = createRelationshipNatalReadingCandidateRegistry();
+    const registry = createBusinessNatalReadingCandidateRegistry();
     return {
       registry,
       interpretation: runInterpretation(snapshot, registry, { now: new Date() }),
@@ -510,6 +596,12 @@ function assertNoInternalLeak(serialized) {
     'breakupOutcomeAuthorized',
     'infidelityInferenceAuthorized',
     'compatibilityAuthorized',
+    'entrepreneurSuitabilityAuthorized',
+    'specificIndustryAuthorized',
+    'businessSuccessAuthorized',
+    'revenueOutcomeAuthorized',
+    'fundingOutcomeAuthorized',
+    'failureOutcomeAuthorized',
     'month_branch_structural_context',
     '"direction"',
     '"families"',
@@ -517,6 +609,7 @@ function assertNoInternalLeak(serialized) {
     '"careerKind"',
     '"wealthKind"',
     '"relationshipKind"',
+    '"businessKind"',
     '"dominance"',
   ]) {
     if (serialized.includes(forbidden)) {
@@ -596,6 +689,23 @@ async function runSmoke(baseUrl) {
     }
   }
   assertNoInternalLeak(relationshipSerialized);
+
+  const businessPayload = await requestReading(baseUrl, '사업운');
+  const businessSerialized = JSON.stringify(businessPayload);
+  for (const required of ['사업운 핵심', '참고']) {
+    if (!businessSerialized.includes(required)) {
+      throw new Error(`Business preview is missing required section: ${required}`);
+    }
+  }
+  if (!['불확실성을 다루는 방식', '결정하고 실행하는 방식', '자원을 배분하는 방식', '파트너와 역할을 나눌 때', '책임과 운영 기준', '성과 압박을 받을 때', '사업에서 주의할 점'].some((title) => businessSerialized.includes(title))) {
+    throw new Error('Business preview emitted no substantive business section.');
+  }
+  for (const forbiddenPromise of ['사업하면 성공', '창업하면 성공', '매출이 오릅니다', '투자를 받습니다', '폐업하게 됩니다', '사업가 체질입니다']) {
+    if (businessSerialized.includes(forbiddenPromise)) {
+      throw new Error(`Business preview contains deterministic business promise: ${forbiddenPromise}`);
+    }
+  }
+  assertNoInternalLeak(businessSerialized);
 }
 
 function writeStdout(message) {
@@ -628,7 +738,7 @@ server.listen(requestedPort, '127.0.0.1', async () => {
   writeStdout('Myeonghwa Research UX Preview');
   writeStdout('NOT PRODUCTION AUTHORITY');
   writeStdout(`Open: ${baseUrl}`);
-  writeStdout('Current meaningful test targets: 전체 사주, 직업운, 재물운, 연애운/관계운 (natal)');
+  writeStdout('Current meaningful test targets: 전체 사주, 직업운, 재물운, 연애운/관계운, 사업운 (natal)');
   writeStdout('Spouse-specific, compatibility, annual/monthly specialist readings remain fail-closed when evidence is insufficient.');
   writeStdout('Press Ctrl+C to stop.');
   writeStdout('');
