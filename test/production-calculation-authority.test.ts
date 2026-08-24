@@ -47,8 +47,8 @@ describe('production calculation authority V1', () => {
     );
 
     expect(reference.productionDefaultAuthorized).toBe(false);
-    expect(profiles.some((item) => item.profileId === PRODUCTION_DEFAULT_CALCULATION_POLICY_ID)).toBe(
-      false,
+    expect(profiles.map((item) => String(item.profileId))).not.toContain(
+      PRODUCTION_DEFAULT_CALCULATION_POLICY_ID,
     );
   });
 
