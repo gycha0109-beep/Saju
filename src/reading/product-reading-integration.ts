@@ -13,8 +13,8 @@ import {
 } from './consumer-reading-request-adapter.js';
 import {
   buildReadingCompositionEvidence,
-  type GovernedReadingCompositionEvidenceResult,
-} from './reading-profile-authorization.js';
+} from './scenario-aware-reading-composition.js';
+import type { GovernedReadingCompositionEvidenceResult } from './reading-profile-authorization.js';
 
 export const PRODUCT_READING_INTEGRATION_VERSION =
   'myeonghwa-product-reading-integration-v1';
