@@ -80,8 +80,7 @@ function sourceRefs(): RuleDefinition['sourceRefs'] {
   ];
 }
 
-const TEN_GOD_SPECS: Readonly<Record<TenGod, CareerTenGodSpec | undefined>> = Object.freeze({
-  일간: undefined,
+const TEN_GOD_SPECS: Readonly<Record<TenGod, CareerTenGodSpec>> = Object.freeze({
   비견: {
     id: 'BI_GYEON',
     kind: 'environment',
@@ -152,7 +151,7 @@ const TEN_GOD_SPECS: Readonly<Record<TenGod, CareerTenGodSpec | undefined>> = Ob
     visibleSummary:
       '겉으로 드러나는 업무 방식에서 역할, 기준, 절차를 분명하게 이해하고 책임지는 힘이 나타납니다. 무엇을 지켜야 하고 어디까지 책임져야 하는지가 명확한 환경에서 일의 방향을 잡기 쉬울 수 있습니다.',
     branchSummary:
-      '일을 실제로 이어가는 바탕에서 질서와 책임 기준을 무시하기보다 일정한 틀 안에서 안정적으로 완수하려는 흐름이 나타납니다. 기준이 계속 바뀌거나 책임 소재가 अस्पष्ट한 환경은 피로하게 느껴질 수 있습니다.',
+      '일을 실제로 이어가는 바탕에서 질서와 책임 기준을 무시하기보다 일정한 틀 안에서 안정적으로 완수하려는 흐름이 나타납니다. 기준이 계속 바뀌거나 책임 소재가 불분명한 환경은 피로하게 느껴질 수 있습니다.',
   },
   편인: {
     id: 'PYEON_IN',
@@ -190,12 +189,8 @@ function channelCondition(channel: CareerTenGodChannel, god: TenGod): RuleExpres
   };
 }
 
-function careerTenGodRule(
-  god: Exclude<TenGod, '일간'>,
-  channel: CareerTenGodChannel,
-): RuleDefinition {
+function careerTenGodRule(god: TenGod, channel: CareerTenGodChannel): RuleDefinition {
   const spec = TEN_GOD_SPECS[god];
-  if (spec === undefined) throw new Error(`Missing career Ten-God spec: ${god}`);
   const summary = channel === 'visible_stems' ? spec.visibleSummary : spec.branchSummary;
   const channelLabel = channel === 'visible_stems' ? 'visible stems' : 'branches';
 
@@ -245,9 +240,7 @@ function careerTenGodRule(
   };
 }
 
-const CAREER_TEN_GODS = (Object.keys(TEN_GOD_SPECS) as TenGod[]).filter(
-  (god): god is Exclude<TenGod, '일간'> => god !== '일간',
-);
+const CAREER_TEN_GODS = Object.keys(TEN_GOD_SPECS) as TenGod[];
 const CAREER_CHANNELS: readonly CareerTenGodChannel[] = ['visible_stems', 'branches'];
 
 export const CAREER_NATAL_READING_RULES: readonly RuleDefinition[] = Object.freeze(
