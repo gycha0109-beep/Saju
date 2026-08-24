@@ -236,6 +236,35 @@ describe('scenario-aware reading coverage', () => {
     ]);
   });
 
+  it('includes snapshot scenarios that have no eligible domain claim at all', () => {
+    const readingProfile = profile([
+      group('CORE_REQUIRED', 'CAREER-CORE'),
+      group('ENV_REQUIRED', 'CAREER-ENV'),
+    ]);
+    const result = evaluateScenarioAwareReadingCoverage(
+      readingProfile,
+      [
+        claim('scenario-a-core', 'CAREER-CORE', 'scenario-a'),
+        claim('scenario-a-env', 'CAREER-ENV', 'scenario-a'),
+      ],
+      ['scenario-a', 'scenario-b'],
+    );
+
+    expect(result.coverageState).toBe('partial_coverage');
+    expect(result.scenarioCoverage[0]?.coverageState).toBe('complete');
+    expect(result.scenarioCoverage[1]).toEqual({
+      scenarioRef: 'scenario-b',
+      coverageState: 'insufficient_evidence',
+      matchedRequirementIds: [],
+      missingRequirements: ['CORE_REQUIRED', 'ENV_REQUIRED'],
+      targetClaimIds: [],
+    });
+    expect(result.missingRequirements).toEqual([
+      'SCENARIO[scenario-b]:CORE_REQUIRED',
+      'SCENARIO[scenario-b]:ENV_REQUIRED',
+    ]);
+  });
+
   it('fails closed when an MUR policy does not classify the required selector set exactly', () => {
     const readingProfile = profile(
       [
