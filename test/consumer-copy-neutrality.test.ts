@@ -69,7 +69,7 @@ describe('consumer copy neutrality guard', () => {
     }
   });
 
-  it('keeps all specialist domains useful while rejecting cross-channel-only combinations', () => {
+  it('keeps all specialist domains useful with direct layout grounding for career', () => {
     const execution = runInterpretation(fixture(), createBusinessNatalReadingCandidateRegistry());
     const familyClaimIds = new Set(
       execution.claims
@@ -78,7 +78,7 @@ describe('consumer copy neutrality guard', () => {
     );
 
     const expectedCounts = new Map([
-      ['career_conclusion', 9],
+      ['career_conclusion', 7],
       ['wealth_conclusion', 9],
       ['relationship_conclusion', 10],
       ['business_conclusion', 10],
@@ -88,12 +88,27 @@ describe('consumer copy neutrality guard', () => {
       const claims = execution.claims.filter((claim) => claim.predicate === predicate);
       expect(claims).toHaveLength(expectedCount);
       expect(claims.every((claim) => claim.taxonomy.tier === 'T8')).toBe(true);
+      expect(claims.every((claim) => claim.factRefs.includes('derivedFacts.tenGods'))).toBe(true);
+
+      if (predicate === 'career_conclusion') {
+        expect(claims.every((claim) => claim.upstreamClaimRefs.length === 0)).toBe(true);
+        expect(
+          claims.every((claim) => {
+            const value = claim.value as { tenGod?: string; channel?: string };
+            return (
+              typeof value.tenGod === 'string' &&
+              (value.channel === 'visible_stems' || value.channel === 'branches')
+            );
+          }),
+        ).toBe(true);
+        continue;
+      }
+
       expect(
         claims.every(
           (claim) =>
             claim.upstreamClaimRefs.length > 0 &&
-            claim.upstreamClaimRefs.every((ref) => familyClaimIds.has(ref)) &&
-            claim.factRefs.includes('derivedFacts.tenGods'),
+            claim.upstreamClaimRefs.every((ref) => familyClaimIds.has(ref)),
         ),
       ).toBe(true);
     }
