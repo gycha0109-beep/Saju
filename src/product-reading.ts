@@ -14,10 +14,19 @@ export type {
 } from './llm/model-adapter.js';
 export type { ConsumerReadingRequestInput } from './reading/consumer-reading-request-adapter.js';
 export type {
-  ProductReadingClarification,
-  ProductReadingCoverageSummary,
-  ProductReadingDeliveryMessageCode,
-  ProductReadingDeliveryResult,
-  ProductReadingDeliveryState,
-  ProductReadingRequiredAction,
-} from './reading/product-reading-delivery.js';
+  ProductReadingResponse,
+  ProductReadingResponseBlock,
+  ProductReadingResponseCalculationAmbiguity,
+  ProductReadingResponseCalculationSummary,
+  ProductReadingResponseClarification,
+  ProductReadingResponseClarificationOption,
+  ProductReadingResponseCoverage,
+  ProductReadingResponseDiagnostic,
+  ProductReadingResponseDisclosure,
+  ProductReadingResponseDisplayFact,
+  ProductReadingResponseMessageCode,
+  ProductReadingResponseReading,
+  ProductReadingResponseRequiredAction,
+  ProductReadingResponseSection,
+  ProductReadingResponseState,
+} from './reading/product-reading-response.js';
