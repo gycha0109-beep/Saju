@@ -9,14 +9,14 @@ import {
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
 import { createGeneralNatalConclusionCandidateRegistry } from '../dist/research/general-natal-conclusion-synthesis-candidate.js';
 
-const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v4';
+const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v5';
 const SCOPE_GUARD_CLAIM_TYPE = 'GENERAL_NATAL_USEFUL_READING_SCOPE-GUARD';
 const smokeMode = process.env.MYEONGHWA_PREVIEW_SMOKE === '1';
 const fetchRequest = globalThis.fetch.bind(globalThis);
 
 const narrativePolicy = {
   policyId: RESEARCH_PREVIEW_VERSION,
-  version: '4.0.0-preview',
+  version: '5.0.0-preview',
   language: 'ko',
   certaintyPolicy: {
     deterministicFacts: 'direct',
@@ -39,6 +39,29 @@ const narrativePolicy = {
   sourceDisclosure: 'internal_only',
 };
 
+const CONSUMER_COPY = Object.freeze({
+  GENERAL_NATAL_CONCLUSION_CORE_FIVE_FAMILY_CYCLE:
+    '여러 가지를 두루 생각하지만, 결국 직접 해보고 결과를 만들어야 속이 풀리는 편에 가깝습니다. 배운 것을 실제로 써보고, 만든 결과까지 책임지는 흐름이 잘 맞습니다. 다만 내 방식대로 하고 싶은 마음과 현실적인 조건이 부딪히면 스트레스를 크게 받을 수 있습니다.',
+  GENERAL_NATAL_CONCLUSION_OUTPUT_TO_WEALTH:
+    '생각한 것은 직접 만들어봐야 만족하는 편입니다. 아이디어나 기술을 머릿속에만 두기보다 실제 결과물로 꺼낼 때 강점이 살아납니다. 만든 것이 성과나 수입처럼 눈에 보이는 결과로 이어지면 동력도 더 커질 수 있습니다.',
+  GENERAL_NATAL_CONCLUSION_WEALTH_TO_OFFICER:
+    '결과를 내는 데서 끝나기보다, 그다음에 어떻게 굴리고 관리할지까지 신경 쓰는 편입니다. 맡은 일이 생기면 기준을 만들고 책임지고 마무리하려는 성향이 함께 나타날 수 있습니다.',
+  GENERAL_NATAL_CONCLUSION_OFFICER_TO_RESOURCE:
+    '압박을 받으면 감으로 버티기보다 정보를 찾고 구조를 파악하려는 쪽에 가깝습니다. 갑자기 일이 꼬여도 자료를 모으고 이해한 뒤 해결책을 만드는 방식이 더 잘 맞을 수 있습니다.',
+  GENERAL_NATAL_CONCLUSION_PEER_WEALTH_TENSION:
+    '하고 싶은 방식이 분명한데 돈·시간·효율 같은 현실 조건이 끼어들면 답답함을 느끼기 쉽습니다. 특히 “내가 원하는 방식”과 “지금 가장 효율적인 선택”이 다를 때 갈등이 생길 수 있습니다.',
+  GENERAL_NATAL_CONCLUSION_WEALTH_RESOURCE_TENSION:
+    '충분히 알아보고 시작하고 싶지만, 동시에 빨리 결과도 보고 싶어 하는 편입니다. 그래서 준비가 길어지거나, 반대로 너무 빨리 시작해서 나중에 다시 고치는 일이 반복될 수 있습니다.',
+  GENERAL_NATAL_CONCLUSION_PEER_OFFICER_TENSION:
+    '내가 납득한 방식대로 하고 싶은 마음이 있는 반면, 책임이나 규칙도 대충 넘기지는 못하는 편입니다. 자율성은 없고 책임만 큰 환경에서는 특히 답답함을 느끼기 쉽습니다.',
+  GENERAL_NATAL_CONCLUSION_WORK_OUTPUT_WEALTH_OFFICER:
+    '일에서는 한 조각만 맡는 것보다 기획부터 실행, 결과 확인까지 연결해서 볼 수 있을 때 강점이 잘 드러납니다. 시키는 일만 반복하기보다 직접 만들고 개선하고 운영하는 역할이 더 잘 맞을 가능성이 있습니다.',
+  GENERAL_NATAL_CONCLUSION_MONEY_WEALTH_PEER_RESOURCE:
+    '돈은 단순히 많이 모으는 것보다 “어디에 써야 가치가 커지는가”를 중요하게 보는 편입니다. 배우는 데 쓰는 돈, 일을 키우는 데 쓰는 돈, 그냥 갖고 싶은 데 쓰는 돈을 구분하면 판단이 훨씬 편해질 수 있습니다.',
+  GENERAL_NATAL_CONCLUSION_RELATIONSHIP_PEER_OFFICER:
+    '사람 관계에서도 선이 분명한 편에 가깝습니다. 무조건 맞춰주기보다 서로 무엇을 맡고 어디까지 책임지는지가 분명할 때 편하고, 기준이 애매하거나 일방적으로 맞춰줘야 하는 관계는 피로하게 느낄 수 있습니다.',
+});
+
 function valueRecord(claim) {
   if (claim.value === null || typeof claim.value !== 'object' || Array.isArray(claim.value)) {
     throw new Error(`Preview claim ${claim.claimId} has an unsupported value shape.`);
@@ -51,17 +74,18 @@ function conclusionKind(claim) {
   return typeof value.conclusionKind === 'string' ? value.conclusionKind : undefined;
 }
 
-function conclusionText(claim) {
+function consumerText(claim) {
+  const mapped = CONSUMER_COPY[claim.claimType];
+  if (mapped !== undefined) return mapped;
   const value = valueRecord(claim);
-  const headline = typeof value.headline === 'string' ? value.headline : '해석 결론';
   const summary = typeof value.summary === 'string' ? value.summary : '';
-  return `${headline}. ${summary}`;
+  return summary;
 }
 
 function assertion(claim) {
   return {
     type: 'assertion',
-    text: conclusionText(claim),
+    text: consumerText(claim),
     epistemicType: 'synthesis',
     evidenceRefs: [{ sourceType: 'claim', ref: claim.claimId }],
     methodologyRefs: [claim.methodologyRef],
@@ -74,7 +98,7 @@ function ambiguityBlocks(evidence) {
     .map((fact) => ({
       type: 'disclosure',
       disclosureType: 'calculation_ambiguity',
-      text: `계산 조건에 따라 ${fact.path} 값이 하나로 확정되지 않습니다. 가능한 경우를 구분해 확인합니다.`,
+      text: '출생 정보의 경계 조건 때문에 일부 계산 결과가 달라질 수 있습니다. 이 경우에는 가능한 결과를 나눠서 확인합니다.',
       relatedRefs: [fact.ref],
     }));
 }
@@ -85,11 +109,7 @@ function claimsOfKind(claims, kind) {
 
 function sectionFromClaims(sectionId, title, claims) {
   if (claims.length === 0) return undefined;
-  return {
-    sectionId,
-    title,
-    blocks: claims.map(assertion),
-  };
+  return { sectionId, title, blocks: claims.map(assertion) };
 }
 
 function previewDraft(evidence) {
@@ -111,30 +131,29 @@ function previewDraft(evidence) {
   const money = claimsOfKind(conclusions, 'money');
   const relationship = claimsOfKind(conclusions, 'relationship');
   const tensions = claimsOfKind(conclusions, 'tension');
-
   const summaryClaims = core.length > 0 ? core : [...strengths, ...work, ...money, ...relationship].slice(0, 2);
 
   const sections = [
     {
       sectionId: 'research-preview-overall-conclusion',
-      title: '한눈에 보는 결론',
+      title: '이 사주의 핵심',
       blocks: [...ambiguityBlocks(evidence), ...summaryClaims.map(assertion)],
     },
-    sectionFromClaims('research-preview-strengths', '강점으로 읽히는 부분', strengths),
-    sectionFromClaims('research-preview-work', '일과 성과', work),
-    sectionFromClaims('research-preview-money', '돈과 자원', money),
-    sectionFromClaims('research-preview-relationship', '관계와 자기 기준', relationship),
-    sectionFromClaims('research-preview-tensions', '부딪히는 지점', tensions),
+    sectionFromClaims('research-preview-strengths', '잘 맞는 방식', strengths),
+    sectionFromClaims('research-preview-work', '일할 때', work),
+    sectionFromClaims('research-preview-money', '돈을 다룰 때', money),
+    sectionFromClaims('research-preview-relationship', '사람 관계에서', relationship),
+    sectionFromClaims('research-preview-tensions', '주의할 점', tensions),
   ].filter(Boolean);
 
   sections.push({
     sectionId: 'research-preview-general-natal-scope',
-    title: '현재 풀이의 범위',
+    title: '참고',
     blocks: [
       {
         type: 'disclosure',
         disclosureType: 'scope_limitation',
-        text: '이 결과는 타고난 명식의 구조를 바탕으로 성향·일하는 방식·자원 운용·관계 방식의 경향을 해석한 연구 미리보기입니다. 특정 직업의 성공 여부, 실제 재산 규모, 배우자 결과, 건강 결과, 사건 발생이나 미래 시기는 이 화면에서 단정하지 않습니다.',
+        text: '지금 결과는 태어난 사주에서 보이는 기본 성향과 일·돈·관계의 경향을 먼저 풀어본 것입니다. 특정 직업의 성공 여부, 실제 재산 규모, 배우자 결과, 건강 문제나 미래의 사건·시기까지 확정해서 말하는 단계는 아닙니다.',
         relatedRefs: [guard.claimId],
       },
     ],
@@ -150,7 +169,7 @@ function previewDraft(evidence) {
 class ResearchPreviewNarrativeAdapter {
   metadata = {
     provider: 'deterministic-research-preview',
-    modelId: 'grounded-conclusion-natal-preview',
+    modelId: 'grounded-friendly-natal-preview',
     modelRevision: RESEARCH_PREVIEW_VERSION,
   };
 
@@ -214,15 +233,19 @@ async function runSmoke(baseUrl) {
   }
 
   const serialized = JSON.stringify(payload);
-  for (const required of ['한눈에 보는 결론', '현재 풀이의 범위']) {
+  for (const required of ['이 사주의 핵심', '참고']) {
     if (!serialized.includes(required)) {
       throw new Error(`Preview response is missing required section: ${required}`);
     }
   }
-  if (!['강점으로 읽히는 부분', '일과 성과', '돈과 자원', '관계와 자기 기준', '부딪히는 지점'].some((title) => serialized.includes(title))) {
-    throw new Error('Preview response emitted no substantive conclusion section.');
+  if (!['잘 맞는 방식', '일할 때', '돈을 다룰 때', '사람 관계에서', '주의할 점'].some((title) => serialized.includes(title))) {
+    throw new Error('Preview response emitted no substantive consumer section.');
   }
-
+  for (const unfriendly of ['명식 안에', '구조로 읽힙니다', '축이 ', '서로 견제합니다', '작동 방식']) {
+    if (serialized.includes(unfriendly)) {
+      throw new Error(`Preview response contains analyst-facing wording: ${unfriendly}`);
+    }
+  }
   for (const forbidden of [
     'classificationAuthorized',
     'fortunePolarityAuthorized',
@@ -256,7 +279,6 @@ server.listen(requestedPort, '127.0.0.1', async () => {
     throw new Error('Unable to resolve preview server address.');
   }
   const baseUrl = `http://127.0.0.1:${address.port}`;
-
   if (smokeMode) {
     try {
       await runSmoke(baseUrl);
@@ -269,7 +291,6 @@ server.listen(requestedPort, '127.0.0.1', async () => {
     }
     return;
   }
-
   writeStdout('');
   writeStdout('Myeonghwa Research UX Preview');
   writeStdout('NOT PRODUCTION AUTHORITY');
