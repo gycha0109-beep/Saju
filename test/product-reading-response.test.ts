@@ -92,8 +92,13 @@ function artifact(): ReadingArtifact {
   };
 }
 
-function delivered(overrides: Partial<ProductReadingDeliveryResult> = {}): ProductReadingDeliveryResult {
-  return {
+type DeliveryOverrides = Partial<Omit<ProductReadingDeliveryResult, 'artifact'>> & {
+  artifact?: ReadingArtifact | null;
+};
+
+function delivered(overrides: DeliveryOverrides = {}): ProductReadingDeliveryResult {
+  const { artifact: artifactOverride, ...rest } = overrides;
+  const result: ProductReadingDeliveryResult = {
     deliveryId: 'delivery-stable-1',
     deliveryVersion: 'delivery-internal-v1',
     state: 'delivered',
@@ -105,8 +110,11 @@ function delivered(overrides: Partial<ProductReadingDeliveryResult> = {}): Produ
       preparationId: 'preparation-secret',
     },
     constraints: deliveryConstraints,
-    ...overrides,
+    ...rest,
   };
+  if (artifactOverride === null) delete result.artifact;
+  else if (artifactOverride !== undefined) result.artifact = artifactOverride;
+  return result;
 }
 
 describe('Product Reading Consumer Transport Response', () => {
@@ -180,7 +188,7 @@ describe('Product Reading Consumer Transport Response', () => {
         state: 'clarification_required',
         messageCode: 'READING_REQUEST_CLARIFICATION_REQUIRED',
         requiredAction: 'clarify_request',
-        artifact: undefined,
+        artifact: null,
         clarification: {
           kind: 'domain',
           options: [
@@ -207,7 +215,7 @@ describe('Product Reading Consumer Transport Response', () => {
         state: 'partial_evidence',
         messageCode: 'READING_EVIDENCE_PARTIAL',
         requiredAction: 'none',
-        artifact: undefined,
+        artifact: null,
         coverage: {
           state: 'partial',
           hasAvailableEvidence: true,
