@@ -140,7 +140,7 @@ function interpretationWithClaims(
 }
 
 describe('Product Reading Service Facade', () => {
-  it('returns a delivered consumer DTO from the single public service call', async () => {
+  it('returns a transport-safe delivered response from the single public service call', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
     const career = claim(currentSnapshot.snapshotId, 'claim-career-service', 'T8', 'career');
@@ -157,11 +157,14 @@ describe('Product Reading Service Facade', () => {
     );
 
     expect(result.state).toBe('delivered');
-    expect(result.artifact).toBeDefined();
+    expect(result.reading).toBeDefined();
     expect(adapter.calls).toHaveLength(1);
-    expect(result).not.toHaveProperty('preparation');
-    expect(result).not.toHaveProperty('narrative');
-    expect(result).not.toHaveProperty('modelCalls');
+    expect(result).not.toHaveProperty('artifact');
+    expect(result).not.toHaveProperty('audit');
+    expect(result).not.toHaveProperty('constraints');
+    expect(result.reading).not.toHaveProperty('explainability');
+    expect(result.reading).not.toHaveProperty('provenance');
+    expect(JSON.stringify(result)).not.toContain('claim-career-service');
   });
 
   it('returns clarification_required and performs zero model calls for ambiguous input', async () => {
@@ -182,7 +185,7 @@ describe('Product Reading Service Facade', () => {
     expect(result.state).toBe('clarification_required');
     expect(result.clarification?.kind).toBe('domain');
     expect(adapter.calls).toHaveLength(0);
-    expect(result.artifact).toBeUndefined();
+    expect(result.reading).toBeUndefined();
   });
 
   it('returns partial_evidence and performs zero model calls when annual evidence is incomplete', async () => {
@@ -209,7 +212,7 @@ describe('Product Reading Service Facade', () => {
     expect(result.state).toBe('partial_evidence');
     expect(result.coverage?.state).toBe('partial');
     expect(adapter.calls).toHaveLength(0);
-    expect(result.artifact).toBeUndefined();
+    expect(result.reading).toBeUndefined();
   });
 
   it('preserves the existing grounded deterministic fallback as delivered_with_fallback', async () => {
@@ -234,7 +237,7 @@ describe('Product Reading Service Facade', () => {
     );
 
     expect(result.state).toBe('delivered_with_fallback');
-    expect(result.artifact?.status).toBe('narrative_fallback');
+    expect(result.reading).toBeDefined();
     expect(adapter.calls).toHaveLength(1);
   });
 
@@ -263,6 +266,7 @@ describe('Product Reading Service Facade', () => {
     expect(productReadingPublic).not.toHaveProperty('prepareProductReading');
     expect(productReadingPublic).not.toHaveProperty('executeProductReading');
     expect(productReadingPublic).not.toHaveProperty('buildProductReadingDelivery');
+    expect(productReadingPublic).not.toHaveProperty('buildProductReadingResponse');
   });
 
   it('registers the consumer product-reading subpath in the package export map', async () => {
@@ -275,7 +279,7 @@ describe('Product Reading Service Facade', () => {
     });
   });
 
-  it('keeps the final delivery identity deterministic across audit timestamps', async () => {
+  it('keeps the final response identity deterministic across audit timestamps', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
     const career = claim(
@@ -313,8 +317,8 @@ describe('Product Reading Service Facade', () => {
       },
     );
 
-    expect(second.deliveryId).toBe(first.deliveryId);
-    expect(second.artifact?.readingId).toBe(first.artifact?.readingId);
-    expect(second.artifact?.generatedAt).not.toBe(first.artifact?.generatedAt);
+    expect(second.responseId).toBe(first.responseId);
+    expect(second.reading?.readingId).toBe(first.reading?.readingId);
+    expect(second.reading?.generatedAt).not.toBe(first.reading?.generatedAt);
   });
 });
