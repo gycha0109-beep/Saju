@@ -10,6 +10,7 @@ import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/produc
 import { createGeneralNatalT8StructuralSummaryCandidateRegistry } from '../dist/research/general-natal-t8-structural-summary-candidate.js';
 
 const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v1';
+const smokeMode = process.env.MYEONGHWA_PREVIEW_SMOKE === '1';
 
 const narrativePolicy = {
   policyId: RESEARCH_PREVIEW_VERSION,
@@ -72,17 +73,61 @@ const dependencies = {
   requestIdFactory: () => `research-preview-${randomUUID()}`,
 };
 
-const portValue = Number(process.env.PORT ?? 4173);
-if (!Number.isInteger(portValue) || portValue < 1 || portValue > 65535) {
+const requestedPort = smokeMode ? 0 : Number(process.env.PORT ?? 4173);
+if (!Number.isInteger(requestedPort) || requestedPort < 0 || requestedPort > 65535) {
   throw new Error('PORT must be an integer between 1 and 65535.');
 }
 
 const server = createMyeonghwaProductHostServer(dependencies);
-server.listen(portValue, '127.0.0.1', () => {
+
+async function runSmoke(baseUrl) {
+  const health = await fetch(`${baseUrl}/healthz`);
+  if (!health.ok) throw new Error(`Preview health check failed: ${health.status}`);
+
+  const reading = await fetch(`${baseUrl}/api/readings`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      birth: {
+        calendarType: 'solar',
+        date: '2024-03-10',
+        time: '12:00',
+        sex: 'unspecified',
+      },
+      reading: { text: '사주' },
+    }),
+  });
+  if (!reading.ok) throw new Error(`Preview reading request failed: ${reading.status}`);
+  const payload = await reading.json();
+  if (payload.state !== 'delivered' && payload.state !== 'delivered_with_fallback') {
+    throw new Error(`Preview reading did not deliver: ${String(payload.state)}`);
+  }
+}
+
+server.listen(requestedPort, '127.0.0.1', async () => {
+  const address = server.address();
+  if (address === null || typeof address === 'string') {
+    throw new Error('Unable to resolve preview server address.');
+  }
+  const baseUrl = `http://127.0.0.1:${address.port}`;
+
+  if (smokeMode) {
+    try {
+      await runSmoke(baseUrl);
+      console.log('Myeonghwa research UX preview smoke: PASS');
+      server.close();
+    } catch (error) {
+      console.error(error);
+      process.exitCode = 1;
+      server.close();
+    }
+    return;
+  }
+
   console.log('');
   console.log('Myeonghwa Research UX Preview');
   console.log('NOT PRODUCTION AUTHORITY');
-  console.log(`Open: http://127.0.0.1:${portValue}`);
+  console.log(`Open: ${baseUrl}`);
   console.log('Current meaningful test target: 전체 사주 (general / natal)');
   console.log('Other reading intents remain fail-closed when evidence is insufficient.');
   console.log('Press Ctrl+C to stop.');
