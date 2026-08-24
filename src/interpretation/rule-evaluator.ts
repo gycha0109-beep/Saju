@@ -1,6 +1,7 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import type { FactState, VersionedRef } from '../contracts/common.js';
 import type {
+  ClaimInputSelector,
   InterpretationClaim,
   InterpretationPack,
   RuleDefinition,
@@ -42,7 +43,9 @@ type InputResolution =
       status:
         | 'skipped_missing_input'
         | 'skipped_ambiguous_input'
-        | 'skipped_dependency_unresolved';
+        | 'skipped_dependency_unresolved'
+        | 'skipped_cardinality_mismatch'
+        | 'error';
       inputs: readonly ResolvedInput[];
     };
 
@@ -266,6 +269,93 @@ function claimVisibleInContext(
   return claim.scenarioRef === undefined || claim.scenarioRef === scenarioRef;
 }
 
+function versionKey(ref: VersionedRef): string {
+  return `${ref.id}@${ref.version}`;
+}
+
+function matchesSelector(claim: InterpretationClaim, selector: ClaimInputSelector | undefined): boolean {
+  if (selector === undefined) return true;
+
+  const taxonomy = selector.taxonomy;
+  if (taxonomy?.tiers !== undefined && !taxonomy.tiers.includes(claim.taxonomy.tier)) return false;
+  if (
+    taxonomy?.categories !== undefined &&
+    !taxonomy.categories.includes(claim.taxonomy.category)
+  ) {
+    return false;
+  }
+  if (taxonomy?.subcategories !== undefined) {
+    if (
+      claim.taxonomy.subcategory === undefined ||
+      !taxonomy.subcategories.includes(claim.taxonomy.subcategory)
+    ) {
+      return false;
+    }
+  }
+  if (selector.subjects !== undefined && !selector.subjects.includes(claim.subject)) return false;
+  if (selector.predicates !== undefined && !selector.predicates.includes(claim.predicate)) return false;
+  if (
+    selector.methodologyRefs !== undefined &&
+    !selector.methodologyRefs.some((ref) => versionKey(ref) === versionKey(claim.methodologyRef))
+  ) {
+    return false;
+  }
+  for (const expected of selector.valueEquals ?? []) {
+    const projected = getPath(claim.value, expected.path);
+    if (!projected.found || !deepEqual(projected.value, expected.value)) return false;
+  }
+  return true;
+}
+
+function claimInputRef(
+  requirement: RuleInputRequirement,
+  claims: readonly InterpretationClaim[],
+  observedValue?: unknown,
+): RuleEvaluation['inputRefs'][number] {
+  return {
+    sourceType: 'claim',
+    idOrPath: requirement.pathOrClaimType,
+    ...(observedValue === undefined ? {} : { observedValue }),
+    selectedClaimIds: claims.map((claim) => claim.claimId),
+  };
+}
+
+function readyClaimInput(
+  requirement: RuleInputRequirement,
+  claims: readonly InterpretationClaim[],
+  value: unknown,
+): InputResolution {
+  return {
+    status: 'ready',
+    inputs: [
+      {
+        key: requirement.key,
+        value,
+        inputRef: claimInputRef(requirement, claims, value),
+        upstreamClaimRefs: claims.map((claim) => claim.claimId),
+      },
+    ],
+  };
+}
+
+function cardinalityMismatch(
+  requirement: RuleInputRequirement,
+  claims: readonly InterpretationClaim[],
+): InputResolution {
+  const values = claims.map((claim) => claim.value);
+  return {
+    status: 'skipped_cardinality_mismatch',
+    inputs: [
+      {
+        key: requirement.key,
+        value: values,
+        inputRef: claimInputRef(requirement, claims, values),
+        upstreamClaimRefs: claims.map((claim) => claim.claimId),
+      },
+    ],
+  };
+}
+
 function resolveClaimInput(
   requirement: RuleInputRequirement,
   context: RuleEvaluationContext,
@@ -275,9 +365,31 @@ function resolveClaimInput(
       (claim) =>
         claim.state === 'active' &&
         claim.claimType === requirement.pathOrClaimType &&
-        claimVisibleInContext(claim, context.scenarioRef),
+        claimVisibleInContext(claim, context.scenarioRef) &&
+        matchesSelector(claim, requirement.claimSelector),
     )
     .sort((left, right) => left.claimId.localeCompare(right.claimId));
+
+  switch (requirement.cardinality) {
+    case 'exactly_one':
+      if (matchingClaims.length !== 1) return cardinalityMismatch(requirement, matchingClaims);
+      return readyClaimInput(requirement, matchingClaims, matchingClaims[0]?.value);
+    case 'one_or_more':
+      if (matchingClaims.length === 0) return cardinalityMismatch(requirement, matchingClaims);
+      return readyClaimInput(
+        requirement,
+        matchingClaims,
+        matchingClaims.map((claim) => claim.value),
+      );
+    case 'zero_or_more':
+      return readyClaimInput(
+        requirement,
+        matchingClaims,
+        matchingClaims.map((claim) => claim.value),
+      );
+    case undefined:
+      break;
+  }
 
   if (matchingClaims.length === 0) {
     return {
@@ -288,7 +400,7 @@ function resolveClaimInput(
             {
               key: requirement.key,
               value: undefined,
-              inputRef: { sourceType: 'claim', idOrPath: requirement.pathOrClaimType },
+              inputRef: claimInputRef(requirement, []),
               upstreamClaimRefs: [],
             },
           ],
@@ -299,26 +411,30 @@ function resolveClaimInput(
     matchingClaims.length === 1
       ? matchingClaims[0]?.value
       : matchingClaims.map((claim) => claim.value);
-  return {
-    status: 'ready',
-    inputs: [
-      {
-        key: requirement.key,
-        value,
-        inputRef: {
-          sourceType: 'claim',
-          idOrPath: requirement.pathOrClaimType,
-          observedValue: value,
-        },
-        upstreamClaimRefs: matchingClaims.map((claim) => claim.claimId),
-      },
-    ],
-  };
+  return readyClaimInput(requirement, matchingClaims, value);
+}
+
+function validInputDeclaration(requirement: RuleInputRequirement): boolean {
+  const selectorOrCardinalityPresent =
+    requirement.claimSelector !== undefined || requirement.cardinality !== undefined;
+  if (requirement.source !== 'interpretation_claim') return !selectorOrCardinalityPresent;
+
+  switch (requirement.cardinality) {
+    case 'exactly_one':
+    case 'one_or_more':
+      return requirement.required;
+    case 'zero_or_more':
+      return !requirement.required;
+    case undefined:
+      return true;
+  }
+  return false;
 }
 
 function resolveInputs(rule: RuleDefinition, context: RuleEvaluationContext): InputResolution {
   const inputs: ResolvedInput[] = [];
   for (const requirement of rule.inputs) {
+    if (!validInputDeclaration(requirement)) return { status: 'error', inputs };
     const resolution =
       requirement.source === 'interpretation_claim'
         ? resolveClaimInput(requirement, context)
