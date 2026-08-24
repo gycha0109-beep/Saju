@@ -69,7 +69,7 @@ describe('consumer copy neutrality guard', () => {
     }
   });
 
-  it('preserves all four specialist T8 claim families and their upstream grounding', () => {
+  it('keeps all specialist domains useful while rejecting cross-channel-only combinations', () => {
     const execution = runInterpretation(fixture(), createBusinessNatalReadingCandidateRegistry());
     const familyClaimIds = new Set(
       execution.claims
@@ -78,10 +78,10 @@ describe('consumer copy neutrality guard', () => {
     );
 
     const expectedCounts = new Map([
-      ['career_conclusion', 11],
-      ['wealth_conclusion', 11],
-      ['relationship_conclusion', 11],
-      ['business_conclusion', 11],
+      ['career_conclusion', 9],
+      ['wealth_conclusion', 9],
+      ['relationship_conclusion', 10],
+      ['business_conclusion', 10],
     ] as const);
 
     for (const [predicate, expectedCount] of expectedCounts) {
@@ -92,7 +92,8 @@ describe('consumer copy neutrality guard', () => {
         claims.every(
           (claim) =>
             claim.upstreamClaimRefs.length > 0 &&
-            claim.upstreamClaimRefs.every((ref) => familyClaimIds.has(ref)),
+            claim.upstreamClaimRefs.every((ref) => familyClaimIds.has(ref)) &&
+            claim.factRefs.includes('derivedFacts.tenGods'),
         ),
       ).toBe(true);
     }
