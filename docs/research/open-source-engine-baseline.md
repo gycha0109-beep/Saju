@@ -1,0 +1,294 @@
+# Open-source Engine Baseline
+
+## 목적
+
+명화가 참고하거나 의존할 오픈소스 사주/만세력 프로젝트의 역할을 구분한다.
+
+README나 package metadata의 주장과 실제 사용 범위를 동일시하지 않는다. 계산 authority와 해석 참고 구현을 분리한다.
+
+검토 기준일: 2026-08-19
+
+---
+
+## 1. 후보 A — `yhj1024/manseryeok`
+
+Repository: https://github.com/yhj1024/manseryeok
+
+### 현재 위치
+
+**결정론적 계산 코어의 우선 후보.**
+
+현재 `package.json` 기준 버전은 `2.0.0`이다.
+
+### 확인된 주요 특성
+
+- TypeScript 라이브러리
+- Node.js >= 18
+- runtime dependency 없음
+- `prepublishOnly = lint -> test:run -> build`
+- root에 실제 MIT `LICENSE` 존재
+- 양력/음력 변환
+- 윤달
+- 연주/월주/일주/시주
+- 24절기
+- 입춘 경계
+- 진태양시 옵션
+- 역사적 표준시/DST 처리 옵션
+- `midnight` / `jasi` / `splitJasi` day boundary 지원
+- 십신
+- 공망
+- 대운
+
+### 명화에서의 사용 원칙
+
+직접 domain model로 사용하지 않는다.
+
+```text
+manseryeok
+  -> Myeonghwa Calculation Adapter
+  -> Canonical Saju Snapshot
+```
+
+이유:
+
+1. 외부 패키지 버전 변화 격리
+2. 자체 golden fixture 검증
+3. 명화 schema 독립성
+4. 향후 엔진 교체/이중검산 가능성
+5. 외부 편의 API와 내부 domain contract 분리
+
+### 주의
+
+- 과거 1.x의 계산 오류 이력이 있으므로 1.x를 지원 대상으로 삼지 않는다.
+- v2.0.0 이상만 검토 대상으로 한다.
+- 라이브러리 자체 default와 명화의 계산 방법론 default를 동일시하지 않는다.
+- 특히 `dayBoundary`와 `trueSolarTime`은 명화 정책으로 별도 결정한다.
+- 대운 시작점 등 유파 차이가 가능한 항목은 별도 검증한다.
+
+### 잠정 평가
+
+```text
+Role: Calculation Core Candidate
+Confidence: B+ ~ A-
+Adoption: conditional
+Version floor: 2.0.0
+```
+
+실서비스 채택 전 자체 regression corpus가 필요하다.
+
+---
+
+## 2. 후보 B — `hjsh200219/fortuneteller`
+
+Repository: https://github.com/hjsh200219/fortuneteller
+
+### 현재 위치
+
+**해석 기능 목록과 구현 아이디어 참고 후보. 계산 authority로 사용하지 않는다.**
+
+현재 `package.json` 기준 버전은 `1.2.0`이다.
+
+### 확인된 특성
+
+- TypeScript
+- MCP server 구조
+- 사주 분석/운세/직업/재물/건강/애정/궁합 등 다수 해석 기능
+- rule-based 로직과 정적 설명문
+- LLM과 연결하기 쉬운 tool interface
+- package metadata상 MIT 선언
+- `test` script는 존재
+- `prepublishOnly`에는 build + lint만 있고 test가 포함되지 않음
+
+### 검토상 주의
+
+기존 검진에서 다음을 확인했다.
+
+- 일부 운세 점수는 heuristic
+- 직업·재물·성격 등 상당 부분이 정적 rule/copy 기반
+- 품질 주장 대비 검증 gate가 약함
+- 일부 문서와 실제 tolerance/구현 불일치
+- 오류를 삼켜 false positive가 가능한 테스트 패턴 존재
+- 과거 Critical/High/Medium 만세력 버그 수정 문서 존재
+- 현재 root의 `LICENSE` 파일은 조회되지 않음
+
+특히 `package.json`은 `files`에 `LICENSE`를 포함하고 `license: MIT`라고 선언하지만, 현재 repository root에서는 `LICENSE`가 확인되지 않는다.
+
+따라서 상업 서비스 코드 직접 복제나 재배포는 라이선스 상태를 별도로 확인하기 전 보류한다.
+
+### 명화에서 허용하는 사용 방식
+
+- 기능 taxonomy 조사
+- 용신/신살/궁합/운세 기능 목록 참고
+- rule engine 구조 아이디어 참고
+- MCP/tool interface 참고
+
+### 허용하지 않는 방식
+
+- 계산 authority로 채택
+- heuristic 점수를 검증된 정확도처럼 사용
+- 출처 없는 해석 rule 대량 복사
+- 라이선스 확인 전 코드 직접 복제
+- README 품질 수치를 독립 검증 없이 명화 품질 근거로 사용
+
+### 잠정 평가
+
+```text
+Role: Interpretation Reference
+Confidence: C+
+Adoption: no (core)
+Code reuse: hold pending license/provenance review
+```
+
+---
+
+## 3. 후보 C — `golbin/ssaju`
+
+Repository: https://github.com/golbin/ssaju
+
+### 현재 위치
+
+2026년에 공개된 TypeScript 사주 라이브러리로, 기능 범위와 LLM용 출력은 풍부하다. 그러나 **명화의 결정론적 계산 authority로는 `manseryeok`보다 우선하지 않는다.**
+
+현재 `package.json` 기준 버전은 `0.2.0`이다.
+
+### 확인된 장점
+
+- TypeScript
+- MIT LICENSE 실제 존재
+- package-lock 존재
+- runtime dependency 0
+- 양/음력 변환
+- 4주 계산
+- 입춘/절기 계산
+- 한국 DST 테이블 처리
+- 경도 기반 Local Mean Time 옵션
+- 십신·공망·대운·세운·월운·12운성·관계·신살·격국·용신까지 넓은 기능
+- `toCompact()` / `toMarkdown()` 같은 LLM/UI 편의 출력
+- golden/boundary 성격의 테스트가 존재
+
+### 명화 기준의 핵심 문제
+
+#### 1. 출생시간 미상 처리
+
+`normalizeInput()`은 `hour`가 없으면 `12`, `minute`이 없으면 `0`을 자동 주입한다.
+
+즉:
+
+```text
+unknown birth time -> 12:00
+```
+
+이 기본 정책은 명화의 `unknown != fabricated noon` 원칙과 직접 충돌한다.
+
+#### 2. 성별 기본값
+
+성별 입력이 없으면 `여`를 기본값으로 주입한다. 대운 등 성별 의존 계산에서 입력 부재를 사실상 특정 값으로 확정할 위험이 있다.
+
+#### 3. 진태양시가 아니라 Local Mean Time
+
+옵션은 `(longitude - standardLongitude) * 4분` 방식의 경도 보정이다. `manseryeok`의 진태양시 옵션처럼 균시차(Equation of Time)를 함께 다루는 구조가 아니다.
+
+#### 4. 절기 authority
+
+절기 시각은 임베드된 정본 절입표가 아니라 태양 황경을 자체 계산하고 Newton-like 반복으로 절입 순간을 근사한다.
+
+이 접근 자체가 잘못이라는 뜻은 아니지만, 명화의 계산 authority로 채택하려면 KASI 또는 독립적인 천문 reference와 별도 전수 검증이 필요하다.
+
+#### 5. 계산과 해석의 제품 API 결합
+
+`calculateSaju()`가 내부에서:
+
+```text
+normalize/calculate four pillars
+-> analyzeChart
+-> ten gods / relations / daeun / seyun / wolun
+-> gyeokguk / yongsin / interpretation-oriented output
+```
+
+까지 한 번에 반환한다.
+
+내부 파일은 `manse.ts`와 `analyze.ts`로 나뉘어 있지만 public product API는 명화가 의도한 Calculation Fact / Interpretation Claim 경계보다 넓다.
+
+#### 6. CI gate 확인 부족
+
+현재 repository root에서 `.github` workflow는 확인되지 않았다. `package.json`에는 test/typecheck/build script가 있지만 publish/CI gate가 `manseryeok`만큼 명확하지 않다.
+
+### 명화에서의 사용 가능성
+
+- 독립 교차검산 후보
+- 기능 taxonomy 참고
+- 관계/12운성/신살/운세 기능 조사 참고
+- LLM compact representation 아이디어 참고
+
+### 권장하지 않는 사용 방식
+
+- `calculateSaju()` 결과 전체를 canonical data로 채택
+- 시간 미상 입력을 그대로 호출
+- `advanced.gyeokguk`, `advanced.yongsin`을 명화 authority로 채택
+- LMT 보정을 진태양시와 동일 취급
+
+### 잠정 평가
+
+```text
+Role: Cross-validation / Feature Reference
+Calculation Authority: below manseryeok
+Adoption: no (primary core)
+Code reuse: selective only
+```
+
+---
+
+## 4. 현재 계산 코어 우선순위
+
+```text
+Primary candidate
+  1. yhj1024/manseryeok v2.0.0
+
+Independent / secondary comparison
+  2. golbin/ssaju v0.2.0
+
+Interpretation reference
+  3. hjsh200219/fortuneteller v1.2.0
+```
+
+이 순위는 별 개수나 기능 수가 아니라 **명화의 authority boundary, uncertainty 보존, 검증 가능성, 계산/해석 분리 적합성**을 기준으로 한다.
+
+---
+
+## 5. 명화의 기본 조합
+
+현재 설계 기준은 다음과 같다.
+
+```text
+Birth Input
+  -> Calculation Policy
+  -> manseryeok Adapter (primary candidate)
+  -> Canonical Saju Snapshot
+  -> optional independent cross-check
+  -> Myeonghwa-owned Interpretation Rule Registry
+  -> Interpretation Claims
+  -> Grounded LLM Narrative
+```
+
+`fortuneteller`와 `ssaju`의 분석 결과 전체는 위 pipeline에 계산 authority dependency로 들어가지 않는다.
+
+---
+
+## 6. 채택 전 필수 검증
+
+`manseryeok`을 실제 dependency로 추가하기 전에 다음을 완료한다.
+
+1. supported date range 확인
+2. 입춘 직전/직후 fixture
+3. 월 절입 직전/직후 fixture
+4. 23:00~00:59 자시 경계 fixture
+5. 음력/윤달 fixture
+6. 역사적 한국 표준시 fixture
+7. DST fixture
+8. 진태양시로 시주가 바뀌는 fixture
+9. 대운 순/역행 fixture
+10. 대운 시작점 fixture
+11. 외부 reference와 교차검증
+12. regression test 자동화
+
+검증이 끝나기 전에는 “정확한 사주 엔진” 같은 제품 claim을 하지 않는다.

@@ -1,0 +1,43 @@
+{
+  "name": "myeonghwa-saju-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Channel-neutral deterministic Saju calculation and interpretation engine for Myeonghwa.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "packageManager": "npm@11.17.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write src test package.json tsconfig.json tsconfig.build.json eslint.config.mjs .prettierrc.json .github/workflows/ci.yml",
+    "format:check": "prettier --check src test package.json tsconfig.json tsconfig.build.json eslint.config.mjs .prettierrc.json .github/workflows/ci.yml",
+    "test": "vitest run",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "manseryeok": "2.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.13.3",
+    "eslint": "10.8.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.2",
+    "typescript-eslint": "8.66.0",
+    "vitest": "4.1.10"
+  }
+}

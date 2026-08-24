@@ -1,0 +1,564 @@
+import type { ContentAddressedVersionedRef, VersionedRef } from '../contracts/common.js';
+import type {
+  InterpretationPack,
+  MethodologyDefinition,
+  ReviewAttestation,
+  RuleDefinition,
+  SourceReference,
+} from '../contracts/interpretation.js';
+import {
+  reviewerTrustPolicyRef,
+  reviewerTrustsAttestation,
+  type ReviewerTrustContext,
+} from './reviewer-trust.js';
+import {
+  deterministicContentHash,
+  verifyResolvedRegistryContentIntegrity,
+  type ResolvedRuleRegistrySnapshot,
+} from './rule-registry.js';
+
+export type ExecutionPlanErrorCode =
+  | 'REGISTRY_CONTENT_INTEGRITY_FAILED'
+  | 'PACK_NOT_EXECUTABLE'
+  | 'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK'
+  | 'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK'
+  | 'RULE_NOT_EXECUTABLE_FOR_PACK'
+  | 'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK'
+  | 'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK'
+  | 'REVIEWER_TRUST_CONTEXT_REQUIRED'
+  | 'REVIEW_ATTESTATION_NOT_AUTHORIZED_FOR_PACK'
+  | 'RULE_METHODOLOGY_NOT_ENABLED'
+  | 'RULE_VERSION_SELECTION_AMBIGUOUS'
+  | 'RULE_DEPENDENCY_MISSING'
+  | 'CLAIM_DEPENDENCY_MISSING'
+  | 'EXECUTION_PLAN_INVALID_CYCLE';
+
+export class ExecutionPlanError extends Error {
+  readonly code: ExecutionPlanErrorCode;
+
+  constructor(code: ExecutionPlanErrorCode, message: string) {
+    super(message);
+    this.name = 'ExecutionPlanError';
+    this.code = code;
+  }
+}
+
+export interface RuleDependencyEdge {
+  fromRuleRef: VersionedRef;
+  toRuleRef: VersionedRef;
+  reason: 'explicit_rule_requirement' | 'interpretation_claim_requirement';
+  claimType?: string;
+}
+
+export interface ExecutionPlanStage {
+  stageIndex: number;
+  ruleRefs: readonly ContentAddressedVersionedRef[];
+}
+
+export interface InterpretationExecutionPlan {
+  executionPlanId: string;
+  registrySnapshotId: string;
+  packRef: ContentAddressedVersionedRef;
+  reviewerTrustPolicyRef?: ContentAddressedVersionedRef;
+  orderedRuleRefs: readonly ContentAddressedVersionedRef[];
+  dependencyEdges: readonly RuleDependencyEdge[];
+  stages: readonly ExecutionPlanStage[];
+  planHash: string;
+}
+
+const PRODUCTION_TEST_COVERAGE = new Set<RuleDefinition['quality']['testCoverage']>([
+  'fixture_matrix',
+  'regression_suite',
+]);
+const STAGING_TEST_COVERAGE = new Set<RuleDefinition['quality']['testCoverage']>([
+  'unit',
+  'fixture_matrix',
+  'regression_suite',
+]);
+const PRODUCTION_PROVENANCE = new Set<RuleDefinition['quality']['provenanceQuality']>([
+  'primary_supported',
+  'multi_source_supported',
+]);
+const STAGING_PROVENANCE = new Set<RuleDefinition['quality']['provenanceQuality']>([
+  'primary_supported',
+  'multi_source_supported',
+  'secondary_only',
+  'single_practitioner',
+]);
+const PRODUCTION_SOURCE_TIERS = new Set<SourceReference['provenanceTier']>([
+  'primary',
+  'scholarly_secondary',
+  'cross_reference',
+]);
+
+function ref(rule: RuleDefinition): VersionedRef {
+  return { id: rule.ruleId, version: rule.version };
+}
+
+function refKey(value: VersionedRef): string {
+  return `${value.id}@${value.version}`;
+}
+
+function sortRules(rules: readonly RuleDefinition[]): RuleDefinition[] {
+  return [...rules].sort((left, right) => {
+    const idOrder = left.ruleId.localeCompare(right.ruleId);
+    return idOrder === 0 ? left.version.localeCompare(right.version) : idOrder;
+  });
+}
+
+function assertRegistryContentIntegrity(registry: ResolvedRuleRegistrySnapshot): void {
+  const errors = verifyResolvedRegistryContentIntegrity(registry);
+  if (errors.length === 0) return;
+  throw new ExecutionPlanError(
+    'REGISTRY_CONTENT_INTEGRITY_FAILED',
+    `Resolved interpretation registry content does not match its snapshot: ${errors.join('; ')}`,
+  );
+}
+
+function requirePromotedTrustContext(
+  registry: ResolvedRuleRegistrySnapshot,
+  trustContext: ReviewerTrustContext | undefined,
+): ReviewerTrustContext | undefined {
+  if (registry.pack.status === 'research') return undefined;
+  if (registry.pack.status === 'deprecated') return trustContext;
+  if (trustContext !== undefined) return trustContext;
+  throw new ExecutionPlanError(
+    'REVIEWER_TRUST_CONTEXT_REQUIRED',
+    `${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version} requires an externally supplied reviewer trust policy.`,
+  );
+}
+
+function contentRefFor(
+  registry: ResolvedRuleRegistrySnapshot,
+  versioned: VersionedRef,
+): ContentAddressedVersionedRef {
+  const found = registry.snapshot.rules.find(
+    (candidate) => candidate.id === versioned.id && candidate.version === versioned.version,
+  );
+  if (found === undefined) {
+    throw new Error(`Registry snapshot missing content ref ${refKey(versioned)}`);
+  }
+  return found;
+}
+
+function contentRefForMethodology(
+  registry: ResolvedRuleRegistrySnapshot,
+  methodology: MethodologyDefinition,
+): ContentAddressedVersionedRef {
+  const found = registry.snapshot.methodologies.find(
+    (candidate) =>
+      candidate.id === methodology.methodologyId && candidate.version === methodology.version,
+  );
+  if (found === undefined) {
+    throw new Error(
+      `Registry snapshot missing methodology content ref ${methodology.methodologyId}@${methodology.version}`,
+    );
+  }
+  return found;
+}
+
+function sourceIndex(registry: ResolvedRuleRegistrySnapshot): ReadonlyMap<string, SourceReference> {
+  return new Map(registry.sources.map((source) => [source.sourceId, source]));
+}
+
+function latestReview(attestations: readonly ReviewAttestation[]): ReviewAttestation | undefined {
+  return [...attestations].sort((left, right) => {
+    const timeOrder = Date.parse(left.reviewedAt) - Date.parse(right.reviewedAt);
+    return timeOrder === 0
+      ? left.attestationId.localeCompare(right.attestationId)
+      : timeOrder;
+  }).at(-1);
+}
+
+function assertReviewAuthorization(
+  registry: ResolvedRuleRegistrySnapshot,
+  subjectType: ReviewAttestation['subjectType'],
+  subjectRef: ContentAddressedVersionedRef,
+  trustContext: ReviewerTrustContext | undefined,
+): void {
+  if (registry.pack.status === 'research') return;
+  if (trustContext === undefined) {
+    throw new ExecutionPlanError(
+      'REVIEWER_TRUST_CONTEXT_REQUIRED',
+      `${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version} requires reviewer trust context.`,
+    );
+  }
+
+  const trusted = registry.reviewAttestations.filter(
+    (attestation) =>
+      attestation.subjectType === subjectType &&
+      attestation.subjectRef.id === subjectRef.id &&
+      attestation.subjectRef.version === subjectRef.version &&
+      attestation.subjectRef.contentHash === subjectRef.contentHash &&
+      reviewerTrustsAttestation(trustContext, attestation),
+  );
+  const domain = trusted.filter((attestation) => attestation.reviewLevel === 'domain');
+  const internal = trusted.filter((attestation) => attestation.reviewLevel === 'internal');
+  const governing =
+    registry.pack.status === 'production'
+      ? latestReview(domain)
+      : latestReview(domain) ?? latestReview(internal);
+
+  if (governing?.decision !== 'approved') {
+    throw new ExecutionPlanError(
+      'REVIEW_ATTESTATION_NOT_AUTHORIZED_FOR_PACK',
+      `${subjectType} ${subjectRef.id}@${subjectRef.version} content ${subjectRef.contentHash.slice(0, 12)} lacks a current approved trust-pinned ${
+        registry.pack.status === 'production' ? 'domain' : 'internal/domain'
+      } attestation for ${registry.pack.status}.`,
+    );
+  }
+}
+
+function methodologyStatusAllowed(
+  methodology: MethodologyDefinition,
+  pack: InterpretationPack,
+): boolean {
+  if (methodology.status === 'deprecated') return false;
+  if (pack.status === 'production') return methodology.status === 'active';
+  if (pack.status === 'staging') {
+    return methodology.status === 'active' || methodology.status === 'reviewed';
+  }
+  return (
+    methodology.status === 'active' ||
+    methodology.status === 'reviewed' ||
+    methodology.status === 'research'
+  );
+}
+
+function assertMethodologyAuthorization(
+  registry: ResolvedRuleRegistrySnapshot,
+  trustContext: ReviewerTrustContext | undefined,
+): void {
+  const sources = sourceIndex(registry);
+  for (const methodology of registry.methodologies) {
+    if (!methodologyStatusAllowed(methodology, registry.pack)) {
+      throw new ExecutionPlanError(
+        'METHODOLOGY_NOT_EXECUTABLE_FOR_PACK',
+        `${methodology.methodologyId}@${methodology.version} (${methodology.status}) is not executable in ${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version}`,
+      );
+    }
+    if (
+      (registry.pack.status === 'staging' || registry.pack.status === 'production') &&
+      methodology.sourceIds.length === 0
+    ) {
+      throw new ExecutionPlanError(
+        'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+        `${methodology.methodologyId}@${methodology.version} has no source references and cannot enter ${registry.pack.status}.`,
+      );
+    }
+    if (registry.pack.status === 'production') {
+      const unauthorized = methodology.sourceIds
+        .map((sourceId) => sources.get(sourceId))
+        .filter(
+          (source): source is SourceReference =>
+            source !== undefined && !PRODUCTION_SOURCE_TIERS.has(source.provenanceTier),
+        );
+      if (unauthorized.length > 0) {
+        throw new ExecutionPlanError(
+          'METHODOLOGY_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+          `${methodology.methodologyId}@${methodology.version} references production-disallowed source tiers: ${unauthorized
+            .map((source) => `${source.sourceId}:${source.provenanceTier}`)
+            .sort()
+            .join(', ')}`,
+        );
+      }
+    }
+    assertReviewAuthorization(
+      registry,
+      'methodology',
+      contentRefForMethodology(registry, methodology),
+      trustContext,
+    );
+  }
+}
+
+function allowedRuleStatus(rule: RuleDefinition, pack: InterpretationPack): boolean {
+  if (rule.status === 'rejected' || rule.status === 'deprecated') return false;
+  if (pack.status === 'production') return rule.status === 'active';
+  if (pack.status === 'staging') return rule.status === 'active' || rule.status === 'reviewed';
+  return rule.status === 'active' || rule.status === 'reviewed' || rule.status === 'research';
+}
+
+function assertRuleQualityAuthorization(rule: RuleDefinition, pack: InterpretationPack): void {
+  if (pack.status === 'research') return;
+  if (pack.status === 'staging') {
+    const reviewerAllowed =
+      rule.quality.reviewerStatus === 'internal_reviewed' ||
+      rule.quality.reviewerStatus === 'domain_reviewed';
+    if (
+      !reviewerAllowed ||
+      !STAGING_TEST_COVERAGE.has(rule.quality.testCoverage) ||
+      !STAGING_PROVENANCE.has(rule.quality.provenanceQuality)
+    ) {
+      throw new ExecutionPlanError(
+        'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK',
+        `${rule.ruleId}@${rule.version} quality is not staging-authorized: reviewer=${rule.quality.reviewerStatus}, tests=${rule.quality.testCoverage}, provenance=${rule.quality.provenanceQuality}`,
+      );
+    }
+    return;
+  }
+  if (
+    rule.quality.reviewerStatus !== 'domain_reviewed' ||
+    !PRODUCTION_TEST_COVERAGE.has(rule.quality.testCoverage) ||
+    !PRODUCTION_PROVENANCE.has(rule.quality.provenanceQuality)
+  ) {
+    throw new ExecutionPlanError(
+      'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK',
+      `${rule.ruleId}@${rule.version} quality is not production-authorized: reviewer=${rule.quality.reviewerStatus}, tests=${rule.quality.testCoverage}, provenance=${rule.quality.provenanceQuality}`,
+    );
+  }
+}
+
+function assertRuleSourceAuthorization(
+  rule: RuleDefinition,
+  registry: ResolvedRuleRegistrySnapshot,
+): void {
+  if (registry.pack.status === 'research') return;
+  const sourceIds = [...new Set(rule.sourceRefs.map((sourceRef) => sourceRef.sourceId))];
+  if (sourceIds.length === 0) {
+    throw new ExecutionPlanError(
+      'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+      `${rule.ruleId}@${rule.version} has no source references and cannot enter ${registry.pack.status}.`,
+    );
+  }
+  if (registry.pack.status !== 'production') return;
+
+  const sources = sourceIndex(registry);
+  const resolvedSources = sourceIds
+    .map((sourceId) => sources.get(sourceId))
+    .filter((source): source is SourceReference => source !== undefined);
+  const unauthorized = resolvedSources.filter(
+    (source) => !PRODUCTION_SOURCE_TIERS.has(source.provenanceTier),
+  );
+  if (unauthorized.length > 0) {
+    throw new ExecutionPlanError(
+      'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+      `${rule.ruleId}@${rule.version} references production-disallowed source tiers: ${unauthorized
+        .map((source) => `${source.sourceId}:${source.provenanceTier}`)
+        .sort()
+        .join(', ')}`,
+    );
+  }
+  if (rule.quality.provenanceQuality === 'multi_source_supported' && sourceIds.length < 2) {
+    throw new ExecutionPlanError(
+      'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+      `${rule.ruleId}@${rule.version} declares multi_source_supported but references only ${sourceIds.length} distinct source(s).`,
+    );
+  }
+  if (
+    rule.quality.provenanceQuality === 'primary_supported' &&
+    !resolvedSources.some((source) => source.provenanceTier === 'primary')
+  ) {
+    throw new ExecutionPlanError(
+      'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK',
+      `${rule.ruleId}@${rule.version} declares primary_supported but references no primary-tier source.`,
+    );
+  }
+}
+
+function assertSingleSelectedVersion(rules: readonly RuleDefinition[]): void {
+  const versionsByRuleId = new Map<string, Set<string>>();
+  for (const rule of rules) {
+    const versions = versionsByRuleId.get(rule.ruleId) ?? new Set<string>();
+    versions.add(rule.version);
+    versionsByRuleId.set(rule.ruleId, versions);
+  }
+  for (const [ruleId, versions] of versionsByRuleId) {
+    if (versions.size <= 1) continue;
+    throw new ExecutionPlanError(
+      'RULE_VERSION_SELECTION_AMBIGUOUS',
+      `Pack selection resolves multiple versions for ${ruleId}: ${[...versions].sort().join(', ')}`,
+    );
+  }
+}
+
+function selectRules(
+  registry: ResolvedRuleRegistrySnapshot,
+  trustContext: ReviewerTrustContext | undefined,
+): readonly RuleDefinition[] {
+  assertMethodologyAuthorization(registry, trustContext);
+  const enabledSets = new Set(registry.pack.enabledRuleSets);
+  const disabled = new Set(registry.pack.disabledRuleIds ?? []);
+  const enabledMethodologies = new Set(
+    registry.pack.methodologyRefs.map((methodology) => `${methodology.id}@${methodology.version}`),
+  );
+  const selected = registry.rules.filter(
+    (rule) => enabledSets.has(rule.ruleSetId) && !disabled.has(rule.ruleId),
+  );
+  assertSingleSelectedVersion(selected);
+
+  for (const rule of selected) {
+    if (!allowedRuleStatus(rule, registry.pack)) {
+      throw new ExecutionPlanError(
+        'RULE_NOT_EXECUTABLE_FOR_PACK',
+        `${rule.ruleId}@${rule.version} (${rule.status}) is not executable in ${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version}`,
+      );
+    }
+    if (!enabledMethodologies.has(`${rule.methodologyRef.id}@${rule.methodologyRef.version}`)) {
+      throw new ExecutionPlanError(
+        'RULE_METHODOLOGY_NOT_ENABLED',
+        `${rule.ruleId}@${rule.version} requires methodology ${rule.methodologyRef.id}@${rule.methodologyRef.version} outside the pack`,
+      );
+    }
+    assertRuleQualityAuthorization(rule, registry.pack);
+    assertRuleSourceAuthorization(rule, registry);
+    assertReviewAuthorization(registry, 'rule', contentRefFor(registry, ref(rule)), trustContext);
+  }
+  return sortRules(selected);
+}
+
+function explicitDependencies(rules: readonly RuleDefinition[]): readonly RuleDependencyEdge[] {
+  const byId = new Map<string, RuleDefinition[]>();
+  for (const rule of rules) {
+    const values = byId.get(rule.ruleId) ?? [];
+    values.push(rule);
+    byId.set(rule.ruleId, values);
+  }
+  const edges: RuleDependencyEdge[] = [];
+  for (const rule of rules) {
+    for (const dependencyId of rule.relations?.requires ?? []) {
+      const candidates = byId.get(dependencyId);
+      if (candidates === undefined || candidates.length === 0) {
+        throw new ExecutionPlanError(
+          'RULE_DEPENDENCY_MISSING',
+          `${rule.ruleId}@${rule.version} requires missing selected rule ${dependencyId}`,
+        );
+      }
+      for (const dependency of sortRules(candidates)) {
+        edges.push({
+          fromRuleRef: ref(dependency),
+          toRuleRef: ref(rule),
+          reason: 'explicit_rule_requirement',
+        });
+      }
+    }
+  }
+  return edges;
+}
+
+function claimDependencies(rules: readonly RuleDefinition[]): readonly RuleDependencyEdge[] {
+  const producersByClaim = new Map<string, RuleDefinition[]>();
+  for (const rule of rules) {
+    const producers = producersByClaim.get(rule.output.claimType) ?? [];
+    producers.push(rule);
+    producersByClaim.set(rule.output.claimType, producers);
+  }
+  const edges: RuleDependencyEdge[] = [];
+  for (const rule of rules) {
+    for (const input of rule.inputs) {
+      if (input.source !== 'interpretation_claim' || !input.required) continue;
+      const producers = (producersByClaim.get(input.pathOrClaimType) ?? []).filter(
+        (producer) => producer.ruleId !== rule.ruleId || producer.version !== rule.version,
+      );
+      if (producers.length === 0) {
+        throw new ExecutionPlanError(
+          'CLAIM_DEPENDENCY_MISSING',
+          `${rule.ruleId}@${rule.version} requires claim type ${input.pathOrClaimType} but no selected rule produces it`,
+        );
+      }
+      for (const producer of sortRules(producers)) {
+        edges.push({
+          fromRuleRef: ref(producer),
+          toRuleRef: ref(rule),
+          reason: 'interpretation_claim_requirement',
+          claimType: input.pathOrClaimType,
+        });
+      }
+    }
+  }
+  return edges;
+}
+
+function uniqueEdges(edges: readonly RuleDependencyEdge[]): readonly RuleDependencyEdge[] {
+  const byKey = new Map<string, RuleDependencyEdge>();
+  for (const edge of edges) {
+    const key = `${refKey(edge.fromRuleRef)}>${refKey(edge.toRuleRef)}:${edge.reason}:${edge.claimType ?? ''}`;
+    byKey.set(key, edge);
+  }
+  return [...byKey.values()].sort((left, right) => {
+    const leftKey = `${refKey(left.fromRuleRef)}>${refKey(left.toRuleRef)}:${left.reason}:${left.claimType ?? ''}`;
+    const rightKey = `${refKey(right.fromRuleRef)}>${refKey(right.toRuleRef)}:${right.reason}:${right.claimType ?? ''}`;
+    return leftKey.localeCompare(rightKey);
+  });
+}
+
+function buildStages(
+  rules: readonly RuleDefinition[],
+  edges: readonly RuleDependencyEdge[],
+): readonly { rules: readonly RuleDefinition[]; refs: readonly VersionedRef[] }[] {
+  const ruleByKey = new Map(rules.map((rule) => [refKey(ref(rule)), rule]));
+  const incoming = new Map<string, Set<string>>();
+  for (const key of ruleByKey.keys()) incoming.set(key, new Set());
+  for (const edge of edges) {
+    incoming.get(refKey(edge.toRuleRef))?.add(refKey(edge.fromRuleRef));
+  }
+
+  const remaining = new Set(ruleByKey.keys());
+  const stages: { rules: readonly RuleDefinition[]; refs: readonly VersionedRef[] }[] = [];
+  while (remaining.size > 0) {
+    const ready = [...remaining]
+      .filter((key) => [...(incoming.get(key) ?? [])].every((dependency) => !remaining.has(dependency)))
+      .sort();
+    if (ready.length === 0) {
+      throw new ExecutionPlanError(
+        'EXECUTION_PLAN_INVALID_CYCLE',
+        `Interpretation rule dependency cycle detected among: ${[...remaining].sort().join(', ')}`,
+      );
+    }
+    const stageRules = ready.map((key) => {
+      const rule = ruleByKey.get(key);
+      if (rule === undefined) throw new Error(`Internal planner error for ${key}`);
+      return rule;
+    });
+    stages.push({ rules: stageRules, refs: stageRules.map(ref) });
+    for (const key of ready) remaining.delete(key);
+  }
+  return stages;
+}
+
+export function buildInterpretationExecutionPlan(
+  registry: ResolvedRuleRegistrySnapshot,
+  trustContext?: ReviewerTrustContext,
+): InterpretationExecutionPlan {
+  assertRegistryContentIntegrity(registry);
+  if (registry.pack.status === 'deprecated') {
+    throw new ExecutionPlanError(
+      'PACK_NOT_EXECUTABLE',
+      `Deprecated pack ${registry.pack.packId}@${registry.pack.version} cannot be executed.`,
+    );
+  }
+
+  const promotedTrustContext = requirePromotedTrustContext(registry, trustContext);
+  const rules = selectRules(registry, promotedTrustContext);
+  const edges = uniqueEdges([...explicitDependencies(rules), ...claimDependencies(rules)]);
+  const staged = buildStages(rules, edges);
+  const stages: ExecutionPlanStage[] = staged.map((stage, stageIndex) => ({
+    stageIndex,
+    ruleRefs: stage.refs.map((value) => contentRefFor(registry, value)),
+  }));
+  const orderedRuleRefs = stages.flatMap((stage) => stage.ruleRefs);
+  const trustPolicyRef =
+    registry.pack.status === 'research' || promotedTrustContext === undefined
+      ? undefined
+      : reviewerTrustPolicyRef(promotedTrustContext);
+  const planMaterial = {
+    registrySnapshotId: registry.snapshot.registrySnapshotId,
+    packRef: registry.snapshot.packRef,
+    reviewerTrustPolicyRef: trustPolicyRef,
+    orderedRuleRefs,
+    dependencyEdges: edges,
+    stages,
+  };
+  const planHash = deterministicContentHash(planMaterial);
+
+  return {
+    executionPlanId: `plan_${planHash.slice(0, 24)}`,
+    registrySnapshotId: registry.snapshot.registrySnapshotId,
+    packRef: registry.snapshot.packRef,
+    ...(trustPolicyRef === undefined ? {} : { reviewerTrustPolicyRef: trustPolicyRef }),
+    orderedRuleRefs,
+    dependencyEdges: edges,
+    stages,
+    planHash,
+  };
+}
