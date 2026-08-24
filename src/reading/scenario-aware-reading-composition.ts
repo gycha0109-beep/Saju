@@ -181,6 +181,7 @@ function evaluateScenarioCoverage(
 export function evaluateScenarioAwareReadingCoverage(
   profile: DomainReadingProfile,
   claims: readonly InterpretationClaim[],
+  scenarioUniverse?: readonly string[],
 ): {
   coverageState: Exclude<ReadingCoverageState, 'unsupported_intent'>;
   targetClaimIds: readonly string[];
@@ -195,11 +196,15 @@ export function evaluateScenarioAwareReadingCoverage(
         !profile.excludedClaimSelectors.some((selector) => matchesSelector(claim, selector)),
     )
     .sort((left, right) => left.claimId.localeCompare(right.claimId));
-  const scenarioRefs = [
+  const inferredScenarioRefs = [
     ...new Set(
       eligible.flatMap((claim) => (claim.scenarioRef === undefined ? [] : [claim.scenarioRef])),
     ),
   ].sort();
+  const scenarioRefs =
+    scenarioUniverse !== undefined && scenarioUniverse.length > 0
+      ? [...new Set(scenarioUniverse)].sort()
+      : inferredScenarioRefs;
   const scenarioCoverage =
     scenarioRefs.length === 0
       ? [evaluateScenarioCoverage(profile, eligible, undefined)]
@@ -267,7 +272,11 @@ export function buildReadingCompositionEvidence(
     return authorized;
   }
 
-  const coverage = evaluateScenarioAwareReadingCoverage(authorized.profile, eligible);
+  const coverage = evaluateScenarioAwareReadingCoverage(
+    authorized.profile,
+    eligible,
+    snapshot.scenarios.map((scenario) => scenario.scenarioId),
+  );
   const targetClaimIds = coverage.targetClaimIds;
   const evidence =
     targetClaimIds.length === 0
@@ -281,8 +290,7 @@ export function buildReadingCompositionEvidence(
             ? { includeSourceSummaries: true }
             : {}),
         });
-  const selectedClaimIds =
-    evidence?.bundle.claims.map((claim) => claim.claimId).sort() ?? [];
+  const selectedClaimIds = evidence?.bundle.claims.map((claim) => claim.claimId).sort() ?? [];
   const selected = new Set(selectedClaimIds);
   const active = execution.claims
     .filter((claim) => claim.state === 'active')
@@ -325,9 +333,18 @@ export function buildReadingCompositionEvidence(
     ...selectionMaterial,
   };
 
+  if (evidence === undefined) {
+    const { evidence: priorEvidence, ...withoutEvidence } = authorized;
+    void priorEvidence;
+    return {
+      ...withoutEvidence,
+      selection,
+    };
+  }
+
   return {
     ...authorized,
     selection,
-    ...(evidence === undefined ? { evidence: undefined } : { evidence }),
+    evidence,
   };
 }
