@@ -7,16 +7,16 @@ import {
   runInterpretation,
 } from '../dist/index.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
-import { createCareerNatalReadingCandidateRegistry } from '../dist/research/career-natal-reading-candidate.js';
+import { createWealthNatalReadingCandidateRegistry } from '../dist/research/wealth-natal-reading-candidate.js';
 
-const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v6';
+const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v7';
 const SCOPE_GUARD_CLAIM_TYPE = 'GENERAL_NATAL_USEFUL_READING_SCOPE-GUARD';
 const smokeMode = process.env.MYEONGHWA_PREVIEW_SMOKE === '1';
 const fetchRequest = globalThis.fetch.bind(globalThis);
 
 const narrativePolicy = {
   policyId: RESEARCH_PREVIEW_VERSION,
-  version: '6.0.0-preview',
+  version: '7.0.0-preview',
   language: 'ko',
   certaintyPolicy: {
     deterministicFacts: 'direct',
@@ -79,6 +79,11 @@ function careerKind(claim) {
   return typeof value.careerKind === 'string' ? value.careerKind : undefined;
 }
 
+function wealthKind(claim) {
+  const value = valueRecord(claim);
+  return typeof value.wealthKind === 'string' ? value.wealthKind : undefined;
+}
+
 function consumerText(claim) {
   const mapped = CONSUMER_COPY[claim.claimType];
   if (mapped !== undefined) return mapped;
@@ -114,6 +119,10 @@ function claimsOfKind(claims, kind) {
 
 function careerClaimsOfKind(claims, kind) {
   return claims.filter((claim) => careerKind(claim) === kind);
+}
+
+function wealthClaimsOfKind(claims, kind) {
+  return claims.filter((claim) => wealthKind(claim) === kind);
 }
 
 function sectionFromClaims(sectionId, title, claims) {
@@ -230,6 +239,69 @@ function careerNatalPreviewDraft(evidence, careerClaims) {
   };
 }
 
+function wealthNatalPreviewDraft(evidence, wealthClaims) {
+  const preferredSummary = [
+    'WEALTH_NATAL_CONCLUSION_OUTPUT_WEALTH_OFFICER_VALUE_OPERATING_LOOP',
+    'WEALTH_NATAL_CONCLUSION_OUTPUT_WEALTH_MAKE_TO_VALUE',
+    'WEALTH_NATAL_CONCLUSION_WEALTH_OFFICER_RESULT_TO_BUDGET',
+  ];
+  const summaryClaim =
+    preferredSummary
+      .map((claimType) => wealthClaims.find((claim) => claim.claimType === claimType))
+      .find(Boolean) ?? wealthClaims[0];
+  if (summaryClaim === undefined) {
+    throw new Error('Wealth natal preview emitted no wealth conclusion.');
+  }
+
+  const remaining =
+    wealthClaims.length === 1
+      ? wealthClaims
+      : wealthClaims.filter((claim) => claim.claimId !== summaryClaim.claimId);
+  const valueCreation = wealthClaimsOfKind(remaining, 'value_creation');
+  const spending = wealthClaimsOfKind(remaining, 'spending');
+  const management = wealthClaimsOfKind(remaining, 'management');
+  const friction = wealthClaimsOfKind(remaining, 'friction');
+
+  const sections = [
+    {
+      sectionId: 'research-preview-wealth-core',
+      title: '재물운 핵심',
+      blocks: [...ambiguityBlocks(evidence), assertion(summaryClaim)],
+    },
+    sectionFromClaims(
+      'research-preview-wealth-value-creation',
+      '돈과 가치가 연결되는 방식',
+      valueCreation,
+    ),
+    sectionFromClaims('research-preview-wealth-spending', '돈을 쓰는 기준', spending),
+    sectionFromClaims('research-preview-wealth-management', '돈을 관리할 때', management),
+    sectionFromClaims(
+      'research-preview-wealth-friction',
+      '돈에서 흔들리기 쉬운 지점',
+      friction,
+    ),
+  ].filter(Boolean);
+
+  sections.push({
+    sectionId: 'research-preview-wealth-scope',
+    title: '참고',
+    blocks: [
+      {
+        type: 'disclosure',
+        disclosureType: 'scope_limitation',
+        text: '이 재물운은 태어난 사주에서 보이는 돈을 만들고 쓰고 관리하는 방식의 경향을 보는 풀이입니다. 실제 재산 규모, 연봉, 투자수익, 대박·횡재 여부, 돈이 들어오는 미래 시기나 개인 금융 조언을 제공하지 않습니다.',
+        relatedRefs: [summaryClaim.claimId],
+      },
+    ],
+  });
+
+  return {
+    schemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
+    requestId: evidence.requestId,
+    sections,
+  };
+}
+
 function previewDraft(prompt) {
   const evidence = prompt.evidence;
   const requestedSection = prompt.userRequest?.requestedSection;
@@ -248,6 +320,18 @@ function previewDraft(prompt) {
       throw new Error('Career natal preview request has no career conclusion evidence.');
     }
     return careerNatalPreviewDraft(evidence, careerClaims);
+  }
+  if (requestedSection === 'wealth:natal') {
+    const wealthClaims = evidence.claims.filter(
+      (claim) =>
+        claim.taxonomy.tier === 'T8' &&
+        claim.taxonomy.category === 'wealth' &&
+        claim.predicate === 'wealth_conclusion',
+    );
+    if (wealthClaims.length === 0) {
+      throw new Error('Wealth natal preview request has no wealth conclusion evidence.');
+    }
+    return wealthNatalPreviewDraft(evidence, wealthClaims);
   }
 
   throw new Error(`Unsupported research preview section: ${String(requestedSection)}`);
@@ -272,7 +356,7 @@ const dependencies = {
     });
   },
   interpret(snapshot) {
-    const registry = createCareerNatalReadingCandidateRegistry();
+    const registry = createWealthNatalReadingCandidateRegistry();
     return {
       registry,
       interpretation: runInterpretation(snapshot, registry, { now: new Date() }),
@@ -329,11 +413,17 @@ function assertNoInternalLeak(serialized) {
     'specificOccupationAuthorized',
     'careerSuccessAuthorized',
     'incomeOutcomeAuthorized',
+    'netWorthAuthorized',
+    'investmentReturnAuthorized',
+    'windfallAuthorized',
+    'financialAdviceAuthorized',
+    'futureMoneyTimingAuthorized',
     'month_branch_structural_context',
     '"direction"',
     '"families"',
     '"conclusionKind"',
     '"careerKind"',
+    '"wealthKind"',
     '"dominance"',
   ]) {
     if (serialized.includes(forbidden)) {
@@ -379,6 +469,23 @@ async function runSmoke(baseUrl) {
     }
   }
   assertNoInternalLeak(careerSerialized);
+
+  const wealthPayload = await requestReading(baseUrl, '재물운');
+  const wealthSerialized = JSON.stringify(wealthPayload);
+  for (const required of ['재물운 핵심', '참고']) {
+    if (!wealthSerialized.includes(required)) {
+      throw new Error(`Wealth preview is missing required section: ${required}`);
+    }
+  }
+  if (!['돈과 가치가 연결되는 방식', '돈을 쓰는 기준', '돈을 관리할 때', '돈에서 흔들리기 쉬운 지점'].some((title) => wealthSerialized.includes(title))) {
+    throw new Error('Wealth preview emitted no substantive wealth section.');
+  }
+  for (const forbiddenPromise of ['부자가 됩니다', '돈이 들어옵니다', '대박이 납니다', '투자하면', '수익률은']) {
+    if (wealthSerialized.includes(forbiddenPromise)) {
+      throw new Error(`Wealth preview contains deterministic financial promise: ${forbiddenPromise}`);
+    }
+  }
+  assertNoInternalLeak(wealthSerialized);
 }
 
 function writeStdout(message) {
@@ -411,8 +518,8 @@ server.listen(requestedPort, '127.0.0.1', async () => {
   writeStdout('Myeonghwa Research UX Preview');
   writeStdout('NOT PRODUCTION AUTHORITY');
   writeStdout(`Open: ${baseUrl}`);
-  writeStdout('Current meaningful test targets: 전체 사주, 직업운 (natal)');
-  writeStdout('Annual/monthly career and other specialized intents remain fail-closed when evidence is insufficient.');
+  writeStdout('Current meaningful test targets: 전체 사주, 직업운, 재물운 (natal)');
+  writeStdout('Annual/monthly specialist readings remain fail-closed when period evidence is insufficient.');
   writeStdout('Press Ctrl+C to stop.');
   writeStdout('');
 });
