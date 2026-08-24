@@ -26,10 +26,16 @@ import {
   type ProductHostInterpretationBundle,
 } from '../host/product-host.js';
 import type { ProductReadingServiceOptions } from '../reading/product-reading-service.js';
+import {
+  PRODUCTION_CALCULATION_AUTHORIZATION_ID,
+  PRODUCTION_CALCULATION_AUTHORITY_RECORD_REF,
+  PRODUCTION_DEFAULT_CALCULATION_POLICY,
+  PRODUCTION_DEFAULT_CALCULATION_POLICY_ID,
+} from './production-calculation-policy.js';
 
-export const PRODUCTION_COMPOSITION_VERSION = 'myeonghwa-production-composition-v1';
+export const PRODUCTION_COMPOSITION_VERSION = 'myeonghwa-production-composition-v2';
 export const PRODUCTION_AUTHORITY_MANIFEST_VERSION =
-  'myeonghwa-production-authority-manifest-v1';
+  'myeonghwa-production-authority-manifest-v2';
 export const CURRENT_PRODUCTION_COMPOSITION_STATUS = 'blocked_authority_required' as const;
 
 interface AuthorizedCalculationPolicyGrant {
@@ -40,7 +46,13 @@ interface AuthorizedCalculationPolicyGrant {
 
 const AUTHORIZED_CALCULATION_POLICIES: Readonly<
   Record<string, AuthorizedCalculationPolicyGrant>
-> = Object.freeze({});
+> = Object.freeze({
+  [PRODUCTION_DEFAULT_CALCULATION_POLICY_ID]: Object.freeze({
+    authorizationId: PRODUCTION_CALCULATION_AUTHORIZATION_ID,
+    authorityRecordRef: PRODUCTION_CALCULATION_AUTHORITY_RECORD_REF,
+    policy: PRODUCTION_DEFAULT_CALCULATION_POLICY,
+  }),
+});
 
 export interface AuthorizedProductionCalculationPolicySummary {
   calculationPolicyId: string;
@@ -130,6 +142,10 @@ export function listAuthorizedProductionCalculationPolicies(): readonly Authoriz
     .sort((left, right) => left.calculationPolicyId.localeCompare(right.calculationPolicyId));
 }
 
+function selectedCalculationPolicyId(calculationPolicyId: string | undefined): string {
+  return calculationPolicyId ?? PRODUCTION_DEFAULT_CALCULATION_POLICY_ID;
+}
+
 function calculationGrant(
   calculationPolicyId: string | undefined,
 ): AuthorizedCalculationPolicyGrant | undefined {
@@ -179,17 +195,11 @@ export function inspectMyeonghwaProductionComposition(
   request: ProductionCompositionRequest = {},
 ): ProductionCompositionInspection {
   const blockers: ProductionCompositionBlocker[] = [];
-  const calculationPolicyId = request.calculationPolicyId;
+  const calculationPolicyId = selectedCalculationPolicyId(request.calculationPolicyId);
   const registry = request.registry;
   const grant = calculationGrant(calculationPolicyId);
 
-  if (calculationPolicyId === undefined) {
-    blockers.push({
-      code: 'CALCULATION_POLICY_SELECTION_REQUIRED',
-      component: 'calculation',
-      message: 'A production calculation policy must be selected explicitly.',
-    });
-  } else if (grant === undefined) {
+  if (grant === undefined) {
     blockers.push({
       code: 'AUTHORIZED_CALCULATION_POLICY_NOT_REGISTERED',
       component: 'calculation',
@@ -230,12 +240,7 @@ export function inspectMyeonghwaProductionComposition(
     });
   }
 
-  if (
-    blockers.length > 0 ||
-    grant === undefined ||
-    calculationPolicyId === undefined ||
-    registry === undefined
-  ) {
+  if (blockers.length > 0 || grant === undefined || registry === undefined) {
     return {
       status: 'blocked',
       compositionVersion: PRODUCTION_COMPOSITION_VERSION,
@@ -308,7 +313,8 @@ export function createAuthorizedMyeonghwaProductionHost(
     throw new ProductionCompositionBlockedError(inspection.blockers);
   }
 
-  const grant = calculationGrant(request.calculationPolicyId);
+  const calculationPolicyId = selectedCalculationPolicyId(request.calculationPolicyId);
+  const grant = calculationGrant(calculationPolicyId);
   const registry = request.registry;
   if (grant === undefined || registry === undefined) {
     throw new Error('Production composition authority disappeared after readiness inspection.');
