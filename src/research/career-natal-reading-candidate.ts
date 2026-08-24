@@ -49,11 +49,12 @@ export const CAREER_NATAL_READING_METHODOLOGY: MethodologyDefinition = Object.fr
   family: 'domain_synthesis',
   name: 'Natal career reading from exact Ten-God subtype and channel (research)',
   description:
-    'Projects resolved Ten-God subtypes into bounded career-reading themes while preserving the exact Ten-God identity and visible-stem versus branch channel. It intentionally avoids collapsing all ten subtypes into five broad families before consumer synthesis.',
+    'Projects resolved Ten-God subtypes into bounded career-reading themes while preserving the exact Ten-God identity and visible-stem versus branch channel. Visible-stem observations are the direct consumer career conclusions; branch observations remain supporting career context rather than competing for the headline.',
   assumptions: [
     'Career claims describe bounded work-style tendencies and decision criteria, not deterministic occupation assignment.',
     '비견 and 겁재, 식신 and 상관, 편재 and 정재, 편관 and 정관, 편인 and 정인 remain distinct observations and are not collapsed into a single family sentence.',
     'Visible stems and branches remain separate observation channels; neither channel is converted into a numeric dominance or strength score.',
+    'Visible-stem exact Ten-God observations are surfaced as direct career conclusions, while branch exact Ten-God observations are preserved as supporting context so a shared branch theme cannot arbitrarily become the career headline.',
     'A Ten-God subtype or channel is not a rank, aptitude score, proof of career success, or prediction of employment, salary, promotion, or future timing.',
     'Named occupations, hiring outcomes, salary, promotion, business success, luck polarity, and future timing are outside this candidate.',
     'The candidate remains research-only until domain review and production authorization are completed.',
@@ -193,6 +194,7 @@ function careerTenGodRule(god: TenGod, channel: CareerTenGodChannel): RuleDefini
   const spec = TEN_GOD_SPECS[god];
   const summary = channel === 'visible_stems' ? spec.visibleSummary : spec.branchSummary;
   const channelLabel = channel === 'visible_stems' ? 'visible stems' : 'branches';
+  const directConclusion = channel === 'visible_stems';
 
   return {
     ruleId: `RULE-CAREER-NATAL-${spec.id}-${channel.toUpperCase()}`,
@@ -201,8 +203,9 @@ function careerTenGodRule(god: TenGod, channel: CareerTenGodChannel): RuleDefini
     taxonomy: { tier: 'T8', category: 'career', subcategory: `ten_god_${channel}` },
     methodologyRef: { id: METHOD_ID, version: CAREER_NATAL_READING_CANDIDATE_VERSION },
     title: `${god} career theme in ${channelLabel}`,
-    description:
-      'Projects one exact resolved Ten-God subtype in one preserved chart channel into a bounded work-style theme without collapsing it into a five-family generic sentence.',
+    description: directConclusion
+      ? 'Projects one exact resolved visible-stem Ten-God subtype into a bounded direct consumer career conclusion without collapsing it into a five-family generic sentence.'
+      : 'Preserves one exact resolved branch Ten-God subtype as supporting career context without allowing it to compete arbitrarily for the direct consumer career headline.',
     inputs: [
       {
         key: 'tenGods',
@@ -217,7 +220,7 @@ function careerTenGodRule(god: TenGod, channel: CareerTenGodChannel): RuleDefini
     output: {
       claimType: `CAREER_NATAL_TEN_GOD_${spec.id}_${channel.toUpperCase()}`,
       subject: 'natal_chart',
-      predicate: 'career_conclusion',
+      predicate: directConclusion ? 'career_conclusion' : 'career_context',
       value: {
         careerKind: spec.kind,
         tenGod: god,
@@ -231,8 +234,16 @@ function careerTenGodRule(god: TenGod, channel: CareerTenGodChannel): RuleDefini
         numericScoringAuthorized: false,
       },
       polarity: 'neutral',
-      emphasis: channel === 'visible_stems' ? 'moderate' : 'minor',
-      tags: ['research', 'career', 'natal', 'exact-ten-god', channel, spec.kind],
+      emphasis: directConclusion ? 'moderate' : 'minor',
+      tags: [
+        'research',
+        'career',
+        'natal',
+        'exact-ten-god',
+        channel,
+        directConclusion ? 'direct-consumer-conclusion' : 'supporting-context',
+        spec.kind,
+      ],
     },
     sourceRefs: sourceRefs(),
     quality: QUALITY,
