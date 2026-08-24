@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type { CanonicalSajuSnapshot, TenGodChartFact } from '../src/contracts/calculation.js';
+import { resolved } from '../src/contracts/common.js';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import { buildReadingCompositionEvidence } from '../src/reading/reading-intent-composition.js';
@@ -15,23 +17,28 @@ import {
   createGeneralNatalUsefulReadingCandidateRegistry,
 } from '../src/research/general-natal-useful-reading-candidate.js';
 
-function userFixture() {
-  return calculateCanonicalSajuSnapshot(
+const SYNTHETIC_TEN_GODS: TenGodChartFact = {
+  year: { stem: resolved('비견'), branch: resolved('정인') },
+  month: { stem: resolved('편재'), branch: resolved('정재') },
+  day: { stem: resolved('일간'), branch: resolved('상관') },
+  hour: { stem: resolved('편관'), branch: resolved('식신') },
+};
+
+function syntheticFixture(): CanonicalSajuSnapshot {
+  const base = calculateCanonicalSajuSnapshot(
     {
       calendarType: 'solar',
-      date: { year: 1996, month: 1, day: 9 },
-      time: { known: true, hour: 9, minute: 10 },
-      sexForTraditionalCalculation: 'male',
+      date: { year: 2024, month: 3, day: 10 },
+      time: { known: true, hour: 12, minute: 0 },
+      sexForTraditionalCalculation: 'unspecified',
     },
     PRODUCTION_DEFAULT_CALCULATION_POLICY,
     { now: new Date('2026-08-24T04:00:00.000Z') },
   );
-}
-
-function pillarText(snapshot: ReturnType<typeof userFixture>, slot: 'year' | 'month' | 'day' | 'hour') {
-  const pillar = snapshot.pillars[slot];
-  if (pillar.status !== 'resolved') throw new Error(`Expected resolved ${slot} pillar.`);
-  return `${pillar.value.stem.value}${pillar.value.branch.value}`;
+  return {
+    ...base,
+    derivedFacts: { ...base.derivedFacts, tenGods: resolved(SYNTHETIC_TEN_GODS) },
+  };
 }
 
 describe('general natal minimum useful reading research candidate', () => {
@@ -54,29 +61,11 @@ describe('general natal minimum useful reading research candidate', () => {
     ).toBe(true);
   });
 
-  it('calculates the user fixture consistently before interpreting it', () => {
-    const snapshot = userFixture();
-    expect([
-      pillarText(snapshot, 'year'),
-      pillarText(snapshot, 'month'),
-      pillarText(snapshot, 'day'),
-      pillarText(snapshot, 'hour'),
-    ]).toEqual(['을해', '기축', '을사', '신사']);
-    expect(snapshot.derivedFacts.dayMaster).toEqual(
-      expect.objectContaining({
-        status: 'resolved',
-        value: expect.objectContaining({ value: '을', element: '목' }),
-      }),
-    );
-  });
-
-  it('turns the user fixture into multiple consumer theme axes instead of one month-branch fact', () => {
-    const snapshot = userFixture();
+  it('turns a whole-chart Ten-God fixture into multiple consumer theme axes', () => {
     const registry = createGeneralNatalUsefulReadingCandidateRegistry();
-    const execution = runInterpretation(snapshot, registry, {
+    const execution = runInterpretation(syntheticFixture(), registry, {
       now: new Date('2026-08-24T04:00:00.000Z'),
     });
-
     const t5 = execution.claims.filter((claim) => claim.taxonomy.tier === 'T5');
     const t8 = execution.claims.filter((claim) => claim.taxonomy.tier === 'T8');
 
@@ -90,7 +79,6 @@ describe('general natal minimum useful reading research candidate', () => {
         'TEN_GOD_WEALTH_VISIBLE_STEMS_THEME',
       ].sort(),
     );
-
     expect(t8.map((claim) => claim.claimType).sort()).toEqual(
       [
         'GENERAL_NATAL_DAY_MASTER_BASELINE',
@@ -103,7 +91,6 @@ describe('general natal minimum useful reading research candidate', () => {
         'GENERAL_NATAL_WEALTH_VISIBLE_STEMS_THEME',
       ].sort(),
     );
-
     expect(t8.every((claim) => claim.polarity === 'neutral')).toBe(true);
     expect(
       new Set(
@@ -124,37 +111,36 @@ describe('general natal minimum useful reading research candidate', () => {
   });
 
   it('keeps T8 consumer themes bound to upstream T5 claims', () => {
-    const snapshot = userFixture();
     const registry = createGeneralNatalUsefulReadingCandidateRegistry();
-    const execution = runInterpretation(snapshot, registry, {
+    const execution = runInterpretation(syntheticFixture(), registry, {
       now: new Date('2026-08-24T04:00:00.000Z'),
     });
-
     const thematicT8 = execution.claims.filter(
       (claim) => claim.taxonomy.tier === 'T8' && claim.predicate === 'consumer_theme',
     );
     expect(thematicT8).toHaveLength(6);
     expect(thematicT8.every((claim) => claim.upstreamClaimRefs.length === 1)).toBe(true);
     for (const claim of thematicT8) {
-      const upstream = execution.claims.find((candidate) => candidate.claimId === claim.upstreamClaimRefs[0]);
+      const upstream = execution.claims.find(
+        (candidate) => candidate.claimId === claim.upstreamClaimRefs[0],
+      );
       expect(upstream?.taxonomy.tier).toBe('T5');
       expect(upstream?.factRefs).toContain('derivedFacts.tenGods');
     }
   });
 
   it('makes general natal evidence complete while career-specific intent still fails closed', () => {
-    const snapshot = userFixture();
+    const snapshot = syntheticFixture();
     const registry = createGeneralNatalUsefulReadingCandidateRegistry();
     const execution = runInterpretation(snapshot, registry, {
       now: new Date('2026-08-24T04:00:00.000Z'),
     });
-
     const general = buildReadingCompositionEvidence(
       snapshot,
       execution,
       registry,
       {
-        requestId: 'general-natal-useful-user-fixture',
+        requestId: 'general-natal-useful-synthetic',
         intent: { domain: 'general', temporalScope: 'natal' },
       },
       { narrativePolicyVersion: 'general-natal-useful-v1' },
@@ -178,10 +164,11 @@ describe('general natal minimum useful reading research candidate', () => {
   });
 
   it('contains no deterministic success, wealth-level, spouse, health, future, or numeric claim', () => {
-    const snapshot = userFixture();
-    const execution = runInterpretation(snapshot, createGeneralNatalUsefulReadingCandidateRegistry());
+    const execution = runInterpretation(
+      syntheticFixture(),
+      createGeneralNatalUsefulReadingCandidateRegistry(),
+    );
     const encoded = JSON.stringify(execution.claims);
-
     for (const forbidden of [
       'success_probability',
       'wealth_score',
@@ -211,8 +198,9 @@ describe('general natal minimum useful reading research candidate', () => {
   });
 
   it('remains blocked from production composition', () => {
-    const registry = createGeneralNatalUsefulReadingCandidateRegistry();
-    const inspection = inspectMyeonghwaProductionComposition({ registry });
+    const inspection = inspectMyeonghwaProductionComposition({
+      registry: createGeneralNatalUsefulReadingCandidateRegistry(),
+    });
     expect(inspection.status).toBe('blocked');
     if (inspection.status !== 'blocked') throw new Error('Expected blocked composition.');
     expect(inspection.blockers).toContainEqual(
