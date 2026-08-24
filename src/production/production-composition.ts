@@ -38,12 +38,6 @@ interface AuthorizedCalculationPolicyGrant {
   policy: CalculationPolicySnapshot;
 }
 
-/**
- * Deliberately empty until a governed repository change authorizes an exact
- * calculation policy as a production default. No runtime registration API is
- * exposed: authorization must be introduced by an explicit code-reviewed
- * manifest change.
- */
 const AUTHORIZED_CALCULATION_POLICIES: Readonly<
   Record<string, AuthorizedCalculationPolicyGrant>
 > = Object.freeze({});
@@ -114,7 +108,11 @@ export class ProductionCompositionBlockedError extends Error {
   readonly blockers: readonly ProductionCompositionBlocker[];
 
   constructor(blockers: readonly ProductionCompositionBlocker[]) {
-    super(`Myeonghwa production composition is blocked: ${blockers.map((item) => item.code).join(', ')}`);
+    super(
+      `Myeonghwa production composition is blocked: ${blockers
+        .map((item) => item.code)
+        .join(', ')}`,
+    );
     this.name = 'ProductionCompositionBlockedError';
     this.blockers = blockers;
   }
@@ -135,8 +133,9 @@ export function listAuthorizedProductionCalculationPolicies(): readonly Authoriz
 function calculationGrant(
   calculationPolicyId: string | undefined,
 ): AuthorizedCalculationPolicyGrant | undefined {
-  if (calculationPolicyId === undefined) return undefined;
-  return AUTHORIZED_CALCULATION_POLICIES[calculationPolicyId];
+  return calculationPolicyId === undefined
+    ? undefined
+    : AUTHORIZED_CALCULATION_POLICIES[calculationPolicyId];
 }
 
 function sortedBlockers(
@@ -180,9 +179,11 @@ export function inspectMyeonghwaProductionComposition(
   request: ProductionCompositionRequest = {},
 ): ProductionCompositionInspection {
   const blockers: ProductionCompositionBlocker[] = [];
-  const grant = calculationGrant(request.calculationPolicyId);
+  const calculationPolicyId = request.calculationPolicyId;
+  const registry = request.registry;
+  const grant = calculationGrant(calculationPolicyId);
 
-  if (request.calculationPolicyId === undefined) {
+  if (calculationPolicyId === undefined) {
     blockers.push({
       code: 'CALCULATION_POLICY_SELECTION_REQUIRED',
       component: 'calculation',
@@ -192,18 +193,18 @@ export function inspectMyeonghwaProductionComposition(
     blockers.push({
       code: 'AUTHORIZED_CALCULATION_POLICY_NOT_REGISTERED',
       component: 'calculation',
-      message: `Calculation policy ${request.calculationPolicyId} is not registered in the governed production authority manifest.`,
+      message: `Calculation policy ${calculationPolicyId} is not registered in the governed production authority manifest.`,
     });
   }
 
-  if (request.registry === undefined) {
+  if (registry === undefined) {
     blockers.push({
       code: 'PRODUCTION_INTERPRETATION_REGISTRY_REQUIRED',
       component: 'interpretation',
       message: 'A resolved production interpretation registry is required.',
     });
   } else {
-    const blocker = interpretationPreflightBlocker(request.registry, request.reviewerTrustContext);
+    const blocker = interpretationPreflightBlocker(registry, request.reviewerTrustContext);
     if (blocker !== undefined) blockers.push(blocker);
   }
 
@@ -229,7 +230,12 @@ export function inspectMyeonghwaProductionComposition(
     });
   }
 
-  if (blockers.length > 0 || grant === undefined || request.registry === undefined) {
+  if (
+    blockers.length > 0 ||
+    grant === undefined ||
+    calculationPolicyId === undefined ||
+    registry === undefined
+  ) {
     return {
       status: 'blocked',
       compositionVersion: PRODUCTION_COMPOSITION_VERSION,
@@ -244,14 +250,14 @@ export function inspectMyeonghwaProductionComposition(
     authorityManifestVersion: PRODUCTION_AUTHORITY_MANIFEST_VERSION,
     blockers: [],
     authority: {
-      calculationPolicyId: request.calculationPolicyId,
+      calculationPolicyId,
       calculationAuthorizationId: grant.authorizationId,
       calculationAuthorityRecordRef: grant.authorityRecordRef,
       calculationPolicyContentHash: deterministicContentHash(grant.policy),
-      interpretationRegistrySnapshotId: request.registry.snapshot.registrySnapshotId,
-      interpretationPackId: request.registry.pack.packId,
-      interpretationPackVersion: request.registry.pack.version,
-      interpretationPackContentHash: deterministicContentHash(request.registry.pack),
+      interpretationRegistrySnapshotId: registry.snapshot.registrySnapshotId,
+      interpretationPackId: registry.pack.packId,
+      interpretationPackVersion: registry.pack.version,
+      interpretationPackContentHash: deterministicContentHash(registry.pack),
     },
   };
 }
