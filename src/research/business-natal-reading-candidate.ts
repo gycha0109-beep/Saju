@@ -1,7 +1,9 @@
+import type { TenGod } from '../contracts/calculation.js';
 import type {
   InterpretationPack,
   MethodologyDefinition,
   RuleDefinition,
+  RuleExpression,
 } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import {
@@ -31,10 +33,11 @@ import {
   RELATIONSHIP_NATAL_READING_RULES,
 } from './relationship-natal-reading-candidate.js';
 
-export const BUSINESS_NATAL_READING_CANDIDATE_VERSION = '0.6.0-research' as const;
+export const BUSINESS_NATAL_READING_CANDIDATE_VERSION = '0.7.0-research' as const;
 
 const METHOD_ID = 'M-BUSINESS-NATAL-READING-TEN-GOD-SYNTHESIS-V1';
 const BUSINESS_RULE_SET = 'business-natal-consumer-reading';
+const CHANNEL_SENSITIVE_SUFFIX = 'channel-sensitive';
 
 const QUALITY: RuleDefinition['quality'] = Object.freeze({
   provenanceQuality: 'secondary_only',
@@ -66,12 +69,14 @@ export const BUSINESS_NATAL_READING_METHODOLOGY: MethodologyDefinition = Object.
   family: 'domain_synthesis',
   name: 'Natal business operating-style reading from bounded Ten-God family synthesis (research)',
   description:
-    'Applies already-materialized whole-chart Ten-God family themes to bounded business-operating questions such as uncertainty, decision and execution cadence, resource allocation, partner role boundaries, accountability, and performance pressure without predicting business success, revenue, founder suitability, or future timing.',
+    'Applies Ten-God family themes to bounded business-operating questions such as uncertainty, decision and execution cadence, resource allocation, partner role boundaries, accountability, and performance pressure without predicting business success, revenue, founder suitability, or future timing. The cumulative consumer registry conservatively requires every family participating in a multi-family specialist conclusion to be observed together in at least one Ten-God channel.',
   assumptions: [
     'Business claims describe operating tendencies and conditions the native may handle more comfortably; they do not classify the person as suited or unsuited for entrepreneurship.',
     'A represented Ten-God family is not a startup score, founder score, success probability, revenue forecast, investment recommendation, or proof of future business outcomes.',
     'Specific industries, products, company size, revenue, profit, funding, exit, bankruptcy, market events, and future business timing are outside this candidate.',
     'Career claims must not be renamed or reused as business claims; every business conclusion must address a distinct operating concern such as uncertainty, allocation, partnership, governance, or market-feedback pressure.',
+    'Whole-chart family presence alone is insufficient for a multi-family consumer conclusion in the cumulative specialist registry; the participating families must co-occur in visible stems or co-occur in branches.',
+    'The shared-channel gate is a conservative evidence-specificity requirement and does not create a numeric dominance score, strength classification, or new fortune verdict.',
     'Family combinations are interpreted only as bounded coexistence or generation/control themes already supported by the underlying research candidates.',
     'The candidate remains research-only until domain review and production authorization are completed.',
   ],
@@ -245,15 +250,116 @@ export const BUSINESS_NATAL_READING_RULES: readonly RuleDefinition[] = Object.fr
   BUSINESS_CONCLUSIONS.map(businessConclusionRule),
 );
 
+const TEN_GODS_BY_FAMILY: Readonly<Record<ConclusionFamily, readonly TenGod[]>> = Object.freeze({
+  peer: ['비견', '겁재'],
+  resource: ['편인', '정인'],
+  output: ['식신', '상관'],
+  wealth: ['편재', '정재'],
+  officer: ['편관', '정관'],
+});
+
+const VISIBLE_STEM_SLOTS = ['year.stem.value', 'month.stem.value', 'hour.stem.value'] as const;
+const BRANCH_SLOTS = [
+  'year.branch.value',
+  'month.branch.value',
+  'day.branch.value',
+  'hour.branch.value',
+] as const;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function specialistFamilies(rule: RuleDefinition): readonly ConclusionFamily[] | undefined {
+  if (!isRecord(rule.output.value)) return undefined;
+  const families = rule.output.value.families;
+  if (!Array.isArray(families) || families.length === 0) return undefined;
+  if (
+    !families.every(
+      (family) => typeof family === 'string' && Object.hasOwn(TEN_GODS_BY_FAMILY, family),
+    )
+  ) {
+    return undefined;
+  }
+  return families as ConclusionFamily[];
+}
+
+function familyObservedInSlots(
+  family: ConclusionFamily,
+  slots: readonly string[],
+): RuleExpression {
+  return {
+    op: 'or',
+    expressions: slots.map((path) => ({
+      op: 'in' as const,
+      value: { kind: 'input' as const, key: 'tenGodsLayout', path },
+      set: TEN_GODS_BY_FAMILY[family],
+    })),
+  };
+}
+
+function sharedChannelCondition(families: readonly ConclusionFamily[]): RuleExpression {
+  return {
+    op: 'or',
+    expressions: [
+      {
+        op: 'and',
+        expressions: families.map((family) => familyObservedInSlots(family, VISIBLE_STEM_SLOTS)),
+      },
+      {
+        op: 'and',
+        expressions: families.map((family) => familyObservedInSlots(family, BRANCH_SLOTS)),
+      },
+    ],
+  };
+}
+
+function channelSensitiveSpecialistRule(rule: RuleDefinition): RuleDefinition {
+  const families = specialistFamilies(rule);
+  if (families === undefined) return rule;
+  return {
+    ...rule,
+    ruleId: `RULE-CHANNEL-SENSITIVE-${rule.ruleId.replace(/^RULE-/, '')}`,
+    version: BUSINESS_NATAL_READING_CANDIDATE_VERSION,
+    ruleSetId: `${rule.ruleSetId}-${CHANNEL_SENSITIVE_SUFFIX}`,
+    description: `${rule.description} Consumer eligibility additionally requires all participating Ten-God families to be observed together in visible stems or together in branches.`,
+    inputs: [
+      ...rule.inputs,
+      {
+        key: 'tenGodsLayout',
+        source: 'derived_fact',
+        pathOrClaimType: 'derivedFacts.tenGods',
+        acceptedStatuses: ['resolved'],
+        required: true,
+        ambiguityBehavior: 'scenario_preserving',
+      },
+    ],
+    condition: {
+      op: 'and',
+      expressions: [rule.condition, sharedChannelCondition(families)],
+    },
+    output: {
+      ...rule.output,
+      tags: [...(rule.output.tags ?? []), 'shared-channel-gated'],
+    },
+  };
+}
+
+const CHANNEL_SENSITIVE_SPECIALIST_RULES: readonly RuleDefinition[] = Object.freeze(
+  [
+    ...CAREER_NATAL_READING_RULES,
+    ...WEALTH_NATAL_READING_RULES,
+    ...RELATIONSHIP_NATAL_READING_RULES,
+    ...BUSINESS_NATAL_READING_RULES,
+  ].map(channelSensitiveSpecialistRule),
+);
+
 const ALL_RULES: readonly RuleDefinition[] = Object.freeze([
   ...GENERAL_NATAL_USEFUL_TEN_GOD_RULES,
   ...GENERAL_NATAL_USEFUL_T8_RULES,
   ...GENERAL_NATAL_CONCLUSION_FAMILY_RULES,
   ...GENERAL_NATAL_CONCLUSION_RULES,
-  ...CAREER_NATAL_READING_RULES,
-  ...WEALTH_NATAL_READING_RULES,
-  ...RELATIONSHIP_NATAL_READING_RULES,
-  ...BUSINESS_NATAL_READING_RULES,
+  ...CHANNEL_SENSITIVE_SPECIALIST_RULES,
 ]);
 
 const ENABLED_RULE_SETS = Object.freeze([...new Set(ALL_RULES.map((rule) => rule.ruleSetId))]);
