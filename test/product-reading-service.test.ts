@@ -12,7 +12,6 @@ import {
   type CompiledNarrativePrompt,
   type InterpretationClaim,
   type InterpretationExecutionResult,
-  type NarrativeGenerationParams,
   type NarrativeModelAdapter,
   type NarrativePolicy,
 } from '../src/index.js';
@@ -72,10 +71,7 @@ class TrackingAdapter implements NarrativeModelAdapter {
 
   constructor(private readonly providerError = false) {}
 
-  async generateStructured(
-    prompt: CompiledNarrativePrompt,
-    _params?: NarrativeGenerationParams,
-  ): Promise<unknown> {
+  async generateStructured(prompt: CompiledNarrativePrompt): Promise<unknown> {
     this.calls.push(prompt);
     if (this.providerError) throw new Error('provider unavailable');
     return buildDeterministicFallbackDraft(prompt.evidence);
