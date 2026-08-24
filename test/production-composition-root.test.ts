@@ -12,22 +12,32 @@ import {
 } from '../src/production-runtime.js';
 
 describe('production composition root', () => {
-  it('starts fail-closed with no authorized production calculation policy', () => {
+  it('registers exactly one approved V1 production calculation default', () => {
     expect(CURRENT_PRODUCTION_COMPOSITION_STATUS).toBe('blocked_authority_required');
-    expect(PRODUCTION_COMPOSITION_VERSION).toBe('myeonghwa-production-composition-v1');
+    expect(PRODUCTION_COMPOSITION_VERSION).toBe('myeonghwa-production-composition-v2');
     expect(PRODUCTION_AUTHORITY_MANIFEST_VERSION).toBe(
-      'myeonghwa-production-authority-manifest-v1',
+      'myeonghwa-production-authority-manifest-v2',
     );
-    expect(listAuthorizedProductionCalculationPolicies()).toEqual([]);
+
+    const policies = listAuthorizedProductionCalculationPolicies();
+    expect(policies).toHaveLength(1);
+    expect(policies[0]).toEqual(
+      expect.objectContaining({
+        calculationPolicyId: 'myeonghwa-production-civil-midnight-v1',
+        authorizationId: 'myeonghwa-production-calculation-default-authorization-v1',
+        authorityRecordRef: 'docs/decisions/ADR-0006-production-calculation-default-v1.md',
+        policyVersion: 'myeonghwa-production-calculation-policy-v1',
+      }),
+    );
+    expect(policies[0]?.contentHash).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it('reports deterministic missing authority/configuration blockers', () => {
+  it('uses the governed product default when deployment omits a calculation policy id', () => {
     const inspection = inspectMyeonghwaProductionComposition();
     expect(inspection.status).toBe('blocked');
     if (inspection.status !== 'blocked') throw new Error('Expected blocked production composition.');
 
     expect(inspection.blockers.map((item) => item.code)).toEqual([
-      'CALCULATION_POLICY_SELECTION_REQUIRED',
       'PRODUCTION_INTERPRETATION_REGISTRY_REQUIRED',
       'NARRATIVE_ADAPTER_REQUIRED',
       'NARRATIVE_POLICY_REQUIRED',
@@ -35,15 +45,24 @@ describe('production composition root', () => {
     ]);
   });
 
-  it('does not treat an engineering reference calculation profile as production authority', () => {
+  it('does not promote sensitivity or research profile ids into production authority', () => {
     const inspection = inspectMyeonghwaProductionComposition({
-      calculationPolicyId: 'civil-midnight-reference-v1',
+      calculationPolicyId: 'civil-jasi-sensitivity-v1',
     });
     expect(inspection.status).toBe('blocked');
     if (inspection.status !== 'blocked') throw new Error('Expected blocked production composition.');
     expect(inspection.blockers.map((item) => item.code)).toContain(
       'AUTHORIZED_CALCULATION_POLICY_NOT_REGISTERED',
     );
+  });
+
+  it('accepts only the separately authorized production calculation identity', () => {
+    const inspection = inspectMyeonghwaProductionComposition({
+      calculationPolicyId: 'myeonghwa-production-civil-midnight-v1',
+    });
+    expect(inspection.status).toBe('blocked');
+    if (inspection.status !== 'blocked') throw new Error('Expected blocked production composition.');
+    expect(inspection.blockers.some((item) => item.component === 'calculation')).toBe(false);
   });
 
   it('rejects the existing I14 research registry at the production boundary', () => {
@@ -84,11 +103,9 @@ describe('production composition root', () => {
     );
   });
 
-  it('refuses to construct a production host while authority is incomplete', () => {
-    expect(() =>
-      createAuthorizedMyeonghwaProductionHost({
-        calculationPolicyId: 'civil-midnight-reference-v1',
-      }),
-    ).toThrow(ProductionCompositionBlockedError);
+  it('refuses to construct a production host while interpretation authority is incomplete', () => {
+    expect(() => createAuthorizedMyeonghwaProductionHost({})).toThrow(
+      ProductionCompositionBlockedError,
+    );
   });
 });
