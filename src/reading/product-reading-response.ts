@@ -2,7 +2,7 @@ import type { ReadingArtifact, ReadingBlockView, ReadingIntent } from '../contra
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import type { ProductReadingDeliveryResult } from './product-reading-delivery.js';
 
-export const PRODUCT_READING_RESPONSE_VERSION = 'myeonghwa-product-reading-response-v1';
+export const PRODUCT_READING_RESPONSE_VERSION = 'myeonghwa-product-reading-response-v2';
 
 export type ProductReadingResponseState =
   | 'delivered'
@@ -175,6 +175,55 @@ export interface ProductReadingResponse {
   consumerDiagnostics?: readonly ProductReadingResponseDiagnostic[];
 }
 
+type RedactInternalText = (value: string) => string;
+
+function collectInternalTokens(artifact: ReadingArtifact): readonly string[] {
+  const tokens = new Set<string>();
+  const add = (value: string | undefined): void => {
+    if (value !== undefined && value.length > 0) tokens.add(value);
+  };
+
+  add(artifact.schemaVersion);
+  add(artifact.provenance.snapshotId);
+  add(artifact.provenance.interpretationRunId);
+  add(artifact.provenance.narrativeRunId);
+  add(artifact.provenance.readingVersion);
+
+  for (const entry of artifact.explainability.entries) {
+    add(entry.explainabilityRef);
+    entry.claimIds.forEach(add);
+    entry.factRefs.forEach(add);
+    entry.methodologyIds.forEach(add);
+    entry.sourceIds.forEach(add);
+  }
+
+  for (const section of artifact.sections) {
+    add(section.sectionId);
+    section.disclosureRefs?.forEach(add);
+    section.explainabilityRefs?.forEach(add);
+    for (const block of section.blocks) {
+      if (block.type === 'source_hint') add(block.explainabilityRef);
+    }
+  }
+
+  for (const disclosure of artifact.disclosures) add(disclosure.disclosureId);
+  for (const ambiguity of artifact.calculationSummary.ambiguity ?? []) {
+    add(ambiguity.ambiguityId);
+    ambiguity.affectedPaths.forEach(add);
+  }
+
+  return [...tokens].sort((left, right) => right.length - left.length || left.localeCompare(right));
+}
+
+function createInternalTextRedactor(artifact: ReadingArtifact): RedactInternalText {
+  const tokens = collectInternalTokens(artifact);
+  return (value: string): string => {
+    let result = value;
+    for (const token of tokens) result = result.split(token).join('근거 참조');
+    return result;
+  };
+}
+
 function displayFact(
   fact: ProductReadingResponseDisplayFact,
 ): ProductReadingResponseDisplayFact {
@@ -187,6 +236,7 @@ function displayFact(
 
 function calculationSummary(
   artifact: ReadingArtifact,
+  redact: RedactInternalText,
 ): ProductReadingResponseCalculationSummary {
   const source = artifact.calculationSummary;
   return {
@@ -212,47 +262,63 @@ function calculationSummary(
       ? {}
       : {
           ambiguity: source.ambiguity.map((item) => ({
-            title: item.title,
-            summary: item.summary,
+            title: redact(item.title),
+            summary: redact(item.summary),
           })),
         }),
   };
 }
 
-function readingBlock(block: ReadingBlockView): ProductReadingResponseBlock {
+function readingBlock(
+  block: ReadingBlockView,
+  redact: RedactInternalText,
+): ProductReadingResponseBlock {
   switch (block.type) {
     case 'paragraph':
-      return { type: 'paragraph', text: block.text };
+      return { type: 'paragraph', text: redact(block.text) };
     case 'key_points':
-      return { type: 'key_points', items: [...block.items] };
+      return { type: 'key_points', items: block.items.map((item) => redact(item)) };
     case 'comparison':
       return {
         type: 'comparison',
-        title: block.title,
-        perspectives: block.perspectives.map((item) => ({ label: item.label, text: item.text })),
+        title: redact(block.title),
+        perspectives: block.perspectives.map((item) => ({
+          label: redact(item.label),
+          text: redact(item.text),
+        })),
       };
     case 'ambiguity':
       return {
         type: 'ambiguity',
-        summary: block.summary,
-        scenarios: block.scenarios.map((item) => ({ label: item.label, text: item.text })),
+        summary: redact(block.summary),
+        scenarios: block.scenarios.map((item) => ({
+          label: redact(item.label),
+          text: redact(item.text),
+        })),
       };
     case 'timeline':
       return {
         type: 'timeline',
-        entries: block.entries.map((item) => ({ label: item.label, text: item.text })),
+        entries: block.entries.map((item) => ({
+          label: redact(item.label),
+          text: redact(item.text),
+        })),
       };
     case 'fact_table':
       return {
         type: 'fact_table',
-        rows: block.rows.map((item) => ({ label: item.label, value: item.value })),
+        rows: block.rows.map((item) => ({
+          label: redact(item.label),
+          value: redact(item.value),
+        })),
       };
     case 'source_hint':
-      return { type: 'source_hint', text: block.text };
+      return { type: 'source_hint', text: redact(block.text) };
   }
 }
 
 function readingView(artifact: ReadingArtifact): ProductReadingResponseReading {
+  const redact = createInternalTextRedactor(artifact);
   return {
     readingId: artifact.readingId,
     brand: {
@@ -279,16 +345,16 @@ function readingView(artifact: ReadingArtifact): ProductReadingResponseReading {
       },
       calculationState: artifact.subject.calculationState,
     },
-    calculationSummary: calculationSummary(artifact),
+    calculationSummary: calculationSummary(artifact, redact),
     sections: artifact.sections.map((section) => ({
       sectionType: section.sectionType,
-      title: section.title,
-      blocks: section.blocks.map((block) => readingBlock(block)),
+      title: redact(section.title),
+      blocks: section.blocks.map((block) => readingBlock(block, redact)),
       state: section.state,
     })),
     disclosures: artifact.disclosures.map((disclosure) => ({
       type: disclosure.type,
-      text: disclosure.text,
+      text: redact(disclosure.text),
     })),
     generatedAt: artifact.generatedAt,
   };
