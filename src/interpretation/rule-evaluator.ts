@@ -44,7 +44,8 @@ type InputResolution =
         | 'skipped_missing_input'
         | 'skipped_ambiguous_input'
         | 'skipped_dependency_unresolved'
-        | 'skipped_cardinality_mismatch';
+        | 'skipped_cardinality_mismatch'
+        | 'error';
       inputs: readonly ResolvedInput[];
     };
 
@@ -413,9 +414,26 @@ function resolveClaimInput(
   return readyClaimInput(requirement, matchingClaims, value);
 }
 
+function validInputDeclaration(requirement: RuleInputRequirement): boolean {
+  const selectorOrCardinalityPresent =
+    requirement.claimSelector !== undefined || requirement.cardinality !== undefined;
+  if (requirement.source !== 'interpretation_claim') return !selectorOrCardinalityPresent;
+
+  switch (requirement.cardinality) {
+    case 'exactly_one':
+    case 'one_or_more':
+      return requirement.required;
+    case 'zero_or_more':
+      return !requirement.required;
+    case undefined:
+      return true;
+  }
+}
+
 function resolveInputs(rule: RuleDefinition, context: RuleEvaluationContext): InputResolution {
   const inputs: ResolvedInput[] = [];
   for (const requirement of rule.inputs) {
+    if (!validInputDeclaration(requirement)) return { status: 'error', inputs };
     const resolution =
       requirement.source === 'interpretation_claim'
         ? resolveClaimInput(requirement, context)
