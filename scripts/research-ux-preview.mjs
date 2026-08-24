@@ -7,16 +7,16 @@ import {
   runInterpretation,
 } from '../dist/index.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
-import { createGeneralNatalConclusionCandidateRegistry } from '../dist/research/general-natal-conclusion-synthesis-candidate.js';
+import { createCareerNatalReadingCandidateRegistry } from '../dist/research/career-natal-reading-candidate.js';
 
-const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v5';
+const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v6';
 const SCOPE_GUARD_CLAIM_TYPE = 'GENERAL_NATAL_USEFUL_READING_SCOPE-GUARD';
 const smokeMode = process.env.MYEONGHWA_PREVIEW_SMOKE === '1';
 const fetchRequest = globalThis.fetch.bind(globalThis);
 
 const narrativePolicy = {
   policyId: RESEARCH_PREVIEW_VERSION,
-  version: '5.0.0-preview',
+  version: '6.0.0-preview',
   language: 'ko',
   certaintyPolicy: {
     deterministicFacts: 'direct',
@@ -74,6 +74,11 @@ function conclusionKind(claim) {
   return typeof value.conclusionKind === 'string' ? value.conclusionKind : undefined;
 }
 
+function careerKind(claim) {
+  const value = valueRecord(claim);
+  return typeof value.careerKind === 'string' ? value.careerKind : undefined;
+}
+
 function consumerText(claim) {
   const mapped = CONSUMER_COPY[claim.claimType];
   if (mapped !== undefined) return mapped;
@@ -107,12 +112,16 @@ function claimsOfKind(claims, kind) {
   return claims.filter((claim) => conclusionKind(claim) === kind);
 }
 
+function careerClaimsOfKind(claims, kind) {
+  return claims.filter((claim) => careerKind(claim) === kind);
+}
+
 function sectionFromClaims(sectionId, title, claims) {
   if (claims.length === 0) return undefined;
   return { sectionId, title, blocks: claims.map(assertion) };
 }
 
-function previewDraft(evidence) {
+function generalNatalPreviewDraft(evidence) {
   const guard = evidence.claims.find((claim) => claim.claimType === SCOPE_GUARD_CLAIM_TYPE);
   if (guard === undefined) {
     throw new Error('General natal useful-reading scope guard is missing from preview evidence.');
@@ -166,10 +175,73 @@ function previewDraft(evidence) {
   };
 }
 
+function careerNatalPreviewDraft(evidence, careerClaims) {
+  const preferredSummary = [
+    'CAREER_NATAL_CONCLUSION_OUTPUT_WEALTH_OFFICER_END_TO_END',
+    'CAREER_NATAL_CONCLUSION_OUTPUT_WEALTH_MAKE_TO_VALUE',
+    'CAREER_NATAL_CONCLUSION_OFFICER_RESOURCE_STRUCTURED_PROBLEM_SOLVING',
+  ];
+  const summaryClaim =
+    preferredSummary
+      .map((claimType) => careerClaims.find((claim) => claim.claimType === claimType))
+      .find(Boolean) ?? careerClaims[0];
+  if (summaryClaim === undefined) {
+    throw new Error('Career natal preview emitted no career conclusion.');
+  }
+
+  const remaining = careerClaims.filter((claim) => claim.claimId !== summaryClaim.claimId);
+  const drivers = careerClaimsOfKind(remaining, 'driver');
+  const fits = careerClaimsOfKind(remaining, 'fit');
+  const environments = careerClaimsOfKind(remaining, 'environment');
+  const friction = careerClaimsOfKind(remaining, 'friction');
+
+  const sections = [
+    {
+      sectionId: 'research-preview-career-core',
+      title: '직업운 핵심',
+      blocks: [...ambiguityBlocks(evidence), assertion(summaryClaim)],
+    },
+    sectionFromClaims('research-preview-career-driver', '일에서 힘이 나는 방식', drivers),
+    sectionFromClaims('research-preview-career-fit', '잘 맞을 수 있는 역할 조건', fits),
+    sectionFromClaims('research-preview-career-environment', '잘 맞는 업무 환경', environments),
+    sectionFromClaims('research-preview-career-friction', '일에서 막히기 쉬운 지점', friction),
+  ].filter(Boolean);
+
+  sections.push({
+    sectionId: 'research-preview-career-scope',
+    title: '참고',
+    blocks: [
+      {
+        type: 'disclosure',
+        disclosureType: 'scope_limitation',
+        text: '이 직업운은 태어난 사주에서 보이는 일하는 방식과 역할·환경의 경향을 보는 풀이입니다. 특정 직업을 정답으로 지정하거나 취업·승진·연봉·성공 여부, 미래의 시기를 예측하지 않습니다.',
+        relatedRefs: [summaryClaim.claimId],
+      },
+    ],
+  });
+
+  return {
+    schemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
+    requestId: evidence.requestId,
+    sections,
+  };
+}
+
+function previewDraft(evidence) {
+  const careerClaims = evidence.claims.filter(
+    (claim) =>
+      claim.taxonomy.tier === 'T8' &&
+      claim.taxonomy.category === 'career' &&
+      claim.predicate === 'career_conclusion',
+  );
+  if (careerClaims.length > 0) return careerNatalPreviewDraft(evidence, careerClaims);
+  return generalNatalPreviewDraft(evidence);
+}
+
 class ResearchPreviewNarrativeAdapter {
   metadata = {
     provider: 'deterministic-research-preview',
-    modelId: 'grounded-friendly-natal-preview',
+    modelId: 'grounded-friendly-consumer-preview',
     modelRevision: RESEARCH_PREVIEW_VERSION,
   };
 
@@ -185,7 +257,7 @@ const dependencies = {
     });
   },
   interpret(snapshot) {
-    const registry = createGeneralNatalConclusionCandidateRegistry();
+    const registry = createCareerNatalReadingCandidateRegistry();
     return {
       registry,
       interpretation: runInterpretation(snapshot, registry, { now: new Date() }),
@@ -209,11 +281,8 @@ if (!Number.isInteger(requestedPort) || requestedPort < 0 || requestedPort > 655
 
 const server = createMyeonghwaProductHostServer(dependencies);
 
-async function runSmoke(baseUrl) {
-  const health = await fetchRequest(`${baseUrl}/healthz`);
-  if (!health.ok) throw new Error(`Preview health check failed: ${health.status}`);
-
-  const reading = await fetchRequest(`${baseUrl}/api/readings`, {
+async function requestReading(baseUrl, text) {
+  const response = await fetchRequest(`${baseUrl}/api/readings`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -223,29 +292,18 @@ async function runSmoke(baseUrl) {
         time: '12:00',
         sex: 'unspecified',
       },
-      reading: { text: '사주' },
+      reading: { text },
     }),
   });
-  if (!reading.ok) throw new Error(`Preview reading request failed: ${reading.status}`);
-  const payload = await reading.json();
+  if (!response.ok) throw new Error(`Preview ${text} request failed: ${response.status}`);
+  const payload = await response.json();
   if (payload.state !== 'delivered' && payload.state !== 'delivered_with_fallback') {
-    throw new Error(`Preview reading did not deliver: ${String(payload.state)}`);
+    throw new Error(`Preview ${text} did not deliver: ${String(payload.state)}`);
   }
+  return payload;
+}
 
-  const serialized = JSON.stringify(payload);
-  for (const required of ['이 사주의 핵심', '참고']) {
-    if (!serialized.includes(required)) {
-      throw new Error(`Preview response is missing required section: ${required}`);
-    }
-  }
-  if (!['잘 맞는 방식', '일할 때', '돈을 다룰 때', '사람 관계에서', '주의할 점'].some((title) => serialized.includes(title))) {
-    throw new Error('Preview response emitted no substantive consumer section.');
-  }
-  for (const unfriendly of ['명식 안에', '구조로 읽힙니다', '축이 ', '서로 견제합니다', '작동 방식']) {
-    if (serialized.includes(unfriendly)) {
-      throw new Error(`Preview response contains analyst-facing wording: ${unfriendly}`);
-    }
-  }
+function assertNoInternalLeak(serialized) {
   for (const forbidden of [
     'classificationAuthorized',
     'fortunePolarityAuthorized',
@@ -253,16 +311,59 @@ async function runSmoke(baseUrl) {
     'wholePersonConclusionAuthorized',
     'outcomeAuthorized',
     'futureTimingAuthorized',
+    'specificOccupationAuthorized',
+    'careerSuccessAuthorized',
+    'incomeOutcomeAuthorized',
     'month_branch_structural_context',
     '"direction"',
     '"families"',
     '"conclusionKind"',
+    '"careerKind"',
     '"dominance"',
   ]) {
     if (serialized.includes(forbidden)) {
       throw new Error(`Preview response leaked internal evidence field: ${forbidden}`);
     }
   }
+}
+
+async function runSmoke(baseUrl) {
+  const health = await fetchRequest(`${baseUrl}/healthz`);
+  if (!health.ok) throw new Error(`Preview health check failed: ${health.status}`);
+
+  const generalPayload = await requestReading(baseUrl, '사주');
+  const generalSerialized = JSON.stringify(generalPayload);
+  for (const required of ['이 사주의 핵심', '참고']) {
+    if (!generalSerialized.includes(required)) {
+      throw new Error(`Preview response is missing required section: ${required}`);
+    }
+  }
+  if (!['잘 맞는 방식', '일할 때', '돈을 다룰 때', '사람 관계에서', '주의할 점'].some((title) => generalSerialized.includes(title))) {
+    throw new Error('Preview response emitted no substantive general consumer section.');
+  }
+  for (const unfriendly of ['명식 안에', '구조로 읽힙니다', '축이 ', '서로 견제합니다', '작동 방식']) {
+    if (generalSerialized.includes(unfriendly)) {
+      throw new Error(`Preview response contains analyst-facing wording: ${unfriendly}`);
+    }
+  }
+  assertNoInternalLeak(generalSerialized);
+
+  const careerPayload = await requestReading(baseUrl, '직업운');
+  const careerSerialized = JSON.stringify(careerPayload);
+  for (const required of ['직업운 핵심', '참고']) {
+    if (!careerSerialized.includes(required)) {
+      throw new Error(`Career preview is missing required section: ${required}`);
+    }
+  }
+  if (!['일에서 힘이 나는 방식', '잘 맞을 수 있는 역할 조건', '잘 맞는 업무 환경', '일에서 막히기 쉬운 지점'].some((title) => careerSerialized.includes(title))) {
+    throw new Error('Career preview emitted no substantive career section.');
+  }
+  for (const forbiddenPromise of ['취업하게 됩니다', '승진하게 됩니다', '연봉이', '성공합니다', '정답 직업']) {
+    if (careerSerialized.includes(forbiddenPromise)) {
+      throw new Error(`Career preview contains deterministic career promise: ${forbiddenPromise}`);
+    }
+  }
+  assertNoInternalLeak(careerSerialized);
 }
 
 function writeStdout(message) {
@@ -295,8 +396,8 @@ server.listen(requestedPort, '127.0.0.1', async () => {
   writeStdout('Myeonghwa Research UX Preview');
   writeStdout('NOT PRODUCTION AUTHORITY');
   writeStdout(`Open: ${baseUrl}`);
-  writeStdout('Current meaningful test target: 전체 사주 (general / natal)');
-  writeStdout('Other reading intents remain fail-closed when evidence is insufficient.');
+  writeStdout('Current meaningful test targets: 전체 사주, 직업운 (natal)');
+  writeStdout('Annual/monthly career and other specialized intents remain fail-closed when evidence is insufficient.');
   writeStdout('Press Ctrl+C to stop.');
   writeStdout('');
 });
