@@ -20,7 +20,7 @@ const GUARD_RULE_SET = 'general-natal-useful-scope-guard';
 export type GeneralNatalThemeFamily = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
 export type GeneralNatalThemeChannel = 'visible_stems' | 'branches';
 
-export const GENERAL_NATAL_USEFUL_READING_SOURCE: SourceReference = Object.freeze({
+export const GENERAL_NATAL_USEFUL_READING_SOURCE = Object.freeze({
   sourceId: 'SRC-GENERAL-NATAL-YUANHAI-SEMANTICS-WIKISOURCE',
   sourceType: 'classical_text',
   title: '淵海子平',
@@ -36,8 +36,8 @@ export const GENERAL_NATAL_USEFUL_READING_SOURCE: SourceReference = Object.freez
     reusePolicy: 'paraphrase_only',
   },
   notes:
-    'Research-only transcription source. Consumer wording is deliberately narrower than historical fortune, health, status, spouse, and lifespan statements. Presence of a Ten-God family is treated only as a thematic axis that must remain whole-chart qualified.',
-});
+    'Research-only transcription source. Consumer wording is narrower than historical deterministic fortune, health, status, spouse, and lifespan statements. Ten-God presence is only a whole-chart-qualified thematic axis.',
+} satisfies SourceReference);
 
 const QUALITY: RuleDefinition['quality'] = Object.freeze({
   provenanceQuality: 'secondary_only',
@@ -52,7 +52,7 @@ function sourceRefs(): RuleDefinition['sourceRefs'] {
       sourceId: GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId,
       supportType: 'interpretive_basis' as const,
       notes:
-        'Supports the narrow traditional semantic vocabulary only. The rule does not import historical deterministic fortune, health, marriage, rank, lifespan, or event predictions.',
+        'Supports narrow traditional semantic vocabulary only; deterministic fortune, health, marriage, rank, lifespan, and event predictions are excluded.',
     },
   ];
 }
@@ -63,11 +63,11 @@ export const GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY: MethodologyDefinition = Ob
   family: 'ten_gods',
   name: 'Ten-God consumer theme projection from Yuanhai Ziping (research)',
   description:
-    'Projects resolved whole-chart Ten-God presence into five neutral consumer theme families while preserving visible-stem versus branch channels. It does not classify fortune polarity or predict life events.',
+    'Projects resolved whole-chart Ten-God presence into five neutral consumer theme families while preserving visible-stem versus branch channels.',
   assumptions: [
-    'Ten-God presence is evidence of a semantic theme, not proof of personality, wealth level, career success, relationship outcome, or future event.',
-    'Visible stems and branches are kept as distinct observation channels rather than collapsed into a numeric dominance score.',
-    'No family is globally good or bad; chart context, strength, structure, interactions, and methodology may qualify its expression.',
+    'Ten-God presence is a semantic theme, not proof of personality, wealth level, career success, relationship outcome, or future event.',
+    'Visible stems and branches remain distinct observation channels and are not collapsed into a numeric dominance score.',
+    'No family is globally good or bad; chart context, strength, structure, interactions, and methodology may qualify expression.',
     'Historical spouse, disease, rank, lifespan, disaster, and deterministic wealth statements are outside this candidate.',
   ],
   requiredFactTypes: ['derivedFacts.tenGods'],
@@ -81,11 +81,11 @@ export const GENERAL_NATAL_USEFUL_SYNTHESIS_METHODOLOGY: MethodologyDefinition =
   family: 'domain_synthesis',
   name: 'General natal minimum useful consumer synthesis (research)',
   description:
-    'Produces consumer-readable natal themes from a day-master elemental baseline plus already-emitted Ten-God family theme claims. It adds no fortune verdict or time-dynamic prediction.',
+    'Produces consumer-readable natal themes from a day-master elemental baseline plus already-emitted Ten-God family theme claims.',
   assumptions: [
-    'The day-master element is a traditional interpretive baseline and cannot by itself determine the whole personality.',
-    'Theme claims describe what kinds of concerns are structurally represented, not whether the user will succeed or fail in those concerns.',
-    'Career, wealth, collaboration, learning, and expression wording remains thematic; specific occupations, income outcomes, spouse outcomes, and future timing are not authorized.',
+    'The day-master element is a traditional baseline and cannot by itself determine the whole personality.',
+    'Theme claims describe represented concerns, not whether the user will succeed or fail in those concerns.',
+    'Specific occupations, income outcomes, spouse outcomes, and future timing are not authorized.',
     'No numeric theme score, dominance percentage, or pseudo-confidence value is produced.',
   ],
   requiredFactTypes: ['derivedFacts.dayMaster'],
@@ -103,10 +103,7 @@ const TEN_GOD_FAMILIES: Readonly<Record<GeneralNatalThemeFamily, readonly TenGod
 });
 
 const FAMILY_MEANING: Readonly<
-  Record<
-    GeneralNatalThemeFamily,
-    { headline: string; summary: string; consumerSection: string }
-  >
+  Record<GeneralNatalThemeFamily, { headline: string; summary: string; consumerSection: string }>
 > = Object.freeze({
   peer: {
     headline: '자기 기준과 사람 사이의 힘',
@@ -140,37 +137,39 @@ const FAMILY_MEANING: Readonly<
   },
 });
 
-const ELEMENT_BASELINES: Readonly<
-  Record<FiveElement, { headline: string; summary: string }>
-> = Object.freeze({
-  목: {
-    headline: '성장과 관계를 향하는 기본축',
-    summary:
-      '전통 오행 성정에서 목은 인(仁), 성장·확장·배려의 방향과 연결됩니다. 이는 일간의 기본 바탕을 설명하는 한 축일 뿐 전체 성격을 단정하지 않습니다.',
-  },
-  화: {
-    headline: '표현과 추진을 향하는 기본축',
-    summary:
-      '전통 오행 성정에서 화는 예(禮), 표현·활동·빠른 반응의 방향과 연결됩니다. 이는 일간의 기본 바탕을 설명하는 한 축일 뿐 전체 성격을 단정하지 않습니다.',
-  },
-  토: {
-    headline: '안정과 신뢰를 향하는 기본축',
-    summary:
-      '전통 오행 성정에서 토는 신(信), 안정·지속·신뢰의 방향과 연결됩니다. 이는 일간의 기본 바탕을 설명하는 한 축일 뿐 전체 성격을 단정하지 않습니다.',
-  },
-  금: {
-    headline: '판단과 원칙을 향하는 기본축',
-    summary:
-      '전통 오행 성정에서 금은 의(義), 판단·원칙·결단의 방향과 연결됩니다. 이는 일간의 기본 바탕을 설명하는 한 축일 뿐 전체 성격을 단정하지 않습니다.',
-  },
-  수: {
-    headline: '사고와 적응을 향하는 기본축',
-    summary:
-      '전통 오행 성정에서 수는 지(智), 사고·기획·적응의 방향과 연결됩니다. 이는 일간의 기본 바탕을 설명하는 한 축일 뿐 전체 성격을 단정하지 않습니다.',
-  },
-});
+const ELEMENT_BASELINES: Readonly<Record<FiveElement, { headline: string; summary: string }>> =
+  Object.freeze({
+    목: {
+      headline: '성장과 관계를 향하는 기본축',
+      summary:
+        '전통 오행 성정에서 목은 인(仁), 성장·확장·배려의 방향과 연결됩니다. 이는 일간의 기본 바탕을 설명하는 한 축일 뿐 전체 성격을 단정하지 않습니다.',
+    },
+    화: {
+      headline: '표현과 추진을 향하는 기본축',
+      summary:
+        '전통 오행 성정에서 화는 예(禮), 표현·활동·빠른 반응의 방향과 연결됩니다. 이는 일간의 기본 바탕을 설명하는 한 축일 뿐 전체 성격을 단정하지 않습니다.',
+    },
+    토: {
+      headline: '안정과 신뢰를 향하는 기본축',
+      summary:
+        '전통 오행 성정에서 토는 신(信), 안정·지속·신뢰의 방향과 연결됩니다. 이는 일간의 기본 바탕을 설명하는 한 축일 뿐 전체 성격을 단정하지 않습니다.',
+    },
+    금: {
+      headline: '판단과 원칙을 향하는 기본축',
+      summary:
+        '전통 오행 성정에서 금은 의(義), 판단·원칙·결단의 방향과 연결됩니다. 이는 일간의 기본 바탕을 설명하는 한 축일 뿐 전체 성격을 단정하지 않습니다.',
+    },
+    수: {
+      headline: '사고와 적응을 향하는 기본축',
+      summary:
+        '전통 오행 성정에서 수는 지(智), 사고·기획·적응의 방향과 연결됩니다. 이는 일간의 기본 바탕을 설명하는 한 축일 뿐 전체 성격을 단정하지 않습니다.',
+    },
+  });
 
-function tenGodSlotExpressions(channel: GeneralNatalThemeChannel, gods: readonly TenGod[]): RuleExpression[] {
+function tenGodSlotExpressions(
+  channel: GeneralNatalThemeChannel,
+  gods: readonly TenGod[],
+): RuleExpression[] {
   const slots =
     channel === 'visible_stems'
       ? ['year.stem.value', 'month.stem.value', 'hour.stem.value']
@@ -187,23 +186,18 @@ function t5FamilyRule(
   channel: GeneralNatalThemeChannel,
 ): RuleDefinition {
   const meaning = FAMILY_MEANING[family];
-  const channelLabel = channel === 'visible_stems' ? 'visible' : 'branch';
   return {
-    ruleId: `RULE-GENERAL-NATAL-T5-${family.toUpperCase()}-${channelLabel.toUpperCase()}`,
+    ruleId: `RULE-GENERAL-NATAL-T5-${family.toUpperCase()}-${channel.toUpperCase()}`,
     version: GENERAL_NATAL_USEFUL_READING_CANDIDATE_VERSION,
     ruleSetId: TEN_GOD_RULE_SET,
-    taxonomy: {
-      tier: 'T5',
-      category: 'ten_gods',
-      subcategory: `${family}_${channel}`,
-    },
+    taxonomy: { tier: 'T5', category: 'ten_gods', subcategory: `${family}_${channel}` },
     methodologyRef: {
       id: TEN_GOD_METHOD_ID,
       version: GENERAL_NATAL_USEFUL_READING_CANDIDATE_VERSION,
     },
     title: `${family} theme observed in ${channel}`,
     description:
-      'Records the presence of one Ten-God family in a specific chart channel as a neutral thematic signal. It does not score dominance or predict an outcome.',
+      'Records one Ten-God family in a chart channel as a neutral thematic signal without scoring dominance or predicting an outcome.',
     inputs: [
       {
         key: 'tenGods',
@@ -251,7 +245,7 @@ function dayMasterBaselineRule(element: FiveElement): RuleDefinition {
     },
     title: `Day-master ${element} general natal baseline`,
     description:
-      'Provides a narrow traditional elemental temperament baseline while explicitly refusing a single-pillar whole-person conclusion.',
+      'Provides a narrow traditional elemental temperament baseline while refusing a single-pillar whole-person conclusion.',
     inputs: [
       {
         key: 'dayMaster',
@@ -288,7 +282,10 @@ function dayMasterBaselineRule(element: FiveElement): RuleDefinition {
   };
 }
 
-function t8ThemeRule(family: GeneralNatalThemeFamily, channel: GeneralNatalThemeChannel): RuleDefinition {
+function t8ThemeRule(
+  family: GeneralNatalThemeFamily,
+  channel: GeneralNatalThemeChannel,
+): RuleDefinition {
   const meaning = FAMILY_MEANING[family];
   const upstreamClaimType = `TEN_GOD_${family.toUpperCase()}_${channel.toUpperCase()}_THEME`;
   return {
@@ -302,7 +299,7 @@ function t8ThemeRule(family: GeneralNatalThemeFamily, channel: GeneralNatalTheme
     },
     title: `${family} ${channel} consumer theme`,
     description:
-      'Carries an already-emitted T5 Ten-God family theme into the general natal consumer domain without adding a success/failure verdict.',
+      'Carries an emitted T5 Ten-God family theme into the general-natal domain without adding a success/failure verdict.',
     inputs: [
       {
         key: 'theme',
