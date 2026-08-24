@@ -15,6 +15,7 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
     label { display: grid; gap: 7px; font-size: 14px; font-weight: 650; }
     input, select, button { box-sizing: border-box; width: 100%; font: inherit; }
     input, select { min-height: 44px; border: 1px solid #c8c5bd; border-radius: 10px; padding: 10px 12px; background: white; }
+    .field-hint { font-size: 12px; line-height: 1.35; color: #777; font-weight: 400; }
     .check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
     .check input { width: auto; min-height: 0; }
     .full { grid-column: 1 / -1; }
@@ -48,7 +49,8 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
         </select>
       </label>
       <label>생년월일
-        <input id="birth-date" name="date" type="date" required>
+        <input id="birth-date" name="date" type="text" inputmode="numeric" autocomplete="bday" maxlength="10" placeholder="YYYY-MM-DD" aria-describedby="birth-date-hint" required>
+        <span id="birth-date-hint" class="field-hint">숫자 8자리로 입력해도 자동으로 YYYY-MM-DD 형식으로 바뀝니다.</span>
       </label>
       <label id="time-field">출생시간
         <input id="birth-time" name="time" type="time" value="12:00">
@@ -122,6 +124,36 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     if (text !== undefined) node.textContent = text;
     if (className) node.className = className;
     return node;
+  }
+
+  function formatBirthDateInput(value) {
+    const digits = String(value).replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 4) return digits;
+    if (digits.length <= 6) return digits.slice(0, 4) + '-' + digits.slice(4);
+    return digits.slice(0, 4) + '-' + digits.slice(4, 6) + '-' + digits.slice(6);
+  }
+
+  function birthDateValidationMessage(value, lunar) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(value);
+    if (match === null) return '생년월일을 YYYY-MM-DD 형식으로 입력해 주세요.';
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    if (year < 1 || month < 1 || month > 12 || day < 1) return '생년월일을 확인해 주세요.';
+    if (lunar) {
+      if (day > 30) return '음력 날짜의 일은 1일부터 30일까지 입력할 수 있습니다.';
+      return '';
+    }
+    const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    const monthDays = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if (day > monthDays[month - 1]) return '존재하지 않는 양력 날짜입니다.';
+    return '';
+  }
+
+  function syncBirthDateValidity() {
+    const message = birthDateValidationMessage(birthDate.value, calendar.value === 'lunar');
+    birthDate.setCustomValidity(message);
+    return message;
   }
 
   function appendBlock(container, block) {
@@ -204,10 +236,21 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     }
   }
 
+  birthDate.addEventListener('input', () => {
+    const formatted = formatBirthDateInput(birthDate.value);
+    if (birthDate.value !== formatted) birthDate.value = formatted;
+    syncBirthDateValidity();
+  });
+
+  birthDate.addEventListener('blur', () => {
+    syncBirthDateValidity();
+  });
+
   calendar.addEventListener('change', () => {
     const lunar = calendar.value === 'lunar';
     leapField.classList.toggle('hidden', !lunar);
     if (!lunar) leapMonth.checked = false;
+    syncBirthDateValidity();
   });
 
   timeUnknown.addEventListener('change', () => {
@@ -216,6 +259,15 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    const dateError = syncBirthDateValidity();
+    if (dateError) {
+      result.classList.remove('hidden');
+      result.replaceChildren(el('div', dateError, 'state error'));
+      birthDate.focus();
+      birthDate.reportValidity();
+      return;
+    }
+
     submit.disabled = true;
     result.classList.remove('hidden');
     result.replaceChildren(el('div', '풀이를 준비하고 있습니다.', 'state'));
