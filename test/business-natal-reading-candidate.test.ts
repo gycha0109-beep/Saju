@@ -47,13 +47,26 @@ function fixture(tenGods: TenGodChartFact = FIVE_FAMILY_TEN_GODS): CanonicalSaju
   };
 }
 
+function realSnapshot(year: number, month: number, day: number): CanonicalSajuSnapshot {
+  return calculateCanonicalSajuSnapshot(
+    {
+      calendarType: 'solar',
+      date: { year, month, day },
+      time: { known: true, hour: 9, minute: 10 },
+      sexForTraditionalCalculation: 'male',
+    },
+    PRODUCTION_DEFAULT_CALCULATION_POLICY,
+    { now: new Date('2026-08-24T08:20:00.000Z') },
+  );
+}
+
 function businessClaims(execution: ReturnType<typeof runInterpretation>) {
   return execution.claims.filter((claim) => claim.predicate === 'business_conclusion');
 }
 
 describe('natal business consumer reading research candidate', () => {
   it('remains research-only, unreviewed, and bounded by contract', () => {
-    expect(BUSINESS_NATAL_READING_CANDIDATE_VERSION).toBe('0.6.0-research');
+    expect(BUSINESS_NATAL_READING_CANDIDATE_VERSION).toBe('0.7.0-research');
     expect(BUSINESS_NATAL_READING_PACK.status).toBe('research');
     expect(BUSINESS_NATAL_READING_METHODOLOGY.status).toBe('research');
     expect(BUSINESS_NATAL_READING_RULES).toHaveLength(11);
@@ -68,11 +81,14 @@ describe('natal business consumer reading research candidate', () => {
     ).toBe(true);
   });
 
-  it('emits business-specific operating conclusions from the five-family fixture', () => {
+  it('emits only shared-channel business combinations from the five-family fixture', () => {
     const execution = runInterpretation(fixture(), createBusinessNatalReadingCandidateRegistry());
     const claims = businessClaims(execution);
 
-    expect(claims).toHaveLength(11);
+    expect(claims).toHaveLength(10);
+    expect(claims.map((claim) => claim.claimType)).not.toContain(
+      'BUSINESS_NATAL_CONCLUSION_OUTPUT_WEALTH_OFFICER_OPERATING_LOOP',
+    );
     expect(
       new Set(claims.map((claim) => (claim.value as { businessKind: string }).businessKind)),
     ).toEqual(
@@ -87,6 +103,22 @@ describe('natal business consumer reading research candidate', () => {
       ]),
     );
     expect(claims.every((claim) => claim.taxonomy.category === 'business')).toBe(true);
+  });
+
+  it('distinguishes the reported 1996-08-10 and 1996-01-01 natal charts at business synthesis', () => {
+    const registry = createBusinessNatalReadingCandidateRegistry();
+    const augustClaims = businessClaims(runInterpretation(realSnapshot(1996, 8, 10), registry));
+    const januaryClaims = businessClaims(runInterpretation(realSnapshot(1996, 1, 1), registry));
+    const augustTypes = new Set(augustClaims.map((claim) => claim.claimType));
+    const januaryTypes = new Set(januaryClaims.map((claim) => claim.claimType));
+
+    expect([...augustTypes].sort()).not.toEqual([...januaryTypes].sort());
+    expect(augustTypes).toContain('BUSINESS_NATAL_CONCLUSION_OUTPUT_WEALTH_OFFICER_OPERATING_LOOP');
+    expect(augustTypes).not.toContain('BUSINESS_NATAL_CONCLUSION_PEER_OFFICER_PARTNER_DECISION_RIGHTS');
+    expect(januaryTypes).not.toContain(
+      'BUSINESS_NATAL_CONCLUSION_OUTPUT_WEALTH_OFFICER_OPERATING_LOOP',
+    );
+    expect(januaryTypes).toContain('BUSINESS_NATAL_CONCLUSION_PEER_OFFICER_PARTNER_DECISION_RIGHTS');
   });
 
   it('keeps business reading useful with only one represented family', () => {
@@ -134,7 +166,7 @@ describe('natal business consumer reading research candidate', () => {
     const selectedT8 = execution.claims.filter(
       (claim) => targets.has(claim.claimId) && claim.taxonomy.tier === 'T8',
     );
-    expect(selectedT8).toHaveLength(11);
+    expect(selectedT8).toHaveLength(10);
     expect(selectedT8.every((claim) => claim.taxonomy.category === 'business')).toBe(true);
   });
 
@@ -179,7 +211,7 @@ describe('natal business consumer reading research candidate', () => {
     ).toBe(true);
   });
 
-  it('binds every business conclusion only to already-materialized family claims', () => {
+  it('binds every business conclusion to family claims and the resolved Ten-God layout', () => {
     const execution = runInterpretation(fixture(), createBusinessNatalReadingCandidateRegistry());
     const familyIds = new Set(
       execution.claims
@@ -190,6 +222,7 @@ describe('natal business consumer reading research candidate', () => {
     for (const claim of businessClaims(execution)) {
       expect(claim.upstreamClaimRefs.length).toBeGreaterThanOrEqual(1);
       expect(claim.upstreamClaimRefs.every((ref) => familyIds.has(ref))).toBe(true);
+      expect(claim.factRefs).toContain('derivedFacts.tenGods');
     }
   });
 
