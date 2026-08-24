@@ -28,6 +28,13 @@ const OUTPUT_ONLY_TEN_GODS: TenGodChartFact = {
   hour: { stem: resolved('상관'), branch: resolved('식신') },
 };
 
+const ALTERNATE_VISIBLE_TEN_GODS: TenGodChartFact = {
+  year: { stem: resolved('정재'), branch: resolved('정인') },
+  month: { stem: resolved('상관'), branch: resolved('편재') },
+  day: { stem: resolved('일간'), branch: resolved('편관') },
+  hour: { stem: resolved('식신'), branch: resolved('비견') },
+};
+
 function fixture(tenGods: TenGodChartFact = FIVE_FAMILY_TEN_GODS): CanonicalSajuSnapshot {
   const base = calculateCanonicalSajuSnapshot(
     {
@@ -43,24 +50,6 @@ function fixture(tenGods: TenGodChartFact = FIVE_FAMILY_TEN_GODS): CanonicalSaju
     ...base,
     derivedFacts: { ...base.derivedFacts, tenGods: resolved(tenGods) },
   };
-}
-
-function realSnapshot(
-  year: number,
-  month: number,
-  day: number,
-  sexForTraditionalCalculation: 'male' | 'female',
-): CanonicalSajuSnapshot {
-  return calculateCanonicalSajuSnapshot(
-    {
-      calendarType: 'solar',
-      date: { year, month, day },
-      time: { known: true, hour: 9, minute: 10 },
-      sexForTraditionalCalculation,
-    },
-    PRODUCTION_DEFAULT_CALCULATION_POLICY,
-    { now: new Date('2026-08-24T08:31:00.000Z') },
-  );
 }
 
 function careerClaims(execution: ReturnType<typeof runInterpretation>) {
@@ -173,35 +162,32 @@ describe('natal career consumer reading research candidate', () => {
     );
   });
 
-  it('distinguishes the two reported direct career previews before narrative rendering', () => {
-    const august2004 = realSnapshot(2004, 8, 20, 'female');
-    const january1996 = realSnapshot(1996, 1, 9, 'male');
-    const augustTypes = careerTypes(august2004);
-    const januaryTypes = careerTypes(january1996);
+  it('distinguishes synthetic direct-career structures before narrative rendering', () => {
+    const first = fixture(ALTERNATE_VISIBLE_TEN_GODS);
+    const second = fixture(FIVE_FAMILY_TEN_GODS);
+    const firstTypes = careerTypes(first);
+    const secondTypes = careerTypes(second);
 
-    expect(augustTypes).toEqual(
+    expect(firstTypes).toEqual(
       [
         'CAREER_NATAL_TEN_GOD_JEONG_JAE_VISIBLE_STEMS',
         'CAREER_NATAL_TEN_GOD_SANG_GWAN_VISIBLE_STEMS',
         'CAREER_NATAL_TEN_GOD_SIK_SIN_VISIBLE_STEMS',
       ].sort(),
     );
-    expect(januaryTypes).toEqual(
+    expect(secondTypes).toEqual(
       [
         'CAREER_NATAL_TEN_GOD_BI_GYEON_VISIBLE_STEMS',
         'CAREER_NATAL_TEN_GOD_PYEON_GWAN_VISIBLE_STEMS',
         'CAREER_NATAL_TEN_GOD_PYEON_JAE_VISIBLE_STEMS',
       ].sort(),
     );
-    expect(augustTypes).not.toEqual(januaryTypes);
-    expect(previewFallbackCoreText(august2004)).not.toBe(previewFallbackCoreText(january1996));
+    expect(firstTypes).not.toEqual(secondTypes);
+    expect(previewFallbackCoreText(first)).not.toBe(previewFallbackCoreText(second));
   });
 
   it('keeps branch context from becoming a direct career headline candidate', () => {
-    for (const snapshot of [
-      realSnapshot(2004, 8, 20, 'female'),
-      realSnapshot(1996, 1, 9, 'male'),
-    ]) {
+    for (const snapshot of [fixture(ALTERNATE_VISIBLE_TEN_GODS), fixture(FIVE_FAMILY_TEN_GODS)]) {
       const execution = runInterpretation(snapshot, createCareerNatalReadingCandidateRegistry());
       expect(
         careerClaims(execution).every(
