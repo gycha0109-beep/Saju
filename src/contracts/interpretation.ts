@@ -76,6 +76,27 @@ export interface ContentAddressedSourceRef {
   contentHash: string;
 }
 
+export type MethodologyInputMode = 'allowed' | 'required' | 'forbidden';
+
+export interface MethodologyFactInputContract {
+  source: 'canonical_fact' | 'derived_fact';
+  pathPattern: string;
+  mode: MethodologyInputMode;
+  rationale: string;
+}
+
+export interface MethodologyClaimInputContract {
+  source: 'interpretation_claim';
+  claimType: string;
+  mode: MethodologyInputMode;
+  rationale: string;
+}
+
+export interface MethodologyInputContract {
+  factInputs?: readonly MethodologyFactInputContract[];
+  claimInputs?: readonly MethodologyClaimInputContract[];
+}
+
 export interface MethodologyDefinition {
   methodologyId: string;
   version: string;
@@ -85,6 +106,7 @@ export interface MethodologyDefinition {
   assumptions: readonly string[];
   requiredFactTypes: readonly string[];
   optionalFactTypes?: readonly string[];
+  inputContract?: MethodologyInputContract;
   sourceIds: readonly string[];
   status: 'research' | 'reviewed' | 'active' | 'deprecated';
   supersedes?: string;
@@ -100,6 +122,7 @@ export interface InterpretationPack {
   conflictPolicy: 'preserve_all' | 'prefer_declared_methodology';
   ambiguityPolicy: 'propagate' | 'skip_requires_resolved';
   compositionPolicyRef: VersionedRef;
+  claimContractMode?: 'legacy_permissive' | 'registered_required';
   status: 'research' | 'staging' | 'production' | 'deprecated';
 }
 
@@ -269,9 +292,31 @@ export interface EvidenceIndexEntry {
   methodologyRef: VersionedRef;
 }
 
+export type ClaimValueSchemaNode =
+  | { kind: 'string'; enum?: readonly string[] }
+  | { kind: 'number'; integer?: boolean }
+  | { kind: 'boolean' }
+  | { kind: 'null' }
+  | { kind: 'literal'; value: unknown }
+  | { kind: 'array'; items: ClaimValueSchemaNode; minItems?: number; maxItems?: number }
+  | {
+      kind: 'object';
+      required: readonly string[];
+      properties: Readonly<Record<string, ClaimValueSchemaNode>>;
+      additionalProperties: boolean;
+    }
+  | { kind: 'union'; anyOf: readonly ClaimValueSchemaNode[] };
+
+export interface ClaimValueSchemaDefinition {
+  schemaId: string;
+  version: string;
+  root: ClaimValueSchemaNode;
+}
+
 export interface ClaimTypeDefinition {
   claimType: string;
-  valueSchemaRef: string;
+  version: string;
+  valueSchemaRef: VersionedRef;
   scope: 'natal' | 'period' | 'compatibility' | 'question';
   exclusiveValue: boolean;
   scenarioSensitive: boolean;
@@ -314,6 +359,8 @@ export interface RuleRegistrySnapshot {
   rules: readonly ContentAddressedVersionedRef[];
   methodologies: readonly ContentAddressedVersionedRef[];
   sources: readonly ContentAddressedSourceRef[];
+  claimTypeDefinitions?: readonly ContentAddressedVersionedRef[];
+  claimValueSchemas?: readonly ContentAddressedVersionedRef[];
   reviewAttestations: readonly ContentAddressedReviewAttestationRef[];
   packRef: ContentAddressedVersionedRef;
 }
