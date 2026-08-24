@@ -95,7 +95,13 @@ describe('natal career consumer reading research candidate', () => {
       { narrativePolicyVersion: 'career-natal-reading-v1' },
     );
     expect(career.selection.coverageState).toBe('complete');
-    expect(career.evidence?.bundle.claims).toHaveLength(1);
+    const bundledCareerClaims =
+      career.evidence?.bundle.claims.filter((claim) => claim.predicate === 'career_conclusion') ?? [];
+    expect(bundledCareerClaims).toHaveLength(1);
+    expect(bundledCareerClaims[0]?.claimType).toBe('CAREER_NATAL_CONCLUSION_OUTPUT_MAKING_ENGINE');
+    expect(
+      career.evidence?.bundle.claims.some((claim) => claim.predicate === 'ten_god_family_presence'),
+    ).toBe(true);
   });
 
   it('opens natal career intent while annual career remains partial without T9 period evidence', () => {
@@ -114,8 +120,12 @@ describe('natal career consumer reading research candidate', () => {
       { narrativePolicyVersion: 'career-natal-reading-v1' },
     );
     expect(natal.selection.coverageState).toBe('complete');
+    const bundledCareerClaims =
+      natal.evidence?.bundle.claims.filter((claim) => claim.predicate === 'career_conclusion') ?? [];
+    expect(bundledCareerClaims.length).toBeGreaterThan(0);
+    expect(bundledCareerClaims.every((claim) => claim.taxonomy.category === 'career')).toBe(true);
     expect(
-      natal.evidence?.bundle.claims.every((claim) => claim.taxonomy.category === 'career'),
+      natal.evidence?.bundle.claims.some((claim) => claim.predicate === 'ten_god_family_presence'),
     ).toBe(true);
 
     const annual = buildReadingCompositionEvidence(
