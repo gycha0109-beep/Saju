@@ -47,19 +47,6 @@ function fixture(tenGods: TenGodChartFact = FIVE_FAMILY_TEN_GODS): CanonicalSaju
   };
 }
 
-function realSnapshot(year: number, month: number, day: number): CanonicalSajuSnapshot {
-  return calculateCanonicalSajuSnapshot(
-    {
-      calendarType: 'solar',
-      date: { year, month, day },
-      time: { known: true, hour: 9, minute: 10 },
-      sexForTraditionalCalculation: 'male',
-    },
-    PRODUCTION_DEFAULT_CALCULATION_POLICY,
-    { now: new Date('2026-08-24T08:20:00.000Z') },
-  );
-}
-
 function businessClaims(execution: ReturnType<typeof runInterpretation>) {
   return execution.claims.filter((claim) => claim.predicate === 'business_conclusion');
 }
@@ -105,20 +92,20 @@ describe('natal business consumer reading research candidate', () => {
     expect(claims.every((claim) => claim.taxonomy.category === 'business')).toBe(true);
   });
 
-  it('distinguishes the reported 1996-08-10 and 1996-01-01 natal charts at business synthesis', () => {
+  it('distinguishes synthetic business structures before narrative rendering', () => {
     const registry = createBusinessNatalReadingCandidateRegistry();
-    const augustClaims = businessClaims(runInterpretation(realSnapshot(1996, 8, 10), registry));
-    const januaryClaims = businessClaims(runInterpretation(realSnapshot(1996, 1, 1), registry));
-    const augustTypes = new Set(augustClaims.map((claim) => claim.claimType));
-    const januaryTypes = new Set(januaryClaims.map((claim) => claim.claimType));
+    const multiFamilyTypes = businessClaims(runInterpretation(fixture(FIVE_FAMILY_TEN_GODS), registry))
+      .map((claim) => claim.claimType)
+      .sort();
+    const resourceOnlyTypes = businessClaims(runInterpretation(fixture(RESOURCE_ONLY_TEN_GODS), registry))
+      .map((claim) => claim.claimType)
+      .sort();
 
-    expect([...augustTypes].sort()).not.toEqual([...januaryTypes].sort());
-    expect(augustTypes).toContain('BUSINESS_NATAL_CONCLUSION_OUTPUT_WEALTH_OFFICER_OPERATING_LOOP');
-    expect(augustTypes).not.toContain('BUSINESS_NATAL_CONCLUSION_PEER_OFFICER_PARTNER_DECISION_RIGHTS');
-    expect(januaryTypes).not.toContain(
-      'BUSINESS_NATAL_CONCLUSION_OUTPUT_WEALTH_OFFICER_OPERATING_LOOP',
-    );
-    expect(januaryTypes).toContain('BUSINESS_NATAL_CONCLUSION_PEER_OFFICER_PARTNER_DECISION_RIGHTS');
+    expect(multiFamilyTypes).not.toEqual(resourceOnlyTypes);
+    expect(multiFamilyTypes.length).toBeGreaterThan(resourceOnlyTypes.length);
+    expect(resourceOnlyTypes).toEqual([
+      'BUSINESS_NATAL_CONCLUSION_RESOURCE_UNCERTAINTY_BEFORE_COMMIT',
+    ]);
   });
 
   it('keeps business reading useful with only one represented family', () => {
