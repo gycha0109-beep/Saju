@@ -8,19 +8,20 @@ import {
   executeProductReading,
   type GovernedReadingExecutionOptions,
 } from './governed-reading-execution.js';
+import { buildProductReadingDelivery } from './product-reading-delivery.js';
 import {
-  buildProductReadingDelivery,
-  type ProductReadingDeliveryResult,
-} from './product-reading-delivery.js';
+  buildProductReadingResponse,
+  type ProductReadingResponse,
+} from './product-reading-response.js';
 
-export const PRODUCT_READING_SERVICE_VERSION = 'myeonghwa-product-reading-service-v1';
+export const PRODUCT_READING_SERVICE_VERSION = 'myeonghwa-product-reading-service-v2';
 
 export type ProductReadingServiceOptions = GovernedReadingExecutionOptions;
 
 /**
  * Governed product-facing reading facade.
  *
- * Consumer request states are returned as ProductReadingDeliveryResult values.
+ * Consumer request states are returned as transport-safe ProductReadingResponse values.
  * Operational configuration or engine invariant failures remain exceptions and
  * must be handled by the hosting API as operational failures, not reinterpreted
  * as consumer-facing Saju meaning.
@@ -33,7 +34,7 @@ export async function requestProductReading(
   adapter: NarrativeModelAdapter,
   narrativePolicy: NarrativePolicy,
   options: ProductReadingServiceOptions,
-): Promise<ProductReadingDeliveryResult> {
+): Promise<ProductReadingResponse> {
   const execution = await executeProductReading(
     snapshot,
     interpretation,
@@ -43,5 +44,5 @@ export async function requestProductReading(
     narrativePolicy,
     options,
   );
-  return buildProductReadingDelivery(execution);
+  return buildProductReadingResponse(buildProductReadingDelivery(execution));
 }
