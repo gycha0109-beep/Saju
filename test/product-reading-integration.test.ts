@@ -105,14 +105,14 @@ describe('Product Reading Integration Boundary', () => {
   it('emits a grounded narrative request only for a complete authorized reading selection', () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
-    const career = claim(currentSnapshot.snapshotId, {
-      id: 'claim-career-natal',
+    const general = claim(currentSnapshot.snapshotId, {
+      id: 'claim-general-natal',
       tier: 'T8',
-      category: 'career',
+      category: 'general',
     });
     const result = prepareProductReading(
       currentSnapshot,
-      executionWithClaims(currentSnapshot, registry, [career]),
+      executionWithClaims(currentSnapshot, registry, [general]),
       registry,
       { requestId: 'product-general', text: '일반 사주' },
       integrationOptions,

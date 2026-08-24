@@ -114,9 +114,14 @@ function executionWithClaims(
 }
 
 describe('ReadingIntent composition contract', () => {
-  it('selects natal T8 domain claims for a general natal reading and excludes unrelated period claims', () => {
+  it('selects only general natal T8 claims for a general reading and excludes specialized or period claims', () => {
     const snapshot = knownSnapshot();
     const registry = createI7SeasonalSupportRegistry();
+    const general = syntheticClaim(snapshot.snapshotId, {
+      id: 'claim-general-natal',
+      tier: 'T8',
+      category: 'general',
+    });
     const career = syntheticClaim(snapshot.snapshotId, {
       id: 'claim-career-natal',
       tier: 'T8',
@@ -133,7 +138,7 @@ describe('ReadingIntent composition contract', () => {
       category: 'general',
       subcategory: 'annual',
     });
-    const execution = executionWithClaims(snapshot, registry, [career, wealth, annual]);
+    const execution = executionWithClaims(snapshot, registry, [general, career, wealth, annual]);
 
     const result = buildReadingCompositionEvidence(
       snapshot,
@@ -147,10 +152,12 @@ describe('ReadingIntent composition contract', () => {
     );
 
     expect(result.selection.coverageState).toBe('complete');
-    expect(result.selection.targetClaimIds).toEqual([career.claimId, wealth.claimId].sort());
-    expect(result.selection.selectedClaimIds).toEqual([career.claimId, wealth.claimId].sort());
-    expect(result.selection.omittedClaimIds).toContain(annual.claimId);
-    expect(result.evidence?.bundle.claims.map((claim) => claim.claimId)).not.toContain(annual.claimId);
+    expect(result.selection.targetClaimIds).toEqual([general.claimId]);
+    expect(result.selection.selectedClaimIds).toEqual([general.claimId]);
+    expect(result.selection.omittedClaimIds).toEqual(
+      [career.claimId, wealth.claimId, annual.claimId].sort(),
+    );
+    expect(result.evidence?.bundle.claims.map((claim) => claim.claimId)).toEqual([general.claimId]);
   });
 
   it('selects only explicitly parent-scoped family claims and does not fabricate missing parent evidence', () => {

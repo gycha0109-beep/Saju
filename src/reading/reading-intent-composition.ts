@@ -170,7 +170,12 @@ function buildProfile(intent: ReadingIntent): DomainReadingProfile | undefined {
         return makeProfile(
           intent,
           'general-natal-v1',
-          [requiredGroup('NATAL_DOMAIN_SYNTHESIS_CLAIM_REQUIRED', taxonomySelector('target-general-natal', 'T8'))],
+          [
+            requiredGroup(
+              'NATAL_DOMAIN_SYNTHESIS_CLAIM_REQUIRED',
+              taxonomySelector('target-general-natal', 'T8', 'general'),
+            ),
+          ],
           [
             taxonomySelector('exclude-general-period', 'T9'),
             taxonomySelector('exclude-general-compatibility', 'T10'),
