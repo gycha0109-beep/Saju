@@ -14,6 +14,10 @@
     "./product-reading": {
       "types": "./dist/product-reading.d.ts",
       "default": "./dist/product-reading.js"
+    },
+    "./product-host": {
+      "types": "./dist/product-host.d.ts",
+      "default": "./dist/product-host.js"
     }
   },
   "files": [
