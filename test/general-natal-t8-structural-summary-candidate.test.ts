@@ -14,18 +14,36 @@ import {
   GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_PACK,
   GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_RULES,
   createGeneralNatalT8StructuralSummaryCandidateRegistry,
+  type GeneralNatalMonthBranchStructuralRelationship,
 } from '../src/research/general-natal-t8-structural-summary-candidate.js';
 import type { MonthBranchStrengthRelation } from '../src/research/i18a-month-branch-strength-evidence.js';
 
 const FIXTURE_RELATIONS = [
-  { relation: 'peer', direction: 'supporting' },
-  { relation: 'resource', direction: 'supporting' },
-  { relation: 'output', direction: 'challenging' },
-  { relation: 'wealth', direction: 'challenging' },
-  { relation: 'officer', direction: 'challenging' },
+  { relation: 'peer', direction: 'supporting', structuralRelationship: 'same_element' },
+  {
+    relation: 'resource',
+    direction: 'supporting',
+    structuralRelationship: 'month_branch_generates_day_master',
+  },
+  {
+    relation: 'output',
+    direction: 'challenging',
+    structuralRelationship: 'day_master_generates_month_branch',
+  },
+  {
+    relation: 'wealth',
+    direction: 'challenging',
+    structuralRelationship: 'day_master_controls_month_branch',
+  },
+  {
+    relation: 'officer',
+    direction: 'challenging',
+    structuralRelationship: 'month_branch_controls_day_master',
+  },
 ] as const satisfies readonly {
   relation: MonthBranchStrengthRelation;
   direction: 'supporting' | 'challenging';
+  structuralRelationship: GeneralNatalMonthBranchStructuralRelationship;
 }[];
 
 function snapshot(): CanonicalSajuSnapshot {
@@ -54,7 +72,10 @@ function upstreamClaim(
     taxonomy: {
       tier: 'T2',
       category: 'day_master_strength',
-      subcategory: claimType === 'DAY_MASTER_MONTH_BRANCH_SCOPE_GUARD' ? 'scope_guard' : 'month_branch_elemental_relation',
+      subcategory:
+        claimType === 'DAY_MASTER_MONTH_BRANCH_SCOPE_GUARD'
+          ? 'scope_guard'
+          : 'month_branch_elemental_relation',
     },
     claimType,
     subject: 'day_master',
@@ -94,7 +115,7 @@ describe('general natal T8 structural summary candidate', () => {
 
   it.each(FIXTURE_RELATIONS)(
     'maps $relation I18A evidence into one neutral guarded T8 candidate',
-    ({ relation, direction }) => {
+    ({ relation, direction, structuralRelationship }) => {
       const currentSnapshot = snapshot();
       const relationClaim = upstreamClaim(
         currentSnapshot.snapshotId,
@@ -145,7 +166,7 @@ describe('general natal T8 structural summary candidate', () => {
       );
       expect(claim?.value).toEqual({
         relation,
-        evidenceDirection: direction,
+        structuralRelationship,
         monthContext: 'branch_element_only',
         overallStrength: 'not_determined',
         withinMonthCommand: 'not_determined',
@@ -153,7 +174,9 @@ describe('general natal T8 structural summary candidate', () => {
         classificationAuthorized: false,
         numericScoringAuthorized: false,
         fortunePolarityAuthorized: false,
+        upstreamEvidenceDirectionAsFortuneMeaningAuthorized: false,
       });
+      expect(JSON.stringify(claim?.value)).not.toContain(direction);
     },
   );
 
@@ -205,6 +228,12 @@ describe('general natal T8 structural summary candidate', () => {
       [relationClaims[0]?.claimId, guardClaims[0]?.claimId].sort(),
     );
     expect(t8Claims[0]?.polarity).toBe('neutral');
+    expect(t8Claims[0]?.value).toEqual(
+      expect.objectContaining({
+        fortunePolarityAuthorized: false,
+        upstreamEvidenceDirectionAsFortuneMeaningAuthorized: false,
+      }),
+    );
   });
 
   it('makes only general natal evidence complete and does not fabricate career coverage', () => {
