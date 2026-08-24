@@ -98,7 +98,7 @@ const WEALTH_CONCLUSIONS: readonly WealthConclusionSpec[] = [
     families: ['output'],
     headline: '직접 만든 결과에 가치가 붙는 구조를 이해하기 쉽습니다',
     summary:
-      '아이디어나 기술을 실제 결과물로 바꾸는 과정이 돈의 흐름을 이해하는 출발점이 될 수 있습니다. 무엇을 만들었고 누가 왜 필요로 하는지가 보일 때 금전적인 판단도 더 구체적으로 하기 쉬운 편입니다.',
+      '생각이나 능력을 실제 결과물로 바꾸는 과정이 돈의 흐름을 이해하는 출발점이 될 수 있습니다. 무엇을 만들었고 누가 왜 필요로 하는지가 보일 때 금전적인 판단도 더 구체적으로 하기 쉬운 편입니다.',
   },
   {
     id: 'RESOURCE-CAPABILITY-SPEND',
@@ -107,7 +107,7 @@ const WEALTH_CONCLUSIONS: readonly WealthConclusionSpec[] = [
     families: ['resource'],
     headline: '배움과 도구에 쓰는 돈은 비교적 납득하기 쉬운 편입니다',
     summary:
-      '지식, 교육, 장비, 자료처럼 앞으로의 판단이나 작업 능력을 넓혀주는 지출에는 의미를 느끼기 쉽습니다. 다만 배우는 행위 자체가 목적이 되면 실제로 써보지 못한 채 비용만 늘어날 수 있어 사용 시점을 함께 정하는 편이 좋습니다.',
+      '배움, 준비, 도구, 자료처럼 앞으로의 판단이나 활동 범위를 넓혀주는 지출에는 의미를 느끼기 쉽습니다. 다만 준비 자체가 목적이 되면 실제로 써보지 못한 채 비용만 늘어날 수 있어 사용 시점을 함께 정하는 편이 좋습니다.',
   },
   {
     id: 'OFFICER-RULED-MANAGEMENT',
@@ -143,7 +143,7 @@ const WEALTH_CONCLUSIONS: readonly WealthConclusionSpec[] = [
     families: ['wealth', 'officer'],
     headline: '들어오고 나가는 돈을 역할별로 나누면 관리가 쉬워집니다',
     summary:
-      '돈이 생겼을 때 전부 한 덩어리로 보기보다 생활비, 운영비, 여유자금처럼 역할을 나누는 방식이 잘 맞을 수 있습니다. 현실적인 결과를 확인하면서도 지켜야 할 기준을 함께 두면 판단이 안정되는 편입니다.',
+      '돈이 생겼을 때 전부 한 덩어리로 보기보다 생활비, 계획된 지출, 여유자금처럼 역할을 나누는 방식이 잘 맞을 수 있습니다. 현실적인 결과를 확인하면서도 지켜야 할 기준을 함께 두면 판단이 안정되는 편입니다.',
   },
   {
     id: 'WEALTH-RESOURCE-LEARN-VS-RETURN',
@@ -152,7 +152,7 @@ const WEALTH_CONCLUSIONS: readonly WealthConclusionSpec[] = [
     families: ['wealth', 'resource'],
     headline: '더 배우기 위해 쓰는 돈과 지금 결과를 내야 하는 돈 사이에서 흔들릴 수 있습니다',
     summary:
-      '조금 더 공부하거나 더 좋은 도구를 갖추면 결과가 좋아질 것 같다는 생각과, 지금 가진 것으로 먼저 결과를 내야 한다는 현실이 충돌하기 쉽습니다. 지출 전에 “이걸 언제 실제로 쓸 것인가”를 정하면 과잉 준비를 줄이는 데 도움이 됩니다.',
+      '조금 더 배우거나 더 나은 준비 수단을 갖추면 결과가 좋아질 것 같다는 생각과, 지금 가진 것으로 먼저 결과를 내야 한다는 현실이 충돌하기 쉽습니다. 지출 전에 “이걸 언제 실제로 쓸 것인가”를 정하면 과잉 준비를 줄이는 데 도움이 됩니다.',
   },
   {
     id: 'PEER-WEALTH-MY-WAY-VS-BUDGET',
@@ -170,7 +170,7 @@ const WEALTH_CONCLUSIONS: readonly WealthConclusionSpec[] = [
     families: ['output', 'wealth', 'officer'],
     headline: '만들고, 가치가 생기는지 확인하고, 다시 관리하는 흐름이 잘 맞습니다',
     summary:
-      '돈을 따로 떼어 생각하기보다 무엇을 만들었는지, 실제 가치가 생겼는지, 다음에 얼마를 다시 쓸지까지 한 흐름으로 보는 편이 이해하기 쉽습니다. 작은 프로젝트나 일에서도 결과와 비용을 함께 확인하면 판단 기준이 빠르게 선명해질 수 있습니다.',
+      '돈을 따로 떼어 생각하기보다 무엇을 만들었는지, 실제 가치가 생겼는지, 다음에 얼마를 다시 쓸지까지 한 흐름으로 보는 편이 이해하기 쉽습니다. 작은 선택에서도 결과와 비용을 함께 확인하면 판단 기준이 빠르게 선명해질 수 있습니다.',
   },
   {
     id: 'PEER-WEALTH-RESOURCE-CHOICE-GROWTH-TRADEOFF',
