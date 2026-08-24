@@ -7,3 +7,4 @@ export {
   type ResolvedDomainReadingProfile,
 } from './reading-intent-composition.js';
 export * from './reading-profile-authorization.js';
+export * from './consumer-reading-request-adapter.js';
