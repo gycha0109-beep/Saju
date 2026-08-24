@@ -8,3 +8,4 @@ export {
 } from './reading-intent-composition.js';
 export * from './reading-profile-authorization.js';
 export * from './consumer-reading-request-adapter.js';
+export * from './product-reading-integration.js';
