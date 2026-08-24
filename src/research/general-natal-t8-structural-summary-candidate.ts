@@ -21,15 +21,22 @@ const CANDIDATE_RULE_SET_ID = 'general-natal-t8-month-branch-structural-summary-
 const RELATION_CLAIM_TYPE = 'DAY_MASTER_MONTH_BRANCH_EVIDENCE';
 const SCOPE_GUARD_CLAIM_TYPE = 'DAY_MASTER_MONTH_BRANCH_SCOPE_GUARD';
 
+export type GeneralNatalMonthBranchStructuralRelationship =
+  | 'same_element'
+  | 'month_branch_generates_day_master'
+  | 'day_master_generates_month_branch'
+  | 'day_master_controls_month_branch'
+  | 'month_branch_controls_day_master';
+
 const RELATIONS = [
-  { relation: 'peer', direction: 'supporting' },
-  { relation: 'resource', direction: 'supporting' },
-  { relation: 'output', direction: 'challenging' },
-  { relation: 'wealth', direction: 'challenging' },
-  { relation: 'officer', direction: 'challenging' },
+  { relation: 'peer', structuralRelationship: 'same_element' },
+  { relation: 'resource', structuralRelationship: 'month_branch_generates_day_master' },
+  { relation: 'output', structuralRelationship: 'day_master_generates_month_branch' },
+  { relation: 'wealth', structuralRelationship: 'day_master_controls_month_branch' },
+  { relation: 'officer', structuralRelationship: 'month_branch_controls_day_master' },
 ] as const satisfies readonly {
   relation: MonthBranchStrengthRelation;
-  direction: 'supporting' | 'challenging';
+  structuralRelationship: GeneralNatalMonthBranchStructuralRelationship;
 }[];
 
 export const GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY: MethodologyDefinition =
@@ -43,8 +50,8 @@ export const GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY: MethodologyDefinit
     assumptions: [
       'The T8 claim may restate only the upstream I18A relation family and its explicit scope limitations.',
       'The month-branch relation is one structural axis and does not determine overall day-master strength.',
-      'Supporting/challenging is retained as an evidence-direction label only; it is not auspicious/inauspicious fortune meaning.',
-      'No personality, event, relationship, career, wealth, health, timing, or future conclusion is authorized by this candidate.',
+      'The upstream I18A supporting/challenging label is an evidence-direction label only and is deliberately not copied into this consumer-domain claim.',
+      'No auspicious/inauspicious, good/bad, favorable/unfavorable, personality, event, relationship, career, wealth, health, timing, or future conclusion is authorized by this candidate.',
       'No numeric weight, score, probability, or final strong/weak classification is authorized.',
     ],
     requiredFactTypes: [RELATION_CLAIM_TYPE, SCOPE_GUARD_CLAIM_TYPE],
@@ -64,13 +71,13 @@ function sourceRefs(): RuleDefinition['sourceRefs'] {
     sourceId: source.sourceId,
     supportType: 'interpretive_basis' as const,
     notes:
-      'Inherited source basis from I18A. This candidate adds no new fortune semantics and only preserves the upstream relation plus explicit scope guard.',
+      'Inherited source basis from I18A. This candidate adds no new fortune semantics and only preserves the upstream elemental relation plus explicit scope guard.',
   }));
 }
 
 function candidateRule(
   relation: MonthBranchStrengthRelation,
-  direction: 'supporting' | 'challenging',
+  structuralRelationship: GeneralNatalMonthBranchStructuralRelationship,
 ): RuleDefinition {
   return {
     ruleId: `RULE-GENERAL-NATAL-T8-MONTH-BRANCH-${relation.toUpperCase()}`,
@@ -124,7 +131,7 @@ function candidateRule(
       predicate: 'month_branch_structural_context',
       value: {
         relation,
-        evidenceDirection: direction,
+        structuralRelationship,
         monthContext: 'branch_element_only',
         overallStrength: 'not_determined',
         withinMonthCommand: 'not_determined',
@@ -132,6 +139,7 @@ function candidateRule(
         classificationAuthorized: false,
         numericScoringAuthorized: false,
         fortunePolarityAuthorized: false,
+        upstreamEvidenceDirectionAsFortuneMeaningAuthorized: false,
       },
       polarity: 'neutral',
       emphasis: 'moderate',
@@ -144,7 +152,11 @@ function candidateRule(
 }
 
 export const GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_RULES: readonly RuleDefinition[] =
-  Object.freeze(RELATIONS.map(({ relation, direction }) => candidateRule(relation, direction)));
+  Object.freeze(
+    RELATIONS.map(({ relation, structuralRelationship }) =>
+      candidateRule(relation, structuralRelationship),
+    ),
+  );
 
 const I18A_RULE_SET_IDS = [
   ...new Set(I18A_MONTH_BRANCH_STRENGTH_RULES.map((rule) => rule.ruleSetId)),
