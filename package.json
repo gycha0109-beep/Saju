@@ -38,7 +38,9 @@
     "format": "prettier --write src test package.json tsconfig.json tsconfig.build.json eslint.config.mjs .prettierrc.json .github/workflows/ci.yml",
     "format:check": "prettier --check src test package.json tsconfig.json tsconfig.build.json eslint.config.mjs .prettierrc.json .github/workflows/ci.yml",
     "test": "vitest run",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run preview:research:smoke",
+    "preview:research": "npm run build && node scripts/research-ux-preview.mjs",
+    "preview:research:smoke": "MYEONGHWA_PREVIEW_SMOKE=1 node scripts/research-ux-preview.mjs"
   },
   "dependencies": {
     "manseryeok": "2.0.0"
