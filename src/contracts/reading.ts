@@ -50,6 +50,13 @@ export interface ReadingClaimSelectorGroup {
   anyOf: readonly ReadingClaimSelector[];
 }
 
+export interface MinimumUsefulReadingPolicy {
+  coreRequirementIds: readonly string[];
+  supplementaryRequirementIds: readonly string[];
+  minimumSupplementaryMatches: number;
+  scenarioMode: 'each_scenario';
+}
+
 export interface DomainReadingProfile {
   profileId: string;
   version: string;
@@ -71,6 +78,7 @@ export interface DomainReadingProfile {
     partial: 'some_required_groups';
     insufficient: 'no_required_groups';
   };
+  minimumUsefulReading?: MinimumUsefulReadingPolicy;
 }
 
 export type ReadingCoverageState =
@@ -78,6 +86,14 @@ export type ReadingCoverageState =
   | 'partial_coverage'
   | 'insufficient_evidence'
   | 'unsupported_intent';
+
+export interface ReadingScenarioCoverage {
+  scenarioRef?: string;
+  coverageState: Exclude<ReadingCoverageState, 'unsupported_intent'>;
+  matchedRequirementIds: readonly string[];
+  missingRequirements: readonly string[];
+  targetClaimIds: readonly string[];
+}
 
 export interface ReadingEvidenceSelection {
   selectionId: string;
@@ -89,6 +105,7 @@ export interface ReadingEvidenceSelection {
   omittedClaimIds: readonly string[];
   missingRequirements: readonly string[];
   scenarioRefs: readonly string[];
+  scenarioCoverage?: readonly ReadingScenarioCoverage[];
   conflictRelationIds: readonly string[];
   constraints: {
     mayGenerateClaims: false;
