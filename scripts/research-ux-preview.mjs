@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import process from 'node:process';
 import { createMyeonghwaProductHostServer } from '../dist/product-host.js';
 import {
   SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
@@ -11,6 +12,7 @@ import { createGeneralNatalT8StructuralSummaryCandidateRegistry } from '../dist/
 
 const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v1';
 const smokeMode = process.env.MYEONGHWA_PREVIEW_SMOKE === '1';
+const fetchRequest = globalThis.fetch.bind(globalThis);
 
 const narrativePolicy = {
   policyId: RESEARCH_PREVIEW_VERSION,
@@ -81,10 +83,10 @@ if (!Number.isInteger(requestedPort) || requestedPort < 0 || requestedPort > 655
 const server = createMyeonghwaProductHostServer(dependencies);
 
 async function runSmoke(baseUrl) {
-  const health = await fetch(`${baseUrl}/healthz`);
+  const health = await fetchRequest(`${baseUrl}/healthz`);
   if (!health.ok) throw new Error(`Preview health check failed: ${health.status}`);
 
-  const reading = await fetch(`${baseUrl}/api/readings`, {
+  const reading = await fetchRequest(`${baseUrl}/api/readings`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -104,6 +106,14 @@ async function runSmoke(baseUrl) {
   }
 }
 
+function writeStdout(message) {
+  process.stdout.write(`${message}\n`);
+}
+
+function writeStderr(error) {
+  process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
+}
+
 server.listen(requestedPort, '127.0.0.1', async () => {
   const address = server.address();
   if (address === null || typeof address === 'string') {
@@ -114,30 +124,30 @@ server.listen(requestedPort, '127.0.0.1', async () => {
   if (smokeMode) {
     try {
       await runSmoke(baseUrl);
-      console.log('Myeonghwa research UX preview smoke: PASS');
+      writeStdout('Myeonghwa research UX preview smoke: PASS');
       server.close();
     } catch (error) {
-      console.error(error);
+      writeStderr(error);
       process.exitCode = 1;
       server.close();
     }
     return;
   }
 
-  console.log('');
-  console.log('Myeonghwa Research UX Preview');
-  console.log('NOT PRODUCTION AUTHORITY');
-  console.log(`Open: ${baseUrl}`);
-  console.log('Current meaningful test target: 전체 사주 (general / natal)');
-  console.log('Other reading intents remain fail-closed when evidence is insufficient.');
-  console.log('Press Ctrl+C to stop.');
-  console.log('');
+  writeStdout('');
+  writeStdout('Myeonghwa Research UX Preview');
+  writeStdout('NOT PRODUCTION AUTHORITY');
+  writeStdout(`Open: ${baseUrl}`);
+  writeStdout('Current meaningful test target: 전체 사주 (general / natal)');
+  writeStdout('Other reading intents remain fail-closed when evidence is insufficient.');
+  writeStdout('Press Ctrl+C to stop.');
+  writeStdout('');
 });
 
 function shutdown() {
   server.close((error) => {
     if (error) {
-      console.error(error);
+      writeStderr(error);
       process.exitCode = 1;
     }
   });
