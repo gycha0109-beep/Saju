@@ -189,7 +189,10 @@ function careerNatalPreviewDraft(evidence, careerClaims) {
     throw new Error('Career natal preview emitted no career conclusion.');
   }
 
-  const remaining = careerClaims.filter((claim) => claim.claimId !== summaryClaim.claimId);
+  const remaining =
+    careerClaims.length === 1
+      ? careerClaims
+      : careerClaims.filter((claim) => claim.claimId !== summaryClaim.claimId);
   const drivers = careerClaimsOfKind(remaining, 'driver');
   const fits = careerClaimsOfKind(remaining, 'fit');
   const environments = careerClaimsOfKind(remaining, 'environment');
@@ -227,15 +230,27 @@ function careerNatalPreviewDraft(evidence, careerClaims) {
   };
 }
 
-function previewDraft(evidence) {
-  const careerClaims = evidence.claims.filter(
-    (claim) =>
-      claim.taxonomy.tier === 'T8' &&
-      claim.taxonomy.category === 'career' &&
-      claim.predicate === 'career_conclusion',
-  );
-  if (careerClaims.length > 0) return careerNatalPreviewDraft(evidence, careerClaims);
-  return generalNatalPreviewDraft(evidence);
+function previewDraft(prompt) {
+  const evidence = prompt.evidence;
+  const requestedSection = prompt.userRequest?.requestedSection;
+
+  if (requestedSection === 'general:natal') {
+    return generalNatalPreviewDraft(evidence);
+  }
+  if (requestedSection === 'career:natal') {
+    const careerClaims = evidence.claims.filter(
+      (claim) =>
+        claim.taxonomy.tier === 'T8' &&
+        claim.taxonomy.category === 'career' &&
+        claim.predicate === 'career_conclusion',
+    );
+    if (careerClaims.length === 0) {
+      throw new Error('Career natal preview request has no career conclusion evidence.');
+    }
+    return careerNatalPreviewDraft(evidence, careerClaims);
+  }
+
+  throw new Error(`Unsupported research preview section: ${String(requestedSection)}`);
 }
 
 class ResearchPreviewNarrativeAdapter {
@@ -246,7 +261,7 @@ class ResearchPreviewNarrativeAdapter {
   };
 
   async generateStructured(prompt) {
-    return previewDraft(prompt.evidence);
+    return previewDraft(prompt);
   }
 }
 
