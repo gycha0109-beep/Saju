@@ -3,20 +3,21 @@ import process from 'node:process';
 import { createMyeonghwaProductHostServer } from '../dist/product-host.js';
 import {
   SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  buildDeterministicFallbackDraft,
   calculateCanonicalSajuSnapshot,
   runInterpretation,
 } from '../dist/index.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
 import { createGeneralNatalT8StructuralSummaryCandidateRegistry } from '../dist/research/general-natal-t8-structural-summary-candidate.js';
 
-const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v1';
+const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v2';
+const GENERAL_NATAL_CLAIM_TYPE = 'GENERAL_NATAL_MONTH_BRANCH_STRUCTURAL_CONTEXT';
+const SCOPE_GUARD_CLAIM_TYPE = 'DAY_MASTER_MONTH_BRANCH_SCOPE_GUARD';
 const smokeMode = process.env.MYEONGHWA_PREVIEW_SMOKE === '1';
 const fetchRequest = globalThis.fetch.bind(globalThis);
 
 const narrativePolicy = {
   policyId: RESEARCH_PREVIEW_VERSION,
-  version: '1.0.0-preview',
+  version: '2.0.0-preview',
   language: 'ko',
   certaintyPolicy: {
     deterministicFacts: 'direct',
@@ -39,15 +40,81 @@ const narrativePolicy = {
   sourceDisclosure: 'internal_only',
 };
 
+const relationText = {
+  peer: '월지와 일간이 같은 오행에 속하는 관계입니다.',
+  resource: '월지의 오행이 일간의 오행을 생하는 관계입니다.',
+  output: '일간의 오행이 월지의 오행을 생하는 관계입니다.',
+  wealth: '일간의 오행이 월지의 오행을 극하는 관계입니다.',
+  officer: '월지의 오행이 일간의 오행을 극하는 관계입니다.',
+};
+
+function previewDraft(evidence) {
+  const t8Claim = evidence.claims.find((claim) => claim.claimType === GENERAL_NATAL_CLAIM_TYPE);
+  if (t8Claim === undefined) {
+    throw new Error('General natal structural context claim is missing from the preview evidence bundle.');
+  }
+
+  const value = t8Claim.value;
+  const relation =
+    value !== null && typeof value === 'object' && typeof value.relation === 'string'
+      ? value.relation
+      : undefined;
+  const summary = relation === undefined ? undefined : relationText[relation];
+  if (summary === undefined) {
+    throw new Error('General natal structural relationship is not supported by the preview renderer.');
+  }
+
+  const scopeGuard = evidence.claims.find((claim) => claim.claimType === SCOPE_GUARD_CLAIM_TYPE);
+  const ambiguityBlocks = evidence.canonicalFacts
+    .filter((fact) => fact.scenarioRef === undefined && fact.fact.status === 'ambiguous')
+    .map((fact) => ({
+      type: 'disclosure',
+      disclosureType: 'calculation_ambiguity',
+      text: `계산 조건에 따라 ${fact.path} 값이 하나로 확정되지 않습니다. 가능한 경우를 구분해 확인합니다.`,
+      relatedRefs: [fact.ref],
+    }));
+
+  return {
+    schemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
+    requestId: evidence.requestId,
+    sections: [
+      {
+        sectionId: 'research-preview-general-natal-structure',
+        title: '사주의 기본 구조',
+        blocks: [
+          ...ambiguityBlocks,
+          {
+            type: 'assertion',
+            text: summary,
+            epistemicType: 'synthesis',
+            evidenceRefs: [{ sourceType: 'claim', ref: t8Claim.claimId }],
+            methodologyRefs: [t8Claim.methodologyRef],
+          },
+          {
+            type: 'disclosure',
+            disclosureType: 'scope_limitation',
+            text: '이 내용은 월지의 오행과 일간의 오행 사이의 관계만 확인한 제한된 구조 정보입니다. 이것만으로 신강·신약, 길흉, 성격, 직업, 재물, 관계, 사건이나 미래를 판단하지 않습니다.',
+            relatedRefs: [scopeGuard?.claimId ?? t8Claim.claimId],
+          },
+          {
+            type: 'transition',
+            text: '현재 연구 미리보기에서 제공하는 해석은 여기까지입니다. 이후 항목은 근거와 검토가 확보되는 순서대로 추가됩니다.',
+          },
+        ],
+      },
+    ],
+  };
+}
+
 class ResearchPreviewNarrativeAdapter {
   metadata = {
     provider: 'deterministic-research-preview',
-    modelId: 'deterministic-fallback',
+    modelId: 'grounded-readable-preview',
     modelRevision: RESEARCH_PREVIEW_VERSION,
   };
 
   async generateStructured(prompt) {
-    return buildDeterministicFallbackDraft(prompt.evidence);
+    return previewDraft(prompt.evidence);
   }
 }
 
@@ -103,6 +170,22 @@ async function runSmoke(baseUrl) {
   const payload = await reading.json();
   if (payload.state !== 'delivered' && payload.state !== 'delivered_with_fallback') {
     throw new Error(`Preview reading did not deliver: ${String(payload.state)}`);
+  }
+
+  const serialized = JSON.stringify(payload);
+  if (!serialized.includes('사주의 기본 구조')) {
+    throw new Error('Preview response is missing the readable Korean structural summary.');
+  }
+  for (const forbidden of [
+    'classificationAuthorized',
+    'fortunePolarityAuthorized',
+    'numericScoringAuthorized',
+    'month_branch_structural_context',
+    '"direction"',
+  ]) {
+    if (serialized.includes(forbidden)) {
+      throw new Error(`Preview response leaked internal evidence field: ${forbidden}`);
+    }
   }
 }
 
