@@ -7,16 +7,16 @@ import {
   runInterpretation,
 } from '../dist/index.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
-import { createWealthNatalReadingCandidateRegistry } from '../dist/research/wealth-natal-reading-candidate.js';
+import { createRelationshipNatalReadingCandidateRegistry } from '../dist/research/relationship-natal-reading-candidate.js';
 
-const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v7';
+const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v8';
 const SCOPE_GUARD_CLAIM_TYPE = 'GENERAL_NATAL_USEFUL_READING_SCOPE-GUARD';
 const smokeMode = process.env.MYEONGHWA_PREVIEW_SMOKE === '1';
 const fetchRequest = globalThis.fetch.bind(globalThis);
 
 const narrativePolicy = {
   policyId: RESEARCH_PREVIEW_VERSION,
-  version: '7.0.0-preview',
+  version: '8.0.0-preview',
   language: 'ko',
   certaintyPolicy: {
     deterministicFacts: 'direct',
@@ -84,6 +84,11 @@ function wealthKind(claim) {
   return typeof value.wealthKind === 'string' ? value.wealthKind : undefined;
 }
 
+function relationshipKind(claim) {
+  const value = valueRecord(claim);
+  return typeof value.relationshipKind === 'string' ? value.relationshipKind : undefined;
+}
+
 function consumerText(claim) {
   const mapped = CONSUMER_COPY[claim.claimType];
   if (mapped !== undefined) return mapped;
@@ -125,6 +130,10 @@ function wealthClaimsOfKind(claims, kind) {
   return claims.filter((claim) => wealthKind(claim) === kind);
 }
 
+function relationshipClaimsOfKind(claims, kind) {
+  return claims.filter((claim) => relationshipKind(claim) === kind);
+}
+
 function sectionFromClaims(sectionId, title, claims) {
   if (claims.length === 0) return undefined;
   return { sectionId, title, blocks: claims.map(assertion) };
@@ -137,7 +146,10 @@ function generalNatalPreviewDraft(evidence) {
   }
 
   const conclusions = evidence.claims.filter(
-    (claim) => claim.taxonomy.tier === 'T8' && claim.predicate === 'consumer_conclusion',
+    (claim) =>
+      claim.taxonomy.tier === 'T8' &&
+      claim.taxonomy.category === 'general' &&
+      claim.predicate === 'consumer_conclusion',
   );
   if (conclusions.length === 0) {
     throw new Error('Conclusion-oriented general natal preview emitted no consumer conclusions.');
@@ -302,6 +314,67 @@ function wealthNatalPreviewDraft(evidence, wealthClaims) {
   };
 }
 
+function relationshipNatalPreviewDraft(evidence, relationshipClaims) {
+  const preferredSummary = [
+    'RELATIONSHIP_NATAL_CONCLUSION_PEER_OFFICER_AUTONOMY_WITH_BOUNDARY',
+    'RELATIONSHIP_NATAL_CONCLUSION_OUTPUT_WEALTH_WORDS_TO_ACTION',
+    'RELATIONSHIP_NATAL_CONCLUSION_RESOURCE_OUTPUT_PROCESS_THEN_SPEAK',
+  ];
+  const summaryClaim =
+    preferredSummary
+      .map((claimType) => relationshipClaims.find((claim) => claim.claimType === claimType))
+      .find(Boolean) ?? relationshipClaims[0];
+  if (summaryClaim === undefined) {
+    throw new Error('Relationship natal preview emitted no general-relationship conclusion.');
+  }
+
+  const remaining =
+    relationshipClaims.length === 1
+      ? relationshipClaims
+      : relationshipClaims.filter((claim) => claim.claimId !== summaryClaim.claimId);
+  const closeness = relationshipClaimsOfKind(remaining, 'closeness');
+  const values = relationshipClaimsOfKind(remaining, 'values');
+  const expression = relationshipClaimsOfKind(remaining, 'expression');
+  const boundary = relationshipClaimsOfKind(remaining, 'boundary');
+  const friction = relationshipClaimsOfKind(remaining, 'friction');
+
+  const sections = [
+    {
+      sectionId: 'research-preview-relationship-core',
+      title: '관계운 핵심',
+      blocks: [...ambiguityBlocks(evidence), assertion(summaryClaim)],
+    },
+    sectionFromClaims('research-preview-relationship-closeness', '가까워지는 방식', closeness),
+    sectionFromClaims('research-preview-relationship-values', '관계에서 중요하게 보는 것', values),
+    sectionFromClaims(
+      'research-preview-relationship-expression',
+      '표현하고 소통하는 방식',
+      expression,
+    ),
+    sectionFromClaims('research-preview-relationship-boundary', '독립성과 경계', boundary),
+    sectionFromClaims('research-preview-relationship-friction', '관계에서 주의할 점', friction),
+  ].filter(Boolean);
+
+  sections.push({
+    sectionId: 'research-preview-relationship-scope',
+    title: '참고',
+    blocks: [
+      {
+        type: 'disclosure',
+        disclosureType: 'scope_limitation',
+        text: '이 관계운은 태어난 사주에서 보이는 일반적인 가까워지는 방식, 소통, 경계와 갈등 경향을 보는 풀이입니다. 특정 상대의 성격·외모·직업, 결혼·이별 결과, 외도 여부, 배우자 판단, 만남이나 결혼 시기를 예측하지 않습니다.',
+        relatedRefs: [summaryClaim.claimId],
+      },
+    ],
+  });
+
+  return {
+    schemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
+    requestId: evidence.requestId,
+    sections,
+  };
+}
+
 function previewDraft(prompt) {
   const evidence = prompt.evidence;
   const requestedSection = prompt.userRequest?.requestedSection;
@@ -333,6 +406,19 @@ function previewDraft(prompt) {
     }
     return wealthNatalPreviewDraft(evidence, wealthClaims);
   }
+  if (requestedSection === 'relationship:natal:general') {
+    const relationshipClaims = evidence.claims.filter(
+      (claim) =>
+        claim.taxonomy.tier === 'T8' &&
+        claim.taxonomy.category === 'relationship' &&
+        claim.taxonomy.subcategory === 'general' &&
+        claim.predicate === 'relationship_conclusion',
+    );
+    if (relationshipClaims.length === 0) {
+      throw new Error('Relationship natal preview request has no general-relationship conclusion evidence.');
+    }
+    return relationshipNatalPreviewDraft(evidence, relationshipClaims);
+  }
 
   throw new Error(`Unsupported research preview section: ${String(requestedSection)}`);
 }
@@ -356,7 +442,7 @@ const dependencies = {
     });
   },
   interpret(snapshot) {
-    const registry = createWealthNatalReadingCandidateRegistry();
+    const registry = createRelationshipNatalReadingCandidateRegistry();
     return {
       registry,
       interpretation: runInterpretation(snapshot, registry, { now: new Date() }),
@@ -418,12 +504,19 @@ function assertNoInternalLeak(serialized) {
     'windfallAuthorized',
     'financialAdviceAuthorized',
     'futureMoneyTimingAuthorized',
+    'specificPartnerAuthorized',
+    'partnerAttributePredictionAuthorized',
+    'marriageOutcomeAuthorized',
+    'breakupOutcomeAuthorized',
+    'infidelityInferenceAuthorized',
+    'compatibilityAuthorized',
     'month_branch_structural_context',
     '"direction"',
     '"families"',
     '"conclusionKind"',
     '"careerKind"',
     '"wealthKind"',
+    '"relationshipKind"',
     '"dominance"',
   ]) {
     if (serialized.includes(forbidden)) {
@@ -486,6 +579,23 @@ async function runSmoke(baseUrl) {
     }
   }
   assertNoInternalLeak(wealthSerialized);
+
+  const relationshipPayload = await requestReading(baseUrl, '연애운');
+  const relationshipSerialized = JSON.stringify(relationshipPayload);
+  for (const required of ['관계운 핵심', '참고']) {
+    if (!relationshipSerialized.includes(required)) {
+      throw new Error(`Relationship preview is missing required section: ${required}`);
+    }
+  }
+  if (!['가까워지는 방식', '관계에서 중요하게 보는 것', '표현하고 소통하는 방식', '독립성과 경계', '관계에서 주의할 점'].some((title) => relationshipSerialized.includes(title))) {
+    throw new Error('Relationship preview emitted no substantive relationship section.');
+  }
+  for (const forbiddenPromise of ['결혼하게 됩니다', '이별하게 됩니다', '바람을 피웁니다', '배우자는 ', '만나게 됩니다']) {
+    if (relationshipSerialized.includes(forbiddenPromise)) {
+      throw new Error(`Relationship preview contains deterministic relationship promise: ${forbiddenPromise}`);
+    }
+  }
+  assertNoInternalLeak(relationshipSerialized);
 }
 
 function writeStdout(message) {
@@ -518,8 +628,8 @@ server.listen(requestedPort, '127.0.0.1', async () => {
   writeStdout('Myeonghwa Research UX Preview');
   writeStdout('NOT PRODUCTION AUTHORITY');
   writeStdout(`Open: ${baseUrl}`);
-  writeStdout('Current meaningful test targets: 전체 사주, 직업운, 재물운 (natal)');
-  writeStdout('Annual/monthly specialist readings remain fail-closed when period evidence is insufficient.');
+  writeStdout('Current meaningful test targets: 전체 사주, 직업운, 재물운, 연애운/관계운 (natal)');
+  writeStdout('Spouse-specific, compatibility, annual/monthly specialist readings remain fail-closed when evidence is insufficient.');
   writeStdout('Press Ctrl+C to stop.');
   writeStdout('');
 });
