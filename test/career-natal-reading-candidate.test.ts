@@ -67,10 +67,24 @@ function careerClaims(execution: ReturnType<typeof runInterpretation>) {
   return execution.claims.filter((claim) => claim.predicate === 'career_conclusion');
 }
 
+function careerContext(execution: ReturnType<typeof runInterpretation>) {
+  return execution.claims.filter((claim) => claim.predicate === 'career_context');
+}
+
 function careerTypes(snapshot: CanonicalSajuSnapshot): readonly string[] {
   return careerClaims(runInterpretation(snapshot, createCareerNatalReadingCandidateRegistry()))
     .map((claim) => claim.claimType)
     .sort();
+}
+
+function previewFallbackCoreText(snapshot: CanonicalSajuSnapshot): string {
+  const first = careerClaims(
+    runInterpretation(snapshot, createCareerNatalReadingCandidateRegistry()),
+  )[0];
+  if (first === undefined) throw new Error('Expected a direct career conclusion.');
+  const value = first.value as { summary?: string };
+  if (typeof value.summary !== 'string') throw new Error('Expected career summary.');
+  return value.summary;
 }
 
 describe('natal career consumer reading research candidate', () => {
@@ -91,24 +105,29 @@ describe('natal career consumer reading research candidate', () => {
     ).toBe(true);
   });
 
-  it('preserves exact Ten-God subtype and visible-stem versus branch channel', () => {
-    const claims = careerClaims(
-      runInterpretation(fixture(), createCareerNatalReadingCandidateRegistry(), {
-        now: new Date('2026-08-24T08:32:00.000Z'),
-      }),
-    );
+  it('surfaces visible stems as direct conclusions and preserves branches as context', () => {
+    const execution = runInterpretation(fixture(), createCareerNatalReadingCandidateRegistry(), {
+      now: new Date('2026-08-24T08:32:00.000Z'),
+    });
+    const conclusions = careerClaims(execution);
+    const context = careerContext(execution);
 
-    expect(claims).toHaveLength(7);
-    expect(new Set(claims.map((claim) => (claim.value as { tenGod: string }).tenGod))).toEqual(
-      new Set(['비견', '편재', '편관', '정인', '정재', '상관', '식신']),
-    );
-    expect(new Set(claims.map((claim) => (claim.value as { channel: string }).channel))).toEqual(
-      new Set(['visible_stems', 'branches']),
+    expect(conclusions).toHaveLength(3);
+    expect(new Set(conclusions.map((claim) => (claim.value as { tenGod: string }).tenGod))).toEqual(
+      new Set(['비견', '편재', '편관']),
     );
     expect(
-      claims.every(
-        (claim) => claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'career',
+      conclusions.every(
+        (claim) => (claim.value as { channel: string }).channel === 'visible_stems',
       ),
+    ).toBe(true);
+
+    expect(context).toHaveLength(4);
+    expect(new Set(context.map((claim) => (claim.value as { tenGod: string }).tenGod))).toEqual(
+      new Set(['정인', '정재', '상관', '식신']),
+    );
+    expect(
+      context.every((claim) => (claim.value as { channel: string }).channel === 'branches'),
     ).toBe(true);
   });
 
@@ -116,15 +135,19 @@ describe('natal career consumer reading research candidate', () => {
     const snapshot = fixture(OUTPUT_ONLY_TEN_GODS);
     const registry = createCareerNatalReadingCandidateRegistry();
     const execution = runInterpretation(snapshot, registry);
-    const claims = careerClaims(execution);
+    const conclusions = careerClaims(execution);
+    const context = careerContext(execution);
 
-    expect(claims).toHaveLength(4);
-    expect(claims.map((claim) => claim.claimType).sort()).toEqual(
+    expect(conclusions.map((claim) => claim.claimType).sort()).toEqual(
+      [
+        'CAREER_NATAL_TEN_GOD_SANG_GWAN_VISIBLE_STEMS',
+        'CAREER_NATAL_TEN_GOD_SIK_SIN_VISIBLE_STEMS',
+      ].sort(),
+    );
+    expect(context.map((claim) => claim.claimType).sort()).toEqual(
       [
         'CAREER_NATAL_TEN_GOD_SANG_GWAN_BRANCHES',
-        'CAREER_NATAL_TEN_GOD_SANG_GWAN_VISIBLE_STEMS',
         'CAREER_NATAL_TEN_GOD_SIK_SIN_BRANCHES',
-        'CAREER_NATAL_TEN_GOD_SIK_SIN_VISIBLE_STEMS',
       ].sort(),
     );
 
@@ -141,37 +164,56 @@ describe('natal career consumer reading research candidate', () => {
     expect(career.selection.coverageState).toBe('complete');
     const bundledCareerClaims =
       career.evidence?.bundle.claims.filter((claim) => claim.predicate === 'career_conclusion') ?? [];
-    expect(bundledCareerClaims).toHaveLength(4);
+    const bundledContext =
+      career.evidence?.bundle.claims.filter((claim) => claim.predicate === 'career_context') ?? [];
+    expect(bundledCareerClaims).toHaveLength(2);
+    expect(bundledContext).toHaveLength(2);
     expect(career.evidence?.bundle.canonicalFacts.map((fact) => fact.path)).toContain(
       'derivedFacts.tenGods',
     );
   });
 
-  it('distinguishes the two reported career previews at exact subtype/channel level', () => {
+  it('distinguishes the two reported direct career previews before narrative rendering', () => {
     const august2004 = realSnapshot(2004, 8, 20, 'female');
     const january1996 = realSnapshot(1996, 1, 9, 'male');
     const augustTypes = careerTypes(august2004);
     const januaryTypes = careerTypes(january1996);
 
-    expect(augustTypes).not.toEqual(januaryTypes);
-
     expect(augustTypes).toEqual(
-      expect.arrayContaining([
+      [
         'CAREER_NATAL_TEN_GOD_JEONG_JAE_VISIBLE_STEMS',
         'CAREER_NATAL_TEN_GOD_SANG_GWAN_VISIBLE_STEMS',
         'CAREER_NATAL_TEN_GOD_SIK_SIN_VISIBLE_STEMS',
-      ]),
+      ].sort(),
     );
-    expect(augustTypes).not.toContain('CAREER_NATAL_TEN_GOD_BI_GYEON_VISIBLE_STEMS');
-
     expect(januaryTypes).toEqual(
-      expect.arrayContaining([
+      [
         'CAREER_NATAL_TEN_GOD_BI_GYEON_VISIBLE_STEMS',
-        'CAREER_NATAL_TEN_GOD_PYEON_JAE_VISIBLE_STEMS',
         'CAREER_NATAL_TEN_GOD_PYEON_GWAN_VISIBLE_STEMS',
-      ]),
+        'CAREER_NATAL_TEN_GOD_PYEON_JAE_VISIBLE_STEMS',
+      ].sort(),
     );
-    expect(januaryTypes).not.toContain('CAREER_NATAL_TEN_GOD_SANG_GWAN_VISIBLE_STEMS');
+    expect(augustTypes).not.toEqual(januaryTypes);
+    expect(previewFallbackCoreText(august2004)).not.toBe(previewFallbackCoreText(january1996));
+  });
+
+  it('keeps branch context from becoming a direct career headline candidate', () => {
+    for (const snapshot of [
+      realSnapshot(2004, 8, 20, 'female'),
+      realSnapshot(1996, 1, 9, 'male'),
+    ]) {
+      const execution = runInterpretation(snapshot, createCareerNatalReadingCandidateRegistry());
+      expect(
+        careerClaims(execution).every(
+          (claim) => (claim.value as { channel?: string }).channel === 'visible_stems',
+        ),
+      ).toBe(true);
+      expect(
+        careerContext(execution).every(
+          (claim) => (claim.value as { channel?: string }).channel === 'branches',
+        ),
+      ).toBe(true);
+    }
   });
 
   it('opens natal career intent while annual career remains partial without T9 period evidence', () => {
@@ -209,10 +251,9 @@ describe('natal career consumer reading research candidate', () => {
     expect(annual.selection.missingRequirements).toContain('ANNUAL_CAREER_PERIOD_CLAIM_REQUIRED');
   });
 
-  it('binds every career conclusion directly to the resolved Ten-God layout', () => {
-    const claims = careerClaims(
-      runInterpretation(fixture(), createCareerNatalReadingCandidateRegistry()),
-    );
+  it('binds all direct and contextual career observations to the resolved Ten-God layout', () => {
+    const execution = runInterpretation(fixture(), createCareerNatalReadingCandidateRegistry());
+    const claims = [...careerClaims(execution), ...careerContext(execution)];
 
     for (const claim of claims) {
       expect(claim.factRefs).toContain('derivedFacts.tenGods');
@@ -224,9 +265,8 @@ describe('natal career consumer reading research candidate', () => {
   });
 
   it('does not emit occupation assignment, salary, success, or future-event authority', () => {
-    const claims = careerClaims(
-      runInterpretation(fixture(), createCareerNatalReadingCandidateRegistry()),
-    );
+    const execution = runInterpretation(fixture(), createCareerNatalReadingCandidateRegistry());
+    const claims = [...careerClaims(execution), ...careerContext(execution)];
     const encoded = JSON.stringify(claims);
 
     for (const forbidden of [
