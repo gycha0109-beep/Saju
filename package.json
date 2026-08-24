@@ -10,6 +10,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./product-reading": {
+      "types": "./dist/product-reading.d.ts",
+      "default": "./dist/product-reading.js"
     }
   },
   "files": [
