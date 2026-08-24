@@ -1,7 +1,9 @@
+import type { TenGod } from '../contracts/calculation.js';
 import type {
   InterpretationPack,
   MethodologyDefinition,
   RuleDefinition,
+  RuleExpression,
 } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import {
@@ -16,13 +18,12 @@ import {
   GENERAL_NATAL_CONCLUSION_METHODOLOGY,
   GENERAL_NATAL_CONCLUSION_RULES,
   GENERAL_NATAL_CONCLUSION_SOURCE,
-  type ConclusionFamily,
 } from './general-natal-conclusion-synthesis-candidate.js';
 
-export const CAREER_NATAL_READING_CANDIDATE_VERSION = '0.3.0-research' as const;
+export const CAREER_NATAL_READING_CANDIDATE_VERSION = '0.4.0-research' as const;
 
-const METHOD_ID = 'M-CAREER-NATAL-READING-TEN-GOD-SYNTHESIS-V1';
-const CAREER_RULE_SET = 'career-natal-consumer-reading';
+const METHOD_ID = 'M-CAREER-NATAL-READING-EXACT-TEN-GOD-CHANNEL-V2';
+const CAREER_RULE_SET = 'career-natal-exact-ten-god-channel-reading';
 
 const QUALITY: RuleDefinition['quality'] = Object.freeze({
   provenanceQuality: 'secondary_only',
@@ -32,28 +33,29 @@ const QUALITY: RuleDefinition['quality'] = Object.freeze({
 });
 
 export type CareerConclusionKind = 'driver' | 'fit' | 'environment' | 'friction';
+export type CareerTenGodChannel = 'visible_stems' | 'branches';
 
-interface CareerConclusionSpec {
+interface CareerTenGodSpec {
   id: string;
-  subcategory: string;
   kind: CareerConclusionKind;
-  families: readonly ConclusionFamily[];
   headline: string;
-  summary: string;
+  visibleSummary: string;
+  branchSummary: string;
 }
 
 export const CAREER_NATAL_READING_METHODOLOGY: MethodologyDefinition = Object.freeze({
   methodologyId: METHOD_ID,
   version: CAREER_NATAL_READING_CANDIDATE_VERSION,
   family: 'domain_synthesis',
-  name: 'Natal career reading from bounded Ten-God family synthesis (research)',
+  name: 'Natal career reading from exact Ten-God subtype and channel (research)',
   description:
-    'Applies already-materialized whole-chart Ten-God family themes to bounded career-reading questions such as work motivation, task fit, work environment, and recurring friction without predicting a specific occupation or career outcome.',
+    'Projects resolved Ten-God subtypes into bounded career-reading themes while preserving the exact Ten-God identity and visible-stem versus branch channel. It intentionally avoids collapsing all ten subtypes into five broad families before consumer synthesis.',
   assumptions: [
-    'Career claims describe work-style themes and decision criteria, not a deterministic occupation assignment.',
-    'A represented Ten-God family is not a score, rank, aptitude test, or proof of career success.',
+    'Career claims describe bounded work-style tendencies and decision criteria, not deterministic occupation assignment.',
+    '비견 and 겁재, 식신 and 상관, 편재 and 정재, 편관 and 정관, 편인 and 정인 remain distinct observations and are not collapsed into a single family sentence.',
+    'Visible stems and branches remain separate observation channels; neither channel is converted into a numeric dominance or strength score.',
+    'A Ten-God subtype or channel is not a rank, aptitude score, proof of career success, or prediction of employment, salary, promotion, or future timing.',
     'Named occupations, hiring outcomes, salary, promotion, business success, luck polarity, and future timing are outside this candidate.',
-    'Family combinations are interpreted only as bounded coexistence or generation/control themes already supported by the underlying research candidates.',
     'The candidate remains research-only until domain review and production authorization are completed.',
   ],
   requiredFactTypes: ['derivedFacts.tenGods'],
@@ -66,153 +68,167 @@ function sourceRefs(): RuleDefinition['sourceRefs'] {
     {
       sourceId: GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId,
       supportType: 'interpretive_basis',
-      notes: 'Supports bounded Ten-God semantic vocabulary used for work-style themes.',
+      notes:
+        'Supports narrow Ten-God subtype semantics while excluding historical deterministic career, rank, wealth, spouse, health, and lifespan claims.',
     },
     {
       sourceId: GENERAL_NATAL_CONCLUSION_SOURCE.sourceId,
-      supportType: 'interpretive_basis',
-      notes: 'Supports bounded generation/control relations among Ten-God families used for career synthesis.',
+      supportType: 'corroboration',
+      notes:
+        'Provides bounded synthesis context; exact subtype and channel identity remain primary evidence for this career candidate.',
     },
   ];
 }
 
-const CAREER_CONCLUSIONS: readonly CareerConclusionSpec[] = [
-  {
-    id: 'PEER-SELF-DIRECTION',
-    subcategory: 'work_environment',
+const TEN_GOD_SPECS: Readonly<Record<TenGod, CareerTenGodSpec | undefined>> = Object.freeze({
+  일간: undefined,
+  비견: {
+    id: 'BI_GYEON',
     kind: 'environment',
-    families: ['peer'],
-    headline: '자기 방식이 전혀 없는 일보다는 판단 여지가 있는 일이 편합니다',
-    summary:
-      '일할 때 스스로 기준을 세우고 선택할 수 있는 여지가 중요하게 느껴질 수 있습니다. 모든 과정을 정해진 방식대로만 따라야 하는 역할보다, 맡은 범위 안에서 직접 판단하고 조정할 수 있는 환경이 더 자연스럽게 맞을 수 있습니다.',
+    headline: '내 판단 기준을 지키면서 일할 여지가 중요합니다',
+    visibleSummary:
+      '겉으로 드러나는 업무 방식에서 자기 기준과 판단을 직접 세우는 힘이 나타납니다. 맡은 범위 안에서 방법을 선택하거나 스스로 결정을 내려야 할 때 편할 수 있고, 세부 방식까지 계속 통제받는 환경에서는 답답함을 느끼기 쉽습니다.',
+    branchSummary:
+      '일을 실제로 이어가는 바탕에서 자기 기준을 쉽게 버리지 않는 흐름이 나타납니다. 겉으로 강하게 주장하지 않더라도 중요한 선택에서는 납득한 방식이 있어야 오래 집중하기 쉬울 수 있습니다.',
   },
-  {
-    id: 'RESOURCE-LEARNING-ENGINE',
-    subcategory: 'work_driver',
-    kind: 'driver',
-    families: ['resource'],
-    headline: '배우고 이해하는 과정이 일의 동력으로 연결됩니다',
-    summary:
-      '새로운 정보를 익히고 구조를 파악하는 과정이 업무 수행과 연결될 때 강점이 살아날 수 있습니다. 이미 아는 일을 반복하는 것보다 계속 배우거나 해석해야 하는 과제가 있는 편이 더 맞을 수 있습니다.',
-  },
-  {
-    id: 'OUTPUT-MAKING-ENGINE',
-    subcategory: 'work_driver',
-    kind: 'driver',
-    families: ['output'],
-    headline: '생각을 실제 결과물로 꺼내는 일이 중요합니다',
-    summary:
-      '생각이나 구상을 말, 글, 계획, 산출물처럼 확인 가능한 형태로 바꾸는 과정에서 만족을 느끼기 쉽습니다. 결과가 남지 않는 역할보다 직접 만들어보고 다듬는 과정이 포함된 역할이 더 잘 맞을 수 있습니다.',
-  },
-  {
-    id: 'WEALTH-RESULT-ORIENTATION',
-    subcategory: 'work_fit',
-    kind: 'fit',
-    families: ['wealth'],
-    headline: '내 일이 어떤 결과로 이어지는지 보이는 편이 좋습니다',
-    summary:
-      '완료 여부, 투입한 시간과 자원, 외부의 반응처럼 현실에서 확인되는 결과가 보일 때 일의 의미가 선명해질 수 있습니다. 무엇을 위해 하는 일인지 끝까지 알기 어려운 역할보다 결과와 연결되는 구조가 더 편할 수 있습니다.',
-  },
-  {
-    id: 'OFFICER-RESPONSIBILITY-FIT',
-    subcategory: 'work_fit',
-    kind: 'fit',
-    families: ['officer'],
-    headline: '책임 범위와 기준이 분명할수록 집중하기 쉽습니다',
-    summary:
-      '맡은 역할과 책임, 품질 기준이 명확할 때 오히려 일하기 편할 수 있습니다. 규칙 자체를 좋아한다는 뜻이라기보다, 무엇을 책임져야 하는지 분명한 환경에서 힘을 쓰기 쉬운 쪽에 가깝습니다.',
-  },
-  {
-    id: 'OUTPUT-WEALTH-MAKE-TO-VALUE',
-    subcategory: 'work_driver',
-    kind: 'driver',
-    families: ['output', 'wealth'],
-    headline: '만드는 일과 실제 가치가 연결될 때 동력이 커집니다',
-    summary:
-      '무언가를 직접 만들고 그 결과가 실제 쓰임이나 반응, 효율, 성과처럼 확인 가능한 가치로 이어지는 흐름이 잘 맞을 수 있습니다. 제작과 결과 확인이 완전히 분리된 역할보다 둘 사이의 연결을 볼 수 있는 일이 더 만족스럽게 느껴질 수 있습니다.',
-  },
-  {
-    id: 'OUTPUT-WEALTH-OFFICER-END-TO-END',
-    subcategory: 'work_fit',
-    kind: 'fit',
-    families: ['output', 'wealth', 'officer'],
-    headline: '기획부터 실행과 결과 확인까지 이어지는 역할이 잘 맞을 수 있습니다',
-    summary:
-      '한 단계만 잘라 맡기보다 직접 만들고, 결과를 확인하고, 필요한 책임까지 이어서 맡는 흐름에서 강점이 드러날 수 있습니다. 하나의 과제를 처음부터 끝까지 이어서 책임지는 방식이 더 잘 맞는 편으로 읽을 수 있습니다.',
-  },
-  {
-    id: 'OFFICER-RESOURCE-STRUCTURED-PROBLEM-SOLVING',
-    subcategory: 'work_fit',
-    kind: 'fit',
-    families: ['officer', 'resource'],
-    headline: '복잡한 요구를 공부해서 해결하는 일이 맞을 수 있습니다',
-    summary:
-      '조건이나 제약이 생겼을 때 관련 정보를 찾고 원리를 이해한 뒤 해결책을 만드는 방식이 자연스럽습니다. 처음에는 복잡해 보여도 기준과 맥락을 파고들수록 풀리는 일을 맡았을 때 강점을 쓰기 쉽습니다.',
-  },
-  {
-    id: 'PEER-OFFICER-BOUNDED-AUTONOMY',
-    subcategory: 'work_environment',
-    kind: 'environment',
-    families: ['peer', 'officer'],
-    headline: '자율권은 필요하지만 책임 경계도 분명해야 합니다',
-    summary:
-      '세세하게 통제받는 환경은 답답할 수 있지만, 아무 기준 없이 알아서 하라는 환경도 편하지 않을 수 있습니다. 목표와 책임은 분명하고 방법은 스스로 선택할 수 있는 구조가 가장 안정적으로 맞을 가능성이 있습니다.',
-  },
-  {
-    id: 'WEALTH-RESOURCE-PREPARE-VS-SHIP',
-    subcategory: 'work_friction',
+  겁재: {
+    id: 'GEOP_JAE',
     kind: 'friction',
-    families: ['wealth', 'resource'],
-    headline: '충분히 알아보는 것과 빨리 결과를 내는 것 사이에서 막힐 수 있습니다',
-    summary:
-      '조금 더 알아보고 싶다는 마음과 일단 결과를 만들어야 한다는 현실이 충돌하기 쉽습니다. 조사와 준비의 종료 기준을 미리 정하지 않으면 시작이 늦어지거나, 반대로 너무 빨리 시작한 뒤 다시 고치는 일이 반복될 수 있습니다.',
+    headline: '사람과 자원을 함께 다룰 때 경쟁과 역할 경계가 중요합니다',
+    visibleSummary:
+      '겉으로 드러나는 업무 방식에서 동료와 속도를 맞추거나 경쟁하면서 움직이는 힘이 나타납니다. 협업 자체보다 누가 무엇을 맡고 어떤 자원을 함께 쓰는지가 분명할 때 불필요한 힘겨루기를 줄이기 쉽습니다.',
+    branchSummary:
+      '일을 실제로 이어가는 바탕에서 사람 사이의 비교, 경쟁, 몫의 문제가 신경 쓰이기 쉬울 수 있습니다. 공동 작업에서는 기여 범위와 책임을 구체적으로 나누는 편이 안정적입니다.',
   },
-  {
-    id: 'PEER-WEALTH-MY-WAY-VS-RESULT',
-    subcategory: 'work_friction',
-    kind: 'friction',
-    families: ['peer', 'wealth'],
-    headline: '내가 원하는 방식과 실제 성과 기준이 다를 때 스트레스가 커질 수 있습니다',
-    summary:
-      '일의 완성 방식에 대한 개인 기준이 강한데 비용, 일정, 효율, 외부 요구 같은 현실 조건이 다른 답을 요구하면 갈등이 생기기 쉽습니다. 무엇은 지키고 무엇은 타협할지 기준을 미리 나누는 것이 중요합니다.',
+  식신: {
+    id: 'SIK_SIN',
+    kind: 'driver',
+    headline: '꾸준히 만들어 결과를 쌓는 과정이 동력이 되기 쉽습니다',
+    visibleSummary:
+      '겉으로 드러나는 업무 방식에서 생각을 실제 산출물로 차분히 이어가는 힘이 나타납니다. 한 번의 강한 승부보다 반복해서 만들고 품질을 다듬으며 결과를 축적하는 일이 잘 맞을 수 있습니다.',
+    branchSummary:
+      '일을 실제로 이어가는 바탕에서 꾸준히 생산하고 완성하는 과정이 중요하게 작용할 수 있습니다. 눈앞의 반응이 크지 않아도 일정한 리듬으로 결과를 쌓을 수 있는 구조가 도움이 됩니다.',
   },
-];
+  상관: {
+    id: 'SANG_GWAN',
+    kind: 'driver',
+    headline: '문제를 발견하고 기존 방식을 고쳐 결과로 보여주는 힘이 큽니다',
+    visibleSummary:
+      '겉으로 드러나는 업무 방식에서 기존 방식의 문제를 발견하고 더 나은 형태로 바꾸려는 힘이 나타납니다. 정해진 절차를 그대로 반복하기보다 개선할 여지가 있고 생각을 말이나 결과물로 드러낼 수 있는 일이 더 자연스러울 수 있습니다.',
+    branchSummary:
+      '일을 실제로 이어가는 바탕에서 비효율이나 모순을 그냥 넘기기 어려운 흐름이 나타납니다. 충분히 납득되지 않는 기준을 오래 따르기보다 문제를 찾아 수정할 여지가 있을 때 집중하기 쉽습니다.',
+  },
+  편재: {
+    id: 'PYEON_JAE',
+    kind: 'fit',
+    headline: '여러 현실 조건과 외부 반응을 빠르게 엮는 일이 맞을 수 있습니다',
+    visibleSummary:
+      '겉으로 드러나는 업무 방식에서 여러 사람, 자원, 일정, 외부 반응을 동시에 보며 현실적인 선택을 하는 힘이 나타납니다. 한 가지 조건만 오래 파기보다 변화하는 상황을 읽고 우선순위를 조정하는 역할에서 강점을 쓰기 쉽습니다.',
+    branchSummary:
+      '일을 실제로 이어가는 바탕에서 시간과 자원을 어디에 배분할지 판단하는 문제가 중요하게 작용할 수 있습니다. 선택지가 많을수록 현실적인 효율과 활용 가능성을 확인하는 편이 도움이 됩니다.',
+  },
+  정재: {
+    id: 'JEONG_JAE',
+    kind: 'fit',
+    headline: '구체적인 결과와 자원을 안정적으로 관리하는 역할이 편할 수 있습니다',
+    visibleSummary:
+      '겉으로 드러나는 업무 방식에서 맡은 자원과 결과를 구체적으로 확인하고 안정적으로 관리하려는 힘이 나타납니다. 완료 기준과 책임 범위가 보이는 일, 쌓인 결과를 꾸준히 관리하는 역할이 더 편할 수 있습니다.',
+    branchSummary:
+      '일을 실제로 이어가는 바탕에서 결과를 허술하게 넘기기보다 일정, 비용, 품질처럼 현실적인 조건을 챙기는 흐름이 나타납니다. 목표와 관리 기준이 구체적일수록 지속하기 쉽습니다.',
+  },
+  편관: {
+    id: 'PYEON_GWAN',
+    kind: 'fit',
+    headline: '압박이나 난도가 있는 상황에서 빠르게 책임지는 역할과 연결될 수 있습니다',
+    visibleSummary:
+      '겉으로 드러나는 업무 방식에서 긴장도가 있거나 빠른 판단이 필요한 상황을 정면으로 다루는 힘이 나타납니다. 책임은 분명하되 대응 여지가 있는 역할에서 집중력이 살아날 수 있고, 압박만 크고 결정권이 없는 환경은 소모적일 수 있습니다.',
+    branchSummary:
+      '일을 실제로 이어가는 바탕에서 기준을 어기지 않으면서 어려운 조건을 버티는 문제가 중요하게 작용할 수 있습니다. 책임의 무게가 커질수록 무엇까지 맡을지 경계를 분명히 하는 편이 필요합니다.',
+  },
+  정관: {
+    id: 'JEONG_GWAN',
+    kind: 'fit',
+    headline: '역할과 기준이 명확한 구조에서 안정적으로 책임지기 쉽습니다',
+    visibleSummary:
+      '겉으로 드러나는 업무 방식에서 역할, 기준, 절차를 분명하게 이해하고 책임지는 힘이 나타납니다. 무엇을 지켜야 하고 어디까지 책임져야 하는지가 명확한 환경에서 일의 방향을 잡기 쉬울 수 있습니다.',
+    branchSummary:
+      '일을 실제로 이어가는 바탕에서 질서와 책임 기준을 무시하기보다 일정한 틀 안에서 안정적으로 완수하려는 흐름이 나타납니다. 기준이 계속 바뀌거나 책임 소재가 अस्पष्ट한 환경은 피로하게 느껴질 수 있습니다.',
+  },
+  편인: {
+    id: 'PYEON_IN',
+    kind: 'driver',
+    headline: '익숙하지 않은 정보를 연결해 새로운 해석을 만드는 일이 맞을 수 있습니다',
+    visibleSummary:
+      '겉으로 드러나는 업무 방식에서 정해진 설명만 받아들이기보다 다른 자료와 관점을 연결해 패턴을 찾는 힘이 나타납니다. 낯선 문제를 탐색하거나 기존 방식으로 바로 풀리지 않는 과제를 다루는 일이 더 흥미로울 수 있습니다.',
+    branchSummary:
+      '일을 실제로 이어가는 바탕에서 혼자 자료를 파고들거나 남들이 지나친 연결점을 찾는 과정이 중요하게 작용할 수 있습니다. 충분한 탐색 시간이 없으면 생각이 끊기는 느낌을 받을 수 있습니다.',
+  },
+  정인: {
+    id: 'JEONG_IN',
+    kind: 'driver',
+    headline: '정보를 체계적으로 이해하고 정리하는 과정이 일의 기반이 되기 쉽습니다',
+    visibleSummary:
+      '겉으로 드러나는 업무 방식에서 정보를 배우고 구조화해 안정적인 근거로 만드는 힘이 나타납니다. 자료, 원리, 기준을 충분히 이해한 뒤 움직이는 역할에서 실수를 줄이고 완성도를 높이기 쉽습니다.',
+    branchSummary:
+      '일을 실제로 이어가는 바탕에서 충분히 이해하고 정리된 근거가 있어야 마음이 놓이는 흐름이 나타납니다. 배울 시간이나 참고할 기준이 전혀 없는 상태에서 즉흥적으로만 처리하는 일은 피로할 수 있습니다.',
+  },
+});
 
-function careerConclusionRule(spec: CareerConclusionSpec): RuleDefinition {
-  const inputs = spec.families.map((family) => ({
-    key: family,
-    source: 'interpretation_claim' as const,
-    pathOrClaimType: `TEN_GOD_FAMILY_${family.toUpperCase()}_PRESENT`,
-    required: true,
-    ambiguityBehavior: 'scenario_preserving' as const,
-  }));
+const CHANNEL_PATHS: Readonly<Record<CareerTenGodChannel, readonly string[]>> = Object.freeze({
+  visible_stems: ['year.stem.value', 'month.stem.value', 'hour.stem.value'],
+  branches: ['year.branch.value', 'month.branch.value', 'day.branch.value', 'hour.branch.value'],
+});
+
+function channelCondition(channel: CareerTenGodChannel, god: TenGod): RuleExpression {
+  return {
+    op: 'or',
+    expressions: CHANNEL_PATHS[channel].map((path) => ({
+      op: 'eq' as const,
+      left: { kind: 'input' as const, key: 'tenGods', path },
+      right: { kind: 'literal' as const, value: god },
+    })),
+  };
+}
+
+function careerTenGodRule(
+  god: Exclude<TenGod, '일간'>,
+  channel: CareerTenGodChannel,
+): RuleDefinition {
+  const spec = TEN_GOD_SPECS[god];
+  if (spec === undefined) throw new Error(`Missing career Ten-God spec: ${god}`);
+  const summary = channel === 'visible_stems' ? spec.visibleSummary : spec.branchSummary;
+  const channelLabel = channel === 'visible_stems' ? 'visible stems' : 'branches';
 
   return {
-    ruleId: `RULE-CAREER-NATAL-${spec.id}`,
+    ruleId: `RULE-CAREER-NATAL-${spec.id}-${channel.toUpperCase()}`,
     version: CAREER_NATAL_READING_CANDIDATE_VERSION,
     ruleSetId: CAREER_RULE_SET,
-    taxonomy: { tier: 'T8', category: 'career', subcategory: spec.subcategory },
+    taxonomy: { tier: 'T8', category: 'career', subcategory: `ten_god_${channel}` },
     methodologyRef: { id: METHOD_ID, version: CAREER_NATAL_READING_CANDIDATE_VERSION },
-    title: spec.headline,
+    title: `${god} career theme in ${channelLabel}`,
     description:
-      'Synthesizes already-materialized whole-chart Ten-God family claims into a bounded natal career-reading conclusion.',
-    inputs,
-    condition: {
-      op: 'and',
-      expressions: spec.families.map((family) => ({
-        op: 'exists' as const,
-        value: { kind: 'input' as const, key: family },
-      })),
-    },
+      'Projects one exact resolved Ten-God subtype in one preserved chart channel into a bounded work-style theme without collapsing it into a five-family generic sentence.',
+    inputs: [
+      {
+        key: 'tenGods',
+        source: 'derived_fact',
+        pathOrClaimType: 'derivedFacts.tenGods',
+        acceptedStatuses: ['resolved'],
+        required: true,
+        ambiguityBehavior: 'scenario_preserving',
+      },
+    ],
+    condition: channelCondition(channel, god),
     output: {
-      claimType: `CAREER_NATAL_CONCLUSION_${spec.id.replaceAll('-', '_')}`,
+      claimType: `CAREER_NATAL_TEN_GOD_${spec.id}_${channel.toUpperCase()}`,
       subject: 'natal_chart',
       predicate: 'career_conclusion',
       value: {
         careerKind: spec.kind,
+        tenGod: god,
+        channel,
         headline: spec.headline,
-        summary: spec.summary,
-        families: spec.families,
+        summary,
         specificOccupationAuthorized: false,
         careerSuccessAuthorized: false,
         incomeOutcomeAuthorized: false,
@@ -220,8 +236,8 @@ function careerConclusionRule(spec: CareerConclusionSpec): RuleDefinition {
         numericScoringAuthorized: false,
       },
       polarity: 'neutral',
-      emphasis: spec.families.length >= 2 ? 'moderate' : 'minor',
-      tags: ['research', 'career', 'natal', 'consumer-conclusion', spec.kind],
+      emphasis: channel === 'visible_stems' ? 'moderate' : 'minor',
+      tags: ['research', 'career', 'natal', 'exact-ten-god', channel, spec.kind],
     },
     sourceRefs: sourceRefs(),
     quality: QUALITY,
@@ -229,8 +245,15 @@ function careerConclusionRule(spec: CareerConclusionSpec): RuleDefinition {
   };
 }
 
+const CAREER_TEN_GODS = (Object.keys(TEN_GOD_SPECS) as TenGod[]).filter(
+  (god): god is Exclude<TenGod, '일간'> => god !== '일간',
+);
+const CAREER_CHANNELS: readonly CareerTenGodChannel[] = ['visible_stems', 'branches'];
+
 export const CAREER_NATAL_READING_RULES: readonly RuleDefinition[] = Object.freeze(
-  CAREER_CONCLUSIONS.map(careerConclusionRule),
+  CAREER_CHANNELS.flatMap((channel) =>
+    CAREER_TEN_GODS.map((god) => careerTenGodRule(god, channel)),
+  ),
 );
 
 const ALL_RULES: readonly RuleDefinition[] = Object.freeze([
@@ -246,7 +269,7 @@ const ENABLED_RULE_SETS = Object.freeze([...new Set(ALL_RULES.map((rule) => rule
 export const CAREER_NATAL_READING_PACK: InterpretationPack = Object.freeze({
   packId: 'PACK-CAREER-NATAL-CONSUMER-READING-CANDIDATE',
   version: CAREER_NATAL_READING_CANDIDATE_VERSION,
-  name: 'Natal Career Consumer Reading Research Candidate',
+  name: 'Natal Career Exact Ten-God Consumer Reading Research Candidate',
   methodologyRefs: [
     {
       id: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.methodologyId,
