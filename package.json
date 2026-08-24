@@ -18,6 +18,10 @@
     "./product-host": {
       "types": "./dist/product-host.d.ts",
       "default": "./dist/product-host.js"
+    },
+    "./production-runtime": {
+      "types": "./dist/production-runtime.d.ts",
+      "default": "./dist/production-runtime.js"
     }
   },
   "files": [
