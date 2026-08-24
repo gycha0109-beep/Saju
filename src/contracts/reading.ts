@@ -1,3 +1,103 @@
+import type { ContentAddressedVersionedRef } from './common.js';
+import type { TaxonomyTier } from './interpretation.js';
+
+export type ReadingDomain =
+  | 'general'
+  | 'family'
+  | 'relationship'
+  | 'compatibility'
+  | 'career'
+  | 'business'
+  | 'wealth'
+  | 'life_stage'
+  | 'question_specific';
+
+export type ReadingTemporalScope = 'natal' | 'annual' | 'monthly' | 'life_stage';
+
+export type ReadingRelationshipScope = 'general' | 'parents' | 'children' | 'spouse';
+
+export interface ReadingIntent {
+  domain: ReadingDomain;
+  temporalScope: ReadingTemporalScope;
+  relationshipScope?: ReadingRelationshipScope;
+}
+
+export interface ReadingRequest {
+  requestId: string;
+  intent: ReadingIntent;
+  targetPersonRef?: string;
+  question?: string;
+  outputPreferences?: {
+    preferredDetail?: 'concise' | 'standard' | 'detailed';
+    includeSourceSummaries?: boolean;
+  };
+}
+
+export interface ReadingClaimSelector {
+  selectorId: string;
+  taxonomy?: {
+    tiers?: readonly Exclude<TaxonomyTier, 'T0'>[];
+    categories?: readonly string[];
+    subcategories?: readonly string[];
+  };
+  claimTypes?: readonly string[];
+  subjects?: readonly string[];
+  predicates?: readonly string[];
+}
+
+export interface ReadingClaimSelectorGroup {
+  requirementId: string;
+  anyOf: readonly ReadingClaimSelector[];
+}
+
+export interface DomainReadingProfile {
+  profileId: string;
+  version: string;
+  registryVersion: string;
+  intent: ReadingIntent;
+  requiredClaimSelectors: readonly ReadingClaimSelectorGroup[];
+  optionalClaimSelectors: readonly ReadingClaimSelector[];
+  excludedClaimSelectors: readonly ReadingClaimSelector[];
+  temporalRequirements: {
+    scope: ReadingTemporalScope;
+    periodEvidence: 'not_required' | 'required';
+    explicitPeriodSubcategoryRequired: boolean;
+  };
+  scenarioHandling: 'preserve_claim_scenarios';
+  ambiguityHandling: 'preserve';
+  conflictPolicy: 'preserve_all';
+  minimumEvidencePolicy: {
+    complete: 'all_required_groups';
+    partial: 'some_required_groups';
+    insufficient: 'no_required_groups';
+  };
+}
+
+export type ReadingCoverageState =
+  | 'complete'
+  | 'partial_coverage'
+  | 'insufficient_evidence'
+  | 'unsupported_intent';
+
+export interface ReadingEvidenceSelection {
+  selectionId: string;
+  intent: ReadingIntent;
+  profileRef?: ContentAddressedVersionedRef;
+  coverageState: ReadingCoverageState;
+  targetClaimIds: readonly string[];
+  selectedClaimIds: readonly string[];
+  omittedClaimIds: readonly string[];
+  missingRequirements: readonly string[];
+  scenarioRefs: readonly string[];
+  conflictRelationIds: readonly string[];
+  constraints: {
+    mayGenerateClaims: false;
+    mayResolveConflicts: false;
+    mayCollapseScenarios: false;
+    mayPromoteResearchAuthority: false;
+  };
+}
+
 export type ReadingStatus =
   | 'ready'
   | 'ready_with_ambiguity'
