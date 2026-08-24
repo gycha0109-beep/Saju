@@ -428,6 +428,7 @@ function validInputDeclaration(requirement: RuleInputRequirement): boolean {
     case undefined:
       return true;
   }
+  return false;
 }
 
 function resolveInputs(rule: RuleDefinition, context: RuleEvaluationContext): InputResolution {
