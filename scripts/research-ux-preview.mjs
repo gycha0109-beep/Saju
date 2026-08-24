@@ -7,17 +7,17 @@ import {
   runInterpretation,
 } from '../dist/index.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
-import { createGeneralNatalT8StructuralSummaryCandidateRegistry } from '../dist/research/general-natal-t8-structural-summary-candidate.js';
+import { createGeneralNatalUsefulReadingCandidateRegistry } from '../dist/research/general-natal-useful-reading-candidate.js';
 
-const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v2';
-const GENERAL_NATAL_CLAIM_TYPE = 'GENERAL_NATAL_MONTH_BRANCH_STRUCTURAL_CONTEXT';
-const SCOPE_GUARD_CLAIM_TYPE = 'DAY_MASTER_MONTH_BRANCH_SCOPE_GUARD';
+const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v3';
+const BASELINE_CLAIM_TYPE = 'GENERAL_NATAL_DAY_MASTER_BASELINE';
+const SCOPE_GUARD_CLAIM_TYPE = 'GENERAL_NATAL_USEFUL_READING_SCOPE-GUARD';
 const smokeMode = process.env.MYEONGHWA_PREVIEW_SMOKE === '1';
 const fetchRequest = globalThis.fetch.bind(globalThis);
 
 const narrativePolicy = {
   policyId: RESEARCH_PREVIEW_VERSION,
-  version: '2.0.0-preview',
+  version: '3.0.0-preview',
   language: 'ko',
   certaintyPolicy: {
     deterministicFacts: 'direct',
@@ -40,32 +40,33 @@ const narrativePolicy = {
   sourceDisclosure: 'internal_only',
 };
 
-const relationText = {
-  peer: '월지와 일간이 같은 오행에 속하는 관계입니다.',
-  resource: '월지의 오행이 일간의 오행을 생하는 관계입니다.',
-  output: '일간의 오행이 월지의 오행을 생하는 관계입니다.',
-  wealth: '일간의 오행이 월지의 오행을 극하는 관계입니다.',
-  officer: '월지의 오행이 일간의 오행을 극하는 관계입니다.',
-};
+const SECTION_ORDER = [
+  ['relationships_and_agency', '관계와 자기주도'],
+  ['learning_and_support', '생각과 학습'],
+  ['expression_and_workstyle', '표현과 일하는 방식'],
+  ['resources_and_results', '돈과 자원'],
+  ['responsibility_and_pressure', '책임과 압박'],
+];
 
-function previewDraft(evidence) {
-  const t8Claim = evidence.claims.find((claim) => claim.claimType === GENERAL_NATAL_CLAIM_TYPE);
-  if (t8Claim === undefined) {
-    throw new Error('General natal structural context claim is missing from the preview evidence bundle.');
+function valueRecord(claim) {
+  if (claim.value === null || typeof claim.value !== 'object' || Array.isArray(claim.value)) {
+    throw new Error(`Preview claim ${claim.claimId} has an unsupported value shape.`);
   }
+  return claim.value;
+}
 
-  const value = t8Claim.value;
-  const relation =
-    value !== null && typeof value === 'object' && typeof value.relation === 'string'
-      ? value.relation
-      : undefined;
-  const summary = relation === undefined ? undefined : relationText[relation];
-  if (summary === undefined) {
-    throw new Error('General natal structural relationship is not supported by the preview renderer.');
-  }
+function assertion(claim, text) {
+  return {
+    type: 'assertion',
+    text,
+    epistemicType: 'synthesis',
+    evidenceRefs: [{ sourceType: 'claim', ref: claim.claimId }],
+    methodologyRefs: [claim.methodologyRef],
+  };
+}
 
-  const scopeGuard = evidence.claims.find((claim) => claim.claimType === SCOPE_GUARD_CLAIM_TYPE);
-  const ambiguityBlocks = evidence.canonicalFacts
+function ambiguityBlocks(evidence) {
+  return evidence.canonicalFacts
     .filter((fact) => fact.scenarioRef === undefined && fact.fact.status === 'ambiguous')
     .map((fact) => ({
       type: 'disclosure',
@@ -73,43 +74,93 @@ function previewDraft(evidence) {
       text: `계산 조건에 따라 ${fact.path} 값이 하나로 확정되지 않습니다. 가능한 경우를 구분해 확인합니다.`,
       relatedRefs: [fact.ref],
     }));
+}
+
+function themeText(claim) {
+  const value = valueRecord(claim);
+  const headline = typeof value.headline === 'string' ? value.headline : '해석 주제';
+  const summary = typeof value.summary === 'string' ? value.summary : '';
+  const channel = value.channel;
+  const channelText =
+    channel === 'visible_stems'
+      ? '겉으로 드러나는 천간에서 확인되는 축입니다.'
+      : channel === 'branches'
+        ? '지지에서 확인되는 축입니다.'
+        : '명식에서 확인되는 축입니다.';
+  return `${headline}. ${channelText} ${summary}`;
+}
+
+function previewDraft(evidence) {
+  const baseline = evidence.claims.find((claim) => claim.claimType === BASELINE_CLAIM_TYPE);
+  if (baseline === undefined) {
+    throw new Error('General natal day-master baseline is missing from preview evidence.');
+  }
+  const guard = evidence.claims.find((claim) => claim.claimType === SCOPE_GUARD_CLAIM_TYPE);
+  if (guard === undefined) {
+    throw new Error('General natal useful-reading scope guard is missing from preview evidence.');
+  }
+
+  const baselineValue = valueRecord(baseline);
+  const baselineHeadline =
+    typeof baselineValue.headline === 'string' ? baselineValue.headline : '기본 성향의 출발점';
+  const baselineSummary = typeof baselineValue.summary === 'string' ? baselineValue.summary : '';
+  const themeClaims = evidence.claims.filter(
+    (claim) => claim.taxonomy.tier === 'T8' && claim.predicate === 'consumer_theme',
+  );
+
+  const sections = [
+    {
+      sectionId: 'research-preview-general-natal-baseline',
+      title: '기본 성향',
+      blocks: [
+        ...ambiguityBlocks(evidence),
+        assertion(baseline, `${baselineHeadline}. ${baselineSummary}`),
+        {
+          type: 'transition',
+          text: '아래 내용은 월지 하나가 아니라 명식 전체의 십신 배치에서 실제로 확인되는 주제를 나눠서 봅니다.',
+        },
+      ],
+    },
+  ];
+
+  for (const [consumerSection, title] of SECTION_ORDER) {
+    const claims = themeClaims.filter(
+      (claim) => valueRecord(claim).consumerSection === consumerSection,
+    );
+    if (claims.length === 0) continue;
+    sections.push({
+      sectionId: `research-preview-${consumerSection}`,
+      title,
+      blocks: claims
+        .sort((left, right) => left.claimId.localeCompare(right.claimId))
+        .map((claim) => assertion(claim, themeText(claim))),
+    });
+  }
+
+  sections.push({
+    sectionId: 'research-preview-general-natal-scope',
+    title: '이 풀이에서 아직 단정하지 않는 것',
+    blocks: [
+      {
+        type: 'disclosure',
+        disclosureType: 'scope_limitation',
+        text: '현재 풀이는 타고난 명식의 성향·학습·표현·자원·책임·협업 주제를 읽는 연구 미리보기입니다. 이 단계에서 돈이 많다/적다, 직업 성공 여부, 배우자 결과, 건강 결과, 길흉, 사건 발생이나 미래 시기를 단정하지 않습니다.',
+        relatedRefs: [guard.claimId],
+      },
+    ],
+  });
 
   return {
     schemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
     requestId: evidence.requestId,
-    sections: [
-      {
-        sectionId: 'research-preview-general-natal-structure',
-        title: '사주의 기본 구조',
-        blocks: [
-          ...ambiguityBlocks,
-          {
-            type: 'assertion',
-            text: summary,
-            epistemicType: 'synthesis',
-            evidenceRefs: [{ sourceType: 'claim', ref: t8Claim.claimId }],
-            methodologyRefs: [t8Claim.methodologyRef],
-          },
-          {
-            type: 'disclosure',
-            disclosureType: 'scope_limitation',
-            text: '이 내용은 월지의 오행과 일간의 오행 사이의 관계만 확인한 제한된 구조 정보입니다. 이것만으로 신강·신약, 길흉, 성격, 직업, 재물, 관계, 사건이나 미래를 판단하지 않습니다.',
-            relatedRefs: [scopeGuard?.claimId ?? t8Claim.claimId],
-          },
-          {
-            type: 'transition',
-            text: '현재 연구 미리보기에서 제공하는 해석은 여기까지입니다. 이후 항목은 근거와 검토가 확보되는 순서대로 추가됩니다.',
-          },
-        ],
-      },
-    ],
+    sections,
   };
 }
 
 class ResearchPreviewNarrativeAdapter {
   metadata = {
     provider: 'deterministic-research-preview',
-    modelId: 'grounded-readable-preview',
+    modelId: 'grounded-useful-natal-preview',
     modelRevision: RESEARCH_PREVIEW_VERSION,
   };
 
@@ -125,7 +176,7 @@ const dependencies = {
     });
   },
   interpret(snapshot) {
-    const registry = createGeneralNatalT8StructuralSummaryCandidateRegistry();
+    const registry = createGeneralNatalUsefulReadingCandidateRegistry();
     return {
       registry,
       interpretation: runInterpretation(snapshot, registry, { now: new Date() }),
@@ -173,15 +224,23 @@ async function runSmoke(baseUrl) {
   }
 
   const serialized = JSON.stringify(payload);
-  if (!serialized.includes('사주의 기본 구조')) {
-    throw new Error('Preview response is missing the readable Korean structural summary.');
+  if (!serialized.includes('기본 성향')) {
+    throw new Error('Preview response is missing the consumer baseline section.');
+  }
+  if (!SECTION_ORDER.some(([, title]) => serialized.includes(title))) {
+    throw new Error('Preview response is missing all whole-chart consumer theme sections.');
   }
   for (const forbidden of [
     'classificationAuthorized',
     'fortunePolarityAuthorized',
     'numericScoringAuthorized',
+    'wholePersonConclusionAuthorized',
+    'outcomeAuthorized',
+    'futureTimingAuthorized',
     'month_branch_structural_context',
     '"direction"',
+    '"family"',
+    '"channel"',
   ]) {
     if (serialized.includes(forbidden)) {
       throw new Error(`Preview response leaked internal evidence field: ${forbidden}`);
