@@ -256,7 +256,7 @@ describe('natal career consumer reading research candidate', () => {
     const encoded = JSON.stringify(claims);
 
     for (const forbidden of [
-      'career_success\":true',
+      'career_success":true',
       'specific_occupation',
       'salary_prediction',
       'promotion_prediction',
