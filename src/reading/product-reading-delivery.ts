@@ -39,6 +39,11 @@ export interface ProductReadingCoverageSummary {
   missingRequirementCount: number;
 }
 
+export interface ProductReadingClarification {
+  kind: 'domain' | 'temporal_scope' | 'request';
+  options?: readonly ReadingIntent[];
+}
+
 export interface ProductReadingDeliveryResult {
   deliveryId: string;
   deliveryVersion: string;
@@ -46,7 +51,7 @@ export interface ProductReadingDeliveryResult {
   messageCode: ProductReadingDeliveryMessageCode;
   requiredAction: ProductReadingRequiredAction;
   artifact?: ReadingArtifact;
-  clarificationOptions?: readonly ReadingIntent[];
+  clarification?: ProductReadingClarification;
   coverage?: ProductReadingCoverageSummary;
   consumerDiagnostics?: readonly (
     | 'target_person_required'
@@ -104,6 +109,23 @@ function consumerDiagnostics(
   return diagnostics.size === 0 ? undefined : [...diagnostics].sort();
 }
 
+function clarificationFor(
+  execution: GovernedReadingExecutionResult,
+): ProductReadingClarification {
+  const reasons = execution.preparation.reasonCodes;
+  if (reasons.includes('MULTIPLE_READING_DOMAINS_DETECTED')) {
+    const options = execution.preparation.normalization.candidateIntents;
+    return {
+      kind: 'domain',
+      ...(options.length > 1 ? { options } : {}),
+    };
+  }
+  if (reasons.includes('MULTIPLE_TEMPORAL_SCOPES_DETECTED')) {
+    return { kind: 'temporal_scope' };
+  }
+  return { kind: 'request' };
+}
+
 function coverageSummary(
   execution: GovernedReadingExecutionResult,
   state: ProductReadingCoverageSummary['state'],
@@ -123,7 +145,7 @@ function buildDelivery(
   requiredAction: ProductReadingRequiredAction,
   optional: {
     artifact?: ReadingArtifact;
-    clarificationOptions?: readonly ReadingIntent[];
+    clarification?: ProductReadingClarification;
     coverage?: ProductReadingCoverageSummary;
     consumerDiagnostics?: ProductReadingDeliveryResult['consumerDiagnostics'];
   } = {},
@@ -136,7 +158,7 @@ function buildDelivery(
     messageCode,
     requiredAction,
     readingId: optional.artifact?.readingId,
-    clarificationOptions: optional.clarificationOptions,
+    clarification: optional.clarification,
     coverage: optional.coverage,
     consumerDiagnostics: optional.consumerDiagnostics,
     constraints: DELIVERY_CONSTRAINTS,
@@ -148,9 +170,7 @@ function buildDelivery(
     messageCode,
     requiredAction,
     ...(optional.artifact === undefined ? {} : { artifact: optional.artifact }),
-    ...(optional.clarificationOptions === undefined
-      ? {}
-      : { clarificationOptions: optional.clarificationOptions }),
+    ...(optional.clarification === undefined ? {} : { clarification: optional.clarification }),
     ...(optional.coverage === undefined ? {} : { coverage: optional.coverage }),
     ...(optional.consumerDiagnostics === undefined
       ? {}
@@ -201,9 +221,7 @@ export function buildProductReadingDelivery(
         'clarification_required',
         'READING_REQUEST_CLARIFICATION_REQUIRED',
         'clarify_request',
-        {
-          clarificationOptions: execution.preparation.normalization.candidateIntents,
-        },
+        { clarification: clarificationFor(execution) },
       );
     case 'input_unsupported':
       return buildDelivery(
