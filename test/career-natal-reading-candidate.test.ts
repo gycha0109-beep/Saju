@@ -37,7 +37,7 @@ function fixture(tenGods: TenGodChartFact = FIVE_FAMILY_TEN_GODS): CanonicalSaju
       sexForTraditionalCalculation: 'unspecified',
     },
     PRODUCTION_DEFAULT_CALCULATION_POLICY,
-    { now: new Date('2026-08-24T06:00:00.000Z') },
+    { now: new Date('2026-08-24T08:30:00.000Z') },
   );
   return {
     ...base,
@@ -45,63 +45,175 @@ function fixture(tenGods: TenGodChartFact = FIVE_FAMILY_TEN_GODS): CanonicalSaju
   };
 }
 
+function realSnapshot(
+  year: number,
+  month: number,
+  day: number,
+  sexForTraditionalCalculation: 'male' | 'female',
+): CanonicalSajuSnapshot {
+  return calculateCanonicalSajuSnapshot(
+    {
+      calendarType: 'solar',
+      date: { year, month, day },
+      time: { known: true, hour: 9, minute: 10 },
+      sexForTraditionalCalculation,
+    },
+    PRODUCTION_DEFAULT_CALCULATION_POLICY,
+    { now: new Date('2026-08-24T08:31:00.000Z') },
+  );
+}
+
+function careerClaims(execution: ReturnType<typeof runInterpretation>) {
+  return execution.claims.filter((claim) => claim.predicate === 'career_conclusion');
+}
+
+function careerContext(execution: ReturnType<typeof runInterpretation>) {
+  return execution.claims.filter((claim) => claim.predicate === 'career_context');
+}
+
+function careerTypes(snapshot: CanonicalSajuSnapshot): readonly string[] {
+  return careerClaims(runInterpretation(snapshot, createCareerNatalReadingCandidateRegistry()))
+    .map((claim) => claim.claimType)
+    .sort();
+}
+
+function previewFallbackCoreText(snapshot: CanonicalSajuSnapshot): string {
+  const first = careerClaims(
+    runInterpretation(snapshot, createCareerNatalReadingCandidateRegistry()),
+  )[0];
+  if (first === undefined) throw new Error('Expected a direct career conclusion.');
+  const value = first.value as { summary?: string };
+  if (typeof value.summary !== 'string') throw new Error('Expected career summary.');
+  return value.summary;
+}
+
 describe('natal career consumer reading research candidate', () => {
-  it('remains research-only, unreviewed, and non-predictive by contract', () => {
-    expect(CAREER_NATAL_READING_CANDIDATE_VERSION).toBe('0.3.0-research');
+  it('remains research-only, unreviewed, and exact-Ten-God/channel bounded', () => {
+    expect(CAREER_NATAL_READING_CANDIDATE_VERSION).toBe('0.4.0-research');
     expect(CAREER_NATAL_READING_PACK.status).toBe('research');
     expect(CAREER_NATAL_READING_METHODOLOGY.status).toBe('research');
-    expect(CAREER_NATAL_READING_RULES).toHaveLength(11);
+    expect(CAREER_NATAL_READING_RULES).toHaveLength(20);
     expect(
       CAREER_NATAL_READING_RULES.every(
-        (rule) => rule.status === 'research' && rule.quality.reviewerStatus === 'unreviewed',
+        (rule) =>
+          rule.status === 'research' &&
+          rule.quality.reviewerStatus === 'unreviewed' &&
+          rule.taxonomy.tier === 'T8' &&
+          rule.taxonomy.category === 'career' &&
+          rule.inputs.some((input) => input.pathOrClaimType === 'derivedFacts.tenGods'),
       ),
     ).toBe(true);
   });
 
-  it('emits bounded T8 career conclusions from the five-family fixture', () => {
+  it('surfaces visible stems as direct conclusions and preserves branches as context', () => {
     const execution = runInterpretation(fixture(), createCareerNatalReadingCandidateRegistry(), {
-      now: new Date('2026-08-24T06:01:00.000Z'),
+      now: new Date('2026-08-24T08:32:00.000Z'),
     });
-    const claims = execution.claims.filter((claim) => claim.predicate === 'career_conclusion');
+    const conclusions = careerClaims(execution);
+    const context = careerContext(execution);
 
-    expect(claims).toHaveLength(11);
+    expect(conclusions).toHaveLength(3);
+    expect(new Set(conclusions.map((claim) => (claim.value as { tenGod: string }).tenGod))).toEqual(
+      new Set(['비견', '편재', '편관']),
+    );
     expect(
-      claims.every(
-        (claim) => claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'career',
+      conclusions.every(
+        (claim) => (claim.value as { channel: string }).channel === 'visible_stems',
       ),
     ).toBe(true);
+
+    expect(context).toHaveLength(4);
+    expect(new Set(context.map((claim) => (claim.value as { tenGod: string }).tenGod))).toEqual(
+      new Set(['정인', '정재', '상관', '식신']),
+    );
     expect(
-      new Set(claims.map((claim) => (claim.value as { careerKind: string }).careerKind)),
-    ).toEqual(new Set(['driver', 'fit', 'environment', 'friction']));
+      context.every((claim) => (claim.value as { channel: string }).channel === 'branches'),
+    ).toBe(true);
   });
 
-  it('keeps career evidence useful even when only one family is represented', () => {
+  it('does not collapse 식신 and 상관 into one generic output-family sentence', () => {
     const snapshot = fixture(OUTPUT_ONLY_TEN_GODS);
     const registry = createCareerNatalReadingCandidateRegistry();
     const execution = runInterpretation(snapshot, registry);
-    const claims = execution.claims.filter((claim) => claim.predicate === 'career_conclusion');
+    const conclusions = careerClaims(execution);
+    const context = careerContext(execution);
 
-    expect(claims).toHaveLength(1);
-    expect(claims[0]?.claimType).toBe('CAREER_NATAL_CONCLUSION_OUTPUT_MAKING_ENGINE');
+    expect(conclusions.map((claim) => claim.claimType).sort()).toEqual(
+      [
+        'CAREER_NATAL_TEN_GOD_SANG_GWAN_VISIBLE_STEMS',
+        'CAREER_NATAL_TEN_GOD_SIK_SIN_VISIBLE_STEMS',
+      ].sort(),
+    );
+    expect(context.map((claim) => claim.claimType).sort()).toEqual(
+      [
+        'CAREER_NATAL_TEN_GOD_SANG_GWAN_BRANCHES',
+        'CAREER_NATAL_TEN_GOD_SIK_SIN_BRANCHES',
+      ].sort(),
+    );
 
     const career = buildReadingCompositionEvidence(
       snapshot,
       execution,
       registry,
       {
-        requestId: 'career-single-family',
+        requestId: 'career-exact-output-subtypes',
         intent: { domain: 'career', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'career-natal-reading-v1' },
+      { narrativePolicyVersion: 'career-natal-reading-v2' },
     );
     expect(career.selection.coverageState).toBe('complete');
     const bundledCareerClaims =
       career.evidence?.bundle.claims.filter((claim) => claim.predicate === 'career_conclusion') ?? [];
-    expect(bundledCareerClaims).toHaveLength(1);
-    expect(bundledCareerClaims[0]?.claimType).toBe('CAREER_NATAL_CONCLUSION_OUTPUT_MAKING_ENGINE');
-    expect(
-      career.evidence?.bundle.claims.some((claim) => claim.predicate === 'ten_god_family_presence'),
-    ).toBe(true);
+    const bundledContext =
+      career.evidence?.bundle.claims.filter((claim) => claim.predicate === 'career_context') ?? [];
+    expect(bundledCareerClaims).toHaveLength(2);
+    expect(bundledContext).toHaveLength(2);
+    expect(career.evidence?.bundle.canonicalFacts.map((fact) => fact.path)).toContain(
+      'derivedFacts.tenGods',
+    );
+  });
+
+  it('distinguishes the two reported direct career previews before narrative rendering', () => {
+    const august2004 = realSnapshot(2004, 8, 20, 'female');
+    const january1996 = realSnapshot(1996, 1, 9, 'male');
+    const augustTypes = careerTypes(august2004);
+    const januaryTypes = careerTypes(january1996);
+
+    expect(augustTypes).toEqual(
+      [
+        'CAREER_NATAL_TEN_GOD_JEONG_JAE_VISIBLE_STEMS',
+        'CAREER_NATAL_TEN_GOD_SANG_GWAN_VISIBLE_STEMS',
+        'CAREER_NATAL_TEN_GOD_SIK_SIN_VISIBLE_STEMS',
+      ].sort(),
+    );
+    expect(januaryTypes).toEqual(
+      [
+        'CAREER_NATAL_TEN_GOD_BI_GYEON_VISIBLE_STEMS',
+        'CAREER_NATAL_TEN_GOD_PYEON_GWAN_VISIBLE_STEMS',
+        'CAREER_NATAL_TEN_GOD_PYEON_JAE_VISIBLE_STEMS',
+      ].sort(),
+    );
+    expect(augustTypes).not.toEqual(januaryTypes);
+    expect(previewFallbackCoreText(august2004)).not.toBe(previewFallbackCoreText(january1996));
+  });
+
+  it('keeps branch context from becoming a direct career headline candidate', () => {
+    for (const snapshot of [
+      realSnapshot(2004, 8, 20, 'female'),
+      realSnapshot(1996, 1, 9, 'male'),
+    ]) {
+      const execution = runInterpretation(snapshot, createCareerNatalReadingCandidateRegistry());
+      expect(
+        careerClaims(execution).every(
+          (claim) => (claim.value as { channel?: string }).channel === 'visible_stems',
+        ),
+      ).toBe(true);
+      expect(
+        careerContext(execution).every(
+          (claim) => (claim.value as { channel?: string }).channel === 'branches',
+        ),
+      ).toBe(true);
+    }
   });
 
   it('opens natal career intent while annual career remains partial without T9 period evidence', () => {
@@ -117,16 +229,13 @@ describe('natal career consumer reading research candidate', () => {
         requestId: 'career-natal-open',
         intent: { domain: 'career', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'career-natal-reading-v1' },
+      { narrativePolicyVersion: 'career-natal-reading-v2' },
     );
     expect(natal.selection.coverageState).toBe('complete');
     const bundledCareerClaims =
       natal.evidence?.bundle.claims.filter((claim) => claim.predicate === 'career_conclusion') ?? [];
     expect(bundledCareerClaims.length).toBeGreaterThan(0);
     expect(bundledCareerClaims.every((claim) => claim.taxonomy.category === 'career')).toBe(true);
-    expect(
-      natal.evidence?.bundle.claims.some((claim) => claim.predicate === 'ten_god_family_presence'),
-    ).toBe(true);
 
     const annual = buildReadingCompositionEvidence(
       snapshot,
@@ -136,31 +245,28 @@ describe('natal career consumer reading research candidate', () => {
         requestId: 'career-annual-stays-temporally-closed',
         intent: { domain: 'career', temporalScope: 'annual' },
       },
-      { narrativePolicyVersion: 'career-natal-reading-v1' },
+      { narrativePolicyVersion: 'career-natal-reading-v2' },
     );
     expect(annual.selection.coverageState).toBe('partial_coverage');
     expect(annual.selection.missingRequirements).toContain('ANNUAL_CAREER_PERIOD_CLAIM_REQUIRED');
   });
 
-  it('binds every career conclusion only to already-materialized family claims', () => {
+  it('binds all direct and contextual career observations to the resolved Ten-God layout', () => {
     const execution = runInterpretation(fixture(), createCareerNatalReadingCandidateRegistry());
-    const familyIds = new Set(
-      execution.claims
-        .filter((claim) => claim.predicate === 'ten_god_family_presence')
-        .map((claim) => claim.claimId),
-    );
+    const claims = [...careerClaims(execution), ...careerContext(execution)];
 
-    for (const claim of execution.claims.filter(
-      (candidate) => candidate.predicate === 'career_conclusion',
-    )) {
-      expect(claim.upstreamClaimRefs.length).toBeGreaterThanOrEqual(1);
-      expect(claim.upstreamClaimRefs.every((ref) => familyIds.has(ref))).toBe(true);
+    for (const claim of claims) {
+      expect(claim.factRefs).toContain('derivedFacts.tenGods');
+      expect(claim.upstreamClaimRefs).toEqual([]);
+      const value = claim.value as { tenGod?: string; channel?: string };
+      expect(typeof value.tenGod).toBe('string');
+      expect(['visible_stems', 'branches']).toContain(value.channel);
     }
   });
 
   it('does not emit occupation assignment, salary, success, or future-event authority', () => {
     const execution = runInterpretation(fixture(), createCareerNatalReadingCandidateRegistry());
-    const claims = execution.claims.filter((claim) => claim.predicate === 'career_conclusion');
+    const claims = [...careerClaims(execution), ...careerContext(execution)];
     const encoded = JSON.stringify(claims);
 
     for (const forbidden of [

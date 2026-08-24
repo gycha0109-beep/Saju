@@ -32,6 +32,7 @@ function fixture(): CanonicalSajuSnapshot {
 
 const SPECIALIST_PREDICATES = new Set([
   'career_conclusion',
+  'career_context',
   'wealth_conclusion',
   'relationship_conclusion',
   'business_conclusion',
@@ -69,7 +70,7 @@ describe('consumer copy neutrality guard', () => {
     }
   });
 
-  it('keeps all specialist domains useful while rejecting cross-channel-only combinations', () => {
+  it('keeps direct career output visible-stem-specific and branch observations contextual', () => {
     const execution = runInterpretation(fixture(), createBusinessNatalReadingCandidateRegistry());
     const familyClaimIds = new Set(
       execution.claims
@@ -77,8 +78,39 @@ describe('consumer copy neutrality guard', () => {
         .map((claim) => claim.claimId),
     );
 
+    const careerConclusions = execution.claims.filter(
+      (claim) => claim.predicate === 'career_conclusion',
+    );
+    const careerContext = execution.claims.filter((claim) => claim.predicate === 'career_context');
+
+    expect(careerConclusions).toHaveLength(3);
+    expect(careerContext).toHaveLength(4);
+    expect(
+      careerConclusions.every((claim) => {
+        const value = claim.value as { tenGod?: string; channel?: string };
+        return (
+          claim.taxonomy.tier === 'T8' &&
+          claim.factRefs.includes('derivedFacts.tenGods') &&
+          claim.upstreamClaimRefs.length === 0 &&
+          typeof value.tenGod === 'string' &&
+          value.channel === 'visible_stems'
+        );
+      }),
+    ).toBe(true);
+    expect(
+      careerContext.every((claim) => {
+        const value = claim.value as { tenGod?: string; channel?: string };
+        return (
+          claim.taxonomy.tier === 'T8' &&
+          claim.factRefs.includes('derivedFacts.tenGods') &&
+          claim.upstreamClaimRefs.length === 0 &&
+          typeof value.tenGod === 'string' &&
+          value.channel === 'branches'
+        );
+      }),
+    ).toBe(true);
+
     const expectedCounts = new Map([
-      ['career_conclusion', 9],
       ['wealth_conclusion', 9],
       ['relationship_conclusion', 10],
       ['business_conclusion', 10],
@@ -88,12 +120,12 @@ describe('consumer copy neutrality guard', () => {
       const claims = execution.claims.filter((claim) => claim.predicate === predicate);
       expect(claims).toHaveLength(expectedCount);
       expect(claims.every((claim) => claim.taxonomy.tier === 'T8')).toBe(true);
+      expect(claims.every((claim) => claim.factRefs.includes('derivedFacts.tenGods'))).toBe(true);
       expect(
         claims.every(
           (claim) =>
             claim.upstreamClaimRefs.length > 0 &&
-            claim.upstreamClaimRefs.every((ref) => familyClaimIds.has(ref)) &&
-            claim.factRefs.includes('derivedFacts.tenGods'),
+            claim.upstreamClaimRefs.every((ref) => familyClaimIds.has(ref)),
         ),
       ).toBe(true);
     }
