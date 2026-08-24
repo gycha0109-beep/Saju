@@ -62,9 +62,7 @@ describe('consumer copy neutrality guard', () => {
     const specialistClaims = execution.claims.filter((claim) =>
       SPECIALIST_PREDICATES.has(claim.predicate),
     );
-    const consumerCopy = JSON.stringify(
-      specialistClaims.map((claim) => ({ title: claim.title, value: claim.value })),
-    );
+    const consumerCopy = JSON.stringify(specialistClaims.map((claim) => claim.value));
 
     for (const example of CONTEXT_SPECIFIC_EXAMPLES) {
       expect(consumerCopy).not.toContain(example);
