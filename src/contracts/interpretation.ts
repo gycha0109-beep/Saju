@@ -131,6 +131,23 @@ export type AmbiguityBehavior =
   | 'invariant_across_candidates'
   | 'scenario_preserving';
 
+export interface ClaimInputSelector {
+  taxonomy?: {
+    tiers?: readonly Exclude<TaxonomyTier, 'T0'>[];
+    categories?: readonly string[];
+    subcategories?: readonly string[];
+  };
+  subjects?: readonly string[];
+  predicates?: readonly string[];
+  methodologyRefs?: readonly VersionedRef[];
+  valueEquals?: readonly {
+    path: string;
+    value: unknown;
+  }[];
+}
+
+export type ClaimInputCardinality = 'exactly_one' | 'one_or_more' | 'zero_or_more';
+
 export interface RuleInputRequirement {
   key: string;
   source: 'canonical_fact' | 'derived_fact' | 'interpretation_claim';
@@ -138,6 +155,8 @@ export interface RuleInputRequirement {
   acceptedStatuses?: readonly ('resolved' | 'ambiguous' | 'unavailable')[];
   required: boolean;
   ambiguityBehavior: AmbiguityBehavior;
+  claimSelector?: ClaimInputSelector;
+  cardinality?: ClaimInputCardinality;
 }
 
 export type RuleOperand =
@@ -219,6 +238,7 @@ export type RuleEvaluationStatus =
   | 'skipped_missing_input'
   | 'skipped_ambiguous_input'
   | 'skipped_dependency_unresolved'
+  | 'skipped_cardinality_mismatch'
   | 'skipped_disabled'
   | 'blocked_policy'
   | 'error';
@@ -234,6 +254,7 @@ export interface RuleEvaluation {
     sourceType: 'fact' | 'claim';
     idOrPath: string;
     observedValue?: unknown;
+    selectedClaimIds?: readonly string[];
   }[];
   emittedClaimIds: readonly string[];
   evaluatedAt: string;
