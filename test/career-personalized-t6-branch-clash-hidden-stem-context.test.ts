@@ -19,6 +19,10 @@ import {
   createCareerT6BranchClashContextRegistry,
 } from '../src/research/career-personalized-t6-branch-clash-hidden-stem-context.js';
 
+type BranchClashContextState = NonNullable<
+  CanonicalSajuSnapshot['derivedFacts']['branchClashContexts']
+>;
+
 function validI252(): I252PublicClassicHiddenStemInteractionEvidenceAdequacyMethodologyReviewReport {
   return {
     reviewId: 'i252_synthetic_valid',
@@ -96,9 +100,7 @@ function context(pairKey: PillarPairKey): BranchClashContextFact {
   throw new Error(`synthetic context not defined for ${pairKey}`);
 }
 
-function snapshot(
-  indexState: CanonicalSajuSnapshot['derivedFacts']['branchClashContexts'],
-): CanonicalSajuSnapshot {
+function snapshot(indexState: BranchClashContextState): CanonicalSajuSnapshot {
   return {
     snapshotId: 'saju_synthetic_t6_context',
     schemaVersion: 'saju-canonical-v1.3',
@@ -146,9 +148,9 @@ function snapshot(
     completeness: {
       birthTimeKnown: true,
       fullyResolved: false,
-      resolvedPaths: indexState?.status === 'resolved' ? ['derivedFacts.branchClashContexts'] : [],
+      resolvedPaths: indexState.status === 'resolved' ? ['derivedFacts.branchClashContexts'] : [],
       ambiguousPaths: [],
-      unavailablePaths: indexState?.status === 'resolved' ? [] : ['derivedFacts.branchClashContexts'],
+      unavailablePaths: indexState.status === 'resolved' ? [] : ['derivedFacts.branchClashContexts'],
     },
     provenance: {
       engine: { name: 'synthetic', version: '1' },
@@ -159,8 +161,8 @@ function snapshot(
   };
 }
 
-function resolvedIndex(index: BranchClashContextIndex) {
-  return { status: 'resolved' as const, value: index };
+function resolvedIndex(index: BranchClashContextIndex): BranchClashContextState {
+  return { status: 'resolved', value: index };
 }
 
 function claimValue(value: unknown): Record<string, unknown> {
@@ -290,7 +292,7 @@ describe('Career T6 bounded branch-clash hidden-stem context', () => {
     const invalid = {
       ...p4(),
       damageMagnitudeAuthorized: true,
-    } as ReturnType<typeof p4>;
+    } as unknown as ReturnType<typeof p4>;
     expect(() => createCareerT6BranchClashContextRegistry(invalid)).toThrow(
       'P4 Career T6 gate does not authorize',
     );
