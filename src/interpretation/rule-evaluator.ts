@@ -49,6 +49,12 @@ type InputResolution =
       inputs: readonly ResolvedInput[];
     };
 
+type LogicalFactPathResolution =
+  | { status: 'found'; value: unknown }
+  | { status: 'missing' }
+  | { status: 'ambiguous'; state: FactState<unknown> }
+  | { status: 'unavailable'; state: FactState<unknown> };
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -60,11 +66,17 @@ function isFactState(value: unknown): value is FactState<unknown> {
   );
 }
 
-function getPath(root: unknown, path: string): { found: boolean; value?: unknown } {
+function splitPath(path: string): readonly string[] | undefined {
   const segments = path.split('.').filter((segment) => segment.length > 0);
   if (segments.length === 0 || segments.some((segment) => FORBIDDEN_PATH_SEGMENTS.has(segment))) {
-    return { found: false };
+    return undefined;
   }
+  return segments;
+}
+
+function getPath(root: unknown, path: string): { found: boolean; value?: unknown } {
+  const segments = splitPath(path);
+  if (segments === undefined) return { found: false };
 
   let cursor: unknown = root;
   for (const segment of segments) {
@@ -74,6 +86,55 @@ function getPath(root: unknown, path: string): { found: boolean; value?: unknown
     cursor = cursor[segment];
   }
   return { found: true, value: cursor };
+}
+
+function matchingOverride(
+  path: string,
+  overrides: Readonly<Record<string, unknown>> | undefined,
+): { value: unknown; remainingSegments: readonly string[] } | undefined {
+  if (overrides === undefined) return undefined;
+  const candidates = Object.entries(overrides)
+    .filter(([candidatePath]) => path === candidatePath || path.startsWith(`${candidatePath}.`))
+    .sort(([left], [right]) => right.length - left.length);
+  const selected = candidates[0];
+  if (selected === undefined) return undefined;
+
+  const remainingPath = path === selected[0] ? '' : path.slice(selected[0].length + 1);
+  const remainingSegments = remainingPath.length === 0 ? [] : splitPath(remainingPath);
+  if (remainingSegments === undefined) return undefined;
+  return { value: selected[1], remainingSegments };
+}
+
+function resolveLogicalFactPath(
+  root: unknown,
+  path: string,
+  overrides: Readonly<Record<string, unknown>> | undefined,
+): LogicalFactPathResolution {
+  const segments = splitPath(path);
+  if (segments === undefined) return { status: 'missing' };
+
+  const selectedOverride = matchingOverride(path, overrides);
+  let cursor: unknown = selectedOverride?.value ?? root;
+  const remainingSegments = selectedOverride?.remainingSegments ?? segments;
+
+  for (const segment of remainingSegments) {
+    while (isFactState(cursor)) {
+      if (cursor.status === 'resolved') {
+        cursor = cursor.value;
+        continue;
+      }
+      return cursor.status === 'ambiguous'
+        ? { status: 'ambiguous', state: cursor }
+        : { status: 'unavailable', state: cursor };
+    }
+
+    if (!isRecord(cursor) || !Object.prototype.hasOwnProperty.call(cursor, segment)) {
+      return { status: 'missing' };
+    }
+    cursor = cursor[segment];
+  }
+
+  return { status: 'found', value: cursor };
 }
 
 function deepEqual(left: unknown, right: unknown): boolean {
@@ -148,66 +209,80 @@ function acceptedStatus(
   return requirement.acceptedStatuses === undefined || requirement.acceptedStatuses.includes(status);
 }
 
+function missingFactInput(requirement: RuleInputRequirement): InputResolution {
+  return {
+    status: requirement.required ? 'skipped_missing_input' : 'ready',
+    inputs: requirement.required
+      ? []
+      : [
+          {
+            key: requirement.key,
+            value: undefined,
+            inputRef: { sourceType: 'fact', idOrPath: requirement.pathOrClaimType },
+            factRef: requirement.pathOrClaimType,
+            upstreamClaimRefs: [],
+          },
+        ],
+  };
+}
+
+function unavailableFactInput(
+  requirement: RuleInputRequirement,
+  state: FactState<unknown>,
+): InputResolution {
+  if (requirement.required) return { status: 'skipped_missing_input', inputs: [] };
+  return {
+    status: 'ready',
+    inputs: [
+      {
+        key: requirement.key,
+        value: undefined,
+        inputRef: {
+          sourceType: 'fact',
+          idOrPath: requirement.pathOrClaimType,
+          observedValue: state,
+        },
+        factRef: requirement.pathOrClaimType,
+        upstreamClaimRefs: [],
+      },
+    ],
+  };
+}
+
+function readyFactInput(requirement: RuleInputRequirement, value: unknown): InputResolution {
+  return {
+    status: 'ready',
+    inputs: [
+      {
+        key: requirement.key,
+        value,
+        inputRef: {
+          sourceType: 'fact',
+          idOrPath: requirement.pathOrClaimType,
+          observedValue: value,
+        },
+        factRef: requirement.pathOrClaimType,
+        upstreamClaimRefs: [],
+      },
+    ],
+  };
+}
+
 function resolveFactInput(
   requirement: RuleInputRequirement,
   context: RuleEvaluationContext,
 ): InputResolution {
-  const override = context.factOverrides?.[requirement.pathOrClaimType];
-  if (override !== undefined) {
-    return {
-      status: 'ready',
-      inputs: [
-        {
-          key: requirement.key,
-          value: override,
-          inputRef: {
-            sourceType: 'fact',
-            idOrPath: requirement.pathOrClaimType,
-            observedValue: override,
-          },
-          factRef: requirement.pathOrClaimType,
-          upstreamClaimRefs: [],
-        },
-      ],
-    };
-  }
+  const located = resolveLogicalFactPath(
+    context.snapshot,
+    requirement.pathOrClaimType,
+    context.factOverrides,
+  );
 
-  const located = getPath(context.snapshot, requirement.pathOrClaimType);
-  if (!located.found) {
-    return {
-      status: requirement.required ? 'skipped_missing_input' : 'ready',
-      inputs: requirement.required
-        ? []
-        : [
-            {
-              key: requirement.key,
-              value: undefined,
-              inputRef: { sourceType: 'fact', idOrPath: requirement.pathOrClaimType },
-              factRef: requirement.pathOrClaimType,
-              upstreamClaimRefs: [],
-            },
-          ],
-    };
-  }
+  if (located.status === 'missing') return missingFactInput(requirement);
+  if (located.status === 'ambiguous') return { status: 'skipped_ambiguous_input', inputs: [] };
+  if (located.status === 'unavailable') return unavailableFactInput(requirement, located.state);
 
-  if (!isFactState(located.value)) {
-    return {
-      status: 'ready',
-      inputs: [
-        {
-          key: requirement.key,
-          value: located.value,
-          inputRef: {
-            sourceType: 'fact',
-            idOrPath: requirement.pathOrClaimType,
-            observedValue: located.value,
-          },
-          factRef: requirement.pathOrClaimType,
-          upstreamClaimRefs: [],
-        },
-      ],
-    };
-  }
+  if (!isFactState(located.value)) return readyFactInput(requirement, located.value);
 
   const state = located.value;
   if (!acceptedStatus(requirement, state.status)) {
@@ -218,47 +293,9 @@ function resolveFactInput(
     };
   }
 
-  if (state.status === 'unavailable') {
-    return {
-      status: requirement.required ? 'skipped_missing_input' : 'ready',
-      inputs: requirement.required
-        ? []
-        : [
-            {
-              key: requirement.key,
-              value: undefined,
-              inputRef: {
-                sourceType: 'fact',
-                idOrPath: requirement.pathOrClaimType,
-                observedValue: state,
-              },
-              factRef: requirement.pathOrClaimType,
-              upstreamClaimRefs: [],
-            },
-          ],
-    };
-  }
-
-  if (state.status === 'ambiguous') {
-    return { status: 'skipped_ambiguous_input', inputs: [] };
-  }
-
-  return {
-    status: 'ready',
-    inputs: [
-      {
-        key: requirement.key,
-        value: state.value,
-        inputRef: {
-          sourceType: 'fact',
-          idOrPath: requirement.pathOrClaimType,
-          observedValue: state.value,
-        },
-        factRef: requirement.pathOrClaimType,
-        upstreamClaimRefs: [],
-      },
-    ],
-  };
+  if (state.status === 'unavailable') return unavailableFactInput(requirement, state);
+  if (state.status === 'ambiguous') return { status: 'skipped_ambiguous_input', inputs: [] };
+  return readyFactInput(requirement, state.value);
 }
 
 function claimVisibleInContext(
