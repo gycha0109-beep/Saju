@@ -5,6 +5,8 @@ import type {
   BranchClashContextIndex,
   CalculationScenario,
   CanonicalSajuSnapshot,
+  EarthlyBranch,
+  HeavenlyStem,
   HiddenStemChartFact,
   PillarPairKey,
   PillarSlot,
@@ -51,7 +53,7 @@ function pairKey(left: PillarSlot, right: PillarSlot): PillarPairKey {
 function resolvedHiddenStems(
   hiddenStems: HiddenStemChartFact,
   pillar: PillarSlot,
-): readonly import('../contracts/calculation.js').HeavenlyStem[] | undefined {
+): readonly HeavenlyStem[] | undefined {
   const state = hiddenStems[pillar];
   return state.status === 'resolved' ? state.value : undefined;
 }
@@ -88,12 +90,12 @@ function branchClashContext(
     participants: [
       {
         pillar: left.pillar,
-        branch: left.value as import('../contracts/calculation.js').EarthlyBranch,
+        branch: left.value as EarthlyBranch,
         hiddenStems: leftHidden,
       },
       {
         pillar: right.pillar,
-        branch: right.value as import('../contracts/calculation.js').EarthlyBranch,
+        branch: right.value as EarthlyBranch,
         hiddenStems: rightHidden,
       },
     ],
