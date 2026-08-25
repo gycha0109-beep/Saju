@@ -1,4 +1,5 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { ResearchEvidenceRuntimeAdapter } from '../interpretation/research-evidence-runtime.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import {
   createResearchEvidenceEnvelope,
@@ -55,6 +56,10 @@ function expectedI20Payload(snapshot: CanonicalSajuSnapshot): RelativeForceEvide
   return buildI20RelativeForceEvidence(snapshot);
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
 export function buildI20RelativeForceResearchEvidence(
   snapshot: CanonicalSajuSnapshot,
 ): I20RelativeForceResearchEvidenceBuildResult {
@@ -80,7 +85,7 @@ export function buildI20RelativeForceResearchEvidence(
 }
 
 export function validateI20RelativeForceResearchEvidence(
-  envelope: I20RelativeForceResearchEvidenceEnvelope,
+  envelope: ResearchEvidenceEnvelope,
   snapshot: CanonicalSajuSnapshot,
 ): ResearchEvidenceValidationResult {
   const base = validateResearchEvidenceEnvelope(
@@ -90,30 +95,44 @@ export function validateI20RelativeForceResearchEvidence(
   );
   const errors = [...base.errors];
   const expected = expectedI20Payload(snapshot);
+  const payload = envelope.payload;
+
+  if (!isRecord(payload)) {
+    errors.push('i20_payload_shape_invalid');
+    if (deterministicContentHash(payload) !== deterministicContentHash(expected)) {
+      errors.push('i20_payload_not_reproducible_from_bound_snapshot');
+    }
+    return { valid: false, errors: [...new Set(errors)].sort() };
+  }
 
   if (expected.status !== 'RESOLVED_EVIDENCE') {
     errors.push(`i20_expected_status_not_resolved:${expected.status}`);
   }
-  if (envelope.payload.status !== 'RESOLVED_EVIDENCE') {
-    errors.push(`i20_payload_status_not_resolved:${envelope.payload.status}`);
+  if (payload.status !== 'RESOLVED_EVIDENCE') {
+    errors.push(`i20_payload_status_not_resolved:${String(payload.status)}`);
   }
-  if (envelope.payload.snapshotId !== snapshot.snapshotId) {
-    errors.push(`i20_payload_snapshot_mismatch:${String(envelope.payload.snapshotId)}`);
+  if (payload.snapshotId !== snapshot.snapshotId) {
+    errors.push(`i20_payload_snapshot_mismatch:${String(payload.snapshotId)}`);
   }
-  if (envelope.payload.evidenceVersion !== I20_RELATIVE_FORCE_EVIDENCE_VERSION) {
-    errors.push(`i20_payload_version_mismatch:${envelope.payload.evidenceVersion}`);
+  if (payload.evidenceVersion !== I20_RELATIVE_FORCE_EVIDENCE_VERSION) {
+    errors.push(`i20_payload_version_mismatch:${String(payload.evidenceVersion)}`);
   }
   if (
-    envelope.payload.relativeForceVerdictAuthorized !== false ||
-    envelope.payload.rootEffectResolutionAuthorized !== false ||
-    envelope.payload.classificationAuthorized !== false ||
-    envelope.payload.numericScoringAuthorized !== false
+    payload.relativeForceVerdictAuthorized !== false ||
+    payload.rootEffectResolutionAuthorized !== false ||
+    payload.classificationAuthorized !== false ||
+    payload.numericScoringAuthorized !== false
   ) {
     errors.push('i20_payload_authority_widened');
   }
-  if (deterministicContentHash(envelope.payload) !== deterministicContentHash(expected)) {
+  if (deterministicContentHash(payload) !== deterministicContentHash(expected)) {
     errors.push('i20_payload_not_reproducible_from_bound_snapshot');
   }
 
   return { valid: errors.length === 0, errors: [...new Set(errors)].sort() };
 }
+
+export const I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_RUNTIME_ADAPTER = {
+  definition: I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_DEFINITION,
+  validate: validateI20RelativeForceResearchEvidence,
+} satisfies ResearchEvidenceRuntimeAdapter;
