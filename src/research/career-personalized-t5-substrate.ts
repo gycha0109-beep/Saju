@@ -7,19 +7,13 @@ import type {
   RuleDefinition,
 } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
-import {
-  GENERAL_NATAL_USEFUL_READING_SOURCE,
-} from './general-natal-useful-reading-candidate.js';
+import { careerMethodologyDecision, careerMethodologyMayAuthorTier } from './career-personalization-methodology-gate.js';
 import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
-import {
-  careerMethodologyDecision,
-  careerMethodologyMayAuthorTier,
-} from './career-personalization-methodology-gate.js';
+import { GENERAL_NATAL_USEFUL_READING_SOURCE } from './general-natal-useful-reading-candidate.js';
 
 export const CAREER_PERSONALIZED_T5_SUBSTRATE_VERSION = '0.1.0-research' as const;
 export const CAREER_T5_SUBTYPE_CLAIM_TYPE = 'CAREER_T5_TEN_GOD_SUBTYPE_SEMANTIC' as const;
-export const CAREER_T5_FAMILY_RELATION_CLAIM_TYPE =
-  'CAREER_T5_FAMILY_RELATION_CONTEXT' as const;
+export const CAREER_T5_FAMILY_RELATION_CLAIM_TYPE = 'CAREER_T5_FAMILY_RELATION_CONTEXT' as const;
 
 const SUBTYPE_METHOD_ID = 'M-CAREER-PERSONALIZED-T5-TEN-GOD-SUBTYPE-V1';
 const RELATION_METHOD_ID = 'M-CAREER-PERSONALIZED-T5-FAMILY-RELATION-V1';
@@ -59,177 +53,183 @@ interface CareerT5FamilyRelationSpec {
   sourceFamily: CareerT5Family;
   targetFamily: CareerT5Family;
   relationKind: 'generation' | 'control';
-  relation: string;
+  relation:
+    | 'output_generates_wealth'
+    | 'wealth_generates_officer'
+    | 'officer_generates_resource'
+    | 'peer_controls_wealth'
+    | 'wealth_controls_resource'
+    | 'officer_controls_peer';
 }
 
-const QUALITY: RuleDefinition['quality'] = Object.freeze({
+const QUALITY: RuleDefinition['quality'] = {
   provenanceQuality: 'multi_source_supported',
   testCoverage: 'fixture_matrix',
   methodologyStability: 'contested',
   reviewerStatus: 'unreviewed',
-});
+};
 
-const SUBTYPE_QUALITY: RuleDefinition['quality'] = Object.freeze({
+const SUBTYPE_QUALITY: RuleDefinition['quality'] = {
   provenanceQuality: 'secondary_only',
   testCoverage: 'fixture_matrix',
   methodologyStability: 'contested',
   reviewerStatus: 'unreviewed',
-});
+};
 
-const SLOTS: readonly CareerT5Slot[] = Object.freeze([
-  Object.freeze({ slotId: 'year-stem', logicalPath: 'derivedFacts.tenGods.year.stem' }),
-  Object.freeze({ slotId: 'year-branch', logicalPath: 'derivedFacts.tenGods.year.branch' }),
-  Object.freeze({ slotId: 'month-stem', logicalPath: 'derivedFacts.tenGods.month.stem' }),
-  Object.freeze({ slotId: 'month-branch', logicalPath: 'derivedFacts.tenGods.month.branch' }),
-  Object.freeze({ slotId: 'day-branch', logicalPath: 'derivedFacts.tenGods.day.branch' }),
-  Object.freeze({ slotId: 'hour-stem', logicalPath: 'derivedFacts.tenGods.hour.stem' }),
-  Object.freeze({ slotId: 'hour-branch', logicalPath: 'derivedFacts.tenGods.hour.branch' }),
-]);
+const SLOTS = [
+  { slotId: 'year-stem', logicalPath: 'derivedFacts.tenGods.year.stem' },
+  { slotId: 'year-branch', logicalPath: 'derivedFacts.tenGods.year.branch' },
+  { slotId: 'month-stem', logicalPath: 'derivedFacts.tenGods.month.stem' },
+  { slotId: 'month-branch', logicalPath: 'derivedFacts.tenGods.month.branch' },
+  { slotId: 'day-branch', logicalPath: 'derivedFacts.tenGods.day.branch' },
+  { slotId: 'hour-stem', logicalPath: 'derivedFacts.tenGods.hour.stem' },
+  { slotId: 'hour-branch', logicalPath: 'derivedFacts.tenGods.hour.branch' },
+] as const satisfies readonly CareerT5Slot[];
 
-const FORBIDDEN_INFERENCES = Object.freeze([
+const FORBIDDEN_INFERENCES = [
   'specific_occupation',
   'career_success',
   'salary_outcome',
   'promotion_outcome',
   'future_timing',
   'numeric_career_score',
-] as const);
+] as const;
 
-const SUBTYPE_SEMANTICS: Readonly<Record<TenGod, CareerT5SubtypeSemantic>> = Object.freeze({
-  비견: Object.freeze({
+const SUBTYPE_SEMANTICS = {
+  비견: {
     semanticKey: 'TEN_GOD_BI_GYEON_SELF_DIRECTION',
     exactTenGod: '비견',
     family: 'peer',
     facet: 'self_direction',
     scope: 'semantic_substrate_only',
     forbiddenInferences: FORBIDDEN_INFERENCES,
-  }),
-  겁재: Object.freeze({
+  },
+  겁재: {
     semanticKey: 'TEN_GOD_GEOP_JAE_PEER_COMPETITION',
     exactTenGod: '겁재',
     family: 'peer',
     facet: 'peer_competition',
     scope: 'semantic_substrate_only',
     forbiddenInferences: FORBIDDEN_INFERENCES,
-  }),
-  식신: Object.freeze({
+  },
+  식신: {
     semanticKey: 'TEN_GOD_SIK_SIN_STEADY_OUTPUT',
     exactTenGod: '식신',
     family: 'output',
     facet: 'steady_output',
     scope: 'semantic_substrate_only',
     forbiddenInferences: FORBIDDEN_INFERENCES,
-  }),
-  상관: Object.freeze({
+  },
+  상관: {
     semanticKey: 'TEN_GOD_SANG_GWAN_CRITICAL_EXPRESSION',
     exactTenGod: '상관',
     family: 'output',
     facet: 'critical_expression',
     scope: 'semantic_substrate_only',
     forbiddenInferences: FORBIDDEN_INFERENCES,
-  }),
-  편재: Object.freeze({
+  },
+  편재: {
     semanticKey: 'TEN_GOD_PYEON_JAE_ADAPTIVE_RESOURCE_OPERATION',
     exactTenGod: '편재',
     family: 'wealth',
     facet: 'adaptive_resource_operation',
     scope: 'semantic_substrate_only',
     forbiddenInferences: FORBIDDEN_INFERENCES,
-  }),
-  정재: Object.freeze({
+  },
+  정재: {
     semanticKey: 'TEN_GOD_JEONG_JAE_STABLE_RESOURCE_MANAGEMENT',
     exactTenGod: '정재',
     family: 'wealth',
     facet: 'stable_resource_management',
     scope: 'semantic_substrate_only',
     forbiddenInferences: FORBIDDEN_INFERENCES,
-  }),
-  편관: Object.freeze({
+  },
+  편관: {
     semanticKey: 'TEN_GOD_PYEON_GWAN_PRESSURE_AND_CONSTRAINT',
     exactTenGod: '편관',
     family: 'officer',
     facet: 'pressure_and_constraint',
     scope: 'semantic_substrate_only',
     forbiddenInferences: FORBIDDEN_INFERENCES,
-  }),
-  정관: Object.freeze({
+  },
+  정관: {
     semanticKey: 'TEN_GOD_JEONG_GWAN_FORMAL_RESPONSIBILITY',
     exactTenGod: '정관',
     family: 'officer',
     facet: 'formal_responsibility',
     scope: 'semantic_substrate_only',
     forbiddenInferences: FORBIDDEN_INFERENCES,
-  }),
-  편인: Object.freeze({
+  },
+  편인: {
     semanticKey: 'TEN_GOD_PYEON_IN_EXPLORATORY_LEARNING',
     exactTenGod: '편인',
     family: 'resource',
     facet: 'exploratory_learning',
     scope: 'semantic_substrate_only',
     forbiddenInferences: FORBIDDEN_INFERENCES,
-  }),
-  정인: Object.freeze({
+  },
+  정인: {
     semanticKey: 'TEN_GOD_JEONG_IN_STRUCTURED_LEARNING',
     exactTenGod: '정인',
     family: 'resource',
     facet: 'structured_learning',
     scope: 'semantic_substrate_only',
     forbiddenInferences: FORBIDDEN_INFERENCES,
-  }),
-});
+  },
+} as const satisfies Readonly<Record<TenGod, CareerT5SubtypeSemantic>>;
 
-const FAMILY_RELATIONS: readonly CareerT5FamilyRelationSpec[] = Object.freeze([
-  Object.freeze({
+const FAMILY_RELATIONS = [
+  {
     id: 'OUTPUT-GENERATES-WEALTH',
     semanticKey: 'TEN_GOD_FAMILY_OUTPUT_GENERATES_WEALTH',
     sourceFamily: 'output',
     targetFamily: 'wealth',
     relationKind: 'generation',
     relation: 'output_generates_wealth',
-  }),
-  Object.freeze({
+  },
+  {
     id: 'WEALTH-GENERATES-OFFICER',
     semanticKey: 'TEN_GOD_FAMILY_WEALTH_GENERATES_OFFICER',
     sourceFamily: 'wealth',
     targetFamily: 'officer',
     relationKind: 'generation',
     relation: 'wealth_generates_officer',
-  }),
-  Object.freeze({
+  },
+  {
     id: 'OFFICER-GENERATES-RESOURCE',
     semanticKey: 'TEN_GOD_FAMILY_OFFICER_GENERATES_RESOURCE',
     sourceFamily: 'officer',
     targetFamily: 'resource',
     relationKind: 'generation',
     relation: 'officer_generates_resource',
-  }),
-  Object.freeze({
+  },
+  {
     id: 'PEER-CONTROLS-WEALTH',
     semanticKey: 'TEN_GOD_FAMILY_PEER_CONTROLS_WEALTH',
     sourceFamily: 'peer',
     targetFamily: 'wealth',
     relationKind: 'control',
     relation: 'peer_controls_wealth',
-  }),
-  Object.freeze({
+  },
+  {
     id: 'WEALTH-CONTROLS-RESOURCE',
     semanticKey: 'TEN_GOD_FAMILY_WEALTH_CONTROLS_RESOURCE',
     sourceFamily: 'wealth',
     targetFamily: 'resource',
     relationKind: 'control',
     relation: 'wealth_controls_resource',
-  }),
-  Object.freeze({
+  },
+  {
     id: 'OFFICER-CONTROLS-PEER',
     semanticKey: 'TEN_GOD_FAMILY_OFFICER_CONTROLS_PEER',
     sourceFamily: 'officer',
     targetFamily: 'peer',
     relationKind: 'control',
     relation: 'officer_controls_peer',
-  }),
-]);
+  },
+] as const satisfies readonly CareerT5FamilyRelationSpec[];
 
-export const CAREER_T5_SUBTYPE_VALUE_SCHEMA: ClaimValueSchemaDefinition = Object.freeze({
+export const CAREER_T5_SUBTYPE_VALUE_SCHEMA = {
   schemaId: 'SCHEMA-CAREER-T5-TEN-GOD-SUBTYPE-SEMANTIC-V1',
   version: CAREER_PERSONALIZED_T5_SUBSTRATE_VERSION,
   root: {
@@ -262,9 +262,9 @@ export const CAREER_T5_SUBTYPE_VALUE_SCHEMA: ClaimValueSchemaDefinition = Object
     },
     additionalProperties: false,
   },
-});
+} satisfies ClaimValueSchemaDefinition;
 
-export const CAREER_T5_FAMILY_RELATION_VALUE_SCHEMA: ClaimValueSchemaDefinition = Object.freeze({
+export const CAREER_T5_FAMILY_RELATION_VALUE_SCHEMA = {
   schemaId: 'SCHEMA-CAREER-T5-FAMILY-RELATION-CONTEXT-V1',
   version: CAREER_PERSONALIZED_T5_SUBSTRATE_VERSION,
   root: {
@@ -299,9 +299,9 @@ export const CAREER_T5_FAMILY_RELATION_VALUE_SCHEMA: ClaimValueSchemaDefinition 
     },
     additionalProperties: false,
   },
-});
+} satisfies ClaimValueSchemaDefinition;
 
-export const CAREER_T5_SUBTYPE_CLAIM_DEFINITION: ClaimTypeDefinition = Object.freeze({
+export const CAREER_T5_SUBTYPE_CLAIM_DEFINITION = {
   claimType: CAREER_T5_SUBTYPE_CLAIM_TYPE,
   version: CAREER_PERSONALIZED_T5_SUBSTRATE_VERSION,
   valueSchemaRef: {
@@ -313,9 +313,9 @@ export const CAREER_T5_SUBTYPE_CLAIM_DEFINITION: ClaimTypeDefinition = Object.fr
   scenarioSensitive: true,
   materialForNarrative: false,
   allowedTaxonomyTiers: ['T5'],
-});
+} satisfies ClaimTypeDefinition;
 
-export const CAREER_T5_FAMILY_RELATION_CLAIM_DEFINITION: ClaimTypeDefinition = Object.freeze({
+export const CAREER_T5_FAMILY_RELATION_CLAIM_DEFINITION = {
   claimType: CAREER_T5_FAMILY_RELATION_CLAIM_TYPE,
   version: CAREER_PERSONALIZED_T5_SUBSTRATE_VERSION,
   valueSchemaRef: {
@@ -327,9 +327,9 @@ export const CAREER_T5_FAMILY_RELATION_CLAIM_DEFINITION: ClaimTypeDefinition = O
   scenarioSensitive: true,
   materialForNarrative: false,
   allowedTaxonomyTiers: ['T5'],
-});
+} satisfies ClaimTypeDefinition;
 
-export const CAREER_T5_SUBTYPE_METHODOLOGY: MethodologyDefinition = Object.freeze({
+export const CAREER_T5_SUBTYPE_METHODOLOGY = {
   methodologyId: SUBTYPE_METHOD_ID,
   version: CAREER_PERSONALIZED_T5_SUBSTRATE_VERSION,
   family: 'ten_gods',
@@ -354,9 +354,9 @@ export const CAREER_T5_SUBTYPE_METHODOLOGY: MethodologyDefinition = Object.freez
   },
   sourceIds: [GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId],
   status: 'research',
-});
+} satisfies MethodologyDefinition;
 
-export const CAREER_T5_FAMILY_RELATION_METHODOLOGY: MethodologyDefinition = Object.freeze({
+export const CAREER_T5_FAMILY_RELATION_METHODOLOGY = {
   methodologyId: RELATION_METHOD_ID,
   version: CAREER_PERSONALIZED_T5_SUBSTRATE_VERSION,
   family: 'ten_gods',
@@ -379,12 +379,9 @@ export const CAREER_T5_FAMILY_RELATION_METHODOLOGY: MethodologyDefinition = Obje
       },
     ],
   },
-  sourceIds: [
-    GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId,
-    GENERAL_NATAL_CONCLUSION_SOURCE.sourceId,
-  ],
+  sourceIds: [GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId, GENERAL_NATAL_CONCLUSION_SOURCE.sourceId],
   status: 'research',
-});
+} satisfies MethodologyDefinition;
 
 function subtypeSourceRefs(): RuleDefinition['sourceRefs'] {
   return [
@@ -524,30 +521,24 @@ function relationRule(spec: CareerT5FamilyRelationSpec): RuleDefinition {
   };
 }
 
-export const CAREER_PERSONALIZED_T5_SUBTYPE_RULES: readonly RuleDefinition[] = Object.freeze(
-  SLOTS.flatMap((slot) =>
-    (Object.keys(SUBTYPE_SEMANTICS) as TenGod[]).map((tenGod) => subtypeRule(slot, tenGod)),
-  ),
+export const CAREER_PERSONALIZED_T5_SUBTYPE_RULES: readonly RuleDefinition[] = SLOTS.flatMap((slot) =>
+  (Object.keys(SUBTYPE_SEMANTICS) as TenGod[]).map((tenGod) => subtypeRule(slot, tenGod)),
 );
 
-export const CAREER_PERSONALIZED_T5_FAMILY_RELATION_RULES: readonly RuleDefinition[] = Object.freeze(
-  FAMILY_RELATIONS.map(relationRule),
-);
+export const CAREER_PERSONALIZED_T5_FAMILY_RELATION_RULES: readonly RuleDefinition[] =
+  FAMILY_RELATIONS.map(relationRule);
 
-export const CAREER_PERSONALIZED_T5_RULES: readonly RuleDefinition[] = Object.freeze([
+export const CAREER_PERSONALIZED_T5_RULES: readonly RuleDefinition[] = [
   ...CAREER_PERSONALIZED_T5_SUBTYPE_RULES,
   ...CAREER_PERSONALIZED_T5_FAMILY_RELATION_RULES,
-]);
+];
 
-export const CAREER_PERSONALIZED_T5_PACK: InterpretationPack = Object.freeze({
+export const CAREER_PERSONALIZED_T5_PACK = {
   packId: 'PACK-CAREER-PERSONALIZED-T5-SUBSTRATE',
   version: CAREER_PERSONALIZED_T5_SUBSTRATE_VERSION,
   name: 'Career personalized T5 semantic substrate research pack',
   methodologyRefs: [
-    {
-      id: CAREER_T5_SUBTYPE_METHODOLOGY.methodologyId,
-      version: CAREER_T5_SUBTYPE_METHODOLOGY.version,
-    },
+    { id: CAREER_T5_SUBTYPE_METHODOLOGY.methodologyId, version: CAREER_T5_SUBTYPE_METHODOLOGY.version },
     {
       id: CAREER_T5_FAMILY_RELATION_METHODOLOGY.methodologyId,
       version: CAREER_T5_FAMILY_RELATION_METHODOLOGY.version,
@@ -562,7 +553,7 @@ export const CAREER_PERSONALIZED_T5_PACK: InterpretationPack = Object.freeze({
   },
   claimContractMode: 'registered_required',
   status: 'research',
-});
+} satisfies InterpretationPack;
 
 function assertP1Gate(): void {
   const subtype = careerMethodologyDecision('exact_ten_god_subtype');
@@ -586,10 +577,7 @@ export function createCareerPersonalizedT5SubstrateRegistry(generatedAt?: string
       rules: CAREER_PERSONALIZED_T5_RULES,
       methodologies: [CAREER_T5_SUBTYPE_METHODOLOGY, CAREER_T5_FAMILY_RELATION_METHODOLOGY],
       sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE],
-      claimTypeDefinitions: [
-        CAREER_T5_SUBTYPE_CLAIM_DEFINITION,
-        CAREER_T5_FAMILY_RELATION_CLAIM_DEFINITION,
-      ],
+      claimTypeDefinitions: [CAREER_T5_SUBTYPE_CLAIM_DEFINITION, CAREER_T5_FAMILY_RELATION_CLAIM_DEFINITION],
       claimValueSchemas: [CAREER_T5_SUBTYPE_VALUE_SCHEMA, CAREER_T5_FAMILY_RELATION_VALUE_SCHEMA],
     },
     CAREER_PERSONALIZED_T5_PACK,
