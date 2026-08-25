@@ -11,6 +11,7 @@ import {
   assertCalculationPolicySnapshot,
 } from '../contracts/runtime-validation.js';
 import { enrichCanonicalBranchClashContexts } from './branch-clash-context-facts.js';
+import { enrichCanonicalBranchClashQualifierObservations } from './branch-clash-qualifier-observation-facts.js';
 import { enrichCanonicalHiddenStems } from './hidden-stems.js';
 import {
   calculateCanonicalSajuSnapshot as calculateAdapterSnapshot,
@@ -248,7 +249,8 @@ export function calculateCanonicalSajuSnapshot(
     const adapterSnapshot = calculateAdapterSnapshot(input, policy, options);
     const hiddenStemSnapshot = enrichCanonicalHiddenStems(adapterSnapshot);
     const structuralRelationSnapshot = enrichCanonicalStructuralRelations(hiddenStemSnapshot);
-    const snapshot = enrichCanonicalBranchClashContexts(structuralRelationSnapshot);
+    const branchClashContextSnapshot = enrichCanonicalBranchClashContexts(structuralRelationSnapshot);
+    const snapshot = enrichCanonicalBranchClashQualifierObservations(branchClashContextSnapshot);
     enforceScenarioLimit(snapshot, options);
     const solarTermContext = buildSolarTermContext(snapshot, policy);
     return solarTermContext === undefined ? snapshot : { ...snapshot, solarTermContext };
