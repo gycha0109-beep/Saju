@@ -281,7 +281,11 @@ export function validateClaimGraphIntegrity(
       errors.push(`evaluation ${evaluation.evaluationId} references unknown rule ${evaluation.ruleRef.id}@${evaluation.ruleRef.version}`);
     }
     for (const inputRef of evaluation.inputRefs) {
-      if (inputRef.sourceType === 'research_evidence' && !researchEvidenceIds.has(inputRef.idOrPath)) {
+      if (
+        inputRef.sourceType === 'research_evidence' &&
+        inputRef.payloadHash !== undefined &&
+        !researchEvidenceIds.has(inputRef.idOrPath)
+      ) {
         errors.push(
           `evaluation ${evaluation.evaluationId} references missing research evidence ${inputRef.idOrPath}`,
         );
