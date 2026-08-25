@@ -521,7 +521,7 @@ function laneResults(): readonly CareerT8CandidateDiscoveryLaneResult[] {
   });
 }
 
-function finalized<T extends { evidenceId?: never }>(
+function finalized(
   material: Omit<CareerPersonalizationT8SynthesisAuthorityCandidateDiscoveryEvidenceReport, 'evidenceId'>,
 ): CareerPersonalizationT8SynthesisAuthorityCandidateDiscoveryEvidenceReport {
   return {
