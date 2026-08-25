@@ -142,6 +142,13 @@ export const CAREER_T6_BRANCH_CLASH_CONTEXT_METHODOLOGY = {
     factInputs: [
       {
         source: 'derived_fact',
+        pathPattern: 'derivedFacts.branchClashContexts',
+        mode: 'required',
+        rationale:
+          'The projection root must be resolved so absence of a pair can be distinguished from unavailable T0 authority.',
+      },
+      {
+        source: 'derived_fact',
         pathPattern: 'derivedFacts.branchClashContexts.*',
         mode: 'allowed',
         rationale:
@@ -183,11 +190,19 @@ function rule(pair: PillarPairKey): RuleDefinition {
       'Emits one non-narrative structural interaction context only when the exact precomputed T0 branch-clash context exists for this pillar pair.',
     inputs: [
       {
+        key: 'branchClashContextRoot',
+        source: 'derived_fact',
+        pathOrClaimType: 'derivedFacts.branchClashContexts',
+        acceptedStatuses: ['resolved'],
+        required: true,
+        ambiguityBehavior: 'requires_resolved',
+      },
+      {
         key: 'branchClashContext',
         source: 'derived_fact',
         pathOrClaimType: factPath,
         acceptedStatuses: ['resolved'],
-        required: true,
+        required: false,
         ambiguityBehavior: 'requires_resolved',
       },
     ],
