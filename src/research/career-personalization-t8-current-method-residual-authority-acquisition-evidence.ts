@@ -105,7 +105,7 @@ export const CAREER_T8_CURRENT_METHOD_ACQUISITION_CANDIDATES = Object.freeze([
     candidateId: 'QIN_LUNSHI_2010_PUBLISHED_TENGOD_CAREER_CHAPTER_LEAD',
     taskId: 'T5_CURRENT_METHOD_DIRECT_BRIDGE_AUTHORITY_ACQUISITION',
     sourceClass: 'FORMAL_PUBLISHED_BOOK_TOC_AND_BIBLIOGRAPHY',
-    sourceIdentity: '秦倫詩, 中國易學博覽·八字應用經驗學, 內蒙古人民出版社, 2010, ISBN 9787504098774',
+    sourceIdentity: '秦倫詩, 中國易學博覽·八字應用經驗學, 內蒙古人民出版社, 2010, ISBN 9787204098774',
     sourceLocator:
       'WorldCat title 654936533 / printed first edition metadata; public TOC: Chapter 18 職業篇, section 3 按十神組合選職業, printed p.464',
     inspectedSurface:
@@ -142,7 +142,7 @@ export const CAREER_T8_CURRENT_METHOD_ACQUISITION_CANDIDATES = Object.freeze([
     taskId: 'T5_CURRENT_METHOD_DIRECT_BRIDGE_AUTHORITY_ACQUISITION',
     sourceClass: 'MODERN_WEB_METHOD_ARTICLE',
     sourceIdentity: '汪緣堂, 十神組合與職業選擇（上）, 2022-05-04',
-    sourceLocator: 'Sohu article /a/544012309_120805639 and derivative indexed mirrors',
+    sourceLocator: 'Sohu article https://www.sohu.com/a/543696130_120557164, published 2022-05-04',
     inspectedSurface:
       'The article directly maps multi-Ten-God combinations to occupational categories, including 食傷 with 比劫 and several official/wealth combinations, but repeatedly conditions results on relative strength between Ten-God groups.',
     disposition: 'DIRECT_SEMANTICS_PROVENANCE_OR_METHOD_INADEQUATE',
