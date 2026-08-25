@@ -116,6 +116,44 @@ describe('nested RuleOperand projection', () => {
     ).toBe(true);
   });
 
+  test('projects canonical numeric array indexes without widening object-path authority', () => {
+    const inputs = new Map<string, unknown>([
+      ['value', { positions: [{ seasonalPhase: '休' }, { seasonalPhase: '相' }] }],
+    ]);
+
+    expect(
+      evaluateRuleExpression(
+        {
+          op: 'eq',
+          left: { kind: 'input', key: 'value', path: 'positions.1.seasonalPhase' },
+          right: { kind: 'literal', value: '相' },
+        },
+        inputs,
+      ),
+    ).toBe(true);
+  });
+
+  test('rejects non-canonical, metadata, and out-of-range array segments', () => {
+    const inputs = new Map<string, unknown>([
+      ['value', { positions: [{ seasonalPhase: '休' }] }],
+    ]);
+
+    for (const path of [
+      'positions.-1.seasonalPhase',
+      'positions.01.seasonalPhase',
+      'positions.1e0.seasonalPhase',
+      'positions.length',
+      'positions.4.seasonalPhase',
+    ]) {
+      expect(
+        evaluateRuleExpression(
+          { op: 'exists', value: { kind: 'input', key: 'value', path } },
+          inputs,
+        ),
+      ).toBe(false);
+    }
+  });
+
   test('missing nested paths resolve as absent instead of reading arbitrary properties', () => {
     const inputs = new Map<string, unknown>([['value', { outer: {} }]]);
 
