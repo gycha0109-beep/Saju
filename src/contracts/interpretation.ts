@@ -92,9 +92,19 @@ export interface MethodologyClaimInputContract {
   rationale: string;
 }
 
+export interface MethodologyResearchEvidenceInputContract {
+  source: 'research_evidence';
+  evidenceType: string;
+  evidenceVersion?: string;
+  definitionRef?: VersionedRef;
+  mode: MethodologyInputMode;
+  rationale: string;
+}
+
 export interface MethodologyInputContract {
   factInputs?: readonly MethodologyFactInputContract[];
   claimInputs?: readonly MethodologyClaimInputContract[];
+  researchEvidenceInputs?: readonly MethodologyResearchEvidenceInputContract[];
 }
 
 export interface MethodologyDefinition {
@@ -150,13 +160,15 @@ export type ClaimInputCardinality = 'exactly_one' | 'one_or_more' | 'zero_or_mor
 
 export interface RuleInputRequirement {
   key: string;
-  source: 'canonical_fact' | 'derived_fact' | 'interpretation_claim';
+  source: 'canonical_fact' | 'derived_fact' | 'interpretation_claim' | 'research_evidence';
   pathOrClaimType: string;
   acceptedStatuses?: readonly ('resolved' | 'ambiguous' | 'unavailable')[];
   required: boolean;
   ambiguityBehavior: AmbiguityBehavior;
   claimSelector?: ClaimInputSelector;
   cardinality?: ClaimInputCardinality;
+  evidenceVersion?: string;
+  researchEvidenceDefinitionRef?: VersionedRef;
 }
 
 export type RuleOperand =
@@ -251,10 +263,15 @@ export interface RuleEvaluation {
   interpretationPackRef: VersionedRef;
   status: RuleEvaluationStatus;
   inputRefs: readonly {
-    sourceType: 'fact' | 'claim';
+    sourceType: 'fact' | 'claim' | 'research_evidence';
     idOrPath: string;
     observedValue?: unknown;
     selectedClaimIds?: readonly string[];
+    definitionRef?: VersionedRef;
+    definitionContentHash?: string;
+    evidenceType?: string;
+    evidenceVersion?: string;
+    payloadHash?: string;
   }[];
   emittedClaimIds: readonly string[];
   evaluatedAt: string;
@@ -282,6 +299,7 @@ export interface InterpretationClaim {
   }[];
   factRefs: readonly string[];
   upstreamClaimRefs: readonly string[];
+  researchEvidenceRefs?: readonly string[];
   sourceRefs: readonly string[];
   polarity?: 'supportive' | 'challenging' | 'neutral' | 'mixed';
   emphasis?: 'minor' | 'moderate' | 'major';
@@ -308,6 +326,7 @@ export interface EvidenceIndexEntry {
   claimId: string;
   factRefs: readonly string[];
   upstreamClaimRefs: readonly string[];
+  researchEvidenceRefs?: readonly string[];
   sourceRefs: readonly string[];
   ruleRefs: readonly VersionedRef[];
   methodologyRef: VersionedRef;
