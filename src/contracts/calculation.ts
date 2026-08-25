@@ -152,6 +152,30 @@ export interface FourPillarsFact {
   hour: FactState<PillarFact>;
 }
 
+export type PillarSlot = 'year' | 'month' | 'day' | 'hour';
+export type StructuralRelationKind =
+  | 'stem_five_combination'
+  | 'branch_six_combination'
+  | 'branch_clash'
+  | 'branch_three_combination';
+
+export interface StructuralRelationParticipant {
+  pillar: PillarSlot;
+  component: 'stem' | 'branch';
+  value: HeavenlyStem | EarthlyBranch;
+}
+
+export interface StructuralRelationCandidate {
+  relationId: string;
+  kind: StructuralRelationKind;
+  participants: readonly StructuralRelationParticipant[];
+  sourceIds: readonly string[];
+  semantics: {
+    structuralMatchOnly: true;
+    transformationEstablished: false;
+  };
+}
+
 export interface TenGodTargetFact {
   stem?: FactState<TenGod | '일간'>;
   branch?: FactState<TenGod>;
@@ -177,6 +201,7 @@ export interface DerivedFacts {
   voidBranches: FactState<readonly EarthlyBranch[]>;
   hiddenStems?: HiddenStemChartFact;
   fiveElementCounts?: FactState<Readonly<Record<FiveElement, number>>>;
+  structuralRelations?: FactState<readonly StructuralRelationCandidate[]>;
 }
 
 export interface SolarTermFact {
