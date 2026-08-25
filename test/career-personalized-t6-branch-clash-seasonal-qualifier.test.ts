@@ -466,7 +466,7 @@ describe('Career T6 branch-clash seasonal qualifier transport', () => {
 
     const serialized = JSON.stringify(CAREER_T6_BRANCH_CLASH_SEASONAL_QUALIFIER_RULES);
     expect(serialized).not.toContain('materialForNarrative":true');
-    expect(serialized).not.toContain('career_t8');
+    expect(serialized).toContain('"career_t8_conclusion"');
     expect(serialized).not.toContain('production');
   });
 });
