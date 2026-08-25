@@ -1,8 +1,5 @@
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
-import {
-  CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS,
-  type CareerT8SynthesisAuthorityGapId,
-} from './career-personalization-bounded-t5-t6-t8-synthesis-methodology-review.js';
+import { CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS } from './career-personalization-bounded-t5-t6-t8-synthesis-methodology-review.js';
 import {
   CAREER_PERSONALIZATION_T8_CURRENT_T5_T6_SEMANTIC_BRIDGE_ACTIVE_REMEDIATION_EXECUTION_EVIDENCE_VERSION,
   CAREER_T8_CURRENT_T5_T6_BRIDGE_ACTIVE_REMEDIATION_EXECUTION_EVIDENCE_RECORDS,
@@ -12,6 +9,8 @@ import {
 
 export const CAREER_PERSONALIZATION_T8_CURRENT_T5_T6_SEMANTIC_BRIDGE_REMEDIATION_EVIDENCE_ADEQUACY_RESIDUAL_PATH_REASSESSMENT_REVIEW_VERSION =
   'myeonghwa-career-personalization-t8-current-t5-t6-semantic-bridge-remediation-evidence-adequacy-residual-path-reassessment-review-v1' as const;
+
+type CareerT8SynthesisAuthorityGapId = (typeof CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS)[number];
 
 export type CareerT8BridgeResidualPathId =
   | 'CHEONBU_EXTERNAL_FULL_TEXT_ACCESS_HOLD'
