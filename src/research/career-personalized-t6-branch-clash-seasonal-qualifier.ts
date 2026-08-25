@@ -52,7 +52,15 @@ const PAIR_PARTICIPANTS = {
   month_day: ['month', 'day'],
   month_hour: ['month', 'hour'],
   day_hour: ['day', 'hour'],
-} as const satisfies Readonly<Record<PillarPairKey, readonly ['year' | 'month' | 'day' | 'hour', 'year' | 'month' | 'day' | 'hour']>>;
+} as const satisfies Readonly<
+  Record<
+    PillarPairKey,
+    readonly [
+      'year' | 'month' | 'day' | 'hour',
+      'year' | 'month' | 'day' | 'hour',
+    ]
+  >
+>;
 
 const PHASE_ID = {
   旺: 'WANG',
@@ -89,10 +97,6 @@ function phasePath(pillar: keyof typeof PILLAR_INDEX): string {
   return `positions.${PILLAR_INDEX[pillar]}.seasonalPhase`;
 }
 
-function positionPath(pillar: keyof typeof PILLAR_INDEX): string {
-  return `positions.${PILLAR_INDEX[pillar]}.position`;
-}
-
 export const CAREER_T6_BRANCH_CLASH_SEASONAL_QUALIFIER_VALUE_SCHEMA = {
   schemaId: 'SCHEMA-CAREER-T6-BRANCH-CLASH-SEASONAL-QUALIFIER-V1',
   version: CAREER_T6_BRANCH_CLASH_SEASONAL_QUALIFIER_VERSION,
@@ -114,12 +118,18 @@ export const CAREER_T6_BRANCH_CLASH_SEASONAL_QUALIFIER_VALUE_SCHEMA = {
       'forbiddenInferences',
     ],
     properties: {
-      semanticKey: { kind: 'string', enum: ['BRANCH_CLASH_PARTICIPANT_SEASONAL_PHASE_OBSERVATION'] },
+      semanticKey: {
+        kind: 'string',
+        enum: ['BRANCH_CLASH_PARTICIPANT_SEASONAL_PHASE_OBSERVATION'],
+      },
       structuralTrigger: { kind: 'string', enum: ['branch_clash'] },
       pillarPair: { kind: 'string', enum: Object.keys(PAIR_PARTICIPANTS) },
       participantPillar: { kind: 'string', enum: Object.keys(PILLAR_INDEX) },
       seasonalPhase: { kind: 'string', enum: PHASES },
-      seasonalPhaseAuthority: { kind: 'string', enum: ['month_branch_element_relation_only'] },
+      seasonalPhaseAuthority: {
+        kind: 'string',
+        enum: ['month_branch_element_relation_only'],
+      },
       researchEvidenceType: {
         kind: 'string',
         enum: [I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_TYPE],
@@ -277,27 +287,47 @@ function rule(
         },
         {
           op: 'eq',
-          left: { kind: 'input', key: 'i20SeasonalEvidence', path: 'seasonalPhaseAuthority' },
+          left: {
+            kind: 'input',
+            key: 'i20SeasonalEvidence',
+            path: 'seasonalPhaseAuthority',
+          },
           right: { kind: 'literal', value: 'month_branch_element_relation_only' },
         },
         {
           op: 'eq',
-          left: { kind: 'input', key: 'i20SeasonalEvidence', path: 'relativeForceVerdictAuthorized' },
+          left: {
+            kind: 'input',
+            key: 'i20SeasonalEvidence',
+            path: 'relativeForceVerdictAuthorized',
+          },
           right: { kind: 'literal', value: false },
         },
         {
           op: 'eq',
-          left: { kind: 'input', key: 'i20SeasonalEvidence', path: 'numericScoringAuthorized' },
+          left: {
+            kind: 'input',
+            key: 'i20SeasonalEvidence',
+            path: 'numericScoringAuthorized',
+          },
           right: { kind: 'literal', value: false },
         },
         {
           op: 'eq',
-          left: { kind: 'input', key: 'i20SeasonalEvidence', path: `positions.${index}.position` },
+          left: {
+            kind: 'input',
+            key: 'i20SeasonalEvidence',
+            path: `positions.${index}.position`,
+          },
           right: { kind: 'literal', value: participantPillar },
         },
         {
           op: 'eq',
-          left: { kind: 'input', key: 'i20SeasonalEvidence', path: `positions.${index}.seasonalPhase` },
+          left: {
+            kind: 'input',
+            key: 'i20SeasonalEvidence',
+            path: `positions.${index}.seasonalPhase`,
+          },
           right: { kind: 'literal', value: seasonalPhase },
         },
       ],
@@ -322,7 +352,15 @@ function rule(
         forbiddenInferences: FORBIDDEN_INFERENCES,
       },
       polarity: 'neutral',
-      tags: ['research', 'career', 't6', 'branch-clash', 'seasonal-qualifier', 'categorical', 'non-narrative'],
+      tags: [
+        'research',
+        'career',
+        't6',
+        'branch-clash',
+        'seasonal-qualifier',
+        'categorical',
+        'non-narrative',
+      ],
     },
     sourceRefs: [
       {
@@ -426,7 +464,10 @@ export function createCareerT6BranchClashSeasonalQualifierRegistry(
         CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_METHODOLOGY,
         CAREER_T6_BRANCH_CLASH_SEASONAL_QUALIFIER_METHODOLOGY,
       ],
-      sources: [CAREER_T6_QIANLI_NLC_SCAN_SOURCE, CAREER_T6_QIANLI_PUBLIC_TRANSCRIPTION_SOURCE],
+      sources: [
+        CAREER_T6_QIANLI_NLC_SCAN_SOURCE,
+        CAREER_T6_QIANLI_PUBLIC_TRANSCRIPTION_SOURCE,
+      ],
       claimTypeDefinitions: [
         CAREER_T6_BRANCH_CLASH_CONTEXT_CLAIM_DEFINITION,
         CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_CLAIM_DEFINITION,
