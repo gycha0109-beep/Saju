@@ -35,6 +35,7 @@ export type RegistryConfigurationErrorCode =
   | 'RULE_CLAIM_TAXONOMY_NOT_ALLOWED'
   | 'RULE_CLAIM_VALUE_SCHEMA_MISMATCH'
   | 'RULE_INPUT_NOT_ALLOWED_BY_METHODOLOGY'
+  | 'PRODUCTION_RULE_RESEARCH_EVIDENCE_FORBIDDEN'
   | 'REVIEW_ATTESTATION_INVALID'
   | 'REVIEW_ATTESTATION_SUBJECT_MISMATCH';
 
@@ -354,6 +355,23 @@ function pathPatternMatches(pattern: string, path: string): boolean {
   return pi === patternSegments.length - 1 && patternSegments[pi] === '**';
 }
 
+function researchEvidenceContractMatches(
+  candidate: NonNullable<MethodologyDefinition['inputContract']>['researchEvidenceInputs'] extends readonly (infer T)[] | undefined
+    ? T
+    : never,
+  input: RuleDefinition['inputs'][number],
+): boolean {
+  if (candidate.evidenceType !== input.pathOrClaimType) return false;
+  if (candidate.evidenceVersion !== undefined && candidate.evidenceVersion !== input.evidenceVersion) {
+    return false;
+  }
+  if (candidate.definitionRef !== undefined) {
+    if (input.researchEvidenceDefinitionRef === undefined) return false;
+    if (versionKey(candidate.definitionRef) !== versionKey(input.researchEvidenceDefinitionRef)) return false;
+  }
+  return true;
+}
+
 function ensureMethodologyInputContracts(
   rules: readonly RuleDefinition[],
   methodologies: readonly MethodologyDefinition[],
@@ -384,6 +402,25 @@ function ensureMethodologyInputContracts(
         continue;
       }
 
+      if (input.source === 'research_evidence') {
+        const candidates = (method.inputContract.researchEvidenceInputs ?? []).filter((candidate) =>
+          researchEvidenceContractMatches(candidate, input),
+        );
+        if (candidates.some((candidate) => candidate.mode === 'forbidden')) {
+          throw new RegistryConfigurationError(
+            'RULE_INPUT_NOT_ALLOWED_BY_METHODOLOGY',
+            `Rule ${rule.ruleId}@${rule.version} consumes forbidden research evidence ${input.pathOrClaimType}@${input.evidenceVersion ?? '*'} under ${method.methodologyId}@${method.version}.`,
+          );
+        }
+        if (!candidates.some((candidate) => candidate.mode === 'allowed' || candidate.mode === 'required')) {
+          throw new RegistryConfigurationError(
+            'RULE_INPUT_NOT_ALLOWED_BY_METHODOLOGY',
+            `Rule ${rule.ruleId}@${rule.version} consumes undeclared research evidence ${input.pathOrClaimType}@${input.evidenceVersion ?? '*'} under ${method.methodologyId}@${method.version}.`,
+          );
+        }
+        continue;
+      }
+
       const candidates = (method.inputContract.factInputs ?? []).filter(
         (candidate) =>
           candidate.source === input.source &&
@@ -402,6 +439,21 @@ function ensureMethodologyInputContracts(
         );
       }
     }
+  }
+}
+
+function ensureResearchEvidenceProductionBoundary(
+  rules: readonly RuleDefinition[],
+  pack: InterpretationPack,
+): void {
+  if (pack.status !== 'production') return;
+  for (const rule of rules) {
+    const researchInput = rule.inputs.find((input) => input.source === 'research_evidence');
+    if (researchInput === undefined) continue;
+    throw new RegistryConfigurationError(
+      'PRODUCTION_RULE_RESEARCH_EVIDENCE_FORBIDDEN',
+      `Production pack ${pack.packId}@${pack.version} cannot select rule ${rule.ruleId}@${rule.version} because it consumes research_only evidence ${researchInput.pathOrClaimType}@${researchInput.evidenceVersion ?? '*'}.`,
+    );
   }
 }
 
@@ -754,6 +806,7 @@ export function createRuleRegistrySnapshot(
 
   const selectedRules = selectedRulesForPack(rules, packInput);
   ensureMethodologyInputContracts(selectedRules, methodologies);
+  ensureResearchEvidenceProductionBoundary(selectedRules, packInput);
   ensureRuleClaimContracts(
     selectedRules,
     claimTypeDefinitions,
