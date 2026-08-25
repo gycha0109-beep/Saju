@@ -16,6 +16,7 @@ import {
   manseryeokAdapterMetadata,
   type CalculationAdapterOptions,
 } from './manseryeok-adapter.js';
+import { enrichCanonicalStructuralRelations } from './structural-relation-facts.js';
 
 const SOLAR_TERM_MIN_YEAR = 1800;
 const SOLAR_TERM_MAX_YEAR = 2300;
@@ -244,7 +245,8 @@ export function calculateCanonicalSajuSnapshot(
     assertCalculationPolicySnapshot(policy);
     enforceHistoricalCivilTimeSupport(input, policy);
     const adapterSnapshot = calculateAdapterSnapshot(input, policy, options);
-    const snapshot = enrichCanonicalHiddenStems(adapterSnapshot);
+    const hiddenStemSnapshot = enrichCanonicalHiddenStems(adapterSnapshot);
+    const snapshot = enrichCanonicalStructuralRelations(hiddenStemSnapshot);
     enforceScenarioLimit(snapshot, options);
     const solarTermContext = buildSolarTermContext(snapshot, policy);
     return solarTermContext === undefined ? snapshot : { ...snapshot, solarTermContext };
