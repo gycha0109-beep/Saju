@@ -206,6 +206,40 @@ export type BranchClashContextIndex = Readonly<
   Partial<Record<PillarPairKey, BranchClashContextFact>>
 >;
 
+export interface BranchClashHiddenStemObservation {
+  stem: HeavenlyStem;
+  visibleExactStemPositions: readonly PillarSlot[];
+  hiddenOccurrenceBranchPositions: readonly PillarSlot[];
+}
+
+export interface BranchClashQualifierObservationParticipant {
+  pillar: PillarSlot;
+  branch: EarthlyBranch;
+  hiddenStemObservations: readonly BranchClashHiddenStemObservation[];
+}
+
+export interface BranchClashQualifierObservationFact {
+  relationId: string;
+  pairKey: PillarPairKey;
+  interveningPillars: readonly PillarSlot[];
+  participants: readonly [
+    BranchClashQualifierObservationParticipant,
+    BranchClashQualifierObservationParticipant,
+  ];
+  sourceFactRefs: readonly string[];
+  semantics: {
+    observationOnly: true;
+    visibilityEffectEstablished: false;
+    separationEffectEstablished: false;
+    pluralityEffectEstablished: false;
+    numericWeightAssigned: false;
+  };
+}
+
+export type BranchClashQualifierObservationIndex = Readonly<
+  Partial<Record<PillarPairKey, BranchClashQualifierObservationFact>>
+>;
+
 export interface TenGodTargetFact {
   stem?: FactState<TenGod | '일간'>;
   branch?: FactState<TenGod>;
@@ -233,6 +267,7 @@ export interface DerivedFacts {
   fiveElementCounts?: FactState<Readonly<Record<FiveElement, number>>>;
   structuralRelations?: FactState<readonly StructuralRelationCandidate[]>;
   branchClashContexts?: FactState<BranchClashContextIndex>;
+  branchClashQualifierObservations?: FactState<BranchClashQualifierObservationIndex>;
 }
 
 export interface SolarTermFact {

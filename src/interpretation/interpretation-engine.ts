@@ -24,7 +24,7 @@ import {
 } from './rule-registry.js';
 
 const INTERPRETATION_ENGINE_VERSION = '0.5.0';
-const DERIVED_FACT_SET_VERSION = 'myeonghwa-derived-facts-v1.3';
+const DERIVED_FACT_SET_VERSION = 'myeonghwa-derived-facts-v1.4';
 export const INTERPRETATION_AUTHORIZATION_POLICY_VERSION =
   'myeonghwa-interpretation-authorization-v4';
 
