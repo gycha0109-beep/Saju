@@ -153,6 +153,7 @@ describe('Career T8 synthesis authority candidate requirement coverage evaluatio
       true,
     );
     expect(report.gapSummaries.every((item) => !item.gapClosed)).toBe(true);
+    expect(report.gapSummaries.every((item) => item.partialEvidenceCompositionBlocked)).toBe(true);
     expect(report.allSixGapsRemainOpen).toBe(true);
     expect(report.unresolvedGapIds).toEqual(CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS);
   });
@@ -292,8 +293,8 @@ describe('Career T8 synthesis authority candidate requirement coverage evaluatio
     const { b6, b7 } = acceptedInputs();
     const tampered = {
       ...b7,
-      inspectedCandidateCount: 3 as const,
-    };
+      inspectedCandidateCount: 3,
+    } as unknown as typeof b7;
     const report =
       buildCareerPersonalizationT8SynthesisAuthorityCandidateRequirementCoverageEvaluation(
         b6,
