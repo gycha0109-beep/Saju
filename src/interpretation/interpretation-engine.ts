@@ -16,6 +16,11 @@ import {
   buildInterpretationExecutionPlan,
   type InterpretationExecutionPlan,
 } from './execution-plan.js';
+import type { ResearchEvidenceEnvelope } from './research-evidence.js';
+import type {
+  ResearchEvidenceRuntimeRegistry,
+  ValidatedResearchEvidence,
+} from './research-evidence-runtime.js';
 import type { ReviewerTrustContext } from './reviewer-trust.js';
 import { evaluateRule } from './rule-evaluator.js';
 import {
@@ -28,10 +33,26 @@ const DERIVED_FACT_SET_VERSION = 'myeonghwa-derived-facts-v1.4';
 export const INTERPRETATION_AUTHORIZATION_POLICY_VERSION =
   'myeonghwa-interpretation-authorization-v4';
 
+export interface InterpretationResearchEvidenceInput {
+  runtimeRegistry: ResearchEvidenceRuntimeRegistry;
+  envelopes: readonly ResearchEvidenceEnvelope[];
+}
+
+export class ResearchEvidenceExecutionError extends Error {
+  readonly errors: readonly string[];
+
+  constructor(errors: readonly string[]) {
+    super(`Research evidence validation failed: ${errors.join('; ')}`);
+    this.name = 'ResearchEvidenceExecutionError';
+    this.errors = [...errors];
+  }
+}
+
 export interface InterpretationRunOptions {
   requestId?: string;
   now?: Date;
   reviewerTrustContext?: ReviewerTrustContext;
+  researchEvidence?: InterpretationResearchEvidenceInput;
 }
 
 export interface InterpretationExecutionResult {
@@ -55,6 +76,35 @@ function ruleIndex(registry: ResolvedRuleRegistrySnapshot): ReadonlyMap<string, 
   return new Map(registry.rules.map((rule) => [ruleKey(rule.ruleId, rule.version), rule]));
 }
 
+function validateResearchEvidenceInput(
+  snapshot: CanonicalSajuSnapshot,
+  input: InterpretationResearchEvidenceInput | undefined,
+): readonly ValidatedResearchEvidence[] {
+  if (input === undefined) return [];
+
+  const validated: ValidatedResearchEvidence[] = [];
+  const envelopeIds = new Set<string>();
+  const errors: string[] = [];
+  for (const envelope of input.envelopes) {
+    if (envelopeIds.has(envelope.envelopeId)) {
+      errors.push(`duplicate_research_evidence_envelope:${envelope.envelopeId}`);
+      continue;
+    }
+    envelopeIds.add(envelope.envelopeId);
+    const result = input.runtimeRegistry.validate(envelope, snapshot);
+    if (result.status === 'rejected') {
+      errors.push(...result.errors.map((error) => `${envelope.envelopeId}:${error}`));
+      continue;
+    }
+    validated.push(result.value);
+  }
+
+  if (errors.length > 0) throw new ResearchEvidenceExecutionError(errors.sort());
+  return validated.sort((left, right) =>
+    left.envelope.envelopeId.localeCompare(right.envelope.envelopeId),
+  );
+}
+
 function scenarioOverrides(
   scenario: CanonicalSajuSnapshot['scenarios'][number],
 ): Readonly<Record<string, unknown>> {
@@ -70,6 +120,7 @@ function evaluatePlannedRule(
   snapshot: CanonicalSajuSnapshot,
   registry: ResolvedRuleRegistrySnapshot,
   existingClaims: readonly InterpretationClaim[],
+  validatedResearchEvidence: readonly ValidatedResearchEvidence[],
   now: Date,
 ): readonly { evaluation: RuleEvaluation; claims: readonly InterpretationClaim[] }[] {
   if (!scenarioSensitive(rule) || snapshot.scenarios.length === 0) {
@@ -78,6 +129,7 @@ function evaluatePlannedRule(
         snapshot,
         pack: registry.pack,
         existingClaims,
+        validatedResearchEvidence,
         now,
       }),
     ];
@@ -88,6 +140,7 @@ function evaluatePlannedRule(
       snapshot,
       pack: registry.pack,
       existingClaims,
+      validatedResearchEvidence,
       scenarioRef: scenario.scenarioId,
       factOverrides: scenarioOverrides(scenario),
       now,
@@ -200,6 +253,7 @@ export function runInterpretation(
   options: InterpretationRunOptions = {},
 ): InterpretationExecutionResult {
   const now = options.now ?? new Date();
+  const validatedResearchEvidence = validateResearchEvidenceInput(snapshot, options.researchEvidence);
   const plan = buildInterpretationExecutionPlan(registry, options.reviewerTrustContext);
   const rules = ruleIndex(registry);
   const plannedRules = plan.orderedRuleRefs.map((ruleRef) => {
@@ -222,7 +276,14 @@ export function runInterpretation(
       if (rule === undefined) {
         throw new Error(`Execution plan references missing resolved rule ${ruleRef.id}@${ruleRef.version}`);
       }
-      for (const result of evaluatePlannedRule(rule, snapshot, registry, priorStageClaims, now)) {
+      for (const result of evaluatePlannedRule(
+        rule,
+        snapshot,
+        registry,
+        priorStageClaims,
+        validatedResearchEvidence,
+        now,
+      )) {
         stageEvaluations.push(result.evaluation);
         stageClaims.push(...result.claims);
       }
@@ -242,6 +303,7 @@ export function runInterpretation(
     registry,
     sortedEvaluations,
     sortedClaims,
+    validatedResearchEvidence,
   );
   const relationErrors = relationIntegrityErrors(sortedClaims, claimRelations);
   const integrityErrors = [...graphIntegrity.errors, ...relationErrors].sort();
