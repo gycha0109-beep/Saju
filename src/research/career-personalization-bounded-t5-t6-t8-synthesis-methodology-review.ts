@@ -206,10 +206,10 @@ function sourceAuthorityStillLowerTierOrContextOnly(): boolean {
 }
 
 function legacyAudit(): CareerLegacyT8Audit {
-  const allTierT8Career = CAREER_NATAL_READING_RULES.every(
+  const allRulesTierT8Career = CAREER_NATAL_READING_RULES.every(
     (rule) => rule.taxonomy.tier === 'T8' && rule.taxonomy.category === 'career',
   );
-  const allReadRawDerivedTenGodFact = CAREER_NATAL_READING_RULES.every(
+  const allRulesReadRawDerivedTenGodFact = CAREER_NATAL_READING_RULES.every(
     (rule) =>
       rule.inputs.length === 1 &&
       rule.inputs[0]?.source === 'derived_fact' &&
