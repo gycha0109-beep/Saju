@@ -286,10 +286,26 @@ describe('Career T6 branch-clash seasonal qualifier transport', () => {
       expect.objectContaining({
         source: 'research_evidence',
         evidenceType: I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_DEFINITION.evidenceType,
-        evidenceVersion: I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_DEFINITION.evidenceVersion,
+        definitionRef: {
+          id: I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_DEFINITION.definitionId,
+          version: I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_DEFINITION.version,
+        },
         mode: 'required',
       }),
     ]);
+    expect(
+      CAREER_T6_BRANCH_CLASH_SEASONAL_QUALIFIER_RULES.every((rule) =>
+        rule.inputs.some(
+          (input) =>
+            input.source === 'research_evidence' &&
+            input.evidenceVersion === I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_DEFINITION.evidenceVersion &&
+            input.researchEvidenceDefinitionRef?.id ===
+              I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_DEFINITION.definitionId &&
+            input.researchEvidenceDefinitionRef.version ===
+              I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_DEFINITION.version,
+        ),
+      ),
+    ).toBe(true);
   });
 
   test('year-day clash emits exactly the two participant phase observations carried by governed I20 evidence', () => {
@@ -449,7 +465,7 @@ describe('Career T6 branch-clash seasonal qualifier transport', () => {
     ).toBe(true);
 
     const serialized = JSON.stringify(CAREER_T6_BRANCH_CLASH_SEASONAL_QUALIFIER_RULES);
-    expect(serialized).not.toContain('materialForNarrative":true');
+    expect(serialized).not.toContain('materialForNarrative\":true');
     expect(serialized).not.toContain('career_t8');
     expect(serialized).not.toContain('production');
   });
