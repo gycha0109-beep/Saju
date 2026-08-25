@@ -89,6 +89,12 @@ export const CAREER_T8_CANDIDATE_DISCOVERY_CONTROL_IDS = Object.freeze([
   'NO_T8_RULE_CLAIM_PACK_NARRATIVE_PREVIEW_OR_PRODUCTION_ARTIFACT',
 ] as const);
 
+function discoveryLaneIds(
+  ...ids: readonly CareerT8AuthorityDiscoveryLaneId[]
+): readonly CareerT8AuthorityDiscoveryLaneId[] {
+  return Object.freeze([...ids]);
+}
+
 function sourceQianli(): SourceReference {
   return {
     sourceId: 'source_wei_qianli_qianli_minggao_nlc_1935_t8_discovery',
@@ -217,7 +223,7 @@ function qianliCandidate(): CareerT8DiscoveredAuthorityCandidate {
   return Object.freeze({
     candidateId: `career_t8_candidate_${deterministicContentHash(material).slice(0, 20)}`,
     discoveryStatus: material.discoveryStatus,
-    laneIds: Object.freeze(['STRUCTURAL_QUALIFIER_MODIFIERS', 'MULTI_PATTERN_COMPOSITION']),
+    laneIds: discoveryLaneIds('STRUCTURAL_QUALIFIER_MODIFIERS', 'MULTI_PATTERN_COMPOSITION'),
     targetGapIds,
     sourceReference,
     sourceIdentityVerified: true,
@@ -292,7 +298,7 @@ function jingxuanCandidate(): CareerT8DiscoveredAuthorityCandidate {
   return Object.freeze({
     candidateId: `career_t8_candidate_${deterministicContentHash(material).slice(0, 20)}`,
     discoveryStatus: 'POTENTIAL_PARTIAL_COVERAGE',
-    laneIds: Object.freeze(['TEN_GOD_SEMANTIC_COMPOSITION', 'MULTI_PATTERN_COMPOSITION']),
+    laneIds: discoveryLaneIds('TEN_GOD_SEMANTIC_COMPOSITION', 'MULTI_PATTERN_COMPOSITION'),
     targetGapIds,
     sourceReference,
     sourceIdentityVerified: true,
@@ -354,7 +360,7 @@ function zipingCandidate(): CareerT8DiscoveredAuthorityCandidate {
   return Object.freeze({
     candidateId: `career_t8_candidate_${deterministicContentHash(material).slice(0, 20)}`,
     discoveryStatus: 'POTENTIAL_PARTIAL_COVERAGE',
-    laneIds: Object.freeze(['MULTI_PATTERN_COMPOSITION']),
+    laneIds: discoveryLaneIds('MULTI_PATTERN_COMPOSITION'),
     targetGapIds,
     sourceReference,
     sourceIdentityVerified: true,
@@ -402,7 +408,7 @@ function shenfengCandidate(): CareerT8DiscoveredAuthorityCandidate {
   return Object.freeze({
     candidateId: `career_t8_candidate_${deterministicContentHash(material).slice(0, 20)}`,
     discoveryStatus: 'DISCOVERY_LEAD_ONLY',
-    laneIds: Object.freeze(['TEN_GOD_SEMANTIC_COMPOSITION', 'MULTI_PATTERN_COMPOSITION']),
+    laneIds: discoveryLaneIds('TEN_GOD_SEMANTIC_COMPOSITION', 'MULTI_PATTERN_COMPOSITION'),
     targetGapIds,
     sourceReference,
     sourceIdentityVerified: true,
