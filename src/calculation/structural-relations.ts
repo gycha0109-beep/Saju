@@ -1,32 +1,20 @@
+import { createHash } from 'node:crypto';
 import type {
   EarthlyBranch,
   HeavenlyStem,
   PillarFact,
+  PillarSlot,
+  StructuralRelationCandidate,
+  StructuralRelationKind,
+  StructuralRelationParticipant,
 } from '../contracts/calculation.js';
 
-export type PillarSlot = 'year' | 'month' | 'day' | 'hour';
-export type StructuralRelationKind =
-  | 'stem_five_combination'
-  | 'branch_six_combination'
-  | 'branch_clash'
-  | 'branch_three_combination';
-
-export interface StructuralRelationParticipant {
-  pillar: PillarSlot;
-  component: 'stem' | 'branch';
-  value: HeavenlyStem | EarthlyBranch;
-}
-
-export interface StructuralRelationCandidate {
-  relationId: string;
-  kind: StructuralRelationKind;
-  participants: readonly StructuralRelationParticipant[];
-  sourceIds: readonly string[];
-  semantics: {
-    structuralMatchOnly: true;
-    transformationEstablished: false;
-  };
-}
+export type {
+  PillarSlot,
+  StructuralRelationCandidate,
+  StructuralRelationKind,
+  StructuralRelationParticipant,
+} from '../contracts/calculation.js';
 
 export interface StructuralPillarInput {
   year?: PillarFact;
@@ -34,6 +22,8 @@ export interface StructuralPillarInput {
   day?: PillarFact;
   hour?: PillarFact;
 }
+
+export const STRUCTURAL_RELATION_DERIVATION_VERSION = 'myeonghwa-structural-relations-v1' as const;
 
 export const STRUCTURAL_RELATION_SOURCE_CATALOG = Object.freeze({
   yisiZhan: {
@@ -95,6 +85,33 @@ const BRANCH_THREE_COMBINATIONS = [
 
 const SLOT_ORDER = ['year', 'month', 'day', 'hour'] as const satisfies readonly PillarSlot[];
 
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value === null || typeof value !== 'object') return value;
+  const record = value as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.keys(record)
+      .sort()
+      .filter((key) => record[key] !== undefined)
+      .map((key) => [key, canonicalize(record[key])]),
+  );
+}
+
+export const STRUCTURAL_RELATION_DEFINITION_CONTENT_HASH = createHash('sha256')
+  .update(
+    JSON.stringify(
+      canonicalize({
+        version: STRUCTURAL_RELATION_DERIVATION_VERSION,
+        sourceCatalog: STRUCTURAL_RELATION_SOURCE_CATALOG,
+        stemFiveCombinations: STEM_FIVE_COMBINATIONS,
+        branchSixCombinations: BRANCH_SIX_COMBINATIONS,
+        branchClashes: BRANCH_CLASHES,
+        branchThreeCombinations: BRANCH_THREE_COMBINATIONS,
+      }),
+    ),
+  )
+  .digest('hex');
+
 function pairMatches<T extends string>(
   left: T,
   right: T,
@@ -143,9 +160,7 @@ function availablePillars(input: StructuralPillarInput): readonly { slot: Pillar
   });
 }
 
-function pairCandidates(
-  input: StructuralPillarInput,
-): readonly StructuralRelationCandidate[] {
+function pairCandidates(input: StructuralPillarInput): readonly StructuralRelationCandidate[] {
   const pillars = availablePillars(input);
   const result: StructuralRelationCandidate[] = [];
 
@@ -163,10 +178,7 @@ function pairCandidates(
               { pillar: left.slot, component: 'stem', value: left.pillar.stem.value },
               { pillar: right.slot, component: 'stem', value: right.pillar.stem.value },
             ],
-            [
-              STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan.sourceId,
-              STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId,
-            ],
+            [STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan.sourceId, STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId],
           ),
         );
       }
@@ -179,10 +191,7 @@ function pairCandidates(
               { pillar: left.slot, component: 'branch', value: left.pillar.branch.value },
               { pillar: right.slot, component: 'branch', value: right.pillar.branch.value },
             ],
-            [
-              STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan.sourceId,
-              STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId,
-            ],
+            [STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan.sourceId, STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId],
           ),
         );
       }
@@ -195,10 +204,7 @@ function pairCandidates(
               { pillar: left.slot, component: 'branch', value: left.pillar.branch.value },
               { pillar: right.slot, component: 'branch', value: right.pillar.branch.value },
             ],
-            [
-              STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan.sourceId,
-              STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId,
-            ],
+            [STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan.sourceId, STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId],
           ),
         );
       }
@@ -208,9 +214,7 @@ function pairCandidates(
   return result;
 }
 
-function tripleCandidates(
-  input: StructuralPillarInput,
-): readonly StructuralRelationCandidate[] {
+function tripleCandidates(input: StructuralPillarInput): readonly StructuralRelationCandidate[] {
   const pillars = availablePillars(input);
   const result: StructuralRelationCandidate[] = [];
 
@@ -222,11 +226,7 @@ function tripleCandidates(
         const third = pillars[thirdIndex];
         if (first === undefined || second === undefined || third === undefined) continue;
 
-        const values = [
-          first.pillar.branch.value,
-          second.pillar.branch.value,
-          third.pillar.branch.value,
-        ] as const;
+        const values = [first.pillar.branch.value, second.pillar.branch.value, third.pillar.branch.value] as const;
         if (!tripleMatches(values, BRANCH_THREE_COMBINATIONS)) continue;
 
         result.push(
@@ -237,10 +237,7 @@ function tripleCandidates(
               { pillar: second.slot, component: 'branch', value: second.pillar.branch.value },
               { pillar: third.slot, component: 'branch', value: third.pillar.branch.value },
             ],
-            [
-              STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId,
-              STRUCTURAL_RELATION_SOURCE_CATALOG.sanmingTonghui.sourceId,
-            ],
+            [STRUCTURAL_RELATION_SOURCE_CATALOG.xuanzeYaolue.sourceId, STRUCTURAL_RELATION_SOURCE_CATALOG.sanmingTonghui.sourceId],
           ),
         );
       }
