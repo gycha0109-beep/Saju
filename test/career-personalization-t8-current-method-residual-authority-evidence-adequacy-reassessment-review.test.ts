@@ -237,7 +237,7 @@ describe('Career T8 B21 current-method residual authority evidence adequacy reas
     const valid = acceptedB20();
     const tamperedMaterial = {
       ...valid,
-      xuBingxinExactCurrentT5ModifierBridgeConfirmed: true,
+      exactB19BoundaryAccepted: false,
     };
     const { evidenceId, ...withoutId } = tamperedMaterial;
     expect(evidenceId).toBeTruthy();
