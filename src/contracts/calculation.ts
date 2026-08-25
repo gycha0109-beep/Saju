@@ -153,6 +153,13 @@ export interface FourPillarsFact {
 }
 
 export type PillarSlot = 'year' | 'month' | 'day' | 'hour';
+export type PillarPairKey =
+  | 'year_month'
+  | 'year_day'
+  | 'year_hour'
+  | 'month_day'
+  | 'month_hour'
+  | 'day_hour';
 export type StructuralRelationKind =
   | 'stem_five_combination'
   | 'branch_six_combination'
@@ -175,6 +182,29 @@ export interface StructuralRelationCandidate {
     transformationEstablished: false;
   };
 }
+
+export interface BranchClashContextParticipant {
+  pillar: PillarSlot;
+  branch: EarthlyBranch;
+  hiddenStems: readonly HeavenlyStem[];
+}
+
+export interface BranchClashContextFact {
+  relationId: string;
+  kind: 'branch_clash';
+  pairKey: PillarPairKey;
+  participants: readonly [BranchClashContextParticipant, BranchClashContextParticipant];
+  sourceIds: readonly string[];
+  sourceFactRefs: readonly string[];
+  semantics: {
+    structuralMatchOnly: true;
+    transformationEstablished: false;
+  };
+}
+
+export type BranchClashContextIndex = Readonly<
+  Partial<Record<PillarPairKey, BranchClashContextFact>>
+>;
 
 export interface TenGodTargetFact {
   stem?: FactState<TenGod | '일간'>;
@@ -202,6 +232,7 @@ export interface DerivedFacts {
   hiddenStems?: HiddenStemChartFact;
   fiveElementCounts?: FactState<Readonly<Record<FiveElement, number>>>;
   structuralRelations?: FactState<readonly StructuralRelationCandidate[]>;
+  branchClashContexts?: FactState<BranchClashContextIndex>;
 }
 
 export interface SolarTermFact {
