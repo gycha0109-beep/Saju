@@ -34,11 +34,12 @@ describe('derived fact and interpretation authority versioning', () => {
     );
     const result = runInterpretation(snapshot, createI13StrengthEvidenceRegistry());
 
-    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.3');
+    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.4');
     expect(snapshot.derivedFacts.hiddenStems).toBeDefined();
     expect(snapshot.derivedFacts.structuralRelations).toBeDefined();
     expect(snapshot.derivedFacts.branchClashContexts).toBeDefined();
-    expect(result.run.derivedFactSetVersion).toBe('myeonghwa-derived-facts-v1.3');
+    expect(snapshot.derivedFacts.branchClashQualifierObservations).toBeDefined();
+    expect(result.run.derivedFactSetVersion).toBe('myeonghwa-derived-facts-v1.4');
     expect(result.run.interpretationEngineVersion).toBe('0.5.0');
     expect(result.run.authorizationPolicyVersion).toBe(
       INTERPRETATION_AUTHORIZATION_POLICY_VERSION,
