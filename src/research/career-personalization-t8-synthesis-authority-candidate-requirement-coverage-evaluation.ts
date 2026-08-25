@@ -1,15 +1,13 @@
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
-import {
-  CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS,
-  type CareerT8SynthesisAuthorityGapId,
-} from './career-personalization-bounded-t5-t6-t8-synthesis-methodology-review.js';
+import { CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS } from './career-personalization-bounded-t5-t6-t8-synthesis-methodology-review.js';
 import type { CareerPersonalizationT8SynthesisAuthorityAcquisitionReadinessReviewReport } from './career-personalization-t8-synthesis-authority-acquisition-readiness-review.js';
 import {
   CAREER_T8_DISCOVERED_AUTHORITY_CANDIDATES,
   type CareerPersonalizationT8SynthesisAuthorityCandidateDiscoveryEvidenceReport,
-  type CareerT8DiscoveredAuthorityCandidate,
   type CareerT8CandidateGapObservation,
+  type CareerT8DiscoveredAuthorityCandidate,
 } from './career-personalization-t8-synthesis-authority-candidate-discovery-evidence.js';
+import type { CareerT8SynthesisAuthorityGapId } from './career-personalization-t8-synthesis-authority-gap-requirements-review.js';
 
 export const CAREER_PERSONALIZATION_T8_SYNTHESIS_AUTHORITY_CANDIDATE_REQUIREMENT_COVERAGE_EVALUATION_VERSION =
   'myeonghwa-career-personalization-t8-synthesis-authority-candidate-requirement-coverage-evaluation-v1' as const;
@@ -67,6 +65,7 @@ export interface CareerT8GapCoverageSummary {
   gapClosed: false;
   strongestCandidateIds: readonly string[];
   residualRequirementIds: readonly CareerT8CandidateCoverageRequirementId[];
+  partialEvidenceCompositionBlocked: true;
 }
 
 export const CAREER_T8_CANDIDATE_COVERAGE_CONTROL_IDS = Object.freeze([
@@ -142,11 +141,32 @@ export interface CareerPersonalizationT8SynthesisAuthorityCandidateRequirementCo
     | 'CAREER_PERSONALIZATION_T8_SYNTHESIS_AUTHORITY_CANDIDATE_DISCOVERY_EVIDENCE';
 }
 
+function contentAddressedB6IdentityValid(
+  b6: CareerPersonalizationT8SynthesisAuthorityAcquisitionReadinessReviewReport,
+): boolean {
+  const { reviewId, ...material } = b6;
+  return (
+    reviewId ===
+    `career_t8_synthesis_authority_acquisition_readiness_${deterministicContentHash(material).slice(0, 24)}`
+  );
+}
+
+function contentAddressedB7IdentityValid(
+  b7: CareerPersonalizationT8SynthesisAuthorityCandidateDiscoveryEvidenceReport,
+): boolean {
+  const { evidenceId, ...material } = b7;
+  return (
+    evidenceId ===
+    `career_t8_authority_discovery_${deterministicContentHash(material).slice(0, 24)}`
+  );
+}
+
 function exactB7Accepted(
   b6: CareerPersonalizationT8SynthesisAuthorityAcquisitionReadinessReviewReport,
   b7: CareerPersonalizationT8SynthesisAuthorityCandidateDiscoveryEvidenceReport,
 ): boolean {
   return (
+    contentAddressedB6IdentityValid(b6) &&
     b6.status === 'RESOLVED_CAREER_T8_SYNTHESIS_AUTHORITY_ACQUISITION_READINESS' &&
     b6.decision ===
       'GAP_SCOPED_GOVERNED_AUTHORITY_ACQUISITION_CONTRACT_FROZEN_NO_AUTHORITY_ACQUIRED' &&
@@ -154,25 +174,53 @@ function exactB7Accepted(
     b6.allSixGapsCoveredExactlyOnceByAdmissionContract &&
     b6.requirementCoverageEvaluationRequiredAfterDiscovery &&
     b6.authorityAcquiredByThisGate === false &&
+    contentAddressedB7IdentityValid(b7) &&
     b7.status === 'RESOLVED_CAREER_T8_SYNTHESIS_AUTHORITY_CANDIDATE_DISCOVERY_EVIDENCE' &&
     b7.decision ===
       'FOUR_CANDIDATES_DISCOVERED_ALL_PARTIAL_OR_LEAD_ONLY_NO_AUTHORITY_ACCEPTED_OR_GAP_CLOSED' &&
     b7.upstreamB6ReviewId === b6.reviewId &&
     b7.exactB6BoundaryAccepted &&
     b7.discoveryPerformed &&
+    b7.laneCount === 3 &&
+    b7.laneResults.length === 3 &&
     b7.inspectedCandidateCount === 4 &&
     b7.inspectedCandidates.length === 4 &&
     deterministicContentHash(b7.inspectedCandidates) ===
       deterministicContentHash(CAREER_T8_DISCOVERED_AUTHORITY_CANDIDATES) &&
+    b7.partialCoverageCandidateCount === 3 &&
+    b7.discoveryLeadOnlyCandidateCount === 1 &&
     b7.fullAdmissionCandidateCount === 0 &&
     b7.registeredCandidateCount === 0 &&
     b7.allSixGapsRemainOpen &&
     deterministicContentHash(b7.unresolvedGapIds) ===
       deterministicContentHash(CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS) &&
+    b7.qianliExplicitCareerBindingObserved &&
+    b7.qianliCareerBindingUsesCurrentT5T6Inputs === false &&
+    b7.qianliCompetingMethodologyApplicabilityReviewRequired &&
+    b7.exactPrimaryPageBindingMissingForQianliDiscoveredPassages &&
+    b7.primaryPageBindingMissingForShenfengTargetPassage &&
     b7.candidateRequirementCoverageEvaluatedByThisGate === false &&
+    b7.candidateDiscoveryMeansRequirementSatisfied === false &&
+    b7.sameGapCrossCandidateCompositionPerformed === false &&
+    b7.sameGapCrossCandidateCompositionAuthorized === false &&
     b7.authorityAcquiredByThisGate === false &&
     b7.t8RuleAuthoringAuthorized === false &&
+    b7.t8ClaimTypeCreationAuthorized === false &&
+    b7.personalizedT8PackCreationAuthorized === false &&
+    b7.consumerNarrativeAuthorized === false &&
+    b7.previewDefaultSwitchAuthorized === false &&
     b7.productionPromotionAuthorized === false &&
+    b7.controlsFrozen &&
+    b7.controlCount === 12 &&
+    b7.implementationEffects.candidateEvidenceRecordsCreated === 4 &&
+    b7.implementationEffects.registeredSourcesCreated === 0 &&
+    b7.implementationEffects.methodologyDefinitionsCreated === 0 &&
+    b7.implementationEffects.ruleDefinitionsCreated === 0 &&
+    b7.implementationEffects.claimTypesCreated === 0 &&
+    b7.implementationEffects.registrySnapshotsCreated === 0 &&
+    b7.implementationEffects.interpretationPacksCreated === 0 &&
+    b7.implementationEffects.narrativePlansCreated === 0 &&
+    b7.implementationEffects.previewRoutesChanged === 0 &&
     b7.recommendedNextGate ===
       'CAREER_PERSONALIZATION_T8_SYNTHESIS_AUTHORITY_CANDIDATE_REQUIREMENT_COVERAGE_EVALUATION'
   );
@@ -195,15 +243,11 @@ function result(
 
 function stableLocatorObserved(candidate: CareerT8DiscoveredAuthorityCandidate): boolean {
   const locator = candidate.sourceReference.locator;
-  return (
-    candidate.sourceReference.url?.startsWith('https://') === true &&
-    locator !== undefined &&
-    (locator.page?.trim().length ?? 0) > 0 ||
-    (candidate.sourceReference.url?.startsWith('https://') === true &&
-      locator !== undefined &&
-      (locator.section?.trim().length ?? 0) > 0 &&
-      (locator.anchor?.trim().length ?? 0) > 0)
-  );
+  const secureUrl = candidate.sourceReference.url?.startsWith('https://') === true;
+  const pageLocator = (locator?.page?.trim().length ?? 0) > 0;
+  const sectionAnchorLocator =
+    (locator?.section?.trim().length ?? 0) > 0 && (locator?.anchor?.trim().length ?? 0) > 0;
+  return secureUrl && (pageLocator || sectionAnchorLocator);
 }
 
 function methodologyCompatible(candidate: CareerT8DiscoveredAuthorityCandidate): boolean {
@@ -372,6 +416,7 @@ function buildGapSummaries(
         gapClosed: false,
         strongestCandidateIds: strongestCandidateIdsForGap(evaluations, gapId),
         residualRequirementIds: residualRequirementsForGap(evaluations, gapId),
+        partialEvidenceCompositionBlocked: true,
       });
     }),
   );
