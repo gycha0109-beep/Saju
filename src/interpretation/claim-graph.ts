@@ -1,4 +1,5 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { FactState } from '../contracts/common.js';
 import type {
   ClaimRelation,
   EvidenceIndexEntry,
@@ -22,18 +23,69 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function pathExists(root: unknown, path: string): boolean {
+function isFactState(value: unknown): value is FactState<unknown> {
+  return (
+    isRecord(value) &&
+    (value.status === 'resolved' || value.status === 'ambiguous' || value.status === 'unavailable')
+  );
+}
+
+function splitPath(path: string): readonly string[] | undefined {
   const segments = path.split('.').filter((segment) => segment.length > 0);
   if (segments.length === 0 || segments.some((segment) => FORBIDDEN_PATH_SEGMENTS.has(segment))) {
-    return false;
+    return undefined;
   }
+  return segments;
+}
 
-  let cursor: unknown = root;
-  for (const segment of segments) {
+function matchingOverride(
+  path: string,
+  overrides: Readonly<Record<string, unknown>> | undefined,
+): { value: unknown; remainingSegments: readonly string[] } | undefined {
+  if (overrides === undefined) return undefined;
+  const selected = Object.entries(overrides)
+    .filter(([candidatePath]) => path === candidatePath || path.startsWith(`${candidatePath}.`))
+    .sort(([left], [right]) => right.length - left.length)[0];
+  if (selected === undefined) return undefined;
+
+  const remainingPath = path === selected[0] ? '' : path.slice(selected[0].length + 1);
+  const remainingSegments = remainingPath.length === 0 ? [] : splitPath(remainingPath);
+  if (remainingSegments === undefined) return undefined;
+  return { value: selected[1], remainingSegments };
+}
+
+function logicalPathExists(
+  root: unknown,
+  path: string,
+  overrides?: Readonly<Record<string, unknown>>,
+): boolean {
+  const segments = splitPath(path);
+  if (segments === undefined) return false;
+
+  const selectedOverride = matchingOverride(path, overrides);
+  let cursor: unknown = selectedOverride?.value ?? root;
+  const remainingSegments = selectedOverride?.remainingSegments ?? segments;
+
+  for (const segment of remainingSegments) {
+    while (isFactState(cursor)) {
+      if (cursor.status !== 'resolved') return false;
+      cursor = cursor.value;
+    }
     if (!isRecord(cursor) || !Object.prototype.hasOwnProperty.call(cursor, segment)) return false;
     cursor = cursor[segment];
   }
   return true;
+}
+
+function scenarioOverrideIndex(
+  snapshot: CanonicalSajuSnapshot,
+): ReadonlyMap<string, Readonly<Record<string, unknown>>> {
+  return new Map(
+    snapshot.scenarios.map((scenario) => [
+      scenario.scenarioId,
+      Object.fromEntries(scenario.factOverrides.map((override) => [override.path, override.value])),
+    ]),
+  );
 }
 
 function primaryRuleRef(
@@ -206,6 +258,7 @@ export function validateClaimGraphIntegrity(
     registry.methodologies.map((methodology) => `${methodology.methodologyId}@${methodology.version}`),
   );
   const ruleRefs = new Set(registry.rules.map((rule) => `${rule.ruleId}@${rule.version}`));
+  const scenarioOverrides = scenarioOverrideIndex(snapshot);
   const evidenceIndex: Record<string, EvidenceIndexEntry> = {};
 
   for (const duplicate of duplicateIds(evaluations.map((evaluation) => evaluation.evaluationId))) {
@@ -255,8 +308,12 @@ export function validateClaimGraphIntegrity(
       }
     }
 
+    const claimScenarioOverrides =
+      claim.scenarioRef === undefined ? undefined : scenarioOverrides.get(claim.scenarioRef);
     for (const factRef of claim.factRefs) {
-      if (!pathExists(snapshot, factRef)) errors.push(`claim ${claim.claimId} references missing fact ${factRef}`);
+      if (!logicalPathExists(snapshot, factRef, claimScenarioOverrides)) {
+        errors.push(`claim ${claim.claimId} references missing fact ${factRef}`);
+      }
     }
     for (const upstreamClaimRef of claim.upstreamClaimRefs) {
       if (upstreamClaimRef === claim.claimId) {
