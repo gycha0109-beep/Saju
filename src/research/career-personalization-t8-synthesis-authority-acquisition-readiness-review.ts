@@ -72,13 +72,19 @@ export const CAREER_T8_AUTHORITY_ACQUISITION_CONTROL_IDS = Object.freeze([
   'NO_T8_RULE_CLAIM_PACK_NARRATIVE_PREVIEW_OR_PRODUCTION_ARTIFACT_BY_THIS_GATE',
 ] as const);
 
+function gapIds(
+  ...ids: readonly CareerT8SynthesisAuthorityGapId[]
+): readonly CareerT8SynthesisAuthorityGapId[] {
+  return Object.freeze([...ids]);
+}
+
 export const CAREER_T8_AUTHORITY_DISCOVERY_LANES = Object.freeze([
   Object.freeze({
     laneId: 'TEN_GOD_SEMANTIC_COMPOSITION',
-    targetGapIds: Object.freeze([
+    targetGapIds: gapIds(
       'EXACT_SUBTYPE_MULTI_CLAIM_TO_CAREER_PATTERN_BINDING_MISSING',
       'FAMILY_RELATION_TO_CAREER_PATTERN_BINDING_MISSING',
-    ]),
+    ),
     objective:
       'Find exact authority for composing Ten-God subtype/family relations into bounded Career or work-expression semantics.',
     candidateMayTargetSubsetOfLaneGaps: true,
@@ -86,11 +92,11 @@ export const CAREER_T8_AUTHORITY_DISCOVERY_LANES = Object.freeze([
   }),
   Object.freeze({
     laneId: 'STRUCTURAL_QUALIFIER_MODIFIERS',
-    targetGapIds: Object.freeze([
+    targetGapIds: gapIds(
       'BRANCH_CLASH_TO_T5_CAREER_SEMANTIC_MODIFIER_MISSING',
       'VISIBILITY_POSITION_PLURALITY_TO_CAREER_SEMANTIC_MODIFIER_MISSING',
       'SEASONAL_PHASE_TO_CAREER_SEMANTIC_MODIFIER_MISSING',
-    ]),
+    ),
     objective:
       'Find exact authority for qualitative structural/interaction qualifiers that modify an already-established Career semantic without numeric weighting.',
     candidateMayTargetSubsetOfLaneGaps: true,
@@ -98,7 +104,7 @@ export const CAREER_T8_AUTHORITY_DISCOVERY_LANES = Object.freeze([
   }),
   Object.freeze({
     laneId: 'MULTI_PATTERN_COMPOSITION',
-    targetGapIds: Object.freeze(['MULTI_PATTERN_CONFLICT_TENSION_COMPOSITION_POLICY_MISSING']),
+    targetGapIds: gapIds('MULTI_PATTERN_CONFLICT_TENSION_COMPOSITION_POLICY_MISSING'),
     objective:
       'Find an explicit source-bound composition policy for coexistence, reinforcement, tension, qualification, or precedence among multiple Career patterns.',
     candidateMayTargetSubsetOfLaneGaps: true,
