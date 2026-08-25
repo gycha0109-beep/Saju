@@ -7,6 +7,7 @@ import type {
   RuleDefinition,
   RuleEvaluation,
 } from '../contracts/interpretation.js';
+import type { ValidatedResearchEvidence } from './research-evidence-runtime.js';
 import { deterministicContentHash, type ResolvedRuleRegistrySnapshot } from './rule-registry.js';
 
 const FORBIDDEN_PATH_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor']);
@@ -249,6 +250,7 @@ export function validateClaimGraphIntegrity(
   registry: ResolvedRuleRegistrySnapshot,
   evaluations: readonly RuleEvaluation[],
   claims: readonly InterpretationClaim[],
+  validatedResearchEvidence: readonly ValidatedResearchEvidence[] = [],
 ): ClaimGraphIntegrityResult {
   const errors: string[] = [];
   const evaluationById = new Map(evaluations.map((evaluation) => [evaluation.evaluationId, evaluation]));
@@ -258,6 +260,9 @@ export function validateClaimGraphIntegrity(
     registry.methodologies.map((methodology) => `${methodology.methodologyId}@${methodology.version}`),
   );
   const ruleRefs = new Set(registry.rules.map((rule) => `${rule.ruleId}@${rule.version}`));
+  const researchEvidenceIds = new Set(
+    validatedResearchEvidence.map((evidence) => evidence.envelope.envelopeId),
+  );
   const scenarioOverrides = scenarioOverrideIndex(snapshot);
   const evidenceIndex: Record<string, EvidenceIndexEntry> = {};
 
@@ -274,6 +279,13 @@ export function validateClaimGraphIntegrity(
     }
     if (!ruleRefs.has(`${evaluation.ruleRef.id}@${evaluation.ruleRef.version}`)) {
       errors.push(`evaluation ${evaluation.evaluationId} references unknown rule ${evaluation.ruleRef.id}@${evaluation.ruleRef.version}`);
+    }
+    for (const inputRef of evaluation.inputRefs) {
+      if (inputRef.sourceType === 'research_evidence' && !researchEvidenceIds.has(inputRef.idOrPath)) {
+        errors.push(
+          `evaluation ${evaluation.evaluationId} references missing research evidence ${inputRef.idOrPath}`,
+        );
+      }
     }
     for (const claimId of evaluation.emittedClaimIds) {
       if (!claimById.has(claimId)) {
@@ -322,6 +334,11 @@ export function validateClaimGraphIntegrity(
         errors.push(`claim ${claim.claimId} references missing upstream claim ${upstreamClaimRef}`);
       }
     }
+    for (const researchEvidenceRef of claim.researchEvidenceRefs ?? []) {
+      if (!researchEvidenceIds.has(researchEvidenceRef)) {
+        errors.push(`claim ${claim.claimId} references missing research evidence ${researchEvidenceRef}`);
+      }
+    }
     for (const sourceRef of claim.sourceRefs) {
       if (!sourceIds.has(sourceRef)) errors.push(`claim ${claim.claimId} references missing source ${sourceRef}`);
     }
@@ -330,6 +347,9 @@ export function validateClaimGraphIntegrity(
       claimId: claim.claimId,
       factRefs: [...claim.factRefs],
       upstreamClaimRefs: [...claim.upstreamClaimRefs],
+      ...((claim.researchEvidenceRefs?.length ?? 0) === 0
+        ? {}
+        : { researchEvidenceRefs: [...(claim.researchEvidenceRefs ?? [])] }),
       sourceRefs: [...claim.sourceRefs],
       ruleRefs: claim.ruleRefs.map((ruleRef) => ({ id: ruleRef.ruleId, version: ruleRef.version })),
       methodologyRef: claim.methodologyRef,
