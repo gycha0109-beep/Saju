@@ -1,0 +1,66 @@
+schema_version: "1.0"
+contract_version: PIE_OPERATIONAL_POLICY_V1
+project_id: myeonghwa
+policy_authority: PR_BASE_REVISION
+
+operational_classes:
+  interpretation-engine:
+    paths:
+      - src/**
+    trust_task_class: routine_code
+    required_scenarios:
+      - birth-input-variance
+      - deterministic-output
+      - boundary-input
+      - domain-evidence-isolation
+    required_evidence:
+      - repository-ci
+    readiness_policy:
+      policy_id: myeonghwa-interpretation-engine
+      policy_version: 1.0.0
+      min_ledger_runs: 1
+      min_ledger_decisions: 1
+      min_defects: 1
+      min_closed_defects: 0
+      min_reground_observations: 1
+      min_reground_coverage: 1.0
+      min_reground_precision: 1.0
+      min_reground_recall: 1.0
+      max_reground_false_positive_rate: 0.0
+      require_active_policy: true
+      require_pass_evaluation: true
+      require_holdout: true
+      require_repeatability: true
+      require_zero_protected_negative_regressions: true
+
+  verifier-boundary:
+    paths:
+      - src/**/validation/**
+      - src/**/*validator*
+      - src/**/*evidence*
+    trust_task_class: verifier
+    required_scenarios:
+      - deterministic-replay
+      - negative-control
+      - tamper-rejection
+      - evidence-isolation
+    required_evidence:
+      - repository-ci
+      - verifier-evidence
+    readiness_policy:
+      policy_id: myeonghwa-verifier-boundary
+      policy_version: 1.0.0
+      min_ledger_runs: 1
+      min_ledger_decisions: 1
+      min_defects: 1
+      min_closed_defects: 0
+      min_reground_observations: 1
+      min_reground_coverage: 1.0
+      min_reground_precision: 1.0
+      min_reground_recall: 1.0
+      max_reground_false_positive_rate: 0.0
+      require_active_policy: true
+      require_pass_evaluation: true
+      require_holdout: true
+      require_repeatability: true
+      require_zero_protected_negative_regressions: true
