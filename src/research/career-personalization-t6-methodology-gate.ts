@@ -146,6 +146,11 @@ function assertP1Boundary(): void {
 
 assertP1Boundary();
 
+const NEXT_DECISION_OPTIONS = [
+  'NEW_EXTERNAL_INTERACTION_AUTHORITY',
+  'SEPARATE_T5_ONLY_T8_SYNTHESIS_METHODOLOGY_REVIEW',
+] as const;
+
 export const CAREER_PERSONALIZATION_T6_METHODOLOGY_GATE: CareerPersonalizationT6MethodologyGate =
   Object.freeze({
     gateId: 'CAREER-PERSONALIZATION-T6-METHODOLOGY-P3',
@@ -157,25 +162,25 @@ export const CAREER_PERSONALIZATION_T6_METHODOLOGY_GATE: CareerPersonalizationT6
     authorityScope: 't6_interaction_methodology_readiness_only',
     auditContracts: Object.freeze([
       Object.freeze({
-        auditId: 'P1',
+        auditId: 'P1' as const,
         version: CAREER_PERSONALIZATION_METHODOLOGY_GATE_VERSION,
         supports: Object.freeze(['T5 subtype/family substrate.', 'Structural interaction evidence preservation.']),
         doesNotSupport: Object.freeze(['T6 interaction authoring.', 'Career interaction-effect conclusions.']),
       }),
       Object.freeze({
-        auditId: 'I113',
+        auditId: 'I113' as const,
         version: I113_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_INTERACTION_ELIGIBILITY_METHODOLOGY_REVIEW_VERSION,
         supports: Object.freeze(['Visible-stem positional applicability language for research.', 'Visible/hidden authority separation.']),
         doesNotSupport: Object.freeze(['Effective interaction eligibility.', 'Hidden-stem eligibility.', 'Damage or numeric weighting.']),
       }),
       Object.freeze({
-        auditId: 'I116',
+        auditId: 'I116' as const,
         version: I116_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_VISIBLE_STEM_POSITIONAL_APPLICABILITY_PROMOTION_READINESS_REVIEW_VERSION,
         supports: Object.freeze(['Visible-stem directional plus qualitative positional evidence substrate.']),
         doesNotSupport: Object.freeze(['Promotion to effective interaction.', '无力 as no interaction.', 'Damage, settlement, numeric force, or hidden-stem borrowing.']),
       }),
       Object.freeze({
-        auditId: 'I117',
+        auditId: 'I117' as const,
         version: I117_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_VISIBLE_STEM_EFFECTIVE_INTERACTION_ELIGIBILITY_METHODOLOGY_REVIEW_VERSION,
         supports: Object.freeze(['Non-binary qualitative ordering may remain research evidence.', 'Binary-threshold authority gap is explicit.']),
         doesNotSupport: Object.freeze(['Boolean effective-interaction threshold.', '力大/次之 as active thresholds.', '无力 as no interaction or zero damage.', 'Damage before eligibility.']),
@@ -228,10 +233,7 @@ export const CAREER_PERSONALIZATION_T6_METHODOLOGY_GATE: CareerPersonalizationT6
       interpretationPacksCreated: 0,
       previewRoutesChanged: 0,
     }),
-    nextDecisionOptions: Object.freeze([
-      'NEW_EXTERNAL_INTERACTION_AUTHORITY',
-      'SEPARATE_T5_ONLY_T8_SYNTHESIS_METHODOLOGY_REVIEW',
-    ]),
+    nextDecisionOptions: NEXT_DECISION_OPTIONS,
     automaticNextPathAuthorized: false,
   });
 
