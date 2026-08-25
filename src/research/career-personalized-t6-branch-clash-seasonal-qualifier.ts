@@ -203,7 +203,6 @@ export const CAREER_T6_BRANCH_CLASH_SEASONAL_QUALIFIER_METHODOLOGY = {
       {
         source: 'research_evidence',
         evidenceType: I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_TYPE,
-        evidenceVersion: I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_DEFINITION.evidenceVersion,
         definitionRef: {
           id: I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_DEFINITION.definitionId,
           version: I20_RELATIVE_FORCE_RESEARCH_EVIDENCE_DEFINITION.version,
