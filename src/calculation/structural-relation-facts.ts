@@ -112,7 +112,7 @@ export function enrichCanonicalStructuralRelations(
     {
       name: 'myeonghwa-structural-relation-candidates',
       version: STRUCTURAL_RELATION_DERIVATION_VERSION,
-      source: sourceUrls[0],
+      source: STRUCTURAL_RELATION_SOURCE_CATALOG.yisiZhan.url,
       notes: `Structural matching only; no transformation or effect verdict. sourceIds=${sourceIds.join(',')} sourceUrls=${sourceUrls.join(',')} contentHash=${STRUCTURAL_RELATION_DEFINITION_CONTENT_HASH}`,
     },
   ];
