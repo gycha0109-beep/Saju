@@ -112,25 +112,24 @@ const qualifierObservation: BranchClashQualifierObservationFact = {
   },
 };
 
-function snapshot(options: {
-  clash?: BranchClashContextFact;
-  observation?: BranchClashQualifierObservationFact;
-  qualifierRootUnavailable?: boolean;
-} = {}): CanonicalSajuSnapshot {
-  const clash = options.clash === undefined && 'clash' in options ? undefined : (options.clash ?? branchClashContext);
-  const observation =
-    options.observation === undefined && 'observation' in options
-      ? undefined
-      : (options.observation ?? qualifierObservation);
+function snapshot(
+  options: {
+    includeClash?: boolean;
+    includeObservation?: boolean;
+    qualifierRootUnavailable?: boolean;
+  } = {},
+): CanonicalSajuSnapshot {
+  const includeClash = options.includeClash ?? true;
+  const includeObservation = options.includeObservation ?? true;
   const qualifierState = options.qualifierRootUnavailable
     ? ({ status: 'unavailable' as const, reasonCode: 'synthetic-qualifier-missing' })
     : ({
         status: 'resolved' as const,
-        value: observation === undefined ? {} : { year_day: observation },
+        value: includeObservation ? { year_day: qualifierObservation } : {},
       });
 
   return {
-    snapshotId: `saju_synthetic_t6_qualifier_${clash === undefined ? 'no_clash' : 'clash'}_${observation === undefined ? 'no_observation' : 'observation'}_${options.qualifierRootUnavailable ? 'unavailable' : 'resolved'}`,
+    snapshotId: `saju_synthetic_t6_qualifier_${includeClash ? 'clash' : 'no_clash'}_${includeObservation ? 'observation' : 'no_observation'}_${options.qualifierRootUnavailable ? 'unavailable' : 'resolved'}`,
     schemaVersion: 'saju-canonical-v1.4',
     calculationHash: 'c'.repeat(64),
     createdAt: '2026-08-25T00:00:00.000Z',
@@ -171,7 +170,7 @@ function snapshot(options: {
       voidBranches: { status: 'unavailable', reasonCode: 'synthetic-not-needed' },
       branchClashContexts: {
         status: 'resolved',
-        value: clash === undefined ? {} : { year_day: clash },
+        value: includeClash ? { year_day: branchClashContext } : {},
       },
       branchClashQualifierObservations: qualifierState,
     },
@@ -182,11 +181,11 @@ function snapshot(options: {
       fullyResolved: false,
       resolvedPaths: [
         'derivedFacts.branchClashContexts',
-        ...(clash === undefined ? [] : ['derivedFacts.branchClashContexts.year_day']),
+        ...(includeClash ? ['derivedFacts.branchClashContexts.year_day'] : []),
         ...(options.qualifierRootUnavailable ? [] : ['derivedFacts.branchClashQualifierObservations']),
-        ...(observation === undefined || options.qualifierRootUnavailable
-          ? []
-          : ['derivedFacts.branchClashQualifierObservations.year_day']),
+        ...(includeObservation && !options.qualifierRootUnavailable
+          ? ['derivedFacts.branchClashQualifierObservations.year_day']
+          : []),
       ],
       ambiguousPaths: [],
       unavailablePaths: options.qualifierRootUnavailable
@@ -208,12 +207,19 @@ function claimsOfType(result: ReturnType<typeof runInterpretation>, claimType: s
 
 describe('Career T6 branch-clash qualifier context', () => {
   test('registers six qualifier rules together with six upstream branch-clash rules under the P4 gate', () => {
-    const registry = createCareerT6BranchClashQualifierContextRegistry(p4(), '2026-08-25T00:00:00.000Z');
+    const registry = createCareerT6BranchClashQualifierContextRegistry(
+      p4(),
+      '2026-08-25T00:00:00.000Z',
+    );
     expect(CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_RULES).toHaveLength(6);
     expect(registry.rules).toHaveLength(12);
     expect(CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_CLAIM_DEFINITION.materialForNarrative).toBe(false);
     expect(CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_METHODOLOGY.status).toBe('research');
-    expect(registry.rules.filter((rule) => rule.ruleSetId === 'career-t6-branch-clash-qualifier-context').every((rule) => rule.taxonomy.tier === 'T6' && rule.taxonomy.category === 'career')).toBe(true);
+    expect(
+      registry.rules
+        .filter((rule) => rule.ruleSetId === 'career-t6-branch-clash-qualifier-context')
+        .every((rule) => rule.taxonomy.tier === 'T6' && rule.taxonomy.category === 'career'),
+    ).toBe(true);
   });
 
   test('one exact pair emits one upstream context and one qualifier context with a direct dependency', () => {
@@ -229,20 +235,30 @@ describe('Career T6 branch-clash qualifier context', () => {
     expect(upstream).toHaveLength(1);
     expect(qualifiers).toHaveLength(1);
     expect(qualifiers[0]?.upstreamClaimRefs).toEqual([upstream[0]?.claimId]);
-    expect(qualifiers[0]?.factRefs).toContain('derivedFacts.branchClashQualifierObservations.year_day');
-    expect(result.claimRelations.some((relation) => relation.fromClaimId === qualifiers[0]?.claimId && relation.toClaimId === upstream[0]?.claimId && relation.relation === 'depends_on')).toBe(true);
+    expect(qualifiers[0]?.factRefs).toContain(
+      'derivedFacts.branchClashQualifierObservations.year_day',
+    );
+    expect(
+      result.claimRelations.some(
+        (relation) =>
+          relation.fromClaimId === qualifiers[0]?.claimId &&
+          relation.toClaimId === upstream[0]?.claimId &&
+          relation.relation === 'depends_on',
+      ),
+    ).toBe(true);
   });
 
-  test('qualifier claim references the lossless observation path instead of copying raw stems and position arrays into claim value', () => {
+  test('qualifier claim references the lossless observation path instead of copying raw arrays', () => {
     const result = runInterpretation(
       snapshot(),
       createCareerT6BranchClashQualifierContextRegistry(p4(), '2026-08-25T00:00:00.000Z'),
       { now: new Date('2026-08-25T00:00:00.000Z') },
     );
     const qualifier = claimsOfType(result, CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_CLAIM_TYPE)[0];
-    expect(qualifier).toBeDefined();
     const value = qualifier?.value as Record<string, unknown>;
-    expect(value.qualifierEvidenceRef).toBe('derivedFacts.branchClashQualifierObservations.year_day');
+    expect(value.qualifierEvidenceRef).toBe(
+      'derivedFacts.branchClashQualifierObservations.year_day',
+    );
     expect(value.qualifierDimensions).toEqual([
       'visible_hidden_location_observation',
       'position_or_separation_observation',
@@ -252,7 +268,6 @@ describe('Career T6 branch-clash qualifier context', () => {
     expect(serialized).not.toContain('visibleExactStemPositions');
     expect(serialized).not.toContain('hiddenOccurrenceBranchPositions');
     expect(serialized).not.toContain('interveningPillars');
-    expect(qualifier?.factRefs).toContain('derivedFacts.branchClashQualifierObservations.year_day');
   });
 
   test('season is explicitly deferred rather than fabricated from canonical facts', () => {
@@ -267,31 +282,37 @@ describe('Career T6 branch-clash qualifier context', () => {
     expect(JSON.stringify(value)).not.toMatch(/旺|相|休|囚|死/);
   });
 
-  test('resolved qualifier root with no pair is a normal no-match while the upstream clash remains valid', () => {
+  test('resolved qualifier root with no pair is a normal no-match while upstream remains valid', () => {
     const result = runInterpretation(
-      snapshot({ observation: undefined }),
+      snapshot({ includeObservation: false }),
       createCareerT6BranchClashQualifierContextRegistry(p4(), '2026-08-25T00:00:00.000Z'),
       { now: new Date('2026-08-25T00:00:00.000Z') },
     );
     expect(claimsOfType(result, CAREER_T6_BRANCH_CLASH_CONTEXT_CLAIM_TYPE)).toHaveLength(1);
     expect(claimsOfType(result, CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_CLAIM_TYPE)).toHaveLength(0);
-    const qualifierEvaluation = result.evaluations.find((evaluation) => evaluation.ruleRef.id === 'RULE-CAREER-T6-BRANCH-CLASH-QUALIFIER-YEAR-DAY');
-    expect(qualifierEvaluation?.status).toBe('not_matched');
+    expect(
+      result.evaluations.find(
+        (evaluation) => evaluation.ruleRef.id === 'RULE-CAREER-T6-BRANCH-CLASH-QUALIFIER-YEAR-DAY',
+      )?.status,
+    ).toBe('not_matched');
   });
 
-  test('qualifier observation cannot create a T6 qualifier without the same-pair upstream branch-clash claim', () => {
+  test('observation cannot create a qualifier without the same-pair upstream clash claim', () => {
     const result = runInterpretation(
-      snapshot({ clash: undefined }),
+      snapshot({ includeClash: false }),
       createCareerT6BranchClashQualifierContextRegistry(p4(), '2026-08-25T00:00:00.000Z'),
       { now: new Date('2026-08-25T00:00:00.000Z') },
     );
     expect(claimsOfType(result, CAREER_T6_BRANCH_CLASH_CONTEXT_CLAIM_TYPE)).toHaveLength(0);
     expect(claimsOfType(result, CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_CLAIM_TYPE)).toHaveLength(0);
-    const qualifierEvaluation = result.evaluations.find((evaluation) => evaluation.ruleRef.id === 'RULE-CAREER-T6-BRANCH-CLASH-QUALIFIER-YEAR-DAY');
-    expect(qualifierEvaluation?.status).toBe('skipped_cardinality_mismatch');
+    expect(
+      result.evaluations.find(
+        (evaluation) => evaluation.ruleRef.id === 'RULE-CAREER-T6-BRANCH-CLASH-QUALIFIER-YEAR-DAY',
+      )?.status,
+    ).toBe('skipped_cardinality_mismatch');
   });
 
-  test('unavailable qualifier root fails closed and never reuses the upstream context as fallback evidence', () => {
+  test('unavailable qualifier root fails closed and never falls back to upstream context', () => {
     const result = runInterpretation(
       snapshot({ qualifierRootUnavailable: true }),
       createCareerT6BranchClashQualifierContextRegistry(p4(), '2026-08-25T00:00:00.000Z'),
@@ -302,7 +323,7 @@ describe('Career T6 branch-clash qualifier context', () => {
     expect(result.run.completeness.state).toBe('partial');
   });
 
-  test('qualifier contract contains no activation strength distance weight winner damage outcome T8 or narrative authority', () => {
+  test('qualifier contract contains no activation strength weight winner damage outcome T8 authority', () => {
     for (const rule of CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_RULES) {
       const serialized = JSON.stringify(rule.output.value).toLowerCase();
       expect(serialized).toContain('not_authorized');
@@ -335,8 +356,16 @@ describe('Career T6 branch-clash qualifier context', () => {
     );
   });
 
-  test('all qualifier rules remain Career-only and never leak into general or other specialist domains', () => {
-    expect(CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_RULES.every((rule) => rule.taxonomy.category === 'career')).toBe(true);
-    expect(CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_RULES.some((rule) => ['general', 'wealth', 'relationship', 'business'].includes(rule.taxonomy.category))).toBe(false);
+  test('all qualifier rules remain Career-only with no cross-domain leakage', () => {
+    expect(
+      CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_RULES.every(
+        (rule) => rule.taxonomy.category === 'career',
+      ),
+    ).toBe(true);
+    expect(
+      CAREER_T6_BRANCH_CLASH_QUALIFIER_CONTEXT_RULES.some((rule) =>
+        ['general', 'wealth', 'relationship', 'business'].includes(rule.taxonomy.category),
+      ),
+    ).toBe(false);
   });
 });
