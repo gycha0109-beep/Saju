@@ -10,6 +10,7 @@ import type {
   RuleInputRequirement,
   RuleOperand,
 } from '../contracts/interpretation.js';
+import type { ValidatedResearchEvidence } from './research-evidence-runtime.js';
 import { deterministicContentHash } from './rule-registry.js';
 
 const CLAIM_SCHEMA_VERSION = 'myeonghwa-interpretation-claim-v1';
@@ -19,6 +20,7 @@ export interface RuleEvaluationContext {
   snapshot: CanonicalSajuSnapshot;
   pack: InterpretationPack;
   existingClaims?: readonly InterpretationClaim[];
+  validatedResearchEvidence?: readonly ValidatedResearchEvidence[];
   scenarioRef?: string;
   factOverrides?: Readonly<Record<string, unknown>>;
   now?: Date;
@@ -35,6 +37,7 @@ interface ResolvedInput {
   inputRef: RuleEvaluation['inputRefs'][number];
   factRef?: string;
   upstreamClaimRefs: readonly string[];
+  researchEvidenceRef?: string;
 }
 
 type InputResolution =
@@ -451,9 +454,118 @@ function resolveClaimInput(
   return readyClaimInput(requirement, matchingClaims, value);
 }
 
+function researchEvidenceMatches(
+  requirement: RuleInputRequirement,
+  evidence: ValidatedResearchEvidence,
+): boolean {
+  if (evidence.envelope.evidenceType !== requirement.pathOrClaimType) return false;
+  if (
+    requirement.evidenceVersion !== undefined &&
+    evidence.envelope.evidenceVersion !== requirement.evidenceVersion
+  ) {
+    return false;
+  }
+  if (
+    requirement.researchEvidenceDefinitionRef !== undefined &&
+    versionKey(evidence.envelope.definitionRef) !== versionKey(requirement.researchEvidenceDefinitionRef)
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function researchEvidenceInputRef(
+  requirement: RuleInputRequirement,
+  evidence?: ValidatedResearchEvidence,
+): RuleEvaluation['inputRefs'][number] {
+  if (evidence === undefined) {
+    return {
+      sourceType: 'research_evidence',
+      idOrPath: `${requirement.pathOrClaimType}@${requirement.evidenceVersion ?? '*'}`,
+      evidenceType: requirement.pathOrClaimType,
+      ...(requirement.evidenceVersion === undefined
+        ? {}
+        : { evidenceVersion: requirement.evidenceVersion }),
+      ...(requirement.researchEvidenceDefinitionRef === undefined
+        ? {}
+        : { definitionRef: requirement.researchEvidenceDefinitionRef }),
+    };
+  }
+  return {
+    sourceType: 'research_evidence',
+    idOrPath: evidence.envelope.envelopeId,
+    observedValue: evidence.envelope.payload,
+    definitionRef: evidence.envelope.definitionRef,
+    definitionContentHash: evidence.definitionContentHash,
+    evidenceType: evidence.envelope.evidenceType,
+    evidenceVersion: evidence.envelope.evidenceVersion,
+    payloadHash: evidence.envelope.payloadHash,
+  };
+}
+
+function resolveResearchEvidenceInput(
+  requirement: RuleInputRequirement,
+  context: RuleEvaluationContext,
+): InputResolution {
+  const matches = (context.validatedResearchEvidence ?? [])
+    .filter((evidence) => researchEvidenceMatches(requirement, evidence))
+    .sort((left, right) => left.envelope.envelopeId.localeCompare(right.envelope.envelopeId));
+
+  if (matches.length === 0) {
+    return {
+      status: requirement.required ? 'skipped_missing_input' : 'ready',
+      inputs: requirement.required
+        ? []
+        : [
+            {
+              key: requirement.key,
+              value: undefined,
+              inputRef: researchEvidenceInputRef(requirement),
+              upstreamClaimRefs: [],
+            },
+          ],
+    };
+  }
+
+  if (matches.length !== 1) {
+    return {
+      status: 'skipped_cardinality_mismatch',
+      inputs: matches.map((evidence) => ({
+        key: requirement.key,
+        value: evidence.envelope.payload,
+        inputRef: researchEvidenceInputRef(requirement, evidence),
+        upstreamClaimRefs: [],
+        researchEvidenceRef: evidence.envelope.envelopeId,
+      })),
+    };
+  }
+
+  const evidence = matches[0];
+  if (evidence === undefined) return { status: 'error', inputs: [] };
+  return {
+    status: 'ready',
+    inputs: [
+      {
+        key: requirement.key,
+        value: evidence.envelope.payload,
+        inputRef: researchEvidenceInputRef(requirement, evidence),
+        upstreamClaimRefs: [],
+        researchEvidenceRef: evidence.envelope.envelopeId,
+      },
+    ],
+  };
+}
+
 function validInputDeclaration(requirement: RuleInputRequirement): boolean {
   const selectorOrCardinalityPresent =
     requirement.claimSelector !== undefined || requirement.cardinality !== undefined;
+  const researchSelectorPresent =
+    requirement.evidenceVersion !== undefined || requirement.researchEvidenceDefinitionRef !== undefined;
+
+  if (requirement.source === 'research_evidence') {
+    return !selectorOrCardinalityPresent && requirement.acceptedStatuses === undefined;
+  }
+  if (researchSelectorPresent) return false;
   if (requirement.source !== 'interpretation_claim') return !selectorOrCardinalityPresent;
 
   switch (requirement.cardinality) {
@@ -475,7 +587,9 @@ function resolveInputs(rule: RuleDefinition, context: RuleEvaluationContext): In
     const resolution =
       requirement.source === 'interpretation_claim'
         ? resolveClaimInput(requirement, context)
-        : resolveFactInput(requirement, context);
+        : requirement.source === 'research_evidence'
+          ? resolveResearchEvidenceInput(requirement, context)
+          : resolveFactInput(requirement, context);
     inputs.push(...resolution.inputs);
     if (resolution.status !== 'ready') {
       return { status: resolution.status, inputs };
@@ -504,7 +618,22 @@ function evaluationId(
     packContentHash: packContentHash(context.pack),
     ruleRef: { id: rule.ruleId, version: rule.version },
     ruleContentHash: ruleContentHash(rule),
-    inputs: resolvedInputs.map((input) => ({ key: input.key, value: input.value })),
+    inputs: resolvedInputs.map((input) => ({
+      key: input.key,
+      value: input.value,
+      ...(input.inputRef.sourceType === 'research_evidence'
+        ? {
+            researchEvidenceIdentity: {
+              envelopeId: input.inputRef.idOrPath,
+              definitionRef: input.inputRef.definitionRef,
+              definitionContentHash: input.inputRef.definitionContentHash,
+              evidenceType: input.inputRef.evidenceType,
+              evidenceVersion: input.inputRef.evidenceVersion,
+              payloadHash: input.inputRef.payloadHash,
+            },
+          }
+        : {}),
+    })),
   });
   return `eval_${hash.slice(0, 24)}`;
 }
@@ -523,6 +652,13 @@ function emitClaim(
   const upstreamClaimRefs = [
     ...new Set(resolvedInputs.flatMap((input) => input.upstreamClaimRefs)),
   ].sort();
+  const researchEvidenceRefs = [
+    ...new Set(
+      resolvedInputs.flatMap((input) =>
+        input.researchEvidenceRef === undefined ? [] : [input.researchEvidenceRef],
+      ),
+    ),
+  ].sort();
   const sourceRefs = [...new Set(rule.sourceRefs.map((source) => source.sourceId))].sort();
   const claimMaterial = {
     snapshotId: context.snapshot.snapshotId,
@@ -533,6 +669,7 @@ function emitClaim(
     output: rule.output,
     factRefs,
     upstreamClaimRefs,
+    ...(researchEvidenceRefs.length === 0 ? {} : { researchEvidenceRefs }),
   };
   const claimId = `claim_${deterministicContentHash(claimMaterial).slice(0, 24)}`;
 
@@ -550,6 +687,7 @@ function emitClaim(
     ruleRefs: [{ ruleId: rule.ruleId, version: rule.version, evaluationId: id }],
     factRefs,
     upstreamClaimRefs,
+    ...(researchEvidenceRefs.length === 0 ? {} : { researchEvidenceRefs }),
     sourceRefs,
     ...(rule.output.polarity === undefined ? {} : { polarity: rule.output.polarity }),
     ...(rule.output.emphasis === undefined ? {} : { emphasis: rule.output.emphasis }),
