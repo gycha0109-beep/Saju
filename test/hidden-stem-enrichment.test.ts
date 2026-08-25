@@ -11,6 +11,7 @@ import {
   type HeavenlyStem,
   type PillarFact,
 } from '../src/index.js';
+import { BRANCH_CLASH_CONTEXT_ENRICHED_CANONICAL_SCHEMA_VERSION } from '../src/calculation/branch-clash-context-facts.js';
 import { STRUCTURAL_RELATION_ENRICHED_CANONICAL_SCHEMA_VERSION } from '../src/calculation/structural-relation-facts.js';
 
 const EXPECTED_MEMBERSHIP: Readonly<Record<EarthlyBranch, readonly HeavenlyStem[]>> = {
@@ -75,8 +76,10 @@ describe('hidden-stem structural enrichment', () => {
   test('known-time public snapshots preserve hidden stems through the final canonical schema', () => {
     const snapshot = calculateCanonicalSajuSnapshot(knownInput(), policy);
     expect(ENRICHED_CANONICAL_SCHEMA_VERSION).toBe('saju-canonical-v1.1');
-    expect(snapshot.schemaVersion).toBe(STRUCTURAL_RELATION_ENRICHED_CANONICAL_SCHEMA_VERSION);
-    expect(snapshot.provenance.schema.version).toBe(STRUCTURAL_RELATION_ENRICHED_CANONICAL_SCHEMA_VERSION);
+    expect(STRUCTURAL_RELATION_ENRICHED_CANONICAL_SCHEMA_VERSION).toBe('saju-canonical-v1.2');
+    expect(snapshot.schemaVersion).toBe(BRANCH_CLASH_CONTEXT_ENRICHED_CANONICAL_SCHEMA_VERSION);
+    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.3');
+    expect(snapshot.provenance.schema.version).toBe(BRANCH_CLASH_CONTEXT_ENRICHED_CANONICAL_SCHEMA_VERSION);
     expect(snapshot.derivedFacts.hiddenStems).toBeDefined();
 
     const hidden = snapshot.derivedFacts.hiddenStems;
