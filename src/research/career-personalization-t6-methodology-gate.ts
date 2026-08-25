@@ -28,6 +28,10 @@ export type CareerT6DimensionMode =
   | 'blocked_authority_gap'
   | 'blocked';
 
+export type CareerPostT6GateOption =
+  | 'NEW_EXTERNAL_INTERACTION_AUTHORITY'
+  | 'SEPARATE_T5_ONLY_T8_SYNTHESIS_METHODOLOGY_REVIEW';
+
 export interface CareerT6DimensionDecision {
   dimension: CareerT6Dimension;
   mode: CareerT6DimensionMode;
@@ -90,9 +94,10 @@ export interface CareerPersonalizationT6MethodologyGate {
     interpretationPacksCreated: 0;
     previewRoutesChanged: 0;
   };
-  nextDecisionPoint:
-    | 'NEW_EXTERNAL_INTERACTION_AUTHORITY'
-    | 'SEPARATE_T5_ONLY_T8_SYNTHESIS_METHODOLOGY_REVIEW';
+  nextDecisionOptions: readonly [
+    'NEW_EXTERNAL_INTERACTION_AUTHORITY',
+    'SEPARATE_T5_ONLY_T8_SYNTHESIS_METHODOLOGY_REVIEW',
+  ];
   automaticNextPathAuthorized: false;
 }
 
@@ -119,12 +124,11 @@ function decision(
   });
 }
 
-function assertP1InteractionBoundary(): void {
+function assertP1Boundary(): void {
   const structural = careerMethodologyDecision('structural_interactions');
   const hidden = careerMethodologyDecision('hidden_stem_participation');
   const subtype = careerMethodologyDecision('exact_ten_god_subtype');
   const family = careerMethodologyDecision('broad_family_context');
-
   if (
     structural.mode !== 'preserve_only' ||
     structural.authorizedSemanticTiers.length !== 0 ||
@@ -136,11 +140,11 @@ function assertP1InteractionBoundary(): void {
     family.mode !== 'consume' ||
     !family.authorizedSemanticTiers.includes('T5')
   ) {
-    throw new Error('P1 Career methodology boundary no longer matches the P3 T6 readiness assumptions.');
+    throw new Error('P1 Career boundary no longer matches the P3 T6 readiness assumptions.');
   }
 }
 
-assertP1InteractionBoundary();
+assertP1Boundary();
 
 export const CAREER_PERSONALIZATION_T6_METHODOLOGY_GATE: CareerPersonalizationT6MethodologyGate =
   Object.freeze({
@@ -153,139 +157,42 @@ export const CAREER_PERSONALIZATION_T6_METHODOLOGY_GATE: CareerPersonalizationT6
     authorityScope: 't6_interaction_methodology_readiness_only',
     auditContracts: Object.freeze([
       Object.freeze({
-        auditId: 'P1' as const,
+        auditId: 'P1',
         version: CAREER_PERSONALIZATION_METHODOLOGY_GATE_VERSION,
-        supports: Object.freeze([
-          'Exact Ten-God subtype and broad-family relation context as bounded T5 substrate.',
-          'Structural interactions retained as auditable evidence without Career-specific effect semantics.',
-        ]),
-        doesNotSupport: Object.freeze([
-          'T6 interaction authoring.',
-          'Visible-stem or hidden-stem interaction effects as Career conclusions.',
-        ]),
+        supports: Object.freeze(['T5 subtype/family substrate.', 'Structural interaction evidence preservation.']),
+        doesNotSupport: Object.freeze(['T6 interaction authoring.', 'Career interaction-effect conclusions.']),
       }),
       Object.freeze({
-        auditId: 'I113' as const,
-        version:
-          I113_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_INTERACTION_ELIGIBILITY_METHODOLOGY_REVIEW_VERSION,
-        supports: Object.freeze([
-          'Source-bounded visible-stem positional applicability language is available for further research.',
-          'Hidden stems are explicitly separated from visible-stem positional authority.',
-        ]),
-        doesNotSupport: Object.freeze([
-          'Visible-stem effective interaction eligibility.',
-          'Hidden-stem interaction eligibility.',
-          'Damage, magnitude, settlement, relative force, or numeric weighting.',
-        ]),
+        auditId: 'I113',
+        version: I113_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_INTERACTION_ELIGIBILITY_METHODOLOGY_REVIEW_VERSION,
+        supports: Object.freeze(['Visible-stem positional applicability language for research.', 'Visible/hidden authority separation.']),
+        doesNotSupport: Object.freeze(['Effective interaction eligibility.', 'Hidden-stem eligibility.', 'Damage or numeric weighting.']),
       }),
       Object.freeze({
-        auditId: 'I116' as const,
-        version:
-          I116_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_VISIBLE_STEM_POSITIONAL_APPLICABILITY_PROMOTION_READINESS_REVIEW_VERSION,
-        supports: Object.freeze([
-          'Visible-stem directional plus qualitative positional evidence as a complete research substrate.',
-          'The positional evidence may enter a separate effective-interaction methodology review.',
-        ]),
-        doesNotSupport: Object.freeze([
-          'Promotion of positional evidence to effective interaction.',
-          'Promotion of 远干无力 to no interaction or zero effect.',
-          'Numeric force weights, damage outcome, settlement, or hidden-stem borrowing.',
-        ]),
+        auditId: 'I116',
+        version: I116_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_VISIBLE_STEM_POSITIONAL_APPLICABILITY_PROMOTION_READINESS_REVIEW_VERSION,
+        supports: Object.freeze(['Visible-stem directional plus qualitative positional evidence substrate.']),
+        doesNotSupport: Object.freeze(['Promotion to effective interaction.', '无力 as no interaction.', 'Damage, settlement, numeric force, or hidden-stem borrowing.']),
       }),
       Object.freeze({
-        auditId: 'I117' as const,
-        version:
-          I117_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_VISIBLE_STEM_EFFECTIVE_INTERACTION_ELIGIBILITY_METHODOLOGY_REVIEW_VERSION,
-        supports: Object.freeze([
-          'Qualitative ordering 邻干力大 / 隔干次之 / 远干无力 may remain non-binary research evidence.',
-          'The binary effective-interaction threshold authority gap is explicitly identified.',
-        ]),
-        doesNotSupport: Object.freeze([
-          'A boolean effective-interaction threshold.',
-          'Treating 力大 or 次之 as active thresholds.',
-          'Treating 无力 as no interaction or zero damage.',
-          'Damage evaluation before interaction eligibility is resolved.',
-        ]),
+        auditId: 'I117',
+        version: I117_CHALLENGE_COMBINATION_SUPPORT_CHANNEL_UNTOUCHED_SUPPORT_EFFECT_SOURCE_KE_VISIBLE_STEM_EFFECTIVE_INTERACTION_ELIGIBILITY_METHODOLOGY_REVIEW_VERSION,
+        supports: Object.freeze(['Non-binary qualitative ordering may remain research evidence.', 'Binary-threshold authority gap is explicit.']),
+        doesNotSupport: Object.freeze(['Boolean effective-interaction threshold.', '力大/次之 as active thresholds.', '无力 as no interaction or zero damage.', 'Damage before eligibility.']),
       }),
     ]),
     decisions: Object.freeze([
-      decision(
-        't5_exact_subtype_upstream',
-        'available_upstream',
-        'P2 materializes exact subtype semantics as non-narrative T5 research claims. Their existence is upstream evidence availability, not T6 authority.',
-        [YUANHAI],
-        ['P1', 'P2'],
-      ),
-      decision(
-        't5_family_relation_upstream',
-        'available_upstream',
-        'P2 materializes broad family generation/control context as non-narrative T5 claims. These structural relations do not establish interaction effect.',
-        [YUANHAI, SAMYEONG],
-        ['P1', 'P2'],
-      ),
-      decision(
-        'visible_stem_directional_relation',
-        'preserve_only',
-        'Existing source work establishes directional 克 relation evidence for visible stems, but direction alone cannot be promoted to effective interaction or damage.',
-        [CHEN_YUAN],
-        ['I113', 'I116', 'I117'],
-      ),
-      decision(
-        'visible_stem_positional_qualitative_context',
-        'preserve_only',
-        '邻干/隔干/远干 with 力大/次之/无力 is valid qualitative positional research evidence, but it remains non-binary and non-numeric.',
-        [CHEN_YUAN],
-        ['I113', 'I116', 'I117'],
-      ),
-      decision(
-        'visible_stem_effective_interaction',
-        'blocked_authority_gap',
-        'I117 explicitly confirms that no boolean threshold authorizes converting qualitative positional wording into effective-interaction eligibility.',
-        [CHEN_YUAN],
-        ['I117'],
-      ),
-      decision(
-        'hidden_stem_interaction_eligibility',
-        'blocked_authority_gap',
-        'The current source chain explicitly lacks hidden-stem positional interaction-eligibility authority and forbids borrowing the visible-stem rule.',
-        [CHEN_YUAN],
-        ['I113', 'I116', 'I117'],
-      ),
-      decision(
-        'activation_persistence_effective_support',
-        'blocked_authority_gap',
-        'Current interaction reviews leave activation, persistence, and effective-support verdicts unauthorized.',
-        [CHEN_YUAN],
-        ['I113', 'I116', 'I117'],
-      ),
-      decision(
-        'damage_magnitude_settlement',
-        'blocked_authority_gap',
-        'Damage evaluation cannot proceed before effective-interaction eligibility is resolved, and magnitude/settlement authority remains absent.',
-        [CHEN_YUAN],
-        ['I113', 'I116', 'I117'],
-      ),
-      decision(
-        'cross_relation_precedence',
-        'blocked',
-        'No reviewed Career methodology authorizes a winner or precedence policy across competing structural relations.',
-        [],
-        ['P1', 'I113', 'I116', 'I117'],
-      ),
-      decision(
-        'numeric_interaction_weighting',
-        'blocked',
-        'Qualitative position language and slot distance may not be converted into numeric interaction weights or scores.',
-        [CHEN_YUAN],
-        ['I113', 'I116', 'I117'],
-      ),
-      decision(
-        'career_t6_semantic_effect',
-        'blocked_authority_gap',
-        'No current source-bound methodology connects the available T5 substrate plus preserved interaction evidence to a governed Career T6 semantic effect.',
-        [YUANHAI, SAMYEONG, CHEN_YUAN],
-        ['P1', 'I113', 'I116', 'I117'],
-      ),
+      decision('t5_exact_subtype_upstream', 'available_upstream', 'P2 T5 subtype claims are available research evidence, not T6 authority.', [YUANHAI], ['P1', 'P2']),
+      decision('t5_family_relation_upstream', 'available_upstream', 'P2 T5 family relations are structural context, not interaction effect.', [YUANHAI, SAMYEONG], ['P1', 'P2']),
+      decision('visible_stem_directional_relation', 'preserve_only', 'Directional 克 evidence exists but direction alone does not establish effective interaction or damage.', [CHEN_YUAN], ['I113', 'I116', 'I117']),
+      decision('visible_stem_positional_qualitative_context', 'preserve_only', '邻干/隔干/远干 with 力大/次之/无力 remains non-binary, non-numeric positional evidence.', [CHEN_YUAN], ['I113', 'I116', 'I117']),
+      decision('visible_stem_effective_interaction', 'blocked_authority_gap', 'I117 confirms no boolean threshold for promoting qualitative position to effective interaction.', [CHEN_YUAN], ['I117']),
+      decision('hidden_stem_interaction_eligibility', 'blocked_authority_gap', 'Hidden-stem interaction eligibility is not established and may not borrow the visible-stem rule.', [CHEN_YUAN], ['I113', 'I116', 'I117']),
+      decision('activation_persistence_effective_support', 'blocked_authority_gap', 'Activation, persistence, and effective-support verdicts remain unauthorized.', [CHEN_YUAN], ['I113', 'I116', 'I117']),
+      decision('damage_magnitude_settlement', 'blocked_authority_gap', 'Damage cannot proceed before effective-interaction eligibility; magnitude and settlement authority are absent.', [CHEN_YUAN], ['I113', 'I116', 'I117']),
+      decision('cross_relation_precedence', 'blocked', 'No reviewed Career winner or precedence policy exists.', [], ['P1', 'I113', 'I116', 'I117']),
+      decision('numeric_interaction_weighting', 'blocked', 'Qualitative force and slot distance may not become numeric weights or scores.', [CHEN_YUAN], ['I113', 'I116', 'I117']),
+      decision('career_t6_semantic_effect', 'blocked_authority_gap', 'No current methodology connects T5 plus preserved interaction evidence to a governed Career T6 semantic effect.', [YUANHAI, SAMYEONG, CHEN_YUAN], ['P1', 'I113', 'I116', 'I117']),
     ]),
     readiness: Object.freeze({
       t5Substrate: 'available_research_only',
@@ -321,7 +228,10 @@ export const CAREER_PERSONALIZATION_T6_METHODOLOGY_GATE: CareerPersonalizationT6
       interpretationPacksCreated: 0,
       previewRoutesChanged: 0,
     }),
-    nextDecisionPoint: 'NEW_EXTERNAL_INTERACTION_AUTHORITY',
+    nextDecisionOptions: Object.freeze([
+      'NEW_EXTERNAL_INTERACTION_AUTHORITY',
+      'SEPARATE_T5_ONLY_T8_SYNTHESIS_METHODOLOGY_REVIEW',
+    ]),
     automaticNextPathAuthorized: false,
   });
 
