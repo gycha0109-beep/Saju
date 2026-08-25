@@ -178,6 +178,12 @@ const MULTI_GAP = Object.freeze([
   'MULTI_PATTERN_CONFLICT_TENSION_COMPOSITION_POLICY_MISSING',
 ] as const satisfies readonly CareerT8SynthesisAuthorityGapId[]);
 
+function bridgeLaneIds(
+  ...ids: CareerT8CurrentT5T6BridgeLaneId[]
+): readonly CareerT8CurrentT5T6BridgeLaneId[] {
+  return Object.freeze(ids);
+}
+
 export const CAREER_T8_CURRENT_T5_T6_BRIDGE_DISCOVERED_CANDIDATES = Object.freeze([
   Object.freeze({
     candidateId: 'cheonbu_myeongri_tongbyeonron_2020',
@@ -194,10 +200,10 @@ export const CAREER_T8_CURRENT_T5_T6_BRIDGE_DISCOVERED_CANDIDATES = Object.freez
       inspectedSurface: 'YES24 bibliographic metadata, book description, and table of contents',
     }),
     status: 'DISCOVERY_LEAD_ONLY',
-    laneIds: Object.freeze([
+    laneIds: bridgeLaneIds(
       'T5_TEN_GOD_TO_CAREER_SEMANTIC_BRIDGE',
       'MULTI_PATTERN_CAREER_COMPOSITION_BRIDGE',
-    ]),
+    ),
     targetedGapIds: Object.freeze([...T5_GAPS, ...MULTI_GAP]),
     observedEvidence: Object.freeze([
       'The published table of contents has a Career chapter with distinct sections for Ten-God activity, Ten-God occupational aptitude, and occupational characteristics by Ten-God structure.',
@@ -242,10 +248,10 @@ export const CAREER_T8_CURRENT_T5_T6_BRIDGE_DISCOVERED_CANDIDATES = Object.freez
       inspectedSurface: 'KCI article metadata and abstract',
     }),
     status: 'INCOMPATIBLE_NUMERIC_STRENGTH_METHOD',
-    laneIds: Object.freeze([
+    laneIds: bridgeLaneIds(
       'T5_TEN_GOD_TO_CAREER_SEMANTIC_BRIDGE',
       'MULTI_PATTERN_CAREER_COMPOSITION_BRIDGE',
-    ]),
+    ),
     targetedGapIds: Object.freeze([...T5_GAPS, ...MULTI_GAP]),
     observedEvidence: Object.freeze([
       'The abstract explicitly treats occupational aptitude through multiple Ten Stars rather than one single pattern.',
@@ -289,10 +295,10 @@ export const CAREER_T8_CURRENT_T5_T6_BRIDGE_DISCOVERED_CANDIDATES = Object.freez
       inspectedSurface: 'KCI article metadata and abstract',
     }),
     status: 'PARTIAL_METHODOLOGY_MIXED',
-    laneIds: Object.freeze([
+    laneIds: bridgeLaneIds(
       'T5_TEN_GOD_TO_CAREER_SEMANTIC_BRIDGE',
       'MULTI_PATTERN_CAREER_COMPOSITION_BRIDGE',
-    ]),
+    ),
     targetedGapIds: Object.freeze([...T5_GAPS, ...MULTI_GAP]),
     observedEvidence: Object.freeze([
       'The abstract explicitly discusses occupational aptitude and reports a framework combining Five-Element personality, Ten-God personality, Gyeokguk occupational fields, and Yongshin.',
@@ -336,7 +342,7 @@ export const CAREER_T8_CURRENT_T5_T6_BRIDGE_DISCOVERED_CANDIDATES = Object.freez
       inspectedSurface: 'KCI article metadata and abstract',
     }),
     status: 'PARTIAL_METHODOLOGY_MIXED',
-    laneIds: Object.freeze(['T5_TEN_GOD_TO_CAREER_SEMANTIC_BRIDGE']),
+    laneIds: bridgeLaneIds('T5_TEN_GOD_TO_CAREER_SEMANTIC_BRIDGE'),
     targetedGapIds: T5_GAPS,
     observedEvidence: Object.freeze([
       'The study explicitly investigates one profession, financial sales, using a cohort of 42 practitioners.',
@@ -380,7 +386,7 @@ export const CAREER_T8_CURRENT_T5_T6_BRIDGE_DISCOVERED_CANDIDATES = Object.freez
       inspectedSurface: 'web transcription reproducing 地支六冲主事 and later 用神/喜忌 material',
     }),
     status: 'TEMPORAL_SEMANTIC_MISMATCH',
-    laneIds: Object.freeze(['T6_STRUCTURAL_QUALIFIER_TO_CAREER_MODIFIER_BRIDGE']),
+    laneIds: bridgeLaneIds('T6_STRUCTURAL_QUALIFIER_TO_CAREER_MODIFIER_BRIDGE'),
     targetedGapIds: T6_GAPS,
     observedEvidence: Object.freeze([
       'The transcription labels some branch clashes as associated with profession change or residence-plus-profession change.',
