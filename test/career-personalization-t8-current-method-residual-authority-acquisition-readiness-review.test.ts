@@ -138,7 +138,9 @@ describe('Career T8 B19 current-method residual authority acquisition readiness'
 
   test('makes T5 acquisition ready around Yang plus independent current-method sources without stitching', () => {
     const report = buildCareerPersonalizationT8CurrentMethodResidualAuthorityAcquisitionReadinessReview(acceptedB18());
-    const task = report.acquisitionTasks.find((item) => item.taskId === 'T5_CURRENT_METHOD_DIRECT_BRIDGE_AUTHORITY_ACQUISITION');
+    const task = report.acquisitionTasks.find(
+      (item) => item.taskId === 'T5_CURRENT_METHOD_DIRECT_BRIDGE_AUTHORITY_ACQUISITION',
+    );
 
     expect(report.t5CurrentMethodAcquisitionReady).toBe(true);
     expect(task?.retainedCandidateIds).toEqual(['YANG_YIYUN_SHISHEN_CHANWEI']);
@@ -150,7 +152,9 @@ describe('Career T8 B19 current-method residual authority acquisition readiness'
 
   test('makes T6 direct Career bridge acquisition ready while keeping classics as context until direct semantics exist', () => {
     const report = buildCareerPersonalizationT8CurrentMethodResidualAuthorityAcquisitionReadinessReview(acceptedB18());
-    const task = report.acquisitionTasks.find((item) => item.taskId === 'T6_CURRENT_METHOD_DIRECT_CAREER_BRIDGE_AUTHORITY_ACQUISITION');
+    const task = report.acquisitionTasks.find(
+      (item) => item.taskId === 'T6_CURRENT_METHOD_DIRECT_CAREER_BRIDGE_AUTHORITY_ACQUISITION',
+    );
 
     expect(report.t6CurrentMethodAcquisitionReady).toBe(true);
     expect(task?.retainedCandidateIds).toEqual([
@@ -169,9 +173,9 @@ describe('Career T8 B19 current-method residual authority acquisition readiness'
     expect(report.wangQingHoldExcludedFromExecution).toBe(true);
     expect(report.executableResidualClassIds).not.toContain('CHEONBU_EXTERNAL_FULL_TEXT_ACCESS_HOLD');
     expect(report.executableResidualClassIds).not.toContain('WANG_QING_COMPETING_FOUNDATIONAL_METHOD_HOLD');
-    expect(report.acquisitionTasks.every((task) => !task.cheonbuHoldMayBeExecuted && !task.wangQingHoldMayBeExecuted)).toBe(
-      true,
-    );
+    expect(
+      report.acquisitionTasks.every((task) => !task.cheonbuHoldMayBeExecuted && !task.wangQingHoldMayBeExecuted),
+    ).toBe(true);
   });
 
   test('preserves Wang human adjudication while current-method acquisition can continue without that choice', () => {
@@ -243,6 +247,7 @@ describe('Career T8 B19 current-method residual authority acquisition readiness'
       currentMethodT5DirectBridgeAcquisitionMayContinue: false,
     };
     const { reviewId: _ignored, ...withoutId } = tamperedMaterial;
+    expect(_ignored).toBe(valid.reviewId);
     const tampered = {
       ...tamperedMaterial,
       reviewId: `career_t8_current_t5_t6_bridge_method_boundary_reassessment_${deterministicContentHash(withoutId).slice(0, 24)}`,
