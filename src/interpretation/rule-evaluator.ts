@@ -77,12 +77,30 @@ function splitPath(path: string): readonly string[] | undefined {
   return segments;
 }
 
+function numericArrayIndex(segment: string): number | undefined {
+  if (!/^(0|[1-9]\d*)$/.test(segment)) return undefined;
+  const index = Number(segment);
+  return Number.isSafeInteger(index) ? index : undefined;
+}
+
 function getPath(root: unknown, path: string): { found: boolean; value?: unknown } {
   const segments = splitPath(path);
   if (segments === undefined) return { found: false };
 
   let cursor: unknown = root;
   for (const segment of segments) {
+    if (Array.isArray(cursor)) {
+      const index = numericArrayIndex(segment);
+      if (
+        index === undefined ||
+        index >= cursor.length ||
+        !Object.prototype.hasOwnProperty.call(cursor, index)
+      ) {
+        return { found: false };
+      }
+      cursor = cursor[index];
+      continue;
+    }
     if (!isRecord(cursor) || !Object.prototype.hasOwnProperty.call(cursor, segment)) {
       return { found: false };
     }
