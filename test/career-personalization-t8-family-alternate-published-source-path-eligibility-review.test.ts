@@ -148,6 +148,9 @@ describe('Career T8 B35 family alternate published-source path eligibility revie
     expect(report.allSixHistoricalGapsRemainOpen).toBe(true);
     expect(report.unresolvedGapIds).toEqual(CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS);
     expect(report.gapClosureReadyCount).toBe(0);
+    expect(report.controlIds).toEqual(CAREER_T8_B35_FAMILY_ALTERNATE_PATH_CONTROL_IDS);
+    expect(report.controlCount).toBe(12);
+    expect(report.controlsFrozen).toBe(true);
     expect(report.t8RuleAuthoringAuthorized).toBe(false);
     expect(report.personalizedT8PackCreationAuthorized).toBe(false);
     expect(report.productionPromotionAuthorized).toBe(false);
