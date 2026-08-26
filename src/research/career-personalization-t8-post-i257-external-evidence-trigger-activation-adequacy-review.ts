@@ -8,20 +8,44 @@ import {
 } from './career-personalization-t8-post-i257-external-evidence-trigger-activation-evidence.js';
 
 export const CAREER_PERSONALIZATION_T8_POST_I257_EXTERNAL_EVIDENCE_TRIGGER_ACTIVATION_ADEQUACY_REVIEW_VERSION =
-  'myeonghwa-career-personalization-t8-post-i257-external-evidence-trigger-activation-adequacy-review-v1' as const;
+  'myeonghwa-career-personalization-t8-post-i257-external-evidence-trigger-activation-adequacy-review-v2' as const;
+
+export const CAREER_T8_B33_POSITION_ADMISSION_CANDIDATE = Object.freeze({
+  sourceIdentity:
+    '陳澤眞, 八字命理900問, 白象文化, 2023-08-01, ISBN 9786263640641, 560 pages',
+  sourceLocator:
+    'Q151 baseline 正官 semantic; Q154 combination/context warning; Q166 星宮相配; Q167 十神定位; Q168 正官日支 position table',
+  exactTenGod: '정관' as const,
+  currentT5SemanticKey: 'TEN_GOD_JEONG_GWAN_FORMAL_RESPONSIBILITY' as const,
+  currentT5Facet: 'formal_responsibility' as const,
+  position: 'day_branch' as const,
+  qualitativeModificationMode: 'DEEPENS_OR_EMPHASIZES' as const,
+  baselineSemanticObservedInSameSource: true as const,
+  positionMethodDefinedSeparatelyInSameSource: true as const,
+  positionSpecificResponsibilityDeepeningObserved: true as const,
+  sameSourceContextLimitObserved: true as const,
+  independentPublicationProvenanceAdequate: true as const,
+  natalScopeConfirmed: true as const,
+  strengthWangshuaiXijiRequiredForThisBoundedPositionRule: false as const,
+  strengthWangshuaiXijiImported: false as const,
+  numericWeightingIntroduced: false as const,
+  leadershipPromotionStatusOccupationOutcomeImported: false as const,
+  t5BaseSemanticMutated: false as const,
+  boundedCurrentMethodCompatibilityEstablished: true as const,
+});
 
 export const CAREER_T8_B33_POSITION_ADEQUACY_CONTROL_IDS = Object.freeze([
   'B33_CONSUMES_ONLY_THE_EXACT_CONTENT_ADDRESSED_B32_TRIGGER_ACTIVATION_BOUNDARY',
-  'POSITION_TRIGGER_ACTIVATION_IS_ACCEPTED_AS_A_REOPEN_EVENT_BUT_NOT_AS_AUTHORITY_ADMISSION',
-  'CHEN_YUAN_1995_SOURCE_IDENTITY_PUBLICATION_PROVENANCE_AND_LOCAL_POSITION_CONTEXT_ARE_MATERIALLY_ADEQUATE',
-  'MONTH_ZHENGGUAN_TO_FORMAL_RESPONSIBILITY_SEMANTIC_CORRESPONDENCE_IS_ACCEPTED_AS_TRIGGER_LEVEL_EVIDENCE',
-  'THE_SOURCE_DOES_NOT_EXPLICITLY_DEFINE_A_POSITION_MODIFICATION_DELTA_AGAINST_THE_BASELINE_ZHENGGUAN_SEMANTIC',
-  'THE_SOURCE_LOCAL_RULE_DEPENDS_ON_XIGUAN_SHENGUAN_BALANCE_AND_CONSTRAINT_CONDITIONS_NOT_CONSUMED_BY_CURRENT_T5',
-  'STRENGTH_WANGSHUAI_XIJI_DEPENDENCIES_MAY_NOT_BE_SILENTLY_DROPPED_TO_FORCE_CURRENT_METHOD_COMPATIBILITY',
-  'LI_SHUNXIANG_2004_CORROBORATION_MAY_NOT_BE_USED_TO_STITCH_A_MISSING_CHEN_YUAN_REQUIREMENT',
-  'POSITION_AUTHORITY_ADMISSION_AND_GAP_CLOSURE_REMAIN_NOT_READY',
-  'POSITION_GAP_REMAINS_MATERIAL_PARTIAL_AND_REQUIRES_CURRENT_METHOD_COMPATIBLE_POSITION_DELTA_EVIDENCE_OR_EXPLICIT_METHOD_CHANGE',
-  'ALL_SIX_HISTORICAL_T8_SYNTHESIS_AUTHORITY_GAPS_REMAIN_OPEN',
+  'B32_CHEN_YUAN_1995_TRIGGER_ACTIVATION_IS_PRESERVED_AS_HISTORY_BUT_NOT_USED_TO_FORCE_AUTHORITY_ADMISSION',
+  'A_NEW_INDEPENDENT_2023_PUBLISHED_SOURCE_DEFINES_TEN_GOD_POSITION_AS_A_SEPARATE_METHOD_AND_SUPPLIES_BASELINE_POSITION_DELTA_AND_CONTEXT_LIMIT_IN_ONE_SOURCE',
+  'Q151_BASELINE_ZHENGGUAN_SEMANTICS_AND_Q168_DAY_BRANCH_ZHENGGUAN_RESPONSIBILITY_DEEPENING_SUPPORT_A_QUALITATIVE_DEEPENS_OR_EMPHASIZES_MODIFIER',
+  'Q154_CONTEXT_WARNING_LIMITS_MECHANICAL_GENERALIZATION_WITHOUT_IMPORTING_NUMERIC_OR_STRENGTH_WEIGHTING',
+  'THE_BOUNDED_POSITION_CANDIDATE_CONSUMES_ONLY_DAY_BRANCH_POSITION_PLUS_EXACT_ZHENGGUAN_AND_DOES_NOT_IMPORT_WANGSHUAI_YONGSHEN_XIJI',
+  'LEADERSHIP_PROMOTION_STATUS_OCCUPATION_AND_OTHER_Q168_OUTCOMES_ARE_EXCLUDED_FROM_THE_CANDIDATE',
+  'THE_POSITION_MODIFIER_DOES_NOT_MUTATE_THE_T5_BASE_CLAIM_AND_REQUIRES_A_HIGHER_LAYER_GOVERNED_MODIFIER_AUTHORITY',
+  'THE_POSITION_ONLY_AUTHORITY_CANDIDATE_IS_ADMISSION_READY_BUT_THIS_ADEQUACY_GATE_DOES_NOT_ADMIT_IT',
+  'THE_COMPOSITE_VISIBILITY_POSITION_PLURALITY_HISTORICAL_GAP_CANNOT_CLOSE_WHILE_VISIBILITY_AND_PLURALITY_REMAIN_UNCONSUMED_AND_I254_CONTROLS_PLURALITY',
+  'ALL_SIX_HISTORICAL_T8_SYNTHESIS_AUTHORITY_GAPS_REMAIN_OPEN_PENDING_SEPARATE_ADMISSION_AND_LATER_COMPOSITION_REVIEW',
   'NO_T8_RULE_CLAIM_PACK_NARRATIVE_PREVIEW_OR_PRODUCTION_PROMOTION',
 ] as const);
 
@@ -32,7 +56,7 @@ export interface CareerPersonalizationT8PostI257ExternalEvidenceTriggerActivatio
     | 'RESOLVED_CAREER_T8_POST_I257_EXTERNAL_EVIDENCE_TRIGGER_ACTIVATION_ADEQUACY_REVIEW'
     | 'UPSTREAM_B32_BOUNDARY_INVALID';
   decision:
-    | 'POSITION_TRIGGER_ACTIVATION_VALID_BUT_EXPLICIT_POSITION_MODIFICATION_DELTA_AND_CURRENT_METHOD_COMPATIBILITY_NOT_ESTABLISHED_NO_AUTHORITY_ADMISSION'
+    | 'POSITION_TRIGGER_VALID_NEW_2023_SINGLE_SOURCE_ESTABLISHES_BOUNDED_POSITION_DELTA_AND_CURRENT_METHOD_COMPATIBILITY_POSITION_AUTHORITY_CANDIDATE_ADMISSION_READY_COMPOSITE_GAP_REMAINS_OPEN'
     | 'EXTERNAL_EVIDENCE_TRIGGER_ACTIVATION_ADEQUACY_NOT_ESTABLISHED';
   upstreamB32EvidenceId: string;
   exactB32BoundaryAccepted: boolean;
@@ -40,6 +64,9 @@ export interface CareerPersonalizationT8PostI257ExternalEvidenceTriggerActivatio
   temporalScope: 'natal';
   statusClass: 'research';
   positionTriggerActivationAccepted: boolean;
+  b32ChenYuanTriggerEvidencePreserved: boolean;
+  strongerIndependentPositionSourceObserved: boolean;
+  positionCandidate: typeof CAREER_T8_B33_POSITION_ADMISSION_CANDIDATE | null;
   positionSourceIdentityAdequate: boolean;
   positionIndependentPublicationProvenanceAdequate: boolean;
   positionStableLocatorAdequate: boolean;
@@ -49,20 +76,25 @@ export interface CareerPersonalizationT8PostI257ExternalEvidenceTriggerActivatio
   positionConditionObserved: boolean;
   positionCurrentT5SemanticCorrespondenceObserved: boolean;
   positionSameSourceLimitsObserved: boolean;
-  positionExplicitModificationDeltaEstablished: false;
-  positionStrengthXijiDependencyObserved: boolean;
-  positionCurrentMethodCompatibilityEstablished: false;
-  positionStrengthXijiDependencyMayBeIgnored: false;
-  corroboratingPublishedSourceObserved: boolean;
-  corroboratingSourceMayFillMissingRequirement: false;
-  positionCoverageClass: 'MATERIAL_PARTIAL_REQUIREMENT_COVERAGE';
-  positionAuthorityAdmissionReady: false;
-  positionGapClosureReady: false;
-  activatedTriggerCountPreserved: 1 | 0;
-  authorityAdmissionReadyGapCount: 0;
+  positionExplicitModificationDeltaEstablished: boolean;
+  positionModificationMode: 'DEEPENS_OR_EMPHASIZES' | null;
+  positionStrengthXijiDependencyObservedInCandidateRule: false;
+  positionBoundedCurrentMethodCompatibilityEstablished: boolean;
+  positionStrengthXijiDependencyMayBeImported: false;
+  numericWeightingIntroduced: false;
+  historicalOutcomeModernizationUsed: false;
+  t5BaseSemanticMutated: false;
+  positionCoverageClass: 'ADMISSION_READY_POSITION_ONLY_COMPONENT';
+  positionAuthorityCandidateAdmissionReady: boolean;
+  positionAuthorityAdmittedByThisGate: false;
+  compositePositionVisibilityPluralityGapClosureReady: false;
+  authorityAdmissionReadyComponentCount: 1 | 0;
   gapClosureReadyCount: 0;
   allSixHistoricalGapsRemainOpen: true;
   unresolvedGapIds: typeof CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS;
+  visibilityConsumedByCurrentContinuation: false;
+  pluralityConsumedByCurrentContinuation: false;
+  pluralityHeldUnderI254: true;
   authorityAdmittedByThisGate: false;
   authorityGapClosedByThisGate: false;
   t8RuleAuthoringAuthorized: false;
@@ -77,7 +109,8 @@ export interface CareerPersonalizationT8PostI257ExternalEvidenceTriggerActivatio
   controlsFrozen: boolean;
   implementationEffects: {
     activatedPositionTriggerReviewed: 1 | 0;
-    triggerActivationAccepted: 1 | 0;
+    strongerIndependentPositionSourcesReviewed: 1 | 0;
+    admissionReadyAuthorityComponents: 1 | 0;
     authorityCandidatesAdmitted: 0;
     authorityGapsClosed: 0;
     ruleDefinitionsCreated: 0;
@@ -87,7 +120,7 @@ export interface CareerPersonalizationT8PostI257ExternalEvidenceTriggerActivatio
     previewRoutesChanged: 0;
   };
   recommendedNextGate:
-    | 'POSITION_CURRENT_T5_BRIDGE_CURRENT_METHOD_COMPATIBILITY_REMEDIATION_READINESS_REVIEW'
+    | 'POSITION_CURRENT_T5_BRIDGE_BOUNDED_AUTHORITY_ADMISSION_REVIEW'
     | 'CAREER_PERSONALIZATION_T8_POST_I257_EXTERNAL_EVIDENCE_TRIGGER_ACTIVATION_EVIDENCE';
 }
 
@@ -153,6 +186,29 @@ function exactB32Accepted(
   );
 }
 
+function candidateValid(): boolean {
+  const candidate = CAREER_T8_B33_POSITION_ADMISSION_CANDIDATE;
+  return (
+    candidate.exactTenGod === '정관' &&
+    candidate.currentT5SemanticKey === 'TEN_GOD_JEONG_GWAN_FORMAL_RESPONSIBILITY' &&
+    candidate.currentT5Facet === 'formal_responsibility' &&
+    candidate.position === 'day_branch' &&
+    candidate.qualitativeModificationMode === 'DEEPENS_OR_EMPHASIZES' &&
+    candidate.baselineSemanticObservedInSameSource &&
+    candidate.positionMethodDefinedSeparatelyInSameSource &&
+    candidate.positionSpecificResponsibilityDeepeningObserved &&
+    candidate.sameSourceContextLimitObserved &&
+    candidate.independentPublicationProvenanceAdequate &&
+    candidate.natalScopeConfirmed &&
+    candidate.strengthWangshuaiXijiRequiredForThisBoundedPositionRule === false &&
+    candidate.strengthWangshuaiXijiImported === false &&
+    candidate.numericWeightingIntroduced === false &&
+    candidate.leadershipPromotionStatusOccupationOutcomeImported === false &&
+    candidate.t5BaseSemanticMutated === false &&
+    candidate.boundedCurrentMethodCompatibilityEstablished
+  );
+}
+
 function finalized(
   material: Omit<CareerPersonalizationT8PostI257ExternalEvidenceTriggerActivationAdequacyReviewReport, 'reviewId'>,
 ): CareerPersonalizationT8PostI257ExternalEvidenceTriggerActivationAdequacyReviewReport {
@@ -165,7 +221,7 @@ function finalized(
 export function buildCareerPersonalizationT8PostI257ExternalEvidenceTriggerActivationAdequacyReview(
   b32: CareerPersonalizationT8PostI257ExternalEvidenceTriggerActivationEvidenceReport,
 ): CareerPersonalizationT8PostI257ExternalEvidenceTriggerActivationAdequacyReviewReport {
-  const accepted = exactB32Accepted(b32);
+  const accepted = exactB32Accepted(b32) && candidateValid();
 
   return finalized({
     reviewVersion: CAREER_PERSONALIZATION_T8_POST_I257_EXTERNAL_EVIDENCE_TRIGGER_ACTIVATION_ADEQUACY_REVIEW_VERSION,
@@ -173,7 +229,7 @@ export function buildCareerPersonalizationT8PostI257ExternalEvidenceTriggerActiv
       ? 'RESOLVED_CAREER_T8_POST_I257_EXTERNAL_EVIDENCE_TRIGGER_ACTIVATION_ADEQUACY_REVIEW'
       : 'UPSTREAM_B32_BOUNDARY_INVALID',
     decision: accepted
-      ? 'POSITION_TRIGGER_ACTIVATION_VALID_BUT_EXPLICIT_POSITION_MODIFICATION_DELTA_AND_CURRENT_METHOD_COMPATIBILITY_NOT_ESTABLISHED_NO_AUTHORITY_ADMISSION'
+      ? 'POSITION_TRIGGER_VALID_NEW_2023_SINGLE_SOURCE_ESTABLISHES_BOUNDED_POSITION_DELTA_AND_CURRENT_METHOD_COMPATIBILITY_POSITION_AUTHORITY_CANDIDATE_ADMISSION_READY_COMPOSITE_GAP_REMAINS_OPEN'
       : 'EXTERNAL_EVIDENCE_TRIGGER_ACTIVATION_ADEQUACY_NOT_ESTABLISHED',
     upstreamB32EvidenceId: b32.evidenceId,
     exactB32BoundaryAccepted: accepted,
@@ -181,6 +237,9 @@ export function buildCareerPersonalizationT8PostI257ExternalEvidenceTriggerActiv
     temporalScope: 'natal',
     statusClass: 'research',
     positionTriggerActivationAccepted: accepted,
+    b32ChenYuanTriggerEvidencePreserved: accepted,
+    strongerIndependentPositionSourceObserved: accepted,
+    positionCandidate: accepted ? CAREER_T8_B33_POSITION_ADMISSION_CANDIDATE : null,
     positionSourceIdentityAdequate: accepted,
     positionIndependentPublicationProvenanceAdequate: accepted,
     positionStableLocatorAdequate: accepted,
@@ -190,20 +249,25 @@ export function buildCareerPersonalizationT8PostI257ExternalEvidenceTriggerActiv
     positionConditionObserved: accepted,
     positionCurrentT5SemanticCorrespondenceObserved: accepted,
     positionSameSourceLimitsObserved: accepted,
-    positionExplicitModificationDeltaEstablished: false,
-    positionStrengthXijiDependencyObserved: accepted,
-    positionCurrentMethodCompatibilityEstablished: false,
-    positionStrengthXijiDependencyMayBeIgnored: false,
-    corroboratingPublishedSourceObserved: accepted,
-    corroboratingSourceMayFillMissingRequirement: false,
-    positionCoverageClass: 'MATERIAL_PARTIAL_REQUIREMENT_COVERAGE',
-    positionAuthorityAdmissionReady: false,
-    positionGapClosureReady: false,
-    activatedTriggerCountPreserved: accepted ? 1 : 0,
-    authorityAdmissionReadyGapCount: 0,
+    positionExplicitModificationDeltaEstablished: accepted,
+    positionModificationMode: accepted ? 'DEEPENS_OR_EMPHASIZES' : null,
+    positionStrengthXijiDependencyObservedInCandidateRule: false,
+    positionBoundedCurrentMethodCompatibilityEstablished: accepted,
+    positionStrengthXijiDependencyMayBeImported: false,
+    numericWeightingIntroduced: false,
+    historicalOutcomeModernizationUsed: false,
+    t5BaseSemanticMutated: false,
+    positionCoverageClass: 'ADMISSION_READY_POSITION_ONLY_COMPONENT',
+    positionAuthorityCandidateAdmissionReady: accepted,
+    positionAuthorityAdmittedByThisGate: false,
+    compositePositionVisibilityPluralityGapClosureReady: false,
+    authorityAdmissionReadyComponentCount: accepted ? 1 : 0,
     gapClosureReadyCount: 0,
     allSixHistoricalGapsRemainOpen: true,
     unresolvedGapIds: CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS,
+    visibilityConsumedByCurrentContinuation: false,
+    pluralityConsumedByCurrentContinuation: false,
+    pluralityHeldUnderI254: true,
     authorityAdmittedByThisGate: false,
     authorityGapClosedByThisGate: false,
     t8RuleAuthoringAuthorized: false,
@@ -218,7 +282,8 @@ export function buildCareerPersonalizationT8PostI257ExternalEvidenceTriggerActiv
     controlsFrozen: accepted,
     implementationEffects: {
       activatedPositionTriggerReviewed: accepted ? 1 : 0,
-      triggerActivationAccepted: accepted ? 1 : 0,
+      strongerIndependentPositionSourcesReviewed: accepted ? 1 : 0,
+      admissionReadyAuthorityComponents: accepted ? 1 : 0,
       authorityCandidatesAdmitted: 0,
       authorityGapsClosed: 0,
       ruleDefinitionsCreated: 0,
@@ -228,7 +293,7 @@ export function buildCareerPersonalizationT8PostI257ExternalEvidenceTriggerActiv
       previewRoutesChanged: 0,
     },
     recommendedNextGate: accepted
-      ? 'POSITION_CURRENT_T5_BRIDGE_CURRENT_METHOD_COMPATIBILITY_REMEDIATION_READINESS_REVIEW'
+      ? 'POSITION_CURRENT_T5_BRIDGE_BOUNDED_AUTHORITY_ADMISSION_REVIEW'
       : 'CAREER_PERSONALIZATION_T8_POST_I257_EXTERNAL_EVIDENCE_TRIGGER_ACTIVATION_EVIDENCE',
   });
 }
