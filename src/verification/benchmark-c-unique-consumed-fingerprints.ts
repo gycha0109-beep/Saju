@@ -25,7 +25,8 @@ export interface BenchmarkCReport {
 
 export function auditBenchmarkCUniqueConsumedFingerprints(
   observations: readonly ConvergenceObservation[],
-  minimumUniqueConsumedFingerprints = BENCHMARK_C_DEFAULT_MINIMUM_UNIQUE_CONSUMED_FINGERPRINTS,
+  minimumUniqueConsumedFingerprints: number =
+    BENCHMARK_C_DEFAULT_MINIMUM_UNIQUE_CONSUMED_FINGERPRINTS,
 ): BenchmarkCReport {
   if (!Number.isInteger(minimumUniqueConsumedFingerprints) || minimumUniqueConsumedFingerprints <= 0) {
     throw new RangeError('minimumUniqueConsumedFingerprints must be a positive integer.');
