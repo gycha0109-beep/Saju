@@ -26,10 +26,6 @@ export interface DomainInterpretationSignatureClaimMaterial {
   subject: string;
   predicate: string;
   value: unknown;
-  methodologyRef: {
-    id: string;
-    version: string;
-  };
   polarity?: InterpretationClaim['polarity'];
   emphasis?: InterpretationClaim['emphasis'];
 }
@@ -42,13 +38,13 @@ export interface DomainInterpretationSignatureRelationMaterial {
 
 export interface DomainInterpretationSignatureMaterial {
   domain: string;
-  scenarioRef?: string;
   claims: readonly DomainInterpretationSignatureClaimMaterial[];
   relations: readonly DomainInterpretationSignatureRelationMaterial[];
 }
 
 export interface DomainInterpretationSignature {
   version: typeof DOMAIN_INTERPRETATION_SIGNATURE_VERSION;
+  scenarioRef?: string;
   signature: string;
   material: DomainInterpretationSignatureMaterial;
 }
@@ -70,7 +66,7 @@ function semanticValue(value: unknown): unknown {
 }
 
 function claimMaterial(claim: InterpretationClaim): DomainInterpretationSignatureClaimMaterial {
-  const material: DomainInterpretationSignatureClaimMaterial = {
+  return {
     taxonomy: {
       tier: 'T8',
       category: claim.taxonomy.category,
@@ -82,14 +78,9 @@ function claimMaterial(claim: InterpretationClaim): DomainInterpretationSignatur
     subject: claim.subject,
     predicate: claim.predicate,
     value: semanticValue(claim.value),
-    methodologyRef: {
-      id: claim.methodologyRef.id,
-      version: claim.methodologyRef.version,
-    },
     ...(claim.polarity === undefined ? {} : { polarity: claim.polarity }),
     ...(claim.emphasis === undefined ? {} : { emphasis: claim.emphasis }),
   };
-  return material;
 }
 
 function semanticKey(material: DomainInterpretationSignatureClaimMaterial): string {
@@ -100,7 +91,10 @@ function scenarioRefs(selection: ReadingEvidenceSelection): readonly (string | u
   const fromCoverage = selection.scenarioCoverage
     ?.map((coverage: ReadingScenarioCoverage) => coverage.scenarioRef)
     .filter((scenarioRef): scenarioRef is string => scenarioRef !== undefined);
-  const refs = fromCoverage !== undefined && fromCoverage.length > 0 ? fromCoverage : selection.scenarioRefs;
+  const refs =
+    fromCoverage !== undefined && fromCoverage.length > 0
+      ? fromCoverage
+      : selection.scenarioRefs;
   const unique = [...new Set(refs)].sort();
   return unique.length === 0 ? [undefined] : unique;
 }
@@ -153,13 +147,13 @@ function signatureForScenario(
 
   const material: DomainInterpretationSignatureMaterial = {
     domain: selection.intent.domain,
-    ...(scenarioRef === undefined ? {} : { scenarioRef }),
     claims: normalizedClaims,
     relations: normalizedRelations,
   };
   const hash = deterministicContentHash(material);
   return {
     version: DOMAIN_INTERPRETATION_SIGNATURE_VERSION,
+    ...(scenarioRef === undefined ? {} : { scenarioRef }),
     signature: `domain_interpretation_signature_${hash}`,
     material,
   };
