@@ -147,14 +147,31 @@ describe('methodology required-input coverage', () => {
   });
 
   test('requires research evidence version and definition when declared', () => {
-    const method = methodology({
-      researchEvidenceInputs: [{ source: 'research_evidence', evidenceType: 'EVIDENCE-X', evidenceVersion: '2.0.0', definitionRef: { id: 'DEF-X', version: '2.0.0' }, mode: 'required', rationale: 'fixture' }],
-    });
-    const input: RuleDefinition['inputs'][number] = {
-      key: 'evidence', source: 'research_evidence', pathOrClaimType: 'EVIDENCE-X', evidenceVersion: '2.0.0', researchEvidenceDefinitionRef: { id: 'DEF-X', version: '2.0.0' }, required: true, ambiguityBehavior: 'requires_resolved',
+    const requiredV2 = {
+      source: 'research_evidence' as const,
+      evidenceType: 'EVIDENCE-X',
+      evidenceVersion: '2.0.0',
+      definitionRef: { id: 'DEF-X', version: '2.0.0' },
+      mode: 'required' as const,
+      rationale: 'fixture',
     };
-    expect(() => createRuleRegistrySnapshot({ rules: [rule([input])], methodologies: [method] }, pack())).not.toThrow();
-    expectCoverageError(() => createRuleRegistrySnapshot({ rules: [rule([{ ...input, evidenceVersion: '1.0.0' }])], methodologies: [method] }, pack()));
+    const allowedV1 = {
+      source: 'research_evidence' as const,
+      evidenceType: 'EVIDENCE-X',
+      evidenceVersion: '1.0.0',
+      definitionRef: { id: 'DEF-X', version: '1.0.0' },
+      mode: 'allowed' as const,
+      rationale: 'fixture alternate',
+    };
+    const method = methodology({ researchEvidenceInputs: [requiredV2, allowedV1] });
+    const v2Input: RuleDefinition['inputs'][number] = {
+      key: 'evidence-v2', source: 'research_evidence', pathOrClaimType: 'EVIDENCE-X', evidenceVersion: '2.0.0', researchEvidenceDefinitionRef: { id: 'DEF-X', version: '2.0.0' }, required: true, ambiguityBehavior: 'requires_resolved',
+    };
+    const v1Input: RuleDefinition['inputs'][number] = {
+      key: 'evidence-v1', source: 'research_evidence', pathOrClaimType: 'EVIDENCE-X', evidenceVersion: '1.0.0', researchEvidenceDefinitionRef: { id: 'DEF-X', version: '1.0.0' }, required: true, ambiguityBehavior: 'requires_resolved',
+    };
+    expect(() => createRuleRegistrySnapshot({ rules: [rule([v2Input])], methodologies: [method] }, pack())).not.toThrow();
+    expectCoverageError(() => createRuleRegistrySnapshot({ rules: [rule([v1Input])], methodologies: [method] }, pack()));
   });
 
   test('disabled rules cannot satisfy required coverage', () => {
