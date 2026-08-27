@@ -52,18 +52,35 @@ export interface ConsumedInputTraceEntry {
   ruleRef: VersionedRef;
   inputKey: string;
   sourceType: RuleInputRequirement['source'];
-  idOrPath: string;
+  declaredPathOrClaimType: string;
+  consumedRefs: readonly string[];
+  observedValue: unknown;
+  scenarioRef?: string;
+  evaluationStatus: 'matched';
+  evidenceIdentity?: ConsumedResearchEvidenceIdentity;
+}
+
+export interface ConsumedInputFingerprintEntryMaterial {
+  ruleRef: VersionedRef;
+  inputKey: string;
+  sourceType: RuleInputRequirement['source'];
+  declaredPathOrClaimType: string;
   observedValue: unknown;
   evaluationStatus: 'matched';
   evidenceIdentity?: ConsumedResearchEvidenceIdentity;
+}
+
+export interface ConsumedInputFingerprintMaterial {
+  domain: string;
+  entries: readonly ConsumedInputFingerprintEntryMaterial[];
 }
 
 export interface ConsumedInputFingerprint {
   version: typeof CONSUMED_INPUT_FINGERPRINT_VERSION;
   scenarioRef?: string;
   fingerprint: string;
-  domain: string;
-  entries: readonly ConsumedInputTraceEntry[];
+  material: ConsumedInputFingerprintMaterial;
+  trace: readonly ConsumedInputTraceEntry[];
 }
 
 function versionKey(ref: VersionedRef): string {
@@ -132,7 +149,9 @@ function evaluationIndex(
 }
 
 function ruleIndex(registry: ResolvedRuleRegistrySnapshot): ReadonlyMap<string, RuleDefinition> {
-  return new Map(registry.rules.map((rule) => [versionKey({ id: rule.ruleId, version: rule.version }), rule]));
+  return new Map(
+    registry.rules.map((rule) => [versionKey({ id: rule.ruleId, version: rule.version }), rule]),
+  );
 }
 
 function producingEvaluations(
@@ -201,7 +220,7 @@ function evidenceIdentity(
   inputRef: RuleEvaluation['inputRefs'][number],
 ): ConsumedResearchEvidenceIdentity | undefined {
   if (inputRef.sourceType !== 'research_evidence') return undefined;
-  return {
+  const identity: ConsumedResearchEvidenceIdentity = {
     ...(inputRef.evidenceType === undefined ? {} : { evidenceType: inputRef.evidenceType }),
     ...(inputRef.evidenceVersion === undefined
       ? {}
@@ -212,6 +231,19 @@ function evidenceIdentity(
       : { definitionContentHash: inputRef.definitionContentHash }),
     ...(inputRef.payloadHash === undefined ? {} : { payloadHash: inputRef.payloadHash }),
   };
+  return Object.keys(identity).length === 0 ? undefined : identity;
+}
+
+function consumedRefs(inputRef: RuleEvaluation['inputRefs'][number]): readonly string[] {
+  if (inputRef.sourceType === 'claim') return [...(inputRef.selectedClaimIds ?? [])].sort();
+  if (
+    inputRef.sourceType === 'research_evidence' &&
+    inputRef.observedValue === undefined &&
+    inputRef.payloadHash === undefined
+  ) {
+    return [];
+  }
+  return [inputRef.idOrPath];
 }
 
 function validateInputBinding(
@@ -302,12 +334,26 @@ function traceEntriesForEvaluation(
       ruleRef: { id: rule.ruleId, version: rule.version },
       inputKey: requirement.key,
       sourceType: requirement.source,
-      idOrPath: requirement.pathOrClaimType,
+      declaredPathOrClaimType: requirement.pathOrClaimType,
+      consumedRefs: consumedRefs(inputRef),
       observedValue: inputRef.observedValue,
+      ...(evaluation.scenarioRef === undefined ? {} : { scenarioRef: evaluation.scenarioRef }),
       evaluationStatus: 'matched' as const,
       ...(researchIdentity === undefined ? {} : { evidenceIdentity: researchIdentity }),
     };
   });
+}
+
+function semanticEntry(entry: ConsumedInputTraceEntry): ConsumedInputFingerprintEntryMaterial {
+  return {
+    ruleRef: entry.ruleRef,
+    inputKey: entry.inputKey,
+    sourceType: entry.sourceType,
+    declaredPathOrClaimType: entry.declaredPathOrClaimType,
+    observedValue: entry.observedValue,
+    evaluationStatus: entry.evaluationStatus,
+    ...(entry.evidenceIdentity === undefined ? {} : { evidenceIdentity: entry.evidenceIdentity }),
+  };
 }
 
 function visibleInScenario(claim: InterpretationClaim, scenarioRef: string | undefined): boolean {
@@ -331,22 +377,30 @@ export function deriveConsumedInputFingerprints(
     if (visibleClaims.length === 0) continue;
 
     const evaluations = producingEvaluations(visibleClaims, execution);
-    const entries = [...evaluations.values()]
+    const trace = [...evaluations.values()]
       .flatMap((evaluation) => traceEntriesForEvaluation(evaluation, rules, selection.intent.domain))
+      .sort((left, right) =>
+        deterministicContentHash({ semantic: semanticEntry(left), trace: left }).localeCompare(
+          deterministicContentHash({ semantic: semanticEntry(right), trace: right }),
+        ),
+      );
+    const entries = trace
+      .map((entry) => semanticEntry(entry))
       .sort((left, right) =>
         deterministicContentHash(left).localeCompare(deterministicContentHash(right)),
       );
-    const fingerprint = deterministicContentHash({
+    const material: ConsumedInputFingerprintMaterial = {
       domain: selection.intent.domain,
       entries,
-    });
+    };
+    const fingerprint = deterministicContentHash(material);
 
     results.push({
       version: CONSUMED_INPUT_FINGERPRINT_VERSION,
       ...(scenarioRef === undefined ? {} : { scenarioRef }),
       fingerprint: `consumed_input_fingerprint_${fingerprint}`,
-      domain: selection.intent.domain,
-      entries,
+      material,
+      trace,
     });
   }
 
