@@ -154,6 +154,20 @@ describe('verification-only domain interpretation signature', () => {
     expect(first?.signature).toBe(second?.signature);
   });
 
+  it('does not materialize a signature without selected active T8 domain semantics', () => {
+    const signatures = deriveDomainInterpretationSignatures(
+      [
+        claim('t9', BASE_VALUE, { tier: 'T9' }),
+        claim('wealth', BASE_VALUE, { category: 'wealth' }),
+        claim('retracted', BASE_VALUE, { state: 'retracted' }),
+      ],
+      [],
+      selection(['t9', 'wealth', 'retracted']),
+    );
+
+    expect(signatures).toEqual([]);
+  });
+
   it('derives each scenario from global plus that scenario only', () => {
     const global = claim('global', BASE_VALUE);
     const scenarioA = claim(
@@ -176,6 +190,18 @@ describe('verification-only domain interpretation signature', () => {
     expect(signatures[0]?.material.claims).toHaveLength(2);
     expect(signatures[1]?.material.claims).toHaveLength(2);
     expect(signatures[0]?.signature).not.toBe(signatures[1]?.signature);
+  });
+
+  it('does not emit an empty signature for a scenario with no visible selected semantics', () => {
+    const scenarioB = claim('scenario-b', BASE_VALUE, { scenarioRef: 'scenario-b' });
+    const signatures = deriveDomainInterpretationSignatures(
+      [scenarioB],
+      [],
+      selection(['scenario-b'], ['scenario-a', 'scenario-b']),
+    );
+
+    expect(signatures).toHaveLength(1);
+    expect(signatures[0]?.scenarioRef).toBe('scenario-b');
   });
 
   it('does not let scenario identity create false semantic diversity', () => {
