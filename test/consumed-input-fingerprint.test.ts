@@ -134,19 +134,25 @@ describe('verification-only consumed input fingerprints', () => {
 
     expect(fingerprints).toHaveLength(1);
     const fingerprint = fingerprints[0];
-    expect(fingerprint?.domain).toBe('career');
-    expect(fingerprint?.entries).toHaveLength(claims.length);
+    expect(fingerprint?.material.domain).toBe('career');
+    expect(fingerprint?.trace).toHaveLength(claims.length);
+    expect(fingerprint?.material.entries).toHaveLength(claims.length);
     expect(
-      fingerprint?.entries.every(
+      fingerprint?.trace.every(
         (entry) =>
           entry.inputKey === 'tenGods' &&
           entry.sourceType === 'derived_fact' &&
-          entry.idOrPath === 'derivedFacts.tenGods' &&
+          entry.declaredPathOrClaimType === 'derivedFacts.tenGods' &&
+          entry.consumedRefs.length === 1 &&
+          entry.consumedRefs[0] === 'derivedFacts.tenGods' &&
           entry.evaluationStatus === 'matched',
       ),
     ).toBe(true);
-    expect(fingerprint?.entries.every((entry) => entry.observedValue !== undefined)).toBe(true);
-    expect(fingerprint?.entries[0]?.observedValue).toEqual(FIVE_FAMILY_TEN_GODS);
+    expect(fingerprint?.trace.every((entry) => entry.observedValue !== undefined)).toBe(true);
+    expect(fingerprint?.trace[0]?.observedValue).toEqual(FIVE_FAMILY_TEN_GODS);
+    expect(JSON.stringify(fingerprint?.material)).not.toContain('snapshot_');
+    expect(JSON.stringify(fingerprint?.material)).not.toContain('claim_');
+    expect(JSON.stringify(fingerprint?.material)).not.toContain('eval_');
   });
 
   it('ignores snapshot, request, evaluation, claim, and timestamp transport identity', () => {
@@ -214,20 +220,18 @@ describe('verification-only consumed input fingerprints', () => {
     expect(scenarioA?.scenarioRef).toBe('scenario-a');
     expect(scenarioB?.scenarioRef).toBe('scenario-b');
     expect(scenarioA?.fingerprint).toBe(scenarioB?.fingerprint);
+    expect(JSON.stringify(scenarioA?.material)).not.toContain('scenario-a');
+    expect(JSON.stringify(scenarioB?.material)).not.toContain('scenario-b');
   });
 
   it('returns no fingerprint when the selection contains no active T8 claims for the domain', () => {
     const registry = createCareerNatalReadingCandidateRegistry();
     const execution = runInterpretation(fixture(), registry);
-    const generalClaim = execution.claims.find(
-      (claim) => claim.state === 'active' && claim.taxonomy.category === 'general',
-    );
-    if (generalClaim === undefined) throw new Error('Expected a general claim fixture.');
 
     const fingerprints = deriveConsumedInputFingerprints(
       execution,
       registry,
-      selection(execution, [], [generalClaim.claimId]),
+      selection(execution, [], []),
     );
 
     expect(fingerprints).toEqual([]);
@@ -244,7 +248,12 @@ describe('verification-only consumed input fingerprints', () => {
     }));
 
     expectTraceError(
-      () => deriveConsumedInputFingerprints(corrupted, registry, selection(corrupted, [], [claim.claimId])),
+      () =>
+        deriveConsumedInputFingerprints(
+          corrupted,
+          registry,
+          selection(corrupted, [], [claim.claimId]),
+        ),
       'INPUT_TRACE_CARDINALITY_MISMATCH',
     );
   });
@@ -262,7 +271,12 @@ describe('verification-only consumed input fingerprints', () => {
     }));
 
     expectTraceError(
-      () => deriveConsumedInputFingerprints(corrupted, registry, selection(corrupted, [], [claim.claimId])),
+      () =>
+        deriveConsumedInputFingerprints(
+          corrupted,
+          registry,
+          selection(corrupted, [], [claim.claimId]),
+        ),
       'INPUT_TRACE_SOURCE_MISMATCH',
     );
   });
@@ -280,7 +294,12 @@ describe('verification-only consumed input fingerprints', () => {
     }));
 
     expectTraceError(
-      () => deriveConsumedInputFingerprints(corrupted, registry, selection(corrupted, [], [claim.claimId])),
+      () =>
+        deriveConsumedInputFingerprints(
+          corrupted,
+          registry,
+          selection(corrupted, [], [claim.claimId]),
+        ),
       'INPUT_TRACE_DECLARATION_MISMATCH',
     );
   });
