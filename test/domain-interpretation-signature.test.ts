@@ -11,6 +11,7 @@ function claim(
     tier?: 'T8' | 'T9';
     category?: string;
     state?: InterpretationClaim['state'];
+    methodologyId?: string;
   } = {},
 ): InterpretationClaim {
   const tier = options.tier ?? 'T8';
@@ -28,8 +29,10 @@ function claim(
     subject: 'natal_chart',
     predicate: 'career_conclusion',
     value,
-    methodologyRef: { id: 'M-CAREER', version: '1.0.0' },
-    ruleRefs: [{ ruleId: `rule-${claimId}`, version: '1.0.0', evaluationId: `eval-${claimId}` }],
+    methodologyRef: { id: options.methodologyId ?? 'M-CAREER', version: '1.0.0' },
+    ruleRefs: [
+      { ruleId: `rule-${claimId}`, version: '1.0.0', evaluationId: `eval-${claimId}` },
+    ],
     factRefs: ['derivedFacts.tenGods'],
     upstreamClaimRefs: [],
     sourceRefs: ['source-career'],
@@ -72,7 +75,7 @@ const BASE_VALUE = {
 };
 
 describe('verification-only domain interpretation signature', () => {
-  it('ignores claim identity and presentation-only prose', () => {
+  it('ignores claim identity, methodology identity, and presentation-only prose', () => {
     const first = deriveDomainInterpretationSignatures(
       [claim('a', BASE_VALUE)],
       [],
@@ -80,11 +83,15 @@ describe('verification-only domain interpretation signature', () => {
     )[0];
     const second = deriveDomainInterpretationSignatures(
       [
-        claim('b', {
-          ...BASE_VALUE,
-          headline: '완전히 다른 헤드라인',
-          summary: '완전히 다른 소비자 문장',
-        }),
+        claim(
+          'b',
+          {
+            ...BASE_VALUE,
+            headline: '완전히 다른 헤드라인',
+            summary: '완전히 다른 소비자 문장',
+          },
+          { methodologyId: 'M-CAREER-ALTERNATE' },
+        ),
       ],
       [],
       selection(['b']),
@@ -93,6 +100,7 @@ describe('verification-only domain interpretation signature', () => {
     expect(first?.signature).toBe(second?.signature);
     expect(JSON.stringify(first?.material)).not.toContain('소비자용 문장 A');
     expect(JSON.stringify(second?.material)).not.toContain('완전히 다른 소비자 문장');
+    expect(JSON.stringify(second?.material)).not.toContain('M-CAREER-ALTERNATE');
   });
 
   it('changes when structured semantic material changes', () => {
@@ -164,13 +172,24 @@ describe('verification-only domain interpretation signature', () => {
       selection(['global', 'scenario-a', 'scenario-b'], ['scenario-a', 'scenario-b']),
     );
 
-    expect(signatures.map((item) => item.material.scenarioRef)).toEqual([
-      'scenario-a',
-      'scenario-b',
-    ]);
+    expect(signatures.map((item) => item.scenarioRef)).toEqual(['scenario-a', 'scenario-b']);
     expect(signatures[0]?.material.claims).toHaveLength(2);
     expect(signatures[1]?.material.claims).toHaveLength(2);
     expect(signatures[0]?.signature).not.toBe(signatures[1]?.signature);
+  });
+
+  it('does not let scenario identity create false semantic diversity', () => {
+    const scenarioA = claim('scenario-a', BASE_VALUE, { scenarioRef: 'scenario-a' });
+    const scenarioB = claim('scenario-b', BASE_VALUE, { scenarioRef: 'scenario-b' });
+    const signatures = deriveDomainInterpretationSignatures(
+      [scenarioA, scenarioB],
+      [],
+      selection(['scenario-a', 'scenario-b'], ['scenario-a', 'scenario-b']),
+    );
+
+    expect(signatures[0]?.scenarioRef).toBe('scenario-a');
+    expect(signatures[1]?.scenarioRef).toBe('scenario-b');
+    expect(signatures[0]?.signature).toBe(signatures[1]?.signature);
   });
 
   it('includes semantic relation topology without relation IDs or prose reasons', () => {
