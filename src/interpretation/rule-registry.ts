@@ -16,6 +16,7 @@ import type {
   RuleRegistrySnapshot,
   SourceReference,
 } from '../contracts/interpretation.js';
+import { findUncoveredMethodologyRequiredInputs } from './methodology-required-input-coverage.js';
 
 export type RegistryConfigurationErrorCode =
   | 'DUPLICATE_RULE_VERSION'
@@ -35,6 +36,7 @@ export type RegistryConfigurationErrorCode =
   | 'RULE_CLAIM_TAXONOMY_NOT_ALLOWED'
   | 'RULE_CLAIM_VALUE_SCHEMA_MISMATCH'
   | 'RULE_INPUT_NOT_ALLOWED_BY_METHODOLOGY'
+  | 'METHODOLOGY_REQUIRED_INPUT_NOT_COVERED'
   | 'PRODUCTION_RULE_RESEARCH_EVIDENCE_FORBIDDEN'
   | 'REVIEW_ATTESTATION_INVALID'
   | 'REVIEW_ATTESTATION_SUBJECT_MISMATCH';
@@ -442,6 +444,24 @@ function ensureMethodologyInputContracts(
   }
 }
 
+function ensureRequiredMethodologyInputCoverage(
+  rules: readonly RuleDefinition[],
+  methodologies: readonly MethodologyDefinition[],
+): void {
+  const uncovered = findUncoveredMethodologyRequiredInputs(rules, methodologies);
+  if (uncovered.length === 0) return;
+  const details = uncovered
+    .map(
+      (missing) =>
+        `${missing.methodologyId}@${missing.methodologyVersion}:${missing.inputKind}:${missing.inputIdentity}`,
+    )
+    .join(', ');
+  throw new RegistryConfigurationError(
+    'METHODOLOGY_REQUIRED_INPUT_NOT_COVERED',
+    `Selected rule set does not cover required methodology inputs: ${details}`,
+  );
+}
+
 function ensureResearchEvidenceProductionBoundary(
   rules: readonly RuleDefinition[],
   pack: InterpretationPack,
@@ -806,6 +826,7 @@ export function createRuleRegistrySnapshot(
 
   const selectedRules = selectedRulesForPack(rules, packInput);
   ensureMethodologyInputContracts(selectedRules, methodologies);
+  ensureRequiredMethodologyInputCoverage(selectedRules, methodologies);
   ensureResearchEvidenceProductionBoundary(selectedRules, packInput);
   ensureRuleClaimContracts(
     selectedRules,
