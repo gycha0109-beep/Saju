@@ -104,7 +104,7 @@ function signatureForScenario(
   relations: readonly ClaimRelation[],
   selection: ReadingEvidenceSelection,
   scenarioRef: string | undefined,
-): DomainInterpretationSignature {
+): DomainInterpretationSignature | undefined {
   const selected = new Set(selection.selectedClaimIds);
   const domainClaims = claims
     .filter((claim) => selected.has(claim.claimId))
@@ -116,6 +116,8 @@ function signatureForScenario(
         ? claim.scenarioRef === undefined
         : claim.scenarioRef === undefined || claim.scenarioRef === scenarioRef,
     );
+
+  if (domainClaims.length === 0) return undefined;
 
   const materialByClaimId = new Map(
     domainClaims.map((claim) => {
@@ -164,7 +166,8 @@ export function deriveDomainInterpretationSignatures(
   relations: readonly ClaimRelation[],
   selection: ReadingEvidenceSelection,
 ): readonly DomainInterpretationSignature[] {
-  return scenarioRefs(selection).map((scenarioRef) =>
-    signatureForScenario(claims, relations, selection, scenarioRef),
-  );
+  return scenarioRefs(selection).flatMap((scenarioRef) => {
+    const signature = signatureForScenario(claims, relations, selection, scenarioRef);
+    return signature === undefined ? [] : [signature];
+  });
 }
