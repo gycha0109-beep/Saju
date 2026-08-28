@@ -86,17 +86,19 @@ function canonicalize(value: unknown): unknown {
 }
 
 function claimSemanticKey(claim: InterpretationClaim): string {
-  return JSON.stringify(
-    canonicalize({
-      taxonomy: claim.taxonomy,
-      claimType: claim.claimType,
-      subject: claim.subject,
-      predicate: claim.predicate,
-      value: claim.value,
-      methodologyRef: claim.methodologyRef,
-      polarity: claim.polarity,
-      emphasis: claim.emphasis,
-    }),
+  return (
+    JSON.stringify(
+      canonicalize({
+        taxonomy: claim.taxonomy,
+        claimType: claim.claimType,
+        subject: claim.subject,
+        predicate: claim.predicate,
+        value: claim.value,
+        methodologyRef: claim.methodologyRef,
+        polarity: claim.polarity,
+        emphasis: claim.emphasis,
+      }),
+    ) ?? ''
   );
 }
 
