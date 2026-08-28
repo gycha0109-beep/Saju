@@ -7,6 +7,7 @@ import { generateGroundedNarrative } from '../src/llm/narrative-orchestrator.js'
 import { validateNarrativeDraftGrounding } from '../src/narrative/grounding-validator.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import { prepareProductReading } from '../src/reading/product-reading-integration.js';
+import { CAREER_NATAL_CLAIM_NARRATIVE_PROFILES } from '../src/research/career-natal-narrative-profiles.js';
 import {
   CAREER_NATAL_READING_METHODOLOGY,
   CAREER_NATAL_READING_PACK,
@@ -102,9 +103,9 @@ interface ReachableCareerReading {
   userVisibleReading: string;
 }
 
-describe('P5 Career narrative reachability', () => {
+describe('P5/P6 Career narrative reachability', () => {
   it(
-    'reaches a grounded deterministic narrative through selection-only research authorization without semantic collapse',
+    'reaches a grounded profile-rendered deterministic narrative through selection-only research authorization without semantic collapse',
     async () => {
       const registry = createCareerNatalReadingCandidateRegistry(
         FIXED_CALCULATION_TIME.toISOString(),
@@ -193,6 +194,8 @@ describe('P5 Career narrative reachability', () => {
               expect(bundledClaim.sourceRefs).toEqual(originalClaim.sourceRefs);
               expect(bundledClaim.ruleRefs).toEqual(originalClaim.ruleRefs);
               expect(bundledClaim.methodologyRef).toEqual(originalClaim.methodologyRef);
+              expect(bundledClaim.value).not.toHaveProperty('headline');
+              expect(bundledClaim.value).not.toHaveProperty('summary');
             }
 
             const signatures = deriveDomainInterpretationSignatures(
@@ -210,7 +213,10 @@ describe('P5 Career narrative reachability', () => {
               failingAdapter,
               request,
               narrativePolicy,
-              { now: FIXED_NARRATIVE_TIME },
+              {
+                claimNarrativeProfiles: CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
+                now: FIXED_NARRATIVE_TIME,
+              },
             );
             expect(narrative.outcome).toBe('deterministic_fallback');
             expect(narrative.modelCalls).toBe(1);
@@ -221,6 +227,9 @@ describe('P5 Career narrative reachability', () => {
             expect(narrative.run.interpretationRunId).toBe(
               request.evidenceBundle.interpretationRunId,
             );
+            expect(
+              narrative.draft.sections.some((section) => section.sectionId.startsWith('claim-profile:')),
+            ).toBe(true);
 
             const grounding = validateNarrativeDraftGrounding(
               narrative.draft,
@@ -229,11 +238,15 @@ describe('P5 Career narrative reachability', () => {
             expect(grounding.valid).toBe(true);
             expect(grounding.violations).toEqual([]);
 
+            const visibleReading = userVisibleReading(narrative.draft);
+            expect(visibleReading).not.toContain('specificOccupationAuthorized');
+            expect(visibleReading).not.toContain('numericScoringAuthorized');
+
             if (!byInterpretationSignature.has(signature.signature)) {
               byInterpretationSignature.set(signature.signature, {
                 caseId,
                 interpretationSignature: signature.signature,
-                userVisibleReading: userVisibleReading(narrative.draft),
+                userVisibleReading: visibleReading,
               });
             }
 
@@ -263,6 +276,7 @@ describe('P5 Career narrative reachability', () => {
           leftCaseId: left.caseId,
           rightCaseId: right.caseId,
           distinctInterpretationSignatures: byInterpretationSignature.size,
+          claimNarrativeProfileCount: CAREER_NATAL_CLAIM_NARRATIVE_PROFILES.length,
         })}\n`,
       );
     },
