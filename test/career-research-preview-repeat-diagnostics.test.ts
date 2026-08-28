@@ -44,9 +44,9 @@ interface DiagnosticReading {
 interface RepeatGroup {
   text: string;
   occurrenceCount: number;
-  caseIds: readonly string[];
-  claimTypes: readonly string[];
-  profileRefs: readonly string[];
+  caseIds: string[];
+  claimTypes: string[];
+  profileRefs: string[];
   classification: 'shared_profile_reuse' | 'cross_profile_copy_collision';
 }
 
