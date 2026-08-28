@@ -166,7 +166,11 @@ async function renderCareerCase(
     integrationOptions,
   );
 
-  if (prepared.state !== 'ready_for_narrative' || prepared.narrativeRequest === undefined) {
+  if (
+    prepared.state !== 'ready_for_narrative' ||
+    prepared.narrativeRequest === undefined ||
+    prepared.composition === undefined
+  ) {
     return null;
   }
 
@@ -182,7 +186,7 @@ async function renderCareerCase(
   const signatures = deriveDomainInterpretationSignatures(
     execution.claims,
     execution.claimRelations,
-    prepared.composition?.selection,
+    prepared.composition.selection,
   );
   expect(signatures).toHaveLength(1);
   const signature = signatures[0];
