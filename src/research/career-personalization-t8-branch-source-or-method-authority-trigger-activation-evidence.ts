@@ -5,7 +5,6 @@ import {
   CAREER_T8_B47_AUDITED_BASE_MAIN_COMMIT,
   CAREER_T8_B47_CONTROL_IDS,
   CAREER_T8_B47_REMEDIATION_TRIGGER_RECORDS,
-  CAREER_T8_B47_REPOSITORY_AUDIT_EVIDENCE,
   CAREER_T8_B47_TARGETED_SOURCE_RECHECK,
   type CareerPersonalizationT8BranchTriggerGatedPostP0RemediationReviewReport,
 } from './career-personalization-t8-branch-trigger-gated-post-p0-remediation-review.js';
@@ -180,8 +179,6 @@ function exactB47Accepted(
     b47.statusClass === 'research' &&
     b47.auditedBaseMainCommit === CAREER_T8_B47_AUDITED_BASE_MAIN_COMMIT &&
     b47.repositoryAuditAccepted &&
-    deterministicContentHash(CAREER_T8_B47_REPOSITORY_AUDIT_EVIDENCE) ===
-      deterministicContentHash(CAREER_T8_B47_REPOSITORY_AUDIT_EVIDENCE) &&
     b47.targetedSourceRecheckPerformed &&
     b47.targetedSourceRecheckDisposition === CAREER_T8_B47_TARGETED_SOURCE_RECHECK.disposition &&
     deterministicContentHash(b47.remediationTriggerRecords) ===
@@ -231,8 +228,7 @@ function exactB47Accepted(
 }
 
 function activationRecordsValid(): boolean {
-  const source = CAREER_T8_B48_AUTHORITY_TRIGGER_ACTIVATION_RECORDS[0];
-  const method = CAREER_T8_B48_AUTHORITY_TRIGGER_ACTIVATION_RECORDS[1];
+  const [source, method] = CAREER_T8_B48_AUTHORITY_TRIGGER_ACTIVATION_RECORDS;
   return (
     source?.triggerId === 'BRANCH_SOURCE_SPECIFIC_DEPENDENCY_SEPARABILITY_OR_COMPLETE_PATH_TRIGGER' &&
     source.upstreamState === 'OPEN_AUTHORITY_EVIDENCE' &&
