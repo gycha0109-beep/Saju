@@ -1,4 +1,5 @@
 import type {
+  ClaimNarrativeProfile,
   GroundedNarrativeRequest,
   NarrativeDraft,
   NarrativePolicy,
@@ -20,6 +21,7 @@ import {
 
 export interface NarrativeOrchestratorOptions {
   generationParams?: NarrativeGenerationParams;
+  claimNarrativeProfiles?: readonly ClaimNarrativeProfile[];
   now?: Date;
 }
 
@@ -245,7 +247,10 @@ export async function generateGroundedNarrative(
       };
     }
 
-    const fallback = buildValidatedDeterministicFallback(request.evidenceBundle);
+    const fallback = buildValidatedDeterministicFallback(
+      request.evidenceBundle,
+      options.claimNarrativeProfiles,
+    );
     return {
       draft: fallback.draft,
       run: buildRun(
@@ -265,7 +270,10 @@ export async function generateGroundedNarrative(
     };
   }
 
-  const fallback = buildValidatedDeterministicFallback(request.evidenceBundle);
+  const fallback = buildValidatedDeterministicFallback(
+    request.evidenceBundle,
+    options.claimNarrativeProfiles,
+  );
   return {
     draft: fallback.draft,
     run: buildRun(
