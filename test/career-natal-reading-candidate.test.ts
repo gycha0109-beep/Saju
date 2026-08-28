@@ -66,19 +66,9 @@ function careerTypes(snapshot: CanonicalSajuSnapshot): readonly string[] {
     .sort();
 }
 
-function previewFallbackCoreText(snapshot: CanonicalSajuSnapshot): string {
-  const first = careerClaims(
-    runInterpretation(snapshot, createCareerNatalReadingCandidateRegistry()),
-  )[0];
-  if (first === undefined) throw new Error('Expected a direct career conclusion.');
-  const value = first.value as { summary?: string };
-  if (typeof value.summary !== 'string') throw new Error('Expected career summary.');
-  return value.summary;
-}
-
 describe('natal career consumer reading research candidate', () => {
   it('remains research-only, unreviewed, and exact-Ten-God/channel bounded', () => {
-    expect(CAREER_NATAL_READING_CANDIDATE_VERSION).toBe('0.4.0-research');
+    expect(CAREER_NATAL_READING_CANDIDATE_VERSION).toBe('0.5.0-research');
     expect(CAREER_NATAL_READING_PACK.status).toBe('research');
     expect(CAREER_NATAL_READING_METHODOLOGY.status).toBe('research');
     expect(CAREER_NATAL_READING_RULES).toHaveLength(20);
@@ -183,7 +173,6 @@ describe('natal career consumer reading research candidate', () => {
       ].sort(),
     );
     expect(firstTypes).not.toEqual(secondTypes);
-    expect(previewFallbackCoreText(first)).not.toBe(previewFallbackCoreText(second));
   });
 
   it('keeps branch context from becoming a direct career headline candidate', () => {
@@ -244,13 +233,15 @@ describe('natal career consumer reading research candidate', () => {
     for (const claim of claims) {
       expect(claim.factRefs).toContain('derivedFacts.tenGods');
       expect(claim.upstreamClaimRefs).toEqual([]);
-      const value = claim.value as { tenGod?: string; channel?: string };
+      const value = claim.value as Record<string, unknown>;
       expect(typeof value.tenGod).toBe('string');
       expect(['visible_stems', 'branches']).toContain(value.channel);
+      expect(value).not.toHaveProperty('headline');
+      expect(value).not.toHaveProperty('summary');
     }
   });
 
-  it('does not emit occupation assignment, salary, success, or future-event authority', () => {
+  it('does not emit occupation assignment, salary, success, future-event authority, or consumer copy', () => {
     const execution = runInterpretation(fixture(), createCareerNatalReadingCandidateRegistry());
     const claims = [...careerClaims(execution), ...careerContext(execution)];
     const encoded = JSON.stringify(claims);
@@ -264,6 +255,8 @@ describe('natal career consumer reading research candidate', () => {
       'lucky_score',
       'strong_day_master',
       'weak_day_master',
+      '"headline"',
+      '"summary"',
     ]) {
       expect(encoded).not.toContain(forbidden);
     }
