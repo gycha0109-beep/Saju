@@ -7,7 +7,7 @@ import {
   type CareerTenGodChannel,
 } from './career-natal-reading-schema.js';
 
-export const CAREER_NATAL_NARRATIVE_PROFILE_VERSION = '0.1.0-research' as const;
+export const CAREER_NATAL_NARRATIVE_PROFILE_VERSION = '0.1.1-research' as const;
 
 interface CareerNarrativeCopySpec {
   headline: string;
@@ -104,6 +104,11 @@ const KIND_AXIS: Readonly<Record<CareerConclusionKind, string>> = Object.freeze(
   friction: 'tension',
 });
 
+const CHANNEL_HEADLINE_CONTEXT: Readonly<Record<CareerTenGodChannel, string>> = Object.freeze({
+  visible_stems: '겉으로 드러나는 업무 방식',
+  branches: '일을 실제로 이어가는 바탕',
+});
+
 const TEN_GOD_ORDER = Object.freeze([
   '비견',
   '겁재',
@@ -142,7 +147,7 @@ function profile(god: TenGod, channel: CareerTenGodChannel): ClaimNarrativeProfi
       {
         templateKey: 'headline',
         language: 'ko',
-        text: copy.headline,
+        text: `${CHANNEL_HEADLINE_CONTEXT[channel]} — ${copy.headline}`,
       },
       {
         templateKey: 'summary',
