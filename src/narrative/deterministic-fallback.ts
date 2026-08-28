@@ -98,9 +98,9 @@ function claimAssertion(bundle: NarrativeEvidenceBundle['claims'][number]): Narr
 }
 
 function claimAssertions(bundle: NarrativeEvidenceBundle): NarrativeBlock[] {
-  return [...bundle.claims]
-    .sort((left, right) => left.claimId.localeCompare(right.claimId))
-    .map(claimAssertion);
+  return bundle.claims
+    .map(claimAssertion)
+    .sort((left, right) => left.text.localeCompare(right.text));
 }
 
 function fallbackSection(bundle: NarrativeEvidenceBundle): NarrativeSection {
