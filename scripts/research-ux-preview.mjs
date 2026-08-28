@@ -8,6 +8,7 @@ import {
 } from '../dist/index.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
 import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
+import { CAREER_NATAL_CLAIM_NARRATIVE_PROFILES } from '../dist/research/career-natal-narrative-profiles.js';
 
 const RESEARCH_PREVIEW_VERSION = 'myeonghwa-research-ux-preview-v9';
 const SCOPE_GUARD_CLAIM_TYPE = 'GENERAL_NATAL_USEFUL_READING_SCOPE-GUARD';
@@ -62,6 +63,10 @@ const CONSUMER_COPY = Object.freeze({
     '사람 관계에서도 선이 분명한 편에 가깝습니다. 무조건 맞춰주기보다 서로 무엇을 맡고 어디까지 책임지는지가 분명할 때 편하고, 기준이 애매하거나 일방적으로 맞춰줘야 하는 관계는 피로하게 느낄 수 있습니다.',
 });
 
+const CAREER_NARRATIVE_PROFILE_BY_CLAIM_TYPE = new Map(
+  CAREER_NATAL_CLAIM_NARRATIVE_PROFILES.map((profile) => [profile.claimType, profile]),
+);
+
 function valueRecord(claim) {
   if (claim.value === null || typeof claim.value !== 'object' || Array.isArray(claim.value)) {
     throw new Error(`Preview claim ${claim.claimId} has an unsupported value shape.`);
@@ -94,7 +99,25 @@ function businessKind(claim) {
   return typeof value.businessKind === 'string' ? value.businessKind : undefined;
 }
 
+function careerNarrativeProfile(claim) {
+  return CAREER_NARRATIVE_PROFILE_BY_CLAIM_TYPE.get(claim.claimType);
+}
+
+function careerProfileSummary(claim) {
+  const profile = careerNarrativeProfile(claim);
+  if (profile === undefined) return undefined;
+  const summary = profile.templates?.find(
+    (template) => template.templateKey === 'summary' && template.language === 'ko',
+  )?.text;
+  if (summary === undefined || summary.trim().length === 0) {
+    throw new Error(`Career ClaimNarrativeProfile ${profile.profileId} has no Korean summary template.`);
+  }
+  return summary;
+}
+
 function consumerText(claim) {
+  const careerSummary = careerProfileSummary(claim);
+  if (careerSummary !== undefined) return careerSummary;
   const mapped = CONSUMER_COPY[claim.claimType];
   if (mapped !== undefined) return mapped;
   const value = valueRecord(claim);
@@ -106,7 +129,7 @@ function assertion(claim) {
   return {
     type: 'assertion',
     text: consumerText(claim),
-    epistemicType: 'synthesis',
+    epistemicType: careerNarrativeProfile(claim) === undefined ? 'synthesis' : 'interpretation',
     evidenceRefs: [{ sourceType: 'claim', ref: claim.claimId }],
     methodologyRefs: [claim.methodologyRef],
   };
@@ -539,6 +562,7 @@ const dependencies = {
   readingOptions: {
     outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
     readingVersion: RESEARCH_PREVIEW_VERSION,
+    claimNarrativeProfiles: CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
     narrativeNow: new Date(),
     artifactGeneratedAt: new Date(),
   },
