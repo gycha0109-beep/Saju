@@ -75,6 +75,7 @@ function observe(snapshot: CanonicalSajuSnapshot, requestId: string) {
   ) {
     throw new Error(`Expected ready Career narrative preparation for ${requestId}.`);
   }
+  const narrativeRequest = prepared.narrativeRequest;
   const signatures = deriveDomainInterpretationSignatures(
     execution.claims,
     execution.claimRelations,
@@ -86,6 +87,7 @@ function observe(snapshot: CanonicalSajuSnapshot, requestId: string) {
   return {
     execution,
     prepared,
+    narrativeRequest,
     interpretationSignature: signatures[0].signature,
   };
 }
@@ -107,7 +109,7 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
     );
 
     const observed = observe(withTenGodFixture(FIVE_FAMILY_TEN_GODS), 'p6-profile-render');
-    const bundle = observed.prepared.narrativeRequest.evidenceBundle;
+    const bundle = observed.narrativeRequest.evidenceBundle;
 
     for (const claim of bundle.claims) {
       expect(claim.value).not.toHaveProperty('headline');
@@ -153,11 +155,11 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
     expect(left.interpretationSignature).toBe(right.interpretationSignature);
 
     const leftPlan = buildClaimNarrativePlan(
-      left.prepared.narrativeRequest.evidenceBundle,
+      left.narrativeRequest.evidenceBundle,
       CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
     );
     const rightPlan = buildClaimNarrativePlan(
-      right.prepared.narrativeRequest.evidenceBundle,
+      right.narrativeRequest.evidenceBundle,
       CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
     );
     expect(leftPlan.items).toEqual(rightPlan.items);
@@ -169,7 +171,7 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
     const after = observe(snapshot, 'p6-copy-after');
     expect(before.interpretationSignature).toBe(after.interpretationSignature);
 
-    const bundle = before.prepared.narrativeRequest.evidenceBundle;
+    const bundle = before.narrativeRequest.evidenceBundle;
     const baselinePlan = buildClaimNarrativePlan(bundle, CAREER_NATAL_CLAIM_NARRATIVE_PROFILES);
     const activeClaimType = baselinePlan.items[0]?.claimType;
     if (activeClaimType === undefined) throw new Error('Expected active Career narrative profile.');
@@ -190,7 +192,7 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
 
   it('rejects a profile template that contains a prohibited high-risk phrase', () => {
     const observed = observe(withTenGodFixture(FIVE_FAMILY_TEN_GODS), 'p6-prohibited-copy');
-    const bundle = observed.prepared.narrativeRequest.evidenceBundle;
+    const bundle = observed.narrativeRequest.evidenceBundle;
     const activeClaimType = bundle.claims[0]?.claimType;
     if (activeClaimType === undefined) throw new Error('Expected an active Career claim.');
 
