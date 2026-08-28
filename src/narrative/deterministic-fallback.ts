@@ -1,10 +1,15 @@
 import type {
+  ClaimNarrativeProfile,
   NarrativeAssertion,
   NarrativeBlock,
   NarrativeDraft,
   NarrativeEvidenceBundle,
   NarrativeSection,
 } from '../contracts/narrative.js';
+import {
+  claimTypesCoveredByNarrativeProfiles,
+  renderClaimNarrativeProfileSections,
+} from './claim-narrative-profile.js';
 import {
   validateNarrativeDraftGrounding,
   type NarrativeGroundingValidationResult,
@@ -97,21 +102,30 @@ function claimAssertion(bundle: NarrativeEvidenceBundle['claims'][number]): Narr
   };
 }
 
-function claimAssertions(bundle: NarrativeEvidenceBundle): NarrativeBlock[] {
+function claimAssertions(
+  bundle: NarrativeEvidenceBundle,
+  excludedClaimTypes: ReadonlySet<string> = new Set(),
+): NarrativeBlock[] {
   return bundle.claims
+    .filter((claim) => !excludedClaimTypes.has(claim.claimType))
     .map(claimAssertion)
     .sort((left, right) => left.text.localeCompare(right.text));
 }
 
-function fallbackSection(bundle: NarrativeEvidenceBundle): NarrativeSection {
+function fallbackSection(
+  bundle: NarrativeEvidenceBundle,
+  excludedClaimTypes: ReadonlySet<string> = new Set(),
+  allowEmptyTransition = true,
+): NarrativeSection | undefined {
   const blocks: NarrativeBlock[] = [
     ...ambiguityDisclosures(bundle),
     ...conflictDisclosures(bundle),
     ...scopeDisclosures(bundle),
-    ...claimAssertions(bundle),
+    ...claimAssertions(bundle, excludedClaimTypes),
   ];
 
   if (blocks.length === 0) {
+    if (!allowEmptyTransition) return undefined;
     blocks.push({
       type: 'transition',
       text: '현재 Evidence Bundle에는 사용자에게 전달할 수 있는 활성 해석 근거가 없습니다.',
@@ -127,18 +141,37 @@ function fallbackSection(bundle: NarrativeEvidenceBundle): NarrativeSection {
 
 export function buildDeterministicFallbackDraft(
   bundle: NarrativeEvidenceBundle,
+  profiles: readonly ClaimNarrativeProfile[] = [],
 ): NarrativeDraft {
+  if (profiles.length === 0) {
+    const section = fallbackSection(bundle);
+    if (section === undefined) throw new Error('Deterministic fallback section unexpectedly missing.');
+    return {
+      schemaVersion: FALLBACK_SCHEMA_VERSION,
+      requestId: bundle.requestId,
+      sections: [section],
+    };
+  }
+
+  const coveredClaimTypes = claimTypesCoveredByNarrativeProfiles(bundle, profiles);
+  const profileSections = renderClaimNarrativeProfileSections(bundle, profiles);
+  const residualSection = fallbackSection(bundle, coveredClaimTypes, false);
+
   return {
     schemaVersion: FALLBACK_SCHEMA_VERSION,
     requestId: bundle.requestId,
-    sections: [fallbackSection(bundle)],
+    sections: [
+      ...profileSections,
+      ...(residualSection === undefined ? [] : [residualSection]),
+    ],
   };
 }
 
 export function buildValidatedDeterministicFallback(
   bundle: NarrativeEvidenceBundle,
+  profiles: readonly ClaimNarrativeProfile[] = [],
 ): DeterministicFallbackResult {
-  const draft = buildDeterministicFallbackDraft(bundle);
+  const draft = buildDeterministicFallbackDraft(bundle, profiles);
   const validation = validateNarrativeDraftGrounding(draft, bundle);
   if (!validation.valid) throw new DeterministicFallbackError(validation);
   return { draft, validation };
