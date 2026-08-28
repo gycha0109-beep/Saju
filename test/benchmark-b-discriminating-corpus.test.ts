@@ -86,8 +86,12 @@ function replaceDimension(
   }
 }
 
-function requireResolved(value: TenGodChartFact['year']['stem']): string {
-  if (value.status !== 'resolved') throw new Error('Benchmark B requires resolved Ten-God fixtures.');
+function requireResolved(
+  value: TenGodChartFact['year']['stem'] | TenGodChartFact['year']['branch'],
+): string {
+  if (value === undefined || value.status !== 'resolved') {
+    throw new Error('Benchmark B requires resolved Ten-God fixtures.');
+  }
   return value.value;
 }
 
