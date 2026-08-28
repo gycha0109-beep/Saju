@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
-import {
-  buildClaimNarrativePlan,
-  type DeterministicNarrativePlanItem,
-} from '../src/narrative/claim-narrative-profile.js';
+import { buildClaimNarrativePlan } from '../src/narrative/claim-narrative-profile.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import { prepareProductReading } from '../src/reading/product-reading-integration.js';
 import { CAREER_NATAL_CLAIM_NARRATIVE_PROFILES } from '../src/research/career-natal-narrative-profiles.js';
@@ -51,10 +48,6 @@ interface RepeatGroup {
   claimTypes: readonly string[];
   profileRefs: readonly string[];
   classification: 'shared_profile_reuse' | 'cross_profile_copy_collision';
-}
-
-function profileRef(item: DeterministicNarrativePlanItem): string {
-  return `${item.profileRef.id}@${item.profileRef.version}`;
 }
 
 function repeatGroups(
