@@ -198,7 +198,7 @@ describe('bounded Career T5/T6 -> T8 synthesis methodology review', () => {
       readiness(p4),
     );
 
-    expect(CAREER_NATAL_READING_CANDIDATE_VERSION).toBe('0.4.0-research');
+    expect(CAREER_NATAL_READING_CANDIDATE_VERSION).toBe('0.5.0-research');
     expect(CAREER_NATAL_READING_RULES).toHaveLength(20);
     expect(report.legacyT8Audit).toEqual(
       expect.objectContaining({
