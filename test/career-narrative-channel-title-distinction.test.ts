@@ -6,7 +6,12 @@ import {
 } from '../src/research/career-natal-narrative-profiles.js';
 
 function templateText(profile: ClaimNarrativeProfile, templateKey: string): string {
-  const template = profile.templates.find((candidate) => candidate.templateKey === templateKey);
+  const templates = profile.templates;
+  expect(templates).toBeDefined();
+  if (templates === undefined) {
+    throw new Error(`Missing templates for ${profile.claimType}.`);
+  }
+  const template = templates.find((candidate) => candidate.templateKey === templateKey);
   expect(template).toBeDefined();
   if (template === undefined) {
     throw new Error(`Missing ${templateKey} template for ${profile.claimType}.`);
