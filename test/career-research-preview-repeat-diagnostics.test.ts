@@ -114,7 +114,7 @@ function sameReadingDuplicateTitleGroups(readings: readonly DiagnosticReading[])
 }
 
 describe('P7 Career preview repeat diagnostics', () => {
-  it('classifies exact repeated copy by profile provenance without treating shared claim reuse as semantic collapse', () => {
+  it('classifies exact repeated copy by profile provenance and rejects duplicate channel section titles', () => {
     const registry = createCareerNatalReadingCandidateRegistry(
       FIXED_CALCULATION_TIME.toISOString(),
     );
@@ -218,6 +218,8 @@ describe('P7 Career preview repeat diagnostics', () => {
     expect(assertionGroups.length).toBeGreaterThan(0);
     expect(sharedProfileAssertionReuse.length).toBe(assertionGroups.length);
     expect(crossProfileAssertionCollisions).toEqual([]);
+    expect(crossProfileTitleCollisions).toEqual([]);
+    expect(sameReadingTitleDuplicates).toEqual([]);
 
     process.stdout.write(
       `P7_CAREER_REPEAT_DIAGNOSTICS ${JSON.stringify({
@@ -233,7 +235,7 @@ describe('P7 Career preview repeat diagnostics', () => {
         titleGroups,
         sameReadingTitleDuplicates,
         semanticAuthorityChanged: false,
-        profileCopyChanged: false,
+        profileCopyChanged: true,
         productionBehaviorChanged: false,
       })}\n`,
     );
