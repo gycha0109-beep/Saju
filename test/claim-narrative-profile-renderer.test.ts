@@ -177,7 +177,7 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
     const edited = editedProfiles(activeClaimType, (profile) => ({
       ...profile,
       version: '0.1.1-copy-test',
-      templates: profile.templates?.map((template) =>
+      templates: (profile.templates ?? []).map((template) =>
         template.templateKey === 'summary'
           ? { ...template, text: `${template.text} 표현만 다듬은 문장입니다.` }
           : template,
@@ -196,7 +196,7 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
 
     const invalid = editedProfiles(activeClaimType, (profile) => ({
       ...profile,
-      templates: profile.templates?.map((template) =>
+      templates: (profile.templates ?? []).map((template) =>
         template.templateKey === 'summary'
           ? { ...template, text: '이 구조라면 무조건 승진한다.' }
           : template,
