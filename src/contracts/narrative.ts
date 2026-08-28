@@ -64,6 +64,29 @@ export interface NarrativePolicy {
   sourceDisclosure: 'internal_only' | 'on_request' | 'visible';
 }
 
+export type NarrativeEpistemicType =
+  | 'deterministic_fact'
+  | 'interpretation'
+  | 'synthesis'
+  | 'future_tendency';
+
+export interface ClaimNarrativeProfile {
+  profileId: string;
+  version: string;
+  claimType: string;
+  semanticKeys?: readonly string[];
+  allowedEpistemicTypes: readonly NarrativeEpistemicType[];
+  requiredMethodAttribution: boolean;
+  mandatoryQualifier?: string;
+  prohibitedPhrases?: readonly string[];
+  renderingHints?: readonly string[];
+  templates?: readonly {
+    templateKey: string;
+    language: string;
+    text: string;
+  }[];
+}
+
 export interface GroundedNarrativeRequest {
   requestId: string;
   purpose: NarrativePurpose;
@@ -76,12 +99,6 @@ export interface GroundedNarrativeRequest {
   narrativePolicyRef: VersionedRef;
   outputSchemaVersion: string;
 }
-
-export type NarrativeEpistemicType =
-  | 'deterministic_fact'
-  | 'interpretation'
-  | 'synthesis'
-  | 'future_tendency';
 
 export interface NarrativeAssertion {
   type: 'assertion';
