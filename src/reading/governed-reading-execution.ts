@@ -1,5 +1,5 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
-import type { NarrativePolicy } from '../contracts/narrative.js';
+import type { ClaimNarrativeProfile, NarrativePolicy } from '../contracts/narrative.js';
 import type { ReadingArtifact } from '../contracts/reading.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import {
@@ -35,6 +35,7 @@ export interface GovernedReadingExecutionOptions {
   readingVersion: string;
   displayLabel?: string;
   generationParams?: NarrativeGenerationParams;
+  claimNarrativeProfiles?: readonly ClaimNarrativeProfile[];
   narrativeNow?: Date;
   artifactGeneratedAt?: Date;
 }
@@ -157,6 +158,9 @@ export async function executeProductReading(
       ...(options.generationParams === undefined
         ? {}
         : { generationParams: options.generationParams }),
+      ...(options.claimNarrativeProfiles === undefined
+        ? {}
+        : { claimNarrativeProfiles: options.claimNarrativeProfiles }),
       ...(options.narrativeNow === undefined ? {} : { now: options.narrativeNow }),
     },
   );
