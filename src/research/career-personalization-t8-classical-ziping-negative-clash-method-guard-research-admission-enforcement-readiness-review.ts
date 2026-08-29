@@ -178,7 +178,15 @@ function b65AuditSurfacesMatch(
   if (b65.auditSurfaces.length !== CAREER_T8_B65_CURRENT_REPOSITORY_AUDIT_SURFACES.length) {
     return false;
   }
-  const stripped = b65.auditSurfaces.map(({ guardEvaluation: _guardEvaluation, ...surface }) => surface);
+  const stripped = b65.auditSurfaces.map((surface) => ({
+    surfaceId: surface.surfaceId,
+    path: surface.path,
+    blobSha: surface.blobSha,
+    layer: surface.layer,
+    guardApplicability: surface.guardApplicability,
+    observedBoundary: surface.observedBoundary,
+    proposalShape: surface.proposalShape,
+  }));
   return (
     deterministicContentHash(stripped) ===
       deterministicContentHash(CAREER_T8_B65_CURRENT_REPOSITORY_AUDIT_SURFACES) &&
