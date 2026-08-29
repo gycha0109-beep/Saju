@@ -65,16 +65,17 @@ function acceptedB60(): CareerPersonalizationT8ClassicalZipingTargetPassageScanL
 }
 
 describe('Career T8 classical Zi-Ping visual scan confirmation hold', () => {
-  test('accepts exact B60 and resolves a page-image access hold', () => {
+  test('accepts exact B60 and holds visual corroboration while preserving text-bound reassessment', () => {
     const report = buildCareerPersonalizationT8ClassicalZipingVisualScanConfirmationHold(acceptedB60());
 
     expect(report.holdVersion).toBe(CAREER_PERSONALIZATION_T8_CLASSICAL_ZIPING_VISUAL_SCAN_CONFIRMATION_HOLD_VERSION);
     expect(report.status).toBe('RESOLVED_CLASSICAL_ZIPING_TARGET_PASSAGE_VISUAL_SCAN_CONFIRMATION_HOLD');
     expect(report.decision).toBe(
-      'TARGET_TEXT_LOCALIZATION_PRESERVED_ZERO_EXACT_VISUAL_BINDINGS_PAGE_IMAGE_ACCESS_BLOCKED_REOPEN_ONLY_ON_MATERIAL_ACCESS_CHANGE',
+      'VISUAL_CORROBORATION_HELD_ZERO_EXACT_VISUAL_BINDINGS_TEXT_BOUND_METHOD_AUTHORITY_REASSESSMENT_REMAINS_OPEN',
     );
     expect(report.exactB60BoundaryAccepted).toBe(true);
     expect(report.targetPassageVisualConfirmationHoldActive).toBe(true);
+    expect(report.textBoundHistoricalWitnessMethodReassessmentAuthorized).toBe(true);
   });
 
   test('records all three exact-witness access states without claiming a target image', () => {
@@ -99,7 +100,7 @@ describe('Career T8 classical Zi-Ping visual scan confirmation hold', () => {
     expect(ditian?.exactWitnessTargetPageVisuallyInspected).toBe(false);
   });
 
-  test('freezes three unsatisfied material-access reopen triggers', () => {
+  test('freezes three unsatisfied material-access visual reopen triggers', () => {
     const report = buildCareerPersonalizationT8ClassicalZipingVisualScanConfirmationHold(acceptedB60());
 
     expect(report.reopenTriggers).toEqual(CAREER_T8_B61_VISUAL_SCAN_REOPEN_TRIGGERS);
@@ -109,19 +110,20 @@ describe('Career T8 classical Zi-Ping visual scan confirmation hold', () => {
     expect(report.broadClassicalSearchRestartAuthorized).toBe(false);
   });
 
-  test('closes all immediate lanes while preserving all authority gaps', () => {
+  test('closes visual and semantic lanes but opens exactly one text-bound method reassessment lane', () => {
     const report = buildCareerPersonalizationT8ClassicalZipingVisualScanConfirmationHold(acceptedB60());
 
     expect(report.immediatelyExecutableVisualScanConfirmationLaneCount).toBe(0);
+    expect(report.immediatelyExecutableTextBoundMethodReassessmentLaneCount).toBe(1);
     expect(report.immediatelyExecutableAuthorityAdmissionLaneCount).toBe(0);
     expect(report.immediatelyExecutableSemanticRuleLaneCount).toBe(0);
-    expect(report.selectedImmediateNextLane).toBeNull();
+    expect(report.selectedImmediateNextLane).toBe('BRANCH_CLASSICAL_ZIPING_TEXT_BOUND_METHOD_AUTHORITY_REASSESSMENT');
     expect(report.branchAuthorityTriggerActivationCount).toBe(0);
     expect(report.allSixHistoricalGapsRemainOpen).toBe(true);
     expect(report.unresolvedGapIds).toEqual(CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS);
   });
 
-  test('keeps all method, rule and production promotion forbidden', () => {
+  test('keeps all method, rule and production promotion forbidden at the visual hold gate', () => {
     const report = buildCareerPersonalizationT8ClassicalZipingVisualScanConfirmationHold(acceptedB60());
 
     expect(report.commonT6MethodContractEstablished).toBe(false);
@@ -136,13 +138,13 @@ describe('Career T8 classical Zi-Ping visual scan confirmation hold', () => {
     expect(report.productionImpact).toBe('NONE');
   });
 
-  test('freezes sixteen hold controls and the reopen-only next gate', () => {
+  test('freezes sixteen hold controls and selects text-bound method reassessment as the next gate', () => {
     const report = buildCareerPersonalizationT8ClassicalZipingVisualScanConfirmationHold(acceptedB60());
 
     expect(report.controlIds).toEqual(CAREER_T8_B61_VISUAL_SCAN_CONFIRMATION_HOLD_CONTROL_IDS);
     expect(report.controlCount).toBe(16);
     expect(report.controlsFrozen).toBe(true);
-    expect(report.recommendedNextGate).toBe('BRANCH_CLASSICAL_ZIPING_VISUAL_SCAN_REOPEN_TRIGGER_ACTIVATION_EVIDENCE');
+    expect(report.recommendedNextGate).toBe('BRANCH_CLASSICAL_ZIPING_TEXT_BOUND_METHOD_AUTHORITY_REASSESSMENT');
   });
 
   test('is deterministic and fails closed on a tampered B60 content address', () => {
@@ -162,6 +164,9 @@ describe('Career T8 classical Zi-Ping visual scan confirmation hold', () => {
     expect(failed.visualAccessAttemptRecordCount).toBe(0);
     expect(failed.reopenTriggerCount).toBe(0);
     expect(failed.targetPassageVisualConfirmationHoldActive).toBe(false);
+    expect(failed.textBoundHistoricalWitnessMethodReassessmentAuthorized).toBe(false);
+    expect(failed.immediatelyExecutableTextBoundMethodReassessmentLaneCount).toBe(0);
+    expect(failed.selectedImmediateNextLane).toBeNull();
     expect(failed.controlCount).toBe(0);
     expect(failed.controlsFrozen).toBe(false);
     expect(failed.recommendedNextGate).toBe(
