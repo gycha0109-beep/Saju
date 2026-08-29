@@ -151,9 +151,11 @@ describe('Career T8 classical Zi-Ping B64 explicit-applicability research admiss
   });
 
   test('fails closed when explicit applicability is missing rather than inferring it from the subject', () => {
-    const { applicability: _applicability, ...candidate } = admittedCandidate();
     const decision =
-      evaluateCareerT8ClassicalZipingNegativeClashMethodGuardResearchAdmissionCandidate(candidate);
+      evaluateCareerT8ClassicalZipingNegativeClashMethodGuardResearchAdmissionCandidate({
+        ...admittedCandidate(),
+        applicability: undefined,
+      });
 
     expect(decision.status).toBe('REJECTED_RESEARCH_METHOD_PROPOSAL');
     expect(decision.explicitlyApplicable).toBe(false);
