@@ -75,7 +75,7 @@ export const CAREER_T8_B61_VISUAL_ACCESS_ATTEMPT_RECORDS = Object.freeze([
     exactWitnessTargetPageVisuallyInspected: false,
     sameFailedSurfaceRetryAuthorized: false,
     note:
-      'The exact 1947 上海大東書局 witness is indexed to the target 地生天者，天衰怕沖 / 任氏 strength-root commentary. The indexed body still does not expose a reproducible scan-page ordinal or target page image in the current access surface, so visual confirmation remains open.',
+      'The exact 1947 上海大東書局 witness is indexed to the target 地生天者，天衰怕沖 / 任氏 strength-root commentary. The indexed body still does not expose a reproducible scan-page ordinal or target page image in the current access surface, so visual corroboration remains open.',
   }),
 ] as const satisfies readonly CareerT8B61VisualAccessAttemptRecord[]);
 
@@ -102,17 +102,17 @@ export const CAREER_T8_B61_VISUAL_SCAN_REOPEN_TRIGGERS = Object.freeze([
 
 export const CAREER_T8_B61_VISUAL_SCAN_CONFIRMATION_HOLD_CONTROL_IDS = Object.freeze([
   'B61_CONSUMES_ONLY_THE_EXACT_CONTENT_ADDRESSED_B60_LOCALIZATION_BOUNDARY',
-  'B60_THREE_TARGET_TEXT_LOCALIZATIONS_ARE_PRESERVED_WITHOUT_PROMOTION',
+  'B60_THREE_TARGET_TEXT_LOCALIZATIONS_ARE_PRESERVED_WITHOUT_SEMANTIC_PROMOTION',
   'VISUAL_CONFIRMATION_REQUIRES_THE_B59_EXACT_WITNESS_OR_A_VERIFIABLY_SAME_EDITION_PAGE_LEVEL_WITNESS',
-  'INDEPENDENT_1929_SHENFENG_OR_OTHER_EDITION_VISUALS_MAY_NOT_SUBSTITUTE_FOR_THE_B59_1936_WITNESS',
+  'INDEPENDENT_HISTORICAL_WITNESSES_MAY_NOT_SUBSTITUTE_FOR_EXACT_EDITION_VISUAL_CORROBORATION',
+  'DIRECT_INSTITUTIONAL_MECHANICAL_PDF_TEXT_BINDING_REMAINS_ELIGIBLE_FOR_METHOD_AUTHORITY_REASSESSMENT_WITHOUT_VISUAL_CORROBORATION',
   'INDEXED_TEXT_IS_NOT_VISUAL_SCAN_CONFIRMATION',
   'PRINTED_PAGE_ANCHORS_FROM_INDEPENDENT_WITNESSES_ARE_NOT_EXACT_WITNESS_SCAN_PAGE_ORDINALS',
   'ZERO_EXACT_WITNESS_TARGET_PAGE_IMAGES_ARE_CLAIMED_ACQUIRED',
   'ZERO_EXACT_WITNESS_TARGET_PAGES_ARE_CLAIMED_VISUALLY_INSPECTED',
   'REPEATED_RETRY_OF_THE_SAME_FAILED_VIEWER_OR_UNCHANGED_PAGE_FETCH_SURFACE_IS_NOT_AUTHORIZED',
-  'REOPEN_REQUIRES_A_MATERIAL_PAGE_IMAGE_OR_LOCAL_RENDERABILITY_CHANGE',
-  'NO_SOURCE_PASSAGE_INPUT_DIMENSION_OR_EFFECT_CLASS_IS_PROMOTED_BY_THIS_HOLD',
-  'NO_COMMON_T6_METHOD_CONTRACT_OR_METHODOLOGY_INPUT_CONTRACT_IS_AUTHORIZED',
+  'VISUAL_REOPEN_REQUIRES_A_MATERIAL_PAGE_IMAGE_OR_LOCAL_RENDERABILITY_CHANGE',
+  'NO_COMMON_T6_METHOD_CONTRACT_OR_METHODOLOGY_INPUT_CONTRACT_IS_AUTHORIZED_BY_THIS_GATE',
   'NO_FLAT_UNARY_CLASH_MODIFIER_UNIFORM_DAMAGE_EFFECT_NUMERIC_OFFSET_OR_MULTIPLIER_IS_AUTHORIZED',
   'B56_CHEN_ZEZHEN_HOLD_REMAINS_UNCHANGED',
   'ALL_SIX_HISTORICAL_CAREER_T8_AUTHORITY_GAPS_REMAIN_OPEN',
@@ -126,7 +126,7 @@ export interface CareerPersonalizationT8ClassicalZipingVisualScanConfirmationHol
     | 'RESOLVED_CLASSICAL_ZIPING_TARGET_PASSAGE_VISUAL_SCAN_CONFIRMATION_HOLD'
     | 'UPSTREAM_B60_BOUNDARY_INVALID';
   decision:
-    | 'TARGET_TEXT_LOCALIZATION_PRESERVED_ZERO_EXACT_VISUAL_BINDINGS_PAGE_IMAGE_ACCESS_BLOCKED_REOPEN_ONLY_ON_MATERIAL_ACCESS_CHANGE'
+    | 'VISUAL_CORROBORATION_HELD_ZERO_EXACT_VISUAL_BINDINGS_TEXT_BOUND_METHOD_AUTHORITY_REASSESSMENT_REMAINS_OPEN'
     | 'VISUAL_SCAN_CONFIRMATION_HOLD_NOT_ESTABLISHED';
   upstreamB60LocalizationId: string;
   exactB60BoundaryAccepted: boolean;
@@ -143,14 +143,16 @@ export interface CareerPersonalizationT8ClassicalZipingVisualScanConfirmationHol
   satisfiedReopenTriggerCount: 0;
   sameFailedSurfaceRetryAuthorized: false;
   broadClassicalSearchRestartAuthorized: false;
+  textBoundHistoricalWitnessMethodReassessmentAuthorized: boolean;
   commonT6MethodContractEstablished: false;
   methodologyInputContractAuthoringAuthorized: false;
   currentCareerSemanticBridgeEstablished: false;
   branchAuthorityTriggerActivationCount: 0;
   immediatelyExecutableVisualScanConfirmationLaneCount: 0;
+  immediatelyExecutableTextBoundMethodReassessmentLaneCount: 1 | 0;
   immediatelyExecutableAuthorityAdmissionLaneCount: 0;
   immediatelyExecutableSemanticRuleLaneCount: 0;
-  selectedImmediateNextLane: null;
+  selectedImmediateNextLane: 'BRANCH_CLASSICAL_ZIPING_TEXT_BOUND_METHOD_AUTHORITY_REASSESSMENT' | null;
   b56ChenZezhenHoldPreserved: boolean;
   allSixHistoricalGapsRemainOpen: true;
   unresolvedGapIds: typeof CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS;
@@ -166,7 +168,7 @@ export interface CareerPersonalizationT8ClassicalZipingVisualScanConfirmationHol
   controlCount: 16 | 0;
   controlsFrozen: boolean;
   recommendedNextGate:
-    | 'BRANCH_CLASSICAL_ZIPING_VISUAL_SCAN_REOPEN_TRIGGER_ACTIVATION_EVIDENCE'
+    | 'BRANCH_CLASSICAL_ZIPING_TEXT_BOUND_METHOD_AUTHORITY_REASSESSMENT'
     | 'BRANCH_CLASSICAL_ZIPING_CONDITIONAL_CLASH_TARGET_PASSAGE_VISUAL_SCAN_CONFIRMATION';
 }
 
@@ -250,7 +252,7 @@ export function buildCareerPersonalizationT8ClassicalZipingVisualScanConfirmatio
       ? 'RESOLVED_CLASSICAL_ZIPING_TARGET_PASSAGE_VISUAL_SCAN_CONFIRMATION_HOLD'
       : 'UPSTREAM_B60_BOUNDARY_INVALID',
     decision: accepted
-      ? 'TARGET_TEXT_LOCALIZATION_PRESERVED_ZERO_EXACT_VISUAL_BINDINGS_PAGE_IMAGE_ACCESS_BLOCKED_REOPEN_ONLY_ON_MATERIAL_ACCESS_CHANGE'
+      ? 'VISUAL_CORROBORATION_HELD_ZERO_EXACT_VISUAL_BINDINGS_TEXT_BOUND_METHOD_AUTHORITY_REASSESSMENT_REMAINS_OPEN'
       : 'VISUAL_SCAN_CONFIRMATION_HOLD_NOT_ESTABLISHED',
     upstreamB60LocalizationId: b60.localizationId,
     exactB60BoundaryAccepted: accepted,
@@ -267,14 +269,16 @@ export function buildCareerPersonalizationT8ClassicalZipingVisualScanConfirmatio
     satisfiedReopenTriggerCount: 0,
     sameFailedSurfaceRetryAuthorized: false,
     broadClassicalSearchRestartAuthorized: false,
+    textBoundHistoricalWitnessMethodReassessmentAuthorized: accepted,
     commonT6MethodContractEstablished: false,
     methodologyInputContractAuthoringAuthorized: false,
     currentCareerSemanticBridgeEstablished: false,
     branchAuthorityTriggerActivationCount: 0,
     immediatelyExecutableVisualScanConfirmationLaneCount: 0,
+    immediatelyExecutableTextBoundMethodReassessmentLaneCount: accepted ? 1 : 0,
     immediatelyExecutableAuthorityAdmissionLaneCount: 0,
     immediatelyExecutableSemanticRuleLaneCount: 0,
-    selectedImmediateNextLane: null,
+    selectedImmediateNextLane: accepted ? 'BRANCH_CLASSICAL_ZIPING_TEXT_BOUND_METHOD_AUTHORITY_REASSESSMENT' : null,
     b56ChenZezhenHoldPreserved: accepted && b60.b56ChenZezhenHoldPreserved,
     allSixHistoricalGapsRemainOpen: true,
     unresolvedGapIds: CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS,
@@ -290,7 +294,7 @@ export function buildCareerPersonalizationT8ClassicalZipingVisualScanConfirmatio
     controlCount: accepted ? 16 : 0,
     controlsFrozen: accepted,
     recommendedNextGate: accepted
-      ? 'BRANCH_CLASSICAL_ZIPING_VISUAL_SCAN_REOPEN_TRIGGER_ACTIVATION_EVIDENCE'
+      ? 'BRANCH_CLASSICAL_ZIPING_TEXT_BOUND_METHOD_AUTHORITY_REASSESSMENT'
       : 'BRANCH_CLASSICAL_ZIPING_CONDITIONAL_CLASH_TARGET_PASSAGE_VISUAL_SCAN_CONFIRMATION',
   });
 }
