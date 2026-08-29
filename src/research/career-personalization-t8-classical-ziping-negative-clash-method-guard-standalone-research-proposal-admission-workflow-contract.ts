@@ -2,8 +2,6 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { CAREER_T8_SYNTHESIS_AUTHORITY_GAP_IDS } from './career-personalization-bounded-t5-t6-t8-synthesis-methodology-review.js';
 import type { CareerT8B67ResearchAdmissionCandidate } from './career-personalization-t8-classical-ziping-negative-clash-method-guard-explicit-applicability-admission-adapter-contract.js';
 import {
-  CAREER_PERSONALIZATION_T8_CLASSICAL_ZIPING_NEGATIVE_CLASH_METHOD_GUARD_RESEARCH_PROPOSAL_ENVELOPE_AND_ADMISSION_RECORD_CONTRACT_VERSION,
-  CAREER_T8_B69_PROPOSAL_ENVELOPE_AND_ADMISSION_RECORD_CONTROL_IDS,
   createCareerT8ClassicalZipingClashMethodResearchAdmissionRecord,
   createCareerT8ClassicalZipingClashMethodResearchProposalEnvelope,
   type CareerT8B69ResearchAdmissionRecord,
