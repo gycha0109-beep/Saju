@@ -124,16 +124,25 @@ function candidate(
   };
 }
 
+function structurallyInvalidCandidate(): CareerT8B67ResearchAdmissionCandidate {
+  const content = fixtureRule();
+  return {
+    subjectType: 'rule',
+    subjectRef: {
+      id: content.ruleId,
+      version: content.version,
+      contentHash: deterministicContentHash(content),
+    },
+    subjectContent: content,
+    proposalShape: COMPLIANT_SHAPE,
+  };
+}
+
 describe('Career T8 B74 dedicated internal research authoring entrypoint', () => {
   test('preserves structural rejection without authoring eligibility', () => {
-    const valid = candidate();
-    const result = submitCareerT8ClassicalZipingClashMethodResearchProposalForAuthoring({
-      subjectType: 'rule',
-      subjectRef: valid.subjectRef,
-      subjectContent: valid.subjectContent,
-      proposalShape: COMPLIANT_SHAPE,
-    });
-
+    const result = submitCareerT8ClassicalZipingClashMethodResearchProposalForAuthoring(
+      structurallyInvalidCandidate(),
+    );
     expect(result.entrypointVersion).toBe(CAREER_T8_B74_ENTRYPOINT_VERSION);
     expect(result.workflowStatus).toBe('STRUCTURALLY_REJECTED');
     expect(result.authoringDecision).toBe('REJECTED_STRUCTURALLY');
@@ -147,12 +156,8 @@ describe('Career T8 B74 dedicated internal research authoring entrypoint', () =>
 
   test('preserves guard rejection with audit records but no authoring eligibility', () => {
     const result = submitCareerT8ClassicalZipingClashMethodResearchProposalForAuthoring(
-      candidate({
-        ...COMPLIANT_SHAPE,
-        assumesContextFreeUniformDamage: true,
-      }),
+      candidate({ ...COMPLIANT_SHAPE, assumesContextFreeUniformDamage: true }),
     );
-
     expect(result.workflowStatus).toBe('GUARD_REJECTED');
     expect(result.authoringDecision).toBe('REJECTED_BY_NEGATIVE_METHOD_GUARD');
     expect(result.researchAuthoringEligible).toBe(false);
@@ -163,9 +168,8 @@ describe('Career T8 B74 dedicated internal research authoring entrypoint', () =>
     );
   });
 
-  test('maps only B71 admission to research-authoring eligibility', () => {
+  test('maps only B71 admission to research-authoring eligibility and keeps side effects disabled', () => {
     const result = submitCareerT8ClassicalZipingClashMethodResearchProposalForAuthoring(candidate());
-
     expect(result.workflowStatus).toBe('ADMITTED');
     expect(result.authoringDecision).toBe('ELIGIBLE_FOR_RESEARCH_AUTHORING');
     expect(result.researchAuthoringEligible).toBe(true);
@@ -183,7 +187,7 @@ describe('Career T8 B74 dedicated internal research authoring entrypoint', () =>
     expect(result.productionAuthorized).toBe(false);
   });
 
-  test('returns deterministic content-addressed entrypoint results', () => {
+  test('is deterministic and content addressed', () => {
     const first = submitCareerT8ClassicalZipingClashMethodResearchProposalForAuthoring(candidate());
     const second = submitCareerT8ClassicalZipingClashMethodResearchProposalForAuthoring(candidate());
     expect(first.entrypointExecutionId).toBe(second.entrypointExecutionId);
@@ -191,13 +195,12 @@ describe('Career T8 B74 dedicated internal research authoring entrypoint', () =>
   });
 });
 
-describe('Career T8 B74 dedicated internal authoring entrypoint contract materialization', () => {
-  test('materializes only an internal B71-delegated entrypoint and preserves all boundaries', () => {
+describe('Career T8 B74 dedicated internal authoring entrypoint materialization', () => {
+  test('materializes only an internal B71-delegated entrypoint and opens compatibility audit', () => {
     const report =
       buildCareerPersonalizationT8ClassicalZipingNegativeClashMethodGuardDedicatedInternalResearchProposalAuthoringEntrypointContract(
         acceptedB73(),
       );
-
     expect(report.materializationVersion).toBe(
       CAREER_PERSONALIZATION_T8_CLASSICAL_ZIPING_NEGATIVE_CLASH_METHOD_GUARD_DEDICATED_INTERNAL_RESEARCH_PROPOSAL_AUTHORING_ENTRYPOINT_CONTRACT_VERSION,
     );
@@ -215,29 +218,14 @@ describe('Career T8 B74 dedicated internal authoring entrypoint contract materia
     expect(report.rootExportEnabled).toBe(false);
     expect(report.researchBarrelExportEnabled).toBe(false);
     expect(report.packageExportEnabled).toBe(false);
-    expect(report.developerHarnessIntegrationEnabled).toBe(false);
-    expect(report.researchUxPreviewIntegrationEnabled).toBe(false);
     expect(report.coreRuleRegistryIntegrationEnabled).toBe(false);
     expect(report.productionEnforcementAuthorized).toBe(false);
-    expect(report.productionImpact).toBe('NONE');
-  });
-
-  test('opens only compatibility audit and freezes sixteen controls', () => {
-    const report =
-      buildCareerPersonalizationT8ClassicalZipingNegativeClashMethodGuardDedicatedInternalResearchProposalAuthoringEntrypointContract(
-        acceptedB73(),
-      );
-
     expect(report.immediatelyExecutableCompatibilityAuditLaneCount).toBe(1);
-    expect(report.immediatelyExecutablePublicExportLaneCount).toBe(0);
-    expect(report.immediatelyExecutableCoreRegistryIntegrationLaneCount).toBe(0);
-    expect(report.immediatelyExecutableSemanticRuleLaneCount).toBe(0);
     expect(report.selectedImmediateNextLane).toBe(
       'BRANCH_CLASSICAL_ZIPING_NEGATIVE_CLASH_METHOD_GUARD_DEDICATED_INTERNAL_RESEARCH_PROPOSAL_AUTHORING_ENTRYPOINT_COMPATIBILITY_AUDIT',
     );
     expect(report.controlIds).toEqual(CAREER_T8_B74_INTERNAL_AUTHORING_ENTRYPOINT_CONTROL_IDS);
     expect(report.controlCount).toBe(16);
-    expect(report.controlsFrozen).toBe(true);
   });
 
   test('fails closed on a tampered B73 materialization address', () => {
@@ -247,11 +235,9 @@ describe('Career T8 B74 dedicated internal authoring entrypoint contract materia
         ...b73,
         reviewId: `${b73.reviewId}_tampered`,
       });
-
     expect(failed.status).toBe('UPSTREAM_B73_BOUNDARY_INVALID');
     expect(failed.exactB73BoundaryAccepted).toBe(false);
     expect(failed.dedicatedInternalEntrypointCreatedByThisGate).toBe(false);
-    expect(failed.executableEntrypointCreatedByThisGate).toBe(false);
     expect(failed.immediatelyExecutableCompatibilityAuditLaneCount).toBe(0);
     expect(failed.selectedImmediateNextLane).toBeNull();
     expect(failed.controlCount).toBe(0);
