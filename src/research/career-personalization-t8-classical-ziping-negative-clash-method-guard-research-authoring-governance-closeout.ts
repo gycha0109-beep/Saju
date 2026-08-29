@@ -65,7 +65,7 @@ export interface CareerPersonalizationT8ClassicalZipingNegativeClashMethodGuardR
   temporalScope: 'natal';
   statusClass: 'research';
   researchAuthoringGovernanceLaneClosed: boolean;
-  closedCapabilityIds: typeof CAREER_T8_B77_CLOSED_CAPABILITY_IDS;
+  closedCapabilityIds: readonly (typeof CAREER_T8_B77_CLOSED_CAPABILITY_IDS)[number][];
   closedCapabilityCount: 6 | 0;
   reopenConditionIds: typeof CAREER_T8_B77_REOPEN_CONDITION_IDS;
   reopenConditionCount: 3;
