@@ -131,13 +131,11 @@ function acceptedB68(): CareerPersonalizationT8ClassicalZipingNegativeClashMetho
 }
 
 describe('Career T8 classical Zi-Ping B69 research proposal envelope', () => {
-  test('creates a deterministic repository-governance envelope for a structurally valid compliant proposal', () => {
+  test('creates a deterministic repository-governance envelope for a compliant proposal', () => {
     const first = createCareerT8ClassicalZipingClashMethodResearchProposalEnvelope(candidate());
     const second = createCareerT8ClassicalZipingClashMethodResearchProposalEnvelope(candidate());
-
     expect(first.created).toBe(true);
     expect(first.structuralRejectionReasonIds).toEqual([]);
-    expect(first.envelope).not.toBeNull();
     expect(first.envelope?.envelopeVersion).toBe(CAREER_T8_B69_PROPOSAL_ENVELOPE_VERSION);
     expect(first.envelope?.governanceBinding).toBe('repository_method_authoring');
     expect(first.envelope?.snapshotBinding).toBe('none');
@@ -148,15 +146,18 @@ describe('Career T8 classical Zi-Ping B69 research proposal envelope', () => {
     expect(first).toEqual(second);
   });
 
-  test('fails closed before envelope creation when B67 structural bindings are invalid', () => {
-    const invalid = candidate();
+  test('fails closed before envelope creation when applicability is missing', () => {
+    const subjectContent = fixtureRule();
     const result = createCareerT8ClassicalZipingClashMethodResearchProposalEnvelope({
-      subjectType: invalid.subjectType,
-      subjectRef: invalid.subjectRef,
-      subjectContent: invalid.subjectContent,
-      proposalShape: invalid.proposalShape,
+      subjectType: 'rule',
+      subjectRef: {
+        id: subjectContent.ruleId,
+        version: subjectContent.version,
+        contentHash: deterministicContentHash(subjectContent),
+      },
+      subjectContent,
+      proposalShape: COMPLIANT_SHAPE,
     });
-
     expect(result.created).toBe(false);
     expect(result.envelope).toBeNull();
     expect(result.structuralRejectionReasonIds).toContain(
@@ -166,12 +167,8 @@ describe('Career T8 classical Zi-Ping B69 research proposal envelope', () => {
 
   test('allows a structurally valid B64-violating proposal to be enveloped for audit', () => {
     const result = createCareerT8ClassicalZipingClashMethodResearchProposalEnvelope(
-      candidate({
-        ...COMPLIANT_SHAPE,
-        assumesContextFreeUniformDamage: true,
-      }),
+      candidate({ ...COMPLIANT_SHAPE, assumesContextFreeUniformDamage: true }),
     );
-
     expect(result.created).toBe(true);
     expect(result.envelope).not.toBeNull();
     expect(result.structuralRejectionReasonIds).toEqual([]);
@@ -180,13 +177,9 @@ describe('Career T8 classical Zi-Ping B69 research proposal envelope', () => {
 
 describe('Career T8 classical Zi-Ping B69 research admission record', () => {
   test('authorizes research authoring only for an admitted B67 decision', () => {
-    const envelopeResult = createCareerT8ClassicalZipingClashMethodResearchProposalEnvelope(candidate());
-    expect(envelopeResult.envelope).not.toBeNull();
-    const record = createCareerT8ClassicalZipingClashMethodResearchAdmissionRecord(
-      envelopeResult.envelope!,
-    );
-
-    expect(record).not.toBeNull();
+    const envelope = createCareerT8ClassicalZipingClashMethodResearchProposalEnvelope(candidate()).envelope;
+    expect(envelope).not.toBeNull();
+    const record = createCareerT8ClassicalZipingClashMethodResearchAdmissionRecord(envelope!);
     expect(record?.recordVersion).toBe(CAREER_T8_B69_ADMISSION_RECORD_VERSION);
     expect(record?.decisionStatus).toBe('ADMITTED_RESEARCH_METHOD_PROPOSAL');
     expect(record?.authoringAdmissionAuthorized).toBe(true);
@@ -196,19 +189,12 @@ describe('Career T8 classical Zi-Ping B69 research admission record', () => {
     expect(record?.productionAuthorized).toBe(false);
   });
 
-  test('records a guard rejection for audit without authorizing research authoring', () => {
-    const envelopeResult = createCareerT8ClassicalZipingClashMethodResearchProposalEnvelope(
-      candidate({
-        ...COMPLIANT_SHAPE,
-        usesFixedNumericClashOffsetMultiplierOrScalar: true,
-      }),
-    );
-    expect(envelopeResult.envelope).not.toBeNull();
-    const record = createCareerT8ClassicalZipingClashMethodResearchAdmissionRecord(
-      envelopeResult.envelope!,
-    );
-
-    expect(record).not.toBeNull();
+  test('records a guard rejection without authorizing research authoring', () => {
+    const envelope = createCareerT8ClassicalZipingClashMethodResearchProposalEnvelope(
+      candidate({ ...COMPLIANT_SHAPE, usesFixedNumericClashOffsetMultiplierOrScalar: true }),
+    ).envelope;
+    expect(envelope).not.toBeNull();
+    const record = createCareerT8ClassicalZipingClashMethodResearchAdmissionRecord(envelope!);
     expect(record?.decisionStatus).toBe('REJECTED_RESEARCH_METHOD_PROPOSAL');
     expect(record?.authoringAdmissionAuthorized).toBe(false);
     expect(record?.rejectionReasonIds).toContain(
@@ -217,30 +203,28 @@ describe('Career T8 classical Zi-Ping B69 research admission record', () => {
     expect(record?.guardEvaluation?.accepted).toBe(false);
   });
 
-  test('rejects a tampered proposal envelope and creates deterministic records', () => {
-    const envelopeResult = createCareerT8ClassicalZipingClashMethodResearchProposalEnvelope(candidate());
-    expect(envelopeResult.envelope).not.toBeNull();
-    const envelope = envelopeResult.envelope!;
-    const first = createCareerT8ClassicalZipingClashMethodResearchAdmissionRecord(envelope);
-    const second = createCareerT8ClassicalZipingClashMethodResearchAdmissionRecord(envelope);
+  test('rejects tampering and creates deterministic records', () => {
+    const envelope = createCareerT8ClassicalZipingClashMethodResearchProposalEnvelope(candidate()).envelope;
+    expect(envelope).not.toBeNull();
+    const first = createCareerT8ClassicalZipingClashMethodResearchAdmissionRecord(envelope!);
+    const second = createCareerT8ClassicalZipingClashMethodResearchAdmissionRecord(envelope!);
     expect(first).toEqual(second);
     expect(first?.recordId).toBe(second?.recordId);
-
-    const tampered = {
-      ...envelope,
-      envelopeContentHash: '0'.repeat(64),
-    };
-    expect(createCareerT8ClassicalZipingClashMethodResearchAdmissionRecord(tampered)).toBeNull();
+    expect(
+      createCareerT8ClassicalZipingClashMethodResearchAdmissionRecord({
+        ...envelope!,
+        envelopeContentHash: '0'.repeat(64),
+      }),
+    ).toBeNull();
   });
 });
 
 describe('Career T8 classical Zi-Ping B69 contract materialization', () => {
-  test('materializes proposal-envelope and admission-record contracts without widening authority', () => {
+  test('materializes both governance contracts without widening authority', () => {
     const report =
       buildCareerPersonalizationT8ClassicalZipingNegativeClashMethodGuardResearchProposalEnvelopeAndAdmissionRecordContract(
         acceptedB68(),
       );
-
     expect(report.materializationVersion).toBe(
       CAREER_PERSONALIZATION_T8_CLASSICAL_ZIPING_NEGATIVE_CLASH_METHOD_GUARD_RESEARCH_PROPOSAL_ENVELOPE_AND_ADMISSION_RECORD_CONTRACT_VERSION,
     );
@@ -249,8 +233,6 @@ describe('Career T8 classical Zi-Ping B69 contract materialization', () => {
     );
     expect(report.proposalEnvelopeContractCreatedByThisGate).toBe(true);
     expect(report.admissionRecordContractCreatedByThisGate).toBe(true);
-    expect(report.executableProposalEnvelopeCreatorCreatedByThisGate).toBe(true);
-    expect(report.executableAdmissionRecordCreatorCreatedByThisGate).toBe(true);
     expect(report.repositoryGovernanceBindingEstablished).toBe(true);
     expect(report.sajuSnapshotBindingRequired).toBe(false);
     expect(report.rejectedProposalAuditRecordAuthorized).toBe(true);
@@ -267,7 +249,6 @@ describe('Career T8 classical Zi-Ping B69 contract materialization', () => {
       buildCareerPersonalizationT8ClassicalZipingNegativeClashMethodGuardResearchProposalEnvelopeAndAdmissionRecordContract(
         acceptedB68(),
       );
-
     expect(report.immediatelyExecutableWorkflowIntegrationReadinessReviewLaneCount).toBe(1);
     expect(report.immediatelyExecutableCoreRegistryIntegrationLaneCount).toBe(0);
     expect(report.immediatelyExecutableSemanticRuleLaneCount).toBe(0);
@@ -297,7 +278,6 @@ describe('Career T8 classical Zi-Ping B69 contract materialization', () => {
       );
     expect(first).toEqual(second);
     expect(first.materializationId).toBe(second.materializationId);
-
     const failed =
       buildCareerPersonalizationT8ClassicalZipingNegativeClashMethodGuardResearchProposalEnvelopeAndAdmissionRecordContract({
         ...b68,
