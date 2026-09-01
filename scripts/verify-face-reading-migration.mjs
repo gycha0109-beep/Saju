@@ -40,6 +40,7 @@ const expectedRootExports = [
   '.',
   './product-host',
   './product-reading',
+  './production-calculation-host',
   './production-runtime',
 ];
 const actualRootExports = Object.keys(sajuPackage.exports ?? {}).sort();
