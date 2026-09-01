@@ -1,0 +1,72 @@
+name: Face Reading CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/**'
+      - 'docs/migrations/face-reading-from-myeongha.manifest.json'
+      - 'scripts/verify-face-reading-migration.mjs'
+      - 'tsconfig.face-reading.json'
+      - 'tsconfig.face-reading.build.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'eslint.config.mjs'
+      - '.github/workflows/face-reading-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  saju-existing-engine-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+
+  face-reading-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout migrated Saju target
+        uses: actions/checkout@v4
+        with:
+          path: target
+
+      - name: Checkout frozen MyeongHa source
+        uses: actions/checkout@v4
+        with:
+          repository: gycha0109-beep/MyeongHa
+          ref: 09fdc7839f2452bcc8022ba368b03d72b23f31dc
+          path: source
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Verify migrated package bytes and compiler contract
+        working-directory: target
+        run: |
+          npm ci
+          npm run check:face-reading
+
+      - name: Verify frozen source baseline
+        working-directory: source
+        run: |
+          npm ci
+          npm run typecheck
+          npm run build
+          npx vitest run test/face-reading*.test.ts
+
+      - name: Run exact source Face tests against migrated package
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf source/packages/face-reading
+          ln -s "$GITHUB_WORKSPACE/target/packages/face-reading" source/packages/face-reading
+          cd source
+          npx vitest run test/face-reading*.test.ts
