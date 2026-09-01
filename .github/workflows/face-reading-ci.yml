@@ -74,6 +74,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/mediapipe-lips-topology-admission-fr65.test.ts
 
+      - name: Verify FR66 lips contour neutral surface boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/lips-contour-neutral-surface-fr66.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
