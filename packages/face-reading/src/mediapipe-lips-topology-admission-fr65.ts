@@ -13,6 +13,7 @@ import {
 import {
   projectFR61RunToGovernedNeutralGeometryFR62,
 } from './governed-neutral-geometry-fr62.js';
+import { FR14_NEUTRAL_CONSUMER_SLOTS } from './neutral-provider-binding-contract-fr14.js';
 import type { NeutralObservationGeometryV1, NormalizedPoint2DV1 } from './neutral-observation-schema-fr15.js';
 import {
   runProductionNeutralObservationProviderFR61,
@@ -125,6 +126,14 @@ export const MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65: MediaPipeLipsReleaseWitnessFR6
 });
 
 const POINT_KEYS = new Set(['x', 'y']);
+const EXPECTED_FR14_CONSUMER_SLOTS = Object.freeze([
+  'neutral.face.brow_midline',
+  'neutral.face.nose_region',
+  'neutral.face.left_brow_region',
+  'neutral.face.right_brow_region',
+  'neutral.face.left_eye_region',
+  'neutral.face.right_eye_region',
+] as const);
 
 function fail(message: string): never {
   throw new FaceAuthorityValidationError(`FR-65 ${message}`);
@@ -137,6 +146,15 @@ function exactPoint(point: NormalizedPoint2DV1, path: string): NormalizedPoint2D
   if (!Number.isFinite(point.x) || point.x < 0 || point.x > 1) fail(`${path}.x must be finite within [0,1].`);
   if (!Number.isFinite(point.y) || point.y < 0 || point.y > 1) fail(`${path}.y must be finite within [0,1].`);
   return point;
+}
+
+function validateNeutralConsumerContractFR65(): void {
+  if (
+    FR14_NEUTRAL_CONSUMER_SLOTS.length !== EXPECTED_FR14_CONSUMER_SLOTS.length ||
+    FR14_NEUTRAL_CONSUMER_SLOTS.some((slot, index) => slot !== EXPECTED_FR14_CONSUMER_SLOTS[index])
+  ) {
+    fail('FR-14 neutral consumer slot contract changed; mouth-slot admission requires explicit review.');
+  }
 }
 
 function connectedComponents(edges: readonly ProviderConnectionEdgeV1[]): readonly (readonly ProviderConnectionEdgeV1[])[] {
@@ -179,12 +197,15 @@ function connectedComponents(edges: readonly ProviderConnectionEdgeV1[]): readon
 }
 
 function validateReleaseWitnessFR65(): readonly (readonly ProviderConnectionEdgeV1[])[] {
+  validateNeutralConsumerContractFR65();
   validateMediaPipePublishedTopologySurfaceGapAuthorityFR37();
   const witness = MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65;
   if (
     witness.releaseTag !== 'v0.10.35' ||
     witness.releaseCommit !== 'f8ef212d5c962c0e853db7e59d217056b187084b' ||
+    witness.sourcePath !== 'mediapipe/tasks/web/vision/face_landmarker/face_landmarks_connections.ts' ||
     witness.sourceSymbol !== 'FACE_LANDMARKS_LIPS' ||
+    witness.sourceLabel !== 'Landmarks for lips' ||
     witness.runtimePackageVersion !== '0.10.35' ||
     witness.releaseExactForInstalledPackage !== true ||
     witness.componentRoleLabelsPublished !== false
