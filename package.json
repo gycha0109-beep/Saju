@@ -40,7 +40,11 @@
     "test": "vitest run",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run preview:research:smoke",
     "preview:research": "npm run build && node scripts/research-ux-preview.mjs",
-    "preview:research:smoke": "MYEONGHWA_PREVIEW_SMOKE=1 node scripts/research-ux-preview.mjs"
+    "preview:research:smoke": "MYEONGHWA_PREVIEW_SMOKE=1 node scripts/research-ux-preview.mjs",
+    "face:verify:manifest": "node scripts/verify-face-reading-migration.mjs",
+    "face:typecheck": "tsc -p tsconfig.face-reading.json --noEmit",
+    "face:build": "tsc -p tsconfig.face-reading.build.json",
+    "check:face-reading": "npm run face:verify:manifest && npm run face:typecheck && npm run face:build"
   },
   "dependencies": {
     "manseryeok": "2.0.0"
@@ -53,5 +57,8 @@
     "typescript": "6.0.2",
     "typescript-eslint": "8.66.0",
     "vitest": "4.1.10"
-  }
+  },
+  "workspaces": [
+    "packages/face-reading"
+  ]
 }

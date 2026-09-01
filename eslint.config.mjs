@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: ['dist/**', 'coverage/**', 'node_modules/**'],
+    ignores: ['dist/**', '.face-reading-dist/**', 'coverage/**', 'node_modules/**', 'packages/face-reading/**'],
   },
   {
     files: ['**/*.{js,mjs,ts}'],

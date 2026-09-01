@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.face-reading.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./.face-reading-dist",
+    "rootDir": "./packages/face-reading/src"
+  },
+  "include": ["packages/face-reading/src/**/*.ts"],
+  "exclude": ["**/*.test.ts"]
+}
