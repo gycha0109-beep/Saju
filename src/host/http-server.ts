@@ -8,6 +8,7 @@ import {
   type MyeonghwaProductHost,
   type MyeonghwaProductHostDependencies,
 } from './product-host.js';
+import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './production-calculation-http-contract.js';
 import { PRODUCT_HOST_APP_SCRIPT, PRODUCT_HOST_PAGE } from './static-page.js';
 
 export const DEFAULT_PRODUCT_HOST_MAX_REQUEST_BYTES = 16 * 1024;
@@ -195,7 +196,7 @@ function createMyeonghwaHttpServer(
         const body = await readJsonBody(request, bodyLimit);
         const input = parseProductHostCalculationRequest(body);
         const result = calculateAuthorizedMyeonghwaProductionSnapshot(input);
-        sendJson(response, 200, result);
+        sendJson(response, 200, serializeAuthorizedProductionCalculationHttpResponseV1(result));
       } catch (error) {
         if (!handleKnownError(response, error)) sendCalculationOperationalError(response);
       }
