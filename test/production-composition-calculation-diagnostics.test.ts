@@ -112,7 +112,9 @@ const requestBody = {
 describe('production composition calculation diagnostics', () => {
   it('emits bounded sensitivity metadata through an internal observer without changing the consumer response', async () => {
     const observations: ProductionCalculationSensitivityObservation[] = [];
-    const host = createHost((observation) => observations.push(observation));
+    const host = createHost((observation) => {
+      observations.push(observation);
+    });
 
     const response = await host.requestReading(requestBody);
 
