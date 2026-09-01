@@ -78,6 +78,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/lips-contour-neutral-surface-fr66.test.ts
 
+      - name: Verify FR67 lips pose-normalization requirements boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/lips-pose-normalization-requirements-fr67.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
