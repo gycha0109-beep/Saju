@@ -14,7 +14,7 @@ import {
 describe('production composition root', () => {
   it('registers exactly one approved V1 production calculation default', () => {
     expect(CURRENT_PRODUCTION_COMPOSITION_STATUS).toBe('blocked_authority_required');
-    expect(PRODUCTION_COMPOSITION_VERSION).toBe('myeonghwa-production-composition-v2');
+    expect(PRODUCTION_COMPOSITION_VERSION).toBe('myeonghwa-production-composition-v3');
     expect(PRODUCTION_AUTHORITY_MANIFEST_VERSION).toBe(
       'myeonghwa-production-authority-manifest-v2',
     );

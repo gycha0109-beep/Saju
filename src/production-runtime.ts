@@ -16,6 +16,8 @@ export {
   inspectMyeonghwaProductionComposition,
   listAuthorizedProductionCalculationPolicies,
   type AuthorizedProductionCalculationPolicySummary,
+  type ProductionCalculationSensitivityObservation,
+  type ProductionCalculationSensitivityObserver,
   type ProductionCompositionAuthoritySummary,
   type ProductionCompositionBlocker,
   type ProductionCompositionBlockerCode,

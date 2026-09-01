@@ -1,9 +1,5 @@
-import type { CalculationPolicySnapshot } from '../contracts/calculation.js';
 import type { NarrativePolicy } from '../contracts/narrative.js';
-import {
-  calculateCanonicalSajuSnapshot,
-  type CalculationEngineOptions,
-} from '../calculation/calculation-engine.js';
+import type { CalculationEngineOptions } from '../calculation/calculation-engine.js';
 import {
   buildInterpretationExecutionPlan,
   ExecutionPlanError,
@@ -27,40 +23,27 @@ import {
 } from '../host/product-host.js';
 import type { ProductReadingServiceOptions } from '../reading/product-reading-service.js';
 import {
-  PRODUCTION_CALCULATION_AUTHORIZATION_ID,
-  PRODUCTION_CALCULATION_AUTHORITY_RECORD_REF,
-  PRODUCTION_DEFAULT_CALCULATION_POLICY,
-  PRODUCTION_DEFAULT_CALCULATION_POLICY_ID,
-} from './production-calculation-policy.js';
+  getAuthorizedProductionCalculationPolicyGrant,
+  listAuthorizedProductionCalculationPolicies,
+  type AuthorizedCalculationPolicyGrant,
+  type AuthorizedProductionCalculationPolicySummary,
+} from './production-calculation-authority.js';
+import {
+  calculateAuthorizedMyeonghwaProductionSnapshot,
+  diagnoseAuthorizedMyeonghwaProductionCalculationSensitivity,
+  type AuthorizedMyeonghwaProductionCalculationSensitivityDiagnostic,
+} from './production-calculation-runtime.js';
+import { PRODUCTION_DEFAULT_CALCULATION_POLICY_ID } from './production-calculation-policy.js';
 
-export const PRODUCTION_COMPOSITION_VERSION = 'myeonghwa-production-composition-v2';
+export {
+  listAuthorizedProductionCalculationPolicies,
+  type AuthorizedProductionCalculationPolicySummary,
+};
+
+export const PRODUCTION_COMPOSITION_VERSION = 'myeonghwa-production-composition-v3';
 export const PRODUCTION_AUTHORITY_MANIFEST_VERSION =
   'myeonghwa-production-authority-manifest-v2';
 export const CURRENT_PRODUCTION_COMPOSITION_STATUS = 'blocked_authority_required' as const;
-
-interface AuthorizedCalculationPolicyGrant {
-  authorizationId: string;
-  authorityRecordRef: string;
-  policy: CalculationPolicySnapshot;
-}
-
-const AUTHORIZED_CALCULATION_POLICIES: Readonly<
-  Record<string, AuthorizedCalculationPolicyGrant>
-> = Object.freeze({
-  [PRODUCTION_DEFAULT_CALCULATION_POLICY_ID]: Object.freeze({
-    authorizationId: PRODUCTION_CALCULATION_AUTHORIZATION_ID,
-    authorityRecordRef: PRODUCTION_CALCULATION_AUTHORITY_RECORD_REF,
-    policy: PRODUCTION_DEFAULT_CALCULATION_POLICY,
-  }),
-});
-
-export interface AuthorizedProductionCalculationPolicySummary {
-  calculationPolicyId: string;
-  authorizationId: string;
-  authorityRecordRef: string;
-  policyVersion: string;
-  contentHash: string;
-}
 
 export type ProductionCompositionBlockerCode =
   | 'CALCULATION_POLICY_SELECTION_REQUIRED'
@@ -79,6 +62,15 @@ export interface ProductionCompositionBlocker {
   reasonCode?: string;
 }
 
+export interface ProductionCalculationSensitivityObservation {
+  requestId: string;
+  diagnostic: AuthorizedMyeonghwaProductionCalculationSensitivityDiagnostic;
+}
+
+export type ProductionCalculationSensitivityObserver = (
+  observation: ProductionCalculationSensitivityObservation,
+) => void | Promise<void>;
+
 export interface ProductionCompositionRequest {
   calculationPolicyId?: string;
   registry?: ResolvedRuleRegistrySnapshot;
@@ -87,6 +79,7 @@ export interface ProductionCompositionRequest {
   narrativePolicy?: NarrativePolicy;
   readingOptions?: ProductReadingServiceOptions;
   calculationOptions?: CalculationEngineOptions;
+  calculationSensitivityObserver?: ProductionCalculationSensitivityObserver;
   requestIdFactory?: () => string;
 }
 
@@ -130,18 +123,6 @@ export class ProductionCompositionBlockedError extends Error {
   }
 }
 
-export function listAuthorizedProductionCalculationPolicies(): readonly AuthorizedProductionCalculationPolicySummary[] {
-  return Object.entries(AUTHORIZED_CALCULATION_POLICIES)
-    .map(([calculationPolicyId, grant]) => ({
-      calculationPolicyId,
-      authorizationId: grant.authorizationId,
-      authorityRecordRef: grant.authorityRecordRef,
-      policyVersion: grant.policy.policyVersion,
-      contentHash: deterministicContentHash(grant.policy),
-    }))
-    .sort((left, right) => left.calculationPolicyId.localeCompare(right.calculationPolicyId));
-}
-
 function selectedCalculationPolicyId(calculationPolicyId: string | undefined): string {
   return calculationPolicyId ?? PRODUCTION_DEFAULT_CALCULATION_POLICY_ID;
 }
@@ -149,9 +130,7 @@ function selectedCalculationPolicyId(calculationPolicyId: string | undefined): s
 function calculationGrant(
   calculationPolicyId: string | undefined,
 ): AuthorizedCalculationPolicyGrant | undefined {
-  return calculationPolicyId === undefined
-    ? undefined
-    : AUTHORIZED_CALCULATION_POLICIES[calculationPolicyId];
+  return getAuthorizedProductionCalculationPolicyGrant(calculationPolicyId);
 }
 
 function sortedBlockers(
@@ -281,9 +260,27 @@ function interpretationBundle(
   return { registry, interpretation };
 }
 
+async function observeCalculationSensitivity(
+  request: ProductionCompositionRequest,
+  input: Parameters<typeof calculateAuthorizedMyeonghwaProductionSnapshot>[0],
+  context: ProductHostExecutionContext,
+): Promise<void> {
+  const observer = request.calculationSensitivityObserver;
+  if (observer === undefined) return;
+
+  try {
+    const diagnostic = diagnoseAuthorizedMyeonghwaProductionCalculationSensitivity(
+      input,
+      request.calculationOptions ?? {},
+    );
+    await observer({ requestId: context.requestId, diagnostic });
+  } catch {
+    // Diagnostics are deliberately isolated from the consumer reading path.
+  }
+}
+
 function toDependencies(
   request: ProductionCompositionRequest,
-  grant: AuthorizedCalculationPolicyGrant,
   registry: ResolvedRuleRegistrySnapshot,
 ): MyeonghwaProductHostDependencies {
   const adapter = request.adapter;
@@ -294,8 +291,14 @@ function toDependencies(
   }
 
   return {
-    calculate: (input) =>
-      calculateCanonicalSajuSnapshot(input, grant.policy, request.calculationOptions ?? {}),
+    async calculate(input, context) {
+      const result = calculateAuthorizedMyeonghwaProductionSnapshot(
+        input,
+        request.calculationOptions ?? {},
+      );
+      await observeCalculationSensitivity(request, input, context);
+      return result.snapshot;
+    },
     interpret: (snapshot, context) =>
       interpretationBundle(registry, request.reviewerTrustContext, snapshot, context),
     adapter,
@@ -320,5 +323,5 @@ export function createAuthorizedMyeonghwaProductionHost(
     throw new Error('Production composition authority disappeared after readiness inspection.');
   }
 
-  return createMyeonghwaProductHost(toDependencies(request, grant, registry));
+  return createMyeonghwaProductHost(toDependencies(request, registry));
 }

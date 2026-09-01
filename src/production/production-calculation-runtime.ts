@@ -17,7 +17,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import {
   listAuthorizedProductionCalculationPolicies,
   type AuthorizedProductionCalculationPolicySummary,
-} from './production-composition.js';
+} from './production-calculation-authority.js';
 import {
   PRODUCTION_CALCULATION_AUTHORIZATION_ID,
   PRODUCTION_CALCULATION_AUTHORITY_RECORD_REF,
