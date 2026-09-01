@@ -17,9 +17,32 @@ for (const file of packageFiles) {
   }
 }
 
-const pkg = JSON.parse(readFileSync('packages/face-reading/package.json', 'utf8'));
-if (pkg.name !== manifest.invariants.packageName) throw new Error('Face package name drift');
-if (pkg.version !== manifest.invariants.packageVersion) throw new Error('Face package version drift');
-if (pkg.dependencies?.['@mediapipe/tasks-vision'] !== manifest.invariants.mediapipeTasksVisionVersion) {
+const facePackage = JSON.parse(readFileSync('packages/face-reading/package.json', 'utf8'));
+if (facePackage.name !== manifest.invariants.packageName) throw new Error('Face package name drift');
+if (facePackage.version !== manifest.invariants.packageVersion) throw new Error('Face package version drift');
+if (
+  facePackage.dependencies?.['@mediapipe/tasks-vision'] !==
+  manifest.invariants.mediapipeTasksVisionVersion
+) {
   throw new Error('Face dependency drift');
+}
+
+const sajuPackage = JSON.parse(readFileSync('package.json', 'utf8'));
+if (sajuPackage.name !== 'myeonghwa-saju-engine') throw new Error('Saju root package identity drift');
+if (
+  sajuPackage.scripts?.check !==
+  'npm run lint && npm run typecheck && npm run test && npm run build && npm run preview:research:smoke'
+) {
+  throw new Error('Saju root check contract drift');
+}
+
+const expectedRootExports = [
+  '.',
+  './product-host',
+  './product-reading',
+  './production-runtime',
+];
+const actualRootExports = Object.keys(sajuPackage.exports ?? {}).sort();
+if (JSON.stringify(actualRootExports) !== JSON.stringify(expectedRootExports)) {
+  throw new Error('Saju root public exports drift');
 }
