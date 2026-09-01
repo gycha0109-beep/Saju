@@ -130,18 +130,19 @@ function assertSensitivityReferenceMatchesProductionDefault(
   const references = report.results.filter(
     (result) => result.profile.profileId === SENSITIVITY_REFERENCE_PROFILE_ID,
   );
+  const reference = references[0];
 
   if (
     report.referenceProfileId !== SENSITIVITY_REFERENCE_PROFILE_ID ||
     report.productionDefaultAuthorized !== false ||
-    references.length !== 1
+    references.length !== 1 ||
+    reference === undefined
   ) {
     throw new Error(
       'Calculation sensitivity report does not preserve the governed non-authoritative engineering reference boundary.',
     );
   }
 
-  const reference = references[0];
   if (
     reference.profile.role !== 'engineering_reference' ||
     reference.profile.productionDefaultAuthorized !== false ||
