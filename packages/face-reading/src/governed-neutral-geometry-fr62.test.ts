@@ -68,11 +68,19 @@ describe('FR62 photo to governed neutral geometry candidate', () => {
       'FACE_LANDMARKS_RIGHT_EYE',
     ]);
     artifact.geometryCandidates.forEach((entry) => {
+      expect(Object.keys(entry).sort()).toEqual([
+        'candidateRef',
+        'consumerSlotAssignment',
+        'geometry',
+        'providerTopologySymbol',
+        'sideAuthority',
+      ]);
       expect(entry.geometry.kind).toBe('region');
       expect(entry.geometry.boundary).toHaveLength(16);
       expect(entry.sideAuthority).toBe('provider_label_only');
       expect(entry.consumerSlotAssignment).toBeNull();
       entry.geometry.boundary.forEach((point) => {
+        expect(Object.keys(point).sort()).toEqual(['x', 'y']);
         expect(point.x).toBeGreaterThanOrEqual(0);
         expect(point.x).toBeLessThanOrEqual(1);
         expect(point.y).toBeGreaterThanOrEqual(0);
