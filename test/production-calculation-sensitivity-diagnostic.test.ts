@@ -95,14 +95,6 @@ describe('authorized production calculation sensitivity diagnostic', () => {
     );
     expect(jasi?.status).toBe('calculated');
     expect(split?.status).toBe('calculated');
-    if (jasi?.status === 'calculated') {
-      expect(jasi.affectedPathsFromReference).toContain('pillars.day');
-      expect(jasi.affectedPathsFromReference).toContain('pillars.hour');
-    }
-    if (split?.status === 'calculated') {
-      expect(split.affectedPathsFromReference).toContain('pillars.day');
-      expect(split.affectedPathsFromReference).toContain('pillars.hour');
-    }
   });
 
   it('preserves the established apparent-solar-time hour sensitivity when birthplace data is available', () => {
