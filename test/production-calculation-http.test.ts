@@ -1,8 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import type { AddressInfo } from 'node:net';
 import { describe, expect, it } from 'vitest';
-import { createMyeonghwaProductionCalculationHostServer } from '../src/production-calculation-host.js';
+import {
+  PRODUCTION_CALCULATION_HTTP_RESPONSE_SCHEMA_VERSION,
+  createMyeonghwaProductionCalculationHostServer,
+  serializeAuthorizedProductionCalculationHttpResponseV1,
+} from '../src/production-calculation-host.js';
 import { parseProductHostCalculationRequest } from '../src/host/product-host.js';
+import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/production/production-calculation-runtime.js';
 
 const VALID_BIRTH = {
   calendarType: 'solar',
@@ -40,6 +45,10 @@ function collectKeys(value: unknown, keys = new Set<string>()): Set<string> {
   return keys;
 }
 
+function sortedKeys(value: object): string[] {
+  return Object.keys(value).sort();
+}
+
 describe('production calculation HTTP boundary', () => {
   it('normalizes only the existing consumer birth shape', () => {
     expect(parseProductHostCalculationRequest({ birth: VALID_BIRTH })).toEqual({
@@ -67,7 +76,7 @@ describe('production calculation HTTP boundary', () => {
     }
   });
 
-  it('executes only the ADR-0006 authorized production calculation through POST /api/calculations', async () => {
+  it('executes only the ADR-0006 authorized production calculation through a versioned public DTO', async () => {
     const server = await listen();
     try {
       const response = await fetch(`${server.baseUrl}/api/calculations`, {
@@ -76,23 +85,79 @@ describe('production calculation HTTP boundary', () => {
         body: JSON.stringify({ birth: VALID_BIRTH }),
       });
       const payload = (await response.json()) as {
+        responseSchemaVersion: string;
         runtimeVersion: string;
         authority: Record<string, unknown>;
         snapshot: {
           policy: Record<string, unknown>;
-          input: Record<string, unknown>;
+          input: Record<string, unknown> & {
+            date: Record<string, unknown>;
+            time: Record<string, unknown>;
+          };
+          normalized: { appliedCorrections: readonly Record<string, unknown>[] };
+          pillars: Record<string, unknown>;
           calculationHash: string;
+          solarTermContext?: unknown;
         };
       };
 
       expect(response.status).toBe(200);
-      expect(Object.keys(payload).sort()).toEqual(['authority', 'runtimeVersion', 'snapshot']);
+      expect(payload.responseSchemaVersion).toBe(
+        PRODUCTION_CALCULATION_HTTP_RESPONSE_SCHEMA_VERSION,
+      );
+      expect(sortedKeys(payload)).toEqual([
+        'authority',
+        'responseSchemaVersion',
+        'runtimeVersion',
+        'snapshot',
+      ]);
+      expect(sortedKeys(payload.authority)).toEqual([
+        'authorityRecordRef',
+        'authorizationId',
+        'calculationPolicyId',
+        'contentHash',
+        'policyVersion',
+      ]);
       expect(payload.authority).toMatchObject({
         calculationPolicyId: 'myeonghwa-production-civil-midnight-v1',
         authorizationId: 'myeonghwa-production-calculation-default-authorization-v1',
         authorityRecordRef: 'docs/decisions/ADR-0006-production-calculation-default-v1.md',
         policyVersion: 'myeonghwa-production-calculation-policy-v1',
       });
+
+      const expectedSnapshotKeys = [
+        'calculationHash',
+        'completeness',
+        'createdAt',
+        'derivedFacts',
+        'input',
+        'luckCycle',
+        'normalized',
+        'pillars',
+        'policy',
+        'provenance',
+        'schemaVersion',
+        'snapshotId',
+      ];
+      if (payload.snapshot.solarTermContext !== undefined) {
+        expectedSnapshotKeys.push('solarTermContext');
+      }
+      expect(sortedKeys(payload.snapshot)).toEqual(expectedSnapshotKeys.sort());
+      expect(sortedKeys(payload.snapshot.policy)).toEqual([
+        'dayBoundary',
+        'policyId',
+        'policyVersion',
+        'timeZonePolicy',
+        'trueSolarTime',
+        'unknownBirthTimePolicy',
+      ]);
+      expect(sortedKeys(payload.snapshot.input.date)).toEqual(['day', 'month', 'year']);
+      expect(sortedKeys(payload.snapshot.input.time)).toEqual(['hour', 'known', 'minute']);
+      expect(sortedKeys(payload.snapshot.pillars)).toEqual(['day', 'hour', 'month', 'year']);
+      for (const correction of payload.snapshot.normalized.appliedCorrections) {
+        expect(sortedKeys(correction)).toEqual(['applied', 'type']);
+      }
+
       expect(payload.snapshot.policy).toMatchObject({
         policyId: 'myeonghwa/production/civil-midnight-v1',
         policyVersion: 'myeonghwa-production-calculation-policy-v1',
@@ -106,6 +171,8 @@ describe('production calculation HTTP boundary', () => {
       expect(payload.snapshot.calculationHash).toBeTruthy();
 
       const keys = collectKeys(payload);
+      expect(keys).not.toContain('scenarios');
+      expect(keys).not.toContain('details');
       expect(keys).not.toContain('diagnostics');
       expect(keys).not.toContain('sensitivityProfile');
       expect(keys).not.toContain('methodologyRanking');
@@ -116,6 +183,60 @@ describe('production calculation HTTP boundary', () => {
     } finally {
       await server.close();
     }
+  });
+
+  it('strips future internal fields recursively instead of relying on a denylist', () => {
+    const input = parseProductHostCalculationRequest({ birth: VALID_BIRTH });
+    const result = calculateAuthorizedMyeonghwaProductionSnapshot(input);
+    const poisoned = {
+      ...result,
+      diagnostics: { shouldNeverEscape: true },
+      authority: {
+        ...result.authority,
+        methodologyRanking: 99,
+      },
+      snapshot: {
+        ...result.snapshot,
+        internalResearchPayload: { score: 1 },
+        policy: {
+          ...result.snapshot.policy,
+          callerSelectable: true,
+        },
+        normalized: {
+          ...result.snapshot.normalized,
+          internalNormalizationScore: 0.91,
+          appliedCorrections: result.snapshot.normalized.appliedCorrections.map((correction) => ({
+            ...correction,
+            details: { internalWitness: 'research-only' },
+            internalCorrectionScore: 0.5,
+          })),
+        },
+        scenarios: [
+          ...result.snapshot.scenarios,
+          {
+            scenarioId: 'internal-only',
+            snapshotId: 'internal-only',
+            factOverrides: [
+              { path: 'internal', candidateId: 'internal', value: { secret: true } },
+            ],
+            reasonRefs: ['internal'],
+          },
+        ],
+      },
+    };
+
+    const serialized = serializeAuthorizedProductionCalculationHttpResponseV1(poisoned);
+    const keys = collectKeys(serialized);
+
+    expect(keys).not.toContain('diagnostics');
+    expect(keys).not.toContain('methodologyRanking');
+    expect(keys).not.toContain('internalResearchPayload');
+    expect(keys).not.toContain('callerSelectable');
+    expect(keys).not.toContain('internalNormalizationScore');
+    expect(keys).not.toContain('internalCorrectionScore');
+    expect(keys).not.toContain('details');
+    expect(keys).not.toContain('scenarios');
+    expect(keys).not.toContain('secret');
   });
 
   it('fails closed on calculation-policy injection, reading injection, and invalid birth input', async () => {
