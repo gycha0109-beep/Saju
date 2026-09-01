@@ -58,6 +58,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/production-neutral-observation-provider-fr61.test.ts
 
+      - name: Verify FR62 governed neutral geometry boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/governed-neutral-geometry-fr62.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
