@@ -105,8 +105,9 @@ describe('FR63 geometry to morphology admission', () => {
     expect(report.captureSensitiveObservationConsumed).toBe(false);
     expect(report.dynamicAppearanceConsumed).toBe(false);
     expect(report.prohibitedShortcuts).toContain('geometry_to_human_label_assertion');
-    expect(serialized).not.toContain('research_fixture');
-    expect(serialized).not.toContain('human_label_assertion');
+    expect(serialized).not.toContain('\"assertionAuthority\"');
+    expect(serialized).not.toContain('\"fiveOfficers\"');
+    expect(serialized).not.toContain('\"evidenceRefs\"');
     expect(serialized).not.toContain('\"claims\"');
     expect(serialized).not.toContain('\"narrative\"');
   });
