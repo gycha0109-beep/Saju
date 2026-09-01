@@ -62,6 +62,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/governed-neutral-geometry-fr62.test.ts
 
+      - name: Verify FR63 morphology admission boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/morphology-admission-fr63.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
