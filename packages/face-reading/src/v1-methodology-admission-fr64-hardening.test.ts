@@ -99,8 +99,7 @@ describe('FR64 V1 methodology admission hardening', () => {
 
   it('rejects a forged FR63 criterion that becomes static, evaluated, operationalized, or calibrated', async () => {
     const source = await morphology();
-    const first = source.criterionAdmissions[0];
-    expect(first).toBeDefined();
+    const first = source.criterionAdmissions[0]!;
 
     const variants = [
       { ...first, staticV1Eligible: true },
