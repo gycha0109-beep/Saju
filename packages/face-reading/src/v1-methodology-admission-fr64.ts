@@ -82,6 +82,20 @@ export interface V1MethodologyAdmissionReportFR64V1 {
 const TARGET_METHOD_REF = FACE_FR3_METHOD_REFS_V0.shenxiangFiveOfficers;
 const PACK_REF = `${FACE_FR3_RESEARCH_PACK_V0.packId}@${FACE_FR3_RESEARCH_PACK_V0.version}`;
 
+const REQUIRED_FR63_BLOCKERS = Object.freeze([
+  'source_geometry_has_no_anatomical_laterality',
+  'source_geometry_has_no_fr15_consumer_slot_assignment',
+  'eye_criteria_require_capture_sensitive_or_dynamic_observation',
+  'no_static_v1_eye_criterion_operationalization',
+  'methodology_remains_research_only',
+] as const);
+
+const REQUIRED_FR63_SHORTCUT_BLOCKS = Object.freeze([
+  'provider_side_to_anatomical_side',
+  'empty_static_criteria_to_complete_assessment',
+  'geometry_to_human_label_assertion',
+] as const);
+
 const BLOCKERS = Object.freeze([
   'upstream_morphology_input_not_ready',
   'no_automatic_morphology_classifications',
@@ -115,10 +129,29 @@ function validateFR63Source(source: MorphologyAdmissionReportFR63V1): void {
     source.automaticCriterionStatesIssued !== 0 ||
     source.fiveOfficerAssessmentInputIssued !== false ||
     source.researchAssertionSubstitutionAllowed !== false ||
+    source.captureSensitiveObservationConsumed !== false ||
+    source.dynamicAppearanceConsumed !== false ||
     source.productionMorphologyAuthorized !== false ||
     source.v1MethodologyInputReady !== false
   ) {
     throw new FaceAuthorityValidationError('FR-64 v0.1 requires FR-63 morphology input to remain explicitly blocked and empty.');
+  }
+  if (
+    source.criterionAdmissions.length !== 4 ||
+    source.criterionAdmissions.some((criterion) =>
+      criterion.staticV1Eligible !== false ||
+      criterion.automaticState !== 'not_evaluated' ||
+      criterion.operationalizationRef !== null ||
+      criterion.calibrationRef !== null
+    )
+  ) {
+    throw new FaceAuthorityValidationError('FR-64 requires FR-63 eye criteria to remain non-evaluated and non-operationalized.');
+  }
+  if (REQUIRED_FR63_BLOCKERS.some((blocker) => !source.blockers.includes(blocker))) {
+    throw new FaceAuthorityValidationError('FR-64 requires FR-63 laterality, slot, observation, and research blockers to remain intact.');
+  }
+  if (REQUIRED_FR63_SHORTCUT_BLOCKS.some((shortcut) => !source.prohibitedShortcuts.includes(shortcut))) {
+    throw new FaceAuthorityValidationError('FR-64 requires FR-63 anti-shortcut authority restrictions to remain intact.');
   }
   if (
     source.provenance.methodologyRef !== TARGET_METHOD_REF ||
