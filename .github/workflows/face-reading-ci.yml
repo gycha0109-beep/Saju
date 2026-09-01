@@ -54,6 +54,10 @@ jobs:
           npm ci
           npm run check:face-reading
 
+      - name: Verify FR61 provider candidate boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/production-neutral-observation-provider-fr61.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
