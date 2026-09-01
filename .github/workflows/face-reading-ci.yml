@@ -70,6 +70,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/v1-methodology-admission-fr64.test.ts packages/face-reading/src/v1-methodology-admission-fr64-hardening.test.ts
 
+      - name: Verify FR65 release-exact lips topology admission boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/mediapipe-lips-topology-admission-fr65.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
