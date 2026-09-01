@@ -114,7 +114,7 @@ describe('FR62 photo to governed neutral geometry candidate', () => {
     ).every((entry) => entry.derivationRef !== null)).toBe(true);
   });
 
-  it('does not leak provider vertex indices or the FR61 provider-ordered frame into the governed geometry artifact', async () => {
+  it('does not leak provider vertex indices or raw provider landmark fields into the governed geometry artifact', async () => {
     const artifact = await runPhotoToGovernedNeutralGeometryFR62(
       request(),
       factoryFor(validResult()),
@@ -123,8 +123,10 @@ describe('FR62 photo to governed neutral geometry candidate', () => {
 
     expect(serialized).not.toContain('providerOrderedPoints');
     expect(serialized).not.toContain('pointsByProviderVertex');
+    expect(serialized).not.toContain('providerVertex');
     expect(serialized).not.toContain('faceLandmarks');
-    expect(serialized).not.toContain('providerDepth');
+    expect(serialized).not.toContain('\"z\":');
+    expect(serialized).not.toContain('\"visibility\":');
     expect(serialized).not.toContain('morphology\"');
     expect(serialized).not.toContain('claims\"');
     expect(serialized).not.toContain('narrative\"');
