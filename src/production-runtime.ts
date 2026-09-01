@@ -1,7 +1,11 @@
 export {
   PRODUCTION_CALCULATION_RUNTIME_VERSION,
+  PRODUCTION_CALCULATION_SENSITIVITY_DIAGNOSTIC_VERSION,
   calculateAuthorizedMyeonghwaProductionSnapshot,
+  diagnoseAuthorizedMyeonghwaProductionCalculationSensitivity,
   type AuthorizedMyeonghwaProductionCalculationResult,
+  type AuthorizedMyeonghwaProductionCalculationSensitivityDiagnostic,
+  type ProductionCalculationSensitivityDiagnosticCase,
 } from './production/production-calculation-runtime.js';
 export {
   CURRENT_PRODUCTION_COMPOSITION_STATUS,
