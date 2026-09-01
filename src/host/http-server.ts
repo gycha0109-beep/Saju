@@ -1,8 +1,11 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import {
   createMyeonghwaProductHost,
+  parseProductHostCalculationRequest,
   ProductHostRequestError,
   PRODUCT_HOST_VERSION,
+  type MyeonghwaProductHost,
   type MyeonghwaProductHostDependencies,
 } from './product-host.js';
 import { PRODUCT_HOST_APP_SCRIPT, PRODUCT_HOST_PAGE } from './static-page.js';
@@ -108,11 +111,20 @@ function maxRequestBytes(options: MyeonghwaProductHostServerOptions): number {
   return value;
 }
 
-function sendOperationalError(response: ServerResponse): void {
+function sendReadingOperationalError(response: ServerResponse): void {
   sendJson(response, 500, {
     error: {
       code: 'HOST_READING_EXECUTION_FAILED',
       message: 'The reading service could not complete this request.',
+    },
+  });
+}
+
+function sendCalculationOperationalError(response: ServerResponse): void {
+  sendJson(response, 500, {
+    error: {
+      code: 'HOST_CALCULATION_EXECUTION_FAILED',
+      message: 'The calculation service could not complete this request.',
     },
   });
 }
@@ -145,11 +157,10 @@ const PAGE_CSP = [
   "frame-ancestors 'none'",
 ].join('; ');
 
-export function createMyeonghwaProductHostServer(
-  dependencies: MyeonghwaProductHostDependencies,
-  options: MyeonghwaProductHostServerOptions = {},
+function createMyeonghwaHttpServer(
+  readingHost: MyeonghwaProductHost | undefined,
+  options: MyeonghwaProductHostServerOptions,
 ): Server {
-  const host = createMyeonghwaProductHost(dependencies);
   const bodyLimit = maxRequestBytes(options);
 
   return createServer(async (request, response) => {
@@ -172,7 +183,7 @@ export function createMyeonghwaProductHostServer(
       sendJson(response, 200, { status: 'ok', hostVersion: PRODUCT_HOST_VERSION });
       return;
     }
-    if (path === '/api/readings') {
+    if (path === '/api/calculations') {
       if (method !== 'POST') {
         response.setHeader('allow', 'POST');
         sendJson(response, 405, {
@@ -182,10 +193,28 @@ export function createMyeonghwaProductHostServer(
       }
       try {
         const body = await readJsonBody(request, bodyLimit);
-        const result = await host.requestReading(body);
+        const input = parseProductHostCalculationRequest(body);
+        const result = calculateAuthorizedMyeonghwaProductionSnapshot(input);
         sendJson(response, 200, result);
       } catch (error) {
-        if (!handleKnownError(response, error)) sendOperationalError(response);
+        if (!handleKnownError(response, error)) sendCalculationOperationalError(response);
+      }
+      return;
+    }
+    if (path === '/api/readings' && readingHost !== undefined) {
+      if (method !== 'POST') {
+        response.setHeader('allow', 'POST');
+        sendJson(response, 405, {
+          error: { code: 'HOST_METHOD_NOT_ALLOWED', message: 'POST is required.' },
+        });
+        return;
+      }
+      try {
+        const body = await readJsonBody(request, bodyLimit);
+        const result = await readingHost.requestReading(body);
+        sendJson(response, 200, result);
+      } catch (error) {
+        if (!handleKnownError(response, error)) sendReadingOperationalError(response);
       }
       return;
     }
@@ -194,4 +223,17 @@ export function createMyeonghwaProductHostServer(
       error: { code: 'HOST_ROUTE_NOT_FOUND', message: 'Route not found.' },
     });
   });
+}
+
+export function createMyeonghwaProductionCalculationHostServer(
+  options: MyeonghwaProductHostServerOptions = {},
+): Server {
+  return createMyeonghwaHttpServer(undefined, options);
+}
+
+export function createMyeonghwaProductHostServer(
+  dependencies: MyeonghwaProductHostDependencies,
+  options: MyeonghwaProductHostServerOptions = {},
+): Server {
+  return createMyeonghwaHttpServer(createMyeonghwaProductHost(dependencies), options);
 }

@@ -223,6 +223,14 @@ function parseReading(value: unknown): ProductHostReadingRequest {
   };
 }
 
+export function parseProductHostCalculationRequest(body: unknown): BirthInput {
+  if (!isRecord(body)) {
+    throw new ProductHostRequestError('INVALID_REQUEST_BODY', 'Request body must be an object.');
+  }
+  assertOnlyKeys(body, ['birth'], 'INVALID_REQUEST_BODY');
+  return parseBirth(body.birth);
+}
+
 export function parseProductHostReadingRequest(body: unknown): ProductHostReadingRequestBody {
   if (!isRecord(body)) {
     throw new ProductHostRequestError('INVALID_REQUEST_BODY', 'Request body must be an object.');

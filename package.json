@@ -19,6 +19,10 @@
       "types": "./dist/product-host.d.ts",
       "default": "./dist/product-host.js"
     },
+    "./production-calculation-host": {
+      "types": "./dist/production-calculation-host.d.ts",
+      "default": "./dist/production-calculation-host.js"
+    },
     "./production-runtime": {
       "types": "./dist/production-runtime.d.ts",
       "default": "./dist/production-runtime.js"
