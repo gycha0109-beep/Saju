@@ -230,6 +230,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/certified-arclength-total-error-composition-review-fr95.test.ts packages/face-reading/src/certified-arclength-total-error-composition-review-fr95-hardening.test.ts
 
+      - name: Verify FR96 certified symmetric arclength mean runtime boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/certified-role-free-symmetric-arclength-mean-runtime-fr96.test.ts packages/face-reading/src/certified-role-free-symmetric-arclength-mean-runtime-fr96-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
