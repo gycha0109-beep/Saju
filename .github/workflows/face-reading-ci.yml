@@ -226,6 +226,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/exact-rational-distance-enclosure-primitives-runtime-fr94.test.ts packages/face-reading/src/exact-rational-distance-enclosure-primitives-runtime-fr94-hardening.test.ts
 
+      - name: Verify FR95 certified arclength total-error composition review boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/certified-arclength-total-error-composition-review-fr95.test.ts packages/face-reading/src/certified-arclength-total-error-composition-review-fr95-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
