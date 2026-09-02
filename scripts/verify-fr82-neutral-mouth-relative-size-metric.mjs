@@ -114,7 +114,7 @@ async function expectFailure(label, action, pattern) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (!pattern.test(message)) {
-      throw new Error(`FR82 ${label} failed with unexpected error: ${message}`);
+      throw new Error(`FR82 ${label} failed with unexpected error: ${message}`, { cause: error });
     }
     return message;
   }
