@@ -234,6 +234,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/certified-role-free-symmetric-arclength-mean-runtime-fr96.test.ts packages/face-reading/src/certified-role-free-symmetric-arclength-mean-runtime-fr96-hardening.test.ts
 
+      - name: Verify FR97 arclength mean neutral metric definition review boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/role-free-arclength-mean-neutral-metric-definition-review-fr97.test.ts packages/face-reading/src/role-free-arclength-mean-neutral-metric-definition-review-fr97-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
