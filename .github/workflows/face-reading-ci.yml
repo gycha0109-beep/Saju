@@ -106,6 +106,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/five-officers-mouth-indexed-section-anchor-fr73.test.ts
 
+      - name: Verify FR74 mouth scan-image acquisition readiness boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/five-officers-mouth-scan-image-acquisition-readiness-fr74.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
