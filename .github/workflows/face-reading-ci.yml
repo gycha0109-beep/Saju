@@ -10,6 +10,7 @@ on:
       - 'scripts/verify-fr77-governed-metric-runtime.mjs'
       - 'scripts/verify-fr78-governed-metric-lips-surface.mjs'
       - 'scripts/verify-fr79-pose-normalized-lips-geometry.mjs'
+      - 'scripts/verify-fr80-neutral-mouth-contour-metric.mjs'
       - 'tsconfig.face-reading.json'
       - 'tsconfig.face-reading.build.json'
       - 'package.json'
@@ -149,6 +150,14 @@ jobs:
       - name: Verify FR79 exact pose-normalized lips projection
         working-directory: target
         run: npm run face:verify:fr79-pose-normalized-lips
+
+      - name: Verify FR80 neutral mouth contour metric boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-mouth-contour-metric-fr80.test.ts
+
+      - name: Verify FR80 exact neutral mouth contour metric
+        working-directory: target
+        run: npm run face:verify:fr80-neutral-mouth-metric
 
       - name: Verify frozen source baseline
         working-directory: source
