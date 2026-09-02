@@ -6,6 +6,7 @@ on:
       - 'packages/face-reading/**'
       - 'docs/migrations/face-reading-from-myeongha.manifest.json'
       - 'scripts/verify-face-reading-migration.mjs'
+      - 'scripts/verify-fr76-mediapipe-parity.mjs'
       - 'tsconfig.face-reading.json'
       - 'tsconfig.face-reading.build.json'
       - 'package.json'
@@ -113,6 +114,14 @@ jobs:
       - name: Verify FR75 MediaPipe release-exact metric geometry admission boundary
         working-directory: target
         run: npx vitest run packages/face-reading/src/mediapipe-release-exact-metric-geometry-admission-fr75.test.ts
+
+      - name: Verify FR76 MediaPipe screen-to-metric reimplementation boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/mediapipe-screen-to-metric-reimplementation-parity-fr76.test.ts
+
+      - name: Verify FR76 MediaPipe exact golden parity
+        working-directory: target
+        run: npm run face:verify:fr76-parity
 
       - name: Verify frozen source baseline
         working-directory: source
