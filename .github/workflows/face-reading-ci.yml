@@ -13,6 +13,7 @@ on:
       - 'scripts/verify-fr80-neutral-mouth-contour-metric.mjs'
       - 'scripts/verify-fr82-neutral-mouth-relative-size-metric.mjs'
       - 'scripts/verify-fr85-role-free-contour-nesting.mjs'
+      - 'scripts/verify-fr88-role-free-minimum-set-separation.mjs'
       - 'tsconfig.face-reading.json'
       - 'tsconfig.face-reading.build.json'
       - 'package.json'
@@ -192,6 +193,14 @@ jobs:
       - name: Verify FR86 role-free cross-contour correspondence feasibility boundary
         working-directory: target
         run: npx vitest run packages/face-reading/src/role-free-cross-contour-correspondence-feasibility-review-fr86.test.ts packages/face-reading/src/role-free-cross-contour-correspondence-feasibility-review-fr86-hardening.test.ts
+
+      - name: Verify FR88 role-free minimum set separation runtime boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/role-free-minimum-set-separation-runtime-fr88.test.ts packages/face-reading/src/role-free-minimum-set-separation-runtime-fr88-hardening.test.ts
+
+      - name: Verify FR88 exact role-free minimum set separation runtime
+        working-directory: target
+        run: npm run face:verify:fr88-role-free-minimum-set-separation
 
       - name: Verify frozen source baseline
         working-directory: source
