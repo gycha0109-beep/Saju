@@ -2,6 +2,7 @@ import {
   assertIssuedRoleFreeSymmetricSetDistanceFeasibilityReviewFR87,
   reviewRoleFreeSymmetricSetDistanceFeasibilityFR87,
 } from './role-free-symmetric-set-distance-feasibility-review-fr87.js';
+import { computeRoleFreeClosedPolylineMinimumSetSeparationFR88 } from './role-free-minimum-set-separation-runtime-fr88.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export type WholeContourSeparationCandidateStatusFR89 =
@@ -254,13 +255,17 @@ function validateFR87Authority(): void {
     fr87.schemaVersion !== 'fr87-role-free-symmetric-set-distance-feasibility-review-v1' ||
     fr87.authorityState !== 'role_free_symmetric_set_distance_feasibility_review_completed_no_runtime_metric_issued' ||
     fr87.mathematicalDefinitions.minimumSetSeparation !== 'inf_{a_in_A,b_in_B} euclidean_distance(a,b)' ||
-    fr87.feasibilityDecision.minimumSetSeparationAdmittedForResearchNeutralGeometry !== true ||
-    fr87.feasibilityDecision.bidirectionalHausdorffAdmittedForResearchNeutralGeometry !== true ||
-    fr87.feasibilityDecision.minimumSetSeparationMeansRepresentativeBandWidth !== false ||
-    fr87.feasibilityDecision.hausdorffMeansRepresentativeBandWidth !== false ||
+    fr87.feasibilityDecision.researchNeutralFunctionalSpecificationsAdmitted !== 2 ||
+    fr87.candidates[0].functional !== 'minimum_set_separation' ||
+    fr87.candidates[0].researchNeutralFunctionalSpecificationAdmitted !== true ||
+    fr87.candidates[1].functional !== 'bidirectional_hausdorff_distance' ||
+    fr87.candidates[1].researchNeutralFunctionalSpecificationAdmitted !== true ||
+    fr87.authorityBoundary.minimumGapMeansRepresentativeBandWidth !== false ||
+    fr87.authorityBoundary.hausdorffMeansRepresentativeBandWidth !== false ||
     fr87.thicknessMetricIssued !== false ||
-    fr87.traditionalSemanticAuthority !== false
-  ) fail('FR-87 symmetric set-distance authority drift.');
+    fr87.traditionalSemanticAuthority !== false ||
+    typeof computeRoleFreeClosedPolylineMinimumSetSeparationFR88 !== 'function'
+  ) fail('FR-87/FR-88 whole-contour frontier authority drift.');
 }
 
 export function reviewRoleFreeWholeContourSeparationSummaryFeasibilityFR89(): RoleFreeWholeContourSeparationSummaryFeasibilityReviewFR89V1 {
