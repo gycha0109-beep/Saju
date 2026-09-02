@@ -12,6 +12,8 @@ import {
 } from './governed-metric-geometry-runtime-fr77.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
+const LIPS_TOPOLOGY_SOURCE_BLOB_SHA = '644de9d8c7cd90880d92b2393b4913fa93ace927' as const;
+
 export interface GovernedMetricLipsPointFR78V1 {
   readonly x: number;
   readonly y: number;
@@ -39,6 +41,7 @@ export interface GovernedMetricLipsSurfaceReadinessFR78V1 {
     readonly releaseTag: 'v0.10.35';
     readonly releaseCommit: 'f8ef212d5c962c0e853db7e59d217056b187084b';
     readonly sourcePath: 'mediapipe/tasks/web/vision/face_landmarker/face_landmarks_connections.ts';
+    readonly sourceBlobSha: typeof LIPS_TOPOLOGY_SOURCE_BLOB_SHA;
     readonly sourceSymbol: 'FACE_LANDMARKS_LIPS';
     readonly edgeCount: 40;
     readonly connectedComponentCount: 2;
@@ -92,6 +95,7 @@ export interface GovernedMetricLipsSurfaceFR78V1 {
     readonly providerRepository: 'google-ai-edge/mediapipe';
     readonly providerReleaseTag: 'v0.10.35';
     readonly providerReleaseCommit: 'f8ef212d5c962c0e853db7e59d217056b187084b';
+    readonly providerTopologySourceBlobSha: typeof LIPS_TOPOLOGY_SOURCE_BLOB_SHA;
     readonly providerTopologySymbol: 'FACE_LANDMARKS_LIPS';
     readonly providerRuntimePackageVersion: '0.10.35';
     readonly geometryMetadataBlobSha: '252a7b05b24c5c43c5b94179393639f7c9a2fe8f';
@@ -285,6 +289,7 @@ export function assessGovernedMetricLipsSurfaceReadinessFR78(): GovernedMetricLi
       releaseTag: MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65.releaseTag,
       releaseCommit: MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65.releaseCommit,
       sourcePath: MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65.sourcePath,
+      sourceBlobSha: LIPS_TOPOLOGY_SOURCE_BLOB_SHA,
       sourceSymbol: MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65.sourceSymbol,
       edgeCount: MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65.edgeCount,
       connectedComponentCount: MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65.connectedComponentCount,
@@ -427,6 +432,7 @@ export function projectIssuedGovernedMetricGeometryToLipsSurfaceFR78(
       providerRepository: MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65.repository,
       providerReleaseTag: MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65.releaseTag,
       providerReleaseCommit: MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65.releaseCommit,
+      providerTopologySourceBlobSha: LIPS_TOPOLOGY_SOURCE_BLOB_SHA,
       providerTopologySymbol: MEDIAPIPE_LIPS_RELEASE_WITNESS_FR65.sourceSymbol,
       providerRuntimePackageVersion: source.provider.runtimePackageVersion,
       geometryMetadataBlobSha: source.geometryProfile.metadataBlobSha,
