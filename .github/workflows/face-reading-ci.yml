@@ -202,6 +202,10 @@ jobs:
         working-directory: target
         run: npm run face:verify:fr88-role-free-minimum-set-separation
 
+      - name: Verify FR89 role-free whole-contour separation summary feasibility boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/role-free-whole-contour-separation-summary-feasibility-review-fr89.test.ts packages/face-reading/src/role-free-whole-contour-separation-summary-feasibility-review-fr89-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
