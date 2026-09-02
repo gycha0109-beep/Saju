@@ -209,7 +209,7 @@ function validateCurrentResearchAuthorityInputs(): void {
   if (
     methodology === undefined ||
     methodology.reviewStatus !== 'research' ||
-    !methodology.sourceRefs.includes('passage.shenxiang.five_officers.intake')
+    !methodology.sourceRefs.some((sourceRef) => sourceRef === 'passage.shenxiang.five_officers.intake')
   ) {
     fail('Five Officers methodology authority drift.');
   }
@@ -228,7 +228,7 @@ function validateCurrentResearchAuthorityInputs(): void {
       criterion.modality !== expected.modality ||
       criterion.requiredForTraditionalFormation !== true ||
       criterion.staticV1Eligible !== expected.staticV1Eligible ||
-      !criterion.sourceRefs.includes('passage.shenxiang.five_officers.intake')
+      !criterion.sourceRefs.some((sourceRef) => sourceRef === 'passage.shenxiang.five_officers.intake')
     ) {
       fail(`intake criterion authority drift at index ${index}.`);
     }
