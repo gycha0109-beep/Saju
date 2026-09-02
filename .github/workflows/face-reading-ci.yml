@@ -11,6 +11,7 @@ on:
       - 'scripts/verify-fr78-governed-metric-lips-surface.mjs'
       - 'scripts/verify-fr79-pose-normalized-lips-geometry.mjs'
       - 'scripts/verify-fr80-neutral-mouth-contour-metric.mjs'
+      - 'scripts/verify-fr82-neutral-mouth-relative-size-metric.mjs'
       - 'tsconfig.face-reading.json'
       - 'tsconfig.face-reading.build.json'
       - 'package.json'
@@ -162,6 +163,14 @@ jobs:
       - name: Verify FR81 mouth metric binding review boundary
         working-directory: target
         run: npx vitest run packages/face-reading/src/five-officers-mouth-metric-binding-review-fr81.test.ts
+
+      - name: Verify FR82 neutral mouth relative size metric boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-mouth-relative-size-metric-fr82.test.ts
+
+      - name: Verify FR82 exact neutral mouth relative size metric
+        working-directory: target
+        run: npm run face:verify:fr82-neutral-mouth-relative-size
 
       - name: Verify frozen source baseline
         working-directory: source
