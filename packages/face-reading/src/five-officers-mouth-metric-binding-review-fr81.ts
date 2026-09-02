@@ -28,9 +28,7 @@ export interface FiveOfficerMouthMetricBindingCriterionReviewFR81V1 {
   readonly modality: FiveOfficerCriterionModality;
   readonly staticV1Eligible: boolean;
   readonly candidateNeutralMetricRefs: readonly string[];
-  readonly candidateRelation:
-    | 'partial_shape_observation_only'
-    | 'no_applicable_neutral_metric_admitted';
+  readonly candidateRelation: 'partial_shape_observation_only' | 'no_applicable_neutral_metric_admitted';
   readonly traditionalMetricBindingRef: null;
   readonly calibrationRef: null;
   readonly thresholdRef: null;
@@ -119,38 +117,11 @@ export interface FiveOfficerMouthMetricBindingReviewFR81V1 {
 }
 
 const EXPECTED_CRITERIA = Object.freeze([
-  Object.freeze({
-    criterionId: 'criterion.intake.square_broad' as const,
-    sourceConcept: '方大',
-    modality: 'static_geometry' as const,
-    staticV1Eligible: true,
-    operationalizationNote: 'mouth aspect/width 후보이나 方/大 threshold는 별도 calibration이 필요하다.',
-  }),
-  Object.freeze({
-    criterionId: 'criterion.intake.lips_substantial' as const,
-    sourceConcept: '端厚',
-    modality: 'static_geometry' as const,
-    staticV1Eligible: true,
-    operationalizationNote: 'neutral-mouth capture에서 lip thickness 후보.',
-  }),
-  Object.freeze({
-    criterionId: 'criterion.intake.corners_arched' as const,
-    sourceConcept: '角弓',
-    modality: 'capture_sensitive' as const,
-    staticV1Eligible: false,
-  }),
-  Object.freeze({
-    criterionId: 'criterion.intake.open_close_relation' as const,
-    sourceConcept: '開大合小',
-    modality: 'capture_sensitive' as const,
-    staticV1Eligible: false,
-  }),
-  Object.freeze({
-    criterionId: 'criterion.intake.red_lip_color' as const,
-    sourceConcept: '唇紅',
-    modality: 'dynamic_appearance' as const,
-    staticV1Eligible: false,
-  }),
+  Object.freeze({ criterionId: 'criterion.intake.square_broad' as const, sourceConcept: '方大', modality: 'static_geometry' as const, staticV1Eligible: true, operationalizationNote: 'mouth aspect/width 후보이나 方/大 threshold는 별도 calibration이 필요하다.' }),
+  Object.freeze({ criterionId: 'criterion.intake.lips_substantial' as const, sourceConcept: '端厚', modality: 'static_geometry' as const, staticV1Eligible: true, operationalizationNote: 'neutral-mouth capture에서 lip thickness 후보.' }),
+  Object.freeze({ criterionId: 'criterion.intake.corners_arched' as const, sourceConcept: '角弓', modality: 'capture_sensitive' as const, staticV1Eligible: false, operationalizationNote: '표정에 따라 mouth corner curvature가 변하므로 neutral-expression gate가 필요하다.' }),
+  Object.freeze({ criterionId: 'criterion.intake.open_close_relation' as const, sourceConcept: '開大合小', modality: 'capture_sensitive' as const, staticV1Eligible: false, operationalizationNote: '의도적 입 벌림/다묾 상태와 혼동되므로 단일 neutral frame에서 자동판정하지 않는다.' }),
+  Object.freeze({ criterionId: 'criterion.intake.red_lip_color' as const, sourceConcept: '唇紅', modality: 'dynamic_appearance' as const, staticV1Eligible: false, operationalizationNote: 'lip color는 조명·화장 confound가 커 static v1에서 차단한다.' }),
 ] as const);
 
 const REMAINING_BLOCKERS = Object.freeze([
@@ -221,13 +192,11 @@ function validateCurrentAuthorityInputs(): void {
   if (
     methodology === undefined ||
     methodology.reviewStatus !== 'research' ||
-    !methodology.sourceRefs.includes('passage.shenxiang.five_officers.intake')
+    !methodology.sourceRefs.some((sourceRef) => sourceRef === 'passage.shenxiang.five_officers.intake')
   ) fail('Five Officers methodology authority drift.');
 
   const criteria = FIVE_OFFICER_CRITERIA_V0.filter((item) => item.officerKey === 'intake');
-  if (!sameSequence(criteria.map((item) => item.criterionId), FR81_INTAKE_CRITERION_IDS)) {
-    fail('intake criterion registry drift.');
-  }
+  if (!sameSequence(criteria.map((item) => item.criterionId), FR81_INTAKE_CRITERION_IDS)) fail('intake criterion registry drift.');
   criteria.forEach((criterion, index) => {
     const expected = EXPECTED_CRITERIA[index]!;
     if (
@@ -235,18 +204,15 @@ function validateCurrentAuthorityInputs(): void {
       criterion.sourceConcept !== expected.sourceConcept ||
       criterion.modality !== expected.modality ||
       criterion.staticV1Eligible !== expected.staticV1Eligible ||
+      criterion.operationalizationNote !== expected.operationalizationNote ||
       criterion.requiredForTraditionalFormation !== true ||
       criterion.anatomicalTarget !== 'mouth' ||
       criterion.traditionalOfficerName !== '出納官'
     ) fail(`intake criterion authority drift at index ${index}.`);
-    if ('operationalizationNote' in expected && criterion.operationalizationNote !== expected.operationalizationNote) {
-      fail(`intake operationalization note drift at index ${index}.`);
-    }
   });
 
   const criterionSet = new Set<string>(FR81_INTAKE_CRITERION_IDS);
-  if (FACE_CALIBRATION_EVIDENCE_RESEARCH_V0.evidence.some((item) =>
-    item.criterionRefs.some((criterionRef) => criterionSet.has(criterionRef)))) {
+  if (FACE_CALIBRATION_EVIDENCE_RESEARCH_V0.evidence.some((item) => item.criterionRefs.some((ref) => criterionSet.has(ref)))) {
     fail('mouth calibration evidence now exists; FR-81 binding review must be re-reviewed.');
   }
   const protocol = FACE_NOSE_BRIDGE_CALIBRATION_PROTOCOL_RESEARCH_V0;
@@ -271,13 +237,7 @@ function criterionReviews(): readonly FiveOfficerMouthMetricBindingCriterionRevi
       thresholdRef: null,
       automaticCriterionStateAuthorized: false as const,
       bindingDecision: 'not_admitted' as const,
-      missingAuthority: Object.freeze([
-        'relative_mouth_size_metric_definition',
-        'scan_checked_traditional_source',
-        'criterion_specific_calibration_evidence',
-        'criterion_specific_calibration_protocol',
-        'calibrated_decision_threshold',
-      ]),
+      missingAuthority: Object.freeze(['relative_mouth_size_metric_definition', 'scan_checked_traditional_source', 'criterion_specific_calibration_evidence', 'criterion_specific_calibration_protocol', 'calibrated_decision_threshold']),
     }),
     Object.freeze({
       criterionId: 'criterion.intake.lips_substantial' as const,
@@ -291,14 +251,7 @@ function criterionReviews(): readonly FiveOfficerMouthMetricBindingCriterionRevi
       thresholdRef: null,
       automaticCriterionStateAuthorized: false as const,
       bindingDecision: 'not_admitted' as const,
-      missingAuthority: Object.freeze([
-        'outer_inner_lip_anatomical_roles',
-        'lip_thickness_metric_definition',
-        'scan_checked_traditional_source',
-        'criterion_specific_calibration_evidence',
-        'criterion_specific_calibration_protocol',
-        'calibrated_decision_threshold',
-      ]),
+      missingAuthority: Object.freeze(['outer_inner_lip_anatomical_roles', 'lip_thickness_metric_definition', 'scan_checked_traditional_source', 'criterion_specific_calibration_evidence', 'criterion_specific_calibration_protocol', 'calibrated_decision_threshold']),
     }),
     ...EXPECTED_CRITERIA.slice(2).map((criterion) => Object.freeze({
       criterionId: criterion.criterionId,
@@ -313,9 +266,7 @@ function criterionReviews(): readonly FiveOfficerMouthMetricBindingCriterionRevi
       automaticCriterionStateAuthorized: false as const,
       bindingDecision: 'not_admitted' as const,
       missingAuthority: Object.freeze([
-        criterion.modality === 'dynamic_appearance'
-          ? 'dynamic_appearance_authority'
-          : 'capture_state_protocol_and_neutral_expression_gate',
+        criterion.modality === 'dynamic_appearance' ? 'dynamic_appearance_authority' : 'capture_state_protocol_and_neutral_expression_gate',
         'scan_checked_traditional_source',
       ]),
     })),
@@ -381,9 +332,7 @@ export function reviewFiveOfficerMouthMetricBindingsFR81(): FiveOfficerMouthMetr
   return result;
 }
 
-export function assertIssuedFiveOfficerMouthMetricBindingReviewFR81(
-  review: FiveOfficerMouthMetricBindingReviewFR81V1,
-): void {
+export function assertIssuedFiveOfficerMouthMetricBindingReviewFR81(review: FiveOfficerMouthMetricBindingReviewFR81V1): void {
   if (!REVIEW_ISSUED.has(review)) fail('mouth metric binding review was not issued by the active FR-81 boundary.');
   if (
     review.schemaVersion !== 'fr81-five-officers-mouth-metric-binding-review-v1' ||
@@ -398,11 +347,6 @@ export function assertIssuedFiveOfficerMouthMetricBindingReviewFR81(
     review.bindingSummary.criterionStatesIssued !== 0 ||
     review.bindingSummary.claimsIssued !== 0 ||
     review.bindingSummary.traditionalSemanticAuthority !== false ||
-    review.criterionReviews.some((item) =>
-      item.traditionalMetricBindingRef !== null ||
-      item.calibrationRef !== null ||
-      item.thresholdRef !== null ||
-      item.automaticCriterionStateAuthorized !== false ||
-      item.bindingDecision !== 'not_admitted')
+    review.criterionReviews.some((item) => item.traditionalMetricBindingRef !== null || item.calibrationRef !== null || item.thresholdRef !== null || item.automaticCriterionStateAuthorized !== false || item.bindingDecision !== 'not_admitted')
   ) fail('issued FR-81 review authority widened or identity drifted.');
 }
