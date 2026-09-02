@@ -20,6 +20,17 @@ const RELEASE_COMMIT = 'f8ef212d5c962c0e853db7e59d217056b187084b';
 const RAW_ROOT = `https://raw.githubusercontent.com/google-ai-edge/mediapipe/${RELEASE_COMMIT}`;
 const PROVIDER_LANDMARK_COUNT = 478;
 const DIGEST = `sha256:${'5'.repeat(64)}`;
+const EXPECTED_RELATION_STATE = 'strictly_nested';
+const EXPECTED_GEOMETRIC_ROLES = Object.freeze([
+  Object.freeze({
+    contourRef: 'fr79:lips-pose-normalized-contour:1',
+    geometricRole: 'enclosing_cycle',
+  }),
+  Object.freeze({
+    contourRef: 'fr79:lips-pose-normalized-contour:2',
+    geometricRole: 'enclosed_cycle',
+  }),
+]);
 
 const WITNESSES = Object.freeze({
   input: Object.freeze({
@@ -147,20 +158,26 @@ if (
   fr85.traditionalSemanticAuthority !== false
 ) throw new Error('FR85 exact governed contour-relation authority drift.');
 
-if (fr85.relation.relationState === 'strictly_nested') {
-  if (
-    fr85.relation.strictNestingValidated !== true ||
-    fr85.relation.geometricRolesIssued !== 2 ||
-    fr85.relation.geometricRoles.length !== 2 ||
-    fr85.relation.geometricRoles[0]?.geometricRole !== 'enclosing_cycle' ||
-    fr85.relation.geometricRoles[1]?.geometricRole !== 'enclosed_cycle'
-  ) throw new Error('FR85 exact strict nesting must issue exactly two role-free geometric roles.');
-} else if (
-  fr85.relation.strictNestingValidated !== false ||
-  fr85.relation.geometricRolesIssued !== 0 ||
-  fr85.relation.geometricRoles.length !== 0
+const actualGeometricRoles = fr85.relation.geometricRoles.map((role) => ({
+  contourRef: role.contourRef,
+  geometricRole: role.geometricRole,
+}));
+if (
+  fr85.relation.relationState !== EXPECTED_RELATION_STATE ||
+  fr85.relation.strictNestingValidated !== true ||
+  fr85.relation.mutualBoundaryIntersectionOrTouch !== false ||
+  fr85.relation.geometricRolesIssued !== 2 ||
+  JSON.stringify(actualGeometricRoles) !== JSON.stringify(EXPECTED_GEOMETRIC_ROLES)
 ) {
-  throw new Error('FR85 exact non-nested/rejected relation must fail-close geometric-role issuance.');
+  throw new Error(
+    `FR85 exact release fixture geometric golden drift: expected=${JSON.stringify({
+      relationState: EXPECTED_RELATION_STATE,
+      geometricRoles: EXPECTED_GEOMETRIC_ROLES,
+    })} actual=${JSON.stringify({
+      relationState: fr85.relation.relationState,
+      geometricRoles: actualGeometricRoles,
+    })}.`,
+  );
 }
 
 for (const role of fr85.relation.geometricRoles) {
@@ -180,10 +197,7 @@ process.stdout.write(`${JSON.stringify({
   relationState: fr85.relation.relationState,
   strictNestingValidated: fr85.relation.strictNestingValidated,
   geometricRolesIssued: fr85.relation.geometricRolesIssued,
-  geometricRoles: fr85.relation.geometricRoles.map((role) => ({
-    contourRef: role.contourRef,
-    geometricRole: role.geometricRole,
-  })),
+  geometricRoles: actualGeometricRoles,
   anatomicalRolesIssued: fr85.anatomicalRolesIssued,
   thicknessMetricIssued: fr85.relation.thicknessMetricIssued,
   criterionStatesIssued: fr85.criterionStatesIssued,
