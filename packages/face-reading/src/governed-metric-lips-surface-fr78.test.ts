@@ -110,6 +110,7 @@ describe('FR78 governed metric lips surface', () => {
       releaseTag: 'v0.10.35',
       releaseCommit: 'f8ef212d5c962c0e853db7e59d217056b187084b',
       sourcePath: 'mediapipe/tasks/web/vision/face_landmarker/face_landmarks_connections.ts',
+      sourceBlobSha: '644de9d8c7cd90880d92b2393b4913fa93ace927',
       sourceSymbol: 'FACE_LANDMARKS_LIPS',
       edgeCount: 40,
       connectedComponentCount: 2,
