@@ -159,6 +159,10 @@ jobs:
         working-directory: target
         run: npm run face:verify:fr80-neutral-mouth-metric
 
+      - name: Verify FR81 mouth metric binding review boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/five-officers-mouth-metric-binding-review-fr81.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
