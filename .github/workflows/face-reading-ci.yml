@@ -206,6 +206,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/role-free-whole-contour-separation-summary-feasibility-review-fr89.test.ts packages/face-reading/src/role-free-whole-contour-separation-summary-feasibility-review-fr89-hardening.test.ts
 
+      - name: Verify FR90 certified arclength mean integration algorithm boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/role-free-arclength-mean-integration-algorithm-review-fr90.test.ts packages/face-reading/src/role-free-arclength-mean-integration-algorithm-review-fr90-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
