@@ -302,7 +302,7 @@ export function projectMetricLipsSurfaceToPoseNormalized2DFR79(
     sourceComponentAuthority: contour.sourceComponentAuthority,
     anatomicalRole: null,
     traditionalRole: null,
-  }))));
+  })));
 
   const result: PoseNormalizedLipsGeometryFR79V1 = Object.freeze({
     schemaVersion: 'fr79-pose-normalized-lips-geometry-v1' as const,
