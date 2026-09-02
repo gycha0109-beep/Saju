@@ -172,6 +172,10 @@ jobs:
         working-directory: target
         run: npm run face:verify:fr82-neutral-mouth-relative-size
 
+      - name: Verify FR83 square-broad combined binding review boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-combined-binding-review-fr83.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
