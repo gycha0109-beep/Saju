@@ -48,6 +48,7 @@
     "face:verify:manifest": "node scripts/verify-face-reading-migration.mjs",
     "face:typecheck": "tsc -p tsconfig.face-reading.json --noEmit",
     "face:build": "tsc -p tsconfig.face-reading.build.json",
+    "face:verify:fr76-parity": "npm run face:build && node scripts/verify-fr76-mediapipe-parity.mjs",
     "check:face-reading": "npm run face:verify:manifest && npm run face:typecheck && npm run face:build"
   },
   "dependencies": {
