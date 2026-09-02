@@ -1,4 +1,6 @@
+import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
+import process from 'node:process';
 
 import { reimplementMediaPipeScreenToMetricFR76 } from '../.face-reading-dist/mediapipe-screen-to-metric-reimplementation-parity-fr76.js';
 
@@ -32,7 +34,7 @@ function gitBlobSha(bytes) {
 }
 
 async function fetchExact(witness) {
-  const response = await fetch(`${RAW_ROOT}/${witness.path}`, {
+  const response = await globalThis.fetch(`${RAW_ROOT}/${witness.path}`, {
     headers: { 'user-agent': 'myeongha-fr76-parity-verifier' },
   });
   if (!response.ok) {
@@ -193,7 +195,7 @@ for (let index = 0; index < 16; index += 1) {
   }
 }
 
-console.log(JSON.stringify({
+process.stdout.write(`${JSON.stringify({
   status: 'FR76_MEDIAPIPE_V0_10_35_SCREEN_TO_METRIC_PARITY_PASS',
   releaseCommit: RELEASE_COMMIT,
   geometryLandmarkCount: LANDMARK_COUNT,
@@ -205,4 +207,4 @@ console.log(JSON.stringify({
   firstIterationScale: actual.firstIterationScale,
   secondIterationScale: actual.secondIterationScale,
   totalScale: actual.totalScale,
-}));
+})}\n`);
