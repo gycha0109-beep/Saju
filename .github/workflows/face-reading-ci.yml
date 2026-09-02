@@ -222,6 +222,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/exact-dyadic-rational-distance-enclosure-primitives-review-fr93.test.ts packages/face-reading/src/exact-dyadic-rational-distance-enclosure-primitives-review-fr93-hardening.test.ts
 
+      - name: Verify FR94 exact rational distance enclosure primitives runtime boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/exact-rational-distance-enclosure-primitives-runtime-fr94.test.ts packages/face-reading/src/exact-rational-distance-enclosure-primitives-runtime-fr94-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
