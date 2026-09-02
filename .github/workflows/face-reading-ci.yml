@@ -86,6 +86,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/mediapipe-face-geometry-transform-semantics-fr68.test.ts
 
+      - name: Verify FR69 Web metric geometry surface gap boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/mediapipe-web-metric-geometry-gap-fr69.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
