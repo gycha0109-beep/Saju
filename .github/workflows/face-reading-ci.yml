@@ -102,6 +102,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/five-officers-mouth-direct-source-candidate-extension-fr72.test.ts
 
+      - name: Verify FR73 mouth indexed section anchor boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/five-officers-mouth-indexed-section-anchor-fr73.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
