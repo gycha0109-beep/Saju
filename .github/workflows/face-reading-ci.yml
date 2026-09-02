@@ -12,6 +12,7 @@ on:
       - 'scripts/verify-fr79-pose-normalized-lips-geometry.mjs'
       - 'scripts/verify-fr80-neutral-mouth-contour-metric.mjs'
       - 'scripts/verify-fr82-neutral-mouth-relative-size-metric.mjs'
+      - 'scripts/verify-fr85-role-free-contour-nesting.mjs'
       - 'tsconfig.face-reading.json'
       - 'tsconfig.face-reading.build.json'
       - 'package.json'
@@ -183,6 +184,10 @@ jobs:
       - name: Verify FR85 role-free contour nesting runtime boundary
         working-directory: target
         run: npx vitest run packages/face-reading/src/role-free-lips-contour-nesting-runtime-fr85.test.ts packages/face-reading/src/role-free-lips-contour-nesting-runtime-fr85-hardening.test.ts
+
+      - name: Verify FR85 exact role-free contour nesting runtime
+        working-directory: target
+        run: npm run face:verify:fr85-role-free-contour-nesting
 
       - name: Verify frozen source baseline
         working-directory: source
