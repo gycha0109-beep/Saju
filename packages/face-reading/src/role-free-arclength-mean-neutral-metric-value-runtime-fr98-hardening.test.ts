@@ -3,6 +3,7 @@ import type { GovernedCertifiedRoleFreeSymmetricArclengthMeanFR96V1 } from './ce
 import {
   bindIssuedFR96ToNeutralMetricValueFR98,
 } from './role-free-arclength-mean-neutral-metric-value-runtime-fr98.js';
+import { reviewRoleFreeArclengthMeanNeutralMetricDefinitionFR97 } from './role-free-arclength-mean-neutral-metric-definition-review-fr97.js';
 
 describe('FR98 neutral metric value binding hardening', () => {
   it('cannot bypass FR96 issuance by supplying complete-looking geometry and metric fields', () => {
@@ -41,19 +42,22 @@ describe('FR98 neutral metric value binding hardening', () => {
       .toThrow(/not issued by the active FR-96 governed boundary/u);
   });
 
-  it('does not offer a structural path from metric binding to anatomy, thickness or traditional authority', async () => {
-    const sourceText = await import('node:fs/promises').then(async ({ readFile }) =>
-      readFile(new URL('./role-free-arclength-mean-neutral-metric-value-runtime-fr98.ts', import.meta.url), 'utf8')
-        .catch(() => ''),
-    );
+  it('inherits FR97 prohibitions against anatomy, thickness, anthropometry and traditional shortcuts', () => {
+    const review = reviewRoleFreeArclengthMeanNeutralMetricDefinitionFR97();
 
-    if (sourceText.length > 0) {
-      expect(sourceText).toContain('neutralMetricValueMeansLipThickness: false');
-      expect(sourceText).toContain('neutralMetricValueMeansPhysicalSoftTissueAnthropometry: false');
-      expect(sourceText).toContain('nearestSetMetricMeansPointCorrespondence: false');
-      expect(sourceText).toContain('metricValueBindingMeansMorphologyState: false');
-      expect(sourceText).toContain('metricValueBindingMeansTraditionalDuanHou: false');
-      expect(sourceText).toContain('sourceRuntimeValueMayBeRecomputedDuringBinding: false');
-    }
+    expect(review.authorityBoundary.neutralSeparationMetricMeansLipThickness).toBe(false);
+    expect(review.authorityBoundary.canonicalMetricPlaneDistanceMeansPhysicalSoftTissueAnthropometry).toBe(false);
+    expect(review.authorityBoundary.nearestSetDistanceMeansPointCorrespondence).toBe(false);
+    expect(review.authorityBoundary.neutralMetricDefinitionMeansMorphologyState).toBe(false);
+    expect(review.authorityBoundary.neutralMetricDefinitionMeansTraditionalDuanHou).toBe(false);
+    expect(review.authorityBoundary.numericalCertificateMeansCalibrationThreshold).toBe(false);
+    expect(review.prohibitedShortcuts).toEqual(expect.arrayContaining([
+      'neutral_arclength_mean_separation_to_lip_thickness',
+      'canonical_metric_plane_distance_to_physical_soft_tissue_anthropometry',
+      'nearest_set_distance_to_cross_contour_correspondence_pair',
+      'neutral_metric_definition_to_morphology_state',
+      'neutral_metric_definition_to_traditional_duan_hou_semantics',
+      'certified_numerical_error_to_calibration_threshold',
+    ]));
   });
 });
