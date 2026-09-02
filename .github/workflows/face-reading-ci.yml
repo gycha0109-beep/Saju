@@ -180,6 +180,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-lip-band-geometry-feasibility-review-fr84.test.ts packages/face-reading/src/neutral-lip-band-geometry-feasibility-review-fr84-hardening.test.ts
 
+      - name: Verify FR85 role-free contour nesting runtime boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/role-free-lips-contour-nesting-runtime-fr85.test.ts packages/face-reading/src/role-free-lips-contour-nesting-runtime-fr85-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
