@@ -229,7 +229,7 @@ function validateFR91Authority(): void {
   if (
     fr91.schemaVersion !== 'fr91-certified-arclength-mean-runtime-numeric-policy-review-v1' ||
     fr91.authorityState !== 'certified_arclength_mean_numeric_policy_review_completed_no_runtime_value_issued' ||
-    fr91.sourceAuthority.fr90CertificateType !== 'deterministic_absolute_integration_error_upper_bound' ||
+    fr91.sourceAuthority.certificateType !== 'deterministic_absolute_integration_error_upper_bound' ||
     fr91.deterministicSubdivisionPolicy.runtimeArithmetic !== 'ieee754_binary64_finite_only' ||
     fr91.policyDecision.neutralRuntimeImplementationMayBeReviewedNext !== true ||
     fr91.policyDecision.runtimeImplementationIssued !== false ||
