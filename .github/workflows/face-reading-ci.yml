@@ -9,6 +9,7 @@ on:
       - 'scripts/verify-fr76-mediapipe-parity.mjs'
       - 'scripts/verify-fr77-governed-metric-runtime.mjs'
       - 'scripts/verify-fr78-governed-metric-lips-surface.mjs'
+      - 'scripts/verify-fr79-pose-normalized-lips-geometry.mjs'
       - 'tsconfig.face-reading.json'
       - 'tsconfig.face-reading.build.json'
       - 'package.json'
@@ -140,6 +141,14 @@ jobs:
       - name: Verify FR78 exact governed metric lips surface
         working-directory: target
         run: npm run face:verify:fr78-lips-surface
+
+      - name: Verify FR79 pose-normalized lips geometry boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/pose-normalized-lips-geometry-fr79.test.ts
+
+      - name: Verify FR79 exact pose-normalized lips projection
+        working-directory: target
+        run: npm run face:verify:fr79-pose-normalized-lips
 
       - name: Verify frozen source baseline
         working-directory: source
