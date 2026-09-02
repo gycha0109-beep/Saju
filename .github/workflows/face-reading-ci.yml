@@ -7,6 +7,7 @@ on:
       - 'docs/migrations/face-reading-from-myeongha.manifest.json'
       - 'scripts/verify-face-reading-migration.mjs'
       - 'scripts/verify-fr76-mediapipe-parity.mjs'
+      - 'scripts/verify-fr77-governed-metric-runtime.mjs'
       - 'tsconfig.face-reading.json'
       - 'tsconfig.face-reading.build.json'
       - 'package.json'
@@ -122,6 +123,14 @@ jobs:
       - name: Verify FR76 MediaPipe exact golden parity
         working-directory: target
         run: npm run face:verify:fr76-parity
+
+      - name: Verify FR77 governed metric geometry runtime boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/governed-metric-geometry-runtime-fr77.test.ts
+
+      - name: Verify FR77 exact governed metric geometry runtime
+        working-directory: target
+        run: npm run face:verify:fr77-runtime
 
       - name: Verify frozen source baseline
         working-directory: source
