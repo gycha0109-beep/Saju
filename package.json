@@ -50,6 +50,7 @@
     "face:build": "tsc -p tsconfig.face-reading.build.json",
     "face:verify:fr76-parity": "npm run face:build && node scripts/verify-fr76-mediapipe-parity.mjs",
     "face:verify:fr77-runtime": "npm run face:build && node scripts/verify-fr77-governed-metric-runtime.mjs",
+    "face:verify:fr78-lips-surface": "npm run face:build && node scripts/verify-fr78-governed-metric-lips-surface.mjs",
     "check:face-reading": "npm run face:verify:manifest && npm run face:typecheck && npm run face:build"
   },
   "dependencies": {
