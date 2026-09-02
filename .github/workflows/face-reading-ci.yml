@@ -10,6 +10,7 @@ on:
       - 'scripts/verify-fr77-governed-metric-runtime.mjs'
       - 'scripts/verify-fr78-governed-metric-lips-surface.mjs'
       - 'scripts/verify-fr79-pose-normalized-lips-geometry.mjs'
+      - 'scripts/verify-fr80-neutral-mouth-contour-metric.mjs'
       - 'tsconfig.face-reading.json'
       - 'tsconfig.face-reading.build.json'
       - 'package.json'
@@ -150,13 +151,21 @@ jobs:
         working-directory: target
         run: npm run face:verify:fr79-pose-normalized-lips
 
+      - name: Verify FR80 neutral mouth contour metric boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-mouth-contour-metric-fr80.test.ts
+
+      - name: Verify FR80 exact neutral mouth contour metric
+        working-directory: target
+        run: npm run face:verify:fr80-neutral-mouth-metric
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
           npm install --ignore-scripts --no-audit --no-fund
           npm run typecheck
           npm run build
-          npx vitest run test/face-reading*.test.ts
+          ../target/node_modules/.bin/vitest run test/face-reading*.test.ts
 
       - name: Run exact source Face tests against migrated package
         shell: bash
@@ -165,4 +174,4 @@ jobs:
           rm -rf source/packages/face-reading
           ln -s "$GITHUB_WORKSPACE/target/packages/face-reading" source/packages/face-reading
           cd source
-          npx vitest run test/face-reading*.test.ts
+          "$GITHUB_WORKSPACE/target/node_modules/.bin/vitest" run test/face-reading*.test.ts
