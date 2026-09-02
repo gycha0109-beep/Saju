@@ -14,6 +14,7 @@ on:
       - 'scripts/verify-fr82-neutral-mouth-relative-size-metric.mjs'
       - 'scripts/verify-fr85-role-free-contour-nesting.mjs'
       - 'scripts/verify-fr88-role-free-minimum-set-separation.mjs'
+      - 'scripts/verify-fr98-role-free-arclength-mean-neutral-metric.mjs'
       - 'tsconfig.face-reading.json'
       - 'tsconfig.face-reading.build.json'
       - 'package.json'
@@ -237,6 +238,14 @@ jobs:
       - name: Verify FR97 arclength mean neutral metric definition review boundary
         working-directory: target
         run: npx vitest run packages/face-reading/src/role-free-arclength-mean-neutral-metric-definition-review-fr97.test.ts packages/face-reading/src/role-free-arclength-mean-neutral-metric-definition-review-fr97-hardening.test.ts
+
+      - name: Verify FR98 arclength mean neutral metric value binding boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/role-free-arclength-mean-neutral-metric-value-runtime-fr98.test.ts packages/face-reading/src/role-free-arclength-mean-neutral-metric-value-runtime-fr98-hardening.test.ts
+
+      - name: Verify FR98 exact arclength mean neutral metric value binding
+        working-directory: target
+        run: npm run face:verify:fr98-role-free-arclength-mean-neutral-metric
 
       - name: Verify frozen source baseline
         working-directory: source
