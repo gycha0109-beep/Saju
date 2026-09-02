@@ -110,6 +110,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/five-officers-mouth-scan-image-acquisition-readiness-fr74.test.ts
 
+      - name: Verify FR75 MediaPipe release-exact metric geometry admission boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/mediapipe-release-exact-metric-geometry-admission-fr75.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
