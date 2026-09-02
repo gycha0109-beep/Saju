@@ -176,6 +176,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/five-officers-square-broad-combined-binding-review-fr83.test.ts
 
+      - name: Verify FR84 neutral lip-band geometry feasibility boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-lip-band-geometry-feasibility-review-fr84.test.ts packages/face-reading/src/neutral-lip-band-geometry-feasibility-review-fr84-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
