@@ -204,7 +204,7 @@ if (
 
 const serialized = JSON.stringify(fr80);
 for (const forbiddenField of ['widthCm', 'heightCm', 'outerLip', 'innerLip', 'criterionState', 'claimText']) {
-  if (serialized.includes(`\"${forbiddenField}\"`)) {
+  if (serialized.includes(`"${forbiddenField}"`)) {
     throw new Error(`FR80 output exposed forbidden field ${forbiddenField}.`);
   }
 }
