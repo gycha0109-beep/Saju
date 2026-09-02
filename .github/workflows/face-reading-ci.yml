@@ -90,6 +90,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/mediapipe-web-metric-geometry-gap-fr69.test.ts
 
+      - name: Verify FR70 mouth criterion authority gap boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/five-officers-mouth-criterion-authority-gap-fr70.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
