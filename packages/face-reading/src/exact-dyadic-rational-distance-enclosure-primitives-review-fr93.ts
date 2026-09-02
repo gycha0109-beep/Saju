@@ -142,6 +142,7 @@ export interface ExactDyadicRationalDistanceEnclosurePrimitivesReviewFR93V1 {
 }
 
 const ISSUED = new WeakSet<object>();
+let CACHED_REVIEW: ExactDyadicRationalDistanceEnclosurePrimitivesReviewFR93V1 | null = null;
 
 const RESOLVED = Object.freeze([
   'exact_binary64_dyadic_rational_conversion_contract_not_issued',
@@ -204,6 +205,7 @@ function validateFR92Authority(): void {
 }
 
 export function reviewExactDyadicRationalDistanceEnclosurePrimitivesFR93(): ExactDyadicRationalDistanceEnclosurePrimitivesReviewFR93V1 {
+  if (CACHED_REVIEW !== null) return CACHED_REVIEW;
   validateFR92Authority();
 
   const result: ExactDyadicRationalDistanceEnclosurePrimitivesReviewFR93V1 = Object.freeze({
@@ -315,6 +317,7 @@ export function reviewExactDyadicRationalDistanceEnclosurePrimitivesFR93(): Exac
   });
 
   ISSUED.add(result);
+  CACHED_REVIEW = result;
   return result;
 }
 
