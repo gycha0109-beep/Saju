@@ -189,6 +189,10 @@ jobs:
         working-directory: target
         run: npm run face:verify:fr85-role-free-contour-nesting
 
+      - name: Verify FR86 role-free cross-contour correspondence feasibility boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/role-free-cross-contour-correspondence-feasibility-review-fr86.test.ts packages/face-reading/src/role-free-cross-contour-correspondence-feasibility-review-fr86-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
