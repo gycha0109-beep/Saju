@@ -210,6 +210,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/role-free-arclength-mean-integration-algorithm-review-fr90.test.ts packages/face-reading/src/role-free-arclength-mean-integration-algorithm-review-fr90-hardening.test.ts
 
+      - name: Verify FR91 certified arclength mean runtime numeric policy boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/certified-arclength-mean-runtime-numeric-policy-review-fr91.test.ts packages/face-reading/src/certified-arclength-mean-runtime-numeric-policy-review-fr91-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
