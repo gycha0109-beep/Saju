@@ -214,6 +214,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/certified-arclength-mean-runtime-numeric-policy-review-fr91.test.ts packages/face-reading/src/certified-arclength-mean-runtime-numeric-policy-review-fr91-hardening.test.ts
 
+      - name: Verify FR92 certified distance-kernel roundoff feasibility boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/certified-distance-kernel-roundoff-feasibility-review-fr92.test.ts packages/face-reading/src/certified-distance-kernel-roundoff-feasibility-review-fr92-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
