@@ -218,6 +218,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/certified-distance-kernel-roundoff-feasibility-review-fr92.test.ts packages/face-reading/src/certified-distance-kernel-roundoff-feasibility-review-fr92-hardening.test.ts
 
+      - name: Verify FR93 exact rational distance enclosure primitives review boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/exact-dyadic-rational-distance-enclosure-primitives-review-fr93.test.ts packages/face-reading/src/exact-dyadic-rational-distance-enclosure-primitives-review-fr93-hardening.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
