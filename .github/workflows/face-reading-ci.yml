@@ -94,6 +94,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/five-officers-mouth-criterion-authority-gap-fr70.test.ts
 
+      - name: Verify FR71 mouth source witness readiness boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/five-officers-mouth-source-witness-readiness-fr71.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
