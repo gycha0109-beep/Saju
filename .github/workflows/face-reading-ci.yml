@@ -98,6 +98,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/five-officers-mouth-source-witness-readiness-fr71.test.ts
 
+      - name: Verify FR72 mouth direct-source candidate extension boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/five-officers-mouth-direct-source-candidate-extension-fr72.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
