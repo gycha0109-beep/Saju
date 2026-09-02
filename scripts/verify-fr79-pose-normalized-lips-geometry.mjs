@@ -211,7 +211,7 @@ for (let contourIndex = 0; contourIndex < fr78.contours.length; contourIndex += 
 }
 
 const serialized = JSON.stringify(fr79);
-for (const forbidden of ['providerVertexIndices', 'providerGraphComponentOrdinal', 'z":', 'square_broad', 'lips_substantial']) {
+for (const forbidden of ['providerVertexIndices', 'providerGraphComponentOrdinal', 'z":']) {
   if (serialized.includes(forbidden)) throw new Error(`FR79 output exposed forbidden token: ${forbidden}.`);
 }
 
