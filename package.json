@@ -54,6 +54,7 @@
     "face:verify:fr79-pose-normalized-lips": "npm run face:build && node scripts/verify-fr79-pose-normalized-lips-geometry.mjs",
     "face:verify:fr80-neutral-mouth-metric": "npm run face:build && node scripts/verify-fr80-neutral-mouth-contour-metric.mjs",
     "face:verify:fr82-neutral-mouth-relative-size": "npm run face:build && node scripts/verify-fr82-neutral-mouth-relative-size-metric.mjs",
+    "face:verify:fr85-role-free-contour-nesting": "npm run face:build && node scripts/verify-fr85-role-free-contour-nesting.mjs",
     "check:face-reading": "npm run face:verify:manifest && npm run face:typecheck && npm run face:build"
   },
   "dependencies": {
