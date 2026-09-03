@@ -15,7 +15,7 @@ import {
 } from '../reading/product-reading-service.js';
 import type { ProductReadingResponse } from '../reading/product-reading-response.js';
 
-export const PRODUCT_HOST_VERSION = 'myeonghwa-product-host-v1';
+export const PRODUCT_HOST_VERSION = 'myeonghwa-product-host-v2';
 
 const MAX_READING_TEXT_LENGTH = 200;
 const MAX_TARGET_PERSON_REF_LENGTH = 200;
@@ -55,6 +55,7 @@ export interface ProductHostReadingRequestBody {
 
 export interface ProductHostExecutionContext {
   requestId: string;
+  requestedAt: string;
 }
 
 export interface ProductHostInterpretationBundle {
@@ -75,6 +76,7 @@ export interface MyeonghwaProductHostDependencies {
   narrativePolicy: NarrativePolicy;
   readingOptions: ProductReadingServiceOptions;
   requestIdFactory?: () => string;
+  requestNowFactory?: () => Date;
 }
 
 export interface MyeonghwaProductHost {
@@ -274,6 +276,14 @@ function nextRequestId(factory: (() => string) | undefined): string {
   return `host_${requestId}`;
 }
 
+function nextRequestedAt(factory: (() => Date) | undefined): string {
+  const value = (factory ?? (() => new Date()))();
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+    throw new Error('Product host requestNowFactory returned an invalid date.');
+  }
+  return value.toISOString();
+}
+
 function assertDependencies(dependencies: MyeonghwaProductHostDependencies): void {
   if (typeof dependencies.calculate !== 'function') throw new TypeError('calculate dependency is required.');
   if (typeof dependencies.interpret !== 'function') throw new TypeError('interpret dependency is required.');
@@ -282,6 +292,9 @@ function assertDependencies(dependencies: MyeonghwaProductHostDependencies): voi
   }
   if (dependencies.narrativePolicy === undefined || dependencies.readingOptions === undefined) {
     throw new TypeError('narrativePolicy and readingOptions dependencies are required.');
+  }
+  if (dependencies.requestNowFactory !== undefined && typeof dependencies.requestNowFactory !== 'function') {
+    throw new TypeError('requestNowFactory must be a function when provided.');
   }
 }
 
@@ -293,7 +306,10 @@ export function createMyeonghwaProductHost(
     async requestReading(body: unknown): Promise<ProductReadingResponse> {
       const parsed = parseProductHostReadingRequest(body);
       const requestId = nextRequestId(dependencies.requestIdFactory);
-      const context = { requestId };
+      const context: ProductHostExecutionContext = {
+        requestId,
+        requestedAt: nextRequestedAt(dependencies.requestNowFactory),
+      };
       const snapshot = await dependencies.calculate(toBirthInput(parsed.birth), context);
       const { interpretation, registry } = await dependencies.interpret(snapshot, context);
       return requestProductReading(
@@ -303,6 +319,7 @@ export function createMyeonghwaProductHost(
         {
           requestId,
           text: parsed.reading.text,
+          referenceDateTime: context.requestedAt,
           ...(parsed.reading.targetPersonRef === undefined
             ? {}
             : { targetPersonRef: parsed.reading.targetPersonRef }),
