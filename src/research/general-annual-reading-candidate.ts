@@ -276,7 +276,6 @@ function branchClashRule(slot: (typeof PILLAR_SLOTS)[number]): RuleDefinition {
         key: 'relation',
         source: 'temporal_fact',
         pathOrClaimType: `annualBranchRelations.${slot}`,
-        acceptedStatuses: ['resolved'],
         required: false,
         ambiguityBehavior: 'requires_resolved',
       },
