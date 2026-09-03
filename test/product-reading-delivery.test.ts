@@ -16,6 +16,8 @@ import {
   type NarrativePolicy,
 } from '../src/index.js';
 
+const FIXED_READING_REFERENCE = '2026-09-03T12:00:00.000Z';
+
 const calculationPolicy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/product-reading-delivery-test',
   policyVersion: '1.0.0',
@@ -124,6 +126,7 @@ async function execute(text: string, claims: readonly InterpretationClaim[], fai
     {
       requestId: `delivery-${text}`,
       text,
+      referenceDateTime: FIXED_READING_REFERENCE,
       ...(targetPersonRef === undefined ? {} : { targetPersonRef }),
     },
     new DeliveryAdapter(fail),
