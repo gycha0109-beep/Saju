@@ -6,9 +6,18 @@ import type {
   SexForTraditionalCalculation,
 } from '../contracts/calculation.js';
 import type { NarrativePolicy } from '../contracts/narrative.js';
+import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import type { NarrativeModelAdapter } from '../llm/model-adapter.js';
+import {
+  normalizeConsumerReadingRequest,
+  type ConsumerReadingRequestInput,
+} from '../reading/consumer-reading-request-adapter.js';
+import {
+  buildTemporalReadingContext,
+  type TemporalReadingContext,
+} from '../reading/temporal-reading-context.js';
 import {
   requestProductReading,
   type ProductReadingServiceOptions,
@@ -58,6 +67,12 @@ export interface ProductHostExecutionContext {
   requestedAt: string;
 }
 
+export interface ProductHostInterpretationRequestContext {
+  readingRequest: ReadingRequest;
+  temporalContext: TemporalReadingContext;
+  temporalFacts: Readonly<Record<string, unknown>>;
+}
+
 export interface ProductHostInterpretationBundle {
   registry: ResolvedRuleRegistrySnapshot;
   interpretation: InterpretationExecutionResult;
@@ -71,6 +86,7 @@ export interface MyeonghwaProductHostDependencies {
   interpret: (
     snapshot: CanonicalSajuSnapshot,
     context: ProductHostExecutionContext,
+    requestContext?: ProductHostInterpretationRequestContext,
   ) => ProductHostInterpretationBundle | Promise<ProductHostInterpretationBundle>;
   adapter: NarrativeModelAdapter;
   narrativePolicy: NarrativePolicy;
@@ -284,6 +300,34 @@ function nextRequestedAt(factory: (() => Date) | undefined): string {
   return value.toISOString();
 }
 
+function consumerInput(
+  parsed: ProductHostReadingRequestBody,
+  context: ProductHostExecutionContext,
+): ConsumerReadingRequestInput {
+  return {
+    requestId: context.requestId,
+    text: parsed.reading.text,
+    referenceDateTime: context.requestedAt,
+    ...(parsed.reading.targetPersonRef === undefined
+      ? {}
+      : { targetPersonRef: parsed.reading.targetPersonRef }),
+  };
+}
+
+function temporalInterpretationContext(
+  input: ConsumerReadingRequestInput,
+): ProductHostInterpretationRequestContext | undefined {
+  const normalization = normalizeConsumerReadingRequest(input);
+  if (normalization.state !== 'resolved' || normalization.request === undefined) return undefined;
+  const temporalContext = buildTemporalReadingContext(normalization.request);
+  if (temporalContext === undefined) return undefined;
+  return {
+    readingRequest: normalization.request,
+    temporalContext,
+    temporalFacts: { ...temporalContext },
+  };
+}
+
 function assertDependencies(dependencies: MyeonghwaProductHostDependencies): void {
   if (typeof dependencies.calculate !== 'function') throw new TypeError('calculate dependency is required.');
   if (typeof dependencies.interpret !== 'function') throw new TypeError('interpret dependency is required.');
@@ -310,20 +354,18 @@ export function createMyeonghwaProductHost(
         requestId,
         requestedAt: nextRequestedAt(dependencies.requestNowFactory),
       };
+      const input = consumerInput(parsed, context);
+      const requestContext = temporalInterpretationContext(input);
       const snapshot = await dependencies.calculate(toBirthInput(parsed.birth), context);
-      const { interpretation, registry } = await dependencies.interpret(snapshot, context);
+      const { interpretation, registry } =
+        requestContext === undefined
+          ? await dependencies.interpret(snapshot, context)
+          : await dependencies.interpret(snapshot, context, requestContext);
       return requestProductReading(
         snapshot,
         interpretation,
         registry,
-        {
-          requestId,
-          text: parsed.reading.text,
-          referenceDateTime: context.requestedAt,
-          ...(parsed.reading.targetPersonRef === undefined
-            ? {}
-            : { targetPersonRef: parsed.reading.targetPersonRef }),
-        },
+        input,
         dependencies.adapter,
         dependencies.narrativePolicy,
         dependencies.readingOptions,

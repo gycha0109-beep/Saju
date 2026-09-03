@@ -79,7 +79,7 @@ export interface ContentAddressedSourceRef {
 export type MethodologyInputMode = 'allowed' | 'required' | 'forbidden';
 
 export interface MethodologyFactInputContract {
-  source: 'canonical_fact' | 'derived_fact';
+  source: 'canonical_fact' | 'derived_fact' | 'temporal_fact';
   pathPattern: string;
   mode: MethodologyInputMode;
   rationale: string;
@@ -160,7 +160,12 @@ export type ClaimInputCardinality = 'exactly_one' | 'one_or_more' | 'zero_or_mor
 
 export interface RuleInputRequirement {
   key: string;
-  source: 'canonical_fact' | 'derived_fact' | 'interpretation_claim' | 'research_evidence';
+  source:
+    | 'canonical_fact'
+    | 'derived_fact'
+    | 'temporal_fact'
+    | 'interpretation_claim'
+    | 'research_evidence';
   pathOrClaimType: string;
   acceptedStatuses?: readonly ('resolved' | 'ambiguous' | 'unavailable')[];
   required: boolean;
@@ -263,7 +268,7 @@ export interface RuleEvaluation {
   interpretationPackRef: VersionedRef;
   status: RuleEvaluationStatus;
   inputRefs: readonly {
-    sourceType: 'fact' | 'claim' | 'research_evidence';
+    sourceType: 'fact' | 'temporal_fact' | 'claim' | 'research_evidence';
     idOrPath: string;
     observedValue?: unknown;
     selectedClaimIds?: readonly string[];
