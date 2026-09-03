@@ -1,0 +1,31 @@
+name: FR110 Intake Witness-Qualified Passage Identity Definition CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-witness-qualified-passage-identity-definition-review-fr110.ts'
+      - 'packages/face-reading/src/five-officers-intake-witness-qualified-passage-identity-definition-review-fr110.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-witness-qualified-passage-identity-definition-review-fr110-hardening.test.ts'
+      - 'scripts/verify-fr110-intake-witness-qualified-passage-identity-definition.mjs'
+      - '.github/workflows/fr110-intake-witness-qualified-passage-identity-definition-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr110-witness-qualified-passage-identity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR110 authority boundary
+        run: npx vitest run packages/face-reading/src/five-officers-intake-witness-qualified-passage-identity-definition-review-fr110.test.ts packages/face-reading/src/five-officers-intake-witness-qualified-passage-identity-definition-review-fr110-hardening.test.ts
+      - name: Verify FR110 exact witness-qualified passage identity chain
+        run: node scripts/verify-fr110-intake-witness-qualified-passage-identity-definition.mjs
