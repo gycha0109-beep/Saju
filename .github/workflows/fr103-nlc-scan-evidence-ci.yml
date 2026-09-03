@@ -1,0 +1,31 @@
+name: FR103 NLC Scan Evidence CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/evidence/fr103/**'
+      - 'packages/face-reading/src/five-officers-mouth-scan-evidence-acquisition-fr103.ts'
+      - 'packages/face-reading/src/five-officers-mouth-scan-evidence-acquisition-fr103.test.ts'
+      - 'scripts/verify-fr103-nlc-intake-scan-evidence.mjs'
+      - '.github/workflows/fr103-nlc-scan-evidence-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr103-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR103 authority boundary
+        run: npx vitest run packages/face-reading/src/five-officers-mouth-scan-evidence-acquisition-fr103.test.ts
+      - name: Verify FR103 exact frozen evidence bytes
+        run: node scripts/verify-fr103-nlc-intake-scan-evidence.mjs
