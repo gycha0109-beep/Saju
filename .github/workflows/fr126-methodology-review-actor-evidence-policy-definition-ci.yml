@@ -1,0 +1,31 @@
+name: FR126 Methodology Review Actor Evidence Policy Definition CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-actor-evidence-policy-definition-fr126.ts'
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-actor-evidence-policy-definition-fr126.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-actor-evidence-policy-definition-fr126-hardening.test.ts'
+      - 'scripts/verify-fr126-methodology-review-actor-evidence-policy-definition.mjs'
+      - '.github/workflows/fr126-methodology-review-actor-evidence-policy-definition-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr126-methodology-review-actor-evidence-policy-definition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR126 methodology review actor/evidence-policy definition
+        run: npx vitest run packages/face-reading/src/five-officers-intake-methodology-review-actor-evidence-policy-definition-fr126.test.ts packages/face-reading/src/five-officers-intake-methodology-review-actor-evidence-policy-definition-fr126-hardening.test.ts
+      - name: Verify FR126 exact predecessor and actor/evidence-policy definition chain
+        run: node scripts/verify-fr126-methodology-review-actor-evidence-policy-definition.mjs
