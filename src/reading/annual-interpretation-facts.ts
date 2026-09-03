@@ -15,7 +15,7 @@ import type {
   TenGod,
   YinYang,
 } from '../contracts/calculation.js';
-import { ambiguous, resolved, unavailable, type FactState } from '../contracts/common.js';
+import { resolved, unavailable, type FactState } from '../contracts/common.js';
 import type { TemporalReadingContext } from './temporal-reading-context.js';
 
 export const ANNUAL_INTERPRETATION_FACTS_VERSION =
@@ -163,31 +163,18 @@ function annualBranchRelationState(
     return unavailable(natalState.reasonCode);
   }
 
-  const bySemanticValue = new Map<
-    string,
-    { value: AnnualBranchRelationValue; reasonRefs: Set<string> }
-  >();
+  const bySemanticValue = new Map<string, AnnualBranchRelationValue>();
   for (const candidate of natalState.candidates) {
     const value = branchRelation(slot, candidate.value, annualPillar);
-    const key = JSON.stringify(value);
-    const existing = bySemanticValue.get(key);
-    if (existing === undefined) {
-      bySemanticValue.set(key, { value, reasonRefs: new Set(candidate.reasonRefs) });
-    } else {
-      for (const reasonRef of candidate.reasonRefs) existing.reasonRefs.add(reasonRef);
-    }
+    bySemanticValue.set(JSON.stringify(value), value);
   }
 
-  const candidates = [...bySemanticValue.values()]
-    .map(({ value, reasonRefs }, index) => ({
-      candidateId: `annual-${slot}-relation-${index + 1}`,
-      value,
-      reasonRefs: [...reasonRefs].sort(),
-    }))
-    .sort((left, right) => JSON.stringify(left.value).localeCompare(JSON.stringify(right.value)));
+  const values = [...bySemanticValue.values()].sort((left, right) =>
+    JSON.stringify(left).localeCompare(JSON.stringify(right)),
+  );
+  if (values.length === 1) return resolved(values[0]!);
 
-  if (candidates.length === 1) return resolved(candidates[0]!.value);
-  return ambiguous(candidates, natalState.reasonCodes);
+  return unavailable('ANNUAL_RELATION_AMBIGUOUS');
 }
 
 export function buildAnnualInterpretationFacts(
