@@ -155,7 +155,7 @@ function provenanceFanout(observations: readonly BenchmarkAObservation[]): {
 
 describe('MyeongHa general monthly synthetic corpus', () => {
   it(
-    'measures 500 segmented monthly readings and rejects cross-semantic narrative clones or false diversity',
+    'measures 500 segmented monthly readings and rejects semantic clones, false diversity, or provenance fanout',
     () => {
       const registry = createGeneralMonthlyReadingCandidateRegistry(
         FIXED_CALCULATION_TIME.toISOString(),
@@ -292,6 +292,11 @@ describe('MyeongHa general monthly synthetic corpus', () => {
       expect(report.distinctConsumedInputFingerprints).toBeGreaterThan(1);
       expect(report.distinctInterpretationSignatures).toBeGreaterThan(1);
       expect(report.distinctFinalNarrativeSignatures).toBeGreaterThan(1);
+      expect(report.distinctConsumedInputFingerprints).toBe(
+        report.distinctInterpretationSignatures,
+      );
+      expect(fanout.maxConsumedFingerprintsPerInterpretation).toBe(1);
+      expect(fanout.interpretationSignaturesWithMultipleConsumedFingerprints).toBe(0);
       expect(report.crossSemanticExactFullReadingCloneGroupCount).toBe(0);
       expect(report.falseDiversityGroupCount).toBe(0);
       expect(report.failures).toEqual([]);
