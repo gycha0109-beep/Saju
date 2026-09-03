@@ -1,4 +1,3 @@
-import type { FaceAuthorityRegistry, FaceMethodologyDefinition } from './contracts.js';
 import {
   assessFiveOfficerIntakeMouthSemanticExecutionAdmissionFR122,
   assertIssuedFiveOfficerIntakeMouthSemanticExecutionAdmissionFR122,
@@ -8,97 +7,65 @@ import { FIVE_OFFICER_CRITERIA_FR121_WITNESS_QUALIFIED } from './five-officers-i
 import { FaceAuthorityValidationError, validateFaceAuthorityRegistry } from './validation.js';
 
 const METHODOLOGY_ID = 'method.shenxiang.five_officers.intake_criteria' as const;
-const RESEARCH_VERSION = '0.2.0' as const;
-const RESEARCH_REF = `${METHODOLOGY_ID}@${RESEARCH_VERSION}` as const;
-const REVIEWED_VERSION = '0.3.0' as const;
-const REVIEWED_REF = `${METHODOLOGY_ID}@${REVIEWED_VERSION}` as const;
-const FULL_METHODOLOGY_REF = 'method.shenxiang.five_officers@0.1.0' as const;
+const RESEARCH_REF = `${METHODOLOGY_ID}@0.2.0` as const;
+const PROPOSED_REVIEWED_REF = `${METHODOLOGY_ID}@0.3.0` as const;
 const WITNESS_QUALIFIED_PASSAGE_REF = 'passage.shenxiang.five_officers.intake.nlc_1925' as const;
 const HISTORICAL_PASSAGE_REF = 'passage.shenxiang.five_officers.intake' as const;
 const SQUARE_BROAD = 'criterion.intake.square_broad' as const;
 
-const REVIEWED_LIMITATIONS = Object.freeze([
-  '이 reviewed successor는 historical full 五官 methodology와 research predecessor를 변경하거나 대체하지 않는다.',
-  'reviewed 상태는 scan_checked witness에서 出納官 criterion 문구를 확인한 범위에만 적용되며 metric binding, monotonic direction, numeric threshold, calibration result를 승인하지 않는다.',
-  '方大의 두 neutral mouth metric은 research candidate observation path일 뿐 traditional 方/大 또는 compound 方大 operationalization으로 승격되지 않는다.',
-  'methodology review는 methodology pack membership, runtime criterion evaluation, claim issuance, narrative issuance 또는 production semantic authority를 승인하지 않는다.',
-] as const);
-
-export const FR123_INTAKE_CRITERION_METHODOLOGY_WITNESS_QUALIFIED_REVIEWED_SUCCESSOR: FaceMethodologyDefinition & {
-  readonly methodologyId: typeof METHODOLOGY_ID;
-  readonly version: typeof REVIEWED_VERSION;
-  readonly traditionalTerm: '出納官';
-  readonly scope: 'static_face';
-  readonly sourceRefs: readonly [typeof WITNESS_QUALIFIED_PASSAGE_REF];
-  readonly reviewStatus: 'reviewed';
-} = Object.freeze({
-  methodologyId: METHODOLOGY_ID,
-  version: REVIEWED_VERSION,
-  traditionalTerm: '出納官',
-  scope: 'static_face',
-  sourceRefs: Object.freeze([WITNESS_QUALIFIED_PASSAGE_REF]) as readonly [typeof WITNESS_QUALIFIED_PASSAGE_REF],
-  description: '神相全編 出納官의 다섯 criterion 문구를 witness-qualified NLC 1925 scan_checked passage에 결속한 reviewed methodology unit. Metric operationalization과 threshold authority는 별도 calibration chain으로 유지한다.',
-  limitations: REVIEWED_LIMITATIONS,
-  reviewStatus: 'reviewed',
-});
-
-export const FACE_AUTHORITY_FR123_INTAKE_CRITERION_METHODOLOGY_REVIEWED_REGISTRY: FaceAuthorityRegistry = Object.freeze({
-  ...FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY,
-  methodologies: Object.freeze([
-    ...FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.methodologies,
-    FR123_INTAKE_CRITERION_METHODOLOGY_WITNESS_QUALIFIED_REVIEWED_SUCCESSOR,
-  ]),
-});
-
-export interface FiveOfficerIntakeCriterionMethodologyReviewedSuccessorFR123V1 {
-  readonly schemaVersion: 'fr123-five-officers-intake-criterion-methodology-reviewed-successor-v1';
-  readonly artifactVersion: '0.1.0';
-  readonly authorityState: 'witness_qualified_intake_methodology_review_gate_open_metric_and_calibration_authority_still_closed';
+export interface FiveOfficerIntakeCriterionMethodologyReviewPromotionAdmissionFR123V1 {
+  readonly schemaVersion: 'fr123-five-officers-intake-criterion-methodology-review-promotion-admission-v1';
+  readonly artifactVersion: '0.2.0';
+  readonly authorityState: 'witness_qualified_intake_methodology_review_promotion_blocked_no_governed_review_decision';
   readonly predecessor: {
     readonly fr122AuthorityState: 'mouth_semantic_vertical_slice_blocked_no_authoritative_machine_criterion_state';
     readonly executableCriterionId: null;
     readonly closestStaticCandidateCriterionId: typeof SQUARE_BROAD;
     readonly researchMethodologyRef: typeof RESEARCH_REF;
-    readonly researchMethodologyRetained: true;
     readonly researchMethodologyReviewStatus: 'research';
+    readonly witnessQualifiedSourceRef: typeof WITNESS_QUALIFIED_PASSAGE_REF;
+    readonly witnessQualifiedSourceVerificationStatus: 'scan_checked';
   };
   readonly persistedState: {
     readonly registryValidated: true;
-    readonly reviewedMethodologyRef: typeof REVIEWED_REF;
-    readonly reviewedMethodologyReviewStatus: 'reviewed';
-    readonly reviewedSourceRef: typeof WITNESS_QUALIFIED_PASSAGE_REF;
-    readonly reviewedSourceVerificationStatus: 'scan_checked';
     readonly historicalPassageRetained: true;
-    readonly researchPredecessorRetained: true;
-    readonly fullFiveOfficersMethodologyRetained: true;
-    readonly fullFiveOfficersMethodologyUnchanged: true;
-    readonly methodologyPackUnchanged: true;
+    readonly witnessQualifiedPassageRetained: true;
+    readonly researchMethodologyRetained: true;
+    readonly researchMethodologyUnchanged: true;
+    readonly reviewedSuccessorRefCandidate: typeof PROPOSED_REVIEWED_REF;
+    readonly reviewedSuccessorDefinitionIssued: false;
+    readonly reviewedSuccessorPersisted: false;
+    readonly methodologyDefinitionsPersisted: 0;
+    readonly methodologyPackMutations: 0;
     readonly fr121CriterionDefinitionsUnchanged: true;
   };
-  readonly calibrationGateAssessment: {
-    readonly criterionId: typeof SQUARE_BROAD;
+  readonly promotionAssessment: {
     readonly sourceGate: {
-      readonly required: 'scan_checked';
-      readonly current: 'scan_checked';
-      readonly open: true;
+      readonly requiredMinimumVerificationStatus: 'scan_checked';
+      readonly currentVerificationStatus: 'scan_checked';
+      readonly prerequisiteSatisfied: true;
     };
-    readonly methodologyGate: {
-      readonly required: 'reviewed';
-      readonly current: 'reviewed';
-      readonly methodologyRef: typeof REVIEWED_REF;
-      readonly open: true;
-    };
-    readonly linkedProtocolGate: {
-      readonly squareBroadProtocolRegistryIssued: false;
-      readonly approvedRetentionPolicyAvailable: false;
+    readonly currentMethodologyGate: {
+      readonly methodologyRef: typeof RESEARCH_REF;
+      readonly currentReviewStatus: 'research';
+      readonly reviewedStatusRequiredForCalibrationCollection: true;
       readonly open: false;
     };
-    readonly humanCalibrationCollectionAuthorized: false;
+    readonly governedReviewDecision: {
+      readonly decisionArtifactConsumed: false;
+      readonly decisionArtifactRef: null;
+      readonly reviewedPromotionAuthorized: false;
+      readonly reviewedSuccessorRegistryAppendAuthorized: false;
+    };
+    readonly structuralValidationBoundary: {
+      readonly scanCheckedSourceIsNecessaryForReviewedAuthority: true;
+      readonly scanCheckedSourceAloneIsSufficientForReviewedPromotion: false;
+      readonly registryStructuralAcceptanceMeansReviewAuthority: false;
+    };
   };
   readonly execution: {
-    readonly methodologyDefinitionsPersisted: 1;
-    readonly methodologyReviewGateOpened: true;
-    readonly methodologyPackMutations: 0;
+    readonly methodologyReviewPromotionsIssued: 0;
+    readonly reviewedMethodologyDefinitionsIssued: 0;
     readonly metricBindingsIssued: 0;
     readonly operationalizationsIssued: 0;
     readonly calibrationProtocolsIssued: 0;
@@ -110,22 +77,29 @@ export interface FiveOfficerIntakeCriterionMethodologyReviewedSuccessorFR123V1 {
     readonly boundedNarrativesIssued: 0;
     readonly traditionalSemanticAuthority: false;
   };
+  readonly blockers: readonly [
+    'intake_methodology_governed_review_decision_not_admitted',
+    'intake_methodology_review_promotion_authority_not_established',
+    'square_broad_metric_to_source_concept_mapping_not_authorized',
+    'square_broad_calibration_evidence_absent',
+    'square_broad_threshold_not_calibrated',
+  ];
   readonly authorityBoundary: {
-    readonly reviewedMethodologyMeansMetricBinding: false;
-    readonly reviewedMethodologyMeansMetricDirection: false;
-    readonly reviewedMethodologyMeansNumericThreshold: false;
-    readonly reviewedMethodologyMeansCalibrationEvidence: false;
-    readonly reviewedMethodologyMeansCriterionState: false;
-    readonly reviewedMethodologyMeansClaim: false;
-    readonly reviewedMethodologyMeansProductionPromotion: false;
-    readonly researchPredecessorMutated: false;
+    readonly witnessQualifiedSourceMeansReviewedMethodology: false;
+    readonly structuralValidatorAcceptanceMeansReviewPromotionAuthority: false;
+    readonly methodologyReviewPromotionMayBeInferredFromSourceVerification: false;
+    readonly proposedVersionMeansDefinitionIssued: false;
+    readonly reviewPromotionMeansMetricBinding: false;
+    readonly reviewPromotionMeansNumericThreshold: false;
+    readonly reviewPromotionMeansCriterionState: false;
+    readonly reviewPromotionMeansClaim: false;
     readonly historicalArtifactMutated: false;
   };
-  readonly nextFrontier: 'square_broad_calibration_protocol_materialization_and_policy_review';
+  readonly nextFrontier: 'intake_methodology_review_promotion_criteria_and_decision_authority';
 }
 
 const ISSUED = new WeakSet<object>();
-let CACHED: FiveOfficerIntakeCriterionMethodologyReviewedSuccessorFR123V1 | null = null;
+let CACHED: FiveOfficerIntakeCriterionMethodologyReviewPromotionAdmissionFR123V1 | null = null;
 
 function fail(message: string): never {
   throw new FaceAuthorityValidationError(`FR-123 ${message}`);
@@ -135,113 +109,117 @@ function sameJson(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function inspectRegistry(): FiveOfficerIntakeCriterionMethodologyReviewedSuccessorFR123V1['persistedState'] {
+function validatePersistedAuthority(): FiveOfficerIntakeCriterionMethodologyReviewPromotionAdmissionFR123V1['persistedState'] {
   validateFaceAuthorityRegistry(FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY);
-  validateFaceAuthorityRegistry(FACE_AUTHORITY_FR123_INTAKE_CRITERION_METHODOLOGY_REVIEWED_REGISTRY);
 
-  const beforeResearch = FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.methodologies.find(
+  const research = FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.methodologies.find(
     (method) => `${method.methodologyId}@${method.version}` === RESEARCH_REF,
   );
-  const afterResearch = FACE_AUTHORITY_FR123_INTAKE_CRITERION_METHODOLOGY_REVIEWED_REGISTRY.methodologies.find(
-    (method) => `${method.methodologyId}@${method.version}` === RESEARCH_REF,
+  const reviewedCandidateAlreadyPersisted = FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.methodologies.find(
+    (method) => `${method.methodologyId}@${method.version}` === PROPOSED_REVIEWED_REF,
   );
-  const reviewed = FACE_AUTHORITY_FR123_INTAKE_CRITERION_METHODOLOGY_REVIEWED_REGISTRY.methodologies.filter(
-    (method) => `${method.methodologyId}@${method.version}` === REVIEWED_REF,
-  );
-  const source = FACE_AUTHORITY_FR123_INTAKE_CRITERION_METHODOLOGY_REVIEWED_REGISTRY.passages.find(
+  const witnessQualified = FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.passages.find(
     (passage) => passage.passageId === WITNESS_QUALIFIED_PASSAGE_REF,
   );
-  const historical = FACE_AUTHORITY_FR123_INTAKE_CRITERION_METHODOLOGY_REVIEWED_REGISTRY.passages.find(
+  const historical = FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.passages.find(
     (passage) => passage.passageId === HISTORICAL_PASSAGE_REF,
-  );
-  const fullBefore = FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.methodologies.find(
-    (method) => `${method.methodologyId}@${method.version}` === FULL_METHODOLOGY_REF,
-  );
-  const fullAfter = FACE_AUTHORITY_FR123_INTAKE_CRITERION_METHODOLOGY_REVIEWED_REGISTRY.methodologies.find(
-    (method) => `${method.methodologyId}@${method.version}` === FULL_METHODOLOGY_REF,
   );
 
   if (
-    beforeResearch === undefined ||
-    afterResearch === undefined ||
-    beforeResearch.reviewStatus !== 'research' ||
-    !sameJson(beforeResearch, afterResearch) ||
-    reviewed.length !== 1 ||
-    reviewed[0]?.reviewStatus !== 'reviewed' ||
-    reviewed[0]?.sourceRefs.length !== 1 ||
-    reviewed[0]?.sourceRefs[0] !== WITNESS_QUALIFIED_PASSAGE_REF ||
-    source?.verificationStatus !== 'scan_checked' ||
-    source?.witnessId !== 'witness.shenxiang_quanbian.nlc_1925' ||
-    historical === undefined ||
-    fullBefore === undefined ||
-    fullAfter === undefined ||
-    !sameJson(fullBefore, fullAfter) ||
-    !sameJson(
-      FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.methodologyPacks,
-      FACE_AUTHORITY_FR123_INTAKE_CRITERION_METHODOLOGY_REVIEWED_REGISTRY.methodologyPacks,
-    )
-  ) fail('reviewed successor registry persistence drift.');
+    research === undefined ||
+    research.reviewStatus !== 'research' ||
+    research.sourceRefs.length !== 1 ||
+    research.sourceRefs[0] !== WITNESS_QUALIFIED_PASSAGE_REF ||
+    reviewedCandidateAlreadyPersisted !== undefined ||
+    witnessQualified === undefined ||
+    witnessQualified.verificationStatus !== 'scan_checked' ||
+    witnessQualified.witnessId !== 'witness.shenxiang_quanbian.nlc_1925' ||
+    historical === undefined
+  ) fail('persisted witness-qualified methodology authority drift.');
 
   const intake = FIVE_OFFICER_CRITERIA_FR121_WITNESS_QUALIFIED.filter((criterion) => criterion.officerKey === 'intake');
   if (
     intake.length !== 5 ||
     intake.some((criterion) => criterion.sourceRefs.length !== 1 || criterion.sourceRefs[0] !== WITNESS_QUALIFIED_PASSAGE_REF)
-  ) fail('FR-121 witness-qualified criterion definitions drift.');
+  ) fail('FR-121 witness-qualified criterion definition drift.');
+
+  const researchSnapshot = FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.methodologies.find(
+    (method) => `${method.methodologyId}@${method.version}` === RESEARCH_REF,
+  );
+  if (researchSnapshot === undefined || !sameJson(research, researchSnapshot)) fail('research predecessor mutation detected.');
 
   return Object.freeze({
     registryValidated: true as const,
-    reviewedMethodologyRef: REVIEWED_REF,
-    reviewedMethodologyReviewStatus: 'reviewed' as const,
-    reviewedSourceRef: WITNESS_QUALIFIED_PASSAGE_REF,
-    reviewedSourceVerificationStatus: 'scan_checked' as const,
     historicalPassageRetained: true as const,
-    researchPredecessorRetained: true as const,
-    fullFiveOfficersMethodologyRetained: true as const,
-    fullFiveOfficersMethodologyUnchanged: true as const,
-    methodologyPackUnchanged: true as const,
+    witnessQualifiedPassageRetained: true as const,
+    researchMethodologyRetained: true as const,
+    researchMethodologyUnchanged: true as const,
+    reviewedSuccessorRefCandidate: PROPOSED_REVIEWED_REF,
+    reviewedSuccessorDefinitionIssued: false as const,
+    reviewedSuccessorPersisted: false as const,
+    methodologyDefinitionsPersisted: 0 as const,
+    methodologyPackMutations: 0 as const,
     fr121CriterionDefinitionsUnchanged: true as const,
   });
 }
 
-export function implementFiveOfficerIntakeCriterionMethodologyReviewedSuccessorFR123(): FiveOfficerIntakeCriterionMethodologyReviewedSuccessorFR123V1 {
+export function assessFiveOfficerIntakeCriterionMethodologyReviewPromotionAdmissionFR123(): FiveOfficerIntakeCriterionMethodologyReviewPromotionAdmissionFR123V1 {
   if (CACHED !== null) return CACHED;
+
   const fr122 = assessFiveOfficerIntakeMouthSemanticExecutionAdmissionFR122();
   assertIssuedFiveOfficerIntakeMouthSemanticExecutionAdmissionFR122(fr122);
   if (
     fr122.authorityState !== 'mouth_semantic_vertical_slice_blocked_no_authoritative_machine_criterion_state' ||
     fr122.executableCriterionId !== null ||
-    fr122.closestStaticCandidateCriterionId !== SQUARE_BROAD
+    fr122.closestStaticCandidateCriterionId !== SQUARE_BROAD ||
+    fr122.provenance.successorMethodologyRef !== RESEARCH_REF ||
+    fr122.provenance.successorMethodologyReviewStatus !== 'research' ||
+    fr122.provenance.witnessQualifiedPassageRef !== WITNESS_QUALIFIED_PASSAGE_REF ||
+    fr122.provenance.witnessQualifiedPassageVerificationStatus !== 'scan_checked'
   ) fail('FR-122 predecessor authority drift.');
 
-  const persistedState = inspectRegistry();
-  const result: FiveOfficerIntakeCriterionMethodologyReviewedSuccessorFR123V1 = Object.freeze({
-    schemaVersion: 'fr123-five-officers-intake-criterion-methodology-reviewed-successor-v1' as const,
-    artifactVersion: '0.1.0' as const,
-    authorityState: 'witness_qualified_intake_methodology_review_gate_open_metric_and_calibration_authority_still_closed' as const,
+  const persistedState = validatePersistedAuthority();
+  const result: FiveOfficerIntakeCriterionMethodologyReviewPromotionAdmissionFR123V1 = Object.freeze({
+    schemaVersion: 'fr123-five-officers-intake-criterion-methodology-review-promotion-admission-v1' as const,
+    artifactVersion: '0.2.0' as const,
+    authorityState: 'witness_qualified_intake_methodology_review_promotion_blocked_no_governed_review_decision' as const,
     predecessor: Object.freeze({
       fr122AuthorityState: fr122.authorityState,
       executableCriterionId: null,
       closestStaticCandidateCriterionId: SQUARE_BROAD,
       researchMethodologyRef: RESEARCH_REF,
-      researchMethodologyRetained: true as const,
       researchMethodologyReviewStatus: 'research' as const,
+      witnessQualifiedSourceRef: WITNESS_QUALIFIED_PASSAGE_REF,
+      witnessQualifiedSourceVerificationStatus: 'scan_checked' as const,
     }),
     persistedState,
-    calibrationGateAssessment: Object.freeze({
-      criterionId: SQUARE_BROAD,
-      sourceGate: Object.freeze({ required: 'scan_checked' as const, current: 'scan_checked' as const, open: true as const }),
-      methodologyGate: Object.freeze({ required: 'reviewed' as const, current: 'reviewed' as const, methodologyRef: REVIEWED_REF, open: true as const }),
-      linkedProtocolGate: Object.freeze({
-        squareBroadProtocolRegistryIssued: false as const,
-        approvedRetentionPolicyAvailable: false as const,
+    promotionAssessment: Object.freeze({
+      sourceGate: Object.freeze({
+        requiredMinimumVerificationStatus: 'scan_checked' as const,
+        currentVerificationStatus: 'scan_checked' as const,
+        prerequisiteSatisfied: true as const,
+      }),
+      currentMethodologyGate: Object.freeze({
+        methodologyRef: RESEARCH_REF,
+        currentReviewStatus: 'research' as const,
+        reviewedStatusRequiredForCalibrationCollection: true as const,
         open: false as const,
       }),
-      humanCalibrationCollectionAuthorized: false as const,
+      governedReviewDecision: Object.freeze({
+        decisionArtifactConsumed: false as const,
+        decisionArtifactRef: null,
+        reviewedPromotionAuthorized: false as const,
+        reviewedSuccessorRegistryAppendAuthorized: false as const,
+      }),
+      structuralValidationBoundary: Object.freeze({
+        scanCheckedSourceIsNecessaryForReviewedAuthority: true as const,
+        scanCheckedSourceAloneIsSufficientForReviewedPromotion: false as const,
+        registryStructuralAcceptanceMeansReviewAuthority: false as const,
+      }),
     }),
     execution: Object.freeze({
-      methodologyDefinitionsPersisted: 1 as const,
-      methodologyReviewGateOpened: true as const,
-      methodologyPackMutations: 0 as const,
+      methodologyReviewPromotionsIssued: 0 as const,
+      reviewedMethodologyDefinitionsIssued: 0 as const,
       metricBindingsIssued: 0 as const,
       operationalizationsIssued: 0 as const,
       calibrationProtocolsIssued: 0 as const,
@@ -253,41 +231,52 @@ export function implementFiveOfficerIntakeCriterionMethodologyReviewedSuccessorF
       boundedNarrativesIssued: 0 as const,
       traditionalSemanticAuthority: false as const,
     }),
+    blockers: Object.freeze([
+      'intake_methodology_governed_review_decision_not_admitted',
+      'intake_methodology_review_promotion_authority_not_established',
+      'square_broad_metric_to_source_concept_mapping_not_authorized',
+      'square_broad_calibration_evidence_absent',
+      'square_broad_threshold_not_calibrated',
+    ] as const),
     authorityBoundary: Object.freeze({
-      reviewedMethodologyMeansMetricBinding: false as const,
-      reviewedMethodologyMeansMetricDirection: false as const,
-      reviewedMethodologyMeansNumericThreshold: false as const,
-      reviewedMethodologyMeansCalibrationEvidence: false as const,
-      reviewedMethodologyMeansCriterionState: false as const,
-      reviewedMethodologyMeansClaim: false as const,
-      reviewedMethodologyMeansProductionPromotion: false as const,
-      researchPredecessorMutated: false as const,
+      witnessQualifiedSourceMeansReviewedMethodology: false as const,
+      structuralValidatorAcceptanceMeansReviewPromotionAuthority: false as const,
+      methodologyReviewPromotionMayBeInferredFromSourceVerification: false as const,
+      proposedVersionMeansDefinitionIssued: false as const,
+      reviewPromotionMeansMetricBinding: false as const,
+      reviewPromotionMeansNumericThreshold: false as const,
+      reviewPromotionMeansCriterionState: false as const,
+      reviewPromotionMeansClaim: false as const,
       historicalArtifactMutated: false as const,
     }),
-    nextFrontier: 'square_broad_calibration_protocol_materialization_and_policy_review' as const,
+    nextFrontier: 'intake_methodology_review_promotion_criteria_and_decision_authority' as const,
   });
-  ISSUED.add(result);
+
   CACHED = result;
+  ISSUED.add(result);
   return result;
 }
 
-export function assertIssuedFiveOfficerIntakeCriterionMethodologyReviewedSuccessorFR123(
-  value: FiveOfficerIntakeCriterionMethodologyReviewedSuccessorFR123V1,
+export function assertIssuedFiveOfficerIntakeCriterionMethodologyReviewPromotionAdmissionFR123(
+  value: FiveOfficerIntakeCriterionMethodologyReviewPromotionAdmissionFR123V1,
 ): void {
-  if (!ISSUED.has(value)) fail('reviewed successor artifact was not issued by the active FR-123 boundary.');
+  if (!ISSUED.has(value)) fail('methodology review-promotion admission artifact was not issued by FR-123.');
   if (
-    value.authorityState !== 'witness_qualified_intake_methodology_review_gate_open_metric_and_calibration_authority_still_closed' ||
-    value.persistedState.reviewedMethodologyRef !== REVIEWED_REF ||
-    value.persistedState.reviewedMethodologyReviewStatus !== 'reviewed' ||
-    value.persistedState.reviewedSourceVerificationStatus !== 'scan_checked' ||
-    value.calibrationGateAssessment.sourceGate.open !== true ||
-    value.calibrationGateAssessment.methodologyGate.open !== true ||
-    value.calibrationGateAssessment.linkedProtocolGate.open !== false ||
-    value.calibrationGateAssessment.humanCalibrationCollectionAuthorized !== false ||
-    value.execution.metricBindingsIssued !== 0 ||
+    value.authorityState !== 'witness_qualified_intake_methodology_review_promotion_blocked_no_governed_review_decision' ||
+    value.predecessor.researchMethodologyReviewStatus !== 'research' ||
+    value.predecessor.witnessQualifiedSourceVerificationStatus !== 'scan_checked' ||
+    value.persistedState.reviewedSuccessorDefinitionIssued !== false ||
+    value.persistedState.reviewedSuccessorPersisted !== false ||
+    value.promotionAssessment.sourceGate.prerequisiteSatisfied !== true ||
+    value.promotionAssessment.currentMethodologyGate.open !== false ||
+    value.promotionAssessment.governedReviewDecision.reviewedPromotionAuthorized !== false ||
+    value.execution.methodologyReviewPromotionsIssued !== 0 ||
+    value.execution.reviewedMethodologyDefinitionsIssued !== 0 ||
     value.execution.thresholdsIssued !== 0 ||
     value.execution.criterionStatesIssued !== 0 ||
     value.execution.structuredClaimsIssued !== 0 ||
-    value.execution.traditionalSemanticAuthority !== false
-  ) fail('reviewed successor artifact drift.');
+    value.execution.boundedNarrativesIssued !== 0 ||
+    value.execution.traditionalSemanticAuthority !== false ||
+    value.nextFrontier !== 'intake_methodology_review_promotion_criteria_and_decision_authority'
+  ) fail('issued methodology review-promotion admission artifact drift.');
 }
