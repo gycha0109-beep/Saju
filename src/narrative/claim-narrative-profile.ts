@@ -123,7 +123,8 @@ function profileMatchesClaim(profile: ClaimNarrativeProfile, claim: Interpretati
   const semanticKeys = normalizedSemanticKeys(profile);
   if (semanticKeys === undefined) return true;
   const semanticKey = claimProfileSemanticKey(claim);
-  return semanticKey !== undefined && semanticKeys.includes(semanticKey);
+  if (semanticKey === undefined) return true;
+  return semanticKeys.includes(semanticKey);
 }
 
 function assertProfileSelectionUnambiguous(profiles: readonly ClaimNarrativeProfile[]): void {
@@ -289,7 +290,8 @@ function itemMatchesClaim(item: DeterministicNarrativePlanItem, claim: Interpret
   if (claim.claimType !== item.claimType) return false;
   if (item.semanticKeys === undefined) return true;
   const semanticKey = claimProfileSemanticKey(claim);
-  return semanticKey !== undefined && item.semanticKeys.includes(semanticKey);
+  if (semanticKey === undefined) return true;
+  return item.semanticKeys.includes(semanticKey);
 }
 
 export function buildClaimNarrativePlan(
