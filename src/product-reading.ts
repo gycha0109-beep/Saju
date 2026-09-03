@@ -3,12 +3,6 @@ export {
   requestProductReading,
   type ProductReadingServiceOptions,
 } from './reading/product-reading-service.js';
-export {
-  TemporalReadingContextError,
-  annualSexagenaryPillar,
-  buildTemporalReadingContext,
-  type TemporalReadingContext,
-} from './reading/temporal-reading-context.js';
 
 export type { CanonicalSajuSnapshot } from './contracts/calculation.js';
 export type { NarrativePolicy } from './contracts/narrative.js';
