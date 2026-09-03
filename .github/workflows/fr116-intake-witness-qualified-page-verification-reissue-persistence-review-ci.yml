@@ -1,0 +1,31 @@
+name: FR116 Intake Witness-Qualified Page Verification Reissue Persistence Review CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-witness-qualified-page-verification-reissue-persistence-review-fr116.ts'
+      - 'packages/face-reading/src/five-officers-intake-witness-qualified-page-verification-reissue-persistence-review-fr116.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-witness-qualified-page-verification-reissue-persistence-review-fr116-hardening.test.ts'
+      - 'scripts/verify-fr116-intake-witness-qualified-page-verification-reissue-persistence-review.mjs'
+      - '.github/workflows/fr116-intake-witness-qualified-page-verification-reissue-persistence-review-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr116-reissue-persistence-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR116 authority boundary
+        run: npx vitest run packages/face-reading/src/five-officers-intake-witness-qualified-page-verification-reissue-persistence-review-fr116.test.ts packages/face-reading/src/five-officers-intake-witness-qualified-page-verification-reissue-persistence-review-fr116-hardening.test.ts
+      - name: Verify FR116 exact persistence-review chain
+        run: node scripts/verify-fr116-intake-witness-qualified-page-verification-reissue-persistence-review.mjs
