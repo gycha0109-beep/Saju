@@ -17,7 +17,7 @@ const TENSION_RULE_SET = 'general-annual-t9-branch-clash-tension';
 
 export type GeneralAnnualThemeFamily = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
 
-export const GENERAL_ANNUAL_POLICY_SOURCE: SourceReference = Object.freeze({
+export const GENERAL_ANNUAL_POLICY_SOURCE = Object.freeze({
   sourceId: 'SRC-MYEONGHA-ANNUAL-INTERPRETATION-POLICY-V1',
   sourceType: 'internal_research',
   title: 'MyeongHa Annual Interpretation Policy v1',
@@ -25,7 +25,7 @@ export const GENERAL_ANNUAL_POLICY_SOURCE: SourceReference = Object.freeze({
   provenanceTier: 'internal',
   notes:
     'Product policy for request-scoped annual interpretation. The civil Asia/Seoul target year is resolved by the request adapter, annual stem Ten-God is treated as a bounded activation theme, and annual-to-natal branch clash is treated only as a tension signal. It does not authorize deterministic events, luck scores, health outcomes, wealth magnitude, spouse outcomes, or guaranteed timing.',
-});
+} satisfies SourceReference);
 
 const QUALITY: RuleDefinition['quality'] = Object.freeze({
   provenanceQuality: 'heuristic',
@@ -52,7 +52,7 @@ const TEN_GOD_THEME: Readonly<
 const TEN_GODS = Object.keys(TEN_GOD_THEME) as TenGod[];
 const PILLAR_SLOTS = ['year', 'month', 'day', 'hour'] as const;
 
-export const GENERAL_ANNUAL_THEME_SCHEMA: ClaimValueSchemaDefinition = Object.freeze({
+export const GENERAL_ANNUAL_THEME_SCHEMA = Object.freeze({
   schemaId: 'SCHEMA-GENERAL-ANNUAL-THEME-V1',
   version: '1.0.0',
   root: {
@@ -75,9 +75,9 @@ export const GENERAL_ANNUAL_THEME_SCHEMA: ClaimValueSchemaDefinition = Object.fr
     },
     additionalProperties: false,
   },
-});
+} satisfies ClaimValueSchemaDefinition);
 
-export const GENERAL_ANNUAL_TENSION_SCHEMA: ClaimValueSchemaDefinition = Object.freeze({
+export const GENERAL_ANNUAL_TENSION_SCHEMA = Object.freeze({
   schemaId: 'SCHEMA-GENERAL-ANNUAL-TENSION-V1',
   version: '1.0.0',
   root: {
@@ -95,9 +95,9 @@ export const GENERAL_ANNUAL_TENSION_SCHEMA: ClaimValueSchemaDefinition = Object.
     },
     additionalProperties: false,
   },
-});
+} satisfies ClaimValueSchemaDefinition);
 
-export const GENERAL_ANNUAL_THEME_CLAIM_TYPE: ClaimTypeDefinition = Object.freeze({
+export const GENERAL_ANNUAL_THEME_CLAIM_TYPE = Object.freeze({
   claimType: 'GENERAL_ANNUAL_THEME_ACTIVATION',
   version: '1.0.0',
   valueSchemaRef: { id: GENERAL_ANNUAL_THEME_SCHEMA.schemaId, version: GENERAL_ANNUAL_THEME_SCHEMA.version },
@@ -106,9 +106,9 @@ export const GENERAL_ANNUAL_THEME_CLAIM_TYPE: ClaimTypeDefinition = Object.freez
   scenarioSensitive: false,
   materialForNarrative: true,
   allowedTaxonomyTiers: ['T9'],
-});
+} satisfies ClaimTypeDefinition);
 
-export const GENERAL_ANNUAL_TENSION_CLAIM_TYPE: ClaimTypeDefinition = Object.freeze({
+export const GENERAL_ANNUAL_TENSION_CLAIM_TYPE = Object.freeze({
   claimType: 'GENERAL_ANNUAL_BRANCH_CLASH_TENSION',
   version: '1.0.0',
   valueSchemaRef: {
@@ -120,9 +120,9 @@ export const GENERAL_ANNUAL_TENSION_CLAIM_TYPE: ClaimTypeDefinition = Object.fre
   scenarioSensitive: true,
   materialForNarrative: true,
   allowedTaxonomyTiers: ['T9'],
-});
+} satisfies ClaimTypeDefinition);
 
-export const GENERAL_ANNUAL_READING_METHODOLOGY: MethodologyDefinition = Object.freeze({
+export const GENERAL_ANNUAL_READING_METHODOLOGY = Object.freeze({
   methodologyId: METHOD_ID,
   version: GENERAL_ANNUAL_READING_CANDIDATE_VERSION,
   family: 'time_dynamics',
@@ -168,7 +168,7 @@ export const GENERAL_ANNUAL_READING_METHODOLOGY: MethodologyDefinition = Object.
   },
   sourceIds: [GENERAL_ANNUAL_POLICY_SOURCE.sourceId],
   status: 'research',
-});
+} satisfies MethodologyDefinition);
 
 function sourceRefs(): RuleDefinition['sourceRefs'] {
   return [
@@ -328,7 +328,7 @@ export const GENERAL_ANNUAL_TENSION_RULES: readonly RuleDefinition[] = Object.fr
   PILLAR_SLOTS.map(branchClashRule),
 );
 
-export const GENERAL_ANNUAL_READING_PACK: InterpretationPack = Object.freeze({
+export const GENERAL_ANNUAL_READING_PACK = Object.freeze({
   packId: 'PACK-GENERAL-ANNUAL-READING-CANDIDATE',
   version: GENERAL_ANNUAL_READING_CANDIDATE_VERSION,
   name: 'General Annual Reading Research Candidate',
@@ -342,7 +342,7 @@ export const GENERAL_ANNUAL_READING_PACK: InterpretationPack = Object.freeze({
   },
   claimContractMode: 'registered_required',
   status: 'research',
-});
+} satisfies InterpretationPack);
 
 export function createGeneralAnnualReadingCandidateRegistry(
   createdAt = '1970-01-01T00:00:00.000Z',
