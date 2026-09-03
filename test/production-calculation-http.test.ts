@@ -16,8 +16,13 @@ const VALID_BIRTH = {
   sex: 'unspecified',
 } as const;
 
+const TEST_SERVICE_BEARER = 'production-calculation-http-test-bearer-6f7c8d9e';
+const AUTHORIZATION = `Bearer ${TEST_SERVICE_BEARER}`;
+
 async function listen(): Promise<{ baseUrl: string; close: () => Promise<void> }> {
-  const server = createMyeonghwaProductionCalculationHostServer();
+  const server = createMyeonghwaProductionCalculationHostServer({
+    serviceBearer: TEST_SERVICE_BEARER,
+  });
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
     server.listen(0, '127.0.0.1', () => resolve());
@@ -81,7 +86,10 @@ describe('production calculation HTTP boundary', () => {
     try {
       const response = await fetch(`${server.baseUrl}/api/calculations`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          authorization: AUTHORIZATION,
+          'content-type': 'application/json',
+        },
         body: JSON.stringify({ birth: VALID_BIRTH }),
       });
       const payload = (await response.json()) as {
@@ -283,7 +291,10 @@ describe('production calculation HTTP boundary', () => {
       for (const testCase of cases) {
         const response = await fetch(`${server.baseUrl}/api/calculations`, {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: {
+            authorization: AUTHORIZATION,
+            'content-type': 'application/json',
+          },
           body: JSON.stringify(testCase.body),
         });
         expect(response.status).toBe(400);
@@ -308,14 +319,20 @@ describe('production calculation HTTP boundary', () => {
 
       const wrongType = await fetch(`${server.baseUrl}/api/calculations`, {
         method: 'POST',
-        headers: { 'content-type': 'text/plain' },
+        headers: {
+          authorization: AUTHORIZATION,
+          'content-type': 'text/plain',
+        },
         body: '{}',
       });
       expect(wrongType.status).toBe(415);
 
       const malformed = await fetch(`${server.baseUrl}/api/calculations`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          authorization: AUTHORIZATION,
+          'content-type': 'application/json',
+        },
         body: '{broken',
       });
       expect(malformed.status).toBe(400);
