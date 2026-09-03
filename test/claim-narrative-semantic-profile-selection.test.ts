@@ -27,6 +27,25 @@ function claim(claimId: string, semanticKey: string): InterpretationClaim {
   };
 }
 
+function legacyClaim(claimId: string): InterpretationClaim {
+  return {
+    claimId,
+    schemaVersion: '1.0.0-test',
+    snapshotId: 'snapshot-semantic-profile-test',
+    taxonomy: { tier: 'T8', category: 'career', subcategory: 'natal' },
+    claimType: 'GENERAL_ANNUAL_THEME_ACTIVATION',
+    subject: 'career_pattern',
+    predicate: 'legacy_profile_contract',
+    value: { pattern: 'legacy_without_semantic_key' },
+    methodologyRef: { id: 'M-LEGACY-TEST', version: '1.0.0' },
+    ruleRefs: [{ ruleId: 'RULE-LEGACY', version: '1.0.0', evaluationId: 'eval-legacy' }],
+    factRefs: [],
+    upstreamClaimRefs: [],
+    sourceRefs: [],
+    state: 'active',
+  };
+}
+
 function profile(
   profileId: string,
   semanticKeys: readonly string[] | undefined,
@@ -89,6 +108,22 @@ describe('ClaimNarrativeProfile semantic-key selection', () => {
       type: 'assertion',
       epistemicType: 'future_tendency',
       evidenceRefs: [{ sourceType: 'claim', ref: 'claim-B' }],
+    });
+  });
+
+  it('preserves legacy claim-type matching when the claim value has no semanticKey', () => {
+    const evidence = bundle([legacyClaim('claim-legacy')]);
+    const profiles = [profile('profile-legacy', ['LEGACY_PROFILE_METADATA_KEY'], 10)];
+
+    const plan = buildClaimNarrativePlan(evidence, profiles);
+    expect(plan.items.map((item) => item.profileRef.id)).toEqual(['profile-legacy']);
+
+    const sections = renderClaimNarrativeProfileSections(evidence, profiles);
+    expect(sections).toHaveLength(1);
+    expect(sections[0]?.blocks).toHaveLength(1);
+    expect(sections[0]?.blocks[0]).toMatchObject({
+      type: 'assertion',
+      evidenceRefs: [{ sourceType: 'claim', ref: 'claim-legacy' }],
     });
   });
 
