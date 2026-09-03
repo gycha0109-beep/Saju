@@ -1,0 +1,31 @@
+name: FR123 Intake Methodology Review Promotion Admission CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-reviewed-successor-fr123.ts'
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-reviewed-successor-fr123.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-reviewed-successor-fr123-hardening.test.ts'
+      - 'scripts/verify-fr123-intake-methodology-review-promotion-admission.mjs'
+      - '.github/workflows/fr123-intake-methodology-review-promotion-admission-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr123-intake-methodology-review-promotion-admission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR123 methodology review-promotion admission boundary
+        run: npx vitest run packages/face-reading/src/five-officers-intake-criterion-methodology-reviewed-successor-fr123.test.ts packages/face-reading/src/five-officers-intake-criterion-methodology-reviewed-successor-fr123-hardening.test.ts
+      - name: Verify FR123 exact predecessor and review-promotion chain
+        run: node scripts/verify-fr123-intake-methodology-review-promotion-admission.mjs
