@@ -40,11 +40,27 @@ export interface DirectSourcePageVerificationRecord {
   readonly mayPromoteOtherWitness: false;
 }
 
+export interface DirectSourceVerificationRelation {
+  readonly relationId: string;
+  readonly version: string;
+  readonly kind: 'non_independent_identity_reissue';
+  readonly parentVerificationRef: string;
+  readonly childVerificationRef: string;
+  readonly parentRetained: true;
+  readonly evidenceReusePolicy: 'exact_evidence_reuse_required';
+  readonly checkingEventPolicy: 'same_checker_refs_same_checking_event';
+  readonly allowedRecordDifferences: readonly ['verificationId', 'passageId'];
+  readonly lineageDepthPolicy: 'single_hop_parent_root';
+  readonly independentVerificationDelta: 0;
+  readonly childMayCountAsIndependentVerification: false;
+}
+
 export interface DirectSourceVerificationRegistry {
   readonly registryId: string;
   readonly version: string;
   readonly candidates: readonly DirectSourceWitnessCandidate[];
   readonly pageVerifications: readonly DirectSourcePageVerificationRecord[];
+  readonly verificationRelations?: readonly DirectSourceVerificationRelation[];
 }
 
 const STABLE_KEY = /^[a-z0-9][a-z0-9._:-]{0,191}$/u;
@@ -67,8 +83,87 @@ function uniqueNonEmpty(values: readonly string[], path: string): void {
   }
 }
 
+function sameSequence<T>(actual: readonly T[], expected: readonly T[]): boolean {
+  return actual.length === expected.length && actual.every((value, index) => value === expected[index]);
+}
+
 function candidateRef(candidate: DirectSourceWitnessCandidate): string {
   return `${candidate.candidateId}@${candidate.version}`;
+}
+
+function verificationRef(record: DirectSourcePageVerificationRecord): string {
+  return `${record.verificationId}@${record.version}`;
+}
+
+function validateVerificationRelations(
+  registry: DirectSourceVerificationRegistry,
+  recordsByRef: ReadonlyMap<string, DirectSourcePageVerificationRecord>,
+): void {
+  const relations = registry.verificationRelations ?? [];
+  const relationRefs = new Set<string>();
+  const childRefs = new Set<string>();
+
+  for (const relation of relations) {
+    stableKey(relation.relationId, 'directSourceVerificationRelation.relationId');
+    nonEmpty(relation.version, `${relation.relationId}.version`);
+    const relationKey = `${relation.relationId}@${relation.version}`;
+    if (relationRefs.has(relationKey)) {
+      throw new FaceAuthorityValidationError(`Duplicate direct-source verification relation: ${relationKey}`);
+    }
+    relationRefs.add(relationKey);
+
+    if (
+      relation.kind !== 'non_independent_identity_reissue' ||
+      relation.parentRetained !== true ||
+      relation.evidenceReusePolicy !== 'exact_evidence_reuse_required' ||
+      relation.checkingEventPolicy !== 'same_checker_refs_same_checking_event' ||
+      !sameSequence(relation.allowedRecordDifferences, ['verificationId', 'passageId'] as const) ||
+      relation.lineageDepthPolicy !== 'single_hop_parent_root' ||
+      relation.independentVerificationDelta !== 0 ||
+      relation.childMayCountAsIndependentVerification !== false
+    ) {
+      throw new FaceAuthorityValidationError(`${relationKey} violates non-independent identity-reissue contract.`);
+    }
+
+    nonEmpty(relation.parentVerificationRef, `${relationKey}.parentVerificationRef`);
+    nonEmpty(relation.childVerificationRef, `${relationKey}.childVerificationRef`);
+    if (relation.parentVerificationRef === relation.childVerificationRef) {
+      throw new FaceAuthorityValidationError(`${relationKey} parent and child verification refs must be distinct.`);
+    }
+    if (childRefs.has(relation.childVerificationRef)) {
+      throw new FaceAuthorityValidationError(`Multiple reissue parents for child ${relation.childVerificationRef}.`);
+    }
+    childRefs.add(relation.childVerificationRef);
+  }
+
+  for (const relation of relations) {
+    const relationKey = `${relation.relationId}@${relation.version}`;
+    const parent = recordsByRef.get(relation.parentVerificationRef);
+    const child = recordsByRef.get(relation.childVerificationRef);
+    if (parent === undefined || child === undefined) {
+      throw new FaceAuthorityValidationError(`${relationKey} parent and child must resolve to page verification records.`);
+    }
+    if (childRefs.has(relation.parentVerificationRef)) {
+      throw new FaceAuthorityValidationError(`${relationKey} violates single-hop parent-root lineage policy.`);
+    }
+    if (
+      parent.verificationId === child.verificationId ||
+      parent.passageId === child.passageId ||
+      parent.version !== child.version ||
+      parent.candidateRef !== child.candidateRef ||
+      parent.witnessId !== child.witnessId ||
+      parent.chapter !== child.chapter ||
+      parent.scanPage !== child.scanPage ||
+      parent.printedPage !== child.printedPage ||
+      parent.originalText !== child.originalText ||
+      !sameSequence(parent.visualEvidenceRefs, child.visualEvidenceRefs) ||
+      !sameSequence(parent.checkerRefs, child.checkerRefs) ||
+      parent.state !== child.state ||
+      parent.mayPromoteOtherWitness !== child.mayPromoteOtherWitness
+    ) {
+      throw new FaceAuthorityValidationError(`${relationKey} must preserve exact evidence and checking-event identity.`);
+    }
+  }
 }
 
 export function validateDirectSourceVerificationRegistry(registry: DirectSourceVerificationRegistry): void {
@@ -106,13 +201,15 @@ export function validateDirectSourceVerificationRegistry(registry: DirectSourceV
   }
 
   const verificationRefs = new Set<string>();
+  const recordsByRef = new Map<string, DirectSourcePageVerificationRecord>();
   const passageIds = new Set<string>();
   for (const record of registry.pageVerifications) {
     stableKey(record.verificationId, 'directSourceVerification.verificationId');
     nonEmpty(record.version, `${record.verificationId}.version`);
-    const ref = `${record.verificationId}@${record.version}`;
+    const ref = verificationRef(record);
     if (verificationRefs.has(ref)) throw new FaceAuthorityValidationError(`Duplicate page verification: ${ref}`);
     verificationRefs.add(ref);
+    recordsByRef.set(ref, record);
 
     const candidate = candidates.get(record.candidateRef);
     if (candidate === undefined) throw new FaceAuthorityValidationError(`${ref} references unknown candidate ${record.candidateRef}.`);
@@ -136,6 +233,8 @@ export function validateDirectSourceVerificationRegistry(registry: DirectSourceV
       throw new FaceAuthorityValidationError(`${ref} must not promote another witness.`);
     }
   }
+
+  validateVerificationRelations(registry, recordsByRef);
 }
 
 export function materializeVerifiedSourcePassage(
