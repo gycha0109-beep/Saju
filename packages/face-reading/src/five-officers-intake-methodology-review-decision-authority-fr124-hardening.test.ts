@@ -60,7 +60,7 @@ describe('FR124 intake methodology review decision authority hardening', () => {
   });
 
   it('rejects duplicate decision refs and duplicate target-successor promotion pairs', () => {
-    const first = syntheticRegistry().decisions[0];
+    const first = syntheticRegistry().decisions[0]!;
     const duplicateRef: MethodologyReviewDecisionRegistryFR124V1 = {
       registryId: 'registry.face.methodology_review_decisions.synthetic',
       version: '0.1.0',
