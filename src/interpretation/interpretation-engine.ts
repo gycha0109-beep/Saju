@@ -51,6 +51,7 @@ export class ResearchEvidenceExecutionError extends Error {
 export interface InterpretationRunOptions {
   requestId?: string;
   now?: Date;
+  temporalFacts?: Readonly<Record<string, unknown>>;
   reviewerTrustContext?: ReviewerTrustContext;
   researchEvidence?: InterpretationResearchEvidenceInput;
 }
@@ -121,6 +122,7 @@ function evaluatePlannedRule(
   registry: ResolvedRuleRegistrySnapshot,
   existingClaims: readonly InterpretationClaim[],
   validatedResearchEvidence: readonly ValidatedResearchEvidence[],
+  temporalFacts: Readonly<Record<string, unknown>> | undefined,
   now: Date,
 ): readonly { evaluation: RuleEvaluation; claims: readonly InterpretationClaim[] }[] {
   if (!scenarioSensitive(rule) || snapshot.scenarios.length === 0) {
@@ -128,6 +130,7 @@ function evaluatePlannedRule(
       evaluateRule(rule, {
         snapshot,
         pack: registry.pack,
+        ...(temporalFacts === undefined ? {} : { temporalFacts }),
         existingClaims,
         validatedResearchEvidence,
         now,
@@ -139,6 +142,7 @@ function evaluatePlannedRule(
     evaluateRule(rule, {
       snapshot,
       pack: registry.pack,
+      ...(temporalFacts === undefined ? {} : { temporalFacts }),
       existingClaims,
       validatedResearchEvidence,
       scenarioRef: scenario.scenarioId,
@@ -282,6 +286,7 @@ export function runInterpretation(
         registry,
         priorStageClaims,
         validatedResearchEvidence,
+        options.temporalFacts,
         now,
       )) {
         stageEvaluations.push(result.evaluation);
