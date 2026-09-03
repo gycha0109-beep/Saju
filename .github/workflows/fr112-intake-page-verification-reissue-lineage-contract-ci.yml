@@ -1,0 +1,31 @@
+name: FR112 Intake Page Verification Reissue Lineage Contract CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-page-verification-reissue-lineage-contract-review-fr112.ts'
+      - 'packages/face-reading/src/five-officers-intake-page-verification-reissue-lineage-contract-review-fr112.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-page-verification-reissue-lineage-contract-review-fr112-hardening.test.ts'
+      - 'scripts/verify-fr112-intake-page-verification-reissue-lineage-contract.mjs'
+      - '.github/workflows/fr112-intake-page-verification-reissue-lineage-contract-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr112-reissue-lineage-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR112 authority boundary
+        run: npx vitest run packages/face-reading/src/five-officers-intake-page-verification-reissue-lineage-contract-review-fr112.test.ts packages/face-reading/src/five-officers-intake-page-verification-reissue-lineage-contract-review-fr112-hardening.test.ts
+      - name: Verify FR112 exact lineage-contract chain
+        run: node scripts/verify-fr112-intake-page-verification-reissue-lineage-contract.mjs
