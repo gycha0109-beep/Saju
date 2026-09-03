@@ -1,0 +1,31 @@
+name: FR124 Intake Methodology Review Decision Authority CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-decision-authority-fr124.ts'
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-decision-authority-fr124.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-decision-authority-fr124-hardening.test.ts'
+      - 'scripts/verify-fr124-intake-methodology-review-decision-authority.mjs'
+      - '.github/workflows/fr124-intake-methodology-review-decision-authority-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr124-intake-methodology-review-decision-authority:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR124 methodology review decision authority
+        run: npx vitest run packages/face-reading/src/five-officers-intake-methodology-review-decision-authority-fr124.test.ts packages/face-reading/src/five-officers-intake-methodology-review-decision-authority-fr124-hardening.test.ts
+      - name: Verify FR124 exact predecessor and decision-authority chain
+        run: node scripts/verify-fr124-intake-methodology-review-decision-authority.mjs
