@@ -80,12 +80,19 @@ describe('MyeongHa general monthly T9 candidate', () => {
       themes.map((claim) => (claim.value as { segmentId: string }).segmentId).sort(),
     ).toEqual(['after_jeol', 'before_jeol']);
     expect(
-      themes.every((claim) =>
-        claim.factRefs.includes('temporal.targetYear') &&
-        claim.factRefs.includes('temporal.targetMonth') &&
-        claim.factRefs.includes('temporal.jeolBoundary') &&
-        claim.factRefs.includes('temporal.segments'),
-      ),
+      themes.every((claim) => {
+        const segmentId = (claim.value as { segmentId: string }).segmentId;
+        const prefix = `temporal.segmentsById.${segmentId}`;
+        return (
+          claim.factRefs.includes('temporal.targetYear') &&
+          claim.factRefs.includes('temporal.targetMonth') &&
+          claim.factRefs.includes('temporal.jeolBoundary.at') &&
+          claim.factRefs.includes(`${prefix}.segmentId`) &&
+          claim.factRefs.includes(`${prefix}.monthlyPillar`) &&
+          claim.factRefs.includes(`${prefix}.monthlyStemTenGod`) &&
+          !claim.factRefs.includes('temporal.segments')
+        );
+      }),
     ).toBe(true);
 
     const composition = buildReadingCompositionEvidence(
@@ -188,6 +195,11 @@ describe('MyeongHa general monthly T9 candidate', () => {
       for (const claim of tensions) {
         expect(claim.taxonomy).toEqual({ tier: 'T9', category: 'general', subcategory: 'monthly' });
         expect(claim.value).toMatchObject({ relation: 'clash', narrativeRole: 'tension' });
+        const value = claim.value as { segmentId: string; natalPillar: string };
+        expect(claim.factRefs).toContain(
+          `temporal.segmentsById.${value.segmentId}.monthlyBranchRelations.${value.natalPillar}.relation`,
+        );
+        expect(claim.factRefs).not.toContain('temporal.segments');
         found = true;
       }
     }
