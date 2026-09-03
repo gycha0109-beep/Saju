@@ -20,6 +20,7 @@ import {
   type MyeonghwaProductHostDependencies,
   type ProductHostExecutionContext,
   type ProductHostInterpretationBundle,
+  type ProductHostInterpretationRequestContext,
 } from '../host/product-host.js';
 import type { ProductReadingServiceOptions } from '../reading/product-reading-service.js';
 import {
@@ -251,9 +252,11 @@ function interpretationBundle(
   reviewerTrustContext: ReviewerTrustContext | undefined,
   snapshot: Parameters<typeof runInterpretation>[0],
   context: ProductHostExecutionContext,
+  requestContext?: ProductHostInterpretationRequestContext,
 ): ProductHostInterpretationBundle {
   const options = {
     requestId: context.requestId,
+    ...(requestContext === undefined ? {} : { temporalFacts: requestContext.temporalFacts }),
     ...(reviewerTrustContext === undefined ? {} : { reviewerTrustContext }),
   };
   const interpretation: InterpretationExecutionResult = runInterpretation(snapshot, registry, options);
@@ -299,8 +302,14 @@ function toDependencies(
       await observeCalculationSensitivity(request, input, context);
       return result.snapshot;
     },
-    interpret: (snapshot, context) =>
-      interpretationBundle(registry, request.reviewerTrustContext, snapshot, context),
+    interpret: (snapshot, context, requestContext) =>
+      interpretationBundle(
+        registry,
+        request.reviewerTrustContext,
+        snapshot,
+        context,
+        requestContext,
+      ),
     adapter,
     narrativePolicy,
     readingOptions,
