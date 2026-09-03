@@ -139,6 +139,6 @@ describe('FR103 Five Officers mouth NLC scan evidence acquisition', () => {
   it('fails closed when page-verification or scan_checked promotion is requested', async () => {
     const result = await artifact103();
     expect(() => assertMouthPageVerificationRecordAuthorizedFR103(result)).toThrow(/separate governance review/u);
-    expect(() => assertMouthPassageScanCheckedPromotionAuthorizedFR103(result)).toThrow(/does not mutate the direct-source registry/u);
+    expect(() => assertMouthPassageScanCheckedPromotionAuthorizedFR103(result)).toThrow(/do not mutate the direct-source registry/u);
   });
 });
