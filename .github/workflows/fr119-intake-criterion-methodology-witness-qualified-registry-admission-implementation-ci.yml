@@ -1,0 +1,31 @@
+name: FR119 Intake Criterion Methodology Witness-Qualified Registry Admission Implementation CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-witness-qualified-registry-admission-implementation-fr119.ts'
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-witness-qualified-registry-admission-implementation-fr119.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-witness-qualified-registry-admission-implementation-fr119-hardening.test.ts'
+      - 'scripts/verify-fr119-intake-criterion-methodology-witness-qualified-registry-admission-implementation.mjs'
+      - '.github/workflows/fr119-intake-criterion-methodology-witness-qualified-registry-admission-implementation-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr119-registry-admission-implementation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR119 persistence authority boundary
+        run: npx vitest run packages/face-reading/src/five-officers-intake-criterion-methodology-witness-qualified-registry-admission-implementation-fr119.test.ts packages/face-reading/src/five-officers-intake-criterion-methodology-witness-qualified-registry-admission-implementation-fr119-hardening.test.ts
+      - name: Verify FR119 exact registry admission chain
+        run: node scripts/verify-fr119-intake-criterion-methodology-witness-qualified-registry-admission-implementation.mjs
