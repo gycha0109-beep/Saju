@@ -1,0 +1,31 @@
+name: FR108 Intake Methodology Registry Admission CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-registry-admission-review-fr108.ts'
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-registry-admission-review-fr108.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-registry-admission-review-fr108-hardening.test.ts'
+      - 'scripts/verify-fr108-intake-methodology-registry-admission.mjs'
+      - '.github/workflows/fr108-intake-methodology-registry-admission-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr108-intake-methodology-registry-admission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR108 authority boundary
+        run: npx vitest run packages/face-reading/src/five-officers-intake-criterion-methodology-registry-admission-review-fr108.test.ts packages/face-reading/src/five-officers-intake-criterion-methodology-registry-admission-review-fr108-hardening.test.ts
+      - name: Verify FR108 exact registry admission chain
+        run: node scripts/verify-fr108-intake-methodology-registry-admission.mjs
