@@ -146,7 +146,7 @@ function buildTargetRelation(): DirectSourceVerificationRelation {
     parentRetained: true,
     evidenceReusePolicy: 'exact_evidence_reuse_required',
     checkingEventPolicy: 'same_checker_refs_same_checking_event',
-    allowedRecordDifferences: ['verificationId', 'passageId'],
+    allowedRecordDifferences: ['verificationId', 'passageId'] as const,
     lineageDepthPolicy: 'single_hop_parent_root',
     independentVerificationDelta: 0,
     childMayCountAsIndependentVerification: false,
