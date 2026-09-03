@@ -54,7 +54,7 @@ function annualRequest(year: number): ReadingRequest {
 function temporalFacts(value: CanonicalSajuSnapshot, year: number) {
   const context = buildTemporalReadingContext(annualRequest(year));
   if (context === undefined) throw new Error('annual request must produce temporal context');
-  return buildAnnualInterpretationFacts(value, context);
+  return { ...buildAnnualInterpretationFacts(value, context) };
 }
 
 function withDayBranchClash(value: CanonicalSajuSnapshot): CanonicalSajuSnapshot {
