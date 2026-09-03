@@ -53,6 +53,7 @@ export class ClaimNarrativeProfileError extends Error {
 
 export interface DeterministicNarrativePlanItem {
   claimType: string;
+  semanticKeys?: readonly string[];
   profileRef: {
     id: string;
     version: string;
@@ -70,6 +71,10 @@ export interface DeterministicNarrativePlan {
   rendererVersion: string;
   language: string;
   items: readonly DeterministicNarrativePlanItem[];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function canonicalize(value: unknown): unknown {
@@ -100,6 +105,59 @@ function claimSemanticKey(claim: InterpretationClaim): string {
       }),
     ) ?? ''
   );
+}
+
+function claimProfileSemanticKey(claim: InterpretationClaim): string | undefined {
+  if (!isRecord(claim.value)) return undefined;
+  const value = claim.value.semanticKey;
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function normalizedSemanticKeys(profile: ClaimNarrativeProfile): readonly string[] | undefined {
+  if (profile.semanticKeys === undefined || profile.semanticKeys.length === 0) return undefined;
+  return [...new Set(profile.semanticKeys.filter((key) => key.length > 0))].sort();
+}
+
+function profileMatchesClaim(profile: ClaimNarrativeProfile, claim: InterpretationClaim): boolean {
+  if (profile.claimType !== claim.claimType) return false;
+  const semanticKeys = normalizedSemanticKeys(profile);
+  if (semanticKeys === undefined) return true;
+  const semanticKey = claimProfileSemanticKey(claim);
+  if (semanticKey === undefined) return true;
+  return semanticKeys.includes(semanticKey);
+}
+
+function assertProfileSelectionUnambiguous(profiles: readonly ClaimNarrativeProfile[]): void {
+  const byClaimType = new Map<string, ClaimNarrativeProfile[]>();
+  for (const profile of profiles) {
+    const group = byClaimType.get(profile.claimType) ?? [];
+    group.push(profile);
+    byClaimType.set(profile.claimType, group);
+  }
+
+  for (const [claimType, group] of byClaimType) {
+    if (group.length < 2) continue;
+    for (let leftIndex = 0; leftIndex < group.length; leftIndex += 1) {
+      const left = group[leftIndex];
+      if (left === undefined) continue;
+      const leftKeys = normalizedSemanticKeys(left);
+      for (let rightIndex = leftIndex + 1; rightIndex < group.length; rightIndex += 1) {
+        const right = group[rightIndex];
+        if (right === undefined) continue;
+        const rightKeys = normalizedSemanticKeys(right);
+        const ambiguous =
+          leftKeys === undefined ||
+          rightKeys === undefined ||
+          leftKeys.some((key) => rightKeys.includes(key));
+        if (!ambiguous) continue;
+        throw new ClaimNarrativeProfileError(
+          'DUPLICATE_PROFILE_CLAIM_TYPE',
+          right.profileId,
+          `ClaimNarrativeProfiles ${left.profileId} and ${right.profileId} ambiguously target claimType ${claimType}.`,
+        );
+      }
+    }
+  }
 }
 
 function hint(profile: ClaimNarrativeProfile, prefix: string): string | undefined {
@@ -196,23 +254,6 @@ function assertAllowedText(profile: ClaimNarrativeProfile, text: string): void {
   }
 }
 
-function profileIndex(
-  profiles: readonly ClaimNarrativeProfile[],
-): ReadonlyMap<string, ClaimNarrativeProfile> {
-  const result = new Map<string, ClaimNarrativeProfile>();
-  for (const profile of profiles) {
-    if (result.has(profile.claimType)) {
-      throw new ClaimNarrativeProfileError(
-        'DUPLICATE_PROFILE_CLAIM_TYPE',
-        profile.profileId,
-        `Multiple ClaimNarrativeProfiles target claimType ${profile.claimType}.`,
-      );
-    }
-    result.set(profile.claimType, profile);
-  }
-  return result;
-}
-
 function axisRank(axis: DeterministicNarrativeAxis): number {
   return DETERMINISTIC_NARRATIVE_AXIS_ORDER.indexOf(axis);
 }
@@ -229,9 +270,11 @@ function planItem(
       : `${summary} ${profile.mandatoryQualifier}`;
   assertAllowedText(profile, headline);
   assertAllowedText(profile, assertionText);
+  const semanticKeys = normalizedSemanticKeys(profile);
 
   return {
     claimType: profile.claimType,
+    ...(semanticKeys === undefined ? {} : { semanticKeys }),
     profileRef: { id: profile.profileId, version: profile.version },
     axis: renderingAxis(profile),
     order: renderingOrder(profile),
@@ -243,18 +286,23 @@ function planItem(
   };
 }
 
+function itemMatchesClaim(item: DeterministicNarrativePlanItem, claim: InterpretationClaim): boolean {
+  if (claim.claimType !== item.claimType) return false;
+  if (item.semanticKeys === undefined) return true;
+  const semanticKey = claimProfileSemanticKey(claim);
+  if (semanticKey === undefined) return true;
+  return item.semanticKeys.includes(semanticKey);
+}
+
 export function buildClaimNarrativePlan(
   bundle: NarrativeEvidenceBundle,
   profiles: readonly ClaimNarrativeProfile[],
   language = 'ko',
 ): DeterministicNarrativePlan {
-  const indexed = profileIndex(profiles);
-  const claimTypes = new Set(
-    bundle.claims.filter((claim) => claim.state === 'active').map((claim) => claim.claimType),
-  );
-  const items = [...claimTypes]
-    .map((claimType) => indexed.get(claimType))
-    .filter((profile): profile is ClaimNarrativeProfile => profile !== undefined)
+  assertProfileSelectionUnambiguous(profiles);
+  const activeClaims = bundle.claims.filter((claim) => claim.state === 'active');
+  const items = profiles
+    .filter((profile) => activeClaims.some((claim) => profileMatchesClaim(profile, claim)))
     .map((profile) => planItem(profile, language))
     .sort((left, right) => {
       const axisDifference = axisRank(left.axis) - axisRank(right.axis);
@@ -294,7 +342,7 @@ export function renderClaimNarrativeProfileSections(
   const plan = buildClaimNarrativePlan(bundle, profiles, language);
   return plan.items.map((item) => {
     const claims = bundle.claims
-      .filter((claim) => claim.state === 'active' && claim.claimType === item.claimType)
+      .filter((claim) => claim.state === 'active' && itemMatchesClaim(item, claim))
       .sort((left, right) => claimSemanticKey(left).localeCompare(claimSemanticKey(right)));
 
     return {
@@ -309,10 +357,13 @@ export function claimTypesCoveredByNarrativeProfiles(
   bundle: NarrativeEvidenceBundle,
   profiles: readonly ClaimNarrativeProfile[],
 ): ReadonlySet<string> {
-  const indexed = profileIndex(profiles);
+  assertProfileSelectionUnambiguous(profiles);
   return new Set(
     bundle.claims
-      .filter((claim) => claim.state === 'active' && indexed.has(claim.claimType))
+      .filter(
+        (claim) =>
+          claim.state === 'active' && profiles.some((profile) => profileMatchesClaim(profile, claim)),
+      )
       .map((claim) => claim.claimType),
   );
 }
