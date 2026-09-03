@@ -22,9 +22,27 @@ export interface ReadingIntent {
   relationshipScope?: ReadingRelationshipScope;
 }
 
+export type ReadingTargetPeriod =
+  | {
+      scope: 'annual';
+      year: number;
+      timeZone: 'Asia/Seoul';
+      referenceDateTime: string;
+      resolution: 'relative_current';
+    }
+  | {
+      scope: 'monthly';
+      year: number;
+      month: number;
+      timeZone: 'Asia/Seoul';
+      referenceDateTime: string;
+      resolution: 'relative_current';
+    };
+
 export interface ReadingRequest {
   requestId: string;
   intent: ReadingIntent;
+  targetPeriod?: ReadingTargetPeriod;
   targetPersonRef?: string;
   question?: string;
   outputPreferences?: {
