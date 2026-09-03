@@ -163,14 +163,17 @@ export const GENERAL_MONTHLY_READING_METHODOLOGY = Object.freeze({
     'A segment stem Ten-God is an activation theme, not a luck score, outcome guarantee, or proof of a specific event.',
     'A segment branch clash is a tension signal only and cannot establish loss, illness, separation, accident, or another concrete event.',
     'Unknown or ambiguous natal pillars do not authorize fabricated monthly relation claims.',
+    'Rule provenance consumes only the specific keyed segment fields that can affect the emitted claim.',
   ],
   requiredFactTypes: [
     'temporal.targetYear',
     'temporal.targetMonth',
-    'temporal.jeolBoundary',
-    'temporal.segments',
+    'temporal.jeolBoundary.at',
+    'temporal.segmentsById.*.segmentId',
+    'temporal.segmentsById.*.monthlyPillar',
+    'temporal.segmentsById.*.monthlyStemTenGod',
   ],
-  optionalFactTypes: ['temporal.segments.monthlyBranchRelations'],
+  optionalFactTypes: ['temporal.segmentsById.*.monthlyBranchRelations.*.relation'],
   inputContract: {
     factInputs: [
       {
@@ -187,15 +190,33 @@ export const GENERAL_MONTHLY_READING_METHODOLOGY = Object.freeze({
       },
       {
         source: 'temporal_fact',
-        pathPattern: 'jeolBoundary',
+        pathPattern: 'jeolBoundary.at',
         mode: 'required',
         rationale: 'Every monthly phase claim must preserve the exact jeol split inside the civil month.',
       },
       {
         source: 'temporal_fact',
-        pathPattern: 'segments',
+        pathPattern: 'segmentsById.*.segmentId',
         mode: 'required',
-        rationale: 'Monthly phase semantics are evaluated only from the deterministic before/after segment set.',
+        rationale: 'Every phase claim must identify the keyed before/after segment it describes.',
+      },
+      {
+        source: 'temporal_fact',
+        pathPattern: 'segmentsById.*.monthlyPillar',
+        mode: 'required',
+        rationale: 'Every phase claim must remain bound to the actual month pillar active in that segment.',
+      },
+      {
+        source: 'temporal_fact',
+        pathPattern: 'segmentsById.*.monthlyStemTenGod',
+        mode: 'required',
+        rationale: 'Primary monthly activation is personalized against the resolved natal day master.',
+      },
+      {
+        source: 'temporal_fact',
+        pathPattern: 'segmentsById.*.monthlyBranchRelations.*.relation',
+        mode: 'allowed',
+        rationale: 'Optional resolved monthly-segment-to-natal branch clash signal.',
       },
     ],
   },
@@ -213,7 +234,11 @@ function sourceRefs(): RuleDefinition['sourceRefs'] {
   ];
 }
 
-function corePeriodInputs(): RuleDefinition['inputs'] {
+function segmentPath(segmentId: GeneralMonthlySegmentId, suffix: string): string {
+  return `segmentsById.${segmentId}.${suffix}`;
+}
+
+function corePeriodInputs(segmentId: GeneralMonthlySegmentId): RuleDefinition['inputs'] {
   return [
     {
       key: 'targetYear',
@@ -230,29 +255,31 @@ function corePeriodInputs(): RuleDefinition['inputs'] {
       ambiguityBehavior: 'requires_resolved',
     },
     {
-      key: 'jeolBoundary',
+      key: 'jeolBoundaryAt',
       source: 'temporal_fact',
-      pathOrClaimType: 'jeolBoundary',
+      pathOrClaimType: 'jeolBoundary.at',
       required: true,
       ambiguityBehavior: 'requires_resolved',
     },
     {
-      key: 'segments',
+      key: 'segmentId',
       source: 'temporal_fact',
-      pathOrClaimType: 'segments',
+      pathOrClaimType: segmentPath(segmentId, 'segmentId'),
+      required: true,
+      ambiguityBehavior: 'requires_resolved',
+    },
+    {
+      key: 'monthlyPillar',
+      source: 'temporal_fact',
+      pathOrClaimType: segmentPath(segmentId, 'monthlyPillar'),
       required: true,
       ambiguityBehavior: 'requires_resolved',
     },
   ];
 }
 
-function segmentIndex(segmentId: GeneralMonthlySegmentId): 0 | 1 {
-  return segmentId === 'before_jeol' ? 0 : 1;
-}
-
 function activationRule(segmentId: GeneralMonthlySegmentId, tenGod: TenGod): RuleDefinition {
   const theme = TEN_GOD_THEME[tenGod];
-  const index = segmentIndex(segmentId);
   return {
     ruleId: `RULE-GENERAL-MONTHLY-T9-${segmentId.toUpperCase()}-${tenGod}`,
     version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION,
@@ -262,21 +289,31 @@ function activationRule(segmentId: GeneralMonthlySegmentId, tenGod: TenGod): Rul
     title: `Monthly ${segmentId} ${tenGod} activation theme`,
     description:
       'Emits one bounded monthly segment activation theme only when the request-scoped segment stem Ten-God matches.',
-    inputs: corePeriodInputs(),
+    inputs: [
+      ...corePeriodInputs(segmentId),
+      {
+        key: 'monthlyStemTenGod',
+        source: 'temporal_fact',
+        pathOrClaimType: segmentPath(segmentId, 'monthlyStemTenGod'),
+        required: true,
+        ambiguityBehavior: 'requires_resolved',
+      },
+    ],
     condition: {
       op: 'and',
       expressions: [
         { op: 'exists', value: { kind: 'input', key: 'targetYear' } },
         { op: 'exists', value: { kind: 'input', key: 'targetMonth' } },
-        { op: 'exists', value: { kind: 'input', key: 'jeolBoundary' } },
+        { op: 'exists', value: { kind: 'input', key: 'jeolBoundaryAt' } },
+        { op: 'exists', value: { kind: 'input', key: 'monthlyPillar' } },
         {
           op: 'eq',
-          left: { kind: 'input', key: 'segments', path: `${index}.segmentId` },
+          left: { kind: 'input', key: 'segmentId' },
           right: { kind: 'literal', value: segmentId },
         },
         {
           op: 'eq',
-          left: { kind: 'input', key: 'segments', path: `${index}.monthlyStemTenGod` },
+          left: { kind: 'input', key: 'monthlyStemTenGod' },
           right: { kind: 'literal', value: tenGod },
         },
       ],
@@ -314,7 +351,6 @@ function branchClashRule(
   segmentId: GeneralMonthlySegmentId,
   slot: (typeof PILLAR_SLOTS)[number],
 ): RuleDefinition {
-  const index = segmentIndex(segmentId);
   return {
     ruleId: `RULE-GENERAL-MONTHLY-T9-${segmentId.toUpperCase()}-BRANCH-CLASH-${slot.toUpperCase()}`,
     version: GENERAL_MONTHLY_READING_CANDIDATE_VERSION,
@@ -324,31 +360,31 @@ function branchClashRule(
     title: `Monthly ${segmentId} branch clash tension at natal ${slot} pillar`,
     description:
       'Records a resolved monthly segment-to-natal branch clash as a bounded tension signal without inferring a concrete event.',
-    inputs: corePeriodInputs(),
+    inputs: [
+      ...corePeriodInputs(segmentId),
+      {
+        key: 'relation',
+        source: 'temporal_fact',
+        pathOrClaimType: segmentPath(segmentId, `monthlyBranchRelations.${slot}.relation`),
+        required: false,
+        ambiguityBehavior: 'requires_resolved',
+      },
+    ],
     condition: {
       op: 'and',
       expressions: [
+        { op: 'exists', value: { kind: 'input', key: 'targetYear' } },
+        { op: 'exists', value: { kind: 'input', key: 'targetMonth' } },
+        { op: 'exists', value: { kind: 'input', key: 'jeolBoundaryAt' } },
+        { op: 'exists', value: { kind: 'input', key: 'monthlyPillar' } },
         {
           op: 'eq',
-          left: { kind: 'input', key: 'segments', path: `${index}.segmentId` },
+          left: { kind: 'input', key: 'segmentId' },
           right: { kind: 'literal', value: segmentId },
         },
         {
           op: 'eq',
-          left: {
-            kind: 'input',
-            key: 'segments',
-            path: `${index}.monthlyBranchRelations.${slot}.status`,
-          },
-          right: { kind: 'literal', value: 'resolved' },
-        },
-        {
-          op: 'eq',
-          left: {
-            kind: 'input',
-            key: 'segments',
-            path: `${index}.monthlyBranchRelations.${slot}.value.relation`,
-          },
+          left: { kind: 'input', key: 'relation' },
           right: { kind: 'literal', value: 'clash' },
         },
       ],
