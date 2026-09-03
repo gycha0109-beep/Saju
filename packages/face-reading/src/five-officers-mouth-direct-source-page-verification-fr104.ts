@@ -155,9 +155,7 @@ function validateUpstream(source: FiveOfficerMouthScanEvidenceAcquisitionFR103V1
     source.criterionStatesIssued !== 0 ||
     source.claimsIssued !== 0 ||
     source.traditionalSemanticAuthority !== false
-  ) {
-    fail('FR-103 upstream evidence or authority drift.');
-  }
+  ) fail('FR-103 upstream evidence or authority drift.');
 }
 
 function validateCurrentBaseRegistry(): void {
@@ -170,9 +168,7 @@ function validateCurrentBaseRegistry(): void {
     FACE_DIRECT_SOURCE_VERIFICATION_RESEARCH_V0.candidates.some(
       (candidate) => candidate.witnessId === FR104_NLC_1925_INTAKE_CANDIDATE.witnessId,
     )
-  ) {
-    fail('base direct-source registry drift; FR-104 separate extension must be re-reviewed.');
-  }
+  ) fail('base direct-source registry drift; FR-104 separate extension must be re-reviewed.');
 }
 
 function validateAdmissionConstants(): void {
@@ -187,10 +183,9 @@ function validateAdmissionConstants(): void {
     candidate.fileSizeBytes !== FR103_NLC_INTAKE_SCAN_EVIDENCE.sourcePdfSizeBytes ||
     candidate.state !== 'scan_checked' ||
     candidate.mayPromoteOtherWitness !== false ||
-    candidate.checksumSha1 !== undefined
-  ) {
-    fail('NLC intake candidate transition drift.');
-  }
+    'checksumSha1' in candidate
+  ) fail('NLC intake candidate transition drift.');
+
   if (
     record.verificationId !== 'verification.shenxiang_nlc_1925.intake' ||
     record.version !== '0.1.0' ||
@@ -205,10 +200,8 @@ function validateAdmissionConstants(): void {
     record.checkerRefs.length !== 1 ||
     record.state !== 'scan_checked' ||
     record.mayPromoteOtherWitness !== false ||
-    record.printedPage !== undefined
-  ) {
-    fail('NLC intake page-verification record drift.');
-  }
+    'printedPage' in record
+  ) fail('NLC intake page-verification record drift.');
 }
 
 function buildRegistryExtension(): DirectSourceVerificationRegistry {
@@ -217,14 +210,8 @@ function buildRegistryExtension(): DirectSourceVerificationRegistry {
   const registry: DirectSourceVerificationRegistry = {
     registryId: 'direct-source-verification.face.fr104_extension',
     version: '0.1.0',
-    candidates: [
-      ...FACE_DIRECT_SOURCE_VERIFICATION_RESEARCH_V0.candidates,
-      FR104_NLC_1925_INTAKE_CANDIDATE,
-    ],
-    pageVerifications: [
-      ...FACE_DIRECT_SOURCE_VERIFICATION_RESEARCH_V0.pageVerifications,
-      FR104_NLC_INTAKE_PAGE_VERIFICATION,
-    ],
+    candidates: [...FACE_DIRECT_SOURCE_VERIFICATION_RESEARCH_V0.candidates, FR104_NLC_1925_INTAKE_CANDIDATE],
+    pageVerifications: [...FACE_DIRECT_SOURCE_VERIFICATION_RESEARCH_V0.pageVerifications, FR104_NLC_INTAKE_PAGE_VERIFICATION],
   };
   validateDirectSourceVerificationRegistry(registry);
   return registry;
@@ -239,9 +226,7 @@ function validateMaterializedPassage(passage: SourcePassage): void {
     passage.originalText !== FR103_NLC_INTAKE_SCAN_EVIDENCE.visuallyMatchedText ||
     passage.verificationStatus !== 'scan_checked' ||
     passage.printedPage !== undefined
-  ) {
-    fail('materialized scan-checked source passage drift.');
-  }
+  ) fail('materialized scan-checked source passage drift.');
 }
 
 export function admitFiveOfficerMouthDirectSourcePageVerificationFR104(
@@ -325,16 +310,14 @@ export function validateFiveOfficerMouthDirectSourcePageVerificationFR104(
   source: FiveOfficerMouthDirectSourcePageVerificationFR104V1,
 ): FiveOfficerMouthDirectSourcePageVerificationFR104V1 {
   const registry = buildRegistryExtension();
-  const materialized = materializeVerifiedSourcePassage(FR104_NLC_INTAKE_PAGE_VERIFICATION, registry);
-  validateMaterializedPassage(materialized);
+  validateMaterializedPassage(materializeVerifiedSourcePassage(FR104_NLC_INTAKE_PAGE_VERIFICATION, registry));
 
   if (
     source.schemaVersion !== 'fr104-five-officers-mouth-direct-source-page-verification-v1' ||
     source.artifactVersion !== '0.1.0' ||
     source.authorityState !== 'single_checker_scan_checked_passage_issued_in_governed_extension'
-  ) {
-    fail('schema or authority state drift.');
-  }
+  ) fail('schema or authority state drift.');
+
   if (
     source.upstream.fr103SchemaVersion !== 'fr103-five-officers-mouth-scan-evidence-acquisition-v1' ||
     source.upstream.fr103AuthorityState !== 'immutable_scan_evidence_complete_locator_authorized_registry_promotion_blocked' ||
@@ -346,30 +329,30 @@ export function validateFiveOfficerMouthDirectSourcePageVerificationFR104(
     source.upstream.criterionStatesIssued !== 0 ||
     source.upstream.claimsIssued !== 0 ||
     source.upstream.traditionalSemanticAuthority !== false
-  ) {
-    fail('FR-103 upstream authority drift.');
-  }
+  ) fail('FR-103 upstream authority drift.');
+
+  const extension = source.registryExtension;
   if (
-    source.registryExtension.registryId !== 'direct-source-verification.face.fr104_extension' ||
-    source.registryExtension.registryVersion !== '0.1.0' ||
-    source.registryExtension.extensionMode !== 'separate_governed_registry_extension' ||
-    source.registryExtension.baseRegistryId !== 'direct-source-verification.face.research_v0' ||
-    source.registryExtension.baseRegistryVersion !== '0.1.0' ||
-    source.registryExtension.baseCandidateCount !== 1 ||
-    source.registryExtension.basePageVerificationCount !== 0 ||
-    source.registryExtension.extensionCandidateCount !== 2 ||
-    source.registryExtension.extensionPageVerificationCount !== 1 ||
-    source.registryExtension.candidateRef !== 'candidate.shenxiang_nlc_1925.intake@0.2.0' ||
-    source.registryExtension.pageVerificationRef !== 'verification.shenxiang_nlc_1925.intake@0.1.0' ||
-    source.registryExtension.baseRegistryMutated !== false ||
-    source.registryExtension.registryValidationPassed !== true
-  ) {
-    fail('registry extension drift.');
-  }
+    extension.registryId !== 'direct-source-verification.face.fr104_extension' ||
+    extension.registryVersion !== '0.1.0' ||
+    extension.extensionMode !== 'separate_governed_registry_extension' ||
+    extension.baseRegistryId !== 'direct-source-verification.face.research_v0' ||
+    extension.baseRegistryVersion !== '0.1.0' ||
+    extension.baseCandidateCount !== 1 ||
+    extension.basePageVerificationCount !== 0 ||
+    extension.extensionCandidateCount !== 2 ||
+    extension.extensionPageVerificationCount !== 1 ||
+    extension.candidateRef !== 'candidate.shenxiang_nlc_1925.intake@0.2.0' ||
+    extension.pageVerificationRef !== 'verification.shenxiang_nlc_1925.intake@0.1.0' ||
+    extension.baseRegistryMutated !== false ||
+    extension.registryValidationPassed !== true
+  ) fail('registry extension drift.');
+
   if (source.candidate !== FR104_NLC_1925_INTAKE_CANDIDATE || source.pageVerification !== FR104_NLC_INTAKE_PAGE_VERIFICATION) {
     fail('issued candidate or page-verification identity drift.');
   }
   validateMaterializedPassage(source.materializedPassage);
+
   if (
     source.extensionRegistryInsertionAuthorized !== true ||
     source.baseRegistryInsertionAuthorized !== false ||
@@ -384,18 +367,13 @@ export function validateFiveOfficerMouthDirectSourcePageVerificationFR104(
     source.claimsIssued !== 0 ||
     source.traditionalFormationAuthorized !== false ||
     source.traditionalSemanticAuthority !== false
-  ) {
-    fail('authority drift.');
-  }
+  ) fail('authority drift.');
+
   if (!Object.values(source.authorityBoundary).every((value) => value === false)) {
     fail('authority boundary must remain fully fail-closed.');
   }
-  if (!sameSequence(source.remainingBlockers, REQUIRED_BLOCKERS)) {
-    fail('remaining blockers drift.');
-  }
-  if (!sameSequence(source.prohibitedShortcuts, REQUIRED_SHORTCUTS)) {
-    fail('prohibited shortcuts drift.');
-  }
+  if (!sameSequence(source.remainingBlockers, REQUIRED_BLOCKERS)) fail('remaining blockers drift.');
+  if (!sameSequence(source.prohibitedShortcuts, REQUIRED_SHORTCUTS)) fail('prohibited shortcuts drift.');
   return source;
 }
 
