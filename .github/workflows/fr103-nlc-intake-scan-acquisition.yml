@@ -1,0 +1,120 @@
+name: FR103 NLC Intake Scan Acquisition
+
+on:
+  push:
+    branches:
+      - codex/fr103-nlc-intake-scan-acquisition
+    paths:
+      - .github/workflows/fr103-nlc-intake-scan-acquisition.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  locate-and-render:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure PDF tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftotext >/dev/null 2>&1 || ! command -v pdftoppm >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y poppler-utils
+          fi
+
+      - name: Download exact NLC 1925 Commons witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/fr103-nlc-intake
+          url='https://upload.wikimedia.org/wikipedia/commons/2/22/NLC416-13jh001662-59167_%E7%A5%9E%E7%9B%B8%E5%85%A8%E7%B7%A8.pdf'
+          curl -L --fail --retry 4 --retry-delay 2 --connect-timeout 20 "$url" -o build/fr103-nlc-intake/witness.pdf
+          pdfinfo build/fr103-nlc-intake/witness.pdf > build/fr103-nlc-intake/pdfinfo.txt
+          sha256sum build/fr103-nlc-intake/witness.pdf > build/fr103-nlc-intake/sha256.txt
+          test "$(pdfinfo build/fr103-nlc-intake/witness.pdf | awk '/^Pages:/ {print $2}')" = '576'
+
+      - name: Locate target using PDF text layer only
+        shell: bash
+        run: |
+          set -euo pipefail
+          pdftotext -layout build/fr103-nlc-intake/witness.pdf build/fr103-nlc-intake/witness.txt
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('build/fr103-nlc-intake')
+          text = (root / 'witness.txt').read_text(encoding='utf-8', errors='replace')
+          pages = text.split('\f')
+          if pages and not pages[-1].strip():
+              pages = pages[:-1]
+          if len(pages) != 576:
+              raise SystemExit(f'expected 576 text-layer pages, got {len(pages)}')
+
+          needles = [
+              '口須要方大',
+              '唇紅端厚',
+              '出納官',
+              '五官說',
+              '神相全編卷二',
+          ]
+          hits = []
+          candidate_pages = set()
+          for index, page in enumerate(pages, start=1):
+              compact = ''.join(page.split())
+              matched = [needle for needle in needles if needle in compact]
+              if matched:
+                  hits.append({'page': index, 'matched': matched, 'snippet': compact[:1200]})
+                  if '口須要方大' in matched or '唇紅端厚' in matched or '出納官' in matched or '五官說' in matched:
+                      candidate_pages.add(index)
+
+          expanded = set()
+          for page in candidate_pages:
+              for delta in (-2, -1, 0, 1, 2):
+                  p = page + delta
+                  if 1 <= p <= 576:
+                      expanded.add(p)
+
+          result = {
+              'pageCount': len(pages),
+              'needles': needles,
+              'hits': hits,
+              'candidatePages': sorted(candidate_pages),
+              'renderPages': sorted(expanded),
+              'locatorOnly': True,
+              'visualVerificationPerformed': False,
+          }
+          (root / 'locator.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+          (root / 'render-pages.txt').write_text('\n'.join(map(str, sorted(expanded))) + '\n', encoding='utf-8')
+          print(json.dumps(result, ensure_ascii=False, indent=2))
+          if not candidate_pages:
+              raise SystemExit('no target locator candidates found in PDF text layer')
+          PY
+
+      - name: Render candidate scan pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/fr103-nlc-intake/rendered
+          while IFS= read -r page; do
+            [ -n "$page" ] || continue
+            pdftoppm -f "$page" -l "$page" -singlefile -png -r 180 \
+              build/fr103-nlc-intake/witness.pdf \
+              "build/fr103-nlc-intake/rendered/page-${page}"
+          done < build/fr103-nlc-intake/render-pages.txt
+          ls -lh build/fr103-nlc-intake/rendered
+
+      - name: Upload locator and rendered scan candidates
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr103-nlc-intake-scan-candidates
+          path: |
+            build/fr103-nlc-intake/pdfinfo.txt
+            build/fr103-nlc-intake/sha256.txt
+            build/fr103-nlc-intake/locator.json
+            build/fr103-nlc-intake/rendered/*.png
+          if-no-files-found: error
+          retention-days: 7
