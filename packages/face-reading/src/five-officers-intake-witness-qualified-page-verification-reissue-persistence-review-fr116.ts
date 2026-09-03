@@ -143,7 +143,7 @@ function sameSequence<T>(actual: readonly T[], expected: readonly T[]): boolean 
 }
 
 function buildChildVerification(): DirectSourcePageVerificationRecord {
-  const source = FR104_NLC_INTAKE_PAGE_VERIFICATION;
+  const source: DirectSourcePageVerificationRecord = FR104_NLC_INTAKE_PAGE_VERIFICATION;
   return Object.freeze({
     verificationId: CHILD_VERIFICATION_ID,
     version: source.version,
@@ -190,6 +190,7 @@ function probePersistencePlacement(): FiveOfficerIntakeWitnessQualifiedPageVerif
     historical.witnessId !== 'witness.shenxiang_quanbian.ctext' ||
     historical.verificationStatus !== 'unverified_ocr'
   ) fail('historical Face passage prerequisite drift.');
+
   const nlcWitness = FACE_AUTHORITY_FR3_RESEARCH_REGISTRY_V0.witnesses.find(
     (witness) => witness.witnessId === NLC_WITNESS,
   );
@@ -214,6 +215,7 @@ function probePersistencePlacement(): FiveOfficerIntakeWitnessQualifiedPageVerif
     verificationRelations: [relation],
   };
   validateDirectSourceVerificationRegistry(directSourceExtension);
+
   const passage: SourcePassage = materializeVerifiedSourcePassage(child, directSourceExtension);
   if (
     passage.passageId !== WITNESS_QUALIFIED_PASSAGE_REF ||
@@ -272,7 +274,6 @@ export function reviewFiveOfficerIntakeWitnessQualifiedPageVerificationReissuePe
     source.execution.traditionalSemanticAuthority !== false
   ) fail('FR-115 upstream authority drift.');
 
-  const placementReview = probePersistencePlacement();
   const artifact: FiveOfficerIntakeWitnessQualifiedPageVerificationReissuePersistenceReviewFR116V1 = Object.freeze({
     schemaVersion: 'fr116-five-officers-intake-witness-qualified-page-verification-reissue-persistence-review-v1',
     artifactVersion: '0.1.0',
@@ -290,7 +291,7 @@ export function reviewFiveOfficerIntakeWitnessQualifiedPageVerificationReissuePe
       passagesPersistedBefore: 0,
       traditionalSemanticAuthorityBefore: false,
     }),
-    placementReview,
+    placementReview: probePersistencePlacement(),
     persistenceDecision: Object.freeze({
       governedDirectSourceExtensionPersistenceAuthorized: true as const,
       targetRelationPersistenceAuthorized: true as const,
@@ -427,9 +428,7 @@ export function validateFiveOfficerIntakeWitnessQualifiedPageVerificationReissue
     artifact.authorityBoundary.persistenceMeansThreshold !== false ||
     artifact.authorityBoundary.persistenceMeansTraditionalSemantics !== false
   ) fail('authority-boundary drift.');
-  if (artifact.recommendedNextFrontier !== 'intake_witness_qualified_page_verification_reissue_persistence_implementation') {
-    fail('next frontier drift.');
-  }
+  if (artifact.recommendedNextFrontier !== 'intake_witness_qualified_page_verification_reissue_persistence_implementation') fail('next frontier drift.');
   if (!sameSequence(artifact.remainingBlockers, REQUIRED_BLOCKERS)) fail('remaining blockers drift.');
   if (!sameSequence(artifact.prohibitedShortcuts, REQUIRED_SHORTCUTS)) fail('prohibited shortcuts drift.');
   return artifact;
