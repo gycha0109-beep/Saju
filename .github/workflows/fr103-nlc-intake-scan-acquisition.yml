@@ -75,14 +75,14 @@ jobs:
           print(json.dumps(result, ensure_ascii=False, indent=2))
           PY
 
-      - name: Render coarse post-volume-one scan samples
+      - name: Render exact volume-two opening bracket
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p build/fr103-nlc-intake/rendered
-          printf '%s\n' 120 130 140 150 160 170 180 190 200 210 220 > build/fr103-nlc-intake/render-pages.txt
+          printf '%s\n' 113 114 115 116 117 118 119 120 > build/fr103-nlc-intake/render-pages.txt
           while IFS= read -r page; do
-            pdftoppm -f "$page" -l "$page" -singlefile -png -r 170 \
+            pdftoppm -f "$page" -l "$page" -singlefile -png -r 280 \
               build/fr103-nlc-intake/witness.pdf \
               "build/fr103-nlc-intake/rendered/page-${page}"
           done < build/fr103-nlc-intake/render-pages.txt
