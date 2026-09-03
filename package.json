@@ -37,6 +37,7 @@
   "packageManager": "npm@11.17.0",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "start:production-calculation": "node dist/production-calculation-server.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "format": "prettier --write src test package.json tsconfig.json tsconfig.build.json eslint.config.mjs .prettierrc.json .github/workflows/ci.yml",
