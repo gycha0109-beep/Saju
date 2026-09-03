@@ -1,0 +1,31 @@
+name: FR105 Five Officers Source Rebind CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-methodology-source-rebind-review-fr105.ts'
+      - 'packages/face-reading/src/five-officers-methodology-source-rebind-review-fr105.test.ts'
+      - 'packages/face-reading/src/five-officers-methodology-source-rebind-review-fr105-hardening.test.ts'
+      - 'scripts/verify-fr105-five-officers-source-rebind.mjs'
+      - '.github/workflows/fr105-five-officers-source-rebind-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr105-source-rebind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR105 authority boundary
+        run: npx vitest run packages/face-reading/src/five-officers-methodology-source-rebind-review-fr105.test.ts packages/face-reading/src/five-officers-methodology-source-rebind-review-fr105-hardening.test.ts
+      - name: Verify FR105 exact source-rebind chain
+        run: node scripts/verify-fr105-five-officers-source-rebind.mjs
