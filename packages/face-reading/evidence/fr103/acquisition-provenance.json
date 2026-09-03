@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "fr103-nlc-scan-acquisition-provenance-v1",
+  "witnessId": "witness.shenxiang_quanbian.nlc_1925",
+  "sourceFilePageRef": "https://commons.wikimedia.org/wiki/File:NLC416-13jh001662-59167_神相全編.pdf",
+  "sourcePdfSha256": "sha256:94167d8d19d47525535b39e18a20c6b315a3a30751c2063bc2492760f1d927af",
+  "sourcePdfSizeBytes": 19310489,
+  "sourcePdfPageCount": 576,
+  "renderTool": "pdftoppm",
+  "renderDpi": 320,
+  "pages": [
+    {
+      "pdfPage": 87,
+      "repositoryPath": "packages/face-reading/evidence/fr103/nlc-1925-page-87.png",
+      "sha256": "sha256:9a3cbda77616c6c359e2aaca173d8f4d3c7ef867449247d9d3887847d9882073",
+      "role": "section_start_anchor_candidate"
+    },
+    {
+      "pdfPage": 88,
+      "repositoryPath": "packages/face-reading/evidence/fr103/nlc-1925-page-88.png",
+      "sha256": "sha256:5ceedcabaa806ab2a4a55a1923681b5b7b246b01c62af42ee8ba56413d207fce",
+      "role": "target_passage_candidate"
+    }
+  ],
+  "visualVerificationPerformedByAcquisitionRunner": false,
+  "ocrUsedForEvidenceAdmission": false,
+  "searchIndexUsedForEvidenceAdmission": false
+}
