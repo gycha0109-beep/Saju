@@ -1,11 +1,17 @@
 import type { ContentAddressedVersionedRef } from '../contracts/common.js';
-import type { ReadingIntent, ReadingRequest } from '../contracts/reading.js';
+import type {
+  ReadingIntent,
+  ReadingRequest,
+  ReadingTargetPeriod,
+} from '../contracts/reading.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { resolveDomainReadingProfile } from './reading-intent-composition.js';
 import { resolveReadingProfileSelectionAuthorization } from './reading-profile-authorization.js';
 
 export const CONSUMER_READING_REQUEST_ADAPTER_VERSION =
-  'myeonghwa-consumer-reading-request-adapter-v1';
+  'myeonghwa-consumer-reading-request-adapter-v2';
+
+export const PRODUCT_READING_TIME_ZONE = 'Asia/Seoul' as const;
 
 export type ConsumerReadingNormalizationState =
   | 'resolved'
@@ -16,6 +22,7 @@ export type ConsumerReadingNormalizationState =
 export interface ConsumerReadingRequestInput {
   requestId: string;
   text: string;
+  referenceDateTime?: string;
   targetPersonRef?: string;
   outputPreferences?: ReadingRequest['outputPreferences'];
 }
@@ -43,6 +50,16 @@ interface SemanticAlias {
   domain: ReadingIntent['domain'];
   relationshipScope?: ReadingIntent['relationshipScope'];
 }
+
+type TargetPeriodResolution =
+  | { state: 'not_required' }
+  | { state: 'resolved'; targetPeriod: ReadingTargetPeriod }
+  | {
+      state: 'invalid';
+      reasonCode:
+        | 'REFERENCE_DATETIME_REQUIRED_FOR_RELATIVE_PERIOD'
+        | 'REFERENCE_DATETIME_INVALID';
+    };
 
 const SEMANTIC_ALIASES: readonly SemanticAlias[] = [
   { aliases: ['사주', '일반 사주', '전체 사주', '종합 사주'], domain: 'general' },
@@ -189,6 +206,65 @@ function parseTemporalPrefix(text: string): ReadingIntent | undefined {
   return { ...natal, temporalScope };
 }
 
+function periodNumber(date: Date, type: 'year' | 'month'): number {
+  const value = new Intl.DateTimeFormat('en-US', {
+    timeZone: PRODUCT_READING_TIME_ZONE,
+    year: 'numeric',
+    month: 'numeric',
+  })
+    .formatToParts(date)
+    .find((part) => part.type === type)?.value;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) {
+    throw new Error(`Unable to resolve ${type} in ${PRODUCT_READING_TIME_ZONE}.`);
+  }
+  return parsed;
+}
+
+function resolveTargetPeriod(
+  intent: ReadingIntent,
+  referenceDateTime: string | undefined,
+): TargetPeriodResolution {
+  if (intent.temporalScope !== 'annual' && intent.temporalScope !== 'monthly') {
+    return { state: 'not_required' };
+  }
+  if (referenceDateTime === undefined || referenceDateTime.trim().length === 0) {
+    return { state: 'invalid', reasonCode: 'REFERENCE_DATETIME_REQUIRED_FOR_RELATIVE_PERIOD' };
+  }
+
+  const reference = new Date(referenceDateTime);
+  if (Number.isNaN(reference.getTime())) {
+    return { state: 'invalid', reasonCode: 'REFERENCE_DATETIME_INVALID' };
+  }
+  const canonicalReferenceDateTime = reference.toISOString();
+  const year = periodNumber(reference, 'year');
+
+  if (intent.temporalScope === 'annual') {
+    return {
+      state: 'resolved',
+      targetPeriod: {
+        scope: 'annual',
+        year,
+        timeZone: PRODUCT_READING_TIME_ZONE,
+        referenceDateTime: canonicalReferenceDateTime,
+        resolution: 'relative_current',
+      },
+    };
+  }
+
+  return {
+    state: 'resolved',
+    targetPeriod: {
+      scope: 'monthly',
+      year,
+      month: periodNumber(reference, 'month'),
+      timeZone: PRODUCT_READING_TIME_ZONE,
+      referenceDateTime: canonicalReferenceDateTime,
+      resolution: 'relative_current',
+    },
+  };
+}
+
 function makeResult(
   input: ConsumerReadingRequestInput,
   normalizedText: string,
@@ -262,9 +338,15 @@ function validatedResolvedResult(
     );
   }
 
+  const period = resolveTargetPeriod(intent, input.referenceDateTime);
+  if (period.state === 'invalid') {
+    return makeResult(input, normalizedText, 'invalid', [period.reasonCode], [intent]);
+  }
+
   const request: ReadingRequest = {
     requestId,
     intent,
+    ...(period.state === 'resolved' ? { targetPeriod: period.targetPeriod } : {}),
     ...(targetPersonRef === undefined || targetPersonRef.length === 0
       ? {}
       : { targetPersonRef }),

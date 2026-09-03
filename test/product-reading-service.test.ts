@@ -16,6 +16,8 @@ import {
   type NarrativePolicy,
 } from '../src/index.js';
 
+const FIXED_READING_REFERENCE = '2026-09-03T12:00:00.000Z';
+
 const calculationPolicy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/product-reading-service-test',
   policyVersion: '1.0.0',
@@ -203,7 +205,11 @@ describe('Product Reading Service Facade', () => {
       currentSnapshot,
       interpretationWithClaims(currentSnapshot, registry, [businessNatal]),
       registry,
-      { requestId: 'service-partial', text: '올해 사업운' },
+      {
+        requestId: 'service-partial',
+        text: '올해 사업운',
+        referenceDateTime: FIXED_READING_REFERENCE,
+      },
       adapter,
       narrativePolicy,
       serviceOptions,

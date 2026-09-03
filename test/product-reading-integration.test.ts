@@ -11,6 +11,8 @@ import {
   type InterpretationExecutionResult,
 } from '../src/index.js';
 
+const FIXED_READING_REFERENCE = '2026-09-03T12:00:00.000Z';
+
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/product-reading-integration-test',
   policyVersion: '1.0.0',
@@ -198,7 +200,11 @@ describe('Product Reading Integration Boundary', () => {
       currentSnapshot,
       executionWithClaims(currentSnapshot, registry, [businessNatal]),
       registry,
-      { requestId: 'business-annual-partial', text: '올해 사업운' },
+      {
+        requestId: 'business-annual-partial',
+        text: '올해 사업운',
+        referenceDateTime: FIXED_READING_REFERENCE,
+      },
       integrationOptions,
     );
 

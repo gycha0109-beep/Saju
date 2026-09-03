@@ -16,6 +16,8 @@ import {
   type NarrativePolicy,
 } from '../src/index.js';
 
+const FIXED_READING_REFERENCE = '2026-09-03T12:00:00.000Z';
+
 const calculationPolicy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/governed-reading-execution-test',
   policyVersion: '1.0.0',
@@ -229,7 +231,11 @@ describe('Governed Reading Execution Orchestrator', () => {
       currentSnapshot,
       executionWithClaims(currentSnapshot, registry, [businessNatal]),
       registry,
-      { requestId: 'execution-partial', text: '올해 사업운' },
+      {
+        requestId: 'execution-partial',
+        text: '올해 사업운',
+        referenceDateTime: FIXED_READING_REFERENCE,
+      },
       adapter,
       narrativePolicy,
       executionOptions,
