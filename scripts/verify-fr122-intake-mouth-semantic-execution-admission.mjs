@@ -9,6 +9,7 @@ const {
 const { FIVE_OFFICER_CRITERIA_V0 } = await import('../.face-reading-dist/five-officers-six-fus-research-v0.js');
 const { FIVE_OFFICER_CRITERIA_FR121_WITNESS_QUALIFIED } = await import('../.face-reading-dist/five-officers-intake-criterion-definition-witness-qualified-source-rebind-implementation-fr121.js');
 const { FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY } = await import('../.face-reading-dist/five-officers-intake-criterion-methodology-witness-qualified-registry-admission-implementation-fr119.js');
+const { FACE_DIRECT_SOURCE_VERIFICATION_FR117_WITNESS_QUALIFIED_REISSUE } = await import('../.face-reading-dist/five-officers-intake-witness-qualified-page-verification-reissue-persistence-implementation-fr117.js');
 
 const fr122 = assessFiveOfficerIntakeMouthSemanticExecutionAdmissionFR122();
 assertIssuedFiveOfficerIntakeMouthSemanticExecutionAdmissionFR122(fr122);
@@ -23,10 +24,10 @@ const witnessQualifiedPassage = FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOG
 const successorMethodology = FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.methodologies.find(
   (methodology) => `${methodology.methodologyId}@${methodology.version}` === 'method.shenxiang.five_officers.intake_criteria@0.2.0',
 );
-const verification = FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.directSourceVerifications?.find(
+const verification = FACE_DIRECT_SOURCE_VERIFICATION_FR117_WITNESS_QUALIFIED_REISSUE.pageVerifications.find(
   (record) => record.verificationId === 'verification.shenxiang_nlc_1925.intake.witness_qualified',
 );
-const lineage = FACE_AUTHORITY_FR119_INTAKE_CRITERION_METHODOLOGY_RESEARCH_REGISTRY.verificationRelations?.find(
+const lineage = FACE_DIRECT_SOURCE_VERIFICATION_FR117_WITNESS_QUALIFIED_REISSUE.verificationRelations?.find(
   (relation) => relation.relationId === 'verification-lineage.shenxiang_nlc_1925.intake.witness_qualified',
 );
 const squareBroad = fr122.criterionReadiness.find((entry) => entry.criterionId === 'criterion.intake.square_broad');
