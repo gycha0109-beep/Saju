@@ -90,6 +90,47 @@ function canonicalFact(snapshot: CanonicalSajuSnapshot, path: string): FactState
   return located.value;
 }
 
+function temporalFact(
+  execution: InterpretationExecutionResult,
+  claim: InterpretationClaim,
+  path: string,
+): FactState<unknown> {
+  const matches = claim.ruleRefs.flatMap((ruleRef) => {
+    const evaluation = execution.evaluations.find(
+      (candidate) => candidate.evaluationId === ruleRef.evaluationId,
+    );
+    if (evaluation === undefined) return [];
+    return evaluation.inputRefs.filter(
+      (inputRef) => inputRef.sourceType === 'temporal_fact' && inputRef.idOrPath === path,
+    );
+  });
+
+  const withObservedValue = matches.filter((inputRef) =>
+    Object.prototype.hasOwnProperty.call(inputRef, 'observedValue'),
+  );
+  const first = withObservedValue[0];
+  if (first === undefined) {
+    throw new EvidenceSelectionError(
+      'FACT_PATH_NOT_FOUND',
+      `Temporal fact path not found in claim evaluation provenance: ${path}`,
+    );
+  }
+
+  const firstHash = deterministicContentHash(first.observedValue);
+  if (
+    withObservedValue.some(
+      (inputRef) => deterministicContentHash(inputRef.observedValue) !== firstHash,
+    )
+  ) {
+    throw new EvidenceSelectionError(
+      'FACT_PATH_NOT_STATE',
+      `Temporal fact path has conflicting observed values across claim evaluations: ${path}`,
+    );
+  }
+
+  return resolved(first.observedValue);
+}
+
 function activeClaimIndex(
   execution: InterpretationExecutionResult,
 ): ReadonlyMap<string, InterpretationClaim> {
@@ -198,11 +239,17 @@ function scenarioFactRef(scenarioId: string, path: string): string {
 
 function selectedFactsForClaim(
   snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
   claim: InterpretationClaim,
 ): readonly SelectedFact[] {
   const facts: SelectedFact[] = [];
 
   for (const path of claim.factRefs) {
+    if (path.startsWith('temporal.')) {
+      facts.push({ ref: path, path, fact: temporalFact(execution, claim, path) });
+      continue;
+    }
+
     const base = canonicalFact(snapshot, path);
 
     if (claim.scenarioRef === undefined) {
@@ -253,11 +300,12 @@ function selectedFactsForClaim(
 
 function selectFacts(
   snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
   claims: readonly InterpretationClaim[],
 ): readonly SelectedFact[] {
   const byRef = new Map<string, SelectedFact>();
   for (const claim of claims) {
-    for (const fact of selectedFactsForClaim(snapshot, claim)) byRef.set(fact.ref, fact);
+    for (const fact of selectedFactsForClaim(snapshot, execution, claim)) byRef.set(fact.ref, fact);
   }
   return [...byRef.values()].sort((left, right) => left.ref.localeCompare(right.ref));
 }
@@ -324,7 +372,7 @@ export function buildNarrativeEvidenceBundle(
     .map((claimId) => active.get(claimId))
     .filter((claim): claim is InterpretationClaim => claim !== undefined)
     .sort((left, right) => left.claimId.localeCompare(right.claimId));
-  const canonicalFacts = selectFacts(snapshot, claims);
+  const canonicalFacts = selectFacts(snapshot, execution, claims);
   const claimRelations = selectRelations(execution, selectedClaimIds);
 
   const bundle: NarrativeEvidenceBundle = {

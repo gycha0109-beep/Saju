@@ -14,6 +14,7 @@ import {
   normalizeConsumerReadingRequest,
   type ConsumerReadingRequestInput,
 } from '../reading/consumer-reading-request-adapter.js';
+import { buildAnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
 import {
   buildTemporalReadingContext,
   type TemporalReadingContext,
@@ -316,15 +317,20 @@ function consumerInput(
 
 function temporalInterpretationContext(
   input: ConsumerReadingRequestInput,
+  snapshot: CanonicalSajuSnapshot,
 ): ProductHostInterpretationRequestContext | undefined {
   const normalization = normalizeConsumerReadingRequest(input);
   if (normalization.state !== 'resolved' || normalization.request === undefined) return undefined;
   const temporalContext = buildTemporalReadingContext(normalization.request);
   if (temporalContext === undefined) return undefined;
+  const temporalFacts =
+    temporalContext.scope === 'annual'
+      ? { ...buildAnnualInterpretationFacts(snapshot, temporalContext) }
+      : { ...temporalContext };
   return {
     readingRequest: normalization.request,
     temporalContext,
-    temporalFacts: { ...temporalContext },
+    temporalFacts,
   };
 }
 
@@ -355,8 +361,8 @@ export function createMyeonghwaProductHost(
         requestedAt: nextRequestedAt(dependencies.requestNowFactory),
       };
       const input = consumerInput(parsed, context);
-      const requestContext = temporalInterpretationContext(input);
       const snapshot = await dependencies.calculate(toBirthInput(parsed.birth), context);
+      const requestContext = temporalInterpretationContext(input, snapshot);
       const { interpretation, registry } =
         requestContext === undefined
           ? await dependencies.interpret(snapshot, context)

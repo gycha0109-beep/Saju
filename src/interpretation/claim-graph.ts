@@ -165,6 +165,19 @@ function canonicalConflictReason(leftRuleId: string, rightRuleId: string): strin
   return `rule_conflict:${[leftRuleId, rightRuleId].sort().join('<->')}`;
 }
 
+function temporalFactRefExists(
+  claim: InterpretationClaim,
+  evaluationById: ReadonlyMap<string, RuleEvaluation>,
+  factRef: string,
+): boolean {
+  return claim.ruleRefs.some((ruleRef) => {
+    const evaluation = evaluationById.get(ruleRef.evaluationId);
+    return evaluation?.inputRefs.some(
+      (inputRef) => inputRef.sourceType === 'temporal_fact' && inputRef.idOrPath === factRef,
+    ) === true;
+  });
+}
+
 export function buildClaimRelations(
   claims: readonly InterpretationClaim[],
   rules: readonly RuleDefinition[],
@@ -327,7 +340,10 @@ export function validateClaimGraphIntegrity(
     const claimScenarioOverrides =
       claim.scenarioRef === undefined ? undefined : scenarioOverrides.get(claim.scenarioRef);
     for (const factRef of claim.factRefs) {
-      if (!logicalPathExists(snapshot, factRef, claimScenarioOverrides)) {
+      const exists = factRef.startsWith('temporal.')
+        ? temporalFactRefExists(claim, evaluationById, factRef)
+        : logicalPathExists(snapshot, factRef, claimScenarioOverrides);
+      if (!exists) {
         errors.push(`claim ${claim.claimId} references missing fact ${factRef}`);
       }
     }
