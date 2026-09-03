@@ -1,0 +1,14 @@
+.git
+.github
+.review
+node_modules
+dist
+coverage
+test
+packages/face-reading
+docs
+scripts
+*.log
+.env
+.env.*
+README.md
