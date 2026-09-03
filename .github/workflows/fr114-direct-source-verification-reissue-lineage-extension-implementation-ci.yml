@@ -1,0 +1,38 @@
+name: FR114 Direct-Source Verification Reissue Lineage Extension Implementation CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/direct-source-verification.ts'
+      - 'packages/face-reading/src/direct-source-verification-reissue-lineage-fr114.test.ts'
+      - 'packages/face-reading/src/direct-source-verification-reissue-lineage-extension-implementation-fr114.ts'
+      - 'packages/face-reading/src/direct-source-verification-reissue-lineage-extension-implementation-fr114.test.ts'
+      - 'packages/face-reading/src/direct-source-verification-reissue-lineage-extension-implementation-fr114-hardening.test.ts'
+      - 'docs/migrations/face-reading-post-migration-evolutions.json'
+      - 'docs/migrations/face-reading-from-myeongha.manifest.json'
+      - 'scripts/verify-face-reading-migration.mjs'
+      - 'scripts/verify-fr114-direct-source-verification-reissue-lineage-extension-implementation.mjs'
+      - '.github/workflows/fr114-direct-source-verification-reissue-lineage-extension-implementation-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr114-lineage-extension-implementation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Verify migration provenance and governed post-migration evolution
+        run: npm run face:verify:manifest
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR114 core lineage contract
+        run: npx vitest run packages/face-reading/src/direct-source-verification-reissue-lineage-fr114.test.ts packages/face-reading/src/direct-source-verification-reissue-lineage-extension-implementation-fr114.test.ts packages/face-reading/src/direct-source-verification-reissue-lineage-extension-implementation-fr114-hardening.test.ts
+      - name: Verify FR114 exact implementation chain
+        run: node scripts/verify-fr114-direct-source-verification-reissue-lineage-extension-implementation.mjs

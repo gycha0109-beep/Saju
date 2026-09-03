@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "face-reading-post-migration-evolutions/v1",
+  "sourceManifest": "docs/migrations/face-reading-from-myeongha.manifest.json",
+  "evolutions": [
+    {
+      "path": "packages/face-reading/src/direct-source-verification.ts",
+      "sourceBlobSha": "bde65493e4cae9edde7fd91083b2946868ac5c76",
+      "targetBlobSha": "b9041caec17b614fcf86b071f3b0772704cd9d28",
+      "authorityRef": "FR114",
+      "changeClass": "additive_authority_governed_core_extension",
+      "historicalProvenanceMutation": false,
+      "methodologySemanticChange": false
+    }
+  ]
+}
