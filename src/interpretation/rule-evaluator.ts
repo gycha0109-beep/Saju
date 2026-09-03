@@ -19,6 +19,7 @@ const FORBIDDEN_PATH_SEGMENTS = new Set(['__proto__', 'prototype', 'constructor'
 export interface RuleEvaluationContext {
   snapshot: CanonicalSajuSnapshot;
   pack: InterpretationPack;
+  temporalFacts?: Readonly<Record<string, unknown>>;
   existingClaims?: readonly InterpretationClaim[];
   validatedResearchEvidence?: readonly ValidatedResearchEvidence[];
   scenarioRef?: string;
@@ -230,7 +231,11 @@ function acceptedStatus(
   return requirement.acceptedStatuses === undefined || requirement.acceptedStatuses.includes(status);
 }
 
-function missingFactInput(requirement: RuleInputRequirement): InputResolution {
+function missingFactInput(
+  requirement: RuleInputRequirement,
+  sourceType: 'fact' | 'temporal_fact' = 'fact',
+  factRef = requirement.pathOrClaimType,
+): InputResolution {
   return {
     status: requirement.required ? 'skipped_missing_input' : 'ready',
     inputs: requirement.required
@@ -239,8 +244,8 @@ function missingFactInput(requirement: RuleInputRequirement): InputResolution {
           {
             key: requirement.key,
             value: undefined,
-            inputRef: { sourceType: 'fact', idOrPath: requirement.pathOrClaimType },
-            factRef: requirement.pathOrClaimType,
+            inputRef: { sourceType, idOrPath: factRef },
+            factRef,
             upstreamClaimRefs: [],
           },
         ],
@@ -250,6 +255,8 @@ function missingFactInput(requirement: RuleInputRequirement): InputResolution {
 function unavailableFactInput(
   requirement: RuleInputRequirement,
   state: FactState<unknown>,
+  sourceType: 'fact' | 'temporal_fact' = 'fact',
+  factRef = requirement.pathOrClaimType,
 ): InputResolution {
   if (requirement.required) return { status: 'skipped_missing_input', inputs: [] };
   return {
@@ -259,18 +266,23 @@ function unavailableFactInput(
         key: requirement.key,
         value: undefined,
         inputRef: {
-          sourceType: 'fact',
-          idOrPath: requirement.pathOrClaimType,
+          sourceType,
+          idOrPath: factRef,
           observedValue: state,
         },
-        factRef: requirement.pathOrClaimType,
+        factRef,
         upstreamClaimRefs: [],
       },
     ],
   };
 }
 
-function readyFactInput(requirement: RuleInputRequirement, value: unknown): InputResolution {
+function readyFactInput(
+  requirement: RuleInputRequirement,
+  value: unknown,
+  sourceType: 'fact' | 'temporal_fact' = 'fact',
+  factRef = requirement.pathOrClaimType,
+): InputResolution {
   return {
     status: 'ready',
     inputs: [
@@ -278,15 +290,47 @@ function readyFactInput(requirement: RuleInputRequirement, value: unknown): Inpu
         key: requirement.key,
         value,
         inputRef: {
-          sourceType: 'fact',
-          idOrPath: requirement.pathOrClaimType,
+          sourceType,
+          idOrPath: factRef,
           observedValue: value,
         },
-        factRef: requirement.pathOrClaimType,
+        factRef,
         upstreamClaimRefs: [],
       },
     ],
   };
+}
+
+function resolveLocatedFactInput(
+  requirement: RuleInputRequirement,
+  located: LogicalFactPathResolution,
+  sourceType: 'fact' | 'temporal_fact',
+  factRef: string,
+): InputResolution {
+  if (located.status === 'missing') return missingFactInput(requirement, sourceType, factRef);
+  if (located.status === 'ambiguous') return { status: 'skipped_ambiguous_input', inputs: [] };
+  if (located.status === 'unavailable') {
+    return unavailableFactInput(requirement, located.state, sourceType, factRef);
+  }
+
+  if (!isFactState(located.value)) {
+    return readyFactInput(requirement, located.value, sourceType, factRef);
+  }
+
+  const state = located.value;
+  if (!acceptedStatus(requirement, state.status)) {
+    return {
+      status:
+        state.status === 'ambiguous' ? 'skipped_ambiguous_input' : 'skipped_missing_input',
+      inputs: [],
+    };
+  }
+
+  if (state.status === 'unavailable') {
+    return unavailableFactInput(requirement, state, sourceType, factRef);
+  }
+  if (state.status === 'ambiguous') return { status: 'skipped_ambiguous_input', inputs: [] };
+  return readyFactInput(requirement, state.value, sourceType, factRef);
 }
 
 function resolveFactInput(
@@ -298,25 +342,16 @@ function resolveFactInput(
     requirement.pathOrClaimType,
     context.factOverrides,
   );
+  return resolveLocatedFactInput(requirement, located, 'fact', requirement.pathOrClaimType);
+}
 
-  if (located.status === 'missing') return missingFactInput(requirement);
-  if (located.status === 'ambiguous') return { status: 'skipped_ambiguous_input', inputs: [] };
-  if (located.status === 'unavailable') return unavailableFactInput(requirement, located.state);
-
-  if (!isFactState(located.value)) return readyFactInput(requirement, located.value);
-
-  const state = located.value;
-  if (!acceptedStatus(requirement, state.status)) {
-    return {
-      status:
-        state.status === 'ambiguous' ? 'skipped_ambiguous_input' : 'skipped_missing_input',
-      inputs: [],
-    };
-  }
-
-  if (state.status === 'unavailable') return unavailableFactInput(requirement, state);
-  if (state.status === 'ambiguous') return { status: 'skipped_ambiguous_input', inputs: [] };
-  return readyFactInput(requirement, state.value);
+function resolveTemporalFactInput(
+  requirement: RuleInputRequirement,
+  context: RuleEvaluationContext,
+): InputResolution {
+  const factRef = `temporal.${requirement.pathOrClaimType}`;
+  const located = resolveLogicalFactPath(context.temporalFacts, requirement.pathOrClaimType, undefined);
+  return resolveLocatedFactInput(requirement, located, 'temporal_fact', factRef);
 }
 
 function claimVisibleInContext(
@@ -607,7 +642,9 @@ function resolveInputs(rule: RuleDefinition, context: RuleEvaluationContext): In
         ? resolveClaimInput(requirement, context)
         : requirement.source === 'research_evidence'
           ? resolveResearchEvidenceInput(requirement, context)
-          : resolveFactInput(requirement, context);
+          : requirement.source === 'temporal_fact'
+            ? resolveTemporalFactInput(requirement, context)
+            : resolveFactInput(requirement, context);
     inputs.push(...resolution.inputs);
     if (resolution.status !== 'ready') {
       return { status: resolution.status, inputs };
