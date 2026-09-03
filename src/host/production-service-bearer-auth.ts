@@ -14,7 +14,7 @@ function requireBearer(name: string, value: string | undefined): string {
 }
 
 function optionalBearer(name: string, value: string | undefined): string | undefined {
-  if (value === undefined) return undefined;
+  if (value === undefined || value.length === 0) return undefined;
   return requireBearer(name, value);
 }
 
