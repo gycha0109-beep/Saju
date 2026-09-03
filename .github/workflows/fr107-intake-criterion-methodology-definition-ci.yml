@@ -1,0 +1,31 @@
+name: FR107 Intake Criterion Methodology Definition CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-definition-review-fr107.ts'
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-definition-review-fr107.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-criterion-methodology-definition-review-fr107-hardening.test.ts'
+      - 'scripts/verify-fr107-intake-criterion-methodology-definition.mjs'
+      - '.github/workflows/fr107-intake-criterion-methodology-definition-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr107-intake-methodology-definition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR107 authority boundary
+        run: npx vitest run packages/face-reading/src/five-officers-intake-criterion-methodology-definition-review-fr107.test.ts packages/face-reading/src/five-officers-intake-criterion-methodology-definition-review-fr107-hardening.test.ts
+      - name: Verify FR107 exact methodology definition chain
+        run: node scripts/verify-fr107-intake-criterion-methodology-definition.mjs
