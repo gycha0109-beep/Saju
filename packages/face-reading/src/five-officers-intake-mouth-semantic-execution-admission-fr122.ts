@@ -1,3 +1,4 @@
+import type { FiveOfficerCriterionModality } from './five-officers-six-fus-research-v0.js';
 import { FIVE_OFFICER_CRITERIA_V0 } from './five-officers-six-fus-research-v0.js';
 import {
   FIVE_OFFICER_CRITERIA_FR121_WITNESS_QUALIFIED,
@@ -44,7 +45,7 @@ export type MouthSemanticAdmissionStateFR122 = 'blocked';
 export interface MouthCriterionSemanticExecutionReadinessFR122V1 {
   readonly criterionId: IntakeCriterionIdFR122;
   readonly sourceConcept: string;
-  readonly modality: 'static_geometry' | 'capture_sensitive' | 'dynamic_appearance';
+  readonly modality: FiveOfficerCriterionModality;
   readonly staticV1Eligible: boolean;
   readonly witnessQualifiedSourceRef: typeof WITNESS_QUALIFIED_PASSAGE_REF;
   readonly machineObservationPath: {
