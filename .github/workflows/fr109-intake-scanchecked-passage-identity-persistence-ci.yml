@@ -1,0 +1,31 @@
+name: FR109 Intake Scan-Checked Passage Identity Persistence CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-scanchecked-passage-registry-identity-persistence-review-fr109.ts'
+      - 'packages/face-reading/src/five-officers-intake-scanchecked-passage-registry-identity-persistence-review-fr109.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-scanchecked-passage-registry-identity-persistence-review-fr109-hardening.test.ts'
+      - 'scripts/verify-fr109-intake-scanchecked-passage-identity-persistence.mjs'
+      - '.github/workflows/fr109-intake-scanchecked-passage-identity-persistence-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr109-intake-passage-identity-persistence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR109 authority boundary
+        run: npx vitest run packages/face-reading/src/five-officers-intake-scanchecked-passage-registry-identity-persistence-review-fr109.test.ts packages/face-reading/src/five-officers-intake-scanchecked-passage-registry-identity-persistence-review-fr109-hardening.test.ts
+      - name: Verify FR109 exact passage identity-persistence chain
+        run: node scripts/verify-fr109-intake-scanchecked-passage-identity-persistence.mjs
