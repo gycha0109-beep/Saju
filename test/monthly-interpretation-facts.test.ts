@@ -78,6 +78,8 @@ describe('MyeongHa monthly interpretation facts', () => {
       endsAt: facts.civilMonth.endsAt,
       monthlyPillar: { stem: '정', branch: '유' },
     });
+    expect(facts.segmentsById.before_jeol).toBe(facts.segments[0]);
+    expect(facts.segmentsById.after_jeol).toBe(facts.segments[1]);
 
     if (natal.derivedFacts.dayMaster.status !== 'resolved') {
       throw new Error('fixture requires a resolved day master');
