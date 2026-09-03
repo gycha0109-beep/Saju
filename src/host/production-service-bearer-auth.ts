@@ -2,8 +2,8 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 
 export interface MyeonghwaProductionServiceBearerCredentials {
-  activeBearer?: string;
-  previousBearer?: string;
+  activeBearer: string | undefined;
+  previousBearer: string | undefined;
 }
 
 function requireBearer(name: string, value: string | undefined): string {
@@ -34,9 +34,10 @@ export function createMyeonghwaProductionServiceBearerAuthorizer(
     if (typeof authorization !== 'string') return false;
 
     const match = /^Bearer ([^\s]+)$/u.exec(authorization);
-    if (match === null) return false;
+    const candidateBearer = match?.[1];
+    if (candidateBearer === undefined) return false;
 
-    const candidateDigest = digestBearer(match[1]);
+    const candidateDigest = digestBearer(candidateBearer);
     const activeMatch = timingSafeEqual(candidateDigest, activeDigest);
     const previousMatch =
       previousDigest !== undefined && timingSafeEqual(candidateDigest, previousDigest);
