@@ -209,6 +209,8 @@ function expectedInputRefSource(
     case 'canonical_fact':
     case 'derived_fact':
       return 'fact';
+    case 'temporal_fact':
+      return 'temporal_fact';
     case 'interpretation_claim':
       return 'claim';
     case 'research_evidence':
@@ -244,6 +246,12 @@ function consumedRefs(inputRef: RuleEvaluation['inputRefs'][number]): readonly s
     return [];
   }
   return [inputRef.idOrPath];
+}
+
+function declaredInputRef(requirement: RuleInputRequirement): string {
+  return requirement.source === 'temporal_fact'
+    ? `temporal.${requirement.pathOrClaimType}`
+    : requirement.pathOrClaimType;
 }
 
 function validateInputBinding(
@@ -287,10 +295,11 @@ function validateInputBinding(
     return;
   }
 
-  if (inputRef.idOrPath !== requirement.pathOrClaimType) {
+  const expectedRef = declaredInputRef(requirement);
+  if (inputRef.idOrPath !== expectedRef) {
     throw new ConsumedInputTraceError(
       'INPUT_TRACE_DECLARATION_MISMATCH',
-      `Input ${requirement.key} path/type ${inputRef.idOrPath} does not match ${requirement.pathOrClaimType}.`,
+      `Input ${requirement.key} path/type ${inputRef.idOrPath} does not match ${expectedRef}.`,
     );
   }
 }
