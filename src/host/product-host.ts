@@ -15,6 +15,7 @@ import {
   type ConsumerReadingRequestInput,
 } from '../reading/consumer-reading-request-adapter.js';
 import { buildAnnualInterpretationFacts } from '../reading/annual-interpretation-facts.js';
+import { buildMonthlyInterpretationFacts } from '../reading/monthly-interpretation-facts.js';
 import {
   buildTemporalReadingContext,
   type TemporalReadingContext,
@@ -326,7 +327,7 @@ function temporalInterpretationContext(
   const temporalFacts =
     temporalContext.scope === 'annual'
       ? { ...buildAnnualInterpretationFacts(snapshot, temporalContext) }
-      : { ...temporalContext };
+      : { ...buildMonthlyInterpretationFacts(snapshot, temporalContext) };
   return {
     readingRequest: normalization.request,
     temporalContext,
