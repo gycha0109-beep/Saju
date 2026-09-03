@@ -8,6 +8,9 @@ on:
       - 'packages/face-reading/src/direct-source-verification-reissue-lineage-extension-implementation-fr114.ts'
       - 'packages/face-reading/src/direct-source-verification-reissue-lineage-extension-implementation-fr114.test.ts'
       - 'packages/face-reading/src/direct-source-verification-reissue-lineage-extension-implementation-fr114-hardening.test.ts'
+      - 'docs/migrations/face-reading-post-migration-evolutions.json'
+      - 'docs/migrations/face-reading-from-myeongha.manifest.json'
+      - 'scripts/verify-face-reading-migration.mjs'
       - 'scripts/verify-fr114-direct-source-verification-reissue-lineage-extension-implementation.mjs'
       - '.github/workflows/fr114-direct-source-verification-reissue-lineage-extension-implementation-ci.yml'
   workflow_dispatch:
@@ -25,6 +28,8 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - name: Verify migration provenance and governed post-migration evolution
+        run: npm run face:verify:manifest
       - name: Build Face Reading package
         run: npm run face:build
       - name: Verify FR114 core lineage contract
