@@ -1,0 +1,31 @@
+name: FR111 Intake Witness-Qualified Page Verification Reissue Admission CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-witness-qualified-page-verification-reissue-admission-review-fr111.ts'
+      - 'packages/face-reading/src/five-officers-intake-witness-qualified-page-verification-reissue-admission-review-fr111.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-witness-qualified-page-verification-reissue-admission-review-fr111-hardening.test.ts'
+      - 'scripts/verify-fr111-intake-witness-qualified-page-verification-reissue-admission.mjs'
+      - '.github/workflows/fr111-intake-witness-qualified-page-verification-reissue-admission-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr111-verification-reissue-admission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR111 authority boundary
+        run: npx vitest run packages/face-reading/src/five-officers-intake-witness-qualified-page-verification-reissue-admission-review-fr111.test.ts packages/face-reading/src/five-officers-intake-witness-qualified-page-verification-reissue-admission-review-fr111-hardening.test.ts
+      - name: Verify FR111 exact reissue-admission chain
+        run: node scripts/verify-fr111-intake-witness-qualified-page-verification-reissue-admission.mjs
