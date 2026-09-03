@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { InterpretationClaim } from '../src/contracts/interpretation.js';
 import type { ReadingRequest } from '../src/contracts/reading.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import { deterministicContentHash } from '../src/interpretation/rule-registry.js';
 import { buildValidatedDeterministicFallback } from '../src/narrative/deterministic-fallback.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import { buildAnnualInterpretationFacts } from '../src/reading/annual-interpretation-facts.js';
@@ -14,8 +16,6 @@ import {
   deriveBenchmarkAFinalNarrativeSignature,
   type BenchmarkAObservation,
 } from '../src/verification/benchmark-a-natural-synthetic-corpus.js';
-import { deriveConsumedInputFingerprints } from '../src/verification/consumed-input-fingerprint.js';
-import { deriveDomainInterpretationSignatures } from '../src/verification/domain-interpretation-signature.js';
 
 const TARGET_CASES = 500;
 const TARGET_YEAR = 2026;
@@ -37,6 +37,97 @@ function annualRequest(caseId: string): ReadingRequest {
       resolution: 'relative_current',
     },
   };
+}
+
+function selectedAnnualClaims(
+  claims: readonly InterpretationClaim[],
+  selectedClaimIds: readonly string[],
+): readonly InterpretationClaim[] {
+  const selected = new Set(selectedClaimIds);
+  return claims
+    .filter((claim) => selected.has(claim.claimId))
+    .filter((claim) => claim.state === 'active')
+    .filter(
+      (claim) =>
+        claim.taxonomy.tier === 'T9' &&
+        claim.taxonomy.category === 'general' &&
+        claim.taxonomy.subcategory === 'annual',
+    )
+    .sort((left, right) => left.claimId.localeCompare(right.claimId));
+}
+
+function annualConsumedInputFingerprint(
+  execution: ReturnType<typeof runInterpretation>,
+  selectedClaimIds: readonly string[],
+): string {
+  const evaluations = new Map(
+    execution.evaluations.map((evaluation) => [evaluation.evaluationId, evaluation] as const),
+  );
+  const entries = selectedAnnualClaims(execution.claims, selectedClaimIds)
+    .flatMap((claim) =>
+      claim.ruleRefs.map((ruleRef) => {
+        const evaluation = evaluations.get(ruleRef.evaluationId);
+        if (evaluation === undefined || evaluation.status !== 'matched') {
+          throw new Error(`Missing matched producing evaluation ${ruleRef.evaluationId}.`);
+        }
+        return {
+          ruleRef: { id: ruleRef.ruleId, version: ruleRef.version },
+          inputs: evaluation.inputRefs.map((inputRef) => ({
+            sourceType: inputRef.sourceType,
+            idOrPath: inputRef.idOrPath,
+            observedValue: inputRef.observedValue,
+            ...(inputRef.evidenceType === undefined ? {} : { evidenceType: inputRef.evidenceType }),
+            ...(inputRef.evidenceVersion === undefined
+              ? {}
+              : { evidenceVersion: inputRef.evidenceVersion }),
+            ...(inputRef.definitionRef === undefined
+              ? {}
+              : { definitionRef: inputRef.definitionRef }),
+            ...(inputRef.definitionContentHash === undefined
+              ? {}
+              : { definitionContentHash: inputRef.definitionContentHash }),
+            ...(inputRef.payloadHash === undefined ? {} : { payloadHash: inputRef.payloadHash }),
+          })),
+        };
+      }),
+    )
+    .sort((left, right) =>
+      deterministicContentHash(left).localeCompare(deterministicContentHash(right)),
+    );
+
+  return `annual_consumed_input_${deterministicContentHash({
+    domain: 'general',
+    temporalScope: 'annual',
+    entries,
+  })}`;
+}
+
+function annualInterpretationSignature(
+  execution: ReturnType<typeof runInterpretation>,
+  selectedClaimIds: readonly string[],
+): string {
+  const selectedClaims = selectedAnnualClaims(execution.claims, selectedClaimIds);
+  if (selectedClaims.length === 0) throw new Error('Expected selected annual T9 claims.');
+
+  const materials = selectedClaims
+    .map((claim) => ({
+      taxonomy: claim.taxonomy,
+      claimType: claim.claimType,
+      subject: claim.subject,
+      predicate: claim.predicate,
+      value: claim.value,
+      ...(claim.polarity === undefined ? {} : { polarity: claim.polarity }),
+      ...(claim.emphasis === undefined ? {} : { emphasis: claim.emphasis }),
+    }))
+    .sort((left, right) =>
+      deterministicContentHash(left).localeCompare(deterministicContentHash(right)),
+    );
+
+  return `annual_interpretation_${deterministicContentHash({
+    domain: 'general',
+    temporalScope: 'annual',
+    claims: materials,
+  })}`;
 }
 
 describe('MyeongHa general annual synthetic corpus', () => {
@@ -94,26 +185,21 @@ describe('MyeongHa general annual synthetic corpus', () => {
               throw new Error(`Research authority promotion became possible for ${caseId}.`);
             }
 
-            const fingerprints = deriveConsumedInputFingerprints(
-              execution,
-              registry,
-              composition.selection,
-            );
-            const signatures = deriveDomainInterpretationSignatures(
+            const selectedClaims = selectedAnnualClaims(
               execution.claims,
-              execution.claimRelations,
-              composition.selection,
+              composition.selection.selectedClaimIds,
             );
-            if (fingerprints.length !== 1 || signatures.length !== 1) {
-              throw new Error(
-                `Expected one annual fingerprint/signature for ${caseId}; got ${fingerprints.length}/${signatures.length}.`,
-              );
+            if (selectedClaims.length === 0) {
+              throw new Error(`No selected annual T9 claim for ${caseId}.`);
             }
-            const fingerprint = fingerprints[0];
-            const interpretationSignature = signatures[0];
-            if (fingerprint === undefined || interpretationSignature === undefined) {
-              throw new Error(`Incomplete annual semantic observation for ${caseId}.`);
-            }
+            const fingerprint = annualConsumedInputFingerprint(
+              execution,
+              composition.selection.selectedClaimIds,
+            );
+            const interpretationSignature = annualInterpretationSignature(
+              execution,
+              composition.selection.selectedClaimIds,
+            );
 
             const fallback = buildValidatedDeterministicFallback(
               composition.evidence.bundle,
@@ -124,8 +210,8 @@ describe('MyeongHa general annual synthetic corpus', () => {
             observations.push({
               caseId,
               calculationHash: snapshot.calculationHash,
-              consumedInputFingerprint: fingerprint.fingerprint,
-              interpretationSignature: interpretationSignature.signature,
+              consumedInputFingerprint: fingerprint,
+              interpretationSignature,
               narrativePolicyKey: NARRATIVE_POLICY_KEY,
               finalNarrativeSignature: narrativeSignature.signature,
               sectionNarrativeSignatures: narrativeSignature.sectionSignatures,
