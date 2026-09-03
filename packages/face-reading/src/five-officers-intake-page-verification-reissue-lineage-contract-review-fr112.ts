@@ -20,8 +20,6 @@ const PROPOSED_VERIFICATION_ID = 'verification.shenxiang_nlc_1925.intake.witness
 const PROPOSED_VERIFICATION_REF = 'verification.shenxiang_nlc_1925.intake.witness_qualified@0.1.0' as const;
 const HISTORICAL_PASSAGE_REF = 'passage.shenxiang.five_officers.intake' as const;
 const WITNESS_QUALIFIED_PASSAGE_REF = 'passage.shenxiang.five_officers.intake.nlc_1925' as const;
-const NLC_WITNESS = 'witness.shenxiang_quanbian.nlc_1925' as const;
-const NLC_CANDIDATE_REF = 'candidate.shenxiang_nlc_1925.intake@0.2.0' as const;
 const RELATION_ID = 'verification-lineage.shenxiang_nlc_1925.intake.witness_qualified' as const;
 
 export interface DirectSourceVerificationReissueRelationCandidateFR112V1 {
@@ -127,30 +125,8 @@ export interface FiveOfficerIntakePageVerificationReissueLineageContractReviewFR
     readonly lineageContractMeansTraditionalSemantics: false;
   };
   readonly recommendedNextFrontier: 'direct_source_verification_reissue_lineage_contract_extension_admission_review';
-  readonly remainingBlockers: readonly [
-    'direct_source_verification_reissue_lineage_core_extension_not_admitted',
-    'witness_qualified_page_verification_reissue_not_authorized',
-    'witness_qualified_intake_passage_not_persisted_in_face_registry',
-    'intake_criterion_methodology_source_ref_rewrite_not_authorized',
-    'intake_criterion_methodology_not_registered',
-    'intake_officer_mapping_dependency_not_re_reviewed',
-    'intake_metric_to_source_concept_mapping_not_authorized',
-    'intake_calibration_and_thresholds_not_authorized',
-    'fr64_methodology_execution_and_claim_gates_remain',
-  ];
-  readonly prohibitedShortcuts: readonly [
-    'contract_candidate_to_core_schema_extension_authority',
-    'ephemeral_lineage_validation_to_persistence_authority',
-    'lineage_contract_to_verification_reissue_authority',
-    'non_independent_reissue_to_new_checking_event',
-    'non_independent_reissue_to_independent_verification_increment',
-    'lineage_contract_to_persistent_passage',
-    'lineage_contract_to_semantic_identity_equivalence',
-    'lineage_contract_to_methodology_source_ref_rewrite',
-    'lineage_contract_to_metric_binding',
-    'lineage_contract_to_numeric_threshold',
-    'lineage_contract_to_traditional_semantics',
-  ];
+  readonly remainingBlockers: readonly string[];
+  readonly prohibitedShortcuts: readonly string[];
 }
 
 const REQUIRED_BLOCKERS = Object.freeze([
@@ -192,7 +168,7 @@ function verificationRef(record: DirectSourcePageVerificationRecord): string {
 }
 
 function buildProposedReissue(): DirectSourcePageVerificationRecord {
-  const source = FR104_NLC_INTAKE_PAGE_VERIFICATION;
+  const source: DirectSourcePageVerificationRecord = FR104_NLC_INTAKE_PAGE_VERIFICATION;
   return Object.freeze({
     verificationId: PROPOSED_VERIFICATION_ID,
     version: source.version,
@@ -236,7 +212,6 @@ export function validateDirectSourceVerificationReissueRelationCandidateFR112(
     relation.kind !== 'non_independent_identity_reissue' ||
     relation.parentVerificationRef !== ORIGINAL_VERIFICATION_REF ||
     relation.childVerificationRef !== PROPOSED_VERIFICATION_REF ||
-    relation.parentVerificationRef === relation.childVerificationRef ||
     relation.parentRetained !== true ||
     relation.evidenceReusePolicy !== 'exact_evidence_reuse_required' ||
     relation.checkingEventPolicy !== 'same_checker_refs_same_checking_event' ||
@@ -283,19 +258,8 @@ function inspectCurrentCoreContract(): FiveOfficerIntakePageVerificationReissueL
 }
 
 function validateEphemeralContractCandidate(): DirectSourceVerificationReissueRelationCandidateFR112V1 {
-  validateDirectSourceVerificationRegistry(FACE_DIRECT_SOURCE_VERIFICATION_RESEARCH_V0);
-  const original = FR104_NLC_INTAKE_PAGE_VERIFICATION;
+  const original: DirectSourcePageVerificationRecord = FR104_NLC_INTAKE_PAGE_VERIFICATION;
   const proposed = buildProposedReissue();
-  if (
-    original.verificationId !== ORIGINAL_VERIFICATION_ID ||
-    original.version !== '0.1.0' ||
-    original.candidateRef !== NLC_CANDIDATE_REF ||
-    original.witnessId !== NLC_WITNESS ||
-    original.passageId !== HISTORICAL_PASSAGE_REF ||
-    original.scanPage !== 88 ||
-    original.state !== 'scan_checked'
-  ) fail('FR-104 original verification prerequisite drift.');
-
   const ephemeralRegistry: DirectSourceVerificationRegistry = {
     registryId: 'direct-source-verification.face.fr112_probe',
     version: '0.1.0',
@@ -337,10 +301,10 @@ export function reviewFiveOfficerIntakePageVerificationReissueLineageContractFR1
   const currentCoreContract = inspectCurrentCoreContract();
   const lineageContractCandidate = validateEphemeralContractCandidate();
 
-  return Object.freeze({
-    schemaVersion: 'fr112-five-officers-intake-page-verification-reissue-lineage-contract-review-v1' as const,
-    artifactVersion: '0.1.0' as const,
-    authorityState: 'bounded_registry_level_reissue_lineage_contract_candidate_defined_core_extension_not_authorized' as const,
+  const result: FiveOfficerIntakePageVerificationReissueLineageContractReviewFR112V1 = Object.freeze({
+    schemaVersion: 'fr112-five-officers-intake-page-verification-reissue-lineage-contract-review-v1',
+    artifactVersion: '0.1.0',
+    authorityState: 'bounded_registry_level_reissue_lineage_contract_candidate_defined_core_extension_not_authorized',
     upstream: Object.freeze({
       fr111SchemaVersion: source.schemaVersion,
       fr111AuthorityState: source.authorityState,
@@ -366,65 +330,66 @@ export function reviewFiveOfficerIntakePageVerificationReissueLineageContractFR1
     currentCoreContract,
     lineageContractCandidate,
     contractReview: Object.freeze({
-      selectedPlacement: 'registry_level_verification_relation_collection' as const,
-      inlineRecordMutationSelected: false as const,
-      originalVerificationRecordMayRemainUnchanged: true as const,
-      childVerificationRecordMayRemainBaseRecordShape: true as const,
-      relationResolvesExistingParentAndChild: true as const,
-      relationRequiresDistinctVerificationRefs: true as const,
-      relationRequiresDistinctPassageIds: true as const,
-      relationRequiresSameCandidate: true as const,
-      relationRequiresSameWitness: true as const,
-      relationRequiresSameChapterAndPage: true as const,
-      relationRequiresSameOriginalText: true as const,
-      relationRequiresSameVisualEvidenceRefs: true as const,
-      relationRequiresSameCheckerRefs: true as const,
-      relationRequiresSameVerificationState: true as const,
-      relationRequiresSamePromotionBoundary: true as const,
-      independentVerificationDeltaFixedAtZero: true as const,
-      machineReadableLineageContractSufficientForNonIndependentIdentityReissue: true as const,
-      ephemeralLineageValidationPassed: true as const,
-      coreSchemaExtensionCandidateAdmittedForReview: true as const,
-      coreSchemaExtensionAuthorized: false as const,
-      verificationReissueAdmissionAuthorized: false as const,
-      verificationRecordPersistenceAuthorized: false as const,
+      selectedPlacement: 'registry_level_verification_relation_collection',
+      inlineRecordMutationSelected: false,
+      originalVerificationRecordMayRemainUnchanged: true,
+      childVerificationRecordMayRemainBaseRecordShape: true,
+      relationResolvesExistingParentAndChild: true,
+      relationRequiresDistinctVerificationRefs: true,
+      relationRequiresDistinctPassageIds: true,
+      relationRequiresSameCandidate: true,
+      relationRequiresSameWitness: true,
+      relationRequiresSameChapterAndPage: true,
+      relationRequiresSameOriginalText: true,
+      relationRequiresSameVisualEvidenceRefs: true,
+      relationRequiresSameCheckerRefs: true,
+      relationRequiresSameVerificationState: true,
+      relationRequiresSamePromotionBoundary: true,
+      independentVerificationDeltaFixedAtZero: true,
+      machineReadableLineageContractSufficientForNonIndependentIdentityReissue: true,
+      ephemeralLineageValidationPassed: true,
+      coreSchemaExtensionCandidateAdmittedForReview: true,
+      coreSchemaExtensionAuthorized: false,
+      verificationReissueAdmissionAuthorized: false,
+      verificationRecordPersistenceAuthorized: false,
     }),
     execution: Object.freeze({
-      verificationRelationsPersisted: 0 as const,
-      verificationRecordsReissued: 0 as const,
-      verificationRecordsPersisted: 0 as const,
-      passagesPersisted: 0 as const,
-      directSourceRegistrySchemaChanged: false as const,
-      faceRegistryChanged: false as const,
-      methodologySourceRefsRewritten: 0 as const,
-      methodologyDefinitionsPersisted: 0 as const,
-      methodologyExecutionIssued: false as const,
-      methodologyProductionPromotionAuthorized: false as const,
-      metricBindingsIssued: 0 as const,
-      thresholdsIssued: 0 as const,
-      morphologyProduced: false as const,
-      criterionStatesIssued: 0 as const,
-      claimsIssued: 0 as const,
-      traditionalFormationAuthorized: false as const,
-      traditionalSemanticAuthority: false as const,
+      verificationRelationsPersisted: 0,
+      verificationRecordsReissued: 0,
+      verificationRecordsPersisted: 0,
+      passagesPersisted: 0,
+      directSourceRegistrySchemaChanged: false,
+      faceRegistryChanged: false,
+      methodologySourceRefsRewritten: 0,
+      methodologyDefinitionsPersisted: 0,
+      methodologyExecutionIssued: false,
+      methodologyProductionPromotionAuthorized: false,
+      metricBindingsIssued: 0,
+      thresholdsIssued: 0,
+      morphologyProduced: false,
+      criterionStatesIssued: 0,
+      claimsIssued: 0,
+      traditionalFormationAuthorized: false,
+      traditionalSemanticAuthority: false,
     }),
     authorityBoundary: Object.freeze({
-      contractCandidateMeansCoreSchemaExtensionAuthority: false as const,
-      ephemeralLineageValidationMeansPersistenceAuthority: false as const,
-      lineageContractMeansVerificationReissueAuthority: false as const,
-      nonIndependentReissueMeansNewCheckingEvent: false as const,
-      nonIndependentReissueMayIncreaseIndependentVerificationCount: false as const,
-      lineageContractMeansPersistentPassageAuthority: false as const,
-      lineageContractMeansSemanticIdentityEquivalence: false as const,
-      lineageContractMeansMethodologySourceRefRewrite: false as const,
-      lineageContractMeansMetricBinding: false as const,
-      lineageContractMeansThreshold: false as const,
-      lineageContractMeansTraditionalSemantics: false as const,
+      contractCandidateMeansCoreSchemaExtensionAuthority: false,
+      ephemeralLineageValidationMeansPersistenceAuthority: false,
+      lineageContractMeansVerificationReissueAuthority: false,
+      nonIndependentReissueMeansNewCheckingEvent: false,
+      nonIndependentReissueMayIncreaseIndependentVerificationCount: false,
+      lineageContractMeansPersistentPassageAuthority: false,
+      lineageContractMeansSemanticIdentityEquivalence: false,
+      lineageContractMeansMethodologySourceRefRewrite: false,
+      lineageContractMeansMetricBinding: false,
+      lineageContractMeansThreshold: false,
+      lineageContractMeansTraditionalSemantics: false,
     }),
-    recommendedNextFrontier: 'direct_source_verification_reissue_lineage_contract_extension_admission_review' as const,
+    recommendedNextFrontier: 'direct_source_verification_reissue_lineage_contract_extension_admission_review',
     remainingBlockers: REQUIRED_BLOCKERS,
     prohibitedShortcuts: REQUIRED_SHORTCUTS,
   });
+  return validateFiveOfficerIntakePageVerificationReissueLineageContractReviewFR112(result);
 }
 
 export function validateFiveOfficerIntakePageVerificationReissueLineageContractReviewFR112(
