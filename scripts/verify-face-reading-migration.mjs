@@ -1,18 +1,58 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
-const manifest = JSON.parse(
-  readFileSync('docs/migrations/face-reading-from-myeongha.manifest.json', 'utf8'),
-);
+const manifestPath = 'docs/migrations/face-reading-from-myeongha.manifest.json';
+const evolutionPath = 'docs/migrations/face-reading-post-migration-evolutions.json';
+const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+const evolutionLedger = JSON.parse(readFileSync(evolutionPath, 'utf8'));
 const packageFiles = manifest.files.filter((entry) => entry.category === 'package');
 
 if (packageFiles.length !== manifest.invariants.sourcePackageFileCount) {
   throw new Error('Manifest package count drift');
 }
+if (evolutionLedger.schemaVersion !== 'face-reading-post-migration-evolutions/v1') {
+  throw new Error('Face post-migration evolution schema drift');
+}
+if (evolutionLedger.sourceManifest !== manifestPath) {
+  throw new Error('Face post-migration evolution source manifest drift');
+}
+
+const packageByPath = new Map(packageFiles.map((entry) => [entry.path, entry]));
+const evolutionsByPath = new Map();
+for (const evolution of evolutionLedger.evolutions ?? []) {
+  if (evolutionsByPath.has(evolution.path)) {
+    throw new Error(`Duplicate face post-migration evolution path: ${evolution.path}`);
+  }
+  const source = packageByPath.get(evolution.path);
+  if (source === undefined) {
+    throw new Error(`Face post-migration evolution path is not a migrated package file: ${evolution.path}`);
+  }
+  if (evolution.sourceBlobSha !== source.blobSha) {
+    throw new Error(`Face post-migration evolution source SHA drift: ${evolution.path}`);
+  }
+  if (!/^[0-9a-f]{40}$/u.test(evolution.targetBlobSha)) {
+    throw new Error(`Face post-migration evolution target SHA invalid: ${evolution.path}`);
+  }
+  if (typeof evolution.authorityRef !== 'string' || evolution.authorityRef.trim().length === 0) {
+    throw new Error(`Face post-migration evolution authority ref missing: ${evolution.path}`);
+  }
+  if (evolution.changeClass !== 'additive_authority_governed_core_extension') {
+    throw new Error(`Face post-migration evolution change class drift: ${evolution.path}`);
+  }
+  if (evolution.historicalProvenanceMutation !== false) {
+    throw new Error(`Face post-migration evolution may not mutate historical provenance: ${evolution.path}`);
+  }
+  if (evolution.methodologySemanticChange !== false) {
+    throw new Error(`Face post-migration evolution may not change methodology semantics: ${evolution.path}`);
+  }
+  evolutionsByPath.set(evolution.path, evolution);
+}
 
 for (const file of packageFiles) {
   const actual = execFileSync('git', ['hash-object', file.path], { encoding: 'utf8' }).trim();
-  if (actual !== file.blobSha) {
+  const evolution = evolutionsByPath.get(file.path);
+  const expected = evolution?.targetBlobSha ?? file.blobSha;
+  if (actual !== expected) {
     throw new Error(`Face package byte drift: ${file.path}`);
   }
 }
