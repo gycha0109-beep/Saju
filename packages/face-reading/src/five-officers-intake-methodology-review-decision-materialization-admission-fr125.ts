@@ -191,7 +191,7 @@ export function assessFiveOfficerIntakeMethodologyReviewDecisionMaterializationA
       governedAuthorityActorRegistryRef: null,
       governedAuthorityActorRef: null,
       governedReviewEvidencePolicyRef: null,
-      admittedReviewEvidenceRefs: Object.freeze([]),
+      admittedReviewEvidenceRefs: Object.freeze([] as const),
       configuredQuorum: null,
       configuredReviewerCount: null,
       configuredConsensusThreshold: null,
