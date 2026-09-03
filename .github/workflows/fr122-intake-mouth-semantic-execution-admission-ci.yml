@@ -1,0 +1,31 @@
+name: FR122 Intake Mouth Semantic Execution Admission CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-mouth-semantic-execution-admission-fr122.ts'
+      - 'packages/face-reading/src/five-officers-intake-mouth-semantic-execution-admission-fr122.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-mouth-semantic-execution-admission-fr122-hardening.test.ts'
+      - 'scripts/verify-fr122-intake-mouth-semantic-execution-admission.mjs'
+      - '.github/workflows/fr122-intake-mouth-semantic-execution-admission-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr122-mouth-semantic-execution-admission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR122 semantic execution admission boundary
+        run: npx vitest run packages/face-reading/src/five-officers-intake-mouth-semantic-execution-admission-fr122.test.ts packages/face-reading/src/five-officers-intake-mouth-semantic-execution-admission-fr122-hardening.test.ts
+      - name: Verify FR122 exact predecessor and mouth admission chain
+        run: node scripts/verify-fr122-intake-mouth-semantic-execution-admission.mjs
