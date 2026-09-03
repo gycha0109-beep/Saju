@@ -9,12 +9,19 @@ import {
   type MyeonghwaProductHostDependencies,
 } from './product-host.js';
 import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './production-calculation-http-contract.js';
+import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-service-bearer-auth.js';
 import { PRODUCT_HOST_APP_SCRIPT, PRODUCT_HOST_PAGE } from './static-page.js';
 
 export const DEFAULT_PRODUCT_HOST_MAX_REQUEST_BYTES = 16 * 1024;
 
 export interface MyeonghwaProductHostServerOptions {
   maxRequestBytes?: number;
+}
+
+export interface MyeonghwaProductionCalculationHostServerOptions
+  extends MyeonghwaProductHostServerOptions {
+  serviceBearer?: string;
+  previousServiceBearer?: string;
 }
 
 interface HostHttpErrorShape {
@@ -130,6 +137,15 @@ function sendCalculationOperationalError(response: ServerResponse): void {
   });
 }
 
+function sendCalculationAuthRequired(response: ServerResponse): void {
+  sendJson(response, 401, {
+    error: {
+      code: 'HOST_AUTH_REQUIRED',
+      message: 'Authentication required.',
+    },
+  });
+}
+
 function handleKnownError(response: ServerResponse, error: unknown): boolean {
   if (error instanceof HostHttpError) {
     sendJson(response, error.status, { error: { code: error.code, message: error.message } });
@@ -161,6 +177,7 @@ const PAGE_CSP = [
 function createMyeonghwaHttpServer(
   readingHost: MyeonghwaProductHost | undefined,
   options: MyeonghwaProductHostServerOptions,
+  authorizeCalculationRequest?: (request: IncomingMessage) => boolean,
 ): Server {
   const bodyLimit = maxRequestBytes(options);
 
@@ -190,6 +207,10 @@ function createMyeonghwaHttpServer(
         sendJson(response, 405, {
           error: { code: 'HOST_METHOD_NOT_ALLOWED', message: 'POST is required.' },
         });
+        return;
+      }
+      if (authorizeCalculationRequest !== undefined && !authorizeCalculationRequest(request)) {
+        sendCalculationAuthRequired(response);
         return;
       }
       try {
@@ -227,9 +248,14 @@ function createMyeonghwaHttpServer(
 }
 
 export function createMyeonghwaProductionCalculationHostServer(
-  options: MyeonghwaProductHostServerOptions = {},
+  options: MyeonghwaProductionCalculationHostServerOptions = {},
 ): Server {
-  return createMyeonghwaHttpServer(undefined, options);
+  const { serviceBearer, previousServiceBearer, ...serverOptions } = options;
+  const authorizeCalculationRequest = createMyeonghwaProductionServiceBearerAuthorizer({
+    activeBearer: serviceBearer,
+    previousBearer: previousServiceBearer,
+  });
+  return createMyeonghwaHttpServer(undefined, serverOptions, authorizeCalculationRequest);
 }
 
 export function createMyeonghwaProductHostServer(
