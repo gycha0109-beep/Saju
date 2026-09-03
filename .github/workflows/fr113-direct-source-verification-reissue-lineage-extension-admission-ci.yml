@@ -1,0 +1,31 @@
+name: FR113 Direct-Source Verification Reissue Lineage Extension Admission CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/direct-source-verification-reissue-lineage-extension-admission-review-fr113.ts'
+      - 'packages/face-reading/src/direct-source-verification-reissue-lineage-extension-admission-review-fr113.test.ts'
+      - 'packages/face-reading/src/direct-source-verification-reissue-lineage-extension-admission-review-fr113-hardening.test.ts'
+      - 'scripts/verify-fr113-direct-source-verification-reissue-lineage-extension-admission.mjs'
+      - '.github/workflows/fr113-direct-source-verification-reissue-lineage-extension-admission-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr113-lineage-extension-admission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR113 authority boundary
+        run: npx vitest run packages/face-reading/src/direct-source-verification-reissue-lineage-extension-admission-review-fr113.test.ts packages/face-reading/src/direct-source-verification-reissue-lineage-extension-admission-review-fr113-hardening.test.ts
+      - name: Verify FR113 exact lineage-extension admission chain
+        run: node scripts/verify-fr113-direct-source-verification-reissue-lineage-extension-admission.mjs
