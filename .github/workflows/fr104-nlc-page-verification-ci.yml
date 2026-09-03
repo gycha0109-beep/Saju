@@ -1,0 +1,31 @@
+name: FR104 NLC Page Verification CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-mouth-direct-source-page-verification-fr104.ts'
+      - 'packages/face-reading/src/five-officers-mouth-direct-source-page-verification-fr104.test.ts'
+      - 'packages/face-reading/src/five-officers-mouth-direct-source-page-verification-fr104-hardening.test.ts'
+      - 'scripts/verify-fr104-nlc-intake-page-verification.mjs'
+      - '.github/workflows/fr104-nlc-page-verification-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr104-page-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR104 authority boundary
+        run: npx vitest run packages/face-reading/src/five-officers-mouth-direct-source-page-verification-fr104.test.ts packages/face-reading/src/five-officers-mouth-direct-source-page-verification-fr104-hardening.test.ts
+      - name: Verify FR104 exact page-verification chain
+        run: node scripts/verify-fr104-nlc-intake-page-verification.mjs
