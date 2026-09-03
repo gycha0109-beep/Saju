@@ -99,6 +99,7 @@ export interface MonthlyInterpretationFacts {
     at: string;
   };
   segments: readonly [MonthlyPillarSegment, MonthlyPillarSegment];
+  segmentsById: Readonly<Record<MonthlySegmentId, MonthlyPillarSegment>>;
 }
 
 function monthlyPillarFact(stem: HeavenlyStem, branch: EarthlyBranch): PillarFact {
@@ -288,5 +289,9 @@ export function buildMonthlyInterpretationFacts(
       at: jeol.date.toISOString(),
     },
     segments: [before, after],
+    segmentsById: {
+      before_jeol: before,
+      after_jeol: after,
+    },
   };
 }
