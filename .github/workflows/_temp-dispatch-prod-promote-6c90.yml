@@ -1,0 +1,34 @@
+name: Temporary Dispatch Production Promote 6c90
+
+on:
+  push:
+    branches:
+      - ops/dispatch-prod-promote-20260905-6c90c9a
+    paths:
+      - '.github/workflows/_temp-dispatch-prod-promote-6c90.yml'
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch exact-main promote=true production run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg ref 'main' \
+            --arg source_branch 'ops/prod-snapshot-20260905-6c90c9a' \
+            --arg source_sha '6c90c9a941963604991477caba76051837cae824' \
+            '{ref:$ref,inputs:{source_branch:$source_branch,source_sha:$source_sha,active_bearer_secret_version:"1",previous_bearer_secret_version:"",promote:"true"}}' \
+            > dispatch.json
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/production-cloud-run.yml/dispatches" \
+            --input dispatch.json
+          echo 'Dispatched promote=true production run for exact current main SHA.'
