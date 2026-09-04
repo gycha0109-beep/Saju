@@ -1,0 +1,32 @@
+name: FR141 Square Broad Fang Source Lineage Construct Refinement CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr141-square-broad-fang-source-lineage-construct-refinement.md'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-source-lineage-construct-refinement-fr141.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-source-lineage-construct-refinement-fr141.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-source-lineage-construct-refinement-fr141-hardening.test.ts'
+      - 'scripts/verify-fr141-square-broad-fang-source-lineage-construct-refinement.mjs'
+      - '.github/workflows/fr141-square-broad-fang-source-lineage-construct-refinement-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr141-square-broad-fang-source-lineage-construct-refinement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR141 source-lineage construct refinement
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-fang-source-lineage-construct-refinement-fr141.test.ts packages/face-reading/src/five-officers-square-broad-fang-source-lineage-construct-refinement-fr141-hardening.test.ts
+      - name: Verify FR141 exact authority boundary
+        run: node scripts/verify-fr141-square-broad-fang-source-lineage-construct-refinement.mjs
