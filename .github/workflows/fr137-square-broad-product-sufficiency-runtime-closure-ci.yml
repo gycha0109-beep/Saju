@@ -1,0 +1,32 @@
+name: FR137 Square Broad Product Sufficiency Runtime Closure CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr137-square-broad-product-sufficiency-runtime-closure.md'
+      - 'packages/face-reading/src/five-officers-square-broad-product-sufficiency-runtime-closure-fr137.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-product-sufficiency-runtime-closure-fr137.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-product-sufficiency-runtime-closure-fr137-hardening.test.ts'
+      - 'scripts/verify-fr137-square-broad-product-sufficiency-runtime-closure.mjs'
+      - '.github/workflows/fr137-square-broad-product-sufficiency-runtime-closure-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr137-square-broad-product-sufficiency-runtime-closure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR137 product sufficiency runtime closure
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-product-sufficiency-runtime-closure-fr137.test.ts packages/face-reading/src/five-officers-square-broad-product-sufficiency-runtime-closure-fr137-hardening.test.ts
+      - name: Verify FR137 exact authority chain and fail-closed product emission
+        run: node scripts/verify-fr137-square-broad-product-sufficiency-runtime-closure.mjs
