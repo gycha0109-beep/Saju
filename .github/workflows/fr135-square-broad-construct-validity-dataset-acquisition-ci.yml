@@ -1,0 +1,32 @@
+name: FR135 Square Broad Construct Validity Dataset Acquisition CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr135-square-broad-construct-validity-dataset-acquisition.md'
+      - 'packages/face-reading/src/five-officers-square-broad-construct-validity-dataset-acquisition-fr135.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-construct-validity-dataset-acquisition-fr135.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-construct-validity-dataset-acquisition-fr135-hardening.test.ts'
+      - 'scripts/verify-fr135-square-broad-construct-validity-dataset-acquisition.mjs'
+      - '.github/workflows/fr135-square-broad-construct-validity-dataset-acquisition-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr135-square-broad-construct-validity-dataset-acquisition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR135 acquisition boundary
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-construct-validity-dataset-acquisition-fr135.test.ts packages/face-reading/src/five-officers-square-broad-construct-validity-dataset-acquisition-fr135-hardening.test.ts
+      - name: Verify FR135 exact predecessor and zero-authority acquisition chain
+        run: node scripts/verify-fr135-square-broad-construct-validity-dataset-acquisition.mjs
