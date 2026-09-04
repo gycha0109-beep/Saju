@@ -8,6 +8,11 @@ on:
         required: true
         default: candidate-d4d775f80e95
         type: string
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/production-cloud-run-routing-diagnostics.yml'
 
 permissions:
   contents: read
@@ -29,7 +34,7 @@ jobs:
       GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
       GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
-      CANDIDATE_TAG: ${{ inputs.candidate_tag }}
+      CANDIDATE_TAG: ${{ github.event.inputs.candidate_tag || 'candidate-d4d775f80e95' }}
 
     steps:
       - name: Validate diagnostic inputs
