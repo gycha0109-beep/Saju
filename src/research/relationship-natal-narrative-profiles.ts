@@ -26,10 +26,10 @@ export const RELATIONSHIP_NATAL_PROHIBITED_OUTCOME_PHRASES = Object.freeze([
 ] as const);
 
 const AXIS_BY_KIND: Readonly<Record<RelationshipConclusionKind, string>> = Object.freeze({
-  closeness: 'closeness',
-  values: 'values',
-  expression: 'communication',
-  boundary: 'boundary',
+  closeness: 'core',
+  values: 'decision',
+  expression: 'collaboration',
+  boundary: 'responsibility',
   friction: 'tension',
 });
 
