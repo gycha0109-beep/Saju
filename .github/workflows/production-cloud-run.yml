@@ -3,8 +3,12 @@ name: Production Cloud Run
 on:
   workflow_dispatch:
     inputs:
+      source_branch:
+        description: Pinned production snapshot branch that must resolve to source_sha
+        required: true
+        type: string
       source_sha:
-        description: Exact 40-character Saju main SHA to build and deploy
+        description: Exact 40-character commit SHA pinned by source_branch
         required: true
         type: string
       active_bearer_secret_version:
@@ -51,6 +55,7 @@ jobs:
       GCP_CLOUD_RUN_MEMORY: ${{ vars.GCP_CLOUD_RUN_MEMORY }}
       GCP_CLOUD_RUN_CONCURRENCY: ${{ vars.GCP_CLOUD_RUN_CONCURRENCY }}
       GCP_CLOUD_RUN_MAX_INSTANCES: ${{ vars.GCP_CLOUD_RUN_MAX_INSTANCES }}
+      SOURCE_BRANCH: ${{ inputs.source_branch }}
       SOURCE_SHA: ${{ inputs.source_sha }}
       ACTIVE_BEARER_VERSION: ${{ inputs.active_bearer_secret_version }}
       PREVIOUS_BEARER_VERSION: ${{ inputs.previous_bearer_secret_version }}
@@ -82,6 +87,14 @@ jobs:
             fi
           done
 
+          if ! git check-ref-format --branch "$SOURCE_BRANCH" >/dev/null 2>&1; then
+            echo 'source_branch must be a valid Git branch name.' >&2
+            exit 1
+          fi
+          if [[ "$SOURCE_BRANCH" != ops/prod-snapshot-* ]]; then
+            echo 'source_branch must use the ops/prod-snapshot-* production snapshot namespace.' >&2
+            exit 1
+          fi
           if [[ ! "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
             echo 'source_sha must be an exact lowercase 40-character Git SHA.' >&2
             exit 1
@@ -117,7 +130,7 @@ jobs:
           ref: ${{ inputs.source_sha }}
           fetch-depth: 0
 
-      - name: Verify exact current main provenance
+      - name: Verify pinned production source provenance
         shell: bash
         run: |
           set -euo pipefail
@@ -126,10 +139,17 @@ jobs:
             echo 'Checkout did not resolve to the requested exact source SHA.' >&2
             exit 1
           fi
-          git fetch --quiet origin main
-          main_head="$(git rev-parse origin/main)"
-          if [ "$main_head" != "$SOURCE_SHA" ]; then
-            echo 'Requested source SHA is not the current Saju main head; stale or rollback redeploy is refused.' >&2
+
+          git fetch --quiet origin \
+            "refs/heads/${SOURCE_BRANCH}:refs/remotes/origin/${SOURCE_BRANCH}" \
+            main
+          snapshot_head="$(git rev-parse "refs/remotes/origin/${SOURCE_BRANCH}")"
+          if [ "$snapshot_head" != "$SOURCE_SHA" ]; then
+            echo 'Pinned production snapshot branch does not resolve to source_sha.' >&2
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$SOURCE_SHA" origin/main; then
+            echo 'Pinned production snapshot is no longer an ancestor of current Saju main; deployment is refused.' >&2
             exit 1
           fi
 
@@ -270,13 +290,19 @@ jobs:
           echo "image_digest=$digest" >> "$GITHUB_OUTPUT"
           echo "image_ref=${registry}/${IMAGE_NAME}@${digest}" >> "$GITHUB_OUTPUT"
 
-      - name: Re-check main before production candidate creation
+      - name: Re-check pinned production source before candidate creation
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --quiet origin main
-          if [ "$(git rev-parse origin/main)" != "$SOURCE_SHA" ]; then
-            echo 'Saju main moved after verification; refusing to create a stale production candidate.' >&2
+          git fetch --quiet origin \
+            "refs/heads/${SOURCE_BRANCH}:refs/remotes/origin/${SOURCE_BRANCH}" \
+            main
+          if [ "$(git rev-parse "refs/remotes/origin/${SOURCE_BRANCH}")" != "$SOURCE_SHA" ]; then
+            echo 'Pinned production snapshot branch moved after verification; candidate creation is blocked.' >&2
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$SOURCE_SHA" origin/main; then
+            echo 'Pinned production snapshot is no longer an ancestor of current Saju main; candidate creation is blocked.' >&2
             exit 1
           fi
 
@@ -357,14 +383,20 @@ jobs:
             node scripts/verify-production-calculation-service.mjs
           unset active_bearer
 
-      - name: Re-check main immediately before traffic promotion
+      - name: Re-check pinned production source immediately before traffic promotion
         if: ${{ inputs.promote }}
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --quiet origin main
-          if [ "$(git rev-parse origin/main)" != "$SOURCE_SHA" ]; then
-            echo 'Saju main moved after candidate verification; traffic promotion is blocked.' >&2
+          git fetch --quiet origin \
+            "refs/heads/${SOURCE_BRANCH}:refs/remotes/origin/${SOURCE_BRANCH}" \
+            main
+          if [ "$(git rev-parse "refs/remotes/origin/${SOURCE_BRANCH}")" != "$SOURCE_SHA" ]; then
+            echo 'Pinned production snapshot branch moved after candidate verification; traffic promotion is blocked.' >&2
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$SOURCE_SHA" origin/main; then
+            echo 'Pinned production snapshot is no longer an ancestor of current Saju main; traffic promotion is blocked.' >&2
             exit 1
           fi
 
@@ -415,6 +447,7 @@ jobs:
           {
             echo '## Saju Cloud Run production evidence'
             echo
+            echo "- source branch: \`$SOURCE_BRANCH\`"
             echo "- source SHA: \`$SOURCE_SHA\`"
             echo "- image digest: \`${{ steps.image.outputs.image_digest || 'not-created' }}\`"
             echo "- candidate revision: \`${{ steps.candidate.outputs.revision || 'not-created' }}\`"
