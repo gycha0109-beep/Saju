@@ -38,7 +38,7 @@ export const BUSINESS_ANNUAL_PROHIBITED_FUTURE_PHRASES = Object.freeze([
 interface ThemeCopy {
   slug: string;
   semanticKey: string;
-  axis: 'decision' | 'execution' | 'resources' | 'collaboration' | 'responsibility' | 'pressure';
+  axis: 'decision' | 'execution' | 'collaboration' | 'responsibility' | 'tension';
   headline: string;
   summary: string;
 }
@@ -79,7 +79,7 @@ const THEME_COPY: Readonly<Record<TenGod, ThemeCopy>> = Object.freeze({
   편재: {
     slug: 'PYEON-JAE',
     semanticKey: 'BUSINESS_ANNUAL_OPPORTUNITY_ALLOCATION',
-    axis: 'resources',
+    axis: 'decision',
     headline: '외부 기회와 여러 선택지 사이에서 자원을 어디에 배분할지 판단하는 일이 중요해질 수 있습니다',
     summary:
       '해당 연도에는 프로젝트·협업·시장 선택지처럼 바깥에서 들어오는 가능성을 넓게 살피는 경향이 커질 수 있습니다. 이를 매출이나 투자 성과의 예고로 보지 않고 감당 가능한 범위, 우선순위, 검증 비용을 정하는 자원 배분 문제로 제한해 해석합니다.',
@@ -87,7 +87,7 @@ const THEME_COPY: Readonly<Record<TenGod, ThemeCopy>> = Object.freeze({
   정재: {
     slug: 'JEONG-JAE',
     semanticKey: 'BUSINESS_ANNUAL_BUDGET_DISCIPLINE',
-    axis: 'resources',
+    axis: 'responsibility',
     headline: '예산·시간·업무량을 일정한 기준으로 관리하는 운영 규율이 중요해질 수 있습니다',
     summary:
       '해당 연도에는 비용과 시간을 정해진 기준 안에서 관리하고 반복되는 운영 항목을 정리하고 싶은 경향이 두드러질 수 있습니다. 수익 증가를 뜻하는 신호가 아니라 자원을 어디에 얼마나 쓰고 어떻게 점검할지 구조화하려는 흐름으로 봅니다.',
@@ -95,7 +95,7 @@ const THEME_COPY: Readonly<Record<TenGod, ThemeCopy>> = Object.freeze({
   편관: {
     slug: 'PYEON-GWAN',
     semanticKey: 'BUSINESS_ANNUAL_PRESSURE_RISK_RESPONSE',
-    axis: 'pressure',
+    axis: 'tension',
     headline: '기한·책임·변동성이 커질 때 압박과 위험 신호에 대응하는 방식이 중요해질 수 있습니다',
     summary:
       '해당 연도에는 빠른 판단이나 높은 책임을 요구받는 상황을 더 크게 체감할 수 있습니다. 이를 실패나 손실의 예고로 단정하지 않고 우선순위를 정하고 감당 가능한 위험 범위를 구분하는 운영 대응 경향으로 제한해 해석합니다.',
