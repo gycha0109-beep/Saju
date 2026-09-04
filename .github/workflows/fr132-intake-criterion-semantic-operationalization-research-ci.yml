@@ -1,0 +1,32 @@
+name: FR132 Intake Criterion Semantic Operationalization Research CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr132-intake-criterion-semantic-operationalization.md'
+      - 'packages/face-reading/src/five-officers-intake-criterion-semantic-operationalization-research-fr132.ts'
+      - 'packages/face-reading/src/five-officers-intake-criterion-semantic-operationalization-research-fr132.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-criterion-semantic-operationalization-research-fr132-hardening.test.ts'
+      - 'scripts/verify-fr132-intake-criterion-semantic-operationalization-research.mjs'
+      - '.github/workflows/fr132-intake-criterion-semantic-operationalization-research-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr132-intake-criterion-semantic-operationalization-research:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR132 semantic operationalization research
+        run: npx vitest run packages/face-reading/src/five-officers-intake-criterion-semantic-operationalization-research-fr132.test.ts packages/face-reading/src/five-officers-intake-criterion-semantic-operationalization-research-fr132-hardening.test.ts
+      - name: Verify FR132 exact predecessor, source, metric and deferred-promotion chain
+        run: node scripts/verify-fr132-intake-criterion-semantic-operationalization-research.mjs
