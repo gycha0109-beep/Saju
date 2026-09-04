@@ -1,0 +1,32 @@
+name: FR138 Square Broad Fang Semantic Annotation Protocol CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr138-square-broad-fang-semantic-annotation-protocol.md'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-semantic-annotation-protocol-fr138.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-semantic-annotation-protocol-fr138.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-semantic-annotation-protocol-fr138-hardening.test.ts'
+      - 'scripts/verify-fr138-square-broad-fang-semantic-annotation-protocol.mjs'
+      - '.github/workflows/fr138-square-broad-fang-semantic-annotation-protocol-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr138-square-broad-fang-semantic-annotation-protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR138 fang annotation protocol candidate
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-fang-semantic-annotation-protocol-fr138.test.ts packages/face-reading/src/five-officers-square-broad-fang-semantic-annotation-protocol-fr138-hardening.test.ts
+      - name: Verify FR138 exact predecessor and no-collection boundary
+        run: node scripts/verify-fr138-square-broad-fang-semantic-annotation-protocol.mjs
