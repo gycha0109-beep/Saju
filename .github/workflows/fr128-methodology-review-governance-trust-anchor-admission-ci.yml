@@ -1,0 +1,31 @@
+name: FR128 Methodology Review Governance Trust Anchor Admission CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-governance-trust-anchor-admission-fr128.ts'
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-governance-trust-anchor-admission-fr128.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-governance-trust-anchor-admission-fr128-hardening.test.ts'
+      - 'scripts/verify-fr128-methodology-review-governance-trust-anchor-admission.mjs'
+      - '.github/workflows/fr128-methodology-review-governance-trust-anchor-admission-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr128-methodology-review-governance-trust-anchor-admission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR128 methodology review governance trust-anchor admission
+        run: npx vitest run packages/face-reading/src/five-officers-intake-methodology-review-governance-trust-anchor-admission-fr128.test.ts packages/face-reading/src/five-officers-intake-methodology-review-governance-trust-anchor-admission-fr128-hardening.test.ts
+      - name: Verify FR128 exact predecessor and trust-anchor admission chain
+        run: node scripts/verify-fr128-methodology-review-governance-trust-anchor-admission.mjs
