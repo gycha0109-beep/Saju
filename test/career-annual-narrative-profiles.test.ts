@@ -45,7 +45,7 @@ function annualRequest(year: number): ReadingRequest {
       year,
       timeZone: 'Asia/Seoul',
       referenceDateTime: NOW.toISOString(),
-      resolution: 'explicit',
+      resolution: 'relative_current',
     },
   };
 }
