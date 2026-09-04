@@ -30,10 +30,10 @@ export const BUSINESS_NATAL_PROHIBITED_OUTCOME_PHRASES = Object.freeze([
 const AXIS_BY_KIND: Readonly<Record<BusinessConclusionKind, string>> = Object.freeze({
   uncertainty: 'decision',
   decision_execution: 'execution',
-  allocation: 'resources',
+  allocation: 'decision',
   partnership: 'collaboration',
   accountability: 'responsibility',
-  pressure: 'pressure',
+  pressure: 'tension',
   friction: 'tension',
 });
 
