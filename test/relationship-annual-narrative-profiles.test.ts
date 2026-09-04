@@ -63,7 +63,7 @@ describe('MyeongHa Relationship Annual narrative profiles', () => {
   it('contains no deterministic relationship-event promises in governed templates', () => {
     const renderableCopy = RELATIONSHIP_ANNUAL_CLAIM_NARRATIVE_PROFILES.flatMap((profile) => [
       profile.mandatoryQualifier ?? '',
-      ...profile.templates.map((template) => template.text),
+      ...(profile.templates ?? []).map((template) => template.text),
     ]).join('\n');
     for (const forbidden of RELATIONSHIP_ANNUAL_PROHIBITED_FUTURE_PHRASES) {
       expect(renderableCopy).not.toContain(forbidden);
