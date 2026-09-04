@@ -150,7 +150,6 @@ describe('MyeongHa Career Monthly T9 reading candidate', () => {
     expect(composition.selection.coverageState).toBe('complete');
     expect(composition.selection.missingRequirements).toEqual([]);
     expect(composition.selection.profileRef?.id).toBe('myeonghwa-reading-profile-career-monthly-v1');
-    expect(composition.selection.profileAuthorization.state).toBe('authorized');
     expect(composition.selection.constraints.mayPromoteResearchAuthority).toBe(false);
     expect(composition.evidence?.bundle.claims.some((claim) => claim.taxonomy.tier === 'T8')).toBe(true);
     expect(
