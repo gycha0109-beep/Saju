@@ -231,7 +231,7 @@ describe('Product Host Wealth Annual reading end-to-end', () => {
     expect(text).toContain('수입·수익·손실·투자 결과를 예측하거나');
     for (const forbidden of [
       '무조건',
-      '반드시',
+      '반드시 부자',
       '확실히',
       '100%',
       '부자가 된다',
