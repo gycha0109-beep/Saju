@@ -1,0 +1,32 @@
+name: FR142 Square Broad Fang Neutral Candidate Metric Runtime CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr142-square-broad-fang-neutral-candidate-metric-runtime.md'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-neutral-candidate-metric-runtime-fr142.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-neutral-candidate-metric-runtime-fr142.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-neutral-candidate-metric-runtime-fr142-hardening.test.ts'
+      - 'scripts/verify-fr142-square-broad-fang-neutral-candidate-metric-runtime.mjs'
+      - '.github/workflows/fr142-square-broad-fang-neutral-candidate-metric-runtime-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr142-square-broad-fang-neutral-candidate-metric-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR142 neutral candidate metric runtime
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-fang-neutral-candidate-metric-runtime-fr142.test.ts packages/face-reading/src/five-officers-square-broad-fang-neutral-candidate-metric-runtime-fr142-hardening.test.ts
+      - name: Verify FR142 exact authority boundary
+        run: node scripts/verify-fr142-square-broad-fang-neutral-candidate-metric-runtime.mjs
