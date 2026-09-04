@@ -48,7 +48,7 @@ function annualRequest(year: number): ReadingRequest {
       year,
       timeZone: 'Asia/Seoul',
       referenceDateTime: NOW.toISOString(),
-      resolution: 'explicit',
+      resolution: 'relative_current',
     },
   };
 }
@@ -69,7 +69,7 @@ function withDayBranchClash(value: CanonicalSajuSnapshot): CanonicalSajuSnapshot
 }
 
 describe('MyeongHa Career Annual T9 reading candidate', () => {
-  it('reuses Career Natal T8 and registers the strict Career Annual contracts without authority promotion', () => {
+  it('reuses Career Natal T8 and registers strict Career Annual contracts without authority promotion', () => {
     const registry = createCareerAnnualReadingCandidateRegistry();
 
     expect(CAREER_ANNUAL_READING_CANDIDATE_VERSION).toBe('0.1.0-research');
@@ -129,7 +129,7 @@ describe('MyeongHa Career Annual T9 reading candidate', () => {
     expect(execution.integrity.valid).toBe(true);
   });
 
-  it('makes the career/annual profile complete with both Career Natal T8 and Career Annual T9 evidence', () => {
+  it('makes career/annual complete with both Career Natal T8 and Career Annual T9 evidence', () => {
     const natal = snapshot();
     const request = annualRequest(2026);
     const registry = createCareerAnnualReadingCandidateRegistry();
@@ -144,7 +144,7 @@ describe('MyeongHa Career Annual T9 reading candidate', () => {
 
     expect(composition.selection.coverageState).toBe('complete');
     expect(composition.selection.missingRequirements).toEqual([]);
-    expect(composition.selection.profileAuthorization.state).toBe('authorized');
+    expect(composition.selection.profileRef?.id).toBe('myeonghwa-reading-profile-career-annual-v1');
     expect(composition.selection.constraints.mayPromoteResearchAuthority).toBe(false);
     expect(composition.evidence?.bundle.claims.some((claim) => claim.taxonomy.tier === 'T8')).toBe(true);
     expect(
