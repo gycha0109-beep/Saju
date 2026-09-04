@@ -14,7 +14,6 @@ import {
   CAREER_NATAL_READING_RULES,
 } from './career-natal-reading-candidate.js';
 import {
-  CAREER_TEN_GOD_SEMANTIC_SPECS,
   careerTenGodClaimType,
   type CareerConclusionKind,
   type CareerTenGodChannel,
@@ -52,7 +51,7 @@ export const CAREER_ANNUAL_POLICY_SOURCE = Object.freeze({
   language: 'ko',
   provenanceTier: 'internal',
   notes:
-    'Product policy for request-scoped Career Annual interpretation. It reuses the resolved annual pillar, annual stem Ten-God, and annual-to-natal branch relations from the existing temporal runtime, projects them only into bounded career working-pattern tendencies, and forbids deterministic employment, firing, resignation, promotion, compensation, or business-success predictions.',
+    'Request-scoped Career Annual policy. It projects existing annual temporal facts into bounded career working-pattern tendencies and forbids deterministic employment, firing, resignation, promotion, compensation, or business-success predictions.',
 } satisfies SourceReference);
 
 const QUALITY: RuleDefinition['quality'] = Object.freeze({
@@ -63,22 +62,10 @@ const QUALITY: RuleDefinition['quality'] = Object.freeze({
 });
 
 const TEN_GOD_THEME: Readonly<Record<TenGod, CareerAnnualThemeSpec>> = Object.freeze({
-  비견: {
-    axis: 'self_direction',
-    semanticKey: 'CAREER_ANNUAL_SELF_DIRECTED_WORK_DIRECTION',
-  },
-  겁재: {
-    axis: 'coordination',
-    semanticKey: 'CAREER_ANNUAL_PEER_COORDINATION_PRESSURE',
-  },
-  식신: {
-    axis: 'production',
-    semanticKey: 'CAREER_ANNUAL_STEADY_PRODUCTION_CADENCE',
-  },
-  상관: {
-    axis: 'expression_change',
-    semanticKey: 'CAREER_ANNUAL_EXPRESSION_PROCESS_CHANGE',
-  },
+  비견: { axis: 'self_direction', semanticKey: 'CAREER_ANNUAL_SELF_DIRECTED_WORK_DIRECTION' },
+  겁재: { axis: 'coordination', semanticKey: 'CAREER_ANNUAL_PEER_COORDINATION_PRESSURE' },
+  식신: { axis: 'production', semanticKey: 'CAREER_ANNUAL_STEADY_PRODUCTION_CADENCE' },
+  상관: { axis: 'expression_change', semanticKey: 'CAREER_ANNUAL_EXPRESSION_PROCESS_CHANGE' },
   편재: {
     axis: 'external_resources',
     semanticKey: 'CAREER_ANNUAL_EXTERNAL_PROJECT_RESOURCE_HANDLING',
@@ -155,10 +142,7 @@ export const CAREER_ANNUAL_THEME_SCHEMA = Object.freeze({
     ],
     properties: {
       semanticKey: { kind: 'string', enum: TEN_GODS.map((god) => TEN_GOD_THEME[god].semanticKey) },
-      careerAxis: {
-        kind: 'string',
-        enum: TEN_GODS.map((god) => TEN_GOD_THEME[god].axis),
-      },
+      careerAxis: { kind: 'string', enum: TEN_GODS.map((god) => TEN_GOD_THEME[god].axis) },
       tenGod: { kind: 'string', enum: TEN_GODS },
       activationKind: { kind: 'literal', value: 'annual_stem_ten_god' },
       narrativeRole: { kind: 'literal', value: 'primary' },
@@ -225,7 +209,10 @@ export const CAREER_NATAL_REUSED_CLAIM_TYPE_DEFINITIONS: readonly ClaimTypeDefin
 export const CAREER_ANNUAL_THEME_CLAIM_TYPE = Object.freeze({
   claimType: 'CAREER_ANNUAL_THEME_ACTIVATION',
   version: '1.0.0',
-  valueSchemaRef: { id: CAREER_ANNUAL_THEME_SCHEMA.schemaId, version: CAREER_ANNUAL_THEME_SCHEMA.version },
+  valueSchemaRef: {
+    id: CAREER_ANNUAL_THEME_SCHEMA.schemaId,
+    version: CAREER_ANNUAL_THEME_SCHEMA.version,
+  },
   scope: 'period',
   exclusiveValue: true,
   scenarioSensitive: false,
@@ -269,19 +256,19 @@ export const CAREER_ANNUAL_READING_METHODOLOGY = Object.freeze({
         source: 'temporal_fact',
         pathPattern: 'targetYear',
         mode: 'required',
-        rationale: 'Every Career Annual T9 claim must be bound to the request-resolved target year.',
+        rationale: 'Binds every Career Annual claim to the request-resolved target year.',
       },
       {
         source: 'temporal_fact',
         pathPattern: 'annualPillar',
         mode: 'required',
-        rationale: 'Every Career Annual T9 claim must be bound to the request-resolved annual pillar.',
+        rationale: 'Binds every Career Annual claim to the request-resolved annual pillar.',
       },
       {
         source: 'temporal_fact',
         pathPattern: 'annualStemTenGod',
         mode: 'required',
-        rationale: 'Primary Career Annual activation is personalized against the natal day master.',
+        rationale: 'Personalizes Career Annual activation against the natal day master.',
       },
       ...PILLAR_SLOTS.map((slot) => ({
         source: 'temporal_fact' as const,
@@ -300,7 +287,7 @@ function sourceRefs(): RuleDefinition['sourceRefs'] {
     {
       sourceId: CAREER_ANNUAL_POLICY_SOURCE.sourceId,
       supportType: 'implementation_reference',
-      notes: 'MyeongHa Career Annual Policy v1 bounds the permitted T9 career semantics.',
+      notes: 'Bounds the permitted Career Annual T9 semantics.',
     },
   ];
 }
@@ -333,8 +320,7 @@ function activationRule(tenGod: TenGod): RuleDefinition {
     taxonomy: { tier: 'T9', category: 'career', subcategory: 'annual' },
     methodologyRef: { id: METHOD_ID, version: CAREER_ANNUAL_READING_CANDIDATE_VERSION },
     title: `Career Annual ${tenGod} activation`,
-    description:
-      'Emits one bounded career working-pattern tendency only when the request-scoped annual stem Ten-God matches.',
+    description: 'Emits one bounded career working-pattern tendency for the resolved annual stem Ten-God.',
     inputs: [
       ...corePeriodInputs(),
       {
@@ -396,8 +382,7 @@ function branchClashRule(slot: (typeof PILLAR_SLOTS)[number]): RuleDefinition {
     taxonomy: { tier: 'T9', category: 'career', subcategory: 'annual' },
     methodologyRef: { id: METHOD_ID, version: CAREER_ANNUAL_READING_CANDIDATE_VERSION },
     title: `Career Annual branch clash tension at natal ${slot} pillar`,
-    description:
-      'Records a resolved annual-to-natal branch clash only as bounded career work-adjustment pressure.',
+    description: 'Records a resolved annual-to-natal branch clash only as bounded career work-adjustment pressure.',
     inputs: [
       ...corePeriodInputs(),
       {
