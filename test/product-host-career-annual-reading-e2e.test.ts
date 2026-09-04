@@ -216,7 +216,7 @@ describe('Product Host Career Annual reading end-to-end', () => {
     );
     expect(preparation.state).toBe('ready_for_narrative');
     expect(preparation.composition?.selection.coverageState).toBe('complete');
-    expect(preparation.composition?.selection.profile?.profileId).toBe(
+    expect(preparation.composition?.selection.profileRef?.id).toBe(
       'myeonghwa-reading-profile-career-annual-v1',
     );
     expect(preparation.composition?.selection.profileAuthorization.state).toBe('authorized');
@@ -259,7 +259,7 @@ describe('Product Host Career Annual reading end-to-end', () => {
     const secondObserved = requireCaptured(second.captured);
 
     expect(secondResult).toEqual(firstResult);
-    expect(secondObserved.snapshot.snapshotHash).toBe(firstObserved.snapshot.snapshotHash);
+    expect(secondObserved.snapshot.calculationHash).toBe(firstObserved.snapshot.calculationHash);
     expect(secondObserved.interpretation.run.runHash).toBe(firstObserved.interpretation.run.runHash);
     expect(second.adapter.calls).toEqual(first.adapter.calls);
   });
