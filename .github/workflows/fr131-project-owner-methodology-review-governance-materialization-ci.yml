@@ -1,0 +1,32 @@
+name: FR131 Project Owner Methodology Review Governance Materialization CI
+
+on:
+  pull_request:
+    paths:
+      - 'governance/face-reading/methodology-review-project-owner-governance-v1.md'
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-project-owner-governance-materialization-fr131.ts'
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-project-owner-governance-materialization-fr131.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-project-owner-governance-materialization-fr131-hardening.test.ts'
+      - 'scripts/verify-fr131-project-owner-methodology-review-governance-materialization.mjs'
+      - '.github/workflows/fr131-project-owner-methodology-review-governance-materialization-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr131-project-owner-methodology-review-governance-materialization:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR131 project-owner methodology review governance materialization
+        run: npx vitest run packages/face-reading/src/five-officers-intake-methodology-review-project-owner-governance-materialization-fr131.test.ts packages/face-reading/src/five-officers-intake-methodology-review-project-owner-governance-materialization-fr131-hardening.test.ts
+      - name: Verify FR131 exact predecessor and project-owner governance chain
+        run: node scripts/verify-fr131-project-owner-methodology-review-governance-materialization.mjs
