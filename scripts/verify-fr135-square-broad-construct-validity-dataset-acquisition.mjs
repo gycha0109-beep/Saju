@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import process from 'node:process';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
@@ -105,4 +106,4 @@ requireText(workflow,
   'five-officers-square-broad-construct-validity-dataset-acquisition-fr135-hardening.test.ts',
   'hardening workflow coverage');
 
-console.log('FR135 square-broad construct-validity dataset acquisition verification: PASS');
+process.stdout.write('FR135 square-broad construct-validity dataset acquisition verification: PASS\n');
