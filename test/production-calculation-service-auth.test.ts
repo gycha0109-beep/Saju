@@ -62,7 +62,7 @@ async function malformedCalculation(
 describe('production calculation service bearer authorization', () => {
   it('keeps healthz public', async () => {
     const origin = await startServer();
-    const response = await fetch(`${origin}/healthz`);
+    const response = await fetch(`${origin}/health`);
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ status: 'ok' });

@@ -73,7 +73,7 @@ The research registry remains `research`, its rules remain `research/unreviewed`
 ```text
 build
 → start preview on an ephemeral localhost port
-→ GET /healthz
+→ GET /health
 → POST a general/natal reading
 → require delivered or delivered_with_fallback
 → shutdown

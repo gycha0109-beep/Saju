@@ -131,26 +131,26 @@ async function verifyResponse({ response, expectedStatus, label, bearer }) {
   return requireJsonObject(text, label);
 }
 
-async function verifyHealthzReady({ baseUrl, bearer, timeoutMs }) {
+async function verifyHealthReady({ baseUrl, bearer, timeoutMs }) {
   for (let attempt = 1; attempt <= HEALTH_READINESS_ATTEMPTS; attempt += 1) {
-    const health = await requestWithTimeout(`${baseUrl}/healthz`, { method: 'GET' }, timeoutMs);
+    const health = await requestWithTimeout(`${baseUrl}/health`, { method: 'GET' }, timeoutMs);
     if (health.status === 200) {
       const healthBody = await verifyResponse({
         response: health,
         expectedStatus: 200,
-        label: 'healthz',
+        label: 'health',
         bearer,
       });
-      if (healthBody.status !== 'ok') fail('healthz did not report status=ok.');
+      if (healthBody.status !== 'ok') fail('health did not report status=ok.');
       if (attempt > 1) {
-        process.stdout.write(`healthz readiness converged on attempt ${String(attempt)}.\n`);
+        process.stdout.write(`health readiness converged on attempt ${String(attempt)}.\n`);
       }
       return;
     }
 
     const status = health.status;
     if (!HEALTH_READINESS_RETRYABLE_STATUSES.has(status)) {
-      fail(`healthz returned HTTP ${String(status)}; expected 200.`);
+      fail(`health returned HTTP ${String(status)}; expected 200.`);
     }
 
     if (health.body !== null) {
@@ -159,12 +159,12 @@ async function verifyHealthzReady({ baseUrl, bearer, timeoutMs }) {
 
     if (attempt === HEALTH_READINESS_ATTEMPTS) {
       fail(
-        `healthz did not become routable after ${String(HEALTH_READINESS_ATTEMPTS)} attempts; last HTTP ${String(status)}.`,
+        `health did not become routable after ${String(HEALTH_READINESS_ATTEMPTS)} attempts; last HTTP ${String(status)}.`,
       );
     }
 
     process.stdout.write(
-      `healthz readiness attempt ${String(attempt)} returned HTTP ${String(status)}; retrying.\n`,
+      `health readiness attempt ${String(attempt)} returned HTTP ${String(status)}; retrying.\n`,
     );
     await delay(HEALTH_READINESS_RETRY_MS);
   }
@@ -181,7 +181,7 @@ async function main() {
       ? 'saju-smoke-intentionally-wrong-token-2'
       : 'saju-smoke-intentionally-wrong-token';
 
-  await verifyHealthzReady({ baseUrl, bearer, timeoutMs });
+  await verifyHealthReady({ baseUrl, bearer, timeoutMs });
 
   const unauthenticated = await requestWithTimeout(
     calculationUrl,

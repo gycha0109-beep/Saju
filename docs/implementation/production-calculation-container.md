@@ -31,7 +31,7 @@ The active service Bearer remains mandatory and startup fails closed when it is 
 ## HTTP boundary
 
 ```text
-GET  /healthz           public health probe
+GET  /health           public health probe
 POST /api/calculations  Bearer-authenticated calculation-only request
 /api/readings            unavailable
 ```
@@ -62,7 +62,7 @@ Do not commit or bake the credential into the image. Provision it through the se
 `.github/workflows/production-calculation-container.yml` builds and boots the exact repository image on pull requests and `main` pushes. It verifies:
 
 - final image user is non-root `node`;
-- `/healthz` returns HTTP 200;
+- `/health` returns HTTP 200;
 - unauthenticated `/api/calculations` fails with HTTP 401;
 - the active Bearer reaches request authorization before malformed-body validation (HTTP 400);
 - an incorrect Bearer returns HTTP 401;

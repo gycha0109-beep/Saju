@@ -72,7 +72,7 @@ The consumer reading text continues to be resolved only by the frozen determinis
 ```text
 GET  /              static consumer form
 GET  /app.js        static renderer
-GET  /healthz       host process health
+GET  /health       host process health
 POST /api/readings  governed reading request
 ```
 
