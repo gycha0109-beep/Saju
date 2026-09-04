@@ -1,6 +1,9 @@
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
-import { RELATIONSHIP_SPOUSE_T8_AUTHORITY_REQUIREMENTS, type RelationshipSpouseT8AuthorityGapId } from './relationship-spouse-t8-authority-acquisition-readiness-review.js';
+import {
+  RELATIONSHIP_SPOUSE_T8_AUTHORITY_REQUIREMENTS,
+  type RelationshipSpouseT8AuthorityGapId,
+} from './relationship-spouse-t8-authority-acquisition-readiness-review.js';
 import { RELATIONSHIP_SPOUSE_T8_DISCOVERED_AUTHORITY_CANDIDATES } from './relationship-spouse-t8-authority-candidate-discovery-evidence.js';
 import {
   RELATIONSHIP_SPOUSE_T8_CURRENT_T5_BRIDGE_INPUT_CLAIM_TYPES,
@@ -176,7 +179,6 @@ export interface RelationshipSpouseT8CurrentT5T6SemanticBridgeAuthorityCandidate
 const ALL_GAP_IDS = Object.freeze(
   RELATIONSHIP_SPOUSE_T8_AUTHORITY_REQUIREMENTS.map((requirement) => requirement.gapId),
 );
-
 const WEALTH_FAMILY_CLAIM = 'TEN_GOD_FAMILY_WEALTH_PRESENT';
 const OFFICER_FAMILY_CLAIM = 'TEN_GOD_FAMILY_OFFICER_PRESENT';
 
@@ -340,11 +342,14 @@ function existingZipingCandidate(): RelationshipSpouseT8CurrentBridgeDiscoveredC
     source.sourceReference.title,
     'existing_primary_scan_discovery',
     source.sourceReference.url ?? '',
-    `${source.sourceReference.locator.section ?? ''} / ${source.sourceReference.locator.page ?? ''}`,
+    `${source.sourceReference.locator?.section ?? ''} / ${source.sourceReference.locator?.page ?? ''}`,
     'Existing governed discovery record with exact primary page inspection',
     false,
   );
-  const material = { sourceId: sourceReference.sourceId, status: 'COMPETING_METHODOLOGY_NO_CURRENT_T5_BRIDGE' as const };
+  const material = {
+    sourceId: sourceReference.sourceId,
+    status: 'COMPETING_METHODOLOGY_NO_CURRENT_T5_BRIDGE' as const,
+  };
   return Object.freeze({
     candidateId: candidateId(material),
     sourceReference,
@@ -395,11 +400,14 @@ function existingDitianCandidate(): RelationshipSpouseT8CurrentBridgeDiscoveredC
     source.sourceReference.title,
     'existing_scan_identity_transcription_lead',
     source.sourceReference.url ?? '',
-    `${source.sourceReference.locator.section ?? ''} / ${source.sourceReference.locator.page ?? ''}`,
+    `${source.sourceReference.locator?.section ?? ''} / ${source.sourceReference.locator?.page ?? ''}`,
     'Existing governed scan-identity plus transcription discovery record',
     false,
   );
-  const material = { sourceId: sourceReference.sourceId, status: 'TRANSCRIPTION_LEAD_COMPETING_METHODOLOGY' as const };
+  const material = {
+    sourceId: sourceReference.sourceId,
+    status: 'TRANSCRIPTION_LEAD_COMPETING_METHODOLOGY' as const,
+  };
   return Object.freeze({
     candidateId: candidateId(material),
     sourceReference,
@@ -492,7 +500,8 @@ function exactReadinessBoundaryAccepted(
     readiness.previewDefaultSwitchAuthorized === false &&
     readiness.productionPromotionAuthorized === false &&
     readiness.controlsFrozen &&
-    readiness.controlCount === RELATIONSHIP_SPOUSE_T8_CURRENT_T5_T6_BRIDGE_AUTHORITY_ACQUISITION_CONTROL_IDS.length &&
+    readiness.controlCount ===
+      RELATIONSHIP_SPOUSE_T8_CURRENT_T5_T6_BRIDGE_AUTHORITY_ACQUISITION_CONTROL_IDS.length &&
     readiness.recommendedNextGate ===
       'RELATIONSHIP_SPOUSE_T8_CURRENT_T5_T6_SEMANTIC_BRIDGE_AUTHORITY_CANDIDATE_DISCOVERY_EVIDENCE'
   );
@@ -524,7 +533,10 @@ function laneResults(
 }
 
 function finalized(
-  material: Omit<RelationshipSpouseT8CurrentT5T6SemanticBridgeAuthorityCandidateDiscoveryEvidenceReport, 'evidenceId'>,
+  material: Omit<
+    RelationshipSpouseT8CurrentT5T6SemanticBridgeAuthorityCandidateDiscoveryEvidenceReport,
+    'evidenceId'
+  >,
 ): RelationshipSpouseT8CurrentT5T6SemanticBridgeAuthorityCandidateDiscoveryEvidenceReport {
   return {
     evidenceId: `relationship_spouse_t8_current_bridge_candidate_discovery_${deterministicContentHash(material).slice(0, 24)}`,
@@ -574,7 +586,8 @@ export function buildRelationshipSpouseT8CurrentT5T6SemanticBridgeAuthorityCandi
     allFiveGapsRemainOpen: true,
     unresolvedGapIds,
     strongestCurrentLeadCandidateId: strongest?.candidateId ?? null,
-    strongestCurrentLeadCurrentT5ClaimTypes: strongest?.correspondenceEstablishedCurrentT5ClaimTypes ?? Object.freeze([]),
+    strongestCurrentLeadCurrentT5ClaimTypes:
+      strongest?.correspondenceEstablishedCurrentT5ClaimTypes ?? Object.freeze([]),
     strongestCurrentLeadRequiresPrimaryWitnessBinding: accepted,
     strongestCurrentLeadRequiresModernScopeRemediation: accepted,
     wealthFamilyHistoricalSpouseVocabularyCorrespondenceObserved: accepted,
