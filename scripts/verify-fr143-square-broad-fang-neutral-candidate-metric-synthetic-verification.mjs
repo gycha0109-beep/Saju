@@ -53,5 +53,3 @@ for (const [fragment, label] of [
   ['traditionalMetricBindingsIssued: 1', 'traditional binding issuance'],
   ['criterionStatesIssued: 1', 'criterion-state issuance'],
 ]) forbidFragment(runtime, fragment, label);
-
-console.log('FR143 synthetic metric verification boundary: PASS');
