@@ -35,7 +35,7 @@ export const RELATIONSHIP_ANNUAL_PROHIBITED_FUTURE_PHRASES = Object.freeze([
 interface RelationshipAnnualThemeCopy {
   profileId: string;
   semanticKey: string;
-  axis: 'closeness' | 'communication' | 'boundary' | 'reciprocity' | 'tension';
+  axis: 'core' | 'collaboration' | 'responsibility' | 'tension';
   order: number;
   headline: string;
   summary: string;
@@ -45,7 +45,7 @@ const THEME_COPY: readonly RelationshipAnnualThemeCopy[] = Object.freeze([
   {
     profileId: 'PROFILE-RELATIONSHIP-ANNUAL-BI-GYEON',
     semanticKey: 'RELATIONSHIP_ANNUAL_AUTONOMY_RECIPROCITY',
-    axis: 'boundary',
+    axis: 'responsibility',
     order: 30,
     headline: '가까워지더라도 각자의 선택권과 속도를 존중하려는 흐름이 두드러질 수 있습니다',
     summary:
@@ -54,7 +54,7 @@ const THEME_COPY: readonly RelationshipAnnualThemeCopy[] = Object.freeze([
   {
     profileId: 'PROFILE-RELATIONSHIP-ANNUAL-GEOP-JAE',
     semanticKey: 'RELATIONSHIP_ANNUAL_BOUNDARY_NEGOTIATION',
-    axis: 'boundary',
+    axis: 'responsibility',
     order: 31,
     headline: '비교·경쟁·역할 분담 속에서 관계의 경계를 다시 조정하는 일이 중요해질 수 있습니다',
     summary:
@@ -63,7 +63,7 @@ const THEME_COPY: readonly RelationshipAnnualThemeCopy[] = Object.freeze([
   {
     profileId: 'PROFILE-RELATIONSHIP-ANNUAL-SIK-SIN',
     semanticKey: 'RELATIONSHIP_ANNUAL_STEADY_EXPRESSION',
-    axis: 'communication',
+    axis: 'collaboration',
     order: 32,
     headline: '꾸준하고 편안한 표현을 통해 관계의 리듬을 만드는 흐름이 두드러질 수 있습니다',
     summary:
@@ -72,7 +72,7 @@ const THEME_COPY: readonly RelationshipAnnualThemeCopy[] = Object.freeze([
   {
     profileId: 'PROFILE-RELATIONSHIP-ANNUAL-SANG-GWAN',
     semanticKey: 'RELATIONSHIP_ANNUAL_COMMUNICATION_RENEGOTIATION',
-    axis: 'communication',
+    axis: 'collaboration',
     order: 33,
     headline: '기존의 말하기 방식이나 관계 규칙을 다시 표현하고 조정하려는 흐름이 나타날 수 있습니다',
     summary:
@@ -81,7 +81,7 @@ const THEME_COPY: readonly RelationshipAnnualThemeCopy[] = Object.freeze([
   {
     profileId: 'PROFILE-RELATIONSHIP-ANNUAL-PYEON-JAE',
     semanticKey: 'RELATIONSHIP_ANNUAL_SOCIAL_OPENNESS',
-    axis: 'closeness',
+    axis: 'core',
     order: 34,
     headline: '다양한 사람과 상황을 접하며 관계 선택지를 넓게 바라보는 흐름이 커질 수 있습니다',
     summary:
@@ -90,7 +90,7 @@ const THEME_COPY: readonly RelationshipAnnualThemeCopy[] = Object.freeze([
   {
     profileId: 'PROFILE-RELATIONSHIP-ANNUAL-JEONG-JAE',
     semanticKey: 'RELATIONSHIP_ANNUAL_CONSISTENT_RECIPROCITY',
-    axis: 'reciprocity',
+    axis: 'collaboration',
     order: 35,
     headline: '시간·약속·관심을 꾸준히 주고받는 관계의 안정성을 중요하게 보는 흐름이 두드러질 수 있습니다',
     summary:
@@ -108,7 +108,7 @@ const THEME_COPY: readonly RelationshipAnnualThemeCopy[] = Object.freeze([
   {
     profileId: 'PROFILE-RELATIONSHIP-ANNUAL-JEONG-GWAN',
     semanticKey: 'RELATIONSHIP_ANNUAL_ROLE_EXPECTATION_CLARITY',
-    axis: 'reciprocity',
+    axis: 'collaboration',
     order: 37,
     headline: '관계에서 서로 기대하는 역할과 약속을 분명히 하고 싶은 흐름이 두드러질 수 있습니다',
     summary:
@@ -117,7 +117,7 @@ const THEME_COPY: readonly RelationshipAnnualThemeCopy[] = Object.freeze([
   {
     profileId: 'PROFILE-RELATIONSHIP-ANNUAL-PYEON-IN',
     semanticKey: 'RELATIONSHIP_ANNUAL_REFLECTIVE_DISTANCE',
-    axis: 'closeness',
+    axis: 'core',
     order: 38,
     headline: '관계를 바로 규정하기보다 한 발 떨어져 해석하고 생각을 정리하려는 흐름이 나타날 수 있습니다',
     summary:
@@ -126,7 +126,7 @@ const THEME_COPY: readonly RelationshipAnnualThemeCopy[] = Object.freeze([
   {
     profileId: 'PROFILE-RELATIONSHIP-ANNUAL-JEONG-IN',
     semanticKey: 'RELATIONSHIP_ANNUAL_SUPPORT_RECEPTIVITY',
-    axis: 'closeness',
+    axis: 'core',
     order: 39,
     headline: '신뢰할 수 있는 지지와 이해를 주고받는 관계를 중요하게 느끼는 흐름이 두드러질 수 있습니다',
     summary:
