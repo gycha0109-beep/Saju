@@ -72,14 +72,8 @@ export interface SquareBroadNeutralShapeMetricRuntimeFR134V1 {
     readonly contourConsumptionState: 'unordered_set_no_outer_inner_role';
     readonly anatomicalRoleAssigned: false;
   };
-  readonly metricDefinitions: readonly [
-    SquareBroadNeutralShapeMetricDefinitionFR134V1,
-    SquareBroadNeutralShapeMetricDefinitionFR134V1,
-  ];
-  readonly metricValues: readonly [
-    SquareBroadNeutralShapeMetricValueFR134V1,
-    SquareBroadNeutralShapeMetricValueFR134V1,
-  ];
+  readonly metricDefinitions: readonly SquareBroadNeutralShapeMetricDefinitionFR134V1[];
+  readonly metricValues: readonly SquareBroadNeutralShapeMetricValueFR134V1[];
   readonly constructValidityDatasetDesign: {
     readonly designStatus: 'schema_only_no_dataset_materialized';
     readonly candidateFeatureRefs: readonly [
