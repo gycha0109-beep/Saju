@@ -1,0 +1,163 @@
+name: Production Cloud Run Routing Diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_tag:
+        description: Existing Cloud Run traffic tag to inspect
+        required: true
+        default: candidate-d4d775f80e95
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-saju-cloud-run-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    name: Inspect candidate control plane and HTTP routing
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production-saju
+    env:
+      GCP_REGION: asia-southeast1
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+      GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+      CANDIDATE_TAG: ${{ inputs.candidate_tag }}
+
+    steps:
+      - name: Validate diagnostic inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_vars=(
+            GCP_PROJECT_ID
+            GCP_WORKLOAD_IDENTITY_PROVIDER
+            GCP_DEPLOYER_SERVICE_ACCOUNT
+            GCP_CLOUD_RUN_SERVICE
+            CANDIDATE_TAG
+          )
+          for name in "${required_vars[@]}"; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required diagnostic value: ${name}." >&2
+              exit 1
+            fi
+          done
+          if [[ ! "$CANDIDATE_TAG" =~ ^[a-z][a-z0-9-]{0,62}$ ]]; then
+            echo 'candidate_tag is not a valid Cloud Run traffic tag.' >&2
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+
+      - name: Inspect Cloud Run routing and probe HTTP endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          service_json="${RUNNER_TEMP}/cloud-run-service.json"
+          revision_json="${RUNNER_TEMP}/cloud-run-revision.json"
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format=json > "$service_json"
+
+          echo '=== Cloud Run service control-plane snapshot ==='
+          jq '{
+            name: .metadata.name,
+            url: .status.url,
+            latestCreatedRevisionName: .status.latestCreatedRevisionName,
+            latestReadyRevisionName: .status.latestReadyRevisionName,
+            traffic: [.status.traffic[]? | {
+              tag: (.tag // null),
+              revisionName: (.revisionName // null),
+              percent: (.percent // 0),
+              url: (.url // null),
+              latestRevision: (.latestRevision // false)
+            }]
+          }' "$service_json"
+
+          candidate_revision="$(jq -r --arg tag "$CANDIDATE_TAG" '.status.traffic[]? | select(.tag == $tag) | (.revisionName // empty)' "$service_json" | head -n 1)"
+          candidate_url="$(jq -r --arg tag "$CANDIDATE_TAG" '.status.traffic[]? | select(.tag == $tag) | (.url // empty)' "$service_json" | head -n 1)"
+          service_url="$(jq -r '.status.url // empty' "$service_json")"
+
+          if [ -z "$candidate_revision" ] || [ -z "$candidate_url" ]; then
+            echo "Candidate tag '$CANDIDATE_TAG' does not resolve to both revisionName and url." >&2
+            exit 1
+          fi
+
+          gcloud run revisions describe "$candidate_revision" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format=json > "$revision_json"
+
+          echo '=== Tagged candidate revision snapshot ==='
+          jq '{
+            name: .metadata.name,
+            image: (.spec.containers[0].image // null),
+            ready: ([.status.conditions[]? | select(.type == "Ready")][0] // null),
+            conditions: [.status.conditions[]? | {
+              type: .type,
+              status: .status,
+              reason: (.reason // null),
+              message: (.message // null)
+            }]
+          }' "$revision_json"
+
+          ready="$(jq -r '[.status.conditions[]? | select(.type == "Ready")][0].status // empty' "$revision_json")"
+          if [ "$ready" != 'True' ]; then
+            echo "Tagged candidate revision is not Ready=True: ${ready:-missing}." >&2
+            exit 1
+          fi
+
+          probe() {
+            local label="$1"
+            local url="$2"
+            local headers="${RUNNER_TEMP}/${label}.headers"
+            local body="${RUNNER_TEMP}/${label}.body"
+            local code
+
+            code="$(curl --silent --show-error --location \
+              --connect-timeout 10 \
+              --max-time 20 \
+              --dump-header "$headers" \
+              --output "$body" \
+              --write-out '%{http_code}' \
+              "$url" || true)"
+
+            echo "=== HTTP probe: ${label} ==="
+            echo "url=${url}"
+            echo "status=${code:-000}"
+            echo '-- selected response headers --'
+            awk 'BEGIN {IGNORECASE=1} /^HTTP\// || /^(server|content-type|location|via|x-cloud-trace-context|alt-svc):/ {print}' "$headers" 2>/dev/null || true
+            echo '-- bounded response body (first 2048 bytes) --'
+            head -c 2048 "$body" 2>/dev/null || true
+            echo
+            echo '-- end probe --'
+          }
+
+          probe candidate-root "${candidate_url}/"
+          probe candidate-healthz "${candidate_url}/healthz"
+          if [ -n "$service_url" ]; then
+            probe stable-healthz "${service_url}/healthz"
+          else
+            echo 'Stable service URL is absent from Cloud Run status.'
+          fi
