@@ -1,0 +1,34 @@
+name: Temporary Dispatch Production Candidate Healthfix
+
+on:
+  push:
+    branches:
+      - ops/dispatch-prod-candidate-20260905-healthfix
+    paths:
+      - '.github/workflows/_temp-dispatch-prod-candidate-healthfix.yml'
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch exact-main promote=false candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg ref 'main' \
+            --arg source_branch 'ops/prod-snapshot-20260905-healthfix' \
+            --arg source_sha 'f5c83e927714603b09dfb3fc2c19577e315b530b' \
+            '{ref:$ref,inputs:{source_branch:$source_branch,source_sha:$source_sha,active_bearer_secret_version:"1",previous_bearer_secret_version:"",promote:"false"}}' \
+            > dispatch.json
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/production-cloud-run.yml/dispatches" \
+            --input dispatch.json
+          echo 'Dispatched promote=false production candidate for exact merged main SHA.'
