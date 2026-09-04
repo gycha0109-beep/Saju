@@ -299,7 +299,9 @@ describe('Product Host Career Annual reading end-to-end', () => {
     expect(result.state).toBe('delivered_with_fallback');
     expect(result.reading?.subject.birthInputDisplay.timeKnown).toBe(false);
     expect(result.reading?.subject.calculationState).toBe('partially_ambiguous');
-    expect(observed.requestContext.temporalFacts.annualBranchRelations.hour.status).not.toBe('resolved');
+    expect(observed.requestContext.temporalFacts.annualBranchRelations).not.toMatchObject({
+      hour: { status: 'resolved' },
+    });
     expect(
       observed.interpretation.claims.some(
         (claim) =>
