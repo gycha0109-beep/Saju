@@ -1,0 +1,231 @@
+import { describe, expect, it } from 'vitest';
+import type { CanonicalSajuSnapshot, PillarFact } from '../src/contracts/calculation.js';
+import { resolved } from '../src/contracts/common.js';
+import type { ReadingRequest } from '../src/contracts/reading.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
+import {
+  buildAnnualInterpretationFacts,
+  deriveAnnualStemTenGod,
+} from '../src/reading/annual-interpretation-facts.js';
+import { buildReadingCompositionEvidence } from '../src/reading/reading-intent-composition.js';
+import { buildTemporalReadingContext } from '../src/reading/temporal-reading-context.js';
+import { WEALTH_NATAL_READING_RULES } from '../src/research/wealth-natal-reading-candidate.js';
+import {
+  WEALTH_ANNUAL_ACTIVATION_RULES,
+  WEALTH_ANNUAL_READING_CANDIDATE_VERSION,
+  WEALTH_ANNUAL_READING_METHODOLOGY,
+  WEALTH_ANNUAL_READING_PACK,
+  WEALTH_ANNUAL_TENSION_CLAIM_TYPE,
+  WEALTH_ANNUAL_TENSION_RULES,
+  WEALTH_ANNUAL_THEME_CLAIM_TYPE,
+  createWealthAnnualReadingCandidateRegistry,
+} from '../src/research/wealth-annual-reading-candidate.js';
+
+const NOW = new Date('2026-09-04T01:00:00.000Z');
+
+function snapshot(timeKnown = true): CanonicalSajuSnapshot {
+  return calculateCanonicalSajuSnapshot(
+    {
+      calendarType: 'solar',
+      date: { year: 1996, month: 1, day: 9 },
+      time: timeKnown ? { known: true, hour: 9, minute: 30 } : { known: false },
+      sexForTraditionalCalculation: 'male',
+    },
+    PRODUCTION_DEFAULT_CALCULATION_POLICY,
+    { now: NOW },
+  );
+}
+
+function annualRequest(year: number): ReadingRequest {
+  return {
+    requestId: `wealth-annual-${year}`,
+    intent: { domain: 'wealth', temporalScope: 'annual' },
+    targetPeriod: {
+      scope: 'annual',
+      year,
+      timeZone: 'Asia/Seoul',
+      referenceDateTime: NOW.toISOString(),
+      resolution: 'relative_current',
+    },
+  };
+}
+
+function temporalFacts(value: CanonicalSajuSnapshot, year: number) {
+  const context = buildTemporalReadingContext(annualRequest(year));
+  if (context === undefined) throw new Error('wealth annual request must produce temporal context');
+  return { ...buildAnnualInterpretationFacts(value, context) };
+}
+
+function withDayBranchClash(value: CanonicalSajuSnapshot): CanonicalSajuSnapshot {
+  if (value.pillars.day.status !== 'resolved') throw new Error('fixture requires resolved day pillar');
+  const day: PillarFact = {
+    ...value.pillars.day.value,
+    branch: { value: '자', hanja: '子', element: '수', yinYang: '양' },
+  };
+  return { ...value, pillars: { ...value.pillars, day: resolved(day) } };
+}
+
+describe('MyeongHa Wealth Annual T9 reading candidate', () => {
+  it('reuses the existing Wealth Natal T8 chain and remains research-only', () => {
+    const registry = createWealthAnnualReadingCandidateRegistry();
+
+    expect(WEALTH_ANNUAL_READING_CANDIDATE_VERSION).toBe('0.1.0-research');
+    expect(WEALTH_ANNUAL_READING_PACK.status).toBe('research');
+    expect(WEALTH_ANNUAL_READING_METHODOLOGY.status).toBe('research');
+    expect(WEALTH_ANNUAL_READING_METHODOLOGY.family).toBe('time_dynamics');
+    expect(WEALTH_ANNUAL_ACTIVATION_RULES).toHaveLength(10);
+    expect(WEALTH_ANNUAL_TENSION_RULES).toHaveLength(4);
+    expect(
+      WEALTH_NATAL_READING_RULES.every((rule) =>
+        registry.rules.some(
+          (registered) => registered.ruleId === rule.ruleId && registered.version === rule.version,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      registry.rules.some(
+        (rule) =>
+          rule.taxonomy.tier === 'T9' &&
+          rule.taxonomy.category === 'general' &&
+          rule.taxonomy.subcategory === 'annual',
+      ),
+    ).toBe(false);
+  });
+
+  it('emits exactly one personalized Wealth Annual activation from request-scoped temporal facts', () => {
+    const natal = snapshot();
+    const facts = temporalFacts(natal, 2026);
+    const registry = createWealthAnnualReadingCandidateRegistry();
+    const execution = runInterpretation(natal, registry, { temporalFacts: facts, now: NOW });
+    const activations = execution.claims.filter(
+      (claim) => claim.claimType === WEALTH_ANNUAL_THEME_CLAIM_TYPE,
+    );
+
+    if (natal.derivedFacts.dayMaster.status !== 'resolved') {
+      throw new Error('fixture requires resolved day master');
+    }
+    expect(facts.annualStemTenGod).toBe(
+      deriveAnnualStemTenGod(natal.derivedFacts.dayMaster.value, facts.annualPillar.stem),
+    );
+    expect(activations).toHaveLength(1);
+    expect(activations[0]?.taxonomy).toEqual({ tier: 'T9', category: 'wealth', subcategory: 'annual' });
+    expect(activations[0]?.factRefs).toEqual(
+      expect.arrayContaining([
+        'temporal.targetYear',
+        'temporal.annualPillar',
+        'temporal.annualStemTenGod',
+      ]),
+    );
+    const activationEvaluation = execution.evaluations.find((evaluation) =>
+      evaluation.emittedClaimIds.includes(activations[0]?.claimId ?? ''),
+    );
+    expect(
+      activationEvaluation?.inputRefs
+        .filter((ref) => ref.idOrPath.startsWith('temporal.'))
+        .every((ref) => ref.sourceType === 'temporal_fact'),
+    ).toBe(true);
+    expect(execution.integrity.valid).toBe(true);
+  });
+
+  it('makes wealth/annual complete with Wealth Natal T8 plus Wealth Annual T9 evidence', () => {
+    const natal = snapshot();
+    const request = annualRequest(2026);
+    const registry = createWealthAnnualReadingCandidateRegistry();
+    const execution = runInterpretation(natal, registry, {
+      requestId: request.requestId,
+      temporalFacts: temporalFacts(natal, 2026),
+      now: NOW,
+    });
+    const composition = buildReadingCompositionEvidence(natal, execution, registry, request, {
+      narrativePolicyVersion: 'myeongha-wealth-annual-narrative-v1',
+    });
+
+    expect(composition.selection.coverageState).toBe('complete');
+    expect(composition.selection.missingRequirements).toEqual([]);
+    expect(composition.selection.profileRef?.id).toBe('myeonghwa-reading-profile-wealth-annual-v1');
+    expect(composition.selection.constraints.mayPromoteResearchAuthority).toBe(false);
+    expect(
+      composition.evidence?.bundle.claims.some(
+        (claim) => claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'wealth',
+      ),
+    ).toBe(true);
+    expect(
+      composition.evidence?.bundle.claims.some(
+        (claim) =>
+          claim.taxonomy.tier === 'T9' &&
+          claim.taxonomy.category === 'wealth' &&
+          claim.taxonomy.subcategory === 'annual',
+      ),
+    ).toBe(true);
+  });
+
+  it('is deterministic for the same target year and changes annual semantics for another year', () => {
+    const natal = snapshot();
+    const registry = createWealthAnnualReadingCandidateRegistry();
+    const first = runInterpretation(natal, registry, {
+      temporalFacts: temporalFacts(natal, 2026),
+      now: NOW,
+    });
+    const repeated = runInterpretation(natal, registry, {
+      temporalFacts: temporalFacts(natal, 2026),
+      now: NOW,
+    });
+    const nextYear = runInterpretation(natal, registry, {
+      temporalFacts: temporalFacts(natal, 2027),
+      now: NOW,
+    });
+
+    expect(repeated.run.runHash).toBe(first.run.runHash);
+    expect(repeated.claims).toEqual(first.claims);
+    expect(nextYear.run.runHash).not.toBe(first.run.runHash);
+    expect(
+      nextYear.claims.find((claim) => claim.claimType === WEALTH_ANNUAL_THEME_CLAIM_TYPE)?.value,
+    ).not.toEqual(
+      first.claims.find((claim) => claim.claimType === WEALTH_ANNUAL_THEME_CLAIM_TYPE)?.value,
+    );
+  });
+
+  it('emits branch clash only as bounded financial-plan adjustment pressure', () => {
+    const natal = withDayBranchClash(snapshot());
+    const registry = createWealthAnnualReadingCandidateRegistry();
+    const execution = runInterpretation(natal, registry, {
+      temporalFacts: temporalFacts(natal, 2026),
+      now: NOW,
+    });
+    const tension = execution.claims.find(
+      (claim) =>
+        claim.claimType === WEALTH_ANNUAL_TENSION_CLAIM_TYPE &&
+        (claim.value as { natalPillar?: string }).natalPillar === 'day',
+    );
+
+    expect(tension).toBeDefined();
+    expect(tension?.factRefs).toContain('temporal.annualBranchRelations.day');
+    expect(tension?.value).toMatchObject({
+      relation: 'clash',
+      boundedTo: 'financial_plan_adjustment_pressure',
+      adjustmentAreas: ['budget', 'commitments', 'shared_resources', 'spending_priorities'],
+      financialAdviceAuthorized: false,
+    });
+  });
+
+  it('does not fabricate hour relation evidence when birth time is unknown', () => {
+    const natal = snapshot(false);
+    const facts = temporalFacts(natal, 2026);
+    const registry = createWealthAnnualReadingCandidateRegistry();
+    const execution = runInterpretation(natal, registry, { temporalFacts: facts, now: NOW });
+
+    expect(facts.annualBranchRelations.hour.status).not.toBe('resolved');
+    expect(
+      execution.claims.some((claim) => claim.claimType === WEALTH_ANNUAL_THEME_CLAIM_TYPE),
+    ).toBe(true);
+    expect(
+      execution.claims.some(
+        (claim) =>
+          claim.claimType === WEALTH_ANNUAL_TENSION_CLAIM_TYPE &&
+          (claim.value as { natalPillar?: string }).natalPillar === 'hour',
+      ),
+    ).toBe(false);
+  });
+});
