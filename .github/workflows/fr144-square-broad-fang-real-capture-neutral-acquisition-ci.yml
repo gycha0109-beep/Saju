@@ -1,0 +1,32 @@
+name: FR144 Square Broad Fang Real Capture Neutral Acquisition CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr144-square-broad-fang-real-capture-neutral-acquisition-extension.md'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-real-capture-acquisition-fr144.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-real-capture-acquisition-fr144.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-real-capture-acquisition-fr144-hardening.test.ts'
+      - 'scripts/verify-fr144-square-broad-fang-real-capture-neutral-acquisition.mjs'
+      - '.github/workflows/fr144-square-broad-fang-real-capture-neutral-acquisition-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr144-square-broad-fang-real-capture-neutral-acquisition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR144 neutral acquisition boundary
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-fang-real-capture-acquisition-fr144.test.ts packages/face-reading/src/five-officers-square-broad-fang-real-capture-acquisition-fr144-hardening.test.ts
+      - name: Verify FR144 exact predecessor and zero-authority acquisition chain
+        run: node scripts/verify-fr144-square-broad-fang-real-capture-neutral-acquisition.mjs
