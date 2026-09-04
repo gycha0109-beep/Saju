@@ -1,0 +1,32 @@
+name: FR143 Square Broad Fang Neutral Candidate Metric Synthetic Verification CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr143-square-broad-fang-neutral-candidate-metric-synthetic-verification.md'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-neutral-candidate-metric-synthetic-verification-fr143.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-neutral-candidate-metric-synthetic-verification-fr143.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-neutral-candidate-metric-synthetic-verification-fr143-hardening.test.ts'
+      - 'scripts/verify-fr143-square-broad-fang-neutral-candidate-metric-synthetic-verification.mjs'
+      - '.github/workflows/fr143-square-broad-fang-neutral-candidate-metric-synthetic-verification-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr143-square-broad-fang-neutral-candidate-metric-synthetic-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR143 synthetic metric behavior
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-fang-neutral-candidate-metric-synthetic-verification-fr143.test.ts packages/face-reading/src/five-officers-square-broad-fang-neutral-candidate-metric-synthetic-verification-fr143-hardening.test.ts
+      - name: Verify FR143 exact authority boundary
+        run: node scripts/verify-fr143-square-broad-fang-neutral-candidate-metric-synthetic-verification.mjs
