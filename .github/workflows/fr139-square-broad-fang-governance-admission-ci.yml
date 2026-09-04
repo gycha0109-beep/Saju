@@ -1,0 +1,33 @@
+name: FR139 Square Broad Fang Governance Admission CI
+
+on:
+  pull_request:
+    paths:
+      - 'governance/face-reading/square-broad-fang-governance-decision-request-v1.md'
+      - 'research/face-reading/fr139-square-broad-fang-governance-admission.md'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-governance-admission-fr139.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-governance-admission-fr139.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-governance-admission-fr139-hardening.test.ts'
+      - 'scripts/verify-fr139-square-broad-fang-governance-admission.mjs'
+      - '.github/workflows/fr139-square-broad-fang-governance-admission-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr139-square-broad-fang-governance-admission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR139 governance admission
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-fang-governance-admission-fr139.test.ts packages/face-reading/src/five-officers-square-broad-fang-governance-admission-fr139-hardening.test.ts
+      - name: Verify FR139 exact governance boundary
+        run: node scripts/verify-fr139-square-broad-fang-governance-admission.mjs
