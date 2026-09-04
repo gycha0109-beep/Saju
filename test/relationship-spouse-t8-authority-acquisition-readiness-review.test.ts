@@ -120,8 +120,8 @@ describe('Relationship spouse T8 authority acquisition readiness', () => {
     const second = buildRelationshipSpouseT8AuthorityAcquisitionReadinessReview();
 
     expect(first).toEqual(second);
-    const { reviewId: _reviewId, ...material } = first;
-    expect(first.reviewId).toBe(
+    const { reviewId, ...material } = first;
+    expect(reviewId).toBe(
       `relationship_spouse_t8_authority_readiness_${deterministicContentHash(material).slice(0, 24)}`,
     );
   });
