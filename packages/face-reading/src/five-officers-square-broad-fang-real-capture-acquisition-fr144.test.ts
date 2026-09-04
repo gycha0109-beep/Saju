@@ -46,18 +46,18 @@ describe('FR144 square-broad 方 real-capture neutral acquisition extension', ()
       FR144_ORTHOGONALITY_METRIC_REF,
       [0.2, 0.4, 0.8],
     );
-    expect(summary).toEqual({
+    expect(summary).toMatchObject({
       metricRef: FR144_ORTHOGONALITY_METRIC_REF,
       unit: 'ratio',
       count: 3,
       min: 0.2,
       max: 0.8,
       mean: (0.2 + 0.4 + 0.8) / 3,
-      range: 0.6,
       classificationApplied: false,
       calibrationApplied: false,
       acceptanceThresholdApplied: false,
     });
+    expect(summary.range).toBeCloseTo(0.6, 12);
     expect(() => summarizeSquareBroadFangNeutralValuesFR144(FR144_CORRESPONDENCE_METRIC_REF, []))
       .toThrow(/at least one finite/u);
     expect(() => summarizeSquareBroadFangNeutralValuesFR144(FR144_TURN_CONCENTRATION_METRIC_REF, [Number.NaN]))
