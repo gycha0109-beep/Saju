@@ -5,6 +5,9 @@ import { URL } from 'node:url';
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
+const HEALTH_READINESS_ATTEMPTS = 30;
+const HEALTH_READINESS_RETRY_MS = 2_000;
+const HEALTH_READINESS_RETRYABLE_STATUSES = new Set([404, 429, 500, 502, 503, 504]);
 const SYNTHETIC_REQUEST = Object.freeze({
   birth: Object.freeze({
     calendarType: 'solar',
@@ -98,6 +101,10 @@ function requireJsonObject(text, label) {
   return parsed;
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function requestWithTimeout(url, init, timeoutMs) {
   const controller = new globalThis.AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -124,6 +131,45 @@ async function verifyResponse({ response, expectedStatus, label, bearer }) {
   return requireJsonObject(text, label);
 }
 
+async function verifyHealthzReady({ baseUrl, bearer, timeoutMs }) {
+  for (let attempt = 1; attempt <= HEALTH_READINESS_ATTEMPTS; attempt += 1) {
+    const health = await requestWithTimeout(`${baseUrl}/healthz`, { method: 'GET' }, timeoutMs);
+    if (health.status === 200) {
+      const healthBody = await verifyResponse({
+        response: health,
+        expectedStatus: 200,
+        label: 'healthz',
+        bearer,
+      });
+      if (healthBody.status !== 'ok') fail('healthz did not report status=ok.');
+      if (attempt > 1) {
+        process.stdout.write(`healthz readiness converged on attempt ${String(attempt)}.\n`);
+      }
+      return;
+    }
+
+    const status = health.status;
+    if (!HEALTH_READINESS_RETRYABLE_STATUSES.has(status)) {
+      fail(`healthz returned HTTP ${String(status)}; expected 200.`);
+    }
+
+    if (health.body !== null) {
+      await health.body.cancel().catch(() => undefined);
+    }
+
+    if (attempt === HEALTH_READINESS_ATTEMPTS) {
+      fail(
+        `healthz did not become routable after ${String(HEALTH_READINESS_ATTEMPTS)} attempts; last HTTP ${String(status)}.`,
+      );
+    }
+
+    process.stdout.write(
+      `healthz readiness attempt ${String(attempt)} returned HTTP ${String(status)}; retrying.\n`,
+    );
+    await delay(HEALTH_READINESS_RETRY_MS);
+  }
+}
+
 async function main() {
   const baseUrl = parseBaseUrl(requiredEnv('SAJU_SMOKE_BASE_URL'));
   const bearer = requiredEnv('SAJU_SMOKE_BEARER');
@@ -135,14 +181,7 @@ async function main() {
       ? 'saju-smoke-intentionally-wrong-token-2'
       : 'saju-smoke-intentionally-wrong-token';
 
-  const health = await requestWithTimeout(`${baseUrl}/healthz`, { method: 'GET' }, timeoutMs);
-  const healthBody = await verifyResponse({
-    response: health,
-    expectedStatus: 200,
-    label: 'healthz',
-    bearer,
-  });
-  if (healthBody.status !== 'ok') fail('healthz did not report status=ok.');
+  await verifyHealthzReady({ baseUrl, bearer, timeoutMs });
 
   const unauthenticated = await requestWithTimeout(
     calculationUrl,
