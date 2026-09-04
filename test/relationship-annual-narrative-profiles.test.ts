@@ -61,9 +61,12 @@ describe('MyeongHa Relationship Annual narrative profiles', () => {
   });
 
   it('contains no deterministic relationship-event promises in governed templates', () => {
-    const encoded = JSON.stringify(RELATIONSHIP_ANNUAL_CLAIM_NARRATIVE_PROFILES);
+    const renderableCopy = RELATIONSHIP_ANNUAL_CLAIM_NARRATIVE_PROFILES.flatMap((profile) => [
+      profile.mandatoryQualifier ?? '',
+      ...profile.templates.map((template) => template.text),
+    ]).join('\n');
     for (const forbidden of RELATIONSHIP_ANNUAL_PROHIBITED_FUTURE_PHRASES) {
-      expect(encoded).not.toContain(forbidden);
+      expect(renderableCopy).not.toContain(forbidden);
     }
     expect(RELATIONSHIP_ANNUAL_MANDATORY_QUALIFIER).toContain('관계 결과를 확정하지 않습니다');
   });
