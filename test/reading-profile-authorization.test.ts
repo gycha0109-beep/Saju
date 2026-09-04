@@ -33,6 +33,7 @@ const AUTHORIZED_INTENTS: readonly ReadingIntent[] = [
   { domain: 'family', temporalScope: 'natal', relationshipScope: 'parents' },
   { domain: 'family', temporalScope: 'natal', relationshipScope: 'children' },
   { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'general' },
+  { domain: 'relationship', temporalScope: 'annual', relationshipScope: 'general' },
   { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'spouse' },
   { domain: 'compatibility', temporalScope: 'natal' },
   { domain: 'career', temporalScope: 'natal' },

@@ -91,6 +91,11 @@ const AUTHORIZED_PROFILE_REFS: readonly ContentAddressedVersionedRef[] = Object.
     contentHash: '5fc3aa30fc290f2ee372e58d3e28ea4d119778cb5d8b6300f1281b95c469dc51',
   },
   {
+    id: 'myeonghwa-reading-profile-relationship-general-annual-v1',
+    version: '1.0.0',
+    contentHash: '552b75d6e2d8ade5a1457e768cc79f9331ce51c53228f400739995b638328914',
+  },
+  {
     id: 'myeonghwa-reading-profile-relationship-spouse-natal-v1',
     version: '1.0.0',
     contentHash: '2e14ea487fe38fb34629e8c160c8241ed85571fc90429b808e4d33f3fd60d3f9',

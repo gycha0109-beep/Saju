@@ -230,6 +230,41 @@ function buildProfile(intent: ReadingIntent): DomainReadingProfile | undefined {
       );
     }
     case 'relationship': {
+      if (intent.temporalScope === 'annual') {
+        if (intent.relationshipScope !== 'general') return undefined;
+        return makeProfile(
+          intent,
+          'relationship-general-annual-v1',
+          [
+            requiredGroup(
+              'RELATIONSHIP_GENERAL_DOMAIN_CLAIM_REQUIRED',
+              taxonomySelector(
+                'target-relationship-general-natal',
+                'T8',
+                'relationship',
+                'general',
+              ),
+            ),
+            requiredGroup(
+              'ANNUAL_RELATIONSHIP_GENERAL_PERIOD_CLAIM_REQUIRED',
+              taxonomySelector(
+                'target-relationship-general-annual',
+                'T9',
+                'relationship',
+                'annual',
+              ),
+            ),
+          ],
+          [
+            taxonomySelector(
+              'exclude-relationship-general-monthly',
+              'T9',
+              'relationship',
+              'monthly',
+            ),
+          ],
+        );
+      }
       if (intent.temporalScope !== 'natal') return undefined;
       if (intent.relationshipScope !== 'general' && intent.relationshipScope !== 'spouse') {
         return undefined;
