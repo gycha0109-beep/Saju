@@ -301,7 +301,7 @@ function validatePredecessors(): void {
     fr124.contract.proposedSuccessorRef !== PROPOSED_REVIEWED_REF ||
     fr124.predecessor.witnessQualifiedSourceRef !== SOURCE_PASSAGE_REF ||
     fr124.currentRegistry.decisionCount !== 0 ||
-    fr124.admission.governedReviewDecisionPresent !== false ||
+    fr124.admission.governedDecisionRecordPresent !== false ||
     fr124.admission.reviewedPromotionAuthorized !== false
   ) fail('FR-124 target-specific methodology decision contract drift.');
 }
