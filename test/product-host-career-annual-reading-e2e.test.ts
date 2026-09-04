@@ -291,17 +291,30 @@ describe('Product Host Career Annual reading end-to-end', () => {
     expect(secondResult.responseId).not.toBe(firstResult.responseId);
   });
 
-  it('remains usable without birth hour and never emits an hour-specific Career Annual clash', async () => {
-    const { host, captured } = createCareerAnnualHost(YEAR_2026_NOW);
+  it('fails closed to partial evidence without birth hour while retaining bounded annual evidence', async () => {
+    const { host, adapter, captured } = createCareerAnnualHost(YEAR_2026_NOW);
     const result = await host.requestReading(requestBody(null));
     const observed = requireCaptured(captured);
 
-    expect(result.state).toBe('delivered_with_fallback');
-    expect(result.reading?.subject.birthInputDisplay.timeKnown).toBe(false);
-    expect(result.reading?.subject.calculationState).toBe('partially_ambiguous');
+    expect(result.state).toBe('partial_evidence');
+    expect(result.messageCode).toBe('READING_EVIDENCE_PARTIAL');
+    expect(result.requiredAction).toBe('none');
+    expect(result.coverage).toMatchObject({
+      state: 'partial',
+      hasAvailableEvidence: true,
+    });
+    expect(result.coverage?.missingRequirementCount).toBeGreaterThan(0);
+    expect(result.reading).toBeUndefined();
+    expect(adapter.calls).toHaveLength(0);
     expect(observed.requestContext.temporalFacts.annualBranchRelations).not.toMatchObject({
       hour: { status: 'resolved' },
     });
+    expect(
+      observed.interpretation.claims.some(
+        (claim) =>
+          claim.state === 'active' && claim.claimType === CAREER_ANNUAL_THEME_CLAIM_TYPE.claimType,
+      ),
+    ).toBe(true);
     expect(
       observed.interpretation.claims.some(
         (claim) =>
@@ -310,6 +323,5 @@ describe('Product Host Career Annual reading end-to-end', () => {
           (claim.value as { natalPillar?: string }).natalPillar === 'hour',
       ),
     ).toBe(false);
-    expect(responseText(result).length).toBeGreaterThan(0);
   });
 });
