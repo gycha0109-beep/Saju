@@ -1,0 +1,425 @@
+name: Production Cloud Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact 40-character Saju main SHA to build and deploy
+        required: true
+        type: string
+      active_bearer_secret_version:
+        description: Enabled numeric Secret Manager version for the active Saju service Bearer
+        required: true
+        type: string
+      previous_bearer_secret_version:
+        description: Optional enabled numeric Secret Manager version for the previous Bearer during rotation
+        required: false
+        default: ''
+        type: string
+      promote:
+        description: Migrate 100% production traffic after candidate smoke succeeds
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-saju-cloud-run
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Verify, deploy candidate, and optionally promote
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production-saju
+    env:
+      GCP_REGION: asia-southeast1
+      IMAGE_NAME: saju-production
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+      GCP_ARTIFACT_REGISTRY_REPOSITORY: ${{ vars.GCP_ARTIFACT_REGISTRY_REPOSITORY }}
+      GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+      GCP_CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT }}
+      GCP_SAJU_ACTIVE_BEARER_SECRET: ${{ vars.GCP_SAJU_ACTIVE_BEARER_SECRET }}
+      GCP_SAJU_PREVIOUS_BEARER_SECRET: ${{ vars.GCP_SAJU_PREVIOUS_BEARER_SECRET }}
+      GCP_CLOUD_RUN_CPU: ${{ vars.GCP_CLOUD_RUN_CPU }}
+      GCP_CLOUD_RUN_MEMORY: ${{ vars.GCP_CLOUD_RUN_MEMORY }}
+      GCP_CLOUD_RUN_CONCURRENCY: ${{ vars.GCP_CLOUD_RUN_CONCURRENCY }}
+      GCP_CLOUD_RUN_MAX_INSTANCES: ${{ vars.GCP_CLOUD_RUN_MAX_INSTANCES }}
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      ACTIVE_BEARER_VERSION: ${{ inputs.active_bearer_secret_version }}
+      PREVIOUS_BEARER_VERSION: ${{ inputs.previous_bearer_secret_version }}
+      PROMOTE: ${{ inputs.promote }}
+
+    steps:
+      - name: Preflight workflow inputs and repository variables
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_vars=(
+            GCP_PROJECT_ID
+            GCP_WORKLOAD_IDENTITY_PROVIDER
+            GCP_DEPLOYER_SERVICE_ACCOUNT
+            GCP_ARTIFACT_REGISTRY_REPOSITORY
+            GCP_CLOUD_RUN_SERVICE
+            GCP_CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT
+            GCP_SAJU_ACTIVE_BEARER_SECRET
+            GCP_CLOUD_RUN_CPU
+            GCP_CLOUD_RUN_MEMORY
+            GCP_CLOUD_RUN_CONCURRENCY
+            GCP_CLOUD_RUN_MAX_INSTANCES
+          )
+          for name in "${required_vars[@]}"; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required production deployment variable: ${name}." >&2
+              exit 1
+            fi
+          done
+
+          if [[ ! "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'source_sha must be an exact lowercase 40-character Git SHA.' >&2
+            exit 1
+          fi
+          if [[ ! "$ACTIVE_BEARER_VERSION" =~ ^[1-9][0-9]*$ ]]; then
+            echo 'active_bearer_secret_version must be a positive numeric Secret Manager version.' >&2
+            exit 1
+          fi
+          if [ -n "$PREVIOUS_BEARER_VERSION" ] && [[ ! "$PREVIOUS_BEARER_VERSION" =~ ^[1-9][0-9]*$ ]]; then
+            echo 'previous_bearer_secret_version must be empty or a positive numeric Secret Manager version.' >&2
+            exit 1
+          fi
+          if [ -n "$PREVIOUS_BEARER_VERSION" ] && [ -z "${GCP_SAJU_PREVIOUS_BEARER_SECRET:-}" ]; then
+            echo 'GCP_SAJU_PREVIOUS_BEARER_SECRET is required when a previous bearer version is supplied.' >&2
+            exit 1
+          fi
+          if [[ ! "$GCP_CLOUD_RUN_SERVICE" =~ ^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$ ]]; then
+            echo 'GCP_CLOUD_RUN_SERVICE is not a valid Cloud Run service name.' >&2
+            exit 1
+          fi
+          if [[ ! "$GCP_CLOUD_RUN_CONCURRENCY" =~ ^[1-9][0-9]*$ ]]; then
+            echo 'GCP_CLOUD_RUN_CONCURRENCY must be a positive integer.' >&2
+            exit 1
+          fi
+          if [[ ! "$GCP_CLOUD_RUN_MAX_INSTANCES" =~ ^[1-9][0-9]*$ ]]; then
+            echo 'GCP_CLOUD_RUN_MAX_INSTANCES must be a positive integer.' >&2
+            exit 1
+          fi
+
+      - name: Checkout exact source SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify exact current main provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          if [ "$actual" != "$SOURCE_SHA" ]; then
+            echo 'Checkout did not resolve to the requested exact source SHA.' >&2
+            exit 1
+          fi
+          git fetch --quiet origin main
+          main_head="$(git rev-parse origin/main)"
+          if [ "$main_head" != "$SOURCE_SHA" ]; then
+            echo 'Requested source SHA is not the current Saju main head; stale or rollback redeploy is refused.' >&2
+            exit 1
+          fi
+
+      - name: Set up Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run repository verification
+        run: npm run check
+
+      - name: Build exact linux/amd64 container
+        shell: bash
+        run: |
+          set -euo pipefail
+          local_image="saju-production-local:${SOURCE_SHA}"
+          docker build --platform linux/amd64 --tag "$local_image" .
+          test "$(docker image inspect --format '{{.Architecture}}' "$local_image")" = 'amd64'
+          test "$(docker image inspect --format '{{.Config.User}}' "$local_image")" = 'node'
+
+      - name: Smoke exact local container
+        shell: bash
+        run: |
+          set -euo pipefail
+          local_image="saju-production-local:${SOURCE_SHA}"
+          container="saju-production-cloud-run-preflight"
+          local_bearer="local-smoke-$(openssl rand -hex 32)"
+
+          cleanup() {
+            docker rm -f "$container" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          docker run \
+            --detach \
+            --name "$container" \
+            --env "SAJU_PRODUCTION_SERVICE_BEARER=$local_bearer" \
+            --publish 127.0.0.1:18080:3000 \
+            "$local_image" >/dev/null
+
+          health=''
+          for _ in $(seq 1 30); do
+            health="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18080/healthz || true)"
+            [ "$health" = '200' ] && break
+            sleep 1
+          done
+          [ "$health" = '200' ]
+
+          SAJU_SMOKE_BASE_URL='http://127.0.0.1:18080' \
+          SAJU_SMOKE_BEARER="$local_bearer" \
+          SAJU_SMOKE_TIMEOUT_MS='10000' \
+            node scripts/verify-production-calculation-service.mjs
+
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+
+      - name: Verify provisioned Google Cloud prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud artifacts repositories describe "$GCP_ARTIFACT_REGISTRY_REPOSITORY" \
+            --location "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format='value(name)' >/dev/null
+
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format='value(metadata.name)' >/dev/null
+
+          gcloud secrets versions access "$ACTIVE_BEARER_VERSION" \
+            --secret "$GCP_SAJU_ACTIVE_BEARER_SECRET" \
+            --project "$GCP_PROJECT_ID" >/dev/null
+
+          if [ -n "$PREVIOUS_BEARER_VERSION" ]; then
+            gcloud secrets versions access "$PREVIOUS_BEARER_VERSION" \
+              --secret "$GCP_SAJU_PREVIOUS_BEARER_SECRET" \
+              --project "$GCP_PROJECT_ID" >/dev/null
+          fi
+
+      - name: Capture current serving revisions
+        id: before
+        shell: bash
+        run: |
+          set -euo pipefail
+          before_json="${RUNNER_TEMP}/cloud-run-before.json"
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format=json > "$before_json"
+
+          previous="$(jq -r '[.status.traffic[]? | select((.percent // 0) > 0) | (.revisionName // empty)] | unique | join(",")' "$before_json")"
+          service_url="$(jq -r '.status.url // empty' "$before_json")"
+          echo "previous_revisions=$previous" >> "$GITHUB_OUTPUT"
+          echo "service_url=$service_url" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Artifact Registry Docker authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+
+      - name: Push exact source image and resolve digest
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          registry="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REGISTRY_REPOSITORY}"
+          image_tag="${registry}/${IMAGE_NAME}:git-${SOURCE_SHA}"
+          local_image="saju-production-local:${SOURCE_SHA}"
+          push_log="${RUNNER_TEMP}/saju-production-docker-push.log"
+
+          docker tag "$local_image" "$image_tag"
+          docker push "$image_tag" 2>&1 | tee "$push_log"
+
+          digest="$(sed -nE 's/.*digest: (sha256:[0-9a-f]{64}).*/\1/p' "$push_log" | tail -n 1)"
+          if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo 'Docker push did not return a valid sha256 registry digest.' >&2
+            exit 1
+          fi
+
+          echo "image_tag=$image_tag" >> "$GITHUB_OUTPUT"
+          echo "image_digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "image_ref=${registry}/${IMAGE_NAME}@${digest}" >> "$GITHUB_OUTPUT"
+
+      - name: Re-check main before production candidate creation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin main
+          if [ "$(git rev-parse origin/main)" != "$SOURCE_SHA" ]; then
+            echo 'Saju main moved after verification; refusing to create a stale production candidate.' >&2
+            exit 1
+          fi
+
+      - name: Deploy no-traffic candidate revision
+        id: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="candidate-${SOURCE_SHA:0:12}"
+          secret_updates="SAJU_PRODUCTION_SERVICE_BEARER=${GCP_SAJU_ACTIVE_BEARER_SECRET}:${ACTIVE_BEARER_VERSION}"
+          deploy_args=(
+            run deploy "$GCP_CLOUD_RUN_SERVICE"
+            --project "$GCP_PROJECT_ID"
+            --region "$GCP_REGION"
+            --image "${{ steps.image.outputs.image_ref }}"
+            --service-account "$GCP_CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT"
+            --ingress all
+            --port 8080
+            --cpu "$GCP_CLOUD_RUN_CPU"
+            --memory "$GCP_CLOUD_RUN_MEMORY"
+            --concurrency "$GCP_CLOUD_RUN_CONCURRENCY"
+            --min 0
+            --max "$GCP_CLOUD_RUN_MAX_INSTANCES"
+            --no-traffic
+            --tag "$tag"
+            --deploy-health-check
+            --startup-probe 'httpGet.path=/healthz,httpGet.port=8080,initialDelaySeconds=0,failureThreshold=30,timeoutSeconds=1,periodSeconds=2'
+            --liveness-probe 'httpGet.path=/healthz,httpGet.port=8080,initialDelaySeconds=5,failureThreshold=3,timeoutSeconds=1,periodSeconds=10'
+          )
+
+          if [ -n "$PREVIOUS_BEARER_VERSION" ]; then
+            secret_updates="${secret_updates},SAJU_PRODUCTION_PREVIOUS_SERVICE_BEARER=${GCP_SAJU_PREVIOUS_BEARER_SECRET}:${PREVIOUS_BEARER_VERSION}"
+            deploy_args+=(--update-secrets "$secret_updates")
+          else
+            deploy_args+=(
+              --remove-secrets SAJU_PRODUCTION_PREVIOUS_SERVICE_BEARER
+              --update-secrets "$secret_updates"
+            )
+          fi
+
+          gcloud "${deploy_args[@]}" --quiet
+
+          after_json="${RUNNER_TEMP}/cloud-run-candidate.json"
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format=json > "$after_json"
+
+          candidate_url="$(jq -r --arg tag "$tag" '.status.traffic[]? | select(.tag == $tag) | (.url // empty)' "$after_json" | head -n 1)"
+          candidate_revision="$(jq -r --arg tag "$tag" '.status.traffic[]? | select(.tag == $tag) | (.revisionName // empty)' "$after_json" | head -n 1)"
+          if [ -z "$candidate_url" ] || [ -z "$candidate_revision" ]; then
+            echo 'Cloud Run did not expose the tagged candidate URL/revision in service status.' >&2
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "url=$candidate_url" >> "$GITHUB_OUTPUT"
+          echo "revision=$candidate_revision" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke no-traffic candidate with active service credential
+        shell: bash
+        env:
+          CANDIDATE_URL: ${{ steps.candidate.outputs.url }}
+        run: |
+          set -euo pipefail
+          active_bearer="$(gcloud secrets versions access "$ACTIVE_BEARER_VERSION" \
+            --secret "$GCP_SAJU_ACTIVE_BEARER_SECRET" \
+            --project "$GCP_PROJECT_ID")"
+          if [ -z "$active_bearer" ] || [[ "$active_bearer" =~ [[:space:]] ]]; then
+            echo 'Active Saju service Bearer is empty or invalid.' >&2
+            exit 1
+          fi
+          echo "::add-mask::$active_bearer"
+
+          SAJU_SMOKE_BASE_URL="$CANDIDATE_URL" \
+          SAJU_SMOKE_BEARER="$active_bearer" \
+          SAJU_SMOKE_TIMEOUT_MS='30000' \
+            node scripts/verify-production-calculation-service.mjs
+          unset active_bearer
+
+      - name: Re-check main immediately before traffic promotion
+        if: ${{ inputs.promote }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin main
+          if [ "$(git rev-parse origin/main)" != "$SOURCE_SHA" ]; then
+            echo 'Saju main moved after candidate verification; traffic promotion is blocked.' >&2
+            exit 1
+          fi
+
+      - name: Promote candidate to 100 percent traffic
+        if: ${{ inputs.promote }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services update-traffic "$GCP_CLOUD_RUN_SERVICE" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --to-tags "${{ steps.candidate.outputs.tag }}=100" \
+            --quiet
+
+      - name: Post-promotion smoke
+        if: ${{ inputs.promote }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          service_url="$(gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format='value(status.url)')"
+          if [ -z "$service_url" ]; then
+            echo 'Cloud Run service URL is unavailable after promotion.' >&2
+            exit 1
+          fi
+
+          active_bearer="$(gcloud secrets versions access "$ACTIVE_BEARER_VERSION" \
+            --secret "$GCP_SAJU_ACTIVE_BEARER_SECRET" \
+            --project "$GCP_PROJECT_ID")"
+          if [ -z "$active_bearer" ] || [[ "$active_bearer" =~ [[:space:]] ]]; then
+            echo 'Active Saju service Bearer is empty or invalid.' >&2
+            exit 1
+          fi
+          echo "::add-mask::$active_bearer"
+
+          SAJU_SMOKE_BASE_URL="$service_url" \
+          SAJU_SMOKE_BEARER="$active_bearer" \
+          SAJU_SMOKE_TIMEOUT_MS='30000' \
+            node scripts/verify-production-calculation-service.mjs
+          unset active_bearer
+
+      - name: Record deployment evidence
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          {
+            echo '## Saju Cloud Run production evidence'
+            echo
+            echo "- source SHA: \`$SOURCE_SHA\`"
+            echo "- image digest: \`${{ steps.image.outputs.image_digest || 'not-created' }}\`"
+            echo "- candidate revision: \`${{ steps.candidate.outputs.revision || 'not-created' }}\`"
+            echo "- candidate tag: \`${{ steps.candidate.outputs.tag || 'not-created' }}\`"
+            echo "- previous serving revision(s): \`${{ steps.before.outputs.previous_revisions || 'unknown' }}\`"
+            echo "- promotion requested: \`$PROMOTE\`"
+            echo '- credential values: not emitted'
+          } >> "$GITHUB_STEP_SUMMARY"

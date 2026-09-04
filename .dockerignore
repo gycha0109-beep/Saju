@@ -11,4 +11,5 @@ scripts
 *.log
 .env
 .env.*
+gha-creds-*.json
 README.md
