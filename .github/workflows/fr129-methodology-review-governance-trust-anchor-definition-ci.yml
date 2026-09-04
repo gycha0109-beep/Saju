@@ -1,0 +1,31 @@
+name: FR129 Methodology Review Governance Trust Anchor Definition CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-governance-trust-anchor-definition-fr129.ts'
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-governance-trust-anchor-definition-fr129.test.ts'
+      - 'packages/face-reading/src/five-officers-intake-methodology-review-governance-trust-anchor-definition-fr129-hardening.test.ts'
+      - 'scripts/verify-fr129-methodology-review-governance-trust-anchor-definition.mjs'
+      - '.github/workflows/fr129-methodology-review-governance-trust-anchor-definition-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr129-methodology-review-governance-trust-anchor-definition:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR129 methodology review governance trust-anchor definition
+        run: npx vitest run packages/face-reading/src/five-officers-intake-methodology-review-governance-trust-anchor-definition-fr129.test.ts packages/face-reading/src/five-officers-intake-methodology-review-governance-trust-anchor-definition-fr129-hardening.test.ts
+      - name: Verify FR129 exact predecessor and trust-anchor definition chain
+        run: node scripts/verify-fr129-methodology-review-governance-trust-anchor-definition.mjs
