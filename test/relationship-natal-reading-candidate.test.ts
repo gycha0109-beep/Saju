@@ -213,7 +213,7 @@ describe('natal general-relationship consumer reading research candidate', () =>
     expect(spouse.evidence).toBeUndefined();
   });
 
-  it('keeps annual relationship reading unsupported until a separate temporal contract exists', () => {
+  it('keeps spouse annual reading unsupported without a spouse-specific temporal contract', () => {
     const snapshot = fixture();
     const registry = createRelationshipNatalReadingCandidateRegistry();
     const execution = runInterpretation(snapshot, registry);
@@ -222,11 +222,11 @@ describe('natal general-relationship consumer reading research candidate', () =>
       execution,
       registry,
       {
-        requestId: 'relationship-annual-unsupported',
+        requestId: 'relationship-spouse-annual-unsupported',
         intent: {
           domain: 'relationship',
           temporalScope: 'annual',
-          relationshipScope: 'general',
+          relationshipScope: 'spouse',
         },
       },
       { narrativePolicyVersion: 'relationship-natal-reading-v1' },
