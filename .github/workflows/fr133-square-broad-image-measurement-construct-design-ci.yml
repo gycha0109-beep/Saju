@@ -1,0 +1,32 @@
+name: FR133 Square Broad Image Measurement Construct Design CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr133-square-broad-image-measurement-construct-design.md'
+      - 'packages/face-reading/src/five-officers-square-broad-image-measurement-construct-design-fr133.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-image-measurement-construct-design-fr133.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-image-measurement-construct-design-fr133-hardening.test.ts'
+      - 'scripts/verify-fr133-square-broad-image-measurement-construct-design.mjs'
+      - '.github/workflows/fr133-square-broad-image-measurement-construct-design-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr133-square-broad-image-measurement-construct-design:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR133 square-broad construct design
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-image-measurement-construct-design-fr133.test.ts packages/face-reading/src/five-officers-square-broad-image-measurement-construct-design-fr133-hardening.test.ts
+      - name: Verify FR133 exact predecessor, topology, metric and deferred-approval chain
+        run: node scripts/verify-fr133-square-broad-image-measurement-construct-design.mjs
