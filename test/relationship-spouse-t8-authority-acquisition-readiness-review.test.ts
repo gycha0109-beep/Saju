@@ -23,8 +23,9 @@ describe('Relationship spouse T8 authority acquisition readiness', () => {
     expect(report.broadRelationshipBoundaryAccepted).toBe(true);
     expect(report.broadRelationshipRuleCount).toBeGreaterThan(0);
     expect(report.broadRelationshipMayBeReusedAsSpouseAuthority).toBe(false);
-    expect(report.spouseAuthorityPresent).toBe(false);
-    expect(report.spouseAuthorityGapClosed).toBe(false);
+    expect(report.broadRelationshipAuthorityInsufficientForSpouse).toBe(true);
+    expect(report.spouseAuthorityAdmittedByThisGate).toBe(false);
+    expect(report.spouseAuthorityGapClosedByThisGate).toBe(false);
   });
 
   test('freezes five mandatory unsatisfied spouse-specific authority requirements', () => {
@@ -34,7 +35,7 @@ describe('Relationship spouse T8 authority acquisition readiness', () => {
     expect(report.requirementCount).toBe(5);
     expect(report.allRequirementsMandatory).toBe(true);
     expect(report.allRequirementsCurrentlyUnsatisfied).toBe(true);
-    expect(report.authorityGapConfirmed).toBe(true);
+    expect(report.broadRelationshipAuthorityInsufficientForSpouse).toBe(true);
     expect(new Set(report.requirements.map((item) => item.gapId)).size).toBe(5);
   });
 
