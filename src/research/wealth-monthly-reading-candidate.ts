@@ -37,6 +37,10 @@ const TENSION_RULE_SET = 'wealth-monthly-t9-segment-branch-clash-tension';
 const SEGMENT_IDS = ['before_jeol', 'after_jeol'] as const;
 const PILLAR_SLOTS = ['year', 'month', 'day', 'hour'] as const;
 
+export const WEALTH_MONTHLY_THEME_CLAIM_TYPE = 'WEALTH_MONTHLY_SEGMENT_THEME_ACTIVATION' as const;
+export const WEALTH_MONTHLY_TENSION_CLAIM_TYPE =
+  'WEALTH_MONTHLY_SEGMENT_BRANCH_CLASH_TENSION' as const;
+
 export type WealthMonthlySegmentId = (typeof SEGMENT_IDS)[number];
 export type WealthMonthlyAxis =
   | 'autonomy_boundaries'
@@ -379,10 +383,6 @@ export const WEALTH_MONTHLY_ACTIVATION_RULES: readonly RuleDefinition[] = Object
 export const WEALTH_MONTHLY_TENSION_RULES: readonly RuleDefinition[] = Object.freeze(
   SEGMENT_IDS.flatMap((segmentId) => PILLAR_SLOTS.map((slot) => branchClashRule(segmentId, slot))),
 );
-
-export const WEALTH_MONTHLY_THEME_CLAIM_TYPE = 'WEALTH_MONTHLY_SEGMENT_THEME_ACTIVATION' as const;
-export const WEALTH_MONTHLY_TENSION_CLAIM_TYPE =
-  'WEALTH_MONTHLY_SEGMENT_BRANCH_CLASH_TENSION' as const;
 
 const ALL_RULES: readonly RuleDefinition[] = Object.freeze([
   ...GENERAL_NATAL_USEFUL_TEN_GOD_RULES,
