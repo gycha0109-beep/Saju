@@ -142,9 +142,9 @@ export interface RelationshipSpouseT8AuthorityAcquisitionReadinessReviewReport {
   broadRelationshipBoundaryAccepted: boolean;
   broadRelationshipRuleCount: number;
   broadRelationshipMayBeReusedAsSpouseAuthority: false;
-  authorityGapConfirmed: boolean;
-  spouseAuthorityPresent: false;
-  spouseAuthorityGapClosed: false;
+  broadRelationshipAuthorityInsufficientForSpouse: boolean;
+  spouseAuthorityAdmittedByThisGate: false;
+  spouseAuthorityGapClosedByThisGate: false;
   requirements: readonly RelationshipSpouseT8AuthorityRequirement[];
   requirementCount: 5 | 0;
   allRequirementsMandatory: boolean;
@@ -227,9 +227,9 @@ export function buildRelationshipSpouseT8AuthorityAcquisitionReadinessReview(): 
     broadRelationshipBoundaryAccepted: boundaryAccepted,
     broadRelationshipRuleCount: boundaryAccepted ? RELATIONSHIP_NATAL_READING_RULES.length : 0,
     broadRelationshipMayBeReusedAsSpouseAuthority: false,
-    authorityGapConfirmed: boundaryAccepted,
-    spouseAuthorityPresent: false,
-    spouseAuthorityGapClosed: false,
+    broadRelationshipAuthorityInsufficientForSpouse: boundaryAccepted,
+    spouseAuthorityAdmittedByThisGate: false,
+    spouseAuthorityGapClosedByThisGate: false,
     requirements: boundaryAccepted ? RELATIONSHIP_SPOUSE_T8_AUTHORITY_REQUIREMENTS : Object.freeze([]),
     requirementCount: boundaryAccepted ? 5 : 0,
     allRequirementsMandatory:
