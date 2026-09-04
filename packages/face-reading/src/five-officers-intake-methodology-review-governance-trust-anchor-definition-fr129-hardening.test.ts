@@ -5,32 +5,33 @@ import {
   assertIssuedFiveOfficerIntakeMethodologyReviewGovernanceTrustAnchorDefinitionFR129,
   validateMethodologyReviewGovernanceTrustAnchorRegistryFR129,
   type FiveOfficerIntakeMethodologyReviewGovernanceTrustAnchorDefinitionFR129V1,
+  type MethodologyReviewGovernanceTrustAnchorDefinitionFR129V1,
   type MethodologyReviewGovernanceTrustAnchorRegistryFR129V1,
 } from './five-officers-intake-methodology-review-governance-trust-anchor-definition-fr129.js';
+
+const validAnchor = (): MethodologyReviewGovernanceTrustAnchorDefinitionFR129V1 => ({
+  anchorId: 'anchor.candidate.external_designation',
+  version: '0.1.0',
+  authorityScope: 'methodology_review_governance_root',
+  provenanceRefs: ['provenance.external.candidate'],
+  designationEvidenceRefs: ['evidence.external.designation.candidate'],
+  limitations: ['candidate-only structural validation does not establish governed authority'],
+  independentFromTargetActorRegistry: true,
+  independentFromTargetEvidencePolicyRegistry: true,
+  selfDesignationAuthorized: false,
+  sourceVerificationAuthorityInherited: false,
+  repositoryIdentityAuthorityInherited: false,
+  pullRequestMergeAuthorityInherited: false,
+  pieOperationalAuthorityInherited: false,
+  legacyReviewedScalarAuthorityInherited: false,
+  externalProviderProvenanceAuthorityInherited: false,
+  methodologyReviewDecisionAuthorityGranted: false,
+});
 
 const validCandidate = (): MethodologyReviewGovernanceTrustAnchorRegistryFR129V1 => ({
   registryId: 'registry.face.methodology_review_governance_trust_anchors.candidate',
   version: '0.1.0',
-  anchors: [
-    {
-      anchorId: 'anchor.candidate.external_designation',
-      version: '0.1.0',
-      authorityScope: 'methodology_review_governance_root',
-      provenanceRefs: ['provenance.external.candidate'],
-      designationEvidenceRefs: ['evidence.external.designation.candidate'],
-      limitations: ['candidate-only structural validation does not establish governed authority'],
-      independentFromTargetActorRegistry: true,
-      independentFromTargetEvidencePolicyRegistry: true,
-      selfDesignationAuthorized: false,
-      sourceVerificationAuthorityInherited: false,
-      repositoryIdentityAuthorityInherited: false,
-      pullRequestMergeAuthorityInherited: false,
-      pieOperationalAuthorityInherited: false,
-      legacyReviewedScalarAuthorityInherited: false,
-      externalProviderProvenanceAuthorityInherited: false,
-      methodologyReviewDecisionAuthorityGranted: false,
-    },
-  ],
+  anchors: [validAnchor()],
 });
 
 describe('FR129 methodology review governance trust-anchor definition hardening', () => {
@@ -42,11 +43,16 @@ describe('FR129 methodology review governance trust-anchor definition hardening'
 
   it('rejects structural candidates without provenance, designation evidence, or limitations', () => {
     for (const field of ['provenanceRefs', 'designationEvidenceRefs', 'limitations'] as const) {
-      const candidate = structuredClone(validCandidate()) as MethodologyReviewGovernanceTrustAnchorRegistryFR129V1 & {
-        anchors: Array<Record<string, unknown>>;
+      const invalidAnchor = {
+        ...validAnchor(),
+        [field]: [],
+      } as unknown as MethodologyReviewGovernanceTrustAnchorDefinitionFR129V1;
+      const candidate: MethodologyReviewGovernanceTrustAnchorRegistryFR129V1 = {
+        registryId: 'registry.face.methodology_review_governance_trust_anchors.invalid_candidate',
+        version: '0.1.0',
+        anchors: [invalidAnchor],
       };
-      candidate.anchors[0][field] = [];
-      expect(() => validateMethodologyReviewGovernanceTrustAnchorRegistryFR129(candidate as unknown as MethodologyReviewGovernanceTrustAnchorRegistryFR129V1)).toThrow(/FR-129/);
+      expect(() => validateMethodologyReviewGovernanceTrustAnchorRegistryFR129(candidate)).toThrow(/FR-129/);
     }
   });
 
@@ -63,18 +69,21 @@ describe('FR129 methodology review governance trust-anchor definition hardening'
     ] as const;
 
     for (const field of forbidden) {
-      const candidate = structuredClone(validCandidate()) as unknown as {
-        registryId: string;
-        version: string;
-        anchors: Array<Record<string, unknown>>;
+      const invalidAnchor = {
+        ...validAnchor(),
+        [field]: true,
+      } as unknown as MethodologyReviewGovernanceTrustAnchorDefinitionFR129V1;
+      const candidate: MethodologyReviewGovernanceTrustAnchorRegistryFR129V1 = {
+        registryId: 'registry.face.methodology_review_governance_trust_anchors.invalid_candidate',
+        version: '0.1.0',
+        anchors: [invalidAnchor],
       };
-      candidate.anchors[0][field] = true;
-      expect(() => validateMethodologyReviewGovernanceTrustAnchorRegistryFR129(candidate as unknown as MethodologyReviewGovernanceTrustAnchorRegistryFR129V1)).toThrow(/FR-129/);
+      expect(() => validateMethodologyReviewGovernanceTrustAnchorRegistryFR129(candidate)).toThrow(/FR-129/);
     }
   });
 
   it('rejects duplicate trust-anchor refs even when the definitions are otherwise valid', () => {
-    const first = validCandidate().anchors[0];
+    const first = validAnchor();
     const duplicate: MethodologyReviewGovernanceTrustAnchorRegistryFR129V1 = {
       registryId: 'registry.face.methodology_review_governance_trust_anchors.candidate',
       version: '0.1.0',
