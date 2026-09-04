@@ -230,11 +230,12 @@ function buildProfile(intent: ReadingIntent): DomainReadingProfile | undefined {
       );
     }
     case 'relationship': {
-      if (intent.temporalScope === 'annual') {
+      if (intent.temporalScope === 'annual' || intent.temporalScope === 'monthly') {
         if (intent.relationshipScope !== 'general') return undefined;
+        const opposite = oppositePeriod(intent.temporalScope);
         return makeProfile(
           intent,
-          'relationship-general-annual-v1',
+          `relationship-general-${intent.temporalScope}-v1`,
           [
             requiredGroup(
               'RELATIONSHIP_GENERAL_DOMAIN_CLAIM_REQUIRED',
@@ -246,23 +247,25 @@ function buildProfile(intent: ReadingIntent): DomainReadingProfile | undefined {
               ),
             ),
             requiredGroup(
-              'ANNUAL_RELATIONSHIP_GENERAL_PERIOD_CLAIM_REQUIRED',
+              `${intent.temporalScope.toUpperCase()}_RELATIONSHIP_GENERAL_PERIOD_CLAIM_REQUIRED`,
               taxonomySelector(
-                'target-relationship-general-annual',
+                `target-relationship-general-${intent.temporalScope}`,
                 'T9',
                 'relationship',
-                'annual',
+                intent.temporalScope,
               ),
             ),
           ],
-          [
-            taxonomySelector(
-              'exclude-relationship-general-monthly',
-              'T9',
-              'relationship',
-              'monthly',
-            ),
-          ],
+          opposite === undefined
+            ? []
+            : [
+                taxonomySelector(
+                  `exclude-relationship-general-${opposite}`,
+                  'T9',
+                  'relationship',
+                  opposite,
+                ),
+              ],
         );
       }
       if (intent.temporalScope !== 'natal') return undefined;
