@@ -91,7 +91,7 @@ describe('Relationship spouse T8 authority candidate requirement coverage evalua
     ] as const;
 
     for (const evaluation of report.evaluations) {
-      expect(evaluation.missingRequirementIds).toEqual(expect.arrayContaining(commonResidual));
+      expect(evaluation.missingRequirementIds).toEqual(expect.arrayContaining([...commonResidual]));
       expect(evaluation.currentSpouseT5T6BridgeMissing).toBe(true);
       expect(evaluation.competingMethodologyInputMismatchObserved).toBe(true);
       expect(evaluation.modernProductScopeCompatibilityMissing).toBe(true);
