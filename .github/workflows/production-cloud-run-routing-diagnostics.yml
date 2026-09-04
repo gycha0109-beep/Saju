@@ -160,9 +160,9 @@ jobs:
           }
 
           probe candidate-root "${candidate_url}/"
-          probe candidate-healthz "${candidate_url}/healthz"
+          probe candidate-health "${candidate_url}/health"
           if [ -n "$service_url" ]; then
-            probe stable-healthz "${service_url}/healthz"
+            probe stable-health "${service_url}/health"
           else
             echo 'Stable service URL is absent from Cloud Run status.'
           fi

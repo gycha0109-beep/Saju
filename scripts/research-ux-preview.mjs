@@ -643,7 +643,7 @@ function assertNoInternalLeak(serialized) {
 }
 
 async function runSmoke(baseUrl) {
-  const health = await fetchRequest(`${baseUrl}/healthz`);
+  const health = await fetchRequest(`${baseUrl}/health`);
   if (!health.ok) throw new Error(`Preview health check failed: ${health.status}`);
 
   const generalPayload = await requestReading(baseUrl, '사주');

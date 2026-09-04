@@ -147,7 +147,7 @@ describe('production calculation process composition', () => {
 
     const port = await listenEphemeral(runtime.server);
     try {
-      const health = await fetch(`http://127.0.0.1:${port}/healthz`);
+      const health = await fetch(`http://127.0.0.1:${port}/health`);
       expect(health.status).toBe(200);
 
       const unauthenticated = await fetch(`http://127.0.0.1:${port}/api/calculations`, {

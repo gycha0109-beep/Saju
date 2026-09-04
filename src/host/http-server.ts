@@ -197,7 +197,7 @@ function createMyeonghwaHttpServer(
       sendText(response, 200, 'text/javascript; charset=utf-8', PRODUCT_HOST_APP_SCRIPT);
       return;
     }
-    if (path === '/healthz' && method === 'GET') {
+    if ((path === '/health' || path === '/healthz') && method === 'GET') {
       sendJson(response, 200, { status: 'ok', hostVersion: PRODUCT_HOST_VERSION });
       return;
     }

@@ -211,8 +211,8 @@ The workflow deploys a new Cloud Run revision with:
 0% production traffic
 candidate-<12-char-source-sha> traffic tag
 PORT=8080
-startup probe -> /healthz
-liveness probe -> /healthz
+startup probe -> /health
+liveness probe -> /health
 service-level min instances = 0
 finite service-level max instances
 explicit per-instance concurrency
@@ -226,7 +226,7 @@ The tagged URL is then tested with `scripts/verify-production-calculation-servic
 
 Required smoke behavior:
 
-- `GET /healthz` -> 200 JSON + `Cache-Control: no-store`,
+- `GET /health` -> 200 JSON + `Cache-Control: no-store`,
 - valid synthetic calculation with no Bearer -> 401,
 - valid synthetic calculation with wrong Bearer -> 401,
 - valid synthetic calculation with active Bearer -> 200 JSON,

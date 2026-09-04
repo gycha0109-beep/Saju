@@ -30,7 +30,7 @@ Bearer values must be non-empty and contain no whitespace. The active credential
 
 The process reuses `createMyeonghwaProductionCalculationHostServer` without changing its authority contract:
 
-- `GET /healthz` is public.
+- `GET /health` is public.
 - `POST /api/calculations` requires the active or explicitly configured previous Bearer credential.
 - Authentication occurs before request-body parsing.
 - `/api/readings` remains unavailable from the production calculation host.
