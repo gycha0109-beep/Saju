@@ -74,5 +74,3 @@ for (const fragment of requiredNoteFragments) {
 if (!workflow.includes('FR138 Square Broad Fang Semantic Annotation Protocol CI')) {
   throw new Error('FR138 verifier: dedicated workflow identity missing.');
 }
-
-console.log('FR138 exact-boundary verification passed.');
