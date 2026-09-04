@@ -1,0 +1,32 @@
+name: FR136 Square Broad Semantic Annotation Authority Reuse Review CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr136-square-broad-independent-semantic-annotation-authority-reuse-review.md'
+      - 'packages/face-reading/src/five-officers-square-broad-independent-semantic-annotation-authority-reuse-review-fr136.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-independent-semantic-annotation-authority-reuse-review-fr136.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-independent-semantic-annotation-authority-reuse-review-fr136-hardening.test.ts'
+      - 'scripts/verify-fr136-square-broad-independent-semantic-annotation-authority-reuse-review.mjs'
+      - '.github/workflows/fr136-square-broad-independent-semantic-annotation-authority-reuse-review-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr136-square-broad-semantic-annotation-authority-reuse-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR136 authority reuse review boundary
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-independent-semantic-annotation-authority-reuse-review-fr136.test.ts packages/face-reading/src/five-officers-square-broad-independent-semantic-annotation-authority-reuse-review-fr136-hardening.test.ts
+      - name: Verify FR136 exact predecessor and no-authority reuse decision
+        run: node scripts/verify-fr136-square-broad-independent-semantic-annotation-authority-reuse-review.mjs
