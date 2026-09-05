@@ -214,7 +214,7 @@ function currentT5FamilyForClaimType(claimType: string): CurrentT5Family | null 
     claimType as (typeof EXPECTED_T5_CLAIM_TYPES)[number],
   );
   if (index < 0) return null;
-  return (['peer', 'resource', 'output', 'wealth', 'officer'] as const)[index];
+  return (['peer', 'resource', 'output', 'wealth', 'officer'] as const)[index] ?? null;
 }
 
 function exactCurrentT5ProducerBoundaryAccepted(): boolean {
