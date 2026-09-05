@@ -57,11 +57,7 @@ export interface SquareBroadFangPerturbationScheduleFR150V1 {
   readonly perturbationRef: SquareBroadFangControlledPerturbationFamilyRefFR149V1;
   readonly shortRef: 'dark' | 'bright' | 'blur' | 'gradient' | 'mask';
   readonly transformImplementationRef: string;
-  readonly strengths: readonly [
-    SquareBroadFangPerturbationStrengthFR150V1,
-    SquareBroadFangPerturbationStrengthFR150V1,
-    SquareBroadFangPerturbationStrengthFR150V1,
-  ];
+  readonly strengths: readonly SquareBroadFangPerturbationStrengthFR150V1[];
 }
 
 export type SquareBroadFangPrimaryTrendObservationFR150V1 =
@@ -503,7 +499,16 @@ export function getSquareBroadFangControlledPerturbationExecutionContractFR150()
     || protocol.measurementBoundary.empiricalPerturbationExecutionPerformed !== false
     || refs.length !== FR150_PERTURBATION_SCHEDULES.length
     || refs.some((ref, index) => ref !== FR150_PERTURBATION_SCHEDULES[index]?.perturbationRef)
-  ) fail('FR-149 predecessor protocol drift.');
+    || FR150_PERTURBATION_SCHEDULES.some((schedule) => (
+      schedule.strengths.length !== 3
+      || schedule.strengths[0]?.strengthOrder !== 0
+      || schedule.strengths[0]?.baseline !== true
+      || schedule.strengths[1]?.strengthOrder !== 1
+      || schedule.strengths[1]?.baseline !== false
+      || schedule.strengths[2]?.strengthOrder !== 2
+      || schedule.strengths[2]?.baseline !== false
+    ))
+  ) fail('FR-149 predecessor protocol or FR-150 frozen schedule drift.');
 
   return Object.freeze({
     schemaVersion: 'fr150-square-broad-fang-controlled-perturbation-execution-contract-v1' as const,
@@ -545,6 +550,7 @@ export function materializeSquareBroadFangControlledPerturbationExecutionFR150(
 
   for (const source of request.sources) {
     for (const schedule of FR150_PERTURBATION_SCHEDULES) {
+      if (schedule.strengths.length !== 3) fail(`schedule ${schedule.perturbationRef} must contain exactly three strengths.`);
       for (const strengthEntry of schedule.strengths) {
         const ref = variantRef(source.sourceRasterRef, schedule.shortRef, strengthEntry.strengthOrder);
         const transformed = applyTransform(schedule, strengthEntry, source);
