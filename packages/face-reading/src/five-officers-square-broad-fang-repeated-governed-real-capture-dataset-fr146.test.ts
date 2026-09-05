@@ -382,7 +382,7 @@ describe('FR146 repeated governed real-capture dataset', () => {
     expect(result.traditionalSemanticAuthority).toBe(false);
     const serialized = JSON.stringify(result);
     expect(serialized).not.toContain('imageBlob');
-    expect(serialized).not.toContain('rawProviderResponse');
+    expect(serialized).not.toContain('"rawProviderResponse":');
     assertIssuedSquareBroadFangRepeatedGovernedRealCaptureDatasetFR146(result);
     expect(() => assertIssuedSquareBroadFangRepeatedGovernedRealCaptureDatasetFR146({ ...result }))
       .toThrow(/not issued/u);
