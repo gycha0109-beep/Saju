@@ -24,16 +24,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p .fr146-public-runtime
-          cp -R .face-reading-dist .fr146-public-runtime/face-reading-dist
-          cp -R node_modules/@mediapipe/tasks-vision .fr146-public-runtime/tasks-vision
+          mkdir -p fr146-public-runtime
+          cp -R .face-reading-dist fr146-public-runtime/face-reading-dist
+          cp -R node_modules/@mediapipe/tasks-vision fr146-public-runtime/tasks-vision
           curl --fail --location --retry 3 \
             'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task' \
-            --output .fr146-public-runtime/face_landmarker.task
+            --output fr146-public-runtime/face_landmarker.task
           curl --fail --location --retry 3 \
             'https://raw.githubusercontent.com/google-ai-edge/mediapipe/f8ef212d5c962c0e853db7e59d217056b187084b/mediapipe/tasks/cc/vision/face_geometry/data/geometry_pipeline_metadata_landmarks.pbtxt' \
-            --output .fr146-public-runtime/geometry_pipeline_metadata_landmarks.pbtxt
-          cat > .fr146-public-runtime/manifest.txt <<'EOF'
+            --output fr146-public-runtime/geometry_pipeline_metadata_landmarks.pbtxt
+          cat > fr146-public-runtime/manifest.txt <<'EOF'
           purpose=FR146 local public-runtime bootstrap only
           repository=gycha0109-beep/Saju
           source_head=${{ github.event.pull_request.head.sha || github.sha }}
@@ -46,6 +46,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: fr146-public-runtime-bootstrap
-          path: .fr146-public-runtime
+          path: fr146-public-runtime
           if-no-files-found: error
           retention-days: 1
