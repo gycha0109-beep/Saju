@@ -8,7 +8,7 @@ import {
 } from '../src/research/relationship-spouse-t8-independent-scholarly-provenance-candidate-evidence.js';
 
 describe('Relationship spouse T8 independent scholarly provenance candidate evidence', () => {
-  test('records two KCI articles and one graduate thesis without treating abstract inspection as full-text admission', () => {
+  test('records two reviewed journal articles and one graduate thesis without treating abstract inspection as full-text admission', () => {
     const report = buildRelationshipSpouseT8IndependentScholarlyProvenanceCandidateEvidence();
 
     expect(report.evidenceVersion).toBe(
@@ -19,18 +19,25 @@ describe('Relationship spouse T8 independent scholarly provenance candidate evid
       RELATIONSHIP_SPOUSE_T8_INDEPENDENT_SCHOLARLY_PROVENANCE_CANDIDATE_RECORDS,
     );
     expect(report.candidateRecordCount).toBe(3);
-    expect(report.kciIndexedScholarlyCandidateCount).toBe(2);
+    expect(report.peerReviewedJournalCandidateCount).toBe(2);
     expect(report.graduateThesisCandidateCount).toBe(1);
+    expect(report.institutionalNormativeStandardCandidateCount).toBe(0);
     expect(report.natalMethodologyCandidateCount).toBe(3);
     expect(report.fullTextDirectlyInspectedCount).toBe(0);
     expect(report.exactBodyPassageLocatorEstablishedCount).toBe(0);
   });
 
-  test('preserves only the claims visible on the inspected article and thesis surfaces', () => {
+  test('preserves exact source classification and only claims visible on inspected surfaces', () => {
     const [lee2020, lee2025, kweon2021] =
       RELATIONSHIP_SPOUSE_T8_INDEPENDENT_SCHOLARLY_PROVENANCE_CANDIDATE_RECORDS;
 
     expect(lee2020.sourceId).toBe('KCI-ART002630397');
+    expect(lee2020.peerReviewed).toBe(true);
+    expect(lee2020.institutionalNormativeStandard).toBe(false);
+    expect(lee2020.authorityClassification.primary).toBe(false);
+    expect(lee2020.authorityClassification.secondary).toBe(true);
+    expect(lee2020.authorityClassification.normativeMethodologicalRuleCandidate).toBe(false);
+    expect(lee2020.authorityClassification.independentNormativeAuthorityEstablished).toBe(false);
     expect(lee2020.natalMethodologyScopeExplicit).toBe(true);
     expect(lee2020.compatibilityOnly).toBe(false);
     expect(lee2020.spousePalaceExplicitInInspectedAbstract).toBe(true);
@@ -40,6 +47,12 @@ describe('Relationship spouse T8 independent scholarly provenance candidate evid
     expect(lee2020.independentNormativeProvenanceAdequateForCurrentSpouseMethod).toBe(false);
 
     expect(lee2025.sourceId).toBe('KCI-ART003175186');
+    expect(lee2025.peerReviewed).toBe(true);
+    expect(lee2025.institutionalNormativeStandard).toBe(false);
+    expect(lee2025.authorityClassification.primary).toBe(false);
+    expect(lee2025.authorityClassification.secondary).toBe(true);
+    expect(lee2025.authorityClassification.normativeMethodologicalRuleCandidate).toBe(true);
+    expect(lee2025.authorityClassification.independentNormativeAuthorityEstablished).toBe(false);
     expect(lee2025.natalMethodologyScopeExplicit).toBe(true);
     expect(lee2025.compatibilityOnly).toBe(false);
     expect(lee2025.femaleChartHusbandScopeExplicit).toBe(true);
@@ -47,11 +60,18 @@ describe('Relationship spouse T8 independent scholarly provenance candidate evid
     expect(lee2025.modernMarriageContextChangeExplicitInInspectedAbstract).toBe(true);
     expect(lee2025.husbandNotFixedToOfficerStarOnlyExplicitInInspectedAbstract).toBe(true);
     expect(lee2025.alternativeTenGodRepresentationForHusbandProposedInInspectedAbstract).toBe(true);
+    expect(lee2025.historicalVsModernDistinctionExplicit).toBe(true);
     expect(lee2025.fullTextDirectlyInspected).toBe(false);
     expect(lee2025.independentNormativeProvenanceAdequateForCurrentSpouseMethod).toBe(false);
 
     expect(kweon2021.sourceId).toBe('DBPIA-T15948798');
     expect(kweon2021.sourceClass).toBe('graduate_thesis');
+    expect(kweon2021.peerReviewed).toBe(false);
+    expect(kweon2021.institutionalNormativeStandard).toBe(false);
+    expect(kweon2021.authorityClassification.primary).toBe(false);
+    expect(kweon2021.authorityClassification.secondary).toBe(true);
+    expect(kweon2021.authorityClassification.normativeMethodologicalRuleCandidate).toBe(true);
+    expect(kweon2021.authorityClassification.independentNormativeAuthorityEstablished).toBe(false);
     expect(kweon2021.sameSexCohabitingFamilyExplicitInInspectedAbstract).toBe(true);
     expect(kweon2021.traditionalSocialStructureMismatchExplicitInInspectedAbstract).toBe(true);
     expect(kweon2021.marriageMayUsePalaceAsWellAsTenGodsExplicitInInspectedAbstract).toBe(true);
@@ -114,7 +134,7 @@ describe('Relationship spouse T8 independent scholarly provenance candidate evid
     expect(first.controlIds).toEqual(
       RELATIONSHIP_SPOUSE_T8_INDEPENDENT_SCHOLARLY_PROVENANCE_CANDIDATE_CONTROL_IDS,
     );
-    expect(first.controlCount).toBe(17);
+    expect(first.controlCount).toBe(18);
     expect(first.recommendedNextAction).toBe(
       'ACQUIRE_AND_DIRECTLY_INSPECT_EXACT_RELEVANT_FULL_TEXT_PASSAGES_FOR_THE_SCHOLARLY_CANDIDATES_AND_CONTINUE_SEARCH_FOR_AN_EXPLICIT_ROLE_NEUTRAL_NATAL_MAPPING_WITHOUT_STITCHING',
     );
