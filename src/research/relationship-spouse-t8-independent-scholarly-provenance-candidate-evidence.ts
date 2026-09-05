@@ -83,16 +83,59 @@ export const RELATIONSHIP_SPOUSE_T8_INDEPENDENT_SCHOLARLY_PROVENANCE_CANDIDATE_R
         'production spouse T8 promotion',
       ] as const),
     }),
+    Object.freeze({
+      sourceId: 'DBPIA-T15948798',
+      title: '명리 십신의 관계변화와 재해석 : 현대 가족관계와 사회관계를 중심으로',
+      author: '권수정',
+      institution: '서경대학교 경영문화대학원',
+      publicationYear: 2021,
+      sourceClass: 'graduate_thesis',
+      accessSurface: 'https://www.dbpia.co.kr/journal/detail?nodeId=T15948798',
+      inspectedSurface: 'dbpia_bibliographic_metadata_abstract_and_table_of_contents',
+      natalMethodologyScopeExplicit: true,
+      compatibilityOnly: false,
+      modernFamilyReinterpretationExplicitInInspectedAbstract: true,
+      sameSexCohabitingFamilyExplicitInInspectedAbstract: true,
+      traditionalSocialStructureMismatchExplicitInInspectedAbstract: true,
+      marriageMayUsePalaceAsWellAsTenGodsExplicitInInspectedAbstract: true,
+      sameSexContextSpousePalaceDayBranchInterpretationPossibilityExplicitInInspectedAbstract: true,
+      relevantBodyChapterLocatorAvailable: true,
+      relevantBodyChapterLocators: Object.freeze([
+        'IV.1.1 남녀의 존비 관계에서 상대적 관계로의 변화 — p.48',
+        'IV.3.2 혼인관의 인식 전환 — p.78',
+        'IV.3.3 혼인 형태의 변화 — p.82',
+      ] as const),
+      fullTextDirectlyInspected: false,
+      exactBodyPassageLocatorEstablished: false,
+      explicitModernRoleNeutralSpouseNatalMappingEstablished: false,
+      explicitPartnerGenderNeutralRuleEstablished: false,
+      explicitSexualOrientationNeutralRuleEstablished: false,
+      independentNormativeProvenanceAdequateForCurrentSpouseMethod: false,
+      authorityAdmissionAdequate: false,
+      exactSupportedClaim:
+        'The inspected thesis abstract explicitly treats same-sex cohabiting families as a modern family form, states that traditional Four-Pillars relationship methodology can mismatch modern social structures, and says that marriage interpretation may be derived from Palace as well as Ten Gods, leaving room in the same-sex-family context to interpret via the spouse palace/day branch.',
+      unsupportedExtrapolations: Object.freeze([
+        'an explicit rule that maps every partner regardless of gender through the day branch',
+        'a role-neutral spouse-star Ten-God mapping',
+        'a sexual-orientation inference rule',
+        'peer-reviewed or institutional normative-standard status',
+        'the exact current Relationship T6 input contract',
+        'production spouse T8 promotion',
+      ] as const),
+    }),
   ] as const);
 
 export const RELATIONSHIP_SPOUSE_T8_INDEPENDENT_SCHOLARLY_PROVENANCE_CANDIDATE_CONTROL_IDS =
   Object.freeze([
     'KCI_INDEXED_SCHOLARLY_ARTICLE_IS_STRONGER_PROVENANCE_THAN_COMMERCIAL_EDITORIAL_GUIDANCE_BUT_IS_NOT_AUTO_ADMITTED',
-    'OFFICIAL_KCI_ABSTRACT_TEXT_IS_RECORDED_ONLY_FOR_CLAIMS_EXPLICITLY_VISIBLE_ON_THE_INSPECTED_SURFACE',
-    'FULL_TEXT_AND_EXACT_RELEVANT_BODY_PASSAGE_REMAIN_UNINSPECTED_FOR_BOTH_CANDIDATES',
+    'GRADUATE_THESIS_IS_RECORDED_AS_SCHOLARLY_DISCOVERY_EVIDENCE_NOT_AS_PEER_REVIEWED_OR_INSTITUTIONAL_NORMATIVE_AUTHORITY',
+    'ABSTRACT_AND_TABLE_OF_CONTENTS_TEXT_IS_RECORDED_ONLY_FOR_CLAIMS_EXPLICITLY_VISIBLE_ON_THE_INSPECTED_SURFACE',
+    'FULL_TEXT_AND_EXACT_RELEVANT_BODY_PASSAGE_REMAIN_UNINSPECTED_FOR_ALL_CANDIDATES',
     'LEE_2020_SUPPORTS_A_MULTI_FACTOR_NATAL_FAMILY_METHOD_NOT_CURRENT_BROAD_T5_FAMILY_EQUIVALENCE',
     'LEE_2025_SUPPORTS_HISTORICAL_SOCIAL_ROLE_CONTINGENCY_AND_A_FEMALE_HUSBAND_METHOD_ALTERNATIVE_ONLY',
     'LEE_2025_DOES_NOT_DEFINE_A_PARTNER_NEUTRAL_OR_SEXUAL_ORIENTATION_NEUTRAL_NATAL_MAPPING',
+    'KWEON_2021_EXPLICITLY_INCLUDES_SAME_SEX_COHABITING_FAMILY_AND_SPOUSE_PALACE_DAY_BRANCH_INTERPRETIVE_POSSIBILITY',
+    'KWEON_2021_INTERPRETIVE_POSSIBILITY_IS_NOT_RELABELLED_AS_AN_EXPLICIT_ROLE_NEUTRAL_OPERATIONAL_MAPPING',
     'NO_COMPATIBILITY_AUTHORITY_IS_REUSED_AS_NATAL_AUTHORITY',
     'NO_CROSS_SOURCE_STITCHING_IS_USED_TO_SYNTHESIZE_MISSING_ROLE_NEUTRAL_AUTHORITY',
     'INDEPENDENT_NORMATIVE_PROVENANCE_REMAINS_OPEN_PENDING_EXACT_BODY_CONTEXT_AND_METHOD_ADEQUACY_REVIEW',
@@ -112,12 +155,15 @@ export interface RelationshipSpouseT8IndependentScholarlyProvenanceCandidateEvid
   temporalScope: 'natal';
   statusClass: 'research';
   candidateRecords: typeof RELATIONSHIP_SPOUSE_T8_INDEPENDENT_SCHOLARLY_PROVENANCE_CANDIDATE_RECORDS;
-  candidateRecordCount: 2;
+  candidateRecordCount: 3;
   kciIndexedScholarlyCandidateCount: 2;
-  natalMethodologyCandidateCount: 2;
+  graduateThesisCandidateCount: 1;
+  natalMethodologyCandidateCount: 3;
   fullTextDirectlyInspectedCount: 0;
   exactBodyPassageLocatorEstablishedCount: 0;
   modernHistoricalRoleContingencyCandidateLocated: true;
+  modernSameSexFamilyApplicabilityCandidateLocated: true;
+  sameSexContextSpousePalaceInterpretivePossibilityCandidateLocated: true;
   explicitRoleNeutralNatalMappingCandidateLocated: false;
   independentNormativeProvenanceEstablished: false;
   explicitRoleNeutralSpouseNatalMappingEstablished: false;
@@ -137,7 +183,7 @@ export interface RelationshipSpouseT8IndependentScholarlyProvenanceCandidateEvid
   previewDefaultReady: false;
   productionPromotionReady: false;
   controlIds: typeof RELATIONSHIP_SPOUSE_T8_INDEPENDENT_SCHOLARLY_PROVENANCE_CANDIDATE_CONTROL_IDS;
-  controlCount: 14;
+  controlCount: 17;
   recommendedNextAction:
     'ACQUIRE_AND_DIRECTLY_INSPECT_EXACT_RELEVANT_FULL_TEXT_PASSAGES_FOR_THE_SCHOLARLY_CANDIDATES_AND_CONTINUE_SEARCH_FOR_AN_EXPLICIT_ROLE_NEUTRAL_NATAL_MAPPING_WITHOUT_STITCHING';
 }
@@ -152,12 +198,15 @@ export function buildRelationshipSpouseT8IndependentScholarlyProvenanceCandidate
     temporalScope: 'natal' as const,
     statusClass: 'research' as const,
     candidateRecords: RELATIONSHIP_SPOUSE_T8_INDEPENDENT_SCHOLARLY_PROVENANCE_CANDIDATE_RECORDS,
-    candidateRecordCount: 2 as const,
+    candidateRecordCount: 3 as const,
     kciIndexedScholarlyCandidateCount: 2 as const,
-    natalMethodologyCandidateCount: 2 as const,
+    graduateThesisCandidateCount: 1 as const,
+    natalMethodologyCandidateCount: 3 as const,
     fullTextDirectlyInspectedCount: 0 as const,
     exactBodyPassageLocatorEstablishedCount: 0 as const,
     modernHistoricalRoleContingencyCandidateLocated: true as const,
+    modernSameSexFamilyApplicabilityCandidateLocated: true as const,
+    sameSexContextSpousePalaceInterpretivePossibilityCandidateLocated: true as const,
     explicitRoleNeutralNatalMappingCandidateLocated: false as const,
     independentNormativeProvenanceEstablished: false as const,
     explicitRoleNeutralSpouseNatalMappingEstablished: false as const,
@@ -177,7 +226,7 @@ export function buildRelationshipSpouseT8IndependentScholarlyProvenanceCandidate
     previewDefaultReady: false as const,
     productionPromotionReady: false as const,
     controlIds: RELATIONSHIP_SPOUSE_T8_INDEPENDENT_SCHOLARLY_PROVENANCE_CANDIDATE_CONTROL_IDS,
-    controlCount: 14 as const,
+    controlCount: 17 as const,
     recommendedNextAction:
       'ACQUIRE_AND_DIRECTLY_INSPECT_EXACT_RELEVANT_FULL_TEXT_PASSAGES_FOR_THE_SCHOLARLY_CANDIDATES_AND_CONTINUE_SEARCH_FOR_AN_EXPLICIT_ROLE_NEUTRAL_NATAL_MAPPING_WITHOUT_STITCHING' as const,
   };
