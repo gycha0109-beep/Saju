@@ -1,0 +1,36 @@
+name: FR148 Capture Quality Candidate Features CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-condition-governance-fr147.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-candidate-features-fr148.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-candidate-features-fr148.test.ts'
+      - 'research/face-reading/fr148-square-broad-fang-capture-quality-candidate-features.md'
+      - 'scripts/verify-fr148-square-broad-fang-capture-quality-candidate-features.mjs'
+      - '.github/workflows/fr148-capture-quality-candidate-features-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr148-capture-quality-candidate-features:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Test FR148 candidate feature runtime
+        run: >-
+          npx vitest run
+          packages/face-reading/src/five-officers-square-broad-fang-capture-quality-candidate-features-fr148.test.ts
+      - name: Verify FR148 fail-closed capture-quality authority
+        run: node scripts/verify-fr148-square-broad-fang-capture-quality-candidate-features.mjs
