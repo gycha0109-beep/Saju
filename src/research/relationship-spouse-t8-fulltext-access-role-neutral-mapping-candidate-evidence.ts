@@ -52,14 +52,14 @@ export const RELATIONSHIP_SPOUSE_T8_SCHOLARLY_FULLTEXT_ACCESS_ATTEMPTS = Object.
     sourceId: 'KCI-ART003175186',
     surfaceId: 'LEE_2025_RESEARCHGATE',
     accessSurface:
-      'https://www.researchgate.net/publication/389545348_Contemporary_Meaning_for_the_Chapter_of_Woman_Fate_in_Jeokcheonsucheonmi_34_Focusing_on_the_Theory_of_Husband_Star_as_the_Yongshin',
+      'https://www.researchgate.net/publication/389752735_Contemporary_Meaning_for_the_Chapter_of_Woman_Fate_in_Jeokcheonsucheonmi_Focusing_on_the_Theory_of_Husband_Star_as_the_Yongshin',
     inspectedSurface: 'researchgate_publication_metadata',
     requestFullTextOnly: true,
     directArticleBodySurfaced: false,
     directPdfSurfaced: false,
     exactRelevantBodyPassageInspected: false,
     accessResult:
-      'The inspected publication surface did not provide public full text; a request-full-text path is not treated as direct inspection.',
+      'The inspected publication surface explicitly reports no full text available and provides only a request-full-text PDF path, which is not treated as direct inspection.',
   }),
   Object.freeze({
     sourceId: 'DBPIA-T15948798',
