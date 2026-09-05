@@ -19,7 +19,7 @@ jobs:
       - name: Install deterministic PDF render dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends poppler-utils imagemagick
+          sudo apt-get install -y --no-install-recommends poppler-utils imagemagick fonts-dejavu-core
 
       - name: Download exact NLC volume 14 public-domain facsimile
         shell: bash
@@ -79,6 +79,8 @@ jobs:
               inputs+=("acquisition/pages/page-$(printf '%02d' "$p").jpg")
             done
             montage "${inputs[@]}" \
+              -font DejaVu-Sans \
+              -pointsize 18 \
               -thumbnail '520x820>' \
               -tile 3x3 \
               -geometry '+12+28' \
@@ -88,6 +90,7 @@ jobs:
           sha256sum acquisition/contact-sheets/*.jpg > acquisition/contact-sheet-sha256.txt
 
       - name: Upload acquisition artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: relationship-spouse-t8-wanli-nlc14-pages
