@@ -47,4 +47,5 @@ jobs:
           name: fr145-public-runtime-assets-${{ github.sha }}
           path: .fr145-public-runtime
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 1
