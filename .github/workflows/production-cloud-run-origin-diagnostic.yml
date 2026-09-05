@@ -1,0 +1,110 @@
+name: Production Cloud Run Origin Diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-saju-cloud-run-origin-diagnostic
+  cancel-in-progress: false
+
+jobs:
+  diagnostic:
+    name: Read authoritative Cloud Run service origin
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production-saju
+    env:
+      GCP_REGION: asia-southeast1
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+      GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+
+    steps:
+      - name: Preflight read-only authority inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_vars=(
+            GCP_PROJECT_ID
+            GCP_WORKLOAD_IDENTITY_PROVIDER
+            GCP_DEPLOYER_SERVICE_ACCOUNT
+            GCP_CLOUD_RUN_SERVICE
+          )
+          for name in "${required_vars[@]}"; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required production diagnostic variable: ${name}." >&2
+              exit 1
+            fi
+          done
+
+          if [[ ! "$GCP_CLOUD_RUN_SERVICE" =~ ^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$ ]]; then
+            echo 'GCP_CLOUD_RUN_SERVICE is not a valid Cloud Run service name.' >&2
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+
+      - name: Read and validate authoritative service origin
+        id: origin
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          service_url="$(gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format='value(status.url)')"
+
+          SERVICE_URL="$service_url" node --input-type=module - <<'NODE'
+          const value = process.env.SERVICE_URL ?? '';
+          let parsed;
+          try {
+            parsed = new URL(value);
+          } catch {
+            console.error('Cloud Run status.url is not a valid URL.');
+            process.exit(1);
+          }
+
+          if (
+            parsed.protocol !== 'https:' ||
+            parsed.username !== '' ||
+            parsed.password !== '' ||
+            parsed.pathname !== '/' ||
+            parsed.search !== '' ||
+            parsed.hash !== '' ||
+            parsed.origin !== value
+          ) {
+            console.error('Cloud Run status.url must be an exact HTTPS origin with no path, query, fragment, or credentials.');
+            process.exit(1);
+          }
+          NODE
+
+          echo "service_url=$service_url" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$service_url" | tee "${RUNNER_TEMP}/production-cloud-run-origin.txt"
+          printf 'Authoritative Cloud Run origin: `%s`\n' "$service_url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve public origin authority artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: production-cloud-run-origin-authority
+          path: ${{ runner.temp }}/production-cloud-run-origin.txt
+          if-no-files-found: error
+          retention-days: 1
