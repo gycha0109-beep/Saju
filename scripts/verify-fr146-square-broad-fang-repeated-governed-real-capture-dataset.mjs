@@ -67,7 +67,9 @@ for (const [fragment, label] of [
 for (const [fragment, label] of [
   ['byte distinctness != independent capture event != capture quality != empirical repeatability', 'empirical authority separation'],
   ['image geometry != construct validity != traditional meaning', 'semantic authority separation'],
-  ['A true FR146 real-series run requires at least one additional independently captured source image', 'external capture requirement'],
+  ['A real two-capture FR146 execution has now completed ephemerally', 'completed real-series status'],
+  ['No real user image or face-derived metric value is committed to the repository.', 'public-repo privacy boundary'],
+  ['does **not** establish capture quality, independent session provenance', 'post-execution authority non-promotion'],
   ['No real user image is committed or uploaded to CI.', 'real-image CI exclusion'],
   ['empiricalRepeatabilityEstablished: false', 'note repeatability unresolved'],
   ['construct validity: unresolved', 'note construct validity unresolved'],
