@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { stdout } from 'node:process';
 
 const runtimePath = 'packages/face-reading/src/five-officers-square-broad-fang-repeated-governed-real-capture-dataset-fr146.ts';
 const testPath = 'packages/face-reading/src/five-officers-square-broad-fang-repeated-governed-real-capture-dataset-fr146.test.ts';
@@ -83,4 +84,4 @@ for (const [fragment, label] of [
   forbidFragment(note, fragment, label);
 }
 
-process.stdout.write('FR146_REPEATED_GOVERNED_REAL_CAPTURE_DATASET: PASS\n');
+stdout.write('FR146_REPEATED_GOVERNED_REAL_CAPTURE_DATASET: PASS\n');
