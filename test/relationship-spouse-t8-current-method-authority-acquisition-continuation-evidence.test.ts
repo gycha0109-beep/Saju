@@ -105,14 +105,16 @@ describe('Relationship spouse T8 current-method authority acquisition continuati
       RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINUATION_SOURCE_LEAD.sourceId,
     );
     expect(report.sourceLeadChapter).toBe('妻妾引例章');
-    expect(report.sourceLeadStableFolioLocators).toEqual(['007-88b', '007-89a']);
+    expect(report.sourceLeadTargetFolioSpan).toEqual(['007-88a', '007-88b']);
+    expect(report.sourceLeadNextChapterBoundaryFolio).toBe('007-89a');
+    expect(report.sourceLeadStableFolioLocators).toEqual(['007-88a', '007-88b', '007-89a']);
     expect(report.sourceLeadExactTargetTextLocatorEstablished).toBe(true);
     expect(report.sourceLeadDirectPrimaryImageInspected).toBe(false);
     expect(report.sourceLeadQualifyingPrimaryWitnessEstablished).toBe(false);
     expect(report.sourceLeadMultiFactorSpouseMethodObserved).toBe(true);
   });
 
-  test('freezes the exact current T5 family-presence substrate and information loss', () => {
+  test('freezes the exact current T5 family-presence conditions, emitted substrate, and information loss', () => {
     const report = buildRelationshipSpouseT8CurrentMethodAuthorityAcquisitionContinuationEvidence(
       acceptedAdequacyReview(),
     );
@@ -129,6 +131,8 @@ describe('Relationship spouse T8 current-method authority acquisition continuati
     expect(report.currentT5FamilySubtypeCollapse).toEqual(
       RELATIONSHIP_SPOUSE_T8_CURRENT_T5_SUBTYPE_COLLAPSE,
     );
+    expect(report.currentT5ConditionSubtypeSetsVerified).toBe(true);
+    expect(report.currentT5ConditionSlotPathsVerified).toBe(true);
     expect(report.currentT5EmittedClaimPreservesTenGodSubtypeIdentity).toBe(false);
     expect(report.currentT5EmittedClaimPreservesSourceSlotIdentity).toBe(false);
     expect(report.currentT5EmittedClaimPreservesSeasonalCommand).toBe(false);
