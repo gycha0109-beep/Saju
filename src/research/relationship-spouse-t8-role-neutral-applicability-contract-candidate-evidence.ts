@@ -11,7 +11,7 @@ export const RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDAT
 
 export const RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDATE_RECORD =
   Object.freeze({
-    recordId: 'CLARIFY_2026_ROLE_NEUTRAL_SPOUSE_STAR_EDITORIAL_CONTRACT_CANDIDATE',
+    recordId: 'CLARIFY_2026_PARTNER_NEUTRAL_NO_IDENTITY_INFERENCE_EDITORIAL_BOUNDARY_CANDIDATE',
     sourceId: 'CLARIFY-BZ-SPOUSE-STAR-MARRIAGE-ANALYSIS-2026-07-22',
     title: 'The Spouse Star in Marriage Analysis',
     sourceClass: 'commercial_practitioner_editorial_methodology',
@@ -20,10 +20,11 @@ export const RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDAT
     replicationVerifiedDate: '2026-08-22',
     accessSurface:
       'https://clarifyhk.com/learn/bazi/relationships-compatibility/the-spouse-star-in-marriage-analysis',
-    supportingOverviewSurface: 'https://clarifyhk.com/learn/bazi/life-themes/spouse-star-in-bazi',
+    supportingNatalOverviewSurface: 'https://clarifyhk.com/learn/bazi/life-themes/spouse-star-in-bazi',
     classicalGenderedConventionExplicitlyHistorical: true,
-    roleNeutralConventionExplicitlyAllowed: true,
+    historicalGenderedConventionExplicitlyNotUniversal: true,
     partnerNeutralLanguageSupported: true,
+    explicitRoleNeutralSpouseNatalConventionEstablished: false,
     spouseStarSeparatedFromSpousePalace: true,
     spouseStarSeparatedFromDirectRealWorldPartnerEvidence: true,
     requiresDeclaredConvention: true,
@@ -46,34 +47,35 @@ export const RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDAT
     explicitlyProhibitsFidelityInference: true,
     explicitlyProhibitsRelationshipStatusInference: true,
     explicitlyProhibitsAutomaticMarriageOutcomeInference: true,
+    compatibilityScopedRoleNeutralConventionReusedForNatalAuthority: false,
     scholarlyPeerReviewed: false,
     institutionalNormativeStandard: false,
     independentNormativeAuthorityForCurrentSpouseMethod: false,
     qualifiesForAuthorityAdmission: false,
-    adequacyClass: 'EXPLICIT_EDITORIAL_CONTRACT_CANDIDATE_PROVENANCE_INSUFFICIENT',
+    adequacyClass: 'EXPLICIT_EDITORIAL_NO_IDENTITY_INFERENCE_BOUNDARY_PARTIAL_CONTRACT_PROVENANCE_INSUFFICIENT',
     notes:
-      'This source materially improves applicability acquisition because one explicit modern BaZi editorial method permits a role-neutral spouse convention and independently states no partner-gender or sexual-orientation inference. It remains a commercial/practitioner editorial methodology rather than peer-reviewed or institutional normative authority, so its contract cannot be promoted to governed spouse-natal authority.',
+      'The spouse-star marriage/natal editorial surfaces materially improve applicability acquisition by treating the classical gendered table as historical/non-universal, supporting partner-neutral language, separating spouse star from spouse palace and real-world evidence, and explicitly prohibiting partner-gender or sexual-orientation inference. They do not themselves publish an explicit alternative role-neutral spouse-natal star mapping. A more explicit role-neutral convention appears on a compatibility-scoped page and is deliberately not reused here because compatibility authority cannot be stitched into natal authority. The source is also commercial/practitioner editorial methodology rather than peer-reviewed or institutional normative authority.',
   } as const);
 
 export const RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDATE_CONTROL_IDS =
   Object.freeze([
-    'ROLE_NEUTRAL_CONTRACT_CANDIDATE_ACCEPTS_ONLY_THE_EXACT_POST_301_WANLI_PRIMARY_TARGET_BOUNDARY',
-    'CLARIFY_EDITORIAL_METHOD_EXPLICITLY_ALLOWS_A_ROLE_NEUTRAL_SPOUSE_CONVENTION',
-    'CLARIFY_EDITORIAL_METHOD_EXPLICITLY_PROHIBITS_PARTNER_GENDER_AND_SEXUAL_ORIENTATION_INFERENCE',
-    'CLARIFY_EDITORIAL_METHOD_SEPARATES_SPOUSE_STAR_SPOUSE_PALACE_AND_REAL_WORLD_PARTNER_EVIDENCE',
-    'CLARIFY_EDITORIAL_METHOD_REQUIRES_DECLARED_CONVENTION_AND_WHOLE_CHART_CONTEXT',
-    'EXPLICIT_MODERN_EDITORIAL_CONTRACT_CANDIDATE_DOES_NOT_EQUAL_QUALIFYING_NORMATIVE_AUTHORITY',
+    'MODERN_APPLICABILITY_BOUNDARY_CANDIDATE_ACCEPTS_ONLY_THE_EXACT_POST_301_WANLI_PRIMARY_TARGET_BOUNDARY',
+    'CLARIFY_NATAL_MARRIAGE_EDITORIAL_METHOD_TREATS_THE_CLASSICAL_GENDERED_CONVENTION_AS_HISTORICAL_AND_NON_UNIVERSAL',
+    'CLARIFY_NATAL_MARRIAGE_EDITORIAL_METHOD_SUPPORTS_PARTNER_NEUTRAL_LANGUAGE',
+    'CLARIFY_NATAL_MARRIAGE_EDITORIAL_METHOD_EXPLICITLY_PROHIBITS_PARTNER_GENDER_AND_SEXUAL_ORIENTATION_INFERENCE',
+    'CLARIFY_NATAL_MARRIAGE_EDITORIAL_METHOD_SEPARATES_SPOUSE_STAR_SPOUSE_PALACE_AND_REAL_WORLD_PARTNER_EVIDENCE',
+    'CLARIFY_NATAL_MARRIAGE_EDITORIAL_METHOD_REQUIRES_DECLARED_CONVENTION_AND_WHOLE_CHART_CONTEXT',
+    'EXPLICIT_ALTERNATIVE_ROLE_NEUTRAL_SPOUSE_NATAL_STAR_MAPPING_REMAINS_NOT_ESTABLISHED',
+    'COMPATIBILITY_SCOPED_ROLE_NEUTRAL_CONVENTION_IS_NOT_REUSED_AS_NATAL_AUTHORITY',
     'COMMERCIAL_PRACTITIONER_EDITORIAL_PROVENANCE_IS_INSUFFICIENT_FOR_AUTHORITY_ADMISSION',
-    'KCI_GENDER_ASYMMETRY_EVIDENCE_AND_CLARIFY_EDITORIAL_CONTRACT_MUST_NOT_BE_STITCHED_TO_SYNTHESIZE_MISSING_AUTHORITY',
-    'APPLICABILITY_REMAINS_PARTIAL_EVIDENCE_NOT_ADEQUATE_DESPITE_EXPLICIT_EDITORIAL_CONTRACT_DISCOVERY',
+    'KCI_GENDER_ASYMMETRY_EVIDENCE_AND_EDITORIAL_BOUNDARY_MUST_NOT_BE_STITCHED_TO_SYNTHESIZE_MISSING_AUTHORITY',
+    'APPLICABILITY_REMAINS_PARTIAL_EVIDENCE_NOT_ADEQUATE',
     'WANLI_DIRECT_TARGET_FACSIMILE_REMAINS_UNBOUND_AND_UNINSPECTED',
     'CURRENT_T5_INFORMATION_LOSS_SEMANTIC_MISMATCH_REMAINS_UNCHANGED',
     'CURRENT_RELATIONSHIP_T6_DIRECT_INPUT_PATH_REMAINS_ABSENT',
-    'HISTORICAL_GENDER_ROLE_MAPPING_IS_NOT_UNIVERSALIZED',
     'NO_USER_OR_PARTNER_SEX_OR_SEXUAL_ORIENTATION_INFERENCE_IS_AUTHORIZED',
     'ZERO_OF_FIVE_AUTHORITY_GAPS_CLOSED',
     'NO_SPOUSE_T8_PRODUCER_RULE_CLAIM_PACK_NARRATIVE_PREVIEW_OR_PRODUCTION_EFFECT',
-    'NEXT_GATE_REQUIRES_INDEPENDENT_NORMATIVE_PROVENANCE_FOR_THE_EXPLICIT_ROLE_NEUTRAL_CONTRACT_OR_DIRECT_PRIMARY_TARGET_FACSIMILE_PROGRESS',
   ] as const);
 
 export interface RelationshipSpouseT8RoleNeutralApplicabilityContractCandidateEvidenceReport {
@@ -83,7 +85,7 @@ export interface RelationshipSpouseT8RoleNeutralApplicabilityContractCandidateEv
     | 'RESOLVED_RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDATE_EVIDENCE'
     | 'UPSTREAM_WANLI_PRIMARY_TARGET_BOUNDARY_INVALID';
   decision:
-    | 'EXPLICIT_ROLE_NEUTRAL_AND_NO_IDENTITY_INFERENCE_EDITORIAL_CONTRACT_CANDIDATE_ACQUIRED_BUT_PROVENANCE_INSUFFICIENT_ZERO_GAP_CLOSURE'
+    | 'EXPLICIT_NO_IDENTITY_INFERENCE_AND_PARTNER_NEUTRAL_EDITORIAL_BOUNDARY_ACQUIRED_BUT_ROLE_NEUTRAL_NATAL_CONVENTION_AND_NORMATIVE_PROVENANCE_REMAIN_UNRESOLVED_ZERO_GAP_CLOSURE'
     | 'ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDATE_EVIDENCE_NOT_ESTABLISHED';
   upstreamWanliPrimaryTargetEvidenceId: string;
   exactUpstreamWanliPrimaryTargetBoundaryAccepted: boolean;
@@ -95,18 +97,20 @@ export interface RelationshipSpouseT8RoleNeutralApplicabilityContractCandidateEv
     | typeof RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDATE_RECORD
     | null;
   candidateRecordCount: 1 | 0;
-  explicitModernEditorialRoleNeutralSpouseConventionCandidateLocated: boolean;
+  explicitModernEditorialHistoricalGenderConventionNotUniversalCandidateLocated: boolean;
   explicitModernEditorialPartnerNeutralLanguageCandidateLocated: boolean;
   explicitModernEditorialNoPartnerGenderInferenceCandidateLocated: boolean;
   explicitModernEditorialNoSexualOrientationInferenceCandidateLocated: boolean;
   explicitModernEditorialSpouseStarPalaceSeparationCandidateLocated: boolean;
   explicitModernEditorialWholeChartContextCandidateLocated: boolean;
-  editorialContractCandidateIsCommercialPractitionerMethodology: boolean;
-  editorialContractCandidatePeerReviewed: false;
-  editorialContractCandidateInstitutionalNormativeStandard: false;
-  editorialContractCandidateIndependentNormativeAuthority: false;
-  editorialContractCandidateAdequateForAuthorityAdmission: false;
-  modernApplicabilityContractTextFoundButGovernedAuthorityNotEstablished: boolean;
+  explicitRoleNeutralSpouseNatalConventionCandidateLocated: false;
+  compatibilityScopedRoleNeutralConventionReusedForNatalAuthority: false;
+  editorialBoundaryCandidateIsCommercialPractitionerMethodology: boolean;
+  editorialBoundaryCandidatePeerReviewed: false;
+  editorialBoundaryCandidateInstitutionalNormativeStandard: false;
+  editorialBoundaryCandidateIndependentNormativeAuthority: false;
+  editorialBoundaryCandidateAdequateForAuthorityAdmission: false;
+  modernNoIdentityInferenceBoundaryTextFoundButCompleteGovernedApplicabilityContractNotEstablished: boolean;
   applicabilityGapStatus: 'PARTIAL_EVIDENCE_NOT_ADEQUATE';
   applicabilityGapClosedByThisEvidence: false;
   independentNormativeProvenanceForCurrentSpouseMethodEstablished: false;
@@ -141,9 +145,11 @@ export interface RelationshipSpouseT8RoleNeutralApplicabilityContractCandidateEv
   controlCount: 17 | 0;
   controlsFrozen: boolean;
   implementationEffects: {
-    explicitModernEditorialContractCandidatesRecorded: 1 | 0;
-    explicitRoleNeutralConventionCandidatesRecorded: 1 | 0;
-    explicitNoSexOrientationInferenceContractCandidatesRecorded: 1 | 0;
+    explicitModernEditorialBoundaryCandidatesRecorded: 1 | 0;
+    explicitPartnerNeutralLanguageCandidatesRecorded: 1 | 0;
+    explicitNoSexOrientationInferenceBoundaryCandidatesRecorded: 1 | 0;
+    explicitRoleNeutralSpouseNatalConventionCandidatesRecorded: 0;
+    compatibilityAuthorityReusedForNatal: 0;
     independentNormativeAuthoritiesEstablished: 0;
     directPrimaryTargetImagesNewlyInspected: 0;
     authorityRequirementsSatisfied: 0;
@@ -157,7 +163,7 @@ export interface RelationshipSpouseT8RoleNeutralApplicabilityContractCandidateEv
     previewRoutesChanged: 0;
   };
   recommendedNextAction:
-    | 'ACQUIRE_INDEPENDENT_NORMATIVE_PROVENANCE_FOR_EXPLICIT_ROLE_NEUTRAL_SPOUSE_NATAL_CONTRACT_OR_BIND_DIRECT_WANLI_TARGET_FACSIMILE_BEFORE_ANY_ADMISSION_OR_PRODUCER_GATE'
+    | 'ACQUIRE_EXPLICIT_ROLE_NEUTRAL_SPOUSE_NATAL_CONVENTION_WITH_INDEPENDENT_NORMATIVE_PROVENANCE_OR_BIND_DIRECT_WANLI_TARGET_FACSIMILE_BEFORE_ANY_ADMISSION_OR_PRODUCER_GATE'
     | 'REESTABLISH_RELATIONSHIP_SPOUSE_T8_SAMYEONG_WANLI_PRIMARY_TARGET_EVIDENCE';
 }
 
@@ -249,7 +255,7 @@ export function buildRelationshipSpouseT8RoleNeutralApplicabilityContractCandida
       ? 'RESOLVED_RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDATE_EVIDENCE'
       : 'UPSTREAM_WANLI_PRIMARY_TARGET_BOUNDARY_INVALID',
     decision: accepted
-      ? 'EXPLICIT_ROLE_NEUTRAL_AND_NO_IDENTITY_INFERENCE_EDITORIAL_CONTRACT_CANDIDATE_ACQUIRED_BUT_PROVENANCE_INSUFFICIENT_ZERO_GAP_CLOSURE'
+      ? 'EXPLICIT_NO_IDENTITY_INFERENCE_AND_PARTNER_NEUTRAL_EDITORIAL_BOUNDARY_ACQUIRED_BUT_ROLE_NEUTRAL_NATAL_CONVENTION_AND_NORMATIVE_PROVENANCE_REMAIN_UNRESOLVED_ZERO_GAP_CLOSURE'
       : 'ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDATE_EVIDENCE_NOT_ESTABLISHED',
     upstreamWanliPrimaryTargetEvidenceId: upstream.evidenceId,
     exactUpstreamWanliPrimaryTargetBoundaryAccepted: accepted,
@@ -261,18 +267,21 @@ export function buildRelationshipSpouseT8RoleNeutralApplicabilityContractCandida
       ? RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDATE_RECORD
       : null,
     candidateRecordCount: accepted ? 1 : 0,
-    explicitModernEditorialRoleNeutralSpouseConventionCandidateLocated: accepted,
+    explicitModernEditorialHistoricalGenderConventionNotUniversalCandidateLocated: accepted,
     explicitModernEditorialPartnerNeutralLanguageCandidateLocated: accepted,
     explicitModernEditorialNoPartnerGenderInferenceCandidateLocated: accepted,
     explicitModernEditorialNoSexualOrientationInferenceCandidateLocated: accepted,
     explicitModernEditorialSpouseStarPalaceSeparationCandidateLocated: accepted,
     explicitModernEditorialWholeChartContextCandidateLocated: accepted,
-    editorialContractCandidateIsCommercialPractitionerMethodology: accepted,
-    editorialContractCandidatePeerReviewed: false,
-    editorialContractCandidateInstitutionalNormativeStandard: false,
-    editorialContractCandidateIndependentNormativeAuthority: false,
-    editorialContractCandidateAdequateForAuthorityAdmission: false,
-    modernApplicabilityContractTextFoundButGovernedAuthorityNotEstablished: accepted,
+    explicitRoleNeutralSpouseNatalConventionCandidateLocated: false,
+    compatibilityScopedRoleNeutralConventionReusedForNatalAuthority: false,
+    editorialBoundaryCandidateIsCommercialPractitionerMethodology: accepted,
+    editorialBoundaryCandidatePeerReviewed: false,
+    editorialBoundaryCandidateInstitutionalNormativeStandard: false,
+    editorialBoundaryCandidateIndependentNormativeAuthority: false,
+    editorialBoundaryCandidateAdequateForAuthorityAdmission: false,
+    modernNoIdentityInferenceBoundaryTextFoundButCompleteGovernedApplicabilityContractNotEstablished:
+      accepted,
     applicabilityGapStatus: 'PARTIAL_EVIDENCE_NOT_ADEQUATE',
     applicabilityGapClosedByThisEvidence: false,
     independentNormativeProvenanceForCurrentSpouseMethodEstablished: false,
@@ -309,9 +318,11 @@ export function buildRelationshipSpouseT8RoleNeutralApplicabilityContractCandida
     controlCount: accepted ? 17 : 0,
     controlsFrozen: accepted,
     implementationEffects: {
-      explicitModernEditorialContractCandidatesRecorded: accepted ? 1 : 0,
-      explicitRoleNeutralConventionCandidatesRecorded: accepted ? 1 : 0,
-      explicitNoSexOrientationInferenceContractCandidatesRecorded: accepted ? 1 : 0,
+      explicitModernEditorialBoundaryCandidatesRecorded: accepted ? 1 : 0,
+      explicitPartnerNeutralLanguageCandidatesRecorded: accepted ? 1 : 0,
+      explicitNoSexOrientationInferenceBoundaryCandidatesRecorded: accepted ? 1 : 0,
+      explicitRoleNeutralSpouseNatalConventionCandidatesRecorded: 0,
+      compatibilityAuthorityReusedForNatal: 0,
       independentNormativeAuthoritiesEstablished: 0,
       directPrimaryTargetImagesNewlyInspected: 0,
       authorityRequirementsSatisfied: 0,
@@ -325,7 +336,7 @@ export function buildRelationshipSpouseT8RoleNeutralApplicabilityContractCandida
       previewRoutesChanged: 0,
     },
     recommendedNextAction: accepted
-      ? 'ACQUIRE_INDEPENDENT_NORMATIVE_PROVENANCE_FOR_EXPLICIT_ROLE_NEUTRAL_SPOUSE_NATAL_CONTRACT_OR_BIND_DIRECT_WANLI_TARGET_FACSIMILE_BEFORE_ANY_ADMISSION_OR_PRODUCER_GATE'
+      ? 'ACQUIRE_EXPLICIT_ROLE_NEUTRAL_SPOUSE_NATAL_CONVENTION_WITH_INDEPENDENT_NORMATIVE_PROVENANCE_OR_BIND_DIRECT_WANLI_TARGET_FACSIMILE_BEFORE_ANY_ADMISSION_OR_PRODUCER_GATE'
       : 'REESTABLISH_RELATIONSHIP_SPOUSE_T8_SAMYEONG_WANLI_PRIMARY_TARGET_EVIDENCE',
   });
 }

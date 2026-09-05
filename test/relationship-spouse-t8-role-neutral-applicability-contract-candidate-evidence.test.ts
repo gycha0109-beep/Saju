@@ -90,8 +90,8 @@ function acceptedWanliEvidence() {
   return buildRelationshipSpouseT8SamyeongWanliPrimaryTargetEvidence(sourceAccessApplicability);
 }
 
-describe('Relationship spouse T8 role-neutral applicability contract candidate evidence', () => {
-  test('accepts the exact #301 Wanli boundary and records one explicit modern editorial contract candidate', () => {
+describe('Relationship spouse T8 modern applicability boundary candidate evidence', () => {
+  test('accepts the exact #301 Wanli boundary and records one bounded editorial candidate', () => {
     const report = buildRelationshipSpouseT8RoleNeutralApplicabilityContractCandidateEvidence(
       acceptedWanliEvidence(),
     );
@@ -103,7 +103,7 @@ describe('Relationship spouse T8 role-neutral applicability contract candidate e
       'RESOLVED_RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDATE_EVIDENCE',
     );
     expect(report.decision).toBe(
-      'EXPLICIT_ROLE_NEUTRAL_AND_NO_IDENTITY_INFERENCE_EDITORIAL_CONTRACT_CANDIDATE_ACQUIRED_BUT_PROVENANCE_INSUFFICIENT_ZERO_GAP_CLOSURE',
+      'EXPLICIT_NO_IDENTITY_INFERENCE_AND_PARTNER_NEUTRAL_EDITORIAL_BOUNDARY_ACQUIRED_BUT_ROLE_NEUTRAL_NATAL_CONVENTION_AND_NORMATIVE_PROVENANCE_REMAIN_UNRESOLVED_ZERO_GAP_CLOSURE',
     );
     expect(report.exactUpstreamWanliPrimaryTargetBoundaryAccepted).toBe(true);
     expect(report.candidateRecord).toEqual(
@@ -112,45 +112,57 @@ describe('Relationship spouse T8 role-neutral applicability contract candidate e
     expect(report.candidateRecordCount).toBe(1);
   });
 
-  test('records the explicit role-neutral and no-identity-inference contract as editorial evidence only', () => {
+  test('records only the spouse-natal/editorial applicability boundary actually supported by the source', () => {
     const report = buildRelationshipSpouseT8RoleNeutralApplicabilityContractCandidateEvidence(
       acceptedWanliEvidence(),
     );
     const record = RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_APPLICABILITY_CONTRACT_CANDIDATE_RECORD;
 
-    expect(record.roleNeutralConventionExplicitlyAllowed).toBe(true);
+    expect(record.classicalGenderedConventionExplicitlyHistorical).toBe(true);
+    expect(record.historicalGenderedConventionExplicitlyNotUniversal).toBe(true);
     expect(record.partnerNeutralLanguageSupported).toBe(true);
+    expect(record.explicitRoleNeutralSpouseNatalConventionEstablished).toBe(false);
     expect(record.spouseStarSeparatedFromSpousePalace).toBe(true);
     expect(record.spouseStarSeparatedFromDirectRealWorldPartnerEvidence).toBe(true);
     expect(record.requiresDeclaredConvention).toBe(true);
     expect(record.requiresWholeChartContext).toBe(true);
     expect(record.explicitlyProhibitsPartnerGenderInference).toBe(true);
     expect(record.explicitlyProhibitsSexualOrientationInference).toBe(true);
-    expect(report.explicitModernEditorialRoleNeutralSpouseConventionCandidateLocated).toBe(true);
+    expect(record.compatibilityScopedRoleNeutralConventionReusedForNatalAuthority).toBe(false);
+
+    expect(report.explicitModernEditorialHistoricalGenderConventionNotUniversalCandidateLocated).toBe(
+      true,
+    );
+    expect(report.explicitModernEditorialPartnerNeutralLanguageCandidateLocated).toBe(true);
     expect(report.explicitModernEditorialNoPartnerGenderInferenceCandidateLocated).toBe(true);
     expect(report.explicitModernEditorialNoSexualOrientationInferenceCandidateLocated).toBe(true);
     expect(report.explicitModernEditorialSpouseStarPalaceSeparationCandidateLocated).toBe(true);
     expect(report.explicitModernEditorialWholeChartContextCandidateLocated).toBe(true);
+    expect(report.explicitRoleNeutralSpouseNatalConventionCandidateLocated).toBe(false);
+    expect(report.compatibilityScopedRoleNeutralConventionReusedForNatalAuthority).toBe(false);
   });
 
-  test('does not promote commercial practitioner editorial methodology into governed authority', () => {
+  test('does not promote practitioner editorial material into governed applicability authority', () => {
     const report = buildRelationshipSpouseT8RoleNeutralApplicabilityContractCandidateEvidence(
       acceptedWanliEvidence(),
     );
 
-    expect(report.editorialContractCandidateIsCommercialPractitionerMethodology).toBe(true);
-    expect(report.editorialContractCandidatePeerReviewed).toBe(false);
-    expect(report.editorialContractCandidateInstitutionalNormativeStandard).toBe(false);
-    expect(report.editorialContractCandidateIndependentNormativeAuthority).toBe(false);
-    expect(report.editorialContractCandidateAdequateForAuthorityAdmission).toBe(false);
-    expect(report.modernApplicabilityContractTextFoundButGovernedAuthorityNotEstablished).toBe(true);
+    expect(report.editorialBoundaryCandidateIsCommercialPractitionerMethodology).toBe(true);
+    expect(report.editorialBoundaryCandidatePeerReviewed).toBe(false);
+    expect(report.editorialBoundaryCandidateInstitutionalNormativeStandard).toBe(false);
+    expect(report.editorialBoundaryCandidateIndependentNormativeAuthority).toBe(false);
+    expect(report.editorialBoundaryCandidateAdequateForAuthorityAdmission).toBe(false);
+    expect(
+      report.modernNoIdentityInferenceBoundaryTextFoundButCompleteGovernedApplicabilityContractNotEstablished,
+    ).toBe(true);
     expect(report.applicabilityGapStatus).toBe('PARTIAL_EVIDENCE_NOT_ADEQUATE');
     expect(report.applicabilityGapClosedByThisEvidence).toBe(false);
     expect(report.independentNormativeProvenanceForCurrentSpouseMethodEstablished).toBe(false);
     expect(report.crossSourceStitchingAuthorized).toBe(false);
+    expect(report.crossTaskStitchingAuthorized).toBe(false);
   });
 
-  test('preserves direct-facsimile, current-method, inference, admission, and producer gates', () => {
+  test('preserves direct-facsimile, semantic-correspondence, inference, admission, and producer gates', () => {
     const report = buildRelationshipSpouseT8RoleNeutralApplicabilityContractCandidateEvidence(
       acceptedWanliEvidence(),
     );
@@ -182,7 +194,7 @@ describe('Relationship spouse T8 role-neutral applicability contract candidate e
     expect(report.productionPromotionAuthorized).toBe(false);
   });
 
-  test('freezes zero product effects and the next independent-provenance/direct-facsimile gate', () => {
+  test('freezes zero product effects and the next natal-specific provenance/direct-facsimile gate', () => {
     const report = buildRelationshipSpouseT8RoleNeutralApplicabilityContractCandidateEvidence(
       acceptedWanliEvidence(),
     );
@@ -193,9 +205,11 @@ describe('Relationship spouse T8 role-neutral applicability contract candidate e
     expect(report.controlCount).toBe(17);
     expect(report.controlsFrozen).toBe(true);
     expect(report.implementationEffects).toEqual({
-      explicitModernEditorialContractCandidatesRecorded: 1,
-      explicitRoleNeutralConventionCandidatesRecorded: 1,
-      explicitNoSexOrientationInferenceContractCandidatesRecorded: 1,
+      explicitModernEditorialBoundaryCandidatesRecorded: 1,
+      explicitPartnerNeutralLanguageCandidatesRecorded: 1,
+      explicitNoSexOrientationInferenceBoundaryCandidatesRecorded: 1,
+      explicitRoleNeutralSpouseNatalConventionCandidatesRecorded: 0,
+      compatibilityAuthorityReusedForNatal: 0,
       independentNormativeAuthoritiesEstablished: 0,
       directPrimaryTargetImagesNewlyInspected: 0,
       authorityRequirementsSatisfied: 0,
@@ -209,7 +223,7 @@ describe('Relationship spouse T8 role-neutral applicability contract candidate e
       previewRoutesChanged: 0,
     });
     expect(report.recommendedNextAction).toBe(
-      'ACQUIRE_INDEPENDENT_NORMATIVE_PROVENANCE_FOR_EXPLICIT_ROLE_NEUTRAL_SPOUSE_NATAL_CONTRACT_OR_BIND_DIRECT_WANLI_TARGET_FACSIMILE_BEFORE_ANY_ADMISSION_OR_PRODUCER_GATE',
+      'ACQUIRE_EXPLICIT_ROLE_NEUTRAL_SPOUSE_NATAL_CONVENTION_WITH_INDEPENDENT_NORMATIVE_PROVENANCE_OR_BIND_DIRECT_WANLI_TARGET_FACSIMILE_BEFORE_ANY_ADMISSION_OR_PRODUCER_GATE',
     );
   });
 
@@ -228,7 +242,10 @@ describe('Relationship spouse T8 role-neutral applicability contract candidate e
     expect(report.exactUpstreamWanliPrimaryTargetBoundaryAccepted).toBe(false);
     expect(report.candidateRecord).toBeNull();
     expect(report.candidateRecordCount).toBe(0);
-    expect(report.modernApplicabilityContractTextFoundButGovernedAuthorityNotEstablished).toBe(false);
+    expect(
+      report.modernNoIdentityInferenceBoundaryTextFoundButCompleteGovernedApplicabilityContractNotEstablished,
+    ).toBe(false);
+    expect(report.explicitRoleNeutralSpouseNatalConventionCandidateLocated).toBe(false);
     expect(report.controlsFrozen).toBe(false);
     expect(report.semanticProducerImplementationAuthorized).toBe(false);
     expect(report.recommendedNextAction).toBe(
