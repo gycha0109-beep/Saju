@@ -1,0 +1,102 @@
+name: Relationship Spouse T8 Wanli Target Acquisition
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/relationship-spouse-t8-wanli-target-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-wanli-target:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install deterministic PDF render dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils imagemagick
+
+      - name: Download exact NLC volume 14 public-domain facsimile
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p acquisition
+          url='https://upload.wikimedia.org/wikipedia/commons/f/fe/NLC892-411999029701-66491_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_%E7%AC%AC14%E5%86%8A.pdf'
+          curl --fail --location --retry 3 --retry-delay 2 \
+            --output acquisition/nlc14.pdf \
+            "$url"
+
+      - name: Verify immutable source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_sha1='e23875add1ce23db1b3be3251433af3e0f46d641'
+          expected_bytes='21351812'
+          actual_sha1="$(sha1sum acquisition/nlc14.pdf | awk '{print $1}')"
+          actual_bytes="$(stat -c '%s' acquisition/nlc14.pdf)"
+          actual_pages="$(pdfinfo acquisition/nlc14.pdf | awk -F: '/^Pages:/ {gsub(/[[:space:]]/, "", $2); print $2}')"
+          test "$actual_sha1" = "$expected_sha1"
+          test "$actual_bytes" = "$expected_bytes"
+          test "$actual_pages" = '63'
+          {
+            echo "source=NLC892-411999029701-66491"
+            echo "sha1=$actual_sha1"
+            echo "bytes=$actual_bytes"
+            echo "pages=$actual_pages"
+            echo "description=卷之七下"
+          } | tee acquisition/source-manifest.txt
+
+      - name: Render all 63 scan pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p acquisition/pages
+          pdftoppm \
+            -f 1 -l 63 \
+            -jpeg -jpegopt quality=88,progressive=n,optimize=y \
+            -r 130 \
+            acquisition/nlc14.pdf \
+            acquisition/pages/page
+          count="$(find acquisition/pages -type f -name 'page-*.jpg' | wc -l | tr -d ' ')"
+          test "$count" = '63'
+          sha256sum acquisition/pages/page-*.jpg > acquisition/render-sha256.txt
+
+      - name: Build labeled 3x3 contact sheets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p acquisition/contact-sheets
+          for start in 1 10 19 28 37 46 55; do
+            end=$((start + 8))
+            if [ "$end" -gt 63 ]; then end=63; fi
+            inputs=()
+            for p in $(seq "$start" "$end"); do
+              inputs+=("acquisition/pages/page-$(printf '%02d' "$p").jpg")
+            done
+            montage "${inputs[@]}" \
+              -thumbnail '520x820>' \
+              -tile 3x3 \
+              -geometry '+12+28' \
+              -set label '%t' \
+              "acquisition/contact-sheets/pages-$(printf '%02d' "$start")-$(printf '%02d' "$end").jpg"
+          done
+          sha256sum acquisition/contact-sheets/*.jpg > acquisition/contact-sheet-sha256.txt
+
+      - name: Upload acquisition artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: relationship-spouse-t8-wanli-nlc14-pages
+          path: |
+            acquisition/source-manifest.txt
+            acquisition/render-sha256.txt
+            acquisition/contact-sheet-sha256.txt
+            acquisition/pages/*.jpg
+            acquisition/contact-sheets/*.jpg
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
