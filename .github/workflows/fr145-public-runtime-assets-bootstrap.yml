@@ -42,7 +42,7 @@ jobs:
           export { admitMediaPipeScreenToMetricReimplementationParityFR76 } from './packages/face-reading/src/mediapipe-screen-to-metric-reimplementation-parity-fr76.ts';
           export { runSquareBroadFangEphemeralRealCaptureFR145, DEFAULT_SQUARE_BROAD_FANG_EPHEMERAL_REAL_CAPTURE_DEPENDENCIES_FR145 } from './packages/face-reading/src/five-officers-square-broad-fang-ephemeral-real-capture-bridge-fr145.ts';
           ENTRY
-          ./node_modules/.bin/esbuild .fr145-browser-entry.ts \
+          npx --yes esbuild@0.25.9 .fr145-browser-entry.ts \
             --bundle --format=esm --platform=browser --target=es2022 \
             --outfile=.fr145-public-runtime/fr145-browser-bundle.mjs
           rm .fr145-browser-entry.ts
