@@ -105,9 +105,13 @@ Repository tests use synthetic in-memory Blob values only. No real user image is
 
 ## Current empirical status
 
-FR146 provides the repeated-capture execution and materialization boundary. The previously acquired real FR145 result is still a **single source capture**. It must not be duplicated under a second ref to manufacture empirical repeatability evidence; FR146 rejects exact byte duplicates for this reason.
+A real two-capture FR146 execution has now completed ephemerally through the active MediaPipe 0.10.35 / FR145 -> issued FR144 -> FR146 path. Both capture inputs produced FR144 acquisition `PASS` lineage before the FR144 dataset materializer and FR146 bounded descriptive dataset were issued.
 
-A true FR146 real-series run requires at least one additional independently captured source image for the same study-local capture series.
+No real user image or face-derived metric value is committed to the repository. Source-image digests, provider payloads, full landmark geometry, pose-normalized contour coordinates, embeddings, and identity templates were not committed as empirical evidence.
+
+The successful two-capture materialization does **not** establish capture quality, independent session provenance, construct validity, traditional binding, a repeatability classification, or a repeatability threshold. Descriptive results remain bounded observations only.
+
+The historical real captures also carry no independently verified multi-session assignment. They must not be retroactively labeled as separate capture sessions to satisfy a later governance gate.
 
 ## Next frontier
 
