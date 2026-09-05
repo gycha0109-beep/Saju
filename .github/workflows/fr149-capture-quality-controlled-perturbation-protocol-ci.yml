@@ -1,0 +1,36 @@
+name: FR149 Capture Quality Controlled Perturbation Protocol CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-candidate-features-fr148.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-perturbation-protocol-fr149.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-perturbation-protocol-fr149.test.ts'
+      - 'research/face-reading/fr149-square-broad-fang-capture-quality-controlled-perturbation-protocol.md'
+      - 'scripts/verify-fr149-square-broad-fang-capture-quality-controlled-perturbation-protocol.mjs'
+      - '.github/workflows/fr149-capture-quality-controlled-perturbation-protocol-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr149-controlled-perturbation-protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Test FR149 controlled perturbation protocol
+        run: >-
+          npx vitest run
+          packages/face-reading/src/five-officers-square-broad-fang-capture-quality-perturbation-protocol-fr149.test.ts
+      - name: Verify FR149 fail-closed protocol authority
+        run: node scripts/verify-fr149-square-broad-fang-capture-quality-controlled-perturbation-protocol.mjs
