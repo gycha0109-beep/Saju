@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { stdout } from 'node:process';
 
 const runtimePath = 'packages/face-reading/src/five-officers-square-broad-fang-ephemeral-real-capture-bridge-fr145.ts';
 const testPath = 'packages/face-reading/src/five-officers-square-broad-fang-ephemeral-real-capture-bridge-fr145.test.ts';
@@ -86,4 +87,4 @@ for (const [fragment, label] of [
   forbidFragment(hardening, fragment, label);
 }
 
-console.log('FR145_EPHEMERAL_REAL_CAPTURE_BRIDGE: PASS');
+stdout.write('FR145_EPHEMERAL_REAL_CAPTURE_BRIDGE: PASS\n');
