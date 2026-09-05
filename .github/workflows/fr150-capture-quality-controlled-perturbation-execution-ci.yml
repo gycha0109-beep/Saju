@@ -34,3 +34,10 @@ jobs:
           packages/face-reading/src/five-officers-square-broad-fang-capture-quality-controlled-perturbation-execution-fr150.test.ts
       - name: Verify FR150 fail-closed execution authority
         run: node scripts/verify-fr150-square-broad-fang-capture-quality-controlled-perturbation-execution.mjs
+      - name: Publish FR150 public runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr150-public-runtime
+          path: .face-reading-dist
+          if-no-files-found: error
+          retention-days: 1
