@@ -6,6 +6,7 @@ on:
       - 'research/face-reading/fr146-square-broad-fang-repeated-governed-real-capture-dataset.md'
       - 'packages/face-reading/src/five-officers-square-broad-fang-repeated-governed-real-capture-dataset-fr146.ts'
       - 'packages/face-reading/src/five-officers-square-broad-fang-repeated-governed-real-capture-dataset-fr146.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-repeated-governed-real-capture-dataset-fr146-allowlist.test.ts'
       - 'scripts/verify-fr146-square-broad-fang-repeated-governed-real-capture-dataset.mjs'
       - '.github/workflows/fr146-repeated-governed-real-capture-dataset-ci.yml'
   workflow_dispatch:
@@ -28,6 +29,9 @@ jobs:
       - name: Build Face Reading package
         run: npm run face:build
       - name: Verify FR146 repeated governed real-capture boundary
-        run: npx vitest run packages/face-reading/src/five-officers-square-broad-fang-repeated-governed-real-capture-dataset-fr146.test.ts
+        run: >-
+          npx vitest run
+          packages/face-reading/src/five-officers-square-broad-fang-repeated-governed-real-capture-dataset-fr146.test.ts
+          packages/face-reading/src/five-officers-square-broad-fang-repeated-governed-real-capture-dataset-fr146-allowlist.test.ts
       - name: Verify FR146 zero-persistence and zero-semantic-promotion contract
         run: node scripts/verify-fr146-square-broad-fang-repeated-governed-real-capture-dataset.mjs
