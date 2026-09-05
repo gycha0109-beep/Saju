@@ -1,0 +1,36 @@
+name: FR150 Capture Quality Controlled Perturbation Execution CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-perturbation-protocol-fr149.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-controlled-perturbation-execution-fr150.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-controlled-perturbation-execution-fr150.test.ts'
+      - 'research/face-reading/fr150-square-broad-fang-capture-quality-controlled-perturbation-execution.md'
+      - 'scripts/verify-fr150-square-broad-fang-capture-quality-controlled-perturbation-execution.mjs'
+      - '.github/workflows/fr150-capture-quality-controlled-perturbation-execution-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr150-controlled-perturbation-execution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Test FR150 controlled perturbation execution
+        run: >-
+          npx vitest run
+          packages/face-reading/src/five-officers-square-broad-fang-capture-quality-controlled-perturbation-execution-fr150.test.ts
+      - name: Verify FR150 fail-closed execution authority
+        run: node scripts/verify-fr150-square-broad-fang-capture-quality-controlled-perturbation-execution.mjs
