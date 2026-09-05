@@ -24,8 +24,10 @@ export const RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINU
       'https://ctext.org/wiki.pl?chapter=548506',
       'https://zh.wikisource.org/wiki/三命通會_(四庫全書本)/卷07',
     ]),
-    imageLocatorSurface: 'https://www.kanripo.org/text/KR3g0042/007',
-    stableFolioLocators: Object.freeze(['007-88b', '007-89a']),
+    imageLocatorSurface: 'https://www.kanripo.org/edition/WYG/KR3g0042/007',
+    targetFolioSpan: Object.freeze(['007-88a', '007-88b']),
+    nextChapterBoundaryFolio: '007-89a',
+    stableFolioLocators: Object.freeze(['007-88a', '007-88b', '007-89a']),
     exactTargetTextLocatorEstablished: true,
     exactTargetPrimaryImageInspected: false,
     targetImageFetchBlockedByAccessSurface: true,
@@ -41,7 +43,7 @@ export const RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINU
     ]),
     multiFactorSpouseMethodObservedInTranscription: true,
     notes:
-      'The chapter is a stronger spouse-method lead because its reasoning is conditional and multi-factor rather than a single-symbol mapping. The direct target facsimile was not successfully inspected, so the lead remains non-qualifying research evidence only.',
+      'WYG/Kanripo transcription places the chapter start and first lines on 007-88a, continuation on 007-88b, and the next chapter at 007-89a. The chapter is a stronger spouse-method lead because its reasoning is conditional and multi-factor rather than a single-symbol mapping. The direct target facsimile was not successfully inspected, so the lead remains non-qualifying research evidence only.',
   } as const);
 
 export const RELATIONSHIP_SPOUSE_T8_CURRENT_T5_EXPECTED_CLAIM_TYPES = Object.freeze([
@@ -59,6 +61,16 @@ export const RELATIONSHIP_SPOUSE_T8_CURRENT_T5_SUBTYPE_COLLAPSE = Object.freeze(
   wealth: Object.freeze(['편재', '정재']),
   officer: Object.freeze(['편관', '정관']),
 } as const);
+
+export const RELATIONSHIP_SPOUSE_T8_CURRENT_T5_EXPECTED_SLOT_PATHS = Object.freeze([
+  'year.stem.value',
+  'month.stem.value',
+  'hour.stem.value',
+  'year.branch.value',
+  'month.branch.value',
+  'day.branch.value',
+  'hour.branch.value',
+] as const);
 
 export const RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINUATION_CONTROL_IDS =
   Object.freeze([
@@ -79,9 +91,11 @@ export const RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINU
     'EXTERNAL_SOURCE_ACQUISITION_MUST_CONTINUE_UNTIL_GENUINELY_QUALIFYING_AUTHORITY_EXISTS',
   ] as const);
 
+type CurrentT5Family = keyof typeof RELATIONSHIP_SPOUSE_T8_CURRENT_T5_SUBTYPE_COLLAPSE;
+
 type CurrentT5ObservedClaim = {
   claimType: (typeof RELATIONSHIP_SPOUSE_T8_CURRENT_T5_EXPECTED_CLAIM_TYPES)[number];
-  family: keyof typeof RELATIONSHIP_SPOUSE_T8_CURRENT_T5_SUBTYPE_COLLAPSE;
+  family: CurrentT5Family;
   presence: 'observed';
   dominance: 'not_scored';
 };
@@ -105,6 +119,8 @@ export interface RelationshipSpouseT8CurrentMethodAuthorityAcquisitionContinuati
   statusClass: 'research';
   sourceLeadId: typeof RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINUATION_SOURCE_LEAD.sourceId;
   sourceLeadChapter: typeof RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINUATION_SOURCE_LEAD.chapter;
+  sourceLeadTargetFolioSpan: readonly string[];
+  sourceLeadNextChapterBoundaryFolio: string;
   sourceLeadStableFolioLocators: readonly string[];
   sourceLeadExactTargetTextLocatorEstablished: boolean;
   sourceLeadDirectPrimaryImageInspected: false;
@@ -115,6 +131,8 @@ export interface RelationshipSpouseT8CurrentMethodAuthorityAcquisitionContinuati
   currentT5ObservedClaims: readonly CurrentT5ObservedClaim[];
   currentT5ClaimCount: 5 | 0;
   currentT5FamilySubtypeCollapse: typeof RELATIONSHIP_SPOUSE_T8_CURRENT_T5_SUBTYPE_COLLAPSE;
+  currentT5ConditionSubtypeSetsVerified: boolean;
+  currentT5ConditionSlotPathsVerified: boolean;
   currentT5EmittedClaimPreservesTenGodSubtypeIdentity: false;
   currentT5EmittedClaimPreservesSourceSlotIdentity: false;
   currentT5EmittedClaimPreservesSeasonalCommand: false;
@@ -228,7 +246,47 @@ function exactUpstreamAdequacyBoundaryAccepted(
 }
 
 function ruleOutputValue(rule: (typeof GENERAL_NATAL_CONCLUSION_FAMILY_RULES)[number]): Record<string, unknown> {
-  return rule.output.value as Record<string, unknown>;
+  return rule.output.value as unknown as Record<string, unknown>;
+}
+
+function conditionMatchesCurrentT5Family(
+  rule: (typeof GENERAL_NATAL_CONCLUSION_FAMILY_RULES)[number],
+  family: CurrentT5Family,
+): boolean {
+  const condition = rule.condition as unknown as {
+    op?: unknown;
+    expressions?: readonly unknown[];
+  };
+  if (condition.op !== 'or' || !Array.isArray(condition.expressions)) return false;
+  if (condition.expressions.length !== RELATIONSHIP_SPOUSE_T8_CURRENT_T5_EXPECTED_SLOT_PATHS.length) {
+    return false;
+  }
+
+  const observedPaths: string[] = [];
+  for (const rawExpression of condition.expressions) {
+    const expression = rawExpression as {
+      op?: unknown;
+      value?: { kind?: unknown; key?: unknown; path?: unknown };
+      set?: unknown;
+    };
+    if (
+      expression.op !== 'in' ||
+      expression.value?.kind !== 'input' ||
+      expression.value?.key !== 'tenGods' ||
+      typeof expression.value?.path !== 'string' ||
+      !Array.isArray(expression.set) ||
+      deterministicContentHash(expression.set) !==
+        deterministicContentHash(RELATIONSHIP_SPOUSE_T8_CURRENT_T5_SUBTYPE_COLLAPSE[family])
+    ) {
+      return false;
+    }
+    observedPaths.push(expression.value.path);
+  }
+
+  return (
+    deterministicContentHash(observedPaths) ===
+    deterministicContentHash(RELATIONSHIP_SPOUSE_T8_CURRENT_T5_EXPECTED_SLOT_PATHS)
+  );
 }
 
 function observedCurrentT5Claims(): readonly CurrentT5ObservedClaim[] {
@@ -252,12 +310,9 @@ function observedCurrentT5Claims(): readonly CurrentT5ObservedClaim[] {
     ) {
       return Object.freeze([]);
     }
-    observed.push({
-      claimType,
-      family: value.family as CurrentT5ObservedClaim['family'],
-      presence: 'observed',
-      dominance: 'not_scored',
-    });
+    const family = value.family as CurrentT5Family;
+    if (!conditionMatchesCurrentT5Family(rule, family)) return Object.freeze([]);
+    observed.push({ claimType, family, presence: 'observed', dominance: 'not_scored' });
   }
   return Object.freeze(observed);
 }
@@ -328,6 +383,12 @@ export function buildRelationshipSpouseT8CurrentMethodAuthorityAcquisitionContin
       RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINUATION_SOURCE_LEAD.sourceId,
     sourceLeadChapter:
       RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINUATION_SOURCE_LEAD.chapter,
+    sourceLeadTargetFolioSpan: valid
+      ? RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINUATION_SOURCE_LEAD.targetFolioSpan
+      : Object.freeze([]),
+    sourceLeadNextChapterBoundaryFolio: valid
+      ? RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINUATION_SOURCE_LEAD.nextChapterBoundaryFolio
+      : '',
     sourceLeadStableFolioLocators: valid
       ? RELATIONSHIP_SPOUSE_T8_CURRENT_METHOD_AUTHORITY_ACQUISITION_CONTINUATION_SOURCE_LEAD.stableFolioLocators
       : Object.freeze([]),
@@ -346,6 +407,8 @@ export function buildRelationshipSpouseT8CurrentMethodAuthorityAcquisitionContin
     currentT5ObservedClaims: valid ? observedT5Claims : Object.freeze([]),
     currentT5ClaimCount: valid ? 5 : 0,
     currentT5FamilySubtypeCollapse: RELATIONSHIP_SPOUSE_T8_CURRENT_T5_SUBTYPE_COLLAPSE,
+    currentT5ConditionSubtypeSetsVerified: valid,
+    currentT5ConditionSlotPathsVerified: valid,
     currentT5EmittedClaimPreservesTenGodSubtypeIdentity: false,
     currentT5EmittedClaimPreservesSourceSlotIdentity: false,
     currentT5EmittedClaimPreservesSeasonalCommand: false,
