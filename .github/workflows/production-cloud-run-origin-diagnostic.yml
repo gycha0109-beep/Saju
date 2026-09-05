@@ -2,6 +2,11 @@ name: Production Cloud Run Origin Diagnostic
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/production-cloud-run-origin-diagnostic.yml
 
 permissions:
   contents: read
