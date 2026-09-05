@@ -27,6 +27,20 @@ export const FR146_NEXT_FRONTIER =
   'square_broad_fang_capture_quality_and_multi_session_condition_governance_before_repeatability_interpretation' as const;
 
 const SAFE_REF = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$/u;
+const REQUEST_KEYS = new Set([
+  'schemaVersion',
+  'researchSubjectRef',
+  'captureSeriesRef',
+  'geometryMetadataPbtxt',
+  'parity',
+  'captures',
+]);
+const CAPTURE_KEYS = new Set([
+  'acquisitionRunRef',
+  'providerRunRef',
+  'captureRef',
+  'imageBlob',
+]);
 const MIN_REPEATED_CAPTURE_COUNT = 2;
 const ISSUED = new WeakSet<object>();
 
@@ -181,6 +195,10 @@ async function transientSha256(blob: Blob): Promise<string> {
 
 function validateRequest(request: SquareBroadFangRepeatedGovernedRealCaptureRequestFR146V1): void {
   if (typeof request !== 'object' || request === null) fail('request must be an object.');
+  const unexpectedRequestField = Object.keys(request).find((key) => !REQUEST_KEYS.has(key));
+  if (unexpectedRequestField !== undefined) {
+    fail(`request contains unauthorized field: ${unexpectedRequestField}.`);
+  }
   if (request.schemaVersion !== 'fr146-square-broad-fang-repeated-governed-real-capture-request-v1') {
     fail('request schemaVersion is unsupported.');
   }
@@ -199,6 +217,10 @@ function validateRequest(request: SquareBroadFangRepeatedGovernedRealCaptureRequ
   const captureRefs = new Set<string>();
   request.captures.forEach((capture, index) => {
     if (typeof capture !== 'object' || capture === null) fail(`capture ${index} must be an object.`);
+    const unexpectedCaptureField = Object.keys(capture).find((key) => !CAPTURE_KEYS.has(key));
+    if (unexpectedCaptureField !== undefined) {
+      fail(`capture ${index} contains unauthorized field: ${unexpectedCaptureField}.`);
+    }
     const acquisitionRunRef = opaqueRef(capture.acquisitionRunRef, `capture ${index} acquisitionRunRef`);
     const providerRunRef = opaqueRef(capture.providerRunRef, `capture ${index} providerRunRef`);
     const captureRef = opaqueRef(capture.captureRef, `capture ${index} captureRef`);
