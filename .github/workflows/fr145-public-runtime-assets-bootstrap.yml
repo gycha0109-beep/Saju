@@ -33,7 +33,7 @@ jobs:
           cp -R node_modules/@mediapipe/tasks-vision/. .fr145-public-runtime/tasks-vision/
           cp -R .face-reading-dist .fr145-public-runtime/face-reading-dist
           cat > .fr145-browser-entry.ts <<'ENTRY'
-          export { FaceLandmarker } from '@mediapipe/tasks-vision';
+          export { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
           export { runPhotoToLipsContourNeutralSurfaceFR66 } from './packages/face-reading/src/lips-contour-neutral-surface-fr66.ts';
           export { assessLipsPoseNormalizationRequirementsFR67 } from './packages/face-reading/src/lips-pose-normalization-requirements-fr67.ts';
           export { admitMediaPipeFaceGeometryTransformSemanticsFR68 } from './packages/face-reading/src/mediapipe-face-geometry-transform-semantics-fr68.ts';
@@ -42,10 +42,19 @@ jobs:
           export { admitMediaPipeScreenToMetricReimplementationParityFR76 } from './packages/face-reading/src/mediapipe-screen-to-metric-reimplementation-parity-fr76.ts';
           export { runSquareBroadFangEphemeralRealCaptureFR145, DEFAULT_SQUARE_BROAD_FANG_EPHEMERAL_REAL_CAPTURE_DEPENDENCIES_FR145 } from './packages/face-reading/src/five-officers-square-broad-fang-ephemeral-real-capture-bridge-fr145.ts';
           ENTRY
+          cat > .fr145-node-crypto-browser-shim.mjs <<'SHIM'
+          function unavailable() {
+            throw new Error('node:crypto compatibility shim is outside the FR145 browser capture path');
+          }
+          export function createHash() { return unavailable(); }
+          export function createPublicKey() { return unavailable(); }
+          export function verify() { return unavailable(); }
+          SHIM
           npx --yes esbuild@0.25.9 .fr145-browser-entry.ts \
             --bundle --format=esm --platform=browser --target=es2022 \
+            --alias:node:crypto=./.fr145-node-crypto-browser-shim.mjs \
             --outfile=.fr145-public-runtime/fr145-browser-bundle.mjs
-          rm .fr145-browser-entry.ts
+          rm .fr145-browser-entry.ts .fr145-node-crypto-browser-shim.mjs
           curl --fail --location --retry 3 \
             'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task' \
             --output .fr145-public-runtime/model/face_landmarker.task
