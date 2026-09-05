@@ -1,0 +1,33 @@
+name: FR147 Multi Session Condition Governance CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr147-square-broad-fang-multi-session-condition-governance.md'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-multi-session-condition-governance-fr147.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-multi-session-condition-governance-fr147.test.ts'
+      - 'scripts/verify-fr147-square-broad-fang-multi-session-condition-governance.mjs'
+      - '.github/workflows/fr147-multi-session-condition-governance-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr147-multi-session-condition-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR147 multi-session condition governance
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-fang-multi-session-condition-governance-fr147.test.ts
+      - name: Verify FR147 zero-quality-promotion and zero-semantic-promotion contract
+        run: node scripts/verify-fr147-square-broad-fang-multi-session-condition-governance.mjs
