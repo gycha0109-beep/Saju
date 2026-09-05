@@ -1,0 +1,34 @@
+name: FR145 Square Broad Fang Ephemeral Real Capture Bridge CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr145-square-broad-fang-ephemeral-real-capture-bridge.md'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-ephemeral-real-capture-bridge-fr145.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-ephemeral-real-capture-bridge-fr145.test.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-ephemeral-real-capture-bridge-fr145-hardening.test.ts'
+      - 'scripts/verify-fr145-square-broad-fang-ephemeral-real-capture-bridge.mjs'
+      - '.github/workflows/fr145-square-broad-fang-ephemeral-real-capture-bridge-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr145-square-broad-fang-ephemeral-real-capture-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR145 ephemeral bridge boundary
+        run: npx vitest run packages/face-reading/src/five-officers-square-broad-fang-ephemeral-real-capture-bridge-fr145.test.ts packages/face-reading/src/five-officers-square-broad-fang-ephemeral-real-capture-bridge-fr145-hardening.test.ts
+      - name: Verify FR145 exact zero-persistence and zero-semantic-promotion chain
+        run: node scripts/verify-fr145-square-broad-fang-ephemeral-real-capture-bridge.mjs
