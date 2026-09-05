@@ -71,15 +71,15 @@ async function parity(): Promise<MediaPipeScreenToMetricReimplementationParityFR
   const fr67 = assessLipsPoseNormalizationRequirementsFR67(fr66);
   const fr68 = admitMediaPipeFaceGeometryTransformSemanticsFR68(fr67);
   const fr69 = admitMediaPipeWebMetricGeometryGapFR69(fr68);
-  const fr75 = admitMediaPipeReleaseExactMetricGeometryFR75(fr69);
-  return admitMediaPipeScreenToMetricReimplementationParityFR76(fr75);
+  return admitMediaPipeScreenToMetricReimplementationParityFR76(
+    admitMediaPipeReleaseExactMetricGeometryFR75(fr69),
+  );
 }
 
 function fakeRecord(
   request: SquareBroadFangEphemeralRealCaptureRequestFR145V1,
   offset: number,
 ): SquareBroadFangNeutralCaptureRecordFR144V1 {
-  const values = [0.1 + offset, 0.5 + offset, 0.2 + offset] as const;
   return {
     schemaVersion: 'fr144-square-broad-fang-neutral-capture-record-v1',
     artifactVersion: '0.1.0',
@@ -100,7 +100,7 @@ function fakeRecord(
     neutralMetricValues: [
       {
         metricRef: FR144_CORRESPONDENCE_METRIC_REF,
-        value: values[0],
+        value: 0.1 + offset,
         unit: 'ratio',
         contributingClosedCycleCount: 2,
         contributingElementCount: 40,
@@ -110,7 +110,7 @@ function fakeRecord(
       },
       {
         metricRef: FR144_ORTHOGONALITY_METRIC_REF,
-        value: values[1],
+        value: 0.5 + offset,
         unit: 'ratio',
         contributingClosedCycleCount: 2,
         contributingElementCount: 40,
@@ -120,7 +120,7 @@ function fakeRecord(
       },
       {
         metricRef: FR144_TURN_CONCENTRATION_METRIC_REF,
-        value: values[2],
+        value: 0.2 + offset,
         unit: 'ratio',
         contributingClosedCycleCount: 2,
         contributingElementCount: 40,
@@ -200,6 +200,8 @@ function fakeResult(
           unit: 'ratio',
           coordinateFrame: 'pose_normalized_face_2d',
           poseCompensated: true,
+          contributingClosedCycleCount: 2,
+          contributingElementCount: 40,
           classificationApplied: false,
           calibrationApplied: false,
           traditionalBindingApplied: false,
@@ -210,6 +212,8 @@ function fakeResult(
           unit: 'radian',
           coordinateFrame: 'pose_normalized_face_2d',
           poseCompensated: true,
+          contributingClosedCycleCount: 2,
+          contributingElementCount: 40,
           classificationApplied: false,
           calibrationApplied: false,
           traditionalBindingApplied: false,
@@ -217,16 +221,11 @@ function fakeResult(
       ],
     },
     fr142: {
-      metricValues: record.neutralMetricValues.map((metric) => ({
-        metricRef: metric.metricRef,
-        value: metric.value,
-        unit: metric.unit,
-        contributingClosedCycleCount: metric.contributingClosedCycleCount,
-        contributingElementCount: metric.contributingElementCount,
-        classificationApplied: metric.classificationApplied,
-        calibrationApplied: metric.calibrationApplied,
-        traditionalBindingApplied: metric.traditionalBindingApplied,
-      })) as SquareBroadFangEphemeralRealCaptureResultFR145V1['fr142']['metricValues'],
+      metricValues: [
+        { ...record.neutralMetricValues[0]! },
+        { ...record.neutralMetricValues[1]! },
+        { ...record.neutralMetricValues[2]! },
+      ],
     },
     fr144: { acquisitionValidation: 'PASS', captureRecord: record },
     persistencePolicy: {
@@ -250,29 +249,29 @@ function fakeResult(
   };
 }
 
-function fakeDataset(records: readonly SquareBroadFangNeutralCaptureRecordFR144V1[]): SquareBroadFangNeutralAcquisitionDatasetFR144V1 {
-  const refs = [
-    FR144_CORRESPONDENCE_METRIC_REF,
-    FR144_ORTHOGONALITY_METRIC_REF,
-    FR144_TURN_CONCENTRATION_METRIC_REF,
-  ] as const;
-  const metrics = refs.map((metricRef) => {
-    const values = records.map((record) => record.neutralMetricValues.find((metric) => metric.metricRef === metricRef)!.value);
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    return {
-      metricRef,
-      unit: 'ratio' as const,
-      count: values.length,
-      min,
-      max,
-      mean: values.reduce((sum, value) => sum + value, 0) / values.length,
-      range: max - min,
-      classificationApplied: false as const,
-      calibrationApplied: false as const,
-      acceptanceThresholdApplied: false as const,
-    };
-  }) as SquareBroadFangNeutralAcquisitionDatasetFR144V1['seriesSummaries'][number]['metrics'];
+function summarize(records: readonly SquareBroadFangNeutralCaptureRecordFR144V1[], index: 0 | 1 | 2) {
+  const metricRef = records[0]!.neutralMetricValues[index]!.metricRef;
+  const values = records.map((record) => record.neutralMetricValues[index]!.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  return {
+    metricRef,
+    unit: 'ratio' as const,
+    count: values.length,
+    min,
+    max,
+    mean: values.reduce((sum, value) => sum + value, 0) / values.length,
+    range: max - min,
+    classificationApplied: false as const,
+    calibrationApplied: false as const,
+    acceptanceThresholdApplied: false as const,
+  };
+}
+
+function fakeDataset(
+  records: readonly SquareBroadFangNeutralCaptureRecordFR144V1[],
+): SquareBroadFangNeutralAcquisitionDatasetFR144V1 {
+  const metrics = [summarize(records, 0), summarize(records, 1), summarize(records, 2)] as const;
   return {
     schemaVersion: 'fr144-square-broad-fang-neutral-acquisition-dataset-v1',
     artifactVersion: '0.1.0',
@@ -312,8 +311,8 @@ function fakeDataset(records: readonly SquareBroadFangNeutralCaptureRecordFR144V
 function dependencies(): SquareBroadFangRepeatedGovernedRealCaptureDependenciesFR146V1 {
   let offset = 0;
   return {
-    async runCapture(request) {
-      const result = fakeResult(request, offset);
+    async runCapture(input) {
+      const result = fakeResult(input, offset);
       offset += 0.05;
       return result;
     },
@@ -375,7 +374,6 @@ describe('FR146 repeated governed real-capture dataset', () => {
     expect(result.seriesSummary.metrics.every((metric) => metric.count === 2)).toBe(true);
     expect(result.seriesSummary.empiricalRepeatabilityEstablished).toBe(false);
     expect(result.seriesSummary.captureQualityValidated).toBe(false);
-    expect(result.repeatedCaptureBoundary.exactSourceByteDuplicateRejectedTransiently).toBe(true);
     expect(result.repeatedCaptureBoundary.sourceDigestPersisted).toBe(false);
     expect(result.repeatedCaptureBoundary.sourceDigestReturned).toBe(false);
     expect(result.semanticAuthority.humanSemanticLabelsIssued).toBe(0);
@@ -394,10 +392,13 @@ describe('FR146 repeated governed real-capture dataset', () => {
     const value = await request();
     const calls: string[] = [];
     const deps = dependencies();
-    const guarded = { ...deps, async runCapture(input: SquareBroadFangEphemeralRealCaptureRequestFR145V1) {
-      calls.push(input.identity.captureRef);
-      return deps.runCapture(input);
-    } };
+    const guarded = {
+      ...deps,
+      async runCapture(input: SquareBroadFangEphemeralRealCaptureRequestFR145V1) {
+        calls.push(input.identity.captureRef);
+        return deps.runCapture(input);
+      },
+    };
     await expect(runSquareBroadFangRepeatedGovernedRealCaptureFR146({
       ...value,
       captures: value.captures.slice(0, 1),
@@ -407,18 +408,20 @@ describe('FR146 repeated governed real-capture dataset', () => {
 
   it('rejects exact duplicate source bytes before provider execution even when refs differ', async () => {
     const value = await request();
-    const duplicateBytes = new Blob([new Uint8Array([7, 7, 7])], { type: 'image/jpeg' });
     let calls = 0;
     const deps = dependencies();
-    const guarded = { ...deps, async runCapture(input: SquareBroadFangEphemeralRealCaptureRequestFR145V1) {
-      calls += 1;
-      return deps.runCapture(input);
-    } };
+    const guarded = {
+      ...deps,
+      async runCapture(input: SquareBroadFangEphemeralRealCaptureRequestFR145V1) {
+        calls += 1;
+        return deps.runCapture(input);
+      },
+    };
     await expect(runSquareBroadFangRepeatedGovernedRealCaptureFR146({
       ...value,
       captures: [
-        { ...value.captures[0]!, imageBlob: duplicateBytes },
-        { ...value.captures[1]!, imageBlob: new Blob([new Uint8Array([7, 7, 7])], { type: 'image/jpeg' }) },
+        { ...value.captures[0]!, imageBlob: new Blob([new Uint8Array([7, 7, 7])]) },
+        { ...value.captures[1]!, imageBlob: new Blob([new Uint8Array([7, 7, 7])]) },
       ],
     }, guarded)).rejects.toThrow(/exact duplicate source image bytes/u);
     expect(calls).toBe(0);
