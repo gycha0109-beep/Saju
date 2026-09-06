@@ -1,0 +1,44 @@
+name: FR156 External Witness Trust Root Provisioning Protocol CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-square-broad-fang-witness-trust-evidence-intake-fr155.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-external-witness-trust-root-provisioning-protocol-fr156.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-external-witness-trust-root-provisioning-protocol-fr156.test.ts'
+      - 'research/face-reading/fr156-square-broad-fang-external-witness-trust-root-provisioning-protocol.md'
+      - 'scripts/verify-fr156-square-broad-fang-external-witness-trust-root-provisioning-protocol.mjs'
+      - '.github/workflows/fr156-external-witness-trust-root-provisioning-protocol-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr156-external-witness-trust-root-provisioning-protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Test FR156 external witness trust-root provisioning protocol
+        run: >-
+          npx vitest run
+          packages/face-reading/src/five-officers-square-broad-fang-external-witness-trust-root-provisioning-protocol-fr156.test.ts
+      - name: Verify FR156 fail-closed external trust-root authority
+        run: node scripts/verify-fr156-square-broad-fang-external-witness-trust-root-provisioning-protocol.mjs
+      - name: Publish FR156 public runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr156-public-runtime
+          path: .face-reading-dist
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: true
