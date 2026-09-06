@@ -1,0 +1,44 @@
+name: FR151 Capture Quality Perturbation Evidence Review CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-controlled-perturbation-execution-fr150.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-perturbation-evidence-review-fr151.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-perturbation-evidence-review-fr151.test.ts'
+      - 'research/face-reading/fr151-square-broad-fang-capture-quality-perturbation-evidence-review.md'
+      - 'scripts/verify-fr151-square-broad-fang-capture-quality-perturbation-evidence-review.mjs'
+      - '.github/workflows/fr151-capture-quality-perturbation-evidence-review-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr151-perturbation-evidence-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Test FR151 perturbation evidence review
+        run: >-
+          npx vitest run
+          packages/face-reading/src/five-officers-square-broad-fang-capture-quality-perturbation-evidence-review-fr151.test.ts
+      - name: Verify FR151 fail-closed review authority
+        run: node scripts/verify-fr151-square-broad-fang-capture-quality-perturbation-evidence-review.mjs
+      - name: Publish FR151 public runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr151-public-runtime
+          path: .face-reading-dist
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: true
