@@ -1,0 +1,44 @@
+name: FR157 External Trust Root Material Intake CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-square-broad-fang-external-witness-trust-root-provisioning-protocol-fr156.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-external-trust-root-material-intake-fr157.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-external-trust-root-material-intake-fr157.test.ts'
+      - 'research/face-reading/fr157-square-broad-fang-external-trust-root-material-intake.md'
+      - 'scripts/verify-fr157-square-broad-fang-external-trust-root-material-intake.mjs'
+      - '.github/workflows/fr157-external-trust-root-material-intake-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr157-external-trust-root-material-intake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Test FR157 external trust-root material intake
+        run: >-
+          npx vitest run
+          packages/face-reading/src/five-officers-square-broad-fang-external-trust-root-material-intake-fr157.test.ts
+      - name: Verify FR157 fail-closed trust-root authority
+        run: node scripts/verify-fr157-square-broad-fang-external-trust-root-material-intake.mjs
+      - name: Publish FR157 public runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr157-public-runtime
+          path: .face-reading-dist
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: true
