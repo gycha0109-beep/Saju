@@ -111,9 +111,9 @@ The linked transcription continues onto `[005-1b]` and `[005-2a]`.
 
 This gives an edition-native locator that is more precise than the current candidate's section-title-only Wikisource metadata.
 
-### 2.4 四庫全書 text cross-check surfaces
+### 2.4 Separate public text cross-check surfaces
 
-Independent public text surfaces currently agree on the same section identity and opening relation model:
+Separate public text surfaces currently agree on the same section identity and opening relation model:
 
 ```text
 Wikisource 四庫全書本 / 卷05
@@ -124,6 +124,27 @@ https://ctext.org/wiki.pl?if=gb&res=758991
 ```
 
 These remain transcription/cross-reference surfaces. They are useful for locating and comparing text, not substitutes for direct witness-page verification when a production primary-witness claim is intended.
+
+### 2.5 Source-lineage / source-count boundary
+
+A follow-up search also surfaced `神峰通考`, whose public text describes the same day-stem-centered Ten-God relation system and explicitly situates its 子平 method in the `淵海子平` tradition.
+
+```text
+神峰通考
+https://zh.wikisource.org/zh-hant/%E7%A5%9E%E5%B3%B0%E9%80%9A%E8%80%83
+```
+
+This is useful corroborative lineage evidence, but it must **not** be counted mechanically as an independent second authority merely to satisfy a multi-source threshold.
+
+```text
+distinct source ID
+!=
+independent normative provenance
+```
+
+Likewise, Wikisource, CText, Kanripo, Commons, and a library manifest may be different digital surfaces for the same work or edition lineage. Mirror count is not source independence.
+
+Any future `multi_source_supported` classification for an atomic General Natal proposition must document why the supporting works/witnesses are materially independent or otherwise why the lineage relationship is acceptable. The production gate's source-count minimum is necessary but not sufficient methodological evidence.
 
 ---
 
@@ -149,7 +170,7 @@ It is not, by itself, authority for the existing broad General Natal consumer co
 The located section is a plausible primary-witness target for:
 - day-stem-centered Ten-God relation identity
 - generation/control relation naming
--正/偏 differentiation where directly verified in the same witness
+- 正/偏 differentiation where directly verified in the same witness
 ```
 
 ### Not established by this acquisition
@@ -228,7 +249,7 @@ PACK-GENERAL-NATAL-CONCLUSION-SYNTHESIS-CANDIDATE
 | edition-native exact section locator | EXISTS | Kanripo `KR3g0042/WYG/005`, `[005-1a]` |
 | direct scan-page semantic verification | MISSING | PDF body not directly inspected in this pass |
 | proposition-level atomic General Natal methodology | INCOMPLETE | relation identity is bounded; paid-reading synthesis still undefined |
-| qualifying multi-source proposition support | INCOMPLETE | additional proposition-specific sources must be acquired rather than source-count padding |
+| qualifying multi-source proposition support | INCOMPLETE | additional proposition-specific sources must be acquired with lineage review rather than source-count padding |
 | ClaimTypeDefinition/value schema | MISSING for production path | current candidate registries do not supply production claim contracts |
 | ambiguity/scenario General Natal matrix | MISSING | dedicated end-to-end matrix still absent |
 | domain ReviewAttestation | MISSING | must be genuine external/domain review |
