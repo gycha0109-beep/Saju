@@ -1,0 +1,38 @@
+name: FR Cross-Subject Runtime Bootstrap
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/fr-cross-subject-runtime-bootstrap.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build exact current Face Reading runtime
+        run: npm run face:build
+      - name: Acquire pinned FR26 MediaPipe model
+        run: |
+          mkdir -p .runtime-bootstrap
+          curl -fsSL --retry 3 \
+            'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task' \
+            -o .runtime-bootstrap/face_landmarker.task
+          cp -R node_modules/@mediapipe/tasks-vision .runtime-bootstrap/tasks-vision
+          cp -R .face-reading-dist .runtime-bootstrap/face-reading-dist
+          printf '%s\n' '${{ github.sha }}' > .runtime-bootstrap/source-sha.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fr-cross-subject-runtime-bootstrap
+          path: .runtime-bootstrap
+          retention-days: 1
+          if-no-files-found: error
