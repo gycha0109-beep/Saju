@@ -1,0 +1,45 @@
+name: FR152 Independent Multi-Session Evidence Acquisition Protocol CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-condition-governance-fr147.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-capture-quality-perturbation-evidence-review-fr151.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-independent-multi-session-evidence-acquisition-protocol-fr152.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-independent-multi-session-evidence-acquisition-protocol-fr152.test.ts'
+      - 'research/face-reading/fr152-square-broad-fang-independent-multi-session-evidence-acquisition-protocol.md'
+      - 'scripts/verify-fr152-square-broad-fang-independent-multi-session-evidence-acquisition-protocol.mjs'
+      - '.github/workflows/fr152-independent-multi-session-evidence-acquisition-protocol-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr152-independent-multi-session-protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Test FR152 independent multi-session acquisition protocol
+        run: >-
+          npx vitest run
+          packages/face-reading/src/five-officers-square-broad-fang-independent-multi-session-evidence-acquisition-protocol-fr152.test.ts
+      - name: Verify FR152 fail-closed acquisition authority
+        run: node scripts/verify-fr152-square-broad-fang-independent-multi-session-evidence-acquisition-protocol.mjs
+      - name: Publish FR152 public runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr152-public-runtime
+          path: .face-reading-dist
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: true
