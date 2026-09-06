@@ -1,0 +1,44 @@
+name: FR155 Witness Trust Evidence Intake CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-square-broad-fang-witness-signature-mechanical-verification-fr154.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-witness-trust-evidence-intake-fr155.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-witness-trust-evidence-intake-fr155.test.ts'
+      - 'research/face-reading/fr155-square-broad-fang-witness-trust-evidence-intake.md'
+      - 'scripts/verify-fr155-square-broad-fang-witness-trust-evidence-intake.mjs'
+      - '.github/workflows/fr155-witness-trust-evidence-intake-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr155-witness-trust-evidence-intake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Test FR155 witness trust evidence intake
+        run: >-
+          npx vitest run
+          packages/face-reading/src/five-officers-square-broad-fang-witness-trust-evidence-intake-fr155.test.ts
+      - name: Verify FR155 fail-closed witness trust authority
+        run: node scripts/verify-fr155-square-broad-fang-witness-trust-evidence-intake.mjs
+      - name: Publish FR155 public runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr155-public-runtime
+          path: .face-reading-dist
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: true
