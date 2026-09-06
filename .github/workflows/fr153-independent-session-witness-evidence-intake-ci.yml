@@ -1,0 +1,44 @@
+name: FR153 Independent Session Witness Evidence Intake CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/five-officers-square-broad-fang-independent-multi-session-evidence-acquisition-protocol-fr152.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-independent-session-witness-evidence-intake-fr153.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-independent-session-witness-evidence-intake-fr153.test.ts'
+      - 'research/face-reading/fr153-square-broad-fang-independent-session-witness-evidence-intake.md'
+      - 'scripts/verify-fr153-square-broad-fang-independent-session-witness-evidence-intake.mjs'
+      - '.github/workflows/fr153-independent-session-witness-evidence-intake-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr153-independent-session-witness-evidence-intake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Test FR153 independent-session witness evidence intake
+        run: >-
+          npx vitest run
+          packages/face-reading/src/five-officers-square-broad-fang-independent-session-witness-evidence-intake-fr153.test.ts
+      - name: Verify FR153 fail-closed witness evidence intake authority
+        run: node scripts/verify-fr153-square-broad-fang-independent-session-witness-evidence-intake.mjs
+      - name: Publish FR153 public runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr153-public-runtime
+          path: .face-reading-dist
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: true
