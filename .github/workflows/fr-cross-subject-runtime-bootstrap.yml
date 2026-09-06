@@ -21,12 +21,15 @@ jobs:
       - run: npm ci
       - name: Build exact current Face Reading runtime
         run: npm run face:build
-      - name: Acquire pinned FR26 MediaPipe model
+      - name: Acquire pinned FR26/FR77 runtime material
         run: |
           mkdir -p runtime-bootstrap
           curl -fsSL --retry 3 \
             'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task' \
             -o runtime-bootstrap/face_landmarker.task
+          curl -fsSL --retry 3 \
+            'https://raw.githubusercontent.com/google-ai-edge/mediapipe/f8ef212d5c962c0e853db7e59d217056b187084b/mediapipe/tasks/cc/vision/face_geometry/data/geometry_pipeline_metadata_landmarks.pbtxt' \
+            -o runtime-bootstrap/geometry_pipeline_metadata_landmarks.pbtxt
           cp -R node_modules/@mediapipe/tasks-vision runtime-bootstrap/tasks-vision
           cp -R .face-reading-dist runtime-bootstrap/face-reading-dist
           printf '%s\n' '${{ github.sha }}' > runtime-bootstrap/source-sha.txt
