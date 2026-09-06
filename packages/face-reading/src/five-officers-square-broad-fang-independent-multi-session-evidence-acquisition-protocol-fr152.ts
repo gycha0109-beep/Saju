@@ -181,9 +181,9 @@ function validatePredecessors(): void {
   const fr147 = getSquareBroadFangCaptureConditionGovernanceContractFR147();
   if (
     fr147.nextFrontier !== FR147_NEXT_FRONTIER
-    || fr147.admission.sessionEvidence !== 'study_operator_declared_session_ref_not_independently_verified'
-    || fr147.admission.distinctSessionRefsMeanIndependentCaptureSessions !== false
-    || fr147.admission.distinctCaptureEventRefsMeanIndependentCaptureEvents !== false
+    || fr147.admission.sessionAssignmentAuthority !== 'study_operator_declared_not_independently_verified'
+    || fr147.authorityBoundary.distinctSessionRefsMeanIndependentCaptureSessions !== false
+    || fr147.authorityBoundary.distinctCaptureEventRefsMeanIndependentCaptureEvents !== false
   ) fail('FR-147 predecessor session-evidence boundary drift.');
 
   const fr151 = getSquareBroadFangCaptureQualityPerturbationEvidenceReviewContractFR151();
