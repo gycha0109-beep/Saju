@@ -187,7 +187,7 @@ describe('FR153 square broad Fang independent-session witness evidence intake', 
         request.sessions[0],
         {
           ...request.sessions[1],
-          sessionRef: request.sessions[0].sessionRef,
+          sessionRef: request.sessions[0]!.sessionRef,
         },
       ],
     } as SquareBroadFangIndependentSessionWitnessEvidenceIntakeRequestFR153V1;
