@@ -1,0 +1,68 @@
+name: Relationship Spouse T8 Hong Yooseon 2022 Exact KCI Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-hong-yooseon-2022-exact-kci.py'
+      - '.github/workflows/relationship-spouse-t8-hong-yooseon-exact-kci-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-kci-fulltext:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PDF inspection dependencies
+        run: python -m pip install --disable-pip-version-check 'pypdf[crypto]' pymupdf
+      - name: Probe exact public KCI backend
+        run: python scripts/acquire-relationship-spouse-t8-hong-yooseon-2022-exact-kci.py
+      - name: Print bounded acquisition evidence
+        if: always()
+        run: |
+          test -f acquisition-hong-yooseon-2022/summary.txt && cat acquisition-hong-yooseon-2022/summary.txt || true
+          test -f acquisition-hong-yooseon-2022/report.json && python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('acquisition-hong-yooseon-2022/report.json')
+          if p.exists():
+              j = json.loads(p.read_text())
+              print(json.dumps({
+                  'candidate': j.get('candidate'),
+                  'htmlDiscoveredOrteFileIds': j.get('htmlDiscoveredOrteFileIds'),
+                  'fallbackOrteFileIdsTried': j.get('fallbackOrteFileIdsTried'),
+                  'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
+                  'downloadAttempts': j.get('downloadAttempts'),
+                  'pdfs': j.get('pdfs'),
+              }, ensure_ascii=False, indent=2))
+          PY
+      - name: Enforce acquisition identity boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j = json.loads(Path('acquisition-hong-yooseon-2022/report.json').read_text())
+          assert j['candidate']['author'] == '홍유선'
+          assert j['candidate']['year'] == 2022
+          assert j['candidate']['kciArticleId'] == 'ART003089059'
+          assert j['candidate']['doi'] == '10.54385/cbt.2022.2.2.75'
+          assert j['candidate']['printedPages'] == '75-89'
+          assert j['candidate']['expectedArticlePages'] == 15
+          print('Identity boundary verified; fullLengthPdfAcquired=', j['fullLengthPdfAcquired'])
+          PY
+      - name: Upload bounded rendered evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hong-yooseon-2022-exact-kci-bounded-evidence
+          path: |
+            acquisition-hong-yooseon-2022/summary.txt
+            acquisition-hong-yooseon-2022/report.json
+            acquisition-hong-yooseon-2022/rendered-*.png
+          if-no-files-found: warn
+          retention-days: 1
