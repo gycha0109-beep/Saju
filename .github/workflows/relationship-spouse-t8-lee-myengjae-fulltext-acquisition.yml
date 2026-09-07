@@ -56,6 +56,6 @@ jobs:
           path: |
             acquisition-lee-myengjae-2022/summary.txt
             acquisition-lee-myengjae-2022/report.json
-            acquisition-lee-myengjae-2022/rendered-physical-p*.png
+            acquisition-lee-myengjae-2022/rendered-*.png
           if-no-files-found: warn
           retention-days: 1
