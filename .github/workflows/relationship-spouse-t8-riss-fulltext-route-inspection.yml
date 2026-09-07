@@ -1,0 +1,29 @@
+name: Relationship Spouse T8 RISS Fulltext Route Inspection
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/relationship-spouse-t8-riss-fulltext-route-inspection.yml'
+      - 'scripts/probe-relationship-spouse-t8-riss-fulltext-routes.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-routes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect bounded RISS/LOD fulltext route metadata
+        run: python3 scripts/probe-relationship-spouse-t8-riss-fulltext-routes.py
+      - name: Upload route-inspection artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relationship-spouse-t8-riss-fulltext-route-inspection
+          path: acquisition-riss-route-inspection/*
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
