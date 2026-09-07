@@ -5,9 +5,14 @@ import {
   GENERAL_NATAL_SOURCE_CONDITION_FACT_PATHS,
   type GeneralNatalSourceConditionKey,
 } from './general-natal-source-conditioned-lower-tier-producer.js';
+import {
+  GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_DEFINITION_HASH,
+  GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_SCOPE,
+  GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_VERSION,
+} from './general-natal-source-scoped-branch-break.js';
 
 export const GENERAL_NATAL_SOURCE_CONDITION_RESOLVER_FRONTIER_VERSION =
-  '0.1.0-research' as const;
+  '0.2.0-research' as const;
 
 export type GeneralNatalSourceConditionResolverGap =
   | 'GEJU_CANDIDATE_DERIVATION_AUTHORITY_MISSING'
@@ -17,7 +22,7 @@ export type GeneralNatalSourceConditionResolverGap =
   | 'DAY_MASTER_FLOURISHING_CLASSIFICATION_AUTHORITY_MISSING'
   | 'FOOD_GOD_FLOURISHING_CLASSIFICATION_AUTHORITY_MISSING'
   | 'NO_CLASH_BREAK_QUALIFICATION_AUTHORITY_MISSING'
-  | 'BRANCH_BREAK_RELATION_NOT_MODELED';
+  | 'SOURCE_SCOPED_BRANCH_BREAK_ADMISSION_AUTHORITY_MISSING';
 
 export interface PianCaiGeSourceConditionFact {
   readonly patternEstablished: true;
@@ -53,6 +58,16 @@ export interface GeneralNatalCanonicalSubstrateObservation {
   readonly authorityBoundary: string;
 }
 
+export interface GeneralNatalSourceScopedBranchBreakResearchSubstrate {
+  readonly available: true;
+  readonly version: typeof GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_VERSION;
+  readonly sourceScope: typeof GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_SCOPE;
+  readonly definitionHash: string;
+  readonly canonicalDerivedFact: false;
+  readonly universalBranchBreakAuthorized: false;
+  readonly noClashBreakQualificationAuthorized: false;
+}
+
 export interface GeneralNatalSourceConditionFrontierItem {
   readonly conditionKey: GeneralNatalSourceConditionKey;
   readonly targetFactPath: string;
@@ -69,6 +84,7 @@ export interface GeneralNatalSourceConditionResolverFrontierReport {
   readonly canonicalResolverAuthorized: false;
   readonly sourceConditionFactsEmitted: false;
   readonly observedCanonicalSubstrate: readonly GeneralNatalCanonicalSubstrateObservation[];
+  readonly sourceScopedBranchBreakResearchSubstrate: GeneralNatalSourceScopedBranchBreakResearchSubstrate;
   readonly conditions: readonly GeneralNatalSourceConditionFrontierItem[];
   readonly facts: GeneralNatalSourceConditionFactSet;
   readonly globalAuthorityGaps: readonly GeneralNatalSourceConditionResolverGap[];
@@ -123,7 +139,7 @@ const CONDITION_FRONTIER = Object.freeze([
       'DAY_MASTER_FLOURISHING_CLASSIFICATION_AUTHORITY_MISSING',
       'FOOD_GOD_FLOURISHING_CLASSIFICATION_AUTHORITY_MISSING',
       'NO_CLASH_BREAK_QUALIFICATION_AUTHORITY_MISSING',
-      'BRANCH_BREAK_RELATION_NOT_MODELED',
+      'SOURCE_SCOPED_BRANCH_BREAK_ADMISSION_AUTHORITY_MISSING',
     ],
   },
 ] as const satisfies readonly GeneralNatalSourceConditionFrontierItem[]);
@@ -162,9 +178,21 @@ function observedCanonicalSubstrate(
       path: 'derivedFacts.structuralRelations',
       status: stateStatus(snapshot.derivedFacts.structuralRelations),
       authorityBoundary:
-        'Current relations are structural matches only; transformation/effect is not established and branch break is not modeled.',
+        'Current canonical relations are structural matches only; transformation/effect is not established and branch break remains absent from the canonical relation vocabulary. A separate source-scoped research membership helper is not canonical resolver authority.',
     },
   ]);
+}
+
+function sourceScopedBranchBreakResearchSubstrate(): GeneralNatalSourceScopedBranchBreakResearchSubstrate {
+  return Object.freeze({
+    available: true,
+    version: GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_VERSION,
+    sourceScope: GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_SCOPE,
+    definitionHash: GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_DEFINITION_HASH,
+    canonicalDerivedFact: false,
+    universalBranchBreakAuthorized: false,
+    noClashBreakQualificationAuthorized: false,
+  });
 }
 
 function unavailableFacts(): GeneralNatalSourceConditionFactSet {
@@ -185,7 +213,7 @@ function orderedGlobalGaps(): readonly GeneralNatalSourceConditionResolverGap[] 
     'DAY_MASTER_FLOURISHING_CLASSIFICATION_AUTHORITY_MISSING',
     'FOOD_GOD_FLOURISHING_CLASSIFICATION_AUTHORITY_MISSING',
     'NO_CLASH_BREAK_QUALIFICATION_AUTHORITY_MISSING',
-    'BRANCH_BREAK_RELATION_NOT_MODELED',
+    'SOURCE_SCOPED_BRANCH_BREAK_ADMISSION_AUTHORITY_MISSING',
   ]);
   const present = new Set(CONDITION_FRONTIER.flatMap((condition) => condition.authorityGaps));
   return ordered.filter((gap) => present.has(gap));
@@ -195,6 +223,7 @@ export function buildGeneralNatalSourceConditionResolverFrontier(
   snapshot: CanonicalSajuSnapshot,
 ): GeneralNatalSourceConditionResolverFrontierReport {
   const substrate = observedCanonicalSubstrate(snapshot);
+  const branchBreakResearchSubstrate = sourceScopedBranchBreakResearchSubstrate();
   const globalAuthorityGaps = orderedGlobalGaps();
   const material = {
     reportVersion: GENERAL_NATAL_SOURCE_CONDITION_RESOLVER_FRONTIER_VERSION,
@@ -203,6 +232,7 @@ export function buildGeneralNatalSourceConditionResolverFrontier(
     canonicalResolverAuthorized: false as const,
     sourceConditionFactsEmitted: false as const,
     observedCanonicalSubstrate: substrate,
+    sourceScopedBranchBreakResearchSubstrate: branchBreakResearchSubstrate,
     conditions: CONDITION_FRONTIER,
     globalAuthorityGaps,
   };
@@ -212,7 +242,9 @@ export function buildGeneralNatalSourceConditionResolverFrontier(
     ...material,
     facts: unavailableFacts(),
     notes: Object.freeze([
-      'This research frontier records authority gaps; it does not infer any source condition from raw pillars, Ten-God presence, hidden-stem membership, or structural-relation presence/absence.',
+      'This research frontier records authority gaps; it does not infer any source condition from raw pillars, Ten-God presence, hidden-stem membership, canonical structural-relation presence/absence, or source-scoped branch-break membership.',
+      'The source-scoped branch-break helper preserves only the direct 三命通會 卷三 破煞 membership set. It is not a universal 六破 authority and is not admitted as a canonical derived fact.',
+      'Branch-break membership, even when present, does not establish the compound 食神格 無衝破 qualification; absence of emitted source-scoped membership is not an authorized no-break verdict.',
       'A fully resolved canonical snapshot is insufficient to establish the four PR #335 source conditions under current repository authority.',
       'Do not translate unavailable source-condition facts into false negatives. Downstream source-conditioned rules must remain fail-closed until a reviewed resolver is introduced.',
       'Product, narrative, LLM, and Commerce layers must not fill these missing predicates.',
