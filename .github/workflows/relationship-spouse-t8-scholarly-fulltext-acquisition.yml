@@ -1,0 +1,44 @@
+name: Relationship Spouse T8 Scholarly Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/relationship-spouse-t8-scholarly-fulltext-acquisition.yml'
+      - 'scripts/acquire-relationship-spouse-t8-scholarly-fulltext.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-scholarly-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PDF inspection utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils
+
+      - name: Probe public scholarly fulltext routes
+        run: |
+          python3 scripts/acquire-relationship-spouse-t8-scholarly-fulltext.py
+
+      - name: Upload bounded acquisition artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relationship-spouse-t8-scholarly-fulltext-acquisition
+          path: |
+            acquisition/acquisition-report.json
+            acquisition/acquisition-summary.txt
+            acquisition/*-lod-*.txt
+            acquisition/*-riss-search.txt
+            acquisition/*-discovered-*.txt
+            acquisition/*-target-pages/*.txt
+            acquisition/*-target-pages/*.png
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
