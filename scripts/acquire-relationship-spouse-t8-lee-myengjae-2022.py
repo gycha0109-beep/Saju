@@ -11,9 +11,10 @@ from pypdf import PdfReader
 
 OUT = Path('acquisition-lee-myengjae-2022'); OUT.mkdir(exist_ok=True)
 PRIVATE = Path('acquisition-lee-myengjae-2022-private'); PRIVATE.mkdir(exist_ok=True)
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/6.1; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/6.3; public-resource-verification)'
 MAX = 35 * 1024 * 1024
 ARTI = 'ART002833924'
+ORTE_FILE_ID = 'KCI_FI002833924'
 TITLE = '자평명리학의 육친론 고찰'
 DOI = '10.35955/JCH.2022.04.80.273'
 KEYWORDS = ('배우자','부부','남편','아내','처','妻','夫','배우자궁','부처궁','夫妻','남명','여명','건명','곤명','남녀','재성','관성','육친')
@@ -50,10 +51,10 @@ def candidate_links(text, base):
     out=set()
     for x in re.findall(r'(?:href|src|action)=["\']([^"\']+)["\']', text, re.I):
         u=urljoin(base,x.replace('&amp;','&'))
-        if any(k in u.lower() for k in ('pdf','preview','download','orterview','artipreview','file','original')):
+        if any(k in u.lower() for k in ('pdf','preview','download','orterview','artipreview','orteservhist','file','original')):
             out.add(u)
     for x in re.findall(r'https?://[^\s"\'<>]+', text):
-        if any(k in x.lower() for k in ('pdf','preview','download','file')): out.add(x.rstrip(').,;'))
+        if any(k in x.lower() for k in ('pdf','preview','download','orteservhist','file')): out.add(x.rstrip(').,;'))
     return sorted(out)
 
 def inspect_pdf(b, label):
@@ -82,7 +83,7 @@ def inspect_pdf(b, label):
             for i in hit_pages:
                 for p in (i-1,i,i+1):
                     if 1 <= p <= doc.page_count and p not in targets: targets.append(p)
-            targets=targets[:14]
+            targets=targets[:18]
             for p in targets:
                 pix=doc.load_page(p-1).get_pixmap(matrix=pymupdf.Matrix(1.65,1.65),alpha=False)
                 f=OUT/f'rendered-{label}-p{p:03d}.png'; pix.save(f)
@@ -94,16 +95,22 @@ def inspect_pdf(b, label):
 
 def main():
     base='https://www.kci.go.kr/kciportal/'
+    detail=f'{base}ci/sereArticleSearch/ciSereArtiView.kci?sereArticleSearchBean.artiId={ARTI}'
+    exact_download=(
+      f'{base}ci/sereArticleSearch/ciSereArtiOrteServHistIFrame.kci?'
+      f'sereArticleSearchBean.artiId={ARTI}&sereArticleSearchBean.orteFileId={ORTE_FILE_ID}'
+    )
     roots=[
-      f'{base}landing/article.kci?arti_id={ARTI}',
-      f'{base}ci/sereArticleSearch/ciSereArtiView.kci?sereArticleSearchBean.artiId={ARTI}',
-      f'{base}ci/sereArticleSearch/ciSereArtiOrteView.kci?sereArticleSearchBean.artiId={ARTI}',
-      f'{base}ci/sereArticleSearch/artiPreView.kci?sereArticleSearchBean.artiId={ARTI}&v=2019',
-      f'https://doi.org/{DOI}',
+      ('kci-exact-download', exact_download, detail),
+      ('root', f'{base}landing/article.kci?arti_id={ARTI}', None),
+      ('root', detail, None),
+      ('root', f'{base}ci/sereArticleSearch/ciSereArtiOrteView.kci?sereArticleSearchBean.artiId={ARTI}', detail),
+      ('root', f'{base}ci/sereArticleSearch/artiPreView.kci?sereArticleSearchBean.artiId={ARTI}&v=2019', detail),
+      ('root', f'https://doi.org/{DOI}', None),
     ]
-    report={'purpose':'public fulltext acquisition only; no login/paywall/auth bypass','candidate':{'author':'이명재','year':2022,'title':TITLE,'kciArticleId':ARTI,'doi':DOI},'probes':[],'pdfs':[]}
-    queue=[('root',u,None) for u in roots]; seen=set()
-    while queue and len(seen)<80:
+    report={'purpose':'public fulltext acquisition only; no login/paywall/auth bypass','candidate':{'author':'이명재','year':2022,'title':TITLE,'kciArticleId':ARTI,'kciOrteFileId':ORTE_FILE_ID,'doi':DOI},'probes':[],'pdfs':[]}
+    queue=list(roots); seen=set()
+    while queue and len(seen)<100:
         origin,u,ref=queue.pop(0)
         if u in seen: continue
         seen.add(u); m,b=fetch(u,ref); m['origin']=origin; m['directPdf']=is_pdf(m,b)
@@ -115,12 +122,15 @@ def main():
             rec={'origin':origin,'sourceUrl':m.get('finalUrl') or u,'sha256':hashlib.sha256(b).hexdigest(),'bytes':len(b),'savedAs':p.name,**ins}
             report['pdfs'].append(rec); m['savedAs']=p.name
         elif b:
-            text=dec(b); m['containsTitle']=TITLE in text; m['containsArticleId']=ARTI in text; links=candidate_links(text,m.get('finalUrl') or u); m['candidateLinkCount']=len(links); m['candidateLinks']=links[:80]
-            for link in links[:40]: queue.append((f'html:{origin}',link,m.get('finalUrl') or u))
+            text=dec(b); m['containsTitle']=TITLE in text; m['containsArticleId']=ARTI in text; m['bodySample']=re.sub(r'\s+',' ',text[:3000])[:3000]
+            links=candidate_links(text,m.get('finalUrl') or u); m['candidateLinkCount']=len(links); m['candidateLinks']=links[:100]
+            for link in links[:50]: queue.append((f'html:{origin}',link,m.get('finalUrl') or u))
         report['probes'].append(m)
     report['directPdfAcquired']=bool(report['pdfs'])
+    report['fullLengthPdfCandidates']=[p for p in report['pdfs'] if p.get('pageCount',0) >= 10]
+    report['fullLengthPdfAcquired']=bool(report['fullLengthPdfCandidates'])
     (OUT/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
-    lines=[f'directPdfAcquired={report["directPdfAcquired"]}',f'candidate={report["candidate"]}']
+    lines=[f'directPdfAcquired={report["directPdfAcquired"]}',f'fullLengthPdfAcquired={report["fullLengthPdfAcquired"]}',f'candidate={report["candidate"]}']
     for p in report['pdfs']:
         lines.append(f'PDF sha={p["sha256"]} bytes={p["bytes"]} pages={p["pageCount"]} encrypted={p["encrypted"]} origin={p["origin"]} url={p["sourceUrl"]}')
         lines.append(f'TEXT_SAMPLES={p["textSamples"]}')
@@ -128,8 +138,8 @@ def main():
         for hit in p['hits']:
             lines.append(f'PAGE {hit["physicalPdfPage"]}: ' + ' || '.join(hit['snippets'][:8]))
     for m in report['probes']:
-        if m.get('directPdf') or m.get('containsTitle') or m.get('error'):
-            lines.append(f'PROBE origin={m["origin"]} status={m["status"]} type={m["contentType"]} bytes={m["bytes"]} pdf={m.get("directPdf")} title={m.get("containsTitle")} final={m["finalUrl"]} err={m["error"]}')
+        if m.get('origin')=='kci-exact-download' or m.get('directPdf') or m.get('containsTitle') or m.get('error'):
+            lines.append(f'PROBE origin={m["origin"]} status={m["status"]} type={m["contentType"]} bytes={m["bytes"]} pdf={m.get("directPdf")} title={m.get("containsTitle")} final={m["finalUrl"]} redirects={m.get("redirectChain")} err={m["error"]} sample={m.get("bodySample","")[:1200]}')
     (OUT/'summary.txt').write_text('\n'.join(lines)+'\n',encoding='utf-8'); print('\n'.join(lines)); return 0
 
 if __name__=='__main__': raise SystemExit(main())
