@@ -1,0 +1,42 @@
+name: Relationship Spouse T8 Role-Neutral Frontier Acquisition
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/relationship-spouse-t8-role-neutral-frontier-acquisition.yml'
+      - 'scripts/acquire-relationship-spouse-t8-role-neutral-frontier.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-role-neutral-frontier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install bounded PDF inspection utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils
+
+      - name: Probe public Song/Jung fulltext routes
+        run: |
+          python3 scripts/acquire-relationship-spouse-t8-role-neutral-frontier.py
+
+      - name: Upload bounded acquisition artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relationship-spouse-t8-role-neutral-frontier-acquisition
+          path: |
+            acquisition-role-neutral-frontier/report.json
+            acquisition-role-neutral-frontier/summary.txt
+            acquisition-role-neutral-frontier/*-matched-pages/*.txt
+            acquisition-role-neutral-frontier/*-matched-pages/*.png
+            acquisition-role-neutral-frontier-private/*.pdf
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
