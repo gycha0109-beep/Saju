@@ -1,0 +1,32 @@
+name: Relationship Spouse T8 Lee Youngeun Fulltext Acquisition
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-lee-youngeun-2025.py'
+      - '.github/workflows/relationship-spouse-t8-lee-youngeun-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-lee-youngeun-2025:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe exact public Kyobo and publisher routes
+        run: python3 scripts/acquire-relationship-spouse-t8-lee-youngeun-2025.py
+      - name: Upload bounded acquisition artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relationship-spouse-t8-lee-youngeun-2025-acquisition
+          path: |
+            acquisition-lee-youngeun-2025/**
+            acquisition-lee-youngeun-2025-private/*.pdf
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
