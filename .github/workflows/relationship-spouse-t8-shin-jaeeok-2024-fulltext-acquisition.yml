@@ -1,0 +1,60 @@
+name: Relationship Spouse T8 Shin Jaeeok 2024 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/relationship-spouse-t8-shin-jaeeok-2024-fulltext-acquisition.yml'
+      - 'scripts/acquire-relationship-spouse-t8-shin-jaeeok-2024.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PDF inspection dependencies
+        run: python -m pip install --disable-pip-version-check 'pypdf[crypto]' pymupdf
+      - name: Probe public RISS and dCollection fulltext routes
+        run: python scripts/acquire-relationship-spouse-t8-shin-jaeeok-2024.py
+      - name: Print bounded acquisition result
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-shin-jaeeok-2024/report.json').read_text())
+          print(json.dumps({
+            'candidate':j.get('candidate'),
+            'discoveredUcis':j.get('discoveredUcis'),
+            'discoveredDcollectionUrls':j.get('discoveredDcollectionUrls'),
+            'pdf':j.get('pdf'),
+            'fullLengthPdfAcquired':j.get('fullLengthPdfAcquired'),
+          },ensure_ascii=False,indent=2))
+          PY
+      - name: Enforce exact identity boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-shin-jaeeok-2024/report.json').read_text())
+          assert j['candidate']['rissId']=='T16939654'
+          assert j['candidate']['author']=='신재억'
+          assert j['candidate']['year']==2024
+          print('identity boundary verified; fullLengthPdfAcquired=',j['fullLengthPdfAcquired'])
+          PY
+      - name: Upload bounded evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shin-jaeeok-2024-bounded-fulltext-evidence
+          path: |
+            acquisition-shin-jaeeok-2024/report.json
+            acquisition-shin-jaeeok-2024/rendered-*.png
+          if-no-files-found: warn
+          retention-days: 1
