@@ -6,6 +6,7 @@ on:
       - '.github/workflows/relationship-spouse-t8-shin-jaeeok-2024-fulltext-acquisition.yml'
       - 'scripts/acquire-relationship-spouse-t8-shin-jaeeok-2024.py'
       - 'scripts/probe-relationship-spouse-t8-shin-jaeeok-2024-riss-dispatcher.py'
+      - 'scripts/probe-relationship-spouse-t8-shin-jaeeok-2024-riss-tts-uri.py'
   workflow_dispatch:
 
 permissions:
@@ -26,6 +27,8 @@ jobs:
         run: python scripts/acquire-relationship-spouse-t8-shin-jaeeok-2024.py
       - name: Probe exact RISS dispatcher
         run: python scripts/probe-relationship-spouse-t8-shin-jaeeok-2024-riss-dispatcher.py
+      - name: Probe target-specific RISS TTS source URI
+        run: python scripts/probe-relationship-spouse-t8-shin-jaeeok-2024-riss-tts-uri.py
       - name: Print bounded acquisition result
         run: |
           python - <<'PY'
@@ -33,6 +36,7 @@ jobs:
           from pathlib import Path
           j=json.loads(Path('acquisition-shin-jaeeok-2024/report.json').read_text())
           d=json.loads(Path('acquisition-shin-jaeeok-2024/riss-dispatcher.json').read_text())
+          t=json.loads(Path('acquisition-shin-jaeeok-2024/riss-tts-uri.json').read_text())
           print(json.dumps({
             'candidate':j.get('candidate'),
             'discoveredUcis':j.get('discoveredUcis'),
@@ -40,6 +44,9 @@ jobs:
             'fullLengthPdfAcquired':j.get('fullLengthPdfAcquired'),
             'originalCheck':d.get('originalCheck'),
             'originalCheckBody':d.get('originalCheckBody'),
+            'tts':t.get('tts'),
+            'ttsBody':t.get('ttsBody'),
+            'ttsExposedUrls':t.get('exposedUrls'),
             'dispatcherSources':[{
               'source':x.get('source'),
               'targetCalls':x.get('targetCalls'),
@@ -54,10 +61,12 @@ jobs:
           from pathlib import Path
           j=json.loads(Path('acquisition-shin-jaeeok-2024/report.json').read_text())
           d=json.loads(Path('acquisition-shin-jaeeok-2024/riss-dispatcher.json').read_text())
+          t=json.loads(Path('acquisition-shin-jaeeok-2024/riss-tts-uri.json').read_text())
           assert j['candidate']['rissId']=='T16939654'
           assert j['candidate']['author']=='신재억'
           assert j['candidate']['year']==2024
           assert d['detail']['status']==200
+          assert t['payload']['control_no']=='49df877f9b4f8a08ffe0bdc3ef48d419'
           print('identity boundary verified; fullLengthPdfAcquired=',j['fullLengthPdfAcquired'])
           PY
       - name: Upload bounded evidence only
@@ -68,6 +77,7 @@ jobs:
           path: |
             acquisition-shin-jaeeok-2024/report.json
             acquisition-shin-jaeeok-2024/riss-dispatcher.json
+            acquisition-shin-jaeeok-2024/riss-tts-uri.json
             acquisition-shin-jaeeok-2024/rendered-*.png
           if-no-files-found: warn
           retention-days: 1
