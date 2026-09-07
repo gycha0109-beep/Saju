@@ -28,7 +28,7 @@ export type GeneralNatalSourceConditionKey =
   | 'shang_guan_shang_jin'
   | 'shi_shen_ge_flourishing_no_clash_break';
 
-export const GENERAL_NATAL_SOURCE_CONDITION_SOURCE: SourceReference = Object.freeze({
+export const GENERAL_NATAL_SOURCE_CONDITION_SOURCE = Object.freeze({
   sourceId: 'SRC-GENERAL-NATAL-SAMYEONG-V5-SOURCE-CONDITIONS-KANRIPO',
   sourceType: 'classical_text',
   title: '三命通會（四庫全書本）卷五',
@@ -45,7 +45,7 @@ export const GENERAL_NATAL_SOURCE_CONDITION_SOURCE: SourceReference = Object.fre
   },
   notes:
     'Research text surface used only to preserve the exact source-condition topology recorded by the 2026-09-07 General Natal authority review. This source object is not a production primary-witness promotion.',
-});
+} satisfies SourceReference);
 
 export const GENERAL_NATAL_SOURCE_CONDITION_METHODOLOGY: MethodologyDefinition = Object.freeze({
   methodologyId: METHODOLOGY_ID,
@@ -75,7 +75,7 @@ export const GENERAL_NATAL_SOURCE_CONDITION_METHODOLOGY: MethodologyDefinition =
   status: 'research',
 });
 
-export const GENERAL_NATAL_SOURCE_CONDITION_VALUE_SCHEMA: ClaimValueSchemaDefinition = Object.freeze({
+export const GENERAL_NATAL_SOURCE_CONDITION_VALUE_SCHEMA = Object.freeze({
   schemaId: VALUE_SCHEMA_ID,
   version: GENERAL_NATAL_SOURCE_CONDITION_PRODUCER_VERSION,
   root: {
@@ -120,9 +120,9 @@ export const GENERAL_NATAL_SOURCE_CONDITION_VALUE_SCHEMA: ClaimValueSchemaDefini
     },
     additionalProperties: false,
   },
-});
+} satisfies ClaimValueSchemaDefinition);
 
-export const GENERAL_NATAL_SOURCE_CONDITION_CLAIM_DEFINITION: ClaimTypeDefinition = Object.freeze({
+export const GENERAL_NATAL_SOURCE_CONDITION_CLAIM_DEFINITION = Object.freeze({
   claimType: GENERAL_NATAL_SOURCE_CONDITION_CLAIM_TYPE,
   version: GENERAL_NATAL_SOURCE_CONDITION_PRODUCER_VERSION,
   valueSchemaRef: {
@@ -134,7 +134,7 @@ export const GENERAL_NATAL_SOURCE_CONDITION_CLAIM_DEFINITION: ClaimTypeDefinitio
   scenarioSensitive: true,
   materialForNarrative: false,
   allowedTaxonomyTiers: ['T3'],
-});
+} satisfies ClaimTypeDefinition);
 
 const candidateQuality: RuleDefinition['quality'] = Object.freeze({
   provenanceQuality: 'secondary_only',
