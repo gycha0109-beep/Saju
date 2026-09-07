@@ -6,6 +6,7 @@ on:
       - '.github/workflows/relationship-spouse-t8-scholarly-fulltext-acquisition.yml'
       - 'scripts/acquire-relationship-spouse-t8-scholarly-fulltext.py'
       - 'scripts/acquire-relationship-spouse-t8-fulltext-route-stage2.py'
+      - 'scripts/acquire-kweon-orgview-stage3.py'
   workflow_dispatch:
 
 permissions:
@@ -31,6 +32,10 @@ jobs:
         run: |
           python3 scripts/acquire-relationship-spouse-t8-fulltext-route-stage2.py
 
+      - name: Probe exact Kweon orgView item
+        run: |
+          python3 scripts/acquire-kweon-orgview-stage3.py
+
       - name: Upload bounded acquisition artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -48,6 +53,10 @@ jobs:
             acquisition-stage2/stage2-summary.txt
             acquisition-stage2/*.txt
             acquisition-stage2/*.pdf
+            acquisition-stage3/kweon-orgview-report.json
+            acquisition-stage3/kweon-orgview-summary.txt
+            acquisition-stage3/*.txt
+            acquisition-stage3/*.pdf
           if-no-files-found: warn
           retention-days: 1
           compression-level: 0
