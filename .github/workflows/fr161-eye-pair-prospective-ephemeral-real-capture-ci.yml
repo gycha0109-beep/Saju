@@ -1,0 +1,38 @@
+name: FR161 Eye Pair Prospective Ephemeral Real Capture CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr161-eye-pair-prospective-ephemeral-real-capture-series.md'
+      - 'packages/face-reading/src/eye-pair-prospective-ephemeral-real-capture-series-fr161.ts'
+      - 'packages/face-reading/src/eye-pair-prospective-ephemeral-real-capture-series-fr161.test.ts'
+      - '.github/workflows/fr161-eye-pair-prospective-ephemeral-real-capture-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'research/face-reading/fr161-eye-pair-prospective-ephemeral-real-capture-series.md'
+      - 'packages/face-reading/src/eye-pair-prospective-ephemeral-real-capture-series-fr161.ts'
+      - 'packages/face-reading/src/eye-pair-prospective-ephemeral-real-capture-series-fr161.test.ts'
+      - '.github/workflows/fr161-eye-pair-prospective-ephemeral-real-capture-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr161-eye-pair-prospective-ephemeral-real-capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR161 real-capture intake and authority boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-prospective-ephemeral-real-capture-series-fr161.test.ts
+      - name: Re-verify FR160 governed acquisition predecessor
+        run: node scripts/verify-fr160-eye-pair-prospective-acquisition-runtime.mjs
