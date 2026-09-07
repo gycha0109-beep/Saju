@@ -6,12 +6,12 @@ from pathlib import Path
 from urllib.parse import urljoin
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
-import fitz
+import pymupdf
 from pypdf import PdfReader
 
 OUT = Path('acquisition-lee-myengjae-2022'); OUT.mkdir(exist_ok=True)
 PRIVATE = Path('acquisition-lee-myengjae-2022-private'); PRIVATE.mkdir(exist_ok=True)
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/6.0; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/6.1; public-resource-verification)'
 MAX = 35 * 1024 * 1024
 ARTI = 'ART002833924'
 TITLE = '자평명리학의 육친론 고찰'
@@ -50,19 +50,22 @@ def candidate_links(text, base):
     out=set()
     for x in re.findall(r'(?:href|src|action)=["\']([^"\']+)["\']', text, re.I):
         u=urljoin(base,x.replace('&amp;','&'))
-        if any(k in u.lower() for k in ('pdf','preview','download','orterview','orterview','artipreview','file','original')):
+        if any(k in u.lower() for k in ('pdf','preview','download','orterview','artipreview','file','original')):
             out.add(u)
     for x in re.findall(r'https?://[^\s"\'<>]+', text):
         if any(k in x.lower() for k in ('pdf','preview','download','file')): out.add(x.rstrip(').,;'))
     return sorted(out)
 
-def inspect_pdf(b):
-    result={'pageCount':0,'encrypted':None,'hits':[],'rendered':[],'error':None}
+def inspect_pdf(b, label):
+    result={'pageCount':0,'encrypted':None,'hits':[],'textSamples':[],'rendered':[],'error':None}
     try:
         reader=PdfReader(io.BytesIO(b)); result['pageCount']=len(reader.pages); result['encrypted']=bool(reader.is_encrypted)
         hit_pages=[]
         for i,page in enumerate(reader.pages,1):
             text=(page.extract_text() or '').replace('\x00',' ')
+            compact=' / '.join(x.strip() for x in text.splitlines() if x.strip())
+            if i <= 3:
+                result['textSamples'].append({'physicalPdfPage':i,'sample':compact[:4000]})
             lines=[x.strip() for x in text.splitlines() if x.strip()]
             snippets=[]
             for n,line in enumerate(lines):
@@ -71,16 +74,18 @@ def inspect_pdf(b):
                     snippets.append(' / '.join(lines[lo:hi])[:2200])
             if snippets:
                 result['hits'].append({'physicalPdfPage':i,'snippets':snippets[:14]}); hit_pages.append(i)
-        doc=fitz.open(stream=b,filetype='pdf')
+        doc=pymupdf.open(stream=b,filetype='pdf')
         try:
             targets=[]
+            if doc.page_count <= 3:
+                targets.extend(range(1, doc.page_count + 1))
             for i in hit_pages:
                 for p in (i-1,i,i+1):
                     if 1 <= p <= doc.page_count and p not in targets: targets.append(p)
             targets=targets[:14]
             for p in targets:
-                pix=doc.load_page(p-1).get_pixmap(matrix=fitz.Matrix(1.65,1.65),alpha=False)
-                f=OUT/f'rendered-physical-p{p:03d}.png'; pix.save(f)
+                pix=doc.load_page(p-1).get_pixmap(matrix=pymupdf.Matrix(1.65,1.65),alpha=False)
+                f=OUT/f'rendered-{label}-p{p:03d}.png'; pix.save(f)
                 result['rendered'].append({'physicalPdfPage':p,'file':f.name,'sha256':hashlib.sha256(f.read_bytes()).hexdigest(),'bytes':f.stat().st_size})
         finally: doc.close()
     except Exception as e:
@@ -103,8 +108,10 @@ def main():
         if u in seen: continue
         seen.add(u); m,b=fetch(u,ref); m['origin']=origin; m['directPdf']=is_pdf(m,b)
         if m['directPdf']:
-            p=PRIVATE/f'candidate-{len(report["pdfs"])+1:02d}.pdf'; p.write_bytes(b)
-            ins=inspect_pdf(b)
+            candidate_no=len(report['pdfs'])+1
+            label=f'candidate-{candidate_no:02d}'
+            p=PRIVATE/f'{label}.pdf'; p.write_bytes(b)
+            ins=inspect_pdf(b,label)
             rec={'origin':origin,'sourceUrl':m.get('finalUrl') or u,'sha256':hashlib.sha256(b).hexdigest(),'bytes':len(b),'savedAs':p.name,**ins}
             report['pdfs'].append(rec); m['savedAs']=p.name
         elif b:
@@ -116,6 +123,7 @@ def main():
     lines=[f'directPdfAcquired={report["directPdfAcquired"]}',f'candidate={report["candidate"]}']
     for p in report['pdfs']:
         lines.append(f'PDF sha={p["sha256"]} bytes={p["bytes"]} pages={p["pageCount"]} encrypted={p["encrypted"]} origin={p["origin"]} url={p["sourceUrl"]}')
+        lines.append(f'TEXT_SAMPLES={p["textSamples"]}')
         lines.append(f'RENDERED={p["rendered"]}')
         for hit in p['hits']:
             lines.append(f'PAGE {hit["physicalPdfPage"]}: ' + ' || '.join(hit['snippets'][:8]))
