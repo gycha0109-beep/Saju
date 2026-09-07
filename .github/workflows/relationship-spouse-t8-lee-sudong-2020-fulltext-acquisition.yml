@@ -1,0 +1,68 @@
+name: Relationship Spouse T8 Lee Sudong 2020 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-lee-sudong-2020-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-lee-sudong-2020-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PDF inspection dependencies
+        run: python -m pip install --disable-pip-version-check 'pypdf[crypto]' pymupdf
+      - name: Probe public KCI and Kyobo routes only
+        run: python scripts/acquire-relationship-spouse-t8-lee-sudong-2020-fulltext.py
+      - name: Print bounded acquisition evidence
+        if: always()
+        run: |
+          test -f acquisition-lee-sudong-2020/summary.txt && cat acquisition-lee-sudong-2020/summary.txt || true
+          test -f acquisition-lee-sudong-2020/report.json && python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('acquisition-lee-sudong-2020/report.json')
+          if p.exists():
+              j = json.loads(p.read_text())
+              print(json.dumps({
+                  'candidate': j.get('candidate'),
+                  'siteAuthoredPdfRoutes': j.get('siteAuthoredPdfRoutes'),
+                  'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
+                  'pdfs': j.get('pdfs'),
+              }, ensure_ascii=False, indent=2))
+          PY
+      - name: Enforce acquisition identity boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j = json.loads(Path('acquisition-lee-sudong-2020/report.json').read_text())
+          c = j['candidate']
+          assert c['author'] == '이수동'
+          assert c['year'] == 2020
+          assert c['kciArticleId'] == 'ART002630397'
+          assert c['doi'] == '10.33645/cnc.2020.09.42.9.755'
+          assert c['kyoboArticleBarcode'] == '4010027924050'
+          assert c['rissId'] == 'A107064519'
+          assert c['printedPages'] == '755-780'
+          print('Identity boundary verified; fullLengthPdfAcquired=', j['fullLengthPdfAcquired'])
+          PY
+      - name: Upload bounded evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lee-sudong-2020-bounded-fulltext-evidence
+          path: |
+            acquisition-lee-sudong-2020/summary.txt
+            acquisition-lee-sudong-2020/report.json
+            acquisition-lee-sudong-2020/rendered-*.png
+          if-no-files-found: warn
+          retention-days: 1
