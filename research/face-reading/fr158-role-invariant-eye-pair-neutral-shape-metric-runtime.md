@@ -2,86 +2,97 @@
 
 ## Status
 
-Research-only neutral-geometry extension. No anatomical laterality, morphology, identity matching, calibration, threshold, criterion state, traditional binding, structured claim, or narrative authority is issued.
+Research-only neutral-geometry extension over issued FR77 canonical-aligned metric 3D geometry. No anatomical laterality, morphology, identity matching, calibration, threshold, criterion state, traditional binding, structured claim, or narrative authority is issued.
 
-## Problem
+## Why FR77 metric 3D is the source
 
-FR24 already materializes two 16-point MediaPipe eye closed cycles as a research projection, but its coordinate frame is `canonical_image_normalized_2d`. X and Y are normalized against different image dimensions. Directly treating raw normalized-coordinate width/height, edge orientation, or turning geometry as frame-independent shape would therefore silently inherit image-aspect scaling.
+FR24 exposes two 16-point eye closed cycles in image-normalized 2D, but X and Y are normalized by different frame dimensions and FR77 explicitly blocks an unreviewed metric-XYZ-to-2D projection shortcut. FR158 therefore does **not** invent a new 2D projection and does not treat image-normalized eye geometry as physical eye shape.
 
-FR158 does not promote that surface into physical eye anthropometry. Instead, each closed cycle is independently mapped to an axis-wise unit box before shape-only measurements are computed. This intentionally removes translation, independent X/Y scale, absolute size, and original bounding-box aspect ratio.
+Instead FR158:
 
-## Source boundary
+1. consumes an actually issued FR77 `canonical_aligned_right_handed_metric_3d` artifact,
+2. uses the pinned FR24 eye topology vertex sets only to select two 16-point cycles from the first 468 metric landmarks,
+3. performs every candidate computation directly in canonical metric 3D,
+4. aggregates the two cycles without assigning anatomical left/right roles.
 
-Input must validate as the existing FR24 `fr24-eye-pair-research-v1` artifact:
-
-- exactly two research-only eye regions,
-- exactly 16 points in each closed cycle,
-- provider labels remain provenance only,
-- pair consumption remains unordered for metric purposes,
-- anatomical laterality remains unresolved,
-- FR15 production neutral observation is not issued,
-- the current provider binding is not promoted to release-exact authority,
-- raw source/provider response/embedding persistence remains false.
-
-FR158 consumes no provider-side label or provider-region order in its formulas.
-
-## Unit-box normalization
-
-For each 16-point cycle independently:
-
-1. compute `minX`, `maxX`, `minY`, `maxY`,
-2. require finite positive X/Y spans,
-3. map every point to:
-   - `x' = (x - minX) / (maxX - minX)`
-   - `y' = (y - minY) / (maxY - minY)`.
-
-This is a shape-only normalization. It is not pose compensation and must not be described as such.
+The FR24 eye topology witness remains research provenance and is not promoted to release-exact provider authority by FR158.
 
 ## Candidate metrics
 
-### 1. Unit-box area-fill mean
+### 1. Mean cycle X-span / full-mesh X-span
 
-`neutral.eye_pair.closed_cycles.unit_box_area_fill_mean@0.1.0`
+`neutral.eye_pair.metric_3d.mean_cycle_x_span_to_full_mesh_x_span_ratio@0.1.0`
 
-For each normalized cycle, compute absolute shoelace area. Because each normalized bounding box has unit area, the value is a dimensionless fill ratio. Aggregate by an equal mean over the two cycles.
+For each 16-point cycle, compute `max(x)-min(x)` in FR77 metric 3D. Average the two cycle spans and divide by the X span of all 468 metric landmarks.
 
-### 2. Unit-box axis-alignment mean
+This is a relative canonical-geometry scale candidate. It is not physical soft-tissue anthropometry.
 
-`neutral.eye_pair.closed_cycles.unit_box_axis_alignment_mean@0.1.0`
+### 2. Mean 3D cycle perimeter / full-mesh X-span
 
-For each of the 32 directed edges across the two normalized cycles, compute:
+`neutral.eye_pair.metric_3d.mean_cycle_perimeter_to_full_mesh_x_span_ratio@0.1.0`
 
-`max(abs(dx), abs(dy)) / hypot(dx, dy)`
+For each cycle, sum Euclidean 3D distances over its 16 closed-cycle edges. Average the two perimeters and divide by full-mesh X span.
 
-and take the mean. No eye-side role is consumed.
+### 3. 3D cycle-centroid separation / full-mesh X-span
 
-### 3. Unit-box mean absolute turning angle
+`neutral.eye_pair.metric_3d.centroid_separation_to_full_mesh_x_span_ratio@0.1.0`
 
-`neutral.eye_pair.closed_cycles.unit_box_mean_absolute_turning_angle@0.1.0`
+Compute the 3D centroid of each 16-point cycle, then divide their Euclidean 3D separation by full-mesh X span. This is not an anatomical inner-canthus or interpupillary-distance claim.
 
-For every one of the 32 vertices across the two normalized cycles, compute the principal angle between the incoming and outgoing unit directions and take the mean.
+### 4. Mean 3D closed-cycle absolute turning angle
 
-## Synthetic verification contract
+`neutral.eye_pair.metric_3d.mean_closed_cycle_absolute_turning_angle@0.1.0`
 
-The FR158 verifier must demonstrate without any source face image:
+For all 32 vertices, compute the principal angle between incoming and outgoing 3D unit directions and take the mean.
 
-- deterministic rerun equality,
-- invariance to translation plus independent X/Y scale before unit-box normalization,
-- invariance when the two synthetic cycle shapes are exchanged between provider topology labels,
-- invariance to closed-cycle direction reversal,
-- all empirical, privacy, identity, threshold, and traditional-semantic gates remain fail-closed.
+## Role-invariance boundary
 
-These are algorithmic invariance checks only. They do not establish empirical repeatability or construct validity.
+- Provider topology symbols select pinned vertex sets only.
+- Provider topology symbols are not consumed as anatomical side labels.
+- The formulas use symmetric aggregation over the two cycles.
+- No anatomical laterality is resolved.
+- No provider label is converted into a semantic role.
 
-## Empirical evaluation boundary
+## Projection boundary
 
-Any real-image evaluation remains ephemeral and must compare candidate metric behavior across repeated captures without converting the result into an identity-match score or same/different-person probability. Source images, full landmark sets, embeddings, identity templates, and subject-derived metric datasets are not persisted by this runtime.
+FR158 does **not**:
 
-FR158 intentionally issues no numeric acceptance threshold. Small within-capture variation, large between-capture variation, or any apparent group separation is descriptive evidence only until an independently governed empirical protocol establishes otherwise.
+- drop FR77 Z to create a new 2D surface,
+- claim a reviewed 2D projection,
+- claim a pose-normalized 2D eye surface,
+- bypass the FR77 `metric_xyz_to_pose_normalized_2d_without_reviewed_projection` prohibition.
+
+All four candidates are defined directly in FR77 canonical-aligned metric 3D.
+
+## Development-set boundary
+
+The candidate family was explored during the current development session. Any already-seen development captures are therefore unsuitable as prospective validation evidence. Their behavior may be used only to decide what should be tested next.
+
+FR158 explicitly records:
+
+- `candidateSelectionState: exploratory_feature_definition_not_validation`
+- `currentDevelopmentCapturesCanEstablishValidation: false`
+- `prospectiveFreshCaptureEvaluationRequired: true`
+
+A fresh prospective capture set is required before making a repeatability or construct-validity claim.
+
+## Verification contract
+
+The verifier must use an issued FR77 geometry artifact and independently recompute the four formulas from the FR77 metric landmarks plus the pinned FR24 eye topology vertex sets. It must also verify that:
+
+- FR77 exact geometry metadata remains verified,
+- the two topology sets remain 16 points each and within the 468-landmark surface,
+- no 2D projection is introduced,
+- empirical validation remains false,
+- no identity matching, embedding, biometric template, calibration, threshold, morphology, or traditional semantics are issued.
+
+Algorithm agreement on a deterministic fixture is implementation verification only, not empirical repeatability.
+
+## Privacy
+
+FR158 does not persist source images, provider responses, raw landmark sets, derived full-face metric geometry, embeddings, identity templates, or metric values. Real-image development execution remains ephemeral.
 
 ## Authority state
-
-The following remain unresolved/false:
 
 ```yaml
 captureQualityValidated: false
@@ -96,4 +107,4 @@ traditionalSemanticAuthority: false
 
 ## Next frontier
 
-`eye_pair_neutral_shape_repeatability_and_capture_sensitivity_evaluation_without_identity_matching_or_semantic_promotion`
+`prospective_eye_pair_metric_3d_repeatability_and_capture_sensitivity_evaluation_without_identity_matching_or_semantic_promotion`
