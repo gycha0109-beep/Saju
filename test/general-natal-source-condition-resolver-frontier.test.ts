@@ -6,6 +6,10 @@ import {
   GENERAL_NATAL_SOURCE_CONDITION_RESOLVER_FRONTIER_VERSION,
   buildGeneralNatalSourceConditionResolverFrontier,
 } from '../src/research/general-natal-source-condition-resolver-frontier.js';
+import {
+  GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_SCOPE,
+  GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_VERSION,
+} from '../src/research/general-natal-source-scoped-branch-break.js';
 
 function snapshot() {
   return calculateCanonicalSajuSnapshot(
@@ -64,6 +68,21 @@ describe('General Natal source-condition resolver frontier', () => {
     expect(Object.values(report.facts).every((fact) => fact.status === 'unavailable')).toBe(true);
   });
 
+  it('records source-scoped branch-break research substrate without admitting it as a canonical fact', () => {
+    const report = buildGeneralNatalSourceConditionResolverFrontier(snapshot());
+
+    expect(report.sourceScopedBranchBreakResearchSubstrate).toMatchObject({
+      available: true,
+      version: GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_VERSION,
+      sourceScope: GENERAL_NATAL_SOURCE_SCOPED_BRANCH_BREAK_SCOPE,
+      canonicalDerivedFact: false,
+      universalBranchBreakAuthorized: false,
+      noClashBreakQualificationAuthorized: false,
+    });
+    expect(report.sourceScopedBranchBreakResearchSubstrate.definitionHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(report.canonicalResolverAuthorized).toBe(false);
+  });
+
   it('pins the exact missing authority required before a canonical resolver may exist', () => {
     const report = buildGeneralNatalSourceConditionResolverFrontier(snapshot());
 
@@ -75,7 +94,7 @@ describe('General Natal source-condition resolver frontier', () => {
       'DAY_MASTER_FLOURISHING_CLASSIFICATION_AUTHORITY_MISSING',
       'FOOD_GOD_FLOURISHING_CLASSIFICATION_AUTHORITY_MISSING',
       'NO_CLASH_BREAK_QUALIFICATION_AUTHORITY_MISSING',
-      'BRANCH_BREAK_RELATION_NOT_MODELED',
+      'SOURCE_SCOPED_BRANCH_BREAK_ADMISSION_AUTHORITY_MISSING',
     ]);
 
     const shiShen = report.conditions.find(
@@ -84,10 +103,13 @@ describe('General Natal source-condition resolver frontier', () => {
     expect(shiShen?.authorityGaps).toContain('DAY_MASTER_FLOURISHING_CLASSIFICATION_AUTHORITY_MISSING');
     expect(shiShen?.authorityGaps).toContain('FOOD_GOD_FLOURISHING_CLASSIFICATION_AUTHORITY_MISSING');
     expect(shiShen?.authorityGaps).toContain('NO_CLASH_BREAK_QUALIFICATION_AUTHORITY_MISSING');
-    expect(shiShen?.authorityGaps).toContain('BRANCH_BREAK_RELATION_NOT_MODELED');
+    expect(shiShen?.authorityGaps).toContain(
+      'SOURCE_SCOPED_BRANCH_BREAK_ADMISSION_AUTHORITY_MISSING',
+    );
+    expect(shiShen?.authorityGaps).not.toContain('BRANCH_BREAK_RELATION_NOT_MODELED');
   });
 
-  it('does not reinterpret the current structural-relation vocabulary as a branch-break verdict', () => {
+  it('does not reinterpret the current canonical structural-relation vocabulary as a branch-break verdict', () => {
     const current = snapshot();
     if (
       current.pillars.year.status !== 'resolved' ||
@@ -123,10 +145,10 @@ describe('General Natal source-condition resolver frontier', () => {
 
     expect(first.reportId).toBe(second.reportId);
     expect(first).toEqual(second);
-    expect(JSON.stringify(first)).not.toContain('patternEstablished":true');
-    expect(JSON.stringify(first)).not.toContain('qualificationSatisfied":true');
-    expect(JSON.stringify(first)).not.toContain('dayMasterFlourishing":true');
-    expect(JSON.stringify(first)).not.toContain('foodGodFlourishing":true');
-    expect(JSON.stringify(first)).not.toContain('noClashBreak":true');
+    expect(JSON.stringify(first)).not.toContain('patternEstablished\":true');
+    expect(JSON.stringify(first)).not.toContain('qualificationSatisfied\":true');
+    expect(JSON.stringify(first)).not.toContain('dayMasterFlourishing\":true');
+    expect(JSON.stringify(first)).not.toContain('foodGodFlourishing\":true');
+    expect(JSON.stringify(first)).not.toContain('noClashBreak\":true');
   });
 });
