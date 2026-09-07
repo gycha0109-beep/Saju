@@ -1,0 +1,30 @@
+name: Relationship Spouse T8 Kim Sanghan Publisher Stage3
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/probe-relationship-spouse-t8-kim-sanghan-publisher-stage3.py'
+      - '.github/workflows/relationship-spouse-t8-kim-sanghan-publisher-stage3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe-publisher-stage3:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe public publisher thesis-list routes
+        run: python3 scripts/probe-relationship-spouse-t8-kim-sanghan-publisher-stage3.py
+      - name: Upload bounded publisher artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relationship-spouse-t8-kim-sanghan-publisher-stage3
+          path: acquisition-kim-sanghan-publisher-stage3/**
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
