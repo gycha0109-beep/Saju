@@ -11,6 +11,73 @@ permissions:
   contents: read
 
 jobs:
+  probe-exact-kci-download:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install KCI PDF inspection dependency
+        run: python -m pip install --disable-pip-version-check 'pypdf[crypto]'
+      - name: Probe exact session-aware KCI download route only
+        run: |
+          python - <<'PY'
+          import hashlib, io, re
+          from http.cookiejar import CookieJar
+          from urllib.request import Request, build_opener, HTTPCookieProcessor, HTTPRedirectHandler
+          from pypdf import PdfReader
+
+          ARTI='ART002833924'
+          FILE_ID='KCI_FI002833924'
+          DETAIL=f'https://www.kci.go.kr/kciportal/ci/sereArticleSearch/ciSereArtiView.kci?sereArticleSearchBean.artiId={ARTI}'
+          DOWNLOAD=(
+              'https://www.kci.go.kr/kciportal/ci/sereArticleSearch/ciSereArtiOrteServHistIFrame.kci?'
+              f'sereArticleSearchBean.artiId={ARTI}&sereArticleSearchBean.orteFileId={FILE_ID}'
+          )
+          UA='Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/6.4; public-resource-verification)'
+
+          class RD(HTTPRedirectHandler):
+              def __init__(self): super().__init__(); self.chain=[]
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  self.chain.append((code,newurl))
+                  return super().redirect_request(req,fp,code,msg,headers,newurl)
+
+          jar=CookieJar(); rd=RD(); op=build_opener(HTTPCookieProcessor(jar),rd)
+          with op.open(Request(DETAIL,headers={'User-Agent':UA}),timeout=25) as r:
+              seed=r.read(300000)
+              print('DETAIL status=',getattr(r,'status',None),'final=',r.geturl(),'bytes=',len(seed),'cookies=',[(c.name,c.domain) for c in jar])
+          rd.chain.clear()
+          with op.open(Request(DOWNLOAD,headers={'User-Agent':UA,'Referer':DETAIL,'Accept':'application/pdf,text/html,*/*;q=0.7'}),timeout=35) as r:
+              b=r.read(40*1024*1024)
+              ctype=r.headers.get('Content-Type')
+              disposition=r.headers.get('Content-Disposition')
+              final=r.geturl()
+              status=getattr(r,'status',None)
+          print('DOWNLOAD status=',status)
+          print('DOWNLOAD final=',final)
+          print('DOWNLOAD redirects=',rd.chain)
+          print('DOWNLOAD type=',ctype)
+          print('DOWNLOAD disposition=',disposition)
+          print('DOWNLOAD bytes=',len(b))
+          print('DOWNLOAD sha256=',hashlib.sha256(b).hexdigest())
+          print('DOWNLOAD starts_pdf=',b.startswith(b'%PDF-'))
+          if b.startswith(b'%PDF-') or 'pdf' in (ctype or '').lower():
+              reader=PdfReader(io.BytesIO(b))
+              print('PDF pages=',len(reader.pages),'encrypted=',bool(reader.is_encrypted))
+              for i in sorted(set([0, min(1,len(reader.pages)-1), max(0,len(reader.pages)-1)])):
+                  text=(reader.pages[i].extract_text() or '').replace('\x00',' ')
+                  text=re.sub(r'\s+',' ',text).strip()
+                  print(f'PDF page_{i+1}_sample=',text[:2500])
+          else:
+              for enc in ('utf-8','euc-kr','cp949'):
+                  try:
+                      text=b.decode(enc); break
+                  except UnicodeDecodeError: pass
+              else: text=b.decode('utf-8',errors='replace')
+              text=re.sub(r'\s+',' ',text).strip()
+              print('HTML_OR_OTHER sample=',text[:10000])
+          PY
+
   acquire-public-fulltext:
     runs-on: ubuntu-latest
     steps:
@@ -32,14 +99,15 @@ jobs:
           urls = [
               'https://www.kci.go.kr/kciportal/ci/sereArticleSearch/ciSereArtiView.kci?sereArticleSearchBean.artiId=ART002833924',
               'https://scholar.kyobobook.co.kr/article/detail/4010047338431',
-              'https://www.humanchina.or.kr/',
+              'https://contents.kyobobook.co.kr/sra/fo/js/biz/article/articleDetail.js?v=20220321',
+              'https://www.humanchina.or.kr/subList/32000005194?journalCd=23195',
           ]
           markers = (
               '원문', 'artiPreView', 'download', 'builderDownload', 'artId', 'barcode',
               'kyoboKey', 'fnViewPdf', 'pdf', 'ART002833924', '4010047338431',
-              'selectKyoboThesis', 'thesis',
+              'selectKyoboThesis', 'thesis', '.pdf', '.down', 'artlNum', 'schlrCmdtcode',
           )
-          ua = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/6.2; public-resource-verification)'
+          ua = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/6.4; public-resource-verification)'
           for url in urls:
               print('\n=== URL', url, '===')
               try:
@@ -58,25 +126,25 @@ jobs:
                   for marker in markers:
                       start = 0
                       needle = marker.lower()
-                      while count < 40:
+                      while count < 60:
                           idx = low.find(needle, start)
                           if idx < 0: break
-                          lo=max(0, idx-360); hi=min(len(text), idx+720)
+                          lo=max(0, idx-500); hi=min(len(text), idx+1000)
                           frag=re.sub(r'\s+', ' ', html.unescape(text[lo:hi])).strip()
-                          key=frag[:240]
+                          key=frag[:260]
                           if key not in seen:
                               seen.add(key); count += 1
                               print(f'[{marker}]', frag)
                           start=idx+len(needle)
-                      if count >= 40: break
+                      if count >= 60: break
                   print('quoted-route-candidates:')
                   q=[]
-                  for s in re.findall(r'["\']([^"\']{1,600})["\']', text):
+                  for s in re.findall(r'["\']([^"\']{1,800})["\']', text):
                       sl=s.lower()
-                      if any(k in sl for k in ('pdf','download','preview','original','fulltext','builder','article/detail','thesis')) or 'ART002833924' in s or '4010047338431' in s:
+                      if any(k in sl for k in ('pdf','download','preview','original','fulltext','builder','article/detail','thesis','selectkyobo')) or 'ART002833924' in s or '4010047338431' in s:
                           s=html.unescape(s)
                           if s not in q: q.append(s)
-                  for s in q[:100]: print(' ', s)
+                  for s in q[:140]: print(' ', s)
               except Exception as e:
                   print('ERROR', type(e).__name__, str(e))
           PY
@@ -92,6 +160,7 @@ jobs:
               j=json.loads(p.read_text())
               print(json.dumps({
                   'directPdfAcquired':j.get('directPdfAcquired'),
+                  'fullLengthPdfAcquired':j.get('fullLengthPdfAcquired'),
                   'candidate':j.get('candidate'),
                   'pdfs':j.get('pdfs'),
               }, ensure_ascii=False, indent=2))
@@ -103,8 +172,9 @@ jobs:
           from pathlib import Path
           j=json.loads(Path('acquisition-lee-myengjae-2022/report.json').read_text())
           assert j['candidate']['kciArticleId']=='ART002833924'
+          assert j['candidate']['kciOrteFileId']=='KCI_FI002833924'
           assert j['candidate']['doi']=='10.35955/JCH.2022.04.80.273'
-          print('Acquisition probe completed; directPdfAcquired=', j['directPdfAcquired'])
+          print('Acquisition probe completed; fullLengthPdfAcquired=', j['fullLengthPdfAcquired'])
           PY
       - name: Upload bounded rendered-page evidence
         if: always()
