@@ -1,0 +1,35 @@
+name: Relationship Spouse T8 Next Stage2 Acquisition
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/relationship-spouse-t8-next-stage2.yml'
+      - 'scripts/acquire-relationship-spouse-t8-next-stage2.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-next-stage2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Probe targeted public dCollection routes
+        run: python3 scripts/acquire-relationship-spouse-t8-next-stage2.py
+
+      - name: Upload bounded stage2 artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relationship-spouse-t8-next-stage2-acquisition
+          path: |
+            acquisition-next-stage2/report.json
+            acquisition-next-stage2/summary.txt
+            acquisition-next-stage2/*.txt
+            acquisition-next-stage2/*.pdf
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
