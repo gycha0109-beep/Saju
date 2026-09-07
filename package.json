@@ -60,7 +60,8 @@
     "face:verify:fr98-role-free-arclength-mean-neutral-metric": "npm run face:build && node scripts/verify-fr98-role-free-arclength-mean-neutral-metric.mjs",
     "face:verify:fr158-role-invariant-eye-pair-neutral-shape": "node scripts/verify-fr158-role-invariant-eye-pair-neutral-shape.mjs",
     "face:verify:fr159-eye-pair-prospective-repeatability-protocol": "node scripts/verify-fr159-eye-pair-prospective-repeatability-protocol.mjs",
-    "check:face-reading": "npm run face:verify:manifest && npm run face:typecheck && npm run face:build && npm run face:verify:fr158-role-invariant-eye-pair-neutral-shape && npm run face:verify:fr159-eye-pair-prospective-repeatability-protocol"
+    "face:verify:fr160-eye-pair-prospective-acquisition-runtime": "node scripts/verify-fr160-eye-pair-prospective-acquisition-runtime.mjs",
+    "check:face-reading": "npm run face:verify:manifest && npm run face:typecheck && npm run face:build && npm run face:verify:fr158-role-invariant-eye-pair-neutral-shape && npm run face:verify:fr159-eye-pair-prospective-repeatability-protocol && npm run face:verify:fr160-eye-pair-prospective-acquisition-runtime"
   },
   "dependencies": {
     "manseryeok": "2.0.0"

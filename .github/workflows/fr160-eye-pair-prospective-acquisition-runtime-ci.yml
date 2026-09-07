@@ -1,0 +1,42 @@
+name: FR160 Eye Pair Prospective Acquisition Runtime CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr160-eye-pair-prospective-acquisition-runtime.md'
+      - 'packages/face-reading/src/eye-pair-prospective-acquisition-runtime-fr160.ts'
+      - 'packages/face-reading/src/eye-pair-prospective-acquisition-runtime-fr160.test.ts'
+      - 'scripts/verify-fr160-eye-pair-prospective-acquisition-runtime.mjs'
+      - 'package.json'
+      - '.github/workflows/fr160-eye-pair-prospective-acquisition-runtime-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'research/face-reading/fr160-eye-pair-prospective-acquisition-runtime.md'
+      - 'packages/face-reading/src/eye-pair-prospective-acquisition-runtime-fr160.ts'
+      - 'packages/face-reading/src/eye-pair-prospective-acquisition-runtime-fr160.test.ts'
+      - 'scripts/verify-fr160-eye-pair-prospective-acquisition-runtime.mjs'
+      - 'package.json'
+      - '.github/workflows/fr160-eye-pair-prospective-acquisition-runtime-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr160-eye-pair-prospective-acquisition-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR160 acquisition boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-prospective-acquisition-runtime-fr160.test.ts
+      - name: Verify FR160 exact governed ingestion and zero-definition-time-empirical boundary
+        run: node scripts/verify-fr160-eye-pair-prospective-acquisition-runtime.mjs
