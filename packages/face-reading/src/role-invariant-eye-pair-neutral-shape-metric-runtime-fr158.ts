@@ -1,40 +1,47 @@
 import {
-  validateFaceEyePairResearchArtifactFR24,
-  type FaceEyePairResearchArtifactFR24V1,
+  FR24_EYE_TOPOLOGY_SERIALIZATION_ORDER,
+  FR24_EYE_TOPOLOGY_WITNESS_EDGES,
 } from './face-eye-pair-research-bridge-fr24.js';
-import type { NormalizedPoint2DV1 } from './neutral-observation-schema-fr15.js';
+import {
+  assertIssuedGovernedMetricGeometryFR77,
+  type GovernedMetricGeometryCandidateFR77V1,
+} from './governed-metric-geometry-runtime-fr77.js';
+import { orderClosedCycleProviderVerticesFR16 } from './provider-adapter-evidence-fr16.js';
+import type { MediaPipeMetricGeometryPointFR76V1 } from './mediapipe-screen-to-metric-reimplementation-parity-fr76.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export const FR158_RESEARCH_NOTE_REF =
   'repo:research/face-reading/fr158-role-invariant-eye-pair-neutral-shape-metric-runtime.md' as const;
 export const FR158_NEXT_FRONTIER =
-  'eye_pair_neutral_shape_repeatability_and_capture_sensitivity_evaluation_without_identity_matching_or_semantic_promotion' as const;
+  'prospective_eye_pair_metric_3d_repeatability_and_capture_sensitivity_evaluation_without_identity_matching_or_semantic_promotion' as const;
 
-const AREA_KEY = 'neutral.eye_pair.closed_cycles.unit_box_area_fill_mean' as const;
-const AXIS_KEY = 'neutral.eye_pair.closed_cycles.unit_box_axis_alignment_mean' as const;
-const TURN_KEY = 'neutral.eye_pair.closed_cycles.unit_box_mean_absolute_turning_angle' as const;
+const X_SPAN_KEY = 'neutral.eye_pair.metric_3d.mean_cycle_x_span_to_full_mesh_x_span_ratio' as const;
+const PERIMETER_KEY = 'neutral.eye_pair.metric_3d.mean_cycle_perimeter_to_full_mesh_x_span_ratio' as const;
+const CENTROID_KEY = 'neutral.eye_pair.metric_3d.centroid_separation_to_full_mesh_x_span_ratio' as const;
+const TURN_KEY = 'neutral.eye_pair.metric_3d.mean_closed_cycle_absolute_turning_angle' as const;
 const METRIC_VERSION = '0.1.0' as const;
-const AREA_REF = `${AREA_KEY}@${METRIC_VERSION}` as const;
-const AXIS_REF = `${AXIS_KEY}@${METRIC_VERSION}` as const;
+const X_SPAN_REF = `${X_SPAN_KEY}@${METRIC_VERSION}` as const;
+const PERIMETER_REF = `${PERIMETER_KEY}@${METRIC_VERSION}` as const;
+const CENTROID_REF = `${CENTROID_KEY}@${METRIC_VERSION}` as const;
 const TURN_REF = `${TURN_KEY}@${METRIC_VERSION}` as const;
 
 export type RoleInvariantEyePairNeutralShapeMetricRefFR158V1 =
-  | typeof AREA_REF
-  | typeof AXIS_REF
+  | typeof X_SPAN_REF
+  | typeof PERIMETER_REF
+  | typeof CENTROID_REF
   | typeof TURN_REF;
 
 export interface RoleInvariantEyePairNeutralShapeMetricDefinitionFR158V1 {
-  readonly metricKey: typeof AREA_KEY | typeof AXIS_KEY | typeof TURN_KEY;
+  readonly metricKey: typeof X_SPAN_KEY | typeof PERIMETER_KEY | typeof CENTROID_KEY | typeof TURN_KEY;
   readonly metricVersion: typeof METRIC_VERSION;
   readonly metricRef: RoleInvariantEyePairNeutralShapeMetricRefFR158V1;
-  readonly sourceSurface: 'fr24_two_eye_closed_cycle_research_regions';
-  readonly sourceCoordinateFrame: 'canonical_image_normalized_2d';
-  readonly normalization: 'per_closed_cycle_axiswise_unit_box';
+  readonly sourceSurface: 'fr77_canonical_aligned_metric_3d_plus_fr24_eye_topology_witness';
+  readonly coordinateFrame: 'canonical_aligned_right_handed_metric_3d';
   readonly unit: 'ratio' | 'radian';
   readonly formula: string;
-  readonly componentAggregation: 'role_invariant_mean_over_both_closed_cycles';
-  readonly providerTopologyLabelRequiredForFormula: false;
-  readonly providerRegionOrderRequiredForFormula: false;
+  readonly componentAggregation: 'role_invariant_over_two_closed_cycles';
+  readonly usesReviewed2DProjection: false;
+  readonly providerTopologyLabelRequiredForSemanticRole: false;
   readonly anatomicalLateralityRequired: false;
   readonly physicalAnthropometricInterpretationAllowed: false;
   readonly identityMatchingInterpretationAllowed: false;
@@ -46,8 +53,7 @@ export interface RoleInvariantEyePairNeutralShapeMetricValueFR158V1 {
   readonly metricRef: RoleInvariantEyePairNeutralShapeMetricRefFR158V1;
   readonly value: number;
   readonly unit: 'ratio' | 'radian';
-  readonly sourceCoordinateFrame: 'canonical_image_normalized_2d';
-  readonly normalization: 'per_closed_cycle_axiswise_unit_box';
+  readonly coordinateFrame: 'canonical_aligned_right_handed_metric_3d';
   readonly contributingClosedCycleCount: 2;
   readonly contributingElementCount: 2 | 32;
   readonly classificationApplied: false;
@@ -60,26 +66,34 @@ export interface RoleInvariantEyePairNeutralShapeMetricValueFR158V1 {
 export interface RoleInvariantEyePairNeutralShapeMetricRuntimeFR158V1 {
   readonly schemaVersion: 'fr158-role-invariant-eye-pair-neutral-shape-metric-runtime-v1';
   readonly artifactVersion: '0.1.0';
-  readonly authorityState: 'role_invariant_eye_pair_neutral_shape_candidates_research_only';
+  readonly authorityState: 'role_invariant_eye_pair_metric_3d_candidates_research_only';
   readonly source: {
-    readonly fr24SchemaVersion: 'fr24-eye-pair-research-v1';
-    readonly fr24ArtifactVersion: '0.1.0';
-    readonly fr24AuthorityState: 'research_projection_only';
-    readonly coordinateFrame: 'canonical_image_normalized_2d';
-    readonly regionCount: 2;
-    readonly regionPointCounts: readonly [16, 16];
-    readonly pairConsumptionState: 'unordered_provider_labeled_pair_only';
+    readonly fr77SchemaVersion: 'fr77-governed-metric-geometry-candidate-v1';
+    readonly fr77ArtifactVersion: '0.1.0';
+    readonly fr77AuthorityState: 'governed_metric_geometry_candidate_only';
+    readonly coordinateFrame: 'canonical_aligned_right_handed_metric_3d';
+    readonly coordinateUnit: 'centimeter';
+    readonly providerLandmarkCount: 478;
+    readonly geometryLandmarkCount: 468;
+    readonly irisLandmarksExcluded: true;
+    readonly exactGeometryMetadataBlobVerified: true;
+    readonly eyeTopologyWitnessRegionCount: 2;
+    readonly eyeTopologyWitnessPointCounts: readonly [16, 16];
+    readonly eyeTopologyReleaseExactForInstalledPackage: false;
     readonly anatomicalLateralityResolved: false;
-    readonly releaseExactProviderBindingPromoted: false;
   };
-  readonly normalization: {
-    readonly method: 'per_closed_cycle_axiswise_unit_box';
-    readonly purpose: 'remove_translation_and_independent_xy_scale_before_shape_only_metrics';
-    readonly absoluteSizePreserved: false;
-    readonly originalBoundingBoxAspectRatioPreserved: false;
-    readonly poseCompensationPerformed: false;
+  readonly geometryBoundary: {
+    readonly fullMeshXSpanUsedAsScaleDenominator: true;
+    readonly fullMeshXSpanUnit: 'centimeter';
+    readonly twoEyeCyclesSelectedByPinnedFR24TopologyVertexSets: true;
+    readonly providerTopologySymbolsUsedOnlyToSelectPinnedVertexSets: true;
+    readonly providerTopologySymbolsUsedAsSemanticSideLabels: false;
+    readonly reviewed2DProjectionUsed: false;
+    readonly metricXYZDroppedTo2D: false;
+    readonly poseNormalized2DClaimIssued: false;
   };
   readonly metricDefinitions: readonly [
+    RoleInvariantEyePairNeutralShapeMetricDefinitionFR158V1,
     RoleInvariantEyePairNeutralShapeMetricDefinitionFR158V1,
     RoleInvariantEyePairNeutralShapeMetricDefinitionFR158V1,
     RoleInvariantEyePairNeutralShapeMetricDefinitionFR158V1,
@@ -88,8 +102,12 @@ export interface RoleInvariantEyePairNeutralShapeMetricRuntimeFR158V1 {
     RoleInvariantEyePairNeutralShapeMetricValueFR158V1,
     RoleInvariantEyePairNeutralShapeMetricValueFR158V1,
     RoleInvariantEyePairNeutralShapeMetricValueFR158V1,
+    RoleInvariantEyePairNeutralShapeMetricValueFR158V1,
   ];
   readonly empiricalBoundary: {
+    readonly candidateSelectionState: 'exploratory_feature_definition_not_validation';
+    readonly currentDevelopmentCapturesCanEstablishValidation: false;
+    readonly prospectiveFreshCaptureEvaluationRequired: true;
     readonly captureQualityValidated: false;
     readonly empiricalRepeatabilityEstablished: false;
     readonly captureQualityMeasurementConstructValidated: false;
@@ -98,10 +116,7 @@ export interface RoleInvariantEyePairNeutralShapeMetricRuntimeFR158V1 {
     readonly constructValidity: 'unresolved';
   };
   readonly authorityBoundary: {
-    readonly providerTopologyLabelsUsedInFormula: false;
-    readonly providerRegionOrderUsedInFormula: false;
-    readonly cycleStartVertexUsedAsSemanticAnchor: false;
-    readonly cycleDirectionUsedAsSemanticRole: false;
+    readonly providerTopologyLabelsUsedAsAnatomicalLaterality: false;
     readonly anatomicalLateralityResolved: false;
     readonly productionNeutralObservationIssued: false;
     readonly physicalAnthropometricInterpretationAllowed: false;
@@ -110,6 +125,7 @@ export interface RoleInvariantEyePairNeutralShapeMetricRuntimeFR158V1 {
     readonly classificationIssued: false;
     readonly calibrationIssued: false;
     readonly thresholdsIssued: false;
+    readonly morphologyProduced: false;
     readonly criterionStatesIssued: 0;
     readonly structuredClaimsIssued: 0;
     readonly boundedNarrativesIssued: 0;
@@ -119,6 +135,7 @@ export interface RoleInvariantEyePairNeutralShapeMetricRuntimeFR158V1 {
     readonly rawImagePersisted: false;
     readonly rawProviderResponsePersisted: false;
     readonly rawLandmarkSetPersisted: false;
+    readonly derivedFullFaceMetricGeometryPersistedByThisRuntime: false;
     readonly embeddingPersisted: false;
     readonly identityTemplatePersisted: false;
     readonly metricValuesPersistedByThisRuntime: false;
@@ -129,71 +146,89 @@ export interface RoleInvariantEyePairNeutralShapeMetricRuntimeFR158V1 {
 }
 
 const ISSUED = new WeakSet<object>();
+const EYE_CYCLE_VERTEX_SETS: readonly (readonly number[])[] = Object.freeze(
+  FR24_EYE_TOPOLOGY_SERIALIZATION_ORDER.map((symbol) =>
+    Object.freeze(orderClosedCycleProviderVerticesFR16(FR24_EYE_TOPOLOGY_WITNESS_EDGES[symbol])),
+  ),
+);
 
 function fail(message: string): never {
   throw new FaceAuthorityValidationError(`FR-158 ${message}`);
 }
 
-function validateSource(source: FaceEyePairResearchArtifactFR24V1): void {
-  validateFaceEyePairResearchArtifactFR24(source);
+function validateSource(source: GovernedMetricGeometryCandidateFR77V1): void {
+  assertIssuedGovernedMetricGeometryFR77(source);
   if (
-    source.schemaVersion !== 'fr24-eye-pair-research-v1'
+    source.schemaVersion !== 'fr77-governed-metric-geometry-candidate-v1'
     || source.artifactVersion !== '0.1.0'
-    || source.authorityState !== 'research_projection_only'
-    || source.coordinateFrame !== 'canonical_image_normalized_2d'
-    || source.regions.length !== 2
-    || source.sideAuthority !== 'provider_label_only'
-    || source.pairConsumptionState !== 'unordered_provider_labeled_pair_only'
-    || source.serializationOrder !== 'provider_topology_symbol_fixed_order_not_side_authority'
-    || source.consumerSlotAssignment !== null
-    || source.anatomicalLateralityResolved !== false
-    || source.productionNeutralObservationIssued !== false
-    || source.traditionalSemanticAuthority !== false
-    || source.provenance.releaseExactForInstalledPackage !== false
-    || source.provenance.rawSourcePersisted !== false
-    || source.provenance.rawProviderResponsePersisted !== false
-    || source.provenance.biometricEmbeddingPersisted !== false
-  ) fail('requires the exact FR-24 research-only eye-pair authority boundary.');
-  for (const region of source.regions) {
-    if (region.boundary.length !== 16) fail('each FR-24 eye region must remain a 16-point closed cycle.');
+    || source.authorityState !== 'governed_metric_geometry_candidate_only'
+    || source.coordinateFrame !== 'canonical_aligned_right_handed_metric_3d'
+    || source.unit !== 'centimeter'
+    || source.provider.runtimePackageName !== '@mediapipe/tasks-vision'
+    || source.provider.runtimePackageVersion !== '0.10.35'
+    || source.provider.providerLandmarkCount !== 478
+    || source.provider.geometryLandmarkCount !== 468
+    || source.provider.irisLandmarksExcluded !== true
+    || source.provider.providerDepthConsumedForMetricGeometry !== true
+    || source.provider.fr61ContractModified !== false
+    || source.metricLandmarks.length !== 468
+    || source.geometryProfile.exactGitBlobVerified !== true
+    || source.geometryProfile.procrustesBasisCount !== 33
+    || source.authorityBoundary.governedResearchMetricGeometryOutputAuthorized !== true
+    || source.authorityBoundary.productionNeutralObservationIssued !== false
+    || source.authorityBoundary.reviewed2DProjectionRuleIssued !== false
+    || source.authorityBoundary.neutralMetricDefinitionsIssued !== 0
+    || source.authorityBoundary.neutralMetricValuesIssued !== 0
+    || source.authorityBoundary.morphologyProduced !== false
+    || source.authorityBoundary.criterionStatesIssued !== 0
+    || source.authorityBoundary.claimsIssued !== 0
+    || source.authorityBoundary.traditionalSemanticAuthority !== false
+    || source.persistencePolicy.rawSourcePersisted !== false
+    || source.persistencePolicy.rawProviderResponsePersisted !== false
+    || source.persistencePolicy.rawProviderDepthPersisted !== false
+    || source.persistencePolicy.derivedMetricGeometryPersisted !== false
+    || source.persistencePolicy.biometricEmbeddingPersisted !== false
+  ) fail('requires the exact issued FR-77 research metric-geometry authority boundary.');
+
+  if (EYE_CYCLE_VERTEX_SETS.length !== 2 || EYE_CYCLE_VERTEX_SETS.some((cycle) => cycle.length !== 16)) {
+    fail('FR-24 eye topology witness must remain exactly two 16-point closed cycles.');
+  }
+  for (const cycle of EYE_CYCLE_VERTEX_SETS) {
+    if (cycle.some((vertex) => vertex < 0 || vertex >= source.metricLandmarks.length)) {
+      fail('FR-24 eye topology witness references a vertex outside the FR-77 468-landmark geometry surface.');
+    }
   }
 }
 
-function unitBox(points: readonly NormalizedPoint2DV1[]): readonly NormalizedPoint2DV1[] {
-  if (points.length !== 16) fail('unit-box normalization requires exactly 16 points per closed cycle.');
+function distance3(left: MediaPipeMetricGeometryPointFR76V1, right: MediaPipeMetricGeometryPointFR76V1): number {
+  return Math.hypot(left.x - right.x, left.y - right.y, left.z - right.z);
+}
+
+function centroid3(points: readonly MediaPipeMetricGeometryPointFR76V1[]): MediaPipeMetricGeometryPointFR76V1 {
+  const sum = points.reduce((accumulator, point) => ({
+    x: accumulator.x + point.x,
+    y: accumulator.y + point.y,
+    z: accumulator.z + point.z,
+  }), { x: 0, y: 0, z: 0 });
+  return Object.freeze({
+    x: sum.x / points.length,
+    y: sum.y / points.length,
+    z: sum.z / points.length,
+  });
+}
+
+function cycleStats(points: readonly MediaPipeMetricGeometryPointFR76V1[]): {
+  xSpan: number;
+  perimeter: number;
+  meanTurningAngle: number;
+  centroid: MediaPipeMetricGeometryPointFR76V1;
+} {
+  if (points.length !== 16) fail('eye metric cycle must contain exactly 16 metric 3D points.');
   const xs = points.map((point) => point.x);
-  const ys = points.map((point) => point.y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const spanX = maxX - minX;
-  const spanY = maxY - minY;
-  if (!Number.isFinite(spanX) || spanX <= 0 || !Number.isFinite(spanY) || spanY <= 0) {
-    fail('each eye closed cycle must have finite positive X/Y spans.');
-  }
-  return Object.freeze(points.map((point) => Object.freeze({
-    x: (point.x - minX) / spanX,
-    y: (point.y - minY) / spanY,
-  })));
-}
+  const xSpan = Math.max(...xs) - Math.min(...xs);
+  if (!Number.isFinite(xSpan) || xSpan <= 0) fail('eye metric cycle X span must be finite and positive.');
 
-function areaFill(points: readonly NormalizedPoint2DV1[]): number {
-  let twiceSignedArea = 0;
-  for (let index = 0; index < points.length; index += 1) {
-    const current = points[index]!;
-    const next = points[(index + 1) % points.length]!;
-    twiceSignedArea += (current.x * next.y) - (next.x * current.y);
-  }
-  const value = Math.abs(twiceSignedArea) / 2;
-  if (!Number.isFinite(value) || value <= 0 || value > 1 + 1e-12) {
-    fail(`unit-box closed-cycle area fill must be finite within (0,1]; actual=${value}.`);
-  }
-  return value;
-}
-
-function edgeShape(points: readonly NormalizedPoint2DV1[]): { axis: number; turn: number } {
-  let axisSum = 0;
+  let perimeter = 0;
   let turnSum = 0;
   for (let index = 0; index < points.length; index += 1) {
     const previous = points[(index - 1 + points.length) % points.length]!;
@@ -201,81 +236,74 @@ function edgeShape(points: readonly NormalizedPoint2DV1[]): { axis: number; turn
     const next = points[(index + 1) % points.length]!;
     const inX = current.x - previous.x;
     const inY = current.y - previous.y;
+    const inZ = current.z - previous.z;
     const outX = next.x - current.x;
     const outY = next.y - current.y;
-    const inLength = Math.hypot(inX, inY);
-    const outLength = Math.hypot(outX, outY);
+    const outZ = next.z - current.z;
+    const inLength = Math.hypot(inX, inY, inZ);
+    const outLength = Math.hypot(outX, outY, outZ);
     if (!Number.isFinite(inLength) || inLength <= 0 || !Number.isFinite(outLength) || outLength <= 0) {
-      fail(`unit-box closed-cycle edge length must be finite and positive at vertex ${index}.`);
+      fail(`eye metric 3D edge length must be finite and positive at vertex ${index}.`);
     }
-    axisSum += Math.max(Math.abs(outX), Math.abs(outY)) / outLength;
-    const cosine = Math.max(-1, Math.min(1, ((inX * outX) + (inY * outY)) / (inLength * outLength)));
+    perimeter += outLength;
+    const cosine = Math.max(-1, Math.min(1,
+      ((inX * outX) + (inY * outY) + (inZ * outZ)) / (inLength * outLength),
+    ));
     const angle = Math.acos(cosine);
-    if (!Number.isFinite(angle)) fail(`unit-box turning angle must be finite at vertex ${index}.`);
+    if (!Number.isFinite(angle)) fail(`eye metric 3D turning angle must be finite at vertex ${index}.`);
     turnSum += angle;
   }
-  return { axis: axisSum / points.length, turn: turnSum / points.length };
+  if (!Number.isFinite(perimeter) || perimeter <= 0) fail('eye metric cycle perimeter must be finite and positive.');
+  return { xSpan, perimeter, meanTurningAngle: turnSum / points.length, centroid: centroid3(points) };
 }
 
 function definitions(): readonly [
   RoleInvariantEyePairNeutralShapeMetricDefinitionFR158V1,
   RoleInvariantEyePairNeutralShapeMetricDefinitionFR158V1,
   RoleInvariantEyePairNeutralShapeMetricDefinitionFR158V1,
+  RoleInvariantEyePairNeutralShapeMetricDefinitionFR158V1,
 ] {
+  const common = Object.freeze({
+    metricVersion: METRIC_VERSION,
+    sourceSurface: 'fr77_canonical_aligned_metric_3d_plus_fr24_eye_topology_witness' as const,
+    coordinateFrame: 'canonical_aligned_right_handed_metric_3d' as const,
+    componentAggregation: 'role_invariant_over_two_closed_cycles' as const,
+    usesReviewed2DProjection: false as const,
+    providerTopologyLabelRequiredForSemanticRole: false as const,
+    anatomicalLateralityRequired: false as const,
+    physicalAnthropometricInterpretationAllowed: false as const,
+    identityMatchingInterpretationAllowed: false as const,
+    calibrationRef: null,
+    traditionalCriterionBindingRef: null,
+  });
   return Object.freeze([
     Object.freeze({
-      metricKey: AREA_KEY,
-      metricVersion: METRIC_VERSION,
-      metricRef: AREA_REF,
-      sourceSurface: 'fr24_two_eye_closed_cycle_research_regions' as const,
-      sourceCoordinateFrame: 'canonical_image_normalized_2d' as const,
-      normalization: 'per_closed_cycle_axiswise_unit_box' as const,
+      ...common,
+      metricKey: X_SPAN_KEY,
+      metricRef: X_SPAN_REF,
       unit: 'ratio' as const,
-      formula: 'mean(abs(shoelace_area(unit_box(cycle)))) over the two 16-point closed cycles' as const,
-      componentAggregation: 'role_invariant_mean_over_both_closed_cycles' as const,
-      providerTopologyLabelRequiredForFormula: false as const,
-      providerRegionOrderRequiredForFormula: false as const,
-      anatomicalLateralityRequired: false as const,
-      physicalAnthropometricInterpretationAllowed: false as const,
-      identityMatchingInterpretationAllowed: false as const,
-      calibrationRef: null,
-      traditionalCriterionBindingRef: null,
+      formula: 'mean(max_x(cycle)-min_x(cycle)) over two 16-point metric-3D eye cycles divided by full 468-landmark mesh X span' as const,
     }),
     Object.freeze({
-      metricKey: AXIS_KEY,
-      metricVersion: METRIC_VERSION,
-      metricRef: AXIS_REF,
-      sourceSurface: 'fr24_two_eye_closed_cycle_research_regions' as const,
-      sourceCoordinateFrame: 'canonical_image_normalized_2d' as const,
-      normalization: 'per_closed_cycle_axiswise_unit_box' as const,
+      ...common,
+      metricKey: PERIMETER_KEY,
+      metricRef: PERIMETER_REF,
       unit: 'ratio' as const,
-      formula: 'mean(max(abs(dx),abs(dy))/hypot(dx,dy)) over all 32 unit-box closed-cycle edges' as const,
-      componentAggregation: 'role_invariant_mean_over_both_closed_cycles' as const,
-      providerTopologyLabelRequiredForFormula: false as const,
-      providerRegionOrderRequiredForFormula: false as const,
-      anatomicalLateralityRequired: false as const,
-      physicalAnthropometricInterpretationAllowed: false as const,
-      identityMatchingInterpretationAllowed: false as const,
-      calibrationRef: null,
-      traditionalCriterionBindingRef: null,
+      formula: 'mean(sum(euclidean_3d_closed_cycle_edge_length)) over two 16-point eye cycles divided by full 468-landmark mesh X span' as const,
     }),
     Object.freeze({
+      ...common,
+      metricKey: CENTROID_KEY,
+      metricRef: CENTROID_REF,
+      unit: 'ratio' as const,
+      formula: 'euclidean_3d_distance(centroid(cycle_1),centroid(cycle_2)) divided by full 468-landmark mesh X span' as const,
+    }),
+    Object.freeze({
+      ...common,
       metricKey: TURN_KEY,
-      metricVersion: METRIC_VERSION,
       metricRef: TURN_REF,
-      sourceSurface: 'fr24_two_eye_closed_cycle_research_regions' as const,
-      sourceCoordinateFrame: 'canonical_image_normalized_2d' as const,
-      normalization: 'per_closed_cycle_axiswise_unit_box' as const,
       unit: 'radian' as const,
-      formula: 'mean(acos(clamp(dot(unit_incoming,unit_outgoing),-1,1))) over all 32 unit-box closed-cycle vertices' as const,
-      componentAggregation: 'role_invariant_mean_over_both_closed_cycles' as const,
-      providerTopologyLabelRequiredForFormula: false as const,
-      providerRegionOrderRequiredForFormula: false as const,
-      anatomicalLateralityRequired: false as const,
-      physicalAnthropometricInterpretationAllowed: false as const,
-      identityMatchingInterpretationAllowed: false as const,
-      calibrationRef: null,
-      traditionalCriterionBindingRef: null,
+      formula: 'mean(acos(clamp(dot(unit_incoming_3d,unit_outgoing_3d),-1,1))) over all 32 closed-cycle vertices' as const,
     }),
   ]);
 }
@@ -285,48 +313,64 @@ export function getRoleInvariantEyePairNeutralShapeMetricDefinitionsFR158(): Ret
 }
 
 export function computeRoleInvariantEyePairNeutralShapeMetricsFR158(
-  source: FaceEyePairResearchArtifactFR24V1,
+  source: GovernedMetricGeometryCandidateFR77V1,
 ): RoleInvariantEyePairNeutralShapeMetricRuntimeFR158V1 {
   validateSource(source);
-  const normalized = source.regions.map((region) => unitBox(region.boundary));
-  const areas = normalized.map(areaFill);
-  const edgeMetrics = normalized.map(edgeShape);
-  const area = (areas[0]! + areas[1]!) / 2;
-  const axis = (edgeMetrics[0]!.axis + edgeMetrics[1]!.axis) / 2;
-  const turn = (edgeMetrics[0]!.turn + edgeMetrics[1]!.turn) / 2;
-  if (![area, axis, turn].every(Number.isFinite)) fail('computed eye-pair neutral shape metric must be finite.');
-  const [areaDefinition, axisDefinition, turnDefinition] = definitions();
+  const cycles = EYE_CYCLE_VERTEX_SETS.map((vertices) =>
+    Object.freeze(vertices.map((vertex) => source.metricLandmarks[vertex]!)),
+  );
+  const stats = cycles.map(cycleStats);
+  const meshXs = source.metricLandmarks.map((point) => point.x);
+  const fullMeshXSpan = Math.max(...meshXs) - Math.min(...meshXs);
+  if (!Number.isFinite(fullMeshXSpan) || fullMeshXSpan <= 0) fail('full FR-77 mesh X span must be finite and positive.');
+
+  const meanCycleXSpanRatio = ((stats[0]!.xSpan + stats[1]!.xSpan) / 2) / fullMeshXSpan;
+  const meanCyclePerimeterRatio = ((stats[0]!.perimeter + stats[1]!.perimeter) / 2) / fullMeshXSpan;
+  const centroidSeparationRatio = distance3(stats[0]!.centroid, stats[1]!.centroid) / fullMeshXSpan;
+  const meanTurningAngle = (stats[0]!.meanTurningAngle + stats[1]!.meanTurningAngle) / 2;
+  if (![meanCycleXSpanRatio, meanCyclePerimeterRatio, centroidSeparationRatio, meanTurningAngle].every(Number.isFinite)) {
+    fail('computed eye-pair metric-3D candidate must be finite.');
+  }
+  const [xSpanDefinition, perimeterDefinition, centroidDefinition, turnDefinition] = definitions();
 
   const result: RoleInvariantEyePairNeutralShapeMetricRuntimeFR158V1 = Object.freeze({
     schemaVersion: 'fr158-role-invariant-eye-pair-neutral-shape-metric-runtime-v1' as const,
     artifactVersion: '0.1.0' as const,
-    authorityState: 'role_invariant_eye_pair_neutral_shape_candidates_research_only' as const,
+    authorityState: 'role_invariant_eye_pair_metric_3d_candidates_research_only' as const,
     source: Object.freeze({
-      fr24SchemaVersion: source.schemaVersion,
-      fr24ArtifactVersion: source.artifactVersion,
-      fr24AuthorityState: source.authorityState,
+      fr77SchemaVersion: source.schemaVersion,
+      fr77ArtifactVersion: source.artifactVersion,
+      fr77AuthorityState: source.authorityState,
       coordinateFrame: source.coordinateFrame,
-      regionCount: 2 as const,
-      regionPointCounts: Object.freeze([16, 16] as const),
-      pairConsumptionState: source.pairConsumptionState,
+      coordinateUnit: source.unit,
+      providerLandmarkCount: 478 as const,
+      geometryLandmarkCount: 468 as const,
+      irisLandmarksExcluded: true as const,
+      exactGeometryMetadataBlobVerified: source.geometryProfile.exactGitBlobVerified,
+      eyeTopologyWitnessRegionCount: 2 as const,
+      eyeTopologyWitnessPointCounts: Object.freeze([16, 16] as const),
+      eyeTopologyReleaseExactForInstalledPackage: false as const,
       anatomicalLateralityResolved: false as const,
-      releaseExactProviderBindingPromoted: false as const,
     }),
-    normalization: Object.freeze({
-      method: 'per_closed_cycle_axiswise_unit_box' as const,
-      purpose: 'remove_translation_and_independent_xy_scale_before_shape_only_metrics' as const,
-      absoluteSizePreserved: false as const,
-      originalBoundingBoxAspectRatioPreserved: false as const,
-      poseCompensationPerformed: false as const,
+    geometryBoundary: Object.freeze({
+      fullMeshXSpanUsedAsScaleDenominator: true as const,
+      fullMeshXSpanUnit: 'centimeter' as const,
+      twoEyeCyclesSelectedByPinnedFR24TopologyVertexSets: true as const,
+      providerTopologySymbolsUsedOnlyToSelectPinnedVertexSets: true as const,
+      providerTopologySymbolsUsedAsSemanticSideLabels: false as const,
+      reviewed2DProjectionUsed: false as const,
+      metricXYZDroppedTo2D: false as const,
+      poseNormalized2DClaimIssued: false as const,
     }),
-    metricDefinitions: Object.freeze([areaDefinition, axisDefinition, turnDefinition] as const),
+    metricDefinitions: Object.freeze([
+      xSpanDefinition, perimeterDefinition, centroidDefinition, turnDefinition,
+    ] as const),
     metricValues: Object.freeze([
       Object.freeze({
-        metricRef: AREA_REF,
-        value: area,
+        metricRef: X_SPAN_REF,
+        value: meanCycleXSpanRatio,
         unit: 'ratio' as const,
-        sourceCoordinateFrame: 'canonical_image_normalized_2d' as const,
-        normalization: 'per_closed_cycle_axiswise_unit_box' as const,
+        coordinateFrame: 'canonical_aligned_right_handed_metric_3d' as const,
         contributingClosedCycleCount: 2 as const,
         contributingElementCount: 2 as const,
         classificationApplied: false as const,
@@ -336,11 +380,10 @@ export function computeRoleInvariantEyePairNeutralShapeMetricsFR158(
         traditionalBindingApplied: false as const,
       }),
       Object.freeze({
-        metricRef: AXIS_REF,
-        value: axis,
+        metricRef: PERIMETER_REF,
+        value: meanCyclePerimeterRatio,
         unit: 'ratio' as const,
-        sourceCoordinateFrame: 'canonical_image_normalized_2d' as const,
-        normalization: 'per_closed_cycle_axiswise_unit_box' as const,
+        coordinateFrame: 'canonical_aligned_right_handed_metric_3d' as const,
         contributingClosedCycleCount: 2 as const,
         contributingElementCount: 32 as const,
         classificationApplied: false as const,
@@ -350,11 +393,23 @@ export function computeRoleInvariantEyePairNeutralShapeMetricsFR158(
         traditionalBindingApplied: false as const,
       }),
       Object.freeze({
+        metricRef: CENTROID_REF,
+        value: centroidSeparationRatio,
+        unit: 'ratio' as const,
+        coordinateFrame: 'canonical_aligned_right_handed_metric_3d' as const,
+        contributingClosedCycleCount: 2 as const,
+        contributingElementCount: 2 as const,
+        classificationApplied: false as const,
+        calibrationApplied: false as const,
+        thresholdApplied: false as const,
+        identityMatchingApplied: false as const,
+        traditionalBindingApplied: false as const,
+      }),
+      Object.freeze({
         metricRef: TURN_REF,
-        value: turn,
+        value: meanTurningAngle,
         unit: 'radian' as const,
-        sourceCoordinateFrame: 'canonical_image_normalized_2d' as const,
-        normalization: 'per_closed_cycle_axiswise_unit_box' as const,
+        coordinateFrame: 'canonical_aligned_right_handed_metric_3d' as const,
         contributingClosedCycleCount: 2 as const,
         contributingElementCount: 32 as const,
         classificationApplied: false as const,
@@ -365,6 +420,9 @@ export function computeRoleInvariantEyePairNeutralShapeMetricsFR158(
       }),
     ] as const),
     empiricalBoundary: Object.freeze({
+      candidateSelectionState: 'exploratory_feature_definition_not_validation' as const,
+      currentDevelopmentCapturesCanEstablishValidation: false as const,
+      prospectiveFreshCaptureEvaluationRequired: true as const,
       captureQualityValidated: false as const,
       empiricalRepeatabilityEstablished: false as const,
       captureQualityMeasurementConstructValidated: false as const,
@@ -373,10 +431,7 @@ export function computeRoleInvariantEyePairNeutralShapeMetricsFR158(
       constructValidity: 'unresolved' as const,
     }),
     authorityBoundary: Object.freeze({
-      providerTopologyLabelsUsedInFormula: false as const,
-      providerRegionOrderUsedInFormula: false as const,
-      cycleStartVertexUsedAsSemanticAnchor: false as const,
-      cycleDirectionUsedAsSemanticRole: false as const,
+      providerTopologyLabelsUsedAsAnatomicalLaterality: false as const,
       anatomicalLateralityResolved: false as const,
       productionNeutralObservationIssued: false as const,
       physicalAnthropometricInterpretationAllowed: false as const,
@@ -385,6 +440,7 @@ export function computeRoleInvariantEyePairNeutralShapeMetricsFR158(
       classificationIssued: false as const,
       calibrationIssued: false as const,
       thresholdsIssued: false as const,
+      morphologyProduced: false as const,
       criterionStatesIssued: 0 as const,
       structuredClaimsIssued: 0 as const,
       boundedNarrativesIssued: 0 as const,
@@ -394,6 +450,7 @@ export function computeRoleInvariantEyePairNeutralShapeMetricsFR158(
       rawImagePersisted: false as const,
       rawProviderResponsePersisted: false as const,
       rawLandmarkSetPersisted: false as const,
+      derivedFullFaceMetricGeometryPersistedByThisRuntime: false as const,
       embeddingPersisted: false as const,
       identityTemplatePersisted: false as const,
       metricValuesPersistedByThisRuntime: false as const,
@@ -413,23 +470,27 @@ export function assertIssuedRoleInvariantEyePairNeutralShapeMetricsFR158(
   if (
     result.schemaVersion !== 'fr158-role-invariant-eye-pair-neutral-shape-metric-runtime-v1'
     || result.artifactVersion !== '0.1.0'
-    || result.authorityState !== 'role_invariant_eye_pair_neutral_shape_candidates_research_only'
-    || result.source.regionCount !== 2
-    || result.source.regionPointCounts[0] !== 16
-    || result.source.regionPointCounts[1] !== 16
+    || result.authorityState !== 'role_invariant_eye_pair_metric_3d_candidates_research_only'
+    || result.source.geometryLandmarkCount !== 468
+    || result.source.eyeTopologyWitnessRegionCount !== 2
+    || result.source.eyeTopologyWitnessPointCounts[0] !== 16
+    || result.source.eyeTopologyWitnessPointCounts[1] !== 16
+    || result.source.eyeTopologyReleaseExactForInstalledPackage !== false
     || result.source.anatomicalLateralityResolved !== false
-    || result.source.releaseExactProviderBindingPromoted !== false
-    || result.normalization.poseCompensationPerformed !== false
-    || result.metricValues.length !== 3
+    || result.geometryBoundary.reviewed2DProjectionUsed !== false
+    || result.geometryBoundary.metricXYZDroppedTo2D !== false
+    || result.metricValues.length !== 4
     || result.metricValues.some((metric) => !Number.isFinite(metric.value) || metric.identityMatchingApplied !== false)
+    || result.empiricalBoundary.candidateSelectionState !== 'exploratory_feature_definition_not_validation'
+    || result.empiricalBoundary.currentDevelopmentCapturesCanEstablishValidation !== false
+    || result.empiricalBoundary.prospectiveFreshCaptureEvaluationRequired !== true
     || result.empiricalBoundary.captureQualityValidated !== false
     || result.empiricalBoundary.empiricalRepeatabilityEstablished !== false
     || result.empiricalBoundary.captureQualityMeasurementConstructValidated !== false
     || result.empiricalBoundary.numericCaptureQualityThreshold !== null
     || result.empiricalBoundary.numericRepeatabilityAcceptanceThreshold !== null
     || result.empiricalBoundary.constructValidity !== 'unresolved'
-    || result.authorityBoundary.providerTopologyLabelsUsedInFormula !== false
-    || result.authorityBoundary.providerRegionOrderUsedInFormula !== false
+    || result.authorityBoundary.providerTopologyLabelsUsedAsAnatomicalLaterality !== false
     || result.authorityBoundary.anatomicalLateralityResolved !== false
     || result.authorityBoundary.identityMatchingPerformed !== false
     || result.authorityBoundary.biometricTemplateIssued !== false
