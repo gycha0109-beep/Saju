@@ -1,0 +1,52 @@
+name: Relationship Spouse T8 Lee Ockhwa 2024 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-lee-ockhwa-2024.py'
+      - '.github/workflows/relationship-spouse-t8-lee-ockhwa-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install text extraction dependency
+        run: python -m pip install --disable-pip-version-check pypdf
+      - name: Acquire only publicly exposed original routes
+        run: python scripts/acquire-relationship-spouse-t8-lee-ockhwa-2024.py
+      - name: Print bounded acquisition evidence
+        if: always()
+        run: |
+          test -f acquisition-lee-ockhwa-2024/summary.txt && cat acquisition-lee-ockhwa-2024/summary.txt || true
+          test -f acquisition-lee-ockhwa-2024/report.json && python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('acquisition-lee-ockhwa-2024/report.json')
+          if p.exists():
+              j=json.loads(p.read_text())
+              print(json.dumps({
+                  'directPdfAcquired':j.get('directPdfAcquired'),
+                  'candidate':j.get('candidate'),
+                  'targetRecords':j.get('targetRecords'),
+                  'pdfs':j.get('pdfs'),
+              }, ensure_ascii=False, indent=2))
+          PY
+      - name: Enforce acquisition boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-lee-ockhwa-2024/report.json').read_text())
+          assert j['candidate']['kciArticleId']=='ART003150783'
+          assert j['candidate']['kyoboArticleId']=='4010070433587'
+          assert j['candidate']['doi']=='10.55793/jkhc.2024.23.177'
+          print('Acquisition probe completed; directPdfAcquired=', j['directPdfAcquired'])
+          PY
