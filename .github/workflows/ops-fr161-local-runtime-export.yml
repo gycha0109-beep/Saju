@@ -1,0 +1,35 @@
+name: OPS FR161 Local Runtime Export
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/ops-export-fr161-runtime-bundle.mjs'
+      - 'scripts/ops-fr161-local-runner.mjs'
+      - 'scripts/ops-fr161-local-runner.html'
+      - '.github/workflows/ops-fr161-local-runtime-export.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-fr161-local-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Export exact FR161 local runtime bundle
+        run: node scripts/ops-export-fr161-runtime-bundle.mjs
+      - name: Upload FR161 local runtime bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr161-local-runtime-bundle
+          path: fr161-local-runtime-bundle
+          if-no-files-found: error
+          retention-days: 1
