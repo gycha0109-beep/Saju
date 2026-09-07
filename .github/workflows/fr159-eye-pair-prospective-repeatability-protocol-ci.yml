@@ -1,0 +1,44 @@
+name: FR159 Eye Pair Prospective Repeatability Protocol CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr159-eye-pair-prospective-repeatability-protocol.md'
+      - 'packages/face-reading/src/eye-pair-prospective-repeatability-protocol-fr159.ts'
+      - 'packages/face-reading/src/eye-pair-prospective-repeatability-protocol-fr159.test.ts'
+      - 'packages/face-reading/src/eye-pair-prospective-repeatability-protocol-fr159-hardening.test.ts'
+      - 'scripts/verify-fr159-eye-pair-prospective-repeatability-protocol.mjs'
+      - 'package.json'
+      - '.github/workflows/fr159-eye-pair-prospective-repeatability-protocol-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'research/face-reading/fr159-eye-pair-prospective-repeatability-protocol.md'
+      - 'packages/face-reading/src/eye-pair-prospective-repeatability-protocol-fr159.ts'
+      - 'packages/face-reading/src/eye-pair-prospective-repeatability-protocol-fr159.test.ts'
+      - 'packages/face-reading/src/eye-pair-prospective-repeatability-protocol-fr159-hardening.test.ts'
+      - 'scripts/verify-fr159-eye-pair-prospective-repeatability-protocol.mjs'
+      - 'package.json'
+      - '.github/workflows/fr159-eye-pair-prospective-repeatability-protocol-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr159-eye-pair-prospective-repeatability-protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR159 protocol boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-prospective-repeatability-protocol-fr159.test.ts packages/face-reading/src/eye-pair-prospective-repeatability-protocol-fr159-hardening.test.ts
+      - name: Verify FR159 exact protocol and zero-empirical-evidence boundary
+        run: node scripts/verify-fr159-eye-pair-prospective-repeatability-protocol.mjs
