@@ -17,17 +17,19 @@ DOI = '10.55793/jkhc.2026.33.631'
 TITLE = '명리 고전 여명론(女命論)의 성별 비대칭과 역사적 맥락'
 BASE = 'https://www.kci.go.kr/kciportal/'
 DETAIL = f'{BASE}ci/sereArticleSearch/ciSereArtiView.kci?sereArticleSearchBean.artiId={ARTI}'
+ORIGINAL_VIEW = f'{BASE}ci/sereArticleSearch/ciSereArtiOrteView.kci?sereArticleSearchBean.artiId={ARTI}'
 PREVIEW = f'{BASE}ci/sereArticleSearch/artiPreView.kci?sereArticleSearchBean.artiId={ARTI}&v=2019'
 OUT = Path('acquisition-kim-sanghan-2026')
 PRIVATE = Path('acquisition-kim-sanghan-2026-private')
 OUT.mkdir(exist_ok=True)
 PRIVATE.mkdir(exist_ok=True)
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/7.1; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/7.2; public-resource-verification)'
 MAX_BYTES = 45 * 1024 * 1024
 KEYWORDS = (
     '배우자', '남편', '아내', '부부', '혼인', '결혼', '여명', '남명', '재성', '관성',
     '정재', '편재', '정관', '편관', '성별', '비대칭', '현대', '차별', '도덕', '정절',
 )
+SIGNAL_RE = re.compile(r'원문|orte|file|download|preview|pdf|KCI_FI|ART003370620', re.I)
 
 
 class RedirectRecorder(HTTPRedirectHandler):
@@ -47,6 +49,24 @@ def decode_html(data: bytes) -> str:
         except UnicodeDecodeError:
             pass
     return data.decode('utf-8', errors='replace')
+
+
+def bounded_signals(text: str, limit: int = 30) -> list[str]:
+    out: list[str] = []
+    for line in text.splitlines():
+        if SIGNAL_RE.search(line):
+            compact = re.sub(r'\s+', ' ', line).strip()
+            if compact and compact not in out:
+                out.append(compact[:2200])
+            if len(out) >= limit:
+                break
+    return out
+
+
+def extract_file_ids(text: str) -> set[str]:
+    ids = set(re.findall(r'(KCI_FI\d+)', text))
+    ids.update(re.findall(r"orteFileId[=:\"'\s]+([A-Za-z0-9_\-]+)", text, flags=re.I))
+    return {x for x in ids if x.startswith('KCI_FI')}
 
 
 def render_pages(data: bytes, label: str, targets: list[int], scale: float) -> list[dict]:
@@ -117,8 +137,6 @@ def inspect_pdf(data: bytes, label: str, source_url: str, file_id: str | None) -
             targets = targets[:18]
             scale = 1.45
         else:
-            # If Korean extraction is broken, retain only bounded navigation renders.
-            # The article PDF itself stays private to the runner and is not uploaded.
             n = result['pageCount']
             seeds = [1, 2, 3, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, n]
             targets = sorted({p for p in seeds if 1 <= p <= n})[:14]
@@ -127,6 +145,26 @@ def inspect_pdf(data: bytes, label: str, source_url: str, file_id: str | None) -
     except Exception as e:
         result['error'] = f'{type(e).__name__}: {e}'
     return result
+
+
+def fetch_text_surface(opener, rd, url: str, referer: str | None = None) -> tuple[dict, bytes, str]:
+    rd.chain.clear()
+    headers = {'User-Agent': UA, 'Accept': 'text/html,application/pdf,*/*;q=0.7'}
+    if referer:
+        headers['Referer'] = referer
+    with opener.open(Request(url, headers=headers), timeout=35) as r:
+        data = r.read(2_000_000)
+        meta = {
+            'status': getattr(r, 'status', None),
+            'finalUrl': r.geturl(),
+            'redirectChain': rd.chain.copy(),
+            'contentType': r.headers.get('Content-Type'),
+            'bytes': len(data),
+            'sha256': hashlib.sha256(data).hexdigest(),
+        }
+    text = decode_html(data) if not data.startswith(b'%PDF-') else ''
+    meta['signals'] = bounded_signals(text)
+    return meta, data, text
 
 
 def main() -> int:
@@ -144,38 +182,38 @@ def main() -> int:
             'printedPages': '631-665',
         },
         'detail': {},
-        'discoveredOrteFileIds': [],
+        'originalView': {},
+        'htmlDiscoveredOrteFileIds': [],
+        'fallbackOrteFileIdsTried': [],
         'downloadAttempts': [],
         'pdfs': [],
         'fullLengthPdfAcquired': False,
     }
 
-    with opener.open(Request(DETAIL, headers={'User-Agent': UA}), timeout=35) as r:
-        detail_bytes = r.read(2_000_000)
-        report['detail'] = {
-            'status': getattr(r, 'status', None),
-            'finalUrl': r.geturl(),
-            'contentType': r.headers.get('Content-Type'),
-            'bytes': len(detail_bytes),
-            'sha256': hashlib.sha256(detail_bytes).hexdigest(),
-            'cookies': [(c.name, c.domain) for c in jar],
-        }
+    detail_meta, detail_bytes, detail_text = fetch_text_surface(opener, rd, DETAIL)
+    detail_meta['cookies'] = [(c.name, c.domain) for c in jar]
+    report['detail'] = detail_meta
 
-    html = decode_html(detail_bytes)
-    ids = set(re.findall(r'(KCI_FI\d+)', html))
-    ids.update(re.findall(r"orteFileId[=:\"'\s]+([A-Za-z0-9_\-]+)", html, flags=re.I))
-    # Fallback pattern learned from a separately verified KCI public fulltext route.
-    ids.add('KCI_FI003370620')
-    ids = {x for x in ids if x.startswith('KCI_FI')}
-    report['discoveredOrteFileIds'] = sorted(ids)
+    original_meta, original_bytes, original_text = fetch_text_surface(opener, rd, ORIGINAL_VIEW, DETAIL)
+    report['originalView'] = original_meta
 
-    for file_id in sorted(ids):
+    html_ids = extract_file_ids(detail_text) | extract_file_ids(original_text)
+    fallback_ids = {'KCI_FI003370620'} - html_ids
+    report['htmlDiscoveredOrteFileIds'] = sorted(html_ids)
+    report['fallbackOrteFileIdsTried'] = sorted(fallback_ids)
+    ids = sorted(html_ids | fallback_ids)
+
+    for file_id in ids:
         rd.chain.clear()
         url = (
             f'{BASE}ci/sereArticleSearch/ciSereArtiOrteServHistIFrame.kci?'
             f'sereArticleSearchBean.artiId={ARTI}&sereArticleSearchBean.orteFileId={file_id}'
         )
-        meta: dict = {'orteFileId': file_id, 'requestedUrl': url}
+        meta: dict = {
+            'orteFileId': file_id,
+            'origin': 'html-discovered' if file_id in html_ids else 'deterministic-fallback',
+            'requestedUrl': url,
+        }
         try:
             with opener.open(Request(url, headers={
                 'User-Agent': UA,
@@ -196,11 +234,14 @@ def main() -> int:
             if data.startswith(b'%PDF-') or 'pdf' in (meta.get('contentType') or '').lower():
                 (PRIVATE / f'{file_id}.pdf').write_bytes(data)
                 report['pdfs'].append(inspect_pdf(data, file_id.lower(), meta['finalUrl'], file_id))
+            elif data:
+                text = decode_html(data)
+                meta['boundedBodySample'] = re.sub(r'\s+', ' ', text).strip()[:3500]
+                meta['signals'] = bounded_signals(text)
         except Exception as e:
             meta['error'] = f'{type(e).__name__}: {e}'
         report['downloadAttempts'].append(meta)
 
-    # Preserve the known one-page preview only as a control.
     try:
         rd.chain.clear()
         with opener.open(Request(PREVIEW, headers={'User-Agent': UA, 'Referer': DETAIL}), timeout=35) as r:
@@ -210,14 +251,15 @@ def main() -> int:
     except Exception as e:
         report['previewError'] = f'{type(e).__name__}: {e}'
 
-    # KCI bibliographic record is 35 printed pages. >=20 physical pages is enough to distinguish
-    # a plausible complete-body object from the known one-page preview. Semantic admission is separate.
     report['fullLengthPdfAcquired'] = any(p.get('pageCount', 0) >= 20 for p in report['pdfs'])
 
     (OUT / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     lines = [
         f'candidate={report["candidate"]}',
-        f'discoveredOrteFileIds={report["discoveredOrteFileIds"]}',
+        f'htmlDiscoveredOrteFileIds={report["htmlDiscoveredOrteFileIds"]}',
+        f'fallbackOrteFileIdsTried={report["fallbackOrteFileIdsTried"]}',
+        f'detailSignals={report["detail"].get("signals", [])}',
+        f'originalViewSignals={report["originalView"].get("signals", [])}',
         f'fullLengthPdfAcquired={report["fullLengthPdfAcquired"]}',
     ]
     for a in report['downloadAttempts']:
