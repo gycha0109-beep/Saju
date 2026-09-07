@@ -44,17 +44,20 @@ export interface EyePairProspectiveAcquisitionRecordFR160V1 {
   readonly schemaVersion: 'fr160-eye-pair-prospective-acquisition-record-v1';
   readonly artifactVersion: '0.1.0';
   readonly recordId: typeof FR160_EYE_PAIR_PROSPECTIVE_ACQUISITION_RECORD_ID;
-  readonly authorityState: 'fresh_capture_metric_observation_record_only_no_repeatability_adjudication';
+  readonly authorityState: 'prospective_admitted_metric_observation_record_only_no_repeatability_adjudication';
   readonly prospectiveCollectionRef: string;
   readonly captureSeriesRef: string;
   readonly captureRef: string;
   readonly captureConditionRef: string;
   readonly captureSequenceIndex: number;
+  readonly prospectiveEligibilityState: 'fr159_attestations_accepted_not_independently_verified';
   readonly source: {
     readonly fr159ManifestSchemaVersion: 'fr159-eye-pair-prospective-capture-manifest-v1';
     readonly fr158RuntimeSchemaVersion: 'fr158-role-invariant-eye-pair-neutral-shape-metric-runtime-v1';
     readonly fr158CoordinateFrame: 'canonical_aligned_right_handed_metric_3d';
     readonly primaryMetricCoverage: 'fr159_preregistered_two_metric_subset_only';
+    readonly fr159FreshnessAttestationMeansIndependentFreshnessProof: false;
+    readonly fr159SameParticipantAttestationMeansIdentityProof: false;
   };
   readonly linkageAttestation: {
     readonly metricRuntimeCorrespondsToManifestCaptureAttested: true;
@@ -105,6 +108,13 @@ export interface EyePairProspectiveAcquisitionDatasetFR160V1 {
   readonly observedCaptureCount: number;
   readonly observedCaptureSeriesCount: number;
   readonly observedCaptureConditionCount: number;
+  readonly execution: {
+    readonly empiricalRepeatabilityEstablished: false;
+    readonly captureQualityValidated: false;
+    readonly captureQualityMeasurementConstructValidated: false;
+    readonly numericRepeatabilityAcceptanceThreshold: null;
+    readonly numericCaptureQualityThreshold: null;
+  };
   readonly authorityBoundary: {
     readonly datasetMaterializationMeansEmpiricalRepeatabilityEstablished: false;
     readonly descriptiveSeriesSummaryMeansRepeatabilityPass: false;
@@ -216,6 +226,8 @@ export function getEyePairProspectiveAcquisitionContractFR160() {
       primaryMetricRefs: Object.freeze([FR159_X_SPAN_METRIC_REF, FR159_PERIMETER_METRIC_REF] as const),
       metricRuntimeToManifestCaptureLinkageAttestationRequired: true as const,
       linkageAttestationMeansIndependentProof: false as const,
+      fr159FreshnessAttestationMeansIndependentlyVerifiedFreshCapture: false as const,
+      fr159SameParticipantAttestationMeansIndependentlyVerifiedIdentity: false as const,
       prospectiveCollectionMustBeSingleWithinMaterializedDataset: true as const,
       duplicateCaptureRefAllowed: false as const,
       duplicateCaptureSequenceIndexWithinSeriesAllowed: false as const,
@@ -272,17 +284,20 @@ export function recordEyePairProspectiveAcquisitionFR160(
     schemaVersion: 'fr160-eye-pair-prospective-acquisition-record-v1' as const,
     artifactVersion: '0.1.0' as const,
     recordId: FR160_EYE_PAIR_PROSPECTIVE_ACQUISITION_RECORD_ID,
-    authorityState: 'fresh_capture_metric_observation_record_only_no_repeatability_adjudication' as const,
+    authorityState: 'prospective_admitted_metric_observation_record_only_no_repeatability_adjudication' as const,
     prospectiveCollectionRef: input.manifest.prospectiveCollectionRef,
     captureSeriesRef: input.manifest.captureSeriesRef,
     captureRef: input.manifest.captureRef,
     captureConditionRef: input.manifest.captureConditionRef,
     captureSequenceIndex: input.manifest.captureSequenceIndex,
+    prospectiveEligibilityState: 'fr159_attestations_accepted_not_independently_verified' as const,
     source: Object.freeze({
       fr159ManifestSchemaVersion: input.manifest.schemaVersion,
       fr158RuntimeSchemaVersion: input.metricRuntime.schemaVersion,
       fr158CoordinateFrame: 'canonical_aligned_right_handed_metric_3d' as const,
       primaryMetricCoverage: 'fr159_preregistered_two_metric_subset_only' as const,
+      fr159FreshnessAttestationMeansIndependentFreshnessProof: false as const,
+      fr159SameParticipantAttestationMeansIdentityProof: false as const,
     }),
     linkageAttestation: Object.freeze({
       metricRuntimeCorrespondsToManifestCaptureAttested: true as const,
@@ -316,7 +331,10 @@ export function assertIssuedEyePairProspectiveAcquisitionRecordFR160(
   if (
     record.schemaVersion !== 'fr160-eye-pair-prospective-acquisition-record-v1'
     || record.artifactVersion !== '0.1.0'
-    || record.authorityState !== 'fresh_capture_metric_observation_record_only_no_repeatability_adjudication'
+    || record.authorityState !== 'prospective_admitted_metric_observation_record_only_no_repeatability_adjudication'
+    || record.prospectiveEligibilityState !== 'fr159_attestations_accepted_not_independently_verified'
+    || record.source.fr159FreshnessAttestationMeansIndependentFreshnessProof !== false
+    || record.source.fr159SameParticipantAttestationMeansIdentityProof !== false
     || record.linkageAttestation.metricRuntimeCorrespondsToManifestCaptureAttested !== true
     || record.linkageAttestation.attestationMeansIndependentCaptureRuntimeProof !== false
     || record.metricObservations.length !== 2
@@ -359,10 +377,8 @@ export function materializeEyePairProspectiveAcquisitionDatasetFR160(
     groups.set(key, group);
   }
 
-  const seriesConditionSummaries = [...groups.values()].map((group) => {
+  const seriesConditionSummaries: EyePairProspectiveSeriesConditionSummaryFR160V1[] = [...groups.values()].map((group) => {
     const first = group[0]!;
-    const xValues = group.map((record) => record.metricObservations[0].value);
-    const perimeterValues = group.map((record) => record.metricObservations[1].value);
     return Object.freeze({
       prospectiveCollectionRef,
       captureSeriesRef: first.captureSeriesRef,
@@ -370,8 +386,14 @@ export function materializeEyePairProspectiveAcquisitionDatasetFR160(
       captureCount: group.length,
       captureSequenceIndices: Object.freeze(group.map((record) => record.captureSequenceIndex).sort((left, right) => left - right)),
       metrics: Object.freeze([
-        summarizeEyePairProspectiveMetricValuesFR159(FR159_X_SPAN_METRIC_REF, xValues),
-        summarizeEyePairProspectiveMetricValuesFR159(FR159_PERIMETER_METRIC_REF, perimeterValues),
+        summarizeEyePairProspectiveMetricValuesFR159(
+          FR159_X_SPAN_METRIC_REF,
+          group.map((record) => record.metricObservations[0].value),
+        ),
+        summarizeEyePairProspectiveMetricValuesFR159(
+          FR159_PERIMETER_METRIC_REF,
+          group.map((record) => record.metricObservations[1].value),
+        ),
       ] as const),
       evaluationState: 'descriptive_series_condition_summary_only' as const,
       repeatabilityPassFailIssued: false as const,
@@ -391,6 +413,13 @@ export function materializeEyePairProspectiveAcquisitionDatasetFR160(
     observedCaptureCount: records.length,
     observedCaptureSeriesCount: new Set(records.map((record) => record.captureSeriesRef)).size,
     observedCaptureConditionCount: new Set(records.map((record) => record.captureConditionRef)).size,
+    execution: Object.freeze({
+      empiricalRepeatabilityEstablished: false as const,
+      captureQualityValidated: false as const,
+      captureQualityMeasurementConstructValidated: false as const,
+      numericRepeatabilityAcceptanceThreshold: null,
+      numericCaptureQualityThreshold: null,
+    }),
     authorityBoundary: Object.freeze({
       datasetMaterializationMeansEmpiricalRepeatabilityEstablished: false as const,
       descriptiveSeriesSummaryMeansRepeatabilityPass: false as const,
@@ -426,6 +455,11 @@ export function assertIssuedEyePairProspectiveAcquisitionDatasetFR160(
     || dataset.artifactVersion !== '0.1.0'
     || dataset.authorityState !== 'prospective_metric_observation_dataset_descriptive_only'
     || dataset.observedCaptureCount !== dataset.captureRecords.length
+    || dataset.execution.empiricalRepeatabilityEstablished !== false
+    || dataset.execution.captureQualityValidated !== false
+    || dataset.execution.captureQualityMeasurementConstructValidated !== false
+    || dataset.execution.numericRepeatabilityAcceptanceThreshold !== null
+    || dataset.execution.numericCaptureQualityThreshold !== null
     || dataset.authorityBoundary.datasetMaterializationMeansEmpiricalRepeatabilityEstablished !== false
     || dataset.authorityBoundary.betweenSeriesIdentityInferenceAllowed !== false
     || dataset.authorityBoundary.sameDifferentParticipantClassificationAllowed !== false

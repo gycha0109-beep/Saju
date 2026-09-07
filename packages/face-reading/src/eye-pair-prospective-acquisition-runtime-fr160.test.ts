@@ -22,10 +22,12 @@ describe('FR160 eye-pair prospective acquisition runtime', () => {
     expect(contract.nextFrontier).toBe(FR160_NEXT_FRONTIER);
   });
 
-  it('freezes manifest/runtime linkage as an explicit attestation rather than independent proof', () => {
+  it('keeps freshness and runtime linkage as attestations rather than independent proof', () => {
     const contract = getEyePairProspectiveAcquisitionContractFR160();
     expect(contract.acquisition.metricRuntimeToManifestCaptureLinkageAttestationRequired).toBe(true);
     expect(contract.acquisition.linkageAttestationMeansIndependentProof).toBe(false);
+    expect(contract.acquisition.fr159FreshnessAttestationMeansIndependentlyVerifiedFreshCapture).toBe(false);
+    expect(contract.acquisition.fr159SameParticipantAttestationMeansIndependentlyVerifiedIdentity).toBe(false);
     expect(contract.verificationBoundary.verifierFixtureMeansEmpiricalFreshCaptureEvidence).toBe(false);
     expect(contract.verificationBoundary.verifierFixtureMeansRepeatabilityEstablished).toBe(false);
   });
@@ -66,7 +68,8 @@ describe('FR160 eye-pair prospective acquisition runtime', () => {
     const forgedRecord = {
       schemaVersion: 'fr160-eye-pair-prospective-acquisition-record-v1',
       artifactVersion: '0.1.0',
-      authorityState: 'fresh_capture_metric_observation_record_only_no_repeatability_adjudication',
+      authorityState: 'prospective_admitted_metric_observation_record_only_no_repeatability_adjudication',
+      prospectiveEligibilityState: 'fr159_attestations_accepted_not_independently_verified',
       traditionalSemanticAuthority: false,
     } as unknown as EyePairProspectiveAcquisitionRecordFR160V1;
     expect(() => materializeEyePairProspectiveAcquisitionDatasetFR160([forgedRecord])).toThrow(/FR-160/u);

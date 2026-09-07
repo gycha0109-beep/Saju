@@ -160,7 +160,11 @@ if (
 ) throw new Error('FR160 did not copy the two preregistered FR159 metric values exactly from issued FR158 runtime.');
 
 if (
-  record.source.fr158CoordinateFrame !== 'canonical_aligned_right_handed_metric_3d'
+  record.authorityState !== 'prospective_admitted_metric_observation_record_only_no_repeatability_adjudication'
+  || record.prospectiveEligibilityState !== 'fr159_attestations_accepted_not_independently_verified'
+  || record.source.fr158CoordinateFrame !== 'canonical_aligned_right_handed_metric_3d'
+  || record.source.fr159FreshnessAttestationMeansIndependentFreshnessProof !== false
+  || record.source.fr159SameParticipantAttestationMeansIdentityProof !== false
   || record.linkageAttestation.metricRuntimeCorrespondsToManifestCaptureAttested !== true
   || record.linkageAttestation.attestationMeansIndependentCaptureRuntimeProof !== false
   || record.authorityBoundary.observationRecordMeansEmpiricalRepeatabilityEstablished !== false
@@ -178,6 +182,11 @@ if (
   || dataset.seriesConditionSummaries[0].repeatabilityPassFailIssued !== false
   || dataset.seriesConditionSummaries[0].captureSensitivityPassFailIssued !== false
   || dataset.seriesConditionSummaries[0].identityComparisonIssued !== false
+  || dataset.execution.empiricalRepeatabilityEstablished !== false
+  || dataset.execution.captureQualityValidated !== false
+  || dataset.execution.captureQualityMeasurementConstructValidated !== false
+  || dataset.execution.numericRepeatabilityAcceptanceThreshold !== null
+  || dataset.execution.numericCaptureQualityThreshold !== null
   || dataset.authorityBoundary.datasetMaterializationMeansEmpiricalRepeatabilityEstablished !== false
   || dataset.authorityBoundary.betweenSeriesIdentityInferenceAllowed !== false
   || dataset.authorityBoundary.sameDifferentParticipantClassificationAllowed !== false
@@ -193,23 +202,28 @@ if (
 
 if (
   contract.acquisition.empiricalFreshCaptureRecordsBundledAtDefinitionTime !== 0
+  || contract.acquisition.fr159FreshnessAttestationMeansIndependentlyVerifiedFreshCapture !== false
+  || contract.acquisition.fr159SameParticipantAttestationMeansIndependentlyVerifiedIdentity !== false
   || contract.verificationBoundary.syntheticVerifierFixtureAllowedForMechanicsOnly !== true
   || contract.verificationBoundary.verifierFixtureMeansEmpiricalFreshCaptureEvidence !== false
   || contract.verificationBoundary.verifierFixtureMeansRepeatabilityEstablished !== false
   || contract.descriptiveAnalysis.numericRepeatabilityAcceptanceThreshold !== null
   || contract.descriptiveAnalysis.numericCaptureQualityThreshold !== null
   || contract.authorityBoundary.traditionalSemanticAuthority !== false
-) throw new Error('FR160 contract attempted to promote verifier mechanics into empirical authority.');
+) throw new Error('FR160 contract attempted to promote attestations or verifier mechanics into empirical authority.');
 
 process.stdout.write(`${JSON.stringify({
   status: 'FR160_PROSPECTIVE_ACQUISITION_RUNTIME_PASS',
   releaseCommit: RELEASE_COMMIT,
   copiedPrimaryMetricRefs: record.metricObservations.map((metric) => metric.metricRef),
+  prospectiveEligibilityState: record.prospectiveEligibilityState,
+  freshnessAttestationMeansIndependentProof: record.source.fr159FreshnessAttestationMeansIndependentFreshnessProof,
   verifierFixtureMeansEmpiricalFreshCaptureEvidence: contract.verificationBoundary.verifierFixtureMeansEmpiricalFreshCaptureEvidence,
   empiricalFreshCaptureRecordsBundledAtDefinitionTime: contract.acquisition.empiricalFreshCaptureRecordsBundledAtDefinitionTime,
-  empiricalRepeatabilityEstablished: dataset.authorityBoundary.datasetMaterializationMeansEmpiricalRepeatabilityEstablished,
+  empiricalRepeatabilityEstablished: dataset.execution.empiricalRepeatabilityEstablished,
+  captureQualityValidated: dataset.execution.captureQualityValidated,
   identityInferenceAllowed: dataset.authorityBoundary.betweenSeriesIdentityInferenceAllowed,
-  numericRepeatabilityAcceptanceThreshold: contract.descriptiveAnalysis.numericRepeatabilityAcceptanceThreshold,
+  numericRepeatabilityAcceptanceThreshold: dataset.execution.numericRepeatabilityAcceptanceThreshold,
   traditionalSemanticAuthority: dataset.traditionalSemanticAuthority,
   nextFrontier: dataset.nextFrontier,
 })}\n`);
