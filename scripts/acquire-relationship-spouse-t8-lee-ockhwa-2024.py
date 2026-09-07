@@ -5,11 +5,13 @@ import hashlib, io, json, re
 from pathlib import Path
 from urllib.parse import urlencode, urljoin
 from urllib.request import Request, build_opener, HTTPRedirectHandler
+
+import fitz
 from pypdf import PdfReader
 
 OUT = Path('acquisition-lee-ockhwa-2024'); OUT.mkdir(exist_ok=True)
 PRIVATE = Path('acquisition-lee-ockhwa-2024-private'); PRIVATE.mkdir(exist_ok=True)
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/5.0; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/5.1; public-resource-verification)'
 MAX = 45 * 1024 * 1024
 TITLE = '명리사상에 나타난 육친가변성'
 KCI_ARTICLE = 'ART003150783'
@@ -18,6 +20,7 @@ KY_ARTICLE_ID = '4010070433587'
 KY_ARTICLE = f'https://scholar.kyobobook.co.kr/article/detail/{KY_ARTICLE_ID}'
 PUBLISHER = 'https://brhistory.re.kr'
 KEYWORDS = ('배우자', '부부', '남편', '아내', '처', '남명', '여명', '일지', '일명', '동성', '성별', '육친가변')
+TARGET_RENDER_PAGES = (10, 13, 15, 16, 18, 23, 25, 26, 28)
 
 class RD(HTTPRedirectHandler):
     def __init__(self): super().__init__(); self.chain=[]
@@ -78,8 +81,23 @@ def extract_pdf_text(b):
     except Exception as e:
         result['error']=f'{type(e).__name__}: {e}'; return result
 
+def render_target_pages(b):
+    rendered=[]
+    doc=fitz.open(stream=b,filetype='pdf')
+    try:
+        for physical in TARGET_RENDER_PAGES:
+            if physical < 1 or physical > doc.page_count: continue
+            page=doc.load_page(physical-1)
+            pix=page.get_pixmap(matrix=fitz.Matrix(1.7,1.7), alpha=False)
+            out=OUT/f'rendered-physical-p{physical:03d}.png'
+            pix.save(out)
+            rendered.append({'physicalPdfPage':physical,'file':out.name,'sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'bytes':out.stat().st_size})
+    finally:
+        doc.close()
+    return rendered
+
 def main():
-    rep={'purpose':'public Lee Ockhwa 2024 fulltext acquisition only; no auth/paywall bypass','candidate':{'author':'이옥화','year':2024,'title':TITLE,'kciArticleId':KCI_ARTICLE,'doi':DOI,'kyoboArticleId':KY_ARTICLE_ID},'probes':[],'issueRecords':[],'targetRecords':[],'pdfs':[]}
+    rep={'purpose':'public Lee Ockhwa 2024 fulltext acquisition only; no auth/paywall bypass','candidate':{'author':'이옥화','year':2024,'title':TITLE,'kciArticleId':KCI_ARTICLE,'doi':DOI,'kyoboArticleId':KY_ARTICLE_ID},'probes':[],'issueRecords':[],'targetRecords':[],'pdfs':[],'renderedPages':[]}
     m,b=fetch(KY_ARTICLE); m['label']='kyobo-detail'; t=save_text('kyobo-detail',b) if b else ''; m['containsTarget']=TITLE in t and ('이옥화' in t or KY_ARTICLE_ID in t); m['candidateUrls']=links(t,m.get('finalUrl') or KY_ARTICLE)[:500]; rep['probes'].append(m)
     candidate=[]
     for u in m.get('candidateUrls',[]):
@@ -110,7 +128,7 @@ def main():
             for u in links(frag,referer):
                 if 'scholar.kyobobook.co.kr' in u and any(k in u.lower() for k in ('download','pdf','viewer','article')): candidate.append(('publisher-link',u))
 
-    seen=set()
+    seen=set(); rendered=False
     for i,(origin,u) in enumerate(candidate[:100]):
         if u in seen: continue
         seen.add(u); fm,fb=fetch(u,referer=KY_ARTICLE); fm['label']=f'followup-{i:03d}'; fm['origin']=origin; fm['directPdf']=pdf(fm,fb)
@@ -119,13 +137,15 @@ def main():
             tx=extract_pdf_text(fb)
             rec={'sourceUrl':fm.get('finalUrl') or u,'sha256':hashlib.sha256(fb).hexdigest(),'bytes':len(fb),'savedAs':p.name,'origin':origin,'pageCount':tx['pageCount'],'textExtractionError':tx['error'],'keywordHits':tx['hits']}
             rep['pdfs'].append(rec); fm['savedAs']=p.name
+            if not rendered:
+                rep['renderedPages']=render_target_pages(fb); rendered=True
         elif fb:
             ft=dec(fb); fm['accessBoundary']={'login':bool(re.search(r'로그인|login|sign.?in',ft,re.I)),'purchase':bool(re.search(r'구매|결제|purchase|paywall|이용권',ft,re.I)),'containsTarget':TITLE in ft or KY_ARTICLE_ID in ft}
         rep['probes'].append(fm)
 
     rep['directPdfAcquired']=len(rep['pdfs'])>0
     (OUT/'report.json').write_text(json.dumps(rep,ensure_ascii=False,indent=2),encoding='utf-8')
-    lines=[f'directPdfAcquired={rep["directPdfAcquired"]}',f'issueRecords={[(r.get("BOOK_CD"),r.get("BOOK_NM")) for r in rep["issueRecords"]]}',f'targetRecords={rep["targetRecords"]}']
+    lines=[f'directPdfAcquired={rep["directPdfAcquired"]}',f'issueRecords={[(r.get("BOOK_CD"),r.get("BOOK_NM")) for r in rep["issueRecords"]]}',f'targetRecords={rep["targetRecords"]}',f'renderedPages={rep["renderedPages"]}']
     for p in rep['pdfs']:
         lines.append(f'PDF sha={p["sha256"]} bytes={p["bytes"]} pages={p["pageCount"]} origin={p["origin"]} url={p["sourceUrl"]}')
         for hit in p['keywordHits']:
