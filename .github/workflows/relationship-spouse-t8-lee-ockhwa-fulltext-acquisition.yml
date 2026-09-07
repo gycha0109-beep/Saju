@@ -18,8 +18,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install text extraction dependency
-        run: python -m pip install --disable-pip-version-check pypdf
+      - name: Install extraction and rendering dependencies
+        run: python -m pip install --disable-pip-version-check pypdf pymupdf
       - name: Acquire only publicly exposed original routes
         run: python scripts/acquire-relationship-spouse-t8-lee-ockhwa-2024.py
       - name: Print bounded acquisition evidence
@@ -37,6 +37,7 @@ jobs:
                   'candidate':j.get('candidate'),
                   'targetRecords':j.get('targetRecords'),
                   'pdfs':j.get('pdfs'),
+                  'renderedPages':j.get('renderedPages'),
               }, ensure_ascii=False, indent=2))
           PY
       - name: Enforce acquisition boundary
@@ -48,5 +49,18 @@ jobs:
           assert j['candidate']['kciArticleId']=='ART003150783'
           assert j['candidate']['kyoboArticleId']=='4010070433587'
           assert j['candidate']['doi']=='10.55793/jkhc.2024.23.177'
+          if j['directPdfAcquired']:
+              assert len(j['renderedPages']) == 9
           print('Acquisition probe completed; directPdfAcquired=', j['directPdfAcquired'])
           PY
+      - name: Upload bounded rendered-page evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lee-ockhwa-2024-bounded-rendered-pages
+          path: |
+            acquisition-lee-ockhwa-2024/summary.txt
+            acquisition-lee-ockhwa-2024/report.json
+            acquisition-lee-ockhwa-2024/rendered-physical-p*.png
+          if-no-files-found: warn
+          retention-days: 1
