@@ -145,10 +145,10 @@ describe('General Natal source-condition resolver frontier', () => {
 
     expect(first.reportId).toBe(second.reportId);
     expect(first).toEqual(second);
-    expect(JSON.stringify(first)).not.toContain('patternEstablished\":true');
-    expect(JSON.stringify(first)).not.toContain('qualificationSatisfied\":true');
-    expect(JSON.stringify(first)).not.toContain('dayMasterFlourishing\":true');
-    expect(JSON.stringify(first)).not.toContain('foodGodFlourishing\":true');
-    expect(JSON.stringify(first)).not.toContain('noClashBreak\":true');
+    expect(JSON.stringify(first)).not.toContain('patternEstablished":true');
+    expect(JSON.stringify(first)).not.toContain('qualificationSatisfied":true');
+    expect(JSON.stringify(first)).not.toContain('dayMasterFlourishing":true');
+    expect(JSON.stringify(first)).not.toContain('foodGodFlourishing":true');
+    expect(JSON.stringify(first)).not.toContain('noClashBreak":true');
   });
 });
