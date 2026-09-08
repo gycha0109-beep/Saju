@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/discover-relationship-spouse-t8-song-sangseop-2022-riss.py'
       - 'scripts/probe-relationship-spouse-t8-song-sangseop-2022-riss-dispatcher.py'
+      - 'scripts/probe-relationship-spouse-t8-song-sangseop-2022-riss-global-dispatcher.py'
       - '.github/workflows/relationship-spouse-t8-song-sangseop-2022-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -24,15 +25,22 @@ jobs:
         run: python scripts/discover-relationship-spouse-t8-song-sangseop-2022-riss.py
       - name: Probe current RISS dispatcher and original-existence contract
         run: python scripts/probe-relationship-spouse-t8-song-sangseop-2022-riss-dispatcher.py
+      - name: Distinguish ButtonSet wrapper from global fulltext dispatcher
+        run: python scripts/probe-relationship-spouse-t8-song-sangseop-2022-riss-global-dispatcher.py
       - name: Print discovery and dispatcher evidence
         if: always()
         run: |
           test -f acquisition-song-sangseop-2022/riss-identity.json && cat acquisition-song-sangseop-2022/riss-identity.json || true
-          test -f acquisition-song-sangseop-2022/riss-dispatcher.json && python - <<'PY'
+          python - <<'PY'
           import json
           from pathlib import Path
-          j=json.loads(Path('acquisition-song-sangseop-2022/riss-dispatcher.json').read_text())
-          print(json.dumps({k:j[k] for k in ('target','form','originalCheckUrl','originalCheckContractFound','originalCheck','originalCheckBody','fulltextDispatcherImplementation','guessedOpaqueIdentifierCount','contentDownloadExecuted')},ensure_ascii=False,indent=2))
+          for name,keys in (
+            ('riss-dispatcher.json',('target','form','originalCheckUrl','originalCheckContractFound','originalCheck','originalCheckBody','guessedOpaqueIdentifierCount','contentDownloadExecuted')),
+            ('riss-global-dispatcher.json',('target','exactTargetButtonSetCallObserved','searchFormRedirectURL','buttonSetWrapperFound','globalFulltextFunctionFound','globalFulltextDefinitions','guessedOpaqueIdentifierCount','contentDownloadExecuted')),
+          ):
+            p=Path('acquisition-song-sangseop-2022')/name
+            if p.exists():
+              j=json.loads(p.read_text()); print(name); print(json.dumps({k:j[k] for k in keys},ensure_ascii=False,indent=2))
           PY
       - name: Enforce no-guess discovery boundary
         run: |
@@ -40,19 +48,21 @@ jobs:
           import json
           from pathlib import Path
           i=json.loads(Path('acquisition-song-sangseop-2022/riss-identity.json').read_text())
-          assert i['guessedOpaqueIdentifierCount']==0
-          assert i['contentActionExecuted'] is False
+          assert i['guessedOpaqueIdentifierCount']==0 and i['contentActionExecuted'] is False
           assert i['target']['rissIds']==['T16377357']
-          assert i['target']['docControlNo']=='16377357'
-          assert i['target']['docType']=='T'
+          assert i['target']['docControlNo']=='16377357' and i['target']['docType']=='T'
           assert i['target']['ucis']==['I804:45008-200000631721']
           d=json.loads(Path('acquisition-song-sangseop-2022/riss-dispatcher.json').read_text())
           assert d['form']=={'control_no':'6188af0cf49b0838ffe0bdc3ef48d419','p_mat_type':'be54d9b8bc7cdb09','p_submat_type':'b51fa0b5ced94fec','fulltext_kind':'a8cb3aaead67ab5b','t_gubun':''}
-          assert d['originalCheckContractFound'] is True
-          assert d['originalCheck']['status']==200
-          assert d['guessedOpaqueIdentifierCount']==0
-          assert d['contentDownloadExecuted'] is False
-          print('Song Sangseop exact RISS identity and current dispatcher boundary verified')
+          assert d['originalCheckContractFound'] is True and d['originalCheck']['status']==200
+          assert d['originalCheckBody']=='{"flag":"T"}'
+          assert d['guessedOpaqueIdentifierCount']==0 and d['contentDownloadExecuted'] is False
+          g=json.loads(Path('acquisition-song-sangseop-2022/riss-global-dispatcher.json').read_text())
+          assert g['exactTargetButtonSetCallObserved'] is True
+          assert g['searchFormRedirectURL']=='/search/download/FullTextDownload.do'
+          assert g['buttonSetWrapperFound'] is True
+          assert g['guessedOpaqueIdentifierCount']==0 and g['contentDownloadExecuted'] is False
+          print('Song Sangseop exact RISS identity, original existence, and dispatcher classification verified')
           PY
       - name: Upload bounded discovery evidence
         if: always()
@@ -62,6 +72,7 @@ jobs:
           path: |
             acquisition-song-sangseop-2022/riss-identity.json
             acquisition-song-sangseop-2022/riss-dispatcher.json
+            acquisition-song-sangseop-2022/riss-global-dispatcher.json
             acquisition-song-sangseop-2022/riss-search.html
             acquisition-song-sangseop-2022/riss-detail.html
           if-no-files-found: warn
