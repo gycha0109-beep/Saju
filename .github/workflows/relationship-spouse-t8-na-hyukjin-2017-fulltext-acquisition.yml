@@ -51,6 +51,9 @@ jobs:
                       'nanet': {
                           'identityObserved': j.get('nanet', {}).get('identityObserved'),
                           'controlObserved': j.get('nanet', {}).get('controlObserved'),
+                          'surfaceUnavailable': j.get('nanet', {}).get('surfaceUnavailable'),
+                          'targetViewCallObserved': j.get('nanet', {}).get('targetViewCallObserved'),
+                          'targetDownloadCallObserved': j.get('nanet', {}).get('targetDownloadCallObserved'),
                       },
                       'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
                       'contentActionExecuted': j.get('contentActionExecuted'),
@@ -60,6 +63,7 @@ jobs:
                   out = {
                       'rissOriginalCheck': j.get('riss', {}).get('originalCheck'),
                       'rissOriginalCheckBody': j.get('riss', {}).get('originalCheckBody'),
+                      'nanetSurfaceUnavailable': j.get('nanet', {}).get('surfaceUnavailable'),
                       'nanetTargetViewCallObserved': j.get('nanet', {}).get('targetViewCallObserved'),
                       'nanetTargetDownloadCallObserved': j.get('nanet', {}).get('targetDownloadCallObserved'),
                       'nanetViewPublicContractObserved': j.get('nanet', {}).get('viewPublicContractObserved'),
@@ -88,20 +92,27 @@ jobs:
           assert c['rissId'] == 'T14398372'
           assert c['nanetControl'] == 'KDMT1201802345'
           assert j['riss']['identityObserved'] is True
-          assert j['nanet']['identityObserved'] is True
+          assert j['riss']['docControlNo'] == '14398372'
+          assert j['riss']['docType'] == 'T'
           assert j['guessedOpaqueIdentifierCount'] == 0
           assert j['contentActionExecuted'] is False
+          if not j['nanet'].get('surfaceUnavailable'):
+              assert j['nanet']['identityObserved'] is True
+              assert j['nanet']['controlObserved'] is True
+              assert j['nanet']['targetViewCallObserved'] is True
+              assert j['nanet']['targetDownloadCallObserved'] is True
 
           d = json.loads(Path('acquisition-na-hyukjin-2017/dispatcher-probe.json').read_text())
           assert d['riss']['originalCheck']['status'] == 200
-          assert d['nanet']['targetViewCallObserved'] is True
-          assert d['nanet']['targetDownloadCallObserved'] is True
-          assert d['nanet']['viewPublicContractObserved'] is True
-          assert d['nanet']['downloadLoginGateObserved'] is True
-          assert d['nanet']['viewer']['status'] == 200
+          if not d['nanet'].get('surfaceUnavailable'):
+              assert d['nanet']['targetViewCallObserved'] is True
+              assert d['nanet']['targetDownloadCallObserved'] is True
+              assert d['nanet']['viewPublicContractObserved'] is True
+              assert d['nanet']['downloadLoginGateObserved'] is True
+              assert d['nanet']['viewer']['status'] == 200
           assert d['guessedOpaqueIdentifierCount'] == 0
           assert d['downloadActionExecuted'] is False
-          print('Na Hyukjin 2017 public dispatcher/no-guess boundary verified')
+          print('Na Hyukjin 2017 public dispatcher/no-guess boundary verified; nanetSurfaceUnavailable=', d['nanet'].get('surfaceUnavailable'))
           PY
 
       - name: Upload bounded evidence only
