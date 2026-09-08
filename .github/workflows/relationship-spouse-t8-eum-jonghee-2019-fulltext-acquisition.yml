@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-eum-jonghee-2019-fulltext.py'
+      - 'scripts/probe-relationship-spouse-t8-eum-jonghee-2019-riss-dispatcher.py'
       - '.github/workflows/relationship-spouse-t8-eum-jonghee-2019-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -22,8 +23,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends poppler-utils
 
+      - name: Probe exact public RISS dispatcher implementation
+        run: python3 scripts/probe-relationship-spouse-t8-eum-jonghee-2019-riss-dispatcher.py
+
       - name: Probe public thesis routes and inspect bounded semantic pages
         run: python3 scripts/acquire-relationship-spouse-t8-eum-jonghee-2019-fulltext.py
+
+      - name: Print bounded RISS dispatcher evidence
+        if: always()
+        run: |
+          test -f acquisition-eum-jonghee-2019/riss-dispatcher.json && python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('acquisition-eum-jonghee-2019/riss-dispatcher.json')
+          if p.exists():
+              j = json.loads(p.read_text())
+              print(json.dumps({
+                  'target': j.get('target'),
+                  'tuplePresentOnSearchSurface': j.get('tuplePresentOnSearchSurface'),
+                  'pageAuthoredFulltextCalls': j.get('pageAuthoredFulltextCalls'),
+                  'docControlNo': j.get('docControlNo'),
+                  'docType': j.get('docType'),
+                  'originalCheckUrl': j.get('originalCheckUrl'),
+                  'originalCheckContractFound': j.get('originalCheckContractFound'),
+                  'originalCheck': j.get('originalCheck'),
+                  'originalCheckBody': j.get('originalCheckBody'),
+              }, ensure_ascii=False, indent=2))
+          PY
 
       - name: Print bounded acquisition evidence
         if: always()
@@ -59,6 +85,18 @@ jobs:
           assert c['institution'] == '경기대학교 예술대학원'
           assert c['dbpiaNode'] == 'T15047469'
           assert c['kKnowledgeId'] == '281111307'
+
+          r = json.loads(Path('acquisition-eum-jonghee-2019/riss-dispatcher.json').read_text())
+          t = r['target']
+          assert t['author'] == '음종희'
+          assert t['controlNo'] == 'b3c06fb77553c27dffe0bdc3ef48d419'
+          assert t['pMatType'] == 'be54d9b8bc7cdb09'
+          assert t['pSubmatType'] == 'f1a8c7a1de0e08b8'
+          assert t['fulltextKind'] == 'a8cb3aaead67ab5b'
+          assert r['tuplePresentOnSearchSurface'] is True
+          assert r['docControlNo']
+          assert r['docType']
+
           if j['fullLengthPdfAcquired']:
               assert j['pdf'] is not None
               assert j['pdf']['bytes'] > 100000
@@ -75,6 +113,7 @@ jobs:
           path: |
             acquisition-eum-jonghee-2019/report.json
             acquisition-eum-jonghee-2019/summary.txt
+            acquisition-eum-jonghee-2019/riss-dispatcher.json
             acquisition-eum-jonghee-2019/*.txt
             acquisition-eum-jonghee-2019/semantic-pages/*.txt
             acquisition-eum-jonghee-2019/semantic-pages/*.png
