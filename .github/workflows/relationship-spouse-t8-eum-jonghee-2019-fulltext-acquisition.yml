@@ -1,0 +1,83 @@
+name: Relationship Spouse T8 Eum Jonghee 2019 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-eum-jonghee-2019-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-eum-jonghee-2019-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PDF inspection utilities
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils
+
+      - name: Probe public thesis routes and inspect bounded semantic pages
+        run: python3 scripts/acquire-relationship-spouse-t8-eum-jonghee-2019-fulltext.py
+
+      - name: Print bounded acquisition evidence
+        if: always()
+        run: |
+          test -f acquisition-eum-jonghee-2019/summary.txt && cat acquisition-eum-jonghee-2019/summary.txt || true
+          test -f acquisition-eum-jonghee-2019/report.json && python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('acquisition-eum-jonghee-2019/report.json')
+          if p.exists():
+              j = json.loads(p.read_text())
+              print(json.dumps({
+                  'candidate': j.get('candidate'),
+                  'observedIds': j.get('observedIds'),
+                  'siteAuthoredCandidateUrls': j.get('siteAuthoredCandidateUrls'),
+                  'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
+                  'pdf': j.get('pdf'),
+                  'semanticPages': j.get('semanticPages'),
+                  'accessBoundary': j.get('accessBoundary'),
+              }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Enforce candidate identity and acquisition boundary
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          j = json.loads(Path('acquisition-eum-jonghee-2019/report.json').read_text())
+          c = j['candidate']
+          assert c['author'] == '음종희'
+          assert c['year'] == 2019
+          assert c['title'] == '四柱命理 宮星에 관한 硏究 : 宮에 따른 十星작용을 중심으로'
+          assert c['institution'] == '경기대학교 예술대학원'
+          assert c['dbpiaNode'] == 'T15047469'
+          assert c['kKnowledgeId'] == '281111307'
+          if j['fullLengthPdfAcquired']:
+              assert j['pdf'] is not None
+              assert j['pdf']['bytes'] > 100000
+              assert j['pdf']['pages'] is None or j['pdf']['pages'] > 10
+              assert j['semanticPages'], 'full thesis acquired but no bounded semantic pages captured'
+          print('Eum Jonghee 2019 identity boundary verified; fullLengthPdfAcquired=', j['fullLengthPdfAcquired'])
+          PY
+
+      - name: Upload bounded evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eum-jonghee-2019-bounded-fulltext-evidence
+          path: |
+            acquisition-eum-jonghee-2019/report.json
+            acquisition-eum-jonghee-2019/summary.txt
+            acquisition-eum-jonghee-2019/*.txt
+            acquisition-eum-jonghee-2019/semantic-pages/*.txt
+            acquisition-eum-jonghee-2019/semantic-pages/*.png
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
