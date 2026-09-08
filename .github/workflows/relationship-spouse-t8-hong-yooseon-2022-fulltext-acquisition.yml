@@ -1,0 +1,82 @@
+name: Relationship Spouse T8 Hong Yooseon 2022 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-hong-yooseon-2022-public-routes.py'
+      - '.github/workflows/relationship-spouse-t8-hong-yooseon-2022-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install bounded PDF inspection dependencies
+        run: python -m pip install --disable-pip-version-check 'pypdf[crypto]' pymupdf
+
+      - name: Probe only public site-authored target routes
+        run: python scripts/acquire-relationship-spouse-t8-hong-yooseon-2022-public-routes.py
+
+      - name: Print bounded acquisition evidence
+        if: always()
+        run: |
+          test -f acquisition-hong-yooseon-2022/summary.txt && cat acquisition-hong-yooseon-2022/summary.txt || true
+          test -f acquisition-hong-yooseon-2022/report.json && python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('acquisition-hong-yooseon-2022/report.json')
+          if p.exists():
+              j = json.loads(p.read_text())
+              print(json.dumps({
+                  'candidate': j.get('candidate'),
+                  'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
+                  'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
+                  'semanticDisposition': j.get('semanticDisposition'),
+                  'pdfs': j.get('pdfs'),
+                  'siteAuthoredCandidateUrls': j.get('siteAuthoredCandidateUrls'),
+              }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Enforce identity and no-guess boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j = json.loads(Path('acquisition-hong-yooseon-2022/report.json').read_text())
+          c = j['candidate']
+          assert c['author'] == '홍유선'
+          assert c['year'] == 2022
+          assert c['kciArticleId'] == 'ART003089059'
+          assert c['rissId'] == 'A108419413'
+          assert c['doi'] == '10.54385/cbt.2022.2.2.75'
+          assert c['printedPages'] == '75-89'
+          assert c['expectedArticlePages'] == 15
+          assert j['guessedOpaqueIdentifierCount'] == 0
+          if j['fullLengthPdfAcquired']:
+              assert any((p.get('pages') or 0) >= 12 and p.get('bytes', 0) > 100000 for p in j['pdfs'])
+          print('Hong Yooseon 2022 bounded acquisition identity verified; fullLengthPdfAcquired=', j['fullLengthPdfAcquired'])
+          PY
+
+      - name: Upload bounded evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hong-yooseon-2022-bounded-fulltext-evidence
+          path: |
+            acquisition-hong-yooseon-2022/report.json
+            acquisition-hong-yooseon-2022/summary.txt
+            acquisition-hong-yooseon-2022/*.txt
+            acquisition-hong-yooseon-2022/*.png
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
