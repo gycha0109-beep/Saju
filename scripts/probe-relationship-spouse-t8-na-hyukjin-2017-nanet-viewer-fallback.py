@@ -16,7 +16,7 @@ OUT.mkdir(exist_ok=True)
 CONTROL = 'KDMT1201802345'
 STATIC = 'https://dl.nanet.go.kr/script/search/inner.js'
 VIEWER = f'https://dl.nanet.go.kr/view/callViewer.do?controlNo={CONTROL}&orgId=dl&linkSysId=NADL'
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/19.4; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/19.6; public-resource-verification)'
 MAX = 12 * 1024 * 1024
 ATTEMPTS = 3
 
@@ -84,10 +84,22 @@ def main() -> int:
         'viewer':{},
     }
     sm,st=fetch(STATIC)
+    normalized=re.sub(r'\s+','',st) if st else ''
     view_ctx=context(st,r'function\s+viewDoc\s*\([^)]*\)',500,7000) if st else None
     download_ctx=context(st,r'function\s+downloadDoc\s*\([^)]*\)',500,5000) if st else None
-    view_contract=bool(view_ctx and 'viewDocBySingleCount(controlNo)' in view_ctx and '/view/callViewer.do?controlNo=' in st)
-    download_login_gate=bool(download_ctx and re.search(r'if\s*\(\s*!isLogin\s*\)',download_ctx) and '/login.do' in download_ctx)
+    view_contract=bool(
+        st and
+        re.search(r'function\s+viewDoc\s*\([^)]*\)',st,re.I) and
+        'viewDocBySingleCount(controlNo)' in normalized and
+        '/view/callViewer.do?controlNo=' in st
+    )
+    download_login_gate=bool(
+        st and
+        re.search(r'function\s+downloadDoc\s*\([^)]*\)',st,re.I) and
+        'if(!isLogin)' in normalized and
+        '/login.do' in st and
+        '/file/fileDownload.do' in st
+    )
     report['static']={
         'meta':sm,
         'viewContractObserved':view_contract,
@@ -125,7 +137,6 @@ def main() -> int:
         'guessedOpaqueIdentifierCount':0,
         'downloadActionExecuted':False,
     },ensure_ascii=False,indent=2))
-    # Static contract must be current. Viewer network availability is evidence-neutral.
     if vt:
         assert vm['status']==200
     assert report['guessedOpaqueIdentifierCount']==0
