@@ -28,17 +28,15 @@ DETAIL = (
     'https://www.riss.kr/search/detail/DetailView.do?'
     f'p_mat_type={P_MAT_TYPE}&control_no={CONTROL_NO}'
 )
-ORIGINAL_CHECK = 'https://www.riss.kr/detail/originalCheck.do'
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/14.1; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/14.2; public-resource-verification)'
 MAX = 10 * 1024 * 1024
+
 PATTERNS = (
-    r'function\s+fulltextDownload\s*\([^)]*\)',
-    r'fulltextDownload\s*=\s*function\s*\([^)]*\)',
     r'fulltextDownload\s*:\s*function\s*\([^)]*\)',
+    r'function\s+fulltextDownload\s*\([^)]*\)',
     r'function\s+openFulltext\s*\([^)]*\)',
-    r'function\s+urlDownload\s*\([^)]*\)',
-    r'function\s+publicUrlDownload\s*\([^)]*\)',
     r'function\s+originalCheck\s*\([^)]*\)',
+    r'/detail/originalCheck\.do',
     r'/search/download/[A-Za-z0-9_.?=&/+%-]+',
 )
 
@@ -92,7 +90,7 @@ def fetch(opener, url: str, *, data: bytes | None = None, referer: str | None = 
         return meta, b''
 
 
-def windows(text: str, pattern: str, *, before: int = 1200, after: int = 9000, cap: int = 12) -> list[str]:
+def windows(text: str, pattern: str, *, before: int = 1200, after: int = 5000, cap: int = 8) -> list[str]:
     out: list[str] = []
     for m in re.finditer(pattern, text, re.I | re.S):
         value = compact(text[max(0, m.start() - before): min(len(text), m.start() + after)])
@@ -111,24 +109,24 @@ def inspect_source(source: str, text: str) -> dict:
             matches.append({'pattern': pattern, 'contexts': contexts})
     target_calls: list[str] = []
     for pattern in (
-        r'fulltextDownload\s*\([^;]{0,1600}\)',
-        r'openFulltext\s*\([^;]{0,1600}\)',
-        r'alertFullTextLayer\s*\([^;]{0,1600}\)',
-        r'ButtonSet\.fulltextDownload\s*\([^;]{0,1600}\)',
+        r'ButtonSet\.fulltextDownload\s*\([^;]{0,1200}\)',
+        r'fulltextDownload\s*\([^;]{0,1200}\)',
+        r'originalCheck\s*\([^;]{0,1200}\)',
+        r'openFulltext\s*\([^;]{0,1200}\)',
     ):
         for m in re.finditer(pattern, text, re.I | re.S):
-            call = compact(m.group(0), 2600)
+            call = compact(m.group(0), 2200)
             if call not in target_calls:
                 target_calls.append(call)
     return {'source': source, 'matches': matches, 'targetCalls': target_calls[:40]}
 
 
-def target_call_windows(text: str) -> list[str]:
+def target_windows(text: str) -> list[str]:
     out: list[str] = []
     decoded = html.unescape(text)
-    for token in (CONTROL_NO, 'ButtonSet.fulltextDownload', 'fulltextDownload('):
+    for token in (CONTROL_NO, 'ButtonSet.fulltextDownload', 'fulltextDownload(', 'id="controlNo"', 'originalCheck'):
         for m in re.finditer(re.escape(token), decoded, re.I):
-            value = compact(decoded[max(0, m.start() - 1200): min(len(decoded), m.start() + 2600)], 4200)
+            value = compact(decoded[max(0, m.start() - 1200): min(len(decoded), m.start() + 3200)], 4800)
             if value not in out:
                 out.append(value)
             if len(out) >= 30:
@@ -136,18 +134,31 @@ def target_call_windows(text: str) -> list[str]:
     return out
 
 
-def extract_doc_control_no(text: str) -> str | None:
-    # Accept only a value explicitly emitted by the target detail page.
-    patterns = (
-        r"originalCheck\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]T['\"]",
-        r"docControlNo\s*[:=]\s*['\"]([^'\"]+)['\"]",
-        r"doc_control_no\s*[:=]\s*['\"]([^'\"]+)['\"]",
-    )
-    for pattern in patterns:
-        m = re.search(pattern, text, re.I)
+def hidden_value(text: str, element_id: str) -> str | None:
+    for tag in re.findall(r'<input\b[^>]*>', text, re.I | re.S):
+        if not re.search(rf'\bid\s*=\s*["\']{re.escape(element_id)}["\']', tag, re.I):
+            continue
+        m = re.search(r'\bvalue\s*=\s*["\']([^"\']*)["\']', tag, re.I)
         if m:
-            return m.group(1)
+            return html.unescape(m.group(1))
     return None
+
+
+def original_check_endpoint(source_url: str, text: str) -> str | None:
+    # Use only a route string literally emitted by public RISS HTML/JS.
+    m = re.search(r'(?:(?:https?:)?//www\.riss\.kr)?(/detail/originalCheck\.do)', text, re.I)
+    if not m:
+        return None
+    return urljoin(source_url, m.group(1))
+
+
+def has_original_check_contract(text: str) -> bool:
+    normalized = re.sub(r'\s+', '', text)
+    return (
+        'functionoriginalCheck(goOri)' in normalized
+        and 'data:{controlNo:controlNo,docType:docType}' in normalized
+        and 'url:goOri' in normalized
+    )
 
 
 def main() -> int:
@@ -163,15 +174,18 @@ def main() -> int:
         },
         'searchUrl': SEARCH,
         'detailUrl': DETAIL,
-        'originalCheckUrl': ORIGINAL_CHECK,
         'search': {},
         'detail': {},
         'searchTargetWindows': [],
         'detailTargetWindows': [],
         'scriptUrls': [],
         'sources': [],
+        'pageAuthoredFulltextCalls': [],
         'tuplePresentOnSearchSurface': False,
         'docControlNo': None,
+        'docType': None,
+        'originalCheckUrl': None,
+        'originalCheckContractFound': False,
         'originalCheck': None,
         'originalCheckBody': None,
     }
@@ -179,28 +193,43 @@ def main() -> int:
     smeta, sbody = fetch(opener, SEARCH)
     report['search'] = smeta
     search_text = decode(sbody) if sbody else ''
-    report['searchTargetWindows'] = target_call_windows(search_text)
-    search_joined = ' '.join(report['searchTargetWindows'])
+    report['searchTargetWindows'] = target_windows(search_text)
     expected_tuple = (CONTROL_NO, P_MAT_TYPE, P_SUBMAT_TYPE, FULLTEXT_KIND)
-    report['tuplePresentOnSearchSurface'] = all(v in search_joined for v in expected_tuple)
+    report['tuplePresentOnSearchSurface'] = all(v in ' '.join(report['searchTargetWindows']) for v in expected_tuple)
     report['sources'].append(inspect_source(smeta.get('finalUrl') or SEARCH, search_text))
 
     meta, body = fetch(opener, DETAIL, referer=SEARCH)
     report['detail'] = meta
-    text = decode(body) if body else ''
-    assert CONTROL_NO in text
-    assert P_MAT_TYPE in text
-    assert AUTHOR in text or TITLE_SIGNAL in text or '적천수' in text
-    report['detailTargetWindows'] = target_call_windows(text)
-    report['sources'].append(inspect_source(meta.get('finalUrl') or DETAIL, text))
+    detail_text = decode(body) if body else ''
+    assert CONTROL_NO in detail_text
+    assert P_MAT_TYPE in detail_text
+    assert AUTHOR in detail_text or TITLE_SIGNAL in detail_text or '적천수' in detail_text
+    report['detailTargetWindows'] = target_windows(detail_text)
+    report['sources'].append(inspect_source(meta.get('finalUrl') or DETAIL, detail_text))
+
+    calls: list[str] = []
+    for source_text in (search_text, detail_text):
+        for pattern in (
+            r"ButtonSet\.fulltextDownload\s*\([^;]{0,1000}\)",
+            r"onclick=[\"'][^\"']*fulltextDownload\s*\([^\"']*\)[^\"']*[\"']",
+        ):
+            for m in re.finditer(pattern, html.unescape(source_text), re.I | re.S):
+                call = compact(m.group(0), 1800)
+                if call not in calls:
+                    calls.append(call)
+    report['pageAuthoredFulltextCalls'] = calls[:30]
 
     script_urls: list[str] = []
-    for raw in re.findall(r'<script[^>]+src=["\']([^"\']+)', text, re.I):
+    for raw in re.findall(r'<script[^>]+src=["\']([^"\']+)', detail_text, re.I):
         url = urljoin(meta.get('finalUrl') or DETAIL, html.unescape(raw))
         if url not in script_urls:
             script_urls.append(url)
     report['scriptUrls'] = script_urls
 
+    source_texts: list[tuple[str, str]] = [
+        (smeta.get('finalUrl') or SEARCH, search_text),
+        (meta.get('finalUrl') or DETAIL, detail_text),
+    ]
     for url in script_urls[:100]:
         jm, jb = fetch(opener, url, referer=DETAIL)
         if not jb:
@@ -212,12 +241,28 @@ def main() -> int:
         rec = inspect_source(jm.get('finalUrl') or url, jt)
         rec['meta'] = jm
         report['sources'].append(rec)
+        source_texts.append((jm.get('finalUrl') or url, jt))
 
-    doc_control_no = extract_doc_control_no(text)
-    report['docControlNo'] = doc_control_no
-    if doc_control_no:
-        payload = urlencode({'controlNo': doc_control_no, 'docType': 'T'}).encode('ascii')
-        om, ob = fetch(opener, ORIGINAL_CHECK, data=payload, referer=DETAIL)
+    report['docControlNo'] = hidden_value(detail_text, 'controlNo')
+    report['docType'] = hidden_value(detail_text, 'docType')
+
+    endpoint = None
+    contract_found = False
+    for source_url, source_text in source_texts:
+        contract_found = contract_found or has_original_check_contract(source_text)
+        if endpoint is None:
+            endpoint = original_check_endpoint(source_url, source_text)
+    report['originalCheckContractFound'] = contract_found
+    report['originalCheckUrl'] = endpoint
+
+    # Reproduce the public site's own originalCheck(goOri) AJAX contract only when
+    # both the implementation and its literal endpoint are observed in fetched HTML/JS.
+    if endpoint and contract_found and report['docControlNo'] and report['docType']:
+        payload = urlencode({
+            'controlNo': report['docControlNo'],
+            'docType': report['docType'],
+        }).encode('ascii')
+        om, ob = fetch(opener, endpoint, data=payload, referer=DETAIL)
         report['originalCheck'] = om
         report['originalCheckBody'] = compact(decode(ob), 4000) if ob else None
 
@@ -228,10 +273,12 @@ def main() -> int:
         'target': report['target'],
         'search': report['search'],
         'detail': report['detail'],
+        'pageAuthoredFulltextCalls': report['pageAuthoredFulltextCalls'],
         'tuplePresentOnSearchSurface': report['tuplePresentOnSearchSurface'],
-        'searchTargetWindows': report['searchTargetWindows'],
-        'detailTargetWindows': report['detailTargetWindows'],
         'docControlNo': report['docControlNo'],
+        'docType': report['docType'],
+        'originalCheckUrl': report['originalCheckUrl'],
+        'originalCheckContractFound': report['originalCheckContractFound'],
         'originalCheck': report['originalCheck'],
         'originalCheckBody': report['originalCheckBody'],
         'sources': [
@@ -245,9 +292,9 @@ def main() -> int:
     }
     print(json.dumps(focused, ensure_ascii=False, indent=2))
 
-    # Search surface is expected to expose the exact tuple discovered in the prior run;
-    # this assertion is now correctly scoped to that surface rather than the detail wrapper.
     assert report['tuplePresentOnSearchSurface'], 'exact target fulltext tuple disappeared from RISS search surface'
+    assert report['docControlNo'], 'target detail page no longer exposes doc control number'
+    assert report['docType'], 'target detail page no longer exposes doc type'
     return 0
 
 
