@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-na-hyukjin-2017-public-routes.py'
       - 'scripts/probe-relationship-spouse-t8-na-hyukjin-2017-public-dispatchers.py'
+      - 'scripts/probe-relationship-spouse-t8-na-hyukjin-2017-nanet-viewer-fallback.py'
       - '.github/workflows/relationship-spouse-t8-na-hyukjin-2017-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -28,6 +29,9 @@ jobs:
       - name: Reproduce site-authored RISS original check and anonymous NANET viewer bootstrap
         run: python scripts/probe-relationship-spouse-t8-na-hyukjin-2017-public-dispatchers.py
 
+      - name: Verify current NANET static dispatcher and bounded anonymous viewer fallback
+        run: python scripts/probe-relationship-spouse-t8-na-hyukjin-2017-nanet-viewer-fallback.py
+
       - name: Print bounded acquisition evidence
         if: always()
         run: |
@@ -35,7 +39,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          for name in ('report.json', 'dispatcher-probe.json'):
+          for name in ('report.json', 'dispatcher-probe.json', 'nanet-viewer-fallback.json'):
               p = Path('acquisition-na-hyukjin-2017') / name
               if not p.exists():
                   continue
@@ -59,20 +63,19 @@ jobs:
                       'contentActionExecuted': j.get('contentActionExecuted'),
                       'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
                   }
-              else:
+              elif name == 'dispatcher-probe.json':
                   out = {
                       'rissOriginalCheck': j.get('riss', {}).get('originalCheck'),
                       'rissOriginalCheckBody': j.get('riss', {}).get('originalCheckBody'),
                       'nanetSurfaceUnavailable': j.get('nanet', {}).get('surfaceUnavailable'),
-                      'nanetTargetViewCallObserved': j.get('nanet', {}).get('targetViewCallObserved'),
-                      'nanetTargetDownloadCallObserved': j.get('nanet', {}).get('targetDownloadCallObserved'),
-                      'nanetViewPublicContractObserved': j.get('nanet', {}).get('viewPublicContractObserved'),
-                      'nanetDownloadLoginGateObserved': j.get('nanet', {}).get('downloadLoginGateObserved'),
-                      'nanetViewer': j.get('nanet', {}).get('viewer'),
                       'nanetViewerNextHop': j.get('nanet', {}).get('viewerNextHop'),
-                      'nanetViewerLoginBoundary': j.get('nanet', {}).get('viewerLoginBoundary'),
-                      'nanetViewerInstitutionBoundary': j.get('nanet', {}).get('viewerInstitutionBoundary'),
-                      'nanetViewerDrmSignal': j.get('nanet', {}).get('viewerDrmSignal'),
+                      'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
+                      'downloadActionExecuted': j.get('downloadActionExecuted'),
+                  }
+              else:
+                  out = {
+                      'static': j.get('static'),
+                      'viewer': j.get('viewer'),
                       'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
                       'downloadActionExecuted': j.get('downloadActionExecuted'),
                   }
@@ -104,6 +107,7 @@ jobs:
 
           d = json.loads(Path('acquisition-na-hyukjin-2017/dispatcher-probe.json').read_text())
           assert d['riss']['originalCheck']['status'] == 200
+          assert d['riss']['originalCheckBody'] == '{"flag":"T"}'
           if not d['nanet'].get('surfaceUnavailable'):
               assert d['nanet']['targetViewCallObserved'] is True
               assert d['nanet']['targetDownloadCallObserved'] is True
@@ -112,7 +116,17 @@ jobs:
               assert d['nanet']['viewer']['status'] == 200
           assert d['guessedOpaqueIdentifierCount'] == 0
           assert d['downloadActionExecuted'] is False
-          print('Na Hyukjin 2017 public dispatcher/no-guess boundary verified; nanetSurfaceUnavailable=', d['nanet'].get('surfaceUnavailable'))
+
+          f = json.loads(Path('acquisition-na-hyukjin-2017/nanet-viewer-fallback.json').read_text())
+          assert f['targetControl'] == 'KDMT1201802345'
+          assert f['static']['meta']['status'] == 200
+          assert f['static']['viewContractObserved'] is True
+          assert f['static']['downloadLoginGateObserved'] is True
+          if not f['viewer'].get('surfaceUnavailable'):
+              assert f['viewer']['meta']['status'] == 200
+          assert f['guessedOpaqueIdentifierCount'] == 0
+          assert f['downloadActionExecuted'] is False
+          print('Na Hyukjin 2017 exact public acquisition boundary verified')
           PY
 
       - name: Upload bounded evidence only
@@ -123,6 +137,7 @@ jobs:
           path: |
             acquisition-na-hyukjin-2017/report.json
             acquisition-na-hyukjin-2017/dispatcher-probe.json
+            acquisition-na-hyukjin-2017/nanet-viewer-fallback.json
             acquisition-na-hyukjin-2017/summary.txt
           if-no-files-found: warn
           retention-days: 1
