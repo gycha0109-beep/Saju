@@ -1,0 +1,52 @@
+name: Relationship Spouse T8 Song Sangseop 2022 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/discover-relationship-spouse-t8-song-sangseop-2022-riss.py'
+      - '.github/workflows/relationship-spouse-t8-song-sangseop-2022-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Resolve exact current public RISS identity without guessed ids
+        run: python scripts/discover-relationship-spouse-t8-song-sangseop-2022-riss.py
+      - name: Print discovery evidence
+        if: always()
+        run: |
+          test -f acquisition-song-sangseop-2022/riss-identity.json && cat acquisition-song-sangseop-2022/riss-identity.json || true
+      - name: Enforce no-guess discovery boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-song-sangseop-2022/riss-identity.json').read_text())
+          assert j['guessedOpaqueIdentifierCount']==0
+          assert j['contentActionExecuted'] is False
+          assert j['target']['rissIds']
+          assert j['target']['docControlNo']
+          assert j['target']['docType']=='T'
+          print('Song Sangseop exact RISS identity resolved without guessing')
+          PY
+      - name: Upload bounded discovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: song-sangseop-2022-bounded-fulltext-evidence
+          path: |
+            acquisition-song-sangseop-2022/riss-identity.json
+            acquisition-song-sangseop-2022/riss-search.html
+            acquisition-song-sangseop-2022/riss-detail.html
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
