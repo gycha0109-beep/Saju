@@ -65,10 +65,16 @@ jobs:
               j = json.loads(p.read_text())
               print(json.dumps({
                   'target': j.get('target'),
+                  'surfaceAvailable': j.get('surfaceAvailable'),
+                  'surfaceUnavailable': j.get('surfaceUnavailable'),
                   'surfaces': j.get('surfaces'),
                   'pageCalls': j.get('pageCalls'),
-                  'scriptUrls': j.get('scriptUrls'),
-                  'sources': j.get('sources'),
+                  'viewerContractObservedThisRun': j.get('viewerContractObservedThisRun'),
+                  'viewerContract': j.get('viewerContract'),
+                  'viewerAttempt': j.get('viewerAttempt'),
+                  'viewerPdfPrivateFile': j.get('viewerPdfPrivateFile'),
+                  'downloadBoundary': j.get('downloadBoundary'),
+                  'scriptFetchSummary': j.get('scriptFetchSummary'),
               }, ensure_ascii=False, indent=2))
           PY
       - name: Print bounded acquisition evidence
@@ -111,8 +117,16 @@ jobs:
           n = json.loads(Path('acquisition-lee-sangcheon-2017/nanet-dispatcher.json').read_text())
           assert n['target']['author'] == '이상천'
           assert n['target']['controlNo'] == 'KDMT1201802346'
-          assert any('viewDoc' in x and 'KDMT1201802346' in x for x in n['pageCalls'])
-          assert any('downloadDoc' in x and 'KDMT1201802346' in x for x in n['pageCalls'])
+          if n.get('surfaceUnavailable'):
+              assert not n.get('viewerContractObservedThisRun')
+              assert n.get('viewerAttempt') is None
+              print('NANET availability boundary recorded; no contract or semantic negative inferred.')
+          else:
+              assert any('viewDoc' in x and 'KDMT1201802346' in x for x in n['pageCalls'])
+              assert any('downloadDoc' in x and 'KDMT1201802346' in x for x in n['pageCalls'])
+              if n.get('viewerContractObservedThisRun'):
+                  assert n.get('viewerContract', {}).get('controlNo') == 'KDMT1201802346'
+              assert n.get('downloadBoundary') is None or n['downloadBoundary'].get('executed') is False
           print('Identity boundary verified; fullLengthPdfAcquired=', j['fullLengthPdfAcquired'])
           PY
       - name: Upload bounded evidence only
