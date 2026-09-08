@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-hong-yooseon-2022-public-routes.py'
       - 'scripts/probe-relationship-spouse-t8-hong-yooseon-2022-acci-publisher.py'
+      - 'scripts/probe-relationship-spouse-t8-hong-yooseon-2022-nanet.py'
       - '.github/workflows/relationship-spouse-t8-hong-yooseon-2022-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -31,6 +32,9 @@ jobs:
       - name: Probe ACCI publisher contract and target feed only if public provenance is verified
         run: python scripts/probe-relationship-spouse-t8-hong-yooseon-2022-acci-publisher.py
 
+      - name: Probe National Assembly Library exact public record boundary
+        run: python scripts/probe-relationship-spouse-t8-hong-yooseon-2022-nanet.py
+
       - name: Print bounded acquisition evidence
         if: always()
         run: |
@@ -38,7 +42,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          for name in ('report.json', 'publisher-probe.json'):
+          for name in ('report.json', 'publisher-probe.json', 'nanet-probe.json'):
               p = Path('acquisition-hong-yooseon-2022') / name
               if not p.exists():
                   continue
@@ -51,7 +55,7 @@ jobs:
                       'semanticDisposition': j.get('semanticDisposition'),
                       'pdfs': j.get('pdfs'),
                   }
-              else:
+              elif name == 'publisher-probe.json':
                   out = {
                       'contractVerified': j.get('contractVerified'),
                       'publicContract': j.get('publicContract'),
@@ -62,6 +66,17 @@ jobs:
                       'pdf': j.get('pdf'),
                       'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
                       'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
+                  }
+              else:
+                  out = {
+                      'searchTargetObserved': j.get('searchTargetObserved'),
+                      'searchAccessSignals': j.get('searchAccessSignals'),
+                      'observedOpaqueIdentifiers': j.get('observedOpaqueIdentifiers'),
+                      'targetRoutes': j.get('targetRoutes'),
+                      'targetCalls': j.get('targetCalls'),
+                      'detailProbes': j.get('detailProbes'),
+                      'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
+                      'contentActionExecuted': j.get('contentActionExecuted'),
                   }
               print(name)
               print(json.dumps(out, ensure_ascii=False, indent=2))
@@ -89,7 +104,14 @@ jobs:
               assert p['pdf'] is not None
               assert (p['pdf'].get('pages') or 0) >= 12
               assert p['pdf'].get('bytes', 0) > 100000
-          print('Hong Yooseon 2022 bounded acquisition identity verified; baseFullLength=', j['fullLengthPdfAcquired'], 'publisherFullLength=', p['fullLengthPdfAcquired'])
+
+          n = json.loads(Path('acquisition-hong-yooseon-2022/nanet-probe.json').read_text())
+          assert n['candidate']['author'] == '홍유선'
+          assert n['candidate']['printedPages'] == '75-89'
+          assert n['searchTargetObserved'] is True
+          assert n['guessedOpaqueIdentifierCount'] == 0
+          assert n['contentActionExecuted'] is False
+          print('Hong Yooseon 2022 bounded acquisition identity verified; baseFullLength=', j['fullLengthPdfAcquired'], 'publisherFullLength=', p['fullLengthPdfAcquired'], 'nanetTarget=', n['searchTargetObserved'])
           PY
 
       - name: Upload bounded evidence only
@@ -100,6 +122,7 @@ jobs:
           path: |
             acquisition-hong-yooseon-2022/report.json
             acquisition-hong-yooseon-2022/publisher-probe.json
+            acquisition-hong-yooseon-2022/nanet-probe.json
             acquisition-hong-yooseon-2022/summary.txt
             acquisition-hong-yooseon-2022/*.txt
             acquisition-hong-yooseon-2022/*.png
