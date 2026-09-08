@@ -1,0 +1,65 @@
+name: Relationship Spouse T8 Lee Sangcheon 2017 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-lee-sangcheon-2017-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-lee-sangcheon-2017-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PDF inspection dependencies
+        run: python -m pip install --disable-pip-version-check 'pypdf[crypto]' pymupdf
+      - name: Probe public thesis fulltext routes only
+        run: python scripts/acquire-relationship-spouse-t8-lee-sangcheon-2017-fulltext.py
+      - name: Print bounded acquisition evidence
+        if: always()
+        run: |
+          test -f acquisition-lee-sangcheon-2017/summary.txt && cat acquisition-lee-sangcheon-2017/summary.txt || true
+          test -f acquisition-lee-sangcheon-2017/report.json && python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('acquisition-lee-sangcheon-2017/report.json')
+          if p.exists():
+              j = json.loads(p.read_text())
+              print(json.dumps({
+                  'candidate': j.get('candidate'),
+                  'siteAuthoredRoutes': j.get('siteAuthoredRoutes'),
+                  'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
+                  'pdfs': j.get('pdfs'),
+              }, ensure_ascii=False, indent=2))
+          PY
+      - name: Enforce acquisition identity boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j = json.loads(Path('acquisition-lee-sangcheon-2017/report.json').read_text())
+          c = j['candidate']
+          assert c['author'] == '이상천'
+          assert c['year'] == 2017
+          assert c['nanetControlNo'] == 'KDMT1201802346'
+          assert '부처(夫妻)' in c['spouseChapterToc']
+          print('Identity boundary verified; fullLengthPdfAcquired=', j['fullLengthPdfAcquired'])
+          PY
+      - name: Upload bounded evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lee-sangcheon-2017-bounded-fulltext-evidence
+          path: |
+            acquisition-lee-sangcheon-2017/summary.txt
+            acquisition-lee-sangcheon-2017/report.json
+            acquisition-lee-sangcheon-2017/rendered-*.png
+          if-no-files-found: warn
+          retention-days: 1
