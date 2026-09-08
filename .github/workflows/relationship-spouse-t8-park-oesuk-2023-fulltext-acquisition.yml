@@ -1,0 +1,56 @@
+name: Relationship Spouse T8 Park Oesuk 2023 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-park-oesuk-2023-public-routes.py'
+      - '.github/workflows/relationship-spouse-t8-park-oesuk-2023-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Probe exact public RISS and NANET routes
+        run: python scripts/acquire-relationship-spouse-t8-park-oesuk-2023-public-routes.py
+      - name: Print bounded evidence
+        if: always()
+        run: |
+          test -f acquisition-park-oesuk-2023/summary.txt && cat acquisition-park-oesuk-2023/summary.txt || true
+      - name: Enforce identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-park-oesuk-2023/report.json').read_text())
+          assert j['candidate']['author']=='박외숙'
+          assert j['candidate']['riss']=='T16818829'
+          assert j['candidate']['nanet']=='KDMT12023000053361'
+          assert j['riss']['identityObserved'] is True
+          assert j['nanet']['identityObserved'] is True
+          assert j['guessedOpaqueIdentifierCount']==0
+          assert j['loginBypass'] is False
+          assert j['drmRequestExecuted'] is False
+          assert j['contentAssetActionExecuted'] is False
+          assert j['fullLengthPdfAcquired'] is False
+          print('Park Oesuk bounded public acquisition boundary verified')
+          PY
+      - name: Upload bounded evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: park-oesuk-2023-bounded-fulltext-evidence
+          path: |
+            acquisition-park-oesuk-2023/report.json
+            acquisition-park-oesuk-2023/summary.txt
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
