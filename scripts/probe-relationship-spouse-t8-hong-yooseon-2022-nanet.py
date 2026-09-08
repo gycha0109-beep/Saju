@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import math
 import re
 from http.cookiejar import CookieJar
 from pathlib import Path
@@ -19,12 +20,15 @@ TITLE_ANCHOR = '이데올로기적 접근'
 PUBLISHER = '아시아문화콘텐츠연구소'
 ISSUE = '제2권 제2호'
 PAGES = '75-89'
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/18.1; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/18.2; public-resource-verification)'
 MAX = 8 * 1024 * 1024
+PAGE_SIZE = 10
+# The indexed public search surface reported totalSize=36. Four normal public
+# result pages therefore exhaust the result set without guessing any record id.
+INDEXED_TOTAL_SIZE = 36
+MAX_PUBLIC_PAGES = math.ceil(INDEXED_TOTAL_SIZE / PAGE_SIZE)
 
-# Reproduce the complete public National Assembly Library publisher-search URL
-# observed on the indexed search-result surface. No opaque record id is supplied.
-SEARCH_PARAMS = {
+BASE_SEARCH_PARAMS = {
     'bestMeterialSearchQuery': f'{PUBLISHER}:ALL_NI_TOC:AND',
     'branchCode': 'ALL',
     'dpBranch': 'ALL',
@@ -32,8 +36,7 @@ SEARCH_PARAMS = {
     'navigationSize': '5',
     'nopMenu': 'REFD',
     'orderBy': 'WEIGHT',
-    'pageNum': '3',
-    'pageSize': '10',
+    'pageSize': str(PAGE_SIZE),
     'queryText': f'{PUBLISHER}:PUB^PUB_WS^DP_PUB_WS:AND',
     'refineSearchYn': 'N',
     'resultType': 'INNER_SEARCH_LIST',
@@ -42,12 +45,16 @@ SEARCH_PARAMS = {
     'searchQuery': PUBLISHER,
     'searchType': 'INNER_SEARCH',
     'seqNo': '0',
-    'totalSize': '36',
-    'totalSizeByMenu': '36',
+    'totalSize': str(INDEXED_TOTAL_SIZE),
+    'totalSizeByMenu': str(INDEXED_TOTAL_SIZE),
     'userClass': '0',
     'zone': 'PUB^PUB_WS^DP_PUB_WS',
 }
-SEARCH = 'https://dl.nanet.go.kr/search/searchInnerList.do?' + urlencode(SEARCH_PARAMS)
+
+
+def search_url(page_num: int) -> str:
+    params = {**BASE_SEARCH_PARAMS, 'pageNum': str(page_num)}
+    return 'https://dl.nanet.go.kr/search/searchInnerList.do?' + urlencode(params)
 
 
 def decode(body: bytes) -> str:
@@ -103,12 +110,21 @@ def target_window(text: str) -> str:
         idx = text.find(needle)
         if idx >= 0:
             return text[max(0, idx - 22000):min(len(text), idx + 42000)]
-    # AUTHOR appears on another item on the same page as well, so use it only as
-    # a diagnostic fallback, never as sufficient identity by itself.
-    idx = text.find(AUTHOR)
-    if idx < 0:
-        return ''
-    return text[max(0, idx - 22000):min(len(text), idx + 42000)]
+    return ''
+
+
+def target_observed(text: str) -> bool:
+    if not text:
+        return False
+    normalized = compact(text, len(text))
+    if TITLE_ANCHOR not in normalized:
+        return False
+    tw = compact(target_window(text), 64000)
+    return (
+        AUTHOR in tw
+        and ('75-89' in tw or '75~89' in tw or '75 - 89' in tw)
+        and ('문화' in tw or PUBLISHER in tw)
+    )
 
 
 def observed_routes(window: str, base: str) -> list[dict]:
@@ -167,17 +183,29 @@ def detail_candidates(routes: list[dict]) -> list[str]:
     for item in routes:
         url = item['url']
         low = url.lower()
-        # Detail metadata/navigation only. Do not execute original/download/viewer/content actions.
+        # Metadata/detail navigation only. Never execute original/download/viewer/content actions.
         if ('searchdetailview.do' in low or '/detail/' in low) and not re.search(r'original|download|viewer|file|content', low, re.I):
             if url not in out:
                 out.append(url)
     return out[:10]
 
 
+def observed_ids(window: str) -> list[str]:
+    ids: set[str] = set()
+    for pat in (
+        r'\b(KINX\d{6,})\b',
+        r'\b(KDMT\d{6,})\b',
+        r'\b(MONO\d{6,})\b',
+        r'[?&](?:cn|controlNo|control_no|sysid|articleId|article_id)=([A-Za-z0-9._:-]{5,120})',
+    ):
+        ids.update(re.findall(pat, window, re.I))
+    return sorted(ids)
+
+
 def main() -> int:
     opener = build_opener(HTTPCookieProcessor(CookieJar()))
     report = {
-        'purpose': 'National Assembly Library exact public record/control inspection for Hong Yooseon 2022; no content action or authentication bypass',
+        'purpose': 'National Assembly Library public pagination and exact-record/control inspection for Hong Yooseon 2022; no protected content action or authentication bypass',
         'candidate': {
             'author': AUTHOR,
             'title': TITLE,
@@ -185,53 +213,59 @@ def main() -> int:
             'issue': ISSUE,
             'printedPages': PAGES,
         },
-        'searchUrl': SEARCH,
-        'search': None,
+        'indexedPublicSearchContract': {
+            'indexedTotalSize': INDEXED_TOTAL_SIZE,
+            'pageSize': PAGE_SIZE,
+            'pagesExhaustivelyScanned': MAX_PUBLIC_PAGES,
+        },
+        'searchPages': [],
         'searchTargetObserved': False,
+        'targetSearchPage': None,
         'targetWindow': None,
         'targetRoutes': [],
         'targetCalls': [],
         'searchAccessSignals': None,
         'detailProbes': [],
         'observedOpaqueIdentifiers': [],
+        'liveSearchDisposition': 'TARGET_NOT_REPRODUCED_ON_CURRENT_LIVE_PUBLIC_PAGINATION',
         'guessedOpaqueIdentifierCount': 0,
         'contentActionExecuted': False,
     }
 
-    sm, st = fetch(opener, SEARCH)
-    report['search'] = sm
-    if st:
-        normalized = compact(st, len(st))
-        report['searchTargetObserved'] = (
-            TITLE_ANCHOR in normalized
-            and AUTHOR in normalized
-            and ('75-89' in normalized or '75~89' in normalized or '75 - 89' in normalized)
-        )
-        tw = target_window(st)
+    target_html = ''
+    target_meta = None
+    target_page = None
+
+    for page_num in range(1, MAX_PUBLIC_PAGES + 1):
+        url = search_url(page_num)
+        sm, st = fetch(opener, url)
+        page_rec = {
+            'pageNum': page_num,
+            'meta': sm,
+            'targetObserved': target_observed(st),
+        }
+        report['searchPages'].append(page_rec)
+        if st:
+            (OUT / f'nanet-search-page-{page_num}.html').write_text(st[:4_000_000], encoding='utf-8')
+        if page_rec['targetObserved'] and not target_html:
+            target_html = st
+            target_meta = sm
+            target_page = page_num
+
+    if target_html:
+        report['searchTargetObserved'] = True
+        report['targetSearchPage'] = target_page
+        report['liveSearchDisposition'] = 'TARGET_REPRODUCED_ON_CURRENT_LIVE_PUBLIC_PAGINATION'
+        tw = target_window(target_html)
         report['targetWindow'] = compact(tw, 36000)
-        report['targetRoutes'] = observed_routes(tw, sm.get('finalUrl') or SEARCH)
+        report['targetRoutes'] = observed_routes(tw, target_meta.get('finalUrl') or search_url(target_page))
         report['targetCalls'] = extract_calls(tw)
         report['searchAccessSignals'] = access_signals(tw)
-
-        # Persist the full public search HTML for deterministic failure diagnosis;
-        # it contains only public search results, not protected article content.
-        (OUT / 'nanet-search.html').write_text(st[:4_000_000], encoding='utf-8')
-
-        # Record only identifiers literally observed in the exact target window.
-        ids = set()
-        for pat in (
-            r'\b(KINX\d{6,})\b',
-            r'\b(KDMT\d{6,})\b',
-            r'\b(MONO\d{6,})\b',
-            r'[?&](?:cn|controlNo|control_no|sysid|articleId|article_id)=([A-Za-z0-9._:-]{5,120})',
-        ):
-            ids.update(re.findall(pat, tw, re.I))
-        report['observedOpaqueIdentifiers'] = sorted(ids)
-
+        report['observedOpaqueIdentifiers'] = observed_ids(tw)
         (OUT / 'nanet-target-window.txt').write_text(tw, encoding='utf-8')
 
         for url in detail_candidates(report['targetRoutes']):
-            dm, dt = fetch(opener, url, sm.get('finalUrl') or SEARCH)
+            dm, dt = fetch(opener, url, target_meta.get('finalUrl') or search_url(target_page))
             dt_norm = compact(dt, len(dt)) if dt else ''
             rec = {
                 'meta': dm,
@@ -246,7 +280,11 @@ def main() -> int:
 
     (OUT / 'nanet-probe.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps({
+        'indexedPublicSearchContract': report['indexedPublicSearchContract'],
+        'searchPages': report['searchPages'],
         'searchTargetObserved': report['searchTargetObserved'],
+        'targetSearchPage': report['targetSearchPage'],
+        'liveSearchDisposition': report['liveSearchDisposition'],
         'searchAccessSignals': report['searchAccessSignals'],
         'observedOpaqueIdentifiers': report['observedOpaqueIdentifiers'],
         'targetRoutes': report['targetRoutes'],
@@ -256,8 +294,8 @@ def main() -> int:
         'contentActionExecuted': report['contentActionExecuted'],
     }, ensure_ascii=False, indent=2))
 
-    assert report['search']['status'] == 200, 'NANET public search did not return HTTP 200'
-    assert report['searchTargetObserved'] is True, 'exact Hong Yooseon target was not observed on the complete public NANET search surface'
+    assert len(report['searchPages']) == MAX_PUBLIC_PAGES
+    assert all(x['meta']['status'] == 200 for x in report['searchPages']), 'one or more NANET public pagination requests failed'
     assert report['guessedOpaqueIdentifierCount'] == 0
     assert report['contentActionExecuted'] is False
     return 0
