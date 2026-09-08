@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-hong-yooseon-2022-public-routes.py'
+      - 'scripts/probe-relationship-spouse-t8-hong-yooseon-2022-acci-publisher.py'
       - '.github/workflows/relationship-spouse-t8-hong-yooseon-2022-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -27,24 +28,43 @@ jobs:
       - name: Probe only public site-authored target routes
         run: python scripts/acquire-relationship-spouse-t8-hong-yooseon-2022-public-routes.py
 
+      - name: Probe ACCI publisher contract and target feed only if public provenance is verified
+        run: python scripts/probe-relationship-spouse-t8-hong-yooseon-2022-acci-publisher.py
+
       - name: Print bounded acquisition evidence
         if: always()
         run: |
           test -f acquisition-hong-yooseon-2022/summary.txt && cat acquisition-hong-yooseon-2022/summary.txt || true
-          test -f acquisition-hong-yooseon-2022/report.json && python - <<'PY'
+          python - <<'PY'
           import json
           from pathlib import Path
-          p = Path('acquisition-hong-yooseon-2022/report.json')
-          if p.exists():
+          for name in ('report.json', 'publisher-probe.json'):
+              p = Path('acquisition-hong-yooseon-2022') / name
+              if not p.exists():
+                  continue
               j = json.loads(p.read_text())
-              print(json.dumps({
-                  'candidate': j.get('candidate'),
-                  'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
-                  'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
-                  'semanticDisposition': j.get('semanticDisposition'),
-                  'pdfs': j.get('pdfs'),
-                  'siteAuthoredCandidateUrls': j.get('siteAuthoredCandidateUrls'),
-              }, ensure_ascii=False, indent=2))
+              if name == 'report.json':
+                  out = {
+                      'candidate': j.get('candidate'),
+                      'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
+                      'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
+                      'semanticDisposition': j.get('semanticDisposition'),
+                      'pdfs': j.get('pdfs'),
+                  }
+              else:
+                  out = {
+                      'contractVerified': j.get('contractVerified'),
+                      'publicContract': j.get('publicContract'),
+                      'issueRecords': [(x.get('BOOK_CD') or x.get('bookCd'), x.get('BOOK_NM') or x.get('bookNm')) for x in j.get('issueRecords', [])],
+                      'targetRecords': j.get('targetRecords'),
+                      'builderContractObserved': j.get('builderContractObserved'),
+                      'downloadAttempts': j.get('downloadAttempts'),
+                      'pdf': j.get('pdf'),
+                      'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
+                      'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
+                  }
+              print(name)
+              print(json.dumps(out, ensure_ascii=False, indent=2))
           PY
 
       - name: Enforce identity and no-guess boundary
@@ -62,9 +82,14 @@ jobs:
           assert c['printedPages'] == '75-89'
           assert c['expectedArticlePages'] == 15
           assert j['guessedOpaqueIdentifierCount'] == 0
-          if j['fullLengthPdfAcquired']:
-              assert any((p.get('pages') or 0) >= 12 and p.get('bytes', 0) > 100000 for p in j['pdfs'])
-          print('Hong Yooseon 2022 bounded acquisition identity verified; fullLengthPdfAcquired=', j['fullLengthPdfAcquired'])
+
+          p = json.loads(Path('acquisition-hong-yooseon-2022/publisher-probe.json').read_text())
+          assert p['guessedOpaqueIdentifierCount'] == 0
+          if p['fullLengthPdfAcquired']:
+              assert p['pdf'] is not None
+              assert (p['pdf'].get('pages') or 0) >= 12
+              assert p['pdf'].get('bytes', 0) > 100000
+          print('Hong Yooseon 2022 bounded acquisition identity verified; baseFullLength=', j['fullLengthPdfAcquired'], 'publisherFullLength=', p['fullLengthPdfAcquired'])
           PY
 
       - name: Upload bounded evidence only
@@ -74,6 +99,7 @@ jobs:
           name: hong-yooseon-2022-bounded-fulltext-evidence
           path: |
             acquisition-hong-yooseon-2022/report.json
+            acquisition-hong-yooseon-2022/publisher-probe.json
             acquisition-hong-yooseon-2022/summary.txt
             acquisition-hong-yooseon-2022/*.txt
             acquisition-hong-yooseon-2022/*.png
