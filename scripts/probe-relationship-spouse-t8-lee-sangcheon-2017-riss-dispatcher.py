@@ -28,15 +28,20 @@ DETAIL = (
     'https://www.riss.kr/search/detail/DetailView.do?'
     f'p_mat_type={P_MAT_TYPE}&control_no={CONTROL_NO}'
 )
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/14.2; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/14.3; public-resource-verification)'
 MAX = 10 * 1024 * 1024
 
 PATTERNS = (
     r'fulltextDownload\s*:\s*function\s*\([^)]*\)',
     r'function\s+fulltextDownload\s*\([^)]*\)',
+    r'window\.fulltextDownload\s*=',
     r'function\s+openFulltext\s*\([^)]*\)',
     r'function\s+originalCheck\s*\([^)]*\)',
     r'/detail/originalCheck\.do',
+    r'FullTextDownload\.do',
+    r'redirectURL',
+    r'document\.f',
+    r'\.submit\s*\(',
     r'/search/download/[A-Za-z0-9_.?=&/+%-]+',
 )
 
@@ -101,6 +106,25 @@ def windows(text: str, pattern: str, *, before: int = 1200, after: int = 5000, c
     return out
 
 
+def dispatcher_windows(text: str) -> list[str]:
+    out: list[str] = []
+    for pattern in (
+        r'function\s+fulltextDownload\s*\([^)]*\)',
+        r'fulltextDownload\s*:\s*function\s*\([^)]*\)',
+        r'window\.fulltextDownload\s*=',
+        r'FullTextDownload\.do',
+        r'redirectURL',
+        r'document\.f',
+        r'\.submit\s*\(',
+    ):
+        for value in windows(text, pattern, before=700, after=3300, cap=6):
+            if value not in out:
+                out.append(value)
+            if len(out) >= 16:
+                return out
+    return out
+
+
 def inspect_source(source: str, text: str) -> dict:
     matches: list[dict] = []
     for pattern in PATTERNS:
@@ -118,7 +142,12 @@ def inspect_source(source: str, text: str) -> dict:
             call = compact(m.group(0), 2200)
             if call not in target_calls:
                 target_calls.append(call)
-    return {'source': source, 'matches': matches, 'targetCalls': target_calls[:40]}
+    return {
+        'source': source,
+        'matches': matches,
+        'targetCalls': target_calls[:40],
+        'dispatcherWindows': dispatcher_windows(text),
+    }
 
 
 def target_windows(text: str) -> list[str]:
@@ -230,13 +259,22 @@ def main() -> int:
         (smeta.get('finalUrl') or SEARCH, search_text),
         (meta.get('finalUrl') or DETAIL, detail_text),
     ]
+    dispatcher_tokens = (
+        'fulltextdownload',
+        'openfulltext',
+        'originalcheck',
+        '/search/download/',
+        'redirecturl',
+        'document.f',
+        '.submit(',
+    )
     for url in script_urls[:100]:
         jm, jb = fetch(opener, url, referer=DETAIL)
         if not jb:
             continue
         jt = decode(jb)
         low = jt.lower()
-        if not any(k in low for k in ('fulltextdownload', 'openfulltext', 'originalcheck', '/search/download/')):
+        if not any(k in low for k in dispatcher_tokens):
             continue
         rec = inspect_source(jm.get('finalUrl') or url, jt)
         rec['meta'] = jm
@@ -286,6 +324,7 @@ def main() -> int:
                 'source': x['source'],
                 'targetCalls': x['targetCalls'],
                 'patterns': [m['pattern'] for m in x['matches']],
+                'dispatcherWindows': x.get('dispatcherWindows', []),
             }
             for x in report['sources']
         ],
