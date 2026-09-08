@@ -15,7 +15,7 @@ P_SUBMAT_TYPE = 'b51fa0b5ced94fec'
 FULLTEXT_KIND = 'a8cb3aaead67ab5b'
 DOC_CONTROL_NO = '16377357'
 DOC_TYPE = 'T'
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/22.1; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/22.2; public-resource-verification)'
 MAX = 12 * 1024 * 1024
 
 
@@ -73,7 +73,7 @@ def main():
     dm,db=fetch(opener,DETAIL); assert dm['status']==200
     dt=dec(db)
     assert CONTROL_NO in dt and P_MAT_TYPE in dt and P_SUBMAT_TYPE in dt and FULLTEXT_KIND in dt
-    assert '송상섭' in dt and '六親論' in dt
+    assert '송상섭' in dt and ('滴天隨' in dt or '滴天髓' in dt) and 'T16377357' in dt
     form={k:hidden(dt,k) for k in ('control_no','p_mat_type','p_submat_type','fulltext_kind','t_gubun')}
     assert form['control_no']==CONTROL_NO and form['p_mat_type']==P_MAT_TYPE and form['p_submat_type']==P_SUBMAT_TYPE and form['fulltext_kind']==FULLTEXT_KIND
     assert re.search(r'onclick=["\'][^"\']*fulltextDownload\s*\(\s*\)',dt,re.I)
