@@ -20,9 +20,10 @@ RISS_ID = 'T14398372'
 NANET_CONTROL = 'KDMT1201802345'
 RISS_LINK = f'https://www.riss.kr/link?id={RISS_ID}'
 NANET_DETAIL = f'https://dl.nanet.go.kr/detail/{NANET_CONTROL}'
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/19.3; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/19.5; public-resource-verification)'
 MAX = 12 * 1024 * 1024
 ATTEMPTS = 3
+TIMEOUT = 35
 
 
 def allowed(url: str) -> bool:
@@ -39,7 +40,7 @@ def decode(body: bytes) -> str:
     return body.decode('utf-8', errors='replace')
 
 
-def compact(text: str, limit: int = 6000) -> str:
+def compact(text: str, limit: int = 5000) -> str:
     return re.sub(r'\s+', ' ', html.unescape(text)).strip()[:limit]
 
 
@@ -70,7 +71,7 @@ def fetch(opener, url: str, *, data: bytes | None = None, referer: str | None = 
             'attempt': attempt,
         }
         try:
-            with opener.open(Request(url, data=data, headers=headers), timeout=35) as resp:
+            with opener.open(Request(url, data=data, headers=headers), timeout=TIMEOUT) as resp:
                 body = resp.read(MAX)
                 meta.update({
                     'status': getattr(resp, 'status', None),
@@ -103,8 +104,8 @@ def hidden_value(text: str, element_id: str) -> str | None:
     return None
 
 
-def scripts(text: str, base: str) -> list[str]:
-    out: list[str] = []
+def script_urls(text: str, base: str) -> list[str]:
+    out = []
     for raw in re.findall(r'<script[^>]+src=["\']([^"\']+)', text, re.I):
         url = urljoin(base, html.unescape(raw))
         if allowed(url) and url not in out:
@@ -112,36 +113,23 @@ def scripts(text: str, base: str) -> list[str]:
     return out[:140]
 
 
-def ctx(text: str, pattern: str, before: int = 900, after: int = 5000) -> str | None:
-    m = re.search(pattern, text, re.I | re.S)
-    if not m:
-        return None
-    return compact(text[max(0, m.start()-before):min(len(text), m.start()+after)], before+after)
-
-
-def write_report(report: dict) -> None:
-    (OUT / 'dispatcher-probe.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
-
-
 def main() -> int:
     opener = build_opener(HTTPCookieProcessor(CookieJar()))
     report = {
-        'purpose': 'same-run site-authored RISS originalCheck and anonymous NANET viewer bootstrap for Na Hyukjin 2017; availability-neutral bounded retry',
+        'purpose': 'RISS originalCheck plus exact NANET target-button evidence; static dispatcher/viewer verification is isolated in the fallback probe',
         'guessedOpaqueIdentifierCount': 0,
         'downloadActionExecuted': False,
         'riss': {},
-        'nanet': {'surfaceUnavailable': False},
+        'nanet': {},
     }
 
-    # RISS current public contract.
     rm, rt = fetch(opener, RISS_LINK)
     rbase = rm.get('finalUrl') or RISS_LINK
     doc_control = hidden_value(rt, 'controlNo')
     doc_type = hidden_value(rt, 'docType')
-    go_ori_observed = '/detail/originalCheck.do' in rt
-    original_contract = None
-    original_contract_source = None
-    for url in scripts(rt, rbase):
+    contract_source = None
+    contract_context = None
+    for url in script_urls(rt, rbase):
         jm, jt = fetch(opener, url, referer=rbase)
         if not jt or 'originalCheck' not in jt:
             continue
@@ -149,105 +137,59 @@ def main() -> int:
         if ('functionoriginalCheck(goOri)' in normalized and
             'data:{controlNo:controlNo,docType:docType}' in normalized and
             'url:goOri' in normalized):
-            original_contract = ctx(jt, r'function\s+originalCheck\s*\([^)]*\)', 700, 3800)
-            original_contract_source = jm.get('finalUrl') or url
+            contract_source = jm.get('finalUrl') or url
+            m = re.search(r'function\s+originalCheck\s*\([^)]*\)', jt, re.I)
+            if m:
+                contract_context = compact(jt[max(0, m.start()-500):m.start()+3500], 4500)
             break
-    report['riss'].update({
+
+    report['riss'] = {
         'detail': rm,
         'docControlNo': doc_control,
         'docType': doc_type,
-        'goOriObserved': go_ori_observed,
-        'originalCheckContractObserved': bool(original_contract),
-        'originalCheckContractSource': original_contract_source,
-        'originalCheckContractContext': original_contract,
-    })
+        'goOriObserved': '/detail/originalCheck.do' in rt,
+        'originalCheckContractObserved': contract_source is not None,
+        'originalCheckContractSource': contract_source,
+        'originalCheckContractContext': contract_context,
+    }
     assert rm['status'] == 200 and TITLE in rt and AUTHOR in rt
     assert doc_control == '14398372' and doc_type == 'T'
-    assert go_ori_observed and original_contract
+    assert report['riss']['goOriObserved'] and report['riss']['originalCheckContractObserved']
 
-    endpoint = urljoin(rbase, '/detail/originalCheck.do')
     payload = urlencode({'controlNo': doc_control, 'docType': doc_type}).encode('ascii')
-    om, ot = fetch(opener, endpoint, data=payload, referer=rbase)
+    om, ot = fetch(opener, urljoin(rbase, '/detail/originalCheck.do'), data=payload, referer=rbase)
     report['riss']['originalCheck'] = om
     report['riss']['originalCheckBody'] = compact(ot, 4000)
     assert om['status'] == 200
+    assert report['riss']['originalCheckBody'] == '{"flag":"T"}'
 
-    # NANET current public surface. Availability failure is not a semantic/access negative.
     nm, nt = fetch(opener, NANET_DETAIL)
-    if not nt:
-        report['nanet'].update({'surfaceUnavailable': True, 'detail': nm})
-        write_report(report)
-        print(json.dumps({
-            'rissOriginalCheckBody': report['riss']['originalCheckBody'],
-            'nanetSurfaceUnavailable': True,
-            'guessedOpaqueIdentifierCount': 0,
-            'downloadActionExecuted': False,
-        }, ensure_ascii=False, indent=2))
-        return 0
-
-    nbase = nm.get('finalUrl') or NANET_DETAIL
-    report['nanet']['surfaceUnavailable'] = False
-    target_view = re.search(rf'viewDoc\s*\(\s*this\s*,\s*["\']{NANET_CONTROL}["\']\s*,\s*["\']1["\']\s*\)', nt, re.I)
-    target_download = re.search(rf'downloadDoc\s*\(\s*this\s*,\s*["\']{NANET_CONTROL}["\']\s*,\s*["\']1["\']\s*\)', nt, re.I)
-    view_context = None
-    download_context = None
-    dispatcher_source = None
-    for url in scripts(nt, nbase):
-        jm, jt = fetch(opener, url, referer=nbase)
-        if not jt:
-            continue
-        vc = ctx(jt, r'function\s+viewDoc\s*\([^)]*\)', 500, 6500)
-        dc = ctx(jt, r'function\s+downloadDoc\s*\([^)]*\)', 500, 4500)
-        if vc and dc and '/view/callViewer.do' in jt and '/file/fileDownload.do' in jt:
-            view_context = vc
-            download_context = dc
-            dispatcher_source = jm.get('finalUrl') or url
-            break
-    view_public_contract = bool(view_context and 'viewDocBySingleCount(controlNo)' in view_context and '/view/callViewer.do?controlNo=' in view_context)
-    download_login_gate = bool(download_context and re.search(r'if\s*\(\s*!isLogin\s*\)', download_context) and '/login.do' in download_context)
-    report['nanet'].update({
+    surface_unavailable = not bool(nt)
+    target_view = bool(re.search(rf'viewDoc\s*\(\s*this\s*,\s*["\']{NANET_CONTROL}["\']\s*,\s*["\']1["\']\s*\)', nt, re.I)) if nt else False
+    target_download = bool(re.search(rf'downloadDoc\s*\(\s*this\s*,\s*["\']{NANET_CONTROL}["\']\s*,\s*["\']1["\']\s*\)', nt, re.I)) if nt else False
+    report['nanet'] = {
         'detail': nm,
-        'targetViewCallObserved': bool(target_view),
-        'targetDownloadCallObserved': bool(target_download),
-        'dispatcherSource': dispatcher_source,
-        'viewContext': view_context,
-        'downloadContext': download_context,
-        'viewPublicContractObserved': view_public_contract,
-        'downloadLoginGateObserved': download_login_gate,
-    })
-    assert nm['status'] == 200 and TITLE in nt and AUTHOR in nt and NANET_CONTROL in nt
-    assert target_view and target_download
-    assert view_public_contract and download_login_gate
+        'surfaceUnavailable': surface_unavailable,
+        'identityObserved': bool(nt and TITLE in nt and AUTHOR in nt),
+        'controlObserved': bool(nt and NANET_CONTROL in nt),
+        'targetViewCallObserved': target_view,
+        'targetDownloadCallObserved': target_download,
+    }
+    if nt:
+        assert nm['status'] == 200
+        assert report['nanet']['identityObserved'] and report['nanet']['controlObserved']
+        assert target_view and target_download
 
-    viewer_url = f'https://dl.nanet.go.kr/view/callViewer.do?controlNo={NANET_CONTROL}&orgId=dl&linkSysId=NADL'
-    vm, vt = fetch(opener, viewer_url, referer=nbase)
-    report['nanet']['viewer'] = vm
-    report['nanet']['viewerBody'] = compact(vt, 10000)
-    replace = re.search(r'location\.replace\s*\(\s*["\']([^"\']+)["\']\s*\)', vt, re.I)
-    report['nanet']['viewerNextHop'] = html.unescape(replace.group(1)) if replace else None
-    report['nanet']['viewerLoginBoundary'] = bool(re.search(r'로그인|/login\.do|loginForm', vt, re.I))
-    report['nanet']['viewerInstitutionBoundary'] = bool(re.search(r'협정기관|기관.?인증|소속기관', vt, re.I))
-    report['nanet']['viewerDrmSignal'] = bool(re.search(r'\bDRM\b|Fasoo|ezPDF', vt, re.I))
-    assert vm['status'] == 200
-
-    write_report(report)
+    (OUT / 'dispatcher-probe.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps({
+        'rissOriginalCheck': report['riss']['originalCheck'],
         'rissOriginalCheckBody': report['riss']['originalCheckBody'],
-        'nanetSurfaceUnavailable': report['nanet']['surfaceUnavailable'],
-        'nanetTargetViewCallObserved': report['nanet']['targetViewCallObserved'],
-        'nanetTargetDownloadCallObserved': report['nanet']['targetDownloadCallObserved'],
-        'nanetViewPublicContractObserved': report['nanet']['viewPublicContractObserved'],
-        'nanetDownloadLoginGateObserved': report['nanet']['downloadLoginGateObserved'],
-        'nanetViewer': report['nanet']['viewer'],
-        'nanetViewerNextHop': report['nanet']['viewerNextHop'],
-        'nanetViewerLoginBoundary': report['nanet']['viewerLoginBoundary'],
-        'nanetViewerInstitutionBoundary': report['nanet']['viewerInstitutionBoundary'],
-        'nanetViewerDrmSignal': report['nanet']['viewerDrmSignal'],
-        'guessedOpaqueIdentifierCount': report['guessedOpaqueIdentifierCount'],
-        'downloadActionExecuted': report['downloadActionExecuted'],
+        'nanetSurfaceUnavailable': surface_unavailable,
+        'nanetTargetViewCallObserved': target_view,
+        'nanetTargetDownloadCallObserved': target_download,
+        'guessedOpaqueIdentifierCount': 0,
+        'downloadActionExecuted': False,
     }, ensure_ascii=False, indent=2))
-    assert report['guessedOpaqueIdentifierCount'] == 0
-    assert report['downloadActionExecuted'] is False
     return 0
 
 
