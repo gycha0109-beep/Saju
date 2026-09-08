@@ -1,0 +1,55 @@
+name: Relationship Spouse T8 Kim Sanghan 2026 Current Publisher Reacquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-publisher.py'
+      - '.github/workflows/relationship-spouse-t8-kim-sanghan-2026-current-publisher-reacquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Probe current KCI and publisher feed without stale identifiers
+        run: python scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-publisher.py
+      - name: Print strict current-public evidence
+        if: always()
+        run: |
+          test -f acquisition-kim-sanghan-2026-current/summary.txt && cat acquisition-kim-sanghan-2026-current/summary.txt || true
+      - name: Enforce no-guess/no-download boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-kim-sanghan-2026-current/report.json').read_text())
+          assert j['candidate']['kci']=='ART003370620'
+          assert j['candidate']['author']=='김상한'
+          assert j['kci']['identityObserved'] is True
+          assert j['guessedOpaqueIdentifierCount']==0
+          assert j['contentDownloadExecuted'] is False
+          # Any target Kyobo tuple admitted here must be emitted by the current issue/article feed.
+          for r in j['publisher'].get('targetRecords',[]):
+              assert all(r.get(k) for k in ('barcode','artId','kyoboKey','scholarUrl'))
+          print('strict current-public Kim Sanghan discovery boundary verified')
+          PY
+      - name: Upload bounded evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kim-sanghan-2026-current-publisher-evidence
+          path: |
+            acquisition-kim-sanghan-2026-current/report.json
+            acquisition-kim-sanghan-2026-current/summary.txt
+            acquisition-kim-sanghan-2026-current/publisher-target-fragment.html
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
