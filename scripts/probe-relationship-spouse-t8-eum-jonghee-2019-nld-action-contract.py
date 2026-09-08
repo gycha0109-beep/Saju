@@ -7,7 +7,7 @@ import json
 import re
 from http.cookiejar import CookieJar
 from pathlib import Path
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode, urljoin, urlparse
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 
 OUT = Path('acquisition-eum-jonghee-2019')
@@ -19,7 +19,7 @@ METADATA = 'https://www.nld.go.kr/home/getDetailInfo.do'
 AUTHOR = '음종희'
 TITLE_SIGNAL = '四柱命理 宮星'
 EXPECTED_UCCNO = 'CAT-000147672'
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/16.3; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/16.4; public-resource-verification)'
 MAX = 10 * 1024 * 1024
 
 
@@ -108,6 +108,17 @@ def function_window(text: str, name: str) -> str | None:
     return compact(text[start:start + 30000], 30000)
 
 
+def context_windows(text: str, token: str, cap: int = 12) -> list[str]:
+    out = []
+    for m in re.finditer(re.escape(token), text, re.I):
+        value = compact(text[max(0, m.start() - 1800): min(len(text), m.start() + 9000)], 11000)
+        if value not in out:
+            out.append(value)
+        if len(out) >= cap:
+            break
+    return out
+
+
 def routes(window: str | None, base: str) -> list[str]:
     if not window:
         return []
@@ -123,10 +134,15 @@ def routes(window: str | None, base: str) -> list[str]:
     return out[:200]
 
 
+def same_nld_script(url: str) -> bool:
+    host = (urlparse(url).hostname or '').lower()
+    return host == 'www.nld.go.kr' or host.endswith('.nld.go.kr')
+
+
 def main() -> int:
     opener = build_opener(HTTPCookieProcessor(CookieJar()))
     report = {
-        'purpose': 'inspect target-specific NLD action routing and permission contract without executing download/view/content actions',
+        'purpose': 'inspect target-specific NLD action/session permission contract without executing download/view/content actions',
         'detail': None,
         'metadata': None,
         'targetMetadata': None,
@@ -134,8 +150,10 @@ def main() -> int:
         'commonJs': None,
         'doActionExt': None,
         'doAction': None,
-        'checkSession': None,
         'doActionRoutes': [],
+        'scriptUrls': [],
+        'checkSessionDefinitionObserved': False,
+        'checkSessionSources': [],
         'loginOrSessionGateObserved': False,
         'contentActionExecuted': False,
     }
@@ -186,11 +204,46 @@ def main() -> int:
     assert jm['status'] == 200 and 'doActionExt' in jt and 'function doAction' in jt
     report['doActionExt'] = function_window(jt, 'doActionExt')
     report['doAction'] = function_window(jt, 'doAction')
-    report['checkSession'] = function_window(jt, 'checkSession')
     report['doActionRoutes'] = routes(report['doAction'], jm.get('finalUrl') or COMMON_JS)
 
-    permission_text = ' '.join(x or '' for x in (report['doActionExt'], report['doAction'], report['checkSession']))
-    report['loginOrSessionGateObserved'] = bool(re.search(r'checkSession|goLogin|login|로그인|user_id|userId', permission_text, re.I))
+    script_urls = []
+    for raw in re.findall(r'<script[^>]+src=["\']([^"\']+)', dt, re.I):
+        url = urljoin(dm.get('finalUrl') or DETAIL, html.unescape(raw))
+        if same_nld_script(url) and url not in script_urls:
+            script_urls.append(url)
+    if COMMON_JS not in script_urls:
+        script_urls.append(COMMON_JS)
+    report['scriptUrls'] = script_urls[:80]
+
+    for url in report['scriptUrls']:
+        sm, _sb, st = fetch(opener, url, referer=DETAIL)
+        if not st or 'checkSession' not in st:
+            continue
+        named = function_window(st, 'checkSession')
+        contexts = context_windows(st, 'checkSession')
+        definitionish = [
+            x for x in contexts
+            if re.search(r'function\s+checkSession|checkSession\s*=\s*(?:function|\([^)]*\)\s*=>)|checkSession\s*:\s*function', x, re.I)
+        ]
+        report['checkSessionSources'].append({
+            'source': sm.get('finalUrl') or url,
+            'meta': sm,
+            'namedFunction': named,
+            'definitionContexts': definitionish[:8],
+            'allContexts': contexts[:12],
+            'routeLiterals': routes(' '.join(contexts), sm.get('finalUrl') or url),
+        })
+        if named or definitionish:
+            report['checkSessionDefinitionObserved'] = True
+
+    permission_text = ' '.join(
+        [report['doActionExt'] or '', report['doAction'] or '']
+        + [
+            (x.get('namedFunction') or '') + ' ' + ' '.join(x.get('definitionContexts') or [])
+            for x in report['checkSessionSources']
+        ]
+    )
+    report['loginOrSessionGateObserved'] = bool(re.search(r'checkSession|goLogin|login|로그인|user_id|userId|session', permission_text, re.I))
 
     path = OUT / 'nld-action-contract.json'
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -200,14 +253,17 @@ def main() -> int:
         'commonJs': report['commonJs'],
         'doActionExt': report['doActionExt'],
         'doAction': report['doAction'],
-        'checkSession': report['checkSession'],
         'doActionRoutes': report['doActionRoutes'],
+        'checkSessionDefinitionObserved': report['checkSessionDefinitionObserved'],
+        'checkSessionSources': report['checkSessionSources'],
         'loginOrSessionGateObserved': report['loginOrSessionGateObserved'],
         'contentActionExecuted': report['contentActionExecuted'],
     }, ensure_ascii=False, indent=2))
 
     assert report['doActionExt'] is not None
     assert report['doAction'] is not None
+    assert 'checkSession' in report['doAction'], 'NLD doAction no longer gates through checkSession'
+    assert report['checkSessionDefinitionObserved'] is True, 'could not recover site-authored checkSession definition from NLD detail scripts'
     assert report['contentActionExecuted'] is False
     return 0
 
