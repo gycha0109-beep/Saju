@@ -5,6 +5,7 @@ import hashlib
 import html
 import json
 import re
+import time
 from http.cookiejar import CookieJar
 from pathlib import Path
 from urllib.parse import quote, urljoin, urlparse
@@ -20,8 +21,10 @@ TITLE_SIGNAL = '육친론'
 CONTROL = 'KDMT1201802346'
 DETAIL = f'https://dl.nanet.go.kr/SearchDetailView.do?cn={CONTROL}'
 DETAIL_ALT = f'https://dl.nanet.go.kr/detail/{CONTROL}'
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/15.1; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/15.2; public-resource-verification)'
 MAX = 55 * 1024 * 1024
+NETWORK_ATTEMPTS = 3
+NETWORK_TIMEOUT_SECONDS = 25
 FUNCTIONS = ('viewDoc', 'downloadDoc', 'newViewerCall')
 ROUTE_HINT = re.compile(r'viewer|view|download|file|original|pdf|document|doc', re.I)
 
@@ -48,7 +51,12 @@ def access_boundary(text: str) -> dict[str, bool]:
     }
 
 
-def fetch_bytes(opener, url: str, referer: str | None = None) -> tuple[dict, bytes, str]:
+def fetch_bytes(
+    opener,
+    url: str,
+    referer: str | None = None,
+    attempts: int = NETWORK_ATTEMPTS,
+) -> tuple[dict, bytes, str]:
     headers = {
         'User-Agent': UA,
         'Accept': 'text/html,application/javascript,application/pdf,application/octet-stream,*/*;q=0.5',
@@ -56,41 +64,69 @@ def fetch_bytes(opener, url: str, referer: str | None = None) -> tuple[dict, byt
     }
     if referer:
         headers['Referer'] = referer
-    meta = {
-        'requestedUrl': url,
-        'method': 'GET',
-        'status': None,
-        'finalUrl': None,
-        'contentType': None,
-        'contentDisposition': None,
-        'bytes': 0,
-        'sha256': None,
-        'redirected': False,
-        'startsPdf': False,
-        'error': None,
-    }
-    try:
-        with opener.open(Request(url, headers=headers), timeout=45) as r:
-            body = r.read(MAX)
-            final_url = r.geturl()
-            meta.update({
-                'status': getattr(r, 'status', None),
-                'finalUrl': final_url,
-                'contentType': r.headers.get('Content-Type'),
-                'contentDisposition': r.headers.get('Content-Disposition'),
-                'bytes': len(body),
-                'sha256': hashlib.sha256(body).hexdigest(),
-                'redirected': final_url != url,
-                'startsPdf': body.startswith(b'%PDF-'),
+
+    attempt_records: list[dict] = []
+    last_meta: dict | None = None
+    for attempt in range(1, attempts + 1):
+        meta = {
+            'requestedUrl': url,
+            'method': 'GET',
+            'status': None,
+            'finalUrl': None,
+            'contentType': None,
+            'contentDisposition': None,
+            'bytes': 0,
+            'sha256': None,
+            'redirected': False,
+            'startsPdf': False,
+            'error': None,
+            'attempt': attempt,
+        }
+        try:
+            with opener.open(Request(url, headers=headers), timeout=NETWORK_TIMEOUT_SECONDS) as r:
+                body = r.read(MAX)
+                final_url = r.geturl()
+                meta.update({
+                    'status': getattr(r, 'status', None),
+                    'finalUrl': final_url,
+                    'contentType': r.headers.get('Content-Type'),
+                    'contentDisposition': r.headers.get('Content-Disposition'),
+                    'bytes': len(body),
+                    'sha256': hashlib.sha256(body).hexdigest(),
+                    'redirected': final_url != url,
+                    'startsPdf': body.startswith(b'%PDF-'),
+                })
+                text = '' if body.startswith(b'%PDF-') else decode(body)
+                if text:
+                    meta['accessBoundary'] = access_boundary(text)
+                    meta['bodySample'] = compact(text, 12000)
+                attempt_records.append({
+                    'attempt': attempt,
+                    'status': meta['status'],
+                    'finalUrl': meta['finalUrl'],
+                    'bytes': meta['bytes'],
+                    'sha256': meta['sha256'],
+                    'error': None,
+                })
+                meta['attempts'] = attempt_records
+                return meta, body, text
+        except Exception as e:
+            meta['error'] = f'{type(e).__name__}: {e}'
+            last_meta = meta
+            attempt_records.append({
+                'attempt': attempt,
+                'status': None,
+                'finalUrl': None,
+                'bytes': 0,
+                'sha256': None,
+                'error': meta['error'],
             })
-            text = '' if body.startswith(b'%PDF-') else decode(body)
-            if text:
-                meta['accessBoundary'] = access_boundary(text)
-                meta['bodySample'] = compact(text, 12000)
-            return meta, body, text
-    except Exception as e:
-        meta['error'] = f'{type(e).__name__}: {e}'
-        return meta, b'', ''
+            if attempt < attempts:
+                time.sleep(attempt)
+
+    assert last_meta is not None
+    last_meta['attempts'] = attempt_records
+    return last_meta, b'', ''
 
 
 def fetch(opener, url: str, referer: str | None = None) -> tuple[dict, str]:
@@ -212,6 +248,9 @@ def main() -> int:
         'purpose': 'observe and replay only exact public NANET target-specific viewer contract; no login, DRM, or access-control bypass',
         'target': {'author': AUTHOR, 'controlNo': CONTROL},
         'surfaces': [],
+        'surfaceAvailable': False,
+        'surfaceUnavailable': False,
+        'viewerContractObservedThisRun': False,
         'pageCalls': [],
         'scriptUrls': [],
         'sources': [],
@@ -227,8 +266,9 @@ def main() -> int:
         report['surfaces'].append(meta)
         if not text:
             continue
-        assert CONTROL in text
-        assert AUTHOR in text or TITLE_SIGNAL in text or '적천수' in text
+        # A successful but wrong/changed page is not a network boundary.
+        assert CONTROL in text, 'successful NANET surface no longer identifies target control number'
+        assert AUTHOR in text or TITLE_SIGNAL in text or '적천수' in text, 'successful NANET surface no longer corroborates target identity'
         source_url = meta.get('finalUrl') or url
         source_texts.append((source_url, text))
         for call in page_calls(text):
@@ -239,6 +279,9 @@ def main() -> int:
             if same_host(script_url) and script_url not in report['scriptUrls']:
                 report['scriptUrls'].append(script_url)
 
+    report['surfaceAvailable'] = bool(source_texts)
+    report['surfaceUnavailable'] = not report['surfaceAvailable']
+
     for source_url, text in list(source_texts):
         rec = inspect_source(source_url, text)
         if rec['definitions']:
@@ -248,10 +291,14 @@ def main() -> int:
         if report['downloadBoundary'] is None:
             report['downloadBoundary'] = download_login_boundary(source_url, text)
 
+    script_successes = 0
+    script_failures = 0
     for url in report['scriptUrls'][:120]:
         meta, text = fetch(opener, url, DETAIL)
         if not text:
+            script_failures += 1
             continue
+        script_successes += 1
         if not any(fn.lower() in text.lower() for fn in FUNCTIONS):
             continue
         source_url = meta.get('finalUrl') or url
@@ -264,8 +311,15 @@ def main() -> int:
         if report['downloadBoundary'] is None:
             report['downloadBoundary'] = download_login_boundary(source_url, text)
 
+    report['scriptFetchSummary'] = {
+        'attempted': len(report['scriptUrls'][:120]),
+        'succeeded': script_successes,
+        'failed': script_failures,
+    }
+    report['viewerContractObservedThisRun'] = report['viewerContract'] is not None
+
     # The target page emits viewDoc(..., '1'). Execute only the exact public
-    # single-count viewer GET recovered from the site's own viewDocBySingleCount().
+    # single-count viewer GET recovered in this same run from site-owned code.
     if report['viewerContract']:
         vm, vb, _vt = fetch_bytes(opener, report['viewerContract']['url'], DETAIL)
         report['viewerAttempt'] = vm
@@ -283,12 +337,16 @@ def main() -> int:
 
     focused = {
         'target': report['target'],
+        'surfaceAvailable': report['surfaceAvailable'],
+        'surfaceUnavailable': report['surfaceUnavailable'],
         'surfaces': report['surfaces'],
         'pageCalls': report['pageCalls'],
+        'viewerContractObservedThisRun': report['viewerContractObservedThisRun'],
         'viewerContract': report['viewerContract'],
         'viewerAttempt': report['viewerAttempt'],
         'viewerPdfPrivateFile': report['viewerPdfPrivateFile'],
         'downloadBoundary': report['downloadBoundary'],
+        'scriptFetchSummary': report['scriptFetchSummary'],
         'scriptUrls': report['scriptUrls'],
         'sources': [
             {
@@ -306,9 +364,20 @@ def main() -> int:
     }
     print(json.dumps(focused, ensure_ascii=False, indent=2))
 
-    assert any('viewDoc' in x and CONTROL in x for x in report['pageCalls']), 'target public viewDoc call disappeared'
-    assert any('downloadDoc' in x and CONTROL in x for x in report['pageCalls']), 'target public downloadDoc call disappeared'
-    assert report['viewerContract'], 'public single-count viewer contract disappeared'
+    if report['surfaceUnavailable']:
+        print('NANET public surfaces unavailable after bounded retries; no contract disappearance or semantic conclusion is inferred.')
+        return 0
+
+    assert any('viewDoc' in x and CONTROL in x for x in report['pageCalls']), 'target public viewDoc call disappeared from a successfully fetched target surface'
+    assert any('downloadDoc' in x and CONTROL in x for x in report['pageCalls']), 'target public downloadDoc call disappeared from a successfully fetched target surface'
+
+    # If some public scripts were unavailable, absence of a contract is an
+    # availability boundary rather than proof that the dispatcher disappeared.
+    if not report['viewerContract'] and script_failures:
+        print('NANET dispatcher scripts were partially unavailable; viewer contract absence is evidence-neutral for this run.')
+        return 0
+
+    assert report['viewerContract'], 'public single-count viewer contract disappeared from successfully fetched public source code'
     assert report['downloadBoundary'] and report['downloadBoundary']['requiresLogin'], 'expected public download login boundary disappeared'
     return 0
 
