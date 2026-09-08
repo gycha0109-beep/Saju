@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-lee-sangcheon-2017-fulltext.py'
+      - 'scripts/probe-relationship-spouse-t8-lee-sangcheon-2017-riss-dispatcher.py'
       - '.github/workflows/relationship-spouse-t8-lee-sangcheon-2017-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -20,8 +21,36 @@ jobs:
           python-version: '3.12'
       - name: Install PDF inspection dependencies
         run: python -m pip install --disable-pip-version-check 'pypdf[crypto]' pymupdf
+      - name: Probe exact public RISS dispatcher implementation
+        run: python scripts/probe-relationship-spouse-t8-lee-sangcheon-2017-riss-dispatcher.py
       - name: Probe public thesis fulltext routes only
         run: python scripts/acquire-relationship-spouse-t8-lee-sangcheon-2017-fulltext.py
+      - name: Print bounded RISS dispatcher evidence
+        if: always()
+        run: |
+          test -f acquisition-lee-sangcheon-2017/riss-dispatcher.json && python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('acquisition-lee-sangcheon-2017/riss-dispatcher.json')
+          if p.exists():
+              j = json.loads(p.read_text())
+              print(json.dumps({
+                  'target': j.get('target'),
+                  'detail': j.get('detail'),
+                  'pageAuthoredFulltextCalls': j.get('pageAuthoredFulltextCalls'),
+                  'docControlNo': j.get('docControlNo'),
+                  'originalCheck': j.get('originalCheck'),
+                  'originalCheckBody': j.get('originalCheckBody'),
+                  'sources': [
+                      {
+                          'source': x.get('source'),
+                          'targetCalls': x.get('targetCalls'),
+                          'patterns': [m.get('pattern') for m in x.get('matches', [])],
+                      }
+                      for x in j.get('sources', [])
+                  ],
+              }, ensure_ascii=False, indent=2))
+          PY
       - name: Print bounded acquisition evidence
         if: always()
         run: |
@@ -50,6 +79,14 @@ jobs:
           assert c['year'] == 2017
           assert c['nanetControlNo'] == 'KDMT1201802346'
           assert '부처(夫妻)' in c['spouseChapterToc']
+
+          r = json.loads(Path('acquisition-lee-sangcheon-2017/riss-dispatcher.json').read_text())
+          t = r['target']
+          assert t['author'] == '이상천'
+          assert t['controlNo'] == '7dedd951a2b45b77ffe0bdc3ef48d419'
+          assert t['pMatType'] == 'be54d9b8bc7cdb09'
+          assert t['pSubmatType'] == 'f1a8c7a1de0e08b8'
+          assert t['fulltextKind'] == 'a8cb3aaead67ab5b'
           print('Identity boundary verified; fullLengthPdfAcquired=', j['fullLengthPdfAcquired'])
           PY
       - name: Upload bounded evidence only
@@ -60,6 +97,7 @@ jobs:
           path: |
             acquisition-lee-sangcheon-2017/summary.txt
             acquisition-lee-sangcheon-2017/report.json
+            acquisition-lee-sangcheon-2017/riss-dispatcher.json
             acquisition-lee-sangcheon-2017/rendered-*.png
           if-no-files-found: warn
           retention-days: 1
