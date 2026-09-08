@@ -19,7 +19,7 @@ METADATA = 'https://www.nld.go.kr/home/getDetailInfo.do'
 AUTHOR = '음종희'
 TITLE_SIGNAL = '四柱命理 宮星'
 EXPECTED_UCCNO = 'CAT-000147672'
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/16.4; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/16.5; public-resource-verification)'
 MAX = 10 * 1024 * 1024
 
 
@@ -139,6 +139,11 @@ def same_nld_script(url: str) -> bool:
     return host == 'www.nld.go.kr' or host.endswith('.nld.go.kr')
 
 
+def assigned_string(text: str, name: str) -> str | None:
+    m = re.search(rf'\b(?:var|let|const)\s+{re.escape(name)}\s*=\s*["\']([^"\']*)["\']', text)
+    return html.unescape(m.group(1)) if m else None
+
+
 def main() -> int:
     opener = build_opener(HTTPCookieProcessor(CookieJar()))
     report = {
@@ -151,9 +156,20 @@ def main() -> int:
         'doActionExt': None,
         'doAction': None,
         'doActionRoutes': [],
-        'scriptUrls': [],
+        'checkSession': None,
         'checkSessionDefinitionObserved': False,
         'checkSessionSources': [],
+        'anonymousSession': {
+            'userId': None,
+            'userid': None,
+            'requiresLogin': False,
+            'loginMessageObserved': False,
+            'returnsFalseBeforeAuthorityCheck': False,
+        },
+        'checkAccessAuthority': None,
+        'getSelectActionType': None,
+        'accessAuthorityGateObserved': False,
+        'scriptUrls': [],
         'loginOrSessionGateObserved': False,
         'contentActionExecuted': False,
     }
@@ -163,6 +179,35 @@ def main() -> int:
     assert dm['status'] == 200
     assert AUTHOR in dt or TITLE_SIGNAL in dt or EXPECTED_UCCNO in dt
     assert 'doActionExt' in dt and '/home/getDetailInfo.do' in dt
+
+    # The target detail page itself authors the effective session gate. This must
+    # be inspected before any content action is even considered.
+    inline_check_session = function_window(dt, 'checkSession')
+    assert inline_check_session is not None, 'target detail page no longer exposes checkSession'
+    report['checkSession'] = inline_check_session
+    report['checkSessionDefinitionObserved'] = True
+    report['checkSessionSources'].append({
+        'source': dm.get('finalUrl') or DETAIL,
+        'kind': 'target-detail-inline',
+        'namedFunction': inline_check_session,
+        'definitionContexts': context_windows(dt, 'checkSession')[:4],
+        'routeLiterals': routes(inline_check_session, dm.get('finalUrl') or DETAIL),
+    })
+    report['anonymousSession']['userId'] = assigned_string(dt, 'USER_ID')
+    report['anonymousSession']['userid'] = assigned_string(dt, 'userid')
+    normalized_check = re.sub(r'\s+', '', inline_check_session)
+    report['anonymousSession']['loginMessageObserved'] = '로그인 후 이용하실 수 있습니다' in inline_check_session
+    report['anonymousSession']['returnsFalseBeforeAuthorityCheck'] = (
+        'returnfalse;' in normalized_check
+        and normalized_check.find('returnfalse;') < normalized_check.find('checkAccessAuthority')
+    )
+    report['anonymousSession']['requiresLogin'] = (
+        report['anonymousSession']['userId'] == ''
+        and report['anonymousSession']['userid'] == ''
+        and report['anonymousSession']['loginMessageObserved']
+        and report['anonymousSession']['returnsFalseBeforeAuthorityCheck']
+        and "if(''!='Y')" in normalized_check
+    )
 
     mm, _mb, mt = fetch(
         opener,
@@ -205,6 +250,13 @@ def main() -> int:
     report['doActionExt'] = function_window(jt, 'doActionExt')
     report['doAction'] = function_window(jt, 'doAction')
     report['doActionRoutes'] = routes(report['doAction'], jm.get('finalUrl') or COMMON_JS)
+    report['checkAccessAuthority'] = function_window(jt, 'checkAccessAuthority')
+    report['getSelectActionType'] = function_window(jt, 'getSelectActionType')
+    report['accessAuthorityGateObserved'] = (
+        report['checkAccessAuthority'] is not None
+        and report['getSelectActionType'] is not None
+        and '회원님께서는 본 서비스를 이용할 수 있는 권한이 없습니다' in report['checkAccessAuthority']
+    )
 
     script_urls = []
     for raw in re.findall(r'<script[^>]+src=["\']([^"\']+)', dt, re.I):
@@ -215,6 +267,9 @@ def main() -> int:
         script_urls.append(COMMON_JS)
     report['scriptUrls'] = script_urls[:80]
 
+    # Preserve any additional same-host checkSession definitions/usages for
+    # provenance, but the target detail inline definition above is authoritative
+    # for the anonymous page that generated these target actions.
     for url in report['scriptUrls']:
         sm, _sb, st = fetch(opener, url, referer=DETAIL)
         if not st or 'checkSession' not in st:
@@ -227,23 +282,26 @@ def main() -> int:
         ]
         report['checkSessionSources'].append({
             'source': sm.get('finalUrl') or url,
+            'kind': 'same-host-static-script',
             'meta': sm,
             'namedFunction': named,
             'definitionContexts': definitionish[:8],
             'allContexts': contexts[:12],
             'routeLiterals': routes(' '.join(contexts), sm.get('finalUrl') or url),
         })
-        if named or definitionish:
-            report['checkSessionDefinitionObserved'] = True
 
-    permission_text = ' '.join(
-        [report['doActionExt'] or '', report['doAction'] or '']
-        + [
-            (x.get('namedFunction') or '') + ' ' + ' '.join(x.get('definitionContexts') or [])
-            for x in report['checkSessionSources']
-        ]
-    )
-    report['loginOrSessionGateObserved'] = bool(re.search(r'checkSession|goLogin|login|로그인|user_id|userId|session', permission_text, re.I))
+    permission_text = ' '.join([
+        report['doActionExt'] or '',
+        report['doAction'] or '',
+        report['checkSession'] or '',
+        report['checkAccessAuthority'] or '',
+        report['getSelectActionType'] or '',
+    ])
+    report['loginOrSessionGateObserved'] = bool(re.search(
+        r'checkSession|goLogin|login|로그인|user_id|userId|session|checkAccessAuthority',
+        permission_text,
+        re.I,
+    ))
 
     path = OUT / 'nld-action-contract.json'
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -253,9 +311,13 @@ def main() -> int:
         'commonJs': report['commonJs'],
         'doActionExt': report['doActionExt'],
         'doAction': report['doAction'],
+        'checkSession': report['checkSession'],
+        'anonymousSession': report['anonymousSession'],
+        'checkAccessAuthority': report['checkAccessAuthority'],
+        'getSelectActionType': report['getSelectActionType'],
+        'accessAuthorityGateObserved': report['accessAuthorityGateObserved'],
         'doActionRoutes': report['doActionRoutes'],
         'checkSessionDefinitionObserved': report['checkSessionDefinitionObserved'],
-        'checkSessionSources': report['checkSessionSources'],
         'loginOrSessionGateObserved': report['loginOrSessionGateObserved'],
         'contentActionExecuted': report['contentActionExecuted'],
     }, ensure_ascii=False, indent=2))
@@ -263,7 +325,11 @@ def main() -> int:
     assert report['doActionExt'] is not None
     assert report['doAction'] is not None
     assert 'checkSession' in report['doAction'], 'NLD doAction no longer gates through checkSession'
-    assert report['checkSessionDefinitionObserved'] is True, 'could not recover site-authored checkSession definition from NLD detail scripts'
+    assert report['checkSessionDefinitionObserved'] is True
+    assert report['anonymousSession']['requiresLogin'] is True, 'anonymous target page no longer exposes a fail-closed login gate'
+    assert report['checkAccessAuthority'] is not None
+    assert report['getSelectActionType'] is not None
+    assert report['accessAuthorityGateObserved'] is True
     assert report['contentActionExecuted'] is False
     return 0
 
