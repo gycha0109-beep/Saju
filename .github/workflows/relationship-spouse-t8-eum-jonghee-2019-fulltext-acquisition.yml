@@ -6,6 +6,7 @@ on:
       - 'scripts/acquire-relationship-spouse-t8-eum-jonghee-2019-fulltext.py'
       - 'scripts/probe-relationship-spouse-t8-eum-jonghee-2019-riss-dispatcher.py'
       - 'scripts/probe-relationship-spouse-t8-eum-jonghee-2019-nld-source.py'
+      - 'scripts/probe-relationship-spouse-t8-eum-jonghee-2019-nld-action-contract.py'
       - '.github/workflows/relationship-spouse-t8-eum-jonghee-2019-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -29,6 +30,9 @@ jobs:
 
       - name: Probe exact official NLD source relation
         run: python3 scripts/probe-relationship-spouse-t8-eum-jonghee-2019-nld-source.py
+
+      - name: Probe exact NLD action permission contract
+        run: python3 scripts/probe-relationship-spouse-t8-eum-jonghee-2019-nld-action-contract.py
 
       - name: Probe public thesis routes and inspect bounded semantic pages
         run: python3 scripts/acquire-relationship-spouse-t8-eum-jonghee-2019-fulltext.py
@@ -55,22 +59,41 @@ jobs:
               }, ensure_ascii=False, indent=2))
           PY
 
-      - name: Print bounded NLD source evidence
+      - name: Print bounded NLD source and action evidence
         if: always()
         run: |
-          test -f acquisition-eum-jonghee-2019/nld-source.json && python3 - <<'PY'
+          python3 - <<'PY'
           import json
           from pathlib import Path
-          p = Path('acquisition-eum-jonghee-2019/nld-source.json')
-          if p.exists():
+          for name in ('nld-source.json', 'nld-action-contract.json'):
+              p = Path('acquisition-eum-jonghee-2019') / name
+              if not p.exists():
+                  continue
               j = json.loads(p.read_text())
-              print(json.dumps({
-                  'sourceRelationObserved': j.get('sourceRelationObserved'),
-                  'sourceUrl': j.get('sourceUrl'),
-                  'nldDetail': j.get('nldDetail'),
-                  'nldCandidateUrls': j.get('nldCandidateUrls'),
-                  'interestingLineCount': len(j.get('nldInterestingLines', [])),
-              }, ensure_ascii=False, indent=2))
+              if name == 'nld-source.json':
+                  out = {
+                      'sourceRelationObserved': j.get('sourceRelationObserved'),
+                      'sourceUrl': j.get('sourceUrl'),
+                      'nldDetail': j.get('nldDetail'),
+                      'getDetailInfo': j.get('getDetailInfo'),
+                      'getDetailInfoPayload': j.get('getDetailInfoPayload'),
+                      'doActionExtObserved': j.get('doActionExtObserved'),
+                      'contentActionExecuted': j.get('contentActionExecuted'),
+                  }
+              else:
+                  out = {
+                      'targetMetadata': j.get('targetMetadata'),
+                      'derivedSiteAuthoredCalls': j.get('derivedSiteAuthoredCalls'),
+                      'commonJs': j.get('commonJs'),
+                      'doActionExt': j.get('doActionExt'),
+                      'doAction': j.get('doAction'),
+                      'checkSession': j.get('checkSession'),
+                      'doActionRoutes': j.get('doActionRoutes'),
+                      'loginOrSessionGateObserved': j.get('loginOrSessionGateObserved'),
+                      'contentActionExecuted': j.get('contentActionExecuted'),
+                  }
+              print(name)
+              print(json.dumps(out, ensure_ascii=False, indent=2))
           PY
 
       - name: Print bounded acquisition evidence
@@ -123,6 +146,17 @@ jobs:
           assert n['sourceRelationObserved'] is True
           assert 'unicno=142462' in n['sourceUrl']
           assert 'key_id=CAT-000147672' in n['sourceUrl']
+          assert n['metadataTargetMatched'] is True
+          assert n['contentActionExecuted'] is False
+
+          a = json.loads(Path('acquisition-eum-jonghee-2019/nld-action-contract.json').read_text())
+          assert a['targetMetadata']['author100'] == '음종희'
+          assert a['targetMetadata']['dataTypeCode'] == 'DT'
+          assert a['targetMetadata']['ucCno'] == 'CAT-000147672'
+          assert a['targetMetadata']['targetDivCode'] == 'SP'
+          assert a['doActionExt'] is not None
+          assert a['doAction'] is not None
+          assert a['contentActionExecuted'] is False
 
           if j['fullLengthPdfAcquired']:
               assert j['pdf'] is not None
@@ -142,6 +176,8 @@ jobs:
             acquisition-eum-jonghee-2019/summary.txt
             acquisition-eum-jonghee-2019/riss-dispatcher.json
             acquisition-eum-jonghee-2019/nld-source.json
+            acquisition-eum-jonghee-2019/nld-action-contract.json
+            acquisition-eum-jonghee-2019/nld-get-detail-info.json
             acquisition-eum-jonghee-2019/nld-detail.txt
             acquisition-eum-jonghee-2019/*.txt
             acquisition-eum-jonghee-2019/semantic-pages/*.txt
