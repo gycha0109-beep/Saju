@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-eum-jonghee-2019-fulltext.py'
       - 'scripts/probe-relationship-spouse-t8-eum-jonghee-2019-riss-dispatcher.py'
+      - 'scripts/probe-relationship-spouse-t8-eum-jonghee-2019-nld-source.py'
       - '.github/workflows/relationship-spouse-t8-eum-jonghee-2019-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -25,6 +26,9 @@ jobs:
 
       - name: Probe exact public RISS dispatcher implementation
         run: python3 scripts/probe-relationship-spouse-t8-eum-jonghee-2019-riss-dispatcher.py
+
+      - name: Probe exact official NLD source relation
+        run: python3 scripts/probe-relationship-spouse-t8-eum-jonghee-2019-nld-source.py
 
       - name: Probe public thesis routes and inspect bounded semantic pages
         run: python3 scripts/acquire-relationship-spouse-t8-eum-jonghee-2019-fulltext.py
@@ -48,6 +52,24 @@ jobs:
                   'originalCheckContractFound': j.get('originalCheckContractFound'),
                   'originalCheck': j.get('originalCheck'),
                   'originalCheckBody': j.get('originalCheckBody'),
+              }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Print bounded NLD source evidence
+        if: always()
+        run: |
+          test -f acquisition-eum-jonghee-2019/nld-source.json && python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('acquisition-eum-jonghee-2019/nld-source.json')
+          if p.exists():
+              j = json.loads(p.read_text())
+              print(json.dumps({
+                  'sourceRelationObserved': j.get('sourceRelationObserved'),
+                  'sourceUrl': j.get('sourceUrl'),
+                  'nldDetail': j.get('nldDetail'),
+                  'nldCandidateUrls': j.get('nldCandidateUrls'),
+                  'interestingLineCount': len(j.get('nldInterestingLines', [])),
               }, ensure_ascii=False, indent=2))
           PY
 
@@ -94,8 +116,13 @@ jobs:
           assert t['pSubmatType'] == 'f1a8c7a1de0e08b8'
           assert t['fulltextKind'] == 'a8cb3aaead67ab5b'
           assert r['tuplePresentOnSearchSurface'] is True
-          assert r['docControlNo']
-          assert r['docType']
+          assert r['docControlNo'] == '15047469'
+          assert r['docType'] == 'T'
+
+          n = json.loads(Path('acquisition-eum-jonghee-2019/nld-source.json').read_text())
+          assert n['sourceRelationObserved'] is True
+          assert 'unicno=142462' in n['sourceUrl']
+          assert 'key_id=CAT-000147672' in n['sourceUrl']
 
           if j['fullLengthPdfAcquired']:
               assert j['pdf'] is not None
@@ -114,6 +141,8 @@ jobs:
             acquisition-eum-jonghee-2019/report.json
             acquisition-eum-jonghee-2019/summary.txt
             acquisition-eum-jonghee-2019/riss-dispatcher.json
+            acquisition-eum-jonghee-2019/nld-source.json
+            acquisition-eum-jonghee-2019/nld-detail.txt
             acquisition-eum-jonghee-2019/*.txt
             acquisition-eum-jonghee-2019/semantic-pages/*.txt
             acquisition-eum-jonghee-2019/semantic-pages/*.png
