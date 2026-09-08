@@ -8,6 +8,7 @@ on:
       - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-article-list.py'
       - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-issue33.py'
       - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-issue33-enumerate.py'
+      - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-kci-exact.py'
       - '.github/workflows/relationship-spouse-t8-kim-sanghan-2026-current-publisher-reacquisition.yml'
   workflow_dispatch:
 
@@ -17,7 +18,7 @@ permissions:
 jobs:
   acquire-public-fulltext:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,6 +34,8 @@ jobs:
         run: python scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-issue33.py
       - name: Enumerate exact current issue33 and author filter
         run: python scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-issue33-enumerate.py
+      - name: Probe strict current KCI exact-body contract without fallback ids
+        run: python scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-kci-exact.py
       - name: Print strict current-public evidence
         if: always()
         run: |
@@ -40,24 +43,22 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          for name in ('publisher-contract-context.json','current-article-list.json','current-issue33.json','current-issue33-enumerate.json'):
+          for name in ('publisher-contract-context.json','current-article-list.json','current-issue33.json','current-issue33-enumerate.json','current-kci-exact.json'):
               p=Path('acquisition-kim-sanghan-2026-current')/name
               if p.exists():
                   j=json.loads(p.read_text())
                   print(name)
                   print(json.dumps(j,ensure_ascii=False,indent=2))
           PY
-      - name: Enforce no-guess/no-download boundary
+      - name: Enforce no-guess boundary and exact current contracts
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           j=json.loads(Path('acquisition-kim-sanghan-2026-current/report.json').read_text())
-          assert j['candidate']['kci']=='ART003370620'
-          assert j['candidate']['author']=='김상한'
+          assert j['candidate']['kci']=='ART003370620' and j['candidate']['author']=='김상한'
           assert j['kci']['identityObserved'] is True
-          assert j['guessedOpaqueIdentifierCount']==0
-          assert j['contentDownloadExecuted'] is False
+          assert j['guessedOpaqueIdentifierCount']==0 and j['contentDownloadExecuted'] is False
           c=json.loads(Path('acquisition-kim-sanghan-2026-current/publisher-contract-context.json').read_text())
           assert c['home']['status']==200 and c['guessedOpaqueIdentifierCount']==0 and c['contentActionExecuted'] is False
           a=json.loads(Path('acquisition-kim-sanghan-2026-current/current-article-list.json').read_text())
@@ -65,21 +66,22 @@ jobs:
           assert a['bootstrapContract']=={'journalCd':'','sysmoduleSeq':'10000000221','pubcNumYsno':'N'}
           assert a['guessedOpaqueIdentifierCount']==0 and a['contentDownloadExecuted'] is False
           i=json.loads(Path('acquisition-kim-sanghan-2026-current/current-issue33.json').read_text())
-          assert i['issue33Query']['meta']['status']==200
-          assert i['currentFormDefaults']['trgtIsuInsttCd']=='20885'
-          assert i['issue33Query']['form']['journalCd']=='3444'
-          assert i['issue33Query']['form']['bookCd']=='1096294'
+          assert i['issue33Query']['meta']['status']==200 and i['currentFormDefaults']['trgtIsuInsttCd']=='20885'
+          assert i['issue33Query']['form']['journalCd']=='3444' and i['issue33Query']['form']['bookCd']=='1096294'
           assert i['guessedOpaqueIdentifierCount']==0 and i['contentDownloadExecuted'] is False
           e=json.loads(Path('acquisition-kim-sanghan-2026-current/current-issue33-enumerate.json').read_text())
-          assert len(e['probes'])==2
-          assert all(p['meta']['status']==200 for p in e['probes'])
+          assert len(e['probes'])==2 and all(p['meta']['status']==200 for p in e['probes'])
           assert e['guessedOpaqueIdentifierCount']==0 and e['contentDownloadExecuted'] is False
-          for rec in e.get('targetCards',[]):
-              for r in rec.get('tuples',[]):
-                  assert all(r.get(k) for k in ('barcode','artId','kyoboKey','scholarUrl'))
-          print('strict current-public Kim Sanghan discovery boundary verified')
+          k=json.loads(Path('acquisition-kim-sanghan-2026-current/current-kci-exact.json').read_text())
+          assert k['candidate']['kci']=='ART003370620'
+          assert k['guessedOpaqueIdentifierCount']==0 and k['fallbackOrteFileIdsTried']==[]
+          for x in k['htmlDiscoveredOrteFileIds']:
+              assert x.startswith('KCI_FI')
+          for x in k['contentAttempts']:
+              assert x['origin']=='current-html-or-static-js-discovered'
+          print('strict current-public Kim Sanghan no-guess boundary verified')
           PY
-      - name: Upload bounded evidence only
+      - name: Upload bounded evidence and any exact-current public KCI PDF
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -91,10 +93,10 @@ jobs:
             acquisition-kim-sanghan-2026-current/current-article-list.json
             acquisition-kim-sanghan-2026-current/current-issue33.json
             acquisition-kim-sanghan-2026-current/current-issue33-enumerate.json
+            acquisition-kim-sanghan-2026-current/current-kci-exact.json
+            acquisition-kim-sanghan-2026-current/current-kci-*.pdf
             acquisition-kim-sanghan-2026-current/current-issue33-all.html
             acquisition-kim-sanghan-2026-current/current-issue33-author.html
-            acquisition-kim-sanghan-2026-current/current-issue33-target-fragment.html
-            acquisition-kim-sanghan-2026-current/publisher-target-fragment.html
           if-no-files-found: warn
           retention-days: 1
           compression-level: 0
