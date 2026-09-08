@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-kim-youngjin-2020-public-routes.py'
+      - 'scripts/acquire-relationship-spouse-t8-kim-youngjin-2020-public-routes-v2.py'
       - '.github/workflows/relationship-spouse-t8-kim-youngjin-2020-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -20,7 +21,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Probe exact current public RISS and NANET routes without guessed ids
-        run: python scripts/acquire-relationship-spouse-t8-kim-youngjin-2020-public-routes.py
+        run: python scripts/acquire-relationship-spouse-t8-kim-youngjin-2020-public-routes-v2.py
       - name: Print bounded evidence
         if: always()
         run: test -f acquisition-kim-youngjin-2020/summary.txt && cat acquisition-kim-youngjin-2020/summary.txt || true
@@ -48,9 +49,9 @@ jobs:
           path: |
             acquisition-kim-youngjin-2020/report.json
             acquisition-kim-youngjin-2020/summary.txt
-            acquisition-kim-youngjin-2020/riss-search.html
             acquisition-kim-youngjin-2020/riss-detail.html
-            acquisition-kim-youngjin-2020/nanet-search.html
+            acquisition-kim-youngjin-2020/nanet-search-1.html
+            acquisition-kim-youngjin-2020/nanet-search-2.html
             acquisition-kim-youngjin-2020/nanet-detail.html
           if-no-files-found: warn
           retention-days: 1
