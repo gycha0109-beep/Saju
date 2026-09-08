@@ -6,6 +6,7 @@ on:
       - 'scripts/acquire-relationship-spouse-t8-na-hyukjin-2017-public-routes.py'
       - 'scripts/probe-relationship-spouse-t8-na-hyukjin-2017-public-dispatchers.py'
       - 'scripts/probe-relationship-spouse-t8-na-hyukjin-2017-nanet-viewer-fallback.py'
+      - 'scripts/probe-relationship-spouse-t8-na-hyukjin-2017-nanet-docviewer.py'
       - '.github/workflows/relationship-spouse-t8-na-hyukjin-2017-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -32,6 +33,9 @@ jobs:
       - name: Verify current NANET static dispatcher and bounded anonymous viewer fallback
         run: python scripts/probe-relationship-spouse-t8-na-hyukjin-2017-nanet-viewer-fallback.py
 
+      - name: Inspect exact public NANET docviewer contract without replaying assets
+        run: python scripts/probe-relationship-spouse-t8-na-hyukjin-2017-nanet-docviewer.py
+
       - name: Print bounded acquisition evidence
         if: always()
         run: |
@@ -39,7 +43,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          for name in ('report.json', 'dispatcher-probe.json', 'nanet-viewer-fallback.json'):
+          for name in ('report.json', 'dispatcher-probe.json', 'nanet-viewer-fallback.json', 'nanet-docviewer.json'):
               p = Path('acquisition-na-hyukjin-2017') / name
               if not p.exists():
                   continue
@@ -73,12 +77,24 @@ jobs:
                       'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
                       'downloadActionExecuted': j.get('downloadActionExecuted'),
                   }
-              else:
+              elif name == 'nanet-viewer-fallback.json':
                   out = {
                       'static': j.get('static'),
                       'viewer': j.get('viewer'),
                       'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
                       'downloadActionExecuted': j.get('downloadActionExecuted'),
+                  }
+              else:
+                  out = {
+                      'siteAuthoredDocviewerUrl': j.get('siteAuthoredDocviewerUrl'),
+                      'viewerSurface': j.get('viewerSurface'),
+                      'scriptFetchSummary': j.get('scriptFetchSummary'),
+                      'accessBoundary': j.get('accessBoundary'),
+                      'scriptAccessBoundary': j.get('scriptAccessBoundary'),
+                      'focusedContexts': j.get('focusedContexts'),
+                      'nextHopDisposition': j.get('nextHopDisposition'),
+                      'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
+                      'contentAssetActionExecuted': j.get('contentAssetActionExecuted'),
                   }
               print(name)
               print(json.dumps(out, ensure_ascii=False, indent=2))
@@ -124,6 +140,13 @@ jobs:
               assert f['viewer']['meta']['status'] == 200
           assert f['guessedOpaqueIdentifierCount'] == 0
           assert f['downloadActionExecuted'] is False
+
+          v = json.loads(Path('acquisition-na-hyukjin-2017/nanet-docviewer.json').read_text())
+          assert v['targetControl'] == 'KDMT1201802345'
+          assert v['guessedOpaqueIdentifierCount'] == 0
+          assert v['contentAssetActionExecuted'] is False
+          if v.get('siteAuthoredDocviewerUrl') and v.get('viewerSurfaceAvailable'):
+              assert v['viewerSurface']['status'] == 200
           print('Na Hyukjin 2017 exact public acquisition boundary verified')
           PY
 
@@ -136,6 +159,7 @@ jobs:
             acquisition-na-hyukjin-2017/report.json
             acquisition-na-hyukjin-2017/dispatcher-probe.json
             acquisition-na-hyukjin-2017/nanet-viewer-fallback.json
+            acquisition-na-hyukjin-2017/nanet-docviewer.json
             acquisition-na-hyukjin-2017/summary.txt
           if-no-files-found: warn
           retention-days: 1
