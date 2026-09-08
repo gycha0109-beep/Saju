@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-na-hyukjin-2017-public-routes.py'
+      - 'scripts/probe-relationship-spouse-t8-na-hyukjin-2017-public-dispatchers.py'
       - '.github/workflows/relationship-spouse-t8-na-hyukjin-2017-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -24,6 +25,9 @@ jobs:
       - name: Probe exact public RISS and NANET target routes
         run: python scripts/acquire-relationship-spouse-t8-na-hyukjin-2017-public-routes.py
 
+      - name: Reproduce site-authored RISS original check and anonymous NANET viewer bootstrap
+        run: python scripts/probe-relationship-spouse-t8-na-hyukjin-2017-public-dispatchers.py
+
       - name: Print bounded acquisition evidence
         if: always()
         run: |
@@ -31,31 +35,45 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          p = Path('acquisition-na-hyukjin-2017/report.json')
-          if p.exists():
+          for name in ('report.json', 'dispatcher-probe.json'):
+              p = Path('acquisition-na-hyukjin-2017') / name
+              if not p.exists():
+                  continue
               j = json.loads(p.read_text())
-              print(json.dumps({
-                  'candidate': j.get('candidate'),
-                  'riss': {
-                      'identityObserved': j.get('riss', {}).get('identityObserved'),
-                      'finalControlObserved': j.get('riss', {}).get('finalControlObserved'),
-                      'docControlNo': j.get('riss', {}).get('docControlNo'),
-                      'docType': j.get('riss', {}).get('docType'),
-                      'accessSignals': j.get('riss', {}).get('accessSignals'),
-                      'targetWindows': j.get('riss', {}).get('targetWindows'),
-                      'scriptWindows': j.get('riss', {}).get('scriptWindows'),
-                  },
-                  'nanet': {
-                      'identityObserved': j.get('nanet', {}).get('identityObserved'),
-                      'controlObserved': j.get('nanet', {}).get('controlObserved'),
-                      'accessSignals': j.get('nanet', {}).get('accessSignals'),
-                      'targetWindows': j.get('nanet', {}).get('targetWindows'),
-                      'scriptWindows': j.get('nanet', {}).get('scriptWindows'),
-                  },
-                  'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
-                  'contentActionExecuted': j.get('contentActionExecuted'),
-                  'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
-              }, ensure_ascii=False, indent=2))
+              if name == 'report.json':
+                  out = {
+                      'candidate': j.get('candidate'),
+                      'riss': {
+                          'identityObserved': j.get('riss', {}).get('identityObserved'),
+                          'docControlNo': j.get('riss', {}).get('docControlNo'),
+                          'docType': j.get('riss', {}).get('docType'),
+                      },
+                      'nanet': {
+                          'identityObserved': j.get('nanet', {}).get('identityObserved'),
+                          'controlObserved': j.get('nanet', {}).get('controlObserved'),
+                      },
+                      'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
+                      'contentActionExecuted': j.get('contentActionExecuted'),
+                      'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
+                  }
+              else:
+                  out = {
+                      'rissOriginalCheck': j.get('riss', {}).get('originalCheck'),
+                      'rissOriginalCheckBody': j.get('riss', {}).get('originalCheckBody'),
+                      'nanetTargetViewCallObserved': j.get('nanet', {}).get('targetViewCallObserved'),
+                      'nanetTargetDownloadCallObserved': j.get('nanet', {}).get('targetDownloadCallObserved'),
+                      'nanetViewPublicContractObserved': j.get('nanet', {}).get('viewPublicContractObserved'),
+                      'nanetDownloadLoginGateObserved': j.get('nanet', {}).get('downloadLoginGateObserved'),
+                      'nanetViewer': j.get('nanet', {}).get('viewer'),
+                      'nanetViewerNextHop': j.get('nanet', {}).get('viewerNextHop'),
+                      'nanetViewerLoginBoundary': j.get('nanet', {}).get('viewerLoginBoundary'),
+                      'nanetViewerInstitutionBoundary': j.get('nanet', {}).get('viewerInstitutionBoundary'),
+                      'nanetViewerDrmSignal': j.get('nanet', {}).get('viewerDrmSignal'),
+                      'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
+                      'downloadActionExecuted': j.get('downloadActionExecuted'),
+                  }
+              print(name)
+              print(json.dumps(out, ensure_ascii=False, indent=2))
           PY
 
       - name: Enforce identity and no-guess boundary
@@ -73,7 +91,17 @@ jobs:
           assert j['nanet']['identityObserved'] is True
           assert j['guessedOpaqueIdentifierCount'] == 0
           assert j['contentActionExecuted'] is False
-          print('Na Hyukjin 2017 public-route identity/no-guess boundary verified')
+
+          d = json.loads(Path('acquisition-na-hyukjin-2017/dispatcher-probe.json').read_text())
+          assert d['riss']['originalCheck']['status'] == 200
+          assert d['nanet']['targetViewCallObserved'] is True
+          assert d['nanet']['targetDownloadCallObserved'] is True
+          assert d['nanet']['viewPublicContractObserved'] is True
+          assert d['nanet']['downloadLoginGateObserved'] is True
+          assert d['nanet']['viewer']['status'] == 200
+          assert d['guessedOpaqueIdentifierCount'] == 0
+          assert d['downloadActionExecuted'] is False
+          print('Na Hyukjin 2017 public dispatcher/no-guess boundary verified')
           PY
 
       - name: Upload bounded evidence only
@@ -83,6 +111,7 @@ jobs:
           name: na-hyukjin-2017-bounded-fulltext-evidence
           path: |
             acquisition-na-hyukjin-2017/report.json
+            acquisition-na-hyukjin-2017/dispatcher-probe.json
             acquisition-na-hyukjin-2017/summary.txt
           if-no-files-found: warn
           retention-days: 1
