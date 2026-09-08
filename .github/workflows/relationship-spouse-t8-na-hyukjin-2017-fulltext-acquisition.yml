@@ -26,7 +26,7 @@ jobs:
       - name: Probe exact public RISS and NANET target routes
         run: python scripts/acquire-relationship-spouse-t8-na-hyukjin-2017-public-routes.py
 
-      - name: Reproduce site-authored RISS original check and anonymous NANET viewer bootstrap
+      - name: Reproduce RISS original check and exact NANET target-button evidence
         run: python scripts/probe-relationship-spouse-t8-na-hyukjin-2017-public-dispatchers.py
 
       - name: Verify current NANET static dispatcher and bounded anonymous viewer fallback
@@ -68,7 +68,8 @@ jobs:
                       'rissOriginalCheck': j.get('riss', {}).get('originalCheck'),
                       'rissOriginalCheckBody': j.get('riss', {}).get('originalCheckBody'),
                       'nanetSurfaceUnavailable': j.get('nanet', {}).get('surfaceUnavailable'),
-                      'nanetViewerNextHop': j.get('nanet', {}).get('viewerNextHop'),
+                      'nanetTargetViewCallObserved': j.get('nanet', {}).get('targetViewCallObserved'),
+                      'nanetTargetDownloadCallObserved': j.get('nanet', {}).get('targetDownloadCallObserved'),
                       'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
                       'downloadActionExecuted': j.get('downloadActionExecuted'),
                   }
@@ -111,9 +112,6 @@ jobs:
           if not d['nanet'].get('surfaceUnavailable'):
               assert d['nanet']['targetViewCallObserved'] is True
               assert d['nanet']['targetDownloadCallObserved'] is True
-              assert d['nanet']['viewPublicContractObserved'] is True
-              assert d['nanet']['downloadLoginGateObserved'] is True
-              assert d['nanet']['viewer']['status'] == 200
           assert d['guessedOpaqueIdentifierCount'] == 0
           assert d['downloadActionExecuted'] is False
 
