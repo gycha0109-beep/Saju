@@ -15,13 +15,25 @@ OUT = Path('acquisition-lee-sangcheon-2017')
 OUT.mkdir(exist_ok=True)
 
 NANET_REPORT = OUT / 'nanet-dispatcher.json'
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/15.3; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/15.4; public-resource-verification)'
 MAX = 12 * 1024 * 1024
 NETWORK_ATTEMPTS = 3
 NETWORK_TIMEOUT_SECONDS = 25
 DOCVIEWER_HOST = 'docviewer.nanet.go.kr'
 ROUTE_HINT = re.compile(r'api|asset|book|content|document|doc|file|image|img|manifest|page|pdf|reader|text|tile|view', re.I)
 REQUEST_HINT = re.compile(r'fetch\s*\(|axios\.|XMLHttpRequest|\.ajax\s*\(|\.get\s*\(|\.post\s*\(', re.I)
+FOCUS_TOKENS = (
+    'VUE_APP_BASE_URL',
+    'VUE_APP_MORE_PATH',
+    'VUE_APP_PDF_DOWN_URL',
+    'VUE_APP_USE_SEC',
+    '/docinfo/',
+    '/page/',
+    '/pagec/',
+    '/regDoc',
+    '/download/',
+    'drm',
+)
 
 
 def decode(data: bytes) -> str:
@@ -44,6 +56,11 @@ def access_boundary(text: str) -> dict[str, bool]:
         'purchase': bool(re.search(r'구매|결제|유료|purchase|payment|paywall', text, re.I)),
         'drmOrDedicatedViewer': bool(re.search(r'DRM|전용.?뷰어|dedicated.?viewer|ezPDF|Fasoo|MarkAny|MaWebDRM', text, re.I)),
     }
+
+
+def merge_boundary(base: dict[str, bool], incoming: dict[str, bool]) -> None:
+    for key in base:
+        base[key] = bool(base[key] or incoming.get(key))
 
 
 def fetch_bytes(opener, url: str, referer: str | None = None) -> tuple[dict, bytes, str]:
@@ -161,6 +178,24 @@ def request_windows(source_url: str, text: str) -> list[dict]:
     return out[:80]
 
 
+def focused_contexts(source_url: str, text: str) -> list[dict]:
+    decoded = html.unescape(text)
+    out: list[dict] = []
+    for token in FOCUS_TOKENS:
+        for m in re.finditer(re.escape(token), decoded, re.I):
+            window = compact(decoded[max(0, m.start() - 900): min(len(decoded), m.end() + 1800)], 2800)
+            rec = {
+                'token': token,
+                'window': window,
+                'routeLiterals': route_literals(source_url, window),
+            }
+            if rec not in out:
+                out.append(rec)
+            if sum(1 for x in out if x['token'].lower() == token.lower()) >= 6:
+                break
+    return out[:80]
+
+
 def main() -> int:
     assert NANET_REPORT.exists(), 'nanet dispatcher evidence is required first'
     nanet = json.loads(NANET_REPORT.read_text(encoding='utf-8'))
@@ -175,7 +210,9 @@ def main() -> int:
         'scriptFetchSummary': {'attempted': 0, 'succeeded': 0, 'failed': 0},
         'routeLiterals': [],
         'requestContracts': [],
+        'focusedContexts': [],
         'accessBoundary': None,
+        'scriptAccessBoundary': {'login': False, 'institutionAuth': False, 'purchase': False, 'drmOrDedicatedViewer': False},
         'nextHopDisposition': None,
     }
 
@@ -205,6 +242,7 @@ def main() -> int:
                     report['viewerScripts'] = scripts
                     all_routes = route_literals(final_url, text)
                     contracts = [{'source': final_url, 'kind': 'html', 'requests': request_windows(final_url, text)}]
+                    contexts = focused_contexts(final_url, text)
                     successes = 0
                     failures = 0
                     for script_url in scripts:
@@ -213,18 +251,27 @@ def main() -> int:
                             failures += 1
                             continue
                         successes += 1
+                        merge_boundary(report['scriptAccessBoundary'], access_boundary(stext))
                         for route in route_literals(script_url, stext):
                             if route not in all_routes:
                                 all_routes.append(route)
                         reqs = request_windows(script_url, stext)
                         if reqs:
                             contracts.append({'source': script_url, 'kind': 'script', 'meta': smeta, 'requests': reqs})
+                        for ctx in focused_contexts(script_url, stext):
+                            ctx['source'] = script_url
+                            if ctx not in contexts:
+                                contexts.append(ctx)
                     report['scriptFetchSummary'] = {'attempted': len(scripts), 'succeeded': successes, 'failed': failures}
                     report['routeLiterals'] = all_routes[:240]
                     report['requestContracts'] = contracts
+                    report['focusedContexts'] = contexts[:120]
                     b = report['accessBoundary'] or {}
-                    if b.get('login') or b.get('institutionAuth') or b.get('purchase') or b.get('drmOrDedicatedViewer'):
+                    sb = report['scriptAccessBoundary']
+                    if b.get('login') or b.get('institutionAuth') or b.get('purchase'):
                         report['nextHopDisposition'] = 'ACCESS_BOUNDARY_SIGNAL_ON_DOCVIEWER_SURFACE'
+                    elif sb.get('drmOrDedicatedViewer'):
+                        report['nextHopDisposition'] = 'DRM_OR_DEDICATED_VIEWER_SIGNAL_OBSERVED_REVIEW_BEFORE_REPLAY'
                     elif all_routes or any(x.get('requests') for x in contracts):
                         report['nextHopDisposition'] = 'PUBLIC_VIEWER_CONTRACTS_OBSERVED_REVIEW_BEFORE_REPLAY'
                     else:
@@ -238,8 +285,10 @@ def main() -> int:
         'viewerSurface': report['viewerSurface'],
         'viewerSurfaceAvailable': report['viewerSurfaceAvailable'],
         'accessBoundary': report['accessBoundary'],
+        'scriptAccessBoundary': report['scriptAccessBoundary'],
         'scriptFetchSummary': report['scriptFetchSummary'],
         'routeLiterals': report['routeLiterals'],
+        'focusedContexts': report['focusedContexts'],
         'requestContracts': report['requestContracts'],
         'nextHopDisposition': report['nextHopDisposition'],
     }, ensure_ascii=False, indent=2))
