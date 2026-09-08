@@ -7,19 +7,21 @@ import json
 import re
 from http.cookiejar import CookieJar
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import quote, urljoin, urlparse
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 
 OUT = Path('acquisition-lee-sangcheon-2017')
+PRIVATE = Path('acquisition-lee-sangcheon-2017-private')
 OUT.mkdir(exist_ok=True)
+PRIVATE.mkdir(exist_ok=True)
 
 AUTHOR = '이상천'
 TITLE_SIGNAL = '육친론'
 CONTROL = 'KDMT1201802346'
 DETAIL = f'https://dl.nanet.go.kr/SearchDetailView.do?cn={CONTROL}'
 DETAIL_ALT = f'https://dl.nanet.go.kr/detail/{CONTROL}'
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/15.0; public-resource-verification)'
-MAX = 8 * 1024 * 1024
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/15.1; public-resource-verification)'
+MAX = 55 * 1024 * 1024
 FUNCTIONS = ('viewDoc', 'downloadDoc', 'newViewerCall')
 ROUTE_HINT = re.compile(r'viewer|view|download|file|original|pdf|document|doc', re.I)
 
@@ -37,53 +39,68 @@ def compact(text: str, limit: int = 18000) -> str:
     return re.sub(r'\s+', ' ', html.unescape(text)).strip()[:limit]
 
 
-def fetch(opener, url: str, referer: str | None = None) -> tuple[dict, str]:
+def access_boundary(text: str) -> dict[str, bool]:
+    return {
+        'login': bool(re.search(r'로그인|login|sign.?in', text, re.I)),
+        'institutionAuth': bool(re.search(r'기관.?인증|소속기관|institutional|institution.?auth', text, re.I)),
+        'purchase': bool(re.search(r'구매|결제|유료|purchase|payment|paywall', text, re.I)),
+        'drmOrDedicatedViewer': bool(re.search(r'DRM|전용.?뷰어|dedicated.?viewer|ezPDF|Fasoo', text, re.I)),
+    }
+
+
+def fetch_bytes(opener, url: str, referer: str | None = None) -> tuple[dict, bytes, str]:
     headers = {
         'User-Agent': UA,
-        'Accept': 'text/html,application/javascript,*/*;q=0.5',
+        'Accept': 'text/html,application/javascript,application/pdf,application/octet-stream,*/*;q=0.5',
         'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.7',
     }
     if referer:
         headers['Referer'] = referer
     meta = {
         'requestedUrl': url,
+        'method': 'GET',
         'status': None,
         'finalUrl': None,
         'contentType': None,
+        'contentDisposition': None,
         'bytes': 0,
         'sha256': None,
+        'redirected': False,
+        'startsPdf': False,
         'error': None,
     }
     try:
-        with opener.open(Request(url, headers=headers), timeout=40) as r:
+        with opener.open(Request(url, headers=headers), timeout=45) as r:
             body = r.read(MAX)
+            final_url = r.geturl()
             meta.update({
                 'status': getattr(r, 'status', None),
-                'finalUrl': r.geturl(),
+                'finalUrl': final_url,
                 'contentType': r.headers.get('Content-Type'),
+                'contentDisposition': r.headers.get('Content-Disposition'),
                 'bytes': len(body),
                 'sha256': hashlib.sha256(body).hexdigest(),
+                'redirected': final_url != url,
+                'startsPdf': body.startswith(b'%PDF-'),
             })
-            return meta, decode(body)
+            text = '' if body.startswith(b'%PDF-') else decode(body)
+            if text:
+                meta['accessBoundary'] = access_boundary(text)
+                meta['bodySample'] = compact(text, 12000)
+            return meta, body, text
     except Exception as e:
         meta['error'] = f'{type(e).__name__}: {e}'
-        return meta, ''
+        return meta, b'', ''
+
+
+def fetch(opener, url: str, referer: str | None = None) -> tuple[dict, str]:
+    meta, _body, text = fetch_bytes(opener, url, referer)
+    return meta, text
 
 
 def same_host(url: str) -> bool:
     p = urlparse(url)
     return p.scheme in ('http', 'https') and p.hostname == 'dl.nanet.go.kr'
-
-
-def contexts(text: str, token: str, before: int = 1800, after: int = 14000, cap: int = 12) -> list[str]:
-    out: list[str] = []
-    for m in re.finditer(re.escape(token), text, re.I):
-        value = compact(text[max(0, m.start() - before): min(len(text), m.start() + after)])
-        if value not in out:
-            out.append(value)
-        if len(out) >= cap:
-            break
-    return out
 
 
 def route_literals(source_url: str, window: str) -> list[str]:
@@ -136,15 +153,72 @@ def inspect_source(source_url: str, text: str) -> dict:
     return {'source': source_url, 'definitions': found}
 
 
+def exact_public_viewer_contract(source_url: str, text: str) -> dict | None:
+    decoded = html.unescape(text)
+    view_dispatch = re.search(
+        r'function\s+viewDoc\s*\([^)]*\).*?parseInt\(count\)\s*==\s*1\s*\)\s*\{\s*viewDocBySingleCount\(controlNo\)',
+        decoded,
+        re.I | re.S,
+    )
+    if not view_dispatch:
+        return None
+    single = re.search(
+        r'''function\s+viewDocBySingleCount\s*\([^)]*\).*?window\.open\(\s*["'](/view/callViewer\.do\?controlNo=)["']\s*\+\s*controlNo\s*\+\s*["'](&orgId=dl&linkSysId=NADL)["']''',
+        decoded,
+        re.I | re.S,
+    )
+    if not single:
+        return None
+    route = single.group(1) + quote(CONTROL) + single.group(2)
+    return {
+        'source': source_url,
+        'method': 'GET',
+        'url': urljoin(source_url, route),
+        'controlNo': CONTROL,
+        'orgId': 'dl',
+        'linkSysId': 'NADL',
+    }
+
+
+def download_login_boundary(source_url: str, text: str) -> dict | None:
+    decoded = html.unescape(text)
+    m = re.search(
+        r'''function\s+downloadDoc\s*\([^)]*\)\s*\{(.*?)(?=function\s+downloadEpub\s*\()''',
+        decoded,
+        re.I | re.S,
+    )
+    if not m:
+        return None
+    body = m.group(1)
+    requires_login = bool(re.search(r'if\s*\(\s*!isLogin\s*\)', body, re.I))
+    login_route = None
+    lm = re.search(r'''window\.location\.href\s*=\s*["']([^"']+)["']''', body, re.I)
+    if lm:
+        login_route = urljoin(source_url, lm.group(1))
+    single_dispatch = bool(re.search(r'parseInt\(count\)\s*==\s*1.*?downloadBySingleCount\(controlNo\)', body, re.I | re.S))
+    return {
+        'source': source_url,
+        'requiresLogin': requires_login,
+        'loginRoute': login_route,
+        'singleCountDispatchesToDownloadBySingleCount': single_dispatch,
+        'executed': False,
+        'reason': 'download path is not replayed because public site code requires login' if requires_login else None,
+    }
+
+
 def main() -> int:
     opener = build_opener(HTTPCookieProcessor(CookieJar()))
     report = {
-        'purpose': 'observe public NANET target-specific fulltext dispatcher only; no login, DRM, or access-control bypass',
+        'purpose': 'observe and replay only exact public NANET target-specific viewer contract; no login, DRM, or access-control bypass',
         'target': {'author': AUTHOR, 'controlNo': CONTROL},
         'surfaces': [],
         'pageCalls': [],
         'scriptUrls': [],
         'sources': [],
+        'viewerContract': None,
+        'viewerAttempt': None,
+        'viewerPdfPrivateFile': None,
+        'downloadBoundary': None,
     }
 
     source_texts: list[tuple[str, str]] = []
@@ -169,6 +243,10 @@ def main() -> int:
         rec = inspect_source(source_url, text)
         if rec['definitions']:
             report['sources'].append(rec)
+        if report['viewerContract'] is None:
+            report['viewerContract'] = exact_public_viewer_contract(source_url, text)
+        if report['downloadBoundary'] is None:
+            report['downloadBoundary'] = download_login_boundary(source_url, text)
 
     for url in report['scriptUrls'][:120]:
         meta, text = fetch(opener, url, DETAIL)
@@ -176,10 +254,29 @@ def main() -> int:
             continue
         if not any(fn.lower() in text.lower() for fn in FUNCTIONS):
             continue
-        rec = inspect_source(meta.get('finalUrl') or url, text)
+        source_url = meta.get('finalUrl') or url
+        rec = inspect_source(source_url, text)
         rec['meta'] = meta
         if rec['definitions']:
             report['sources'].append(rec)
+        if report['viewerContract'] is None:
+            report['viewerContract'] = exact_public_viewer_contract(source_url, text)
+        if report['downloadBoundary'] is None:
+            report['downloadBoundary'] = download_login_boundary(source_url, text)
+
+    # The target page emits viewDoc(..., '1'). Execute only the exact public
+    # single-count viewer GET recovered from the site's own viewDocBySingleCount().
+    if report['viewerContract']:
+        vm, vb, _vt = fetch_bytes(opener, report['viewerContract']['url'], DETAIL)
+        report['viewerAttempt'] = vm
+        if vb.startswith(b'%PDF-'):
+            private_pdf = PRIVATE / 'nanet-public-viewer.pdf'
+            private_pdf.write_bytes(vb)
+            report['viewerPdfPrivateFile'] = {
+                'file': private_pdf.name,
+                'bytes': len(vb),
+                'sha256': hashlib.sha256(vb).hexdigest(),
+            }
 
     path = OUT / 'nanet-dispatcher.json'
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
@@ -188,6 +285,10 @@ def main() -> int:
         'target': report['target'],
         'surfaces': report['surfaces'],
         'pageCalls': report['pageCalls'],
+        'viewerContract': report['viewerContract'],
+        'viewerAttempt': report['viewerAttempt'],
+        'viewerPdfPrivateFile': report['viewerPdfPrivateFile'],
+        'downloadBoundary': report['downloadBoundary'],
         'scriptUrls': report['scriptUrls'],
         'sources': [
             {
@@ -196,7 +297,6 @@ def main() -> int:
                     {
                         'function': d['function'],
                         'routeLiterals': d['routeLiterals'],
-                        'windows': d['windows'],
                     }
                     for d in src['definitions']
                 ],
@@ -208,6 +308,8 @@ def main() -> int:
 
     assert any('viewDoc' in x and CONTROL in x for x in report['pageCalls']), 'target public viewDoc call disappeared'
     assert any('downloadDoc' in x and CONTROL in x for x in report['pageCalls']), 'target public downloadDoc call disappeared'
+    assert report['viewerContract'], 'public single-count viewer contract disappeared'
+    assert report['downloadBoundary'] and report['downloadBoundary']['requiresLogin'], 'expected public download login boundary disappeared'
     return 0
 
 
