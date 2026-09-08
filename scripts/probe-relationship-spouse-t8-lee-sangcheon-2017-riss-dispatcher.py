@@ -7,24 +7,29 @@ import json
 import re
 from http.cookiejar import CookieJar
 from pathlib import Path
-from urllib.parse import urlencode, urljoin
+from urllib.parse import quote, urlencode, urljoin
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 
 OUT = Path('acquisition-lee-sangcheon-2017')
 OUT.mkdir(exist_ok=True)
 
 AUTHOR = '이상천'
+TITLE = '『적천수천미』 「육친론」에 관한 연구'
 TITLE_SIGNAL = '육친론'
 CONTROL_NO = '7dedd951a2b45b77ffe0bdc3ef48d419'
 P_MAT_TYPE = 'be54d9b8bc7cdb09'
 P_SUBMAT_TYPE = 'f1a8c7a1de0e08b8'
 FULLTEXT_KIND = 'a8cb3aaead67ab5b'
+SEARCH = (
+    'https://www.riss.kr/search/Search.do?isDetailSearch=N&searchGubun=true&viewYn=OP&'
+    f'query={quote(TITLE)}&queryText=&iStartCount=0&iGroupView=5&colName=bib_t'
+)
 DETAIL = (
     'https://www.riss.kr/search/detail/DetailView.do?'
     f'p_mat_type={P_MAT_TYPE}&control_no={CONTROL_NO}'
 )
 ORIGINAL_CHECK = 'https://www.riss.kr/detail/originalCheck.do'
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/14.0; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/14.1; public-resource-verification)'
 MAX = 10 * 1024 * 1024
 PATTERNS = (
     r'function\s+fulltextDownload\s*\([^)]*\)',
@@ -106,24 +111,33 @@ def inspect_source(source: str, text: str) -> dict:
             matches.append({'pattern': pattern, 'contexts': contexts})
     target_calls: list[str] = []
     for pattern in (
-        r'fulltextDownload\s*\([^;]{0,1400}\)',
-        r'openFulltext\s*\([^;]{0,1400}\)',
-        r'alertFullTextLayer\s*\([^;]{0,1400}\)',
-        r'ButtonSet\.fulltextDownload\s*\([^;]{0,1400}\)',
+        r'fulltextDownload\s*\([^;]{0,1600}\)',
+        r'openFulltext\s*\([^;]{0,1600}\)',
+        r'alertFullTextLayer\s*\([^;]{0,1600}\)',
+        r'ButtonSet\.fulltextDownload\s*\([^;]{0,1600}\)',
     ):
         for m in re.finditer(pattern, text, re.I | re.S):
-            call = compact(m.group(0), 2400)
+            call = compact(m.group(0), 2600)
             if call not in target_calls:
                 target_calls.append(call)
-    return {
-        'source': source,
-        'matches': matches,
-        'targetCalls': target_calls[:30],
-    }
+    return {'source': source, 'matches': matches, 'targetCalls': target_calls[:40]}
+
+
+def target_call_windows(text: str) -> list[str]:
+    out: list[str] = []
+    decoded = html.unescape(text)
+    for token in (CONTROL_NO, 'ButtonSet.fulltextDownload', 'fulltextDownload('):
+        for m in re.finditer(re.escape(token), decoded, re.I):
+            value = compact(decoded[max(0, m.start() - 1200): min(len(decoded), m.start() + 2600)], 4200)
+            if value not in out:
+                out.append(value)
+            if len(out) >= 30:
+                return out
+    return out
 
 
 def extract_doc_control_no(text: str) -> str | None:
-    # Only accept a value emitted by the target page itself; never derive or guess it.
+    # Accept only a value explicitly emitted by the target detail page.
     patterns = (
         r"originalCheck\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*['\"]T['\"]",
         r"docControlNo\s*[:=]\s*['\"]([^'\"]+)['\"]",
@@ -147,33 +161,38 @@ def main() -> int:
             'pSubmatType': P_SUBMAT_TYPE,
             'fulltextKind': FULLTEXT_KIND,
         },
+        'searchUrl': SEARCH,
         'detailUrl': DETAIL,
         'originalCheckUrl': ORIGINAL_CHECK,
+        'search': {},
         'detail': {},
+        'searchTargetWindows': [],
+        'detailTargetWindows': [],
         'scriptUrls': [],
         'sources': [],
-        'pageAuthoredFulltextCalls': [],
+        'tuplePresentOnSearchSurface': False,
         'docControlNo': None,
         'originalCheck': None,
         'originalCheckBody': None,
     }
 
-    meta, body = fetch(opener, DETAIL)
+    smeta, sbody = fetch(opener, SEARCH)
+    report['search'] = smeta
+    search_text = decode(sbody) if sbody else ''
+    report['searchTargetWindows'] = target_call_windows(search_text)
+    search_joined = ' '.join(report['searchTargetWindows'])
+    expected_tuple = (CONTROL_NO, P_MAT_TYPE, P_SUBMAT_TYPE, FULLTEXT_KIND)
+    report['tuplePresentOnSearchSurface'] = all(v in search_joined for v in expected_tuple)
+    report['sources'].append(inspect_source(smeta.get('finalUrl') or SEARCH, search_text))
+
+    meta, body = fetch(opener, DETAIL, referer=SEARCH)
     report['detail'] = meta
     text = decode(body) if body else ''
     assert CONTROL_NO in text
     assert P_MAT_TYPE in text
     assert AUTHOR in text or TITLE_SIGNAL in text or '적천수' in text
-
+    report['detailTargetWindows'] = target_call_windows(text)
     report['sources'].append(inspect_source(meta.get('finalUrl') or DETAIL, text))
-    for m in re.finditer(r'ButtonSet\.fulltextDownload\s*\([^;]{0,1800}\)', text, re.I | re.S):
-        value = compact(m.group(0), 2600)
-        if value not in report['pageAuthoredFulltextCalls']:
-            report['pageAuthoredFulltextCalls'].append(value)
-
-    expected_tuple = (CONTROL_NO, P_MAT_TYPE, P_SUBMAT_TYPE, FULLTEXT_KIND)
-    joined_calls = ' '.join(report['pageAuthoredFulltextCalls'])
-    assert all(v in joined_calls for v in expected_tuple), 'target-specific fulltextDownload tuple missing'
 
     script_urls: list[str] = []
     for raw in re.findall(r'<script[^>]+src=["\']([^"\']+)', text, re.I):
@@ -183,15 +202,15 @@ def main() -> int:
     report['scriptUrls'] = script_urls
 
     for url in script_urls[:100]:
-        sm, sb = fetch(opener, url, referer=DETAIL)
-        if not sb:
+        jm, jb = fetch(opener, url, referer=DETAIL)
+        if not jb:
             continue
-        st = decode(sb)
-        low = st.lower()
+        jt = decode(jb)
+        low = jt.lower()
         if not any(k in low for k in ('fulltextdownload', 'openfulltext', 'originalcheck', '/search/download/')):
             continue
-        rec = inspect_source(sm.get('finalUrl') or url, st)
-        rec['meta'] = sm
+        rec = inspect_source(jm.get('finalUrl') or url, jt)
+        rec['meta'] = jm
         report['sources'].append(rec)
 
     doc_control_no = extract_doc_control_no(text)
@@ -207,8 +226,11 @@ def main() -> int:
 
     focused = {
         'target': report['target'],
+        'search': report['search'],
         'detail': report['detail'],
-        'pageAuthoredFulltextCalls': report['pageAuthoredFulltextCalls'],
+        'tuplePresentOnSearchSurface': report['tuplePresentOnSearchSurface'],
+        'searchTargetWindows': report['searchTargetWindows'],
+        'detailTargetWindows': report['detailTargetWindows'],
         'docControlNo': report['docControlNo'],
         'originalCheck': report['originalCheck'],
         'originalCheckBody': report['originalCheckBody'],
@@ -222,6 +244,10 @@ def main() -> int:
         ],
     }
     print(json.dumps(focused, ensure_ascii=False, indent=2))
+
+    # Search surface is expected to expose the exact tuple discovered in the prior run;
+    # this assertion is now correctly scoped to that surface rather than the detail wrapper.
+    assert report['tuplePresentOnSearchSurface'], 'exact target fulltext tuple disappeared from RISS search surface'
     return 0
 
 
