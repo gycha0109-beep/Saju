@@ -6,6 +6,7 @@ on:
       - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-publisher.py'
       - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-publisher-contract-context.py'
       - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-article-list.py'
+      - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-issue33.py'
       - '.github/workflows/relationship-spouse-t8-kim-sanghan-2026-current-publisher-reacquisition.yml'
   workflow_dispatch:
 
@@ -27,6 +28,8 @@ jobs:
         run: python scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-publisher-contract-context.py
       - name: Reproduce exact current site-authored article-list bootstrap
         run: python scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-article-list.py
+      - name: Reproduce exact current issue33 title-filter target discovery
+        run: python scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-issue33.py
       - name: Print strict current-public evidence
         if: always()
         run: |
@@ -34,7 +37,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          for name in ('publisher-contract-context.json','current-article-list.json'):
+          for name in ('publisher-contract-context.json','current-article-list.json','current-issue33.json'):
               p=Path('acquisition-kim-sanghan-2026-current')/name
               if p.exists():
                   j=json.loads(p.read_text())
@@ -52,16 +55,19 @@ jobs:
           assert j['kci']['identityObserved'] is True
           assert j['guessedOpaqueIdentifierCount']==0
           assert j['contentDownloadExecuted'] is False
-          for r in j['publisher'].get('targetRecords',[]):
-              assert all(r.get(k) for k in ('barcode','artId','kyoboKey','scholarUrl'))
           c=json.loads(Path('acquisition-kim-sanghan-2026-current/publisher-contract-context.json').read_text())
           assert c['home']['status']==200 and c['guessedOpaqueIdentifierCount']==0 and c['contentActionExecuted'] is False
           a=json.loads(Path('acquisition-kim-sanghan-2026-current/current-article-list.json').read_text())
           assert a['articleList']['status']==200
           assert a['bootstrapContract']=={'journalCd':'','sysmoduleSeq':'10000000221','pubcNumYsno':'N'}
-          assert a['guessedOpaqueIdentifierCount']==0
-          assert a['contentDownloadExecuted'] is False
-          for r in a.get('targetTuples',[]):
+          assert a['guessedOpaqueIdentifierCount']==0 and a['contentDownloadExecuted'] is False
+          i=json.loads(Path('acquisition-kim-sanghan-2026-current/current-issue33.json').read_text())
+          assert i['issue33Query']['meta']['status']==200
+          assert i['currentFormDefaults']['trgtIsuInsttCd']=='20885'
+          assert i['issue33Query']['form']['journalCd']=='3444'
+          assert i['issue33Query']['form']['bookCd']=='1096294'
+          assert i['guessedOpaqueIdentifierCount']==0 and i['contentDownloadExecuted'] is False
+          for r in i.get('targetTuples',[]):
               assert all(r.get(k) for k in ('barcode','artId','kyoboKey','scholarUrl'))
           print('strict current-public Kim Sanghan discovery boundary verified')
           PY
@@ -75,6 +81,8 @@ jobs:
             acquisition-kim-sanghan-2026-current/summary.txt
             acquisition-kim-sanghan-2026-current/publisher-contract-context.json
             acquisition-kim-sanghan-2026-current/current-article-list.json
+            acquisition-kim-sanghan-2026-current/current-issue33.json
+            acquisition-kim-sanghan-2026-current/current-issue33-target-fragment.html
             acquisition-kim-sanghan-2026-current/publisher-target-fragment.html
           if-no-files-found: warn
           retention-days: 1
