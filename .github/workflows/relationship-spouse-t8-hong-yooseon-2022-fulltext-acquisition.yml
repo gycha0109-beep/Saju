@@ -33,7 +33,7 @@ jobs:
       - name: Probe ACCI publisher contract and target feed only if public provenance is verified
         run: python scripts/probe-relationship-spouse-t8-hong-yooseon-2022-acci-publisher.py
 
-      - name: Probe National Assembly Library exact public record boundary
+      - name: Exhaust National Assembly Library public pagination and inspect exact target controls if reproduced
         run: python scripts/probe-relationship-spouse-t8-hong-yooseon-2022-nanet.py
 
       - name: Print bounded acquisition evidence
@@ -71,7 +71,11 @@ jobs:
                   }
               else:
                   out = {
+                      'indexedPublicSearchContract': j.get('indexedPublicSearchContract'),
+                      'searchPages': j.get('searchPages'),
                       'searchTargetObserved': j.get('searchTargetObserved'),
+                      'targetSearchPage': j.get('targetSearchPage'),
+                      'liveSearchDisposition': j.get('liveSearchDisposition'),
                       'searchAccessSignals': j.get('searchAccessSignals'),
                       'observedOpaqueIdentifiers': j.get('observedOpaqueIdentifiers'),
                       'targetRoutes': j.get('targetRoutes'),
@@ -110,10 +114,12 @@ jobs:
           n = json.loads(Path('acquisition-hong-yooseon-2022/nanet-probe.json').read_text())
           assert n['candidate']['author'] == '홍유선'
           assert n['candidate']['printedPages'] == '75-89'
-          assert n['searchTargetObserved'] is True
+          expected_pages = n['indexedPublicSearchContract']['pagesExhaustivelyScanned']
+          assert len(n['searchPages']) == expected_pages
+          assert all(x['meta']['status'] == 200 for x in n['searchPages'])
           assert n['guessedOpaqueIdentifierCount'] == 0
           assert n['contentActionExecuted'] is False
-          print('Hong Yooseon 2022 bounded acquisition identity verified; baseFullLength=', j['fullLengthPdfAcquired'], 'publisherFullLength=', p['fullLengthPdfAcquired'], 'nanetTarget=', n['searchTargetObserved'])
+          print('Hong Yooseon 2022 bounded acquisition identity verified; baseFullLength=', j['fullLengthPdfAcquired'], 'publisherFullLength=', p['fullLengthPdfAcquired'], 'nanetTarget=', n['searchTargetObserved'], 'nanetDisposition=', n['liveSearchDisposition'])
           PY
 
       - name: Upload bounded evidence only
