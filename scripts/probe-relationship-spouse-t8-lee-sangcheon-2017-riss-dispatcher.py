@@ -28,7 +28,7 @@ DETAIL = (
     'https://www.riss.kr/search/detail/DetailView.do?'
     f'p_mat_type={P_MAT_TYPE}&control_no={CONTROL_NO}'
 )
-UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/14.3; public-resource-verification)'
+UA = 'Mozilla/5.0 (compatible; MyeongHa-Research-Acquisition/14.4; public-resource-verification)'
 MAX = 10 * 1024 * 1024
 
 PATTERNS = (
@@ -174,7 +174,6 @@ def hidden_value(text: str, element_id: str) -> str | None:
 
 
 def original_check_endpoint(source_url: str, text: str) -> str | None:
-    # Use only a route string literally emitted by public RISS HTML/JS.
     m = re.search(r'(?:(?:https?:)?//www\.riss\.kr)?(/detail/originalCheck\.do)', text, re.I)
     if not m:
         return None
@@ -249,10 +248,14 @@ def main() -> int:
     report['pageAuthoredFulltextCalls'] = calls[:30]
 
     script_urls: list[str] = []
-    for raw in re.findall(r'<script[^>]+src=["\']([^"\']+)', detail_text, re.I):
-        url = urljoin(meta.get('finalUrl') or DETAIL, html.unescape(raw))
-        if url not in script_urls:
-            script_urls.append(url)
+    for page_base, page_text in (
+        (smeta.get('finalUrl') or SEARCH, search_text),
+        (meta.get('finalUrl') or DETAIL, detail_text),
+    ):
+        for raw in re.findall(r'<script[^>]+src=["\']([^"\']+)', page_text, re.I):
+            url = urljoin(page_base, html.unescape(raw))
+            if url not in script_urls:
+                script_urls.append(url)
     report['scriptUrls'] = script_urls
 
     source_texts: list[tuple[str, str]] = [
@@ -268,7 +271,7 @@ def main() -> int:
         'document.f',
         '.submit(',
     )
-    for url in script_urls[:100]:
+    for url in script_urls[:160]:
         jm, jb = fetch(opener, url, referer=DETAIL)
         if not jb:
             continue
@@ -293,8 +296,6 @@ def main() -> int:
     report['originalCheckContractFound'] = contract_found
     report['originalCheckUrl'] = endpoint
 
-    # Reproduce the public site's own originalCheck(goOri) AJAX contract only when
-    # both the implementation and its literal endpoint are observed in fetched HTML/JS.
     if endpoint and contract_found and report['docControlNo'] and report['docType']:
         payload = urlencode({
             'controlNo': report['docControlNo'],
@@ -311,6 +312,7 @@ def main() -> int:
         'target': report['target'],
         'search': report['search'],
         'detail': report['detail'],
+        'scriptUrls': report['scriptUrls'],
         'pageAuthoredFulltextCalls': report['pageAuthoredFulltextCalls'],
         'tuplePresentOnSearchSurface': report['tuplePresentOnSearchSurface'],
         'docControlNo': report['docControlNo'],
