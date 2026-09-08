@@ -1,0 +1,89 @@
+name: Relationship Spouse T8 Na Hyukjin 2017 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-na-hyukjin-2017-public-routes.py'
+      - '.github/workflows/relationship-spouse-t8-na-hyukjin-2017-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Probe exact public RISS and NANET target routes
+        run: python scripts/acquire-relationship-spouse-t8-na-hyukjin-2017-public-routes.py
+
+      - name: Print bounded acquisition evidence
+        if: always()
+        run: |
+          test -f acquisition-na-hyukjin-2017/summary.txt && cat acquisition-na-hyukjin-2017/summary.txt || true
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('acquisition-na-hyukjin-2017/report.json')
+          if p.exists():
+              j = json.loads(p.read_text())
+              print(json.dumps({
+                  'candidate': j.get('candidate'),
+                  'riss': {
+                      'identityObserved': j.get('riss', {}).get('identityObserved'),
+                      'finalControlObserved': j.get('riss', {}).get('finalControlObserved'),
+                      'docControlNo': j.get('riss', {}).get('docControlNo'),
+                      'docType': j.get('riss', {}).get('docType'),
+                      'accessSignals': j.get('riss', {}).get('accessSignals'),
+                      'targetWindows': j.get('riss', {}).get('targetWindows'),
+                      'scriptWindows': j.get('riss', {}).get('scriptWindows'),
+                  },
+                  'nanet': {
+                      'identityObserved': j.get('nanet', {}).get('identityObserved'),
+                      'controlObserved': j.get('nanet', {}).get('controlObserved'),
+                      'accessSignals': j.get('nanet', {}).get('accessSignals'),
+                      'targetWindows': j.get('nanet', {}).get('targetWindows'),
+                      'scriptWindows': j.get('nanet', {}).get('scriptWindows'),
+                  },
+                  'guessedOpaqueIdentifierCount': j.get('guessedOpaqueIdentifierCount'),
+                  'contentActionExecuted': j.get('contentActionExecuted'),
+                  'fullLengthPdfAcquired': j.get('fullLengthPdfAcquired'),
+              }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Enforce identity and no-guess boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j = json.loads(Path('acquisition-na-hyukjin-2017/report.json').read_text())
+          c = j['candidate']
+          assert c['author'] == '나혁진'
+          assert c['year'] == 2017
+          assert c['rissId'] == 'T14398372'
+          assert c['nanetControl'] == 'KDMT1201802345'
+          assert j['riss']['identityObserved'] is True
+          assert j['nanet']['identityObserved'] is True
+          assert j['guessedOpaqueIdentifierCount'] == 0
+          assert j['contentActionExecuted'] is False
+          print('Na Hyukjin 2017 public-route identity/no-guess boundary verified')
+          PY
+
+      - name: Upload bounded evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: na-hyukjin-2017-bounded-fulltext-evidence
+          path: |
+            acquisition-na-hyukjin-2017/report.json
+            acquisition-na-hyukjin-2017/summary.txt
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
