@@ -7,6 +7,7 @@ on:
       - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-publisher-contract-context.py'
       - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-article-list.py'
       - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-issue33.py'
+      - 'scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-issue33-enumerate.py'
       - '.github/workflows/relationship-spouse-t8-kim-sanghan-2026-current-publisher-reacquisition.yml'
   workflow_dispatch:
 
@@ -30,6 +31,8 @@ jobs:
         run: python scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-article-list.py
       - name: Reproduce exact current issue33 title-filter target discovery
         run: python scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-issue33.py
+      - name: Enumerate exact current issue33 and author filter
+        run: python scripts/probe-relationship-spouse-t8-kim-sanghan-2026-current-issue33-enumerate.py
       - name: Print strict current-public evidence
         if: always()
         run: |
@@ -37,7 +40,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          for name in ('publisher-contract-context.json','current-article-list.json','current-issue33.json'):
+          for name in ('publisher-contract-context.json','current-article-list.json','current-issue33.json','current-issue33-enumerate.json'):
               p=Path('acquisition-kim-sanghan-2026-current')/name
               if p.exists():
                   j=json.loads(p.read_text())
@@ -67,8 +70,13 @@ jobs:
           assert i['issue33Query']['form']['journalCd']=='3444'
           assert i['issue33Query']['form']['bookCd']=='1096294'
           assert i['guessedOpaqueIdentifierCount']==0 and i['contentDownloadExecuted'] is False
-          for r in i.get('targetTuples',[]):
-              assert all(r.get(k) for k in ('barcode','artId','kyoboKey','scholarUrl'))
+          e=json.loads(Path('acquisition-kim-sanghan-2026-current/current-issue33-enumerate.json').read_text())
+          assert len(e['probes'])==2
+          assert all(p['meta']['status']==200 for p in e['probes'])
+          assert e['guessedOpaqueIdentifierCount']==0 and e['contentDownloadExecuted'] is False
+          for rec in e.get('targetCards',[]):
+              for r in rec.get('tuples',[]):
+                  assert all(r.get(k) for k in ('barcode','artId','kyoboKey','scholarUrl'))
           print('strict current-public Kim Sanghan discovery boundary verified')
           PY
       - name: Upload bounded evidence only
@@ -82,6 +90,9 @@ jobs:
             acquisition-kim-sanghan-2026-current/publisher-contract-context.json
             acquisition-kim-sanghan-2026-current/current-article-list.json
             acquisition-kim-sanghan-2026-current/current-issue33.json
+            acquisition-kim-sanghan-2026-current/current-issue33-enumerate.json
+            acquisition-kim-sanghan-2026-current/current-issue33-all.html
+            acquisition-kim-sanghan-2026-current/current-issue33-author.html
             acquisition-kim-sanghan-2026-current/current-issue33-target-fragment.html
             acquisition-kim-sanghan-2026-current/publisher-target-fragment.html
           if-no-files-found: warn
