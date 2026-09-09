@@ -1,0 +1,63 @@
+name: Relationship Spouse T8 Park Hyeyoung 2018 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-park-hyeyoung-2018-public-routes.py'
+      - '.github/workflows/relationship-spouse-t8-park-hyeyoung-2018-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Probe exact public RISS and directly exposed institutional routes
+        run: python scripts/acquire-relationship-spouse-t8-park-hyeyoung-2018-public-routes.py
+      - name: Print bounded evidence
+        if: always()
+        run: test -f acquisition-park-hyeyoung-2018/summary.txt && cat acquisition-park-hyeyoung-2018/summary.txt || true
+      - name: Enforce exact identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('acquisition-park-hyeyoung-2018/report.json')
+          j=json.loads(p.read_text())
+          assert j['candidate']['author']=='박혜영'
+          assert j['candidate']['title']=='명리학 통변의 다양성 모색에 관한 연구 : 육친론을 중심으로'
+          assert j['candidate']['riss']=='T14752312'
+          assert j['riss']['control']=='90b96055ae1e4289ffe0bdc3ef48d419'
+          assert j['guessedOpaqueIdentifierCount']==0
+          assert j['loginBypass'] is False
+          assert j['institutionAuthBypass'] is False
+          assert j['paywallBypass'] is False
+          assert j['drmRequestExecuted'] is False
+          assert j['decryptionActionExecuted'] is False
+          assert j['crossSourceSemanticStitching'] is False
+          print('Park Hyeyoung exact identity and bounded acquisition contract verified')
+          PY
+      - name: Upload bounded evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: park-hyeyoung-2018-bounded-fulltext-evidence
+          path: |
+            acquisition-park-hyeyoung-2018/report.json
+            acquisition-park-hyeyoung-2018/summary.txt
+            acquisition-park-hyeyoung-2018/riss-detail.html
+            acquisition-park-hyeyoung-2018/riss-title-search.html
+            acquisition-park-hyeyoung-2018/riss-original-check.txt
+            acquisition-park-hyeyoung-2018/digital-knowledge.html
+            acquisition-park-hyeyoung-2018/institutional-*.html
+            acquisition-park-hyeyoung-2018/park-hyeyoung-2018.pdf
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
