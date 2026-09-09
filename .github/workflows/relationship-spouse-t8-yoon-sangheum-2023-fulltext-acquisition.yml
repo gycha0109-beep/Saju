@@ -96,15 +96,19 @@ jobs:
           assert j['rissProvider']['guessedOpaqueIdentifierCount']==0
           b=j['rissPaidProviderBoundary']
           assert b['exactPaidKoreaScholarProviderObserved'] is True
+          assert b['rissOriginalViewOnclickContracts']==["ButtonSet.urlDownload('03ada6d1a184da39','9ba5989fa333064ec85d2949c297615a','1a0202e37d52c72d','','')"]
+          assert b['buttonSetUrlDownloadImplementationObserved'] is True
+          assert b['articleSpecificSeparatelyAuthoredFreeRissArticleOrPdfUrls']==[]
           assert b['disposition']=='RISS_EXPLICIT_PAID_KOREASCHOLAR_PROVIDER_STOP_NO_PAYWALL_BYPASS'
           assert b['originalViewInvoked'] is False
+          assert b['rissOpenFullTextEndpointInvoked'] is False
           assert b['koreaScholarContentRequestExecuted'] is False
           assert b['contentDownloadExecuted'] is False
           assert b['guessedOpaqueIdentifierCount']==0
           assert b['paywallBypass'] is False
           assert j['fullLengthPdfAcquired'] is False
           assert j['semanticDisposition']=='ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION'
-          print('Yoon Sangheum 2023 exact KCI->RISS paid-provider access boundary verified; no semantic body decision')
+          print('Yoon Sangheum 2023 exact KCI->RISS paid-provider access boundary verified; zero article-specific free fulltext routes; no semantic body decision')
           PY
       - name: Upload bounded evidence
         if: always()
