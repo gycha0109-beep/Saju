@@ -1,0 +1,54 @@
+name: Relationship Spouse T8 Shin Jaeeok 2024 Fulltext Discovery
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/discover-relationship-spouse-t8-shin-jaeeok-2024-public-identity.py'
+      - '.github/workflows/relationship-spouse-t8-shin-jaeeok-2024-fulltext-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discover-current-public-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Discover exact current public RISS identity
+        run: python scripts/discover-relationship-spouse-t8-shin-jaeeok-2024-public-identity.py
+      - name: Enforce discovery-only no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-shin-jaeeok-2024/report.json').read_text(encoding='utf-8'))
+          assert j['candidate']['author']=='신재억'
+          assert j['candidate']['year']==2024
+          assert j['candidate']['dbpiaNodeId']=='T16939654'
+          assert j['contentDownloadExecuted'] is False
+          assert j['guessedOpaqueIdentifierCount']==0
+          assert j['loginBypass'] is False
+          assert j['institutionAuthBypass'] is False
+          assert j['paywallBypass'] is False
+          assert j['drmRequestExecuted'] is False
+          assert j['decryptionActionExecuted'] is False
+          assert j['crossSourceSemanticStitching'] is False
+          print('Shin Jae-eok 2024 discovery-only no-bypass boundary verified')
+          PY
+      - name: Upload bounded discovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shin-jaeeok-2024-public-identity-discovery
+          path: |
+            acquisition-shin-jaeeok-2024/report.json
+            acquisition-shin-jaeeok-2024/riss-title-search-*.html
+            acquisition-shin-jaeeok-2024/riss-detail.html
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
