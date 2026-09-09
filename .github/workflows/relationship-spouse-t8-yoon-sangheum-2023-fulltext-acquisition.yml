@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-yoon-sangheum-2023-kci-public-fulltext.py'
       - 'scripts/follow-yoon-sangheum-2023-kci-concrete-file-contract.py'
+      - 'scripts/inspect-yoon-sangheum-2023-kci-riss-provider-route.py'
       - '.github/workflows/relationship-spouse-t8-yoon-sangheum-2023-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -24,8 +25,10 @@ jobs:
         run: python -m pip install --disable-pip-version-check pypdf==6.0.0
       - name: Inspect current site-authored KCI contracts
         run: python scripts/acquire-relationship-spouse-t8-yoon-sangheum-2023-kci-public-fulltext.py
-      - name: Follow exact current KCI concrete file contract
+      - name: Follow exact current KCI concrete file contract when exposed
         run: python scripts/follow-yoon-sangheum-2023-kci-concrete-file-contract.py
+      - name: Inspect exact KCI-authored RISS provider route
+        run: python scripts/inspect-yoon-sangheum-2023-kci-riss-provider-route.py
       - name: Inspect any exact site-authored PDF object
         run: |
           python - <<'PY'
@@ -81,7 +84,9 @@ jobs:
           assert j['paywallBypass'] is False
           assert j['drmRequestExecuted'] is False
           assert j['decryptionActionExecuted'] is False
-          print('Yoon Sangheum 2023 exact identity + no-bypass boundary verified')
+          assert j['rissProvider']['contentDownloadExecuted'] is False
+          assert j['rissProvider']['guessedOpaqueIdentifierCount']==0
+          print('Yoon Sangheum 2023 exact identity + KCI/RISS no-bypass boundary verified')
           PY
       - name: Upload bounded evidence
         if: always()
@@ -94,6 +99,9 @@ jobs:
             acquisition-yoon-sangheum-2023/pdf-metadata.json
             acquisition-yoon-sangheum-2023/detail.html
             acquisition-yoon-sangheum-2023/download-service.html
+            acquisition-yoon-sangheum-2023/kci-riss-provider.xml
+            acquisition-yoon-sangheum-2023/riss-provider-report.json
+            acquisition-yoon-sangheum-2023/riss-target.html
             acquisition-yoon-sangheum-2023/candidate.pdf
             acquisition-yoon-sangheum-2023/candidate.txt
           if-no-files-found: warn
