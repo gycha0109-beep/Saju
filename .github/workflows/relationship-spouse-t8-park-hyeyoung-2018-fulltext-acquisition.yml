@@ -6,6 +6,7 @@ on:
       - 'scripts/acquire-relationship-spouse-t8-park-hyeyoung-2018-public-routes.py'
       - 'scripts/inspect-riss-fulltext-dispatch-park-hyeyoung-2018.py'
       - 'scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nld-public-metadata-v2.py'
+      - 'scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nanet-public-route.py'
       - '.github/workflows/relationship-spouse-t8-park-hyeyoung-2018-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -15,7 +16,7 @@ permissions:
 jobs:
   acquire-public-fulltext:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,12 +28,15 @@ jobs:
         run: python scripts/inspect-riss-fulltext-dispatch-park-hyeyoung-2018.py
       - name: Inspect exact NLD target metadata and anonymous access boundary
         run: python scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nld-public-metadata-v2.py
+      - name: Inspect exact NANET public search-row and viewer boundary
+        run: python scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nanet-public-route.py
       - name: Print bounded evidence
         if: always()
         run: |
           test -f acquisition-park-hyeyoung-2018/summary.txt && cat acquisition-park-hyeyoung-2018/summary.txt || true
           test -f acquisition-park-hyeyoung-2018/riss-fulltext-dispatch-evidence.json && cat acquisition-park-hyeyoung-2018/riss-fulltext-dispatch-evidence.json || true
           test -f acquisition-park-hyeyoung-2018/nld-report.json && cat acquisition-park-hyeyoung-2018/nld-report.json || true
+          test -f acquisition-park-hyeyoung-2018/nanet-report.json && cat acquisition-park-hyeyoung-2018/nanet-report.json || true
       - name: Enforce exact identity and no-bypass boundary
         run: |
           python - <<'PY'
@@ -41,6 +45,7 @@ jobs:
           j=json.loads(Path('acquisition-park-hyeyoung-2018/report.json').read_text())
           d=json.loads(Path('acquisition-park-hyeyoung-2018/riss-fulltext-dispatch-evidence.json').read_text())
           n=json.loads(Path('acquisition-park-hyeyoung-2018/nld-report.json').read_text())
+          a=json.loads(Path('acquisition-park-hyeyoung-2018/nanet-report.json').read_text())
           assert j['candidate']['author']=='박혜영'
           assert j['candidate']['title']=='명리학 통변의 다양성 모색에 관한 연구 : 육친론을 중심으로'
           assert j['candidate']['riss']=='T14752312'
@@ -82,7 +87,24 @@ jobs:
           assert n['paywallBypass'] is False
           assert n['drmRequestExecuted'] is False
           assert n['decryptionActionExecuted'] is False
-          print('Park Hyeyoung exact RISS dispatcher/NLD access boundary verified')
+          assert a['candidate']['title']=='명리학 통변의 다양성 모색에 관한 연구 : 육친론을 중심으로'
+          assert a['candidate']['author']=='박혜영'
+          assert a['guessedOpaqueIdentifierCount']==0
+          assert a['contentAssetActionExecuted'] is False
+          assert a['drmRequestExecuted'] is False
+          assert a['loginBypass'] is False
+          assert a['institutionAuthBypass'] is False
+          assert a['paywallBypass'] is False
+          # A NANET control is admissible only if it is uniquely authored by the exact public search row.
+          if a['exactControl'] is not None:
+              assert a['controlResolutionDisposition']=='EXACT_PUBLIC_SEARCH_ROW_CONTROL_RESOLVED'
+              assert a['search']['exactRowControls']==[a['exactControl']]
+              assert a['detail']['titleObserved'] is True
+              assert a['detail']['authorObserved'] is True
+              assert a['detail']['controlObserved'] is True
+          else:
+              assert a['controlResolutionDisposition']=='NO_UNIQUE_EXACT_PUBLIC_SEARCH_ROW_CONTROL'
+          print('Park Hyeyoung exact RISS/NLD/NANET bounded acquisition contract verified')
           PY
       - name: Upload bounded evidence only
         if: always()
@@ -101,6 +123,13 @@ jobs:
             acquisition-park-hyeyoung-2018/nld-detail.html
             acquisition-park-hyeyoung-2018/nld-metadata-response.json
             acquisition-park-hyeyoung-2018/nld-report.json
+            acquisition-park-hyeyoung-2018/nanet-search.html
+            acquisition-park-hyeyoung-2018/nanet-occurrence-contexts.json
+            acquisition-park-hyeyoung-2018/nanet-detail.html
+            acquisition-park-hyeyoung-2018/nanet-inner.js
+            acquisition-park-hyeyoung-2018/nanet-viewer-bootstrap.html
+            acquisition-park-hyeyoung-2018/docviewer-bootstrap.html
+            acquisition-park-hyeyoung-2018/nanet-report.json
             acquisition-park-hyeyoung-2018/park-hyeyoung-2018.pdf
           if-no-files-found: warn
           retention-days: 1
