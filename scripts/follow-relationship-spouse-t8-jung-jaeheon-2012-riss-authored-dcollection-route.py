@@ -78,6 +78,17 @@ def interesting(u:str)->bool:
     return EXPECTED_ITEM in u or any(x in low for x in ['.pdf','download','viewer','view','file','fulltext','origin','orgper','orgview','dclo'])
 
 
+def same_exact_item_https_redirect(source:str, location:str|None)->str|None:
+    if not location:return None
+    target=urljoin(source,location)
+    s=urlparse(source); t=urlparse(target)
+    if s.hostname != t.hostname:return None
+    if t.scheme != 'https':return None
+    if EXPECTED_ITEM not in target:return None
+    if t.path != s.path:return None
+    return target
+
+
 dispatch=DISPATCH_HTML.read_text(encoding='utf-8')
 report=json.loads(REPORT.read_text(encoding='utf-8'))
 assert TITLE_SIGNAL in dispatch,'exact thesis title signal absent from RISS popup'
@@ -91,7 +102,7 @@ iframe_url=urljoin('https://www.riss.kr/search/download/FullTextDownload.do',htm
 
 ctx=ssl.create_default_context()
 opener=build_opener(HTTPSHandler(context=ctx),HTTPCookieProcessor(CookieJar()),NoRedirect())
-out={'rissAuthoredDcollectionUrl':dcollection_url,'rissAuthoredIframeUrl':iframe_url,'rissIframe':None,'dcollectionEntry':None,'followedLiteralPages':[],'directPdfAcquired':False,'pdf':None,'contentDownloadExecuted':True,'guessedOpaqueIdentifierCount':0,'loginBypass':False,'institutionAuthBypass':False,'paywallBypass':False,'drmRequestExecuted':False,'decryptionActionExecuted':False,'disposition':'ROUTE_REVIEW_PENDING'}
+out={'rissAuthoredDcollectionUrl':dcollection_url,'rissAuthoredIframeUrl':iframe_url,'rissIframe':None,'dcollectionEntry':None,'dcollectionHttpsRedirect':None,'followedLiteralPages':[],'directPdfAcquired':False,'pdf':None,'contentDownloadExecuted':True,'guessedOpaqueIdentifierCount':0,'loginBypass':False,'institutionAuthBypass':False,'paywallBypass':False,'drmRequestExecuted':False,'decryptionActionExecuted':False,'disposition':'ROUTE_REVIEW_PENDING'}
 
 # Inspect exact RISS-authored iframe without following redirects.
 im,ib=fetch(opener,iframe_url,report['rissDispatcher']['request']['requestedUrl'])
@@ -105,6 +116,13 @@ if im['pdfMagic']:
 if not out['directPdfAcquired']:
     dm,db=fetch(opener,dcollection_url,report['rissDispatcher']['request']['requestedUrl'])
     out['dcollectionEntry']=dm
+    # dCollection currently canonicalizes its RISS-authored HTTP item to HTTPS. Follow only this
+    # same-host, same-path, same-item redirect once; do not enable generic redirect following.
+    redirected=same_exact_item_https_redirect(dcollection_url,dm.get('location')) if dm.get('status') in {301,302,303,307,308} else None
+    if redirected:
+        rm,rb=fetch(opener,redirected,dcollection_url)
+        out['dcollectionHttpsRedirect']={'from':dcollection_url,'to':redirected,'response':rm}
+        dm,db=rm,rb
     if dm['pdfMagic'] or 'application/pdf' in dm['contentType'].lower():
         (ROOT/'jung-jaeheon-2012.pdf').write_bytes(db); out['directPdfAcquired']=True; out['pdf']={**dm,'source':'RISS-authored dCollection item'}
     else:
@@ -116,6 +134,12 @@ if not out['directPdfAcquired']:
         for i,u in enumerate(candidates[:20],start=1):
             try:
                 cm,cb=fetch(opener,u,entry_base)
+                # Permit the same narrowly-scoped HTTP->HTTPS canonicalization for literal dCollection pages.
+                rr=same_exact_item_https_redirect(u,cm.get('location')) if cm.get('status') in {301,302,303,307,308} else None
+                if rr:
+                    cm2,cb2=fetch(opener,rr,u)
+                    out['followedLiteralPages'].append({**cm,'sourceUrl':u,'canonicalHttps':rr})
+                    cm,cb=cm2,cb2
                 rec={**cm,'sourceUrl':u}
                 out['followedLiteralPages'].append(rec)
                 if cm['pdfMagic'] or 'application/pdf' in cm['contentType'].lower():
@@ -138,7 +162,7 @@ if not out['directPdfAcquired']:
                 if out['directPdfAcquired']:break
             except Exception as exc:
                 out['followedLiteralPages'].append({'sourceUrl':u,'error':f'{type(exc).__name__}: {exc}'})
-        if not entry_identity and not out['directPdfAcquired']:
+        if not entry_identity and not out['directPdfAcquired'] and out['disposition']=='ROUTE_REVIEW_PENDING':
             out['disposition']='DCOLLECTION_ITEM_FETCHED_WITHOUT_IDENTITY_BODY_SIGNAL_STOP'
 
 if out['directPdfAcquired']:
