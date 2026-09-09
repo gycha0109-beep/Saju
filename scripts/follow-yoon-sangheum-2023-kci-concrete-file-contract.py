@@ -39,11 +39,22 @@ def main():
     ids=[]
     for m in re.finditer(r"fncDown\(\s*['\"](KCI_FI\d+)['\"]\s*\)",detail,re.I):
         if m.group(1) not in ids:ids.append(m.group(1))
-    assert len(ids)==1,f'exact current KCI detail must expose one concrete file ID, observed={ids}'
     prefix=report.get('siteAuthoredDownloadServicePrefix')
-    assert prefix and 'ciSereArtiOrteServHistIFrame.kci?' in prefix,'site-authored KCI download-service contract missing'
-    concrete=urljoin(DETAIL_URL,prefix+ids[0])
+    assert prefix and 'ciSereArtiOrteServHistIFrame.kci?' in prefix,'site-authored KCI download-service function contract missing'
 
+    if not ids:
+        report['concreteSiteAuthoredOrteFileId']=None
+        report['kciConcreteFileDisposition']='NO_CONCRETE_ORTE_FILE_ID_EXPOSED_BY_CURRENT_DETAIL'
+        report['concreteDownloadAttempts']=[]
+        report['contentDownloadExecuted']=False
+        report['fallbackOrteFileIdsTried']=[]
+        report['guessedOpaqueIdentifierCount']=0
+        (ROOT/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+        print('KCI current detail exposes no concrete fncDown file ID; no KCI content request synthesized.')
+        return
+
+    assert len(ids)==1,f'multiple concrete KCI file IDs unexpectedly exposed: {ids}'
+    concrete=urljoin(DETAIL_URL,prefix+ids[0])
     opener=build_opener(HTTPSHandler(context=ssl.create_default_context()),HTTPCookieProcessor(CookieJar()))
     attempts=[]; selected=None
     meta,body=fetch(opener,concrete,DETAIL_URL); attempts.append(meta)
@@ -68,6 +79,7 @@ def main():
                 attempts.append({'requestedUrl':u,'error':f'{type(exc).__name__}: {exc}'})
 
     report['concreteSiteAuthoredOrteFileId']=ids[0]
+    report['kciConcreteFileDisposition']='CONCRETE_ORTE_FILE_ID_EXPOSED_AND_FOLLOWED'
     report['concreteFileIdSource']='current KCI detail onclick fncDown literal'
     report['siteAuthoredConcreteDownloadServiceUrl']=concrete
     report['concreteDownloadAttempts']=attempts
