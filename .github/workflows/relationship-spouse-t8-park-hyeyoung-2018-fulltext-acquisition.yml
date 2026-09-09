@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-park-hyeyoung-2018-public-routes.py'
+      - 'scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nld-public-metadata.py'
       - '.github/workflows/relationship-spouse-t8-park-hyeyoung-2018-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -21,16 +22,20 @@ jobs:
           python-version: '3.12'
       - name: Probe exact public RISS and directly exposed institutional routes
         run: python scripts/acquire-relationship-spouse-t8-park-hyeyoung-2018-public-routes.py
+      - name: Inspect exact NLD target metadata and anonymous access boundary
+        run: python scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nld-public-metadata.py
       - name: Print bounded evidence
         if: always()
-        run: test -f acquisition-park-hyeyoung-2018/summary.txt && cat acquisition-park-hyeyoung-2018/summary.txt || true
+        run: |
+          test -f acquisition-park-hyeyoung-2018/summary.txt && cat acquisition-park-hyeyoung-2018/summary.txt || true
+          test -f acquisition-park-hyeyoung-2018/nld-report.json && cat acquisition-park-hyeyoung-2018/nld-report.json || true
       - name: Enforce exact identity and no-bypass boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          p=Path('acquisition-park-hyeyoung-2018/report.json')
-          j=json.loads(p.read_text())
+          j=json.loads(Path('acquisition-park-hyeyoung-2018/report.json').read_text())
+          n=json.loads(Path('acquisition-park-hyeyoung-2018/nld-report.json').read_text())
           assert j['candidate']['author']=='박혜영'
           assert j['candidate']['title']=='명리학 통변의 다양성 모색에 관한 연구 : 육친론을 중심으로'
           assert j['candidate']['riss']=='T14752312'
@@ -42,7 +47,18 @@ jobs:
           assert j['drmRequestExecuted'] is False
           assert j['decryptionActionExecuted'] is False
           assert j['crossSourceSemanticStitching'] is False
-          print('Park Hyeyoung exact identity and bounded acquisition contract verified')
+          assert n['metadataContract']['observed'] is True
+          assert n['anonymousSession']['requiresLogin'] is True
+          assert n['anonymousSession']['returnsFalseBeforeAuthorityCheck'] is True
+          assert n['contentActionExecuted'] is False
+          assert n['accessAuthorityRequestExecuted'] is False
+          assert n['guessedOpaqueIdentifierCount']==0
+          assert n['loginBypass'] is False
+          assert n['institutionAuthBypass'] is False
+          assert n['paywallBypass'] is False
+          assert n['drmRequestExecuted'] is False
+          assert n['decryptionActionExecuted'] is False
+          print('Park Hyeyoung exact RISS/NLD identity and bounded acquisition contract verified')
           PY
       - name: Upload bounded evidence only
         if: always()
@@ -57,6 +73,9 @@ jobs:
             acquisition-park-hyeyoung-2018/riss-original-check.txt
             acquisition-park-hyeyoung-2018/digital-knowledge.html
             acquisition-park-hyeyoung-2018/institutional-*.html
+            acquisition-park-hyeyoung-2018/nld-detail.html
+            acquisition-park-hyeyoung-2018/nld-metadata-response.json
+            acquisition-park-hyeyoung-2018/nld-report.json
             acquisition-park-hyeyoung-2018/park-hyeyoung-2018.pdf
           if-no-files-found: warn
           retention-days: 1
