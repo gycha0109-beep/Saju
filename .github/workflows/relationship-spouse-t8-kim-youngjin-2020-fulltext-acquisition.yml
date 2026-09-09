@@ -15,57 +15,116 @@ permissions:
 jobs:
   acquire-public-fulltext:
     runs-on: ubuntu-latest
-    timeout-minutes: 14
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Probe exact current public RISS and NANET routes without guessed ids
-        run: python scripts/acquire-relationship-spouse-t8-kim-youngjin-2020-public-routes-v2.py
-      - name: Inspect exact RISS fulltext dispatcher source without content request
-        run: python scripts/inspect-riss-fulltext-dispatch-kim-youngjin-2020.py
-      - name: Print bounded evidence
-        if: always()
-        run: test -f acquisition-kim-youngjin-2020/summary.txt && cat acquisition-kim-youngjin-2020/summary.txt || true
-      - name: Enforce identity and no-bypass boundary
+      - name: Verify acquisition is superseded by permanent Kim Youngjin direct-body evidence
+        run: |
+          mkdir -p acquisition-kim-youngjin-2020
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          kim_path = Path('docs/research/relationship-spouse-t8-kim-youngjin-direct-body-boundary-evidence.md')
+          ledger_path = Path('docs/research/relationship-spouse-t8-lee-youngeun-independent-normative-provenance-adequacy-review.md')
+          kim = kim_path.read_text(encoding='utf-8')
+          ledger = ledger_path.read_text(encoding='utf-8')
+
+          expected_pdf = '88d82fab599bea08d5778fdd488d8d614af9d26071768a64a9bce63a6433e526'
+          assert 'direct institutional PDF inspected = true' in kim
+          assert 'PDF screenshot reviewed             = true' in kim
+          assert 'role-neutral spouse selector found  = false' in kim
+          assert expected_pdf in kim
+          assert 'male chart spouse   -> Direct Wealth / 正財' in kim
+          assert 'female chart spouse -> Direct Officer / 正官' in kim
+          assert 'operational role-neutral spouse selector             = NO' in kim
+          assert 'INDEPENDENT_NORMATIVE_PROVENANCE            = CLOSED' in ledger
+          assert 'EXPLICIT_ROLE_NEUTRAL_NATAL_MAPPING         = OPEN' in ledger
+          assert 'authorityGapsClosed = 2/5' in ledger
+          assert 'Production = HOLD' in ledger
+
+          report = {
+            'candidate': {
+              'author': '김영진',
+              'year': 2020,
+              'title': '사주명리학의 宮과 星에 관한 연구',
+              'riss': 'T15521643',
+            },
+            'disposition': 'SUPERSEDED_BY_MERGED_PERMANENT_DIRECT_BODY_EVIDENCE_PR_344',
+            'permanentEvidence': {
+              'path': str(kim_path),
+              'documentSha256': hashlib.sha256(kim.encode()).hexdigest(),
+              'pdfSha256': expected_pdf,
+              'fullLengthPdfPreviouslyAcquired': True,
+              'pdfPages': 94,
+              'directBodyReviewed': True,
+              'roleNeutralSpouseSelectorFound': False,
+              'nativeSexConditionedSelector': True,
+              'mapping': {
+                'maleChartSpouse': 'Direct Wealth / 正財',
+                'femaleChartSpouse': 'Direct Officer / 正官',
+              },
+            },
+            'currentLedger': {
+              'qualifyingPrimaryWitness': 'CLOSED',
+              'independentNormativeProvenance': 'CLOSED',
+              'explicitRoleNeutralNatalMapping': 'OPEN',
+              'currentGovernedSemanticCorrespondence': 'OPEN',
+              'relationshipT6Input': 'OPEN',
+              'authorityGapsClosed': '2/5',
+              'authorityAdmissionReady': False,
+              'production': 'HOLD',
+            },
+            'thisRun': {
+              'networkAcquisitionExecuted': False,
+              'contentDownloadExecuted': False,
+              'guessedOpaqueIdentifierCount': 0,
+              'loginBypass': False,
+              'institutionAuthBypass': False,
+              'paywallBypass': False,
+              'drmOrDecryptionAction': False,
+              'crossSourceSemanticStitching': False,
+            },
+          }
+          out = Path('acquisition-kim-youngjin-2020/report.json')
+          out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          Path('acquisition-kim-youngjin-2020/summary.txt').write_text(
+              json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(report, ensure_ascii=False, indent=2))
+          PY
+      - name: Enforce supersession and no-bypass boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           j=json.loads(Path('acquisition-kim-youngjin-2020/report.json').read_text())
-          d=json.loads(Path('acquisition-kim-youngjin-2020/riss-fulltext-dispatch-evidence.json').read_text())
-          assert j['candidate']['author']=='김영진'
-          assert j['candidate']['title']=='사주명리학의 宮과 星에 관한 연구'
-          assert 'T15521643' in j['riss']['rissIds']
-          assert j['riss']['titleFieldContractObserved'] is True
-          assert j['guessedOpaqueIdentifierCount']==0
-          assert j['loginBypass'] is False
-          assert j['drmRequestExecuted'] is False
-          assert j['contentAssetActionExecuted'] is False
-          assert j['fullLengthPdfAcquired'] is False
-          assert d['guessedOpaqueIdentifierCount']==0
-          assert d['contentDownloadExecuted'] is False
-          print('Kim Youngjin exact public acquisition boundary verified')
+          assert j['disposition']=='SUPERSEDED_BY_MERGED_PERMANENT_DIRECT_BODY_EVIDENCE_PR_344'
+          assert j['permanentEvidence']['directBodyReviewed'] is True
+          assert j['permanentEvidence']['roleNeutralSpouseSelectorFound'] is False
+          assert j['currentLedger']['authorityGapsClosed']=='2/5'
+          assert j['currentLedger']['explicitRoleNeutralNatalMapping']=='OPEN'
+          assert j['thisRun']['networkAcquisitionExecuted'] is False
+          assert j['thisRun']['contentDownloadExecuted'] is False
+          assert j['thisRun']['guessedOpaqueIdentifierCount']==0
+          assert j['thisRun']['loginBypass'] is False
+          assert j['thisRun']['institutionAuthBypass'] is False
+          assert j['thisRun']['paywallBypass'] is False
+          assert j['thisRun']['drmOrDecryptionAction'] is False
+          assert j['thisRun']['crossSourceSemanticStitching'] is False
+          print('Kim Youngjin duplicate acquisition correctly superseded by merged permanent evidence')
           PY
-      - name: Upload bounded evidence only
-        if: always()
+      - name: Upload bounded supersession evidence
         uses: actions/upload-artifact@v4
         with:
           name: kim-youngjin-2020-bounded-fulltext-evidence
           path: |
             acquisition-kim-youngjin-2020/report.json
             acquisition-kim-youngjin-2020/summary.txt
-            acquisition-kim-youngjin-2020/riss-detail.html
-            acquisition-kim-youngjin-2020/riss-title-search.html
-            acquisition-kim-youngjin-2020/riss-fulltext-dispatch-evidence.json
-            acquisition-kim-youngjin-2020/nanet-search-1.html
-            acquisition-kim-youngjin-2020/nanet-search-2.html
-            acquisition-kim-youngjin-2020/nanet-search-3.html
-            acquisition-kim-youngjin-2020/nanet-occurrence-contexts.json
-            acquisition-kim-youngjin-2020/nanet-detail.html
-            acquisition-kim-youngjin-2020/nanet-viewer-bootstrap.html
-            acquisition-kim-youngjin-2020/docviewer-bootstrap.html
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 1
           compression-level: 0
