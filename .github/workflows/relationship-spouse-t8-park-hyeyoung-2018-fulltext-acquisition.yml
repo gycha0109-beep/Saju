@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-park-hyeyoung-2018-public-routes.py'
       - 'scripts/inspect-riss-fulltext-dispatch-park-hyeyoung-2018.py'
+      - 'scripts/inspect-riss-national-library-bridge-park-hyeyoung-2018.py'
       - 'scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nld-public-metadata-v2.py'
       - 'scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nanet-public-route.py'
       - '.github/workflows/relationship-spouse-t8-park-hyeyoung-2018-fulltext-acquisition.yml'
@@ -16,7 +17,7 @@ permissions:
 jobs:
   acquire-public-fulltext:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -26,6 +27,8 @@ jobs:
         run: python scripts/acquire-relationship-spouse-t8-park-hyeyoung-2018-public-routes.py
       - name: Inspect RISS fulltext dispatcher source without content request
         run: python scripts/inspect-riss-fulltext-dispatch-park-hyeyoung-2018.py
+      - name: Inspect exact RISS national-library local-bib routing context
+        run: python scripts/inspect-riss-national-library-bridge-park-hyeyoung-2018.py
       - name: Inspect exact NLD target metadata and anonymous access boundary
         run: python scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nld-public-metadata-v2.py
       - name: Inspect exact NANET public search-row and viewer boundary
@@ -35,6 +38,7 @@ jobs:
         run: |
           test -f acquisition-park-hyeyoung-2018/summary.txt && cat acquisition-park-hyeyoung-2018/summary.txt || true
           test -f acquisition-park-hyeyoung-2018/riss-fulltext-dispatch-evidence.json && cat acquisition-park-hyeyoung-2018/riss-fulltext-dispatch-evidence.json || true
+          test -f acquisition-park-hyeyoung-2018/riss-national-library-bridge-evidence.json && cat acquisition-park-hyeyoung-2018/riss-national-library-bridge-evidence.json || true
           test -f acquisition-park-hyeyoung-2018/nld-report.json && cat acquisition-park-hyeyoung-2018/nld-report.json || true
           test -f acquisition-park-hyeyoung-2018/nanet-report.json && cat acquisition-park-hyeyoung-2018/nanet-report.json || true
       - name: Enforce exact identity and no-bypass boundary
@@ -44,6 +48,7 @@ jobs:
           from pathlib import Path
           j=json.loads(Path('acquisition-park-hyeyoung-2018/report.json').read_text())
           d=json.loads(Path('acquisition-park-hyeyoung-2018/riss-fulltext-dispatch-evidence.json').read_text())
+          b=json.loads(Path('acquisition-park-hyeyoung-2018/riss-national-library-bridge-evidence.json').read_text())
           n=json.loads(Path('acquisition-park-hyeyoung-2018/nld-report.json').read_text())
           a=json.loads(Path('acquisition-park-hyeyoung-2018/nanet-report.json').read_text())
           assert j['candidate']['author']=='박혜영'
@@ -66,6 +71,16 @@ jobs:
           assert j['crossSourceSemanticStitching'] is False
           assert d['contentDownloadExecuted'] is False
           assert d['guessedOpaqueIdentifierCount']==0
+          assert b['expectedBibno']=='KDM201900838'
+          assert b['fieldName']=='nationalLibraryLocalBibno'
+          assert b['exactHiddenFieldObserved'] is True
+          assert b['bridgeRequestExecuted'] is False
+          assert b['contentDownloadExecuted'] is False
+          assert b['guessedOpaqueIdentifierCount']==0
+          assert b['disposition'] in {
+              'RISS_NATIONAL_LIBRARY_LOCAL_BIBNO_PRESENT_NO_ROUTING_CONTRACT',
+              'RISS_NATIONAL_LIBRARY_LOCAL_BIBNO_ROUTE_CONTEXT_OBSERVED_REVIEW_REQUIRED'
+          }
           assert n['metadataContract']['observed'] is True
           assert n['metadata']['title']=='명리학 통변의 다양성 모색에 관한 연구'
           assert n['metadata']['subTitle']=='육친론을 중심으로'
@@ -95,16 +110,25 @@ jobs:
           assert a['loginBypass'] is False
           assert a['institutionAuthBypass'] is False
           assert a['paywallBypass'] is False
-          # A NANET control is admissible only if it is uniquely authored by the exact public search row.
+          # NANET transport failure must never be collapsed into "no control".
           if a['exactControl'] is not None:
               assert a['controlResolutionDisposition']=='EXACT_PUBLIC_SEARCH_ROW_CONTROL_RESOLVED'
+              assert a['search']['fetchSucceeded'] is True
               assert a['search']['exactRowControls']==[a['exactControl']]
               assert a['detail']['titleObserved'] is True
               assert a['detail']['authorObserved'] is True
               assert a['detail']['controlObserved'] is True
+          elif a['controlResolutionDisposition']=='PUBLIC_SEARCH_FETCH_UNAVAILABLE':
+              assert a['search']['fetchSucceeded'] is False
+              assert a['search']['meta']['error']
+              assert a['search']['exactRowControls']==[]
+              assert a['detail']=={}
+              assert a['viewer']=={}
+              assert a['docviewer']=={}
           else:
               assert a['controlResolutionDisposition']=='NO_UNIQUE_EXACT_PUBLIC_SEARCH_ROW_CONTROL'
-          print('Park Hyeyoung exact RISS/NLD/NANET bounded acquisition contract verified')
+              assert a['search']['fetchSucceeded'] is True
+          print('Park Hyeyoung exact RISS bridge/NLD/NANET bounded acquisition contract verified')
           PY
       - name: Upload bounded evidence only
         if: always()
@@ -118,6 +142,7 @@ jobs:
             acquisition-park-hyeyoung-2018/riss-title-search.html
             acquisition-park-hyeyoung-2018/riss-original-check.txt
             acquisition-park-hyeyoung-2018/riss-fulltext-dispatch-evidence.json
+            acquisition-park-hyeyoung-2018/riss-national-library-bridge-evidence.json
             acquisition-park-hyeyoung-2018/digital-knowledge.html
             acquisition-park-hyeyoung-2018/institutional-*.html
             acquisition-park-hyeyoung-2018/nld-detail.html
