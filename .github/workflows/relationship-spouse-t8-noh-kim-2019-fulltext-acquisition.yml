@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-noh-kim-2019-kci-public-fulltext.py'
+      - 'scripts/follow-noh-kim-2019-kci-concrete-file-contract.py'
       - '.github/workflows/relationship-spouse-t8-noh-kim-2019-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -23,6 +24,8 @@ jobs:
         run: python -m pip install --disable-pip-version-check pypdf==6.0.0
       - name: Inspect current site-authored KCI contracts
         run: python scripts/acquire-relationship-spouse-t8-noh-kim-2019-kci-public-fulltext.py
+      - name: Follow exact current KCI concrete file contract
+        run: python scripts/follow-noh-kim-2019-kci-concrete-file-contract.py
       - name: Inspect any exact site-authored PDF object
         run: |
           python - <<'PY'
@@ -78,6 +81,7 @@ jobs:
           assert j['candidate']['year']==2019
           assert j['candidate']['kci']=='ART002459146'
           assert j['candidate']['doi']=='10.22143/HSS21.10.2.15'
+          assert j['concreteSiteAuthoredOrteFileId']=='KCI_FI002459146'
           assert j['fallbackOrteFileIdsTried']==[]
           assert j['guessedOpaqueIdentifierCount']==0
           assert j['loginBypass'] is False
@@ -85,7 +89,7 @@ jobs:
           assert j['paywallBypass'] is False
           assert j['drmRequestExecuted'] is False
           assert j['decryptionActionExecuted'] is False
-          print('Noh/Kim 2019 exact identity + no-bypass boundary verified')
+          print('Noh/Kim 2019 exact identity + concrete KCI file contract + no-bypass boundary verified')
           PY
       - name: Upload bounded evidence
         if: always()
@@ -98,6 +102,7 @@ jobs:
             acquisition-noh-kim-2019/pdf-metadata.json
             acquisition-noh-kim-2019/detail.html
             acquisition-noh-kim-2019/original-view.html
+            acquisition-noh-kim-2019/download-service.html
             acquisition-noh-kim-2019/candidate.pdf
             acquisition-noh-kim-2019/candidate.txt
             acquisition-noh-kim-2019/script-*.txt
