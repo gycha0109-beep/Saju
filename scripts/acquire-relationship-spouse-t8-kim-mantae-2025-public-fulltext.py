@@ -19,9 +19,6 @@ EXPECTED_AUTHOR = '김만태'
 ALLOWED_HOSTS = {'namestory.kr', 'www.namestory.kr'}
 UA = 'Mozilla/5.0 (compatible; SajuResearchEvidence/2.0; Kim-Mantae-2025-public-fulltext)'
 
-class SameSiteRedirect:
-    pass
-
 
 def host_ok(url: str) -> bool:
     return (urlparse(url).hostname or '').lower() in ALLOWED_HOSTS
@@ -62,31 +59,59 @@ def fetch(opener, url: str, referer: str | None = None, max_bytes: int = 10_000_
         }, body
 
 
-def anchor_candidates(text: str):
+def compact(text: str, limit: int = 5000) -> str:
+    return re.sub(r'\s+', ' ', html.unescape(text)).strip()[:limit]
+
+
+def discovery_contexts(text: str) -> list[dict]:
     rows = []
-    for m in re.finditer(r'<a\b([^>]*)>(.*?)</a>', text, re.I | re.S):
-        attrs, inner = m.group(1), m.group(2)
-        hm = re.search(r'\bhref\s*=\s*(["\'])(.*?)\1', attrs, re.I | re.S)
-        if not hm:
-            continue
-        href = html.unescape(hm.group(2).strip())
-        label = re.sub(r'<[^>]+>', ' ', inner)
-        label = re.sub(r'\s+', ' ', html.unescape(label)).strip()
-        absolute = urljoin(PAGE_URL, href)
-        if not host_ok(absolute):
-            continue
-        low = (href + ' ' + label).lower()
-        if '.pdf' in low or 'download.php' in low or 'file_download' in low:
-            rows.append({'href': href, 'url': absolute, 'label': label})
-    # exact-page authored links only; dedupe while preserving order
+    needles = ['.pdf', 'download.php', 'file_download', '다운로드', '첨부', 'wr_id=418']
+    for needle in needles:
+        for m in re.finditer(re.escape(needle), text, re.I):
+            lo = max(0, m.start() - 1200)
+            hi = min(len(text), m.end() + 2200)
+            rows.append({'needle': needle, 'offset': m.start(), 'snippet': compact(text[lo:hi])})
+            if sum(1 for r in rows if r['needle'] == needle) >= 12:
+                break
+    return rows
+
+
+def literal_url_candidates(text: str) -> list[dict]:
+    rows = []
+    # Only exact literal attributes/URLs authored by the fetched page are considered.
+    patterns = [
+        r'\bhref\s*=\s*(["\'])(.*?)\1',
+        r'\b(?:src|data-url|data-href)\s*=\s*(["\'])(.*?)\1',
+    ]
+    for pattern in patterns:
+        for m in re.finditer(pattern, text, re.I | re.S):
+            raw = html.unescape(m.group(2).strip())
+            low = raw.lower()
+            if not any(k in low for k in ('.pdf', 'download.php', 'file_download', 'download')):
+                continue
+            if raw.lower().startswith('javascript:'):
+                rows.append({'raw': raw, 'url': None, 'kind': 'javascript-literal'})
+                continue
+            absolute = urljoin(PAGE_URL, raw)
+            rows.append({
+                'raw': raw,
+                'url': absolute if host_ok(absolute) else None,
+                'kind': 'same-site-literal' if host_ok(absolute) else 'rejected-non-author-site',
+            })
+    # Also capture exact same-site absolute URL literals containing download/pdf tokens.
+    for m in re.finditer(r'https?://[^\s\'"<>]+', text, re.I):
+        raw = html.unescape(m.group(0).rstrip('),.;'))
+        if any(k in raw.lower() for k in ('.pdf', 'download.php', 'file_download')):
+            rows.append({'raw': raw, 'url': raw if host_ok(raw) else None, 'kind': 'absolute-literal'})
     seen = set()
     out = []
     for row in rows:
-        if row['url'] in seen:
+        key = (row['raw'], row.get('url'))
+        if key in seen:
             continue
-        seen.add(row['url'])
+        seen.add(key)
         out.append(row)
-    return out
+    return out[:100]
 
 
 def main():
@@ -97,15 +122,22 @@ def main():
 
     title_observed = EXPECTED_TITLE in page_text
     author_observed = EXPECTED_AUTHOR in page_text
-    assert title_observed and author_observed, 'exact author/title not observed on source page'
+    contexts = discovery_contexts(page_text)
+    literals = literal_url_candidates(page_text)
+    (OUT / 'attachment-discovery.json').write_text(
+        json.dumps({'contexts': contexts, 'literalCandidates': literals}, ensure_ascii=False, indent=2),
+        encoding='utf-8',
+    )
 
-    candidates = anchor_candidates(page_text)
     attempts = []
     selected = None
     selected_body = None
-    for row in candidates:
+    for row in literals:
+        url = row.get('url')
+        if not url or row['kind'] == 'rejected-non-author-site':
+            continue
         try:
-            meta, body = fetch(opener, row['url'], referer=PAGE_URL, max_bytes=12_000_000)
+            meta, body = fetch(opener, url, referer=PAGE_URL, max_bytes=12_000_000)
             is_pdf = body.startswith(b'%PDF-')
             attempts.append({**row, **meta, 'pdfMagic': is_pdf})
             if is_pdf:
@@ -114,11 +146,6 @@ def main():
                 break
         except Exception as exc:
             attempts.append({**row, 'error': f'{type(exc).__name__}: {exc}', 'pdfMagic': False})
-
-    assert selected is not None and selected_body is not None, 'no exact page-authored public PDF attachment resolved'
-    pdf_path = OUT / 'kim-mantae-2025.pdf'
-    pdf_path.write_bytes(selected_body)
-    (OUT / 'pdf-url.txt').write_text(selected['finalUrl'] + '\n', encoding='utf-8')
 
     report = {
         'candidate': {
@@ -131,10 +158,10 @@ def main():
         'sourcePage': page_meta,
         'titleObserved': title_observed,
         'authorObserved': author_observed,
-        'pageAuthoredAttachmentCandidates': candidates,
+        'pageAuthoredLiteralCandidates': literals,
         'attempts': attempts,
         'selectedPdf': selected,
-        'fullLengthPdfAcquired': True,
+        'fullLengthPdfAcquired': selected is not None,
         'guessedOpaqueIdentifierCount': 0,
         'loginBypass': False,
         'institutionAuthBypass': False,
@@ -144,6 +171,12 @@ def main():
     }
     (OUT / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps(report, ensure_ascii=False, indent=2))
+
+    assert title_observed and author_observed, 'exact author/title not observed on source page'
+    assert selected is not None and selected_body is not None, 'no exact page-authored public PDF attachment resolved'
+    pdf_path = OUT / 'kim-mantae-2025.pdf'
+    pdf_path.write_bytes(selected_body)
+    (OUT / 'pdf-url.txt').write_text(selected['finalUrl'] + '\n', encoding='utf-8')
 
 
 if __name__ == '__main__':
