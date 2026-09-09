@@ -6,6 +6,7 @@ on:
       - 'scripts/discover-relationship-spouse-t8-shin-jaeeok-2024-public-identity.py'
       - 'scripts/inspect-relationship-spouse-t8-shin-jaeeok-2024-riss-public-routes.py'
       - 'scripts/follow-relationship-spouse-t8-shin-jaeeok-2024-riss-fulltext-dispatcher.py'
+      - 'scripts/follow-relationship-spouse-t8-shin-jaeeok-2024-riss-authored-dcollection-route.py'
       - '.github/workflows/relationship-spouse-t8-shin-jaeeok-2024-fulltext-discovery.yml'
   workflow_dispatch:
 
@@ -15,46 +16,86 @@ permissions:
 jobs:
   discover-current-public-identity:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install bounded PDF reader
+        run: python -m pip install --disable-pip-version-check pypdf==6.0.0
       - name: Discover exact current public RISS identity
         run: python scripts/discover-relationship-spouse-t8-shin-jaeeok-2024-public-identity.py
       - name: Inspect exact RISS route contracts
         run: python scripts/inspect-relationship-spouse-t8-shin-jaeeok-2024-riss-public-routes.py
       - name: Follow exact site-authored RISS fulltext dispatcher once
         run: python scripts/follow-relationship-spouse-t8-shin-jaeeok-2024-riss-fulltext-dispatcher.py
+      - name: Follow exact RISS-authored Gongju dCollection route
+        run: python scripts/follow-relationship-spouse-t8-shin-jaeeok-2024-riss-authored-dcollection-route.py
+      - name: Inspect exact public PDF when acquired
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from pypdf import PdfReader
+          root=Path('acquisition-shin-jaeeok-2024')
+          p=root/'public-route-report.json'
+          j=json.loads(p.read_text(encoding='utf-8'))
+          pdf=root/'shin-jaeeok-2024.pdf'
+          meta={'observed':pdf.exists(),'pages':0,'encrypted':None,'textChars':0,'sha256':None,'bytes':0}
+          if pdf.exists():
+              import hashlib
+              raw=pdf.read_bytes(); reader=PdfReader(str(pdf)); chunks=[]
+              for i,page in enumerate(reader.pages,1):
+                  chunks.append(f'\n===== PHYSICAL_PDF_PAGE_{i} =====\n{page.extract_text() or ""}')
+              text=''.join(chunks); (root/'shin-jaeeok-2024.txt').write_text(text,encoding='utf-8')
+              meta.update({'pages':len(reader.pages),'encrypted':bool(reader.is_encrypted),'textChars':len(text),'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)})
+              j['fullLengthPdfAcquired']=len(reader.pages)>=60 and len(text)>10000
+              j['semanticDisposition']='DIRECT_BODY_READY_FOR_REVIEW' if j['fullLengthPdfAcquired'] else 'PARTIAL_OR_INVALID_PDF_NO_BODY_DECISION'
+          else:
+              j['fullLengthPdfAcquired']=False
+              j['semanticDisposition']='PUBLIC_ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION'
+          j['pdfInspection']=meta; p.write_text(json.dumps(j,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(meta,ensure_ascii=False,indent=2)); print(j['semanticDisposition'])
+          PY
+      - name: Print spouse and role semantic contexts when body exists
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('acquisition-shin-jaeeok-2024/shin-jaeeok-2024.txt')
+          if not p.exists():
+              print('No complete body acquired; semantic review intentionally skipped.'); raise SystemExit(0)
+          t=p.read_text(encoding='utf-8')
+          for term in ['배우자','부부','결혼','혼인','남편','아내','처','재성','관성','정재','정관','일지','배우자궁','육친궁','육친성','변화','오행','역할']:
+              print(f'\n### TERM {term}')
+              shown=0
+              for m in re.finditer(re.escape(term),t,re.I):
+                  print(re.sub(r'\s+',' ',t[max(0,m.start()-500):min(len(t),m.end()+1400)]))
+                  shown+=1
+                  if shown>=15:break
+              print('COUNT_SHOWN',shown)
+          PY
       - name: Enforce exact identity and no-bypass boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          p=Path('acquisition-shin-jaeeok-2024/public-route-report.json')
-          j=json.loads(p.read_text(encoding='utf-8'))
-          assert j['candidate']['author']=='신재억'
-          assert j['candidate']['year']==2024
+          j=json.loads(Path('acquisition-shin-jaeeok-2024/public-route-report.json').read_text(encoding='utf-8'))
+          assert j['candidate']['author']=='신재억' and j['candidate']['year']==2024
           assert j['exactRow']['control']=='49df877f9b4f8a08ffe0bdc3ef48d419'
           assert j['exactRow']['rissId']=='T16939654'
           assert j['exactRow']['uci']=='I804:44004-000000033581'
           assert j['guessedOpaqueIdentifierCount']==0
-          assert j['loginBypass'] is False
-          assert j['institutionAuthBypass'] is False
-          assert j['paywallBypass'] is False
-          assert j['drmRequestExecuted'] is False
-          assert j['decryptionActionExecuted'] is False
-          assert j['crossSourceSemanticStitching'] is False
-          d=j['rissDispatcher']
-          assert d['dispatcherImplementationObserved'] is True
-          assert d['guessedOpaqueIdentifierCount']==0
-          assert d['loginBypass'] is False
-          assert d['institutionAuthBypass'] is False
-          assert d['paywallBypass'] is False
-          assert d['drmRequestExecuted'] is False
-          assert d['decryptionActionExecuted'] is False
-          print('Shin Jae-eok 2024 exact RISS route/no-bypass boundary verified')
+          assert j['loginBypass'] is False and j['institutionAuthBypass'] is False and j['paywallBypass'] is False
+          assert j['drmRequestExecuted'] is False and j['decryptionActionExecuted'] is False and j['crossSourceSemanticStitching'] is False
+          d=j['rissDispatcher']; assert d['dispatcherImplementationObserved'] is True
+          assert 'https://kongju.dcollection.net/common/orgView/200001003260' in d['externalUrls']
+          dc=j['dcollectionRoute']; assert dc['rissAuthoredDcollectionUrl']=='https://kongju.dcollection.net/common/orgView/200001003260'
+          assert dc['guessedOpaqueIdentifierCount']==0
+          assert dc['loginBypass'] is False and dc['institutionAuthBypass'] is False and dc['paywallBypass'] is False
+          assert dc['drmRequestExecuted'] is False and dc['decryptionActionExecuted'] is False
+          print('Shin Jae-eok 2024 exact RISS+dCollection/no-bypass route verified')
           PY
       - name: Upload bounded route evidence
         if: always()
@@ -66,10 +107,14 @@ jobs:
             acquisition-shin-jaeeok-2024/public-route-report.json
             acquisition-shin-jaeeok-2024/riss-dispatcher-report.json
             acquisition-shin-jaeeok-2024/riss-fulltext-dispatch-response.html
+            acquisition-shin-jaeeok-2024/dcollection-route-report.json
+            acquisition-shin-jaeeok-2024/dcollection-entry.html
+            acquisition-shin-jaeeok-2024/dcollection-follow-*.html
             acquisition-shin-jaeeok-2024/riss-title-search-*.html
             acquisition-shin-jaeeok-2024/riss-detail.html
             acquisition-shin-jaeeok-2024/riss-script-*.txt
             acquisition-shin-jaeeok-2024/shin-jaeeok-2024.pdf
+            acquisition-shin-jaeeok-2024/shin-jaeeok-2024.txt
           if-no-files-found: warn
           retention-days: 1
           compression-level: 0
