@@ -77,10 +77,9 @@ jobs:
           assert b['bridgeRequestExecuted'] is False
           assert b['contentDownloadExecuted'] is False
           assert b['guessedOpaqueIdentifierCount']==0
-          assert b['disposition'] in {
-              'RISS_NATIONAL_LIBRARY_LOCAL_BIBNO_PRESENT_NO_ROUTING_CONTRACT',
-              'RISS_NATIONAL_LIBRARY_LOCAL_BIBNO_ROUTE_CONTEXT_OBSERVED_REVIEW_REQUIRED'
-          }
+          assert b['actionableRouteWindowCount']==0
+          assert b['scriptOccurrenceCount']==0
+          assert b['disposition']=='RISS_NATIONAL_LIBRARY_LOCAL_BIBNO_PRESENT_NO_SITE_AUTHORED_ROUTING_CONTRACT'
           assert n['metadataContract']['observed'] is True
           assert n['metadata']['title']=='명리학 통변의 다양성 모색에 관한 연구'
           assert n['metadata']['subTitle']=='육친론을 중심으로'
