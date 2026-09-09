@@ -6,6 +6,7 @@ on:
       - 'scripts/discover-relationship-spouse-t8-jung-jaeheon-2012-public-identity.py'
       - 'scripts/inspect-relationship-spouse-t8-jung-jaeheon-2012-riss-public-routes.py'
       - 'scripts/follow-relationship-spouse-t8-jung-jaeheon-2012-riss-fulltext-dispatcher.py'
+      - 'scripts/follow-relationship-spouse-t8-jung-jaeheon-2012-riss-authored-dcollection-route.py'
       - '.github/workflows/relationship-spouse-t8-jung-jaeheon-2012-fulltext-discovery.yml'
   workflow_dispatch:
 
@@ -15,7 +16,7 @@ permissions:
 jobs:
   discover-current-public-identity:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,6 +30,8 @@ jobs:
         run: python scripts/inspect-relationship-spouse-t8-jung-jaeheon-2012-riss-public-routes.py
       - name: Follow exact current site-authored RISS fulltext dispatcher once
         run: python scripts/follow-relationship-spouse-t8-jung-jaeheon-2012-riss-fulltext-dispatcher.py
+      - name: Follow exact RISS-authored dCollection route
+        run: python scripts/follow-relationship-spouse-t8-jung-jaeheon-2012-riss-authored-dcollection-route.py
       - name: Inspect any exact direct public PDF object
         run: |
           python - <<'PY'
@@ -52,11 +55,8 @@ jobs:
           else:
               report['pdfInspection']=meta
               report['fullLengthPdfAcquired']=False
-              if report.get('rissDispatcher',{}).get('disposition') in {
-                  'RISS_DISPATCHER_LOGIN_OR_AUTH_BOUNDARY_STOP_NO_BYPASS',
-                  'RISS_DISPATCHER_DRM_OR_DEDICATED_VIEWER_SIGNAL_STOP_NO_REPLAY',
-                  'RISS_DISPATCHER_NO_DIRECT_BODY_ROUTE_OBSERVED',
-              }:
+              dc=report.get('dcollectionRoute',{})
+              if dc and dc.get('directPdfAcquired') is False:
                   report['semanticDisposition']='PUBLIC_ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION'
           (root/'public-route-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
           print(json.dumps(meta,ensure_ascii=False,indent=2))
@@ -106,7 +106,16 @@ jobs:
           assert d['paywallBypass'] is False
           assert d['drmRequestExecuted'] is False
           assert d['decryptionActionExecuted'] is False
-          print('Jung Jaeheon 2012 exact row identity + exact RISS dispatcher/no-bypass boundary verified')
+          dc=j['dcollectionRoute']
+          assert dc['rissAuthoredDcollectionUrl'].endswith('sItemId=000001272735')
+          assert 'Downloading.do?' in dc['rissAuthoredIframeUrl']
+          assert dc['guessedOpaqueIdentifierCount']==0
+          assert dc['loginBypass'] is False
+          assert dc['institutionAuthBypass'] is False
+          assert dc['paywallBypass'] is False
+          assert dc['drmRequestExecuted'] is False
+          assert dc['decryptionActionExecuted'] is False
+          print('Jung Jaeheon 2012 exact RISS dispatcher + RISS-authored dCollection/no-bypass route verified')
           PY
       - name: Upload bounded discovery/acquisition evidence
         if: always()
@@ -118,6 +127,10 @@ jobs:
             acquisition-jung-jaeheon-2012/public-route-report.json
             acquisition-jung-jaeheon-2012/riss-dispatcher-report.json
             acquisition-jung-jaeheon-2012/riss-fulltext-dispatch-response.html
+            acquisition-jung-jaeheon-2012/dcollection-route-report.json
+            acquisition-jung-jaeheon-2012/riss-downloading-response.html
+            acquisition-jung-jaeheon-2012/dcollection-entry.html
+            acquisition-jung-jaeheon-2012/dcollection-follow-*.html
             acquisition-jung-jaeheon-2012/riss-row-contexts.json
             acquisition-jung-jaeheon-2012/riss-title-search-*.html
             acquisition-jung-jaeheon-2012/riss-exact-title-current.html
