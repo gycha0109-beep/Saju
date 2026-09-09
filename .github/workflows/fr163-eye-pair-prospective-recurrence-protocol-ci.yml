@@ -1,0 +1,44 @@
+name: FR163 Eye Pair Prospective Recurrence Protocol CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr163-eye-pair-prospective-recurrence-protocol.md'
+      - 'packages/face-reading/src/eye-pair-prospective-recurrence-protocol-fr163.ts'
+      - 'packages/face-reading/src/eye-pair-prospective-recurrence-protocol-fr163.test.ts'
+      - 'packages/face-reading/src/eye-pair-capture-condition-operational-boundary-fr162.ts'
+      - '.github/workflows/fr163-eye-pair-prospective-recurrence-protocol-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'research/face-reading/fr163-eye-pair-prospective-recurrence-protocol.md'
+      - 'packages/face-reading/src/eye-pair-prospective-recurrence-protocol-fr163.ts'
+      - 'packages/face-reading/src/eye-pair-prospective-recurrence-protocol-fr163.test.ts'
+      - 'packages/face-reading/src/eye-pair-capture-condition-operational-boundary-fr162.ts'
+      - '.github/workflows/fr163-eye-pair-prospective-recurrence-protocol-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr163-eye-pair-prospective-recurrence-protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR163 prospective recurrence authority boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-prospective-recurrence-protocol-fr163.test.ts
+      - name: Re-verify FR162 capture-condition predecessor
+        run: npx vitest run packages/face-reading/src/eye-pair-capture-condition-operational-boundary-fr162.test.ts
+      - name: Re-verify FR161 governed real-capture predecessor
+        run: npx vitest run packages/face-reading/src/eye-pair-prospective-ephemeral-real-capture-series-fr161.test.ts
