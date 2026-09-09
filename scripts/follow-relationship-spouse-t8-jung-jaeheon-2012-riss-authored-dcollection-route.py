@@ -9,7 +9,7 @@ import ssl
 from http.cookiejar import CookieJar
 from pathlib import Path
 from urllib.error import HTTPError
-from urllib.parse import urljoin, urlparse
+from urllib.parse import parse_qs, urljoin, urlparse
 from urllib.request import HTTPCookieProcessor, HTTPRedirectHandler, HTTPSHandler, Request, build_opener
 
 ROOT=Path('acquisition-jung-jaeheon-2012')
@@ -106,6 +106,20 @@ def fetch_exact_item_redirect_chain(opener,start_url:str,referer:str,max_hops:in
     return meta,body,chain
 
 
+def exact_viewer_authored_pdf(viewer_url:str)->str|None:
+    """Return only the exact public_resource PDF path authored in the dCollection viewer URL."""
+    p=urlparse(viewer_url)
+    if (p.hostname or '').lower() != 'dongbang.dcollection.net':return None
+    if not p.path.endswith('/pdf/web/viewer.html'):return None
+    values=parse_qs(p.query,keep_blank_values=False).get('file',[])
+    if len(values)!=1:return None
+    raw=values[0]
+    if not raw.startswith('/public_resource/pdf/'):return None
+    if EXPECTED_ITEM not in raw or not raw.lower().endswith('.pdf'):return None
+    target=urljoin(f'{p.scheme}://{p.netloc}',raw)
+    return target if allowed(target) else None
+
+
 dispatch=DISPATCH_HTML.read_text(encoding='utf-8')
 report=json.loads(REPORT.read_text(encoding='utf-8'))
 assert TITLE_SIGNAL in dispatch,'exact thesis title signal absent from RISS popup'
@@ -119,7 +133,7 @@ iframe_url=urljoin('https://www.riss.kr/search/download/FullTextDownload.do',htm
 
 ctx=ssl.create_default_context()
 opener=build_opener(HTTPSHandler(context=ctx),HTTPCookieProcessor(CookieJar()),NoRedirect())
-out={'rissAuthoredDcollectionUrl':dcollection_url,'rissAuthoredIframeUrl':iframe_url,'rissIframe':None,'dcollectionEntry':None,'dcollectionRedirectChain':[],'followedLiteralPages':[],'directPdfAcquired':False,'pdf':None,'contentDownloadExecuted':True,'guessedOpaqueIdentifierCount':0,'loginBypass':False,'institutionAuthBypass':False,'paywallBypass':False,'drmRequestExecuted':False,'decryptionActionExecuted':False,'disposition':'ROUTE_REVIEW_PENDING'}
+out={'rissAuthoredDcollectionUrl':dcollection_url,'rissAuthoredIframeUrl':iframe_url,'rissIframe':None,'dcollectionEntry':None,'dcollectionRedirectChain':[],'viewerAuthoredPdfUrl':None,'followedLiteralPages':[],'directPdfAcquired':False,'pdf':None,'contentDownloadExecuted':True,'guessedOpaqueIdentifierCount':0,'loginBypass':False,'institutionAuthBypass':False,'paywallBypass':False,'drmRequestExecuted':False,'decryptionActionExecuted':False,'disposition':'ROUTE_REVIEW_PENDING'}
 
 # Inspect exact RISS-authored iframe without following redirects.
 im,ib=fetch(opener,iframe_url,report['rissDispatcher']['request']['requestedUrl'])
@@ -130,7 +144,7 @@ if im['pdfMagic']:
     (ROOT/'jung-jaeheon-2012.pdf').write_bytes(ib); out['directPdfAcquired']=True; out['pdf']={**im,'source':'RISS Downloading.do'}
 
 # Follow only the exact dCollection item URL authored by RISS and its same-host exact-item
-# canonical redirects (currently HTTP -> HTTPS -> /common/orgView/000001272735), max two hops.
+# canonical redirects (HTTP -> HTTPS -> /common/orgView/000001272735), max two hops.
 if not out['directPdfAcquired']:
     dm,db,chain=fetch_exact_item_redirect_chain(opener,dcollection_url,report['rissDispatcher']['request']['requestedUrl'],max_hops=2)
     out['dcollectionRedirectChain']=chain
@@ -152,6 +166,21 @@ if not out['directPdfAcquired']:
                 out['followedLiteralPages'].append(rec)
                 if cm['pdfMagic'] or 'application/pdf' in cm['contentType'].lower():
                     (ROOT/'jung-jaeheon-2012.pdf').write_bytes(cb); out['directPdfAcquired']=True; out['pdf']={**cm,'source':u}; break
+
+                # dCollection orgView authors a PDF.js viewer URL whose `file=` query value is
+                # the exact public_resource PDF object. Follow only that page-authored value;
+                # do not replay generic viewer APIs or synthesize opaque identifiers.
+                viewer_pdf=exact_viewer_authored_pdf(u)
+                if viewer_pdf:
+                    out['viewerAuthoredPdfUrl']=viewer_pdf
+                    pm,pb=fetch(opener,viewer_pdf,u)
+                    out['followedLiteralPages'].append({**pm,'sourceUrl':viewer_pdf,'authoredByViewerUrl':u})
+                    if pm['pdfMagic'] or 'application/pdf' in pm['contentType'].lower():
+                        (ROOT/'jung-jaeheon-2012.pdf').write_bytes(pb)
+                        out['directPdfAcquired']=True
+                        out['pdf']={**pm,'source':viewer_pdf,'authoredByViewerUrl':u}
+                        break
+
                 ct=decode(cb,cm['contentType'])
                 (ROOT/f'dcollection-follow-{i:02d}.html').write_text(ct,encoding='utf-8')
                 lower=ct.lower()
