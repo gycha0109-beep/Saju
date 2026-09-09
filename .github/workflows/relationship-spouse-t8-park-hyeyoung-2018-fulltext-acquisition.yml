@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-park-hyeyoung-2018-public-routes.py'
-      - 'scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nld-public-metadata.py'
+      - 'scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nld-public-metadata-v2.py'
       - '.github/workflows/relationship-spouse-t8-park-hyeyoung-2018-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -23,7 +23,7 @@ jobs:
       - name: Probe exact public RISS and directly exposed institutional routes
         run: python scripts/acquire-relationship-spouse-t8-park-hyeyoung-2018-public-routes.py
       - name: Inspect exact NLD target metadata and anonymous access boundary
-        run: python scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nld-public-metadata.py
+        run: python scripts/inspect-relationship-spouse-t8-park-hyeyoung-2018-nld-public-metadata-v2.py
       - name: Print bounded evidence
         if: always()
         run: |
@@ -40,6 +40,13 @@ jobs:
           assert j['candidate']['title']=='명리학 통변의 다양성 모색에 관한 연구 : 육친론을 중심으로'
           assert j['candidate']['riss']=='T14752312'
           assert j['riss']['control']=='90b96055ae1e4289ffe0bdc3ef48d419'
+          assert j['riss']['fulltextTuples'] == [{
+              'control_no':'90b96055ae1e4289ffe0bdc3ef48d419',
+              'p_mat_type':'be54d9b8bc7cdb09',
+              'p_submat_type':'f1a8c7a1de0e08b8',
+              'fulltext_kind':'a8cb3aaead67ab5b'
+          }]
+          assert j['riss']['originalCheck']['body']=='{"flag":"T"}'
           assert j['guessedOpaqueIdentifierCount']==0
           assert j['loginBypass'] is False
           assert j['institutionAuthBypass'] is False
@@ -48,17 +55,27 @@ jobs:
           assert j['decryptionActionExecuted'] is False
           assert j['crossSourceSemanticStitching'] is False
           assert n['metadataContract']['observed'] is True
+          assert n['metadata']['title']=='명리학 통변의 다양성 모색에 관한 연구'
+          assert n['metadata']['subTitle']=='육친론을 중심으로'
+          assert n['metadata']['author']=='박혜영'
+          assert n['metadata']['uniCno']=='162263'
+          assert n['metadata']['ucCno']=='CAT-000168477'
+          assert n['metadata']['dataTypeCode']=='DT'
+          assert n['metadata']['targetDivCode']=='SP'
           assert n['anonymousSession']['requiresLogin'] is True
           assert n['anonymousSession']['returnsFalseBeforeAuthorityCheck'] is True
+          assert n['targetActions']['executed'] is False
           assert n['contentActionExecuted'] is False
           assert n['accessAuthorityRequestExecuted'] is False
+          assert n['allowedExternalFulltextUrls']==[]
+          assert n['disposition']=='NLD_ANONYMOUS_LOGIN_GATE_NO_ALTERNATE_PUBLIC_FULLTEXT_URL'
           assert n['guessedOpaqueIdentifierCount']==0
           assert n['loginBypass'] is False
           assert n['institutionAuthBypass'] is False
           assert n['paywallBypass'] is False
           assert n['drmRequestExecuted'] is False
           assert n['decryptionActionExecuted'] is False
-          print('Park Hyeyoung exact RISS/NLD identity and bounded acquisition contract verified')
+          print('Park Hyeyoung exact RISS/NLD access boundary verified')
           PY
       - name: Upload bounded evidence only
         if: always()
