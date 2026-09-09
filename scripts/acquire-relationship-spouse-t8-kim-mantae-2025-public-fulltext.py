@@ -16,6 +16,7 @@ OUT.mkdir(exist_ok=True)
 PAGE_URL = 'https://www.namestory.kr/bbs/board.php?bo_table=sub3_1&wr_id=418'
 EXPECTED_TITLE = '배우자 인연의 중시로서 궁합(宮合)에 관한 고찰'
 EXPECTED_AUTHOR = '김만태'
+EXPECTED_ATTACHMENT_NAME = '배우자 인연의 중시로서 궁합(宮合)에 관한 고찰(김만태).pdf'
 ALLOWED_HOSTS = {'namestory.kr', 'www.namestory.kr'}
 UA = 'Mozilla/5.0 (compatible; SajuResearchEvidence/2.0; Kim-Mantae-2025-public-fulltext)'
 
@@ -67,51 +68,61 @@ def discovery_contexts(text: str) -> list[dict]:
     rows = []
     needles = ['.pdf', 'download.php', 'file_download', '다운로드', '첨부', 'wr_id=418']
     for needle in needles:
+        shown = 0
         for m in re.finditer(re.escape(needle), text, re.I):
             lo = max(0, m.start() - 1200)
             hi = min(len(text), m.end() + 2200)
             rows.append({'needle': needle, 'offset': m.start(), 'snippet': compact(text[lo:hi])})
-            if sum(1 for r in rows if r['needle'] == needle) >= 12:
+            shown += 1
+            if shown >= 12:
                 break
     return rows
 
 
-def literal_url_candidates(text: str) -> list[dict]:
+def page_authored_download_candidates(text: str) -> tuple[list[dict], dict]:
+    # The page defines file_download(link,file) as document.location.href=link.
+    # We accept only literal first arguments from calls authored by this exact page.
+    function_match = re.search(
+        r'function\s+file_download\s*\(\s*link\s*,\s*file\s*\)\s*\{(?P<body>.*?)\}',
+        text,
+        re.I | re.S,
+    )
+    function_body = function_match.group('body') if function_match else ''
+    function_contract = {
+        'definitionObserved': bool(function_match),
+        'documentLocationHrefAssignedFromLink': bool(
+            re.search(r'document\s*\.\s*location\s*\.\s*href\s*=\s*link\b', function_body, re.I)
+        ),
+        'snippet': compact(function_match.group(0), 1200) if function_match else '',
+    }
+
     rows = []
-    # Only exact literal attributes/URLs authored by the fetched page are considered.
-    patterns = [
-        r'\bhref\s*=\s*(["\'])(.*?)\1',
-        r'\b(?:src|data-url|data-href)\s*=\s*(["\'])(.*?)\1',
-    ]
-    for pattern in patterns:
-        for m in re.finditer(pattern, text, re.I | re.S):
-            raw = html.unescape(m.group(2).strip())
-            low = raw.lower()
-            if not any(k in low for k in ('.pdf', 'download.php', 'file_download', 'download')):
-                continue
-            if raw.lower().startswith('javascript:'):
-                rows.append({'raw': raw, 'url': None, 'kind': 'javascript-literal'})
-                continue
-            absolute = urljoin(PAGE_URL, raw)
-            rows.append({
-                'raw': raw,
-                'url': absolute if host_ok(absolute) else None,
-                'kind': 'same-site-literal' if host_ok(absolute) else 'rejected-non-author-site',
-            })
-    # Also capture exact same-site absolute URL literals containing download/pdf tokens.
-    for m in re.finditer(r'https?://[^\s\'"<>]+', text, re.I):
-        raw = html.unescape(m.group(0).rstrip('),.;'))
+    call_re = re.compile(
+        r'file_download\s*\(\s*(["\'])(?P<link>.*?)\1\s*,\s*(["\'])(?P<file>.*?)\3\s*\)',
+        re.I | re.S,
+    )
+    for m in call_re.finditer(text):
+        link = html.unescape(m.group('link').strip())
+        filename = html.unescape(m.group('file').strip())
+        absolute = urljoin(PAGE_URL, link)
+        rows.append({
+            'rawLink': link,
+            'fileName': filename,
+            'url': absolute if host_ok(absolute) else None,
+            'sameAuthorSite': host_ok(absolute),
+            'exactAttachmentName': filename == EXPECTED_ATTACHMENT_NAME,
+            'pageOffset': m.start(),
+        })
+
+    # Exact literal hrefs are retained for audit, but they are not executed unless
+    # they are the resolved first argument of the verified page-authored function.
+    literals = []
+    for m in re.finditer(r'\bhref\s*=\s*(["\'])(.*?)\1', text, re.I | re.S):
+        raw = html.unescape(m.group(2).strip())
         if any(k in raw.lower() for k in ('.pdf', 'download.php', 'file_download')):
-            rows.append({'raw': raw, 'url': raw if host_ok(raw) else None, 'kind': 'absolute-literal'})
-    seen = set()
-    out = []
-    for row in rows:
-        key = (row['raw'], row.get('url'))
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(row)
-    return out[:100]
+            literals.append(raw)
+    function_contract['hrefLiterals'] = literals[:50]
+    return rows, function_contract
 
 
 def main():
@@ -123,29 +134,38 @@ def main():
     title_observed = EXPECTED_TITLE in page_text
     author_observed = EXPECTED_AUTHOR in page_text
     contexts = discovery_contexts(page_text)
-    literals = literal_url_candidates(page_text)
+    candidates, function_contract = page_authored_download_candidates(page_text)
     (OUT / 'attachment-discovery.json').write_text(
-        json.dumps({'contexts': contexts, 'literalCandidates': literals}, ensure_ascii=False, indent=2),
+        json.dumps({
+            'contexts': contexts,
+            'fileDownloadFunctionContract': function_contract,
+            'pageAuthoredFileDownloadCalls': candidates,
+        }, ensure_ascii=False, indent=2),
         encoding='utf-8',
     )
 
     attempts = []
     selected = None
     selected_body = None
-    for row in literals:
-        url = row.get('url')
-        if not url or row['kind'] == 'rejected-non-author-site':
-            continue
-        try:
-            meta, body = fetch(opener, url, referer=PAGE_URL, max_bytes=12_000_000)
-            is_pdf = body.startswith(b'%PDF-')
-            attempts.append({**row, **meta, 'pdfMagic': is_pdf})
-            if is_pdf:
-                selected = {**row, **meta, 'pdfMagic': True}
-                selected_body = body
-                break
-        except Exception as exc:
-            attempts.append({**row, 'error': f'{type(exc).__name__}: {exc}', 'pdfMagic': False})
+    function_safe = (
+        function_contract['definitionObserved']
+        and function_contract['documentLocationHrefAssignedFromLink']
+    )
+    if function_safe:
+        for row in candidates:
+            url = row.get('url')
+            if not url or not row['sameAuthorSite'] or not row['exactAttachmentName']:
+                continue
+            try:
+                meta, body = fetch(opener, url, referer=PAGE_URL, max_bytes=12_000_000)
+                is_pdf = body.startswith(b'%PDF-')
+                attempts.append({**row, **meta, 'pdfMagic': is_pdf})
+                if is_pdf:
+                    selected = {**row, **meta, 'pdfMagic': True}
+                    selected_body = body
+                    break
+            except Exception as exc:
+                attempts.append({**row, 'error': f'{type(exc).__name__}: {exc}', 'pdfMagic': False})
 
     report = {
         'candidate': {
@@ -158,7 +178,8 @@ def main():
         'sourcePage': page_meta,
         'titleObserved': title_observed,
         'authorObserved': author_observed,
-        'pageAuthoredLiteralCandidates': literals,
+        'fileDownloadFunctionContract': function_contract,
+        'pageAuthoredFileDownloadCalls': candidates,
         'attempts': attempts,
         'selectedPdf': selected,
         'fullLengthPdfAcquired': selected is not None,
@@ -173,7 +194,8 @@ def main():
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
     assert title_observed and author_observed, 'exact author/title not observed on source page'
-    assert selected is not None and selected_body is not None, 'no exact page-authored public PDF attachment resolved'
+    assert function_safe, 'page-authored file_download routing contract not established'
+    assert selected is not None and selected_body is not None, 'exact page-authored public PDF attachment did not resolve'
     pdf_path = OUT / 'kim-mantae-2025.pdf'
     pdf_path.write_bytes(selected_body)
     (OUT / 'pdf-url.txt').write_text(selected['finalUrl'] + '\n', encoding='utf-8')
