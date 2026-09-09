@@ -1,0 +1,113 @@
+name: Relationship Spouse T8 Kim Mantae 2025 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-kim-mantae-2025-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-kim-mantae-2025-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install bounded PDF text reader
+        run: python -m pip install --disable-pip-version-check pypdf==6.0.0
+      - name: Acquire exact author-hosted public PDF
+        run: python scripts/acquire-relationship-spouse-t8-kim-mantae-2025-public-fulltext.py
+      - name: Extract complete text and PDF metadata
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          from pypdf import PdfReader
+
+          root=Path('acquisition-kim-mantae-2025')
+          pdf=root/'kim-mantae-2025.pdf'
+          reader=PdfReader(str(pdf))
+          texts=[]
+          page_stats=[]
+          for i,page in enumerate(reader.pages, start=1):
+              text=page.extract_text() or ''
+              texts.append(f'\n===== PHYSICAL_PDF_PAGE_{i} =====\n{text}')
+              page_stats.append({'page': i, 'chars': len(text)})
+          full=''.join(texts)
+          (root/'kim-mantae-2025.txt').write_text(full, encoding='utf-8')
+          meta={
+              'pages': len(reader.pages),
+              'encrypted': bool(reader.is_encrypted),
+              'bytes': pdf.stat().st_size,
+              'sha256': hashlib.sha256(pdf.read_bytes()).hexdigest(),
+              'textChars': len(full),
+              'pageStats': page_stats,
+          }
+          (root/'pdf-metadata.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(meta,ensure_ascii=False,indent=2))
+          assert 20 <= meta['pages'] <= 40
+          assert meta['textChars'] > 10000
+          PY
+      - name: Print target semantic contexts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          t=Path('acquisition-kim-mantae-2025/kim-mantae-2025.txt').read_text(encoding='utf-8')
+          terms=['배우자궁','배우자 궁','배우자성','배우자 성','남명','여명','남녀','일지','재성','관성','동성','성별','궁합법','중화','配偶','財星','官星']
+          for term in terms:
+              print(f'\n### TERM {term}')
+              count=0
+              for m in re.finditer(re.escape(term),t,re.I):
+                  print(re.sub(r'\s+',' ',t[max(0,m.start()-350):min(len(t),m.end()+650)]))
+                  count+=1
+                  if count>=12: break
+              print('COUNT_SHOWN',count)
+          PY
+      - name: Enforce acquisition boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-kim-mantae-2025/report.json').read_text())
+          m=json.loads(Path('acquisition-kim-mantae-2025/pdf-metadata.json').read_text())
+          assert j['candidate']['author']=='김만태'
+          assert j['candidate']['year']==2025
+          assert j['candidate']['title']=='배우자 인연의 중시로서 궁합(宮合)에 관한 고찰'
+          assert j['candidate']['doi']=='10.58936/gcr.2025.9.5.3.143'
+          assert j['candidate']['kci']=='ART003250308'
+          assert j['titleObserved'] is True
+          assert j['authorObserved'] is True
+          assert j['selectedPdf']['pdfMagic'] is True
+          assert j['fullLengthPdfAcquired'] is True
+          assert j['guessedOpaqueIdentifierCount']==0
+          assert j['loginBypass'] is False
+          assert j['institutionAuthBypass'] is False
+          assert j['paywallBypass'] is False
+          assert j['drmRequestExecuted'] is False
+          assert j['decryptionActionExecuted'] is False
+          assert m['encrypted'] is False
+          assert 20 <= m['pages'] <= 40
+          assert m['textChars'] > 10000
+          print('Kim Mantae 2025 exact public fulltext acquisition verified')
+          PY
+      - name: Upload bounded evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kim-mantae-2025-public-fulltext-evidence
+          path: |
+            acquisition-kim-mantae-2025/report.json
+            acquisition-kim-mantae-2025/pdf-url.txt
+            acquisition-kim-mantae-2025/pdf-metadata.json
+            acquisition-kim-mantae-2025/kim-mantae-2025.txt
+            acquisition-kim-mantae-2025/kim-mantae-2025.pdf
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
