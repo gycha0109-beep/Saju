@@ -74,6 +74,28 @@ def fetch(opener, url: str, referer: str):
     return last, ''
 
 
+def route_signals(raw: str) -> list[str]:
+    patterns = {
+        'function-definition': r'function\s+[A-Za-z0-9_$]+\s*\([^)]*\)\s*\{',
+        'fetch-call': r'\bfetch\s*\(',
+        'jquery-ajax': r'\$\s*\.\s*ajax\s*\(',
+        'jquery-get': r'\$\s*\.\s*get\s*\(',
+        'jquery-post': r'\$\s*\.\s*post\s*\(',
+        'window-open': r'\b(?:window\s*\.\s*)?open\s*\(',
+        'location-assignment': r'\b(?:window\s*\.\s*)?location(?:\s*\.\s*href)?\s*=',
+        'form-submit': r'\.\s*submit\s*\(',
+    }
+    return [name for name, pattern in patterns.items() if re.search(pattern, raw, re.I)]
+
+
+def relevant_endpoint(endpoint: str) -> bool:
+    low = endpoint.lower()
+    return (
+        EXPECTED_BIBNO.lower() in low
+        or any(token in low for token in ('library', 'localbib', 'copy', 'loan', 'delivery', 'nld', 'nanet'))
+    )
+
+
 def occurrences(source: str, text: str) -> list[dict]:
     out = []
     for needle in (TOKEN, EXPECTED_BIBNO):
@@ -98,12 +120,16 @@ def occurrences(source: str, text: str) -> list[dict]:
                 name = fm.group(1)
                 if name not in functions:
                     functions.append(name)
+            signals = route_signals(raw)
+            relevant_endpoints = [value for value in endpoints if relevant_endpoint(value)]
             out.append({
                 'source': source,
                 'needle': needle,
                 'offset': match.start(),
                 'functionsInWindow': functions[:20],
+                'routeSignalsInWindow': signals,
                 'endpointLiteralsInWindow': endpoints[:50],
+                'relevantRouteEndpointsInWindow': relevant_endpoints[:30],
                 'snippet': compact(raw),
             })
     return out
@@ -147,34 +173,45 @@ def main():
             if body:
                 all_occurrences += occurrences(url, body)
 
-    # A routing contract is only recognized when the exact field/BIBNO appears
-    # in a code window that also contains an explicit endpoint literal. Mere
-    # presence of unrelated URLs elsewhere in the page does not qualify.
-    route_windows = [
+    # Generic URLs in the same HTML region as a hidden field are not a routing
+    # contract. Require both an executable routing signal and a route endpoint
+    # that is semantically tied to a library/copy/local-bib destination (or the
+    # exact site-authored bib number itself). This prevents DetailView/Search
+    # links elsewhere in the same large form from creating a false bridge.
+    context_windows = [
         o for o in all_occurrences
         if o['endpointLiteralsInWindow']
         and (o['needle'].lower() == TOKEN.lower() or o['needle'] == EXPECTED_BIBNO)
     ]
+    actionable_route_windows = [
+        o for o in context_windows
+        if o['routeSignalsInWindow'] and o['relevantRouteEndpointsInWindow']
+    ]
+    script_occurrences = [
+        o for o in all_occurrences
+        if o['source'].startswith('https://')
+    ]
 
-    # Keep the classification conservative. A route window is evidence for
-    # further inspection, not permission to execute it automatically.
     report = {
         'purpose': 'Trace the exact RISS-authored nationalLibraryLocalBibno without synthesizing any library/content request.',
         'expectedBibno': EXPECTED_BIBNO,
         'fieldName': TOKEN,
         'exactHiddenFieldObserved': exact_hidden,
         'occurrenceCount': len(all_occurrences),
-        'routeWindowCount': len(route_windows),
-        'routeWindows': route_windows[:40],
+        'scriptOccurrenceCount': len(script_occurrences),
+        'contextWindowCount': len(context_windows),
+        'actionableRouteWindowCount': len(actionable_route_windows),
+        'routeWindows': actionable_route_windows[:40],
+        'contextWindows': context_windows[:40],
         'occurrences': all_occurrences[:80],
         'scriptFetches': fetched,
         'bridgeRequestExecuted': False,
         'contentDownloadExecuted': False,
         'guessedOpaqueIdentifierCount': 0,
         'disposition': (
-            'RISS_NATIONAL_LIBRARY_LOCAL_BIBNO_ROUTE_CONTEXT_OBSERVED_REVIEW_REQUIRED'
-            if route_windows
-            else 'RISS_NATIONAL_LIBRARY_LOCAL_BIBNO_PRESENT_NO_ROUTING_CONTRACT'
+            'RISS_NATIONAL_LIBRARY_LOCAL_BIBNO_ACTIONABLE_ROUTE_CONTEXT_REVIEW_REQUIRED'
+            if actionable_route_windows
+            else 'RISS_NATIONAL_LIBRARY_LOCAL_BIBNO_PRESENT_NO_SITE_AUTHORED_ROUTING_CONTRACT'
         ),
     }
     (OUT / 'riss-national-library-bridge-evidence.json').write_text(
@@ -184,7 +221,9 @@ def main():
         'expectedBibno': EXPECTED_BIBNO,
         'exactHiddenFieldObserved': exact_hidden,
         'occurrenceCount': len(all_occurrences),
-        'routeWindowCount': len(route_windows),
+        'scriptOccurrenceCount': len(script_occurrences),
+        'contextWindowCount': len(context_windows),
+        'actionableRouteWindowCount': len(actionable_route_windows),
         'disposition': report['disposition'],
         'bridgeRequestExecuted': False,
         'contentDownloadExecuted': False,
