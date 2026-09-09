@@ -10,6 +10,9 @@ from urllib.request import HTTPCookieProcessor, HTTPSHandler, Request, build_ope
 ROOT = Path('acquisition-yoon-sangheum-2023')
 RISS_TARGET = ROOT / 'riss-target.html'
 UA = 'Mozilla/5.0 (compatible; SajuResearchEvidence/1.0; Yoon-2023-RISS-paid-provider-boundary)'
+ARTICLE_LINK_ID = 'A108917392'
+CONTROL_NO = '37b95c18ae24bef64884a65323211ff0'
+DOI = '10.35203/EACT.2023.15.33'
 
 
 def riss_host(url: str) -> bool:
@@ -86,18 +89,27 @@ def main():
         except Exception as exc:
             fetches.append({'sourceUrl': u, 'error': f'{type(exc).__name__}: {exc}'})
 
-    # We intentionally do not invoke ButtonSet.urlDownload or any KoreaScholar content endpoint.
-    # The exact RISS page itself marks the provider as paid; absence of a separately authored free
-    # article/PDF URL means acquisition stops at this public paywall handoff boundary.
-    free_article_urls = []
+    # Do not invoke ButtonSet.urlDownload or any KoreaScholar content endpoint.
+    # Classify only literal href/src URLs. Generic RISS download-center/analytics links are
+    # explicitly separated from article-specific routes so they cannot be misreported as free fulltext.
+    generic_download_like_urls = []
+    article_specific_free_urls = []
+    exact_identifiers = [ARTICLE_LINK_ID.lower(), CONTROL_NO.lower(), DOI.lower()]
     for m in re.finditer(r'''(?:href|src)\s*=\s*(["'])(.*?)\1''', text, re.I | re.S):
         raw = html.unescape(m.group(2).strip())
         low = raw.lower()
-        if ('pdf' in low or 'download' in low or 'fulltext' in low) and 'koreascholar' not in low:
-            u = urljoin(final_url, raw)
-            if riss_host(u) and u not in free_article_urls:
-                free_article_urls.append(u)
+        if not any(k in low for k in ['pdf', 'download', 'fulltext']):
+            continue
+        u = urljoin(final_url, raw)
+        if not riss_host(u):
+            continue
+        if u not in generic_download_like_urls:
+            generic_download_like_urls.append(u)
+        if any(identifier in low for identifier in exact_identifiers) and 'koreascholar' not in low:
+            if u not in article_specific_free_urls:
+                article_specific_free_urls.append(u)
 
+    joined_contexts = '\n'.join(function_contexts)
     out = {
         'exactPaidKoreaScholarProviderObserved': exact_paid_provider,
         'providerHomepage': 'http://db.koreascholar.com',
@@ -105,8 +117,12 @@ def main():
         'sameOriginScriptFetches': fetches,
         'urlDownloadFunctionContextCount': len(function_contexts),
         'urlDownloadFunctionContexts': function_contexts[:12],
-        'separatelyAuthoredFreeRissArticleOrPdfUrls': free_article_urls,
+        'buttonSetUrlDownloadImplementationObserved': 'urlDownload : function' in joined_contexts,
+        'rissOpenFullTextEndpointMentionObservedInStaticJs': '/search/download/openFullText.do?' in joined_contexts,
+        'genericNonArticleDownloadLikeRissUrls': generic_download_like_urls,
+        'articleSpecificSeparatelyAuthoredFreeRissArticleOrPdfUrls': article_specific_free_urls,
         'originalViewInvoked': False,
+        'rissOpenFullTextEndpointInvoked': False,
         'koreaScholarContentRequestExecuted': False,
         'contentDownloadExecuted': False,
         'guessedOpaqueIdentifierCount': 0,
