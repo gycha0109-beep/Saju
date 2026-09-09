@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-kim-youngjin-2020-public-routes.py'
       - 'scripts/acquire-relationship-spouse-t8-kim-youngjin-2020-public-routes-v2.py'
+      - 'scripts/inspect-riss-fulltext-dispatch-kim-youngjin-2020.py'
       - '.github/workflows/relationship-spouse-t8-kim-youngjin-2020-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -14,7 +15,7 @@ permissions:
 jobs:
   acquire-public-fulltext:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 14
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -22,6 +23,8 @@ jobs:
           python-version: '3.12'
       - name: Probe exact current public RISS and NANET routes without guessed ids
         run: python scripts/acquire-relationship-spouse-t8-kim-youngjin-2020-public-routes-v2.py
+      - name: Inspect exact RISS fulltext dispatcher source without content request
+        run: python scripts/inspect-riss-fulltext-dispatch-kim-youngjin-2020.py
       - name: Print bounded evidence
         if: always()
         run: test -f acquisition-kim-youngjin-2020/summary.txt && cat acquisition-kim-youngjin-2020/summary.txt || true
@@ -31,6 +34,7 @@ jobs:
           import json
           from pathlib import Path
           j=json.loads(Path('acquisition-kim-youngjin-2020/report.json').read_text())
+          d=json.loads(Path('acquisition-kim-youngjin-2020/riss-fulltext-dispatch-evidence.json').read_text())
           assert j['candidate']['author']=='김영진'
           assert j['candidate']['title']=='사주명리학의 宮과 星에 관한 연구'
           assert 'T15521643' in j['riss']['rissIds']
@@ -40,6 +44,8 @@ jobs:
           assert j['drmRequestExecuted'] is False
           assert j['contentAssetActionExecuted'] is False
           assert j['fullLengthPdfAcquired'] is False
+          assert d['guessedOpaqueIdentifierCount']==0
+          assert d['contentDownloadExecuted'] is False
           print('Kim Youngjin exact public acquisition boundary verified')
           PY
       - name: Upload bounded evidence only
@@ -52,6 +58,7 @@ jobs:
             acquisition-kim-youngjin-2020/summary.txt
             acquisition-kim-youngjin-2020/riss-detail.html
             acquisition-kim-youngjin-2020/riss-title-search.html
+            acquisition-kim-youngjin-2020/riss-fulltext-dispatch-evidence.json
             acquisition-kim-youngjin-2020/nanet-search-1.html
             acquisition-kim-youngjin-2020/nanet-search-2.html
             acquisition-kim-youngjin-2020/nanet-search-3.html
