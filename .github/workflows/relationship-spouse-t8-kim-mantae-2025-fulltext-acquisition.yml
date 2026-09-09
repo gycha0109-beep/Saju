@@ -103,6 +103,8 @@ jobs:
         with:
           name: kim-mantae-2025-public-fulltext-evidence
           path: |
+            acquisition-kim-mantae-2025/author-page.html
+            acquisition-kim-mantae-2025/attachment-discovery.json
             acquisition-kim-mantae-2025/report.json
             acquisition-kim-mantae-2025/pdf-url.txt
             acquisition-kim-mantae-2025/pdf-metadata.json
