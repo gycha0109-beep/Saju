@@ -6,6 +6,7 @@ on:
       - 'scripts/acquire-relationship-spouse-t8-yoon-sangheum-2023-kci-public-fulltext.py'
       - 'scripts/follow-yoon-sangheum-2023-kci-concrete-file-contract.py'
       - 'scripts/inspect-yoon-sangheum-2023-kci-riss-provider-route.py'
+      - 'scripts/inspect-yoon-sangheum-2023-riss-paid-provider-boundary.py'
       - '.github/workflows/relationship-spouse-t8-yoon-sangheum-2023-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -29,6 +30,8 @@ jobs:
         run: python scripts/follow-yoon-sangheum-2023-kci-concrete-file-contract.py
       - name: Inspect exact KCI-authored RISS provider route
         run: python scripts/inspect-yoon-sangheum-2023-kci-riss-provider-route.py
+      - name: Inspect RISS paid-provider boundary without invoking original view
+        run: python scripts/inspect-yoon-sangheum-2023-riss-paid-provider-boundary.py
       - name: Inspect any exact site-authored PDF object
         run: |
           python - <<'PY'
@@ -47,6 +50,9 @@ jobs:
               meta.update({'pages':len(reader.pages),'encrypted':bool(reader.is_encrypted),'textChars':len(full)})
               report['fullLengthPdfAcquired']=20 <= len(reader.pages) <= 26 and len(full)>8000
               report['semanticDisposition']='DIRECT_BODY_READY_FOR_REVIEW' if report['fullLengthPdfAcquired'] else 'PARTIAL_OR_NO_PDF_NO_BODY_DECISION'
+          else:
+              report['fullLengthPdfAcquired']=False
+              report['semanticDisposition']='ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION'
           (root/'pdf-metadata.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2),encoding='utf-8')
           (root/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
           print(json.dumps(meta,ensure_ascii=False,indent=2)); print('fullLengthPdfAcquired=',report['fullLengthPdfAcquired'])
@@ -84,9 +90,21 @@ jobs:
           assert j['paywallBypass'] is False
           assert j['drmRequestExecuted'] is False
           assert j['decryptionActionExecuted'] is False
+          assert j['rissProvider']['uniqueTargetRissUrl']=='http://www.riss.kr/link?id=A108917392'
+          assert j['rissProvider']['rissTarget']['finalUrl'].endswith('control_no=37b95c18ae24bef64884a65323211ff0')
           assert j['rissProvider']['contentDownloadExecuted'] is False
           assert j['rissProvider']['guessedOpaqueIdentifierCount']==0
-          print('Yoon Sangheum 2023 exact identity + KCI/RISS no-bypass boundary verified')
+          b=j['rissPaidProviderBoundary']
+          assert b['exactPaidKoreaScholarProviderObserved'] is True
+          assert b['disposition']=='RISS_EXPLICIT_PAID_KOREASCHOLAR_PROVIDER_STOP_NO_PAYWALL_BYPASS'
+          assert b['originalViewInvoked'] is False
+          assert b['koreaScholarContentRequestExecuted'] is False
+          assert b['contentDownloadExecuted'] is False
+          assert b['guessedOpaqueIdentifierCount']==0
+          assert b['paywallBypass'] is False
+          assert j['fullLengthPdfAcquired'] is False
+          assert j['semanticDisposition']=='ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION'
+          print('Yoon Sangheum 2023 exact KCI->RISS paid-provider access boundary verified; no semantic body decision')
           PY
       - name: Upload bounded evidence
         if: always()
@@ -102,6 +120,8 @@ jobs:
             acquisition-yoon-sangheum-2023/kci-riss-provider.xml
             acquisition-yoon-sangheum-2023/riss-provider-report.json
             acquisition-yoon-sangheum-2023/riss-target.html
+            acquisition-yoon-sangheum-2023/riss-paid-provider-boundary.json
+            acquisition-yoon-sangheum-2023/riss-script-*.txt
             acquisition-yoon-sangheum-2023/candidate.pdf
             acquisition-yoon-sangheum-2023/candidate.txt
           if-no-files-found: warn
