@@ -1,0 +1,38 @@
+name: FR162 Eye Pair Capture Condition Operational Boundary CI
+
+on:
+  pull_request:
+    paths:
+      - 'research/face-reading/fr162-eye-pair-capture-condition-operational-boundary.md'
+      - 'packages/face-reading/src/eye-pair-capture-condition-operational-boundary-fr162.ts'
+      - 'packages/face-reading/src/eye-pair-capture-condition-operational-boundary-fr162.test.ts'
+      - '.github/workflows/fr162-eye-pair-capture-condition-operational-boundary-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'research/face-reading/fr162-eye-pair-capture-condition-operational-boundary.md'
+      - 'packages/face-reading/src/eye-pair-capture-condition-operational-boundary-fr162.ts'
+      - 'packages/face-reading/src/eye-pair-capture-condition-operational-boundary-fr162.test.ts'
+      - '.github/workflows/fr162-eye-pair-capture-condition-operational-boundary-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr162-eye-pair-capture-condition-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR162 capture-condition operational boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-capture-condition-operational-boundary-fr162.test.ts
+      - name: Re-verify FR161 governed real-capture predecessor
+        run: npx vitest run packages/face-reading/src/eye-pair-prospective-ephemeral-real-capture-series-fr161.test.ts
