@@ -78,15 +78,32 @@ def interesting(u:str)->bool:
     return EXPECTED_ITEM in u or any(x in low for x in ['.pdf','download','viewer','view','file','fulltext','origin','orgper','orgview','dclo'])
 
 
-def same_exact_item_https_redirect(source:str, location:str|None)->str|None:
+def exact_item_https_redirect(source:str,location:str|None)->str|None:
     if not location:return None
     target=urljoin(source,location)
     s=urlparse(source); t=urlparse(target)
     if s.hostname != t.hostname:return None
     if t.scheme != 'https':return None
     if EXPECTED_ITEM not in target:return None
-    if t.path != s.path:return None
+    if not allowed(target):return None
     return target
+
+
+def fetch_exact_item_redirect_chain(opener,start_url:str,referer:str,max_hops:int=2):
+    current=start_url
+    chain=[]
+    meta,body=fetch(opener,current,referer)
+    for _ in range(max_hops):
+        if meta.get('status') not in {301,302,303,307,308}:
+            break
+        target=exact_item_https_redirect(current,meta.get('location'))
+        if not target:
+            break
+        chain.append({'from':current,'status':meta.get('status'),'location':meta.get('location'),'to':target})
+        prev=current
+        current=target
+        meta,body=fetch(opener,current,prev)
+    return meta,body,chain
 
 
 dispatch=DISPATCH_HTML.read_text(encoding='utf-8')
@@ -102,7 +119,7 @@ iframe_url=urljoin('https://www.riss.kr/search/download/FullTextDownload.do',htm
 
 ctx=ssl.create_default_context()
 opener=build_opener(HTTPSHandler(context=ctx),HTTPCookieProcessor(CookieJar()),NoRedirect())
-out={'rissAuthoredDcollectionUrl':dcollection_url,'rissAuthoredIframeUrl':iframe_url,'rissIframe':None,'dcollectionEntry':None,'dcollectionHttpsRedirect':None,'followedLiteralPages':[],'directPdfAcquired':False,'pdf':None,'contentDownloadExecuted':True,'guessedOpaqueIdentifierCount':0,'loginBypass':False,'institutionAuthBypass':False,'paywallBypass':False,'drmRequestExecuted':False,'decryptionActionExecuted':False,'disposition':'ROUTE_REVIEW_PENDING'}
+out={'rissAuthoredDcollectionUrl':dcollection_url,'rissAuthoredIframeUrl':iframe_url,'rissIframe':None,'dcollectionEntry':None,'dcollectionRedirectChain':[],'followedLiteralPages':[],'directPdfAcquired':False,'pdf':None,'contentDownloadExecuted':True,'guessedOpaqueIdentifierCount':0,'loginBypass':False,'institutionAuthBypass':False,'paywallBypass':False,'drmRequestExecuted':False,'decryptionActionExecuted':False,'disposition':'ROUTE_REVIEW_PENDING'}
 
 # Inspect exact RISS-authored iframe without following redirects.
 im,ib=fetch(opener,iframe_url,report['rissDispatcher']['request']['requestedUrl'])
@@ -112,17 +129,12 @@ if ib and not im['pdfMagic']:
 if im['pdfMagic']:
     (ROOT/'jung-jaeheon-2012.pdf').write_bytes(ib); out['directPdfAcquired']=True; out['pdf']={**im,'source':'RISS Downloading.do'}
 
-# Inspect exact public dCollection item authored by RISS.
+# Follow only the exact dCollection item URL authored by RISS and its same-host exact-item
+# canonical redirects (currently HTTP -> HTTPS -> /common/orgView/000001272735), max two hops.
 if not out['directPdfAcquired']:
-    dm,db=fetch(opener,dcollection_url,report['rissDispatcher']['request']['requestedUrl'])
+    dm,db,chain=fetch_exact_item_redirect_chain(opener,dcollection_url,report['rissDispatcher']['request']['requestedUrl'],max_hops=2)
+    out['dcollectionRedirectChain']=chain
     out['dcollectionEntry']=dm
-    # dCollection currently canonicalizes its RISS-authored HTTP item to HTTPS. Follow only this
-    # same-host, same-path, same-item redirect once; do not enable generic redirect following.
-    redirected=same_exact_item_https_redirect(dcollection_url,dm.get('location')) if dm.get('status') in {301,302,303,307,308} else None
-    if redirected:
-        rm,rb=fetch(opener,redirected,dcollection_url)
-        out['dcollectionHttpsRedirect']={'from':dcollection_url,'to':redirected,'response':rm}
-        dm,db=rm,rb
     if dm['pdfMagic'] or 'application/pdf' in dm['contentType'].lower():
         (ROOT/'jung-jaeheon-2012.pdf').write_bytes(db); out['directPdfAcquired']=True; out['pdf']={**dm,'source':'RISS-authored dCollection item'}
     else:
@@ -133,13 +145,9 @@ if not out['directPdfAcquired']:
         # Follow only literal same-site content-looking URLs from the exact item page, at most one level.
         for i,u in enumerate(candidates[:20],start=1):
             try:
-                cm,cb=fetch(opener,u,entry_base)
-                # Permit the same narrowly-scoped HTTP->HTTPS canonicalization for literal dCollection pages.
-                rr=same_exact_item_https_redirect(u,cm.get('location')) if cm.get('status') in {301,302,303,307,308} else None
-                if rr:
-                    cm2,cb2=fetch(opener,rr,u)
-                    out['followedLiteralPages'].append({**cm,'sourceUrl':u,'canonicalHttps':rr})
-                    cm,cb=cm2,cb2
+                cm,cb,cchain=fetch_exact_item_redirect_chain(opener,u,entry_base,max_hops=2)
+                for hop in cchain:
+                    out['followedLiteralPages'].append({'sourceUrl':u,'canonicalRedirect':hop})
                 rec={**cm,'sourceUrl':u}
                 out['followedLiteralPages'].append(rec)
                 if cm['pdfMagic'] or 'application/pdf' in cm['contentType'].lower():
@@ -168,9 +176,9 @@ if not out['directPdfAcquired']:
 if out['directPdfAcquired']:
     out['disposition']='RISS_AUTHORED_DCOLLECTION_DIRECT_PDF_ACQUIRED'
 elif out['disposition']=='ROUTE_REVIEW_PENDING':
-    loc=(out['rissIframe'] or {}).get('location')
+    loc=(out['dcollectionEntry'] or {}).get('location')
     if loc:
-        out['disposition']='RISS_IFRAME_REDIRECT_OBSERVED_NO_UNSAFE_FOLLOW'
+        out['disposition']='DCOLLECTION_EXACT_ITEM_REDIRECT_REMAINS_AFTER_BOUNDED_CHAIN_STOP'
     else:
         out['disposition']='RISS_AUTHORED_DCOLLECTION_ROUTE_NO_DIRECT_PDF_OBSERVED'
 
