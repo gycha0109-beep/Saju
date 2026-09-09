@@ -34,6 +34,7 @@ jobs:
           assert j['candidate']['author']=='김영진'
           assert j['candidate']['title']=='사주명리학의 宮과 星에 관한 연구'
           assert 'T15521643' in j['riss']['rissIds']
+          assert j['riss']['titleFieldContractObserved'] is True
           assert j['guessedOpaqueIdentifierCount']==0
           assert j['loginBypass'] is False
           assert j['drmRequestExecuted'] is False
@@ -50,9 +51,14 @@ jobs:
             acquisition-kim-youngjin-2020/report.json
             acquisition-kim-youngjin-2020/summary.txt
             acquisition-kim-youngjin-2020/riss-detail.html
+            acquisition-kim-youngjin-2020/riss-title-search.html
             acquisition-kim-youngjin-2020/nanet-search-1.html
             acquisition-kim-youngjin-2020/nanet-search-2.html
+            acquisition-kim-youngjin-2020/nanet-search-3.html
+            acquisition-kim-youngjin-2020/nanet-occurrence-contexts.json
             acquisition-kim-youngjin-2020/nanet-detail.html
+            acquisition-kim-youngjin-2020/nanet-viewer-bootstrap.html
+            acquisition-kim-youngjin-2020/docviewer-bootstrap.html
           if-no-files-found: warn
           retention-days: 1
           compression-level: 0
