@@ -80,6 +80,7 @@ const expectedRootExports = [
   '.',
   './product-host',
   './product-reading',
+  './product-reading-response',
   './production-calculation-host',
   './production-runtime',
 ];
