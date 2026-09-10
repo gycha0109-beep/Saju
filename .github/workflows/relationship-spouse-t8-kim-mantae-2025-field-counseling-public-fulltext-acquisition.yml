@@ -1,0 +1,69 @@
+name: Relationship Spouse T8 Kim Mantae 2025 Public Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-kim-mantae-2025-field-counseling-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-kim-mantae-2025-field-counseling-public-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Follow exact author-page-authored public attachment
+        run: python scripts/acquire-relationship-spouse-t8-kim-mantae-2025-field-counseling-public-fulltext.py
+      - name: Enforce exact identity public-PDF and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-kim-mantae-2025-field-counseling/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']; s=j['selectedPdf']
+          assert c['author']=='김만태'
+          assert c['year']==2025
+          assert c['title']=='현대 사주명리 상담의 현장론적 연구'
+          assert c['doi']=='10.35303/spf.2025.02.45.135'
+          assert c['kci']=='ART003182973'
+          assert j['titleObserved'] is True
+          assert j['authorObserved'] is True
+          assert j['yearObserved'] is True
+          assert j['fileDownloadFunctionContract']['definitionObserved'] is True
+          assert j['fileDownloadFunctionContract']['documentLocationHrefAssignedFromLink'] is True
+          assert j['fullLengthPdfAcquired'] is True
+          assert s['exactAttachmentName'] is True
+          assert s['sameAuthorSite'] is True
+          assert s['pdfMagic'] is True
+          assert s['bytes'] > 100000
+          assert p['guessedOpaqueIdentifierCount']==0
+          assert p['onlyPageAuthoredSameSiteAttachmentExecuted'] is True
+          assert p['loginBypass'] is False
+          assert p['institutionAuthBypass'] is False
+          assert p['paywallBypass'] is False
+          assert p['drmRequestExecuted'] is False
+          assert p['decryptionActionExecuted'] is False
+          print('Kim Mantae 2025 exact author-page-authored public PDF acquired and verified')
+          print('pdfSha256=', s['sha256'])
+          print('pdfBytes=', s['bytes'])
+          PY
+      - name: Upload bounded acquisition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kim-mantae-2025-field-counseling-public-fulltext-evidence
+          path: |
+            acquisition-kim-mantae-2025-field-counseling/report.json
+            acquisition-kim-mantae-2025-field-counseling/author-page.html
+            acquisition-kim-mantae-2025-field-counseling/*.pdf
+            acquisition-kim-mantae-2025-field-counseling/pdf-url.txt
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
