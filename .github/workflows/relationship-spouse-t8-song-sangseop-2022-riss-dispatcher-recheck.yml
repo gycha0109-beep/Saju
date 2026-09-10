@@ -1,0 +1,61 @@
+name: Relationship Spouse T8 Song Sangseop 2022 RISS Dispatcher Recheck
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-song-sangseop-2022-riss-dispatcher-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-song-sangseop-2022-riss-dispatcher-recheck.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recheck-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Follow page-authored RISS dispatcher to institutional route
+        run: python scripts/acquire-relationship-spouse-t8-song-sangseop-2022-riss-dispatcher-public-fulltext.py
+      - name: Enforce exact identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-song-sangseop-2022-riss-dispatcher-recheck/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']
+          assert c['author']=='송상섭'
+          assert c['year']==2022
+          assert c['rissId']=='T16377357'
+          assert c['rissControl']=='6188af0cf49b0838ffe0bdc3ef48d419'
+          assert c['priorAccessBoundaryPr']==374
+          assert j['identityDisposition']=='EXACT_RISS_IDENTITY_CONFIRMED'
+          assert j['dispatcherContractVerified'] is True
+          assert p['guessedOpaqueIdentifierCount']==0
+          assert p['onlySiteAuthoredPublicRoutesInspected'] is True
+          assert p['loginBypass'] is False
+          assert p['institutionAuthBypass'] is False
+          assert p['paywallBypass'] is False
+          assert p['drmRequestExecuted'] is False
+          assert p['decryptionActionExecuted'] is False
+          print('Song Sangseop 2022 exact identity and current RISS dispatcher contract verified')
+          print('fulltextDisposition=', j['fulltextDisposition'])
+          PY
+      - name: Upload bounded recheck evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: song-sangseop-2022-riss-dispatcher-recheck-evidence
+          path: |
+            acquisition-song-sangseop-2022-riss-dispatcher-recheck/report.json
+            acquisition-song-sangseop-2022-riss-dispatcher-recheck/*-response.html
+            acquisition-song-sangseop-2022-riss-dispatcher-recheck/*.js
+            acquisition-song-sangseop-2022-riss-dispatcher-recheck/*.pdf
+            acquisition-song-sangseop-2022-riss-dispatcher-recheck/*.bin
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
