@@ -13,71 +13,42 @@ from pathlib import Path
 
 ROOT = Path('acquisition-jeon-suhyun-2016')
 ROOT.mkdir(parents=True, exist_ok=True)
-
 TITLE = '官星의 十干別 特性에 관한 硏究'
-TITLE_KO = '관성의 십간별 특성에 관한 연구'
 AUTHOR = '전수현'
 YEAR = 2016
 RISS_CONTROL = '648380763c455520ffe0bdc3ef48d419'
 RISS_URL = f'https://m.riss.kr/search/detail/DetailView.do?control_no={RISS_CONTROL}&p_mat_type=be54d9b8bc7cdb09'
 NANET_SEARCH_URL = 'https://dl.nanet.go.kr/search/searchInnerList.do?queryText=%EA%B2%BD%EA%B8%B0%EB%8C%80%ED%95%99%EA%B5%90+%EB%AC%B8%ED%99%94%EC%98%88%EC%88%A0%EB%8C%80%ED%95%99%EC%9B%90%3APUB%5EPUB_WS%5EDP_PUB_WS%3AAND&zone=PUB%5EPUB_WS%5EDP_PUB_WS'
-
 UA = 'Mozilla/5.0 (compatible; SajuResearchPublicRouteVerifier/1.0; +https://github.com/gycha0109-beep/Saju)'
 CTX = ssl.create_default_context()
 
 
-def fetch(url: str, method: str = 'GET', data: bytes | None = None, headers: dict[str, str] | None = None) -> dict[str, object]:
-    h = {
+def fetch(url: str, timeout: int = 20) -> dict[str, object]:
+    req = urllib.request.Request(url, headers={
         'User-Agent': UA,
-        'Accept': 'text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8',
+        'Accept': 'text/html,application/javascript,application/pdf;q=0.9,*/*;q=0.8',
         'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.6',
-    }
-    if headers:
-        h.update(headers)
-    req = urllib.request.Request(url, data=data, method=method, headers=h)
+    })
     try:
-        with urllib.request.urlopen(req, timeout=30, context=CTX) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, context=CTX) as resp:
             body = resp.read()
-            return {
-                'ok': True,
-                'status': getattr(resp, 'status', 200),
-                'finalUrl': resp.geturl(),
-                'contentType': resp.headers.get('Content-Type', ''),
-                'bytes': len(body),
-                'sha256': hashlib.sha256(body).hexdigest(),
-                'body': body,
-            }
+            return {'ok': True, 'status': getattr(resp, 'status', 200), 'finalUrl': resp.geturl(),
+                    'contentType': resp.headers.get('Content-Type', ''), 'bytes': len(body),
+                    'sha256': hashlib.sha256(body).hexdigest(), 'body': body}
     except urllib.error.HTTPError as exc:
         body = exc.read()
-        return {
-            'ok': False,
-            'status': exc.code,
-            'finalUrl': exc.geturl(),
-            'contentType': exc.headers.get('Content-Type', '') if exc.headers else '',
-            'bytes': len(body),
-            'sha256': hashlib.sha256(body).hexdigest(),
-            'body': body,
-            'error': f'HTTPError: {exc}',
-        }
+        return {'ok': False, 'status': exc.code, 'finalUrl': exc.geturl(),
+                'contentType': exc.headers.get('Content-Type', '') if exc.headers else '',
+                'bytes': len(body), 'sha256': hashlib.sha256(body).hexdigest(), 'body': body,
+                'error': f'HTTPError: {exc}'}
     except Exception as exc:  # noqa: BLE001
-        return {
-            'ok': False,
-            'status': None,
-            'finalUrl': url,
-            'contentType': '',
-            'bytes': 0,
-            'sha256': None,
-            'body': b'',
-            'error': f'{type(exc).__name__}: {exc}',
-        }
+        return {'ok': False, 'status': None, 'finalUrl': url, 'contentType': '', 'bytes': 0,
+                'sha256': None, 'body': b'', 'error': f'{type(exc).__name__}: {exc}'}
 
 
-def decode(body: bytes, content_type: str) -> str:
-    charset = None
+def decode(body: bytes, content_type: str = '') -> str:
     m = re.search(r'charset=([\w-]+)', content_type, re.I)
-    if m:
-        charset = m.group(1)
-    for enc in [charset, 'utf-8', 'euc-kr', 'cp949']:
+    for enc in [m.group(1) if m else None, 'utf-8', 'euc-kr', 'cp949']:
         if not enc:
             continue
         try:
@@ -94,114 +65,81 @@ def visibleish(html: str) -> str:
     return re.sub(r'\s+', ' ', unescape(text)).strip()
 
 
-def title_block(html: str, radius: int = 14000) -> str:
-    for needle in (TITLE, TITLE_KO, AUTHOR):
-        idx = html.find(needle)
-        if idx >= 0:
-            return html[max(0, idx-radius): min(len(html), idx+len(needle)+radius)]
-    return ''
-
-
-def extract_anchor_contracts(block: str, base: str) -> list[dict[str, str]]:
-    out: list[dict[str, str]] = []
-    pat = re.compile(r'(?is)<a\b([^>]*)>(.*?)</a>')
-    for attrs, inner in pat.findall(block):
-        text = visibleish(inner)[:500]
-        href_m = re.search(r'(?is)\bhref\s*=\s*["\']([^"\']*)["\']', attrs)
-        onclick_m = re.search(r'(?is)\bonclick\s*=\s*["\']([^"\']*)["\']', attrs)
-        href = unescape(href_m.group(1)).strip() if href_m else ''
-        onclick = unescape(onclick_m.group(1)).strip() if onclick_m else ''
-        hay = f'{text} {href} {onclick}'.lower()
-        if any(x in hay for x in ('원문', '다운로드', 'download', 'viewer', 'detail', '목차', '官星', '전수현')):
-            absolute = ''
-            if href and not href.lower().startswith(('javascript:', '#', 'mailto:')):
-                absolute = urllib.parse.urljoin(base, href)
-            out.append({'text': text, 'href': href, 'absoluteUrl': absolute, 'onclick': onclick})
-    dedup: dict[tuple[str, str, str], dict[str, str]] = {}
-    for row in out:
-        dedup[(row['text'], row['href'], row['onclick'])] = row
-    return list(dedup.values())[:200]
-
-
-def js_function_fragments(html: str, names: set[str]) -> dict[str, list[str]]:
-    found: dict[str, list[str]] = {}
-    for name in sorted(names):
-        snippets: list[str] = []
-        for m in re.finditer(rf'(?is)function\s+{re.escape(name)}\s*\([^)]*\)\s*\{{', html):
-            snippets.append(html[m.start(): min(len(html), m.start()+5000)])
-        if snippets:
-            found[name] = snippets[:5]
-    return found
+def function_fragments(js: str, name: str) -> list[str]:
+    out: list[str] = []
+    for m in re.finditer(rf'(?is)(?:function\s+{re.escape(name)}\s*\([^)]*\)\s*\{{|{re.escape(name)}\s*=\s*function\s*\([^)]*\)\s*\{{)', js):
+        out.append(js[m.start(): min(len(js), m.start()+9000)])
+    return out[:5]
 
 
 report: dict[str, object] = {
-    'candidate': {
-        'title': TITLE,
-        'author': AUTHOR,
-        'year': YEAR,
-        'institution': '경기대학교 문화예술대학원',
-        'degree': '석사',
-        'pages': 'vi, 114 p.',
-        'rissControl': RISS_CONTROL,
-        'nanetCallNumber': 'TM 181 -16-52',
-    },
-    'policy': {
-        'guessedOpaqueIdentifierCount': 0,
-        'loginBypass': False,
-        'institutionAuthBypass': False,
-        'paywallBypass': False,
-        'drmRequestExecuted': False,
-        'decryptionActionExecuted': False,
-        'onlySiteAuthoredPublicRoutesInspected': True,
-    },
+    'candidate': {'title': TITLE, 'author': AUTHOR, 'year': YEAR,
+                  'institution': '경기대학교 문화예술대학원', 'degree': '석사',
+                  'pages': 'vi, 114 p.', 'rissControl': RISS_CONTROL,
+                  'nanetCallNumber': 'TM 181 -16-52'},
+    'policy': {'guessedOpaqueIdentifierCount': 0, 'loginBypass': False,
+               'institutionAuthBypass': False, 'paywallBypass': False,
+               'drmRequestExecuted': False, 'decryptionActionExecuted': False,
+               'onlySiteAuthoredPublicRoutesInspected': True},
     'sources': [],
 }
 
-for name, url in [('riss', RISS_URL), ('nanet_search', NANET_SEARCH_URL)]:
-    result = fetch(url)
-    body = result.pop('body')
-    entry: dict[str, object] = {'name': name, 'requestedUrl': url, **result}
-    if body:
-        suffix = 'pdf' if body[:5] == b'%PDF-' else 'html'
-        (ROOT / f'{name}-response.{suffix}').write_bytes(body)
-        if suffix == 'html':
-            html = decode(body, str(result.get('contentType') or ''))
-            text = visibleish(html)
-            entry['identityMarkers'] = {
-                'titleExact': TITLE in text or TITLE in html,
-                'authorExact': AUTHOR in text or AUTHOR in html,
-                'year': str(YEAR) in text,
-            }
-            entry['accessMarkers'] = {
-                'electronicMaterial': '전자자료' in text,
-                'originalView': '원문보기' in text,
-                'download': '다운로드' in text,
-                'login': '로그인' in text,
-                'institutionVisit': '협정기관' in text,
-            }
-            if name == 'nanet_search':
-                block = title_block(html)
-                (ROOT / 'nanet-title-block.html').write_text(block, encoding='utf-8')
-                contracts = extract_anchor_contracts(block, str(result.get('finalUrl') or url))
-                entry['exactTitleAnchorContracts'] = contracts
-                function_names: set[str] = set()
-                for c in contracts:
-                    onclick = c.get('onclick', '')
-                    for fn in re.findall(r'([A-Za-z_$][\w$]*)\s*\(', onclick):
-                        function_names.add(fn)
-                entry['referencedJsFunctions'] = js_function_fragments(html, function_names)
-                entry['boundedTitleBlock'] = visibleish(block)[:12000]
-    report['sources'].append(entry)
+riss = fetch(RISS_URL, 25)
+riss_body = riss.pop('body')
+riss_entry: dict[str, object] = {'name': 'riss', 'requestedUrl': RISS_URL, **riss}
+riss_html = ''
+if riss_body:
+    (ROOT / 'riss-response.html').write_bytes(riss_body)
+    riss_html = decode(riss_body, str(riss.get('contentType') or ''))
+    text = visibleish(riss_html)
+    riss_entry['identityMarkers'] = {'titleExact': TITLE in text or TITLE in riss_html,
+                                     'authorExact': AUTHOR in text or AUTHOR in riss_html,
+                                     'year': str(YEAR) in text}
+    riss_entry['accessMarkers'] = {'originalView': '원문보기' in text,
+                                   'download': '다운로드' in text,
+                                   'fulltextDownloadOnclick': 'fulltextDownload()' in riss_html,
+                                   'login': '로그인' in text}
+    srcs = re.findall(r'(?is)<script[^>]+src=["\']([^"\']+)', riss_html)
+    authored_srcs = [urllib.parse.urljoin(str(riss.get('finalUrl') or RISS_URL), s)
+                     for s in srcs if s.startswith('/') and ('detail' in s.lower() or 'search' in s.lower())]
+    riss_entry['siteAuthoredScriptUrls'] = authored_srcs
+    script_contracts = []
+    for i, url in enumerate(dict.fromkeys(authored_srcs)):
+        js_result = fetch(url, 15)
+        js_body = js_result.pop('body')
+        js_text = decode(js_body, str(js_result.get('contentType') or '')) if js_body else ''
+        if js_body:
+            (ROOT / f'riss-script-{i}.js').write_bytes(js_body)
+        fragments = function_fragments(js_text, 'fulltextDownload')
+        if fragments:
+            script_contracts.append({'url': url, 'fetch': js_result,
+                                     'fulltextDownloadFragments': fragments})
+    riss_entry['fulltextDownloadContracts'] = script_contracts
+report['sources'].append(riss_entry)
 
-nanet = next((s for s in report['sources'] if s.get('name') == 'nanet_search'), {})
-riss = next((s for s in report['sources'] if s.get('name') == 'riss'), {})
-report['identityDisposition'] = (
-    'EXACT_IDENTITY_CONFIRMED'
-    if nanet.get('identityMarkers', {}).get('titleExact') and nanet.get('identityMarkers', {}).get('authorExact')
-    and riss.get('identityMarkers', {}).get('titleExact') and riss.get('identityMarkers', {}).get('authorExact')
-    else 'IDENTITY_NOT_YET_CONFIRMED'
-)
-report['fulltextDisposition'] = 'PUBLIC_ROUTE_CONTRACT_DISCOVERY_PENDING_BODY_FETCH'
+# NANET is a corroborating public holding surface. It may rate-limit cloud runners;
+# its failure must not erase the exact RISS identity already established above.
+nanet = fetch(NANET_SEARCH_URL, 8)
+nanet_body = nanet.pop('body')
+nanet_entry: dict[str, object] = {'name': 'nanet_search', 'requestedUrl': NANET_SEARCH_URL, **nanet}
+if nanet_body:
+    (ROOT / 'nanet-search-response.html').write_bytes(nanet_body)
+    html = decode(nanet_body, str(nanet.get('contentType') or ''))
+    text = visibleish(html)
+    nanet_entry['identityMarkers'] = {'titleExact': TITLE in text or TITLE in html,
+                                      'authorExact': AUTHOR in text or AUTHOR in html,
+                                      'callNumber': 'TM 181 -16-52' in text}
+    nanet_entry['accessMarkers'] = {'electronicMaterial': '전자자료' in text,
+                                    'originalView': '원문보기' in text,
+                                    'download': '다운로드' in text}
+report['sources'].append(nanet_entry)
+
+ri = riss_entry.get('identityMarkers', {})
+report['identityDisposition'] = ('EXACT_RISS_IDENTITY_CONFIRMED'
+                                 if ri.get('titleExact') and ri.get('authorExact') and ri.get('year')
+                                 else 'IDENTITY_NOT_CONFIRMED')
+report['rissFulltextFunctionContractRecovered'] = bool(riss_entry.get('fulltextDownloadContracts'))
+report['fulltextDisposition'] = 'RISS_SITE_AUTHORED_FULLTEXT_FUNCTION_CONTRACT_DISCOVERED_PENDING_FOLLOW'
 report['semanticDisposition'] = 'NO_BODY_LEVEL_DECISION_YET'
 
 path = ROOT / 'report.json'
