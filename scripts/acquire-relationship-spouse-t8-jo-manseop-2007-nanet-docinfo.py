@@ -107,7 +107,8 @@ uuid_module = vendor_text[module_start:module_end]
 assert 'new Uint8Array(0x10)' in uuid_module
 assert '0xf&_0x380d4c[0x6]|0x40' in uuid_module
 assert '0x3f&_0x380d4c[0x8]|0x80' in uuid_module
-assert 'getRandomValues' in uuid_module
+uuid_contexts = vendor.get('uuidContexts') or []
+assert any('getRandomValues' in str(item.get('context', '')) for item in uuid_contexts)
 
 request_uuid = uuid_v4_from_secure_random()
 docinfo_url = urllib.parse.urljoin(API_BASE, API_PATH + DOCINFO_PATH + cert_id)
