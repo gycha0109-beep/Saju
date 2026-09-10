@@ -1,0 +1,69 @@
+name: Relationship Spouse T8 Park Oe-suk 2023 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-park-oe-suk-2023-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-park-oe-suk-2023-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Follow exact public fulltext chain
+        run: python scripts/acquire-relationship-spouse-t8-park-oe-suk-2023-public-fulltext.py
+      - name: Enforce exact identity public-body and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-park-oe-suk-2023/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']
+          assert c['author']=='박외숙'
+          assert c['year']==2023
+          assert c['rissId']=='T16818829'
+          assert c['rissControl']=='b4338a3915d9039bffe0bdc3ef48d419'
+          assert c['nanetControl']=='KDMT12023000053361'
+          assert j['identityDisposition']=='EXACT_RISS_IDENTITY_CONFIRMED'
+          assert j['rissFulltextPopupFetched'] is True
+          assert j['rissDownloadingHopFetched'] is True
+          assert j['dcollectionTargetRecoveredFromRiss'] is True
+          assert j['dcollectionItemFetched'] is True
+          assert j['dcollectionPublicPdfContractRecovered'] is True
+          assert j['publicPdfAcquired'] is True
+          pdf=next(h for h in j['hops'] if h['name']=='publicPdf')
+          assert pdf['isPdf'] is True
+          assert pdf['pdfHeader'].startswith('%PDF-')
+          assert pdf['bytes'] > 500000
+          assert p['guessedOpaqueIdentifierCount']==0
+          assert p['onlySiteAuthoredPublicRoutesInspected'] is True
+          assert p['loginBypass'] is False
+          assert p['institutionAuthBypass'] is False
+          assert p['paywallBypass'] is False
+          assert p['drmRequestExecuted'] is False
+          assert p['decryptionActionExecuted'] is False
+          print('Park Oe-suk 2023 exact public PDF body acquired through site-authored chain')
+          PY
+      - name: Upload bounded acquisition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: park-oe-suk-2023-public-fulltext-acquisition-evidence
+          path: |
+            acquisition-park-oe-suk-2023/report.json
+            acquisition-park-oe-suk-2023/*-response.html
+            acquisition-park-oe-suk-2023/*-response.pdf
+            acquisition-park-oe-suk-2023/*-response.bin
+            acquisition-park-oe-suk-2023/park-oe-suk-2023-fulltext.pdf
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
