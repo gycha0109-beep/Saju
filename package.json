@@ -15,6 +15,10 @@
       "types": "./dist/product-reading.d.ts",
       "default": "./dist/product-reading.js"
     },
+    "./product-reading-response": {
+      "types": "./dist/product-reading-response.d.ts",
+      "default": "./dist/product-reading-response.js"
+    },
     "./product-host": {
       "types": "./dist/product-host.d.ts",
       "default": "./dist/product-host.js"
