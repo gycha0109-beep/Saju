@@ -6,6 +6,7 @@ on:
       - 'scripts/acquire-relationship-spouse-t8-jeon-suhyun-2016-public-fulltext.py'
       - 'scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-riss-downloading.py'
       - 'scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-dcollection.py'
+      - 'scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-public-pdf.py'
       - '.github/workflows/relationship-spouse-t8-jeon-suhyun-2016-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -27,7 +28,9 @@ jobs:
         run: python scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-riss-downloading.py
       - name: Follow server-authored Kyonggi dCollection item
         run: python scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-dcollection.py
-      - name: Enforce exact identity and no-bypass boundary
+      - name: Fetch dCollection-authored public PDF target
+        run: python scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-public-pdf.py
+      - name: Enforce exact identity public-body and no-bypass boundary
         run: |
           python - <<'PY'
           import json
@@ -35,7 +38,8 @@ jobs:
           j=json.loads(Path('acquisition-jeon-suhyun-2016/report.json').read_text(encoding='utf-8'))
           f=json.loads(Path('acquisition-jeon-suhyun-2016/follow-report.json').read_text(encoding='utf-8'))
           d=json.loads(Path('acquisition-jeon-suhyun-2016/dcollection-report.json').read_text(encoding='utf-8'))
-          c=j['candidate']; p=j['policy']; fp=f['policy']; dp=d['policy']
+          q=json.loads(Path('acquisition-jeon-suhyun-2016/public-pdf-report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']; fp=f['policy']; dp=d['policy']; qp=q['policy']
           assert c['author']=='전수현'
           assert c['year']==2016
           assert c['rissControl']=='648380763c455520ffe0bdc3ef48d419'
@@ -46,18 +50,28 @@ jobs:
           assert d['sourceProvenance']['fromRissDownloadingResponse'] is True
           assert d['sourceProvenance']['itemId']=='000000043819'
           assert d['dcollectionHopFetched'] is True
+          assert q['sourceContract']['itemPage']=='https://dcollection.kyonggi.ac.kr/common/orgView/000000043819'
+          assert q['sourceContract']['drm']=='N'
+          assert q['sourceContract']['agree']=='Y'
+          assert q['sourceContract']['ext']=='.pdf'
+          assert q['sourceContract']['authoredPublicPdfPath'].startswith('/public_resource/pdf/000000043819_')
+          assert q['isPdf'] is True
+          assert q['pdfHeader'].startswith('%PDF-')
+          assert q['fetch']['bytes'] > 1000000
           assert p['guessedOpaqueIdentifierCount']==0
           assert fp['guessedOpaqueIdentifierCount']==0
           assert dp['guessedOpaqueIdentifierCount']==0
+          assert qp['guessedOpaqueIdentifierCount']==0
           assert fp['onlyServerAuthoredValuesUsed'] is True
           assert dp['onlyServerAuthoredTargetFollowed'] is True
-          for policy in (p, fp, dp):
+          assert qp['onlyPageAuthoredPublicPdfTargetFollowed'] is True
+          for policy in (p, fp, dp, qp):
               assert policy['loginBypass'] is False
               assert policy['institutionAuthBypass'] is False
               assert policy['paywallBypass'] is False
               assert policy['drmRequestExecuted'] is False
               assert policy['decryptionActionExecuted'] is False
-          print('Jeon Suhyun 2016 exact public chain verified through Kyonggi dCollection item')
+          print('Jeon Suhyun 2016 exact public PDF body acquired through site-authored chain')
           PY
       - name: Upload bounded acquisition evidence
         if: always()
@@ -68,6 +82,8 @@ jobs:
             acquisition-jeon-suhyun-2016/report.json
             acquisition-jeon-suhyun-2016/follow-report.json
             acquisition-jeon-suhyun-2016/dcollection-report.json
+            acquisition-jeon-suhyun-2016/public-pdf-report.json
+            acquisition-jeon-suhyun-2016/jeon-suhyun-2016-fulltext.pdf
             acquisition-jeon-suhyun-2016/*-response.html
             acquisition-jeon-suhyun-2016/*-response.pdf
             acquisition-jeon-suhyun-2016/*-response.bin
