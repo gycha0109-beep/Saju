@@ -1,0 +1,176 @@
+name: Production Cloud Run Latency Evidence
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/production-cloud-run-latency.yml'
+      - 'scripts/measure-production-health-latency.mjs'
+  workflow_dispatch:
+    inputs:
+      samples:
+        description: Sequential /health samples; minimum 100 for P99 evidence
+        required: true
+        default: '100'
+        type: string
+      timeout_ms:
+        description: Per-request timeout in milliseconds
+        required: true
+        default: '30000'
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-saju-cloud-run
+  cancel-in-progress: false
+
+env:
+  GCP_REGION: asia-southeast1
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+  GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+  SAMPLE_COUNT: ${{ inputs.samples || '100' }}
+  TIMEOUT_MS: ${{ inputs.timeout_ms || '30000' }}
+
+jobs:
+  measure:
+    name: Measure immutable production health latency
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production-saju
+
+    steps:
+      - name: Validate observation inputs and repository variables
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in GCP_PROJECT_ID GCP_WORKLOAD_IDENTITY_PROVIDER GCP_DEPLOYER_SERVICE_ACCOUNT GCP_CLOUD_RUN_SERVICE; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required production observation variable: ${name}." >&2
+              exit 1
+            fi
+          done
+          if [[ ! "$SAMPLE_COUNT" =~ ^[0-9]+$ ]] || [ "$SAMPLE_COUNT" -lt 100 ] || [ "$SAMPLE_COUNT" -gt 500 ]; then
+            echo 'samples must be an integer between 100 and 500.' >&2
+            exit 1
+          fi
+          if [[ ! "$TIMEOUT_MS" =~ ^[0-9]+$ ]] || [ "$TIMEOUT_MS" -lt 1000 ] || [ "$TIMEOUT_MS" -gt 120000 ]; then
+            echo 'timeout_ms must be an integer between 1000 and 120000.' >&2
+            exit 1
+          fi
+
+      - name: Checkout evidence sampler
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+
+      - name: Capture immutable production observation target
+        id: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          service_json="${RUNNER_TEMP}/cloud-run-latency-before.json"
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format=json > "$service_json"
+
+          active_revision_count="$(jq -r '[.status.traffic[]? | select((.percent // 0) > 0) | (.revisionName // empty)] | unique | length' "$service_json")"
+          active_revision="$(jq -r '[.status.traffic[]? | select((.percent // 0) > 0) | (.revisionName // empty)] | unique | .[0] // empty' "$service_json")"
+          traffic_total="$(jq -r '[.status.traffic[]? | (.percent // 0)] | add // 0' "$service_json")"
+          service_url="$(jq -r '.status.url // empty' "$service_json")"
+          traffic_snapshot="$(jq -c '[.status.traffic[]? | select((.percent // 0) > 0) | {revisionName:(.revisionName // ""),percent:(.percent // 0),tag:(.tag // "")}] | sort_by(.revisionName,.tag)' "$service_json")"
+
+          if [ "$active_revision_count" != '1' ] || [ "$traffic_total" != '100' ] || [ -z "$active_revision" ]; then
+            echo 'Production latency evidence requires exactly one active revision carrying 100 percent total traffic.' >&2
+            exit 1
+          fi
+          if [[ ! "$service_url" =~ ^https://[^/]+$ ]]; then
+            echo 'Cloud Run service URL is unavailable or not an exact HTTPS origin.' >&2
+            exit 1
+          fi
+
+          revision_json="${RUNNER_TEMP}/cloud-run-latency-revision.json"
+          gcloud run revisions describe "$active_revision" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format=json > "$revision_json"
+          image_ref="$(jq -r '.spec.containers[0].image // empty' "$revision_json")"
+          if [[ ! "$image_ref" =~ @sha256:[0-9a-f]{64}$ ]]; then
+            echo 'Active revision is not bound to a digest-qualified image reference.' >&2
+            exit 1
+          fi
+
+          echo "active_revision=$active_revision" >> "$GITHUB_OUTPUT"
+          echo "service_url=$service_url" >> "$GITHUB_OUTPUT"
+          echo "image_ref=$image_ref" >> "$GITHUB_OUTPUT"
+          echo "traffic_snapshot=$traffic_snapshot" >> "$GITHUB_OUTPUT"
+
+      - name: Measure production health latency
+        shell: bash
+        env:
+          SAJU_LATENCY_BASE_URL: ${{ steps.target.outputs.service_url }}
+          SAJU_LATENCY_REVISION: ${{ steps.target.outputs.active_revision }}
+          SAJU_LATENCY_IMAGE_REF: ${{ steps.target.outputs.image_ref }}
+          SAJU_LATENCY_SAMPLES: ${{ env.SAMPLE_COUNT }}
+          SAJU_LATENCY_TIMEOUT_MS: ${{ env.TIMEOUT_MS }}
+          SAJU_LATENCY_OUTPUT_JSON: ${{ runner.temp }}/saju-production-health-latency.json
+          SAJU_LATENCY_OUTPUT_MARKDOWN: ${{ runner.temp }}/saju-production-health-latency.md
+        run: node scripts/measure-production-health-latency.mjs
+
+      - name: Verify production traffic remained unchanged
+        shell: bash
+        env:
+          EXPECTED_TRAFFIC: ${{ steps.target.outputs.traffic_snapshot }}
+        run: |
+          set -euo pipefail
+          after_json="${RUNNER_TEMP}/cloud-run-latency-after.json"
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format=json > "$after_json"
+          actual_traffic="$(jq -c '[.status.traffic[]? | select((.percent // 0) > 0) | {revisionName:(.revisionName // ""),percent:(.percent // 0),tag:(.tag // "")}] | sort_by(.revisionName,.tag)' "$after_json")"
+          if [ "$actual_traffic" != "$EXPECTED_TRAFFIC" ]; then
+            echo 'Production traffic changed during latency measurement; evidence is invalid.' >&2
+            exit 1
+          fi
+          echo 'Production traffic snapshot remained unchanged.'
+
+      - name: Publish latency evidence summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "${RUNNER_TEMP}/saju-production-health-latency.md" ]; then
+            cat "${RUNNER_TEMP}/saju-production-health-latency.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo '## Saju Production health latency evidence' >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo '- measurement artifact was not produced' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload latency evidence artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: saju-production-health-latency-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/saju-production-health-latency.json
+            ${{ runner.temp }}/saju-production-health-latency.md
+          if-no-files-found: warn
+          retention-days: 30
