@@ -1,0 +1,124 @@
+name: Relationship Spouse T8 Lee Kim 2019 Ten-Star Quantification Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-lee-kim-2019-ten-star-quantification.py'
+      - '.github/workflows/relationship-spouse-t8-lee-kim-2019-ten-star-quantification-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-current-public-kci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install bounded PDF reader
+        run: python -m pip install --disable-pip-version-check pypdf==6.0.0
+      - name: Inspect and follow only current site-authored KCI contract
+        run: python scripts/acquire-relationship-spouse-t8-lee-kim-2019-ten-star-quantification.py
+      - name: Content-address any exact public PDF and extract locator text
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          from pypdf import PdfReader
+
+          root = Path('acquisition-lee-kim-2019-ten-star-quantification')
+          report = json.loads((root / 'report.json').read_text(encoding='utf-8'))
+          pdf = root / 'candidate.pdf'
+          meta = {'observed': pdf.exists(), 'pages': 0, 'encrypted': None, 'textChars': 0, 'sha256': None, 'bytes': 0}
+          if pdf.exists():
+              raw = pdf.read_bytes()
+              reader = PdfReader(str(pdf))
+              texts = []
+              for i, page in enumerate(reader.pages, start=1):
+                  texts.append(f'\n===== PHYSICAL_PDF_PAGE_{i} =====\n{page.extract_text() or ""}')
+              full = ''.join(texts)
+              (root / 'candidate.txt').write_text(full, encoding='utf-8')
+              meta.update({
+                  'pages': len(reader.pages),
+                  'encrypted': bool(reader.is_encrypted),
+                  'textChars': len(full),
+                  'sha256': hashlib.sha256(raw).hexdigest(),
+                  'bytes': len(raw),
+              })
+              report['fullLengthPdfAcquired'] = 30 <= len(reader.pages) <= 45 and len(full) > 10_000
+              report['semanticDisposition'] = 'DIRECT_BODY_READY_FOR_RENDER_FIRST_REVIEW' if report['fullLengthPdfAcquired'] else 'PARTIAL_OR_UNEXPECTED_PDF_NO_BODY_DECISION'
+          else:
+              report['fullLengthPdfAcquired'] = False
+          (root / 'pdf-metadata.json').write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding='utf-8')
+          (root / 'report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(meta, ensure_ascii=False, indent=2))
+          print('fullLengthPdfAcquired=', report['fullLengthPdfAcquired'])
+          PY
+      - name: Print spouse-selector locator contexts only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('acquisition-lee-kim-2019-ten-star-quantification/candidate.txt')
+          if not p.exists():
+              print('No complete PDF text; no body-level semantic decision.')
+              raise SystemExit(0)
+          text = p.read_text(encoding='utf-8')
+          terms = ['배우자','배우자궁','배우자성','남편','아내','처','妻','夫','재성','財星','관성','官星','일지','日支','육친','六親','십성','十星']
+          for term in terms:
+              print(f'\n### TERM {term}')
+              shown = 0
+              for m in re.finditer(re.escape(term), text, re.I):
+                  print(re.sub(r'\s+', ' ', text[max(0,m.start()-450):min(len(text),m.end()+1000)]))
+                  shown += 1
+                  if shown >= 12:
+                      break
+              print('COUNT_SHOWN', shown)
+          PY
+      - name: Enforce exact identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j = json.loads(Path('acquisition-lee-kim-2019-ten-star-quantification/report.json').read_text(encoding='utf-8'))
+          assert j['candidate']['authors'] == ['이재승','김만태']
+          assert j['candidate']['year'] == 2019
+          assert j['candidate']['kci'] == 'ART002438633'
+          assert j['candidate']['doi'] == '10.33645/cc.2019.02.41.1.887'
+          assert j['fallbackOrteFileIdsTried'] == []
+          assert j['guessedOpaqueIdentifierCount'] == 0
+          assert j['loginBypass'] is False
+          assert j['institutionAuthBypass'] is False
+          assert j['paywallBypass'] is False
+          assert j['drmRequestExecuted'] is False
+          assert j['decryptionActionExecuted'] is False
+          assert j['accessControlBypass'] is False
+          if j['concreteFileIdFollowed'] is not None:
+              assert len(j['siteAuthoredConcreteFileIds']) == 1
+              assert j['followedConcreteContract'] is True
+          print('Lee/Kim 2019 exact identity + site-authored-only + no-bypass boundary verified')
+          PY
+      - name: Upload bounded evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lee-kim-2019-ten-star-quantification-bounded-evidence
+          path: |
+            acquisition-lee-kim-2019-ten-star-quantification/report.json
+            acquisition-lee-kim-2019-ten-star-quantification/contract-snippets.json
+            acquisition-lee-kim-2019-ten-star-quantification/pdf-metadata.json
+            acquisition-lee-kim-2019-ten-star-quantification/detail.html
+            acquisition-lee-kim-2019-ten-star-quantification/original-view.html
+            acquisition-lee-kim-2019-ten-star-quantification/download-service.html
+            acquisition-lee-kim-2019-ten-star-quantification/candidate.pdf
+            acquisition-lee-kim-2019-ten-star-quantification/candidate.txt
+            acquisition-lee-kim-2019-ten-star-quantification/script-*.txt
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
