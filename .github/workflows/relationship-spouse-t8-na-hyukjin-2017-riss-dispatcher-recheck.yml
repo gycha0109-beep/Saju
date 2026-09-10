@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-na-hyukjin-2017-riss-dispatcher-public-fulltext.py'
+      - 'scripts/follow-relationship-spouse-t8-na-hyukjin-2017-dcollection-public-pdf.py'
       - '.github/workflows/relationship-spouse-t8-na-hyukjin-2017-riss-dispatcher-recheck.yml'
   workflow_dispatch:
 
@@ -21,36 +22,61 @@ jobs:
           python-version: '3.12'
       - name: Follow page-authored RISS dispatcher to institutional route
         run: python scripts/acquire-relationship-spouse-t8-na-hyukjin-2017-riss-dispatcher-public-fulltext.py
-      - name: Enforce exact identity dispatcher and no-bypass boundary
+      - name: Follow same-run RISS-authored non-DRM dCollection public PDF branch
+        run: python scripts/follow-relationship-spouse-t8-na-hyukjin-2017-dcollection-public-pdf.py
+      - name: Enforce exact identity dispatcher public-PDF and no-bypass boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          j=json.loads(Path('acquisition-na-hyukjin-2017-riss-dispatcher-recheck/report.json').read_text(encoding='utf-8'))
-          c=j['candidate']; p=j['policy']
+
+          base=json.loads(Path('acquisition-na-hyukjin-2017-riss-dispatcher-recheck/report.json').read_text(encoding='utf-8'))
+          follow=json.loads(Path('acquisition-na-hyukjin-2017-riss-dispatcher-recheck/public-pdf-followup.json').read_text(encoding='utf-8'))
+          c=base['candidate']; p=base['policy']; fp=follow['policy']; sc=follow['sourceContract']; prov=follow['provenance']
+
           assert c['author']=='나혁진'
           assert c['year']==2017
           assert c['rissId']=='T14398372'
           assert c['rissControl']=='1f8b683fad900548ffe0bdc3ef48d419'
           assert c['nanetControl']=='KDMT1201802345'
           assert c['priorAccessBoundaryPr']==371
-          assert j['identityDisposition']=='EXACT_RISS_IDENTITY_CONFIRMED'
-          assert j['dispatcherContractVerified'] is True
-          assert j['rissFulltextPopupFetched'] is True
-          assert p['guessedOpaqueIdentifierCount']==0
-          assert p['onlySiteAuthoredPublicRoutesInspected'] is True
-          assert p['nanetDrmRouteReplayed'] is False
-          assert p['loginBypass'] is False
-          assert p['institutionAuthBypass'] is False
-          assert p['paywallBypass'] is False
-          assert p['drmRequestExecuted'] is False
-          assert p['decryptionActionExecuted'] is False
-          if j['publicPdfAcquired']:
-              pdf=next(x for x in j['hops'] if x['name']=='publicPdf')
-              assert pdf['isPdf'] is True
-              assert pdf['sourceContract']['sizeMatchesServerMetadata'] is True
-          print('Na Hyukjin 2017 exact identity and current RISS dispatcher contract verified')
-          print('fulltextDisposition=', j['fulltextDisposition'])
+          assert base['identityDisposition']=='EXACT_RISS_IDENTITY_CONFIRMED'
+          assert base['dispatcherContractVerified'] is True
+          assert base['rissFulltextPopupFetched'] is True
+          assert base['dcollectionTargetRecoveredFromRiss'] is True
+          assert base['dcollectionItemFetched'] is True
+
+          assert prov['sameRunRissDispatcherVerified'] is True
+          assert prov['sameRunDcollectionTargetRecoveredFromRiss'] is True
+          assert prov['itemId']=='000002321514'
+          assert prov['itemUrl']=='https://ube.dcollection.net/common/orgView/000002321514'
+
+          assert sc['drm']=='N'
+          assert sc['msg'] in (None, '')
+          assert sc['ext']=='.pdf'
+          assert sc['drmBranchOnlyWhenY'] is True
+          assert sc['nonDrmElsePublicRedirect'] is True
+          assert sc['fileSaveName']=='000002321514.pdf'
+          assert sc['expectedFileSize']==1345857
+          assert sc['contractAllowsPublicPdf'] is True
+          assert follow['publicPdfAcquired'] is True
+          pdf=follow['publicPdf']
+          assert pdf['isPdf'] is True
+          assert pdf['sizeMatchesServerMetadata'] is True
+          assert pdf['bytes']==1345857
+
+          for policy in (p, fp):
+              assert policy['guessedOpaqueIdentifierCount']==0
+              assert policy['nanetDrmRouteReplayed'] is False
+              assert policy['loginBypass'] is False
+              assert policy['institutionAuthBypass'] is False
+              assert policy['paywallBypass'] is False
+              assert policy['drmRequestExecuted'] is False
+              assert policy['decryptionActionExecuted'] is False
+
+          print('Na Hyukjin 2017 exact RISS-authored public non-DRM PDF acquired and verified')
+          print('pdfSha256=', pdf['sha256'])
+          print('pdfBytes=', pdf['bytes'])
           PY
       - name: Upload bounded recheck evidence
         if: always()
@@ -59,6 +85,7 @@ jobs:
           name: na-hyukjin-2017-riss-dispatcher-recheck-evidence
           path: |
             acquisition-na-hyukjin-2017-riss-dispatcher-recheck/report.json
+            acquisition-na-hyukjin-2017-riss-dispatcher-recheck/public-pdf-followup.json
             acquisition-na-hyukjin-2017-riss-dispatcher-recheck/*-response.html
             acquisition-na-hyukjin-2017-riss-dispatcher-recheck/*.js
             acquisition-na-hyukjin-2017-riss-dispatcher-recheck/*.pdf
