@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-jeon-suhyun-2016-public-fulltext.py'
       - 'scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-riss-downloading.py'
+      - 'scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-dcollection.py'
       - '.github/workflows/relationship-spouse-t8-jeon-suhyun-2016-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -24,6 +25,8 @@ jobs:
         run: python scripts/acquire-relationship-spouse-t8-jeon-suhyun-2016-public-fulltext.py
       - name: Follow exact RISS popup and Downloading contract
         run: python scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-riss-downloading.py
+      - name: Follow server-authored Kyonggi dCollection item
+        run: python scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-dcollection.py
       - name: Enforce exact identity and no-bypass boundary
         run: |
           python - <<'PY'
@@ -31,7 +34,8 @@ jobs:
           from pathlib import Path
           j=json.loads(Path('acquisition-jeon-suhyun-2016/report.json').read_text(encoding='utf-8'))
           f=json.loads(Path('acquisition-jeon-suhyun-2016/follow-report.json').read_text(encoding='utf-8'))
-          c=j['candidate']; p=j['policy']; fp=f['policy']
+          d=json.loads(Path('acquisition-jeon-suhyun-2016/dcollection-report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']; fp=f['policy']; dp=d['policy']
           assert c['author']=='전수현'
           assert c['year']==2016
           assert c['rissControl']=='648380763c455520ffe0bdc3ef48d419'
@@ -39,16 +43,21 @@ jobs:
           assert j['rissFulltextFunctionContractRecovered'] is True
           assert f['popupNavigationContractRecovered'] is True
           assert f['downloadingHopFetched'] is True
+          assert d['sourceProvenance']['fromRissDownloadingResponse'] is True
+          assert d['sourceProvenance']['itemId']=='000000043819'
+          assert d['dcollectionHopFetched'] is True
           assert p['guessedOpaqueIdentifierCount']==0
           assert fp['guessedOpaqueIdentifierCount']==0
+          assert dp['guessedOpaqueIdentifierCount']==0
           assert fp['onlyServerAuthoredValuesUsed'] is True
-          for policy in (p, fp):
+          assert dp['onlyServerAuthoredTargetFollowed'] is True
+          for policy in (p, fp, dp):
               assert policy['loginBypass'] is False
               assert policy['institutionAuthBypass'] is False
               assert policy['paywallBypass'] is False
               assert policy['drmRequestExecuted'] is False
               assert policy['decryptionActionExecuted'] is False
-          print('Jeon Suhyun 2016 exact RISS authored chain verified through Downloading hop')
+          print('Jeon Suhyun 2016 exact public chain verified through Kyonggi dCollection item')
           PY
       - name: Upload bounded acquisition evidence
         if: always()
@@ -58,8 +67,10 @@ jobs:
           path: |
             acquisition-jeon-suhyun-2016/report.json
             acquisition-jeon-suhyun-2016/follow-report.json
+            acquisition-jeon-suhyun-2016/dcollection-report.json
             acquisition-jeon-suhyun-2016/*-response.html
             acquisition-jeon-suhyun-2016/*-response.pdf
+            acquisition-jeon-suhyun-2016/*-response.bin
             acquisition-jeon-suhyun-2016/riss-script-*.js
             acquisition-jeon-suhyun-2016/nanet-search-response.html
             acquisition-jeon-suhyun-2016/follow-*.html
