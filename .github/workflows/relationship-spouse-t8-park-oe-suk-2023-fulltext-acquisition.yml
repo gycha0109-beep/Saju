@@ -21,6 +21,29 @@ jobs:
           python-version: '3.12'
       - name: Follow exact public fulltext chain
         run: python scripts/acquire-relationship-spouse-t8-park-oe-suk-2023-public-fulltext.py
+      - name: Normalize server-authored dCollection item route
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+          path=Path('acquisition-park-oe-suk-2023/report.json')
+          j=json.loads(path.read_text(encoding='utf-8'))
+          d=next(h for h in j['hops'] if h['name']=='dcollectionItem')
+          target=d['sourceProvenance']['rawTarget']
+          item=d['sourceProvenance'].get('itemId')
+          if not item:
+              m=re.search(r'/common/orgView/([0-9]+)(?:$|[/?#])', target)
+              if m:
+                  item=m.group(1)
+                  d['sourceProvenance']['itemId']=item
+                  pdf=next((h for h in j['hops'] if h['name']=='publicPdf'), None)
+                  if pdf:
+                      pdf['sourceContract']['itemId']=item
+          j['dcollectionTargetRecoveredFromRiss']=bool(d['sourceProvenance']['fromRissDownloadingResponse'] and item)
+          path.write_text(json.dumps(j, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(f'normalized dCollection itemId={item}')
+          PY
       - name: Enforce exact identity public-body and no-bypass boundary
         run: |
           python - <<'PY'
@@ -40,10 +63,16 @@ jobs:
           assert j['dcollectionItemFetched'] is True
           assert j['dcollectionPublicPdfContractRecovered'] is True
           assert j['publicPdfAcquired'] is True
+          d=next(h for h in j['hops'] if h['name']=='dcollectionItem')
+          assert d['sourceProvenance']['itemId']=='000000057593'
+          assert d['sourceContract']['drm']=='N'
+          assert d['sourceContract']['agree']=='Y'
           pdf=next(h for h in j['hops'] if h['name']=='publicPdf')
+          assert pdf['sourceContract']['itemId']=='000000057593'
           assert pdf['isPdf'] is True
           assert pdf['pdfHeader'].startswith('%PDF-')
           assert pdf['bytes'] > 500000
+          assert pdf['sourceContract']['sizeMatchesServerMetadata'] is True
           assert p['guessedOpaqueIdentifierCount']==0
           assert p['onlySiteAuthoredPublicRoutesInspected'] is True
           assert p['loginBypass'] is False
