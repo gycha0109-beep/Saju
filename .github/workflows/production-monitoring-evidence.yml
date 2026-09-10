@@ -102,7 +102,7 @@ jobs:
           ACTIVE_REVISION: ${{ steps.target.outputs.active_revision }}
           IMAGE_REF: ${{ steps.target.outputs.image_ref }}
         run: |
-          set -uo pipefail
+          set -euo pipefail
           evidence_dir="${RUNNER_TEMP}/production-monitoring-evidence"
           raw_policies="${RUNNER_TEMP}/monitoring-policies-raw.json"
           raw_channels="${RUNNER_TEMP}/monitoring-channels-raw.json"
@@ -114,13 +114,19 @@ jobs:
 
           captured_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
-          gcloud monitoring policies list --project "$GCP_PROJECT_ID" --format=json > "$raw_policies" 2> "$policy_error"
-          policy_rc=$?
+          if gcloud monitoring policies list --project "$GCP_PROJECT_ID" --format=json > "$raw_policies" 2> "$policy_error"; then
+            policy_rc=0
+          else
+            policy_rc=$?
+          fi
 
           channel_rc=0
           if [ "$policy_rc" -eq 0 ]; then
-            gcloud monitoring channels list --project "$GCP_PROJECT_ID" --format=json > "$raw_channels" 2> "$channel_error"
-            channel_rc=$?
+            if gcloud monitoring channels list --project "$GCP_PROJECT_ID" --format=json > "$raw_channels" 2> "$channel_error"; then
+              channel_rc=0
+            else
+              channel_rc=$?
+            fi
           fi
 
           if [ "$policy_rc" -ne 0 ] || [ "$channel_rc" -ne 0 ]; then
