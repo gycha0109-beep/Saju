@@ -1,0 +1,59 @@
+name: Relationship Spouse T8 Yoon Sangheum 2023 Fulltext Discovery
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/discover-relationship-spouse-t8-yoon-sangheum-2023-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-yoon-sangheum-2023-fulltext-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discover-public-fulltext-routes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Inspect exact KCI RISS KoreaScholar and DOI routes
+        run: python scripts/discover-relationship-spouse-t8-yoon-sangheum-2023-public-fulltext.py
+      - name: Enforce exact identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('acquisition-yoon-sangheum-2023/report.json')
+          j=json.loads(p.read_text(encoding='utf-8'))
+          c=j['candidate']; policy=j['policy']
+          assert c['author']=='윤상흠'
+          assert c['year']==2023
+          assert c['doi']=='10.35203/EACT.2023.15.33'
+          assert c['kciArticleId']=='ART003042567'
+          assert c['rissControl']=='37b95c18ae24bef64884a65323211ff0'
+          assert c['koreaScholarArticleId']=='428909'
+          assert policy['guessedOpaqueIdentifierCount']==0
+          assert policy['loginBypass'] is False
+          assert policy['institutionAuthBypass'] is False
+          assert policy['paywallBypass'] is False
+          assert policy['drmRequestExecuted'] is False
+          assert policy['decryptionActionExecuted'] is False
+          assert policy['onlySiteAuthoredPublicRoutesInspected'] is True
+          assert j['semanticDisposition']=='ABSTRACT_ONLY_NO_SPOUSE_SELECTOR_ADMISSION_DECISION'
+          print('Yoon Sangheum 2023 exact identity and no-bypass discovery boundary verified')
+          PY
+      - name: Upload bounded discovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yoon-sangheum-2023-public-fulltext-route-evidence
+          path: |
+            acquisition-yoon-sangheum-2023/report.json
+            acquisition-yoon-sangheum-2023/*-response.html
+            acquisition-yoon-sangheum-2023/*-response.pdf
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
