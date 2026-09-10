@@ -1,0 +1,60 @@
+name: Relationship Spouse T8 Eum Jonghee 2019 RISS dCollection Recheck
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-eum-jonghee-2019-riss-dcollection-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-eum-jonghee-2019-riss-dcollection-recheck.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recheck-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Follow newly validated RISS to dCollection public route
+        run: python scripts/acquire-relationship-spouse-t8-eum-jonghee-2019-riss-dcollection-public-fulltext.py
+      - name: Enforce exact identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-eum-jonghee-2019-riss-dcollection-recheck/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']
+          assert c['author']=='음종희'
+          assert c['year']==2019
+          assert c['dbpiaId']=='T15047469'
+          assert c['rissControl']=='b3c06fb77553c27dffe0bdc3ef48d419'
+          assert c['priorAccessBoundaryPr']==369
+          assert j['identityDisposition']=='EXACT_RISS_IDENTITY_CONFIRMED'
+          assert p['guessedOpaqueIdentifierCount']==0
+          assert p['onlySiteAuthoredPublicRoutesInspected'] is True
+          assert p['loginBypass'] is False
+          assert p['institutionAuthBypass'] is False
+          assert p['paywallBypass'] is False
+          assert p['drmRequestExecuted'] is False
+          assert p['decryptionActionExecuted'] is False
+          print('Eum Jonghee 2019 exact identity and bounded public-route policy verified')
+          print('fulltextDisposition=', j['fulltextDisposition'])
+          PY
+      - name: Upload bounded recheck evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eum-jonghee-2019-riss-dcollection-recheck-evidence
+          path: |
+            acquisition-eum-jonghee-2019-riss-dcollection-recheck/report.json
+            acquisition-eum-jonghee-2019-riss-dcollection-recheck/*-response.html
+            acquisition-eum-jonghee-2019-riss-dcollection-recheck/*-response.pdf
+            acquisition-eum-jonghee-2019-riss-dcollection-recheck/*-response.bin
+            acquisition-eum-jonghee-2019-riss-dcollection-recheck/eum-jonghee-2019-fulltext.pdf
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
