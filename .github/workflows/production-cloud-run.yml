@@ -124,6 +124,19 @@ jobs:
             exit 1
           fi
 
+      - name: Checkout workflow authority
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Stage rollback manifest builder
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp scripts/build-production-rollback-manifest.mjs \
+            "${RUNNER_TEMP}/build-production-rollback-manifest.mjs"
+
       - name: Checkout exact source SHA
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -251,15 +264,71 @@ jobs:
         run: |
           set -euo pipefail
           before_json="${RUNNER_TEMP}/cloud-run-before.json"
+          revision_dir="${RUNNER_TEMP}/cloud-run-rollback-revisions"
+          manifest="${RUNNER_TEMP}/production-rollback-manifest.json"
+          mkdir -p "$revision_dir"
+
           gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
             --region "$GCP_REGION" \
             --project "$GCP_PROJECT_ID" \
             --format=json > "$before_json"
+          captured_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
-          previous="$(jq -r '[.status.traffic[]? | select((.percent // 0) > 0) | (.revisionName // empty)] | unique | join(",")' "$before_json")"
-          service_url="$(jq -r '.status.url // empty' "$before_json")"
+          mapfile -t serving_revisions < <(
+            jq -r '.status.traffic[]? | select((.percent // 0) > 0) | (.revisionName // empty)' "$before_json" \
+              | sort -u
+          )
+          if [ "${#serving_revisions[@]}" -eq 0 ]; then
+            echo 'No positive-percent serving revision is available for rollback evidence.' >&2
+            exit 1
+          fi
+
+          for revision in "${serving_revisions[@]}"; do
+            if [[ ! "$revision" =~ ^[a-z][a-z0-9-]{0,62}$ ]]; then
+              echo "Invalid serving revision name returned by Cloud Run: ${revision}." >&2
+              exit 1
+            fi
+            gcloud run revisions describe "$revision" \
+              --region "$GCP_REGION" \
+              --project "$GCP_PROJECT_ID" \
+              --format=json > "${revision_dir}/${revision}.json"
+          done
+
+          node "${RUNNER_TEMP}/build-production-rollback-manifest.mjs" \
+            --service-json "$before_json" \
+            --revisions-dir "$revision_dir" \
+            --output "$manifest" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --service "$GCP_CLOUD_RUN_SERVICE" \
+            --captured-at "$captured_at" \
+            --source-repository "$GITHUB_REPOSITORY" \
+            --source-branch "$SOURCE_BRANCH" \
+            --source-sha "$SOURCE_SHA" \
+            --workflow-sha "$GITHUB_SHA" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT"
+
+          previous="$(jq -r '[.activeTraffic[].revisionName] | unique | join(",")' "$manifest")"
+          service_url="$(jq -r '.target.serviceUrl // empty' "$manifest")"
+          if [ -z "$previous" ] || [ -z "$service_url" ]; then
+            echo 'Rollback manifest did not preserve required serving identity.' >&2
+            exit 1
+          fi
+
+          rm -f "$before_json"
+          rm -rf "$revision_dir"
           echo "previous_revisions=$previous" >> "$GITHUB_OUTPUT"
           echo "service_url=$service_url" >> "$GITHUB_OUTPUT"
+          echo "captured_at=$captured_at" >> "$GITHUB_OUTPUT"
+
+      - name: Preserve pre-deploy rollback manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: production-cloud-run-rollback-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/production-rollback-manifest.json
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Configure Artifact Registry Docker authentication
         shell: bash
@@ -453,6 +522,9 @@ jobs:
             echo "- candidate revision: \`${{ steps.candidate.outputs.revision || 'not-created' }}\`"
             echo "- candidate tag: \`${{ steps.candidate.outputs.tag || 'not-created' }}\`"
             echo "- previous serving revision(s): \`${{ steps.before.outputs.previous_revisions || 'unknown' }}\`"
+            echo "- rollback manifest captured UTC: \`${{ steps.before.outputs.captured_at || 'not-captured' }}\`"
+            echo "- rollback manifest artifact: \`production-cloud-run-rollback-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}\`"
             echo "- promotion requested: \`$PROMOTE\`"
+            echo '- rollback execution authorized by manifest alone: `false`'
             echo '- credential values: not emitted'
           } >> "$GITHUB_STEP_SUMMARY"
