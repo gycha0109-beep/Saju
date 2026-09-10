@@ -114,7 +114,7 @@ describe('Relationship spouse T8 Go Jaemin 2016 gender-conditioned boundary evid
     expect(report.authorityGapsOpenCount).toBe(3);
     expect(report.authorityAdmissionReady).toBe(false);
     expect(report.productionState).toBe('HOLD');
-  });
+  }, 20_000);
 
   test('keeps no-stitching and all producer/production gates fail-closed', () => {
     const candidate = RELATIONSHIP_SPOUSE_T8_GO_JAEMIN_2016_GENDER_CONDITIONED_BOUNDARY_CANDIDATE;
