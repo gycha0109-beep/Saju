@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-jeon-suhyun-2016-public-fulltext.py'
+      - 'scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-riss-downloading.py'
       - '.github/workflows/relationship-spouse-t8-jeon-suhyun-2016-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -21,26 +22,33 @@ jobs:
           python-version: '3.12'
       - name: Discover exact RISS and NANET public contracts
         run: python scripts/acquire-relationship-spouse-t8-jeon-suhyun-2016-public-fulltext.py
+      - name: Follow exact RISS popup and Downloading contract
+        run: python scripts/follow-relationship-spouse-t8-jeon-suhyun-2016-riss-downloading.py
       - name: Enforce exact identity and no-bypass boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           j=json.loads(Path('acquisition-jeon-suhyun-2016/report.json').read_text(encoding='utf-8'))
-          c=j['candidate']; p=j['policy']
+          f=json.loads(Path('acquisition-jeon-suhyun-2016/follow-report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']; fp=f['policy']
           assert c['author']=='전수현'
           assert c['year']==2016
           assert c['rissControl']=='648380763c455520ffe0bdc3ef48d419'
           assert j['identityDisposition']=='EXACT_RISS_IDENTITY_CONFIRMED'
           assert j['rissFulltextFunctionContractRecovered'] is True
+          assert f['popupNavigationContractRecovered'] is True
+          assert f['downloadingHopFetched'] is True
           assert p['guessedOpaqueIdentifierCount']==0
-          assert p['loginBypass'] is False
-          assert p['institutionAuthBypass'] is False
-          assert p['paywallBypass'] is False
-          assert p['drmRequestExecuted'] is False
-          assert p['decryptionActionExecuted'] is False
-          assert p['onlySiteAuthoredPublicRoutesInspected'] is True
-          print('Jeon Suhyun 2016 exact RISS identity and site-authored fulltext contract verified')
+          assert fp['guessedOpaqueIdentifierCount']==0
+          assert fp['onlyServerAuthoredValuesUsed'] is True
+          for policy in (p, fp):
+              assert policy['loginBypass'] is False
+              assert policy['institutionAuthBypass'] is False
+              assert policy['paywallBypass'] is False
+              assert policy['drmRequestExecuted'] is False
+              assert policy['decryptionActionExecuted'] is False
+          print('Jeon Suhyun 2016 exact RISS authored chain verified through Downloading hop')
           PY
       - name: Upload bounded acquisition evidence
         if: always()
@@ -49,10 +57,14 @@ jobs:
           name: jeon-suhyun-2016-public-fulltext-acquisition-evidence
           path: |
             acquisition-jeon-suhyun-2016/report.json
+            acquisition-jeon-suhyun-2016/follow-report.json
             acquisition-jeon-suhyun-2016/*-response.html
             acquisition-jeon-suhyun-2016/*-response.pdf
             acquisition-jeon-suhyun-2016/riss-script-*.js
             acquisition-jeon-suhyun-2016/nanet-search-response.html
+            acquisition-jeon-suhyun-2016/follow-*.html
+            acquisition-jeon-suhyun-2016/follow-*.pdf
+            acquisition-jeon-suhyun-2016/follow-*.bin
           if-no-files-found: warn
           retention-days: 1
           compression-level: 0
