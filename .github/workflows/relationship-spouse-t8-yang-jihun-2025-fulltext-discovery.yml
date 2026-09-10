@@ -1,0 +1,54 @@
+name: Relationship Spouse T8 Yang Jihun 2025 Fulltext Discovery
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/discover-relationship-spouse-t8-yang-jihun-2025-public-identity.py'
+      - '.github/workflows/relationship-spouse-t8-yang-jihun-2025-fulltext-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discover-current-public-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Discover exact current public RISS identity
+        run: python scripts/discover-relationship-spouse-t8-yang-jihun-2025-public-identity.py
+      - name: Enforce discovery boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-yang-jihun-2025/report.json').read_text(encoding='utf-8'))
+          assert j['candidate']['author']=='양지훈'
+          assert j['candidate']['year']==2025
+          assert j['candidate']['nanetControl']=='KDMT12025000053655'
+          assert j['contentDownloadExecuted'] is False
+          assert j['guessedOpaqueIdentifierCount']==0
+          assert j['loginBypass'] is False
+          assert j['institutionAuthBypass'] is False
+          assert j['paywallBypass'] is False
+          assert j['drmRequestExecuted'] is False
+          assert j['decryptionActionExecuted'] is False
+          assert j['crossSourceSemanticStitching'] is False
+          print('Yang Jihun 2025 identity discovery boundary verified')
+          PY
+      - name: Upload discovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yang-jihun-2025-public-identity-evidence
+          path: |
+            acquisition-yang-jihun-2025/report.json
+            acquisition-yang-jihun-2025/riss-title-search-*.html
+            acquisition-yang-jihun-2025/riss-detail.html
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
