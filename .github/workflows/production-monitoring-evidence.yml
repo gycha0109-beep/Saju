@@ -1,0 +1,287 @@
+name: Production Monitoring Evidence
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/production-monitoring-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-saju-cloud-run
+  cancel-in-progress: false
+
+env:
+  GCP_REGION: asia-southeast1
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+  GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+
+jobs:
+  collect:
+    name: Collect read-only Cloud Monitoring evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production-saju
+
+    steps:
+      - name: Validate production observation variables
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in GCP_PROJECT_ID GCP_WORKLOAD_IDENTITY_PROVIDER GCP_DEPLOYER_SERVICE_ACCOUNT GCP_CLOUD_RUN_SERVICE; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required production observation variable: ${name}." >&2
+              exit 1
+            fi
+          done
+          if [[ ! "$GCP_CLOUD_RUN_SERVICE" =~ ^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$ ]]; then
+            echo 'GCP_CLOUD_RUN_SERVICE is not a valid Cloud Run service name.' >&2
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+
+      - name: Capture immutable Production Cloud Run context
+        id: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          service_json="${RUNNER_TEMP}/monitoring-cloud-run-service.json"
+          revision_json="${RUNNER_TEMP}/monitoring-cloud-run-revision.json"
+
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format=json > "$service_json"
+
+          active_revision_count="$(jq -r '[.status.traffic[]? | select((.percent // 0) > 0) | (.revisionName // empty)] | unique | length' "$service_json")"
+          active_revision="$(jq -r '[.status.traffic[]? | select((.percent // 0) > 0) | (.revisionName // empty)] | unique | .[0] // empty' "$service_json")"
+          traffic_total="$(jq -r '[.status.traffic[]? | (.percent // 0)] | add // 0' "$service_json")"
+
+          if [ "$active_revision_count" != '1' ] || [ "$traffic_total" != '100' ] || [ -z "$active_revision" ]; then
+            echo 'Monitoring evidence requires exactly one active Cloud Run revision carrying 100 percent total traffic.' >&2
+            exit 1
+          fi
+
+          gcloud run revisions describe "$active_revision" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format=json > "$revision_json"
+
+          image_ref="$(jq -r '.spec.containers[0].image // empty' "$revision_json")"
+          if [[ ! "$image_ref" =~ @sha256:[0-9a-f]{64}$ ]]; then
+            echo 'Active revision is not bound to a digest-qualified image reference.' >&2
+            exit 1
+          fi
+
+          echo "active_revision=$active_revision" >> "$GITHUB_OUTPUT"
+          echo "image_ref=$image_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Read Cloud Monitoring alert policies and notification channels
+        id: monitoring
+        shell: bash
+        env:
+          ACTIVE_REVISION: ${{ steps.target.outputs.active_revision }}
+          IMAGE_REF: ${{ steps.target.outputs.image_ref }}
+        run: |
+          set -euo pipefail
+          evidence_dir="${RUNNER_TEMP}/production-monitoring-evidence"
+          raw_policies="${RUNNER_TEMP}/monitoring-policies-raw.json"
+          raw_channels="${RUNNER_TEMP}/monitoring-channels-raw.json"
+          evidence_json="${evidence_dir}/saju-production-monitoring-evidence.json"
+          evidence_md="${evidence_dir}/saju-production-monitoring-evidence.md"
+          mkdir -p "$evidence_dir"
+
+          captured_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          gcloud monitoring policies list --project "$GCP_PROJECT_ID" --format=json > "$raw_policies"
+          gcloud monitoring channels list --project "$GCP_PROJECT_ID" --format=json > "$raw_channels"
+
+          jq -n \
+            --arg capturedAt "$captured_at" \
+            --arg projectId "$GCP_PROJECT_ID" \
+            --arg region "$GCP_REGION" \
+            --arg service "$GCP_CLOUD_RUN_SERVICE" \
+            --arg revision "$ACTIVE_REVISION" \
+            --arg imageRef "$IMAGE_REF" \
+            --slurpfile policies "$raw_policies" \
+            --slurpfile channels "$raw_channels" '
+              def condition_text($p):
+                [$p.conditions[]? |
+                  if .conditionThreshold then (.conditionThreshold.filter // "")
+                  elif .conditionAbsent then (.conditionAbsent.filter // "")
+                  elif .conditionMonitoringQueryLanguage then (.conditionMonitoringQueryLanguage.query // "")
+                  elif .conditionPrometheusQueryLanguage then (.conditionPrometheusQueryLanguage.query // "")
+                  elif .conditionMatchedLog then (.conditionMatchedLog.filter // "")
+                  else ""
+                  end
+                ] | join(" ");
+              def condition_safe:
+                if .conditionThreshold then {
+                  displayName: (.displayName // ""),
+                  type: "metric_threshold",
+                  filter: (.conditionThreshold.filter // ""),
+                  comparison: (.conditionThreshold.comparison // ""),
+                  thresholdValue: (.conditionThreshold.thresholdValue // null),
+                  duration: (.conditionThreshold.duration // ""),
+                  trigger: (.conditionThreshold.trigger // null),
+                  aggregations: (.conditionThreshold.aggregations // [])
+                }
+                elif .conditionAbsent then {
+                  displayName: (.displayName // ""),
+                  type: "metric_absence",
+                  filter: (.conditionAbsent.filter // ""),
+                  duration: (.conditionAbsent.duration // ""),
+                  trigger: (.conditionAbsent.trigger // null),
+                  aggregations: (.conditionAbsent.aggregations // [])
+                }
+                elif .conditionMonitoringQueryLanguage then {
+                  displayName: (.displayName // ""),
+                  type: "mql",
+                  query: (.conditionMonitoringQueryLanguage.query // ""),
+                  duration: (.conditionMonitoringQueryLanguage.duration // ""),
+                  trigger: (.conditionMonitoringQueryLanguage.trigger // null)
+                }
+                elif .conditionPrometheusQueryLanguage then {
+                  displayName: (.displayName // ""),
+                  type: "promql",
+                  query: (.conditionPrometheusQueryLanguage.query // ""),
+                  duration: (.conditionPrometheusQueryLanguage.duration // "")
+                }
+                elif .conditionMatchedLog then {
+                  displayName: (.displayName // ""),
+                  type: "log_match",
+                  filter: (.conditionMatchedLog.filter // "")
+                }
+                else {
+                  displayName: (.displayName // ""),
+                  type: "unknown"
+                }
+                end;
+              ($policies[0] // []) as $policyList |
+              ($channels[0] // []) as $channelList |
+              [$policyList[] | . as $p |
+                (condition_text($p)) as $text |
+                (($text | test("cloud_run_revision|run\\.googleapis\\.com"; "i"))) as $cloudRunTargeted |
+                (($text | test("service_name"; "i"))) as $hasServiceMatcher |
+                (($text | contains($service))) as $serviceSpecific |
+                {
+                  name: ($p.name // ""),
+                  displayName: ($p.displayName // ""),
+                  enabled: ($p.enabled // true),
+                  combiner: ($p.combiner // ""),
+                  notificationChannels: ($p.notificationChannels // []),
+                  cloudRunTargeted: $cloudRunTargeted,
+                  hasServiceMatcher: $hasServiceMatcher,
+                  serviceSpecific: $serviceSpecific,
+                  coversCurrentService: ($cloudRunTargeted and ($serviceSpecific or ($hasServiceMatcher | not))),
+                  conditions: [($p.conditions[]? | condition_safe)]
+                }
+              ] as $safePolicies |
+              [$channelList[] | {
+                name: (.name // ""),
+                type: (.type // ""),
+                verificationStatus: (.verificationStatus // "")
+              }] as $safeChannels |
+              [$safePolicies[] | select(.enabled == true and .coversCurrentService == true)] as $coveringPolicies |
+              ([$coveringPolicies[].notificationChannels[]?] | unique) as $referencedChannels |
+              ([$safeChannels[].name] | unique) as $existingChannelNames |
+              ($referencedChannels - $existingChannelNames) as $missingChannelRefs |
+              {
+                schemaVersion: 1,
+                capturedAtUtc: $capturedAt,
+                providerEvidenceReadable: true,
+                target: {
+                  projectId: $projectId,
+                  region: $region,
+                  service: $service,
+                  activeRevision: $revision,
+                  imageRef: $imageRef,
+                  trafficPercent: 100
+                },
+                classification: {
+                  totalAlertPolicyCount: ($safePolicies | length),
+                  enabledCloudRunPolicyCount: ([$safePolicies[] | select(.enabled == true and .cloudRunTargeted == true)] | length),
+                  currentServiceCoveringPolicyCount: ($coveringPolicies | length),
+                  referencedNotificationChannelCount: ($referencedChannels | length),
+                  unresolvedNotificationChannelReferenceCount: ($missingChannelRefs | length),
+                  ownerOnCallEvidence: "repo_not_proven",
+                  monitoringReadiness: (
+                    if (($coveringPolicies | length) > 0 and ($referencedChannels | length) > 0 and ($missingChannelRefs | length) == 0)
+                    then "provider_alert_path_present_owner_oncall_not_proven"
+                    else "not_proven"
+                    end
+                  ),
+                  coverageDetection: "condition filter/query heuristic: Cloud Run metric/resource plus exact service matcher, or project-wide Cloud Run condition without service_name matcher"
+                },
+                coveringPolicies: $coveringPolicies,
+                referencedChannels: [$safeChannels[] | select(.name as $name | $referencedChannels | index($name))],
+                unresolvedNotificationChannelReferences: $missingChannelRefs,
+                nonClaims: [
+                  "Evidence collection success is not Monitoring Ready certification.",
+                  "Notification channel labels, destinations, and secrets are intentionally omitted.",
+                  "Human owner/on-call assignment is not inferred from provider configuration.",
+                  "This workflow performs no Monitoring, Cloud Run, traffic, IAM, or Secret Manager mutation."
+                ]
+              }
+            ' > "$evidence_json"
+
+          rm -f "$raw_policies" "$raw_channels"
+
+          {
+            echo '## Saju Production Cloud Monitoring evidence'
+            echo
+            echo "- captured UTC: \`$(jq -r '.capturedAtUtc' "$evidence_json")\`"
+            echo "- active revision: \`$(jq -r '.target.activeRevision' "$evidence_json")\`"
+            echo "- image ref: \`$(jq -r '.target.imageRef' "$evidence_json")\`"
+            echo "- total alert policies: \`$(jq -r '.classification.totalAlertPolicyCount' "$evidence_json")\`"
+            echo "- enabled Cloud Run policies: \`$(jq -r '.classification.enabledCloudRunPolicyCount' "$evidence_json")\`"
+            echo "- policies covering current service: \`$(jq -r '.classification.currentServiceCoveringPolicyCount' "$evidence_json")\`"
+            echo "- referenced notification channels: \`$(jq -r '.classification.referencedNotificationChannelCount' "$evidence_json")\`"
+            echo "- unresolved channel references: \`$(jq -r '.classification.unresolvedNotificationChannelReferenceCount' "$evidence_json")\`"
+            echo "- owner/on-call evidence: \`$(jq -r '.classification.ownerOnCallEvidence' "$evidence_json")\`"
+            echo "- monitoring readiness: \`$(jq -r '.classification.monitoringReadiness' "$evidence_json")\`"
+            echo
+            echo '### Covering policies'
+            if [ "$(jq -r '.classification.currentServiceCoveringPolicyCount' "$evidence_json")" = '0' ]; then
+              echo '- none found'
+            else
+              jq -r '.coveringPolicies[] | "- `" + .name + "` — " + .displayName + " — enabled=" + (.enabled|tostring) + " — serviceSpecific=" + (.serviceSpecific|tostring)' "$evidence_json"
+            fi
+            echo
+            echo '### Boundary'
+            echo '- provider read success is evidence collection only; it is not Monitoring Ready certification'
+            echo '- notification destinations and labels are intentionally redacted'
+            echo '- human owner/on-call assignment remains unproven unless separately evidenced'
+            echo '- this workflow is read-only and performs no Production mutation'
+          } > "$evidence_md"
+
+          cat "$evidence_md" >> "$GITHUB_STEP_SUMMARY"
+          echo "evidence_json=$evidence_json" >> "$GITHUB_OUTPUT"
+          echo "evidence_md=$evidence_md" >> "$GITHUB_OUTPUT"
+
+      - name: Upload sanitized monitoring evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: saju-production-monitoring-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/production-monitoring-evidence/
+          if-no-files-found: warn
+          retention-days: 30
