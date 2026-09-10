@@ -47,14 +47,14 @@ jobs:
           fi
 
       - name: Authenticate to Google Cloud using Workload Identity Federation
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
           workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
 
       - name: Set up Google Cloud SDK 583.0.0
-        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
           version: '583.0.0'
@@ -102,17 +102,109 @@ jobs:
           ACTIVE_REVISION: ${{ steps.target.outputs.active_revision }}
           IMAGE_REF: ${{ steps.target.outputs.image_ref }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           evidence_dir="${RUNNER_TEMP}/production-monitoring-evidence"
           raw_policies="${RUNNER_TEMP}/monitoring-policies-raw.json"
           raw_channels="${RUNNER_TEMP}/monitoring-channels-raw.json"
+          policy_error="${RUNNER_TEMP}/monitoring-policies-error.txt"
+          channel_error="${RUNNER_TEMP}/monitoring-channels-error.txt"
           evidence_json="${evidence_dir}/saju-production-monitoring-evidence.json"
           evidence_md="${evidence_dir}/saju-production-monitoring-evidence.md"
           mkdir -p "$evidence_dir"
 
           captured_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          gcloud monitoring policies list --project "$GCP_PROJECT_ID" --format=json > "$raw_policies"
-          gcloud monitoring channels list --project "$GCP_PROJECT_ID" --format=json > "$raw_channels"
+
+          gcloud monitoring policies list --project "$GCP_PROJECT_ID" --format=json > "$raw_policies" 2> "$policy_error"
+          policy_rc=$?
+
+          channel_rc=0
+          if [ "$policy_rc" -eq 0 ]; then
+            gcloud monitoring channels list --project "$GCP_PROJECT_ID" --format=json > "$raw_channels" 2> "$channel_error"
+            channel_rc=$?
+          fi
+
+          if [ "$policy_rc" -ne 0 ] || [ "$channel_rc" -ne 0 ]; then
+            if [ "$policy_rc" -ne 0 ]; then
+              failure_stage='alert_policies'
+              failure_rc="$policy_rc"
+              failure_file="$policy_error"
+            else
+              failure_stage='notification_channels'
+              failure_rc="$channel_rc"
+              failure_file="$channel_error"
+            fi
+
+            failure_category='provider_read_failed'
+            if grep -Eqi 'does not have permission|permission denied|PERMISSION_DENIED' "$failure_file"; then
+              failure_category='permission_denied'
+            elif grep -Eqi 'not found|does not exist' "$failure_file"; then
+              failure_category='resource_not_found_or_hidden'
+            fi
+
+            jq -n \
+              --arg capturedAt "$captured_at" \
+              --arg projectId "$GCP_PROJECT_ID" \
+              --arg region "$GCP_REGION" \
+              --arg service "$GCP_CLOUD_RUN_SERVICE" \
+              --arg revision "$ACTIVE_REVISION" \
+              --arg imageRef "$IMAGE_REF" \
+              --arg stage "$failure_stage" \
+              --arg category "$failure_category" \
+              --argjson exitCode "$failure_rc" '
+                {
+                  schemaVersion: 2,
+                  capturedAtUtc: $capturedAt,
+                  providerEvidenceReadable: false,
+                  target: {
+                    projectId: $projectId,
+                    region: $region,
+                    service: $service,
+                    activeRevision: $revision,
+                    imageRef: $imageRef,
+                    trafficPercent: 100
+                  },
+                  readFailure: {
+                    stage: $stage,
+                    category: $category,
+                    exitCode: $exitCode,
+                    rawProviderErrorRetained: false
+                  },
+                  classification: {
+                    ownerOnCallEvidence: "repo_not_proven",
+                    monitoringReadiness: "not_proven"
+                  },
+                  nonClaims: [
+                    "A provider read failure is not evidence that no alert policy exists.",
+                    "Provider error text is intentionally not retained in the artifact.",
+                    "Human owner/on-call assignment remains unproven unless separately evidenced.",
+                    "This workflow performs no Monitoring, Cloud Run, traffic, IAM, or Secret Manager mutation."
+                  ]
+                }
+              ' > "$evidence_json"
+
+            {
+              echo '## Saju Production Cloud Monitoring evidence'
+              echo
+              echo "- captured UTC: \`$(jq -r '.capturedAtUtc' "$evidence_json")\`"
+              echo "- active revision: \`$(jq -r '.target.activeRevision' "$evidence_json")\`"
+              echo "- image ref: \`$(jq -r '.target.imageRef' "$evidence_json")\`"
+              echo '- provider evidence readable: `false`'
+              echo "- failure stage: \`$(jq -r '.readFailure.stage' "$evidence_json")\`"
+              echo "- failure category: \`$(jq -r '.readFailure.category' "$evidence_json")\`"
+              echo "- provider exit code: \`$(jq -r '.readFailure.exitCode' "$evidence_json")\`"
+              echo '- owner/on-call evidence: `repo_not_proven`'
+              echo '- monitoring readiness: `not_proven`'
+              echo
+              echo '### Boundary'
+              echo '- the failed read does not prove that no provider alert policy exists'
+              echo '- raw provider error text is not retained in the artifact'
+              echo '- this workflow remains read-only and performs no Production mutation'
+            } > "$evidence_md"
+
+            rm -f "$raw_policies" "$raw_channels" "$policy_error" "$channel_error"
+            cat "$evidence_md" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
 
           jq -n \
             --arg capturedAt "$captured_at" \
@@ -205,7 +297,7 @@ jobs:
               ([$safeChannels[].name] | unique) as $existingChannelNames |
               ($referencedChannels - $existingChannelNames) as $missingChannelRefs |
               {
-                schemaVersion: 1,
+                schemaVersion: 2,
                 capturedAtUtc: $capturedAt,
                 providerEvidenceReadable: true,
                 target: {
@@ -243,7 +335,7 @@ jobs:
               }
             ' > "$evidence_json"
 
-          rm -f "$raw_policies" "$raw_channels"
+          rm -f "$raw_policies" "$raw_channels" "$policy_error" "$channel_error"
 
           {
             echo '## Saju Production Cloud Monitoring evidence'
@@ -251,6 +343,7 @@ jobs:
             echo "- captured UTC: \`$(jq -r '.capturedAtUtc' "$evidence_json")\`"
             echo "- active revision: \`$(jq -r '.target.activeRevision' "$evidence_json")\`"
             echo "- image ref: \`$(jq -r '.target.imageRef' "$evidence_json")\`"
+            echo '- provider evidence readable: `true`'
             echo "- total alert policies: \`$(jq -r '.classification.totalAlertPolicyCount' "$evidence_json")\`"
             echo "- enabled Cloud Run policies: \`$(jq -r '.classification.enabledCloudRunPolicyCount' "$evidence_json")\`"
             echo "- policies covering current service: \`$(jq -r '.classification.currentServiceCoveringPolicyCount' "$evidence_json")\`"
@@ -274,14 +367,12 @@ jobs:
           } > "$evidence_md"
 
           cat "$evidence_md" >> "$GITHUB_STEP_SUMMARY"
-          echo "evidence_json=$evidence_json" >> "$GITHUB_OUTPUT"
-          echo "evidence_md=$evidence_md" >> "$GITHUB_OUTPUT"
 
       - name: Upload sanitized monitoring evidence
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: saju-production-monitoring-evidence-${{ github.run_id }}
           path: ${{ runner.temp }}/production-monitoring-evidence/
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 30
