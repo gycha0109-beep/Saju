@@ -1,0 +1,65 @@
+name: Relationship Spouse T8 Song Jaewoo 2023 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-song-jaewoo-2023-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-song-jaewoo-2023-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Recover exact identity and follow public fulltext routes
+        run: python scripts/acquire-relationship-spouse-t8-song-jaewoo-2023-public-fulltext.py
+      - name: Enforce exact identity public-body and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-song-jaewoo-2023/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']
+          assert c['author']=='송재우'
+          assert c['year']==2023
+          assert c['rissId']=='T16680125'
+          assert c['uci']=='I804:44032-200000668457'
+          assert c['uciDcollectionItemId']=='200000668457'
+          assert j['exactDcollectionIdentityConfirmed'] is True or j['exactRissIdentityConfirmed'] is True
+          assert j['publicPdfAcquired'] is True
+          d=j['dcollection']
+          assert d['exactItemIdentityVerifiedBeforePdfFollow'] is True
+          pdf=j['publicPdf']
+          assert pdf['isPdf'] is True
+          assert pdf['pdfHeader'].startswith('%PDF-')
+          assert pdf['bytes'] > 500000
+          assert p['guessedOpaqueIdentifierCount']==0
+          assert p['uciSuffixUsedAsExplicitPublishedItemIdentifier'] is True
+          assert p['loginBypass'] is False
+          assert p['institutionAuthBypass'] is False
+          assert p['paywallBypass'] is False
+          assert p['drmRequestExecuted'] is False
+          assert p['decryptionActionExecuted'] is False
+          print('Song Jaewoo 2023 exact public PDF body acquired without access-control bypass')
+          PY
+      - name: Upload bounded acquisition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: song-jaewoo-2023-public-fulltext-acquisition-evidence
+          path: |
+            acquisition-song-jaewoo-2023/report.json
+            acquisition-song-jaewoo-2023/*.html
+            acquisition-song-jaewoo-2023/*.pdf
+            acquisition-song-jaewoo-2023/*.bin
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
