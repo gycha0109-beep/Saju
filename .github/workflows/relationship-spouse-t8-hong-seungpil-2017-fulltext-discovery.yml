@@ -71,7 +71,8 @@ jobs:
           form={k:value(k) for k in ['control_no','p_mat_type','p_submat_type','fulltext_kind']}
           assert form['control_no']=='8ebdb4487e4de984ffe0bdc3ef48d419',form
           assert form['p_mat_type']=='be54d9b8bc7cdb09',form
-          assert form['p_submat_type'] and form['fulltext_kind'],form
+          assert form['p_submat_type']=='f1a8c7a1de0e08b8',form
+          assert form['fulltext_kind']=='',form
 
           boundary={
               'candidate':{
@@ -134,12 +135,14 @@ jobs:
           assert c['control']=='8ebdb4487e4de984ffe0bdc3ef48d419'
           assert j['formTuple']['control_no']=='8ebdb4487e4de984ffe0bdc3ef48d419'
           assert j['formTuple']['p_mat_type']=='be54d9b8bc7cdb09'
+          assert j['formTuple']['p_submat_type']=='f1a8c7a1de0e08b8'
           assert j['guessedOpaqueIdentifierCount']==0
           assert j['loginBypass'] is False and j['institutionAuthBypass'] is False and j['paywallBypass'] is False
           assert j['drmRequestExecuted'] is False and j['decryptionActionExecuted'] is False
           assert j.get('tlsVerificationDisabled',False) is False
           assert j['crossSourceSemanticStitching'] is False
           if j['semanticDisposition']=='PUBLIC_ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION':
+              assert j['formTuple']['fulltext_kind']==''
               assert j['rissAuthoredDcollectionUrl']=='https://kongju.dcollection.net/common/orgView/200000999222'
               assert 'CERTIFICATE_VERIFY_FAILED' in j['strictTlsError']
           print('Hong Seungpil 2017 exact RISS/no-bypass public route verified')
