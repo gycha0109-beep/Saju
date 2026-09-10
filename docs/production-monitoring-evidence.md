@@ -8,19 +8,28 @@ The workflow is evidence collection, not alert provisioning. It does not create,
 
 ## Evidence collected
 
-Each successful collection binds the snapshot to:
+Each collection binds the snapshot to:
 
 - UTC capture timestamp,
 - Google Cloud project and region,
 - exact currently serving Cloud Run revision,
 - exact digest-qualified serving image,
-- 100 percent serving traffic state,
+- 100 percent serving traffic state.
+
+When provider reads succeed, the artifact additionally records:
+
 - current alerting policies readable through Cloud Monitoring,
 - policy condition filters/queries and threshold configuration,
 - notification-channel resource references,
 - referenced channel type and verification status.
 
 Notification-channel destination labels and destination values are intentionally excluded from retained artifacts.
+
+## Failed provider reads
+
+A Cloud Monitoring API read failure is retained as a sanitized evidence artifact and the workflow still fails. The artifact records only the failed read stage, a bounded failure category, the provider command exit code, and the immutable Cloud Run target context. Raw provider error text is not retained.
+
+A failed read does not prove that no alert policy or notification channel exists. It proves only that the configured production observation identity could not complete the requested provider read at that UTC capture time.
 
 ## Coverage classification
 
