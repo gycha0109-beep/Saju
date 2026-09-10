@@ -95,14 +95,12 @@ const RESPONSE_STATE_CONTRACT = Object.freeze({
 const RESPONSE_STATES = Object.freeze(
   Object.keys(RESPONSE_STATE_CONTRACT) as readonly ProductReadingResponseState[],
 );
-
 const DIAGNOSTICS = [
   'target_person_required',
   'request_text_required',
   'question_text_required',
   'request_not_recognized',
 ] as const;
-
 const CLARIFICATION_DOMAINS = [
   'general',
   'family',
@@ -114,7 +112,6 @@ const CLARIFICATION_DOMAINS = [
   'life_stage',
   'question_specific',
 ] as const;
-
 const TEMPORAL_SCOPES = ['natal', 'annual', 'monthly', 'life_stage'] as const;
 const RELATIONSHIP_SCOPES = ['general', 'parents', 'children', 'spouse'] as const;
 const DISPLAY_FACT_STATUSES = ['resolved', 'ambiguous', 'unavailable'] as const;
@@ -203,7 +200,6 @@ function assertCalculationSummary(value: unknown, field: string): void {
   assertDisplayFact(value.pillars.month, `${field}.pillars.month`);
   assertDisplayFact(value.pillars.day, `${field}.pillars.day`);
   assertDisplayFact(value.pillars.hour, `${field}.pillars.hour`);
-
   if (value.calendar !== undefined) assertDisplayFactArray(value.calendar, `${field}.calendar`);
   if (value.fiveElements !== undefined) {
     assertDisplayFactArray(value.fiveElements, `${field}.fiveElements`);
@@ -212,7 +208,6 @@ function assertCalculationSummary(value: unknown, field: string): void {
   if (value.luckPillars !== undefined) {
     assertDisplayFactArray(value.luckPillars, `${field}.luckPillars`);
   }
-
   if (value.ambiguity !== undefined) {
     assertArray(value.ambiguity, `${field}.ambiguity`);
     value.ambiguity.forEach((item, index) => {
@@ -237,7 +232,6 @@ function assertPairArray(value: unknown, field: string, valueField: 'text' | 'va
 function assertReadingBlock(value: unknown, field: string): void {
   assertRecord(value, field);
   assertNonEmptyString(value.type, `${field}.type`);
-
   switch (value.type) {
     case 'paragraph':
     case 'source_hint':
@@ -280,17 +274,19 @@ function assertReadingSection(value: unknown, field: string): void {
 function assertReading(value: unknown, field: string): void {
   assertRecord(value, field);
   assertNonEmptyString(value.readingId, `${field}.readingId`);
-
   assertRecord(value.brand, `${field}.brand`);
   if (value.brand.brandId !== 'myeonghwa' || value.brand.displayName !== '명화') {
     throw new TypeError(`${field}.brand must be the canonical Myeonghwa brand.`);
   }
-
   assertRecord(value.subject, `${field}.subject`);
   assertOptionalNonEmptyString(value.subject.displayLabel, `${field}.subject.displayLabel`);
   assertRecord(value.subject.birthInputDisplay, `${field}.subject.birthInputDisplay`);
   const birth = value.subject.birthInputDisplay;
-  assertEnum(birth.calendarType, ['solar', 'lunar'] as const, `${field}.subject.birthInputDisplay.calendarType`);
+  assertEnum(
+    birth.calendarType,
+    ['solar', 'lunar'] as const,
+    `${field}.subject.birthInputDisplay.calendarType`,
+  );
   assertNonEmptyString(birth.date, `${field}.subject.birthInputDisplay.date`);
   assertOptionalNonEmptyString(birth.time, `${field}.subject.birthInputDisplay.time`);
   assertBoolean(birth.timeKnown, `${field}.subject.birthInputDisplay.timeKnown`);
@@ -302,14 +298,11 @@ function assertReading(value: unknown, field: string): void {
     `${field}.subject.birthInputDisplay.birthplaceLabel`,
   );
   assertEnum(value.subject.calculationState, CALCULATION_STATES, `${field}.subject.calculationState`);
-
   assertCalculationSummary(value.calculationSummary, `${field}.calculationSummary`);
-
   assertArray(value.sections, `${field}.sections`);
   value.sections.forEach((section, index) =>
     assertReadingSection(section, `${field}.sections[${index}]`),
   );
-
   assertArray(value.disclosures, `${field}.disclosures`);
   value.disclosures.forEach((disclosure, index) => {
     const disclosureField = `${field}.disclosures[${index}]`;
@@ -317,14 +310,12 @@ function assertReading(value: unknown, field: string): void {
     assertEnum(disclosure.type, DISCLOSURE_TYPES, `${disclosureField}.type`);
     assertNonEmptyString(disclosure.text, `${disclosureField}.text`);
   });
-
   assertNonEmptyString(value.generatedAt, `${field}.generatedAt`);
 }
 
 function assertClarification(value: unknown, field: string): void {
   assertRecord(value, field);
   assertEnum(value.kind, ['domain', 'temporal_scope', 'request'] as const, `${field}.kind`);
-
   if (value.options === undefined) return;
   if (value.kind !== 'domain') {
     throw new TypeError(`${field}.options is only valid for domain clarification.`);
@@ -333,7 +324,6 @@ function assertClarification(value: unknown, field: string): void {
   if (value.options.length < 2) {
     throw new RangeError(`${field}.options must contain at least two domain candidates.`);
   }
-
   value.options.forEach((option, index) => {
     const optionField = `${field}.options[${index}]`;
     assertRecord(option, optionField);
@@ -349,7 +339,10 @@ function assertCoverage(value: unknown, field: string): void {
   assertRecord(value, field);
   assertEnum(value.state, ['partial', 'insufficient', 'unsupported'] as const, `${field}.state`);
   assertBoolean(value.hasAvailableEvidence, `${field}.hasAvailableEvidence`);
-  if (!Number.isInteger(value.missingRequirementCount) || (value.missingRequirementCount as number) < 0) {
+  if (
+    !Number.isInteger(value.missingRequirementCount) ||
+    (value.missingRequirementCount as number) < 0
+  ) {
     throw new RangeError(`${field}.missingRequirementCount must be a non-negative integer.`);
   }
 }
@@ -380,7 +373,6 @@ export function assertProductReadingResponse(
   ) {
     throw new TypeError('ProductReadingResponse.responseId is invalid.');
   }
-
   assertEnum(value.state, RESPONSE_STATES, 'ProductReadingResponse.state');
   const contract = RESPONSE_STATE_CONTRACT[value.state];
   if (value.messageCode !== contract.messageCode) {
@@ -389,7 +381,6 @@ export function assertProductReadingResponse(
   if (value.requiredAction !== contract.requiredAction) {
     throw new TypeError('ProductReadingResponse.requiredAction does not match response state.');
   }
-
   assertPayloadPolicy(value.reading, 'ProductReadingResponse.reading', contract.reading);
   assertPayloadPolicy(
     value.clarification,
@@ -402,13 +393,14 @@ export function assertProductReadingResponse(
     'ProductReadingResponse.consumerDiagnostics',
     contract.consumerDiagnostics,
   );
-
   if (value.reading !== undefined) assertReading(value.reading, 'ProductReadingResponse.reading');
   if (value.clarification !== undefined) {
     assertClarification(value.clarification, 'ProductReadingResponse.clarification');
   }
   if (value.coverage !== undefined) {
-    assertCoverage(value.coverage, 'ProductReadingResponse.coverage');
+    const coverage = value.coverage;
+    assertRecord(coverage, 'ProductReadingResponse.coverage');
+    assertCoverage(coverage, 'ProductReadingResponse.coverage');
     const expectedCoverageState =
       value.state === 'partial_evidence'
         ? 'partial'
@@ -417,7 +409,7 @@ export function assertProductReadingResponse(
           : value.state === 'unsupported_intent'
             ? 'unsupported'
             : undefined;
-    if (expectedCoverageState !== undefined && value.coverage.state !== expectedCoverageState) {
+    if (expectedCoverageState !== undefined && coverage.state !== expectedCoverageState) {
       throw new TypeError('ProductReadingResponse.coverage.state does not match response state.');
     }
   }
