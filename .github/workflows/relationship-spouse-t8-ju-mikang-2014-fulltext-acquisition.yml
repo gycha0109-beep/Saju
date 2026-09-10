@@ -1,0 +1,113 @@
+name: Relationship Spouse T8 Ju Mikang 2014 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-ju-mikang-2014-riss-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-ju-mikang-2014-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-current-public-riss:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install bounded PDF reader
+        run: python -m pip install --disable-pip-version-check pypdf==6.0.0
+      - name: Follow exact RISS page-authored public route
+        run: python scripts/acquire-relationship-spouse-t8-ju-mikang-2014-riss-public-fulltext.py
+      - name: Content-address exact PDF and extract locator text
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          from pypdf import PdfReader
+          root=Path('acquisition-ju-mikang-2014')
+          report=json.loads((root/'report.json').read_text(encoding='utf-8'))
+          pdf=root/'candidate.pdf'
+          meta={'observed':pdf.exists(),'pages':0,'encrypted':None,'textChars':0,'sha256':None,'bytes':0}
+          if pdf.exists():
+              raw=pdf.read_bytes()
+              reader=PdfReader(str(pdf))
+              texts=[]
+              for i,page in enumerate(reader.pages,start=1):
+                  texts.append(f'\n===== PHYSICAL_PDF_PAGE_{i} =====\n{page.extract_text() or ""}')
+              full=''.join(texts)
+              (root/'candidate.txt').write_text(full,encoding='utf-8')
+              meta.update({'pages':len(reader.pages),'encrypted':bool(reader.is_encrypted),'textChars':len(full),'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)})
+              report['pdfMetadata']=meta
+              report['fullLengthPdfAcquired']=len(reader.pages)>=70 and len(full)>15000
+              report['semanticDisposition']='DIRECT_BODY_READY_FOR_RENDER_REVIEW' if report['fullLengthPdfAcquired'] else 'PARTIAL_PDF_ONLY_NO_BODY_DECISION'
+          else:
+              report['pdfMetadata']=meta
+              report['fullLengthPdfAcquired']=False
+              report['semanticDisposition']='ACCESS_BOUNDARY_ONLY_NO_BODY_LEVEL_DECISION'
+          (root/'pdf-metadata.json').write_text(json.dumps(meta,ensure_ascii=False,indent=2),encoding='utf-8')
+          (root/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(meta,ensure_ascii=False,indent=2))
+          print('fullLengthPdfAcquired=',report['fullLengthPdfAcquired'])
+          PY
+      - name: Print spouse semantic locator contexts only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('acquisition-ju-mikang-2014/candidate.txt')
+          if not p.exists():
+              print('No complete body; semantic review intentionally skipped.')
+              raise SystemExit(0)
+          t=p.read_text(encoding='utf-8')
+          for term in ['배우자','배우자궁','배우자성','일지','日支','남자','여자','남편','아내','처','妻','夫','재성','財星','관성','官星','육신','용신','궁합']:
+              print(f'\n### TERM {term}')
+              shown=0
+              for m in re.finditer(re.escape(term),t,re.I):
+                  print(re.sub(r'\s+',' ',t[max(0,m.start()-350):min(len(t),m.end()+800)]))
+                  shown+=1
+                  if shown>=8: break
+              print('COUNT_SHOWN',shown)
+          PY
+      - name: Enforce exact identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-ju-mikang-2014/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']
+          assert c['title']=='자평사주 궁합론 연구'
+          assert c['author']=='주미강'
+          assert c['year']==2014
+          assert c['rissId']=='T13562621'
+          assert c['rissControl']=='25a5a7cc644554ffffe0bdc3ef48d419'
+          assert p['guessedOpaqueIdentifierCount']==0
+          assert p['loginBypass'] is False
+          assert p['institutionAuthBypass'] is False
+          assert p['paywallBypass'] is False
+          assert p['drmRequestExecuted'] is False
+          assert p['decryptionActionExecuted'] is False
+          assert p['accessControlBypass'] is False
+          print('Ju Mikang 2014 exact identity + no-bypass boundary verified')
+          PY
+      - name: Upload bounded acquisition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ju-mikang-2014-bounded-fulltext-evidence
+          path: |
+            acquisition-ju-mikang-2014/report.json
+            acquisition-ju-mikang-2014/pdf-metadata.json
+            acquisition-ju-mikang-2014/riss-*.html
+            acquisition-ju-mikang-2014/riss-*.js
+            acquisition-ju-mikang-2014/dcollection-*.html
+            acquisition-ju-mikang-2014/ju-mikang-2014-fulltext.pdf
+            acquisition-ju-mikang-2014/candidate.pdf
+            acquisition-ju-mikang-2014/candidate.txt
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
