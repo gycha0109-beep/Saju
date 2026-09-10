@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/acquire-relationship-spouse-t8-song-jaewoo-2023-public-fulltext.py'
+      - 'scripts/follow-relationship-spouse-t8-song-jaewoo-2023-riss-dcollection.py'
       - '.github/workflows/relationship-spouse-t8-song-jaewoo-2023-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -21,6 +22,8 @@ jobs:
           python-version: '3.12'
       - name: Recover exact identity and follow public fulltext routes
         run: python scripts/acquire-relationship-spouse-t8-song-jaewoo-2023-public-fulltext.py
+      - name: Follow exact RISS-authored dCollection target
+        run: python scripts/follow-relationship-spouse-t8-song-jaewoo-2023-riss-dcollection.py
       - name: Enforce exact identity public-body and no-bypass boundary
         run: |
           python - <<'PY'
@@ -33,11 +36,18 @@ jobs:
           assert c['rissId']=='T16680125'
           assert c['uci']=='I804:44032-200000668457'
           assert c['uciDcollectionItemId']=='200000668457'
-          assert j['exactDcollectionIdentityConfirmed'] is True or j['exactRissIdentityConfirmed'] is True
+          assert j['recoveredRissControl']=='105b810f6d2f3decffe0bdc3ef48d419'
+          assert j['exactRissIdentityConfirmed'] is True
+          assert j['exactDcollectionIdentityConfirmed'] is True
           assert j['publicPdfAcquired'] is True
           d=j['dcollection']
+          assert d['provenance']=='EXACT_RISS_DOWNLOADING_AUTHORED_AFTER_EXACT_RISS_IDENTITY'
+          assert d['itemId']=='200000668457'
           assert d['exactItemIdentityVerifiedBeforePdfFollow'] is True
+          assert d['identityBinding']['exactRissControl']=='105b810f6d2f3decffe0bdc3ef48d419'
+          assert d['identityBinding']['targetItemId']=='200000668457'
           pdf=j['publicPdf']
+          assert pdf['sourceContract']['itemId']=='200000668457'
           assert pdf['isPdf'] is True
           assert pdf['pdfHeader'].startswith('%PDF-')
           assert pdf['bytes'] > 500000
@@ -48,7 +58,7 @@ jobs:
           assert p['paywallBypass'] is False
           assert p['drmRequestExecuted'] is False
           assert p['decryptionActionExecuted'] is False
-          print('Song Jaewoo 2023 exact public PDF body acquired without access-control bypass')
+          print('Song Jaewoo 2023 exact public PDF body acquired through exact RISS-authored dCollection chain')
           PY
       - name: Upload bounded acquisition evidence
         if: always()
