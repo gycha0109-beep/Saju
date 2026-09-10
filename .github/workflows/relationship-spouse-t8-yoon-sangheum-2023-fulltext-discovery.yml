@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/discover-relationship-spouse-t8-yoon-sangheum-2023-public-fulltext.py'
+      - 'scripts/follow-relationship-spouse-t8-yoon-sangheum-2023-kci-authored-routes.py'
       - '.github/workflows/relationship-spouse-t8-yoon-sangheum-2023-fulltext-discovery.yml'
   workflow_dispatch:
 
@@ -21,29 +22,38 @@ jobs:
           python-version: '3.12'
       - name: Inspect exact KCI RISS KoreaScholar and DOI routes
         run: python scripts/discover-relationship-spouse-t8-yoon-sangheum-2023-public-fulltext.py
+      - name: Follow exact KCI-authored preview and RISS resolver routes
+        run: python scripts/follow-relationship-spouse-t8-yoon-sangheum-2023-kci-authored-routes.py
       - name: Enforce exact identity and no-bypass boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          p=Path('acquisition-yoon-sangheum-2023/report.json')
-          j=json.loads(p.read_text(encoding='utf-8'))
-          c=j['candidate']; policy=j['policy']
+          root=Path('acquisition-yoon-sangheum-2023')
+          j=json.loads((root/'report.json').read_text(encoding='utf-8'))
+          k=json.loads((root/'kci-authored-route-report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; policy=j['policy']; kp=k['policy']
           assert c['author']=='윤상흠'
           assert c['year']==2023
           assert c['doi']=='10.35203/EACT.2023.15.33'
           assert c['kciArticleId']=='ART003042567'
           assert c['rissControl']=='37b95c18ae24bef64884a65323211ff0'
           assert c['koreaScholarArticleId']=='428909'
-          assert policy['guessedOpaqueIdentifierCount']==0
-          assert policy['loginBypass'] is False
-          assert policy['institutionAuthBypass'] is False
-          assert policy['paywallBypass'] is False
-          assert policy['drmRequestExecuted'] is False
-          assert policy['decryptionActionExecuted'] is False
-          assert policy['onlySiteAuthoredPublicRoutesInspected'] is True
+          for p in (policy, kp):
+              assert p['guessedOpaqueIdentifierCount']==0
+              assert p['loginBypass'] is False
+              assert p['institutionAuthBypass'] is False
+              assert p['paywallBypass'] is False
+              assert p['drmRequestExecuted'] is False
+              assert p['decryptionActionExecuted'] is False
           assert j['semanticDisposition']=='ABSTRACT_ONLY_NO_SPOUSE_SELECTOR_ADMISSION_DECISION'
+          assert k['kciPageContract']['previewFunctionObserved'] is True
+          assert k['kciPageContract']['rissInfoPostObserved'] is True
+          assert k['kciPageContract']['scienceOnTabCommentedOut'] is True
           print('Yoon Sangheum 2023 exact identity and no-bypass discovery boundary verified')
+          print('publicBodyAcquired=', k['publicBodyAcquired'])
+          print('fulltextDisposition=', k['fulltextDisposition'])
+          print('semanticDisposition=', k['semanticDisposition'])
           PY
       - name: Upload bounded discovery evidence
         if: always()
@@ -52,7 +62,9 @@ jobs:
           name: yoon-sangheum-2023-public-fulltext-route-evidence
           path: |
             acquisition-yoon-sangheum-2023/report.json
+            acquisition-yoon-sangheum-2023/kci-authored-route-report.json
             acquisition-yoon-sangheum-2023/*-response.html
+            acquisition-yoon-sangheum-2023/*-response.xml
             acquisition-yoon-sangheum-2023/*-response.pdf
           if-no-files-found: warn
           retention-days: 1
