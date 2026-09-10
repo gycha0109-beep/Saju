@@ -1,0 +1,56 @@
+name: Relationship Spouse T8 Jeon Suhyun 2016 Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-jeon-suhyun-2016-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-jeon-suhyun-2016-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Discover exact RISS and NANET public contracts
+        run: python scripts/acquire-relationship-spouse-t8-jeon-suhyun-2016-public-fulltext.py
+      - name: Enforce exact identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-jeon-suhyun-2016/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']
+          assert c['author']=='전수현'
+          assert c['year']==2016
+          assert c['rissControl']=='648380763c455520ffe0bdc3ef48d419'
+          assert j['identityDisposition']=='EXACT_IDENTITY_CONFIRMED'
+          assert p['guessedOpaqueIdentifierCount']==0
+          assert p['loginBypass'] is False
+          assert p['institutionAuthBypass'] is False
+          assert p['paywallBypass'] is False
+          assert p['drmRequestExecuted'] is False
+          assert p['decryptionActionExecuted'] is False
+          assert p['onlySiteAuthoredPublicRoutesInspected'] is True
+          print('Jeon Suhyun 2016 exact identity and public-route boundary verified')
+          PY
+      - name: Upload bounded acquisition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jeon-suhyun-2016-public-fulltext-acquisition-evidence
+          path: |
+            acquisition-jeon-suhyun-2016/report.json
+            acquisition-jeon-suhyun-2016/*-response.html
+            acquisition-jeon-suhyun-2016/*-response.pdf
+            acquisition-jeon-suhyun-2016/nanet-title-block.html
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
