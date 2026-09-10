@@ -3,8 +3,9 @@ name: Relationship Spouse T8 Kim Sanghan 2026 Fulltext Recheck
 on:
   pull_request:
     paths:
-      - 'scripts/verify-relationship-spouse-t8-kim-sanghan-2026-current-publisher-contract.py'
+      - 'scripts/inspect-relationship-spouse-t8-kim-sanghan-2026-current-data-manage.py'
       - 'scripts/recheck-relationship-spouse-t8-kim-sanghan-2026-current-public-fulltext.py'
+      - 'scripts/verify-relationship-spouse-t8-kim-sanghan-2026-current-publisher-contract.py'
       - '.github/workflows/relationship-spouse-t8-kim-sanghan-2026-fulltext-recheck.yml'
   workflow_dispatch:
 
@@ -14,108 +15,40 @@ permissions:
 jobs:
   recheck-current-public-fulltext:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install bounded PDF reader
-        run: python -m pip install --disable-pip-version-check pypdf==6.0.0
-      - name: Verify current publisher-authored contract
-        run: python scripts/verify-relationship-spouse-t8-kim-sanghan-2026-current-publisher-contract.py
-      - name: Recheck current issue 33 and exact public fulltext route
-        run: python scripts/recheck-relationship-spouse-t8-kim-sanghan-2026-current-public-fulltext.py
-      - name: Inspect acquired PDF and extract complete text when present
-        run: |
-          python - <<'PY'
-          import hashlib, json
-          from pathlib import Path
-          from pypdf import PdfReader
-          root=Path('acquisition-kim-sanghan-2026-recheck')
-          report=json.loads((root/'report.json').read_text(encoding='utf-8'))
-          pdf=root/'kim-sanghan-2026.pdf'
-          inspection={'observed':pdf.exists(),'pages':0,'bytes':0,'sha256':None,'encrypted':None,'textChars':0}
-          if pdf.exists():
-              body=pdf.read_bytes()
-              reader=PdfReader(str(pdf))
-              texts=[]
-              for i,page in enumerate(reader.pages,start=1):
-                  texts.append(f'\n===== PHYSICAL_PDF_PAGE_{i} =====\n{page.extract_text() or ""}')
-              full=''.join(texts)
-              (root/'kim-sanghan-2026.txt').write_text(full,encoding='utf-8')
-              inspection.update({
-                  'pages':len(reader.pages),
-                  'bytes':len(body),
-                  'sha256':hashlib.sha256(body).hexdigest(),
-                  'encrypted':bool(reader.is_encrypted),
-                  'textChars':len(full),
-              })
-              report['pdfInspection']=inspection
-              report['fullLengthPdfAcquired']=len(reader.pages)>=20 and len(full)>=10000
-              report['semanticDisposition']='DIRECT_BODY_READY_FOR_REVIEW' if report['fullLengthPdfAcquired'] else 'PARTIAL_OR_INVALID_PDF_NO_BODY_DECISION'
-          else:
-              report['pdfInspection']=inspection
-              report['fullLengthPdfAcquired']=False
-              report['semanticDisposition']='CURRENT_PUBLIC_ACCESS_BOUNDARY_ONLY_NO_BODY_LEVEL_DECISION'
-          (root/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
-          print(json.dumps(inspection,ensure_ascii=False,indent=2))
-          print('semanticDisposition=',report['semanticDisposition'])
-          PY
-      - name: Print bounded spouse/gender/context passages when body exists
-        run: |
-          python - <<'PY'
-          import re
-          from pathlib import Path
-          p=Path('acquisition-kim-sanghan-2026-recheck/kim-sanghan-2026.txt')
-          if not p.exists():
-              print('No complete article body acquired; semantic review intentionally skipped.')
-              raise SystemExit(0)
-          t=p.read_text(encoding='utf-8')
-          for term in ['남편','배우자','처','아내','관성','재성','여명','남명','성별','비대칭','결혼','혼인','정절','극부','현대','도덕','육친']:
-              print(f'\n### TERM {term}')
-              shown=0
-              for m in re.finditer(re.escape(term),t,re.I):
-                  print(re.sub(r'\s+',' ',t[max(0,m.start()-450):min(len(t),m.end()+1000)]))
-                  shown+=1
-                  if shown>=10: break
-              print('COUNT_SHOWN',shown)
-          PY
-      - name: Enforce no-guessing and no-bypass boundary
+      - name: Follow current publisher-authored first-stage data route
+        run: python scripts/inspect-relationship-spouse-t8-kim-sanghan-2026-current-data-manage.py
+      - name: Enforce first-stage no-content/no-bypass boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          j=json.loads(Path('acquisition-kim-sanghan-2026-recheck/report.json').read_text(encoding='utf-8'))
-          assert j['candidate']['author']=='김상한'
-          assert j['candidate']['kciArticleId']=='ART003370620'
-          assert j['candidate']['doi']=='10.55793/jkhc.2026.33.631'
+          j=json.loads(Path('acquisition-kim-sanghan-2026-recheck/current-data-manage-report.json').read_text(encoding='utf-8'))
+          assert j['currentFirstStageContract']['directlyObservedOnCurrentEntry'] is True
+          assert j['currentFirstStageContract']['route']=='/module/thesis/selectKyoboThesisNttListAjax.ink'
+          assert j['currentFirstStageContract']['method']=='POST'
+          assert j['contentActionExecuted'] is False
           assert j['guessedOpaqueIdentifierCount']==0
           assert j['loginBypass'] is False
           assert j['institutionAuthBypass'] is False
           assert j['paywallBypass'] is False
-          assert j['drmRequestExecuted'] is False
-          assert j['decryptionActionExecuted'] is False
-          assert j['crossSourceSemanticStitching'] is False
-          print('Kim Sanghan 2026 current public route/no-bypass boundary verified')
+          print('Kim Sanghan 2026 current first-stage publisher contract verified')
           PY
-      - name: Upload bounded recheck evidence
+      - name: Upload current first-stage evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: kim-sanghan-2026-current-public-fulltext-recheck
           path: |
-            acquisition-kim-sanghan-2026-recheck/current-publisher-contract-report.json
-            acquisition-kim-sanghan-2026-recheck/current-publisher-contract-entry.html
-            acquisition-kim-sanghan-2026-recheck/publisher-entry.html
-            acquisition-kim-sanghan-2026-recheck/publisher-script-*.txt
-            acquisition-kim-sanghan-2026-recheck/issue-list-2026.txt
-            acquisition-kim-sanghan-2026-recheck/article-list-*.html
-            acquisition-kim-sanghan-2026-recheck/target-fragment-*.html
-            acquisition-kim-sanghan-2026-recheck/kyobo-*.html
-            acquisition-kim-sanghan-2026-recheck/report.json
-            acquisition-kim-sanghan-2026-recheck/kim-sanghan-2026.pdf
-            acquisition-kim-sanghan-2026-recheck/kim-sanghan-2026.txt
+            acquisition-kim-sanghan-2026-recheck/current-publisher-entry-v2.html
+            acquisition-kim-sanghan-2026-recheck/current-data-manage.html
+            acquisition-kim-sanghan-2026-recheck/current-data-script-*.txt
+            acquisition-kim-sanghan-2026-recheck/current-data-manage-report.json
           if-no-files-found: warn
           retention-days: 1
           compression-level: 0
