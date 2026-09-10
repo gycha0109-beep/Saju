@@ -6,6 +6,7 @@ on:
       - 'scripts/acquire-relationship-spouse-t8-go-jaemin-2016-public-fulltext.py'
       - 'scripts/acquire-relationship-spouse-t8-go-jaemin-2016-riss-js-stage2.py'
       - 'scripts/acquire-relationship-spouse-t8-go-jaemin-2016-riss-post-stage3.py'
+      - 'scripts/acquire-relationship-spouse-t8-go-jaemin-2016-dcollection-tls-stage4.py'
       - '.github/workflows/relationship-spouse-t8-go-jaemin-2016-public-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -27,7 +28,9 @@ jobs:
         run: python scripts/acquire-relationship-spouse-t8-go-jaemin-2016-riss-js-stage2.py
       - name: Execute exact candidate-page-authored RISS POST contracts
         run: python scripts/acquire-relationship-spouse-t8-go-jaemin-2016-riss-post-stage3.py
-      - name: Enforce identity and no-bypass discovery boundary
+      - name: Retry exact RISS-returned dCollection URI with transport-only TLS workaround
+        run: python scripts/acquire-relationship-spouse-t8-go-jaemin-2016-dcollection-tls-stage4.py
+      - name: Enforce identity and no-access-bypass boundary
         run: |
           python - <<'PY'
           import json
@@ -35,40 +38,33 @@ jobs:
           j=json.loads(Path('acquisition-go-jaemin-2016/report.json').read_text(encoding='utf-8'))
           s=json.loads(Path('acquisition-go-jaemin-2016-stage2/report.json').read_text(encoding='utf-8'))
           t=json.loads(Path('acquisition-go-jaemin-2016-stage3/report.json').read_text(encoding='utf-8'))
-          c=j['candidate']; p=j['policy']; i=j['identityObserved']; sp=s['policy']; tp=t['policy']; o=s['observedCandidateInputs']
-          assert c['author']=='고재민'
-          assert c['year']==2016
-          assert c['title']=='四柱命理의 宮星과 格局用神論 硏究'
-          assert c['rissId']=='T14040293'
-          assert c['rissControl']=='01535e75dd09ae73ffe0bdc3ef48d419'
-          assert i['title'] and i['author'] and i['year'] and i['rissId']
-          assert i['originalViewLabel'] is True
-          assert p['guessedOpaqueIdentifierCount']==0 and sp['guessedOpaqueIdentifierCount']==0 and tp['guessedOpaqueIdentifierCount']==0
-          assert p['onlyLiteralPageAuthoredRoutesFollowed'] is True
-          assert p['loginBypass'] is False and sp['loginBypass'] is False and tp['loginBypass'] is False
-          assert p['institutionAuthBypass'] is False and sp['institutionAuthBypass'] is False and tp['institutionAuthBypass'] is False
-          assert p['paywallBypass'] is False and sp['paywallBypass'] is False and tp['paywallBypass'] is False
-          assert p['drmRequestExecuted'] is False and sp['drmRequestExecuted'] is False and tp['drmRequestExecuted'] is False
-          assert p['decryptionActionExecuted'] is False and sp['decryptionActionExecuted'] is False and tp['decryptionActionExecuted'] is False
+          u=json.loads(Path('acquisition-go-jaemin-2016-stage4/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']; i=j['identityObserved']; sp=s['policy']; tp=t['policy']; up=u['policy']; o=s['observedCandidateInputs']
+          assert c['author']=='고재민' and c['year']==2016 and c['title']=='四柱命理의 宮星과 格局用神論 硏究'
+          assert c['rissId']=='T14040293' and c['rissControl']=='01535e75dd09ae73ffe0bdc3ef48d419'
+          assert i['title'] and i['author'] and i['year'] and i['rissId'] and i['originalViewLabel']
+          assert all(x['guessedOpaqueIdentifierCount']==0 for x in (p,sp,tp,up))
+          for x in (p,sp,tp,up):
+              assert x['loginBypass'] is False
+              assert x['institutionAuthBypass'] is False
+              assert x['paywallBypass'] is False
+              assert x['drmRequestExecuted'] is False
+              assert x['decryptionActionExecuted'] is False
+          assert up['credentialAdded'] is False
+          assert up['tlsCertificateVerificationDisabled'] is True
+          assert up['onlyExactRissReturnedAndLiteralSameHostAuthoredRoutesFollowed'] is True
           assert sp['contentRouteExecuted'] is False
-          assert tp['ttsUriRewriteApplied'] is False
-          assert tp['onlyRawServerReturnedLiteralUriFollowed'] is True
-          assert o['docType']=='T' and o['controlNo']=='14040293'
-          assert o['nationalLibraryLocalBibno']=='KDM201705404'
+          assert tp['ttsUriRewriteApplied'] is False and tp['onlyRawServerReturnedLiteralUriFollowed'] is True
+          assert t['rawReturnedUrls']==['http://dhu.dcollection.net/jsp/common/SvcOrgDownLoad.jsp?item_id=000002241914']
+          assert u['exactRissReturnedUrl']==t['rawReturnedUrls'][0]
+          assert o['docType']=='T' and o['controlNo']=='14040293' and o['nationalLibraryLocalBibno']=='KDM201705404'
           assert s['pageAuthoredOriginalCheckEndpoint']=='/detail/originalCheck.do'
-          assert s['pageAuthoredFulltextCall']=='fulltextDownload()'
-          assert t['contracts']['originalCheck']['url']=='https://www.riss.kr/detail/originalCheck.do'
-          assert t['contracts']['originalCheck']['data']=={'controlNo':'14040293','docType':'T'}
-          assert t['contracts']['ttsDiscovery']['url']=='https://www.riss.kr/search/download/newTtsView.do'
-          print('Go Jaemin 2016 exact RISS identity and staged public-route policy verified')
-          print('stage1Boundary=', j['boundary'])
-          print('stage2MatchingScripts=', len(s['matchingScripts']))
-          print('stage3OriginalCheck=', t['originalCheck'].get('json', t['originalCheck'].get('text')))
-          print('stage3RawReturnedUrls=', len(t['rawReturnedUrls']))
-          print('stage3PdfCount=', len(t['pdfs']))
-          print('stage3Boundary=', t['boundary'])
-          for pdf in t['pdfs']:
-              print('pdfSha256=', pdf['sha256'], 'bytes=', pdf['bytes'], 'final=', pdf['finalUrl'])
+          assert t['originalCheck'].get('json')=={'flag':'T'}
+          print('Go Jaemin 2016 staged public acquisition policy verified')
+          print('stage4PdfCount=',len(u['pdfs']))
+          print('stage4Boundary=',u['boundary'])
+          for pdf in u['pdfs']:
+              print('pdfSha256=',pdf['sha256'],'bytes=',pdf['bytes'],'final=',pdf['finalUrl'])
           PY
       - name: Upload bounded acquisition evidence
         if: always()
@@ -87,6 +83,10 @@ jobs:
             acquisition-go-jaemin-2016-stage3/summary.txt
             acquisition-go-jaemin-2016-stage3/*.txt
             acquisition-go-jaemin-2016-stage3/*.pdf
+            acquisition-go-jaemin-2016-stage4/report.json
+            acquisition-go-jaemin-2016-stage4/summary.txt
+            acquisition-go-jaemin-2016-stage4/*.html.txt
+            acquisition-go-jaemin-2016-stage4/*.pdf
           if-no-files-found: warn
           retention-days: 1
           compression-level: 0
