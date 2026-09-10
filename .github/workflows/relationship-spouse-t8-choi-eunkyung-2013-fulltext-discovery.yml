@@ -1,0 +1,106 @@
+name: Relationship Spouse T8 Choi Eunkyung 2013 Fulltext Discovery
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/discover-relationship-spouse-t8-choi-eunkyung-2013-public-identity.py'
+      - 'scripts/inspect-relationship-spouse-t8-choi-eunkyung-2013-riss-public-routes.py'
+      - 'scripts/follow-relationship-spouse-t8-choi-eunkyung-2013-riss-fulltext-dispatcher.py'
+      - 'scripts/follow-relationship-spouse-t8-choi-eunkyung-2013-riss-authored-dcollection-route.py'
+      - 'scripts/review-relationship-spouse-t8-choi-eunkyung-2013-body.py'
+      - '.github/workflows/relationship-spouse-t8-choi-eunkyung-2013-fulltext-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discover-current-public-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install bounded PDF reader
+        run: python -m pip install --disable-pip-version-check pypdf==6.0.0
+      - name: Discover exact current public RISS identity
+        run: python scripts/discover-relationship-spouse-t8-choi-eunkyung-2013-public-identity.py
+      - name: Inspect exact RISS public route contracts
+        run: python scripts/inspect-relationship-spouse-t8-choi-eunkyung-2013-riss-public-routes.py
+      - name: Follow exact site-authored RISS fulltext dispatcher once
+        run: python scripts/follow-relationship-spouse-t8-choi-eunkyung-2013-riss-fulltext-dispatcher.py
+      - name: Follow exact RISS-authored dCollection route when exposed
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('acquisition-choi-eunkyung-2013/riss-dispatcher-report.json')
+          j=json.loads(p.read_text(encoding='utf-8'))
+          if j.get('directPdfAcquired'):
+              print('RISS dispatcher already returned a direct PDF; dCollection follow is not needed.')
+              raise SystemExit(0)
+          urls=[u for u in j.get('externalUrls',[]) if 'dcollection.net' in u.lower()]
+          if not urls:
+              print('No site-authored dCollection route observed; bounded follow is intentionally skipped.')
+              raise SystemExit(0)
+          PY
+          if [ -f acquisition-choi-eunkyung-2013/choi-eunkyung-2013.pdf ]; then
+            echo 'Direct PDF already present; skip dCollection follow.'
+          else
+            python scripts/follow-relationship-spouse-t8-choi-eunkyung-2013-riss-authored-dcollection-route.py
+          fi
+      - name: Extract complete body and spouse-role contexts when present
+        run: python scripts/review-relationship-spouse-t8-choi-eunkyung-2013-body.py
+      - name: Enforce exact identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('acquisition-choi-eunkyung-2013')
+          identity=json.loads((root/'report.json').read_text(encoding='utf-8'))
+          public=json.loads((root/'public-route-report.json').read_text(encoding='utf-8'))
+          dispatch=json.loads((root/'riss-dispatcher-report.json').read_text(encoding='utf-8'))
+          assert identity['resolvedExactRow']['control']=='a2d2aa37279fbaaaffe0bdc3ef48d419'
+          assert identity['resolvedExactRow']['rissId']=='T13097800'
+          assert identity['resolvedExactRow']['identityObserved'] is True
+          for record in (identity, public, dispatch):
+              assert record['guessedOpaqueIdentifierCount']==0
+              assert record['loginBypass'] is False
+              assert record['institutionAuthBypass'] is False
+              assert record['paywallBypass'] is False
+              assert record['drmRequestExecuted'] is False
+              assert record['decryptionActionExecuted'] is False
+          d=root/'dcollection-route-report.json'
+          if d.exists():
+              record=json.loads(d.read_text(encoding='utf-8'))
+              assert record['guessedOpaqueIdentifierCount']==0
+              assert record['loginBypass'] is False
+              assert record['institutionAuthBypass'] is False
+              assert record['paywallBypass'] is False
+              assert record['drmRequestExecuted'] is False
+              assert record['decryptionActionExecuted'] is False
+          print('Choi Eunkyung 2013 exact public acquisition/no-bypass boundary verified')
+          PY
+      - name: Upload bounded route evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: choi-eunkyung-2013-public-route-evidence
+          path: |
+            acquisition-choi-eunkyung-2013/report.json
+            acquisition-choi-eunkyung-2013/public-route-report.json
+            acquisition-choi-eunkyung-2013/riss-dispatcher-report.json
+            acquisition-choi-eunkyung-2013/dcollection-route-report.json
+            acquisition-choi-eunkyung-2013/body-review.json
+            acquisition-choi-eunkyung-2013/riss-title-search-*.html
+            acquisition-choi-eunkyung-2013/riss-detail.html
+            acquisition-choi-eunkyung-2013/riss-script-*.txt
+            acquisition-choi-eunkyung-2013/riss-fulltext-dispatch-response.html
+            acquisition-choi-eunkyung-2013/dcollection-*.html
+            acquisition-choi-eunkyung-2013/choi-eunkyung-2013.pdf
+            acquisition-choi-eunkyung-2013/choi-eunkyung-2013.txt
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
