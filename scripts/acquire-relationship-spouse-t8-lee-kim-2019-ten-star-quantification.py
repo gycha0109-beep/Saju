@@ -16,10 +16,7 @@ OUT.mkdir(exist_ok=True)
 ARTICLE_ID = 'ART002438633'
 TITLE = '사주 십성(十星)의 계량화(計量化)와 활용에 대한 고찰'
 DOI = '10.33645/cc.2019.02.41.1.887'
-DETAIL = (
-    'https://www.kci.go.kr/kciportal/ci/sereArticleSearch/ciSereArtiView.kci'
-    f'?sereArticleSearchBean.artiId={ARTICLE_ID}'
-)
+ENTRY = f'https://www.kci.go.kr/kciportal/landing/article.kci?arti_id={ARTICLE_ID}'
 UA = 'Mozilla/5.0 (compatible; SajuResearchEvidence/1.0; Lee-Kim-2019-KCI-public-contract)'
 
 
@@ -42,6 +39,7 @@ def fetch(opener, url: str, *, referer: str | None = None, max_bytes: int = 16_0
     headers = {
         'User-Agent': UA,
         'Accept': 'application/pdf,text/html,application/xhtml+xml,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.7',
     }
     if referer:
         headers['Referer'] = referer
@@ -62,13 +60,17 @@ def fetch(opener, url: str, *, referer: str | None = None, max_bytes: int = 16_0
         }, body
 
 
-def script_urls(text: str, base: str) -> list[str]:
+def same_kci_urls(text: str, base: str) -> list[str]:
     values: list[str] = []
-    for m in re.finditer(r'<script\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1', text, re.I | re.S):
-        u = urljoin(base, html.unescape(m.group(2).strip()))
-        if host_ok(u) and u not in values:
-            values.append(u)
-    return values[:80]
+    for pat in [r'<script\b[^>]*\bsrc\s*=\s*(["\'])(.*?)\1', r'(?:href|src)\s*=\s*(["\'])(.*?)\1']:
+        for m in re.finditer(pat, text, re.I | re.S):
+            raw = html.unescape(m.group(2).strip())
+            if not raw or raw.startswith(('javascript:', '#')):
+                continue
+            u = urljoin(base, raw)
+            if host_ok(u) and u not in values:
+                values.append(u)
+    return values[:120]
 
 
 def inspect_source(text: str, source: str):
@@ -82,7 +84,6 @@ def inspect_source(text: str, source: str):
             value = m.group(1)
             if value not in ids:
                 ids.append(value)
-
     markers = {
         key: key in text
         for key in [
@@ -110,20 +111,25 @@ def inspect_source(text: str, source: str):
 
 def main():
     opener = build_opener(HTTPSHandler(context=ssl.create_default_context()), HTTPCookieProcessor(CookieJar()))
-    detail_meta, detail_body = fetch(opener, DETAIL, max_bytes=7_000_000)
-    detail_text = decode(detail_body, detail_meta['contentType'])
-    (OUT / 'detail.html').write_text(detail_text, encoding='utf-8')
+    entry_meta, entry_body = fetch(opener, ENTRY, max_bytes=8_000_000)
+    entry_text = decode(entry_body, entry_meta['contentType'])
+    (OUT / 'detail.html').write_text(entry_text, encoding='utf-8')
 
-    assert '이재승' in detail_text and '김만태' in detail_text, 'exact authors not observed on current KCI detail'
-    assert '사주 십성' in detail_text and '계량화' in detail_text, 'exact title stem not observed'
-    assert DOI in detail_text, 'exact DOI not observed'
+    assert ARTICLE_ID in entry_text, 'exact KCI article id not observed on current landing page'
+    assert '이재승' in entry_text and '김만태' in entry_text, 'exact authors not observed on current landing page'
+    assert '사주 십성' in entry_text and '계량화' in entry_text, 'exact title stem not observed on current landing page'
 
-    sources: list[tuple[str, str]] = [('detail', detail_text)]
+    sources: list[tuple[str, str]] = [('landing', entry_text)]
+    fetched_urls: list[str] = []
     script_fetches = []
-    for i, url in enumerate(script_urls(detail_text, DETAIL), start=1):
+    for i, url in enumerate(same_kci_urls(entry_text, ENTRY), start=1):
+        low = url.lower()
+        if not any(token in low for token in ['.js', 'article', 'serearti', 'preview', 'orte']):
+            continue
         try:
-            meta, body = fetch(opener, url, referer=DETAIL, max_bytes=4_000_000)
+            meta, body = fetch(opener, url, referer=ENTRY, max_bytes=5_000_000)
             text = decode(body, meta['contentType'])
+            fetched_urls.append(url)
             sources.append((url, text))
             script_fetches.append({**meta, 'sourceUrl': url, 'error': None})
             (OUT / f'script-{i:02d}.txt').write_text(text, encoding='utf-8')
@@ -144,13 +150,18 @@ def main():
 
     original_meta = None
     original_text = ''
-    if markers.get('ciSereArtiOrteView.kci'):
-        original_url = (
-            'https://www.kci.go.kr/kciportal/ci/sereArticleSearch/ciSereArtiOrteView.kci'
-            f'?sereArticleSearchBean.artiId={ARTICLE_ID}'
-        )
+    authored_original_urls: list[str] = []
+    for source, text in sources:
+        for m in re.finditer(r'''(?:href|src)\s*=\s*(["'])(.*?)\1''', text, re.I | re.S):
+            raw = html.unescape(m.group(2).strip())
+            if 'ciSereArtiOrteView.kci' not in raw:
+                continue
+            u = urljoin(source if source.startswith('http') else ENTRY, raw)
+            if host_ok(u) and (ARTICLE_ID in u or 'artiId=' not in u) and u not in authored_original_urls:
+                authored_original_urls.append(u)
+    for u in authored_original_urls[:3]:
         try:
-            original_meta, body = fetch(opener, original_url, referer=DETAIL, max_bytes=7_000_000)
+            original_meta, body = fetch(opener, u, referer=ENTRY, max_bytes=7_000_000)
             original_text = decode(body, original_meta['contentType'])
             (OUT / 'original-view.html').write_text(original_text, encoding='utf-8')
             ids, obs, snips = inspect_source(original_text, 'original-view')
@@ -160,12 +171,13 @@ def main():
             for key, value in obs.items():
                 markers[key] = markers.get(key, False) or value
             snippets.extend(snips)
+            break
         except Exception as exc:
-            original_meta = {'requestedUrl': original_url, 'error': f'{type(exc).__name__}: {exc}'}
+            original_meta = {'requestedUrl': u, 'error': f'{type(exc).__name__}: {exc}'}
 
     route_match = re.search(
         r'orteDownFrame\.location\.href\s*=\s*["\']([^"\']*ciSereArtiOrteServHistIFrame\.kci\?[^"\']*orteFileId=)["\']\s*\+\s*orteFileId',
-        detail_text + '\n' + original_text,
+        '\n'.join(text for _, text in sources) + '\n' + original_text,
         re.I,
     )
 
@@ -173,11 +185,13 @@ def main():
     selected = None
     concrete_file_id = file_ids[0] if len(file_ids) == 1 else None
     concrete_url = None
+    followed_contract = False
     if concrete_file_id and route_match:
         prefix = html.unescape(route_match.group(1))
-        concrete_url = urljoin(DETAIL, prefix + concrete_file_id)
-        meta, body = fetch(opener, concrete_url, referer=DETAIL)
+        concrete_url = urljoin(ENTRY, prefix + concrete_file_id)
+        meta, body = fetch(opener, concrete_url, referer=ENTRY)
         attempts.append(meta)
+        followed_contract = True
         if meta['pdfMagic']:
             (OUT / 'candidate.pdf').write_bytes(body)
             selected = meta
@@ -205,9 +219,6 @@ def main():
                         break
                 except Exception as exc:
                     attempts.append({'requestedUrl': u, 'error': f'{type(exc).__name__}: {exc}'})
-        followed_contract = True
-    else:
-        followed_contract = False
 
     report = {
         'candidate': {
@@ -221,8 +232,11 @@ def main():
             'kci': ARTICLE_ID,
             'doi': DOI,
         },
-        'detail': detail_meta,
+        'entry': entry_meta,
+        'entryContract': 'current KCI landing/article.kci arti_id route',
         'scriptFetches': script_fetches,
+        'fetchedSameKciUrls': fetched_urls,
+        'authoredOriginalUrls': authored_original_urls,
         'originalView': original_meta,
         'routeMarkersObserved': markers,
         'siteAuthoredConcreteFileIds': file_ids,
