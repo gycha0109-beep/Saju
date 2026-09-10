@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/discover-relationship-spouse-t8-lee-changim-2016-public-fulltext.py'
+      - 'scripts/follow-relationship-spouse-t8-lee-changim-2016-kyonggi-dcollection.py'
       - 'scripts/review-relationship-spouse-t8-lee-changim-2016-body.py'
       - '.github/workflows/relationship-spouse-t8-lee-changim-2016-fulltext-discovery.yml'
   workflow_dispatch:
@@ -24,6 +25,8 @@ jobs:
         run: python -m pip install --disable-pip-version-check pypdf==6.0.0
       - name: Discover exact RISS identity and follow only page-authored public routes
         run: python scripts/discover-relationship-spouse-t8-lee-changim-2016-public-fulltext.py
+      - name: Follow exact RISS-authored Kyonggi dCollection route when exposed
+        run: python scripts/follow-relationship-spouse-t8-lee-changim-2016-kyonggi-dcollection.py
       - name: Extract body locators only when a PDF was actually acquired
         run: python scripts/review-relationship-spouse-t8-lee-changim-2016-body.py
       - name: Enforce exact identity and no-bypass boundary
@@ -38,7 +41,9 @@ jobs:
           assert acquisition['candidate']['author'] == '이창임'
           assert acquisition['candidate']['year'] == 2016
           assert acquisition['candidate']['title'] == '子平四柱를 통한 夫婦宮合 硏究 : 宮位論을 中心으로'
-          assert acquisition['resolvedExactRow']['control']
+          assert acquisition['resolvedExactRow']['control'] == '08d9a0b65772bc3cffe0bdc3ef48d419'
+          assert 'T14205410' in acquisition['resolvedExactRow']['rissIdsObserved']
+          assert acquisition['rissAuthoredDcollectionItemId'] == '000000043815'
           for key in ['guessedOpaqueIdentifierCount','loginBypass','institutionAuthBypass','paywallBypass','drmRequestExecuted','decryptionActionExecuted','tlsVerificationDisabled','crossSourceSemanticStitching']:
               expected = 0 if key == 'guessedOpaqueIdentifierCount' else False
               assert acquisition['policy'][key] == expected, (key, acquisition['policy'][key])
@@ -63,6 +68,7 @@ jobs:
             acquisition-lee-changim-2016/riss-detail.html
             acquisition-lee-changim-2016/hop-*.html
             acquisition-lee-changim-2016/hop-*.bin
+            acquisition-lee-changim-2016/dcollection-item.html
             acquisition-lee-changim-2016/lee-changim-2016.pdf
             acquisition-lee-changim-2016/lee-changim-2016.txt
           if-no-files-found: warn
