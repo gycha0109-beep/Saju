@@ -24,10 +24,7 @@ RISS_URL = f'https://m.riss.kr/search/detail/DetailView.do?control_no={RISS_CONT
 UA = 'Mozilla/5.0 (compatible; SajuResearchPublicRouteVerifier/1.0; +https://github.com/gycha0109-beep/Saju)'
 CTX = ssl.create_default_context()
 JAR = http.cookiejar.CookieJar()
-OPENER = urllib.request.build_opener(
-    urllib.request.HTTPCookieProcessor(JAR),
-    urllib.request.HTTPSHandler(context=CTX),
-)
+OPENER = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(JAR), urllib.request.HTTPSHandler(context=CTX))
 
 
 def fetch(url: str, timeout: int = 30, referer: str | None = None) -> dict[str, object]:
@@ -127,15 +124,24 @@ def exact_form_fields(html: str) -> dict[str, str]:
     return fields
 
 
+def input_value(html: str, name: str) -> str | None:
+    for tag in re.findall(r'(?is)<input\b[^>]*>', html):
+        nm = re.search(r'(?is)\bname\s*=\s*["\']([^"\']+)["\']', tag)
+        if not nm or unescape(nm.group(1)) != name:
+            continue
+        vm = re.search(r'(?is)\bvalue\s*=\s*["\']([^"\']*)["\']', tag)
+        return unescape(vm.group(1)) if vm else ''
+    return None
+
+
 def navigation_targets(html: str, base: str) -> list[dict[str, str]]:
     candidates: list[tuple[str, str]] = []
-    patterns = [
+    for kind, pattern in [
         ('document.location.href', r'(?is)document\.location\.href\s*=\s*["\']([^"\']+)["\']'),
         ('window.location.href', r'(?is)window\.location\.href\s*=\s*["\']([^"\']+)["\']'),
         ('location.href', r'(?is)(?<!document\.)(?<!window\.)location\.href\s*=\s*["\']([^"\']+)["\']'),
         ('location.replace', r'(?is)location\.replace\(\s*["\']([^"\']+)["\']\s*\)'),
-    ]
-    for kind, pattern in patterns:
+    ]:
         for target in re.findall(pattern, html):
             target = unescape(target.strip())
             if target and not target.lower().startswith(('javascript:', '#')):
@@ -144,31 +150,29 @@ def navigation_targets(html: str, base: str) -> list[dict[str, str]]:
     seen: set[str] = set()
     for kind, target in candidates:
         absolute = urllib.parse.urljoin(base, target)
-        if absolute in seen:
-            continue
-        seen.add(absolute)
-        out.append({'kind': kind, 'raw': target, 'absoluteUrl': absolute})
+        if absolute not in seen:
+            seen.add(absolute)
+            out.append({'kind': kind, 'raw': target, 'absoluteUrl': absolute})
     return out
 
 
 def js_value(html: str, name: str) -> str | None:
-    patterns = [
-        rf'(?is)\bvar\s+{re.escape(name)}\s*=\s*["\']([^"\']*)["\']',
+    for pattern in [
+        rf'(?is)\b(?:var|let|const)\s+{re.escape(name)}\s*=\s*["\']([^"\']*)["\']',
         rf'(?is)\b{re.escape(name)}\s*=\s*["\']([^"\']*)["\']',
-    ]
-    for pattern in patterns:
+    ]:
         match = re.search(pattern, html)
         if match:
             return unescape(match.group(1))
     return None
 
 
-def public_pdf_path(html: str) -> str | None:
-    for pattern in [
-        r'(?is)location\.replace\(\s*context\s*\+\s*["\']([^"\']*/public_resource/pdf/[^"\']+\.pdf)["\']',
-        r'(?is)["\'](/public_resource/pdf/[^"\']+\.pdf)["\']',
-    ]:
-        match = re.search(pattern, html)
+def active_public_pdf_path(html: str) -> str | None:
+    for raw_line in html.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('//'):
+            continue
+        match = re.search(r"location\.replace\(\s*['\"](/public_resource/pdf/[^'\"]+\.pdf)['\"]\s*\+\s*sPage", line)
         if match:
             return unescape(match.group(1))
     return None
@@ -214,7 +218,6 @@ fields = exact_form_fields(riss_html)
 
 script_srcs = [unescape(src) for src in re.findall(r'(?is)<script\b[^>]*\bsrc=["\']([^"\']+)["\']', riss_html)]
 search_common_url = next((urllib.parse.urljoin(RISS_URL, src) for src in script_srcs if 'searchCommon.js' in src), None)
-search_common_entry: dict[str, object] = {'name': 'searchCommonJs', 'ok': False, 'authoredByDetailPage': bool(search_common_url)}
 dispatcher_verified = False
 if search_common_url:
     js = fetch(search_common_url, 30, RISS_URL)
@@ -226,27 +229,25 @@ if search_common_url:
         and re.search(r'loginFlag\.value\s*=\s*["\']1["\']', js_text)
         and 'FullTextDownload.do' in js_text
     )
-    search_common_entry = {
+    report['hops'].append({
         'name': 'searchCommonJs', **js, 'saved': js_saved, 'kind': js_kind,
         'authoredByDetailPage': True,
         'globalFulltextDownloadFound': bool(re.search(r'function\s+fulltextDownload\s*\(', js_text)),
         'loginFlagOneObserved': bool(re.search(r'loginFlag\.value\s*=\s*["\']1["\']', js_text)),
         'dispatcherRouteObserved': 'FullTextDownload.do' in js_text,
-    }
-    report['hops'].append(search_common_entry)
+    })
 
 identity_markers = {
     'title': TITLE_SHORT in riss_text or TITLE_SHORT in riss_html,
     'author': AUTHOR in riss_text or AUTHOR in riss_html,
     'year': str(YEAR) in riss_text,
 }
-riss_entry = {
+report['hops'].insert(0, {
     'name': 'rissDetail', **riss, 'saved': riss_saved, 'kind': riss_kind,
     'identityMarkers': identity_markers,
     'formFields': fields,
     'dispatcherContractVerifiedFromPageAuthoredScript': dispatcher_verified,
-}
-report['hops'].insert(0, riss_entry)
+})
 
 popup_entry: dict[str, object] = {'name': 'rissFulltextPopup', 'ok': False}
 down_entry: dict[str, object] = {'name': 'rissDownloading', 'ok': False}
@@ -282,18 +283,33 @@ if fields and dispatcher_verified:
             dc_body = dc.pop('body')
             dc_saved, dc_kind = save('dcollection-item-response', dc, dc_body) if dc_body else ('', '')
             dc_html = decode(dc_body, str(dc.get('contentType') or '')) if dc_body and dc_kind == 'html' else ''
-            path = public_pdf_path(dc_html) if dc_html else None
+            path = active_public_pdf_path(dc_html) if dc_html else None
             drm = js_value(dc_html, 'drm') if dc_html else None
             agree = js_value(dc_html, 'agree') if dc_html else None
-            size_raw = js_value(dc_html, 'fileSize') if dc_html else None
+            msg = js_value(dc_html, 'msg') if dc_html else None
+            size_raw = input_value(dc_html, 'fileSize') if dc_html else None
             expected_size = int(size_raw) if size_raw and size_raw.isdigit() else None
+            non_drm_branch = bool(
+                re.search(r"if\s*\(\s*!isAdmin\s*&&\s*!isStaff\s*&&\s*drm\s*==\s*['\"]Y['\"]\s*\)", dc_html)
+                and path
+                and drm == 'N'
+            )
             dc_entry = {
                 'name': 'dcollectionItem', **dc, 'saved': dc_saved, 'kind': dc_kind,
                 'sourceProvenance': {'fromRissDownloadingResponse': True, 'itemId': recovered_item_id, 'url': dc_url},
-                'sourceContract': {'drm': drm, 'agree': agree, 'expectedFileSize': expected_size, 'authoredPublicPdfPath': path},
+                'sourceContract': {
+                    'drm': drm,
+                    'agree': agree,
+                    'agreeVariablePresent': agree is not None,
+                    'messageGateValue': msg,
+                    'messageGateEmpty': msg == '',
+                    'activeNonDrmPublicPdfRedirect': non_drm_branch,
+                    'expectedFileSize': expected_size,
+                    'authoredPublicPdfPath': path,
+                },
             }
             report['hops'].append(dc_entry)
-            if path and drm == 'N' and agree == 'Y':
+            if path and drm == 'N' and non_drm_branch and msg == '' and expected_size is not None:
                 pdf_url = urllib.parse.urljoin(str(dc.get('finalUrl') or dc_url), path)
                 pdf = fetch(pdf_url, 120, str(dc.get('finalUrl') or dc_url))
                 pdf_body = pdf.pop('body')
@@ -306,7 +322,7 @@ if fields and dispatcher_verified:
                         'itemId': recovered_item_id,
                         'authoredPublicPdfPath': path,
                         'expectedFileSize': expected_size,
-                        'sizeMatchesServerMetadata': expected_size is not None and len(pdf_body) == expected_size,
+                        'sizeMatchesServerMetadata': len(pdf_body) == expected_size,
                     },
                 }
                 report['hops'].append(pdf_entry)
@@ -317,9 +333,9 @@ report['rissFulltextPopupFetched'] = bool(popup_entry.get('ok'))
 report['rissDownloadingHopFetched'] = bool(down_entry.get('ok'))
 report['dcollectionTargetRecoveredFromRiss'] = bool(dc_entry.get('sourceProvenance', {}).get('itemId')) if isinstance(dc_entry.get('sourceProvenance'), dict) else False
 report['dcollectionItemFetched'] = bool(dc_entry.get('ok'))
-report['dcollectionPublicPdfContractRecovered'] = bool(dc_entry.get('sourceContract', {}).get('authoredPublicPdfPath')) if isinstance(dc_entry.get('sourceContract'), dict) else False
+report['dcollectionPublicPdfContractRecovered'] = bool(dc_entry.get('sourceContract', {}).get('activeNonDrmPublicPdfRedirect')) if isinstance(dc_entry.get('sourceContract'), dict) else False
 report['publicPdfAcquired'] = bool(pdf_entry.get('isPdf'))
-report['fulltextDisposition'] = 'PUBLIC_PDF_ACQUIRED_FROM_RISS_AUTHORED_DCOLLECTION_TARGET' if report['publicPdfAcquired'] else 'PUBLIC_BODY_NOT_ACQUIRED_RETAIN_PRIOR_ACCESS_BOUNDARY'
+report['fulltextDisposition'] = 'PUBLIC_PDF_ACQUIRED_FROM_PAGE_AUTHORED_NON_DRM_DCOLLECTION_BRANCH' if report['publicPdfAcquired'] else 'PUBLIC_BODY_NOT_ACQUIRED_RETAIN_PRIOR_ACCESS_BOUNDARY'
 report['semanticDisposition'] = 'NO_BODY_LEVEL_DECISION_YET'
 
 report_path = ROOT / 'report.json'
