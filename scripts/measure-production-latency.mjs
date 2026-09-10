@@ -1,6 +1,7 @@
 import fs from 'node:fs';
-import process from 'node:process';
 import { performance } from 'node:perf_hooks';
+import process from 'node:process';
+import { clearTimeout, setTimeout } from 'node:timers';
 import { URL } from 'node:url';
 
 const SYNTHETIC_REQUEST = Object.freeze({
@@ -89,12 +90,12 @@ function sleep(ms) {
 
 async function requestSample({ url, bearer, payload, timeoutMs, index }) {
   const timestampUtc = new Date().toISOString();
-  const controller = new AbortController();
+  const controller = new globalThis.AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const started = performance.now();
 
   try {
-    const response = await fetch(url, {
+    const response = await globalThis.fetch(url, {
       method: 'POST',
       redirect: 'manual',
       signal: controller.signal,
