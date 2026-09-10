@@ -1,0 +1,266 @@
+name: Production Cloud Run Lineage Evidence
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/production-cloud-run-lineage-evidence.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-saju-cloud-run
+  cancel-in-progress: false
+
+env:
+  GCP_REGION: asia-southeast1
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+  GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+
+jobs:
+  lineage:
+    name: Collect read-only Cloud Run lineage evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production-saju
+
+    steps:
+      - name: Validate production observation variables
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in GCP_PROJECT_ID GCP_WORKLOAD_IDENTITY_PROVIDER GCP_DEPLOYER_SERVICE_ACCOUNT GCP_CLOUD_RUN_SERVICE; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required production observation variable: ${name}." >&2
+              exit 1
+            fi
+          done
+          if [[ ! "$GCP_CLOUD_RUN_SERVICE" =~ ^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$ ]]; then
+            echo 'GCP_CLOUD_RUN_SERVICE is not a valid Cloud Run service name.' >&2
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+
+      - name: Collect sanitized service lineage evidence
+        id: lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence_dir="${RUNNER_TEMP}/production-cloud-run-lineage-evidence"
+          service_raw="${RUNNER_TEMP}/cloud-run-service-raw.json"
+          revision_names="${RUNNER_TEMP}/cloud-run-revision-names.txt"
+          revision_ndjson="${RUNNER_TEMP}/cloud-run-revisions-sanitized.ndjson"
+          audit_raw="${RUNNER_TEMP}/cloud-run-audit-raw.json"
+          audit_error="${RUNNER_TEMP}/cloud-run-audit-error.txt"
+          audit_safe="${RUNNER_TEMP}/cloud-run-audit-sanitized.json"
+          evidence_json="${evidence_dir}/saju-production-cloud-run-lineage-evidence.json"
+          evidence_md="${evidence_dir}/saju-production-cloud-run-lineage-evidence.md"
+          mkdir -p "$evidence_dir"
+          : > "$revision_ndjson"
+
+          captured_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format=json > "$service_raw"
+
+          gcloud run revisions list \
+            --service "$GCP_CLOUD_RUN_SERVICE" \
+            --region "$GCP_REGION" \
+            --project "$GCP_PROJECT_ID" \
+            --format='value(metadata.name)' > "$revision_names"
+
+          if [ ! -s "$revision_names" ]; then
+            echo 'No Cloud Run revisions were returned for the configured Production service.' >&2
+            exit 1
+          fi
+
+          while IFS= read -r revision; do
+            [ -n "$revision" ] || continue
+            gcloud run revisions describe "$revision" \
+              --region "$GCP_REGION" \
+              --project "$GCP_PROJECT_ID" \
+              --format=json \
+              | jq -c '{
+                  name: (.metadata.name // ""),
+                  createdAtUtc: (.metadata.creationTimestamp // ""),
+                  imageRef: (.spec.containers[0].image // ""),
+                  ready: ([.status.conditions[]? | select(.type == "Ready") | .status][0] // "")
+                }' >> "$revision_ndjson"
+          done < "$revision_names"
+
+          audit_filter="protoPayload.serviceName=\"run.googleapis.com\" AND (protoPayload.resourceName:\"/services/${GCP_CLOUD_RUN_SERVICE}\" OR resource.labels.service_name=\"${GCP_CLOUD_RUN_SERVICE}\")"
+          if gcloud logging read "$audit_filter" \
+            --project "$GCP_PROJECT_ID" \
+            --freshness=30d \
+            --limit=500 \
+            --order=asc \
+            --format=json > "$audit_raw" 2> "$audit_error"; then
+            audit_readable=true
+            audit_category='readable'
+            audit_exit_code=0
+            jq '[.[] | {
+                timestamp: (.timestamp // .receiveTimestamp // ""),
+                methodName: (.protoPayload.methodName // ""),
+                resourceName: (.protoPayload.resourceName // ""),
+                requestTraffic: (.protoPayload.request.spec.traffic // .protoPayload.request.traffic // []),
+                responseTraffic: (.protoPayload.response.status.traffic // []),
+                responseLatestReadyRevisionName: (.protoPayload.response.status.latestReadyRevisionName // "")
+              }]
+              | map(select(
+                  (.requestTraffic | length) > 0
+                  or (.responseTraffic | length) > 0
+                  or (.methodName | test("CreateService|UpdateService|ReplaceService"))
+                ))' "$audit_raw" > "$audit_safe"
+          else
+            audit_exit_code=$?
+            audit_readable=false
+            audit_category='provider_read_failed'
+            if grep -Eqi 'does not have permission|permission denied|PERMISSION_DENIED' "$audit_error"; then
+              audit_category='permission_denied'
+            elif grep -Eqi 'not found|does not exist' "$audit_error"; then
+              audit_category='resource_not_found_or_hidden'
+            fi
+            printf '[]\n' > "$audit_safe"
+          fi
+
+          jq -s '.' "$revision_ndjson" > "${RUNNER_TEMP}/cloud-run-revisions-sanitized.json"
+
+          jq -n \
+            --arg capturedAt "$captured_at" \
+            --arg projectId "$GCP_PROJECT_ID" \
+            --arg region "$GCP_REGION" \
+            --arg service "$GCP_CLOUD_RUN_SERVICE" \
+            --arg auditCategory "$audit_category" \
+            --argjson auditReadable "$audit_readable" \
+            --argjson auditExitCode "$audit_exit_code" \
+            --slurpfile serviceDoc "$service_raw" \
+            --slurpfile revisions "${RUNNER_TEMP}/cloud-run-revisions-sanitized.json" \
+            --slurpfile auditEvents "$audit_safe" '
+              ($serviceDoc[0] // {}) as $serviceDoc |
+              ($revisions[0] // []) as $revisions |
+              ($auditEvents[0] // []) as $auditEvents |
+              [($serviceDoc.status.traffic[]? | {
+                revisionName: (.revisionName // ""),
+                percent: (.percent // 0),
+                tag: (.tag // ""),
+                latestRevision: (.latestRevision // false)
+              }) | select(.percent > 0)] as $activeTraffic |
+              ($activeTraffic | map(.percent) | add // 0) as $trafficTotal |
+              {
+                schemaVersion: 1,
+                capturedAtUtc: $capturedAt,
+                target: {
+                  projectId: $projectId,
+                  region: $region,
+                  service: $service,
+                  serviceUrl: ($serviceDoc.status.url // ""),
+                  generation: ($serviceDoc.metadata.generation // null),
+                  observedGeneration: ($serviceDoc.status.observedGeneration // null),
+                  latestCreatedRevisionName: ($serviceDoc.status.latestCreatedRevisionName // ""),
+                  latestReadyRevisionName: ($serviceDoc.status.latestReadyRevisionName // ""),
+                  activeTraffic: $activeTraffic,
+                  activeTrafficPercentTotal: $trafficTotal
+                },
+                revisionInventory: $revisions,
+                auditHistory: {
+                  freshnessDays: 30,
+                  limit: 500,
+                  readable: $auditReadable,
+                  category: $auditCategory,
+                  exitCode: $auditExitCode,
+                  rawProviderDataRetained: false,
+                  selectedTrafficEvents: $auditEvents
+                },
+                classification: {
+                  revisionInventoryCount: ($revisions | length),
+                  selectedTrafficEventCount: ($auditEvents | length),
+                  singleActiveRevisionAt100Percent: (($activeTraffic | length) == 1 and $trafficTotal == 100),
+                  rollbackTargetAuthorized: false,
+                  predecessorInferenceFromRevisionOrderingAllowed: false
+                },
+                nonClaims: [
+                  "Revision creation ordering is not evidence of prior serving traffic.",
+                  "A prior rollback target is not authorized unless direct traffic-history evidence identifies it.",
+                  "Audit-log read failure is not evidence that no traffic history exists.",
+                  "Raw service, revision, audit-log, and provider-error payloads are intentionally excluded from the artifact.",
+                  "This workflow performs no Cloud Run deployment, traffic, IAM, Secret Manager, Logging, or Monitoring mutation."
+                ]
+              }
+            ' > "$evidence_json"
+
+          selected_event_count="$(jq -r '.classification.selectedTrafficEventCount' "$evidence_json")"
+          active_100="$(jq -r '.classification.singleActiveRevisionAt100Percent' "$evidence_json")"
+
+          {
+            echo '## Saju Production Cloud Run lineage evidence'
+            echo
+            echo "- captured UTC: \`$(jq -r '.capturedAtUtc' "$evidence_json")\`"
+            echo "- project: \`$(jq -r '.target.projectId' "$evidence_json")\`"
+            echo "- service: \`$(jq -r '.target.service' "$evidence_json")\`"
+            echo "- active traffic: \`$(jq -c '.target.activeTraffic' "$evidence_json")\`"
+            echo "- latest ready revision: \`$(jq -r '.target.latestReadyRevisionName' "$evidence_json")\`"
+            echo "- revision inventory count: \`$(jq -r '.classification.revisionInventoryCount' "$evidence_json")\`"
+            echo "- audit history readable: \`$(jq -r '.auditHistory.readable' "$evidence_json")\`"
+            echo "- audit history category: \`$(jq -r '.auditHistory.category' "$evidence_json")\`"
+            echo "- selected traffic events: \`${selected_event_count}\`"
+            echo "- single active revision at 100%: \`${active_100}\`"
+            echo '- rollback target authorized: `false`'
+            echo
+            echo '### Boundary'
+            echo '- no predecessor is inferred from revision number or creation order'
+            echo '- raw provider payloads and raw provider errors are not retained'
+            echo '- this workflow is read-only and performs no Production mutation'
+          } > "$evidence_md"
+
+          rm -f "$service_raw" "$revision_names" "$revision_ndjson" \
+            "$audit_raw" "$audit_error" "$audit_safe" \
+            "${RUNNER_TEMP}/cloud-run-revisions-sanitized.json"
+
+          echo "audit_readable=$audit_readable" >> "$GITHUB_OUTPUT"
+          echo "selected_event_count=$selected_event_count" >> "$GITHUB_OUTPUT"
+          cat "$evidence_md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload sanitized lineage evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: saju-production-cloud-run-lineage-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/production-cloud-run-lineage-evidence
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Enforce direct traffic-history evidence
+        shell: bash
+        env:
+          AUDIT_READABLE: ${{ steps.lineage.outputs.audit_readable }}
+          SELECTED_EVENT_COUNT: ${{ steps.lineage.outputs.selected_event_count }}
+        run: |
+          set -euo pipefail
+          if [ "$AUDIT_READABLE" != 'true' ]; then
+            echo 'Cloud Audit history is not readable; rollback predecessor remains unproven.' >&2
+            exit 1
+          fi
+          if [ "${SELECTED_EVENT_COUNT:-0}" -eq 0 ]; then
+            echo 'No direct Cloud Run traffic-history event was captured; rollback predecessor remains unproven.' >&2
+            exit 1
+          fi
