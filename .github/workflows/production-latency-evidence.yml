@@ -147,7 +147,7 @@ jobs:
             --project "$GCP_PROJECT_ID" \
             --format=json > "$revision_json"
 
-          ready="$(jq -r '[.status.conditions[]? | select(.type == "Ready") | .status] | first // empty' "$revision_json")"
+          ready="$(jq -r '[.status.conditions[]? | select(.type == "Ready") | .status] | .[0] // empty' "$revision_json")"
           image_ref="$(jq -r '.spec.containers[0].image // empty' "$revision_json")"
           if [ "$ready" != 'True' ]; then
             echo 'Current 100% production revision is not Ready=True.' >&2
@@ -196,6 +196,7 @@ jobs:
           SAJU_LATENCY_BEARER="$bearer" node scripts/measure-production-latency.mjs
 
       - name: Capture final production identity and enforce stability
+        if: ${{ always() && steps.before.outcome == 'success' }}
         shell: bash
         env:
           EXPECTED_REVISION: ${{ steps.before.outputs.revision }}
