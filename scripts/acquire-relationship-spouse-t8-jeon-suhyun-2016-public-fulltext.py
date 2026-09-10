@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import http.cookiejar
 import json
 import re
 import ssl
@@ -21,16 +22,21 @@ RISS_URL = f'https://m.riss.kr/search/detail/DetailView.do?control_no={RISS_CONT
 NANET_SEARCH_URL = 'https://dl.nanet.go.kr/search/searchInnerList.do?queryText=%EA%B2%BD%EA%B8%B0%EB%8C%80%ED%95%99%EA%B5%90+%EB%AC%B8%ED%99%94%EC%98%88%EC%88%A0%EB%8C%80%ED%95%99%EC%9B%90%3APUB%5EPUB_WS%5EDP_PUB_WS%3AAND&zone=PUB%5EPUB_WS%5EDP_PUB_WS'
 UA = 'Mozilla/5.0 (compatible; SajuResearchPublicRouteVerifier/1.0; +https://github.com/gycha0109-beep/Saju)'
 CTX = ssl.create_default_context()
+COOKIE_JAR = http.cookiejar.CookieJar()
+OPENER = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(COOKIE_JAR), urllib.request.HTTPSHandler(context=CTX))
 
 
-def fetch(url: str, timeout: int = 20) -> dict[str, object]:
-    req = urllib.request.Request(url, headers={
+def fetch(url: str, timeout: int = 20, referer: str | None = None) -> dict[str, object]:
+    headers = {
         'User-Agent': UA,
         'Accept': 'text/html,application/javascript,application/pdf;q=0.9,*/*;q=0.8',
         'Accept-Language': 'ko-KR,ko;q=0.9,en;q=0.6',
-    })
+    }
+    if referer:
+        headers['Referer'] = referer
+    req = urllib.request.Request(url, headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=timeout, context=CTX) as resp:
+        with OPENER.open(req, timeout=timeout) as resp:
             body = resp.read()
             return {'ok': True, 'status': getattr(resp, 'status', 200), 'finalUrl': resp.geturl(),
                     'contentType': resp.headers.get('Content-Type', ''), 'bytes': len(body),
@@ -72,6 +78,40 @@ def function_fragments(js: str, name: str) -> list[str]:
     return out[:5]
 
 
+def exact_form_fields(html: str) -> dict[str, str]:
+    form = re.search(r'(?is)<form\b[^>]*\bname=["\']f["\'][^>]*>(.*?)</form>', html)
+    if not form:
+        return {}
+    fields: dict[str, str] = {}
+    for tag in re.findall(r'(?is)<input\b[^>]*>', form.group(1)):
+        name_m = re.search(r'(?is)\bname\s*=\s*["\']([^"\']+)["\']', tag)
+        if not name_m:
+            continue
+        value_m = re.search(r'(?is)\bvalue\s*=\s*["\']([^"\']*)["\']', tag)
+        fields[unescape(name_m.group(1))] = unescape(value_m.group(1)) if value_m else ''
+    return fields
+
+
+def authored_links(html: str, base: str) -> list[dict[str, str]]:
+    out: list[dict[str, str]] = []
+    for attrs, inner in re.findall(r'(?is)<a\b([^>]*)>(.*?)</a>', html):
+        text = visibleish(inner)[:300]
+        href_m = re.search(r'(?is)\bhref\s*=\s*["\']([^"\']+)["\']', attrs)
+        href = unescape(href_m.group(1)).strip() if href_m else ''
+        onclick_m = re.search(r'(?is)\bonclick\s*=\s*["\']([^"\']+)["\']', attrs)
+        onclick = unescape(onclick_m.group(1)).strip() if onclick_m else ''
+        if not href or href.lower().startswith(('javascript:', '#', 'mailto:')):
+            continue
+        absolute = urllib.parse.urljoin(base, href)
+        hay = f'{text} {href} {onclick}'.lower()
+        if any(k in hay for k in ('원문', 'download', '다운로드', 'viewer', 'view', '.pdf', 'fulltext', 'full-text')):
+            out.append({'text': text, 'href': href, 'absoluteUrl': absolute, 'onclick': onclick})
+    dedup: dict[str, dict[str, str]] = {}
+    for row in out:
+        dedup.setdefault(row['absoluteUrl'], row)
+    return list(dedup.values())[:100]
+
+
 report: dict[str, object] = {
     'candidate': {'title': TITLE, 'author': AUTHOR, 'year': YEAR,
                   'institution': '경기대학교 문화예술대학원', 'degree': '석사',
@@ -105,7 +145,7 @@ if riss_body:
     riss_entry['siteAuthoredScriptUrls'] = authored_srcs
     script_contracts = []
     for i, url in enumerate(dict.fromkeys(authored_srcs)):
-        js_result = fetch(url, 15)
+        js_result = fetch(url, 15, referer=RISS_URL)
         js_body = js_result.pop('body')
         js_text = decode(js_body, str(js_result.get('contentType') or '')) if js_body else ''
         if js_body:
@@ -115,10 +155,38 @@ if riss_body:
             script_contracts.append({'url': url, 'fetch': js_result,
                                      'fulltextDownloadFragments': fragments})
     riss_entry['fulltextDownloadContracts'] = script_contracts
+
+    # Reproduce exactly what the site-authored fulltextDownload() does:
+    # serialize document.f after setting loginFlag=1, then GET FullTextDownload.do.
+    fields = exact_form_fields(riss_html)
+    original_fields = dict(fields)
+    fields['loginFlag'] = '1'
+    riss_entry['exactDetailFormFields'] = original_fields
+    riss_entry['fulltextPopupFields'] = fields
+    popup_url = urllib.parse.urljoin(RISS_URL, '/search/download/FullTextDownload.do') + '?' + urllib.parse.urlencode(fields)
+    popup = fetch(popup_url, 25, referer=RISS_URL)
+    popup_body = popup.pop('body')
+    popup_entry: dict[str, object] = {'name': 'riss_fulltext_popup', 'requestedUrl': popup_url, **popup}
+    if popup_body:
+        suffix = 'pdf' if popup_body[:5] == b'%PDF-' else 'html'
+        (ROOT / f'riss-fulltext-popup-response.{suffix}').write_bytes(popup_body)
+        popup_entry['isPdf'] = suffix == 'pdf'
+        if suffix == 'html':
+            popup_html = decode(popup_body, str(popup.get('contentType') or ''))
+            popup_text = visibleish(popup_html)
+            popup_entry['accessMarkers'] = {
+                'login': '로그인' in popup_text,
+                'loginRequired': any(x in popup_text for x in ('로그인이 필요', '로그인 후', '로그인해', '로그인하여')),
+                'institution': any(x in popup_text for x in ('소속기관', '기관인증', '기관 인증', '협정기관')),
+                'download': '다운로드' in popup_text,
+                'originalView': '원문보기' in popup_text,
+            }
+            popup_entry['authoredLinks'] = authored_links(popup_html, str(popup.get('finalUrl') or popup_url))
+            popup_entry['boundedText'] = popup_text[:16000]
+    report['sources'].append(popup_entry)
 report['sources'].append(riss_entry)
 
-# NANET is a corroborating public holding surface. It may rate-limit cloud runners;
-# its failure must not erase the exact RISS identity already established above.
+# NANET remains corroborating only; cloud-runner timeout does not invalidate exact RISS identity.
 nanet = fetch(NANET_SEARCH_URL, 8)
 nanet_body = nanet.pop('body')
 nanet_entry: dict[str, object] = {'name': 'nanet_search', 'requestedUrl': NANET_SEARCH_URL, **nanet}
@@ -135,11 +203,16 @@ if nanet_body:
 report['sources'].append(nanet_entry)
 
 ri = riss_entry.get('identityMarkers', {})
+popup_entry = next((s for s in report['sources'] if s.get('name') == 'riss_fulltext_popup'), {})
 report['identityDisposition'] = ('EXACT_RISS_IDENTITY_CONFIRMED'
                                  if ri.get('titleExact') and ri.get('authorExact') and ri.get('year')
                                  else 'IDENTITY_NOT_CONFIRMED')
 report['rissFulltextFunctionContractRecovered'] = bool(riss_entry.get('fulltextDownloadContracts'))
-report['fulltextDisposition'] = 'RISS_SITE_AUTHORED_FULLTEXT_FUNCTION_CONTRACT_DISCOVERED_PENDING_FOLLOW'
+report['rissFulltextPopupFetched'] = bool(popup_entry.get('ok'))
+report['publicPdfAcquired'] = bool(popup_entry.get('isPdf'))
+report['fulltextDisposition'] = ('PUBLIC_PDF_ACQUIRED'
+                                 if report['publicPdfAcquired']
+                                 else 'SITE_AUTHORED_FULLTEXT_POPUP_FOLLOWED_NO_DIRECT_PDF_YET')
 report['semanticDisposition'] = 'NO_BODY_LEVEL_DECISION_YET'
 
 path = ROOT / 'report.json'
