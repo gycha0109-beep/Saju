@@ -22,7 +22,86 @@ jobs:
       - name: Install bounded PDF reader
         run: python -m pip install --disable-pip-version-check pypdf==6.0.0
       - name: Follow exact current public RISS route
+        id: acquire
+        continue-on-error: true
         run: python scripts/acquire-relationship-spouse-t8-hong-seungpil-2017-public-fulltext.py
+      - name: Classify strict TLS verification boundary when dCollection rejects verified TLS
+        if: steps.acquire.outcome == 'failure'
+        run: |
+          python - <<'PY'
+          import html
+          import json
+          import re
+          import ssl
+          from pathlib import Path
+          from urllib.error import URLError
+          from urllib.parse import urlparse
+          from urllib.request import Request, urlopen
+
+          root=Path('acquisition-hong-seungpil-2017')
+          dispatch=(root/'riss-fulltext-dispatch-response.html').read_text(encoding='utf-8',errors='replace')
+          detail=(root/'riss-detail.html').read_text(encoding='utf-8',errors='replace')
+          urls=[]
+          for m in re.finditer(r'https://kongju\.dcollection\.net/common/orgView/\d+',dispatch):
+              u=html.unescape(m.group(0))
+              if u not in urls: urls.append(u)
+          assert urls==['https://kongju.dcollection.net/common/orgView/200000999222'],urls
+          target=urls[0]
+          assert urlparse(target).hostname=='kongju.dcollection.net'
+
+          tls_error=None
+          try:
+              with urlopen(Request(target,headers={'User-Agent':'Mozilla/5.0 (compatible; SajuResearchEvidence/1.0; Hong-Seungpil-2017-strict-TLS)'}),timeout=35) as r:
+                  raise AssertionError(f'strict TLS unexpectedly succeeded: {getattr(r,"status",None)} {r.geturl()}')
+          except URLError as exc:
+              tls_error=f'{type(exc.reason).__name__}: {exc.reason}'
+              assert isinstance(exc.reason,ssl.SSLCertVerificationError),tls_error
+              assert 'CERTIFICATE_VERIFY_FAILED' in tls_error,tls_error
+
+          def value(name):
+              patterns=[
+                  rf'name=["\']{re.escape(name)}["\'][^>]*value=["\']([^"\']*)',
+                  rf'value=["\']([^"\']*)["\'][^>]*name=["\']{re.escape(name)}["\']',
+              ]
+              for p in patterns:
+                  m=re.search(p,detail,re.I|re.S)
+                  if m:return html.unescape(m.group(1))
+              return None
+
+          form={k:value(k) for k in ['control_no','p_mat_type','p_submat_type','fulltext_kind']}
+          assert form['control_no']=='8ebdb4487e4de984ffe0bdc3ef48d419',form
+          assert form['p_mat_type']=='be54d9b8bc7cdb09',form
+          assert form['p_submat_type'] and form['fulltext_kind'],form
+
+          boundary={
+              'candidate':{
+                  'author':'홍승필',
+                  'title':'『자평진전』에 기초한 궁합실관 연구',
+                  'year':2017,
+                  'institution':'공주대학교 대학원 동양학과',
+                  'rissId':'T14388745',
+                  'control':'8ebdb4487e4de984ffe0bdc3ef48d419',
+              },
+              'formTuple':form,
+              'rissAuthoredDcollectionUrl':target,
+              'strictTlsError':tls_error,
+              'fullLengthPdfAcquired':False,
+              'contentDownloadExecuted':True,
+              'guessedOpaqueIdentifierCount':0,
+              'loginBypass':False,
+              'institutionAuthBypass':False,
+              'paywallBypass':False,
+              'drmRequestExecuted':False,
+              'decryptionActionExecuted':False,
+              'tlsVerificationDisabled':False,
+              'crossSourceSemanticStitching':False,
+              'semanticDisposition':'PUBLIC_ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION',
+              'disposition':'RISS_AUTHORED_KONGJU_DCOLLECTION_TLS_CERT_VERIFICATION_BOUNDARY_STOP_NO_BYPASS',
+          }
+          (root/'tls-boundary.json').write_text(json.dumps(boundary,ensure_ascii=False,indent=2),encoding='utf-8')
+          (root/'report.json').write_text(json.dumps(boundary,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(boundary,ensure_ascii=False,indent=2))
+          PY
       - name: Print spouse and compatibility semantic contexts when body exists
         run: |
           python - <<'PY'
@@ -58,7 +137,11 @@ jobs:
           assert j['guessedOpaqueIdentifierCount']==0
           assert j['loginBypass'] is False and j['institutionAuthBypass'] is False and j['paywallBypass'] is False
           assert j['drmRequestExecuted'] is False and j['decryptionActionExecuted'] is False
+          assert j.get('tlsVerificationDisabled',False) is False
           assert j['crossSourceSemanticStitching'] is False
+          if j['semanticDisposition']=='PUBLIC_ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION':
+              assert j['rissAuthoredDcollectionUrl']=='https://kongju.dcollection.net/common/orgView/200000999222'
+              assert 'CERTIFICATE_VERIFY_FAILED' in j['strictTlsError']
           print('Hong Seungpil 2017 exact RISS/no-bypass public route verified')
           print('semanticDisposition=',j['semanticDisposition'])
           PY
@@ -69,6 +152,7 @@ jobs:
           name: hong-seungpil-2017-public-route-evidence
           path: |
             acquisition-hong-seungpil-2017/report.json
+            acquisition-hong-seungpil-2017/tls-boundary.json
             acquisition-hong-seungpil-2017/riss-detail.html
             acquisition-hong-seungpil-2017/riss-script-*.txt
             acquisition-hong-seungpil-2017/riss-fulltext-dispatch-response.html
