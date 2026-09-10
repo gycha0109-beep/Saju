@@ -7,6 +7,7 @@ on:
       - 'scripts/inspect-relationship-spouse-t8-yang-jihun-2025-riss-public-routes.py'
       - 'scripts/follow-relationship-spouse-t8-yang-jihun-2025-riss-fulltext-dispatcher.py'
       - 'scripts/follow-relationship-spouse-t8-yang-jihun-2025-riss-authored-dcollection-route.py'
+      - 'scripts/review-relationship-spouse-t8-yang-jihun-2025-decisive-pages.py'
       - '.github/workflows/relationship-spouse-t8-yang-jihun-2025-fulltext-discovery.yml'
   workflow_dispatch:
 
@@ -56,6 +57,8 @@ jobs:
           (root/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
           print(json.dumps(inspection,ensure_ascii=False,indent=2)); print('semanticDisposition=',report['semanticDisposition'])
           PY
+      - name: Extract decisive body pages with layout-preserving text
+        run: python scripts/review-relationship-spouse-t8-yang-jihun-2025-decisive-pages.py
       - name: Print bounded spouse and modern-applicability contexts when body exists
         run: |
           python - <<'PY'
@@ -104,6 +107,7 @@ jobs:
             acquisition-yang-jihun-2025/public-route-report.json
             acquisition-yang-jihun-2025/riss-dispatcher-report.json
             acquisition-yang-jihun-2025/dcollection-route-report.json
+            acquisition-yang-jihun-2025/decisive-pages.json
             acquisition-yang-jihun-2025/riss-title-search-*.html
             acquisition-yang-jihun-2025/riss-detail.html
             acquisition-yang-jihun-2025/riss-script-*.txt
