@@ -94,6 +94,32 @@ def authored_targets(text: str, base: str):
     return out
 
 
+def contract_literals(source: str):
+    values = []
+    seen = set()
+    keywords = ('api', 'document', 'page', 'pdf', 'file', 'content', 'metadata', 'reader', 'image', 'stream', 'info', 'source', 'download', 'thumbnail')
+    for match in re.finditer(r'(["\'])(.{1,400}?)\1', source, re.S):
+        value = match.group(2)
+        low = value.lower()
+        if not any(keyword in low for keyword in keywords):
+            continue
+        if not (value.startswith('/') or value.startswith('http') or '?' in value or '=' in value):
+            continue
+        if value in seen:
+            continue
+        seen.add(value)
+        values.append(value)
+        if len(values) >= 250:
+            break
+    contexts = []
+    for term in ('axios', 'fetch(', '/api/', '.pdf', 'page', 'document', 'content', 'metadata', 'file', 'source'):
+        for match in re.finditer(re.escape(term), source, re.I):
+            contexts.append(re.sub(r'\s+', ' ', source[max(0, match.start()-240):min(len(source), match.end()+520)]))
+            if len(contexts) >= 120:
+                return values, contexts
+    return values, contexts
+
+
 report_path = ROOT / 'report.json'
 viewer_path = ROOT / 'nanet-viewer.html'
 assert report_path.exists() and viewer_path.exists(), 'prior exact NANET viewer evidence missing'
@@ -115,6 +141,7 @@ viewer_url = report['viewerContract']['requestedViewerUrl']
 reader = fetch(reader_url, referer=viewer_url, attempts=3, timeout=25, max_bytes=25_000_000)
 body = reader.pop('body')
 is_pdf = body.startswith(b'%PDF-')
+app_contract = None
 if is_pdf:
     saved = ROOT / 'nanet-reader.pdf'
     saved.write_bytes(body)
@@ -129,13 +156,36 @@ else:
     saved.write_bytes(body)
     text = decode(body, str(reader.get('contentType') or ''))
     targets = authored_targets(text, str(reader.get('finalUrl') or reader_url))
-    report['semanticDisposition'] = 'PUBLIC_READER_RESPONSE_DISCOVERED_NO_BODY_LEVEL_DECISION'
+    index_targets = [
+        item['url'] for item in targets
+        if item['kind'] == 'src'
+        and urllib.parse.urlsplit(item['url']).hostname == 'docviewer.nanet.go.kr'
+        and re.fullmatch(r'/reader/js/index\.[0-9a-f]+\.js', urllib.parse.urlsplit(item['url']).path)
+    ]
+    assert len(index_targets) == 1, f'exact reader-authored index JS not uniquely observed: {index_targets}'
+    index_url = index_targets[0]
+    index = fetch(index_url, referer=reader_url, attempts=3, timeout=25, max_bytes=25_000_000)
+    index_body = index.pop('body')
+    index_saved = ROOT / 'nanet-reader-index.js'
+    index_saved.write_bytes(index_body)
+    index_text = decode(index_body, str(index.get('contentType') or ''))
+    literals, contexts = contract_literals(index_text)
+    app_contract = {
+        'indexUrlAuthoredByReaderResponse': True,
+        'indexUrl': index_url,
+        'indexResponse': {**index, 'saved': str(index_saved)},
+        'literalCandidates': literals,
+        'keywordContexts': contexts,
+        'applicationRequestExecuted': False,
+    }
+    report['semanticDisposition'] = 'PUBLIC_READER_APP_CONTRACT_INSPECTED_NO_BODY_LEVEL_DECISION'
 
 report['readerContract'] = {
     'readerUrlAuthoredByViewerResponse': True,
     'readerUrl': reader_url,
     'opaqueReaderIdGuessed': False,
     'response': {**reader, 'saved': str(saved), 'isPdf': is_pdf, 'authoredTargets': targets},
+    'appContract': app_contract,
 }
 report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
 print(json.dumps({
@@ -146,6 +196,7 @@ print(json.dumps({
     'readerBytes': reader.get('bytes'),
     'readerSha256': reader.get('sha256'),
     'readerIsPdf': is_pdf,
-    'authoredTargets': targets[:150],
+    'authoredTargets': targets[:50],
+    'appContract': app_contract,
     'semanticDisposition': report['semanticDisposition'],
 }, ensure_ascii=False, indent=2))
