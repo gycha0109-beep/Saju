@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'scripts/discover-relationship-spouse-t8-yang-jihun-2025-public-identity.py'
+      - 'scripts/inspect-relationship-spouse-t8-yang-jihun-2025-riss-public-routes.py'
+      - 'scripts/follow-relationship-spouse-t8-yang-jihun-2025-riss-fulltext-dispatcher.py'
       - '.github/workflows/relationship-spouse-t8-yang-jihun-2025-fulltext-discovery.yml'
   workflow_dispatch:
 
@@ -13,7 +15,7 @@ permissions:
 jobs:
   discover-current-public-identity:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,34 +23,44 @@ jobs:
           python-version: '3.12'
       - name: Discover exact current public RISS identity
         run: python scripts/discover-relationship-spouse-t8-yang-jihun-2025-public-identity.py
-      - name: Enforce discovery boundary
+      - name: Inspect exact RISS public route contracts
+        run: python scripts/inspect-relationship-spouse-t8-yang-jihun-2025-riss-public-routes.py
+      - name: Follow exact site-authored RISS fulltext dispatcher once
+        run: python scripts/follow-relationship-spouse-t8-yang-jihun-2025-riss-fulltext-dispatcher.py
+      - name: Enforce no-guessing and no-bypass boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          j=json.loads(Path('acquisition-yang-jihun-2025/report.json').read_text(encoding='utf-8'))
+          j=json.loads(Path('acquisition-yang-jihun-2025/public-route-report.json').read_text(encoding='utf-8'))
+          d=json.loads(Path('acquisition-yang-jihun-2025/riss-dispatcher-report.json').read_text(encoding='utf-8'))
           assert j['candidate']['author']=='양지훈'
-          assert j['candidate']['year']==2025
-          assert j['candidate']['nanetControl']=='KDMT12025000053655'
-          assert j['contentDownloadExecuted'] is False
+          assert j['exactRow']['control']=='a0a78b8578ab695effe0bdc3ef48d419'
+          assert j['exactRow']['rissId']=='T17159723'
+          assert j['exactRow']['uci']=='I804:44032-200000847815'
           assert j['guessedOpaqueIdentifierCount']==0
-          assert j['loginBypass'] is False
-          assert j['institutionAuthBypass'] is False
-          assert j['paywallBypass'] is False
-          assert j['drmRequestExecuted'] is False
-          assert j['decryptionActionExecuted'] is False
-          assert j['crossSourceSemanticStitching'] is False
-          print('Yang Jihun 2025 identity discovery boundary verified')
+          assert d['guessedOpaqueIdentifierCount']==0
+          assert d['loginBypass'] is False
+          assert d['institutionAuthBypass'] is False
+          assert d['paywallBypass'] is False
+          assert d['drmRequestExecuted'] is False
+          assert d['decryptionActionExecuted'] is False
+          print('Yang Jihun 2025 exact RISS route/no-bypass boundary verified')
           PY
-      - name: Upload discovery evidence
+      - name: Upload bounded route evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: yang-jihun-2025-public-identity-evidence
+          name: yang-jihun-2025-public-route-evidence
           path: |
             acquisition-yang-jihun-2025/report.json
+            acquisition-yang-jihun-2025/public-route-report.json
+            acquisition-yang-jihun-2025/riss-dispatcher-report.json
             acquisition-yang-jihun-2025/riss-title-search-*.html
             acquisition-yang-jihun-2025/riss-detail.html
+            acquisition-yang-jihun-2025/riss-script-*.txt
+            acquisition-yang-jihun-2025/riss-fulltext-dispatch-response.html
+            acquisition-yang-jihun-2025/yang-jihun-2025.pdf
           if-no-files-found: warn
           retention-days: 1
           compression-level: 0
