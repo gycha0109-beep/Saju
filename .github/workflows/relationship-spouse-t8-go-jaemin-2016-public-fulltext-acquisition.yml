@@ -1,0 +1,63 @@
+name: Relationship Spouse T8 Go Jaemin 2016 Public Fulltext Acquisition
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-go-jaemin-2016-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-go-jaemin-2016-public-fulltext-acquisition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Follow exact RISS-authored public routes only
+        run: python scripts/acquire-relationship-spouse-t8-go-jaemin-2016-public-fulltext.py
+      - name: Enforce identity and no-bypass discovery boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-go-jaemin-2016/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']; i=j['identityObserved']
+          assert c['author']=='고재민'
+          assert c['year']==2016
+          assert c['title']=='四柱命理의 宮星과 格局用神論 硏究'
+          assert c['rissId']=='T14040293'
+          assert c['rissControl']=='01535e75dd09ae73ffe0bdc3ef48d419'
+          assert i['title'] and i['author'] and i['year'] and i['rissId']
+          assert i['originalViewLabel'] is True
+          assert p['guessedOpaqueIdentifierCount']==0
+          assert p['onlyLiteralPageAuthoredRoutesFollowed'] is True
+          assert p['loginBypass'] is False
+          assert p['institutionAuthBypass'] is False
+          assert p['paywallBypass'] is False
+          assert p['drmRequestExecuted'] is False
+          assert p['decryptionActionExecuted'] is False
+          print('Go Jaemin 2016 exact RISS identity and bounded public-route policy verified')
+          print('boundary=', j['boundary'])
+          print('pdfCount=', len(j['pdfs']))
+          for pdf in j['pdfs']:
+              print('pdfSha256=', pdf['sha256'], 'bytes=', pdf['bytes'], 'final=', pdf['finalUrl'])
+          PY
+      - name: Upload bounded acquisition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-jaemin-2016-public-fulltext-evidence
+          path: |
+            acquisition-go-jaemin-2016/report.json
+            acquisition-go-jaemin-2016/summary.txt
+            acquisition-go-jaemin-2016/*.html.txt
+            acquisition-go-jaemin-2016/*.pdf
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
