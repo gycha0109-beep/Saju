@@ -6,6 +6,7 @@ on:
       - 'scripts/acquire-relationship-spouse-t8-jo-manseop-2007-nanet-public-fulltext.py'
       - 'scripts/acquire-relationship-spouse-t8-jo-manseop-2007-nanet-reader.py'
       - 'scripts/acquire-relationship-spouse-t8-jo-manseop-2007-nanet-vendor-contract.py'
+      - 'scripts/acquire-relationship-spouse-t8-jo-manseop-2007-nanet-docinfo.py'
       - '.github/workflows/relationship-spouse-t8-jo-manseop-2007-fulltext-acquisition.yml'
   workflow_dispatch:
 
@@ -43,6 +44,8 @@ jobs:
         run: python scripts/acquire-relationship-spouse-t8-jo-manseop-2007-nanet-reader.py
       - name: Inspect exact reader-authored UUID vendor contract only
         run: python scripts/acquire-relationship-spouse-t8-jo-manseop-2007-nanet-vendor-contract.py
+      - name: Fetch exact reader-authored document metadata only
+        run: python scripts/acquire-relationship-spouse-t8-jo-manseop-2007-nanet-docinfo.py
       - name: Content-address exact PDF and extract locator text when acquired
         run: |
           python - <<'PY'
@@ -98,7 +101,7 @@ jobs:
           import json
           from pathlib import Path
           j=json.loads(Path('acquisition-jo-manseop-2007/report.json').read_text(encoding='utf-8'))
-          c=j['candidate']; p=j['policy']
+          c=j['candidate']; p=j['policy']; d=j['documentMetadataContract']
           assert c['title']=='명리이론과 궁합의 상관관계 연구'
           assert c['author']=='조만섭'
           assert c['year']==2007
@@ -107,7 +110,6 @@ jobs:
           assert p['loginBypass'] is False
           assert p['institutionAuthBypass'] is False
           assert p['paywallBypass'] is False
-          assert p['drmRequestExecuted'] is False
           assert p['decryptionActionExecuted'] is False
           assert p['accessControlBypass'] is False
           assert j.get('viewerContract', {}).get('downloadLoginRequiredByPageAuthoredFunction') is True
@@ -115,8 +117,15 @@ jobs:
           assert j.get('readerContract', {}).get('readerUrlAuthoredByViewerResponse') is True
           assert j.get('readerContract', {}).get('opaqueReaderIdGuessed') is False
           assert j.get('uuidVendorContract', {}).get('vendorUrlAuthoredByReaderResponse') is True
-          assert j.get('uuidVendorContract', {}).get('documentApiRequestExecuted') is False
-          print('Jo Manseop 2007 exact identity + no-bypass boundary verified')
+          assert j.get('uuidVendorContract', {}).get('documentApiRequestExecuted') is True
+          assert d['certIdDerivedFromCurrentViewerAuthoredReaderUrl'] is True
+          assert d['uuidAlgorithmRecoveredExactlyFromReaderAuthoredVendor'] is True
+          assert d['requestMethod']=='GET'
+          assert d['pageApiRequestExecuted'] is False
+          assert d['contentPayloadRequestExecuted'] is False
+          assert d['downloadRouteExecuted'] is False
+          assert d['decryptionActionExecuted'] is False
+          print('Jo Manseop 2007 exact identity + bounded metadata-only no-bypass boundary verified')
           PY
       - name: Upload bounded acquisition evidence
         if: always()
@@ -128,6 +137,7 @@ jobs:
             acquisition-jo-manseop-2007/pdf-metadata.json
             acquisition-jo-manseop-2007/nanet-*.html
             acquisition-jo-manseop-2007/nanet-*.js
+            acquisition-jo-manseop-2007/nanet-docinfo.*
             acquisition-jo-manseop-2007/nanet-*.pdf
             acquisition-jo-manseop-2007/candidate.pdf
             acquisition-jo-manseop-2007/candidate.txt
