@@ -112,17 +112,22 @@ function delivered(): ProductReadingDeliveryResult {
   };
 }
 
+function withoutArtifact(): ProductReadingDeliveryResult {
+  const result = delivered();
+  delete result.artifact;
+  return result;
+}
+
 function deliveredResponse() {
   return buildProductReadingResponse(delivered());
 }
 
 function clarificationResponse() {
   return buildProductReadingResponse({
-    ...delivered(),
+    ...withoutArtifact(),
     state: 'clarification_required',
     messageCode: 'READING_REQUEST_CLARIFICATION_REQUIRED',
     requiredAction: 'clarify_request',
-    artifact: undefined,
     clarification: {
       kind: 'domain',
       options: [
@@ -155,11 +160,10 @@ function coverageResponse(
   }[state];
 
   return buildProductReadingResponse({
-    ...delivered(),
+    ...withoutArtifact(),
     state,
     messageCode: contract.messageCode,
     requiredAction: contract.requiredAction,
-    artifact: undefined,
     coverage: {
       state: contract.coverageState,
       hasAvailableEvidence: state === 'partial_evidence',
@@ -278,7 +282,10 @@ describe('ProductReadingResponse admission', () => {
     expect(() =>
       admitProductReadingResponse({
         ...response,
-        coverage: { ...response.coverage, state: 'partial' === expectedCoverageState ? 'unsupported' : 'partial' },
+        coverage: {
+          ...response.coverage,
+          state: 'partial' === expectedCoverageState ? 'unsupported' : 'partial',
+        },
       }),
     ).toThrow(TypeError);
   });
