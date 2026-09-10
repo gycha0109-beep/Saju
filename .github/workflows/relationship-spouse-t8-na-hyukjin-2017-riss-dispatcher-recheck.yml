@@ -1,0 +1,68 @@
+name: Relationship Spouse T8 Na Hyukjin 2017 RISS Dispatcher Recheck
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-na-hyukjin-2017-riss-dispatcher-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-na-hyukjin-2017-riss-dispatcher-recheck.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recheck-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Follow page-authored RISS dispatcher to institutional route
+        run: python scripts/acquire-relationship-spouse-t8-na-hyukjin-2017-riss-dispatcher-public-fulltext.py
+      - name: Enforce exact identity dispatcher and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-na-hyukjin-2017-riss-dispatcher-recheck/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; p=j['policy']
+          assert c['author']=='나혁진'
+          assert c['year']==2017
+          assert c['rissId']=='T14398372'
+          assert c['rissControl']=='1f8b683fad900548ffe0bdc3ef48d419'
+          assert c['nanetControl']=='KDMT1201802345'
+          assert c['priorAccessBoundaryPr']==371
+          assert j['identityDisposition']=='EXACT_RISS_IDENTITY_CONFIRMED'
+          assert j['dispatcherContractVerified'] is True
+          assert j['rissFulltextPopupFetched'] is True
+          assert p['guessedOpaqueIdentifierCount']==0
+          assert p['onlySiteAuthoredPublicRoutesInspected'] is True
+          assert p['nanetDrmRouteReplayed'] is False
+          assert p['loginBypass'] is False
+          assert p['institutionAuthBypass'] is False
+          assert p['paywallBypass'] is False
+          assert p['drmRequestExecuted'] is False
+          assert p['decryptionActionExecuted'] is False
+          if j['publicPdfAcquired']:
+              pdf=next(x for x in j['hops'] if x['name']=='publicPdf')
+              assert pdf['isPdf'] is True
+              assert pdf['sourceContract']['sizeMatchesServerMetadata'] is True
+          print('Na Hyukjin 2017 exact identity and current RISS dispatcher contract verified')
+          print('fulltextDisposition=', j['fulltextDisposition'])
+          PY
+      - name: Upload bounded recheck evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: na-hyukjin-2017-riss-dispatcher-recheck-evidence
+          path: |
+            acquisition-na-hyukjin-2017-riss-dispatcher-recheck/report.json
+            acquisition-na-hyukjin-2017-riss-dispatcher-recheck/*-response.html
+            acquisition-na-hyukjin-2017-riss-dispatcher-recheck/*.js
+            acquisition-na-hyukjin-2017-riss-dispatcher-recheck/*.pdf
+            acquisition-na-hyukjin-2017-riss-dispatcher-recheck/*.bin
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
