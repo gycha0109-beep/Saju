@@ -13,6 +13,11 @@ export type {
   NarrativeModelAdapter,
 } from './llm/model-adapter.js';
 export type { ConsumerReadingRequestInput } from './reading/consumer-reading-request-adapter.js';
+export {
+  admitProductReadingResponse,
+  assertProductReadingResponse,
+} from './reading/product-reading-response-admission.js';
+export { PRODUCT_READING_RESPONSE_VERSION } from './reading/product-reading-response.js';
 export type {
   ProductReadingResponse,
   ProductReadingResponseBlock,
