@@ -21,7 +21,7 @@ jobs:
           python-version: '3.12'
       - name: Follow page-authored RISS dispatcher to institutional route
         run: python scripts/acquire-relationship-spouse-t8-song-sangseop-2022-riss-dispatcher-public-fulltext.py
-      - name: Enforce exact identity and no-bypass boundary
+      - name: Enforce exact identity public-body and no-bypass boundary
         run: |
           python - <<'PY'
           import json
@@ -35,6 +35,21 @@ jobs:
           assert c['priorAccessBoundaryPr']==374
           assert j['identityDisposition']=='EXACT_RISS_IDENTITY_CONFIRMED'
           assert j['dispatcherContractVerified'] is True
+          assert j['dcollectionTargetRecoveredFromRiss'] is True
+          assert j['dcollectionItemFetched'] is True
+          assert j['dcollectionPublicPdfContractRecovered'] is True
+          assert j['publicPdfAcquired'] is True
+          dc=next(x for x in j['hops'] if x['name']=='dcollectionItem')
+          pdf=next(x for x in j['hops'] if x['name']=='publicPdf')
+          assert dc['sourceProvenance']['itemId']=='200000631721'
+          assert dc['sourceContract']['drm']=='N'
+          assert dc['sourceContract']['agreeVariablePresent'] is False
+          assert dc['sourceContract']['messageGateEmpty'] is True
+          assert dc['sourceContract']['activeNonDrmPublicPdfRedirect'] is True
+          assert dc['sourceContract']['expectedFileSize']==1895533
+          assert pdf['isPdf'] is True
+          assert pdf['sourceContract']['itemId']=='200000631721'
+          assert pdf['sourceContract']['sizeMatchesServerMetadata'] is True
           assert p['guessedOpaqueIdentifierCount']==0
           assert p['onlySiteAuthoredPublicRoutesInspected'] is True
           assert p['loginBypass'] is False
@@ -42,8 +57,9 @@ jobs:
           assert p['paywallBypass'] is False
           assert p['drmRequestExecuted'] is False
           assert p['decryptionActionExecuted'] is False
-          print('Song Sangseop 2022 exact identity and current RISS dispatcher contract verified')
-          print('fulltextDisposition=', j['fulltextDisposition'])
+          print('Song Sangseop 2022 exact public PDF body and bounded route verified')
+          print('pdfSha256=', pdf['sha256'])
+          print('pdfBytes=', pdf['bytes'])
           PY
       - name: Upload bounded recheck evidence
         if: always()
