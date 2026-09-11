@@ -43,7 +43,7 @@ describe('General Natal Gyeokguk source frontier integration boundary', () => {
     expect(gejuSource.observedCanonicalSubstrate.every((item) => item.status === 'resolved')).toBe(true);
     expect(gejuSource.candidateFactsEmitted).toBe(false);
     expect(gejuSource.establishmentFactsEmitted).toBe(false);
-    expect(serialized).not.toContain('candidateDerivationAuthorized\":true');
-    expect(serialized).not.toContain('establishmentPredicateAuthorized\":true');
+    expect(serialized).not.toContain('candidateDerivationAuthorized":true');
+    expect(serialized).not.toContain('establishmentPredicateAuthorized":true');
   });
 });
