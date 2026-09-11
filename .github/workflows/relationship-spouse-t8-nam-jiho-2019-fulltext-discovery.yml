@@ -1,0 +1,85 @@
+name: Relationship Spouse T8 Nam Jiho 2019 Fulltext Discovery
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-nam-jiho-2019-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-nam-jiho-2019-fulltext-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-current-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install bounded PDF reader
+        run: python -m pip install --disable-pip-version-check pypdf==6.0.0
+      - name: Follow exact current public RISS route
+        run: python scripts/acquire-relationship-spouse-t8-nam-jiho-2019-public-fulltext.py
+      - name: Print compatibility semantic contexts when body exists
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('acquisition-nam-jiho-2019/nam-jiho-2019.txt')
+          if not p.exists():
+              print('No complete body acquired; semantic review intentionally skipped.')
+              raise SystemExit(0)
+          t=p.read_text(encoding='utf-8')
+          for term in ['배우자','부부','궁합','이혼','일간궁합','궁위궁합','육친궁합','십신궁합','일주궁합','관성','재성','일지','남성','여성','남자','여자','남녀','결합']:
+              print(f'\n### TERM {term}')
+              n=0
+              for m in re.finditer(re.escape(term),t,re.I):
+                  print(re.sub(r'\s+',' ',t[max(0,m.start()-500):min(len(t),m.end()+1500)]))
+                  n+=1
+                  if n>=15: break
+              print('COUNT_SHOWN',n)
+          PY
+      - name: Enforce exact identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-nam-jiho-2019/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']
+          assert c['author']=='남직호' and c['year']==2019
+          assert c['rissId']=='T15169258'
+          assert c['control']=='c357150c3e5609c7ffe0bdc3ef48d419'
+          assert j['formTuple']['control_no']=='c357150c3e5609c7ffe0bdc3ef48d419'
+          assert j['formTuple']['p_mat_type']=='be54d9b8bc7cdb09'
+          assert j['guessedOpaqueIdentifierCount']==0
+          assert not j['loginBypass'] and not j['institutionAuthBypass'] and not j['paywallBypass']
+          assert not j['drmRequestExecuted'] and not j['decryptionActionExecuted']
+          assert j['tlsVerificationDisabled'] is False and j['crossSourceSemanticStitching'] is False
+          if j['semanticDisposition']=='DIRECT_BODY_ACQUIRED_REQUIRES_RENDER_FIRST_REVIEW':
+              assert j['fullLengthPdfAcquired'] is True
+              assert j['pdfInspection']['pages']>=140 and j['pdfInspection']['encrypted'] is False
+          else:
+              assert j['semanticDisposition']=='PUBLIC_ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION'
+          print('Nam Jiho 2019 exact RISS/no-bypass public route verified')
+          print('semanticDisposition=',j['semanticDisposition'])
+          PY
+      - name: Upload bounded acquisition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nam-jiho-2019-public-route-evidence
+          path: |
+            acquisition-nam-jiho-2019/report.json
+            acquisition-nam-jiho-2019/riss-detail.html
+            acquisition-nam-jiho-2019/riss-script-*.txt
+            acquisition-nam-jiho-2019/riss-fulltext-dispatch-response.html
+            acquisition-nam-jiho-2019/dcollection-entry.html
+            acquisition-nam-jiho-2019/dcollection-follow-*.html
+            acquisition-nam-jiho-2019/nam-jiho-2019.pdf
+            acquisition-nam-jiho-2019/nam-jiho-2019.txt
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
