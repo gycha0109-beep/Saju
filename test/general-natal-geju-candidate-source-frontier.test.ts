@@ -110,8 +110,8 @@ describe('General Natal Gyeokguk candidate source frontier', () => {
     expect(first.reportId).toBe(second.reportId);
     expect(first).toEqual(second);
     expect(GENERAL_NATAL_GEJU_CANDIDATE_SOURCE_FRONTIER_DEFINITION_HASH).toMatch(/^[0-9a-f]{64}$/);
-    expect(serialized).not.toContain('GEJU_CANDIDATE\":true');
-    expect(serialized).not.toContain('GEJU_ESTABLISHMENT_STATE\":true');
-    expect(serialized).not.toContain('patternEstablished\":true');
+    expect(serialized).not.toContain('GEJU_CANDIDATE":true');
+    expect(serialized).not.toContain('GEJU_ESTABLISHMENT_STATE":true');
+    expect(serialized).not.toContain('patternEstablished":true');
   });
 });
