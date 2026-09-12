@@ -24,6 +24,7 @@ import {
   assertIssuedEyePairGovernedParticipantMediaIngressPolicyFR173,
   getEyePairGovernedParticipantMediaIngressPolicyContractFR173,
   issueEyePairGovernedParticipantMediaIngressPolicyFR173,
+  type ParticipantMediaIngressMetadataFR173V1,
 } from './eye-pair-governed-participant-media-ingress-policy-fr173.js';
 
 function liveBytes(): { trustList: Uint8Array; products: Uint8Array } | null {
@@ -73,9 +74,11 @@ function issueFR172(trustList: Uint8Array, products: Uint8Array) {
   return issueEyePairC2paProductionVerifierRuntimeIntegrationFR172(fr171);
 }
 
-function validMetadata(overrides: Record<string, unknown> = {}) {
+function validMetadata(
+  overrides: Partial<ParticipantMediaIngressMetadataFR173V1> = {},
+): ParticipantMediaIngressMetadataFR173V1 {
   return {
-    schemaVersion: 'fr173-participant-media-ingress-metadata-v1' as const,
+    schemaVersion: 'fr173-participant-media-ingress-metadata-v1',
     mediaObjectCount: 1,
     contentType: 'image/jpeg',
     transportEncoding: 'raw-binary',
