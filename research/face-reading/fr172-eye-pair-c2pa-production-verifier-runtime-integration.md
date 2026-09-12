@@ -36,7 +36,7 @@ trust-list/C2PA-TRUST-LIST.json
   Git blob = f22c13252df991f43bca58634d966dcf1b29c089
 
 trust-list/C2PA-TRUST-LIST.pem
-  Git blob = a0d20f58270177608bd96fad331c8ba9a04820ad
+  Git blob = a0d20fd74c5ba7a545193ec1a906323e5125b5ef
 
 conforming-products/conforming-products-list.json
   Git blob = 256d9881337be86e4639606dd5aa2bf2a4189d03
