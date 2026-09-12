@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { EarthlyBranch } from '../contracts/calculation.js';
+import type { SourceReference } from '../contracts/interpretation.js';
 import {
   GENERAL_NATAL_GEJU_CANDIDATE_OPEN_PREDICATE_GAPS,
   GENERAL_NATAL_GEJU_CANDIDATE_SOURCE_REFERENCES,
@@ -10,6 +11,28 @@ export const GENERAL_NATAL_GEJU_MIXED_QI_TRANSPARENCY_SOURCE_BOUNDARY_VERSION =
   '0.1.0-research' as const;
 export const GENERAL_NATAL_GEJU_MIXED_QI_TRANSPARENCY_SOURCE_SCOPE =
   'ziping_zhenquan_mixed_qi_transparency_source_scope' as const;
+
+export const GENERAL_NATAL_GEJU_MIXED_QI_MONTH_SCOPE_SOURCE_REFERENCE = Object.freeze({
+  sourceId: 'SRC-GEJU-ZIPING-ZHENQUAN-PINGZHU-FOUR-TOMB-MONTH-SCOPE',
+  sourceType: 'classical_text',
+  title: '子平真詮評注',
+  author: '沈孝瞻',
+  editor: '徐樂吾',
+  language: 'zh-Hant',
+  locator: {
+    section: '論雜氣如何取用',
+    anchor: '辰戌丑未四個月',
+  },
+  url: 'https://ncc.com.tw/fate/paleo/bg/bg_033.htm',
+  accessedAt: '2026-09-12',
+  provenanceTier: 'cross_reference',
+  rights: {
+    copyrightStatus: 'unknown',
+    reusePolicy: 'metadata_only',
+  },
+  notes:
+    'Cross-reference for the explicit 徐樂吾 commentary mapping of the selected four-tomb/mixed-qi month scope to 辰戌丑未. This source binds branch scope only and does not authorize transparency slot admissibility or candidate semantics.',
+} as const satisfies SourceReference);
 
 export const GENERAL_NATAL_GEJU_MIXED_QI_MONTH_BRANCHES = Object.freeze([
   '진',
@@ -50,6 +73,7 @@ export interface GeneralNatalGejuMixedQiTransparencySourceBoundaryReport {
 }
 
 const SOURCE_IDS = Object.freeze([
+  GENERAL_NATAL_GEJU_MIXED_QI_MONTH_SCOPE_SOURCE_REFERENCE.sourceId,
   GENERAL_NATAL_GEJU_CANDIDATE_SOURCE_REFERENCES.mixedQiSelection.sourceId,
   GENERAL_NATAL_GEJU_CANDIDATE_SOURCE_REFERENCES.mixedQiPluralSelection.sourceId,
 ]);
@@ -112,7 +136,7 @@ export function buildGeneralNatalGejuMixedQiTransparencySourceBoundary(
     sourceIds: SOURCE_IDS,
     openPredicateGaps: GENERAL_NATAL_GEJU_CANDIDATE_OPEN_PREDICATE_GAPS,
     authorityBoundary:
-      'The selected 子平真詮 mixed-qi passage is scoped to the four tomb/storehouse month branches and explicitly observes transparency-based single/plural usage plus joint transparency/branch-meeting usage. It does not enumerate which canonical pillar slots qualify as 透干, so an exact visible-stem match must not yet be promoted into a governed transparency-selection fact or GEJU_CANDIDATE.',
+      'The selected 子平真詮 mixed-qi passage is scoped to the four tomb/storehouse month branches, with the 徐樂吾 commentary cross-reference explicitly binding that scope to 辰戌丑未, and explicitly observes transparency-based single/plural usage plus joint transparency/branch-meeting usage. It does not enumerate which canonical pillar slots qualify as 透干, so an exact visible-stem match must not yet be promoted into a governed transparency-selection fact or GEJU_CANDIDATE.',
   };
 
   return Object.freeze({
@@ -122,7 +146,7 @@ export function buildGeneralNatalGejuMixedQiTransparencySourceBoundary(
       .slice(0, 24)}`,
     ...material,
     notes: Object.freeze([
-      '四墓/雜氣 source scope is bounded to 辰戌丑未 and must not be generalized to all twelve month branches from this passage alone.',
+      '四墓/雜氣 source scope is bounded to 辰戌丑未 by an explicit 徐樂吾 commentary cross-reference and must not be generalized to all twelve month branches from this passage alone.',
       'The selected passage defines a source-level transparency axis and explicitly permits one transparent use, plural transparent co-use, and transparency plus branch-meeting joint use.',
       'No year/month/day/hour admissibility policy is inferred from the undifferentiated source wording 干/干頭.',
       'The PR #441 exact visible-stem observations remain observation-only until canonical slot admissibility and source-to-canonical matching semantics are governed.',
