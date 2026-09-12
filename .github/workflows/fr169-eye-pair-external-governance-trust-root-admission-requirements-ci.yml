@@ -1,0 +1,45 @@
+name: FR169 Eye Pair External Governance Trust Root Admission Requirements CI
+
+on:
+  pull_request:
+    paths:
+      - "research/face-reading/fr168-eye-pair-external-trust-root-candidate-material-intake.md"
+      - "research/face-reading/fr169-eye-pair-external-governance-trust-root-admission-requirements.md"
+      - "packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.ts"
+      - "packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.test.ts"
+      - "packages/face-reading/src/eye-pair-external-governance-trust-root-admission-requirements-fr169.ts"
+      - "packages/face-reading/src/eye-pair-external-governance-trust-root-admission-requirements-fr169.test.ts"
+      - ".github/workflows/fr169-eye-pair-external-governance-trust-root-admission-requirements-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "research/face-reading/fr168-eye-pair-external-trust-root-candidate-material-intake.md"
+      - "research/face-reading/fr169-eye-pair-external-governance-trust-root-admission-requirements.md"
+      - "packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.ts"
+      - "packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.test.ts"
+      - "packages/face-reading/src/eye-pair-external-governance-trust-root-admission-requirements-fr169.ts"
+      - "packages/face-reading/src/eye-pair-external-governance-trust-root-admission-requirements-fr169.test.ts"
+      - ".github/workflows/fr169-eye-pair-external-governance-trust-root-admission-requirements-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fr169-eye-pair-external-governance-trust-root-admission-requirements:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Test FR168 and FR169 governance boundaries
+        run: >-
+          npx vitest run
+          packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.test.ts
+          packages/face-reading/src/eye-pair-external-governance-trust-root-admission-requirements-fr169.test.ts
