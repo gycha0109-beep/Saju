@@ -244,7 +244,9 @@ function exactExemplarEvidence(
       monthBranch: exemplar.monthBranch,
       requiredTransparencyStems: exemplar.requiredTransparencyStems,
       observedPositiveTransparencyStems: Object.freeze(
-        observedTransparencyStems.filter((stem) => exemplar.requiredTransparencyStems.includes(stem)),
+        observedTransparencyStems.filter((stem) =>
+          exemplar.requiredTransparencyStems.some((requiredStem) => requiredStem === stem),
+        ),
       ),
       meetingExampleId: exemplar.requiredMeetingExampleId,
       affinityClassification: exemplar.affinityClassification,
