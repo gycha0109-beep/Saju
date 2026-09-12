@@ -1,0 +1,45 @@
+name: FR168 Eye Pair External Trust Root Candidate Material Intake CI
+
+on:
+  pull_request:
+    paths:
+      - "research/face-reading/fr167-eye-pair-external-session-provenance-trust-requirements.md"
+      - "research/face-reading/fr168-eye-pair-external-trust-root-candidate-material-intake.md"
+      - "packages/face-reading/src/eye-pair-external-session-provenance-trust-requirements-fr167.ts"
+      - "packages/face-reading/src/eye-pair-external-session-provenance-trust-requirements-fr167.test.ts"
+      - "packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.ts"
+      - "packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.test.ts"
+      - ".github/workflows/fr168-eye-pair-external-trust-root-candidate-material-intake-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "research/face-reading/fr167-eye-pair-external-session-provenance-trust-requirements.md"
+      - "research/face-reading/fr168-eye-pair-external-trust-root-candidate-material-intake.md"
+      - "packages/face-reading/src/eye-pair-external-session-provenance-trust-requirements-fr167.ts"
+      - "packages/face-reading/src/eye-pair-external-session-provenance-trust-requirements-fr167.test.ts"
+      - "packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.ts"
+      - "packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.test.ts"
+      - ".github/workflows/fr168-eye-pair-external-trust-root-candidate-material-intake-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fr168-eye-pair-external-trust-root-candidate-material-intake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Test FR167 and FR168 trust boundaries
+        run: >-
+          npx vitest run
+          packages/face-reading/src/eye-pair-external-session-provenance-trust-requirements-fr167.test.ts
+          packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.test.ts
