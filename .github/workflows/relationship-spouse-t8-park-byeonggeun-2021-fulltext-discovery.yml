@@ -1,0 +1,90 @@
+name: Relationship Spouse T8 Park Byeonggeun 2021 Fulltext Discovery
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-park-byeonggeun-2021-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-park-byeonggeun-2021-fulltext-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-current-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install bounded PDF reader
+        run: python -m pip install --disable-pip-version-check pypdf==6.0.0
+      - name: Resolve exact title and follow current public RISS route
+        run: python scripts/acquire-relationship-spouse-t8-park-byeonggeun-2021-public-fulltext.py
+      - name: Print compatibility semantic contexts when body exists
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('acquisition-park-byeonggeun-2021/park-byeonggeun-2021.txt')
+          if not p.exists():
+              print('No complete body acquired; semantic review intentionally skipped.')
+              raise SystemExit(0)
+          t=p.read_text(encoding='utf-8')
+          for term in ['배우자','부부','궁합','단식','복식','납음오행','구성궁합','구궁궁합','일간','일지','궁위','육친','십신','관성','재성','남성','여성','남자','여자','남녀']:
+              print(f'\n### TERM {term}')
+              n=0
+              for m in re.finditer(re.escape(term),t,re.I):
+                  print(re.sub(r'\s+',' ',t[max(0,m.start()-500):min(len(t),m.end()+1500)]))
+                  n+=1
+                  if n>=15: break
+              print('COUNT_SHOWN',n)
+          PY
+      - name: Enforce exact identity resolution and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-park-byeonggeun-2021/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']
+          assert c['author']=='박병근' and c['year']==2021
+          assert c['title']=='宮合의 吉凶 분석방법 연구'
+          assert c['institution']=='공주대학교 일반대학원'
+          assert isinstance(c['control'],str) and len(c['control'])>20
+          assert j['searchDiscovery']['resolutionRule']=='EXACT_TITLE_AUTHOR_YEAR_FROM_SITE_AUTHORED_SEARCH_RESULT_LINK_ONLY'
+          assert j['formTuple']['control_no']==c['control']
+          assert j['formTuple']['p_mat_type']=='be54d9b8bc7cdb09'
+          assert j['guessedOpaqueIdentifierCount']==0
+          assert not j['loginBypass'] and not j['institutionAuthBypass'] and not j['paywallBypass']
+          assert not j['drmRequestExecuted'] and not j['decryptionActionExecuted']
+          assert j['tlsVerificationDisabled'] is False and j['crossSourceSemanticStitching'] is False
+          if j['semanticDisposition']=='DIRECT_BODY_ACQUIRED_REQUIRES_RENDER_FIRST_REVIEW':
+              assert j['fullLengthPdfAcquired'] is True
+              assert j['pdfInspection']['pages']>=85 and j['pdfInspection']['encrypted'] is False
+          else:
+              assert j['semanticDisposition']=='PUBLIC_ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION'
+          print('Park Byeonggeun 2021 exact-title RISS/no-bypass public route verified')
+          print('resolved control=',c['control'])
+          print('observed RISS ID=',c['rissId'])
+          print('semanticDisposition=',j['semanticDisposition'])
+          PY
+      - name: Upload bounded acquisition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: park-byeonggeun-2021-public-route-evidence
+          path: |
+            acquisition-park-byeonggeun-2021/report.json
+            acquisition-park-byeonggeun-2021/riss-search-*.html
+            acquisition-park-byeonggeun-2021/riss-detail.html
+            acquisition-park-byeonggeun-2021/riss-script-*.txt
+            acquisition-park-byeonggeun-2021/riss-fulltext-dispatch-response.html
+            acquisition-park-byeonggeun-2021/dcollection-entry.html
+            acquisition-park-byeonggeun-2021/dcollection-follow-*.html
+            acquisition-park-byeonggeun-2021/park-byeonggeun-2021.pdf
+            acquisition-park-byeonggeun-2021/park-byeonggeun-2021.txt
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
