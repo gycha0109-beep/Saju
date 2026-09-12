@@ -48,16 +48,16 @@ jobs:
           import json
           from pathlib import Path
           j=json.loads(Path('acquisition-kim-younghee-2006/report.json').read_text(encoding='utf-8'))
-          c=j['candidate']
-          p=j['primaryRecord']
+          c=j['candidate']; p=j['primaryRecord']
           assert c['author']=='김영희' and c['year']==2006
           assert c['title']=='宮合理論硏究'
           assert c['institution']=='공주대학교 대학원'
           assert isinstance(c['control'],str) and len(c['control'])>20
           assert isinstance(c['rissId'],str) and c['rissId'].startswith('T')
-          assert p['rissId']==c['rissId'] and p['colName']=='bib_t'
+          assert p['rissId']==c['rissId']
           assert '김영희' in p['authorBlock'] and '2006' in p['yearBlock']
-          assert j['searchDiscovery']['resolutionRule']=='PRIMARY_RECORD_EXACT_TITLE_AUTHOR_YEAR_AND_BIB_T_FROM_SITE_AUTHORED_SEARCH_RESULT_LINK_ONLY'
+          assert j['searchDiscovery']['resolutionRule']=='SEARCH_RESULT_EXACT_TITLE_AUTHOR_YEAR_THEN_PRIMARY_RECORD_T_ID_CONFIRMATION'
+          assert j['searchDiscovery']['searches'][0]['exactSearchResultLinkCount']>=1
           assert j['formTuple']['control_no']==c['control']
           assert isinstance(j['formTuple']['p_mat_type'],str) and j['formTuple']['p_mat_type']
           assert j['guessedOpaqueIdentifierCount']==0
@@ -69,7 +69,7 @@ jobs:
               assert j['pdfInspection']['pages']>=50 and j['pdfInspection']['encrypted'] is False
           else:
               assert j['semanticDisposition']=='PUBLIC_ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION'
-          print('Kim Younghee 2006 primary-record exact thesis RISS/no-bypass public route verified')
+          print('Kim Younghee 2006 exact search-result + primary thesis record verified')
           print('resolved control=',c['control'])
           print('observed RISS ID=',c['rissId'])
           print('semanticDisposition=',j['semanticDisposition'])

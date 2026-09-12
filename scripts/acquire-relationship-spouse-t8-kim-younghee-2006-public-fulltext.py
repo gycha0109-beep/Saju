@@ -16,7 +16,7 @@ TITLE = '宮合理論硏究'
 TITLE_ALT = '궁합이론 연구'
 YEAR = '2006'
 INSTITUTION = '공주대학교 대학원'
-UA = 'Mozilla/5.0 (compatible; SajuResearchEvidence/1.1; Kim-Younghee-2006-public-acquisition)'
+UA = 'Mozilla/5.0 (compatible; SajuResearchEvidence/1.2; Kim-Younghee-2006-public-acquisition)'
 
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
@@ -37,8 +37,7 @@ def is_dc(url: str) -> bool:
 
 def decode(raw: bytes, content_type: str = '') -> str:
     m = re.search(r'charset=([A-Za-z0-9._-]+)', content_type or '', re.I)
-    encodings = ([m.group(1)] if m else []) + ['utf-8', 'cp949', 'euc-kr']
-    for enc in encodings:
+    for enc in ([m.group(1)] if m else []) + ['utf-8', 'cp949', 'euc-kr']:
         try:
             return raw.decode(enc)
         except Exception:
@@ -66,6 +65,13 @@ def fetch(opener, url: str, referer: str | None = None, max_bytes: int = 30_000_
         meta.update({'finalUrl': url, 'status': e.code, 'location': e.headers.get('Location'), 'contentType': e.headers.get('Content-Type', ''), 'contentDisposition': e.headers.get('Content-Disposition', ''), 'bytes': len(raw), 'sha256': sha(raw), 'pdfMagic': raw.startswith(b'%PDF-'), 'error': f'HTTPError: {e.code}'})
         return meta, raw
 
+def clean_text(fragment: str) -> str:
+    return re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', fragment))).strip()
+
+def normalized_title(value: str) -> str:
+    value = value.replace('理', '理')
+    return re.sub(r'[\s:：·ㆍ\-_=]+', '', value)
+
 def links(base: str, text: str) -> list[str]:
     out: list[str] = []
     for m in re.finditer(r'''(?:href|src)\s*=\s*(["'])(.*?)\1''', text, re.I | re.S):
@@ -92,35 +98,40 @@ def riss_detail_links(base: str, text: str) -> list[str]:
             out.append(u)
     return out
 
-def clean_text(fragment: str) -> str:
-    return re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', fragment))).strip()
-
-def normalized_title(value: str) -> str:
-    value = value.replace('理', '理')
-    return re.sub(r'[\s:：·ㆍ\-_=]+', '', value)
+def exact_search_result_links(base: str, text: str) -> list[str]:
+    out: list[str] = []
+    pattern = re.compile(r'<p\s+class=["\']title["\']>\s*<a\s+href=["\']([^"\']*DetailView\.do\?[^"\']+)["\'][^>]*>(.*?)</a>\s*</p>\s*<p\s+class=["\']etc["\']>(.*?)</p>', re.I | re.S)
+    for m in pattern.finditer(text):
+        title = normalized_title(clean_text(m.group(2)))
+        etc = clean_text(m.group(3))
+        if title not in {normalized_title(TITLE), normalized_title(TITLE_ALT)}:
+            continue
+        if AUTHOR not in etc or YEAR not in etc:
+            continue
+        u = urljoin(base, html.unescape(m.group(1)))
+        if is_riss(u) and parse_qs(urlparse(u).query).get('control_no') and u not in out:
+            out.append(u)
+    return out
 
 def primary_record(text: str) -> dict[str, str | None]:
     tm = re.search(r'<h3\s+class=["\']title["\'][^>]*>(.*?)</h3>', text, re.I | re.S)
     author_m = re.search(r'<!--\s*저자\s*-->(.*?)</li>', text, re.I | re.S)
     year_m = re.search(r'<!--\s*발행연도\s*-->(.*?)</li>', text, re.I | re.S)
     rid_m = re.search(r'class=["\']controlNum["\'][^>]*>\s*https://www\.riss\.kr/link\?id=(T\d+)', text, re.I | re.S)
-    form_col = re.search(r'<input\b[^>]*name=["\']colName["\'][^>]*value=["\']([^"\']+)', text, re.I | re.S)
     return {
         'title': clean_text(tm.group(1)) if tm else None,
         'authorBlock': clean_text(author_m.group(1)) if author_m else None,
         'yearBlock': clean_text(year_m.group(1)) if year_m else None,
         'rissId': rid_m.group(1) if rid_m else None,
-        'colName': form_col.group(1) if form_col else None,
     }
 
 def exact_candidate_page(text: str) -> bool:
     p = primary_record(text)
-    if p['rissId'] is None or p['colName'] != 'bib_t':
+    if p['rissId'] is None:
         return False
     if AUTHOR not in (p['authorBlock'] or '') or YEAR not in (p['yearBlock'] or ''):
         return False
-    title = normalized_title(p['title'] or '')
-    return title in {normalized_title(TITLE), normalized_title(TITLE_ALT)}
+    return normalized_title(p['title'] or '') in {normalized_title(TITLE), normalized_title(TITLE_ALT)}
 
 def doc_form(text: str) -> str:
     m = re.search(r'<form\b[^>]*(?:id=["\']f["\']|name=["\']f["\'])[^>]*>', text, re.I | re.S)
@@ -182,8 +193,10 @@ for si, surl in enumerate(search_urls, 1):
     sm, sr = fetch(normal, surl, max_bytes=9_000_000)
     st = decode(sr, sm['contentType'])
     (ROOT / f'riss-search-{si}.html').write_text(st, encoding='utf-8')
-    found = riss_detail_links(sm['finalUrl'] or surl, st)
-    discovery.append({'searchUrl': surl, 'response': sm, 'siteAuthoredDetailLinkCount': len(found)})
+    preferred = exact_search_result_links(sm['finalUrl'] or surl, st)
+    fallback = riss_detail_links(sm['finalUrl'] or surl, st)
+    found = preferred + [u for u in fallback if u not in preferred]
+    discovery.append({'searchUrl': surl, 'response': sm, 'exactSearchResultLinkCount': len(preferred), 'siteAuthoredDetailLinkCount': len(fallback)})
     for u in found[:60]:
         request_u = normalize_http_url(u)
         dm, dr = fetch(normal, request_u, sm['finalUrl'] or surl, max_bytes=9_000_000)
@@ -193,8 +206,8 @@ for si, surl in enumerate(search_urls, 1):
             break
     if resolved:
         break
-assert resolved and resolved_authored and detail_meta is not None and detail_raw is not None, 'exact thesis RISS detail was not resolved from site-authored search-result detail links'
-report['searchDiscovery'] = {'searches': discovery, 'siteAuthoredResolvedDetailUrl': resolved_authored, 'normalizedRequestUrl': resolved, 'resolutionRule': 'PRIMARY_RECORD_EXACT_TITLE_AUTHOR_YEAR_AND_BIB_T_FROM_SITE_AUTHORED_SEARCH_RESULT_LINK_ONLY'}
+assert resolved and resolved_authored and detail_meta is not None and detail_raw is not None, 'exact thesis RISS detail was not resolved from site-authored search-result links'
+report['searchDiscovery'] = {'searches': discovery, 'siteAuthoredResolvedDetailUrl': resolved_authored, 'normalizedRequestUrl': resolved, 'resolutionRule': 'SEARCH_RESULT_EXACT_TITLE_AUTHOR_YEAR_THEN_PRIMARY_RECORD_T_ID_CONFIRMATION'}
 text = decode(detail_raw, detail_meta['contentType'])
 (ROOT / 'riss-detail.html').write_text(text, encoding='utf-8')
 assert exact_candidate_page(text)
