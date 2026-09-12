@@ -29,7 +29,7 @@ export const FR172_C2PATOOL_TARGET_COMMIT = '1a56d244ee77d7e58221eabebede4281d9e
 export const FR172_C2PATOOL_LINUX_ARCHIVE = 'c2patool-v0.27.22-x86_64-unknown-linux-gnu.tar.gz' as const;
 export const FR172_C2PATOOL_LINUX_ARCHIVE_SHA256 =
   '6f138ad53da1a62f1cd6ee71c60727efa27d13b811f4c0ea8c2a8528968b358b' as const;
-export const FR172_C2PA_TRUST_LIST_PEM_BLOB_SHA = 'a0d20f58270177608bd96fad331c8ba9a04820ad' as const;
+export const FR172_C2PA_TRUST_LIST_PEM_BLOB_SHA = 'a0d20fd74c5ba7a545193ec1a906323e5125b5ef' as const;
 export const FR172_OFFICIAL_MECHANICS_FIXTURE_REPOSITORY = 'contentauth/c2pa-rs' as const;
 export const FR172_OFFICIAL_MECHANICS_FIXTURE_REF = 'c2patool-v0.27.22' as const;
 export const FR172_OFFICIAL_MECHANICS_FIXTURE_PATH = 'sdk/tests/fixtures/C.jpg' as const;
