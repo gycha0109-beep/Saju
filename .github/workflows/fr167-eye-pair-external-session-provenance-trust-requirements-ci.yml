@@ -1,0 +1,39 @@
+name: FR167 Eye Pair External Session Provenance Trust Requirements CI
+
+on:
+  pull_request:
+    paths:
+      - "research/face-reading/fr166-eye-pair-post-fr165-authority-frontier-review.md"
+      - "research/face-reading/fr167-eye-pair-external-session-provenance-trust-requirements.md"
+      - "packages/face-reading/src/eye-pair-post-fr165-authority-frontier-review-fr166.ts"
+      - "packages/face-reading/src/eye-pair-external-session-provenance-trust-requirements-fr167.ts"
+      - "packages/face-reading/src/eye-pair-external-session-provenance-trust-requirements-fr167.test.ts"
+      - ".github/workflows/fr167-eye-pair-external-session-provenance-trust-requirements-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "research/face-reading/fr166-eye-pair-post-fr165-authority-frontier-review.md"
+      - "research/face-reading/fr167-eye-pair-external-session-provenance-trust-requirements.md"
+      - "packages/face-reading/src/eye-pair-post-fr165-authority-frontier-review-fr166.ts"
+      - "packages/face-reading/src/eye-pair-external-session-provenance-trust-requirements-fr167.ts"
+      - "packages/face-reading/src/eye-pair-external-session-provenance-trust-requirements-fr167.test.ts"
+      - ".github/workflows/fr167-eye-pair-external-session-provenance-trust-requirements-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fr167-eye-pair-external-session-provenance-trust-requirements:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: >-
+          npx vitest run
+          packages/face-reading/src/eye-pair-post-fr165-authority-frontier-review-fr166.test.ts
+          packages/face-reading/src/eye-pair-external-session-provenance-trust-requirements-fr167.test.ts
