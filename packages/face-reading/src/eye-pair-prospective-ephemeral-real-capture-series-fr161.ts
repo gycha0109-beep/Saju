@@ -22,6 +22,7 @@ import {
   type EyePairProspectiveCaptureManifestFR159V1,
 } from './eye-pair-prospective-repeatability-protocol-fr159.js';
 import {
+  assertIssuedEyePairProspectiveAcquisitionDatasetFR160,
   materializeEyePairProspectiveAcquisitionDatasetFR160,
   recordEyePairProspectiveAcquisitionFR160,
   type EyePairProspectiveAcquisitionDatasetFR160V1,
@@ -54,6 +55,7 @@ const REQUEST_KEYS = new Set([
   'parity',
 ]);
 const CAPTURE_KEYS = new Set(['captureRef', 'providerRunRef', 'captureSequenceIndex', 'imageBlob']);
+const RESULT_ISSUED = new WeakSet<object>();
 
 export interface EyePairProspectiveEphemeralCaptureInputFR161V1 {
   readonly captureRef: string;
@@ -171,6 +173,56 @@ EyePairProspectiveEphemeralRealCaptureDependenciesFR161V1 = Object.freeze({
 
 function fail(message: string): never {
   throw new FaceAuthorityValidationError(`FR-161 ${message}`);
+}
+
+export function assertIssuedEyePairProspectiveEphemeralRealCaptureSeriesFR161(
+  result: EyePairProspectiveEphemeralRealCaptureSeriesResultFR161V1,
+): void {
+  if (!RESULT_ISSUED.has(result)) {
+    fail('real-capture series result was not issued by the active FR-161 runtime.');
+  }
+  assertIssuedEyePairProspectiveAcquisitionDatasetFR160(result.dataset);
+  if (
+    result.schemaVersion !== 'fr161-eye-pair-prospective-ephemeral-real-capture-series-result-v1'
+    || result.artifactVersion !== '0.1.0'
+    || result.recordId !== FR161_EYE_PAIR_PROSPECTIVE_EPHEMERAL_REAL_CAPTURE_RECORD_ID
+    || result.authorityState !== 'ephemeral_prospective_real_capture_series_descriptive_only'
+    || !Number.isSafeInteger(result.captureCount)
+    || result.captureCount < 2
+    || result.captures.length !== result.captureCount
+    || result.intakeBoundary.minimumDistinctSourceByteCapturesRequired !== 2
+    || result.intakeBoundary.exactDuplicateSourceBytesRejectedBeforeProviderExecution !== true
+    || result.intakeBoundary.sourceDigestPersistedOrReturned !== false
+    || result.intakeBoundary.byteDistinctnessMeansIndependentCaptureEvent !== false
+    || result.intakeBoundary.freshnessAttestationMeansIndependentFreshnessProof !== false
+    || result.intakeBoundary.sameParticipantAttestationMeansIdentityProof !== false
+    || result.metricBoundary.preregisteredMetricRefs[0] !== FR159_X_SPAN_METRIC_REF
+    || result.metricBoundary.preregisteredMetricRefs[1] !== FR159_PERIMETER_METRIC_REF
+    || result.metricBoundary.coordinateFrame !== 'canonical_aligned_right_handed_metric_3d'
+    || result.metricBoundary.repeatabilityPassFailIssued !== false
+    || result.metricBoundary.captureSensitivityPassFailIssued !== false
+    || result.metricBoundary.numericRepeatabilityAcceptanceThreshold !== null
+    || result.metricBoundary.numericCaptureQualityThreshold !== null
+    || result.privacyBoundary.rawImagePersisted !== false
+    || result.privacyBoundary.rawProviderResponsePersisted !== false
+    || result.privacyBoundary.rawLandmarkSetPersisted !== false
+    || result.privacyBoundary.derivedFullFaceMetricGeometryPersisted !== false
+    || result.privacyBoundary.sourceDigestPersisted !== false
+    || result.privacyBoundary.faceEmbeddingPersisted !== false
+    || result.privacyBoundary.identityTemplatePersisted !== false
+    || result.authorityBoundary.empiricalRepeatabilityEstablished !== false
+    || result.authorityBoundary.captureQualityValidated !== false
+    || result.authorityBoundary.captureQualityMeasurementConstructValidated !== false
+    || result.authorityBoundary.identityMatchingPerformed !== false
+    || result.authorityBoundary.sameDifferentParticipantClassificationIssued !== false
+    || result.authorityBoundary.calibrationIssued !== false
+    || result.authorityBoundary.thresholdIssued !== false
+    || result.authorityBoundary.constructValidity !== 'unresolved'
+    || result.authorityBoundary.traditionalBinding !== 'unresolved'
+    || result.traditionalSemanticAuthority !== false
+    || result.researchNoteRef !== FR161_RESEARCH_NOTE_REF
+    || result.nextFrontier !== FR161_NEXT_FRONTIER
+  ) fail('issued real-capture series authority boundary drift.');
 }
 
 function opaqueRef(value: string, label: string): string {
@@ -412,7 +464,7 @@ export async function runEyePairProspectiveEphemeralRealCaptureSeriesFR161(
     || dataset.traditionalSemanticAuthority !== false
   ) fail('FR-160 descriptive dataset authority boundary drift during FR-161 execution.');
 
-  return Object.freeze({
+  const result: EyePairProspectiveEphemeralRealCaptureSeriesResultFR161V1 = Object.freeze({
     schemaVersion: 'fr161-eye-pair-prospective-ephemeral-real-capture-series-result-v1' as const,
     artifactVersion: '0.1.0' as const,
     recordId: FR161_EYE_PAIR_PROSPECTIVE_EPHEMERAL_REAL_CAPTURE_RECORD_ID,
@@ -464,4 +516,6 @@ export async function runEyePairProspectiveEphemeralRealCaptureSeriesFR161(
     researchNoteRef: FR161_RESEARCH_NOTE_REF,
     nextFrontier: FR161_NEXT_FRONTIER,
   });
+  RESULT_ISSUED.add(result);
+  return result;
 }
