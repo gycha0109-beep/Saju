@@ -3,6 +3,7 @@ import type { EarthlyBranch } from '../src/contracts/calculation.js';
 import { GENERAL_NATAL_GEJU_CANDIDATE_OPEN_PREDICATE_GAPS } from '../src/research/general-natal-geju-candidate-source-frontier.js';
 import {
   GENERAL_NATAL_GEJU_MIXED_QI_MONTH_BRANCHES,
+  GENERAL_NATAL_GEJU_MIXED_QI_MONTH_SCOPE_SOURCE_REFERENCE,
   GENERAL_NATAL_GEJU_MIXED_QI_TRANSPARENCY_SOURCE_BOUNDARY_VERSION,
   buildGeneralNatalGejuMixedQiTransparencySourceBoundary,
   isGeneralNatalGejuMixedQiMonthBranch,
@@ -26,7 +27,10 @@ const ALL_BRANCHES = [
 const MIXED_QI_BRANCHES = new Set<EarthlyBranch>(['진', '술', '축', '미']);
 
 describe('General Natal Gyeokguk mixed-qi transparency source boundary', () => {
-  test('authorizes only the four-tomb month-branch source scope predicate', () => {
+  test('authorizes only the explicitly cross-referenced four-tomb month-branch source scope', () => {
+    expect(GENERAL_NATAL_GEJU_MIXED_QI_MONTH_SCOPE_SOURCE_REFERENCE.locator?.anchor).toBe(
+      '辰戌丑未四個月',
+    );
     expect(GENERAL_NATAL_GEJU_MIXED_QI_MONTH_BRANCHES).toEqual(['진', '술', '축', '미']);
 
     for (const branch of ALL_BRANCHES) {
@@ -47,6 +51,9 @@ describe('General Natal Gyeokguk mixed-qi transparency source boundary', () => {
     expect(report.sourceSingleTransparencySingleUseObserved).toBe(true);
     expect(report.sourcePluralTransparencyPluralUseObserved).toBe(true);
     expect(report.sourceTransparencyAndBranchMeetingJointUseObserved).toBe(true);
+    expect(report.sourceIds).toContain(
+      GENERAL_NATAL_GEJU_MIXED_QI_MONTH_SCOPE_SOURCE_REFERENCE.sourceId,
+    );
 
     expect(report.canonicalPillarSlotAdmissibilityAuthorized).toBe(false);
     expect(report.exactMatchToTransparencySelectionAuthorized).toBe(false);
