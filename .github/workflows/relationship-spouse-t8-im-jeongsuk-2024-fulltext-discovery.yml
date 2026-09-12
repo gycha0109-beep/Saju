@@ -1,0 +1,92 @@
+name: Relationship Spouse T8 Im Jeongsuk 2024 Fulltext Discovery
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-im-jeongsuk-2024-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-im-jeongsuk-2024-fulltext-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-current-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install bounded PDF reader
+        run: python -m pip install --disable-pip-version-check pypdf==6.0.0
+      - name: Resolve exact title and follow current public RISS route
+        run: python scripts/acquire-relationship-spouse-t8-im-jeongsuk-2024-public-fulltext.py
+      - name: Print locator contexts only when a complete body exists
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('acquisition-im-jeongsuk-2024/im-jeongsuk-2024.txt')
+          if not p.exists():
+              print('No complete body acquired; semantic review intentionally skipped.')
+              raise SystemExit(0)
+          t=p.read_text(encoding='utf-8')
+          for term in ['배우자','부부','궁합','궁위','육친','용신','일지','日支','좋은 궁합','결혼','남성','여성','남자','여자','남녀']:
+              print(f'\n### TERM {term}')
+              n=0
+              for m in re.finditer(re.escape(term),t,re.I):
+                  print(re.sub(r'\s+',' ',t[max(0,m.start()-500):min(len(t),m.end()+1500)]))
+                  n+=1
+                  if n>=15: break
+              print('COUNT_SHOWN',n)
+          PY
+      - name: Enforce exact card identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-im-jeongsuk-2024/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; card=j['searchDiscovery']['card']; sig=j['detailIdentitySignals']
+          assert c['author']=='임정숙' and c['year']==2024
+          assert c['institution']=='국제뇌교육종합대학원대학교'
+          assert isinstance(c['control'],str) and len(c['control'])>20
+          assert j['searchDiscovery']['resolutionRule']=='EXACT_SITE_AUTHORED_RESULT_CARD_TITLE_AUTHOR_YEAR_SCHOOL_AND_LITERAL_DETAIL_ROUTE'
+          assert '임정숙' in card['etc'] and '2024' in card['etc']
+          assert ('국제뇌교육' in card['etc'] or '국제뇌교육' in card['sameCardBlock'])
+          assert '궁합' in card['title'] and '부부갈등' in card['title']
+          assert card['control']==c['control']==j['formTuple']['control_no']
+          assert sig['controlLiteralPresent'] and sig['titleLiteralPresent'] and sig['authorLiteralPresent'] and sig['yearLiteralPresent']
+          assert j['guessedOpaqueIdentifierCount']==0
+          assert not j['loginBypass'] and not j['institutionAuthBypass'] and not j['paywallBypass']
+          assert not j['drmRequestExecuted'] and not j['decryptionActionExecuted']
+          assert j['tlsVerificationDisabled'] is False and j['crossSourceSemanticStitching'] is False
+          if j['semanticDisposition']=='DIRECT_BODY_ACQUIRED_REQUIRES_RENDER_FIRST_REVIEW':
+              assert j['fullLengthPdfAcquired'] is True and j['pdfInspection']['pages']>=50
+              assert j['pdfInspection']['encrypted'] is False
+          else:
+              assert j['semanticDisposition']=='PUBLIC_ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION'
+          print('Im Jeongsuk 2024 exact RISS card public route verified')
+          print('resolved control=',c['control'])
+          print('observed RISS ID=',c['rissId'])
+          print('semanticDisposition=',j['semanticDisposition'])
+          PY
+      - name: Upload bounded acquisition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: im-jeongsuk-2024-public-route-evidence
+          path: |
+            acquisition-im-jeongsuk-2024/report.json
+            acquisition-im-jeongsuk-2024/riss-search-*.html
+            acquisition-im-jeongsuk-2024/riss-candidate-detail.html
+            acquisition-im-jeongsuk-2024/riss-detail.html
+            acquisition-im-jeongsuk-2024/riss-script-*.txt
+            acquisition-im-jeongsuk-2024/riss-fulltext-dispatch-response.html
+            acquisition-im-jeongsuk-2024/dcollection-entry.html
+            acquisition-im-jeongsuk-2024/im-jeongsuk-2024.pdf
+            acquisition-im-jeongsuk-2024/im-jeongsuk-2024.txt
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
