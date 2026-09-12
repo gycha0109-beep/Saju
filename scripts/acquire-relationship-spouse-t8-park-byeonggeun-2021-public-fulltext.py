@@ -5,7 +5,7 @@ import hashlib, html, json, re, ssl
 from http.cookiejar import CookieJar
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, urlencode, urljoin, urlparse
+from urllib.parse import parse_qs, parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 from urllib.request import HTTPCookieProcessor, HTTPRedirectHandler, HTTPSHandler, Request, build_opener
 from pypdf import PdfReader
 
@@ -30,6 +30,9 @@ def decode(raw:bytes,ct:str='')->str:
         try:return raw.decode(enc)
         except Exception:pass
     return raw.decode('utf-8',errors='replace')
+def normalize_http_url(url:str)->str:
+    p=urlsplit(url)
+    return urlunsplit((p.scheme,p.netloc,p.path,urlencode(parse_qsl(p.query,keep_blank_values=True)),p.fragment))
 
 def fetch(opener,url:str,referer:str|None=None,max_bytes:int=30_000_000):
     headers={'User-Agent':UA,'Accept':'text/html,application/xhtml+xml,application/pdf,*/*;q=0.8'}
@@ -103,24 +106,24 @@ normal=build_opener(HTTPSHandler(context=ctx),HTTPCookieProcessor(CookieJar()))
 no_redirect=build_opener(HTTPSHandler(context=ctx),HTTPCookieProcessor(CookieJar()),NoRedirect())
 report={'candidate':{'author':AUTHOR,'title':TITLE,'year':2021,'institution':INSTITUTION,'rissId':None,'control':None},'searchDiscovery':None,'detail':None,'formTuple':None,'dispatcher':None,'dcollection':None,'pdfInspection':None,'fullLengthPdfAcquired':False,'guessedOpaqueIdentifierCount':0,'loginBypass':False,'institutionAuthBypass':False,'paywallBypass':False,'drmRequestExecuted':False,'decryptionActionExecuted':False,'tlsVerificationDisabled':False,'crossSourceSemanticStitching':False,'semanticDisposition':'PUBLIC_ROUTE_INSPECTION_PENDING'}
 
-# 1. Resolve the exact RISS detail only from site-authored links returned by a public title search.
 search_urls=[
     'https://www.riss.kr/search/Search.do?'+urlencode({'isDetailSearch':'N','searchGubun':'true','viewYn':'OP','query':TITLE}),
     'https://www.riss.kr/search/Search.do?'+urlencode({'colName':'bib_t','isDetailSearch':'N','searchGubun':'true','query':TITLE}),
 ]
-resolved=None; detail_meta=None; detail_raw=None; discovery=[]
+resolved_authored=None; resolved=None; detail_meta=None; detail_raw=None; discovery=[]
 for si,surl in enumerate(search_urls,1):
     sm,sr=fetch(normal,surl,max_bytes=9_000_000); st=decode(sr,sm['contentType'])
     (ROOT/f'riss-search-{si}.html').write_text(st,encoding='utf-8')
     found=riss_detail_links(sm['finalUrl'] or surl,st)
     discovery.append({'searchUrl':surl,'response':sm,'siteAuthoredDetailLinkCount':len(found)})
     for u in found[:30]:
-        dm,dr=fetch(normal,u,sm['finalUrl'] or surl,max_bytes=9_000_000); dt=decode(dr,dm['contentType'])
+        request_u=normalize_http_url(u)
+        dm,dr=fetch(normal,request_u,sm['finalUrl'] or surl,max_bytes=9_000_000); dt=decode(dr,dm['contentType'])
         if AUTHOR in dt and YEAR in dt and ('宮合의 吉凶 분석방법 연구' in dt or ('宮合' in dt and '吉凶' in dt and '분석방법' in dt)):
-            resolved=u; detail_meta=dm; detail_raw=dr; break
+            resolved_authored=u; resolved=request_u; detail_meta=dm; detail_raw=dr; break
     if resolved: break
-assert resolved and detail_meta is not None and detail_raw is not None, 'exact RISS detail was not resolved from site-authored title-search links'
-report['searchDiscovery']={'searches':discovery,'resolvedDetailUrl':resolved,'resolutionRule':'EXACT_TITLE_AUTHOR_YEAR_FROM_SITE_AUTHORED_SEARCH_RESULT_LINK_ONLY'}
+assert resolved and resolved_authored and detail_meta is not None and detail_raw is not None, 'exact RISS detail was not resolved from site-authored title-search links'
+report['searchDiscovery']={'searches':discovery,'siteAuthoredResolvedDetailUrl':resolved_authored,'normalizedRequestUrl':resolved,'resolutionRule':'EXACT_TITLE_AUTHOR_YEAR_FROM_SITE_AUTHORED_SEARCH_RESULT_LINK_ONLY'}
 
 text=decode(detail_raw,detail_meta['contentType']); (ROOT/'riss-detail.html').write_text(text,encoding='utf-8')
 assert AUTHOR in text and YEAR in text
@@ -134,11 +137,10 @@ f=fields(doc_form(text)); assert f.get('control_no')==control
 p_mat=f.get('p_mat_type'); assert p_mat
 report['formTuple']={k:f.get(k) for k in ['control_no','p_mat_type','p_submat_type','fulltext_kind']}
 
-# 2. Observe the current site-authored dispatcher implementation before replaying document.f values.
 observed=False
 for i,u in enumerate([u for u in links(detail_meta['finalUrl'] or resolved,text) if is_riss(u) and (u.lower().endswith('.js') or '.js?' in u.lower())][:50],1):
     try:
-        sm,sr=fetch(normal,u,detail_meta['finalUrl'] or resolved,3_000_000); st=decode(sr,sm['contentType'])
+        sm,sr=fetch(normal,normalize_http_url(u),detail_meta['finalUrl'] or resolved,3_000_000); st=decode(sr,sm['contentType'])
         if 'fulltextDownload' in st or 'FullTextDownload.do' in st:(ROOT/f'riss-script-{i:02d}.txt').write_text(st,encoding='utf-8')
         if 'FullTextDownload.do' in st and ('serialize()' in st or 'document.f' in st):observed=True
     except Exception:pass
@@ -162,14 +164,14 @@ authored=next((u for u in external if is_dc(u)),None)
 if not pdf.exists() and authored:
     h=host(authored); dc={'rissAuthoredUrl':authored,'host':h,'entry':None,'followed':[],'directPdfAcquired':False,'disposition':'PUBLIC_ROUTE_REVIEW_PENDING'}
     try:
-        em,er=fetch(normal,authored,req); dc['entry']=em
+        em,er=fetch(normal,normalize_http_url(authored),req); dc['entry']=em
         if em['pdfMagic'] or 'application/pdf' in em['contentType'].lower(): pdf.write_bytes(er); dc['directPdfAcquired']=True
         else:
             et=decode(er,em['contentType']); (ROOT/'dcollection-entry.html').write_text(et,encoding='utf-8')
             queue=same_host_candidates(em['finalUrl'] or authored,et,h); seen=set()
             for i,u in enumerate(queue[:35],1):
                 if u in seen:continue
-                seen.add(u); fm,fr=fetch(normal,u,em['finalUrl'] or authored); dc['followed'].append({'url':u,'response':fm})
+                seen.add(u); fm,fr=fetch(normal,normalize_http_url(u),em['finalUrl'] or authored); dc['followed'].append({'url':u,'response':fm})
                 if fm['pdfMagic'] or 'application/pdf' in fm['contentType'].lower(): pdf.write_bytes(fr); dc['directPdfAcquired']=True; break
                 ft=decode(fr,fm['contentType']); (ROOT/f'dcollection-follow-{i:02d}.html').write_text(ft,encoding='utf-8')
                 for x in same_host_candidates(fm['finalUrl'] or u,ft,h):
