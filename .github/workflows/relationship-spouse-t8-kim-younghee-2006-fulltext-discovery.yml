@@ -42,24 +42,23 @@ jobs:
                   if n>=15: break
               print('COUNT_SHOWN',n)
           PY
-      - name: Enforce exact identity resolution and no-bypass boundary
+      - name: Enforce exact search-card identity and no-bypass boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           j=json.loads(Path('acquisition-kim-younghee-2006/report.json').read_text(encoding='utf-8'))
-          c=j['candidate']; p=j['primaryRecord']
-          assert c['author']=='김영희' and c['year']==2006
-          assert c['title']=='宮合理論硏究'
+          c=j['candidate']; card=j['searchDiscovery']['card']; sig=j['detailIdentitySignals']
+          assert c['author']=='김영희' and c['year']==2006 and c['title']=='宮合理論硏究'
           assert c['institution']=='공주대학교 대학원'
           assert isinstance(c['control'],str) and len(c['control'])>20
-          assert isinstance(c['rissId'],str) and c['rissId'].startswith('T')
-          assert p['rissId']==c['rissId']
-          assert '김영희' in p['authorBlock'] and '2006' in p['yearBlock']
-          assert j['searchDiscovery']['resolutionRule']=='SEARCH_RESULT_EXACT_TITLE_AUTHOR_YEAR_THEN_PRIMARY_RECORD_T_ID_CONFIRMATION'
-          assert j['searchDiscovery']['searches'][0]['exactSearchResultLinkCount']>=1
+          assert j['searchDiscovery']['resolutionRule']=='EXACT_SITE_AUTHORED_THESIS_SEARCH_RESULT_CARD_TITLE_AUTHOR_SCHOOL_YEAR_TYPE_AND_LITERAL_DETAIL_ROUTE'
+          assert '김영희' in card['etc'] and '2006' in card['etc']
+          assert ('국내석사' in card['sameCardBlock'] or '석사' in card['sameCardBlock'])
+          assert ('公州大學校' in card['sameCardBlock'] or '공주대학교' in card['sameCardBlock'])
+          assert card['control']==c['control']
           assert j['formTuple']['control_no']==c['control']
-          assert isinstance(j['formTuple']['p_mat_type'],str) and j['formTuple']['p_mat_type']
+          assert sig['controlLiteralPresent'] and sig['titleLiteralPresent'] and sig['authorLiteralPresent'] and sig['yearLiteralPresent']
           assert j['guessedOpaqueIdentifierCount']==0
           assert not j['loginBypass'] and not j['institutionAuthBypass'] and not j['paywallBypass']
           assert not j['drmRequestExecuted'] and not j['decryptionActionExecuted']
@@ -69,9 +68,9 @@ jobs:
               assert j['pdfInspection']['pages']>=50 and j['pdfInspection']['encrypted'] is False
           else:
               assert j['semanticDisposition']=='PUBLIC_ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION'
-          print('Kim Younghee 2006 exact search-result + primary thesis record verified')
+          print('Kim Younghee 2006 exact RISS thesis search-card public route verified')
           print('resolved control=',c['control'])
-          print('observed RISS ID=',c['rissId'])
+          print('observed candidate RISS ID=',c['rissId'])
           print('semanticDisposition=',j['semanticDisposition'])
           PY
       - name: Upload bounded acquisition evidence
@@ -82,6 +81,7 @@ jobs:
           path: |
             acquisition-kim-younghee-2006/report.json
             acquisition-kim-younghee-2006/riss-search-*.html
+            acquisition-kim-younghee-2006/riss-candidate-detail.html
             acquisition-kim-younghee-2006/riss-detail.html
             acquisition-kim-younghee-2006/riss-script-*.txt
             acquisition-kim-younghee-2006/riss-fulltext-dispatch-response.html
