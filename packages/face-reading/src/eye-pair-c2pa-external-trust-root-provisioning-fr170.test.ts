@@ -113,7 +113,7 @@ describe('FR170 eye-pair C2PA external trust-root provisioning', () => {
       fr169Requirements: clone,
       c2paTrustListJsonBytes: synthetic,
       c2paConformingProductsJsonBytes: synthetic,
-    })).toThrow(/FR-169 external governance trust-root admission requirements artifact was not issued/u);
+    })).toThrow(/FR-169 admission requirements artifact was not issued by the active FR-169 boundary/u);
   });
 
   it('provisions only from the exact live immutable C2PA snapshot when dedicated CI supplies it', () => {
