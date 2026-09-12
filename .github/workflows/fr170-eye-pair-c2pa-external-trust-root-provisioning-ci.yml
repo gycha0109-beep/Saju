@@ -1,0 +1,62 @@
+name: FR170 Eye Pair C2PA External Trust Root Provisioning CI
+
+on:
+  pull_request:
+    paths:
+      - "research/face-reading/fr168-eye-pair-external-trust-root-candidate-material-intake.md"
+      - "research/face-reading/fr169-eye-pair-external-governance-trust-root-admission-requirements.md"
+      - "research/face-reading/fr170-eye-pair-c2pa-external-trust-root-provisioning.md"
+      - "packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.ts"
+      - "packages/face-reading/src/eye-pair-external-governance-trust-root-admission-requirements-fr169.ts"
+      - "packages/face-reading/src/eye-pair-c2pa-external-trust-root-provisioning-fr170.ts"
+      - "packages/face-reading/src/eye-pair-c2pa-external-trust-root-provisioning-fr170.test.ts"
+      - ".github/workflows/fr170-eye-pair-c2pa-external-trust-root-provisioning-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "research/face-reading/fr168-eye-pair-external-trust-root-candidate-material-intake.md"
+      - "research/face-reading/fr169-eye-pair-external-governance-trust-root-admission-requirements.md"
+      - "research/face-reading/fr170-eye-pair-c2pa-external-trust-root-provisioning.md"
+      - "packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.ts"
+      - "packages/face-reading/src/eye-pair-external-governance-trust-root-admission-requirements-fr169.ts"
+      - "packages/face-reading/src/eye-pair-c2pa-external-trust-root-provisioning-fr170.ts"
+      - "packages/face-reading/src/eye-pair-c2pa-external-trust-root-provisioning-fr170.test.ts"
+      - ".github/workflows/fr170-eye-pair-c2pa-external-trust-root-provisioning-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fr170-eye-pair-c2pa-external-trust-root-provisioning:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Fetch immutable C2PA governance snapshot
+        run: |
+          mkdir -p .tmp/fr170
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/c2pa-org/conformance-public/6273cdcb4f273c7556e74f93825a7a3df87869fb/trust-list/C2PA-TRUST-LIST.json" \
+            --output .tmp/fr170/C2PA-TRUST-LIST.json
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/c2pa-org/conformance-public/6273cdcb4f273c7556e74f93825a7a3df87869fb/conforming-products/conforming-products-list.json" \
+            --output .tmp/fr170/conforming-products-list.json
+          test -s .tmp/fr170/C2PA-TRUST-LIST.json
+          test -s .tmp/fr170/conforming-products-list.json
+      - name: Test FR168 through FR170 external governance chain
+        env:
+          FR170_C2PA_TRUST_LIST_JSON_PATH: .tmp/fr170/C2PA-TRUST-LIST.json
+          FR170_C2PA_CONFORMING_PRODUCTS_JSON_PATH: .tmp/fr170/conforming-products-list.json
+        run: >-
+          npx vitest run
+          packages/face-reading/src/eye-pair-external-trust-root-candidate-material-intake-fr168.test.ts
+          packages/face-reading/src/eye-pair-external-governance-trust-root-admission-requirements-fr169.test.ts
+          packages/face-reading/src/eye-pair-c2pa-external-trust-root-provisioning-fr170.test.ts
