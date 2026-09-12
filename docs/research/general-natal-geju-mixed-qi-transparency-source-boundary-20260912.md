@@ -31,12 +31,19 @@ The selected passage `論雜氣如何取用` states, in bounded context:
 - transparency and branch meeting may be used together;
 - later `有情 / 無情` judgment is distinct from the initial selection surface.
 
-Repository source references reused:
+Repository/source references bound by this frontier:
 
 ```text
+SRC-GEJU-ZIPING-ZHENQUAN-PINGZHU-FOUR-TOMB-MONTH-SCOPE
+  section: 論雜氣如何取用
+  anchor: 辰戌丑未四個月
+  role: explicit four-tomb branch-scope cross-reference only
+
 SRC-GEJU-ZIPING-ZHENQUAN-MIXED-QI-SELECTION
 SRC-GEJU-ZIPING-ZHENQUAN-MIXED-QI-PLURAL-SELECTION
 ```
+
+The branch-scope reference is deliberately separate from the transparency-selection references so provenance for `辰戌丑未` is explicit rather than inferred from an unstated traditional mapping.
 
 This frontier does not broaden those passages to all twelve month branches.
 
