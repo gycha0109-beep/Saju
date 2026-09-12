@@ -53,9 +53,15 @@ jobs:
           curl --fail --location --silent --show-error \
             "https://raw.githubusercontent.com/c2pa-org/conformance-public/6273cdcb4f273c7556e74f93825a7a3df87869fb/conforming-products/conforming-products-list.json" \
             --output .tmp/fr172/conforming-products-list.json
-          test "$(git hash-object .tmp/fr172/C2PA-TRUST-LIST.json)" = "f22c13252df991f43bca58634d966dcf1b29c089"
-          test "$(git hash-object .tmp/fr172/C2PA-TRUST-LIST.pem)" = "a0d20f58270177608bd96fad331c8ba9a04820ad"
-          test "$(git hash-object .tmp/fr172/conforming-products-list.json)" = "256d9881337be86e4639606dd5aa2bf2a4189d03"
+          TRUST_JSON_SHA="$(git hash-object .tmp/fr172/C2PA-TRUST-LIST.json)"
+          TRUST_PEM_SHA="$(git hash-object .tmp/fr172/C2PA-TRUST-LIST.pem)"
+          PRODUCTS_SHA="$(git hash-object .tmp/fr172/conforming-products-list.json)"
+          echo "trust-json=$TRUST_JSON_SHA"
+          echo "trust-pem=$TRUST_PEM_SHA"
+          echo "products=$PRODUCTS_SHA"
+          test "$TRUST_JSON_SHA" = "f22c13252df991f43bca58634d966dcf1b29c089"
+          test "$TRUST_PEM_SHA" = "a0d20fd74c5ba7a545193ec1a906323e5125b5ef"
+          test "$PRODUCTS_SHA" = "256d9881337be86e4639606dd5aa2bf2a4189d03"
       - name: Fetch and verify pinned official c2patool release
         run: |
           set -euo pipefail
@@ -76,7 +82,9 @@ jobs:
           curl --fail --location --silent --show-error \
             "https://raw.githubusercontent.com/contentauth/c2pa-rs/c2patool-v0.27.22/sdk/tests/fixtures/C.jpg" \
             --output .tmp/fr172/C.jpg
-          test "$(git hash-object .tmp/fr172/C.jpg)" = "b6579b3281fbd448163f77fe46bf8d24f3e5a018"
+          FIXTURE_SHA="$(git hash-object .tmp/fr172/C.jpg)"
+          echo "fixture=$FIXTURE_SHA"
+          test "$FIXTURE_SHA" = "b6579b3281fbd448163f77fe46bf8d24f3e5a018"
           set +e
           "$C2PATOOL_BIN" .tmp/fr172/C.jpg > .tmp/fr172/C.validation.json 2> .tmp/fr172/C.validation.stderr
           C2PA_EXIT=$?
