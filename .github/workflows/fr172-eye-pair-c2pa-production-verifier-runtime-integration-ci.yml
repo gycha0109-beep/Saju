@@ -1,0 +1,111 @@
+name: FR172 Eye Pair C2PA Production Verifier Runtime Integration CI
+
+on:
+  pull_request:
+    paths:
+      - "research/face-reading/fr170-eye-pair-c2pa-external-trust-root-provisioning.md"
+      - "research/face-reading/fr171-eye-pair-c2pa-witness-credential-admission-readiness.md"
+      - "research/face-reading/fr172-eye-pair-c2pa-production-verifier-runtime-integration.md"
+      - "packages/face-reading/src/eye-pair-c2pa-external-trust-root-provisioning-fr170.ts"
+      - "packages/face-reading/src/eye-pair-c2pa-witness-credential-admission-readiness-fr171.ts"
+      - "packages/face-reading/src/eye-pair-c2pa-production-verifier-runtime-integration-fr172.ts"
+      - "packages/face-reading/src/eye-pair-c2pa-production-verifier-runtime-integration-fr172.test.ts"
+      - ".github/workflows/fr172-eye-pair-c2pa-production-verifier-runtime-integration-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "research/face-reading/fr170-eye-pair-c2pa-external-trust-root-provisioning.md"
+      - "research/face-reading/fr171-eye-pair-c2pa-witness-credential-admission-readiness.md"
+      - "research/face-reading/fr172-eye-pair-c2pa-production-verifier-runtime-integration.md"
+      - "packages/face-reading/src/eye-pair-c2pa-external-trust-root-provisioning-fr170.ts"
+      - "packages/face-reading/src/eye-pair-c2pa-witness-credential-admission-readiness-fr171.ts"
+      - "packages/face-reading/src/eye-pair-c2pa-production-verifier-runtime-integration-fr172.ts"
+      - "packages/face-reading/src/eye-pair-c2pa-production-verifier-runtime-integration-fr172.test.ts"
+      - ".github/workflows/fr172-eye-pair-c2pa-production-verifier-runtime-integration-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fr172-eye-pair-c2pa-production-verifier-runtime-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck Face Reading package
+        run: npm run face:typecheck
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Fetch and verify immutable C2PA governance material
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp/fr172
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/c2pa-org/conformance-public/6273cdcb4f273c7556e74f93825a7a3df87869fb/trust-list/C2PA-TRUST-LIST.json" \
+            --output .tmp/fr172/C2PA-TRUST-LIST.json
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/c2pa-org/conformance-public/6273cdcb4f273c7556e74f93825a7a3df87869fb/trust-list/C2PA-TRUST-LIST.pem" \
+            --output .tmp/fr172/C2PA-TRUST-LIST.pem
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/c2pa-org/conformance-public/6273cdcb4f273c7556e74f93825a7a3df87869fb/conforming-products/conforming-products-list.json" \
+            --output .tmp/fr172/conforming-products-list.json
+          TRUST_JSON_SHA="$(git hash-object .tmp/fr172/C2PA-TRUST-LIST.json)"
+          TRUST_PEM_SHA="$(git hash-object .tmp/fr172/C2PA-TRUST-LIST.pem)"
+          PRODUCTS_SHA="$(git hash-object .tmp/fr172/conforming-products-list.json)"
+          echo "trust-json=$TRUST_JSON_SHA"
+          echo "trust-pem=$TRUST_PEM_SHA"
+          echo "products=$PRODUCTS_SHA"
+          test "$TRUST_JSON_SHA" = "f22c13252df991f43bca58634d966dcf1b29c089"
+          test "$TRUST_PEM_SHA" = "a0d20fd74c5ba7a545193ec1a906323e5125b5ef"
+          test "$PRODUCTS_SHA" = "256d9881337be86e4639606dd5aa2bf2a4189d03"
+      - name: Fetch and verify pinned official c2patool release
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error \
+            "https://github.com/contentauth/c2pa-rs/releases/download/c2patool-v0.27.22/c2patool-v0.27.22-x86_64-unknown-linux-gnu.tar.gz" \
+            --output .tmp/fr172/c2patool.tar.gz
+          echo "6f138ad53da1a62f1cd6ee71c60727efa27d13b811f4c0ea8c2a8528968b358b  .tmp/fr172/c2patool.tar.gz" | sha256sum --check --strict
+          mkdir -p .tmp/fr172/c2patool
+          tar -xzf .tmp/fr172/c2patool.tar.gz -C .tmp/fr172/c2patool
+          C2PATOOL_BIN="$(find .tmp/fr172/c2patool -type f -name c2patool -perm -u+x -print -quit)"
+          test -n "$C2PATOOL_BIN"
+          "$C2PATOOL_BIN" --version | tee .tmp/fr172/c2patool-version.txt
+          grep -F "0.27.22" .tmp/fr172/c2patool-version.txt
+          echo "C2PATOOL_BIN=$C2PATOOL_BIN" >> "$GITHUB_ENV"
+      - name: Exercise exact c2patool on official public C2PA fixture
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error \
+            "https://raw.githubusercontent.com/contentauth/c2pa-rs/c2patool-v0.27.22/sdk/tests/fixtures/C.jpg" \
+            --output .tmp/fr172/C.jpg
+          FIXTURE_SHA="$(git hash-object .tmp/fr172/C.jpg)"
+          echo "fixture=$FIXTURE_SHA"
+          test "$FIXTURE_SHA" = "b6579b3281fbd448163f77fe46bf8d24f3e5a018"
+          set +e
+          "$C2PATOOL_BIN" .tmp/fr172/C.jpg > .tmp/fr172/C.validation.json 2> .tmp/fr172/C.validation.stderr
+          C2PA_EXIT=$?
+          set -e
+          echo "public fixture c2patool exit=$C2PA_EXIT"
+          test -s .tmp/fr172/C.validation.json
+          node --input-type=module - <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const parsed = JSON.parse(readFileSync('.tmp/fr172/C.validation.json', 'utf8'));
+          if (typeof parsed.active_manifest !== 'string' || parsed.active_manifest.length === 0) throw new Error('missing active_manifest');
+          if (!parsed.manifests || typeof parsed.manifests !== 'object' || !(parsed.active_manifest in parsed.manifests)) throw new Error('active manifest is not resolvable');
+          if (!['Trusted', 'Valid', 'Invalid'].includes(parsed.validation_state)) throw new Error(`unexpected validation_state ${parsed.validation_state}`);
+          if (!parsed.validation_results || typeof parsed.validation_results !== 'object') throw new Error('missing validation_results');
+          NODE
+      - name: Test FR170 through FR172 authority chain
+        env:
+          FR170_C2PA_TRUST_LIST_JSON_PATH: .tmp/fr172/C2PA-TRUST-LIST.json
+          FR170_C2PA_CONFORMING_PRODUCTS_JSON_PATH: .tmp/fr172/conforming-products-list.json
+          FR172_C2PATOOL_OUTPUT_JSON_PATH: .tmp/fr172/C.validation.json
+        run: >-
+          npx vitest run
+          packages/face-reading/src/eye-pair-c2pa-external-trust-root-provisioning-fr170.test.ts
+          packages/face-reading/src/eye-pair-c2pa-witness-credential-admission-readiness-fr171.test.ts
+          packages/face-reading/src/eye-pair-c2pa-production-verifier-runtime-integration-fr172.test.ts
