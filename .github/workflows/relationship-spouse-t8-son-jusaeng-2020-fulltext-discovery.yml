@@ -1,0 +1,94 @@
+name: Relationship Spouse T8 Son Jusaeng 2020 Fulltext Discovery
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/acquire-relationship-spouse-t8-son-jusaeng-2020-public-fulltext.py'
+      - '.github/workflows/relationship-spouse-t8-son-jusaeng-2020-fulltext-discovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-current-public-fulltext:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install bounded PDF and renderer dependencies
+        run: python -m pip install --disable-pip-version-check pypdf==6.0.0 pymupdf==1.26.4
+      - name: Resolve exact title and follow current public RISS route
+        run: python scripts/acquire-relationship-spouse-t8-son-jusaeng-2020-public-fulltext.py
+      - name: Print locator contexts only when a complete body exists
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('acquisition-son-jusaeng-2020/son-jusaeng-2020.txt')
+          if not p.exists():
+              print('No complete body acquired; semantic review intentionally skipped.')
+              raise SystemExit(0)
+          t=p.read_text(encoding='utf-8')
+          for term in ['배우자','배우자궁','配偶','配偶宮','궁','宮','육친','六親','십성','十星','관성','官星','재성','財星','남편','아내','처','妻','夫','남성','여성','남자','여자','남녀','일지','日支','결혼','혼인']:
+              print(f'\n### TERM {term}')
+              n=0
+              for m in re.finditer(re.escape(term),t,re.I):
+                  print(re.sub(r'\s+',' ',t[max(0,m.start()-500):min(len(t),m.end()+1500)]))
+                  n+=1
+                  if n>=20: break
+              print('COUNT_SHOWN',n)
+          PY
+      - name: Enforce exact card identity and no-bypass boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('acquisition-son-jusaeng-2020/report.json').read_text(encoding='utf-8'))
+          c=j['candidate']; card=j['searchDiscovery']['card']; sig=j['detailIdentitySignals']
+          assert c['author']=='손주생' and c['year']==2020
+          assert c['institution']=='경기대학교'
+          assert isinstance(c['control'],str) and len(c['control'])>20
+          assert j['searchDiscovery']['resolutionRule']=='EXACT_SITE_AUTHORED_RESULT_CARD_TITLE_AUTHOR_YEAR_SCHOOL_AND_LITERAL_DETAIL_ROUTE'
+          assert '손주생' in card['etc'] and '2020' in card['etc']
+          assert ('경기대학교' in card['etc'] or '경기대학교' in card['sameCardBlock'])
+          assert '格局' in card['title'] and '用神' in card['title']
+          assert card['control']==c['control']==j['formTuple']['control_no']
+          assert sig['controlLiteralPresent'] and sig['titleLiteralPresent'] and sig['authorLiteralPresent'] and sig['yearLiteralPresent']
+          assert j['guessedOpaqueIdentifierCount']==0
+          assert not j['loginBypass'] and not j['institutionAuthBypass'] and not j['paywallBypass']
+          assert not j['drmRequestExecuted'] and not j['decryptionActionExecuted']
+          assert j['tlsVerificationDisabled'] is False and j['crossSourceSemanticStitching'] is False
+          if j['semanticDisposition']=='DIRECT_BODY_ACQUIRED_REQUIRES_RENDER_FIRST_REVIEW':
+              assert j['fullLengthPdfAcquired'] is True and j['pdfInspection']['pages']>=70
+              assert j['pdfInspection']['encrypted'] is False
+              assert j['renderedPageCount']==j['pdfInspection']['pages']
+          else:
+              assert j['semanticDisposition']=='PUBLIC_ACCESS_BOUNDARY_ONLY_NO_DIRECT_BODY_DECISION'
+          print('Son Jusaeng 2020 exact RISS card public route verified')
+          print('resolved control=',c['control'])
+          print('observed RISS ID=',c['rissId'])
+          print('semanticDisposition=',j['semanticDisposition'])
+          PY
+      - name: Upload bounded acquisition evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: son-jusaeng-2020-public-route-evidence
+          path: |
+            acquisition-son-jusaeng-2020/report.json
+            acquisition-son-jusaeng-2020/riss-search-*.html
+            acquisition-son-jusaeng-2020/riss-candidate-detail.html
+            acquisition-son-jusaeng-2020/riss-detail.html
+            acquisition-son-jusaeng-2020/riss-script-*.txt
+            acquisition-son-jusaeng-2020/riss-fulltext-dispatch-response.html
+            acquisition-son-jusaeng-2020/dcollection-entry.html
+            acquisition-son-jusaeng-2020/son-jusaeng-2020.pdf
+            acquisition-son-jusaeng-2020/son-jusaeng-2020.txt
+            acquisition-son-jusaeng-2020/rendered-pages/*.jpg
+          if-no-files-found: warn
+          retention-days: 1
+          compression-level: 0
