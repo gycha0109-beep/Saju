@@ -1,0 +1,37 @@
+name: FR166 Eye Pair Post FR165 Authority Frontier Review CI
+
+on:
+  pull_request:
+    paths:
+      - "research/face-reading/fr166-eye-pair-post-fr165-authority-frontier-review.md"
+      - "packages/face-reading/src/eye-pair-prospective-multi-session-recurrence-fr165.ts"
+      - "packages/face-reading/src/eye-pair-post-fr165-authority-frontier-review-fr166.ts"
+      - "packages/face-reading/src/eye-pair-post-fr165-authority-frontier-review-fr166.test.ts"
+      - ".github/workflows/fr166-eye-pair-post-fr165-authority-frontier-review-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "research/face-reading/fr166-eye-pair-post-fr165-authority-frontier-review.md"
+      - "packages/face-reading/src/eye-pair-prospective-multi-session-recurrence-fr165.ts"
+      - "packages/face-reading/src/eye-pair-post-fr165-authority-frontier-review-fr166.ts"
+      - "packages/face-reading/src/eye-pair-post-fr165-authority-frontier-review-fr166.test.ts"
+      - ".github/workflows/fr166-eye-pair-post-fr165-authority-frontier-review-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  fr166-eye-pair-post-fr165-authority-frontier-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: >-
+          npx vitest run
+          packages/face-reading/src/eye-pair-prospective-multi-session-recurrence-fr165.test.ts
+          packages/face-reading/src/eye-pair-post-fr165-authority-frontier-review-fr166.test.ts
