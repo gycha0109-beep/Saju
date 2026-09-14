@@ -1,0 +1,28 @@
+name: FR176 Daruma Eye Morphology Source Review CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/daruma-eye-morphology-source-review-fr176.ts'
+      - 'packages/face-reading/src/daruma-eye-morphology-source-review-fr176.test.ts'
+      - 'research/face-reading/fr176-daruma-eye-morphology-source-review.md'
+      - '.github/workflows/fr176-daruma-eye-morphology-source-review-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr176-source-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR176 Daruma Eye fail-closed source review
+        run: npx vitest run packages/face-reading/src/daruma-eye-morphology-source-review-fr176.test.ts
