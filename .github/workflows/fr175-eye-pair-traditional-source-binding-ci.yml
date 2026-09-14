@@ -1,0 +1,28 @@
+name: FR175 Eye-Pair Traditional Source Binding CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/eye-pair-traditional-source-lineage-direct-passage-binding-fr175.ts'
+      - 'packages/face-reading/src/eye-pair-traditional-source-lineage-direct-passage-binding-fr175.test.ts'
+      - 'research/face-reading/fr175-eye-pair-traditional-source-lineage-direct-passage-binding.md'
+      - '.github/workflows/fr175-eye-pair-traditional-source-binding-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr175-source-binding:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR175 fail-closed source binding
+        run: npx vitest run packages/face-reading/src/eye-pair-traditional-source-lineage-direct-passage-binding-fr175.test.ts
