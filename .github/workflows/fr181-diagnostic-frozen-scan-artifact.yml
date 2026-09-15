@@ -1,0 +1,32 @@
+name: FR181 Diagnostic Frozen Scan Artifact
+
+on:
+  push:
+    branches:
+      - diagnostic/fr181-frozen-scan-artifact
+
+permissions:
+  contents: read
+
+jobs:
+  export-frozen-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify frozen evidence files
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum packages/face-reading/evidence/fr103/nlc-1925-page-87.png
+          sha256sum packages/face-reading/evidence/fr103/nlc-1925-page-88.png
+          test "$(sha256sum packages/face-reading/evidence/fr103/nlc-1925-page-87.png | cut -d' ' -f1)" = "9a3cbda77616c6c359e2aaca173d8f4d3c7ef867449247d9d3887847d9882073"
+          test "$(sha256sum packages/face-reading/evidence/fr103/nlc-1925-page-88.png | cut -d' ' -f1)" = "5ceedcabaa806ab2a4a55a1923681b5b7b246b01c62af42ee8ba56413d207fce"
+      - name: Upload frozen evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr181-frozen-nlc-pages-87-88
+          path: |
+            packages/face-reading/evidence/fr103/nlc-1925-page-87.png
+            packages/face-reading/evidence/fr103/nlc-1925-page-88.png
+          if-no-files-found: error
+          retention-days: 1
