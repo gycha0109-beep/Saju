@@ -1,0 +1,53 @@
+name: FR182 Scan Acquisition Probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/fr182-scan-acquisition-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  render-fixed-nlc-window:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PDF renderer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
+      - name: Download and verify fixed NLC witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fr182
+          curl --fail --location --retry 3 --output /tmp/fr182/source.pdf \
+            'https://upload.wikimedia.org/wikipedia/commons/2/22/NLC416-13jh001662-59167_%E7%A5%9E%E7%9B%B8%E5%85%A8%E7%B7%A8.pdf'
+          printf '%s  %s\n' \
+            '94167d8d19d47525535b39e18a20c6b315a3a30751c2063bc2492760f1d927af' \
+            '/tmp/fr182/source.pdf' | sha256sum --check --strict
+          test "$(pdfinfo /tmp/fr182/source.pdf | awk '/^Pages:/ {print $2}')" = '576'
+      - name: Render candidate pages 88-90 at 320 DPI
+        shell: bash
+        run: |
+          set -euo pipefail
+          for page in 88 89 90; do
+            pdftoppm -f "$page" -l "$page" -singlefile -r 320 -png \
+              /tmp/fr182/source.pdf "/tmp/fr182/nlc-1925-page-${page}"
+          done
+          sha256sum /tmp/fr182/nlc-1925-page-88.png \
+                    /tmp/fr182/nlc-1925-page-89.png \
+                    /tmp/fr182/nlc-1925-page-90.png \
+            | tee /tmp/fr182/sha256sums.txt
+      - name: Upload visual-review window
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr182-nlc-pages-88-90
+          path: |
+            /tmp/fr182/nlc-1925-page-88.png
+            /tmp/fr182/nlc-1925-page-89.png
+            /tmp/fr182/nlc-1925-page-90.png
+            /tmp/fr182/sha256sums.txt
+          if-no-files-found: error
+          retention-days: 1
