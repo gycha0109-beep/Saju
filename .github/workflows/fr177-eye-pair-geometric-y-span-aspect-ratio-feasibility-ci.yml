@@ -1,0 +1,28 @@
+name: FR177 Eye-Pair Geometric Y-Span Aspect-Ratio Feasibility CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/eye-pair-geometric-y-span-aspect-ratio-feasibility-fr177.ts'
+      - 'packages/face-reading/src/eye-pair-geometric-y-span-aspect-ratio-feasibility-fr177.test.ts'
+      - 'research/face-reading/fr177-eye-pair-geometric-y-span-aspect-ratio-feasibility.md'
+      - '.github/workflows/fr177-eye-pair-geometric-y-span-aspect-ratio-feasibility-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr177-feasibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR177 Eye-Pair geometry feasibility boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-geometric-y-span-aspect-ratio-feasibility-fr177.test.ts
