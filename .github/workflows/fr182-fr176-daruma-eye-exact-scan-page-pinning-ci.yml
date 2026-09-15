@@ -1,0 +1,36 @@
+name: FR182 FR176 Daruma Eye Exact Scan Page Pinning CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/evidence/fr182/nlc-1925-page-146.png'
+      - 'packages/face-reading/src/eye-pair-fr176-daruma-eye-exact-scan-page-pinning-fr182.ts'
+      - 'packages/face-reading/src/eye-pair-fr176-daruma-eye-exact-scan-page-pinning-fr182.test.ts'
+      - 'research/face-reading/fr182-fr176-daruma-eye-exact-scan-page-pinning.md'
+      - '.github/workflows/fr182-fr176-daruma-eye-exact-scan-page-pinning-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr182-pinning:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Verify frozen page-146 image digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s  %s\n' \
+            '522e5cc94a1fbd885a298cedd8aea94e7a95dd4877d93afa10129e707e8059c7' \
+            'packages/face-reading/evidence/fr182/nlc-1925-page-146.png' | sha256sum --check --strict
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR182 exact scan-page locator boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-fr176-daruma-eye-exact-scan-page-pinning-fr182.test.ts
