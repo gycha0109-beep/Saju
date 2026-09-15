@@ -1,0 +1,28 @@
+name: FR183 Xi Chang Operationalization Requirements Rereview CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/eye-pair-xi-chang-operationalization-requirements-rereview-fr183.ts'
+      - 'packages/face-reading/src/eye-pair-xi-chang-operationalization-requirements-rereview-fr183.test.ts'
+      - 'research/face-reading/fr183-eye-pair-xi-chang-operationalization-requirements-rereview.md'
+      - '.github/workflows/fr183-eye-pair-xi-chang-operationalization-requirements-rereview-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr183-rereview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR183 fail-closed re-review boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-xi-chang-operationalization-requirements-rereview-fr183.test.ts
