@@ -1,0 +1,296 @@
+import type { FactState } from '../contracts/common.js';
+import type { StemFact, YinYang } from '../contracts/calculation.js';
+import type { RuleInputRequirement, TaxonomyTier } from '../contracts/interpretation.js';
+import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import {
+  RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_SEMANTIC_CORRESPONDENCE_MAP,
+  buildRelationshipSpouseT8RoleNeutralSemanticCorrespondenceGovernance,
+  type RelationshipSpouseT8GovernedSpouseStarCorrespondenceRecord,
+} from './relationship-spouse-t8-role-neutral-semantic-correspondence-governance.js';
+
+export const RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_GOVERNANCE_VERSION =
+  'myeonghwa-relationship-spouse-t8-role-neutral-t6-input-governance-v1' as const;
+
+export const RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_REQUIREMENT = Object.freeze({
+  key: 'relationship_spouse_role_neutral_day_master',
+  source: 'derived_fact',
+  pathOrClaimType: 'derivedFacts.dayMaster',
+  acceptedStatuses: Object.freeze(['resolved'] as const),
+  required: true,
+  ambiguityBehavior: 'requires_resolved',
+} satisfies RuleInputRequirement);
+
+export interface RelationshipSpouseT8RoleNeutralT6InputEnvelope {
+  taxonomyTier: 'T6';
+  source: 'derived_fact';
+  pathOrClaimType: 'derivedFacts.dayMaster';
+  selectorField: 'value.yinYang';
+  factState: 'resolved';
+  dayMasterPolarity: YinYang;
+  correspondence: RelationshipSpouseT8GovernedSpouseStarCorrespondenceRecord;
+  evidenceRefs: readonly string[];
+}
+
+export const RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_GOVERNANCE = Object.freeze({
+  governanceId: 'RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT',
+  frontierIssue: 595,
+  domain: 'relationship',
+  subcategory: 'spouse',
+  temporalScope: 'natal',
+  statusClass: 'research',
+  authorityScope: 'repository_owned_t6_input_contract_only',
+  targetTaxonomyTier: 'T6' as const satisfies TaxonomyTier,
+  standardInputRequirement: RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_REQUIREMENT,
+  canonicalContract: Object.freeze({
+    snapshotContract: 'CanonicalSajuSnapshot',
+    sourceFactPath: 'derivedFacts.dayMaster',
+    sourceFactContract: 'FactState<StemFact>',
+    acceptedFactState: 'resolved',
+    selectorField: 'value.yinYang',
+    selectorType: 'YinYang',
+    selectorValues: Object.freeze(['양', '음'] satisfies readonly YinYang[]),
+    provenanceField: 'evidenceRefs',
+    preserveSourceEvidenceRefs: true,
+    ambiguousFactProducesT6Input: false,
+    unavailableFactProducesT6Input: false,
+  } as const),
+  historicalFailClosedBoundary: Object.freeze({
+    priorFeasibilityPr: 312,
+    broadT5FamilyPresenceCannotBeRelabelledAsSpouseAuthority: true,
+    discardedT5SubtypeReconstructionAuthorized: false,
+    generalRelationshipT8RelabellingAuthorized: false,
+    oldT5InformationLossFindingOverridden: false,
+    currentPathConsumesCanonicalDayMasterFactDirectly: true,
+  } as const),
+  semanticBoundary: Object.freeze({
+    usesOnlyPreviouslyGovernedSemanticCorrespondence: true,
+    nativeSexInputRequired: false,
+    partnerSexInputRequired: false,
+    partnerIdentityInputRequired: false,
+    sexualOrientationInputRequired: false,
+    secondChartInputRequired: false,
+    compatibilityInputRequired: false,
+    marriageGuaranteeInferenceAuthorized: false,
+    fertilityInferenceAuthorized: false,
+    relationshipLegalityOrEthicsInferenceAuthorized: false,
+    crossSourceSemanticStitchingAuthorized: false,
+  } as const),
+  runtimeBoundary: Object.freeze({
+    researchT6InputContractEstablished: true,
+    methodologyRegistered: false,
+    producerRegistered: false,
+    ruleRegistered: false,
+    claimTypeRegistered: false,
+    interpretationPackRegistered: false,
+    consumerNarrativeActivated: false,
+    compatibilityConsumerActivated: false,
+    previewDefaultRouteChanged: false,
+    productionBehaviorChanged: false,
+  } as const),
+} as const);
+
+export function buildRelationshipSpouseT8RoleNeutralT6InputFromDayMaster(
+  dayMaster: FactState<StemFact>,
+): RelationshipSpouseT8RoleNeutralT6InputEnvelope | null {
+  if (dayMaster.state !== 'resolved') return null;
+
+  const dayMasterPolarity = dayMaster.value.yinYang;
+  return Object.freeze({
+    taxonomyTier: 'T6' as const,
+    source: 'derived_fact' as const,
+    pathOrClaimType: 'derivedFacts.dayMaster' as const,
+    selectorField: 'value.yinYang' as const,
+    factState: 'resolved' as const,
+    dayMasterPolarity,
+    correspondence: RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_SEMANTIC_CORRESPONDENCE_MAP[dayMasterPolarity],
+    evidenceRefs: Object.freeze([...dayMaster.evidenceRefs]),
+  });
+}
+
+export const RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_GOVERNANCE_CONTROL_IDS = Object.freeze([
+  'EXACT_UPSTREAM_FOUR_OF_FIVE_AUTHORITY_STATE_IS_REQUIRED',
+  'STANDARD_RULE_INPUT_REQUIREMENT_VOCABULARY_IS_REUSED',
+  'TARGET_TAXONOMY_TIER_IS_T6',
+  'T6_SOURCE_IS_DERIVED_FACT',
+  'T6_CANONICAL_SOURCE_PATH_IS_DERIVED_FACTS_DAY_MASTER',
+  'T6_SELECTOR_FIELD_IS_RESOLVED_DAY_MASTER_VALUE_YIN_YANG',
+  'T6_ACCEPTED_FACT_STATE_IS_RESOLVED_ONLY',
+  'T6_AMBIGUITY_BEHAVIOR_REQUIRES_RESOLVED',
+  'DAY_MASTER_EVIDENCE_REFS_ARE_PRESERVED_AS_PROVENANCE',
+  'AMBIGUOUS_DAY_MASTER_PRODUCES_NO_T6_INPUT',
+  'UNAVAILABLE_DAY_MASTER_PRODUCES_NO_T6_INPUT',
+  'RESOLVED_YANG_REUSES_GOVERNED_INDIRECT_WEALTH_PIANCAI_CORRESPONDENCE',
+  'RESOLVED_YIN_REUSES_GOVERNED_INDIRECT_POWER_PIANGUAN_CORRESPONDENCE',
+  'CURRENT_T5_FAMILY_PRESENCE_TUPLE_IS_NOT_CONSUMED',
+  'DISCARDED_T5_SUBTYPE_RECONSTRUCTION_REMAINS_FORBIDDEN',
+  'GENERAL_RELATIONSHIP_T8_RELABELLING_REMAINS_FORBIDDEN',
+  'HISTORICAL_PR_312_INFORMATION_LOSS_FINDING_IS_NOT_OVERRIDDEN',
+  'NATIVE_SEX_INPUT_IS_NOT_REQUIRED',
+  'PARTNER_SEX_INPUT_IS_NOT_REQUIRED',
+  'PARTNER_IDENTITY_INPUT_IS_NOT_REQUIRED',
+  'SEXUAL_ORIENTATION_INPUT_IS_NOT_REQUIRED',
+  'SECOND_CHART_INPUT_IS_NOT_REQUIRED',
+  'COMPATIBILITY_INPUT_IS_NOT_REQUIRED',
+  'MARRIAGE_GUARANTEE_FERTILITY_AND_LEGALITY_ETHICS_INFERENCE_REMAIN_UNAUTHORIZED',
+  'NO_CROSS_SOURCE_STITCHING_TO_MANUFACTURE_T6_AUTHORITY',
+  'RELATIONSHIP_T6_INPUT_IS_CLOSED_BY_REPOSITORY_GOVERNANCE_ONLY',
+  'ALL_FIVE_RESEARCH_AUTHORITY_GAPS_ARE_CLOSED',
+  'FIVE_OF_FIVE_RESEARCH_AUTHORITY_CLOSURE_DOES_NOT_REGISTER_RUNTIME_COMPONENTS',
+  'AUTHORITY_ADMISSION_READY_REMAINS_FALSE_PENDING_SEPARATE_RUNTIME_ADMISSION',
+  'SPOUSE_T8_PRODUCER_READY_REMAINS_FALSE',
+  'NO_METHODOLOGY_PRODUCER_RULE_CLAIM_PACK_NARRATIVE_COMPATIBILITY_OR_PREVIEW_ACTIVATION',
+  'PRODUCTION_PROMOTION_REMAINS_NOT_READY_AND_PRODUCTION_REMAINS_HOLD',
+] as const);
+
+export interface RelationshipSpouseT8RoleNeutralT6InputGovernanceReport {
+  evidenceId: string;
+  evidenceVersion: typeof RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_GOVERNANCE_VERSION;
+  upstreamEvidenceId: string;
+  status:
+    | 'GOVERNED_RESOLVED_CANONICAL_DAY_MASTER_T6_INPUT_CONTRACT_ESTABLISHED'
+    | 'UPSTREAM_FOUR_OF_FIVE_AUTHORITY_STATE_INVALID';
+  domain: 'relationship';
+  subcategory: 'spouse';
+  temporalScope: 'natal';
+  statusClass: 'research';
+  governance: typeof RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_GOVERNANCE;
+  exactUpstreamFourOfFiveStateAccepted: boolean;
+  t6InputSource: 'derived_fact';
+  t6InputPath: 'derivedFacts.dayMaster';
+  t6SelectorField: 'value.yinYang';
+  resolvedOnly: true;
+  ambiguityBehavior: 'requires_resolved';
+  provenancePreserved: true;
+  ambiguousInputFailsClosed: true;
+  unavailableInputFailsClosed: true;
+  explicitRoleNeutralNatalMappingEstablished: boolean;
+  currentGovernedMethodSemanticCorrespondenceEstablished: boolean;
+  currentRelationshipT6InputPathEstablished: boolean;
+  relationshipT6InputGapClosedByThisEvidence: boolean;
+  qualifyingPrimaryWitnessRemainsClosed: boolean;
+  independentNormativeProvenanceRemainsClosed: boolean;
+  authorityGapsClosedCount: 5 | 0;
+  authorityGapsOpenCount: 0 | 5;
+  authorityAdmissionReady: false;
+  crossSourceStitchingAuthorized: false;
+  spouseT8ProducerReady: false;
+  methodologyRegistered: false;
+  producerRegistered: false;
+  ruleRegistered: false;
+  claimTypeRegistered: false;
+  interpretationPackRegistered: false;
+  consumerNarrativeActivated: false;
+  compatibilityConsumerActivated: false;
+  previewDefaultRouteChanged: false;
+  productionPromotionReady: false;
+  productionState: 'HOLD';
+  controlIds: readonly (typeof RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_GOVERNANCE_CONTROL_IDS)[number][];
+  controlCount: number;
+  recommendedNextAction:
+    | 'REVIEW_SEPARATE_RUNTIME_ADMISSION_AFTER_FIVE_OF_FIVE_RESEARCH_AUTHORITY_CLOSURE'
+    | 'REESTABLISH_FOUR_OF_FIVE_AUTHORITY_STATE';
+}
+
+type UpstreamReport = ReturnType<
+  typeof buildRelationshipSpouseT8RoleNeutralSemanticCorrespondenceGovernance
+>;
+
+function contentAddressedUpstreamIdentityValid(upstream: UpstreamReport): boolean {
+  const { evidenceId, ...material } = upstream;
+  return (
+    evidenceId ===
+    `relationship_spouse_t8_role_neutral_semantic_correspondence_governance_${deterministicContentHash(material).slice(0, 24)}`
+  );
+}
+
+function upstreamFourOfFiveStateAccepted(upstream: UpstreamReport): boolean {
+  return (
+    contentAddressedUpstreamIdentityValid(upstream) &&
+    upstream.status ===
+      'GOVERNED_CANONICAL_DAY_MASTER_POLARITY_SPOUSE_STAR_SEMANTIC_CORRESPONDENCE_ESTABLISHED' &&
+    upstream.exactUpstreamThreeOfFiveStateAccepted === true &&
+    upstream.canonicalDayMasterPolarityContractGoverned === true &&
+    upstream.explicitRoleNeutralNatalMappingEstablished === true &&
+    upstream.currentGovernedMethodSemanticCorrespondenceEstablished === true &&
+    upstream.currentRelationshipT6InputPathEstablished === false &&
+    upstream.semanticCorrespondenceGapClosedByThisEvidence === true &&
+    upstream.relationshipT6InputGapClosedByThisEvidence === false &&
+    upstream.qualifyingPrimaryWitnessRemainsClosed === true &&
+    upstream.independentNormativeProvenanceRemainsClosed === true &&
+    upstream.authorityGapsClosedCount === 4 &&
+    upstream.authorityGapsOpenCount === 1 &&
+    upstream.authorityAdmissionReady === false &&
+    upstream.crossSourceStitchingAuthorized === false &&
+    upstream.spouseT8ProducerReady === false &&
+    upstream.producerRegistered === false &&
+    upstream.ruleRegistered === false &&
+    upstream.claimTypeRegistered === false &&
+    upstream.interpretationPackRegistered === false &&
+    upstream.consumerNarrativeActivated === false &&
+    upstream.compatibilityConsumerActivated === false &&
+    upstream.previewDefaultRouteChanged === false &&
+    upstream.productionPromotionReady === false &&
+    upstream.productionState === 'HOLD'
+  );
+}
+
+export function buildRelationshipSpouseT8RoleNeutralT6InputGovernance(): RelationshipSpouseT8RoleNeutralT6InputGovernanceReport {
+  const upstream = buildRelationshipSpouseT8RoleNeutralSemanticCorrespondenceGovernance();
+  const accepted = upstreamFourOfFiveStateAccepted(upstream);
+  const material = {
+    evidenceVersion: RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_GOVERNANCE_VERSION,
+    upstreamEvidenceId: upstream.evidenceId,
+    status: accepted
+      ? ('GOVERNED_RESOLVED_CANONICAL_DAY_MASTER_T6_INPUT_CONTRACT_ESTABLISHED' as const)
+      : ('UPSTREAM_FOUR_OF_FIVE_AUTHORITY_STATE_INVALID' as const),
+    domain: 'relationship' as const,
+    subcategory: 'spouse' as const,
+    temporalScope: 'natal' as const,
+    statusClass: 'research' as const,
+    governance: RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_GOVERNANCE,
+    exactUpstreamFourOfFiveStateAccepted: accepted,
+    t6InputSource: 'derived_fact' as const,
+    t6InputPath: 'derivedFacts.dayMaster' as const,
+    t6SelectorField: 'value.yinYang' as const,
+    resolvedOnly: true as const,
+    ambiguityBehavior: 'requires_resolved' as const,
+    provenancePreserved: true as const,
+    ambiguousInputFailsClosed: true as const,
+    unavailableInputFailsClosed: true as const,
+    explicitRoleNeutralNatalMappingEstablished: accepted,
+    currentGovernedMethodSemanticCorrespondenceEstablished: accepted,
+    currentRelationshipT6InputPathEstablished: accepted,
+    relationshipT6InputGapClosedByThisEvidence: accepted,
+    qualifyingPrimaryWitnessRemainsClosed: accepted,
+    independentNormativeProvenanceRemainsClosed: accepted,
+    authorityGapsClosedCount: accepted ? (5 as const) : (0 as const),
+    authorityGapsOpenCount: accepted ? (0 as const) : (5 as const),
+    authorityAdmissionReady: false as const,
+    crossSourceStitchingAuthorized: false as const,
+    spouseT8ProducerReady: false as const,
+    methodologyRegistered: false as const,
+    producerRegistered: false as const,
+    ruleRegistered: false as const,
+    claimTypeRegistered: false as const,
+    interpretationPackRegistered: false as const,
+    consumerNarrativeActivated: false as const,
+    compatibilityConsumerActivated: false as const,
+    previewDefaultRouteChanged: false as const,
+    productionPromotionReady: false as const,
+    productionState: 'HOLD' as const,
+    controlIds: accepted
+      ? RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_GOVERNANCE_CONTROL_IDS
+      : Object.freeze([]),
+    controlCount: accepted
+      ? RELATIONSHIP_SPOUSE_T8_ROLE_NEUTRAL_T6_INPUT_GOVERNANCE_CONTROL_IDS.length
+      : 0,
+    recommendedNextAction: accepted
+      ? ('REVIEW_SEPARATE_RUNTIME_ADMISSION_AFTER_FIVE_OF_FIVE_RESEARCH_AUTHORITY_CLOSURE' as const)
+      : ('REESTABLISH_FOUR_OF_FIVE_AUTHORITY_STATE' as const),
+  };
+
+  return {
+    evidenceId: `relationship_spouse_t8_role_neutral_t6_input_governance_${deterministicContentHash(material).slice(0, 24)}`,
+    ...material,
+  };
+}
