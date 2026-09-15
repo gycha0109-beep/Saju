@@ -1,0 +1,28 @@
+name: FR180 Eye-Pair Xi-Chang Operationalization Requirements CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/eye-pair-xi-chang-operationalization-requirements-fr180.ts'
+      - 'packages/face-reading/src/eye-pair-xi-chang-operationalization-requirements-fr180.test.ts'
+      - 'research/face-reading/fr180-eye-pair-xi-chang-operationalization-requirements.md'
+      - '.github/workflows/fr180-eye-pair-xi-chang-operationalization-requirements-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr180-requirements:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR180 Xi-Chang operationalization requirements boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-xi-chang-operationalization-requirements-fr180.test.ts
