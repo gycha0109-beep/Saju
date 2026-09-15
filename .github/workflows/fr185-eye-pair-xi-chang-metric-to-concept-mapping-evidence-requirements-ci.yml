@@ -1,0 +1,28 @@
+name: FR185 Xi Chang Metric To Concept Mapping Evidence Requirements CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/eye-pair-xi-chang-metric-to-concept-mapping-evidence-requirements-fr185.ts'
+      - 'packages/face-reading/src/eye-pair-xi-chang-metric-to-concept-mapping-evidence-requirements-fr185.test.ts'
+      - 'research/face-reading/fr185-eye-pair-xi-chang-metric-to-concept-mapping-evidence-requirements.md'
+      - '.github/workflows/fr185-eye-pair-xi-chang-metric-to-concept-mapping-evidence-requirements-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr185-mapping-evidence-requirements:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR185 mapping evidence requirements boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-xi-chang-metric-to-concept-mapping-evidence-requirements-fr185.test.ts
