@@ -1,4 +1,4 @@
-name: FR182 Final One-Commit Assembly Probe
+name: FR182 Final Blob Staging Probe
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  assemble-final-fr182-branch:
+  stage-validated-fr182-blobs:
     if: github.head_ref == 'research/fr182-final-assembly-probe'
     runs-on: ubuntu-24.04
     steps:
@@ -23,40 +23,37 @@ jobs:
           node-version: '24'
           cache: npm
 
-      - name: Verify exact fresh main and absent final branch
+      - name: Verify exact fresh main and absent staging/final branches
         shell: bash
         env:
           EXPECTED_MAIN_SHA: a2313b10acfaa4e6186cb11beb851c829ad073a0
           FINAL_BRANCH: research/fr182-daruma-eye-exact-scan-page-pinning
+          STAGING_BRANCH: research/fr182-final-staging
           PROBE_BRANCH: research/fr182-final-assembly-probe
         run: |
           set -euo pipefail
           git fetch origin \
             "main:refs/remotes/origin/main" \
             "$PROBE_BRANCH:refs/remotes/origin/$PROBE_BRANCH"
-          ACTUAL_MAIN_SHA="$(git rev-parse refs/remotes/origin/main)"
-          test "$ACTUAL_MAIN_SHA" = "$EXPECTED_MAIN_SHA"
-          if git ls-remote --exit-code --heads origin "refs/heads/$FINAL_BRANCH" >/dev/null 2>&1; then
-            echo "Final branch already exists: $FINAL_BRANCH" >&2
-            exit 1
-          fi
+          test "$(git rev-parse refs/remotes/origin/main)" = "$EXPECTED_MAIN_SHA"
+          for branch in "$FINAL_BRANCH" "$STAGING_BRANCH"; do
+            if git ls-remote --exit-code --heads origin "refs/heads/$branch" >/dev/null 2>&1; then
+              echo "Unexpected existing branch: $branch" >&2
+              exit 1
+            fi
+          done
 
-      - name: Assemble exact five-file FR182 candidate from fresh main
+      - name: Assemble four validated implementation blobs from fresh main
         shell: bash
         env:
           EXPECTED_MAIN_SHA: a2313b10acfaa4e6186cb11beb851c829ad073a0
-          FINAL_BRANCH: research/fr182-daruma-eye-exact-scan-page-pinning
           PROBE_BRANCH: research/fr182-final-assembly-probe
+          STAGING_BRANCH: research/fr182-final-staging
         run: |
           set -euo pipefail
           git checkout --detach "$EXPECTED_MAIN_SHA"
-          git switch -c "$FINAL_BRANCH"
-
-          mkdir -p packages/face-reading/evidence/fr182
-          mkdir -p packages/face-reading/src
-          mkdir -p research/face-reading
-          mkdir -p .github/workflows
-
+          git switch -c "$STAGING_BRANCH"
+          mkdir -p packages/face-reading/evidence/fr182 packages/face-reading/src research/face-reading
           git show "refs/remotes/origin/$PROBE_BRANCH:.fr182-assembly/eye-pair-fr176-daruma-eye-exact-scan-page-pinning-fr182.ts" \
             > packages/face-reading/src/eye-pair-fr176-daruma-eye-exact-scan-page-pinning-fr182.ts
           sed -i "s#'../packages/face-reading/src/#'./#g" \
@@ -65,8 +62,6 @@ jobs:
             > packages/face-reading/src/eye-pair-fr176-daruma-eye-exact-scan-page-pinning-fr182.test.ts
           git show "refs/remotes/origin/$PROBE_BRANCH:.fr182-assembly/fr182-fr176-daruma-eye-exact-scan-page-pinning.md" \
             > research/face-reading/fr182-fr176-daruma-eye-exact-scan-page-pinning.md
-          git show "refs/remotes/origin/$PROBE_BRANCH:.fr182-assembly/fr182-fr176-daruma-eye-exact-scan-page-pinning-ci.yml" \
-            > .github/workflows/fr182-fr176-daruma-eye-exact-scan-page-pinning-ci.yml
 
       - name: Recreate and verify immutable page-146 evidence
         shell: bash
@@ -88,7 +83,7 @@ jobs:
             '522e5cc94a1fbd885a298cedd8aea94e7a95dd4877d93afa10129e707e8059c7' \
             'packages/face-reading/evidence/fr182/nlc-1925-page-146.png' | sha256sum --check --strict
 
-      - name: Validate candidate before commit
+      - name: Validate candidate before staging commit
         shell: bash
         run: |
           set -euo pipefail
@@ -96,24 +91,21 @@ jobs:
           npm run face:build
           npx vitest run packages/face-reading/src/eye-pair-fr176-daruma-eye-exact-scan-page-pinning-fr182.test.ts
 
-      - name: Commit exactly five files once and push final branch
+      - name: Push only four validated blobs to temporary staging branch
         shell: bash
         env:
           EXPECTED_MAIN_SHA: a2313b10acfaa4e6186cb11beb851c829ad073a0
-          FINAL_BRANCH: research/fr182-daruma-eye-exact-scan-page-pinning
+          STAGING_BRANCH: research/fr182-final-staging
         run: |
           set -euo pipefail
           git config user.name 'gycha0109-beep'
           git config user.email 'gycha0109@gmail.com'
           git add \
-            .github/workflows/fr182-fr176-daruma-eye-exact-scan-page-pinning-ci.yml \
             packages/face-reading/evidence/fr182/nlc-1925-page-146.png \
             packages/face-reading/src/eye-pair-fr176-daruma-eye-exact-scan-page-pinning-fr182.ts \
             packages/face-reading/src/eye-pair-fr176-daruma-eye-exact-scan-page-pinning-fr182.test.ts \
             research/face-reading/fr182-fr176-daruma-eye-exact-scan-page-pinning.md
-
           cat > /tmp/fr182-expected-files.txt <<'EOF'
-          .github/workflows/fr182-fr176-daruma-eye-exact-scan-page-pinning-ci.yml
           packages/face-reading/evidence/fr182/nlc-1925-page-146.png
           packages/face-reading/src/eye-pair-fr176-daruma-eye-exact-scan-page-pinning-fr182.test.ts
           packages/face-reading/src/eye-pair-fr176-daruma-eye-exact-scan-page-pinning-fr182.ts
@@ -122,9 +114,8 @@ jobs:
           sed -i 's/^          //' /tmp/fr182-expected-files.txt
           git diff --cached --name-only | sort > /tmp/fr182-staged-files.txt
           diff -u /tmp/fr182-expected-files.txt /tmp/fr182-staged-files.txt
-
-          git commit -m 'research(face-reading): pin FR176 Daruma Eye scan page'
+          git commit -m 'chore(fr182): stage validated final blobs'
           test "$(git rev-parse HEAD^)" = "$EXPECTED_MAIN_SHA"
           test "$(git rev-list --count "$EXPECTED_MAIN_SHA"..HEAD)" = '1'
-          test "$(git diff --name-only "$EXPECTED_MAIN_SHA"..HEAD | wc -l | tr -d ' ')" = '5'
-          git push origin "HEAD:refs/heads/$FINAL_BRANCH"
+          test "$(git diff --name-only "$EXPECTED_MAIN_SHA"..HEAD | wc -l | tr -d ' ')" = '4'
+          git push origin "HEAD:refs/heads/$STAGING_BRANCH"
