@@ -1,0 +1,27 @@
+name: FR187 Xi Chang Blinded Expert Operationalization Protocol CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/eye-pair-xi-chang-blinded-expert-operationalization-protocol-fr187.ts'
+      - 'packages/face-reading/src/eye-pair-xi-chang-blinded-expert-operationalization-protocol-fr187.test.ts'
+      - 'research/face-reading/fr187-eye-pair-xi-chang-blinded-expert-operationalization-protocol.md'
+      - '.github/workflows/fr187-eye-pair-xi-chang-blinded-expert-operationalization-protocol-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr187-blinded-operationalization-protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR187 blinded expert operationalization protocol boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-xi-chang-blinded-expert-operationalization-protocol-fr187.test.ts
