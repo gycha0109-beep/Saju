@@ -1,0 +1,28 @@
+name: FR186 Xi Chang Mapping Hypothesis Provenance CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/eye-pair-xi-chang-mapping-hypothesis-provenance-fr186.ts'
+      - 'packages/face-reading/src/eye-pair-xi-chang-mapping-hypothesis-provenance-fr186.test.ts'
+      - 'research/face-reading/fr186-eye-pair-xi-chang-mapping-hypothesis-provenance.md'
+      - '.github/workflows/fr186-eye-pair-xi-chang-mapping-hypothesis-provenance-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr186-mapping-hypothesis-provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR186 mapping hypothesis provenance boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-xi-chang-mapping-hypothesis-provenance-fr186.test.ts
