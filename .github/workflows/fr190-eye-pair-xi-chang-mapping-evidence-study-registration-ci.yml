@@ -1,0 +1,27 @@
+name: FR190 Xi Chang Mapping Evidence Study Registration CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/eye-pair-xi-chang-mapping-evidence-study-registration-fr190.ts'
+      - 'packages/face-reading/src/eye-pair-xi-chang-mapping-evidence-study-registration-fr190.test.ts'
+      - 'research/face-reading/fr190-eye-pair-xi-chang-mapping-evidence-study-registration.md'
+      - '.github/workflows/fr190-eye-pair-xi-chang-mapping-evidence-study-registration-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr190-mapping-evidence-study-registration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR190 mapping-evidence study registration boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-xi-chang-mapping-evidence-study-registration-fr190.test.ts
