@@ -1,0 +1,27 @@
+name: FR189 Xi Chang Capture Quality Review Artifact Retention CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/eye-pair-xi-chang-capture-quality-review-artifact-retention-fr189.ts'
+      - 'packages/face-reading/src/eye-pair-xi-chang-capture-quality-review-artifact-retention-fr189.test.ts'
+      - 'research/face-reading/fr189-eye-pair-xi-chang-capture-quality-review-artifact-retention.md'
+      - '.github/workflows/fr189-eye-pair-xi-chang-capture-quality-review-artifact-retention-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr189-capture-quality-review-artifact-retention:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR189 capture-quality and review-artifact retention support boundary
+        run: npx vitest run packages/face-reading/src/eye-pair-xi-chang-capture-quality-review-artifact-retention-fr189.test.ts
