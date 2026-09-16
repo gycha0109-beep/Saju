@@ -1,0 +1,27 @@
+name: FR192 Master Region Coverage Skeleton CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/face-reading-master-region-coverage-skeleton-fr192.ts'
+      - 'packages/face-reading/src/face-reading-master-region-coverage-skeleton-fr192.test.ts'
+      - 'research/face-reading/fr192-master-region-coverage-skeleton.md'
+      - '.github/workflows/fr192-master-region-coverage-skeleton-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr192-master-region-coverage-skeleton:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR192 master region coverage skeleton
+        run: npx vitest run packages/face-reading/src/face-reading-master-region-coverage-skeleton-fr192.test.ts
