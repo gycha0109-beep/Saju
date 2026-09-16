@@ -1,0 +1,27 @@
+name: FR191 Frontal Profile Product Capture View Contract CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/face-reading-product-capture-view-contract-fr191.ts'
+      - 'packages/face-reading/src/face-reading-product-capture-view-contract-fr191.test.ts'
+      - 'research/face-reading/fr191-frontal-profile-product-capture-view-contract.md'
+      - '.github/workflows/fr191-frontal-profile-product-capture-view-contract-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr191-product-capture-view-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR191 frontal/profile product capture-view boundary
+        run: npx vitest run packages/face-reading/src/face-reading-product-capture-view-contract-fr191.test.ts
