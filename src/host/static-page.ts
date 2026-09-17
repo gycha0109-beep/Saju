@@ -184,6 +184,22 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     if (typeof block.summary === 'string') container.appendChild(el('p', block.summary));
   }
 
+  function renderFactGroup(title, facts) {
+    if (!Array.isArray(facts) || facts.length === 0) return;
+    const node = el('section');
+    node.appendChild(el('h2', title));
+    const list = el('ul');
+    facts.forEach((fact) => {
+      const label = fact && typeof fact.label === 'string' ? fact.label : '항목';
+      const value = fact && typeof fact.value === 'string' && fact.value.length > 0
+        ? fact.value
+        : '확인 불가';
+      list.appendChild(el('li', label + ': ' + value));
+    });
+    node.appendChild(list);
+    result.appendChild(node);
+  }
+
   function renderReading(reading) {
     if (reading.calculationSummary && reading.calculationSummary.pillars) {
       const pillars = el('div', undefined, 'pillars');
@@ -195,6 +211,8 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
         pillars.appendChild(item);
       });
       result.appendChild(pillars);
+      renderFactGroup('오행', reading.calculationSummary.fiveElements);
+      renderFactGroup('십신', reading.calculationSummary.tenGods);
     }
     (reading.sections || []).forEach((section) => {
       const node = el('section');
