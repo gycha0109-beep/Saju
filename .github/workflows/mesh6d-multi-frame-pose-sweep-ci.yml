@@ -1,0 +1,68 @@
+name: MESH6D Multi-frame Pose Sweep CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mesh6d-multi-frame-pose-sweep-ci.yml'
+      - 'packages/face-reading/src/mesh6d-multi-frame-pose-sweep-evidence.ts'
+      - 'packages/face-reading/src/mesh6c-morphology-repeatability.ts'
+      - 'packages/face-reading/src/mesh6b-zygomatic-raw-morphology.ts'
+      - 'packages/face-reading/src/mesh6a-neutral-observation-frame.ts'
+      - 'packages/face-reading/src/mediapipe-screen-to-metric-reimplementation-parity-fr76.ts'
+      - 'packages/face-reading/src/governed-metric-geometry-runtime-fr77.ts'
+      - 'packages/face-geometry/docs/mesh6d-multi-frame-pose-sweep-evidence.md'
+      - 'packages/face-geometry/assets/bridge/gnm-to-mediapipe468-weighted-region-projection-v2.json'
+      - 'packages/face-geometry/assets/regions/gnm-provider-region-ontology-v1.json'
+      - 'scripts/verify-face-geometry-mesh6d.mjs'
+      - 'tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py'
+      - 'tools/face-geometry/gnm/export_gnm_region_ontology.py'
+      - 'tools/face-geometry/gnm/fetch_gnm_head.py'
+      - 'tools/face-reading/blender/fetch_mediapipe_canonical_face.py'
+  workflow_dispatch:
+
+jobs:
+  verify-multi-frame-pose-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck Face Reading
+        run: npm run face:typecheck
+      - name: Build Face Reading
+        run: npm run face:build
+      - name: Install projection dependency
+        run: python -m pip install --disable-pip-version-check numpy
+      - name: Compile projection tooling
+        run: |
+          python -m py_compile \
+            tools/face-reading/blender/fetch_mediapipe_canonical_face.py \
+            tools/face-geometry/gnm/fetch_gnm_head.py \
+            tools/face-geometry/gnm/export_gnm_region_ontology.py \
+            tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py
+      - name: Fetch exact canonical assets
+        run: |
+          python tools/face-reading/blender/fetch_mediapipe_canonical_face.py \
+            --output /tmp/mediapipe-canonical-face.obj
+          python tools/face-geometry/gnm/fetch_gnm_head.py \
+            --output /tmp/gnm_head.npz
+      - name: Build exact MESH5.1 weighted adapter
+        run: |
+          python tools/face-geometry/gnm/export_gnm_region_ontology.py \
+            --npz /tmp/gnm_head.npz \
+            --output /tmp/gnm-provider-region-ontology.json
+          python tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py \
+            --mediapipe-obj /tmp/mediapipe-canonical-face.obj \
+            --gnm-npz /tmp/gnm_head.npz \
+            --source-regions /tmp/gnm-provider-region-ontology.json \
+            --output /tmp/mediapipe468-weighted-region-adapter.json
+      - name: Verify multi-frame pose sweep evidence
+        run: node scripts/verify-face-geometry-mesh6d.mjs /tmp/mediapipe468-weighted-region-adapter.json
