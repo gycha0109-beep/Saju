@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "face-geometry-upstream-asset-v1",
+  "assetId": "google-gnm-head-v3.0-fe31d4e",
+  "provider": "Google GNM",
+  "repository": "google/GNM",
+  "upstreamCommit": "fe31d4eb089f591a2e0c8ff0c38203b7b1fb1690",
+  "path": "gnm/shape/data/versions/v3_0/gnm_head.npz",
+  "gitBlobSha": "ae49903ad7d50ce1d64e464a0407441f2781873c",
+  "byteLength": 53305389,
+  "license": "Apache-2.0",
+  "licenseBlobSha": "4a7b3523e1405d867e2fc65e3d58c3346b565236",
+  "cacheOnly": true,
+  "runtimeRequired": false,
+  "coordinateConvention": {
+    "handedness": "right-handed",
+    "upAxis": "+Y",
+    "forwardAxis": "+Z",
+    "unit": "meter"
+  },
+  "requiredArrays": [
+    "template_vertex_positions",
+    "triangles",
+    "vertex_groups",
+    "vertex_group_names"
+  ],
+  "requiredProviderVertexGroups": [
+    "ears",
+    "left",
+    "right"
+  ],
+  "derivedRegions": {
+    "left_ear": ["ears", "left"],
+    "right_ear": ["ears", "right"]
+  },
+  "consumerPolicy": {
+    "productNeutral": true,
+    "directMediaPipeVertexIdentity": false,
+    "downstreamInterpretationIncluded": false
+  }
+}
