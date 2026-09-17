@@ -1,0 +1,53 @@
+name: MESH1 Canonical Face Blender PoC CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mesh1-canonical-face-blender-poc-ci.yml'
+      - 'packages/face-reading/assets/canonical-face/mediapipe-v0.10.35.manifest.json'
+      - 'scripts/verify-face-reading-canonical-face-poc.mjs'
+      - 'tools/face-reading/blender/**'
+      - 'packages/face-reading/package.json'
+  workflow_dispatch:
+
+jobs:
+  verify-canonical-face-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify repository contract
+        run: node scripts/verify-face-reading-canonical-face-poc.mjs
+      - name: Compile Python tooling
+        run: |
+          python -m py_compile \
+            tools/face-reading/blender/fetch_mediapipe_canonical_face.py \
+            tools/face-reading/blender/build_myeongha_canonical_face_scene.py
+      - name: Fetch and verify exact MediaPipe canonical asset
+        run: |
+          python tools/face-reading/blender/fetch_mediapipe_canonical_face.py \
+            --output /tmp/myeongha-canonical-face.obj
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+      - name: Build canonical face scene headlessly
+        run: |
+          blender --background \
+            --python tools/face-reading/blender/build_myeongha_canonical_face_scene.py \
+            -- \
+            --obj /tmp/myeongha-canonical-face.obj \
+            --output /tmp/myeongha-canonical-face.blend \
+            --metadata-out /tmp/myeongha-canonical-face-metadata.json
+      - name: Verify generated Blender artifacts
+        run: |
+          test -s /tmp/myeongha-canonical-face.blend
+          test -s /tmp/myeongha-canonical-face-metadata.json
+          grep -q '"vertexCount": 468' /tmp/myeongha-canonical-face-metadata.json
+          grep -q '"status": "inspection_only"' /tmp/myeongha-canonical-face-metadata.json

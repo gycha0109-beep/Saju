@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "mesh1-canonical-face-v1",
+  "assetId": "mediapipe-canonical-face-v0.10.35",
+  "provider": "google-ai-edge/mediapipe",
+  "providerTag": "v0.10.35",
+  "providerPath": "mediapipe/tasks/cc/vision/face_geometry/data/canonical_face_model.obj",
+  "providerRawUrl": "https://raw.githubusercontent.com/google-ai-edge/mediapipe/v0.10.35/mediapipe/tasks/cc/vision/face_geometry/data/canonical_face_model.obj",
+  "providerGitBlobSha": "0e666d1c4e75949d1639c2bcf347a38da4834164",
+  "providerByteLength": 45999,
+  "license": "Apache-2.0",
+  "usage": "asset_creation_and_reference",
+  "canonicalTopology": {
+    "vertexCount": 468,
+    "vertexIndexBase": 0,
+    "coordinateUnit": "centimeter",
+    "runtimePackage": "@mediapipe/tasks-vision",
+    "runtimePackageVersion": "0.10.35",
+    "scope": "core_face_mesh_only",
+    "irisExtensionIncluded": false
+  },
+  "inspectionSeeds": [
+    {
+      "index": 234,
+      "name": "lateral_face_candidate_negative_x",
+      "coordinateCm": [-7.664182, 0.673132, -2.435867],
+      "status": "inspection_only"
+    },
+    {
+      "index": 454,
+      "name": "lateral_face_candidate_positive_x",
+      "coordinateCm": [7.664182, 0.673132, -2.435867],
+      "status": "inspection_only"
+    }
+  ],
+  "boundaries": {
+    "productionRegionAuthorized": false,
+    "productionMetricAuthorized": false,
+    "runtimeBlenderDependency": false,
+    "semanticSideAssignmentEncoded": false
+  }
+}
