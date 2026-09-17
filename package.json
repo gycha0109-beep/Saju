@@ -19,6 +19,10 @@
       "types": "./dist/product-reading-response.d.ts",
       "default": "./dist/product-reading-response.js"
     },
+    "./character-grounding": {
+      "types": "./dist/character-grounding.d.ts",
+      "default": "./dist/character-grounding.js"
+    },
     "./product-host": {
       "types": "./dist/product-host.d.ts",
       "default": "./dist/product-host.js"
