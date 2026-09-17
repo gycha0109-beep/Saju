@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "face-geometry-registration-bridge-v1",
+  "status": "bridge_contract_only",
+  "source": {
+    "assetId": "mediapipe-canonical-face-v0.10.35",
+    "provider": "MediaPipe",
+    "topologyVertexCount": 468,
+    "role": "photo-observation-and-registration-anchor"
+  },
+  "target": {
+    "assetId": "google-gnm-head-v3.0-fe31d4e",
+    "provider": "Google GNM",
+    "role": "full-head-authoring-and-reference-surface"
+  },
+  "relation": {
+    "directVertexIdentity": false,
+    "requiresRegistration": true,
+    "preferredGNMLandmarkSurface": "gnm/shape/data/landmarks/head_sparse_68.txt",
+    "registrationImplementationStatus": "not_implemented_in_mesh3"
+  },
+  "allowedUses": [
+    "shared-geometry-authoring",
+    "visual-inspection",
+    "future-landmark-registration",
+    "downstream-product-adapters"
+  ],
+  "forbiddenClaims": [
+    "mediapipe-index-equals-gnm-index",
+    "unvalidated-anatomical-correspondence"
+  ]
+}
