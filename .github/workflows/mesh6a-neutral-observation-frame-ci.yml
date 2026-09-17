@@ -1,0 +1,33 @@
+name: MESH6A Neutral Observation Frame CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mesh6a-neutral-observation-frame-ci.yml'
+      - 'packages/face-reading/src/mesh6a-neutral-observation-frame.ts'
+      - 'packages/face-geometry/docs/mesh6a-neutral-observation-frame.md'
+      - 'scripts/verify-face-geometry-mesh6a.mjs'
+      - 'packages/face-reading/src/governed-metric-geometry-runtime-fr77.ts'
+      - 'packages/face-reading/src/pose-normalized-lips-geometry-fr79.ts'
+      - 'packages/face-reading/src/capture-quality-raw-observations-frdata05.ts'
+      - 'packages/face-reading/src/metric-eligibility-readiness-frdata12.ts'
+  workflow_dispatch:
+
+jobs:
+  verify-neutral-observation-frame:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck Face Reading
+        run: npm run face:typecheck
+      - name: Build Face Reading
+        run: npm run face:build
+      - name: Verify MESH6A exact-runtime composition
+        run: node scripts/verify-face-geometry-mesh6a.mjs
