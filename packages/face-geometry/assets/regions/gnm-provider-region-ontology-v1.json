@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "face-geometry-gnm-region-ontology-v1",
+  "assetId": "google-gnm-head-v3.0-fe31d4e",
+  "status": "provider_region_ontology_authoring",
+  "threshold": 0.5,
+  "policy": {
+    "productNeutral": true,
+    "runtimeGNMDependency": false,
+    "runtimeBlenderDependency": false,
+    "productInterpretationIncluded": false,
+    "anatomicalDiagnosticClaim": false
+  },
+  "regions": [
+    {"id": "forehead", "label": "Forehead", "renderPriority": 40, "source": {"kind": "provider_vertex_group", "providerGroup": "forehead_region"}},
+    {"id": "left_brow", "label": "Left brow", "renderPriority": 80, "source": {"kind": "provider_vertex_group", "providerGroup": "left_brow_region"}},
+    {"id": "middle_brow", "label": "Middle brow", "renderPriority": 82, "source": {"kind": "provider_vertex_group", "providerGroup": "middle_brow_region"}},
+    {"id": "right_brow", "label": "Right brow", "renderPriority": 80, "source": {"kind": "provider_vertex_group", "providerGroup": "right_brow_region"}},
+    {"id": "left_temple", "label": "Left temple", "renderPriority": 50, "source": {"kind": "provider_vertex_group", "providerGroup": "left_temple_region"}},
+    {"id": "right_temple", "label": "Right temple", "renderPriority": 50, "source": {"kind": "provider_vertex_group", "providerGroup": "right_temple_region"}},
+    {"id": "left_orbital", "label": "Left orbital", "renderPriority": 90, "source": {"kind": "provider_vertex_group", "providerGroup": "left_orbital_region"}},
+    {"id": "right_orbital", "label": "Right orbital", "renderPriority": 90, "source": {"kind": "provider_vertex_group", "providerGroup": "right_orbital_region"}},
+    {"id": "left_zygomatic", "label": "Left zygomatic", "renderPriority": 70, "source": {"kind": "provider_vertex_group", "providerGroup": "left_zygomatic_region"}},
+    {"id": "right_zygomatic", "label": "Right zygomatic", "renderPriority": 70, "source": {"kind": "provider_vertex_group", "providerGroup": "right_zygomatic_region"}},
+    {"id": "nose", "label": "Nose", "renderPriority": 100, "source": {"kind": "provider_vertex_group", "providerGroup": "nose_region"}},
+    {"id": "left_parotid", "label": "Left parotid surface", "renderPriority": 45, "source": {"kind": "provider_vertex_group", "providerGroup": "left_parotid_region"}},
+    {"id": "right_parotid", "label": "Right parotid surface", "renderPriority": 45, "source": {"kind": "provider_vertex_group", "providerGroup": "right_parotid_region"}},
+    {"id": "left_infraorbital", "label": "Left infraorbital", "renderPriority": 85, "source": {"kind": "provider_vertex_group", "providerGroup": "left_infraorbital_region"}},
+    {"id": "right_infraorbital", "label": "Right infraorbital", "renderPriority": 85, "source": {"kind": "provider_vertex_group", "providerGroup": "right_infraorbital_region"}},
+    {"id": "left_cheek", "label": "Left cheek", "renderPriority": 60, "source": {"kind": "provider_vertex_group", "providerGroup": "left_cheek_region"}},
+    {"id": "right_cheek", "label": "Right cheek", "renderPriority": 60, "source": {"kind": "provider_vertex_group", "providerGroup": "right_cheek_region"}},
+    {"id": "upper_lip", "label": "Upper lip", "renderPriority": 95, "source": {"kind": "provider_vertex_group", "providerGroup": "upper_lip_region"}},
+    {"id": "lower_lip", "label": "Lower lip", "renderPriority": 95, "source": {"kind": "provider_vertex_group", "providerGroup": "lower_lip_region"}},
+    {"id": "chin", "label": "Chin", "renderPriority": 75, "source": {"kind": "provider_vertex_group", "providerGroup": "chin_region"}},
+    {"id": "left_ear", "label": "Left ear", "renderPriority": 55, "source": {"kind": "intersection", "providerGroups": ["ears", "left"]}},
+    {"id": "right_ear", "label": "Right ear", "renderPriority": 55, "source": {"kind": "intersection", "providerGroups": ["ears", "right"]}}
+  ],
+  "bilateralPairs": [
+    {"left": "left_brow", "right": "right_brow"},
+    {"left": "left_temple", "right": "right_temple"},
+    {"left": "left_orbital", "right": "right_orbital"},
+    {"left": "left_zygomatic", "right": "right_zygomatic"},
+    {"left": "left_parotid", "right": "right_parotid"},
+    {"left": "left_infraorbital", "right": "right_infraorbital"},
+    {"left": "left_cheek", "right": "right_cheek"},
+    {"left": "left_ear", "right": "right_ear"}
+  ]
+}
