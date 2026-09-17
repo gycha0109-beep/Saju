@@ -7,7 +7,7 @@ import {
 } from './general-natal-conclusion-source-bounded-candidate.js';
 
 export const GENERAL_NATAL_PEER_TAXONOMY_SCAN_EVIDENCE_VERSION =
-  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v1' as const;
+  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v2' as const;
 
 const PEER_RULE_ID = 'RULE-GENERAL-NATAL-SOURCE-BOUNDED-FAMILY-PEER-PRESENT' as const;
 const SAMYEONG_V5_SOURCE_ID =
@@ -24,6 +24,14 @@ const SCAN_AUTHORITY = Object.freeze({
   pageCount: 198,
   libraryMetadataUrl: 'https://ctext.org/library.pl?if=gb&res=6109',
   corroboratingOcrUrl: 'https://ctext.org/wiki.pl?chapter=548506&if=gb',
+  directInspection: Object.freeze({
+    uploadedDjvuSha1: 'eeb9f80eb97fd385a580aa5bfda28c292aa7761c',
+    digitalScanPage: 174,
+    sectionObserved: '兄弟引例章',
+    boundedPropositionObserved: '兄弟者即劫財比肩',
+    pageFormDjvuSha256: 'f0d83bf196e4b9752d63ad4340f5d74a1f29a6bebf88315b601488fb8fc62ba9',
+    pageSjbzSha256: 'fcdd51135abeeb0b22637b7852c809848c74b482ae71a0092d336a2f75cca57b',
+  }),
 } as const);
 
 export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
@@ -49,7 +57,7 @@ export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
 
   const material = Object.freeze({
     evidenceVersion: GENERAL_NATAL_PEER_TAXONOMY_SCAN_EVIDENCE_VERSION,
-    issue: '#812' as const,
+    issue: '#829' as const,
     candidateVersion: GENERAL_NATAL_SOURCE_BOUNDED_T8_VERSION,
     peerRuleRef: Object.freeze({ ...peerRuleContentRef }),
     source: Object.freeze({
@@ -57,6 +65,7 @@ export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
       pinnedTranscriptionUrl: GENERAL_NATAL_PEER_TAXONOMY_SOURCE.url,
       pinnedTranscriptionSection: GENERAL_NATAL_PEER_TAXONOMY_SOURCE.locator.section,
       boundedProposition: '兄弟者，即劫財比肩',
+      directScanObservedText: '兄弟者即劫財比肩',
       sourceBindingSupportType: sourceBinding.supportType,
       volumeFiveTaxonomySourceUsedForPeer: peerRule.sourceRefs.some(
         (ref) => ref.sourceId === SAMYEONG_V5_SOURCE_ID,
@@ -67,8 +76,10 @@ export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
       sameEditionScanAuthorityLocated: true as const,
       sameEditionDigitizationFamilyEstablished: true as const,
       sameEditionScanOcrPropositionCorroborated: true as const,
+      exactDigitalScanPageVerified: true as const,
+      boundedPropositionDirectlyObservedInScan: true as const,
       exactPhysicalPageOrFolioVerified: false as const,
-      directScanImageComparisonCompleted: false as const,
+      directScanImageComparisonCompleted: true as const,
       exactWitnessHashReproducedFromScan: false as const,
       exactTranscriptionIdentityEstablished: false as const,
       fullSourceIntegrityQualificationEstablished: false as const,
