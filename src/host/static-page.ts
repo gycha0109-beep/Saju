@@ -39,7 +39,7 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
 <body>
 <main>
   <h1>명화</h1>
-  <p class="lead">생년월일을 입력하고 보고 싶은 항목을 선택해 주세요.</p>
+  <p class="lead">생년월일을 입력하면 현재 지원하는 사주 풀이를 바로 확인할 수 있습니다.</p>
   <form id="reading-form">
     <div class="grid">
       <label>달력
@@ -70,20 +70,9 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
           <option value="직업운">직업운</option>
           <option value="사업운">사업운</option>
           <option value="재물운">재물운</option>
-          <option value="연애운">연애운</option>
-          <option value="부모운">부모운</option>
-          <option value="자녀운">자녀운</option>
-          <option value="배우자운">배우자운</option>
-          <option value="평생 흐름">평생 흐름</option>
-          <option value="올해 운세">올해 전체 흐름</option>
-          <option value="올해 직업운">올해 직업운</option>
-          <option value="올해 사업운">올해 사업운</option>
-          <option value="올해 재물운">올해 재물운</option>
-          <option value="이번 달 운세">이번 달 전체 흐름</option>
-          <option value="이번 달 직업운">이번 달 직업운</option>
-          <option value="이번 달 사업운">이번 달 사업운</option>
-          <option value="이번 달 재물운">이번 달 재물운</option>
+          <option value="연애운">연애·관계운</option>
         </select>
+        <span class="field-hint">현재 실제 풀이가 끝까지 제공되는 항목만 표시합니다.</span>
       </label>
     </div>
     <button id="submit" type="submit">풀이 보기</button>
