@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "mesh2-physical-region-rules-v1",
+  "assetId": "mediapipe-canonical-face-v0.10.35",
+  "status": "authoring_surface_v0",
+  "coordinateSpace": {
+    "unit": "centimeter",
+    "x": "canonical lateral axis",
+    "y": "canonical vertical axis",
+    "z": "canonical depth axis",
+    "semanticSideAssignment": false
+  },
+  "policy": {
+    "overlapAllowed": true,
+    "runtimeBlenderDependency": false,
+    "productionRegionAuthorized": false,
+    "productionMetricAuthorized": false,
+    "traditionalInterpretationAuthorized": false
+  },
+  "regions": [
+    {
+      "id": "forehead",
+      "label": "Forehead",
+      "renderPriority": 60,
+      "displayColorRgba": [0.95, 0.58, 0.22, 1.0],
+      "rule": {"absXMax": 5.4, "yMin": 3.3, "zMin": 2.4}
+    },
+    {
+      "id": "temple_negative_x",
+      "label": "Temple (-X)",
+      "renderPriority": 70,
+      "displayColorRgba": [0.67, 0.42, 0.91, 1.0],
+      "rule": {"xMin": -7.8, "xMax": -4.5, "yMin": 1.8, "yMax": 6.8, "zMax": 4.2}
+    },
+    {
+      "id": "temple_positive_x",
+      "label": "Temple (+X)",
+      "renderPriority": 70,
+      "displayColorRgba": [0.67, 0.42, 0.91, 1.0],
+      "rule": {"xMin": 4.5, "xMax": 7.8, "yMin": 1.8, "yMax": 6.8, "zMax": 4.2}
+    },
+    {
+      "id": "zygoma_negative_x",
+      "label": "Zygoma surface (-X)",
+      "renderPriority": 90,
+      "displayColorRgba": [0.92, 0.27, 0.28, 1.0],
+      "rule": {"xMin": -7.8, "xMax": -3.0, "yMin": -1.3, "yMax": 2.8, "zMin": -2.6, "zMax": 4.7}
+    },
+    {
+      "id": "zygoma_positive_x",
+      "label": "Zygoma surface (+X)",
+      "renderPriority": 90,
+      "displayColorRgba": [0.92, 0.27, 0.28, 1.0],
+      "rule": {"xMin": 3.0, "xMax": 7.8, "yMin": -1.3, "yMax": 2.8, "zMin": -2.6, "zMax": 4.7}
+    },
+    {
+      "id": "cheek_negative_x",
+      "label": "Cheek (-X)",
+      "renderPriority": 80,
+      "displayColorRgba": [0.21, 0.69, 0.78, 1.0],
+      "rule": {"xMin": -6.7, "xMax": -2.0, "yMin": -4.9, "yMax": -0.5, "zMin": 1.0, "zMax": 4.9}
+    },
+    {
+      "id": "cheek_positive_x",
+      "label": "Cheek (+X)",
+      "renderPriority": 80,
+      "displayColorRgba": [0.21, 0.69, 0.78, 1.0],
+      "rule": {"xMin": 2.0, "xMax": 6.7, "yMin": -4.9, "yMax": -0.5, "zMin": 1.0, "zMax": 4.9}
+    },
+    {
+      "id": "jaw_negative_x",
+      "label": "Jaw / lower lateral face (-X)",
+      "renderPriority": 75,
+      "displayColorRgba": [0.29, 0.52, 0.89, 1.0],
+      "rule": {"xMin": -7.4, "xMax": -2.3, "yMin": -8.6, "yMax": -3.8, "zMax": 4.4}
+    },
+    {
+      "id": "jaw_positive_x",
+      "label": "Jaw / lower lateral face (+X)",
+      "renderPriority": 75,
+      "displayColorRgba": [0.29, 0.52, 0.89, 1.0],
+      "rule": {"xMin": 2.3, "xMax": 7.4, "yMin": -8.6, "yMax": -3.8, "zMax": 4.4}
+    },
+    {
+      "id": "chin",
+      "label": "Chin",
+      "renderPriority": 95,
+      "displayColorRgba": [0.25, 0.76, 0.38, 1.0],
+      "rule": {"absXMax": 2.8, "yMin": -9.6, "yMax": -5.6, "zMin": 3.2}
+    },
+    {
+      "id": "nose",
+      "label": "Central nose surface",
+      "renderPriority": 100,
+      "displayColorRgba": [0.96, 0.79, 0.18, 1.0],
+      "rule": {"absXMax": 1.9, "yMin": -2.3, "yMax": 2.8, "zMin": 5.15}
+    }
+  ],
+  "bilateralPairs": [
+    {"negativeX": "temple_negative_x", "positiveX": "temple_positive_x"},
+    {"negativeX": "zygoma_negative_x", "positiveX": "zygoma_positive_x"},
+    {"negativeX": "cheek_negative_x", "positiveX": "cheek_positive_x"},
+    {"negativeX": "jaw_negative_x", "positiveX": "jaw_positive_x"}
+  ],
+  "seedExpectations": [
+    {"index": 234, "mustBelongTo": "zygoma_negative_x"},
+    {"index": 454, "mustBelongTo": "zygoma_positive_x"}
+  ]
+}

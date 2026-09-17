@@ -1,0 +1,83 @@
+name: MESH2 Canonical Physical Region Authoring CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mesh2-canonical-physical-region-authoring-ci.yml'
+      - 'packages/face-reading/assets/canonical-face/mediapipe-v0.10.35.manifest.json'
+      - 'packages/face-reading/assets/canonical-face/myeongha-physical-regions-v0.1.json'
+      - 'scripts/verify-face-reading-mesh2-region-authoring.mjs'
+      - 'tools/face-reading/blender/**'
+  workflow_dispatch:
+
+jobs:
+  verify-physical-region-authoring:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify repository contract
+        run: node scripts/verify-face-reading-mesh2-region-authoring.mjs
+      - name: Compile Python tooling
+        run: |
+          python -m py_compile \
+            tools/face-reading/blender/fetch_mediapipe_canonical_face.py \
+            tools/face-reading/blender/compile_myeongha_face_regions.py \
+            tools/face-reading/blender/build_myeongha_physical_region_scene.py
+      - name: Fetch and verify exact MediaPipe canonical asset
+        run: |
+          python tools/face-reading/blender/fetch_mediapipe_canonical_face.py \
+            --output /tmp/myeongha-canonical-face.obj
+      - name: Compile physical region masks
+        run: |
+          python tools/face-reading/blender/compile_myeongha_face_regions.py \
+            --obj /tmp/myeongha-canonical-face.obj \
+            --output /tmp/myeongha-physical-regions.json
+      - name: Verify compiled mask contract
+        run: |
+          test -s /tmp/myeongha-physical-regions.json
+          grep -q '"vertexCount": 468' /tmp/myeongha-physical-regions.json
+          grep -q '"regionCount": 11' /tmp/myeongha-physical-regions.json
+          grep -q '"id": "zygoma_negative_x"' /tmp/myeongha-physical-regions.json
+          grep -q '"id": "zygoma_positive_x"' /tmp/myeongha-physical-regions.json
+      - name: Install Blender headless rendering dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender xvfb xauth libegl1 libgl1-mesa-dri libglx-mesa0
+      - name: Build physical-region scene and preview
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          xvfb-run -a blender --background \
+            --python tools/face-reading/blender/build_myeongha_physical_region_scene.py \
+            -- \
+            --obj /tmp/myeongha-canonical-face.obj \
+            --region-mask /tmp/myeongha-physical-regions.json \
+            --output /tmp/myeongha-physical-regions.blend \
+            --metadata-out /tmp/myeongha-physical-regions-metadata.json \
+            --preview-out /tmp/myeongha-physical-regions-preview.png
+      - name: Verify Blender artifacts
+        run: |
+          test -s /tmp/myeongha-physical-regions.blend
+          test -s /tmp/myeongha-physical-regions-metadata.json
+          test -s /tmp/myeongha-physical-regions-preview.png
+          grep -q '"regionCount": 11' /tmp/myeongha-physical-regions-metadata.json
+          grep -q '"status": "authoring_surface_v0"' /tmp/myeongha-physical-regions-metadata.json
+          grep -q '"runtimeBlenderDependency": false' /tmp/myeongha-physical-regions-metadata.json
+      - name: Upload authoring artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mesh2-canonical-physical-regions
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            /tmp/myeongha-physical-regions.json
+            /tmp/myeongha-physical-regions-metadata.json
+            /tmp/myeongha-physical-regions-preview.png
+            /tmp/myeongha-physical-regions.blend
