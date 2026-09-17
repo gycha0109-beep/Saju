@@ -688,6 +688,9 @@ export function assertCharacterGroundingBundleV1(
   assertHash(value.sourceResponseHash, 'CharacterGroundingBundleV1.sourceResponseHash');
   assertHash(value.groundingHash, 'CharacterGroundingBundleV1.groundingHash');
 
+  const sourceResponseHash = value.sourceResponseHash;
+  const readingDomain = value.readingDomain;
+
   assertArray(value.disclosures, 'CharacterGroundingBundleV1.disclosures');
   const disclosures: CharacterGroundingDisclosureV1[] = [];
   const disclosureRefs = new Set<string>();
@@ -721,7 +724,7 @@ export function assertCharacterGroundingBundleV1(
   value.units.forEach((unit, index) => {
     const field = `CharacterGroundingBundleV1.units[${index}]`;
     assertUnitShape(unit, field);
-    if (unit.domain !== value.readingDomain) {
+    if (unit.domain !== readingDomain) {
       throw new TypeError(`${field}.domain must match bundle readingDomain.`);
     }
     if (unitIds.has(unit.unitId)) {
@@ -750,7 +753,7 @@ export function assertCharacterGroundingBundleV1(
       realizationPolicyRef: unit.realizationPolicyRef,
       requiredCompanionUnitRefs: unit.requiredCompanionUnitRefs,
     };
-    const expectedUnitId = makeUnitId(value.sourceResponseHash, candidate, unit.domain);
+    const expectedUnitId = makeUnitId(sourceResponseHash, candidate, unit.domain);
     if (unit.unitId !== expectedUnitId) {
       throw new TypeError(`${field}.unitId does not match unit content.`);
     }
@@ -767,8 +770,8 @@ export function assertCharacterGroundingBundleV1(
     readingRef: value.readingRef,
     productResponseVersion: value.productResponseVersion,
     engineVersion: value.engineVersion,
-    readingDomain: value.readingDomain,
-    sourceResponseHash: value.sourceResponseHash,
+    readingDomain,
+    sourceResponseHash,
     units,
     disclosures,
     ambiguities,
