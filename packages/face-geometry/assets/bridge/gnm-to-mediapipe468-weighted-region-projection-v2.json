@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "face-geometry-mediapipe468-weighted-region-projection-policy-v2",
+  "status": "offline_authoring_candidate",
+  "source": {
+    "assetId": "google-gnm-head-v3.0-fe31d4e",
+    "regionOntology": "gnm-provider-region-ontology-v1"
+  },
+  "target": {
+    "assetId": "mediapipe-canonical-face-v0.10.35",
+    "topologyVertexCount": 468,
+    "coordinateUnit": "centimeter"
+  },
+  "registration": {
+    "method": "canonical_axis_robust_affine_then_local_provider_region_neighborhood_v2",
+    "sourceQuantileLow": 0.02,
+    "sourceQuantileHigh": 0.98,
+    "mediapipeUnitConversionToMeter": 0.01,
+    "preserveCanonicalAxisSigns": true,
+    "subjectSpecificFitting": false,
+    "productionDistanceThreshold": null
+  },
+  "assignment": {
+    "hardPartition": false,
+    "overlapAllowed": true,
+    "unassignedAllowed": true,
+    "neighborhoodVertexCount": 24,
+    "maximumRetainedMemberships": 4,
+    "minimumRetainedMembershipWeight": 0.08,
+    "corePrimaryWeightMin": 0.68,
+    "corePrimaryMarginMin": 0.24,
+    "borderPrimaryWeightMin": 0.42,
+    "outlierMadMultiplier": 3.5,
+    "outlierCutoffFloorQuantile": 0.95,
+    "bilateralAdapterNaming": "canonical_x_axis",
+    "semanticSideAssignmentEncoded": false
+  },
+  "unsupportedOnMediaPipe468": [
+    "left_ear",
+    "right_ear"
+  ],
+  "policy": {
+    "productNeutral": true,
+    "runtimeGNMDependency": false,
+    "runtimeBlenderDependency": false,
+    "productionMetricAuthorized": false,
+    "productInterpretationIncluded": false,
+    "anatomicalDiagnosticClaim": false,
+    "authoringThresholdsAreProductionThresholds": false
+  }
+}

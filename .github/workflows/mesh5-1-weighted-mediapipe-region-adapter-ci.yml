@@ -1,0 +1,179 @@
+name: MESH5.1 Weighted MediaPipe Region Adapter CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mesh5-1-weighted-mediapipe-region-adapter-ci.yml'
+      - 'packages/face-geometry/assets/bridge/gnm-to-mediapipe468-weighted-region-projection-v2.json'
+      - 'scripts/verify-face-geometry-mesh5-1.mjs'
+      - 'tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py'
+      - 'tools/face-geometry/gnm/build_mediapipe468_weighted_region_scene.py'
+      - 'packages/face-geometry/docs/mesh5-1-weighted-region-adapter.md'
+      - 'packages/face-geometry/assets/bridge/gnm-to-mediapipe468-region-projection-v1.json'
+      - 'packages/face-geometry/assets/regions/gnm-provider-region-ontology-v1.json'
+      - 'tools/face-geometry/gnm/export_gnm_region_ontology.py'
+      - 'tools/face-geometry/gnm/fetch_gnm_head.py'
+      - 'tools/face-reading/blender/fetch_mediapipe_canonical_face.py'
+  workflow_dispatch:
+
+jobs:
+  verify-weighted-region-adapter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify repository contract
+        run: node scripts/verify-face-geometry-mesh5-1.mjs
+      - name: Install exporter dependency
+        run: python -m pip install --disable-pip-version-check numpy
+      - name: Compile Python tooling
+        run: |
+          python -m py_compile \
+            tools/face-reading/blender/fetch_mediapipe_canonical_face.py \
+            tools/face-geometry/gnm/fetch_gnm_head.py \
+            tools/face-geometry/gnm/export_gnm_region_ontology.py \
+            tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py \
+            tools/face-geometry/gnm/build_mediapipe468_weighted_region_scene.py
+      - name: Fetch and verify exact MediaPipe canonical asset
+        run: |
+          python tools/face-reading/blender/fetch_mediapipe_canonical_face.py \
+            --output /tmp/mediapipe-canonical-face.obj
+      - name: Fetch and verify exact GNM Head asset
+        run: |
+          python tools/face-geometry/gnm/fetch_gnm_head.py \
+            --output /tmp/gnm_head.npz
+      - name: Export shared GNM provider-region ontology masks
+        run: |
+          python tools/face-geometry/gnm/export_gnm_region_ontology.py \
+            --npz /tmp/gnm_head.npz \
+            --output /tmp/gnm-provider-region-ontology.json
+      - name: Build weighted MediaPipe 468 adapter
+        run: |
+          python tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py \
+            --mediapipe-obj /tmp/mediapipe-canonical-face.obj \
+            --gnm-npz /tmp/gnm_head.npz \
+            --source-regions /tmp/gnm-provider-region-ontology.json \
+            --output /tmp/mediapipe468-weighted-region-adapter.json
+      - name: Verify generated weighted adapter
+        run: |
+          python - <<'PY'
+          import json
+          import math
+          from pathlib import Path
+
+          payload = json.loads(Path('/tmp/mediapipe468-weighted-region-adapter.json').read_text())
+          assert payload['schemaVersion'] == 'face-geometry-mediapipe468-weighted-region-adapter-v2'
+          assert payload['targetVertexCount'] == 468
+          assert payload['regionCount'] == 22
+          assert payload['supportedRegionCount'] == 20
+          assert payload['unsupportedRegionCount'] == 2
+          assert payload['assignment']['hardPartition'] is False
+          assert payload['assignment']['overlapAllowed'] is True
+          assert payload['assignment']['unassignedAllowed'] is True
+          assert payload['assignment']['semanticSideAssignmentEncoded'] is False
+          assert payload['policy']['runtimeGNMDependency'] is False
+          assert payload['policy']['runtimeBlenderDependency'] is False
+          assert payload['policy']['productionMetricAuthorized'] is False
+          assert payload['policy']['authoringThresholdsAreProductionThresholds'] is False
+          assert payload['registration']['productionDistanceThreshold'] is None
+          assert len(payload['vertexMemberships']) == 468
+          assert [item['mediapipeIndex'] for item in payload['vertexMemberships']] == list(range(468))
+
+          allowed_statuses = {'core', 'border', 'ambiguous', 'unassigned'}
+          assert set(payload['coverage']['classCounts']).issubset(allowed_statuses)
+          assert sum(payload['coverage']['classCounts'].values()) == 468
+          assert payload['coverage']['assignedVertexCount'] + payload['coverage']['unassignedVertexCount'] == 468
+          assert payload['coverage']['membershipEdgeCount'] >= payload['coverage']['assignedVertexCount']
+          assert payload['coverage']['overlapVertexCount'] > 0
+
+          supported = [r for r in payload['regions'] if r['status'] == 'weighted_projected_authoring_candidate']
+          unsupported = [r for r in payload['regions'] if r['status'] == 'unsupported_on_mediapipe468']
+          assert {r['sourceRegionId'] for r in unsupported} == {'left_ear', 'right_ear'}
+          assert all(r['vertexCount'] == 0 and r['weightedVertices'] == [] for r in unsupported)
+          assert all(r['vertexCount'] > 0 for r in supported)
+
+          for record in payload['vertexMemberships']:
+              assert record['status'] in allowed_statuses
+              assert math.isfinite(float(record['projectionDistanceM']))
+              assert float(record['projectionDistanceM']) >= 0
+              if record['status'] == 'unassigned':
+                  assert record['memberships'] == []
+                  assert record['primaryAdapterRegionId'] is None
+              else:
+                  assert record['memberships']
+                  assert record['primaryAdapterRegionId'] is not None
+                  assert 0 < float(record['primaryWeight']) <= 1
+                  for membership in record['memberships']:
+                      assert 0 < float(membership['weight']) <= 1
+
+          weighted_edges = [
+              (r['adapterRegionId'], item['mediapipeIndex'], item['weight'])
+              for r in supported
+              for item in r['weightedVertices']
+          ]
+          assert len(weighted_edges) == payload['coverage']['membershipEdgeCount']
+          assert all(0 <= int(index) < 468 and 0 < float(weight) <= 1 for _, index, weight in weighted_edges)
+
+          gate = payload['registration']['authoringDistanceGate']
+          assert gate['authoringOutlierCutoffM'] >= gate['quantileFloorDistanceM']
+          assert gate['authoringOutlierCutoffM'] >= 0
+          assert [seed['mediapipeIndex'] for seed in payload['inspectionSeeds']] == [234, 454]
+          assert all(seed['status'] != 'unassigned' for seed in payload['inspectionSeeds'])
+
+          print(json.dumps({
+              'status': 'pass',
+              'coverage': payload['coverage'],
+              'distanceGate': gate,
+              'projectionDistanceM': payload['registration']['projectionDistanceM'],
+              'regionVertexCounts': {r['adapterRegionId']: r['vertexCount'] for r in payload['regions']},
+              'inspectionSeeds': payload['inspectionSeeds'],
+          }, sort_keys=True))
+          PY
+      - name: Install Blender headless rendering dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender xvfb xauth libegl1 libgl1-mesa-dri libglx-mesa0
+      - name: Build weighted-region Blender scene and previews
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          xvfb-run -a blender --background \
+            --python tools/face-geometry/gnm/build_mediapipe468_weighted_region_scene.py \
+            -- \
+            --obj /tmp/mediapipe-canonical-face.obj \
+            --adapter /tmp/mediapipe468-weighted-region-adapter.json \
+            --output /tmp/mediapipe468-weighted-region-adapter.blend \
+            --metadata-out /tmp/mediapipe468-weighted-region-adapter-scene-metadata.json \
+            --front-preview-out /tmp/mediapipe468-weighted-region-adapter-front.png \
+            --three-quarter-preview-out /tmp/mediapipe468-weighted-region-adapter-three-quarter.png
+      - name: Verify Blender artifacts
+        run: |
+          test -s /tmp/mediapipe468-weighted-region-adapter.blend
+          test -s /tmp/mediapipe468-weighted-region-adapter-scene-metadata.json
+          test -s /tmp/mediapipe468-weighted-region-adapter-front.png
+          test -s /tmp/mediapipe468-weighted-region-adapter-three-quarter.png
+          grep -q '"vertexCount": 468' /tmp/mediapipe468-weighted-region-adapter-scene-metadata.json
+          grep -q '"hardPartition": false' /tmp/mediapipe468-weighted-region-adapter-scene-metadata.json
+          grep -q '"overlapAllowed": true' /tmp/mediapipe468-weighted-region-adapter-scene-metadata.json
+          grep -q '"unassignedAllowed": true' /tmp/mediapipe468-weighted-region-adapter-scene-metadata.json
+          grep -q '"runtimeGNMDependency": false' /tmp/mediapipe468-weighted-region-adapter-scene-metadata.json
+          grep -q '"runtimeBlenderDependency": false' /tmp/mediapipe468-weighted-region-adapter-scene-metadata.json
+          grep -q '"rollDegrees": 0.0' /tmp/mediapipe468-weighted-region-adapter-scene-metadata.json
+      - name: Upload MESH5.1 authoring artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mesh5-1-weighted-mediapipe-region-adapter
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            /tmp/mediapipe468-weighted-region-adapter.json
+            /tmp/mediapipe468-weighted-region-adapter.blend
+            /tmp/mediapipe468-weighted-region-adapter-scene-metadata.json
+            /tmp/mediapipe468-weighted-region-adapter-front.png
+            /tmp/mediapipe468-weighted-region-adapter-three-quarter.png
