@@ -6,6 +6,7 @@ import { runInterpretation } from '../src/interpretation/interpretation-engine.j
 import { inspectMyeonghwaProductionComposition } from '../src/production/production-composition.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import {
+  GENERAL_NATAL_PEER_TAXONOMY_SOURCE,
   GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES,
   GENERAL_NATAL_SOURCE_BOUNDED_METHODOLOGY,
   GENERAL_NATAL_SOURCE_BOUNDED_PACK,
@@ -54,7 +55,7 @@ function fixture(tenGods: TenGodChartFact): CanonicalSajuSnapshot {
 
 describe('general natal source-bounded T8 structural relation candidate', () => {
   it('contains exactly five family rules and five source-bounded structural rules', () => {
-    expect(GENERAL_NATAL_SOURCE_BOUNDED_T8_VERSION).toBe('0.1.0-research');
+    expect(GENERAL_NATAL_SOURCE_BOUNDED_T8_VERSION).toBe('0.2.0-research');
     expect(GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES).toHaveLength(5);
     expect(GENERAL_NATAL_SOURCE_BOUNDED_RELATION_RULES).toHaveLength(5);
     expect(GENERAL_NATAL_SOURCE_BOUNDED_PACK.status).toBe('research');
@@ -70,6 +71,46 @@ describe('general natal source-bounded T8 structural relation candidate', () => 
           rule.status === 'research' &&
           rule.quality.provenanceQuality === 'secondary_only' &&
           rule.quality.reviewerStatus === 'unreviewed',
+      ),
+    ).toBe(true);
+  });
+
+  it('registers Samyeong volume 7 as the direct second peer-family source', () => {
+    expect(GENERAL_NATAL_PEER_TAXONOMY_SOURCE).toEqual(
+      expect.objectContaining({
+        sourceId: 'SRC-SAMYEONG-TONGHOE-V7-FOUR-LIBRARIES-PEER-TAXONOMY',
+        provenanceTier: 'cross_reference',
+        locator: { section: '兄弟' },
+      }),
+    );
+    expect(GENERAL_NATAL_PEER_TAXONOMY_SOURCE.url).toContain('oldid=2082208');
+
+    expect(
+      GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES.every(
+        (rule) => new Set(rule.sourceRefs.map((ref) => ref.sourceId)).size === 2,
+      ),
+    ).toBe(true);
+
+    const peerRule = GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES.find(
+      (rule) =>
+        rule.ruleId === 'RULE-GENERAL-NATAL-SOURCE-BOUNDED-FAMILY-PEER-PRESENT',
+    );
+    expect(peerRule).toBeDefined();
+    const peerSourceIds = peerRule?.sourceRefs.map((ref) => ref.sourceId).sort();
+    expect(peerSourceIds).toEqual(
+      [
+        'SRC-GENERAL-NATAL-YUANHAI-SEMANTICS-WIKISOURCE',
+        'SRC-SAMYEONG-TONGHOE-V7-FOUR-LIBRARIES-PEER-TAXONOMY',
+      ].sort(),
+    );
+    expect(peerSourceIds).not.toContain(
+      'SRC-SAMYEONG-TONGHOE-V5-FOUR-LIBRARIES-TENGOD-RELATIONS',
+    );
+
+    const registry = createGeneralNatalSourceBoundedRegistry();
+    expect(
+      registry.sources.some(
+        (source) => source.sourceId === GENERAL_NATAL_PEER_TAXONOMY_SOURCE.sourceId,
       ),
     ).toBe(true);
   });
@@ -105,7 +146,7 @@ describe('general natal source-bounded T8 structural relation candidate', () => 
     ).toBe(true);
   });
 
-  it('binds every T8 structural relation to both registered classical sources', () => {
+  it('keeps every T8 structural relation bound to Yuanhai plus Samyeong volume 5', () => {
     expect(
       GENERAL_NATAL_SOURCE_BOUNDED_RELATION_RULES.every((rule) => {
         const sourceIds = rule.sourceRefs.map((ref) => ref.sourceId).sort();

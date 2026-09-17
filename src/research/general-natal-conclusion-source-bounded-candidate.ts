@@ -4,12 +4,13 @@ import type {
   MethodologyDefinition,
   RuleDefinition,
   RuleExpression,
+  SourceReference,
 } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import { GENERAL_NATAL_USEFUL_READING_SOURCE } from './general-natal-useful-reading-candidate.js';
 import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
 
-export const GENERAL_NATAL_SOURCE_BOUNDED_T8_VERSION = '0.1.0-research' as const;
+export const GENERAL_NATAL_SOURCE_BOUNDED_T8_VERSION = '0.2.0-research' as const;
 
 export type GeneralNatalSourceBoundedFamily =
   | 'peer'
@@ -26,6 +27,25 @@ export type GeneralNatalSourceBoundedRelationKind =
 const METHOD_ID = 'M-GENERAL-NATAL-CONCLUSION-SOURCE-BOUNDED-V1';
 const FAMILY_RULE_SET = 'general-natal-source-bounded-family-presence';
 const RELATION_RULE_SET = 'general-natal-source-bounded-structural-relation';
+
+export const GENERAL_NATAL_PEER_TAXONOMY_SOURCE = Object.freeze({
+  sourceId: 'SRC-SAMYEONG-TONGHOE-V7-FOUR-LIBRARIES-PEER-TAXONOMY',
+  sourceType: 'classical_text',
+  title: '三命通會（四庫全書本）卷七',
+  language: 'zh-Hant',
+  locator: {
+    section: '兄弟',
+  },
+  url: 'https://zh.wikisource.org/w/index.php?title=%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_(%E5%9B%9B%E5%BA%AB%E5%85%A8%E6%9B%B8%E6%9C%AC)%2F%E5%8D%B707&oldid=2082208',
+  accessedAt: '2026-09-18',
+  provenanceTier: 'cross_reference',
+  rights: {
+    copyrightStatus: 'public_domain',
+    reusePolicy: 'paraphrase_only',
+  },
+  notes:
+    'Research-only direct peer-family taxonomy witness. The pinned transcription states 兄弟者，即劫財比肩, directly supporting the 比肩 + 劫財 peer grouping. Permanent transcription identity is pinned, but scan/transcription identity and Production source-integrity qualification remain separate.',
+} satisfies SourceReference);
 
 const QUALITY: RuleDefinition['quality'] = Object.freeze({
   provenanceQuality: 'secondary_only',
@@ -72,6 +92,7 @@ export const GENERAL_NATAL_SOURCE_BOUNDED_METHODOLOGY: MethodologyDefinition = O
   sourceIds: [
     GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId,
     GENERAL_NATAL_CONCLUSION_SOURCE.sourceId,
+    GENERAL_NATAL_PEER_TAXONOMY_SOURCE.sourceId,
   ],
   status: 'research',
 });
@@ -106,7 +127,16 @@ function familySourceRefs(
     supportType: 'direct_basis' as const,
     notes: 'Supports the bounded Ten-God family taxonomy around the day master.',
   };
-  if (family === 'peer') return [yuanhai];
+  if (family === 'peer') {
+    return [
+      yuanhai,
+      {
+        sourceId: GENERAL_NATAL_PEER_TAXONOMY_SOURCE.sourceId,
+        supportType: 'direct_basis' as const,
+        notes: 'Directly groups 劫財 and 比肩 on the sibling/peer side in 三命通會卷七.',
+      },
+    ];
+  }
   return [
     yuanhai,
     {
@@ -344,7 +374,11 @@ export function createGeneralNatalSourceBoundedRegistry(
     {
       rules: [...ALL_RULES],
       methodologies: [GENERAL_NATAL_SOURCE_BOUNDED_METHODOLOGY],
-      sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE],
+      sources: [
+        GENERAL_NATAL_USEFUL_READING_SOURCE,
+        GENERAL_NATAL_CONCLUSION_SOURCE,
+        GENERAL_NATAL_PEER_TAXONOMY_SOURCE,
+      ],
     },
     GENERAL_NATAL_SOURCE_BOUNDED_PACK,
     createdAt,
