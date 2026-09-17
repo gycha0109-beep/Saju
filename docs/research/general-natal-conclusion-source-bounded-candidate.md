@@ -1,12 +1,14 @@
 # General Natal — Source-Bounded T8 Structural Relation Subset
 
-Issue: #800
+Issues: #800, #806
 
 ## Purpose
 
-This artifact introduces a separate executable research candidate whose T8 semantics stop at the classical structural relation itself.
+This artifact defines a separate executable research candidate whose T8 semantics stop at the classical structural relation itself.
 
-It does **not** promote the existing consumer-oriented conclusion candidate and does not claim that passage support alone establishes Production authority.
+Version `0.2.0-research` adds a second direct classical source for the peer-family taxonomy without promoting provenance quality or review status.
+
+It does **not** promote the existing consumer-oriented conclusion candidate and does not claim that source-count coverage alone establishes Production authority.
 
 ## Upstream evidence
 
@@ -16,6 +18,7 @@ The current repository already establishes the following bounded evidence chain:
 #789  immutable passage witness binding
 #794  scan-backed proposition corroboration
 #796  fixed-transcription digest reproduction contract
+#801  source-bounded executable T8 structural subset
 ```
 
 Those artifacts still preserve fail-closed source-integrity and Production boundaries.
@@ -34,7 +37,32 @@ officer
 
 They only state that a family is observed. They do not state dominance, strength, personality, success, failure, or fortune polarity.
 
-The peer family remains single-source at this boundary because the currently registered Samyeong volume-5 taxonomy witness does not directly establish the same-kind `比肩 + 劫財` grouping.
+### Peer-family second source
+
+The peer rule now uses two directly relevant classical transcription sources:
+
+```text
+淵海子平
+三命通會（四庫全書本）卷七 / 兄弟
+```
+
+The Samyeong volume-7 source is separately registered as:
+
+```text
+SRC-SAMYEONG-TONGHOE-V7-FOUR-LIBRARIES-PEER-TAXONOMY
+```
+
+Its pinned transcription surface contains the direct taxonomy statement:
+
+```text
+兄弟者，即劫財比肩
+```
+
+The source URL is pinned to the previously identified permanent revision `oldid=2082208`.
+
+This source is used only for the peer T5 family taxonomy. The volume-5 four-relation source is still **not** treated as peer-family taxonomy evidence.
+
+All five T5 family rules therefore now carry two registered source references. This is a source-coverage fact only; it does not automatically establish `multi_source_supported` provenance quality.
 
 ## Included T8 structural relations
 
@@ -48,20 +76,11 @@ PEER -> WEALTH            adverse_to      劫財→財
 WEALTH <-> RESOURCE       conflicts_with  財↔印
 ```
 
-Each T8 relation binds both currently registered classical sources used by the passage-witness evidence.
+The five T8 relations retain their existing Yuanhai + Samyeong volume-5 binding. The new volume-7 source does not broaden or replace those relation witnesses.
 
 ### Peer → wealth intersection rule
 
-The two registered passages are not equally broad:
-
-```text
-Yuanhai witness   -> peer / rob-wealth side can oppose wealth
-Samyeong witness  -> 劫財 directly divides or damages 財
-```
-
-Therefore this candidate does **not** treat mere `比肩` presence as sufficient for a two-source `PEER -> WEALTH` claim.
-
-The executable intersection is:
+The structural relation remains deliberately narrower than the peer-family taxonomy:
 
 ```text
 peer family present
@@ -77,11 +96,11 @@ evidenceScope = exact_member_intersection
 exactTenGodConstraint = 겁재
 ```
 
-This prevents a family-level abstraction from silently becoming broader than the narrower direct Samyeong witness.
+Mere `比肩` presence still does not trigger the two-source peer-to-wealth relation.
 
 ## Semantic boundary
 
-T8 output is structured data only:
+T8 output remains structured data only:
 
 ```text
 relationId
@@ -99,18 +118,6 @@ numericScoringAuthorized = false
 
 The output intentionally has no consumer `headline` or `summary`.
 
-This removes the unreviewed semantic jump from a classical relation into statements such as:
-
-```text
-idea -> practical result
-result -> responsibility
-pressure -> study/systematization
-self-direction -> resource tension
-execution speed -> preparation tension
-```
-
-Those projections may remain useful research hypotheses, but this candidate does not treat them as source-bounded facts.
-
 ## Explicit exclusions
 
 The following existing T8 conclusion shapes are not present:
@@ -127,7 +134,7 @@ No Gyeokguk, 強弱, 旺衰, Yongshin, event timing, deterministic fortune, occu
 
 ## Quality and lifecycle boundary
 
-The new methodology, pack, and all ten rules remain:
+The methodology, pack, and all ten rules remain:
 
 ```text
 status = research
@@ -137,29 +144,31 @@ methodologyStability = contested
 reviewerStatus = unreviewed
 ```
 
-No reviewer, trust grant, review attestation, lifecycle status, source tier, or Production route is fabricated.
+The new Samyeong volume-7 source remains `cross_reference` and explicitly does not claim completed scan/transcription identity qualification.
+
+No reviewer, trust grant, review attestation, lifecycle status, provenance quality, or Production route is fabricated.
 
 Therefore:
 
 ```text
 sourceBoundedStructuralSubsetEstablished = true
-modernConsumerSemanticExpansionRemovedFromSubset = true
+peerFamilySecondClassicalSourceRegistered = true
+allSourceBoundedT5FamiliesHaveTwoSourceRefs = true
 peerWealthTwoSourceScopeNarrowedToGyeopjaeIntersection = true
-productionEligibleProvenanceEstablished = false
+sourceIntegrityQualificationEstablished = false
+provenanceQualityPromotionAuthorized = false
 domainReviewAuthorityEstablished = false
 productionAdmissionAuthority = false
 Production = HOLD
 ```
 
-## Next real blocker
+## Next real blockers
 
-After this subset is validated, remaining Production work is no longer “what does this T8 relation mean in modern prose?” for these five rules.
+Source-count asymmetry is no longer the peer-family blocker. Remaining governed work is:
 
-The next governed blockers are:
-
-1. source-integrity qualification sufficient to reconsider rule provenance quality;
-2. independent domain review of exact rule and methodology content;
-3. trusted content-hash-pinned domain attestations;
+1. source-integrity qualification sufficient to justify any provenance-quality promotion;
+2. exact content-addressed review-subject preparation for the methodology and rules;
+3. independent domain review and trusted attestation hashes;
 4. lifecycle promotion only after those authorities exist.
 
-The original consumer-oriented candidate remains research-only and unchanged.
+The original consumer-oriented conclusion candidate remains research-only and unchanged.
