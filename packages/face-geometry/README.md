@@ -52,6 +52,64 @@ CI requires the two derived sets to be non-empty, non-overlapping, and to cover 
 
 The ear masks are physical/provider geometry. They do not carry physiognomy, beauty, styling, or recommendation meaning.
 
+## MESH4 — shared provider-region ontology
+
+GNM v3 already ships named surface groups for many regions that both MyeongHa and Face Lab need. MESH4 promotes those provider masks into one normalized, product-neutral catalog rather than redrawing the same regions independently in each product.
+
+The shared catalog contains 22 regions:
+
+```text
+forehead
+left / middle / right brow
+left / right temple
+left / right orbital
+left / right zygomatic
+nose
+left / right parotid
+left / right infraorbital
+left / right cheek
+upper / lower lip
+chin
+left / right ear
+```
+
+The first 20 map directly to GNM `*_region` provider groups. The two ears keep the MESH3 deterministic provider derivation:
+
+```text
+left_ear  = ears ∩ left
+right_ear = ears ∩ right
+```
+
+Catalog:
+
+```text
+packages/face-geometry/assets/regions/gnm-provider-region-ontology-v1.json
+```
+
+Compile exact vertex masks from the pinned GNM NPZ:
+
+```bash
+python tools/face-geometry/gnm/export_gnm_region_ontology.py \
+  --npz .cache/face-geometry/gnm/v3_0/gnm_head.npz \
+  --output .cache/face-geometry/mesh4/gnm-provider-region-ontology.json
+```
+
+Build a Blender inspection scene with one vertex group per shared region and both front and three-quarter full-head previews:
+
+```bash
+blender --background \
+  --python tools/face-geometry/gnm/build_gnm_region_ontology_scene.py \
+  -- \
+  --obj .cache/face-geometry/mesh3/gnm-head-neutral.obj \
+  --regions .cache/face-geometry/mesh4/gnm-provider-region-ontology.json \
+  --output .cache/face-geometry/mesh4/gnm-region-ontology.blend \
+  --metadata-out .cache/face-geometry/mesh4/gnm-region-ontology-scene-metadata.json \
+  --front-preview-out .cache/face-geometry/mesh4/gnm-region-ontology-front.png \
+  --three-quarter-preview-out .cache/face-geometry/mesh4/gnm-region-ontology-three-quarter.png
+```
+
+MESH4 is still an authoring/reference contract. Provider-region membership is not itself a beauty score, face-reading judgment, recommendation, medical/anatomical diagnosis, or production classifier threshold.
+
 ## Commands
 
 ```bash
@@ -65,7 +123,7 @@ python tools/face-geometry/gnm/export_gnm_template_head.py \
   --metadata-out .cache/face-geometry/mesh3/gnm-head-export-metadata.json
 ```
 
-Blender inspection scene:
+Blender MESH3 ear inspection scene:
 
 ```bash
 blender --background \
