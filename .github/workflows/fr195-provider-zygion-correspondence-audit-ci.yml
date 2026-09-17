@@ -1,0 +1,28 @@
+name: FR195 Provider Zygion Correspondence Audit CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/face-reading-cheek-mid-face-provider-correspondence-audit-fr195.ts'
+      - 'packages/face-reading/src/face-reading-cheek-mid-face-provider-correspondence-audit-fr195.test.ts'
+      - 'research/face-reading/fr195-provider-zygion-correspondence-audit.md'
+      - '.github/workflows/fr195-provider-zygion-correspondence-audit-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr195-provider-zygion-correspondence-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR195 provider-to-neutral zygion correspondence audit
+        run: npx vitest run packages/face-reading/src/face-reading-cheek-mid-face-provider-correspondence-audit-fr195.test.ts
