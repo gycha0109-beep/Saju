@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "face-geometry-mediapipe468-region-projection-policy-v1",
+  "status": "offline_authoring_candidate",
+  "source": {
+    "assetId": "google-gnm-head-v3.0-fe31d4e",
+    "regionOntology": "gnm-provider-region-ontology-v1"
+  },
+  "target": {
+    "assetId": "mediapipe-canonical-face-v0.10.35",
+    "topologyVertexCount": 468,
+    "coordinateUnit": "centimeter"
+  },
+  "registration": {
+    "method": "canonical_axis_robust_affine_then_nearest_provider_region_vertex_v1",
+    "sourceQuantileLow": 0.02,
+    "sourceQuantileHigh": 0.98,
+    "preserveCanonicalAxisSigns": true,
+    "mediapipeUnitConversionToMeter": 0.01,
+    "productionDistanceThreshold": null,
+    "subjectSpecificFitting": false
+  },
+  "assignment": {
+    "primaryRegionSelection": "nearest_gnm_face_region_vertex_then_render_priority",
+    "bilateralAdapterNaming": "canonical_x_axis",
+    "semanticSideAssignmentEncoded": false,
+    "allProjectedDistancesRetained": true
+  },
+  "unsupportedOnMediaPipe468": [
+    "left_ear",
+    "right_ear"
+  ],
+  "policy": {
+    "productNeutral": true,
+    "runtimeGNMDependency": false,
+    "runtimeBlenderDependency": false,
+    "productionMetricAuthorized": false,
+    "productInterpretationIncluded": false,
+    "anatomicalDiagnosticClaim": false
+  }
+}
