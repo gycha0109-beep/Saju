@@ -1,0 +1,29 @@
+name: MESH6E Prospective Real-capture Calibration Protocol CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mesh6e-prospective-real-capture-calibration-ci.yml'
+      - 'packages/face-reading/src/mesh6e-prospective-real-capture-calibration-protocol.ts'
+      - 'packages/face-geometry/docs/mesh6e-prospective-real-capture-calibration-protocol.md'
+      - 'scripts/verify-face-geometry-mesh6e.mjs'
+  workflow_dispatch:
+
+jobs:
+  verify-prospective-real-capture-calibration-protocol:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck Face Reading
+        run: npm run face:typecheck
+      - name: Build Face Reading
+        run: npm run face:build
+      - name: Verify prospective real-capture calibration protocol
+        run: node scripts/verify-face-geometry-mesh6e.mjs
