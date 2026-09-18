@@ -169,7 +169,7 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
         },
       ]);
       expect(tianyige.acquisitionAction).toBe(
-        'DIRECTLY_INSPECT_ZHUJI_PUBLIC_SCAN_FOR_FOUR_YAN_DUBU_AND_FROZEN_EXACT_STRINGS',
+        'DIRECT_INSPECTION_COMPLETE_NO_FROZEN_WITNESS_ESTABLISHED',
       );
     }
 
