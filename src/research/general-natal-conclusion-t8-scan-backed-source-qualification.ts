@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v6' as const;
+  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v7' as const;
 
 const SOURCE_AUTHORITIES = Object.freeze([
   {
@@ -30,6 +30,11 @@ const SOURCE_AUTHORITIES = Object.freeze([
       'https://commons.wikimedia.org/wiki/Category:%E5%88%BB%E4%BA%AC%E8%87%BA%E5%A2%9E%E8%A3%9C%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E5%A4%A7%E5%85%A8',
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/book/SDZJ0626/chapter/1lhnc3bvvh5bo',
+    directlyInspectedAsset: Object.freeze({
+      filename: 'NLC892-2642-210318_刻京臺增補淵海子平大全_第4冊.pdf',
+      sha1: '9f6098878cda071f5e1d3cbb0502cb65dfe17eea',
+      pageCount: 41,
+    }),
     editionIdentityEstablished: true,
     scanBackedSurfaceLocated: true,
     directScanImageComparisonCompleted: false,
@@ -123,10 +128,13 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
     scanSurfaceInspection: Object.freeze({
+      inspectedDigitalScanPageRange: Object.freeze([14, 17]),
       terminalDigitalScanPage: 18,
       nextVolumeBeginsDigitalScanPage: 19,
       sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
       terminalColophonObserved: '龍飛萬曆庚子春月 / 閩建喬山書舍刊行',
+      fixedWitnessDirectVerificationOutcome:
+        'NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE',
       boundedPropositionGlyphsVerified: false,
     }),
   },
@@ -138,10 +146,13 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
     scanSurfaceInspection: Object.freeze({
+      inspectedDigitalScanPageRange: Object.freeze([14, 17]),
       terminalDigitalScanPage: 18,
       nextVolumeBeginsDigitalScanPage: 19,
       sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
       terminalColophonObserved: '龍飛萬曆庚子春月 / 閩建喬山書舍刊行',
+      fixedWitnessDirectVerificationOutcome:
+        'NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE',
       boundedPropositionGlyphsVerified: false,
     }),
   },
@@ -153,10 +164,13 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
     scanSurfaceInspection: Object.freeze({
+      inspectedDigitalScanPageRange: Object.freeze([14, 17]),
       terminalDigitalScanPage: 18,
       nextVolumeBeginsDigitalScanPage: 19,
       sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
       terminalColophonObserved: '龍飛萬曆庚子春月 / 閩建喬山書舍刊行',
+      fixedWitnessDirectVerificationOutcome:
+        'NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE',
       boundedPropositionGlyphsVerified: false,
     }),
   },
@@ -168,10 +182,13 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
     scanSurfaceInspection: Object.freeze({
+      inspectedDigitalScanPageRange: Object.freeze([14, 17]),
       terminalDigitalScanPage: 18,
       nextVolumeBeginsDigitalScanPage: 19,
       sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
       terminalColophonObserved: '龍飛萬曆庚子春月 / 閩建喬山書舍刊行',
+      fixedWitnessDirectVerificationOutcome:
+        'NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE',
       boundedPropositionGlyphsVerified: false,
     }),
   },
@@ -311,10 +328,10 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION,
-    issue: '#870' as const,
-    auditBaseSha: 'e5538e904b47239148b4440733f050a5e01ddb63' as const,
+    issue: '#875' as const,
+    auditBaseSha: 'fca3ef5363999deb2cc21d0c7d8297f123de57cb' as const,
     status:
-      'SCAN_SURFACE_BOUNDARY_CORRECTED_TWELVE_OF_SIXTEEN_DIRECT_SCAN_VERIFIED' as const,
+      'SCAN_TEXTUAL_VARIANT_DIVERGENCE_RECORDED_TWELVE_OF_SIXTEEN_DIRECT_SCAN_VERIFIED' as const,
     upstreamPassageEvidenceId: passageEvidence.evidenceId,
     sourceAuthorities: SOURCE_AUTHORITIES,
     witnessRows,
@@ -336,6 +353,12 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
       ).length,
       directScanImageComparisonCompletedCount: witnessRows.filter(
         (row) => row.directScanImageComparisonCompleted,
+      ).length,
+      fixedWitnessTextualVariantDivergenceCount: witnessRows.filter(
+        (row) =>
+          'scanSurfaceInspection' in row &&
+          row.scanSurfaceInspection.fixedWitnessDirectVerificationOutcome ===
+            'NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE',
       ).length,
       exactPhysicalPageOrFolioVerifiedCount: witnessRows.filter(
         (row) => row.exactPhysicalPageOrFolioVerified,
@@ -361,12 +384,13 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
       productionState: 'HOLD' as const,
     },
     requiredNextEvidence: Object.freeze([
-      'READ_REMAINING_BOUNDED_PROPOSITIONS_GLYPH_FOR_GLYPH_FROM_LOCATED_SCAN_SURFACE',
-      'VERIFY_REMAINING_EXACT_DIGITAL_SCAN_PAGES_FOR_BOUNDED_PROPOSITIONS',
-      'DIRECTLY_COMPARE_REMAINING_SCAN_IMAGES_WITH_CORROBORATING_TRANSCRIPTIONS',
+      'OBTAIN_SCAN_OR_REGISTERED_TRANSCRIPTION_SURFACE_CONTAINING_FROZEN_EXACT_WITNESS_STRINGS',
+      'DO_NOT_TREAT_INSPECTED_MING_WANLI_TEXTUAL_VARIANT_AS_EXACT_FIXED_WITNESS_IDENTITY',
+      'REQUIRE_DIRECT_ROB_WEALTH_GLYPH_SUPPORT_FOR_PEER_WEALTH_WITNESS',
       'PRESERVE_DIGITAL_SCAN_PAGE_VS_PRINTED_PAGE_OR_FOLIO_BOUNDARY',
-      'REPRODUCE_WITNESS_DIGEST_FROM_SCAN_VERIFIED_TRANSCRIPTION_SURFACE',
+      'REPRODUCE_WITNESS_DIGEST_ONLY_FROM_SCAN_VERIFIED_TRANSCRIPTION_SURFACE',
       'KEEP_YUANHAI_CROSS_EDITION_SUPPORT_DISTINCT_FROM_TRANSCRIPTION_IDENTITY',
+      'USE_SEPARATE_REVIEWED_PROCESS_IF_FIXED_WITNESS_DEFINITIONS_ARE_EVER_RE_REGISTERED',
       'DO_NOT_PROMOTE_PROVENANCE_QUALITY_FROM_OCR_CORROBORATION_ALONE',
     ] as const),
   };
