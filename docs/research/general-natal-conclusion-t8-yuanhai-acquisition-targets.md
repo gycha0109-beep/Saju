@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Yuanhai Acquisition Target Registry
 
-Issue: #899  
-Audit base: `a73e4751ea2e00b2f3e17b99afa6c80f31bb14d9`
+Issue: #905  
+Audit base: `a184772122526412dfa07ebda691963ffe39922c`
 
 ## Purpose
 
@@ -188,6 +188,44 @@ The University of Tokyo General Library documents an external-user route for 和
 https://www.lib.u-tokyo.ac.jp/ja/library/general/user-guide/materials/stack-classics
 ```
 
+## P1 — National Diet Library / 掃葉山房石印 / microform
+
+```text
+NDL bibliographic ID = 000007566884
+call number           = 特2-1447
+surrogate call        = YD-古-5454
+title                 = 新刊合併官板音義評註淵海子平5卷附新鐫増補時憲臺歴袖裏璇璣星命須知2卷
+imprint               = 掃葉山房石印, 民國
+extent                = 6冊 ; 15cm
+format                = microform
+```
+
+Catalog:
+
+```text
+https://ndlsearch.ndl.go.jp/books/R100000002-I000007566884
+```
+
+This is a confirmed microform/reproduction holding, **not** a confirmed physical-original holding and not phrase-level evidence. Public page images are not established.
+
+The National Diet Library remote-copy route is independently documented:
+
+```text
+remote copy of held materials = supported when the requested location is identifiable
+microfilmed material          = copied from the microform surrogate
+postal receipt                = supported
+PDF receipt                   = potentially supported subject to user/material eligibility
+```
+
+Guides:
+
+```text
+https://www.ndl.go.jp/copy/remote
+https://www.ndl.go.jp/tokyo/classic
+```
+
+The unresolved primitive is to identify the bounded `四言獨步` copy location/frames in this microform and obtain that reproduction. No frozen witness content is claimed from the catalog record or access route.
+
 ## P0 — Tianyi Pavilion public 崇禎 scan
 
 ```text
@@ -343,8 +381,9 @@ The surfaced record does not establish a holding institution or a retrievable sc
 
 ```text
 unresolvedWitnessCount                 = 4
-acquisitionTargetCount                 = 10
+acquisitionTargetCount                 = 11
 confirmedPhysicalHoldingCount          = 7
+confirmedMicroformHoldingCount         = 1
 bibliographicLeadCount                 = 1
 publicDigitalPageImageVerifiedCount    = 2
 directlyInspectedAcquisitionTargetCount = 2
@@ -383,4 +422,4 @@ Production remains **HOLD**.
 
 Both registered P0 public scans (Tianyi and Zhuji) have now been directly inspected. Neither establishes any of the four unresolved frozen exact witnesses inside its bounded `四言獨步` surface, so the direct-scan count remains **12 / 16**.
 
-The active frontier is therefore **P1 reproduction acquisition**, led by Bukkyo `BB08851308 / 000241358`, with the newly registered `BB08850892 / 000241360` as a same-family fallback and Tokyo `BB1246745X / 0005484761` as the next institutional fallback. Verified access routes do not constitute phrase-level evidence.
+The active frontier remains **P1 reproduction acquisition**. Bukkyo `BB08851308 / 000241358` and `BB08850892 / 000241360` remain same-family physical-copy targets, while NDL `000007566884 / 特2-1447 / YD-古-5454` adds a confirmed microform route with documented remote-copy support. Tokyo `BB1246745X / 0005484761` remains an institutional fallback. Verified access routes do not constitute phrase-level evidence.
