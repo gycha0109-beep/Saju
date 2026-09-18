@@ -53,6 +53,51 @@ describe('FR198 independent zygion reference acquisition', () => {
     });
   });
 
+
+  it('registers the public synthetic same-ID surface/image lane without promoting it to correspondence evidence', () => {
+    const source =
+      FACE_READING_INDEPENDENT_ZYGION_REFERENCE_ACQUISITION_FR198.evidenceCandidates.find(
+        (candidate) =>
+          candidate.candidateId
+            === 'TOPSAKAL-2024-OPEN-SYNTHETIC-3D-FACE-DATASET',
+      );
+    expect(source).toMatchObject({
+      evidenceState:
+        'PUBLIC_SAME_ID_IMAGE_SURFACE_ASSETS_REFERENCE_DERIVATION_PENDING',
+      bilateralZygionExplicitlyDefined: true,
+      sameSampleSurfaceAndZygionCoordinatesReported: false,
+      sameSampleExecutableAssetAcquired: false,
+      sufficientForEndpointCoordinateCorrespondence: false,
+      publicSameIdImageAndSurfaceAssetsAvailable: true,
+      publicSameIdAssetTupleCount: 20,
+      referenceCoordinatesAlreadyPublished: false,
+      referenceDerivationExecutableWithoutProviderCandidate: true,
+      publishedReferenceValidationMeanErrorMm: 8.08,
+      accessPrerequisite: null,
+    });
+  });
+
+  it('rejects promoting the public synthetic lane before independent reference derivation executes', () => {
+    const drift = cloneEvidence() as unknown as {
+      evidenceCandidates: Array<{
+        candidateId: string;
+        sufficientForEndpointCoordinateCorrespondence: boolean;
+      }>;
+    };
+    const source = drift.evidenceCandidates.find(
+      (candidate) =>
+        candidate.candidateId
+          === 'TOPSAKAL-2024-OPEN-SYNTHETIC-3D-FACE-DATASET',
+    );
+    if (!source) throw new Error('test_fixture_missing_public_synthetic_lane');
+    source.sufficientForEndpointCoordinateCorrespondence = true;
+    expect(() =>
+      assertFaceReadingIndependentZygionReferenceAcquisitionFR198(
+        drift as unknown as FaceReadingIndependentZygionReferenceAcquisitionFR198,
+      ),
+    ).toThrow('fr198_public_synthetic_reference_lane_drift_or_promotion');
+  });
+
   it('does not treat FaceBase caliper zy-zy width as endpoint coordinates', () => {
     const faceBase =
       FACE_READING_INDEPENDENT_ZYGION_REFERENCE_ACQUISITION_FR198.evidenceCandidates.find(
@@ -157,15 +202,17 @@ describe('FR198 independent zygion reference acquisition', () => {
     ).toBe(false);
   });
 
-  it('moves only to same-sample independent reference acquisition', () => {
+  it('moves only to public synthetic independent reference derivation before correspondence', () => {
     expect(
       FACE_READING_INDEPENDENT_ZYGION_REFERENCE_ACQUISITION_FR198.readiness
         .nextRequiredGate,
-    ).toBe('obtain_independently_labelled_same_sample_reference_asset');
+    ).toBe(
+      'execute_public_synthetic_reference_derivation_without_provider_visibility',
+    );
     expect(
       FACE_READING_INDEPENDENT_ZYGION_REFERENCE_ACQUISITION_FR198.nextFrontier,
     ).toBe(
-      'obtain_independently_labelled_same_sample_reference_asset_without_user_recapture_then_execute_fr197_correspondence',
+      'execute_public_synthetic_independent_zygion_reference_derivation_without_provider_visibility_then_run_fr197_correspondence',
     );
   });
 });
