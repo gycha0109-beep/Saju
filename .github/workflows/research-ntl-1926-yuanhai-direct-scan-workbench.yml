@@ -1,0 +1,130 @@
+name: NTL 1926 Yuanhai Direct Scan Workbench
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/research-ntl-1926-yuanhai-direct-scan-workbench.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ntl-1926-yuanhai-direct-scan-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    name: Locate NTL 1926 四言獨步
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+
+      - name: Install scan tooling
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils jq tesseract-ocr tesseract-ocr-chi-tra imagemagick
+
+      - name: Fetch and verify exact NTL binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ntl
+          api=/tmp/ntl/imageinfo.json
+
+          curl --fail --silent --show-error --get \
+            'https://commons.wikimedia.org/w/api.php' \
+            --data-urlencode 'action=query' \
+            --data-urlencode 'format=json' \
+            --data-urlencode 'prop=imageinfo' \
+            --data-urlencode 'iiprop=url|sha1|size' \
+            --data-urlencode 'titles=File:NTL-9900014380 淵海子平子平真詮 v.2.pdf' \
+            --output "$api"
+
+          registered_url="$(jq -r '.query.pages[]?.imageinfo[0]?.url // empty' "$api")"
+          api_sha1="$(jq -r '.query.pages[]?.imageinfo[0]?.sha1 // empty' "$api")"
+          api_size="$(jq -r '.query.pages[]?.imageinfo[0]?.size // empty' "$api")"
+
+          test -n "$registered_url"
+          test -n "$api_sha1"
+          test -n "$api_size"
+
+          curl --fail --location --silent --show-error "$registered_url" \
+            --output /tmp/ntl/NTL-9900014380.pdf
+
+          actual_sha1="$(sha1sum /tmp/ntl/NTL-9900014380.pdf | awk '{print $1}')"
+          actual_size="$(stat -c '%s' /tmp/ntl/NTL-9900014380.pdf)"
+          pages="$(pdfinfo /tmp/ntl/NTL-9900014380.pdf | awk '/^Pages:/ {print $2}')"
+
+          test "$actual_sha1" = "$api_sha1"
+          test "$actual_size" = "$api_size"
+          test "$pages" = '164'
+
+          printf 'asset=NTL-9900014380\nsha1=%s\nbytes=%s\npages=%s\n' \
+            "$actual_sha1" "$actual_size" "$pages" \
+            | tee /tmp/ntl/verified-metadata.txt
+
+      - name: OCR all pages as locator only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ntl/locator-pages /tmp/ntl/ocr
+          pdftoppm -r 110 -gray -png \
+            /tmp/ntl/NTL-9900014380.pdf \
+            /tmp/ntl/locator-pages/page
+
+          : > /tmp/ntl/ocr-locator-hits.txt
+          for img in /tmp/ntl/locator-pages/page-*.png; do
+            base="$(basename "$img" .png)"
+            page10="$(printf '%s' "$base" | sed 's/^page-//')"
+            page=$((10#$page10))
+            out="/tmp/ntl/ocr/$base"
+            tesseract "$img" "$out" -l chi_tra --psm 6 >/dev/null 2>&1 || true
+            if grep -Eq '四言.{0,3}[獨独]步|財旺生官|财旺生官|[煞殺杀]化.{0,2}[為爲为]印|比.{0,2}劫.{0,4}羊刃|財格.{0,3}大忌|财格.{0,3}大忌|印[綬绶].{0,2}見財|印[綬绶].{0,2}见财' "$out.txt"; then
+              {
+                echo "===== DIGITAL PAGE $page ====="
+                grep -En '四言.{0,3}[獨独]步|財旺生官|财旺生官|[煞殺杀]化.{0,2}[為爲为]印|比.{0,2}劫.{0,4}羊刃|財格.{0,3}大忌|财格.{0,3}大忌|印[綬绶].{0,2}見財|印[綬绶].{0,2}见财' "$out.txt" || true
+              } >> /tmp/ntl/ocr-locator-hits.txt
+            fi
+          done
+
+          cat /tmp/ntl/ocr-locator-hits.txt
+
+      - name: Build locator contact sheets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ntl/review
+          cp /tmp/ntl/verified-metadata.txt /tmp/ntl/review/
+          cp /tmp/ntl/ocr-locator-hits.txt /tmp/ntl/review/
+
+          # Visual locator only. These sheets are not authority for exact glyph identity.
+          n=0
+          sheet=1
+          files=()
+          for img in /tmp/ntl/locator-pages/page-*.png; do
+            files+=("$img")
+            n=$((n+1))
+            if [ "$n" -eq 20 ]; then
+              montage "${files[@]}" -thumbnail '260x' -tile 5x4 -geometry +8+8 \
+                "/tmp/ntl/review/contact-sheet-$(printf '%02d' "$sheet").jpg"
+              files=()
+              n=0
+              sheet=$((sheet+1))
+            fi
+          done
+          if [ "${#files[@]}" -gt 0 ]; then
+            montage "${files[@]}" -thumbnail '260x' -tile 5x4 -geometry +8+8 \
+              "/tmp/ntl/review/contact-sheet-$(printf '%02d' "$sheet").jpg"
+          fi
+
+      - name: Upload locator artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ntl-1926-yuanhai-locator
+          path: /tmp/ntl/review
+          if-no-files-found: error
+          retention-days: 1
