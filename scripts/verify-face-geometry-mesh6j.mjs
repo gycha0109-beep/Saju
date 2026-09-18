@@ -1,5 +1,10 @@
 import { readFileSync } from 'node:fs';
 import process from 'node:process';
+import {
+  assertLanRequestAllowed,
+  isPrivateOrLoopbackAddress,
+  normalizeRemoteAddress,
+} from './mesh6j-private-lan-transport.mjs';
 
 const serverPath = 'scripts/mesh6j-manual-browser-capture-preview.mjs';
 const clientPath = 'tools/face-geometry/capture/mesh6j-operator-capture.mjs';
@@ -21,7 +26,14 @@ function expectExcludes(source, needle, message) {
   expect(!source.includes(needle), message + ' Forbidden: ' + needle);
 }
 
-expectIncludes(server, "const HOST = '127.0.0.1';", 'MESH6J server must bind localhost only.');
+expectIncludes(server, "const LOCALHOST_HOST = '127.0.0.1';", 'MESH6J default bind must remain localhost.');
+expectIncludes(server, "const LAN_HOST = '0.0.0.0';", 'MESH6J.1 explicit LAN mode must expose a separate bind address.');
+expectIncludes(server, "const LAN_MODE = process.env.MESH6J_LAN === '1' || LAN_SMOKE;", 'MESH6J.1 LAN mode must be opt-in.');
+expectIncludes(server, "LAN_MODE ? LAN_HOST : LOCALHOST_HOST", 'MESH6J must choose LAN bind only after explicit opt-in.');
+expectIncludes(server, "LAN mode requires MESH6J_TLS_KEY and MESH6J_TLS_CERT.", 'MESH6J.1 must fail closed without TLS material.');
+expectIncludes(server, "createSecureServer(tls, requestHandler)", 'MESH6J.1 LAN mode must use HTTPS.');
+expectIncludes(server, "assertLanRequestAllowed(request.socket.remoteAddress)", 'MESH6J.1 must reject non-private remote clients.');
+expectIncludes(server, "transportMode: LAN_MODE ? 'private_lan_https' : 'localhost_http'", 'MESH6J runtime config must disclose transport mode.');
 expectIncludes(server, "request.method !== 'GET'", 'MESH6J server must reject non-GET methods.');
 expectIncludes(server, "allow: 'GET'", 'MESH6J server must advertise GET-only routing.');
 expectIncludes(server, "rawCapturePersistenceEnabled: false", 'MESH6J runtime config must deny raw-capture persistence.');
@@ -31,7 +43,8 @@ expectIncludes(server, "METADATA_BLOB_SHA = '252a7b05b24c5c43c5b94179393639f7c9a
 expectIncludes(server, "project_gnm_regions_to_mediapipe468_weighted.py", 'MESH6J must regenerate the exact weighted adapter.');
 expectIncludes(server, "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net", 'MESH6J CSP must permit only the inline import map plus pinned self/CDN scripts.');
 expectIncludes(server, "'permissions-policy': 'camera=(self)'", 'MESH6J must restrict camera permission to self.');
-expectIncludes(server, "MYEONGHWA_MESH6J_SMOKE", 'MESH6J server must expose deterministic smoke mode.');
+expectIncludes(server, "MYEONGHWA_MESH6J_SMOKE", 'MESH6J server must expose deterministic localhost smoke mode.');
+expectIncludes(server, "MYEONGHWA_MESH6J_LAN_SMOKE", 'MESH6J.1 server must expose deterministic LAN HTTPS smoke mode.');
 
 for (const forbidden of [
   "request.method === 'POST'",
@@ -43,6 +56,43 @@ for (const forbidden of [
   "MediaRecorder",
 ]) {
   expectExcludes(server, forbidden, 'MESH6J server must expose no upload/raw-capture persistence path.');
+}
+
+expect(normalizeRemoteAddress('::ffff:192.168.1.20') === '192.168.1.20', 'IPv4-mapped IPv6 normalization drift.');
+for (const address of [
+  '127.0.0.1',
+  '10.1.2.3',
+  '172.16.0.1',
+  '172.31.255.254',
+  '192.168.0.42',
+  '169.254.10.20',
+  '::1',
+  'fc00::1',
+  'fd12:3456::1',
+  'fe80::1234',
+  '::ffff:192.168.1.9',
+]) {
+  expect(isPrivateOrLoopbackAddress(address), 'Expected private/loopback admission for ' + address);
+  assertLanRequestAllowed(address);
+}
+
+for (const address of [
+  '8.8.8.8',
+  '1.1.1.1',
+  '172.15.0.1',
+  '172.32.0.1',
+  '192.0.2.1',
+  '2001:4860:4860::8888',
+  '',
+]) {
+  expect(!isPrivateOrLoopbackAddress(address), 'Expected public/invalid denial for ' + address);
+  let denied = false;
+  try {
+    assertLanRequestAllowed(address);
+  } catch {
+    denied = true;
+  }
+  expect(denied, 'Expected LAN request denial for ' + address);
 }
 
 expectIncludes(page, 'id="fresh-attestation"', 'MESH6J page must require explicit freshness attestation.');
@@ -96,7 +146,9 @@ expect(importCount === 2, 'MESH6J should import and invoke the MESH6I controller
 
 process.stdout.write(JSON.stringify({
   status: 'MESH6J_MANUAL_BROWSER_CAPTURE_SURFACE_CONTRACT_PASS',
-  localhostOnlyVerified: true,
+  defaultLocalhostVerified: true,
+  optInPrivateLanHttpsVerified: true,
+  nonPrivateRemoteDenialVerified: true,
   getOnlyServerVerified: true,
   explicitManualTriggerVerified: true,
   manifestAttestationsVerified: true,
