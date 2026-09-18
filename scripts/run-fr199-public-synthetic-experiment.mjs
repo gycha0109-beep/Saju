@@ -91,9 +91,42 @@ if (reference?.authorityBoundary?.providerIndexAdmissionAuthorized !== false) th
 await download(urls.image, imagePath);
 await download(urls.model, modelPath);
 
+let resolveBrowserResult;
+let rejectBrowserResult;
+const browserResultPromise = new Promise((resolveResult, rejectResult) => {
+  resolveBrowserResult = resolveResult;
+  rejectBrowserResult = rejectResult;
+});
+
 const server = createServer((req, res) => {
   try {
     const url = new URL(req.url || '/', 'http://127.0.0.1');
+
+    if (req.method === 'POST' && url.pathname === '/fr199-result') {
+      let body = '';
+      req.setEncoding('utf8');
+      req.on('data', (chunk) => {
+        body += chunk;
+        if (body.length > 1024 * 1024) {
+          rejectBrowserResult(new Error('fr199_browser_result_too_large'));
+          req.destroy();
+        }
+      });
+      req.on('end', () => {
+        try {
+          const envelope = JSON.parse(body);
+          resolveBrowserResult(envelope);
+          res.writeHead(204);
+          res.end();
+        } catch (error) {
+          rejectBrowserResult(error);
+          res.writeHead(400);
+          res.end('invalid result');
+        }
+      });
+      return;
+    }
+
     const decoded = decodeURIComponent(url.pathname);
     const target = resolve(root, '.' + decoded);
     if (!target.startsWith(resolve(root) + '/')) {
@@ -106,6 +139,8 @@ const server = createServer((req, res) => {
       'content-type': contentType(target),
       'cache-control': 'no-store',
       'cross-origin-resource-policy': 'cross-origin',
+      'cross-origin-opener-policy': 'same-origin',
+      'cross-origin-embedder-policy': 'require-corp',
     });
     createReadStream(target).pipe(res);
   } catch (error) {
@@ -132,61 +167,38 @@ const chromeArgs = [
   '--no-sandbox',
   '--disable-gpu',
   '--disable-dev-shm-usage',
-  '--virtual-time-budget=45000',
-  '--dump-dom',
   browserUrl.toString(),
 ];
-const chromeRun = await new Promise((resolveChrome, rejectChrome) => {
-  const child = spawn(chrome, chromeArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
-  let stdout = '';
-  let stderr = '';
-  const timer = setTimeout(() => {
-    child.kill('SIGKILL');
-    rejectChrome(new Error('chrome_provider_stage_timeout'));
-  }, 70000);
-  child.stdout.setEncoding('utf8');
-  child.stderr.setEncoding('utf8');
-  child.stdout.on('data', (chunk) => {
-    stdout += chunk;
-    if (stdout.length > 20 * 1024 * 1024) {
-      child.kill('SIGKILL');
-      rejectChrome(new Error('chrome_stdout_limit_exceeded'));
-    }
-  });
-  child.stderr.on('data', (chunk) => {
-    stderr += chunk;
-    if (stderr.length > 20 * 1024 * 1024) stderr = stderr.slice(-20 * 1024 * 1024);
-  });
-  child.once('error', (error) => {
-    clearTimeout(timer);
-    rejectChrome(error);
-  });
-  child.once('close', (code) => {
-    clearTimeout(timer);
-    if (code !== 0) {
-      rejectChrome(new Error('chrome_provider_stage_failed:' + code + '\n' + stderr));
-      return;
-    }
-    resolveChrome({ stdout, stderr });
-  });
+const child = spawn(chrome, chromeArgs, { stdio: ['ignore', 'ignore', 'pipe'] });
+let chromeStderr = '';
+child.stderr.setEncoding('utf8');
+child.stderr.on('data', (chunk) => {
+  chromeStderr += chunk;
+  if (chromeStderr.length > 20 * 1024 * 1024) chromeStderr = chromeStderr.slice(-20 * 1024 * 1024);
 });
-await new Promise((resolveClose) => server.close(resolveClose));
-const dom = chromeRun.stdout || '';
-const errorMatch = dom.match(/FR199_ERROR_BASE64:([A-Za-z0-9+/=]+)/);
-if (errorMatch) {
-  const decoded = JSON.parse(Buffer.from(errorMatch[1], 'base64').toString('utf8'));
-  throw new Error('provider_browser_error:' + decoded.message);
+
+let browserEnvelope;
+try {
+  browserEnvelope = await Promise.race([
+    browserResultPromise,
+    new Promise((_, rejectTimeout) => {
+      setTimeout(() => rejectTimeout(new Error('fr199_browser_result_timeout\n' + chromeStderr.slice(-12000))), 70000);
+    }),
+  ]);
+} finally {
+  child.kill('SIGKILL');
+  await new Promise((resolveClose) => server.close(resolveClose));
 }
-const match = dom.match(/FR199_RESULT_BASE64:([A-Za-z0-9+/=]+)/);
-if (!match) {
-  throw new Error(
-    'provider_result_not_found_in_dom\n--- chrome stderr ---\n'
-      + (chromeRun.stderr || '').slice(-12000)
-      + '\n--- dumped dom ---\n'
-      + dom.slice(-12000),
-  );
+if (!browserEnvelope || typeof browserEnvelope !== 'object') {
+  throw new Error('provider_browser_envelope_missing');
 }
-const provider = JSON.parse(Buffer.from(match[1], 'base64').toString('utf8'));
+if (browserEnvelope.prefix === 'FR199_ERROR_BASE64:') {
+  throw new Error('provider_browser_error:' + String(browserEnvelope.payload?.message || 'unknown'));
+}
+if (browserEnvelope.prefix !== 'FR199_RESULT_BASE64:') {
+  throw new Error('provider_browser_prefix_invalid');
+}
+const provider = browserEnvelope.payload;
 if (provider.runtimePackageVersion !== '0.10.35') throw new Error('provider_version_drift');
 if (JSON.stringify(provider.providerCandidateIndices) !== JSON.stringify([234, 454])) throw new Error('provider_candidate_drift');
 if (provider.providerIndexAdmissionAuthorized !== false) throw new Error('provider_authority_violation');
