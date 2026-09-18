@@ -88,6 +88,63 @@ https://ci.nii.ac.jp/ncid/BA88839860
 
 Public digital scan has not been established.
 
+## P1 — Bukkyo University Library / 乾隆51 [1786] 文光堂
+
+```text
+CiNii NCID     = BA88832205
+title          = 新刊合併官板音義評註淵海子平 5卷
+imprint        = 文光堂, 乾隆51 [1786] 刊
+extent         = 5冊
+relevant item  = 卷之4
+call number    = 000241364
+```
+
+Catalog:
+
+```text
+https://ci.nii.ac.jp/ncid/BA88832205
+```
+
+This is a confirmed older printed holding and is directly relevant to the frozen `四言獨步` volume. Public page images have not been established.
+
+## P1 — Bukkyo University Library / 掃葉山房 [清]
+
+```text
+CiNii NCID     = BB08851308
+title          = 新刋合併官板音義評註淵海子平 5卷
+imprint        = 掃葉山房, [清], 刊本
+relevant item  = 卷之3-5
+call number    = 000241358
+size           = 23.7 × 15.3 cm
+```
+
+Catalog:
+
+```text
+https://ci.nii.ac.jp/ncid/BB08851308
+```
+
+The catalog explicitly records `崇禎七年孟冬吉日重梓` and `福建余氏 鐫梓`. This makes it a high-value acquisition target for testing whether the frozen text belongs to a different later impression / transmission branch. Public page images have not been established.
+
+## P1 — University of Tokyo General Library / 敬文堂後印
+
+```text
+CiNii NCID     = BB1246745X
+title          = 新刊合併官板音義評註淵海子平 5巻
+imprint        = 敬文堂, [出版年不明]
+relevant item  = 卷之3-5
+call number    = A90:1323 / 0005484761
+size           = 24 cm
+```
+
+Catalog:
+
+```text
+https://ci.nii.ac.jp/ncid/BB1246745X
+```
+
+The catalog identifies this item as a later impression of the `福建余氏繡梓崇禎7年重梓` blocks. Public page images have not been established.
+
 ## P2 — Shanghai Fuwen Shuju bibliographic lead
 
 ```text
@@ -107,8 +164,8 @@ The surfaced record does not establish a holding institution or a retrievable sc
 
 ```text
 unresolvedWitnessCount                 = 4
-acquisitionTargetCount                 = 4
-confirmedPhysicalHoldingCount          = 3
+acquisitionTargetCount                 = 7
+confirmedPhysicalHoldingCount          = 6
 bibliographicLeadCount                 = 1
 publicDigitalPageImageVerifiedCount    = 0
 directlyInspectedAcquisitionTargetCount = 0
