@@ -5,7 +5,7 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
   it('records scan-backed corroboration without promoting provenance authority', () => {
     const evidence = buildGeneralNatalConclusionT8ScanBackedSourceQualification();
 
-    expect(evidence.issue).toBe('#860');
+    expect(evidence.issue).toBe('#864');
     expect(evidence.counts.witnessCount).toBe(16);
     expect(evidence.counts.scanBackedEditionIdentityEstablishedCount).toBe(16);
     expect(evidence.counts.scanBackedPropositionCorroboratedCount).toBe(16);
@@ -167,7 +167,7 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
     }
   });
 
-  it('keeps the four current 四言獨步 Yuanhai witnesses unverified until an exact direct scan page is established', () => {
+  it('pins the four remaining Yuanhai witnesses to the actual 卷五 四言獨步 scan surface without promoting phrase-level verification', () => {
     const evidence = buildGeneralNatalConclusionT8ScanBackedSourceQualification();
     const remainingIds = new Set([
       'W-YUANHAI-WEALTH-OFFICER',
@@ -178,15 +178,32 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
     const remaining = evidence.witnessRows.filter((row) => remainingIds.has(row.witnessId));
 
     expect(remaining).toHaveLength(4);
-    expect(
-      remaining.every(
-        (row) =>
-          row.originalSection === '四言獨步' &&
-          !row.exactDigitalScanPageVerified &&
-          !row.boundedPropositionDirectlyObservedInScan &&
-          !row.directScanImageComparisonCompleted,
-      ),
-    ).toBe(true);
+    for (const row of remaining) {
+      expect(row.originalSection).toBe('四言獨步');
+      expect(row.scanVolume).toBe('NLC892-2642-210318 第4冊 / 卷之五');
+      expect(row.scanSurfaceSection).toBe('四言獨步');
+      expect(row.corroboratingOcrUrl).toBe(
+        'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
+      );
+      expect(row.scanSurfaceInspection).toEqual({
+        terminalDigitalScanPage: 17,
+        nextVolumeBeginsDigitalScanPage: 18,
+        sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
+        boundedPropositionGlyphsVerified: false,
+      });
+      expect(row.exactDigitalScanPageVerified).toBe(false);
+      expect(row.boundedPropositionDirectlyObservedInScan).toBe(false);
+      expect(row.directScanImageComparisonCompleted).toBe(false);
+      expect(row.exactPhysicalPageOrFolioVerified).toBe(false);
+      expect(row.exactWitnessHashReproducedFromScan).toBe(false);
+      expect(row.exactTranscriptionIdentityEstablished).toBe(false);
+      expect(row.fullScanQualificationEstablished).toBe(false);
+      expect(row.productionProvenancePromotionAuthorized).toBe(false);
+    }
+
+    expect(evidence.counts.exactDigitalScanPageVerifiedCount).toBe(12);
+    expect(evidence.counts.boundedPropositionDirectlyObservedInScanCount).toBe(12);
+    expect(evidence.counts.directScanImageComparisonCompletedCount).toBe(12);
   });
 
   it('keeps same-edition OCR corroboration separate from cross-edition Yuanhai corroboration', () => {
