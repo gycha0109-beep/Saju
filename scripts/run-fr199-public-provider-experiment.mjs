@@ -40,6 +40,94 @@ function sourceFor(sampleId) {
     commit: male ? FR199_MALE_DATASET_COMMIT : FR199_FEMALE_DATASET_COMMIT,
   };
 }
+
+function objIndex(rawIndex, length) {
+  const parsed = Number(rawIndex);
+  if (!Number.isInteger(parsed) || parsed === 0) throw new Error(`FR199 invalid OBJ index: ${rawIndex}`);
+  return parsed > 0 ? parsed - 1 : length + parsed;
+}
+function deriveObjMaterialUvBridge(objText, reference, sampleId, mtlText) {
+  const expectedMtl = `${sampleId}.mtl`;
+  const expectedTexture = `${sampleId}.jpg`;
+  const vertices = [];
+  const texcoords = [];
+  const vertexToTexcoordIndices = new Map();
+  let declaredMtl = null;
+  for (const line of objText.split(/\r?\n/)) {
+    if (line.startsWith('mtllib ')) declaredMtl = line.trim().slice('mtllib '.length);
+    else if (line.startsWith('v ')) {
+      const [, x, y, z] = line.trim().split(/\s+/);
+      vertices.push({ x: Number(x), y: Number(y), z: Number(z) });
+    } else if (line.startsWith('vt ')) {
+      const [, u, v] = line.trim().split(/\s+/);
+      texcoords.push({ u: Number(u), v: Number(v) });
+    } else if (line.startsWith('f ')) {
+      for (const token of line.trim().split(/\s+/).slice(1)) {
+        const [rawVertexIndex, rawTexcoordIndex] = token.split('/');
+        if (!rawTexcoordIndex) continue;
+        const vertexIndex = objIndex(rawVertexIndex, vertices.length);
+        const texcoordIndex = objIndex(rawTexcoordIndex, texcoords.length);
+        const refs = vertexToTexcoordIndices.get(vertexIndex) ?? [];
+        refs.push(texcoordIndex);
+        vertexToTexcoordIndices.set(vertexIndex, refs);
+      }
+    }
+  }
+  if (declaredMtl !== expectedMtl) throw new Error(`FR199 OBJ/MTL binding drift for ${sampleId}: ${declaredMtl}`);
+  const mapKd = mtlText.split(/\r?\n/).map((line) => line.trim()).find((line) => line.startsWith('map_Kd '));
+  if (mapKd?.slice('map_Kd '.length).trim() !== expectedTexture) {
+    throw new Error(`FR199 MTL texture binding drift for ${sampleId}: ${mapKd ?? 'missing map_Kd'}`);
+  }
+  const points = reference.bilateralReference.map((point) => {
+    const vertexIndex = vertices.findIndex((vertex) =>
+      vertex.x === point.x && vertex.y === point.y && vertex.z === point.z
+    );
+    if (vertexIndex < 0) throw new Error(`FR199 reference point is not an exact OBJ vertex for ${sampleId}`);
+    const refs = vertexToTexcoordIndices.get(vertexIndex) ?? [];
+    const unique = [];
+    const seen = new Set();
+    for (const texcoordIndex of refs) {
+      const uv = texcoords[texcoordIndex];
+      if (!uv || !Number.isFinite(uv.u) || !Number.isFinite(uv.v)) {
+        throw new Error(`FR199 invalid OBJ texture coordinate for ${sampleId}`);
+      }
+      const key = `${uv.u}:${uv.v}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push({ texcoordIndex1: texcoordIndex + 1, u: uv.u, v: uv.v });
+      }
+    }
+    return {
+      referencePoint: point,
+      objVertexIndex1: vertexIndex + 1,
+      incidentTextureReferenceCount: refs.length,
+      uniqueTextureCoordinates: unique,
+      exactSingleTextureCoordinate: unique.length === 1 ? unique[0] : null,
+    };
+  });
+  return {
+    schemaVersion: 'fr199-obj-material-uv-bridge-v1',
+    sampleId,
+    sourceFrame: 'source_exact_obj_vertex_xyz',
+    intermediateFrame: 'obj_material_texture_uv',
+    textureBinding: {
+      objMtllib: declaredMtl,
+      mtlMapKd: expectedTexture,
+    },
+    normalization: {
+      u: 'OBJ vt u preserved',
+      v: 'OBJ vt v preserved in receipt',
+      topLeftImageCandidate: 'x=u; y=1-v',
+    },
+    projectionAssumptions: [
+      'This is an OBJ material UV parameterization bridge, not a recovered camera projection.',
+      'Top-left raster comparison uses x=u and y=1-v as an explicit image-origin convention assumption.',
+    ],
+    providerCandidateVisibleDuringBridgeDerivation: false,
+    points,
+    exactSingleUvPerReference: points.every((point) => point.exactSingleTextureCoordinate !== null),
+  };
+}
 function findChrome() {
   for (const candidate of [
     process.env.CHROME_BIN,
@@ -60,6 +148,8 @@ function mime(path) {
     case '.mjs': return 'text/javascript; charset=utf-8';
     case '.wasm': return 'application/wasm';
     case '.png': return 'image/png';
+    case '.jpg':
+    case '.jpeg': return 'image/jpeg';
     case '.task': return 'application/octet-stream';
     default: return 'application/octet-stream';
   }
@@ -147,6 +237,15 @@ async function main() {
         const objBoundingWidth = Math.max(...xs) - Math.min(...xs);
         const referenceWidth = Math.abs(reference.bilateralReference[0].x - reference.bilateralReference[1].x);
         const referenceNormalizedWidth = referenceWidth / objBoundingWidth;
+        const mtlResponse = await fetch(`https://raw.githubusercontent.com/${repository}/${commit}/3D-models/${sampleId}.mtl`);
+        if (!mtlResponse.ok) throw new Error(`MTL HTTP ${mtlResponse.status}`);
+        const mtlText = await mtlResponse.text();
+        const uvBridge = deriveObjMaterialUvBridge(objText, reference, sampleId, mtlText);
+        const textureImagePath = join(imageDir, `${sampleId}.jpg`);
+        const textureImageBytes = await download(
+          `https://raw.githubusercontent.com/${repository}/${commit}/3D-models/${sampleId}.jpg`,
+          textureImagePath,
+        );
         const imagePath = join(imageDir, `${sampleId}.png`);
         const imageBytes = await download(
           `https://raw.githubusercontent.com/${repository}/${commit}/2D-photos/${sampleId}.png`,
@@ -156,6 +255,9 @@ async function main() {
           reference,
           imageDigest: sha256(imageBytes),
           imagePath: `/assets/images/${sampleId}.png`,
+          textureImageDigest: sha256(textureImageBytes),
+          textureImagePath: `/assets/images/${sampleId}.jpg`,
+          uvBridge,
           referenceNormalizedWidth,
         });
       } catch (error) {
@@ -236,6 +338,28 @@ async function main() {
   });
   const receipts = [];
   const failures = [];
+  const textureReceipts = [];
+  const textureFailures = [];
+  const unorderedPairDistance = (referencePoints, providerPoints) => {
+    const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const direct = [
+      distance(referencePoints[0], providerPoints[0]),
+      distance(referencePoints[1], providerPoints[1]),
+    ];
+    const swapped = [
+      distance(referencePoints[0], providerPoints[1]),
+      distance(referencePoints[1], providerPoints[0]),
+    ];
+    const directSum = direct[0] + direct[1];
+    const swappedSum = swapped[0] + swapped[1];
+    return {
+      direct: { distances: direct, sum: directSum },
+      swapped: { distances: swapped, sum: swappedSum },
+      descriptiveUnorderedMinimum: directSum <= swappedSum
+        ? { assignment: 'reference_order_to_234_454', distances: direct, sum: directSum }
+        : { assignment: 'reference_order_to_454_234', distances: swapped, sum: swappedSum },
+    };
+  };
   try {
     for (const input of inputs) {
       try {
@@ -268,18 +392,65 @@ async function main() {
       } catch (error) {
         failures.push({ sampleId: input.reference.sampleId, error: error instanceof Error ? error.message : String(error) });
       }
+      try {
+        if (!input.uvBridge.exactSingleUvPerReference) {
+          throw new Error('FR199 texture bridge has ambiguous or missing UV coordinates.');
+        }
+        const image = new Image();
+        image.src = input.textureImagePath;
+        await image.decode();
+        const raw = landmarker.detect(image);
+        const frame = sanitizeMediaPipeProviderObservationFR61(raw, {
+          providerRunRef: 'fr199:texture:' + input.reference.sampleId,
+          canonicalAssetDigest: input.textureImageDigest,
+        });
+        const receipt = issueDescriptiveZygionCorrespondenceFR199(deepFreeze(input.reference), frame);
+        const topLeftUvReference = input.uvBridge.points.map((point) => ({
+          x: point.exactSingleTextureCoordinate.u,
+          y: 1 - point.exactSingleTextureCoordinate.v,
+        }));
+        const providerPoints = receipt.provider.unorderedCandidatePair.map((point) => ({ x: point.x, y: point.y }));
+        textureReceipts.push({
+          sampleId: receipt.sampleId,
+          textureImageDigest: input.textureImageDigest,
+          textureImageDimensions: [image.naturalWidth, image.naturalHeight],
+          detectedFaceCount: raw.faceLandmarks.length,
+          detectedLandmarkCount: raw.faceLandmarks[0]?.length ?? 0,
+          uvBridge: input.uvBridge,
+          topLeftUvReference,
+          provider: receipt.provider,
+          descriptiveNormalizedImageDistances: unorderedPairDistance(topLeftUvReference, providerPoints),
+          authority: {
+            bridgeKind: 'obj_material_uv_parameterization_not_camera_projection',
+            imageOriginConventionAssumption: 'x=u; y=1-v',
+            anatomicalSideAssignment: null,
+            numericAcceptanceThresholdAuthorized: false,
+            providerIndexAdmissionAuthorized: false,
+            productionAuthorized: false,
+            commerceAuthorized: false,
+          },
+        });
+      } catch (error) {
+        textureFailures.push({ sampleId: input.reference.sampleId, error: error instanceof Error ? error.message : String(error) });
+      }
     }
   } finally {
     landmarker.close();
   }
-  return { receipts, failures };
+  return { receipts, failures, textureReceipts, textureFailures };
 })()`;
       const evaluation = await cdp.command('Runtime.evaluate', {
         expression, awaitPromise: true, returnByValue: true, timeout: 120000,
       });
       if (evaluation.exceptionDetails) throw new Error(`FR199 browser exception: ${JSON.stringify(evaluation.exceptionDetails)}`);
       const result = evaluation.result?.value;
-      if (!result || !Array.isArray(result.receipts) || !Array.isArray(result.failures)) {
+      if (
+        !result ||
+        !Array.isArray(result.receipts) ||
+        !Array.isArray(result.failures) ||
+        !Array.isArray(result.textureReceipts) ||
+        !Array.isArray(result.textureFailures)
+      ) {
         throw new Error(`FR199 invalid browser result: ${JSON.stringify(result)}`);
       }
       if (result.receipts.some((entry) =>
@@ -326,6 +497,10 @@ async function main() {
         providerSuccessCount: result.receipts.length,
         providerFailureCount: result.failures.length,
         providerFailures: result.failures,
+        textureBridgeSuccessCount: result.textureReceipts.length,
+        textureBridgeFailureCount: result.textureFailures.length,
+        textureBridgeFailures: result.textureFailures,
+        textureBridgeReceipts: result.textureReceipts,
         pairedWidths,
         descriptiveNormalizedWidthPearson: pearson(pairedWidths),
         receipts: result.receipts,
@@ -342,6 +517,10 @@ async function main() {
         providerSuccessCount: artifact.providerSuccessCount,
         providerFailureCount: artifact.providerFailureCount,
         providerFailures: artifact.providerFailures,
+        textureBridgeSuccessCount: artifact.textureBridgeSuccessCount,
+        textureBridgeFailureCount: artifact.textureBridgeFailureCount,
+        textureBridgeFailures: artifact.textureBridgeFailures,
+        textureBridgeReceipts: artifact.textureBridgeReceipts,
         pairedWidths: artifact.pairedWidths,
         descriptiveNormalizedWidthPearson: artifact.descriptiveNormalizedWidthPearson,
         providerIndexAdmissionAuthorized: false,
