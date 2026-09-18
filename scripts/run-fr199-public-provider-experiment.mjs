@@ -13,6 +13,7 @@ import {
   FR199_MALE_DATASET_REPOSITORY,
   FR199_PUBLIC_CORPUS,
   deriveAndFreezeIndependentZygionReferenceFR199,
+  parseObjVerticesFR199,
 } from '../.face-reading-dist/face-reading-public-synthetic-zygion-correspondence-fr199.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -141,6 +142,11 @@ async function main() {
           objText,
           objDigest: sha256(Buffer.from(objText, 'utf8')),
         });
+        const objVertices = parseObjVerticesFR199(objText);
+        const xs = objVertices.map((point) => point.x);
+        const objBoundingWidth = Math.max(...xs) - Math.min(...xs);
+        const referenceWidth = Math.abs(reference.bilateralReference[0].x - reference.bilateralReference[1].x);
+        const referenceNormalizedWidth = referenceWidth / objBoundingWidth;
         const imagePath = join(imageDir, `${sampleId}.png`);
         const imageBytes = await download(
           `https://raw.githubusercontent.com/${repository}/${commit}/2D-photos/${sampleId}.png`,
@@ -150,6 +156,7 @@ async function main() {
           reference,
           imageDigest: sha256(imageBytes),
           imagePath: `/assets/images/${sampleId}.png`,
+          referenceNormalizedWidth,
         });
       } catch (error) {
         referenceFailures.push({ sampleId, error: error instanceof Error ? error.message : String(error) });
@@ -248,6 +255,8 @@ async function main() {
           detectedFaceCount: raw.faceLandmarks.length,
           detectedLandmarkCount: raw.faceLandmarks[0]?.length ?? 0,
           provider: receipt.provider,
+          referenceNormalizedWidth: input.referenceNormalizedWidth,
+          providerNormalizedWidth: Math.abs(receipt.provider.unorderedCandidatePair[0].x - receipt.provider.unorderedCandidatePair[1].x),
           authority: {
             coordinateFrameCorrespondenceResolved: receipt.coordinateFrameCorrespondenceResolved,
             numericDistanceAuthorized: receipt.numericDistanceAuthorized,
@@ -282,6 +291,30 @@ async function main() {
         entry.authority?.commerceAuthorized !== false
       )) throw new Error('FR199 provider receipt violated runtime or authority boundary.');
 
+      const pairedWidths = result.receipts.map((entry) => ({
+        sampleId: entry.sampleId,
+        referenceNormalizedWidth: entry.referenceNormalizedWidth,
+        providerNormalizedWidth: entry.providerNormalizedWidth,
+      }));
+      const pearson = (pairs) => {
+        if (pairs.length < 2) return null;
+        const xs = pairs.map((pair) => pair.referenceNormalizedWidth);
+        const ys = pairs.map((pair) => pair.providerNormalizedWidth);
+        const mx = xs.reduce((sum, value) => sum + value, 0) / xs.length;
+        const my = ys.reduce((sum, value) => sum + value, 0) / ys.length;
+        let numerator = 0;
+        let dx2 = 0;
+        let dy2 = 0;
+        for (let index = 0; index < pairs.length; index += 1) {
+          const dx = xs[index] - mx;
+          const dy = ys[index] - my;
+          numerator += dx * dy;
+          dx2 += dx * dx;
+          dy2 += dy * dy;
+        }
+        const denominator = Math.sqrt(dx2 * dy2);
+        return denominator === 0 ? null : numerator / denominator;
+      };
       const artifact = {
         schemaVersion: 'fr199-public-provider-experiment-v1',
         status: result.receipts.length > 0 ? 'executed' : 'no_provider_receipts',
@@ -293,6 +326,8 @@ async function main() {
         providerSuccessCount: result.receipts.length,
         providerFailureCount: result.failures.length,
         providerFailures: result.failures,
+        pairedWidths,
+        descriptiveNormalizedWidthPearson: pearson(pairedWidths),
         receipts: result.receipts,
         providerIndexAdmissionAuthorized: false,
       };
@@ -307,6 +342,8 @@ async function main() {
         providerSuccessCount: artifact.providerSuccessCount,
         providerFailureCount: artifact.providerFailureCount,
         providerFailures: artifact.providerFailures,
+        pairedWidths: artifact.pairedWidths,
+        descriptiveNormalizedWidthPearson: artifact.descriptiveNormalizedWidthPearson,
         providerIndexAdmissionAuthorized: false,
       })}\n`);
       if (result.receipts.length === 0) process.exitCode = 1;
