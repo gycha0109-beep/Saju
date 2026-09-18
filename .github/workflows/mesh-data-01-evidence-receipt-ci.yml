@@ -1,0 +1,22 @@
+name: MESH-DATA-01 Evidence Receipt CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mesh-data-01-evidence-receipt-ci.yml'
+      - 'packages/face-geometry/evidence/mesh-data-01-first-real-repeated-sweep-receipt-v1.json'
+      - 'packages/face-geometry/docs/mesh-data-01-first-real-repeated-sweep-evidence-receipt.md'
+      - 'scripts/verify-face-geometry-mesh-data-01.mjs'
+  workflow_dispatch:
+
+jobs:
+  verify-mesh-data-01-receipt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify MESH-DATA-01 evidence receipt
+        run: node scripts/verify-face-geometry-mesh-data-01.mjs
