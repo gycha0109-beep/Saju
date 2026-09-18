@@ -1,0 +1,30 @@
+name: MESH6H Browser Camera Frame Source CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mesh6h-browser-camera-frame-source-ci.yml'
+      - 'packages/face-reading/src/mesh6h-browser-camera-frame-source.ts'
+      - 'packages/face-reading/src/mesh6g-prospective-operator-capture-session.ts'
+      - 'packages/face-geometry/docs/mesh6h-browser-camera-frame-source.md'
+      - 'scripts/verify-face-geometry-mesh6h.mjs'
+  workflow_dispatch:
+
+jobs:
+  verify-browser-camera-frame-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck Face Reading
+        run: npm run face:typecheck
+      - name: Build Face Reading
+        run: npm run face:build
+      - name: Verify browser camera frame source
+        run: node scripts/verify-face-geometry-mesh6h.mjs
