@@ -1,0 +1,215 @@
+import { describe, expect, it } from 'vitest';
+
+import { buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets } from '../src/research/general-natal-conclusion-t8-yuanhai-acquisition-targets.js';
+
+describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
+  it('registers acquisition targets without converting catalog records into witness evidence', () => {
+    const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
+
+    expect(evidence.issue).toBe('#879');
+    expect(evidence.counts).toEqual({
+      unresolvedWitnessCount: 4,
+      acquisitionTargetCount: 9,
+      confirmedPhysicalHoldingCount: 6,
+      bibliographicLeadCount: 1,
+      publicDigitalPageImageVerifiedCount: 2,
+      directlyInspectedAcquisitionTargetCount: 0,
+      newDirectWitnessEvidenceCount: 0,
+      productionAdmissionEvidenceCount: 0,
+    });
+
+    expect(evidence.verdict.catalogRecordIsPhraseLevelEvidence).toBe(false);
+    expect(evidence.verdict.anyTargetFrozenWitnessContentEstablished).toBe(false);
+    expect(evidence.verdict.anyTargetReadyForWitnessPromotion).toBe(false);
+    expect(evidence.verdict.productionAdmissionAuthority).toBe(false);
+    expect(evidence.verdict.productionState).toBe('HOLD');
+  });
+
+  it('pins the six confirmed physical holdings and their relevant item identifiers', () => {
+    const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
+
+    const yulgok = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-YULGOK-YG015-01-470',
+    );
+    expect(yulgok).toMatchObject({
+      priority: 'P1',
+      targetClass: 'CONFIRMED_PHYSICAL_HOLDING',
+      catalogIdentifier: 'YG015-01-470',
+      title: '新刊合倂官板音義評註淵海子平 卷1~5',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+
+    const tokyo = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-TOKYO-IASA-BB19249231-4',
+    );
+    expect(tokyo).toMatchObject({
+      priority: 'P1',
+      targetClass: 'CONFIRMED_PHYSICAL_HOLDING',
+      catalogIdentifier: 'CiNii NCID BB19249231 / fascicle [4] call 6402838715',
+      editionOrImprint: '上海錦章圖書局, [19--], 石印本',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+
+    const bukkyo = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-BUKKYO-BA88839860-V4-5',
+    );
+    expect(bukkyo).toMatchObject({
+      priority: 'P1',
+      targetClass: 'CONFIRMED_PHYSICAL_HOLDING',
+      catalogIdentifier: 'CiNii NCID BA88839860 / 卷之4-5 call 000241369',
+      editionOrImprint: '千頃堂書局, [19--], 石印本',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+    const bukkyoQianlong = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-BUKKYO-BA88832205-V4',
+    );
+    expect(bukkyoQianlong).toMatchObject({
+      priority: 'P1',
+      targetClass: 'CONFIRMED_PHYSICAL_HOLDING',
+      catalogIdentifier: 'CiNii NCID BA88832205 / 卷之4 call 000241364',
+      editionOrImprint: '文光堂, 乾隆51 [1786] 刊',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+
+    const bukkyoSaoye = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-BUKKYO-BB08851308-V3-5',
+    );
+    expect(bukkyoSaoye).toMatchObject({
+      priority: 'P1',
+      targetClass: 'CONFIRMED_PHYSICAL_HOLDING',
+      catalogIdentifier: 'CiNii NCID BB08851308 / 卷之3-5 call 000241358',
+      editionOrImprint: '掃葉山房, [清], 刊本',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+
+    const tokyoGeneral = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-TOKYO-GENERAL-BB1246745X-V3-5',
+    );
+    expect(tokyoGeneral).toMatchObject({
+      priority: 'P1',
+      targetClass: 'CONFIRMED_PHYSICAL_HOLDING',
+      catalogIdentifier: 'CiNii NCID BB1246745X / 卷之3-5 A90:1323 item 0005484761',
+      editionOrImprint: '敬文堂, [出版年不明], 崇禎7年重梓後印',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+  });
+
+  it('registers Tianyi and Zhuji public scans as inspectable targets without claiming witness text', () => {
+    const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
+
+    const tianyige = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-TIANYIGE-330000-1705-0005007-DIGITAL',
+    );
+    expect(tianyige).toMatchObject({
+      priority: 'P0',
+      targetClass: 'VERIFIED_PUBLIC_DIGITAL_SCAN',
+      holdingInstitution: 'Tianyi Pavilion Museum',
+      editionOrImprint: '明崇禎刻本',
+      publicPageImageAvailability: 'VERIFIED_AVAILABLE',
+      directInspectionState: 'AVAILABLE_NOT_INSPECTED',
+      frozenWitnessContentClaimed: false,
+    });
+    if (tianyige?.targetId === 'ACQ-YUANHAI-TIANYIGE-330000-1705-0005007-DIGITAL') {
+      expect(tianyige.digitalAssets).toEqual([
+        {
+          pageCount: 153,
+          sha1: '2ec904422ced60bf241286c6b822623048bb8883',
+          fileSizeBytes: 133016361,
+        },
+      ]);
+    }
+
+    const zjs = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-ZJSLIB-FLDB-2458-DIGITAL',
+    );
+    expect(zjs).toMatchObject({
+      priority: 'P0',
+      targetClass: 'VERIFIED_PUBLIC_DIGITAL_SCAN',
+      holdingInstitution: 'Zhuji Library',
+      editionOrImprint: '清福建余氏刻本 13行25字小字雙行25字白口四周單邊',
+      publicPageImageAvailability: 'VERIFIED_AVAILABLE',
+      directInspectionState: 'AVAILABLE_NOT_INSPECTED',
+      frozenWitnessContentClaimed: false,
+    });
+    if (zjs?.targetId === 'ACQ-YUANHAI-ZJSLIB-FLDB-2458-DIGITAL') {
+      expect(zjs.digitalAssets).toEqual([
+        { assetId: 'ZJSLib-FLDB-2458-1', pageCount: 138, fileSizeMiB: 64.85 },
+        { assetId: 'ZJSLib-FLDB-2458-2', pageCount: 170, fileSizeMiB: 79.26 },
+      ]);
+    }
+
+    expect(evidence.verdict.anyTargetFrozenWitnessContentEstablished).toBe(false);
+    expect(evidence.verdict.anyTargetReadyForWitnessPromotion).toBe(false);
+  });
+
+  it('keeps the Fuwen Shuju record as a lead rather than inventing a holding', () => {
+    const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
+    const lead = evidence.acquisitionTargets.find(
+      (target) =>
+        target.targetId === 'ACQ-YUANHAI-FUWEN-GUANGXU-BIBLIOGRAPHIC-LEAD',
+    );
+
+    expect(lead).toMatchObject({
+      priority: 'P2',
+      targetClass: 'BIBLIOGRAPHIC_LEAD_HOLDING_UNCONFIRMED',
+      holdingInstitution: null,
+      editionOrImprint: '清光緒間上海富文書局石印本',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+  });
+
+  it('keeps all four unresolved witness identities explicit', () => {
+    const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
+
+    expect(evidence.unresolvedWitnessIds).toEqual([
+      'W-YUANHAI-WEALTH-OFFICER',
+      'W-YUANHAI-OFFICER-RESOURCE',
+      'W-YUANHAI-PEER-WEALTH',
+      'W-YUANHAI-WEALTH-RESOURCE',
+    ]);
+  });
+
+  it('requires direct acquisition and exact glyph verification before any promotion', () => {
+    const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
+
+    expect(evidence.acquisitionProtocol).toContain(
+      'OBTAIN_EXACT_ITEM_OR_REPRODUCTION_WITH_CATALOG_IDENTITY',
+    );
+    expect(evidence.acquisitionProtocol).toContain(
+      'READ_BOUNDED_GLYPHS_DIRECTLY_FROM_ACQUIRED_SURFACE',
+    );
+    expect(evidence.acquisitionProtocol).toContain(
+      'REQUIRE_EXACT_ROB_WEALTH_GLYPH_FOR_PEER_WEALTH_WITNESS',
+    );
+    expect(evidence.acquisitionProtocol).toContain(
+      'DO_NOT_NORMALIZE_ORTHOGRAPHIC_VARIANTS_INTO_FROZEN_HASH_IDENTITY',
+    );
+
+    expect(evidence.verdict.witnessReregistrationAuthorized).toBe(false);
+    expect(evidence.verdict.exactWitnessHashReproductionAuthorityEstablished).toBe(
+      false,
+    );
+    expect(evidence.verdict.sourceIntegrityQualificationEstablished).toBe(false);
+    expect(evidence.verdict.productionEligibleProvenanceEstablished).toBe(false);
+  });
+
+  it('is deterministic', () => {
+    expect(buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets()).toEqual(
+      buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets(),
+    );
+  });
+});
