@@ -1,0 +1,59 @@
+name: FR199 Public Synthetic Zygion Execution CI
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/fr199-independent-zygion-reference.py'
+      - 'scripts/fr199-provider-browser.html'
+      - 'scripts/run-fr199-public-synthetic-experiment.mjs'
+      - '.github/workflows/fr199-public-synthetic-zygion-execution-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  execute-fr199-public-synthetic-same-sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - name: Reference derivation deterministic self-test
+        run: python3 scripts/fr199-independent-zygion-reference.py --self-test
+      - name: Execute real public same-sample FR199 experiment
+        run: node scripts/run-fr199-public-synthetic-experiment.mjs --sample male-23
+      - name: Verify fail-closed receipt
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const p = '.tmp/fr199/male-23/fr199-receipt.json';
+          const r = JSON.parse(fs.readFileSync(p, 'utf8'));
+          if (!r.independentReference.frozenBeforeProviderExecution) throw new Error('reference_not_frozen_first');
+          if (r.providerObservation.runtimePackageVersion !== '0.10.35') throw new Error('provider_version_drift');
+          if (JSON.stringify(r.providerObservation.providerCandidateIndices) !== JSON.stringify([234,454])) throw new Error('provider_pair_drift');
+          if (r.correspondence.sameSampleIdEstablished !== true) throw new Error('same_sample_not_established');
+          if (r.correspondence.coordinateFramesDirectlyComparable !== false) throw new Error('coordinate_frame_overclaim');
+          if (r.correspondence.distanceComputed !== false) throw new Error('distance_overclaim');
+          if (Object.values(r.authorityBoundary).some(Boolean)) throw new Error('authority_widening');
+          console.log(JSON.stringify({
+            ok: true,
+            sampleId: r.sampleId,
+            referenceDigest: r.independentReference.digest,
+            providerCandidatePoints: r.providerObservation.providerCandidatePoints,
+          }, null, 2));
+          NODE
+      - name: Upload FR199 research receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr199-male-23-research-receipt
+          path: .tmp/fr199/male-23/fr199-receipt.json
+          if-no-files-found: error
+          retention-days: 14
