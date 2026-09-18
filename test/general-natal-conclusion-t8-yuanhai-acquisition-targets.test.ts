@@ -9,8 +9,8 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
     expect(evidence.issue).toBe('#879');
     expect(evidence.counts).toEqual({
       unresolvedWitnessCount: 4,
-      acquisitionTargetCount: 4,
-      confirmedPhysicalHoldingCount: 3,
+      acquisitionTargetCount: 7,
+      confirmedPhysicalHoldingCount: 6,
       bibliographicLeadCount: 1,
       publicDigitalPageImageVerifiedCount: 0,
       directlyInspectedAcquisitionTargetCount: 0,
@@ -25,7 +25,7 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
     expect(evidence.verdict.productionState).toBe('HOLD');
   });
 
-  it('pins the three confirmed physical holdings and their relevant item identifiers', () => {
+  it('pins the six confirmed physical holdings and their relevant item identifiers', () => {
     const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
 
     const yulgok = evidence.acquisitionTargets.find(
@@ -62,6 +62,44 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
       targetClass: 'CONFIRMED_PHYSICAL_HOLDING',
       catalogIdentifier: 'CiNii NCID BA88839860 / 卷之4-5 call 000241369',
       editionOrImprint: '千頃堂書局, [19--], 石印本',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+    const bukkyoQianlong = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-BUKKYO-BA88832205-V4',
+    );
+    expect(bukkyoQianlong).toMatchObject({
+      priority: 'P1',
+      targetClass: 'CONFIRMED_PHYSICAL_HOLDING',
+      catalogIdentifier: 'CiNii NCID BA88832205 / 卷之4 call 000241364',
+      editionOrImprint: '文光堂, 乾隆51 [1786] 刊',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+
+    const bukkyoSaoye = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-BUKKYO-BB08851308-V3-5',
+    );
+    expect(bukkyoSaoye).toMatchObject({
+      priority: 'P1',
+      targetClass: 'CONFIRMED_PHYSICAL_HOLDING',
+      catalogIdentifier: 'CiNii NCID BB08851308 / 卷之3-5 call 000241358',
+      editionOrImprint: '掃葉山房, [清], 刊本',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+
+    const tokyoGeneral = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-TOKYO-GENERAL-BB1246745X-V3-5',
+    );
+    expect(tokyoGeneral).toMatchObject({
+      priority: 'P1',
+      targetClass: 'CONFIRMED_PHYSICAL_HOLDING',
+      catalogIdentifier: 'CiNii NCID BB1246745X / 卷之3-5 A90:1323 item 0005484761',
+      editionOrImprint: '敬文堂, [出版年不明], 崇禎7年重梓後印',
       publicPageImageAvailability: 'NOT_ESTABLISHED',
       directInspectionState: 'NOT_ACQUIRED',
       frozenWitnessContentClaimed: false,
