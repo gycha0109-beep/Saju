@@ -5,7 +5,7 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
   it('records scan-backed corroboration without promoting provenance authority', () => {
     const evidence = buildGeneralNatalConclusionT8ScanBackedSourceQualification();
 
-    expect(evidence.issue).toBe('#864');
+    expect(evidence.issue).toBe('#870');
     expect(evidence.counts.witnessCount).toBe(16);
     expect(evidence.counts.scanBackedEditionIdentityEstablishedCount).toBe(16);
     expect(evidence.counts.scanBackedPropositionCorroboratedCount).toBe(16);
@@ -186,9 +186,10 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
         'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
       );
       expect(row.scanSurfaceInspection).toEqual({
-        terminalDigitalScanPage: 17,
-        nextVolumeBeginsDigitalScanPage: 18,
+        terminalDigitalScanPage: 18,
+        nextVolumeBeginsDigitalScanPage: 19,
         sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
+        terminalColophonObserved: '龍飛萬曆庚子春月 / 閩建喬山書舍刊行',
         boundedPropositionGlyphsVerified: false,
       });
       expect(row.exactDigitalScanPageVerified).toBe(false);
