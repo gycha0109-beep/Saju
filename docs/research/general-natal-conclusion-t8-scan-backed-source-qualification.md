@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Scan-Backed Source Qualification Audit
 
-Issue: #839  
-Audit base: `a45374f0e657729ef28dccb95179b06e1cfa3446`
+Issue: #844  
+Audit base: `d07e8d6a52ed87c732af919956e68cf4738e3e4f`
 
 ## Purpose
 
@@ -41,7 +41,23 @@ corroborating OCR = 識典古籍 scan/OCR surface
 
 The Ming Wanli scan-backed surface independently corroborates the bounded propositions used by all ten current Yuanhai witnesses across 卷一、卷三、卷四.
 
-One Yuanhai witness now also has direct image verification:
+Six Yuanhai witnesses now also have direct image verification.
+
+Five family-taxonomy witnesses share one directly inspected scan surface:
+
+```text
+scan asset = NLC892-2642-210287 第1冊 / 卷之一
+digital scan page = 8
+section observed = 論五行相生相尅訣
+
+W-YUANHAI-RESOURCE-TAXONOMY → 生我者爲正印偏印
+W-YUANHAI-OUTPUT-TAXONOMY   → 我生者爲傷官食神
+W-YUANHAI-OFFICER-TAXONOMY  → 尅我者爲正官七殺
+W-YUANHAI-WEALTH-TAXONOMY   → 我尅者爲偏財正財
+W-YUANHAI-PEER-TAXONOMY     → 比肩者爲刼財敗財
+```
+
+The previously verified structural witness remains:
 
 ```text
 witness = W-YUANHAI-OUTPUT-WEALTH
@@ -51,7 +67,7 @@ section observed = 論食神
 bounded proposition observed = 食神者生我財神之謂也
 ```
 
-The page number above is the 1-based digital scan-page index. It is not asserted to be a printed page or folio. The scan image was directly compared with the corroborating OCR surface for this bounded proposition only; byte-identical identity with the fixed Wikisource witness is not established.
+These page numbers are 1-based digital scan-page indices. They are not asserted to be printed pages or folios. The scan images were directly compared with the corroborating OCR surfaces for the bounded propositions only; byte-identical identity with the fixed Wikisource witnesses is not established.
 
 These rows are intentionally recorded as:
 
@@ -69,9 +85,9 @@ scanBackedEditionIdentityEstablishedCount = 16
 scanBackedPropositionCorroboratedCount = 16
 sameEditionScanOcrCorroboratedCount = 6
 crossEditionPropositionCorroboratedCount = 10
-exactDigitalScanPageVerifiedCount = 1
-boundedPropositionDirectlyObservedInScanCount = 1
-directScanImageComparisonCompletedCount = 1
+exactDigitalScanPageVerifiedCount = 6
+boundedPropositionDirectlyObservedInScanCount = 6
+directScanImageComparisonCompletedCount = 6
 exactPhysicalPageOrFolioVerifiedCount = 0
 exactWitnessHashReproducedFromScanCount = 0
 fullScanQualificationEstablishedCount = 0
@@ -97,13 +113,13 @@ A scan file or OCR surface proves neither the exact physical page/folio nor the 
 
 For the Samyeong rows, same-edition scan-backed OCR corroboration establishes a stronger edition link than a mutable transcription alone, but direct image comparison is still pending.
 
-For the Yuanhai rows, the Ming Wanli scan independently corroborates the proposition but is a distinct edition surface from the current Wikisource witness. `W-YUANHAI-OUTPUT-WEALTH` now additionally has an exact digital scan-page locator and direct bounded-proposition image comparison, but that still does not authorize exact transcription identity because the registered witness remains the separate fixed Wikisource surface.
+For the Yuanhai rows, the Ming Wanli scan independently corroborates the proposition but is a distinct edition surface from the current Wikisource witness. Six rows now additionally have exact digital scan-page locators and direct bounded-proposition image comparison, but that still does not authorize exact transcription identity because the registered witnesses remain the separate fixed Wikisource surface.
 
 No witness can therefore be promoted to full scan qualification in this audit.
 
 ## Required next evidence
 
-1. identify and visually verify the exact digital scan page for the remaining fifteen witnesses;
+1. identify and visually verify the exact digital scan page for the remaining ten witnesses;
 2. directly compare the remaining scan images with the corroborating transcription/OCR surfaces;
 3. preserve digital scan-page identity separately from any printed page/folio claim;
 4. reproduce each relevant witness digest from a scan-verified transcription surface using the already-frozen exact-substring / UTF-8 / no-normalization contract;
