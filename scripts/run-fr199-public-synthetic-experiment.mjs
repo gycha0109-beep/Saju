@@ -182,7 +182,7 @@ try {
   browserEnvelope = await Promise.race([
     browserResultPromise,
     new Promise((_, rejectTimeout) => {
-      setTimeout(() => rejectTimeout(new Error('fr199_browser_result_timeout\n' + chromeStderr.slice(-12000))), 70000);
+      globalThis.setTimeout(() => rejectTimeout(new Error('fr199_browser_result_timeout\n' + chromeStderr.slice(-12000))), 70000);
     }),
   ]);
 } finally {
