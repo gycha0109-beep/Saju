@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey } from './general-natal-conclusion-t8-alternate-witness-surface-survey.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_YUANHAI_ACQUISITION_TARGETS_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v5' as const;
+  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v6' as const;
 
 const UNRESOLVED_WITNESS_IDS = Object.freeze([
   'W-YUANHAI-WEALTH-OFFICER',
@@ -105,8 +105,50 @@ const ACQUISITION_TARGETS = Object.freeze([
     publicPageImageAvailability: 'NOT_ESTABLISHED' as const,
     directInspectionState: 'NOT_ACQUIRED' as const,
     frozenWitnessContentClaimed: false as const,
+    reproductionAccess: Object.freeze({
+      routeState: 'VERIFIED_INSTITUTIONAL_APPLICATION_ROUTE' as const,
+      externalUserApplicationSupported: true as const,
+      applicationEmail: 'bulib@bukkyo-u.ac.jp',
+      decisionLeadTime: 'approximately 1 week',
+      selfCopyAllowed: false as const,
+      selfPhotographyAllowed: false as const,
+      reproductionInquiryRequired: true as const,
+      accessGuideUrl: 'https://bird.bukkyo-u.ac.jp/wakankosho/wakankosho.html',
+      libraryRulesUrl: 'https://www.bukkyo-u.ac.jp/library/rule/',
+    }),
     acquisitionAction:
-      'REQUEST_OR_OBTAIN_REPRODUCTION_OF_CALL_000241358_AND_INSPECT_FOUR_YAN_DUBU',
+      'REQUEST_REPRODUCTION_OF_CALL_000241358_VIA_VERIFIED_BUKKYO_ROUTE_AND_INSPECT_FOUR_YAN_DUBU',
+  }),
+  Object.freeze({
+    targetId: 'ACQ-YUANHAI-BUKKYO-BB08850892-V3-5',
+    priority: 'P1' as const,
+    targetClass: 'CONFIRMED_PHYSICAL_HOLDING' as const,
+    holdingInstitution: 'Bukkyo University Library',
+    catalogIdentifier: 'CiNii NCID BB08850892 / 卷之3-5 call 000241360',
+    title: '新刋合併官板音義評註淵海子平 5卷',
+    attributedAuthor: '(宋)徐升編 ; (明)楊淙校',
+    editionOrImprint: '掃葉山房, [清], 刊本',
+    materialExtent: '2 fascicles total; relevant 卷之3-5',
+    dimensions: '24.3 × 15.4 cm',
+    relevantCoverage:
+      '卷之3-5; second confirmed Bukkyo copy with 崇禎七年孟冬吉日重梓 and 福建余氏鐫梓 catalog notes',
+    catalogUrl: 'https://ci.nii.ac.jp/ncid/BB08850892',
+    publicPageImageAvailability: 'NOT_ESTABLISHED' as const,
+    directInspectionState: 'NOT_ACQUIRED' as const,
+    frozenWitnessContentClaimed: false as const,
+    reproductionAccess: Object.freeze({
+      routeState: 'VERIFIED_INSTITUTIONAL_APPLICATION_ROUTE' as const,
+      externalUserApplicationSupported: true as const,
+      applicationEmail: 'bulib@bukkyo-u.ac.jp',
+      decisionLeadTime: 'approximately 1 week',
+      selfCopyAllowed: false as const,
+      selfPhotographyAllowed: false as const,
+      reproductionInquiryRequired: true as const,
+      accessGuideUrl: 'https://bird.bukkyo-u.ac.jp/wakankosho/wakankosho.html',
+      libraryRulesUrl: 'https://www.bukkyo-u.ac.jp/library/rule/',
+    }),
+    acquisitionAction:
+      'REQUEST_REPRODUCTION_OF_CALL_000241360_VIA_VERIFIED_BUKKYO_ROUTE_AND_INSPECT_FOUR_YAN_DUBU',
   }),
   Object.freeze({
     targetId: 'ACQ-YUANHAI-TOKYO-GENERAL-BB1246745X-V3-5',
@@ -125,8 +167,16 @@ const ACQUISITION_TARGETS = Object.freeze([
     publicPageImageAvailability: 'NOT_ESTABLISHED' as const,
     directInspectionState: 'NOT_ACQUIRED' as const,
     frozenWitnessContentClaimed: false as const,
+    reproductionAccess: Object.freeze({
+      routeState: 'VERIFIED_INSTITUTIONAL_COPY_ROUTE' as const,
+      externalUserReadingSupported: true as const,
+      selfCopyAllowed: false as const,
+      vendorCopyMayBeAvailableSubjectToCondition: true as const,
+      accessGuideUrl:
+        'https://www.lib.u-tokyo.ac.jp/ja/library/general/user-guide/materials/stack-classics',
+    }),
     acquisitionAction:
-      'REQUEST_OR_OBTAIN_REPRODUCTION_OF_ITEM_0005484761_AND_INSPECT_FOUR_YAN_DUBU',
+      'REQUEST_OR_OBTAIN_VENDOR_REPRODUCTION_OF_ITEM_0005484761_AND_INSPECT_FOUR_YAN_DUBU',
   }),
   Object.freeze({
     targetId: 'ACQ-YUANHAI-TIANYIGE-330000-1705-0005007-DIGITAL',
@@ -324,9 +374,9 @@ export function buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_YUANHAI_ACQUISITION_TARGETS_VERSION,
-    issue: '#894' as const,
-    auditBaseSha: '47d493535a2e251ac136bcc56fad54c2fe59f6f3' as const,
-    status: 'BOTH_P0_PUBLIC_SCANS_DIRECTLY_INSPECTED_NO_NEW_WITNESS_EVIDENCE' as const,
+    issue: '#899' as const,
+    auditBaseSha: 'a73e4751ea2e00b2f3e17b99afa6c80f31bb14d9' as const,
+    status: 'P0_EXHAUSTED_P1_REPRODUCTION_ROUTE_VERIFIED_NO_NEW_WITNESS_EVIDENCE' as const,
     upstreamAlternateSurfaceSurveyId: upstream.evidenceId,
     unresolvedWitnessIds: UNRESOLVED_WITNESS_IDS,
     acquisitionTargets: ACQUISITION_TARGETS,
