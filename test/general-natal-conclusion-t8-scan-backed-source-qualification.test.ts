@@ -167,7 +167,7 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
     }
   });
 
-  it('routes the four remaining Yuanhai witnesses to 四言獨步 in 第4冊 without claiming direct verification', () => {
+  it('keeps the four current 四言獨步 Yuanhai witnesses unverified until an exact direct scan page is established', () => {
     const evidence = buildGeneralNatalConclusionT8ScanBackedSourceQualification();
     const remainingIds = new Set([
       'W-YUANHAI-WEALTH-OFFICER',
@@ -181,8 +181,7 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
     expect(
       remaining.every(
         (row) =>
-          row.scanVolume === 'NLC892-2642-210318 第4冊 / 卷之五' &&
-          row.scanSurfaceSection === '四言獨步' &&
+          row.originalSection === '四言獨步' &&
           !row.exactDigitalScanPageVerified &&
           !row.boundedPropositionDirectlyObservedInScan &&
           !row.directScanImageComparisonCompleted,
