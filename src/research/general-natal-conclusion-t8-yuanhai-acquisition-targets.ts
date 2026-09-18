@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey } from './general-natal-conclusion-t8-alternate-witness-surface-survey.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_YUANHAI_ACQUISITION_TARGETS_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v3' as const;
+  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v4' as const;
 
 const UNRESOLVED_WITNESS_IDS = Object.freeze([
   'W-YUANHAI-WEALTH-OFFICER',
@@ -139,11 +139,12 @@ const ACQUISITION_TARGETS = Object.freeze([
     editionOrImprint: '明崇禎刻本',
     materialExtent: '1 digital PDF / 153 pages',
     dimensions: 'scan 1781 × 1431 px',
-    relevantCoverage: '五卷 complete in one public scan; 四言獨步 target surface not yet directly inspected',
+    relevantCoverage:
+      '五卷 complete in one public scan; 四言獨步 directly inspected on digital pages 113..116',
     catalogUrl:
       'https://commons.wikimedia.org/wiki/File:Tianyige-330000-1705-0005007_%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E8%A8%BB%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E4%BA%94%E5%8D%B7_%E5%AE%8B%E5%BE%90%E5%8D%87%E7%B7%A8_%E6%98%8E%E6%A5%8A%E6%B7%99%E5%A2%9E%E6%A0%A1_%E6%98%8E%E5%B4%87%E7%A6%8E%E5%88%BB%E6%9C%AC.pdf',
     publicPageImageAvailability: 'VERIFIED_AVAILABLE' as const,
-    directInspectionState: 'AVAILABLE_NOT_INSPECTED' as const,
+    directInspectionState: 'DIRECTLY_INSPECTED' as const,
     frozenWitnessContentClaimed: false as const,
     digitalAssets: Object.freeze([
       Object.freeze({
@@ -152,8 +153,51 @@ const ACQUISITION_TARGETS = Object.freeze([
         fileSizeBytes: 133016361,
       }),
     ]),
+    directInspection: Object.freeze({
+      sectionObserved: '四言獨步',
+      sectionTitleDigitalScanPage: 113,
+      inspectedDigitalScanPageRange: Object.freeze([113, 116] as const),
+      transitionDigitalScanPage: 116,
+      sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論',
+      boundedVariantAnchorsObserved: Object.freeze([
+        '先財後印',
+        '先印後財',
+        '印綬根深',
+      ] as const),
+      sameStringOutsideFrozenContext: Object.freeze({
+        digitalScanPage: 112,
+        exactString: '財旺生官',
+        acceptedAsFrozenWitness: false as const,
+        reason: 'OBSERVED_OUTSIDE_FOUR_YAN_DUBU',
+      }),
+      frozenWitnessChecks: Object.freeze([
+        Object.freeze({
+          witnessId: 'W-YUANHAI-WEALTH-OFFICER',
+          exactString: '財旺生官',
+          establishedWithinFourYanDubu: false as const,
+        }),
+        Object.freeze({
+          witnessId: 'W-YUANHAI-OFFICER-RESOURCE',
+          exactString: '煞化為印',
+          establishedWithinFourYanDubu: false as const,
+        }),
+        Object.freeze({
+          witnessId: 'W-YUANHAI-PEER-WEALTH',
+          exactString: '比劫羊刃，財格大忌',
+          establishedWithinFourYanDubu: false as const,
+        }),
+        Object.freeze({
+          witnessId: 'W-YUANHAI-WEALTH-RESOURCE',
+          exactString: '印綬見財',
+          establishedWithinFourYanDubu: false as const,
+        }),
+      ]),
+      fixedWitnessDirectVerificationOutcome:
+        'NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE' as const,
+      exactFrozenWitnessCountEstablished: 0 as const,
+    }),
     acquisitionAction:
-      'DIRECTLY_INSPECT_PUBLIC_SCAN_FOR_FOUR_YAN_DUBU_AND_FROZEN_EXACT_STRINGS',
+      'DIRECTLY_INSPECT_ZHUJI_PUBLIC_SCAN_FOR_FOUR_YAN_DUBU_AND_FROZEN_EXACT_STRINGS',
   }),
   Object.freeze({
     targetId: 'ACQ-YUANHAI-ZJSLIB-FLDB-2458-DIGITAL',
@@ -241,9 +285,9 @@ export function buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_YUANHAI_ACQUISITION_TARGETS_VERSION,
-    issue: '#879' as const,
-    auditBaseSha: '4dd9ca8e987455ef939c7339024ba88ace24ced8' as const,
-    status: 'ACQUISITION_TARGETS_REGISTERED_NO_NEW_WITNESS_EVIDENCE' as const,
+    issue: '#883' as const,
+    auditBaseSha: 'a0735ab816f4d8c2cc26eb228eee468ee1d0f03c' as const,
+    status: 'TIANYI_DIRECTLY_INSPECTED_TEXTUAL_VARIANT_NO_NEW_WITNESS_EVIDENCE' as const,
     upstreamAlternateSurfaceSurveyId: upstream.evidenceId,
     unresolvedWitnessIds: UNRESOLVED_WITNESS_IDS,
     acquisitionTargets: ACQUISITION_TARGETS,
