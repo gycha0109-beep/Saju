@@ -78,6 +78,7 @@ if (
 
 const expectedRootExports = [
   '.',
+  './character-grounding',
   './product-host',
   './product-reading',
   './product-reading-response',
