@@ -5,15 +5,15 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
   it('records scan-backed corroboration without promoting provenance authority', () => {
     const evidence = buildGeneralNatalConclusionT8ScanBackedSourceQualification();
 
-    expect(evidence.issue).toBe('#844');
+    expect(evidence.issue).toBe('#860');
     expect(evidence.counts.witnessCount).toBe(16);
     expect(evidence.counts.scanBackedEditionIdentityEstablishedCount).toBe(16);
     expect(evidence.counts.scanBackedPropositionCorroboratedCount).toBe(16);
     expect(evidence.counts.sameEditionScanOcrCorroboratedCount).toBe(6);
     expect(evidence.counts.crossEditionPropositionCorroboratedCount).toBe(10);
-    expect(evidence.counts.exactDigitalScanPageVerifiedCount).toBe(6);
-    expect(evidence.counts.boundedPropositionDirectlyObservedInScanCount).toBe(6);
-    expect(evidence.counts.directScanImageComparisonCompletedCount).toBe(6);
+    expect(evidence.counts.exactDigitalScanPageVerifiedCount).toBe(12);
+    expect(evidence.counts.boundedPropositionDirectlyObservedInScanCount).toBe(12);
+    expect(evidence.counts.directScanImageComparisonCompletedCount).toBe(12);
     expect(evidence.counts.exactPhysicalPageOrFolioVerifiedCount).toBe(0);
     expect(evidence.counts.exactWitnessHashReproducedFromScanCount).toBe(0);
     expect(evidence.counts.fullScanQualificationEstablishedCount).toBe(0);
@@ -41,6 +41,12 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
       'W-YUANHAI-WEALTH-TAXONOMY',
       'W-YUANHAI-OFFICER-TAXONOMY',
       'W-YUANHAI-OUTPUT-WEALTH',
+      'W-SAMYEONG-FOUR-RELATION-TAXONOMY',
+      'W-SAMYEONG-OUTPUT-WEALTH',
+      'W-SAMYEONG-WEALTH-OFFICER',
+      'W-SAMYEONG-OFFICER-RESOURCE',
+      'W-SAMYEONG-PEER-WEALTH',
+      'W-SAMYEONG-WEALTH-RESOURCE',
     ]);
     const others = evidence.witnessRows.filter(
       (row) => !directlyVerifiedIds.has(row.witnessId),
@@ -101,10 +107,87 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
 
     expect(
       evidence.witnessRows.filter((row) => row.exactDigitalScanPageVerified),
-    ).toHaveLength(6);
+    ).toHaveLength(12);
     expect(
       evidence.witnessRows.filter((row) => !row.exactDigitalScanPageVerified),
-    ).toHaveLength(10);
+    ).toHaveLength(4);
+  });
+
+  it('pins all six Samyeong witnesses to directly inspected 卷五 scan pages', () => {
+    const evidence = buildGeneralNatalConclusionT8ScanBackedSourceQualification();
+    const expected = new Map([
+      [
+        'W-SAMYEONG-FOUR-RELATION-TAXONOMY',
+        {
+          digitalScanPage: 4,
+          boundedPropositionObserved:
+            '謂之日主屬我生我者壬癸水我生者丙丁火尅我者庚辛金我尅者戊己土',
+        },
+      ],
+      [
+        'W-SAMYEONG-OUTPUT-WEALTH',
+        { digitalScanPage: 7, boundedPropositionObserved: '甲乙生丙丁為子丙丁生戊己為子' },
+      ],
+      [
+        'W-SAMYEONG-WEALTH-OFFICER',
+        { digitalScanPage: 7, boundedPropositionObserved: '丙丁生戊己為子戊己生庚辛為子' },
+      ],
+      [
+        'W-SAMYEONG-OFFICER-RESOURCE',
+        { digitalScanPage: 7, boundedPropositionObserved: '戊己生庚辛為子庚辛生壬癸為子' },
+      ],
+      [
+        'W-SAMYEONG-PEER-WEALTH',
+        { digitalScanPage: 7, boundedPropositionObserved: '財怕劫被劫則分' },
+      ],
+      [
+        'W-SAMYEONG-WEALTH-RESOURCE',
+        { digitalScanPage: 7, boundedPropositionObserved: '印怕財貪財則壞' },
+      ],
+    ]);
+
+    for (const [witnessId, inspection] of expected) {
+      const row = evidence.witnessRows.find((candidate) => candidate.witnessId === witnessId);
+      expect(row).toBeDefined();
+      expect(row?.scanVolume).toBe('CADAL06066041 / 卷五');
+      expect(row?.scanSurfaceSection).toBe('論古人立印食官財名義');
+      expect(row?.exactDigitalScanPageVerified).toBe(true);
+      expect(row?.boundedPropositionDirectlyObservedInScan).toBe(true);
+      expect(row?.directScanImageComparisonCompleted).toBe(true);
+      expect(row?.directInspection).toEqual({
+        digitalScanPage: inspection.digitalScanPage,
+        sectionObserved: '論古人立印食官財名義',
+        boundedPropositionObserved: inspection.boundedPropositionObserved,
+      });
+      expect(row?.exactPhysicalPageOrFolioVerified).toBe(false);
+      expect(row?.exactWitnessHashReproducedFromScan).toBe(false);
+      expect(row?.exactTranscriptionIdentityEstablished).toBe(false);
+      expect(row?.fullScanQualificationEstablished).toBe(false);
+      expect(row?.productionProvenancePromotionAuthorized).toBe(false);
+    }
+  });
+
+  it('routes the four remaining Yuanhai witnesses to 四言獨步 in 第4冊 without claiming direct verification', () => {
+    const evidence = buildGeneralNatalConclusionT8ScanBackedSourceQualification();
+    const remainingIds = new Set([
+      'W-YUANHAI-WEALTH-OFFICER',
+      'W-YUANHAI-OFFICER-RESOURCE',
+      'W-YUANHAI-PEER-WEALTH',
+      'W-YUANHAI-WEALTH-RESOURCE',
+    ]);
+    const remaining = evidence.witnessRows.filter((row) => remainingIds.has(row.witnessId));
+
+    expect(remaining).toHaveLength(4);
+    expect(
+      remaining.every(
+        (row) =>
+          row.scanVolume === 'NLC892-2642-210318 第4冊 / 卷之五' &&
+          row.scanSurfaceSection === '四言獨步' &&
+          !row.exactDigitalScanPageVerified &&
+          !row.boundedPropositionDirectlyObservedInScan &&
+          !row.directScanImageComparisonCompleted,
+      ),
+    ).toBe(true);
   });
 
   it('keeps same-edition OCR corroboration separate from cross-edition Yuanhai corroboration', () => {
