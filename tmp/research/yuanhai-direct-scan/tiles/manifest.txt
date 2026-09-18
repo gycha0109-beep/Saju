@@ -1,0 +1,12 @@
+source=page17-full.png
+scaled_width=1200
+scaled_height=1133
+grid=2x4
+page17-r1c1 x=0:300 y=0:566 png_bytes=7495 b64_chars=9996
+page17-r1c2 x=300:600 y=0:566 png_bytes=6459 b64_chars=8612
+page17-r1c3 x=600:900 y=0:566 png_bytes=6827 b64_chars=9104
+page17-r1c4 x=900:1200 y=0:566 png_bytes=7032 b64_chars=9376
+page17-r2c1 x=0:300 y=566:1133 png_bytes=8494 b64_chars=11328
+page17-r2c2 x=300:600 y=566:1133 png_bytes=9090 b64_chars=12120
+page17-r2c3 x=600:900 y=566:1133 png_bytes=9216 b64_chars=12288
+page17-r2c4 x=900:1200 y=566:1133 png_bytes=8964 b64_chars=11952
