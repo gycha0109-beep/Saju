@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v3' as const;
+  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v4' as const;
 
 const SOURCE_AUTHORITIES = Object.freeze([
   {
@@ -117,32 +117,32 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
   },
   'W-YUANHAI-WEALTH-OFFICER': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
-    scanSurfaceSection: '雜論口訣 / 實法第一',
+    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
+    scanSurfaceSection: '四言獨步',
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/book/SDZJ0626/chapter/1lctut4t92tri',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
   },
   'W-YUANHAI-OFFICER-RESOURCE': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
-    scanSurfaceSection: '實法第一',
+    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
+    scanSurfaceSection: '四言獨步',
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/book/SDZJ0626/chapter/1lctut4t92tri',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
   },
   'W-YUANHAI-PEER-WEALTH': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
-    scanSurfaceSection: '雜論口訣',
+    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
+    scanSurfaceSection: '四言獨步',
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/mid-page/7557108914061590554',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
   },
   'W-YUANHAI-WEALTH-RESOURCE': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
-    scanSurfaceSection: '雜論口訣',
+    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
+    scanSurfaceSection: '四言獨步',
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/mid-page/7557108914061590554',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
@@ -150,44 +150,74 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
   'W-SAMYEONG-FOUR-RELATION-TAXONOMY': {
     authorityId: 'SCAN-SAMYEONG-SIKU-CADAL06066041',
     scanVolume: 'CADAL06066041 / 卷五',
-    scanSurfaceSection: '論古人立印食官財名義 / scan-backed OCR image unit 7',
+    scanSurfaceSection: '論古人立印食官財名義',
     corroboratingOcrUrl: 'https://ctext.org/wiki.pl?chapter=864968&if=en&remap=gb',
     corroborationLevel: 'SAME_EDITION_SCAN_OCR_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 4,
+      sectionObserved: '論古人立印食官財名義',
+      boundedPropositionObserved: '謂之日主屬我生我者壬癸水我生者丙丁火尅我者庚辛金我尅者戊己土',
+    }),
   },
   'W-SAMYEONG-OUTPUT-WEALTH': {
     authorityId: 'SCAN-SAMYEONG-SIKU-CADAL06066041',
     scanVolume: 'CADAL06066041 / 卷五',
-    scanSurfaceSection: '論古人立印食官財名義 / scan-backed OCR image unit 7',
+    scanSurfaceSection: '論古人立印食官財名義',
     corroboratingOcrUrl: 'https://ctext.org/wiki.pl?chapter=864968&if=en&remap=gb',
     corroborationLevel: 'SAME_EDITION_SCAN_OCR_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 7,
+      sectionObserved: '論古人立印食官財名義',
+      boundedPropositionObserved: '甲乙生丙丁為子丙丁生戊己為子',
+    }),
   },
   'W-SAMYEONG-WEALTH-OFFICER': {
     authorityId: 'SCAN-SAMYEONG-SIKU-CADAL06066041',
     scanVolume: 'CADAL06066041 / 卷五',
-    scanSurfaceSection: '論古人立印食官財名義 / scan-backed OCR image unit 7',
+    scanSurfaceSection: '論古人立印食官財名義',
     corroboratingOcrUrl: 'https://ctext.org/wiki.pl?chapter=864968&if=en&remap=gb',
     corroborationLevel: 'SAME_EDITION_SCAN_OCR_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 7,
+      sectionObserved: '論古人立印食官財名義',
+      boundedPropositionObserved: '丙丁生戊己為子戊己生庚辛為子',
+    }),
   },
   'W-SAMYEONG-OFFICER-RESOURCE': {
     authorityId: 'SCAN-SAMYEONG-SIKU-CADAL06066041',
     scanVolume: 'CADAL06066041 / 卷五',
-    scanSurfaceSection: '論古人立印食官財名義 / scan-backed OCR image unit 7',
+    scanSurfaceSection: '論古人立印食官財名義',
     corroboratingOcrUrl: 'https://ctext.org/wiki.pl?chapter=864968&if=en&remap=gb',
     corroborationLevel: 'SAME_EDITION_SCAN_OCR_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 7,
+      sectionObserved: '論古人立印食官財名義',
+      boundedPropositionObserved: '戊己生庚辛為子庚辛生壬癸為子',
+    }),
   },
   'W-SAMYEONG-PEER-WEALTH': {
     authorityId: 'SCAN-SAMYEONG-SIKU-CADAL06066041',
     scanVolume: 'CADAL06066041 / 卷五',
-    scanSurfaceSection: '論古人立印食官財名義 / scan-backed OCR image unit 7',
+    scanSurfaceSection: '論古人立印食官財名義',
     corroboratingOcrUrl: 'https://ctext.org/wiki.pl?chapter=864968&if=en&remap=gb',
     corroborationLevel: 'SAME_EDITION_SCAN_OCR_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 7,
+      sectionObserved: '論古人立印食官財名義',
+      boundedPropositionObserved: '財怕劫被劫則分',
+    }),
   },
   'W-SAMYEONG-WEALTH-RESOURCE': {
     authorityId: 'SCAN-SAMYEONG-SIKU-CADAL06066041',
     scanVolume: 'CADAL06066041 / 卷五',
-    scanSurfaceSection: '論古人立印食官財名義 / scan-backed OCR image unit 7',
+    scanSurfaceSection: '論古人立印食官財名義',
     corroboratingOcrUrl: 'https://ctext.org/wiki.pl?chapter=864968&if=en&remap=gb',
     corroborationLevel: 'SAME_EDITION_SCAN_OCR_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 7,
+      sectionObserved: '論古人立印食官財名義',
+      boundedPropositionObserved: '印怕財貪財則壞',
+    }),
   },
 } as const);
 
@@ -250,10 +280,10 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION,
-    issue: '#844' as const,
-    auditBaseSha: 'd07e8d6a52ed87c732af919956e68cf4738e3e4f' as const,
+    issue: '#860' as const,
+    auditBaseSha: '1d74dd024c9a603d0d65ff956c269523d4c3d235' as const,
     status:
-      'SCAN_BACKED_EDITION_CORROBORATION_ESTABLISHED_PARTIAL_DIRECT_SCAN_VERIFICATION' as const,
+      'SCAN_BACKED_EDITION_CORROBORATION_ESTABLISHED_TWELVE_OF_SIXTEEN_DIRECT_SCAN_VERIFIED' as const,
     upstreamPassageEvidenceId: passageEvidence.evidenceId,
     sourceAuthorities: SOURCE_AUTHORITIES,
     witnessRows,
