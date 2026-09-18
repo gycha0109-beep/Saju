@@ -1,0 +1,187 @@
+name: NLC 1940 Yuanhai Direct Scan Workbench
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/research-nlc-1940-yuanhai-direct-scan-workbench.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nlc-1940-yuanhai-direct-scan-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    name: Locate NLC 1940 四言獨步 / 增補四言獨步
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      OMP_THREAD_LIMIT: '1'
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+
+      - name: Install scan tooling
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils jq tesseract-ocr tesseract-ocr-chi-tra imagemagick
+
+      - name: Fetch and verify exact NLC 1940 binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nlc1940
+          api=/tmp/nlc1940/imageinfo.json
+
+          curl --fail --silent --show-error --get \
+            'https://commons.wikimedia.org/w/api.php' \
+            --data-urlencode 'action=query' \
+            --data-urlencode 'format=json' \
+            --data-urlencode 'prop=imageinfo' \
+            --data-urlencode 'iiprop=url|sha1|size' \
+            --data-urlencode 'titles=File:NLC416-12jh002712-40330 增補淵海子平音義評註.pdf' \
+            --output "$api"
+
+          registered_url="$(jq -r '.query.pages[]?.imageinfo[0]?.url // empty' "$api")"
+          api_sha1="$(jq -r '.query.pages[]?.imageinfo[0]?.sha1 // empty' "$api")"
+          api_size="$(jq -r '.query.pages[]?.imageinfo[0]?.size // empty' "$api")"
+
+          test -n "$registered_url"
+          test -n "$api_sha1"
+          test -n "$api_size"
+
+          curl --fail --location --silent --show-error "$registered_url" \
+            --output /tmp/nlc1940/NLC416-12jh002712-40330.pdf
+
+          actual_sha1="$(sha1sum /tmp/nlc1940/NLC416-12jh002712-40330.pdf | awk '{print $1}')"
+          actual_size="$(stat -c '%s' /tmp/nlc1940/NLC416-12jh002712-40330.pdf)"
+          pages="$(pdfinfo /tmp/nlc1940/NLC416-12jh002712-40330.pdf | awk '/^Pages:/ {print $2}')"
+
+          test "$actual_sha1" = "$api_sha1"
+          test "$actual_size" = "$api_size"
+          test "$pages" = '306'
+
+          printf 'asset=NLC416-12jh002712-40330\nsha1=%s\nbytes=%s\npages=%s\n' \
+            "$actual_sha1" "$actual_size" "$pages" \
+            | tee /tmp/nlc1940/verified-metadata.txt
+
+      - name: Render low-resolution locator pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nlc1940/locator-pages
+          pdftoppm -r 100 -gray -jpeg -jpegopt quality=78 \
+            /tmp/nlc1940/NLC416-12jh002712-40330.pdf \
+            /tmp/nlc1940/locator-pages/page
+
+      - name: OCR all pages as locator only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nlc1940/ocr
+
+          find /tmp/nlc1940/locator-pages -name 'page-*.jpg' -print0 \
+            | xargs -0 -n1 -P8 bash -c '
+                img="$0"
+                base="$(basename "$img" .jpg)"
+                out="/tmp/nlc1940/ocr/$base"
+                tesseract "$img" "$out" -l chi_tra --psm 6 >/dev/null 2>&1 || true
+              '
+
+          : > /tmp/nlc1940/ocr-locator-hits.txt
+          for txt in /tmp/nlc1940/ocr/page-*.txt; do
+            base="$(basename "$txt" .txt)"
+            page10="$(printf '%s' "$base" | sed 's/^page-//')"
+            page=$((10#$page10))
+            if grep -Eq '增補.{0,3}四言.{0,3}[獨独]步|四言.{0,3}[獨独]步|財旺生官|财旺生官|[煞殺杀]化.{0,2}[為爲为]印|比.{0,2}劫.{0,4}羊刃|財格.{0,3}大忌|财格.{0,3}大忌|印[綬绶].{0,2}見財|印[綬绶].{0,2}见财|先財後印|先印後財' "$txt"; then
+              {
+                echo "===== DIGITAL PAGE $page ====="
+                grep -En '增補.{0,3}四言.{0,3}[獨独]步|四言.{0,3}[獨独]步|財旺生官|财旺生官|[煞殺杀]化.{0,2}[為爲为]印|比.{0,2}劫.{0,4}羊刃|財格.{0,3}大忌|财格.{0,3}大忌|印[綬绶].{0,2}見財|印[綬绶].{0,2}见财|先財後印|先印後財' "$txt" || true
+              } >> /tmp/nlc1940/ocr-locator-hits.txt
+            fi
+          done
+
+          cat /tmp/nlc1940/ocr-locator-hits.txt
+
+      - name: Select candidate pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          hits = Path('/tmp/nlc1940/ocr-locator-hits.txt').read_text(errors='ignore')
+          pages = sorted({int(x) for x in re.findall(r'DIGITAL PAGE (\d+)', hits)})
+          expanded = set()
+          for p in pages:
+              expanded.update(range(max(1,p-3), min(306,p+3)+1))
+          Path('/tmp/nlc1940/candidate-pages.txt').write_text(
+              '\n'.join(map(str, sorted(expanded))) + ('\n' if expanded else '')
+          )
+          print('hit pages:', pages)
+          print('candidate pages:', sorted(expanded))
+          PY
+
+      - name: Build full-scan locator contact sheets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nlc1940/locator-review
+          cp /tmp/nlc1940/verified-metadata.txt /tmp/nlc1940/locator-review/
+          cp /tmp/nlc1940/ocr-locator-hits.txt /tmp/nlc1940/locator-review/
+          cp /tmp/nlc1940/candidate-pages.txt /tmp/nlc1940/locator-review/
+
+          n=0
+          sheet=1
+          files=()
+          for img in /tmp/nlc1940/locator-pages/page-*.jpg; do
+            files+=("$img")
+            n=$((n+1))
+            if [ "$n" -eq 20 ]; then
+              montage "${files[@]}" -thumbnail '220x' -tile 5x4 -geometry +6+6 \
+                "/tmp/nlc1940/locator-review/contact-sheet-$(printf '%02d' "$sheet").jpg"
+              files=()
+              n=0
+              sheet=$((sheet+1))
+            fi
+          done
+          if [ "${#files[@]}" -gt 0 ]; then
+            montage "${files[@]}" -thumbnail '220x' -tile 5x4 -geometry +6+6 \
+              "/tmp/nlc1940/locator-review/contact-sheet-$(printf '%02d' "$sheet").jpg"
+          fi
+
+      - name: Upload locator artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nlc-1940-yuanhai-locator
+          path: /tmp/nlc1940/locator-review
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Render candidate pages for direct review
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nlc1940/highres-review
+          cp /tmp/nlc1940/verified-metadata.txt /tmp/nlc1940/highres-review/
+          cp /tmp/nlc1940/ocr-locator-hits.txt /tmp/nlc1940/highres-review/
+          cp /tmp/nlc1940/candidate-pages.txt /tmp/nlc1940/highres-review/
+
+          while read -r page; do
+            [ -n "$page" ] || continue
+            pdftoppm -f "$page" -l "$page" -r 220 -png -singlefile \
+              /tmp/nlc1940/NLC416-12jh002712-40330.pdf \
+              "/tmp/nlc1940/highres-review/page-$(printf '%03d' "$page")"
+          done < /tmp/nlc1940/candidate-pages.txt
+
+      - name: Upload high-resolution review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nlc-1940-yuanhai-highres-review
+          path: /tmp/nlc1940/highres-review
+          if-no-files-found: warn
+          retention-days: 1
