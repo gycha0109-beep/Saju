@@ -197,7 +197,7 @@ const ACQUISITION_TARGETS = Object.freeze([
       exactFrozenWitnessCountEstablished: 0 as const,
     }),
     acquisitionAction:
-      'DIRECTLY_INSPECT_ZHUJI_PUBLIC_SCAN_FOR_FOUR_YAN_DUBU_AND_FROZEN_EXACT_STRINGS',
+      'DIRECT_INSPECTION_COMPLETE_NO_FROZEN_WITNESS_ESTABLISHED',
   }),
   Object.freeze({
     targetId: 'ACQ-YUANHAI-ZJSLIB-FLDB-2458-DIGITAL',
