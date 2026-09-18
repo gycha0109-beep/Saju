@@ -178,7 +178,14 @@ if (errorMatch) {
   throw new Error('provider_browser_error:' + decoded.message);
 }
 const match = dom.match(/FR199_RESULT_BASE64:([A-Za-z0-9+/=]+)/);
-if (!match) throw new Error('provider_result_not_found_in_dom');
+if (!match) {
+  throw new Error(
+    'provider_result_not_found_in_dom\n--- chrome stderr ---\n'
+      + (chromeRun.stderr || '').slice(-12000)
+      + '\n--- dumped dom ---\n'
+      + dom.slice(-12000),
+  );
+}
 const provider = JSON.parse(Buffer.from(match[1], 'base64').toString('utf8'));
 if (provider.runtimePackageVersion !== '0.10.35') throw new Error('provider_version_drift');
 if (JSON.stringify(provider.providerCandidateIndices) !== JSON.stringify([234, 454])) throw new Error('provider_candidate_drift');
