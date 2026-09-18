@@ -2,103 +2,318 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>MESH6J Face Capture</title>
   <script type="importmap">
     {"imports":{"@mediapipe/tasks-vision":"__MEDIAPIPE_ENTRY__"}}
   </script>
   <style>
-    :root { color-scheme: light; font-family: Inter, Pretendard, system-ui, sans-serif; background:#f4f5f7; color:#15171a; }
+    :root {
+      color-scheme: light;
+      font-family: Inter, Pretendard, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:#f4f5f7;
+      color:#15171a;
+    }
     * { box-sizing:border-box; }
-    body { margin:0; }
-    main { width:min(760px, calc(100% - 24px)); margin:18px auto 42px; }
-    h1 { margin:0 0 6px; font-size:26px; }
+    html, body { margin:0; min-height:100%; }
+    body { background:#f4f5f7; }
+    button, input { font:inherit; }
+    button { cursor:pointer; }
+    button:disabled { opacity:.42; cursor:not-allowed; }
+    [hidden] { display:none !important; }
+
+    .screen { min-height:100dvh; }
+    .content-shell {
+      width:min(680px, calc(100% - 24px));
+      margin:0 auto;
+      padding:24px 0 max(32px, env(safe-area-inset-bottom));
+    }
+    .stack { display:grid; gap:14px; }
+    .card {
+      background:#fff;
+      border:1px solid #e1e4e8;
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 6px 22px rgba(0,0,0,.05);
+    }
+    h1 { margin:0 0 8px; font-size:28px; }
     h2 { margin:0 0 12px; font-size:18px; }
     p { line-height:1.55; }
-    .lead { margin:0 0 18px; color:#5f6670; }
-    .stack { display:grid; gap:14px; }
-    .card { background:#fff; border:1px solid #e1e4e8; border-radius:16px; padding:16px; box-shadow:0 4px 18px rgba(0,0,0,.04); }
-    video { width:100%; aspect-ratio:4/5; object-fit:cover; border-radius:14px; background:#111; transform:scaleX(-1); }
-    .actions { display:flex; flex-wrap:wrap; gap:8px; }
-    button { border:0; border-radius:12px; padding:11px 14px; font:inherit; font-weight:750; cursor:pointer; background:#20242a; color:#fff; }
-    button.secondary { background:#e9edf2; color:#20242a; }
-    button:disabled { opacity:.42; cursor:not-allowed; }
-    .capture-button { width:100%; min-height:64px; font-size:20px; border-radius:16px; }
-    .capture-button::before { content:"📷 "; }
-    .status { padding:12px 14px; border-radius:12px; background:#eef3ff; color:#2f477c; font-size:14px; min-height:46px; }
-    .checks { display:grid; gap:10px; padding:12px; background:#f7f8fa; border-radius:12px; }
-    .checks label { display:flex; align-items:flex-start; gap:9px; font-size:14px; line-height:1.45; }
+    .lead { margin:0; color:#5f6670; }
+    .checks { display:grid; gap:12px; }
+    .checks label {
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      padding:12px;
+      border-radius:12px;
+      background:#f7f8fa;
+      font-size:14px;
+      line-height:1.45;
+    }
     .checks input { width:auto; margin-top:3px; }
-    details { border:1px solid #e4e7eb; border-radius:12px; padding:10px 12px; }
-    summary { cursor:pointer; font-weight:700; }
-    .fields { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+    .primary {
+      width:100%;
+      min-height:58px;
+      border:0;
+      border-radius:15px;
+      background:#15171a;
+      color:#fff;
+      font-weight:800;
+      font-size:18px;
+    }
+    .secondary {
+      border:0;
+      border-radius:12px;
+      background:#e9edf2;
+      color:#20242a;
+      padding:11px 14px;
+      font-weight:750;
+    }
+    .status {
+      padding:12px 14px;
+      border-radius:12px;
+      background:#eef3ff;
+      color:#2f477c;
+      font-size:14px;
+      line-height:1.45;
+    }
+    details {
+      border:1px solid #e4e7eb;
+      border-radius:12px;
+      padding:10px 12px;
+    }
+    summary { cursor:pointer; font-weight:750; }
+    .fields {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:12px;
+    }
     label.field { display:grid; gap:6px; font-size:13px; font-weight:650; }
-    input { width:100%; border:1px solid #cfd4da; border-radius:9px; padding:10px 11px; font:inherit; background:#fff; }
-    input:focus { outline:2px solid #8ba7ff; outline-offset:1px; }
-    .progress { display:flex; justify-content:space-between; gap:12px; font-size:14px; padding:4px 2px 0; color:#58616c; }
-    .boundary { font-size:12px; color:#626b75; line-height:1.55; margin:0; }
-    pre { margin:0; max-height:420px; overflow:auto; background:#11151a; color:#e8edf2; padding:13px; border-radius:10px; font-size:11px; white-space:pre-wrap; word-break:break-word; }
+    input[type="number"], input[type="text"] {
+      width:100%;
+      border:1px solid #cfd4da;
+      border-radius:9px;
+      padding:10px 11px;
+      background:#fff;
+    }
+    .boundary { margin:0; font-size:12px; color:#626b75; line-height:1.55; }
+
+    #capture-view {
+      position:fixed;
+      inset:0;
+      z-index:50;
+      overflow:hidden;
+      background:#000;
+      color:#fff;
+      height:100dvh;
+    }
+    .camera-stage {
+      position:absolute;
+      inset:0;
+      overflow:hidden;
+      background:#050505;
+    }
+    #camera {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      transform:scaleX(-1);
+      background:#111;
+    }
+    .camera-shade {
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,.58) 0%, rgba(0,0,0,.12) 22%, rgba(0,0,0,0) 50%, rgba(0,0,0,.18) 70%, rgba(0,0,0,.72) 100%);
+    }
+    .capture-topbar {
+      position:absolute;
+      top:0;
+      left:0;
+      right:0;
+      z-index:2;
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      align-items:center;
+      gap:12px;
+      padding:max(14px, env(safe-area-inset-top)) 16px 14px;
+    }
+    .ghost-button {
+      border:1px solid rgba(255,255,255,.36);
+      background:rgba(12,12,12,.38);
+      color:#fff;
+      border-radius:999px;
+      padding:9px 13px;
+      backdrop-filter:blur(10px);
+      font-weight:750;
+    }
+    .capture-progress {
+      text-align:center;
+      text-shadow:0 2px 8px rgba(0,0,0,.5);
+      line-height:1.25;
+    }
+    .capture-progress strong { display:block; font-size:17px; }
+    .capture-progress span { display:block; font-size:13px; opacity:.86; margin-top:3px; }
+    .capture-bottom {
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:0;
+      z-index:2;
+      display:grid;
+      justify-items:center;
+      gap:12px;
+      padding:18px 20px max(24px, calc(env(safe-area-inset-bottom) + 16px));
+    }
+    #capture-status {
+      width:min(92vw, 520px);
+      min-height:38px;
+      text-align:center;
+      color:#fff;
+      font-size:13px;
+      line-height:1.4;
+      text-shadow:0 2px 8px rgba(0,0,0,.7);
+    }
+    .shutter {
+      width:82px;
+      height:82px;
+      border-radius:50%;
+      border:6px solid rgba(255,255,255,.95);
+      background:transparent;
+      padding:6px;
+      display:grid;
+      place-items:center;
+    }
+    .shutter::after {
+      content:"";
+      width:58px;
+      height:58px;
+      border-radius:50%;
+      background:#fff;
+      display:block;
+      transition:transform .08s ease;
+    }
+    .shutter:active::after { transform:scale(.9); }
+    .shutter:disabled { opacity:.45; }
+    .capture-hint {
+      font-size:12px;
+      opacity:.82;
+      text-align:center;
+    }
+
+    .result-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .result-actions button { flex:1 1 180px; }
+    pre {
+      margin:0;
+      max-height:58vh;
+      overflow:auto;
+      background:#11151a;
+      color:#e8edf2;
+      padding:14px;
+      border-radius:12px;
+      font-size:11px;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
     @media (max-width:620px) {
-      main { width:min(100% - 16px, 760px); margin-top:10px; }
+      .content-shell { width:min(100% - 16px, 680px); padding-top:14px; }
+      h1 { font-size:24px; }
       .fields { grid-template-columns:1fr; }
-      h1 { font-size:23px; }
     }
   </style>
 </head>
 <body>
-<main class="stack">
-  <header>
-    <h1>얼굴 촬영 분석</h1>
-    <p class="lead">카메라를 켜고 얼굴을 맞춘 뒤 <strong>촬영 및 분석</strong>을 누르세요. 촬영 버튼을 누른 순간의 프레임만 사용합니다.</p>
-  </header>
+  <section id="prep-view" class="screen">
+    <main class="content-shell stack">
+      <header>
+        <h1>얼굴 촬영 분석</h1>
+        <p class="lead">조건을 확인한 뒤 촬영을 시작하면 카메라 전용 화면으로 전환됩니다.</p>
+      </header>
 
-  <section class="card stack">
-    <h2>1. 카메라</h2>
-    <video id="camera" autoplay muted playsinline></video>
-    <div class="actions">
-      <button id="open-camera">카메라 켜기</button>
-      <button id="close-camera" class="secondary" disabled>카메라 끄기</button>
-    </div>
+      <section class="card stack">
+        <h2>촬영 조건 확인</h2>
+        <div class="checks">
+          <label><input id="fresh-attestation" type="checkbox">지금 새로 촬영하는 이미지임을 확인합니다.</label>
+          <label><input id="participant-attestation" type="checkbox">반복 측정은 모두 같은 사람의 연속 촬영임을 확인합니다.</label>
+        </div>
+
+        <details>
+          <summary>고급 / 연구용 설정</summary>
+          <div class="fields">
+            <label class="field">측정 횟수
+              <input id="sweep-count" type="number" min="1" max="12" step="1" value="3">
+            </label>
+            <label class="field">측정당 촬영 수
+              <input id="frames-per-sweep" type="number" min="2" max="30" step="1" value="5">
+            </label>
+            <label class="field">Collection ref
+              <input id="collection-ref" type="text" value="mesh6j:collection:001">
+            </label>
+            <label class="field">Capture series ref
+              <input id="series-ref" type="text" value="mesh6j:series:001">
+            </label>
+            <label class="field">Condition ref
+              <input id="condition-ref" type="text" value="mesh6j:condition:baseline">
+            </label>
+            <label class="field">Sweep ref prefix
+              <input id="sweep-prefix" type="text" value="mesh6j:sweep">
+            </label>
+          </div>
+          <p class="boundary">기본은 3회 측정 × 회당 5회 명시적 셔터 입력입니다. 자동 촬영은 없습니다.</p>
+        </details>
+
+        <div id="prep-status" class="status">분석 runtime 준비 중…</div>
+        <button id="start-capture" class="primary" disabled>촬영 시작</button>
+        <p class="boundary">이 확인은 신원 인증이 아닙니다. candidate selection, development capture reuse, identity matching은 모두 false로 고정됩니다.</p>
+      </section>
+    </main>
   </section>
 
-  <section class="card stack">
-    <h2>2. 촬영 조건 확인</h2>
-    <div class="checks">
-      <label><input id="fresh-attestation" type="checkbox">지금 새로 촬영하는 이미지임을 확인합니다.</label>
-      <label><input id="participant-attestation" type="checkbox">반복 촬영을 사용하는 경우 모두 같은 사람임을 확인합니다.</label>
+  <section id="capture-view" class="screen" hidden>
+    <div class="camera-stage">
+      <video id="camera" autoplay muted playsinline></video>
+      <div class="camera-shade"></div>
     </div>
-    <p class="boundary">이 확인은 신원 인증이 아닙니다. candidate selection, development capture reuse, identity matching은 모두 false로 고정됩니다.</p>
 
-    <details>
-      <summary>고급 / 연구용 설정</summary>
-      <div class="fields">
-        <label class="field">촬영 횟수<input id="capture-count" type="number" min="1" step="1" value="1"></label>
-        <label class="field">Collection ref<input id="collection-ref" value="mesh6j:collection:001"></label>
-        <label class="field">Capture series ref<input id="series-ref" value="mesh6j:series:001"></label>
-        <label class="field">Condition ref<input id="condition-ref" value="mesh6j:condition:baseline"></label>
-        <label class="field">Capture ref prefix<input id="sweep-prefix" value="mesh6j:capture"></label>
+    <div class="capture-topbar">
+      <button id="cancel-capture" class="ghost-button">취소</button>
+      <div class="capture-progress">
+        <strong id="sweep-progress">측정 1 / 3</strong>
+        <span id="frame-progress">촬영 0 / 5</span>
       </div>
-      <p class="boundary">기본 1회 촬영이면 즉시 분석합니다. 반복 측정이 필요할 때만 횟수를 늘리세요. 각 버튼 클릭은 정확히 하나의 명시적 capture trigger입니다.</p>
-    </details>
-  </section>
-
-  <section class="card stack">
-    <h2>3. 촬영</h2>
-    <button id="capture-analyze" class="capture-button" disabled>촬영 및 분석</button>
-    <div class="progress">
-      <span>진행</span>
-      <strong id="capture-progress">0 / 1</strong>
+      <span></span>
     </div>
-    <div id="status" class="status">runtime 준비 중…</div>
+
+    <div class="capture-bottom">
+      <div id="capture-status">얼굴을 프레임 안에 맞춘 뒤 셔터를 누르세요.</div>
+      <button id="shutter" class="shutter" aria-label="촬영" disabled></button>
+      <div class="capture-hint">셔터 1회 = 현재 측정에 프레임 1개 추가</div>
+    </div>
   </section>
 
-  <section class="card stack">
-    <h2>분석 결과</h2>
-    <pre id="result">{}</pre>
-    <button id="download-result" class="secondary" disabled>분석 JSON 저장</button>
-    <p class="boundary">이 결과는 descriptive geometry evidence입니다. repeatability pass/fail, confidence, population norm, production admission 또는 해석 권한을 발행하지 않습니다.</p>
+  <section id="result-view" class="screen" hidden>
+    <main class="content-shell stack">
+      <header>
+        <h1>분석 완료</h1>
+        <p class="lead">촬영한 반복 프레임으로 생성된 descriptive geometry 결과입니다.</p>
+      </header>
+
+      <section class="card stack">
+        <div id="result-status" class="status">결과 생성 완료</div>
+        <pre id="result">{}</pre>
+        <div class="result-actions">
+          <button id="download-result" class="primary" disabled>JSON 다운로드</button>
+          <button id="retry-capture" class="secondary">다시 촬영</button>
+        </div>
+        <p class="boundary">결과는 descriptive evidence입니다. repeatability pass/fail, confidence, population norm, production admission 또는 전통 해석 권한을 자동 발행하지 않습니다.</p>
+      </section>
+    </main>
   </section>
-</main>
-<script type="module" src="/capture.mjs"></script>
+
+  <script type="module" src="/capture.mjs"></script>
 </body>
 </html>

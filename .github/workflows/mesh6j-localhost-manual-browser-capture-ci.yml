@@ -11,6 +11,7 @@ on:
       - 'tools/face-geometry/capture/mesh6j-operator-capture.mjs'
       - 'packages/face-geometry/docs/mesh6j-localhost-manual-browser-capture-surface.md'
       - 'packages/face-geometry/docs/mesh6j1-private-lan-https-mobile-capture.md'
+      - 'packages/face-geometry/docs/mesh6j3-camera-style-mobile-multi-frame-capture.md'
       - 'packages/face-reading/src/mesh6h-browser-camera-frame-source.ts'
       - 'packages/face-reading/src/mesh6i-manual-browser-capture-controller.ts'
       - 'packages/face-reading/src/mesh6g-prospective-operator-capture-session.ts'

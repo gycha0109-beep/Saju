@@ -17,21 +17,29 @@ const PARITY_INPUT = Object.freeze({
 });
 
 const elements = Object.freeze({
-  video: document.querySelector('#camera'),
-  openCamera: document.querySelector('#open-camera'),
-  closeCamera: document.querySelector('#close-camera'),
+  prepView: document.querySelector('#prep-view'),
+  captureView: document.querySelector('#capture-view'),
+  resultView: document.querySelector('#result-view'),
+  freshAttestation: document.querySelector('#fresh-attestation'),
+  participantAttestation: document.querySelector('#participant-attestation'),
+  sweepCount: document.querySelector('#sweep-count'),
+  framesPerSweep: document.querySelector('#frames-per-sweep'),
   collectionRef: document.querySelector('#collection-ref'),
   seriesRef: document.querySelector('#series-ref'),
   conditionRef: document.querySelector('#condition-ref'),
   sweepPrefix: document.querySelector('#sweep-prefix'),
-  captureCount: document.querySelector('#capture-count'),
-  freshAttestation: document.querySelector('#fresh-attestation'),
-  participantAttestation: document.querySelector('#participant-attestation'),
-  captureAnalyze: document.querySelector('#capture-analyze'),
-  captureProgress: document.querySelector('#capture-progress'),
-  status: document.querySelector('#status'),
+  prepStatus: document.querySelector('#prep-status'),
+  startCapture: document.querySelector('#start-capture'),
+  video: document.querySelector('#camera'),
+  cancelCapture: document.querySelector('#cancel-capture'),
+  sweepProgress: document.querySelector('#sweep-progress'),
+  frameProgress: document.querySelector('#frame-progress'),
+  captureStatus: document.querySelector('#capture-status'),
+  shutter: document.querySelector('#shutter'),
+  resultStatus: document.querySelector('#result-status'),
   result: document.querySelector('#result'),
   downloadResult: document.querySelector('#download-result'),
+  retryCapture: document.querySelector('#retry-capture'),
 });
 
 for (const [name, value] of Object.entries(elements)) {
@@ -90,8 +98,22 @@ let active = null;
 let lastResult = null;
 let sessionOrdinal = 0;
 
-function setStatus(message) {
-  elements.status.textContent = message;
+function setPrepStatus(message) {
+  elements.prepStatus.textContent = message;
+}
+
+function setCaptureStatus(message) {
+  elements.captureStatus.textContent = message;
+}
+
+function setResultStatus(message) {
+  elements.resultStatus.textContent = message;
+}
+
+function showView(name) {
+  elements.prepView.hidden = name !== 'prep';
+  elements.captureView.hidden = name !== 'capture';
+  elements.resultView.hidden = name !== 'result';
 }
 
 function nonEmptyInput(element, label) {
@@ -204,55 +226,40 @@ async function buildRuntimeInputs() {
   });
 }
 
-function configuredCaptureCount() {
-  const count = Number(elements.captureCount.value);
-  return Number.isInteger(count) && count >= 1 ? count : null;
+function configuredSweepCount() {
+  const count = Number(elements.sweepCount.value);
+  return Number.isInteger(count) && count >= 1 && count <= 12 ? count : null;
 }
 
-function updateCaptureLabel() {
-  const configured = configuredCaptureCount() ?? 1;
-  if (active === null) {
-    elements.captureAnalyze.textContent = configured === 1
-      ? '촬영 및 분석'
-      : '촬영 시작 (1 / ' + configured + ')';
-    elements.captureProgress.textContent = '0 / ' + configured;
-    return;
-  }
-
-  const completed = active.currentCaptureIndex;
-  elements.captureProgress.textContent = completed + ' / ' + active.captureCount;
-  if (completed < active.captureCount) {
-    elements.captureAnalyze.textContent =
-      completed === 0
-        ? '촬영 시작 (1 / ' + active.captureCount + ')'
-        : '다음 촬영 (' + (completed + 1) + ' / ' + active.captureCount + ')';
-  } else {
-    elements.captureAnalyze.textContent = '분석 중…';
-  }
+function configuredFramesPerSweep() {
+  const count = Number(elements.framesPerSweep.value);
+  return Number.isInteger(count) && count >= 2 && count <= 30 ? count : null;
 }
 
-function updateControls() {
-  const cameraOpen = camera !== null;
-  const sessionActive = active !== null;
-  const attestationsReady =
-    elements.freshAttestation.checked && elements.participantAttestation.checked;
-  const countReady = configuredCaptureCount() !== null;
-
-  elements.openCamera.disabled = cameraOpen || sessionActive;
-  elements.closeCamera.disabled = !cameraOpen || sessionActive;
-  elements.captureAnalyze.disabled =
-    !cameraOpen || runtimeInputs === null || !attestationsReady || !countReady
-    || (sessionActive && active.currentCaptureIndex >= active.captureCount);
+function updatePrepControls() {
+  const ready =
+    runtimeInputs !== null
+    && elements.freshAttestation.checked
+    && elements.participantAttestation.checked
+    && configuredSweepCount() !== null
+    && configuredFramesPerSweep() !== null
+    && active === null;
+  elements.startCapture.disabled = !ready;
   elements.downloadResult.disabled = lastResult === null;
-  updateCaptureLabel();
+}
+
+function updateCaptureProgress() {
+  if (active === null) return;
+  const sweepNumber = Math.min(active.currentSweepIndex + 1, active.sweepCount);
+  const frameNumber = active.frameCounts[active.currentSweepIndex] ?? active.framesPerSweep;
+  elements.sweepProgress.textContent = '측정 ' + sweepNumber + ' / ' + active.sweepCount;
+  elements.frameProgress.textContent = '촬영 ' + frameNumber + ' / ' + active.framesPerSweep;
 }
 
 function closeCamera() {
   if (camera === null) return;
   camera.close();
   camera = null;
-  setStatus('카메라를 껐습니다.');
-  updateControls();
 }
 
 function createCaptureSession() {
@@ -264,12 +271,15 @@ function createCaptureSession() {
   const prospectiveCollectionRef = nonEmptyInput(elements.collectionRef, 'Collection ref');
   const captureSeriesRef = nonEmptyInput(elements.seriesRef, 'Capture series ref');
   const captureConditionRef = nonEmptyInput(elements.conditionRef, 'Condition ref');
-  const sweepPrefix = nonEmptyInput(elements.sweepPrefix, 'Capture ref prefix');
-  const captureCount = configuredCaptureCount();
-  if (captureCount === null) throw new Error('촬영 횟수는 1 이상의 정수여야 합니다.');
+  const sweepPrefix = nonEmptyInput(elements.sweepPrefix, 'Sweep ref prefix');
+  const sweepCount = configuredSweepCount();
+  const framesPerSweep = configuredFramesPerSweep();
+  if (sweepCount === null) throw new Error('측정 횟수는 1~12 정수여야 합니다.');
+  if (framesPerSweep === null) throw new Error('측정당 촬영 수는 2~30 정수여야 합니다.');
 
-  const queues = Array.from({ length: captureCount }, () => new ManualTriggerQueue());
-  const lastTimestamps = Array.from({ length: captureCount }, () => null);
+  const queues = Array.from({ length: sweepCount }, () => new ManualTriggerQueue());
+  const lastTimestamps = Array.from({ length: sweepCount }, () => null);
+  const frameCounts = Array.from({ length: sweepCount }, () => 0);
   const manifests = queues.map((queue, index) => Object.freeze({
     manifest: Object.freeze({
       prospectiveCollectionRef,
@@ -290,9 +300,12 @@ function createCaptureSession() {
   const session = {
     queues,
     lastTimestamps,
-    currentCaptureIndex: 0,
-    captureCount,
+    frameCounts,
+    currentSweepIndex: 0,
+    sweepCount,
+    framesPerSweep,
     sessionOrdinal,
+    cancelled: false,
     promise: null,
   };
 
@@ -309,107 +322,169 @@ function createCaptureSession() {
     sweeps: manifests,
     cameraOwnership: 'caller_retains_camera',
   }).then((result) => {
+    if (session.cancelled) return null;
     lastResult = result;
     elements.result.textContent = JSON.stringify(result, null, 2);
-    setStatus('분석 완료. 결과를 확인하거나 JSON으로 저장할 수 있습니다.');
+    setResultStatus(
+      session.sweepCount + '회 측정 × ' + session.framesPerSweep
+      + '회 촬영 분석 완료',
+    );
+    closeCamera();
     if (active === session) active = null;
-    updateControls();
+    elements.downloadResult.disabled = false;
+    showView('result');
+    updatePrepControls();
     return result;
   }).catch((error) => {
     for (const queue of session.queues) queue.close();
-    setStatus('분석 실패: ' + (error instanceof Error ? error.message : String(error)));
     if (active === session) active = null;
-    updateControls();
+    closeCamera();
+    if (session.cancelled) {
+      showView('prep');
+      setPrepStatus('촬영을 취소했습니다.');
+    } else {
+      showView('prep');
+      setPrepStatus('분석 실패: ' + (error instanceof Error ? error.message : String(error)));
+    }
+    updatePrepControls();
     return null;
   });
 
-  updateControls();
+  updateCaptureProgress();
   return session;
 }
 
-elements.openCamera.addEventListener('click', async () => {
+async function startCaptureFlow() {
   try {
-    setStatus('카메라 권한을 요청하고 있습니다…');
+    elements.startCapture.disabled = true;
+    setPrepStatus('카메라 권한을 요청하고 있습니다…');
     camera = await openMesh6HBrowserCamera({ video: elements.video });
-    setStatus('카메라 준비 완료. 얼굴을 맞춘 뒤 촬영 및 분석을 누르세요.');
+    const session = createCaptureSession();
+    showView('capture');
+    setCaptureStatus('얼굴을 프레임 안에 맞춘 뒤 셔터를 누르세요.');
+    elements.shutter.disabled = false;
+    updateCaptureProgress();
+    return session;
   } catch (error) {
-    camera = null;
-    setStatus('카메라 열기 실패: ' + (error instanceof Error ? error.message : String(error)));
+    closeCamera();
+    active = null;
+    setPrepStatus('촬영 시작 실패: ' + (error instanceof Error ? error.message : String(error)));
+    showView('prep');
+    updatePrepControls();
+    return null;
   }
-  updateControls();
+}
+
+async function captureOneExplicitFrame() {
+  const session = active;
+  if (session === null) return;
+  const sweepIndex = session.currentSweepIndex;
+  if (sweepIndex >= session.sweepCount) return;
+
+  const frameIndex = session.frameCounts[sweepIndex];
+  if (frameIndex >= session.framesPerSweep) return;
+
+  const now = performance.timeOrigin + performance.now();
+  const previous = session.lastTimestamps[sweepIndex];
+  if (previous !== null && !(now > previous)) {
+    throw new Error('현재 capture timestamp가 이전 값보다 크지 않습니다.');
+  }
+
+  elements.shutter.disabled = true;
+  setCaptureStatus(
+    '측정 ' + (sweepIndex + 1) + ' / ' + session.sweepCount
+    + ' · 촬영 ' + (frameIndex + 1) + ' / ' + session.framesPerSweep,
+  );
+
+  const providerRunRef =
+    'mesh6j:session:' + session.sessionOrdinal
+    + ':sweep:' + (sweepIndex + 1)
+    + ':frame:' + (frameIndex + 1);
+
+  await session.queues[sweepIndex].push(Object.freeze({
+    timestampMs: now,
+    providerRunRef,
+  }));
+
+  session.lastTimestamps[sweepIndex] = now;
+  session.frameCounts[sweepIndex] += 1;
+  updateCaptureProgress();
+
+  const sweepComplete = session.frameCounts[sweepIndex] === session.framesPerSweep;
+  if (sweepComplete) {
+    session.queues[sweepIndex].close();
+    session.currentSweepIndex += 1;
+  }
+
+  const sessionComplete = session.currentSweepIndex === session.sweepCount;
+  if (sessionComplete) {
+    elements.shutter.disabled = true;
+    elements.sweepProgress.textContent = '촬영 완료';
+    elements.frameProgress.textContent =
+      (session.sweepCount * session.framesPerSweep) + '개 프레임';
+    setCaptureStatus('마지막 촬영 완료. 촬영한 프레임으로 분석 중입니다…');
+    await session.promise;
+    return;
+  }
+
+  if (sweepComplete) {
+    setCaptureStatus(
+      '측정 ' + (sweepIndex + 1) + ' 완료. 다음 측정을 위해 얼굴 위치를 다시 맞추고 셔터를 누르세요.',
+    );
+  } else {
+    setCaptureStatus('좋습니다. 같은 측정을 이어서 다음 셔터를 눌러주세요.');
+  }
+  updateCaptureProgress();
+  elements.shutter.disabled = false;
+}
+
+function cancelActiveCapture() {
+  const session = active;
+  if (session !== null) {
+    session.cancelled = true;
+    for (const queue of session.queues) queue.close();
+    active = null;
+  }
+  elements.shutter.disabled = true;
+  closeCamera();
+  showView('prep');
+  setPrepStatus('촬영을 취소했습니다.');
+  updatePrepControls();
+}
+
+elements.startCapture.addEventListener('click', async () => {
+  await startCaptureFlow();
 });
 
-elements.closeCamera.addEventListener('click', closeCamera);
+elements.cancelCapture.addEventListener('click', () => {
+  cancelActiveCapture();
+});
+
+elements.shutter.addEventListener('click', async () => {
+  try {
+    await captureOneExplicitFrame();
+  } catch (error) {
+    const session = active;
+    if (session !== null) {
+      for (const queue of session.queues) queue.close();
+      active = null;
+    }
+    closeCamera();
+    showView('prep');
+    setPrepStatus('촬영 실패: ' + (error instanceof Error ? error.message : String(error)));
+    updatePrepControls();
+  }
+});
 
 for (const element of [
   elements.freshAttestation,
   elements.participantAttestation,
-  elements.captureCount,
+  elements.sweepCount,
+  elements.framesPerSweep,
 ]) {
-  element.addEventListener('change', updateControls);
-  element.addEventListener('input', updateControls);
+  element.addEventListener('change', updatePrepControls);
+  element.addEventListener('input', updatePrepControls);
 }
-
-elements.captureAnalyze.addEventListener('click', async () => {
-  let session = active;
-  try {
-    if (session === null) session = createCaptureSession();
-    if (active !== session) return;
-
-    const index = session.currentCaptureIndex;
-    if (index >= session.captureCount) return;
-
-    const now = performance.timeOrigin + performance.now();
-    const previous = session.lastTimestamps[index];
-    if (previous !== null && !(now > previous)) {
-      throw new Error('현재 capture timestamp가 이전 값보다 크지 않습니다.');
-    }
-
-    elements.captureAnalyze.disabled = true;
-    setStatus(
-      session.captureCount === 1
-        ? '촬영 중…'
-        : '촬영 중… (' + (index + 1) + ' / ' + session.captureCount + ')',
-    );
-
-    const providerRunRef =
-      'mesh6j:session:' + session.sessionOrdinal
-      + ':sweep:' + (index + 1)
-      + ':frame:1';
-
-    await session.queues[index].push(Object.freeze({
-      timestampMs: now,
-      providerRunRef,
-    }));
-
-    session.lastTimestamps[index] = now;
-
-    // The explicit operator click above is the sole cause of this one-frame
-    // sweep completing. No timer, frame callback, selection, or score closes it.
-    session.queues[index].close();
-    session.currentCaptureIndex += 1;
-
-    if (session.currentCaptureIndex < session.captureCount) {
-      setStatus(
-        (index + 1) + ' / ' + session.captureCount
-        + ' 촬영 완료. 얼굴 위치를 다시 맞춘 뒤 다음 촬영을 누르세요.',
-      );
-      updateControls();
-      return;
-    }
-
-    setStatus('마지막 촬영 완료. 촬영한 프레임으로 분석 중입니다…');
-    updateControls();
-    await session.promise;
-  } catch (error) {
-    if (session !== null) {
-      for (const queue of session.queues) queue.close();
-      if (active === session) active = null;
-    }
-    setStatus('촬영 실패: ' + (error instanceof Error ? error.message : String(error)));
-    updateControls();
-  }
-});
 
 elements.downloadResult.addEventListener('click', () => {
   if (lastResult === null) return;
@@ -423,6 +498,15 @@ elements.downloadResult.addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
+elements.retryCapture.addEventListener('click', () => {
+  lastResult = null;
+  elements.result.textContent = '{}';
+  elements.downloadResult.disabled = true;
+  showView('prep');
+  setPrepStatus('다시 촬영할 준비가 됐습니다.');
+  updatePrepControls();
+});
+
 window.addEventListener('beforeunload', () => {
   if (active !== null) {
     for (const queue of active.queues) queue.close();
@@ -430,12 +514,13 @@ window.addEventListener('beforeunload', () => {
   camera?.close();
 });
 
-updateControls();
+showView('prep');
+updatePrepControls();
 try {
-  setStatus('분석 runtime을 준비 중입니다…');
+  setPrepStatus('분석 runtime을 준비 중입니다…');
   runtimeInputs = await buildRuntimeInputs();
-  setStatus('준비 완료. 카메라를 켜고 촬영하세요.');
+  setPrepStatus('준비 완료. 조건을 확인하고 촬영 시작을 누르세요.');
 } catch (error) {
-  setStatus('runtime 준비 실패: ' + (error instanceof Error ? error.message : String(error)));
+  setPrepStatus('runtime 준비 실패: ' + (error instanceof Error ? error.message : String(error)));
 }
-updateControls();
+updatePrepControls();

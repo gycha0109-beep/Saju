@@ -44,8 +44,8 @@ expectIncludes(server, "project_gnm_regions_to_mediapipe468_weighted.py", 'MESH6
 const scriptSrcMatch = /script-src ([^;]+); connect-src/.exec(server);
 expect(scriptSrcMatch !== null, 'MESH6J CSP script-src directive must be statically inspectable.');
 const scriptSrcTokens = scriptSrcMatch[1].trim().split(/\s+/);
-expect(scriptSrcTokens.includes("'wasm-unsafe-eval'"), 'MESH6J.2 must narrowly permit WebAssembly compilation.');
-expect(!scriptSrcTokens.includes("'unsafe-eval'"), 'MESH6J.2 must not broaden CSP to unsafe-eval.');
+expect(scriptSrcTokens.includes("'wasm-unsafe-eval'"), 'MESH6J must narrowly permit WebAssembly compilation.');
+expect(!scriptSrcTokens.includes("'unsafe-eval'"), 'MESH6J must not broaden CSP to unsafe-eval.');
 expectIncludes(server, "'permissions-policy': 'camera=(self)'", 'MESH6J must restrict camera permission to self.');
 expectIncludes(server, "MYEONGHWA_MESH6J_SMOKE", 'MESH6J server must expose deterministic localhost smoke mode.');
 expectIncludes(server, "MYEONGHWA_MESH6J_LAN_SMOKE", 'MESH6J.1 server must expose deterministic LAN HTTPS smoke mode.');
@@ -55,9 +55,9 @@ for (const forbidden of [
   "request.method === 'PUT'",
   "request.method === 'PATCH'",
   "request.method === 'DELETE'",
-  "rawImage",
-  "rawVideo",
-  "MediaRecorder",
+  'rawImage',
+  'rawVideo',
+  'MediaRecorder',
 ]) {
   expectExcludes(server, forbidden, 'MESH6J server must expose no upload/raw-capture persistence path.');
 }
@@ -99,33 +99,61 @@ for (const address of [
   expect(denied, 'Expected LAN request denial for ' + address);
 }
 
+expectIncludes(page, 'id="prep-view"', 'MESH6J.3 must expose a preparation view.');
+expectIncludes(page, 'id="capture-view"', 'MESH6J.3 must expose a dedicated capture view.');
+expectIncludes(page, 'id="result-view"', 'MESH6J.3 must expose a result view.');
 expectIncludes(page, 'id="fresh-attestation"', 'MESH6J page must require explicit freshness attestation.');
 expectIncludes(page, 'id="participant-attestation"', 'MESH6J page must require explicit same-participant-series attestation.');
-expectIncludes(page, 'id="capture-analyze"', 'MESH6J.2 page must expose a primary capture-and-analyze control.');
-expectIncludes(page, 'id="capture-count"', 'MESH6J.2 page must retain optional repeated research capture count.');
-expectIncludes(page, 'value="1"', 'MESH6J.2 default capture count must be one.');
-for (const removed of ['id="start-session"', 'id="capture-frame"', 'id="finish-sweep"']) {
-  expectExcludes(page, removed, 'MESH6J.2 must hide internal session/sweep orchestration controls.');
-}
-expectIncludes(page, 'id="download-result"', 'MESH6J page must expose descriptive JSON download.');
+expectIncludes(page, 'id="start-capture"', 'MESH6J.3 preparation view must expose one capture-start control.');
+expectIncludes(page, 'id="shutter"', 'MESH6J.3 capture view must expose a dedicated shutter control.');
+expectIncludes(page, 'class="shutter"', 'MESH6J.3 shutter must use the camera-style shutter class.');
+expectIncludes(page, '.shutter {', 'MESH6J.3 shutter styling must be explicit.');
+expectIncludes(page, 'border-radius:50%;', 'MESH6J.3 shutter must be circular.');
+expectIncludes(page, 'position:fixed;', 'MESH6J.3 capture view must be fixed to the viewport.');
+expectIncludes(page, 'overflow:hidden;', 'MESH6J.3 capture view must prevent scrolling.');
+expectIncludes(page, 'height:100dvh;', 'MESH6J.3 capture view must fit the mobile viewport.');
+expectIncludes(page, 'id="sweep-progress"', 'MESH6J.3 capture view must show measurement progress.');
+expectIncludes(page, 'id="frame-progress"', 'MESH6J.3 capture view must show per-sweep frame progress.');
+expectIncludes(page, 'id="sweep-count" type="number" min="1" max="12" step="1" value="3"', 'MESH6J.3 default sweep count must be three.');
+expectIncludes(page, 'id="frames-per-sweep" type="number" min="2" max="30" step="1" value="5"', 'MESH6J.3 default frames per sweep must be five and cannot be one.');
+expectIncludes(page, 'id="download-result"', 'MESH6J.3 result view must expose descriptive JSON download.');
+expectIncludes(page, 'id="retry-capture"', 'MESH6J.3 result view must allow another capture session.');
+expectIncludes(page, 'id="result"', 'MESH6J.3 result view must expose bounded JSON preview.');
 expectIncludes(page, '__MEDIAPIPE_ENTRY__', 'MESH6J page must receive the installed pinned MediaPipe entry through an import map.');
 
-expectIncludes(client, "openMesh6HBrowserCamera", 'MESH6J client must open camera only through MESH6H.');
-expectIncludes(client, "runMesh6IManualBrowserCaptureController", 'MESH6J client must execute sessions only through MESH6I.');
+for (const removed of [
+  'id="start-session"',
+  'id="capture-frame"',
+  'id="finish-sweep"',
+  'id="capture-analyze"',
+  'id="capture-count"',
+]) {
+  expectExcludes(page, removed, 'MESH6J.3 must not expose legacy session/sweep orchestration controls.');
+}
+
+expectIncludes(client, 'openMesh6HBrowserCamera', 'MESH6J client must open camera only through MESH6H.');
+expectIncludes(client, 'runMesh6IManualBrowserCaptureController', 'MESH6J client must execute sessions only through MESH6I.');
 expectIncludes(client, "cameraOwnership: 'caller_retains_camera'", 'MESH6J interactive session must retain camera ownership explicitly.');
 expectIncludes(client, 'postPreregistrationFreshCaptureAttested: true', 'MESH6J must map the operator freshness attestation into MESH6E input.');
 expectIncludes(client, 'sameParticipantSeriesAttested: true', 'MESH6J must map the operator participant-series attestation into MESH6E input.');
 expectIncludes(client, 'usedForCandidateSelection: false', 'MESH6J must prohibit candidate-selection use.');
 expectIncludes(client, 'developmentCaptureReuse: false', 'MESH6J must prohibit development-capture reuse.');
 expectIncludes(client, 'identityMatchingPerformed: false', 'MESH6J must prohibit identity matching.');
-expectIncludes(client, 'performance.timeOrigin + performance.now()', 'MESH6J capture timestamps must originate from the explicit click-time monotonic browser clock.');
-expectIncludes(client, "elements.captureAnalyze.addEventListener('click'", 'MESH6J.2 capture must originate from the explicit primary button.');
-expectIncludes(client, 'await session.queues[index].push', 'MESH6J.2 capture button must wait until exactly one explicit trigger is consumed.');
-expectIncludes(client, 'session.queues[index].close()', 'MESH6J.2 must close the one-frame sweep only after its explicit trigger is consumed.');
-expectIncludes(client, 'session.currentCaptureIndex += 1', 'MESH6J.2 must advance only after explicit capture completion.');
-expectIncludes(client, 'await session.promise', 'MESH6J.2 must await analysis after the final configured explicit capture.');
+expectIncludes(client, 'performance.timeOrigin + performance.now()', 'MESH6J capture timestamps must originate from the explicit shutter-time monotonic browser clock.');
+expectIncludes(client, "elements.startCapture.addEventListener('click'", 'MESH6J.3 camera opening must be initiated by the preparation control.');
+expectIncludes(client, "elements.shutter.addEventListener('click'", 'MESH6J.3 capture must originate from the explicit shutter control.');
+expectIncludes(client, 'await session.queues[sweepIndex].push', 'MESH6J.3 each shutter click must wait until exactly one explicit trigger is consumed.');
+expectIncludes(client, "':frame:' + (frameIndex + 1)", 'MESH6J.3 provider run references must preserve explicit frame sequence.');
+expectIncludes(client, 'session.frameCounts[sweepIndex] += 1', 'MESH6J.3 must increment the current sweep frame count only after trigger consumption.');
+expectIncludes(client, 'const sweepComplete = session.frameCounts[sweepIndex] === session.framesPerSweep;', 'MESH6J.3 sweep completion must require all configured explicit frames.');
+expectIncludes(client, 'if (sweepComplete) {', 'MESH6J.3 queue closure must be guarded by sweep completion.');
+expectIncludes(client, 'session.queues[sweepIndex].close();', 'MESH6J.3 must close the current queue only after the explicit frame quota is reached.');
+expectIncludes(client, 'session.currentSweepIndex += 1;', 'MESH6J.3 must advance only after the current sweep closes.');
+expectIncludes(client, 'const sessionComplete = session.currentSweepIndex === session.sweepCount;', 'MESH6J.3 session completion must require every sweep.');
+expectIncludes(client, 'await session.promise;', 'MESH6J.3 must await descriptive analysis only after the final configured explicit frame.');
+expectIncludes(client, "showView('result');", 'MESH6J.3 must switch to the result view after analysis.');
 expectIncludes(client, "new Blob([payload], { type: 'application/json' })", 'MESH6J export must be the descriptive JSON artifact.');
-expectIncludes(client, 'for (const queue of session.queues) queue.close()', 'MESH6J must close outstanding trigger streams on capture/session failure.');
+expectIncludes(client, 'for (const queue of session.queues) queue.close()', 'MESH6J must close outstanding trigger streams on cancellation/failure.');
 
 for (const forbidden of [
   'setInterval(',
@@ -152,8 +180,8 @@ for (const forbidden of [
 
 expectExcludes(client, 'throw error;', 'MESH6J session promise must not create an unhandled rejection after UI failure handling.');
 
-const importCount = (client.match(/runMesh6IManualBrowserCaptureController/g) || []).length;
-expect(importCount === 2, 'MESH6J should import and invoke the MESH6I controller exactly once each.');
+const controllerCount = (client.match(/runMesh6IManualBrowserCaptureController/g) || []).length;
+expect(controllerCount === 2, 'MESH6J should import and invoke the MESH6I controller exactly once each.');
 
 process.stdout.write(JSON.stringify({
   status: 'MESH6J_MANUAL_BROWSER_CAPTURE_SURFACE_CONTRACT_PASS',
@@ -162,8 +190,11 @@ process.stdout.write(JSON.stringify({
   nonPrivateRemoteDenialVerified: true,
   getOnlyServerVerified: true,
   wasmCompilationCspNarrowlyAuthorized: true,
-  captureToAnalysisUxVerified: true,
-  explicitManualTriggerVerified: true,
+  threeViewMobileUxVerified: true,
+  fixedCameraShutterCompositionVerified: true,
+  defaultThreeSweepsFiveFramesVerified: true,
+  multiFrameSweepExplicitTriggerVerified: true,
+  finalFrameAnalysisTransitionVerified: true,
   manifestAttestationsVerified: true,
   noAutomaticCaptureVerified: true,
   noRawCapturePersistenceVerified: true,
