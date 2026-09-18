@@ -17,7 +17,7 @@ jobs:
     name: Locate and render Tianyi 四言獨步
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
 
     steps:
       - name: Checkout PR head
@@ -85,10 +85,10 @@ jobs:
           mkdir -p /tmp/tianyi/ocr
           find /tmp/tianyi/locator -name 'page-*.jpg' -print0 \
             | sort -z \
-            | xargs -0 -n1 -P4 -I{} bash -c '
+            | xargs -0 -P8 -I{} bash -c '
                 img="$1"
                 stem="$(basename "$img" .jpg)"
-                tesseract "$img" "/tmp/tianyi/ocr/$stem" -l chi_tra --psm 5 2>/dev/null || true
+                OMP_THREAD_LIMIT=1 tesseract "$img" "/tmp/tianyi/ocr/$stem" -l chi_tra --psm 5 2>/dev/null || true
               ' _ {}
 
       - name: Rank locator pages and choose candidates
