@@ -1,0 +1,146 @@
+# General Natal Conclusion T8 — Yuanhai Acquisition Target Registry
+
+Issue: #879  
+Audit base: `4dd9ca8e987455ef939c7339024ba88ace24ced8`
+
+## Purpose
+
+The four unresolved Yuanhai witnesses cannot advance from the currently inspected Ming Wanli NLC `四言獨步` surface because #875 / #876 established a textual-variant divergence, and #877 / #878 found no production-admissible alternate 4/4 scan surface.
+
+This registry turns the next evidence step into concrete acquisition targets.
+
+It does **not** treat a catalog record as phrase-level evidence.
+
+## Unresolved witnesses
+
+```text
+W-YUANHAI-WEALTH-OFFICER
+W-YUANHAI-OFFICER-RESOURCE
+W-YUANHAI-PEER-WEALTH
+W-YUANHAI-WEALTH-RESOURCE
+```
+
+Current direct-scan count remains **12 / 16**.
+
+## P1 — Gangwon Yulgok Korean Studies Archive
+
+```text
+catalog id   = YG015-01-470
+title        = 新刊合倂官板音義評註淵海子平 卷1~5
+books        = 1
+size         = 14.7 × 9.8 cm
+author       = 徐大升
+edition      = 石印本
+catalog note = 增補淵海子平音義評註
+```
+
+Catalog source:
+
+```text
+https://db.yulgok.or.kr/data/media/EB000008_svc.pdf
+```
+
+Public page images have not been established.
+
+Acquisition action:
+
+```text
+obtain page images or a digital reproduction of the relevant later-volume
+surface and inspect 四言獨步 directly
+```
+
+## P1 — University of Tokyo Institute for Advanced Studies on Asia
+
+```text
+CiNii NCID     = BB19249231
+title          = 増補淵海子平音義評註
+imprint        = 上海錦章圖書局, [19--]
+edition        = 石印本
+extent         = 6冊
+relevant item  = [4]
+call number    = 6402838715
+```
+
+Catalog:
+
+```text
+https://ci.nii.ac.jp/ncid/BB19249231
+```
+
+Public digital scan has not been established.
+
+## P1 — Bukkyo University Library
+
+```text
+CiNii NCID     = BA88839860
+title          = 新刊合併官板音義評註淵海子平 5卷
+imprint        = 千頃堂書局, [19--]
+edition        = 石印本
+relevant item  = 卷之4-5
+call number    = 000241369
+```
+
+Catalog:
+
+```text
+https://ci.nii.ac.jp/ncid/BA88839860
+```
+
+Public digital scan has not been established.
+
+## P2 — Shanghai Fuwen Shuju bibliographic lead
+
+```text
+title   = 淵海子平（新刊合併官板音義評註淵海子平）五卷
+edition = 清光緒間上海富文書局石印本
+```
+
+Bibliographic lead:
+
+```text
+https://www.guoxuedashi.com/shumu/gj-1762324oo.html
+```
+
+The surfaced record does not establish a holding institution or a retrievable scan. It therefore remains a bibliographic lead only.
+
+## Deterministic counts
+
+```text
+unresolvedWitnessCount                 = 4
+acquisitionTargetCount                 = 4
+confirmedPhysicalHoldingCount          = 3
+bibliographicLeadCount                 = 1
+publicDigitalPageImageVerifiedCount    = 0
+directlyInspectedAcquisitionTargetCount = 0
+newDirectWitnessEvidenceCount          = 0
+productionAdmissionEvidenceCount       = 0
+```
+
+## Acquisition protocol
+
+An acquired target may advance a witness only after:
+
+1. exact item or reproduction identity is pinned to the catalog record;
+2. relevant volume and `四言獨步` section are verified;
+3. exact image/page/folio locator is recorded without invention;
+4. bounded glyphs are read directly from the acquired surface;
+5. PEER→WEALTH includes an actual rob-wealth `劫` glyph;
+6. orthographic variants are not normalized into frozen hash identity;
+7. frozen SHA-256 reproduction is performed as a separate step;
+8. any changed source definition uses a separate reviewed witness re-registration process.
+
+## Authority boundary
+
+Still false:
+
+- catalogRecordIsPhraseLevelEvidence
+- anyTargetFrozenWitnessContentEstablished
+- anyTargetReadyForWitnessPromotion
+- witnessReregistrationAuthorized
+- exactWitnessHashReproductionAuthorityEstablished
+- sourceIntegrityQualificationEstablished
+- productionEligibleProvenanceEstablished
+- provenanceQualityPromotionAuthorized
+- productionAdmissionAuthority
+
+Production remains **HOLD**.
