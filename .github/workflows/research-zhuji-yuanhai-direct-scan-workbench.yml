@@ -1,0 +1,305 @@
+name: Zhuji Yuanhai Direct Scan Workbench
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/research-zhuji-yuanhai-direct-scan-workbench.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zhuji-yuanhai-direct-scan-\${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    name: Locate and render Zhuji 四言獨步
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+
+      - name: Install scan tooling
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils tesseract-ocr tesseract-ocr-chi-tra jq python3-pil
+
+      - name: Fetch and verify registered Zhuji scans
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/zhuji
+
+          resolve_asset() {
+            local asset="$1"
+            local title="$2"
+            local expected_pages="$3"
+            local api="/tmp/zhuji/\${asset}-imageinfo.json"
+            local pdf="/tmp/zhuji/\${asset}.pdf"
+
+            curl --fail --silent --show-error --get \
+              'https://commons.wikimedia.org/w/api.php' \
+              --data-urlencode 'action=query' \
+              --data-urlencode 'format=json' \
+              --data-urlencode 'prop=imageinfo' \
+              --data-urlencode 'iiprop=url|sha1|size' \
+              --data-urlencode "titles=File:\${title}" \
+              --output "$api"
+
+            local registered_url
+            local api_sha1
+            local api_size
+            registered_url="$(jq -r '.query.pages[]?.imageinfo[0]?.url // empty' "$api")"
+            api_sha1="$(jq -r '.query.pages[]?.imageinfo[0]?.sha1 // empty' "$api")"
+            api_size="$(jq -r '.query.pages[]?.imageinfo[0]?.size // empty' "$api")"
+
+            test -n "$registered_url"
+            test -n "$api_sha1"
+            test -n "$api_size"
+
+            curl --fail --location --silent --show-error "$registered_url" --output "$pdf"
+
+            local actual_sha1
+            local actual_size
+            local pages
+            actual_sha1="$(sha1sum "$pdf" | awk '{print $1}')"
+            actual_size="$(stat -c '%s' "$pdf")"
+            pages="$(pdfinfo "$pdf" | awk '/^Pages:/ {print $2}')"
+
+            test "$actual_sha1" = "$api_sha1"
+            test "$actual_size" = "$api_size"
+            test "$pages" = "$expected_pages"
+
+            printf 'asset=%s\nsha1=%s\nbytes=%s\npages=%s\n' \
+              "$asset" "$actual_sha1" "$actual_size" "$pages" \
+              > "/tmp/zhuji/\${asset}-verified-metadata.txt"
+          }
+
+          resolve_asset \
+            'ZJSLib-FLDB-2458-1' \
+            'ZJSLib-FLDB-2458-1 新刊合併官板音義評註淵海子平五卷 第一冊.pdf' \
+            '138'
+
+          resolve_asset \
+            'ZJSLib-FLDB-2458-2' \
+            'ZJSLib-FLDB-2458-2 新刊合併官板音義評註淵海子平五卷 第二冊.pdf' \
+            '170'
+
+      - name: Render 第二冊 low-resolution locator pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/zhuji/locator
+          pdftoppm \
+            -f 1 -l 170 \
+            -r 110 -gray -jpeg \
+            -jpegopt quality=58,progressive=y,optimize=y \
+            /tmp/zhuji/ZJSLib-FLDB-2458-2.pdf \
+            /tmp/zhuji/locator/page
+
+      - name: Run Traditional Chinese OCR for locator only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/zhuji/ocr
+          find /tmp/zhuji/locator -name 'page-*.jpg' -print0 \
+            | sort -z \
+            | xargs -0 -P8 -I{} bash -c '
+                img="$1"
+                stem="$(basename "$img" .jpg)"
+                OMP_THREAD_LIMIT=1 tesseract \
+                  "$img" "/tmp/zhuji/ocr/$stem" \
+                  -l chi_tra --psm 5 2>/dev/null || true
+              ' _ {}
+
+      - name: Rank locator pages and choose candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/zhuji/evidence
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          ocr = Path('/tmp/zhuji/ocr')
+          evidence = Path('/tmp/zhuji/evidence')
+
+          targets = [
+              '四言獨步',
+              '財旺生官',
+              '煞化為印',
+              '殺化爲印',
+              '比劫羊刃',
+              '財格大忌',
+              '印綬見財',
+              '先財後印',
+              '先印後財',
+              '印綬根深',
+          ]
+          target_chars = '四言獨步財旺生官煞殺化為爲印比劫羊刃格大忌綬先後根深'
+
+          rows = []
+          for p in sorted(ocr.glob('page-*.txt')):
+              m = re.search(r'(\d+)$', p.stem)
+              if not m:
+                  continue
+              page = int(m.group(1))
+              text = p.read_text(encoding='utf-8', errors='ignore').replace(' ', '')
+              exact = [t for t in targets if t in text]
+              score = sum(text.count(ch) for ch in target_chars)
+              score += 50 * len(exact)
+              if '四言' in text or '獨步' in text or '独步' in text:
+                  score += 80
+              if '羊刃' in text or '財格' in text or '印綬' in text:
+                  score += 25
+              rows.append((page, score, exact, text))
+
+          ranked = sorted(rows, key=lambda x: (-x[1], x[0]))
+          report = [
+              'Zhuji Yuanhai 第二冊 locator report',
+              'OCR IS LOCATOR-ONLY; NOT AUTHORITY EVIDENCE',
+              '',
+              'Top scored pages:',
+          ]
+          for page, score, exact, text in ranked[:40]:
+              report.append(
+                  f'page={page:03d} score={score} exact={exact} preview={text[:500]!r}'
+              )
+          evidence.joinpath('target-report.txt').write_text(
+              '\n'.join(report) + '\n',
+              encoding='utf-8',
+          )
+
+          section_pages = {
+              page for page, _, _, text in rows
+              if '四言' in text or '獨步' in text or '独步' in text
+          }
+          exact_pages = {
+              page for page, _, exact, _ in rows
+              if exact
+          }
+
+          candidates = set()
+          for page in section_pages:
+              for q in range(max(1, page - 2), min(170, page + 16) + 1):
+                  candidates.add(q)
+
+          for page in exact_pages:
+              for q in range(max(1, page - 2), min(170, page + 2) + 1):
+                  candidates.add(q)
+
+          if not section_pages:
+              for page, score, _, _ in ranked[:12]:
+                  if score <= 0:
+                      continue
+                  for q in range(max(1, page - 1), min(170, page + 1) + 1):
+                      candidates.add(q)
+              candidates.update((100, 110, 120, 130, 140, 150, 160, 170))
+
+          ordered = sorted(candidates)
+          evidence.joinpath('candidate-pages.txt').write_text(
+              '\n'.join(str(p) for p in ordered) + '\n',
+              encoding='ascii',
+          )
+          print('section_pages', sorted(section_pages))
+          print('candidate_count', len(ordered))
+          print('candidates', ordered)
+          PY
+
+      - name: Build full 第二冊 contact sheets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/zhuji/evidence/contact
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw
+
+          src = Path('/tmp/zhuji/locator')
+          out = Path('/tmp/zhuji/evidence/contact')
+          pages = sorted(src.glob('page-*.jpg'))
+
+          thumb_w, thumb_h = 220, 180
+          cols, rows = 3, 3
+          per = cols * rows
+
+          for batch_i in range(0, len(pages), per):
+              batch = pages[batch_i:batch_i+per]
+              canvas = Image.new('L', (cols*thumb_w, rows*(thumb_h+24)), 255)
+              draw = ImageDraw.Draw(canvas)
+              labels = []
+              for idx, p in enumerate(batch):
+                  im = Image.open(p).convert('L')
+                  im.thumbnail((thumb_w-8, thumb_h-8))
+                  cell_x = (idx % cols) * thumb_w
+                  cell_y = (idx // cols) * (thumb_h+24)
+                  x = cell_x + (thumb_w-im.width)//2
+                  y = cell_y + (thumb_h-im.height)//2
+                  canvas.paste(im, (x, y))
+                  page_no = int(p.stem.split('-')[-1])
+                  draw.text((cell_x+4, cell_y+thumb_h+3), f'p{page_no:03d}', fill=0)
+                  labels.append(page_no)
+              canvas.save(
+                  out / f'contact-{batch_i//per+1:02d}-p{labels[0]:03d}-p{labels[-1]:03d}.jpg',
+                  quality=84,
+                  optimize=True,
+              )
+          PY
+
+          cp /tmp/zhuji/ZJSLib-FLDB-2458-1-verified-metadata.txt /tmp/zhuji/evidence/
+          cp /tmp/zhuji/ZJSLib-FLDB-2458-2-verified-metadata.txt /tmp/zhuji/evidence/
+
+      - name: Upload locator review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zhuji-yuanhai-locator-review
+          path: /tmp/zhuji/evidence
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Render candidates at high resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/zhuji/highres
+          python3 - <<'PY' > /tmp/zhuji/candidate-ranges.txt
+          from pathlib import Path
+
+          pages = [
+              int(x) for x in Path('/tmp/zhuji/evidence/candidate-pages.txt')
+              .read_text(encoding='ascii').split()
+          ]
+          if pages:
+              start = prev = pages[0]
+              for page in pages[1:]:
+                  if page == prev + 1:
+                      prev = page
+                      continue
+                  print(start, prev)
+                  start = prev = page
+              print(start, prev)
+          PY
+
+          while read -r first last; do
+            [ -n "$first" ] || continue
+            pdftoppm \
+              -f "$first" -l "$last" \
+              -r 180 -gray -png \
+              /tmp/zhuji/ZJSLib-FLDB-2458-2.pdf \
+              /tmp/zhuji/highres/page
+          done < /tmp/zhuji/candidate-ranges.txt
+
+          cp /tmp/zhuji/evidence/candidate-pages.txt /tmp/zhuji/highres/
+          cp /tmp/zhuji/candidate-ranges.txt /tmp/zhuji/highres/
+
+      - name: Upload high-resolution direct-review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zhuji-yuanhai-highres-review
+          path: /tmp/zhuji/highres
+          if-no-files-found: error
+          retention-days: 1
