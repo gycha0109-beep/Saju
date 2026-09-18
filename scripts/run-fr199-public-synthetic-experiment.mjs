@@ -1,9 +1,11 @@
+import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { extname, join, normalize, resolve } from 'node:path';
+import { extname, join, resolve } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import process from 'node:process';
+import { URL } from 'node:url';
 
 const args = process.argv.slice(2);
 const sampleIndex = args.indexOf('--sample');
@@ -23,7 +25,7 @@ const urls = {
 };
 
 async function download(url, dest) {
-  const response = await fetch(url, { redirect: 'follow' });
+  const response = await globalThis.fetch(url, { redirect: 'follow' });
   if (!response.ok) throw new Error('download_failed:' + response.status + ':' + url);
   const buf = Buffer.from(await response.arrayBuffer());
   writeFileSync(dest, buf);
@@ -225,7 +227,7 @@ const receipt = {
   },
 };
 writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + '\n', 'utf8');
-console.log(JSON.stringify({
+globalThis.console.log(JSON.stringify({
   ok: true,
   sampleId,
   referenceDigest,
