@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v4' as const;
+  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v5' as const;
 
 const SOURCE_AUTHORITIES = Object.freeze([
   {
@@ -117,35 +117,59 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
   },
   'W-YUANHAI-WEALTH-OFFICER': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
-    scanSurfaceSection: '雜論口訣 / 實法第一',
+    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
+    scanSurfaceSection: '四言獨步',
     corroboratingOcrUrl:
-      'https://www.shidianguji.com/zh/book/SDZJ0626/chapter/1lctut4t92tri',
+      'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
+    scanSurfaceInspection: Object.freeze({
+      terminalDigitalScanPage: 17,
+      nextVolumeBeginsDigitalScanPage: 18,
+      sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
+      boundedPropositionGlyphsVerified: false,
+    }),
   },
   'W-YUANHAI-OFFICER-RESOURCE': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
-    scanSurfaceSection: '實法第一',
+    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
+    scanSurfaceSection: '四言獨步',
     corroboratingOcrUrl:
-      'https://www.shidianguji.com/zh/book/SDZJ0626/chapter/1lctut4t92tri',
+      'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
+    scanSurfaceInspection: Object.freeze({
+      terminalDigitalScanPage: 17,
+      nextVolumeBeginsDigitalScanPage: 18,
+      sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
+      boundedPropositionGlyphsVerified: false,
+    }),
   },
   'W-YUANHAI-PEER-WEALTH': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
-    scanSurfaceSection: '雜論口訣',
+    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
+    scanSurfaceSection: '四言獨步',
     corroboratingOcrUrl:
-      'https://www.shidianguji.com/zh/mid-page/7557108914061590554',
+      'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
+    scanSurfaceInspection: Object.freeze({
+      terminalDigitalScanPage: 17,
+      nextVolumeBeginsDigitalScanPage: 18,
+      sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
+      boundedPropositionGlyphsVerified: false,
+    }),
   },
   'W-YUANHAI-WEALTH-RESOURCE': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
-    scanSurfaceSection: '雜論口訣',
+    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
+    scanSurfaceSection: '四言獨步',
     corroboratingOcrUrl:
-      'https://www.shidianguji.com/zh/mid-page/7557108914061590554',
+      'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
+    scanSurfaceInspection: Object.freeze({
+      terminalDigitalScanPage: 17,
+      nextVolumeBeginsDigitalScanPage: 18,
+      sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
+      boundedPropositionGlyphsVerified: false,
+    }),
   },
   'W-SAMYEONG-FOUR-RELATION-TAXONOMY': {
     authorityId: 'SCAN-SAMYEONG-SIKU-CADAL06066041',
@@ -238,6 +262,8 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
       }
       const directInspection =
         'directInspection' in locator ? locator.directInspection : undefined;
+      const scanSurfaceInspection =
+        'scanSurfaceInspection' in locator ? locator.scanSurfaceInspection : undefined;
 
       return Object.freeze({
         witnessId: witness.witnessId,
@@ -257,6 +283,7 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
         corroboratingOcrUrl: locator.corroboratingOcrUrl,
         corroborationLevel: locator.corroborationLevel,
         ...(directInspection === undefined ? {} : { directInspection }),
+        ...(scanSurfaceInspection === undefined ? {} : { scanSurfaceInspection }),
         scanBackedEditionIdentityEstablished: true as const,
         scanBackedPropositionCorroborated: true as const,
         exactDigitalScanPageVerified: directInspection !== undefined,
@@ -280,10 +307,10 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION,
-    issue: '#860' as const,
-    auditBaseSha: '1d74dd024c9a603d0d65ff956c269523d4c3d235' as const,
+    issue: '#864' as const,
+    auditBaseSha: '6b3967b88bda4915e67e012fd57012701628e06d' as const,
     status:
-      'SCAN_BACKED_EDITION_CORROBORATION_ESTABLISHED_TWELVE_OF_SIXTEEN_DIRECT_SCAN_VERIFIED' as const,
+      'SCAN_SURFACE_LOCATORS_CORRECTED_TWELVE_OF_SIXTEEN_DIRECT_SCAN_VERIFIED' as const,
     upstreamPassageEvidenceId: passageEvidence.evidenceId,
     sourceAuthorities: SOURCE_AUTHORITIES,
     witnessRows,
@@ -330,7 +357,8 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
       productionState: 'HOLD' as const,
     },
     requiredNextEvidence: Object.freeze([
-      'VERIFY_REMAINING_EXACT_DIGITAL_SCAN_PAGES_FOR_UNVERIFIED_WITNESSES',
+      'READ_REMAINING_BOUNDED_PROPOSITIONS_GLYPH_FOR_GLYPH_FROM_LOCATED_SCAN_SURFACE',
+      'VERIFY_REMAINING_EXACT_DIGITAL_SCAN_PAGES_FOR_BOUNDED_PROPOSITIONS',
       'DIRECTLY_COMPARE_REMAINING_SCAN_IMAGES_WITH_CORROBORATING_TRANSCRIPTIONS',
       'PRESERVE_DIGITAL_SCAN_PAGE_VS_PRINTED_PAGE_OR_FOLIO_BOUNDARY',
       'REPRODUCE_WITNESS_DIGEST_FROM_SCAN_VERIFIED_TRANSCRIPTION_SURFACE',
