@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Alternate Frozen-Witness Surface Survey
 
-Issue: #886  
-Audit base: `7f5c0b7923d3b8a79ca6a4fa9781a95b48ef3068`
+Issue: #889  
+Audit base: `a0735ab816f4d8c2cc26eb228eee468ee1d0f03c`
 
 ## Purpose
 
@@ -90,6 +90,27 @@ The Shidian book identifier is tied to this NLC family:
 https://www.shidianguji.com/zh/book/NGJ892411999032112149610/chapter/1lqbsmkg60o4b
 ```
 
+Direct Commons page-image inspection now independently pins the relevant surface:
+
+```text
+digital page 16
+  四言獨步 title directly visible
+  directly legible opening anchors:
+    先天何處 / 後天何處 / 要知來處 / 便知去處
+    四柱排定 / 三才次分 / 年干為本 / 配合元辰
+    神煞相伴 / 輕重較量 / 先觀月令 / 論格推詳
+    以日為主 / 專論財官 / 分其貴賤 / 妙法多端
+
+digital pages 17-18
+  bounded 四言-style continuation directly inspected
+
+digital page 19
+  transition surface directly inspected
+  棄命從殺論 title directly visible on the left leaf
+```
+
+Across the directly inspected bounded pages 16..19, none of the four frozen exact strings was established. This is a direct bounded textual-variant divergence result; it is not an exhaustive claim about every historical exemplar.
+
 The linked transcription establishes the previously observed context mismatch on the NLC surface:
 
 ```text
@@ -122,6 +143,7 @@ Result:
 ```text
 registered scan candidate                  = YES
 scan-linked transcription                  = YES, NLC family
+direct bounded page-image inspection       = YES, digital pages 16..19
 context-bound frozen 4/4 exact match       = NO
 same-string-different-section substitution = FORBIDDEN
 orthographic normalization                 = FORBIDDEN
@@ -157,6 +179,7 @@ scan qualification           = NO
 targetWitnessCount                         = 4
 candidateSurfaceCount                      = 4
 registeredScanCandidateCount               = 2
+directlyInspectedRegisteredScanCandidateCount = 1
 contextBoundFourOfFourTextCandidateCount   = 2
 productionAdmissibleFourOfFourCandidateCount = 0
 ```
