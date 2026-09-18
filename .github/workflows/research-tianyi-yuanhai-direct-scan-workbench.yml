@@ -1,0 +1,225 @@
+name: Tianyi Yuanhai Direct Scan Workbench
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/research-tianyi-yuanhai-direct-scan-workbench.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tianyi-yuanhai-direct-scan-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inspect:
+    name: Locate and render Tianyi 四言獨步
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+
+      - name: Install scan tooling
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils tesseract-ocr tesseract-ocr-chi-tra jq python3-pil
+
+      - name: Fetch and verify registered Tianyi scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tianyi
+          api=/tmp/tianyi/imageinfo.json
+          curl --fail --silent --show-error --get \
+            'https://commons.wikimedia.org/w/api.php' \
+            --data-urlencode 'action=query' \
+            --data-urlencode 'format=json' \
+            --data-urlencode 'prop=imageinfo' \
+            --data-urlencode 'iiprop=url|sha1|size' \
+            --data-urlencode 'titles=File:Tianyige-330000-1705-0005007 新刊合併官板音義評註淵海子平五卷 宋徐升編 明楊淙增校 明崇禎刻本.pdf' \
+            --output "$api"
+
+          registered_url="$(jq -r '.query.pages[]?.imageinfo[0]?.url // empty' "$api")"
+          api_sha1="$(jq -r '.query.pages[]?.imageinfo[0]?.sha1 // empty' "$api")"
+          api_size="$(jq -r '.query.pages[]?.imageinfo[0]?.size // empty' "$api")"
+
+          test -n "$registered_url"
+          test "$api_sha1" = '2ec904422ced60bf241286c6b822623048bb8883'
+          test "$api_size" = '133016361'
+
+          curl --fail --location --silent --show-error "$registered_url" \
+            --output /tmp/tianyi/yuanhai.pdf
+
+          actual_sha1="$(sha1sum /tmp/tianyi/yuanhai.pdf | awk '{print $1}')"
+          actual_size="$(stat -c '%s' /tmp/tianyi/yuanhai.pdf)"
+          test "$actual_sha1" = "$api_sha1"
+          test "$actual_size" = "$api_size"
+
+          pages="$(pdfinfo /tmp/tianyi/yuanhai.pdf | awk '/^Pages:/ {print $2}')"
+          test "$pages" = '153'
+
+          printf 'sha1=%s\nbytes=%s\npages=%s\n' \
+            "$actual_sha1" "$actual_size" "$pages" \
+            > /tmp/tianyi/verified-metadata.txt
+
+      - name: Render low-resolution locator pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tianyi/locator
+          pdftoppm \
+            -f 1 -l 153 \
+            -r 110 -gray -jpeg \
+            -jpegopt quality=55,progressive=y,optimize=y \
+            /tmp/tianyi/yuanhai.pdf \
+            /tmp/tianyi/locator/page
+
+      - name: Run Traditional Chinese OCR for locator only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tianyi/ocr
+          find /tmp/tianyi/locator -name 'page-*.jpg' -print0 \
+            | sort -z \
+            | xargs -0 -n1 -P4 -I{} bash -c '
+                img="$1"
+                stem="$(basename "$img" .jpg)"
+                tesseract "$img" "/tmp/tianyi/ocr/$stem" -l chi_tra --psm 5 2>/dev/null || true
+              ' _ {}
+
+      - name: Rank locator pages and choose candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tianyi/evidence
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          ocr = Path('/tmp/tianyi/ocr')
+          evidence = Path('/tmp/tianyi/evidence')
+
+          targets = [
+              '四言獨步',
+              '財旺生官',
+              '煞化為印',
+              '殺化爲印',
+              '比劫羊刃',
+              '財格大忌',
+              '印綬見財',
+          ]
+          target_chars = '四言獨步財旺生官煞殺化為爲印比劫羊刃格大忌綬'
+
+          rows = []
+          for p in sorted(ocr.glob('page-*.txt')):
+              m = re.search(r'(\d+)$', p.stem)
+              if not m:
+                  continue
+              page = int(m.group(1))
+              text = p.read_text(encoding='utf-8', errors='ignore').replace(' ', '')
+              exact = [t for t in targets if t in text]
+              score = sum(text.count(ch) for ch in target_chars)
+              # Strongly prefer likely section-title or bounded-string hits.
+              score += 40 * len(exact)
+              if '四言' in text or '獨步' in text or '独步' in text:
+                  score += 60
+              if '羊刃' in text or '財格' in text or '印綬' in text:
+                  score += 25
+              rows.append((page, score, exact, text[:400]))
+
+          ranked = sorted(rows, key=lambda x: (-x[1], x[0]))
+          report = [
+              'Tianyi Yuanhai locator report',
+              'OCR IS LOCATOR-ONLY; NOT AUTHORITY EVIDENCE',
+              '',
+              'Top scored pages:',
+          ]
+          for page, score, exact, preview in ranked[:30]:
+              report.append(f'page={page:03d} score={score} exact={exact} preview={preview!r}')
+
+          evidence.joinpath('target-report.txt').write_text('\n'.join(report) + '\n', encoding='utf-8')
+
+          seed = {page for page, score, exact, _ in ranked[:14] if score > 0}
+          # The target is expected in later volumes; retain a sparse structural fallback.
+          seed.update(range(110, 154, 5))
+
+          candidates = set()
+          for page in seed:
+              for q in range(max(1, page - 2), min(153, page + 2) + 1):
+                  candidates.add(q)
+
+          ordered = sorted(candidates)
+          evidence.joinpath('candidate-pages.txt').write_text(
+              '\n'.join(str(p) for p in ordered) + '\n',
+              encoding='ascii',
+          )
+          print('candidate_count', len(ordered))
+          print('candidates', ordered)
+          PY
+
+      - name: Build full-scan contact sheets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tianyi/evidence/contact
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageOps, ImageDraw
+
+          src = Path('/tmp/tianyi/locator')
+          out = Path('/tmp/tianyi/evidence/contact')
+          pages = sorted(src.glob('page-*.jpg'))
+
+          thumb_w, thumb_h = 220, 180
+          cols, rows = 3, 3
+          per = cols * rows
+
+          for batch_i in range(0, len(pages), per):
+              batch = pages[batch_i:batch_i+per]
+              canvas = Image.new('L', (cols*thumb_w, rows*(thumb_h+24)), 255)
+              draw = ImageDraw.Draw(canvas)
+              labels = []
+              for idx, p in enumerate(batch):
+                  im = Image.open(p).convert('L')
+                  im.thumbnail((thumb_w-8, thumb_h-8))
+                  cell_x = (idx % cols) * thumb_w
+                  cell_y = (idx // cols) * (thumb_h+24)
+                  x = cell_x + (thumb_w-im.width)//2
+                  y = cell_y + (thumb_h-im.height)//2
+                  canvas.paste(im, (x, y))
+                  page_no = int(p.stem.split('-')[-1])
+                  label = f'p{page_no:03d}'
+                  draw.text((cell_x+4, cell_y+thumb_h+3), label, fill=0)
+                  labels.append(page_no)
+              out.joinpath(f'contact-{batch_i//per+1:02d}-p{labels[0]:03d}-p{labels[-1]:03d}.jpg').write_bytes(b'')
+              canvas.save(out / f'contact-{batch_i//per+1:02d}-p{labels[0]:03d}-p{labels[-1]:03d}.jpg', quality=82, optimize=True)
+          PY
+
+      - name: Render candidate pages at high resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/tianyi/evidence/highres
+          while read -r page; do
+            [ -n "$page" ] || continue
+            printf -v stem 'page%03d' "$page"
+            pdftoppm \
+              -f "$page" -l "$page" -singlefile \
+              -r 360 -gray -png \
+              /tmp/tianyi/yuanhai.pdf \
+              "/tmp/tianyi/evidence/highres/$stem"
+          done < /tmp/tianyi/evidence/candidate-pages.txt
+
+          cp /tmp/tianyi/verified-metadata.txt /tmp/tianyi/evidence/
+
+      - name: Upload locator and direct-review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tianyi-yuanhai-direct-scan-review
+          path: /tmp/tianyi/evidence
+          if-no-files-found: error
+          retention-days: 1
