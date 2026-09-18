@@ -143,7 +143,7 @@ const ACQUISITION_TARGETS = Object.freeze([
     catalogUrl:
       'https://commons.wikimedia.org/wiki/File:Tianyige-330000-1705-0005007_%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E8%A8%BB%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E4%BA%94%E5%8D%B7_%E5%AE%8B%E5%BE%90%E5%8D%87%E7%B7%A8_%E6%98%8E%E6%A5%8A%E6%B7%99%E5%A2%9E%E6%A0%A1_%E6%98%8E%E5%B4%87%E7%A6%8E%E5%88%BB%E6%9C%AC.pdf',
     publicPageImageAvailability: 'VERIFIED_AVAILABLE' as const,
-    directInspectionState: 'NOT_ACQUIRED' as const,
+    directInspectionState: 'AVAILABLE_NOT_INSPECTED' as const,
     frozenWitnessContentClaimed: false as const,
     digitalAssets: Object.freeze([
       Object.freeze({
@@ -171,7 +171,7 @@ const ACQUISITION_TARGETS = Object.freeze([
     catalogUrl:
       'https://commons.wikimedia.org/wiki/Category:%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E8%A8%BB%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3',
     publicPageImageAvailability: 'VERIFIED_AVAILABLE' as const,
-    directInspectionState: 'NOT_ACQUIRED' as const,
+    directInspectionState: 'AVAILABLE_NOT_INSPECTED' as const,
     frozenWitnessContentClaimed: false as const,
     digitalAssets: Object.freeze([
       Object.freeze({
