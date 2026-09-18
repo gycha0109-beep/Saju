@@ -236,6 +236,19 @@ jobs:
               fh.write('\n'.join(['', 'page15-page16:', *manifest, '']))
           PY
 
+      - name: Upload direct-glyph review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yuanhai-page17-direct-glyph-review
+          path: |
+            tmp/research/yuanhai-direct-scan/page17-full.png
+            tmp/research/yuanhai-direct-scan/page17-left-leaf.png
+            tmp/research/yuanhai-direct-scan/page17-right-leaf.png
+            tmp/research/yuanhai-direct-scan/tiles/*.png
+            tmp/research/yuanhai-direct-scan/tiles/manifest.txt
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Commit rendered workbench evidence
         shell: bash
         run: |
