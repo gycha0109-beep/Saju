@@ -125,7 +125,7 @@ browserUrl.searchParams.set('model', '/.tmp/fr199/' + sampleId + '/face_landmark
 browserUrl.searchParams.set('wasm', '/node_modules/@mediapipe/tasks-vision/wasm');
 
 const chrome = findChrome();
-const chromeRun = spawnSync(chrome, [
+const chromeArgs = [
   '--headless=new',
   '--no-sandbox',
   '--disable-gpu',
@@ -133,11 +133,42 @@ const chromeRun = spawnSync(chrome, [
   '--virtual-time-budget=45000',
   '--dump-dom',
   browserUrl.toString(),
-], { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 });
-server.close();
-if (chromeRun.status !== 0) {
-  throw new Error('chrome_provider_stage_failed\n' + (chromeRun.stderr || ''));
-}
+];
+const chromeRun = await new Promise((resolveChrome, rejectChrome) => {
+  const child = spawn(chrome, chromeArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
+  let stdout = '';
+  let stderr = '';
+  const timer = setTimeout(() => {
+    child.kill('SIGKILL');
+    rejectChrome(new Error('chrome_provider_stage_timeout'));
+  }, 70000);
+  child.stdout.setEncoding('utf8');
+  child.stderr.setEncoding('utf8');
+  child.stdout.on('data', (chunk) => {
+    stdout += chunk;
+    if (stdout.length > 20 * 1024 * 1024) {
+      child.kill('SIGKILL');
+      rejectChrome(new Error('chrome_stdout_limit_exceeded'));
+    }
+  });
+  child.stderr.on('data', (chunk) => {
+    stderr += chunk;
+    if (stderr.length > 20 * 1024 * 1024) stderr = stderr.slice(-20 * 1024 * 1024);
+  });
+  child.once('error', (error) => {
+    clearTimeout(timer);
+    rejectChrome(error);
+  });
+  child.once('close', (code) => {
+    clearTimeout(timer);
+    if (code !== 0) {
+      rejectChrome(new Error('chrome_provider_stage_failed:' + code + '\n' + stderr));
+      return;
+    }
+    resolveChrome({ stdout, stderr });
+  });
+});
+await new Promise((resolveClose) => server.close(resolveClose));
 const dom = chromeRun.stdout || '';
 const errorMatch = dom.match(/FR199_ERROR_BASE64:([A-Za-z0-9+/=]+)/);
 if (errorMatch) {
