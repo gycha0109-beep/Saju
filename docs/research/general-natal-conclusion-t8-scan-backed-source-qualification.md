@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Scan-Backed Source Qualification Audit
 
-Issue: #793  
-Audit base: `1781e0c72a95360aeac18b3f245da4b46cd8cf65`
+Issue: #839  
+Audit base: `a45374f0e657729ef28dccb95179b06e1cfa3446`
 
 ## Purpose
 
@@ -41,6 +41,18 @@ corroborating OCR = 識典古籍 scan/OCR surface
 
 The Ming Wanli scan-backed surface independently corroborates the bounded propositions used by all ten current Yuanhai witnesses across 卷一、卷三、卷四.
 
+One Yuanhai witness now also has direct image verification:
+
+```text
+witness = W-YUANHAI-OUTPUT-WEALTH
+scan asset = NLC892-2642-210288 第2冊 / 卷之三
+digital scan page = 8
+section observed = 論食神
+bounded proposition observed = 食神者生我財神之謂也
+```
+
+The page number above is the 1-based digital scan-page index. It is not asserted to be a printed page or folio. The scan image was directly compared with the corroborating OCR surface for this bounded proposition only; byte-identical identity with the fixed Wikisource witness is not established.
+
 These rows are intentionally recorded as:
 
 ```text
@@ -57,6 +69,9 @@ scanBackedEditionIdentityEstablishedCount = 16
 scanBackedPropositionCorroboratedCount = 16
 sameEditionScanOcrCorroboratedCount = 6
 crossEditionPropositionCorroboratedCount = 10
+exactDigitalScanPageVerifiedCount = 1
+boundedPropositionDirectlyObservedInScanCount = 1
+directScanImageComparisonCompletedCount = 1
 exactPhysicalPageOrFolioVerifiedCount = 0
 exactWitnessHashReproducedFromScanCount = 0
 fullScanQualificationEstablishedCount = 0
@@ -82,16 +97,16 @@ A scan file or OCR surface proves neither the exact physical page/folio nor the 
 
 For the Samyeong rows, same-edition scan-backed OCR corroboration establishes a stronger edition link than a mutable transcription alone, but direct image comparison is still pending.
 
-For the Yuanhai rows, the Ming Wanli scan independently corroborates the proposition but is a distinct edition surface from the current Wikisource witness. It must not be used to assert exact transcription identity.
+For the Yuanhai rows, the Ming Wanli scan independently corroborates the proposition but is a distinct edition surface from the current Wikisource witness. `W-YUANHAI-OUTPUT-WEALTH` now additionally has an exact digital scan-page locator and direct bounded-proposition image comparison, but that still does not authorize exact transcription identity because the registered witness remains the separate fixed Wikisource surface.
 
 No witness can therefore be promoted to full scan qualification in this audit.
 
 ## Required next evidence
 
-1. identify and visually verify the exact physical scan page or folio for each witness;
-2. directly compare the scan image with the corroborating transcription/OCR surface;
-3. define the exact extraction and normalization contract used for witness hashing;
-4. independently reproduce each relevant SHA-256 from that contract;
+1. identify and visually verify the exact digital scan page for the remaining fifteen witnesses;
+2. directly compare the remaining scan images with the corroborating transcription/OCR surfaces;
+3. preserve digital scan-page identity separately from any printed page/folio claim;
+4. reproduce each relevant witness digest from a scan-verified transcription surface using the already-frozen exact-substring / UTF-8 / no-normalization contract;
 5. preserve the distinction between Yuanhai cross-edition corroboration and exact transcription identity;
 6. only after those gates pass may source-integrity qualification be reconsidered.
 

@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v1' as const;
+  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v2' as const;
 
 const SOURCE_AUTHORITIES = Object.freeze([
   {
@@ -84,6 +84,11 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qpidcm57',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 8,
+      sectionObserved: '論食神',
+      boundedPropositionObserved: '食神者生我財神之謂也',
+    }),
   },
   'W-YUANHAI-WEALTH-OFFICER': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
@@ -176,6 +181,8 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
       if (authority.sourceId !== witness.sourceId) {
         throw new Error(`Scan authority source mismatch for ${witness.witnessId}`);
       }
+      const directInspection =
+        'directInspection' in locator ? locator.directInspection : undefined;
 
       return Object.freeze({
         witnessId: witness.witnessId,
@@ -194,10 +201,13 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
         scanSurfaceSection: locator.scanSurfaceSection,
         corroboratingOcrUrl: locator.corroboratingOcrUrl,
         corroborationLevel: locator.corroborationLevel,
+        ...(directInspection === undefined ? {} : { directInspection }),
         scanBackedEditionIdentityEstablished: true as const,
         scanBackedPropositionCorroborated: true as const,
+        exactDigitalScanPageVerified: directInspection !== undefined,
+        boundedPropositionDirectlyObservedInScan: directInspection !== undefined,
         exactPhysicalPageOrFolioVerified: false as const,
-        directScanImageComparisonCompleted: false as const,
+        directScanImageComparisonCompleted: directInspection !== undefined,
         exactWitnessHashReproducedFromScan: false as const,
         exactTranscriptionIdentityEstablished: false as const,
         fullScanQualificationEstablished: false as const,
@@ -215,10 +225,10 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION,
-    issue: '#793' as const,
-    auditBaseSha: '1781e0c72a95360aeac18b3f245da4b46cd8cf65' as const,
+    issue: '#839' as const,
+    auditBaseSha: 'a45374f0e657729ef28dccb95179b06e1cfa3446' as const,
     status:
-      'SCAN_BACKED_EDITION_CORROBORATION_ESTABLISHED_EXACT_PAGE_HASH_QUALIFICATION_PENDING' as const,
+      'SCAN_BACKED_EDITION_CORROBORATION_ESTABLISHED_PARTIAL_DIRECT_SCAN_VERIFICATION' as const,
     upstreamPassageEvidenceId: passageEvidence.evidenceId,
     sourceAuthorities: SOURCE_AUTHORITIES,
     witnessRows,
@@ -232,6 +242,15 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
       ).length,
       sameEditionScanOcrCorroboratedCount: sameEditionRows.length,
       crossEditionPropositionCorroboratedCount: crossEditionRows.length,
+      exactDigitalScanPageVerifiedCount: witnessRows.filter(
+        (row) => row.exactDigitalScanPageVerified,
+      ).length,
+      boundedPropositionDirectlyObservedInScanCount: witnessRows.filter(
+        (row) => row.boundedPropositionDirectlyObservedInScan,
+      ).length,
+      directScanImageComparisonCompletedCount: witnessRows.filter(
+        (row) => row.directScanImageComparisonCompleted,
+      ).length,
       exactPhysicalPageOrFolioVerifiedCount: witnessRows.filter(
         (row) => row.exactPhysicalPageOrFolioVerified,
       ).length,
@@ -256,9 +275,10 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
       productionState: 'HOLD' as const,
     },
     requiredNextEvidence: Object.freeze([
-      'VERIFY_EXACT_SCAN_PAGE_OR_FOLIO_FOR_EACH_WITNESS',
-      'DIRECTLY_COMPARE_SCAN_IMAGE_WITH_CORROBORATING_TRANSCRIPTION',
-      'DEFINE_AND_REPRODUCE_EXACT_WITNESS_EXTRACTION_HASH_CONTRACT',
+      'VERIFY_REMAINING_EXACT_DIGITAL_SCAN_PAGES_FOR_UNVERIFIED_WITNESSES',
+      'DIRECTLY_COMPARE_REMAINING_SCAN_IMAGES_WITH_CORROBORATING_TRANSCRIPTIONS',
+      'PRESERVE_DIGITAL_SCAN_PAGE_VS_PRINTED_PAGE_OR_FOLIO_BOUNDARY',
+      'REPRODUCE_WITNESS_DIGEST_FROM_SCAN_VERIFIED_TRANSCRIPTION_SURFACE',
       'KEEP_YUANHAI_CROSS_EDITION_SUPPORT_DISTINCT_FROM_TRANSCRIPTION_IDENTITY',
       'DO_NOT_PROMOTE_PROVENANCE_QUALITY_FROM_OCR_CORROBORATION_ALONE',
     ] as const),
