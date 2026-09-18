@@ -200,6 +200,11 @@ jobs:
                       candidates.add(q)
               candidates.update((100, 110, 120, 130, 140, 150, 160, 170))
 
+          # Direct visual review of p110 established 卷四終, so p111 begins 卷五.
+          # Preserve a bounded late-卷五 structural window independent of OCR
+          # because 四言獨步 is known to sit near the terminal 卷五 sequence.
+          candidates.update(range(145, 166))
+
           ordered = sorted(candidates)
           evidence.joinpath('candidate-pages.txt').write_text(
               '\n'.join(str(p) for p in ordered) + '\n',
