@@ -38,7 +38,7 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/yuanhai-scan
           curl --fail --location --silent --show-error \
-            'https://upload.wikimedia.org/wikipedia/commons/b/b2/NLC892-2642-210318_%E5%88%BB%E4%BA%AC%E8%87%BA%E5%A2%9C%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E5%A4%A7%E5%85%A8_%E7%AC%AC4%E5%86%8A.pdf' \
+            'https://upload.wikimedia.org/wikipedia/commons/8/83/NLC892-2642-210318_%E5%88%BB%E4%BA%AC%E8%87%BA%E5%A2%9C%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E5%A4%A7%E5%85%A8_%E7%AC%AC4%E5%86%8A.pdf' \
             --output /tmp/yuanhai-scan/volume4.pdf
           actual_sha1="$(sha1sum /tmp/yuanhai-scan/volume4.pdf | awk '{print $1}')"
           test "$actual_sha1" = '9f6098878cda071f5e1d3cbb0502cb65dfe17eea'
