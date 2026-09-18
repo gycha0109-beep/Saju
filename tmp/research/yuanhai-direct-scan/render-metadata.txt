@@ -1,0 +1,6 @@
+source_sha1=9f6098878cda071f5e1d3cbb0502cb65dfe17eea
+digital_page=17
+render_dpi=600
+full_width=3004
+full_height=2836
+authority=workbench_visual_evidence_only
