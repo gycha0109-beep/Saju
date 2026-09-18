@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Scan-Backed Source Qualification Audit
 
-Issue: #844  
-Audit base: `d07e8d6a52ed87c732af919956e68cf4738e3e4f`
+Issue: #860  
+Audit base: `1d74dd024c9a603d0d65ff956c269523d4c3d235`
 
 ## Purpose
 
@@ -21,13 +21,41 @@ scan = Wikimedia Commons CADAL06066041 三命通會·卷五.djvu
 scan-backed OCR = Chinese Text Project
 ```
 
-The scan-backed OCR surface contains the `論古人立印食官財名義` material used by the current six Samyeong witnesses. Because the edition identity matches the registered 四庫全書 volume, these rows are recorded as:
+The scan-backed OCR surface contains the `論古人立印食官財名義` material used by the current six Samyeong witnesses. Because the edition identity matches the registered 四庫全書 volume, these rows remain recorded as:
 
 ```text
 SAME_EDITION_SCAN_OCR_CORROBORATED
 ```
 
-This does not claim that OCR text has been visually checked glyph-for-glyph against the scan image, and it does not establish exact transcription identity or reproduce the existing passage SHA-256.
+The uploaded original `CADAL06066041_三命通會·卷五.djvu` has SHA-1
+`dd6be166b360a58bd142235803fc5a19fd8f267b`, exactly matching the registered Commons CADAL06066041 asset. The following bounded propositions were then directly inspected on that scan binary's image surfaces:
+
+```text
+scan asset = CADAL06066041 / 卷五
+section observed = 論古人立印食官財名義
+
+digital scan page = 4
+W-SAMYEONG-FOUR-RELATION-TAXONOMY
+→ 謂之日主屬我生我者壬癸水我生者丙丁火尅我者庚辛金我尅者戊己土
+
+digital scan page = 7
+W-SAMYEONG-OUTPUT-WEALTH
+→ 甲乙生丙丁為子丙丁生戊己為子
+
+W-SAMYEONG-WEALTH-OFFICER
+→ 丙丁生戊己為子戊己生庚辛為子
+
+W-SAMYEONG-OFFICER-RESOURCE
+→ 戊己生庚辛為子庚辛生壬癸為子
+
+W-SAMYEONG-PEER-WEALTH
+→ 財怕劫被劫則分
+
+W-SAMYEONG-WEALTH-RESOURCE
+→ 印怕財貪財則壞
+```
+
+The digital page indices above are 1-based scan pages, not printed pages or folios. Direct visual agreement establishes neither byte-identical transcription identity nor reproduction of the existing fixed witness SHA-256 values.
 
 ### 刻京臺增補淵海子平大全
 
@@ -39,9 +67,11 @@ scan = Wikimedia Commons scan collection
 corroborating OCR = 識典古籍 scan/OCR surface
 ```
 
-The Ming Wanli scan-backed surface independently corroborates the bounded propositions used by all ten current Yuanhai witnesses across 卷一、卷三、卷四.
+The Ming Wanli scan-backed surface independently corroborates the bounded propositions used by all ten current Yuanhai witnesses.
 
-Six Yuanhai witnesses now also have direct image verification.
+The repository-authoritative fixed passage definitions place the four still-unverified structural Yuanhai witnesses in `四言獨步`. The existing NLC `scanSurfaceSection` entries (`雜論口訣 / 實法第一`) are cross-edition proposition-corroboration locators, not direct fixed-witness locators. Direct inspection of the uploaded 46-page `NLC892-2642-210317 第3冊` did not establish an exact `四言獨步` digital scan page for those four current witnesses. They therefore remain unverified rather than being inferred from the older corroboration locators or from a guessed continuation volume.
+
+Six Yuanhai witnesses already have direct image verification.
 
 Five family-taxonomy witnesses share one directly inspected scan surface:
 
@@ -85,9 +115,9 @@ scanBackedEditionIdentityEstablishedCount = 16
 scanBackedPropositionCorroboratedCount = 16
 sameEditionScanOcrCorroboratedCount = 6
 crossEditionPropositionCorroboratedCount = 10
-exactDigitalScanPageVerifiedCount = 6
-boundedPropositionDirectlyObservedInScanCount = 6
-directScanImageComparisonCompletedCount = 6
+exactDigitalScanPageVerifiedCount = 12
+boundedPropositionDirectlyObservedInScanCount = 12
+directScanImageComparisonCompletedCount = 12
 exactPhysicalPageOrFolioVerifiedCount = 0
 exactWitnessHashReproducedFromScanCount = 0
 fullScanQualificationEstablishedCount = 0
@@ -111,16 +141,16 @@ Production = HOLD
 
 A scan file or OCR surface proves neither the exact physical page/folio nor the extraction procedure that produced the existing witness digest.
 
-For the Samyeong rows, same-edition scan-backed OCR corroboration establishes a stronger edition link than a mutable transcription alone, but direct image comparison is still pending.
+For all six Samyeong rows, the current bounded propositions now have exact digital scan-page locators and direct image comparison. This still does not establish exact witness-digest reproduction or byte-identical transcription identity with the fixed repository witnesses.
 
-For the Yuanhai rows, the Ming Wanli scan independently corroborates the proposition but is a distinct edition surface from the current Wikisource witness. Six rows now additionally have exact digital scan-page locators and direct bounded-proposition image comparison, but that still does not authorize exact transcription identity because the registered witnesses remain the separate fixed Wikisource surface.
+For the Yuanhai rows, the Ming Wanli scan independently corroborates the proposition but is a distinct edition surface from the current Wikisource witness. Six rows have exact digital scan-page locators and direct bounded-proposition image comparison. The remaining four fixed witnesses have `originalSection = 四言獨步`, but no exact direct scan-page locator was established in this pass. The existing cross-edition corroboration locators must not be mistaken for direct verification of those fixed witnesses. Even completed visual comparison would not authorize exact transcription identity because the registered witnesses remain the separate fixed Wikisource surface.
 
 No witness can therefore be promoted to full scan qualification in this audit.
 
 ## Required next evidence
 
-1. identify and visually verify the exact digital scan page for the remaining ten witnesses;
-2. directly compare the remaining scan images with the corroborating transcription/OCR surfaces;
+1. locate the exact same-edition scan surface corresponding to the four remaining fixed `四言獨步` witnesses without assuming that an older cross-edition corroboration locator or a CText image-unit number is the digital scan page;
+2. directly compare the exact scan image(s) with those four bounded propositions, preserving the exact 劫財/peer boundary rather than widening from 比肩-only text;
 3. preserve digital scan-page identity separately from any printed page/folio claim;
 4. reproduce each relevant witness digest from a scan-verified transcription surface using the already-frozen exact-substring / UTF-8 / no-normalization contract;
 5. preserve the distinction between Yuanhai cross-edition corroboration and exact transcription identity;
