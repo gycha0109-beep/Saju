@@ -6,14 +6,14 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
   it('registers acquisition targets without converting catalog records into witness evidence', () => {
     const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
 
-    expect(evidence.issue).toBe('#879');
+    expect(evidence.issue).toBe('#883');
     expect(evidence.counts).toEqual({
       unresolvedWitnessCount: 4,
       acquisitionTargetCount: 9,
       confirmedPhysicalHoldingCount: 6,
       bibliographicLeadCount: 1,
       publicDigitalPageImageVerifiedCount: 2,
-      directlyInspectedAcquisitionTargetCount: 0,
+      directlyInspectedAcquisitionTargetCount: 1,
       newDirectWitnessEvidenceCount: 0,
       productionAdmissionEvidenceCount: 0,
     });
@@ -118,7 +118,7 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
       holdingInstitution: 'Tianyi Pavilion Museum',
       editionOrImprint: '明崇禎刻本',
       publicPageImageAvailability: 'VERIFIED_AVAILABLE',
-      directInspectionState: 'AVAILABLE_NOT_INSPECTED',
+      directInspectionState: 'DIRECTLY_INSPECTED',
       frozenWitnessContentClaimed: false,
     });
     if (tianyige?.targetId === 'ACQ-YUANHAI-TIANYIGE-330000-1705-0005007-DIGITAL') {
@@ -129,6 +129,48 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
           fileSizeBytes: 133016361,
         },
       ]);
+      expect(tianyige.directInspection).toMatchObject({
+        sectionObserved: '四言獨步',
+        sectionTitleDigitalScanPage: 113,
+        inspectedDigitalScanPageRange: [113, 116],
+        transitionDigitalScanPage: 116,
+        sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論',
+        boundedVariantAnchorsObserved: ['先財後印', '先印後財', '印綬根深'],
+        sameStringOutsideFrozenContext: {
+          digitalScanPage: 112,
+          exactString: '財旺生官',
+          acceptedAsFrozenWitness: false,
+          reason: 'OBSERVED_OUTSIDE_FOUR_YAN_DUBU',
+        },
+        fixedWitnessDirectVerificationOutcome:
+          'NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE',
+        exactFrozenWitnessCountEstablished: 0,
+      });
+      expect(tianyige.directInspection.frozenWitnessChecks).toEqual([
+        {
+          witnessId: 'W-YUANHAI-WEALTH-OFFICER',
+          exactString: '財旺生官',
+          establishedWithinFourYanDubu: false,
+        },
+        {
+          witnessId: 'W-YUANHAI-OFFICER-RESOURCE',
+          exactString: '煞化為印',
+          establishedWithinFourYanDubu: false,
+        },
+        {
+          witnessId: 'W-YUANHAI-PEER-WEALTH',
+          exactString: '比劫羊刃，財格大忌',
+          establishedWithinFourYanDubu: false,
+        },
+        {
+          witnessId: 'W-YUANHAI-WEALTH-RESOURCE',
+          exactString: '印綬見財',
+          establishedWithinFourYanDubu: false,
+        },
+      ]);
+      expect(tianyige.acquisitionAction).toBe(
+        'DIRECTLY_INSPECT_ZHUJI_PUBLIC_SCAN_FOR_FOUR_YAN_DUBU_AND_FROZEN_EXACT_STRINGS',
+      );
     }
 
     const zjs = evidence.acquisitionTargets.find(
