@@ -188,6 +188,54 @@ jobs:
           )
           PY
 
+      - name: Generate compact page15-page16 visual tiles
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageEnhance, ImageFilter
+          import base64
+
+          out = Path('tmp/research/yuanhai-direct-scan')
+          tile_dir = out / 'tiles'
+          tile_dir.mkdir(parents=True, exist_ok=True)
+          manifest = []
+
+          for page in (15, 16):
+              source = Image.open(
+                  out / 'locator' / f'page{page:02d}.png'
+              ).convert('L')
+              target_w = 1200
+              target_h = round(source.height * target_w / source.width)
+              scaled = source.resize((target_w, target_h), Image.Resampling.LANCZOS)
+              scaled = ImageEnhance.Contrast(scaled).enhance(1.45)
+              scaled = scaled.filter(ImageFilter.SHARPEN)
+              bilevel = scaled.point(lambda p: 255 if p > 178 else 0, mode='1')
+
+              cols, rows = 4, 2
+              for row in range(rows):
+                  for col in range(cols):
+                      x0 = round(col * target_w / cols)
+                      x1 = round((col + 1) * target_w / cols)
+                      y0 = round(row * target_h / rows)
+                      y1 = round((row + 1) * target_h / rows)
+                      tile = bilevel.crop((x0, y0, x1, y1))
+                      name = f'page{page}-r{row+1}c{col+1}'
+                      png_path = tile_dir / f'{name}.png'
+                      b64_path = tile_dir / f'{name}.b64'
+                      tile.save(png_path, optimize=True)
+                      payload = base64.b64encode(png_path.read_bytes()).decode('ascii')
+                      b64_path.write_text(payload, encoding='ascii')
+                      manifest.append(
+                          f'{name} x={x0}:{x1} y={y0}:{y1} '
+                          f'png_bytes={png_path.stat().st_size} b64_chars={len(payload)}'
+                      )
+
+          with (tile_dir / 'manifest.txt').open('a', encoding='utf-8') as fh:
+              fh.write('\n'.join(['', 'page15-page16:', *manifest, '']))
+          PY
+
       - name: Commit rendered workbench evidence
         shell: bash
         run: |
