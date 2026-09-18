@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-alternate-witness-surface-survey-v1' as const;
+  'myeonghwa-general-natal-conclusion-t8-alternate-witness-surface-survey-v2' as const;
 
 const TARGET_WITNESS_IDS = Object.freeze([
   'W-YUANHAI-WEALTH-OFFICER',
@@ -53,7 +53,7 @@ const CANDIDATE_SURFACES = Object.freeze([
   }),
   Object.freeze({
     candidateId: 'CANDIDATE-NTL-1926-QINSHENAN-V2',
-    authorityClass: 'REGISTERED_SCAN_WITH_SCAN_LINKED_TRANSCRIPTION',
+    authorityClass: 'REGISTERED_SCAN_NOT_DIRECTLY_INSPECTED',
     title: '淵海子平子平真詮 v.2',
     edition: '秦慎安校勘 / 文明 / 1926',
     holdingInstitution: 'National Taiwan Library',
@@ -61,6 +61,36 @@ const CANDIDATE_SURFACES = Object.freeze([
     pageCount: 164,
     scanUrl:
       'https://commons.wikimedia.org/wiki/File:NTL-9900014380_%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E5%AD%90%E5%B9%B3%E7%9C%9F%E8%A9%AE_v.2.pdf',
+    registeredScanIdentityEstablished: true,
+    auditableHoldingInstitutionEstablished: true,
+    context: 'registered 1926 scan; relevant 四言獨步 surface not yet directly inspected',
+    rows: Object.freeze({
+      'W-YUANHAI-WEALTH-OFFICER': Object.freeze({
+        status: 'REGISTERED_SCAN_TEXT_NOT_DIRECTLY_INSPECTED',
+      }),
+      'W-YUANHAI-OFFICER-RESOURCE': Object.freeze({
+        status: 'REGISTERED_SCAN_TEXT_NOT_DIRECTLY_INSPECTED',
+      }),
+      'W-YUANHAI-PEER-WEALTH': Object.freeze({
+        status: 'REGISTERED_SCAN_TEXT_NOT_DIRECTLY_INSPECTED',
+      }),
+      'W-YUANHAI-WEALTH-RESOURCE': Object.freeze({
+        status: 'REGISTERED_SCAN_TEXT_NOT_DIRECTLY_INSPECTED',
+      }),
+    }),
+    qualificationOutcome: 'REGISTERED_SCAN_NOT_DIRECTLY_INSPECTED',
+  }),
+  Object.freeze({
+    candidateId: 'CANDIDATE-NLC-1634-YUSHI-SHANCHENGTANG',
+    authorityClass: 'REGISTERED_SCAN_WITH_SCAN_LINKED_TRANSCRIPTION',
+    title: '新刊合併官板音義評注淵海子平',
+    edition: '余氏善成堂 / 明崇禎7年 [1634]',
+    holdingInstitution: 'National Library of China',
+    digitization: 'NLC892-411999032112 / five-fascicle set',
+    relevantDigitization: 'NLC892-411999032112-149659 / 第4冊 / 卷之四',
+    relevantPageCount: 29,
+    scanUrl:
+      'https://commons.wikimedia.org/wiki/File:NLC892-411999032112-149659_%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E6%B3%A8%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3_%E7%AC%AC4%E5%86%8A.pdf',
     scanLinkedTranscriptionUrl:
       'https://www.shidianguji.com/zh/book/NGJ892411999032112149610/chapter/1lqbsmkg60o4b',
     registeredScanIdentityEstablished: true,
@@ -70,7 +100,7 @@ const CANDIDATE_SURFACES = Object.freeze([
       'W-YUANHAI-WEALTH-OFFICER': Object.freeze({
         status: 'EXACT_STRING_PRESENT_OUTSIDE_FROZEN_CONTEXT',
         observedText: '財旺生官',
-        observedContext: '挈要捷馳玄妙訣 / 四言獨步 preceding material',
+        observedContext: '四言獨步 preceding material',
       }),
       'W-YUANHAI-OFFICER-RESOURCE': Object.freeze({
         status: 'ORTHOGRAPHIC_TEXTUAL_VARIANT_OUTSIDE_FROZEN_CONTEXT',
@@ -81,12 +111,12 @@ const CANDIDATE_SURFACES = Object.freeze([
       'W-YUANHAI-PEER-WEALTH': Object.freeze({
         status: 'NOT_ESTABLISHED_IN_FROZEN_CONTEXT',
         observedText:
-          'registered scan-linked transcription instead carries a divergent 四言獨步 sequence',
+          'scan-linked transcription carries a divergent 四言獨步 sequence and does not establish the frozen rob-wealth string',
       }),
       'W-YUANHAI-WEALTH-RESOURCE': Object.freeze({
         status: 'EXACT_STRING_PRESENT_OUTSIDE_FROZEN_CONTEXT',
         observedText: '印綬見財',
-        observedContext: '卷五 / 格局生死引用',
+        observedContext: 'same NLC set / 卷三 / 論格局生死引用',
       }),
     }),
     frozenContextSequenceObserved: Object.freeze([
@@ -95,7 +125,7 @@ const CANDIDATE_SURFACES = Object.freeze([
       '先財後印',
       '先印後財',
     ]),
-    qualificationOutcome: 'REGISTERED_SCAN_CANDIDATE_CONTEXT_MISMATCH',
+    qualificationOutcome: 'REGISTERED_SCAN_LINKED_TRANSCRIPTION_CONTEXT_MISMATCH',
   }),
   Object.freeze({
     candidateId: 'CANDIDATE-SECONDARY-FOUR-YAN-DUBU-TRANSCRIPTIONS',
@@ -175,8 +205,8 @@ export function buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION,
-    issue: '#877' as const,
-    auditBaseSha: '1675fc24efbc34e8f60983388820aa250aff2a0d' as const,
+    issue: '#886' as const,
+    auditBaseSha: '7f5c0b7923d3b8a79ca6a4fa9781a95b48ef3068' as const,
     status: 'ALTERNATE_SURFACES_SURVEYED_NO_PRODUCTION_ADMISSIBLE_FOUR_OF_FOUR_CANDIDATE' as const,
     upstreamPassageEvidenceId: upstream.evidenceId,
     frozenRows,
@@ -200,6 +230,7 @@ export function buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey() {
     },
     requiredNextEvidence: Object.freeze([
       'LOCATE_REGISTERED_OR_EQUIVALENTLY_AUDITABLE_SCAN_WITH_CONTEXT_BOUND_FROZEN_EXACT_STRINGS',
+      'DIRECTLY_INSPECT_NTL_1926_BEFORE_ANY_NTL_TEXTUAL_CLAIM',
       'ALLOW_PER_WITNESS_ADVANCE_ONLY_AFTER_DIRECT_IMAGE_OR_REVIEWED_REGISTERED_TRANSCRIPTION_SUPPORT',
       'REQUIRE_EXACT_ROB_WEALTH_GLYPH_FOR_PEER_WEALTH_WITNESS',
       'DO_NOT_NORMALIZE_ORTHOGRAPHIC_VARIANTS_INTO_FROZEN_HASH_IDENTITY',

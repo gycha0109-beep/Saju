@@ -6,11 +6,11 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
   it('separates exact text circulation from scan-backed production authority', () => {
     const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
 
-    expect(evidence.issue).toBe('#877');
+    expect(evidence.issue).toBe('#886');
     expect(evidence.counts).toEqual({
       targetWitnessCount: 4,
-      candidateSurfaceCount: 3,
-      registeredScanCandidateCount: 1,
+      candidateSurfaceCount: 4,
+      registeredScanCandidateCount: 2,
       contextBoundFourOfFourTextCandidateCount: 2,
       productionAdmissibleFourOfFourCandidateCount: 0,
     });
@@ -45,7 +45,7 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
     }
   });
 
-  it('records the 1926 National Taiwan Library scan as registered but context-mismatched', () => {
+  it('keeps the 1926 National Taiwan Library scan registered but makes no textual claim before direct inspection', () => {
     const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
     const candidate = evidence.candidateSurfaces.find(
       (row) => row.candidateId === 'CANDIDATE-NTL-1926-QINSHENAN-V2',
@@ -61,14 +61,49 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
     expect(candidate.holdingInstitution).toBe('National Taiwan Library');
     expect(candidate.digitization).toBe('NTL-9900014380');
     expect(candidate.pageCount).toBe(164);
+    expect('scanLinkedTranscriptionUrl' in candidate).toBe(false);
+    expect(candidate.qualificationOutcome).toBe('REGISTERED_SCAN_NOT_DIRECTLY_INSPECTED');
+
+    for (const witnessId of [
+      'W-YUANHAI-WEALTH-OFFICER',
+      'W-YUANHAI-OFFICER-RESOURCE',
+      'W-YUANHAI-PEER-WEALTH',
+      'W-YUANHAI-WEALTH-RESOURCE',
+    ] as const) {
+      expect(candidate.rows[witnessId]).toEqual({
+        status: 'REGISTERED_SCAN_TEXT_NOT_DIRECTLY_INSPECTED',
+      });
+    }
+  });
+
+  it('binds the Shidian transcription to the NLC 1634 five-fascicle scan set and preserves its context mismatch', () => {
+    const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
+    const candidate = evidence.candidateSurfaces.find(
+      (row) => row.candidateId === 'CANDIDATE-NLC-1634-YUSHI-SHANCHENGTANG',
+    );
+
+    expect(candidate).toBeDefined();
+    if (candidate?.candidateId !== 'CANDIDATE-NLC-1634-YUSHI-SHANCHENGTANG') {
+      throw new Error('Expected NLC 1634 candidate.');
+    }
+
+    expect(candidate.registeredScanIdentityEstablished).toBe(true);
+    expect(candidate.auditableHoldingInstitutionEstablished).toBe(true);
+    expect(candidate.holdingInstitution).toBe('National Library of China');
+    expect(candidate.digitization).toBe('NLC892-411999032112 / five-fascicle set');
+    expect(candidate.relevantDigitization).toBe(
+      'NLC892-411999032112-149659 / 第4冊 / 卷之四',
+    );
+    expect(candidate.relevantPageCount).toBe(29);
+    expect(candidate.scanLinkedTranscriptionUrl).toContain('NGJ892411999032112149610');
     expect(candidate.qualificationOutcome).toBe(
-      'REGISTERED_SCAN_CANDIDATE_CONTEXT_MISMATCH',
+      'REGISTERED_SCAN_LINKED_TRANSCRIPTION_CONTEXT_MISMATCH',
     );
 
     expect(candidate.rows['W-YUANHAI-WEALTH-OFFICER']).toEqual({
       status: 'EXACT_STRING_PRESENT_OUTSIDE_FROZEN_CONTEXT',
       observedText: '財旺生官',
-      observedContext: '挈要捷馳玄妙訣 / 四言獨步 preceding material',
+      observedContext: '四言獨步 preceding material',
     });
     expect(candidate.rows['W-YUANHAI-OFFICER-RESOURCE']).toEqual({
       status: 'ORTHOGRAPHIC_TEXTUAL_VARIANT_OUTSIDE_FROZEN_CONTEXT',
@@ -82,7 +117,7 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
     expect(candidate.rows['W-YUANHAI-WEALTH-RESOURCE']).toEqual({
       status: 'EXACT_STRING_PRESENT_OUTSIDE_FROZEN_CONTEXT',
       observedText: '印綬見財',
-      observedContext: '卷五 / 格局生死引用',
+      observedContext: 'same NLC set / 卷三 / 論格局生死引用',
     });
 
     expect(candidate.frozenContextSequenceObserved).toEqual([
@@ -133,6 +168,9 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
   it('requires exact rob-wealth glyph support and forbids orthographic normalization', () => {
     const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
 
+    expect(evidence.requiredNextEvidence).toContain(
+      'DIRECTLY_INSPECT_NTL_1926_BEFORE_ANY_NTL_TEXTUAL_CLAIM',
+    );
     expect(evidence.requiredNextEvidence).toContain(
       'REQUIRE_EXACT_ROB_WEALTH_GLYPH_FOR_PEER_WEALTH_WITNESS',
     );
