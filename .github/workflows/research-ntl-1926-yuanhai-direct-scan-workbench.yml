@@ -76,17 +76,24 @@ jobs:
             /tmp/ntl/NTL-9900014380.pdf \
             /tmp/ntl/locator-pages/page
 
+          # Run OCR in parallel. OCR remains locator-only.
+          find /tmp/ntl/locator-pages -name 'page-*.png' -print0 \
+            | xargs -0 -n1 -P4 bash -c '
+                img="$0"
+                base="$(basename "$img" .png)"
+                out="/tmp/ntl/ocr/$base"
+                tesseract "$img" "$out" -l chi_tra --psm 6 >/dev/null 2>&1 || true
+              '
+
           : > /tmp/ntl/ocr-locator-hits.txt
-          for img in /tmp/ntl/locator-pages/page-*.png; do
-            base="$(basename "$img" .png)"
+          for txt in /tmp/ntl/ocr/page-*.txt; do
+            base="$(basename "$txt" .txt)"
             page10="$(printf '%s' "$base" | sed 's/^page-//')"
             page=$((10#$page10))
-            out="/tmp/ntl/ocr/$base"
-            tesseract "$img" "$out" -l chi_tra --psm 6 >/dev/null 2>&1 || true
-            if grep -Eq '四言.{0,3}[獨独]步|財旺生官|财旺生官|[煞殺杀]化.{0,2}[為爲为]印|比.{0,2}劫.{0,4}羊刃|財格.{0,3}大忌|财格.{0,3}大忌|印[綬绶].{0,2}見財|印[綬绶].{0,2}见财' "$out.txt"; then
+            if grep -Eq '四言.{0,3}[獨独]步|財旺生官|财旺生官|[煞殺杀]化.{0,2}[為爲为]印|比.{0,2}劫.{0,4}羊刃|財格.{0,3}大忌|财格.{0,3}大忌|印[綬绶].{0,2}見財|印[綬绶].{0,2}见财' "$txt"; then
               {
                 echo "===== DIGITAL PAGE $page ====="
-                grep -En '四言.{0,3}[獨独]步|財旺生官|财旺生官|[煞殺杀]化.{0,2}[為爲为]印|比.{0,2}劫.{0,4}羊刃|財格.{0,3}大忌|财格.{0,3}大忌|印[綬绶].{0,2}見財|印[綬绶].{0,2}见财' "$out.txt" || true
+                grep -En '四言.{0,3}[獨独]步|財旺生官|财旺生官|[煞殺杀]化.{0,2}[為爲为]印|比.{0,2}劫.{0,4}羊刃|財格.{0,3}大忌|财格.{0,3}大忌|印[綬绶].{0,2}見財|印[綬绶].{0,2}见财' "$txt" || true
               } >> /tmp/ntl/ocr-locator-hits.txt
             fi
           done
