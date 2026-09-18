@@ -18,6 +18,8 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      OMP_THREAD_LIMIT: '1'
 
     steps:
       - name: Checkout PR head
@@ -72,12 +74,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/ntl/locator-pages /tmp/ntl/ocr
-          pdftoppm -r 110 -gray -png \
+          pdftoppm -r 100 -gray -jpeg -jpegopt quality=78 \
             /tmp/ntl/NTL-9900014380.pdf \
             /tmp/ntl/locator-pages/page
 
           # Run OCR in parallel. OCR remains locator-only.
-          find /tmp/ntl/locator-pages -name 'page-*.png' -print0 \
+          find /tmp/ntl/locator-pages -name 'page-*.jpg' -print0 \
             | xargs -0 -n1 -P8 bash -c '
                 img="$0"
                 base="$(basename "$img" .jpg)"
