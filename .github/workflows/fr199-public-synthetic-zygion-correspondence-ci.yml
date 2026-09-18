@@ -8,12 +8,14 @@ on:
       - 'packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.ts'
       - 'packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.test.ts'
       - 'scripts/run-fr199-public-reference-experiment.mjs'
+      - 'scripts/run-fr199-public-provider-experiment.mjs'
       - '.github/workflows/fr199-public-synthetic-zygion-correspondence-ci.yml'
   pull_request:
     paths:
       - 'packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.ts'
       - 'packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.test.ts'
       - 'scripts/run-fr199-public-reference-experiment.mjs'
+      - 'scripts/run-fr199-public-provider-experiment.mjs'
       - '.github/workflows/fr199-public-synthetic-zygion-correspondence-ci.yml'
 
 permissions:
@@ -38,3 +40,13 @@ jobs:
         run: npx vitest run packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.test.ts
       - name: FR199 public source-exact reference experiment
         run: node scripts/run-fr199-public-reference-experiment.mjs
+      - name: FR199 real MediaPipe provider experiment
+        run: node scripts/run-fr199-public-provider-experiment.mjs
+      - name: Upload FR199 provider experiment receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr199-public-provider-experiment
+          path: artifacts/face-reading/fr199-public-provider-experiment.json
+          if-no-files-found: warn
+          retention-days: 14
