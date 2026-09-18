@@ -232,15 +232,33 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/tianyi/evidence/highres
-          while read -r page; do
-            [ -n "$page" ] || continue
-            printf -v stem 'page%03d' "$page"
+          python3 - <<'PY' > /tmp/tianyi/evidence/candidate-ranges.txt
+          from pathlib import Path
+
+          pages = [
+              int(x) for x in Path('/tmp/tianyi/evidence/candidate-pages.txt')
+              .read_text(encoding='ascii').split()
+          ]
+
+          if pages:
+              start = prev = pages[0]
+              for page in pages[1:]:
+                  if page == prev + 1:
+                      prev = page
+                      continue
+                  print(start, prev)
+                  start = prev = page
+              print(start, prev)
+          PY
+
+          while read -r first last; do
+            [ -n "$first" ] || continue
             pdftoppm \
-              -f "$page" -l "$page" -singlefile \
-              -r 240 -gray -png \
+              -f "$first" -l "$last" \
+              -r 180 -gray -png \
               /tmp/tianyi/yuanhai.pdf \
-              "/tmp/tianyi/evidence/highres/$stem"
-          done < /tmp/tianyi/evidence/candidate-pages.txt
+              /tmp/tianyi/evidence/highres/page
+          done < /tmp/tianyi/evidence/candidate-ranges.txt
 
           cp /tmp/tianyi/verified-metadata.txt /tmp/tianyi/evidence/
 
