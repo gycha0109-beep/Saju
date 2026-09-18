@@ -1,0 +1,22 @@
+name: MESH-DATA-02 Private Session Review Tool CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mesh-data-02-private-session-review-ci.yml'
+      - 'scripts/review-face-geometry-mesh-data-02-session.mjs'
+      - 'scripts/verify-face-geometry-mesh-data-02.mjs'
+      - 'packages/face-geometry/docs/mesh-data-02-same-condition-repeated-session-protocol.md'
+  workflow_dispatch:
+
+jobs:
+  verify-mesh-data-02-private-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify private session review tool
+        run: node scripts/verify-face-geometry-mesh-data-02.mjs
