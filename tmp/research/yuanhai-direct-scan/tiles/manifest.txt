@@ -10,3 +10,21 @@ page17-r2c1 x=0:300 y=566:1133 png_bytes=8494 b64_chars=11328
 page17-r2c2 x=300:600 y=566:1133 png_bytes=9090 b64_chars=12120
 page17-r2c3 x=600:900 y=566:1133 png_bytes=9216 b64_chars=12288
 page17-r2c4 x=900:1200 y=566:1133 png_bytes=8964 b64_chars=11952
+
+page15-page16:
+page15-r1c1 x=0:300 y=0:566 png_bytes=7749 b64_chars=10332
+page15-r1c2 x=300:600 y=0:566 png_bytes=7061 b64_chars=9416
+page15-r1c3 x=600:900 y=0:566 png_bytes=7918 b64_chars=10560
+page15-r1c4 x=900:1200 y=0:566 png_bytes=8058 b64_chars=10744
+page15-r2c1 x=0:300 y=566:1132 png_bytes=7144 b64_chars=9528
+page15-r2c2 x=300:600 y=566:1132 png_bytes=9202 b64_chars=12272
+page15-r2c3 x=600:900 y=566:1132 png_bytes=8476 b64_chars=11304
+page15-r2c4 x=900:1200 y=566:1132 png_bytes=8724 b64_chars=11632
+page16-r1c1 x=0:300 y=0:556 png_bytes=6484 b64_chars=8648
+page16-r1c2 x=300:600 y=0:556 png_bytes=6662 b64_chars=8884
+page16-r1c3 x=600:900 y=0:556 png_bytes=7219 b64_chars=9628
+page16-r1c4 x=900:1200 y=0:556 png_bytes=7221 b64_chars=9628
+page16-r2c1 x=0:300 y=556:1113 png_bytes=9384 b64_chars=12512
+page16-r2c2 x=300:600 y=556:1113 png_bytes=9356 b64_chars=12476
+page16-r2c3 x=600:900 y=556:1113 png_bytes=8541 b64_chars=11388
+page16-r2c4 x=900:1200 y=556:1113 png_bytes=8508 b64_chars=11344
