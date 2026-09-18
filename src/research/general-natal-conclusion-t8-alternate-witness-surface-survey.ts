@@ -134,6 +134,10 @@ function isContextBoundExactStatus(status: string): boolean {
   );
 }
 
+function isProductionAdmissibleStatus(status: string): boolean {
+  return status === 'CONTEXT_BOUND_EXACT_STRING_DIRECTLY_VERIFIED';
+}
+
 export function buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey() {
   const upstream = buildGeneralNatalConclusionT8PassageWitnessEvidence();
   const frozenRows = Object.freeze(
@@ -164,10 +168,8 @@ export function buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey() {
     (candidate) =>
       candidate.registeredScanIdentityEstablished &&
       candidate.auditableHoldingInstitutionEstablished &&
-      TARGET_WITNESS_IDS.every(
-        (witnessId) =>
-          candidate.rows[witnessId].status ===
-          'CONTEXT_BOUND_EXACT_STRING_DIRECTLY_VERIFIED',
+      TARGET_WITNESS_IDS.every((witnessId) =>
+        isProductionAdmissibleStatus(candidate.rows[witnessId].status),
       ),
   );
 
