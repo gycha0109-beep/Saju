@@ -1,0 +1,216 @@
+import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
+
+export const GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION =
+  'myeonghwa-general-natal-conclusion-t8-alternate-witness-surface-survey-v1' as const;
+
+const TARGET_WITNESS_IDS = Object.freeze([
+  'W-YUANHAI-WEALTH-OFFICER',
+  'W-YUANHAI-OFFICER-RESOURCE',
+  'W-YUANHAI-PEER-WEALTH',
+  'W-YUANHAI-WEALTH-RESOURCE',
+] as const);
+
+type TargetWitnessId = (typeof TARGET_WITNESS_IDS)[number];
+
+const FROZEN_EXACT_STRINGS = Object.freeze({
+  'W-YUANHAI-WEALTH-OFFICER': '財旺生官',
+  'W-YUANHAI-OFFICER-RESOURCE': '煞化為印',
+  'W-YUANHAI-PEER-WEALTH': '比劫羊刃，財格大忌',
+  'W-YUANHAI-WEALTH-RESOURCE': '印綬見財',
+} satisfies Readonly<Record<TargetWitnessId, string>>);
+
+const CANDIDATE_SURFACES = Object.freeze([
+  Object.freeze({
+    candidateId: 'CANDIDATE-WIKISOURCE-FROZEN-TRANSCRIPTION',
+    authorityClass: 'SOURCE_UNKNOWN_FROZEN_TRANSCRIPTION',
+    title: '淵海子平',
+    edition: 'Wikisource transcription; source edition not established',
+    surfaceUrl:
+      'https://zh.wikisource.org/zh-hant/%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3',
+    registeredScanIdentityEstablished: false,
+    auditableHoldingInstitutionEstablished: false,
+    context: '四言獨步',
+    rows: Object.freeze({
+      'W-YUANHAI-WEALTH-OFFICER': Object.freeze({
+        status: 'CONTEXT_BOUND_EXACT_STRING_PRESENT_SOURCE_UNKNOWN',
+        observedText: '財旺生官',
+      }),
+      'W-YUANHAI-OFFICER-RESOURCE': Object.freeze({
+        status: 'CONTEXT_BOUND_EXACT_STRING_PRESENT_SOURCE_UNKNOWN',
+        observedText: '煞化為印',
+      }),
+      'W-YUANHAI-PEER-WEALTH': Object.freeze({
+        status: 'CONTEXT_BOUND_EXACT_STRING_PRESENT_SOURCE_UNKNOWN',
+        observedText: '比劫羊刃，財格大忌',
+      }),
+      'W-YUANHAI-WEALTH-RESOURCE': Object.freeze({
+        status: 'CONTEXT_BOUND_EXACT_STRING_PRESENT_SOURCE_UNKNOWN',
+        observedText: '印綬見財',
+      }),
+    }),
+    qualificationOutcome: 'TEXT_IDENTITY_ONLY_NOT_SCAN_QUALIFIED',
+  }),
+  Object.freeze({
+    candidateId: 'CANDIDATE-NTL-1926-QINSHENAN-V2',
+    authorityClass: 'REGISTERED_SCAN_WITH_SCAN_LINKED_TRANSCRIPTION',
+    title: '淵海子平子平真詮 v.2',
+    edition: '秦慎安校勘 / 文明 / 1926',
+    holdingInstitution: 'National Taiwan Library',
+    digitization: 'NTL-9900014380',
+    pageCount: 164,
+    scanUrl:
+      'https://commons.wikimedia.org/wiki/File:NTL-9900014380_%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E5%AD%90%E5%B9%B3%E7%9C%9F%E8%A9%AE_v.2.pdf',
+    scanLinkedTranscriptionUrl:
+      'https://www.shidianguji.com/zh/book/NGJ892411999032112149610/chapter/1lqbsmkg60o4b',
+    registeredScanIdentityEstablished: true,
+    auditableHoldingInstitutionEstablished: true,
+    context: '卷四 / 四言獨步 and adjacent sections',
+    rows: Object.freeze({
+      'W-YUANHAI-WEALTH-OFFICER': Object.freeze({
+        status: 'EXACT_STRING_PRESENT_OUTSIDE_FROZEN_CONTEXT',
+        observedText: '財旺生官',
+        observedContext: '挈要捷馳玄妙訣 / 四言獨步 preceding material',
+      }),
+      'W-YUANHAI-OFFICER-RESOURCE': Object.freeze({
+        status: 'ORTHOGRAPHIC_TEXTUAL_VARIANT_OUTSIDE_FROZEN_CONTEXT',
+        observedText: '殺化爲印',
+        frozenText: '煞化為印',
+        observedContext: '四言獨步 preceding material',
+      }),
+      'W-YUANHAI-PEER-WEALTH': Object.freeze({
+        status: 'NOT_ESTABLISHED_IN_FROZEN_CONTEXT',
+        observedText:
+          'registered scan-linked transcription instead carries a divergent 四言獨步 sequence',
+      }),
+      'W-YUANHAI-WEALTH-RESOURCE': Object.freeze({
+        status: 'EXACT_STRING_PRESENT_OUTSIDE_FROZEN_CONTEXT',
+        observedText: '印綬見財',
+        observedContext: '卷五 / 格局生死引用',
+      }),
+    }),
+    frozenContextSequenceObserved: Object.freeze([
+      '印殺相輕',
+      '印綬根深',
+      '先財後印',
+      '先印後財',
+    ]),
+    qualificationOutcome: 'REGISTERED_SCAN_CANDIDATE_CONTEXT_MISMATCH',
+  }),
+  Object.freeze({
+    candidateId: 'CANDIDATE-SECONDARY-FOUR-YAN-DUBU-TRANSCRIPTIONS',
+    authorityClass: 'SECONDARY_TRANSCRIPTION_NO_REGISTERED_SCAN_IDENTITY',
+    title: 'secondary 四言獨步 transcription family',
+    exampleUrl: 'https://nangwol.com/post/2694',
+    registeredScanIdentityEstablished: false,
+    auditableHoldingInstitutionEstablished: false,
+    context: '四言獨步',
+    rows: Object.freeze({
+      'W-YUANHAI-WEALTH-OFFICER': Object.freeze({
+        status: 'CONTEXT_BOUND_EXACT_STRING_PRESENT_SECONDARY_ONLY',
+        observedText: '財旺生官',
+      }),
+      'W-YUANHAI-OFFICER-RESOURCE': Object.freeze({
+        status: 'CONTEXT_BOUND_EXACT_STRING_PRESENT_SECONDARY_ONLY',
+        observedText: '煞化為印',
+      }),
+      'W-YUANHAI-PEER-WEALTH': Object.freeze({
+        status: 'CONTEXT_BOUND_EXACT_STRING_PRESENT_SECONDARY_ONLY',
+        observedText: '比劫羊刃，財格大忌',
+      }),
+      'W-YUANHAI-WEALTH-RESOURCE': Object.freeze({
+        status: 'CONTEXT_BOUND_EXACT_STRING_PRESENT_SECONDARY_ONLY',
+        observedText: '印綬見財',
+      }),
+    }),
+    qualificationOutcome: 'TEXTUAL_VARIANT_EXISTS_BUT_SCAN_IDENTITY_UNESTABLISHED',
+  }),
+] as const);
+
+function isContextBoundExactStatus(status: string): boolean {
+  return (
+    status === 'CONTEXT_BOUND_EXACT_STRING_PRESENT_SOURCE_UNKNOWN' ||
+    status === 'CONTEXT_BOUND_EXACT_STRING_PRESENT_SECONDARY_ONLY'
+  );
+}
+
+function isProductionAdmissibleStatus(status: string): boolean {
+  return status === 'CONTEXT_BOUND_EXACT_STRING_DIRECTLY_VERIFIED';
+}
+
+export function buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey() {
+  const upstream = buildGeneralNatalConclusionT8PassageWitnessEvidence();
+  const frozenRows = Object.freeze(
+    TARGET_WITNESS_IDS.map((witnessId) => {
+      const upstreamWitness = upstream.witnesses.find((row) => row.witnessId === witnessId);
+      if (upstreamWitness === undefined) {
+        throw new Error(`Missing frozen witness: ${witnessId}`);
+      }
+      return Object.freeze({
+        witnessId,
+        frozenExactString: FROZEN_EXACT_STRINGS[witnessId],
+        frozenPassageSha256: upstreamWitness.passageSha256,
+        frozenSection: upstreamWitness.section,
+        frozenPermanentRevisionUrl: upstreamWitness.permanentRevisionUrl,
+      });
+    }),
+  );
+
+  const registeredScanCandidates = CANDIDATE_SURFACES.filter(
+    (candidate) => candidate.registeredScanIdentityEstablished,
+  );
+  const contextBoundFourOfFourCandidates = CANDIDATE_SURFACES.filter((candidate) =>
+    TARGET_WITNESS_IDS.every((witnessId) =>
+      isContextBoundExactStatus(candidate.rows[witnessId].status),
+    ),
+  );
+  const productionAdmissibleCandidates = CANDIDATE_SURFACES.filter(
+    (candidate) =>
+      candidate.registeredScanIdentityEstablished &&
+      candidate.auditableHoldingInstitutionEstablished &&
+      TARGET_WITNESS_IDS.every((witnessId) =>
+        isProductionAdmissibleStatus(candidate.rows[witnessId].status),
+      ),
+  );
+
+  const material = {
+    evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION,
+    issue: '#877' as const,
+    auditBaseSha: '1675fc24efbc34e8f60983388820aa250aff2a0d' as const,
+    status: 'ALTERNATE_SURFACES_SURVEYED_NO_PRODUCTION_ADMISSIBLE_FOUR_OF_FOUR_CANDIDATE' as const,
+    upstreamPassageEvidenceId: upstream.evidenceId,
+    frozenRows,
+    candidateSurfaces: CANDIDATE_SURFACES,
+    counts: {
+      targetWitnessCount: TARGET_WITNESS_IDS.length,
+      candidateSurfaceCount: CANDIDATE_SURFACES.length,
+      registeredScanCandidateCount: registeredScanCandidates.length,
+      contextBoundFourOfFourTextCandidateCount: contextBoundFourOfFourCandidates.length,
+      productionAdmissibleFourOfFourCandidateCount: productionAdmissibleCandidates.length,
+    },
+    verdict: {
+      frozenWitnessMutationAuthorized: false as const,
+      alternateRegisteredScanFourOfFourEstablished: false as const,
+      exactWitnessHashReproductionAuthorityEstablished: false as const,
+      sourceIntegrityQualificationEstablished: false as const,
+      productionEligibleProvenanceEstablished: false as const,
+      provenanceQualityPromotionAuthorized: false as const,
+      productionAdmissionAuthority: false as const,
+      productionState: 'HOLD' as const,
+    },
+    requiredNextEvidence: Object.freeze([
+      'LOCATE_REGISTERED_OR_EQUIVALENTLY_AUDITABLE_SCAN_WITH_CONTEXT_BOUND_FROZEN_EXACT_STRINGS',
+      'ALLOW_PER_WITNESS_ADVANCE_ONLY_AFTER_DIRECT_IMAGE_OR_REVIEWED_REGISTERED_TRANSCRIPTION_SUPPORT',
+      'REQUIRE_EXACT_ROB_WEALTH_GLYPH_FOR_PEER_WEALTH_WITNESS',
+      'DO_NOT_NORMALIZE_ORTHOGRAPHIC_VARIANTS_INTO_FROZEN_HASH_IDENTITY',
+      'KEEP_SAME_STRING_DIFFERENT_SECTION_SEPARATE_FROM_FROZEN_CONTEXT_IDENTITY',
+      'REPRODUCE_FROZEN_DIGEST_ONLY_AFTER_SCAN_VERIFIED_TRANSCRIPTION_IS_PINNED',
+      'USE_SEPARATE_REVIEWED_WITNESS_REREGISTRATION_PROCESS_IF_SOURCE_DEFINITION_CHANGES',
+    ] as const),
+  };
+
+  return Object.freeze({
+    evidenceId: deterministicContentHash(material),
+    ...material,
+  });
+}
