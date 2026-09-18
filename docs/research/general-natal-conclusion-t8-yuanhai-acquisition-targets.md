@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Yuanhai Acquisition Target Registry
 
-Issue: #883  
-Audit base: `a0735ab816f4d8c2cc26eb228eee468ee1d0f03c`
+Issue: #894  
+Audit base: `47d493535a2e251ac136bcc56fad54c2fe59f6f3`
 
 ## Purpose
 
@@ -231,7 +231,55 @@ Commons category:
 https://commons.wikimedia.org/wiki/Category:新刊合併官板音義評註淵海子平
 ```
 
-Both public PDFs are directly surfaced by Commons and together cover the five-volume work. The relevant `四言獨步` part/page and frozen witness strings remain to be inspected. No textual identity is inferred from the edition label.
+Both registered Commons binaries were fetched through MediaWiki imageinfo and verified against the downloaded files:
+
+```text
+第一冊
+SHA-1      = 8ba90db1a254f14922a1031b207f51664dcde15a
+file bytes = 67995892
+pages      = 138
+
+第二冊
+SHA-1      = fae363bb817c0fd6332fa18f879a8ea6687140a9
+file bytes = 83113601
+pages      = 170
+```
+
+Direct image review of the exact 第二冊 binary established the bounded section:
+
+```text
+digital page 87      = 四言獨步 title / section begins
+digital pages 87..91 = directly inspected 四言獨步 surface
+digital page 92      = transition into 身弱論
+digital page 110     = 卷四終
+```
+
+Directly visible variant anchors include:
+
+```text
+先印後財
+反成其辱
+```
+
+The four frozen exact witnesses were **not established** within digital pages 87..91:
+
+```text
+財旺生官                 NOT ESTABLISHED IN 四言獨步
+煞化為印                 NOT ESTABLISHED IN 四言獨步
+比劫羊刃，財格大忌       NOT ESTABLISHED IN 四言獨步
+印綬見財                 NOT ESTABLISHED IN 四言獨步
+```
+
+Deterministic outcome:
+
+```text
+directInspectionState = DIRECTLY_INSPECTED
+exactFrozenWitnessCountEstablished = 0
+fixedWitnessDirectVerificationOutcome =
+  NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE
+```
+
+This closes the remaining P0 public-scan direct-inspection target without creating new witness evidence. Both registered P0 public scans are now directly inspected; further acquisition work must move to a distinct physical/reproduction target rather than infer 16/16 from the inspected variants.
 
 ## P2 — Shanghai Fuwen Shuju bibliographic lead
 
@@ -256,7 +304,7 @@ acquisitionTargetCount                 = 9
 confirmedPhysicalHoldingCount          = 6
 bibliographicLeadCount                 = 1
 publicDigitalPageImageVerifiedCount    = 2
-directlyInspectedAcquisitionTargetCount = 1
+directlyInspectedAcquisitionTargetCount = 2
 newDirectWitnessEvidenceCount          = 0
 productionAdmissionEvidenceCount       = 0
 ```
@@ -289,3 +337,5 @@ Still false:
 - productionAdmissionAuthority
 
 Production remains **HOLD**.
+
+Both registered P0 public scans (Tianyi and Zhuji) have now been directly inspected. Neither establishes any of the four unresolved frozen exact witnesses inside its bounded `四言獨步` surface, so the direct-scan count remains **12 / 16**.
