@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "mesh-data-01-real-repeated-sweep-evidence-receipt-v1",
+  "artifactVersion": "0.1.0",
+  "receiptId": "research.face_geometry.mesh_data_01.first_real_repeated_sweep.receipt_001",
+  "issueRef": "#855",
+  "reviewDate": "2026-09-18",
+  "sourceArtifact": {
+    "repositoryStored": false,
+    "sha256": "8c60a72f04f681984297f38b254efa84ff4533fd39973dc32b3108480260f47c",
+    "controllerSchemaVersion": "mesh6i-manual-browser-capture-controller-result-v1",
+    "datasetSchemaVersion": "mesh6f-prospective-sweep-acquisition-dataset-v1",
+    "eligibilityState": "mesh6e_attestations_accepted_not_independently_verified",
+    "freshnessIndependentlyProven": false,
+    "sameParticipantIdentityIndependentlyProven": false
+  },
+  "review": {
+    "realBrowserCameraCaptureOperatorReported": true,
+    "postPreregistrationFreshCaptureAttested": true,
+    "syntheticOrRepositoryFixture": false,
+    "candidateSelectedCapture": false,
+    "developmentCaptureReuse": false,
+    "identityMatchingPerformed": false,
+    "sweepCount": 3,
+    "capturedFrameCount": 15,
+    "observedCaptureSeriesCount": 1,
+    "observedCaptureConditionCount": 1,
+    "primaryEvidenceFieldCountPerSweep": 13,
+    "allSweepsContainSameFrozenFieldSet": true,
+    "allPrimaryValuesFinite": true,
+    "allPrimaryValuesNonZero": true,
+    "uniqueSweepRefs": true,
+    "sweepSequenceIndices": [
+      1,
+      2,
+      3
+    ],
+    "provenanceConsistentAcrossSweeps": true
+  },
+  "frozenPrimaryEvidenceFields": [
+    "poseSweep.lateralOrientationRadians.span",
+    "poseSweep.verticalOrientationRadians.span",
+    "poseSweep.relativeRotationFromFirstFrameRadians.max",
+    "morphologyRepeatability.observables.zygomaticSpanRatio.mad",
+    "morphologyRepeatability.observables.zygomaticSpanRatio.robustSpanP10P90",
+    "morphologyRepeatability.observables.zygomaticTemporalFlareRatio.mad",
+    "morphologyRepeatability.observables.zygomaticTemporalFlareRatio.robustSpanP10P90",
+    "morphologyRepeatability.observables.zygomaticCheekLateralReliefRatio.mad",
+    "morphologyRepeatability.observables.zygomaticCheekLateralReliefRatio.robustSpanP10P90",
+    "morphologyRepeatability.observables.bilateralZygomaticAsymmetryRatio.mad",
+    "morphologyRepeatability.observables.bilateralZygomaticAsymmetryRatio.robustSpanP10P90",
+    "morphologyRepeatability.observables.zygomaticRelativeDepthRatio.mad",
+    "morphologyRepeatability.observables.zygomaticRelativeDepthRatio.robustSpanP10P90"
+  ],
+  "privacyReview": {
+    "rawImageStored": false,
+    "rawVideoStored": false,
+    "rawProviderResponseStored": false,
+    "rawLandmarkSetStored": false,
+    "derivedFullFaceMetricGeometryStored": false,
+    "faceEmbeddingStored": false,
+    "identityTemplateStored": false,
+    "participantDerivedNumericEvidenceValuesStoredInRepository": false
+  },
+  "authorityReview": {
+    "empiricalRepeatabilityEstablished": false,
+    "repeatabilityPassFailIssued": false,
+    "captureQualityValidated": false,
+    "poseAcceptanceValidated": false,
+    "calibrationIssued": false,
+    "thresholdsIssued": false,
+    "confidenceScoreIssued": false,
+    "populationNormDefined": false,
+    "productionMorphologyAuthorized": false,
+    "anatomicalMeasurementClaimed": false,
+    "traditionalSemanticAuthorityIssued": false
+  },
+  "completion": {
+    "meshData01CompletionConditionSatisfied": true,
+    "basis": "one inspectable real post-preregistration repeated-sweep dataset reviewed for eligibility, privacy, provenance, and frozen-field coverage",
+    "nextFrontier": "MESH-DATA-02 same-condition repeated-session acquisition; existence of this receipt does not justify calibration or thresholds"
+  }
+}
