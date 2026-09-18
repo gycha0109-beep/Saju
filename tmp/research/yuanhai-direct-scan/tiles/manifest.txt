@@ -11,7 +11,15 @@ page17-r2c2 x=300:600 y=566:1133 png_bytes=9090 b64_chars=12120
 page17-r2c3 x=600:900 y=566:1133 png_bytes=9216 b64_chars=12288
 page17-r2c4 x=900:1200 y=566:1133 png_bytes=8964 b64_chars=11952
 
-page15-page16:
+page14-page16:
+page14-r1c1 x=0:300 y=0:562 png_bytes=8823 b64_chars=11764
+page14-r1c2 x=300:600 y=0:562 png_bytes=7772 b64_chars=10364
+page14-r1c3 x=600:900 y=0:562 png_bytes=8459 b64_chars=11280
+page14-r1c4 x=900:1200 y=0:562 png_bytes=8839 b64_chars=11788
+page14-r2c1 x=0:300 y=562:1124 png_bytes=8175 b64_chars=10900
+page14-r2c2 x=300:600 y=562:1124 png_bytes=8398 b64_chars=11200
+page14-r2c3 x=600:900 y=562:1124 png_bytes=9869 b64_chars=13160
+page14-r2c4 x=900:1200 y=562:1124 png_bytes=9547 b64_chars=12732
 page15-r1c1 x=0:300 y=0:566 png_bytes=7749 b64_chars=10332
 page15-r1c2 x=300:600 y=0:566 png_bytes=7061 b64_chars=9416
 page15-r1c3 x=600:900 y=0:566 png_bytes=7918 b64_chars=10560
