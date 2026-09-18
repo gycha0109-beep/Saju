@@ -5,12 +5,15 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
   it('records scan-backed corroboration without promoting provenance authority', () => {
     const evidence = buildGeneralNatalConclusionT8ScanBackedSourceQualification();
 
-    expect(evidence.issue).toBe('#793');
+    expect(evidence.issue).toBe('#839');
     expect(evidence.counts.witnessCount).toBe(16);
     expect(evidence.counts.scanBackedEditionIdentityEstablishedCount).toBe(16);
     expect(evidence.counts.scanBackedPropositionCorroboratedCount).toBe(16);
     expect(evidence.counts.sameEditionScanOcrCorroboratedCount).toBe(6);
     expect(evidence.counts.crossEditionPropositionCorroboratedCount).toBe(10);
+    expect(evidence.counts.exactDigitalScanPageVerifiedCount).toBe(1);
+    expect(evidence.counts.boundedPropositionDirectlyObservedInScanCount).toBe(1);
+    expect(evidence.counts.directScanImageComparisonCompletedCount).toBe(1);
     expect(evidence.counts.exactPhysicalPageOrFolioVerifiedCount).toBe(0);
     expect(evidence.counts.exactWitnessHashReproducedFromScanCount).toBe(0);
     expect(evidence.counts.fullScanQualificationEstablishedCount).toBe(0);
@@ -24,6 +27,39 @@ describe('General Natal conclusion T8 scan-backed source qualification', () => {
     expect(evidence.verdict.productionAdmissionAuthority).toBe(false);
     expect(evidence.verdict.productionState).toBe('HOLD');
     expect(evidence.witnessRows.every((row) => !row.exactTranscriptionIdentityEstablished)).toBe(true);
+  });
+
+  it('pins the Yuanhai output-to-wealth digital scan page without claiming physical folio or transcription identity', () => {
+    const evidence = buildGeneralNatalConclusionT8ScanBackedSourceQualification();
+    const target = evidence.witnessRows.find(
+      (row) => row.witnessId === 'W-YUANHAI-OUTPUT-WEALTH',
+    );
+    const others = evidence.witnessRows.filter(
+      (row) => row.witnessId !== 'W-YUANHAI-OUTPUT-WEALTH',
+    );
+
+    expect(target).toBeDefined();
+    expect(target?.exactDigitalScanPageVerified).toBe(true);
+    expect(target?.boundedPropositionDirectlyObservedInScan).toBe(true);
+    expect(target?.directScanImageComparisonCompleted).toBe(true);
+    expect(target?.directInspection).toEqual({
+      digitalScanPage: 8,
+      sectionObserved: '論食神',
+      boundedPropositionObserved: '食神者生我財神之謂也',
+    });
+    expect(target?.exactPhysicalPageOrFolioVerified).toBe(false);
+    expect(target?.exactWitnessHashReproducedFromScan).toBe(false);
+    expect(target?.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(target?.fullScanQualificationEstablished).toBe(false);
+    expect(target?.productionProvenancePromotionAuthorized).toBe(false);
+    expect(
+      others.every(
+        (row) =>
+          !row.exactDigitalScanPageVerified &&
+          !row.boundedPropositionDirectlyObservedInScan &&
+          !row.directScanImageComparisonCompleted,
+      ),
+    ).toBe(true);
   });
 
   it('keeps same-edition OCR corroboration separate from cross-edition Yuanhai corroboration', () => {
