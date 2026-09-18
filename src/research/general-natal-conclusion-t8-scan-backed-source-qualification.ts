@@ -117,32 +117,32 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
   },
   'W-YUANHAI-WEALTH-OFFICER': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
-    scanSurfaceSection: '四言獨步',
+    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
+    scanSurfaceSection: '雜論口訣 / 實法第一',
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/book/SDZJ0626/chapter/1lctut4t92tri',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
   },
   'W-YUANHAI-OFFICER-RESOURCE': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
-    scanSurfaceSection: '四言獨步',
+    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
+    scanSurfaceSection: '實法第一',
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/book/SDZJ0626/chapter/1lctut4t92tri',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
   },
   'W-YUANHAI-PEER-WEALTH': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
-    scanSurfaceSection: '四言獨步',
+    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
+    scanSurfaceSection: '雜論口訣',
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/mid-page/7557108914061590554',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
   },
   'W-YUANHAI-WEALTH-RESOURCE': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
-    scanVolume: 'NLC892-2642-210318 第4冊 / 卷之五',
-    scanSurfaceSection: '四言獨步',
+    scanVolume: 'NLC892-2642-210317 第3冊 / 卷之四',
+    scanSurfaceSection: '雜論口訣',
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/mid-page/7557108914061590554',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
