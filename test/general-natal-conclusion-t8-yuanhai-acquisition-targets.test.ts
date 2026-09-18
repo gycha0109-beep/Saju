@@ -6,11 +6,11 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
   it('registers acquisition targets without converting catalog records into witness evidence', () => {
     const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
 
-    expect(evidence.issue).toBe('#894');
+    expect(evidence.issue).toBe('#899');
     expect(evidence.counts).toEqual({
       unresolvedWitnessCount: 4,
-      acquisitionTargetCount: 9,
-      confirmedPhysicalHoldingCount: 6,
+      acquisitionTargetCount: 10,
+      confirmedPhysicalHoldingCount: 7,
       bibliographicLeadCount: 1,
       publicDigitalPageImageVerifiedCount: 2,
       directlyInspectedAcquisitionTargetCount: 2,
@@ -25,7 +25,7 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
     expect(evidence.verdict.productionState).toBe('HOLD');
   });
 
-  it('pins the six confirmed physical holdings and their relevant item identifiers', () => {
+  it('pins the seven confirmed physical holdings and their relevant item identifiers', () => {
     const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
 
     const yulgok = evidence.acquisitionTargets.find(
@@ -90,6 +90,38 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
       publicPageImageAvailability: 'NOT_ESTABLISHED',
       directInspectionState: 'NOT_ACQUIRED',
       frozenWitnessContentClaimed: false,
+      reproductionAccess: {
+        routeState: 'VERIFIED_INSTITUTIONAL_APPLICATION_ROUTE',
+        externalUserApplicationSupported: true,
+        applicationEmail: 'bulib@bukkyo-u.ac.jp',
+        decisionLeadTime: 'approximately 1 week',
+        selfCopyAllowed: false,
+        selfPhotographyAllowed: false,
+        reproductionInquiryRequired: true,
+      },
+    });
+
+    const bukkyoSaoyeSecond = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-BUKKYO-BB08850892-V3-5',
+    );
+    expect(bukkyoSaoyeSecond).toMatchObject({
+      priority: 'P1',
+      targetClass: 'CONFIRMED_PHYSICAL_HOLDING',
+      catalogIdentifier: 'CiNii NCID BB08850892 / 卷之3-5 call 000241360',
+      editionOrImprint: '掃葉山房, [清], 刊本',
+      dimensions: '24.3 × 15.4 cm',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+      reproductionAccess: {
+        routeState: 'VERIFIED_INSTITUTIONAL_APPLICATION_ROUTE',
+        externalUserApplicationSupported: true,
+        applicationEmail: 'bulib@bukkyo-u.ac.jp',
+        decisionLeadTime: 'approximately 1 week',
+        selfCopyAllowed: false,
+        selfPhotographyAllowed: false,
+        reproductionInquiryRequired: true,
+      },
     });
 
     const tokyoGeneral = evidence.acquisitionTargets.find(
@@ -103,6 +135,12 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
       publicPageImageAvailability: 'NOT_ESTABLISHED',
       directInspectionState: 'NOT_ACQUIRED',
       frozenWitnessContentClaimed: false,
+      reproductionAccess: {
+        routeState: 'VERIFIED_INSTITUTIONAL_COPY_ROUTE',
+        externalUserReadingSupported: true,
+        selfCopyAllowed: false,
+        vendorCopyMayBeAvailableSubjectToCondition: true,
+      },
     });
   });
 

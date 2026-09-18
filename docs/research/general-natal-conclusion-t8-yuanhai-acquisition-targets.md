@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Yuanhai Acquisition Target Registry
 
-Issue: #894  
-Audit base: `47d493535a2e251ac136bcc56fad54c2fe59f6f3`
+Issue: #899  
+Audit base: `a73e4751ea2e00b2f3e17b99afa6c80f31bb14d9`
 
 ## Purpose
 
@@ -126,6 +126,43 @@ https://ci.nii.ac.jp/ncid/BB08851308
 
 The catalog explicitly records `崇禎七年孟冬吉日重梓` and `福建余氏 鐫梓`. This makes it a high-value acquisition target for testing whether the frozen text belongs to a different later impression / transmission branch. Public page images have not been established.
 
+The institutional access route is now verified:
+
+```text
+external-user application = supported
+application email         = bulib@bukkyo-u.ac.jp
+decision lead time        = approximately 1 week
+self copy                 = not allowed for 和漢古書
+self photography          = not allowed
+reproduction              = inquiry/application through library reference service
+```
+
+Access guide:
+
+```text
+https://bird.bukkyo-u.ac.jp/wakankosho/wakankosho.html
+https://www.bukkyo-u.ac.jp/library/rule/
+```
+
+## P1 — Bukkyo University Library / 掃葉山房 [清] / second confirmed copy
+
+```text
+CiNii NCID     = BB08850892
+title          = 新刋合併官板音義評註淵海子平 5卷
+imprint        = 掃葉山房, [清], 刊本
+relevant item  = 卷之3-5
+call number    = 000241360
+size           = 24.3 × 15.4 cm
+```
+
+Catalog:
+
+```text
+https://ci.nii.ac.jp/ncid/BB08850892
+```
+
+This is a distinct second Bukkyo holding in the same cataloged `崇禎七年孟冬吉日重梓` / `福建余氏 鐫梓` transmission family. It provides a separate acquisition fallback if call `000241358` cannot be reproduced. The same verified Bukkyo external-user reproduction route applies.
+
 ## P1 — University of Tokyo General Library / 敬文堂後印
 
 ```text
@@ -144,6 +181,12 @@ https://ci.nii.ac.jp/ncid/BB1246745X
 ```
 
 The catalog identifies this item as a later impression of the `福建余氏繡梓崇禎7年重梓` blocks. Public page images have not been established.
+
+The University of Tokyo General Library documents an external-user route for 和漢古書: reading is available to general users, self-copy is not allowed, and vendor copying may be accepted when material condition permits.
+
+```text
+https://www.lib.u-tokyo.ac.jp/ja/library/general/user-guide/materials/stack-classics
+```
 
 ## P0 — Tianyi Pavilion public 崇禎 scan
 
@@ -210,7 +253,7 @@ fixedWitnessDirectVerificationOutcome =
   NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE
 ```
 
-This advances acquisition inspection state only. It does **not** create new direct witness evidence. The next P0 direct-inspection target is the Zhuji Library public scan.
+This advances acquisition inspection state only. It does **not** create new direct witness evidence. The Zhuji P0 route was subsequently inspected and is recorded below.
 
 ## P0 — Zhuji Library public 福建余氏 scan
 
@@ -300,8 +343,8 @@ The surfaced record does not establish a holding institution or a retrievable sc
 
 ```text
 unresolvedWitnessCount                 = 4
-acquisitionTargetCount                 = 9
-confirmedPhysicalHoldingCount          = 6
+acquisitionTargetCount                 = 10
+confirmedPhysicalHoldingCount          = 7
 bibliographicLeadCount                 = 1
 publicDigitalPageImageVerifiedCount    = 2
 directlyInspectedAcquisitionTargetCount = 2
@@ -339,3 +382,5 @@ Still false:
 Production remains **HOLD**.
 
 Both registered P0 public scans (Tianyi and Zhuji) have now been directly inspected. Neither establishes any of the four unresolved frozen exact witnesses inside its bounded `四言獨步` surface, so the direct-scan count remains **12 / 16**.
+
+The active frontier is therefore **P1 reproduction acquisition**, led by Bukkyo `BB08851308 / 000241358`, with the newly registered `BB08850892 / 000241360` as a same-family fallback and Tokyo `BB1246745X / 0005484761` as the next institutional fallback. Verified access routes do not constitute phrase-level evidence.
