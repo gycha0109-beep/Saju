@@ -7,6 +7,8 @@ import {
   FR199_MALE_DATASET_REPOSITORY,
   FR199_PUBLIC_CORPUS,
   deriveAndFreezeIndependentZygionReferenceFR199,
+  deriveZygionIntendedLoopRepairFR199,
+  parseObjVerticesFR199,
 } from '../.face-reading-dist/face-reading-public-synthetic-zygion-correspondence-fr199.js';
 
 function sha256(text) {
@@ -42,6 +44,30 @@ for (const sampleId of FR199_PUBLIC_CORPUS) {
   }
 }
 
+const intendedRepairReceipts = [];
+const intendedRepairFailures = [];
+for (const sampleId of FR199_PUBLIC_CORPUS) {
+  try {
+    const source = await fetchObj(sampleId);
+    const repaired = deriveZygionIntendedLoopRepairFR199(parseObjVerticesFR199(source.objText));
+    intendedRepairReceipts.push({
+      sampleId,
+      objDigest: source.objDigest,
+      referenceMethod: repaired.referenceMethod,
+      pronasale: repaired.pronasale,
+      bilateralReference: repaired.bilateral,
+      bandsVisited: repaired.bandsVisited,
+      providerCandidateVisibleDuringDerivation: false,
+      providerIndexAdmissionAuthorized: false,
+    });
+  } catch (error) {
+    intendedRepairFailures.push({
+      sampleId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 process.stdout.write(`${JSON.stringify({
   status: failures.length === 0 ? 'FR199_PUBLIC_REFERENCE_EXPERIMENT_COMPLETE' : 'FR199_PUBLIC_REFERENCE_EXPERIMENT_PARTIAL',
   corpusCount: FR199_PUBLIC_CORPUS.length,
@@ -49,6 +75,11 @@ process.stdout.write(`${JSON.stringify({
   sourceExactFailureCount: failures.length,
   receipts,
   failures,
+  intendedLoopRepairMethod: 'topsakal_2023_public_notebook_intended_loop_repair_v1',
+  intendedLoopRepairSuccessCount: intendedRepairReceipts.length,
+  intendedLoopRepairFailureCount: intendedRepairFailures.length,
+  intendedLoopRepairReceipts: intendedRepairReceipts,
+  intendedLoopRepairFailures: intendedRepairFailures,
   providerStageExecuted: false,
   providerIndexAdmissionAuthorized: false,
 })}\n`);
