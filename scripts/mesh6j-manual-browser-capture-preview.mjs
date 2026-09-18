@@ -9,6 +9,8 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { createServer } from 'node:http';
+import { createServer as createSecureServer, request as httpsRequest } from 'node:https';
+import { networkInterfaces } from 'node:os';
 import {
   dirname,
   extname,
@@ -18,14 +20,18 @@ import {
 } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath, URL } from 'node:url';
+import { assertLanRequestAllowed } from './mesh6j-private-lan-transport.mjs';
 
 const RELEASE_COMMIT = 'f8ef212d5c962c0e853db7e59d217056b187084b';
 const METADATA_PATH = 'mediapipe/tasks/cc/vision/face_geometry/data/geometry_pipeline_metadata_landmarks.pbtxt';
 const METADATA_BLOB_SHA = '252a7b05b24c5c43c5b94179393639f7c9a2fe8f';
 const METADATA_URL = 'https://raw.githubusercontent.com/google-ai-edge/mediapipe/' + RELEASE_COMMIT + '/' + METADATA_PATH;
-const HOST = '127.0.0.1';
+const LOCALHOST_HOST = '127.0.0.1';
+const LAN_HOST = '0.0.0.0';
 const DEFAULT_PORT = 4316;
 const SMOKE = process.env.MYEONGHWA_MESH6J_SMOKE === '1';
+const LAN_SMOKE = process.env.MYEONGHWA_MESH6J_LAN_SMOKE === '1';
+const LAN_MODE = process.env.MESH6J_LAN === '1' || LAN_SMOKE;
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, '..');
@@ -181,7 +187,63 @@ function sendFile(response, path) {
   response.end(readFileSync(path));
 }
 
+function requireLanTlsConfig() {
+  if (!LAN_MODE) return null;
+  const keyPath = process.env.MESH6J_TLS_KEY?.trim();
+  const certPath = process.env.MESH6J_TLS_CERT?.trim();
+  if (!keyPath || !certPath) {
+    fail('LAN mode requires MESH6J_TLS_KEY and MESH6J_TLS_CERT.');
+  }
+  if (!existsSync(keyPath) || !statSync(keyPath).isFile()) {
+    fail('LAN TLS key path does not exist or is not a file.');
+  }
+  if (!existsSync(certPath) || !statSync(certPath).isFile()) {
+    fail('LAN TLS certificate path does not exist or is not a file.');
+  }
+  return Object.freeze({
+    key: readFileSync(keyPath),
+    cert: readFileSync(certPath),
+  });
+}
+
+function privateLanUrls(port) {
+  const urls = [];
+  for (const entries of Object.values(networkInterfaces())) {
+    for (const entry of entries || []) {
+      if (entry.family !== 'IPv4' || entry.internal) continue;
+      const octets = entry.address.split('.').map(Number);
+      const [a, b] = octets;
+      const isPrivate =
+        a === 10 ||
+        (a === 172 && b >= 16 && b <= 31) ||
+        (a === 192 && b === 168) ||
+        (a === 169 && b === 254);
+      if (isPrivate) urls.push('https://' + entry.address + ':' + port + '/');
+    }
+  }
+  return Object.freeze(urls);
+}
+
+function smokeHttpsGet(url) {
+  return new Promise((resolveRequest, rejectRequest) => {
+    const request = httpsRequest(url, { rejectUnauthorized: false }, (response) => {
+      const chunks = [];
+      response.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+      response.on('end', () => {
+        resolveRequest(Object.freeze({
+          ok: response.statusCode !== undefined && response.statusCode >= 200 && response.statusCode < 300,
+          status: response.statusCode ?? 0,
+          body: Buffer.concat(chunks),
+        }));
+      });
+    });
+    request.once('error', rejectRequest);
+    request.end();
+  });
+}
+
 async function main() {
+  const tls = requireLanTlsConfig();
   const prepared = await prepareRuntimeAssets();
   const visionEntry = fileURLToPath(import.meta.resolve('@mediapipe/tasks-vision'));
   const visionRoot = findPackageRoot(visionEntry);
@@ -194,9 +256,18 @@ async function main() {
   }
   const pageHtml = pageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
 
-  const server = createServer((request, response) => {
+  const requestHandler = (request, response) => {
+    if (LAN_MODE) {
+      try {
+        assertLanRequestAllowed(request.socket.remoteAddress);
+      } catch {
+        response.writeHead(403, { 'content-type': 'text/plain; charset=utf-8' });
+        response.end('private LAN clients only');
+        return;
+      }
+    }
     const rawUrl = request.url || '/';
-    const url = new URL(rawUrl, 'http://' + HOST);
+    const url = new URL(rawUrl, (LAN_MODE ? 'https://' : 'http://') + (request.headers.host || LOCALHOST_HOST));
     if (request.method !== 'GET') {
       response.writeHead(405, { 'content-type': 'text/plain; charset=utf-8', allow: 'GET' });
       response.end('method not allowed');
@@ -231,10 +302,11 @@ async function main() {
       });
       response.end(JSON.stringify({
         schemaVersion: 'mesh6j-localhost-runtime-config-v1',
+        transportMode: LAN_MODE ? 'private_lan_https' : 'localhost_http',
         releaseCommit: RELEASE_COMMIT,
         canonicalAssetDigest: prepared.canonicalAssetDigest,
         geometryMetadataBlobSha: METADATA_BLOB_SHA,
-        authorityState: 'localhost_manual_research_capture_only',
+        authorityState: 'manual_research_capture_only',
         rawCapturePersistenceEnabled: false,
         calibrationAuthorized: false,
         productionMorphologyAuthorized: false,
@@ -276,23 +348,26 @@ async function main() {
 
     response.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
     response.end('not found');
-  });
+  };
+  const server = LAN_MODE
+    ? createSecureServer(tls, requestHandler)
+    : createServer(requestHandler);
 
-  const requestedPort = SMOKE ? 0 : Number(process.env.MESH6J_PORT || DEFAULT_PORT);
+  const requestedPort = (SMOKE || LAN_SMOKE) ? 0 : Number(process.env.MESH6J_PORT || DEFAULT_PORT);
   if (!Number.isInteger(requestedPort) || requestedPort < 0 || requestedPort > 65535) {
     fail('MESH6J_PORT must be an integer between 0 and 65535.');
   }
 
   await new Promise((resolveListen, rejectListen) => {
     server.once('error', rejectListen);
-    server.listen(requestedPort, HOST, resolveListen);
+    server.listen(requestedPort, LAN_MODE ? LAN_HOST : LOCALHOST_HOST, resolveListen);
   });
 
   const address = server.address();
   if (address === null || typeof address === 'string') fail('unexpected localhost server address.');
-  const base = 'http://' + HOST + ':' + address.port;
+  const base = (LAN_MODE ? 'https://' : 'http://') + LOCALHOST_HOST + ':' + address.port;
 
-  if (SMOKE) {
+  if (SMOKE || LAN_SMOKE) {
     try {
       const required = [
         '/',
@@ -305,14 +380,19 @@ async function main() {
         importMapTarget,
       ];
       for (const route of required) {
-        const response = await globalThis.fetch(base + route);
+        const response = LAN_MODE
+          ? await smokeHttpsGet(base + route)
+          : await globalThis.fetch(base + route);
         if (!response.ok) fail('smoke route failed: ' + route + ' HTTP ' + response.status + '.');
-        const bytes = Buffer.from(await response.arrayBuffer());
+        const bytes = LAN_MODE ? response.body : Buffer.from(await response.arrayBuffer());
         if (bytes.length === 0) fail('smoke route returned an empty payload: ' + route + '.');
       }
-      const config = await (await globalThis.fetch(base + '/runtime/config.json')).json();
+      const config = LAN_MODE
+        ? JSON.parse((await smokeHttpsGet(base + '/runtime/config.json')).body.toString('utf8'))
+        : await (await globalThis.fetch(base + '/runtime/config.json')).json();
       if (
         config.schemaVersion !== 'mesh6j-localhost-runtime-config-v1'
+        || config.transportMode !== (LAN_MODE ? 'private_lan_https' : 'localhost_http')
         || config.rawCapturePersistenceEnabled !== false
         || config.calibrationAuthorized !== false
         || config.productionMorphologyAuthorized !== false
@@ -320,8 +400,9 @@ async function main() {
         fail('smoke runtime config authority boundary drift.');
       }
       process.stdout.write(JSON.stringify({
-        status: 'MESH6J_LOCALHOST_CAPTURE_SURFACE_PASS',
-        localhostOnly: true,
+        status: LAN_MODE ? 'MESH6J_PRIVATE_LAN_HTTPS_CAPTURE_SURFACE_PASS' : 'MESH6J_LOCALHOST_CAPTURE_SURFACE_PASS',
+        localhostOnly: !LAN_MODE,
+        privateLanHttps: LAN_MODE,
         requiredRoutesVerified: true,
         exactMetadataVerified: true,
         weightedAdapterRegenerated: true,
@@ -337,7 +418,18 @@ async function main() {
     return;
   }
 
-  process.stdout.write('MESH6J manual research capture surface: ' + base + '/\n');
+  if (LAN_MODE) {
+    const urls = privateLanUrls(address.port);
+    process.stdout.write('MESH6J.1 private-LAN HTTPS mobile capture mode enabled.\n');
+    if (urls.length === 0) {
+      process.stdout.write('No private IPv4 interface was discovered; check the PC network connection.\n');
+    } else {
+      for (const url of urls) process.stdout.write('Phone URL: ' + url + '\n');
+    }
+    process.stdout.write('The phone must trust the certificate/issuing local CA before browser camera access will work.\n');
+  } else {
+    process.stdout.write('MESH6J manual research capture surface: ' + base + '/\n');
+  }
   process.stdout.write('Camera data remains in-memory; only the descriptive session JSON can be exported by the page.\n');
 }
 

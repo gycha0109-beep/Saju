@@ -1,14 +1,16 @@
-name: MESH6J Localhost Manual Browser Capture Surface CI
+name: MESH6J Manual Browser Capture Surface CI
 
 on:
   pull_request:
     paths:
       - '.github/workflows/mesh6j-localhost-manual-browser-capture-ci.yml'
       - 'scripts/mesh6j-manual-browser-capture-preview.mjs'
+      - 'scripts/mesh6j-private-lan-transport.mjs'
       - 'scripts/verify-face-geometry-mesh6j.mjs'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.html'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.mjs'
       - 'packages/face-geometry/docs/mesh6j-localhost-manual-browser-capture-surface.md'
+      - 'packages/face-geometry/docs/mesh6j1-private-lan-https-mobile-capture.md'
       - 'packages/face-reading/src/mesh6h-browser-camera-frame-source.ts'
       - 'packages/face-reading/src/mesh6i-manual-browser-capture-controller.ts'
       - 'packages/face-reading/src/mesh6g-prospective-operator-capture-session.ts'
@@ -25,7 +27,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  verify-localhost-manual-browser-capture-surface:
+  verify-manual-browser-capture-surface:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -54,7 +56,29 @@ jobs:
             tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py
       - name: Verify executable surface contract
         run: node scripts/verify-face-geometry-mesh6j.mjs
+      - name: Verify LAN mode fails closed without TLS
+        run: |
+          if MESH6J_LAN=1 node scripts/mesh6j-manual-browser-capture-preview.mjs > /tmp/mesh6j-lan-no-tls.log 2>&1; then
+            cat /tmp/mesh6j-lan-no-tls.log
+            echo "LAN mode unexpectedly started without TLS material" >&2
+            exit 1
+          fi
+          grep -F "LAN mode requires MESH6J_TLS_KEY and MESH6J_TLS_CERT." /tmp/mesh6j-lan-no-tls.log
       - name: Smoke localhost capture surface
         env:
           MYEONGHWA_MESH6J_SMOKE: '1'
+        run: node scripts/mesh6j-manual-browser-capture-preview.mjs
+      - name: Create ephemeral CI TLS certificate
+        run: |
+          openssl req -x509 -newkey rsa:2048 -nodes \
+            -keyout /tmp/mesh6j-ci-key.pem \
+            -out /tmp/mesh6j-ci-cert.pem \
+            -days 1 \
+            -subj "/CN=127.0.0.1" \
+            -addext "subjectAltName=IP:127.0.0.1,DNS:localhost"
+      - name: Smoke private-LAN HTTPS capture surface
+        env:
+          MYEONGHWA_MESH6J_LAN_SMOKE: '1'
+          MESH6J_TLS_KEY: /tmp/mesh6j-ci-key.pem
+          MESH6J_TLS_CERT: /tmp/mesh6j-ci-cert.pem
         run: node scripts/mesh6j-manual-browser-capture-preview.mjs
