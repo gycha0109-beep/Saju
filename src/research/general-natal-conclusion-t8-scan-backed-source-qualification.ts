@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v2' as const;
+  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v3' as const;
 
 const SOURCE_AUTHORITIES = Object.freeze([
   {
@@ -44,6 +44,11 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qifvq0j2',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 8,
+      sectionObserved: '論五行相生相尅訣',
+      boundedPropositionObserved: '比肩者爲刼財敗財',
+    }),
   },
   'W-YUANHAI-RESOURCE-TAXONOMY': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
@@ -52,6 +57,11 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qifvq0j2',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 8,
+      sectionObserved: '論五行相生相尅訣',
+      boundedPropositionObserved: '生我者爲正印偏印',
+    }),
   },
   'W-YUANHAI-OUTPUT-TAXONOMY': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
@@ -60,6 +70,11 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qifvq0j2',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 8,
+      sectionObserved: '論五行相生相尅訣',
+      boundedPropositionObserved: '我生者爲傷官食神',
+    }),
   },
   'W-YUANHAI-WEALTH-TAXONOMY': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
@@ -68,6 +83,11 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qifvq0j2',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 8,
+      sectionObserved: '論五行相生相尅訣',
+      boundedPropositionObserved: '我尅者爲偏財正財',
+    }),
   },
   'W-YUANHAI-OFFICER-TAXONOMY': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
@@ -76,6 +96,11 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
     corroboratingOcrUrl:
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qifvq0j2',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
+    directInspection: Object.freeze({
+      digitalScanPage: 8,
+      sectionObserved: '論五行相生相尅訣',
+      boundedPropositionObserved: '尅我者爲正官七殺',
+    }),
   },
   'W-YUANHAI-OUTPUT-WEALTH': {
     authorityId: 'SCAN-YUANHAI-MING-WANLI-NLC',
@@ -225,8 +250,8 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION,
-    issue: '#839' as const,
-    auditBaseSha: 'a45374f0e657729ef28dccb95179b06e1cfa3446' as const,
+    issue: '#844' as const,
+    auditBaseSha: 'd07e8d6a52ed87c732af919956e68cf4738e3e4f' as const,
     status:
       'SCAN_BACKED_EDITION_CORROBORATION_ESTABLISHED_PARTIAL_DIRECT_SCAN_VERIFICATION' as const,
     upstreamPassageEvidenceId: passageEvidence.evidenceId,
