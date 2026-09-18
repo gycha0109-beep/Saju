@@ -6,11 +6,12 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
   it('registers acquisition targets without converting catalog records into witness evidence', () => {
     const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
 
-    expect(evidence.issue).toBe('#899');
+    expect(evidence.issue).toBe('#905');
     expect(evidence.counts).toEqual({
       unresolvedWitnessCount: 4,
-      acquisitionTargetCount: 10,
+      acquisitionTargetCount: 11,
       confirmedPhysicalHoldingCount: 7,
+      confirmedMicroformHoldingCount: 1,
       bibliographicLeadCount: 1,
       publicDigitalPageImageVerifiedCount: 2,
       directlyInspectedAcquisitionTargetCount: 2,
@@ -140,6 +141,34 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
         externalUserReadingSupported: true,
         selfCopyAllowed: false,
         vendorCopyMayBeAvailableSubjectToCondition: true,
+      },
+    });
+  });
+
+  it('pins the NDL microform holding without treating it as physical-original or phrase-level evidence', () => {
+    const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
+    const ndl = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-NDL-000007566884-MICROFORM',
+    );
+
+    expect(ndl).toMatchObject({
+      priority: 'P1',
+      targetClass: 'CONFIRMED_MICROFORM_HOLDING',
+      holdingInstitution: 'National Diet Library, Japan',
+      catalogIdentifier:
+        'NDL bibliographic ID 000007566884 / call 特2-1447 / surrogate YD-古-5454',
+      editionOrImprint: '掃葉山房石印, 民國',
+      materialExtent: '6冊 / microform surrogate',
+      publicPageImageAvailability: 'NOT_ESTABLISHED',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+      reproductionAccess: {
+        routeState: 'VERIFIED_NDL_REMOTE_COPY_ROUTE',
+        remoteCopySupportedForHeldMaterials: true,
+        exactCopyLocationMustBeSpecified: true,
+        microformCopySourceRequiredWhenMicrofilmed: true,
+        postalReceiptSupported: true,
+        pdfReceiptPotentiallySupportedSubjectToEligibility: true,
       },
     });
   });
