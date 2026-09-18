@@ -17,7 +17,7 @@ jobs:
     name: Locate NTL 1926 四言獨步
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
 
     steps:
       - name: Checkout PR head
@@ -78,9 +78,9 @@ jobs:
 
           # Run OCR in parallel. OCR remains locator-only.
           find /tmp/ntl/locator-pages -name 'page-*.png' -print0 \
-            | xargs -0 -n1 -P4 bash -c '
+            | xargs -0 -n1 -P8 bash -c '
                 img="$0"
-                base="$(basename "$img" .png)"
+                base="$(basename "$img" .jpg)"
                 out="/tmp/ntl/ocr/$base"
                 tesseract "$img" "$out" -l chi_tra --psm 6 >/dev/null 2>&1 || true
               '
@@ -112,7 +112,7 @@ jobs:
           n=0
           sheet=1
           files=()
-          for img in /tmp/ntl/locator-pages/page-*.png; do
+          for img in /tmp/ntl/locator-pages/page-*.jpg; do
             files+=("$img")
             n=$((n+1))
             if [ "$n" -eq 20 ]; then
