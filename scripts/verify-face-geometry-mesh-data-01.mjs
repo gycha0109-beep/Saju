@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import process from 'node:process';
 
 const path = 'packages/face-geometry/evidence/mesh-data-01-first-real-repeated-sweep-receipt-v1.json';
 const receipt = JSON.parse(readFileSync(path, 'utf8'));
