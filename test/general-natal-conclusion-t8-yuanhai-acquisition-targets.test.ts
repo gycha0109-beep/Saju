@@ -6,14 +6,14 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
   it('registers acquisition targets without converting catalog records into witness evidence', () => {
     const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
 
-    expect(evidence.issue).toBe('#883');
+    expect(evidence.issue).toBe('#894');
     expect(evidence.counts).toEqual({
       unresolvedWitnessCount: 4,
       acquisitionTargetCount: 9,
       confirmedPhysicalHoldingCount: 6,
       bibliographicLeadCount: 1,
       publicDigitalPageImageVerifiedCount: 2,
-      directlyInspectedAcquisitionTargetCount: 1,
+      directlyInspectedAcquisitionTargetCount: 2,
       newDirectWitnessEvidenceCount: 0,
       productionAdmissionEvidenceCount: 0,
     });
@@ -106,7 +106,7 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
     });
   });
 
-  it('registers Tianyi and Zhuji public scans as inspectable targets without claiming witness text', () => {
+  it('pins both P0 public scans as directly inspected without claiming frozen witness text', () => {
     const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
 
     const tianyige = evidence.acquisitionTargets.find(
@@ -182,14 +182,61 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
       holdingInstitution: 'Zhuji Library',
       editionOrImprint: '清福建余氏刻本 13行25字小字雙行25字白口四周單邊',
       publicPageImageAvailability: 'VERIFIED_AVAILABLE',
-      directInspectionState: 'AVAILABLE_NOT_INSPECTED',
+      directInspectionState: 'DIRECTLY_INSPECTED',
       frozenWitnessContentClaimed: false,
     });
     if (zjs?.targetId === 'ACQ-YUANHAI-ZJSLIB-FLDB-2458-DIGITAL') {
       expect(zjs.digitalAssets).toEqual([
-        { assetId: 'ZJSLib-FLDB-2458-1', pageCount: 138, fileSizeMiB: 64.85 },
-        { assetId: 'ZJSLib-FLDB-2458-2', pageCount: 170, fileSizeMiB: 79.26 },
+        {
+          assetId: 'ZJSLib-FLDB-2458-1',
+          pageCount: 138,
+          sha1: '8ba90db1a254f14922a1031b207f51664dcde15a',
+          fileSizeBytes: 67995892,
+        },
+        {
+          assetId: 'ZJSLib-FLDB-2458-2',
+          pageCount: 170,
+          sha1: 'fae363bb817c0fd6332fa18f879a8ea6687140a9',
+          fileSizeBytes: 83113601,
+        },
       ]);
+      expect(zjs.directInspection).toMatchObject({
+        sectionObserved: '四言獨步',
+        sectionTitleDigitalScanPage: 87,
+        inspectedDigitalScanPageRange: [87, 91],
+        transitionDigitalScanPage: 92,
+        transitionSectionObserved: '身弱論',
+        volumeFourTerminalDigitalScanPage: 110,
+        boundedVariantAnchorsObserved: ['先印後財', '反成其辱'],
+        fixedWitnessDirectVerificationOutcome:
+          'NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE',
+        exactFrozenWitnessCountEstablished: 0,
+      });
+      expect(zjs.directInspection.frozenWitnessChecks).toEqual([
+        {
+          witnessId: 'W-YUANHAI-WEALTH-OFFICER',
+          exactString: '財旺生官',
+          establishedWithinFourYanDubu: false,
+        },
+        {
+          witnessId: 'W-YUANHAI-OFFICER-RESOURCE',
+          exactString: '煞化為印',
+          establishedWithinFourYanDubu: false,
+        },
+        {
+          witnessId: 'W-YUANHAI-PEER-WEALTH',
+          exactString: '比劫羊刃，財格大忌',
+          establishedWithinFourYanDubu: false,
+        },
+        {
+          witnessId: 'W-YUANHAI-WEALTH-RESOURCE',
+          exactString: '印綬見財',
+          establishedWithinFourYanDubu: false,
+        },
+      ]);
+      expect(zjs.acquisitionAction).toBe(
+        'P0_PUBLIC_SCAN_DIRECT_INSPECTION_COMPLETE_NO_FROZEN_WITNESS_ESTABLISHED',
+      );
     }
 
     expect(evidence.verdict.anyTargetFrozenWitnessContentEstablished).toBe(false);
