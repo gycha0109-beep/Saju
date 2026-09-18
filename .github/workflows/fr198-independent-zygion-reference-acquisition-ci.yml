@@ -1,0 +1,28 @@
+name: FR198 Independent Zygion Reference Acquisition CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/face-reading-independent-zygion-reference-acquisition-fr198.ts'
+      - 'packages/face-reading/src/face-reading-independent-zygion-reference-acquisition-fr198.test.ts'
+      - 'research/face-reading/fr198-independent-zygion-reference-acquisition.md'
+      - '.github/workflows/fr198-independent-zygion-reference-acquisition-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr198-independent-zygion-reference-acquisition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR198 independent zygion reference acquisition
+        run: npx vitest run packages/face-reading/src/face-reading-independent-zygion-reference-acquisition-fr198.test.ts
