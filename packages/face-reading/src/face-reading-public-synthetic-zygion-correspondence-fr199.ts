@@ -193,6 +193,89 @@ export function deriveZygionSourceExactFR199(
   });
 }
 
+export function deriveZygionIntendedLoopRepairFR199(
+  vertices: readonly Point3DFR199V1[],
+): Readonly<{
+  referenceMethod: 'topsakal_2023_public_notebook_intended_loop_repair_v1';
+  pronasale: Point3DFR199V1;
+  bilateral: readonly [Point3DFR199V1, Point3DFR199V1];
+  bandsVisited: readonly Readonly<{
+    currentMinWidth: number;
+    currentMaxWidth: number;
+    leftCandidateCount: number;
+    rightCandidateCount: number;
+  }>[];
+}> {
+  const pronasale = derivePronasaleSourceExactFR199(vertices);
+  const maxHeight = 10;
+  const maxDepth = 100;
+  const std = 5;
+  const currentMinWidth = 55 - (std / 2);
+  let currentMaxWidth = 55 + (std / 2);
+  const maxWidth = 55 + (3 * std);
+  const bandsVisited: Array<{
+    currentMinWidth: number;
+    currentMaxWidth: number;
+    leftCandidateCount: number;
+    rightCandidateCount: number;
+  }> = [];
+
+  // INTENDED_LOOP_REPAIR is deliberately distinct from SOURCE_EXACT:
+  // it removes only the unconditional first-iteration return caused by
+  // checking whether the already-initialized "zygion" local exists.
+  // The source's fixed CURRENT_MIN_WIDTH and CURRENT_MAX_WIDTH += STD/2
+  // progression are otherwise preserved. Candidate arrays are recomputed
+  // per band so a one-sided earlier band cannot be duplicated into a later pair.
+  while (currentMaxWidth < maxWidth) {
+    const left = vertices
+      .filter((vertex) =>
+        vertex.x > pronasale.x + currentMinWidth &&
+        vertex.x < pronasale.x + currentMaxWidth &&
+        vertex.y > pronasale.y &&
+        vertex.y < pronasale.y + maxHeight &&
+        vertex.z < pronasale.z &&
+        vertex.z > pronasale.z - maxDepth
+      )
+      .sort((a, b) => (a.x + a.y) - (b.x + b.y));
+
+    const right = vertices
+      .filter((vertex) =>
+        vertex.x < pronasale.x - currentMinWidth &&
+        vertex.x > pronasale.x - currentMaxWidth &&
+        vertex.y > pronasale.y &&
+        vertex.y < pronasale.y + maxHeight &&
+        vertex.z < pronasale.z &&
+        vertex.z > pronasale.z - maxDepth
+      )
+      .sort((a, b) => (a.x - a.y) - (b.x - b.y));
+
+    bandsVisited.push(Object.freeze({
+      currentMinWidth,
+      currentMaxWidth,
+      leftCandidateCount: left.length,
+      rightCandidateCount: right.length,
+    }));
+
+    if (left.length > 0 && right.length > 0) {
+      return Object.freeze({
+        referenceMethod: 'topsakal_2023_public_notebook_intended_loop_repair_v1' as const,
+        pronasale,
+        bilateral: Object.freeze([
+          Object.freeze(left.at(-1)!),
+          Object.freeze(right[0]!),
+        ] as const),
+        bandsVisited: Object.freeze([...bandsVisited]),
+      });
+    }
+
+    currentMaxWidth += std / 2;
+  }
+
+  throw new FaceAuthorityValidationError(
+    'FR199 intended-loop-repair exhausted the published width expansion without a bilateral pair.',
+  );
+}
+
 export function deriveAndFreezeIndependentZygionReferenceFR199(input: {
   readonly sampleId: string;
   readonly objText: string;
