@@ -1,0 +1,105 @@
+name: Yuanhai Direct Scan Workbench
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/research-yuanhai-direct-scan-workbench.yml'
+      - 'tmp/research/yuanhai-direct-scan/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: yuanhai-direct-scan-workbench-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    name: Render exact NLC page 17 evidence
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Install page renderer
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils python3-pil
+
+      - name: Fetch and verify registered scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/yuanhai-scan
+          curl --fail --location --silent --show-error \
+            'https://upload.wikimedia.org/wikipedia/commons/b/b2/NLC892-2642-210318_%E5%88%BB%E4%BA%AC%E8%87%BA%E5%A2%9C%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E5%A4%A7%E5%85%A8_%E7%AC%AC4%E5%86%8A.pdf' \
+            --output /tmp/yuanhai-scan/volume4.pdf
+          actual_sha1="$(sha1sum /tmp/yuanhai-scan/volume4.pdf | awk '{print $1}')"
+          test "$actual_sha1" = '9f6098878cda071f5e1d3cbb0502cb65dfe17eea'
+          echo "registered_scan_sha1=$actual_sha1"
+
+      - name: Render and split exact digital page 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          out='tmp/research/yuanhai-direct-scan'
+          mkdir -p "$out"
+          pdftoppm \
+            -f 17 -l 17 -singlefile \
+            -r 600 -png \
+            /tmp/yuanhai-scan/volume4.pdf \
+            "$out/page17-full"
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageEnhance, ImageFilter
+
+          out = Path('tmp/research/yuanhai-direct-scan')
+          source = Image.open(out / 'page17-full.png').convert('L')
+          w, h = source.size
+          mid = w // 2
+
+          crops = {
+              'page17-right-leaf.png': (mid, 0, w, h),
+              'page17-left-leaf.png': (0, 0, mid, h),
+              'page17-right-leaf-left-half.png': (mid, 0, mid + (w-mid)//2, h),
+              'page17-right-leaf-right-half.png': (mid + (w-mid)//2, 0, w, h),
+              'page17-left-leaf-right-half.png': (mid//2, 0, mid, h),
+          }
+
+          for name, box in crops.items():
+              crop = source.crop(box)
+              crop = ImageEnhance.Contrast(crop).enhance(1.35)
+              crop = crop.filter(ImageFilter.SHARPEN)
+              crop.save(out / name, optimize=True)
+
+          (out / 'render-metadata.txt').write_text(
+              f'source_sha1=9f6098878cda071f5e1d3cbb0502cb65dfe17eea\n'
+              f'digital_page=17\n'
+              f'render_dpi=600\n'
+              f'full_width={w}\n'
+              f'full_height={h}\n'
+              f'authority=workbench_visual_evidence_only\n',
+              encoding='utf-8',
+          )
+          PY
+
+      - name: Commit rendered workbench evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- tmp/research/yuanhai-direct-scan && \
+             git ls-files --error-unmatch tmp/research/yuanhai-direct-scan/page17-full.png >/dev/null 2>&1; then
+            echo 'Evidence already committed; no new commit required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tmp/research/yuanhai-direct-scan
+          git commit -m 'chore(research): render Yuanhai page 17 workbench evidence'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
