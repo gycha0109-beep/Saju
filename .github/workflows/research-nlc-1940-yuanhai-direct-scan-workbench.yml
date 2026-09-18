@@ -119,8 +119,10 @@ jobs:
           expanded = set()
           for p in pages:
               expanded.update(range(max(1,p-3), min(306,p+3)+1))
+          if not expanded:
+              expanded.update(range(180, 231))
           Path('/tmp/nlc1940/candidate-pages.txt').write_text(
-              '\n'.join(map(str, sorted(expanded))) + ('\n' if expanded else '')
+              '\n'.join(map(str, sorted(expanded))) + '\n'
           )
           print('hit pages:', pages)
           print('candidate pages:', sorted(expanded))
@@ -173,7 +175,7 @@ jobs:
 
           while read -r page; do
             [ -n "$page" ] || continue
-            pdftoppm -f "$page" -l "$page" -r 220 -png -singlefile \
+            pdftoppm -f "$page" -l "$page" -r 160 -jpeg -jpegopt quality=92 -singlefile \
               /tmp/nlc1940/NLC416-12jh002712-40330.pdf \
               "/tmp/nlc1940/highres-review/page-$(printf '%03d' "$page")"
           done < /tmp/nlc1940/candidate-pages.txt
