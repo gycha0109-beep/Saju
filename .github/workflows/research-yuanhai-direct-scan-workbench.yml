@@ -138,8 +138,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- tmp/research/yuanhai-direct-scan && \
-             git ls-files --error-unmatch tmp/research/yuanhai-direct-scan/page17-full.png >/dev/null 2>&1; then
+          if [ -z "$(git status --porcelain -- tmp/research/yuanhai-direct-scan)" ]; then
             echo 'Evidence already committed; no new commit required.'
             exit 0
           fi
