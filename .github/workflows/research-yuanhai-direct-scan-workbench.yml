@@ -188,7 +188,7 @@ jobs:
           )
           PY
 
-      - name: Generate compact page15-page16 visual tiles
+      - name: Generate compact page14-page16 visual tiles
         shell: bash
         run: |
           set -euo pipefail
@@ -202,7 +202,7 @@ jobs:
           tile_dir.mkdir(parents=True, exist_ok=True)
           manifest = []
 
-          for page in (15, 16):
+          for page in (14, 15, 16):
               source = Image.open(
                   out / 'locator' / f'page{page:02d}.png'
               ).convert('L')
@@ -233,7 +233,7 @@ jobs:
                       )
 
           with (tile_dir / 'manifest.txt').open('a', encoding='utf-8') as fh:
-              fh.write('\n'.join(['', 'page15-page16:', *manifest, '']))
+              fh.write('\n'.join(['', 'page14-page16:', *manifest, '']))
           PY
 
       - name: Upload direct-glyph review artifact
@@ -244,6 +244,9 @@ jobs:
             tmp/research/yuanhai-direct-scan/page17-full.png
             tmp/research/yuanhai-direct-scan/page17-left-leaf.png
             tmp/research/yuanhai-direct-scan/page17-right-leaf.png
+            tmp/research/yuanhai-direct-scan/locator/page14.png
+            tmp/research/yuanhai-direct-scan/locator/page15.png
+            tmp/research/yuanhai-direct-scan/locator/page16.png
             tmp/research/yuanhai-direct-scan/tiles/*.png
             tmp/research/yuanhai-direct-scan/tiles/manifest.txt
           if-no-files-found: error
