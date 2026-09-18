@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey } from './general-natal-conclusion-t8-alternate-witness-surface-survey.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_YUANHAI_ACQUISITION_TARGETS_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v1' as const;
+  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v2' as const;
 
 const UNRESOLVED_WITNESS_IDS = Object.freeze([
   'W-YUANHAI-WEALTH-OFFICER',
@@ -68,6 +68,65 @@ const ACQUISITION_TARGETS = Object.freeze([
     frozenWitnessContentClaimed: false as const,
     acquisitionAction:
       'REQUEST_OR_OBTAIN_REPRODUCTION_OF_CALL_000241369_AND_INSPECT_FOUR_YAN_DUBU',
+  }),
+  Object.freeze({
+    targetId: 'ACQ-YUANHAI-BUKKYO-BA88832205-V4',
+    priority: 'P1' as const,
+    targetClass: 'CONFIRMED_PHYSICAL_HOLDING' as const,
+    holdingInstitution: 'Bukkyo University Library',
+    catalogIdentifier: 'CiNii NCID BA88832205 / 卷之4 call 000241364',
+    title: '新刊合併官板音義評註淵海子平 5卷',
+    attributedAuthor: '(宋)徐升編 ; (明)楊淙校',
+    editionOrImprint: '文光堂, 乾隆51 [1786] 刊',
+    materialExtent: '5 fascicles total; relevant 卷之4',
+    dimensions: '24 cm',
+    relevantCoverage: '卷之4; directly relevant to the frozen 四言獨步 section',
+    catalogUrl: 'https://ci.nii.ac.jp/ncid/BA88832205',
+    publicPageImageAvailability: 'NOT_ESTABLISHED' as const,
+    directInspectionState: 'NOT_ACQUIRED' as const,
+    frozenWitnessContentClaimed: false as const,
+    acquisitionAction:
+      'REQUEST_OR_OBTAIN_REPRODUCTION_OF_CALL_000241364_AND_INSPECT_FOUR_YAN_DUBU',
+  }),
+  Object.freeze({
+    targetId: 'ACQ-YUANHAI-BUKKYO-BB08851308-V3-5',
+    priority: 'P1' as const,
+    targetClass: 'CONFIRMED_PHYSICAL_HOLDING' as const,
+    holdingInstitution: 'Bukkyo University Library',
+    catalogIdentifier: 'CiNii NCID BB08851308 / 卷之3-5 call 000241358',
+    title: '新刋合併官板音義評註淵海子平 5卷',
+    attributedAuthor: '(宋)徐升編 ; (明)楊淙校',
+    editionOrImprint: '掃葉山房, [清], 刊本',
+    materialExtent: '2 fascicles total; relevant 卷之3-5',
+    dimensions: '23.7 × 15.3 cm',
+    relevantCoverage:
+      '卷之3-5; catalog notes 崇禎七年孟冬吉日重梓 and 福建余氏鐫梓',
+    catalogUrl: 'https://ci.nii.ac.jp/ncid/BB08851308',
+    publicPageImageAvailability: 'NOT_ESTABLISHED' as const,
+    directInspectionState: 'NOT_ACQUIRED' as const,
+    frozenWitnessContentClaimed: false as const,
+    acquisitionAction:
+      'REQUEST_OR_OBTAIN_REPRODUCTION_OF_CALL_000241358_AND_INSPECT_FOUR_YAN_DUBU',
+  }),
+  Object.freeze({
+    targetId: 'ACQ-YUANHAI-TOKYO-GENERAL-BB1246745X-V3-5',
+    priority: 'P1' as const,
+    targetClass: 'CONFIRMED_PHYSICAL_HOLDING' as const,
+    holdingInstitution: 'General Library, University of Tokyo',
+    catalogIdentifier: 'CiNii NCID BB1246745X / 卷之3-5 A90:1323 item 0005484761',
+    title: '新刊合併官板音義評註淵海子平 5巻',
+    attributedAuthor: '(宋)徐升編 ; (明)楊淙増校',
+    editionOrImprint: '敬文堂, [出版年不明], 崇禎7年重梓後印',
+    materialExtent: '2 fascicles total; relevant 卷之3-5',
+    dimensions: '24 cm',
+    relevantCoverage:
+      '卷之3-5; catalog identifies 福建余氏繡梓崇禎7年重梓の後印',
+    catalogUrl: 'https://ci.nii.ac.jp/ncid/BB1246745X',
+    publicPageImageAvailability: 'NOT_ESTABLISHED' as const,
+    directInspectionState: 'NOT_ACQUIRED' as const,
+    frozenWitnessContentClaimed: false as const,
+    acquisitionAction:
+      'REQUEST_OR_OBTAIN_REPRODUCTION_OF_ITEM_0005484761_AND_INSPECT_FOUR_YAN_DUBU',
   }),
   Object.freeze({
     targetId: 'ACQ-YUANHAI-FUWEN-GUANGXU-BIBLIOGRAPHIC-LEAD',
