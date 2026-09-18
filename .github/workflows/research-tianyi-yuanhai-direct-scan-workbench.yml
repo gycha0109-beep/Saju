@@ -143,14 +143,39 @@ jobs:
 
           evidence.joinpath('target-report.txt').write_text('\n'.join(report) + '\n', encoding='utf-8')
 
-          seed = {page for page, score, exact, _ in ranked[:14] if score > 0}
-          # The target is expected in later volumes; retain a sparse structural fallback.
-          seed.update(range(110, 154, 5))
+          section_pages = {
+              page for page, score, exact, preview in rows
+              if '四言' in preview or '獨步' in preview or '独步' in preview
+          }
+          exact_pages = {
+              page for page, score, exact, preview in rows
+              if exact
+          }
 
           candidates = set()
-          for page in seed:
+
+          # A section-title hit is the strongest locator: retain the title page and
+          # enough following pages to cover the complete 四言獨步 section.
+          for page in section_pages:
+              for q in range(max(1, page - 1), min(153, page + 12) + 1):
+                  candidates.add(q)
+
+          # Exact OCR hits are only locators, but retain close neighbors for direct
+          # glyph comparison.
+          for page in exact_pages:
               for q in range(max(1, page - 2), min(153, page + 2) + 1):
                   candidates.add(q)
+
+          # If OCR misses the section title, fall back to the strongest pages plus
+          # a sparse late-volume structural sample. Full contact sheets still cover
+          # all 153 pages independently of this high-resolution subset.
+          if not section_pages:
+              for page, score, exact, preview in ranked[:10]:
+                  if score <= 0:
+                      continue
+                  for q in range(max(1, page - 1), min(153, page + 1) + 1):
+                      candidates.add(q)
+              candidates.update((110, 120, 130, 140, 150))
 
           ordered = sorted(candidates)
           evidence.joinpath('candidate-pages.txt').write_text(
@@ -209,7 +234,7 @@ jobs:
             printf -v stem 'page%03d' "$page"
             pdftoppm \
               -f "$page" -l "$page" -singlefile \
-              -r 360 -gray -png \
+              -r 240 -gray -png \
               /tmp/tianyi/yuanhai.pdf \
               "/tmp/tianyi/evidence/highres/$stem"
           done < /tmp/tianyi/evidence/candidate-pages.txt
