@@ -1,0 +1,40 @@
+name: FR199 Public Synthetic Zygion Correspondence CI
+
+on:
+  push:
+    branches:
+      - research/fr199-public-synthetic-zygion-correspondence
+    paths:
+      - 'packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.ts'
+      - 'packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.test.ts'
+      - 'scripts/run-fr199-public-reference-experiment.mjs'
+      - '.github/workflows/fr199-public-synthetic-zygion-correspondence-ci.yml'
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.ts'
+      - 'packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.test.ts'
+      - 'scripts/run-fr199-public-reference-experiment.mjs'
+      - '.github/workflows/fr199-public-synthetic-zygion-correspondence-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fr199:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck face-reading
+        run: npm run face:typecheck
+      - name: Build face-reading
+        run: npm run face:build
+      - name: FR199 deterministic tests
+        run: npx vitest run packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.test.ts
+      - name: FR199 public source-exact reference experiment
+        run: node scripts/run-fr199-public-reference-experiment.mjs
