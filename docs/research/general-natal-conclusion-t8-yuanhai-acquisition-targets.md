@@ -145,6 +145,50 @@ https://ci.nii.ac.jp/ncid/BB1246745X
 
 The catalog identifies this item as a later impression of the `福建余氏繡梓崇禎7年重梓` blocks. Public page images have not been established.
 
+## P0 — Tianyi Pavilion public 崇禎 scan
+
+```text
+asset          = Tianyige-330000-1705-0005007
+title          = 新刊合併官板音義評註淵海子平五卷
+holding        = Tianyi Pavilion Museum
+edition        = 明崇禎刻本
+census         = 330000-1705-0005007
+call number    = 善2875
+pages          = 153
+scan size      = 1781 × 1431
+SHA-1          = 2ec904422ced60bf241286c6b822623048bb8883
+file bytes     = 133016361
+```
+
+Commons file:
+
+```text
+https://commons.wikimedia.org/wiki/File:Tianyige-330000-1705-0005007_新刊合併官板音義評註淵海子平五卷_宋徐升編_明楊淙增校_明崇禎刻本.pdf
+```
+
+The file metadata explicitly records a `崇禎七年` preface and provides the complete five-volume work in one public 153-page scan. Page-image availability is therefore verified. The relevant `四言獨步` page and frozen exact strings have **not** yet been directly inspected, so this is an acquisition advance, not witness evidence.
+
+## P0 — Zhuji Library public 福建余氏 scan
+
+```text
+assets         = ZJSLib-FLDB-2458-1 / ZJSLib-FLDB-2458-2
+title          = 新刊合併官板音義評註淵海子平五卷
+holding        = Zhuji Library
+edition        = 清福建余氏刻本
+layout         = 13行25字小字雙行25字白口四周單邊
+part 1         = 138 pages / 64.85 MiB
+part 2         = 170 pages / 79.26 MiB
+scan size      = 937 × 1608
+```
+
+Commons category:
+
+```text
+https://commons.wikimedia.org/wiki/Category:新刊合併官板音義評註淵海子平
+```
+
+Both public PDFs are directly surfaced by Commons and together cover the five-volume work. The relevant `四言獨步` part/page and frozen witness strings remain to be inspected. No textual identity is inferred from the edition label.
+
 ## P2 — Shanghai Fuwen Shuju bibliographic lead
 
 ```text
@@ -164,10 +208,10 @@ The surfaced record does not establish a holding institution or a retrievable sc
 
 ```text
 unresolvedWitnessCount                 = 4
-acquisitionTargetCount                 = 7
+acquisitionTargetCount                 = 9
 confirmedPhysicalHoldingCount          = 6
 bibliographicLeadCount                 = 1
-publicDigitalPageImageVerifiedCount    = 0
+publicDigitalPageImageVerifiedCount    = 2
 directlyInspectedAcquisitionTargetCount = 0
 newDirectWitnessEvidenceCount          = 0
 productionAdmissionEvidenceCount       = 0
