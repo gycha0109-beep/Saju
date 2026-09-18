@@ -9,7 +9,13 @@ const modelPath = params.get('model');
 const wasmRoot = params.get('wasm');
 const sampleId = params.get('sample');
 
-function finish(prefix, payload) {
+async function finish(prefix, payload) {
+  const envelope = { prefix, payload };
+  await fetch('/fr199-result', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(envelope),
+  });
   const encoded = btoa(JSON.stringify(payload));
   document.title = prefix + encoded;
   document.body.textContent = prefix + encoded;
@@ -53,7 +59,7 @@ try {
   });
 
   landmarker.close();
-  finish('FR199_RESULT_BASE64:', {
+  await finish('FR199_RESULT_BASE64:', {
     schemaVersion: 'fr199-provider-candidate-observation-v1',
     sampleId,
     runtimePackageName: '@mediapipe/tasks-vision',
@@ -67,7 +73,7 @@ try {
     rawProviderResponsePersisted: false,
   });
 } catch (error) {
-  finish('FR199_ERROR_BASE64:', {
+  await finish('FR199_ERROR_BASE64:', {
     message: error instanceof Error ? error.message : String(error),
   });
 }
