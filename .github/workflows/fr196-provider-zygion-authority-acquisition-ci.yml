@@ -1,0 +1,28 @@
+name: FR196 Provider Zygion Authority Acquisition CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/face-reading-provider-zygion-correspondence-authority-acquisition-fr196.ts'
+      - 'packages/face-reading/src/face-reading-provider-zygion-correspondence-authority-acquisition-fr196.test.ts'
+      - 'research/face-reading/fr196-provider-zygion-correspondence-authority-acquisition.md'
+      - '.github/workflows/fr196-provider-zygion-authority-acquisition-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr196-provider-zygion-authority-acquisition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR196 provider-to-neutral zygion authority acquisition audit
+        run: npx vitest run packages/face-reading/src/face-reading-provider-zygion-correspondence-authority-acquisition-fr196.test.ts
