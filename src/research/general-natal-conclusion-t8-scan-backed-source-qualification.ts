@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v5' as const;
+  'myeonghwa-general-natal-conclusion-t8-scan-backed-source-qualification-v6' as const;
 
 const SOURCE_AUTHORITIES = Object.freeze([
   {
@@ -123,9 +123,10 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
     scanSurfaceInspection: Object.freeze({
-      terminalDigitalScanPage: 17,
-      nextVolumeBeginsDigitalScanPage: 18,
+      terminalDigitalScanPage: 18,
+      nextVolumeBeginsDigitalScanPage: 19,
       sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
+      terminalColophonObserved: '龍飛萬曆庚子春月 / 閩建喬山書舍刊行',
       boundedPropositionGlyphsVerified: false,
     }),
   },
@@ -137,9 +138,10 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
     scanSurfaceInspection: Object.freeze({
-      terminalDigitalScanPage: 17,
-      nextVolumeBeginsDigitalScanPage: 18,
+      terminalDigitalScanPage: 18,
+      nextVolumeBeginsDigitalScanPage: 19,
       sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
+      terminalColophonObserved: '龍飛萬曆庚子春月 / 閩建喬山書舍刊行',
       boundedPropositionGlyphsVerified: false,
     }),
   },
@@ -151,9 +153,10 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
     scanSurfaceInspection: Object.freeze({
-      terminalDigitalScanPage: 17,
-      nextVolumeBeginsDigitalScanPage: 18,
+      terminalDigitalScanPage: 18,
+      nextVolumeBeginsDigitalScanPage: 19,
       sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
+      terminalColophonObserved: '龍飛萬曆庚子春月 / 閩建喬山書舍刊行',
       boundedPropositionGlyphsVerified: false,
     }),
   },
@@ -165,9 +168,10 @@ const WITNESS_SCAN_LOCATORS = Object.freeze({
       'https://www.shidianguji.com/zh/book/NGJ8922642210287/chapter/1lnh0qw3hcu15',
     corroborationLevel: 'CROSS_EDITION_PROPOSITION_CORROBORATED',
     scanSurfaceInspection: Object.freeze({
-      terminalDigitalScanPage: 17,
-      nextVolumeBeginsDigitalScanPage: 18,
+      terminalDigitalScanPage: 18,
+      nextVolumeBeginsDigitalScanPage: 19,
       sectionSequenceObserved: '四言獨步 → 身弱論 → 棄命從殺論 → 卷五刊記',
+      terminalColophonObserved: '龍飛萬曆庚子春月 / 閩建喬山書舍刊行',
       boundedPropositionGlyphsVerified: false,
     }),
   },
@@ -307,10 +311,10 @@ export function buildGeneralNatalConclusionT8ScanBackedSourceQualification() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_SCAN_BACKED_SOURCE_QUALIFICATION_VERSION,
-    issue: '#864' as const,
-    auditBaseSha: '6b3967b88bda4915e67e012fd57012701628e06d' as const,
+    issue: '#870' as const,
+    auditBaseSha: 'e5538e904b47239148b4440733f050a5e01ddb63' as const,
     status:
-      'SCAN_SURFACE_LOCATORS_CORRECTED_TWELVE_OF_SIXTEEN_DIRECT_SCAN_VERIFIED' as const,
+      'SCAN_SURFACE_BOUNDARY_CORRECTED_TWELVE_OF_SIXTEEN_DIRECT_SCAN_VERIFIED' as const,
     upstreamPassageEvidenceId: passageEvidence.evidenceId,
     sourceAuthorities: SOURCE_AUTHORITIES,
     witnessRows,
