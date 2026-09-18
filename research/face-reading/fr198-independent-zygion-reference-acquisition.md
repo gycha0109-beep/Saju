@@ -135,6 +135,16 @@ A separate 2023 peer-reviewed/open-source implementation from the same research 
 
 This method is independent from the MediaPipe `[234,454]` candidate assignment, but it is not treated as perfect ground truth. The published validation against manual markings reports a mean left-zygion Euclidean error of **8.08 mm** over 111 3D facial scans. That observed error is evidence metadata only; it is **not** an FR198 acceptance threshold.
 
+The public notebook also contains a source-level control-flow quirk. It initializes `zygion = []` and later checks `if 'zygion' in locals(): return zygion`, which is true after initialization. Therefore the published implementation returns after the first width-band pass rather than reliably iterating the intended widening loop.
+
+FR198 does not silently repair that source. A source-exact execution must:
+
+- preserve the published control flow;
+- require a complete bilateral result;
+- fail closed if either side is absent or malformed.
+
+If a later experiment implements the apparently intended widening loop, that must be a separately versioned repair with explicit provenance and cannot be described as byte/behavior-exact execution of the published notebook.
+
 Current state:
 
 ```text
