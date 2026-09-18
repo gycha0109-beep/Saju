@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Scan-Backed Source Qualification Audit
 
-Issue: #864  
-Audit base: `6b3967b88bda4915e67e012fd57012701628e06d`
+Issue: #870  
+Audit base: `e5538e904b47239148b4440733f050a5e01ddb63`
 
 ## Purpose
 
@@ -71,15 +71,20 @@ The Ming Wanli scan-backed surface independently corroborates the bounded propos
 
 The repository-authoritative fixed passage definitions place the four still-unverified structural Yuanhai witnesses in `四言獨步`. Fresh source inspection now locates that fixed-witness section on the actual Ming Wanli scan surface in `NLC892-2642-210318 第4冊 / 卷之五`, not in the older `第3冊 / 卷之四 / 雜論口訣 / 實法第一` proposition-corroboration surface.
 
-Commons identifies `NLC892-2642-210318 第4冊` as a 41-page National Library of China scan containing `卷之五 / 卷之六`, with SHA-1 `9f6098878cda071f5e1d3cbb0502cb65dfe17eea`. The corresponding NLC-family OCR for `卷之五` explicitly sequences `四言獨步 → 身弱論 → 棄命從殺論 → 龍飛萬曆庚子春月 / 閩建喬山書舍刊行`. Direct scan inspection confirms digital page 17 is the terminal `卷之五` spread and digital page 18 begins `卷之六`.
+Commons identifies `NLC892-2642-210318 第4冊` as a 41-page National Library of China scan containing `卷之五 / 卷之六`, with SHA-1 `9f6098878cda071f5e1d3cbb0502cb65dfe17eea`. The corresponding NLC-family OCR for `卷之五` explicitly sequences `四言獨步 → 身弱論 → 棄命從殺論 → 龍飛萬曆庚子春月 / 閩建喬山書舍刊行`.
 
-The four locator rows are therefore corrected to:
+A follow-up direct scan check corrects the boundary recorded in #865: digital page 18, not page 17, contains the terminal `卷之五` colophon `龍飛萬曆庚子春月 / 閩建喬山書舍刊行`. The following digital page 19 is the first page aligned with the next OCR chapter, `卷六`, which begins `榄命活用總套`.
+
+The uploaded `NLC892-2642-210317 第3冊` was also rendered through its final scan pages. Its late pages remain in preceding song/訣 material and end before `四言獨步`; the fixed-witness section therefore remains on the continuation carried by 第4冊.
+
+The four locator rows retain the corrected surface and now carry the corrected terminal boundary:
 
 ```text
 scan asset = NLC892-2642-210318 第4冊 / 卷之五
 scan surface section = 四言獨步
-terminal 卷五 digital scan page inspected = 17
-next volume begins = digital scan page 18
+terminal 卷五 digital scan page inspected = 18
+terminal colophon observed = 龍飛萬曆庚子春月 / 閩建喬山書舍刊行
+next volume begins = digital scan page 19
 ```
 
 This is a scan-surface locator correction only. The four bounded witness propositions have not yet been read glyph-for-glyph from the scan image, so no per-witness exact digital scan page, direct bounded-proposition observation, or image-comparison authority is asserted.
@@ -156,7 +161,7 @@ A scan file or OCR surface proves neither the exact physical page/folio nor the 
 
 For all six Samyeong rows, the current bounded propositions now have exact digital scan-page locators and direct image comparison. This still does not establish exact witness-digest reproduction or byte-identical transcription identity with the fixed repository witnesses.
 
-For the Yuanhai rows, the Ming Wanli scan independently corroborates the proposition but is a distinct edition surface from the current Wikisource witness. Six rows have exact digital scan-page locators and direct bounded-proposition image comparison. The remaining four fixed witnesses now have the correct `第4冊 / 卷之五 / 四言獨步` scan surface located, with the terminal 卷五 spread pinned to digital page 17 and 卷六 beginning on page 18. That surface-level location is intentionally weaker than per-witness direct verification: the four bounded proposition glyphs have not yet been read directly from the scan, so their `exactDigitalScanPageVerified`, `boundedPropositionDirectlyObservedInScan`, and `directScanImageComparisonCompleted` flags remain false. Even completed visual comparison would not authorize exact transcription identity because the registered witnesses remain the separate fixed Wikisource surface.
+For the Yuanhai rows, the Ming Wanli scan independently corroborates the proposition but is a distinct edition surface from the current Wikisource witness. Six rows have exact digital scan-page locators and direct bounded-proposition image comparison. The remaining four fixed witnesses now have the correct `第4冊 / 卷之五 / 四言獨步` scan surface located, with the terminal 卷五 colophon directly observed on digital page 18 and the following 卷六 surface beginning on digital page 19. That surface-level location is intentionally weaker than per-witness direct verification: the four bounded proposition glyphs have not yet been read directly from the scan, so their `exactDigitalScanPageVerified`, `boundedPropositionDirectlyObservedInScan`, and `directScanImageComparisonCompleted` flags remain false. Even completed visual comparison would not authorize exact transcription identity because the registered witnesses remain the separate fixed Wikisource surface.
 
 No witness can therefore be promoted to full scan qualification in this audit.
 
