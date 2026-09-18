@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey } from './general-natal-conclusion-t8-alternate-witness-surface-survey.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_YUANHAI_ACQUISITION_TARGETS_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v4' as const;
+  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v5' as const;
 
 const UNRESOLVED_WITNESS_IDS = Object.freeze([
   'W-YUANHAI-WEALTH-OFFICER',
@@ -211,26 +211,65 @@ const ACQUISITION_TARGETS = Object.freeze([
     materialExtent: '2 public digital PDFs / 138 + 170 pages',
     dimensions: 'scan 937 × 1608 px',
     relevantCoverage:
-      '五卷 split across two public scans; exact 四言獨步 part/page not yet directly inspected',
+      '五卷 split across two public scans; 四言獨步 directly inspected on 第二冊 digital pages 87..91',
     catalogUrl:
       'https://commons.wikimedia.org/wiki/Category:%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E8%A8%BB%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3',
     publicPageImageAvailability: 'VERIFIED_AVAILABLE' as const,
-    directInspectionState: 'AVAILABLE_NOT_INSPECTED' as const,
+    directInspectionState: 'DIRECTLY_INSPECTED' as const,
     frozenWitnessContentClaimed: false as const,
     digitalAssets: Object.freeze([
       Object.freeze({
         assetId: 'ZJSLib-FLDB-2458-1',
         pageCount: 138,
-        fileSizeMiB: 64.85,
+        sha1: '8ba90db1a254f14922a1031b207f51664dcde15a',
+        fileSizeBytes: 67995892,
       }),
       Object.freeze({
         assetId: 'ZJSLib-FLDB-2458-2',
         pageCount: 170,
-        fileSizeMiB: 79.26,
+        sha1: 'fae363bb817c0fd6332fa18f879a8ea6687140a9',
+        fileSizeBytes: 83113601,
       }),
     ]),
+    directInspection: Object.freeze({
+      sectionObserved: '四言獨步',
+      sectionTitleDigitalScanPage: 87,
+      inspectedDigitalScanPageRange: Object.freeze([87, 91] as const),
+      transitionDigitalScanPage: 92,
+      transitionSectionObserved: '身弱論',
+      volumeFourTerminalDigitalScanPage: 110,
+      boundedVariantAnchorsObserved: Object.freeze([
+        '先印後財',
+        '反成其辱',
+      ] as const),
+      frozenWitnessChecks: Object.freeze([
+        Object.freeze({
+          witnessId: 'W-YUANHAI-WEALTH-OFFICER',
+          exactString: '財旺生官',
+          establishedWithinFourYanDubu: false as const,
+        }),
+        Object.freeze({
+          witnessId: 'W-YUANHAI-OFFICER-RESOURCE',
+          exactString: '煞化為印',
+          establishedWithinFourYanDubu: false as const,
+        }),
+        Object.freeze({
+          witnessId: 'W-YUANHAI-PEER-WEALTH',
+          exactString: '比劫羊刃，財格大忌',
+          establishedWithinFourYanDubu: false as const,
+        }),
+        Object.freeze({
+          witnessId: 'W-YUANHAI-WEALTH-RESOURCE',
+          exactString: '印綬見財',
+          establishedWithinFourYanDubu: false as const,
+        }),
+      ]),
+      fixedWitnessDirectVerificationOutcome:
+        'NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE' as const,
+      exactFrozenWitnessCountEstablished: 0 as const,
+    }),
     acquisitionAction:
-      'LOCATE_FOUR_YAN_DUBU_WITHIN_PUBLIC_TWO_PART_SCAN_AND_DIRECTLY_INSPECT_FROZEN_EXACT_STRINGS',
+      'P0_PUBLIC_SCAN_DIRECT_INSPECTION_COMPLETE_NO_FROZEN_WITNESS_ESTABLISHED',
   }),
   Object.freeze({
     targetId: 'ACQ-YUANHAI-FUWEN-GUANGXU-BIBLIOGRAPHIC-LEAD',
@@ -285,9 +324,9 @@ export function buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_YUANHAI_ACQUISITION_TARGETS_VERSION,
-    issue: '#883' as const,
-    auditBaseSha: 'a0735ab816f4d8c2cc26eb228eee468ee1d0f03c' as const,
-    status: 'TIANYI_DIRECTLY_INSPECTED_TEXTUAL_VARIANT_NO_NEW_WITNESS_EVIDENCE' as const,
+    issue: '#894' as const,
+    auditBaseSha: '47d493535a2e251ac136bcc56fad54c2fe59f6f3' as const,
+    status: 'BOTH_P0_PUBLIC_SCANS_DIRECTLY_INSPECTED_NO_NEW_WITNESS_EVIDENCE' as const,
     upstreamAlternateSurfaceSurveyId: upstream.evidenceId,
     unresolvedWitnessIds: UNRESOLVED_WITNESS_IDS,
     acquisitionTargets: ACQUISITION_TARGETS,
