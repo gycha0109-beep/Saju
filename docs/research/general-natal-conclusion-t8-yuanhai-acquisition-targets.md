@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Yuanhai Acquisition Target Registry
 
-Issue: #879  
-Audit base: `4dd9ca8e987455ef939c7339024ba88ace24ced8`
+Issue: #883  
+Audit base: `a0735ab816f4d8c2cc26eb228eee468ee1d0f03c`
 
 ## Purpose
 
@@ -166,7 +166,51 @@ Commons file:
 https://commons.wikimedia.org/wiki/File:Tianyige-330000-1705-0005007_新刊合併官板音義評註淵海子平五卷_宋徐升編_明楊淙增校_明崇禎刻本.pdf
 ```
 
-The file metadata explicitly records a `崇禎七年` preface and provides the complete five-volume work in one public 153-page scan. Page-image availability is therefore verified. The relevant `四言獨步` page and frozen exact strings have **not** yet been directly inspected, so this is an acquisition advance, not witness evidence.
+The exact registered binary was directly inspected after verifying:
+
+```text
+SHA-1      = 2ec904422ced60bf241286c6b822623048bb8883
+file bytes = 133016361
+pages      = 153
+```
+
+Direct image review established:
+
+```text
+digital page 113 = 四言獨步 title / section begins
+digital pages 113..116 = inspected 四言獨步 surface
+digital page 116 = transition into 身弱論 / 棄命從殺論
+```
+
+Directly visible variant anchors include:
+
+```text
+先財後印
+先印後財
+印綬根深
+```
+
+The four frozen exact witnesses were **not established** within the inspected `四言獨步` surface:
+
+```text
+財旺生官                 NOT ESTABLISHED IN 四言獨步
+煞化為印                 NOT ESTABLISHED IN 四言獨步
+比劫羊刃，財格大忌       NOT ESTABLISHED IN 四言獨步
+印綬見財                 NOT ESTABLISHED IN 四言獨步
+```
+
+A particularly important negative control is digital page **112**, where `財旺生官` is directly visible **before** the `四言獨步` title page. The same string in a different section does not satisfy the frozen witness identity and is therefore explicitly excluded.
+
+Deterministic outcome:
+
+```text
+directInspectionState = DIRECTLY_INSPECTED
+exactFrozenWitnessCountEstablished = 0
+fixedWitnessDirectVerificationOutcome =
+  NOT_ESTABLISHED_TEXTUAL_VARIANT_DIVERGENCE
+```
+
+This advances acquisition inspection state only. It does **not** create new direct witness evidence. The next P0 direct-inspection target is the Zhuji Library public scan.
 
 ## P0 — Zhuji Library public 福建余氏 scan
 
@@ -212,7 +256,7 @@ acquisitionTargetCount                 = 9
 confirmedPhysicalHoldingCount          = 6
 bibliographicLeadCount                 = 1
 publicDigitalPageImageVerifiedCount    = 2
-directlyInspectedAcquisitionTargetCount = 0
+directlyInspectedAcquisitionTargetCount = 1
 newDirectWitnessEvidenceCount          = 0
 productionAdmissionEvidenceCount       = 0
 ```
