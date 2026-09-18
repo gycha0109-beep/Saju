@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>FR199_PENDING</title></head>
+<body>
+<script type="module">
+const params = new URLSearchParams(location.search);
+const imagePath = params.get('image');
+const modelPath = params.get('model');
+const wasmRoot = params.get('wasm');
+const sampleId = params.get('sample');
+
+function finish(prefix, payload) {
+  const encoded = btoa(JSON.stringify(payload));
+  document.title = prefix + encoded;
+  document.body.textContent = prefix + encoded;
+}
+
+try {
+  if (!imagePath || !modelPath || !wasmRoot || !sampleId) {
+    throw new Error('missing_fr199_browser_parameter');
+  }
+
+  const vision = await import('/node_modules/@mediapipe/tasks-vision/vision_bundle.mjs');
+  const fileset = await vision.FilesetResolver.forVisionTasks(wasmRoot);
+  const landmarker = await vision.FaceLandmarker.createFromOptions(fileset, {
+    baseOptions: { modelAssetPath: modelPath },
+    runningMode: 'IMAGE',
+    numFaces: 1,
+    outputFaceBlendshapes: false,
+    outputFacialTransformationMatrixes: false,
+  });
+
+  const image = new Image();
+  image.src = imagePath;
+  await image.decode();
+
+  const result = landmarker.detect(image);
+  const faces = result.faceLandmarks ?? [];
+  if (faces.length !== 1) {
+    throw new Error('fr199_requires_exactly_one_face:' + faces.length);
+  }
+  const points = faces[0];
+  if (!Array.isArray(points) || points.length <= 454) {
+    throw new Error('fr199_provider_landmark_array_too_short');
+  }
+
+  const selected = [234, 454].map((index) => {
+    const p = points[index];
+    if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) {
+      throw new Error('fr199_non_finite_provider_candidate:' + index);
+    }
+    return { index, x: p.x, y: p.y };
+  });
+
+  landmarker.close();
+  finish('FR199_RESULT_BASE64:', {
+    schemaVersion: 'fr199-provider-candidate-observation-v1',
+    sampleId,
+    runtimePackageName: '@mediapipe/tasks-vision',
+    runtimePackageVersion: '0.10.35',
+    runningMode: 'IMAGE',
+    faceCount: 1,
+    providerCandidateIndices: [234, 454],
+    providerCandidatePoints: selected,
+    anatomicalLateralityResolved: false,
+    providerIndexAdmissionAuthorized: false,
+    rawProviderResponsePersisted: false,
+  });
+} catch (error) {
+  finish('FR199_ERROR_BASE64:', {
+    message: error instanceof Error ? error.message : String(error),
+  });
+}
+</script>
+</body>
+</html>
