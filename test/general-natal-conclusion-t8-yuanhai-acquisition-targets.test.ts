@@ -118,7 +118,7 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
       holdingInstitution: 'Tianyi Pavilion Museum',
       editionOrImprint: '明崇禎刻本',
       publicPageImageAvailability: 'VERIFIED_AVAILABLE',
-      directInspectionState: 'NOT_ACQUIRED',
+      directInspectionState: 'AVAILABLE_NOT_INSPECTED',
       frozenWitnessContentClaimed: false,
     });
     if (tianyige?.targetId === 'ACQ-YUANHAI-TIANYIGE-330000-1705-0005007-DIGITAL') {
@@ -140,7 +140,7 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
       holdingInstitution: 'Zhuji Library',
       editionOrImprint: '清福建余氏刻本 13行25字小字雙行25字白口四周單邊',
       publicPageImageAvailability: 'VERIFIED_AVAILABLE',
-      directInspectionState: 'NOT_ACQUIRED',
+      directInspectionState: 'AVAILABLE_NOT_INSPECTED',
       frozenWitnessContentClaimed: false,
     });
     if (zjs?.targetId === 'ACQ-YUANHAI-ZJSLIB-FLDB-2458-DIGITAL') {
