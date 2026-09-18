@@ -83,10 +83,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/tianyi/ocr
-          find /tmp/tianyi/locator -name 'page-*.jpg' -print0 \
-            | sort -z \
-            | xargs -0 -P8 -I{} bash -c '
-                img="$1"
+          # 四言獨步 is a 卷四 target. OCR is only a locator, so restrict
+          # machine OCR to the bounded late-volume window while retaining full
+          # 153-page contact sheets for independent visual coverage.
+          seq 70 145 \
+            | xargs -P8 -I{} bash -c '
+                printf -v img "/tmp/tianyi/locator/page-%03d.jpg" "$1"
+                test -f "$img" || exit 0
                 stem="$(basename "$img" .jpg)"
                 OMP_THREAD_LIMIT=1 tesseract "$img" "/tmp/tianyi/ocr/$stem" -l chi_tra --psm 5 2>/dev/null || true
               ' _ {}
