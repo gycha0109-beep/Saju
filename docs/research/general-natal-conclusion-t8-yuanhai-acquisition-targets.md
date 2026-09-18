@@ -212,19 +212,23 @@ The National Diet Library remote-copy route is independently documented:
 
 ```text
 remote copy of held materials = supported when the requested location is identifiable
-microfilmed material          = copied from the microform surrogate
-postal receipt                = supported
-PDF receipt                   = potentially supported subject to user/material eligibility
+location-research service      = generally available to registered individual users
+location-research scope        = table of contents / index only; target eligibility not yet established
+location-research lead time    = approximately 5 opening days
+microfilmed material           = copied from the microform surrogate
+postal receipt                 = supported
+PDF receipt                    = potentially supported subject to user/material eligibility
 ```
 
 Guides:
 
 ```text
 https://www.ndl.go.jp/copy/remote
+https://ndlsearch.ndl.go.jp/help/individual
 https://www.ndl.go.jp/tokyo/classic
 ```
 
-The unresolved primitive is to identify the bounded `四言獨步` copy location/frames in this microform and obtain that reproduction. No frozen witness content is claimed from the catalog record or access route.
+The unresolved primitive is to identify the bounded `四言獨步` copy location/frames in this microform and obtain that reproduction. NDL's article-location service can only inspect a table of contents or index and is usable only when the target record exposes the relevant request path; eligibility for this specific item is therefore still `NOT_ESTABLISHED`. No frozen witness content is claimed from the catalog record or access route.
 
 ## P0 — Tianyi Pavilion public 崇禎 scan
 
