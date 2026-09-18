@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: zhuji-yuanhai-direct-scan-\${{ github.event.pull_request.number || github.ref }}
+  group: zhuji-yuanhai-direct-scan-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -38,8 +38,8 @@ jobs:
             local asset="$1"
             local title="$2"
             local expected_pages="$3"
-            local api="/tmp/zhuji/\${asset}-imageinfo.json"
-            local pdf="/tmp/zhuji/\${asset}.pdf"
+            local api="/tmp/zhuji/${asset}-imageinfo.json"
+            local pdf="/tmp/zhuji/${asset}.pdf"
 
             curl --fail --silent --show-error --get \
               'https://commons.wikimedia.org/w/api.php' \
@@ -47,7 +47,7 @@ jobs:
               --data-urlencode 'format=json' \
               --data-urlencode 'prop=imageinfo' \
               --data-urlencode 'iiprop=url|sha1|size' \
-              --data-urlencode "titles=File:\${title}" \
+              --data-urlencode "titles=File:${title}" \
               --output "$api"
 
             local registered_url
@@ -76,7 +76,7 @@ jobs:
 
             printf 'asset=%s\nsha1=%s\nbytes=%s\npages=%s\n' \
               "$asset" "$actual_sha1" "$actual_size" "$pages" \
-              > "/tmp/zhuji/\${asset}-verified-metadata.txt"
+              > "/tmp/zhuji/${asset}-verified-metadata.txt"
           }
 
           resolve_asset \
