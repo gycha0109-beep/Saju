@@ -49,6 +49,8 @@ export interface FaceReadingIndependentZygionReferenceAcquisitionFR198 {
     readonly referenceCoordinatesAlreadyPublished: boolean;
     readonly referenceDerivationExecutableWithoutProviderCandidate: boolean;
     readonly publishedReferenceValidationMeanErrorMm: number | null;
+    readonly sourceImplementationControlFlowQuirkPresent?: boolean;
+    readonly sourceExactExecutionMustFailIfBilateralResultIncomplete?: boolean;
     readonly accessPrerequisite: string | null;
     readonly sourceRefs: readonly string[];
   }[];
@@ -60,6 +62,7 @@ export interface FaceReadingIndependentZygionReferenceAcquisitionFR198 {
     readonly providerCandidateMaySeedReferenceLabels: false;
     readonly syntheticReferenceDerivationMaySeeProviderCandidate: false;
     readonly publishedAlgorithmErrorIsAcceptanceThreshold: false;
+    readonly sourceAlgorithmMayBeSilentlyRepaired: false;
   };
   readonly operatorBurdenPolicy: {
     readonly userRepeatedCaptureCampaignRequired: false;
@@ -175,6 +178,8 @@ FaceReadingIndependentZygionReferenceAcquisitionFR198 = Object.freeze({
       referenceCoordinatesAlreadyPublished: false,
       referenceDerivationExecutableWithoutProviderCandidate: true,
       publishedReferenceValidationMeanErrorMm: 8.08,
+      sourceImplementationControlFlowQuirkPresent: true,
+      sourceExactExecutionMustFailIfBilateralResultIncomplete: true,
       accessPrerequisite: null,
       sourceRefs: Object.freeze([
         'https://github.com/research-digitized-rhinoplasty/3D-face-morph',
@@ -216,6 +221,7 @@ FaceReadingIndependentZygionReferenceAcquisitionFR198 = Object.freeze({
     providerCandidateMaySeedReferenceLabels: false,
     syntheticReferenceDerivationMaySeeProviderCandidate: false,
     publishedAlgorithmErrorIsAcceptanceThreshold: false,
+    sourceAlgorithmMayBeSilentlyRepaired: false,
   }),
   operatorBurdenPolicy: Object.freeze({
     userRepeatedCaptureCampaignRequired: false,
@@ -334,6 +340,8 @@ export function assertFaceReadingIndependentZygionReferenceAcquisitionFR198(
     || synthetic.referenceCoordinatesAlreadyPublished !== false
     || synthetic.referenceDerivationExecutableWithoutProviderCandidate !== true
     || synthetic.publishedReferenceValidationMeanErrorMm !== 8.08
+    || synthetic.sourceImplementationControlFlowQuirkPresent !== true
+    || synthetic.sourceExactExecutionMustFailIfBilateralResultIncomplete !== true
     || synthetic.sameSampleExecutableAssetAcquired !== false
     || synthetic.sufficientForEndpointCoordinateCorrespondence !== false
   ) {
