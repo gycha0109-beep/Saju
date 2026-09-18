@@ -30,7 +30,7 @@ jobs:
       - name: Install page renderer
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq poppler-utils python3-pil
+          sudo apt-get install -y -qq poppler-utils python3-pil tesseract-ocr tesseract-ocr-chi-tra
 
       - name: Fetch and verify registered scan
         shell: bash
@@ -100,6 +100,39 @@ jobs:
               encoding='utf-8',
           )
           PY
+
+      - name: Render locator pages and generate OCR locator surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          out='tmp/research/yuanhai-direct-scan'
+          mkdir -p "$out/locator"
+          for page in 13 14 15 16 17; do
+            pdftoppm \
+              -f "$page" -l "$page" -singlefile \
+              -r 400 -gray -png \
+              /tmp/yuanhai-scan/volume4.pdf \
+              "$out/locator/page$(printf '%02d' "$page")"
+            tesseract \
+              "$out/locator/page$(printf '%02d' "$page").png" \
+              "$out/locator/page$(printf '%02d' "$page")-psm5" \
+              -l chi_tra --psm 5 2>/dev/null || true
+            tesseract \
+              "$out/locator/page$(printf '%02d' "$page").png" \
+              stdout -l chi_tra --psm 5 tsv 2>/dev/null \
+              > "$out/locator/page$(printf '%02d' "$page")-psm5.tsv" || true
+          done
+
+          {
+            echo '=== target-oriented OCR locator report ==='
+            for page in 13 14 15 16 17; do
+              txt="$out/locator/page$(printf '%02d' "$page")-psm5.txt"
+              echo "--- digital page $page ---"
+              if [ -f "$txt" ]; then
+                grep -n -E '財|官|煞|印|比|劫|羊|刃|財格|印綬|生官|化為' "$txt" || true
+              fi
+            done
+          } > "$out/locator/target-report.txt"
 
       - name: Commit rendered workbench evidence
         shell: bash
