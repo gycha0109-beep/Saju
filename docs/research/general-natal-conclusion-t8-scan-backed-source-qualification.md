@@ -69,7 +69,7 @@ corroborating OCR = 識典古籍 scan/OCR surface
 
 The Ming Wanli scan-backed surface independently corroborates the bounded propositions used by all ten current Yuanhai witnesses.
 
-The repository-authoritative passage definitions place the four still-unverified structural Yuanhai witnesses in `四言獨步`. Direct inspection of the uploaded 46-page `NLC892-2642-210317 第3冊` showed that it ends earlier in the 卷五 song sequence and does not reach `四言獨步`. The registered scan continuation `NLC892-2642-210318 第4冊 / 卷之五` is therefore the correct remaining scan volume. Earlier `雜論口訣 / 實法第一` locator text is not used as witness authority.
+The repository-authoritative fixed passage definitions place the four still-unverified structural Yuanhai witnesses in `四言獨步`. The existing NLC `scanSurfaceSection` entries (`雜論口訣 / 實法第一`) are cross-edition proposition-corroboration locators, not direct fixed-witness locators. Direct inspection of the uploaded 46-page `NLC892-2642-210317 第3冊` did not establish an exact `四言獨步` digital scan page for those four current witnesses. They therefore remain unverified rather than being inferred from the older corroboration locators or from a guessed continuation volume.
 
 Six Yuanhai witnesses already have direct image verification.
 
@@ -143,14 +143,14 @@ A scan file or OCR surface proves neither the exact physical page/folio nor the 
 
 For all six Samyeong rows, the current bounded propositions now have exact digital scan-page locators and direct image comparison. This still does not establish exact witness-digest reproduction or byte-identical transcription identity with the fixed repository witnesses.
 
-For the Yuanhai rows, the Ming Wanli scan independently corroborates the proposition but is a distinct edition surface from the current Wikisource witness. Six rows have exact digital scan-page locators and direct bounded-proposition image comparison; the remaining four `四言獨步` rows still require direct inspection in `NLC892-2642-210318 第4冊`. Even completed visual comparison does not authorize exact transcription identity because the registered witnesses remain the separate fixed Wikisource surface.
+For the Yuanhai rows, the Ming Wanli scan independently corroborates the proposition but is a distinct edition surface from the current Wikisource witness. Six rows have exact digital scan-page locators and direct bounded-proposition image comparison. The remaining four fixed witnesses have `originalSection = 四言獨步`, but no exact direct scan-page locator was established in this pass. The existing cross-edition corroboration locators must not be mistaken for direct verification of those fixed witnesses. Even completed visual comparison would not authorize exact transcription identity because the registered witnesses remain the separate fixed Wikisource surface.
 
 No witness can therefore be promoted to full scan qualification in this audit.
 
 ## Required next evidence
 
-1. identify and visually verify the exact digital scan page(s) for the four remaining `四言獨步` witnesses in `NLC892-2642-210318 第4冊`;
-2. directly compare those four scan images with the bounded propositions, preserving the exact 劫財/peer boundary rather than widening from 比肩-only text;
+1. locate the exact same-edition scan surface corresponding to the four remaining fixed `四言獨步` witnesses without assuming that an older cross-edition corroboration locator or a CText image-unit number is the digital scan page;
+2. directly compare the exact scan image(s) with those four bounded propositions, preserving the exact 劫財/peer boundary rather than widening from 比肩-only text;
 3. preserve digital scan-page identity separately from any printed page/folio claim;
 4. reproduce each relevant witness digest from a scan-verified transcription surface using the already-frozen exact-substring / UTF-8 / no-normalization contract;
 5. preserve the distinction between Yuanhai cross-edition corroboration and exact transcription identity;
