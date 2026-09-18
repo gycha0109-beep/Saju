@@ -41,7 +41,11 @@ expectIncludes(server, "calibrationAuthorized: false", 'MESH6J runtime config mu
 expectIncludes(server, "productionMorphologyAuthorized: false", 'MESH6J runtime config must deny production morphology authority.');
 expectIncludes(server, "METADATA_BLOB_SHA = '252a7b05b24c5c43c5b94179393639f7c9a2fe8f'", 'MESH6J must pin exact geometry metadata blob.');
 expectIncludes(server, "project_gnm_regions_to_mediapipe468_weighted.py", 'MESH6J must regenerate the exact weighted adapter.');
-expectIncludes(server, "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net", 'MESH6J CSP must permit only the inline import map plus pinned self/CDN scripts.');
+const scriptSrcMatch = /script-src ([^;]+); connect-src/.exec(server);
+expect(scriptSrcMatch !== null, 'MESH6J CSP script-src directive must be statically inspectable.');
+const scriptSrcTokens = scriptSrcMatch[1].trim().split(/\s+/);
+expect(scriptSrcTokens.includes("'wasm-unsafe-eval'"), 'MESH6J.2 must narrowly permit WebAssembly compilation.');
+expect(!scriptSrcTokens.includes("'unsafe-eval'"), 'MESH6J.2 must not broaden CSP to unsafe-eval.');
 expectIncludes(server, "'permissions-policy': 'camera=(self)'", 'MESH6J must restrict camera permission to self.');
 expectIncludes(server, "MYEONGHWA_MESH6J_SMOKE", 'MESH6J server must expose deterministic localhost smoke mode.');
 expectIncludes(server, "MYEONGHWA_MESH6J_LAN_SMOKE", 'MESH6J.1 server must expose deterministic LAN HTTPS smoke mode.');
@@ -97,8 +101,12 @@ for (const address of [
 
 expectIncludes(page, 'id="fresh-attestation"', 'MESH6J page must require explicit freshness attestation.');
 expectIncludes(page, 'id="participant-attestation"', 'MESH6J page must require explicit same-participant-series attestation.');
-expectIncludes(page, 'id="capture-frame"', 'MESH6J page must expose an explicit one-frame capture control.');
-expectIncludes(page, 'id="finish-sweep"', 'MESH6J page must expose manual sweep completion.');
+expectIncludes(page, 'id="capture-analyze"', 'MESH6J.2 page must expose a primary capture-and-analyze control.');
+expectIncludes(page, 'id="capture-count"', 'MESH6J.2 page must retain optional repeated research capture count.');
+expectIncludes(page, 'value="1"', 'MESH6J.2 default capture count must be one.');
+for (const removed of ['id="start-session"', 'id="capture-frame"', 'id="finish-sweep"']) {
+  expectExcludes(page, removed, 'MESH6J.2 must hide internal session/sweep orchestration controls.');
+}
 expectIncludes(page, 'id="download-result"', 'MESH6J page must expose descriptive JSON download.');
 expectIncludes(page, '__MEDIAPIPE_ENTRY__', 'MESH6J page must receive the installed pinned MediaPipe entry through an import map.');
 
@@ -111,10 +119,13 @@ expectIncludes(client, 'usedForCandidateSelection: false', 'MESH6J must prohibit
 expectIncludes(client, 'developmentCaptureReuse: false', 'MESH6J must prohibit development-capture reuse.');
 expectIncludes(client, 'identityMatchingPerformed: false', 'MESH6J must prohibit identity matching.');
 expectIncludes(client, 'performance.timeOrigin + performance.now()', 'MESH6J capture timestamps must originate from the explicit click-time monotonic browser clock.');
-expectIncludes(client, 'await active.queues[index].push', 'MESH6J capture button must wait until exactly one explicit trigger is consumed.');
-expectIncludes(client, 'active.queues[index].close()', 'MESH6J must end each sweep only through explicit queue closure.');
+expectIncludes(client, "elements.captureAnalyze.addEventListener('click'", 'MESH6J.2 capture must originate from the explicit primary button.');
+expectIncludes(client, 'await session.queues[index].push', 'MESH6J.2 capture button must wait until exactly one explicit trigger is consumed.');
+expectIncludes(client, 'session.queues[index].close()', 'MESH6J.2 must close the one-frame sweep only after its explicit trigger is consumed.');
+expectIncludes(client, 'session.currentCaptureIndex += 1', 'MESH6J.2 must advance only after explicit capture completion.');
+expectIncludes(client, 'await session.promise', 'MESH6J.2 must await analysis after the final configured explicit capture.');
 expectIncludes(client, "new Blob([payload], { type: 'application/json' })", 'MESH6J export must be the descriptive JSON artifact.');
-expectIncludes(client, 'for (const queue of failedSession.queues) queue.close()', 'MESH6J must close outstanding trigger streams on session failure.');
+expectIncludes(client, 'for (const queue of session.queues) queue.close()', 'MESH6J must close outstanding trigger streams on capture/session failure.');
 
 for (const forbidden of [
   'setInterval(',
@@ -150,6 +161,8 @@ process.stdout.write(JSON.stringify({
   optInPrivateLanHttpsVerified: true,
   nonPrivateRemoteDenialVerified: true,
   getOnlyServerVerified: true,
+  wasmCompilationCspNarrowlyAuthorized: true,
+  captureToAnalysisUxVerified: true,
   explicitManualTriggerVerified: true,
   manifestAttestationsVerified: true,
   noAutomaticCaptureVerified: true,
