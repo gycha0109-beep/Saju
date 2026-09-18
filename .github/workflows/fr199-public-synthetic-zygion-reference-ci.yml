@@ -1,0 +1,30 @@
+name: FR199 Public Synthetic Zygion Reference CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/face-reading-public-synthetic-zygion-reference-fr199.ts'
+      - 'packages/face-reading/src/face-reading-public-synthetic-zygion-reference-fr199.test.ts'
+      - 'scripts/verify-fr199-public-synthetic-zygion-reference.mjs'
+      - '.github/workflows/fr199-public-synthetic-zygion-reference-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr199-public-synthetic-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR199 reference governance
+        run: npx vitest run packages/face-reading/src/face-reading-public-synthetic-zygion-reference-fr199.test.ts
+      - name: Execute exact public synthetic reference corpus
+        run: node scripts/verify-fr199-public-synthetic-zygion-reference.mjs
