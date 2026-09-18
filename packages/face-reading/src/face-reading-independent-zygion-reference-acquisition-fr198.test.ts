@@ -73,8 +73,29 @@ describe('FR198 independent zygion reference acquisition', () => {
       referenceCoordinatesAlreadyPublished: false,
       referenceDerivationExecutableWithoutProviderCandidate: true,
       publishedReferenceValidationMeanErrorMm: 8.08,
+      sourceImplementationControlFlowQuirkPresent: true,
+      sourceExactExecutionMustFailIfBilateralResultIncomplete: true,
       accessPrerequisite: null,
     });
+  });
+
+
+  it('forbids silently repairing the published zygion implementation control-flow quirk', () => {
+    expect(
+      FACE_READING_INDEPENDENT_ZYGION_REFERENCE_ACQUISITION_FR198.evidenceRules
+        .sourceAlgorithmMayBeSilentlyRepaired,
+    ).toBe(false);
+
+    const source =
+      FACE_READING_INDEPENDENT_ZYGION_REFERENCE_ACQUISITION_FR198.evidenceCandidates.find(
+        (candidate) =>
+          candidate.candidateId
+            === 'TOPSAKAL-2024-OPEN-SYNTHETIC-3D-FACE-DATASET',
+      );
+    expect(source?.sourceImplementationControlFlowQuirkPresent).toBe(true);
+    expect(source?.sourceExactExecutionMustFailIfBilateralResultIncomplete).toBe(
+      true,
+    );
   });
 
   it('rejects promoting the public synthetic lane before independent reference derivation executes', () => {
