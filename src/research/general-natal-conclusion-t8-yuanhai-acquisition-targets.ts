@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey } from './general-natal-conclusion-t8-alternate-witness-surface-survey.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_YUANHAI_ACQUISITION_TARGETS_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v2' as const;
+  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v3' as const;
 
 const UNRESOLVED_WITNESS_IDS = Object.freeze([
   'W-YUANHAI-WEALTH-OFFICER',
@@ -127,6 +127,66 @@ const ACQUISITION_TARGETS = Object.freeze([
     frozenWitnessContentClaimed: false as const,
     acquisitionAction:
       'REQUEST_OR_OBTAIN_REPRODUCTION_OF_ITEM_0005484761_AND_INSPECT_FOUR_YAN_DUBU',
+  }),
+  Object.freeze({
+    targetId: 'ACQ-YUANHAI-TIANYIGE-330000-1705-0005007-DIGITAL',
+    priority: 'P0' as const,
+    targetClass: 'VERIFIED_PUBLIC_DIGITAL_SCAN' as const,
+    holdingInstitution: 'Tianyi Pavilion Museum',
+    catalogIdentifier: 'census 330000-1705-0005007 / call 善2875',
+    title: '新刊合併官板音義評註淵海子平五卷',
+    attributedAuthor: '宋徐升編、明楊淙增校',
+    editionOrImprint: '明崇禎刻本',
+    materialExtent: '1 digital PDF / 153 pages',
+    dimensions: 'scan 1781 × 1431 px',
+    relevantCoverage: '五卷 complete in one public scan; 四言獨步 target surface not yet directly inspected',
+    catalogUrl:
+      'https://commons.wikimedia.org/wiki/File:Tianyige-330000-1705-0005007_%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E8%A8%BB%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E4%BA%94%E5%8D%B7_%E5%AE%8B%E5%BE%90%E5%8D%87%E7%B7%A8_%E6%98%8E%E6%A5%8A%E6%B7%99%E5%A2%9E%E6%A0%A1_%E6%98%8E%E5%B4%87%E7%A6%8E%E5%88%BB%E6%9C%AC.pdf',
+    publicPageImageAvailability: 'VERIFIED_AVAILABLE' as const,
+    directInspectionState: 'NOT_ACQUIRED' as const,
+    frozenWitnessContentClaimed: false as const,
+    digitalAssets: Object.freeze([
+      Object.freeze({
+        pageCount: 153,
+        sha1: '2ec904422ced60bf241286c6b822623048bb8883',
+        fileSizeBytes: 133016361,
+      }),
+    ]),
+    acquisitionAction:
+      'DIRECTLY_INSPECT_PUBLIC_SCAN_FOR_FOUR_YAN_DUBU_AND_FROZEN_EXACT_STRINGS',
+  }),
+  Object.freeze({
+    targetId: 'ACQ-YUANHAI-ZJSLIB-FLDB-2458-DIGITAL',
+    priority: 'P0' as const,
+    targetClass: 'VERIFIED_PUBLIC_DIGITAL_SCAN' as const,
+    holdingInstitution: 'Zhuji Library',
+    catalogIdentifier: 'ZJSLib-FLDB-2458-1 / ZJSLib-FLDB-2458-2',
+    title: '新刊合併官板音義評註淵海子平五卷',
+    attributedAuthor: '（宋）徐升編 （明）楊淙增校',
+    editionOrImprint: '清福建余氏刻本 13行25字小字雙行25字白口四周單邊',
+    materialExtent: '2 public digital PDFs / 138 + 170 pages',
+    dimensions: 'scan 937 × 1608 px',
+    relevantCoverage:
+      '五卷 split across two public scans; exact 四言獨步 part/page not yet directly inspected',
+    catalogUrl:
+      'https://commons.wikimedia.org/wiki/Category:%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E8%A8%BB%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3',
+    publicPageImageAvailability: 'VERIFIED_AVAILABLE' as const,
+    directInspectionState: 'NOT_ACQUIRED' as const,
+    frozenWitnessContentClaimed: false as const,
+    digitalAssets: Object.freeze([
+      Object.freeze({
+        assetId: 'ZJSLib-FLDB-2458-1',
+        pageCount: 138,
+        fileSizeMiB: 64.85,
+      }),
+      Object.freeze({
+        assetId: 'ZJSLib-FLDB-2458-2',
+        pageCount: 170,
+        fileSizeMiB: 79.26,
+      }),
+    ]),
+    acquisitionAction:
+      'LOCATE_FOUR_YAN_DUBU_WITHIN_PUBLIC_TWO_PART_SCAN_AND_DIRECTLY_INSPECT_FROZEN_EXACT_STRINGS',
   }),
   Object.freeze({
     targetId: 'ACQ-YUANHAI-FUWEN-GUANGXU-BIBLIOGRAPHIC-LEAD',
