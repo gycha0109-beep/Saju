@@ -9,10 +9,10 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
     expect(evidence.issue).toBe('#879');
     expect(evidence.counts).toEqual({
       unresolvedWitnessCount: 4,
-      acquisitionTargetCount: 7,
+      acquisitionTargetCount: 9,
       confirmedPhysicalHoldingCount: 6,
       bibliographicLeadCount: 1,
-      publicDigitalPageImageVerifiedCount: 0,
+      publicDigitalPageImageVerifiedCount: 2,
       directlyInspectedAcquisitionTargetCount: 0,
       newDirectWitnessEvidenceCount: 0,
       productionAdmissionEvidenceCount: 0,
@@ -104,6 +104,54 @@ describe('General Natal conclusion T8 Yuanhai acquisition targets', () => {
       directInspectionState: 'NOT_ACQUIRED',
       frozenWitnessContentClaimed: false,
     });
+  });
+
+  it('registers Tianyi and Zhuji public scans as inspectable targets without claiming witness text', () => {
+    const evidence = buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets();
+
+    const tianyige = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-TIANYIGE-330000-1705-0005007-DIGITAL',
+    );
+    expect(tianyige).toMatchObject({
+      priority: 'P0',
+      targetClass: 'VERIFIED_PUBLIC_DIGITAL_SCAN',
+      holdingInstitution: 'Tianyi Pavilion Museum',
+      editionOrImprint: '明崇禎刻本',
+      publicPageImageAvailability: 'VERIFIED_AVAILABLE',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+    if (tianyige?.targetId === 'ACQ-YUANHAI-TIANYIGE-330000-1705-0005007-DIGITAL') {
+      expect(tianyige.digitalAssets).toEqual([
+        {
+          pageCount: 153,
+          sha1: '2ec904422ced60bf241286c6b822623048bb8883',
+          fileSizeBytes: 133016361,
+        },
+      ]);
+    }
+
+    const zjs = evidence.acquisitionTargets.find(
+      (target) => target.targetId === 'ACQ-YUANHAI-ZJSLIB-FLDB-2458-DIGITAL',
+    );
+    expect(zjs).toMatchObject({
+      priority: 'P0',
+      targetClass: 'VERIFIED_PUBLIC_DIGITAL_SCAN',
+      holdingInstitution: 'Zhuji Library',
+      editionOrImprint: '清福建余氏刻本 13行25字小字雙行25字白口四周單邊',
+      publicPageImageAvailability: 'VERIFIED_AVAILABLE',
+      directInspectionState: 'NOT_ACQUIRED',
+      frozenWitnessContentClaimed: false,
+    });
+    if (zjs?.targetId === 'ACQ-YUANHAI-ZJSLIB-FLDB-2458-DIGITAL') {
+      expect(zjs.digitalAssets).toEqual([
+        { assetId: 'ZJSLib-FLDB-2458-1', pageCount: 138, fileSizeMiB: 64.85 },
+        { assetId: 'ZJSLib-FLDB-2458-2', pageCount: 170, fileSizeMiB: 79.26 },
+      ]);
+    }
+
+    expect(evidence.verdict.anyTargetFrozenWitnessContentEstablished).toBe(false);
+    expect(evidence.verdict.anyTargetReadyForWitnessPromotion).toBe(false);
   });
 
   it('keeps the Fuwen Shuju record as a lead rather than inventing a holding', () => {
