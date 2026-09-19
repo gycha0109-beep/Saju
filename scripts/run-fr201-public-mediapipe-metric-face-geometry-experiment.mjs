@@ -227,9 +227,67 @@ function spearman(entries, key) {
   return pearson(ranked, 'rankMetric');
 }
 
+function pearsonPair(entries, xKey, yKey) {
+  if (entries.length < 2) return null;
+  const xs = entries.map((entry) => entry[xKey]);
+  const ys = entries.map((entry) => entry[yKey]);
+  const mx = xs.reduce((sum, value) => sum + value, 0) / xs.length;
+  const my = ys.reduce((sum, value) => sum + value, 0) / ys.length;
+  let numerator = 0;
+  let dx2 = 0;
+  let dy2 = 0;
+  for (let index = 0; index < entries.length; index += 1) {
+    const dx = xs[index] - mx;
+    const dy = ys[index] - my;
+    numerator += dx * dy;
+    dx2 += dx * dx;
+    dy2 += dy * dy;
+  }
+  const denominator = Math.sqrt(dx2 * dy2);
+  return denominator === 0 ? null : numerator / denominator;
+}
+
+function spearmanPair(entries, xKey, yKey) {
+  if (entries.length < 2) return null;
+  const xr = rank(entries.map((entry) => entry[xKey]));
+  const yr = rank(entries.map((entry) => entry[yKey]));
+  const ranked = entries.map((_, index) => ({ x: xr[index], y: yr[index] }));
+  return pearsonPair(ranked, 'x', 'y');
+}
+
+function distribution(entries, key) {
+  const values = entries.map((entry) => entry[key]);
+  if (values.length === 0) return null;
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  const variance =
+    values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
+  return {
+    min: Math.min(...values),
+    max: Math.max(...values),
+    mean,
+    standardDeviation: Math.sqrt(variance),
+    coefficientOfVariation: mean === 0 ? null : Math.sqrt(variance) / Math.abs(mean),
+  };
+}
+
 function summarize(entries) {
   return {
     sampleCount: entries.length,
+    sourceReferenceVsObjMaxWidth: {
+      pearson: pearsonPair(entries, 'referenceWidthByObjHeight', 'sourceObjMaxWidthByObjHeight'),
+      spearman: spearmanPair(entries, 'referenceWidthByObjHeight', 'sourceObjMaxWidthByObjHeight'),
+    },
+    sourceObjMaxWidthVsMetricFullOval: {
+      pearson: pearsonPair(entries, 'sourceObjMaxWidthByObjHeight', 'metricFullOvalWidthByHeight'),
+      spearman: spearmanPair(entries, 'sourceObjMaxWidthByObjHeight', 'metricFullOvalWidthByHeight'),
+    },
+    distributions: {
+      referenceWidthByObjHeight: distribution(entries, 'referenceWidthByObjHeight'),
+      sourceObjMaxWidthByObjHeight: distribution(entries, 'sourceObjMaxWidthByObjHeight'),
+      metricFixed234454WidthByHeight: distribution(entries, 'metricFixed234454WidthByHeight'),
+      metricBandEnvelopeWidthByHeight: distribution(entries, 'metricBandEnvelopeWidthByHeight'),
+      metricFullOvalWidthByHeight: distribution(entries, 'metricFullOvalWidthByHeight'),
+    },
     metricFixed234454WidthByHeight: {
       pearson: pearson(entries, 'metricFixed234454WidthByHeight'),
       spearman: spearman(entries, 'metricFixed234454WidthByHeight'),
@@ -301,8 +359,12 @@ async function main() {
         });
         const vertices = parseObjVerticesFR199(objText);
         const ys = vertices.map((entry) => entry.y);
+        const xs = vertices.map((entry) => entry.x);
         const objHeight = Math.max(...ys) - Math.min(...ys);
-        if (!(objHeight > 0)) throw new Error('OBJ height must be positive.');
+        const objMaxWidth = Math.max(...xs) - Math.min(...xs);
+        if (!(objHeight > 0) || !(objMaxWidth > 0)) {
+          throw new Error('OBJ height and maximum X span must be positive.');
+        }
         const referenceWidth = Math.abs(
           reference.bilateralReference[0].x - reference.bilateralReference[1].x,
         );
@@ -317,6 +379,8 @@ async function main() {
           imagePath: `/assets/images/${sampleId}.png`,
           imageDigest: sha256(imageBytes),
           referenceWidthByObjHeight: referenceWidth / objHeight,
+          sourceObjMaxWidthByObjHeight: objMaxWidth / objHeight,
+          sourceZygionWidthByObjMaxWidth: referenceWidth / objMaxWidth,
         });
       } catch (error) {
         referenceFailures.push({
@@ -481,6 +545,8 @@ async function main() {
           imageDigest: input.imageDigest,
           imageDimensions: [image.naturalWidth, image.naturalHeight],
           referenceWidthByObjHeight: input.referenceWidthByObjHeight,
+          sourceObjMaxWidthByObjHeight: input.sourceObjMaxWidthByObjHeight,
+          sourceZygionWidthByObjMaxWidth: input.sourceZygionWidthByObjMaxWidth,
           metricFixed234454WidthByHeight: Math.abs(dx) / faceHeight,
           metricFixed234454EuclideanByHeight: Math.hypot(dx, dy, dz) / faceHeight,
           metricBandEnvelopeWidthByHeight: (Math.max(...bandXs) - Math.min(...bandXs)) / faceHeight,
