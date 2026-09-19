@@ -1,82 +1,110 @@
-# Myeonghwa Research UX Preview
+# Myeonghwa Preview E2E Reading
 
-Status: `LOCAL_RESEARCH_PREVIEW_ONLY`
+Status: `PREVIEW_E2E_PROVISIONALLY_APPROVED`
 
-This preview exists only to let the product owner inspect the current consumer UX before production interpretation authority is available.
+This runtime exists so the product owner can inspect the real consumer screen and end-to-end behavior while Saju research continues.
 
-## Run
+It is **not** a final interpretation decision and it is **not** Production Interpretation Authority.
 
-Requirements:
-
-- Node.js 24
-- npm 11
-
-From the repository root:
-
-```bash
-npm ci
-npm run preview:research
-```
-
-Then open:
+## Lifecycle split
 
 ```text
-http://127.0.0.1:4173
+interpretation evidence lifecycle = research
+consumer runtime lifecycle        = preview
+production interpretation         = blocked
+commerce / paid entitlement       = not authorized by this approval
+reading persistence finalization  = not authorized by this approval
+general public availability       = not authorized by this approval
+research                          = continues before and after launch
 ```
 
-Stop with `Ctrl+C`.
-
-## Current meaningful target
-
-The currently evidence-backed research candidate only makes the following reading target meaningful:
+The provisional approval is recorded by:
 
 ```text
-전체 사주
-→ reading text: 사주
-→ general / natal
+src/preview/preview-authority.ts
+approvalId = owner-provisional-preview-2026-09-19
+purpose    = consumer-screen-e2e-observation
 ```
 
-Other reading intents remain fail-closed when their required T8/T9 evidence is missing.
+Research rules, methodologies, source quality, review metadata, and reviewer-trust state are not relabeled to obtain Preview execution.
 
-## Runtime composition
+## Preview E2E targets
+
+The currently admitted Preview surface is intentionally bounded to the research-backed natal paths that already produce meaningful consumer output:
 
 ```text
-consumer browser
-→ existing Product Host HTTP/UI
-→ Production Calculation Authority V1 policy
-→ I18A research month-branch relation + scope guard
-→ general natal T8 structural-summary research candidate
-→ existing governed reading service
-→ deterministic grounded fallback narrative
-→ consumer response
+전체 사주       → general:natal
+직업 · 커리어   → career:natal
+재물            → wealth:natal
+연애 · 관계     → relationship:natal:general
+사업            → business:natal
 ```
 
-The preview deliberately uses the deterministic grounded fallback instead of an external LLM provider so that UX review does not depend on credentials or model variability.
-
-## Authority boundary
-
-This is not production interpretation authorization.
+The following remain fail-closed until their own evidence path is ready for Preview:
 
 ```text
-research candidate != production registry
-local preview != public deployment
-preview dependency injection != provenance proof
-browser success != production authority
+가족
+삶의 단계
+올해
+이번 달
+배우자 · 관계
+궁합
+지금 고민으로 보기
 ```
 
-The research registry remains `research`, its rules remain `research/unreviewed`, and the production composition root remains blocked until content-addressed domain review attestations and trust pins exist.
+No unsupported request is replaced by a General Natal reading.
 
-## Smoke verification
+## Runtime boundary
 
-`npm run check` includes:
+Cloud/service path:
 
 ```text
-build
-→ start preview on an ephemeral localhost port
-→ GET /health
-→ POST a general/natal reading
-→ require delivered or delivered_with_fallback
-→ shutdown
+MyeongHa server
+→ authenticated Saju service request
+→ POST /api/preview/readings
+→ Production Calculation Authority V1
+→ current research interpretation registry
+→ governed Product Reading preparation / grounding
+→ deterministic consumer Preview narrative
+→ source-owned ProductReadingResponse admission
+→ x-myeonghwa-reading-lifecycle: preview
 ```
 
-This proves the command is executable without converting the preview into production authority.
+The existing production semantic route remains closed:
+
+```text
+POST /api/readings
+→ NOT exposed by the Preview-enabled calculation process
+```
+
+The Preview endpoint is protected by the same server-owned Saju service Bearer as the calculation endpoint. The browser never receives that credential.
+
+## Consumer disclosure
+
+Preview output includes a visible `프리뷰 안내` section. Its purpose is to make the lifecycle explicit without turning the result into an internal research report.
+
+The Preview copy must not imply:
+
+- Production semantic approval,
+- deterministic future events,
+- guaranteed career/business/financial outcomes,
+- unsupported spouse/compatibility claims,
+- authority promotion from browser success.
+
+## Research continuity
+
+The Preview is a product-observation checkpoint, not a research freeze.
+
+New source work, proposition verification, negative/boundary evidence, semantic bridges, reviewer attestations, and production-authority work continue independently. Preview output can be revised as research improves, with the same fail-closed and grounding constraints.
+
+## Production authority remains separate
+
+A future Production Product Reading still requires the existing production authorization contract, including content-addressed review/trust requirements. Preview success does not satisfy or waive that contract.
+
+Therefore:
+
+```text
+PREVIEW E2E = provisionally approved
+PRODUCTION INTERPRETATION AUTHORITY = blocked
+RESEARCH = active / continuing
+```

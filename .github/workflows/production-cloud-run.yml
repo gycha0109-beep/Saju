@@ -220,6 +220,11 @@ jobs:
           SAJU_SMOKE_TIMEOUT_MS='10000' \
             node scripts/verify-production-calculation-service.mjs
 
+          SAJU_SMOKE_BASE_URL='http://127.0.0.1:18080' \
+          SAJU_SMOKE_BEARER="$local_bearer" \
+          SAJU_SMOKE_TIMEOUT_MS='10000' \
+            node scripts/verify-preview-reading-service.mjs
+
       - name: Authenticate to Google Cloud using Workload Identity Federation
         id: auth
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
@@ -450,6 +455,11 @@ jobs:
           SAJU_SMOKE_BEARER="$active_bearer" \
           SAJU_SMOKE_TIMEOUT_MS='30000' \
             node scripts/verify-production-calculation-service.mjs
+
+          SAJU_SMOKE_BASE_URL="$CANDIDATE_URL" \
+          SAJU_SMOKE_BEARER="$active_bearer" \
+          SAJU_SMOKE_TIMEOUT_MS='30000' \
+            node scripts/verify-preview-reading-service.mjs
           unset active_bearer
 
       - name: Re-check pinned production source immediately before traffic promotion
@@ -507,6 +517,11 @@ jobs:
           SAJU_SMOKE_BEARER="$active_bearer" \
           SAJU_SMOKE_TIMEOUT_MS='30000' \
             node scripts/verify-production-calculation-service.mjs
+
+          SAJU_SMOKE_BASE_URL="$service_url" \
+          SAJU_SMOKE_BEARER="$active_bearer" \
+          SAJU_SMOKE_TIMEOUT_MS='30000' \
+            node scripts/verify-preview-reading-service.mjs
           unset active_bearer
 
       - name: Record deployment evidence

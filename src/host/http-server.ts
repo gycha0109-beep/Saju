@@ -17,6 +17,11 @@ import { PRODUCT_HOST_APP_SCRIPT, PRODUCT_HOST_PAGE } from './static-page.js';
 export const DEFAULT_PRODUCT_HOST_MAX_REQUEST_BYTES = 16 * 1024;
 export const PRODUCT_READING_RESPONSE_ADMISSION_HEADER =
   'x-myeonghwa-product-reading-response-admitted' as const;
+export const PRODUCT_READING_LIFECYCLE_HEADER =
+  'x-myeonghwa-reading-lifecycle' as const;
+export const PRODUCT_PREVIEW_READING_HTTP_PATH =
+  '/api/preview/readings' as const;
+export const PRODUCT_READING_PREVIEW_LIFECYCLE = 'preview' as const;
 
 export interface MyeonghwaProductHostServerOptions {
   maxRequestBytes?: number;
@@ -33,6 +38,20 @@ export interface MyeonghwaProductionProductHostServerOptions
   serviceBearer?: string;
   previousServiceBearer?: string;
 }
+
+interface MyeonghwaReadingHttpRoute {
+  readonly path: '/api/readings' | typeof PRODUCT_PREVIEW_READING_HTTP_PATH;
+  readonly lifecycle?: typeof PRODUCT_READING_PREVIEW_LIFECYCLE;
+}
+
+const PRODUCT_READING_ROUTE: MyeonghwaReadingHttpRoute = Object.freeze({
+  path: '/api/readings',
+});
+
+const PREVIEW_READING_ROUTE: MyeonghwaReadingHttpRoute = Object.freeze({
+  path: PRODUCT_PREVIEW_READING_HTTP_PATH,
+  lifecycle: PRODUCT_READING_PREVIEW_LIFECYCLE,
+});
 
 interface HostHttpErrorShape {
   status: number;
@@ -194,6 +213,7 @@ function createMyeonghwaHttpServer(
   options: MyeonghwaProductHostServerOptions,
   authorizeCalculationRequest?: (request: IncomingMessage) => boolean,
   authorizeReadingRequest?: (request: IncomingMessage) => boolean,
+  readingRoute: MyeonghwaReadingHttpRoute = PRODUCT_READING_ROUTE,
 ): Server {
   const bodyLimit = maxRequestBytes(options);
 
@@ -239,7 +259,7 @@ function createMyeonghwaHttpServer(
       }
       return;
     }
-    if (path === '/api/readings' && readingHost !== undefined) {
+    if (path === readingRoute.path && readingHost !== undefined) {
       if (method !== 'POST') {
         response.setHeader('allow', 'POST');
         sendJson(response, 405, {
@@ -257,6 +277,9 @@ function createMyeonghwaHttpServer(
         const admitted = admitProductReadingResponse(result);
         sendJson(response, 200, admitted, {
           [PRODUCT_READING_RESPONSE_ADMISSION_HEADER]: PRODUCT_READING_RESPONSE_VERSION,
+          ...(readingRoute.lifecycle === undefined
+            ? {}
+            : { [PRODUCT_READING_LIFECYCLE_HEADER]: readingRoute.lifecycle }),
         });
       } catch (error) {
         if (!handleKnownError(response, error)) sendReadingOperationalError(response);
@@ -296,6 +319,25 @@ export function createMyeonghwaProductionProductHostServer(
     serverOptions,
     authorizeRequest,
     authorizeRequest,
+    PRODUCT_READING_ROUTE,
+  );
+}
+
+export function createMyeonghwaProductionPreviewHostServer(
+  readingHost: MyeonghwaProductHost,
+  options: MyeonghwaProductionProductHostServerOptions = {},
+): Server {
+  const { serviceBearer, previousServiceBearer, ...serverOptions } = options;
+  const authorizeRequest = createMyeonghwaProductionServiceBearerAuthorizer({
+    activeBearer: serviceBearer,
+    previousBearer: previousServiceBearer,
+  });
+  return createMyeonghwaHttpServer(
+    readingHost,
+    serverOptions,
+    authorizeRequest,
+    authorizeRequest,
+    PREVIEW_READING_ROUTE,
   );
 }
 
