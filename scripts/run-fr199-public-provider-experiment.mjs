@@ -316,9 +316,9 @@ async function main() {
       const expression = `
 (async () => {
   const [{ sanitizeMediaPipeProviderObservationFR61 }, { issueDescriptiveZygionCorrespondenceFR199 }, vision] = await Promise.all([
-    import('/dist/production-neutral-observation-provider-fr61.js'),
-    import('/dist/face-reading-public-synthetic-zygion-correspondence-fr199.js'),
-    import('/vendor/vision_bundle.mjs'),
+    import(location.origin + '/dist/production-neutral-observation-provider-fr61.js'),
+    import(location.origin + '/dist/face-reading-public-synthetic-zygion-correspondence-fr199.js'),
+    import(location.origin + '/vendor/vision_bundle.mjs'),
   ]);
   const deepFreeze = (value) => {
     if (value && typeof value === 'object' && !Object.isFrozen(value)) {
