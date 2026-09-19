@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-alternate-witness-surface-survey-v2' as const;
+  'myeonghwa-general-natal-conclusion-t8-alternate-witness-surface-survey-v3' as const;
 
 const TARGET_WITNESS_IDS = Object.freeze([
   'W-YUANHAI-WEALTH-OFFICER',
@@ -82,7 +82,7 @@ const CANDIDATE_SURFACES = Object.freeze([
   }),
   Object.freeze({
     candidateId: 'CANDIDATE-NLC-1634-YUSHI-SHANCHENGTANG',
-    authorityClass: 'REGISTERED_SCAN_WITH_SCAN_LINKED_TRANSCRIPTION',
+    authorityClass: 'REGISTERED_SCAN_DIRECTLY_INSPECTED_WITH_SCAN_LINKED_TRANSCRIPTION',
     title: '新刊合併官板音義評注淵海子平',
     edition: '余氏善成堂 / 明崇禎7年 [1634]',
     holdingInstitution: 'National Library of China',
@@ -96,6 +96,27 @@ const CANDIDATE_SURFACES = Object.freeze([
     registeredScanIdentityEstablished: true,
     auditableHoldingInstitutionEstablished: true,
     context: '卷四 / 四言獨步 and adjacent sections',
+    directInspection: Object.freeze({
+      state: 'DIRECTLY_INSPECTED' as const,
+      boundedDigitalPages: Object.freeze([16, 17, 18, 19] as const),
+      sectionTitlePage: 16 as const,
+      sectionTitle: '四言獨步' as const,
+      directlyLegibleOpeningAnchors: Object.freeze([
+        '先天何處', '後天何處', '要知來處', '便知去處',
+        '四柱排定', '三才次分', '年干為本', '配合元辰',
+        '神煞相伴', '輕重較量', '先觀月令', '論格推詳',
+        '以日為主', '專論財官', '分其貴賤', '妙法多端',
+      ] as const),
+      transitionPage: 19 as const,
+      transitionSectionTitle: '棄命從殺論' as const,
+      frozenExactWitnessesEstablished: Object.freeze({
+        'W-YUANHAI-WEALTH-OFFICER': false,
+        'W-YUANHAI-OFFICER-RESOURCE': false,
+        'W-YUANHAI-PEER-WEALTH': false,
+        'W-YUANHAI-WEALTH-RESOURCE': false,
+      }),
+      result: 'BOUNDED_DIRECT_TEXTUAL_DIVERGENCE_NO_FROZEN_EXACT_WITNESS' as const,
+    }),
     rows: Object.freeze({
       'W-YUANHAI-WEALTH-OFFICER': Object.freeze({
         status: 'EXACT_STRING_PRESENT_OUTSIDE_FROZEN_CONTEXT',
@@ -125,7 +146,7 @@ const CANDIDATE_SURFACES = Object.freeze([
       '先財後印',
       '先印後財',
     ]),
-    qualificationOutcome: 'REGISTERED_SCAN_LINKED_TRANSCRIPTION_CONTEXT_MISMATCH',
+    qualificationOutcome: 'REGISTERED_SCAN_DIRECTLY_INSPECTED_CONTEXT_MISMATCH',
   }),
   Object.freeze({
     candidateId: 'CANDIDATE-SECONDARY-FOUR-YAN-DUBU-TRANSCRIPTIONS',
@@ -189,6 +210,12 @@ export function buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey() {
   const registeredScanCandidates = CANDIDATE_SURFACES.filter(
     (candidate) => candidate.registeredScanIdentityEstablished,
   );
+  const directlyInspectedRegisteredScanCandidates = CANDIDATE_SURFACES.filter(
+    (candidate) =>
+      candidate.registeredScanIdentityEstablished &&
+      'directInspection' in candidate &&
+      candidate.directInspection.state === 'DIRECTLY_INSPECTED',
+  );
   const contextBoundFourOfFourCandidates = CANDIDATE_SURFACES.filter((candidate) =>
     TARGET_WITNESS_IDS.every((witnessId) =>
       isContextBoundExactStatus(candidate.rows[witnessId].status),
@@ -205,9 +232,9 @@ export function buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION,
-    issue: '#886' as const,
-    auditBaseSha: '7f5c0b7923d3b8a79ca6a4fa9781a95b48ef3068' as const,
-    status: 'ALTERNATE_SURFACES_SURVEYED_NO_PRODUCTION_ADMISSIBLE_FOUR_OF_FOUR_CANDIDATE' as const,
+    issue: '#889' as const,
+    auditBaseSha: 'c6c9f409da5611d21dc1b62d98e78c1a140645d1' as const,
+    status: 'NLC_1634_DIRECTLY_INSPECTED_TEXTUAL_DIVERGENCE_NO_PRODUCTION_ADMISSIBLE_FOUR_OF_FOUR_CANDIDATE' as const,
     upstreamPassageEvidenceId: upstream.evidenceId,
     frozenRows,
     candidateSurfaces: CANDIDATE_SURFACES,
@@ -215,6 +242,7 @@ export function buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey() {
       targetWitnessCount: TARGET_WITNESS_IDS.length,
       candidateSurfaceCount: CANDIDATE_SURFACES.length,
       registeredScanCandidateCount: registeredScanCandidates.length,
+      directlyInspectedRegisteredScanCandidateCount: directlyInspectedRegisteredScanCandidates.length,
       contextBoundFourOfFourTextCandidateCount: contextBoundFourOfFourCandidates.length,
       productionAdmissibleFourOfFourCandidateCount: productionAdmissibleCandidates.length,
     },
