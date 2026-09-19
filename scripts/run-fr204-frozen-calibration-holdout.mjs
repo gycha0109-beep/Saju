@@ -425,9 +425,11 @@ async function main() {
 
       const wsUrl = await waitForPageTarget(pageUrl);
       cdp = await connectCdp(wsUrl);
+      const browserOrigin = `http://127.0.0.1:${address.port}`;
       const expression = `
 (async () => {
-  const vision = await import(location.origin + '/vendor/vision_bundle.mjs');
+  const browserOrigin = ${JSON.stringify(browserOrigin)};
+  const vision = await import(browserOrigin + '/vendor/vision_bundle.mjs');
   const inputs = ${JSON.stringify(inputs)};
   const renderSize = ${RENDER_SIZE};
   const faceOvalVertices = ${JSON.stringify(FR200_FACE_OVAL_VERTICES)};
@@ -727,9 +729,9 @@ async function main() {
     return { ...best, unorderedPair: ordered };
   };
 
-  const fileset = await vision.FilesetResolver.forVisionTasks(location.origin + '/vendor/wasm');
+  const fileset = await vision.FilesetResolver.forVisionTasks(browserOrigin + '/vendor/wasm');
   const landmarker = await vision.FaceLandmarker.createFromOptions(fileset, {
-    baseOptions: { modelAssetPath: location.origin + '/assets/face_landmarker.task' },
+    baseOptions: { modelAssetPath: browserOrigin + '/assets/face_landmarker.task' },
     runningMode: 'IMAGE',
     numFaces: 1,
     outputFaceBlendshapes: false,
