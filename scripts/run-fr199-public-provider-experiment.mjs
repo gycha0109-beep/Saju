@@ -509,6 +509,67 @@ async function main() {
         const denominator = Math.sqrt(dx2 * dy2);
         return denominator === 0 ? null : numerator / denominator;
       };
+      const frequency = (values) => {
+        const counts = new Map();
+        for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
+        return [...counts.entries()]
+          .map(([index, count]) => ({ index, count }))
+          .sort((a, b) => b.count - a.count || String(a.index).localeCompare(String(b.index)));
+      };
+      const nearestObservations = result.textureReceipts.flatMap((entry) =>
+        entry.providerCandidateRanks.map((rank) => ({
+          sampleId: entry.sampleId,
+          referenceOrdinal: rank.referenceOrdinal,
+          top1Index: rank.nearestProviderLandmarks[0]?.index ?? null,
+          top1Distance: rank.nearestProviderLandmarks[0]?.distance ?? null,
+          top5Indices: rank.nearestProviderLandmarks.slice(0, 5).map((candidate) => candidate.index),
+          top10Indices: rank.nearestProviderLandmarks.map((candidate) => candidate.index),
+        })),
+      );
+      const summarizeReferenceOrdinal = (referenceOrdinal) => {
+        const observations = nearestObservations.filter(
+          (entry) => entry.referenceOrdinal === referenceOrdinal && entry.top1Index !== null,
+        );
+        return {
+          referenceOrdinal,
+          observationCount: observations.length,
+          top1IndexFrequency: frequency(observations.map((entry) => entry.top1Index)),
+          top5PresenceFrequency: frequency(observations.flatMap((entry) => entry.top5Indices)),
+          top10PresenceFrequency: frequency(observations.flatMap((entry) => entry.top10Indices)),
+          meanTop1Distance:
+            observations.length === 0
+              ? null
+              : observations.reduce((sum, entry) => sum + entry.top1Distance, 0) /
+                observations.length,
+        };
+      };
+      const top1PairFrequency = frequency(
+        result.textureReceipts.map((entry) => {
+          const first = entry.providerCandidateRanks.find((rank) => rank.referenceOrdinal === 0)
+            ?.nearestProviderLandmarks[0]?.index;
+          const second = entry.providerCandidateRanks.find((rank) => rank.referenceOrdinal === 1)
+            ?.nearestProviderLandmarks[0]?.index;
+          return `${first ?? 'missing'}/${second ?? 'missing'}`;
+        }),
+      );
+      const descriptiveProviderNearestDiscovery = {
+        schemaVersion: 'fr199-provider-nearest-discovery-v1',
+        authorityState: 'descriptive_candidate_discovery_only_not_admission',
+        bridgeKind: 'obj_material_uv_parameterization_not_camera_projection',
+        observationCount: nearestObservations.length,
+        byReferenceOrdinal: [
+          summarizeReferenceOrdinal(0),
+          summarizeReferenceOrdinal(1),
+        ],
+        top1PairFrequency,
+        providerIndexAdmissionAuthorized: false,
+        thresholdAuthorized: false,
+        calibrationAuthorized: false,
+        classifierAuthorized: false,
+        productionAuthorized: false,
+        commerceAuthorized: false,
+      };
+
       const artifact = {
         schemaVersion: 'fr199-public-provider-experiment-v1',
         status: result.receipts.length > 0 ? 'executed' : 'no_provider_receipts',
@@ -526,6 +587,7 @@ async function main() {
         textureBridgeReceipts: result.textureReceipts,
         pairedWidths,
         descriptiveNormalizedWidthPearson: pearson(pairedWidths),
+        descriptiveProviderNearestDiscovery,
         receipts: result.receipts,
         providerIndexAdmissionAuthorized: false,
       };
@@ -546,6 +608,7 @@ async function main() {
         textureBridgeReceipts: artifact.textureBridgeReceipts,
         pairedWidths: artifact.pairedWidths,
         descriptiveNormalizedWidthPearson: artifact.descriptiveNormalizedWidthPearson,
+        descriptiveProviderNearestDiscovery: artifact.descriptiveProviderNearestDiscovery,
         providerIndexAdmissionAuthorized: false,
       })}\n`);
       if (result.receipts.length === 0) process.exitCode = 1;
