@@ -1,0 +1,27 @@
+name: FR206 Observable Morphology Boundary CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/face-reading-observable-morphology-measurement-boundary-fr206.ts'
+      - 'packages/face-reading/src/face-reading-observable-morphology-measurement-boundary-fr206.test.ts'
+      - 'research/face-reading/fr206-observable-morphology-measurement-boundary.md'
+      - '.github/workflows/fr206-observable-morphology-boundary-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr206-observable-morphology-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR206 observable morphology boundary
+        run: npx vitest run packages/face-reading/src/face-reading-observable-morphology-measurement-boundary-fr206.test.ts
