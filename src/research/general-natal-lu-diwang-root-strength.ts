@@ -48,17 +48,17 @@ export const R017_AUTHORITY_SURFACES: readonly R017AuthoritySurface[] = Object.f
 
 export const R017_COMMENTARY_BINDINGS = Object.freeze([
   {
-    proposition: '祿臨官也',
+    proposition: '寅申巳亥：五行長生臨官之地；四生（亦是四祿）之地',
     sourceFamily: 'ziping_zhenquan_pingzhu',
     sourceStratum: 'XU_LEWU_LATER_COMMENTARY',
-    state: 'SUPPORTED_TEXT_SURFACE' as const,
+    state: 'BOUNDED_COMMENTARY_ASSOCIATION' as const,
     executableBridgeAuthorized: false,
   },
   {
-    proposition: '帝旺 / 專旺 explanatory association',
+    proposition: '卯：春木專旺之地，故稱帝旺；子午卯酉為專旺之方',
     sourceFamily: 'ziping_zhenquan_pingzhu',
     sourceStratum: 'XU_LEWU_LATER_COMMENTARY',
-    state: 'SUPPORTED_TEXT_SURFACE' as const,
+    state: 'BOUNDED_COMMENTARY_ASSOCIATION' as const,
     executableBridgeAuthorized: false,
   },
 ]);
