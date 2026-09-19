@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-alternate-witness-surface-survey-v3' as const;
+  'myeonghwa-general-natal-conclusion-t8-alternate-witness-surface-survey-v4' as const;
 
 const TARGET_WITNESS_IDS = Object.freeze([
   'W-YUANHAI-WEALTH-OFFICER',
@@ -53,7 +53,7 @@ const CANDIDATE_SURFACES = Object.freeze([
   }),
   Object.freeze({
     candidateId: 'CANDIDATE-NTL-1926-QINSHENAN-V2',
-    authorityClass: 'REGISTERED_SCAN_NOT_DIRECTLY_INSPECTED',
+    authorityClass: 'REGISTERED_SCAN_DIRECTLY_INSPECTED',
     title: '淵海子平子平真詮 v.2',
     edition: '秦慎安校勘 / 文明 / 1926',
     holdingInstitution: 'National Taiwan Library',
@@ -63,22 +63,41 @@ const CANDIDATE_SURFACES = Object.freeze([
       'https://commons.wikimedia.org/wiki/File:NTL-9900014380_%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E5%AD%90%E5%B9%B3%E7%9C%9F%E8%A9%AE_v.2.pdf',
     registeredScanIdentityEstablished: true,
     auditableHoldingInstitutionEstablished: true,
-    context: 'registered 1926 scan; relevant 四言獨步 surface not yet directly inspected',
+    context: 'registered 1926 scan / directly inspected 四言獨步 surface',
+    directInspection: Object.freeze({
+      state: 'DIRECTLY_INSPECTED' as const,
+      exactAssetSha1: 'f4e030871acc0a55adafcc49d107aada24f411b5' as const,
+      exactAssetBytes: 68883628 as const,
+      exactAssetPages: 164 as const,
+      boundedDigitalPages: Object.freeze([29, 30, 31, 32, 33] as const),
+      sectionTitlePage: 29 as const,
+      sectionTitle: '四言獨步' as const,
+      transitionPage: 34 as const,
+      transitionSectionTitle: '身弱論' as const,
+      visibleVariantAnchors: Object.freeze(['先財後印'] as const),
+      frozenExactWitnessesEstablished: Object.freeze({
+        'W-YUANHAI-WEALTH-OFFICER': false,
+        'W-YUANHAI-OFFICER-RESOURCE': false,
+        'W-YUANHAI-PEER-WEALTH': false,
+        'W-YUANHAI-WEALTH-RESOURCE': false,
+      }),
+      result: 'BOUNDED_DIRECT_TEXTUAL_DIVERGENCE_NO_FROZEN_EXACT_WITNESS' as const,
+    }),
     rows: Object.freeze({
       'W-YUANHAI-WEALTH-OFFICER': Object.freeze({
-        status: 'REGISTERED_SCAN_TEXT_NOT_DIRECTLY_INSPECTED',
+        status: 'DIRECTLY_INSPECTED_FROZEN_EXACT_STRING_NOT_ESTABLISHED',
       }),
       'W-YUANHAI-OFFICER-RESOURCE': Object.freeze({
-        status: 'REGISTERED_SCAN_TEXT_NOT_DIRECTLY_INSPECTED',
+        status: 'DIRECTLY_INSPECTED_FROZEN_EXACT_STRING_NOT_ESTABLISHED',
       }),
       'W-YUANHAI-PEER-WEALTH': Object.freeze({
-        status: 'REGISTERED_SCAN_TEXT_NOT_DIRECTLY_INSPECTED',
+        status: 'DIRECTLY_INSPECTED_FROZEN_EXACT_STRING_NOT_ESTABLISHED',
       }),
       'W-YUANHAI-WEALTH-RESOURCE': Object.freeze({
-        status: 'REGISTERED_SCAN_TEXT_NOT_DIRECTLY_INSPECTED',
+        status: 'DIRECTLY_INSPECTED_FROZEN_EXACT_STRING_NOT_ESTABLISHED',
       }),
     }),
-    qualificationOutcome: 'REGISTERED_SCAN_NOT_DIRECTLY_INSPECTED',
+    qualificationOutcome: 'REGISTERED_SCAN_DIRECTLY_INSPECTED_CONTEXT_MISMATCH',
   }),
   Object.freeze({
     candidateId: 'CANDIDATE-NLC-1634-YUSHI-SHANCHENGTANG',
@@ -232,9 +251,9 @@ export function buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION,
-    issue: '#889' as const,
-    auditBaseSha: 'c6c9f409da5611d21dc1b62d98e78c1a140645d1' as const,
-    status: 'NLC_1634_DIRECTLY_INSPECTED_TEXTUAL_DIVERGENCE_NO_PRODUCTION_ADMISSIBLE_FOUR_OF_FOUR_CANDIDATE' as const,
+    issue: '#900' as const,
+    auditBaseSha: 'cec546753affdab7feceb364369f3522be52cbd5' as const,
+    status: 'NLC_1634_AND_NTL_1926_DIRECTLY_INSPECTED_TEXTUAL_DIVERGENCE_NO_PRODUCTION_ADMISSIBLE_FOUR_OF_FOUR_CANDIDATE' as const,
     upstreamPassageEvidenceId: upstream.evidenceId,
     frozenRows,
     candidateSurfaces: CANDIDATE_SURFACES,
