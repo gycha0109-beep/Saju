@@ -6,11 +6,12 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
   it('separates exact text circulation from scan-backed production authority', () => {
     const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
 
-    expect(evidence.issue).toBe('#886');
+    expect(evidence.issue).toBe('#889');
     expect(evidence.counts).toEqual({
       targetWitnessCount: 4,
       candidateSurfaceCount: 4,
       registeredScanCandidateCount: 2,
+      directlyInspectedRegisteredScanCandidateCount: 1,
       contextBoundFourOfFourTextCandidateCount: 2,
       productionAdmissibleFourOfFourCandidateCount: 0,
     });
@@ -97,8 +98,29 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
     expect(candidate.relevantPageCount).toBe(29);
     expect(candidate.scanLinkedTranscriptionUrl).toContain('NGJ892411999032112149610');
     expect(candidate.qualificationOutcome).toBe(
-      'REGISTERED_SCAN_LINKED_TRANSCRIPTION_CONTEXT_MISMATCH',
+      'REGISTERED_SCAN_DIRECTLY_INSPECTED_CONTEXT_MISMATCH',
     );
+    expect(candidate.directInspection).toEqual({
+      state: 'DIRECTLY_INSPECTED',
+      boundedDigitalPages: [16, 17, 18, 19],
+      sectionTitlePage: 16,
+      sectionTitle: '四言獨步',
+      directlyLegibleOpeningAnchors: [
+        '先天何處', '後天何處', '要知來處', '便知去處',
+        '四柱排定', '三才次分', '年干為本', '配合元辰',
+        '神煞相伴', '輕重較量', '先觀月令', '論格推詳',
+        '以日為主', '專論財官', '分其貴賤', '妙法多端',
+      ],
+      transitionPage: 19,
+      transitionSectionTitle: '棄命從殺論',
+      frozenExactWitnessesEstablished: {
+        'W-YUANHAI-WEALTH-OFFICER': false,
+        'W-YUANHAI-OFFICER-RESOURCE': false,
+        'W-YUANHAI-PEER-WEALTH': false,
+        'W-YUANHAI-WEALTH-RESOURCE': false,
+      },
+      result: 'BOUNDED_DIRECT_TEXTUAL_DIVERGENCE_NO_FROZEN_EXACT_WITNESS',
+    });
 
     expect(candidate.rows['W-YUANHAI-WEALTH-OFFICER']).toEqual({
       status: 'EXACT_STRING_PRESENT_OUTSIDE_FROZEN_CONTEXT',
