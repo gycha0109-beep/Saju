@@ -1,0 +1,38 @@
+name: FR205A AST-Face Render Pilot
+
+on:
+  push:
+    branches:
+      - research/fr205-independent-identity-acquisition
+    paths:
+      - 'scripts/run-fr205a-astface-render-pilot.mjs'
+      - '.github/workflows/fr205a-astface-render-pilot-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fr205a-astface-render-pilot
+  cancel-in-progress: true
+
+jobs:
+  pilot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run face:build
+      - run: node --check scripts/run-fr205a-astface-render-pilot.mjs
+      - run: node scripts/run-fr205a-astface-render-pilot.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr205a-astface-render-pilot
+          path: artifacts/face-reading/fr205a-astface-render-pilot.json
+          if-no-files-found: warn
+          retention-days: 14
