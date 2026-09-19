@@ -40,12 +40,14 @@ describe('R017 Lu / Wang / Diwang root-strength workbench', () => {
     expect(R017_CROSS_SOURCE_BRIDGES.twelveGrowthLinguanToLuHeavyRoot).toBe(false);
     expect(R017_SCOPE_GAPS.yinLuResolved).toBe(false);
     expect(R017_SCOPE_GAPS.earthLuResolved).toBe(false);
+    expect(R017_SCOPE_GAPS.sameSourceXuCommentaryStemBranchBridgeReviewed).toBe(true);
+    expect(R017_SCOPE_GAPS.sameSourceXuCommentaryCompleteStemBranchBridgeAvailable).toBe(false);
   });
 
   it('fails closed on strength and production escalation', () => {
     expect(R017_AUTHORITY).toEqual(
       expect.objectContaining({
-        status: 'research',
+        status: 'VERIFIED_BOUNDED_CROSS_SOURCE_BRIDGE_REJECTED',
         luHeavyRootSupportedBounded: true,
         wangHeavyRootGovernedResearchOnly: true,
         diwangStageGovernedResearchOnly: true,
