@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { inflateRawSync } from 'node:zlib';
 import { mkdir, writeFile } from 'node:fs/promises';
