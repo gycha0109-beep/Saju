@@ -137,3 +137,23 @@ jobs:
           path: /tmp/ntl/review
           if-no-files-found: error
           retention-days: 1
+
+      - name: Render bounded direct-review pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ntl/direct-review
+          cp /tmp/ntl/verified-metadata.txt /tmp/ntl/direct-review/
+          for page in 29 30 31 32 33 34; do
+            pdftoppm -f "$page" -l "$page" -r 220 -png -singlefile \
+              /tmp/ntl/NTL-9900014380.pdf \
+              "/tmp/ntl/direct-review/page-$(printf '%03d' "$page")"
+          done
+
+      - name: Upload bounded direct-review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ntl-1926-yuanhai-direct-review
+          path: /tmp/ntl/direct-review
+          if-no-files-found: error
+          retention-days: 1
