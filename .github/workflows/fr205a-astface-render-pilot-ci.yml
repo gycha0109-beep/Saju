@@ -5,14 +5,14 @@ on:
     branches:
       - research/fr205-independent-identity-acquisition
     paths:
-      - 'scripts/run-fr205a-astface-render-pilot.mjs'
-      - '.github/workflows/fr205a-astface-render-pilot-ci.yml'
+      - 'scripts/run-fr205a-astface-face-breadth-render-pilot.mjs'
+      - '.github/workflows/fr205a-astface-face-breadth-render-pilot-ci.yml'
 
 permissions:
   contents: read
 
 concurrency:
-  group: fr205a-astface-render-pilot
+  group: fr205a-astface-face-breadth-render-pilot
   cancel-in-progress: true
 
 jobs:
@@ -27,12 +27,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run face:build
-      - run: node --check scripts/run-fr205a-astface-render-pilot.mjs
-      - run: node scripts/run-fr205a-astface-render-pilot.mjs
+      - run: node --check scripts/run-fr205a-astface-face-breadth-render-pilot.mjs
+      - run: node scripts/run-fr205a-astface-face-breadth-render-pilot.mjs
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: fr205a-astface-render-pilot
-          path: artifacts/face-reading/fr205a-astface-render-pilot.json
+          name: fr205a-astface-face-breadth-render-pilot
+          path: artifacts/face-reading/fr205a-astface-face-breadth-render-pilot.json
           if-no-files-found: warn
           retention-days: 14
