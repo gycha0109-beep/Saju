@@ -1,0 +1,38 @@
+name: FR205A AST-Face Remote ZIP Index
+
+on:
+  push:
+    branches:
+      - research/fr205-independent-identity-acquisition
+    paths:
+      - 'scripts/run-fr205a-astface-remote-zip-index.mjs'
+      - '.github/workflows/fr205a-astface-remote-zip-index-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fr205a-astface-remote-zip-index
+  cancel-in-progress: true
+
+jobs:
+  index:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Syntax-check FR205A remote ZIP index
+        run: node --check scripts/run-fr205a-astface-remote-zip-index.mjs
+      - name: Index AST-Face public archive without full download
+        run: node scripts/run-fr205a-astface-remote-zip-index.mjs
+      - name: Upload FR205A ZIP index receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr205a-astface-remote-zip-index
+          path: artifacts/face-reading/fr205a-astface-remote-zip-index.json
+          if-no-files-found: error
+          retention-days: 14
