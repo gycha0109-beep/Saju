@@ -31,8 +31,9 @@ describe('R017 Lu / Wang / Diwang root-strength workbench', () => {
   it('records commentary associations without silently making executable bridges', () => {
     expect(R017_COMMENTARY_BINDINGS).toContainEqual(
       expect.objectContaining({
-        proposition: '祿臨官也',
+        proposition: '寅申巳亥：五行長生臨官之地；四生（亦是四祿）之地',
         sourceStratum: 'XU_LEWU_LATER_COMMENTARY',
+        state: 'BOUNDED_COMMENTARY_ASSOCIATION',
         executableBridgeAuthorized: false,
       }),
     );
