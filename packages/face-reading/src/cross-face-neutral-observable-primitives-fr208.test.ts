@@ -154,7 +154,7 @@ describe('FR208 cross-face neutral observable primitives', () => {
       visibleFaceLeft: { x: 0.2, y: 0.4 },
       visibleFaceRight: { x: 0.8, y: 0.4 },
       sourceObservationRefs: refs,
-    })).toThrow(/cannot exceed/);
+    })).toThrow(/endpoints must lie inside/);
 
     expect(() => computeVisibleLowerFaceWidthRatioFR208({
       coordinateFrame: 'canonical_aligned_right_handed_metric_xy',
