@@ -813,8 +813,8 @@ async function main() {
           clipFills: CLIP_FILLS,
           textureSource: 'exact OBJ-bound map_Kd JPEG',
           lighting: 'unlit_texture',
-          cameraSelection:
-            'deterministic +Z first when exactly one face is detected; otherwise -Z if it is the only successful side',
+          detectorVariantSelection:
+            'first exactly-one-face detection in a fixed predeclared sequence over clip fill, horizontal/vertical orientation, texture-Y orientation, camera side, and neutral background; no zygion distance or landmark rank is consulted',
         },
         corpusCount: FR199_PUBLIC_CORPUS.length,
         independentReferenceReadyCount: inputs.length,
