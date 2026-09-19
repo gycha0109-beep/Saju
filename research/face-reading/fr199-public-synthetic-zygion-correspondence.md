@@ -83,7 +83,9 @@ referenceMethod
 = topsakal_2023_public_notebook_intended_loop_repair_v1
 ```
 
-The repair removes only the unconditional first-iteration return. It preserves the source constants and the source widening step:
+The repair removes the unconditional first-iteration return, but it is not represented as a one-line source patch. The published source also appends candidates into one `zygion` list declared outside the loop; deleting only the return would allow a one-sided point from an earlier band to contaminate a later result.
+
+The separately versioned repair therefore evaluates each widened band as a fresh bilateral search while preserving the source constants and widening step:
 
 ```text
 CURRENT_MIN_WIDTH
@@ -96,7 +98,7 @@ widening
 = +2.5
 ```
 
-Candidate arrays are recomputed per band. A bilateral pair is returned only when both sides exist in the same widened search state.
+A bilateral pair is returned only when both sides exist in the same widened search state. This behavior is explicitly research-repaired and is not source-exact.
 
 Observed result:
 
