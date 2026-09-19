@@ -265,11 +265,12 @@ export function computeEyebrowVisibleCurveFR208(
     fail('orderedVisibleCurve must begin at medialEndpoint and end at lateralEndpoint.');
   }
 
-  const browSpan = euclideanDistance(input.medialEndpoint, input.lateralEndpoint, 'eyebrow');
+  const browHorizontalSpan = horizontalSpan(input.medialEndpoint, input.lateralEndpoint, 'eyebrow');
+  const browChordLength = euclideanDistance(input.medialEndpoint, input.lateralEndpoint, 'eyebrow');
   const faceWidth = horizontalSpan(input.visibleFaceLeft, input.visibleFaceRight, 'visible face');
-  const browSpanRatio = browSpan / faceWidth;
+  const browSpanRatio = browHorizontalSpan / faceWidth;
   if (!Number.isFinite(browSpanRatio) || browSpanRatio <= 0 || browSpanRatio > 1) {
-    fail('eyebrow span-to-face-width ratio must be within (0,1].');
+    fail('eyebrow horizontal-span-to-face-width ratio must be within (0,1].');
   }
   const maxArchDistance = Math.max(
     ...input.orderedVisibleCurve.map((point) =>
@@ -291,7 +292,7 @@ export function computeEyebrowVisibleCurveFR208(
     ),
     archAmplitudeToSpan: metric(
       'neutral.eyebrow.arch_amplitude_to_span_ratio@0.1.0',
-      maxArchDistance / browSpan,
+      maxArchDistance / browChordLength,
       'ratio',
       refs,
     ),
