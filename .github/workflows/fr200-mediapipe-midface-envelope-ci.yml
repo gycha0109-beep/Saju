@@ -1,0 +1,50 @@
+name: FR200 MediaPipe Midface Envelope CI
+
+on:
+  push:
+    branches:
+      - research/fr200-mediapipe-midface-envelope
+    paths:
+      - 'packages/face-reading/src/face-reading-mediapipe-midface-envelope-fr200.ts'
+      - 'packages/face-reading/src/face-reading-mediapipe-midface-envelope-fr200.test.ts'
+      - 'scripts/run-fr200-public-midface-envelope-experiment.mjs'
+      - 'research/face-reading/fr200-mediapipe-midface-envelope.md'
+      - '.github/workflows/fr200-mediapipe-midface-envelope-ci.yml'
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/face-reading-mediapipe-midface-envelope-fr200.ts'
+      - 'packages/face-reading/src/face-reading-mediapipe-midface-envelope-fr200.test.ts'
+      - 'scripts/run-fr200-public-midface-envelope-experiment.mjs'
+      - 'research/face-reading/fr200-mediapipe-midface-envelope.md'
+      - '.github/workflows/fr200-mediapipe-midface-envelope-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fr200:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck face-reading
+        run: npm run face:typecheck
+      - name: Build face-reading
+        run: npm run face:build
+      - name: FR200 deterministic tests
+        run: npx vitest run packages/face-reading/src/face-reading-mediapipe-midface-envelope-fr200.test.ts
+      - name: FR200 real MediaPipe Face Geometry envelope experiment
+        run: node scripts/run-fr200-public-midface-envelope-experiment.mjs
+      - name: Upload FR200 experiment receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr200-public-midface-envelope-experiment
+          path: artifacts/face-reading/fr200-public-midface-envelope-experiment.json
+          if-no-files-found: warn
+          retention-days: 14
