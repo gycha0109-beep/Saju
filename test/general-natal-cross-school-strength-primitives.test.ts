@@ -5,15 +5,15 @@ import {
 } from '../src/research/general-natal-cross-school-strength-primitives.js';
 
 describe('R020 cross-school strength primitives',()=>{
- it('tracks primary commentary surfaces separately from compilation witnesses',()=>{
-  expect(R020_CROSS_SCHOOL_STRENGTH_VERSION).toBe('0.2.0-research');
+ it('tracks primary commentary surfaces separately from compilation title witnesses',()=>{
+  expect(R020_CROSS_SCHOOL_STRENGTH_VERSION).toBe('0.3.0-research');
   expect(R020_TRADITION_SURFACES.map(s=>s.id)).toEqual([
    'XU_ZIPING_PINGZHU','REN_DITIAN_SUI_CHANWEI','MINGLI_TANYUAN_COMPILATION_WITNESS'
   ]);
   expect(R020_TRADITION_SURFACES[2]).toMatchObject({
    directlyVerified:false,
-   surfaceRole:'COMPILATION_WITNESS',
-   independenceStatus:'NOT_AUTHORIZED_AS_INDEPENDENT_SCHOOL',
+   surfaceRole:'COMPILATION_TITLE_WITNESS',
+   independenceStatus:'REJECTED_AS_INDEPENDENT_R020_TRADITION',
   });
  });
  it('records textual overlap and the material branch variant',()=>{
@@ -23,24 +23,24 @@ describe('R020 cross-school strength primitives',()=>{
    context:'spring Wood heavy Metal branch pair',xuReading:'支酉丑',renReading:'支申酉'
   });
  });
- it('keeps the Mingli Tanyuan scan gap explicit and rejects a fake third vote',()=>{
+ it('rejects the Mingli Tanyuan title-list witness as an independent third-school vote',()=>{
   expect(R020_MINGLI_TANYUAN_TOPOLOGY).toEqual({
    volume3TwelveGrowthAuthoritySeparate:true,
    targetLocatedInVolume6Compilation:true,
-   exactScanPassageVerified:false,
+   targetBodyPreservedInWitness:false,
    independentSchoolVoteAuthorized:false,
-   remainingGap:'DIRECT_NLC_SCAN_PAGE_AND_PER_ESSAY_ATTRIBUTION',
+   perTitleUpstreamAttributionSettled:false,
   });
-  expect(R020_AUTHORITY.mingliTanyuanIndependentVoteAuthorized).toBe(false);
+  expect(R020_AUTHORITY.mingliTanyuanIndependentVoteRejected).toBe(true);
  });
  it('forbids fake cross-school confidence and final classification',()=>{
   expect(R020_PRIMITIVE_COMPARISON.crossSchoolMajorityVoteSupported).toBe(false);
   expect(R020_PRIMITIVE_COMPARISON.sharedPhraseCountAsIndependentConfidenceSupported).toBe(false);
   expect(R020_AUTHORITY).toEqual({
    status:'DIVERGENT_WITH_TEXTUAL_DEPENDENCY_RISK',
-   crossSchoolPrimitiveComparisonStarted:true,
+   crossSchoolPrimitiveComparisonBounded:true,
    independentTraditionCountSettled:false,
-   mingliTanyuanIndependentVoteAuthorized:false,
+   mingliTanyuanIndependentVoteRejected:true,
    generalizedStrengthClassifierAuthorized:false,
    productionAuthorityPromoted:false,
   });
