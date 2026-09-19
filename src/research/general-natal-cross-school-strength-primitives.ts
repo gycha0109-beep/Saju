@@ -1,15 +1,15 @@
-export const R020_CROSS_SCHOOL_STRENGTH_VERSION = '0.2.0-research' as const;
+export const R020_CROSS_SCHOOL_STRENGTH_VERSION = '0.3.0-research' as const;
 
 export interface R020TraditionSurface {
   id: 'XU_ZIPING_PINGZHU' | 'REN_DITIAN_SUI_CHANWEI' | 'MINGLI_TANYUAN_COMPILATION_WITNESS';
   sourceStratum: string;
   directlyVerified: boolean;
-  surfaceRole: 'PRIMARY_COMMENTARY_SURFACE' | 'COMPILATION_WITNESS';
+  surfaceRole: 'PRIMARY_COMMENTARY_SURFACE' | 'COMPILATION_TITLE_WITNESS';
   primitives: readonly string[];
   independenceStatus:
     | 'TEXTUAL_DEPENDENCY_RISK_HIGH'
-    | 'NOT_AUTHORIZED_AS_INDEPENDENT_SCHOOL';
-  verificationGap?: string;
+    | 'REJECTED_AS_INDEPENDENT_R020_TRADITION';
+  limitation?: string;
 }
 
 export const R020_TRADITION_SURFACES: readonly R020TraditionSurface[] = Object.freeze([
@@ -31,12 +31,12 @@ export const R020_TRADITION_SURFACES: readonly R020TraditionSurface[] = Object.f
   },
   {
     id: 'MINGLI_TANYUAN_COMPILATION_WITNESS',
-    sourceStratum: '命理探源 / 卷六先賢名論 / 論十干有得時不旺失時不弱 locator',
+    sourceStratum: '命理探源 / 卷六先賢名論 / title list',
     directlyVerified: false,
-    surfaceRole: 'COMPILATION_WITNESS',
+    surfaceRole: 'COMPILATION_TITLE_WITNESS',
     primitives: [],
-    independenceStatus: 'NOT_AUTHORIZED_AS_INDEPENDENT_SCHOOL',
-    verificationGap: 'NLC exact scan page and per-essay source attribution remain open',
+    independenceStatus: 'REJECTED_AS_INDEPENDENT_R020_TRADITION',
+    limitation: 'Target body is omitted in this compilation witness; exact per-title upstream attribution is not established.',
   },
 ]);
 
@@ -57,9 +57,9 @@ export const R020_TEXTUAL_OVERLAP = Object.freeze({
 export const R020_MINGLI_TANYUAN_TOPOLOGY = Object.freeze({
   volume3TwelveGrowthAuthoritySeparate: true,
   targetLocatedInVolume6Compilation: true,
-  exactScanPassageVerified: false,
+  targetBodyPreservedInWitness: false,
   independentSchoolVoteAuthorized: false,
-  remainingGap: 'DIRECT_NLC_SCAN_PAGE_AND_PER_ESSAY_ATTRIBUTION',
+  perTitleUpstreamAttributionSettled: false,
 });
 
 export const R020_PRIMITIVE_COMPARISON = Object.freeze({
@@ -73,9 +73,9 @@ export const R020_PRIMITIVE_COMPARISON = Object.freeze({
 
 export const R020_AUTHORITY = Object.freeze({
   status: 'DIVERGENT_WITH_TEXTUAL_DEPENDENCY_RISK' as const,
-  crossSchoolPrimitiveComparisonStarted: true,
+  crossSchoolPrimitiveComparisonBounded: true,
   independentTraditionCountSettled: false,
-  mingliTanyuanIndependentVoteAuthorized: false,
+  mingliTanyuanIndependentVoteRejected: true,
   generalizedStrengthClassifierAuthorized: false,
   productionAuthorityPromoted: false,
 });
