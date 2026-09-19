@@ -1,4 +1,6 @@
+import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
+import process from 'node:process';
 import { createServer } from 'node:http';
 import { mkdtemp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -27,7 +29,7 @@ function sha256(bytes) {
   return `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
 }
 async function download(url, path) {
-  const response = await fetch(url, { redirect: 'follow', headers: { 'user-agent': 'myeongha-fr199-provider-experiment' } });
+  const response = await globalThis.fetch(url, { redirect: 'follow', headers: { 'user-agent': 'myeongha-fr199-provider-experiment' } });
   if (!response.ok) throw new Error(`FR199 download failed ${response.status} ${url}`);
   const bytes = Buffer.from(await response.arrayBuffer());
   await writeFile(path, bytes);
@@ -154,24 +156,24 @@ function mime(path) {
     default: return 'application/octet-stream';
   }
 }
-const delay = (ms) => new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
+const delay = (ms) => new Promise((resolvePromise) => globalThis.setTimeout(resolvePromise, ms));
 async function waitForPageTarget(pageUrl) {
   const deadline = Date.now() + 15000;
   while (Date.now() < deadline) {
     try {
-      const response = await fetch(`http://127.0.0.1:${CDP_PORT}/json/list`);
+      const response = await globalThis.fetch(`http://127.0.0.1:${CDP_PORT}/json/list`);
       if (response.ok) {
         const targets = await response.json();
         const target = targets.find((entry) => entry.type === 'page' && entry.url === pageUrl);
         if (target?.webSocketDebuggerUrl) return target.webSocketDebuggerUrl;
       }
-    } catch {}
+    } catch { /* CDP is not ready yet; retry until timeout. */ }
     await delay(100);
   }
   throw new Error('FR199 could not discover Chrome DevTools target.');
 }
 async function connectCdp(wsUrl) {
-  const ws = new WebSocket(wsUrl);
+  const ws = new globalThis.WebSocket(wsUrl);
   await new Promise((resolvePromise, rejectPromise) => {
     ws.addEventListener('open', resolvePromise, { once: true });
     ws.addEventListener('error', () => rejectPromise(new Error('FR199 CDP connection failed.')), { once: true });
@@ -224,7 +226,7 @@ async function main() {
     for (const sampleId of FR199_PUBLIC_CORPUS) {
       const { repository, commit } = sourceFor(sampleId);
       try {
-        const objResponse = await fetch(`https://raw.githubusercontent.com/${repository}/${commit}/3D-models/${sampleId}.obj`);
+        const objResponse = await globalThis.fetch(`https://raw.githubusercontent.com/${repository}/${commit}/3D-models/${sampleId}.obj`);
         if (!objResponse.ok) throw new Error(`OBJ HTTP ${objResponse.status}`);
         const objText = await objResponse.text();
         const reference = deriveAndFreezeIndependentZygionReferenceFR199({
@@ -237,7 +239,7 @@ async function main() {
         const objBoundingWidth = Math.max(...xs) - Math.min(...xs);
         const referenceWidth = Math.abs(reference.bilateralReference[0].x - reference.bilateralReference[1].x);
         const referenceNormalizedWidth = referenceWidth / objBoundingWidth;
-        const mtlResponse = await fetch(`https://raw.githubusercontent.com/${repository}/${commit}/3D-models/${sampleId}.mtl`);
+        const mtlResponse = await globalThis.fetch(`https://raw.githubusercontent.com/${repository}/${commit}/3D-models/${sampleId}.mtl`);
         if (!mtlResponse.ok) throw new Error(`MTL HTTP ${mtlResponse.status}`);
         const mtlText = await mtlResponse.text();
         const uvBridge = deriveObjMaterialUvBridge(objText, reference, sampleId, mtlText);
@@ -267,7 +269,7 @@ async function main() {
 
     const server = createServer(async (req, res) => {
       try {
-        const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+        const url = new globalThis.URL(req.url ?? '/', 'http://127.0.0.1');
         let path;
         if (url.pathname === '/fr199.html') path = null;
         else if (url.pathname === '/vendor/vision_bundle.mjs') path = bundlePath;
@@ -636,6 +638,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+  globalThis.console.error(error instanceof Error ? error.stack ?? error.message : String(error));
   process.exitCode = 1;
 });
