@@ -248,6 +248,80 @@ Therefore FR199 does not provide descriptive evidence that 234/454 are the neare
 
 The experiment does observe recurrent nearer provider indices, but FR199 does not promote any alternative index pair. Selecting a replacement candidate would be a separate research question and must not be back-fit from this corpus without governance.
 
+## Descriptive nearest-provider discovery extension
+
+After the 234/454 rank result was known, the existing all-478 observations were aggregated without changing the frozen independent references and without creating an admission rule.
+
+Executed observations:
+
+```text
+SOURCE_EXACT-ready texture samples
+= 18
+
+independent reference points
+= 36
+```
+
+For `referenceOrdinal = 0`, the nearest provider landmark was:
+
+```text
+280 = 11 / 18
+347 = 4 / 18
+330 = 1 / 18
+346 = 1 / 18
+425 = 1 / 18
+```
+
+Indices 280 and 347 were each present in the top 5 for all 18 observations on that reference ordinal. Index 346 was top-5 in 16/18.
+
+For `referenceOrdinal = 1`, the nearest provider landmark was:
+
+```text
+50  = 8 / 18
+118 = 7 / 18
+117 = 2 / 18
+101 = 1 / 18
+```
+
+Index 118 was present in the top 5 for all 18 observations, index 117 in 16/18, and index 50 in 15/18.
+
+The most frequent top-1 unordered ordinal pair was:
+
+```text
+280 / 50
+= 7 / 18 samples
+```
+
+Mean nearest-point distance in the normalized material-texture raster frame:
+
+```text
+referenceOrdinal 0
+= 0.01263513117536793
+
+referenceOrdinal 1
+= 0.0122988532364216
+```
+
+This is descriptive candidate discovery only. It does not establish that 280, 50, 347, 118, or any other provider index is zygion, and it does not authorize selecting a replacement pair from this same corpus.
+
+Authority remains fail-closed:
+
+```text
+providerIndexAdmissionAuthorized = false
+thresholdAuthorized = false
+calibrationAuthorized = false
+classifierAuthorized = false
+productionAuthorized = false
+commerceAuthorized = false
+```
+
+Exact execution:
+
+```text
+GitHub Actions run
+= 35409268047
+```
+
 ## Width proxy
 
 The earlier coarse width proxy remains recorded:
