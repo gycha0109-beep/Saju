@@ -1,5 +1,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
+import { admitProductReadingResponse } from '../reading/product-reading-response-admission.js';
+import { PRODUCT_READING_RESPONSE_VERSION } from '../reading/product-reading-response.js';
 import {
   createMyeonghwaProductHost,
   parseProductHostCalculationRequest,
@@ -13,12 +15,20 @@ import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-s
 import { PRODUCT_HOST_APP_SCRIPT, PRODUCT_HOST_PAGE } from './static-page.js';
 
 export const DEFAULT_PRODUCT_HOST_MAX_REQUEST_BYTES = 16 * 1024;
+export const PRODUCT_READING_RESPONSE_ADMISSION_HEADER =
+  'x-myeonghwa-product-reading-response-admitted' as const;
 
 export interface MyeonghwaProductHostServerOptions {
   maxRequestBytes?: number;
 }
 
 export interface MyeonghwaProductionCalculationHostServerOptions
+  extends MyeonghwaProductHostServerOptions {
+  serviceBearer?: string;
+  previousServiceBearer?: string;
+}
+
+export interface MyeonghwaProductionProductHostServerOptions
   extends MyeonghwaProductHostServerOptions {
   serviceBearer?: string;
   previousServiceBearer?: string;
@@ -49,8 +59,13 @@ function jsonHeaders(): Record<string, string> {
   };
 }
 
-function sendJson(response: ServerResponse, status: number, payload: unknown): void {
-  response.writeHead(status, jsonHeaders());
+function sendJson(
+  response: ServerResponse,
+  status: number,
+  payload: unknown,
+  extraHeaders: Record<string, string> = {},
+): void {
+  response.writeHead(status, { ...jsonHeaders(), ...extraHeaders });
   response.end(JSON.stringify(payload));
 }
 
@@ -137,7 +152,7 @@ function sendCalculationOperationalError(response: ServerResponse): void {
   });
 }
 
-function sendCalculationAuthRequired(response: ServerResponse): void {
+function sendAuthRequired(response: ServerResponse): void {
   sendJson(response, 401, {
     error: {
       code: 'HOST_AUTH_REQUIRED',
@@ -178,6 +193,7 @@ function createMyeonghwaHttpServer(
   readingHost: MyeonghwaProductHost | undefined,
   options: MyeonghwaProductHostServerOptions,
   authorizeCalculationRequest?: (request: IncomingMessage) => boolean,
+  authorizeReadingRequest?: (request: IncomingMessage) => boolean,
 ): Server {
   const bodyLimit = maxRequestBytes(options);
 
@@ -210,7 +226,7 @@ function createMyeonghwaHttpServer(
         return;
       }
       if (authorizeCalculationRequest !== undefined && !authorizeCalculationRequest(request)) {
-        sendCalculationAuthRequired(response);
+        sendAuthRequired(response);
         return;
       }
       try {
@@ -231,10 +247,17 @@ function createMyeonghwaHttpServer(
         });
         return;
       }
+      if (authorizeReadingRequest !== undefined && !authorizeReadingRequest(request)) {
+        sendAuthRequired(response);
+        return;
+      }
       try {
         const body = await readJsonBody(request, bodyLimit);
         const result = await readingHost.requestReading(body);
-        sendJson(response, 200, result);
+        const admitted = admitProductReadingResponse(result);
+        sendJson(response, 200, admitted, {
+          [PRODUCT_READING_RESPONSE_ADMISSION_HEADER]: PRODUCT_READING_RESPONSE_VERSION,
+        });
       } catch (error) {
         if (!handleKnownError(response, error)) sendReadingOperationalError(response);
       }
@@ -256,6 +279,24 @@ export function createMyeonghwaProductionCalculationHostServer(
     previousBearer: previousServiceBearer,
   });
   return createMyeonghwaHttpServer(undefined, serverOptions, authorizeCalculationRequest);
+}
+
+
+export function createMyeonghwaProductionProductHostServer(
+  readingHost: MyeonghwaProductHost,
+  options: MyeonghwaProductionProductHostServerOptions = {},
+): Server {
+  const { serviceBearer, previousServiceBearer, ...serverOptions } = options;
+  const authorizeRequest = createMyeonghwaProductionServiceBearerAuthorizer({
+    activeBearer: serviceBearer,
+    previousBearer: previousServiceBearer,
+  });
+  return createMyeonghwaHttpServer(
+    readingHost,
+    serverOptions,
+    authorizeRequest,
+    authorizeRequest,
+  );
 }
 
 export function createMyeonghwaProductHostServer(

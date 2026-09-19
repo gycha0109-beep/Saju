@@ -1,3 +1,4 @@
+import type { Server } from 'node:http';
 import type { NarrativePolicy } from '../contracts/narrative.js';
 import type { CalculationEngineOptions } from '../calculation/calculation-engine.js';
 import {
@@ -23,6 +24,10 @@ import {
   type ProductHostInterpretationRequestContext,
 } from '../host/product-host.js';
 import type { ProductReadingServiceOptions } from '../reading/product-reading-service.js';
+import {
+  createMyeonghwaProductionProductHostServer,
+  type MyeonghwaProductionProductHostServerOptions,
+} from '../host/http-server.js';
 import {
   getAuthorizedProductionCalculationPolicyGrant,
   listAuthorizedProductionCalculationPolicies,
@@ -334,3 +339,22 @@ export function createAuthorizedMyeonghwaProductionHost(
 
   return createMyeonghwaProductHost(toDependencies(request, registry));
 }
+
+
+/**
+ * Production HTTP boundary for Product Reading.
+ *
+ * This factory cannot be used to bypass interpretation authority: it first constructs
+ * the governed production host, so research/unreviewed/non-production registries fail
+ * before any socket is created. When ready, both /api/calculations and /api/readings
+ * require the same server-owned service bearer.
+ */
+export function createAuthorizedMyeonghwaProductionHostServer(
+  request: ProductionCompositionRequest,
+  options: MyeonghwaProductionProductHostServerOptions = {},
+): Server {
+  const host = createAuthorizedMyeonghwaProductionHost(request);
+  return createMyeonghwaProductionProductHostServer(host, options);
+}
+
+export type { MyeonghwaProductionProductHostServerOptions };

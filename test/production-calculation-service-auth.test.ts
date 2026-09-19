@@ -5,6 +5,12 @@ import {
   createMyeonghwaProductionCalculationHostServer,
   type MyeonghwaProductionCalculationHostServerOptions,
 } from '../src/production-calculation-host.js';
+import {
+  PRODUCT_READING_RESPONSE_ADMISSION_HEADER,
+  createMyeonghwaProductionProductHostServer,
+  type MyeonghwaProductionProductHostServerOptions,
+} from '../src/host/http-server.js';
+import type { MyeonghwaProductHost } from '../src/host/product-host.js';
 
 const ACTIVE_BEARER = 'active-test-bearer-3a82f7149b';
 const PREVIOUS_BEARER = 'previous-test-bearer-e14bb681df';
@@ -17,6 +23,27 @@ async function startServer(
   },
 ): Promise<string> {
   const server = createMyeonghwaProductionCalculationHostServer(options);
+  servers.push(server);
+
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      server.off('error', reject);
+      resolve();
+    });
+  });
+
+  const address = server.address() as AddressInfo;
+  return `http://127.0.0.1:${address.port}`;
+}
+
+async function startProductServer(
+  host: MyeonghwaProductHost,
+  options: MyeonghwaProductionProductHostServerOptions = {
+    serviceBearer: ACTIVE_BEARER,
+  },
+): Promise<string> {
+  const server = createMyeonghwaProductionProductHostServer(host, options);
   servers.push(server);
 
   await new Promise<void>((resolve, reject) => {
@@ -178,5 +205,86 @@ describe('production calculation service bearer authorization', () => {
         previousServiceBearer: 'contains whitespace',
       }),
     ).toThrow(/previousBearer/u);
+  });
+
+  it('protects Product Reading before parsing request JSON', async () => {
+    let readingCalls = 0;
+    const host = {
+      async requestReading() {
+        readingCalls += 1;
+        return {} as never;
+      },
+    };
+    const origin = await startProductServer(host);
+
+    const response = await fetch(`${origin}/api/readings`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{not-json',
+    });
+
+    expect(response.status).toBe(401);
+    expect(readingCalls).toBe(0);
+  });
+
+  it('attests a canonical Product Reading response after source-owned admission', async () => {
+    const host = {
+      async requestReading() {
+        return {
+          responseVersion: 'myeonghwa-product-reading-response-v2',
+          responseId: 'reading_response_0123456789abcdef01234567',
+          state: 'temporarily_unavailable',
+          messageCode: 'READING_TEMPORARILY_UNAVAILABLE',
+          requiredAction: 'try_again_later',
+        } as const;
+      },
+    };
+    const origin = await startProductServer(host);
+
+    const response = await fetch(`${origin}/api/readings`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${ACTIVE_BEARER}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        birth: { calendarType: 'solar', date: '2000-01-02', time: null },
+        reading: { text: '전체 사주' },
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get(PRODUCT_READING_RESPONSE_ADMISSION_HEADER)).toBe(
+      'myeonghwa-product-reading-response-v2',
+    );
+  });
+
+  it('source-admits Product Reading output before returning it over production transport', async () => {
+    const host = {
+      async requestReading() {
+        return { responseVersion: 'not-canonical' } as never;
+      },
+    };
+    const origin = await startProductServer(host);
+
+    const response = await fetch(`${origin}/api/readings`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${ACTIVE_BEARER}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        birth: { calendarType: 'solar', date: '2000-01-02', time: null },
+        reading: { text: '전체 사주' },
+      }),
+    });
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      error: {
+        code: 'HOST_READING_EXECUTION_FAILED',
+        message: 'The reading service could not complete this request.',
+      },
+    });
   });
 });
