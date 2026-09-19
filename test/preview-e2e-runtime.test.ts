@@ -121,6 +121,7 @@ describe('provisionally approved preview E2E runtime', () => {
       expect(['delivered', 'delivered_with_fallback']).toContain(payload.state);
       const serialized = JSON.stringify(payload);
       expect(serialized).toContain('이 사주의 핵심');
+      expect(serialized).toContain('근거 구조:');
       expect(serialized).toContain('프리뷰 안내');
     } finally {
       await close(runtime.server);
@@ -147,7 +148,9 @@ describe('provisionally approved preview E2E runtime', () => {
       expect(response.status).toBe(200);
       const payload = (await response.json()) as { state?: unknown };
       expect(['delivered', 'delivered_with_fallback']).toContain(payload.state);
-      expect(JSON.stringify(payload)).toContain(expectedTitle);
+      const serialized = JSON.stringify(payload);
+      expect(serialized).toContain(expectedTitle);
+      expect(serialized).toContain('근거 구조:');
     } finally {
       await close(runtime.server);
     }

@@ -84,6 +84,14 @@ const GENERAL_CONSUMER_COPY: Readonly<Record<string, string>> = Object.freeze({
     '사람 관계에서도 선이 분명한 편에 가깝습니다. 무조건 맞춰주기보다 서로 무엇을 맡고 어디까지 책임지는지가 분명할 때 편하고, 기준이 애매하거나 일방적으로 맞춰줘야 하는 관계는 피로하게 느낄 수 있습니다.',
 });
 
+const TEN_GOD_FAMILY_STRUCTURE_LABELS: Readonly<Record<string, string>> = Object.freeze({
+  peer: '비겁(자기 기준·주도권)',
+  resource: '인성(학습·준비)',
+  output: '식상(표현·생산)',
+  wealth: '재성(현실 성과·자원)',
+  officer: '관성(책임·규칙)',
+});
+
 const careerProfileByClaimType = new Map(
   CAREER_NATAL_CLAIM_NARRATIVE_PROFILES.map((profile) => [profile.claimType, profile]),
 );
@@ -118,14 +126,13 @@ function consumerText(claim: InterpretationClaim): string {
   const careerSummary = careerProfileSummary(claim);
   if (careerSummary !== undefined) return careerSummary;
 
+  const summary = stringValue(claim, 'summary');
+  if (summary !== undefined && summary.trim().length > 0) return summary.trim();
+
   const generalCopy = GENERAL_CONSUMER_COPY[claim.claimType];
   if (generalCopy !== undefined) return generalCopy;
 
-  const summary = stringValue(claim, 'summary');
-  if (summary === undefined || summary.trim().length === 0) {
-    throw new Error(`Preview claim ${claim.claimId} has no consumer summary.`);
-  }
-  return summary;
+  throw new Error(`Preview claim ${claim.claimId} has no consumer summary.`);
 }
 
 function assertion(claim: InterpretationClaim) {
@@ -138,6 +145,50 @@ function assertion(claim: InterpretationClaim) {
     evidenceRefs: Object.freeze([{ sourceType: 'claim' as const, ref: claim.claimId }]),
     methodologyRefs: Object.freeze([claim.methodologyRef]),
   };
+}
+
+function claimStructureText(claim: InterpretationClaim): string | undefined {
+  const value = valueRecord(claim);
+  const families = value.families;
+  if (Array.isArray(families)) {
+    const labels = families.flatMap((family) =>
+      typeof family === 'string' && TEN_GOD_FAMILY_STRUCTURE_LABELS[family] !== undefined
+        ? [TEN_GOD_FAMILY_STRUCTURE_LABELS[family]]
+        : [],
+    );
+    if (labels.length > 0) {
+      return `근거 구조: ${labels.join(' · ')}${labels.length > 1 ? '의 결합' : ' 축'}이 이 해석의 직접 근거입니다.`;
+    }
+  }
+
+  const tenGod = typeof value.tenGod === 'string' ? value.tenGod : undefined;
+  const channel = typeof value.channel === 'string' ? value.channel : undefined;
+  if (tenGod !== undefined) {
+    const channelLabel =
+      channel === 'visible_stems'
+        ? '천간에 드러난'
+        : channel === 'branches'
+          ? '지지의 바탕에서 확인되는'
+          : '원국에서 확인되는';
+    return `근거 구조: ${channelLabel} ${tenGod}의 작동을 근거로 읽습니다.`;
+  }
+  return undefined;
+}
+
+function claimNarrativeBlocks(claim: InterpretationClaim) {
+  const structureText = claimStructureText(claim);
+  return structureText === undefined
+    ? Object.freeze([assertion(claim)])
+    : Object.freeze([
+        assertion(claim),
+        {
+          type: 'assertion' as const,
+          text: structureText,
+          epistemicType: 'interpretation' as const,
+          evidenceRefs: Object.freeze([{ sourceType: 'claim' as const, ref: claim.claimId }]),
+          methodologyRefs: Object.freeze([claim.methodologyRef]),
+        },
+      ]);
 }
 
 function ambiguityBlocks(evidence: NarrativeEvidenceBundle) {
@@ -160,7 +211,7 @@ function sectionFromClaims(
   return Object.freeze({
     sectionId,
     title,
-    blocks: Object.freeze(claims.map(assertion)),
+    blocks: Object.freeze(claims.flatMap((claim) => claimNarrativeBlocks(claim))),
   });
 }
 
@@ -202,7 +253,10 @@ function generalNatalDraft(evidence: NarrativeEvidenceBundle): NarrativeDraft {
     {
       sectionId: 'preview-overall-conclusion',
       title: '이 사주의 핵심',
-      blocks: Object.freeze([...ambiguityBlocks(evidence), ...summaryClaims.map(assertion)]),
+      blocks: Object.freeze([
+        ...ambiguityBlocks(evidence),
+        ...summaryClaims.flatMap((claim) => claimNarrativeBlocks(claim)),
+      ]),
     },
   ];
   for (const section of [
@@ -270,7 +324,10 @@ function categoryNatalDraft(input: {
     {
       sectionId: `preview-${input.category}-core`,
       title: input.coreTitle,
-      blocks: Object.freeze([...ambiguityBlocks(input.evidence), assertion(summary)]),
+      blocks: Object.freeze([
+        ...ambiguityBlocks(input.evidence),
+        ...claimNarrativeBlocks(summary),
+      ]),
     },
   ];
 
