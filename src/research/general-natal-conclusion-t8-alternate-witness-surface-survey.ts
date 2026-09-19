@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-alternate-witness-surface-survey-v4' as const;
+  'myeonghwa-general-natal-conclusion-t8-alternate-witness-surface-survey-v5' as const;
 
 const TARGET_WITNESS_IDS = Object.freeze([
   'W-YUANHAI-WEALTH-OFFICER',
@@ -72,6 +72,53 @@ const CANDIDATE_SURFACES = Object.freeze([
       contentPages: Object.freeze([29, 30, 31, 32, 33] as const),
       transitionPage: 34 as const,
       transitionSectionTitle: '身弱論' as const,
+      frozenExactWitnessesEstablished: Object.freeze({
+        'W-YUANHAI-WEALTH-OFFICER': false,
+        'W-YUANHAI-OFFICER-RESOURCE': false,
+        'W-YUANHAI-PEER-WEALTH': false,
+        'W-YUANHAI-WEALTH-RESOURCE': false,
+      }),
+      result: 'BOUNDED_DIRECT_TEXTUAL_DIVERGENCE_NO_FROZEN_EXACT_WITNESS' as const,
+    }),
+    rows: Object.freeze({
+      'W-YUANHAI-WEALTH-OFFICER': Object.freeze({
+        status: 'DIRECTLY_INSPECTED_NOT_ESTABLISHED_IN_FROZEN_CONTEXT',
+      }),
+      'W-YUANHAI-OFFICER-RESOURCE': Object.freeze({
+        status: 'DIRECTLY_INSPECTED_NOT_ESTABLISHED_IN_FROZEN_CONTEXT',
+      }),
+      'W-YUANHAI-PEER-WEALTH': Object.freeze({
+        status: 'DIRECTLY_INSPECTED_NOT_ESTABLISHED_IN_FROZEN_CONTEXT',
+      }),
+      'W-YUANHAI-WEALTH-RESOURCE': Object.freeze({
+        status: 'DIRECTLY_INSPECTED_NOT_ESTABLISHED_IN_FROZEN_CONTEXT',
+      }),
+    }),
+    qualificationOutcome: 'REGISTERED_SCAN_DIRECTLY_INSPECTED_TEXTUAL_DIVERGENCE',
+  }),
+  Object.freeze({
+    candidateId: 'CANDIDATE-NLC-1940-ZHAOYANSHENG-ZHANGFUJI',
+    authorityClass: 'REGISTERED_SCAN_DIRECTLY_INSPECTED',
+    title: '增補淵海子平音義評註',
+    edition: '趙燕生 / 章福記書局 / 康德七年 [1940]',
+    holdingInstitution: 'National Library of China',
+    digitization: 'NLC416-12jh002712-40330',
+    commonsFile: 'NLC416-12jh002712-40330 增補淵海子平音義評註.pdf',
+    sha1: 'a75396935b08d948ae972a2f456d1860ff136880',
+    byteCount: 13474114,
+    pageCount: 306,
+    registeredScanIdentityEstablished: true,
+    auditableHoldingInstitutionEstablished: true,
+    context: '1940 registered scan / directly inspected 四言獨步 bounded surface',
+    directInspection: Object.freeze({
+      state: 'DIRECTLY_INSPECTED' as const,
+      boundedDigitalPages: Object.freeze([175, 176, 177, 178, 179, 180] as const),
+      sectionTitlePage: 175 as const,
+      sectionTitle: '四言獨步' as const,
+      contentPages: Object.freeze([175, 176, 177, 178, 179] as const),
+      transitionPage: 180 as const,
+      transitionSectionTitle: '五言獨步' as const,
+      separateAugmentedSectionTitleObserved: false as const,
       frozenExactWitnessesEstablished: Object.freeze({
         'W-YUANHAI-WEALTH-OFFICER': false,
         'W-YUANHAI-OFFICER-RESOURCE': false,
@@ -248,9 +295,9 @@ export function buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION,
-    issue: '#900' as const,
-    auditBaseSha: '56a4a97aeb8c48ba2e0236a6f679fc8ce4ac97f4' as const,
-    status: 'NTL_1926_AND_NLC_1634_DIRECTLY_INSPECTED_TEXTUAL_DIVERGENCE_NO_PRODUCTION_ADMISSIBLE_FOUR_OF_FOUR_CANDIDATE' as const,
+    issue: '#903' as const,
+    auditBaseSha: 'caa499f7ae0d3b7ffa56de52331f7fa9a88fbf53' as const,
+    status: 'NTL_1926_NLC_1634_AND_NLC_1940_DIRECTLY_INSPECTED_TEXTUAL_DIVERGENCE_NO_PRODUCTION_ADMISSIBLE_FOUR_OF_FOUR_CANDIDATE' as const,
     upstreamPassageEvidenceId: upstream.evidenceId,
     frozenRows,
     candidateSurfaces: CANDIDATE_SURFACES,
