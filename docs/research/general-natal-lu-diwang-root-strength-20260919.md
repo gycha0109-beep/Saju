@@ -2,7 +2,7 @@
 
 Date: 2026-09-19  
 Issue: #943  
-Status: PRELIMINARY / CROSS-SOURCE BRIDGE OPEN
+Status: VERIFIED_BOUNDED / CROSS-SOURCE EXECUTABLE BRIDGE REJECTED
 
 ## Existing authority audit
 
@@ -122,13 +122,24 @@ FINAL 身強身弱 / 旺衰             = UNAUTHORIZED
 PRODUCTION                       = NOT PROMOTED
 ```
 
-## 6. Closure path
+## 6. Closure verdict
 
-The next useful question is narrower than "is 帝旺 strong?":
+Fresh direct review of the Xu commentary answers the remaining bounded question.
 
-1. Can the Xu-commentary source itself provide a complete enough stem/branch surface for `臨官→祿` and `帝旺→旺`?
-2. If yes, govern that same-source bridge independently rather than importing #547's 命理探源 table.
-3. If no, preserve the cross-source bridge as INCONCLUSIVE.
-4. Keep Yin-Lu/Earth-Lu unresolved unless exact source evidence closes them.
+The commentary explicitly frames the relevant surface at the **five-element / seasonal branch-set** level and warns against treating Yin stems as having a separate independent 長生祿旺墓 sequence for practical use. It therefore does not provide a complete same-source ten-stem × twelve-branch bridge that can replace #547's separate 命理探源 mapping.
+
+Accordingly:
+
+```text
+SAME_SOURCE_XU_COMMENTARY_BRIDGE_REVIEW = COMPLETE
+COMPLETE_STEM_BRANCH_LINGUAN_TO_LU_BRIDGE = NOT_AVAILABLE
+COMPLETE_STEM_BRANCH_DIWANG_TO_WANG_ROOT_BRIDGE = NOT_AVAILABLE
+CROSS_SOURCE_AUTOMATIC_BRIDGE = REJECTED
+R017 = VERIFIED_BOUNDED
+```
+
+This closes R017 as a **boundary result**, not as a generalized classifier.
+
+Yin-Lu and Earth-Lu remain unresolved subquestions and may be reopened as narrower future frontiers if useful. They are not silently inferred.
 
 No Product, SKU, Commerce, or Production behavior changes.
