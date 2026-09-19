@@ -410,6 +410,28 @@ async function main() {
           y: 1 - point.exactSingleTextureCoordinate.v,
         }));
         const providerPoints = receipt.provider.unorderedCandidatePair.map((point) => ({ x: point.x, y: point.y }));
+        const pairDistance = unorderedPairDistance(topLeftUvReference, providerPoints);
+        const assignedCandidateIndices = pairDistance.descriptiveUnorderedMinimum.assignment === 'reference_order_to_454_234'
+          ? [454, 234]
+          : [234, 454];
+        const providerCandidateRanks = topLeftUvReference.map((referencePoint, referenceOrdinal) => {
+          const ranked = frame.providerOrderedPoints
+            .map((point, index) => ({
+              index,
+              distance: Math.hypot(referencePoint.x - point.x, referencePoint.y - point.y),
+            }))
+            .sort((a, b) => a.distance - b.distance || a.index - b.index);
+          const assignedCandidateIndex = assignedCandidateIndices[referenceOrdinal];
+          const assignedCandidateRankZeroBased = ranked.findIndex((entry) => entry.index === assignedCandidateIndex);
+          if (assignedCandidateRankZeroBased < 0) throw new Error('FR199 assigned provider candidate missing from ranking.');
+          return {
+            referenceOrdinal,
+            assignedCandidateIndex,
+            assignedCandidateRankOneBased: assignedCandidateRankZeroBased + 1,
+            assignedCandidateDistance: ranked[assignedCandidateRankZeroBased].distance,
+            nearestProviderLandmarks: ranked.slice(0, 10),
+          };
+        });
         textureReceipts.push({
           sampleId: receipt.sampleId,
           textureImageDigest: input.textureImageDigest,
@@ -419,7 +441,8 @@ async function main() {
           uvBridge: input.uvBridge,
           topLeftUvReference,
           provider: receipt.provider,
-          descriptiveNormalizedImageDistances: unorderedPairDistance(topLeftUvReference, providerPoints),
+          descriptiveNormalizedImageDistances: pairDistance,
+          providerCandidateRanks,
           authority: {
             bridgeKind: 'obj_material_uv_parameterization_not_camera_projection',
             imageOriginConventionAssumption: 'x=u; y=1-v',
