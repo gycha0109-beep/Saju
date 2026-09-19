@@ -297,6 +297,9 @@ async function main() {
     }
   }
 
+  const metadataBytes = await download(METADATA_URL);
+  const metadata = parseMetadata(metadataBytes.toString('utf8'));
+
   const scratch = await mkdtemp(join(tmpdir(), 'myeongha-fr203-'));
   try {
     const modelPath = join(scratch, 'face_landmarker.task');
