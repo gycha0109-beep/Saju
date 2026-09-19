@@ -434,34 +434,38 @@ async function main() {
       preserveDrawingBuffer: true,
     });
     if (!gl) throw new Error('FR202 WebGL2 unavailable.');
-    const vertexSource = `#version 300 es
-      precision highp float;
-      in vec3 aPosition;
-      in vec2 aUv;
-      uniform vec2 uCenter;
-      uniform float uScale;
-      uniform float uZMid;
-      uniform float uZHalf;
-      uniform float uCameraSign;
-      out vec2 vUv;
-      void main() {
-        float zNorm = (aPosition.z - uZMid) / uZHalf;
-        gl_Position = vec4(
-          (aPosition.x - uCenter.x) * uScale,
-          (aPosition.y - uCenter.y) * uScale,
-          -uCameraSign * zNorm,
-          1.0
-        );
-        vUv = aUv;
-      }`;
-    const fragmentSource = `#version 300 es
-      precision highp float;
-      in vec2 vUv;
-      uniform sampler2D uTexture;
-      out vec4 outColor;
-      void main() {
-        outColor = texture(uTexture, vUv);
-      }`;
+    const vertexSource = [
+      '#version 300 es',
+      'precision highp float;',
+      'in vec3 aPosition;',
+      'in vec2 aUv;',
+      'uniform vec2 uCenter;',
+      'uniform float uScale;',
+      'uniform float uZMid;',
+      'uniform float uZHalf;',
+      'uniform float uCameraSign;',
+      'out vec2 vUv;',
+      'void main() {',
+      '  float zNorm = (aPosition.z - uZMid) / uZHalf;',
+      '  gl_Position = vec4(',
+      '    (aPosition.x - uCenter.x) * uScale,',
+      '    (aPosition.y - uCenter.y) * uScale,',
+      '    -uCameraSign * zNorm,',
+      '    1.0',
+      '  );',
+      '  vUv = aUv;',
+      '}',
+    ].join('\\n');
+    const fragmentSource = [
+      '#version 300 es',
+      'precision highp float;',
+      'in vec2 vUv;',
+      'uniform sampler2D uTexture;',
+      'out vec4 outColor;',
+      'void main() {',
+      '  outColor = texture(uTexture, vUv);',
+      '}',
+    ].join('\\n');
     const program = gl.createProgram();
     gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, vertexSource));
     gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, fragmentSource));
