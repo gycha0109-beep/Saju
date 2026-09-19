@@ -15,16 +15,16 @@ describe('FR208 cross-face neutral observable primitives', () => {
     expect(() => assertFaceReadingNeutralObservablePrimitivePackFR208()).not.toThrow();
   });
 
-  it('computes side-normalized eye outer-corner tilt with positive=outer visually higher', () => {
+  it('computes side-normalized eye outer-corner tilt with positive=outer greater canonical Y', () => {
     const result = computeEyeOuterCornerTiltFR208({
-      coordinateFrame: 'canonical_aligned_metric_xy',
+      coordinateFrame: 'canonical_aligned_right_handed_metric_xy',
       leftEye: {
         innerCorner: { x: 0.42, y: 0.40 },
-        outerCorner: { x: 0.30, y: 0.36 },
+        outerCorner: { x: 0.30, y: 0.44 },
       },
       rightEye: {
         innerCorner: { x: 0.58, y: 0.40 },
-        outerCorner: { x: 0.70, y: 0.36 },
+        outerCorner: { x: 0.70, y: 0.44 },
       },
       sourceObservationRefs: refs,
     });
@@ -38,16 +38,16 @@ describe('FR208 cross-face neutral observable primitives', () => {
     expect(result.mean.anatomicalInterpretationAllowed).toBe(false);
   });
 
-  it('preserves negative eye tilt when outer corners are visually lower', () => {
+  it('preserves negative eye tilt when outer corners have smaller canonical Y', () => {
     const result = computeEyeOuterCornerTiltFR208({
-      coordinateFrame: 'canonical_aligned_metric_xy',
+      coordinateFrame: 'canonical_aligned_right_handed_metric_xy',
       leftEye: {
         innerCorner: { x: 0.42, y: 0.40 },
-        outerCorner: { x: 0.30, y: 0.44 },
+        outerCorner: { x: 0.30, y: 0.36 },
       },
       rightEye: {
         innerCorner: { x: 0.58, y: 0.40 },
-        outerCorner: { x: 0.70, y: 0.44 },
+        outerCorner: { x: 0.70, y: 0.36 },
       },
       sourceObservationRefs: refs,
     });
@@ -57,19 +57,19 @@ describe('FR208 cross-face neutral observable primitives', () => {
     expect(result.mean.value).toBeLessThan(0);
   });
 
-  it('computes eyebrow span, visible arch amplitude, and explicit lateral-endpoint tilt', () => {
+  it('computes eyebrow span, arch amplitude, and explicit lateral-endpoint tilt', () => {
     const result = computeEyebrowVisibleCurveFR208({
-      coordinateFrame: 'canonical_aligned_metric_xy',
+      coordinateFrame: 'canonical_aligned_right_handed_metric_xy',
       medialEndpoint: { x: 0.46, y: 0.30 },
-      lateralEndpoint: { x: 0.28, y: 0.27 },
+      lateralEndpoint: { x: 0.28, y: 0.33 },
       orderedVisibleCurve: [
         { x: 0.46, y: 0.30 },
-        { x: 0.40, y: 0.24 },
-        { x: 0.34, y: 0.23 },
-        { x: 0.28, y: 0.27 },
+        { x: 0.40, y: 0.40 },
+        { x: 0.34, y: 0.43 },
+        { x: 0.28, y: 0.33 },
       ],
-      visibleFaceLeft: { x: 0.20, y: 0.45 },
-      visibleFaceRight: { x: 0.80, y: 0.45 },
+      visibleFaceLeft: { x: 0.20, y: 0.00 },
+      visibleFaceRight: { x: 0.80, y: 0.00 },
       sourceObservationRefs: refs,
     });
 
@@ -82,10 +82,10 @@ describe('FR208 cross-face neutral observable primitives', () => {
 
   it('computes mouth-corner elevation relative to an explicit visible mouth center', () => {
     const result = computeMouthCornerElevationFR208({
-      coordinateFrame: 'canonical_aligned_metric_xy',
-      leftCorner: { x: 0.40, y: 0.60 },
-      rightCorner: { x: 0.60, y: 0.60 },
-      visibleMouthCenter: { x: 0.50, y: 0.62 },
+      coordinateFrame: 'canonical_aligned_right_handed_metric_xy',
+      leftCorner: { x: 0.40, y: 0.62 },
+      rightCorner: { x: 0.60, y: 0.62 },
+      visibleMouthCenter: { x: 0.50, y: 0.60 },
       sourceObservationRefs: refs,
     });
 
@@ -96,9 +96,9 @@ describe('FR208 cross-face neutral observable primitives', () => {
 
   it('computes visible midface and lower-face width ratios without anatomy labels', () => {
     const base = {
-      coordinateFrame: 'canonical_aligned_metric_xy' as const,
-      visibleFaceLeft: { x: 0.20, y: 0.45 },
-      visibleFaceRight: { x: 0.80, y: 0.45 },
+      coordinateFrame: 'canonical_aligned_right_handed_metric_xy' as const,
+      visibleFaceLeft: { x: 0.20, y: 0.00 },
+      visibleFaceRight: { x: 0.80, y: 0.00 },
       sourceObservationRefs: refs,
     };
 
@@ -109,8 +109,8 @@ describe('FR208 cross-face neutral observable primitives', () => {
     });
     const lower = computeVisibleLowerFaceWidthRatioFR208({
       ...base,
-      regionLeft: { x: 0.30, y: 0.70 },
-      regionRight: { x: 0.70, y: 0.70 },
+      regionLeft: { x: 0.30, y: -0.40 },
+      regionRight: { x: 0.70, y: -0.40 },
     });
 
     expect(midface.metric.value).toBeCloseTo(5 / 6, 8);
@@ -127,7 +127,7 @@ describe('FR208 cross-face neutral observable primitives', () => {
 
   it('fails closed on missing provenance, degenerate geometry, and invalid width nesting', () => {
     expect(() => computeEyeOuterCornerTiltFR208({
-      coordinateFrame: 'canonical_aligned_metric_xy',
+      coordinateFrame: 'canonical_aligned_right_handed_metric_xy',
       leftEye: {
         innerCorner: { x: 0.4, y: 0.4 },
         outerCorner: { x: 0.4, y: 0.4 },
@@ -140,7 +140,7 @@ describe('FR208 cross-face neutral observable primitives', () => {
     })).toThrow(/horizontal span must be positive/);
 
     expect(() => computeMouthCornerElevationFR208({
-      coordinateFrame: 'canonical_aligned_metric_xy',
+      coordinateFrame: 'canonical_aligned_right_handed_metric_xy',
       leftCorner: { x: 0.5, y: 0.6 },
       rightCorner: { x: 0.5, y: 0.6 },
       visibleMouthCenter: { x: 0.5, y: 0.61 },
@@ -148,7 +148,7 @@ describe('FR208 cross-face neutral observable primitives', () => {
     })).toThrow(/horizontal span must be positive/);
 
     expect(() => computeVisibleMidfaceWidthRatioFR208({
-      coordinateFrame: 'canonical_aligned_metric_xy',
+      coordinateFrame: 'canonical_aligned_right_handed_metric_xy',
       regionLeft: { x: 0.1, y: 0.4 },
       regionRight: { x: 0.9, y: 0.4 },
       visibleFaceLeft: { x: 0.2, y: 0.4 },
@@ -157,7 +157,7 @@ describe('FR208 cross-face neutral observable primitives', () => {
     })).toThrow(/cannot exceed/);
 
     expect(() => computeVisibleLowerFaceWidthRatioFR208({
-      coordinateFrame: 'canonical_aligned_metric_xy',
+      coordinateFrame: 'canonical_aligned_right_handed_metric_xy',
       regionLeft: { x: 0.3, y: 0.7 },
       regionRight: { x: 0.7, y: 0.7 },
       visibleFaceLeft: { x: 0.2, y: 0.4 },
@@ -166,7 +166,7 @@ describe('FR208 cross-face neutral observable primitives', () => {
     })).toThrow(/sourceObservationRefs must be non-empty/);
 
     expect(() => computeEyebrowVisibleCurveFR208({
-      coordinateFrame: 'canonical_aligned_metric_xy',
+      coordinateFrame: 'canonical_aligned_right_handed_metric_xy',
       medialEndpoint: { x: 0.45, y: 0.3 },
       lateralEndpoint: { x: 0.3, y: 0.3 },
       orderedVisibleCurve: [
@@ -178,5 +178,20 @@ describe('FR208 cross-face neutral observable primitives', () => {
       visibleFaceRight: { x: 0.8, y: 0.4 },
       sourceObservationRefs: refs,
     })).toThrow(/points must be unique/);
+  });
+
+  it('rejects an unreviewed coordinate frame', () => {
+    expect(() => computeEyeOuterCornerTiltFR208({
+      coordinateFrame: 'canonical_aligned_metric_xy' as never,
+      leftEye: {
+        innerCorner: { x: 0.42, y: 0.40 },
+        outerCorner: { x: 0.30, y: 0.44 },
+      },
+      rightEye: {
+        innerCorner: { x: 0.58, y: 0.40 },
+        outerCorner: { x: 0.70, y: 0.44 },
+      },
+      sourceObservationRefs: refs,
+    })).toThrow(/canonical_aligned_right_handed_metric_xy/);
   });
 });
