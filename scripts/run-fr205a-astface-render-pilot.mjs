@@ -31,6 +31,15 @@ const PILOT_SUBJECTS = Object.freeze(
   Array.from({ length: 12 }, (_, index) => `ast${String(index + 1).padStart(3, '0')}`),
 );
 const CLIP_FILLS = Object.freeze([1.2, 1.0, 0.85, 1.5]);
+const ASTFACE_LANDMARK_ID_84 = Object.freeze([
+  21,25,35,31,83,40,41,43,4,3,1,0,7,5,8,9,11,12,13,15,
+  60,49,50,51,52,53,64,55,57,59,61,62,63,65,66,67,
+]);
+const ASTFACE_CROPPED_BFM_KEYPOINT_ZERO_INDICES = Object.freeze([
+  25370,26744,27483,28862,8192,6515,8204,9883,2215,3886,4920,5828,
+  4801,3640,10455,11353,12383,14066,12653,11492,5522,6025,7495,8215,
+  8935,10395,10795,9555,8236,6915,7384,8223,9064,8829,8229,7629,
+]);
 
 const sha256 = (bytes) =>
   `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
@@ -150,6 +159,81 @@ async function extractEntry(entry) {
     );
   }
   return bytes;
+}
+
+function parseMeshVertices(objText) {
+  return objText
+    .split(/\r?\n/u)
+    .filter((line) => line.startsWith('v '))
+    .map((line) => {
+      const parts = line.trim().split(/\s+/u);
+      return [Number(parts[1]), Number(parts[2]), Number(parts[3])];
+    });
+}
+
+function solveLinear4(matrix, vector) {
+  const a = matrix.map((row, index) => [...row, vector[index]]);
+  for (let col = 0; col < 4; col += 1) {
+    let pivot = col;
+    for (let row = col + 1; row < 4; row += 1) {
+      if (Math.abs(a[row][col]) > Math.abs(a[pivot][col])) pivot = row;
+    }
+    if (Math.abs(a[pivot][col]) < 1e-12) throw new Error('FR205A singular frame fit.');
+    [a[col], a[pivot]] = [a[pivot], a[col]];
+    const divisor = a[col][col];
+    for (let k = col; k <= 4; k += 1) a[col][k] /= divisor;
+    for (let row = 0; row < 4; row += 1) {
+      if (row === col) continue;
+      const factor = a[row][col];
+      for (let k = col; k <= 4; k += 1) a[row][k] -= factor * a[col][k];
+    }
+  }
+  return a.map((row) => row[4]);
+}
+
+function fitAffineFrame(source, target) {
+  if (source.length !== target.length || source.length < 4) {
+    throw new Error('FR205A frame fit requires corresponding point sets.');
+  }
+  const ata = Array.from({ length: 4 }, () => Array(4).fill(0));
+  const atb = Array.from({ length: 3 }, () => Array(4).fill(0));
+  for (let index = 0; index < source.length; index += 1) {
+    const row = [source[index][0], source[index][1], source[index][2], 1];
+    for (let r = 0; r < 4; r += 1) {
+      for (let col = 0; col < 4; col += 1) ata[r][col] += row[r] * row[col];
+      for (let axis = 0; axis < 3; axis += 1) {
+        atb[axis][r] += row[r] * target[index][axis];
+      }
+    }
+  }
+  const coeff = atb.map((vector) =>
+    solveLinear4(ata.map((row) => [...row]), vector),
+  );
+  const transform = (point) =>
+    coeff.map(
+      (axis) =>
+        axis[0] * point[0] +
+        axis[1] * point[1] +
+        axis[2] * point[2] +
+        axis[3],
+    );
+  const residuals = source.map((point, index) => {
+    const out = transform(point);
+    const expected = target[index];
+    return Math.hypot(
+      out[0] - expected[0],
+      out[1] - expected[1],
+      out[2] - expected[2],
+    );
+  });
+  return {
+    coeff,
+    transform,
+    rmse: Math.sqrt(
+      residuals.reduce((sum, value) => sum + value * value, 0) / residuals.length,
+    ),
+    maxResidual: Math.max(...residuals),
+  };
 }
 
 function findChrome() {
@@ -301,6 +385,8 @@ async function main() {
           extractEntry(meshEntry),
           extractEntry(landmarkEntry),
         ]);
+        const objText = meshBytes.toString('utf8');
+        const meshVertices = parseMeshVertices(objText);
         const landmarkPoints = landmarkBytes
           .toString('utf8')
           .split(/\r?\n/u)
@@ -315,14 +401,30 @@ async function main() {
         ) {
           throw new Error(`expected 84 finite AST-Face XYZ landmarks, got ${landmarkPoints.length}`);
         }
-        const orderedByX = landmarkPoints
+        const source36 = ASTFACE_LANDMARK_ID_84.map((index) => landmarkPoints[index]);
+        const target36 = ASTFACE_CROPPED_BFM_KEYPOINT_ZERO_INDICES.map((index) => {
+          const point = meshVertices[index];
+          if (!point) throw new Error(`missing cropped BFM keypoint vertex ${index}`);
+          return point;
+        });
+        const frameFit = fitAffineFrame(source36, target36);
+        const transformed84 = landmarkPoints.map(frameFit.transform);
+        const orderedByX = transformed84
           .map(([x, y, z], index) => ({ x, y, z, index }))
           .sort((a, b) => a.x - b.x || a.index - b.index);
         const left = orderedByX[0];
         const right = orderedByX.at(-1);
         if (!left || !right || !(right.x > left.x)) {
-          throw new Error('AST-Face 84-point X-span reference is invalid.');
+          throw new Error('AST-Face frame-aligned 84-point X-span reference is invalid.');
         }
+        const meshXs = meshVertices.map((point) => point[0]);
+        const meshYs = meshVertices.map((point) => point[1]);
+        const meshZs = meshVertices.map((point) => point[2]);
+        const meshSpan = Math.max(
+          Math.max(...meshXs) - Math.min(...meshXs),
+          Math.max(...meshYs) - Math.min(...meshYs),
+          Math.max(...meshZs) - Math.min(...meshZs),
+        );
         const objPath = join(assetDir, `${subject}.obj`);
         await writeFile(objPath, meshBytes);
         inputs.push({
@@ -331,7 +433,15 @@ async function main() {
           objDigest: sha256(meshBytes),
           landmarkDigest: sha256(landmarkBytes),
           breadthReference: {
-            method: 'astface_84_landmark_full_x_span',
+            method: 'astface_84_landmark_full_x_span_after_frozen_bfm_frame_alignment',
+            frameAlignment: {
+              mappingConvention: 'bfm_landmark_index_plus1_then_cut_bfm',
+              correspondenceCount: 36,
+              affineRmse: frameFit.rmse,
+              normalizedAffineRmse: frameFit.rmse / meshSpan,
+              maxResidual: frameFit.maxResidual,
+              coeff: frameFit.coeff,
+            },
             left,
             right,
             sourcePointCount: landmarkPoints.length,
@@ -793,7 +903,7 @@ async function main() {
         providerFailureCount: result.failures.length,
         providerFailures: result.failures,
         referenceDefinition:
-          'AST-Face public 84-point anatomical landmark full X-span; explicitly not zygion',
+          'AST-Face public 84-point anatomical landmark full X-span after frozen 36-correspondence BFM/cropped-mesh frame alignment; explicitly not zygion',
         frozenMeasurement:
           'roll_normalized_mediapipe_full_official_face_oval_x_envelope',
         frozenCalibrationFactor: FROZEN_FULL_OVAL_FACTOR,
@@ -835,7 +945,7 @@ async function main() {
           failures: artifact.providerFailures,
         }),
       );
-      if (!artifact.independentIdentitySyntheticGeometryPilotComplete) {
+      if (!artifact.independentIdentitySyntheticFaceBreadthPilotComplete) {
         process.exitCode = 1;
       }
     } finally {
