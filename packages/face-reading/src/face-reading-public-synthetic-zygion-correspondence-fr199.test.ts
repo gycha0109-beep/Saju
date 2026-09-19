@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   deriveAndFreezeIndependentZygionReferenceFR199,
   deriveZygionSourceExactFR199,
+  deriveZygionIntendedLoopRepairFR199,
   issueDescriptiveZygionCorrespondenceFR199,
   parseObjVerticesFR199,
 } from './face-reading-public-synthetic-zygion-correspondence-fr199.js';
@@ -45,6 +46,41 @@ describe('FR199 public synthetic zygion correspondence', () => {
       'v 0 -100 0',
     ].join('\n'));
     expect(() => deriveZygionSourceExactFR199(vertices)).toThrow(/exactly two are required/u);
+  });
+
+  it('keeps intended-loop repair separately versioned and expands past an incomplete first band', () => {
+    const vertices = parseObjVerticesFR199([
+      'v -60 0 0',
+      'v 60 0 0',
+      'v 0 0 100',
+      'v 53 1 80',
+      'v -59 1 80',
+      'v 0 100 0',
+      'v 0 -100 0',
+    ].join('\n'));
+
+    expect(() => deriveZygionSourceExactFR199(vertices)).toThrow(/exactly two are required/u);
+
+    const repaired = deriveZygionIntendedLoopRepairFR199(vertices);
+    expect(repaired.referenceMethod).toBe('topsakal_2023_public_notebook_intended_loop_repair_v1');
+    expect(repaired.bilateral).toEqual([
+      { x: 53, y: 1, z: 80 },
+      { x: -59, y: 1, z: 80 },
+    ]);
+    expect(repaired.bandsVisited).toEqual([
+      {
+        currentMinWidth: 52.5,
+        currentMaxWidth: 57.5,
+        leftCandidateCount: 1,
+        rightCandidateCount: 0,
+      },
+      {
+        currentMinWidth: 52.5,
+        currentMaxWidth: 60,
+        leftCandidateCount: 1,
+        rightCandidateCount: 1,
+      },
+    ]);
   });
 
   it('extracts only the unordered provider pair after a frozen reference exists', () => {
