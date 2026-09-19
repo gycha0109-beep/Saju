@@ -1,0 +1,30 @@
+name: FR212 Visible Mouth Corner CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/visible-mouth-corner-orientation-fr212.ts'
+      - 'packages/face-reading/src/visible-mouth-corner-orientation-fr212.test.ts'
+      - 'packages/face-reading/src/pose-normalized-lips-geometry-fr79.ts'
+      - 'packages/face-reading/src/cross-face-neutral-observable-primitives-fr208.ts'
+      - 'packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts'
+      - 'research/face-reading/fr212-visible-mouth-corner-orientation.md'
+      - '.github/workflows/fr212-visible-mouth-corner-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr212-visible-mouth-corner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR212 visible mouth-corner orientation
+        run: npx vitest run packages/face-reading/src/visible-mouth-corner-orientation-fr212.test.ts
