@@ -43,7 +43,7 @@ The commentary then distinguishes:
 
 ### 救應
 
-A rescue example is the commentary's `印製傷護官` path.
+The directly verified rescue family is `官逢傷而透印以解之`. The matrix does not invent a stronger literal `印製傷護官` quotation.
 
 ## Execution boundary
 
