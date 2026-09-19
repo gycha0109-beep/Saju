@@ -24,8 +24,8 @@ Minimum sufficient means the smallest method that can measure the declared visib
 | forehead | image classifier / segmentation | image model absent | segment visible hairline/forehead; do not turn 三停/十二宮 into physical geometry |
 | eyebrow | landmark geometry | research geometry exists | reuse topology; add only product brow span/arch/tail primitives |
 | eye pair | landmark geometry | research metrics exist | reuse X/Y/aspect/separation metrics; add tail angle; image model for eyelid crease/radiance |
-| nose | contour geometry | governed neutral metrics exist | reuse bridge deviation + tip circularity; add bounded profile projection only if needed |
-| mouth/lips | contour geometry | governed neutral metrics exist | reuse contour/relative-size metrics; image model for color; controlled states for 開大合小 |
+| nose | contour geometry | governed neutral metrics exist; product binding pending | reuse bridge deviation + tip circularity as neutral inputs; add bounded profile projection only if needed |
+| mouth/lips | contour geometry | governed neutral metrics exist; product binding pending | reuse neutral contour/relative-size inputs; image model for color; controlled states for 開大合小 |
 | ear | image classifier / segmentation | unavailable in current landmark pipeline | build visible ear boundary model or return unavailable |
 | cheek/mid-face | contour geometry | operational breadth candidate | use visible-breadth naming; add midface-width/prominence primitives; no zygion loop |
 | chin/lower face | contour geometry | research geometry exists | add canonical product 2D contour/width primitive; do not call soft-tissue contour bone |
