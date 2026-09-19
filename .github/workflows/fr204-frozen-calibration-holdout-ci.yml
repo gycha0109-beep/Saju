@@ -1,0 +1,46 @@
+name: FR204 Frozen Calibration Holdout CI
+
+on:
+  push:
+    branches:
+      - research/fr204-frozen-calibration-holdout
+    paths:
+      - 'scripts/run-fr204-frozen-calibration-holdout.mjs'
+      - 'scripts/run-fr204-morphed-holdout-inventory.mjs'
+      - 'research/face-reading/fr204-frozen-calibration-holdout.md'
+      - '.github/workflows/fr204-frozen-calibration-holdout-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fr204-frozen-calibration-holdout
+  cancel-in-progress: true
+
+jobs:
+  holdout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Face-reading typecheck
+        run: npm run face:typecheck
+      - name: Build face-reading
+        run: npm run face:build
+      - name: Syntax-check FR204 experiment
+        run: node --check scripts/run-fr204-frozen-calibration-holdout.mjs
+      - name: Execute frozen-calibration unseen-geometry holdout
+        run: node scripts/run-fr204-frozen-calibration-holdout.mjs
+      - name: Upload FR204 holdout receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr204-frozen-calibration-holdout
+          path: artifacts/face-reading/fr204-frozen-calibration-holdout.json
+          if-no-files-found: warn
+          retention-days: 14

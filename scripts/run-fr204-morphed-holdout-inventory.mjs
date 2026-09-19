@@ -12,7 +12,7 @@ import {
   FR199_MALE_DATASET_REPOSITORY,
 } from '../.face-reading-dist/face-reading-public-synthetic-zygion-correspondence-fr199.js';
 
-const ROOT = resolve(new URL('..', import.meta.url).pathname);
+const ROOT = resolve(new globalThis.URL('..', import.meta.url).pathname);
 const SENTINELS = Object.freeze([
   {
     sampleId: 'male-23',
@@ -126,7 +126,7 @@ try {
   await mkdir(outDir, { recursive: true });
   const outPath = join(outDir, 'fr204-morphed-holdout-inventory.json');
   await writeFile(outPath, `${JSON.stringify(artifact, null, 2)}\n`, 'utf8');
-  console.log(
+  globalThis.console.log(
     JSON.stringify({
       status: 'inventory_complete',
       sentinels: receipts.map((receipt) => ({

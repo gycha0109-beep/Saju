@@ -1,6 +1,6 @@
 # FR204 — Frozen Calibration Holdout Protocol
 
-Status: `protocol_frozen_inventory_pending`
+Status: `inventory_passed_holdout_execution_pending`
 
 Issue: #971  
 PR: #972  
@@ -42,6 +42,16 @@ A train/test split invented after FR203 would not be an independent holdout beca
 ## Executable holdout path
 
 The same pinned repositories also contain `morphed-3D/<sample>.zip` archives.
+
+Inventory gate completed successfully on run `35442940101`.
+
+Observed before any provider/error evaluation:
+- male sentinel archive: 96 OBJ / 96 MTL entries;
+- female sentinel archive: 96 OBJ / 96 MTL entries;
+- inspected morph OBJs contain texture coordinates and faces;
+- inspected morph MTLs bind the base identity JPEG (for example `map_Kd male-23.jpg` / `map_Kd female-26.jpg`).
+
+Therefore the unseen-geometry intervention path is executable.
 
 Before any FR204 provider/error observation:
 
