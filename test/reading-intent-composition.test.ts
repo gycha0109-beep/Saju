@@ -114,11 +114,23 @@ function executionWithClaims(
 }
 
 describe('ReadingIntent composition contract', () => {
-  it('selects only general natal T8 claims for a general reading and excludes specialized or period claims', () => {
+  it('requires a General Natal foundation plus synthesis claim and excludes specialized or period claims', () => {
     const snapshot = knownSnapshot();
     const registry = createI7SeasonalSupportRegistry();
-    const general = syntheticClaim(snapshot.snapshotId, {
-      id: 'claim-general-natal',
+    const foundation = syntheticClaim(snapshot.snapshotId, {
+      id: 'claim-general-foundation',
+      tier: 'T8',
+      category: 'general',
+      subcategory: 'self_baseline',
+    });
+    const synthesis = syntheticClaim(snapshot.snapshotId, {
+      id: 'claim-general-synthesis',
+      tier: 'T8',
+      category: 'general',
+      subcategory: 'core_conclusion',
+    });
+    const looseGeneral = syntheticClaim(snapshot.snapshotId, {
+      id: 'claim-general-unscoped',
       tier: 'T8',
       category: 'general',
     });
@@ -138,7 +150,14 @@ describe('ReadingIntent composition contract', () => {
       category: 'general',
       subcategory: 'annual',
     });
-    const execution = executionWithClaims(snapshot, registry, [general, career, wealth, annual]);
+    const execution = executionWithClaims(snapshot, registry, [
+      foundation,
+      synthesis,
+      looseGeneral,
+      career,
+      wealth,
+      annual,
+    ]);
 
     const result = buildReadingCompositionEvidence(
       snapshot,
@@ -152,12 +171,61 @@ describe('ReadingIntent composition contract', () => {
     );
 
     expect(result.selection.coverageState).toBe('complete');
-    expect(result.selection.targetClaimIds).toEqual([general.claimId]);
-    expect(result.selection.selectedClaimIds).toEqual([general.claimId]);
+    expect(result.selection.targetClaimIds).toEqual([foundation.claimId, synthesis.claimId].sort());
+    expect(result.selection.selectedClaimIds).toEqual([foundation.claimId, synthesis.claimId].sort());
     expect(result.selection.omittedClaimIds).toEqual(
-      [career.claimId, wealth.claimId, annual.claimId].sort(),
+      [looseGeneral.claimId, career.claimId, wealth.claimId, annual.claimId].sort(),
     );
-    expect(result.evidence?.bundle.claims.map((claim) => claim.claimId)).toEqual([general.claimId]);
+    expect(result.evidence?.bundle.claims.map((claim) => claim.claimId)).toEqual(
+      [foundation.claimId, synthesis.claimId].sort(),
+    );
+  });
+
+  it('keeps General Natal partial until both minimum-useful-reading groups are present', () => {
+    const snapshot = knownSnapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const foundation = syntheticClaim(snapshot.snapshotId, {
+      id: 'claim-general-foundation-only',
+      tier: 'T8',
+      category: 'general',
+      subcategory: 'month_branch_structural_context',
+    });
+    const synthesis = syntheticClaim(snapshot.snapshotId, {
+      id: 'claim-general-synthesis-only',
+      tier: 'T8',
+      category: 'general',
+      subcategory: 'tension_conclusion',
+    });
+
+    const foundationOnly = buildReadingCompositionEvidence(
+      snapshot,
+      executionWithClaims(snapshot, registry, [foundation]),
+      registry,
+      {
+        requestId: 'general-foundation-only',
+        intent: { domain: 'general', temporalScope: 'natal' },
+      },
+      { narrativePolicyVersion: 'reading-intent-test-v1' },
+    );
+    expect(foundationOnly.selection.coverageState).toBe('partial_coverage');
+    expect(foundationOnly.selection.missingRequirements).toEqual([
+      'NATAL_GENERAL_SYNTHESIS_CLAIM_REQUIRED',
+    ]);
+
+    const synthesisOnly = buildReadingCompositionEvidence(
+      snapshot,
+      executionWithClaims(snapshot, registry, [synthesis]),
+      registry,
+      {
+        requestId: 'general-synthesis-only',
+        intent: { domain: 'general', temporalScope: 'natal' },
+      },
+      { narrativePolicyVersion: 'reading-intent-test-v1' },
+    );
+    expect(synthesisOnly.selection.coverageState).toBe('partial_coverage');
+    expect(synthesisOnly.selection.missingRequirements).toEqual([
+      'NATAL_GENERAL_FOUNDATION_CLAIM_REQUIRED',
+    ]);
   });
 
   it('selects only explicitly parent-scoped family claims and does not fabricate missing parent evidence', () => {

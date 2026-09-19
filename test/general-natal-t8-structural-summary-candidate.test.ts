@@ -236,7 +236,7 @@ describe('general natal T8 structural summary candidate', () => {
     );
   });
 
-  it('makes only general natal evidence complete and does not fabricate career coverage', () => {
+  it('keeps a single structural General Natal axis partial and does not fabricate career coverage', () => {
     const currentSnapshot = snapshot();
     const registry = createGeneralNatalT8StructuralSummaryCandidateRegistry();
     const execution = runInterpretation(currentSnapshot, registry, {
@@ -253,7 +253,10 @@ describe('general natal T8 structural summary candidate', () => {
       },
       { narrativePolicyVersion: 'candidate-general-natal-v1' },
     );
-    expect(general.selection.coverageState).toBe('complete');
+    expect(general.selection.coverageState).toBe('partial_coverage');
+    expect(general.selection.missingRequirements).toEqual([
+      'NATAL_GENERAL_SYNTHESIS_CLAIM_REQUIRED',
+    ]);
     expect(general.selection.targetClaimIds).toHaveLength(1);
     expect(general.evidence?.bundle.claims.some((claim) => claim.taxonomy.tier === 'T2')).toBe(
       true,

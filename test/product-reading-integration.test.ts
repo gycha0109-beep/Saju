@@ -104,17 +104,24 @@ function executionWithClaims(
 }
 
 describe('Product Reading Integration Boundary', () => {
-  it('emits a grounded narrative request only for a complete authorized reading selection', () => {
+  it('emits a grounded narrative request only after General Natal minimum-useful coverage is complete', () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
-    const general = claim(currentSnapshot.snapshotId, {
-      id: 'claim-general-natal',
+    const foundation = claim(currentSnapshot.snapshotId, {
+      id: 'claim-general-foundation',
       tier: 'T8',
       category: 'general',
+      subcategory: 'self_baseline',
+    });
+    const synthesis = claim(currentSnapshot.snapshotId, {
+      id: 'claim-general-synthesis',
+      tier: 'T8',
+      category: 'general',
+      subcategory: 'core_conclusion',
     });
     const result = prepareProductReading(
       currentSnapshot,
-      executionWithClaims(currentSnapshot, registry, [general]),
+      executionWithClaims(currentSnapshot, registry, [foundation, synthesis]),
       registry,
       { requestId: 'product-general', text: '일반 사주' },
       integrationOptions,
@@ -126,6 +133,33 @@ describe('Product Reading Integration Boundary', () => {
     expect(result.narrativeRequest?.evidenceBundle).toEqual(result.composition?.evidence?.bundle);
     expect(result.deliveryEligibility.narrativeGeneration).toBe('allowed');
     expect(result.deliveryEligibility.artifactAssembly).toBe('allowed_after_grounded_narrative');
+  });
+
+  it('blocks General Natal narrative generation when only one minimum-useful group is present', () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const foundation = claim(currentSnapshot.snapshotId, {
+      id: 'claim-general-foundation-only',
+      tier: 'T8',
+      category: 'general',
+      subcategory: 'self_baseline',
+    });
+    const result = prepareProductReading(
+      currentSnapshot,
+      executionWithClaims(currentSnapshot, registry, [foundation]),
+      registry,
+      { requestId: 'product-general-partial', text: '일반 사주' },
+      integrationOptions,
+    );
+
+    expect(result.state).toBe('partial_coverage');
+    expect(result.composition?.selection.coverageState).toBe('partial_coverage');
+    expect(result.composition?.selection.missingRequirements).toEqual([
+      'NATAL_GENERAL_SYNTHESIS_CLAIM_REQUIRED',
+    ]);
+    expect(result.narrativeRequest).toBeUndefined();
+    expect(result.deliveryEligibility.narrativeGeneration).toBe('blocked_coverage');
+    expect(result.deliveryEligibility.artifactAssembly).toBe('blocked_coverage');
   });
 
   it('blocks ambiguous consumer input before evidence selection or narrative generation', () => {
