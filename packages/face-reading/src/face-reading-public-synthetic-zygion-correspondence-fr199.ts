@@ -220,12 +220,14 @@ export function deriveZygionIntendedLoopRepairFR199(
     rightCandidateCount: number;
   }> = [];
 
-  // INTENDED_LOOP_REPAIR is deliberately distinct from SOURCE_EXACT:
-  // it removes only the unconditional first-iteration return caused by
-  // checking whether the already-initialized "zygion" local exists.
-  // The source's fixed CURRENT_MIN_WIDTH and CURRENT_MAX_WIDTH += STD/2
-  // progression are otherwise preserved. Candidate arrays are recomputed
-  // per band so a one-sided earlier band cannot be duplicated into a later pair.
+  // INTENDED_LOOP_REPAIR is deliberately distinct from SOURCE_EXACT.
+  // It removes the unconditional first-iteration return caused by checking whether
+  // the already-initialized "zygion" local exists. Because the published source also
+  // appends into one zygion array declared outside the loop, simply deleting the return
+  // would contaminate a later bilateral result with points appended by an earlier
+  // one-sided band. This separately versioned repair therefore evaluates each widened
+  // band as a fresh bilateral search while preserving the source width constants and
+  // CURRENT_MAX_WIDTH += STD/2 progression.
   while (currentMaxWidth < maxWidth) {
     const left = vertices
       .filter((vertex) =>
