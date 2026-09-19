@@ -1,0 +1,58 @@
+name: FR199 Public Synthetic Experiment
+
+on:
+  push:
+    branches:
+      - research/fr199-public-synthetic-correspondence
+
+permissions:
+  contents: read
+
+jobs:
+  experiment:
+    name: FR199 male-23 actual experiment
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build face-reading modules
+        run: npm run face:build
+
+      - name: Execute public synthetic same-sample experiment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 > /tmp/fr199-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          sleep 2
+
+          google-chrome             --headless=new             --no-sandbox             --disable-gpu             --virtual-time-budget=60000             --dump-dom             http://127.0.0.1:4173/scripts/fr199-public-synthetic-browser-experiment.html             > /tmp/fr199-dom.html
+
+          python3 - <<'PY'
+          import html
+          import re
+          from pathlib import Path
+
+          dom = html.unescape(Path('/tmp/fr199-dom.html').read_text())
+          result = re.search(r'FR199_RESULT_JSON:(.*?)</pre>', dom, re.S)
+          error = re.search(r'FR199_ERROR_JSON:(.*?)</pre>', dom, re.S)
+          if error:
+              print('FR199_ERROR_JSON:' + error.group(1))
+              raise SystemExit(1)
+          if not result:
+              print(dom[-5000:])
+              raise SystemExit('FR199 result marker not found')
+          print('FR199_RESULT_JSON:' + result.group(1))
+          PY
