@@ -1,0 +1,35 @@
+name: FR205A AST-Face Frame Alignment Probe
+
+on:
+  push:
+    branches:
+      - research/fr205-independent-identity-acquisition
+    paths:
+      - 'scripts/run-fr205a-astface-frame-alignment-probe.mjs'
+      - '.github/workflows/fr205a-astface-frame-alignment-probe-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fr205a-astface-frame-alignment-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --check scripts/run-fr205a-astface-frame-alignment-probe.mjs
+      - run: node scripts/run-fr205a-astface-frame-alignment-probe.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr205a-astface-frame-alignment-probe
+          path: artifacts/face-reading/fr205a-astface-frame-alignment-probe.json
+          if-no-files-found: error
+          retention-days: 14
