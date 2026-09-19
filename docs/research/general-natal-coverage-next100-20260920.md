@@ -89,17 +89,17 @@ Important: an unchecked item can already have an issue or workbench. This map do
 - [ ] R074 Annual stem/branch precedence cases. — #1013
 - [ ] R075 Monthly luck interpretation boundary. — #1014
 - [ ] R076 Luck-cycle 格局 break/recovery cases. — #1015
-- [ ] R077 Luck-cycle Yong/Xi shift cases.
-- [ ] R078 Fuyin/Fanyin temporal interpretations.
-- [ ] R079 Multi-cycle conflict resolution corpus.
-- [ ] R080 Backtest historical case chronology against temporal claims.
-- [ ] R081 Assemble classical worked-example corpus with source citations.
-- [ ] R082 Normalize chart calculations for historical examples.
+- [ ] R077 Luck-cycle Yong/Xi shift cases. — #1018
+- [ ] R078 Fuyin/Fanyin temporal interpretations. — #1020
+- [ ] R079 Multi-cycle conflict resolution corpus. — #1021
+- [ ] R080 Backtest historical case chronology against temporal claims. — #1023
+- [ ] R081 Assemble classical worked-example corpus with source citations. — #1025
+- [ ] R082 Normalize chart calculations for historical examples. — #1026
 - [ ] R083 Replay governed engine against classical examples.
-- [ ] R084 Record false-positive interpretation patterns.
-- [ ] R085 Record false-negative interpretation patterns.
-- [ ] R086 Build adversarial near-identical chart pairs.
-- [ ] R087 Test birth-time perturbation sensitivity.
+- [ ] R084 Record false-positive interpretation patterns. — #1027
+- [ ] R085 Record false-negative interpretation patterns. — #1029
+- [ ] R086 Build adversarial near-identical chart pairs. — #1030
+- [ ] R087 Test birth-time perturbation sensitivity. — #1031
 - [ ] R088 Test timezone/solar-time boundary sensitivity. — #1036
 - [ ] R089 Cross-engine calculation disagreement audit. — #1038
 - [ ] R090 Human expert blind-review protocol for bounded claims. — #1039
@@ -112,7 +112,7 @@ Important: an unchecked item can already have an issue or workbench. This map do
 - [ ] R097 Reproducible scan-page inspection manifest format. — #1050
 - [ ] R098 Research-to-governed promotion checklist. — #1052
 - [ ] R099 Regression suite preventing research evidence from silently changing production. — #1053
-- [ ] R100 Publish a complete Saju research coverage map and identify the next 100 frontiers.
+- [ ] R100 Publish a complete Saju research coverage map and identify the next 100 frontiers. — #1054
 
 ## R101–R200 candidate frontiers
 
