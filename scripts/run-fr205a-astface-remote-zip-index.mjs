@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
@@ -124,7 +125,7 @@ if (entries.length !== entryCount) {
 const files = entries.filter((entry) => !entry.name.endsWith('/'));
 const extensionCounts = {};
 for (const entry of files) {
-  const ext = entry.name.toLowerCase().match(/(\.[^.\/]+)$/u)?.[1] ?? '';
+  const ext = entry.name.toLowerCase().match(/(\.[^./]+)$/u)?.[1] ?? '';
   extensionCounts[ext] = (extensionCounts[ext] ?? 0) + 1;
 }
 
