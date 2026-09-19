@@ -73,7 +73,7 @@ describe('FR208 cross-face neutral observable primitives', () => {
       sourceObservationRefs: refs,
     });
 
-    expect(result.spanToFaceWidth.value).toBeGreaterThan(0);
+    expect(result.spanToFaceWidth.value).toBeCloseTo(0.3, 8);
     expect(result.spanToFaceWidth.value).toBeLessThan(1);
     expect(result.archAmplitudeToSpan.value).toBeGreaterThan(0);
     expect(result.lateralEndpointTilt.value).toBeGreaterThan(0);
