@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FR199 public synthetic same-sample experiment</title>
+</head>
+<body>
+<pre id="result">FR199 experiment starting...</pre>
+<script type="module">
+const resultNode = document.getElementById('result');
+const sampleId = 'male-23';
+const objSource =
+  'https://raw.githubusercontent.com/research-digitized-rhinoplasty/3D-face-morph-dataset-male/main/3D-models/male-23.obj';
+const imageSource =
+  'https://raw.githubusercontent.com/research-digitized-rhinoplasty/3D-face-morph-dataset-male/main/2D-photos/male-23.png';
+
+function hex(bytes) {
+  return [...new Uint8Array(bytes)].map((value) => value.toString(16).padStart(2, '0')).join('');
+}
+
+async function sha256(buffer) {
+  return 'sha256:' + hex(await crypto.subtle.digest('SHA-256', buffer));
+}
+
+async function main() {
+  // Reference stage: provider modules and provider indices are intentionally not imported yet.
+  const referenceModule = await import(
+    '/.face-reading-dist/public-synthetic-zygion-reference-fr199.js'
+  );
+
+  const objResponse = await fetch(objSource);
+  if (!objResponse.ok) throw new Error('OBJ_DOWNLOAD_' + objResponse.status);
+  const objBytes = await objResponse.arrayBuffer();
+  const objDigest = await sha256(objBytes);
+  const objText = new TextDecoder().decode(objBytes);
+  const parsed = referenceModule.parseObjVerticesFR199(objText);
+  const sourceExact = referenceModule.deriveZygionReferenceSourceExactFR199(parsed.vertices);
+  const intendedRepair =
+    referenceModule.deriveZygionReferenceIntendedLoopRepairFR199(parsed.vertices);
+
+  const referenceReceipt = referenceModule.freezeZygionReferenceReceiptFR199({
+    sampleId,
+    objSource,
+    objDigest,
+    referenceMethod: 'topsakal_2023_public_notebook_intended_loop_repair_v1',
+    referenceMethodVersion: '1',
+    referenceExecutionMode: 'INTENDED_LOOP_REPAIR',
+    referenceExecutionStatus: intendedRepair.executionStatus,
+    zygionCoordinates: intendedRepair.zygionCoordinates,
+  });
+  Object.freeze(referenceReceipt);
+
+  // Provider stage begins only after the independent reference receipt is frozen.
+  const imageResponse = await fetch(imageSource);
+  if (!imageResponse.ok) throw new Error('IMAGE_DOWNLOAD_' + imageResponse.status);
+  const imageBytes = await imageResponse.arrayBuffer();
+  const imageDigest = await sha256(imageBytes);
+  const imageBlob = new Blob([imageBytes], { type: 'image/png' });
+  const imageBitmap = await createImageBitmap(imageBlob);
+
+  const vision = await import(
+    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs'
+  );
+  const fileset = await vision.FilesetResolver.forVisionTasks(
+    'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm'
+  );
+  const landmarker = await vision.FaceLandmarker.createFromOptions(fileset, {
+    baseOptions: {
+      modelAssetPath:
+        'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+    },
+    runningMode: 'IMAGE',
+    numFaces: 1,
+    outputFaceBlendshapes: false,
+    outputFacialTransformationMatrixes: false,
+  });
+
+  let rawResult;
+  try {
+    rawResult = landmarker.detect(imageBitmap);
+  } finally {
+    imageBitmap.close();
+    landmarker.close();
+  }
+
+  const providerSanitizer = await import(
+    '/.face-reading-dist/production-neutral-observation-provider-fr61.js'
+  );
+  const correspondenceModule = await import(
+    '/.face-reading-dist/public-synthetic-zygion-correspondence-fr199.js'
+  );
+  const frame = providerSanitizer.sanitizeMediaPipeProviderObservationFR61(rawResult, {
+    providerRunRef: 'fr199/male-23',
+    canonicalAssetDigest: imageDigest,
+  });
+  const providerCandidatePair =
+    correspondenceModule.extractProviderCandidatePairFR199(frame);
+  const descriptiveCorrespondence =
+    correspondenceModule.describeCrossFrameCorrespondenceFR199(
+      referenceReceipt,
+      providerCandidatePair,
+    );
+
+  const receipt = {
+    schemaVersion: 'fr199-public-synthetic-experiment-receipt-v1',
+    sampleId,
+    assets: {
+      objSource,
+      objDigest,
+      objByteLength: objBytes.byteLength,
+      imageSource,
+      imageDigest,
+      imageByteLength: imageBytes.byteLength,
+      imageWidth: rawResult.faceLandmarks.length === 1 ? 'decoded' : 'unknown',
+    },
+    objParse: {
+      status: 'PASS',
+      vertexCount: parsed.vertexCount,
+    },
+    sourceExact: {
+      status: sourceExact.executionStatus,
+      attemptedMaxWidths: sourceExact.attemptedMaxWidths,
+      pronasale: sourceExact.pronasale,
+      zygionCoordinates: sourceExact.zygionCoordinates,
+    },
+    intendedLoopRepair: {
+      status: intendedRepair.executionStatus,
+      attemptedMaxWidths: intendedRepair.attemptedMaxWidths,
+      pronasale: intendedRepair.pronasale,
+      zygionCoordinates: intendedRepair.zygionCoordinates,
+    },
+    referenceFrozenBeforeProvider: true,
+    referenceReceipt,
+    provider: {
+      runtimePackageName: '@mediapipe/tasks-vision',
+      runtimePackageVersion: '0.10.35',
+      faceCount: frame.faceCount,
+      landmarkCount: frame.providerOrderedPoints.length,
+      imageDigest,
+      candidatePair: providerCandidatePair,
+    },
+    descriptiveCorrespondence,
+  };
+
+  resultNode.textContent = 'FR199_RESULT_JSON:' + JSON.stringify(receipt);
+  console.log(resultNode.textContent);
+}
+
+main().catch((error) => {
+  const payload = {
+    schemaVersion: 'fr199-public-synthetic-experiment-error-v1',
+    name: error?.name ?? 'Error',
+    message: error?.message ?? String(error),
+    stack: error?.stack ?? null,
+  };
+  resultNode.textContent = 'FR199_ERROR_JSON:' + JSON.stringify(payload);
+  console.error(resultNode.textContent);
+  document.documentElement.dataset.fr199Failed = 'true';
+});
+</script>
+</body>
+</html>
