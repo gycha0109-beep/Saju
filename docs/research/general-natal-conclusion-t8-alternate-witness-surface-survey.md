@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Alternate Frozen-Witness Surface Survey
 
-Issue: #900  
-Audit base: `56a4a97aeb8c48ba2e0236a6f679fc8ce4ac97f4`
+Issue: #903  
+Audit base: `caa499f7ae0d3b7ffa56de52331f7fa9a88fbf53`
 
 ## Purpose
 
@@ -155,7 +155,47 @@ orthographic normalization                 = FORBIDDEN
 production authority                       = NO
 ```
 
-## Candidate D — secondary exact transcriptions
+## Candidate D — NLC 1940 趙燕生 / 章福記書局 edition
+
+Registered scan identity:
+
+```text
+holding institution = National Library of China
+title               = 增補淵海子平音義評註
+editor              = 趙燕生
+publisher           = 章福記書局
+date                = 康德七年 [1940]
+digitization        = NLC416-12jh002712-40330
+SHA-1               = a75396935b08d948ae972a2f456d1860ff136880
+bytes               = 13474114
+digital pages       = 306
+```
+
+The successful locator/high-resolution workbench at exact head `8e5971acabcf87fb7225c4a5006c8247c6cb9303` and run `35408495872` pinned the binary and rendered the candidate surface. OCR returned no authoritative hit and was used only as a locator.
+
+Direct page-image inspection establishes:
+
+```text
+digital page 175      = 四言獨步 title/start
+digital pages 175..179 = bounded 四言獨步 content
+digital page 180      = 五言獨步 transition
+separate 增補四言獨步 title inside bounded surface = NOT OBSERVED
+frozen exact witnesses established inside bounded surface = 0 / 4
+```
+
+The inspected pages do contain many related 財/官/印/殺 terms, but none of the four frozen exact strings is promoted by semantic similarity or partial overlap. No orthographic normalization is used.
+
+Result:
+
+```text
+registered scan candidate             = YES
+direct relevant-page inspection       = YES, digital pages 175..180
+frozen exact witnesses in bounded surface = 0 / 4
+qualification outcome                 = DIRECT TEXTUAL DIVERGENCE
+production authority                  = NO
+```
+
+## Candidate E — secondary exact transcriptions
 
 Multiple secondary online transcriptions reproduce the frozen sequence:
 
@@ -182,9 +222,9 @@ scan qualification           = NO
 
 ```text
 targetWitnessCount                         = 4
-candidateSurfaceCount                      = 4
-registeredScanCandidateCount               = 2
-directlyInspectedRegisteredScanCandidateCount = 2
+candidateSurfaceCount                      = 5
+registeredScanCandidateCount               = 3
+directlyInspectedRegisteredScanCandidateCount = 3
 contextBoundFourOfFourTextCandidateCount   = 2
 productionAdmissibleFourOfFourCandidateCount = 0
 ```

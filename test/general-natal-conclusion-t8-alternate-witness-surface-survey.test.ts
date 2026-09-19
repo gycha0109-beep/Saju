@@ -6,12 +6,12 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
   it('separates exact text circulation from scan-backed production authority', () => {
     const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
 
-    expect(evidence.issue).toBe('#900');
+    expect(evidence.issue).toBe('#903');
     expect(evidence.counts).toEqual({
       targetWitnessCount: 4,
-      candidateSurfaceCount: 4,
-      registeredScanCandidateCount: 2,
-      directlyInspectedRegisteredScanCandidateCount: 2,
+      candidateSurfaceCount: 5,
+      registeredScanCandidateCount: 3,
+      directlyInspectedRegisteredScanCandidateCount: 3,
       contextBoundFourOfFourTextCandidateCount: 2,
       productionAdmissibleFourOfFourCandidateCount: 0,
     });
@@ -74,6 +74,57 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
       contentPages: [29, 30, 31, 32, 33],
       transitionPage: 34,
       transitionSectionTitle: '身弱論',
+      frozenExactWitnessesEstablished: {
+        'W-YUANHAI-WEALTH-OFFICER': false,
+        'W-YUANHAI-OFFICER-RESOURCE': false,
+        'W-YUANHAI-PEER-WEALTH': false,
+        'W-YUANHAI-WEALTH-RESOURCE': false,
+      },
+      result: 'BOUNDED_DIRECT_TEXTUAL_DIVERGENCE_NO_FROZEN_EXACT_WITNESS',
+    });
+
+    for (const witnessId of [
+      'W-YUANHAI-WEALTH-OFFICER',
+      'W-YUANHAI-OFFICER-RESOURCE',
+      'W-YUANHAI-PEER-WEALTH',
+      'W-YUANHAI-WEALTH-RESOURCE',
+    ] as const) {
+      expect(candidate.rows[witnessId]).toEqual({
+        status: 'DIRECTLY_INSPECTED_NOT_ESTABLISHED_IN_FROZEN_CONTEXT',
+      });
+    }
+  });
+
+  it('records the bounded direct inspection of the NLC 1940 scan', () => {
+    const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
+    const candidate = evidence.candidateSurfaces.find(
+      (row) => row.candidateId === 'CANDIDATE-NLC-1940-ZHAOYANSHENG-ZHANGFUJI',
+    );
+
+    expect(candidate).toBeDefined();
+    if (candidate?.candidateId !== 'CANDIDATE-NLC-1940-ZHAOYANSHENG-ZHANGFUJI') {
+      throw new Error('Expected NLC 1940 candidate.');
+    }
+
+    expect(candidate.registeredScanIdentityEstablished).toBe(true);
+    expect(candidate.auditableHoldingInstitutionEstablished).toBe(true);
+    expect(candidate.holdingInstitution).toBe('National Library of China');
+    expect(candidate.digitization).toBe('NLC416-12jh002712-40330');
+    expect(candidate.sha1).toBe('a75396935b08d948ae972a2f456d1860ff136880');
+    expect(candidate.byteCount).toBe(13474114);
+    expect(candidate.pageCount).toBe(306);
+    expect(candidate.qualificationOutcome).toBe(
+      'REGISTERED_SCAN_DIRECTLY_INSPECTED_TEXTUAL_DIVERGENCE',
+    );
+    expect(candidate.directInspection).toEqual({
+      state: 'DIRECTLY_INSPECTED',
+      boundedDigitalPages: [175, 176, 177, 178, 179, 180],
+      sectionTitlePage: 175,
+      sectionTitle: '四言獨步',
+      contentPages: [175, 176, 177, 178, 179],
+      transitionPage: 180,
+      transitionSectionTitle: '五言獨步',
+      separateAugmentedSectionTitleObserved: false,
       frozenExactWitnessesEstablished: {
         'W-YUANHAI-WEALTH-OFFICER': false,
         'W-YUANHAI-OFFICER-RESOURCE': false,
