@@ -49,27 +49,42 @@ async function main() {
     const objText = await fetchText(file);
     const allVertices = parseObjVerticesFR199(objText);
     const faceVertices = allVertices.slice(0, FACE_VERTEX_COUNT);
-    let sourceExact;
-    try {
-      const derived = deriveZygionSourceExactFR199(faceVertices);
-      sourceExact = {
-        status: 'bilateral',
-        pronasale: derived.pronasale,
-        bilateral: derived.bilateral,
-        width: Math.abs(derived.bilateral[0].x - derived.bilateral[1].x),
-      };
-    } catch (error) {
-      sourceExact = {
-        status: 'fail_closed',
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
+    const deriveReceipt = (vertices) => {
+      try {
+        const derived = deriveZygionSourceExactFR199(vertices);
+        return {
+          status: 'bilateral',
+          pronasale: derived.pronasale,
+          bilateral: derived.bilateral,
+          width: Math.abs(derived.bilateral[0].x - derived.bilateral[1].x),
+        };
+      } catch (error) {
+        return {
+          status: 'fail_closed',
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    };
+    const sourceExact = deriveReceipt(faceVertices);
+    const centimeterToMillimeterVertices = faceVertices.map((point) => ({
+      x: point.x * 10,
+      y: point.y * 10,
+      z: point.z * 10,
+    }));
+    const sourceExactAfterCentimeterToMillimeter = deriveReceipt(
+      centimeterToMillimeterVertices,
+    );
     receipts.push({
       file,
       totalVertexCount: allVertices.length,
       faceVertexCount: faceVertices.length,
       faceBounds: bounds(faceVertices),
       sourceExact,
+      centimeterToMillimeter: {
+        scaleFactor: 10,
+        faceBounds: bounds(centimeterToMillimeterVertices),
+        sourceExact: sourceExactAfterCentimeterToMillimeter,
+      },
     });
   }
 
