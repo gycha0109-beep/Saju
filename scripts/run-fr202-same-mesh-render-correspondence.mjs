@@ -27,7 +27,7 @@ const EXPECTED_MODEL_DIGEST =
   'sha256:64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff';
 const CDP_PORT = 9226;
 const RENDER_SIZE = 1024;
-const CLIP_FILLS = [1.2, 1.5, 1.8];
+const CLIP_FILLS = [1.2, 1.0, 0.85, 1.5, 0.7, 1.8];
 
 function sha256(bytes) {
   return `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
@@ -460,11 +460,12 @@ async function main() {
       'uniform float uZHalf;',
       'uniform float uCameraSign;',
       'uniform float uYSign;',
+      'uniform float uXSign;',
       'out vec2 vUv;',
       'void main() {',
       '  float zNorm = (aPosition.z - uZMid) / uZHalf;',
       '  gl_Position = vec4(',
-      '    (aPosition.x - uCenter.x) * uScale,',
+      '    (aPosition.x - uCenter.x) * uScale * uXSign,',
       '    (aPosition.y - uCenter.y) * uScale * uYSign,',
       '    -uCameraSign * zNorm,',
       '    1.0',
@@ -492,10 +493,10 @@ async function main() {
     return { canvas, gl, program };
   };
 
-  const render = async (parsed, image, { cameraSign, ySign, clipFill, flipTextureY }) => {
+  const render = async (parsed, image, { cameraSign, xSign, ySign, clipFill, flipTextureY, background }) => {
     const { canvas, gl, program } = createRenderer();
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(0.72, 0.72, 0.72, 1);
+    gl.clearColor(background, background, background, 1);
     gl.clearDepth(1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
@@ -528,6 +529,7 @@ async function main() {
     gl.uniform1f(gl.getUniformLocation(program, 'uZHalf'), spanZ / 2);
     gl.uniform1f(gl.getUniformLocation(program, 'uCameraSign'), cameraSign);
     gl.uniform1f(gl.getUniformLocation(program, 'uYSign'), ySign);
+    gl.uniform1f(gl.getUniformLocation(program, 'uXSign'), xSign);
 
     const texture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0);
@@ -550,7 +552,7 @@ async function main() {
         centerY,
         scale,
         screenPoint: (point) => ({
-          x: ((point.x - centerX) * scale + 1) / 2,
+          x: (((point.x - centerX) * scale * xSign) + 1) / 2,
           y: 1 - ((((point.y - centerY) * scale * ySign) + 1) / 2),
         }),
       },
@@ -630,36 +632,50 @@ async function main() {
 
         const attempts = [];
         const variants = [];
-        for (const clipFill of [1.2,1.5,1.8]) {
-          for (const ySign of [1, -1]) {
-            for (const flipTextureY of [true, false]) {
-              for (const cameraSign of [1, -1]) {
-                variants.push({ cameraSign, ySign, clipFill, flipTextureY });
+        const pushVariants = (xSign, background) => {
+          for (const clipFill of [1.2,1,0.85,1.5,0.7,1.8]) {
+            for (const ySign of [1, -1]) {
+              for (const flipTextureY of [true, false]) {
+                for (const cameraSign of [1, -1]) {
+                  variants.push({ cameraSign, xSign, ySign, clipFill, flipTextureY, background });
+                }
               }
             }
           }
-        }
+        };
+        // Prefer the original orientation/background first. Detector-only fallbacks
+        // are fixed in advance and never inspect zygion distance or landmark rank.
+        pushVariants(1, 0.72);
+        pushVariants(-1, 0.72);
+        pushVariants(1, 1.0);
+        pushVariants(-1, 1.0);
+        pushVariants(1, 0.15);
+        pushVariants(-1, 0.15);
+
+        let selected = null;
         for (const variant of variants) {
           const rendered = await render(parsed, image, variant);
           const raw = landmarker.detect(rendered.canvas);
-          attempts.push({
+          const attempt = {
             ...variant,
             raw,
             rendered,
             detectedFaceCount: raw.faceLandmarks.length,
-          });
-          if (raw.faceLandmarks.length !== 1) rendered.dispose();
+          };
+          attempts.push(attempt);
+          if (raw.faceLandmarks.length === 1) {
+            selected = attempt;
+            break;
+          }
+          rendered.dispose();
         }
         image.close();
 
-        const successful = attempts.filter((attempt) => attempt.detectedFaceCount === 1);
-        if (successful.length === 0) {
+        if (selected === null) {
           throw new Error(
             'FR202 rendered mesh produced no single-face detection for any deterministic render variant.',
           );
         }
-        const selected = successful[0];
-        for (const attempt of successful.slice(1)) attempt.rendered.dispose();
         const landmarks = selected.raw.faceLandmarks[0];
         if (!landmarks || landmarks.length !== 478) {
           throw new Error('FR202 expected 478 provider landmarks, got ' + (landmarks?.length ?? 0));
@@ -694,13 +710,17 @@ async function main() {
             size: [renderSize, renderSize],
             projection: 'orthographic_source_xy',
             clipFill: selected.clipFill,
+            xSign: selected.xSign,
             ySign: selected.ySign,
             flipTextureY: selected.flipTextureY,
+            background: selected.background,
             attemptedVariants: attempts.map((attempt) => ({
               cameraSign: attempt.cameraSign,
+              xSign: attempt.xSign,
               ySign: attempt.ySign,
               clipFill: attempt.clipFill,
               flipTextureY: attempt.flipTextureY,
+              background: attempt.background,
               detectedFaceCount: attempt.detectedFaceCount,
             })),
             selectedCameraSign: selected.cameraSign,
