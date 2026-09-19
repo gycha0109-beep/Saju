@@ -10,10 +10,10 @@ export const R029_GLOBAL_ENTRY_GATES=Object.freeze([
 export const R029_ENTRY_PROPOSITIONS:readonly R029EntryProposition[]=Object.freeze([
  {id:'day-month-same-follow-strong',sourcePhrase:'日與月同，則從強從旺',target:'FOLLOW_STRONG',preconditions:['日與月同','四柱氣象偏於一方','四柱無可扶抑'],executable:false},
  {id:'day-month-same-follow-prosperous',sourcePhrase:'日與月同，則從強從旺',target:'FOLLOW_PROSPEROUS',preconditions:['日與月同','四柱氣象偏於一方','四柱無可扶抑'],executable:false},
- {id:'day-month-different-daymaster-extinct-follow-officer-kill',sourcePhrase:'日不與月同，而日元臨絕，則從官煞、從財、從食傷',target:'FOLLOW_OFFICER_KILL',preconditions:['日不與月同','日元臨絕','四柱無可扶抑'],executable:false},
- {id:'day-month-different-daymaster-extinct-follow-wealth',sourcePhrase:'日不與月同，而日元臨絕，則從官煞、從財、從食傷',target:'FOLLOW_WEALTH',preconditions:['日不與月同','日元臨絕','四柱無可扶抑'],executable:false},
- {id:'day-month-different-daymaster-extinct-follow-output',sourcePhrase:'日不與月同，而日元臨絕，則從官煞、從財、從食傷',target:'FOLLOW_OUTPUT',preconditions:['日不與月同','日元臨絕','四柱無可扶抑'],executable:false},
- {id:'daystem-transformation',sourcePhrase:'日干化合，則為化氣',target:'TRANSFORM_QI',preconditions:['日干化合'],executable:false},
+ {id:'day-month-different-daymaster-extinct-follow-officer-kill',sourcePhrase:'日不與月同，而日元臨絕，則從官煞、從財、從食傷',target:'FOLLOW_OFFICER_KILL',preconditions:['日不與月同','日元臨絕','四柱氣象偏於一方','四柱無可扶抑'],executable:false},
+ {id:'day-month-different-daymaster-extinct-follow-wealth',sourcePhrase:'日不與月同，而日元臨絕，則從官煞、從財、從食傷',target:'FOLLOW_WEALTH',preconditions:['日不與月同','日元臨絕','四柱氣象偏於一方','四柱無可扶抑'],executable:false},
+ {id:'day-month-different-daymaster-extinct-follow-output',sourcePhrase:'日不與月同，而日元臨絕，則從官煞、從財、從食傷',target:'FOLLOW_OUTPUT',preconditions:['日不與月同','日元臨絕','四柱氣象偏於一方','四柱無可扶抑'],executable:false},
+ {id:'daystem-transformation',sourcePhrase:'日干化合，則為化氣',target:'TRANSFORM_QI',preconditions:['日干化合','四柱氣象偏於一方','四柱無可扶抑'],executable:false},
 ]);
 export const R029_EXCLUSIONS=Object.freeze([
  {id:'month-order-has-usable-yongshen',sourcePhrase:'若月令自有用神，豈可另尋外格？',blocksFollow:true},
