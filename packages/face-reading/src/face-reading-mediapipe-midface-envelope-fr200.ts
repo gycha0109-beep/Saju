@@ -153,34 +153,37 @@ function validateTransform(
   const data = Array.from(matrix.data);
   data.forEach((value, index) => finite(value, `fr200.transform.data[${index}]`));
 
-  const row3 = data.slice(12, 16);
+  // MediaPipe MatrixData is packed column-major. For the conceptual last row
+  // [0, 0, 0, 1], the flattened indices are therefore 3, 7, 11, 15.
   const lastRowTolerance = 1e-4;
   if (
-    Math.abs((row3[0] ?? Infinity) - 0) > lastRowTolerance ||
-    Math.abs((row3[1] ?? Infinity) - 0) > lastRowTolerance ||
-    Math.abs((row3[2] ?? Infinity) - 0) > lastRowTolerance ||
-    Math.abs((row3[3] ?? Infinity) - 1) > lastRowTolerance
+    Math.abs(data[3]!) > lastRowTolerance ||
+    Math.abs(data[7]!) > lastRowTolerance ||
+    Math.abs(data[11]!) > lastRowTolerance ||
+    Math.abs(data[15]! - 1) > lastRowTolerance
   ) {
     throw new FaceAuthorityValidationError(
-      'FR200 facial transformation matrix last row is not the expected rigid-transform form.',
+      'FR200 facial transformation matrix last row is not the expected column-major rigid-transform form.',
     );
   }
 
-  const columnNorm = (column: number): number =>
-    Math.hypot(data[column]!, data[4 + column]!, data[8 + column]!);
+  const columnNorm = (column: number): number => {
+    const offset = column * 4;
+    return Math.hypot(data[offset]!, data[offset + 1]!, data[offset + 2]!);
+  };
   const scale = (columnNorm(0) + columnNorm(1) + columnNorm(2)) / 3;
   if (!(scale > 0)) {
     throw new FaceAuthorityValidationError('FR200 transform scale must be positive.');
   }
 
   const r00 = data[0]! / scale;
-  const r01 = data[1]! / scale;
-  const r02 = data[2]! / scale;
-  const r10 = data[4]! / scale;
+  const r01 = data[4]! / scale;
+  const r02 = data[8]! / scale;
+  const r10 = data[1]! / scale;
   const r11 = data[5]! / scale;
-  const r12 = data[6]! / scale;
-  const r20 = data[8]! / scale;
-  const r21 = data[9]! / scale;
+  const r12 = data[9]! / scale;
+  const r20 = data[2]! / scale;
+  const r21 = data[6]! / scale;
   const r22 = data[10]! / scale;
   const determinant =
     r00 * (r11 * r22 - r12 * r21) -
