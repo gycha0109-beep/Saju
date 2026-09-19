@@ -1,13 +1,15 @@
-import type { NormalizedPoint2DV1 } from './neutral-observation-schema-fr15.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export const FR208_CONTRACT_VERSION =
   'FR208-CROSS-FACE-NEUTRAL-OBSERVABLE-PRIMITIVES-v1' as const;
 
-export type PoseNormalizedVisiblePointFR208V1 = NormalizedPoint2DV1;
+export interface CanonicalAlignedMetricPointXYFR208V1 {
+  readonly x: number;
+  readonly y: number;
+}
 
 export interface NeutralObservableMetricBoundaryFR208V1 {
-  readonly coordinateFrame: 'pose_normalized_face_2d';
+  readonly coordinateFrame: 'canonical_aligned_metric_xy';
   readonly classificationApplied: false;
   readonly thresholdApplied: false;
   readonly calibrationApplied: false;
@@ -34,12 +36,12 @@ export interface NeutralObservableMetricFR208V1 extends NeutralObservableMetricB
 }
 
 export interface EyeSideVisibleCornersFR208V1 {
-  readonly innerCorner: PoseNormalizedVisiblePointFR208V1;
-  readonly outerCorner: PoseNormalizedVisiblePointFR208V1;
+  readonly innerCorner: CanonicalAlignedMetricPointXYFR208V1;
+  readonly outerCorner: CanonicalAlignedMetricPointXYFR208V1;
 }
 
 export interface EyeOuterCornerTiltInputFR208V1 {
-  readonly coordinateFrame: 'pose_normalized_face_2d';
+  readonly coordinateFrame: 'canonical_aligned_metric_xy';
   readonly leftEye: EyeSideVisibleCornersFR208V1;
   readonly rightEye: EyeSideVisibleCornersFR208V1;
   readonly sourceObservationRefs: readonly string[];
@@ -55,12 +57,12 @@ export interface EyeOuterCornerTiltResultFR208V1 {
 }
 
 export interface EyebrowVisibleCurveInputFR208V1 {
-  readonly coordinateFrame: 'pose_normalized_face_2d';
-  readonly medialEndpoint: PoseNormalizedVisiblePointFR208V1;
-  readonly lateralEndpoint: PoseNormalizedVisiblePointFR208V1;
-  readonly orderedVisibleCurve: readonly PoseNormalizedVisiblePointFR208V1[];
-  readonly visibleFaceLeft: PoseNormalizedVisiblePointFR208V1;
-  readonly visibleFaceRight: PoseNormalizedVisiblePointFR208V1;
+  readonly coordinateFrame: 'canonical_aligned_metric_xy';
+  readonly medialEndpoint: CanonicalAlignedMetricPointXYFR208V1;
+  readonly lateralEndpoint: CanonicalAlignedMetricPointXYFR208V1;
+  readonly orderedVisibleCurve: readonly CanonicalAlignedMetricPointXYFR208V1[];
+  readonly visibleFaceLeft: CanonicalAlignedMetricPointXYFR208V1;
+  readonly visibleFaceRight: CanonicalAlignedMetricPointXYFR208V1;
   readonly sourceObservationRefs: readonly string[];
 }
 
@@ -74,10 +76,10 @@ export interface EyebrowVisibleCurveResultFR208V1 {
 }
 
 export interface MouthCornerElevationInputFR208V1 {
-  readonly coordinateFrame: 'pose_normalized_face_2d';
-  readonly leftCorner: PoseNormalizedVisiblePointFR208V1;
-  readonly rightCorner: PoseNormalizedVisiblePointFR208V1;
-  readonly visibleMouthCenter: PoseNormalizedVisiblePointFR208V1;
+  readonly coordinateFrame: 'canonical_aligned_metric_xy';
+  readonly leftCorner: CanonicalAlignedMetricPointXYFR208V1;
+  readonly rightCorner: CanonicalAlignedMetricPointXYFR208V1;
+  readonly visibleMouthCenter: CanonicalAlignedMetricPointXYFR208V1;
   readonly sourceObservationRefs: readonly string[];
 }
 
@@ -91,11 +93,11 @@ export interface MouthCornerElevationResultFR208V1 {
 }
 
 export interface VisibleWidthRatioInputFR208V1 {
-  readonly coordinateFrame: 'pose_normalized_face_2d';
-  readonly regionLeft: PoseNormalizedVisiblePointFR208V1;
-  readonly regionRight: PoseNormalizedVisiblePointFR208V1;
-  readonly visibleFaceLeft: PoseNormalizedVisiblePointFR208V1;
-  readonly visibleFaceRight: PoseNormalizedVisiblePointFR208V1;
+  readonly coordinateFrame: 'canonical_aligned_metric_xy';
+  readonly regionLeft: CanonicalAlignedMetricPointXYFR208V1;
+  readonly regionRight: CanonicalAlignedMetricPointXYFR208V1;
+  readonly visibleFaceLeft: CanonicalAlignedMetricPointXYFR208V1;
+  readonly visibleFaceRight: CanonicalAlignedMetricPointXYFR208V1;
   readonly sourceObservationRefs: readonly string[];
 }
 
@@ -138,17 +140,14 @@ function fail(message: string): never {
 }
 
 function assertCoordinateFrame(value: string): void {
-  if (value !== 'pose_normalized_face_2d') {
-    fail('requires coordinateFrame=pose_normalized_face_2d.');
+  if (value !== 'canonical_aligned_metric_xy') {
+    fail('requires coordinateFrame=canonical_aligned_metric_xy.');
   }
 }
 
-function assertPoint(point: PoseNormalizedVisiblePointFR208V1, label: string): void {
+function assertPoint(point: CanonicalAlignedMetricPointXYFR208V1, label: string): void {
   if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) {
     fail(`${label} must contain finite x/y coordinates.`);
-  }
-  if (point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1) {
-    fail(`${label} must be normalized to [0,1].`);
   }
 }
 
@@ -160,13 +159,13 @@ function assertRefs(refs: readonly string[]): readonly string[] {
   return Object.freeze([...trimmed]);
 }
 
-function pointKey(point: PoseNormalizedVisiblePointFR208V1): string {
+function pointKey(point: CanonicalAlignedMetricPointXYFR208V1): string {
   return `${point.x}:${point.y}`;
 }
 
 function horizontalSpan(
-  left: PoseNormalizedVisiblePointFR208V1,
-  right: PoseNormalizedVisiblePointFR208V1,
+  left: CanonicalAlignedMetricPointXYFR208V1,
+  right: CanonicalAlignedMetricPointXYFR208V1,
   label: string,
 ): number {
   const span = Math.abs(right.x - left.x);
@@ -175,8 +174,8 @@ function horizontalSpan(
 }
 
 function euclideanDistance(
-  a: PoseNormalizedVisiblePointFR208V1,
-  b: PoseNormalizedVisiblePointFR208V1,
+  a: CanonicalAlignedMetricPointXYFR208V1,
+  b: CanonicalAlignedMetricPointXYFR208V1,
   label: string,
 ): number {
   const value = Math.hypot(b.x - a.x, b.y - a.y);
@@ -195,7 +194,7 @@ function metric(
     metricRef,
     value,
     unit,
-    coordinateFrame: 'pose_normalized_face_2d' as const,
+    coordinateFrame: 'canonical_aligned_metric_xy' as const,
     classificationApplied: false as const,
     thresholdApplied: false as const,
     calibrationApplied: false as const,
@@ -233,9 +232,9 @@ export function computeEyeOuterCornerTiltFR208(
 }
 
 function perpendicularDistanceToChord(
-  point: PoseNormalizedVisiblePointFR208V1,
-  start: PoseNormalizedVisiblePointFR208V1,
-  end: PoseNormalizedVisiblePointFR208V1,
+  point: CanonicalAlignedMetricPointXYFR208V1,
+  start: CanonicalAlignedMetricPointXYFR208V1,
+  end: CanonicalAlignedMetricPointXYFR208V1,
 ): number {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
