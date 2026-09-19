@@ -84,6 +84,7 @@ function makeProfile(
   profileKey: string,
   requiredClaimSelectors: readonly ReadingClaimSelectorGroup[],
   excludedClaimSelectors: readonly ReadingClaimSelector[],
+  optionalClaimSelectors: readonly ReadingClaimSelector[] = [],
 ): DomainReadingProfile {
   const periodEvidence =
     intent.temporalScope === 'annual' ||
@@ -96,7 +97,7 @@ function makeProfile(
     registryVersion: READING_PROFILE_REGISTRY_VERSION,
     intent: normalizedIntent(intent),
     requiredClaimSelectors,
-    optionalClaimSelectors: [],
+    optionalClaimSelectors,
     excludedClaimSelectors,
     temporalRequirements: {
       scope: intent.temporalScope,
@@ -248,6 +249,14 @@ function buildProfile(intent: ReadingIntent): DomainReadingProfile | undefined {
             taxonomySelector('exclude-general-period', 'T9'),
             taxonomySelector('exclude-general-compatibility', 'T10'),
             taxonomySelector('exclude-general-question', 'T11'),
+          ],
+          [
+            taxonomySelector(
+              'target-general-natal-scope-guard',
+              'T8',
+              'general',
+              'scope_guard',
+            ),
           ],
         );
       }
