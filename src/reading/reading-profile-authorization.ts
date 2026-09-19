@@ -61,9 +61,9 @@ export interface GovernedReadingCompositionEvidenceResult
 
 const AUTHORIZED_PROFILE_REFS: readonly ContentAddressedVersionedRef[] = Object.freeze([
   {
-    id: 'myeonghwa-reading-profile-general-natal-v1',
+    id: 'myeonghwa-reading-profile-general-natal-v2',
     version: '1.0.0',
-    contentHash: '682bb733efd0ed07623e8477527be321515fa58c6a409f02b6d0ee213d307cb3',
+    contentHash: '224db01cfae6593e6e44829186f5b3581028efc9cb01e848527fa88af914dedb',
   },
   {
     id: 'myeonghwa-reading-profile-general-annual-v1',
