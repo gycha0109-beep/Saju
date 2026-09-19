@@ -21,7 +21,7 @@ describe('FR207 whole-face minimum measurement inventory', () => {
     expect(byKey.get('nose')).toMatchObject({
       primaryMethod: 'contour_geometry',
       currentReadiness: 'existing_governed_neutral_metric',
-      productReadiness: 'neutral_measurement_reusable',
+      productReadiness: 'research_measurement_reusable_not_product_bound',
     });
     expect(byKey.get('eye_pair')).toMatchObject({
       primaryMethod: 'landmark_geometry',
