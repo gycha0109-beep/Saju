@@ -148,15 +148,31 @@ function assertion(claim: InterpretationClaim) {
 }
 
 function claimStructureText(claim: InterpretationClaim): string | undefined {
-  const families = valueRecord(claim).families;
-  if (!Array.isArray(families)) return undefined;
-  const labels = families.flatMap((family) =>
-    typeof family === 'string' && TEN_GOD_FAMILY_STRUCTURE_LABELS[family] !== undefined
-      ? [TEN_GOD_FAMILY_STRUCTURE_LABELS[family]]
-      : [],
-  );
-  if (labels.length === 0) return undefined;
-  return `근거 구조: ${labels.join(' · ')}${labels.length > 1 ? '의 결합' : ' 축'}이 이 해석의 직접 근거입니다.`;
+  const value = valueRecord(claim);
+  const families = value.families;
+  if (Array.isArray(families)) {
+    const labels = families.flatMap((family) =>
+      typeof family === 'string' && TEN_GOD_FAMILY_STRUCTURE_LABELS[family] !== undefined
+        ? [TEN_GOD_FAMILY_STRUCTURE_LABELS[family]]
+        : [],
+    );
+    if (labels.length > 0) {
+      return `근거 구조: ${labels.join(' · ')}${labels.length > 1 ? '의 결합' : ' 축'}이 이 해석의 직접 근거입니다.`;
+    }
+  }
+
+  const tenGod = typeof value.tenGod === 'string' ? value.tenGod : undefined;
+  const channel = typeof value.channel === 'string' ? value.channel : undefined;
+  if (tenGod !== undefined) {
+    const channelLabel =
+      channel === 'visible_stems'
+        ? '천간에 드러난'
+        : channel === 'branches'
+          ? '지지의 바탕에서 확인되는'
+          : '원국에서 확인되는';
+    return `근거 구조: ${channelLabel} ${tenGod}의 작동을 근거로 읽습니다.`;
+  }
+  return undefined;
 }
 
 function claimNarrativeBlocks(claim: InterpretationClaim) {
