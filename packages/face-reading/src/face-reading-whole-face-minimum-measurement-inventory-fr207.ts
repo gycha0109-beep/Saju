@@ -207,7 +207,7 @@ readonly FaceReadingWholeFaceMeasurementEntryFR207[] = Object.freeze([
     regionKey: 'nose',
     primaryMethod: 'contour_geometry',
     currentReadiness: 'existing_governed_neutral_metric',
-    productReadiness: 'neutral_measurement_reusable',
+    productReadiness: 'research_measurement_reusable_not_product_bound',
     reusableRefs: [
       'packages/face-reading/src/nose-geometry.ts',
       'packages/face-reading/src/neutral-observation-schema-fr15.ts',
@@ -236,7 +236,7 @@ readonly FaceReadingWholeFaceMeasurementEntryFR207[] = Object.freeze([
     regionKey: 'mouth_lips',
     primaryMethod: 'contour_geometry',
     currentReadiness: 'existing_governed_neutral_metric',
-    productReadiness: 'neutral_measurement_reusable',
+    productReadiness: 'research_measurement_reusable_not_product_bound',
     reusableRefs: [
       'packages/face-reading/src/neutral-mouth-contour-metric-fr80.ts',
       'packages/face-reading/src/neutral-mouth-relative-size-metric-fr82.ts',
