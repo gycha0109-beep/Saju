@@ -73,12 +73,13 @@ export const R017_CROSS_SOURCE_BRIDGES = Object.freeze({
 export const R017_SCOPE_GAPS = Object.freeze({
   yinLuResolved: false,
   earthLuResolved: false,
-  sameSourceXuCommentaryStemBranchBridgeReviewed: false,
+  sameSourceXuCommentaryStemBranchBridgeReviewed: true,
+  sameSourceXuCommentaryCompleteStemBranchBridgeAvailable: false,
   glyphExactScanClosureComplete: false,
 });
 
 export const R017_AUTHORITY = Object.freeze({
-  status: 'research' as const,
+  status: 'VERIFIED_BOUNDED_CROSS_SOURCE_BRIDGE_REJECTED' as const,
   luHeavyRootSupportedBounded: true,
   wangHeavyRootGovernedResearchOnly: true,
   diwangStageGovernedResearchOnly: true,
