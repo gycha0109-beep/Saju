@@ -1,0 +1,67 @@
+name: FR204 3DDFA Dense Oracle CI
+
+on:
+  push:
+    branches:
+      - research/fr204-3ddfa-dense-oracle
+    paths:
+      - 'packages/face-reading/**'
+      - 'scripts/prepare-fr204-3ddfa-oracle-inputs.mjs'
+      - 'scripts/run-fr204-3ddfa-dense-oracle.py'
+      - 'research/face-reading/fr204-3ddfa-dense-oracle.md'
+      - '.github/workflows/fr204-3ddfa-dense-oracle-ci.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    paths:
+      - 'packages/face-reading/**'
+      - 'scripts/prepare-fr204-3ddfa-oracle-inputs.mjs'
+      - 'scripts/run-fr204-3ddfa-dense-oracle.py'
+      - 'research/face-reading/fr204-3ddfa-dense-oracle.md'
+      - '.github/workflows/fr204-3ddfa-dense-oracle-ci.yml'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fr204-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  fr204:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install Node dependencies
+        run: npm ci
+      - name: Build face-reading research modules
+        run: npm run face:build
+      - name: Prepare frozen independent inputs
+        run: node scripts/prepare-fr204-3ddfa-oracle-inputs.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install validation-only LiteRT runtime
+        run: python -m pip install --disable-pip-version-check --no-cache-dir ai-edge-litert pillow numpy
+      - name: Syntax-check FR204 oracle
+        run: python -m py_compile scripts/run-fr204-3ddfa-dense-oracle.py
+      - name: Execute FR204 3DDFA dense oracle
+        run: >-
+          python scripts/run-fr204-3ddfa-dense-oracle.py
+          artifacts/face-reading/fr204-3ddfa-inputs/manifest.json
+          artifacts/face-reading/fr204-3ddfa-dense-oracle.json
+      - name: Upload FR204 oracle receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr204-3ddfa-dense-oracle
+          path: artifacts/face-reading/fr204-3ddfa-dense-oracle.json
+          if-no-files-found: warn
+          retention-days: 14
