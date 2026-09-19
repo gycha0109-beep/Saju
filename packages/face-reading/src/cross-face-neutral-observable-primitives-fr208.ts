@@ -9,7 +9,7 @@ export interface CanonicalAlignedMetricPointXYFR208V1 {
 }
 
 export interface NeutralObservableMetricBoundaryFR208V1 {
-  readonly coordinateFrame: 'canonical_aligned_metric_xy';
+  readonly coordinateFrame: 'canonical_aligned_right_handed_metric_xy';
   readonly classificationApplied: false;
   readonly thresholdApplied: false;
   readonly calibrationApplied: false;
@@ -41,7 +41,7 @@ export interface EyeSideVisibleCornersFR208V1 {
 }
 
 export interface EyeOuterCornerTiltInputFR208V1 {
-  readonly coordinateFrame: 'canonical_aligned_metric_xy';
+  readonly coordinateFrame: 'canonical_aligned_right_handed_metric_xy';
   readonly leftEye: EyeSideVisibleCornersFR208V1;
   readonly rightEye: EyeSideVisibleCornersFR208V1;
   readonly sourceObservationRefs: readonly string[];
@@ -50,14 +50,14 @@ export interface EyeOuterCornerTiltInputFR208V1 {
 export interface EyeOuterCornerTiltResultFR208V1 {
   readonly schemaVersion: 'fr208-eye-outer-corner-tilt-v1';
   readonly convention:
-    'positive_when_outer_corner_is_visually_higher_than_inner_corner_in_top_left_image_coordinates';
+    'positive_when_outer_corner_has_greater_canonical_metric_y_than_inner_corner';
   readonly left: NeutralObservableMetricFR208V1;
   readonly right: NeutralObservableMetricFR208V1;
   readonly mean: NeutralObservableMetricFR208V1;
 }
 
 export interface EyebrowVisibleCurveInputFR208V1 {
-  readonly coordinateFrame: 'canonical_aligned_metric_xy';
+  readonly coordinateFrame: 'canonical_aligned_right_handed_metric_xy';
   readonly medialEndpoint: CanonicalAlignedMetricPointXYFR208V1;
   readonly lateralEndpoint: CanonicalAlignedMetricPointXYFR208V1;
   readonly orderedVisibleCurve: readonly CanonicalAlignedMetricPointXYFR208V1[];
@@ -72,11 +72,11 @@ export interface EyebrowVisibleCurveResultFR208V1 {
   readonly archAmplitudeToSpan: NeutralObservableMetricFR208V1;
   readonly lateralEndpointTilt: NeutralObservableMetricFR208V1;
   readonly tiltConvention:
-    'positive_when_lateral_endpoint_is_visually_higher_than_medial_endpoint_in_top_left_image_coordinates';
+    'positive_when_lateral_endpoint_has_greater_canonical_metric_y_than_medial_endpoint';
 }
 
 export interface MouthCornerElevationInputFR208V1 {
-  readonly coordinateFrame: 'canonical_aligned_metric_xy';
+  readonly coordinateFrame: 'canonical_aligned_right_handed_metric_xy';
   readonly leftCorner: CanonicalAlignedMetricPointXYFR208V1;
   readonly rightCorner: CanonicalAlignedMetricPointXYFR208V1;
   readonly visibleMouthCenter: CanonicalAlignedMetricPointXYFR208V1;
@@ -86,14 +86,14 @@ export interface MouthCornerElevationInputFR208V1 {
 export interface MouthCornerElevationResultFR208V1 {
   readonly schemaVersion: 'fr208-mouth-corner-elevation-v1';
   readonly convention:
-    'positive_when_corner_is_visually_higher_than_explicit_visible_mouth_center_in_top_left_image_coordinates';
+    'positive_when_corner_has_greater_canonical_metric_y_than_explicit_visible_mouth_center';
   readonly left: NeutralObservableMetricFR208V1;
   readonly right: NeutralObservableMetricFR208V1;
   readonly mean: NeutralObservableMetricFR208V1;
 }
 
 export interface VisibleWidthRatioInputFR208V1 {
-  readonly coordinateFrame: 'canonical_aligned_metric_xy';
+  readonly coordinateFrame: 'canonical_aligned_right_handed_metric_xy';
   readonly regionLeft: CanonicalAlignedMetricPointXYFR208V1;
   readonly regionRight: CanonicalAlignedMetricPointXYFR208V1;
   readonly visibleFaceLeft: CanonicalAlignedMetricPointXYFR208V1;
@@ -140,8 +140,8 @@ function fail(message: string): never {
 }
 
 function assertCoordinateFrame(value: string): void {
-  if (value !== 'canonical_aligned_metric_xy') {
-    fail('requires coordinateFrame=canonical_aligned_metric_xy.');
+  if (value !== 'canonical_aligned_right_handed_metric_xy') {
+    fail('requires coordinateFrame=canonical_aligned_right_handed_metric_xy.');
   }
 }
 
@@ -194,7 +194,7 @@ function metric(
     metricRef,
     value,
     unit,
-    coordinateFrame: 'canonical_aligned_metric_xy' as const,
+    coordinateFrame: 'canonical_aligned_right_handed_metric_xy' as const,
     classificationApplied: false as const,
     thresholdApplied: false as const,
     calibrationApplied: false as const,
@@ -208,8 +208,8 @@ function outwardTiltDegrees(side: EyeSideVisibleCornersFR208V1, label: string): 
   assertPoint(side.innerCorner, `${label}.innerCorner`);
   assertPoint(side.outerCorner, `${label}.outerCorner`);
   const horizontal = horizontalSpan(side.innerCorner, side.outerCorner, label);
-  // Image Y grows downward. inner.y - outer.y is positive when the outer corner is visibly higher.
-  return Math.atan2(side.innerCorner.y - side.outerCorner.y, horizontal) * 180 / Math.PI;
+  // Canonical metric +Y points upward. Positive means the outer corner is above the inner corner.
+  return Math.atan2(side.outerCorner.y - side.innerCorner.y, horizontal) * 180 / Math.PI;
 }
 
 export function computeEyeOuterCornerTiltFR208(
@@ -224,7 +224,7 @@ export function computeEyeOuterCornerTiltFR208(
   return Object.freeze({
     schemaVersion: 'fr208-eye-outer-corner-tilt-v1' as const,
     convention:
-      'positive_when_outer_corner_is_visually_higher_than_inner_corner_in_top_left_image_coordinates' as const,
+      'positive_when_outer_corner_has_greater_canonical_metric_y_than_inner_corner' as const,
     left: metric('neutral.eye.outer_corner_tilt.left_degrees@0.1.0', left, 'degree', refs),
     right: metric('neutral.eye.outer_corner_tilt.right_degrees@0.1.0', right, 'degree', refs),
     mean: metric('neutral.eye.outer_corner_tilt.mean_degrees@0.1.0', mean, 'degree', refs),
@@ -267,7 +267,7 @@ export function computeEyebrowVisibleCurveFR208(
   );
   const lateralTilt =
     Math.atan2(
-      input.medialEndpoint.y - input.lateralEndpoint.y,
+      input.lateralEndpoint.y - input.medialEndpoint.y,
       horizontalSpan(input.medialEndpoint, input.lateralEndpoint, 'eyebrow endpoint'),
     ) * 180 / Math.PI;
 
@@ -292,7 +292,7 @@ export function computeEyebrowVisibleCurveFR208(
       refs,
     ),
     tiltConvention:
-      'positive_when_lateral_endpoint_is_visually_higher_than_medial_endpoint_in_top_left_image_coordinates' as const,
+      'positive_when_lateral_endpoint_has_greater_canonical_metric_y_than_medial_endpoint' as const,
   });
 }
 
@@ -306,14 +306,14 @@ export function computeMouthCornerElevationFR208(
   assertPoint(input.visibleMouthCenter, 'visibleMouthCenter');
 
   const mouthWidth = horizontalSpan(input.leftCorner, input.rightCorner, 'visible mouth');
-  const left = (input.visibleMouthCenter.y - input.leftCorner.y) / mouthWidth;
-  const right = (input.visibleMouthCenter.y - input.rightCorner.y) / mouthWidth;
+  const left = (input.leftCorner.y - input.visibleMouthCenter.y) / mouthWidth;
+  const right = (input.rightCorner.y - input.visibleMouthCenter.y) / mouthWidth;
   const mean = (left + right) / 2;
 
   return Object.freeze({
     schemaVersion: 'fr208-mouth-corner-elevation-v1' as const,
     convention:
-      'positive_when_corner_is_visually_higher_than_explicit_visible_mouth_center_in_top_left_image_coordinates' as const,
+      'positive_when_corner_has_greater_canonical_metric_y_than_explicit_visible_mouth_center' as const,
     left: metric(
       'neutral.mouth.corner_elevation.left_to_mouth_width_ratio@0.1.0',
       left,
