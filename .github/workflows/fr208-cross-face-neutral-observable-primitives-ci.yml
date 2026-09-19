@@ -7,7 +7,6 @@ on:
       - 'packages/face-reading/src/cross-face-neutral-observable-primitives-fr208.test.ts'
       - 'packages/face-reading/src/face-reading-observable-morphology-measurement-boundary-fr206.ts'
       - 'packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts'
-      - 'packages/face-reading/src/index.ts'
       - 'research/face-reading/fr208-cross-face-neutral-observable-primitives.md'
       - '.github/workflows/fr208-cross-face-neutral-observable-primitives-ci.yml'
 
