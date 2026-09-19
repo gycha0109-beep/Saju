@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Alternate Frozen-Witness Surface Survey
 
-Issue: #886  
-Audit base: `7f5c0b7923d3b8a79ca6a4fa9781a95b48ef3068`
+Issue: #889  
+Audit base: `c6c9f409da5611d21dc1b62d98e78c1a140645d1`
 
 ## Purpose
 
@@ -90,7 +90,20 @@ The Shidian book identifier is tied to this NLC family:
 https://www.shidianguji.com/zh/book/NGJ892411999032112149610/chapter/1lqbsmkg60o4b
 ```
 
-The linked transcription establishes the previously observed context mismatch on the NLC surface:
+Direct page-image inspection now establishes the bounded section surface:
+
+```text
+digital page 16 = 四言獨步 title/start; opening anchors directly legible
+digital pages 17-18 = continuation of the bounded 四言 surface
+digital page 19 = transition; 棄命從殺論 title directly visible
+frozen exact witnesses established inside bounded surface = 0 / 4
+```
+
+Directly legible opening anchors on page 16 include `先天何處 / 後天何處 / 要知來處 / 便知去處`, `四柱排定 / 三才次分 / 年干為本 / 配合元辰`, `神煞相伴 / 輕重較量 / 先觀月令 / 論格推詳`, and `以日為主 / 專論財官 / 分其貴賤 / 妙法多端`.
+
+This direct negative result is bounded to pages 16..19 and does not claim that no other historical exemplar contains the frozen strings.
+
+The linked transcription separately establishes the previously observed context mismatch on the NLC surface:
 
 ```text
 財旺生官
@@ -121,6 +134,8 @@ Result:
 
 ```text
 registered scan candidate                  = YES
+direct bounded page-image inspection       = YES, digital pages 16..19
+frozen exact witnesses in bounded surface  = 0 / 4
 scan-linked transcription                  = YES, NLC family
 context-bound frozen 4/4 exact match       = NO
 same-string-different-section substitution = FORBIDDEN
@@ -157,6 +172,7 @@ scan qualification           = NO
 targetWitnessCount                         = 4
 candidateSurfaceCount                      = 4
 registeredScanCandidateCount               = 2
+directlyInspectedRegisteredScanCandidateCount = 1
 contextBoundFourOfFourTextCandidateCount   = 2
 productionAdmissibleFourOfFourCandidateCount = 0
 ```
