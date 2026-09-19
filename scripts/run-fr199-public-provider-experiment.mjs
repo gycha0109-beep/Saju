@@ -551,11 +551,24 @@ async function main() {
       if (result.receipts.length === 0) process.exitCode = 1;
     } finally {
       if (cdp) cdp.ws.close();
-      if (child && child.exitCode === null) child.kill('SIGKILL');
+      if (child && child.exitCode === null) {
+        await new Promise((resolvePromise) => {
+          let settled = false;
+          const finish = () => {
+            if (settled) return;
+            settled = true;
+            resolvePromise();
+          };
+          child.once('exit', finish);
+          child.once('error', finish);
+          child.kill('SIGKILL');
+          globalThis.setTimeout(finish, 5000);
+        });
+      }
       await new Promise((resolvePromise) => server.close(resolvePromise));
     }
   } finally {
-    await rm(scratch, { recursive: true, force: true });
+    await rm(scratch, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
 }
 
