@@ -57,22 +57,34 @@ async function download(url, path) {
 }
 
 async function fetchRange(start, end) {
-  const response = await globalThis.fetch(ZIP_URL, {
-    redirect: 'follow',
-    headers: {
-      Range: `bytes=${start}-${end}`,
-      'user-agent': 'myeongha-fr205a-render-pilot',
-    },
-    signal: globalThis.AbortSignal.timeout(120000),
-  });
-  if (!(response.status === 206 || response.status === 200)) {
-    throw new Error(`FR205A range fetch failed ${response.status}`);
+  let lastStatus = null;
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      const response = await globalThis.fetch(ZIP_URL, {
+        redirect: 'follow',
+        headers: {
+          Range: `bytes=${start}-${end}`,
+          'user-agent': 'myeongha-fr205a-full-holdout',
+        },
+        signal: globalThis.AbortSignal.timeout(120000),
+      });
+      lastStatus = response.status;
+      if (response.status === 206 || response.status === 200) {
+        return {
+          bytes: Buffer.from(await response.arrayBuffer()),
+          contentRange: response.headers.get('content-range'),
+          contentLength: response.headers.get('content-length'),
+        };
+      }
+      if (response.status < 500 && response.status !== 429) {
+        throw new Error(`FR205A range fetch failed ${response.status}`);
+      }
+    } catch (error) {
+      if (attempt === 4) throw error;
+    }
+    await delay(250 * attempt);
   }
-  return {
-    bytes: Buffer.from(await response.arrayBuffer()),
-    contentRange: response.headers.get('content-range'),
-    contentLength: response.headers.get('content-length'),
-  };
+  throw new Error(`FR205A range fetch failed after retries; last status ${lastStatus}`);
 }
 
 async function discoverZipSize() {
