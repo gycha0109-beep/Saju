@@ -9,6 +9,7 @@ on:
       - 'packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.test.ts'
       - 'scripts/run-fr199-public-reference-experiment.mjs'
       - 'scripts/run-fr199-public-provider-experiment.mjs'
+      - 'research/face-reading/fr199-public-synthetic-zygion-correspondence.md'
       - '.github/workflows/fr199-public-synthetic-zygion-correspondence-ci.yml'
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - 'packages/face-reading/src/face-reading-public-synthetic-zygion-correspondence-fr199.test.ts'
       - 'scripts/run-fr199-public-reference-experiment.mjs'
       - 'scripts/run-fr199-public-provider-experiment.mjs'
+      - 'research/face-reading/fr199-public-synthetic-zygion-correspondence.md'
       - '.github/workflows/fr199-public-synthetic-zygion-correspondence-ci.yml'
 
 permissions:
