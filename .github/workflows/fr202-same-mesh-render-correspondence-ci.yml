@@ -1,0 +1,46 @@
+name: FR202 Same-Mesh Render Correspondence CI
+
+on:
+  push:
+    branches:
+      - research/fr202-same-mesh-render-correspondence
+    paths:
+      - 'scripts/run-fr202-same-mesh-render-correspondence.mjs'
+      - 'research/face-reading/fr202-same-mesh-render-correspondence.md'
+      - '.github/workflows/fr202-same-mesh-render-correspondence-ci.yml'
+  pull_request:
+    paths:
+      - 'scripts/run-fr202-same-mesh-render-correspondence.mjs'
+      - 'research/face-reading/fr202-same-mesh-render-correspondence.md'
+      - '.github/workflows/fr202-same-mesh-render-correspondence-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fr202:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck face-reading
+        run: npm run face:typecheck
+      - name: Build face-reading
+        run: npm run face:build
+      - name: Syntax-check FR202 experiment
+        run: node --check scripts/run-fr202-same-mesh-render-correspondence.mjs
+      - name: FR202 exact same-mesh textured render experiment
+        run: node scripts/run-fr202-same-mesh-render-correspondence.mjs
+      - name: Upload FR202 experiment receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr202-same-mesh-render-correspondence
+          path: artifacts/face-reading/fr202-same-mesh-render-correspondence.json
+          if-no-files-found: warn
+          retention-days: 14
