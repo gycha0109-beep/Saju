@@ -17,7 +17,7 @@ This is the first implementation step after FR206/FR207. It deliberately does no
 
 - input: explicit visible inner/outer eye corners for both eyes;
 - output: left, right, and bilateral mean tilt in degrees;
-- sign convention: positive means the outer corner is visually higher than the inner corner in top-left image coordinates;
+- sign convention: positive means the outer corner has greater canonical metric Y than the inner corner (+Y upward);
 - no eye-shape category or traditional label is emitted.
 
 ### Eyebrow
