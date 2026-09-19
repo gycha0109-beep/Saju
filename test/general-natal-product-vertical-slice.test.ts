@@ -4,7 +4,6 @@ import {
   SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
   buildDeterministicFallbackDraft,
   calculateCanonicalSajuSnapshot,
-  createGeneralNatalUsefulReadingCandidateRegistry,
   runInterpretation,
   type CompiledNarrativePrompt,
   type NarrativeModelAdapter,
@@ -12,6 +11,7 @@ import {
 } from '../src/index.js';
 import { createMyeonghwaProductHost } from '../src/host/product-host.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
+import { createGeneralNatalUsefulReadingCandidateRegistry } from '../src/research/general-natal-useful-reading-candidate.js';
 
 const NARRATIVE_POLICY: NarrativePolicy = {
   policyId: 'myeonghwa-general-natal-vertical-slice-test',
