@@ -63,7 +63,7 @@ const AUTHORIZED_PROFILE_REFS: readonly ContentAddressedVersionedRef[] = Object.
   {
     id: 'myeonghwa-reading-profile-general-natal-v2',
     version: '1.0.0',
-    contentHash: '596e6bdcf1e71161090977e2a8a1fe87f4845975037bab059fd60b188673b062',
+    contentHash: '224db01cfae6593e6e44829186f5b3581028efc9cb01e848527fa88af914dedb',
   },
   {
     id: 'myeonghwa-reading-profile-general-annual-v1',
