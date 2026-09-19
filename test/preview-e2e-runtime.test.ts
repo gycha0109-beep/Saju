@@ -117,7 +117,7 @@ describe('provisionally approved preview E2E runtime', () => {
         PRODUCT_READING_PREVIEW_LIFECYCLE,
       );
 
-      const payload = await response.json();
+      const payload = (await response.json()) as { state?: unknown };
       expect(['delivered', 'delivered_with_fallback']).toContain(payload.state);
       const serialized = JSON.stringify(payload);
       expect(serialized).toContain('이 사주의 핵심');
@@ -145,7 +145,7 @@ describe('provisionally approved preview E2E runtime', () => {
         body: readingRequest(text),
       });
       expect(response.status).toBe(200);
-      const payload = await response.json();
+      const payload = (await response.json()) as { state?: unknown };
       expect(['delivered', 'delivered_with_fallback']).toContain(payload.state);
       expect(JSON.stringify(payload)).toContain(expectedTitle);
     } finally {
@@ -189,7 +189,7 @@ describe('provisionally approved preview E2E runtime', () => {
       });
 
       expect(response.status).toBe(200);
-      const payload = await response.json();
+      const payload = (await response.json()) as { state?: unknown };
       expect(['delivered', 'delivered_with_fallback']).not.toContain(payload.state);
       expect(JSON.stringify(payload)).not.toContain('이 사주의 핵심');
     } finally {
