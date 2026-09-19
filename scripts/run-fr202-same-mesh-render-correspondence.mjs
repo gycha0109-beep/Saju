@@ -366,7 +366,6 @@ async function main() {
   const vision = await import(location.origin + '/vendor/vision_bundle.mjs');
   const inputs = ${JSON.stringify(inputs)};
   const renderSize = ${RENDER_SIZE};
-  const clipFill = ${CLIP_FILL};
 
   const objIndex = (raw, length) => {
     const value = Number(raw);
@@ -460,12 +459,13 @@ async function main() {
       'uniform float uZMid;',
       'uniform float uZHalf;',
       'uniform float uCameraSign;',
+      'uniform float uYSign;',
       'out vec2 vUv;',
       'void main() {',
       '  float zNorm = (aPosition.z - uZMid) / uZHalf;',
       '  gl_Position = vec4(',
       '    (aPosition.x - uCenter.x) * uScale,',
-      '    (aPosition.y - uCenter.y) * uScale,',
+      '    (aPosition.y - uCenter.y) * uScale * uYSign,',
       '    -uCameraSign * zNorm,',
       '    1.0',
       '  );',
