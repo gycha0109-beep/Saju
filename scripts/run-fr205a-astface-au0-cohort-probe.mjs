@@ -167,9 +167,13 @@ for (const row of cohort.slice(0, 3)) {
   ]);
   const meshText = meshBytes.toString('utf8');
   const landmarkText = landmarkBytes.toString('utf8');
-  const vertices = meshText
+  const vertexRows = meshText
     .split(/\r?\n/u)
     .filter((line) => line.startsWith('v '));
+  const vertices = vertexRows.map((line) => {
+    const parts = line.trim().split(/\s+/u);
+    return [Number(parts[1]), Number(parts[2]), Number(parts[3])];
+  });
   const faces = meshText
     .split(/\r?\n/u)
     .filter((line) => line.startsWith('f '));
@@ -199,6 +203,14 @@ for (const row of cohort.slice(0, 3)) {
       digest: sha256(meshBytes),
       vertexCount: vertices.length,
       faceCount: faces.length,
+      bounds: {
+        minX: Math.min(...vertices.map((point) => point[0])),
+        maxX: Math.max(...vertices.map((point) => point[0])),
+        minY: Math.min(...vertices.map((point) => point[1])),
+        maxY: Math.max(...vertices.map((point) => point[1])),
+        minZ: Math.min(...vertices.map((point) => point[2])),
+        maxZ: Math.max(...vertices.map((point) => point[2])),
+      },
     },
     landmarks: {
       name: row.landmarks.name,
@@ -207,6 +219,14 @@ for (const row of cohort.slice(0, 3)) {
       digest: sha256(landmarkBytes),
       pointCount: landmarks.length,
       fullXSpan: Math.max(...xs) - Math.min(...xs),
+      bounds: {
+        minX: Math.min(...landmarks.map((point) => point[0])),
+        maxX: Math.max(...landmarks.map((point) => point[0])),
+        minY: Math.min(...landmarks.map((point) => point[1])),
+        maxY: Math.max(...landmarks.map((point) => point[1])),
+        minZ: Math.min(...landmarks.map((point) => point[2])),
+        maxZ: Math.max(...landmarks.map((point) => point[2])),
+      },
     },
   });
 }
