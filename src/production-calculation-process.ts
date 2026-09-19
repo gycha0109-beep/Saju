@@ -1,5 +1,6 @@
 import type { Server } from 'node:http';
-import { createMyeonghwaProductionCalculationHostServer } from './production-calculation-host.js';
+import { createMyeonghwaProductionPreviewHostServer } from './production-calculation-host.js';
+import { createApprovedPreviewE2eProductHost } from './preview/preview-product-host.js';
 
 export const PRODUCTION_CALCULATION_PROCESS_ENV_V1 = {
   serviceBearer: 'SAJU_PRODUCTION_SERVICE_BEARER',
@@ -113,12 +114,15 @@ export function createMyeonghwaProductionCalculationProcessV1(
   env: Environment = process.env,
 ): MyeonghwaProductionCalculationProcessV1 {
   const config = readMyeonghwaProductionCalculationProcessConfigV1(env);
-  const server = createMyeonghwaProductionCalculationHostServer({
-    serviceBearer: config.serviceBearer,
-    ...(config.previousServiceBearer === undefined
-      ? {}
-      : { previousServiceBearer: config.previousServiceBearer }),
-  });
+  const server = createMyeonghwaProductionPreviewHostServer(
+    createApprovedPreviewE2eProductHost(),
+    {
+      serviceBearer: config.serviceBearer,
+      ...(config.previousServiceBearer === undefined
+        ? {}
+        : { previousServiceBearer: config.previousServiceBearer }),
+    },
+  );
 
   return {
     server,
