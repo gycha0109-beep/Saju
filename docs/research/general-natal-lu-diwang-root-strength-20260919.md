@@ -74,13 +74,21 @@ A separate 子平真詮評註 commentary surface:
 
 https://www.ncc.com.tw/fate/paleo/bg/bg_03.htm
 
-contains the commentary association:
+does **not** support the previously drafted literal quote `祿臨官也` as an exact verified quotation. Fresh direct verification instead supports this narrower pair of observations:
 
 ```text
-祿臨官也
+寅申巳亥，為五行長生臨官之地
+寅申巳亥，稱為四生（亦是四祿）之地
 ```
 
-and explains the seasonal sequence in which a branch such as 卯 is described as a 專旺 location and called 帝旺.
+and separately:
+
+```text
+卯者，春木專旺之地，故稱帝旺
+子午卯酉，為專旺之方
+```
+
+Thus the branch-set association is observed in Xu's commentary, but a literal universal `祿 == 臨官` identity claim is withdrawn.
 
 This is meaningful evidence that the commentary vocabulary relates the terms.
 
@@ -100,8 +108,9 @@ The sources and governed tables are not the same authority object.
 祿 AS HEAVY ROOT                 = SUPPORTED_BOUNDED
 旺 AS HEAVY ROOT                 = GOVERNED_RESEARCH_ONLY
 帝旺 STAGE                       = GOVERNED_RESEARCH_ONLY
-臨官 / 祿 COMMENTARY ASSOCIATION = OBSERVED
+臨官 branch-set / 四祿 COMMENTARY ASSOCIATION = OBSERVED_BOUNDED
 帝旺 / 專旺 ASSOCIATION          = OBSERVED_BOUNDED
+LITERAL 祿臨官也 QUOTE              = WITHDRAWN_UNVERIFIED
 
 #547 臨官 -> 祿 heavy root         = UNAUTHORIZED
 #547 帝旺 -> 旺 heavy root         = UNAUTHORIZED
