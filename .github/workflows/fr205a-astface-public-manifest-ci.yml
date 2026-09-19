@@ -1,0 +1,38 @@
+name: FR205A AST-Face Public Manifest
+
+on:
+  push:
+    branches:
+      - research/fr205-independent-identity-acquisition
+    paths:
+      - 'scripts/run-fr205a-astface-public-manifest.mjs'
+      - '.github/workflows/fr205a-astface-public-manifest-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fr205a-astface-public-manifest
+  cancel-in-progress: true
+
+jobs:
+  manifest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Syntax-check FR205A manifest
+        run: node --check scripts/run-fr205a-astface-public-manifest.mjs
+      - name: Enumerate AST-Face public OSF files
+        run: node scripts/run-fr205a-astface-public-manifest.mjs
+      - name: Upload FR205A manifest receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr205a-astface-public-manifest
+          path: artifacts/face-reading/fr205a-astface-public-manifest.json
+          if-no-files-found: error
+          retention-days: 14
