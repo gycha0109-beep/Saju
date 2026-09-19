@@ -963,8 +963,14 @@ async function main() {
       const artifact = {
         schemaVersion: 'fr204-morphed-geometry-holdout-v1',
         authorityState: 'research_morphed_geometry_holdout_only',
-        status:
-          result.receipts.length === inputs.length ? 'executed_complete' : 'executed_partial',
+        holdoutCoverageStatus:
+          referenceFailures.length === 0
+            ? 'all_predeclared_candidates_reference_ready'
+            : 'source_exact_reference_partial',
+        providerExecutionStatus:
+          result.receipts.length === inputs.length && inputs.length > 0
+            ? 'complete_for_reference_ready_subset'
+            : 'partial_for_reference_ready_subset',
         premise:
           'FR204 validates frozen FR203 scale factors on 16 never-used morphed geometry variants. No factor is re-fit from holdout provider/reference error.',
         discoveryCalibration: {
@@ -1047,8 +1053,11 @@ async function main() {
       );
       process.stdout.write(
         `${JSON.stringify({
-          status: artifact.status,
+          holdoutCoverageStatus: artifact.holdoutCoverageStatus,
+          providerExecutionStatus: artifact.providerExecutionStatus,
+          holdoutCandidateCount: artifact.holdoutCandidateCount,
           independentReferenceReadyCount: artifact.independentReferenceReadyCount,
+          referenceFailures: artifact.referenceFailures,
           providerSuccessCount: artifact.providerSuccessCount,
           providerFailures: artifact.providerFailures,
           selectedCameraFrequency: artifact.selectedCameraFrequency,
@@ -1061,7 +1070,10 @@ async function main() {
         })}\n`,
       );
 
-      if (artifact.status !== 'executed_complete' || result.receipts.length === 0) {
+      if (
+        artifact.providerExecutionStatus !== 'complete_for_reference_ready_subset' ||
+        result.receipts.length === 0
+      ) {
         process.exitCode = 1;
       }
     } finally {
