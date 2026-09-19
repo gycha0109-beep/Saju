@@ -13,6 +13,7 @@ export {
   PRODUCTION_COMPOSITION_VERSION,
   ProductionCompositionBlockedError,
   createAuthorizedMyeonghwaProductionHost,
+  createAuthorizedMyeonghwaProductionHostServer,
   inspectMyeonghwaProductionComposition,
   listAuthorizedProductionCalculationPolicies,
   type AuthorizedProductionCalculationPolicySummary,
@@ -23,4 +24,9 @@ export {
   type ProductionCompositionBlockerCode,
   type ProductionCompositionInspection,
   type ProductionCompositionRequest,
+  type MyeonghwaProductionProductHostServerOptions,
 } from './production/production-composition.js';
+
+export {
+  PRODUCT_READING_RESPONSE_ADMISSION_HEADER,
+} from './host/http-server.js';

@@ -7,6 +7,7 @@ import {
   PRODUCTION_COMPOSITION_VERSION,
   ProductionCompositionBlockedError,
   createAuthorizedMyeonghwaProductionHost,
+  createAuthorizedMyeonghwaProductionHostServer,
   inspectMyeonghwaProductionComposition,
   listAuthorizedProductionCalculationPolicies,
 } from '../src/production-runtime.js';
@@ -105,6 +106,12 @@ describe('production composition root', () => {
 
   it('refuses to construct a production host while interpretation authority is incomplete', () => {
     expect(() => createAuthorizedMyeonghwaProductionHost({})).toThrow(
+      ProductionCompositionBlockedError,
+    );
+  });
+
+  it('refuses to expose the Product Reading HTTP server while interpretation authority is incomplete', () => {
+    expect(() => createAuthorizedMyeonghwaProductionHostServer({})).toThrow(
       ProductionCompositionBlockedError,
     );
   });
