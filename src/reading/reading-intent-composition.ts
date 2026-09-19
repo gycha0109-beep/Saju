@@ -84,6 +84,7 @@ function makeProfile(
   profileKey: string,
   requiredClaimSelectors: readonly ReadingClaimSelectorGroup[],
   excludedClaimSelectors: readonly ReadingClaimSelector[],
+  optionalClaimSelectors: readonly ReadingClaimSelector[] = [],
 ): DomainReadingProfile {
   const periodEvidence =
     intent.temporalScope === 'annual' ||
@@ -96,7 +97,7 @@ function makeProfile(
     registryVersion: READING_PROFILE_REGISTRY_VERSION,
     intent: normalizedIntent(intent),
     requiredClaimSelectors,
-    optionalClaimSelectors: [],
+    optionalClaimSelectors,
     excludedClaimSelectors,
     temporalRequirements: {
       scope: intent.temporalScope,
@@ -169,17 +170,93 @@ function buildProfile(intent: ReadingIntent): DomainReadingProfile | undefined {
       if (intent.temporalScope === 'natal') {
         return makeProfile(
           intent,
-          'general-natal-v1',
+          'general-natal-v2',
           [
             requiredGroup(
-              'NATAL_DOMAIN_SYNTHESIS_CLAIM_REQUIRED',
-              taxonomySelector('target-general-natal', 'T8', 'general'),
+              'NATAL_GENERAL_FOUNDATION_CLAIM_REQUIRED',
+              taxonomySelector(
+                'target-general-natal-self-baseline',
+                'T8',
+                'general',
+                'self_baseline',
+              ),
+              taxonomySelector(
+                'target-general-natal-month-branch-structural-context',
+                'T8',
+                'general',
+                'month_branch_structural_context',
+              ),
+            ),
+            requiredGroup(
+              'NATAL_GENERAL_SYNTHESIS_CLAIM_REQUIRED',
+              taxonomySelector(
+                'target-general-natal-core-conclusion',
+                'T8',
+                'general',
+                'core_conclusion',
+              ),
+              taxonomySelector(
+                'target-general-natal-strength-conclusion',
+                'T8',
+                'general',
+                'strength_conclusion',
+              ),
+              taxonomySelector(
+                'target-general-natal-tension-conclusion',
+                'T8',
+                'general',
+                'tension_conclusion',
+              ),
+              taxonomySelector(
+                'target-general-natal-source-bounded-relation',
+                'T8',
+                'general',
+                'source_bounded_relation',
+              ),
+              taxonomySelector(
+                'target-general-natal-relationships-and-agency',
+                'T8',
+                'general',
+                'relationships_and_agency',
+              ),
+              taxonomySelector(
+                'target-general-natal-learning-and-support',
+                'T8',
+                'general',
+                'learning_and_support',
+              ),
+              taxonomySelector(
+                'target-general-natal-expression-and-workstyle',
+                'T8',
+                'general',
+                'expression_and_workstyle',
+              ),
+              taxonomySelector(
+                'target-general-natal-resources-and-results',
+                'T8',
+                'general',
+                'resources_and_results',
+              ),
+              taxonomySelector(
+                'target-general-natal-responsibility-and-pressure',
+                'T8',
+                'general',
+                'responsibility_and_pressure',
+              ),
             ),
           ],
           [
             taxonomySelector('exclude-general-period', 'T9'),
             taxonomySelector('exclude-general-compatibility', 'T10'),
             taxonomySelector('exclude-general-question', 'T11'),
+          ],
+          [
+            taxonomySelector(
+              'target-general-natal-scope-guard',
+              'T8',
+              'general',
+              'scope_guard',
+            ),
           ],
         );
       }
