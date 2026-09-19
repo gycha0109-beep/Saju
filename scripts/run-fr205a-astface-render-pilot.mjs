@@ -10,11 +10,6 @@ import { fileURLToPath } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
 
 import {
-  parseObjVerticesFR199,
-  deriveZygionSourceExactFR199,
-} from '../.face-reading-dist/face-reading-public-synthetic-zygion-correspondence-fr199.js';
-
-import {
   FR200_FACE_OVAL_VERTICES,
   FR200_LEFT_EYE_VERTICES,
   FR200_RIGHT_EYE_VERTICES,
@@ -306,16 +301,27 @@ async function main() {
           extractEntry(meshEntry),
           extractEntry(landmarkEntry),
         ]);
-        const objText = meshBytes.toString('utf8');
-        const vertices = parseObjVerticesFR199(objText);
-        const reference = deriveZygionSourceExactFR199(vertices);
-        const landmarkRows = landmarkBytes
+        const landmarkPoints = landmarkBytes
           .toString('utf8')
           .split(/\r?\n/u)
           .map((line) => line.trim())
-          .filter(Boolean);
-        if (landmarkRows.length !== 84) {
-          throw new Error(`expected 84 AST-Face landmarks, got ${landmarkRows.length}`);
+          .filter(Boolean)
+          .map((line) => line.split(/\s+/u).map(Number));
+        if (
+          landmarkPoints.length !== 84 ||
+          !landmarkPoints.every(
+            (point) => point.length === 3 && point.every(Number.isFinite),
+          )
+        ) {
+          throw new Error(`expected 84 finite AST-Face XYZ landmarks, got ${landmarkPoints.length}`);
+        }
+        const orderedByX = landmarkPoints
+          .map(([x, y, z], index) => ({ x, y, z, index }))
+          .sort((a, b) => a.x - b.x || a.index - b.index);
+        const left = orderedByX[0];
+        const right = orderedByX.at(-1);
+        if (!left || !right || !(right.x > left.x)) {
+          throw new Error('AST-Face 84-point X-span reference is invalid.');
         }
         const objPath = join(assetDir, `${subject}.obj`);
         await writeFile(objPath, meshBytes);
@@ -324,7 +330,12 @@ async function main() {
           objPath: `/assets/${subject}.obj`,
           objDigest: sha256(meshBytes),
           landmarkDigest: sha256(landmarkBytes),
-          bilateralReference: reference.bilateral,
+          breadthReference: {
+            method: 'astface_84_landmark_full_x_span',
+            left,
+            right,
+            sourcePointCount: landmarkPoints.length,
+          },
         });
       } catch (error) {
         referenceFailures.push({
@@ -714,9 +725,10 @@ async function main() {
         if (!landmarks || landmarks.length !== 478) {
           throw new Error('FR205A provider landmark count drift.');
         }
-        const projectedReference = input.bilateralReference.map(
-          selected.rendered.projection.screenPoint,
-        );
+        const projectedReference = [
+          selected.rendered.projection.screenPoint(input.breadthReference.left),
+          selected.rendered.projection.screenPoint(input.breadthReference.right),
+        ];
         const referenceWidth = Math.abs(
           projectedReference[0].x - projectedReference[1].x,
         );
@@ -726,6 +738,7 @@ async function main() {
           subject: input.subject,
           objDigest: input.objDigest,
           landmarkDigest: input.landmarkDigest,
+          breadthReference: input.breadthReference,
           selectedVariant: selected.variant,
           attempts,
           referenceWidth,
@@ -770,8 +783,8 @@ async function main() {
         (receipt) => receipt.calibratedAbsoluteRelativeError,
       );
       const artifact = {
-        schemaVersion: 'fr205a-astface-render-pilot-v1',
-        authorityState: 'independent_identity_synthetic_render_pilot_only',
+        schemaVersion: 'fr205a-astface-face-breadth-render-pilot-v2',
+        authorityState: 'independent_identity_synthetic_face_breadth_pilot_only',
         subjects: PILOT_SUBJECTS,
         selectedCount: PILOT_SUBJECTS.length,
         independentReferenceReadyCount: inputs.length,
@@ -779,6 +792,8 @@ async function main() {
         providerSuccessCount: result.receipts.length,
         providerFailureCount: result.failures.length,
         providerFailures: result.failures,
+        referenceDefinition:
+          'AST-Face public 84-point anatomical landmark full X-span; explicitly not zygion',
         frozenMeasurement:
           'roll_normalized_mediapipe_full_official_face_oval_x_envelope',
         frozenCalibrationFactor: FROZEN_FULL_OVAL_FACTOR,
@@ -791,7 +806,7 @@ async function main() {
         },
         calibratedAbsoluteRelativeError: summarize(errors),
         receipts: result.receipts,
-        independentIdentitySyntheticGeometryPilotComplete:
+        independentIdentitySyntheticFaceBreadthPilotComplete:
           inputs.length + referenceFailures.length === PILOT_SUBJECTS.length &&
           result.receipts.length + result.failures.length === inputs.length,
         independentRealPhotoValidationComplete: false,
@@ -802,13 +817,13 @@ async function main() {
       const outDir = join(ROOT, 'artifacts', 'face-reading');
       await mkdir(outDir, { recursive: true });
       await writeFile(
-        join(outDir, 'fr205a-astface-render-pilot.json'),
+        join(outDir, 'fr205a-astface-face-breadth-render-pilot.json'),
         `${JSON.stringify(artifact, null, 2)}\n`,
         'utf8',
       );
       globalThis.console.log(
         JSON.stringify({
-          status: artifact.independentIdentitySyntheticGeometryPilotComplete
+          status: artifact.independentIdentitySyntheticFaceBreadthPilotComplete
             ? 'pilot_complete'
             : 'pilot_partial',
           selectedCount: artifact.selectedCount,
