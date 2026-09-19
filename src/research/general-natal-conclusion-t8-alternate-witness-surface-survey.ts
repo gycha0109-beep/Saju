@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8PassageWitnessEvidence } from './general-natal-conclusion-t8-passage-witness-evidence.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-alternate-witness-surface-survey-v4' as const;
+  'myeonghwa-general-natal-conclusion-t8-alternate-witness-surface-survey-v5' as const;
 
 const TARGET_WITNESS_IDS = Object.freeze([
   'W-YUANHAI-WEALTH-OFFICER',
@@ -168,6 +168,56 @@ const CANDIDATE_SURFACES = Object.freeze([
     qualificationOutcome: 'REGISTERED_SCAN_DIRECTLY_INSPECTED_CONTEXT_MISMATCH',
   }),
   Object.freeze({
+    candidateId: 'CANDIDATE-NLC-1940-ZENGBU-YUANHAI',
+    authorityClass: 'REGISTERED_LATER_EDITION_SCAN_DIRECTLY_INSPECTED_CONTROL',
+    title: '增補淵海子平音義評註',
+    edition: '章福記書局 / 康德七年 [1940]',
+    holdingInstitution: 'National Library of China',
+    holdingCall: 'MG/B992.3/28',
+    digitization: 'NLC416-12jh002712-40330',
+    pageCount: 306,
+    scanUrl:
+      'https://commons.wikimedia.org/wiki/File:NLC416-12jh002712-40330_%E5%A2%9E%E8%A3%9C%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E9%9F%B3%E7%BE%A9%E8%A9%95%E8%A8%BB.pdf',
+    registeredScanIdentityEstablished: true,
+    auditableHoldingInstitutionEstablished: true,
+    context: 'later-edition control / directly inspected 四言獨步 surface',
+    directInspection: Object.freeze({
+      state: 'DIRECTLY_INSPECTED' as const,
+      exactAssetSha1: 'a75396935b08d948ae972a2f456d1860ff136880' as const,
+      exactAssetBytes: 13474114 as const,
+      exactAssetPages: 306 as const,
+      boundedDigitalPages: Object.freeze([175, 176, 177, 178, 179] as const),
+      sectionTitlePage: 175 as const,
+      sectionTitle: '四言獨步' as const,
+      headingIsPlainFourYanDubu: true as const,
+      augmentedHeadingEstablished: false as const,
+      transitionPage: 180 as const,
+      transitionSectionTitle: '五言獨步' as const,
+      frozenExactWitnessesEstablished: Object.freeze({
+        'W-YUANHAI-WEALTH-OFFICER': false,
+        'W-YUANHAI-OFFICER-RESOURCE': false,
+        'W-YUANHAI-PEER-WEALTH': false,
+        'W-YUANHAI-WEALTH-RESOURCE': false,
+      }),
+      result: 'LATER_EDITION_BOUNDED_DIRECT_TEXTUAL_DIVERGENCE_NO_FROZEN_EXACT_WITNESS' as const,
+    }),
+    rows: Object.freeze({
+      'W-YUANHAI-WEALTH-OFFICER': Object.freeze({
+        status: 'DIRECTLY_INSPECTED_FROZEN_EXACT_STRING_NOT_ESTABLISHED',
+      }),
+      'W-YUANHAI-OFFICER-RESOURCE': Object.freeze({
+        status: 'DIRECTLY_INSPECTED_FROZEN_EXACT_STRING_NOT_ESTABLISHED',
+      }),
+      'W-YUANHAI-PEER-WEALTH': Object.freeze({
+        status: 'DIRECTLY_INSPECTED_FROZEN_EXACT_STRING_NOT_ESTABLISHED',
+      }),
+      'W-YUANHAI-WEALTH-RESOURCE': Object.freeze({
+        status: 'DIRECTLY_INSPECTED_FROZEN_EXACT_STRING_NOT_ESTABLISHED',
+      }),
+    }),
+    qualificationOutcome: 'REGISTERED_LATER_EDITION_DIRECTLY_INSPECTED_CONTROL_DIVERGENCE',
+  }),
+  Object.freeze({
     candidateId: 'CANDIDATE-SECONDARY-FOUR-YAN-DUBU-TRANSCRIPTIONS',
     authorityClass: 'SECONDARY_TRANSCRIPTION_NO_REGISTERED_SCAN_IDENTITY',
     title: 'secondary 四言獨步 transcription family',
@@ -251,9 +301,9 @@ export function buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_ALTERNATE_WITNESS_SURFACE_SURVEY_VERSION,
-    issue: '#900' as const,
-    auditBaseSha: 'cec546753affdab7feceb364369f3522be52cbd5' as const,
-    status: 'NLC_1634_AND_NTL_1926_DIRECTLY_INSPECTED_TEXTUAL_DIVERGENCE_NO_PRODUCTION_ADMISSIBLE_FOUR_OF_FOUR_CANDIDATE' as const,
+    issue: '#903' as const,
+    auditBaseSha: '1c6f0228924b61ae5341c239d4e128674b31b429' as const,
+    status: 'NLC_1634_NTL_1926_AND_NLC_1940_DIRECTLY_INSPECTED_VARIANT_DIVERGENCE_NO_PRODUCTION_ADMISSIBLE_FOUR_OF_FOUR_CANDIDATE' as const,
     upstreamPassageEvidenceId: upstream.evidenceId,
     frozenRows,
     candidateSurfaces: CANDIDATE_SURFACES,
