@@ -45,6 +45,7 @@ async function download(url, path) {
   const response = await globalThis.fetch(url, {
     redirect: 'follow',
     headers: { 'user-agent': 'myeongha-fr202-same-mesh-render' },
+    signal: AbortSignal.timeout(120000),
   });
   if (!response.ok) throw new Error(`FR202 download failed ${response.status} ${url}`);
   const bytes = Buffer.from(await response.arrayBuffer());
@@ -227,7 +228,7 @@ async function main() {
     const inputs = [];
     const referenceFailures = [];
 
-    for (const sampleId of FR199_PUBLIC_CORPUS) {
+    const prepareSample = async (sampleId) => {
       const { repository, commit } = sourceFor(sampleId);
       try {
         const objPath = join(assetDir, `${sampleId}.obj`);
@@ -253,19 +254,34 @@ async function main() {
           objText,
           objDigest: sha256(objBytes),
         });
-        inputs.push({
-          sampleId,
-          objPath: `/assets/${sampleId}.obj`,
-          texturePath: `/assets/${sampleId}.jpg`,
-          objDigest: sha256(objBytes),
-          textureDigest: sha256(textureBytes),
-          bilateralReference: reference.bilateralReference,
-        });
+        return {
+          input: {
+            sampleId,
+            objPath: `/assets/${sampleId}.obj`,
+            texturePath: `/assets/${sampleId}.jpg`,
+            objDigest: sha256(objBytes),
+            textureDigest: sha256(textureBytes),
+            bilateralReference: reference.bilateralReference,
+          },
+          failure: null,
+        };
       } catch (error) {
-        referenceFailures.push({
-          sampleId,
-          error: error instanceof Error ? error.message : String(error),
-        });
+        return {
+          input: null,
+          failure: {
+            sampleId,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        };
+      }
+    };
+
+    for (let offset = 0; offset < FR199_PUBLIC_CORPUS.length; offset += 4) {
+      const batch = FR199_PUBLIC_CORPUS.slice(offset, offset + 4);
+      const prepared = await Promise.all(batch.map(prepareSample));
+      for (const entry of prepared) {
+        if (entry.input) inputs.push(entry.input);
+        if (entry.failure) referenceFailures.push(entry.failure);
       }
     }
 
