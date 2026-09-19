@@ -9,10 +9,6 @@ import { fileURLToPath } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
 
 import {
-  FR199_FEMALE_DATASET_COMMIT,
-  FR199_FEMALE_DATASET_REPOSITORY,
-  FR199_MALE_DATASET_COMMIT,
-  FR199_MALE_DATASET_REPOSITORY,
   deriveZygionSourceExactFR199,
   parseObjVerticesFR199,
 } from '../.face-reading-dist/face-reading-public-synthetic-zygion-correspondence-fr199.js';
