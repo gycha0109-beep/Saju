@@ -1,0 +1,32 @@
+name: FR205 ICT Geometry Probe
+
+on:
+  push:
+    branches:
+      - research/fr205-ict-synthetic-identity-probe
+    paths:
+      - 'scripts/probe-fr205-ict-geometry.mjs'
+      - '.github/workflows/fr205-ict-geometry-probe.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fr205-ict-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build face-reading
+        run: npm run face:build
+      - name: Probe ICT geometry
+        run: node scripts/probe-fr205-ict-geometry.mjs
