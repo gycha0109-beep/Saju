@@ -1,6 +1,6 @@
 # FR204 — Frozen Calibration Holdout Protocol
 
-Status: `inventory_passed_holdout_execution_pending`
+Status: `executed_complete_unseen_geometry_holdout`
 
 Issue: #971  
 PR: #972  
@@ -131,3 +131,66 @@ independentIdentityValidationComplete=false
 ```
 
 A successful intervention holdout can justify continuing the calibration hypothesis. It cannot by itself set any authority flag above to true.
+
+
+## FR204 execution result
+
+Exact experiment head:
+
+`7ef67185f62c8789e80cc3bc2f852a34ae8b6c08`
+
+Dedicated workflow:
+
+- run: `35444691930`
+- job: `105901492914`
+- result: PASS
+- selected holdout identities: **20**
+- independent references ready: **17**
+- independent-reference failures: **3**
+- provider successes among ready references: **17/17**
+- provider failures: **0**
+- artifact id: `10585306912`
+- artifact digest: `sha256:dcd27f5f26f6feb2f8e817eb10abf7ec0994d674f7af52022cd00cc9d218d1aa`
+
+The selection rule and all calibration factors were frozen before provider/error observation.
+
+### Frozen-factor holdout results
+
+| Proxy | Raw mean absolute relative error | Calibrated mean absolute relative error | Calibrated median absolute relative error | Pearson | Spearman |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| fixed 234↔454 | 18.52% | **9.11%** | **5.95%** | 0.8956 | 0.8971 |
+| full face oval | 20.75% | **8.50%** | **5.43%** | **0.8998** | **0.9167** |
+| midface band envelope | 18.88% | **8.79%** | **5.57%** | 0.8944 | 0.8971 |
+
+Observed calibrated provider/reference ratio means:
+
+- fixed 234↔454: `0.96127`
+- full oval: `0.96556`
+- band envelope: `0.96664`
+
+The calibration therefore materially reduced average error on geometry that was not used to estimate the factors.
+
+### Interpretation
+
+This result **supports continuing** the multiplicative-calibration hypothesis.
+
+It does not establish anatomical zygion correspondence and does not complete independent-identity validation.
+
+Among the three predeclared proxies, the **full face-oval envelope** produced the lowest calibrated mean/median absolute relative error and the strongest ordering preservation on this intervention holdout. It becomes the leading candidate for the next independent-identity validation stage.
+
+That candidate selection happens after FR204 and therefore must not be claimed as independently validated by FR204 itself.
+
+The midface band remains a secondary candidate because its calibrated error is close, but it did not outperform full oval on the frozen holdout.
+
+## FR204 decision
+
+```text
+frozenCalibrationHypothesisContinues=true
+leadingNextStageCandidate=full_face_oval_calibrated
+independentIdentityValidationComplete=false
+calibrationAuthorized=false
+productionAuthorized=false
+commerceAuthorized=false
+```
+
+FR205 must validate the selected calibrated full-oval proxy on identities not used anywhere in FR199–FR204, or use a separately justified external 3D oracle protocol if direct scan ground truth cannot be obtained.

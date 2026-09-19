@@ -65,25 +65,6 @@ async function download(url, path) {
   return bytes;
 }
 
-function verifyBinding(objText, mtlText, sampleId) {
-  const mtllib = objText
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .find((line) => line.startsWith('mtllib '));
-  const mapKd = mtlText
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .find((line) => line.startsWith('map_Kd '));
-  const expectedMtl = `${sampleId}.mtl`;
-  const expectedTexture = `${sampleId}.jpg`;
-  if (mtllib?.slice('mtllib '.length).trim() !== expectedMtl) {
-    throw new Error(`FR204 OBJ/MTL binding drift for ${sampleId}: ${mtllib ?? 'missing'}`);
-  }
-  if (mapKd?.slice('map_Kd '.length).trim() !== expectedTexture) {
-    throw new Error(`FR204 MTL/texture binding drift for ${sampleId}: ${mapKd ?? 'missing'}`);
-  }
-}
-
 function zipEntries(zipPath) {
   const result = spawnSync('unzip', ['-Z1', zipPath], {
     encoding: 'utf8',
@@ -1132,7 +1113,6 @@ async function main() {
         traditionalProjectionAuthorized: false,
         productionAuthorized: false,
         commerceAuthorized: false,
-        independentIdentityValidationComplete: false,
       };
 
       const artifactDir = join(ROOT, 'artifacts', 'face-reading');
