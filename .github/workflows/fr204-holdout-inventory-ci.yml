@@ -6,6 +6,7 @@ on:
       - research/fr204-frozen-calibration-holdout
     paths:
       - 'scripts/run-fr204-morphed-holdout-inventory.mjs'
+      - 'research/face-reading/fr204-frozen-calibration-holdout.md'
       - '.github/workflows/fr204-holdout-inventory-ci.yml'
   pull_request:
     paths:
