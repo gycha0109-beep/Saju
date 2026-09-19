@@ -90,6 +90,26 @@ describe('FR200 MediaPipe midface envelope', () => {
     expect(receipt.geometry.fixed234454Width).toBeCloseTo(0.6, 12);
   });
 
+  it('accepts the MediaPipe column-major rigid-transform packing with translation in indices 12-14', () => {
+    const receipt = deriveMediaPipeMidfaceEnvelopeFR200({
+      landmarks: makeLandmarks(),
+      facialTransformationMatrix: {
+        rows: 4,
+        columns: 4,
+        data: [
+          1, 0, 0, 0,
+          0, 1, 0, 0,
+          0, 0, 1, 0,
+          12, -3, 40, 1,
+        ],
+      },
+    });
+
+    expect(receipt.faceGeometryTransform.uniformScaleEstimate).toBeCloseTo(1, 12);
+    expect(receipt.faceGeometryTransform.normalizedRotationDeterminant).toBeCloseTo(1, 12);
+    expect(receipt.faceGeometryTransform.yawDegreesXYZConvention).toBeCloseTo(0, 12);
+  });
+
   it('fails closed when the Face Geometry transform is not a finite 4x4 rigid form', () => {
     expect(() =>
       deriveMediaPipeMidfaceEnvelopeFR200({
