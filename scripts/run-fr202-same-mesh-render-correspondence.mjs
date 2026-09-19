@@ -27,7 +27,7 @@ const EXPECTED_MODEL_DIGEST =
   'sha256:64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff';
 const CDP_PORT = 9226;
 const RENDER_SIZE = 1024;
-const CLIP_FILL = 1.8;
+const CLIP_FILLS = [1.2, 1.5, 1.8];
 
 function sha256(bytes) {
   return `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
@@ -492,7 +492,7 @@ async function main() {
     return { canvas, gl, program };
   };
 
-  const render = async (parsed, image, cameraSign) => {
+  const render = async (parsed, image, { cameraSign, ySign, clipFill, flipTextureY }) => {
     const { canvas, gl, program } = createRenderer();
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.72, 0.72, 0.72, 1);
@@ -527,11 +527,12 @@ async function main() {
     gl.uniform1f(gl.getUniformLocation(program, 'uZMid'), (b.minZ + b.maxZ) / 2);
     gl.uniform1f(gl.getUniformLocation(program, 'uZHalf'), spanZ / 2);
     gl.uniform1f(gl.getUniformLocation(program, 'uCameraSign'), cameraSign);
+    gl.uniform1f(gl.getUniformLocation(program, 'uYSign'), ySign);
 
     const texture = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flipTextureY);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -550,9 +551,10 @@ async function main() {
         scale,
         screenPoint: (point) => ({
           x: ((point.x - centerX) * scale + 1) / 2,
-          y: 1 - (((point.y - centerY) * scale + 1) / 2),
+          y: 1 - ((((point.y - centerY) * scale * ySign) + 1) / 2),
         }),
       },
+      dispose: () => gl.getExtension('WEBGL_lose_context')?.loseContext(),
     };
   };
 
@@ -627,26 +629,37 @@ async function main() {
         const parsed = parseObj(objText);
 
         const attempts = [];
-        for (const cameraSign of [1, -1]) {
-          const rendered = await render(parsed, image, cameraSign);
+        const variants = [];
+        for (const clipFill of [1.2,1.5,1.8]) {
+          for (const ySign of [1, -1]) {
+            for (const flipTextureY of [true, false]) {
+              for (const cameraSign of [1, -1]) {
+                variants.push({ cameraSign, ySign, clipFill, flipTextureY });
+              }
+            }
+          }
+        }
+        for (const variant of variants) {
+          const rendered = await render(parsed, image, variant);
           const raw = landmarker.detect(rendered.canvas);
           attempts.push({
-            cameraSign,
+            ...variant,
             raw,
             rendered,
             detectedFaceCount: raw.faceLandmarks.length,
           });
+          if (raw.faceLandmarks.length !== 1) rendered.dispose();
         }
         image.close();
 
         const successful = attempts.filter((attempt) => attempt.detectedFaceCount === 1);
         if (successful.length === 0) {
           throw new Error(
-            'FR202 rendered mesh produced no single-face detection for either deterministic camera side.',
+            'FR202 rendered mesh produced no single-face detection for any deterministic render variant.',
           );
         }
-        const selected =
-          successful.find((attempt) => attempt.cameraSign === 1) ?? successful[0];
+        const selected = successful[0];
+        for (const attempt of successful.slice(1)) attempt.rendered.dispose();
         const landmarks = selected.raw.faceLandmarks[0];
         if (!landmarks || landmarks.length !== 478) {
           throw new Error('FR202 expected 478 provider landmarks, got ' + (landmarks?.length ?? 0));
@@ -680,9 +693,14 @@ async function main() {
           render: {
             size: [renderSize, renderSize],
             projection: 'orthographic_source_xy',
-            clipFill,
-            attemptedCameraSigns: attempts.map((attempt) => ({
+            clipFill: selected.clipFill,
+            ySign: selected.ySign,
+            flipTextureY: selected.flipTextureY,
+            attemptedVariants: attempts.map((attempt) => ({
               cameraSign: attempt.cameraSign,
+              ySign: attempt.ySign,
+              clipFill: attempt.clipFill,
+              flipTextureY: attempt.flipTextureY,
               detectedFaceCount: attempt.detectedFaceCount,
             })),
             selectedCameraSign: selected.cameraSign,
@@ -706,6 +724,7 @@ async function main() {
             commerceAuthorized: false,
           },
         });
+        selected.rendered.dispose();
       } catch (error) {
         failures.push({
           sampleId: input.sampleId,
@@ -771,7 +790,7 @@ async function main() {
         render: {
           size: RENDER_SIZE,
           projection: 'orthographic_source_xy',
-          clipFill: CLIP_FILL,
+          clipFills: CLIP_FILLS,
           textureSource: 'exact OBJ-bound map_Kd JPEG',
           lighting: 'unlit_texture',
           cameraSelection:
