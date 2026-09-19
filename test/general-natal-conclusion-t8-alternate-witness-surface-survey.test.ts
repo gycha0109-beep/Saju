@@ -6,12 +6,12 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
   it('separates exact text circulation from scan-backed production authority', () => {
     const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
 
-    expect(evidence.issue).toBe('#889');
+    expect(evidence.issue).toBe('#900');
     expect(evidence.counts).toEqual({
       targetWitnessCount: 4,
       candidateSurfaceCount: 4,
       registeredScanCandidateCount: 2,
-      directlyInspectedRegisteredScanCandidateCount: 1,
+      directlyInspectedRegisteredScanCandidateCount: 2,
       contextBoundFourOfFourTextCandidateCount: 2,
       productionAdmissibleFourOfFourCandidateCount: 0,
     });
@@ -46,7 +46,7 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
     }
   });
 
-  it('keeps the 1926 National Taiwan Library scan registered but makes no textual claim before direct inspection', () => {
+  it('records the bounded direct inspection of the 1926 National Taiwan Library scan', () => {
     const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
     const candidate = evidence.candidateSurfaces.find(
       (row) => row.candidateId === 'CANDIDATE-NTL-1926-QINSHENAN-V2',
@@ -63,7 +63,25 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
     expect(candidate.digitization).toBe('NTL-9900014380');
     expect(candidate.pageCount).toBe(164);
     expect('scanLinkedTranscriptionUrl' in candidate).toBe(false);
-    expect(candidate.qualificationOutcome).toBe('REGISTERED_SCAN_NOT_DIRECTLY_INSPECTED');
+    expect(candidate.qualificationOutcome).toBe(
+      'REGISTERED_SCAN_DIRECTLY_INSPECTED_TEXTUAL_DIVERGENCE',
+    );
+    expect(candidate.directInspection).toEqual({
+      state: 'DIRECTLY_INSPECTED',
+      boundedDigitalPages: [29, 30, 31, 32, 33, 34],
+      sectionTitlePage: 29,
+      sectionTitle: '四言獨步',
+      contentPages: [29, 30, 31, 32, 33],
+      transitionPage: 34,
+      transitionSectionTitle: '身弱論',
+      frozenExactWitnessesEstablished: {
+        'W-YUANHAI-WEALTH-OFFICER': false,
+        'W-YUANHAI-OFFICER-RESOURCE': false,
+        'W-YUANHAI-PEER-WEALTH': false,
+        'W-YUANHAI-WEALTH-RESOURCE': false,
+      },
+      result: 'BOUNDED_DIRECT_TEXTUAL_DIVERGENCE_NO_FROZEN_EXACT_WITNESS',
+    });
 
     for (const witnessId of [
       'W-YUANHAI-WEALTH-OFFICER',
@@ -72,7 +90,7 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
       'W-YUANHAI-WEALTH-RESOURCE',
     ] as const) {
       expect(candidate.rows[witnessId]).toEqual({
-        status: 'REGISTERED_SCAN_TEXT_NOT_DIRECTLY_INSPECTED',
+        status: 'DIRECTLY_INSPECTED_NOT_ESTABLISHED_IN_FROZEN_CONTEXT',
       });
     }
   });
@@ -190,9 +208,6 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
   it('requires exact rob-wealth glyph support and forbids orthographic normalization', () => {
     const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
 
-    expect(evidence.requiredNextEvidence).toContain(
-      'DIRECTLY_INSPECT_NTL_1926_BEFORE_ANY_NTL_TEXTUAL_CLAIM',
-    );
     expect(evidence.requiredNextEvidence).toContain(
       'REQUIRE_EXACT_ROB_WEALTH_GLYPH_FOR_PEER_WEALTH_WITNESS',
     );
