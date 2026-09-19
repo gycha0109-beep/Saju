@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Alternate Frozen-Witness Surface Survey
 
-Issue: #900  
-Audit base: `cec546753affdab7feceb364369f3522be52cbd5`
+Issue: #903  
+Audit base: `1c6f0228924b61ae5341c239d4e128674b31b429`
 
 ## Purpose
 
@@ -161,7 +161,46 @@ orthographic normalization                 = FORBIDDEN
 production authority                       = NO
 ```
 
-## Candidate D — secondary exact transcriptions
+## Candidate D — NLC 1940 later-edition control
+
+Registered scan:
+
+```text
+holding institution = National Library of China
+title               = 增補淵海子平音義評註
+editor field        = 趙燕生
+publisher           = 章福記書局
+date                = 康德七年 [1940]
+holding call        = MG/B992.3/28
+digitization        = NLC416-12jh002712-40330
+digital pages       = 306
+sha1                = a75396935b08d948ae972a2f456d1860ff136880
+bytes               = 13474114
+```
+
+High-resolution direct inspection establishes:
+
+```text
+p175      = plain 四言獨步 title/start
+p175..179 = bounded 四言獨步 surface
+p180      = 五言獨步 transition
+增補四言獨步 heading = NOT ESTABLISHED
+frozen exact witnesses inside p175..179 = 0 / 4
+```
+
+This later-edition control closely tracks the directly inspected variant sequence rather than the frozen four-string transcription. The book title contains `增補`, but the visible section heading is plain `四言獨步`; the title must not be projected into the section heading.
+
+Result:
+
+```text
+registered scan candidate                  = YES
+later-edition control                      = YES
+direct bounded page-image inspection       = YES
+context-bound frozen 4/4 exact match       = NO
+production authority                       = NO
+```
+
+## Candidate E — secondary exact transcriptions
 
 Multiple secondary online transcriptions reproduce the frozen sequence:
 
@@ -188,9 +227,9 @@ scan qualification           = NO
 
 ```text
 targetWitnessCount                         = 4
-candidateSurfaceCount                      = 4
-registeredScanCandidateCount               = 2
-directlyInspectedRegisteredScanCandidateCount = 2
+candidateSurfaceCount                      = 5
+registeredScanCandidateCount               = 3
+directlyInspectedRegisteredScanCandidateCount = 3
 contextBoundFourOfFourTextCandidateCount   = 2
 productionAdmissibleFourOfFourCandidateCount = 0
 ```
