@@ -633,7 +633,7 @@ async function main() {
           successful.find((attempt) => attempt.cameraSign === 1) ?? successful[0];
         const landmarks = selected.raw.faceLandmarks[0];
         if (!landmarks || landmarks.length !== 478) {
-          throw new Error(`FR202 expected 478 provider landmarks, got ${landmarks?.length ?? 0}`);
+          throw new Error('FR202 expected 478 provider landmarks, got ' + (landmarks?.length ?? 0));
         }
 
         const projectedReference = input.bilateralReference.map(
