@@ -6,12 +6,12 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
   it('separates exact text circulation from scan-backed production authority', () => {
     const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
 
-    expect(evidence.issue).toBe('#889');
+    expect(evidence.issue).toBe('#900');
     expect(evidence.counts).toEqual({
       targetWitnessCount: 4,
       candidateSurfaceCount: 4,
       registeredScanCandidateCount: 2,
-      directlyInspectedRegisteredScanCandidateCount: 1,
+      directlyInspectedRegisteredScanCandidateCount: 2,
       contextBoundFourOfFourTextCandidateCount: 2,
       productionAdmissibleFourOfFourCandidateCount: 0,
     });
@@ -46,7 +46,7 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
     }
   });
 
-  it('keeps the 1926 National Taiwan Library scan registered but makes no textual claim before direct inspection', () => {
+  it('pins the directly inspected 1926 National Taiwan Library bounded surface without frozen-witness promotion', () => {
     const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
     const candidate = evidence.candidateSurfaces.find(
       (row) => row.candidateId === 'CANDIDATE-NTL-1926-QINSHENAN-V2',
@@ -63,7 +63,26 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
     expect(candidate.digitization).toBe('NTL-9900014380');
     expect(candidate.pageCount).toBe(164);
     expect('scanLinkedTranscriptionUrl' in candidate).toBe(false);
-    expect(candidate.qualificationOutcome).toBe('REGISTERED_SCAN_NOT_DIRECTLY_INSPECTED');
+    expect(candidate.qualificationOutcome).toBe('REGISTERED_SCAN_DIRECTLY_INSPECTED_CONTEXT_MISMATCH');
+    expect(candidate.directInspection).toEqual({
+      state: 'DIRECTLY_INSPECTED',
+      exactAssetSha1: 'f4e030871acc0a55adafcc49d107aada24f411b5',
+      exactAssetBytes: 68883628,
+      exactAssetPages: 164,
+      boundedDigitalPages: [29, 30, 31, 32, 33],
+      sectionTitlePage: 29,
+      sectionTitle: '四言獨步',
+      transitionPage: 34,
+      transitionSectionTitle: '身弱論',
+      visibleVariantAnchors: ['先財後印'],
+      frozenExactWitnessesEstablished: {
+        'W-YUANHAI-WEALTH-OFFICER': false,
+        'W-YUANHAI-OFFICER-RESOURCE': false,
+        'W-YUANHAI-PEER-WEALTH': false,
+        'W-YUANHAI-WEALTH-RESOURCE': false,
+      },
+      result: 'BOUNDED_DIRECT_TEXTUAL_DIVERGENCE_NO_FROZEN_EXACT_WITNESS',
+    });
 
     for (const witnessId of [
       'W-YUANHAI-WEALTH-OFFICER',
@@ -72,7 +91,7 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
       'W-YUANHAI-WEALTH-RESOURCE',
     ] as const) {
       expect(candidate.rows[witnessId]).toEqual({
-        status: 'REGISTERED_SCAN_TEXT_NOT_DIRECTLY_INSPECTED',
+        status: 'DIRECTLY_INSPECTED_FROZEN_EXACT_STRING_NOT_ESTABLISHED',
       });
     }
   });
