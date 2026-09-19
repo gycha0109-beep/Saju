@@ -1,0 +1,39 @@
+name: FR205 Independent Identity Acquisition Gate
+
+on:
+  push:
+    branches:
+      - research/fr205-independent-identity-acquisition
+    paths:
+      - 'scripts/run-fr205-independent-identity-acquisition-gate.mjs'
+      - 'research/face-reading/fr205-independent-identity-acquisition.md'
+      - '.github/workflows/fr205-independent-identity-acquisition-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fr205-independent-identity-acquisition
+  cancel-in-progress: true
+
+jobs:
+  acquisition:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Syntax-check FR205 acquisition gate
+        run: node --check scripts/run-fr205-independent-identity-acquisition-gate.mjs
+      - name: Execute FR205 acquisition gate
+        run: node scripts/run-fr205-independent-identity-acquisition-gate.mjs
+      - name: Upload FR205 acquisition receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr205-independent-identity-acquisition-gate
+          path: artifacts/face-reading/fr205-independent-identity-acquisition-gate.json
+          if-no-files-found: error
+          retention-days: 14
