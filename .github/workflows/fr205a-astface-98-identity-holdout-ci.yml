@@ -1,0 +1,38 @@
+name: FR205A AST-Face 98 Identity Holdout
+
+on:
+  push:
+    branches:
+      - research/fr205-independent-identity-acquisition
+    paths:
+      - 'scripts/run-fr205a-astface-98-identity-holdout.mjs'
+      - '.github/workflows/fr205a-astface-98-identity-holdout-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fr205a-astface-98-identity-holdout
+  cancel-in-progress: true
+
+jobs:
+  holdout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run face:build
+      - run: node --check scripts/run-fr205a-astface-98-identity-holdout.mjs
+      - run: node scripts/run-fr205a-astface-98-identity-holdout.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr205a-astface-face-breadth-full-holdout
+          path: artifacts/face-reading/fr205a-astface-face-breadth-full-holdout.json
+          if-no-files-found: warn
+          retention-days: 14
