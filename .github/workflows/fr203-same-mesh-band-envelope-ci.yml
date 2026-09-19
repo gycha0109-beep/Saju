@@ -1,0 +1,52 @@
+name: FR203 Same-Mesh Band-Envelope CI
+
+on:
+  push:
+    branches:
+      - research/fr203-midface-band-envelope-proxy
+    paths:
+      - 'scripts/run-fr203-same-mesh-band-envelope.mjs'
+      - 'research/face-reading/fr203-same-mesh-band-envelope.md'
+      - '.github/workflows/fr203-same-mesh-band-envelope-ci.yml'
+  pull_request:
+    paths:
+      - 'scripts/run-fr203-same-mesh-band-envelope.mjs'
+      - 'research/face-reading/fr203-same-mesh-band-envelope.md'
+      - '.github/workflows/fr203-same-mesh-band-envelope-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fr203-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  fr202:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck face-reading
+        run: npm run face:typecheck
+      - name: Build face-reading
+        run: npm run face:build
+      - name: Deterministic FR200/FR201 geometry tests
+        run: npx vitest run packages/face-reading/src/face-reading-mediapipe-midface-envelope-fr200.test.ts packages/face-reading/src/face-reading-mediapipe-metric-geometry-fr201.test.ts
+      - name: Syntax-check FR203 experiment
+        run: node --check scripts/run-fr203-same-mesh-band-envelope.mjs
+      - name: FR203 frozen band-envelope same-mesh experiment
+        run: node scripts/run-fr203-same-mesh-band-envelope.mjs
+      - name: Upload FR203 experiment receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr203-same-mesh-band-envelope
+          path: artifacts/face-reading/fr203-same-mesh-band-envelope.json
+          if-no-files-found: warn
+          retention-days: 14
