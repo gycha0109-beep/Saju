@@ -45,7 +45,7 @@ async function download(url, path) {
   const response = await globalThis.fetch(url, {
     redirect: 'follow',
     headers: { 'user-agent': 'myeongha-fr202-same-mesh-render' },
-    signal: AbortSignal.timeout(120000),
+    signal: globalThis.AbortSignal.timeout(120000),
   });
   if (!response.ok) throw new Error(`FR202 download failed ${response.status} ${url}`);
   const bytes = Buffer.from(await response.arrayBuffer());
