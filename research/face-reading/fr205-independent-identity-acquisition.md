@@ -1,6 +1,6 @@
 # FR205 — Independent Identity Acquisition Gate
 
-Status: `public_independent_identity_geometry_holdout_executed_review_pending`
+Status: `public_independent_identity_geometry_holdout_executed_complete`
 
 Issue: #980
 
@@ -193,3 +193,80 @@ commerceAuthorized=false
 ```
 
 The next product-relevant validation should freeze the raw full-oval face-breadth construct prospectively and test it on a separate real-photo or separately held-out paired geometry cohort. The FR205A cohort cannot be reused to claim independent validation of a candidate selected from its own observed result.
+
+
+## Final 98/98 retry execution
+
+A bounded retry was added only to the public archive HTTP range transport. It did not change cohort membership, frame alignment, reference definition, renderer selection, provider measurement, frozen FR204 factor, or evaluation metrics.
+
+Exact experiment head:
+
+`b639acb8728ca6be2be162647dd0305caebb6781`
+
+Dedicated workflow:
+
+- run: `35447505605`;
+- job: `105908873958`;
+- result: PASS;
+- selected identities: **98**;
+- independent face-breadth references ready: **98/98**;
+- provider successes: **98/98**;
+- provider failures: **0**;
+- artifact id: `10585771111`;
+- artifact digest: `sha256:9a6ee714cd27fc38c240b3cba489b6d7db787bfdeb5e2872e60a678fd44227ef`.
+
+Frame-alignment normalized RMSE across all 98 identities:
+
+- mean: **2.503%**;
+- median: **2.472%**;
+- minimum: **1.944%**;
+- maximum: **4.758%**.
+
+### Final full-cohort measurement result
+
+| Measurement | Mean provider/reference ratio | Mean absolute relative error | Median absolute relative error | Maximum absolute relative error | Pearson | Spearman |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| raw full face-oval envelope | **0.9906** | **2.381%** | **2.210%** | **5.878%** | **0.7763** | **0.7267** |
+| FR204 factor × raw full oval | 0.8109 | 18.910% | 18.729% | 22.953% | 0.7763 | 0.7267 |
+
+### Pilot-excluded prospective slice
+
+Because `ast001`–`ast012` were used for the renderer pilot, FR205A also reports the untouched identity slice `ast013`–`ast098` separately.
+
+For those **86** identities, using the unchanged raw full-oval measurement:
+
+- mean provider/reference ratio: **0.9906**;
+- mean absolute relative error: **2.388%**;
+- median absolute relative error: **2.019%**;
+- maximum absolute relative error: **5.878%**;
+- Pearson: **0.7697**;
+- Spearman: **0.7159**.
+
+The pilot-excluded slice therefore reproduces the full-cohort result. The favorable raw full-oval behavior is not explained by the 12 renderer-pilot identities.
+
+## FR205 decision
+
+FR205 closes the acquisition/geometry question with three distinct conclusions:
+
+1. **Independent identity geometry is executable from public AST-Face material.** The earlier repository-demo-only assumption was too narrow; the public OSF archive contains a complete 98-identity AU0 geometry/landmark cohort.
+2. **The FR204 multiplicative calibration is construct-specific.** It materially helped the earlier zygion-like reference but introduces an approximately 19% negative magnitude bias against the independent AST-Face full-face-breadth reference. It must not be reused as a generic face-breadth calibration.
+3. **Raw full-oval width is a viable operational face-breadth candidate.** On all 98 independent identities it is near-unbiased in magnitude and preserves substantial ordering, including on the 86-identity pilot-excluded slice.
+
+FR205 does not convert that third observation into production authority. The AST-Face provider input here is a deterministic synthetic render of processed 3D geometry, not synchronized real capture. In addition, the operational face-breadth interpretation is now an observed candidate and requires a prospectively frozen next-stage validation if it is to become an authoritative product feature.
+
+Final authority:
+
+```text
+independentIdentitySyntheticGeometryEvidenceComplete=true
+independentRealPhotoValidationComplete=false
+independentIdentityValidationComplete=false
+anatomicalZygionClaimAuthorized=false
+numericAcceptanceThresholdAuthorized=false
+calibrationAuthorized=false
+classifierAuthorized=false
+traditionalProjectionAuthorized=false
+productionAuthorized=false
+commerceAuthorized=false
+```
+
+Recommended next frontier: freeze `raw_full_face_oval_width` as an operational **face-breadth** feature, keep it semantically separate from anatomical zygion/cheekbone claims, and validate capture stability on prospectively held-out real images before any product authority change.
