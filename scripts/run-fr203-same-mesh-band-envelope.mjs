@@ -37,7 +37,7 @@ function sha256(bytes) {
 }
 
 function parseMetadata(text) {
-  const values = [...text.matchAll(/vertex_buffer:\\s*([-+0-9.eE]+)/g)].map((match) =>
+  const values = [...text.matchAll(/vertex_buffer:\s*([-+0-9.eE]+)/g)].map((match) =>
     Number(match[1]),
   );
   if (values.length !== 468 * 5) {
@@ -49,7 +49,7 @@ function parseMetadata(text) {
     canonical.push({ x: values[offset], y: values[offset + 1], z: values[offset + 2] });
   }
   const weights = [...text.matchAll(
-    /procrustes_landmark_basis\\s*\\{\\s*landmark_id:\\s*(\\d+)\\s*weight:\\s*([-+0-9.eE]+)\\s*\\}/g,
+    /procrustes_landmark_basis\s*\{\s*landmark_id:\s*(\d+)\s*weight:\s*([-+0-9.eE]+)\s*\}/g,
   )].map((match) => ({ landmarkId: Number(match[1]), weight: Number(match[2]) }));
   if (weights.length !== 33) {
     throw new Error(`FR203 expected 33 Procrustes weights, got ${weights.length}`);
