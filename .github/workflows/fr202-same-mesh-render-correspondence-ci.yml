@@ -17,6 +17,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: fr202-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   fr202:
     runs-on: ubuntu-24.04
