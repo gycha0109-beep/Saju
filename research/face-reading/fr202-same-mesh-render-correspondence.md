@@ -119,4 +119,4 @@ FR202 closes the narrow technical question that remained after the material-UV b
 
 The experiment also fails to identify a stable alternative fixed pair.
 
-The next research step must therefore change the representation question rather than repeatedly search this same corpus for a magic fixed landmark pair: evaluate a pose-normalized **regional/band-envelope cheekbone-span proxy** against the independent 3D reference, with any eventual candidate validation performed on data not used to choose the proxy.
+FR200 and FR201 already tested the simple regional/band-envelope width proxy on the original public 2D photos and found near-zero correlation against the frozen 3D reference, including after MediaPipe metric-3D reconstruction. Therefore the next step must **not** repeat that same cross-representation experiment. The remaining useful question is narrower: on the FR202 exact same-mesh render, can a provider width scalar (fixed span, face-oval envelope, or predeclared midface envelope) reproduce the exact projected source zygion width even though no stable provider landmark pair corresponds point-for-point?
