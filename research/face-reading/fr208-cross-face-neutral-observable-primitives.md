@@ -63,7 +63,7 @@ Every output is continuous and carries:
 - `traditionalBindingApplied=false`;
 - `anatomicalInterpretationAllowed=false`.
 
-All calculations require `canonical_aligned_metric_xy` and non-empty source observation references. This frame is intended to reuse the governed canonical-aligned metric geometry surface rather than introduce a new normalized-image coordinate system.
+All calculations require `canonical_aligned_right_handed_metric_xy` and non-empty source observation references. This is the XY projection of the governed canonical-aligned right-handed metric geometry surface; +Y is treated as the upward metric direction.
 
 ## Fail-closed behavior
 
