@@ -1,0 +1,50 @@
+name: FR203 Same-Mesh Width Proxy CI
+
+on:
+  push:
+    branches:
+      - research/fr203-same-mesh-width-proxy
+    paths:
+      - 'scripts/run-fr203-same-mesh-width-proxy.mjs'
+      - 'research/face-reading/fr203-same-mesh-width-proxy.md'
+      - '.github/workflows/fr203-same-mesh-width-proxy-ci.yml'
+  pull_request:
+    paths:
+      - 'scripts/run-fr203-same-mesh-width-proxy.mjs'
+      - 'research/face-reading/fr203-same-mesh-width-proxy.md'
+      - '.github/workflows/fr203-same-mesh-width-proxy-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fr203-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  fr203:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck face-reading
+        run: npm run face:typecheck
+      - name: Build face-reading
+        run: npm run face:build
+      - name: Syntax-check FR203 experiment
+        run: node --check scripts/run-fr203-same-mesh-width-proxy.mjs
+      - name: FR203 exact same-mesh width proxy experiment
+        run: node scripts/run-fr203-same-mesh-width-proxy.mjs
+      - name: Upload FR203 experiment receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr203-same-mesh-width-proxy
+          path: artifacts/face-reading/fr203-same-mesh-width-proxy.json
+          if-no-files-found: warn
+          retention-days: 14
