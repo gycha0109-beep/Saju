@@ -63,8 +63,8 @@ export const R023_OFFICER_PATTERN_PROPOSITIONS: readonly R023OfficerPatternPropo
   {
     id: 'seal-controls-hurting-protects-officer',
     role: 'RESCUE',
-    sourcePhrase: '印製傷護官',
-    operands: ['印', '制傷', '護官'],
+    sourcePhrase: '官逢傷而透印以解之',
+    operands: ['官', '傷', '透印', '解傷'],
     executable: false,
   },
 ]);
