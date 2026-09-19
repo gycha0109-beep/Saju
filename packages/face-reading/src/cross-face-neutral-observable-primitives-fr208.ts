@@ -258,9 +258,19 @@ export function computeEyebrowVisibleCurveFR208(
   if (new Set(input.orderedVisibleCurve.map(pointKey)).size !== input.orderedVisibleCurve.length) {
     fail('orderedVisibleCurve points must be unique.');
   }
+  if (
+    pointKey(input.orderedVisibleCurve[0]!) !== pointKey(input.medialEndpoint) ||
+    pointKey(input.orderedVisibleCurve[input.orderedVisibleCurve.length - 1]!) !== pointKey(input.lateralEndpoint)
+  ) {
+    fail('orderedVisibleCurve must begin at medialEndpoint and end at lateralEndpoint.');
+  }
 
   const browSpan = euclideanDistance(input.medialEndpoint, input.lateralEndpoint, 'eyebrow');
   const faceWidth = horizontalSpan(input.visibleFaceLeft, input.visibleFaceRight, 'visible face');
+  const browSpanRatio = browSpan / faceWidth;
+  if (!Number.isFinite(browSpanRatio) || browSpanRatio <= 0 || browSpanRatio > 1) {
+    fail('eyebrow span-to-face-width ratio must be within (0,1].');
+  }
   const maxArchDistance = Math.max(
     ...input.orderedVisibleCurve.map((point) =>
       perpendicularDistanceToChord(point, input.medialEndpoint, input.lateralEndpoint)),
@@ -275,7 +285,7 @@ export function computeEyebrowVisibleCurveFR208(
     schemaVersion: 'fr208-eyebrow-visible-curve-v1' as const,
     spanToFaceWidth: metric(
       'neutral.eyebrow.span_to_face_width_ratio@0.1.0',
-      browSpan / faceWidth,
+      browSpanRatio,
       'ratio',
       refs,
     ),
@@ -306,6 +316,11 @@ export function computeMouthCornerElevationFR208(
   assertPoint(input.visibleMouthCenter, 'visibleMouthCenter');
 
   const mouthWidth = horizontalSpan(input.leftCorner, input.rightCorner, 'visible mouth');
+  const mouthMinX = Math.min(input.leftCorner.x, input.rightCorner.x);
+  const mouthMaxX = Math.max(input.leftCorner.x, input.rightCorner.x);
+  if (input.visibleMouthCenter.x < mouthMinX || input.visibleMouthCenter.x > mouthMaxX) {
+    fail('visibleMouthCenter.x must lie between the supplied mouth corners.');
+  }
   const left = (input.leftCorner.y - input.visibleMouthCenter.y) / mouthWidth;
   const right = (input.rightCorner.y - input.visibleMouthCenter.y) / mouthWidth;
   const mean = (left + right) / 2;
@@ -348,6 +363,13 @@ function computeVisibleWidthRatio(
 
   const regionWidth = horizontalSpan(input.regionLeft, input.regionRight, `${region} region`);
   const faceWidth = horizontalSpan(input.visibleFaceLeft, input.visibleFaceRight, 'visible face');
+  const faceMinX = Math.min(input.visibleFaceLeft.x, input.visibleFaceRight.x);
+  const faceMaxX = Math.max(input.visibleFaceLeft.x, input.visibleFaceRight.x);
+  const regionMinX = Math.min(input.regionLeft.x, input.regionRight.x);
+  const regionMaxX = Math.max(input.regionLeft.x, input.regionRight.x);
+  if (regionMinX < faceMinX || regionMaxX > faceMaxX) {
+    fail(`${region} region endpoints must lie inside the supplied visible face width reference.`);
+  }
   const ratio = regionWidth / faceWidth;
   if (!Number.isFinite(ratio) || ratio <= 0) fail(`${region} visible width ratio must be positive.`);
   if (ratio > 1) {
