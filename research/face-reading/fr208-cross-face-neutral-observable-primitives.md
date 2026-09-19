@@ -24,8 +24,8 @@ This is the first implementation step after FR206/FR207. It deliberately does no
 
 `computeEyebrowVisibleCurveFR208`
 
-- span / visible-face-width ratio;
-- maximum visible arch amplitude / brow-span ratio;
+- horizontal endpoint span / visible-face-width ratio;
+- maximum visible arch amplitude / endpoint chord-length ratio;
 - medial-to-lateral endpoint tilt in degrees;
 - medial/lateral endpoints must be supplied explicitly;
 - provider component order is not treated as anatomy.
