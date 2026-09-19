@@ -6,12 +6,12 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
   it('separates exact text circulation from scan-backed production authority', () => {
     const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
 
-    expect(evidence.issue).toBe('#900');
+    expect(evidence.issue).toBe('#903');
     expect(evidence.counts).toEqual({
       targetWitnessCount: 4,
-      candidateSurfaceCount: 4,
-      registeredScanCandidateCount: 2,
-      directlyInspectedRegisteredScanCandidateCount: 2,
+      candidateSurfaceCount: 5,
+      registeredScanCandidateCount: 3,
+      directlyInspectedRegisteredScanCandidateCount: 3,
       contextBoundFourOfFourTextCandidateCount: 2,
       productionAdmissibleFourOfFourCandidateCount: 0,
     });
@@ -167,6 +167,56 @@ describe('General Natal conclusion T8 alternate witness surface survey', () => {
       '先財後印',
       '先印後財',
     ]);
+  });
+
+  it('records the NLC 1940 later-edition control as a bounded direct divergence without inferring an augmented heading', () => {
+    const evidence = buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey();
+    const candidate = evidence.candidateSurfaces.find(
+      (row) => row.candidateId === 'CANDIDATE-NLC-1940-ZENGBU-YUANHAI',
+    );
+
+    expect(candidate).toBeDefined();
+    if (candidate?.candidateId !== 'CANDIDATE-NLC-1940-ZENGBU-YUANHAI') {
+      throw new Error('Expected NLC 1940 candidate.');
+    }
+
+    expect(candidate.holdingInstitution).toBe('National Library of China');
+    expect(candidate.holdingCall).toBe('MG/B992.3/28');
+    expect(candidate.digitization).toBe('NLC416-12jh002712-40330');
+    expect(candidate.directInspection).toEqual({
+      state: 'DIRECTLY_INSPECTED',
+      exactAssetSha1: 'a75396935b08d948ae972a2f456d1860ff136880',
+      exactAssetBytes: 13474114,
+      exactAssetPages: 306,
+      boundedDigitalPages: [175, 176, 177, 178, 179],
+      sectionTitlePage: 175,
+      sectionTitle: '四言獨步',
+      headingIsPlainFourYanDubu: true,
+      augmentedHeadingEstablished: false,
+      transitionPage: 180,
+      transitionSectionTitle: '五言獨步',
+      frozenExactWitnessesEstablished: {
+        'W-YUANHAI-WEALTH-OFFICER': false,
+        'W-YUANHAI-OFFICER-RESOURCE': false,
+        'W-YUANHAI-PEER-WEALTH': false,
+        'W-YUANHAI-WEALTH-RESOURCE': false,
+      },
+      result: 'LATER_EDITION_BOUNDED_DIRECT_TEXTUAL_DIVERGENCE_NO_FROZEN_EXACT_WITNESS',
+    });
+    expect(candidate.qualificationOutcome).toBe(
+      'REGISTERED_LATER_EDITION_DIRECTLY_INSPECTED_CONTROL_DIVERGENCE',
+    );
+
+    for (const witnessId of [
+      'W-YUANHAI-WEALTH-OFFICER',
+      'W-YUANHAI-OFFICER-RESOURCE',
+      'W-YUANHAI-PEER-WEALTH',
+      'W-YUANHAI-WEALTH-RESOURCE',
+    ] as const) {
+      expect(candidate.rows[witnessId].status).toBe(
+        'DIRECTLY_INSPECTED_FROZEN_EXACT_STRING_NOT_ESTABLISHED',
+      );
+    }
   });
 
   it('does not treat source-unknown Wikisource or secondary exact transcriptions as scan qualification', () => {
