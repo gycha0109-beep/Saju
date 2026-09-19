@@ -77,9 +77,9 @@ FR208 rejects:
 
 It does not clamp, impute, invent epsilon denominators, or emit fallback categories.
 
-## Package surface
+## Migration parity boundary
 
-`packages/face-reading/src/index.ts` exports FR206, FR207, and FR208 so the measurement boundary, inventory, and primitives are consumable from `@myeongha/face-reading`.
+`packages/face-reading/src/index.ts` remains byte-identical to the frozen migrated MyeongHa source. FR208 is added as a new module without modifying that frozen export surface.
 
 ## Not implemented here
 
