@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  fr202:
+  fr203:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
