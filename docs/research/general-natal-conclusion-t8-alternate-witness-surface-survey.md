@@ -1,7 +1,7 @@
 # General Natal Conclusion T8 — Alternate Frozen-Witness Surface Survey
 
-Issue: #889  
-Audit base: `c6c9f409da5611d21dc1b62d98e78c1a140645d1`
+Issue: #900  
+Audit base: `cec546753affdab7feceb364369f3522be52cbd5`
 
 ## Purpose
 
@@ -49,17 +49,35 @@ Commons scan:
 https://commons.wikimedia.org/wiki/File:NTL-9900014380_淵海子平子平真詮_v.2.pdf
 ```
 
-The previously registered Shidian URL is **not** linked to this NTL scan. Its book identifier belongs to a separate National Library of China digitization family. Until the NTL pages themselves are directly inspected, no per-witness textual observation is attributed to this candidate.
+The previously registered Shidian URL is **not** linked to this NTL scan. Its book identifier belongs to a separate National Library of China digitization family.
+
+Exact workbench binary:
+
+```text
+sha1          = f4e030871acc0a55adafcc49d107aada24f411b5
+bytes         = 68883628
+digital pages = 164
+```
+
+High-resolution direct page-image inspection establishes:
+
+```text
+p29      = 四言獨步 title/start
+p29..33  = bounded 四言獨步 surface
+p34      = 身弱論 transition
+visible variant anchor = 先財後印
+frozen exact witnesses established inside p29..33 = 0 / 4
+```
 
 Result:
 
 ```text
-registered scan candidate            = YES
-holding institution                  = National Taiwan Library
-direct relevant-page inspection      = NO
+registered scan candidate             = YES
+holding institution                   = National Taiwan Library
+direct relevant-page inspection       = YES, p29..34
 scan-linked transcription established = NO
-textual claim for frozen witnesses   = NONE
-production authority                 = NO
+frozen exact witnesses                = 0 / 4
+production authority                  = NO
 ```
 
 ## Candidate C — NLC 1634 余氏善成堂 five-fascicle set
@@ -172,7 +190,7 @@ scan qualification           = NO
 targetWitnessCount                         = 4
 candidateSurfaceCount                      = 4
 registeredScanCandidateCount               = 2
-directlyInspectedRegisteredScanCandidateCount = 1
+directlyInspectedRegisteredScanCandidateCount = 2
 contextBoundFourOfFourTextCandidateCount   = 2
 productionAdmissibleFourOfFourCandidateCount = 0
 ```
@@ -182,7 +200,7 @@ No candidate currently satisfies all required evidence gates.
 ## Required next evidence
 
 1. locate a registered or equivalently auditable scan containing the frozen exact strings in the relevant context;
-2. directly inspect the NTL 1926 scan before making any NTL-specific textual claim;
+2. preserve the NTL 1926 direct negative/divergence result without normalizing related 財/官/印 language into frozen witness identity;
 3. allow per-witness advancement only after direct image or reviewed registered-transcription support;
 4. require an actual `劫` / rob-wealth glyph for `W-YUANHAI-PEER-WEALTH`;
 5. do not normalize `殺/煞`, `爲/為`, or any other orthographic variant into frozen digest identity;
