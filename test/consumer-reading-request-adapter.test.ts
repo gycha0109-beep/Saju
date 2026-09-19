@@ -18,7 +18,7 @@ describe('consumer reading request adapter', () => {
     expect(result.normalizedText).toBe('일반 사주');
     expect(result.request?.intent).toEqual({ domain: 'general', temporalScope: 'natal' });
     expect(result.request?.targetPeriod).toBeUndefined();
-    expect(result.profileRef?.id).toBe('myeonghwa-reading-profile-general-natal-v1');
+    expect(result.profileRef?.id).toBe('myeonghwa-reading-profile-general-natal-v2');
     expect(result.profileAuthorizationRef).toBeDefined();
   });
 
