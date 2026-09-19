@@ -63,13 +63,13 @@ Every output is continuous and carries:
 - `traditionalBindingApplied=false`;
 - `anatomicalInterpretationAllowed=false`.
 
-All calculations require `pose_normalized_face_2d` and non-empty source observation references.
+All calculations require `canonical_aligned_metric_xy` and non-empty source observation references. This frame is intended to reuse the governed canonical-aligned metric geometry surface rather than introduce a new normalized-image coordinate system.
 
 ## Fail-closed behavior
 
 FR208 rejects:
 
-- non-finite or non-normalized points;
+- non-finite points;
 - zero-width denominators;
 - duplicate eyebrow curve points;
 - region width exceeding the supplied visible face width;
