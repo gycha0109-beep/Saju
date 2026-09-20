@@ -299,6 +299,9 @@ describe('FR218 observable morphology validation layer', () => {
       expect('metricValue' in item).toBe(false);
       expect('coverageBinIndex' in item).toBe(false);
       expect(item.metricValuesExposed).toBe(false);
+      expect(item.candidateMetricIdentityExposed).toBe(false);
+      expect(item.providerIdentityExposed).toBe(false);
+      expect(item.extractorIdentityExposed).toBe(false);
       expect(item.coverageBinExposed).toBe(false);
       expect(item.candidateThresholdExposed).toBe(false);
       expect(item.traditionalMeaningExposed).toBe(false);
