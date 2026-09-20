@@ -1,0 +1,28 @@
+name: FE005 Preview Engine Public Boundary CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/preview-engine.ts'
+      - 'packages/face-reading/src/preview-engine.test.ts'
+      - 'packages/face-reading/src/consumer-preview-engine-facade-fe004.ts'
+      - 'docs/face-engine/fe005-preview-engine-public-entrypoint.md'
+      - '.github/workflows/fe005-preview-engine-public-boundary-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe005-public-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FE005 public entrypoint
+        run: npx vitest run packages/face-reading/src/preview-engine.test.ts
