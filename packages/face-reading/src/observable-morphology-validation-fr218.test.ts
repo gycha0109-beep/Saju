@@ -104,6 +104,8 @@ function candidate(
     partition,
     reviewItemRef: `review-item:${sampleRef}`,
     reviewArtifactRef: `review-artifact:${sampleRef}`,
+    captureEligibilityRef: `capture-eligibility:${sampleRef}`,
+    captureEligibilitySource: 'external_governed_research_manifest',
     captureEligible: true,
     confounderTags: [],
   });
@@ -148,6 +150,8 @@ describe('FR218 observable morphology validation layer', () => {
       partition: 'selection',
       reviewItemRef: 'review-item:a',
       reviewArtifactRef: 'review-artifact:a',
+      captureEligibilityRef: 'capture-eligibility:a',
+      captureEligibilitySource: 'external_governed_research_manifest',
       captureEligible: true,
       confounderTags: ['glasses'],
     });
@@ -162,6 +166,22 @@ describe('FR218 observable morphology validation layer', () => {
     expect(admitted.candidate.traditionalBindingApplied).toBe(false);
   });
 
+  it('rejects ungoverned capture-eligibility provenance', () => {
+    expect(() => admitEyeCornerOrientationCandidateFR218(bundle(1), {
+      sampleRef: 'sample:ungoverned',
+      participantKey: 'participant:ungoverned',
+      captureFamilyKey: 'family:ungoverned',
+      partition: 'selection',
+      reviewItemRef: 'review-item:ungoverned',
+      reviewArtifactRef: 'review-artifact:ungoverned',
+      captureEligibilityRef: 'capture-eligibility:ungoverned',
+      captureEligibilitySource: 'caller_boolean',
+      captureEligible: true,
+      confounderTags: [],
+    } as unknown as Parameters<typeof admitEyeCornerOrientationCandidateFR218>[1]))
+      .toThrow(/external governed research manifest/u);
+  });
+
   it('rejects runtime-forged capture eligibility before candidate admission', () => {
     expect(() => admitEyeCornerOrientationCandidateFR218(bundle(1), {
       sampleRef: 'sample:forged',
@@ -170,6 +190,8 @@ describe('FR218 observable morphology validation layer', () => {
       partition: 'selection',
       reviewItemRef: 'review-item:forged',
       reviewArtifactRef: 'review-artifact:forged',
+      captureEligibilityRef: 'capture-eligibility:forged',
+      captureEligibilitySource: 'external_governed_research_manifest',
       captureEligible: false,
       confounderTags: [],
     } as unknown as Parameters<typeof admitEyeCornerOrientationCandidateFR218>[1]))
@@ -184,6 +206,8 @@ describe('FR218 observable morphology validation layer', () => {
       partition: 'selection',
       reviewItemRef: 'review-item:first',
       reviewArtifactRef: 'review-artifact:shared',
+      captureEligibilityRef: 'capture-eligibility:first',
+      captureEligibilitySource: 'external_governed_research_manifest',
       captureEligible: true,
       confounderTags: [],
     });
@@ -194,6 +218,8 @@ describe('FR218 observable morphology validation layer', () => {
       partition: 'selection',
       reviewItemRef: 'review-item:second',
       reviewArtifactRef: 'review-artifact:shared',
+      captureEligibilityRef: 'capture-eligibility:second',
+      captureEligibilitySource: 'external_governed_research_manifest',
       captureEligible: true,
       confounderTags: [],
     });
