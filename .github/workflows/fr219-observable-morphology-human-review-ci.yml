@@ -1,0 +1,46 @@
+name: FR219 Observable Morphology Human Review CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-validation-fr218.ts'
+      - 'packages/face-reading/src/observable-morphology-human-review-fr219.ts'
+      - 'packages/face-reading/src/observable-morphology-human-review-fr219.test.ts'
+      - 'scripts/fr219-observable-morphology-human-review-server.mjs'
+      - 'tools/face-reading/fr219-review.html'
+      - 'tools/face-reading/fr219-review.mjs'
+      - 'research/face-reading/fr219-observable-morphology-human-review.md'
+      - '.github/workflows/fr219-observable-morphology-human-review-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/face-reading/src/observable-morphology-validation-fr218.ts'
+      - 'packages/face-reading/src/observable-morphology-human-review-fr219.ts'
+      - 'packages/face-reading/src/observable-morphology-human-review-fr219.test.ts'
+      - 'scripts/fr219-observable-morphology-human-review-server.mjs'
+      - 'tools/face-reading/fr219-review.html'
+      - 'tools/face-reading/fr219-review.mjs'
+      - 'research/face-reading/fr219-observable-morphology-human-review.md'
+      - '.github/workflows/fr219-observable-morphology-human-review-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr219-observable-morphology-human-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR219 contract
+        run: npx vitest run packages/face-reading/src/observable-morphology-human-review-fr219.test.ts
+      - name: Verify FR219 localhost review flow
+        run: FR219_SMOKE=1 node scripts/fr219-observable-morphology-human-review-server.mjs
