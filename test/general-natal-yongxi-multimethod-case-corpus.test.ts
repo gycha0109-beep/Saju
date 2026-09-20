@@ -24,8 +24,8 @@ describe('R039 Yong/Xi multi-method case corpus', () => {
   });
 
   it('keeps climate requirements distinct from primary-use roles', () => {
-    const c1 = R039_YONGXI_CASES[0];
-    expect(c1.needs).toEqual([
+    const c1 = R039_YONGXI_CASES.find((c) => c.id === 'weak-winter-metal-climate-and-support');
+    expect(c1?.needs).toEqual([
       expect.objectContaining({ role: 'PRIMARY_USE', value: '酉金扶身' }),
       expect.objectContaining({ role: 'CLIMATE_REQUIREMENT', value: '火不可缺' }),
     ]);
