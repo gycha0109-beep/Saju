@@ -1,0 +1,40 @@
+name: FR224 Empirical Study Readiness Gate CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-candidate-annotation-correspondence-fr222.ts'
+      - 'packages/face-reading/src/observable-morphology-repeat-capture-family-fr223.ts'
+      - 'packages/face-reading/src/observable-morphology-empirical-study-readiness-fr224.ts'
+      - 'packages/face-reading/src/observable-morphology-empirical-study-readiness-fr224.test.ts'
+      - 'research/face-reading/fr224-empirical-study-readiness-gate.md'
+      - '.github/workflows/fr224-empirical-study-readiness-gate-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/face-reading/src/observable-morphology-candidate-annotation-correspondence-fr222.ts'
+      - 'packages/face-reading/src/observable-morphology-repeat-capture-family-fr223.ts'
+      - 'packages/face-reading/src/observable-morphology-empirical-study-readiness-fr224.ts'
+      - 'packages/face-reading/src/observable-morphology-empirical-study-readiness-fr224.test.ts'
+      - 'research/face-reading/fr224-empirical-study-readiness-gate.md'
+      - '.github/workflows/fr224-empirical-study-readiness-gate-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr224-empirical-study-readiness-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR224 readiness-gate contract
+        run: npx vitest run packages/face-reading/src/observable-morphology-empirical-study-readiness-fr224.test.ts
