@@ -5,13 +5,16 @@ const EXPECTED_EXPORTS = Object.freeze([
   'FE006_CONTRACT_VERSION',
   'FE007_CONTRACT_VERSION',
   'FE009_CONTRACT_VERSION',
+  'FE010_CONTRACT_VERSION',
   'assertBoundConsumerPreviewFaceEngineFE006',
   'assertConsumerPreviewEngineResultFE004',
   'assertManagedConsumerPreviewFaceEngineFE007',
   'assertReleaseManagedConsumerPreviewFaceEngineFE009',
+  'assertBrowserBlobConsumerPreviewFaceEngineFE010',
   'createBoundConsumerPreviewFaceEngineFE006',
   'createManagedConsumerPreviewFaceEngineFE007',
   'createReleaseManagedConsumerPreviewFaceEngineFE009',
+  'createBrowserBlobConsumerPreviewFaceEngineFE010',
   'runConsumerPreviewFaceEngineFE004',
 ]);
 
@@ -27,7 +30,8 @@ if (
   preview.FE004_CONTRACT_VERSION !== 'FE004-CONSUMER-PREVIEW-ENGINE-FACADE-v1' ||
   preview.FE006_CONTRACT_VERSION !== 'FE006-BOUND-CONSUMER-PREVIEW-ENGINE-v1' ||
   preview.FE007_CONTRACT_VERSION !== 'FE007-MANAGED-CONSUMER-PREVIEW-ENGINE-SESSION-v1' ||
-  preview.FE009_CONTRACT_VERSION !== 'FE009-RELEASE-ASSET-MANAGED-PREVIEW-ENGINE-v1'
+  preview.FE009_CONTRACT_VERSION !== 'FE009-RELEASE-ASSET-MANAGED-PREVIEW-ENGINE-v1' ||
+  preview.FE010_CONTRACT_VERSION !== 'FE010-BROWSER-BLOB-PREVIEW-INGRESS-v1'
 ) {
   throw new Error('FE008 package import resolved unexpected preview-engine contract versions.');
 }
