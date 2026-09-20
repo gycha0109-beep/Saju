@@ -166,10 +166,13 @@ function safeRef(value: unknown, label: string): string {
 }
 
 function uniqueStrings(value: unknown, label: string): readonly string[] {
-  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
-    fail(`${label} must be an array of strings.`);
+  if (
+    !Array.isArray(value)
+    || value.some((entry) => typeof entry !== 'string' || entry.trim().length === 0)
+  ) {
+    fail(`${label} must be an array of non-empty strings.`);
   }
-  const out = value.map((entry) => safeRef(entry, label));
+  const out = value as readonly string[];
   if (new Set(out).size !== out.length) fail(`${label} must not contain duplicates.`);
   return Object.freeze([...out]);
 }
@@ -390,7 +393,9 @@ function assertFixedTopLevelBoundary(value: Record<string, unknown>): void {
   const materialization = value.materializationBoundary as Record<string, unknown> | undefined;
   const authority = value.authorityBoundary as Record<string, unknown> | undefined;
   if (
-    value.schemaVersion !== 'fr221-persisted-candidate-provenance-evidence-v1'
+    materialization === undefined
+    || authority === undefined
+    || value.schemaVersion !== 'fr221-persisted-candidate-provenance-evidence-v1'
     || value.artifactVersion !== '0.1.0'
     || value.contractVersion !== FR221_CONTRACT_VERSION
     || value.authorityState !==
@@ -398,14 +403,14 @@ function assertFixedTopLevelBoundary(value: Record<string, unknown>): void {
     || value.sourceContractVersion !== FR218_CONTRACT_VERSION
     || value.constructRef !== FR218_EYE_CORNER_ORIENTATION_CONSTRUCT_REF
     || value.metricRef !== FR218_EYE_OUTER_CORNER_TILT_METRIC_REF
-    || materialization?.activeFR218IssuanceRequired !== true
+    || materialization.activeFR218IssuanceRequired !== true
     || materialization.candidatePoolValidatedBeforeMaterialization !== true
     || materialization.selectionHoldoutCoverageRequired !== true
     || materialization.metricValueReviewerExposureAllowed !== false
     || materialization.rawImagePersisted !== false
     || materialization.rawProviderResponsePersisted !== false
     || materialization.rawLandmarkSetPersisted !== false
-    || authority?.persistedDigestConsistencyMeansOriginalFR218IssuanceIndependentlyProven !== false
+    || authority.persistedDigestConsistencyMeansOriginalFR218IssuanceIndependentlyProven !== false
     || authority.freshnessIndependentlyVerified !== false
     || authority.sameParticipantIdentityIndependentlyVerified !== false
     || authority.captureQualityValidated !== false
