@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { FR210EyeNeutralAxisBundle } from './eye-neutral-axis-bundle-fr210.js';
+import { admitEyePairProspectiveCaptureManifestFR159 } from './eye-pair-prospective-repeatability-protocol-fr159.js';
 import {
   FACE_OBSERVABLE_MORPHOLOGY_CONSTRUCT_FR218,
   FR218_HUMAN_EVIDENCE_GATE,
   admitEyeCornerOrientationCandidateFR218,
   assertSelectionHoldoutCoverageFR218,
   assessHumanEvidenceReadinessFR218,
+  issueCaptureAdmissionFromFR159FR218,
   projectBlindedReviewItemsFR218,
   selectMetricSpaceCoverageCandidatesFR218,
   summarizeOrdinalAnnotationsFR218,
@@ -90,6 +92,21 @@ function bundle(tilt: number): FR210EyeNeutralAxisBundle {
   };
 }
 
+function captureAdmission(sampleRef: string) {
+  return issueCaptureAdmissionFromFR159FR218(admitEyePairProspectiveCaptureManifestFR159({
+    prospectiveCollectionRef: 'fr218:test:collection',
+    captureSeriesRef: `fr218:test:series:${sampleRef}`,
+    captureRef: `fr218:test:capture:${sampleRef}`,
+    captureConditionRef: 'fr218:test:condition:neutral',
+    captureSequenceIndex: 1,
+    postPreregistrationFreshCaptureAttested: true,
+    sameParticipantSeriesAttested: true,
+    usedForCandidateSelection: false,
+    developmentCaptureReuse: false,
+    identityMatchingPerformed: false,
+  }));
+}
+
 function candidate(
   value: number,
   sampleRef: string,
@@ -104,9 +121,7 @@ function candidate(
     partition,
     reviewItemRef: `review-item:${sampleRef}`,
     reviewArtifactRef: `review-artifact:${sampleRef}`,
-    captureEligibilityRef: `capture-eligibility:${sampleRef}`,
-    captureEligibilitySource: 'external_governed_research_manifest',
-    captureEligible: true,
+    captureAdmission: captureAdmission(sampleRef),
     confounderTags: [],
   });
   expect(admitted.status).toBe('available');
@@ -150,9 +165,7 @@ describe('FR218 observable morphology validation layer', () => {
       partition: 'selection',
       reviewItemRef: 'review-item:a',
       reviewArtifactRef: 'review-artifact:a',
-      captureEligibilityRef: 'capture-eligibility:a',
-      captureEligibilitySource: 'external_governed_research_manifest',
-      captureEligible: true,
+      captureAdmission: captureAdmission('a'),
       confounderTags: ['glasses'],
     });
 
@@ -160,29 +173,16 @@ describe('FR218 observable morphology validation layer', () => {
     if (admitted.status !== 'available') return;
     expect(admitted.candidate.metricValue).toBe(2.25);
     expect(admitted.candidate.metricRole).toBe('candidate_measurement_only');
+    expect(admitted.candidate.captureAdmissionSource).toBe('fr159_prospective_attestation_manifest');
+    expect(admitted.candidate.captureQualityValidated).toBe(false);
+    expect(admitted.candidate.freshnessIndependentlyVerified).toBe(false);
     expect(admitted.candidate.humanLabelObserved).toBe(false);
     expect(admitted.candidate.thresholdApplied).toBe(false);
     expect(admitted.candidate.classifierApplied).toBe(false);
     expect(admitted.candidate.traditionalBindingApplied).toBe(false);
   });
 
-  it('rejects ungoverned capture-eligibility provenance', () => {
-    expect(() => admitEyeCornerOrientationCandidateFR218(bundle(1), {
-      sampleRef: 'sample:ungoverned',
-      participantKey: 'participant:ungoverned',
-      captureFamilyKey: 'family:ungoverned',
-      partition: 'selection',
-      reviewItemRef: 'review-item:ungoverned',
-      reviewArtifactRef: 'review-artifact:ungoverned',
-      captureEligibilityRef: 'capture-eligibility:ungoverned',
-      captureEligibilitySource: 'caller_boolean',
-      captureEligible: true,
-      confounderTags: [],
-    } as unknown as Parameters<typeof admitEyeCornerOrientationCandidateFR218>[1]))
-      .toThrow(/external governed research manifest/u);
-  });
-
-  it('rejects runtime-forged capture eligibility before candidate admission', () => {
+  it('rejects a forged capture-admission receipt that was not issued from FR159', () => {
     expect(() => admitEyeCornerOrientationCandidateFR218(bundle(1), {
       sampleRef: 'sample:forged',
       participantKey: 'participant:forged',
@@ -190,12 +190,17 @@ describe('FR218 observable morphology validation layer', () => {
       partition: 'selection',
       reviewItemRef: 'review-item:forged',
       reviewArtifactRef: 'review-artifact:forged',
-      captureEligibilityRef: 'capture-eligibility:forged',
-      captureEligibilitySource: 'external_governed_research_manifest',
-      captureEligible: false,
+      captureAdmission: {
+        schemaVersion: 'fr218-capture-admission-receipt-v1',
+        source: 'fr159_prospective_attestation_manifest',
+        captureAdmissionRef: 'fr159:forged',
+        sourceManifestCaptureRef: 'forged',
+        freshnessIndependentlyVerified: false,
+        sameParticipantIdentityIndependentlyVerified: false,
+        captureQualityValidated: false,
+      },
       confounderTags: [],
-    } as unknown as Parameters<typeof admitEyeCornerOrientationCandidateFR218>[1]))
-      .toThrow(/explicit capture eligibility/u);
+    })).toThrow(/not issued by FR218 from an active FR159 manifest/u);
   });
 
   it('rejects duplicate review artifacts in the candidate pool', () => {
@@ -206,9 +211,7 @@ describe('FR218 observable morphology validation layer', () => {
       partition: 'selection',
       reviewItemRef: 'review-item:first',
       reviewArtifactRef: 'review-artifact:shared',
-      captureEligibilityRef: 'capture-eligibility:first',
-      captureEligibilitySource: 'external_governed_research_manifest',
-      captureEligible: true,
+      captureAdmission: captureAdmission('first'),
       confounderTags: [],
     });
     const secondAdmission = admitEyeCornerOrientationCandidateFR218(bundle(1), {
@@ -218,9 +221,7 @@ describe('FR218 observable morphology validation layer', () => {
       partition: 'selection',
       reviewItemRef: 'review-item:second',
       reviewArtifactRef: 'review-artifact:shared',
-      captureEligibilityRef: 'capture-eligibility:second',
-      captureEligibilitySource: 'external_governed_research_manifest',
-      captureEligible: true,
+      captureAdmission: captureAdmission('second'),
       confounderTags: [],
     });
     if (firstAdmission.status !== 'available' || secondAdmission.status !== 'available') {
@@ -278,6 +279,20 @@ describe('FR218 observable morphology validation layer', () => {
     expect(selected.thresholdIssued).toBe(false);
     expect(selected.transitionZoneIssued).toBe(false);
     expect(selected.classifierIssued).toBe(false);
+  });
+
+  it('rejects collapsed metric-space coverage that would fake distinct bins', () => {
+    const records = [
+      candidate(1, 'sample:collapsed-a'),
+      candidate(1, 'sample:collapsed-b'),
+      candidate(1, 'sample:collapsed-c'),
+      candidate(1, 'sample:collapsed-d'),
+    ];
+    expect(() => selectMetricSpaceCoverageCandidatesFR218(records, {
+      partition: 'selection',
+      binCount: 2,
+      targetPerBin: 1,
+    })).toThrow(/distinct candidate metric values/u);
   });
 
   it('projects blinded review items without metric values, bins, thresholds, or traditional meaning', () => {
