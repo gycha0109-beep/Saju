@@ -4,11 +4,14 @@ const EXPECTED_EXPORTS = Object.freeze([
   'FE004_CONTRACT_VERSION',
   'FE006_CONTRACT_VERSION',
   'FE007_CONTRACT_VERSION',
+  'FE009_CONTRACT_VERSION',
   'assertBoundConsumerPreviewFaceEngineFE006',
   'assertConsumerPreviewEngineResultFE004',
   'assertManagedConsumerPreviewFaceEngineFE007',
+  'assertReleaseManagedConsumerPreviewFaceEngineFE009',
   'createBoundConsumerPreviewFaceEngineFE006',
   'createManagedConsumerPreviewFaceEngineFE007',
+  'createReleaseManagedConsumerPreviewFaceEngineFE009',
   'runConsumerPreviewFaceEngineFE004',
 ]);
 
@@ -23,7 +26,8 @@ if (JSON.stringify(actual) !== JSON.stringify(EXPECTED_EXPORTS)) {
 if (
   preview.FE004_CONTRACT_VERSION !== 'FE004-CONSUMER-PREVIEW-ENGINE-FACADE-v1' ||
   preview.FE006_CONTRACT_VERSION !== 'FE006-BOUND-CONSUMER-PREVIEW-ENGINE-v1' ||
-  preview.FE007_CONTRACT_VERSION !== 'FE007-MANAGED-CONSUMER-PREVIEW-ENGINE-SESSION-v1'
+  preview.FE007_CONTRACT_VERSION !== 'FE007-MANAGED-CONSUMER-PREVIEW-ENGINE-SESSION-v1' ||
+  preview.FE009_CONTRACT_VERSION !== 'FE009-RELEASE-ASSET-MANAGED-PREVIEW-ENGINE-v1'
 ) {
   throw new Error('FE008 package import resolved unexpected preview-engine contract versions.');
 }
@@ -49,11 +53,13 @@ await expectBlocked('@myeongha/face-reading');
 await expectBlocked('@myeongha/face-reading/preview-observable-engine-fe001');
 await expectBlocked('@myeongha/face-reading/governed-metric-geometry-runtime-fr77');
 await expectBlocked('@myeongha/face-reading/consumer-safe-preview-output-fe003');
+await expectBlocked('@myeongha/face-reading/mediapipe-v0-10-35-geometry-metadata-fe009.generated');
 
 process.stdout.write(`${JSON.stringify({
   status: 'FE008_PREVIEW_ENGINE_PACKAGE_EXPORT_PASS',
   package: '@myeongha/face-reading/preview-engine',
   runtimeValueExports: actual,
   internalPackagePathsBlocked: true,
+  releaseAssetPayloadPathBlocked: true,
   rootIndexExported: false,
 })}\n`);
