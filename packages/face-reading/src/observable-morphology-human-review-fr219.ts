@@ -136,7 +136,8 @@ export interface FR219AnnotationEvidenceReceipt {
   readonly reviewerIndependenceAttestationCount: number;
   readonly rawReviewerDisagreementPreserved: true;
   readonly consensusCollapsed: false;
-  readonly humanAnnotationEvidencePresent: boolean;
+  readonly annotationRecordsPresent: boolean;
+  readonly declaredHumanAnnotationEvidencePresent: boolean;
   readonly allReviewersHumanAttested: boolean;
   readonly allReviewersIndependentAttested: boolean;
   readonly reviewerHumanStatusIndependentlyVerified: false;
@@ -436,7 +437,18 @@ export function buildAnnotationEvidenceReceiptFR219(
     seenReviewerItem.add(pair);
   }
 
-  const allReviewItems = sessions.flatMap((session) => session.reviewItems);
+  const reviewItemByRef = new Map<string, FR218BlindedReviewItem>();
+  for (const session of sessions) {
+    for (const item of session.reviewItems) {
+      const existing = reviewItemByRef.get(item.reviewItemRef);
+      if (existing === undefined) {
+        reviewItemByRef.set(item.reviewItemRef, item);
+      } else if (canonicalJson(existing) !== canonicalJson(item)) {
+        fail(`review item definition drift across sessions: ${item.reviewItemRef}.`);
+      }
+    }
+  }
+  const allReviewItems = [...reviewItemByRef.values()];
   const fr218Annotations: FR218ReviewerAnnotation[] = annotations.map((record) => ({
     reviewItemRef: record.reviewItemRef,
     reviewerKey: record.reviewerKey,
@@ -479,7 +491,11 @@ export function buildAnnotationEvidenceReceiptFR219(
     reviewerIndependenceAttestationCount,
     rawReviewerDisagreementPreserved: true as const,
     consensusCollapsed: false as const,
-    humanAnnotationEvidencePresent: annotations.length > 0,
+    annotationRecordsPresent: annotations.length > 0,
+    declaredHumanAnnotationEvidencePresent:
+      annotations.length > 0
+      && sessions.length > 0
+      && humanReviewerAttestationCount === sessions.length,
     allReviewersHumanAttested:
       sessions.length > 0 && humanReviewerAttestationCount === sessions.length,
     allReviewersIndependentAttested:
