@@ -66,6 +66,18 @@ function fail(message: string): never {
   throw new FaceAuthorityValidationError(`FE-016 ${message}`);
 }
 
+function exactKeys(
+  value: object,
+  allowed: readonly string[],
+  path: string,
+): void {
+  const allowedSet = new Set(allowed);
+  const unexpected = Object.keys(value).find((key) => !allowedSet.has(key));
+  if (unexpected !== undefined) {
+    fail(`${path} contains unauthorized field: ${unexpected}.`);
+  }
+}
+
 function isLoopbackHostname(hostname: string): boolean {
   const normalized = hostname.toLowerCase();
   return (
@@ -188,6 +200,52 @@ export function createHostBoundMediaPipeRuntimeFactoryFE016(
 export function assertHostBoundMediaPipeRuntimeFactoryFE016(
   factory: FE016HostBoundMediaPipeRuntimeFactory,
 ): void {
+  exactKeys(
+    factory,
+    [
+      'schemaVersion',
+      'artifactVersion',
+      'contractVersion',
+      'runtimeState',
+      'assetReceipt',
+      'authorityBoundary',
+      'create',
+    ],
+    'runtimeFactory',
+  );
+  exactKeys(
+    factory.assetReceipt,
+    [
+      'wasmRoot',
+      'modelAssetPath',
+      'assetRefsHostConfigured',
+      'assetByteDigestVerified',
+      'assetBytesPersistedByEngine',
+      'runtimePackageName',
+      'runtimePackageVersion',
+      'runningMode',
+      'numFaces',
+      'outputFaceBlendshapes',
+      'outputFacialTransformationMatrixes',
+    ],
+    'assetReceipt',
+  );
+  exactKeys(
+    factory.authorityBoundary,
+    [
+      'consumesExistingProviderRuntimeOnly',
+      'performsResearchDecision',
+      'performsValidationDecision',
+      'classificationIssued',
+      'traditionalInterpretationIssued',
+      'physiognomyClaimIssued',
+      'fortuneClaimIssued',
+      'productionActivated',
+      'commerceActivated',
+    ],
+    'authorityBoundary',
+  );
+
   if (
     factory.schemaVersion !==
       'fe016-host-bound-mediapipe-runtime-factory-v1' ||
