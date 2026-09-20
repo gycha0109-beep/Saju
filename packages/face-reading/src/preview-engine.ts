@@ -90,3 +90,11 @@ export {
   FE015_CONTRACT_VERSION,
   runProductSafeBrowserPreviewFE015,
 } from './one-call-product-safe-browser-preview-fe015.js';
+
+export {
+  FE016_CONTRACT_VERSION,
+  assertHostBoundMediaPipeRuntimeFactoryFE016,
+  createHostBoundMediaPipeRuntimeFactoryFE016,
+  type FE016HostBoundMediaPipeAssetConfig,
+  type FE016HostBoundMediaPipeRuntimeFactory,
+} from './host-bound-mediapipe-runtime-assets-fe016.js';
