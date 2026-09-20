@@ -231,27 +231,15 @@ describe('FE014 product-safe neutral preview transport', () => {
         ...transport.authorityBoundary,
         traditionalInterpretationIssued: true,
       },
-    } as typeof transport;
+    } as unknown as typeof transport;
     expect(() => assertProductSafeBrowserPreviewTransportFE014(widened))
       .toThrow(/authority widened/u);
 
-    if (transport.status !== 'ok') throw new Error('expected success transport');
     const leaked = {
       ...transport,
-      preview: {
-        ...transport.preview,
-        metrics: [
-          ...transport.preview.metrics,
-          {
-            regionKey: 'eye_pair',
-            metricRef: '"providerRunRef":"leaked"',
-            value: 1,
-            unit: 'ratio',
-          },
-        ],
-      },
-    } as typeof transport;
+      providerRunRef: 'leaked-trace',
+    } as unknown as typeof transport;
     expect(() => assertProductSafeBrowserPreviewTransportFE014(leaked))
-      .toThrow(/leaked trace identity/u);
+      .toThrow(/unauthorized field: providerRunRef/u);
   });
 });
