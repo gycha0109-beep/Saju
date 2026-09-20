@@ -159,6 +159,48 @@ describe('FR218 observable morphology validation layer', () => {
     expect(admitted.candidate.traditionalBindingApplied).toBe(false);
   });
 
+  it('rejects runtime-forged capture eligibility before candidate admission', () => {
+    expect(() => admitEyeCornerOrientationCandidateFR218(bundle(1), {
+      sampleRef: 'sample:forged',
+      participantKey: 'participant:forged',
+      captureFamilyKey: 'family:forged',
+      partition: 'selection',
+      reviewArtifactRef: 'review-artifact:forged',
+      captureEligible: false,
+      confounderTags: [],
+    } as unknown as Parameters<typeof admitEyeCornerOrientationCandidateFR218>[1]))
+      .toThrow(/explicit capture eligibility/u);
+  });
+
+  it('rejects duplicate review artifacts in the candidate pool', () => {
+    const firstAdmission = admitEyeCornerOrientationCandidateFR218(bundle(-1), {
+      sampleRef: 'sample:first',
+      participantKey: 'participant:first',
+      captureFamilyKey: 'family:first',
+      partition: 'selection',
+      reviewArtifactRef: 'review-artifact:shared',
+      captureEligible: true,
+      confounderTags: [],
+    });
+    const secondAdmission = admitEyeCornerOrientationCandidateFR218(bundle(1), {
+      sampleRef: 'sample:second',
+      participantKey: 'participant:second',
+      captureFamilyKey: 'family:second',
+      partition: 'selection',
+      reviewArtifactRef: 'review-artifact:shared',
+      captureEligible: true,
+      confounderTags: [],
+    });
+    if (firstAdmission.status !== 'available' || secondAdmission.status !== 'available') {
+      throw new Error('test candidates unexpectedly unavailable');
+    }
+
+    expect(() => validateFR218CandidatePool([
+      firstAdmission.candidate,
+      secondAdmission.candidate,
+    ])).toThrow(/duplicate reviewArtifactRef/u);
+  });
+
   it('rejects participant leakage between selection and holdout', () => {
     const records = [
       candidate(-1, 'sample:selection', 'participant:shared', 'selection', 'family:selection'),
