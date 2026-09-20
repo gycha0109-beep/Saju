@@ -4,6 +4,7 @@ import {
   FACE_OBSERVABLE_MORPHOLOGY_CONSTRUCT_FR218,
   FR218_HUMAN_EVIDENCE_GATE,
   admitEyeCornerOrientationCandidateFR218,
+  assertSelectionHoldoutCoverageFR218,
   assessHumanEvidenceReadinessFR218,
   projectBlindedReviewItemsFR218,
   selectMetricSpaceCoverageCandidatesFR218,
@@ -101,6 +102,7 @@ function candidate(
     participantKey,
     captureFamilyKey,
     partition,
+    reviewItemRef: `review-item:${sampleRef}`,
     reviewArtifactRef: `review-artifact:${sampleRef}`,
     captureEligible: true,
     confounderTags: [],
@@ -144,6 +146,7 @@ describe('FR218 observable morphology validation layer', () => {
       participantKey: 'participant:a',
       captureFamilyKey: 'family:a',
       partition: 'selection',
+      reviewItemRef: 'review-item:a',
       reviewArtifactRef: 'review-artifact:a',
       captureEligible: true,
       confounderTags: ['glasses'],
@@ -165,6 +168,7 @@ describe('FR218 observable morphology validation layer', () => {
       participantKey: 'participant:forged',
       captureFamilyKey: 'family:forged',
       partition: 'selection',
+      reviewItemRef: 'review-item:forged',
       reviewArtifactRef: 'review-artifact:forged',
       captureEligible: false,
       confounderTags: [],
@@ -178,6 +182,7 @@ describe('FR218 observable morphology validation layer', () => {
       participantKey: 'participant:first',
       captureFamilyKey: 'family:first',
       partition: 'selection',
+      reviewItemRef: 'review-item:first',
       reviewArtifactRef: 'review-artifact:shared',
       captureEligible: true,
       confounderTags: [],
@@ -209,6 +214,18 @@ describe('FR218 observable morphology validation layer', () => {
 
     expect(() => validateFR218CandidatePool(records))
       .toThrow(/participant leakage across selection\/holdout/u);
+  });
+
+  it('requires both selection and holdout before a study pool is considered split-ready', () => {
+    expect(() => assertSelectionHoldoutCoverageFR218([
+      candidate(-2, 'sample:selection-only'),
+      candidate(2, 'sample:selection-only-2'),
+    ])).toThrow(/both selection and holdout partitions/u);
+
+    expect(() => assertSelectionHoldoutCoverageFR218([
+      candidate(-2, 'sample:selection-ready'),
+      candidate(2, 'sample:holdout-ready', undefined, 'holdout'),
+    ])).not.toThrow();
   });
 
   it('samples metric space for coverage without preassigning a near-boundary class', () => {
