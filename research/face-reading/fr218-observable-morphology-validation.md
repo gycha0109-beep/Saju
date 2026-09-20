@@ -160,7 +160,38 @@ ordinal response vocabulary
 
 The actual UI/storage implementation for reviewer collection is outside FR218.
 
-## 7. Selection / holdout and identity leakage
+## 7. Capture eligibility boundary
+
+FR218 does not own or invent an automatic capture-quality gate.
+
+The current Eye-Pair capture research lineage explicitly does not authorize an automatic numeric capture-quality pass/fail threshold. Therefore FR218 must not convert a caller boolean into capture-quality authority.
+
+Each candidate must carry:
+
+```text
+captureEligibilityRef
+captureEligibilitySource = external_governed_research_manifest
+```
+
+FR218 records the upstream admission reference but does not re-evaluate capture quality:
+
+```text
+captureEligibilityReevaluatedByFR218 = false
+```
+
+This preserves the layer boundary:
+
+```text
+A. capture eligibility authority
+→ admitted research-manifest record
+
+B/C. neutral metric + observable morphology validation
+→ FR218
+```
+
+Synthetic tests use protocol-local fixture refs only to verify contract mechanics. They do not constitute real capture eligibility evidence.
+
+## 8. Selection / holdout and identity leakage
 
 FR218 reuses the existing calibration partition vocabulary:
 
@@ -182,7 +213,7 @@ Threshold selection remains out of scope.
 
 The holdout partition must not be used merely to tune an eventual threshold.
 
-## 8. Reviewer disagreement
+## 9. Reviewer disagreement
 
 FR218 preserves raw reviewer labels and returns descriptive per-label counts.
 
@@ -206,7 +237,7 @@ consensusCollapsed = false
 
 A later study may define an agreement or latent-label model, but that requires separate authority.
 
-## 9. Repeat capture
+## 10. Repeat capture
 
 The current FR218 code does not manufacture repeat-capture evidence.
 
@@ -222,7 +253,7 @@ FR218 requires real repeat-capture evidence before the later classifier/threshol
 
 Synthetic fixtures are algorithm tests only.
 
-## 10. Human evidence gate
+## 11. Human evidence gate
 
 Current repository execution evidence for this new observable construct does not contain the required blinded human annotations or repeat-capture validation.
 
@@ -249,7 +280,7 @@ transition zone
 traditional binding
 ```
 
-## 11. Authority boundary
+## 12. Authority boundary
 
 FR218 must remain:
 
@@ -275,7 +306,7 @@ observable label → traditional physiognomy claim
 missing label → negative evidence
 ```
 
-## 12. Current completion condition
+## 13. Current completion condition
 
 FR218 is complete as an executable research contract when:
 
