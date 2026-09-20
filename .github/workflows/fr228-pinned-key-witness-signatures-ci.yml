@@ -1,0 +1,40 @@
+name: FR228 Pinned-Key Witness Signatures CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-external-witness-evidence-fr225.ts'
+      - 'packages/face-reading/src/observable-morphology-external-evidence-byte-inspection-fr227.ts'
+      - 'packages/face-reading/src/observable-morphology-pinned-key-witness-signatures-fr228.ts'
+      - 'packages/face-reading/src/observable-morphology-pinned-key-witness-signatures-fr228.test.ts'
+      - 'research/face-reading/fr228-pinned-key-witness-signatures.md'
+      - '.github/workflows/fr228-pinned-key-witness-signatures-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/face-reading/src/observable-morphology-external-witness-evidence-fr225.ts'
+      - 'packages/face-reading/src/observable-morphology-external-evidence-byte-inspection-fr227.ts'
+      - 'packages/face-reading/src/observable-morphology-pinned-key-witness-signatures-fr228.ts'
+      - 'packages/face-reading/src/observable-morphology-pinned-key-witness-signatures-fr228.test.ts'
+      - 'research/face-reading/fr228-pinned-key-witness-signatures.md'
+      - '.github/workflows/fr228-pinned-key-witness-signatures-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr228-pinned-key-witness-signatures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR228 pinned-key witness signatures
+        run: npx vitest run packages/face-reading/src/observable-morphology-pinned-key-witness-signatures-fr228.test.ts
