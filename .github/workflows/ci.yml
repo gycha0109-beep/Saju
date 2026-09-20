@@ -27,6 +27,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+          cache: npm
 
       - name: Detect project manifest
         id: project
@@ -40,7 +41,7 @@ jobs:
 
       - name: Install locked dependencies
         if: steps.project.outputs.present == 'true'
-        run: npm ci --no-audit --no-fund
+        run: npm ci --no-audit --no-fund --ignore-scripts
 
       - name: Verify
         if: steps.project.outputs.present == 'true'
