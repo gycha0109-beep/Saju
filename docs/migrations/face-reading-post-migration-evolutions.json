@@ -10,6 +10,15 @@
       "changeClass": "additive_authority_governed_core_extension",
       "historicalProvenanceMutation": false,
       "methodologySemanticChange": false
+    },
+    {
+      "path": "packages/face-reading/package.json",
+      "sourceBlobSha": "7fc9dc90c84b6aabc9887ff974546308466812e2",
+      "targetBlobSha": "18cd6a31b5439fc2751278d612af272d87e3e65c",
+      "authorityRef": "FE008 / issue #1095",
+      "changeClass": "additive_authority_governed_core_extension",
+      "historicalProvenanceMutation": false,
+      "methodologySemanticChange": false
     }
   ]
 }
