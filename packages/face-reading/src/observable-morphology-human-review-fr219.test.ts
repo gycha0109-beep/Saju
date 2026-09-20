@@ -49,6 +49,7 @@ function session(
       assetPath: `/private/${reviewerKey}.png`,
       assetDigest: `sha256:${'a'.repeat(64)}`,
       mediaType: 'image/png',
+      embeddedMetadataSanitizedAttested: true,
     }],
   });
 }
@@ -71,6 +72,22 @@ describe('FR219 observable morphology human review', () => {
     expect(value.publicManifest.thresholdsExposed).toBe(false);
     expect(value.publicManifest.traditionalMeaningExposed).toBe(false);
     expect(value.publicManifest.peerLabelsExposed).toBe(false);
+  });
+
+  it('rejects reviewer delivery without embedded-metadata sanitization attestation', () => {
+    expect(() => materializeBlindedReviewSessionFR219({
+      sessionRef: 'session:metadata',
+      reviewerKey: 'reviewer:metadata',
+      reviewerHumanAttested: true,
+      reviewerIndependenceAttested: true,
+      items: [{
+        reviewItem: reviewItem(),
+        assetPath: '/private/metadata.png',
+        assetDigest: `sha256:${'b'.repeat(64)}`,
+        mediaType: 'image/png',
+        embeddedMetadataSanitizedAttested: false,
+      }],
+    })).toThrow(/embedded-metadata sanitization attestation/u);
   });
 
   it('rejects a review item that widens the FR218 blind boundary', () => {
