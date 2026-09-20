@@ -100,7 +100,7 @@ describe('FE016 host-bound MediaPipe runtime assets', () => {
         'http://[::1]:5173/mediapipe/wasm',
         'http://localhost:5173/models/face_landmarker.task',
       ],
-    ]) {
+    ] as const) {
       expect(() =>
         createHostBoundMediaPipeRuntimeFactoryFE016({
           schemaVersion: 'fe016-host-bound-mediapipe-asset-config-v1',
