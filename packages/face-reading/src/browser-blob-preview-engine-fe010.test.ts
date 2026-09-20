@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FE004ConsumerPreviewEngineResult } from './consumer-preview-engine-facade-fe004.js';
 import type { FE006PreviewImageRequest } from './bound-consumer-preview-engine-fe006.js';
+import { FaceAuthorityValidationError } from './validation.js';
 import {
+  FE010BrowserBlobPreviewError,
   assertBrowserBlobConsumerPreviewFaceEngineFE010,
   createBrowserBlobConsumerPreviewFaceEngineFE010,
   type FE010BrowserBlobPreviewEngine,
@@ -180,15 +182,86 @@ describe('FE010 browser Blob preview ingress', () => {
     await expect(engine.analyzeBlob({
       schemaVersion: 'fe010-browser-blob-analysis-request-v1',
       blob: new Blob(['x'], { type: 'image/gif' }),
-    })).rejects.toThrow(/blob type/u);
+    })).rejects.toMatchObject({
+      name: 'FE010BrowserBlobPreviewError',
+      code: 'UNSUPPORTED_IMAGE_TYPE',
+    });
 
     await expect(engine.analyzeBlob({
       schemaVersion: 'fe010-browser-blob-analysis-request-v1',
       blob: new Blob([], { type: 'image/png' }),
-    })).rejects.toThrow(/non-empty/u);
+    })).rejects.toMatchObject({
+      name: 'FE010BrowserBlobPreviewError',
+      code: 'INVALID_IMAGE_INPUT',
+    });
 
     expect(state.decode).toBe(0);
     await engine.close();
+  });
+
+  it('types decode, no-face, and provider-geometry failures without leaking upstream errors', async () => {
+    const decodeEngine = await createBrowserBlobConsumerPreviewFaceEngineFE010({
+      schemaVersion: 'fe010-browser-blob-preview-engine-config-v1',
+      bitmapDecoder: {
+        async decode() {
+          throw new Error('browser decoder internal detail');
+        },
+      },
+    });
+    await expect(decodeEngine.analyzeBlob({
+      schemaVersion: 'fe010-browser-blob-analysis-request-v1',
+      blob: new Blob(['x'], { type: 'image/png' }),
+    })).rejects.toMatchObject({
+      name: 'FE010BrowserBlobPreviewError',
+      code: 'IMAGE_DECODE_FAILED',
+      message: 'FE-010 browser image decode failed.',
+    });
+    await decodeEngine.close();
+
+    const state = { decode: 0, bitmapClose: 0 };
+    const engine = await createBrowserBlobConsumerPreviewFaceEngineFE010({
+      schemaVersion: 'fe010-browser-blob-preview-engine-config-v1',
+      bitmapDecoder: decoder(state),
+    });
+
+    mocks.analyze.mockRejectedValueOnce(
+      new FaceAuthorityValidationError(
+        'FR-77 requires exactly one detected face; received 0.',
+      ),
+    );
+    await expect(engine.analyzeBlob({
+      schemaVersion: 'fe010-browser-blob-analysis-request-v1',
+      blob: new Blob(['no-face'], { type: 'image/jpeg' }),
+    })).rejects.toMatchObject({
+      name: 'FE010BrowserBlobPreviewError',
+      code: 'NO_FACE_DETECTED',
+    });
+
+    mocks.analyze.mockRejectedValueOnce(
+      new FaceAuthorityValidationError(
+        'FR-77 requires exactly 478 provider landmarks before the release-exact 468 geometry slice.',
+      ),
+    );
+    await expect(engine.analyzeBlob({
+      schemaVersion: 'fe010-browser-blob-analysis-request-v1',
+      blob: new Blob(['bad-geometry'], { type: 'image/webp' }),
+    })).rejects.toMatchObject({
+      name: 'FE010BrowserBlobPreviewError',
+      code: 'INVALID_PROVIDER_GEOMETRY',
+    });
+
+    expect(state.bitmapClose).toBe(2);
+    await engine.close();
+  });
+
+  it('uses the typed FE010 error class for session closure', async () => {
+    const error = new FE010BrowserBlobPreviewError(
+      'SESSION_CLOSED',
+      'browser Blob session close has begun; new analysis is rejected.',
+    );
+    expect(error).toBeInstanceOf(FaceAuthorityValidationError);
+    expect(error.code).toBe('SESSION_CLOSED');
+    expect(error.name).toBe('FE010BrowserBlobPreviewError');
   });
 
   it('rejects authority widening', async () => {
