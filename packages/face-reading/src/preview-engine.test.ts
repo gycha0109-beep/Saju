@@ -6,9 +6,12 @@ describe('preview-engine public entrypoint', () => {
     expect(Object.keys(previewEngine).sort()).toEqual([
       'FE004_CONTRACT_VERSION',
       'FE006_CONTRACT_VERSION',
+      'FE007_CONTRACT_VERSION',
       'assertBoundConsumerPreviewFaceEngineFE006',
       'assertConsumerPreviewEngineResultFE004',
+      'assertManagedConsumerPreviewFaceEngineFE007',
       'createBoundConsumerPreviewFaceEngineFE006',
+      'createManagedConsumerPreviewFaceEngineFE007',
       'runConsumerPreviewFaceEngineFE004',
     ]);
   });
@@ -19,14 +22,17 @@ describe('preview-engine public entrypoint', () => {
     expect(keys).not.toContain('projectConsumerSafePreviewOutputFE003');
     expect(keys).not.toContain('runPreviewObservableEngineFE001');
     expect(keys).not.toContain('runGovernedMetricGeometryFR77');
+    expect(keys).not.toContain('issueMediaPipeGeometryProfileFR77');
     expect(keys).not.toContain('projectIssuedGovernedMetricGeometryToLipsSurfaceFR78');
     expect(keys).not.toContain('projectMetricLipsSurfaceToPoseNormalized2DFR79');
   });
 
-  it('exposes stable FE004 and FE006 contract versions', () => {
+  it('exposes stable FE004, FE006, and FE007 contract versions', () => {
     expect(previewEngine.FE004_CONTRACT_VERSION)
       .toBe('FE004-CONSUMER-PREVIEW-ENGINE-FACADE-v1');
     expect(previewEngine.FE006_CONTRACT_VERSION)
       .toBe('FE006-BOUND-CONSUMER-PREVIEW-ENGINE-v1');
+    expect(previewEngine.FE007_CONTRACT_VERSION)
+      .toBe('FE007-MANAGED-CONSUMER-PREVIEW-ENGINE-SESSION-v1');
   });
 });
