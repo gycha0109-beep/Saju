@@ -175,7 +175,7 @@ function candidateEvidence(prefix: string) {
   return verifyPersistedCandidateProvenanceEvidenceFR221(persisted(materialized));
 }
 
-function reviewItem(record: FR218MetricCandidateRecord): FR218BlindedReviewItem {
+function reviewItem(record: Pick<FR218MetricCandidateRecord, 'reviewItemRef' | 'reviewArtifactRef'>): FR218BlindedReviewItem {
   return {
     reviewItemRef: record.reviewItemRef,
     reviewArtifactRef: record.reviewArtifactRef,
@@ -202,7 +202,7 @@ function reviewItem(record: FR218MetricCandidateRecord): FR218BlindedReviewItem 
 }
 
 function correspondence(prefix: string, candidates = candidateEvidence(prefix)) {
-  const items = candidates.records.map((record) => reviewItem(record as FR218MetricCandidateRecord));
+  const items = candidates.records.map((record) => reviewItem(record));
   const session = materializeBlindedReviewSessionFR219({
     sessionRef: `session:fr224:${prefix}`,
     reviewerKey: `reviewer:fr224:${prefix}`,
