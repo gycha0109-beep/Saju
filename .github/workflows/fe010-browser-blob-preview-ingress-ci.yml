@@ -1,0 +1,32 @@
+name: FE010 Browser Blob Preview Ingress CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/browser-blob-preview-engine-fe010.ts'
+      - 'packages/face-reading/src/browser-blob-preview-engine-fe010.test.ts'
+      - 'packages/face-reading/src/preview-engine.ts'
+      - 'packages/face-reading/src/preview-engine.test.ts'
+      - 'scripts/verify-fe008-preview-engine-package.mjs'
+      - 'docs/face-engine/fe010-browser-blob-preview-ingress.md'
+      - '.github/workflows/fe010-browser-blob-preview-ingress-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe010-browser-blob-ingress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FE010 browser Blob ingress
+        run: npx vitest run packages/face-reading/src/browser-blob-preview-engine-fe010.test.ts packages/face-reading/src/preview-engine.test.ts
+      - name: Verify package import boundary
+        run: npm run face:verify:preview-package
