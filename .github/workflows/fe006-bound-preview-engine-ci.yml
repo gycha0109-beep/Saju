@@ -1,0 +1,30 @@
+name: FE006 Bound Preview Engine CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/bound-consumer-preview-engine-fe006.ts'
+      - 'packages/face-reading/src/bound-consumer-preview-engine-fe006.test.ts'
+      - 'packages/face-reading/src/preview-engine.ts'
+      - 'packages/face-reading/src/preview-engine.test.ts'
+      - 'packages/face-reading/src/consumer-preview-engine-facade-fe004.ts'
+      - 'docs/face-engine/fe006-bound-consumer-preview-engine.md'
+      - '.github/workflows/fe006-bound-preview-engine-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe006-bound-preview-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FE006 bound engine
+        run: npx vitest run packages/face-reading/src/bound-consumer-preview-engine-fe006.test.ts packages/face-reading/src/preview-engine.test.ts
