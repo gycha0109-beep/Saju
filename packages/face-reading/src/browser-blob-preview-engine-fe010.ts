@@ -257,10 +257,10 @@ export async function createBrowserBlobConsumerPreviewFaceEngineFE010(
     validateBlobRequest(request);
     const digest = await sha256Blob(request.blob);
     const bitmap = await decoder.decode(request.blob);
-    validateBitmap(bitmap);
-    sequence += 1;
 
     try {
+      validateBitmap(bitmap);
+      sequence += 1;
       return await managed.analyze({
         schemaVersion: 'fe006-preview-image-request-v1',
         providerRunRef: providerRunRef(sequence, digest),
@@ -270,7 +270,13 @@ export async function createBrowserBlobConsumerPreviewFaceEngineFE010(
         frameHeight: bitmap.height,
       });
     } finally {
-      bitmap.close?.();
+      if (
+        typeof bitmap === 'object' &&
+        bitmap !== null &&
+        typeof bitmap.close === 'function'
+      ) {
+        bitmap.close();
+      }
     }
   };
 
