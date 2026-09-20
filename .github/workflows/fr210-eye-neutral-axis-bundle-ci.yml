@@ -1,0 +1,32 @@
+name: FR210 Eye Neutral Axis Bundle CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/eye-neutral-axis-bundle-fr210.ts'
+      - 'packages/face-reading/src/eye-neutral-axis-bundle-fr210.test.ts'
+      - 'packages/face-reading/src/governed-geometry-to-fr208-adapter-fr209.ts'
+      - 'packages/face-reading/src/cross-face-neutral-observable-primitives-fr208.ts'
+      - 'packages/face-reading/src/role-invariant-eye-pair-neutral-shape-metric-runtime-fr158.ts'
+      - 'packages/face-reading/src/eye-pair-geometric-y-span-runtime-fr178.ts'
+      - 'packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts'
+      - 'research/face-reading/fr210-eye-neutral-axis-bundle.md'
+      - '.github/workflows/fr210-eye-neutral-axis-bundle-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr210-eye-neutral-axis-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR210 Eye-Pair neutral axis bundle
+        run: npx vitest run packages/face-reading/src/eye-neutral-axis-bundle-fr210.test.ts

@@ -1,0 +1,31 @@
+name: FR211 Visible Midface Band CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/visible-midface-band-fr211.ts'
+      - 'packages/face-reading/src/visible-midface-band-fr211.test.ts'
+      - 'packages/face-reading/src/face-reading-observable-morphology-measurement-boundary-fr206.ts'
+      - 'packages/face-reading/src/cross-face-neutral-observable-primitives-fr208.ts'
+      - 'packages/face-reading/src/governed-geometry-to-fr208-adapter-fr209.ts'
+      - 'packages/face-reading/src/eye-neutral-axis-bundle-fr210.ts'
+      - 'research/face-reading/fr211-visible-midface-band.md'
+      - '.github/workflows/fr211-visible-midface-band-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr211-visible-midface-band:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR211 visible mid-face band
+        run: npx vitest run packages/face-reading/src/visible-midface-band-fr211.test.ts

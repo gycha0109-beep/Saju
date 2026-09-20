@@ -1,0 +1,29 @@
+name: FR214 Mouth Outline Angularity CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/role-free-mouth-outline-angularity-fr214.ts'
+      - 'packages/face-reading/src/role-free-mouth-outline-angularity-fr214.test.ts'
+      - 'packages/face-reading/src/pose-normalized-lips-geometry-fr79.ts'
+      - 'packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts'
+      - 'research/face-reading/fr214-mouth-outline-angularity.md'
+      - '.github/workflows/fr214-mouth-outline-angularity-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr214-mouth-outline-angularity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR214 mouth outline angularity
+        run: npx vitest run packages/face-reading/src/role-free-mouth-outline-angularity-fr214.test.ts

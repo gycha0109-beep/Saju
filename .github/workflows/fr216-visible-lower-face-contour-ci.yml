@@ -1,0 +1,32 @@
+name: FR216 Visible Lower Face Contour CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/canonical-visible-lower-face-contour-fr216.ts'
+      - 'packages/face-reading/src/canonical-visible-lower-face-contour-fr216.test.ts'
+      - 'packages/face-reading/src/visible-midface-band-fr211.ts'
+      - 'packages/face-reading/src/visible-lower-face-width-fr213.ts'
+      - 'packages/face-reading/src/governed-metric-geometry-runtime-fr77.ts'
+      - 'packages/face-reading/src/pose-normalized-lips-geometry-fr79.ts'
+      - 'packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts'
+      - 'research/face-reading/fr216-visible-lower-face-contour.md'
+      - '.github/workflows/fr216-visible-lower-face-contour-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr216-visible-lower-face-contour:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR216 visible lower-face contour
+        run: npx vitest run packages/face-reading/src/canonical-visible-lower-face-contour-fr216.test.ts

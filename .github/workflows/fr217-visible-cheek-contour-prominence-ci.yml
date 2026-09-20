@@ -1,0 +1,32 @@
+name: FR217 Visible Cheek Contour Prominence CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/visible-cheek-contour-prominence-fr217.ts'
+      - 'packages/face-reading/src/visible-cheek-contour-prominence-fr217.test.ts'
+      - 'packages/face-reading/src/visible-midface-band-fr211.ts'
+      - 'packages/face-reading/src/face-eye-pair-research-bridge-fr24.ts'
+      - 'packages/face-reading/src/governed-metric-geometry-runtime-fr77.ts'
+      - 'packages/face-reading/src/pose-normalized-lips-geometry-fr79.ts'
+      - 'packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts'
+      - 'research/face-reading/fr217-visible-cheek-contour-prominence.md'
+      - '.github/workflows/fr217-visible-cheek-contour-prominence-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr217-visible-cheek-contour-prominence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR217 visible cheek contour prominence
+        run: npx vitest run packages/face-reading/src/visible-cheek-contour-prominence-fr217.test.ts

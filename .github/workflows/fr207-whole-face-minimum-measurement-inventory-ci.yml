@@ -1,0 +1,28 @@
+name: FR207 Whole-Face Measurement Inventory CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/face-reading-observable-morphology-measurement-boundary-fr206.ts'
+      - 'packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.ts'
+      - 'packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.test.ts'
+      - 'research/face-reading/fr207-whole-face-minimum-measurement-inventory.md'
+      - '.github/workflows/fr207-whole-face-minimum-measurement-inventory-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr207-whole-face-inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR207 whole-face inventory
+        run: npx vitest run packages/face-reading/src/face-reading-whole-face-minimum-measurement-inventory-fr207.test.ts
