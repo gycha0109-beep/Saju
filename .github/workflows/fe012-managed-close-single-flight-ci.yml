@@ -1,0 +1,27 @@
+name: FE012 Managed Close Single-Flight CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/managed-consumer-preview-engine-fe007.ts'
+      - 'packages/face-reading/src/managed-consumer-preview-engine-fe007.test.ts'
+      - 'docs/face-engine/fe012-managed-close-single-flight.md'
+      - '.github/workflows/fe012-managed-close-single-flight-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe012-managed-close-single-flight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FE007 close single-flight hardening
+        run: npx vitest run packages/face-reading/src/managed-consumer-preview-engine-fe007.test.ts
