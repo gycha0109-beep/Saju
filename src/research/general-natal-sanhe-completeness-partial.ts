@@ -52,11 +52,12 @@ export interface R053PartialSubset {
 export const R053_PARTIAL_SUBSETS: readonly R053PartialSubset[] = Object.freeze(
   R053_COMPLETE_FAMILIES.flatMap((family) => {
     const [a, b, c] = family.members;
-    return [
+    const subsets: R053PartialSubset[] = [
       { parentFamilyId: family.id, members: [a, b], taxonomy: 'UNRESOLVED', effect: 'UNRESOLVED', executable: false },
       { parentFamilyId: family.id, members: [b, c], taxonomy: 'UNRESOLVED', effect: 'UNRESOLVED', executable: false },
       { parentFamilyId: family.id, members: [a, c], taxonomy: 'UNRESOLVED', effect: 'UNRESOLVED', executable: false },
     ];
+    return subsets;
   }),
 );
 
