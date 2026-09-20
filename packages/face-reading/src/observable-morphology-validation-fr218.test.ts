@@ -192,6 +192,7 @@ describe('FR218 observable morphology validation layer', () => {
       participantKey: 'participant:second',
       captureFamilyKey: 'family:second',
       partition: 'selection',
+      reviewItemRef: 'review-item:second',
       reviewArtifactRef: 'review-artifact:shared',
       captureEligible: true,
       confounderTags: [],
