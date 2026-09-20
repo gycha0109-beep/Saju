@@ -65,6 +65,7 @@ export interface FR218MetricCandidateMetadata {
   readonly participantKey: string;
   readonly captureFamilyKey: string;
   readonly partition: FaceCalibrationPartition;
+  readonly reviewItemRef: string;
   readonly reviewArtifactRef: string;
   readonly captureEligible: true;
   readonly confounderTags: readonly string[];
@@ -78,6 +79,7 @@ export interface FR218MetricCandidateRecord {
   readonly participantKey: string;
   readonly captureFamilyKey: string;
   readonly partition: FaceCalibrationPartition;
+  readonly reviewItemRef: string;
   readonly reviewArtifactRef: string;
   readonly metricRef: typeof FR218_EYE_OUTER_CORNER_TILT_METRIC_REF;
   readonly metricValue: number;
@@ -281,6 +283,7 @@ export function admitEyeCornerOrientationCandidateFR218(
   const sampleRef = nonEmpty(metadata.sampleRef, 'sampleRef');
   const participantKey = nonEmpty(metadata.participantKey, 'participantKey');
   const captureFamilyKey = nonEmpty(metadata.captureFamilyKey, 'captureFamilyKey');
+  const reviewItemRef = nonEmpty(metadata.reviewItemRef, 'reviewItemRef');
   const reviewArtifactRef = nonEmpty(metadata.reviewArtifactRef, 'reviewArtifactRef');
   if (metadata.partition !== 'selection' && metadata.partition !== 'holdout') {
     fail('partition must be selection or holdout.');
@@ -321,6 +324,7 @@ export function admitEyeCornerOrientationCandidateFR218(
     participantKey,
     captureFamilyKey,
     partition: metadata.partition,
+    reviewItemRef,
     reviewArtifactRef,
     metricRef: FR218_EYE_OUTER_CORNER_TILT_METRIC_REF,
     metricValue: tilt.value,
@@ -362,7 +366,9 @@ export function validateFR218CandidatePool(
 ): void {
   if (records.length === 0) fail('candidate pool must not be empty.');
   const samples = new Set<string>();
+  const reviewItems = new Set<string>();
   const reviewArtifacts = new Set<string>();
+  const partitions = new Set<FaceCalibrationPartition>();
   const participantPartition = new Map<string, FaceCalibrationPartition>();
   const familyPartition = new Map<string, FaceCalibrationPartition>();
   const familyParticipant = new Map<string, string>();
@@ -371,10 +377,15 @@ export function validateFR218CandidatePool(
     assertIssuedFR218MetricCandidate(record);
     if (samples.has(record.sampleRef)) fail(`duplicate sampleRef: ${record.sampleRef}.`);
     samples.add(record.sampleRef);
+    if (reviewItems.has(record.reviewItemRef)) {
+      fail(`duplicate reviewItemRef: ${record.reviewItemRef}.`);
+    }
+    reviewItems.add(record.reviewItemRef);
     if (reviewArtifacts.has(record.reviewArtifactRef)) {
       fail(`duplicate reviewArtifactRef: ${record.reviewArtifactRef}.`);
     }
     reviewArtifacts.add(record.reviewArtifactRef);
+    partitions.add(record.partition);
 
     const participantExisting = participantPartition.get(record.participantKey);
     if (participantExisting !== undefined && participantExisting !== record.partition) {
@@ -393,6 +404,9 @@ export function validateFR218CandidatePool(
       fail(`capture family belongs to multiple participants: ${record.captureFamilyKey}.`);
     }
     familyParticipant.set(record.captureFamilyKey, record.participantKey);
+  }
+  if (!partitions.has('selection') || !partitions.has('holdout')) {
+    fail('candidate pool must contain both selection and holdout partitions.');
   }
 }
 
@@ -451,7 +465,7 @@ export function selectMetricSpaceCoverageCandidatesFR218(
     return pickEvenlyAcrossBin(bin, plan.targetPerBin).map((record) =>
       Object.freeze({
         sampleRef: record.sampleRef,
-        reviewItemRef: `review.fr218:${record.sampleRef}`,
+        reviewItemRef: record.reviewItemRef,
         coverageBinIndex: binIndex,
         metricValueHiddenFromReviewer: true as const,
       }));
