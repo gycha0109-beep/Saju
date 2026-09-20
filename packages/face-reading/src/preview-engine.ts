@@ -71,3 +71,17 @@ export {
   type FE013OneShotBrowserPreviewSuccess,
   type FE013OneShotLifecycleReceipt,
 } from './one-shot-browser-preview-engine-fe013.js';
+
+export {
+  FE014_CONTRACT_VERSION,
+  assertProductSafeBrowserPreviewTransportFE014,
+  projectProductSafeBrowserPreviewTransportFE014,
+  serializeProductSafeBrowserPreviewTransportFE014,
+  type FE014AuthorityBoundary,
+  type FE014NeutralMetricTransport,
+  type FE014ProductSafePreviewTransport,
+  type FE014ProductSafePreviewTransportRejected,
+  type FE014ProductSafePreviewTransportSuccess,
+  type FE014RegionAvailabilityTransport,
+  type FE014TransportReceipt,
+} from './product-safe-preview-transport-fe014.js';
