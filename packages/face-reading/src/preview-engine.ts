@@ -60,3 +60,14 @@ export {
   type FE011PreviewRejectionCode,
   type FE011PreviewRejectionStage,
 } from './host-safe-browser-preview-engine-fe011.js';
+
+export {
+  FE013_CONTRACT_VERSION,
+  assertOneShotHostSafeBrowserPreviewResultFE013,
+  runOneShotHostSafeBrowserPreviewFE013,
+  type FE013OneShotBrowserPreviewRejected,
+  type FE013OneShotBrowserPreviewRequest,
+  type FE013OneShotBrowserPreviewResult,
+  type FE013OneShotBrowserPreviewSuccess,
+  type FE013OneShotLifecycleReceipt,
+} from './one-shot-browser-preview-engine-fe013.js';
