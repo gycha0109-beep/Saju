@@ -41,6 +41,9 @@ export interface FR218ObservableMorphologyConstructDefinition {
   readonly labels: readonly FR218ObservableLabelDefinition[];
   readonly reviewerMustNotSee: readonly [
     'metric_values',
+    'candidate_metric_identity',
+    'provider_identity',
+    'extractor_identity',
     'candidate_threshold',
     'traditional_label',
     'fortune_output',
@@ -151,6 +154,9 @@ export interface FR218BlindedReviewItem {
     reviewerMeaning: string;
   }>[];
   readonly metricValuesExposed: false;
+  readonly candidateMetricIdentityExposed: false;
+  readonly providerIdentityExposed: false;
+  readonly extractorIdentityExposed: false;
   readonly coverageBinExposed: false;
   readonly candidateThresholdExposed: false;
   readonly traditionalMeaningExposed: false;
@@ -245,6 +251,9 @@ export const FACE_OBSERVABLE_MORPHOLOGY_CONSTRUCT_FR218:
     labels: LABELS,
     reviewerMustNotSee: Object.freeze([
       'metric_values',
+      'candidate_metric_identity',
+      'provider_identity',
+      'extractor_identity',
       'candidate_threshold',
       'traditional_label',
       'fortune_output',
@@ -545,6 +554,9 @@ export function projectBlindedReviewItemsFR218(
         reviewerMeaning: label.reviewerMeaning,
       }))),
       metricValuesExposed: false as const,
+      candidateMetricIdentityExposed: false as const,
+      providerIdentityExposed: false as const,
+      extractorIdentityExposed: false as const,
       coverageBinExposed: false as const,
       candidateThresholdExposed: false as const,
       traditionalMeaningExposed: false as const,
