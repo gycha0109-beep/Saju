@@ -10,9 +10,11 @@ const EXPECTED_EXPORTS = Object.freeze([
   'FE013_CONTRACT_VERSION',
   'FE014_CONTRACT_VERSION',
   'FE015_CONTRACT_VERSION',
+  'FE016_CONTRACT_VERSION',
   'assertBoundConsumerPreviewFaceEngineFE006',
   'assertBrowserBlobConsumerPreviewFaceEngineFE010',
   'assertConsumerPreviewEngineResultFE004',
+  'assertHostBoundMediaPipeRuntimeFactoryFE016',
   'assertHostSafeBrowserPreviewFaceEngineFE011',
   'assertManagedConsumerPreviewFaceEngineFE007',
   'assertOneShotHostSafeBrowserPreviewResultFE013',
@@ -20,6 +22,7 @@ const EXPECTED_EXPORTS = Object.freeze([
   'assertReleaseManagedConsumerPreviewFaceEngineFE009',
   'createBoundConsumerPreviewFaceEngineFE006',
   'createBrowserBlobConsumerPreviewFaceEngineFE010',
+  'createHostBoundMediaPipeRuntimeFactoryFE016',
   'createManagedConsumerPreviewFaceEngineFE007',
   'createReleaseManagedConsumerPreviewFaceEngineFE009',
   'openHostSafeBrowserPreviewFaceEngineFE011',
@@ -47,7 +50,8 @@ if (
   preview.FE011_CONTRACT_VERSION !== 'FE011-HOST-SAFE-BROWSER-PREVIEW-ATTEMPT-v1' ||
   preview.FE013_CONTRACT_VERSION !== 'FE013-ONE-SHOT-HOST-SAFE-BROWSER-PREVIEW-v1' ||
   preview.FE014_CONTRACT_VERSION !== 'FE014-PRODUCT-SAFE-NEUTRAL-PREVIEW-TRANSPORT-v1' ||
-  preview.FE015_CONTRACT_VERSION !== 'FE015-ONE-CALL-PRODUCT-SAFE-BROWSER-PREVIEW-v1'
+  preview.FE015_CONTRACT_VERSION !== 'FE015-ONE-CALL-PRODUCT-SAFE-BROWSER-PREVIEW-v1' ||
+  preview.FE016_CONTRACT_VERSION !== 'FE016-HOST-BOUND-MEDIAPIPE-RUNTIME-ASSETS-v1'
 ) {
   throw new Error('FE008 package import resolved unexpected preview-engine contract versions.');
 }
