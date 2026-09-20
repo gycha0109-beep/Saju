@@ -1,0 +1,29 @@
+name: FE004 Consumer Preview Engine CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/consumer-preview-engine-facade-fe004.ts'
+      - 'packages/face-reading/src/consumer-preview-engine-facade-fe004.test.ts'
+      - 'packages/face-reading/src/preview-face-engine-runtime-fe002.ts'
+      - 'packages/face-reading/src/consumer-safe-preview-output-fe003.ts'
+      - 'docs/face-engine/fe004-consumer-preview-engine-facade.md'
+      - '.github/workflows/fe004-consumer-preview-engine-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe004-consumer-preview-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FE004 consumer preview facade
+        run: npx vitest run packages/face-reading/src/consumer-preview-engine-facade-fe004.test.ts
