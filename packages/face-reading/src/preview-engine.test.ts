@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import * as previewEngine from './preview-engine.js';
 
-describe('FE005 preview-engine public entrypoint', () => {
+describe('preview-engine public entrypoint', () => {
   it('pins the runtime value export surface', () => {
     expect(Object.keys(previewEngine).sort()).toEqual([
       'FE004_CONTRACT_VERSION',
+      'FE006_CONTRACT_VERSION',
+      'assertBoundConsumerPreviewFaceEngineFE006',
       'assertConsumerPreviewEngineResultFE004',
+      'createBoundConsumerPreviewFaceEngineFE006',
       'runConsumerPreviewFaceEngineFE004',
     ]);
   });
@@ -20,8 +23,10 @@ describe('FE005 preview-engine public entrypoint', () => {
     expect(keys).not.toContain('projectMetricLipsSurfaceToPoseNormalized2DFR79');
   });
 
-  it('exposes the FE004 preview contract version unchanged', () => {
+  it('exposes stable FE004 and FE006 contract versions', () => {
     expect(previewEngine.FE004_CONTRACT_VERSION)
       .toBe('FE004-CONSUMER-PREVIEW-ENGINE-FACADE-v1');
+    expect(previewEngine.FE006_CONTRACT_VERSION)
+      .toBe('FE006-BOUND-CONSUMER-PREVIEW-ENGINE-v1');
   });
 });
