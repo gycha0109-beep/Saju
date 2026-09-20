@@ -1,4 +1,5 @@
 import {
+  createHash,
   generateKeyPairSync,
   sign,
 } from 'node:crypto';
@@ -32,7 +33,6 @@ function bytes(text: string): Uint8Array {
 }
 
 function sha256Hex(bytesValue: Uint8Array): string {
-  const { createHash } = require('node:crypto') as typeof import('node:crypto');
   return `sha256:${createHash('sha256').update(bytesValue).digest('hex')}`;
 }
 
