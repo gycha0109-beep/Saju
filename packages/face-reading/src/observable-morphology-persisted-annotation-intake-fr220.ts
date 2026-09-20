@@ -1,8 +1,5 @@
 import { createHash } from 'node:crypto';
-import type {
-  FR219AnnotationEvidenceReceipt,
-  FR219AnnotationRecord,
-} from './observable-morphology-human-review-fr219.js';
+import type { FR219AnnotationRecord } from './observable-morphology-human-review-fr219.js';
 import type { FR218ObservableLabelKey } from './observable-morphology-validation-fr218.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
