@@ -8,6 +8,7 @@ on:
       - 'packages/face-reading/src/eye-neutral-axis-bundle-fr210.ts'
       - 'packages/face-reading/src/calibration-protocol.ts'
       - 'research/face-reading/fr218-observable-morphology-validation.md'
+      - 'scripts/verify-fr218-observable-morphology-validation.mjs'
       - '.github/workflows/fr218-observable-morphology-validation-ci.yml'
 
 permissions:
@@ -27,3 +28,5 @@ jobs:
         run: npm run face:build
       - name: Verify FR218 observable morphology validation
         run: npx vitest run packages/face-reading/src/observable-morphology-validation-fr218.test.ts
+      - name: Verify FR218 built runtime mechanics
+        run: node scripts/verify-fr218-observable-morphology-validation.mjs
