@@ -182,7 +182,13 @@ describe('FR221 persisted candidate provenance', () => {
     const verified = verifyPersistedCandidateProvenanceEvidenceFR221(reopened);
     expect(() => assertVerifiedPersistedCandidateProvenanceEvidenceFR221(verified)).not.toThrow();
     expect(verified.evidenceRef).toBe(materialized.evidenceRef);
-    expect(verified.records.map((record) => record.metricValue)).toEqual([-4.5, 0.25, 5.25]);
+    expect(Object.fromEntries(
+      verified.records.map((record) => [record.sampleRef, record.metricValue]),
+    )).toEqual({
+      'sample:holdout:a': 5.25,
+      'sample:selection:a': -4.5,
+      'sample:selection:b': 0.25,
+    });
     expect(verified.authorityBoundary.empiricalSufficiencyEstablished).toBe(false);
     expect(verified.authorityBoundary.thresholdIssued).toBe(false);
     expect(verified.authorityBoundary.traditionalBindingIssued).toBe(false);
@@ -218,8 +224,8 @@ describe('FR221 persisted candidate provenance', () => {
   it('rejects capture-family ownership drift even with internally consistent recomputed digests', () => {
     const reopened = JSON.parse(JSON.stringify(evidence())) as Record<string, unknown>;
     const records = reopened.records as Record<string, unknown>[];
-    records[1]!.captureFamilyKey = records[0]!.captureFamilyKey;
-    redigestRecord(records[1]!);
+    records[2]!.captureFamilyKey = records[1]!.captureFamilyKey;
+    redigestRecord(records[2]!);
     redigestEvidence(reopened);
 
     expect(() => verifyPersistedCandidateProvenanceEvidenceFR221(reopened))
