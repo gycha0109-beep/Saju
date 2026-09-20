@@ -1,0 +1,31 @@
+name: FE008 Preview Engine Package Export CI
+
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'packages/face-reading/package.json'
+      - 'packages/face-reading/src/preview-engine.ts'
+      - 'packages/face-reading/src/consumer-preview-engine-facade-fe004.ts'
+      - 'packages/face-reading/src/bound-consumer-preview-engine-fe006.ts'
+      - 'packages/face-reading/src/managed-consumer-preview-engine-fe007.ts'
+      - 'tsconfig.face-reading.preview-package.json'
+      - 'scripts/verify-fe008-preview-engine-package.mjs'
+      - 'docs/face-engine/fe008-preview-engine-package-export.md'
+      - '.github/workflows/fe008-preview-engine-package-export-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe008-package-export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Verify FE008 package export
+        run: npm run face:verify:preview-package
