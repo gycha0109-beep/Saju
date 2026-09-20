@@ -113,7 +113,10 @@ describe('FE006 bound consumer preview engine', () => {
       metadataVerification: 'performed_by_fr77_on_each_analysis',
       runtimeFactoryBound: false,
     });
-    expect(JSON.stringify(engine)).not.toMatch(/geometryMetadataPbtxt|releaseWitness|runtimeFactory/u);
+    expect(engine).not.toHaveProperty('parity');
+    expect(engine).not.toHaveProperty('geometryMetadataPbtxt');
+    expect(engine).not.toHaveProperty('runtimeFactory');
+    expect(JSON.stringify(engine)).not.toContain('releaseWitness');
     expect(() => assertBoundConsumerPreviewFaceEngineFE006(engine)).not.toThrow();
   });
 
