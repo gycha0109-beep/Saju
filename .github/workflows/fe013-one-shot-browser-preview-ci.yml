@@ -1,0 +1,32 @@
+name: FE013 One-Shot Browser Preview CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/one-shot-browser-preview-engine-fe013.ts'
+      - 'packages/face-reading/src/one-shot-browser-preview-engine-fe013.test.ts'
+      - 'packages/face-reading/src/preview-engine.ts'
+      - 'packages/face-reading/src/preview-engine.test.ts'
+      - 'scripts/verify-fe008-preview-engine-package.mjs'
+      - 'docs/face-engine/fe013-one-shot-browser-preview.md'
+      - '.github/workflows/fe013-one-shot-browser-preview-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe013-one-shot-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FE013 one-shot host path
+        run: npx vitest run packages/face-reading/src/one-shot-browser-preview-engine-fe013.test.ts packages/face-reading/src/preview-engine.test.ts
+      - name: Verify package import boundary
+        run: npm run face:verify:preview-package
