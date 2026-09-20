@@ -36,6 +36,8 @@ export interface FE007ManagedConsumerPreviewEngine {
     readonly analysesSerialized: true;
     readonly perAnalysisRuntimeCloseSuppressed: true;
     readonly explicitSessionCloseRequired: true;
+    readonly closeSingleFlight: true;
+    readonly closeFailureConsistent: true;
   };
   readonly dataBoundary: {
     readonly runtimeInstanceExposed: false;
@@ -173,6 +175,7 @@ export async function createManagedConsumerPreviewFaceEngineFE007(
 
   let lifecycleState: 'open' | 'closing' | 'closed' = 'open';
   let tail: Promise<void> = Promise.resolve();
+  let closePromise: Promise<void> | null = null;
 
   const engine: FE007ManagedConsumerPreviewEngine = Object.freeze({
     schemaVersion: 'fe007-managed-consumer-preview-engine-v1' as const,
@@ -185,6 +188,8 @@ export async function createManagedConsumerPreviewFaceEngineFE007(
       analysesSerialized: true as const,
       perAnalysisRuntimeCloseSuppressed: true as const,
       explicitSessionCloseRequired: true as const,
+      closeSingleFlight: true as const,
+      closeFailureConsistent: true as const,
     }),
     dataBoundary: DATA_BOUNDARY,
     authorityBoundary: AUTHORITY_BOUNDARY,
@@ -204,20 +209,19 @@ export async function createManagedConsumerPreviewFaceEngineFE007(
       );
       return task;
     },
-    async close(): Promise<void> {
-      if (lifecycleState === 'closed') return;
-      if (lifecycleState === 'closing') {
-        await tail;
-        return;
-      }
+    close(): Promise<void> {
+      if (closePromise !== null) return closePromise;
 
       lifecycleState = 'closing';
-      await tail;
-      try {
-        runtime.close();
-      } finally {
-        lifecycleState = 'closed';
-      }
+      closePromise = (async () => {
+        await tail;
+        try {
+          runtime.close();
+        } finally {
+          lifecycleState = 'closed';
+        }
+      })();
+      return closePromise;
     },
   });
 
@@ -238,6 +242,8 @@ export function assertManagedConsumerPreviewFaceEngineFE007(
     engine.lifecycleReceipt.analysesSerialized !== true ||
     engine.lifecycleReceipt.perAnalysisRuntimeCloseSuppressed !== true ||
     engine.lifecycleReceipt.explicitSessionCloseRequired !== true ||
+    engine.lifecycleReceipt.closeSingleFlight !== true ||
+    engine.lifecycleReceipt.closeFailureConsistent !== true ||
     typeof engine.analyze !== 'function' ||
     typeof engine.close !== 'function'
   ) {
