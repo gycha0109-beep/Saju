@@ -10,6 +10,7 @@ import type {
   FE011PreviewRejectionStage,
 } from './host-safe-browser-preview-engine-fe011.js';
 import {
+  FE013_CONTRACT_VERSION,
   assertOneShotHostSafeBrowserPreviewResultFE013,
   type FE013OneShotBrowserPreviewResult,
 } from './one-shot-browser-preview-engine-fe013.js';
@@ -32,7 +33,7 @@ export interface FE014RegionAvailabilityTransport {
 }
 
 export interface FE014TransportReceipt {
-  readonly sourceContractVersion: typeof import('./one-shot-browser-preview-engine-fe013.js').FE013_CONTRACT_VERSION;
+  readonly sourceContractVersion: typeof FE013_CONTRACT_VERSION;
   readonly sourceConsumerProjectionSchemaVersion:
     | 'fe003-consumer-safe-preview-output-v1'
     | null;
@@ -120,8 +121,7 @@ function receipt(
     | null,
 ): FE014TransportReceipt {
   return Object.freeze({
-    sourceContractVersion:
-      'FE013-ONE-SHOT-HOST-SAFE-BROWSER-PREVIEW-v1' as const,
+    sourceContractVersion: FE013_CONTRACT_VERSION,
     sourceConsumerProjectionSchemaVersion,
     providerRunRefOmitted: true as const,
     canonicalAssetDigestOmitted: true as const,
@@ -254,7 +254,17 @@ export function assertProductSafeBrowserPreviewTransportFE014(
         fail('success transport contains invalid neutral metric data.');
       }
     }
+    const expectedRegionOrder = [
+      'eye_pair',
+      'cheek_mid_face',
+      'mouth_lips',
+      'chin_lower_face',
+    ] as const;
     if (
+      transport.preview.regions.length !== expectedRegionOrder.length ||
+      transport.preview.regions.some(
+        (entry, index) => entry.regionKey !== expectedRegionOrder[index],
+      ) ||
       transport.preview.regions.some(
         (entry) =>
           entry.state !==
@@ -273,9 +283,9 @@ export function assertProductSafeBrowserPreviewTransportFE014(
 
   const serialized = JSON.stringify(transport);
   if (
-    serialized.includes('providerRunRef') ||
-    serialized.includes('canonicalAssetDigest') ||
-    serialized.includes('executionReceipt') ||
+    serialized.includes('"providerRunRef":') ||
+    serialized.includes('"canonicalAssetDigest":') ||
+    serialized.includes('"executionReceipt":') ||
     serialized.includes('sha256:')
   ) {
     fail('transport leaked trace identity or input digest.');
