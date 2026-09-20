@@ -1,0 +1,38 @@
+name: FR223 Repeat Capture Family Descriptives CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-persisted-candidate-provenance-fr221.ts'
+      - 'packages/face-reading/src/observable-morphology-repeat-capture-family-fr223.ts'
+      - 'packages/face-reading/src/observable-morphology-repeat-capture-family-fr223.test.ts'
+      - 'research/face-reading/fr223-repeat-capture-family-descriptives.md'
+      - '.github/workflows/fr223-repeat-capture-family-descriptives-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/face-reading/src/observable-morphology-persisted-candidate-provenance-fr221.ts'
+      - 'packages/face-reading/src/observable-morphology-repeat-capture-family-fr223.ts'
+      - 'packages/face-reading/src/observable-morphology-repeat-capture-family-fr223.test.ts'
+      - 'research/face-reading/fr223-repeat-capture-family-descriptives.md'
+      - '.github/workflows/fr223-repeat-capture-family-descriptives-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr223-repeat-capture-family-descriptives:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR223 repeat-family descriptive contract
+        run: npx vitest run packages/face-reading/src/observable-morphology-repeat-capture-family-fr223.test.ts
