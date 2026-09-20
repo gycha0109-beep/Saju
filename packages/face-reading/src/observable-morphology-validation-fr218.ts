@@ -368,7 +368,6 @@ export function validateFR218CandidatePool(
   const samples = new Set<string>();
   const reviewItems = new Set<string>();
   const reviewArtifacts = new Set<string>();
-  const partitions = new Set<FaceCalibrationPartition>();
   const participantPartition = new Map<string, FaceCalibrationPartition>();
   const familyPartition = new Map<string, FaceCalibrationPartition>();
   const familyParticipant = new Map<string, string>();
@@ -385,7 +384,6 @@ export function validateFR218CandidatePool(
       fail(`duplicate reviewArtifactRef: ${record.reviewArtifactRef}.`);
     }
     reviewArtifacts.add(record.reviewArtifactRef);
-    partitions.add(record.partition);
 
     const participantExisting = participantPartition.get(record.participantKey);
     if (participantExisting !== undefined && participantExisting !== record.partition) {
@@ -405,8 +403,15 @@ export function validateFR218CandidatePool(
     }
     familyParticipant.set(record.captureFamilyKey, record.participantKey);
   }
+}
+
+export function assertSelectionHoldoutCoverageFR218(
+  records: readonly FR218MetricCandidateRecord[],
+): void {
+  validateFR218CandidatePool(records);
+  const partitions = new Set(records.map((record) => record.partition));
   if (!partitions.has('selection') || !partitions.has('holdout')) {
-    fail('candidate pool must contain both selection and holdout partitions.');
+    fail('study candidate pool must contain both selection and holdout partitions.');
   }
 }
 
