@@ -85,3 +85,8 @@ export {
   type FE014RegionAvailabilityTransport,
   type FE014TransportReceipt,
 } from './product-safe-preview-transport-fe014.js';
+
+export {
+  FE015_CONTRACT_VERSION,
+  runProductSafeBrowserPreviewFE015,
+} from './one-call-product-safe-browser-preview-fe015.js';

@@ -12,6 +12,7 @@ describe('preview-engine public entrypoint', () => {
       'FE011_CONTRACT_VERSION',
       'FE013_CONTRACT_VERSION',
       'FE014_CONTRACT_VERSION',
+      'FE015_CONTRACT_VERSION',
       'assertBoundConsumerPreviewFaceEngineFE006',
       'assertBrowserBlobConsumerPreviewFaceEngineFE010',
       'assertConsumerPreviewEngineResultFE004',
@@ -28,6 +29,7 @@ describe('preview-engine public entrypoint', () => {
       'projectProductSafeBrowserPreviewTransportFE014',
       'runConsumerPreviewFaceEngineFE004',
       'runOneShotHostSafeBrowserPreviewFE013',
+      'runProductSafeBrowserPreviewFE015',
       'serializeProductSafeBrowserPreviewTransportFE014',
     ]);
   });
@@ -44,7 +46,7 @@ describe('preview-engine public entrypoint', () => {
     expect(keys).not.toContain('MEDIAPIPE_V0_10_35_GEOMETRY_METADATA_PBTXT_FE009');
   });
 
-  it('exposes stable FE004, FE006, FE007, FE009, FE010, FE011, FE013, and FE014 contract versions', () => {
+  it('exposes stable FE004, FE006, FE007, FE009, FE010, FE011, FE013, FE014, and FE015 contract versions', () => {
     expect(previewEngine.FE004_CONTRACT_VERSION)
       .toBe('FE004-CONSUMER-PREVIEW-ENGINE-FACADE-v1');
     expect(previewEngine.FE006_CONTRACT_VERSION)
@@ -61,5 +63,7 @@ describe('preview-engine public entrypoint', () => {
       .toBe('FE013-ONE-SHOT-HOST-SAFE-BROWSER-PREVIEW-v1');
     expect(previewEngine.FE014_CONTRACT_VERSION)
       .toBe('FE014-PRODUCT-SAFE-NEUTRAL-PREVIEW-TRANSPORT-v1');
+    expect(previewEngine.FE015_CONTRACT_VERSION)
+      .toBe('FE015-ONE-CALL-PRODUCT-SAFE-BROWSER-PREVIEW-v1');
   });
 });
