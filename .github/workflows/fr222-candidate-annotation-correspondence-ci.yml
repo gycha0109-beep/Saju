@@ -1,0 +1,42 @@
+name: FR222 Candidate Annotation Correspondence CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-human-review-fr219.ts'
+      - 'packages/face-reading/src/observable-morphology-persisted-annotation-intake-fr220.ts'
+      - 'packages/face-reading/src/observable-morphology-persisted-candidate-provenance-fr221.ts'
+      - 'packages/face-reading/src/observable-morphology-candidate-annotation-correspondence-fr222.ts'
+      - 'packages/face-reading/src/observable-morphology-candidate-annotation-correspondence-fr222.test.ts'
+      - 'research/face-reading/fr222-verified-candidate-annotation-correspondence.md'
+      - '.github/workflows/fr222-candidate-annotation-correspondence-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/face-reading/src/observable-morphology-human-review-fr219.ts'
+      - 'packages/face-reading/src/observable-morphology-persisted-annotation-intake-fr220.ts'
+      - 'packages/face-reading/src/observable-morphology-persisted-candidate-provenance-fr221.ts'
+      - 'packages/face-reading/src/observable-morphology-candidate-annotation-correspondence-fr222.ts'
+      - 'packages/face-reading/src/observable-morphology-candidate-annotation-correspondence-fr222.test.ts'
+      - 'research/face-reading/fr222-verified-candidate-annotation-correspondence.md'
+      - '.github/workflows/fr222-candidate-annotation-correspondence-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr222-candidate-annotation-correspondence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR222 correspondence contract
+        run: npx vitest run packages/face-reading/src/observable-morphology-candidate-annotation-correspondence-fr222.test.ts
