@@ -353,6 +353,8 @@ function verifyRecord(value: unknown, index: number): FR221PersistedCandidateRec
     || !SHA256.test(record.recordDigest)
   ) fail(`record[${index}] schema or authority boundary drift.`);
 
+  const partition = record.partition as 'selection' | 'holdout';
+
   const normalized = {
     schemaVersion: 'fr221-persisted-candidate-record-v1' as const,
     sourceContractVersion: FR218_CONTRACT_VERSION,
@@ -360,7 +362,7 @@ function verifyRecord(value: unknown, index: number): FR221PersistedCandidateRec
     sampleRef,
     participantKey,
     captureFamilyKey,
-    partition: record.partition,
+    partition,
     reviewItemRef,
     reviewArtifactRef,
     captureAdmissionRef,
