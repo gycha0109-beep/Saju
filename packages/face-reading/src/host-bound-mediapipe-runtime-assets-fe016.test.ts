@@ -133,6 +133,20 @@ describe('FE016 host-bound MediaPipe runtime assets', () => {
     ).toThrow();
   });
 
+  it('rejects factory field widening', () => {
+    const factory = createHostBoundMediaPipeRuntimeFactoryFE016({
+      schemaVersion: 'fe016-host-bound-mediapipe-asset-config-v1',
+      wasmRoot: '/wasm',
+      modelAssetPath: '/model.task',
+    });
+    const widened = {
+      ...factory,
+      token: 'unexpected',
+    } as unknown as typeof factory;
+    expect(() => assertHostBoundMediaPipeRuntimeFactoryFE016(widened))
+      .toThrow(/runtimeFactory contains unauthorized field: token/u);
+  });
+
   it('rejects unexpected config fields and unsupported schema versions', () => {
     expect(() =>
       createHostBoundMediaPipeRuntimeFactoryFE016({
