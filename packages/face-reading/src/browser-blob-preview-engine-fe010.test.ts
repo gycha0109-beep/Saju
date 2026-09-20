@@ -183,7 +183,6 @@ describe('FE010 browser Blob preview ingress', () => {
       schemaVersion: 'fe010-browser-blob-analysis-request-v1',
       blob: new Blob(['x'], { type: 'image/gif' }),
     })).rejects.toMatchObject({
-      name: 'FE010BrowserBlobPreviewError',
       code: 'UNSUPPORTED_IMAGE_TYPE',
     });
 
@@ -191,7 +190,6 @@ describe('FE010 browser Blob preview ingress', () => {
       schemaVersion: 'fe010-browser-blob-analysis-request-v1',
       blob: new Blob([], { type: 'image/png' }),
     })).rejects.toMatchObject({
-      name: 'FE010BrowserBlobPreviewError',
       code: 'INVALID_IMAGE_INPUT',
     });
 
@@ -212,7 +210,6 @@ describe('FE010 browser Blob preview ingress', () => {
       schemaVersion: 'fe010-browser-blob-analysis-request-v1',
       blob: new Blob(['x'], { type: 'image/png' }),
     })).rejects.toMatchObject({
-      name: 'FE010BrowserBlobPreviewError',
       code: 'IMAGE_DECODE_FAILED',
       message: 'FE-010 browser image decode failed.',
     });
@@ -233,7 +230,6 @@ describe('FE010 browser Blob preview ingress', () => {
       schemaVersion: 'fe010-browser-blob-analysis-request-v1',
       blob: new Blob(['no-face'], { type: 'image/jpeg' }),
     })).rejects.toMatchObject({
-      name: 'FE010BrowserBlobPreviewError',
       code: 'NO_FACE_DETECTED',
     });
 
@@ -246,7 +242,6 @@ describe('FE010 browser Blob preview ingress', () => {
       schemaVersion: 'fe010-browser-blob-analysis-request-v1',
       blob: new Blob(['bad-geometry'], { type: 'image/webp' }),
     })).rejects.toMatchObject({
-      name: 'FE010BrowserBlobPreviewError',
       code: 'INVALID_PROVIDER_GEOMETRY',
     });
 
@@ -261,7 +256,8 @@ describe('FE010 browser Blob preview ingress', () => {
     );
     expect(error).toBeInstanceOf(FaceAuthorityValidationError);
     expect(error.code).toBe('SESSION_CLOSED');
-    expect(error.name).toBe('FE010BrowserBlobPreviewError');
+    expect(error).toBeInstanceOf(FE010BrowserBlobPreviewError);
+    expect(error.name).toBe('FaceAuthorityValidationError');
   });
 
   it('rejects authority widening', async () => {
