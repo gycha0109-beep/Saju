@@ -1,0 +1,32 @@
+name: FE014 Product-Safe Preview Transport CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/product-safe-preview-transport-fe014.ts'
+      - 'packages/face-reading/src/product-safe-preview-transport-fe014.test.ts'
+      - 'packages/face-reading/src/preview-engine.ts'
+      - 'packages/face-reading/src/preview-engine.test.ts'
+      - 'scripts/verify-fe008-preview-engine-package.mjs'
+      - 'docs/face-engine/fe014-product-safe-preview-transport.md'
+      - '.github/workflows/fe014-product-safe-preview-transport-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe014-product-safe-transport:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FE014 transport projection
+        run: npx vitest run packages/face-reading/src/product-safe-preview-transport-fe014.test.ts packages/face-reading/src/preview-engine.test.ts
+      - name: Verify package import boundary
+        run: npm run face:verify:preview-package
