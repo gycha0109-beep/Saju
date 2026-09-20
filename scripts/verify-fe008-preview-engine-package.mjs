@@ -7,14 +7,14 @@ const EXPECTED_EXPORTS = Object.freeze([
   'FE009_CONTRACT_VERSION',
   'FE010_CONTRACT_VERSION',
   'assertBoundConsumerPreviewFaceEngineFE006',
+  'assertBrowserBlobConsumerPreviewFaceEngineFE010',
   'assertConsumerPreviewEngineResultFE004',
   'assertManagedConsumerPreviewFaceEngineFE007',
   'assertReleaseManagedConsumerPreviewFaceEngineFE009',
-  'assertBrowserBlobConsumerPreviewFaceEngineFE010',
   'createBoundConsumerPreviewFaceEngineFE006',
+  'createBrowserBlobConsumerPreviewFaceEngineFE010',
   'createManagedConsumerPreviewFaceEngineFE007',
   'createReleaseManagedConsumerPreviewFaceEngineFE009',
-  'createBrowserBlobConsumerPreviewFaceEngineFE010',
   'runConsumerPreviewFaceEngineFE004',
 ]);
 
