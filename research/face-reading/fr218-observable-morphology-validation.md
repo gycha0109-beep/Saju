@@ -171,17 +171,26 @@ FR218 does not own or invent an automatic capture-quality gate.
 
 The current Eye-Pair capture research lineage explicitly does not authorize an automatic numeric capture-quality pass/fail threshold. Therefore FR218 must not convert a caller boolean into capture-quality authority.
 
-Each candidate must carry:
+Each candidate must carry an FR218 capture-admission receipt that is issued only from an **active FR159 prospective capture manifest**.
 
 ```text
-captureEligibilityRef
-captureEligibilitySource = external_governed_research_manifest
+FR159 issued manifest
+→ FR218 capture admission receipt
+→ FR218 candidate admission
 ```
 
-FR218 records the upstream admission reference but does not re-evaluate capture quality:
+The receipt explicitly preserves FR159's weaker authority boundary:
 
 ```text
-captureEligibilityReevaluatedByFR218 = false
+freshnessIndependentlyVerified = false
+sameParticipantIdentityIndependentlyVerified = false
+captureQualityValidated = false
+```
+
+FR218 therefore consumes a governed prospective-admission receipt, not a validated capture-quality pass. FR218 does not re-evaluate capture quality:
+
+```text
+captureAdmissionReevaluatedByFR218 = false
 ```
 
 This preserves the layer boundary:
@@ -194,7 +203,35 @@ B/C. neutral metric + observable morphology validation
 → FR218
 ```
 
-Synthetic tests use protocol-local fixture refs only to verify contract mechanics. They do not constitute real capture eligibility evidence.
+Synthetic tests use protocol-local fixture refs only to verify contract mechanics. They do not constitute real capture eligibility, repeatability, or human-validation evidence.
+
+The dedicated built-runtime verifier additionally executes the compiled JavaScript path:
+
+```text
+release-exact MediaPipe fixture
+→ controlled eye-corner perturbation (mechanics only)
+→ FR77 governed metric geometry
+→ FR210 neutral eye-axis bundle
+→ issued FR159 manifest
+→ FR218 capture-admission receipt
+→ FR218 candidate admission
+→ selection/holdout validation
+→ metric-space coverage
+→ provider/metric-blind review projection
+→ synthetic annotation intake
+→ disagreement-preserving summary
+→ HUMAN_EVIDENCE_REQUIRED
+```
+
+The verifier must finish with:
+
+```text
+controlledPerturbationMechanicsOnly = true
+empiricalHumanEvidenceClaimed = false
+humanEvidenceState = HUMAN_EVIDENCE_REQUIRED
+```
+
+This proves executable integration mechanics only. It is intentionally not empirical morphology validation.
 
 ## 8. Selection / holdout and identity leakage
 
@@ -318,11 +355,11 @@ FR218 is complete as an executable research contract when:
 1. the observable construct and ordinal vocabulary are encoded;
 2. FR210 candidate measurement admission is fail-closed;
 3. selection/holdout leakage is rejected;
-4. metric-space coverage sampling is deterministic;
+4. metric-space coverage sampling is deterministic and rejects collapsed metric ranges that cannot support the declared bins;
 5. reviewer projection is blind to metric/traditional information;
 6. reviewer disagreement is preserved;
 7. synthetic fixtures cannot satisfy the human evidence gate;
-8. dedicated tests and CI pass.
+8. dedicated tests, compiled-runtime verifier, and CI pass.
 
 Empirical morphology validation is **not** complete at that point.
 
