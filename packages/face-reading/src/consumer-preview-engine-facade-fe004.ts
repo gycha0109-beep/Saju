@@ -2,6 +2,7 @@ import type { MediaPipeFaceLandmarkerRuntimeFactoryFR26V1 } from './mediapipe-fa
 import type { MediaPipeScreenToMetricReimplementationParityFR76V1 } from './mediapipe-screen-to-metric-reimplementation-parity-fr76.js';
 import type { MediaPipeMetricGeometryRuntimeRequestFR77V1 } from './governed-metric-geometry-runtime-fr77.js';
 import {
+  assertPreviewFaceEngineRunFE002,
   runPreviewFaceEngineFE002,
   type FE002PreviewEngineRun,
 } from './preview-face-engine-runtime-fe002.js';
@@ -83,6 +84,7 @@ export function composeConsumerPreviewEngineResultFE004(
   internalRun: FE002PreviewEngineRun,
   output: FE003ConsumerSafePreviewOutput,
 ): FE004ConsumerPreviewEngineResult {
+  assertPreviewFaceEngineRunFE002(internalRun);
   assertConsumerSafePreviewOutputFE003(output);
 
   if (
