@@ -1,0 +1,31 @@
+name: FE002 Image Preview Engine CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/preview-face-engine-runtime-fe002.ts'
+      - 'packages/face-reading/src/preview-face-engine-runtime-fe002.test.ts'
+      - 'packages/face-reading/src/preview-observable-engine-fe001.ts'
+      - 'packages/face-reading/src/governed-metric-geometry-runtime-fr77.ts'
+      - 'packages/face-reading/src/governed-metric-lips-surface-fr78.ts'
+      - 'packages/face-reading/src/pose-normalized-lips-geometry-fr79.ts'
+      - 'docs/face-engine/fe002-image-preview-engine-runtime.md'
+      - '.github/workflows/fe002-image-preview-engine-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe002-image-preview-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FE002 image preview runtime
+        run: npx vitest run packages/face-reading/src/preview-face-engine-runtime-fe002.test.ts
