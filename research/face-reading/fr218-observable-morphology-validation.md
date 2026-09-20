@@ -143,12 +143,17 @@ The review surface must not expose:
 
 ```text
 metric value
+candidate metric identity
+provider identity
+extractor/model identity
 metric-space bin
 candidate threshold
 traditional label
 fortune output
 peer labels
 ```
+
+The reviewer therefore judges the visible construct without knowing which provider, extractor, candidate metric, or numerical value produced the research candidate.
 
 The review item contains only:
 
