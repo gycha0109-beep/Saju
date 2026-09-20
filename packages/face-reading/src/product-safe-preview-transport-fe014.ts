@@ -115,6 +115,18 @@ function fail(message: string): never {
   throw new FaceAuthorityValidationError(`FE-014 ${message}`);
 }
 
+function exactKeys(
+  value: object,
+  allowed: readonly string[],
+  path: string,
+): void {
+  const allowedSet = new Set(allowed);
+  const unexpected = Object.keys(value).find((key) => !allowedSet.has(key));
+  if (unexpected !== undefined) {
+    fail(`${path} contains unauthorized field: ${unexpected}.`);
+  }
+}
+
 function receipt(
   sourceConsumerProjectionSchemaVersion:
     | 'fe003-consumer-safe-preview-output-v1'
@@ -201,6 +213,62 @@ export function projectProductSafeBrowserPreviewTransportFE014(
 export function assertProductSafeBrowserPreviewTransportFE014(
   transport: FE014ProductSafePreviewTransport,
 ): void {
+  exactKeys(
+    transport,
+    transport.status === 'ok'
+      ? [
+          'schemaVersion',
+          'artifactVersion',
+          'contractVersion',
+          'status',
+          'preview',
+          'transportReceipt',
+          'authorityBoundary',
+        ]
+      : [
+          'schemaVersion',
+          'artifactVersion',
+          'contractVersion',
+          'status',
+          'rejection',
+          'transportReceipt',
+          'authorityBoundary',
+        ],
+    'transport',
+  );
+  exactKeys(
+    transport.transportReceipt,
+    [
+      'sourceContractVersion',
+      'sourceConsumerProjectionSchemaVersion',
+      'providerRunRefOmitted',
+      'canonicalAssetDigestOmitted',
+      'fe004ExecutionReceiptOmitted',
+      'rawInternalErrorsOmitted',
+      'rawProviderPayloadOmitted',
+      'rawGeometryOmitted',
+      'jsonSafePlainDataOnly',
+    ],
+    'transportReceipt',
+  );
+  exactKeys(
+    transport.authorityBoundary,
+    [
+      'consumesUpstreamNeutralObservationOnly',
+      'performsResearchDecision',
+      'performsValidationDecision',
+      'classificationIssued',
+      'scoreIssued',
+      'rankIssued',
+      'traditionalInterpretationIssued',
+      'physiognomyClaimIssued',
+      'fortuneClaimIssued',
+      'productionActivated',
+      'commerceActivated',
+    ],
+    'authorityBoundary',
+  );
+
   if (
     transport.artifactVersion !== '0.1.0' ||
     transport.contractVersion !== FE014_CONTRACT_VERSION
@@ -233,6 +301,17 @@ export function assertProductSafeBrowserPreviewTransportFE014(
   }
 
   if (transport.status === 'ok') {
+    exactKeys(transport.preview, ['metrics', 'regions'], 'preview');
+    transport.preview.metrics.forEach((entry, index) =>
+      exactKeys(entry, ['regionKey', 'metricRef', 'value', 'unit'], `preview.metrics[${index}]`),
+    );
+    transport.preview.regions.forEach((entry, index) =>
+      exactKeys(
+        entry,
+        ['regionKey', 'state', 'unavailableSurfaces'],
+        `preview.regions[${index}]`,
+      ),
+    );
     if (
       transport.schemaVersion !==
         'fe014-product-safe-preview-transport-success-v1' ||
@@ -273,19 +352,24 @@ export function assertProductSafeBrowserPreviewTransportFE014(
     ) {
       fail('success transport region availability drift.');
     }
-  } else if (
-    transport.schemaVersion !==
+  } else {
+    exactKeys(
+      transport.rejection,
+      ['code', 'stage', 'primaryPhase', 'cleanupFailureSuppressed'],
+      'rejection',
+    );
+    if (
+      transport.schemaVersion !==
       'fe014-product-safe-preview-transport-rejected-v1' ||
     transport.transportReceipt.sourceConsumerProjectionSchemaVersion !== null
-  ) {
-    fail('rejected transport identity drift.');
+    ) {
+      fail('rejected transport identity drift.');
+    }
   }
 
   const serialized = JSON.stringify(transport);
   if (
-    serialized.includes('"providerRunRef":') ||
-    serialized.includes('"canonicalAssetDigest":') ||
-    serialized.includes('"executionReceipt":') ||
+    /"(?:providerRunRef|canonicalAssetDigest|executionReceipt)"\s*:/u.test(serialized) ||
     serialized.includes('sha256:')
   ) {
     fail('transport leaked trace identity or input digest.');
