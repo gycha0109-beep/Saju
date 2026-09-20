@@ -285,7 +285,9 @@ export function materializeBlindedReviewSessionFR219(
       reviewItemRef,
       assetRoute: route,
       reviewerPrompt: entry.reviewItem.reviewerPrompt,
-      labelOptions: Object.freeze(entry.reviewItem.labelOptions.map((option) => Object.freeze({
+      labelOptions: Object.freeze(entry.reviewItem.labelOptions.map((
+        option: Readonly<{ key: FR218ObservableLabelKey; reviewerMeaning: string }>,
+      ) => Object.freeze({
         key: option.key,
         reviewerMeaning: option.reviewerMeaning,
       }))),
