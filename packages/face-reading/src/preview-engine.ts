@@ -44,3 +44,19 @@ export {
   type FE010BrowserImageBitmapDecoder,
   type FE010BrowserImageBitmapLike,
 } from './browser-blob-preview-engine-fe010.js';
+
+export {
+  FE011_CONTRACT_VERSION,
+  assertHostSafeBrowserPreviewFaceEngineFE011,
+  openHostSafeBrowserPreviewFaceEngineFE011,
+  type FE011HostSafeBrowserPreviewEngine,
+  type FE011HostSafeBrowserPreviewOpenRejected,
+  type FE011HostSafeBrowserPreviewOpenResult,
+  type FE011HostSafeBrowserPreviewOpenSuccess,
+  type FE011PreviewAttempt,
+  type FE011PreviewAttemptRejected,
+  type FE011PreviewAttemptSuccess,
+  type FE011PreviewRejection,
+  type FE011PreviewRejectionCode,
+  type FE011PreviewRejectionStage,
+} from './host-safe-browser-preview-engine-fe011.js';
