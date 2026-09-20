@@ -1,3 +1,4 @@
+/* global document, fetch */
 const app = document.querySelector('#app');
 
 function fail(message) {
