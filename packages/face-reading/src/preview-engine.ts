@@ -33,3 +33,14 @@ export {
 export type { MediaPipeFaceLandmarkerRuntimeFactoryFR26V1 } from './mediapipe-face-landmarker-runtime-fr26.js';
 export type { MediaPipeScreenToMetricReimplementationParityFR76V1 } from './mediapipe-screen-to-metric-reimplementation-parity-fr76.js';
 export type { MediaPipeMetricGeometryRuntimeRequestFR77V1 } from './governed-metric-geometry-runtime-fr77.js';
+
+export {
+  FE010_CONTRACT_VERSION,
+  assertBrowserBlobConsumerPreviewFaceEngineFE010,
+  createBrowserBlobConsumerPreviewFaceEngineFE010,
+  type FE010BrowserBlobAnalysisRequest,
+  type FE010BrowserBlobPreviewEngine,
+  type FE010BrowserBlobPreviewEngineConfig,
+  type FE010BrowserImageBitmapDecoder,
+  type FE010BrowserImageBitmapLike,
+} from './browser-blob-preview-engine-fe010.js';
