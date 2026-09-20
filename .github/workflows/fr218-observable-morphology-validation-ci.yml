@@ -1,0 +1,29 @@
+name: FR218 Observable Morphology Validation CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-validation-fr218.ts'
+      - 'packages/face-reading/src/observable-morphology-validation-fr218.test.ts'
+      - 'packages/face-reading/src/eye-neutral-axis-bundle-fr210.ts'
+      - 'packages/face-reading/src/calibration-protocol.ts'
+      - 'research/face-reading/fr218-observable-morphology-validation.md'
+      - '.github/workflows/fr218-observable-morphology-validation-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr218-observable-morphology-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR218 observable morphology validation
+        run: npx vitest run packages/face-reading/src/observable-morphology-validation-fr218.test.ts
