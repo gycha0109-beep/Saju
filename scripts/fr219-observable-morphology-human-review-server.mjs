@@ -331,14 +331,36 @@ async function runSmoke() {
 
       const manifest = await (await globalThis.fetch(base + '/api/manifest')).json();
       const serializedManifest = JSON.stringify(manifest);
+      const forbiddenPublicKeys = new Set([
+        'reviewerKey',
+        'assetPath',
+        'assetDigest',
+        'metricValue',
+        'metricRef',
+        'providerRunRef',
+        'extractorRef',
+        'partition',
+        'coverageBinIndex',
+        'candidateThreshold',
+        'traditionalBinding',
+        'fortuneOutput',
+        'peerLabels',
+      ]);
+      const hasForbiddenPublicKey = (value) => {
+        if (Array.isArray(value)) return value.some(hasForbiddenPublicKey);
+        if (value !== null && typeof value === 'object') {
+          return Object.entries(value).some(([key, child]) =>
+            forbiddenPublicKeys.has(key) || hasForbiddenPublicKey(child));
+        }
+        return false;
+      };
       if (
         manifest.schemaVersion !== 'fr219-provider-blind-review-manifest-v1'
         || manifest.items?.length !== 1
+        || hasForbiddenPublicKey(manifest)
         || serializedManifest.includes('reviewer:fr219-smoke')
         || serializedManifest.includes(imagePath)
         || serializedManifest.includes('sha256:')
-        || serializedManifest.includes('metricValue')
-        || serializedManifest.includes('providerRun')
       ) {
         fail('smoke reviewer manifest leaked hidden metadata.');
       }
