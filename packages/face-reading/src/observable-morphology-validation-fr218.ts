@@ -67,6 +67,8 @@ export interface FR218MetricCandidateMetadata {
   readonly partition: FaceCalibrationPartition;
   readonly reviewItemRef: string;
   readonly reviewArtifactRef: string;
+  readonly captureEligibilityRef: string;
+  readonly captureEligibilitySource: 'external_governed_research_manifest';
   readonly captureEligible: true;
   readonly confounderTags: readonly string[];
 }
@@ -81,6 +83,9 @@ export interface FR218MetricCandidateRecord {
   readonly partition: FaceCalibrationPartition;
   readonly reviewItemRef: string;
   readonly reviewArtifactRef: string;
+  readonly captureEligibilityRef: string;
+  readonly captureEligibilitySource: 'external_governed_research_manifest';
+  readonly captureEligibilityReevaluatedByFR218: false;
   readonly metricRef: typeof FR218_EYE_OUTER_CORNER_TILT_METRIC_REF;
   readonly metricValue: number;
   readonly unit: 'degree';
@@ -285,6 +290,10 @@ export function admitEyeCornerOrientationCandidateFR218(
   const captureFamilyKey = nonEmpty(metadata.captureFamilyKey, 'captureFamilyKey');
   const reviewItemRef = nonEmpty(metadata.reviewItemRef, 'reviewItemRef');
   const reviewArtifactRef = nonEmpty(metadata.reviewArtifactRef, 'reviewArtifactRef');
+  const captureEligibilityRef = nonEmpty(metadata.captureEligibilityRef, 'captureEligibilityRef');
+  if (metadata.captureEligibilitySource !== 'external_governed_research_manifest') {
+    fail('capture eligibility must come from an external governed research manifest.');
+  }
   if (metadata.partition !== 'selection' && metadata.partition !== 'holdout') {
     fail('partition must be selection or holdout.');
   }
@@ -326,6 +335,9 @@ export function admitEyeCornerOrientationCandidateFR218(
     partition: metadata.partition,
     reviewItemRef,
     reviewArtifactRef,
+    captureEligibilityRef,
+    captureEligibilitySource: 'external_governed_research_manifest' as const,
+    captureEligibilityReevaluatedByFR218: false as const,
     metricRef: FR218_EYE_OUTER_CORNER_TILT_METRIC_REF,
     metricValue: tilt.value,
     unit: 'degree' as const,
@@ -349,6 +361,9 @@ export function assertIssuedFR218MetricCandidate(
     candidate.contractVersion !== FR218_CONTRACT_VERSION ||
     candidate.constructRef !== FR218_EYE_CORNER_ORIENTATION_CONSTRUCT_REF ||
     candidate.metricRef !== FR218_EYE_OUTER_CORNER_TILT_METRIC_REF ||
+    candidate.captureEligibilitySource !== 'external_governed_research_manifest' ||
+    candidate.captureEligibilityReevaluatedByFR218 !== false ||
+    candidate.captureEligibilityRef.trim().length === 0 ||
     candidate.unit !== 'degree' ||
     !Number.isFinite(candidate.metricValue) ||
     candidate.metricRole !== 'candidate_measurement_only' ||
