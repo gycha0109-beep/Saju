@@ -1,0 +1,30 @@
+name: FE007 Managed Preview Engine Session CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/managed-consumer-preview-engine-fe007.ts'
+      - 'packages/face-reading/src/managed-consumer-preview-engine-fe007.test.ts'
+      - 'packages/face-reading/src/bound-consumer-preview-engine-fe006.ts'
+      - 'packages/face-reading/src/preview-engine.ts'
+      - 'packages/face-reading/src/preview-engine.test.ts'
+      - 'docs/face-engine/fe007-managed-preview-engine-session.md'
+      - '.github/workflows/fe007-managed-preview-engine-session-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe007-managed-session:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FE007 managed runtime session
+        run: npx vitest run packages/face-reading/src/managed-consumer-preview-engine-fe007.test.ts packages/face-reading/src/preview-engine.test.ts
