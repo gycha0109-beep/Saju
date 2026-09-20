@@ -368,3 +368,30 @@ It remains:
 ```text
 HUMAN_EVIDENCE_REQUIRED
 ```
+
+## 14. Consolidated latest-main validation
+
+FR218 is the top of the FR206→FR218 stacked observable-morphology sequence. Before integration, the top PR is retargeted to the latest `main` and the complete diff is audited.
+
+The consolidated candidate must satisfy all of the following on one synchronized head:
+
+```text
+latest main mergeability = true
+FR206..FR218 dedicated path CI = PASS
+Face Reading CI = PASS
+repository CI = PASS
+Production Calculation Container = PASS
+PIE Prospective Shadow = PASS
+FR218 built-runtime verifier = PASS
+```
+
+The integration merge does not change the empirical authority boundary. Even after all software gates pass:
+
+```text
+humanEvidenceState = HUMAN_EVIDENCE_REQUIRED
+thresholdSelectionAuthorized = false
+classifierAuthorized = false
+traditionalBindingAuthorized = false
+```
+
+This section exists to force a post-retarget synchronize event so the complete stack is validated against the actual latest-main merge result rather than only against intermediate stacked bases.
