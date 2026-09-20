@@ -17,8 +17,14 @@ describe('R035 Fuyi Yong-Shen decision conditions', () => {
       ['月令之神太強', 'SUPPRESS'],
       ['月令之神太弱', 'SUPPORT'],
     ]);
-    expect(R035_FUIYI_PROPOSITIONS[0].candidateFamilies).toEqual(['官煞以剋之', '食傷以洩之']);
-    expect(R035_FUIYI_PROPOSITIONS[1].candidateFamilies).toEqual(['印以生之', '劫以助之']);
+    expect(R035_FUIYI_PROPOSITIONS.find((p) => p.id === 'day-master-strong-suppress')?.candidateFamilies).toEqual([
+      '官煞以剋之',
+      '食傷以洩之',
+    ]);
+    expect(R035_FUIYI_PROPOSITIONS.find((p) => p.id === 'day-master-weak-support')?.candidateFamilies).toEqual([
+      '印以生之',
+      '劫以助之',
+    ]);
   });
 
   it('keeps every proposition non-executable while strength/applicability remain unresolved', () => {
