@@ -1,0 +1,35 @@
+name: FE001 Preview Observable Engine CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/preview-observable-engine-fe001.ts'
+      - 'packages/face-reading/src/preview-observable-engine-fe001.test.ts'
+      - 'packages/face-reading/src/eye-neutral-axis-bundle-fr210.ts'
+      - 'packages/face-reading/src/visible-midface-band-fr211.ts'
+      - 'packages/face-reading/src/visible-mouth-corner-orientation-fr212.ts'
+      - 'packages/face-reading/src/visible-lower-face-width-fr213.ts'
+      - 'packages/face-reading/src/role-free-mouth-outline-angularity-fr214.ts'
+      - 'packages/face-reading/src/eye-asymmetry-surface-fr215.ts'
+      - 'packages/face-reading/src/canonical-visible-lower-face-contour-fr216.ts'
+      - 'packages/face-reading/src/visible-cheek-contour-prominence-fr217.ts'
+      - 'docs/face-engine/fe001-preview-observable-engine-snapshot.md'
+      - '.github/workflows/fe001-preview-observable-engine-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe001-preview-observable-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FE001 preview observable engine
+        run: npx vitest run packages/face-reading/src/preview-observable-engine-fe001.test.ts
