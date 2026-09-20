@@ -1,5 +1,9 @@
 import type { FaceCalibrationPartition } from './calibration-protocol.js';
 import {
+  assertIssuedEyePairProspectiveCaptureManifestFR159,
+  type EyePairProspectiveCaptureManifestFR159V1,
+} from './eye-pair-prospective-repeatability-protocol-fr159.js';
+import {
   assertEyeNeutralAxisBundleFR210,
   type FR210EyeNeutralAxisBundle,
 } from './eye-neutral-axis-bundle-fr210.js';
@@ -63,6 +67,16 @@ export interface FR218ObservableMorphologyConstructDefinition {
   };
 }
 
+export interface FR218CaptureAdmissionReceipt {
+  readonly schemaVersion: 'fr218-capture-admission-receipt-v1';
+  readonly source: 'fr159_prospective_attestation_manifest';
+  readonly captureAdmissionRef: string;
+  readonly sourceManifestCaptureRef: string;
+  readonly freshnessIndependentlyVerified: false;
+  readonly sameParticipantIdentityIndependentlyVerified: false;
+  readonly captureQualityValidated: false;
+}
+
 export interface FR218MetricCandidateMetadata {
   readonly sampleRef: string;
   readonly participantKey: string;
@@ -70,9 +84,7 @@ export interface FR218MetricCandidateMetadata {
   readonly partition: FaceCalibrationPartition;
   readonly reviewItemRef: string;
   readonly reviewArtifactRef: string;
-  readonly captureEligibilityRef: string;
-  readonly captureEligibilitySource: 'external_governed_research_manifest';
-  readonly captureEligible: true;
+  readonly captureAdmission: FR218CaptureAdmissionReceipt;
   readonly confounderTags: readonly string[];
 }
 
@@ -86,9 +98,12 @@ export interface FR218MetricCandidateRecord {
   readonly partition: FaceCalibrationPartition;
   readonly reviewItemRef: string;
   readonly reviewArtifactRef: string;
-  readonly captureEligibilityRef: string;
-  readonly captureEligibilitySource: 'external_governed_research_manifest';
-  readonly captureEligibilityReevaluatedByFR218: false;
+  readonly captureAdmissionRef: string;
+  readonly captureAdmissionSource: 'fr159_prospective_attestation_manifest';
+  readonly captureAdmissionReevaluatedByFR218: false;
+  readonly freshnessIndependentlyVerified: false;
+  readonly sameParticipantIdentityIndependentlyVerified: false;
+  readonly captureQualityValidated: false;
   readonly metricRef: typeof FR218_EYE_OUTER_CORNER_TILT_METRIC_REF;
   readonly metricValue: number;
   readonly unit: 'degree';
@@ -264,6 +279,7 @@ export const FACE_OBSERVABLE_MORPHOLOGY_CONSTRUCT_FR218:
     authorityBoundary: AUTHORITY_BOUNDARY,
   });
 
+const ISSUED_CAPTURE_ADMISSIONS = new WeakSet<object>();
 const ISSUED_CANDIDATES = new WeakSet<object>();
 
 function fail(message: string): never {
@@ -289,6 +305,37 @@ function labelDefinition(label: FR218ObservableLabelKey): FR218ObservableLabelDe
   return found;
 }
 
+export function issueCaptureAdmissionFromFR159FR218(
+  manifest: EyePairProspectiveCaptureManifestFR159V1,
+): FR218CaptureAdmissionReceipt {
+  assertIssuedEyePairProspectiveCaptureManifestFR159(manifest);
+  const captureAdmissionRef = `fr159:${nonEmpty(manifest.captureRef, 'manifest.captureRef')}`;
+  const receipt: FR218CaptureAdmissionReceipt = Object.freeze({
+    schemaVersion: 'fr218-capture-admission-receipt-v1' as const,
+    source: 'fr159_prospective_attestation_manifest' as const,
+    captureAdmissionRef,
+    sourceManifestCaptureRef: manifest.captureRef,
+    freshnessIndependentlyVerified: false as const,
+    sameParticipantIdentityIndependentlyVerified: false as const,
+    captureQualityValidated: false as const,
+  });
+  ISSUED_CAPTURE_ADMISSIONS.add(receipt);
+  return receipt;
+}
+
+function assertIssuedCaptureAdmissionFR218(receipt: FR218CaptureAdmissionReceipt): void {
+  if (!ISSUED_CAPTURE_ADMISSIONS.has(receipt)) fail('capture admission receipt was not issued by FR218 from an active FR159 manifest.');
+  if (
+    receipt.schemaVersion !== 'fr218-capture-admission-receipt-v1'
+    || receipt.source !== 'fr159_prospective_attestation_manifest'
+    || receipt.captureAdmissionRef.trim().length === 0
+    || receipt.sourceManifestCaptureRef.trim().length === 0
+    || receipt.freshnessIndependentlyVerified !== false
+    || receipt.sameParticipantIdentityIndependentlyVerified !== false
+    || receipt.captureQualityValidated !== false
+  ) fail('capture admission receipt authority boundary drift.');
+}
+
 export function admitEyeCornerOrientationCandidateFR218(
   bundle: FR210EyeNeutralAxisBundle,
   metadata: FR218MetricCandidateMetadata,
@@ -299,15 +346,9 @@ export function admitEyeCornerOrientationCandidateFR218(
   const captureFamilyKey = nonEmpty(metadata.captureFamilyKey, 'captureFamilyKey');
   const reviewItemRef = nonEmpty(metadata.reviewItemRef, 'reviewItemRef');
   const reviewArtifactRef = nonEmpty(metadata.reviewArtifactRef, 'reviewArtifactRef');
-  const captureEligibilityRef = nonEmpty(metadata.captureEligibilityRef, 'captureEligibilityRef');
-  if (metadata.captureEligibilitySource !== 'external_governed_research_manifest') {
-    fail('capture eligibility must come from an external governed research manifest.');
-  }
+  assertIssuedCaptureAdmissionFR218(metadata.captureAdmission);
   if (metadata.partition !== 'selection' && metadata.partition !== 'holdout') {
     fail('partition must be selection or holdout.');
-  }
-  if (metadata.captureEligible !== true) {
-    fail('candidate admission requires explicit capture eligibility.');
   }
   const confounderTags = uniqueStrings(metadata.confounderTags, 'confounderTags');
 
@@ -344,9 +385,12 @@ export function admitEyeCornerOrientationCandidateFR218(
     partition: metadata.partition,
     reviewItemRef,
     reviewArtifactRef,
-    captureEligibilityRef,
-    captureEligibilitySource: 'external_governed_research_manifest' as const,
-    captureEligibilityReevaluatedByFR218: false as const,
+    captureAdmissionRef: metadata.captureAdmission.captureAdmissionRef,
+    captureAdmissionSource: 'fr159_prospective_attestation_manifest' as const,
+    captureAdmissionReevaluatedByFR218: false as const,
+    freshnessIndependentlyVerified: false as const,
+    sameParticipantIdentityIndependentlyVerified: false as const,
+    captureQualityValidated: false as const,
     metricRef: FR218_EYE_OUTER_CORNER_TILT_METRIC_REF,
     metricValue: tilt.value,
     unit: 'degree' as const,
@@ -370,9 +414,12 @@ export function assertIssuedFR218MetricCandidate(
     candidate.contractVersion !== FR218_CONTRACT_VERSION ||
     candidate.constructRef !== FR218_EYE_CORNER_ORIENTATION_CONSTRUCT_REF ||
     candidate.metricRef !== FR218_EYE_OUTER_CORNER_TILT_METRIC_REF ||
-    candidate.captureEligibilitySource !== 'external_governed_research_manifest' ||
-    candidate.captureEligibilityReevaluatedByFR218 !== false ||
-    candidate.captureEligibilityRef.trim().length === 0 ||
+    candidate.captureAdmissionSource !== 'fr159_prospective_attestation_manifest' ||
+    candidate.captureAdmissionReevaluatedByFR218 !== false ||
+    candidate.captureAdmissionRef.trim().length === 0 ||
+    candidate.freshnessIndependentlyVerified !== false ||
+    candidate.sameParticipantIdentityIndependentlyVerified !== false ||
+    candidate.captureQualityValidated !== false ||
     candidate.unit !== 'degree' ||
     !Number.isFinite(candidate.metricValue) ||
     candidate.metricRole !== 'candidate_measurement_only' ||
@@ -476,6 +523,9 @@ export function selectMetricSpaceCoverageCandidatesFR218(
 
   if (eligible.length < plan.binCount * plan.targetPerBin) {
     fail('candidate pool does not have enough records for the declared coverage plan.');
+  }
+  if (new Set(eligible.map((record) => record.metricValue)).size < plan.binCount) {
+    fail('metric-space coverage requires at least binCount distinct candidate metric values.');
   }
 
   const bins = Array.from({ length: plan.binCount }, () => [] as FR218MetricCandidateRecord[]);
