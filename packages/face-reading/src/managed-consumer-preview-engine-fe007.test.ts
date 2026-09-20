@@ -154,6 +154,8 @@ describe('FE007 managed consumer preview engine session', () => {
       analysesSerialized: true,
       perAnalysisRuntimeCloseSuppressed: true,
       explicitSessionCloseRequired: true,
+      closeSingleFlight: true,
+      closeFailureConsistent: true,
     });
     expect(() => assertManagedConsumerPreviewFaceEngineFE007(engine)).not.toThrow();
 
@@ -230,4 +232,44 @@ describe('FE007 managed consumer preview engine session', () => {
 
     await engine.close();
   });
+  it('joins concurrent and repeated close calls onto one failure-consistent close promise', async () => {
+    const closeError = new Error('runtime close failed');
+    let closeCount = 0;
+    const engine = await createManagedConsumerPreviewFaceEngineFE007({
+      schemaVersion: 'fe007-managed-preview-engine-config-v1',
+      parity: parity(),
+      geometryMetadataPbtxt: 'mocked exact metadata preflight',
+      runtimeFactory: {
+        async create() {
+          return {
+            detect() {
+              return {
+                faceLandmarks: [],
+                faceBlendshapes: [],
+                facialTransformationMatrixes: [],
+              };
+            },
+            close() {
+              closeCount += 1;
+              throw closeError;
+            },
+          };
+        },
+      },
+    });
+
+    const first = engine.close();
+    const second = engine.close();
+
+    expect(second).toBe(first);
+    await expect(first).rejects.toBe(closeError);
+    await expect(second).rejects.toBe(closeError);
+    expect(closeCount).toBe(1);
+
+    const third = engine.close();
+    expect(third).toBe(first);
+    await expect(third).rejects.toBe(closeError);
+    expect(closeCount).toBe(1);
+  });
+
 });
