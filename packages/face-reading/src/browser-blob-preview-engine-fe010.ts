@@ -9,6 +9,28 @@ import { FaceAuthorityValidationError } from './validation.js';
 export const FE010_CONTRACT_VERSION =
   'FE010-BROWSER-BLOB-PREVIEW-INGRESS-v1' as const;
 
+export type FE010BrowserBlobPreviewErrorCode =
+  | 'INVALID_CONFIG'
+  | 'INVALID_IMAGE_INPUT'
+  | 'UNSUPPORTED_IMAGE_TYPE'
+  | 'BROWSER_CAPABILITY_UNAVAILABLE'
+  | 'IMAGE_DIGEST_FAILED'
+  | 'IMAGE_DECODE_FAILED'
+  | 'NO_FACE_DETECTED'
+  | 'INVALID_PROVIDER_GEOMETRY'
+  | 'ENGINE_RUNTIME_FAILED'
+  | 'SESSION_CLOSED';
+
+export class FE010BrowserBlobPreviewError extends FaceAuthorityValidationError {
+  override readonly name = 'FE010BrowserBlobPreviewError';
+  readonly code: FE010BrowserBlobPreviewErrorCode;
+
+  constructor(code: FE010BrowserBlobPreviewErrorCode, message: string) {
+    super(`FE-010 ${message}`);
+    this.code = code;
+  }
+}
+
 export interface FE010BrowserImageBitmapLike {
   readonly width: number;
   readonly height: number;
@@ -113,21 +135,24 @@ const AUTHORITY_BOUNDARY = Object.freeze({
   commerceActivated: false as const,
 });
 
-function fail(message: string): never {
-  throw new FaceAuthorityValidationError(`FE-010 ${message}`);
+function fail(
+  message: string,
+  code: FE010BrowserBlobPreviewErrorCode = 'INVALID_IMAGE_INPUT',
+): never {
+  throw new FE010BrowserBlobPreviewError(code, message);
 }
 
 function validateConfig(config: FE010BrowserBlobPreviewEngineConfig): void {
   if (typeof config !== 'object' || config === null) {
-    fail('config must be an object.');
+    fail('config must be an object.', 'INVALID_CONFIG');
   }
   const allowed = new Set(['schemaVersion', 'runtimeFactory', 'bitmapDecoder']);
   const unexpected = Object.keys(config).find((key) => !allowed.has(key));
   if (unexpected !== undefined) {
-    fail(`config contains unauthorized field: ${unexpected}.`);
+    fail(`config contains unauthorized field: ${unexpected}.`, 'INVALID_CONFIG');
   }
   if (config.schemaVersion !== 'fe010-browser-blob-preview-engine-config-v1') {
-    fail('config schemaVersion is unsupported.');
+    fail('config schemaVersion is unsupported.', 'INVALID_CONFIG');
   }
   if (
     config.runtimeFactory !== undefined &&
@@ -137,7 +162,7 @@ function validateConfig(config: FE010BrowserBlobPreviewEngineConfig): void {
       typeof config.runtimeFactory.create !== 'function'
     )
   ) {
-    fail('runtimeFactory must expose create() when provided.');
+    fail('runtimeFactory must expose create() when provided.', 'INVALID_CONFIG');
   }
   if (
     config.bitmapDecoder !== undefined &&
@@ -147,7 +172,7 @@ function validateConfig(config: FE010BrowserBlobPreviewEngineConfig): void {
       typeof config.bitmapDecoder.decode !== 'function'
     )
   ) {
-    fail('bitmapDecoder must expose decode() when provided.');
+    fail('bitmapDecoder must expose decode() when provided.', 'INVALID_CONFIG');
   }
 }
 
@@ -175,7 +200,7 @@ function validateBlobRequest(request: FE010BrowserBlobAnalysisRequest): void {
     fail('blob must be a non-empty Blob-compatible object.');
   }
   if (!SUPPORTED_IMAGE_TYPES.has(blob.type.toLowerCase())) {
-    fail('blob type must be image/jpeg, image/png, or image/webp.');
+    fail('blob type must be image/jpeg, image/png, or image/webp.', 'UNSUPPORTED_IMAGE_TYPE');
   }
 }
 
@@ -188,10 +213,10 @@ function validateBitmap(bitmap: FE010BrowserImageBitmapLike): void {
     !Number.isInteger(bitmap.height) ||
     bitmap.height <= 0
   ) {
-    fail('decoded bitmap must expose positive integer width/height.');
+    fail('decoded bitmap must expose positive integer width/height.', 'IMAGE_DECODE_FAILED');
   }
   if (bitmap.close !== undefined && typeof bitmap.close !== 'function') {
-    fail('decoded bitmap close must be a function when present.');
+    fail('decoded bitmap close must be a function when present.', 'IMAGE_DECODE_FAILED');
   }
 }
 
@@ -202,7 +227,7 @@ function defaultBitmapDecoder(): FE010BrowserImageBitmapDecoder {
         globalThis as unknown as { readonly createImageBitmap?: BrowserCreateImageBitmap }
       ).createImageBitmap;
       if (typeof createImageBitmap !== 'function') {
-        fail('browser createImageBitmap() is required when no bitmapDecoder is supplied.');
+        fail('browser createImageBitmap() is required when no bitmapDecoder is supplied.', 'BROWSER_CAPABILITY_UNAVAILABLE');
       }
       return createImageBitmap(blob, { imageOrientation: 'from-image' });
     },
@@ -219,11 +244,15 @@ function hex(bytes: ArrayBuffer): string {
 async function sha256Blob(blob: Blob): Promise<string> {
   const subtle = globalThis.crypto?.subtle;
   if (subtle === undefined) {
-    fail('Web Crypto SubtleCrypto is required to hash input Blob bytes.');
+    fail('Web Crypto SubtleCrypto is required to hash input Blob bytes.', 'BROWSER_CAPABILITY_UNAVAILABLE');
   }
-  const bytes = await blob.arrayBuffer();
-  const digest = await subtle.digest('SHA-256', bytes);
-  return `sha256:${hex(digest)}`;
+  try {
+    const bytes = await blob.arrayBuffer();
+    const digest = await subtle.digest('SHA-256', bytes);
+    return `sha256:${hex(digest)}`;
+  } catch {
+    fail('failed to compute SHA-256 over the exact input Blob bytes.', 'IMAGE_DIGEST_FAILED');
+  }
 }
 
 function providerRunRef(sequence: number, digest: string): string {
@@ -256,19 +285,40 @@ export async function createBrowserBlobConsumerPreviewFaceEngineFE010(
   ): Promise<FE004ConsumerPreviewEngineResult> => {
     validateBlobRequest(request);
     const digest = await sha256Blob(request.blob);
-    const bitmap = await decoder.decode(request.blob);
+    let bitmap: FE010BrowserImageBitmapLike;
+    try {
+      bitmap = await decoder.decode(request.blob);
+    } catch (error) {
+      if (error instanceof FE010BrowserBlobPreviewError) throw error;
+      fail('browser image decode failed.', 'IMAGE_DECODE_FAILED');
+    }
 
     try {
       validateBitmap(bitmap);
       sequence += 1;
-      return await managed.analyze({
-        schemaVersion: 'fe006-preview-image-request-v1',
-        providerRunRef: providerRunRef(sequence, digest),
-        canonicalAssetDigest: digest,
-        image: bitmap,
-        frameWidth: bitmap.width,
-        frameHeight: bitmap.height,
-      });
+      try {
+        return await managed.analyze({
+          schemaVersion: 'fe006-preview-image-request-v1',
+          providerRunRef: providerRunRef(sequence, digest),
+          canonicalAssetDigest: digest,
+          image: bitmap,
+          frameWidth: bitmap.width,
+          frameHeight: bitmap.height,
+        });
+      } catch (error) {
+        if (error instanceof FaceAuthorityValidationError) {
+          if (/requires exactly one detected face; received 0\./u.test(error.message)) {
+            fail('no face was detected in the decoded image.', 'NO_FACE_DETECTED');
+          }
+          if (
+            /FaceLandmarker result|faceLandmarks|provider landmarks|provider landmark|landmark\[/u
+              .test(error.message)
+          ) {
+            fail('provider face geometry did not satisfy the bounded engine contract.', 'INVALID_PROVIDER_GEOMETRY');
+          }
+        }
+        fail('preview engine runtime analysis failed.', 'ENGINE_RUNTIME_FAILED');
+      }
     } finally {
       if (
         typeof bitmap === 'object' &&
@@ -291,8 +341,9 @@ export async function createBrowserBlobConsumerPreviewFaceEngineFE010(
     analyzeBlob(request: FE010BrowserBlobAnalysisRequest) {
       if (lifecycle !== 'open') {
         return Promise.reject(
-          new FaceAuthorityValidationError(
-            'FE-010 browser Blob session close has begun; new analysis is rejected.',
+          new FE010BrowserBlobPreviewError(
+            'SESSION_CLOSED',
+            'browser Blob session close has begun; new analysis is rejected.',
           ),
         );
       }
