@@ -22,6 +22,14 @@ export {
   type FE007ManagedPreviewEngineConfig,
 } from './managed-consumer-preview-engine-fe007.js';
 
+export {
+  FE009_CONTRACT_VERSION,
+  assertReleaseManagedConsumerPreviewFaceEngineFE009,
+  createReleaseManagedConsumerPreviewFaceEngineFE009,
+  type FE009ReleaseManagedPreviewEngine,
+  type FE009ReleaseManagedPreviewEngineConfig,
+} from './release-managed-preview-engine-fe009.js';
+
 export type { MediaPipeFaceLandmarkerRuntimeFactoryFR26V1 } from './mediapipe-face-landmarker-runtime-fr26.js';
 export type { MediaPipeScreenToMetricReimplementationParityFR76V1 } from './mediapipe-screen-to-metric-reimplementation-parity-fr76.js';
 export type { MediaPipeMetricGeometryRuntimeRequestFR77V1 } from './governed-metric-geometry-runtime-fr77.js';
