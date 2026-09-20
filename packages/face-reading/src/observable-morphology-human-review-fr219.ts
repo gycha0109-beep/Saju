@@ -17,6 +17,7 @@ export interface FR219ReviewAssetInput {
   readonly assetPath: string;
   readonly assetDigest: string;
   readonly mediaType: FR219ReviewMediaType;
+  readonly embeddedMetadataSanitizedAttested: boolean;
 }
 
 export interface FR219ReviewSessionInput {
@@ -33,6 +34,8 @@ export interface FR219InternalAssetBinding {
   readonly assetDigest: string;
   readonly mediaType: FR219ReviewMediaType;
   readonly assetRoute: string;
+  readonly embeddedMetadataSanitizedAttested: boolean;
+  readonly embeddedMetadataSanitizationIndependentlyVerified: false;
   readonly sourcePathExposedToReviewer: false;
   readonly assetDigestExposedToReviewer: false;
 }
@@ -259,6 +262,9 @@ export function materializeBlindedReviewSessionFR219(
     if (!SHA256.test(entry.assetDigest)) fail(`${reviewItemRef}.assetDigest must be canonical sha256.`);
     if (!ALLOWED_MEDIA_TYPES.has(entry.mediaType)) fail(`${reviewItemRef}.mediaType is unsupported.`);
 
+    if (entry.embeddedMetadataSanitizedAttested !== true) {
+      fail(`${reviewItemRef} requires embedded-metadata sanitization attestation before reviewer delivery.`);
+    }
     const route = assetRoute(sessionRef, reviewItemRef, entry.assetDigest);
     if (seenRoutes.has(route)) fail(`duplicate opaque asset route: ${route}.`);
     seenRoutes.add(route);
@@ -270,6 +276,8 @@ export function materializeBlindedReviewSessionFR219(
       assetDigest: entry.assetDigest,
       mediaType: entry.mediaType,
       assetRoute: route,
+      embeddedMetadataSanitizedAttested: true as const,
+      embeddedMetadataSanitizationIndependentlyVerified: false as const,
       sourcePathExposedToReviewer: false as const,
       assetDigestExposedToReviewer: false as const,
     }));
