@@ -250,6 +250,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/product-neutral-observation-contract-fe035b.test.ts
 
+      - name: Verify FE036 product capture-quality evidence boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/product-capture-quality-evidence-fe036.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
