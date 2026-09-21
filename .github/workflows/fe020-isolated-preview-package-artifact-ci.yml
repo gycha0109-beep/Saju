@@ -1,0 +1,29 @@
+name: FE020 Isolated Preview Package Artifact CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/package.json'
+      - 'packages/face-reading/src/**'
+      - 'tsconfig.face-reading.preview-package.json'
+      - 'scripts/verify-fe020-isolated-preview-package-artifact.mjs'
+      - 'docs/face-engine/fe020-isolated-preview-package-artifact.md'
+      - '.github/workflows/fe020-isolated-preview-package-artifact-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe020-isolated-preview-package-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build preview package
+        run: npm run face:build:preview-package
+      - name: Verify isolated installable artifact
+        run: node scripts/verify-fe020-isolated-preview-package-artifact.mjs
