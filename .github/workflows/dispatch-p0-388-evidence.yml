@@ -1,0 +1,33 @@
+name: Dispatch P0-OPS-01 Evidence
+
+on:
+  push:
+    branches:
+      - ops/dispatch-p0-388-evidence-20260922
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    name: dispatch-latency-and-monitoring-evidence
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Dispatch exact-main evidence workflows
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_MAIN_SHA: d4dd33399e50be6214438c569d523df88a0e3495
+        run: |
+          set -euo pipefail
+
+          main_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          [[ "$main_sha" == "$EXPECTED_MAIN_SHA" ]] || {
+            echo "::error title=P0-OPS-01 evidence dispatch blocked::main moved from expected SHA."
+            exit 1
+          }
+
+          gh workflow run production-latency-evidence.yml             --repo "$GITHUB_REPOSITORY"             --ref main             -f active_bearer_secret_version=1             -f sample_count=100             -f timeout_ms=10000
+
+          gh workflow run production-monitoring-evidence.yml             --repo "$GITHUB_REPOSITORY"             --ref main
