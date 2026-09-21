@@ -204,7 +204,7 @@ describe('FE035B product neutral observation contract', () => {
     const reordered = cloneSurface();
     reordered.regions = [
       reordered.regions[1]!,
-      reordered.regions[0]!
+      reordered.regions[0]!,
       ...reordered.regions.slice(2),
     ];
     expect(() => assertProductNeutralObservationSurfaceFE035B(reordered)).toThrow(
