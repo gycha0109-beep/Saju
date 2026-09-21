@@ -1,0 +1,31 @@
+name: FR232 Authority-Chain-Bound Witness Signatures CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-authority-chain-bound-witness-signatures-fr232.ts'
+      - 'packages/face-reading/src/observable-morphology-authority-chain-bound-witness-signatures-fr232.test.ts'
+      - 'research/face-reading/fr232-authority-chain-bound-witness-signatures.md'
+      - '.github/workflows/fr232-authority-chain-bound-witness-signatures-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/face-reading/src/observable-morphology-authority-chain-bound-witness-signatures-fr232.ts'
+      - 'packages/face-reading/src/observable-morphology-authority-chain-bound-witness-signatures-fr232.test.ts'
+      - 'research/face-reading/fr232-authority-chain-bound-witness-signatures.md'
+      - '.github/workflows/fr232-authority-chain-bound-witness-signatures-ci.yml'
+
+jobs:
+  fr232-authority-chain-bound-witness-signatures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run face:build
+      - run: npx vitest run packages/face-reading/src/observable-morphology-authority-chain-bound-witness-signatures-fr232.test.ts
