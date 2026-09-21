@@ -288,6 +288,31 @@ Never paste the Bearer into an issue, PR, shell history capture, or incident rep
 
 If the previous revision is incompatible with current MyeongHa API expectations, do not rollback blindly; use the MyeongHa<->Saju compatibility gate and choose a coordinated roll-forward/rollback.
 
+### Governed rollback drill
+
+The pre-deploy rollback manifest is evidence, not rollback authorization. A real production rollback drill uses:
+
+```text
+.github/workflows/production-cloud-run-rollback-drill.yml
+```
+
+The drill requires:
+
+- explicit `RUN_PRODUCTION_ROLLBACK_DRILL` confirmation;
+- `watchtower_track=ops`;
+- a successful prior `Production Cloud Run` run ID;
+- the exact unexpired rollback-manifest artifact from that run;
+- manifest-bound revision/image identity with no predecessor inference from revision ordering;
+- exactly one currently serving 100% revision and one manifest rollback target;
+- rollback target `Ready=True` and exact digest equality before traffic mutation;
+- 100% traffic switch to the manifest target;
+- stable-origin authenticated calculation + Preview Reading smoke;
+- unconditional restoration of the exact pre-drill serving revision after a rollback switch attempt;
+- final 100% traffic identity verification and authenticated smoke after restoration;
+- identifier/credential-free evidence with `rollbackDrillPassed=true` and `originalTrafficRestored=true`.
+
+A rollback-smoke failure must still restore the original revision. The job remains failed even if cleanup succeeds. The drill never guesses an older revision from Cloud Run revision numbering.
+
 ## 13. Bearer rotation sequence
 
 The runtime supports active + optional previous credential.
