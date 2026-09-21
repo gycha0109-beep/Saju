@@ -1,0 +1,47 @@
+name: Diagnose P0-OPS-01 Monitoring Evidence
+
+on:
+  push:
+    branches:
+      - ops/diagnose-p0-388-monitoring-evidence-20260922
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  diagnose:
+    name: print-sanitized-monitoring-evidence
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download failed monitoring evidence artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: '35664684980'
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/monitoring-evidence"
+          mkdir -p "$out"
+          gh run download "$SOURCE_RUN_ID"             --repo "$GITHUB_REPOSITORY"             --name "saju-production-monitoring-evidence-$SOURCE_RUN_ID"             --dir "$out"
+
+          mapfile -t files < <(find "$out" -type f -name 'saju-production-monitoring-evidence.json' -print)
+          [[ "${#files[@]}" -eq 1 ]]
+          evidence="${files[0]}"
+
+          jq -e '
+            .providerEvidenceReadable == false
+            and .classification.ownerOnCallEvidence == "repo_not_proven"
+            and .classification.monitoringReadiness == "not_proven"
+            and .readFailure.rawProviderErrorRetained == false
+          ' "$evidence" >/dev/null
+
+          jq '{
+            activeRevision: .target.activeRevision,
+            providerEvidenceReadable,
+            failureStage: .readFailure.stage,
+            failureCategory: .readFailure.category,
+            providerExitCode: .readFailure.exitCode,
+            ownerOnCallEvidence: .classification.ownerOnCallEvidence,
+            monitoringReadiness: .classification.monitoringReadiness
+          }' "$evidence"
