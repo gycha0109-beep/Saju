@@ -1,0 +1,36 @@
+name: FR229 Pinned Registrar Key Enrollment CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-pinned-registrar-key-enrollment-fr229.ts'
+      - 'packages/face-reading/src/observable-morphology-pinned-registrar-key-enrollment-fr229.test.ts'
+      - 'research/face-reading/fr229-pinned-registrar-key-enrollment.md'
+      - '.github/workflows/fr229-pinned-registrar-key-enrollment-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/face-reading/src/observable-morphology-pinned-registrar-key-enrollment-fr229.ts'
+      - 'packages/face-reading/src/observable-morphology-pinned-registrar-key-enrollment-fr229.test.ts'
+      - 'research/face-reading/fr229-pinned-registrar-key-enrollment.md'
+      - '.github/workflows/fr229-pinned-registrar-key-enrollment-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr229-pinned-registrar-key-enrollment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR229 pinned registrar key enrollment
+        run: npx vitest run packages/face-reading/src/observable-morphology-pinned-registrar-key-enrollment-fr229.test.ts
