@@ -1,5 +1,7 @@
 import {
+  FE035B_ALLOWED_UNAVAILABLE_SURFACES,
   FE035B_PRODUCT_NEUTRAL_OBSERVATION_CONTRACT_VERSION,
+  FE035B_REGION_ORDER,
   assertProductNeutralObservationSurfaceFE035B,
   type FE035BNeutralObservationSurface,
   type FE035BRegionAvailability,
@@ -243,10 +245,29 @@ export function assertProductCaptureQualityEvidenceFE036(
     fail('quality dimension authority widened.');
   }
 
-  assertProductNeutralObservationSurfaceFE035B({
-    metrics: FE035BProductMetricSentinel,
-    regions: value.descriptiveRegionCoverage,
-  });
+  if (
+    value.descriptiveRegionCoverage.length !== FE035B_REGION_ORDER.length ||
+    value.descriptiveRegionCoverage.some(
+      (region, index) => region.regionKey !== FE035B_REGION_ORDER[index],
+    )
+  ) {
+    fail('descriptive region coverage order drift.');
+  }
+
+  for (const region of value.descriptiveRegionCoverage) {
+    if (
+      new Set(region.unavailableSurfaces).size !==
+        region.unavailableSurfaces.length ||
+      region.unavailableSurfaces.some(
+        (entry) =>
+          !FE035B_ALLOWED_UNAVAILABLE_SURFACES[region.regionKey].includes(entry),
+      ) ||
+      region.state !==
+        (region.unavailableSurfaces.length === 0 ? 'available' : 'partial')
+    ) {
+      fail('descriptive region coverage drift: ' + region.regionKey);
+    }
+  }
 
   if (
     value.researchCoachingEvidence.sourceScope !==
@@ -266,10 +287,3 @@ export function assertProductCaptureQualityEvidenceFE036(
   }
 }
 
-const FE035BProductMetricSentinel = Object.freeze(
-  FE035B_PRODUCT_METRIC_SENTINEL_SOURCE(),
-);
-
-function FE035B_PRODUCT_METRIC_SENTINEL_SOURCE() {
-  return [] as const;
-}
