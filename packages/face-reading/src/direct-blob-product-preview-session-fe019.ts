@@ -4,6 +4,7 @@ import {
   type FE018HostBoundProductSafeBrowserPreviewConfig,
 } from './host-bound-product-safe-browser-preview-session-fe018.js';
 import type {
+  FE017ProductSafeBrowserPreviewSession,
   FE017ProductSafePreviewAttempt,
   FE017ProductSafeSessionCloseResult,
 } from './product-safe-browser-preview-session-fe017.js';
@@ -127,11 +128,7 @@ function rejected(
 }
 
 function wrapSession(
-  inner: Awaited<
-    ReturnType<typeof openHostBoundProductSafeBrowserPreviewSessionFE018>
-  > extends { readonly status: 'ready'; readonly session: infer T }
-    ? T
-    : never,
+  inner: FE017ProductSafeBrowserPreviewSession,
 ): FE019DirectBlobProductPreviewSession {
   const session: FE019DirectBlobProductPreviewSession = Object.freeze({
     schemaVersion: 'fe019-direct-blob-product-preview-session-v1' as const,
