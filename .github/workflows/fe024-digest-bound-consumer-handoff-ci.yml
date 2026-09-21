@@ -1,0 +1,38 @@
+name: FE024 Digest-Bound Consumer Handoff CI
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-fe024-digest-bound-preview-consumer-handoff.mjs'
+      - 'scripts/verify-fe024-digest-bound-preview-consumer-handoff.mjs'
+      - 'docs/face-engine/fe024-digest-bound-preview-consumer-handoff.md'
+      - '.github/workflows/fe024-digest-bound-consumer-handoff-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe024-digest-bound-consumer-handoff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build preview package
+        run: npm run face:build:preview-package
+      - name: Build FE024 handoff
+        env:
+          FE024_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/build-fe024-digest-bound-preview-consumer-handoff.mjs
+      - name: Verify FE024 handoff
+        run: node scripts/verify-fe024-digest-bound-preview-consumer-handoff.mjs
+      - name: Upload FE024 handoff
+        uses: actions/upload-artifact@v4
+        with:
+          name: fe024-digest-bound-preview-consumer-handoff
+          path: .artifacts/fe024-digest-bound-preview-consumer-handoff/*
+          if-no-files-found: error
+          retention-days: 7
