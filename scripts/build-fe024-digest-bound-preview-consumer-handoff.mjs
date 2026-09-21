@@ -95,7 +95,10 @@ const manifest = Object.freeze({
     version: MEDIAPIPE_VERSION,
   }),
   source: Object.freeze({
-    commit: process.env.GITHUB_SHA?.trim() || null,
+    commit:
+      process.env.FE024_SOURCE_COMMIT?.trim() ||
+      process.env.GITHUB_SHA?.trim() ||
+      null,
   }),
   distribution: Object.freeze({
     registryPublished: false,
