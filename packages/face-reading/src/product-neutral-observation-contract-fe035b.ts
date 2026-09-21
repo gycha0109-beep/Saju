@@ -284,6 +284,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function isRegionKey(value: unknown): value is FE035BRegionKey {
+  return (
+    typeof value === 'string' &&
+    (FE035B_REGION_ORDER as readonly string[]).includes(value)
+  );
+}
+
+function isMetricUnit(value: unknown): value is FE035BMetricUnit {
+  return (
+    typeof value === 'string' &&
+    ['ratio', 'degree', 'radian'].includes(value)
+  );
+}
+
 function exactKeys(
   value: object,
   allowed: readonly string[],
@@ -429,35 +443,44 @@ export function assertProductNeutralObservationSurfaceFE035B(
   if (!isRecord(value)) fail('surface must be an object.');
   exactKeys(value, ['metrics', 'regions'], 'surface');
 
-  if (!Array.isArray(value.metrics) || !Array.isArray(value.regions)) {
+  const metricsValue = value.metrics;
+  const regionsValue = value.regions;
+  if (!Array.isArray(metricsValue) || !Array.isArray(regionsValue)) {
     fail('surface metrics and regions must be arrays.');
   }
 
+  const regionKeys = regionsValue.map((entry) =>
+    isRecord(entry) && isRegionKey(entry.regionKey) ? entry.regionKey : '',
+  );
   if (
-    value.regions.length !== FE035B_REGION_ORDER.length ||
-    !sameSequence(
-      value.regions.map((entry) => entry.regionKey),
-      FE035B_REGION_ORDER,
-    )
+    regionsValue.length !== FE035B_REGION_ORDER.length ||
+    !sameSequence(regionKeys, FE035B_REGION_ORDER)
   ) {
     fail('surface region order drift.');
   }
 
   const regionByKey = new Map<FE035BRegionKey, FE035BRegionAvailability>();
-  for (const region of value.regions) {
-    if (!isRecord(region)) fail('region entry must be an object.');
-    exactKeys(region, ['regionKey', 'state', 'unavailableSurfaces'], 'region');
+  for (const rawRegion of regionsValue) {
+    if (!isRecord(rawRegion)) fail('region entry must be an object.');
+    exactKeys(
+      rawRegion,
+      ['regionKey', 'state', 'unavailableSurfaces'],
+      'region',
+    );
 
+    const regionKey = rawRegion.regionKey;
+    const state = rawRegion.state;
+    const unavailableValue = rawRegion.unavailableSurfaces;
     if (
-      !FE035B_REGION_ORDER.includes(region.regionKey) ||
-      (region.state !== 'available' && region.state !== 'partial') ||
-      !Array.isArray(region.unavailableSurfaces) ||
-      !region.unavailableSurfaces.every((entry) => typeof entry === 'string')
+      !isRegionKey(regionKey) ||
+      (state !== 'available' && state !== 'partial') ||
+      !Array.isArray(unavailableValue) ||
+      !unavailableValue.every((entry) => typeof entry === 'string')
     ) {
       fail('invalid region availability entry.');
     }
 
-    const unavailable = [...region.unavailableSurfaces];
+    const unavailable = [...unavailableValue] as string[];
     if (
       new Set(unavailable).size !== unavailable.length ||
       !sameSequence(unavailable, [...unavailable].sort())
@@ -465,16 +488,27 @@ export function assertProductNeutralObservationSurfaceFE035B(
       fail('unavailable surfaces must be unique and sorted.');
     }
 
-    const allowed = FE035B_ALLOWED_UNAVAILABLE_SURFACES[region.regionKey];
+    const allowed = FE035B_ALLOWED_UNAVAILABLE_SURFACES[regionKey];
     if (unavailable.some((entry) => !allowed.includes(entry))) {
-      fail('region contains an unknown unavailable surface: ' + region.regionKey);
+      fail('region contains an unknown unavailable surface: ' + regionKey);
     }
 
     const expectedState = unavailable.length === 0 ? 'available' : 'partial';
-    if (region.state !== expectedState) {
-      fail('region availability state does not match unavailable surfaces: ' + region.regionKey);
+    if (state !== expectedState) {
+      fail(
+        'region availability state does not match unavailable surfaces: ' +
+          regionKey,
+      );
     }
-    regionByKey.set(region.regionKey, region);
+
+    regionByKey.set(
+      regionKey,
+      Object.freeze({
+        regionKey,
+        state,
+        unavailableSurfaces: Object.freeze(unavailable),
+      }),
+    );
   }
 
   const definitionByRef = new Map(
@@ -485,31 +519,36 @@ export function assertProductNeutralObservationSurfaceFE035B(
   );
   const metricRefs: string[] = [];
 
-  for (const entry of value.metrics) {
-    if (!isRecord(entry)) fail('metric entry must be an object.');
-    exactKeys(entry, ['regionKey', 'metricRef', 'value', 'unit'], 'metric');
+  for (const rawMetric of metricsValue) {
+    if (!isRecord(rawMetric)) fail('metric entry must be an object.');
+    exactKeys(
+      rawMetric,
+      ['regionKey', 'metricRef', 'value', 'unit'],
+      'metric',
+    );
 
+    const regionKey = rawMetric.regionKey;
+    const metricRef = rawMetric.metricRef;
+    const metricValue = rawMetric.value;
+    const unit = rawMetric.unit;
     if (
-      typeof entry.metricRef !== 'string' ||
-      typeof entry.value !== 'number' ||
-      !Number.isFinite(entry.value) ||
-      !FE035B_REGION_ORDER.includes(entry.regionKey) ||
-      !['ratio', 'degree', 'radian'].includes(entry.unit)
+      !isRegionKey(regionKey) ||
+      typeof metricRef !== 'string' ||
+      typeof metricValue !== 'number' ||
+      !Number.isFinite(metricValue) ||
+      !isMetricUnit(unit)
     ) {
       fail('surface contains invalid neutral metric data.');
     }
 
-    const definition = definitionByRef.get(entry.metricRef);
+    const definition = definitionByRef.get(metricRef);
     if (definition === undefined) {
-      fail('surface contains unknown metricRef: ' + entry.metricRef);
+      fail('surface contains unknown metricRef: ' + metricRef);
     }
-    if (
-      entry.regionKey !== definition.regionKey ||
-      entry.unit !== definition.unit
-    ) {
-      fail('metric region or unit drift: ' + entry.metricRef);
+    if (regionKey !== definition.regionKey || unit !== definition.unit) {
+      fail('metric region or unit drift: ' + metricRef);
     }
-    metricRefs.push(entry.metricRef);
+    metricRefs.push(metricRef);
   }
 
   if (new Set(metricRefs).size !== metricRefs.length) {
@@ -534,7 +573,9 @@ export function assertProductNeutralObservationSurfaceFE035B(
     );
     const isPresent = present.has(definition.metricRef);
     if (unavailable === isPresent) {
-      fail('conditional metric availability mismatch: ' + definition.metricRef);
+      fail(
+        'conditional metric availability mismatch: ' + definition.metricRef,
+      );
     }
   }
 }

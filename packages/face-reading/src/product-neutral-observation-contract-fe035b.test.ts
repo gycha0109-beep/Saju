@@ -6,8 +6,15 @@ import {
   assertIssuedProductNeutralObservationContractFE035B,
   assertProductNeutralObservationSurfaceFE035B,
   issueProductNeutralObservationContractFE035B,
+  type FE035BNeutralMetricValue,
   type FE035BNeutralObservationSurface,
+  type FE035BRegionAvailability,
 } from './product-neutral-observation-contract-fe035b.js';
+
+type MutableSurface = {
+  metrics: FE035BNeutralMetricValue[];
+  regions: FE035BRegionAvailability[];
+};
 
 function fullSurface(): FE035BNeutralObservationSurface {
   return {
@@ -58,8 +65,8 @@ function partialSurface(): FE035BNeutralObservationSurface {
 
 function cloneSurface(
   surface: FE035BNeutralObservationSurface = fullSurface(),
-): FE035BNeutralObservationSurface {
-  return structuredClone(surface);
+): MutableSurface {
+  return structuredClone(surface) as MutableSurface;
 }
 
 describe('FE035B product neutral observation contract', () => {
@@ -126,14 +133,14 @@ describe('FE035B product neutral observation contract', () => {
     );
 
     const wrongUnit = cloneSurface();
-    wrongUnit.metrics[0] = { ...wrongUnit.metrics[0], unit: 'degree' };
+    wrongUnit.metrics[0] = { ...wrongUnit.metrics[0]!, unit: 'degree' };
     expect(() => assertProductNeutralObservationSurfaceFE035B(wrongUnit)).toThrow(
       /region or unit drift/u,
     );
 
     const wrongRegion = cloneSurface();
     wrongRegion.metrics[0] = {
-      ...wrongRegion.metrics[0],
+      ...wrongRegion.metrics[0]!,
       regionKey: 'mouth_lips',
     };
     expect(() => assertProductNeutralObservationSurfaceFE035B(wrongRegion)).toThrow(
@@ -143,13 +150,13 @@ describe('FE035B product neutral observation contract', () => {
 
   it('rejects duplicates, non-finite values, and missing required metrics', () => {
     const duplicate = cloneSurface();
-    duplicate.metrics = [...duplicate.metrics, { ...duplicate.metrics[0] }];
+    duplicate.metrics = [...duplicate.metrics, { ...duplicate.metrics[0]! }];
     expect(() => assertProductNeutralObservationSurfaceFE035B(duplicate)).toThrow(
       /duplicate metric refs/u,
     );
 
     const nonFinite = cloneSurface();
-    nonFinite.metrics[0] = { ...nonFinite.metrics[0], value: Number.NaN };
+    nonFinite.metrics[0] = { ...nonFinite.metrics[0]!, value: Number.NaN };
     expect(() => assertProductNeutralObservationSurfaceFE035B(nonFinite)).toThrow(
       /invalid neutral metric/u,
     );
@@ -196,8 +203,8 @@ describe('FE035B product neutral observation contract', () => {
   it('rejects region-order drift, unknown unavailable surfaces, and semantic field injection', () => {
     const reordered = cloneSurface();
     reordered.regions = [
-      reordered.regions[1],
-      reordered.regions[0],
+      reordered.regions[1]!,
+      reordered.regions[0]!
       ...reordered.regions.slice(2),
     ];
     expect(() => assertProductNeutralObservationSurfaceFE035B(reordered)).toThrow(
