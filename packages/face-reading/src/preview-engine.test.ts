@@ -17,9 +17,12 @@ describe('preview-engine public entrypoint', () => {
       'FE017_CONTRACT_VERSION',
       'FE018_CONTRACT_VERSION',
       'FE019_CONTRACT_VERSION',
+      'FE022_CONTRACT_VERSION',
+      'FE022_MAX_MODEL_ASSET_BYTES',
       'assertBoundConsumerPreviewFaceEngineFE006',
       'assertBrowserBlobConsumerPreviewFaceEngineFE010',
       'assertConsumerPreviewEngineResultFE004',
+      'assertDigestBoundMediaPipeRuntimeFactoryFE022',
       'assertDirectBlobProductPreviewOpenResultFE019',
       'assertDirectBlobProductPreviewSessionFE019',
       'assertHostBoundMediaPipeRuntimeFactoryFE016',
@@ -33,6 +36,7 @@ describe('preview-engine public entrypoint', () => {
       'assertReleaseManagedConsumerPreviewFaceEngineFE009',
       'createBoundConsumerPreviewFaceEngineFE006',
       'createBrowserBlobConsumerPreviewFaceEngineFE010',
+      'createDigestBoundMediaPipeRuntimeFactoryFE022',
       'createHostBoundMediaPipeRuntimeFactoryFE016',
       'createManagedConsumerPreviewFaceEngineFE007',
       'createReleaseManagedConsumerPreviewFaceEngineFE009',
@@ -60,7 +64,7 @@ describe('preview-engine public entrypoint', () => {
     expect(keys).not.toContain('MEDIAPIPE_V0_10_35_GEOMETRY_METADATA_PBTXT_FE009');
   });
 
-  it('exposes stable FE004, FE006, FE007, FE009, FE010, FE011, FE013, FE014, FE015, FE016, FE017, FE018, and FE019 contract versions', () => {
+  it('exposes stable FE004, FE006, FE007, FE009, FE010, FE011, FE013, FE014, FE015, FE016, FE017, FE018, FE019, and FE022 contract versions', () => {
     expect(previewEngine.FE004_CONTRACT_VERSION)
       .toBe('FE004-CONSUMER-PREVIEW-ENGINE-FACADE-v1');
     expect(previewEngine.FE006_CONTRACT_VERSION)
@@ -87,5 +91,9 @@ describe('preview-engine public entrypoint', () => {
       .toBe('FE018-HOST-BOUND-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1');
     expect(previewEngine.FE019_CONTRACT_VERSION)
       .toBe('FE019-DIRECT-BLOB-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1');
+    expect(previewEngine.FE022_CONTRACT_VERSION)
+      .toBe('FE022-DIGEST-BOUND-MEDIAPIPE-MODEL-RUNTIME-v1');
+    expect(previewEngine.FE022_MAX_MODEL_ASSET_BYTES)
+      .toBe(64 * 1024 * 1024);
   });
 });
