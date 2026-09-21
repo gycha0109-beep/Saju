@@ -1,0 +1,57 @@
+name: FE033A Stable Preview Distribution
+
+on:
+  push:
+    branches:
+      - feat/fe033a-stable-preview-distribution
+    paths:
+      - '.github/workflows/fe033a-stable-preview-distribution.yml'
+      - 'scripts/build-fe024-digest-bound-preview-consumer-handoff.mjs'
+      - 'scripts/verify-fe024-digest-bound-preview-consumer-handoff.mjs'
+      - 'packages/face-reading/**'
+      - 'tsconfig.face-reading.preview-package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fe033a-stable-preview-distribution
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feat/fe033a-stable-preview-distribution
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run face:build:preview-package
+      - name: Build deterministic FE024 handoff
+        env:
+          FE024_SOURCE_COMMIT: 1c0be383844bd7c5aa75079e2084da7bee9de13c
+        run: node scripts/build-fe024-digest-bound-preview-consumer-handoff.mjs distribution/face-reading/fe024
+      - name: Verify FE024 handoff
+        run: node scripts/verify-fe024-digest-bound-preview-consumer-handoff.mjs distribution/face-reading/fe024
+      - name: Verify locked tarball digest
+        run: |
+          echo "8d793c57e104fc0137a17dc631d208b468131b1d9a9668142a846e34dacbf84a  distribution/face-reading/fe024/myeongha-face-reading-0.0.0.tgz" | sha256sum --check --strict
+      - name: Commit immutable distribution bytes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add distribution/face-reading/fe024/manifest.json distribution/face-reading/fe024/myeongha-face-reading-0.0.0.tgz
+          if git diff --cached --quiet; then
+            echo "FE033A distribution already materialized."
+            exit 0
+          fi
+          git commit -m "build(face-engine): materialize FE024 preview distribution"
+          git push origin HEAD:feat/fe033a-stable-preview-distribution
