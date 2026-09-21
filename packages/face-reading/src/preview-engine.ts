@@ -129,3 +129,15 @@ export {
   type FE018HostBoundProductSafeOpenResult,
   type FE018HostBoundProductSafeOpenSuccess,
 } from './host-bound-product-safe-browser-preview-session-fe018.js';
+
+export {
+  FE019_CONTRACT_VERSION,
+  assertDirectBlobProductPreviewOpenResultFE019,
+  assertDirectBlobProductPreviewSessionFE019,
+  openDirectBlobProductPreviewSessionFE019,
+  type FE019AuthorityBoundary,
+  type FE019DirectBlobProductPreviewOpenRejected,
+  type FE019DirectBlobProductPreviewOpenResult,
+  type FE019DirectBlobProductPreviewOpenSuccess,
+  type FE019DirectBlobProductPreviewSession,
+} from './direct-blob-product-preview-session-fe019.js';

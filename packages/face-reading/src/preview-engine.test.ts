@@ -16,9 +16,12 @@ describe('preview-engine public entrypoint', () => {
       'FE016_CONTRACT_VERSION',
       'FE017_CONTRACT_VERSION',
       'FE018_CONTRACT_VERSION',
+      'FE019_CONTRACT_VERSION',
       'assertBoundConsumerPreviewFaceEngineFE006',
       'assertBrowserBlobConsumerPreviewFaceEngineFE010',
       'assertConsumerPreviewEngineResultFE004',
+      'assertDirectBlobProductPreviewOpenResultFE019',
+      'assertDirectBlobProductPreviewSessionFE019',
       'assertHostBoundMediaPipeRuntimeFactoryFE016',
       'assertHostBoundProductSafeBrowserPreviewOpenResultFE018',
       'assertHostSafeBrowserPreviewFaceEngineFE011',
@@ -33,6 +36,7 @@ describe('preview-engine public entrypoint', () => {
       'createHostBoundMediaPipeRuntimeFactoryFE016',
       'createManagedConsumerPreviewFaceEngineFE007',
       'createReleaseManagedConsumerPreviewFaceEngineFE009',
+      'openDirectBlobProductPreviewSessionFE019',
       'openHostBoundProductSafeBrowserPreviewSessionFE018',
       'openHostSafeBrowserPreviewFaceEngineFE011',
       'openProductSafeBrowserPreviewSessionFE017',
@@ -56,7 +60,7 @@ describe('preview-engine public entrypoint', () => {
     expect(keys).not.toContain('MEDIAPIPE_V0_10_35_GEOMETRY_METADATA_PBTXT_FE009');
   });
 
-  it('exposes stable FE004, FE006, FE007, FE009, FE010, FE011, FE013, FE014, FE015, FE016, FE017, and FE018 contract versions', () => {
+  it('exposes stable FE004, FE006, FE007, FE009, FE010, FE011, FE013, FE014, FE015, FE016, FE017, FE018, and FE019 contract versions', () => {
     expect(previewEngine.FE004_CONTRACT_VERSION)
       .toBe('FE004-CONSUMER-PREVIEW-ENGINE-FACADE-v1');
     expect(previewEngine.FE006_CONTRACT_VERSION)
@@ -81,5 +85,7 @@ describe('preview-engine public entrypoint', () => {
       .toBe('FE017-REUSABLE-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1');
     expect(previewEngine.FE018_CONTRACT_VERSION)
       .toBe('FE018-HOST-BOUND-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1');
+    expect(previewEngine.FE019_CONTRACT_VERSION)
+      .toBe('FE019-DIRECT-BLOB-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1');
   });
 });
