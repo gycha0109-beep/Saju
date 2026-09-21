@@ -5,19 +5,44 @@ Contract: `FR235-EXTERNAL-ASSURANCE-ROUTE-QUALIFICATION-v1`
 
 ## Question
 
-What external body can add real third-party assurance to the MyeongHa face-reading interpretation/verification system?
+What external body can add real third-party assurance to the MyeongHa face-reading interpretation/verification system itself?
 
 This is not a search for a personal face-reading certificate.
 
 ## Official-source findings
 
-### 1. ISO/IEC 42001 is a real, actionable AI-governance route
+### 1. KSA AI+ is the closest direct system/product-service certification route found
+
+The Korean Standards Association (KSA) states that AI+ certification targets AI-applied software, services, and ICT products.
+
+Its published process combines:
+
+- KSA certification review;
+- an on-site management-system review based on ISO/IEC 42001 plus AI-specific requirements;
+- product/service testing by Wisestone;
+- testing based on ISO/IEC 25059 and ISO/IEC 25051;
+- certification review and certificate/mark issuance when requirements are satisfied.
+
+Official reference:
+
+- https://knqac.ksa.or.kr/ksa_kr/6962/subview.do
+
+KSA publishes the AI certification contact as:
+
+- 02-6240-4675
+- aicert01@ksa.or.kr
+
+This is therefore the first route to ask whether MyeongHa itself is eligible for external AI product/service certification.
+
+Eligibility is **not yet confirmed**, and no certification claim is issued by FR235.
+
+### 2. ISO/IEC 42001 is the parallel AI-governance route
 
 ISO describes ISO/IEC 42001:2023 as the management-system standard for organizations that develop, provide, or use AI systems.
 
 KAB formally introduced the ISO/IEC 42001 accreditation/certification scheme and currently lists accredited certification bodies.
 
-Two confirmed candidates:
+Confirmed candidates include:
 
 - Korean Standards Association (KSA) — KAB-AI-02
 - Korean Foundation for Quality (KFQ) — KAB-AI-07
@@ -28,16 +53,11 @@ Official references:
 - https://kab.or.kr/kor/bbs/B0000093/view.do?menuNo=400015&nttId=7211
 - https://www.kab.or.kr/kor/kcn/kcn/view.do?menuNo=400049&orgIdx=171
 - https://www.kab.or.kr/kor/kcn/kcn/view.do?menuNo=400049&orgIdx=150
+- https://iso.ksa.or.kr/ksa_kr/7674/subview.do
 
-### 2. What ISO/IEC 42001 can and cannot mean here
+ISO/IEC 42001 can provide third-party assurance for the organization's AI management system. It does not establish that physiognomy is scientifically valid or that a particular interpretation is true.
 
-A successful ISO/IEC 42001 audit can provide third-party assurance for the organization's AI management system: governance, responsibilities, risk management, lifecycle controls, transparency, monitoring, and continual improvement.
-
-It does **not** establish that physiognomy is scientifically valid, that a particular interpretation is true, or that the model has empirical predictive validity.
-
-Therefore FR235 selects ISO/IEC 42001 as the first actionable external-assurance route, not as a truth certificate for face reading.
-
-### 3. Process/service conformity is a separate possible route
+### 3. Generic process/service conformity is a separate possible route
 
 KOLAS states that KS Q ISO/IEC 17065 concerns third-party certification bodies for products, processes, and services.
 
@@ -45,47 +65,60 @@ Official reference:
 
 - https://knab.go.kr/usr/gud/kas/KasRelateLawStdrInfo.do
 
-However, this does not prove that a certification scheme already exists for MyeongHa's interpretation service. Applicability and an appropriate scheme must be confirmed with a certification body or scheme owner before any conformity-certification claim is made.
+This does not prove that a separate KOLAS-accredited certification scheme already exists for MyeongHa's interpretation service. Applicability must be confirmed before any conformity-certification claim is made.
 
 ### 4. Empirical validation remains separate
 
-Independent empirical testing is still required for claims about:
+Neither AI+ nor ISO/IEC 42001 can by themselves establish:
 
 - construct validity;
 - repeatability;
 - capture sensitivity;
 - calibration;
 - predictive validity;
-- interpretation accuracy.
+- interpretation truth.
 
-ISO/IEC 42001 cannot substitute for these.
+Those require independent empirical testing under a separately defined protocol.
 
 ## Selected first external action
 
-Prepare a scope inquiry for a KAB-accredited ISO/IEC 42001 certification body.
+Contact the Korean Standards Association AI certification center and ask **both**:
 
-Initial candidate: Korean Standards Association (KSA), KAB-AI-02.  
-Alternative: Korean Foundation for Quality (KFQ), KAB-AI-07.
+1. whether MyeongHa qualifies as an AI software/service for AI+ certification;
+2. whether the organization and MyeongHa service can be scoped for ISO/IEC 42001 certification.
 
-The inquiry should ask:
+The inquiry should include:
 
-1. whether an AI-based interpretation/verification service such as MyeongHa can be included in the AIMS certification scope;
-2. whether a sole proprietor, pre-incorporation project, or incorporated organization is required;
-3. minimum operational history or evidence expected before Stage 1/Stage 2 audit;
-4. required AIMS documents, risk/impact assessments, AI inventory, supplier/model controls, incident processes, monitoring evidence, and internal audit/management review evidence;
-5. expected certification process, lead time, and quotation inputs;
-6. whether the face-reading interpretation domain creates any scope restriction or additional evidence requirement.
+- service summary and architecture;
+- AI/provider usage;
+- interpretation and evidence-governance pipeline;
+- current risk and authority boundaries;
+- data/privacy controls;
+- lifecycle/monitoring controls;
+- current development/operating status.
+
+Questions:
+
+1. Is an AI-based face-reading interpretation/verification service eligible for AI+ certification?
+2. Which AI+ product/service tests would apply?
+3. Does the domain create an exclusion or additional evidence requirement?
+4. Can the same service be included in an ISO/IEC 42001 AIMS certification scope?
+5. Is a sole proprietor acceptable, or is an incorporated organization required?
+6. What operational history/evidence is required before assessment?
+7. What documents, internal audits, management reviews, risk/impact assessments, supplier/model controls, incident processes, and monitoring records are required?
+8. What are the application, test, audit, lead-time, and quotation inputs?
 
 ## Authority boundary
 
 FR235 does not claim:
 
+- AI+ certification;
 - ISO/IEC 42001 certification;
-- completed external audit;
+- completed external audit or product test;
 - personal face-reading qualification;
 - external validation of interpretation truth;
 - scientific validation of physiognomy;
-- service/process conformity certification;
+- generic service/process conformity certification;
 - empirical repeatability or sufficiency;
 - calibration;
 - traditional semantic authority;
@@ -93,6 +126,4 @@ FR235 does not claim:
 
 ## Next frontier
 
-The next step is no longer another synthetic trust layer.
-
-It is an actual certification-scope inquiry and readiness-gap assessment against the response from a KAB-accredited ISO/IEC 42001 certification body.
+The next step is an actual KSA scope inquiry and a readiness-gap assessment against KSA's response. No additional synthetic trust layer can substitute for that external step.
