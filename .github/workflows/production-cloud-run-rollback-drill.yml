@@ -1,0 +1,411 @@
+name: Production Cloud Run Rollback Drill
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN_PRODUCTION_ROLLBACK_DRILL
+        required: true
+        type: string
+      source_deployment_run_id:
+        description: Successful Production Cloud Run run whose rollback manifest is authoritative
+        required: true
+        type: string
+      active_bearer_secret_version:
+        description: Enabled numeric Secret Manager version for authenticated smoke
+        required: true
+        type: string
+      watchtower_track:
+        description: Watchtower Track Key for CI attribution
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-saju-cloud-run
+  cancel-in-progress: false
+
+jobs:
+  rollback-drill:
+    name: rollback-then-restore-exact-production-traffic
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: production-saju
+    env:
+      GCP_REGION: asia-southeast1
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+      GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+      GCP_SAJU_ACTIVE_BEARER_SECRET: ${{ vars.GCP_SAJU_ACTIVE_BEARER_SECRET }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      SOURCE_DEPLOYMENT_RUN_ID: ${{ inputs.source_deployment_run_id }}
+      ACTIVE_BEARER_VERSION: ${{ inputs.active_bearer_secret_version }}
+      MYEONGHA_WATCHTOWER_TRACK: ${{ inputs.watchtower_track }}
+
+    steps:
+      - name: Preflight destructive rollback-drill inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          [[ "$GITHUB_REF" == 'refs/heads/main' ]]
+          [[ "$CONFIRMATION" == 'RUN_PRODUCTION_ROLLBACK_DRILL' ]]
+          [[ "$MYEONGHA_WATCHTOWER_TRACK" == 'ops' ]]
+          [[ "$SOURCE_DEPLOYMENT_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          [[ "$ACTIVE_BEARER_VERSION" =~ ^[1-9][0-9]*$ ]]
+
+          for name in             GCP_PROJECT_ID             GCP_WORKLOAD_IDENTITY_PROVIDER             GCP_DEPLOYER_SERVICE_ACCOUNT             GCP_CLOUD_RUN_SERVICE             GCP_SAJU_ACTIVE_BEARER_SECRET
+          do
+            [[ -n "${!name:-}" ]] || {
+              echo "Missing required production rollback variable: $name" >&2
+              exit 1
+            }
+          done
+
+          [[ "$GCP_CLOUD_RUN_SERVICE" =~ ^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$ ]]
+
+      - name: Checkout workflow authority
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+
+      - name: Resolve exact authoritative rollback artifact
+        id: source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          source_run="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_DEPLOYMENT_RUN_ID")"
+          jq -e '
+            .name == "Production Cloud Run"
+            and .path == ".github/workflows/production-cloud-run.yml"
+            and .event == "workflow_dispatch"
+            and .head_branch == "main"
+            and .status == "completed"
+            and .conclusion == "success"
+            and .repository.full_name == env.GITHUB_REPOSITORY
+          ' <<<"$source_run" >/dev/null
+
+          source_attempt="$(jq -er '.run_attempt' <<<"$source_run")"
+          [[ "$source_attempt" =~ ^[1-9][0-9]*$ ]]
+          expected_name="production-cloud-run-rollback-$SOURCE_DEPLOYMENT_RUN_ID-$source_attempt"
+
+          artifacts="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_DEPLOYMENT_RUN_ID/artifacts?per_page=100")"
+          selected="$(jq -c --arg name "$expected_name" '
+            [
+              .artifacts[]
+              | select(.name == $name and (.expired == false))
+            ]
+          ' <<<"$artifacts")"
+          [[ "$(jq 'length' <<<"$selected")" == '1' ]]
+
+          artifact_id="$(jq -er '.[0].id' <<<"$selected")"
+          artifact_name="$(jq -er '.[0].name' <<<"$selected")"
+          [[ "$artifact_id" =~ ^[1-9][0-9]*$ ]]
+
+          echo "artifact_id=$artifact_id" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
+          echo "source_attempt=$source_attempt" >> "$GITHUB_OUTPUT"
+
+      - name: Download exact rollback manifest
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.source_deployment_run_id }}
+          artifact-ids: ${{ steps.source.outputs.artifact_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/rollback-authority
+
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+
+      - name: Validate rollback authority and current traffic
+        id: preflight
+        shell: bash
+        env:
+          SOURCE_ATTEMPT: ${{ steps.source.outputs.source_attempt }}
+          ARTIFACT_ID: ${{ steps.source.outputs.artifact_id }}
+          ARTIFACT_NAME: ${{ steps.source.outputs.artifact_name }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t manifests < <(
+            find "$RUNNER_TEMP/rollback-authority" -type f -name 'production-rollback-manifest.json' -print
+          )
+          [[ "${#manifests[@]}" -eq 1 ]]
+          manifest="${manifests[0]}"
+
+          jq -e             --arg repository "$GITHUB_REPOSITORY"             --arg project "$GCP_PROJECT_ID"             --arg region "$GCP_REGION"             --arg service "$GCP_CLOUD_RUN_SERVICE"             --argjson run_id "$SOURCE_DEPLOYMENT_RUN_ID"             --argjson run_attempt "$SOURCE_ATTEMPT" '
+              .schemaVersion == 1
+              and .evidenceClass == "pre_deploy_rollback_manifest"
+              and .target.projectId == $project
+              and .target.region == $region
+              and .target.service == $service
+              and .source.repository == $repository
+              and .source.runId == $run_id
+              and .source.runAttempt == $run_attempt
+              and .activeTrafficPercentTotal == 100
+              and .classification.exactServingTrafficCaptured == true
+              and .classification.everyServingRevisionReady == true
+              and .classification.everyServingRevisionImageDigestQualified == true
+              and .classification.predecessorInferenceFromRevisionOrderingAllowed == false
+              and .classification.productionTrafficMutatedByThisCapture == false
+              and (.activeTraffic | length) == 1
+              and .activeTraffic[0].percent == 100
+              and (.servingRevisions | length) == 1
+              and .servingRevisions[0].ready == true
+              and .servingRevisions[0].revisionName == .activeTraffic[0].revisionName
+              and (.servingRevisions[0].imageRef | test("@sha256:[0-9a-f]{64}$"))
+            ' "$manifest" >/dev/null
+
+          rollback_revision="$(jq -er '.activeTraffic[0].revisionName' "$manifest")"
+          rollback_image="$(jq -er '.servingRevisions[0].imageRef' "$manifest")"
+          service_url="$(jq -er '.target.serviceUrl' "$manifest")"
+          [[ "$rollback_revision" =~ ^[a-z][a-z0-9-]{0,62}$ ]]
+          [[ "$service_url" =~ ^https://[^/]+$ ]]
+
+          rollback_json="$RUNNER_TEMP/rollback-target-revision.json"
+          gcloud run revisions describe "$rollback_revision"             --region "$GCP_REGION"             --project "$GCP_PROJECT_ID"             --format=json > "$rollback_json"
+
+          [[ "$(jq -r '[.status.conditions[]? | select(.type == "Ready") | .status] | .[0] // empty' "$rollback_json")" == 'True' ]]
+          [[ "$(jq -r '.spec.containers[0].image // empty' "$rollback_json")" == "$rollback_image" ]]
+
+          current_json="$RUNNER_TEMP/current-service.json"
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE"             --region "$GCP_REGION"             --project "$GCP_PROJECT_ID"             --format=json > "$current_json"
+
+          current_count="$(jq '[.status.traffic[]? | select((.percent // 0) > 0 and (.revisionName // "") != "")] | length' "$current_json")"
+          [[ "$current_count" == '1' ]]
+          current_revision="$(jq -er '.status.traffic[] | select((.percent // 0) == 100) | .revisionName' "$current_json")"
+          current_service_url="$(jq -er '.status.url' "$current_json")"
+          [[ "$current_service_url" == "$service_url" ]]
+          [[ "$current_revision" != "$rollback_revision" ]]
+
+          current_revision_json="$RUNNER_TEMP/current-revision.json"
+          gcloud run revisions describe "$current_revision"             --region "$GCP_REGION"             --project "$GCP_PROJECT_ID"             --format=json > "$current_revision_json"
+
+          [[ "$(jq -r '[.status.conditions[]? | select(.type == "Ready") | .status] | .[0] // empty' "$current_revision_json")" == 'True' ]]
+          current_image="$(jq -er '.spec.containers[0].image' "$current_revision_json")"
+          [[ "$current_image" =~ @sha256:[0-9a-f]{64}$ ]]
+
+          state_dir="$RUNNER_TEMP/rollback-drill"
+          mkdir -p "$state_dir"
+          jq -n             --arg schemaVersion "saju-production-cloud-run-rollback-drill-evidence/v1"             --arg capturedAtUtc "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"             --argjson sourceDeploymentRunId "$SOURCE_DEPLOYMENT_RUN_ID"             --argjson sourceDeploymentRunAttempt "$SOURCE_ATTEMPT"             --argjson rollbackManifestArtifactId "$ARTIFACT_ID"             --arg rollbackManifestArtifactName "$ARTIFACT_NAME"             --arg service "$GCP_CLOUD_RUN_SERVICE"             --arg serviceUrl "$service_url"             --arg rollbackRevision "$rollback_revision"             --arg rollbackImageRef "$rollback_image"             --arg originalRevision "$current_revision"             --arg originalImageRef "$current_image" '
+              {
+                schemaVersion: $schemaVersion,
+                capturedAtUtc: $capturedAtUtc,
+                sourceDeploymentRunId: $sourceDeploymentRunId,
+                sourceDeploymentRunAttempt: $sourceDeploymentRunAttempt,
+                rollbackManifestArtifactId: $rollbackManifestArtifactId,
+                rollbackManifestArtifactName: $rollbackManifestArtifactName,
+                target: {
+                  service: $service,
+                  serviceUrl: $serviceUrl
+                },
+                rollbackTarget: {
+                  revision: $rollbackRevision,
+                  imageRef: $rollbackImageRef,
+                  ready: true,
+                  manifestBound: true
+                },
+                originalServing: {
+                  revision: $originalRevision,
+                  imageRef: $originalImageRef,
+                  percent: 100,
+                  ready: true
+                },
+                rollback: {
+                  attempted: false,
+                  trafficVerified: false,
+                  authenticatedSmokePassed: false
+                },
+                restoration: {
+                  attempted: false,
+                  trafficVerified: false,
+                  authenticatedSmokePassed: false
+                },
+                classification: {
+                  predecessorInferredFromRevisionOrdering: false,
+                  secretValuesRetained: false,
+                  rawProviderPayloadsRetained: false,
+                  productionTrafficMutationAuthorizedByConfirmation: true,
+                  finalOriginalTrafficRequired: true
+                }
+              }
+            ' > "$state_dir/evidence.json"
+
+          echo "rollback_revision=$rollback_revision" >> "$GITHUB_OUTPUT"
+          echo "rollback_image=$rollback_image" >> "$GITHUB_OUTPUT"
+          echo "original_revision=$current_revision" >> "$GITHUB_OUTPUT"
+          echo "original_image=$current_image" >> "$GITHUB_OUTPUT"
+          echo "service_url=$service_url" >> "$GITHUB_OUTPUT"
+
+      - name: Read active service credential
+        id: credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          bearer="$(gcloud secrets versions access "$ACTIVE_BEARER_VERSION"             --secret "$GCP_SAJU_ACTIVE_BEARER_SECRET"             --project "$GCP_PROJECT_ID")"
+          [[ -n "$bearer" ]]
+          [[ ! "$bearer" =~ [[:space:]] ]]
+          echo "::add-mask::$bearer"
+          printf '%s' "$bearer" > "$RUNNER_TEMP/rollback-drill-bearer"
+          chmod 600 "$RUNNER_TEMP/rollback-drill-bearer"
+
+      - name: Switch 100 percent traffic to manifest rollback revision
+        id: rollback-switch
+        shell: bash
+        env:
+          ROLLBACK_REVISION: ${{ steps.preflight.outputs.rollback_revision }}
+        run: |
+          set -euo pipefail
+          echo "attempted=true" >> "$GITHUB_OUTPUT"
+          echo "started_epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+          jq '.rollback.attempted = true | .rollback.switchStartedAtUtc = (now | todateiso8601)'             "$RUNNER_TEMP/rollback-drill/evidence.json"             > "$RUNNER_TEMP/rollback-drill/evidence.next.json"
+          mv "$RUNNER_TEMP/rollback-drill/evidence.next.json" "$RUNNER_TEMP/rollback-drill/evidence.json"
+
+          gcloud run services update-traffic "$GCP_CLOUD_RUN_SERVICE"             --project "$GCP_PROJECT_ID"             --region "$GCP_REGION"             --to-revisions "$ROLLBACK_REVISION=100"             --quiet
+
+      - name: Verify rollback traffic and authenticated smoke
+        id: rollback-verify
+        shell: bash
+        env:
+          ROLLBACK_REVISION: ${{ steps.preflight.outputs.rollback_revision }}
+          ROLLBACK_IMAGE: ${{ steps.preflight.outputs.rollback_image }}
+          SERVICE_URL: ${{ steps.preflight.outputs.service_url }}
+          STARTED_EPOCH: ${{ steps.rollback-switch.outputs.started_epoch }}
+        run: |
+          set -euo pipefail
+
+          service_json="$RUNNER_TEMP/rollback-drill-service.json"
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE"             --region "$GCP_REGION"             --project "$GCP_PROJECT_ID"             --format=json > "$service_json"
+
+          jq -e --arg revision "$ROLLBACK_REVISION" '
+            ([.status.traffic[]? | select((.percent // 0) > 0)] | length) == 1
+            and ([.status.traffic[]? | select(.revisionName == $revision and (.percent // 0) == 100)] | length) == 1
+          ' "$service_json" >/dev/null
+
+          bearer="$(cat "$RUNNER_TEMP/rollback-drill-bearer")"
+          echo "::add-mask::$bearer"
+
+          SAJU_SMOKE_BASE_URL="$SERVICE_URL"           SAJU_SMOKE_BEARER="$bearer"           SAJU_SMOKE_TIMEOUT_MS='30000'             node scripts/verify-production-calculation-service.mjs
+
+          SAJU_SMOKE_BASE_URL="$SERVICE_URL"           SAJU_SMOKE_BEARER="$bearer"           SAJU_SMOKE_TIMEOUT_MS='30000'             node scripts/verify-preview-reading-service.mjs
+
+          duration="$(( $(date +%s) - STARTED_EPOCH ))"
+          jq             --arg completed "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"             --argjson duration "$duration"             '.rollback.trafficVerified = true
+             | .rollback.authenticatedSmokePassed = true
+             | .rollback.completedAtUtc = $completed
+             | .rollback.durationSeconds = $duration'             "$RUNNER_TEMP/rollback-drill/evidence.json"             > "$RUNNER_TEMP/rollback-drill/evidence.next.json"
+          mv "$RUNNER_TEMP/rollback-drill/evidence.next.json" "$RUNNER_TEMP/rollback-drill/evidence.json"
+
+      - name: Restore original production traffic
+        id: restore-original
+        if: always() && steps.rollback-switch.outputs.attempted == 'true'
+        shell: bash
+        env:
+          ORIGINAL_REVISION: ${{ steps.preflight.outputs.original_revision }}
+        run: |
+          set -euo pipefail
+
+          jq '.restoration.attempted = true | .restoration.switchStartedAtUtc = (now | todateiso8601)'             "$RUNNER_TEMP/rollback-drill/evidence.json"             > "$RUNNER_TEMP/rollback-drill/evidence.next.json"
+          mv "$RUNNER_TEMP/rollback-drill/evidence.next.json" "$RUNNER_TEMP/rollback-drill/evidence.json"
+
+          gcloud run services update-traffic "$GCP_CLOUD_RUN_SERVICE"             --project "$GCP_PROJECT_ID"             --region "$GCP_REGION"             --to-revisions "$ORIGINAL_REVISION=100"             --quiet
+
+      - name: Verify original traffic restored and smoke again
+        if: always() && steps.rollback-switch.outputs.attempted == 'true' && steps.restore-original.outcome == 'success'
+        shell: bash
+        env:
+          ORIGINAL_REVISION: ${{ steps.preflight.outputs.original_revision }}
+          ORIGINAL_IMAGE: ${{ steps.preflight.outputs.original_image }}
+          SERVICE_URL: ${{ steps.preflight.outputs.service_url }}
+        run: |
+          set -euo pipefail
+
+          service_json="$RUNNER_TEMP/final-service.json"
+          revision_json="$RUNNER_TEMP/final-revision.json"
+
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE"             --region "$GCP_REGION"             --project "$GCP_PROJECT_ID"             --format=json > "$service_json"
+
+          jq -e --arg revision "$ORIGINAL_REVISION" '
+            ([.status.traffic[]? | select((.percent // 0) > 0)] | length) == 1
+            and ([.status.traffic[]? | select(.revisionName == $revision and (.percent // 0) == 100)] | length) == 1
+          ' "$service_json" >/dev/null
+
+          gcloud run revisions describe "$ORIGINAL_REVISION"             --region "$GCP_REGION"             --project "$GCP_PROJECT_ID"             --format=json > "$revision_json"
+          [[ "$(jq -r '.spec.containers[0].image // empty' "$revision_json")" == "$ORIGINAL_IMAGE" ]]
+
+          bearer="$(cat "$RUNNER_TEMP/rollback-drill-bearer")"
+          echo "::add-mask::$bearer"
+
+          SAJU_SMOKE_BASE_URL="$SERVICE_URL"           SAJU_SMOKE_BEARER="$bearer"           SAJU_SMOKE_TIMEOUT_MS='30000'             node scripts/verify-production-calculation-service.mjs
+
+          SAJU_SMOKE_BASE_URL="$SERVICE_URL"           SAJU_SMOKE_BEARER="$bearer"           SAJU_SMOKE_TIMEOUT_MS='30000'             node scripts/verify-preview-reading-service.mjs
+
+          jq             --arg completed "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"             '.restoration.trafficVerified = true
+             | .restoration.authenticatedSmokePassed = true
+             | .restoration.completedAtUtc = $completed
+             | .finalState = {
+                 originalTrafficRestored: true,
+                 productionSmokePassed: true,
+                 rollbackDrillPassed: (
+                   .rollback.trafficVerified == true
+                   and .rollback.authenticatedSmokePassed == true
+                 )
+               }'             "$RUNNER_TEMP/rollback-drill/evidence.json"             > "$RUNNER_TEMP/rollback-drill/evidence.next.json"
+          mv "$RUNNER_TEMP/rollback-drill/evidence.next.json" "$RUNNER_TEMP/rollback-drill/evidence.json"
+
+      - name: Remove in-run credential material
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/rollback-drill-bearer"
+
+      - name: Require successful rollback and final restoration
+        if: always() && steps.rollback-switch.outputs.attempted == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -e '
+            .rollback.attempted == true
+            and .rollback.trafficVerified == true
+            and .rollback.authenticatedSmokePassed == true
+            and .restoration.attempted == true
+            and .restoration.trafficVerified == true
+            and .restoration.authenticatedSmokePassed == true
+            and .finalState.originalTrafficRestored == true
+            and .finalState.productionSmokePassed == true
+            and .finalState.rollbackDrillPassed == true
+            and .classification.secretValuesRetained == false
+            and .classification.rawProviderPayloadsRetained == false
+          ' "$RUNNER_TEMP/rollback-drill/evidence.json" >/dev/null
+
+      - name: Upload identifier-free rollback drill evidence
+        if: always() && steps.preflight.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: production-cloud-run-rollback-drill-${{ github.run_id }}
+          path: ${{ runner.temp }}/rollback-drill/evidence.json
+          if-no-files-found: error
+          retention-days: 90
