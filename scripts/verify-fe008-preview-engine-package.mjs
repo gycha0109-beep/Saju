@@ -11,6 +11,7 @@ const EXPECTED_EXPORTS = Object.freeze([
   'FE014_CONTRACT_VERSION',
   'FE015_CONTRACT_VERSION',
   'FE016_CONTRACT_VERSION',
+  'FE017_CONTRACT_VERSION',
   'assertBoundConsumerPreviewFaceEngineFE006',
   'assertBrowserBlobConsumerPreviewFaceEngineFE010',
   'assertConsumerPreviewEngineResultFE004',
@@ -18,6 +19,8 @@ const EXPECTED_EXPORTS = Object.freeze([
   'assertHostSafeBrowserPreviewFaceEngineFE011',
   'assertManagedConsumerPreviewFaceEngineFE007',
   'assertOneShotHostSafeBrowserPreviewResultFE013',
+  'assertProductSafeBrowserPreviewAttemptFE017',
+  'assertProductSafeBrowserPreviewSessionFE017',
   'assertProductSafeBrowserPreviewTransportFE014',
   'assertReleaseManagedConsumerPreviewFaceEngineFE009',
   'createBoundConsumerPreviewFaceEngineFE006',
@@ -26,6 +29,7 @@ const EXPECTED_EXPORTS = Object.freeze([
   'createManagedConsumerPreviewFaceEngineFE007',
   'createReleaseManagedConsumerPreviewFaceEngineFE009',
   'openHostSafeBrowserPreviewFaceEngineFE011',
+  'openProductSafeBrowserPreviewSessionFE017',
   'projectProductSafeBrowserPreviewTransportFE014',
   'runConsumerPreviewFaceEngineFE004',
   'runOneShotHostSafeBrowserPreviewFE013',
@@ -51,7 +55,8 @@ if (
   preview.FE013_CONTRACT_VERSION !== 'FE013-ONE-SHOT-HOST-SAFE-BROWSER-PREVIEW-v1' ||
   preview.FE014_CONTRACT_VERSION !== 'FE014-PRODUCT-SAFE-NEUTRAL-PREVIEW-TRANSPORT-v1' ||
   preview.FE015_CONTRACT_VERSION !== 'FE015-ONE-CALL-PRODUCT-SAFE-BROWSER-PREVIEW-v1' ||
-  preview.FE016_CONTRACT_VERSION !== 'FE016-HOST-BOUND-MEDIAPIPE-RUNTIME-ASSETS-v1'
+  preview.FE016_CONTRACT_VERSION !== 'FE016-HOST-BOUND-MEDIAPIPE-RUNTIME-ASSETS-v1' ||
+  preview.FE017_CONTRACT_VERSION !== 'FE017-REUSABLE-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1'
 ) {
   throw new Error('FE008 package import resolved unexpected preview-engine contract versions.');
 }
