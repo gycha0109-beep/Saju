@@ -1,0 +1,244 @@
+name: Reader Grounding Hosted Canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_saju_sha:
+        description: Exact deployed Saju source SHA to admit
+        required: true
+        type: string
+      myeongha_sha:
+        description: Exact MyeongHa SHA containing the cross-service Reader grounding E2E harness
+        required: true
+        default: a2873e4546e5a7cea822ce9ccc2878f4de5e9711
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-saju-reader-grounding-hosted-canary
+  cancel-in-progress: false
+
+env:
+  GCP_REGION: asia-southeast1
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+  GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+  GCP_SAJU_ACTIVE_BEARER_SECRET: ${{ vars.GCP_SAJU_ACTIVE_BEARER_SECRET }}
+  EXPECTED_SAJU_SHA: ${{ inputs.expected_saju_sha }}
+  MYEONGHA_SHA: ${{ inputs.myeongha_sha }}
+
+jobs:
+  canary:
+    name: Hosted Reader grounding canary
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    environment:
+      name: production-saju
+      deployment: false
+
+    steps:
+      - name: Validate immutable canary inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in GCP_PROJECT_ID GCP_WORKLOAD_IDENTITY_PROVIDER GCP_DEPLOYER_SERVICE_ACCOUNT GCP_CLOUD_RUN_SERVICE GCP_SAJU_ACTIVE_BEARER_SECRET; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required production canary variable: ${name}." >&2
+              exit 1
+            fi
+          done
+          if [[ ! "$EXPECTED_SAJU_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'expected_saju_sha must be an exact lowercase 40-character Git SHA.' >&2
+            exit 1
+          fi
+          if [[ ! "$MYEONGHA_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'myeongha_sha must be an exact lowercase 40-character Git SHA.' >&2
+            exit 1
+          fi
+
+      - name: Checkout Saju workflow authority
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Verify admitted Saju source lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --quiet origin main "$EXPECTED_SAJU_SHA"
+          if ! git merge-base --is-ancestor b17896099a4919124dfa67ed6f0ada265e460501 "$EXPECTED_SAJU_SHA"; then
+            echo 'Expected Saju deployment does not contain the merged Character grounding authority from PR #1143.' >&2
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$EXPECTED_SAJU_SHA" origin/main; then
+            echo 'Expected Saju deployment is not an ancestor of current main.' >&2
+            exit 1
+          fi
+
+      - name: Checkout exact MyeongHa canary authority
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: gycha0109-beep/MyeongHa
+          ref: ${{ inputs.myeongha_sha }}
+          path: .canary/myeongha
+          fetch-depth: 0
+
+      - name: Verify MyeongHa cross-service harness authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          harness_blob="$(git -C .canary/myeongha rev-parse "$MYEONGHA_SHA:test/saju-character-grounding-cross-service.e2e.test.ts")"
+          if [ "$harness_blob" != 'a747b4f9bb8596a96e2ee705028a92c40bae1199' ]; then
+            echo 'MyeongHa SHA does not contain the reviewed Reader Grounding Cross-Service E2E V1 harness.' >&2
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+
+      - name: Admit exact active Cloud Run deployment
+        id: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          service_json="$RUNNER_TEMP/hosted-canary-service.json"
+          revision_json="$RUNNER_TEMP/hosted-canary-revision.json"
+
+          gcloud run services describe "$GCP_CLOUD_RUN_SERVICE"             --region "$GCP_REGION"             --project "$GCP_PROJECT_ID"             --format=json > "$service_json"
+
+          active_count="$(jq -r '[.status.traffic[]? | select((.percent // 0) > 0) | (.revisionName // empty)] | unique | length' "$service_json")"
+          traffic_total="$(jq -r '[.status.traffic[]? | (.percent // 0)] | add // 0' "$service_json")"
+          active_revision="$(jq -r '[.status.traffic[]? | select((.percent // 0) > 0) | (.revisionName // empty)] | unique | .[0] // empty' "$service_json")"
+          service_url="$(jq -r '.status.url // .status.address.url // empty' "$service_json")"
+
+          if [ "$active_count" != '1' ] || [ "$traffic_total" != '100' ] || [ -z "$active_revision" ] || [ -z "$service_url" ]; then
+            echo 'Hosted canary requires exactly one active Cloud Run revision carrying 100% traffic and a stable service URL.' >&2
+            exit 1
+          fi
+
+          gcloud run revisions describe "$active_revision"             --region "$GCP_REGION"             --project "$GCP_PROJECT_ID"             --format=json > "$revision_json"
+
+          image_ref="$(jq -r '.spec.containers[0].image // empty' "$revision_json")"
+          if [[ ! "$image_ref" =~ ^(.+)@(sha256:[0-9a-f]{64})$ ]]; then
+            echo 'Active Cloud Run revision is not digest-bound.' >&2
+            exit 1
+          fi
+          image_base="${BASH_REMATCH[1]}"
+          active_digest="${BASH_REMATCH[2]}"
+          expected_digest="$(gcloud artifacts docker images describe "${image_base}:git-${EXPECTED_SAJU_SHA}"             --project "$GCP_PROJECT_ID"             --format='value(image_summary.digest)')"
+          if [ -z "$expected_digest" ] || [ "$active_digest" != "$expected_digest" ]; then
+            echo 'Active Cloud Run image digest does not match the requested Saju source SHA tag.' >&2
+            exit 1
+          fi
+
+          secret_name="$(jq -r '.spec.containers[0].env[]? | select(.name == "SAJU_PRODUCTION_SERVICE_BEARER") | (.valueFrom.secretKeyRef.name // empty)' "$revision_json" | head -n 1)"
+          secret_version="$(jq -r '.spec.containers[0].env[]? | select(.name == "SAJU_PRODUCTION_SERVICE_BEARER") | (.valueFrom.secretKeyRef.key // empty)' "$revision_json" | head -n 1)"
+          if [ "$secret_name" != "$GCP_SAJU_ACTIVE_BEARER_SECRET" ] || [[ ! "$secret_version" =~ ^[1-9][0-9]*$ ]]; then
+            echo 'Active Cloud Run revision is not bound to the admitted active Bearer secret/version.' >&2
+            exit 1
+          fi
+
+          bearer="$(gcloud secrets versions access "$secret_version"             --secret "$secret_name"             --project "$GCP_PROJECT_ID")"
+          if [ -z "$bearer" ] || [[ "$bearer" =~ [[:space:]] ]]; then
+            echo 'Resolved active service Bearer is empty or invalid.' >&2
+            exit 1
+          fi
+          echo "::add-mask::$bearer"
+
+          echo "active_revision=$active_revision" >> "$GITHUB_OUTPUT"
+          echo "service_url=$service_url" >> "$GITHUB_OUTPUT"
+          echo "image_ref=$image_ref" >> "$GITHUB_OUTPUT"
+          echo "bearer=$bearer" >> "$GITHUB_OUTPUT"
+
+          rm -f "$service_json" "$revision_json"
+
+      - name: Verify hosted health boundary
+        env:
+          SERVICE_URL: ${{ steps.target.outputs.service_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --connect-timeout 5 --max-time 15 "${SERVICE_URL}/health"             | jq -e '.status == "ok"' >/dev/null
+
+      - name: Set up Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: .canary/myeongha/package-lock.json
+
+      - name: Install exact MyeongHa dependencies
+        working-directory: .canary/myeongha
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Run hosted Reader grounding canary
+        working-directory: .canary/myeongha
+        env:
+          MYEONGHA_RUN_SAJU_GROUNDING_CROSS_SERVICE_E2E: '1'
+          MYEONGHA_SAJU_CROSS_SERVICE_ORIGIN: ${{ steps.target.outputs.service_url }}
+          MYEONGHA_SAJU_CROSS_SERVICE_BEARER: ${{ steps.target.outputs.bearer }}
+        run: npx vitest run test/saju-character-grounding-cross-service.e2e.test.ts
+
+      - name: Write sanitized canary evidence
+        if: success()
+        env:
+          ACTIVE_REVISION: ${{ steps.target.outputs.active_revision }}
+          IMAGE_REF: ${{ steps.target.outputs.image_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/reader-grounding-hosted-canary"
+          jq -n             --arg capturedAt "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"             --arg expectedSajuSha "$EXPECTED_SAJU_SHA"             --arg myeonghaSha "$MYEONGHA_SHA"             --arg activeRevision "$ACTIVE_REVISION"             --arg imageRef "$IMAGE_REF"             '{
+              schemaVersion: 1,
+              capturedAtUtc: $capturedAt,
+              expectedSajuSha: $expectedSajuSha,
+              myeonghaSha: $myeonghaSha,
+              activeRevision: $activeRevision,
+              imageRef: $imageRef,
+              trafficPercent: 100,
+              health: "pass",
+              authenticatedGrounding: "pass",
+              readerPreviewEnvelope: "pass",
+              wrongBearerDenied: "pass",
+              revokedReaderPreTransportDenied: "pass",
+              productionMutationPerformed: false,
+              credentialMaterialRetained: false
+            }' > "$RUNNER_TEMP/reader-grounding-hosted-canary/evidence.json"
+
+          {
+            echo '## Reader Grounding Hosted Canary'
+            echo
+            echo "- Saju source SHA: `$EXPECTED_SAJU_SHA`"
+            echo "- MyeongHa SHA: `$MYEONGHA_SHA`"
+            echo "- active revision: `$ACTIVE_REVISION`"
+            echo '- traffic: `100%`'
+            echo '- health: `PASS`'
+            echo '- authenticated grounding: `PASS`'
+            echo '- Reader Preview envelope: `PASS`'
+            echo '- wrong Bearer denial: `PASS`'
+            echo '- revoked Reader pre-transport denial: `PASS`'
+            echo '- Production mutation: `NONE`'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload sanitized canary evidence
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: reader-grounding-hosted-canary-${{ github.run_id }}
+          path: ${{ runner.temp }}/reader-grounding-hosted-canary/evidence.json
+          if-no-files-found: error
+          retention-days: 30
