@@ -117,3 +117,15 @@ export {
   type FE017RegionAvailabilityTransport,
   type FE017TransportReceipt,
 } from './product-safe-browser-preview-session-fe017.js';
+
+export {
+  FE018_CONTRACT_VERSION,
+  assertHostBoundProductSafeBrowserPreviewOpenResultFE018,
+  openHostBoundProductSafeBrowserPreviewSessionFE018,
+  type FE018AuthorityBoundary,
+  type FE018CompositionReceipt,
+  type FE018HostBoundProductSafeBrowserPreviewConfig,
+  type FE018HostBoundProductSafeOpenRejected,
+  type FE018HostBoundProductSafeOpenResult,
+  type FE018HostBoundProductSafeOpenSuccess,
+} from './host-bound-product-safe-browser-preview-session-fe018.js';
