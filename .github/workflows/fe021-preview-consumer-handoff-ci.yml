@@ -1,0 +1,39 @@
+name: FE021 Preview Consumer Handoff CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/package.json'
+      - 'packages/face-reading/src/**'
+      - 'tsconfig.face-reading.preview-package.json'
+      - 'scripts/build-fe021-preview-consumer-handoff.mjs'
+      - 'scripts/verify-fe021-preview-consumer-handoff.mjs'
+      - 'docs/face-engine/fe021-preview-consumer-handoff.md'
+      - '.github/workflows/fe021-preview-consumer-handoff-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe021-preview-consumer-handoff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build preview package
+        run: npm run face:build:preview-package
+      - name: Build consumer handoff bundle
+        run: node scripts/build-fe021-preview-consumer-handoff.mjs artifacts/fe021-preview-consumer-handoff
+      - name: Verify consumer handoff bundle
+        run: node scripts/verify-fe021-preview-consumer-handoff.mjs artifacts/fe021-preview-consumer-handoff
+      - name: Upload consumer handoff bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: fe021-preview-consumer-handoff
+          path: artifacts/fe021-preview-consumer-handoff/
+          if-no-files-found: error
+          retention-days: 7
