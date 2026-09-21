@@ -24,6 +24,8 @@ jobs:
       - name: Build preview package
         run: npm run face:build:preview-package
       - name: Build FE024 handoff
+        env:
+          FE024_SOURCE_COMMIT: \${{ github.event.pull_request.head.sha || github.sha }}
         run: node scripts/build-fe024-digest-bound-preview-consumer-handoff.mjs
       - name: Verify FE024 handoff
         run: node scripts/verify-fe024-digest-bound-preview-consumer-handoff.mjs
