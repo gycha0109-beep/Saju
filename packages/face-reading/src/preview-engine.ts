@@ -141,3 +141,12 @@ export {
   type FE019DirectBlobProductPreviewOpenSuccess,
   type FE019DirectBlobProductPreviewSession,
 } from './direct-blob-product-preview-session-fe019.js';
+
+export {
+  FE022_CONTRACT_VERSION,
+  FE022_MAX_MODEL_ASSET_BYTES,
+  assertDigestBoundMediaPipeRuntimeFactoryFE022,
+  createDigestBoundMediaPipeRuntimeFactoryFE022,
+  type FE022DigestBoundMediaPipeModelConfig,
+  type FE022DigestBoundMediaPipeRuntimeFactory,
+} from './digest-bound-mediapipe-model-runtime-fe022.js';
