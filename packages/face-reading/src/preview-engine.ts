@@ -150,3 +150,16 @@ export {
   type FE022DigestBoundMediaPipeModelConfig,
   type FE022DigestBoundMediaPipeRuntimeFactory,
 } from './digest-bound-mediapipe-model-runtime-fe022.js';
+
+export {
+  FE023_CONTRACT_VERSION,
+  assertDigestBoundProductPreviewOpenResultFE023,
+  assertDigestBoundProductPreviewSessionFE023,
+  openDigestBoundProductPreviewSessionFE023,
+  type FE023AuthorityBoundary,
+  type FE023DigestBoundProductPreviewConfig,
+  type FE023DigestBoundProductPreviewOpenRejected,
+  type FE023DigestBoundProductPreviewOpenResult,
+  type FE023DigestBoundProductPreviewOpenSuccess,
+  type FE023DigestBoundProductPreviewSession,
+} from './digest-bound-product-preview-session-fe023.js';
