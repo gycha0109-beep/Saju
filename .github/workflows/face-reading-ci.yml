@@ -242,6 +242,14 @@ jobs:
         working-directory: target
         run: npm run face:verify:fr98-role-free-arclength-mean-neutral-metric
 
+      - name: Verify FE035A product semantic readiness gate
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/product-semantic-readiness-fe035a.test.ts
+
+      - name: Verify FE035B product neutral observation contract
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/product-neutral-observation-contract-fe035b.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
