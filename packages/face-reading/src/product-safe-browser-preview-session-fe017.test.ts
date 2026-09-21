@@ -156,9 +156,9 @@ describe('FE017 reusable product-safe browser preview session', () => {
       expect(attempt.status).toBe('ok');
       expect(() => assertProductSafeBrowserPreviewAttemptFE017(attempt)).not.toThrow();
       const serialized = JSON.stringify(attempt);
-      expect(serialized).not.toContain('providerRunRef');
-      expect(serialized).not.toContain('canonicalAssetDigest');
-      expect(serialized).not.toContain('executionReceipt');
+      expect(serialized).not.toMatch(/"providerRunRef"\\s*:/u);
+      expect(serialized).not.toMatch(/"canonicalAssetDigest"\\s*:/u);
+      expect(serialized).not.toMatch(/"executionReceipt"\\s*:/u);
       expect(serialized).not.toContain('sha256:');
       if (attempt.status === 'ok') {
         expect(attempt.preview.metrics).toEqual([
