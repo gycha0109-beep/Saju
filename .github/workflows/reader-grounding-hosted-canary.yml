@@ -10,7 +10,7 @@ on:
       myeongha_sha:
         description: Exact MyeongHa SHA containing the cross-service Reader grounding E2E harness
         required: true
-        default: 8c53e8310c223f9555442848599b1e638ab93760
+        default: a2873e4546e5a7cea822ce9ccc2878f4de5e9711
         type: string
 
 permissions:
