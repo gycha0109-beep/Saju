@@ -1,0 +1,98 @@
+export const R097_SCAN_INSPECTION_MANIFEST_VERSION = '0.2.0-research' as const;
+
+export const R097_IDENTITY_REF_FIELDS = Object.freeze([
+  'WORK_IDENTITY_REF',
+  'EDITION_IDENTITY_REF_IF_ESTABLISHED',
+  'WITNESS_IDENTITY_REF',
+] as const);
+
+export const R097_LOCATOR_STABILITY_STATES = Object.freeze([
+  'IMMUTABLE_REF',
+  'MUTABLE_LOCATOR',
+  'LOCAL_ARCHIVE_REF',
+  'UNKNOWN',
+] as const);
+
+export const R097_PAGE_INDEX_CONVENTION = 'ZERO_BASED_FILE_PAGE_INDEX' as const;
+
+export const R097_COORDINATE_CONTRACT = Object.freeze({
+  coordinateSystem: 'RENDERED_PAGE_CARTESIAN' as const,
+  origin: 'TOP_LEFT' as const,
+  units: 'RENDERED_PAGE_PIXELS' as const,
+  boundingBoxFormat: 'X_Y_WIDTH_HEIGHT' as const,
+});
+
+export const R097_TRANSCRIPTION_METHODS = Object.freeze([
+  'HUMAN_VISUAL',
+  'BUILT_IN_VISION',
+  'OCR_LAST_RESORT',
+] as const);
+
+export const R097_CLAIM_BINDING_RELATION =
+  'INSPECTED_REGION_EVIDENCE_FOR_CLAIM' as const;
+
+export const R097_REQUIRED_FIELDS = Object.freeze([
+  'MANIFEST_ID',
+  'WORK_IDENTITY_REF',
+  'EDITION_IDENTITY_REF_IF_ESTABLISHED',
+  'WITNESS_IDENTITY_REF',
+  'FILE_LOCATOR_REF',
+  'LOCATOR_STABILITY',
+  'CHECKSUM_ALGORITHM',
+  'FILE_CHECKSUM',
+  'FILE_PAGE_INDEX',
+  'PAGE_INDEX_CONVENTION',
+  'PRINTED_PAGE_LABEL_IF_VISIBLE',
+  'COORDINATE_SYSTEM',
+  'COORDINATE_ORIGIN',
+  'COORDINATE_UNITS',
+  'RENDERED_PAGE_WIDTH',
+  'RENDERED_PAGE_HEIGHT',
+  'CROP_BOUNDING_BOX_IF_CLAIM_LOCAL',
+  'ROTATION_DEGREES',
+  'RENDER_DPI_OR_SCALE',
+  'TRANSFORM_ORDER',
+  'VISIBLE_TEXT_TRANSCRIPTION',
+  'TRANSCRIPTION_METHOD',
+  'UNCERTAINTY_OR_ILLEGIBLE_SPANS',
+  'INSPECTOR_TIMESTAMP',
+  'TOOL_VERSION_IF_APPLICABLE',
+  'CLAIM_BINDINGS',
+] as const);
+
+export const R097_DERIVATIVE_REQUIREMENTS = Object.freeze([
+  'PARENT_INSPECTION_MANIFEST_REF',
+  'DERIVATIVE_CHECKSUM',
+  'PARENT_REGION_REF',
+] as const);
+
+export const R097_REJECTED_SHORTCUTS = Object.freeze([
+  'PDF_INDEX_EQUALS_PRINTED_PAGE',
+  'PAGE_INDEX_WITHOUT_DECLARED_CONVENTION',
+  'URL_EQUALS_IMMUTABLE_WITNESS',
+  'CHECKSUM_WITHOUT_ALGORITHM',
+  'COORDINATES_WITHOUT_RENDERED_PAGE_DIMENSIONS',
+  'OCR_OUTPUT_EQUALS_WITNESS_TEXT',
+  'SILENTLY_GUESS_ILLEGIBLE_CHARACTERS',
+  'SCREENSHOT_WITHOUT_WITNESS_IDENTITY',
+  'DETACHED_CROP_WITHOUT_PARENT_MANIFEST',
+  'REUSE_REGION_AFTER_FILE_CHECKSUM_CHANGE',
+  'CLAIM_BINDING_EQUALS_CLAIM_VERIFICATION',
+  'R097_DUPLICATES_R091_IDENTITY_AUTHORITY',
+] as const);
+
+export const R097_AUTHORITY = Object.freeze({
+  status: 'REPRODUCIBLE_SCAN_INSPECTION_MANIFEST_DEFINED' as const,
+  identityAuthorityOwnedByR091: true,
+  pageIndexEqualsPrintedPage: false,
+  pageIndexConventionDeclared: true,
+  urlAloneCountsAsImmutableWitness: false,
+  checksumAlgorithmRequired: true,
+  renderedDimensionsRequiredForCoordinates: true,
+  ocrAsWitnessAuthorized: false,
+  checksumChangeRequiresNewInspection: true,
+  oldManifestRewrittenOnChecksumChange: false,
+  detachedScreenshotProvenanceSufficient: false,
+  claimBindingVerifiesClaim: false,
+  productionAuthorityPromoted: false,
+});
