@@ -12,9 +12,17 @@ import {
 } from './product-host.js';
 import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './production-calculation-http-contract.js';
 import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-service-bearer-auth.js';
+import {
+  CHARACTER_GROUNDING_ADMISSION_HEADER,
+  CHARACTER_GROUNDING_ADMISSION_VERSION,
+  CHARACTER_GROUNDING_HTTP_PATH,
+  CharacterGroundingHttpRequestError,
+  projectCharacterGroundingHttpRequestV1,
+} from './character-grounding-http.js';
 import { PRODUCT_HOST_APP_SCRIPT, PRODUCT_HOST_PAGE } from './static-page.js';
 
 export const DEFAULT_PRODUCT_HOST_MAX_REQUEST_BYTES = 16 * 1024;
+export const DEFAULT_CHARACTER_GROUNDING_MAX_REQUEST_BYTES = 512 * 1024;
 export const PRODUCT_READING_RESPONSE_ADMISSION_HEADER =
   'x-myeonghwa-product-reading-response-admitted' as const;
 export const PRODUCT_READING_LIFECYCLE_HEADER =
@@ -25,6 +33,7 @@ export const PRODUCT_READING_PREVIEW_LIFECYCLE = 'preview' as const;
 
 export interface MyeonghwaProductHostServerOptions {
   maxRequestBytes?: number;
+  characterGroundingMaxRequestBytes?: number;
 }
 
 export interface MyeonghwaProductionCalculationHostServerOptions
@@ -153,6 +162,20 @@ function maxRequestBytes(options: MyeonghwaProductHostServerOptions): number {
   return value;
 }
 
+function characterGroundingMaxRequestBytes(
+  options: MyeonghwaProductHostServerOptions,
+): number {
+  const value =
+    options.characterGroundingMaxRequestBytes ??
+    DEFAULT_CHARACTER_GROUNDING_MAX_REQUEST_BYTES;
+  if (!Number.isInteger(value) || value < 1) {
+    throw new TypeError(
+      'characterGroundingMaxRequestBytes must be a positive integer.',
+    );
+  }
+  return value;
+}
+
 function sendReadingOperationalError(response: ServerResponse): void {
   sendJson(response, 500, {
     error: {
@@ -194,6 +217,15 @@ function handleKnownError(response: ServerResponse, error: unknown): boolean {
     });
     return true;
   }
+  if (error instanceof CharacterGroundingHttpRequestError) {
+    sendJson(response, 400, {
+      error: {
+        code: 'HOST_CHARACTER_GROUNDING_INVALID_REQUEST',
+        message: 'The Character grounding projection request is invalid.',
+      },
+    });
+    return true;
+  }
   return false;
 }
 
@@ -216,6 +248,7 @@ function createMyeonghwaHttpServer(
   readingRoute: MyeonghwaReadingHttpRoute = PRODUCT_READING_ROUTE,
 ): Server {
   const bodyLimit = maxRequestBytes(options);
+  const groundingBodyLimit = characterGroundingMaxRequestBytes(options);
 
   return createServer(async (request, response) => {
     const method = request.method ?? 'GET';
@@ -256,6 +289,33 @@ function createMyeonghwaHttpServer(
         sendJson(response, 200, serializeAuthorizedProductionCalculationHttpResponseV1(result));
       } catch (error) {
         if (!handleKnownError(response, error)) sendCalculationOperationalError(response);
+      }
+      return;
+    }
+    if (
+      path === CHARACTER_GROUNDING_HTTP_PATH &&
+      authorizeReadingRequest !== undefined
+    ) {
+      if (method !== 'POST') {
+        response.setHeader('allow', 'POST');
+        sendJson(response, 405, {
+          error: { code: 'HOST_METHOD_NOT_ALLOWED', message: 'POST is required.' },
+        });
+        return;
+      }
+      if (!authorizeReadingRequest(request)) {
+        sendAuthRequired(response);
+        return;
+      }
+      try {
+        const body = await readJsonBody(request, groundingBodyLimit);
+        const grounding = projectCharacterGroundingHttpRequestV1(body);
+        sendJson(response, 200, grounding, {
+          [CHARACTER_GROUNDING_ADMISSION_HEADER]:
+            CHARACTER_GROUNDING_ADMISSION_VERSION,
+        });
+      } catch (error) {
+        if (!handleKnownError(response, error)) sendReadingOperationalError(response);
       }
       return;
     }
