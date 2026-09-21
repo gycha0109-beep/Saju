@@ -1,0 +1,36 @@
+name: FR231 External Authority Registrar Attestations CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-external-authority-registrar-attestations-fr231.ts'
+      - 'packages/face-reading/src/observable-morphology-external-authority-registrar-attestations-fr231.test.ts'
+      - 'research/face-reading/fr231-external-authority-registrar-attestations.md'
+      - '.github/workflows/fr231-external-authority-registrar-attestations-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/face-reading/src/observable-morphology-external-authority-registrar-attestations-fr231.ts'
+      - 'packages/face-reading/src/observable-morphology-external-authority-registrar-attestations-fr231.test.ts'
+      - 'research/face-reading/fr231-external-authority-registrar-attestations.md'
+      - '.github/workflows/fr231-external-authority-registrar-attestations-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr231-external-authority-registrar-attestations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR231 external authority registrar attestations
+        run: npx vitest run packages/face-reading/src/observable-morphology-external-authority-registrar-attestations-fr231.test.ts
