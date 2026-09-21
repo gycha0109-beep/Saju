@@ -18,7 +18,7 @@ export const R084_FALSE_POSITIVE_PATTERNS = Object.freeze([
   trigger,
   unsupportedLeap,
   missingEvidence,
-  evidenceRefs,
+  evidenceRefs: evidenceRefs ?? [],
   productionAssertion: 'HOLD' as const,
   executableRepair: false,
 })));
