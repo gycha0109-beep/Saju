@@ -1,0 +1,31 @@
+name: FR233 Authority Trust-Root Candidate Intake CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-authority-trust-root-candidate-intake-fr233.ts'
+      - 'packages/face-reading/src/observable-morphology-authority-trust-root-candidate-intake-fr233.test.ts'
+      - 'research/face-reading/fr233-authority-trust-root-candidate-intake.md'
+      - '.github/workflows/fr233-authority-trust-root-candidate-intake-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/face-reading/src/observable-morphology-authority-trust-root-candidate-intake-fr233.ts'
+      - 'packages/face-reading/src/observable-morphology-authority-trust-root-candidate-intake-fr233.test.ts'
+      - 'research/face-reading/fr233-authority-trust-root-candidate-intake.md'
+      - '.github/workflows/fr233-authority-trust-root-candidate-intake-ci.yml'
+
+jobs:
+  fr233-authority-trust-root-candidate-intake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run face:build
+      - run: npx vitest run packages/face-reading/src/observable-morphology-authority-trust-root-candidate-intake-fr233.test.ts
