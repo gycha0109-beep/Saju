@@ -1,0 +1,31 @@
+name: FE022 Digest-Bound MediaPipe Model CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/digest-bound-mediapipe-model-runtime-fe022.ts'
+      - 'packages/face-reading/src/digest-bound-mediapipe-model-runtime-fe022.test.ts'
+      - 'packages/face-reading/src/preview-engine.ts'
+      - 'scripts/verify-fe008-preview-engine-package.mjs'
+      - 'docs/face-engine/fe022-digest-bound-mediapipe-model-runtime.md'
+      - '.github/workflows/fe022-digest-bound-mediapipe-model-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fe022-digest-bound-model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FE022 digest-bound model runtime
+        run: npx vitest run packages/face-reading/src/digest-bound-mediapipe-model-runtime-fe022.test.ts packages/face-reading/src/preview-engine.test.ts
+      - name: Verify package import boundary
+        run: npm run face:verify:preview-package
