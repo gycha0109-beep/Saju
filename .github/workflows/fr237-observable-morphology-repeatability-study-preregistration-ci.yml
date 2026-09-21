@@ -1,0 +1,31 @@
+name: FR237 Observable Morphology Repeatability Preregistration CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-repeatability-study-preregistration-fr237.ts'
+      - 'packages/face-reading/src/observable-morphology-repeatability-study-preregistration-fr237.test.ts'
+      - 'research/face-reading/fr237-observable-morphology-repeatability-study-preregistration.md'
+      - '.github/workflows/fr237-observable-morphology-repeatability-study-preregistration-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/face-reading/src/observable-morphology-repeatability-study-preregistration-fr237.ts'
+      - 'packages/face-reading/src/observable-morphology-repeatability-study-preregistration-fr237.test.ts'
+      - 'research/face-reading/fr237-observable-morphology-repeatability-study-preregistration.md'
+      - '.github/workflows/fr237-observable-morphology-repeatability-study-preregistration-ci.yml'
+
+jobs:
+  fr237-observable-morphology-repeatability-preregistration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run face:build
+      - run: npx vitest run packages/face-reading/src/observable-morphology-repeatability-study-preregistration-fr237.test.ts
