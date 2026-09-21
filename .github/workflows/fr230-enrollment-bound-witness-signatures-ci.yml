@@ -1,0 +1,36 @@
+name: FR230 Enrollment-Bound Witness Signatures CI
+
+on:
+  pull_request:
+    paths:
+      - 'packages/face-reading/src/observable-morphology-enrollment-bound-witness-signatures-fr230.ts'
+      - 'packages/face-reading/src/observable-morphology-enrollment-bound-witness-signatures-fr230.test.ts'
+      - 'research/face-reading/fr230-enrollment-bound-witness-signatures.md'
+      - '.github/workflows/fr230-enrollment-bound-witness-signatures-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/face-reading/src/observable-morphology-enrollment-bound-witness-signatures-fr230.ts'
+      - 'packages/face-reading/src/observable-morphology-enrollment-bound-witness-signatures-fr230.test.ts'
+      - 'research/face-reading/fr230-enrollment-bound-witness-signatures.md'
+      - '.github/workflows/fr230-enrollment-bound-witness-signatures-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fr230-enrollment-bound-witness-signatures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build Face Reading package
+        run: npm run face:build
+      - name: Verify FR230 enrollment-bound witness signatures
+        run: npx vitest run packages/face-reading/src/observable-morphology-enrollment-bound-witness-signatures-fr230.test.ts
