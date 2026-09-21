@@ -156,7 +156,7 @@ jobs:
           [[ "${#manifests[@]}" -eq 1 ]]
           manifest="${manifests[0]}"
 
-          jq -e             --arg repository "$GITHUB_REPOSITORY"             --arg project "$GCP_PROJECT_ID"             --arg region "$GCP_REGION"             --arg service "$GCP_CLOUD_RUN_SERVICE"             --argjson run_id "$SOURCE_DEPLOYMENT_RUN_ID"             --argjson run_attempt "$SOURCE_ATTEMPT" '
+          jq -e             --arg repository "$GITHUB_REPOSITORY"             --arg project "$GCP_PROJECT_ID"             --arg region "$GCP_REGION"             --arg service "$GCP_CLOUD_RUN_SERVICE"             --arg run_id "$SOURCE_DEPLOYMENT_RUN_ID"             --arg run_attempt "$SOURCE_ATTEMPT" '
               .schemaVersion == 1
               and .evidenceClass == "pre_deploy_rollback_manifest"
               and .target.projectId == $project
