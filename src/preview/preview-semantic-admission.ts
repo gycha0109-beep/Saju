@@ -239,7 +239,7 @@ const ENTRIES: readonly PreviewSemanticAdmissionEntryV1[] = Object.freeze([
     researchRef: {
       researchId: 'CAREER_NATAL_READING_CANDIDATE',
       modulePath: 'src/research/career-natal-reading-candidate.ts',
-      expectedVersion: '0.6.0-research',
+      expectedVersion: '0.5.0-research',
       observedVersion: CAREER_NATAL_READING_CANDIDATE_VERSION,
       expectedAuthorityState: 'research',
       observedAuthorityState: CAREER_NATAL_READING_METHODOLOGY.status,
@@ -248,7 +248,7 @@ const ENTRIES: readonly PreviewSemanticAdmissionEntryV1[] = Object.freeze([
     semanticScope: 'existing_ga_open_career_exact_ten_god_channel_conclusions',
     disposition: 'claim',
     rationale:
-      'Pins the existing ga-open Career Preview candidate after moving its already-rendered Korean meaning into the source-owned claim payload used by canonical semantics.',
+      'Pins the existing ga-open Career Preview candidate while allowing its already-rendered Korean meaning to be projected from one source-owned semantic-copy definition into canonical semantics without mutating the claim payload.',
     boundaries: [
       'PREVIEW_BASELINE_ONLY',
       'NO_SPECIFIC_OCCUPATION_ASSIGNMENT',

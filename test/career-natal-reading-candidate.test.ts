@@ -68,7 +68,7 @@ function careerTypes(snapshot: CanonicalSajuSnapshot): readonly string[] {
 
 describe('natal career consumer reading research candidate', () => {
   it('remains research-only, unreviewed, and exact-Ten-God/channel bounded', () => {
-    expect(CAREER_NATAL_READING_CANDIDATE_VERSION).toBe('0.6.0-research');
+    expect(CAREER_NATAL_READING_CANDIDATE_VERSION).toBe('0.5.0-research');
     expect(CAREER_NATAL_READING_PACK.status).toBe('research');
     expect(CAREER_NATAL_READING_METHODOLOGY.status).toBe('research');
     expect(CAREER_NATAL_READING_RULES).toHaveLength(20);
@@ -236,12 +236,12 @@ describe('natal career consumer reading research candidate', () => {
       const value = claim.value as Record<string, unknown>;
       expect(typeof value.tenGod).toBe('string');
       expect(['visible_stems', 'branches']).toContain(value.channel);
-      expect(typeof value.headline).toBe('string');
-      expect(typeof value.summary).toBe('string');
+      expect(value).not.toHaveProperty('headline');
+      expect(value).not.toHaveProperty('summary');
     }
   });
 
-  it('does not grant occupation assignment, salary, success, future-event, or scoring authority', () => {
+  it('does not emit occupation assignment, salary, success, future-event authority, or consumer copy', () => {
     const execution = runInterpretation(fixture(), createCareerNatalReadingCandidateRegistry());
     const claims = [...careerClaims(execution), ...careerContext(execution)];
     const encoded = JSON.stringify(claims);
@@ -255,6 +255,8 @@ describe('natal career consumer reading research candidate', () => {
       'lucky_score',
       'strong_day_master',
       'weak_day_master',
+      '"headline"',
+      '"summary"',
     ]) {
       expect(encoded).not.toContain(forbidden);
     }

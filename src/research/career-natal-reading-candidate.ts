@@ -24,7 +24,6 @@ import {
   careerTenGodClaimType,
   type CareerTenGodChannel,
 } from './career-natal-reading-schema.js';
-import { careerNatalSemanticText } from './career-natal-semantic-copy.js';
 
 export type {
   CareerConclusionKind,
@@ -32,7 +31,7 @@ export type {
 } from './career-natal-reading-schema.js';
 export { careerTenGodClaimType } from './career-natal-reading-schema.js';
 
-export const CAREER_NATAL_READING_CANDIDATE_VERSION = '0.6.0-research' as const;
+export const CAREER_NATAL_READING_CANDIDATE_VERSION = '0.5.0-research' as const;
 
 const METHOD_ID = 'M-CAREER-NATAL-READING-EXACT-TEN-GOD-CHANNEL-V2';
 const CAREER_RULE_SET = 'career-natal-exact-ten-god-channel-reading';
@@ -102,7 +101,6 @@ function careerTenGodRule(god: TenGod, channel: CareerTenGodChannel): RuleDefini
   const spec = CAREER_TEN_GOD_SEMANTIC_SPECS[god];
   const channelLabel = channel === 'visible_stems' ? 'visible stems' : 'branches';
   const directConclusion = channel === 'visible_stems';
-  const semanticText = careerNatalSemanticText(god, channel);
 
   return {
     ruleId: `RULE-CAREER-NATAL-${spec.id}-${channel.toUpperCase()}`,
@@ -133,8 +131,6 @@ function careerTenGodRule(god: TenGod, channel: CareerTenGodChannel): RuleDefini
         careerKind: spec.kind,
         tenGod: god,
         channel,
-        headline: semanticText.headline,
-        summary: semanticText.summary,
         specificOccupationAuthorized: false,
         careerSuccessAuthorized: false,
         incomeOutcomeAuthorized: false,

@@ -10,6 +10,7 @@ import {
 } from '../src/research/career-natal-reading-candidate.js';
 import { CAREER_NATAL_CLAIM_NARRATIVE_PROFILES } from '../src/research/career-natal-narrative-profiles.js';
 import { requirePreviewSemanticAdmissionV1 } from '../src/preview/preview-semantic-admission.js';
+import { buildPreviewSemanticTextBindingsV1 } from '../src/preview/preview-semantic-text-projection.js';
 import { buildReadingCompositionEvidence } from '../src/reading/reading-profile-authorization.js';
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
@@ -49,7 +50,7 @@ function snapshot(): CanonicalSajuSnapshot {
 
 function response(): ProductReadingResponse {
   return {
-    responseId: 'reading_response_career_fidelity_01',
+    responseId: 'reading_response_career_fidelity_1234567890abcdef',
     responseVersion: PRODUCT_READING_RESPONSE_VERSION,
     state: 'delivered',
     messageCode: 'READING_DELIVERED',
@@ -157,22 +158,28 @@ describe('admitted Career Preview semantics -> Official Reading -> Reader', () =
 
     for (const claim of selectedCareerClaims) {
       const value = claim.value as {
-        headline?: string;
-        summary?: string;
         tenGod?: string;
         channel?: string;
       };
-      const expected = profileText(claim.claimType);
-      expect(value.headline).toBe(expected.headline);
-      expect(value.summary).toBe(expected.summary);
+      expect(value).not.toHaveProperty('headline');
+      expect(value).not.toHaveProperty('summary');
       expect(value.channel).toBe('visible_stems');
       expect(typeof value.tenGod).toBe('string');
     }
+
+    const semanticTextBindings = buildPreviewSemanticTextBindingsV1({
+      intent: { domain: 'career', temporalScope: 'natal' },
+      registry,
+      evidence: composition.evidence.bundle,
+      targetClaimIds: composition.selection.targetClaimIds,
+    });
+    expect(semanticTextBindings).toHaveLength(selectedCareerClaims.length);
 
     const semantics = buildCanonicalReadingSemanticBundleV1({
       intent: { domain: 'career', temporalScope: 'natal' },
       evidence: composition.evidence.bundle,
       targetClaimIds: composition.selection.targetClaimIds,
+      semanticTextBindings,
     });
     const primaryCareerUnits = semantics.units.filter(
       (unit) => unit.role === 'primary' && unit.predicate === 'career_conclusion',
@@ -182,6 +189,15 @@ describe('admitted Career Preview semantics -> Official Reading -> Reader', () =
     for (const unit of primaryCareerUnits) {
       const expected = profileText(unit.claimType);
       expect(unit.canonicalText).toEqual(expected);
+      expect(unit.canonicalTextProvenance).toEqual(
+        expect.objectContaining({
+          researchId: 'CAREER_NATAL_READING_CANDIDATE',
+          researchVersion: CAREER_NATAL_READING_CANDIDATE_VERSION,
+          authorityState: 'research',
+        }),
+      );
+      expect(unit.semanticPayload).not.toHaveProperty('headline');
+      expect(unit.semanticPayload).not.toHaveProperty('summary');
       for (const boundary of [
         'specificOccupationAuthorized',
         'careerSuccessAuthorized',
