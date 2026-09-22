@@ -203,6 +203,8 @@ export async function executeProductReading(
     ...(options.artifactGeneratedAt === undefined
       ? {}
       : { generatedAt: options.artifactGeneratedAt }),
+    canonicalSemantics,
+    officialReadingPlan,
   });
   const state: GovernedReadingExecutionState =
     narrative.outcome === 'deterministic_fallback' ? 'completed_with_fallback' : 'completed';
