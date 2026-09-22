@@ -14,6 +14,18 @@ const EXPECTED_VERSION = '0.0.0';
 const EXPECTED_MEDIAPIPE_VERSION = '0.10.35';
 const EXPECTED_FE019 =
   'FE019-DIRECT-BLOB-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1';
+const EXPECTED_FE035B =
+  'FE035B-PRODUCT-NEUTRAL-OBSERVATION-CONTRACT-v1';
+const EXPECTED_EXPORTS = {
+  './preview-engine': {
+    types: './dist/preview-engine.d.ts',
+    default: './dist/preview-engine.js',
+  },
+  './product-neutral-observation-contract-fe035b': {
+    types: './dist/product-neutral-observation-contract-fe035b.d.ts',
+    default: './dist/product-neutral-observation-contract-fe035b.js',
+  },
+};
 
 function run(command, args, options = {}) {
   return execFileSync(command, args, {
@@ -66,6 +78,14 @@ try {
   assert(filePaths.has('dist/preview-engine.js'), 'tarball is missing dist/preview-engine.js.');
   assert(filePaths.has('dist/preview-engine.d.ts'), 'tarball is missing dist/preview-engine.d.ts.');
   assert(
+    filePaths.has('dist/product-neutral-observation-contract-fe035b.js'),
+    'tarball is missing FE035B canonical registry runtime.',
+  );
+  assert(
+    filePaths.has('dist/product-neutral-observation-contract-fe035b.d.ts'),
+    'tarball is missing FE035B canonical registry declarations.',
+  );
+  assert(
     ![...filePaths].some((path) => path.startsWith('src/')),
     'tarball must not ship source files.',
   );
@@ -109,13 +129,7 @@ try {
   assert(installedPackage.version === EXPECTED_VERSION, 'installed package version drift.');
   assert(installedPackage.private === true, 'package must remain private.');
   assert(
-    JSON.stringify(installedPackage.exports) ===
-      JSON.stringify({
-        './preview-engine': {
-          types: './dist/preview-engine.d.ts',
-          default: './dist/preview-engine.js',
-        },
-      }),
+    JSON.stringify(installedPackage.exports) === JSON.stringify(EXPECTED_EXPORTS),
     'installed package export map widened or drifted.',
   );
   assert(
@@ -149,6 +163,27 @@ try {
       throw new Error('FE019 open function missing from isolated consumer.');
     }
 
+    const registry = await import(
+      '@myeongha/face-reading/product-neutral-observation-contract-fe035b'
+    );
+    if (
+      registry.FE035B_PRODUCT_NEUTRAL_OBSERVATION_CONTRACT_VERSION !==
+      ${JSON.stringify(EXPECTED_FE035B)}
+    ) {
+      throw new Error('FE035B contract missing from isolated consumer.');
+    }
+    if (
+      typeof registry.assertProductNeutralObservationContractFE035B !==
+      'function'
+    ) {
+      throw new Error('FE035B assertion function missing from isolated consumer.');
+    }
+    const contract = registry.FE035B_PRODUCT_NEUTRAL_OBSERVATION_CONTRACT;
+    registry.assertProductNeutralObservationContractFE035B(contract);
+    if (contract.regions.length !== 4 || contract.metrics.length !== 13) {
+      throw new Error('FE035B canonical registry cardinality drift.');
+    }
+
     async function expectBlocked(specifier) {
       try {
         await import(specifier);
@@ -164,6 +199,7 @@ try {
     await expectBlocked('@myeongha/face-reading');
     await expectBlocked('@myeongha/face-reading/direct-blob-product-preview-session-fe019');
     await expectBlocked('@myeongha/face-reading/browser-blob-preview-engine-fe010');
+    await expectBlocked('@myeongha/face-reading/product-neutral-observation-contract-fe035b.js');
   `;
   run('node', ['--input-type=module', '-e', consumerCheck], { cwd: consumerDir });
 
@@ -175,6 +211,8 @@ try {
       tarball: artifact.filename,
       isolatedConsumerImport: true,
       fe019ContractVersion: EXPECTED_FE019,
+      fe035bContractVersion: EXPECTED_FE035B,
+      canonicalRegistryExportPresent: true,
       rootPathBlocked: true,
       internalPathsBlocked: true,
       mediaPipeVersion: installedMediaPipe.version,

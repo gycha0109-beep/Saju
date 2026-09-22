@@ -7,6 +7,10 @@
     "./preview-engine": {
       "types": "./dist/preview-engine.d.ts",
       "default": "./dist/preview-engine.js"
+    },
+    "./product-neutral-observation-contract-fe035b": {
+      "types": "./dist/product-neutral-observation-contract-fe035b.d.ts",
+      "default": "./dist/product-neutral-observation-contract-fe035b.js"
     }
   },
   "files": [

@@ -11,19 +11,22 @@ import process from 'node:process';
 
 const PACKAGE_NAME = '@myeongha/face-reading';
 const PACKAGE_VERSION = '0.0.0';
-const PUBLIC_EXPORT_PATH = './preview-engine';
-const CANONICAL_REGISTRY_EXPORT_PATH =
-  './product-neutral-observation-contract-fe035b';
-const FE019_CONTRACT_VERSION =
-  'FE019-DIRECT-BLOB-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1';
+const PREVIEW_EXPORT = './preview-engine';
+const REGISTRY_EXPORT = './product-neutral-observation-contract-fe035b';
+const FE023_CONTRACT_VERSION =
+  'FE023-DIGEST-BOUND-DIRECT-BLOB-PRODUCT-PREVIEW-SESSION-v1';
 const FE035B_CONTRACT_VERSION =
   'FE035B-PRODUCT-NEUTRAL-OBSERVATION-CONTRACT-v1';
+const FE035B_SOURCE_COMMIT =
+  '0f7de13b18a9dd9966074f371cbfd9554490f0ef';
+const FE035B_SOURCE_BLOB =
+  'c9ed7dfb347144759694056e89d571c433d4dfc8';
 const MEDIAPIPE_VERSION = '0.10.35';
 const MANIFEST_SCHEMA =
-  'fe021-preview-consumer-handoff-manifest-v1';
+  'fe040b-canonical-registry-consumer-handoff-manifest-v1';
 
 const outputDir = resolve(
-  process.argv[2] ?? '.artifacts/fe021-preview-consumer-handoff',
+  process.argv[2] ?? '.artifacts/fe040b-canonical-registry-consumer-handoff',
 );
 
 rmSync(outputDir, { recursive: true, force: true });
@@ -44,7 +47,7 @@ const packedOutput = execFileSync(
 
 const packed = JSON.parse(packedOutput);
 if (!Array.isArray(packed) || packed.length !== 1) {
-  throw new Error('FE021 expected npm pack to produce exactly one artifact.');
+  throw new Error('FE040B expected npm pack to produce exactly one artifact.');
 }
 
 const artifact = packed[0];
@@ -54,7 +57,9 @@ if (
   typeof artifact.filename !== 'string' ||
   !artifact.filename.endsWith('.tgz')
 ) {
-  throw new Error('FE021 npm pack metadata drifted from the expected private package.');
+  throw new Error(
+    'FE040B npm pack metadata drifted from the expected private package.',
+  );
 }
 
 const tarballPath = resolve(outputDir, basename(artifact.filename));
@@ -66,9 +71,9 @@ const manifest = Object.freeze({
   package: Object.freeze({
     name: PACKAGE_NAME,
     version: PACKAGE_VERSION,
-    publicExportPath: PUBLIC_EXPORT_PATH,
-    compatibleAdditiveExportPaths: Object.freeze([
-      CANONICAL_REGISTRY_EXPORT_PATH,
+    publicExports: Object.freeze([
+      PREVIEW_EXPORT,
+      REGISTRY_EXPORT,
     ]),
     private: true,
   }),
@@ -76,21 +81,29 @@ const manifest = Object.freeze({
     filename: basename(artifact.filename),
     sha256,
   }),
-  contract: Object.freeze({
-    fe019: FE019_CONTRACT_VERSION,
+  contracts: Object.freeze({
+    fe023: FE023_CONTRACT_VERSION,
     fe035b: FE035B_CONTRACT_VERSION,
+  }),
+  canonicalRegistry: Object.freeze({
+    sourceRepository: 'gycha0109-beep/Saju',
+    sourceCommit: FE035B_SOURCE_COMMIT,
+    sourcePath:
+      'packages/face-reading/src/product-neutral-observation-contract-fe035b.ts',
+    sourceBlobSha: FE035B_SOURCE_BLOB,
+    regionCount: 4,
+    metricCount: 13,
+    requiredMetricCount: 8,
+    conditionalMetricCount: 5,
+    semanticAuthorityIssued: false,
   }),
   runtimeDependency: Object.freeze({
     package: '@mediapipe/tasks-vision',
     version: MEDIAPIPE_VERSION,
   }),
-  source: Object.freeze({
-    commit: process.env.GITHUB_SHA?.trim() || null,
-  }),
   distribution: Object.freeze({
-    registryPublished: false,
+    registryPublished: true,
     handoffOnly: true,
-    canonicalRegistryExportPresent: true,
     productionInterpretationAuthorityIssued: false,
   }),
 });
@@ -103,12 +116,13 @@ writeFileSync(
 
 process.stdout.write(
   `${JSON.stringify({
-    status: 'FE021_PREVIEW_CONSUMER_HANDOFF_BUILT',
+    status: 'FE040B_CANONICAL_REGISTRY_CONSUMER_HANDOFF_BUILT',
     outputDir,
     artifact: manifest.artifact.filename,
     sha256,
-    sourceCommit: manifest.source.commit,
-    registryPublished: false,
-    canonicalRegistryExportPresent: true,
+    fe035b: manifest.contracts.fe035b,
+    sourceCommit: manifest.canonicalRegistry.sourceCommit,
+    sourceBlobSha: manifest.canonicalRegistry.sourceBlobSha,
+    registryPublished: true,
   })}\n`,
 );

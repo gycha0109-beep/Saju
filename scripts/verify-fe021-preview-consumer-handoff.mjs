@@ -16,9 +16,23 @@ const EXPECTED_SCHEMA =
 const EXPECTED_PACKAGE = '@myeongha/face-reading';
 const EXPECTED_VERSION = '0.0.0';
 const EXPECTED_EXPORT = './preview-engine';
+const EXPECTED_REGISTRY_EXPORT =
+  './product-neutral-observation-contract-fe035b';
 const EXPECTED_FE019 =
   'FE019-DIRECT-BLOB-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1';
+const EXPECTED_FE035B =
+  'FE035B-PRODUCT-NEUTRAL-OBSERVATION-CONTRACT-v1';
 const EXPECTED_MEDIAPIPE = '0.10.35';
+const EXPECTED_EXPORTS = {
+  './preview-engine': {
+    types: './dist/preview-engine.d.ts',
+    default: './dist/preview-engine.js',
+  },
+  './product-neutral-observation-contract-fe035b': {
+    types: './dist/product-neutral-observation-contract-fe035b.d.ts',
+    default: './dist/product-neutral-observation-contract-fe035b.js',
+  },
+};
 
 function assert(condition, message) {
   if (!condition) {
@@ -58,10 +72,16 @@ assert(manifest.schemaVersion === EXPECTED_SCHEMA, 'manifest schema drift.');
 assert(manifest.package?.name === EXPECTED_PACKAGE, 'package name drift.');
 assert(manifest.package?.version === EXPECTED_VERSION, 'package version drift.');
 assert(manifest.package?.publicExportPath === EXPECTED_EXPORT, 'public export path drift.');
+assert(
+  JSON.stringify(manifest.package?.compatibleAdditiveExportPaths) ===
+    JSON.stringify([EXPECTED_REGISTRY_EXPORT]),
+  'compatible additive export path drift.',
+);
 assert(manifest.package?.private === true, 'package must remain private.');
 assert(manifest.artifact?.filename === basename(tarball), 'manifest filename mismatch.');
 assert(manifest.artifact?.sha256 === sha256, 'tarball SHA-256 mismatch.');
 assert(manifest.contract?.fe019 === EXPECTED_FE019, 'FE019 contract drift.');
+assert(manifest.contract?.fe035b === EXPECTED_FE035B, 'FE035B contract drift.');
 assert(
   manifest.runtimeDependency?.package === '@mediapipe/tasks-vision' &&
     manifest.runtimeDependency?.version === EXPECTED_MEDIAPIPE,
@@ -69,7 +89,9 @@ assert(
 );
 assert(
   manifest.distribution?.registryPublished === false &&
-    manifest.distribution?.handoffOnly === true,
+    manifest.distribution?.handoffOnly === true &&
+    manifest.distribution?.canonicalRegistryExportPresent === true &&
+    manifest.distribution?.productionInterpretationAuthorityIssued === false,
   'distribution boundary drift.',
 );
 
@@ -113,13 +135,7 @@ try {
   assert(installed.version === EXPECTED_VERSION, 'installed package version drift.');
   assert(installed.private === true, 'installed package must remain private.');
   assert(
-    JSON.stringify(installed.exports) ===
-      JSON.stringify({
-        './preview-engine': {
-          types: './dist/preview-engine.d.ts',
-          default: './dist/preview-engine.js',
-        },
-      }),
+    JSON.stringify(installed.exports) === JSON.stringify(EXPECTED_EXPORTS),
     'installed export map widened or drifted.',
   );
   assert(
@@ -135,6 +151,20 @@ try {
     if (typeof preview.openDirectBlobProductPreviewSessionFE019 !== 'function') {
       throw new Error('FE019 open function missing from FE021 handoff.');
     }
+
+    const registry = await import(
+      '@myeongha/face-reading/product-neutral-observation-contract-fe035b'
+    );
+    if (
+      registry.FE035B_PRODUCT_NEUTRAL_OBSERVATION_CONTRACT_VERSION !==
+      ${JSON.stringify(EXPECTED_FE035B)}
+    ) {
+      throw new Error('FE035B contract missing from FE021 handoff.');
+    }
+    registry.assertProductNeutralObservationContractFE035B(
+      registry.FE035B_PRODUCT_NEUTRAL_OBSERVATION_CONTRACT,
+    );
+
     async function blocked(specifier) {
       try {
         await import(specifier);
@@ -146,6 +176,7 @@ try {
     }
     await blocked('@myeongha/face-reading');
     await blocked('@myeongha/face-reading/direct-blob-product-preview-session-fe019');
+    await blocked('@myeongha/face-reading/product-neutral-observation-contract-fe035b.js');
   `;
   run('node', ['--input-type=module', '-e', consumerCheck], tempRoot);
 } finally {
@@ -160,5 +191,6 @@ process.stdout.write(
     isolatedConsumerImport: true,
     internalPathsBlocked: true,
     registryPublished: false,
+    canonicalRegistryExportPresent: true,
   })}\n`,
 );

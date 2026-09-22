@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "fe040b-canonical-registry-consumer-handoff-manifest-v1",
+  "package": {
+    "name": "@myeongha/face-reading",
+    "version": "0.0.0",
+    "publicExports": [
+      "./preview-engine",
+      "./product-neutral-observation-contract-fe035b"
+    ],
+    "private": true
+  },
+  "artifact": {
+    "filename": "myeongha-face-reading-0.0.0.tgz",
+    "sha256": "210cb8f4358fb3b111e0ad3ab7914ef6846ef14af80e781c31544a8fbc527706"
+  },
+  "contracts": {
+    "fe023": "FE023-DIGEST-BOUND-DIRECT-BLOB-PRODUCT-PREVIEW-SESSION-v1",
+    "fe035b": "FE035B-PRODUCT-NEUTRAL-OBSERVATION-CONTRACT-v1"
+  },
+  "canonicalRegistry": {
+    "sourceRepository": "gycha0109-beep/Saju",
+    "sourceCommit": "0f7de13b18a9dd9966074f371cbfd9554490f0ef",
+    "sourcePath": "packages/face-reading/src/product-neutral-observation-contract-fe035b.ts",
+    "sourceBlobSha": "c9ed7dfb347144759694056e89d571c433d4dfc8",
+    "regionCount": 4,
+    "metricCount": 13,
+    "requiredMetricCount": 8,
+    "conditionalMetricCount": 5,
+    "semanticAuthorityIssued": false
+  },
+  "runtimeDependency": {
+    "package": "@mediapipe/tasks-vision",
+    "version": "0.10.35"
+  },
+  "distribution": {
+    "registryPublished": true,
+    "handoffOnly": true,
+    "productionInterpretationAuthorityIssued": false
+  }
+}
