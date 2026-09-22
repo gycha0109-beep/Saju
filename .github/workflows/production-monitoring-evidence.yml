@@ -224,6 +224,22 @@ jobs:
 
             rm -f "$raw_policies" "$raw_channels" "$policy_error" "$channel_error"
             cat "$evidence_md" >> "$GITHUB_STEP_SUMMARY"
+
+          jq -c '{
+            providerEvidenceReadable,
+            classification: {
+              totalAlertPolicyCount: .classification.totalAlertPolicyCount,
+              enabledCloudRunPolicyCount: .classification.enabledCloudRunPolicyCount,
+              currentServiceCoveringPolicyCount: .classification.currentServiceCoveringPolicyCount,
+              totalNotificationChannelCount: .classification.totalNotificationChannelCount,
+              enabledNotificationChannelCount: .classification.enabledNotificationChannelCount,
+              verifiedNotificationChannelCount: .classification.verifiedNotificationChannelCount,
+              referencedNotificationChannelCount: .classification.referencedNotificationChannelCount,
+              unresolvedNotificationChannelReferenceCount: .classification.unresolvedNotificationChannelReferenceCount,
+              ownerOnCallEvidence: .classification.ownerOnCallEvidence,
+              monitoringReadiness: .classification.monitoringReadiness
+            }
+          }' "$evidence_json"
             exit 1
           fi
 
