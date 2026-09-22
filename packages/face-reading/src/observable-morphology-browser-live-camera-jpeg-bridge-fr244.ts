@@ -36,6 +36,27 @@ export interface FR244BrowserJpegEncoder {
   ) => Promise<Uint8Array>;
 }
 
+export interface FR244PreparedPrimaryMetricBinding {
+  readonly providerBackedPrimaryMetricBinding: true;
+  readonly rawImageDigestComputed: false;
+  readonly rawImageDigestPersisted: false;
+  readonly primaryMetricExtractor: (
+    ephemeralBytes: Uint8Array,
+  ) => FR242PrimaryMetricExtraction;
+  readonly dispose: () => void;
+}
+
+export interface FR244PrimaryMetricBindingPreparer {
+  readonly prepare: (input: {
+    readonly image: unknown;
+    readonly width: number;
+    readonly height: number;
+    readonly providerRunRef: string;
+    readonly jpegBytes: Uint8Array;
+    readonly providerContext?: unknown;
+  }) => Promise<FR244PreparedPrimaryMetricBinding>;
+}
+
 export interface FR244GovernedBrowserCaptureResult {
   readonly schemaVersion: 'fr244-governed-browser-capture-result-v1';
   readonly artifactVersion: '0.1.0';
@@ -264,9 +285,11 @@ export async function executeGovernedBrowserLiveCameraCaptureFR244(input: {
   readonly qualityEvaluator: (
     ephemeralBytes: Uint8Array,
   ) => FR242CaptureQualityAssessment;
-  readonly primaryMetricExtractor: (
+  readonly primaryMetricExtractor?: (
     ephemeralBytes: Uint8Array,
   ) => FR242PrimaryMetricExtraction;
+  readonly primaryMetricBindingPreparer?: FR244PrimaryMetricBindingPreparer;
+  readonly primaryMetricProviderContext?: unknown;
   readonly operatorAttestation: FR243OperatorExecutionAttestation;
   readonly jpegEncoder?: FR244BrowserJpegEncoder;
 }): Promise<FR244GovernedBrowserCaptureResult> {
@@ -274,10 +297,28 @@ export async function executeGovernedBrowserLiveCameraCaptureFR244(input: {
   validateTrigger(input.trigger);
   const encoder = input.jpegEncoder ?? defaultBrowserJpegEncoder();
   validateEncoder(encoder);
+  const hasDirectMetricExtractor =
+    typeof input.primaryMetricExtractor === 'function';
+  const hasPreparedMetricBinding =
+    input.primaryMetricBindingPreparer !== undefined;
+  if (hasDirectMetricExtractor === hasPreparedMetricBinding) {
+    fail('exactly one primary metric source must be supplied.');
+  }
+  if (
+    hasPreparedMetricBinding
+    && (
+      typeof input.primaryMetricBindingPreparer !== 'object'
+      || input.primaryMetricBindingPreparer === null
+      || typeof input.primaryMetricBindingPreparer.prepare !== 'function'
+    )
+  ) {
+    fail('primaryMetricBindingPreparer must expose prepare().');
+  }
 
   const frameSource = input.camera.createSweepFrameSource(oneTrigger(input.trigger));
   const iterator = frameSource[Symbol.asyncIterator]();
   let jpegBytes: Uint8Array | undefined;
+  let preparedMetricBinding: FR244PreparedPrimaryMetricBinding | undefined;
   let frame:
     | {
         readonly image: unknown;
@@ -311,6 +352,36 @@ export async function executeGovernedBrowserLiveCameraCaptureFR244(input: {
     validateJpeg(jpegBytes);
     const observedByteLength = jpegBytes.byteLength;
 
+    if (input.primaryMetricBindingPreparer !== undefined) {
+      preparedMetricBinding = await input.primaryMetricBindingPreparer.prepare({
+        image: frame.image,
+        width: frame.frameWidth,
+        height: frame.frameHeight,
+        providerRunRef: frame.providerRunRef,
+        jpegBytes,
+        ...(input.primaryMetricProviderContext === undefined
+          ? {}
+          : { providerContext: input.primaryMetricProviderContext }),
+      });
+      if (
+        typeof preparedMetricBinding !== 'object'
+        || preparedMetricBinding === null
+        || preparedMetricBinding.providerBackedPrimaryMetricBinding !== true
+        || preparedMetricBinding.rawImageDigestComputed !== false
+        || preparedMetricBinding.rawImageDigestPersisted !== false
+        || typeof preparedMetricBinding.primaryMetricExtractor !== 'function'
+        || typeof preparedMetricBinding.dispose !== 'function'
+      ) {
+        fail('prepared primary-metric binding widened the FR244 privacy boundary.');
+      }
+    }
+    const primaryMetricExtractor =
+      preparedMetricBinding?.primaryMetricExtractor
+      ?? input.primaryMetricExtractor;
+    if (primaryMetricExtractor === undefined) {
+      fail('primary metric extractor was not materialized.');
+    }
+
     const fr243Record = executeGovernedDryRunCaptureFR243(
       input.runtime,
       input.frameIntakeRuntime,
@@ -320,7 +391,7 @@ export async function executeGovernedBrowserLiveCameraCaptureFR244(input: {
         declaredContentLength: observedByteLength,
         mediaBytes: jpegBytes,
         qualityEvaluator: input.qualityEvaluator,
-        primaryMetricExtractor: input.primaryMetricExtractor,
+        primaryMetricExtractor,
         operatorAttestation: input.operatorAttestation,
       },
     );
@@ -376,6 +447,7 @@ export async function executeGovernedBrowserLiveCameraCaptureFR244(input: {
     ISSUED_RESULTS.add(result);
     return result;
   } finally {
+    preparedMetricBinding?.dispose();
     if (jpegBytes !== undefined) jpegBytes.fill(0);
     if (typeof iterator.return === 'function') {
       await iterator.return();
