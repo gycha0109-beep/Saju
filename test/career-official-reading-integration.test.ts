@@ -50,7 +50,7 @@ function snapshot(): CanonicalSajuSnapshot {
 
 function response(): ProductReadingResponse {
   return {
-    responseId: 'reading_response_career_fidelity_1234567890abcdef',
+    responseId: 'reading_response_1234567890abcdef12345678',
     responseVersion: PRODUCT_READING_RESPONSE_VERSION,
     state: 'delivered',
     messageCode: 'READING_DELIVERED',
