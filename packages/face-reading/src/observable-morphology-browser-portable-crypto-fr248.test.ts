@@ -50,8 +50,8 @@ describe('FR248 browser-portable authority crypto boundary', () => {
       policy: fr239,
     });
     const receipt = recordParticipantConsentFR240(protocol, {
-      participantRef: 'participant:fr248:p001',
-      operatorRef: 'operator:fr248:o001',
+      participantRef: 'participant:fr240:p001',
+      operatorRef: 'operator:fr240:o001',
       consentRecordedAt: '2026-09-22T22:40:00.000Z',
       studyNoticeRead: true,
       voluntaryParticipationConfirmed: true,
