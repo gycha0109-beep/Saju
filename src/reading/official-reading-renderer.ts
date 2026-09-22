@@ -21,6 +21,8 @@ export const OFFICIAL_READING_RENDERER_VERSION =
 
 export interface OfficialReadingRenderedContentV1 {
   rendererVersion: typeof OFFICIAL_READING_RENDERER_VERSION;
+  reportId: string;
+  reportHash: string;
   sourceSemanticHash: string;
   sourcePlanHash: string;
   sections: readonly ReadingSectionView[];
@@ -229,16 +231,24 @@ export function renderOfficialReadingV1(
     throw new RangeError('Official Reading renderer produced no report sections.');
   }
 
-  return {
+  const disclosures: readonly ReadingDisclosureView[] = [];
+  const explainability: ExplainabilityIndex = {
+    entries: explainabilityEntries.sort((left, right) =>
+      left.explainabilityRef.localeCompare(right.explainabilityRef),
+    ),
+  };
+  const reportMaterial = {
     rendererVersion: OFFICIAL_READING_RENDERER_VERSION,
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
     sections,
-    disclosures: [],
-    explainability: {
-      entries: explainabilityEntries.sort((left, right) =>
-        left.explainabilityRef.localeCompare(right.explainabilityRef),
-      ),
-    },
+    disclosures,
+    explainability,
+  };
+  const reportHash = deterministicContentHash(reportMaterial);
+  return {
+    ...reportMaterial,
+    reportId: `official_reading_report_${reportHash.slice(0, 24)}`,
+    reportHash,
   };
 }
