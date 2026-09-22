@@ -47,7 +47,7 @@
     "build": "tsc -p tsconfig.build.json",
     "prepare": "npm run build",
     "start:production-calculation": "node dist/production-calculation-server.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "node -e \"console.error('intentional branch-protection negative canary'); process.exit(1)\"",
     "lint": "eslint .",
     "format": "prettier --write src test package.json tsconfig.json tsconfig.build.json eslint.config.mjs .prettierrc.json .github/workflows/ci.yml",
     "format:check": "prettier --check src test package.json tsconfig.json tsconfig.build.json eslint.config.mjs .prettierrc.json .github/workflows/ci.yml",
