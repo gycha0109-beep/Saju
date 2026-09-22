@@ -28,6 +28,10 @@ import {
   WEALTH_NATAL_READING_METHODOLOGY,
 } from '../research/wealth-natal-reading-candidate.js';
 import {
+  RELATIONSHIP_NATAL_READING_CANDIDATE_VERSION,
+  RELATIONSHIP_NATAL_READING_METHODOLOGY,
+} from '../research/relationship-natal-reading-candidate.js';
+import {
   PREVIEW_E2E_APPROVAL,
   PREVIEW_E2E_AUTHORITY_VERSION,
   type PreviewE2eSupportedReadingSection,
@@ -36,7 +40,7 @@ import {
 export const PREVIEW_SEMANTIC_ADMISSION_SCHEMA_VERSION =
   'myeonghwa-preview-semantic-admission-v1' as const;
 export const PREVIEW_SEMANTIC_ADMISSION_REGISTRY_VERSION =
-  'myeonghwa-preview-semantic-admission-registry-2026-09-23-v2' as const;
+  'myeonghwa-preview-semantic-admission-registry-2026-09-23-v3' as const;
 
 export type PreviewSemanticAdmissionDisposition =
   | 'claim'
@@ -254,6 +258,30 @@ const ENTRIES: readonly PreviewSemanticAdmissionEntryV1[] = Object.freeze([
       'NO_SPECIFIC_OCCUPATION_ASSIGNMENT',
       'NO_CAREER_SUCCESS_OR_INCOME_OUTCOME',
       'NO_FUTURE_CAREER_TIMING',
+      'NO_NUMERIC_SCORING',
+    ],
+  }),
+  entry({
+    admissionId: 'preview-baseline-relationship-natal-general-research-candidate-v1',
+    researchRef: {
+      researchId: 'RELATIONSHIP_NATAL_READING_CANDIDATE',
+      modulePath: 'src/research/relationship-natal-reading-candidate.ts',
+      expectedVersion: '0.5.0-research',
+      observedVersion: RELATIONSHIP_NATAL_READING_CANDIDATE_VERSION,
+      expectedAuthorityState: 'research',
+      observedAuthorityState: RELATIONSHIP_NATAL_READING_METHODOLOGY.status,
+    },
+    targetSections: ['relationship:natal:general'],
+    semanticScope: 'existing_ga_open_relationship_general_consumer_conclusions',
+    disposition: 'claim',
+    rationale:
+      'Pins the existing ga-open general Relationship Preview candidate whose bounded Korean headline and summary are already owned by the claim payload.',
+    boundaries: [
+      'PREVIEW_BASELINE_ONLY',
+      'NO_SPECIFIC_PARTNER_OR_ATTRIBUTE_PREDICTION',
+      'NO_MARRIAGE_BREAKUP_OR_INFIDELITY_OUTCOME',
+      'NO_FUTURE_RELATIONSHIP_TIMING',
+      'NO_COMPATIBILITY_JUDGMENT',
       'NO_NUMERIC_SCORING',
     ],
   }),
