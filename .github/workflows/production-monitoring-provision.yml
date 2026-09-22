@@ -1,11 +1,6 @@
 name: Production Monitoring Provision
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/ops/production-monitoring-provision-approved'
   workflow_dispatch:
     inputs:
       confirm:
@@ -40,20 +35,11 @@ jobs:
       - name: Validate explicit provisioning intent
         shell: bash
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          REF_NAME: ${{ github.ref_name }}
           CONFIRM: ${{ inputs.confirm }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" = 'workflow_dispatch' ]; then
-            if [ "$CONFIRM" != 'PROVISION_SAJU_PRODUCTION_ALERT' ]; then
-              echo 'Explicit provisioning confirmation did not match.' >&2
-              exit 1
-            fi
-          elif [ "$EVENT_NAME" = 'push' ] && [ "$REF_NAME" = 'main' ]; then
-            echo 'Accepted one-shot approved main-branch provisioning marker.'
-          else
-            echo 'Unsupported provisioning trigger.' >&2
+          if [ "$CONFIRM" != 'PROVISION_SAJU_PRODUCTION_ALERT' ]; then
+            echo 'Explicit provisioning confirmation did not match.' >&2
             exit 1
           fi
           for name in GCP_PROJECT_ID GCP_WORKLOAD_IDENTITY_PROVIDER GCP_DEPLOYER_SERVICE_ACCOUNT GCP_CLOUD_RUN_SERVICE; do
@@ -171,9 +157,9 @@ jobs:
             ' > "$policy_json"
 
           create_output="${RUNNER_TEMP}/monitoring-policy-create.txt"
-          gcloud monitoring policies create             --project "$GCP_PROJECT_ID"             --policy-from-file="$policy_json" | tee "$create_output"
+          gcloud monitoring policies create             --project "$GCP_PROJECT_ID"             --policy-from-file="$policy_json" 2>&1 | tee "$create_output"
 
-          policy_name="$(grep -Eo 'projects/[^]]+/alertPolicies/[0-9]+' "$create_output" | tail -n 1 || true)"
+          policy_name="$(grep -Eo 'projects/[^/]+/alertPolicies/[0-9]+' "$create_output" | tail -n 1 || true)"
           rm -f "$policy_json" "$create_output"
 
           if [[ ! "$policy_name" =~ ^projects/[^/]+/alertPolicies/[0-9]+$ ]]; then
