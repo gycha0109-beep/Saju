@@ -362,7 +362,7 @@ export async function prepareDigestlessSameFramePrimaryMetricBindingFR246(input:
 
 export const FR246_PRIMARY_METRIC_BINDING_PREPARER:
 FR244PrimaryMetricBindingPreparer = Object.freeze({
-  async prepare(input) {
+  async prepare(input: Parameters<FR244PrimaryMetricBindingPreparer['prepare']>[0]) {
     if (
       input.providerContext === undefined
       || typeof input.providerContext !== 'object'
