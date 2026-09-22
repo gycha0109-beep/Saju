@@ -149,11 +149,15 @@ describe('admitted Career Preview semantics -> Official Reading -> Reader', () =
       throw new Error('Expected admitted Career reading evidence.');
     }
 
-    const selectedCareerClaims = composition.evidence.bundle.claims.filter(
+    const selectedCareerSemanticClaims = composition.evidence.bundle.claims.filter(
       (claim) =>
         composition.selection.targetClaimIds.includes(claim.claimId) &&
-        claim.predicate === 'career_conclusion',
+        (claim.predicate === 'career_conclusion' || claim.predicate === 'career_context'),
     );
+    const selectedCareerClaims = selectedCareerSemanticClaims.filter(
+      (claim) => claim.predicate === 'career_conclusion',
+    );
+    expect(selectedCareerSemanticClaims.length).toBeGreaterThan(0);
     expect(selectedCareerClaims.length).toBeGreaterThan(0);
 
     for (const claim of selectedCareerClaims) {
@@ -173,7 +177,7 @@ describe('admitted Career Preview semantics -> Official Reading -> Reader', () =
       evidence: composition.evidence.bundle,
       targetClaimIds: composition.selection.targetClaimIds,
     });
-    expect(semanticTextBindings).toHaveLength(selectedCareerClaims.length);
+    expect(semanticTextBindings).toHaveLength(selectedCareerSemanticClaims.length);
 
     const semantics = buildCanonicalReadingSemanticBundleV1({
       intent: { domain: 'career', temporalScope: 'natal' },
@@ -182,9 +186,11 @@ describe('admitted Career Preview semantics -> Official Reading -> Reader', () =
       semanticTextBindings,
     });
     const primaryCareerUnits = semantics.units.filter(
-      (unit) => unit.role === 'primary' && unit.predicate === 'career_conclusion',
+      (unit) =>
+        unit.role === 'primary' &&
+        (unit.predicate === 'career_conclusion' || unit.predicate === 'career_context'),
     );
-    expect(primaryCareerUnits).toHaveLength(selectedCareerClaims.length);
+    expect(primaryCareerUnits).toHaveLength(selectedCareerSemanticClaims.length);
 
     for (const unit of primaryCareerUnits) {
       const expected = profileText(unit.claimType);
