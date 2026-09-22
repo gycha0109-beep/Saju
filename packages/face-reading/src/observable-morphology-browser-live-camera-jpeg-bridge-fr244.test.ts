@@ -346,4 +346,103 @@ describe('FR244 governed browser live-camera JPEG bridge', () => {
     camera.close();
   });
 
+
+  it('prepares and disposes an async governed capture-quality binding on the exact frame/JPEG pair', async () => {
+    const s = setupDryRun();
+    const cameraFixture = makeCameraFixture();
+    const camera = await openMesh6HBrowserCamera(
+      { video: cameraFixture.video },
+      cameraFixture.environment,
+    );
+    const jpeg = new Uint8Array([0xff, 0xd8, 0x55, 0x66, 0xff, 0xd9]);
+    const dispose = vi.fn();
+    const prepare = vi.fn(async (input: {
+      readonly image: unknown;
+      readonly width: number;
+      readonly height: number;
+      readonly timestampMs: number;
+      readonly triggerTimestampMs: number;
+      readonly providerRunRef: string;
+      readonly jpegBytes: Uint8Array;
+    }) => ({
+      governedDryRunQualityBinding: true as const,
+      rawImageDigestComputed: false as const,
+      rawImageDigestPersisted: false as const,
+      qualityEvaluator(ephemeralBytes: Uint8Array) {
+        expect(Array.from(ephemeralBytes)).toEqual(Array.from(input.jpegBytes));
+        return passQuality();
+      },
+      dispose,
+    }));
+
+    const result = await executeGovernedBrowserLiveCameraCaptureFR244({
+      camera,
+      trigger: { timestampMs: 5000, providerRunRef: 'provider:fr244:quality' },
+      runtime: s.fr243,
+      frameIntakeRuntime: s.fr242,
+      session: s.session,
+      challenge: s.challenge,
+      qualityBindingPreparer: { prepare },
+      primaryMetricExtractor: () => ({
+        metricRef: 'neutral.eye.outer_corner_tilt.mean_degrees@0.1.0',
+        unit: 'degree',
+        value: 3.5,
+      }),
+      operatorAttestation: attestation(),
+      jpegEncoder: {
+        async encodeJpeg() {
+          return jpeg;
+        },
+      },
+    });
+
+    expect(prepare).toHaveBeenCalledTimes(1);
+    const preparedInput = prepare.mock.calls[0]![0];
+    expect(preparedInput.timestampMs).toBe(5000);
+    expect(preparedInput.triggerTimestampMs).toBe(5000);
+    expect(preparedInput.providerRunRef).toBe('provider:fr244:quality');
+    expect(result.fr243Record.resultStatus).toBe('accepted_for_dry_run_mechanics_only');
+    expect(result.fr243Record.primaryMetric?.value).toBe(3.5);
+    expect(dispose).toHaveBeenCalledTimes(1);
+    expect(Array.from(jpeg)).toEqual([0, 0, 0, 0, 0, 0]);
+    camera.close();
+  });
+
+  it('requires exactly one direct or prepared capture-quality source', async () => {
+    const s = setupDryRun();
+    const cameraFixture = makeCameraFixture();
+    const camera = await openMesh6HBrowserCamera(
+      { video: cameraFixture.video },
+      cameraFixture.environment,
+    );
+
+    await expect(executeGovernedBrowserLiveCameraCaptureFR244({
+      camera,
+      trigger: { timestampMs: 6000, providerRunRef: 'provider:fr244:quality-conflict' },
+      runtime: s.fr243,
+      frameIntakeRuntime: s.fr242,
+      session: s.session,
+      challenge: s.challenge,
+      qualityEvaluator: passQuality,
+      qualityBindingPreparer: {
+        async prepare() {
+          throw new Error('must not execute');
+        },
+      },
+      primaryMetricExtractor: () => ({
+        metricRef: 'neutral.eye.outer_corner_tilt.mean_degrees@0.1.0',
+        unit: 'degree',
+        value: 0,
+      }),
+      operatorAttestation: attestation(),
+      jpegEncoder: {
+        async encodeJpeg() {
+          return new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
+        },
+      },
+    })).rejects.toThrow(/exactly one capture-quality source/u);
+
+    camera.close();
+  });
+
 });
