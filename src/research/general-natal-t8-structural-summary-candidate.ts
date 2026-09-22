@@ -12,7 +12,7 @@ import {
 } from './i18a-month-branch-strength-evidence.js';
 
 export const GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CANDIDATE_VERSION =
-  '0.1.0-research' as const;
+  '0.2.0-research' as const;
 export const GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CLAIM_TYPE =
   'GENERAL_NATAL_MONTH_BRANCH_STRUCTURAL_CONTEXT' as const;
 
@@ -29,14 +29,46 @@ export type GeneralNatalMonthBranchStructuralRelationship =
   | 'month_branch_controls_day_master';
 
 const RELATIONS = [
-  { relation: 'peer', structuralRelationship: 'same_element' },
-  { relation: 'resource', structuralRelationship: 'month_branch_generates_day_master' },
-  { relation: 'output', structuralRelationship: 'day_master_generates_month_branch' },
-  { relation: 'wealth', structuralRelationship: 'day_master_controls_month_branch' },
-  { relation: 'officer', structuralRelationship: 'month_branch_controls_day_master' },
+  {
+    relation: 'peer',
+    structuralRelationship: 'same_element',
+    headline: '월지와 일간이 같은 오행 관계입니다',
+    summary:
+      '월지의 오행이 일간과 같은 오행으로 연결됩니다. 이 관찰은 월지라는 한 구조축을 설명할 뿐, 명식 전체의 강약이나 길흉을 확정하지 않습니다.',
+  },
+  {
+    relation: 'resource',
+    structuralRelationship: 'month_branch_generates_day_master',
+    headline: '월지가 일간을 생하는 관계입니다',
+    summary:
+      '월지의 오행이 일간을 생하는 관계로 연결됩니다. 이 관찰은 월지라는 한 구조축을 설명할 뿐, 명식 전체의 강약이나 길흉을 확정하지 않습니다.',
+  },
+  {
+    relation: 'output',
+    structuralRelationship: 'day_master_generates_month_branch',
+    headline: '일간이 월지를 생하는 관계입니다',
+    summary:
+      '일간의 오행이 월지의 오행을 생하는 관계로 연결됩니다. 이 관찰은 월지라는 한 구조축을 설명할 뿐, 명식 전체의 강약이나 길흉을 확정하지 않습니다.',
+  },
+  {
+    relation: 'wealth',
+    structuralRelationship: 'day_master_controls_month_branch',
+    headline: '일간이 월지를 극하는 관계입니다',
+    summary:
+      '일간의 오행이 월지의 오행을 극하는 관계로 연결됩니다. 이 관찰은 월지라는 한 구조축을 설명할 뿐, 명식 전체의 강약이나 길흉을 확정하지 않습니다.',
+  },
+  {
+    relation: 'officer',
+    structuralRelationship: 'month_branch_controls_day_master',
+    headline: '월지가 일간을 극하는 관계입니다',
+    summary:
+      '월지의 오행이 일간의 오행을 극하는 관계로 연결됩니다. 이 관찰은 월지라는 한 구조축을 설명할 뿐, 명식 전체의 강약이나 길흉을 확정하지 않습니다.',
+  },
 ] as const satisfies readonly {
   relation: MonthBranchStrengthRelation;
   structuralRelationship: GeneralNatalMonthBranchStructuralRelationship;
+  headline: string;
+  summary: string;
 }[];
 
 export const GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY: MethodologyDefinition =
@@ -78,6 +110,8 @@ function sourceRefs(): RuleDefinition['sourceRefs'] {
 function candidateRule(
   relation: MonthBranchStrengthRelation,
   structuralRelationship: GeneralNatalMonthBranchStructuralRelationship,
+  headline: string,
+  summary: string,
 ): RuleDefinition {
   return {
     ruleId: `RULE-GENERAL-NATAL-T8-MONTH-BRANCH-${relation.toUpperCase()}`,
@@ -132,6 +166,14 @@ function candidateRule(
       value: {
         relation,
         structuralRelationship,
+        headline,
+        summary,
+        semanticScope: 'month_branch_structural_context_non_conclusive',
+        qualifiers: [
+          'month_branch_relation_is_one_structural_axis',
+          'overall_strength_not_determined',
+          'fortune_polarity_not_determined',
+        ],
         monthContext: 'branch_element_only',
         overallStrength: 'not_determined',
         withinMonthCommand: 'not_determined',
@@ -153,8 +195,8 @@ function candidateRule(
 
 export const GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_RULES: readonly RuleDefinition[] =
   Object.freeze(
-    RELATIONS.map(({ relation, structuralRelationship }) =>
-      candidateRule(relation, structuralRelationship),
+    RELATIONS.map(({ relation, structuralRelationship, headline, summary }) =>
+      candidateRule(relation, structuralRelationship, headline, summary),
     ),
   );
 
