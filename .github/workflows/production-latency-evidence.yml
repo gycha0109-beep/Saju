@@ -256,3 +256,12 @@ jobs:
           else
             echo 'No latency evidence JSON was produced.'
           fi
+
+      - name: Upload immutable latency evidence
+        if: always() && steps.latency.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: saju-production-latency-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/saju-production-latency-evidence.json
+          if-no-files-found: error
+          retention-days: 90
