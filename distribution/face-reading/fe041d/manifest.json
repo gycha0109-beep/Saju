@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "fe041d-square-broad-candidate-metric-mapping-readiness-handoff-manifest-v1",
+  "package": {
+    "name": "@myeongha/face-reading",
+    "version": "0.0.0",
+    "publicExports": [
+      "./preview-engine",
+      "./product-neutral-observation-contract-fe035b",
+      "./square-broad-operationalization-readiness-fe041b",
+      "./square-broad-candidate-metric-mapping-readiness-fe041d"
+    ],
+    "private": true
+  },
+  "artifact": {
+    "filename": "myeongha-face-reading-0.0.0.tgz",
+    "sha256": "f306515639aef5366308018ec3374f35ee1c20c35adb107ee140381ee6c8cd6d"
+  },
+  "contracts": {
+    "fe041d": "FE041D-SQUARE-BROAD-CANDIDATE-METRIC-MAPPING-READINESS-v1"
+  },
+  "researchSnapshot": {
+    "repository": "gycha0109-beep/Saju",
+    "commit": "8b49d4e03e35ef5447f0f2873ff2b8737bd36110",
+    "fe035bSourceBlob": "c9ed7dfb347144759694056e89d571c433d4dfc8",
+    "fr141SourceBlob": "a2a621bb2088f9002480caf6a89bbc0a40e50538",
+    "fr142SourceBlob": "004a2cdb21bc6f247e48cae52429afaf54f6804d",
+    "fr143SourceBlob": "293e29e65239894a5ec21befbd7152c339250759"
+  },
+  "mappingReadiness": {
+    "candidateMetricCount": 3,
+    "canonicalRegistryMetricCount": 13,
+    "canonicalRegistryIntersectionCount": 0,
+    "canonicalMetricBindingAuthorized": false,
+    "traditionalFangBindingAuthorized": false,
+    "constructValidityEstablished": false,
+    "empiricalSemanticEvidenceAdmitted": false,
+    "calibrationAuthorityIssued": false,
+    "numericThresholdAuthorityIssued": false,
+    "criterionStateIssued": false,
+    "productionSemanticExecutionAuthorized": false
+  },
+  "distribution": {
+    "handoffOnly": true,
+    "productionInterpretationAuthorityIssued": false
+  }
+}
