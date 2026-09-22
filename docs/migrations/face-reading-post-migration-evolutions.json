@@ -14,8 +14,8 @@
     {
       "path": "packages/face-reading/package.json",
       "sourceBlobSha": "7fc9dc90c84b6aabc9887ff974546308466812e2",
-      "targetBlobSha": "5996f386c6c2454f114fd8140c2072597e115e63",
-      "authorityRef": "FE008 / issue #1095; FE040B / issue #1268",
+      "targetBlobSha": "ec85598248429951f558babcee7274333c179466",
+      "authorityRef": "FE008 / issue #1095; FE040B / issue #1268; FE041B / issue #1284",
       "changeClass": "additive_authority_governed_core_extension",
       "historicalProvenanceMutation": false,
       "methodologySemanticChange": false

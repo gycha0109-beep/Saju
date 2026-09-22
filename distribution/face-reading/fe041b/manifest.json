@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "fe041b-square-broad-operationalization-readiness-handoff-manifest-v1",
+  "package": {
+    "name": "@myeongha/face-reading",
+    "version": "0.0.0",
+    "publicExports": [
+      "./preview-engine",
+      "./product-neutral-observation-contract-fe035b",
+      "./square-broad-operationalization-readiness-fe041b"
+    ],
+    "private": true
+  },
+  "artifact": {
+    "filename": "myeongha-face-reading-0.0.0.tgz",
+    "sha256": "170dc999e0cb01e3e9a38c59a9a510170def54d7055c3b988eabb1330d68620e"
+  },
+  "contracts": {
+    "fe023": "FE023-DIGEST-BOUND-DIRECT-BLOB-PRODUCT-PREVIEW-SESSION-v1",
+    "fe035b": "FE035B-PRODUCT-NEUTRAL-OBSERVATION-CONTRACT-v1",
+    "fe041b": "FE041B-SQUARE-BROAD-OPERATIONALIZATION-READINESS-v1"
+  },
+  "operationalizationReadiness": {
+    "authorityRepository": "gycha0109-beep/Saju",
+    "authoritySnapshotCommit": "50fd5b511326033861b3cab48028b989c4499b3c",
+    "fr140SourceBlob": "c6ebcb9213db11dfdd2abda5dd723911355f3859",
+    "fr141SourceBlob": "a2a621bb2088f9002480caf6a89bbc0a40e50538",
+    "methodologyApprovalBlob": "ad9ea864092dd5f70a691c842ba8ef4ca618f971",
+    "criterionRef": "criterion.intake.square_broad",
+    "sourceConcept": "方大",
+    "sourcePassageRef": "passage.shenxiang.five_officers.intake.nlc_1925",
+    "sourcePassageVerificationStatus": "scan_checked",
+    "reviewedMethodologyRef": "method.shenxiang.five_officers.intake_criteria@0.3.0",
+    "methodologyReviewStatus": "reviewed",
+    "canonicalMetricBindingAuthorized": false,
+    "constructValidityEstablished": false,
+    "calibrationAuthorityIssued": false,
+    "numericThresholdAuthorityIssued": false,
+    "classificationBandsIssued": false,
+    "criterionStateIssued": false,
+    "structuredClaimIssued": false,
+    "narrativeAuthorityIssued": false,
+    "productionSemanticExecutionAuthorized": false
+  },
+  "distribution": {
+    "handoffOnly": true,
+    "productionInterpretationAuthorityIssued": false
+  }
+}

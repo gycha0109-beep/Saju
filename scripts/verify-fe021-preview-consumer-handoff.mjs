@@ -18,10 +18,14 @@ const EXPECTED_VERSION = '0.0.0';
 const EXPECTED_EXPORT = './preview-engine';
 const EXPECTED_REGISTRY_EXPORT =
   './product-neutral-observation-contract-fe035b';
+const EXPECTED_READINESS_EXPORT =
+  './square-broad-operationalization-readiness-fe041b';
 const EXPECTED_FE019 =
   'FE019-DIRECT-BLOB-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1';
 const EXPECTED_FE035B =
   'FE035B-PRODUCT-NEUTRAL-OBSERVATION-CONTRACT-v1';
+const EXPECTED_FE041B =
+  'FE041B-SQUARE-BROAD-OPERATIONALIZATION-READINESS-v1';
 const EXPECTED_MEDIAPIPE = '0.10.35';
 const EXPECTED_EXPORTS = {
   './preview-engine': {
@@ -31,6 +35,10 @@ const EXPECTED_EXPORTS = {
   './product-neutral-observation-contract-fe035b': {
     types: './dist/product-neutral-observation-contract-fe035b.d.ts',
     default: './dist/product-neutral-observation-contract-fe035b.js',
+  },
+  './square-broad-operationalization-readiness-fe041b': {
+    types: './dist/square-broad-operationalization-readiness-fe041b.d.ts',
+    default: './dist/square-broad-operationalization-readiness-fe041b.js',
   },
 };
 
@@ -74,7 +82,7 @@ assert(manifest.package?.version === EXPECTED_VERSION, 'package version drift.')
 assert(manifest.package?.publicExportPath === EXPECTED_EXPORT, 'public export path drift.');
 assert(
   JSON.stringify(manifest.package?.compatibleAdditiveExportPaths) ===
-    JSON.stringify([EXPECTED_REGISTRY_EXPORT]),
+    JSON.stringify([EXPECTED_REGISTRY_EXPORT, EXPECTED_READINESS_EXPORT]),
   'compatible additive export path drift.',
 );
 assert(manifest.package?.private === true, 'package must remain private.');
@@ -82,6 +90,7 @@ assert(manifest.artifact?.filename === basename(tarball), 'manifest filename mis
 assert(manifest.artifact?.sha256 === sha256, 'tarball SHA-256 mismatch.');
 assert(manifest.contract?.fe019 === EXPECTED_FE019, 'FE019 contract drift.');
 assert(manifest.contract?.fe035b === EXPECTED_FE035B, 'FE035B contract drift.');
+assert(manifest.contract?.fe041b === EXPECTED_FE041B, 'FE041B contract drift.');
 assert(
   manifest.runtimeDependency?.package === '@mediapipe/tasks-vision' &&
     manifest.runtimeDependency?.version === EXPECTED_MEDIAPIPE,
@@ -91,6 +100,7 @@ assert(
   manifest.distribution?.registryPublished === false &&
     manifest.distribution?.handoffOnly === true &&
     manifest.distribution?.canonicalRegistryExportPresent === true &&
+    manifest.distribution?.operationalizationReadinessExportPresent === true &&
     manifest.distribution?.productionInterpretationAuthorityIssued === false,
   'distribution boundary drift.',
 );
@@ -165,6 +175,26 @@ try {
       registry.FE035B_PRODUCT_NEUTRAL_OBSERVATION_CONTRACT,
     );
 
+    const readiness = await import(
+      '@myeongha/face-reading/square-broad-operationalization-readiness-fe041b'
+    );
+    if (
+      readiness.FE041B_SQUARE_BROAD_OPERATIONALIZATION_READINESS_VERSION !==
+      ${JSON.stringify('FE041B-SQUARE-BROAD-OPERATIONALIZATION-READINESS-v1')}
+    ) {
+      throw new Error('FE041B readiness contract missing from FE021 handoff.');
+    }
+    const readinessState = readiness.issueSquareBroadOperationalizationReadinessFE041B();
+    readiness.assertIssuedSquareBroadOperationalizationReadinessFE041B(readinessState);
+    if (
+      readinessState.operationalization.canonicalInputMetricRefs.length !== 0 ||
+      readinessState.operationalization.classificationBands !== null ||
+      readinessState.operationalization.numericThresholds !== null ||
+      readinessState.authorityBoundary.productionSemanticExecutionAuthorized !== false
+    ) {
+      throw new Error('FE041B readiness authority widened in FE021 handoff.');
+    }
+
     async function blocked(specifier) {
       try {
         await import(specifier);
@@ -192,5 +222,6 @@ process.stdout.write(
     internalPathsBlocked: true,
     registryPublished: false,
     canonicalRegistryExportPresent: true,
+    operationalizationReadinessExportPresent: true,
   })}\n`,
 );
