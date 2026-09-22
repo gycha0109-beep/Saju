@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>FR250 One-Person Dry Run</title>
+  <script type="importmap">
+    {"imports":{"@mediapipe/tasks-vision":"__MEDIAPIPE_ENTRY__"}}
+  </script>
+  <style>
+    :root{color-scheme:light;font-family:Inter,Pretendard,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f5f7;color:#15171a}
+    *{box-sizing:border-box}body{margin:0;background:#f4f5f7}button,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.4;cursor:not-allowed}[hidden]{display:none!important}
+    .shell{width:min(720px,calc(100% - 24px));margin:0 auto;padding:24px 0 40px}.stack{display:grid;gap:14px}.card{background:#fff;border:1px solid #e1e4e8;border-radius:18px;padding:18px;box-shadow:0 6px 22px rgba(0,0,0,.05)}
+    h1{margin:0 0 8px;font-size:27px}h2{margin:0 0 12px;font-size:18px}p{line-height:1.55}.lead,.muted{color:#626b75}.checks{display:grid;gap:9px}.checks label{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:11px;background:#f7f8fa;font-size:14px;line-height:1.4}
+    .primary{width:100%;min-height:54px;border:0;border-radius:14px;background:#15171a;color:#fff;font-weight:800;font-size:17px}.secondary{border:0;border-radius:11px;background:#e9edf2;padding:10px 14px;font-weight:750}.status{padding:12px 14px;border-radius:12px;background:#eef3ff;color:#2f477c;font-size:14px;line-height:1.5}
+    .boundary{font-size:12px;color:#626b75;line-height:1.55}.challenge{padding:14px;border:1px solid #cfd8ea;border-radius:12px;background:#f6f8ff;font-weight:750}
+    #capture-view{position:fixed;inset:0;z-index:20;background:#050505;color:#fff;overflow:auto}.capture-shell{width:min(720px,100%);min-height:100dvh;margin:0 auto;display:grid;grid-template-rows:minmax(280px,48dvh) auto}
+    .camera-stage{position:relative;background:#000;overflow:hidden}#camera{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}.camera-shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent 30%,transparent 65%,rgba(0,0,0,.7))}
+    .camera-label{position:absolute;left:16px;right:16px;top:16px;display:flex;justify-content:space-between;font-weight:800}.capture-panel{background:#fff;color:#15171a;padding:16px;display:grid;gap:12px}.capture-panel .checks{grid-template-columns:1fr 1fr}.actions{display:flex;gap:10px}.actions>*{flex:1}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#111827;color:#e5e7eb;border-radius:12px;padding:14px;font-size:12px;line-height:1.5}
+    @media(max-width:560px){.capture-panel .checks{grid-template-columns:1fr}.shell{padding-top:14px}}
+  </style>
+</head>
+<body>
+  <main id="setup-view" class="shell">
+    <div class="stack">
+      <section class="card">
+        <h1>FR250 실제 1인 Dry Run</h1>
+        <p class="lead">2개 세션 × 세션당 2회 촬영. 모든 촬영은 실시간 카메라와 명시적 셔터만 사용합니다.</p>
+      </section>
+      <section class="card">
+        <h2>참가 동의 확인</h2>
+        <div id="consent-checks" class="checks">
+          <label><input type="checkbox" data-consent="studyNoticeRead"> 연구 안내를 읽었습니다.</label>
+          <label><input type="checkbox" data-consent="voluntaryParticipationConfirmed"> 자발적 참여임을 확인합니다.</label>
+          <label><input type="checkbox" data-consent="liveCameraCaptureConsent"> 실시간 카메라 촬영에 동의합니다.</label>
+          <label><input type="checkbox" data-consent="transientRawCaptureProcessingConsent"> 원본 프레임의 일시적 메모리 처리에 동의합니다.</label>
+          <label><input type="checkbox" data-consent="sanitizedReviewImageRetentionConsent"> 정제된 검토 산출물 정책을 확인했습니다.</label>
+          <label><input type="checkbox" data-consent="pseudonymousMetricStorageConsent"> 가명화된 측정값 저장 범위를 확인했습니다.</label>
+          <label><input type="checkbox" data-consent="noTrainingReuseAcknowledged"> 학습 재사용이 없음을 확인했습니다.</label>
+          <label><input type="checkbox" data-consent="noProductionReuseAcknowledged"> Production 재사용이 없음을 확인했습니다.</label>
+          <label><input type="checkbox" data-consent="noBiometricIdentityMatchingAcknowledged"> 생체 신원 매칭을 수행하지 않음을 확인했습니다.</label>
+          <label><input type="checkbox" data-consent="withdrawalProcedureAcknowledged"> 철회 절차를 확인했습니다.</label>
+        </div>
+      </section>
+      <div id="setup-status" class="status">분석 runtime을 준비 중입니다…</div>
+      <button id="start-run" class="primary" disabled>카메라 열고 세션 1 시작</button>
+      <p class="boundary">이 화면은 mechanics-only 연구 dry run입니다. 원본 이미지/JPEG, provider payload, landmark, image digest, embedding, identity template을 저장하지 않습니다. 결과는 경험적 반복성·관상 해석·Production 권한을 만들지 않습니다.</p>
+    </div>
+  </main>
+
+  <main id="capture-view" hidden>
+    <div class="capture-shell">
+      <section class="camera-stage">
+        <video id="camera" autoplay muted playsinline></video>
+        <div class="camera-shade"></div>
+        <div class="camera-label"><span id="session-label">세션 1</span><span id="capture-label">촬영 1 / 2</span></div>
+      </section>
+      <section class="capture-panel">
+        <div id="capture-status" class="status">Challenge를 준비하세요.</div>
+        <div id="challenge-box" class="challenge" hidden></div>
+        <button id="prepare-challenge" class="secondary">이 촬영의 Live-camera Challenge 표시</button>
+        <div>
+          <h2>촬영 직전 품질 관찰</h2>
+          <div id="quality-checks" class="checks">
+            <label><input type="checkbox" data-quality="frontalNeutralPoseObserved"> 정면 neutral pose</label>
+            <label><input type="checkbox" data-quality="bilateralEyeContoursVisuallyResolvable"> 양쪽 눈 윤곽 식별 가능</label>
+            <label><input type="checkbox" data-quality="bilateralEyeRegionsFullyVisible"> 양쪽 눈 영역 완전 노출</label>
+            <label><input type="checkbox" data-quality="majorEyeRegionOcclusionAbsent"> 주요 눈 영역 가림 없음</label>
+          </div>
+        </div>
+        <div>
+          <h2>운영자 실행 확인</h2>
+          <div id="execution-checks" class="checks">
+            <label><input type="checkbox" data-execution="participantPresentObserved"> 참가자가 현재 카메라 앞에 있음</label>
+            <label><input type="checkbox" data-execution="liveCameraCaptureObserved"> 현재 화면이 실시간 카메라임</label>
+            <label><input type="checkbox" data-execution="consentReconfirmedImmediatelyBeforeCapture"> 촬영 직전 동의를 재확인함</label>
+            <label><input type="checkbox" data-execution="challengePresentedBeforeCapture"> 위 Challenge를 촬영 전에 제시·확인함</label>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="cancel-run" class="secondary">중단</button>
+          <button id="shutter" class="primary" disabled>이 프레임 촬영</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <main id="break-view" class="shell" hidden>
+    <div class="stack">
+      <section class="card">
+        <h1>세션 1 완료</h1>
+        <p>세션 2는 자동으로 시작하지 않습니다. 분리된 다음 세션을 진행할 시점에 아래 버튼을 직접 누르세요.</p>
+        <p class="boundary">시간 간격에 대한 임의의 수치 기준은 적용하지 않습니다. 세션 분리는 독립적으로 검증되지 않습니다.</p>
+      </section>
+      <button id="start-session-two" class="primary">세션 2 수동 시작</button>
+    </div>
+  </main>
+
+  <main id="result-view" class="shell" hidden>
+    <div class="stack">
+      <section class="card">
+        <h1>4개 슬롯 Dry Run 완료</h1>
+        <p id="result-summary" class="lead"></p>
+      </section>
+      <pre id="result-json"></pre>
+      <button id="download-result" class="primary">정제 결과 JSON 저장</button>
+    </div>
+  </main>
+
+  <script type="module" src="/fr250/capture.mjs"></script>
+</body>
+</html>
