@@ -16,6 +16,8 @@ const EXPECTED_FE019 =
   'FE019-DIRECT-BLOB-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1';
 const EXPECTED_FE035B =
   'FE035B-PRODUCT-NEUTRAL-OBSERVATION-CONTRACT-v1';
+const EXPECTED_FE041B =
+  'FE041B-SQUARE-BROAD-OPERATIONALIZATION-READINESS-v1';
 const EXPECTED_EXPORTS = {
   './preview-engine': {
     types: './dist/preview-engine.d.ts',
@@ -24,6 +26,10 @@ const EXPECTED_EXPORTS = {
   './product-neutral-observation-contract-fe035b': {
     types: './dist/product-neutral-observation-contract-fe035b.d.ts',
     default: './dist/product-neutral-observation-contract-fe035b.js',
+  },
+  './square-broad-operationalization-readiness-fe041b': {
+    types: './dist/square-broad-operationalization-readiness-fe041b.d.ts',
+    default: './dist/square-broad-operationalization-readiness-fe041b.js',
   },
 };
 
@@ -84,6 +90,14 @@ try {
   assert(
     filePaths.has('dist/product-neutral-observation-contract-fe035b.d.ts'),
     'tarball is missing FE035B canonical registry declarations.',
+  );
+  assert(
+    filePaths.has('dist/square-broad-operationalization-readiness-fe041b.js'),
+    'tarball is missing FE041B operationalization readiness runtime.',
+  );
+  assert(
+    filePaths.has('dist/square-broad-operationalization-readiness-fe041b.d.ts'),
+    'tarball is missing FE041B operationalization readiness declarations.',
   );
   assert(
     ![...filePaths].some((path) => path.startsWith('src/')),
@@ -184,6 +198,26 @@ try {
       throw new Error('FE035B canonical registry cardinality drift.');
     }
 
+    const readiness = await import(
+      '@myeongha/face-reading/square-broad-operationalization-readiness-fe041b'
+    );
+    if (
+      readiness.FE041B_SQUARE_BROAD_OPERATIONALIZATION_READINESS_VERSION !==
+      ${JSON.stringify('FE041B-SQUARE-BROAD-OPERATIONALIZATION-READINESS-v1')}
+    ) {
+      throw new Error('FE041B readiness contract missing from isolated consumer.');
+    }
+    const readinessState = readiness.issueSquareBroadOperationalizationReadinessFE041B();
+    readiness.assertIssuedSquareBroadOperationalizationReadinessFE041B(readinessState);
+    if (
+      readinessState.target.methodologyReviewStatus !== 'reviewed' ||
+      readinessState.operationalization.canonicalInputMetricRefs.length !== 0 ||
+      readinessState.operationalization.numericThresholds !== null ||
+      readinessState.authorityBoundary.productionSemanticExecutionAuthorized !== false
+    ) {
+      throw new Error('FE041B operationalization readiness authority widened.');
+    }
+
     async function expectBlocked(specifier) {
       try {
         await import(specifier);
@@ -212,7 +246,9 @@ try {
       isolatedConsumerImport: true,
       fe019ContractVersion: EXPECTED_FE019,
       fe035bContractVersion: EXPECTED_FE035B,
+      fe041bContractVersion: EXPECTED_FE041B,
       canonicalRegistryExportPresent: true,
+      operationalizationReadinessExportPresent: true,
       rootPathBlocked: true,
       internalPathsBlocked: true,
       mediaPipeVersion: installedMediaPipe.version,

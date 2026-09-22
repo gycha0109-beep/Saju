@@ -11,6 +11,10 @@
     "./product-neutral-observation-contract-fe035b": {
       "types": "./dist/product-neutral-observation-contract-fe035b.d.ts",
       "default": "./dist/product-neutral-observation-contract-fe035b.js"
+    },
+    "./square-broad-operationalization-readiness-fe041b": {
+      "types": "./dist/square-broad-operationalization-readiness-fe041b.d.ts",
+      "default": "./dist/square-broad-operationalization-readiness-fe041b.js"
     }
   },
   "files": [

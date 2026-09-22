@@ -14,10 +14,14 @@ const PACKAGE_VERSION = '0.0.0';
 const PUBLIC_EXPORT_PATH = './preview-engine';
 const CANONICAL_REGISTRY_EXPORT_PATH =
   './product-neutral-observation-contract-fe035b';
+const OPERATIONALIZATION_READINESS_EXPORT_PATH =
+  './square-broad-operationalization-readiness-fe041b';
 const FE019_CONTRACT_VERSION =
   'FE019-DIRECT-BLOB-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1';
 const FE035B_CONTRACT_VERSION =
   'FE035B-PRODUCT-NEUTRAL-OBSERVATION-CONTRACT-v1';
+const FE041B_CONTRACT_VERSION =
+  'FE041B-SQUARE-BROAD-OPERATIONALIZATION-READINESS-v1';
 const MEDIAPIPE_VERSION = '0.10.35';
 const MANIFEST_SCHEMA =
   'fe021-preview-consumer-handoff-manifest-v1';
@@ -69,6 +73,7 @@ const manifest = Object.freeze({
     publicExportPath: PUBLIC_EXPORT_PATH,
     compatibleAdditiveExportPaths: Object.freeze([
       CANONICAL_REGISTRY_EXPORT_PATH,
+      OPERATIONALIZATION_READINESS_EXPORT_PATH,
     ]),
     private: true,
   }),
@@ -79,6 +84,7 @@ const manifest = Object.freeze({
   contract: Object.freeze({
     fe019: FE019_CONTRACT_VERSION,
     fe035b: FE035B_CONTRACT_VERSION,
+    fe041b: FE041B_CONTRACT_VERSION,
   }),
   runtimeDependency: Object.freeze({
     package: '@mediapipe/tasks-vision',
@@ -91,6 +97,7 @@ const manifest = Object.freeze({
     registryPublished: false,
     handoffOnly: true,
     canonicalRegistryExportPresent: true,
+    operationalizationReadinessExportPresent: true,
     productionInterpretationAuthorityIssued: false,
   }),
 });
@@ -110,5 +117,6 @@ process.stdout.write(
     sourceCommit: manifest.source.commit,
     registryPublished: false,
     canonicalRegistryExportPresent: true,
+    operationalizationReadinessExportPresent: true,
   })}\n`,
 );
