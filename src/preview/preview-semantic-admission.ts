@@ -20,6 +20,10 @@ import {
   GENERAL_NATAL_WANG_SHUAI_QIANG_RUO_SEMANTIC_AXIS_VERSION,
 } from '../research/general-natal-wang-shuai-qiang-ruo-semantic-axis-authority.js';
 import {
+  CAREER_NATAL_READING_CANDIDATE_VERSION,
+  CAREER_NATAL_READING_METHODOLOGY,
+} from '../research/career-natal-reading-candidate.js';
+import {
   WEALTH_NATAL_READING_CANDIDATE_VERSION,
   WEALTH_NATAL_READING_METHODOLOGY,
 } from '../research/wealth-natal-reading-candidate.js';
@@ -32,7 +36,7 @@ import {
 export const PREVIEW_SEMANTIC_ADMISSION_SCHEMA_VERSION =
   'myeonghwa-preview-semantic-admission-v1' as const;
 export const PREVIEW_SEMANTIC_ADMISSION_REGISTRY_VERSION =
-  'myeonghwa-preview-semantic-admission-registry-2026-09-23-v1' as const;
+  'myeonghwa-preview-semantic-admission-registry-2026-09-23-v2' as const;
 
 export type PreviewSemanticAdmissionDisposition =
   | 'claim'
@@ -228,6 +232,29 @@ const ENTRIES: readonly PreviewSemanticAdmissionEntryV1[] = Object.freeze([
       'NO_CHART_LEVEL_WANG_SHUAI_CLASSIFIER',
       'NO_CHART_LEVEL_QIANG_RUO_CLASSIFIER',
       'NO_NUMERIC_OR_NONNUMERIC_STRENGTH_SCALAR',
+    ],
+  }),
+  entry({
+    admissionId: 'preview-baseline-career-natal-research-candidate-v1',
+    researchRef: {
+      researchId: 'CAREER_NATAL_READING_CANDIDATE',
+      modulePath: 'src/research/career-natal-reading-candidate.ts',
+      expectedVersion: '0.5.0-research',
+      observedVersion: CAREER_NATAL_READING_CANDIDATE_VERSION,
+      expectedAuthorityState: 'research',
+      observedAuthorityState: CAREER_NATAL_READING_METHODOLOGY.status,
+    },
+    targetSections: ['career:natal'],
+    semanticScope: 'existing_ga_open_career_exact_ten_god_channel_conclusions',
+    disposition: 'claim',
+    rationale:
+      'Pins the existing ga-open Career Preview candidate while allowing its already-rendered Korean meaning to be projected from one source-owned semantic-copy definition into canonical semantics without mutating the claim payload.',
+    boundaries: [
+      'PREVIEW_BASELINE_ONLY',
+      'NO_SPECIFIC_OCCUPATION_ASSIGNMENT',
+      'NO_CAREER_SUCCESS_OR_INCOME_OUTCOME',
+      'NO_FUTURE_CAREER_TIMING',
+      'NO_NUMERIC_SCORING',
     ],
   }),
   entry({

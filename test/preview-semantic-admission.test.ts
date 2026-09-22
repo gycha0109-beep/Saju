@@ -11,7 +11,7 @@ describe('Preview semantic admission registry v1', () => {
     const registry = createPreviewSemanticAdmissionRegistryV1();
 
     expect(registry.registryVersion).toBe(PREVIEW_SEMANTIC_ADMISSION_REGISTRY_VERSION);
-    expect(registry.entries).toHaveLength(6);
+    expect(registry.entries).toHaveLength(7);
     expect(registry.constraints).toEqual({
       explicitAdmissionRequired: true,
       researchMergeDoesNotImplyAdmission: true,
@@ -68,6 +68,20 @@ describe('Preview semantic admission registry v1', () => {
     expect(admission.effects.mayCreatePreviewClaim).toBe(false);
     expect(admission.effects.mayQualifyPreviewClaim).toBe(false);
     expect(admission.boundaries).toContain('NO_CHART_LEVEL_QIANG_RUO_CLASSIFIER');
+  });
+
+  it('pins the current Career candidate as a ga-open Preview baseline, not Production authority', () => {
+    const admission = requirePreviewSemanticAdmissionV1(
+      'CAREER_NATAL_READING_CANDIDATE',
+      'career:natal',
+    );
+
+    expect(admission.disposition).toBe('claim');
+    expect(admission.semanticScope).toBe(
+      'existing_ga_open_career_exact_ten_god_channel_conclusions',
+    );
+    expect(admission.boundaries).toContain('NO_SPECIFIC_OCCUPATION_ASSIGNMENT');
+    expect(admission.effects.mayAffectProductionAuthority).toBe(false);
   });
 
   it('pins the current Wealth candidate as a ga-open Preview baseline, not Production authority', () => {

@@ -15,6 +15,20 @@ export interface CanonicalReadingSemanticTextV1 {
   summary?: string;
 }
 
+export interface CanonicalReadingSemanticTextProvenanceV1 {
+  admissionId: string;
+  admissionRegistryVersion: string;
+  researchId: string;
+  researchVersion: string;
+  authorityState: string;
+}
+
+export interface CanonicalReadingSemanticTextBindingV1 {
+  targetClaimId: string;
+  canonicalText: CanonicalReadingSemanticTextV1;
+  provenance: CanonicalReadingSemanticTextProvenanceV1;
+}
+
 export type CanonicalReadingSemanticQualifierKind =
   | 'condition'
   | 'qualifier'
@@ -55,6 +69,7 @@ export interface CanonicalReadingSemanticUnitV1 {
   predicate: string;
   semanticKey: string;
   canonicalText?: CanonicalReadingSemanticTextV1;
+  canonicalTextProvenance?: CanonicalReadingSemanticTextProvenanceV1;
   semanticPayload: unknown;
   methodologyRef: InterpretationClaim['methodologyRef'];
   ruleRefs: InterpretationClaim['ruleRefs'];
@@ -95,6 +110,7 @@ export interface CanonicalReadingSemanticProjectionInputV1 {
   intent: ReadingIntent;
   evidence: NarrativeEvidenceBundle;
   targetClaimIds: readonly string[];
+  semanticTextBindings?: readonly CanonicalReadingSemanticTextBindingV1[];
   semanticQualifierBindings?: readonly CanonicalReadingSemanticQualifierBindingV1[];
 }
 
@@ -131,6 +147,51 @@ function canonicalText(value: unknown): CanonicalReadingSemanticTextV1 | undefin
     ...(headline === undefined ? {} : { headline }),
     ...(summary === undefined ? {} : { summary }),
   };
+}
+
+function normalizedTextProvenance(
+  provenance: CanonicalReadingSemanticTextProvenanceV1,
+): CanonicalReadingSemanticTextProvenanceV1 {
+  const normalized = {
+    admissionId: provenance.admissionId.trim(),
+    admissionRegistryVersion: provenance.admissionRegistryVersion.trim(),
+    researchId: provenance.researchId.trim(),
+    researchVersion: provenance.researchVersion.trim(),
+    authorityState: provenance.authorityState.trim(),
+  };
+  if (Object.values(normalized).some((value) => value.length === 0)) {
+    throw new TypeError('Canonical Reading semantic text provenance must be complete.');
+  }
+  return normalized;
+}
+
+function semanticTextBindingsByClaimId(
+  bindings: readonly CanonicalReadingSemanticTextBindingV1[],
+  targetClaimIds: ReadonlySet<string>,
+): ReadonlyMap<string, CanonicalReadingSemanticTextBindingV1> {
+  const result = new Map<string, CanonicalReadingSemanticTextBindingV1>();
+  for (const binding of bindings) {
+    if (!targetClaimIds.has(binding.targetClaimId)) {
+      throw new TypeError(
+        `Canonical Reading semantic text binding targets a non-primary claim: ${binding.targetClaimId}`,
+      );
+    }
+    if (result.has(binding.targetClaimId)) {
+      throw new TypeError(
+        `Duplicate Canonical Reading semantic text binding: ${binding.targetClaimId}`,
+      );
+    }
+    const text = canonicalText(binding.canonicalText);
+    if (text === undefined) {
+      throw new TypeError('Canonical Reading semantic text binding requires canonicalText.');
+    }
+    result.set(binding.targetClaimId, {
+      targetClaimId: binding.targetClaimId,
+      canonicalText: text,
+      provenance: normalizedTextProvenance(binding.provenance),
+    });
+  }
+  return result;
 }
 
 function prohibitedExtensions(value: unknown): readonly string[] {
@@ -257,9 +318,25 @@ function unitMaterial(
   claim: InterpretationClaim,
   role: CanonicalReadingSemanticRole,
   relations: readonly ClaimRelation[],
+  semanticTextBinding?: CanonicalReadingSemanticTextBindingV1,
   semanticQualifiers: readonly CanonicalReadingSemanticQualifierV1[] = [],
 ) {
-  const text = canonicalText(claim.value);
+  const claimText = canonicalText(claim.value);
+  const boundText = semanticTextBinding?.canonicalText;
+  if (
+    claimText !== undefined &&
+    boundText !== undefined &&
+    deterministicContentHash(claimText) !== deterministicContentHash(boundText)
+  ) {
+    throw new TypeError(
+      `Canonical Reading semantic text binding conflicts with claim-owned text: ${claim.claimId}`,
+    );
+  }
+  const text = claimText ?? boundText;
+  const textProvenance =
+    claimText === undefined && boundText !== undefined
+      ? semanticTextBinding?.provenance
+      : undefined;
   const qualifiers = semanticQualifiers.map(normalizedQualifier);
   const qualifierProhibitions = qualifiers.flatMap(
     (qualifier) => qualifier.prohibitedExtensions,
@@ -274,6 +351,9 @@ function unitMaterial(
     predicate: claim.predicate,
     semanticKey: semanticKey(claim),
     ...(text === undefined ? {} : { canonicalText: text }),
+    ...(textProvenance === undefined
+      ? {}
+      : { canonicalTextProvenance: normalizedTextProvenance(textProvenance) }),
     semanticPayload: claim.value,
     methodologyRef: claim.methodologyRef,
     ruleRefs: claim.ruleRefs,
@@ -298,9 +378,16 @@ function makeUnit(
   claim: InterpretationClaim,
   role: CanonicalReadingSemanticRole,
   relations: readonly ClaimRelation[],
+  semanticTextBinding?: CanonicalReadingSemanticTextBindingV1,
   semanticQualifiers: readonly CanonicalReadingSemanticQualifierV1[] = [],
 ): CanonicalReadingSemanticUnitV1 {
-  const material = unitMaterial(claim, role, relations, semanticQualifiers);
+  const material = unitMaterial(
+    claim,
+    role,
+    relations,
+    semanticTextBinding,
+    semanticQualifiers,
+  );
   return {
     unitId: `canonical_reading_unit_${deterministicContentHash({
       projectionVersion: CANONICAL_READING_SEMANTIC_PROJECTION_VERSION,
@@ -347,6 +434,10 @@ export function buildCanonicalReadingSemanticBundleV1(
   }
 
   const targetSet = new Set(targetClaimIds);
+  const textBindings = semanticTextBindingsByClaimId(
+    input.semanticTextBindings ?? [],
+    targetSet,
+  );
   const qualifierBindings = qualifierBindingsByClaimId(
     input.semanticQualifierBindings ?? [],
     claimIds,
@@ -359,6 +450,7 @@ export function buildCanonicalReadingSemanticBundleV1(
       claim,
       targetSet.has(claim.claimId) ? 'primary' : 'supporting',
       relations,
+      textBindings.get(claim.claimId),
       qualifierBindings.get(claim.claimId) ?? [],
     ),
   );
@@ -440,6 +532,13 @@ export function assertCanonicalReadingSemanticBundleV1(
       },
       unit.role,
       value.claimRelations,
+      unit.canonicalTextProvenance === undefined || unit.canonicalText === undefined
+        ? undefined
+        : {
+            targetClaimId: unit.claimId,
+            canonicalText: unit.canonicalText,
+            provenance: unit.canonicalTextProvenance,
+          },
       unit.semanticQualifiers ?? [],
     );
     if (unit.unitId !== expected.unitId) {
