@@ -1,0 +1,33 @@
+name: Dispatch Production Cloud Run Rollback Drill 388
+
+on:
+  push:
+    branches:
+      - ops/dispatch-production-rollback-drill-388-20260922
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    name: dispatch-production-cloud-run-rollback-drill
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Dispatch exact-main governed rollback drill
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_MAIN_SHA: bbd58a5aaec3ddeff8b22b25ffbce52946f97eeb
+          SOURCE_DEPLOYMENT_RUN_ID: '35622856668'
+          ACTIVE_BEARER_VERSION: '1'
+        run: |
+          set -euo pipefail
+
+          main_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          [[ "$main_sha" == "$EXPECTED_MAIN_SHA" ]] || {
+            echo "::error title=Rollback drill dispatch blocked::main moved from expected SHA."
+            exit 1
+          }
+
+          gh workflow run production-cloud-run-rollback-drill.yml             --repo "$GITHUB_REPOSITORY"             --ref main             -f confirmation=RUN_PRODUCTION_ROLLBACK_DRILL             -f source_deployment_run_id="$SOURCE_DEPLOYMENT_RUN_ID"             -f active_bearer_secret_version="$ACTIVE_BEARER_VERSION"             -f watchtower_track=ops
