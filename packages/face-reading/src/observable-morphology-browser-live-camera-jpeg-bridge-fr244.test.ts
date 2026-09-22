@@ -286,4 +286,64 @@ describe('FR244 governed browser live-camera JPEG bridge', () => {
     expect(contract.authorityBoundary.empiricalRepeatabilityEstablished).toBe(false);
     expect(contract.authorityBoundary.productionActivated).toBe(false);
   });
+
+  it('prepares and disposes an async provider-backed primary metric binding on the exact frame/JPEG pair', async () => {
+    const s = setupDryRun();
+    const cameraFixture = makeCameraFixture();
+    const camera = await openMesh6HBrowserCamera(
+      { video: cameraFixture.video },
+      cameraFixture.environment,
+    );
+    const jpeg = new Uint8Array([0xff, 0xd8, 0x33, 0x44, 0xff, 0xd9]);
+    const dispose = vi.fn();
+    const prepare = vi.fn(async (input: {
+      readonly image: unknown;
+      readonly width: number;
+      readonly height: number;
+      readonly providerRunRef: string;
+      readonly jpegBytes: Uint8Array;
+    }) => ({
+      providerBackedPrimaryMetricBinding: true as const,
+      rawImageDigestComputed: false as const,
+      rawImageDigestPersisted: false as const,
+      primaryMetricExtractor(ephemeralBytes: Uint8Array) {
+        expect(Array.from(ephemeralBytes)).toEqual(Array.from(input.jpegBytes));
+        return {
+          metricRef: 'neutral.eye.outer_corner_tilt.mean_degrees@0.1.0' as const,
+          unit: 'degree' as const,
+          value: 2.25,
+        };
+      },
+      dispose,
+    }));
+
+    const result = await executeGovernedBrowserLiveCameraCaptureFR244({
+      camera,
+      trigger: { timestampMs: 4000, providerRunRef: 'provider:fr244:prepared' },
+      runtime: s.fr243,
+      frameIntakeRuntime: s.fr242,
+      session: s.session,
+      challenge: s.challenge,
+      qualityEvaluator: passQuality,
+      primaryMetricBindingPreparer: { prepare },
+      operatorAttestation: attestation(),
+      jpegEncoder: {
+        async encodeJpeg() {
+          return jpeg;
+        },
+      },
+    });
+
+    expect(prepare).toHaveBeenCalledTimes(1);
+    const preparedInput = prepare.mock.calls[0]![0];
+    expect(preparedInput.width).toBe(640);
+    expect(preparedInput.height).toBe(480);
+    expect(preparedInput.providerRunRef).toBe('provider:fr244:prepared');
+    expect(result.fr243Record.primaryMetric?.value).toBe(2.25);
+    expect(dispose).toHaveBeenCalledTimes(1);
+    expect(Array.from(jpeg)).toEqual([0, 0, 0, 0, 0, 0]);
+    expect(cameraFixture.counters.bitmapClose).toBe(1);
+    camera.close();
+  });
+
 });
