@@ -188,14 +188,6 @@ function collectInternalTokens(artifact: ReadingArtifact): readonly string[] {
   add(artifact.provenance.interpretationRunId);
   add(artifact.provenance.narrativeRunId);
   add(artifact.provenance.readingVersion);
-  add(artifact.provenance.canonicalSemanticRef?.schemaVersion);
-  add(artifact.provenance.canonicalSemanticRef?.projectionVersion);
-  add(artifact.provenance.canonicalSemanticRef?.semanticHash);
-  add(artifact.provenance.officialReadingPlanRef?.schemaVersion);
-  add(artifact.provenance.officialReadingPlanRef?.policyVersion);
-  add(artifact.provenance.officialReadingPlanRef?.planId);
-  add(artifact.provenance.officialReadingPlanRef?.planHash);
-  add(artifact.provenance.officialReadingRendererVersion);
 
   for (const entry of artifact.explainability.entries) {
     add(entry.explainabilityRef);
