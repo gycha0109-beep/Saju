@@ -131,7 +131,9 @@ describe('Official Reading Artifact V1', () => {
 
     expect(artifact.schemaVersion).toBe(OFFICIAL_READING_ARTIFACT_SCHEMA_VERSION);
     expect(artifact.readingId).toMatch(/^official_reading_[a-f0-9]{24}$/u);
-    expect(artifact.status).toBe('ready');
+    expect(artifact.status).toBe(
+      currentSnapshot.completeness.fullyResolved ? 'ready' : 'ready_with_ambiguity',
+    );
     expect(artifact.sections).toEqual(report.sections);
     expect(artifact.disclosures).toEqual(report.disclosures);
     expect(artifact.explainability).toEqual(report.explainability);
