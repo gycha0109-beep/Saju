@@ -68,13 +68,25 @@ function stringValue(value: unknown, key: string): string | undefined {
 }
 
 function canonicalMeaning(unit: CanonicalReadingSemanticUnitV1): string {
-  const summary = unit.canonicalText?.summary;
-  if (summary !== undefined && summary.trim().length > 0) return summary.trim();
-  const headline = unit.canonicalText?.headline;
-  if (headline !== undefined && headline.trim().length > 0) return headline.trim();
-  throw new TypeError(
-    `Canonical Reading primary unit has no realizable canonical text: ${unit.unitId}`,
-  );
+  const primaryMeaning =
+    unit.canonicalText?.summary?.trim() ?? unit.canonicalText?.headline?.trim();
+  if (primaryMeaning === undefined || primaryMeaning.length === 0) {
+    throw new TypeError(
+      `Canonical Reading primary unit has no realizable canonical text: ${unit.unitId}`,
+    );
+  }
+  const qualifierMeanings = [
+    ...new Set(
+      (unit.semanticQualifiers ?? [])
+        .map(
+          (qualifier) =>
+            qualifier.canonicalText?.summary?.trim() ??
+            qualifier.canonicalText?.headline?.trim(),
+        )
+        .filter((value): value is string => value !== undefined && value.length > 0),
+    ),
+  ];
+  return [primaryMeaning, ...qualifierMeanings].join('\n');
 }
 
 function axisFor(
@@ -194,9 +206,13 @@ function qualifiersFor(unit: CanonicalReadingSemanticUnitV1): readonly string[] 
           (value): value is string => typeof value === 'string' && value.trim().length > 0,
         )
       : [];
+  const admittedQualifierKeys = (unit.semanticQualifiers ?? []).flatMap(
+    (qualifier) => qualifier.semanticKeys,
+  );
   return [
     ...new Set([
       ...payloadQualifiers,
+      ...admittedQualifierKeys,
       ...(unit.scenarioRef === undefined ? [] : [`scenario:${unit.scenarioRef}`]),
       ...(unit.polarity === undefined ? [] : [`polarity:${unit.polarity}`]),
       ...(unit.emphasis === undefined ? [] : [`emphasis:${unit.emphasis}`]),

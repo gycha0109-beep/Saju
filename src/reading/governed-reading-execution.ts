@@ -34,6 +34,7 @@ import {
   type ProductReadingPreparationState,
 } from './product-reading-integration.js';
 import type { ConsumerReadingRequestInput } from './consumer-reading-request-adapter.js';
+import { buildPreviewSemanticQualifierBindingsV1 } from '../preview/preview-semantic-qualifier-projection.js';
 
 export const GOVERNED_READING_EXECUTION_VERSION =
   'myeonghwa-governed-reading-execution-v1';
@@ -183,10 +184,17 @@ export async function executeProductReading(
     );
   }
 
+  const semanticQualifierBindings = buildPreviewSemanticQualifierBindingsV1({
+    intent: preparation.normalization.request.intent,
+    registry,
+    evidence: preparation.narrativeRequest.evidenceBundle,
+    targetClaimIds: preparation.composition.selection.targetClaimIds,
+  });
   const canonicalSemantics = buildCanonicalReadingSemanticBundleV1({
     intent: preparation.normalization.request.intent,
     evidence: preparation.narrativeRequest.evidenceBundle,
     targetClaimIds: preparation.composition.selection.targetClaimIds,
+    semanticQualifierBindings,
   });
   const officialReadingPlan = buildOfficialReadingPlanV1(canonicalSemantics);
   const officialReadingReport = canRenderOfficialReadingV1(

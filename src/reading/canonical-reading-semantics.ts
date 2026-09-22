@@ -15,6 +15,35 @@ export interface CanonicalReadingSemanticTextV1 {
   summary?: string;
 }
 
+export type CanonicalReadingSemanticQualifierKind =
+  | 'condition'
+  | 'qualifier'
+  | 'tension'
+  | 'boundary';
+
+export interface CanonicalReadingSemanticQualifierProvenanceV1 {
+  admissionId: string;
+  admissionRegistryVersion: string;
+  researchId: string;
+  researchVersion: string;
+  authorityState: string;
+}
+
+export interface CanonicalReadingSemanticQualifierV1 {
+  qualifierId: string;
+  kind: CanonicalReadingSemanticQualifierKind;
+  semanticScope: string;
+  semanticKeys: readonly string[];
+  canonicalText?: CanonicalReadingSemanticTextV1;
+  prohibitedExtensions: readonly string[];
+  provenance: CanonicalReadingSemanticQualifierProvenanceV1;
+}
+
+export interface CanonicalReadingSemanticQualifierBindingV1 {
+  targetClaimId: string;
+  qualifier: CanonicalReadingSemanticQualifierV1;
+}
+
 export interface CanonicalReadingSemanticUnitV1 {
   unitId: string;
   role: CanonicalReadingSemanticRole;
@@ -34,6 +63,7 @@ export interface CanonicalReadingSemanticUnitV1 {
   researchEvidenceRefs: readonly string[];
   sourceRefs: readonly string[];
   relationRefs: readonly string[];
+  semanticQualifiers?: readonly CanonicalReadingSemanticQualifierV1[];
   prohibitedExtensions: readonly string[];
   polarity?: InterpretationClaim['polarity'];
   emphasis?: InterpretationClaim['emphasis'];
@@ -65,6 +95,7 @@ export interface CanonicalReadingSemanticProjectionInputV1 {
   intent: ReadingIntent;
   evidence: NarrativeEvidenceBundle;
   targetClaimIds: readonly string[];
+  semanticQualifierBindings?: readonly CanonicalReadingSemanticQualifierBindingV1[];
 }
 
 export function isCanonicalReadingScopeGuardUnitV1(
@@ -116,6 +147,88 @@ function prohibitedExtensions(value: unknown): readonly string[] {
     .sort();
 }
 
+function normalizedQualifier(
+  qualifier: CanonicalReadingSemanticQualifierV1,
+): CanonicalReadingSemanticQualifierV1 {
+  if (qualifier.qualifierId.trim().length === 0) {
+    throw new TypeError('Canonical Reading semantic qualifier requires qualifierId.');
+  }
+  if (qualifier.semanticScope.trim().length === 0) {
+    throw new TypeError('Canonical Reading semantic qualifier requires semanticScope.');
+  }
+  if (
+    qualifier.provenance.admissionId.trim().length === 0 ||
+    qualifier.provenance.admissionRegistryVersion.trim().length === 0 ||
+    qualifier.provenance.researchId.trim().length === 0 ||
+    qualifier.provenance.researchVersion.trim().length === 0 ||
+    qualifier.provenance.authorityState.trim().length === 0
+  ) {
+    throw new TypeError('Canonical Reading semantic qualifier requires complete provenance.');
+  }
+  const semanticKeys = [
+    ...new Set(
+      qualifier.semanticKeys
+        .map((key) => key.trim())
+        .filter((key) => key.length > 0),
+    ),
+  ].sort();
+  if (semanticKeys.length === 0) {
+    throw new RangeError('Canonical Reading semantic qualifier requires semanticKeys.');
+  }
+  const normalizedText = canonicalText(qualifier.canonicalText);
+  return {
+    qualifierId: qualifier.qualifierId.trim(),
+    kind: qualifier.kind,
+    semanticScope: qualifier.semanticScope.trim(),
+    semanticKeys,
+    ...(normalizedText === undefined ? {} : { canonicalText: normalizedText }),
+    prohibitedExtensions: [
+      ...new Set(
+        qualifier.prohibitedExtensions
+          .map((extension) => extension.trim())
+          .filter((extension) => extension.length > 0),
+      ),
+    ].sort(),
+    provenance: {
+      admissionId: qualifier.provenance.admissionId.trim(),
+      admissionRegistryVersion: qualifier.provenance.admissionRegistryVersion.trim(),
+      researchId: qualifier.provenance.researchId.trim(),
+      researchVersion: qualifier.provenance.researchVersion.trim(),
+      authorityState: qualifier.provenance.authorityState.trim(),
+    },
+  };
+}
+
+function qualifierBindingsByClaimId(
+  bindings: readonly CanonicalReadingSemanticQualifierBindingV1[],
+  claimIds: ReadonlySet<string>,
+): ReadonlyMap<string, readonly CanonicalReadingSemanticQualifierV1[]> {
+  const result = new Map<string, CanonicalReadingSemanticQualifierV1[]>();
+  const seen = new Set<string>();
+  for (const binding of bindings) {
+    if (!claimIds.has(binding.targetClaimId)) {
+      throw new TypeError(
+        `Canonical Reading semantic qualifier targets absent claim: ${binding.targetClaimId}`,
+      );
+    }
+    const qualifier = normalizedQualifier(binding.qualifier);
+    const identity = `${binding.targetClaimId}:${qualifier.qualifierId}`;
+    if (seen.has(identity)) {
+      throw new TypeError(`Duplicate Canonical Reading semantic qualifier binding: ${identity}`);
+    }
+    seen.add(identity);
+    const current = result.get(binding.targetClaimId) ?? [];
+    current.push(qualifier);
+    result.set(binding.targetClaimId, current);
+  }
+  return new Map(
+    [...result.entries()].map(([claimId, qualifiers]) => [
+      claimId,
+      [...qualifiers].sort((left, right) => left.qualifierId.localeCompare(right.qualifierId)),
+    ]),
+  );
+}
+
 function semanticKey(claim: InterpretationClaim): string {
   return [
     claim.taxonomy.tier,
@@ -144,8 +257,13 @@ function unitMaterial(
   claim: InterpretationClaim,
   role: CanonicalReadingSemanticRole,
   relations: readonly ClaimRelation[],
+  semanticQualifiers: readonly CanonicalReadingSemanticQualifierV1[] = [],
 ) {
   const text = canonicalText(claim.value);
+  const qualifiers = semanticQualifiers.map(normalizedQualifier);
+  const qualifierProhibitions = qualifiers.flatMap(
+    (qualifier) => qualifier.prohibitedExtensions,
+  );
   return {
     role,
     claimId: claim.claimId,
@@ -164,7 +282,13 @@ function unitMaterial(
     researchEvidenceRefs: [...(claim.researchEvidenceRefs ?? [])].sort(),
     sourceRefs: [...claim.sourceRefs].sort(),
     relationRefs: relationRefsFor(claim.claimId, relations),
-    prohibitedExtensions: prohibitedExtensions(claim.value),
+    ...(qualifiers.length === 0 ? {} : { semanticQualifiers: qualifiers }),
+    prohibitedExtensions: [
+      ...new Set([
+        ...prohibitedExtensions(claim.value),
+        ...qualifierProhibitions,
+      ]),
+    ].sort(),
     ...(claim.polarity === undefined ? {} : { polarity: claim.polarity }),
     ...(claim.emphasis === undefined ? {} : { emphasis: claim.emphasis }),
   };
@@ -174,8 +298,9 @@ function makeUnit(
   claim: InterpretationClaim,
   role: CanonicalReadingSemanticRole,
   relations: readonly ClaimRelation[],
+  semanticQualifiers: readonly CanonicalReadingSemanticQualifierV1[] = [],
 ): CanonicalReadingSemanticUnitV1 {
-  const material = unitMaterial(claim, role, relations);
+  const material = unitMaterial(claim, role, relations, semanticQualifiers);
   return {
     unitId: `canonical_reading_unit_${deterministicContentHash({
       projectionVersion: CANONICAL_READING_SEMANTIC_PROJECTION_VERSION,
@@ -222,11 +347,20 @@ export function buildCanonicalReadingSemanticBundleV1(
   }
 
   const targetSet = new Set(targetClaimIds);
+  const qualifierBindings = qualifierBindingsByClaimId(
+    input.semanticQualifierBindings ?? [],
+    claimIds,
+  );
   const relations = [...input.evidence.claimRelations].sort((left, right) =>
     left.relationId.localeCompare(right.relationId),
   );
   const units = claims.map((claim) =>
-    makeUnit(claim, targetSet.has(claim.claimId) ? 'primary' : 'supporting', relations),
+    makeUnit(
+      claim,
+      targetSet.has(claim.claimId) ? 'primary' : 'supporting',
+      relations,
+      qualifierBindings.get(claim.claimId) ?? [],
+    ),
   );
 
   const withoutHash: Omit<CanonicalReadingSemanticBundleV1, 'semanticHash'> = {
@@ -306,6 +440,7 @@ export function assertCanonicalReadingSemanticBundleV1(
       },
       unit.role,
       value.claimRelations,
+      unit.semanticQualifiers ?? [],
     );
     if (unit.unitId !== expected.unitId) {
       throw new TypeError('CanonicalReadingSemanticBundleV1 unit identity is invalid.');
@@ -315,6 +450,12 @@ export function assertCanonicalReadingSemanticBundleV1(
     }
     if (deterministicContentHash(unit.canonicalText) !== deterministicContentHash(expected.canonicalText)) {
       throw new TypeError('CanonicalReadingSemanticBundleV1 canonicalText is invalid.');
+    }
+    if (
+      deterministicContentHash(unit.semanticQualifiers) !==
+      deterministicContentHash(expected.semanticQualifiers)
+    ) {
+      throw new TypeError('CanonicalReadingSemanticBundleV1 semanticQualifiers are invalid.');
     }
     if (
       deterministicContentHash(unit.prohibitedExtensions) !==

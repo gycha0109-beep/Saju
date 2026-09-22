@@ -72,6 +72,14 @@ const LIMIT_LABELS: Readonly<Record<string, string>> = Object.freeze({
   futureMoneyTimingAuthorized: '미래 금전 시기',
   futureTimingAuthorized: '미래 사건 시기',
   numericScoringAuthorized: '수치 점수·등급',
+  classificationAuthorized: '명식 전체 강약 분류',
+  fortunePolarityAuthorized: '길흉·유불리 판정',
+  upstreamEvidenceDirectionAsFortuneMeaningAuthorized:
+    '근거 방향을 길흉 의미로 확장하는 해석',
+  monthBranchExclusiveAuthority: '월지만으로 명식 전체를 단독 판정하는 것',
+  universalRootOrdering: '모든 뿌리에 적용되는 보편 순위',
+  numericMonthBranchMultiplier: '월지의 수치 가중치',
+  strengthClassifier: '신강·신약 등 전체 강약 판정',
 });
 
 function titleFor(
@@ -154,19 +162,51 @@ function primaryBlocks(units: readonly CanonicalReadingSemanticUnitV1[]) {
   return units.flatMap((unit) => {
     const headline = unit.canonicalText?.headline?.trim();
     const summary = unit.canonicalText?.summary?.trim();
-    if (headline === undefined && summary === undefined) return [];
-    if (headline !== undefined && summary !== undefined && headline !== summary) {
-      return [
-        { type: 'key_points' as const, items: [headline] },
-        { type: 'paragraph' as const, text: summary },
-      ];
-    }
-    return [{ type: 'paragraph' as const, text: summary ?? headline ?? '' }];
+    const semanticBlocks =
+      headline === undefined && summary === undefined
+        ? []
+        : headline !== undefined && summary !== undefined && headline !== summary
+          ? [
+              { type: 'key_points' as const, items: [headline] },
+              { type: 'paragraph' as const, text: summary },
+            ]
+          : [{ type: 'paragraph' as const, text: summary ?? headline ?? '' }];
+
+    const qualifierTexts = [
+      ...new Set(
+        (unit.semanticQualifiers ?? [])
+          .map(
+            (qualifier) =>
+              qualifier.canonicalText?.summary?.trim() ??
+              qualifier.canonicalText?.headline?.trim(),
+          )
+          .filter((text): text is string => text !== undefined && text.length > 0),
+      ),
+    ];
+    return [
+      ...semanticBlocks,
+      ...(qualifierTexts.length === 0
+        ? []
+        : [{ type: 'key_points' as const, items: qualifierTexts }]),
+    ];
   });
 }
 
 function limitText(prohibitedExtensions: readonly string[]): string {
-  const labels = prohibitedExtensions.map((key) => LIMIT_LABELS[key] ?? key);
+  const knownLabels = [
+    ...new Set(
+      prohibitedExtensions
+        .map((key) => LIMIT_LABELS[key])
+        .filter((label): label is string => label !== undefined),
+    ),
+  ];
+  const unknownCount = prohibitedExtensions.filter(
+    (key) => LIMIT_LABELS[key] === undefined,
+  ).length;
+  const labels = [
+    ...knownLabels,
+    ...(unknownCount === 0 ? [] : ['그 밖의 근거 범위를 벗어난 추가 결론']),
+  ];
   return `현재 근거 범위에서는 ${labels.join(' · ')}까지 확정하지 않습니다.`;
 }
 
