@@ -60,7 +60,7 @@ function snapshot(): CanonicalSajuSnapshot {
 
 function response(): ProductReadingResponse {
   return {
-    responseId: 'reading_response_business1234567890abcdef',
+    responseId: 'reading_response_abcdef1234567890abcdef34',
     responseVersion: PRODUCT_READING_RESPONSE_VERSION,
     state: 'delivered',
     messageCode: 'READING_DELIVERED',
