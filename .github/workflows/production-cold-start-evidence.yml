@@ -1,0 +1,269 @@
+name: Production Cold Start Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_latency_run_id:
+        description: Successful Production Latency Evidence run with immutable artifact
+        required: true
+        type: string
+      watchtower_track:
+        description: Watchtower Track Key for CI attribution
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-saju-cloud-run
+  cancel-in-progress: false
+
+jobs:
+  correlate:
+    name: correlate-latency-first-request-with-provider-startup
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: production-saju
+    env:
+      GCP_REGION: asia-southeast1
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+      GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+      SOURCE_LATENCY_RUN_ID: ${{ inputs.source_latency_run_id }}
+      MYEONGHA_WATCHTOWER_TRACK: ${{ inputs.watchtower_track }}
+
+    steps:
+      - name: Preflight observation-only cold-start evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF" == 'refs/heads/main' ]]
+          [[ "$SOURCE_LATENCY_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          [[ "$MYEONGHA_WATCHTOWER_TRACK" == 'ops' ]]
+          for name in GCP_PROJECT_ID GCP_WORKLOAD_IDENTITY_PROVIDER GCP_DEPLOYER_SERVICE_ACCOUNT GCP_CLOUD_RUN_SERVICE; do
+            [[ -n "${!name:-}" ]]
+          done
+
+      - name: Resolve exact successful latency run and artifact
+        id: source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          source_run="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_LATENCY_RUN_ID")"
+          jq -e '
+            .name == "Production Latency Evidence"
+            and .path == ".github/workflows/production-latency-evidence.yml"
+            and .event == "workflow_dispatch"
+            and .head_branch == "main"
+            and .status == "completed"
+            and .conclusion == "success"
+            and .repository.full_name == env.GITHUB_REPOSITORY
+          ' <<<"$source_run" >/dev/null
+
+          expected_name="saju-production-latency-evidence-$SOURCE_LATENCY_RUN_ID"
+          artifacts="$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_LATENCY_RUN_ID/artifacts?per_page=100")"
+          selected="$(jq -c --arg name "$expected_name" '
+            [.artifacts[] | select(.name == $name and (.expired == false))]
+          ' <<<"$artifacts")"
+          [[ "$(jq 'length' <<<"$selected")" == '1' ]]
+
+          artifact_id="$(jq -er '.[0].id' <<<"$selected")"
+          [[ "$artifact_id" =~ ^[1-9][0-9]*$ ]]
+          echo "artifact_id=$artifact_id" >> "$GITHUB_OUTPUT"
+
+      - name: Download exact latency evidence
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.source_latency_run_id }}
+          artifact-ids: ${{ steps.source.outputs.artifact_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/latency-authority
+
+      - name: Validate latency authority
+        id: latency
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t files < <(find "$RUNNER_TEMP/latency-authority" -type f -name 'saju-production-latency-evidence.json' -print)
+          [[ "${#files[@]}" -eq 1 ]]
+          evidence="${files[0]}"
+
+          jq -e '
+            .schemaVersion == "saju-production-latency-evidence/v1"
+            and .evidenceClass == "indicative_operational_baseline_not_slo"
+            and .endpoint == "/api/calculations"
+            and .sampleCount >= 20
+            and .acceptedCount == .sampleCount
+            and .failedCount == 0
+            and .firstObservedClassification == "first_observed_not_proven_cold_start"
+            and (.revision | type == "string" and length > 0)
+            and (.imageRef | test("@sha256:[0-9a-f]{64}$"))
+            and (.samples | length) == .sampleCount
+            and .samples[0].index == 1
+            and .samples[0].phase == "first_observed"
+            and .samples[0].status == 200
+            and .samples[0].accepted == true
+            and (.samples[0].timestampUtc | type == "string")
+            and (.samples[0].latencyMs | type == "number" and . > 0)
+          ' "$evidence" >/dev/null
+
+          revision="$(jq -er '.revision' "$evidence")"
+          first_at="$(jq -er '.samples[0].timestampUtc' "$evidence")"
+          first_latency_ms="$(jq -er '.samples[0].latencyMs' "$evidence")"
+
+          first_epoch="$(date -u -d "$first_at" +%s)"
+          latency_seconds="$(awk -v ms="$first_latency_ms" 'BEGIN { printf "%d", (ms / 1000) + 1 }')"
+          window_start="$(date -u -d "@$((first_epoch - 15))" +'%Y-%m-%dT%H:%M:%SZ')"
+          window_end="$(date -u -d "@$((first_epoch + latency_seconds + 15))" +'%Y-%m-%dT%H:%M:%SZ')"
+
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+          echo "first_at=$first_at" >> "$GITHUB_OUTPUT"
+          echo "first_latency_ms=$first_latency_ms" >> "$GITHUB_OUTPUT"
+          echo "window_start=$window_start" >> "$GITHUB_OUTPUT"
+          echo "window_end=$window_end" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+
+      - name: Correlate provider startup and request logs
+        shell: bash
+        env:
+          TARGET_REVISION: ${{ steps.latency.outputs.revision }}
+          FIRST_REQUEST_AT: ${{ steps.latency.outputs.first_at }}
+          FIRST_LATENCY_MS: ${{ steps.latency.outputs.first_latency_ms }}
+          WINDOW_START: ${{ steps.latency.outputs.window_start }}
+          WINDOW_END: ${{ steps.latency.outputs.window_end }}
+        run: |
+          set -euo pipefail
+
+          filter="resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"$GCP_CLOUD_RUN_SERVICE\" AND resource.labels.revision_name=\"$TARGET_REVISION\" AND timestamp>=\"$WINDOW_START\" AND timestamp<=\"$WINDOW_END\""
+          raw="$RUNNER_TEMP/provider-window.json"
+
+          gcloud logging read "$filter"             --project "$GCP_PROJECT_ID"             --order=asc             --limit=300             --format=json > "$raw"
+
+          jq '
+            [
+              .[]
+              | {
+                  timestamp,
+                  logName,
+                  text: (.textPayload // .jsonPayload.message // ""),
+                  requestMethod: (.httpRequest.requestMethod // null),
+                  requestUrl: (.httpRequest.requestUrl // null),
+                  requestStatus: (.httpRequest.status // null),
+                  requestLatency: (.httpRequest.latency // null)
+                }
+            ]
+          ' "$raw" > "$RUNNER_TEMP/provider-sanitized.json"
+
+          jq '
+            [
+              .[]
+              | select(
+                  (.logName | tostring | contains("run.googleapis.com%2Fvarlog%2Fsystem"))
+                  and (
+                    (.text | ascii_downcase | contains("starting new instance"))
+                    or (.text | ascii_downcase | contains("instance started"))
+                  )
+                )
+              | {timestamp, eventClass: "cloud_run_instance_start"}
+            ]
+          ' "$RUNNER_TEMP/provider-sanitized.json" > "$RUNNER_TEMP/startups.json"
+
+          jq '
+            [
+              .[]
+              | select(
+                  (.logName | tostring | contains("run.googleapis.com%2Frequests"))
+                  and .requestMethod == "POST"
+                  and (.requestUrl | tostring | contains("/api/calculations"))
+                  and .requestStatus == 200
+                )
+              | {
+                  timestamp,
+                  status: .requestStatus,
+                  latency: .requestLatency,
+                  eventClass: "cloud_run_calculation_request"
+                }
+            ]
+          ' "$RUNNER_TEMP/provider-sanitized.json" > "$RUNNER_TEMP/requests.json"
+
+          startup_count="$(jq 'length' "$RUNNER_TEMP/startups.json")"
+          request_count="$(jq 'length' "$RUNNER_TEMP/requests.json")"
+          first_epoch="$(date -u -d "$FIRST_REQUEST_AT" +%s)"
+          first_end_epoch="$(awk -v start="$first_epoch" -v ms="$FIRST_LATENCY_MS" 'BEGIN { printf "%d", start + (ms / 1000) + 1 }')"
+
+          correlated_startup_count="$(
+            jq --argjson lower "$((first_epoch - 5))" --argjson upper "$((first_end_epoch + 5))" '
+              [
+                .[]
+                | .timestamp as $ts
+                | ($ts | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) as $epoch
+                | select($epoch >= $lower and $epoch <= $upper)
+              ] | length
+            ' "$RUNNER_TEMP/startups.json"
+          )"
+
+          cold_start_proven=false
+          classification="provider_logs_readable_but_cold_start_not_proven"
+          if [ "$correlated_startup_count" -gt 0 ] && [ "$request_count" -gt 0 ]; then
+            cold_start_proven=true
+            classification="provider_startup_event_correlated_to_first_observed_request_window"
+          fi
+
+          mkdir -p "$RUNNER_TEMP/cold-start-evidence"
+          jq -n             --argjson sourceLatencyRunId "$SOURCE_LATENCY_RUN_ID"             --arg revision "$TARGET_REVISION"             --arg firstRequestAt "$FIRST_REQUEST_AT"             --argjson firstLatencyMs "$FIRST_LATENCY_MS"             --arg windowStart "$WINDOW_START"             --arg windowEnd "$WINDOW_END"             --argjson startupEventCount "$startup_count"             --argjson correlatedStartupEventCount "$correlated_startup_count"             --argjson requestLogCount "$request_count"             --argjson coldStartProven "$cold_start_proven"             --arg classification "$classification"             --slurpfile startups "$RUNNER_TEMP/startups.json"             --slurpfile requests "$RUNNER_TEMP/requests.json" '
+              {
+                schemaVersion: "saju-production-cold-start-evidence/v1",
+                evidenceClass: "provider_log_correlated_observation",
+                sourceLatencyRunId: $sourceLatencyRunId,
+                revision: $revision,
+                firstObserved: {
+                  timestampUtc: $firstRequestAt,
+                  clientWallClockLatencyMs: $firstLatencyMs
+                },
+                providerWindowUtc: {start: $windowStart, end: $windowEnd},
+                providerLogsReadable: true,
+                startupEventCount: $startupEventCount,
+                correlatedStartupEventCount: $correlatedStartupEventCount,
+                calculationRequestLogCount: $requestLogCount,
+                coldStartProven: $coldStartProven,
+                classification: $classification,
+                startupEvents: $startups[0],
+                requestEvents: $requests[0],
+                rawProviderPayloadsRetained: false,
+                credentialsRetained: false
+              }
+          ' > "$RUNNER_TEMP/cold-start-evidence/evidence.json"
+
+          cat "$RUNNER_TEMP/cold-start-evidence/evidence.json"
+          [[ "$cold_start_proven" == 'true' ]]
+
+      - name: Upload sanitized cold-start evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: saju-production-cold-start-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/cold-start-evidence/evidence.json
+          if-no-files-found: warn
+          retention-days: 90
