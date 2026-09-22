@@ -118,9 +118,6 @@ function semanticGroupFor(
     case 'life_stage':
     case 'question_specific':
       return 'interpretation';
-    case 'general':
-    case 'wealth':
-      return 'interpretation';
   }
 }
 
