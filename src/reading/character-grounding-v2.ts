@@ -187,11 +187,20 @@ function prohibitedExtensions(
 }
 
 function qualifiersFor(unit: CanonicalReadingSemanticUnitV1): readonly string[] {
+  const payloadQualifiers =
+    isRecord(unit.semanticPayload) && Array.isArray(unit.semanticPayload.qualifiers)
+      ? unit.semanticPayload.qualifiers.filter(
+          (value): value is string => typeof value === 'string' && value.trim().length > 0,
+        )
+      : [];
   return [
-    ...(unit.scenarioRef === undefined ? [] : [`scenario:${unit.scenarioRef}`]),
-    ...(unit.polarity === undefined ? [] : [`polarity:${unit.polarity}`]),
-    ...(unit.emphasis === undefined ? [] : [`emphasis:${unit.emphasis}`]),
-  ];
+    ...new Set([
+      ...payloadQualifiers,
+      ...(unit.scenarioRef === undefined ? [] : [`scenario:${unit.scenarioRef}`]),
+      ...(unit.polarity === undefined ? [] : [`polarity:${unit.polarity}`]),
+      ...(unit.emphasis === undefined ? [] : [`emphasis:${unit.emphasis}`]),
+    ]),
+  ].sort();
 }
 
 function realizationPolicyFor(
