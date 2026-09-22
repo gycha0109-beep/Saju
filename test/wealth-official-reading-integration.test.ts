@@ -173,22 +173,21 @@ describe('admitted Wealth Preview semantics -> Official Reading -> Reader', () =
     ).toBe(true);
 
     const plan = buildOfficialReadingPlanV1(semantics);
-    expect(
-      new Set(plan.sections.map((section) => section.semanticGroup)),
-    ).toEqual(
-      expect.objectContaining
-        ? new Set(plan.sections.map((section) => section.semanticGroup))
-        : new Set(),
-    );
-    expect(plan.sections.some((section) => section.semanticGroup === 'wealth')).toBe(true);
-    expect(plan.sections.some((section) => section.semanticGroup === 'decision_style')).toBe(true);
-    expect(plan.sections.some((section) => section.semanticGroup === 'management')).toBe(true);
-    expect(plan.sections.some((section) => section.semanticGroup === 'tension')).toBe(true);
-    expect(plan.sections.some((section) => section.semanticGroup === 'limits')).toBe(true);
+    for (const semanticGroup of [
+      'wealth',
+      'decision_style',
+      'management',
+      'tension',
+      'limits',
+    ] as const) {
+      expect(plan.sections.some((section) => section.semanticGroup === semanticGroup)).toBe(true);
+    }
 
     const report = renderOfficialReadingV1(semantics, plan);
     const reportJson = JSON.stringify(report.sections);
-    expect(reportJson).toContain('재물 구조 핵심');
+    expect(reportJson).toContain('가치가 만들어지는 방식');
+    expect(reportJson).toContain('돈을 쓰는 기준');
+    expect(reportJson).toContain('관리 방식');
     expect(reportJson).toContain('충돌·흔들림');
     expect(reportJson).toContain('현재 근거 범위에서는');
     for (const internalKey of [
