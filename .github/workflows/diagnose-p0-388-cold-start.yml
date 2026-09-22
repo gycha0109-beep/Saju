@@ -1,0 +1,140 @@
+name: Diagnose P0-OPS-01 Cold Start Evidence
+
+on:
+  push:
+    branches:
+      - ops/diagnose-p0-388-cold-start-20260922
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  diagnose:
+    name: correlate-first-request-with-cloud-run-startup
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: production-saju
+    env:
+      GCP_REGION: asia-southeast1
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+      GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+      TARGET_REVISION: saju-production-00013-lar
+      WINDOW_START: '2026-09-21T22:50:30Z'
+      WINDOW_END: '2026-09-21T22:50:50Z'
+      FIRST_REQUEST_AT: '2026-09-21T22:50:40.513Z'
+
+    steps:
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+
+      - name: Read and sanitize Cloud Run startup/request correlation
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          filter="resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"$GCP_CLOUD_RUN_SERVICE\" AND resource.labels.revision_name=\"$TARGET_REVISION\" AND timestamp>=\"$WINDOW_START\" AND timestamp<=\"$WINDOW_END\""
+
+          raw="$RUNNER_TEMP/cold-start-window.json"
+          if ! gcloud logging read "$filter"             --project "$GCP_PROJECT_ID"             --order=asc             --limit=200             --format=json > "$raw"
+          then
+            jq -n               --arg revision "$TARGET_REVISION"               --arg firstRequestAt "$FIRST_REQUEST_AT"               '{
+                schemaVersion: "saju-production-cold-start-correlation/v1",
+                revision: $revision,
+                firstRequestAtUtc: $firstRequestAt,
+                providerLogsReadable: false,
+                coldStartProven: false,
+                classification: "provider_logging_permission_or_read_failure"
+              }'
+            exit 1
+          fi
+
+          jq -c '
+            .[]
+            | {
+                timestamp,
+                logName,
+                severity,
+                text: (.textPayload // ""),
+                httpLatency: (.httpRequest.latency // null),
+                httpStatus: (.httpRequest.status // null)
+              }
+          ' "$raw" > "$RUNNER_TEMP/sanitized-lines.jsonl"
+
+          startup="$RUNNER_TEMP/startup.json"
+          jq -s '
+            [
+              .[]
+              | select(
+                  (.logName | tostring | contains("varlog%2Fsystem"))
+                  and (
+                    (.text | ascii_downcase | contains("starting new instance"))
+                    or (.text | ascii_downcase | contains("instance started"))
+                    or (.text | ascii_downcase | contains("startup"))
+                  )
+                )
+              | {timestamp, eventClass: "cloud_run_instance_start"}
+            ]
+          ' "$RUNNER_TEMP/sanitized-lines.jsonl" > "$startup"
+
+          requests="$RUNNER_TEMP/requests.json"
+          jq -s '
+            [
+              .[]
+              | select(
+                  (.logName | tostring | contains("run.googleapis.com%2Frequests"))
+                  and .httpStatus != null
+                )
+              | {timestamp, status: .httpStatus, latency: .httpLatency}
+            ]
+          ' "$RUNNER_TEMP/sanitized-lines.jsonl" > "$requests"
+
+          startup_count="$(jq 'length' "$startup")"
+          request_count="$(jq 'length' "$requests")"
+
+          jq -n             --arg revision "$TARGET_REVISION"             --arg windowStart "$WINDOW_START"             --arg windowEnd "$WINDOW_END"             --arg firstRequestAt "$FIRST_REQUEST_AT"             --argjson startupCount "$startup_count"             --argjson requestCount "$request_count"             --slurpfile startups "$startup"             --slurpfile requests "$requests" '
+              {
+                schemaVersion: "saju-production-cold-start-correlation/v1",
+                revision: $revision,
+                windowUtc: {start: $windowStart, end: $windowEnd},
+                firstRequestAtUtc: $firstRequestAt,
+                providerLogsReadable: true,
+                startupEventCount: $startupCount,
+                requestLogCount: $requestCount,
+                startupEvents: $startups[0],
+                requests: $requests[0],
+                coldStartProven: (
+                  $startupCount > 0
+                  and $requestCount > 0
+                  and (
+                    [
+                      $startups[0][].timestamp
+                      | fromdateiso8601
+                      | select(. >= (($firstRequestAt | fromdateiso8601) - 10))
+                      | select(. <= (($firstRequestAt | fromdateiso8601) + 10))
+                    ] | length
+                  ) > 0
+                ),
+                classification: (
+                  if $startupCount > 0 and $requestCount > 0 then
+                    "provider_startup_and_request_logs_present_in_first_observed_window"
+                  else
+                    "provider_logs_readable_but_cold_start_not_proven"
+                  end
+                )
+              }
+          ' > "$RUNNER_TEMP/cold-start-evidence.json"
+
+          cat "$RUNNER_TEMP/cold-start-evidence.json"
