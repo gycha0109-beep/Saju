@@ -1,7 +1,5 @@
 import type {
   CanonicalSajuSnapshot,
-  FactState,
-  PillarFact,
   ReadingArtifact,
   ReadingBlockView,
   ReadingDisclosureView,
@@ -11,6 +9,7 @@ import type {
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import type { NarrativeGenerationResult } from '../llm/narrative-orchestrator.js';
+import { buildReadingArtifactShell } from './reading-artifact-shell.js';
 
 export const READING_ARTIFACT_SCHEMA_VERSION = 'myeonghwa-reading-artifact-v1';
 
@@ -18,59 +17,6 @@ export interface ReadingArtifactAssemblyOptions {
   readingVersion: string;
   generatedAt?: Date;
   displayLabel?: string;
-}
-
-function pad(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
-function displayDate(snapshot: CanonicalSajuSnapshot): string {
-  const { year, month, day } = snapshot.input.date;
-  return `${year}-${pad(month)}-${pad(day)}`;
-}
-
-function displayTime(snapshot: CanonicalSajuSnapshot): string | undefined {
-  if (!snapshot.input.time.known) return undefined;
-  return `${pad(snapshot.input.time.hour)}:${pad(snapshot.input.time.minute)}`;
-}
-
-function formatPillar(value: PillarFact): string {
-  return `${value.stem.value}${value.branch.value} (${value.stem.hanja}${value.branch.hanja})`;
-}
-
-function pillarDisplayFact(
-  label: string,
-  state: FactState<PillarFact>,
-): ReadingArtifact['calculationSummary']['pillars']['year'] {
-  if (state.status === 'resolved') {
-    return { label, value: formatPillar(state.value), status: 'resolved' };
-  }
-  if (state.status === 'ambiguous') {
-    const values = [...new Set(state.candidates.map((candidate) => formatPillar(candidate.value)))];
-    return {
-      label,
-      ...(values.length === 0 ? {} : { value: values.join(' / ') }),
-      status: 'ambiguous',
-    };
-  }
-  return { label, status: 'unavailable' };
-}
-
-function calculationState(
-  snapshot: CanonicalSajuSnapshot,
-): ReadingArtifact['subject']['calculationState'] {
-  if (snapshot.completeness.fullyResolved) return 'resolved';
-  if (snapshot.completeness.resolvedPaths.length > 0) return 'partially_ambiguous';
-  return 'insufficient_input';
-}
-
-function ambiguityViews(snapshot: CanonicalSajuSnapshot) {
-  return snapshot.completeness.ambiguousPaths.map((path) => ({
-    ambiguityId: `ambiguity_${deterministicContentHash({ snapshotId: snapshot.snapshotId, path }).slice(0, 16)}`,
-    title: '계산 불확실성',
-    summary: '입력 정보 또는 계산 경계 때문에 이 항목은 하나의 값으로 확정되지 않았습니다.',
-    affectedPaths: [path],
-  }));
 }
 
 function readingStatus(
@@ -245,8 +191,9 @@ export function assembleReadingArtifact(
 
   const generatedAt = options.generatedAt ?? new Date();
   const content = buildSectionsAndIndexes(narrative, interpretation);
-  const time = displayTime(snapshot);
-  const ambiguity = ambiguityViews(snapshot);
+  const shell = buildReadingArtifactShell(snapshot, {
+    ...(options.displayLabel === undefined ? {} : { displayLabel: options.displayLabel }),
+  });
   const identityMaterial = {
     schemaVersion: READING_ARTIFACT_SCHEMA_VERSION,
     readingVersion: options.readingVersion,
@@ -263,32 +210,7 @@ export function assembleReadingArtifact(
     readingId,
     schemaVersion: READING_ARTIFACT_SCHEMA_VERSION,
     status: readingStatus(snapshot, interpretation, narrative),
-    brand: { brandId: 'myeonghwa', displayName: '명화' },
-    subject: {
-      ...(options.displayLabel === undefined ? {} : { displayLabel: options.displayLabel }),
-      birthInputDisplay: {
-        calendarType: snapshot.input.calendarType,
-        date: displayDate(snapshot),
-        ...(time === undefined ? {} : { time }),
-        timeKnown: snapshot.input.time.known,
-        ...(snapshot.input.calendarType === 'lunar'
-          ? { leapMonth: snapshot.input.isLeapMonth ?? false }
-          : {}),
-        ...(snapshot.input.birthplace?.label === undefined
-          ? {}
-          : { birthplaceLabel: snapshot.input.birthplace.label }),
-      },
-      calculationState: calculationState(snapshot),
-    },
-    calculationSummary: {
-      pillars: {
-        year: pillarDisplayFact('년주', snapshot.pillars.year),
-        month: pillarDisplayFact('월주', snapshot.pillars.month),
-        day: pillarDisplayFact('일주', snapshot.pillars.day),
-        hour: pillarDisplayFact('시주', snapshot.pillars.hour),
-      },
-      ...(ambiguity.length === 0 ? {} : { ambiguity }),
-    },
+    ...shell,
     sections: content.sections,
     disclosures: content.disclosures,
     explainability: content.explainability,
