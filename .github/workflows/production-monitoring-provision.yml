@@ -1,6 +1,11 @@
 name: Production Monitoring Provision
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/ops/production-monitoring-provision-approved'
   workflow_dispatch:
     inputs:
       confirm:
@@ -35,11 +40,20 @@ jobs:
       - name: Validate explicit provisioning intent
         shell: bash
         env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
           CONFIRM: ${{ inputs.confirm }}
         run: |
           set -euo pipefail
-          if [ "$CONFIRM" != 'PROVISION_SAJU_PRODUCTION_ALERT' ]; then
-            echo 'Explicit provisioning confirmation did not match.' >&2
+          if [ "$EVENT_NAME" = 'workflow_dispatch' ]; then
+            if [ "$CONFIRM" != 'PROVISION_SAJU_PRODUCTION_ALERT' ]; then
+              echo 'Explicit provisioning confirmation did not match.' >&2
+              exit 1
+            fi
+          elif [ "$EVENT_NAME" = 'push' ] && [ "$REF_NAME" = 'main' ]; then
+            echo 'Accepted one-shot approved main-branch provisioning marker.'
+          else
+            echo 'Unsupported provisioning trigger.' >&2
             exit 1
           fi
           for name in GCP_PROJECT_ID GCP_WORKLOAD_IDENTITY_PROVIDER GCP_DEPLOYER_SERVICE_ACCOUNT GCP_CLOUD_RUN_SERVICE; do
