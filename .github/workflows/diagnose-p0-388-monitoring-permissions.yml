@@ -1,0 +1,55 @@
+name: Diagnose P0-OPS-01 Monitoring Permissions
+
+on:
+  push:
+    branches:
+      - ops/diagnose-p0-388-monitoring-permissions-20260923
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: production-saju
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+
+      - name: Test exact Monitoring read permissions
+        shell: bash
+        run: |
+          set -u
+          test_read() {
+            local label="$1"
+            shift
+            local err="$RUNNER_TEMP/${label}.err"
+            "$@" >/dev/null 2>"$err"
+            local code=$?
+            local token
+            token="$(grep -Eo "(monitoring|serviceusage|resourcemanager)\.[A-Za-z0-9._]+" "$err" | sort -u | paste -sd, - || true)"
+            local category="other"
+            if grep -Eqi 'permission denied|PERMISSION_DENIED|does not have permission' "$err"; then
+              category="permission_denied"
+            fi
+            printf '%s code=%s category=%s permission_tokens=%s\n' "$label" "$code" "$category" "${token:-none}"
+          }
+
+          test_read alert_policies gcloud monitoring policies list             --project "$GCP_PROJECT_ID" --limit=1 --format=json
+          test_read notification_channels gcloud monitoring channels list             --project "$GCP_PROJECT_ID" --limit=1 --format=json
