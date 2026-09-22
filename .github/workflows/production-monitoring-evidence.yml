@@ -122,7 +122,7 @@ jobs:
 
           channel_rc=0
           if [ "$policy_rc" -eq 0 ]; then
-            if gcloud monitoring channels list --project "$GCP_PROJECT_ID" --format=json > "$raw_channels" 2> "$channel_error"; then
+            if gcloud beta monitoring channels list --project "$GCP_PROJECT_ID" --format=json > "$raw_channels" 2> "$channel_error"; then
               channel_rc=0
             else
               channel_rc=$?
