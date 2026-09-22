@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { portableSha256RefFR248 } from './observable-morphology-browser-portable-crypto-fr248.js';
 import {
   assertResearchLiveCaptureRuntimeFR238,
   type FR238ResearchLiveCaptureRuntime,
@@ -155,7 +155,7 @@ function canonicalJson(value: unknown): string {
 }
 
 function sha256(value: string): string {
-  return `sha256:${createHash('sha256').update(value, 'utf8').digest('hex')}`;
+  return portableSha256RefFR248(value);
 }
 
 function assertExactIsoTimestamp(value: string): void {
