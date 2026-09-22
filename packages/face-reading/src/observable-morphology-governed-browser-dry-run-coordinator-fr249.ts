@@ -46,23 +46,23 @@ import {
 } from './observable-morphology-operator-attested-dry-run-quality-fr247.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
-export const FR248_CONTRACT_VERSION =
-  'FR248-GOVERNED-BROWSER-ONE-PERSON-DRY-RUN-COORDINATOR-v1' as const;
+export const FR249_CONTRACT_VERSION =
+  'FR249-GOVERNED-BROWSER-ONE-PERSON-DRY-RUN-COORDINATOR-v1' as const;
 
-export const FR248_NEXT_FRONTIER =
-  'wire_fr248_into_localhost_operator_surface_then_execute_with_actual_participant_and_live_camera' as const;
+export const FR249_NEXT_FRONTIER =
+  'wire_fr249_into_localhost_operator_surface_then_execute_with_actual_participant_and_live_camera' as const;
 
-export interface FR248CaptureInput {
+export interface FR249CaptureInput {
   readonly challengeIssuedAt: string;
   readonly trigger: Mesh6HBrowserFrameTriggerV1;
   readonly operatorExecutionAttestation: FR243OperatorExecutionAttestation;
   readonly operatorQualityObservation: FR247OperatorQualityObservation;
 }
 
-export interface FR248GovernedBrowserDryRunCoordinator {
-  readonly schemaVersion: 'fr248-governed-browser-dry-run-coordinator-v1';
+export interface FR249GovernedBrowserDryRunCoordinator {
+  readonly schemaVersion: 'fr249-governed-browser-dry-run-coordinator-v1';
   readonly artifactVersion: '0.1.0';
-  readonly contractVersion: typeof FR248_CONTRACT_VERSION;
+  readonly contractVersion: typeof FR249_CONTRACT_VERSION;
   readonly authorityState:
     'browser_dry_run_coordinator_ready_actual_participant_execution_not_performed_by_materialization';
   readonly participantRef: string;
@@ -72,7 +72,7 @@ export interface FR248GovernedBrowserDryRunCoordinator {
     readonly issuedAt: string;
   }) => FR241OnePersonDryRunSession;
   readonly capture: (
-    input: FR248CaptureInput,
+    input: FR249CaptureInput,
   ) => Promise<FR244GovernedBrowserCaptureResult>;
   readonly review: () => FR243DryRunMechanicsReview;
   readonly getSanitizedRecords: () => readonly FR243DryRunCaptureExecutionRecord[];
@@ -89,11 +89,11 @@ export interface FR248GovernedBrowserDryRunCoordinator {
     readonly productionActivated: false;
     readonly commerceActivated: false;
   };
-  readonly nextFrontier: typeof FR248_NEXT_FRONTIER;
+  readonly nextFrontier: typeof FR249_NEXT_FRONTIER;
 }
 
 function fail(message: string): never {
-  throw new FaceAuthorityValidationError('FR-248 ' + message);
+  throw new FaceAuthorityValidationError('FR-249 ' + message);
 }
 
 function assertRuntimeBinding(input: {
@@ -116,7 +116,7 @@ function assertRuntimeBinding(input: {
   }
 }
 
-export function materializeGovernedBrowserDryRunCoordinatorFR248(input: {
+export function materializeGovernedBrowserDryRunCoordinatorFR249(input: {
   readonly camera: Mesh6HBrowserCameraHandleV1;
   readonly runtime: FR241OnePersonDryRunRuntime;
   readonly frameIntakeRuntime: FR242EphemeralLiveCameraFrameIntakeRuntime;
@@ -129,7 +129,7 @@ export function materializeGovernedBrowserDryRunCoordinatorFR248(input: {
   readonly jpegEncoder?: FR244BrowserJpegEncoder;
   readonly qualityBindingPreparer?: FR244CaptureQualityBindingPreparer;
   readonly primaryMetricBindingPreparer?: FR244PrimaryMetricBindingPreparer;
-}): FR248GovernedBrowserDryRunCoordinator {
+}): FR249GovernedBrowserDryRunCoordinator {
   assertRuntimeBinding(input);
   if (typeof input.geometryMetadataPbtxt !== 'string') {
     fail('geometryMetadataPbtxt is required.');
@@ -173,7 +173,7 @@ export function materializeGovernedBrowserDryRunCoordinatorFR248(input: {
   };
 
   const capture = async (
-    captureInput: FR248CaptureInput,
+    captureInput: FR249CaptureInput,
   ): Promise<FR244GovernedBrowserCaptureResult> => {
     if (activeSession === undefined) {
       fail('beginSession() is required before capture().');
@@ -248,9 +248,9 @@ export function materializeGovernedBrowserDryRunCoordinatorFR248(input: {
     Object.freeze([...records]);
 
   return Object.freeze({
-    schemaVersion: 'fr248-governed-browser-dry-run-coordinator-v1' as const,
+    schemaVersion: 'fr249-governed-browser-dry-run-coordinator-v1' as const,
     artifactVersion: '0.1.0' as const,
-    contractVersion: FR248_CONTRACT_VERSION,
+    contractVersion: FR249_CONTRACT_VERSION,
     authorityState:
       'browser_dry_run_coordinator_ready_actual_participant_execution_not_performed_by_materialization' as const,
     participantRef: input.runtime.sourceFR240.participantRef,
@@ -272,6 +272,6 @@ export function materializeGovernedBrowserDryRunCoordinatorFR248(input: {
       productionActivated: false as const,
       commerceActivated: false as const,
     }),
-    nextFrontier: FR248_NEXT_FRONTIER,
+    nextFrontier: FR249_NEXT_FRONTIER,
   });
 }

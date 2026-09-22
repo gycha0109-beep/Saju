@@ -1,15 +1,15 @@
-# FR248 — Governed browser one-person dry-run coordinator
+# FR249 — Governed browser one-person dry-run coordinator
 
 Status: implementation candidate; operator surface still required before actual execution  
-Contract: `FR248-GOVERNED-BROWSER-ONE-PERSON-DRY-RUN-COORDINATOR-v1`  
+Contract: `FR249-GOVERNED-BROWSER-ONE-PERSON-DRY-RUN-COORDINATOR-v1`  
 Tracking: #1314  
 Watchtower-Track: `face-research`
 
 ## Purpose
 
-FR241-FR247 now contain all lower-level mechanics required for the first actual one-person browser dry run, but they still require manual hand-wiring.
+FR241-FR248 now contain the lower-level mechanics and browser-portable authority runtime required for the first actual one-person browser dry run, but they still require manual hand-wiring.
 
-FR248 composes those boundaries without widening any of them.
+FR249 composes those boundaries without widening any of them.
 
 ## Coordinator lifecycle
 
@@ -21,9 +21,9 @@ The coordinator is stateful and intentionally does not execute all four captures
 4. operator explicitly triggers capture 2;
 5. only after both session-1 slots are recorded may session 2 be issued;
 6. session 2 again requires two explicit captures;
-7. after all four slots exist, FR248 calls the existing FR243 mechanics review.
+7. after all four slots exist, FR249 calls the existing FR243 mechanics review.
 
-This preserves the possibility of real temporal separation between session 1 and session 2. FR248 does not independently verify that separation.
+This preserves the possibility of real temporal separation between session 1 and session 2. FR249 does not independently verify that separation.
 
 ## Per-capture composition
 
@@ -45,13 +45,13 @@ FR246 supplies the digestless same-frame primary metric only if FR242 accepts al
 
 A rejected capture still occupies its exact FR243 session/capture slot and remains mechanics-only.
 
-FR248 does not silently retry, replace, reorder, or select a better frame.
+FR249 does not silently retry, replace, reorder, or select a better frame.
 
-A later product/research policy may decide whether a rejected slot should cause a new dry-run admission. FR248 does not invent that policy.
+A later product/research policy may decide whether a rejected slot should cause a new dry-run admission. FR249 does not invent that policy.
 
 ## Persistence
 
-FR248 stores only the sanitized FR243 records already returned by FR244.
+FR249 stores only the sanitized FR243 records already returned by FR244.
 
 It does not add:
 
@@ -82,6 +82,6 @@ The FR243 review remains mechanics-only.
 
 ## Next frontier
 
-`wire_fr248_into_localhost_operator_surface_then_execute_with_actual_participant_and_live_camera`
+`wire_fr249_into_localhost_operator_surface_then_execute_with_actual_participant_and_live_camera`
 
 No participant action is requested until that operator surface is available.

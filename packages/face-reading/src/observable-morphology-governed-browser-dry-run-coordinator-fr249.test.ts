@@ -30,8 +30,8 @@ import type {
   FR247OperatorQualityObservation,
 } from './observable-morphology-operator-attested-dry-run-quality-fr247.js';
 import {
-  materializeGovernedBrowserDryRunCoordinatorFR248,
-} from './observable-morphology-governed-browser-dry-run-coordinator-fr248.js';
+  materializeGovernedBrowserDryRunCoordinatorFR249,
+} from './observable-morphology-governed-browser-dry-run-coordinator-fr249.js';
 
 function setup() {
   const fr238 = materializeResearchLiveCaptureRuntimeFR238(
@@ -40,8 +40,8 @@ function setup() {
   const fr239 = issuePrecollectionRetentionPrivacyPolicyFR239(fr238);
   const protocol = issueParticipantConsentProtocolFR240({ runtime: fr238, policy: fr239 });
   const receipt = recordParticipantConsentFR240(protocol, {
-    participantRef: 'participant:fr248:p001',
-    operatorRef: 'operator:fr248:o001',
+    participantRef: 'participant:fr240:p001',
+    operatorRef: 'operator:fr240:o001',
     consentRecordedAt: '2026-09-22T22:20:00.000Z',
     studyNoticeRead: true,
     voluntaryParticipationConfirmed: true,
@@ -151,7 +151,7 @@ function executionAttestation(
 ): FR243OperatorExecutionAttestation {
   return {
     schemaVersion: 'fr243-operator-execution-attestation-v1',
-    operatorRef: 'operator:fr248:o001',
+    operatorRef: 'operator:fr240:o001',
     recordedAt,
     participantPresentObserved: true,
     liveCameraCaptureObserved: true,
@@ -167,7 +167,7 @@ function qualityObservation(
 ): FR247OperatorQualityObservation {
   return {
     schemaVersion: 'fr247-operator-quality-observation-v1',
-    operatorRef: 'operator:fr248:o001',
+    operatorRef: 'operator:fr240:o001',
     providerRunRef,
     captureTriggerTimestampMs: timestampMs,
     recordedAt: '2026-09-22T22:21:00.000Z',
@@ -181,11 +181,11 @@ function qualityObservation(
   };
 }
 
-describe('FR248 governed browser dry-run coordinator', () => {
+describe('FR249 governed browser dry-run coordinator', () => {
   it('requires two explicit sessions x two explicit captures and returns the FR243 mechanics review', async () => {
     const s = setup();
     const cam = await camera();
-    const coordinator = materializeGovernedBrowserDryRunCoordinatorFR248({
+    const coordinator = materializeGovernedBrowserDryRunCoordinatorFR249({
       camera: cam,
       runtime: s.fr241,
       frameIntakeRuntime: s.fr242,
@@ -209,7 +209,7 @@ describe('FR248 governed browser dry-run coordinator', () => {
 
     for (const captureOrdinal of [1, 2] as const) {
       const timestampMs = 1000 + captureOrdinal;
-      const providerRunRef = 'provider:fr248:s1:' + captureOrdinal;
+      const providerRunRef = 'provider:fr249:s1:' + captureOrdinal;
       await coordinator.capture({
         challengeIssuedAt:
           captureOrdinal === 1
@@ -232,7 +232,7 @@ describe('FR248 governed browser dry-run coordinator', () => {
 
     for (const captureOrdinal of [1, 2] as const) {
       const timestampMs = 2000 + captureOrdinal;
-      const providerRunRef = 'provider:fr248:s2:' + captureOrdinal;
+      const providerRunRef = 'provider:fr249:s2:' + captureOrdinal;
       await coordinator.capture({
         challengeIssuedAt:
           captureOrdinal === 1
@@ -265,7 +265,7 @@ describe('FR248 governed browser dry-run coordinator', () => {
   it('blocks session 2 until session 1 has exactly two slots', async () => {
     const s = setup();
     const cam = await camera();
-    const coordinator = materializeGovernedBrowserDryRunCoordinatorFR248({
+    const coordinator = materializeGovernedBrowserDryRunCoordinatorFR249({
       camera: cam,
       runtime: s.fr241,
       frameIntakeRuntime: s.fr242,
@@ -297,7 +297,7 @@ describe('FR248 governed browser dry-run coordinator', () => {
   it('retains a rejected slot without retrying or promoting empirical authority', async () => {
     const s = setup();
     const cam = await camera();
-    const coordinator = materializeGovernedBrowserDryRunCoordinatorFR248({
+    const coordinator = materializeGovernedBrowserDryRunCoordinatorFR249({
       camera: cam,
       runtime: s.fr241,
       frameIntakeRuntime: s.fr242,
@@ -320,7 +320,7 @@ describe('FR248 governed browser dry-run coordinator', () => {
       { s: 1 as const, c: 2 as const, ts: 3002, at: '2026-09-22T22:50:20.000Z', fail: false },
     ];
     for (const slot of slots) {
-      const ref = 'provider:fr248:reject:' + slot.s + ':' + slot.c;
+      const ref = 'provider:fr249:reject:' + slot.s + ':' + slot.c;
       await coordinator.capture({
         challengeIssuedAt: slot.at,
         trigger: { timestampMs: slot.ts, providerRunRef: ref },
@@ -334,7 +334,7 @@ describe('FR248 governed browser dry-run coordinator', () => {
     }
     coordinator.beginSession({ sessionOrdinal: 2, issuedAt: '2026-09-22T23:00:00.000Z' });
     for (const captureOrdinal of [1, 2] as const) {
-      const ref = 'provider:fr248:reject:2:' + captureOrdinal;
+      const ref = 'provider:fr249:reject:2:' + captureOrdinal;
       const ts = 4000 + captureOrdinal;
       await coordinator.capture({
         challengeIssuedAt:

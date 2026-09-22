@@ -1,4 +1,7 @@
-import { createHash, randomBytes } from 'node:crypto';
+import {
+  portableSha256RefFR248,
+  secureRandomHexFR248,
+} from './observable-morphology-browser-portable-crypto-fr248.js';
 import {
   assertObservableMorphologyRepeatabilityStudyFR237,
   type FR237RepeatabilityStudyPreregistration,
@@ -122,11 +125,11 @@ function canonicalJson(value: unknown): string {
 }
 
 function sha256(value: string): string {
-  return `sha256:${createHash('sha256').update(value, 'utf8').digest('hex')}`;
+  return portableSha256RefFR248(value);
 }
 
 function nonce(): string {
-  return randomBytes(24).toString('hex');
+  return secureRandomHexFR248(24);
 }
 
 function assertIsoTimestamp(value: string): void {
