@@ -178,9 +178,9 @@ SquareBroadFangMappingEvidenceGovernanceReuseReviewFE041FV1 {
       fr185.evidenceRequirements.map((entry) => entry.key),
     ) ||
     fr185.evidenceRequirements.length !== 10 ||
-    fr185.mappingBoundary.thresholdSelectionResultIsLaterCalibrationEvidence !==
+    fr185.evidenceClassSeparation.thresholdSelectionResultIsLaterCalibrationEvidence !==
       true ||
-    fr185.mappingBoundary
+    fr185.evidenceClassSeparation
       .thresholdSelectionResultRequiredToDefineMappingRequirements !== false ||
     fr185.authorityBoundary.mappingEvidenceRequirementsDefined !== true ||
     fr185.authorityBoundary
