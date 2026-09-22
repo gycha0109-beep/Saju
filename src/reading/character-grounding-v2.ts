@@ -127,9 +127,6 @@ function axisFor(
     case 'family':
     case 'question_specific':
       return 'custom';
-    case 'general':
-    case 'wealth':
-      return 'custom';
   }
 }
 
