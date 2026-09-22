@@ -121,9 +121,10 @@ jobs:
                   and (
                     [
                       $startups[0][].timestamp
+                      | sub("\\.[0-9]+Z$"; "Z")
                       | fromdateiso8601
-                      | select(. >= (($firstRequestAt | fromdateiso8601) - 10))
-                      | select(. <= (($firstRequestAt | fromdateiso8601) + 10))
+                      | select(. >= (($firstRequestAt | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) - 10))
+                      | select(. <= (($firstRequestAt | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) + 10))
                     ] | length
                   ) > 0
                 ),
