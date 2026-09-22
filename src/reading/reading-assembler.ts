@@ -11,12 +11,6 @@ import type {
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import type { NarrativeGenerationResult } from '../llm/narrative-orchestrator.js';
-import type { CanonicalReadingSemanticBundleV1 } from './canonical-reading-semantics.js';
-import type { OfficialReadingPlanV1 } from './official-reading-plan.js';
-import {
-  canRenderOfficialReadingV1,
-  renderOfficialReadingV1,
-} from './official-reading-renderer.js';
 
 export const READING_ARTIFACT_SCHEMA_VERSION = 'myeonghwa-reading-artifact-v1';
 
@@ -24,8 +18,6 @@ export interface ReadingArtifactAssemblyOptions {
   readingVersion: string;
   generatedAt?: Date;
   displayLabel?: string;
-  canonicalSemantics?: CanonicalReadingSemanticBundleV1;
-  officialReadingPlan?: OfficialReadingPlanV1;
 }
 
 function pad(value: number): string {
@@ -252,29 +244,7 @@ export function assembleReadingArtifact(
   }
 
   const generatedAt = options.generatedAt ?? new Date();
-  if (
-    (options.canonicalSemantics === undefined) !==
-    (options.officialReadingPlan === undefined)
-  ) {
-    throw new TypeError(
-      'ReadingArtifact canonicalSemantics and officialReadingPlan must be supplied together.',
-    );
-  }
-
-  const officialContent =
-    options.canonicalSemantics !== undefined &&
-    options.officialReadingPlan !== undefined &&
-    canRenderOfficialReadingV1(options.canonicalSemantics, options.officialReadingPlan)
-      ? renderOfficialReadingV1(options.canonicalSemantics, options.officialReadingPlan)
-      : undefined;
-  const content =
-    officialContent === undefined
-      ? buildSectionsAndIndexes(narrative, interpretation)
-      : {
-          sections: officialContent.sections,
-          disclosures: officialContent.disclosures,
-          explainability: officialContent.explainability,
-        };
+  const content = buildSectionsAndIndexes(narrative, interpretation);
   const time = displayTime(snapshot);
   const ambiguity = ambiguityViews(snapshot);
   const identityMaterial = {
@@ -283,9 +253,6 @@ export function assembleReadingArtifact(
     snapshotId: snapshot.snapshotId,
     interpretationRunId: interpretation.run.interpretationRunId,
     narrativeRunId: narrative.run.narrativeRunId,
-    canonicalSemanticHash: options.canonicalSemantics?.semanticHash,
-    officialReadingPlanHash: options.officialReadingPlan?.planHash,
-    officialReadingRendererVersion: officialContent?.rendererVersion,
     sections: content.sections,
     disclosures: content.disclosures,
     explainability: content.explainability,
@@ -330,28 +297,6 @@ export function assembleReadingArtifact(
       interpretationRunId: interpretation.run.interpretationRunId,
       narrativeRunId: narrative.run.narrativeRunId,
       readingVersion: options.readingVersion,
-      ...(options.canonicalSemantics === undefined
-        ? {}
-        : {
-            canonicalSemanticRef: {
-              schemaVersion: options.canonicalSemantics.schemaVersion,
-              projectionVersion: options.canonicalSemantics.projectionVersion,
-              semanticHash: options.canonicalSemantics.semanticHash,
-            },
-          }),
-      ...(options.officialReadingPlan === undefined
-        ? {}
-        : {
-            officialReadingPlanRef: {
-              schemaVersion: options.officialReadingPlan.schemaVersion,
-              policyVersion: options.officialReadingPlan.policyVersion,
-              planId: options.officialReadingPlan.planId,
-              planHash: options.officialReadingPlan.planHash,
-            },
-          }),
-      ...(officialContent === undefined
-        ? {}
-        : { officialReadingRendererVersion: officialContent.rendererVersion }),
     },
     generatedAt: generatedAt.toISOString(),
   };
