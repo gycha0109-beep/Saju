@@ -1,0 +1,25 @@
+name: Dispatch P0-OPS-01 Cold Start Evidence 35746400174
+
+on:
+  push:
+    branches:
+      - ops/dispatch-p0-388-cold-start-35746400174-20260923
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Dispatch cold-start evidence from exact main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_MAIN_SHA: c1a3241ec6186fee2e8e6ef1a1336c0d5b6c1b70
+        run: |
+          set -euo pipefail
+          main_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq '.sha')"
+          [[ "$main_sha" == "$EXPECTED_MAIN_SHA" ]]
+          gh workflow run production-cold-start-evidence.yml             --repo "$GITHUB_REPOSITORY"             --ref main             -f source_latency_run_id=35746400174             -f watchtower_track=ops
