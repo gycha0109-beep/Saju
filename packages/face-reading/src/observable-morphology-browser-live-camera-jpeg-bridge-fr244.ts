@@ -57,6 +57,29 @@ export interface FR244PrimaryMetricBindingPreparer {
   }) => Promise<FR244PreparedPrimaryMetricBinding>;
 }
 
+export interface FR244PreparedCaptureQualityBinding {
+  readonly governedDryRunQualityBinding: true;
+  readonly rawImageDigestComputed: false;
+  readonly rawImageDigestPersisted: false;
+  readonly qualityEvaluator: (
+    ephemeralBytes: Uint8Array,
+  ) => FR242CaptureQualityAssessment;
+  readonly dispose: () => void;
+}
+
+export interface FR244CaptureQualityBindingPreparer {
+  readonly prepare: (input: {
+    readonly image: unknown;
+    readonly width: number;
+    readonly height: number;
+    readonly timestampMs: number;
+    readonly triggerTimestampMs: number;
+    readonly providerRunRef: string;
+    readonly jpegBytes: Uint8Array;
+    readonly providerContext?: unknown;
+  }) => Promise<FR244PreparedCaptureQualityBinding>;
+}
+
 export interface FR244GovernedBrowserCaptureResult {
   readonly schemaVersion: 'fr244-governed-browser-capture-result-v1';
   readonly artifactVersion: '0.1.0';
@@ -282,9 +305,11 @@ export async function executeGovernedBrowserLiveCameraCaptureFR244(input: {
   readonly frameIntakeRuntime: FR242EphemeralLiveCameraFrameIntakeRuntime;
   readonly session: FR241OnePersonDryRunSession;
   readonly challenge: FR241LiveCaptureChallenge;
-  readonly qualityEvaluator: (
+  readonly qualityEvaluator?: (
     ephemeralBytes: Uint8Array,
   ) => FR242CaptureQualityAssessment;
+  readonly qualityBindingPreparer?: FR244CaptureQualityBindingPreparer;
+  readonly qualityProviderContext?: unknown;
   readonly primaryMetricExtractor?: (
     ephemeralBytes: Uint8Array,
   ) => FR242PrimaryMetricExtraction;
@@ -297,6 +322,23 @@ export async function executeGovernedBrowserLiveCameraCaptureFR244(input: {
   validateTrigger(input.trigger);
   const encoder = input.jpegEncoder ?? defaultBrowserJpegEncoder();
   validateEncoder(encoder);
+  const hasDirectQualityEvaluator =
+    typeof input.qualityEvaluator === 'function';
+  const hasPreparedQualityBinding =
+    input.qualityBindingPreparer !== undefined;
+  if (hasDirectQualityEvaluator === hasPreparedQualityBinding) {
+    fail('exactly one capture-quality source must be supplied.');
+  }
+  if (
+    hasPreparedQualityBinding
+    && (
+      typeof input.qualityBindingPreparer !== 'object'
+      || input.qualityBindingPreparer === null
+      || typeof input.qualityBindingPreparer.prepare !== 'function'
+    )
+  ) {
+    fail('qualityBindingPreparer must expose prepare().');
+  }
   const hasDirectMetricExtractor =
     typeof input.primaryMetricExtractor === 'function';
   const hasPreparedMetricBinding =
@@ -318,6 +360,7 @@ export async function executeGovernedBrowserLiveCameraCaptureFR244(input: {
   const frameSource = input.camera.createSweepFrameSource(oneTrigger(input.trigger));
   const iterator = frameSource[Symbol.asyncIterator]();
   let jpegBytes: Uint8Array | undefined;
+  let preparedQualityBinding: FR244PreparedCaptureQualityBinding | undefined;
   let preparedMetricBinding: FR244PreparedPrimaryMetricBinding | undefined;
   let frame:
     | {
@@ -351,6 +394,38 @@ export async function executeGovernedBrowserLiveCameraCaptureFR244(input: {
     );
     validateJpeg(jpegBytes);
     const observedByteLength = jpegBytes.byteLength;
+
+    if (input.qualityBindingPreparer !== undefined) {
+      preparedQualityBinding = await input.qualityBindingPreparer.prepare({
+        image: frame.image,
+        width: frame.frameWidth,
+        height: frame.frameHeight,
+        timestampMs: frame.timestampMs,
+        triggerTimestampMs: input.trigger.timestampMs,
+        providerRunRef: frame.providerRunRef,
+        jpegBytes,
+        ...(input.qualityProviderContext === undefined
+          ? {}
+          : { providerContext: input.qualityProviderContext }),
+      });
+      if (
+        typeof preparedQualityBinding !== 'object'
+        || preparedQualityBinding === null
+        || preparedQualityBinding.governedDryRunQualityBinding !== true
+        || preparedQualityBinding.rawImageDigestComputed !== false
+        || preparedQualityBinding.rawImageDigestPersisted !== false
+        || typeof preparedQualityBinding.qualityEvaluator !== 'function'
+        || typeof preparedQualityBinding.dispose !== 'function'
+      ) {
+        fail('prepared capture-quality binding widened the FR244 privacy boundary.');
+      }
+    }
+    const qualityEvaluator =
+      preparedQualityBinding?.qualityEvaluator
+      ?? input.qualityEvaluator;
+    if (qualityEvaluator === undefined) {
+      fail('capture-quality evaluator was not materialized.');
+    }
 
     if (input.primaryMetricBindingPreparer !== undefined) {
       preparedMetricBinding = await input.primaryMetricBindingPreparer.prepare({
@@ -390,7 +465,7 @@ export async function executeGovernedBrowserLiveCameraCaptureFR244(input: {
       {
         declaredContentLength: observedByteLength,
         mediaBytes: jpegBytes,
-        qualityEvaluator: input.qualityEvaluator,
+        qualityEvaluator,
         primaryMetricExtractor,
         operatorAttestation: input.operatorAttestation,
       },
@@ -448,6 +523,7 @@ export async function executeGovernedBrowserLiveCameraCaptureFR244(input: {
     return result;
   } finally {
     preparedMetricBinding?.dispose();
+    preparedQualityBinding?.dispose();
     if (jpegBytes !== undefined) jpegBytes.fill(0);
     if (typeof iterator.return === 'function') {
       await iterator.return();
