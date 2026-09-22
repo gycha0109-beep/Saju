@@ -2,7 +2,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalConclusionT8AlternateWitnessSurfaceSurvey } from './general-natal-conclusion-t8-alternate-witness-surface-survey.js';
 
 export const GENERAL_NATAL_CONCLUSION_T8_YUANHAI_ACQUISITION_TARGETS_VERSION =
-  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v7' as const;
+  'myeonghwa-general-natal-conclusion-t8-yuanhai-acquisition-targets-v6' as const;
 
 const UNRESOLVED_WITNESS_IDS = Object.freeze([
   'W-YUANHAI-WEALTH-OFFICER',
@@ -177,42 +177,6 @@ const ACQUISITION_TARGETS = Object.freeze([
     }),
     acquisitionAction:
       'REQUEST_OR_OBTAIN_VENDOR_REPRODUCTION_OF_ITEM_0005484761_AND_INSPECT_FOUR_YAN_DUBU',
-  }),
-  Object.freeze({
-    targetId: 'ACQ-YUANHAI-NDL-000007566884-MICROFORM',
-    priority: 'P1' as const,
-    targetClass: 'CONFIRMED_MICROFORM_HOLDING' as const,
-    holdingInstitution: 'National Diet Library, Japan',
-    catalogIdentifier:
-      'NDL bibliographic ID 000007566884 / call 特2-1447 / surrogate YD-古-5454',
-    title: '新刊合併官板音義評註淵海子平5卷附新鐫増補時憲臺歴袖裏璇璣星命須知2卷',
-    attributedAuthor: '宋徐升撰ほか',
-    editionOrImprint: '掃葉山房石印, 民國',
-    materialExtent: '6冊 / microform surrogate',
-    dimensions: '15 cm',
-    relevantCoverage:
-      '淵海子平 5卷 present in the cataloged microform; exact 四言獨步 frames/pages not yet acquired',
-    catalogUrl: 'https://ndlsearch.ndl.go.jp/books/R100000002-I000007566884',
-    publicPageImageAvailability: 'NOT_ESTABLISHED' as const,
-    directInspectionState: 'NOT_ACQUIRED' as const,
-    frozenWitnessContentClaimed: false as const,
-    reproductionAccess: Object.freeze({
-      routeState: 'VERIFIED_NDL_REMOTE_COPY_ROUTE' as const,
-      remoteCopySupportedForHeldMaterials: true as const,
-      exactCopyLocationMustBeSpecified: true as const,
-      articleLocationResearchServiceAvailableGenerally: true as const,
-      targetEligibilityForArticleLocationResearch: 'NOT_ESTABLISHED' as const,
-      articleLocationResearchScope: 'TABLE_OF_CONTENTS_OR_INDEX_ONLY' as const,
-      articleLocationResearchExpectedLeadTime: 'approximately 5 opening days',
-      microformCopySourceRequiredWhenMicrofilmed: true as const,
-      postalReceiptSupported: true as const,
-      pdfReceiptPotentiallySupportedSubjectToEligibility: true as const,
-      remoteCopyGuideUrl: 'https://www.ndl.go.jp/copy/remote',
-      individualServicesGuideUrl: 'https://ndlsearch.ndl.go.jp/help/individual',
-      classicMaterialsGuideUrl: 'https://www.ndl.go.jp/tokyo/classic',
-    }),
-    acquisitionAction:
-      'IDENTIFY_FOUR_YAN_DUBU_COPY_LOCATION_THEN_REQUEST_NDL_MICROFORM_REPRODUCTION_AND_INSPECT_BOUNDED_GLYPHS',
   }),
   Object.freeze({
     targetId: 'ACQ-YUANHAI-TIANYIGE-330000-1705-0005007-DIGITAL',
@@ -398,9 +362,6 @@ export function buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets() {
   const confirmedPhysicalTargets = ACQUISITION_TARGETS.filter(
     (target) => target.targetClass === 'CONFIRMED_PHYSICAL_HOLDING',
   );
-  const confirmedMicroformTargets = ACQUISITION_TARGETS.filter(
-    (target) => target.targetClass === 'CONFIRMED_MICROFORM_HOLDING',
-  );
   const bibliographicLeads = ACQUISITION_TARGETS.filter(
     (target) => target.targetClass === 'BIBLIOGRAPHIC_LEAD_HOLDING_UNCONFIRMED',
   );
@@ -413,9 +374,9 @@ export function buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets() {
 
   const material = {
     evidenceVersion: GENERAL_NATAL_CONCLUSION_T8_YUANHAI_ACQUISITION_TARGETS_VERSION,
-    issue: '#905' as const,
-    auditBaseSha: 'a184772122526412dfa07ebda691963ffe39922c' as const,
-    status: 'P0_EXHAUSTED_P1_NDL_MICROFORM_ROUTE_VERIFIED_NO_NEW_WITNESS_EVIDENCE' as const,
+    issue: '#899' as const,
+    auditBaseSha: 'a73e4751ea2e00b2f3e17b99afa6c80f31bb14d9' as const,
+    status: 'P0_EXHAUSTED_P1_REPRODUCTION_ROUTE_VERIFIED_NO_NEW_WITNESS_EVIDENCE' as const,
     upstreamAlternateSurfaceSurveyId: upstream.evidenceId,
     unresolvedWitnessIds: UNRESOLVED_WITNESS_IDS,
     acquisitionTargets: ACQUISITION_TARGETS,
@@ -423,7 +384,6 @@ export function buildGeneralNatalConclusionT8YuanhaiAcquisitionTargets() {
       unresolvedWitnessCount: UNRESOLVED_WITNESS_IDS.length,
       acquisitionTargetCount: ACQUISITION_TARGETS.length,
       confirmedPhysicalHoldingCount: confirmedPhysicalTargets.length,
-      confirmedMicroformHoldingCount: confirmedMicroformTargets.length,
       bibliographicLeadCount: bibliographicLeads.length,
       publicDigitalPageImageVerifiedCount: publicDigitalTargets.length,
       directlyInspectedAcquisitionTargetCount: directlyInspectedTargets.length,
