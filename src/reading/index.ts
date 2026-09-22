@@ -2,6 +2,7 @@ export * from './reading-assembler.js';
 export * from './canonical-reading-semantics.js';
 export * from './official-reading-plan.js';
 export * from './official-reading-renderer.js';
+export * from './official-reading-reader-parity.js';
 export {
   READING_PROFILE_REGISTRY_VERSION,
   resolveDomainReadingProfile,
