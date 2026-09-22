@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import process from 'node:process';
+import path from 'node:path';
 
 function fail(message) {
   throw new Error(message);
@@ -182,7 +183,7 @@ function main() {
     productionTrafficMutated: false,
   };
 
-  fs.mkdirSync(new URL('.', `file://${outputPath}`).pathname, { recursive: true });
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
   process.stdout.write(`${JSON.stringify(evidence, null, 2)}\n`);
 
