@@ -305,6 +305,7 @@ jobs:
               [$channelList[] | {
                 name: (.name // ""),
                 type: (.type // ""),
+                enabled: (.enabled // true),
                 verificationStatus: (.verificationStatus // "")
               }] as $safeChannels |
               [$safePolicies[] | select(.enabled == true and .coversCurrentService == true)] as $coveringPolicies |
@@ -327,6 +328,9 @@ jobs:
                   totalAlertPolicyCount: ($safePolicies | length),
                   enabledCloudRunPolicyCount: ([$safePolicies[] | select(.enabled == true and .cloudRunTargeted == true)] | length),
                   currentServiceCoveringPolicyCount: ($coveringPolicies | length),
+                  totalNotificationChannelCount: ($safeChannels | length),
+                  enabledNotificationChannelCount: ([$safeChannels[] | select(.enabled == true)] | length),
+                  verifiedNotificationChannelCount: ([$safeChannels[] | select(.verificationStatus == "VERIFIED")] | length),
                   referencedNotificationChannelCount: ($referencedChannels | length),
                   unresolvedNotificationChannelReferenceCount: ($missingChannelRefs | length),
                   ownerOnCallEvidence: "repo_not_proven",
@@ -362,6 +366,9 @@ jobs:
             echo "- total alert policies: \`$(jq -r '.classification.totalAlertPolicyCount' "$evidence_json")\`"
             echo "- enabled Cloud Run policies: \`$(jq -r '.classification.enabledCloudRunPolicyCount' "$evidence_json")\`"
             echo "- policies covering current service: \`$(jq -r '.classification.currentServiceCoveringPolicyCount' "$evidence_json")\`"
+            echo "- total notification channels: \`$(jq -r '.classification.totalNotificationChannelCount' "$evidence_json")\`"
+            echo "- enabled notification channels: \`$(jq -r '.classification.enabledNotificationChannelCount' "$evidence_json")\`"
+            echo "- verified notification channels: \`$(jq -r '.classification.verifiedNotificationChannelCount' "$evidence_json")\`"
             echo "- referenced notification channels: \`$(jq -r '.classification.referencedNotificationChannelCount' "$evidence_json")\`"
             echo "- unresolved channel references: \`$(jq -r '.classification.unresolvedNotificationChannelReferenceCount' "$evidence_json")\`"
             echo "- owner/on-call evidence: \`$(jq -r '.classification.ownerOnCallEvidence' "$evidence_json")\`"
