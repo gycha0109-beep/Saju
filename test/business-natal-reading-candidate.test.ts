@@ -53,7 +53,7 @@ function businessClaims(execution: ReturnType<typeof runInterpretation>) {
 
 describe('natal business consumer reading research candidate', () => {
   it('remains research-only, unreviewed, and bounded by contract', () => {
-    expect(BUSINESS_NATAL_READING_CANDIDATE_VERSION).toBe('0.7.0-research');
+    expect(BUSINESS_NATAL_READING_CANDIDATE_VERSION).toBe('0.8.0-research');
     expect(BUSINESS_NATAL_READING_PACK.status).toBe('research');
     expect(BUSINESS_NATAL_READING_METHODOLOGY.status).toBe('research');
     expect(BUSINESS_NATAL_READING_RULES).toHaveLength(11);

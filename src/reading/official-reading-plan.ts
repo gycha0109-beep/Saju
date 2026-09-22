@@ -2,6 +2,7 @@ import type { ReadingDomain } from '../contracts/reading.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import {
   assertCanonicalReadingSemanticBundleV1,
+  isCanonicalReadingScopeGuardUnitV1,
   type CanonicalReadingSemanticBundleV1,
   type CanonicalReadingSemanticUnitV1,
 } from './canonical-reading-semantics.js';
@@ -159,13 +160,15 @@ function primarySections(
   bundle: CanonicalReadingSemanticBundleV1,
 ): readonly OfficialReadingPlanSectionV1[] {
   const unitsByClaimId = new Map(bundle.units.map((unit) => [unit.claimId, unit]));
-  const primaryUnits = bundle.targetClaimIds.map((claimId) => {
-    const unit = unitsByClaimId.get(claimId);
-    if (unit === undefined || unit.role !== 'primary') {
-      throw new TypeError(`Official Reading target has no primary canonical unit: ${claimId}`);
-    }
-    return unit;
-  });
+  const primaryUnits = bundle.targetClaimIds
+    .map((claimId) => {
+      const unit = unitsByClaimId.get(claimId);
+      if (unit === undefined || unit.role !== 'primary') {
+        throw new TypeError(`Official Reading target has no primary canonical unit: ${claimId}`);
+      }
+      return unit;
+    })
+    .filter((unit) => !isCanonicalReadingScopeGuardUnitV1(unit));
 
   const grouped = new Map<
     OfficialReadingSemanticGroup,
@@ -302,7 +305,11 @@ export function assertOfficialReadingPlanV1(
 
   const unitIds = new Set(bundle.units.map((unit) => unit.unitId));
   const primaryUnitIds = new Set(
-    bundle.units.filter((unit) => unit.role === 'primary').map((unit) => unit.unitId),
+    bundle.units
+      .filter(
+        (unit) => unit.role === 'primary' && !isCanonicalReadingScopeGuardUnitV1(unit),
+      )
+      .map((unit) => unit.unitId),
   );
   const plannedPrimaryRefs = new Set<string>();
   const sectionIds = new Set<string>();

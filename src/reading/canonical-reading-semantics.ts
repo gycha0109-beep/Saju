@@ -67,6 +67,12 @@ export interface CanonicalReadingSemanticProjectionInputV1 {
   targetClaimIds: readonly string[];
 }
 
+export function isCanonicalReadingScopeGuardUnitV1(
+  unit: CanonicalReadingSemanticUnitV1,
+): boolean {
+  return unit.taxonomy.subcategory === 'scope_guard' || unit.predicate === 'scope_guard';
+}
+
 const CONSTRAINTS = Object.freeze({
   mayGenerateClaims: false as const,
   mayResolveConflicts: false as const,

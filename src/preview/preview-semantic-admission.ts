@@ -122,7 +122,7 @@ const ENTRIES: readonly PreviewSemanticAdmissionEntryV1[] = Object.freeze([
     researchRef: {
       researchId: 'GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CANDIDATE',
       modulePath: 'src/research/general-natal-t8-structural-summary-candidate.ts',
-      expectedVersion: '0.1.0-research',
+      expectedVersion: '0.2.0-research',
       observedVersion: GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CANDIDATE_VERSION,
       expectedAuthorityState: 'research',
       observedAuthorityState: GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY.status,
