@@ -1,4 +1,5 @@
 export * from './reading-assembler.js';
+export * from './canonical-reading-semantics.js';
 export {
   READING_PROFILE_REGISTRY_VERSION,
   resolveDomainReadingProfile,
