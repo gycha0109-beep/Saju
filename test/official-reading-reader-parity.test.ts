@@ -62,7 +62,7 @@ function semantics(summary = '실행과 준비가 서로 견제합니다.') {
 
 function response(): ProductReadingResponse {
   return {
-    responseId: 'response-1',
+    responseId: 'reading_response_0123456789abcdef01234567',
     responseVersion: PRODUCT_READING_RESPONSE_VERSION,
     state: 'delivered',
     messageCode: 'READING_DELIVERED',
