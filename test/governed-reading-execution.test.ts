@@ -187,6 +187,12 @@ describe('Governed Reading Execution Orchestrator', () => {
     expect(adapter.calls).toHaveLength(1);
     expect(result.narrative?.outcome).toBe('model_first_pass');
     expect(result.artifact).toBeDefined();
+    expect(result.canonicalSemantics).toBeDefined();
+    expect(result.officialReadingPlan).toBeDefined();
+    expect(result.officialReadingPlan?.sourceSemanticHash).toBe(
+      result.canonicalSemantics?.semanticHash,
+    );
+    expect(result.canonicalSemantics?.targetClaimIds).toEqual(['claim-career-complete']);
     expect(result.artifact?.provenance.snapshotId).toBe(currentSnapshot.snapshotId);
     expect(result.artifact?.provenance.interpretationRunId).toBe(
       interpretation.run.interpretationRunId,
