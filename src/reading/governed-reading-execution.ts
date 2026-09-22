@@ -16,6 +16,14 @@ import type {
 } from '../llm/model-adapter.js';
 import { assembleReadingArtifact } from './reading-assembler.js';
 import {
+  buildCanonicalReadingSemanticBundleV1,
+  type CanonicalReadingSemanticBundleV1,
+} from './canonical-reading-semantics.js';
+import {
+  buildOfficialReadingPlanV1,
+  type OfficialReadingPlanV1,
+} from './official-reading-plan.js';
+import {
   prepareProductReading,
   type ProductReadingPreparationResult,
   type ProductReadingPreparationState,
@@ -46,6 +54,8 @@ export interface GovernedReadingExecutionResult {
   state: GovernedReadingExecutionState;
   preparation: ProductReadingPreparationResult;
   narrative?: NarrativeGenerationResult;
+  canonicalSemantics?: CanonicalReadingSemanticBundleV1;
+  officialReadingPlan?: OfficialReadingPlanV1;
   artifact?: ReadingArtifact;
   modelCalls: number;
   reasonCodes: readonly string[];
@@ -55,6 +65,7 @@ export interface GovernedReadingExecutionResult {
     mayBypassGroundingValidation: false;
     mayRetryBeyondNarrativeRuntimePolicy: false;
     mayFillMissingEvidenceWithLLM: false;
+    mayAssembleOfficialPlanWithoutCanonicalSemantics: false;
     mayPromoteResearchAuthority: false;
   };
 }
@@ -65,6 +76,7 @@ const EXECUTION_CONSTRAINTS = Object.freeze({
   mayBypassGroundingValidation: false as const,
   mayRetryBeyondNarrativeRuntimePolicy: false as const,
   mayFillMissingEvidenceWithLLM: false as const,
+  mayAssembleOfficialPlanWithoutCanonicalSemantics: false as const,
   mayPromoteResearchAuthority: false as const,
 });
 
@@ -83,6 +95,8 @@ function resultIdentity(
   modelCalls: number,
   reasonCodes: readonly string[],
   narrative?: NarrativeGenerationResult,
+  canonicalSemantics?: CanonicalReadingSemanticBundleV1,
+  officialReadingPlan?: OfficialReadingPlanV1,
   artifact?: ReadingArtifact,
 ): string {
   return `reading_execution_${deterministicContentHash({
@@ -91,6 +105,8 @@ function resultIdentity(
     preparationId: preparation.preparationId,
     narrativeRunId: narrative?.run.narrativeRunId,
     narrativeOutcome: narrative?.outcome,
+    canonicalSemanticHash: canonicalSemantics?.semanticHash,
+    officialReadingPlanHash: officialReadingPlan?.planHash,
     readingId: artifact?.readingId,
     modelCalls,
     reasonCodes: [...reasonCodes].sort(),
@@ -150,6 +166,22 @@ export async function executeProductReading(
     return blockedResult(preparation);
   }
 
+  if (
+    preparation.normalization.request === undefined ||
+    preparation.composition === undefined
+  ) {
+    throw new Error(
+      'ready_for_narrative preparation requires resolved request and composition evidence.',
+    );
+  }
+
+  const canonicalSemantics = buildCanonicalReadingSemanticBundleV1({
+    intent: preparation.normalization.request.intent,
+    evidence: preparation.narrativeRequest.evidenceBundle,
+    targetClaimIds: preparation.composition.selection.targetClaimIds,
+  });
+  const officialReadingPlan = buildOfficialReadingPlanV1(canonicalSemantics);
+
   const narrative = await generateGroundedNarrative(
     adapter,
     preparation.narrativeRequest,
@@ -186,12 +218,16 @@ export async function executeProductReading(
       narrative.modelCalls,
       reasonCodes,
       narrative,
+      canonicalSemantics,
+      officialReadingPlan,
       artifact,
     ),
     orchestratorVersion: GOVERNED_READING_EXECUTION_VERSION,
     state,
     preparation,
     narrative,
+    canonicalSemantics,
+    officialReadingPlan,
     artifact,
     modelCalls: narrative.modelCalls,
     reasonCodes,
