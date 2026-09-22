@@ -141,8 +141,14 @@ jobs:
             fi
 
             failure_category='provider_read_failed'
-            if grep -Eqi 'does not have permission|permission denied|PERMISSION_DENIED' "$failure_file"; then
+            failure_permission=''
+            if grep -Eqi 'permission|forbidden|(^|[^0-9])403([^0-9]|$)|monitoring\.(alertPolicies|notificationChannels)\.(list|get)' "$failure_file"; then
               failure_category='permission_denied'
+              failure_permission="$(grep -Eo 'monitoring\.(alertPolicies|notificationChannels)\.(list|get)' "$failure_file" | head -n 1 || true)"
+            elif grep -Eqi 'unknown command|invalid choice|unrecognized arguments|not a valid choice|component.*beta|beta.*component' "$failure_file"; then
+              failure_category='cli_surface_error'
+            elif grep -Eqi 'SERVICE_DISABLED|accessNotConfigured|api.*disabled|has not been used.*before' "$failure_file"; then
+              failure_category='api_disabled_or_unavailable'
             elif grep -Eqi 'not found|does not exist' "$failure_file"; then
               failure_category='resource_not_found_or_hidden'
             fi
@@ -156,6 +162,7 @@ jobs:
               --arg imageRef "$IMAGE_REF" \
               --arg stage "$failure_stage" \
               --arg category "$failure_category" \
+              --arg permission "$failure_permission" \
               --argjson exitCode "$failure_rc" '
                 {
                   schemaVersion: 2,
@@ -173,6 +180,7 @@ jobs:
                     stage: $stage,
                     category: $category,
                     exitCode: $exitCode,
+                    permission: (if $permission == "" then null else $permission end),
                     rawProviderErrorRetained: false
                   },
                   classification: {
