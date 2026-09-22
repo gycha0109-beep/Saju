@@ -12,8 +12,12 @@ import process from 'node:process';
 const PACKAGE_NAME = '@myeongha/face-reading';
 const PACKAGE_VERSION = '0.0.0';
 const PUBLIC_EXPORT_PATH = './preview-engine';
+const CANONICAL_REGISTRY_EXPORT_PATH =
+  './product-neutral-observation-contract-fe035b';
 const FE019_CONTRACT_VERSION =
   'FE019-DIRECT-BLOB-PRODUCT-SAFE-BROWSER-PREVIEW-SESSION-v1';
+const FE035B_CONTRACT_VERSION =
+  'FE035B-PRODUCT-NEUTRAL-OBSERVATION-CONTRACT-v1';
 const MEDIAPIPE_VERSION = '0.10.35';
 const MANIFEST_SCHEMA =
   'fe021-preview-consumer-handoff-manifest-v1';
@@ -63,6 +67,9 @@ const manifest = Object.freeze({
     name: PACKAGE_NAME,
     version: PACKAGE_VERSION,
     publicExportPath: PUBLIC_EXPORT_PATH,
+    compatibleAdditiveExportPaths: Object.freeze([
+      CANONICAL_REGISTRY_EXPORT_PATH,
+    ]),
     private: true,
   }),
   artifact: Object.freeze({
@@ -71,6 +78,7 @@ const manifest = Object.freeze({
   }),
   contract: Object.freeze({
     fe019: FE019_CONTRACT_VERSION,
+    fe035b: FE035B_CONTRACT_VERSION,
   }),
   runtimeDependency: Object.freeze({
     package: '@mediapipe/tasks-vision',
@@ -82,6 +90,8 @@ const manifest = Object.freeze({
   distribution: Object.freeze({
     registryPublished: false,
     handoffOnly: true,
+    canonicalRegistryExportPresent: true,
+    productionInterpretationAuthorityIssued: false,
   }),
 });
 
@@ -99,5 +109,6 @@ process.stdout.write(
     sha256,
     sourceCommit: manifest.source.commit,
     registryPublished: false,
+    canonicalRegistryExportPresent: true,
   })}\n`,
 );

@@ -28,6 +28,8 @@ The private `@myeongha/face-reading@0.0.0` artifact exposes exactly:
 
 The package root and internal implementation paths remain blocked.
 
+Legacy FE020 and FE021 consumer gates are retained as backward-compatibility gates. They continue to verify the preview export while explicitly admitting the single FE040B canonical-registry subpath as an additive governed export. They do not treat the private handoff artifact as an npm-registry publication.
+
 ## Deterministic materialization
 
 The existing stable distribution materializer is reused rather than adding another phase workflow.
@@ -43,6 +45,10 @@ For the FE040B branch it:
 7. commits only the immutable manifest and tarball bytes.
 
 The manifest binds the artifact to the FE035B source commit/blob and records the artifact SHA-256.
+
+## Migration parity
+
+The package export-map change is recorded in the post-migration evolution ledger as an additive authority-governed extension under FE040B / issue #1268. Historical provenance and methodology semantics remain unchanged.
 
 ## Authority boundary
 
