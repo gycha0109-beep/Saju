@@ -11,7 +11,7 @@ describe('Preview semantic admission registry v1', () => {
     const registry = createPreviewSemanticAdmissionRegistryV1();
 
     expect(registry.registryVersion).toBe(PREVIEW_SEMANTIC_ADMISSION_REGISTRY_VERSION);
-    expect(registry.entries).toHaveLength(7);
+    expect(registry.entries).toHaveLength(8);
     expect(registry.constraints).toEqual({
       explicitAdmissionRequired: true,
       researchMergeDoesNotImplyAdmission: true,
@@ -81,6 +81,21 @@ describe('Preview semantic admission registry v1', () => {
       'existing_ga_open_career_exact_ten_god_channel_conclusions',
     );
     expect(admission.boundaries).toContain('NO_SPECIFIC_OCCUPATION_ASSIGNMENT');
+    expect(admission.effects.mayAffectProductionAuthority).toBe(false);
+  });
+
+  it('pins the current general Relationship candidate as a ga-open Preview baseline, not Production authority', () => {
+    const admission = requirePreviewSemanticAdmissionV1(
+      'RELATIONSHIP_NATAL_READING_CANDIDATE',
+      'relationship:natal:general',
+    );
+
+    expect(admission.disposition).toBe('claim');
+    expect(admission.semanticScope).toBe(
+      'existing_ga_open_relationship_general_consumer_conclusions',
+    );
+    expect(admission.boundaries).toContain('NO_SPECIFIC_PARTNER_OR_ATTRIBUTE_PREDICTION');
+    expect(admission.boundaries).toContain('NO_MARRIAGE_BREAKUP_OR_INFIDELITY_OUTCOME');
     expect(admission.effects.mayAffectProductionAuthority).toBe(false);
   });
 
