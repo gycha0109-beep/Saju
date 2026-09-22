@@ -32,6 +32,10 @@ import {
   RELATIONSHIP_NATAL_READING_METHODOLOGY,
 } from '../research/relationship-natal-reading-candidate.js';
 import {
+  BUSINESS_NATAL_READING_CANDIDATE_VERSION,
+  BUSINESS_NATAL_READING_METHODOLOGY,
+} from '../research/business-natal-reading-candidate.js';
+import {
   PREVIEW_E2E_APPROVAL,
   PREVIEW_E2E_AUTHORITY_VERSION,
   type PreviewE2eSupportedReadingSection,
@@ -40,7 +44,7 @@ import {
 export const PREVIEW_SEMANTIC_ADMISSION_SCHEMA_VERSION =
   'myeonghwa-preview-semantic-admission-v1' as const;
 export const PREVIEW_SEMANTIC_ADMISSION_REGISTRY_VERSION =
-  'myeonghwa-preview-semantic-admission-registry-2026-09-23-v3' as const;
+  'myeonghwa-preview-semantic-admission-registry-2026-09-23-v4' as const;
 
 export type PreviewSemanticAdmissionDisposition =
   | 'claim'
@@ -282,6 +286,34 @@ const ENTRIES: readonly PreviewSemanticAdmissionEntryV1[] = Object.freeze([
       'NO_MARRIAGE_BREAKUP_OR_INFIDELITY_OUTCOME',
       'NO_FUTURE_RELATIONSHIP_TIMING',
       'NO_COMPATIBILITY_JUDGMENT',
+      'NO_NUMERIC_SCORING',
+    ],
+  }),
+  entry({
+    admissionId: 'preview-baseline-business-natal-research-candidate-v1',
+    researchRef: {
+      researchId: 'BUSINESS_NATAL_READING_CANDIDATE',
+      modulePath: 'src/research/business-natal-reading-candidate.ts',
+      expectedVersion: '0.8.0-research',
+      observedVersion: BUSINESS_NATAL_READING_CANDIDATE_VERSION,
+      expectedAuthorityState: 'research',
+      observedAuthorityState: BUSINESS_NATAL_READING_METHODOLOGY.status,
+    },
+    targetSections: ['business:natal'],
+    semanticScope: 'existing_ga_open_business_operating_style_consumer_conclusions',
+    disposition: 'claim',
+    rationale:
+      'Pins the existing ga-open Business Preview candidate whose bounded Korean headline and summary are already owned by the claim payload while keeping operating-style semantics separate from business-outcome authority.',
+    boundaries: [
+      'PREVIEW_BASELINE_ONLY',
+      'NO_ENTREPRENEUR_SUITABILITY_CLASSIFICATION',
+      'NO_SPECIFIC_INDUSTRY_ASSIGNMENT',
+      'NO_BUSINESS_SUCCESS_OUTCOME',
+      'NO_REVENUE_OUTCOME',
+      'NO_FUNDING_OUTCOME',
+      'NO_BUSINESS_FAILURE_OUTCOME',
+      'NO_FUTURE_BUSINESS_TIMING',
+      'NO_FINANCIAL_ADVICE',
       'NO_NUMERIC_SCORING',
     ],
   }),

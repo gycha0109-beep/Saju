@@ -412,6 +412,22 @@ jobs:
 
           cat "$evidence_md" >> "$GITHUB_STEP_SUMMARY"
 
+          jq -c '{
+            providerEvidenceReadable,
+            classification: {
+              totalAlertPolicyCount: .classification.totalAlertPolicyCount,
+              enabledCloudRunPolicyCount: .classification.enabledCloudRunPolicyCount,
+              currentServiceCoveringPolicyCount: .classification.currentServiceCoveringPolicyCount,
+              totalNotificationChannelCount: .classification.totalNotificationChannelCount,
+              enabledNotificationChannelCount: .classification.enabledNotificationChannelCount,
+              verifiedNotificationChannelCount: .classification.verifiedNotificationChannelCount,
+              referencedNotificationChannelCount: .classification.referencedNotificationChannelCount,
+              unresolvedNotificationChannelReferenceCount: .classification.unresolvedNotificationChannelReferenceCount,
+              ownerOnCallEvidence: .classification.ownerOnCallEvidence,
+              monitoringReadiness: .classification.monitoringReadiness
+            }
+          }' "$evidence_json"
+
       - name: Upload sanitized monitoring evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

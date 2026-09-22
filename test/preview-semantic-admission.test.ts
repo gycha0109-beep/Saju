@@ -11,7 +11,7 @@ describe('Preview semantic admission registry v1', () => {
     const registry = createPreviewSemanticAdmissionRegistryV1();
 
     expect(registry.registryVersion).toBe(PREVIEW_SEMANTIC_ADMISSION_REGISTRY_VERSION);
-    expect(registry.entries).toHaveLength(8);
+    expect(registry.entries).toHaveLength(9);
     expect(registry.constraints).toEqual({
       explicitAdmissionRequired: true,
       researchMergeDoesNotImplyAdmission: true,
@@ -97,6 +97,30 @@ describe('Preview semantic admission registry v1', () => {
     expect(admission.boundaries).toContain('NO_SPECIFIC_PARTNER_OR_ATTRIBUTE_PREDICTION');
     expect(admission.boundaries).toContain('NO_MARRIAGE_BREAKUP_OR_INFIDELITY_OUTCOME');
     expect(admission.effects.mayAffectProductionAuthority).toBe(false);
+  });
+
+  it('pins the current Business candidate as a ga-open Preview operating-style baseline, not Production authority', () => {
+    const admission = requirePreviewSemanticAdmissionV1(
+      'BUSINESS_NATAL_READING_CANDIDATE',
+      'business:natal',
+    );
+
+    expect(admission.disposition).toBe('claim');
+    expect(admission.researchRef.expectedVersion).toBe('0.8.0-research');
+    expect(admission.researchRef.observedVersion).toBe('0.8.0-research');
+    expect(admission.researchRef.observedAuthorityState).toBe('research');
+    expect(admission.semanticScope).toBe(
+      'existing_ga_open_business_operating_style_consumer_conclusions',
+    );
+    expect(admission.boundaries).toContain('NO_ENTREPRENEUR_SUITABILITY_CLASSIFICATION');
+    expect(admission.boundaries).toContain('NO_BUSINESS_SUCCESS_OUTCOME');
+    expect(admission.boundaries).toContain('NO_FUTURE_BUSINESS_TIMING');
+    expect(admission.boundaries).toContain('NO_FINANCIAL_ADVICE');
+    expect(admission.boundaries).toContain('NO_NUMERIC_SCORING');
+    expect(admission.effects.mayCreatePreviewClaim).toBe(true);
+    expect(admission.effects.mayAffectProductionAuthority).toBe(false);
+    expect(admission.effects.mayPromoteResearchLifecycle).toBe(false);
+    expect(admission.effects.mayInferMissingSemantics).toBe(false);
   });
 
   it('pins the current Wealth candidate as a ga-open Preview baseline, not Production authority', () => {
