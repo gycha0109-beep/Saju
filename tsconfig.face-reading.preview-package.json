@@ -8,7 +8,8 @@
     "rootDir": "./packages/face-reading/src"
   },
   "include": [
-    "packages/face-reading/src/preview-engine.ts"
+    "packages/face-reading/src/preview-engine.ts",
+    "packages/face-reading/src/product-neutral-observation-contract-fe035b.ts"
   ],
   "exclude": [
     "**/*.test.ts"

@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - feat/fe033a-stable-preview-distribution
+      - feat/face-reading/fe040b-registry-distribution
     paths:
       - '.github/workflows/fe033a-stable-preview-distribution.yml'
       - 'scripts/build-fe024-digest-bound-preview-consumer-handoff.mjs'
       - 'scripts/verify-fe024-digest-bound-preview-consumer-handoff.mjs'
+      - 'scripts/build-fe040b-canonical-registry-consumer-handoff.mjs'
+      - 'scripts/verify-fe040b-canonical-registry-consumer-handoff.mjs'
       - 'packages/face-reading/**'
       - 'tsconfig.face-reading.preview-package.json'
   workflow_dispatch:
@@ -16,7 +19,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: fe033a-stable-preview-distribution
+  group: fe033a-stable-preview-distribution-${{ github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -27,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: feat/fe033a-stable-preview-distribution
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -35,16 +38,21 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run face:build:preview-package
+
       - name: Build deterministic FE024 handoff
+        if: github.ref_name == 'feat/fe033a-stable-preview-distribution'
         env:
           FE024_SOURCE_COMMIT: 1c0be383844bd7c5aa75079e2084da7bee9de13c
         run: node scripts/build-fe024-digest-bound-preview-consumer-handoff.mjs distribution/face-reading/fe024
       - name: Verify FE024 handoff
+        if: github.ref_name == 'feat/fe033a-stable-preview-distribution'
         run: node scripts/verify-fe024-digest-bound-preview-consumer-handoff.mjs distribution/face-reading/fe024
-      - name: Verify locked tarball digest
+      - name: Verify locked FE024 tarball digest
+        if: github.ref_name == 'feat/fe033a-stable-preview-distribution'
         run: |
           echo "8d793c57e104fc0137a17dc631d208b468131b1d9a9668142a846e34dacbf84a  distribution/face-reading/fe024/myeongha-face-reading-0.0.0.tgz" | sha256sum --check --strict
-      - name: Commit immutable distribution bytes
+      - name: Commit immutable FE024 distribution bytes
+        if: github.ref_name == 'feat/fe033a-stable-preview-distribution'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -55,3 +63,44 @@ jobs:
           fi
           git commit -m "build(face-engine): materialize FE024 preview distribution"
           git push origin HEAD:feat/fe033a-stable-preview-distribution
+
+      - name: Verify pinned FE035B canonical source blob
+        if: github.ref_name == 'feat/face-reading/fe040b-registry-distribution'
+        run: |
+          test "$(git hash-object packages/face-reading/src/product-neutral-observation-contract-fe035b.ts)" = "c9ed7dfb347144759694056e89d571c433d4dfc8"
+      - name: Build FE040B handoff A
+        if: github.ref_name == 'feat/face-reading/fe040b-registry-distribution'
+        run: node scripts/build-fe040b-canonical-registry-consumer-handoff.mjs .artifacts/fe040b-a
+      - name: Verify FE040B handoff A
+        if: github.ref_name == 'feat/face-reading/fe040b-registry-distribution'
+        run: node scripts/verify-fe040b-canonical-registry-consumer-handoff.mjs .artifacts/fe040b-a
+      - name: Build FE040B handoff B
+        if: github.ref_name == 'feat/face-reading/fe040b-registry-distribution'
+        run: node scripts/build-fe040b-canonical-registry-consumer-handoff.mjs .artifacts/fe040b-b
+      - name: Verify FE040B handoff B
+        if: github.ref_name == 'feat/face-reading/fe040b-registry-distribution'
+        run: node scripts/verify-fe040b-canonical-registry-consumer-handoff.mjs .artifacts/fe040b-b
+      - name: Verify FE040B deterministic artifact equality
+        if: github.ref_name == 'feat/face-reading/fe040b-registry-distribution'
+        run: |
+          test "$(sha256sum .artifacts/fe040b-a/myeongha-face-reading-0.0.0.tgz | cut -d' ' -f1)" = "$(sha256sum .artifacts/fe040b-b/myeongha-face-reading-0.0.0.tgz | cut -d' ' -f1)"
+          diff -u .artifacts/fe040b-a/manifest.json .artifacts/fe040b-b/manifest.json
+      - name: Materialize FE040B distribution bytes
+        if: github.ref_name == 'feat/face-reading/fe040b-registry-distribution'
+        run: |
+          rm -rf distribution/face-reading/fe040b
+          mkdir -p distribution/face-reading/fe040b
+          cp .artifacts/fe040b-a/manifest.json distribution/face-reading/fe040b/manifest.json
+          cp .artifacts/fe040b-a/myeongha-face-reading-0.0.0.tgz distribution/face-reading/fe040b/myeongha-face-reading-0.0.0.tgz
+      - name: Commit immutable FE040B distribution bytes
+        if: github.ref_name == 'feat/face-reading/fe040b-registry-distribution'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add distribution/face-reading/fe040b/manifest.json distribution/face-reading/fe040b/myeongha-face-reading-0.0.0.tgz
+          if git diff --cached --quiet; then
+            echo "FE040B distribution already materialized."
+            exit 0
+          fi
+          git commit -m "build(face-engine): materialize FE040B canonical registry distribution"
+          git push origin HEAD:feat/face-reading/fe040b-registry-distribution
