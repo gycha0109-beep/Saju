@@ -77,5 +77,8 @@ export const R020_AUTHORITY = Object.freeze({
   independentTraditionCountSettled: false,
   mingliTanyuanIndependentVoteRejected: true,
   generalizedStrengthClassifierAuthorized: false,
+  closureCompleteWithDependencyRiskPreserved: true,
+  exactXuRenLineageSettled: false,
+  exactMingliPerTitleAttributionSettled: false,
   productionAuthorityPromoted: false,
 });
