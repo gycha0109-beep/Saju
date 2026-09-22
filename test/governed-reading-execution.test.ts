@@ -200,6 +200,65 @@ describe('Governed Reading Execution Orchestrator', () => {
     expect(result.artifact?.provenance.narrativeRunId).toBe(result.narrative?.run.narrativeRunId);
   });
 
+  it('renders a canonical Official Reading and pins semantic provenance when selected claims carry report meaning', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const wealthBase = claim(currentSnapshot.snapshotId, {
+      id: 'claim-wealth-canonical-report',
+      tier: 'T8',
+      category: 'wealth',
+      subcategory: 'friction',
+    });
+    const wealth: InterpretationClaim = {
+      ...wealthBase,
+      predicate: 'wealth_conclusion',
+      value: {
+        wealthKind: 'friction',
+        headline: '준비와 결과 사이의 긴장',
+        summary: '배움에 더 투자할지 지금 결과를 만들지 사이에서 긴장이 생길 수 있습니다.',
+        futureMoneyTimingAuthorized: false,
+        numericScoringAuthorized: false,
+      },
+    };
+    const interpretation = executionWithClaims(currentSnapshot, registry, [wealth]);
+
+    const result = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      { requestId: 'execution-canonical-report', text: '재물운' },
+      new TrackingAdapter(),
+      narrativePolicy,
+      {
+        ...executionOptions,
+        narrativeNow: new Date('2026-08-24T00:20:00.000Z'),
+        artifactGeneratedAt: new Date('2026-08-24T00:21:00.000Z'),
+      },
+    );
+
+    expect(result.state).toBe('completed');
+    expect(result.artifact?.sections.map((section) => section.title)).toEqual([
+      '충돌·흔들림',
+      '해석 범위',
+    ]);
+    expect(result.artifact?.sections[0]?.blocks).toEqual([
+      { type: 'key_points', items: ['준비와 결과 사이의 긴장'] },
+      {
+        type: 'paragraph',
+        text: '배움에 더 투자할지 지금 결과를 만들지 사이에서 긴장이 생길 수 있습니다.',
+      },
+    ]);
+    expect(result.artifact?.provenance.canonicalSemanticRef?.semanticHash).toBe(
+      result.canonicalSemantics?.semanticHash,
+    );
+    expect(result.artifact?.provenance.officialReadingPlanRef?.planHash).toBe(
+      result.officialReadingPlan?.planHash,
+    );
+    expect(result.artifact?.provenance.officialReadingRendererVersion).toBe(
+      'myeonghwa-official-reading-renderer-v1',
+    );
+  });
+
   it('makes zero model calls and creates no artifact for ambiguous input', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
