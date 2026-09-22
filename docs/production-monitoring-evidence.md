@@ -46,7 +46,7 @@ A successful workflow run proves that the provider configuration was readable an
 
 The operational role for this runbook is the **Production operator**: a repository maintainer authorized to use the `production-saju` GitHub environment and the corresponding Google Cloud production identity.
 
-The current accountable Production operational owner is repository owner `gycha0109-beep`. This records operational ownership only. It does not assign a 24/7 human on-call role; on-call assignment remains separate evidence.
+The current accountable Production operational owner is repository owner `gycha0109-beep`. The same human is also the primary Production on-call / incident responder for this service. This is an accountability assignment for incident response; it is not a claim of a staffed 24/7 rotation or response-time SLA.
 
 ## Governed alert provisioning
 
