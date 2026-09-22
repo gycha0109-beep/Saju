@@ -32,8 +32,17 @@ import {
   RELATIONSHIP_NATAL_READING_METHODOLOGY,
   RELATIONSHIP_NATAL_READING_RULES,
 } from './relationship-natal-reading-candidate.js';
+import {
+  I18A_MONTH_BRANCH_STRENGTH_METHODOLOGY,
+  I18A_MONTH_BRANCH_STRENGTH_RULES,
+  I18A_MONTH_BRANCH_STRENGTH_SOURCES,
+} from './i18a-month-branch-strength-evidence.js';
+import {
+  GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY,
+  GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_RULES,
+} from './general-natal-t8-structural-summary-candidate.js';
 
-export const BUSINESS_NATAL_READING_CANDIDATE_VERSION = '0.7.0-research' as const;
+export const BUSINESS_NATAL_READING_CANDIDATE_VERSION = '0.8.0-research' as const;
 
 const METHOD_ID = 'M-BUSINESS-NATAL-READING-TEN-GOD-SYNTHESIS-V1';
 const BUSINESS_RULE_SET = 'business-natal-consumer-reading';
@@ -355,6 +364,8 @@ const CHANNEL_SENSITIVE_SPECIALIST_RULES: readonly RuleDefinition[] = Object.fre
 );
 
 const ALL_RULES: readonly RuleDefinition[] = Object.freeze([
+  ...I18A_MONTH_BRANCH_STRENGTH_RULES,
+  ...GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_RULES,
   ...GENERAL_NATAL_USEFUL_TEN_GOD_RULES,
   ...GENERAL_NATAL_USEFUL_T8_RULES,
   ...GENERAL_NATAL_CONCLUSION_FAMILY_RULES,
@@ -369,6 +380,14 @@ export const BUSINESS_NATAL_READING_PACK: InterpretationPack = Object.freeze({
   version: BUSINESS_NATAL_READING_CANDIDATE_VERSION,
   name: 'Natal Business Consumer Reading Research Candidate',
   methodologyRefs: [
+    {
+      id: I18A_MONTH_BRANCH_STRENGTH_METHODOLOGY.methodologyId,
+      version: I18A_MONTH_BRANCH_STRENGTH_METHODOLOGY.version,
+    },
+    {
+      id: GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY.methodologyId,
+      version: GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY.version,
+    },
     {
       id: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.methodologyId,
       version: GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY.version,
@@ -412,6 +431,8 @@ export function createBusinessNatalReadingCandidateRegistry(
     {
       rules: [...ALL_RULES],
       methodologies: [
+        I18A_MONTH_BRANCH_STRENGTH_METHODOLOGY,
+        GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY,
         GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
         GENERAL_NATAL_USEFUL_SYNTHESIS_METHODOLOGY,
         GENERAL_NATAL_CONCLUSION_METHODOLOGY,
@@ -420,7 +441,11 @@ export function createBusinessNatalReadingCandidateRegistry(
         RELATIONSHIP_NATAL_READING_METHODOLOGY,
         BUSINESS_NATAL_READING_METHODOLOGY,
       ],
-      sources: [GENERAL_NATAL_USEFUL_READING_SOURCE, GENERAL_NATAL_CONCLUSION_SOURCE],
+      sources: [
+        ...I18A_MONTH_BRANCH_STRENGTH_SOURCES,
+        GENERAL_NATAL_USEFUL_READING_SOURCE,
+        GENERAL_NATAL_CONCLUSION_SOURCE,
+      ],
     },
     BUSINESS_NATAL_READING_PACK,
     createdAt,
