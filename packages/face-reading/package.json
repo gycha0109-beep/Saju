@@ -15,6 +15,10 @@
     "./square-broad-operationalization-readiness-fe041b": {
       "types": "./dist/square-broad-operationalization-readiness-fe041b.d.ts",
       "default": "./dist/square-broad-operationalization-readiness-fe041b.js"
+    },
+    "./square-broad-candidate-metric-mapping-readiness-fe041d": {
+      "types": "./dist/square-broad-candidate-metric-mapping-readiness-fe041d.d.ts",
+      "default": "./dist/square-broad-candidate-metric-mapping-readiness-fe041d.js"
     }
   },
   "files": [

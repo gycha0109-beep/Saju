@@ -10,7 +10,8 @@
   "include": [
     "packages/face-reading/src/preview-engine.ts",
     "packages/face-reading/src/product-neutral-observation-contract-fe035b.ts",
-    "packages/face-reading/src/square-broad-operationalization-readiness-fe041b.ts"
+    "packages/face-reading/src/square-broad-operationalization-readiness-fe041b.ts",
+    "packages/face-reading/src/square-broad-candidate-metric-mapping-readiness-fe041d.ts"
   ],
   "exclude": [
     "**/*.test.ts"
