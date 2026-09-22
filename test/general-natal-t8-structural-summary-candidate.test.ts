@@ -92,7 +92,7 @@ function upstreamClaim(
 
 describe('general natal T8 structural summary candidate', () => {
   it('is explicitly research-only and contains exactly five relation mappings', () => {
-    expect(GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CANDIDATE_VERSION).toBe('0.1.0-research');
+    expect(GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CANDIDATE_VERSION).toBe('0.2.0-research');
     expect(GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_PACK.status).toBe('research');
     expect(GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY.status).toBe('research');
     expect(GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_RULES).toHaveLength(5);
@@ -167,6 +167,14 @@ describe('general natal T8 structural summary candidate', () => {
       expect(claim?.value).toEqual({
         relation,
         structuralRelationship,
+        headline: expect.any(String),
+        summary: expect.stringContaining('명식 전체의 강약이나 길흉을 확정하지 않습니다'),
+        semanticScope: 'month_branch_structural_context_non_conclusive',
+        qualifiers: [
+          'month_branch_relation_is_one_structural_axis',
+          'overall_strength_not_determined',
+          'fortune_polarity_not_determined',
+        ],
         monthContext: 'branch_element_only',
         overallStrength: 'not_determined',
         withinMonthCommand: 'not_determined',
