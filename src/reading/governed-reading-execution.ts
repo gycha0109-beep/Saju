@@ -24,6 +24,11 @@ import {
   type OfficialReadingPlanV1,
 } from './official-reading-plan.js';
 import {
+  canRenderOfficialReadingV1,
+  renderOfficialReadingV1,
+  type OfficialReadingRenderedContentV1,
+} from './official-reading-renderer.js';
+import {
   prepareProductReading,
   type ProductReadingPreparationResult,
   type ProductReadingPreparationState,
@@ -56,6 +61,7 @@ export interface GovernedReadingExecutionResult {
   narrative?: NarrativeGenerationResult;
   canonicalSemantics?: CanonicalReadingSemanticBundleV1;
   officialReadingPlan?: OfficialReadingPlanV1;
+  officialReadingReport?: OfficialReadingRenderedContentV1;
   artifact?: ReadingArtifact;
   modelCalls: number;
   reasonCodes: readonly string[];
@@ -97,6 +103,7 @@ function resultIdentity(
   narrative?: NarrativeGenerationResult,
   canonicalSemantics?: CanonicalReadingSemanticBundleV1,
   officialReadingPlan?: OfficialReadingPlanV1,
+  officialReadingReport?: OfficialReadingRenderedContentV1,
   artifact?: ReadingArtifact,
 ): string {
   return `reading_execution_${deterministicContentHash({
@@ -107,6 +114,7 @@ function resultIdentity(
     narrativeOutcome: narrative?.outcome,
     canonicalSemanticHash: canonicalSemantics?.semanticHash,
     officialReadingPlanHash: officialReadingPlan?.planHash,
+    officialReadingReportHash: officialReadingReport?.reportHash,
     readingId: artifact?.readingId,
     modelCalls,
     reasonCodes: [...reasonCodes].sort(),
@@ -181,6 +189,12 @@ export async function executeProductReading(
     targetClaimIds: preparation.composition.selection.targetClaimIds,
   });
   const officialReadingPlan = buildOfficialReadingPlanV1(canonicalSemantics);
+  const officialReadingReport = canRenderOfficialReadingV1(
+    canonicalSemantics,
+    officialReadingPlan,
+  )
+    ? renderOfficialReadingV1(canonicalSemantics, officialReadingPlan)
+    : undefined;
 
   const narrative = await generateGroundedNarrative(
     adapter,
@@ -220,6 +234,7 @@ export async function executeProductReading(
       narrative,
       canonicalSemantics,
       officialReadingPlan,
+      officialReadingReport,
       artifact,
     ),
     orchestratorVersion: GOVERNED_READING_EXECUTION_VERSION,
@@ -228,6 +243,7 @@ export async function executeProductReading(
     narrative,
     canonicalSemantics,
     officialReadingPlan,
+    ...(officialReadingReport === undefined ? {} : { officialReadingReport }),
     artifact,
     modelCalls: narrative.modelCalls,
     reasonCodes,
