@@ -296,6 +296,18 @@ export interface ReadingArtifact {
     interpretationRunId: string;
     narrativeRunId?: string;
     readingVersion: string;
+    canonicalSemanticRef?: {
+      schemaVersion: string;
+      projectionVersion: string;
+      semanticHash: string;
+    };
+    officialReadingPlanRef?: {
+      schemaVersion: string;
+      policyVersion: string;
+      planId: string;
+      planHash: string;
+    };
+    officialReadingRendererVersion?: string;
   };
   generatedAt: string;
 }
