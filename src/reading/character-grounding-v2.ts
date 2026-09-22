@@ -2,6 +2,7 @@ import type { ReadingDomain } from '../contracts/reading.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import {
   assertCanonicalReadingSemanticBundleV1,
+  isCanonicalReadingScopeGuardUnitV1,
   type CanonicalReadingSemanticBundleV1,
   type CanonicalReadingSemanticUnitV1,
 } from './canonical-reading-semantics.js';
@@ -229,6 +230,7 @@ function makeUnit(
   allUnits: readonly CanonicalReadingSemanticUnitV1[],
   index: ReadonlyMap<string, CanonicalReadingSemanticUnitV1>,
   requiredDisclosureRefs: readonly string[],
+  readingScopeProhibitions: readonly string[],
 ): CharacterGroundingUnitV2 {
   const sourceRefs = sourceCanonicalUnitRefs(source, index);
   const material = {
@@ -239,7 +241,12 @@ function makeUnit(
     canonicalMeaning: canonicalMeaning(source),
     sourceCanonicalUnitRefs: sourceRefs,
     qualifiers: qualifiersFor(source),
-    prohibitedExtensions: prohibitedExtensions(sourceRefs, allUnits),
+    prohibitedExtensions: [
+      ...new Set([
+        ...prohibitedExtensions(sourceRefs, allUnits),
+        ...readingScopeProhibitions,
+      ]),
+    ].sort(),
     requiredCompanionUnitRefs: [] as readonly string[],
     requiredDisclosureRefs: [...requiredDisclosureRefs].sort(),
     realizationPolicyRef: realizationPolicyFor(source),
@@ -276,7 +283,7 @@ export function buildCharacterGroundingBundleV2(
   });
 
   const index = canonicalUnitIndex(input.semanticBundle);
-  const primaryUnits = input.semanticBundle.targetClaimIds.map((claimId) => {
+  const targetUnits = input.semanticBundle.targetClaimIds.map((claimId) => {
     const unit = index.get(claimId);
     if (unit === undefined || unit.role !== 'primary') {
       throw new TypeError(
@@ -285,6 +292,13 @@ export function buildCharacterGroundingBundleV2(
     }
     return unit;
   });
+  const scopeGuardUnits = targetUnits.filter(isCanonicalReadingScopeGuardUnitV1);
+  const primaryUnits = targetUnits.filter(
+    (unit) => !isCanonicalReadingScopeGuardUnitV1(unit),
+  );
+  const readingScopeProhibitions = [
+    ...new Set(scopeGuardUnits.flatMap((unit) => unit.prohibitedExtensions)),
+  ].sort();
 
   const requiredDisclosureRefs = protectedProjection.disclosures.map(
     (disclosure) => disclosure.disclosureRef,
@@ -297,6 +311,7 @@ export function buildCharacterGroundingBundleV2(
       input.semanticBundle.units,
       index,
       requiredDisclosureRefs,
+      readingScopeProhibitions,
     ),
   );
 
