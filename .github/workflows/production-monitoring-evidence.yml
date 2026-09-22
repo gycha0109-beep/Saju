@@ -58,6 +58,7 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
           version: '583.0.0'
+          install_components: 'beta'
 
       - name: Capture immutable Production Cloud Run context
         id: target
