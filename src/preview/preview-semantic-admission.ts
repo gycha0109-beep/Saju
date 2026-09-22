@@ -271,14 +271,14 @@ function assertEntry(entryValue: PreviewSemanticAdmissionEntryV1): void {
   if (entryValue.targetSections.length === 0) {
     throw new RangeError('Preview semantic admission requires at least one target section.');
   }
-  if (entryValue.disposition === 'claim' !== entryValue.effects.mayCreatePreviewClaim) {
+  if ((entryValue.disposition === 'claim') !== entryValue.effects.mayCreatePreviewClaim) {
     throw new TypeError('Preview semantic admission claim effect mismatch.');
   }
-  if (entryValue.disposition === 'qualifier' !== entryValue.effects.mayQualifyPreviewClaim) {
+  if ((entryValue.disposition === 'qualifier') !== entryValue.effects.mayQualifyPreviewClaim) {
     throw new TypeError('Preview semantic admission qualifier effect mismatch.');
   }
   if (
-    entryValue.disposition === 'observation' !==
+    (entryValue.disposition === 'observation') !==
     entryValue.effects.mayExposePreviewObservation
   ) {
     throw new TypeError('Preview semantic admission observation effect mismatch.');
