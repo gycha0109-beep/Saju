@@ -319,7 +319,9 @@ export function executeGovernedDryRunCaptureFR243(
       source: 'live_camera',
       mediaType: 'image/jpeg',
       transportEncoding: 'raw-binary',
-      declaredContentLength: input.declaredContentLength,
+      ...(input.declaredContentLength === undefined
+        ? {}
+        : { declaredContentLength: input.declaredContentLength }),
       mediaBytes: input.mediaBytes,
       qualityEvaluator: input.qualityEvaluator,
       primaryMetricExtractor: input.primaryMetricExtractor,
