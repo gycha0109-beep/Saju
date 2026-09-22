@@ -1,8 +1,8 @@
 import type {
   CanonicalSajuSnapshot,
-  FactState,
   PillarFact,
 } from '../contracts/calculation.js';
+import type { FactState } from '../contracts/common.js';
 import type { ReadingArtifact } from '../contracts/reading.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 
