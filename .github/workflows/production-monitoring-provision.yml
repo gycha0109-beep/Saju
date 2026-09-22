@@ -1,0 +1,215 @@
+name: Production Monitoring Provision
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/ops/production-monitoring-provision-approved'
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type PROVISION_SAJU_PRODUCTION_ALERT to create the governed Production alert policy.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: production-saju-cloud-run
+  cancel-in-progress: false
+
+env:
+  GCP_REGION: asia-southeast1
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  GCP_DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+  GCP_CLOUD_RUN_SERVICE: ${{ vars.GCP_CLOUD_RUN_SERVICE }}
+  ALERT_DISPLAY_NAME: Saju Production Cloud Run 5xx
+
+jobs:
+  provision:
+    name: Provision governed Production alert policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production-saju
+
+    steps:
+      - name: Validate explicit provisioning intent
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = 'workflow_dispatch' ]; then
+            if [ "$CONFIRM" != 'PROVISION_SAJU_PRODUCTION_ALERT' ]; then
+              echo 'Explicit provisioning confirmation did not match.' >&2
+              exit 1
+            fi
+          elif [ "$EVENT_NAME" = 'push' ] && [ "$REF_NAME" = 'main' ]; then
+            echo 'Accepted one-shot approved main-branch provisioning marker.'
+          else
+            echo 'Unsupported provisioning trigger.' >&2
+            exit 1
+          fi
+          for name in GCP_PROJECT_ID GCP_WORKLOAD_IDENTITY_PROVIDER GCP_DEPLOYER_SERVICE_ACCOUNT GCP_CLOUD_RUN_SERVICE; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required Production variable: ${name}." >&2
+              exit 1
+            fi
+          done
+          if [ "$GCP_CLOUD_RUN_SERVICE" != 'saju-production' ]; then
+            echo 'This workflow is fail-closed to the saju-production Cloud Run service.' >&2
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud using Workload Identity Federation
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK 583.0.0
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          version: '583.0.0'
+          install_components: 'beta'
+
+      - name: Resolve exactly one enabled notification channel
+        id: channel
+        shell: bash
+        run: |
+          set -euo pipefail
+          channels_json="${RUNNER_TEMP}/monitoring-channels.json"
+          gcloud beta monitoring channels list             --project "$GCP_PROJECT_ID"             --format=json > "$channels_json"
+
+          enabled_count="$(jq '[.[] | select((.enabled // true) == true)] | length' "$channels_json")"
+          if [ "$enabled_count" != '1' ]; then
+            echo "Provisioning requires exactly one enabled notification channel; observed ${enabled_count}." >&2
+            echo 'No alert policy was created.' >&2
+            exit 1
+          fi
+
+          channel_name="$(jq -r '[.[] | select((.enabled // true) == true)][0].name // empty' "$channels_json")"
+          channel_type="$(jq -r '[.[] | select((.enabled // true) == true)][0].type // empty' "$channels_json")"
+          if [[ ! "$channel_name" =~ ^projects/[^/]+/notificationChannels/[0-9]+$ ]]; then
+            echo 'Resolved notification channel resource name is invalid.' >&2
+            exit 1
+          fi
+
+          echo "name=$channel_name" >> "$GITHUB_OUTPUT"
+          echo "type=$channel_type" >> "$GITHUB_OUTPUT"
+          rm -f "$channels_json"
+
+      - name: Refuse duplicate governed policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          policies_json="${RUNNER_TEMP}/monitoring-policies.json"
+          gcloud monitoring policies list             --project "$GCP_PROJECT_ID"             --format=json > "$policies_json"
+
+          existing_count="$(jq --arg display "$ALERT_DISPLAY_NAME" '[.[] | select((.displayName // "") == $display)] | length' "$policies_json")"
+          rm -f "$policies_json"
+
+          if [ "$existing_count" != '0' ]; then
+            echo "A governed policy named '$ALERT_DISPLAY_NAME' already exists; refusing duplicate mutation." >&2
+            exit 1
+          fi
+
+      - name: Create Cloud Run 5xx alert policy
+        id: create
+        shell: bash
+        env:
+          NOTIFICATION_CHANNEL: ${{ steps.channel.outputs.name }}
+        run: |
+          set -euo pipefail
+          policy_json="${RUNNER_TEMP}/saju-production-5xx-policy.json"
+
+          jq -n             --arg display "$ALERT_DISPLAY_NAME"             --arg service "$GCP_CLOUD_RUN_SERVICE"             --arg region "$GCP_REGION"             --arg channel "$NOTIFICATION_CHANNEL" '
+              {
+                displayName: $display,
+                combiner: "OR",
+                enabled: true,
+                severity: "CRITICAL",
+                documentation: {
+                  mimeType: "text/markdown",
+                  content: ("Saju Production Cloud Run emitted one or more 5xx responses in a 60-second aggregation window. Follow docs/production-monitoring-evidence.md incident response procedure. Target service: " + $service + ", region: " + $region + ".")
+                },
+                userLabels: {
+                  environment: "production",
+                  service: "saju-production",
+                  managed_by: "github_actions"
+                },
+                notificationChannels: [$channel],
+                conditions: [
+                  {
+                    displayName: "Saju Production 5xx request count above zero",
+                    conditionThreshold: {
+                      filter: ("metric.type=\"run.googleapis.com/request_count\" AND resource.type=\"cloud_run_revision\" AND resource.label.\"service_name\"=\"" + $service + "\" AND resource.label.\"location\"=\"" + $region + "\" AND metric.label.\"response_code_class\"=\"5xx\""),
+                      comparison: "COMPARISON_GT",
+                      thresholdValue: 0,
+                      duration: "0s",
+                      trigger: {count: 1},
+                      aggregations: [
+                        {
+                          alignmentPeriod: "60s",
+                          perSeriesAligner: "ALIGN_SUM",
+                          crossSeriesReducer: "REDUCE_SUM",
+                          groupByFields: ["resource.label.service_name"]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ' > "$policy_json"
+
+          create_output="${RUNNER_TEMP}/monitoring-policy-create.txt"
+          gcloud monitoring policies create             --project "$GCP_PROJECT_ID"             --policy-from-file="$policy_json" | tee "$create_output"
+
+          policy_name="$(grep -Eo 'projects/[^]]+/alertPolicies/[0-9]+' "$create_output" | tail -n 1 || true)"
+          rm -f "$policy_json" "$create_output"
+
+          if [[ ! "$policy_name" =~ ^projects/[^/]+/alertPolicies/[0-9]+$ ]]; then
+            echo 'Policy creation returned no parseable alert-policy resource name.' >&2
+            exit 1
+          fi
+          echo "name=$policy_name" >> "$GITHUB_OUTPUT"
+
+      - name: Verify created policy binding
+        shell: bash
+        env:
+          POLICY_NAME: ${{ steps.create.outputs.name }}
+          NOTIFICATION_CHANNEL: ${{ steps.channel.outputs.name }}
+          NOTIFICATION_CHANNEL_TYPE: ${{ steps.channel.outputs.type }}
+        run: |
+          set -euo pipefail
+          policy_json="${RUNNER_TEMP}/created-policy.json"
+          gcloud monitoring policies describe "$POLICY_NAME"             --project "$GCP_PROJECT_ID"             --format=json > "$policy_json"
+
+          jq -e --arg display "$ALERT_DISPLAY_NAME" '.displayName == $display and (.enabled // true) == true' "$policy_json" >/dev/null
+          jq -e --arg channel "$NOTIFICATION_CHANNEL" '(.notificationChannels // []) | index($channel) != null' "$policy_json" >/dev/null
+          jq -e --arg service "$GCP_CLOUD_RUN_SERVICE" '[.conditions[]?.conditionThreshold.filter // ""] | any(contains($service))' "$policy_json" >/dev/null
+          jq -e '[.conditions[]?.conditionThreshold.filter // ""] | any(contains("run.googleapis.com/request_count"))' "$policy_json" >/dev/null
+          jq -e '[.conditions[]?.conditionThreshold.filter // ""] | any(contains("response_code_class") and contains("5xx"))' "$policy_json" >/dev/null
+
+          {
+            echo '## Production Monitoring provisioning'
+            echo
+            echo "- policy: `$POLICY_NAME`"
+            echo "- display name: `$ALERT_DISPLAY_NAME`"
+            echo "- target service: `$GCP_CLOUD_RUN_SERVICE`"
+            echo "- region: `$GCP_REGION`"
+            echo "- notification channel type: `$NOTIFICATION_CHANNEL_TYPE`"
+            echo '- notification destination: intentionally not retained'
+            echo '- condition: any Cloud Run 5xx request in a 60-second aggregation window'
+            echo '- post-create binding verification: PASS'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          rm -f "$policy_json"
