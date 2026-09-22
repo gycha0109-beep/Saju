@@ -237,26 +237,27 @@ describe('Governed Reading Execution Orchestrator', () => {
     );
 
     expect(result.state).toBe('completed');
-    expect(result.artifact?.sections.map((section) => section.title)).toEqual([
+    expect(result.officialReadingReport?.sections.map((section) => section.title)).toEqual([
       '충돌·흔들림',
       '해석 범위',
     ]);
-    expect(result.artifact?.sections[0]?.blocks).toEqual([
+    expect(result.officialReadingReport?.sections[0]?.blocks).toEqual([
       { type: 'key_points', items: ['준비와 결과 사이의 긴장'] },
       {
         type: 'paragraph',
         text: '배움에 더 투자할지 지금 결과를 만들지 사이에서 긴장이 생길 수 있습니다.',
       },
     ]);
-    expect(result.artifact?.provenance.canonicalSemanticRef?.semanticHash).toBe(
+    expect(result.officialReadingReport?.sourceSemanticHash).toBe(
       result.canonicalSemantics?.semanticHash,
     );
-    expect(result.artifact?.provenance.officialReadingPlanRef?.planHash).toBe(
+    expect(result.officialReadingReport?.sourcePlanHash).toBe(
       result.officialReadingPlan?.planHash,
     );
-    expect(result.artifact?.provenance.officialReadingRendererVersion).toBe(
+    expect(result.officialReadingReport?.rendererVersion).toBe(
       'myeonghwa-official-reading-renderer-v1',
     );
+    expect(result.artifact).toBeDefined();
   });
 
   it('makes zero model calls and creates no artifact for ambiguous input', async () => {
