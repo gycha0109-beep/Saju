@@ -1,0 +1,14 @@
+import { createHash } from 'node:crypto';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import process from 'node:process';
+const EXPORTS=['./preview-engine','./product-neutral-observation-contract-fe035b','./square-broad-operationalization-readiness-fe041b','./square-broad-candidate-metric-mapping-readiness-fe041d'];
+const dir=resolve(process.argv[2]??'.artifacts/fe041d'); rmSync(dir,{recursive:true,force:true}); mkdirSync(dir,{recursive:true});
+const packed=JSON.parse(execFileSync('npm',['pack','--workspace','@myeongha/face-reading','--pack-destination',dir,'--json'],{encoding:'utf8'}).trim());
+if(!Array.isArray(packed)||packed.length!==1) throw new Error('FE041D pack cardinality drift.');
+const a=packed[0], path=resolve(dir,basename(a.filename));
+const sha256=createHash('sha256').update(readFileSync(path)).digest('hex');
+const manifest={schemaVersion:'fe041d-square-broad-candidate-metric-mapping-readiness-handoff-manifest-v1',package:{name:'@myeongha/face-reading',version:'0.0.0',publicExports:EXPORTS,private:true},artifact:{filename:basename(a.filename),sha256},contracts:{fe041d:'FE041D-SQUARE-BROAD-CANDIDATE-METRIC-MAPPING-READINESS-v1'},researchSnapshot:{repository:'gycha0109-beep/Saju',commit:'8b49d4e03e35ef5447f0f2873ff2b8737bd36110',fe035bSourceBlob:'c9ed7dfb347144759694056e89d571c433d4dfc8',fr141SourceBlob:'a2a621bb2088f9002480caf6a89bbc0a40e50538',fr142SourceBlob:'004a2cdb21bc6f247e48cae52429afaf54f6804d',fr143SourceBlob:'293e29e65239894a5ec21befbd7152c339250759'},mappingReadiness:{candidateMetricCount:3,canonicalRegistryMetricCount:13,canonicalRegistryIntersectionCount:0,canonicalMetricBindingAuthorized:false,traditionalFangBindingAuthorized:false,constructValidityEstablished:false,empiricalSemanticEvidenceAdmitted:false,calibrationAuthorityIssued:false,numericThresholdAuthorityIssued:false,criterionStateIssued:false,productionSemanticExecutionAuthorized:false},distribution:{handoffOnly:true,productionInterpretationAuthorityIssued:false}};
+writeFileSync(resolve(dir,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');
+process.stdout.write(JSON.stringify({status:'FE041D_HANDOFF_BUILT',sha256})+'\n');

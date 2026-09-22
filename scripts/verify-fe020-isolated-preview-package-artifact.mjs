@@ -18,6 +18,8 @@ const EXPECTED_FE035B =
   'FE035B-PRODUCT-NEUTRAL-OBSERVATION-CONTRACT-v1';
 const EXPECTED_FE041B =
   'FE041B-SQUARE-BROAD-OPERATIONALIZATION-READINESS-v1';
+const EXPECTED_FE041D =
+  'FE041D-SQUARE-BROAD-CANDIDATE-METRIC-MAPPING-READINESS-v1';
 const EXPECTED_EXPORTS = {
   './preview-engine': {
     types: './dist/preview-engine.d.ts',
@@ -30,6 +32,10 @@ const EXPECTED_EXPORTS = {
   './square-broad-operationalization-readiness-fe041b': {
     types: './dist/square-broad-operationalization-readiness-fe041b.d.ts',
     default: './dist/square-broad-operationalization-readiness-fe041b.js',
+  },
+  './square-broad-candidate-metric-mapping-readiness-fe041d': {
+    types: './dist/square-broad-candidate-metric-mapping-readiness-fe041d.d.ts',
+    default: './dist/square-broad-candidate-metric-mapping-readiness-fe041d.js',
   },
 };
 
@@ -99,6 +105,8 @@ try {
     filePaths.has('dist/square-broad-operationalization-readiness-fe041b.d.ts'),
     'tarball is missing FE041B operationalization readiness declarations.',
   );
+  assert(filePaths.has('dist/square-broad-candidate-metric-mapping-readiness-fe041d.js'), 'tarball is missing FE041D runtime.');
+  assert(filePaths.has('dist/square-broad-candidate-metric-mapping-readiness-fe041d.d.ts'), 'tarball is missing FE041D declarations.');
   assert(
     ![...filePaths].some((path) => path.startsWith('src/')),
     'tarball must not ship source files.',
@@ -218,6 +226,12 @@ try {
       throw new Error('FE041B operationalization readiness authority widened.');
     }
 
+    const mapping = await import('@myeongha/face-reading/square-broad-candidate-metric-mapping-readiness-fe041d');
+    if (mapping.FE041D_SQUARE_BROAD_CANDIDATE_METRIC_MAPPING_READINESS_VERSION !== ${JSON.stringify('FE041D-SQUARE-BROAD-CANDIDATE-METRIC-MAPPING-READINESS-v1')}) throw new Error('FE041D contract missing.');
+    const mappingState = mapping.issueSquareBroadCandidateMetricMappingReadinessFE041D();
+    mapping.assertIssuedSquareBroadCandidateMetricMappingReadinessFE041D(mappingState);
+    if (mappingState.canonicalRegistryIntersection.length !== 0 || mappingState.mappingDecision.traditionalFangBindingAuthorized !== false) throw new Error('FE041D authority widened.');
+
     async function expectBlocked(specifier) {
       try {
         await import(specifier);
@@ -247,6 +261,7 @@ try {
       fe019ContractVersion: EXPECTED_FE019,
       fe035bContractVersion: EXPECTED_FE035B,
       fe041bContractVersion: EXPECTED_FE041B,
+      fe041dContractVersion: EXPECTED_FE041D,
       canonicalRegistryExportPresent: true,
       operationalizationReadinessExportPresent: true,
       rootPathBlocked: true,
