@@ -46,7 +46,22 @@ A successful workflow run proves that the provider configuration was readable an
 
 The operational role for this runbook is the **Production operator**: a repository maintainer authorized to use the `production-saju` GitHub environment and the corresponding Google Cloud production identity.
 
-This role definition does not identify a human on-call assignee. A human owner/on-call assignment must be evidenced separately before `monitoring/alert ownership` is considered closed.
+The current accountable Production operational owner is repository owner `gycha0109-beep`. This records operational ownership only. It does not assign a 24/7 human on-call role; on-call assignment remains separate evidence.
+
+## Governed alert provisioning
+
+`.github/workflows/production-monitoring-provision.yml` is a manual-only mutation path for the initial Saju Production Cloud Run alert policy. It is intentionally separate from the read-only evidence collector.
+
+The provisioner fails closed unless all of the following are true:
+
+- the dispatch confirmation is exactly `PROVISION_SAJU_PRODUCTION_ALERT`,
+- the configured Cloud Run service is exactly `saju-production`,
+- exactly one enabled Cloud Monitoring notification channel already exists,
+- no alert policy named `Saju Production Cloud Run 5xx` already exists.
+
+The provisioned policy targets `run.googleapis.com/request_count` for the `cloud_run_revision` resource, restricted to `saju-production` in `asia-southeast1`, and opens an incident when the aggregated 5xx request count is greater than zero in a 60-second aggregation window. The selected notification destination is never retained in repository output.
+
+The GitHub Production identity requires `roles/monitoring.alertPolicyEditor` to execute this mutation. Notification-channel creation is deliberately outside this workflow; an operator must establish the destination separately before dispatch. The provisioner does not require Monitoring Admin, Monitoring Editor, Project Editor, or Project Owner.
 
 ## Incident response procedure
 
