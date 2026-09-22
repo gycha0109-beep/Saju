@@ -243,7 +243,7 @@ export async function executeProductReading(
     narrative,
     canonicalSemantics,
     officialReadingPlan,
-    officialReadingReport,
+    ...(officialReadingReport === undefined ? {} : { officialReadingReport }),
     artifact,
     modelCalls: narrative.modelCalls,
     reasonCodes,
