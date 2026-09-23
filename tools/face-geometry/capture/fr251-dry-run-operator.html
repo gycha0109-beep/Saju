@@ -135,6 +135,70 @@
     </div>
   </section>
 </main>
+<script>
+(() => {
+  const status = document.querySelector('#prep-status');
+  const state = {
+    stage: 'html_ready',
+    moduleStarted: false,
+    ready: false,
+    lastError: null,
+  };
+
+  function render(message) {
+    if (status !== null) status.textContent = message;
+  }
+
+  window.__FR251_BOOTSTRAP_STATE__ = state;
+  window.__fr251BootstrapSignal__ = (stage, detail = '') => {
+    state.stage = stage;
+    if (stage === 'module_started') state.moduleStarted = true;
+    if (stage === 'ready') state.ready = true;
+    if (stage === 'failed') state.lastError = detail || 'unknown bootstrap failure';
+
+    if (stage === 'failed') {
+      render('runtime 준비 실패: ' + state.lastError);
+      return;
+    }
+    if (stage !== 'ready') {
+      render('runtime 준비 중 · ' + stage + (detail ? ' · ' + detail : ''));
+    }
+  };
+
+  window.addEventListener('error', (event) => {
+    const target = event.target;
+    if (target && target !== window) {
+      const resource = target.src || target.href || target.tagName || 'unknown resource';
+      state.lastError = 'resource load error: ' + resource;
+      render('runtime 준비 실패: ' + state.lastError);
+      return;
+    }
+    if (event.message) {
+      state.lastError = event.message;
+      render('runtime 준비 실패: ' + state.lastError);
+    }
+  }, true);
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason instanceof Error ? event.reason.message : String(event.reason);
+    state.lastError = reason;
+    render('runtime 준비 실패: unhandled rejection · ' + reason);
+  });
+
+  window.setTimeout(() => {
+    if (!state.moduleStarted && !state.ready && state.lastError === null) {
+      state.lastError = 'operator module 또는 정적 의존성 로드가 시작되지 않았습니다.';
+      render('runtime 준비 실패: ' + state.lastError);
+    }
+  }, 12000);
+
+  window.setTimeout(() => {
+    if (state.moduleStarted && !state.ready && state.lastError === null) {
+      render('runtime 준비 지연: ' + state.stage + ' 단계에서 응답을 기다리고 있습니다.');
+    }
+  }, 20000);
+})();
+</script>
 <script type="module" src="/fr251/operator.mjs"></script>
 </body>
 </html>
