@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 import {
   assertLanRequestAllowed,
@@ -28,6 +29,73 @@ function expectIncludes(source, needle, message) {
 
 function expectExcludes(source, needle, message) {
   expect(!source.includes(needle), message + ' Forbidden: ' + needle);
+}
+
+function staticImportSpecifiers(source) {
+  const specifiers = [];
+  const pattern = /^\s*import\s+(?!\()(?:(?:[\s\S]*?)\s+from\s+)?['"]([^'"]+)['"]\s*;/gm;
+  for (const match of source.matchAll(pattern)) specifiers.push(match[1]);
+  return specifiers;
+}
+
+function verifyFR251BrowserModuleGraph() {
+  const faceDistRoot = resolve('.face-reading-dist');
+  const queue = staticImportSpecifiers(fr251Client).map((specifier) => ({
+    importer: fr251ClientPath,
+    specifier,
+    importerFile: null,
+  }));
+  const visited = new Set();
+
+  while (queue.length > 0) {
+    const next = queue.shift();
+    if (next.specifier.startsWith('node:')) {
+      throw new Error(
+        'FR251 browser module graph reached Node-only import '
+        + next.specifier + ' from ' + next.importer + '.',
+      );
+    }
+
+    let target;
+    if (next.specifier.startsWith('/face/')) {
+      target = resolve(faceDistRoot, next.specifier.slice('/face/'.length));
+    } else if (next.specifier.startsWith('.')) {
+      if (next.importerFile === null) {
+        throw new Error('FR251 top-level relative import cannot be resolved: ' + next.specifier);
+      }
+      target = resolve(dirname(next.importerFile), next.specifier);
+    } else if (next.specifier === '@mediapipe/tasks-vision') {
+      continue;
+    } else {
+      throw new Error(
+        'FR251 browser module graph reached unmapped bare import '
+        + next.specifier + ' from ' + next.importer + '.',
+      );
+    }
+
+    if (!target.startsWith(faceDistRoot)) {
+      throw new Error('FR251 browser module escaped compiled face-reading root: ' + target);
+    }
+    if (!existsSync(target)) {
+      throw new Error(
+        'FR251 browser module graph references missing compiled module '
+        + target + ' from ' + next.importer + '.',
+      );
+    }
+    if (visited.has(target)) continue;
+    visited.add(target);
+
+    const source = readFileSync(target, 'utf8');
+    for (const specifier of staticImportSpecifiers(source)) {
+      queue.push({
+        importer: target,
+        specifier,
+        importerFile: target,
+      });
+    }
+  }
+
+  return visited;
 }
 
 expectIncludes(server, "const LOCALHOST_HOST = '127.0.0.1';", 'MESH6J default bind must remain localhost.');
@@ -196,6 +264,16 @@ expectIncludes(fr251Client, "signalBootstrap('module_started');", 'FR251 module 
 expectIncludes(fr251Client, "signalBootstrap('authority_bootstrap');", 'FR251 must expose the authority-bootstrap stage for mobile diagnosis.');
 expectExcludes(fr251Client, 'raw.githubusercontent.com', 'FR251 phone runtime must not refetch the parity witness cross-origin after server-side exact verification.');
 
+const fr251BrowserModules = verifyFR251BrowserModuleGraph();
+expect(
+  [...fr251BrowserModules].some((path) => path.endsWith('participant-media-resource-ceiling-fr173-shared.js')),
+  'FR251 browser graph must consume the browser-neutral FR173 media ceiling module.',
+);
+expect(
+  ![...fr251BrowserModules].some((path) => path.endsWith('eye-pair-c2pa-external-trust-root-provisioning-fr170.js')),
+  'FR251 browser graph must not reach the Node-only FR170 trust-root implementation.',
+);
+
 const controllerCount = (client.match(/runMesh6IManualBrowserCaptureController/g) || []).length;
 expect(controllerCount === 2, 'MESH6J should import and invoke the MESH6I controller exactly once each.');
 
@@ -216,4 +294,6 @@ process.stdout.write(JSON.stringify({
   noRawCapturePersistenceVerified: true,
   descriptiveJsonOnlyVerified: true,
   noThresholdOrCalibrationAuthorityVerified: true,
+  fr251BrowserStaticModuleGraphVerified: true,
+  fr251NodeOnlyTrustChainExcluded: true,
 }) + '\n');
