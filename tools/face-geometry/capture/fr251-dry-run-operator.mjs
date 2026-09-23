@@ -19,6 +19,11 @@ import { materializeOnePersonDryRunRuntimeFR241 } from '/face/observable-morphol
 import { materializeEphemeralLiveCameraFrameIntakeRuntimeFR242 } from '/face/observable-morphology-ephemeral-live-camera-frame-intake-fr242.js';
 import { materializeGovernedDryRunExecutionRuntimeFR243 } from '/face/observable-morphology-governed-dry-run-execution-recorder-fr243.js';
 import { materializeChallengeFirstBrowserDryRunCoordinatorFR250 } from '/face/observable-morphology-challenge-first-browser-dry-run-fr250.js';
+import {
+  bindCaptureGeometryAttributionSlotFR257,
+  buildCaptureGeometryAttributionBundleFR257,
+  createCaptureGeometryAttributionCollectorFR257,
+} from '/face/observable-morphology-capture-geometry-attribution-fr257.js';
 
 const RELEASE_COMMIT = 'f8ef212d5c962c0e853db7e59d217056b187084b';
 const PARITY_INPUT = Object.freeze({
@@ -59,7 +64,10 @@ const elements = Object.freeze({
   beginSession2: document.querySelector('#begin-session-2'),
   resultStatus: document.querySelector('#result-status'),
   resultJson: document.querySelector('#result-json'),
+  fr257ResultStatus: document.querySelector('#fr257-result-status'),
+  fr257ResultJson: document.querySelector('#fr257-result-json'),
   download: document.querySelector('#download-result'),
+  downloadFr257: document.querySelector('#download-fr257-result'),
   restart: document.querySelector('#restart'),
   abortMessage: document.querySelector('#abort-message'),
   reloadAfterAbort: document.querySelector('#reload-after-abort'),
@@ -74,6 +82,9 @@ let currentPreparedSlot = null;
 let qualityCompositeDecision = null;
 let busy = false;
 let finishedExport = null;
+let geometryCollector = null;
+let geometrySlots = [];
+let finishedFR257Export = null;
 
 function showView(name) {
   elements.prepView.hidden = name !== 'prep';
@@ -295,6 +306,9 @@ function closeCamera() {
 function abortDryRun(message) {
   busy = false;
   currentPreparedSlot = null;
+  geometryCollector = null;
+  geometrySlots = [];
+  finishedFR257Export = null;
   closeCamera();
   elements.abortMessage.textContent = message;
   showView('abort');
@@ -354,6 +368,9 @@ function materializeAuthorityChain() {
     runtime: fr241,
     frameIntakeRuntime: fr242,
   });
+  geometryCollector = createCaptureGeometryAttributionCollectorFR257();
+  geometrySlots = [];
+  finishedFR257Export = null;
 
   coordinator = materializeChallengeFirstBrowserDryRunCoordinatorFR250({
     camera,
@@ -363,6 +380,7 @@ function materializeAuthorityChain() {
     admission,
     geometryMetadataPbtxt: runtimeInputs.geometryMetadataPbtxt,
     parity: runtimeInputs.parity,
+    primaryMetricBindingPreparer: geometryCollector.primaryMetricBindingPreparer,
   });
 }
 
@@ -480,6 +498,22 @@ async function captureCurrentSlot() {
       }),
     });
 
+    if (geometryCollector === null) {
+      throw new Error('FR257 geometry collector is unavailable.');
+    }
+    const geometryEvidence = geometryCollector.takeEvidence(
+      result.frame.providerRunRef,
+    );
+    geometrySlots.push(bindCaptureGeometryAttributionSlotFR257({
+      record: result.fr243Record,
+      timestampMs: result.frame.timestampMs,
+      providerRunRef: result.frame.providerRunRef,
+      evidence: geometryEvidence,
+    }));
+    if (geometryCollector.pendingEvidenceCount() !== 0) {
+      throw new Error('FR257 retained unexpected pending attribution evidence.');
+    }
+
     setStatus(
       elements.captureStatus,
       result.fr243Record.resultStatus === 'accepted_for_dry_run_mechanics_only'
@@ -517,14 +551,27 @@ async function captureCurrentSlot() {
 }
 
 function finishDryRun() {
-  if (coordinator === null || participantRef === null || operatorRef === null) {
-    throw new Error('coordinator state is unavailable.');
+  if (
+    coordinator === null
+    || participantRef === null
+    || operatorRef === null
+    || geometryCollector === null
+  ) {
+    throw new Error('coordinator/FR257 state is unavailable.');
   }
+  if (geometryCollector.pendingEvidenceCount() !== 0) {
+    throw new Error('FR257 has unconsumed same-frame evidence.');
+  }
+  if (geometrySlots.length !== 4) {
+    throw new Error('FR257 requires exactly four captured slots.');
+  }
+
   const review = coordinator.review();
   const records = coordinator.getSanitizedRecords();
+  const generatedAt = new Date().toISOString();
   finishedExport = Object.freeze({
     schemaVersion: 'fr251-localhost-dry-run-sanitized-export-v1',
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     participantRef,
     operatorRef,
     records,
@@ -544,9 +591,19 @@ function finishDryRun() {
       commerceActivated: false,
     }),
   });
+  finishedFR257Export = buildCaptureGeometryAttributionBundleFR257({
+    generatedAt,
+    slots: geometrySlots,
+  });
+
   closeCamera();
   busy = false;
   elements.resultJson.textContent = JSON.stringify(finishedExport, null, 2);
+  elements.fr257ResultJson.textContent = JSON.stringify(
+    finishedFR257Export,
+    null,
+    2,
+  );
   setStatus(
     elements.resultStatus,
     '4개 슬롯 기록 완료 · accepted '
@@ -554,23 +611,43 @@ function finishDryRun() {
       + ' / rejected '
       + review.rejectedCaptureCount,
   );
+  setStatus(
+    elements.fr257ResultStatus,
+    'FR257 same-frame geometry attribution '
+      + finishedFR257Export.descriptiveSummary.geometryAttributionCount
+      + ' / 4',
+  );
   showView('result');
 }
 
-function downloadResult() {
-  if (finishedExport === null) return;
+function downloadJson(value, filename) {
   const blob = new Blob(
-    [JSON.stringify(finishedExport, null, 2) + '\n'],
+    [JSON.stringify(value, null, 2) + '\n'],
     { type: 'application/json' },
   );
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = 'myeongha-fr251-dry-run-sanitized.json';
+  anchor.download = filename;
   document.body.append(anchor);
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
+}
+
+function downloadResult() {
+  if (finishedExport === null) return;
+  downloadJson(finishedExport, 'myeongha-fr251-dry-run-sanitized.json');
+}
+
+function downloadFR257Result() {
+  if (finishedFR257Export === null) return;
+  downloadJson(
+    finishedFR257Export,
+    'myeongha-fr257-capture-geometry-'
+      + finishedFR257Export.generatedAt.replaceAll(':', '-')
+      + '.json',
+  );
 }
 
 for (const input of elements.consentChecks) {
@@ -607,6 +684,7 @@ elements.beginSession2.addEventListener('click', () => {
   }
 });
 elements.download.addEventListener('click', downloadResult);
+elements.downloadFr257.addEventListener('click', downloadFR257Result);
 elements.restart.addEventListener('click', () => window.location.reload());
 elements.reloadAfterAbort.addEventListener('click', () => window.location.reload());
 window.addEventListener('beforeunload', closeCamera);
