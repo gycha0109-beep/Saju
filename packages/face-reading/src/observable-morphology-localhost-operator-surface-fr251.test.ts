@@ -54,6 +54,7 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(html).toContain('id="start-dry-run"');
     expect(html).toContain('id="shutter-stage"');
     expect(html).toContain('id="challenge-ref"');
+    expect(html).toContain('id="challenge-nonce"');
     expect(html).toContain('id="shutter" class="shutter-button"');
     expect(html).toContain('id="session-break"');
     expect(html).toContain('id="begin-session-2"');
