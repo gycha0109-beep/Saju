@@ -139,7 +139,7 @@ async function execute(text: string, claims: readonly InterpretationClaim[], fai
 describe('Product Reading Delivery Contract', () => {
   it('delivers only the existing ReadingArtifact for completed execution', async () => {
     const currentSnapshot = snapshot();
-    const delivery = await execute('직업운', [claim(currentSnapshot.snapshotId, 'career-complete', 'T8', 'career')]);
+    const delivery = await execute('부모운', [claim(currentSnapshot.snapshotId, 'family-parents-complete', 'T8', 'family', 'parents')]);
 
     expect(delivery.state).toBe('delivered');
     expect(delivery.messageCode).toBe('READING_DELIVERED');
@@ -151,8 +151,8 @@ describe('Product Reading Delivery Contract', () => {
   it('marks grounded deterministic fallback without treating it as new interpretation authority', async () => {
     const currentSnapshot = snapshot();
     const delivery = await execute(
-      '직업운',
-      [claim(currentSnapshot.snapshotId, 'career-fallback', 'T8', 'career')],
+      '부모운',
+      [claim(currentSnapshot.snapshotId, 'family-parents-fallback', 'T8', 'family', 'parents')],
       true,
     );
 
@@ -210,9 +210,9 @@ describe('Product Reading Delivery Contract', () => {
 
   it('keeps delivery identity deterministic for the same governed execution result', async () => {
     const currentSnapshot = snapshot();
-    const claims = [claim(currentSnapshot.snapshotId, 'career-deterministic', 'T8', 'career')];
-    const first = await execute('직업운', claims);
-    const second = await execute('직업운', claims);
+    const claims = [claim(currentSnapshot.snapshotId, 'family-parents-deterministic', 'T8', 'family', 'parents')];
+    const first = await execute('부모운', claims);
+    const second = await execute('부모운', claims);
 
     expect(second.deliveryId).toBe(first.deliveryId);
     expect(second.audit).toEqual(first.audit);
