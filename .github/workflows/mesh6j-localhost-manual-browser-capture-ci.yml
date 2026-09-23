@@ -19,11 +19,11 @@ on:
       - 'packages/face-reading/src/observable-morphology-capture-geometry-attribution-fr257.ts'
       - 'packages/face-reading/src/observable-morphology-capture-geometry-attribution-fr257.test.ts'
       - 'research/face-reading/fr257-capture-geometry-attribution-protocol.md'
-      - 'packages/face-reading/src/observable-morphology-controlled-capture-geometry-sensitivity-fr267.ts'
-      - 'packages/face-reading/src/observable-morphology-controlled-capture-geometry-sensitivity-fr267.test.ts'
-      - 'scripts/analyze-fr267-controlled-geometry.mjs'
-      - 'research/face-reading/fr267-controlled-capture-geometry-sensitivity.md'
-      - 'research/face-reading/evidence/fr267-controlled-geometry/**'
+      - 'packages/face-reading/src/observable-morphology-controlled-capture-geometry-sensitivity-fr269.ts'
+      - 'packages/face-reading/src/observable-morphology-controlled-capture-geometry-sensitivity-fr269.test.ts'
+      - 'scripts/analyze-fr269-controlled-geometry.mjs'
+      - 'research/face-reading/fr269-controlled-capture-geometry-sensitivity.md'
+      - 'research/face-reading/evidence/fr269-controlled-geometry/**'
       - 'packages/face-reading/src/observable-morphology-ephemeral-live-camera-frame-intake-fr242.ts'
       - 'packages/face-reading/src/participant-media-resource-ceiling-fr173-shared.ts'
       - 'packages/face-geometry/docs/mesh6j-localhost-manual-browser-capture-surface.md'
@@ -74,8 +74,8 @@ jobs:
             tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py
       - name: Verify executable surface contract
         run: node scripts/verify-face-geometry-mesh6j.mjs
-      - name: Verify FR267 controlled geometry report
-        run: node scripts/analyze-fr267-controlled-geometry.mjs --verify
+      - name: Verify FR269 controlled geometry report
+        run: node scripts/analyze-fr269-controlled-geometry.mjs --verify
       - name: Verify LAN mode fails closed without TLS
         run: |
           if MESH6J_LAN=1 node scripts/mesh6j-manual-browser-capture-preview.mjs > /tmp/mesh6j-lan-no-tls.log 2>&1; then
