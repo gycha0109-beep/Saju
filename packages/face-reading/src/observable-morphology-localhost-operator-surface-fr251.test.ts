@@ -36,11 +36,18 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     );
     expect(html).toContain('__MEDIAPIPE_ENTRY__');
     expect(html).toContain('id="challenge-ref"');
-    expect(html).toContain('id="shutter" disabled');
+    expect(html).toContain('id="attestation-stage"');
+    expect(html).toContain('id="quality-composite-yes"');
+    expect(html).toContain('id="quality-composite-no"');
+    expect(html).toContain('id="shutter-stage"');
+    expect(html).toContain('id="shutter" class="shutter-button"');
+    expect(html).toContain('disabled></button>');
     expect(html).toContain('id="temporal-separation"');
     expect(client).toContain('materializeChallengeFirstBrowserDryRunCoordinatorFR250');
     expect(client).toContain('coordinator.prepareCapture');
     expect(client).toContain('coordinator.capturePrepared');
+    expect(client).toContain("showCaptureStage('shutter')");
+    expect(client).toContain('qualityCompositeDecision !== true');
     expect(client.indexOf('coordinator.prepareCapture'))
       .toBeLessThan(client.indexOf('performance.now()'));
     expect(client).toContain('rawMediaPersisted: false');
