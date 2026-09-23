@@ -24,8 +24,10 @@ export const FE041H_RECORD_ID =
   'research.face_reading.product_neutral_candidate_canonicalization_policy.fe041h' as const;
 export const FE041H_RESEARCH_NOTE_REF =
   'repo:research/face-reading/fe041h-neutral-candidate-canonicalization-policy.md' as const;
+export const FE041H_PRODUCT_SURFACE_CONTRACT_REF =
+  'research.face_reading.product_neutral_candidate_surface_contract.fe041h' as const;
 export const FE041H_NEXT_FRONTIER =
-  'define_successor_product_neutral_contract_candidate_shape_and_collect_empirical_repeat_capture_evidence_before_any_registry_admission' as const;
+  'collect_empirical_repeat_capture_evidence_and_review_candidate_redundancy_before_successor_registry_design' as const;
 
 export const FE041H_CANONICALIZATION_REQUIREMENT_KEYS = Object.freeze([
   'exact_candidate_identity_and_versioned_neutral_definition',
@@ -45,10 +47,10 @@ export const FE041H_SATISFIED_REQUIREMENT_KEYS = Object.freeze([
   'exact_candidate_identity_and_versioned_neutral_definition',
   'closed_neutral_semantic_boundary',
   'deterministic_runtime_and_synthetic_verification',
+  'explicit_product_region_unit_presence_and_unavailable_surface_contract',
 ] as const);
 
 export const FE041H_UNSATISFIED_REQUIREMENT_KEYS = Object.freeze([
-  'explicit_product_region_unit_presence_and_unavailable_surface_contract',
   'empirical_repeat_capture_and_capture_quality_evidence',
   'duplicate_and_redundancy_review_against_current_registry',
   'successor_contract_version_and_migration_design',
@@ -57,7 +59,10 @@ export const FE041H_UNSATISFIED_REQUIREMENT_KEYS = Object.freeze([
 
 export interface FE041HCanonicalizationRequirementV1 {
   readonly key: FE041HCanonicalizationRequirementKey;
-  readonly state: 'satisfied_upstream' | 'required_not_satisfied';
+  readonly state:
+    | 'satisfied_upstream'
+    | 'satisfied_in_fe041h'
+    | 'required_not_satisfied';
   readonly requiredBeforeRegistryAdmission: true;
   readonly requirement: string;
   readonly evidenceRef: string | null;
@@ -69,10 +74,11 @@ export interface FE041HCandidateCanonicalizationAssessmentV1 {
   readonly sourceSurfaceKey: 'neutral.face.lips_contour_set';
   readonly candidateUnit: 'ratio';
   readonly exactCurrentRegistryIdentityIntersection: false;
-  readonly productRegionKey: null;
-  readonly productPresence: null;
+  readonly productRegionKey: 'mouth_lips';
+  readonly productPresence: 'required';
   readonly productUnavailableSurfaceRef: null;
-  readonly productSurfaceContractIssued: false;
+  readonly productSurfaceContractRef: typeof FE041H_PRODUCT_SURFACE_CONTRACT_REF;
+  readonly productSurfaceContractIssued: true;
   readonly empiricalRepeatCaptureEstablished: false;
   readonly captureQualityAdmissionEvidenceIssued: false;
   readonly duplicateAndRedundancyReviewComplete: false;
@@ -105,8 +111,8 @@ export interface NeutralCandidateCanonicalizationPolicyFE041HV1 {
       typeof FE041H_SATISFIED_REQUIREMENT_KEYS;
     unsatisfiedRequirementKeys:
       typeof FE041H_UNSATISFIED_REQUIREMENT_KEYS;
-    satisfiedRequirementCount: 3;
-    unsatisfiedRequirementCount: 5;
+    satisfiedRequirementCount: 4;
+    unsatisfiedRequirementCount: 4;
   }>;
   readonly candidateAssessments:
     readonly FE041HCandidateCanonicalizationAssessmentV1[];
@@ -168,7 +174,10 @@ function sameStrings(
 
 function requirement(
   key: FE041HCanonicalizationRequirementKey,
-  state: 'satisfied_upstream' | 'required_not_satisfied',
+  state:
+    | 'satisfied_upstream'
+    | 'satisfied_in_fe041h'
+    | 'required_not_satisfied',
   requirementText: string,
   evidenceRef: string | null,
 ): FE041HCanonicalizationRequirementV1 {
@@ -203,9 +212,9 @@ readonly FE041HCanonicalizationRequirementV1[] = Object.freeze([
   ),
   requirement(
     'explicit_product_region_unit_presence_and_unavailable_surface_contract',
-    'required_not_satisfied',
-    'A successor product-neutral contract must explicitly assign regionKey, unit, required-or-conditional presence, and unavailable-surface semantics for each candidate.',
-    null,
+    'satisfied_in_fe041h',
+    'The FE041H candidate product-surface contract assigns all three FR142 metrics to mouth_lips, preserves ratio units, requires them whenever the exact FR79 lips-contour source is admitted, and uses no conditional unavailable-surface reference.',
+    FE041H_PRODUCT_SURFACE_CONTRACT_REF,
   ),
   requirement(
     'empirical_repeat_capture_and_capture_quality_evidence',
@@ -343,10 +352,11 @@ readonly FE041HCandidateCanonicalizationAssessmentV1[] {
       sourceSurfaceKey: 'neutral.face.lips_contour_set' as const,
       candidateUnit: 'ratio' as const,
       exactCurrentRegistryIdentityIntersection: false as const,
-      productRegionKey: null,
-      productPresence: null,
+      productRegionKey: 'mouth_lips' as const,
+      productPresence: 'required' as const,
       productUnavailableSurfaceRef: null,
-      productSurfaceContractIssued: false as const,
+      productSurfaceContractRef: FE041H_PRODUCT_SURFACE_CONTRACT_REF,
+      productSurfaceContractIssued: true as const,
       empiricalRepeatCaptureEstablished: false as const,
       captureQualityAdmissionEvidenceIssued: false as const,
       duplicateAndRedundancyReviewComplete: false as const,
@@ -371,7 +381,7 @@ NeutralCandidateCanonicalizationPolicyFE041HV1 {
     ) ||
     !sameStrings(
       FE041H_CANONICALIZATION_REQUIREMENTS
-        .filter((entry) => entry.state === 'satisfied_upstream')
+        .filter((entry) => entry.state !== 'required_not_satisfied')
         .map((entry) => entry.key),
       FE041H_SATISFIED_REQUIREMENT_KEYS,
     ) ||
@@ -390,7 +400,12 @@ NeutralCandidateCanonicalizationPolicyFE041HV1 {
     candidateAssessments.length !== 3 ||
     candidateAssessments.some(
       (entry) =>
-        entry.productSurfaceContractIssued !== false ||
+        entry.productRegionKey !== 'mouth_lips' ||
+        entry.candidateUnit !== 'ratio' ||
+        entry.productPresence !== 'required' ||
+        entry.productUnavailableSurfaceRef !== null ||
+        entry.productSurfaceContractRef !== FE041H_PRODUCT_SURFACE_CONTRACT_REF ||
+        entry.productSurfaceContractIssued !== true ||
         entry.empiricalRepeatCaptureEstablished !== false ||
         entry.duplicateAndRedundancyReviewComplete !== false ||
         entry.successorContractVersion !== null ||
@@ -422,8 +437,8 @@ NeutralCandidateCanonicalizationPolicyFE041HV1 {
         requirementCount: 8 as const,
         satisfiedRequirementKeys: FE041H_SATISFIED_REQUIREMENT_KEYS,
         unsatisfiedRequirementKeys: FE041H_UNSATISFIED_REQUIREMENT_KEYS,
-        satisfiedRequirementCount: 3 as const,
-        unsatisfiedRequirementCount: 5 as const,
+        satisfiedRequirementCount: 4 as const,
+        unsatisfiedRequirementCount: 4 as const,
       }),
       candidateAssessments,
       exactIdentityReview: Object.freeze({
@@ -480,8 +495,8 @@ export function assertIssuedNeutralCandidateCanonicalizationPolicyFE041H(
     fail('artifact was not issued by FE041H authority.');
   }
   if (
-    value.policyProgression.satisfiedRequirementCount !== 3 ||
-    value.policyProgression.unsatisfiedRequirementCount !== 5 ||
+    value.policyProgression.satisfiedRequirementCount !== 4 ||
+    value.policyProgression.unsatisfiedRequirementCount !== 4 ||
     value.exactIdentityReview.exactIntersectionCount !== 0 ||
     value.exactIdentityReview.exactIdentityNonOverlapMeansAdmission !== false ||
     value.mappingEvidenceLane
