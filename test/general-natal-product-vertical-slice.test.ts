@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  buildDeterministicFallbackDraft,
   calculateCanonicalSajuSnapshot,
   runInterpretation,
   type CompiledNarrativePrompt,
@@ -38,7 +37,7 @@ const NARRATIVE_POLICY: NarrativePolicy = {
   sourceDisclosure: 'internal_only',
 };
 
-class GroundedTestAdapter implements NarrativeModelAdapter {
+class ForbiddenNarrativeAdapter implements NarrativeModelAdapter {
   readonly metadata = {
     provider: 'test-provider',
     modelId: 'test-model',
@@ -47,15 +46,15 @@ class GroundedTestAdapter implements NarrativeModelAdapter {
 
   readonly calls: CompiledNarrativePrompt[] = [];
 
-  async generateStructured(prompt: CompiledNarrativePrompt): Promise<unknown> {
+  async generateStructured(prompt: CompiledNarrativePrompt): Promise<never> {
     this.calls.push(prompt);
-    return buildDeterministicFallbackDraft(prompt.evidence);
+    throw new Error('NARRATIVE_RUNTIME_MUST_NOT_BE_INVOKED_FOR_GENERAL_OFFICIAL_READING');
   }
 }
 
 describe('General Natal product vertical slice', () => {
-  it('runs birth input through the existing General Natal claim/evidence/narrative/response path', async () => {
-    const adapter = new GroundedTestAdapter();
+  it('runs birth input through the General Natal Official Reading path without Narrative runtime', async () => {
+    const adapter = new ForbiddenNarrativeAdapter();
     const host = createMyeonghwaProductHost({
       calculate(input) {
         return calculateCanonicalSajuSnapshot(input, PRODUCTION_DEFAULT_CALCULATION_POLICY, {
@@ -100,30 +99,10 @@ describe('General Natal product vertical slice', () => {
     expect(response.reading).toBeDefined();
     expect(response.reading?.calculationSummary.pillars.day.value).toBeTruthy();
     expect(response.reading?.sections.length).toBeGreaterThan(0);
-    expect(adapter.calls).toHaveLength(1);
-
-    const selectedClaims = adapter.calls[0]?.evidence.claims ?? [];
-    const selectedGeneralT8 = selectedClaims.filter(
-      (claim) => claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'general',
-    );
-    expect(selectedGeneralT8.length).toBeGreaterThanOrEqual(2);
-    expect(
-      selectedGeneralT8.some((claim) => claim.taxonomy.subcategory === 'self_baseline'),
-    ).toBe(true);
-    expect(
-      selectedGeneralT8.some((claim) =>
-        [
-          'relationships_and_agency',
-          'learning_and_support',
-          'expression_and_workstyle',
-          'resources_and_results',
-          'responsibility_and_pressure',
-        ].includes(claim.taxonomy.subcategory ?? ''),
-      ),
-    ).toBe(true);
-    expect(
-      selectedGeneralT8.some((claim) => claim.taxonomy.subcategory === 'scope_guard'),
-    ).toBe(true);
+    expect(response.reading?.readingId).toMatch(/^official_reading_/u);
+    expect(adapter.calls).toHaveLength(0);
+    expect(JSON.stringify(response)).toContain('주요 해석');
+    expect(JSON.stringify(response)).toContain('해석 범위');
   });
 
   it('keeps the candidate registry outside production authority while exercising the shared runtime', () => {
