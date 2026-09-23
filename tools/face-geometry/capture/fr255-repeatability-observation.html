@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>명하 FR255 반복측정 관찰</title>
+  <style>
+    :root { font-family: Inter, "Noto Sans KR", system-ui, sans-serif; color:#171717; background:#f5f5f2; }
+    * { box-sizing:border-box; }
+    body { margin:0; }
+    main { width:min(920px, calc(100% - 32px)); margin:32px auto 64px; }
+    h1 { margin:0 0 8px; font-size:28px; }
+    h2 { margin:0 0 14px; font-size:20px; }
+    p { line-height:1.6; }
+    .muted { color:#666; }
+    .card { background:#fff; border:1px solid #ddd; border-radius:16px; padding:22px; margin-top:16px; }
+    .notice { background:#fff8e8; border-color:#ead7a5; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 18px; }
+    label.field { display:flex; flex-direction:column; gap:7px; font-weight:600; }
+    label.check { display:flex; gap:10px; align-items:flex-start; padding:8px 0; font-weight:500; }
+    input[type="checkbox"] { width:18px; height:18px; margin-top:2px; }
+    input[type="file"], select { width:100%; padding:10px; border:1px solid #ccc; border-radius:10px; background:#fff; font:inherit; }
+    button { border:0; border-radius:10px; padding:11px 16px; cursor:pointer; background:#171717; color:#fff; font:inherit; }
+    button.secondary { background:#e9e9e5; color:#171717; }
+    button:disabled { opacity:.4; cursor:not-allowed; }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+    .status { min-height:24px; margin-top:12px; font-weight:600; }
+    .study-ref { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; word-break:break-all; padding:10px 12px; border:1px solid #ddd; border-radius:10px; background:#fafafa; }
+    pre { white-space:pre-wrap; word-break:break-word; background:#111; color:#eee; border-radius:12px; padding:16px; max-height:520px; overflow:auto; }
+    [hidden] { display:none !important; }
+    @media (max-width:720px) { .grid { grid-template-columns:1fr; } main { width:min(100% - 20px,920px); margin-top:18px; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>FR255 · 반복측정 관찰 번들</h1>
+  <p class="muted">별도로 완료한 FR251 sanitized JSON을 시간 순서대로 누적하고 기술통계만 계산합니다.</p>
+
+  <div class="card notice">
+    <h2>연구 경계</h2>
+    <p>이 화면은 반복성 PASS/FAIL, 허용 오차, calibration, confidence grade를 만들지 않습니다. 사진·영상·raw landmark·embedding·identity template을 업로드하거나 저장하지 않습니다.</p>
+  </div>
+
+  <section class="card">
+    <h2>1. 기존 번들 및 새 FR251 결과</h2>
+    <div class="grid">
+      <label class="field">
+        기존 FR255 번들 · 선택
+        <input id="prior-bundle" type="file" accept="application/json,.json">
+        <span class="muted">첫 관찰이면 비워두십시오.</span>
+      </label>
+      <label class="field">
+        새 FR251 sanitized JSON · 필수
+        <input id="source-fr251" type="file" accept="application/json,.json">
+      </label>
+    </div>
+    <p class="muted">현재 Study Ref</p>
+    <div id="study-ref" class="study-ref">새 번들을 만들면 로컬에서 생성됩니다.</div>
+  </section>
+
+  <section class="card">
+    <h2>2. 운영자 연속성 확인</h2>
+    <label class="check"><input id="baseline-participant" type="checkbox">이번 FR251 실행이 이 연구 번들의 의도된 참가자에 대한 실행임을 확인합니다.</label>
+    <label class="check"><input id="separate-execution" type="checkbox">이번 파일이 기존 파일을 재사용한 것이 아니라 별도로 수행한 FR251 실행 결과임을 확인합니다.</label>
+    <label id="same-participant-row" class="check" hidden><input id="same-participant" type="checkbox">기존 FR255 번들의 관찰과 동일 참가자임을 운영자가 확인합니다. 생체 신원 매칭으로 검증한 것은 아닙니다.</label>
+  </section>
+
+  <section class="card">
+    <h2>3. 촬영 조건 메타데이터</h2>
+    <p class="muted">아래 항목은 descriptive covariate일 뿐 품질 점수나 threshold가 아닙니다.</p>
+    <div class="grid">
+      <label class="field">기기
+        <select id="device-class">
+          <option value="phone">휴대폰</option>
+          <option value="desktop">데스크톱/노트북</option>
+          <option value="tablet">태블릿</option>
+          <option value="other">기타</option>
+          <option value="unknown">모름</option>
+        </select>
+      </label>
+      <label class="field">카메라
+        <select id="camera-facing">
+          <option value="front">전면</option>
+          <option value="rear">후면</option>
+          <option value="external">외장</option>
+          <option value="unknown">모름</option>
+        </select>
+      </label>
+      <label class="field">방향
+        <select id="orientation">
+          <option value="portrait">세로</option>
+          <option value="landscape">가로</option>
+          <option value="unknown">모름</option>
+        </select>
+      </label>
+      <label class="field">조명
+        <select id="lighting-condition">
+          <option value="indoor_typical">실내 일반</option>
+          <option value="indoor_bright">실내 밝음</option>
+          <option value="indoor_dim">실내 어두움</option>
+          <option value="outdoor">야외</option>
+          <option value="mixed">혼합</option>
+          <option value="unknown">모름</option>
+        </select>
+      </label>
+      <label class="field">안경
+        <select id="glasses-present">
+          <option value="absent">없음</option>
+          <option value="present">있음</option>
+          <option value="unknown">모름</option>
+        </select>
+      </label>
+      <label class="field">머리카락이 눈 영역을 가림
+        <select id="hair-occluding">
+          <option value="absent">없음</option>
+          <option value="present">있음</option>
+          <option value="unknown">모름</option>
+        </select>
+      </label>
+    </div>
+    <label class="check"><input id="neutral-expression" type="checkbox">중립 표정으로 촬영했다고 운영자가 판단했습니다.</label>
+    <label class="check"><input id="frontal-pose" type="checkbox">정면 자세로 촬영했다고 운영자가 판단했습니다.</label>
+  </section>
+
+  <section class="card">
+    <h2>4. 번들 생성 / 추가</h2>
+    <div class="actions">
+      <button id="build-bundle" disabled>FR255 번들 생성/추가</button>
+    </div>
+    <div id="status" class="status">파일과 확인 항목을 준비하십시오.</div>
+  </section>
+
+  <section id="result-card" class="card" hidden>
+    <h2>FR255 descriptive bundle</h2>
+    <div id="summary" class="status"></div>
+    <pre id="result-json">{}</pre>
+    <div class="actions">
+      <button id="download-result">sanitized FR255 JSON 저장</button>
+      <button id="reset" class="secondary">다음 파일 준비</button>
+    </div>
+  </section>
+</main>
+<script type="module" src="/fr255/operator.mjs"></script>
+</body>
+</html>

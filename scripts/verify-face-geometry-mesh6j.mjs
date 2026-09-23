@@ -12,12 +12,16 @@ const clientPath = 'tools/face-geometry/capture/mesh6j-operator-capture.mjs';
 const pagePath = 'tools/face-geometry/capture/mesh6j-operator-capture.html';
 const fr251ClientPath = 'tools/face-geometry/capture/fr251-dry-run-operator.mjs';
 const fr251PagePath = 'tools/face-geometry/capture/fr251-dry-run-operator.html';
+const fr255ClientPath = 'tools/face-geometry/capture/fr255-repeatability-observation.mjs';
+const fr255PagePath = 'tools/face-geometry/capture/fr255-repeatability-observation.html';
 
 const server = readFileSync(serverPath, 'utf8');
 const client = readFileSync(clientPath, 'utf8');
 const page = readFileSync(pagePath, 'utf8');
 const fr251Client = readFileSync(fr251ClientPath, 'utf8');
 const fr251Page = readFileSync(fr251PagePath, 'utf8');
+const fr255Client = readFileSync(fr255ClientPath, 'utf8');
+const fr255Page = readFileSync(fr255PagePath, 'utf8');
 
 function expect(condition, message) {
   if (!condition) throw new Error(message);
@@ -38,10 +42,10 @@ function staticImportSpecifiers(source) {
   return specifiers;
 }
 
-function verifyFR251BrowserModuleGraph() {
+function verifyBrowserModuleGraph(clientSource, entryPath, label) {
   const faceDistRoot = resolve('.face-reading-dist');
-  const queue = staticImportSpecifiers(fr251Client).map((specifier) => ({
-    importer: fr251ClientPath,
+  const queue = staticImportSpecifiers(clientSource).map((specifier) => ({
+    importer: entryPath,
     specifier,
     importerFile: null,
   }));
@@ -51,7 +55,7 @@ function verifyFR251BrowserModuleGraph() {
     const next = queue.shift();
     if (next.specifier.startsWith('node:')) {
       throw new Error(
-        'FR251 browser module graph reached Node-only import '
+        label + ' browser module graph reached Node-only import '
         + next.specifier + ' from ' + next.importer + '.',
       );
     }
@@ -61,24 +65,24 @@ function verifyFR251BrowserModuleGraph() {
       target = resolve(faceDistRoot, next.specifier.slice('/face/'.length));
     } else if (next.specifier.startsWith('.')) {
       if (next.importerFile === null) {
-        throw new Error('FR251 top-level relative import cannot be resolved: ' + next.specifier);
+        throw new Error(label + ' top-level relative import cannot be resolved: ' + next.specifier);
       }
       target = resolve(dirname(next.importerFile), next.specifier);
     } else if (next.specifier === '@mediapipe/tasks-vision') {
       continue;
     } else {
       throw new Error(
-        'FR251 browser module graph reached unmapped bare import '
+        label + ' browser module graph reached unmapped bare import '
         + next.specifier + ' from ' + next.importer + '.',
       );
     }
 
     if (!target.startsWith(faceDistRoot)) {
-      throw new Error('FR251 browser module escaped compiled face-reading root: ' + target);
+      throw new Error(label + ' browser module escaped compiled face-reading root: ' + target);
     }
     if (!existsSync(target)) {
       throw new Error(
-        'FR251 browser module graph references missing compiled module '
+        label + ' browser module graph references missing compiled module '
         + target + ' from ' + next.importer + '.',
       );
     }
@@ -124,6 +128,9 @@ expect(!scriptSrcTokens.includes("'unsafe-eval'"), 'MESH6J must not broaden CSP 
 expectIncludes(server, "'permissions-policy': 'camera=(self)'", 'MESH6J must restrict camera permission to self.');
 expectIncludes(server, "MYEONGHWA_MESH6J_SMOKE", 'MESH6J server must expose deterministic localhost smoke mode.');
 expectIncludes(server, "MYEONGHWA_MESH6J_LAN_SMOKE", 'MESH6J.1 server must expose deterministic LAN HTTPS smoke mode.');
+expectIncludes(server, "url.pathname === '/fr255'", 'MESH6J must expose the FR255 local longitudinal route.');
+expectIncludes(server, "'/fr255/operator.mjs'", 'MESH6J must expose the FR255 browser client route.');
+expectIncludes(server, "'permissions-policy': 'camera=()'", 'FR255 must explicitly disable camera permission on its aggregation-only page.');
 
 for (const forbidden of [
   "request.method === 'POST'",
@@ -264,7 +271,34 @@ expectIncludes(fr251Client, "signalBootstrap('module_started');", 'FR251 module 
 expectIncludes(fr251Client, "signalBootstrap('authority_bootstrap');", 'FR251 must expose the authority-bootstrap stage for mobile diagnosis.');
 expectExcludes(fr251Client, 'raw.githubusercontent.com', 'FR251 phone runtime must not refetch the parity witness cross-origin after server-side exact verification.');
 
-const fr251BrowserModules = verifyFR251BrowserModuleGraph();
+
+expectIncludes(fr255Page, 'id="prior-bundle"', 'FR255 page must accept an optional prior longitudinal bundle.');
+expectIncludes(fr255Page, 'id="source-fr251"', 'FR255 page must accept exactly one newly completed FR251 sanitized export.');
+expectIncludes(fr255Page, 'id="baseline-participant"', 'FR255 page must require baseline participant operator attestation.');
+expectIncludes(fr255Page, 'id="separate-execution"', 'FR255 page must require separate-execution operator attestation.');
+expectIncludes(fr255Page, 'id="same-participant"', 'FR255 append path must require same-participant continuity attestation.');
+expectIncludes(fr255Client, 'createLongitudinalRepeatabilityBundleFR255', 'FR255 client must create the first append-only bundle through the governed runtime.');
+expectIncludes(fr255Client, 'appendLongitudinalRepeatabilityObservationFR255', 'FR255 client must append later observations through the governed runtime.');
+expectIncludes(fr255Client, 'assertLongitudinalRepeatabilityBundleFR255', 'FR255 client must validate prior bundle digest chains before append.');
+expectIncludes(fr255Client, 'separateFR251ExecutionOperatorAttested: true', 'FR255 client must pass explicit separate-execution attestation.');
+for (const forbidden of [
+  'localStorage',
+  'sessionStorage',
+  'indexedDB',
+  'fetch(',
+  "method: 'POST'",
+  'MediaRecorder',
+  'getUserMedia',
+  'faceEmbedding',
+  'identityTemplate',
+  'repeatabilityPass',
+  'confidenceGrade',
+]) {
+  expectExcludes(fr255Client, forbidden, 'FR255 aggregation client must remain local, non-biometric, and non-authoritative.');
+}
+
+
+const fr251BrowserModules = verifyBrowserModuleGraph(fr251Client, fr251ClientPath, 'FR251');
 expect(
   [...fr251BrowserModules].some((path) => path.endsWith('participant-media-resource-ceiling-fr173-shared.js')),
   'FR251 browser graph must consume the browser-neutral FR173 media ceiling module.',
@@ -272,6 +306,16 @@ expect(
 expect(
   ![...fr251BrowserModules].some((path) => path.endsWith('eye-pair-c2pa-external-trust-root-provisioning-fr170.js')),
   'FR251 browser graph must not reach the Node-only FR170 trust-root implementation.',
+);
+
+const fr255BrowserModules = verifyBrowserModuleGraph(fr255Client, fr255ClientPath, 'FR255');
+expect(
+  [...fr255BrowserModules].some((path) => path.endsWith('observable-morphology-longitudinal-repeatability-observation-fr255.js')),
+  'FR255 browser graph must include the governed longitudinal bundle runtime.',
+);
+expect(
+  ![...fr255BrowserModules].some((path) => path.endsWith('eye-pair-c2pa-external-trust-root-provisioning-fr170.js')),
+  'FR255 browser graph must remain clear of the Node-only FR170 trust-root implementation.',
 );
 
 const controllerCount = (client.match(/runMesh6IManualBrowserCaptureController/g) || []).length;
@@ -296,4 +340,7 @@ process.stdout.write(JSON.stringify({
   noThresholdOrCalibrationAuthorityVerified: true,
   fr251BrowserStaticModuleGraphVerified: true,
   fr251NodeOnlyTrustChainExcluded: true,
+  fr255LongitudinalBundleSurfaceVerified: true,
+  fr255LocalOnlyAggregationVerified: true,
+  fr255BrowserStaticModuleGraphVerified: true,
 }) + '\n');
