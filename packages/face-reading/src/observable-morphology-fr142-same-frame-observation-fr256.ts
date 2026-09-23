@@ -30,7 +30,7 @@ import {
 } from './cross-face-neutral-observable-primitives-fr208.js';
 import {
   computeSquareBroadFangNeutralCandidateKernelFR142,
-} from './five-officers-square-broad-fang-neutral-candidate-metric-runtime-fr142.js';
+} from './square-broad-fang-neutral-candidate-kernel-fr142-shared.js';
 import {
   FR237_PRIMARY_METRIC,
 } from './observable-morphology-repeatability-study-preregistration-fr237.js';
