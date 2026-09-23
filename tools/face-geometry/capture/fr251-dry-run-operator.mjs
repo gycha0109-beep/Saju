@@ -24,6 +24,11 @@ import {
   buildCaptureGeometryAttributionBundleFR257,
   createCaptureGeometryAttributionCollectorFR257,
 } from '/face/observable-morphology-capture-geometry-attribution-fr257.js';
+import {
+  bindSameFrameEyeTiltDiagnosticSlotFR266,
+  buildSameFrameEyeTiltDiagnosticBundleFR266,
+  createSameFrameEyeTiltDiagnosticCollectorFR266,
+} from '/face/observable-morphology-controlled-capture-geometry-sensitivity-fr266.js';
 
 const RELEASE_COMMIT = 'f8ef212d5c962c0e853db7e59d217056b187084b';
 const PARITY_INPUT = Object.freeze({
@@ -53,6 +58,9 @@ const elements = Object.freeze({
   fr257ResultJson: document.querySelector('#fr257-result-json'),
   download: document.querySelector('#download-result'),
   downloadFr257: document.querySelector('#download-fr257-result'),
+  fr266ResultStatus: document.querySelector('#fr266-result-status'),
+  fr266ResultJson: document.querySelector('#fr266-result-json'),
+  downloadFr266: document.querySelector('#download-fr266-result'),
   restart: document.querySelector('#restart'),
   abortMessage: document.querySelector('#abort-message'),
   reloadAfterAbort: document.querySelector('#reload-after-abort'),
@@ -69,6 +77,9 @@ let finishedExport = null;
 let geometryCollector = null;
 let geometrySlots = [];
 let finishedFR257Export = null;
+let eyeTiltDiagnosticCollector = null;
+let eyeTiltDiagnosticSlots = [];
+let finishedFR266Export = null;
 
 function showView(name) {
   elements.prepView.hidden = name !== 'prep';
@@ -223,6 +234,9 @@ function abortDryRun(message) {
   geometryCollector = null;
   geometrySlots = [];
   finishedFR257Export = null;
+  eyeTiltDiagnosticCollector = null;
+  eyeTiltDiagnosticSlots = [];
+  finishedFR266Export = null;
   closeCamera();
   elements.abortMessage.textContent = message;
   showView('abort');
@@ -274,7 +288,12 @@ function materializeAuthorityChain() {
     runtime: fr241,
     frameIntakeRuntime: fr242,
   });
-  geometryCollector = createCaptureGeometryAttributionCollectorFR257();
+  eyeTiltDiagnosticCollector = createSameFrameEyeTiltDiagnosticCollectorFR266();
+  eyeTiltDiagnosticSlots = [];
+  finishedFR266Export = null;
+  geometryCollector = createCaptureGeometryAttributionCollectorFR257({
+    onEphemeralGeometry: eyeTiltDiagnosticCollector.observe,
+  });
   geometrySlots = [];
   finishedFR257Export = null;
 
@@ -409,6 +428,21 @@ async function captureCurrentSlot() {
       throw new Error('FR257 retained unexpected pending attribution evidence.');
     }
 
+    if (eyeTiltDiagnosticCollector === null) {
+      throw new Error('FR266 eye-tilt diagnostic collector is unavailable.');
+    }
+    const eyeTiltDiagnosticEvidence = eyeTiltDiagnosticCollector.takeEvidence(
+      result.frame.providerRunRef,
+    );
+    eyeTiltDiagnosticSlots.push(bindSameFrameEyeTiltDiagnosticSlotFR266({
+      record: result.fr243Record,
+      providerRunRef: result.frame.providerRunRef,
+      evidence: eyeTiltDiagnosticEvidence,
+    }));
+    if (eyeTiltDiagnosticCollector.pendingEvidenceCount() !== 0) {
+      throw new Error('FR266 retained unexpected pending diagnostic evidence.');
+    }
+
     if (challenge.captureOrdinal === 1) {
       prepareNextCapture();
       busy = false;
@@ -439,14 +473,21 @@ function finishDryRun() {
     || participantRef === null
     || operatorRef === null
     || geometryCollector === null
+    || eyeTiltDiagnosticCollector === null
   ) {
-    throw new Error('coordinator/FR257 state is unavailable.');
+    throw new Error('coordinator/FR257/FR266 state is unavailable.');
   }
   if (geometryCollector.pendingEvidenceCount() !== 0) {
     throw new Error('FR257 has unconsumed same-frame evidence.');
   }
   if (geometrySlots.length !== 4) {
     throw new Error('FR257 requires exactly four captured slots.');
+  }
+  if (eyeTiltDiagnosticCollector.pendingEvidenceCount() !== 0) {
+    throw new Error('FR266 has unconsumed same-frame diagnostic evidence.');
+  }
+  if (eyeTiltDiagnosticSlots.length !== 4) {
+    throw new Error('FR266 requires exactly four diagnostic slots.');
   }
 
   const review = coordinator.review();
@@ -478,6 +519,10 @@ function finishDryRun() {
     generatedAt,
     slots: geometrySlots,
   });
+  finishedFR266Export = buildSameFrameEyeTiltDiagnosticBundleFR266({
+    generatedAt,
+    slots: eyeTiltDiagnosticSlots,
+  });
 
   closeCamera();
   busy = false;
@@ -498,6 +543,17 @@ function finishDryRun() {
     elements.fr257ResultStatus,
     'FR257 same-frame geometry attribution '
       + finishedFR257Export.descriptiveSummary.geometryAttributionCount
+      + ' / 4',
+  );
+  elements.fr266ResultJson.textContent = JSON.stringify(
+    finishedFR266Export,
+    null,
+    2,
+  );
+  setStatus(
+    elements.fr266ResultStatus,
+    'FR266 screen vs FR76 eye-tilt diagnostic '
+      + finishedFR266Export.descriptiveSummary.acceptedDiagnosticCount
       + ' / 4',
   );
   showView('result');
@@ -533,6 +589,16 @@ function downloadFR257Result() {
   );
 }
 
+function downloadFR266Result() {
+  if (finishedFR266Export === null) return;
+  downloadJson(
+    finishedFR266Export,
+    'myeongha-fr266-eye-tilt-diagnostic-'
+      + finishedFR266Export.generatedAt.replaceAll(':', '-')
+      + '.json',
+  );
+}
+
 elements.start.addEventListener('click', () => { void startDryRun(); });
 elements.shutter.addEventListener('click', () => { void captureCurrentSlot(); });
 elements.cancelShutter.addEventListener('click', () => {
@@ -554,6 +620,7 @@ elements.beginSession2.addEventListener('click', () => {
 });
 elements.download.addEventListener('click', downloadResult);
 elements.downloadFr257.addEventListener('click', downloadFR257Result);
+elements.downloadFr266.addEventListener('click', downloadFR266Result);
 elements.restart.addEventListener('click', () => window.location.reload());
 elements.reloadAfterAbort.addEventListener('click', () => window.location.reload());
 window.addEventListener('beforeunload', closeCamera);
