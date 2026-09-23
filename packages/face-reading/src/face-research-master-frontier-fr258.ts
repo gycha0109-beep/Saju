@@ -86,7 +86,7 @@ export interface FaceResearchMasterFrontierFR258 {
   readonly schemaVersion: 'fr258-face-research-master-frontier-v1';
   readonly artifactVersion: '0.1.0';
   readonly contractId: 'face_research_master_frontier_fr258';
-  readonly baselineMainSha: '197d5f22ac5fc0ac107acff7baabbc1416bb085e';
+  readonly baselineMainSha: '8a6a5d4dc9504689dc15f31420b28d8af351a0ce';
   readonly watchtowerTrack: 'face-research';
   readonly auditAxes: readonly [
     'source_authority',
@@ -585,7 +585,7 @@ export const FACE_RESEARCH_MASTER_FRONTIER_FR258: FaceResearchMasterFrontierFR25
   schemaVersion: 'fr258-face-research-master-frontier-v1' as const,
   artifactVersion: '0.1.0' as const,
   contractId: 'face_research_master_frontier_fr258' as const,
-  baselineMainSha: '197d5f22ac5fc0ac107acff7baabbc1416bb085e' as const,
+  baselineMainSha: '8a6a5d4dc9504689dc15f31420b28d8af351a0ce' as const,
   watchtowerTrack: 'face-research' as const,
   auditAxes: AXES,
   slices: FR258_FACE_RESEARCH_FRONTIER_SLICES,
@@ -644,7 +644,7 @@ export function assertFaceResearchMasterFrontierFR258(
     value.schemaVersion !== 'fr258-face-research-master-frontier-v1' ||
     value.artifactVersion !== '0.1.0' ||
     value.contractId !== 'face_research_master_frontier_fr258' ||
-    value.baselineMainSha !== '197d5f22ac5fc0ac107acff7baabbc1416bb085e' ||
+    value.baselineMainSha !== '8a6a5d4dc9504689dc15f31420b28d8af351a0ce' ||
     value.watchtowerTrack !== 'face-research'
   ) fail('identity or baseline drift.');
 
