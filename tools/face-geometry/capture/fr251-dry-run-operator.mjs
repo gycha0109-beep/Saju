@@ -64,7 +64,6 @@ let camera = null;
 let coordinator = null;
 let participantRef = null;
 let operatorRef = null;
-let currentSessionOrdinal = 0;
 let currentPreparedSlot = null;
 let busy = false;
 let finishedExport = null;
@@ -311,7 +310,6 @@ function beginSession(sessionOrdinal) {
     sessionOrdinal,
     issuedAt: new Date().toISOString(),
   });
-  currentSessionOrdinal = sessionOrdinal;
   elements.sessionBreak.hidden = true;
   prepareNextCapture();
 }
