@@ -159,19 +159,20 @@ describe('Governed Reading Execution Orchestrator', () => {
   it('executes exactly one grounded model call and assembles a ReadingArtifact for complete evidence', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
-    const career = claim(currentSnapshot.snapshotId, {
-      id: 'claim-career-complete',
+    const familyParents = claim(currentSnapshot.snapshotId, {
+      id: 'claim-family-parents-complete',
       tier: 'T8',
-      category: 'career',
+      category: 'family',
+      subcategory: 'parents',
     });
-    const interpretation = executionWithClaims(currentSnapshot, registry, [career]);
+    const interpretation = executionWithClaims(currentSnapshot, registry, [familyParents]);
     const adapter = new TrackingAdapter();
 
     const result = await executeProductReading(
       currentSnapshot,
       interpretation,
       registry,
-      { requestId: 'execution-complete', text: '직업운' },
+      { requestId: 'execution-complete', text: '부모운' },
       adapter,
       narrativePolicy,
       {
@@ -192,7 +193,8 @@ describe('Governed Reading Execution Orchestrator', () => {
     expect(result.officialReadingPlan?.sourceSemanticHash).toBe(
       result.canonicalSemantics?.semanticHash,
     );
-    expect(result.canonicalSemantics?.targetClaimIds).toEqual(['claim-career-complete']);
+    expect(result.canonicalSemantics?.targetClaimIds).toEqual(['claim-family-parents-complete']);
+    expect(result.consumerReadingAuthority?.authority).toBe('legacy_narrative');
     expect(result.artifact?.provenance.snapshotId).toBe(currentSnapshot.snapshotId);
     expect(result.artifact?.provenance.interpretationRunId).toBe(
       interpretation.run.interpretationRunId,
@@ -258,6 +260,9 @@ describe('Governed Reading Execution Orchestrator', () => {
       'myeonghwa-official-reading-renderer-v1',
     );
     expect(result.artifact).toBeDefined();
+    expect(result.consumerReadingAuthority?.authority).toBe('official_reading');
+    expect(result.artifact?.schemaVersion).toBe('myeonghwa-official-reading-artifact-v1');
+    expect(result.artifact?.provenance).not.toHaveProperty('narrativeRunId');
   });
 
   it('makes zero model calls and creates no artifact for ambiguous input', async () => {
@@ -346,18 +351,19 @@ describe('Governed Reading Execution Orchestrator', () => {
   it('uses the existing deterministic fallback after a provider failure and still assembles a grounded artifact', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
-    const career = claim(currentSnapshot.snapshotId, {
-      id: 'claim-career-provider-fallback',
+    const familyParents = claim(currentSnapshot.snapshotId, {
+      id: 'claim-family-parents-provider-fallback',
       tier: 'T8',
-      category: 'career',
+      category: 'family',
+      subcategory: 'parents',
     });
     const adapter = new TrackingAdapter('provider_error');
 
     const result = await executeProductReading(
       currentSnapshot,
-      executionWithClaims(currentSnapshot, registry, [career]),
+      executionWithClaims(currentSnapshot, registry, [familyParents]),
       registry,
-      { requestId: 'execution-provider-fallback', text: '직업운' },
+      { requestId: 'execution-provider-fallback', text: '부모운' },
       adapter,
       narrativePolicy,
       executionOptions,
@@ -375,18 +381,19 @@ describe('Governed Reading Execution Orchestrator', () => {
   it('inherits the existing one-repair limit and never performs a third model call', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
-    const career = claim(currentSnapshot.snapshotId, {
-      id: 'claim-career-repair-limit',
+    const familyParents = claim(currentSnapshot.snapshotId, {
+      id: 'claim-family-parents-repair-limit',
       tier: 'T8',
-      category: 'career',
+      category: 'family',
+      subcategory: 'parents',
     });
     const adapter = new TrackingAdapter('always_invalid');
 
     const result = await executeProductReading(
       currentSnapshot,
-      executionWithClaims(currentSnapshot, registry, [career]),
+      executionWithClaims(currentSnapshot, registry, [familyParents]),
       registry,
-      { requestId: 'execution-repair-limit', text: '직업운' },
+      { requestId: 'execution-repair-limit', text: '부모운' },
       adapter,
       narrativePolicy,
       executionOptions,
@@ -431,18 +438,19 @@ describe('Governed Reading Execution Orchestrator', () => {
   it('keeps execution identity stable across audit timestamps when evidence and grounded output are identical', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
-    const career = claim(currentSnapshot.snapshotId, {
-      id: 'claim-career-execution-determinism',
+    const familyParents = claim(currentSnapshot.snapshotId, {
+      id: 'claim-family-parents-execution-determinism',
       tier: 'T8',
-      category: 'career',
+      category: 'family',
+      subcategory: 'parents',
     });
-    const interpretation = executionWithClaims(currentSnapshot, registry, [career]);
+    const interpretation = executionWithClaims(currentSnapshot, registry, [familyParents]);
 
     const first = await executeProductReading(
       currentSnapshot,
       interpretation,
       registry,
-      { requestId: 'execution-determinism', text: '직업운' },
+      { requestId: 'execution-determinism', text: '부모운' },
       new TrackingAdapter(),
       narrativePolicy,
       {
@@ -455,7 +463,7 @@ describe('Governed Reading Execution Orchestrator', () => {
       currentSnapshot,
       interpretation,
       registry,
-      { requestId: 'execution-determinism', text: '직업운' },
+      { requestId: 'execution-determinism', text: '부모운' },
       new TrackingAdapter(),
       narrativePolicy,
       {
