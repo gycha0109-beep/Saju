@@ -42,6 +42,7 @@ const elements = Object.freeze({
   video: document.querySelector('#camera'),
   captureStatus: document.querySelector('#capture-status'),
   challengeRef: document.querySelector('#challenge-ref'),
+  challengeNonce: document.querySelector('#challenge-nonce'),
   shutterSlotLabel: document.querySelector('#shutter-slot-label'),
   shutterMessage: document.querySelector('#shutter-message'),
   shutter: document.querySelector('#shutter'),
@@ -310,6 +311,7 @@ function prepareNextCapture() {
   elements.shutterSlotLabel.textContent =
     'Session ' + challenge.sessionOrdinal + ' · Capture ' + challenge.captureOrdinal;
   elements.challengeRef.textContent = challenge.captureChallengeRef;
+  elements.challengeNonce.textContent = 'nonce · ' + challenge.captureNonce;
   elements.shutterMessage.textContent = '자세를 맞춘 뒤 셔터를 누르십시오.';
   setStatus(
     elements.captureStatus,
