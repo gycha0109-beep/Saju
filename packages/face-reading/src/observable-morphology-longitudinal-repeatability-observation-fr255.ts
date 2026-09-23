@@ -631,6 +631,7 @@ function buildObservation(input: {
   readonly previous: FR255LongitudinalObservation | null;
   readonly baselineParticipantOperatorAttested: boolean;
   readonly sameParticipantAsPreviousOperatorAttested: boolean | null;
+  readonly separateFR251ExecutionOperatorAttested: boolean;
   readonly captureConditions: FR255CaptureConditionObservation;
 }): FR255LongitudinalObservation {
   const previousGeneratedAt =
@@ -673,7 +674,10 @@ function buildObservation(input: {
       identityMatchingPerformed: false as const,
     }),
     executionSeparation: Object.freeze({
-      separateFR251ExecutionOperatorAttested: true as const,
+      separateFR251ExecutionOperatorAttested:
+        input.separateFR251ExecutionOperatorAttested === true
+          ? true as const
+          : fail('separate FR251 execution operator attestation is required.'),
       elapsedTimeRecordedWithoutMinimumThreshold: true as const,
       temporalSeparationIndependentlyVerified: false as const,
     }),
@@ -731,6 +735,7 @@ export function createLongitudinalRepeatabilityBundleFR255(input: {
   readonly importedAt: string;
   readonly sourceFR251: unknown;
   readonly baselineParticipantOperatorAttested: true;
+  readonly separateFR251ExecutionOperatorAttested: true;
   readonly captureConditions: FR255CaptureConditionObservation;
 }): FR255LongitudinalRepeatabilityBundle {
   const importedAt = exactIso(input.importedAt, 'importedAt');
@@ -743,6 +748,8 @@ export function createLongitudinalRepeatabilityBundleFR255(input: {
     baselineParticipantOperatorAttested:
       input.baselineParticipantOperatorAttested,
     sameParticipantAsPreviousOperatorAttested: null,
+    separateFR251ExecutionOperatorAttested:
+      input.separateFR251ExecutionOperatorAttested,
     captureConditions: input.captureConditions,
   });
   return buildBundle({
@@ -759,6 +766,7 @@ export function appendLongitudinalRepeatabilityObservationFR255(input: {
   readonly sourceFR251: unknown;
   readonly baselineParticipantOperatorAttested: true;
   readonly sameParticipantAsPreviousOperatorAttested: true;
+  readonly separateFR251ExecutionOperatorAttested: true;
   readonly captureConditions: FR255CaptureConditionObservation;
 }): FR255LongitudinalRepeatabilityBundle {
   const bundle = assertLongitudinalRepeatabilityBundleFR255(input.bundle);
@@ -784,6 +792,8 @@ export function appendLongitudinalRepeatabilityObservationFR255(input: {
       input.baselineParticipantOperatorAttested,
     sameParticipantAsPreviousOperatorAttested:
       input.sameParticipantAsPreviousOperatorAttested,
+    separateFR251ExecutionOperatorAttested:
+      input.separateFR251ExecutionOperatorAttested,
     captureConditions: input.captureConditions,
   });
   return buildBundle({
