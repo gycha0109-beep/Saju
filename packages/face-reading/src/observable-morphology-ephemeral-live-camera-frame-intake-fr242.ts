@@ -1,6 +1,6 @@
 import {
   FR173_MAX_PARTICIPANT_MEDIA_BYTES,
-} from './eye-pair-governed-participant-media-ingress-policy-fr173.js';
+} from './participant-media-resource-ceiling-fr173-shared.js';
 import {
   FR237_PRIMARY_METRIC,
 } from './observable-morphology-repeatability-study-preregistration-fr237.js';
