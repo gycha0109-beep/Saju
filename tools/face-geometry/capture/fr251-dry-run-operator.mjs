@@ -30,6 +30,10 @@ const RUNTIME_ASSET_TIMEOUT_MS = 15000;
 const elements = Object.freeze({
   prepView: document.querySelector('#prep-view'),
   captureView: document.querySelector('#capture-view'),
+  attestationStage: document.querySelector('#attestation-stage'),
+  shutterStage: document.querySelector('#shutter-stage'),
+  attestationCameraHost: document.querySelector('#attestation-camera-host'),
+  shutterCameraHost: document.querySelector('#shutter-camera-host'),
   resultView: document.querySelector('#result-view'),
   abortView: document.querySelector('#abort-view'),
   consentChecks: [...document.querySelectorAll('[data-consent]')],
@@ -42,12 +46,14 @@ const elements = Object.freeze({
   challengeNonce: document.querySelector('#challenge-nonce'),
   challengePresented: document.querySelector('#challenge-presented'),
   consentReconfirmed: document.querySelector('#consent-reconfirmed'),
-  qualityFrontal: document.querySelector('#quality-frontal'),
-  qualitySharp: document.querySelector('#quality-sharp'),
-  qualityVisible: document.querySelector('#quality-visible'),
-  qualityOcclusion: document.querySelector('#quality-occlusion'),
+  qualityCompositeYes: document.querySelector('#quality-composite-yes'),
+  qualityCompositeNo: document.querySelector('#quality-composite-no'),
+  shutterSlotLabel: document.querySelector('#shutter-slot-label'),
+  shutterMessage: document.querySelector('#shutter-message'),
   shutter: document.querySelector('#shutter'),
+  backToObservation: document.querySelector('#back-to-observation'),
   cancel: document.querySelector('#cancel-dry-run'),
+  cancelShutter: document.querySelector('#cancel-dry-run-shutter'),
   sessionBreak: document.querySelector('#session-break'),
   temporalSeparation: document.querySelector('#temporal-separation'),
   beginSession2: document.querySelector('#begin-session-2'),
@@ -65,6 +71,7 @@ let coordinator = null;
 let participantRef = null;
 let operatorRef = null;
 let currentPreparedSlot = null;
+let qualityCompositeDecision = null;
 let busy = false;
 let finishedExport = null;
 
@@ -77,6 +84,60 @@ function showView(name) {
 
 function setStatus(element, message) {
   element.textContent = message;
+}
+
+function showCaptureStage(name) {
+  const shutterMode = name === 'shutter';
+  elements.attestationStage.hidden = name !== 'attestation';
+  elements.shutterStage.hidden = !shutterMode;
+  elements.sessionBreak.hidden = name !== 'break';
+
+  if (shutterMode) {
+    if (elements.video.parentElement !== elements.shutterCameraHost) {
+      elements.shutterCameraHost.append(elements.video);
+    }
+    window.scrollTo(0, 0);
+  } else if (elements.video.parentElement !== elements.attestationCameraHost) {
+    elements.attestationCameraHost.append(elements.video);
+  }
+}
+
+function readCompositeQualityDecision() {
+  if (elements.qualityCompositeYes.checked) return true;
+  if (elements.qualityCompositeNo.checked) return false;
+  return null;
+}
+
+function maybeEnterShutterStage() {
+  qualityCompositeDecision = readCompositeQualityDecision();
+  if (
+    busy
+    || currentPreparedSlot === null
+    || !elements.challengePresented.checked
+    || !elements.consentReconfirmed.checked
+    || qualityCompositeDecision === null
+  ) {
+    return;
+  }
+
+  elements.shutterSlotLabel.textContent = elements.slotLabel.textContent;
+  if (qualityCompositeDecision === true) {
+    elements.shutterMessage.textContent =
+      '품질 관찰 완료 · 셔터를 눌러 현재 프레임을 캡처하십시오.';
+  } else {
+    elements.shutterMessage.textContent =
+      '품질 조건 미충족 · 세부 항목을 임의로 기록하지 않으며 촬영은 차단됩니다.';
+  }
+  showCaptureStage('shutter');
+  updateShutterButton();
+}
+
+function returnToObservationStage() {
+  qualityCompositeDecision = null;
+  elements.qualityCompositeYes.checked = false;
+  elements.qualityCompositeNo.checked = false;
+  showCaptureStage('attestation');
+  updateShutterButton();
 }
 
 function randomHex(byteLength) {
@@ -206,31 +267,22 @@ function updateStartButton() {
   elements.start.disabled = runtimeInputs === null || !consentReady() || busy;
 }
 
-function qualitySelectionComplete() {
-  return [
-    elements.qualityFrontal,
-    elements.qualitySharp,
-    elements.qualityVisible,
-    elements.qualityOcclusion,
-  ].every((select) => select.value === 'true' || select.value === 'false');
-}
-
 function updateShutterButton() {
   elements.shutter.disabled =
     busy
     || currentPreparedSlot === null
     || !elements.challengePresented.checked
     || !elements.consentReconfirmed.checked
-    || !qualitySelectionComplete();
+    || qualityCompositeDecision !== true;
 }
 
 function resetCaptureConfirmations() {
   elements.challengePresented.checked = false;
   elements.consentReconfirmed.checked = false;
-  elements.qualityFrontal.value = '';
-  elements.qualitySharp.value = '';
-  elements.qualityVisible.value = '';
-  elements.qualityOcclusion.value = '';
+  elements.qualityCompositeYes.checked = false;
+  elements.qualityCompositeNo.checked = false;
+  qualityCompositeDecision = null;
+  showCaptureStage('attestation');
   updateShutterButton();
 }
 
@@ -332,12 +384,13 @@ function prepareNextCapture() {
   const challenge = currentPreparedSlot.challenge;
   elements.slotLabel.textContent =
     'Session ' + challenge.sessionOrdinal + ' · Capture ' + challenge.captureOrdinal;
+  elements.shutterSlotLabel.textContent = elements.slotLabel.textContent;
   elements.challengeRef.textContent = challenge.captureChallengeRef;
   elements.challengeNonce.textContent = challenge.captureNonce;
   resetCaptureConfirmations();
   setStatus(
     elements.captureStatus,
-    'Challenge를 확인하고 품질 관찰을 입력한 뒤 직접 셔터를 누르십시오.',
+    'Challenge와 동의를 확인한 뒤 품질 관찰을 한 번 선택하십시오. 완료되면 촬영 화면으로 전환됩니다.',
   );
 }
 
@@ -368,12 +421,6 @@ async function startDryRun() {
   }
 }
 
-function boolValue(select) {
-  if (select.value === 'true') return true;
-  if (select.value === 'false') return false;
-  throw new Error('품질 관찰 항목이 모두 선택되지 않았습니다.');
-}
-
 async function captureCurrentSlot() {
   if (
     coordinator === null
@@ -383,7 +430,11 @@ async function captureCurrentSlot() {
   ) {
     return;
   }
-  if (!elements.challengePresented.checked || !elements.consentReconfirmed.checked) {
+  if (
+    !elements.challengePresented.checked
+    || !elements.consentReconfirmed.checked
+    || qualityCompositeDecision !== true
+  ) {
     return;
   }
 
@@ -420,10 +471,10 @@ async function captureCurrentSlot() {
         providerRunRef,
         captureTriggerTimestampMs: timestampMs,
         recordedAt: observationRecordedAt,
-        frontalNeutralPoseObserved: boolValue(elements.qualityFrontal),
-        bilateralEyeContoursVisuallyResolvable: boolValue(elements.qualitySharp),
-        bilateralEyeRegionsFullyVisible: boolValue(elements.qualityVisible),
-        majorEyeRegionOcclusionAbsent: boolValue(elements.qualityOcclusion),
+        frontalNeutralPoseObserved: true,
+        bilateralEyeContoursVisuallyResolvable: true,
+        bilateralEyeRegionsFullyVisible: true,
+        majorEyeRegionOcclusionAbsent: true,
         observationMadeBeforeExplicitCaptureTrigger: true,
         observationIsIndependentQualityVerification: false,
       }),
@@ -446,7 +497,7 @@ async function captureCurrentSlot() {
     if (challenge.sessionOrdinal === 1) {
       busy = false;
       resetCaptureConfirmations();
-      elements.sessionBreak.hidden = false;
+      showCaptureStage('break');
       elements.temporalSeparation.checked = false;
       elements.beginSession2.disabled = true;
       setStatus(
@@ -528,19 +579,20 @@ for (const input of elements.consentChecks) {
 for (const control of [
   elements.challengePresented,
   elements.consentReconfirmed,
-  elements.qualityFrontal,
-  elements.qualitySharp,
-  elements.qualityVisible,
-  elements.qualityOcclusion,
+  elements.qualityCompositeYes,
+  elements.qualityCompositeNo,
 ]) {
-  control.addEventListener('change', updateShutterButton);
+  control.addEventListener('change', maybeEnterShutterStage);
 }
 
 elements.start.addEventListener('click', () => { void startDryRun(); });
 elements.shutter.addEventListener('click', () => { void captureCurrentSlot(); });
-elements.cancel.addEventListener('click', () => {
-  abortDryRun('운영자가 드라이런을 중단했습니다. 발급된 challenge는 재사용하지 않습니다.');
-});
+elements.backToObservation.addEventListener('click', returnToObservationStage);
+for (const control of [elements.cancel, elements.cancelShutter]) {
+  control.addEventListener('click', () => {
+    abortDryRun('운영자가 드라이런을 중단했습니다. 발급된 challenge는 재사용하지 않습니다.');
+  });
+}
 elements.temporalSeparation.addEventListener('change', () => {
   elements.beginSession2.disabled = !elements.temporalSeparation.checked || busy;
 });
