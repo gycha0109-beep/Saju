@@ -272,6 +272,29 @@ expectIncludes(fr251Client, "signalBootstrap('authority_bootstrap');", 'FR251 mu
 expectExcludes(fr251Client, 'raw.githubusercontent.com', 'FR251 phone runtime must not refetch the parity witness cross-origin after server-side exact verification.');
 
 
+expectIncludes(fr251Page, 'id="attestation-stage"', 'FR251 mobile flow must expose a dedicated pre-shutter attestation stage.');
+expectIncludes(fr251Page, 'id="quality-composite-yes"', 'FR251 mobile flow must expose a single composite quality yes choice.');
+expectIncludes(fr251Page, 'id="quality-composite-no"', 'FR251 mobile flow must expose a single composite quality no choice.');
+expectIncludes(fr251Page, 'id="shutter-stage"', 'FR251 mobile flow must expose a dedicated shutter stage.');
+expectIncludes(fr251Page, 'class="shutter-button"', 'FR251 shutter must be a camera-style visible control.');
+expectIncludes(fr251Page, 'position:fixed;', 'FR251 shutter stage must be fixed to the viewport on mobile.');
+for (const removed of [
+  'id="quality-frontal"',
+  'id="quality-sharp"',
+  'id="quality-visible"',
+  'id="quality-occlusion"',
+]) {
+  expectExcludes(fr251Page, removed, 'FR251 must not expose four separate quality dropdowns after FR256.');
+}
+expectIncludes(fr251Client, 'qualityCompositeDecision !== true', 'FR251 must block capture unless the composite all-conditions attestation is yes.');
+expectIncludes(fr251Client, "showCaptureStage('shutter')", 'FR251 must transition to the dedicated shutter stage after pre-shutter confirmations.');
+expectIncludes(fr251Client, 'frontalNeutralPoseObserved: true', 'FR251 composite yes must bind the existing FR247 frontal-neutral observation explicitly.');
+expectIncludes(fr251Client, 'bilateralEyeContoursVisuallyResolvable: true', 'FR251 composite yes must bind the existing FR247 eye-contour observation explicitly.');
+expectIncludes(fr251Client, 'bilateralEyeRegionsFullyVisible: true', 'FR251 composite yes must bind the existing FR247 bilateral visibility observation explicitly.');
+expectIncludes(fr251Client, 'majorEyeRegionOcclusionAbsent: true', 'FR251 composite yes must bind the existing FR247 occlusion observation explicitly.');
+expectIncludes(fr251Client, '세부 항목을 임의로 기록하지 않으며 촬영은 차단됩니다.', 'FR251 composite no must fail closed without fabricating detailed FR247 observations.');
+
+
 expectIncludes(fr255Page, 'id="prior-bundle"', 'FR255 page must accept an optional prior longitudinal bundle.');
 expectIncludes(fr255Page, 'id="source-fr251"', 'FR255 page must accept exactly one newly completed FR251 sanitized export.');
 expectIncludes(fr255Page, 'id="baseline-participant"', 'FR255 page must require baseline participant operator attestation.');
@@ -340,6 +363,9 @@ process.stdout.write(JSON.stringify({
   noThresholdOrCalibrationAuthorityVerified: true,
   fr251BrowserStaticModuleGraphVerified: true,
   fr251NodeOnlyTrustChainExcluded: true,
+  fr251SingleCompositeQualityChoiceVerified: true,
+  fr251DedicatedShutterStageVerified: true,
+  fr251CompositeNoFailsClosedVerified: true,
   fr255LongitudinalBundleSurfaceVerified: true,
   fr255LocalOnlyAggregationVerified: true,
   fr255BrowserStaticModuleGraphVerified: true,
