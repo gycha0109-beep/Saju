@@ -28,6 +28,9 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(contract.runtime.shutterActionCarriesPerCaptureReconfirmationAndQualityAttestation).toBe(true);
     expect(contract.runtime.captureUiRemainsPrimaryAfterStart).toBe(true);
     expect(contract.runtime.session2ConfirmationStaysInCaptureUi).toBe(true);
+    expect(contract.runtime.cameraViewportDominantAfterStart).toBe(true);
+    expect(contract.runtime.captureInstructionPanelConsumesNoViewportHeight).toBe(true);
+    expect(contract.runtime.challengePresentationUsesNonLayoutOverlay).toBe(true);
     expect(contract.persistence.rawMediaPersisted).toBe(false);
     expect(contract.persistence.rawImageDigestPersisted).toBe(false);
     expect(contract.persistence.rawScreenLandmarksPersisted).toBe(false);
