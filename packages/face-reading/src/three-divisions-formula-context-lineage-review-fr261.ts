@@ -243,7 +243,7 @@ ThreeDivisionsFormulaContextLineageReviewFR261 = Object.freeze({
     fr33AuthorityState:
       'scan_checked_multiple_boundary_variants_unresolved' as const,
     mayiMethodologyRef: FACE_METHOD_REFS_V0.mayiThreeDivisions,
-    fr33VariantCount: MAYI_THREE_DIVISIONS_BOUNDARY_VARIANTS_FR33.length,
+    fr33VariantCount: 2 as const,
     universalFormulaSelected: false as const,
   }),
   evidence: FR261_THREE_DIVISIONS_CONTEXT_EVIDENCE,
@@ -326,6 +326,7 @@ export function assertThreeDivisionsFormulaContextLineageReviewFR261(
       'scan_checked_multiple_boundary_variants_unresolved' ||
     MAYI_THREE_DIVISIONS_BOUNDARY_AUTHORITY_FR33.selectionPolicy.status !== 'unresolved' ||
     MAYI_THREE_DIVISIONS_BOUNDARY_AUTHORITY_FR33.selectionPolicy.selectedVariantId !== null ||
+    MAYI_THREE_DIVISIONS_BOUNDARY_VARIANTS_FR33.length !== 2 ||
     value.upstream.fr33AuthorityState !== MAYI_THREE_DIVISIONS_BOUNDARY_AUTHORITY_FR33.authorityState ||
     value.upstream.mayiMethodologyRef !== FACE_METHOD_REFS_V0.mayiThreeDivisions ||
     value.upstream.fr33VariantCount !== 2 ||
