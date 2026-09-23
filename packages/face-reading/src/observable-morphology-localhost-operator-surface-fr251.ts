@@ -27,6 +27,9 @@ export function getLocalhostDryRunOperatorSurfaceContractFR251() {
       shutterActionCarriesPerCaptureReconfirmationAndQualityAttestation: true as const,
       captureUiRemainsPrimaryAfterStart: true as const,
       session2ConfirmationStaysInCaptureUi: true as const,
+      cameraViewportDominantAfterStart: true as const,
+      captureInstructionPanelConsumesNoViewportHeight: true as const,
+      challengePresentationUsesNonLayoutOverlay: true as const,
     }),
     persistence: Object.freeze({
       rawMediaPersisted: false as const,
