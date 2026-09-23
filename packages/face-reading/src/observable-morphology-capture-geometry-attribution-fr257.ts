@@ -168,6 +168,20 @@ export interface FR257CaptureGeometryAttributionBundle {
   readonly nextFrontier: typeof FR257_NEXT_FRONTIER;
 }
 
+export interface FR257EphemeralGeometryObservation {
+  readonly providerRunRef: string;
+  readonly screenLandmarks: readonly MediaPipeMetricGeometryPointFR76V1[];
+  readonly metricLandmarks: readonly MediaPipeMetricGeometryPointFR76V1[];
+  readonly poseTransformMatrixPackedColumnMajor: readonly number[];
+  readonly frameWidth: number;
+  readonly frameHeight: number;
+  readonly primaryMetric: FR242PrimaryMetricExtraction;
+}
+
+export type FR257EphemeralGeometryObserver = (
+  observation: FR257EphemeralGeometryObservation,
+) => void;
+
 export interface FR257CaptureGeometryCollector {
   readonly primaryMetricBindingPreparer: FR244PrimaryMetricBindingPreparer;
   readonly takeEvidence: (
@@ -180,6 +194,8 @@ type PreparedGeometry = {
   readonly screenLandmarks: readonly MediaPipeMetricGeometryPointFR76V1[];
   readonly metricLandmarks: readonly MediaPipeMetricGeometryPointFR76V1[];
   readonly poseTransformMatrixPackedColumnMajor: readonly number[];
+  readonly frameWidth: number;
+  readonly frameHeight: number;
 };
 
 function fail(message: string): never {
@@ -390,6 +406,7 @@ function prepareBindingFromGeometry(input: {
   readonly baselinePoseMatrix: () => readonly number[] | undefined;
   readonly commitFirstAcceptedPoseMatrix: (matrix: readonly number[]) => void;
   readonly commitEvidence: (evidence: FR257SameFrameAttributionEvidence) => void;
+  readonly onEphemeralGeometry?: FR257EphemeralGeometryObserver | undefined;
 }): FR244PreparedPrimaryMetricBinding {
   let expectedJpegBytes: Uint8Array | undefined = Uint8Array.from(
     input.expectedJpegBytes,
@@ -430,6 +447,16 @@ function prepareBindingFromGeometry(input: {
       poseTransformMatrixPackedColumnMajor: poseMatrix,
       firstAcceptedPoseTransformMatrixPackedColumnMajor: firstAcceptedPoseMatrix,
     });
+
+    input.onEphemeralGeometry?.(Object.freeze({
+      providerRunRef: input.providerRunRef,
+      screenLandmarks,
+      metricLandmarks,
+      poseTransformMatrixPackedColumnMajor: poseMatrix,
+      frameWidth: input.preparedGeometry.frameWidth,
+      frameHeight: input.preparedGeometry.frameHeight,
+      primaryMetric,
+    }));
 
     input.commitEvidence(Object.freeze({
       schemaVersion: 'fr257-same-frame-attribution-evidence-v1' as const,
@@ -502,8 +529,11 @@ function prepareBindingFromGeometry(input: {
   });
 }
 
-export function createCaptureGeometryAttributionCollectorFR257():
-FR257CaptureGeometryCollector {
+export function createCaptureGeometryAttributionCollectorFR257(
+  options: Readonly<{
+    onEphemeralGeometry?: FR257EphemeralGeometryObserver;
+  }> = Object.freeze({}),
+): FR257CaptureGeometryCollector {
   let firstAcceptedPoseMatrix: readonly number[] | undefined;
   const pendingEvidence = new Map<string, FR257SameFrameAttributionEvidence>();
 
@@ -595,6 +625,8 @@ FR257CaptureGeometryCollector {
             metricLandmarks: metric.metricLandmarks,
             poseTransformMatrixPackedColumnMajor:
               metric.poseTransformMatrixPackedColumnMajor,
+            frameWidth: input.width,
+            frameHeight: input.height,
           });
         } finally {
           runtime.close();
@@ -612,6 +644,7 @@ FR257CaptureGeometryCollector {
             firstAcceptedPoseMatrix = Object.freeze([...matrix]);
           },
           commitEvidence,
+          onEphemeralGeometry: options.onEphemeralGeometry,
         });
       },
     });
@@ -838,6 +871,8 @@ export function createSyntheticMechanicsAttributionBindingFR257(input: {
       metricLandmarks: input.metricLandmarks,
       poseTransformMatrixPackedColumnMajor:
         input.poseTransformMatrixPackedColumnMajor,
+      frameWidth: 1,
+      frameHeight: 1,
     }),
     baselinePoseMatrix: () => first,
     commitFirstAcceptedPoseMatrix: (matrix) => {
