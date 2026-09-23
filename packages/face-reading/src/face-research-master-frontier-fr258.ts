@@ -670,7 +670,7 @@ export function assertFaceResearchMasterFrontierFR258(
   if (
     measurementByRegion.get('ear')?.currentReadiness !== 'unavailable' ||
     measurementByRegion.get('eye_pair')?.currentReadiness !== 'existing_research_metric' ||
-    measurementByRegion.get('mouth_lips')?.currentReadiness !== 'existing_research_metric' ||
+    measurementByRegion.get('mouth_lips')?.currentReadiness !== 'existing_governed_neutral_metric' ||
     measurementByRegion.get('nose')?.currentReadiness !== 'existing_governed_neutral_metric'
   ) fail('FR207 neutral measurement readiness drift.');
 
