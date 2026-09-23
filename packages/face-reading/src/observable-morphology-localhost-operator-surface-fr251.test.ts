@@ -18,8 +18,13 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(contract.runtime.challengeDisplayedBeforeShutterEnabled).toBe(true);
     expect(contract.runtime.explicitOperatorShutterRequired).toBe(true);
     expect(contract.runtime.technicalFailureAfterChallengeFailsClosed).toBe(true);
+    expect(contract.runtime.fr257SameFrameGeometryAttributionSidecarEnabled).toBe(true);
     expect(contract.persistence.rawMediaPersisted).toBe(false);
     expect(contract.persistence.rawImageDigestPersisted).toBe(false);
+    expect(contract.persistence.rawScreenLandmarksPersisted).toBe(false);
+    expect(contract.persistence.rawMetricLandmarksPersisted).toBe(false);
+    expect(contract.persistence.poseTransformMatrixPersisted).toBe(false);
+    expect(contract.persistence.scalarCaptureGeometrySidecarExportAllowed).toBe(true);
     expect(contract.authorityBoundary.empiricalRepeatabilityEstablished).toBe(false);
     expect(contract.authorityBoundary.productionActivated).toBe(false);
     expect(contract.authorityBoundary.commerceActivated).toBe(false);
