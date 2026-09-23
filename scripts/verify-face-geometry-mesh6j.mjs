@@ -9,10 +9,14 @@ import {
 const serverPath = 'scripts/mesh6j-manual-browser-capture-preview.mjs';
 const clientPath = 'tools/face-geometry/capture/mesh6j-operator-capture.mjs';
 const pagePath = 'tools/face-geometry/capture/mesh6j-operator-capture.html';
+const fr251ClientPath = 'tools/face-geometry/capture/fr251-dry-run-operator.mjs';
+const fr251PagePath = 'tools/face-geometry/capture/fr251-dry-run-operator.html';
 
 const server = readFileSync(serverPath, 'utf8');
 const client = readFileSync(clientPath, 'utf8');
 const page = readFileSync(pagePath, 'utf8');
+const fr251Client = readFileSync(fr251ClientPath, 'utf8');
+const fr251Page = readFileSync(fr251PagePath, 'utf8');
 
 function expect(condition, message) {
   if (!condition) throw new Error(message);
@@ -40,6 +44,9 @@ expectIncludes(server, "rawCapturePersistenceEnabled: false", 'MESH6J runtime co
 expectIncludes(server, "calibrationAuthorized: false", 'MESH6J runtime config must deny calibration authority.');
 expectIncludes(server, "productionMorphologyAuthorized: false", 'MESH6J runtime config must deny production morphology authority.');
 expectIncludes(server, "METADATA_BLOB_SHA = '252a7b05b24c5c43c5b94179393639f7c9a2fe8f'", 'MESH6J must pin exact geometry metadata blob.');
+expectIncludes(server, "PARITY_INPUT_BLOB_SHA = 'ea2e60eefaf6a5c13aee4bb468384edab7e7d5d7'", 'MESH6J must pin the exact FR76 parity input blob.');
+expectIncludes(server, "'/runtime/fr76-parity-input.prototxt'", 'MESH6J must expose the server-verified FR76 parity input through the local runtime surface.');
+expectIncludes(server, 'fr76ParityInputBlobSha: PARITY_INPUT_BLOB_SHA', 'MESH6J runtime config must disclose the exact FR76 parity input blob SHA.');
 expectIncludes(server, "project_gnm_regions_to_mediapipe468_weighted.py", 'MESH6J must regenerate the exact weighted adapter.');
 const scriptSrcMatch = /script-src ([^;]+); connect-src/.exec(server);
 expect(scriptSrcMatch !== null, 'MESH6J CSP script-src directive must be statically inspectable.');
@@ -179,6 +186,15 @@ for (const forbidden of [
 }
 
 expectExcludes(client, 'throw error;', 'MESH6J session promise must not create an unhandled rejection after UI failure handling.');
+
+expectIncludes(fr251Page, 'window.__fr251BootstrapSignal__', 'FR251 must expose a page-level bootstrap diagnostic channel before module evaluation.');
+expectIncludes(fr251Page, 'operator module 또는 정적 의존성 로드가 시작되지 않았습니다.', 'FR251 must surface module/dependency bootstrap failure instead of hanging indefinitely.');
+expectIncludes(fr251Client, "const RUNTIME_ASSET_TIMEOUT_MS = 15000;", 'FR251 runtime asset fetches must fail fast with a bounded transport timeout.');
+expectIncludes(fr251Client, "route: '/runtime/fr76-parity-input.prototxt'", 'FR251 must consume the server-verified same-origin parity witness.');
+expectIncludes(fr251Client, "config.fr76ParityInputBlobSha !== PARITY_INPUT.blobSha", 'FR251 must bind the local parity witness to the pinned blob disclosed by runtime config.');
+expectIncludes(fr251Client, "signalBootstrap('module_started');", 'FR251 module evaluation must report that static dependencies resolved.');
+expectIncludes(fr251Client, "signalBootstrap('authority_bootstrap');", 'FR251 must expose the authority-bootstrap stage for mobile diagnosis.');
+expectExcludes(fr251Client, 'raw.githubusercontent.com', 'FR251 phone runtime must not refetch the parity witness cross-origin after server-side exact verification.');
 
 const controllerCount = (client.match(/runMesh6IManualBrowserCaptureController/g) || []).length;
 expect(controllerCount === 2, 'MESH6J should import and invoke the MESH6I controller exactly once each.');
