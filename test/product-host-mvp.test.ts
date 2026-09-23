@@ -76,20 +76,20 @@ class TestNarrativeAdapter implements NarrativeModelAdapter {
   }
 }
 
-function careerClaim(snapshot: CanonicalSajuSnapshot): InterpretationClaim {
+function parentsClaim(snapshot: CanonicalSajuSnapshot): InterpretationClaim {
   return {
-    claimId: 'claim-product-host-career',
+    claimId: 'claim-product-host-family-parents',
     schemaVersion: 'myeonghwa-product-host-test-claim-v1',
     snapshotId: snapshot.snapshotId,
-    taxonomy: { tier: 'T8', category: 'career' },
-    claimType: 'CLAIM-PRODUCT-HOST-CAREER',
-    subject: 'career',
+    taxonomy: { tier: 'T8', category: 'family', subcategory: 'parents' },
+    claimType: 'CLAIM-PRODUCT-HOST-FAMILY-PARENTS',
+    subject: 'family',
     predicate: 'product_host_test_fixture',
-    value: { fixture: 'claim-product-host-career' },
+    value: { fixture: 'claim-product-host-family-parents' },
     methodologyRef: { id: 'METHOD-PRODUCT-HOST-TEST', version: '1.0.0-test' },
     ruleRefs: [
       {
-        ruleId: 'RULE-PRODUCT-HOST-CAREER',
+        ruleId: 'RULE-PRODUCT-HOST-FAMILY-PARENTS',
         version: '1.0.0-test',
         evaluationId: 'eval-product-host-career',
       },
@@ -146,7 +146,7 @@ const validBody = {
     time: '12:00',
     sex: 'unspecified',
   },
-  reading: { text: '직업운' },
+  reading: { text: '부모운' },
 } as const;
 
 async function listen(
@@ -177,7 +177,7 @@ describe('Myeonghwa Product Host MVP', () => {
       time: '12:00',
       sex: 'unspecified',
     });
-    expect(parsed.reading).toEqual({ text: '직업운' });
+    expect(parsed.reading).toEqual({ text: '부모운' });
     expect(parsed).not.toHaveProperty('calculationPolicy');
     expect(parsed).not.toHaveProperty('registry');
   });
@@ -207,7 +207,7 @@ describe('Myeonghwa Product Host MVP', () => {
 
   it('runs birth input through calculation, interpretation injection, requestProductReading, and transport response', async () => {
     const adapter = new TestNarrativeAdapter();
-    const host = createMyeonghwaProductHost(dependencies((snapshot) => [careerClaim(snapshot)], adapter));
+    const host = createMyeonghwaProductHost(dependencies((snapshot) => [parentsClaim(snapshot)], adapter));
 
     const result = await host.requestReading(validBody);
 
@@ -215,7 +215,7 @@ describe('Myeonghwa Product Host MVP', () => {
     expect(result.reading?.calculationSummary.pillars.day.value).toBeTruthy();
     expect(adapter.calls).toHaveLength(1);
     expect(result).not.toHaveProperty('artifact');
-    expect(JSON.stringify(result)).not.toContain('claim-product-host-career');
+    expect(JSON.stringify(result)).not.toContain('claim-product-host-family-parents');
   });
 
   it('serves the static product page with a restrictive script policy', async () => {
@@ -235,7 +235,7 @@ describe('Myeonghwa Product Host MVP', () => {
   });
 
   it('accepts POST /api/readings and returns only the consumer transport response', async () => {
-    const server = await listen(dependencies((snapshot) => [careerClaim(snapshot)]));
+    const server = await listen(dependencies((snapshot) => [parentsClaim(snapshot)]));
     try {
       const response = await fetch(`${server.baseUrl}/api/readings`, {
         method: 'POST',
@@ -246,7 +246,7 @@ describe('Myeonghwa Product Host MVP', () => {
       expect(response.status).toBe(200);
       expect(payload.state).toBe('delivered');
       expect(payload).not.toHaveProperty('artifact');
-      expect(JSON.stringify(payload)).not.toContain('claim-product-host-career');
+      expect(JSON.stringify(payload)).not.toContain('claim-product-host-family-parents');
     } finally {
       await server.close();
     }
@@ -336,7 +336,7 @@ describe('Myeonghwa Product Host MVP', () => {
     await expect(
       host.requestReading({
         birth: { calendarType: 'solar', date: '2024-02-31', time: '12:00' },
-        reading: { text: '직업운' },
+        reading: { text: '부모운' },
       }),
     ).rejects.toMatchObject({ code: 'INVALID_BIRTH_INPUT' });
     await expect(

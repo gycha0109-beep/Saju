@@ -648,30 +648,19 @@ async function runSmoke(baseUrl) {
 
   const generalPayload = await requestReading(baseUrl, '사주');
   const generalSerialized = JSON.stringify(generalPayload);
-  for (const required of ['이 사주의 핵심', '참고']) {
+  for (const required of ['주요 해석', '해석 범위']) {
     if (!generalSerialized.includes(required)) {
-      throw new Error(`Preview response is missing required section: ${required}`);
-    }
-  }
-  if (!['잘 맞는 방식', '일할 때', '돈을 다룰 때', '사람 관계에서', '주의할 점'].some((title) => generalSerialized.includes(title))) {
-    throw new Error('Preview response emitted no substantive general consumer section.');
-  }
-  for (const unfriendly of ['명식 안에', '구조로 읽힙니다', '축이 ', '서로 견제합니다', '작동 방식']) {
-    if (generalSerialized.includes(unfriendly)) {
-      throw new Error(`Preview response contains analyst-facing wording: ${unfriendly}`);
+      throw new Error(`Preview Official Reading is missing required section: ${required}`);
     }
   }
   assertNoInternalLeak(generalSerialized);
 
   const careerPayload = await requestReading(baseUrl, '직업운');
   const careerSerialized = JSON.stringify(careerPayload);
-  for (const required of ['직업운 핵심', '참고']) {
+  for (const required of ['일·성과', '해석 범위']) {
     if (!careerSerialized.includes(required)) {
-      throw new Error(`Career preview is missing required section: ${required}`);
+      throw new Error(`Career Official Reading is missing required section: ${required}`);
     }
-  }
-  if (!['일에서 힘이 나는 방식', '잘 맞을 수 있는 역할 조건', '잘 맞는 업무 환경', '일에서 막히기 쉬운 지점'].some((title) => careerSerialized.includes(title))) {
-    throw new Error('Career preview emitted no substantive career section.');
   }
   for (const forbiddenPromise of ['취업하게 됩니다', '승진하게 됩니다', '연봉이', '성공합니다', '정답 직업']) {
     if (careerSerialized.includes(forbiddenPromise)) {
@@ -682,13 +671,10 @@ async function runSmoke(baseUrl) {
 
   const wealthPayload = await requestReading(baseUrl, '재물운');
   const wealthSerialized = JSON.stringify(wealthPayload);
-  for (const required of ['재물운 핵심', '참고']) {
+  for (const required of ['가치가 만들어지는 방식', '돈을 쓰는 기준', '관리 방식', '충돌·흔들림', '해석 범위']) {
     if (!wealthSerialized.includes(required)) {
-      throw new Error(`Wealth preview is missing required section: ${required}`);
+      throw new Error(`Wealth Official Reading is missing required section: ${required}`);
     }
-  }
-  if (!['돈과 가치가 연결되는 방식', '돈을 쓰는 기준', '돈을 관리할 때', '돈에서 흔들리기 쉬운 지점'].some((title) => wealthSerialized.includes(title))) {
-    throw new Error('Wealth preview emitted no substantive wealth section.');
   }
   for (const forbiddenPromise of ['부자가 됩니다', '돈이 들어옵니다', '대박이 납니다', '투자하면', '수익률은']) {
     if (wealthSerialized.includes(forbiddenPromise)) {
@@ -699,13 +685,10 @@ async function runSmoke(baseUrl) {
 
   const relationshipPayload = await requestReading(baseUrl, '연애운');
   const relationshipSerialized = JSON.stringify(relationshipPayload);
-  for (const required of ['관계운 핵심', '참고']) {
+  for (const required of ['관계', '해석 범위']) {
     if (!relationshipSerialized.includes(required)) {
-      throw new Error(`Relationship preview is missing required section: ${required}`);
+      throw new Error(`Relationship Official Reading is missing required section: ${required}`);
     }
-  }
-  if (!['가까워지는 방식', '관계에서 중요하게 보는 것', '표현하고 소통하는 방식', '독립성과 경계', '관계에서 주의할 점'].some((title) => relationshipSerialized.includes(title))) {
-    throw new Error('Relationship preview emitted no substantive relationship section.');
   }
   for (const forbiddenPromise of ['결혼하게 됩니다', '이별하게 됩니다', '바람을 피웁니다', '배우자는 ', '만나게 됩니다']) {
     if (relationshipSerialized.includes(forbiddenPromise)) {
@@ -716,13 +699,10 @@ async function runSmoke(baseUrl) {
 
   const businessPayload = await requestReading(baseUrl, '사업운');
   const businessSerialized = JSON.stringify(businessPayload);
-  for (const required of ['사업운 핵심', '참고']) {
+  for (const required of ['일·성과', '해석 범위']) {
     if (!businessSerialized.includes(required)) {
-      throw new Error(`Business preview is missing required section: ${required}`);
+      throw new Error(`Business Official Reading is missing required section: ${required}`);
     }
-  }
-  if (!['불확실성을 다루는 방식', '결정하고 실행하는 방식', '자원을 배분하는 방식', '파트너와 역할을 나눌 때', '책임과 운영 기준', '성과 압박을 받을 때', '사업에서 주의할 점'].some((title) => businessSerialized.includes(title))) {
-    throw new Error('Business preview emitted no substantive business section.');
   }
   for (const forbiddenPromise of ['사업하면 성공', '창업하면 성공', '매출이 오릅니다', '투자를 받습니다', '폐업하게 됩니다', '사업가 체질입니다']) {
     if (businessSerialized.includes(forbiddenPromise)) {

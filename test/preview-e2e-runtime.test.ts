@@ -118,22 +118,22 @@ describe('provisionally approved preview E2E runtime', () => {
       );
 
       const payload = (await response.json()) as { state?: unknown };
-      expect(['delivered', 'delivered_with_fallback']).toContain(payload.state);
+      expect(payload.state).toBe('delivered');
       const serialized = JSON.stringify(payload);
-      expect(serialized).toContain('이 사주의 핵심');
-      expect(serialized).toContain('근거 구조:');
-      expect(serialized).toContain('프리뷰 안내');
+      expect(serialized).toContain('"readingId":"official_reading_');
+      expect(serialized).toContain('주요 해석');
+      expect(serialized).toContain('해석 범위');
     } finally {
       await close(runtime.server);
     }
   });
 
   it.each([
-    ['직업운', '직업운 핵심'],
-    ['재물운', '재물운 핵심'],
-    ['연애운', '관계운 핵심'],
-    ['사업운', '사업운 핵심'],
-  ] as const)('delivers supported natal Preview %s', async (text, expectedTitle) => {
+    ['직업운', ['일·성과', '해석 범위']],
+    ['재물운', ['가치가 만들어지는 방식', '돈을 쓰는 기준', '관리 방식', '충돌·흔들림', '해석 범위']],
+    ['연애운', ['관계', '해석 범위']],
+    ['사업운', ['일·성과', '해석 범위']],
+  ] as const)('delivers supported natal Preview %s', async (text, expectedTitles) => {
     const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
@@ -147,10 +147,10 @@ describe('provisionally approved preview E2E runtime', () => {
       });
       expect(response.status).toBe(200);
       const payload = (await response.json()) as { state?: unknown };
-      expect(['delivered', 'delivered_with_fallback']).toContain(payload.state);
+      expect(payload.state).toBe('delivered');
       const serialized = JSON.stringify(payload);
-      expect(serialized).toContain(expectedTitle);
-      expect(serialized).toContain('근거 구조:');
+      expect(serialized).toContain('"readingId":"official_reading_');
+      for (const expectedTitle of expectedTitles) expect(serialized).toContain(expectedTitle);
     } finally {
       await close(runtime.server);
     }
