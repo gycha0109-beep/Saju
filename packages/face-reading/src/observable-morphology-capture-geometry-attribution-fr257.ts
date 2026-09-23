@@ -530,7 +530,7 @@ function prepareBindingFromGeometry(input: {
 }
 
 export function createCaptureGeometryAttributionCollectorFR257(
-  input: Readonly<{
+  options: Readonly<{
     onEphemeralGeometry?: FR257EphemeralGeometryObserver;
   }> = Object.freeze({}),
 ): FR257CaptureGeometryCollector {
@@ -644,7 +644,7 @@ export function createCaptureGeometryAttributionCollectorFR257(
             firstAcceptedPoseMatrix = Object.freeze([...matrix]);
           },
           commitEvidence,
-          onEphemeralGeometry: input.onEphemeralGeometry,
+          onEphemeralGeometry: options.onEphemeralGeometry,
         });
       },
     });
