@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>명하 FR251 관상 연구 드라이런</title>
+  <title>명하 FR251 관상 연구 촬영</title>
   <script type="importmap">
   {
     "imports": {
@@ -16,139 +16,102 @@
     :root { font-family: Inter, "Noto Sans KR", system-ui, sans-serif; color:#171717; background:#f5f5f2; }
     * { box-sizing:border-box; }
     body { margin:0; }
-    main { width:min(980px, calc(100% - 32px)); margin:32px auto 64px; }
-    h1 { margin:0 0 8px; font-size:28px; }
-    h2 { margin:0 0 16px; font-size:20px; }
-    p { line-height:1.6; }
+    main { width:min(760px, calc(100% - 28px)); margin:24px auto 56px; }
+    h1 { margin:0 0 10px; font-size:28px; }
+    h2 { margin:0 0 12px; font-size:22px; }
+    p { line-height:1.55; }
     .muted { color:#666; }
-    .card { background:#fff; border:1px solid #ddd; border-radius:16px; padding:22px; margin-top:16px; }
-    .notice { background:#fff8e8; border-color:#ead7a5; }
-    .danger { background:#fff1f1; border-color:#e7b6b6; }
-    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 18px; }
-    .checks label, .quality-row { display:flex; gap:10px; align-items:flex-start; padding:8px 0; }
-    input[type="checkbox"], input[type="radio"] { width:18px; height:18px; margin-top:2px; }
-    button { font:inherit; border:0; border-radius:10px; padding:11px 16px; cursor:pointer; background:#171717; color:#fff; }
-    .quality-choice { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
-    .quality-choice label { display:flex; align-items:center; justify-content:center; gap:9px; min-height:54px; border:1px solid #bbb; border-radius:12px; font-weight:800; font-size:18px; background:#fafafa; }
-    .quality-choice label:has(input:checked) { border-color:#171717; background:#ecece7; }
-    .quality-summary { margin:10px 0 0; padding-left:20px; line-height:1.55; color:#444; }
+    .card { background:#fff; border:1px solid #ddd; border-radius:18px; padding:24px; margin-top:16px; }
+    .start-card { margin-top:22px; text-align:center; padding:30px 24px; }
+    .start-card p { text-align:left; margin:14px 0 0; }
+    .start-disclosure { font-size:14px; color:#555; background:#f6f6f3; border-radius:12px; padding:14px 16px; }
+    button { font:inherit; border:0; border-radius:12px; padding:13px 18px; cursor:pointer; background:#171717; color:#fff; }
     button.secondary { background:#e9e9e5; color:#171717; }
     button.danger-button { background:#8b1e1e; }
     button:disabled { opacity:.4; cursor:not-allowed; }
+    .start-button { width:100%; min-height:58px; font-size:19px; font-weight:800; margin-top:18px; }
     .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
     .status { min-height:24px; margin-top:12px; font-weight:600; }
-    video { width:100%; max-height:520px; background:#111; border-radius:14px; transform:scaleX(-1); }
-    .shutter-stage { position:fixed; inset:0; z-index:50; background:#0c0c0c; color:#fff; display:flex; flex-direction:column; }
-    .shutter-stage[hidden] { display:none !important; }
-    .shutter-top { flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; background:rgba(0,0,0,.78); }
-    .shutter-slot { font-weight:800; }
-    .shutter-camera-host { flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#000; }
-    .shutter-camera-host video { width:100%; height:100%; max-height:none; object-fit:cover; border-radius:0; }
-    .shutter-controls { flex:0 0 auto; padding:14px 18px calc(18px + env(safe-area-inset-bottom)); background:rgba(0,0,0,.86); text-align:center; }
-    .shutter-message { min-height:24px; margin-bottom:10px; font-weight:700; }
-    .shutter-actions { display:flex; align-items:center; justify-content:center; gap:22px; }
-    .shutter-button { width:76px; height:76px; border-radius:50%; padding:0; background:#fff; border:7px solid #bdbdbd; box-shadow:0 0 0 3px #fff; }
-    .shutter-button:disabled { background:#666; border-color:#444; box-shadow:none; }
-    .shutter-secondary { background:transparent; color:#fff; border:1px solid #777; }
-    .challenge { padding:14px; border:1px solid #bbb; border-radius:12px; background:#fafafa; word-break:break-all; }
-    .challenge strong { display:block; margin-bottom:6px; }
-    .slot { font-size:18px; font-weight:700; margin-bottom:12px; }
-    .pill { display:inline-block; padding:4px 8px; border-radius:999px; background:#eee; font-size:13px; margin-right:6px; }
     pre { white-space:pre-wrap; word-break:break-word; background:#111; color:#eee; border-radius:12px; padding:16px; max-height:480px; overflow:auto; }
     [hidden] { display:none !important; }
-    @media (max-width:720px) { .grid { grid-template-columns:1fr; } main { width:min(100% - 20px,980px); margin-top:18px; } }
+
+    .shutter-stage { position:fixed; inset:0; z-index:50; background:#000; color:#fff; display:flex; flex-direction:column; }
+    .shutter-top { flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; background:rgba(0,0,0,.82); }
+    .shutter-slot { font-weight:800; }
+    .shutter-secondary { background:transparent; color:#fff; border:1px solid #777; padding:9px 12px; }
+    .shutter-camera-host { flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#000; }
+    .shutter-camera-host video { width:100%; height:100%; max-height:none; object-fit:cover; transform:scaleX(-1); }
+    .shutter-controls { flex:0 0 auto; padding:10px 16px calc(18px + env(safe-area-inset-bottom)); background:rgba(0,0,0,.88); text-align:center; }
+    .challenge-inline { max-height:46px; overflow:auto; word-break:break-all; font-size:10px; line-height:1.3; color:#aaa; text-align:left; margin:0 auto 8px; padding:7px 9px; border:1px solid #333; border-radius:8px; }
+    .shutter-message { min-height:24px; margin-bottom:4px; font-weight:800; }
+    .shutter-attestation { margin:0 auto 10px; max-width:720px; color:#c8c8c8; font-size:12px; line-height:1.4; }
+    .shutter-actions { display:flex; align-items:center; justify-content:center; gap:22px; }
+    .shutter-button { width:78px; height:78px; border-radius:50%; padding:0; background:#fff; border:7px solid #bdbdbd; box-shadow:0 0 0 3px #fff; }
+    .shutter-button:disabled { background:#666; border-color:#444; box-shadow:none; }
+
+    .session-overlay { position:absolute; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(0,0,0,.76); }
+    .session-overlay-card { width:min(460px,100%); border-radius:18px; background:#fff; color:#171717; padding:24px; text-align:center; box-shadow:0 16px 50px rgba(0,0,0,.35); }
+    .session-overlay-card p { color:#555; }
+    .session-overlay-card button { width:100%; min-height:52px; font-weight:800; }
+
+    @media (max-width:720px) {
+      main { width:min(100% - 20px,760px); margin-top:18px; }
+      .start-card { padding:24px 18px; }
+      .shutter-top { padding-top:calc(10px + env(safe-area-inset-top)); }
+      .challenge-inline { max-height:40px; }
+      .shutter-attestation { font-size:11px; }
+    }
   </style>
 </head>
 <body>
 <main>
-  <h1>FR251 · 1인 관상 연구 드라이런</h1>
-  <p class="muted">실제 카메라 4슬롯 실행용 localhost 운영자 화면입니다. FR257은 같은 셔터 프레임에서 촬영기하 scalar도 함께 기록합니다. 원본 사진·영상, raw landmark, 얼굴 임베딩, identity template은 저장하지 않습니다.</p>
-
   <section id="prep-view">
-    <div class="card notice">
-      <h2>연구 경계</h2>
-      <p>이 실행은 <strong>기계적 드라이런</strong>입니다. 2세션 × 2캡처를 기록하지만 반복성·해석 타당성·전통 관상 규칙·Production/Commerce 권한을 확립하지 않습니다.</p>
-    </div>
-
-    <div class="card">
-      <h2>참여 동의 확인</h2>
-      <div class="grid checks" id="consent-checks">
-        <label><input type="checkbox" data-consent="studyNoticeRead">연구 안내를 읽었습니다.</label>
-        <label><input type="checkbox" data-consent="voluntaryParticipationConfirmed">자발적으로 참여합니다.</label>
-        <label><input type="checkbox" data-consent="liveCameraCaptureConsent">실시간 카메라 촬영에 동의합니다.</label>
-        <label><input type="checkbox" data-consent="transientRawCaptureProcessingConsent">원본 프레임의 일시적 메모리 처리에 동의합니다.</label>
-        <label><input type="checkbox" data-consent="sanitizedReviewImageRetentionConsent">정책상 허용된 sanitized review artifact 보존 조건을 확인했습니다.</label>
-        <label><input type="checkbox" data-consent="pseudonymousMetricStorageConsent">가명화된 metric/기록 저장에 동의합니다.</label>
-        <label><input type="checkbox" data-consent="noTrainingReuseAcknowledged">학습 데이터로 재사용하지 않음을 확인했습니다.</label>
-        <label><input type="checkbox" data-consent="noProductionReuseAcknowledged">Production 데이터로 재사용하지 않음을 확인했습니다.</label>
-        <label><input type="checkbox" data-consent="noBiometricIdentityMatchingAcknowledged">생체 신원 매칭을 수행하지 않음을 확인했습니다.</label>
-        <label><input type="checkbox" data-consent="withdrawalProcedureAcknowledged">중단/철회 절차를 확인했습니다.</label>
-      </div>
-      <div class="actions">
-        <button id="start-dry-run" disabled>카메라 열고 드라이런 시작</button>
-      </div>
+    <div class="card start-card">
+      <h1>촬영을 시작하시겠습니까?</h1>
+      <p class="muted">2세션 × 2캡처로 눈 metric과 FR257 촬영기하 scalar를 함께 기록합니다.</p>
+      <p class="start-disclosure">
+        <strong>촬영 시작</strong>을 누르면 연구 안내를 확인하고 자발적으로 촬영에 참여하며,
+        원본 프레임의 일시적 메모리 처리와 정책상 허용된 sanitized review artifact/metric 기록 조건에 동의한 것으로 기록됩니다.
+        원본 사진·영상·raw landmark·얼굴 임베딩·identity template은 저장하지 않으며,
+        학습/Production 재사용과 생체 신원 매칭은 수행하지 않습니다. 언제든 중단할 수 있습니다.
+      </p>
+      <button id="start-dry-run" class="start-button" disabled>촬영 시작</button>
       <div id="prep-status" class="status">runtime 준비 중…</div>
     </div>
   </section>
 
   <section id="capture-view" hidden>
-    <div id="attestation-stage">
-      <div class="card">
-        <div id="slot-label" class="slot">Session 1 · Capture 1</div>
-        <div id="attestation-camera-host"><video id="camera" autoplay playsinline muted></video></div>
+    <div id="shutter-stage" class="shutter-stage">
+      <div class="shutter-top">
+        <span id="shutter-slot-label" class="shutter-slot">Session 1 · Capture 1</span>
+        <button id="cancel-dry-run-shutter" class="shutter-secondary">중단</button>
+      </div>
+
+      <div id="shutter-camera-host" class="shutter-camera-host">
+        <video id="camera" autoplay playsinline muted></video>
+      </div>
+
+      <div class="shutter-controls">
+        <div class="challenge-inline"><span id="challenge-ref">challenge 준비 중…</span><br><span id="challenge-nonce"></span></div>
+        <div id="shutter-message" class="shutter-message">카메라 준비 중…</div>
+        <p class="shutter-attestation">
+          셔터를 누르면 이번 캡처에 계속 동의하고, challenge를 확인했으며,
+          정면·중립 자세 / 양쪽 눈 윤곽 식별 가능 / 양쪽 눈 영역 노출 / 큰 가림 없음 조건을 직접 확인한 것으로 기록됩니다.
+          조건이 맞지 않으면 자세를 조정한 뒤 셔터를 누르십시오.
+        </p>
+        <div class="shutter-actions">
+          <button id="shutter" class="shutter-button" aria-label="현재 프레임 캡처" disabled></button>
+        </div>
         <div id="capture-status" class="status"></div>
       </div>
 
-      <div class="card">
-        <h2>1. 발급된 캡처 Challenge</h2>
-        <div class="challenge">
-          <strong id="challenge-ref">-</strong>
-          <span class="pill">nonce</span><span id="challenge-nonce">-</span>
-        </div>
-        <label class="quality-row"><input id="challenge-presented" type="checkbox">위 challenge가 셔터 전에 화면에 제시된 것을 확인합니다.</label>
-        <label class="quality-row"><input id="consent-reconfirmed" type="checkbox">참여자가 이번 캡처 직전에 계속 촬영에 동의함을 재확인했습니다.</label>
-      </div>
-
-      <div class="card">
-        <h2>2. 셔터 전 품질 관찰</h2>
-        <p><strong>아래 네 조건을 모두 직접 확인했습니까?</strong></p>
-        <ul class="quality-summary">
-          <li>정면·중립 자세로 보임</li>
-          <li>양쪽 눈 윤곽이 시각적으로 분해 가능함</li>
-          <li>양쪽 눈 영역이 모두 보임</li>
-          <li>눈 영역의 큰 가림이 없음</li>
-        </ul>
-        <div class="quality-choice" role="radiogroup" aria-label="셔터 전 품질 관찰">
-          <label><input id="quality-composite-yes" type="radio" name="quality-composite" value="true">예</label>
-          <label><input id="quality-composite-no" type="radio" name="quality-composite" value="false">아니오</label>
-        </div>
-        <p class="muted">Challenge 확인·동의 재확인·품질 선택이 끝나면 촬영 화면으로 바로 전환됩니다.</p>
-        <div class="actions">
-          <button id="cancel-dry-run" class="danger-button">드라이런 중단</button>
+      <div id="session-break" class="session-overlay" hidden>
+        <div class="session-overlay-card">
+          <h2>Session 1 완료</h2>
+          <p>실제로 구분된 두 번째 세션을 시작할 때 아래 버튼을 누르십시오.</p>
+          <button id="begin-session-2">Session 2 시작</button>
         </div>
       </div>
-    </div>
-
-    <div id="shutter-stage" class="shutter-stage" hidden>
-      <div class="shutter-top">
-        <span id="shutter-slot-label" class="shutter-slot">Session 1 · Capture 1</span>
-        <button id="back-to-observation" class="shutter-secondary">품질 다시 확인</button>
-      </div>
-      <div id="shutter-camera-host" class="shutter-camera-host"></div>
-      <div class="shutter-controls">
-        <div id="shutter-message" class="shutter-message">셔터를 눌러 현재 프레임을 캡처하십시오.</div>
-        <div class="shutter-actions">
-          <button id="shutter" class="shutter-button" aria-label="현재 프레임 캡처" disabled></button>
-          <button id="cancel-dry-run-shutter" class="shutter-secondary">중단</button>
-        </div>
-      </div>
-    </div>
-
-    <div id="session-break" class="card notice" hidden>
-      <h2>Session 1 완료</h2>
-      <p>FR237은 두 세션의 시간적 분리를 요구하지만 FR251은 그 분리를 독립 검증하지 않습니다. 실제로 구분된 다음 세션을 시작할 때만 아래 확인 후 진행하십시오.</p>
-      <label class="quality-row"><input id="temporal-separation" type="checkbox">Session 2를 별도 세션으로 진행하고 있음을 운영자가 확인합니다.</label>
-      <div class="actions"><button id="begin-session-2" disabled>Session 2 시작</button></div>
     </div>
   </section>
 
@@ -169,19 +132,20 @@
       <pre id="fr257-result-json">{}</pre>
       <div class="actions">
         <button id="download-fr257-result">FR257 geometry JSON 저장</button>
-        <button id="restart" class="secondary">새 드라이런</button>
+        <button id="restart" class="secondary">새 촬영</button>
       </div>
     </div>
   </section>
 
   <section id="abort-view" hidden>
-    <div class="card danger">
-      <h2>드라이런 중단</h2>
+    <div class="card">
+      <h2>촬영 중단</h2>
       <p id="abort-message">발급된 challenge가 소비되었거나 실행이 중단되어 현재 세션은 fail-closed 처리했습니다.</p>
       <div class="actions"><button id="reload-after-abort" class="secondary">처음부터 다시 시작</button></div>
     </div>
   </section>
 </main>
+
 <script>
 (() => {
   const status = document.querySelector('#prep-status');

@@ -35,32 +35,19 @@ const RUNTIME_ASSET_TIMEOUT_MS = 15000;
 const elements = Object.freeze({
   prepView: document.querySelector('#prep-view'),
   captureView: document.querySelector('#capture-view'),
-  attestationStage: document.querySelector('#attestation-stage'),
-  shutterStage: document.querySelector('#shutter-stage'),
-  attestationCameraHost: document.querySelector('#attestation-camera-host'),
-  shutterCameraHost: document.querySelector('#shutter-camera-host'),
   resultView: document.querySelector('#result-view'),
   abortView: document.querySelector('#abort-view'),
-  consentChecks: [...document.querySelectorAll('[data-consent]')],
   start: document.querySelector('#start-dry-run'),
   prepStatus: document.querySelector('#prep-status'),
   video: document.querySelector('#camera'),
-  slotLabel: document.querySelector('#slot-label'),
   captureStatus: document.querySelector('#capture-status'),
   challengeRef: document.querySelector('#challenge-ref'),
   challengeNonce: document.querySelector('#challenge-nonce'),
-  challengePresented: document.querySelector('#challenge-presented'),
-  consentReconfirmed: document.querySelector('#consent-reconfirmed'),
-  qualityCompositeYes: document.querySelector('#quality-composite-yes'),
-  qualityCompositeNo: document.querySelector('#quality-composite-no'),
   shutterSlotLabel: document.querySelector('#shutter-slot-label'),
   shutterMessage: document.querySelector('#shutter-message'),
   shutter: document.querySelector('#shutter'),
-  backToObservation: document.querySelector('#back-to-observation'),
-  cancel: document.querySelector('#cancel-dry-run'),
   cancelShutter: document.querySelector('#cancel-dry-run-shutter'),
   sessionBreak: document.querySelector('#session-break'),
-  temporalSeparation: document.querySelector('#temporal-separation'),
   beginSession2: document.querySelector('#begin-session-2'),
   resultStatus: document.querySelector('#result-status'),
   resultJson: document.querySelector('#result-json'),
@@ -79,7 +66,6 @@ let coordinator = null;
 let participantRef = null;
 let operatorRef = null;
 let currentPreparedSlot = null;
-let qualityCompositeDecision = null;
 let busy = false;
 let finishedExport = null;
 let geometryCollector = null;
@@ -95,60 +81,6 @@ function showView(name) {
 
 function setStatus(element, message) {
   element.textContent = message;
-}
-
-function showCaptureStage(name) {
-  const shutterMode = name === 'shutter';
-  elements.attestationStage.hidden = name !== 'attestation';
-  elements.shutterStage.hidden = !shutterMode;
-  elements.sessionBreak.hidden = name !== 'break';
-
-  if (shutterMode) {
-    if (elements.video.parentElement !== elements.shutterCameraHost) {
-      elements.shutterCameraHost.append(elements.video);
-    }
-    window.scrollTo(0, 0);
-  } else if (elements.video.parentElement !== elements.attestationCameraHost) {
-    elements.attestationCameraHost.append(elements.video);
-  }
-}
-
-function readCompositeQualityDecision() {
-  if (elements.qualityCompositeYes.checked) return true;
-  if (elements.qualityCompositeNo.checked) return false;
-  return null;
-}
-
-function maybeEnterShutterStage() {
-  qualityCompositeDecision = readCompositeQualityDecision();
-  if (
-    busy
-    || currentPreparedSlot === null
-    || !elements.challengePresented.checked
-    || !elements.consentReconfirmed.checked
-    || qualityCompositeDecision === null
-  ) {
-    return;
-  }
-
-  elements.shutterSlotLabel.textContent = elements.slotLabel.textContent;
-  if (qualityCompositeDecision === true) {
-    elements.shutterMessage.textContent =
-      '품질 관찰 완료 · 셔터를 눌러 현재 프레임을 캡처하십시오.';
-  } else {
-    elements.shutterMessage.textContent =
-      '품질 조건 미충족 · 세부 항목을 임의로 기록하지 않으며 촬영은 차단됩니다.';
-  }
-  showCaptureStage('shutter');
-  updateShutterButton();
-}
-
-function returnToObservationStage() {
-  qualityCompositeDecision = null;
-  elements.qualityCompositeYes.checked = false;
-  elements.qualityCompositeNo.checked = false;
-  showCaptureStage('attestation');
-  updateShutterButton();
 }
 
 function randomHex(byteLength) {
@@ -270,31 +202,15 @@ async function buildRuntimeInputs() {
   return Object.freeze({ geometryMetadataPbtxt, parity });
 }
 
-function consentReady() {
-  return elements.consentChecks.every((input) => input.checked);
-}
-
 function updateStartButton() {
-  elements.start.disabled = runtimeInputs === null || !consentReady() || busy;
+  elements.start.disabled = runtimeInputs === null || busy;
 }
 
 function updateShutterButton() {
   elements.shutter.disabled =
     busy
     || currentPreparedSlot === null
-    || !elements.challengePresented.checked
-    || !elements.consentReconfirmed.checked
-    || qualityCompositeDecision !== true;
-}
-
-function resetCaptureConfirmations() {
-  elements.challengePresented.checked = false;
-  elements.consentReconfirmed.checked = false;
-  elements.qualityCompositeYes.checked = false;
-  elements.qualityCompositeNo.checked = false;
-  qualityCompositeDecision = null;
-  showCaptureStage('attestation');
-  updateShutterButton();
+    || !elements.sessionBreak.hidden;
 }
 
 function closeCamera() {
@@ -314,13 +230,6 @@ function abortDryRun(message) {
   showView('abort');
 }
 
-function consentInput() {
-  const values = Object.fromEntries(
-    elements.consentChecks.map((input) => [input.dataset.consent, input.checked]),
-  );
-  return values;
-}
-
 function materializeAuthorityChain() {
   if (runtimeInputs === null || camera === null) {
     throw new Error('runtime/camera is not ready.');
@@ -335,21 +244,20 @@ function materializeAuthorityChain() {
     runtime: fr238,
     policy: fr239,
   });
-  const consent = consentInput();
   const receipt = recordParticipantConsentFR240(protocol, {
     participantRef,
     operatorRef,
     consentRecordedAt: new Date().toISOString(),
-    studyNoticeRead: consent.studyNoticeRead,
-    voluntaryParticipationConfirmed: consent.voluntaryParticipationConfirmed,
-    liveCameraCaptureConsent: consent.liveCameraCaptureConsent,
-    transientRawCaptureProcessingConsent: consent.transientRawCaptureProcessingConsent,
-    sanitizedReviewImageRetentionConsent: consent.sanitizedReviewImageRetentionConsent,
-    pseudonymousMetricStorageConsent: consent.pseudonymousMetricStorageConsent,
-    noTrainingReuseAcknowledged: consent.noTrainingReuseAcknowledged,
-    noProductionReuseAcknowledged: consent.noProductionReuseAcknowledged,
-    noBiometricIdentityMatchingAcknowledged: consent.noBiometricIdentityMatchingAcknowledged,
-    withdrawalProcedureAcknowledged: consent.withdrawalProcedureAcknowledged,
+    studyNoticeRead: true,
+    voluntaryParticipationConfirmed: true,
+    liveCameraCaptureConsent: true,
+    transientRawCaptureProcessingConsent: true,
+    sanitizedReviewImageRetentionConsent: true,
+    pseudonymousMetricStorageConsent: true,
+    noTrainingReuseAcknowledged: true,
+    noProductionReuseAcknowledged: true,
+    noBiometricIdentityMatchingAcknowledged: true,
+    withdrawalProcedureAcknowledged: true,
   });
   const admission = issueOnePersonDryRunAdmissionFR240({
     protocol,
@@ -400,20 +308,20 @@ function prepareNextCapture() {
     challengeIssuedAt: new Date().toISOString(),
   });
   const challenge = currentPreparedSlot.challenge;
-  elements.slotLabel.textContent =
+  elements.shutterSlotLabel.textContent =
     'Session ' + challenge.sessionOrdinal + ' · Capture ' + challenge.captureOrdinal;
-  elements.shutterSlotLabel.textContent = elements.slotLabel.textContent;
   elements.challengeRef.textContent = challenge.captureChallengeRef;
-  elements.challengeNonce.textContent = challenge.captureNonce;
-  resetCaptureConfirmations();
+  elements.challengeNonce.textContent = 'nonce · ' + challenge.captureNonce;
+  elements.shutterMessage.textContent = '자세를 맞춘 뒤 셔터를 누르십시오.';
   setStatus(
     elements.captureStatus,
-    'Challenge와 동의를 확인한 뒤 품질 관찰을 한 번 선택하십시오. 완료되면 촬영 화면으로 전환됩니다.',
+    '셔터 입력 자체가 이번 캡처의 challenge 확인·동의 재확인·품질 관찰 확인입니다.',
   );
+  updateShutterButton();
 }
 
 async function startDryRun() {
-  if (runtimeInputs === null || !consentReady() || busy) return;
+  if (runtimeInputs === null || busy) return;
   busy = true;
   updateStartButton();
   try {
@@ -445,13 +353,7 @@ async function captureCurrentSlot() {
     || currentPreparedSlot === null
     || operatorRef === null
     || busy
-  ) {
-    return;
-  }
-  if (
-    !elements.challengePresented.checked
-    || !elements.consentReconfirmed.checked
-    || qualityCompositeDecision !== true
+    || !elements.sessionBreak.hidden
   ) {
     return;
   }
@@ -530,14 +432,13 @@ async function captureCurrentSlot() {
 
     if (challenge.sessionOrdinal === 1) {
       busy = false;
-      resetCaptureConfirmations();
-      showCaptureStage('break');
-      elements.temporalSeparation.checked = false;
-      elements.beginSession2.disabled = true;
+      elements.sessionBreak.hidden = false;
+      elements.beginSession2.disabled = false;
       setStatus(
         elements.captureStatus,
-        'Session 1의 두 슬롯이 기록되었습니다. 실제로 분리된 Session 2를 시작할 때 아래 확인을 진행하십시오.',
+        'Session 1 완료 · 실제로 구분된 Session 2를 시작할 때 확인하십시오.',
       );
+      updateShutterButton();
       return;
     }
 
@@ -650,33 +551,19 @@ function downloadFR257Result() {
   );
 }
 
-for (const input of elements.consentChecks) {
-  input.addEventListener('change', updateStartButton);
-}
-for (const control of [
-  elements.challengePresented,
-  elements.consentReconfirmed,
-  elements.qualityCompositeYes,
-  elements.qualityCompositeNo,
-]) {
-  control.addEventListener('change', maybeEnterShutterStage);
-}
-
 elements.start.addEventListener('click', () => { void startDryRun(); });
 elements.shutter.addEventListener('click', () => { void captureCurrentSlot(); });
-elements.backToObservation.addEventListener('click', returnToObservationStage);
-for (const control of [elements.cancel, elements.cancelShutter]) {
-  control.addEventListener('click', () => {
-    abortDryRun('운영자가 드라이런을 중단했습니다. 발급된 challenge는 재사용하지 않습니다.');
-  });
-}
-elements.temporalSeparation.addEventListener('change', () => {
-  elements.beginSession2.disabled = !elements.temporalSeparation.checked || busy;
+elements.cancelShutter.addEventListener('click', () => {
+  abortDryRun('운영자가 촬영을 중단했습니다. 발급된 challenge는 재사용하지 않습니다.');
 });
 elements.beginSession2.addEventListener('click', () => {
-  if (!elements.temporalSeparation.checked || busy) return;
+  if (busy) return;
+  busy = true;
+  elements.beginSession2.disabled = true;
   try {
     beginSession(2);
+    busy = false;
+    updateShutterButton();
   } catch (error) {
     abortDryRun(
       'Session 2 시작 실패: ' + (error instanceof Error ? error.message : String(error)),
@@ -695,7 +582,7 @@ buildRuntimeInputs()
   .then((value) => {
     runtimeInputs = value;
     signalBootstrap('ready');
-    setStatus(elements.prepStatus, 'runtime 준비 완료 · 모든 동의 항목 확인 후 시작할 수 있습니다.');
+    setStatus(elements.prepStatus, 'runtime 준비 완료 · 촬영 시작을 누르십시오.');
     updateStartButton();
   })
   .catch((error) => {

@@ -22,6 +22,11 @@ export function getLocalhostDryRunOperatorSurfaceContractFR251() {
       session2TemporalSeparationOperatorConfirmationRequired: true as const,
       technicalFailureAfterChallengeFailsClosed: true as const,
       fr257SameFrameGeometryAttributionSidecarEnabled: true as const,
+      singleStartActionRecordsFR240Consent: true as const,
+      cameraPreviewHiddenUntilStartAction: true as const,
+      shutterActionCarriesPerCaptureReconfirmationAndQualityAttestation: true as const,
+      captureUiRemainsPrimaryAfterStart: true as const,
+      session2ConfirmationStaysInCaptureUi: true as const,
     }),
     persistence: Object.freeze({
       rawMediaPersisted: false as const,
