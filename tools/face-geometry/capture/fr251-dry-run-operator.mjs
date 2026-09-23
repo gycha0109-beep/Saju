@@ -59,7 +59,7 @@ const elements = Object.freeze({
   reloadAfterAbort: document.querySelector('#reload-after-abort'),
 });
 
-let runtimeInputs = null;let runtimeInputs = null;
+let runtimeInputs = null;
 let camera = null;
 let coordinator = null;
 let participantRef = null;
@@ -82,7 +82,7 @@ function setStatus(element, message) {
   element.textContent = message;
 }
 
-function randomHex(byteLength) {function randomHex(byteLength) {
+function randomHex(byteLength) {
   const bytes = new Uint8Array(byteLength);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('');
@@ -212,7 +212,7 @@ function updateShutterButton() {
     || !elements.sessionBreak.hidden;
 }
 
-function closeCamera() {function closeCamera() {
+function closeCamera() {
   if (camera === null) return;
   camera.close();
   camera = null;
@@ -229,7 +229,7 @@ function abortDryRun(message) {
   showView('abort');
 }
 
-function materializeAuthorityChain() {function materializeAuthorityChain() {
+function materializeAuthorityChain() {
   if (runtimeInputs === null || camera === null) {
     throw new Error('runtime/camera is not ready.');
   }
