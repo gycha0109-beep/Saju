@@ -2,6 +2,11 @@ import {
   MAYI_THREE_DIVISIONS_BOUNDARY_AUTHORITY_FR33,
   validateMayiThreeDivisionsBoundaryAuthorityFR33,
 } from './mayi-three-divisions-boundary-variants-fr33.js';
+import {
+  FR261_RECORD_ID,
+  FR261_VERDICT,
+  issueMayiThreeDivisionsSourceContextAdjudicationFR261,
+} from './mayi-three-divisions-source-context-adjudication-fr261.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export const FR263_RECORD_ID =
@@ -80,6 +85,11 @@ export interface ShenyiFuNoncontiguousThreeDivisionsTransmissionWitnessFR263V1 {
     readonly compareAsSeparateMethodologyLineageAuthorizedForResearch: true;
   };
   readonly predecessorBoundary: {
+    readonly fr261RecordId: typeof FR261_RECORD_ID;
+    readonly fr261Verdict: typeof FR261_VERDICT;
+    readonly fr261ShenyiFuRole:
+      'separate_lineage_candidate_pending_repository_source_pinning';
+    readonly fr261MayiContiguousFormulaPreserved: true;
     readonly fr33HistoricalAuthorityRef:
       'authority.face.mayi_three_divisions_boundary_variants.fr33';
     readonly fr33HistoricalState:
@@ -145,6 +155,16 @@ function assertFR33HistoricalBoundary(): void {
 export function issueShenyiFuNoncontiguousThreeDivisionsTransmissionWitnessFR263():
 ShenyiFuNoncontiguousThreeDivisionsTransmissionWitnessFR263V1 {
   assertFR33HistoricalBoundary();
+  const fr261 = issueMayiThreeDivisionsSourceContextAdjudicationFR261();
+  if (
+    fr261.verdict !== FR261_VERDICT ||
+    fr261.methodologyDecision.shenyiFuNoncontiguousFormulaRole !==
+      'separate_lineage_candidate_pending_repository_source_pinning' ||
+    fr261.methodologyDecision.mayiThreeDivisionsResearchFormula !==
+      'hairline_to_brow__brow_to_zhuntou__zhuntou_to_dige'
+  ) {
+    fail('FR261 predecessor boundary drift.');
+  }
 
   const result: ShenyiFuNoncontiguousThreeDivisionsTransmissionWitnessFR263V1 =
     Object.freeze({
@@ -190,6 +210,11 @@ ShenyiFuNoncontiguousThreeDivisionsTransmissionWitnessFR263V1 {
         compareAsSeparateMethodologyLineageAuthorizedForResearch: true as const,
       }),
       predecessorBoundary: Object.freeze({
+        fr261RecordId: FR261_RECORD_ID,
+        fr261Verdict: FR261_VERDICT,
+        fr261ShenyiFuRole:
+          'separate_lineage_candidate_pending_repository_source_pinning' as const,
+        fr261MayiContiguousFormulaPreserved: true as const,
         fr33HistoricalAuthorityRef:
           'authority.face.mayi_three_divisions_boundary_variants.fr33' as const,
         fr33HistoricalState:
@@ -291,11 +316,21 @@ export function assertShenyiFuNoncontiguousThreeDivisionsTransmissionWitnessFR26
     fail('lineage decision drift.');
   }
 
+  const fr261 = issueMayiThreeDivisionsSourceContextAdjudicationFR261();
   if (
+    result.predecessorBoundary.fr261RecordId !== FR261_RECORD_ID ||
+    result.predecessorBoundary.fr261Verdict !== FR261_VERDICT ||
+    result.predecessorBoundary.fr261ShenyiFuRole !==
+      'separate_lineage_candidate_pending_repository_source_pinning' ||
+    result.predecessorBoundary.fr261MayiContiguousFormulaPreserved !== true ||
+    fr261.methodologyDecision.shenyiFuNoncontiguousFormulaRole !==
+      'separate_lineage_candidate_pending_repository_source_pinning' ||
+    fr261.methodologyDecision.mayiThreeDivisionsResearchFormula !==
+      'hairline_to_brow__brow_to_zhuntou__zhuntou_to_dige' ||
     result.predecessorBoundary.fr33Mutated !== false ||
     result.predecessorBoundary.fr33SelectionPolicyOverridden !== false
   ) {
-    fail('FR33 predecessor boundary drift.');
+    fail('FR261/FR33 predecessor boundary drift.');
   }
 
   if (
