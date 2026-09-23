@@ -518,7 +518,9 @@ FR257CaptureGeometryCollector {
 
   const primaryMetricBindingPreparer: FR244PrimaryMetricBindingPreparer =
     Object.freeze({
-      async prepare(input) {
+      async prepare(
+        input: Parameters<FR244PrimaryMetricBindingPreparer['prepare']>[0],
+      ) {
         if (!SAFE_RUN_REF.test(input.providerRunRef)) {
           fail('providerRunRef must be a bounded opaque reference without whitespace.');
         }
