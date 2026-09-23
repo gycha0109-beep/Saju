@@ -28,6 +28,9 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(contract.runtime.shutterActionCarriesPerCaptureReconfirmationAndQualityAttestation).toBe(true);
     expect(contract.runtime.captureUiRemainsPrimaryAfterStart).toBe(true);
     expect(contract.runtime.session2ConfirmationStaysInCaptureUi).toBe(true);
+    expect(contract.runtime.cameraViewportDominantAfterStart).toBe(true);
+    expect(contract.runtime.captureInstructionPanelConsumesNoViewportHeight).toBe(true);
+    expect(contract.runtime.challengePresentationUsesNonLayoutOverlay).toBe(true);
     expect(contract.persistence.rawMediaPersisted).toBe(false);
     expect(contract.persistence.rawImageDigestPersisted).toBe(false);
     expect(contract.persistence.rawScreenLandmarksPersisted).toBe(false);
@@ -39,7 +42,7 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(contract.authorityBoundary.commerceActivated).toBe(false);
   });
 
-  it('pins FR259 capture-first mobile UX without weakening FR250/FR247 semantics', () => {
+  it('pins FR261 camera-dominant mobile UX without weakening FR250/FR247 semantics', () => {
     const html = readFileSync(
       resolve(root, 'tools/face-geometry/capture/fr251-dry-run-operator.html'),
       'utf8',
@@ -56,6 +59,9 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(html).toContain('id="challenge-ref"');
     expect(html).toContain('id="challenge-nonce"');
     expect(html).toContain('id="shutter" class="shutter-button"');
+    expect(html).toContain('height:100dvh;');
+    expect(html).toContain('object-fit:contain;');
+    expect(html).toContain('position:absolute; z-index:4; left:50%;');
     expect(html).toContain('id="session-break"');
     expect(html).toContain('id="begin-session-2"');
     expect(html).toContain('id="fr257-result-status"');
@@ -70,6 +76,9 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
       'id="consent-reconfirmed"',
       'id="temporal-separation"',
       'id="back-to-observation"',
+      'id="shutter-message"',
+      'id="capture-status"',
+      'shutter-attestation',
     ]) {
       expect(html).not.toContain(removed);
     }
