@@ -220,7 +220,7 @@ describe('FR267 controlled capture geometry sensitivity', () => {
       frameWidth: 1000,
       frameHeight: 1000,
       primaryMetric: Object.freeze({
-        metricRef: frozen.metricRef,
+        metricRef: 'neutral.eye.outer_corner_tilt.mean_degrees@0.1.0' as const,
         unit: 'degree' as const,
         value: frozen.value,
       }),
@@ -254,7 +254,7 @@ describe('FR267 controlled capture geometry sensitivity', () => {
       frameWidth: 1000,
       frameHeight: 1000,
       primaryMetric: Object.freeze({
-        metricRef: frozen.metricRef,
+        metricRef: 'neutral.eye.outer_corner_tilt.mean_degrees@0.1.0' as const,
         unit: 'degree' as const,
         value: frozen.value,
       }),
