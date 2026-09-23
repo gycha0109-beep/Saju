@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>명하 FR256 입 후보 반복촬영 관찰</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "@mediapipe/tasks-vision": "__MEDIAPIPE_ENTRY__"
+    }
+  }
+  </script>
+  <style>
+    :root { font-family: Inter, "Noto Sans KR", system-ui, sans-serif; color:#171717; background:#f5f5f2; }
+    * { box-sizing:border-box; }
+    body { margin:0; }
+    main { width:min(980px, calc(100% - 32px)); margin:32px auto 64px; }
+    h1 { margin:0 0 8px; font-size:28px; }
+    h2 { margin:0 0 16px; font-size:20px; }
+    p { line-height:1.6; }
+    .muted { color:#666; }
+    .card { background:#fff; border:1px solid #ddd; border-radius:16px; padding:22px; margin-top:16px; }
+    .notice { background:#fff8e8; border-color:#ead7a5; }
+    .danger { background:#fff1f1; border-color:#e7b6b6; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 18px; }
+    .checks label, .quality-row { display:flex; gap:10px; align-items:flex-start; padding:8px 0; }
+    input[type="checkbox"] { width:18px; height:18px; margin-top:2px; }
+    select, button { font:inherit; }
+    select { margin-left:auto; min-width:120px; padding:8px; }
+    button { border:0; border-radius:10px; padding:11px 16px; cursor:pointer; background:#171717; color:#fff; }
+    button.secondary { background:#e9e9e5; color:#171717; }
+    button.danger-button { background:#8b1e1e; }
+    button:disabled { opacity:.4; cursor:not-allowed; }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+    .status { min-height:24px; margin-top:12px; font-weight:600; }
+    video { width:100%; max-height:520px; background:#111; border-radius:14px; transform:scaleX(-1); }
+    .challenge { padding:14px; border:1px solid #bbb; border-radius:12px; background:#fafafa; word-break:break-all; }
+    .challenge strong { display:block; margin-bottom:6px; }
+    .slot { font-size:18px; font-weight:700; margin-bottom:12px; }
+    .pill { display:inline-block; padding:4px 8px; border-radius:999px; background:#eee; font-size:13px; margin-right:6px; }
+    pre { white-space:pre-wrap; word-break:break-word; background:#111; color:#eee; border-radius:12px; padding:16px; max-height:480px; overflow:auto; }
+    [hidden] { display:none !important; }
+    @media (max-width:720px) { .grid { grid-template-columns:1fr; } main { width:min(100% - 20px,980px); margin-top:18px; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>FR256 · FR142 입 후보 실제촬영 관찰</h1>
+  <p class="muted">실제 카메라 2세션 × 2캡처에서 FR142 입 contour 후보 3개를 동일 프레임으로 관찰합니다. 원본 사진·영상, raw landmark, 얼굴 임베딩, identity template은 저장하지 않습니다.</p>
+
+  <section id="prep-view">
+    <div class="card notice">
+      <h2>연구 경계</h2>
+      <p>이 실행은 <strong>FR142 중립 metric 관찰</strong>입니다. 실제 2세션 × 2캡처에서 값은 기록하지만 반복성 PASS/FAIL·임계값·전통 方 의미·FE041H canonicalization·Production/Commerce 권한을 확립하지 않습니다.</p>
+    </div>
+
+    <div class="card">
+      <h2>참여 동의 확인</h2>
+      <div class="grid checks" id="consent-checks">
+        <label><input type="checkbox" data-consent="studyNoticeRead">연구 안내를 읽었습니다.</label>
+        <label><input type="checkbox" data-consent="voluntaryParticipationConfirmed">자발적으로 참여합니다.</label>
+        <label><input type="checkbox" data-consent="liveCameraCaptureConsent">실시간 카메라 촬영에 동의합니다.</label>
+        <label><input type="checkbox" data-consent="transientRawCaptureProcessingConsent">원본 프레임의 일시적 메모리 처리에 동의합니다.</label>
+        <label><input type="checkbox" data-consent="sanitizedReviewImageRetentionConsent">정책상 허용된 sanitized review artifact 보존 조건을 확인했습니다.</label>
+        <label><input type="checkbox" data-consent="pseudonymousMetricStorageConsent">가명화된 metric/기록 저장에 동의합니다.</label>
+        <label><input type="checkbox" data-consent="noTrainingReuseAcknowledged">학습 데이터로 재사용하지 않음을 확인했습니다.</label>
+        <label><input type="checkbox" data-consent="noProductionReuseAcknowledged">Production 데이터로 재사용하지 않음을 확인했습니다.</label>
+        <label><input type="checkbox" data-consent="noBiometricIdentityMatchingAcknowledged">생체 신원 매칭을 수행하지 않음을 확인했습니다.</label>
+        <label><input type="checkbox" data-consent="withdrawalProcedureAcknowledged">중단/철회 절차를 확인했습니다.</label>
+      </div>
+      <div class="actions">
+        <button id="start-dry-run" disabled>카메라 열고 드라이런 시작</button>
+      </div>
+      <div id="prep-status" class="status">runtime 준비 중…</div>
+    </div>
+  </section>
+
+  <section id="capture-view" hidden>
+    <div class="card">
+      <div id="slot-label" class="slot">Session 1 · Capture 1</div>
+      <video id="camera" autoplay playsinline muted></video>
+      <div id="capture-status" class="status"></div>
+    </div>
+
+    <div class="card">
+      <h2>1. 발급된 캡처 Challenge</h2>
+      <div class="challenge">
+        <strong id="challenge-ref">-</strong>
+        <span class="pill">nonce</span><span id="challenge-nonce">-</span>
+      </div>
+      <label class="quality-row"><input id="challenge-presented" type="checkbox">위 challenge가 셔터 전에 화면에 제시된 것을 확인합니다.</label>
+      <label class="quality-row"><input id="consent-reconfirmed" type="checkbox">참여자가 이번 캡처 직전에 계속 촬영에 동의함을 재확인했습니다.</label>
+    </div>
+
+    <div class="card">
+      <h2>2. 셔터 전 운영자 품질 관찰</h2>
+      <p class="muted">각 항목을 직접 관찰해 예/아니오를 선택합니다. 아니오도 기록 가능하며 해당 슬롯은 거절될 수 있습니다.</p>
+      <div class="quality-row"><span>정면·중립 자세로 보임</span><select id="quality-frontal"><option value="">선택</option><option value="true">예</option><option value="false">아니오</option></select></div>
+      <div class="quality-row"><span>양쪽 눈 윤곽이 시각적으로 분해 가능함</span><select id="quality-sharp"><option value="">선택</option><option value="true">예</option><option value="false">아니오</option></select></div>
+      <div class="quality-row"><span>양쪽 눈 영역이 모두 보임</span><select id="quality-visible"><option value="">선택</option><option value="true">예</option><option value="false">아니오</option></select></div>
+      <div class="quality-row"><span>눈 영역의 큰 가림이 없음</span><select id="quality-occlusion"><option value="">선택</option><option value="true">예</option><option value="false">아니오</option></select></div>
+      <div class="actions">
+        <button id="shutter" disabled>이 프레임 캡처</button>
+        <button id="cancel-dry-run" class="danger-button">드라이런 중단</button>
+      </div>
+    </div>
+
+    <div id="session-break" class="card notice" hidden>
+      <h2>Session 1 완료</h2>
+      <p>FR237은 두 세션의 시간적 분리를 요구하지만 FR256은 그 분리를 독립 검증하지 않습니다. 실제로 구분된 다음 세션을 시작할 때만 아래 확인 후 진행하십시오.</p>
+      <label class="quality-row"><input id="temporal-separation" type="checkbox">Session 2를 별도 세션으로 진행하고 있음을 운영자가 확인합니다.</label>
+      <div class="actions"><button id="begin-session-2" disabled>Session 2 시작</button></div>
+    </div>
+  </section>
+
+  <section id="result-view" hidden>
+    <div class="card">
+      <h2>FR256 mechanics + mouth observation review</h2>
+      <div id="result-status" class="status"></div>
+      <pre id="result-json">{}</pre>
+      <div class="actions">
+        <button id="download-result">FR256 sanitized JSON 저장</button>
+        <button id="restart" class="secondary">새 드라이런</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="abort-view" hidden>
+    <div class="card danger">
+      <h2>드라이런 중단</h2>
+      <p id="abort-message">발급된 challenge가 소비되었거나 실행이 중단되어 현재 세션은 fail-closed 처리했습니다.</p>
+      <div class="actions"><button id="reload-after-abort" class="secondary">처음부터 다시 시작</button></div>
+    </div>
+  </section>
+</main>
+<script>
+(() => {
+  const status = document.querySelector('#prep-status');
+  const state = {
+    stage: 'html_ready',
+    moduleStarted: false,
+    ready: false,
+    lastError: null,
+  };
+
+  function render(message) {
+    if (status !== null) status.textContent = message;
+  }
+
+  window.__FR256_BOOTSTRAP_STATE__ = state;
+  window.__fr256BootstrapSignal__ = (stage, detail = '') => {
+    state.stage = stage;
+    if (stage === 'module_started') state.moduleStarted = true;
+    if (stage === 'ready') state.ready = true;
+    if (stage === 'failed') state.lastError = detail || 'unknown bootstrap failure';
+
+    if (stage === 'failed') {
+      render('runtime 준비 실패: ' + state.lastError);
+      return;
+    }
+    if (stage !== 'ready') {
+      render('runtime 준비 중 · ' + stage + (detail ? ' · ' + detail : ''));
+    }
+  };
+
+  window.addEventListener('error', (event) => {
+    const target = event.target;
+    if (target && target !== window) {
+      const resource = target.src || target.href || target.tagName || 'unknown resource';
+      state.lastError = 'resource load error: ' + resource;
+      render('runtime 준비 실패: ' + state.lastError);
+      return;
+    }
+    if (event.message) {
+      state.lastError = event.message;
+      render('runtime 준비 실패: ' + state.lastError);
+    }
+  }, true);
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason instanceof Error ? event.reason.message : String(event.reason);
+    state.lastError = reason;
+    render('runtime 준비 실패: unhandled rejection · ' + reason);
+  });
+
+  window.setTimeout(() => {
+    if (!state.moduleStarted && !state.ready && state.lastError === null) {
+      state.lastError = 'operator module 또는 정적 의존성 로드가 시작되지 않았습니다.';
+      render('runtime 준비 실패: ' + state.lastError);
+    }
+  }, 12000);
+
+  window.setTimeout(() => {
+    if (state.moduleStarted && !state.ready && state.lastError === null) {
+      render('runtime 준비 지연: ' + state.stage + ' 단계에서 응답을 기다리고 있습니다.');
+    }
+  }, 20000);
+})();
+</script>
+<script type="module" src="/fr256/operator.mjs"></script>
+</body>
+</html>
