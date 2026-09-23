@@ -75,6 +75,7 @@ export interface FE041HCandidateCanonicalizationAssessmentV1 {
   readonly candidateUnit: 'ratio';
   readonly exactCurrentRegistryIdentityIntersection: false;
   readonly productRegionKey: 'mouth_lips';
+  readonly productUnit: 'ratio';
   readonly productPresence: 'required';
   readonly productUnavailableSurfaceRef: null;
   readonly productSurfaceContractRef: typeof FE041H_PRODUCT_SURFACE_CONTRACT_REF;
@@ -353,6 +354,7 @@ readonly FE041HCandidateCanonicalizationAssessmentV1[] {
       candidateUnit: 'ratio' as const,
       exactCurrentRegistryIdentityIntersection: false as const,
       productRegionKey: 'mouth_lips' as const,
+      productUnit: 'ratio' as const,
       productPresence: 'required' as const,
       productUnavailableSurfaceRef: null,
       productSurfaceContractRef: FE041H_PRODUCT_SURFACE_CONTRACT_REF,
@@ -402,6 +404,7 @@ NeutralCandidateCanonicalizationPolicyFE041HV1 {
       (entry) =>
         entry.productRegionKey !== 'mouth_lips' ||
         entry.candidateUnit !== 'ratio' ||
+        entry.productUnit !== 'ratio' ||
         entry.productPresence !== 'required' ||
         entry.productUnavailableSurfaceRef !== null ||
         entry.productSurfaceContractRef !== FE041H_PRODUCT_SURFACE_CONTRACT_REF ||
