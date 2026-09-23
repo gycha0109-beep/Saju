@@ -882,7 +882,7 @@ export function assertLongitudinalRepeatabilityBundleFR255(
       fail('observation elapsed-time chain drift.');
     }
     if (previous !== null) {
-      const expectedElapsed =
+      const expectedElapsed: number =
         Date.parse(sourceGeneratedAt) - Date.parse(previous.sourceGeneratedAt);
       if (
         expectedElapsed <= 0
@@ -918,7 +918,7 @@ export function assertLongitudinalRepeatabilityBundleFR255(
       fail('observation slot/session summary shape drift.');
     }
 
-    const rebuiltWithoutDigest = {
+    const rebuiltWithoutDigest: Omit<FR255LongitudinalObservation, 'observationDigest'> = {
       schemaVersion: 'fr255-longitudinal-observation-v1' as const,
       observationOrdinal: index + 1,
       sourceExecutionRef: candidate.sourceExecutionRef as string,
@@ -965,7 +965,7 @@ export function assertLongitudinalRepeatabilityBundleFR255(
       fail('stored observation summary does not match stored slots.');
     }
 
-    const observation = Object.freeze({
+    const observation: FR255LongitudinalObservation = Object.freeze({
       ...rebuiltWithoutDigest,
       observationDigest: expectedDigest,
     });
