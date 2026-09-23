@@ -14,11 +14,18 @@ import type {
   NarrativeGenerationParams,
   NarrativeModelAdapter,
 } from '../llm/model-adapter.js';
+import {
+  resolvePreviewConsumerReadingAuthorityV1,
+  type PreviewConsumerReadingAuthorityResolutionV1,
+} from '../preview/preview-official-reading-consumer-authority.js';
+import { buildPreviewSemanticQualifierBindingsV1 } from '../preview/preview-semantic-qualifier-projection.js';
+import { buildPreviewSemanticTextBindingsV1 } from '../preview/preview-semantic-text-projection.js';
 import { assembleReadingArtifact } from './reading-assembler.js';
 import {
   buildCanonicalReadingSemanticBundleV1,
   type CanonicalReadingSemanticBundleV1,
 } from './canonical-reading-semantics.js';
+import { assembleOfficialReadingArtifactV1 } from './official-reading-artifact.js';
 import {
   buildOfficialReadingPlanV1,
   type OfficialReadingPlanV1,
@@ -34,11 +41,9 @@ import {
   type ProductReadingPreparationState,
 } from './product-reading-integration.js';
 import type { ConsumerReadingRequestInput } from './consumer-reading-request-adapter.js';
-import { buildPreviewSemanticQualifierBindingsV1 } from '../preview/preview-semantic-qualifier-projection.js';
-import { buildPreviewSemanticTextBindingsV1 } from '../preview/preview-semantic-text-projection.js';
 
 export const GOVERNED_READING_EXECUTION_VERSION =
-  'myeonghwa-governed-reading-execution-v1';
+  'myeonghwa-governed-reading-execution-v2';
 
 export type GovernedReadingExecutionState =
   | Exclude<ProductReadingPreparationState, 'ready_for_narrative'>
@@ -64,6 +69,7 @@ export interface GovernedReadingExecutionResult {
   canonicalSemantics?: CanonicalReadingSemanticBundleV1;
   officialReadingPlan?: OfficialReadingPlanV1;
   officialReadingReport?: OfficialReadingRenderedContentV1;
+  consumerReadingAuthority?: PreviewConsumerReadingAuthorityResolutionV1;
   artifact?: ReadingArtifact;
   modelCalls: number;
   reasonCodes: readonly string[];
@@ -75,6 +81,9 @@ export interface GovernedReadingExecutionResult {
     mayFillMissingEvidenceWithLLM: false;
     mayAssembleOfficialPlanWithoutCanonicalSemantics: false;
     mayPromoteResearchAuthority: false;
+    mayUseNarrativeAsOfficialReadingAuthority: false;
+    mayFallbackOfficialReadingToLegacyNarrative: false;
+    mayOverrideResolvedConsumerReadingAuthority: false;
   };
 }
 
@@ -86,6 +95,9 @@ const EXECUTION_CONSTRAINTS = Object.freeze({
   mayFillMissingEvidenceWithLLM: false as const,
   mayAssembleOfficialPlanWithoutCanonicalSemantics: false as const,
   mayPromoteResearchAuthority: false as const,
+  mayUseNarrativeAsOfficialReadingAuthority: false as const,
+  mayFallbackOfficialReadingToLegacyNarrative: false as const,
+  mayOverrideResolvedConsumerReadingAuthority: false as const,
 });
 
 function assertExecutionOptions(options: GovernedReadingExecutionOptions): void {
@@ -102,6 +114,7 @@ function resultIdentity(
   preparation: ProductReadingPreparationResult,
   modelCalls: number,
   reasonCodes: readonly string[],
+  consumerReadingAuthority?: PreviewConsumerReadingAuthorityResolutionV1,
   narrative?: NarrativeGenerationResult,
   canonicalSemantics?: CanonicalReadingSemanticBundleV1,
   officialReadingPlan?: OfficialReadingPlanV1,
@@ -112,6 +125,14 @@ function resultIdentity(
     orchestratorVersion: GOVERNED_READING_EXECUTION_VERSION,
     state,
     preparationId: preparation.preparationId,
+    consumerReadingAuthority:
+      consumerReadingAuthority === undefined
+        ? undefined
+        : {
+            authorityVersion: consumerReadingAuthority.authorityVersion,
+            readingSection: consumerReadingAuthority.readingSection,
+            authority: consumerReadingAuthority.authority,
+          },
     narrativeRunId: narrative?.run.narrativeRunId,
     narrativeOutcome: narrative?.outcome,
     canonicalSemanticHash: canonicalSemantics?.semanticHash,
@@ -139,6 +160,44 @@ function blockedResult(
     preparation,
     modelCalls: 0,
     reasonCodes,
+    constraints: EXECUTION_CONSTRAINTS,
+  };
+}
+
+function officialAuthorityBlockedResult(
+  preparation: ProductReadingPreparationResult,
+  consumerReadingAuthority: PreviewConsumerReadingAuthorityResolutionV1,
+  reasonCodes: readonly string[],
+  canonicalSemantics: CanonicalReadingSemanticBundleV1,
+  officialReadingPlan: OfficialReadingPlanV1,
+  officialReadingReport?: OfficialReadingRenderedContentV1,
+  narrative?: NarrativeGenerationResult,
+): GovernedReadingExecutionResult {
+  const state: GovernedReadingExecutionState = 'invariant_blocked';
+  const sortedReasonCodes = [...new Set(reasonCodes)].sort();
+  const modelCalls = narrative?.modelCalls ?? 0;
+  return {
+    executionId: resultIdentity(
+      state,
+      preparation,
+      modelCalls,
+      sortedReasonCodes,
+      consumerReadingAuthority,
+      narrative,
+      canonicalSemantics,
+      officialReadingPlan,
+      officialReadingReport,
+    ),
+    orchestratorVersion: GOVERNED_READING_EXECUTION_VERSION,
+    state,
+    preparation,
+    ...(narrative === undefined ? {} : { narrative }),
+    canonicalSemantics,
+    officialReadingPlan,
+    ...(officialReadingReport === undefined ? {} : { officialReadingReport }),
+    consumerReadingAuthority,
+    modelCalls,
+    reasonCodes: sortedReasonCodes,
     constraints: EXECUTION_CONSTRAINTS,
   };
 }
@@ -185,6 +244,9 @@ export async function executeProductReading(
     );
   }
 
+  const consumerReadingAuthority = resolvePreviewConsumerReadingAuthorityV1(
+    preparation.normalization.request.intent,
+  );
   const semanticTextBindings = buildPreviewSemanticTextBindingsV1({
     intent: preparation.normalization.request.intent,
     registry,
@@ -212,6 +274,19 @@ export async function executeProductReading(
     ? renderOfficialReadingV1(canonicalSemantics, officialReadingPlan)
     : undefined;
 
+  if (
+    consumerReadingAuthority.authority === 'official_reading' &&
+    officialReadingReport === undefined
+  ) {
+    return officialAuthorityBlockedResult(
+      preparation,
+      consumerReadingAuthority,
+      ['OFFICIAL_READING_REPORT_REQUIRED_FOR_CONSUMER_AUTHORITY'],
+      canonicalSemantics,
+      officialReadingPlan,
+    );
+  }
+
   const narrative = await generateGroundedNarrative(
     adapter,
     preparation.narrativeRequest,
@@ -227,19 +302,78 @@ export async function executeProductReading(
     },
   );
 
-  const artifact = assembleReadingArtifact(snapshot, interpretation, narrative, {
-    readingVersion: options.readingVersion,
-    ...(options.displayLabel === undefined ? {} : { displayLabel: options.displayLabel }),
-    ...(options.artifactGeneratedAt === undefined
-      ? {}
-      : { generatedAt: options.artifactGeneratedAt }),
-  });
-  const state: GovernedReadingExecutionState =
-    narrative.outcome === 'deterministic_fallback' ? 'completed_with_fallback' : 'completed';
-  const reasonCodes =
+  const narrativeFallbackReasonCodes =
     narrative.outcome === 'deterministic_fallback'
       ? ['NARRATIVE_RUNTIME_USED_DETERMINISTIC_FALLBACK']
       : [];
+
+  let artifact: ReadingArtifact;
+  let state: GovernedReadingExecutionState;
+
+  if (consumerReadingAuthority.authority === 'official_reading') {
+    if (officialReadingReport === undefined) {
+      return officialAuthorityBlockedResult(
+        preparation,
+        consumerReadingAuthority,
+        [
+          ...narrativeFallbackReasonCodes,
+          'OFFICIAL_READING_REPORT_REQUIRED_FOR_CONSUMER_AUTHORITY',
+        ],
+        canonicalSemantics,
+        officialReadingPlan,
+        undefined,
+        narrative,
+      );
+    }
+
+    try {
+      artifact = assembleOfficialReadingArtifactV1(
+        snapshot,
+        interpretation,
+        canonicalSemantics,
+        officialReadingPlan,
+        officialReadingReport,
+        {
+          readingVersion: options.readingVersion,
+          ...(options.displayLabel === undefined
+            ? {}
+            : { displayLabel: options.displayLabel }),
+          ...(options.artifactGeneratedAt === undefined
+            ? {}
+            : { generatedAt: options.artifactGeneratedAt }),
+        },
+      );
+    } catch {
+      return officialAuthorityBlockedResult(
+        preparation,
+        consumerReadingAuthority,
+        [
+          ...narrativeFallbackReasonCodes,
+          'OFFICIAL_READING_ARTIFACT_MATERIALIZATION_BLOCKED',
+        ],
+        canonicalSemantics,
+        officialReadingPlan,
+        officialReadingReport,
+        narrative,
+      );
+    }
+
+    state = 'completed';
+  } else {
+    artifact = assembleReadingArtifact(snapshot, interpretation, narrative, {
+      readingVersion: options.readingVersion,
+      ...(options.displayLabel === undefined ? {} : { displayLabel: options.displayLabel }),
+      ...(options.artifactGeneratedAt === undefined
+        ? {}
+        : { generatedAt: options.artifactGeneratedAt }),
+    });
+    state =
+      narrative.outcome === 'deterministic_fallback'
+        ? 'completed_with_fallback'
+        : 'completed';
+  }
+
+  const reasonCodes = narrativeFallbackReasonCodes;
 
   return {
     executionId: resultIdentity(
@@ -247,6 +381,7 @@ export async function executeProductReading(
       preparation,
       narrative.modelCalls,
       reasonCodes,
+      consumerReadingAuthority,
       narrative,
       canonicalSemantics,
       officialReadingPlan,
@@ -260,6 +395,7 @@ export async function executeProductReading(
     canonicalSemantics,
     officialReadingPlan,
     ...(officialReadingReport === undefined ? {} : { officialReadingReport }),
+    consumerReadingAuthority,
     artifact,
     modelCalls: narrative.modelCalls,
     reasonCodes,

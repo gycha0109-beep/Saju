@@ -184,10 +184,9 @@ function collectInternalTokens(artifact: ReadingArtifact): readonly string[] {
   };
 
   add(artifact.schemaVersion);
-  add(artifact.provenance.snapshotId);
-  add(artifact.provenance.interpretationRunId);
-  add(artifact.provenance.narrativeRunId);
-  add(artifact.provenance.readingVersion);
+  for (const value of Object.values(artifact.provenance)) {
+    if (typeof value === 'string') add(value);
+  }
 
   for (const entry of artifact.explainability.entries) {
     add(entry.explainabilityRef);

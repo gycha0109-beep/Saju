@@ -145,14 +145,14 @@ describe('Product Reading Service Facade', () => {
   it('returns a transport-safe delivered response from the single public service call', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
-    const career = claim(currentSnapshot.snapshotId, 'claim-career-service', 'T8', 'career');
+    const familyParents = claim(currentSnapshot.snapshotId, 'claim-family-parents-service', 'T8', 'family', 'parents');
     const adapter = new TrackingAdapter();
 
     const result = await productReadingPublic.requestProductReading(
       currentSnapshot,
-      interpretationWithClaims(currentSnapshot, registry, [career]),
+      interpretationWithClaims(currentSnapshot, registry, [familyParents]),
       registry,
-      { requestId: 'service-success', text: '직업운' },
+      { requestId: 'service-success', text: '부모운' },
       adapter,
       narrativePolicy,
       serviceOptions,
@@ -166,7 +166,7 @@ describe('Product Reading Service Facade', () => {
     expect(result).not.toHaveProperty('constraints');
     expect(result.reading).not.toHaveProperty('explainability');
     expect(result.reading).not.toHaveProperty('provenance');
-    expect(JSON.stringify(result)).not.toContain('claim-career-service');
+    expect(JSON.stringify(result)).not.toContain('claim-family-parents-service');
   });
 
   it('returns clarification_required and performs zero model calls for ambiguous input', async () => {
@@ -224,19 +224,20 @@ describe('Product Reading Service Facade', () => {
   it('preserves the existing grounded deterministic fallback as delivered_with_fallback', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
-    const career = claim(
+    const familyParents = claim(
       currentSnapshot.snapshotId,
-      'claim-career-service-fallback',
+      'claim-family-parents-service-fallback',
       'T8',
-      'career',
+      'family',
+      'parents',
     );
     const adapter = new TrackingAdapter(true);
 
     const result = await productReadingPublic.requestProductReading(
       currentSnapshot,
-      interpretationWithClaims(currentSnapshot, registry, [career]),
+      interpretationWithClaims(currentSnapshot, registry, [familyParents]),
       registry,
-      { requestId: 'service-fallback', text: '직업운' },
+      { requestId: 'service-fallback', text: '부모운' },
       adapter,
       narrativePolicy,
       serviceOptions,
@@ -288,19 +289,20 @@ describe('Product Reading Service Facade', () => {
   it('keeps the final response identity deterministic across audit timestamps', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
-    const career = claim(
+    const familyParents = claim(
       currentSnapshot.snapshotId,
-      'claim-career-service-determinism',
+      'claim-family-parents-service-determinism',
       'T8',
-      'career',
+      'family',
+      'parents',
     );
-    const interpretation = interpretationWithClaims(currentSnapshot, registry, [career]);
+    const interpretation = interpretationWithClaims(currentSnapshot, registry, [familyParents]);
 
     const first = await productReadingPublic.requestProductReading(
       currentSnapshot,
       interpretation,
       registry,
-      { requestId: 'service-determinism', text: '직업운' },
+      { requestId: 'service-determinism', text: '부모운' },
       new TrackingAdapter(),
       narrativePolicy,
       {
@@ -313,7 +315,7 @@ describe('Product Reading Service Facade', () => {
       currentSnapshot,
       interpretation,
       registry,
-      { requestId: 'service-determinism', text: '직업운' },
+      { requestId: 'service-determinism', text: '부모운' },
       new TrackingAdapter(),
       narrativePolicy,
       {
