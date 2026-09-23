@@ -355,8 +355,12 @@ expect(
   'FR256 browser graph must include the governed FR256 same-frame observation runtime.',
 );
 expect(
-  [...fr256BrowserModules].some((path) => path.endsWith('five-officers-square-broad-fang-neutral-candidate-metric-runtime-fr142.js')),
-  'FR256 browser graph must reach the exact FR142 neutral candidate kernel.',
+  [...fr256BrowserModules].some((path) => path.endsWith('square-broad-fang-neutral-candidate-kernel-fr142-shared.js')),
+  'FR256 browser graph must reach the shared browser-neutral FR142 candidate kernel.',
+);
+expect(
+  ![...fr256BrowserModules].some((path) => path.endsWith('five-officers-square-broad-fang-neutral-candidate-metric-runtime-fr142.js')),
+  'FR256 browser graph must not pull the full provenance-bearing FR142 runtime.',
 );
 expect(
   ![...fr256BrowserModules].some((path) => path.endsWith('eye-pair-c2pa-external-trust-root-provisioning-fr170.js')),
