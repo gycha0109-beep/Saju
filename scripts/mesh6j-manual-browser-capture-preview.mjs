@@ -45,6 +45,8 @@ const fr251PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr251-dry-r
 const fr251ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr251-dry-run-operator.mjs');
 const fr255PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr255-repeatability-observation.html');
 const fr255ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr255-repeatability-observation.mjs');
+const fr256PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr256-mouth-observation-operator.html');
+const fr256ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr256-mouth-observation-operator.mjs');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -281,6 +283,11 @@ async function main() {
   }
   const fr251PageHtml = fr251PageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
   const fr255PageHtml = readFileSync(fr255PagePath, 'utf8');
+  const fr256PageTemplate = readFileSync(fr256PagePath, 'utf8');
+  if (!fr256PageTemplate.includes('__MEDIAPIPE_ENTRY__')) {
+    fail('FR256 operator page import-map placeholder is missing.');
+  }
+  const fr256PageHtml = fr256PageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
 
   const requestHandler = (request, response) => {
     if (LAN_MODE) {
@@ -356,6 +363,26 @@ async function main() {
 
     if (url.pathname === '/fr255/operator.mjs') {
       sendFile(response, fr255ClientPath);
+      return;
+    }
+
+    if (url.pathname === '/fr256' || url.pathname === '/fr256/' || url.pathname === '/fr256/index.html') {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy':
+          "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://raw.githubusercontent.com; " +
+          "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://raw.githubusercontent.com; " +
+          "img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=(self)',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr256PageHtml);
+      return;
+    }
+
+    if (url.pathname === '/fr256/operator.mjs') {
+      sendFile(response, fr256ClientPath);
       return;
     }
 
@@ -447,6 +474,8 @@ async function main() {
         '/fr251/operator.mjs',
         '/fr255/',
         '/fr255/operator.mjs',
+        '/fr256/',
+        '/fr256/operator.mjs',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
         '/runtime/fr76-parity-input.prototxt',
@@ -454,6 +483,7 @@ async function main() {
         '/face/mesh6h-browser-camera-frame-source.js',
         '/face/mesh6i-manual-browser-capture-controller.js',
         '/face/observable-morphology-longitudinal-repeatability-observation-fr255.js',
+        '/face/observable-morphology-fr142-same-frame-observation-fr256.js',
         importMapTarget,
       ];
       for (const route of required) {
@@ -507,6 +537,7 @@ async function main() {
         process.stdout.write('Phone URL: ' + url + '\n');
         process.stdout.write('FR251 phone dry run: ' + url + 'fr251/\n');
         process.stdout.write('FR255 repeatability bundle: ' + url + 'fr255/\n');
+        process.stdout.write('FR256 mouth observation capture: ' + url + 'fr256/\n');
       }
     }
     process.stdout.write('The phone must trust the certificate/issuing local CA before browser camera access will work.\n');
@@ -514,6 +545,7 @@ async function main() {
     process.stdout.write('MESH6J manual research capture surface: ' + base + '/\n');
     process.stdout.write('FR251 one-person dry-run operator surface: ' + base + '/fr251/\n');
     process.stdout.write('FR255 longitudinal repeatability surface: ' + base + '/fr255/\n');
+    process.stdout.write('FR256 mouth observation capture surface: ' + base + '/fr256/\n');
   }
   process.stdout.write('Camera data remains in-memory; only sanitized/descriptive JSON can be exported by the browser surfaces.\n');
 }
