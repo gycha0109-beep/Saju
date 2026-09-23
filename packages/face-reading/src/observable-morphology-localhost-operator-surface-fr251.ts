@@ -22,7 +22,7 @@ export function getLocalhostDryRunOperatorSurfaceContractFR251() {
       session2TemporalSeparationOperatorConfirmationRequired: true as const,
       technicalFailureAfterChallengeFailsClosed: true as const,
       fr257SameFrameGeometryAttributionSidecarEnabled: true as const,
-      fr266SameFrameEyeTiltDiagnosticSidecarEnabled: true as const,
+      fr267SameFrameEyeTiltDiagnosticSidecarEnabled: true as const,
       singleStartActionRecordsFR240Consent: true as const,
       cameraPreviewHiddenUntilStartAction: true as const,
       shutterActionCarriesPerCaptureReconfirmationAndQualityAttestation: true as const,
