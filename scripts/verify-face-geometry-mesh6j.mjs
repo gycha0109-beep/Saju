@@ -15,6 +15,7 @@ const fr251PagePath = 'tools/face-geometry/capture/fr251-dry-run-operator.html';
 const fr255ClientPath = 'tools/face-geometry/capture/fr255-repeatability-observation.mjs';
 const fr255PagePath = 'tools/face-geometry/capture/fr255-repeatability-observation.html';
 const fr257RuntimePath = 'packages/face-reading/src/observable-morphology-capture-geometry-attribution-fr257.ts';
+const fr267RuntimePath = 'packages/face-reading/src/observable-morphology-controlled-capture-geometry-sensitivity-fr267.ts';
 
 const server = readFileSync(serverPath, 'utf8');
 const client = readFileSync(clientPath, 'utf8');
@@ -24,6 +25,7 @@ const fr251Page = readFileSync(fr251PagePath, 'utf8');
 const fr255Client = readFileSync(fr255ClientPath, 'utf8');
 const fr255Page = readFileSync(fr255PagePath, 'utf8');
 const fr257Runtime = readFileSync(fr257RuntimePath, 'utf8');
+const fr267Runtime = readFileSync(fr267RuntimePath, 'utf8');
 
 function expect(condition, message) {
   if (!condition) throw new Error(message);
@@ -347,6 +349,34 @@ expectIncludes(fr251Client, 'primaryMetricBindingPreparer: geometryCollector.pri
 expectIncludes(fr251Client, 'bindCaptureGeometryAttributionSlotFR257', 'FR251 must bind each capture result to its transient FR257 same-frame evidence.');
 expectIncludes(fr251Client, 'buildCaptureGeometryAttributionBundleFR257', 'FR251 must build a separate FR257 sidecar without widening FR251/FR255 schemas.');
 expectIncludes(fr251Client, 'myeongha-fr257-capture-geometry-', 'FR251 must download the FR257 sidecar separately.');
+
+expectIncludes(fr251Page, 'id="fr267-result-status"', 'FR251 result view must expose FR267 diagnostic status.');
+expectIncludes(fr251Page, 'id="download-fr267-result"', 'FR251 result view must expose a separate FR267 scalar diagnostic download.');
+expectIncludes(fr251Client, 'createSameFrameEyeTiltDiagnosticCollectorFR267', 'FR251 must instantiate the FR267 same-frame diagnostic collector.');
+expectIncludes(fr251Client, 'onEphemeralGeometry: eyeTiltDiagnosticCollector.observe', 'FR251 must connect FR267 only to the transient FR257 geometry observer hook.');
+expectIncludes(fr251Client, 'bindSameFrameEyeTiltDiagnosticSlotFR267', 'FR251 must bind each FR243 capture to its transient FR267 diagnostic evidence.');
+expectIncludes(fr251Client, 'buildSameFrameEyeTiltDiagnosticBundleFR267', 'FR251 must build a separate FR267 scalar-only diagnostic sidecar.');
+expectIncludes(fr251Client, 'myeongha-fr267-eye-tilt-diagnostic-', 'FR251 must download FR267 diagnostics separately from FR251/FR257.');
+expectIncludes(fr257Runtime, 'onEphemeralGeometry?: FR257EphemeralGeometryObserver', 'FR257 must expose only a synchronous transient geometry observer hook.');
+expectIncludes(fr267Runtime, 'screenSpaceEyeOuterCornerTiltMeanDegrees', 'FR267 must compute a scalar screen-space eye-tilt diagnostic.');
+expectIncludes(fr267Runtime, 'fr76CanonicalMetricEyeOuterCornerTiltMeanDegrees', 'FR267 must compute the same-frame FR76 metric-space diagnostic.');
+expectIncludes(fr267Runtime, 'not_issued_fr76_metric_geometry_is_already_inverse_pose_aligned', 'FR267 must not invent an extra pose correction over already inverse-pose-aligned FR76 geometry.');
+expectIncludes(fr267Runtime, 'frozenMetricReplaced: false', 'FR267 must keep the frozen FR237 metric unchanged.');
+for (const forbidden of [
+  'rawMediaPersisted: true',
+  'rawScreenLandmarksPersisted: true',
+  'rawMetricLandmarksPersisted: true',
+  'poseTransformMatrixPersisted: true',
+  'additionalPoseNormalizationIssued: true',
+  'calibrationIssued: true',
+  'correctionFormulaIssued: true',
+  'thresholdIssued: true',
+  'classificationIssued: true',
+  'productionActivated: true',
+  'commerceActivated: true',
+]) {
+  expectExcludes(fr267Runtime, forbidden, 'FR267 diagnostic must remain scalar-only and authority-minimized.');
+}
 expectIncludes(fr257Runtime, 'relativeRotationFromFirstAcceptedCaptureRadians', 'FR257 must record relative rotation from the first accepted capture.');
 expectIncludes(fr257Runtime, 'inPlaneLateralAxisOrientationRadians', 'FR257 must record an explicit in-plane lateral-axis orientation scalar.');
 expectIncludes(fr257Runtime, 'screenFaceBoxAreaFraction', 'FR257 must record a normalized screen face-scale proxy.');
@@ -408,6 +438,10 @@ expect(
   [...fr251BrowserModules].some((path) => path.endsWith('observable-morphology-capture-geometry-attribution-fr257.js')),
   'FR251 browser graph must include the FR257 same-frame attribution runtime.',
 );
+expect(
+  [...fr251BrowserModules].some((path) => path.endsWith('observable-morphology-controlled-capture-geometry-sensitivity-fr267.js')),
+  'FR251 browser graph must include the FR267 same-frame diagnostic runtime.',
+);
 
 const fr255BrowserModules = verifyBrowserModuleGraph(fr255Client, fr255ClientPath, 'FR255');
 expect(
@@ -449,6 +483,9 @@ process.stdout.write(JSON.stringify({
   fr251AspectRatioPreservedVerified: true,
   fr257SameFrameAttributionVerified: true,
   fr257ScalarOnlyPersistenceVerified: true,
+  fr267SameFrameEyeTiltDiagnosticVerified: true,
+  fr267FrozenMetricPreservedVerified: true,
+  fr267ScalarOnlyPersistenceVerified: true,
   fr255LongitudinalBundleSurfaceVerified: true,
   fr255LocalOnlyAggregationVerified: true,
   fr255BrowserStaticModuleGraphVerified: true,

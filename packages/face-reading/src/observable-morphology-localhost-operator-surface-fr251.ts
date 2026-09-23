@@ -22,6 +22,7 @@ export function getLocalhostDryRunOperatorSurfaceContractFR251() {
       session2TemporalSeparationOperatorConfirmationRequired: true as const,
       technicalFailureAfterChallengeFailsClosed: true as const,
       fr257SameFrameGeometryAttributionSidecarEnabled: true as const,
+      fr267SameFrameEyeTiltDiagnosticSidecarEnabled: true as const,
       singleStartActionRecordsFR240Consent: true as const,
       cameraPreviewHiddenUntilStartAction: true as const,
       shutterActionCarriesPerCaptureReconfirmationAndQualityAttestation: true as const,
@@ -38,6 +39,7 @@ export function getLocalhostDryRunOperatorSurfaceContractFR251() {
       rawMetricLandmarksPersisted: false as const,
       poseTransformMatrixPersisted: false as const,
       scalarCaptureGeometrySidecarExportAllowed: true as const,
+      scalarEyeTiltDiagnosticSidecarExportAllowed: true as const,
       faceEmbeddingPersisted: false as const,
       identityTemplatePersisted: false as const,
       sanitizedFr243RecordsExportAllowed: true as const,
@@ -57,6 +59,6 @@ export function getLocalhostDryRunOperatorSurfaceContractFR251() {
       commerceActivated: false as const,
     }),
     nextFrontier:
-      'collect_eye_level_low_angle_high_angle_fr251_executions_with_fr257_scalar_geometry_then_review_descriptive_pose_sensitivity' as const,
+      'collect_controlled_same_frame_screen_vs_fr76_eye_tilt_diagnostics_then_adjudicate_capture_envelope_vs_metric_redesign' as const,
   });
 }
