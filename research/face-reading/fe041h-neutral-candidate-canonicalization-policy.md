@@ -34,7 +34,7 @@ FE041H does not mutate FE035B.
 
 A candidate must satisfy all eight requirement classes before registry admission.
 
-### Already satisfied — 3/8
+### Already satisfied — 4/8
 
 1. **Exact candidate identity + versioned neutral definition**
    - FR142 supplies immutable metric refs, versioned definitions, source surface, formula, unit, and runtime identity.
@@ -45,11 +45,14 @@ A candidate must satisfy all eight requirement classes before registry admission
 3. **Deterministic runtime + synthetic verification**
    - FR143 verifies deterministic synthetic numeric behavior while explicitly denying that synthetic evidence is empirical repeatability or construct validity.
 
-### Still unresolved — 5/8
-
 4. **Explicit product region/unit/presence/unavailable-surface contract**
-   - The candidates have neutral source geometry and a unit, but they do not yet have an issued FE035B-style product contract assigning `regionKey`, `required|conditional` presence, and unavailable-surface behavior.
-   - FE041H does not infer `mouth_lips` merely from the source surface name.
+   - FE041H now issues the candidate product-surface contract for the three FR142 metrics.
+   - Existing product composition already places FR79-derived mouth observations under the `mouth_lips` region; FR142 consumes the exact issued FR79 two-contour source.
+   - All three candidate metrics therefore bind to `regionKey = mouth_lips`, `unit = ratio`, `presence = required`, and `unavailableSurfaceRef = null`.
+   - “required” is scoped to a successfully admitted FR79 lips-contour source. FE041H does not create a fallback value when the source geometry is unavailable.
+   - This surface contract does not admit the metrics into FE035B or authorize any traditional meaning.
+
+### Still unresolved — 4/8
 
 5. **Empirical repeat-capture + capture-quality evidence**
    - Synthetic determinism is not product capture stability.
@@ -69,8 +72,8 @@ A candidate must satisfy all eight requirement classes before registry admission
 Current canonicalization readiness is therefore:
 
 ```
-3 / 8 satisfied
-5 / 8 unresolved
+4 / 8 satisfied
+4 / 8 unresolved
 candidate canonicalization = NOT AUTHORIZED
 successor registry = NOT ISSUED
 ```
@@ -86,9 +89,11 @@ The policy is applied equally to:
 For all three:
 
 - exact current-registry identity overlap = false;
-- product region assignment = not issued;
-- product presence policy = not issued;
-- unavailable-surface policy = not issued;
+- product region assignment = `mouth_lips`;
+- product unit = `ratio`;
+- product presence policy = `required`;
+- unavailable-surface policy = `null` (no conditional partial-surface fallback);
+- candidate product-surface contract = issued by FE041H;
 - empirical repeat-capture = not established;
 - product capture-quality admission evidence = not issued;
 - redundancy review = incomplete;
@@ -144,6 +149,6 @@ FE041H issues no:
 
 ## Next frontier
 
-`define_successor_product_neutral_contract_candidate_shape_and_collect_empirical_repeat_capture_evidence_before_any_registry_admission`
+`collect_empirical_repeat_capture_evidence_and_review_candidate_redundancy_before_successor_registry_design`
 
-The next work should define the exact successor-contract candidate shape and, independently, close the empirical product-stability gap before any admission decision.
+The product-surface shape gap is now closed. The next work should close empirical product stability and duplicate/redundancy evidence before successor-registry versioning or any admission decision.
