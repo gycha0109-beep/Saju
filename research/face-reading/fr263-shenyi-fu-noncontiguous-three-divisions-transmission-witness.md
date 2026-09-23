@@ -79,7 +79,7 @@ FR263 independently supports the other side of the research result:
 
 > the non-contiguous formula must not be deleted, because a separate 神異賦 transmission explicitly preserves it as 三停.
 
-FR263 does not mutate FR33 and does not depend on FR261 code landing.
+FR263 does not mutate FR33. On the current main it directly consumes FR261's adjudicated lineage decision: the 1925 Mayi contiguous formula remains the Mayi successor, while the non-contiguous Shenyi Fu formula remains a separate lineage candidate pending source pinning.
 
 ## 6. Earlier rare-book source gap
 
