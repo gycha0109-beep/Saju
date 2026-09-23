@@ -14,6 +14,8 @@ const fr251ClientPath = 'tools/face-geometry/capture/fr251-dry-run-operator.mjs'
 const fr251PagePath = 'tools/face-geometry/capture/fr251-dry-run-operator.html';
 const fr255ClientPath = 'tools/face-geometry/capture/fr255-repeatability-observation.mjs';
 const fr255PagePath = 'tools/face-geometry/capture/fr255-repeatability-observation.html';
+const fr256ClientPath = 'tools/face-geometry/capture/fr256-mouth-observation-operator.mjs';
+const fr256PagePath = 'tools/face-geometry/capture/fr256-mouth-observation-operator.html';
 
 const server = readFileSync(serverPath, 'utf8');
 const client = readFileSync(clientPath, 'utf8');
@@ -22,6 +24,8 @@ const fr251Client = readFileSync(fr251ClientPath, 'utf8');
 const fr251Page = readFileSync(fr251PagePath, 'utf8');
 const fr255Client = readFileSync(fr255ClientPath, 'utf8');
 const fr255Page = readFileSync(fr255PagePath, 'utf8');
+const fr256Client = readFileSync(fr256ClientPath, 'utf8');
+const fr256Page = readFileSync(fr256PagePath, 'utf8');
 
 function expect(condition, message) {
   if (!condition) throw new Error(message);
@@ -131,6 +135,10 @@ expectIncludes(server, "MYEONGHWA_MESH6J_LAN_SMOKE", 'MESH6J.1 server must expos
 expectIncludes(server, "url.pathname === '/fr255'", 'MESH6J must expose the FR255 local longitudinal route.');
 expectIncludes(server, "'/fr255/operator.mjs'", 'MESH6J must expose the FR255 browser client route.');
 expectIncludes(server, "'permissions-policy': 'camera=()'", 'FR255 must explicitly disable camera permission on its aggregation-only page.');
+expectIncludes(server, "url.pathname === '/fr256'", 'MESH6J must expose the FR256 live observation route.');
+expectIncludes(server, "'/fr256/operator.mjs'", 'MESH6J must expose the FR256 browser client route.');
+expectIncludes(server, "'/face/observable-morphology-fr142-same-frame-observation-fr256.js'", 'MESH6J smoke must include the compiled FR256 runtime.');
+
 
 for (const forbidden of [
   "request.method === 'POST'",
@@ -298,6 +306,29 @@ for (const forbidden of [
 }
 
 
+expectIncludes(fr256Page, 'window.__fr256BootstrapSignal__', 'FR256 must expose page-level bootstrap diagnostics before module evaluation.');
+expectIncludes(fr256Page, 'FR142 입 후보 실제촬영 관찰', 'FR256 page must identify the FR142 mouth observation purpose.');
+expectIncludes(fr256Page, 'src="/fr256/operator.mjs"', 'FR256 page must load the dedicated FR256 client.');
+expectIncludes(fr256Client, 'materializeMouthCandidateObservationDryRunCoordinatorFR256', 'FR256 client must use the governed FR256 wrapper coordinator.');
+expectIncludes(fr256Client, 'getMouthCandidateObservations()', 'FR256 export must include sanitized mouth candidate observations.');
+expectIncludes(fr256Client, "schemaVersion: 'fr257-fr256-mobile-observation-sanitized-export-v1'", 'FR256 client must emit the dedicated sanitized export schema.');
+expectIncludes(fr256Client, "anchor.download = 'myeongha-fr256-mouth-observation-sanitized.json';", 'FR256 download must use a distinct sanitized artifact filename.');
+expectIncludes(fr256Client, "provider:fr256:s", 'FR256 provider run refs must be isolated from historical FR251 execution refs.');
+expectExcludes(fr256Client, 'raw.githubusercontent.com', 'FR256 phone runtime must not refetch the parity witness cross-origin after server-side exact verification.');
+for (const forbidden of [
+  'localStorage',
+  'sessionStorage',
+  'indexedDB',
+  'MediaRecorder',
+  "method: 'POST'",
+  'repeatabilityPassFail: true',
+  'calibrationIssued: true',
+  'traditionalFangBindingIssued: true',
+  'fe041hCanonicalizationAuthorized: true',
+]) {
+  expectExcludes(fr256Client, forbidden, 'FR256 mobile observation client must remain non-persistent and non-authoritative.');
+}
+
 const fr251BrowserModules = verifyBrowserModuleGraph(fr251Client, fr251ClientPath, 'FR251');
 expect(
   [...fr251BrowserModules].some((path) => path.endsWith('participant-media-resource-ceiling-fr173-shared.js')),
@@ -316,6 +347,20 @@ expect(
 expect(
   ![...fr255BrowserModules].some((path) => path.endsWith('eye-pair-c2pa-external-trust-root-provisioning-fr170.js')),
   'FR255 browser graph must remain clear of the Node-only FR170 trust-root implementation.',
+);
+
+const fr256BrowserModules = verifyBrowserModuleGraph(fr256Client, fr256ClientPath, 'FR256');
+expect(
+  [...fr256BrowserModules].some((path) => path.endsWith('observable-morphology-fr142-same-frame-observation-fr256.js')),
+  'FR256 browser graph must include the governed FR256 same-frame observation runtime.',
+);
+expect(
+  [...fr256BrowserModules].some((path) => path.endsWith('five-officers-square-broad-fang-neutral-candidate-metric-runtime-fr142.js')),
+  'FR256 browser graph must reach the exact FR142 neutral candidate kernel.',
+);
+expect(
+  ![...fr256BrowserModules].some((path) => path.endsWith('eye-pair-c2pa-external-trust-root-provisioning-fr170.js')),
+  'FR256 browser graph must remain clear of the Node-only FR170 trust-root implementation.',
 );
 
 const controllerCount = (client.match(/runMesh6IManualBrowserCaptureController/g) || []).length;
@@ -343,4 +388,7 @@ process.stdout.write(JSON.stringify({
   fr255LongitudinalBundleSurfaceVerified: true,
   fr255LocalOnlyAggregationVerified: true,
   fr255BrowserStaticModuleGraphVerified: true,
+  fr256MobileObservationSurfaceVerified: true,
+  fr256BrowserStaticModuleGraphVerified: true,
+  fr256NodeOnlyTrustChainExcluded: true,
 }) + '\n');
