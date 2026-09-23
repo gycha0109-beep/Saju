@@ -328,7 +328,7 @@ export function computeMouthCandidateObservationFromMetricGeometryFR256(input: {
         unit: 'ratio' as const,
         value: values[2]!,
       }),
-    ]),
+    ] as const),
     evidenceBoundary: Object.freeze({
       exactSameFrameBindingRequired: true as const,
       emittedOnlyAfterFR242QualityAcceptance: true as const,
