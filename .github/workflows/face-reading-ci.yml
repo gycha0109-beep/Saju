@@ -1,4 +1,5 @@
 name: Face Reading CI
+run-name: "[WT:face-reading] Face Reading CI"
 
 on:
   pull_request:
