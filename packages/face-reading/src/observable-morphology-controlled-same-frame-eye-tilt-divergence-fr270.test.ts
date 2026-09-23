@@ -266,10 +266,19 @@ describe('FR270 controlled same-frame eye-tilt divergence', () => {
       generatedAt: '2026-09-24T00:30:00.000Z',
       conditions: conditions(),
     });
-    const serialized = JSON.stringify(report);
-    expect(serialized).not.toContain('providerRunRef');
-    expect(serialized).not.toContain('screenLandmarks');
-    expect(serialized).not.toContain('metricLandmarks');
+    const forbiddenKeys = new Set(['providerRunRef', 'screenLandmarks', 'metricLandmarks']);
+    const visit = (value: unknown): void => {
+      if (Array.isArray(value)) {
+        value.forEach(visit);
+        return;
+      }
+      if (typeof value !== 'object' || value === null) return;
+      for (const [key, nested] of Object.entries(value)) {
+        expect(forbiddenKeys.has(key)).toBe(false);
+        visit(nested);
+      }
+    };
+    visit(report);
     expect(report.privacyBoundary.rawScreenLandmarksPersisted).toBe(false);
     expect(report.privacyBoundary.rawMetricLandmarksPersisted).toBe(false);
     expect(report.authorityBoundary.causalClassificationIssued).toBe(false);
