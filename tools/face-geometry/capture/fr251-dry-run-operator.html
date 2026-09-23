@@ -35,18 +35,16 @@
     pre { white-space:pre-wrap; word-break:break-word; background:#111; color:#eee; border-radius:12px; padding:16px; max-height:480px; overflow:auto; }
     [hidden] { display:none !important; }
 
-    .shutter-stage { position:fixed; inset:0; z-index:50; background:#000; color:#fff; display:flex; flex-direction:column; }
-    .shutter-top { flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; background:rgba(0,0,0,.82); }
-    .shutter-slot { font-weight:800; }
-    .shutter-secondary { background:transparent; color:#fff; border:1px solid #777; padding:9px 12px; }
-    .shutter-camera-host { flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#000; }
-    .shutter-camera-host video { width:100%; height:100%; max-height:none; object-fit:cover; transform:scaleX(-1); }
-    .shutter-controls { flex:0 0 auto; padding:10px 16px calc(18px + env(safe-area-inset-bottom)); background:rgba(0,0,0,.88); text-align:center; }
-    .challenge-inline { max-height:46px; overflow:auto; word-break:break-all; font-size:10px; line-height:1.3; color:#aaa; text-align:left; margin:0 auto 8px; padding:7px 9px; border:1px solid #333; border-radius:8px; }
-    .shutter-message { min-height:24px; margin-bottom:4px; font-weight:800; }
-    .shutter-attestation { margin:0 auto 10px; max-width:720px; color:#c8c8c8; font-size:12px; line-height:1.4; }
-    .shutter-actions { display:flex; align-items:center; justify-content:center; gap:22px; }
-    .shutter-button { width:78px; height:78px; border-radius:50%; padding:0; background:#fff; border:7px solid #bdbdbd; box-shadow:0 0 0 3px #fff; }
+    .shutter-stage { position:fixed; inset:0; z-index:50; height:100dvh; overflow:hidden; background:#000; color:#fff; }
+    .shutter-top { position:absolute; inset:0 0 auto 0; z-index:4; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; background:linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,0)); }
+    .shutter-slot { font-weight:800; text-shadow:0 1px 4px rgba(0,0,0,.9); }
+    .shutter-secondary { background:rgba(0,0,0,.35); color:#fff; border:1px solid rgba(255,255,255,.55); padding:9px 12px; backdrop-filter:blur(4px); }
+    .shutter-camera-host { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#000; }
+    .shutter-camera-host video { width:100%; height:100%; max-height:none; object-fit:contain; background:#000; transform:scaleX(-1); }
+    .challenge-inline { position:absolute; z-index:3; left:12px; right:12px; bottom:112px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:8px; line-height:1.2; color:rgba(255,255,255,.28); text-shadow:0 1px 3px rgba(0,0,0,.9); pointer-events:none; }
+    .shutter-controls { position:absolute; z-index:4; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:transparent; padding:0; }
+    .shutter-actions { display:flex; align-items:center; justify-content:center; }
+    .shutter-button { width:82px; height:82px; border-radius:50%; padding:0; background:#fff; border:7px solid #bdbdbd; box-shadow:0 0 0 3px #fff,0 4px 18px rgba(0,0,0,.55); }
     .shutter-button:disabled { background:#666; border-color:#444; box-shadow:none; }
 
     .session-overlay { position:absolute; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(0,0,0,.76); }
@@ -58,8 +56,6 @@
       main { width:min(100% - 20px,760px); margin-top:18px; }
       .start-card { padding:24px 18px; }
       .shutter-top { padding-top:calc(10px + env(safe-area-inset-top)); }
-      .challenge-inline { max-height:40px; }
-      .shutter-attestation { font-size:11px; }
     }
   </style>
 </head>
@@ -91,18 +87,14 @@
         <video id="camera" autoplay playsinline muted></video>
       </div>
 
+      <div class="challenge-inline" aria-label="발급된 캡처 challenge">
+        <span id="challenge-ref">challenge 준비 중…</span> · <span id="challenge-nonce"></span>
+      </div>
+
       <div class="shutter-controls">
-        <div class="challenge-inline"><span id="challenge-ref">challenge 준비 중…</span><br><span id="challenge-nonce"></span></div>
-        <div id="shutter-message" class="shutter-message">카메라 준비 중…</div>
-        <p class="shutter-attestation">
-          셔터를 누르면 이번 캡처에 계속 동의하고, challenge를 확인했으며,
-          정면·중립 자세 / 양쪽 눈 윤곽 식별 가능 / 양쪽 눈 영역 노출 / 큰 가림 없음 조건을 직접 확인한 것으로 기록됩니다.
-          조건이 맞지 않으면 자세를 조정한 뒤 셔터를 누르십시오.
-        </p>
         <div class="shutter-actions">
           <button id="shutter" class="shutter-button" aria-label="현재 프레임 캡처" disabled></button>
         </div>
-        <div id="capture-status" class="status"></div>
       </div>
 
       <div id="session-break" class="session-overlay" hidden>
