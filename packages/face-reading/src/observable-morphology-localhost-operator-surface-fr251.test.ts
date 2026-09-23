@@ -18,8 +18,13 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(contract.runtime.challengeDisplayedBeforeShutterEnabled).toBe(true);
     expect(contract.runtime.explicitOperatorShutterRequired).toBe(true);
     expect(contract.runtime.technicalFailureAfterChallengeFailsClosed).toBe(true);
+    expect(contract.runtime.fr257SameFrameGeometryAttributionSidecarEnabled).toBe(true);
     expect(contract.persistence.rawMediaPersisted).toBe(false);
     expect(contract.persistence.rawImageDigestPersisted).toBe(false);
+    expect(contract.persistence.rawScreenLandmarksPersisted).toBe(false);
+    expect(contract.persistence.rawMetricLandmarksPersisted).toBe(false);
+    expect(contract.persistence.poseTransformMatrixPersisted).toBe(false);
+    expect(contract.persistence.scalarCaptureGeometrySidecarExportAllowed).toBe(true);
     expect(contract.authorityBoundary.empiricalRepeatabilityEstablished).toBe(false);
     expect(contract.authorityBoundary.productionActivated).toBe(false);
     expect(contract.authorityBoundary.commerceActivated).toBe(false);
@@ -43,7 +48,13 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(html).toContain('id="shutter" class="shutter-button"');
     expect(html).toContain('disabled></button>');
     expect(html).toContain('id="temporal-separation"');
+    expect(html).toContain('id="fr257-result-status"');
+    expect(html).toContain('id="download-fr257-result"');
     expect(client).toContain('materializeChallengeFirstBrowserDryRunCoordinatorFR250');
+    expect(client).toContain('createCaptureGeometryAttributionCollectorFR257');
+    expect(client).toContain('primaryMetricBindingPreparer: geometryCollector.primaryMetricBindingPreparer');
+    expect(client).toContain('bindCaptureGeometryAttributionSlotFR257');
+    expect(client).toContain('buildCaptureGeometryAttributionBundleFR257');
     expect(client).toContain('coordinator.prepareCapture');
     expect(client).toContain('coordinator.capturePrepared');
     expect(client).toContain("showCaptureStage('shutter')");
@@ -52,6 +63,8 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
       .toBeLessThan(client.indexOf('performance.now()'));
     expect(client).toContain('rawMediaPersisted: false');
     expect(client).toContain('rawImageDigestPersisted: false');
+    expect(client).toContain('myeongha-fr257-capture-geometry-');
+    expect(client).not.toContain('rawMetricLandmarksPersisted: true');
     expect(client).not.toContain('localStorage');
     expect(client).not.toContain('sessionStorage');
   });

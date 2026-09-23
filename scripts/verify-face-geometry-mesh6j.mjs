@@ -14,6 +14,7 @@ const fr251ClientPath = 'tools/face-geometry/capture/fr251-dry-run-operator.mjs'
 const fr251PagePath = 'tools/face-geometry/capture/fr251-dry-run-operator.html';
 const fr255ClientPath = 'tools/face-geometry/capture/fr255-repeatability-observation.mjs';
 const fr255PagePath = 'tools/face-geometry/capture/fr255-repeatability-observation.html';
+const fr257RuntimePath = 'packages/face-reading/src/observable-morphology-capture-geometry-attribution-fr257.ts';
 
 const server = readFileSync(serverPath, 'utf8');
 const client = readFileSync(clientPath, 'utf8');
@@ -22,6 +23,7 @@ const fr251Client = readFileSync(fr251ClientPath, 'utf8');
 const fr251Page = readFileSync(fr251PagePath, 'utf8');
 const fr255Client = readFileSync(fr255ClientPath, 'utf8');
 const fr255Page = readFileSync(fr255PagePath, 'utf8');
+const fr257Runtime = readFileSync(fr257RuntimePath, 'utf8');
 
 function expect(condition, message) {
   if (!condition) throw new Error(message);
@@ -295,6 +297,35 @@ expectIncludes(fr251Client, 'majorEyeRegionOcclusionAbsent: true', 'FR251 compos
 expectIncludes(fr251Client, '세부 항목을 임의로 기록하지 않으며 촬영은 차단됩니다.', 'FR251 composite no must fail closed without fabricating detailed FR247 observations.');
 
 
+expectIncludes(fr251Page, 'id="fr257-result-status"', 'FR251 result view must expose FR257 attribution status.');
+expectIncludes(fr251Page, 'id="download-fr257-result"', 'FR251 result view must expose a separate FR257 scalar sidecar download.');
+expectIncludes(fr251Client, 'createCaptureGeometryAttributionCollectorFR257', 'FR251 must instantiate the FR257 same-frame collector.');
+expectIncludes(fr251Client, 'primaryMetricBindingPreparer: geometryCollector.primaryMetricBindingPreparer', 'FR251 must replace the default metric preparer with the FR257 same-frame metric/geometry preparer.');
+expectIncludes(fr251Client, 'bindCaptureGeometryAttributionSlotFR257', 'FR251 must bind each capture result to its transient FR257 same-frame evidence.');
+expectIncludes(fr251Client, 'buildCaptureGeometryAttributionBundleFR257', 'FR251 must build a separate FR257 sidecar without widening FR251/FR255 schemas.');
+expectIncludes(fr251Client, 'myeongha-fr257-capture-geometry-', 'FR251 must download the FR257 sidecar separately.');
+expectIncludes(fr257Runtime, 'relativeRotationFromFirstAcceptedCaptureRadians', 'FR257 must record relative rotation from the first accepted capture.');
+expectIncludes(fr257Runtime, 'inPlaneLateralAxisOrientationRadians', 'FR257 must record an explicit in-plane lateral-axis orientation scalar.');
+expectIncludes(fr257Runtime, 'screenFaceBoxAreaFraction', 'FR257 must record a normalized screen face-scale proxy.');
+expectIncludes(fr257Runtime, 'scalarGeometryPersisted: true', 'FR257 must explicitly allow only the scalar geometry sidecar.');
+for (const forbidden of [
+  'rawMediaPersisted: true',
+  'rawImageDigestPersisted: true',
+  'rawProviderResponsePersisted: true',
+  'rawScreenLandmarksPersisted: true',
+  'rawMetricLandmarksPersisted: true',
+  'poseTransformMatrixPersisted: true',
+  'poseAcceptanceThresholdIssued: true',
+  'distanceAcceptanceThresholdIssued: true',
+  'calibrationIssued: true',
+  'correctionFormulaIssued: true',
+  'productionActivated: true',
+  'commerceActivated: true',
+]) {
+  expectExcludes(fr257Runtime, forbidden, 'FR257 must persist descriptive scalars only and issue no threshold/calibration/production authority.');
+}
+
+
 expectIncludes(fr255Page, 'id="prior-bundle"', 'FR255 page must accept an optional prior longitudinal bundle.');
 expectIncludes(fr255Page, 'id="source-fr251"', 'FR255 page must accept exactly one newly completed FR251 sanitized export.');
 expectIncludes(fr255Page, 'id="baseline-participant"', 'FR255 page must require baseline participant operator attestation.');
@@ -329,6 +360,10 @@ expect(
 expect(
   ![...fr251BrowserModules].some((path) => path.endsWith('eye-pair-c2pa-external-trust-root-provisioning-fr170.js')),
   'FR251 browser graph must not reach the Node-only FR170 trust-root implementation.',
+);
+expect(
+  [...fr251BrowserModules].some((path) => path.endsWith('observable-morphology-capture-geometry-attribution-fr257.js')),
+  'FR251 browser graph must include the FR257 same-frame attribution runtime.',
 );
 
 const fr255BrowserModules = verifyBrowserModuleGraph(fr255Client, fr255ClientPath, 'FR255');
@@ -366,6 +401,8 @@ process.stdout.write(JSON.stringify({
   fr251SingleCompositeQualityChoiceVerified: true,
   fr251DedicatedShutterStageVerified: true,
   fr251CompositeNoFailsClosedVerified: true,
+  fr257SameFrameAttributionVerified: true,
+  fr257ScalarOnlyPersistenceVerified: true,
   fr255LongitudinalBundleSurfaceVerified: true,
   fr255LocalOnlyAggregationVerified: true,
   fr255BrowserStaticModuleGraphVerified: true,

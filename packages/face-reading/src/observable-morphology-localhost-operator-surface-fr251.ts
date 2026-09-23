@@ -21,10 +21,15 @@ export function getLocalhostDryRunOperatorSurfaceContractFR251() {
       fr247QualityObservationPerCapture: true as const,
       session2TemporalSeparationOperatorConfirmationRequired: true as const,
       technicalFailureAfterChallengeFailsClosed: true as const,
+      fr257SameFrameGeometryAttributionSidecarEnabled: true as const,
     }),
     persistence: Object.freeze({
       rawMediaPersisted: false as const,
       rawImageDigestPersisted: false as const,
+      rawScreenLandmarksPersisted: false as const,
+      rawMetricLandmarksPersisted: false as const,
+      poseTransformMatrixPersisted: false as const,
+      scalarCaptureGeometrySidecarExportAllowed: true as const,
       faceEmbeddingPersisted: false as const,
       identityTemplatePersisted: false as const,
       sanitizedFr243RecordsExportAllowed: true as const,
@@ -44,6 +49,6 @@ export function getLocalhostDryRunOperatorSurfaceContractFR251() {
       commerceActivated: false as const,
     }),
     nextFrontier:
-      'execute_first_actual_fr251_four_slot_operator_attested_dry_run_with_user_camera_action' as const,
+      'collect_eye_level_low_angle_high_angle_fr251_executions_with_fr257_scalar_geometry_then_review_descriptive_pose_sensitivity' as const,
   });
 }
