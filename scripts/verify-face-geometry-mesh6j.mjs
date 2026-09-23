@@ -278,6 +278,7 @@ expectIncludes(fr251Page, '촬영을 시작하시겠습니까?', 'FR251 must beg
 expectIncludes(fr251Page, 'id="start-dry-run"', 'FR251 must expose one explicit capture-start action.');
 expectIncludes(fr251Page, 'id="shutter-stage"', 'FR251 mobile flow must expose the dedicated full-screen shutter stage.');
 expectIncludes(fr251Page, 'id="challenge-ref"', 'FR251 camera UI must present the issued challenge before each shutter.');
+expectIncludes(fr251Page, 'id="challenge-nonce"', 'FR251 camera UI must present the issued challenge nonce before each shutter.');
 expectIncludes(fr251Page, 'id="shutter" class="shutter-button"', 'FR251 shutter must remain a camera-style explicit control.');
 expectIncludes(fr251Page, 'position:fixed;', 'FR251 shutter stage must remain fixed to the viewport on mobile.');
 expectIncludes(fr251Page, 'id="session-break"', 'FR251 must keep the Session 2 confirmation inside the capture UI.');
