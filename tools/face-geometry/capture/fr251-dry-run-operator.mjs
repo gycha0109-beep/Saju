@@ -107,7 +107,7 @@ async function fetchTextWithTimeout(url, label) {
     return value;
   } catch (error) {
     if (typeof error === 'object' && error !== null && error.name === 'AbortError') {
-      throw new Error(label + ' timed out after ' + RUNTIME_ASSET_TIMEOUT_MS + 'ms.');
+      throw new Error(label + ' timed out after ' + RUNTIME_ASSET_TIMEOUT_MS + 'ms.', { cause: error });
     }
     throw error;
   } finally {
