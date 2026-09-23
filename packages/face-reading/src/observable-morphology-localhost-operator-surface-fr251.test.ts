@@ -23,7 +23,7 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(contract.runtime.session2TemporalSeparationOperatorConfirmationRequired).toBe(true);
     expect(contract.runtime.technicalFailureAfterChallengeFailsClosed).toBe(true);
     expect(contract.runtime.fr257SameFrameGeometryAttributionSidecarEnabled).toBe(true);
-    expect(contract.runtime.fr267SameFrameEyeTiltDiagnosticSidecarEnabled).toBe(true);
+    expect(contract.runtime.fr269SameFrameEyeTiltDiagnosticSidecarEnabled).toBe(true);
     expect(contract.runtime.singleStartActionRecordsFR240Consent).toBe(true);
     expect(contract.runtime.cameraPreviewHiddenUntilStartAction).toBe(true);
     expect(contract.runtime.shutterActionCarriesPerCaptureReconfirmationAndQualityAttestation).toBe(true);
@@ -68,8 +68,8 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(html).toContain('id="begin-session-2"');
     expect(html).toContain('id="fr257-result-status"');
     expect(html).toContain('id="download-fr257-result"');
-    expect(html).toContain('id="fr267-result-status"');
-    expect(html).toContain('id="download-fr267-result"');
+    expect(html).toContain('id="fr269-result-status"');
+    expect(html).toContain('id="download-fr269-result"');
 
     for (const removed of [
       'data-consent=',
@@ -92,10 +92,10 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(client).toContain('primaryMetricBindingPreparer: geometryCollector.primaryMetricBindingPreparer');
     expect(client).toContain('bindCaptureGeometryAttributionSlotFR257');
     expect(client).toContain('buildCaptureGeometryAttributionBundleFR257');
-    expect(client).toContain('createSameFrameEyeTiltDiagnosticCollectorFR267');
+    expect(client).toContain('createSameFrameEyeTiltDiagnosticCollectorFR269');
     expect(client).toContain('onEphemeralGeometry: eyeTiltDiagnosticCollector.observe');
-    expect(client).toContain('bindSameFrameEyeTiltDiagnosticSlotFR267');
-    expect(client).toContain('buildSameFrameEyeTiltDiagnosticBundleFR267');
+    expect(client).toContain('bindSameFrameEyeTiltDiagnosticSlotFR269');
+    expect(client).toContain('buildSameFrameEyeTiltDiagnosticBundleFR269');
     expect(client).toContain('coordinator.prepareCapture');
     expect(client).toContain('coordinator.capturePrepared');
 
@@ -120,7 +120,7 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(client).toContain('rawMediaPersisted: false');
     expect(client).toContain('rawImageDigestPersisted: false');
     expect(client).toContain('myeongha-fr257-capture-geometry-');
-    expect(client).toContain('myeongha-fr267-eye-tilt-diagnostic-');
+    expect(client).toContain('myeongha-fr269-eye-tilt-diagnostic-');
 
     for (const removed of [
       'qualityCompositeDecision',
