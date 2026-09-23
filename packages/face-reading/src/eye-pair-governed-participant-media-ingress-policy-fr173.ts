@@ -6,13 +6,15 @@ import {
   assertIssuedEyePairC2paProductionVerifierRuntimeIntegrationFR172,
   type EyePairC2paProductionVerifierRuntimeIntegrationFR172V1,
 } from './eye-pair-c2pa-production-verifier-runtime-integration-fr172.js';
+import { FR173_MAX_PARTICIPANT_MEDIA_BYTES } from './participant-media-resource-ceiling-fr173-shared.js';
 import { FaceAuthorityValidationError } from './validation.js';
+
+export { FR173_MAX_PARTICIPANT_MEDIA_BYTES } from './participant-media-resource-ceiling-fr173-shared.js';
 
 export const FR173_EYE_PAIR_GOVERNED_PARTICIPANT_MEDIA_INGRESS_POLICY_RECORD_ID =
   'research.face_reading.neutral.eye_pair.governed_participant_media_ingress_resource_policy.fr173' as const;
 export const FR173_RESEARCH_NOTE_REF =
   'repo:research/face-reading/fr173-eye-pair-governed-participant-media-ingress-resource-policy.md' as const;
-export const FR173_MAX_PARTICIPANT_MEDIA_BYTES = 32 * 1024 * 1024;
 export const FR173_REQUIRED_MEDIA_TYPE = 'image/jpeg' as const;
 export const FR173_REQUIRED_MEDIA_OBJECT_COUNT = 1 as const;
 export const FR173_REQUIRED_TRANSPORT_ENCODING = 'raw-binary' as const;
