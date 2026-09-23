@@ -173,6 +173,8 @@ export interface FR257EphemeralGeometryObservation {
   readonly screenLandmarks: readonly MediaPipeMetricGeometryPointFR76V1[];
   readonly metricLandmarks: readonly MediaPipeMetricGeometryPointFR76V1[];
   readonly poseTransformMatrixPackedColumnMajor: readonly number[];
+  readonly frameWidth: number;
+  readonly frameHeight: number;
   readonly primaryMetric: FR242PrimaryMetricExtraction;
 }
 
@@ -192,6 +194,8 @@ type PreparedGeometry = {
   readonly screenLandmarks: readonly MediaPipeMetricGeometryPointFR76V1[];
   readonly metricLandmarks: readonly MediaPipeMetricGeometryPointFR76V1[];
   readonly poseTransformMatrixPackedColumnMajor: readonly number[];
+  readonly frameWidth: number;
+  readonly frameHeight: number;
 };
 
 function fail(message: string): never {
@@ -449,6 +453,8 @@ function prepareBindingFromGeometry(input: {
       screenLandmarks,
       metricLandmarks,
       poseTransformMatrixPackedColumnMajor: poseMatrix,
+      frameWidth: input.preparedGeometry.frameWidth,
+      frameHeight: input.preparedGeometry.frameHeight,
       primaryMetric,
     }));
 
@@ -619,6 +625,8 @@ export function createCaptureGeometryAttributionCollectorFR257(
             metricLandmarks: metric.metricLandmarks,
             poseTransformMatrixPackedColumnMajor:
               metric.poseTransformMatrixPackedColumnMajor,
+            frameWidth: input.width,
+            frameHeight: input.height,
           });
         } finally {
           runtime.close();
@@ -863,6 +871,8 @@ export function createSyntheticMechanicsAttributionBindingFR257(input: {
       metricLandmarks: input.metricLandmarks,
       poseTransformMatrixPackedColumnMajor:
         input.poseTransformMatrixPackedColumnMajor,
+      frameWidth: 1,
+      frameHeight: 1,
     }),
     baselinePoseMatrix: () => first,
     commitFirstAcceptedPoseMatrix: (matrix) => {
