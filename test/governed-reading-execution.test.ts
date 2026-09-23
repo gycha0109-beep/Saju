@@ -223,13 +223,14 @@ describe('Governed Reading Execution Orchestrator', () => {
       },
     };
     const interpretation = executionWithClaims(currentSnapshot, registry, [wealth]);
+    const adapter = new TrackingAdapter('provider_error');
 
     const result = await executeProductReading(
       currentSnapshot,
       interpretation,
       registry,
       { requestId: 'execution-canonical-report', text: '재물운' },
-      new TrackingAdapter(),
+      adapter,
       narrativePolicy,
       {
         ...executionOptions,
@@ -263,6 +264,10 @@ describe('Governed Reading Execution Orchestrator', () => {
     expect(result.consumerReadingAuthority?.authority).toBe('official_reading');
     expect(result.artifact?.schemaVersion).toBe('myeonghwa-official-reading-artifact-v1');
     expect(result.artifact?.provenance).not.toHaveProperty('narrativeRunId');
+    expect(result.narrative).toBeUndefined();
+    expect(result.modelCalls).toBe(0);
+    expect(adapter.calls).toHaveLength(0);
+    expect(result.constraints.mayInvokeNarrativeForOfficialReadingAuthority).toBe(false);
   });
 
   it('makes zero model calls and creates no artifact for ambiguous input', async () => {
