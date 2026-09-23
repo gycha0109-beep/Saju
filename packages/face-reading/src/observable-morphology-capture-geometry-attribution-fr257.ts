@@ -406,7 +406,7 @@ function prepareBindingFromGeometry(input: {
   readonly baselinePoseMatrix: () => readonly number[] | undefined;
   readonly commitFirstAcceptedPoseMatrix: (matrix: readonly number[]) => void;
   readonly commitEvidence: (evidence: FR257SameFrameAttributionEvidence) => void;
-  readonly onEphemeralGeometry?: FR257EphemeralGeometryObserver;
+  readonly onEphemeralGeometry?: FR257EphemeralGeometryObserver | undefined;
 }): FR244PreparedPrimaryMetricBinding {
   let expectedJpegBytes: Uint8Array | undefined = Uint8Array.from(
     input.expectedJpegBytes,
