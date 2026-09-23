@@ -42,9 +42,7 @@ const report = analyzeControlledCaptureGeometrySensitivityFR267({
   conditions,
 });
 
-function assertEquivalent(actual, expected, path = '  process.stdout.write(JSON.stringify(report, null, 2) + '\n');
-}
-) {
+function assertEquivalent(actual, expected, path = '$') {
   if (typeof actual === 'number' && typeof expected === 'number') {
     const scale = Math.max(1, Math.abs(actual), Math.abs(expected));
     if (Math.abs(actual - expected) > 1e-12 * scale) {
