@@ -66,6 +66,19 @@ describe('FR263 Shenyi Fu non-contiguous Three-Divisions transmission witness', 
     });
   });
 
+  it('links the transmission witness to the merged FR261 separate-lineage decision', () => {
+    const issued =
+      issueShenyiFuNoncontiguousThreeDivisionsTransmissionWitnessFR263();
+
+    expect(issued.predecessorBoundary).toMatchObject({
+      fr261ShenyiFuRole:
+        'separate_lineage_candidate_pending_repository_source_pinning',
+      fr261MayiContiguousFormulaPreserved: true,
+      fr33Mutated: false,
+      fr33SelectionPolicyOverridden: false,
+    });
+  });
+
   it('keeps the earlier Harvard rare-book page pin unresolved', () => {
     const issued =
       issueShenyiFuNoncontiguousThreeDivisionsTransmissionWitnessFR263();
