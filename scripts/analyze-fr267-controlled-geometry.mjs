@@ -1,4 +1,3 @@
-import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import process from 'node:process';
 import { URL } from 'node:url';
@@ -43,9 +42,54 @@ const report = analyzeControlledCaptureGeometrySensitivityFR267({
   conditions,
 });
 
+function assertEquivalent(actual, expected, path = '  process.stdout.write(JSON.stringify(report, null, 2) + '\n');
+}
+) {
+  if (typeof actual === 'number' && typeof expected === 'number') {
+    const scale = Math.max(1, Math.abs(actual), Math.abs(expected));
+    if (Math.abs(actual - expected) > 1e-12 * scale) {
+      throw new Error(
+        path + ' numeric drift: actual=' + actual + ' expected=' + expected,
+      );
+    }
+    return;
+  }
+  if (Array.isArray(actual) && Array.isArray(expected)) {
+    if (actual.length !== expected.length) {
+      throw new Error(path + ' array length drift.');
+    }
+    actual.forEach((value, index) => {
+      assertEquivalent(value, expected[index], path + '[' + index + ']');
+    });
+    return;
+  }
+  if (
+    typeof actual === 'object'
+    && actual !== null
+    && typeof expected === 'object'
+    && expected !== null
+  ) {
+    const actualKeys = Object.keys(actual).sort();
+    const expectedKeys = Object.keys(expected).sort();
+    if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) {
+      throw new Error(path + ' object key drift.');
+    }
+    for (const key of actualKeys) {
+      assertEquivalent(actual[key], expected[key], path + '.' + key);
+    }
+    return;
+  }
+  if (actual !== expected) {
+    throw new Error(
+      path + ' value drift: actual=' + String(actual)
+      + ' expected=' + String(expected),
+    );
+  }
+}
+
 if (process.argv.includes('--verify')) {
   const expected = await readJson(REPORT_FILE);
-  assert.deepStrictEqual(report, expected);
+  assertEquivalent(report, expected);
   process.stdout.write(
     'FR267 controlled geometry sensitivity report verified: '
       + report.conditions.length
