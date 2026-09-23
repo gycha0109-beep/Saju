@@ -38,6 +38,8 @@ const repoRoot = resolve(scriptDir, '..');
 const faceDist = resolve(repoRoot, '.face-reading-dist');
 const pagePath = resolve(repoRoot, 'tools/face-geometry/capture/mesh6j-operator-capture.html');
 const clientPath = resolve(repoRoot, 'tools/face-geometry/capture/mesh6j-operator-capture.mjs');
+const fr251PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr251-dry-run-operator.html');
+const fr251ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr251-dry-run-operator.mjs');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -255,6 +257,11 @@ async function main() {
     fail('operator page import-map placeholder is missing.');
   }
   const pageHtml = pageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr251PageTemplate = readFileSync(fr251PagePath, 'utf8');
+  if (!fr251PageTemplate.includes('__MEDIAPIPE_ENTRY__')) {
+    fail('FR251 operator page import-map placeholder is missing.');
+  }
+  const fr251PageHtml = fr251PageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
 
   const requestHandler = (request, response) => {
     if (LAN_MODE) {
@@ -291,6 +298,26 @@ async function main() {
 
     if (url.pathname === '/capture.mjs') {
       sendFile(response, clientPath);
+      return;
+    }
+
+    if (url.pathname === '/fr251' || url.pathname === '/fr251/' || url.pathname === '/fr251/index.html') {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy':
+          "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://raw.githubusercontent.com; " +
+          "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://raw.githubusercontent.com; " +
+          "img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=(self)',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr251PageHtml);
+      return;
+    }
+
+    if (url.pathname === '/fr251/operator.mjs') {
+      sendFile(response, fr251ClientPath);
       return;
     }
 
@@ -372,6 +399,8 @@ async function main() {
       const required = [
         '/',
         '/capture.mjs',
+        '/fr251/',
+        '/fr251/operator.mjs',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
         '/runtime/weighted-adapter.json',
@@ -429,8 +458,9 @@ async function main() {
     process.stdout.write('The phone must trust the certificate/issuing local CA before browser camera access will work.\n');
   } else {
     process.stdout.write('MESH6J manual research capture surface: ' + base + '/\n');
+    process.stdout.write('FR251 one-person dry-run operator surface: ' + base + '/fr251/\n');
   }
-  process.stdout.write('Camera data remains in-memory; only the descriptive session JSON can be exported by the page.\n');
+  process.stdout.write('Camera data remains in-memory; only sanitized/descriptive JSON can be exported by the browser surfaces.\n');
 }
 
 await main();

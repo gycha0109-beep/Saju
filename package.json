@@ -71,7 +71,8 @@
     "face:verify:fr159-eye-pair-prospective-repeatability-protocol": "node scripts/verify-fr159-eye-pair-prospective-repeatability-protocol.mjs",
     "face:verify:fr160-eye-pair-prospective-acquisition-runtime": "node scripts/verify-fr160-eye-pair-prospective-acquisition-runtime.mjs",
     "face:verify:fr178-eye-pair-geometric-y-span": "node scripts/verify-fr178-eye-pair-geometric-y-span.mjs",
-    "check:face-reading": "npm run face:verify:manifest && npm run face:typecheck && npm run face:build && npm run face:verify:fr158-role-invariant-eye-pair-neutral-shape && npm run face:verify:fr159-eye-pair-prospective-repeatability-protocol && npm run face:verify:fr160-eye-pair-prospective-acquisition-runtime && npm run face:verify:fr178-eye-pair-geometric-y-span"
+    "check:face-reading": "npm run face:verify:manifest && npm run face:typecheck && npm run face:build && npm run face:verify:fr158-role-invariant-eye-pair-neutral-shape && npm run face:verify:fr159-eye-pair-prospective-repeatability-protocol && npm run face:verify:fr160-eye-pair-prospective-acquisition-runtime && npm run face:verify:fr178-eye-pair-geometric-y-span",
+    "face:dry-run:operator": "npm run face:build && node scripts/mesh6j-manual-browser-capture-preview.mjs"
   },
   "dependencies": {
     "manseryeok": "2.0.0"
