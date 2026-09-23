@@ -42,7 +42,7 @@ describe('FR251 localhost one-person dry-run operator surface', () => {
     expect(contract.authorityBoundary.commerceActivated).toBe(false);
   });
 
-  it('pins FR260 camera-dominant mobile UX without weakening FR250/FR247 semantics', () => {
+  it('pins FR261 camera-dominant mobile UX without weakening FR250/FR247 semantics', () => {
     const html = readFileSync(
       resolve(root, 'tools/face-geometry/capture/fr251-dry-run-operator.html'),
       'utf8',
