@@ -1,4 +1,4 @@
-/* global Blob, TextEncoder, URL, crypto, document, fetch, performance, window */
+/* global AbortController, Blob, URL, crypto, document, fetch, performance, window */
 
 import { runPhotoToLipsContourNeutralSurfaceFR66 } from '/face/lips-contour-neutral-surface-fr66.js';
 import { assessLipsPoseNormalizationRequirementsFR67 } from '/face/lips-pose-normalization-requirements-fr67.js';
@@ -21,11 +21,11 @@ import { materializeGovernedDryRunExecutionRuntimeFR243 } from '/face/observable
 import { materializeChallengeFirstBrowserDryRunCoordinatorFR250 } from '/face/observable-morphology-challenge-first-browser-dry-run-fr250.js';
 
 const RELEASE_COMMIT = 'f8ef212d5c962c0e853db7e59d217056b187084b';
-const RAW_ROOT = 'https://raw.githubusercontent.com/google-ai-edge/mediapipe/' + RELEASE_COMMIT;
 const PARITY_INPUT = Object.freeze({
-  path: 'mediapipe/tasks/testdata/vision/face_blendshapes_in_landmarks.prototxt',
+  route: '/runtime/fr76-parity-input.prototxt',
   blobSha: 'ea2e60eefaf6a5c13aee4bb468384edab7e7d5d7',
 });
+const RUNTIME_ASSET_TIMEOUT_MS = 15000;
 
 const elements = Object.freeze({
   prepView: document.querySelector('#prep-view'),
@@ -85,34 +85,43 @@ function randomHex(byteLength) {
   return Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('');
 }
 
-function hex(buffer) {
-  return Array.from(
-    new Uint8Array(buffer),
-    (value) => value.toString(16).padStart(2, '0'),
-  ).join('');
+function signalBootstrap(stage, detail = '') {
+  const signal = window.__fr251BootstrapSignal__;
+  if (typeof signal === 'function') signal(stage, detail);
 }
 
-async function gitBlobSha(text) {
-  const encoder = new TextEncoder();
-  const body = encoder.encode(text);
-  const prefix = encoder.encode('blob ' + body.byteLength + '\0');
-  const payload = new Uint8Array(prefix.byteLength + body.byteLength);
-  payload.set(prefix, 0);
-  payload.set(body, prefix.byteLength);
-  return hex(await crypto.subtle.digest('SHA-1', payload));
+async function fetchTextWithTimeout(url, label) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), RUNTIME_ASSET_TIMEOUT_MS);
+  try {
+    signalBootstrap(label + '_fetch');
+    const response = await fetch(url, {
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(label + ' HTTP ' + response.status);
+    }
+    const value = await response.text();
+    signalBootstrap(label + '_loaded');
+    return value;
+  } catch (error) {
+    if (typeof error === 'object' && error !== null && error.name === 'AbortError') {
+      throw new Error(label + ' timed out after ' + RUNTIME_ASSET_TIMEOUT_MS + 'ms.', { cause: error });
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
-async function fetchExactText(path, expectedBlobSha) {
-  const response = await fetch(RAW_ROOT + '/' + path, { cache: 'no-store' });
-  if (!response.ok) {
-    throw new Error('release witness fetch failed: ' + path + ' HTTP ' + response.status);
+async function fetchJsonWithTimeout(url, label) {
+  const text = await fetchTextWithTimeout(url, label);
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(label + ' returned invalid JSON.');
   }
-  const value = await response.text();
-  const actual = await gitBlobSha(value);
-  if (actual !== expectedBlobSha) {
-    throw new Error('release witness Git blob SHA mismatch for ' + path + '.');
-  }
-  return value;
 }
 
 function parseProviderLandmarks(text) {
@@ -151,20 +160,11 @@ function parityFactory(providerLandmarks) {
 }
 
 async function buildRuntimeInputs() {
-  const [configResponse, metadataResponse, inputFixture] = await Promise.all([
-    fetch('/runtime/config.json', { cache: 'no-store' }),
-    fetch('/runtime/geometry-metadata.pbtxt', { cache: 'no-store' }),
-    fetchExactText(PARITY_INPUT.path, PARITY_INPUT.blobSha),
-  ]);
-  if (!configResponse.ok || !metadataResponse.ok) {
-    throw new Error('localhost runtime assets are unavailable.');
-  }
-
-  const config = await configResponse.json();
-  const geometryMetadataPbtxt = await metadataResponse.text();
+  const config = await fetchJsonWithTimeout('/runtime/config.json', 'runtime_config');
   if (
     config.schemaVersion !== 'mesh6j-localhost-runtime-config-v1'
     || config.releaseCommit !== RELEASE_COMMIT
+    || config.fr76ParityInputBlobSha !== PARITY_INPUT.blobSha
     || config.rawCapturePersistenceEnabled !== false
     || config.calibrationAuthorized !== false
     || config.productionMorphologyAuthorized !== false
@@ -172,7 +172,16 @@ async function buildRuntimeInputs() {
     throw new Error('localhost runtime config authority boundary drift.');
   }
 
+  const geometryMetadataPbtxt = await fetchTextWithTimeout(
+    '/runtime/geometry-metadata.pbtxt',
+    'geometry_metadata',
+  );
+  const inputFixture = await fetchTextWithTimeout(PARITY_INPUT.route, 'fr76_parity_input');
+
+  signalBootstrap('fr76_parity_input_parse');
   const providerLandmarks = parseProviderLandmarks(inputFixture);
+
+  signalBootstrap('authority_bootstrap');
   const fr66 = await runPhotoToLipsContourNeutralSurfaceFR66({
     schemaVersion: 'fr61-production-neutral-observation-provider-request-v1',
     providerRunRef: 'fr251:parity-bootstrap',
@@ -185,6 +194,7 @@ async function buildRuntimeInputs() {
   const fr75 = admitMediaPipeReleaseExactMetricGeometryFR75(fr69);
   const parity = admitMediaPipeScreenToMetricReimplementationParityFR76(fr75);
 
+  signalBootstrap('runtime_inputs_materialized');
   return Object.freeze({ geometryMetadataPbtxt, parity });
 }
 
@@ -550,16 +560,20 @@ elements.reloadAfterAbort.addEventListener('click', () => window.location.reload
 window.addEventListener('beforeunload', closeCamera);
 
 showView('prep');
+signalBootstrap('module_started');
 buildRuntimeInputs()
   .then((value) => {
     runtimeInputs = value;
+    signalBootstrap('ready');
     setStatus(elements.prepStatus, 'runtime 준비 완료 · 모든 동의 항목 확인 후 시작할 수 있습니다.');
     updateStartButton();
   })
   .catch((error) => {
+    const detail = error instanceof Error ? error.message : String(error);
+    signalBootstrap('failed', detail);
     setStatus(
       elements.prepStatus,
-      'runtime 준비 실패: ' + (error instanceof Error ? error.message : String(error)),
+      'runtime 준비 실패: ' + detail,
     );
     updateStartButton();
   });

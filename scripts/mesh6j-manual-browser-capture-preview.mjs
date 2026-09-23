@@ -26,6 +26,9 @@ const RELEASE_COMMIT = 'f8ef212d5c962c0e853db7e59d217056b187084b';
 const METADATA_PATH = 'mediapipe/tasks/cc/vision/face_geometry/data/geometry_pipeline_metadata_landmarks.pbtxt';
 const METADATA_BLOB_SHA = '252a7b05b24c5c43c5b94179393639f7c9a2fe8f';
 const METADATA_URL = 'https://raw.githubusercontent.com/google-ai-edge/mediapipe/' + RELEASE_COMMIT + '/' + METADATA_PATH;
+const PARITY_INPUT_PATH = 'mediapipe/tasks/testdata/vision/face_blendshapes_in_landmarks.prototxt';
+const PARITY_INPUT_BLOB_SHA = 'ea2e60eefaf6a5c13aee4bb468384edab7e7d5d7';
+const PARITY_INPUT_URL = 'https://raw.githubusercontent.com/google-ai-edge/mediapipe/' + RELEASE_COMMIT + '/' + PARITY_INPUT_PATH;
 const LOCALHOST_HOST = '127.0.0.1';
 const LAN_HOST = '0.0.0.0';
 const DEFAULT_PORT = 4316;
@@ -46,6 +49,7 @@ const gnmHead = resolve(cacheDir, 'gnm_head.npz');
 const ontology = resolve(cacheDir, 'gnm-provider-region-ontology.json');
 const weightedAdapter = resolve(cacheDir, 'mediapipe468-weighted-region-adapter.json');
 const metadataFile = resolve(cacheDir, 'geometry_pipeline_metadata_landmarks.pbtxt');
+const parityInputFile = resolve(cacheDir, 'fr76-parity-input.prototxt');
 
 function fail(message) {
   throw new Error('MESH6J ' + message);
@@ -72,19 +76,27 @@ function gitBlobSha(data) {
   return createHash('sha1').update(prefix).update(data).digest('hex');
 }
 
-async function fetchExactMetadata() {
-  const response = await globalThis.fetch(METADATA_URL, {
+async function fetchExactRemoteAsset(url, expectedBlobSha, outputPath, label) {
+  const response = await globalThis.fetch(url, {
     headers: { 'user-agent': 'MyeongHa-MESH6J/1.0' },
   });
   if (!response.ok) {
-    fail('geometry metadata fetch failed with HTTP ' + response.status + '.');
+    fail(label + ' fetch failed with HTTP ' + response.status + '.');
   }
   const bytes = Buffer.from(await response.arrayBuffer());
   const actual = gitBlobSha(bytes);
-  if (actual !== METADATA_BLOB_SHA) {
-    fail('geometry metadata Git blob SHA mismatch: expected=' + METADATA_BLOB_SHA + ' actual=' + actual + '.');
+  if (actual !== expectedBlobSha) {
+    fail(label + ' Git blob SHA mismatch: expected=' + expectedBlobSha + ' actual=' + actual + '.');
   }
-  writeFileSync(metadataFile, bytes);
+  writeFileSync(outputPath, bytes);
+}
+
+async function fetchExactMetadata() {
+  await fetchExactRemoteAsset(METADATA_URL, METADATA_BLOB_SHA, metadataFile, 'geometry metadata');
+}
+
+async function fetchExactParityInput() {
+  await fetchExactRemoteAsset(PARITY_INPUT_URL, PARITY_INPUT_BLOB_SHA, parityInputFile, 'FR76 parity input');
 }
 
 async function prepareRuntimeAssets() {
@@ -109,7 +121,10 @@ async function prepareRuntimeAssets() {
     '--source-regions', ontology,
     '--output', weightedAdapter,
   ]);
-  await fetchExactMetadata();
+  await Promise.all([
+    fetchExactMetadata(),
+    fetchExactParityInput(),
+  ]);
 
   const adapter = JSON.parse(readFileSync(weightedAdapter, 'utf8'));
   if (
@@ -132,6 +147,7 @@ async function prepareRuntimeAssets() {
     canonicalAssetDigest,
     weightedAdapter,
     metadataFile,
+    parityInputFile,
   });
 }
 
@@ -333,6 +349,7 @@ async function main() {
         releaseCommit: RELEASE_COMMIT,
         canonicalAssetDigest: prepared.canonicalAssetDigest,
         geometryMetadataBlobSha: METADATA_BLOB_SHA,
+        fr76ParityInputBlobSha: PARITY_INPUT_BLOB_SHA,
         authorityState: 'manual_research_capture_only',
         rawCapturePersistenceEnabled: false,
         calibrationAuthorized: false,
@@ -343,6 +360,11 @@ async function main() {
 
     if (url.pathname === '/runtime/geometry-metadata.pbtxt') {
       sendFile(response, prepared.metadataFile);
+      return;
+    }
+
+    if (url.pathname === '/runtime/fr76-parity-input.prototxt') {
+      sendFile(response, prepared.parityInputFile);
       return;
     }
 
@@ -403,6 +425,7 @@ async function main() {
         '/fr251/operator.mjs',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
+        '/runtime/fr76-parity-input.prototxt',
         '/runtime/weighted-adapter.json',
         '/face/mesh6h-browser-camera-frame-source.js',
         '/face/mesh6i-manual-browser-capture-controller.js',
@@ -422,6 +445,7 @@ async function main() {
       if (
         config.schemaVersion !== 'mesh6j-localhost-runtime-config-v1'
         || config.transportMode !== (LAN_MODE ? 'private_lan_https' : 'localhost_http')
+        || config.fr76ParityInputBlobSha !== PARITY_INPUT_BLOB_SHA
         || config.rawCapturePersistenceEnabled !== false
         || config.calibrationAuthorized !== false
         || config.productionMorphologyAuthorized !== false
@@ -434,6 +458,7 @@ async function main() {
         privateLanHttps: LAN_MODE,
         requiredRoutesVerified: true,
         exactMetadataVerified: true,
+        exactParityInputVerified: true,
         weightedAdapterRegenerated: true,
         rawCapturePersistenceEnabled: false,
         calibrationAuthorized: false,
