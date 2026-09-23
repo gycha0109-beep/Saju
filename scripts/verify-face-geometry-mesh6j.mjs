@@ -274,27 +274,63 @@ expectIncludes(fr251Client, "signalBootstrap('authority_bootstrap');", 'FR251 mu
 expectExcludes(fr251Client, 'raw.githubusercontent.com', 'FR251 phone runtime must not refetch the parity witness cross-origin after server-side exact verification.');
 
 
-expectIncludes(fr251Page, 'id="attestation-stage"', 'FR251 mobile flow must expose a dedicated pre-shutter attestation stage.');
-expectIncludes(fr251Page, 'id="quality-composite-yes"', 'FR251 mobile flow must expose a single composite quality yes choice.');
-expectIncludes(fr251Page, 'id="quality-composite-no"', 'FR251 mobile flow must expose a single composite quality no choice.');
-expectIncludes(fr251Page, 'id="shutter-stage"', 'FR251 mobile flow must expose a dedicated shutter stage.');
-expectIncludes(fr251Page, 'class="shutter-button"', 'FR251 shutter must be a camera-style visible control.');
-expectIncludes(fr251Page, 'position:fixed;', 'FR251 shutter stage must be fixed to the viewport on mobile.');
+expectIncludes(fr251Page, '촬영을 시작하시겠습니까?', 'FR251 must begin with one explicit capture-start decision.');
+expectIncludes(fr251Page, 'id="start-dry-run"', 'FR251 must expose one explicit capture-start action.');
+expectIncludes(fr251Page, 'id="shutter-stage"', 'FR251 mobile flow must expose the dedicated full-screen shutter stage.');
+expectIncludes(fr251Page, 'id="challenge-ref"', 'FR251 camera UI must present the issued challenge before each shutter.');
+expectIncludes(fr251Page, 'id="shutter" class="shutter-button"', 'FR251 shutter must remain a camera-style explicit control.');
+expectIncludes(fr251Page, 'position:fixed;', 'FR251 shutter stage must remain fixed to the viewport on mobile.');
+expectIncludes(fr251Page, 'id="session-break"', 'FR251 must keep the Session 2 confirmation inside the capture UI.');
+expectIncludes(fr251Page, 'id="begin-session-2"', 'FR251 must expose one explicit Session 2 start action.');
+
 for (const removed of [
+  'data-consent=',
+  'id="attestation-stage"',
+  'id="quality-composite-yes"',
+  'id="quality-composite-no"',
+  'id="challenge-presented"',
+  'id="consent-reconfirmed"',
+  'id="temporal-separation"',
+  'id="back-to-observation"',
   'id="quality-frontal"',
   'id="quality-sharp"',
   'id="quality-visible"',
   'id="quality-occlusion"',
 ]) {
-  expectExcludes(fr251Page, removed, 'FR251 must not expose four separate quality dropdowns after FR256.');
+  expectExcludes(fr251Page, removed, 'FR251 FR259 flow must not expose the superseded checkbox/card attestation UI.');
 }
-expectIncludes(fr251Client, 'qualityCompositeDecision !== true', 'FR251 must block capture unless the composite all-conditions attestation is yes.');
-expectIncludes(fr251Client, "showCaptureStage('shutter')", 'FR251 must transition to the dedicated shutter stage after pre-shutter confirmations.');
-expectIncludes(fr251Client, 'frontalNeutralPoseObserved: true', 'FR251 composite yes must bind the existing FR247 frontal-neutral observation explicitly.');
-expectIncludes(fr251Client, 'bilateralEyeContoursVisuallyResolvable: true', 'FR251 composite yes must bind the existing FR247 eye-contour observation explicitly.');
-expectIncludes(fr251Client, 'bilateralEyeRegionsFullyVisible: true', 'FR251 composite yes must bind the existing FR247 bilateral visibility observation explicitly.');
-expectIncludes(fr251Client, 'majorEyeRegionOcclusionAbsent: true', 'FR251 composite yes must bind the existing FR247 occlusion observation explicitly.');
-expectIncludes(fr251Client, '세부 항목을 임의로 기록하지 않으며 촬영은 차단됩니다.', 'FR251 composite no must fail closed without fabricating detailed FR247 observations.');
+
+expectIncludes(fr251Client, 'studyNoticeRead: true', 'FR251 start action must materialize the disclosed FR240 study notice acknowledgement.');
+expectIncludes(fr251Client, 'voluntaryParticipationConfirmed: true', 'FR251 start action must materialize voluntary participation.');
+expectIncludes(fr251Client, 'liveCameraCaptureConsent: true', 'FR251 start action must materialize live camera consent.');
+expectIncludes(fr251Client, 'withdrawalProcedureAcknowledged: true', 'FR251 start action must preserve withdrawal acknowledgement.');
+expectIncludes(fr251Client, 'consentReconfirmedImmediatelyBeforeCapture: true', 'FR251 shutter action must carry the per-capture consent reconfirmation.');
+expectIncludes(fr251Client, 'challengePresentedBeforeCapture: true', 'FR251 shutter action must bind the visible challenge before capture.');
+expectIncludes(fr251Client, 'frontalNeutralPoseObserved: true', 'FR251 shutter action must preserve FR247 frontal-neutral observation.');
+expectIncludes(fr251Client, 'bilateralEyeContoursVisuallyResolvable: true', 'FR251 shutter action must preserve FR247 eye-contour observation.');
+expectIncludes(fr251Client, 'bilateralEyeRegionsFullyVisible: true', 'FR251 shutter action must preserve FR247 bilateral visibility observation.');
+expectIncludes(fr251Client, 'majorEyeRegionOcclusionAbsent: true', 'FR251 shutter action must preserve FR247 occlusion observation.');
+expectIncludes(fr251Client, "elements.start.addEventListener('click'", 'FR251 camera opening must originate from the explicit start action.');
+expectIncludes(fr251Client, "elements.shutter.addEventListener('click'", 'FR251 capture must originate from the explicit shutter action.');
+expectIncludes(fr251Client, 'elements.sessionBreak.hidden = false', 'FR251 must remain in capture UI at the Session 1/2 boundary.');
+expectIncludes(fr251Client, "elements.beginSession2.addEventListener('click'", 'FR251 Session 2 transition must remain an explicit operator action.');
+expect(
+  fr251Client.indexOf('coordinator.prepareCapture') < fr251Client.indexOf('performance.now()'),
+  'FR251 challenge preparation must occur before the explicit shutter trigger timestamp.',
+);
+
+for (const forbidden of [
+  'qualityCompositeDecision',
+  'showCaptureStage(',
+  'resetCaptureConfirmations(',
+  'consentReady(',
+  'consentInput(',
+  'elements.challengePresented',
+  'elements.consentReconfirmed',
+  'elements.temporalSeparation',
+]) {
+  expectExcludes(fr251Client, forbidden, 'FR251 FR259 client must not retain superseded pre-shutter form state.');
+}
 
 
 expectIncludes(fr251Page, 'id="fr257-result-status"', 'FR251 result view must expose FR257 attribution status.');
@@ -398,9 +434,10 @@ process.stdout.write(JSON.stringify({
   noThresholdOrCalibrationAuthorityVerified: true,
   fr251BrowserStaticModuleGraphVerified: true,
   fr251NodeOnlyTrustChainExcluded: true,
-  fr251SingleCompositeQualityChoiceVerified: true,
+  fr251SingleStartConsentActionVerified: true,
   fr251DedicatedShutterStageVerified: true,
-  fr251CompositeNoFailsClosedVerified: true,
+  fr251ShutterCarriesPerCaptureAttestationVerified: true,
+  fr251Session2CaptureUiContinuityVerified: true,
   fr257SameFrameAttributionVerified: true,
   fr257ScalarOnlyPersistenceVerified: true,
   fr255LongitudinalBundleSurfaceVerified: true,
