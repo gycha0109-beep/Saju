@@ -26,8 +26,6 @@ import { buildProductReadingDelivery } from '../src/reading/product-reading-deli
 import { buildProductReadingResponse } from '../src/reading/product-reading-response.js';
 
 const NOW = '2026-09-23T08:00:00.000Z';
-const SENTINEL = 'NARRATIVE_AUTHORITY_INTRUSION_SENTINEL';
-
 const FIVE_FAMILY_TEN_GODS: TenGodChartFact = {
   year: { stem: resolved('비견'), branch: resolved('정인') },
   month: { stem: resolved('편재'), branch: resolved('정재') },
@@ -115,10 +113,23 @@ const DOMAIN_CASES: readonly DomainCase[] = [
   },
 ];
 
-class SentinelAdapter implements NarrativeModelAdapter {
+class ForbiddenNarrativeAdapter implements NarrativeModelAdapter {
   readonly metadata = {
     provider: 'test-provider',
-    modelId: 'official-reading-consumer-cutover-sentinel',
+    modelId: 'official-reading-zero-model-forbidden',
+  } as const;
+  readonly calls: CompiledNarrativePrompt[] = [];
+
+  async generateStructured(prompt: CompiledNarrativePrompt): Promise<never> {
+    this.calls.push(prompt);
+    throw new Error('NARRATIVE_RUNTIME_MUST_NOT_BE_INVOKED_FOR_OFFICIAL_READING');
+  }
+}
+
+class LegacyNarrativeAdapter implements NarrativeModelAdapter {
+  readonly metadata = {
+    provider: 'test-provider',
+    modelId: 'legacy-narrative-control',
   } as const;
   readonly calls: CompiledNarrativePrompt[] = [];
 
@@ -127,19 +138,7 @@ class SentinelAdapter implements NarrativeModelAdapter {
   async generateStructured(prompt: CompiledNarrativePrompt): Promise<unknown> {
     this.calls.push(prompt);
     if (this.providerError) throw new Error('provider unavailable');
-
-    const draft = buildDeterministicFallbackDraft(prompt.evidence);
-    return {
-      ...draft,
-      sections: draft.sections.map((section) => ({
-        ...section,
-        blocks: section.blocks.map((block) =>
-          block.type === 'assertion'
-            ? { ...block, text: `${SENTINEL}: ${block.text}` }
-            : block,
-        ),
-      })),
-    };
+    return buildDeterministicFallbackDraft(prompt.evidence);
   }
 }
 
@@ -223,7 +222,7 @@ function visibleCanonicalMeanings(
 
 describe('Preview Official Reading consumer authority cutover', () => {
   it.each(DOMAIN_CASES)(
-    '$label delivers Official Reading meaning and blocks Narrative-only prose from the public response',
+    '$label delivers Official Reading with zero Narrative model calls',
     async (candidate) => {
       const currentSnapshot = snapshot(candidate.useFiveFamilyTenGods);
       const registry = candidate.createRegistry(NOW);
@@ -231,7 +230,7 @@ describe('Preview Official Reading consumer authority cutover', () => {
         requestId: `official-cutover-${candidate.label}-interpretation`,
         now: new Date(NOW),
       });
-      const adapter = new SentinelAdapter();
+      const adapter = new ForbiddenNarrativeAdapter();
 
       const execution = await executeProductReading(
         currentSnapshot,
@@ -251,19 +250,22 @@ describe('Preview Official Reading consumer authority cutover', () => {
       expect(execution.officialReadingReport).toBeDefined();
       expect(execution.artifact?.schemaVersion).toBe('myeonghwa-official-reading-artifact-v1');
       expect(execution.artifact?.readingId).toMatch(/^official_reading_/u);
-      expect(execution.narrative).toBeDefined();
-      expect(JSON.stringify(execution.narrative)).toContain(SENTINEL);
-      expect(JSON.stringify(execution.artifact)).not.toContain(SENTINEL);
+      expect(execution.narrative).toBeUndefined();
+      expect(execution.modelCalls).toBe(0);
+      expect(adapter.calls).toHaveLength(0);
+      expect(execution.reasonCodes).toEqual([]);
+      expect(execution.constraints.mayInvokeNarrativeForOfficialReadingAuthority).toBe(false);
+      expect(
+        execution.constraints.mayAssembleLegacyNarrativeArtifactWithoutGroundedNarrative,
+      ).toBe(false);
 
       expect(delivery.state).toBe('delivered');
       expect(delivery.messageCode).toBe('READING_DELIVERED');
       expect(delivery.artifact?.readingId).toBe(execution.artifact?.readingId);
-      expect(JSON.stringify(delivery.artifact)).not.toContain(SENTINEL);
 
       expect(response.state).toBe('delivered');
       expect(response.reading?.readingId).toBe(execution.artifact?.readingId);
       const responseJson = JSON.stringify(response);
-      expect(responseJson).not.toContain(SENTINEL);
 
       const meanings = visibleCanonicalMeanings(execution);
       expect(meanings.length).toBeGreaterThan(0);
@@ -320,20 +322,20 @@ describe('Preview Official Reading consumer authority cutover', () => {
     },
   );
 
-  it('keeps Official consumer delivery normal when Narrative runtime uses deterministic fallback', async () => {
+  it('keeps Official delivery independent from a Narrative adapter that would fail if invoked', async () => {
     const currentSnapshot = snapshot(true);
     const registry = createCareerNatalReadingCandidateRegistry(NOW);
     const interpretation = runInterpretation(currentSnapshot, registry, {
-      requestId: 'official-cutover-career-fallback-interpretation',
+      requestId: 'official-zero-model-career-interpretation',
       now: new Date(NOW),
     });
-    const adapter = new SentinelAdapter(true);
+    const adapter = new ForbiddenNarrativeAdapter();
 
     const execution = await executeProductReading(
       currentSnapshot,
       interpretation,
       registry,
-      { requestId: 'official-cutover-career-fallback', text: '직업운' },
+      { requestId: 'official-zero-model-career', text: '직업운' },
       adapter,
       narrativePolicy,
       executionOptions,
@@ -342,8 +344,10 @@ describe('Preview Official Reading consumer authority cutover', () => {
     const response = buildProductReadingResponse(delivery);
 
     expect(execution.consumerReadingAuthority?.authority).toBe('official_reading');
-    expect(execution.narrative?.outcome).toBe('deterministic_fallback');
-    expect(execution.reasonCodes).toContain('NARRATIVE_RUNTIME_USED_DETERMINISTIC_FALLBACK');
+    expect(execution.narrative).toBeUndefined();
+    expect(execution.modelCalls).toBe(0);
+    expect(adapter.calls).toHaveLength(0);
+    expect(execution.reasonCodes).toEqual([]);
     expect(execution.state).toBe('completed');
     expect(execution.artifact?.schemaVersion).toBe('myeonghwa-official-reading-artifact-v1');
     expect(delivery.state).toBe('delivered');
@@ -361,7 +365,7 @@ describe('Preview Official Reading consumer authority cutover', () => {
       'career',
     );
     const interpretation = executionWithClaims(currentSnapshot, registry, [career]);
-    const adapter = new SentinelAdapter();
+    const adapter = new ForbiddenNarrativeAdapter();
 
     const execution = await executeProductReading(
       currentSnapshot,
@@ -409,7 +413,7 @@ describe('Preview Official Reading consumer authority cutover', () => {
       interpretation,
       registry,
       { requestId: 'legacy-family-fallback', text: '부모운' },
-      new SentinelAdapter(true),
+      new LegacyNarrativeAdapter(true),
       narrativePolicy,
       executionOptions,
     );

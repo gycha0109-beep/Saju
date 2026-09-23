@@ -43,7 +43,7 @@ import {
 import type { ConsumerReadingRequestInput } from './consumer-reading-request-adapter.js';
 
 export const GOVERNED_READING_EXECUTION_VERSION =
-  'myeonghwa-governed-reading-execution-v2';
+  'myeonghwa-governed-reading-execution-v3';
 
 export type GovernedReadingExecutionState =
   | Exclude<ProductReadingPreparationState, 'ready_for_narrative'>
@@ -75,7 +75,8 @@ export interface GovernedReadingExecutionResult {
   reasonCodes: readonly string[];
   constraints: {
     mayInvokeModelWhenPreparationBlocked: false;
-    mayAssembleArtifactWithoutGroundedNarrative: false;
+    mayAssembleLegacyNarrativeArtifactWithoutGroundedNarrative: false;
+    mayInvokeNarrativeForOfficialReadingAuthority: false;
     mayBypassGroundingValidation: false;
     mayRetryBeyondNarrativeRuntimePolicy: false;
     mayFillMissingEvidenceWithLLM: false;
@@ -89,7 +90,8 @@ export interface GovernedReadingExecutionResult {
 
 const EXECUTION_CONSTRAINTS = Object.freeze({
   mayInvokeModelWhenPreparationBlocked: false as const,
-  mayAssembleArtifactWithoutGroundedNarrative: false as const,
+  mayAssembleLegacyNarrativeArtifactWithoutGroundedNarrative: false as const,
+  mayInvokeNarrativeForOfficialReadingAuthority: false as const,
   mayBypassGroundingValidation: false as const,
   mayRetryBeyondNarrativeRuntimePolicy: false as const,
   mayFillMissingEvidenceWithLLM: false as const,
@@ -171,19 +173,17 @@ function officialAuthorityBlockedResult(
   canonicalSemantics: CanonicalReadingSemanticBundleV1,
   officialReadingPlan: OfficialReadingPlanV1,
   officialReadingReport?: OfficialReadingRenderedContentV1,
-  narrative?: NarrativeGenerationResult,
 ): GovernedReadingExecutionResult {
   const state: GovernedReadingExecutionState = 'invariant_blocked';
   const sortedReasonCodes = [...new Set(reasonCodes)].sort();
-  const modelCalls = narrative?.modelCalls ?? 0;
   return {
     executionId: resultIdentity(
       state,
       preparation,
-      modelCalls,
+      0,
       sortedReasonCodes,
       consumerReadingAuthority,
-      narrative,
+      undefined,
       canonicalSemantics,
       officialReadingPlan,
       officialReadingReport,
@@ -191,12 +191,11 @@ function officialAuthorityBlockedResult(
     orchestratorVersion: GOVERNED_READING_EXECUTION_VERSION,
     state,
     preparation,
-    ...(narrative === undefined ? {} : { narrative }),
     canonicalSemantics,
     officialReadingPlan,
     ...(officialReadingReport === undefined ? {} : { officialReadingReport }),
     consumerReadingAuthority,
-    modelCalls,
+    modelCalls: 0,
     reasonCodes: sortedReasonCodes,
     constraints: EXECUTION_CONSTRAINTS,
   };
@@ -274,58 +273,18 @@ export async function executeProductReading(
     ? renderOfficialReadingV1(canonicalSemantics, officialReadingPlan)
     : undefined;
 
-  if (
-    consumerReadingAuthority.authority === 'official_reading' &&
-    officialReadingReport === undefined
-  ) {
-    return officialAuthorityBlockedResult(
-      preparation,
-      consumerReadingAuthority,
-      ['OFFICIAL_READING_REPORT_REQUIRED_FOR_CONSUMER_AUTHORITY'],
-      canonicalSemantics,
-      officialReadingPlan,
-    );
-  }
-
-  const narrative = await generateGroundedNarrative(
-    adapter,
-    preparation.narrativeRequest,
-    narrativePolicy,
-    {
-      ...(options.generationParams === undefined
-        ? {}
-        : { generationParams: options.generationParams }),
-      ...(options.claimNarrativeProfiles === undefined
-        ? {}
-        : { claimNarrativeProfiles: options.claimNarrativeProfiles }),
-      ...(options.narrativeNow === undefined ? {} : { now: options.narrativeNow }),
-    },
-  );
-
-  const narrativeFallbackReasonCodes =
-    narrative.outcome === 'deterministic_fallback'
-      ? ['NARRATIVE_RUNTIME_USED_DETERMINISTIC_FALLBACK']
-      : [];
-
-  let artifact: ReadingArtifact;
-  let state: GovernedReadingExecutionState;
-
   if (consumerReadingAuthority.authority === 'official_reading') {
     if (officialReadingReport === undefined) {
       return officialAuthorityBlockedResult(
         preparation,
         consumerReadingAuthority,
-        [
-          ...narrativeFallbackReasonCodes,
-          'OFFICIAL_READING_REPORT_REQUIRED_FOR_CONSUMER_AUTHORITY',
-        ],
+        ['OFFICIAL_READING_REPORT_REQUIRED_FOR_CONSUMER_AUTHORITY'],
         canonicalSemantics,
         officialReadingPlan,
-        undefined,
-        narrative,
       );
     }
 
+    let artifact: ReadingArtifact;
     try {
       artifact = assembleOfficialReadingArtifactV1(
         snapshot,
@@ -347,33 +306,73 @@ export async function executeProductReading(
       return officialAuthorityBlockedResult(
         preparation,
         consumerReadingAuthority,
-        [
-          ...narrativeFallbackReasonCodes,
-          'OFFICIAL_READING_ARTIFACT_MATERIALIZATION_BLOCKED',
-        ],
+        ['OFFICIAL_READING_ARTIFACT_MATERIALIZATION_BLOCKED'],
         canonicalSemantics,
         officialReadingPlan,
         officialReadingReport,
-        narrative,
       );
     }
 
-    state = 'completed';
-  } else {
-    artifact = assembleReadingArtifact(snapshot, interpretation, narrative, {
-      readingVersion: options.readingVersion,
-      ...(options.displayLabel === undefined ? {} : { displayLabel: options.displayLabel }),
-      ...(options.artifactGeneratedAt === undefined
-        ? {}
-        : { generatedAt: options.artifactGeneratedAt }),
-    });
-    state =
-      narrative.outcome === 'deterministic_fallback'
-        ? 'completed_with_fallback'
-        : 'completed';
+    const state: GovernedReadingExecutionState = 'completed';
+    const reasonCodes: readonly string[] = [];
+    return {
+      executionId: resultIdentity(
+        state,
+        preparation,
+        0,
+        reasonCodes,
+        consumerReadingAuthority,
+        undefined,
+        canonicalSemantics,
+        officialReadingPlan,
+        officialReadingReport,
+        artifact,
+      ),
+      orchestratorVersion: GOVERNED_READING_EXECUTION_VERSION,
+      state,
+      preparation,
+      canonicalSemantics,
+      officialReadingPlan,
+      officialReadingReport,
+      consumerReadingAuthority,
+      artifact,
+      modelCalls: 0,
+      reasonCodes,
+      constraints: EXECUTION_CONSTRAINTS,
+    };
   }
 
-  const reasonCodes = narrativeFallbackReasonCodes;
+  const narrative = await generateGroundedNarrative(
+    adapter,
+    preparation.narrativeRequest,
+    narrativePolicy,
+    {
+      ...(options.generationParams === undefined
+        ? {}
+        : { generationParams: options.generationParams }),
+      ...(options.claimNarrativeProfiles === undefined
+        ? {}
+        : { claimNarrativeProfiles: options.claimNarrativeProfiles }),
+      ...(options.narrativeNow === undefined ? {} : { now: options.narrativeNow }),
+    },
+  );
+
+  const reasonCodes =
+    narrative.outcome === 'deterministic_fallback'
+      ? ['NARRATIVE_RUNTIME_USED_DETERMINISTIC_FALLBACK']
+      : [];
+
+  const artifact = assembleReadingArtifact(snapshot, interpretation, narrative, {
+    readingVersion: options.readingVersion,
+    ...(options.displayLabel === undefined ? {} : { displayLabel: options.displayLabel }),
+    ...(options.artifactGeneratedAt === undefined
+      ? {}
+      : { generatedAt: options.artifactGeneratedAt }),
+  });
+  const state: GovernedReadingExecutionState =
+    narrative.outcome === 'deterministic_fallback'
+      ? 'completed_with_fallback'
+      : 'completed';
 
   return {
     executionId: resultIdentity(
