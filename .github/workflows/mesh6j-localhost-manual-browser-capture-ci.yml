@@ -17,6 +17,8 @@ on:
       - 'tools/face-geometry/capture/fr256-mouth-observation-operator.mjs'
       - 'packages/face-reading/src/observable-morphology-fr142-same-frame-observation-fr256.ts'
       - 'packages/face-reading/src/observable-morphology-fr142-same-frame-observation-fr256.test.ts'
+      - 'packages/face-reading/src/square-broad-fang-neutral-candidate-kernel-fr142-shared.ts'
+      - 'packages/face-reading/src/five-officers-square-broad-fang-neutral-candidate-metric-runtime-fr142.ts'
       - 'research/face-reading/fr256-same-frame-fr142-mouth-candidate-observation.md'
       - 'packages/face-reading/src/observable-morphology-longitudinal-repeatability-observation-fr255.ts'
       - 'packages/face-reading/src/observable-morphology-longitudinal-repeatability-observation-fr255.test.ts'
