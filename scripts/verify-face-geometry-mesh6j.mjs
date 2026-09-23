@@ -281,6 +281,9 @@ expectIncludes(fr251Page, 'id="challenge-ref"', 'FR251 camera UI must present th
 expectIncludes(fr251Page, 'id="challenge-nonce"', 'FR251 camera UI must present the issued challenge nonce before each shutter.');
 expectIncludes(fr251Page, 'id="shutter" class="shutter-button"', 'FR251 shutter must remain a camera-style explicit control.');
 expectIncludes(fr251Page, 'position:fixed;', 'FR251 shutter stage must remain fixed to the viewport on mobile.');
+expectIncludes(fr251Page, 'height:100dvh;', 'FR251 camera stage must occupy the dynamic mobile viewport.');
+expectIncludes(fr251Page, 'object-fit:contain;', 'FR251 live preview must preserve camera-frame aspect ratio instead of cropping to the available control area.');
+expectIncludes(fr251Page, 'position:absolute; z-index:4; left:50%;', 'FR251 shutter controls must overlay the camera instead of consuming vertical layout space.');
 expectIncludes(fr251Page, 'id="session-break"', 'FR251 must keep the Session 2 confirmation inside the capture UI.');
 expectIncludes(fr251Page, 'id="begin-session-2"', 'FR251 must expose one explicit Session 2 start action.');
 
@@ -297,6 +300,9 @@ for (const removed of [
   'id="quality-sharp"',
   'id="quality-visible"',
   'id="quality-occlusion"',
+  'id="shutter-message"',
+  'id="capture-status"',
+  'shutter-attestation',
 ]) {
   expectExcludes(fr251Page, removed, 'FR251 FR259 flow must not expose the superseded checkbox/card attestation UI.');
 }
@@ -439,6 +445,8 @@ process.stdout.write(JSON.stringify({
   fr251DedicatedShutterStageVerified: true,
   fr251ShutterCarriesPerCaptureAttestationVerified: true,
   fr251Session2CaptureUiContinuityVerified: true,
+  fr251CameraViewportDominantVerified: true,
+  fr251AspectRatioPreservedVerified: true,
   fr257SameFrameAttributionVerified: true,
   fr257ScalarOnlyPersistenceVerified: true,
   fr255LongitudinalBundleSurfaceVerified: true,
