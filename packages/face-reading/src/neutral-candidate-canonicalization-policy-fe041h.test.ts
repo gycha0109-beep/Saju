@@ -3,6 +3,7 @@ import {
   FE041H_CANONICALIZATION_REQUIREMENT_KEYS,
   FE041H_CANONICALIZATION_REQUIREMENTS,
   FE041H_NEXT_FRONTIER,
+  FE041H_PRODUCT_SURFACE_CONTRACT_REF,
   FE041H_SATISFIED_REQUIREMENT_KEYS,
   FE041H_UNSATISFIED_REQUIREMENT_KEYS,
   assertIssuedNeutralCandidateCanonicalizationPolicyFE041H,
@@ -10,7 +11,7 @@ import {
 } from './neutral-candidate-canonicalization-policy-fe041h.js';
 
 describe('FE041H neutral candidate canonicalization policy', () => {
-  it('defines exactly eight admission requirements with only three currently satisfied', () => {
+  it('defines exactly eight admission requirements with four currently satisfied', () => {
     const result = issueNeutralCandidateCanonicalizationPolicyFE041H();
     assertIssuedNeutralCandidateCanonicalizationPolicyFE041H(result);
 
@@ -20,12 +21,12 @@ describe('FE041H neutral candidate canonicalization policy', () => {
       requirementCount: 8,
       satisfiedRequirementKeys: FE041H_SATISFIED_REQUIREMENT_KEYS,
       unsatisfiedRequirementKeys: FE041H_UNSATISFIED_REQUIREMENT_KEYS,
-      satisfiedRequirementCount: 3,
-      unsatisfiedRequirementCount: 5,
+      satisfiedRequirementCount: 4,
+      unsatisfiedRequirementCount: 4,
     });
   });
 
-  it('assesses all three FR142 candidates without inventing product-surface contract fields', () => {
+  it('issues the governed FE041H product-surface contract for all three FR142 candidates', () => {
     const result = issueNeutralCandidateCanonicalizationPolicyFE041H();
     expect(result.candidateAssessments).toHaveLength(3);
     expect(result.candidateAssessments.map((entry) => entry.metricRef)).toEqual([
@@ -38,10 +39,11 @@ describe('FE041H neutral candidate canonicalization policy', () => {
       expect(candidate.metricVersion).toBe('0.1.0');
       expect(candidate.sourceSurfaceKey).toBe('neutral.face.lips_contour_set');
       expect(candidate.candidateUnit).toBe('ratio');
-      expect(candidate.productRegionKey).toBeNull();
-      expect(candidate.productPresence).toBeNull();
+      expect(candidate.productRegionKey).toBe('mouth_lips');
+      expect(candidate.productPresence).toBe('required');
       expect(candidate.productUnavailableSurfaceRef).toBeNull();
-      expect(candidate.productSurfaceContractIssued).toBe(false);
+      expect(candidate.productSurfaceContractRef).toBe(FE041H_PRODUCT_SURFACE_CONTRACT_REF);
+      expect(candidate.productSurfaceContractIssued).toBe(true);
       expect(candidate.empiricalRepeatCaptureEstablished).toBe(false);
       expect(candidate.captureQualityAdmissionEvidenceIssued).toBe(false);
       expect(candidate.duplicateAndRedundancyReviewComplete).toBe(false);
