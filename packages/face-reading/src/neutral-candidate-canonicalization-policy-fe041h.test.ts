@@ -40,6 +40,7 @@ describe('FE041H neutral candidate canonicalization policy', () => {
       expect(candidate.sourceSurfaceKey).toBe('neutral.face.lips_contour_set');
       expect(candidate.candidateUnit).toBe('ratio');
       expect(candidate.productRegionKey).toBe('mouth_lips');
+      expect(candidate.productUnit).toBe('ratio');
       expect(candidate.productPresence).toBe('required');
       expect(candidate.productUnavailableSurfaceRef).toBeNull();
       expect(candidate.productSurfaceContractRef).toBe(FE041H_PRODUCT_SURFACE_CONTRACT_REF);
