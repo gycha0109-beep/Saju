@@ -246,10 +246,6 @@ function medianAbsoluteDeviation(values: readonly number[]): number | null {
   return median(values.map((value) => Math.abs(value - center)));
 }
 
-function nullOrFinite(value: number | null): number | null {
-  return value === null ? null : finite(value, 'derived descriptive statistic');
-}
-
 function validateCaptureConditions(
   input: FR255CaptureConditionObservation,
 ): FR255CaptureConditionObservation {
