@@ -144,6 +144,7 @@ describe('FR255 longitudinal repeatability observation bundle', () => {
         [8, 7, 6, 5],
       ),
       baselineParticipantOperatorAttested: true,
+      separateFR251ExecutionOperatorAttested: true,
       captureConditions: conditions(),
     });
 
@@ -174,6 +175,7 @@ describe('FR255 longitudinal repeatability observation bundle', () => {
         [8, 7, 6, 5],
       ),
       baselineParticipantOperatorAttested: true,
+      separateFR251ExecutionOperatorAttested: true,
       captureConditions: conditions(),
     });
     const second = appendLongitudinalRepeatabilityObservationFR255({
@@ -185,6 +187,7 @@ describe('FR255 longitudinal repeatability observation bundle', () => {
       ),
       baselineParticipantOperatorAttested: true,
       sameParticipantAsPreviousOperatorAttested: true,
+      separateFR251ExecutionOperatorAttested: true,
       captureConditions: conditions({ lightingCondition: 'indoor_bright' }),
     });
 
@@ -215,6 +218,7 @@ describe('FR255 longitudinal repeatability observation bundle', () => {
       importedAt: '2026-09-23T03:00:00.000Z',
       sourceFR251: sourceOne,
       baselineParticipantOperatorAttested: true,
+      separateFR251ExecutionOperatorAttested: true,
       captureConditions: conditions(),
     });
 
@@ -224,6 +228,7 @@ describe('FR255 longitudinal repeatability observation bundle', () => {
       sourceFR251: sourceOne,
       baselineParticipantOperatorAttested: true,
       sameParticipantAsPreviousOperatorAttested: true,
+      separateFR251ExecutionOperatorAttested: true,
       captureConditions: conditions(),
     })).toThrow(/same FR251 execution cannot be appended twice/u);
 
@@ -236,6 +241,7 @@ describe('FR255 longitudinal repeatability observation bundle', () => {
       ),
       baselineParticipantOperatorAttested: true,
       sameParticipantAsPreviousOperatorAttested: true,
+      separateFR251ExecutionOperatorAttested: true,
       captureConditions: conditions(),
     })).toThrow(/generatedAt must be later than the current chain head/u);
   });
@@ -249,6 +255,7 @@ describe('FR255 longitudinal repeatability observation bundle', () => {
         [8, 7, 6, 5],
       ),
       baselineParticipantOperatorAttested: true,
+      separateFR251ExecutionOperatorAttested: true,
       captureConditions: conditions(),
     });
     const edited = JSON.parse(JSON.stringify(bundle)) as {
@@ -269,6 +276,7 @@ describe('FR255 longitudinal repeatability observation bundle', () => {
         [8, 7, 6, 5],
       ),
       baselineParticipantOperatorAttested: true,
+      separateFR251ExecutionOperatorAttested: true,
       captureConditions: conditions({
         neutralExpressionOperatorAttested: false,
         frontalPoseOperatorAttested: false,
