@@ -40,11 +40,9 @@ const elements = Object.freeze({
   start: document.querySelector('#start-dry-run'),
   prepStatus: document.querySelector('#prep-status'),
   video: document.querySelector('#camera'),
-  captureStatus: document.querySelector('#capture-status'),
   challengeRef: document.querySelector('#challenge-ref'),
   challengeNonce: document.querySelector('#challenge-nonce'),
   shutterSlotLabel: document.querySelector('#shutter-slot-label'),
-  shutterMessage: document.querySelector('#shutter-message'),
   shutter: document.querySelector('#shutter'),
   cancelShutter: document.querySelector('#cancel-dry-run-shutter'),
   sessionBreak: document.querySelector('#session-break'),
@@ -312,11 +310,6 @@ function prepareNextCapture() {
     'Session ' + challenge.sessionOrdinal + ' · Capture ' + challenge.captureOrdinal;
   elements.challengeRef.textContent = challenge.captureChallengeRef;
   elements.challengeNonce.textContent = 'nonce · ' + challenge.captureNonce;
-  elements.shutterMessage.textContent = '자세를 맞춘 뒤 셔터를 누르십시오.';
-  setStatus(
-    elements.captureStatus,
-    '셔터 입력 자체가 이번 캡처의 challenge 확인·동의 재확인·품질 관찰 확인입니다.',
-  );
   updateShutterButton();
 }
 
@@ -416,13 +409,6 @@ async function captureCurrentSlot() {
       throw new Error('FR257 retained unexpected pending attribution evidence.');
     }
 
-    setStatus(
-      elements.captureStatus,
-      result.fr243Record.resultStatus === 'accepted_for_dry_run_mechanics_only'
-        ? '슬롯 기록 완료: mechanics-only accepted'
-        : '슬롯 기록 완료: rejected (' + result.fr243Record.rejectionReasons.join(', ') + ')',
-    );
-
     if (challenge.captureOrdinal === 1) {
       prepareNextCapture();
       busy = false;
@@ -434,10 +420,6 @@ async function captureCurrentSlot() {
       busy = false;
       elements.sessionBreak.hidden = false;
       elements.beginSession2.disabled = false;
-      setStatus(
-        elements.captureStatus,
-        'Session 1 완료 · 실제로 구분된 Session 2를 시작할 때 확인하십시오.',
-      );
       updateShutterButton();
       return;
     }
