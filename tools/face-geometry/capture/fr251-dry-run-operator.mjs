@@ -25,10 +25,10 @@ import {
   createCaptureGeometryAttributionCollectorFR257,
 } from '/face/observable-morphology-capture-geometry-attribution-fr257.js';
 import {
-  bindSameFrameEyeTiltDiagnosticSlotFR267,
-  buildSameFrameEyeTiltDiagnosticBundleFR267,
-  createSameFrameEyeTiltDiagnosticCollectorFR267,
-} from '/face/observable-morphology-controlled-capture-geometry-sensitivity-fr267.js';
+  bindSameFrameEyeTiltDiagnosticSlotFR269,
+  buildSameFrameEyeTiltDiagnosticBundleFR269,
+  createSameFrameEyeTiltDiagnosticCollectorFR269,
+} from '/face/observable-morphology-controlled-capture-geometry-sensitivity-fr269.js';
 
 const RELEASE_COMMIT = 'f8ef212d5c962c0e853db7e59d217056b187084b';
 const PARITY_INPUT = Object.freeze({
@@ -58,9 +58,9 @@ const elements = Object.freeze({
   fr257ResultJson: document.querySelector('#fr257-result-json'),
   download: document.querySelector('#download-result'),
   downloadFr257: document.querySelector('#download-fr257-result'),
-  fr267ResultStatus: document.querySelector('#fr267-result-status'),
-  fr267ResultJson: document.querySelector('#fr267-result-json'),
-  downloadFr266: document.querySelector('#download-fr267-result'),
+  fr269ResultStatus: document.querySelector('#fr269-result-status'),
+  fr269ResultJson: document.querySelector('#fr269-result-json'),
+  downloadFr269: document.querySelector('#download-fr269-result'),
   restart: document.querySelector('#restart'),
   abortMessage: document.querySelector('#abort-message'),
   reloadAfterAbort: document.querySelector('#reload-after-abort'),
@@ -79,7 +79,7 @@ let geometrySlots = [];
 let finishedFR257Export = null;
 let eyeTiltDiagnosticCollector = null;
 let eyeTiltDiagnosticSlots = [];
-let finishedFR267Export = null;
+let finishedFR269Export = null;
 
 function showView(name) {
   elements.prepView.hidden = name !== 'prep';
@@ -236,7 +236,7 @@ function abortDryRun(message) {
   finishedFR257Export = null;
   eyeTiltDiagnosticCollector = null;
   eyeTiltDiagnosticSlots = [];
-  finishedFR267Export = null;
+  finishedFR269Export = null;
   closeCamera();
   elements.abortMessage.textContent = message;
   showView('abort');
@@ -288,9 +288,9 @@ function materializeAuthorityChain() {
     runtime: fr241,
     frameIntakeRuntime: fr242,
   });
-  eyeTiltDiagnosticCollector = createSameFrameEyeTiltDiagnosticCollectorFR267();
+  eyeTiltDiagnosticCollector = createSameFrameEyeTiltDiagnosticCollectorFR269();
   eyeTiltDiagnosticSlots = [];
-  finishedFR267Export = null;
+  finishedFR269Export = null;
   geometryCollector = createCaptureGeometryAttributionCollectorFR257({
     onEphemeralGeometry: eyeTiltDiagnosticCollector.observe,
   });
@@ -429,18 +429,18 @@ async function captureCurrentSlot() {
     }
 
     if (eyeTiltDiagnosticCollector === null) {
-      throw new Error('FR267 eye-tilt diagnostic collector is unavailable.');
+      throw new Error('FR269 eye-tilt diagnostic collector is unavailable.');
     }
     const eyeTiltDiagnosticEvidence = eyeTiltDiagnosticCollector.takeEvidence(
       result.frame.providerRunRef,
     );
-    eyeTiltDiagnosticSlots.push(bindSameFrameEyeTiltDiagnosticSlotFR267({
+    eyeTiltDiagnosticSlots.push(bindSameFrameEyeTiltDiagnosticSlotFR269({
       record: result.fr243Record,
       providerRunRef: result.frame.providerRunRef,
       evidence: eyeTiltDiagnosticEvidence,
     }));
     if (eyeTiltDiagnosticCollector.pendingEvidenceCount() !== 0) {
-      throw new Error('FR267 retained unexpected pending diagnostic evidence.');
+      throw new Error('FR269 retained unexpected pending diagnostic evidence.');
     }
 
     if (challenge.captureOrdinal === 1) {
@@ -475,7 +475,7 @@ function finishDryRun() {
     || geometryCollector === null
     || eyeTiltDiagnosticCollector === null
   ) {
-    throw new Error('coordinator/FR257/FR267 state is unavailable.');
+    throw new Error('coordinator/FR257/FR269 state is unavailable.');
   }
   if (geometryCollector.pendingEvidenceCount() !== 0) {
     throw new Error('FR257 has unconsumed same-frame evidence.');
@@ -484,10 +484,10 @@ function finishDryRun() {
     throw new Error('FR257 requires exactly four captured slots.');
   }
   if (eyeTiltDiagnosticCollector.pendingEvidenceCount() !== 0) {
-    throw new Error('FR267 has unconsumed same-frame diagnostic evidence.');
+    throw new Error('FR269 has unconsumed same-frame diagnostic evidence.');
   }
   if (eyeTiltDiagnosticSlots.length !== 4) {
-    throw new Error('FR267 requires exactly four diagnostic slots.');
+    throw new Error('FR269 requires exactly four diagnostic slots.');
   }
 
   const review = coordinator.review();
@@ -519,7 +519,7 @@ function finishDryRun() {
     generatedAt,
     slots: geometrySlots,
   });
-  finishedFR267Export = buildSameFrameEyeTiltDiagnosticBundleFR267({
+  finishedFR269Export = buildSameFrameEyeTiltDiagnosticBundleFR269({
     generatedAt,
     slots: eyeTiltDiagnosticSlots,
   });
@@ -545,15 +545,15 @@ function finishDryRun() {
       + finishedFR257Export.descriptiveSummary.geometryAttributionCount
       + ' / 4',
   );
-  elements.fr267ResultJson.textContent = JSON.stringify(
-    finishedFR267Export,
+  elements.fr269ResultJson.textContent = JSON.stringify(
+    finishedFR269Export,
     null,
     2,
   );
   setStatus(
-    elements.fr267ResultStatus,
-    'FR267 screen vs FR76 eye-tilt diagnostic '
-      + finishedFR267Export.descriptiveSummary.acceptedDiagnosticCount
+    elements.fr269ResultStatus,
+    'FR269 screen vs FR76 eye-tilt diagnostic '
+      + finishedFR269Export.descriptiveSummary.acceptedDiagnosticCount
       + ' / 4',
   );
   showView('result');
@@ -589,12 +589,12 @@ function downloadFR257Result() {
   );
 }
 
-function downloadFR267Result() {
-  if (finishedFR267Export === null) return;
+function downloadFR269Result() {
+  if (finishedFR269Export === null) return;
   downloadJson(
-    finishedFR267Export,
-    'myeongha-fr267-eye-tilt-diagnostic-'
-      + finishedFR267Export.generatedAt.replaceAll(':', '-')
+    finishedFR269Export,
+    'myeongha-fr269-eye-tilt-diagnostic-'
+      + finishedFR269Export.generatedAt.replaceAll(':', '-')
       + '.json',
   );
 }
@@ -620,7 +620,7 @@ elements.beginSession2.addEventListener('click', () => {
 });
 elements.download.addEventListener('click', downloadResult);
 elements.downloadFr257.addEventListener('click', downloadFR257Result);
-elements.downloadFr266.addEventListener('click', downloadFR267Result);
+elements.downloadFr269.addEventListener('click', downloadFR269Result);
 elements.restart.addEventListener('click', () => window.location.reload());
 elements.reloadAfterAbort.addEventListener('click', () => window.location.reload());
 window.addEventListener('beforeunload', closeCamera);
