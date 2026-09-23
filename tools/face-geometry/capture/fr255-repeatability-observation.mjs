@@ -82,6 +82,7 @@ async function readJsonFile(file, label) {
     throw new Error(
       label + ' JSON 파싱 실패: '
       + (error instanceof Error ? error.message : String(error)),
+      { cause: error },
     );
   }
   return value;
