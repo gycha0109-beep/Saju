@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { InterpretationClaim } from '../src/contracts/interpretation.js';
-import type { NarrativeEvidenceBundle } from '../src/contracts/narrative.js';
+import {
+  GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
+  type GovernedReadingEvidenceBundleV1,
+} from '../src/reading/governed-reading-evidence.js';
 import {
   assertCanonicalReadingSemanticBundleV1,
   buildCanonicalReadingSemanticBundleV1,
@@ -57,7 +60,7 @@ function targetClaim(): InterpretationClaim {
   };
 }
 
-function evidence(): NarrativeEvidenceBundle {
+function evidence(): GovernedReadingEvidenceBundleV1 {
   return {
     requestId: 'request-1',
     purpose: 'section_reading',
@@ -74,7 +77,7 @@ function evidence(): NarrativeEvidenceBundle {
         relation: 'derived_from',
       },
     ],
-    narrativePolicyVersion: 'preview-1',
+    schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
     constraints: {
       mayRecalculate: false,
       mayInventRules: false,

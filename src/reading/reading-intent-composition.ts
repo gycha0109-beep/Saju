@@ -18,9 +18,9 @@ import {
 } from '../interpretation/rule-registry.js';
 import {
   EvidenceSelectionError,
-  buildNarrativeEvidenceBundle,
-  type BuiltNarrativeEvidenceBundle,
+  buildGovernedReadingEvidenceBundle,
 } from '../narrative/evidence-selector.js';
+import type { BuiltGovernedReadingEvidenceBundleV1 } from './governed-reading-evidence.js';
 
 export const READING_PROFILE_REGISTRY_VERSION = 'myeonghwa-reading-profile-registry-v1';
 const READING_PROFILE_VERSION = '1.0.0';
@@ -37,7 +37,7 @@ export interface ReadingCompositionOptions {
 export interface ReadingCompositionEvidenceResult {
   selection: ReadingEvidenceSelection;
   profile?: DomainReadingProfile;
-  evidence?: BuiltNarrativeEvidenceBundle;
+  evidence?: BuiltGovernedReadingEvidenceBundleV1;
 }
 
 function taxonomySelector(
@@ -652,10 +652,9 @@ export function buildReadingCompositionEvidence(
     };
   }
 
-  const evidence = buildNarrativeEvidenceBundle(snapshot, execution, registry, {
+  const evidence = buildGovernedReadingEvidenceBundle(snapshot, execution, registry, {
     requestId: request.requestId,
     purpose: request.intent.domain === 'question_specific' ? 'question_answer' : 'section_reading',
-    narrativePolicyVersion: options.narrativePolicyVersion,
     targetClaimIds: targets.targetClaimIds,
     ...(request.outputPreferences?.includeSourceSummaries === true
       ? { includeSourceSummaries: true }

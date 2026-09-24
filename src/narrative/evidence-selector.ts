@@ -10,6 +10,11 @@ import type {
   SelectedFact,
   SourceSummary,
 } from '../contracts/narrative.js';
+import {
+  GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
+  type BuiltGovernedReadingEvidenceBundleV1,
+  type GovernedReadingEvidenceBundleV1,
+} from '../reading/governed-reading-evidence.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import {
   deterministicContentHash,
@@ -39,12 +44,15 @@ export class EvidenceSelectionError extends Error {
   }
 }
 
-export interface EvidenceSelectionRequest {
+export interface GovernedEvidenceSelectionRequest {
   requestId: string;
   purpose: NarrativePurpose;
-  narrativePolicyVersion: string;
   targetClaimIds?: readonly string[];
   includeSourceSummaries?: boolean;
+}
+
+export interface EvidenceSelectionRequest extends GovernedEvidenceSelectionRequest {
+  narrativePolicyVersion: string;
 }
 
 export interface BuiltNarrativeEvidenceBundle {
@@ -143,7 +151,7 @@ function activeClaimIndex(
 
 function initialClaimIds(
   execution: InterpretationExecutionResult,
-  request: EvidenceSelectionRequest,
+  request: GovernedEvidenceSelectionRequest,
 ): Set<string> {
   const active = activeClaimIndex(execution);
   if (request.purpose === 'full_reading') return new Set(active.keys());
@@ -347,12 +355,12 @@ function sourceSummaries(
   return summaries;
 }
 
-export function buildNarrativeEvidenceBundle(
+export function buildGovernedReadingEvidenceBundle(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
   registry: ResolvedRuleRegistrySnapshot,
-  request: EvidenceSelectionRequest,
-): BuiltNarrativeEvidenceBundle {
+  request: GovernedEvidenceSelectionRequest,
+): BuiltGovernedReadingEvidenceBundleV1 {
   if (execution.run.snapshotId !== snapshot.snapshotId) {
     throw new EvidenceSelectionError(
       'RUN_SNAPSHOT_MISMATCH',
@@ -375,7 +383,8 @@ export function buildNarrativeEvidenceBundle(
   const canonicalFacts = selectFacts(snapshot, execution, claims);
   const claimRelations = selectRelations(execution, selectedClaimIds);
 
-  const bundle: NarrativeEvidenceBundle = {
+  const bundle: GovernedReadingEvidenceBundleV1 = {
+    schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
     requestId: request.requestId,
     purpose: request.purpose,
     snapshotId: snapshot.snapshotId,
@@ -387,7 +396,6 @@ export function buildNarrativeEvidenceBundle(
     ...(request.includeSourceSummaries === true
       ? { sourceSummaries: sourceSummaries(registry, claims) }
       : {}),
-    narrativePolicyVersion: request.narrativePolicyVersion,
     constraints: {
       mayRecalculate: false,
       mayInventRules: false,
@@ -400,4 +408,36 @@ export function buildNarrativeEvidenceBundle(
     bundle,
     evidenceBundleHash: deterministicContentHash(bundle),
   };
+}
+
+export function buildNarrativeEvidenceBundleFromReadingEvidence(
+  evidence: GovernedReadingEvidenceBundleV1,
+  narrativePolicyVersion: string,
+): BuiltNarrativeEvidenceBundle {
+  if (narrativePolicyVersion.trim().length === 0) {
+    throw new TypeError('narrativePolicyVersion must be a non-empty string.');
+  }
+  const { schemaVersion, ...neutralEvidence } = evidence;
+  void schemaVersion;
+  const bundle: NarrativeEvidenceBundle = {
+    ...neutralEvidence,
+    narrativePolicyVersion,
+  };
+  return {
+    bundle,
+    evidenceBundleHash: deterministicContentHash(bundle),
+  };
+}
+
+export function buildNarrativeEvidenceBundle(
+  snapshot: CanonicalSajuSnapshot,
+  execution: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+  request: EvidenceSelectionRequest,
+): BuiltNarrativeEvidenceBundle {
+  const neutralEvidence = buildGovernedReadingEvidenceBundle(snapshot, execution, registry, request);
+  return buildNarrativeEvidenceBundleFromReadingEvidence(
+    neutralEvidence.bundle,
+    request.narrativePolicyVersion,
+  );
 }

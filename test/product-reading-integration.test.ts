@@ -130,7 +130,19 @@ describe('Product Reading Integration Boundary', () => {
     expect(result.state).toBe('ready_for_narrative');
     expect(result.composition?.selection.coverageState).toBe('complete');
     expect(result.narrativeRequest).toBeDefined();
-    expect(result.narrativeRequest?.evidenceBundle).toEqual(result.composition?.evidence?.bundle);
+    expect(result.composition?.evidence?.bundle).not.toHaveProperty('narrativePolicyVersion');
+    expect(result.narrativeRequest?.evidenceBundle.narrativePolicyVersion).toBe(
+      integrationOptions.narrativePolicyRef.version,
+    );
+    expect(result.narrativeRequest?.evidenceBundle.claims).toEqual(
+      result.composition?.evidence?.bundle.claims,
+    );
+    expect(result.narrativeRequest?.evidenceBundle.canonicalFacts).toEqual(
+      result.composition?.evidence?.bundle.canonicalFacts,
+    );
+    expect(result.narrativeRequest?.evidenceBundle.claimRelations).toEqual(
+      result.composition?.evidence?.bundle.claimRelations,
+    );
     expect(result.deliveryEligibility.narrativeGeneration).toBe('allowed');
     expect(result.deliveryEligibility.artifactAssembly).toBe('allowed_after_grounded_narrative');
   });

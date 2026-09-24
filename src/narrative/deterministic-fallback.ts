@@ -3,9 +3,9 @@ import type {
   NarrativeAssertion,
   NarrativeBlock,
   NarrativeDraft,
-  NarrativeEvidenceBundle,
   NarrativeSection,
 } from '../contracts/narrative.js';
+import type { GovernedReadingEvidenceContentV1 } from '../reading/governed-reading-evidence.js';
 import {
   claimTypesCoveredByNarrativeProfiles,
   renderClaimNarrativeProfileSections,
@@ -56,7 +56,7 @@ function displayValue(value: unknown): string {
   return String(value);
 }
 
-function ambiguityDisclosures(bundle: NarrativeEvidenceBundle): NarrativeBlock[] {
+function ambiguityDisclosures(bundle: GovernedReadingEvidenceContentV1): NarrativeBlock[] {
   return bundle.canonicalFacts
     .filter((fact) => fact.scenarioRef === undefined && fact.fact.status === 'ambiguous')
     .sort((left, right) => left.ref.localeCompare(right.ref))
@@ -68,7 +68,7 @@ function ambiguityDisclosures(bundle: NarrativeEvidenceBundle): NarrativeBlock[]
     }));
 }
 
-function conflictDisclosures(bundle: NarrativeEvidenceBundle): NarrativeBlock[] {
+function conflictDisclosures(bundle: GovernedReadingEvidenceContentV1): NarrativeBlock[] {
   return bundle.claimRelations
     .filter((relation) => relation.relation === 'contradicts')
     .sort((left, right) => left.relationId.localeCompare(right.relationId))
@@ -80,7 +80,7 @@ function conflictDisclosures(bundle: NarrativeEvidenceBundle): NarrativeBlock[] 
     }));
 }
 
-function scopeDisclosures(bundle: NarrativeEvidenceBundle): NarrativeBlock[] {
+function scopeDisclosures(bundle: GovernedReadingEvidenceContentV1): NarrativeBlock[] {
   return bundle.claims
     .filter((claim) => claim.claimType.includes('SCOPE-GUARD'))
     .sort((left, right) => left.claimId.localeCompare(right.claimId))
@@ -92,7 +92,7 @@ function scopeDisclosures(bundle: NarrativeEvidenceBundle): NarrativeBlock[] {
     }));
 }
 
-function claimAssertion(bundle: NarrativeEvidenceBundle['claims'][number]): NarrativeAssertion {
+function claimAssertion(bundle: GovernedReadingEvidenceContentV1['claims'][number]): NarrativeAssertion {
   return {
     type: 'assertion',
     text: `${bundle.subject} / ${bundle.predicate}: ${displayValue(bundle.value)}`,
@@ -103,7 +103,7 @@ function claimAssertion(bundle: NarrativeEvidenceBundle['claims'][number]): Narr
 }
 
 function claimAssertions(
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
   excludedClaimTypes: ReadonlySet<string> = new Set(),
 ): NarrativeBlock[] {
   return bundle.claims
@@ -113,7 +113,7 @@ function claimAssertions(
 }
 
 function fallbackSection(
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
   excludedClaimTypes: ReadonlySet<string> = new Set(),
   allowEmptyTransition = true,
 ): NarrativeSection | undefined {
@@ -140,7 +140,7 @@ function fallbackSection(
 }
 
 export function buildDeterministicFallbackDraft(
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
   profiles: readonly ClaimNarrativeProfile[] = [],
 ): NarrativeDraft {
   if (profiles.length === 0) {
@@ -168,7 +168,7 @@ export function buildDeterministicFallbackDraft(
 }
 
 export function buildValidatedDeterministicFallback(
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
   profiles: readonly ClaimNarrativeProfile[] = [],
 ): DeterministicFallbackResult {
   const draft = buildDeterministicFallbackDraft(bundle, profiles);

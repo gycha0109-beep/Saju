@@ -7,7 +7,8 @@ import {
   type CanonicalSajuSnapshot,
   type InterpretationClaim,
   type InterpretationExecutionResult,
-  type NarrativeEvidenceBundle,
+  GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
+  type GovernedReadingEvidenceBundleV1,
 } from '../src/index.js';
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import {
@@ -86,7 +87,7 @@ function fixture(summary = '실행과 준비가 서로 견제합니다.') {
     integrity: { valid: true, errors: [] },
     evidenceIndex: {},
   };
-  const evidence: NarrativeEvidenceBundle = {
+  const evidence: GovernedReadingEvidenceBundleV1 = {
     requestId: 'official-artifact-reading',
     purpose: 'full_reading',
     snapshotId: currentSnapshot.snapshotId,
@@ -95,7 +96,7 @@ function fixture(summary = '실행과 준비가 서로 견제합니다.') {
     canonicalFacts: [],
     claims: [claim],
     claimRelations: [],
-    narrativePolicyVersion: 'official-reading-artifact-test',
+    schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
     constraints: {
       mayRecalculate: false,
       mayInventRules: false,

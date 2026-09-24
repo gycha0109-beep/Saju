@@ -1,5 +1,5 @@
 import type { TenGod } from '../contracts/calculation.js';
-import type { NarrativeEvidenceBundle } from '../contracts/narrative.js';
+import type { GovernedReadingEvidenceBundleV1 } from '../reading/governed-reading-evidence.js';
 import type { ReadingIntent } from '../contracts/reading.js';
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import {
@@ -23,7 +23,7 @@ export const PREVIEW_SEMANTIC_TEXT_PROJECTION_VERSION =
 export interface PreviewSemanticTextProjectionInputV1 {
   intent: ReadingIntent;
   registry: ResolvedRuleRegistrySnapshot;
-  evidence: NarrativeEvidenceBundle;
+  evidence: GovernedReadingEvidenceBundleV1;
   targetClaimIds: readonly string[];
 }
 

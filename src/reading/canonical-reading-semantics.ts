@@ -1,12 +1,13 @@
 import type { ClaimRelation, InterpretationClaim } from '../contracts/interpretation.js';
-import type { NarrativeEvidenceBundle, SelectedFact } from '../contracts/narrative.js';
+import type { SelectedFact } from '../contracts/narrative.js';
 import type { ReadingIntent } from '../contracts/reading.js';
+import type { GovernedReadingEvidenceBundleV1 } from './governed-reading-evidence.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 
 export const CANONICAL_READING_SEMANTIC_SCHEMA_VERSION =
   'myeonghwa-canonical-reading-semantics-v1' as const;
 export const CANONICAL_READING_SEMANTIC_PROJECTION_VERSION =
-  'myeonghwa-canonical-reading-semantic-projection-v1' as const;
+  'myeonghwa-canonical-reading-semantic-projection-v2' as const;
 
 export type CanonicalReadingSemanticRole = 'primary' | 'supporting';
 
@@ -108,7 +109,7 @@ export interface CanonicalReadingSemanticBundleV1 {
 
 export interface CanonicalReadingSemanticProjectionInputV1 {
   intent: ReadingIntent;
-  evidence: NarrativeEvidenceBundle;
+  evidence: GovernedReadingEvidenceBundleV1;
   targetClaimIds: readonly string[];
   semanticTextBindings?: readonly CanonicalReadingSemanticTextBindingV1[];
   semanticQualifierBindings?: readonly CanonicalReadingSemanticQualifierBindingV1[];
@@ -428,7 +429,7 @@ export function buildCanonicalReadingSemanticBundleV1(
   for (const claimId of targetClaimIds) {
     if (!claimIds.has(claimId)) {
       throw new TypeError(
-        `Canonical Reading target claim is missing from NarrativeEvidenceBundle: ${claimId}`,
+        `Canonical Reading target claim is missing from GovernedReadingEvidenceBundleV1: ${claimId}`,
       );
     }
   }
