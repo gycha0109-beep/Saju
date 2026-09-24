@@ -76,6 +76,7 @@ export * from './provider-conformance-evidence-fr23.js';
 export * from './provider-release-attestation-fr18.js';
 export * from './research-diagnosis-runtime.js';
 export * from './research-pack-v0.js';
+export * from './traditional-three-divisions-source-witnesses-t3.js';
 export * from './semantic-anchor-authority-fr13.js';
 export * from './semantic-anchor-registry-fr13.js';
 export * from './semantic-projection.js';
