@@ -7,6 +7,7 @@ import type {
   NarrativeDraft,
   NarrativeEvidenceBundle,
 } from '../contracts/narrative.js';
+import type { GovernedReadingEvidenceContentV1 } from '../reading/governed-reading-evidence.js';
 
 export type NarrativeGroundingViolationCode =
   | 'REQUEST_ID_MISMATCH'
@@ -58,17 +59,17 @@ function violation(
   });
 }
 
-function claimIndex(bundle: NarrativeEvidenceBundle): ReadonlyMap<string, InterpretationClaim> {
+function claimIndex(bundle: GovernedReadingEvidenceContentV1): ReadonlyMap<string, InterpretationClaim> {
   return new Map(bundle.claims.map((claim) => [claim.claimId, claim]));
 }
 
-function methodologyKeys(bundle: NarrativeEvidenceBundle): ReadonlySet<string> {
+function methodologyKeys(bundle: GovernedReadingEvidenceContentV1): ReadonlySet<string> {
   return new Set(bundle.claims.map((claim) => versionKey(claim.methodologyRef)));
 }
 
 function validateAssertion(
   assertion: NarrativeAssertion,
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
   violations: NarrativeGroundingViolation[],
   sectionId: string,
   blockIndex: number,
@@ -216,7 +217,7 @@ function validateAssertion(
 
 function validateComparison(
   comparison: NarrativeComparison,
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
   violations: NarrativeGroundingViolation[],
   sectionId: string,
   blockIndex: number,
@@ -263,7 +264,7 @@ function validateComparison(
 
 function validateDisclosureRefs(
   block: Extract<NarrativeBlock, { type: 'disclosure' }>,
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
   violations: NarrativeGroundingViolation[],
   sectionId: string,
   blockIndex: number,
@@ -299,7 +300,7 @@ function allDisclosures(draft: NarrativeDraft) {
 
 function enforceMandatoryDisclosures(
   draft: NarrativeDraft,
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
   violations: NarrativeGroundingViolation[],
 ): void {
   const disclosures = allDisclosures(draft);
@@ -351,7 +352,7 @@ function enforceMandatoryDisclosures(
 
 export function validateNarrativeDraftGrounding(
   draft: NarrativeDraft,
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
 ): NarrativeGroundingValidationResult {
   const violations: NarrativeGroundingViolation[] = [];
 
