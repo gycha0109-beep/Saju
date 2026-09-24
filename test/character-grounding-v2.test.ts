@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { InterpretationClaim } from '../src/contracts/interpretation.js';
-import type { NarrativeEvidenceBundle } from '../src/contracts/narrative.js';
+import {
+  GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
+  type GovernedReadingEvidenceBundleV1,
+} from '../src/reading/governed-reading-evidence.js';
 import type { ReadingArtifact } from '../src/contracts/reading.js';
 import {
   buildCanonicalReadingSemanticBundleV1,
@@ -72,7 +75,7 @@ function upstream(): InterpretationClaim {
 }
 
 function semanticBundle(summary = '결과를 빨리 만들려는 축과 더 배우고 검토하려는 축이 서로 견제합니다.') {
-  const evidence: NarrativeEvidenceBundle = {
+  const evidence: GovernedReadingEvidenceBundleV1 = {
     requestId: 'request-1',
     purpose: 'section_reading',
     snapshotId: 'snapshot-1',
@@ -88,7 +91,7 @@ function semanticBundle(summary = '결과를 빨리 만들려는 축과 더 배�
         relation: 'derived_from',
       },
     ],
-    narrativePolicyVersion: 'preview-1',
+    schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
     constraints: {
       mayRecalculate: false,
       mayInventRules: false,
