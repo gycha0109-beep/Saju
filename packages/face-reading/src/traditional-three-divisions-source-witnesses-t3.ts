@@ -104,7 +104,7 @@ export const FACE_TRADITIONAL_T3_SUCCESSOR_PASSAGES = [
     volume: '卷二',
     chapter: '三才三停論',
     originalText:
-      '三才者額為天，鼻為人，頤為地。三停者髮際至印堂為上輔，是初主；自山根至準頭為中輔，是中主；自人中至地閣為下輔，是末主；自髮際至眉為上停，眉至準頭為中停，準頭至地閣為下停。',
+      '三才者額為天。欲闊而圓。名曰有天著貴。鼻為人。欲旺而齊。名曰有人者壽。頤為地。欲方而闊。名曰有地者富。三停者髮際至印堂為上輔。是初主。自山根至準頭為中輔。是中主。自人中至地閣為下輔。是末主。自髮際至眉為上停。眉至準頭為中停。準頭至地閣為下停。',
     normalizedText:
       'Direct NLC-PDF OCR locator only. Exact scan page has not been visually pinned in T3; OCR variants such as 輔/府 and 頤/頦 require page-level checking before promotion.',
     verificationStatus: 'unverified_ocr',
@@ -115,7 +115,7 @@ export const FACE_TRADITIONAL_T3_SUCCESSOR_PASSAGES = [
     volume: '卷五',
     chapter: '論面部',
     originalText:
-      '面之三停，自髮際下至眉間為上停，自眉間至鼻準為中停，自準人中至頤為下停。夫三停者，以像三才也，上像天，中像人，下像地。',
+      '論面部　面之三停白髮際下至眉間為上停自眉間至鼻準為中停自準八中至頤為下停夫三停者以像三才也上像天中像人下像地',
     normalizedText:
       'Direct NLC-PDF OCR locator only. The direct PDF search index supports 頤 for the lower endpoint, while other electronic transcriptions contain OCR variants; exact scan page remains unpinned.',
     verificationStatus: 'unverified_ocr',
