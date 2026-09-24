@@ -236,31 +236,33 @@ export async function executeProductReading(
 
   if (
     preparation.normalization.request === undefined ||
-    preparation.composition === undefined
+    preparation.composition === undefined ||
+    preparation.composition.evidence === undefined
   ) {
     throw new Error(
       'ready_for_narrative preparation requires resolved request and composition evidence.',
     );
   }
 
+  const governedEvidence = preparation.composition.evidence.bundle;
   const consumerReadingAuthority = resolvePreviewConsumerReadingAuthorityV1(
     preparation.normalization.request.intent,
   );
   const semanticTextBindings = buildPreviewSemanticTextBindingsV1({
     intent: preparation.normalization.request.intent,
     registry,
-    evidence: preparation.narrativeRequest.evidenceBundle,
+    evidence: governedEvidence,
     targetClaimIds: preparation.composition.selection.targetClaimIds,
   });
   const semanticQualifierBindings = buildPreviewSemanticQualifierBindingsV1({
     intent: preparation.normalization.request.intent,
     registry,
-    evidence: preparation.narrativeRequest.evidenceBundle,
+    evidence: governedEvidence,
     targetClaimIds: preparation.composition.selection.targetClaimIds,
   });
   const canonicalSemantics = buildCanonicalReadingSemanticBundleV1({
     intent: preparation.normalization.request.intent,
-    evidence: preparation.narrativeRequest.evidenceBundle,
+    evidence: governedEvidence,
     targetClaimIds: preparation.composition.selection.targetClaimIds,
     semanticTextBindings,
     semanticQualifierBindings,
