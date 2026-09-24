@@ -20,7 +20,7 @@ The two FR274 executions were produced from fresh runtime executions over the sa
 - high angle × 2;
 - low angle × 2.
 
-All persisted scalar evidence matched exactly across the two runs. generatedAt is deliberately excluded from the reproducibility comparison.
+All persisted scalar evidence matched exactly across the two runs. `generatedAt` is deliberately excluded from the reproducibility comparison.
 
 This establishes deterministic runtime reuse for these fixed inputs. It does **not** establish live-camera capture repeatability.
 
