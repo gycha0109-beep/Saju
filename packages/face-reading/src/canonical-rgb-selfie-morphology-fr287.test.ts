@@ -80,6 +80,8 @@ describe('FR287 canonical RGB selfie nose cluster', () => {
       'eye.inter_eye_spacing_ratio',
       'eye.outer_corner_tilt',
       'eye.bilateral_shape_asymmetry',
+      'nose.bridge_centerline_deviation',
+      'nose.tip_contour_circularity',
       'mouth.width_and_relative_size',
       'mouth.corner_orientation',
       'mouth.outline_angularity',
@@ -87,8 +89,6 @@ describe('FR287 canonical RGB selfie nose cluster', () => {
       'cheek_midface.visible_contour_prominence',
       'chin_lower_face.visible_width_ratio',
       'chin_lower_face.visible_contour',
-      'nose.bridge_centerline_deviation',
-      'nose.tip_contour_circularity',
     ]);
   });
 
