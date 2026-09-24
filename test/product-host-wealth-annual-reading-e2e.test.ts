@@ -217,7 +217,7 @@ describe('Product Host Wealth Annual reading end-to-end', () => {
         outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
       },
     );
-    expect(preparation.state).toBe('ready_for_narrative');
+    expect(preparation.state).toBe('ready_for_execution');
     expect(preparation.composition?.selection.coverageState).toBe('complete');
     expect(preparation.composition?.selection.profileRef?.id).toBe(
       'myeonghwa-reading-profile-wealth-annual-v1',
