@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>명하 FR279 눈 chord 분해 진단</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "@mediapipe/tasks-vision": "__MEDIAPIPE_ENTRY__"
+    }
+  }
+  </script>
+  <style>
+    :root { font-family: Inter, "Noto Sans KR", system-ui, sans-serif; color:#171717; background:#f5f5f2; }
+    * { box-sizing:border-box; }
+    body { margin:0; }
+    main { width:min(860px, calc(100% - 28px)); margin:24px auto 56px; }
+    h1 { margin:0 0 8px; font-size:28px; }
+    h2 { margin:0 0 10px; font-size:20px; }
+    p { line-height:1.55; }
+    .muted { color:#666; }
+    .card { background:#fff; border:1px solid #ddd; border-radius:18px; padding:22px; margin-top:16px; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    label { display:grid; gap:6px; font-weight:700; }
+    input[type=file] { width:100%; border:1px solid #ccc; border-radius:10px; padding:10px; background:#fafafa; }
+    button { font:inherit; border:0; border-radius:12px; padding:13px 18px; cursor:pointer; background:#171717; color:#fff; }
+    button.secondary { background:#e9e9e5; color:#171717; }
+    button:disabled { opacity:.4; cursor:not-allowed; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+    .status { min-height:24px; margin-top:12px; font-weight:600; }
+    pre { white-space:pre-wrap; word-break:break-word; background:#111; color:#eee; border-radius:12px; padding:16px; max-height:560px; overflow:auto; }
+    [hidden] { display:none !important; }
+    @media (max-width:700px) { .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>FR279 · 고정 정적 이미지 눈 chord 분해</h1>
+    <p class="muted">FR274와 같은 6장 JPG를 같은 MediaPipe/FR76/FR257/FR269 경로로 다시 실행하고, screen-space 눈 chord를 가로 span과 signed 세로 rise scalar로 분해합니다. 원본 이미지·raw landmark·pose matrix·provider ref는 결과 JSON에 저장하지 않습니다.</p>
+    <div id="runtime-status" class="status">runtime 준비 중…</div>
+  </div>
+
+  <div class="card">
+    <h2>고정 입력 6장</h2>
+    <div class="grid">
+      <label>Front 1<input id="front-1" type="file" accept="image/jpeg"></label>
+      <label>Front 2<input id="front-2" type="file" accept="image/jpeg"></label>
+      <label>High 1<input id="high-1" type="file" accept="image/jpeg"></label>
+      <label>High 2<input id="high-2" type="file" accept="image/jpeg"></label>
+      <label>Low 1<input id="low-1" type="file" accept="image/jpeg"></label>
+      <label>Low 2<input id="low-2" type="file" accept="image/jpeg"></label>
+    </div>
+    <div class="actions">
+      <button id="analyze" disabled>6장 분해 분석</button>
+    </div>
+    <div id="analysis-status" class="status"></div>
+  </div>
+
+  <div id="result-card" class="card" hidden>
+    <h2>Scalar-only component report</h2>
+    <pre id="result-json">{}</pre>
+    <div class="actions">
+      <button id="download">FR279 JSON 저장</button>
+      <button id="reset" class="secondary">초기화</button>
+    </div>
+  </div>
+</main>
+<script type="module" src="/fr279/operator.mjs"></script>
+</body>
+</html>
