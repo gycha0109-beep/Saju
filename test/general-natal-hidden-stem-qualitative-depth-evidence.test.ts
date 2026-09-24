@@ -34,6 +34,11 @@ describe('R123 hidden-stem qualitative evidence comparison', () => {
     expect(row?.prohibitedExtensions).toContain(
       'ARRAY_INDEX_ZERO_EQUALS_PRIMARY_HIDDEN_STEM',
     );
+    expect(
+      R123_QUALITATIVE_EVIDENCE_ROWS.every(
+        (item) => item.authorizesSemanticDepthRanking === false,
+      ),
+    ).toBe(true);
     expect(R123_REJECTED_NORMALIZATIONS).toContain(
       'HIDDEN_STEM_ARRAY_ORDER_EQUALS_SEMANTIC_RANK',
     );
@@ -48,7 +53,8 @@ describe('R123 hidden-stem qualitative evidence comparison', () => {
       evidenceType: 'EXACT_PRIMARY_ROLE',
       sourceNature: 'BASE_TEXT',
       generalizability: 'EXACT_EXAMPLE_ONLY',
-      authorizesSemanticDepthRanking: true,
+      authorizesQualitativeRoleDifferentiation: true,
+      authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
     });
@@ -147,7 +153,8 @@ describe('R123 hidden-stem qualitative evidence comparison', () => {
     expect(row).toMatchObject({
       sourceNature: 'LATER_COMMENTARY',
       generalizability: 'EXACT_EXAMPLE_ONLY',
-      authorizesSemanticDepthRanking: true,
+      authorizesQualitativeRoleDifferentiation: true,
+      authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
     });
