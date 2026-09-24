@@ -2,6 +2,7 @@ import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import type { ContentAddressedVersionedRef, VersionedRef } from '../contracts/common.js';
 import type { GroundedNarrativeRequest } from '../contracts/narrative.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
+import { buildNarrativeEvidenceBundleFromReadingEvidence } from '../narrative/evidence-selector.js';
 import {
   deterministicContentHash,
   type ResolvedRuleRegistrySnapshot,
@@ -191,6 +192,10 @@ function buildNarrativeRequest(
   options: ProductReadingIntegrationOptions,
 ): GroundedNarrativeRequest | undefined {
   if (normalization.request === undefined || composition.evidence === undefined) return undefined;
+  const narrativeEvidence = buildNarrativeEvidenceBundleFromReadingEvidence(
+    composition.evidence.bundle,
+    options.narrativePolicyRef.version,
+  );
   const intent = normalization.request.intent;
   const requestedSection =
     intent.relationshipScope === undefined
@@ -199,7 +204,7 @@ function buildNarrativeRequest(
   return {
     requestId: normalization.request.requestId,
     purpose: composition.evidence.bundle.purpose,
-    evidenceBundle: composition.evidence.bundle,
+    evidenceBundle: narrativeEvidence.bundle,
     userRequest: {
       ...(intent.domain === 'question_specific' ? {} : { requestedSection }),
       ...(normalization.request.question === undefined
