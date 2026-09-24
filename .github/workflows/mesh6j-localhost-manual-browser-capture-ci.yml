@@ -113,6 +113,7 @@ jobs:
             .face-reading-dist
             .cache/face-geometry/mesh6j/geometry_pipeline_metadata_landmarks.pbtxt
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 1
       - name: Create ephemeral CI TLS certificate
         run: |
