@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>명하 FR283 FR76 eye-chord propagation</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "@mediapipe/tasks-vision": "__MEDIAPIPE_ENTRY__"
+    }
+  }
+  </script>
+  <style>
+    :root { font-family: Inter,"Noto Sans KR",system-ui,sans-serif; color:#171717; background:#f5f5f2; }
+    * { box-sizing:border-box; }
+    body { margin:0; }
+    main { width:min(900px,calc(100% - 28px)); margin:24px auto 56px; }
+    h1 { margin:0 0 8px; font-size:28px; }
+    h2 { margin:0 0 10px; font-size:20px; }
+    p { line-height:1.55; }
+    .muted { color:#666; }
+    .card { background:#fff; border:1px solid #ddd; border-radius:18px; padding:22px; margin-top:16px; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    label { display:grid; gap:6px; font-weight:700; }
+    input[type=file] { width:100%; border:1px solid #ccc; border-radius:10px; padding:10px; background:#fafafa; }
+    button { font:inherit; border:0; border-radius:12px; padding:13px 18px; cursor:pointer; background:#171717; color:#fff; }
+    button:disabled { opacity:.4; cursor:not-allowed; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+    .status { min-height:24px; margin-top:12px; font-weight:600; }
+    pre { white-space:pre-wrap; word-break:break-word; background:#111; color:#eee; border-radius:12px; padding:16px; max-height:620px; overflow:auto; }
+    [hidden] { display:none !important; }
+    @media (max-width:700px) { .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>FR283 · FR76 eye-chord propagation</h1>
+    <p class="muted">FR279/FR281과 같은 6장 JPG를 사용해 screen → FR76 내부 intermediate → canonical metric까지 눈 chord의 가로 span, signed 세로 rise, angle이 어느 단계에서 변하는지 scalar-only로 추적합니다.</p>
+    <div id="runtime-status" class="status">runtime 준비 중…</div>
+  </div>
+
+  <div class="card">
+    <h2>고정 입력 6장</h2>
+    <div class="grid">
+      <label>Front 1<input id="front-1" type="file" accept="image/jpeg"></label>
+      <label>Front 2<input id="front-2" type="file" accept="image/jpeg"></label>
+      <label>High 1<input id="high-1" type="file" accept="image/jpeg"></label>
+      <label>High 2<input id="high-2" type="file" accept="image/jpeg"></label>
+      <label>Low 1<input id="low-1" type="file" accept="image/jpeg"></label>
+      <label>Low 2<input id="low-2" type="file" accept="image/jpeg"></label>
+    </div>
+    <div class="actions"><button id="analyze" disabled>6장 단계별 추적</button></div>
+    <div id="analysis-status" class="status"></div>
+  </div>
+
+  <div id="result-card" class="card" hidden>
+    <h2>Scalar-only propagation report</h2>
+    <pre id="result-json">{}</pre>
+    <div class="actions"><button id="download">FR283 JSON 저장</button></div>
+  </div>
+</main>
+<script type="module" src="/fr283/operator.mjs"></script>
+</body>
+</html>
