@@ -16,11 +16,6 @@ import type { PersonalizationObservation } from '../src/verification/discriminat
 
 const FIXED_CALCULATION_TIME = new Date('2026-08-28T00:00:00.000Z');
 const FIXED_INTERPRETATION_TIME = new Date('2026-08-28T00:01:00.000Z');
-const INTEGRATION_OPTIONS = {
-  narrativePolicyRef: { id: 'myeonghwa-narrative-policy', version: '1.0.0-benchmark-b' },
-  outputSchemaVersion: 'myeonghwa-narrative-draft-v1',
-} as const;
-
 const BASE_TEN_GODS: TenGodChartFact = {
   year: { stem: resolved('비견'), branch: resolved('정인') },
   month: { stem: resolved('편재'), branch: resolved('정재') },
@@ -132,9 +127,8 @@ function observe(snapshot: CanonicalSajuSnapshot, caseId: string): Personalizati
     execution,
     registry,
     { requestId: caseId, text: '직업운' },
-    INTEGRATION_OPTIONS,
   );
-  if (prepared.state !== 'ready_for_narrative' || prepared.composition === undefined) {
+  if (prepared.state !== 'ready_for_execution' || prepared.composition === undefined) {
     throw new Error(`Expected ready Career selection for ${caseId}; got ${prepared.state}.`);
   }
   const selection = prepared.composition.selection;
