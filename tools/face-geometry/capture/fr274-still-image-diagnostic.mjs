@@ -1,4 +1,4 @@
-/* global Blob, Image, URL, document, fetch, window */
+/* global Blob, File, Image, URL, document, fetch, window */
 
 import { runPhotoToLipsContourNeutralSurfaceFR66 } from '/face/lips-contour-neutral-surface-fr66.js';
 import { assessLipsPoseNormalizationRequirementsFR67 } from '/face/lips-pose-normalization-requirements-fr67.js';
