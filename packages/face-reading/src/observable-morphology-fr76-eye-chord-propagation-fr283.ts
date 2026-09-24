@@ -851,8 +851,10 @@ export function buildFixedStillFR76EyeChordPropagationReportFR283(input: {
   const observations = Object.freeze(input.observations.map((observation) =>
     Object.freeze({
       ...observation,
-      stages: Object.freeze(observation.stages.map((stage) => Object.freeze({ ...stage })))
-        as FR283SameFramePropagationEvidence['stages'],
+      stages: (
+        Object.freeze(observation.stages.map((stage) => Object.freeze({ ...stage })))
+        as FR283SameFramePropagationEvidence['stages']
+      ),
       scales: Object.freeze({ ...observation.scales }),
     })));
 
