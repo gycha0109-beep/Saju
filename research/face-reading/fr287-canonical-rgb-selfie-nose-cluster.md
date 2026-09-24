@@ -81,8 +81,9 @@ The remaining seven are:
 - forehead.relative_surface_curvature
 - eyebrow.span_arch_tail_orientation
 - eyebrow.visible_hair_density_texture
-- eye.eyelid_crease_or_hooded_category
 - ear.visible_boundary_height_shape
-- ear.thickness_attachment_canal_boundary is already represented as unavailable in the FR282 implementation map and remains outside the currently materialized region payload until the ear cluster is added.
+- ear.thickness_attachment_canal_boundary
+
+The eye eyelid/hooded column is already represented in the FR284 eye cluster as an explicit unavailable product feature, so it is not part of the remaining seven.
 
 The next engine step should bind the remaining non-depth geometry/visibility clusters without inventing semantics or restarting general camera research.
