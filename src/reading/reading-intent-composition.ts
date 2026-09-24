@@ -588,6 +588,7 @@ export function buildReadingCompositionEvidence(
   execution: InterpretationExecutionResult,
   registry: ResolvedRuleRegistrySnapshot,
   request: ReadingRequest,
+  _legacyOptions?: unknown,
 ): ReadingCompositionEvidenceResult {
   assertIdentity(snapshot, execution, registry);
 
