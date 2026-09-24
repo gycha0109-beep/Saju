@@ -1,7 +1,6 @@
 import {
   assertIssuedPoseNormalizedLipsGeometryFR79,
   type PoseNormalizedLipsGeometryFR79V1,
-  type PoseNormalizedLipsPointFR79V1,
 } from './pose-normalized-lips-geometry-fr79.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
@@ -16,6 +15,11 @@ export const FR291_VISIBLE_GROOVE_WIDTH_METRIC_REF =
 
 const EPSILON = 1e-12;
 
+export interface FR291VisibleFacePoint2D {
+  readonly x: number;
+  readonly y: number;
+}
+
 export interface FR291VisiblePhiltrumGeometryInput {
   readonly schemaVersion:
     'fr291-visible-philtrum-geometry-input-v1';
@@ -24,12 +28,12 @@ export interface FR291VisiblePhiltrumGeometryInput {
   readonly coordinateFrame: 'pose_normalized_face_2d';
   readonly coordinateUnit: 'centimeter';
   readonly visibleCentralGrooveAxisEndpoints: readonly [
-    PoseNormalizedLipsPointFR79V1,
-    PoseNormalizedLipsPointFR79V1,
+    FR291VisibleFacePoint2D,
+    FR291VisibleFacePoint2D,
   ];
   readonly visibleCorridorWidthPair: readonly [
-    PoseNormalizedLipsPointFR79V1,
-    PoseNormalizedLipsPointFR79V1,
+    FR291VisibleFacePoint2D,
+    FR291VisibleFacePoint2D,
   ];
   readonly visibilityAdmitted: true;
   readonly sameCaptureAsFR79LipsVerified: true;
@@ -168,7 +172,7 @@ function finite(value: number, label: string): number {
 }
 
 function assertPoint(
-  point: PoseNormalizedLipsPointFR79V1,
+  point: FR291VisibleFacePoint2D,
   label: string,
 ): void {
   if (
@@ -180,8 +184,8 @@ function assertPoint(
 }
 
 function distance(
-  a: PoseNormalizedLipsPointFR79V1,
-  b: PoseNormalizedLipsPointFR79V1,
+  a: FR291VisibleFacePoint2D,
+  b: FR291VisibleFacePoint2D,
 ): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
@@ -369,7 +373,7 @@ function unavailable(
 }
 
 function insideHorizontalEnvelope(
-  point: PoseNormalizedLipsPointFR79V1,
+  point: FR291VisibleFacePoint2D,
   reference: FR291VisibleMouthWidthReference,
 ): boolean {
   return (
