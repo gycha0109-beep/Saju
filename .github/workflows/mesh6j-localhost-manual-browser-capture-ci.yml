@@ -64,6 +64,22 @@ jobs:
           python-version: '3.12'
       - name: Install dependencies
         run: npm ci
+      - name: Export pinned FR279 browser runtime assets
+        run: |
+          mkdir -p /tmp/fr279-runtime
+          cp -R node_modules/@mediapipe/tasks-vision /tmp/fr279-runtime/tasks-vision
+          curl -L --fail --retry 3 \
+            https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task \
+            -o /tmp/fr279-runtime/face_landmarker.task
+          echo "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff  /tmp/fr279-runtime/face_landmarker.task" | sha256sum -c -
+          echo "55d7ab624fbb70dcc5adc4ae6d7ea9cfcb569139d3dbfbf2b1deafcb966bc0fe  /tmp/fr279-runtime/tasks-vision/vision_bundle.mjs" | sha256sum -c -
+      - name: Upload pinned FR279 browser runtime assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr279-runtime-assets
+          path: /tmp/fr279-runtime
+          if-no-files-found: error
+          retention-days: 1
       - name: Typecheck Face Reading
         run: npm run face:typecheck
       - name: Build Face Reading
