@@ -1,4 +1,5 @@
 import type { InterpretationClaim } from '../contracts/interpretation.js';
+import type { GovernedReadingEvidenceContentV1 } from '../reading/governed-reading-evidence.js';
 import type {
   ClaimNarrativeProfile,
   NarrativeAssertion,
@@ -295,7 +296,7 @@ function itemMatchesClaim(item: DeterministicNarrativePlanItem, claim: Interpret
 }
 
 export function buildClaimNarrativePlan(
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
   profiles: readonly ClaimNarrativeProfile[],
   language = 'ko',
 ): DeterministicNarrativePlan {
@@ -335,7 +336,7 @@ function profileAssertion(
 }
 
 export function renderClaimNarrativeProfileSections(
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
   profiles: readonly ClaimNarrativeProfile[],
   language = 'ko',
 ): readonly NarrativeSection[] {
@@ -354,7 +355,7 @@ export function renderClaimNarrativeProfileSections(
 }
 
 export function claimTypesCoveredByNarrativeProfiles(
-  bundle: NarrativeEvidenceBundle,
+  bundle: GovernedReadingEvidenceContentV1,
   profiles: readonly ClaimNarrativeProfile[],
 ): ReadonlySet<string> {
   assertProfileSelectionUnambiguous(profiles);
