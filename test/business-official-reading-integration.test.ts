@@ -136,9 +136,7 @@ describe('admitted Business Preview semantics -> Official Reading -> Reader', ()
           domain: 'business',
           temporalScope: 'natal',
         },
-      },
-      { narrativePolicyVersion: 'business-official-reader-fidelity-v1' },
-    );
+      });
 
     expect(composition.selection.coverageState).toBe('complete');
     if (composition.evidence === undefined) {
