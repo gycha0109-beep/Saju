@@ -142,9 +142,7 @@ describe('general natal minimum useful reading research candidate', () => {
       {
         requestId: 'general-natal-useful-synthetic',
         intent: { domain: 'general', temporalScope: 'natal' },
-      },
-      { narrativePolicyVersion: 'general-natal-useful-v1' },
-    );
+      });
     expect(general.selection.coverageState).toBe('complete');
     expect(general.selection.targetClaimIds).toHaveLength(8);
     expect(general.evidence?.bundle.claims.some((claim) => claim.taxonomy.tier === 'T5')).toBe(true);
@@ -156,9 +154,7 @@ describe('general natal minimum useful reading research candidate', () => {
       {
         requestId: 'career-natal-still-unsupported',
         intent: { domain: 'career', temporalScope: 'natal' },
-      },
-      { narrativePolicyVersion: 'general-natal-useful-v1' },
-    );
+      });
     expect(career.selection.coverageState).toBe('insufficient_evidence');
     expect(career.selection.targetClaimIds).toEqual([]);
   });
