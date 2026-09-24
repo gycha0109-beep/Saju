@@ -1,5 +1,5 @@
 import type { InterpretationClaim } from '../contracts/interpretation.js';
-import type { NarrativeEvidenceBundle } from '../contracts/narrative.js';
+import type { GovernedReadingEvidenceContentV1 } from '../reading/governed-reading-evidence.js';
 import { CAREER_NATAL_READING_METHODOLOGY } from './career-natal-reading-candidate.js';
 
 export const CAREER_RESEARCH_PREVIEW_ISOLATION_VERSION = '0.1.0-research' as const;
@@ -46,7 +46,7 @@ function usesCurrentLegacyCareerMethodology(claim: InterpretationClaim): boolean
 }
 
 export function inspectCareerResearchPreviewIsolation(
-  evidence: NarrativeEvidenceBundle,
+  evidence: GovernedReadingEvidenceContentV1,
 ): CareerResearchPreviewIsolationReport {
   const careerClaims = evidence.claims.filter(isActiveCareerT8Claim);
   const legacyClaims = careerClaims.filter(usesCurrentLegacyCareerMethodology);
@@ -74,7 +74,7 @@ export function inspectCareerResearchPreviewIsolation(
 }
 
 export function assertCareerResearchPreviewEvidenceIsolation(
-  evidence: NarrativeEvidenceBundle,
+  evidence: GovernedReadingEvidenceContentV1,
 ): CareerResearchPreviewIsolationReport {
   const report = inspectCareerResearchPreviewIsolation(evidence);
   if (report.state !== 'isolated_legacy_direct_t8') {
