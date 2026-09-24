@@ -112,7 +112,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          export_dir=".fr274-runtime-export"
+          export_dir="fr274-runtime-export"
           rm -rf "$export_dir"
           mkdir -p "$export_dir/face" "$export_dir/cache" "$export_dir/tasks-vision" "$export_dir/capture"
           cp -R .face-reading-dist/. "$export_dir/face/"
@@ -132,6 +132,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: fr274-offline-runtime-export
-          path: .fr274-runtime-export
+          path: fr274-runtime-export
           if-no-files-found: error
           retention-days: 1
