@@ -150,7 +150,7 @@ export const FACE_TRADITIONAL_T6_PACK_CANDIDATE: TraditionalMethodologyPackCandi
         reason:
           'The legacy research-v0 comparison policy is not silently inherited by this successor pack candidate.',
       },
-    ],
+    ] as const,
     lineageIsolationAssertions: [
       'Mayi contiguous 三停 remains distinct from Mayi 三府/三主.',
       'Mayi 三府/三主 remains distinct from Shenyi Fu Gujin transmission 三停 even where span geometry matches.',
@@ -192,7 +192,7 @@ export const FACE_TRADITIONAL_T7_BINDING_HANDOFF_CANDIDATE: TraditionalBindingHa
   Object.freeze({
     handoffId: 'handoff.face.three_divisions.t7_candidate@0.1.0',
     fromPackRef: 'pack.face.three_divisions.t6_candidate@0.1.0',
-    targetTracks: ['face-observation-engine', 'face-reading-binding'],
+    targetTracks: ['face-observation-engine', 'face-reading-binding'] as const,
     requiredObservationRefs: [
       'trad.anchor.hairline',
       'trad.anchor.brow',
