@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { InterpretationClaim } from '../src/contracts/interpretation.js';
-import type { NarrativeEvidenceBundle } from '../src/contracts/narrative.js';
+import {
+  GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
+  type GovernedReadingEvidenceBundleV1,
+} from '../src/reading/governed-reading-evidence.js';
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
@@ -36,7 +39,7 @@ function semantics(summary = '실행과 준비가 서로 견제합니다.') {
     sourceRefs: ['source-1'],
     state: 'active',
   };
-  const evidence: NarrativeEvidenceBundle = {
+  const evidence: GovernedReadingEvidenceBundleV1 = {
     requestId: 'request-1',
     purpose: 'full_reading',
     snapshotId: 'snapshot-1',
@@ -45,7 +48,7 @@ function semantics(summary = '실행과 준비가 서로 견제합니다.') {
     canonicalFacts: [],
     claims: [claim],
     claimRelations: [],
-    narrativePolicyVersion: 'preview-1',
+    schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
     constraints: {
       mayRecalculate: false,
       mayInventRules: false,
