@@ -1,6 +1,6 @@
 # FR283 — Fixed-still FR76 eye-chord propagation trace
 
-Status: implementation complete / empirical rerun pending
+Status: empirical rerun completed / FR76 attenuation stage localized
 
 Watchtower-Track: face-research
 
@@ -148,3 +148,73 @@ FR283 stops after:
 The result should then be handed to the RGB feature-authority / product-column work so only affected observables consume the finding.
 
 FR283 must not continue into a generic camera-correction subsystem.
+
+## Empirical result — 2026-09-24
+
+The exact same six local-only JPEGs were executed twice with fresh Chromium / MediaPipe runtime instances.
+
+Pinned runtime evidence:
+
+- `@mediapipe/tasks-vision@0.10.35`
+- `runningMode = IMAGE`
+- Face Landmarker model SHA-256: `64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff`
+- `vision_bundle.mjs` SHA-256: `55d7ab624fbb70dcc5adc4ae6d7ea9cfcb569139d3dbfbf2b1deafcb966bc0fe`
+- Run A: `2026-09-24T06:20:48.649Z`
+- Run B: `2026-09-24T06:20:59.799Z`
+- all persisted FR283 scalars were identical between runs, excluding `generatedAt`
+- traced final metric geometry matched FR76 for all six inputs
+- traced packed pose matched FR76 for all six inputs
+
+Scalar evidence:
+
+`research/face-reading/evidence/fr283-fixed-still-fr76-eye-chord-propagation/fr283-empirical-evidence.json`
+
+### Low-angle front-relative propagation
+
+| stage | Δ horizontal span | Δ signed vertical rise | Δ eye angle |
+| --- | ---: | ---: | ---: |
+| screen pixels | +2.5032% | -71.9904% | -7.0436° |
+| projected near plane | +2.5032% | -71.9904% | -7.0436° |
+| first intermediate | +2.5032% | -71.9904% | -7.0436° |
+| second intermediate | +4.8669% | -66.2787% | -6.6527° |
+| runtime metric pre-pose | +5.5899% | -66.0789% | -6.6527° |
+| canonical metric post-pose | +5.5552% | -39.4093% | -3.7622° |
+
+### High-angle front-relative propagation
+
+| stage | Δ horizontal span | Δ signed vertical rise | Δ eye angle |
+| --- | ---: | ---: | ---: |
+| screen pixels | -3.0583% | +21.6177% | +2.4226° |
+| projected near plane | -3.0583% | +21.6177% | +2.4226° |
+| first intermediate | -3.0583% | +21.6177% | +2.4226° |
+| second intermediate | +0.4069% | +22.3667% | +2.1136° |
+| runtime metric pre-pose | +1.0501% | +23.1369% | +2.1136° |
+| canonical metric post-pose | +1.0559% | +5.1019% | +0.3539° |
+
+### Descriptive adjudication
+
+The early FR76 projection does not attenuate the observed eye-chord angle deformation. The screen, projected-near-plane, and first-intermediate stages preserve the same front-relative angle and signed-vertical-rise ratio.
+
+The first perspective/depth reconstruction step provides only modest low-angle attenuation:
+
+- signed vertical-rise deficit: -71.9904% -> -66.2787%
+- angle delta: -7.0436° -> -6.6527°
+
+The transition from second intermediate to runtime metric changes scale but leaves the eye angle effectively unchanged, with the low-angle angle delta remaining -6.6527°.
+
+The largest attenuation occurs in the final pose-normalization transition from runtime metric pre-pose to canonical metric post-pose:
+
+- signed vertical-rise deficit: -66.0789% -> -39.4093%
+- angle delta: -6.6527° -> -3.7622°
+
+The high-angle pair shows the same qualitative localization: its pre-pose +2.1136° angle delta is reduced to +0.3539° after canonical pose normalization.
+
+Therefore, within this six-image single-participant diagnostic, the dominant FR76 attenuation of viewpoint-associated eye-chord deformation is localized descriptively to the final canonical pose-normalization stage rather than the initial screen projection.
+
+This does not establish a causal camera model and does not authorize a correction formula, acceptance threshold, metric replacement, or population generalization.
+
+### Handoff
+
+FR283 stops here. The result should be consumed by the RGB-selfie feature authority / product-column track only for observables that depend on viewpoint-sensitive eye geometry.
+
+No generic camera-correction subsystem is opened from FR283.
