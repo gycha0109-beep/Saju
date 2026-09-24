@@ -148,9 +148,7 @@ describe('MyeongHa Wealth Monthly T9 reading candidate', () => {
       natal,
       result.execution,
       result.registry,
-      result.readingRequest,
-      { narrativePolicyVersion: 'myeongha-wealth-monthly-narrative-v1' },
-    );
+      result.readingRequest);
 
     expect(composition.selection.coverageState).toBe('complete');
     expect(composition.selection.missingRequirements).toEqual([]);
