@@ -7,6 +7,9 @@ import {
   type CanonicalReadingSemanticUnitV1,
 } from './canonical-reading-semantics.js';
 import {
+  CHARACTER_GROUNDING_REALIZATION_POLICIES_V1,
+  GROUNDING_AXIS_REGISTRY_V1,
+  GROUNDING_AXIS_REGISTRY_VERSION,
   buildCharacterGroundingBundleV1,
   type CharacterGroundingAmbiguityV1,
   type CharacterGroundingDisclosureV1,
@@ -14,10 +17,17 @@ import {
   type CharacterGroundingRealizationPolicyRef,
   type GroundingAxisKey,
 } from './character-grounding.js';
+import { admitProductReadingResponse } from './product-reading-response-admission.js';
 
-export const CHARACTER_GROUNDING_SCHEMA_VERSION_V2 = 'myeonghwa-character-grounding-v2' as const;
+export const CHARACTER_GROUNDING_SCHEMA_VERSION_V2 =
+  'myeonghwa-character-grounding-v2' as const;
 export const CHARACTER_GROUNDING_PROJECTION_VERSION_V2 =
-  'myeonghwa-character-grounding-projection-v2' as const;
+  'myeonghwa-character-grounding-projection-v3' as const;
+export const CHARACTER_GROUNDING_SEMANTIC_KEY_REGISTRY_VERSION_V1 =
+  'myeonghwa-character-grounding-semantic-key-v1' as const;
+export const CHARACTER_GROUNDING_REALIZATION_POLICY_REGISTRY_VERSION_V1 =
+  'myeonghwa-character-grounding-realization-policy-v1' as const;
+export const CHARACTER_GROUNDING_BUNDLE_REF_SCHEMA_VERSION_V1 = 'v1' as const;
 
 export interface CharacterGroundingUnitV2 {
   unitId: string;
@@ -37,6 +47,10 @@ export interface CharacterGroundingUnitV2 {
 export interface CharacterGroundingBundleV2 {
   schemaVersion: typeof CHARACTER_GROUNDING_SCHEMA_VERSION_V2;
   projectionVersion: typeof CHARACTER_GROUNDING_PROJECTION_VERSION_V2;
+  axisRegistryVersion: typeof GROUNDING_AXIS_REGISTRY_VERSION;
+  semanticKeyRegistryVersion: typeof CHARACTER_GROUNDING_SEMANTIC_KEY_REGISTRY_VERSION_V1;
+  realizationPolicyRegistryVersion:
+    typeof CHARACTER_GROUNDING_REALIZATION_POLICY_REGISTRY_VERSION_V1;
   readingRef: string;
   productResponseVersion: string;
   engineVersion: string;
@@ -55,8 +69,86 @@ export interface CharacterGroundingProjectionInputV2 {
   engineVersion: string;
 }
 
+export interface CharacterGroundingBundleRefV1 {
+  schemaVersion: typeof CHARACTER_GROUNDING_BUNDLE_REF_SCHEMA_VERSION_V1;
+  readingRef: string;
+  groundingHash: string;
+  projectionVersion: typeof CHARACTER_GROUNDING_PROJECTION_VERSION_V2;
+}
+
+const READING_DOMAINS = [
+  'general',
+  'family',
+  'relationship',
+  'compatibility',
+  'career',
+  'business',
+  'wealth',
+  'life_stage',
+  'question_specific',
+] as const satisfies readonly ReadingDomain[];
+
+const NARRATIVE_ROLES = [
+  'primary',
+  'supporting',
+  'tension',
+  'limitation',
+] as const satisfies readonly CharacterGroundingNarrativeRole[];
+
+const REALIZATION_POLICIES = Object.freeze(
+  Object.keys(
+    CHARACTER_GROUNDING_REALIZATION_POLICIES_V1,
+  ) as readonly CharacterGroundingRealizationPolicyRef[],
+);
+
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function assertRecord(
+  value: unknown,
+  field: string,
+): asserts value is Readonly<Record<string, unknown>> {
+  if (!isRecord(value)) throw new TypeError(`${field} must be an object.`);
+}
+
+function assertArray(value: unknown, field: string): asserts value is readonly unknown[] {
+  if (!Array.isArray(value)) throw new TypeError(`${field} must be an array.`);
+}
+
+function assertNonEmptyString(value: unknown, field: string): asserts value is string {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new TypeError(`${field} must be a non-empty string.`);
+  }
+}
+
+function assertHash(value: unknown, field: string): asserts value is string {
+  if (typeof value !== 'string' || !/^[0-9a-f]{64}$/u.test(value)) {
+    throw new TypeError(`${field} must be a lowercase SHA-256 hex digest.`);
+  }
+}
+
+function assertEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  field: string,
+): asserts value is T {
+  if (typeof value !== 'string' || !allowed.includes(value as T)) {
+    throw new TypeError(`${field} is invalid.`);
+  }
+}
+
+function assertUniqueStrings(
+  value: unknown,
+  field: string,
+): asserts value is readonly string[] {
+  assertArray(value, field);
+  const seen = new Set<string>();
+  value.forEach((item, index) => {
+    assertNonEmptyString(item, `${field}[${index}]`);
+    if (seen.has(item)) throw new TypeError(`${field} must not contain duplicates.`);
+    seen.add(item);
+  });
 }
 
 function stringValue(value: unknown, key: string): string | undefined {
@@ -278,6 +370,27 @@ function makeUnit(
   };
 }
 
+function stableSourceResponseHash(response: unknown): string {
+  const admitted = admitProductReadingResponse(response);
+  if (
+    (admitted.state !== 'delivered' && admitted.state !== 'delivered_with_fallback') ||
+    admitted.reading === undefined
+  ) {
+    throw new TypeError(
+      'CharacterGroundingBundleV2 requires a delivered ProductReadingResponse.',
+    );
+  }
+  const { generatedAt, ...stableReading } = admitted.reading;
+  void generatedAt;
+  return deterministicContentHash({
+    responseVersion: admitted.responseVersion,
+    state: admitted.state,
+    messageCode: admitted.messageCode,
+    requiredAction: admitted.requiredAction,
+    reading: stableReading,
+  });
+}
+
 function bundleHashMaterial(
   bundle: Omit<CharacterGroundingBundleV2, 'groundingHash'>,
 ): Omit<CharacterGroundingBundleV2, 'groundingHash'> {
@@ -297,6 +410,7 @@ export function buildCharacterGroundingBundleV2(
     engineVersion: input.engineVersion,
     readingDomain: input.semanticBundle.intent.domain,
   });
+  const sourceResponseHash = stableSourceResponseHash(input.response);
 
   const index = canonicalUnitIndex(input.semanticBundle);
   const targetUnits = input.semanticBundle.targetClaimIds.map((claimId) => {
@@ -338,11 +452,15 @@ export function buildCharacterGroundingBundleV2(
   const withoutHash: Omit<CharacterGroundingBundleV2, 'groundingHash'> = {
     schemaVersion: CHARACTER_GROUNDING_SCHEMA_VERSION_V2,
     projectionVersion: CHARACTER_GROUNDING_PROJECTION_VERSION_V2,
+    axisRegistryVersion: GROUNDING_AXIS_REGISTRY_VERSION,
+    semanticKeyRegistryVersion: CHARACTER_GROUNDING_SEMANTIC_KEY_REGISTRY_VERSION_V1,
+    realizationPolicyRegistryVersion:
+      CHARACTER_GROUNDING_REALIZATION_POLICY_REGISTRY_VERSION_V1,
     readingRef: protectedProjection.readingRef,
     productResponseVersion: protectedProjection.productResponseVersion,
     engineVersion: input.engineVersion,
     readingDomain: input.semanticBundle.intent.domain,
-    sourceResponseHash: protectedProjection.sourceResponseHash,
+    sourceResponseHash,
     sourceSemanticHash: input.semanticBundle.semanticHash,
     units,
     disclosures: protectedProjection.disclosures,
@@ -357,42 +475,226 @@ export function buildCharacterGroundingBundleV2(
   return bundle;
 }
 
+function assertCompanionGraph(units: readonly CharacterGroundingUnitV2[]): void {
+  const byId = new Map(units.map((unit) => [unit.unitId, unit]));
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+
+  const visit = (unitId: string): void => {
+    if (visited.has(unitId)) return;
+    if (visiting.has(unitId)) {
+      throw new TypeError('CharacterGroundingBundleV2 companion graph must be acyclic.');
+    }
+    const unit = byId.get(unitId);
+    if (unit === undefined) {
+      throw new TypeError('CharacterGroundingBundleV2 contains a dangling companion reference.');
+    }
+    visiting.add(unitId);
+    for (const companionRef of unit.requiredCompanionUnitRefs) visit(companionRef);
+    visiting.delete(unitId);
+    visited.add(unitId);
+  };
+
+  units.forEach((unit) => visit(unit.unitId));
+}
+
 export function assertCharacterGroundingBundleV2(
-  value: CharacterGroundingBundleV2,
-): void {
+  value: unknown,
+): asserts value is CharacterGroundingBundleV2 {
+  assertRecord(value, 'CharacterGroundingBundleV2');
   if (value.schemaVersion !== CHARACTER_GROUNDING_SCHEMA_VERSION_V2) {
     throw new TypeError('CharacterGroundingBundleV2.schemaVersion is invalid.');
   }
   if (value.projectionVersion !== CHARACTER_GROUNDING_PROJECTION_VERSION_V2) {
     throw new TypeError('CharacterGroundingBundleV2.projectionVersion is invalid.');
   }
+  if (value.axisRegistryVersion !== GROUNDING_AXIS_REGISTRY_VERSION) {
+    throw new TypeError('CharacterGroundingBundleV2.axisRegistryVersion is invalid.');
+  }
+  if (
+    value.semanticKeyRegistryVersion !==
+    CHARACTER_GROUNDING_SEMANTIC_KEY_REGISTRY_VERSION_V1
+  ) {
+    throw new TypeError('CharacterGroundingBundleV2.semanticKeyRegistryVersion is invalid.');
+  }
+  if (
+    value.realizationPolicyRegistryVersion !==
+    CHARACTER_GROUNDING_REALIZATION_POLICY_REGISTRY_VERSION_V1
+  ) {
+    throw new TypeError(
+      'CharacterGroundingBundleV2.realizationPolicyRegistryVersion is invalid.',
+    );
+  }
+  assertNonEmptyString(value.readingRef, 'CharacterGroundingBundleV2.readingRef');
+  assertNonEmptyString(
+    value.productResponseVersion,
+    'CharacterGroundingBundleV2.productResponseVersion',
+  );
+  assertNonEmptyString(value.engineVersion, 'CharacterGroundingBundleV2.engineVersion');
+  assertEnum(value.readingDomain, READING_DOMAINS, 'CharacterGroundingBundleV2.readingDomain');
+  assertHash(value.sourceResponseHash, 'CharacterGroundingBundleV2.sourceResponseHash');
+  assertHash(value.sourceSemanticHash, 'CharacterGroundingBundleV2.sourceSemanticHash');
+  assertHash(value.groundingHash, 'CharacterGroundingBundleV2.groundingHash');
+
+  assertArray(value.disclosures, 'CharacterGroundingBundleV2.disclosures');
+  const disclosureRefs = new Set<string>();
+  value.disclosures.forEach((disclosure, index) => {
+    const field = `CharacterGroundingBundleV2.disclosures[${index}]`;
+    assertRecord(disclosure, field);
+    assertNonEmptyString(disclosure.disclosureRef, `${field}.disclosureRef`);
+    assertNonEmptyString(disclosure.type, `${field}.type`);
+    assertNonEmptyString(disclosure.text, `${field}.text`);
+    if (
+      !Number.isInteger(disclosure.sourceDisclosureIndex) ||
+      (disclosure.sourceDisclosureIndex as number) < 0
+    ) {
+      throw new RangeError(`${field}.sourceDisclosureIndex must be a non-negative integer.`);
+    }
+    if (disclosureRefs.has(disclosure.disclosureRef)) {
+      throw new TypeError('CharacterGroundingBundleV2 disclosure refs must be unique.');
+    }
+    disclosureRefs.add(disclosure.disclosureRef);
+  });
+
+  assertArray(value.ambiguities, 'CharacterGroundingBundleV2.ambiguities');
+  const ambiguityRefs = new Set<string>();
+  value.ambiguities.forEach((ambiguity, index) => {
+    const field = `CharacterGroundingBundleV2.ambiguities[${index}]`;
+    assertRecord(ambiguity, field);
+    assertNonEmptyString(ambiguity.ambiguityRef, `${field}.ambiguityRef`);
+    assertEnum(ambiguity.kind, ['calculation', 'reading_block'] as const, `${field}.kind`);
+    assertNonEmptyString(ambiguity.sourceRef, `${field}.sourceRef`);
+    assertNonEmptyString(ambiguity.summary, `${field}.summary`);
+    if (ambiguityRefs.has(ambiguity.ambiguityRef)) {
+      throw new TypeError('CharacterGroundingBundleV2 ambiguity refs must be unique.');
+    }
+    ambiguityRefs.add(ambiguity.ambiguityRef);
+  });
+
+  assertArray(value.units, 'CharacterGroundingBundleV2.units');
   if (value.units.length === 0) {
     throw new RangeError('CharacterGroundingBundleV2.units must not be empty.');
   }
 
+  const units: CharacterGroundingUnitV2[] = [];
   const unitIds = new Set<string>();
-  for (const unit of value.units) {
-    if (!/^grounding_unit_v2_[0-9a-f]{24}$/.test(unit.unitId)) {
-      throw new TypeError('CharacterGroundingBundleV2 unitId is invalid.');
+  value.units.forEach((unit, index) => {
+    const field = `CharacterGroundingBundleV2.units[${index}]`;
+    assertRecord(unit, field);
+    if (
+      typeof unit.unitId !== 'string' ||
+      !/^grounding_unit_v2_[0-9a-f]{24}$/u.test(unit.unitId)
+    ) {
+      throw new TypeError(`${field}.unitId is invalid.`);
     }
     if (unitIds.has(unit.unitId)) {
       throw new TypeError('CharacterGroundingBundleV2 unit IDs must be unique.');
     }
+    assertEnum(unit.domain, READING_DOMAINS, `${field}.domain`);
     if (unit.domain !== value.readingDomain) {
-      throw new TypeError('CharacterGroundingBundleV2 unit domain is invalid.');
+      throw new TypeError(`${field}.domain must match bundle readingDomain.`);
     }
-    if (unit.canonicalMeaning.trim().length === 0) {
-      throw new TypeError('CharacterGroundingBundleV2 canonicalMeaning must not be empty.');
+    assertEnum(unit.axis, GROUNDING_AXIS_REGISTRY_V1, `${field}.axis`);
+    assertEnum(unit.narrativeRole, NARRATIVE_ROLES, `${field}.narrativeRole`);
+    assertNonEmptyString(unit.semanticKey, `${field}.semanticKey`);
+    if (!unit.semanticKey.startsWith(`${value.readingDomain}:`)) {
+      throw new TypeError(`${field}.semanticKey is outside the bundle domain.`);
     }
+    assertNonEmptyString(unit.canonicalMeaning, `${field}.canonicalMeaning`);
+    assertUniqueStrings(unit.sourceCanonicalUnitRefs, `${field}.sourceCanonicalUnitRefs`);
     if (unit.sourceCanonicalUnitRefs.length === 0) {
-      throw new TypeError('CharacterGroundingBundleV2 sourceCanonicalUnitRefs must not be empty.');
+      throw new RangeError(`${field}.sourceCanonicalUnitRefs must not be empty.`);
+    }
+    for (const ref of unit.sourceCanonicalUnitRefs) {
+      if (!/^canonical_reading_unit_[0-9a-f]{24}$/u.test(ref)) {
+        throw new TypeError(`${field}.sourceCanonicalUnitRefs contains an invalid ref.`);
+      }
+    }
+    assertUniqueStrings(unit.qualifiers, `${field}.qualifiers`);
+    assertUniqueStrings(unit.prohibitedExtensions, `${field}.prohibitedExtensions`);
+    assertUniqueStrings(
+      unit.requiredCompanionUnitRefs,
+      `${field}.requiredCompanionUnitRefs`,
+    );
+    assertUniqueStrings(unit.requiredDisclosureRefs, `${field}.requiredDisclosureRefs`);
+    assertEnum(
+      unit.realizationPolicyRef,
+      REALIZATION_POLICIES,
+      `${field}.realizationPolicyRef`,
+    );
+    for (const disclosureRef of unit.requiredDisclosureRefs) {
+      if (!disclosureRefs.has(disclosureRef)) {
+        throw new TypeError(`${field} contains a dangling required disclosure reference.`);
+      }
     }
     unitIds.add(unit.unitId);
-  }
+    units.push(unit as unknown as CharacterGroundingUnitV2);
+  });
 
-  const { groundingHash, ...withoutHash } = value;
+  for (const unit of units) {
+    for (const companionRef of unit.requiredCompanionUnitRefs) {
+      if (!unitIds.has(companionRef)) {
+        throw new TypeError(
+          'CharacterGroundingBundleV2 contains a dangling companion reference.',
+        );
+      }
+    }
+  }
+  assertCompanionGraph(units);
+
+  const typed = value as unknown as CharacterGroundingBundleV2;
+  const { groundingHash, ...withoutHash } = typed;
   const expectedHash = deterministicContentHash(bundleHashMaterial(withoutHash));
   if (groundingHash !== expectedHash) {
     throw new TypeError('CharacterGroundingBundleV2.groundingHash is invalid.');
+  }
+}
+
+export function admitCharacterGroundingBundleV2(
+  input: unknown,
+  source: CharacterGroundingProjectionInputV2,
+): CharacterGroundingBundleV2 {
+  assertCharacterGroundingBundleV2(input);
+  const expected = buildCharacterGroundingBundleV2(source);
+  if (deterministicContentHash(input) !== deterministicContentHash(expected)) {
+    throw new TypeError(
+      'CharacterGroundingBundleV2 does not match the admitted Saju source projection.',
+    );
+  }
+  return input;
+}
+
+export function buildCharacterGroundingBundleRefV1(
+  bundle: CharacterGroundingBundleV2,
+): CharacterGroundingBundleRefV1 {
+  assertCharacterGroundingBundleV2(bundle);
+  return {
+    schemaVersion: CHARACTER_GROUNDING_BUNDLE_REF_SCHEMA_VERSION_V1,
+    readingRef: bundle.readingRef,
+    groundingHash: bundle.groundingHash,
+    projectionVersion: bundle.projectionVersion,
+  };
+}
+
+export function assertCharacterGroundingBundleRefV1(
+  value: unknown,
+  bundle?: CharacterGroundingBundleV2,
+): asserts value is CharacterGroundingBundleRefV1 {
+  assertRecord(value, 'CharacterGroundingBundleRefV1');
+  if (value.schemaVersion !== CHARACTER_GROUNDING_BUNDLE_REF_SCHEMA_VERSION_V1) {
+    throw new TypeError('CharacterGroundingBundleRefV1.schemaVersion is invalid.');
+  }
+  assertNonEmptyString(value.readingRef, 'CharacterGroundingBundleRefV1.readingRef');
+  assertHash(value.groundingHash, 'CharacterGroundingBundleRefV1.groundingHash');
+  if (value.projectionVersion !== CHARACTER_GROUNDING_PROJECTION_VERSION_V2) {
+    throw new TypeError('CharacterGroundingBundleRefV1.projectionVersion is invalid.');
+  }
+  if (
+    bundle !== undefined &&
+    (value.readingRef !== bundle.readingRef ||
+      value.groundingHash !== bundle.groundingHash ||
+      value.projectionVersion !== bundle.projectionVersion)
+  ) {
+    throw new TypeError('CharacterGroundingBundleRefV1 does not match grounding bundle.');
   }
 }

@@ -9,9 +9,16 @@ import {
   buildCanonicalReadingSemanticBundleV1,
 } from '../src/reading/canonical-reading-semantics.js';
 import {
+  CHARACTER_GROUNDING_PROJECTION_VERSION_V2,
+  CHARACTER_GROUNDING_REALIZATION_POLICY_REGISTRY_VERSION_V1,
+  CHARACTER_GROUNDING_SEMANTIC_KEY_REGISTRY_VERSION_V1,
+  admitCharacterGroundingBundleV2,
+  assertCharacterGroundingBundleRefV1,
   assertCharacterGroundingBundleV2,
+  buildCharacterGroundingBundleRefV1,
   buildCharacterGroundingBundleV2,
 } from '../src/reading/character-grounding-v2.js';
+import { GROUNDING_AXIS_REGISTRY_VERSION } from '../src/reading/character-grounding.js';
 import type { ProductReadingDeliveryResult } from '../src/reading/product-reading-delivery.js';
 import { buildProductReadingResponse } from '../src/reading/product-reading-response.js';
 
@@ -250,4 +257,121 @@ describe('CharacterGroundingBundleV2', () => {
       }),
     ).toThrow(TypeError);
   });
+
+  it('pins public grounding registries and emits a stable admitted bundle ref', () => {
+    const source = {
+      response: response('보고서 문장'),
+      semanticBundle: semanticBundle(),
+      engineVersion: 'engine-1',
+    };
+    const result = buildCharacterGroundingBundleV2(source);
+    const admitted = admitCharacterGroundingBundleV2(result, source);
+    const ref = buildCharacterGroundingBundleRefV1(admitted);
+
+    expect(result.axisRegistryVersion).toBe(GROUNDING_AXIS_REGISTRY_VERSION);
+    expect(result.semanticKeyRegistryVersion).toBe(
+      CHARACTER_GROUNDING_SEMANTIC_KEY_REGISTRY_VERSION_V1,
+    );
+    expect(result.realizationPolicyRegistryVersion).toBe(
+      CHARACTER_GROUNDING_REALIZATION_POLICY_REGISTRY_VERSION_V1,
+    );
+    expect(ref).toEqual({
+      schemaVersion: 'v1',
+      readingRef: result.readingRef,
+      groundingHash: result.groundingHash,
+      projectionVersion: CHARACTER_GROUNDING_PROJECTION_VERSION_V2,
+    });
+    expect(() => assertCharacterGroundingBundleRefV1(ref, result)).not.toThrow();
+  });
+
+  it('keeps grounding identity independent of transport responseId and generatedAt', () => {
+    const semantics = semanticBundle();
+    const firstResponse = response('보고서 문장');
+    const first = buildCharacterGroundingBundleV2({
+      response: firstResponse,
+      semanticBundle: semantics,
+      engineVersion: 'engine-1',
+    });
+    if (firstResponse.reading === undefined) throw new Error('fixture must contain reading');
+
+    const second = buildCharacterGroundingBundleV2({
+      response: {
+        ...firstResponse,
+        responseId: 'reading_response_fedcba9876543210fedcba98',
+        reading: {
+          ...firstResponse.reading,
+          generatedAt: '2030-01-01T00:00:00.000Z',
+        },
+      },
+      semanticBundle: semantics,
+      engineVersion: 'engine-1',
+    });
+
+    expect(second.sourceResponseHash).toBe(first.sourceResponseHash);
+    expect(second.units).toEqual(first.units);
+    expect(second.groundingHash).toBe(first.groundingHash);
+    expect(buildCharacterGroundingBundleRefV1(second)).toEqual(
+      buildCharacterGroundingBundleRefV1(first),
+    );
+  });
+
+  it('rejects a self-consistent grounding bundle that does not match the admitted Saju source', () => {
+    const sourceA = {
+      response: response('동일한 보고서 문장'),
+      semanticBundle: semanticBundle('의미 A'),
+      engineVersion: 'engine-1',
+    };
+    const sourceB = {
+      response: response('동일한 보고서 문장'),
+      semanticBundle: semanticBundle('의미 B'),
+      engineVersion: 'engine-1',
+    };
+    const bundleA = buildCharacterGroundingBundleV2(sourceA);
+    const bundleB = buildCharacterGroundingBundleV2(sourceB);
+
+    expect(() => admitCharacterGroundingBundleV2(bundleA, sourceA)).not.toThrow();
+    expect(() => admitCharacterGroundingBundleV2(bundleB, sourceA)).toThrow(TypeError);
+  });
+
+  it('rejects registry drift and dangling dependency refs before Reader handoff', () => {
+    const result = buildCharacterGroundingBundleV2({
+      response: response('보고서 문장'),
+      semanticBundle: semanticBundle(),
+      engineVersion: 'engine-1',
+    });
+    const firstUnit = result.units[0];
+    if (firstUnit === undefined) throw new Error('fixture must contain unit');
+
+    expect(() =>
+      assertCharacterGroundingBundleV2({
+        ...result,
+        axisRegistryVersion: 'unknown-axis-registry',
+      }),
+    ).toThrow(TypeError);
+
+    expect(() =>
+      assertCharacterGroundingBundleV2({
+        ...result,
+        units: [
+          {
+            ...firstUnit,
+            requiredDisclosureRefs: ['grounding_disclosure_missing'],
+          },
+        ],
+      }),
+    ).toThrow(TypeError);
+
+    expect(() =>
+      assertCharacterGroundingBundleV2({
+        ...result,
+        units: [
+          {
+            ...firstUnit,
+            requiredCompanionUnitRefs: ['grounding_unit_v2_000000000000000000000000'],
+          },
+        ],
+      }),
+    ).toThrow(TypeError);
+  });
+
 });
