@@ -1,3 +1,4 @@
+import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../src/reading/governed-reading-execution.js';
 import { describe, expect, it } from 'vitest';
 import {
   SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
@@ -102,8 +103,11 @@ function createRelationshipAnnualHost(now: Date) {
       captured.interpretation = interpretation;
       return { registry, interpretation };
     },
-    adapter,
-    narrativePolicy: NARRATIVE_POLICY,
+    legacyNarrativeRuntime: {
+      runtimeVersion: LEGACY_NARRATIVE_RUNTIME_VERSION,
+      adapter,
+      narrativePolicy: NARRATIVE_POLICY,
+    },
     readingOptions: {
       outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
       readingVersion: 'myeongha-relationship-annual-product-host-e2e-v1',

@@ -7,6 +7,7 @@ import type { ConsumerReadingRequestInput } from './consumer-reading-request-ada
 import {
   executeProductReading,
   type GovernedReadingExecutionOptions,
+  type LegacyNarrativeRuntimeV1,
 } from './governed-reading-execution.js';
 import { buildProductReadingDelivery } from './product-reading-delivery.js';
 import {
@@ -14,7 +15,7 @@ import {
   type ProductReadingResponse,
 } from './product-reading-response.js';
 
-export const PRODUCT_READING_SERVICE_VERSION = 'myeonghwa-product-reading-service-v2';
+export const PRODUCT_READING_SERVICE_VERSION = 'myeonghwa-product-reading-service-v3';
 
 export type ProductReadingServiceOptions = GovernedReadingExecutionOptions;
 
@@ -26,7 +27,24 @@ export type ProductReadingServiceOptions = GovernedReadingExecutionOptions;
  * must be handled by the hosting API as operational failures, not reinterpreted
  * as consumer-facing Saju meaning.
  */
-export async function requestProductReading(
+function isNarrativeModelAdapter(value: unknown): value is NarrativeModelAdapter {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as Partial<NarrativeModelAdapter>).generateStructured === 'function'
+  );
+}
+
+export function requestProductReading(
+  snapshot: CanonicalSajuSnapshot,
+  interpretation: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+  input: ConsumerReadingRequestInput,
+  options: ProductReadingServiceOptions,
+  legacyNarrativeRuntime?: LegacyNarrativeRuntimeV1,
+): Promise<ProductReadingResponse>;
+/** @deprecated Use the authority-neutral options + optional LegacyNarrativeRuntimeV1 signature. */
+export function requestProductReading(
   snapshot: CanonicalSajuSnapshot,
   interpretation: InterpretationExecutionResult,
   registry: ResolvedRuleRegistrySnapshot,
@@ -34,15 +52,33 @@ export async function requestProductReading(
   adapter: NarrativeModelAdapter,
   narrativePolicy: NarrativePolicy,
   options: ProductReadingServiceOptions,
+): Promise<ProductReadingResponse>;
+export async function requestProductReading(
+  snapshot: CanonicalSajuSnapshot,
+  interpretation: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+  input: ConsumerReadingRequestInput,
+  optionsOrAdapter: ProductReadingServiceOptions | NarrativeModelAdapter,
+  runtimeOrPolicy?: LegacyNarrativeRuntimeV1 | NarrativePolicy,
+  legacyOptions?: ProductReadingServiceOptions,
 ): Promise<ProductReadingResponse> {
-  const execution = await executeProductReading(
-    snapshot,
-    interpretation,
-    registry,
-    input,
-    adapter,
-    narrativePolicy,
-    options,
-  );
+  const execution = isNarrativeModelAdapter(optionsOrAdapter)
+    ? await executeProductReading(
+        snapshot,
+        interpretation,
+        registry,
+        input,
+        optionsOrAdapter,
+        runtimeOrPolicy as NarrativePolicy,
+        legacyOptions as ProductReadingServiceOptions,
+      )
+    : await executeProductReading(
+        snapshot,
+        interpretation,
+        registry,
+        input,
+        optionsOrAdapter,
+        runtimeOrPolicy as LegacyNarrativeRuntimeV1 | undefined,
+      );
   return buildProductReadingResponse(buildProductReadingDelivery(execution));
 }

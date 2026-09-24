@@ -4,57 +4,13 @@ import {
   SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
   calculateCanonicalSajuSnapshot,
   runInterpretation,
-  type CompiledNarrativePrompt,
-  type NarrativeModelAdapter,
-  type NarrativePolicy,
 } from '../src/index.js';
 import { createMyeonghwaProductHost } from '../src/host/product-host.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import { createGeneralNatalUsefulReadingCandidateRegistry } from '../src/research/general-natal-useful-reading-candidate.js';
 
-const NARRATIVE_POLICY: NarrativePolicy = {
-  policyId: 'myeonghwa-general-natal-vertical-slice-test',
-  version: '1.0.0-test',
-  language: 'ko',
-  certaintyPolicy: {
-    deterministicFacts: 'direct',
-    interpretationClaims: 'method_attributed',
-    contestedClaims: 'explicit_difference',
-    ambiguousFacts: 'explicit_uncertainty',
-    futureClaims: 'non_deterministic',
-  },
-  tone: {
-    style: 'clear',
-    avoidFatalism: true,
-    avoidFearInduction: true,
-  },
-  sensitiveDomains: {
-    health: 'non_diagnostic',
-    finance: 'non_advisory',
-    legal: 'non_advisory',
-    safety: 'no_harmful_direction',
-  },
-  sourceDisclosure: 'internal_only',
-};
-
-class ForbiddenNarrativeAdapter implements NarrativeModelAdapter {
-  readonly metadata = {
-    provider: 'test-provider',
-    modelId: 'test-model',
-    modelRevision: 'general-natal-vertical-slice',
-  } as const;
-
-  readonly calls: CompiledNarrativePrompt[] = [];
-
-  async generateStructured(prompt: CompiledNarrativePrompt): Promise<never> {
-    this.calls.push(prompt);
-    throw new Error('NARRATIVE_RUNTIME_MUST_NOT_BE_INVOKED_FOR_GENERAL_OFFICIAL_READING');
-  }
-}
-
 describe('General Natal product vertical slice', () => {
   it('runs birth input through the General Natal Official Reading path without Narrative runtime', async () => {
-    const adapter = new ForbiddenNarrativeAdapter();
     const host = createMyeonghwaProductHost({
       calculate(input) {
         return calculateCanonicalSajuSnapshot(input, PRODUCTION_DEFAULT_CALCULATION_POLICY, {
@@ -73,8 +29,6 @@ describe('General Natal product vertical slice', () => {
           }),
         };
       },
-      adapter,
-      narrativePolicy: NARRATIVE_POLICY,
       readingOptions: {
         outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
         readingVersion: 'myeonghwa-general-natal-vertical-slice-test-v1',
@@ -100,7 +54,6 @@ describe('General Natal product vertical slice', () => {
     expect(response.reading?.calculationSummary.pillars.day.value).toBeTruthy();
     expect(response.reading?.sections.length).toBeGreaterThan(0);
     expect(response.reading?.readingId).toMatch(/^official_reading_/u);
-    expect(adapter.calls).toHaveLength(0);
     expect(JSON.stringify(response)).toContain('주요 해석');
     expect(JSON.stringify(response)).toContain('해석 범위');
   });

@@ -1,3 +1,4 @@
+import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../src/reading/governed-reading-execution.js';
 import { readFile } from 'node:fs/promises';
 import type { AddressInfo } from 'node:net';
 import { describe, expect, it } from 'vitest';
@@ -101,6 +102,38 @@ function parentsClaim(snapshot: CanonicalSajuSnapshot): InterpretationClaim {
   };
 }
 
+
+function wealthOfficialClaim(snapshot: CanonicalSajuSnapshot): InterpretationClaim {
+  return {
+    claimId: 'claim-product-host-wealth-official',
+    schemaVersion: 'myeonghwa-product-host-test-claim-v1',
+    snapshotId: snapshot.snapshotId,
+    taxonomy: { tier: 'T8', category: 'wealth', subcategory: 'friction' },
+    claimType: 'WEALTH-NATAL-OFFICIAL-NO-LEGACY-RUNTIME',
+    subject: 'wealth',
+    predicate: 'wealth_conclusion',
+    value: {
+      wealthKind: 'friction',
+      headline: '준비와 결과 사이의 긴장',
+      summary: '배움에 더 투자할지 지금 결과를 만들지 사이에서 긴장이 생길 수 있습니다.',
+      futureMoneyTimingAuthorized: false,
+      numericScoringAuthorized: false,
+    },
+    methodologyRef: { id: 'METHOD-PRODUCT-HOST-TEST', version: '1.0.0-test' },
+    ruleRefs: [
+      {
+        ruleId: 'RULE-PRODUCT-HOST-WEALTH-OFFICIAL',
+        version: '1.0.0-test',
+        evaluationId: 'eval-product-host-wealth-official',
+      },
+    ],
+    factRefs: ['pillars.day'],
+    upstreamClaimRefs: [],
+    sourceRefs: [],
+    state: 'active',
+  };
+}
+
 function dependencies(
   claims: (snapshot: CanonicalSajuSnapshot) => readonly InterpretationClaim[] = () => [],
   adapter = new TestNarrativeAdapter(),
@@ -127,8 +160,11 @@ function dependencies(
         },
       };
     },
-    adapter,
-    narrativePolicy: TEST_ONLY_NARRATIVE_POLICY,
+    legacyNarrativeRuntime: {
+      runtimeVersion: LEGACY_NARRATIVE_RUNTIME_VERSION,
+      adapter,
+      narrativePolicy: TEST_ONLY_NARRATIVE_POLICY,
+    },
     readingOptions: {
       outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
       readingVersion: 'myeonghwa-product-host-reading-v1-test',
@@ -216,6 +252,38 @@ describe('Myeonghwa Product Host MVP', () => {
     expect(adapter.calls).toHaveLength(1);
     expect(result).not.toHaveProperty('artifact');
     expect(JSON.stringify(result)).not.toContain('claim-product-host-family-parents');
+  });
+
+
+  it('constructs and delivers an Official-capable host without Legacy Narrative runtime dependencies', async () => {
+    const adapter = new TestNarrativeAdapter();
+    const base = dependencies((snapshot) => [wealthOfficialClaim(snapshot)], adapter);
+    const officialOnlyDependencies = { ...base };
+    delete officialOnlyDependencies.legacyNarrativeRuntime;
+    const host = createMyeonghwaProductHost(officialOnlyDependencies);
+
+    const result = await host.requestReading({
+      ...validBody,
+      reading: { text: '재물운' },
+    });
+
+    expect(result.state).toBe('delivered');
+    expect(result.reading).toBeDefined();
+    expect(adapter.calls).toHaveLength(0);
+  });
+
+  it('fails closed instead of falling back to Official Reading when a Legacy request has no runtime', async () => {
+    const adapter = new TestNarrativeAdapter();
+    const base = dependencies((snapshot) => [parentsClaim(snapshot)], adapter);
+    const legacyWithoutRuntime = { ...base };
+    delete legacyWithoutRuntime.legacyNarrativeRuntime;
+    const host = createMyeonghwaProductHost(legacyWithoutRuntime);
+
+    const result = await host.requestReading(validBody);
+
+    expect(result.state).toBe('temporarily_unavailable');
+    expect(result.reading).toBeUndefined();
+    expect(adapter.calls).toHaveLength(0);
   });
 
   it('serves the static product page with a restrictive script policy', async () => {

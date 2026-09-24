@@ -6,6 +6,7 @@ import {
   createI7SeasonalSupportRegistry,
   executeProductReading,
   runInterpretation,
+  type LegacyNarrativeRuntimeV1,
   type CalculationPolicySnapshot,
   type CanonicalSajuSnapshot,
   type CompiledNarrativePrompt,
@@ -268,6 +269,108 @@ describe('Governed Reading Execution Orchestrator', () => {
     expect(result.modelCalls).toBe(0);
     expect(adapter.calls).toHaveLength(0);
     expect(result.constraints.mayInvokeNarrativeForOfficialReadingAuthority).toBe(false);
+  });
+
+
+  it('executes Official Reading without any Legacy Narrative runtime dependency', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const wealthBase = claim(currentSnapshot.snapshotId, {
+      id: 'claim-wealth-official-no-legacy-runtime',
+      tier: 'T8',
+      category: 'wealth',
+      subcategory: 'friction',
+    });
+    const wealth: InterpretationClaim = {
+      ...wealthBase,
+      predicate: 'wealth_conclusion',
+      value: {
+        wealthKind: 'friction',
+        headline: '준비와 결과 사이의 긴장',
+        summary: '배움에 더 투자할지 지금 결과를 만들지 사이에서 긴장이 생길 수 있습니다.',
+        futureMoneyTimingAuthorized: false,
+        numericScoringAuthorized: false,
+      },
+    };
+
+    const result = await executeProductReading(
+      currentSnapshot,
+      executionWithClaims(currentSnapshot, registry, [wealth]),
+      registry,
+      { requestId: 'execution-official-without-legacy-runtime', text: '재물운' },
+      executionOptions,
+    );
+
+    expect(result.state).toBe('completed');
+    expect(result.consumerReadingAuthority?.authority).toBe('official_reading');
+    expect(result.modelCalls).toBe(0);
+    expect(result.narrative).toBeUndefined();
+    expect(result.artifact?.schemaVersion).toBe('myeonghwa-official-reading-artifact-v1');
+  });
+
+  it('does not inspect a malformed Legacy Narrative runtime for an Official Reading request', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const wealthBase = claim(currentSnapshot.snapshotId, {
+      id: 'claim-wealth-official-ignore-legacy-runtime',
+      tier: 'T8',
+      category: 'wealth',
+      subcategory: 'friction',
+    });
+    const wealth: InterpretationClaim = {
+      ...wealthBase,
+      predicate: 'wealth_conclusion',
+      value: {
+        wealthKind: 'friction',
+        headline: '공식 해석',
+        summary: '공식 해석은 Legacy Narrative 런타임과 독립적으로 생성됩니다.',
+        futureMoneyTimingAuthorized: false,
+        numericScoringAuthorized: false,
+      },
+    };
+    const malformedRuntime = {
+      runtimeVersion: 'invalid-runtime',
+    } as unknown as LegacyNarrativeRuntimeV1;
+
+    const result = await executeProductReading(
+      currentSnapshot,
+      executionWithClaims(currentSnapshot, registry, [wealth]),
+      registry,
+      { requestId: 'execution-official-ignore-malformed-runtime', text: '재물운' },
+      executionOptions,
+      malformedRuntime,
+    );
+
+    expect(result.state).toBe('completed');
+    expect(result.modelCalls).toBe(0);
+    expect(result.narrative).toBeUndefined();
+  });
+
+  it('fails closed with zero model calls when a Legacy request has no Narrative runtime', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const familyParents = claim(currentSnapshot.snapshotId, {
+      id: 'claim-family-parents-no-legacy-runtime',
+      tier: 'T8',
+      category: 'family',
+      subcategory: 'parents',
+    });
+
+    const result = await executeProductReading(
+      currentSnapshot,
+      executionWithClaims(currentSnapshot, registry, [familyParents]),
+      registry,
+      { requestId: 'execution-legacy-without-runtime', text: '부모운' },
+      executionOptions,
+    );
+
+    expect(result.state).toBe('invariant_blocked');
+    expect(result.consumerReadingAuthority?.authority).toBe('legacy_narrative');
+    expect(result.reasonCodes).toEqual(['LEGACY_NARRATIVE_RUNTIME_REQUIRED']);
+    expect(result.modelCalls).toBe(0);
+    expect(result.narrative).toBeUndefined();
+    expect(result.artifact).toBeUndefined();
+    expect(result.constraints.mayFallbackLegacyWithoutNarrativeRuntime).toBe(false);
   });
 
   it('makes zero model calls and creates no artifact for ambiguous input', async () => {

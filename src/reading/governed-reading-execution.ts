@@ -49,7 +49,16 @@ import {
 import type { ConsumerReadingRequestInput } from './consumer-reading-request-adapter.js';
 
 export const GOVERNED_READING_EXECUTION_VERSION =
-  'myeonghwa-governed-reading-execution-v4';
+  'myeonghwa-governed-reading-execution-v5';
+
+export const LEGACY_NARRATIVE_RUNTIME_VERSION =
+  'myeonghwa-legacy-narrative-runtime-v1' as const;
+
+export interface LegacyNarrativeRuntimeV1 {
+  runtimeVersion: typeof LEGACY_NARRATIVE_RUNTIME_VERSION;
+  adapter: NarrativeModelAdapter;
+  narrativePolicy: NarrativePolicy;
+}
 
 export type GovernedReadingExecutionState =
   | Exclude<ProductReadingPreparationState, 'ready_for_execution'>
@@ -91,6 +100,7 @@ export interface GovernedReadingExecutionResult {
     mayUseNarrativeAsOfficialReadingAuthority: false;
     mayFallbackOfficialReadingToLegacyNarrative: false;
     mayOverrideResolvedConsumerReadingAuthority: false;
+    mayFallbackLegacyWithoutNarrativeRuntime: false;
   };
 }
 
@@ -106,6 +116,7 @@ const EXECUTION_CONSTRAINTS = Object.freeze({
   mayUseNarrativeAsOfficialReadingAuthority: false as const,
   mayFallbackOfficialReadingToLegacyNarrative: false as const,
   mayOverrideResolvedConsumerReadingAuthority: false as const,
+  mayFallbackLegacyWithoutNarrativeRuntime: false as const,
 });
 
 function assertExecutionOptions(options: GovernedReadingExecutionOptions): void {
@@ -115,6 +126,71 @@ function assertExecutionOptions(options: GovernedReadingExecutionOptions): void 
   if (options.readingVersion.trim().length === 0) {
     throw new TypeError('readingVersion must be a non-empty string.');
   }
+}
+
+
+function assertLegacyNarrativeRuntimeV1(
+  value: unknown,
+): asserts value is LegacyNarrativeRuntimeV1 {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new TypeError('LegacyNarrativeRuntimeV1 must be an object.');
+  }
+  const runtime = value as Partial<LegacyNarrativeRuntimeV1>;
+  if (runtime.runtimeVersion !== LEGACY_NARRATIVE_RUNTIME_VERSION) {
+    throw new TypeError('LegacyNarrativeRuntimeV1.runtimeVersion is invalid.');
+  }
+  if (typeof runtime.adapter?.generateStructured !== 'function') {
+    throw new TypeError('LegacyNarrativeRuntimeV1.adapter is invalid.');
+  }
+  if (
+    runtime.narrativePolicy === undefined ||
+    typeof runtime.narrativePolicy.policyId !== 'string' ||
+    runtime.narrativePolicy.policyId.trim().length === 0 ||
+    typeof runtime.narrativePolicy.version !== 'string' ||
+    runtime.narrativePolicy.version.trim().length === 0
+  ) {
+    throw new TypeError('LegacyNarrativeRuntimeV1.narrativePolicy is invalid.');
+  }
+}
+
+function isNarrativeModelAdapter(value: unknown): value is NarrativeModelAdapter {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as Partial<NarrativeModelAdapter>).generateStructured === 'function'
+  );
+}
+
+function normalizedExecutionTail(
+  optionsOrAdapter: GovernedReadingExecutionOptions | NarrativeModelAdapter,
+  runtimeOrPolicy: LegacyNarrativeRuntimeV1 | NarrativePolicy | undefined,
+  legacyOptions: GovernedReadingExecutionOptions | undefined,
+): {
+  options: GovernedReadingExecutionOptions;
+  legacyNarrativeRuntime?: LegacyNarrativeRuntimeV1;
+} {
+  if (isNarrativeModelAdapter(optionsOrAdapter)) {
+    if (runtimeOrPolicy === undefined || legacyOptions === undefined) {
+      throw new TypeError(
+        'Legacy executeProductReading signature requires adapter, narrativePolicy, and options.',
+      );
+    }
+    return {
+      options: legacyOptions,
+      legacyNarrativeRuntime: {
+        runtimeVersion: LEGACY_NARRATIVE_RUNTIME_VERSION,
+        adapter: optionsOrAdapter,
+        narrativePolicy: runtimeOrPolicy as NarrativePolicy,
+      },
+    };
+  }
+
+  return {
+    options: optionsOrAdapter,
+    ...(runtimeOrPolicy === undefined
+      ? {}
+      : { legacyNarrativeRuntime: runtimeOrPolicy as LegacyNarrativeRuntimeV1 }),
+  };
 }
 
 function resultIdentity(
@@ -207,6 +283,31 @@ function officialAuthorityBlockedResult(
   };
 }
 
+
+function legacyNarrativeRuntimeBlockedResult(
+  preparation: ProductReadingPreparationResult,
+  consumerReadingAuthority: PreviewConsumerReadingAuthorityResolutionV1,
+): GovernedReadingExecutionResult {
+  const state: GovernedReadingExecutionState = 'invariant_blocked';
+  const reasonCodes = ['LEGACY_NARRATIVE_RUNTIME_REQUIRED'] as const;
+  return {
+    executionId: resultIdentity(
+      state,
+      preparation,
+      0,
+      reasonCodes,
+      consumerReadingAuthority,
+    ),
+    orchestratorVersion: GOVERNED_READING_EXECUTION_VERSION,
+    state,
+    preparation,
+    consumerReadingAuthority,
+    modelCalls: 0,
+    reasonCodes,
+    constraints: EXECUTION_CONSTRAINTS,
+  };
+}
+
 function buildLegacyNarrativeRequest(
   preparation: ProductReadingPreparationResult,
   narrativePolicy: NarrativePolicy,
@@ -246,7 +347,16 @@ function buildLegacyNarrativeRequest(
   };
 }
 
-export async function executeProductReading(
+export function executeProductReading(
+  snapshot: CanonicalSajuSnapshot,
+  interpretation: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+  input: ConsumerReadingRequestInput,
+  options: GovernedReadingExecutionOptions,
+  legacyNarrativeRuntime?: LegacyNarrativeRuntimeV1,
+): Promise<GovernedReadingExecutionResult>;
+/** @deprecated Use the authority-neutral options + optional LegacyNarrativeRuntimeV1 signature. */
+export function executeProductReading(
   snapshot: CanonicalSajuSnapshot,
   interpretation: InterpretationExecutionResult,
   registry: ResolvedRuleRegistrySnapshot,
@@ -254,7 +364,21 @@ export async function executeProductReading(
   adapter: NarrativeModelAdapter,
   narrativePolicy: NarrativePolicy,
   options: GovernedReadingExecutionOptions,
+): Promise<GovernedReadingExecutionResult>;
+export async function executeProductReading(
+  snapshot: CanonicalSajuSnapshot,
+  interpretation: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+  input: ConsumerReadingRequestInput,
+  optionsOrAdapter: GovernedReadingExecutionOptions | NarrativeModelAdapter,
+  runtimeOrPolicy?: LegacyNarrativeRuntimeV1 | NarrativePolicy,
+  legacyOptions?: GovernedReadingExecutionOptions,
 ): Promise<GovernedReadingExecutionResult> {
+  const { options, legacyNarrativeRuntime } = normalizedExecutionTail(
+    optionsOrAdapter,
+    runtimeOrPolicy,
+    legacyOptions,
+  );
   assertExecutionOptions(options);
 
   const preparation = prepareProductReading(
@@ -382,15 +506,23 @@ export async function executeProductReading(
     };
   }
 
+  if (legacyNarrativeRuntime === undefined) {
+    return legacyNarrativeRuntimeBlockedResult(
+      preparation,
+      consumerReadingAuthority,
+    );
+  }
+  assertLegacyNarrativeRuntimeV1(legacyNarrativeRuntime);
+
   const narrativeRequest = buildLegacyNarrativeRequest(
     preparation,
-    narrativePolicy,
+    legacyNarrativeRuntime.narrativePolicy,
     options.outputSchemaVersion,
   );
   const narrative = await generateGroundedNarrative(
-    adapter,
+    legacyNarrativeRuntime.adapter,
     narrativeRequest,
-    narrativePolicy,
+    legacyNarrativeRuntime.narrativePolicy,
     {
       ...(options.generationParams === undefined
         ? {}

@@ -30,3 +30,5 @@ export type {
   ProductReadingResponseSection,
   ProductReadingResponseState,
 } from './reading/product-reading-response.js';
+
+export type { LegacyNarrativeRuntimeV1 } from './reading/governed-reading-execution.js';

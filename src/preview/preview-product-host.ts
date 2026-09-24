@@ -10,6 +10,7 @@ import {
   createMyeonghwaProductHost,
   type MyeonghwaProductHost,
 } from '../host/product-host.js';
+import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../reading/governed-reading-execution.js';
 import {
   runInterpretation,
 } from '../interpretation/interpretation-engine.js';
@@ -500,8 +501,11 @@ export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
         }),
       };
     },
-    adapter: new PreviewE2eNarrativeAdapter(),
-    narrativePolicy: PREVIEW_NARRATIVE_POLICY,
+    legacyNarrativeRuntime: {
+      runtimeVersion: LEGACY_NARRATIVE_RUNTIME_VERSION,
+      adapter: new PreviewE2eNarrativeAdapter(),
+      narrativePolicy: PREVIEW_NARRATIVE_POLICY,
+    },
     readingOptions: {
       outputSchemaVersion: PREVIEW_E2E_OUTPUT_SCHEMA_VERSION,
       readingVersion: PREVIEW_E2E_RUNTIME_VERSION,

@@ -169,6 +169,64 @@ describe('Product Reading Service Facade', () => {
     expect(JSON.stringify(result)).not.toContain('claim-family-parents-service');
   });
 
+
+  it('delivers an Official Reading through the authority-neutral service signature without Legacy runtime', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const wealthBase = claim(
+      currentSnapshot.snapshotId,
+      'claim-wealth-service-official-no-runtime',
+      'T8',
+      'wealth',
+      'friction',
+    );
+    const wealth: InterpretationClaim = {
+      ...wealthBase,
+      predicate: 'wealth_conclusion',
+      value: {
+        wealthKind: 'friction',
+        headline: '준비와 결과 사이의 긴장',
+        summary: '배움에 더 투자할지 지금 결과를 만들지 사이에서 긴장이 생길 수 있습니다.',
+        futureMoneyTimingAuthorized: false,
+        numericScoringAuthorized: false,
+      },
+    };
+
+    const result = await productReadingPublic.requestProductReading(
+      currentSnapshot,
+      interpretationWithClaims(currentSnapshot, registry, [wealth]),
+      registry,
+      { requestId: 'service-official-no-runtime', text: '재물운' },
+      serviceOptions,
+    );
+
+    expect(result.state).toBe('delivered');
+    expect(result.reading).toBeDefined();
+  });
+
+  it('returns temporarily_unavailable for a Legacy request when no Legacy runtime is supplied', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const familyParents = claim(
+      currentSnapshot.snapshotId,
+      'claim-family-parents-service-no-runtime',
+      'T8',
+      'family',
+      'parents',
+    );
+
+    const result = await productReadingPublic.requestProductReading(
+      currentSnapshot,
+      interpretationWithClaims(currentSnapshot, registry, [familyParents]),
+      registry,
+      { requestId: 'service-legacy-no-runtime', text: '부모운' },
+      serviceOptions,
+    );
+
+    expect(result.state).toBe('temporarily_unavailable');
+    expect(result.reading).toBeUndefined();
+  });
+
   it('returns clarification_required and performs zero model calls for ambiguous input', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();

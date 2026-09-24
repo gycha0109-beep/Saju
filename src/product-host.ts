@@ -14,3 +14,5 @@ export {
   createMyeonghwaProductHostServer,
   type MyeonghwaProductHostServerOptions,
 } from './host/http-server.js';
+
+export type { LegacyNarrativeRuntimeV1 } from './reading/governed-reading-execution.js';

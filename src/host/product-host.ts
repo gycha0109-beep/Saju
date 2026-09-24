@@ -5,11 +5,9 @@ import type {
   CanonicalSajuSnapshot,
   SexForTraditionalCalculation,
 } from '../contracts/calculation.js';
-import type { NarrativePolicy } from '../contracts/narrative.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
-import type { NarrativeModelAdapter } from '../llm/model-adapter.js';
 import {
   normalizeConsumerReadingRequest,
   type ConsumerReadingRequestInput,
@@ -24,9 +22,10 @@ import {
   requestProductReading,
   type ProductReadingServiceOptions,
 } from '../reading/product-reading-service.js';
+import type { LegacyNarrativeRuntimeV1 } from '../reading/governed-reading-execution.js';
 import type { ProductReadingResponse } from '../reading/product-reading-response.js';
 
-export const PRODUCT_HOST_VERSION = 'myeonghwa-product-host-v2';
+export const PRODUCT_HOST_VERSION = 'myeonghwa-product-host-v3';
 
 const MAX_READING_TEXT_LENGTH = 200;
 const MAX_TARGET_PERSON_REF_LENGTH = 200;
@@ -90,9 +89,8 @@ export interface MyeonghwaProductHostDependencies {
     context: ProductHostExecutionContext,
     requestContext?: ProductHostInterpretationRequestContext,
   ) => ProductHostInterpretationBundle | Promise<ProductHostInterpretationBundle>;
-  adapter: NarrativeModelAdapter;
-  narrativePolicy: NarrativePolicy;
   readingOptions: ProductReadingServiceOptions;
+  legacyNarrativeRuntime?: LegacyNarrativeRuntimeV1;
   requestIdFactory?: () => string;
   requestNowFactory?: () => Date;
 }
@@ -338,11 +336,8 @@ function temporalInterpretationContext(
 function assertDependencies(dependencies: MyeonghwaProductHostDependencies): void {
   if (typeof dependencies.calculate !== 'function') throw new TypeError('calculate dependency is required.');
   if (typeof dependencies.interpret !== 'function') throw new TypeError('interpret dependency is required.');
-  if (typeof dependencies.adapter?.generateStructured !== 'function') {
-    throw new TypeError('narrative adapter dependency is required.');
-  }
-  if (dependencies.narrativePolicy === undefined || dependencies.readingOptions === undefined) {
-    throw new TypeError('narrativePolicy and readingOptions dependencies are required.');
+  if (dependencies.readingOptions === undefined) {
+    throw new TypeError('readingOptions dependency is required.');
   }
   if (dependencies.requestNowFactory !== undefined && typeof dependencies.requestNowFactory !== 'function') {
     throw new TypeError('requestNowFactory must be a function when provided.');
@@ -373,9 +368,8 @@ export function createMyeonghwaProductHost(
         interpretation,
         registry,
         input,
-        dependencies.adapter,
-        dependencies.narrativePolicy,
         dependencies.readingOptions,
+        dependencies.legacyNarrativeRuntime,
       );
     },
   };
