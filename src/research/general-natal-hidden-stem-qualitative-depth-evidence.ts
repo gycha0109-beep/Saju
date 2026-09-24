@@ -33,7 +33,8 @@ export interface R123QualitativeEvidenceRow {
   directObservation: string;
   qualitativeImplication: string;
   generalizability: R123Generalizability;
-  authorizesSemanticDepthRanking: boolean;
+  authorizesQualitativeRoleDifferentiation: boolean;
+  authorizesSemanticDepthRanking: false;
   authorizesAllBranchMapping: boolean;
   authorizesNumericWeight: boolean;
   authorizesFinalStrength: boolean;
@@ -56,6 +57,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Branch-to-hidden-stem membership is supported as membership only.',
       generalizability: 'BOUNDED_GENERAL',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: true,
       authorizesNumericWeight: false,
@@ -77,6 +79,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Array position is explicitly non-semantic and cannot encode hidden-stem rank, depth, command duration, or strength.',
       generalizability: 'BOUNDED_GENERAL',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -101,7 +104,8 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'The source gives 甲 an exact primary-role description within this 寅 example.',
       generalizability: 'EXACT_EXAMPLE_ONLY',
-      authorizesSemanticDepthRanking: true,
+      authorizesQualitativeRoleDifferentiation: true,
+      authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
       authorizesFinalStrength: false,
@@ -125,6 +129,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Role prominence can change with transparency in this exact source example; static hidden membership alone does not settle active role.',
       generalizability: 'EXACT_EXAMPLE_ONLY',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -148,7 +153,8 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'The passage supports qualitative role differentiation inside one branch example without yielding a universal three-level ranking table.',
       generalizability: 'EXACT_EXAMPLE_ONLY',
-      authorizesSemanticDepthRanking: true,
+      authorizesQualitativeRoleDifferentiation: true,
+      authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
       authorizesFinalStrength: false,
@@ -170,6 +176,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Exact 寅 evidence cannot be promoted into a repository-wide primary mapping.',
       generalizability: 'UNRESOLVED',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -193,6 +200,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'A three-level hidden-stem depth ontology remains unadmitted.',
       generalizability: 'UNRESOLVED',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -213,6 +221,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Temporal command sequencing is qualitatively observable as a distinct evidence axis from static membership.',
       generalizability: 'BOUNDED_GENERAL',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -233,6 +242,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Even where temporal sequencing is recorded, the source itself resists a mechanically rigid duration model.',
       generalizability: 'BOUNDED_GENERAL',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -256,6 +266,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         '餘氣 is context-sensitive in the selected source surface rather than a timeless fixed scalar.',
       generalizability: 'EXACT_EXAMPLE_ONLY',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -276,7 +287,8 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'An exact branch/context can carry qualitative 本氣/餘氣 terminology without authorizing a complete twelve-branch ontology.',
       generalizability: 'EXACT_EXAMPLE_ONLY',
-      authorizesSemanticDepthRanking: true,
+      authorizesQualitativeRoleDifferentiation: true,
+      authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
       authorizesFinalStrength: false,
@@ -300,6 +312,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Root-class comparison is a distinct qualitative axis and must not be conflated with hidden-stem storage depth.',
       generalizability: 'BOUNDED_GENERAL',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -323,6 +336,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Being a hidden member does not by itself establish activation or usable role.',
       generalizability: 'BOUNDED_GENERAL',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -346,6 +360,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Interaction events cannot be used as a generic hidden-depth activation switch.',
       generalizability: 'BOUNDED_GENERAL',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -369,6 +384,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Configuration-level effects must remain distinct from hidden-stem depth or per-member activation.',
       generalizability: 'BOUNDED_GENERAL',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -394,6 +410,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'The reviewed evidence supports multiple qualitative dimensions, not one scalar depth score.',
       generalizability: 'NOT_GENERALIZABLE',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -417,6 +434,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Qualitative evidence comparison does not authorize candidate selection or establishment logic.',
       generalizability: 'UNRESOLVED',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
@@ -437,6 +455,7 @@ export const R123_QUALITATIVE_EVIDENCE_ROWS: readonly R123QualitativeEvidenceRow
       qualitativeImplication:
         'Adding qualitative hidden-stem evidence does not close the remaining root, support-aggregation, or methodology-composition gaps.',
       generalizability: 'NOT_GENERALIZABLE',
+      authorizesQualitativeRoleDifferentiation: false,
       authorizesSemanticDepthRanking: false,
       authorizesAllBranchMapping: false,
       authorizesNumericWeight: false,
