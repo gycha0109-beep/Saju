@@ -151,9 +151,7 @@ describe('MyeongHa Business Monthly T9 reading candidate', () => {
       natal,
       result.execution,
       result.registry,
-      result.readingRequest,
-      { narrativePolicyVersion: 'myeongha-business-monthly-narrative-v1' },
-    );
+      result.readingRequest);
 
     expect(composition.selection.coverageState).toBe('complete');
     expect(composition.selection.missingRequirements).toEqual([]);

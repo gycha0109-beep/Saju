@@ -99,9 +99,7 @@ describe('MyeongHa general monthly T9 candidate', () => {
       natal,
       result.execution,
       result.registry,
-      result.readingRequest,
-      { narrativePolicyVersion: 'monthly-candidate-test' },
-    );
+      result.readingRequest);
     expect(composition.selection.coverageState).toBe('complete');
     expect(composition.selection.selectedClaimIds).toEqual(
       expect.arrayContaining(themes.map((claim) => claim.claimId)),
@@ -131,9 +129,7 @@ describe('MyeongHa general monthly T9 candidate', () => {
       natal,
       execution,
       registry,
-      readingRequest,
-      { narrativePolicyVersion: 'monthly-candidate-test' },
-    );
+      readingRequest);
     expect(composition.selection.coverageState).not.toBe('complete');
   });
 

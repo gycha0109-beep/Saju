@@ -366,12 +366,12 @@ describe('Preview Official Reading consumer authority cutover', () => {
       expect(firstEvidence?.bundle).not.toHaveProperty('prompt');
       expect(firstEvidence?.bundle).not.toHaveProperty('narrative');
 
-      expect(first.preparation.narrativeRequest?.evidenceBundle.narrativePolicyVersion).toBe(
-        narrativePolicy.version,
-      );
-      expect(second.preparation.narrativeRequest?.evidenceBundle.narrativePolicyVersion).toBe(
-        secondPolicy.version,
-      );
+      expect(first.preparation).not.toHaveProperty('narrativeRequest');
+      expect(first.preparation).not.toHaveProperty('narrativeRequestRef');
+      expect(second.preparation).not.toHaveProperty('narrativeRequest');
+      expect(second.preparation).not.toHaveProperty('narrativeRequestRef');
+      expect(first.preparation.preparationId).toBe(second.preparation.preparationId);
+      expect(first.executionId).toBe(second.executionId);
 
       expect(first.canonicalSemantics?.sourceEvidenceHash).toBe(
         second.canonicalSemantics?.sourceEvidenceHash,
@@ -490,6 +490,8 @@ describe('Preview Official Reading consumer authority cutover', () => {
     expect(execution.preparation.composition?.evidence?.bundle).not.toHaveProperty(
       'narrativePolicyVersion',
     );
+    expect(execution.preparation).not.toHaveProperty('narrativeRequest');
+    expect(execution.preparation).not.toHaveProperty('narrativeRequestRef');
     expect(execution.consumerReadingAuthority?.authority).toBe('legacy_narrative');
     expect(execution.state).toBe('completed_with_fallback');
     expect(execution.artifact?.schemaVersion).toBe('myeonghwa-reading-artifact-v1');

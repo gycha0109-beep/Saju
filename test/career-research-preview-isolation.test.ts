@@ -37,17 +37,13 @@ function actualCareerEvidence() {
     execution,
     registry,
     { requestId: 'career-preview-isolation-actual-engine', text: '직업운' },
-    {
-      narrativePolicyRef: { id: 'myeonghwa-narrative-policy', version: '1.0.0-test' },
-      outputSchemaVersion: 'myeonghwa-narrative-draft-v1',
-    },
   );
 
-  expect(prepared.state).toBe('ready_for_narrative');
-  if (prepared.state !== 'ready_for_narrative' || prepared.narrativeRequest === undefined) {
-    throw new Error('Synthetic Career preview fixture must reach ready_for_narrative.');
+  expect(prepared.state).toBe('ready_for_execution');
+  if (prepared.state !== 'ready_for_execution' || prepared.composition?.evidence === undefined) {
+    throw new Error('Synthetic Career preview fixture must reach ready_for_execution.');
   }
-  return prepared.narrativeRequest.evidenceBundle;
+  return prepared.composition.evidence.bundle;
 }
 
 describe('P7 Career research preview isolation gate', () => {

@@ -107,9 +107,7 @@ describe('natal general-relationship consumer reading research candidate', () =>
           temporalScope: 'natal',
           relationshipScope: 'general',
         },
-      },
-      { narrativePolicyVersion: 'relationship-natal-reading-v1' },
-    );
+      });
     expect(reading.selection.profileAuthorization.state).toBe('authorized');
     expect(reading.selection.coverageState).toBe('complete');
     const bundled =
@@ -137,9 +135,7 @@ describe('natal general-relationship consumer reading research candidate', () =>
           temporalScope: 'natal',
           relationshipScope: 'general',
         },
-      },
-      { narrativePolicyVersion: 'relationship-natal-reading-v1' },
-    );
+      });
 
     expect(reading.selection.coverageState).toBe('complete');
     const targets = new Set(reading.selection.targetClaimIds);
@@ -173,9 +169,7 @@ describe('natal general-relationship consumer reading research candidate', () =>
           temporalScope: 'natal',
           relationshipScope: 'general',
         },
-      },
-      { narrativePolicyVersion: 'relationship-natal-reading-v1' },
-    );
+      });
 
     expect(reading.selection.coverageState).toBe('insufficient_evidence');
     expect(reading.selection.targetClaimIds).toEqual([]);
@@ -201,9 +195,7 @@ describe('natal general-relationship consumer reading research candidate', () =>
           temporalScope: 'natal',
           relationshipScope: 'spouse',
         },
-      },
-      { narrativePolicyVersion: 'relationship-natal-reading-v1' },
-    );
+      });
 
     expect(spouse.selection.coverageState).toBe('insufficient_evidence');
     expect(spouse.selection.targetClaimIds).toEqual([]);
@@ -228,9 +220,7 @@ describe('natal general-relationship consumer reading research candidate', () =>
           temporalScope: 'annual',
           relationshipScope: 'spouse',
         },
-      },
-      { narrativePolicyVersion: 'relationship-natal-reading-v1' },
-    );
+      });
 
     expect(annual.selection.coverageState).toBe('unsupported_intent');
     expect(annual.selection.targetClaimIds).toEqual([]);
@@ -307,9 +297,7 @@ describe('natal general-relationship consumer reading research candidate', () =>
         snapshot,
         execution,
         registry,
-        { requestId: `${domain}-after-relationship`, intent: { domain, temporalScope: 'natal' } },
-        { narrativePolicyVersion: 'relationship-natal-reading-v1' },
-      );
+        { requestId: `${domain}-after-relationship`, intent: { domain, temporalScope: 'natal' } });
       expect(reading.selection.coverageState).toBe('complete');
       const targets = new Set(reading.selection.targetClaimIds);
       const targetT8 = execution.claims.filter(

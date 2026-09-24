@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import type { NarrativeBlock, NarrativeDraft, NarrativePolicy } from '../src/contracts/narrative.js';
+import type {
+  GroundedNarrativeRequest,
+  NarrativeBlock,
+  NarrativeDraft,
+  NarrativePolicy,
+} from '../src/contracts/narrative.js';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import type { NarrativeModelAdapter } from '../src/llm/model-adapter.js';
 import { generateGroundedNarrative } from '../src/llm/narrative-orchestrator.js';
+import { buildNarrativeEvidenceBundleFromReadingEvidence } from '../src/narrative/evidence-selector.js';
 import { validateNarrativeDraftGrounding } from '../src/narrative/grounding-validator.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import { prepareProductReading } from '../src/reading/product-reading-integration.js';
@@ -45,11 +51,6 @@ const narrativePolicy: NarrativePolicy = {
   },
   sourceDisclosure: 'internal_only',
 };
-
-const integrationOptions = {
-  narrativePolicyRef: { id: narrativePolicy.policyId, version: narrativePolicy.version },
-  outputSchemaVersion: 'myeonghwa-narrative-draft-v1',
-} as const;
 
 const failingAdapter: NarrativeModelAdapter = {
   metadata: {
@@ -141,21 +142,20 @@ describe('P5/P6 Career narrative reachability', () => {
               execution,
               registry,
               { requestId: caseId, text: '직업운' },
-              integrationOptions,
             );
 
-            if (prepared.state !== 'ready_for_narrative') {
+            if (prepared.state !== 'ready_for_execution') {
               if (scannedCases >= MAX_SCANNED_CASES) break outer;
               continue;
             }
             readyCases += 1;
 
             const composition = prepared.composition;
-            const request = prepared.narrativeRequest;
+            const governedEvidence = composition?.evidence?.bundle;
             expect(composition).toBeDefined();
-            expect(request).toBeDefined();
-            if (composition === undefined || request === undefined) {
-              throw new Error(`ready_for_narrative must carry composition and request for ${caseId}.`);
+            expect(governedEvidence).toBeDefined();
+            if (composition === undefined || governedEvidence === undefined) {
+              throw new Error(`ready_for_execution must carry composition and evidence for ${caseId}.`);
             }
 
             expect(composition.selection.coverageState).toBe('complete');
@@ -169,19 +169,19 @@ describe('P5/P6 Career narrative reachability', () => {
               mayPromoteResearchAuthority: false,
               mayOverrideInterpretationAuthorization: false,
             });
-            expect(prepared.deliveryEligibility.constraints.mayPromoteResearchAuthority).toBe(false);
-            expect(prepared.deliveryEligibility.constraints.mayGenerateInterpretationClaims).toBe(false);
-            expect(prepared.deliveryEligibility.narrativeGeneration).toBe('allowed');
-            expect(prepared.deliveryEligibility.artifactAssembly).toBe(
-              'allowed_after_grounded_narrative',
+            expect(prepared.executionEligibility.constraints.mayPromoteResearchAuthority).toBe(false);
+            expect(prepared.executionEligibility.constraints.mayGenerateInterpretationClaims).toBe(false);
+            expect(prepared.executionEligibility.readingExecution).toBe('allowed');
+            expect(prepared.executionEligibility.artifactAssembly).toBe(
+              'allowed_after_authority_execution',
             );
 
             expect(composition.selection.selectedClaimIds.length).toBeGreaterThan(0);
-            expect(request.evidenceBundle.claims.map((claim) => claim.claimId).sort()).toEqual(
+            expect(governedEvidence.claims.map((claim) => claim.claimId).sort()).toEqual(
               [...composition.selection.selectedClaimIds].sort(),
             );
 
-            for (const bundledClaim of request.evidenceBundle.claims) {
+            for (const bundledClaim of governedEvidence.claims) {
               const originalClaim = execution.claims.find(
                 (claim) => claim.claimId === bundledClaim.claimId,
               );
@@ -209,6 +209,18 @@ describe('P5/P6 Career narrative reachability', () => {
               throw new Error(`Missing selected Career interpretation signature for ${caseId}.`);
             }
 
+            const narrativeEvidence = buildNarrativeEvidenceBundleFromReadingEvidence(
+              governedEvidence,
+              narrativePolicy.version,
+            );
+            const request: GroundedNarrativeRequest = {
+              requestId: caseId,
+              purpose: governedEvidence.purpose,
+              evidenceBundle: narrativeEvidence.bundle,
+              userRequest: { requestedSection: 'career:natal' },
+              narrativePolicyRef: { id: narrativePolicy.policyId, version: narrativePolicy.version },
+              outputSchemaVersion: 'myeonghwa-narrative-draft-v1',
+            };
             const narrative = await generateGroundedNarrative(
               failingAdapter,
               request,

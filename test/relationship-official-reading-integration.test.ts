@@ -136,9 +136,7 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
           temporalScope: 'natal',
           relationshipScope: 'general',
         },
-      },
-      { narrativePolicyVersion: 'relationship-official-reader-fidelity-v1' },
-    );
+      });
 
     expect(composition.selection.coverageState).toBe('complete');
     if (composition.evidence === undefined) {

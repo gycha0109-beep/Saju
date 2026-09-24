@@ -138,9 +138,7 @@ describe('MyeongHa Wealth Annual T9 reading candidate', () => {
       temporalFacts: temporalFacts(natal, 2026),
       now: NOW,
     });
-    const composition = buildReadingCompositionEvidence(natal, execution, registry, request, {
-      narrativePolicyVersion: 'myeongha-wealth-annual-narrative-v1',
-    });
+    const composition = buildReadingCompositionEvidence(natal, execution, registry, request);
 
     expect(composition.selection.coverageState).toBe('complete');
     expect(composition.selection.missingRequirements).toEqual([]);

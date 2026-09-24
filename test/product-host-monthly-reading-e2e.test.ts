@@ -235,7 +235,7 @@ describe('Product Host monthly reading end-to-end', () => {
         outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
       },
     );
-    expect(preparation.state).toBe('ready_for_narrative');
+    expect(preparation.state).toBe('ready_for_execution');
     expect(preparation.composition?.selection.profileAuthorization.state).toBe('authorized');
     expect(preparation.composition?.selection.constraints.mayPromoteResearchAuthority).toBe(false);
   });

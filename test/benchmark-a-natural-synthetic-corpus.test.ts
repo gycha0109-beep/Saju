@@ -22,10 +22,6 @@ const NARRATIVE_POLICY_REF = {
   version: '1.0.0-benchmark-a',
 } as const;
 const NARRATIVE_POLICY_KEY = `${NARRATIVE_POLICY_REF.id}@${NARRATIVE_POLICY_REF.version}`;
-const INTEGRATION_OPTIONS = {
-  narrativePolicyRef: NARRATIVE_POLICY_REF,
-  outputSchemaVersion: 'myeonghwa-narrative-draft-v1',
-} as const;
 
 function observation(
   overrides: Partial<BenchmarkAObservation> = {},
@@ -157,14 +153,13 @@ describe('P5 Benchmark A — natural synthetic Career corpus', () => {
               execution,
               registry,
               { requestId: caseId, text: '직업운' },
-              INTEGRATION_OPTIONS,
             );
 
-            if (prepared.state !== 'ready_for_narrative') continue;
+            if (prepared.state !== 'ready_for_execution') continue;
             const selection = prepared.composition?.selection;
-            const request = prepared.narrativeRequest;
-            if (selection === undefined || request === undefined) {
-              throw new Error(`ready_for_narrative must include selection/request for ${caseId}.`);
+            const evidence = prepared.composition?.evidence?.bundle;
+            if (selection === undefined || evidence === undefined) {
+              throw new Error(`ready_for_execution must include selection/evidence for ${caseId}.`);
             }
             if (selection.profileAuthorization.state !== 'authorized') {
               throw new Error(`Career selection authorization was lost for ${caseId}.`);
@@ -190,7 +185,7 @@ describe('P5 Benchmark A — natural synthetic Career corpus', () => {
               throw new Error(`Incomplete Benchmark A semantic observation for ${caseId}.`);
             }
 
-            const fallback = buildValidatedDeterministicFallback(request.evidenceBundle);
+            const fallback = buildValidatedDeterministicFallback(evidence);
             if (!fallback.validation.valid) {
               throw new Error(`Deterministic fallback grounding failed for ${caseId}.`);
             }

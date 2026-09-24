@@ -140,9 +140,7 @@ describe('admitted Career Preview semantics -> Official Reading -> Reader', () =
       {
         requestId: 'career-official-reader-reading',
         intent: { domain: 'career', temporalScope: 'natal' },
-      },
-      { narrativePolicyVersion: 'career-official-reader-fidelity-v1' },
-    );
+      });
 
     expect(composition.selection.coverageState).toBe('complete');
     if (composition.evidence === undefined) {

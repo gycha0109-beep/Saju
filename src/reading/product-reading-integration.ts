@@ -1,8 +1,5 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
-import type { ContentAddressedVersionedRef, VersionedRef } from '../contracts/common.js';
-import type { GroundedNarrativeRequest } from '../contracts/narrative.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
-import { buildNarrativeEvidenceBundleFromReadingEvidence } from '../narrative/evidence-selector.js';
 import {
   deterministicContentHash,
   type ResolvedRuleRegistrySnapshot,
@@ -21,7 +18,7 @@ export const PRODUCT_READING_INTEGRATION_VERSION =
   'myeonghwa-product-reading-integration-v1';
 
 export type ProductReadingPreparationState =
-  | 'ready_for_narrative'
+  | 'ready_for_execution'
   | 'input_ambiguous'
   | 'input_unsupported'
   | 'input_invalid'
@@ -30,19 +27,14 @@ export type ProductReadingPreparationState =
   | 'unsupported_intent'
   | 'invariant_blocked';
 
-export interface ProductReadingIntegrationOptions {
-  narrativePolicyRef: VersionedRef;
-  outputSchemaVersion: string;
-}
-
-export interface ProductReadingDeliveryEligibility {
-  narrativeGeneration:
+export interface ProductReadingExecutionEligibility {
+  readingExecution:
     | 'allowed'
     | 'blocked_input'
     | 'blocked_coverage'
     | 'blocked_invariant';
   artifactAssembly:
-    | 'allowed_after_grounded_narrative'
+    | 'allowed_after_authority_execution'
     | 'blocked_input'
     | 'blocked_coverage'
     | 'blocked_invariant';
@@ -64,10 +56,8 @@ export interface ProductReadingPreparationResult {
   state: ProductReadingPreparationState;
   normalization: ConsumerReadingNormalizationResult;
   composition?: GovernedReadingCompositionEvidenceResult;
-  narrativeRequest?: GroundedNarrativeRequest;
-  narrativeRequestRef?: ContentAddressedVersionedRef;
   reasonCodes: readonly string[];
-  deliveryEligibility: ProductReadingDeliveryEligibility;
+  executionEligibility: ProductReadingExecutionEligibility;
 }
 
 const DELIVERY_CONSTRAINTS = Object.freeze({
@@ -79,21 +69,9 @@ const DELIVERY_CONSTRAINTS = Object.freeze({
   mayPromoteResearchAuthority: false as const,
 });
 
-function assertIntegrationOptions(options: ProductReadingIntegrationOptions): void {
-  if (options.narrativePolicyRef.id.trim().length === 0) {
-    throw new TypeError('narrativePolicyRef.id must be a non-empty string.');
-  }
-  if (options.narrativePolicyRef.version.trim().length === 0) {
-    throw new TypeError('narrativePolicyRef.version must be a non-empty string.');
-  }
-  if (options.outputSchemaVersion.trim().length === 0) {
-    throw new TypeError('outputSchemaVersion must be a non-empty string.');
-  }
-}
-
-function inputBlockedEligibility(): ProductReadingDeliveryEligibility {
+function inputBlockedEligibility(): ProductReadingExecutionEligibility {
   return {
-    narrativeGeneration: 'blocked_input',
+    readingExecution: 'blocked_input',
     artifactAssembly: 'blocked_input',
     mustSurfaceNormalizationState: true,
     mustSurfaceCoverageState: false,
@@ -101,9 +79,9 @@ function inputBlockedEligibility(): ProductReadingDeliveryEligibility {
   };
 }
 
-function coverageBlockedEligibility(): ProductReadingDeliveryEligibility {
+function coverageBlockedEligibility(): ProductReadingExecutionEligibility {
   return {
-    narrativeGeneration: 'blocked_coverage',
+    readingExecution: 'blocked_coverage',
     artifactAssembly: 'blocked_coverage',
     mustSurfaceNormalizationState: false,
     mustSurfaceCoverageState: true,
@@ -111,9 +89,9 @@ function coverageBlockedEligibility(): ProductReadingDeliveryEligibility {
   };
 }
 
-function invariantBlockedEligibility(): ProductReadingDeliveryEligibility {
+function invariantBlockedEligibility(): ProductReadingExecutionEligibility {
   return {
-    narrativeGeneration: 'blocked_invariant',
+    readingExecution: 'blocked_invariant',
     artifactAssembly: 'blocked_invariant',
     mustSurfaceNormalizationState: true,
     mustSurfaceCoverageState: true,
@@ -121,10 +99,10 @@ function invariantBlockedEligibility(): ProductReadingDeliveryEligibility {
   };
 }
 
-function readyEligibility(): ProductReadingDeliveryEligibility {
+function readyEligibility(): ProductReadingExecutionEligibility {
   return {
-    narrativeGeneration: 'allowed',
-    artifactAssembly: 'allowed_after_grounded_narrative',
+    readingExecution: 'allowed',
+    artifactAssembly: 'allowed_after_authority_execution',
     mustSurfaceNormalizationState: false,
     mustSurfaceCoverageState: false,
     constraints: DELIVERY_CONSTRAINTS,
@@ -135,26 +113,17 @@ function buildResult(
   state: ProductReadingPreparationState,
   normalization: ConsumerReadingNormalizationResult,
   reasonCodes: readonly string[],
-  deliveryEligibility: ProductReadingDeliveryEligibility,
+  executionEligibility: ProductReadingExecutionEligibility,
   composition?: GovernedReadingCompositionEvidenceResult,
-  narrativeRequest?: GroundedNarrativeRequest,
 ): ProductReadingPreparationResult {
-  const narrativeRequestRef =
-    narrativeRequest === undefined
-      ? undefined
-      : {
-          id: `grounded_narrative_request_${deterministicContentHash(narrativeRequest).slice(0, 24)}`,
-          version: PRODUCT_READING_INTEGRATION_VERSION,
-          contentHash: deterministicContentHash(narrativeRequest),
-        };
   const identityMaterial = {
     integrationVersion: PRODUCT_READING_INTEGRATION_VERSION,
     state,
     normalizationId: normalization.normalizationId,
     selectionId: composition?.selection.selectionId,
-    narrativeRequestRef,
+    governedEvidenceHash: composition?.evidence?.evidenceBundleHash,
     reasonCodes: [...reasonCodes].sort(),
-    deliveryEligibility,
+    executionEligibility,
   };
   return {
     preparationId: `product_reading_${deterministicContentHash(identityMaterial).slice(0, 24)}`,
@@ -162,10 +131,8 @@ function buildResult(
     state,
     normalization,
     ...(composition === undefined ? {} : { composition }),
-    ...(narrativeRequest === undefined ? {} : { narrativeRequest }),
-    ...(narrativeRequestRef === undefined ? {} : { narrativeRequestRef }),
     reasonCodes: [...reasonCodes].sort(),
-    deliveryEligibility,
+    executionEligibility,
   };
 }
 
@@ -186,47 +153,14 @@ function blockedFromNormalization(
   );
 }
 
-function buildNarrativeRequest(
-  normalization: ConsumerReadingNormalizationResult,
-  composition: GovernedReadingCompositionEvidenceResult,
-  options: ProductReadingIntegrationOptions,
-): GroundedNarrativeRequest | undefined {
-  if (normalization.request === undefined || composition.evidence === undefined) return undefined;
-  const narrativeEvidence = buildNarrativeEvidenceBundleFromReadingEvidence(
-    composition.evidence.bundle,
-    options.narrativePolicyRef.version,
-  );
-  const intent = normalization.request.intent;
-  const requestedSection =
-    intent.relationshipScope === undefined
-      ? `${intent.domain}:${intent.temporalScope}`
-      : `${intent.domain}:${intent.temporalScope}:${intent.relationshipScope}`;
-  return {
-    requestId: normalization.request.requestId,
-    purpose: composition.evidence.bundle.purpose,
-    evidenceBundle: narrativeEvidence.bundle,
-    userRequest: {
-      ...(intent.domain === 'question_specific' ? {} : { requestedSection }),
-      ...(normalization.request.question === undefined
-        ? {}
-        : { question: normalization.request.question }),
-      ...(normalization.request.outputPreferences?.preferredDetail === undefined
-        ? {}
-        : { preferredDetail: normalization.request.outputPreferences.preferredDetail }),
-    },
-    narrativePolicyRef: options.narrativePolicyRef,
-    outputSchemaVersion: options.outputSchemaVersion,
-  };
-}
-
 export function prepareProductReading(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
   registry: ResolvedRuleRegistrySnapshot,
   input: ConsumerReadingRequestInput,
-  options: ProductReadingIntegrationOptions,
+  _legacyOptions?: unknown,
 ): ProductReadingPreparationResult {
-  assertIntegrationOptions(options);
+  void _legacyOptions;
   const normalization = normalizeConsumerReadingRequest(input);
   if (normalization.state !== 'resolved' || normalization.request === undefined) {
     return blockedFromNormalization(normalization);
@@ -237,7 +171,6 @@ export function prepareProductReading(
     execution,
     registry,
     normalization.request,
-    { narrativePolicyVersion: options.narrativePolicyRef.version },
   );
 
   switch (composition.selection.coverageState) {
@@ -266,8 +199,7 @@ export function prepareProductReading(
         composition,
       );
     case 'complete': {
-      const narrativeRequest = buildNarrativeRequest(normalization, composition, options);
-      if (narrativeRequest === undefined) {
+      if (composition.evidence === undefined) {
         return buildResult(
           'invariant_blocked',
           normalization,
@@ -277,12 +209,11 @@ export function prepareProductReading(
         );
       }
       return buildResult(
-        'ready_for_narrative',
+        'ready_for_execution',
         normalization,
         [],
         readyEligibility(),
         composition,
-        narrativeRequest,
       );
     }
   }

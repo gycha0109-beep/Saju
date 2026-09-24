@@ -329,9 +329,7 @@ describe('cross-domain Official Reading semantic fidelity contract', () => {
         {
           requestId: 'cross-domain-' + candidate.label + '-reading',
           intent: candidate.intent,
-        },
-        { narrativePolicyVersion: 'cross-domain-official-reading-fidelity-v1' },
-      );
+        });
 
       expect(composition.selection.coverageState).toBe('complete');
       expect(composition.selection.profileAuthorization.state).toBe('authorized');

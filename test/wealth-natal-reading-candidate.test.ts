@@ -91,9 +91,7 @@ describe('natal wealth consumer reading research candidate', () => {
       {
         requestId: 'wealth-single-family',
         intent: { domain: 'wealth', temporalScope: 'natal' },
-      },
-      { narrativePolicyVersion: 'wealth-natal-reading-v1' },
-    );
+      });
     expect(wealth.selection.coverageState).toBe('complete');
     const bundledWealthClaims =
       wealth.evidence?.bundle.claims.filter((claim) => claim.predicate === 'wealth_conclusion') ?? [];
@@ -118,9 +116,7 @@ describe('natal wealth consumer reading research candidate', () => {
       {
         requestId: 'wealth-natal-open',
         intent: { domain: 'wealth', temporalScope: 'natal' },
-      },
-      { narrativePolicyVersion: 'wealth-natal-reading-v1' },
-    );
+      });
     expect(natal.selection.coverageState).toBe('complete');
     const bundledWealthClaims =
       natal.evidence?.bundle.claims.filter((claim) => claim.predicate === 'wealth_conclusion') ?? [];
@@ -134,9 +130,7 @@ describe('natal wealth consumer reading research candidate', () => {
       {
         requestId: 'wealth-annual-stays-temporally-closed',
         intent: { domain: 'wealth', temporalScope: 'annual' },
-      },
-      { narrativePolicyVersion: 'wealth-natal-reading-v1' },
-    );
+      });
     expect(annual.selection.coverageState).toBe('partial_coverage');
     expect(annual.selection.missingRequirements).toContain('ANNUAL_WEALTH_PERIOD_CLAIM_REQUIRED');
   });

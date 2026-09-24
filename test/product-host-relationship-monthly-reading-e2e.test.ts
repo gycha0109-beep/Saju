@@ -222,7 +222,7 @@ describe('Product Host Relationship Monthly reading end-to-end', () => {
         outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
       },
     );
-    expect(preparation.state).toBe('ready_for_narrative');
+    expect(preparation.state).toBe('ready_for_execution');
     expect(preparation.composition?.selection.coverageState).toBe('complete');
     expect(preparation.composition?.selection.profileRef?.id).toBe(
       'myeonghwa-reading-profile-relationship-general-monthly-v1',

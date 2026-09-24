@@ -137,9 +137,7 @@ describe('natal career consumer reading research candidate', () => {
       {
         requestId: 'career-exact-output-subtypes',
         intent: { domain: 'career', temporalScope: 'natal' },
-      },
-      { narrativePolicyVersion: 'career-natal-reading-v2' },
-    );
+      });
     expect(career.selection.coverageState).toBe('complete');
     const bundledCareerClaims =
       career.evidence?.bundle.claims.filter((claim) => claim.predicate === 'career_conclusion') ?? [];
@@ -203,9 +201,7 @@ describe('natal career consumer reading research candidate', () => {
       {
         requestId: 'career-natal-open',
         intent: { domain: 'career', temporalScope: 'natal' },
-      },
-      { narrativePolicyVersion: 'career-natal-reading-v2' },
-    );
+      });
     expect(natal.selection.coverageState).toBe('complete');
     const bundledCareerClaims =
       natal.evidence?.bundle.claims.filter((claim) => claim.predicate === 'career_conclusion') ?? [];
@@ -219,9 +215,7 @@ describe('natal career consumer reading research candidate', () => {
       {
         requestId: 'career-annual-stays-temporally-closed',
         intent: { domain: 'career', temporalScope: 'annual' },
-      },
-      { narrativePolicyVersion: 'career-natal-reading-v2' },
-    );
+      });
     expect(annual.selection.coverageState).toBe('partial_coverage');
     expect(annual.selection.missingRequirements).toContain('ANNUAL_CAREER_PERIOD_CLAIM_REQUIRED');
   });

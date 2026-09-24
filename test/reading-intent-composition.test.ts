@@ -167,7 +167,6 @@ describe('ReadingIntent composition contract', () => {
         requestId: 'general-natal',
         intent: { domain: 'general', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
 
     expect(result.selection.coverageState).toBe('complete');
@@ -205,7 +204,6 @@ describe('ReadingIntent composition contract', () => {
         requestId: 'general-foundation-only',
         intent: { domain: 'general', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
     expect(foundationOnly.selection.coverageState).toBe('partial_coverage');
     expect(foundationOnly.selection.missingRequirements).toEqual([
@@ -220,7 +218,6 @@ describe('ReadingIntent composition contract', () => {
         requestId: 'general-synthesis-only',
         intent: { domain: 'general', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
     expect(synthesisOnly.selection.coverageState).toBe('partial_coverage');
     expect(synthesisOnly.selection.missingRequirements).toEqual([
@@ -256,7 +253,6 @@ describe('ReadingIntent composition contract', () => {
           relationshipScope: 'parents',
         },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
     expect(supported.selection.targetClaimIds).toEqual([parent.claimId]);
     expect(supported.selection.selectedClaimIds).toEqual([parent.claimId]);
@@ -274,7 +270,6 @@ describe('ReadingIntent composition contract', () => {
           relationshipScope: 'parents',
         },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
     expect(missing.selection.coverageState).toBe('insufficient_evidence');
     expect(missing.selection.targetClaimIds).toEqual([]);
@@ -322,7 +317,6 @@ describe('ReadingIntent composition contract', () => {
         requestId: 'career-annual',
         intent: { domain: 'career', temporalScope: 'annual' },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
     expect(career.selection.coverageState).toBe('complete');
     expect(career.selection.targetClaimIds).toEqual(
@@ -351,7 +345,6 @@ describe('ReadingIntent composition contract', () => {
         requestId: 'business-annual',
         intent: { domain: 'business', temporalScope: 'annual' },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
     expect(business.selection.coverageState).toBe('complete');
     expect(business.selection.targetClaimIds).toEqual(
@@ -382,7 +375,6 @@ describe('ReadingIntent composition contract', () => {
         requestId: 'career-unknown-time',
         intent: { domain: 'career', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
 
     expect(result.selection.coverageState).toBe('complete');
@@ -430,7 +422,6 @@ describe('ReadingIntent composition contract', () => {
         requestId: 'career-conflict',
         intent: { domain: 'career', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
 
     expect(result.selection.selectedClaimIds).toEqual([methodA.claimId, methodB.claimId].sort());
@@ -457,7 +448,6 @@ describe('ReadingIntent composition contract', () => {
         requestId: 'career-annual-partial',
         intent: { domain: 'career', temporalScope: 'annual' },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
     expect(partial.selection.coverageState).toBe('partial_coverage');
     expect(partial.selection.targetClaimIds).toEqual([careerNatal.claimId]);
@@ -473,7 +463,6 @@ describe('ReadingIntent composition contract', () => {
         requestId: 'business-annual-insufficient',
         intent: { domain: 'business', temporalScope: 'annual' },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
     expect(insufficient.selection.coverageState).toBe('insufficient_evidence');
     expect(insufficient.selection.selectedClaimIds).toEqual([]);
@@ -487,7 +476,6 @@ describe('ReadingIntent composition contract', () => {
         requestId: 'family-invalid-shape',
         intent: { domain: 'family', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
     expect(unsupported.selection.coverageState).toBe('unsupported_intent');
     expect(unsupported.selection.missingRequirements).toEqual([
@@ -514,14 +502,12 @@ describe('ReadingIntent composition contract', () => {
       execution,
       registry,
       { requestId: 'request-one', intent },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
     const second = buildReadingCompositionEvidence(
       snapshot,
       execution,
       registry,
       { requestId: 'request-two', intent, outputPreferences: { preferredDetail: 'detailed' } },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
     const profileA = resolveDomainReadingProfile(intent);
     const profileB = resolveDomainReadingProfile(intent);
@@ -547,7 +533,6 @@ describe('ReadingIntent composition contract', () => {
         requestId: 'no-authority-escalation',
         intent: { domain: 'wealth', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'reading-intent-test-v1' },
     );
 
     expect(execution.claims).toHaveLength(beforeClaims);

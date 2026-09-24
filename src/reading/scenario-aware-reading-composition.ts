@@ -17,7 +17,6 @@ import {
   buildReadingCompositionEvidence as buildAuthorizedReadingCompositionEvidence,
   type GovernedReadingCompositionEvidenceResult,
 } from './reading-profile-authorization.js';
-import type { ReadingCompositionOptions } from './reading-intent-composition.js';
 
 function matchesList(value: string, accepted: readonly string[] | undefined): boolean {
   return accepted === undefined || accepted.includes(value);
@@ -248,14 +247,14 @@ export function buildReadingCompositionEvidence(
   execution: InterpretationExecutionResult,
   registry: ResolvedRuleRegistrySnapshot,
   request: ReadingRequest,
-  options: ReadingCompositionOptions,
+  _legacyOptions?: unknown,
 ): GovernedReadingCompositionEvidenceResult {
+  void _legacyOptions;
   const authorized = buildAuthorizedReadingCompositionEvidence(
     snapshot,
     execution,
     registry,
     request,
-    options,
   );
 
   if (

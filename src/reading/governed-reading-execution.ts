@@ -1,5 +1,9 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
-import type { ClaimNarrativeProfile, NarrativePolicy } from '../contracts/narrative.js';
+import type {
+  ClaimNarrativeProfile,
+  GroundedNarrativeRequest,
+  NarrativePolicy,
+} from '../contracts/narrative.js';
 import type { ReadingArtifact } from '../contracts/reading.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import {
@@ -15,11 +19,13 @@ import type {
   NarrativeModelAdapter,
 } from '../llm/model-adapter.js';
 import {
+  readingSectionForIntentV1,
   resolvePreviewConsumerReadingAuthorityV1,
   type PreviewConsumerReadingAuthorityResolutionV1,
 } from '../preview/preview-official-reading-consumer-authority.js';
 import { buildPreviewSemanticQualifierBindingsV1 } from '../preview/preview-semantic-qualifier-projection.js';
 import { buildPreviewSemanticTextBindingsV1 } from '../preview/preview-semantic-text-projection.js';
+import { buildNarrativeEvidenceBundleFromReadingEvidence } from '../narrative/evidence-selector.js';
 import { assembleReadingArtifact } from './reading-assembler.js';
 import {
   buildCanonicalReadingSemanticBundleV1,
@@ -43,10 +49,10 @@ import {
 import type { ConsumerReadingRequestInput } from './consumer-reading-request-adapter.js';
 
 export const GOVERNED_READING_EXECUTION_VERSION =
-  'myeonghwa-governed-reading-execution-v3';
+  'myeonghwa-governed-reading-execution-v4';
 
 export type GovernedReadingExecutionState =
-  | Exclude<ProductReadingPreparationState, 'ready_for_narrative'>
+  | Exclude<ProductReadingPreparationState, 'ready_for_execution'>
   | 'completed'
   | 'completed_with_fallback';
 
@@ -150,8 +156,8 @@ function resultIdentity(
 function blockedResult(
   preparation: ProductReadingPreparationResult,
 ): GovernedReadingExecutionResult {
-  if (preparation.state === 'ready_for_narrative') {
-    throw new Error('blockedResult cannot accept a ready_for_narrative preparation.');
+  if (preparation.state === 'ready_for_execution') {
+    throw new Error('blockedResult cannot accept a ready_for_execution preparation.');
   }
   const state = preparation.state;
   const reasonCodes = [...preparation.reasonCodes].sort();
@@ -201,6 +207,45 @@ function officialAuthorityBlockedResult(
   };
 }
 
+function buildLegacyNarrativeRequest(
+  preparation: ProductReadingPreparationResult,
+  narrativePolicy: NarrativePolicy,
+  outputSchemaVersion: string,
+): GroundedNarrativeRequest {
+  const request = preparation.normalization.request;
+  const governedEvidence = preparation.composition?.evidence?.bundle;
+  if (request === undefined || governedEvidence === undefined) {
+    throw new Error(
+      'ready_for_execution preparation requires resolved request and composition evidence.',
+    );
+  }
+
+  const narrativeEvidence = buildNarrativeEvidenceBundleFromReadingEvidence(
+    governedEvidence,
+    narrativePolicy.version,
+  );
+  const intent = request.intent;
+  return {
+    requestId: request.requestId,
+    purpose: governedEvidence.purpose,
+    evidenceBundle: narrativeEvidence.bundle,
+    userRequest: {
+      ...(intent.domain === 'question_specific'
+        ? {}
+        : { requestedSection: readingSectionForIntentV1(intent) }),
+      ...(request.question === undefined ? {} : { question: request.question }),
+      ...(request.outputPreferences?.preferredDetail === undefined
+        ? {}
+        : { preferredDetail: request.outputPreferences.preferredDetail }),
+    },
+    narrativePolicyRef: {
+      id: narrativePolicy.policyId,
+      version: narrativePolicy.version,
+    },
+    outputSchemaVersion,
+  };
+}
+
 export async function executeProductReading(
   snapshot: CanonicalSajuSnapshot,
   interpretation: InterpretationExecutionResult,
@@ -217,19 +262,11 @@ export async function executeProductReading(
     interpretation,
     registry,
     input,
-    {
-      narrativePolicyRef: {
-        id: narrativePolicy.policyId,
-        version: narrativePolicy.version,
-      },
-      outputSchemaVersion: options.outputSchemaVersion,
-    },
   );
 
   if (
-    preparation.state !== 'ready_for_narrative' ||
-    preparation.narrativeRequest === undefined ||
-    preparation.deliveryEligibility.narrativeGeneration !== 'allowed'
+    preparation.state !== 'ready_for_execution' ||
+    preparation.executionEligibility.readingExecution !== 'allowed'
   ) {
     return blockedResult(preparation);
   }
@@ -240,7 +277,7 @@ export async function executeProductReading(
     preparation.composition.evidence === undefined
   ) {
     throw new Error(
-      'ready_for_narrative preparation requires resolved request and composition evidence.',
+      'ready_for_execution preparation requires resolved request and composition evidence.',
     );
   }
 
@@ -248,34 +285,35 @@ export async function executeProductReading(
   const consumerReadingAuthority = resolvePreviewConsumerReadingAuthorityV1(
     preparation.normalization.request.intent,
   );
-  const semanticTextBindings = buildPreviewSemanticTextBindingsV1({
-    intent: preparation.normalization.request.intent,
-    registry,
-    evidence: governedEvidence,
-    targetClaimIds: preparation.composition.selection.targetClaimIds,
-  });
-  const semanticQualifierBindings = buildPreviewSemanticQualifierBindingsV1({
-    intent: preparation.normalization.request.intent,
-    registry,
-    evidence: governedEvidence,
-    targetClaimIds: preparation.composition.selection.targetClaimIds,
-  });
-  const canonicalSemantics = buildCanonicalReadingSemanticBundleV1({
-    intent: preparation.normalization.request.intent,
-    evidence: governedEvidence,
-    targetClaimIds: preparation.composition.selection.targetClaimIds,
-    semanticTextBindings,
-    semanticQualifierBindings,
-  });
-  const officialReadingPlan = buildOfficialReadingPlanV1(canonicalSemantics);
-  const officialReadingReport = canRenderOfficialReadingV1(
-    canonicalSemantics,
-    officialReadingPlan,
-  )
-    ? renderOfficialReadingV1(canonicalSemantics, officialReadingPlan)
-    : undefined;
 
   if (consumerReadingAuthority.authority === 'official_reading') {
+    const semanticTextBindings = buildPreviewSemanticTextBindingsV1({
+      intent: preparation.normalization.request.intent,
+      registry,
+      evidence: governedEvidence,
+      targetClaimIds: preparation.composition.selection.targetClaimIds,
+    });
+    const semanticQualifierBindings = buildPreviewSemanticQualifierBindingsV1({
+      intent: preparation.normalization.request.intent,
+      registry,
+      evidence: governedEvidence,
+      targetClaimIds: preparation.composition.selection.targetClaimIds,
+    });
+    const canonicalSemantics = buildCanonicalReadingSemanticBundleV1({
+      intent: preparation.normalization.request.intent,
+      evidence: governedEvidence,
+      targetClaimIds: preparation.composition.selection.targetClaimIds,
+      semanticTextBindings,
+      semanticQualifierBindings,
+    });
+    const officialReadingPlan = buildOfficialReadingPlanV1(canonicalSemantics);
+    const officialReadingReport = canRenderOfficialReadingV1(
+      canonicalSemantics,
+      officialReadingPlan,
+    )
+      ? renderOfficialReadingV1(canonicalSemantics, officialReadingPlan)
+      : undefined;
+
     if (officialReadingReport === undefined) {
       return officialAuthorityBlockedResult(
         preparation,
@@ -344,9 +382,14 @@ export async function executeProductReading(
     };
   }
 
+  const narrativeRequest = buildLegacyNarrativeRequest(
+    preparation,
+    narrativePolicy,
+    options.outputSchemaVersion,
+  );
   const narrative = await generateGroundedNarrative(
     adapter,
-    preparation.narrativeRequest,
+    narrativeRequest,
     narrativePolicy,
     {
       ...(options.generationParams === undefined
@@ -384,18 +427,15 @@ export async function executeProductReading(
       reasonCodes,
       consumerReadingAuthority,
       narrative,
-      canonicalSemantics,
-      officialReadingPlan,
-      officialReadingReport,
+      undefined,
+      undefined,
+      undefined,
       artifact,
     ),
     orchestratorVersion: GOVERNED_READING_EXECUTION_VERSION,
     state,
     preparation,
     narrative,
-    canonicalSemantics,
-    officialReadingPlan,
-    ...(officialReadingReport === undefined ? {} : { officialReadingReport }),
     consumerReadingAuthority,
     artifact,
     modelCalls: narrative.modelCalls,

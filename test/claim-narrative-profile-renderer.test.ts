@@ -17,11 +17,6 @@ import { deriveDomainInterpretationSignatures } from '../src/verification/domain
 
 const FIXED_CALCULATION_TIME = new Date('2026-08-28T00:00:00.000Z');
 const FIXED_INTERPRETATION_TIME = new Date('2026-08-28T00:01:00.000Z');
-const INTEGRATION_OPTIONS = {
-  narrativePolicyRef: { id: 'myeonghwa-narrative-policy', version: '1.0.0-p6-test' },
-  outputSchemaVersion: 'myeonghwa-narrative-draft-v1',
-} as const;
-
 const FIVE_FAMILY_TEN_GODS: TenGodChartFact = {
   year: { stem: resolved('비견'), branch: resolved('정인') },
   month: { stem: resolved('편재'), branch: resolved('정재') },
@@ -66,16 +61,14 @@ function observe(snapshot: CanonicalSajuSnapshot, requestId: string) {
     execution,
     registry,
     { requestId, text: '직업운' },
-    INTEGRATION_OPTIONS,
   );
   if (
-    prepared.state !== 'ready_for_narrative' ||
-    prepared.composition === undefined ||
-    prepared.narrativeRequest === undefined
+    prepared.state !== 'ready_for_execution' ||
+    prepared.composition?.evidence === undefined
   ) {
     throw new Error(`Expected ready Career narrative preparation for ${requestId}.`);
   }
-  const narrativeRequest = prepared.narrativeRequest;
+  const evidenceBundle = prepared.composition.evidence.bundle;
   const signatures = deriveDomainInterpretationSignatures(
     execution.claims,
     execution.claimRelations,
@@ -87,7 +80,7 @@ function observe(snapshot: CanonicalSajuSnapshot, requestId: string) {
   return {
     execution,
     prepared,
-    narrativeRequest,
+    evidenceBundle,
     interpretationSignature: signatures[0].signature,
   };
 }
@@ -109,7 +102,7 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
     );
 
     const observed = observe(withTenGodFixture(FIVE_FAMILY_TEN_GODS), 'p6-profile-render');
-    const bundle = observed.narrativeRequest.evidenceBundle;
+    const bundle = observed.evidenceBundle;
 
     for (const claim of bundle.claims) {
       expect(claim.value).not.toHaveProperty('headline');
@@ -155,11 +148,11 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
     expect(left.interpretationSignature).toBe(right.interpretationSignature);
 
     const leftPlan = buildClaimNarrativePlan(
-      left.narrativeRequest.evidenceBundle,
+      left.evidenceBundle,
       CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
     );
     const rightPlan = buildClaimNarrativePlan(
-      right.narrativeRequest.evidenceBundle,
+      right.evidenceBundle,
       CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
     );
     expect(leftPlan.items).toEqual(rightPlan.items);
@@ -171,7 +164,7 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
     const after = observe(snapshot, 'p6-copy-after');
     expect(before.interpretationSignature).toBe(after.interpretationSignature);
 
-    const bundle = before.narrativeRequest.evidenceBundle;
+    const bundle = before.evidenceBundle;
     const baselinePlan = buildClaimNarrativePlan(bundle, CAREER_NATAL_CLAIM_NARRATIVE_PROFILES);
     const activeClaimType = baselinePlan.items[0]?.claimType;
     if (activeClaimType === undefined) throw new Error('Expected active Career narrative profile.');
@@ -192,7 +185,7 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
 
   it('rejects a profile template that contains a prohibited high-risk phrase', () => {
     const observed = observe(withTenGodFixture(FIVE_FAMILY_TEN_GODS), 'p6-prohibited-copy');
-    const bundle = observed.narrativeRequest.evidenceBundle;
+    const bundle = observed.evidenceBundle;
     const activeClaimType = bundle.claims[0]?.claimType;
     if (activeClaimType === undefined) throw new Error('Expected an active Career claim.');
 

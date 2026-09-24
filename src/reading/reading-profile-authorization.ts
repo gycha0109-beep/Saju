@@ -11,7 +11,6 @@ import {
   buildReadingCompositionEvidence as buildUngovernedReadingCompositionEvidence,
   resolveDomainReadingProfile,
   type ReadingCompositionEvidenceResult,
-  type ReadingCompositionOptions,
 } from './reading-intent-composition.js';
 
 export const READING_PROFILE_SELECTION_AUTHORIZATION_POLICY_VERSION =
@@ -329,11 +328,9 @@ export function buildReadingCompositionEvidence(
   execution: InterpretationExecutionResult,
   registry: ResolvedRuleRegistrySnapshot,
   request: ReadingRequest,
-  options: ReadingCompositionOptions,
+  _legacyOptions?: unknown,
 ): GovernedReadingCompositionEvidenceResult {
-  if (options.narrativePolicyVersion.trim().length === 0) {
-    throw new TypeError('narrativePolicyVersion must be a non-empty string.');
-  }
+  void _legacyOptions;
   assertCompositionIdentity(snapshot, execution, registry);
 
   const resolvedProfile = resolveDomainReadingProfile(request.intent);
@@ -343,7 +340,6 @@ export function buildReadingCompositionEvidence(
       execution,
       registry,
       request,
-      options,
     );
     const authorization: ReadingProfileSelectionAuthorizationResolution = {
       state: 'not_authorized',
@@ -373,7 +369,6 @@ export function buildReadingCompositionEvidence(
     execution,
     registry,
     request,
-    options,
   );
   return {
     ...base,

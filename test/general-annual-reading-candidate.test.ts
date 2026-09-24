@@ -134,9 +134,7 @@ describe('MyeongHa general annual T9 reading candidate', () => {
       natal,
       execution,
       registry,
-      request,
-      { narrativePolicyVersion: 'general-annual-policy-v1' },
-    );
+      request);
 
     expect(composition.selection.coverageState).toBe('complete');
     expect(composition.selection.missingRequirements).toEqual([]);
@@ -177,9 +175,7 @@ describe('MyeongHa general annual T9 reading candidate', () => {
       natal,
       execution,
       registry,
-      annualRequest(2026),
-      { narrativePolicyVersion: 'general-annual-policy-v1' },
-    );
+      annualRequest(2026));
 
     expect(execution.claims).toEqual([]);
     expect(execution.run.status).toBe('partial');

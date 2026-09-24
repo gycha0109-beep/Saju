@@ -30,10 +30,6 @@ export interface ResolvedDomainReadingProfile {
   profileRef: ContentAddressedVersionedRef;
 }
 
-export interface ReadingCompositionOptions {
-  narrativePolicyVersion: string;
-}
-
 export interface ReadingCompositionEvidenceResult {
   selection: ReadingEvidenceSelection;
   profile?: DomainReadingProfile;
@@ -592,11 +588,9 @@ export function buildReadingCompositionEvidence(
   execution: InterpretationExecutionResult,
   registry: ResolvedRuleRegistrySnapshot,
   request: ReadingRequest,
-  options: ReadingCompositionOptions,
+  _legacyOptions?: unknown,
 ): ReadingCompositionEvidenceResult {
-  if (options.narrativePolicyVersion.trim().length === 0) {
-    throw new TypeError('narrativePolicyVersion must be a non-empty string.');
-  }
+  void _legacyOptions;
   assertIdentity(snapshot, execution, registry);
 
   if (

@@ -119,7 +119,6 @@ describe('Reading profile content authorization', () => {
         requestId: 'authorized-career-natal',
         intent: { domain: 'career', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'reading-profile-authorization-test-v1' },
     );
     const second = buildReadingCompositionEvidence(
       canonical,
@@ -129,7 +128,6 @@ describe('Reading profile content authorization', () => {
         requestId: 'authorized-career-natal',
         intent: { domain: 'career', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'reading-profile-authorization-test-v1' },
     );
 
     expect(first.selection.profileAuthorization.state).toBe('authorized');
@@ -158,7 +156,6 @@ describe('Reading profile content authorization', () => {
         requestId: 'question-without-question',
         intent: { domain: 'question_specific', temporalScope: 'natal' },
       },
-      { narrativePolicyVersion: 'reading-profile-authorization-test-v1' },
     );
 
     expect(result.selection.coverageState).toBe('unsupported_intent');
