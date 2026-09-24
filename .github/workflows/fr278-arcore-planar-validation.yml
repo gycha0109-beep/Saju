@@ -1,0 +1,39 @@
+name: "[WT:face-research] FR278 ARCore Planar Validation"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "tools/fr278-arcore-planar-validation/**"
+      - ".github/workflows/fr278-arcore-planar-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-validation-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools"
+          log-accepted-android-sdk-licenses: "false"
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: "8.9"
+          cache-provider: basic
+      - name: Assemble FR278 validation app
+        working-directory: tools/fr278-arcore-planar-validation
+        run: gradle --no-daemon :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fr278-arcore-planar-validation-apk
+          path: tools/fr278-arcore-planar-validation/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
