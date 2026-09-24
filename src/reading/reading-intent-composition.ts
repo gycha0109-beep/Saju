@@ -590,6 +590,7 @@ export function buildReadingCompositionEvidence(
   request: ReadingRequest,
   _legacyOptions?: unknown,
 ): ReadingCompositionEvidenceResult {
+  void _legacyOptions;
   assertIdentity(snapshot, execution, registry);
 
   if (
