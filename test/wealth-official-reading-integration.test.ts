@@ -121,9 +121,7 @@ describe('admitted Wealth Preview semantics -> Official Reading -> Reader', () =
       {
         requestId: 'wealth-official-reader-reading',
         intent: { domain: 'wealth', temporalScope: 'natal' },
-      },
-      { narrativePolicyVersion: 'wealth-official-reader-fidelity-v1' },
-    );
+      });
 
     expect(composition.selection.coverageState).toBe('complete');
     if (composition.evidence === undefined) {
