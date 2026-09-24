@@ -1,7 +1,8 @@
-import type {
-  NeutralFaceGeometryProvenance,
-  NeutralFacePoint2D,
-  NoseTipContourGeometryInput,
+import {
+  computeNoseTipContourCircularity,
+  type NeutralFaceGeometryProvenance,
+  type NeutralFacePoint2D,
+  type NoseTipContourGeometryInput,
 } from './nose-geometry.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
@@ -342,6 +343,7 @@ export function computeVisibleAlarNostrilGeometryFR290(
 
   assertProvenance(input.provenance, 'alar/nostril');
   assertProvenance(tip.provenance, 'tip');
+  computeNoseTipContourCircularity(tip);
 
   const source = sourceReceipt(input, tip);
 
