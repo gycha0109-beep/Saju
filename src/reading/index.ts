@@ -1,6 +1,7 @@
 export * from './reading-assembler.js';
 export * from './reading-artifact-shell.js';
 export * from './canonical-reading-semantics.js';
+export * from './governed-reading-evidence.js';
 export * from './official-reading-plan.js';
 export * from './official-reading-renderer.js';
 export * from './official-reading-artifact.js';
