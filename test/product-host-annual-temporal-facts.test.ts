@@ -1,3 +1,4 @@
+import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../src/reading/governed-reading-execution.js';
 import { describe, expect, it } from 'vitest';
 import type { CanonicalSajuSnapshot } from '../src/contracts/calculation.js';
 import type { NarrativePolicy } from '../src/contracts/narrative.js';
@@ -42,8 +43,11 @@ describe('product host annual temporal facts', () => {
         if (requestContext !== undefined) seenContexts.push(requestContext);
         throw STOP_AFTER_INTERPRET;
       },
-      adapter: unusedAdapter,
-      narrativePolicy: unusedNarrativePolicy,
+      legacyNarrativeRuntime: {
+        runtimeVersion: LEGACY_NARRATIVE_RUNTIME_VERSION,
+        adapter: unusedAdapter,
+        narrativePolicy: unusedNarrativePolicy,
+      },
       readingOptions: unusedReadingOptions,
       requestIdFactory: () => 'annual-context-test',
       requestNowFactory: () => NOW,

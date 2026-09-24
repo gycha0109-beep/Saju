@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  buildDeterministicFallbackDraft,
   createRuleRegistrySnapshot,
-  type CompiledNarrativePrompt,
   type InterpretationPack,
-  type NarrativeModelAdapter,
-  type NarrativePolicy,
   type ReviewerTrustContext,
 } from '../src/index.js';
 import {
@@ -42,51 +38,12 @@ const reviewerTrustContext: ReviewerTrustContext = {
   grants: [],
 };
 
-class TestNarrativeAdapter implements NarrativeModelAdapter {
-  readonly metadata = {
-    provider: 'test-provider',
-    modelId: 'test-model',
-    modelRevision: 'production-calculation-diagnostics',
-  } as const;
-
-  async generateStructured(prompt: CompiledNarrativePrompt): Promise<unknown> {
-    return buildDeterministicFallbackDraft(prompt.evidence);
-  }
-}
-
-const narrativePolicy: NarrativePolicy = {
-  policyId: 'myeonghwa-production-calculation-diagnostics-test',
-  version: '1.0.0-test',
-  language: 'ko',
-  certaintyPolicy: {
-    deterministicFacts: 'direct',
-    interpretationClaims: 'method_attributed',
-    contestedClaims: 'explicit_difference',
-    ambiguousFacts: 'explicit_uncertainty',
-    futureClaims: 'non_deterministic',
-  },
-  tone: {
-    style: 'clear',
-    avoidFatalism: true,
-    avoidFearInduction: true,
-  },
-  sensitiveDomains: {
-    health: 'non_diagnostic',
-    finance: 'non_advisory',
-    legal: 'non_advisory',
-    safety: 'no_harmful_direction',
-  },
-  sourceDisclosure: 'internal_only',
-};
-
 function createHost(
   observer: (observation: ProductionCalculationSensitivityObservation) => void | Promise<void>,
 ) {
   return createAuthorizedMyeonghwaProductionHost({
     registry,
     reviewerTrustContext,
-    adapter: new TestNarrativeAdapter(),
-    narrativePolicy,
     readingOptions: {
       outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
       readingVersion: 'myeonghwa-production-calculation-diagnostics-reading-v1-test',

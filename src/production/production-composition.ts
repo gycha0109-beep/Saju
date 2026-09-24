@@ -1,5 +1,4 @@
 import type { Server } from 'node:http';
-import type { NarrativePolicy } from '../contracts/narrative.js';
 import type { CalculationEngineOptions } from '../calculation/calculation-engine.js';
 import {
   buildInterpretationExecutionPlan,
@@ -14,7 +13,6 @@ import {
   type ResolvedRuleRegistrySnapshot,
 } from '../interpretation/rule-registry.js';
 import type { ReviewerTrustContext } from '../interpretation/reviewer-trust.js';
-import type { NarrativeModelAdapter } from '../llm/model-adapter.js';
 import {
   createMyeonghwaProductHost,
   type MyeonghwaProductHost,
@@ -24,6 +22,7 @@ import {
   type ProductHostInterpretationRequestContext,
 } from '../host/product-host.js';
 import type { ProductReadingServiceOptions } from '../reading/product-reading-service.js';
+import type { LegacyNarrativeRuntimeV1 } from '../reading/governed-reading-execution.js';
 import {
   createMyeonghwaProductionProductHostServer,
   type MyeonghwaProductionProductHostServerOptions,
@@ -46,7 +45,7 @@ export {
   type AuthorizedProductionCalculationPolicySummary,
 };
 
-export const PRODUCTION_COMPOSITION_VERSION = 'myeonghwa-production-composition-v3';
+export const PRODUCTION_COMPOSITION_VERSION = 'myeonghwa-production-composition-v4';
 export const PRODUCTION_AUTHORITY_MANIFEST_VERSION =
   'myeonghwa-production-authority-manifest-v2';
 export const CURRENT_PRODUCTION_COMPOSITION_STATUS = 'blocked_authority_required' as const;
@@ -57,8 +56,6 @@ export type ProductionCompositionBlockerCode =
   | 'PRODUCTION_INTERPRETATION_REGISTRY_REQUIRED'
   | 'INTERPRETATION_PACK_NOT_PRODUCTION'
   | 'INTERPRETATION_AUTHORIZATION_PREFLIGHT_FAILED'
-  | 'NARRATIVE_ADAPTER_REQUIRED'
-  | 'NARRATIVE_POLICY_REQUIRED'
   | 'READING_OPTIONS_REQUIRED';
 
 export interface ProductionCompositionBlocker {
@@ -81,9 +78,8 @@ export interface ProductionCompositionRequest {
   calculationPolicyId?: string;
   registry?: ResolvedRuleRegistrySnapshot;
   reviewerTrustContext?: ReviewerTrustContext;
-  adapter?: NarrativeModelAdapter;
-  narrativePolicy?: NarrativePolicy;
   readingOptions?: ProductReadingServiceOptions;
+  legacyNarrativeRuntime?: LegacyNarrativeRuntimeV1;
   calculationOptions?: CalculationEngineOptions;
   calculationSensitivityObserver?: ProductionCalculationSensitivityObserver;
   requestIdFactory?: () => string;
@@ -203,20 +199,6 @@ export function inspectMyeonghwaProductionComposition(
     if (blocker !== undefined) blockers.push(blocker);
   }
 
-  if (request.adapter === undefined || typeof request.adapter.generateStructured !== 'function') {
-    blockers.push({
-      code: 'NARRATIVE_ADAPTER_REQUIRED',
-      component: 'narrative',
-      message: 'A configured narrative model adapter is required.',
-    });
-  }
-  if (request.narrativePolicy === undefined) {
-    blockers.push({
-      code: 'NARRATIVE_POLICY_REQUIRED',
-      component: 'narrative',
-      message: 'A narrative policy is required.',
-    });
-  }
   if (request.readingOptions === undefined) {
     blockers.push({
       code: 'READING_OPTIONS_REQUIRED',
@@ -291,10 +273,8 @@ function toDependencies(
   request: ProductionCompositionRequest,
   registry: ResolvedRuleRegistrySnapshot,
 ): MyeonghwaProductHostDependencies {
-  const adapter = request.adapter;
-  const narrativePolicy = request.narrativePolicy;
   const readingOptions = request.readingOptions;
-  if (adapter === undefined || narrativePolicy === undefined || readingOptions === undefined) {
+  if (readingOptions === undefined) {
     throw new Error('Production composition invariant failed after readiness inspection.');
   }
 
@@ -315,9 +295,10 @@ function toDependencies(
         context,
         requestContext,
       ),
-    adapter,
-    narrativePolicy,
     readingOptions,
+    ...(request.legacyNarrativeRuntime === undefined
+      ? {}
+      : { legacyNarrativeRuntime: request.legacyNarrativeRuntime }),
     ...(request.requestIdFactory === undefined ? {} : { requestIdFactory: request.requestIdFactory }),
   };
 }
