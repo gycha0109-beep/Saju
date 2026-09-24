@@ -183,18 +183,18 @@ describe('Governed Reading Execution Orchestrator', () => {
     );
 
     expect(result.state).toBe('completed');
-    expect(result.preparation.state).toBe('ready_for_narrative');
+    expect(result.preparation.state).toBe('ready_for_execution');
     expect(result.modelCalls).toBe(1);
     expect(adapter.calls).toHaveLength(1);
     expect(result.narrative?.outcome).toBe('model_first_pass');
     expect(result.artifact).toBeDefined();
-    expect(result.canonicalSemantics).toBeDefined();
-    expect(result.officialReadingPlan).toBeDefined();
-    expect(result.officialReadingPlan?.sourceSemanticHash).toBe(
-      result.canonicalSemantics?.semanticHash,
-    );
-    expect(result.canonicalSemantics?.targetClaimIds).toEqual(['claim-family-parents-complete']);
+    expect(result.canonicalSemantics).toBeUndefined();
+    expect(result.officialReadingPlan).toBeUndefined();
+    expect(result.officialReadingReport).toBeUndefined();
     expect(result.consumerReadingAuthority?.authority).toBe('legacy_narrative');
+    expect(adapter.calls[0]?.prompt.evidence.narrativePolicyVersion).toBe(narrativePolicy.version);
+    expect(result.preparation).not.toHaveProperty('narrativeRequest');
+    expect(result.preparation).not.toHaveProperty('narrativeRequestRef');
     expect(result.artifact?.provenance.snapshotId).toBe(currentSnapshot.snapshotId);
     expect(result.artifact?.provenance.interpretationRunId).toBe(
       interpretation.run.interpretationRunId,
