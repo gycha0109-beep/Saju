@@ -51,6 +51,8 @@ const fr279PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr279-still
 const fr279ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr279-still-image-eye-chord-decomposition.mjs');
 const fr281PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr281-still-image-metric-eye-chord.html');
 const fr281ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr281-still-image-metric-eye-chord.mjs');
+const fr283PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr283-still-image-fr76-eye-chord-propagation.html');
+const fr283ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr283-still-image-fr76-eye-chord-propagation.mjs');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -300,6 +302,9 @@ async function main() {
   const fr281PageTemplate = readFileSync(fr281PagePath, 'utf8');
   if (!fr281PageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR281 operator page import-map placeholder is missing.');
   const fr281PageHtml = fr281PageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr283PageTemplate = readFileSync(fr283PagePath, 'utf8');
+  if (!fr283PageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR283 operator page import-map placeholder is missing.');
+  const fr283PageHtml = fr283PageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
 
   const requestHandler = (request, response) => {
     if (LAN_MODE) {
@@ -428,6 +433,16 @@ async function main() {
     }
     if (url.pathname === '/fr281/operator.mjs') { sendFile(response, fr281ClientPath); return; }
 
+    if (url.pathname === '/fr283' || url.pathname === '/fr283/' || url.pathname === '/fr283/index.html') {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://raw.githubusercontent.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://raw.githubusercontent.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()', 'x-content-type-options': 'nosniff',
+      });
+      response.end(fr283PageHtml); return;
+    }
+    if (url.pathname === '/fr283/operator.mjs') { sendFile(response, fr283ClientPath); return; }
+
     if (url.pathname === '/runtime/config.json') {
       response.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
@@ -522,6 +537,8 @@ async function main() {
         '/fr279/operator.mjs',
         '/fr281/',
         '/fr281/operator.mjs',
+        '/fr283/',
+        '/fr283/operator.mjs',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
         '/runtime/fr76-parity-input.prototxt',
@@ -532,6 +549,7 @@ async function main() {
         '/face/observable-morphology-deterministic-still-image-diagnostic-fr274.js',
         '/face/observable-morphology-fixed-still-screen-eye-chord-fr279.js',
         '/face/observable-morphology-fixed-still-metric-eye-chord-fr281.js',
+        '/face/observable-morphology-fr76-eye-chord-propagation-fr283.js',
         importMapTarget,
       ];
       for (const route of required) {
@@ -588,6 +606,7 @@ async function main() {
         process.stdout.write('FR274 still-image diagnostic: ' + url + 'fr274/\n');
         process.stdout.write('FR279 eye-chord decomposition: ' + url + 'fr279/\n');
         process.stdout.write('FR281 metric eye-chord decomposition: ' + url + 'fr281/\n');
+        process.stdout.write('FR283 FR76 eye-chord propagation: ' + url + 'fr283/\n');
       }
     }
     process.stdout.write('The phone must trust the certificate/issuing local CA before browser camera access will work.\n');
@@ -598,6 +617,7 @@ async function main() {
     process.stdout.write('FR274 deterministic still-image diagnostic: ' + base + '/fr274/\n');
     process.stdout.write('FR279 fixed-still eye-chord decomposition: ' + base + '/fr279/\n');
     process.stdout.write('FR281 fixed-still metric eye-chord decomposition: ' + base + '/fr281/\n');
+    process.stdout.write('FR283 fixed-still FR76 eye-chord propagation: ' + base + '/fr283/\n');
   }
   process.stdout.write('Camera data remains in-memory; only sanitized/descriptive JSON can be exported by the browser surfaces.\n');
 }
