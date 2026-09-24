@@ -186,7 +186,7 @@ export function deriveMetricEyeChordComponentsFR281(
 export function createSameFrameMetricEyeChordCollectorFR281(): FR281SameFrameMetricEyeChordCollector {
   const pending = new Map<string, FR281SameFrameMetricEyeChordEvidence>();
   return Object.freeze({
-    observe(observation) {
+    observe(observation: FR257EphemeralGeometryObservation) {
       if (pending.has(observation.providerRunRef)) fail('duplicate providerRunRef metric observation.');
       const components = deriveMetricEyeChordComponentsFR281(observation.metricLandmarks);
       pending.set(observation.providerRunRef, Object.freeze({
@@ -196,7 +196,7 @@ export function createSameFrameMetricEyeChordCollectorFR281(): FR281SameFrameMet
         ...components,
       }));
     },
-    takeEvidence(providerRunRef) {
+    takeEvidence(providerRunRef: string) {
       const evidence = pending.get(providerRunRef);
       if (evidence === undefined) return null;
       pending.delete(providerRunRef);
