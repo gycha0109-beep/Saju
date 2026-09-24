@@ -330,6 +330,7 @@ export function buildReadingCompositionEvidence(
   request: ReadingRequest,
   _legacyOptions?: unknown,
 ): GovernedReadingCompositionEvidenceResult {
+  void _legacyOptions;
   assertCompositionIdentity(snapshot, execution, registry);
 
   const resolvedProfile = resolveDomainReadingProfile(request.intent);
