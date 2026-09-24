@@ -249,6 +249,7 @@ export function buildReadingCompositionEvidence(
   request: ReadingRequest,
   _legacyOptions?: unknown,
 ): GovernedReadingCompositionEvidenceResult {
+  void _legacyOptions;
   const authorized = buildAuthorizedReadingCompositionEvidence(
     snapshot,
     execution,
