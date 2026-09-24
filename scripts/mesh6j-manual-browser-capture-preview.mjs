@@ -47,6 +47,8 @@ const fr255PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr255-repea
 const fr255ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr255-repeatability-observation.mjs');
 const fr274PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr274-still-image-diagnostic.html');
 const fr274ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr274-still-image-diagnostic.mjs');
+const fr279PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr279-still-image-eye-chord-decomposition.html');
+const fr279ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr279-still-image-eye-chord-decomposition.mjs');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -288,6 +290,11 @@ async function main() {
     fail('FR274 operator page import-map placeholder is missing.');
   }
   const fr274PageHtml = fr274PageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr279PageTemplate = readFileSync(fr279PagePath, 'utf8');
+  if (!fr279PageTemplate.includes('__MEDIAPIPE_ENTRY__')) {
+    fail('FR279 operator page import-map placeholder is missing.');
+  }
+  const fr279PageHtml = fr279PageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
 
   const requestHandler = (request, response) => {
     if (LAN_MODE) {
@@ -386,6 +393,26 @@ async function main() {
       return;
     }
 
+    if (url.pathname === '/fr279' || url.pathname === '/fr279/' || url.pathname === '/fr279/index.html') {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy':
+          "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://raw.githubusercontent.com; " +
+          "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://raw.githubusercontent.com; " +
+          "img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr279PageHtml);
+      return;
+    }
+
+    if (url.pathname === '/fr279/operator.mjs') {
+      sendFile(response, fr279ClientPath);
+      return;
+    }
+
     if (url.pathname === '/runtime/config.json') {
       response.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
@@ -476,6 +503,8 @@ async function main() {
         '/fr255/operator.mjs',
         '/fr274/',
         '/fr274/operator.mjs',
+        '/fr279/',
+        '/fr279/operator.mjs',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
         '/runtime/fr76-parity-input.prototxt',
@@ -484,6 +513,7 @@ async function main() {
         '/face/mesh6i-manual-browser-capture-controller.js',
         '/face/observable-morphology-longitudinal-repeatability-observation-fr255.js',
         '/face/observable-morphology-deterministic-still-image-diagnostic-fr274.js',
+        '/face/observable-morphology-fixed-still-screen-eye-chord-fr279.js',
         importMapTarget,
       ];
       for (const route of required) {
@@ -538,6 +568,7 @@ async function main() {
         process.stdout.write('FR251 phone dry run: ' + url + 'fr251/\n');
         process.stdout.write('FR255 repeatability bundle: ' + url + 'fr255/\n');
         process.stdout.write('FR274 still-image diagnostic: ' + url + 'fr274/\n');
+        process.stdout.write('FR279 eye-chord decomposition: ' + url + 'fr279/\n');
       }
     }
     process.stdout.write('The phone must trust the certificate/issuing local CA before browser camera access will work.\n');
@@ -546,6 +577,7 @@ async function main() {
     process.stdout.write('FR251 one-person dry-run operator surface: ' + base + '/fr251/\n');
     process.stdout.write('FR255 longitudinal repeatability surface: ' + base + '/fr255/\n');
     process.stdout.write('FR274 deterministic still-image diagnostic: ' + base + '/fr274/\n');
+    process.stdout.write('FR279 fixed-still eye-chord decomposition: ' + base + '/fr279/\n');
   }
   process.stdout.write('Camera data remains in-memory; only sanitized/descriptive JSON can be exported by the browser surfaces.\n');
 }
