@@ -160,6 +160,7 @@ export function prepareProductReading(
   input: ConsumerReadingRequestInput,
   _legacyOptions?: unknown,
 ): ProductReadingPreparationResult {
+  void _legacyOptions;
   const normalization = normalizeConsumerReadingRequest(input);
   if (normalization.state !== 'resolved' || normalization.request === undefined) {
     return blockedFromNormalization(normalization);
