@@ -417,7 +417,8 @@ export function buildNarrativeEvidenceBundleFromReadingEvidence(
   if (narrativePolicyVersion.trim().length === 0) {
     throw new TypeError('narrativePolicyVersion must be a non-empty string.');
   }
-  const { schemaVersion: _schemaVersion, ...neutralEvidence } = evidence;
+  const { schemaVersion, ...neutralEvidence } = evidence;
+  void schemaVersion;
   const bundle: NarrativeEvidenceBundle = {
     ...neutralEvidence,
     narrativePolicyVersion,
