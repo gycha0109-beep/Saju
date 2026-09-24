@@ -15,14 +15,6 @@ const SYNTHETIC_HOURS = [0, 3, 6, 9, 12, 15, 18, 21] as const;
 const MAX_SCANNED_CASES = 128;
 const TARGET_DISTINCT_SIGNATURES = 8;
 
-const integrationOptions = {
-  narrativePolicyRef: {
-    id: 'myeonghwa-narrative-policy',
-    version: '1.0.0-p7-repeat-diagnostics',
-  },
-  outputSchemaVersion: 'myeonghwa-narrative-draft-v1',
-} as const;
-
 interface Occurrence {
   caseId: string;
   interpretationSignature: string;
@@ -145,19 +137,17 @@ describe('P7 Career preview repeat diagnostics', () => {
             execution,
             registry,
             { requestId: caseId, text: '직업운' },
-            integrationOptions,
           );
 
           if (
-            prepared.state !== 'ready_for_narrative' ||
-            prepared.composition === undefined ||
-            prepared.narrativeRequest === undefined
+            prepared.state !== 'ready_for_execution' ||
+            prepared.composition?.evidence === undefined
           ) {
             if (scannedCases >= MAX_SCANNED_CASES) break outer;
             continue;
           }
 
-          assertCareerResearchPreviewEvidenceIsolation(prepared.narrativeRequest.evidenceBundle);
+          assertCareerResearchPreviewEvidenceIsolation(prepared.composition.evidence.bundle);
           const signatures = deriveDomainInterpretationSignatures(
             execution.claims,
             execution.claimRelations,
@@ -169,7 +159,7 @@ describe('P7 Career preview repeat diagnostics', () => {
 
           if (!bySignature.has(signature.signature)) {
             const plan = buildClaimNarrativePlan(
-              prepared.narrativeRequest.evidenceBundle,
+              prepared.composition.evidence.bundle,
               CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
             );
             bySignature.set(signature.signature, {
