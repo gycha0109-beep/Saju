@@ -12,7 +12,7 @@ import {
   deterministicContentHash,
   type ResolvedRuleRegistrySnapshot,
 } from '../interpretation/rule-registry.js';
-import { buildNarrativeEvidenceBundle } from '../narrative/evidence-selector.js';
+import { buildGovernedReadingEvidenceBundle } from '../narrative/evidence-selector.js';
 import {
   buildReadingCompositionEvidence as buildAuthorizedReadingCompositionEvidence,
   type GovernedReadingCompositionEvidenceResult,
@@ -281,10 +281,9 @@ export function buildReadingCompositionEvidence(
   const evidence =
     targetClaimIds.length === 0
       ? undefined
-      : buildNarrativeEvidenceBundle(snapshot, execution, registry, {
+      : buildGovernedReadingEvidenceBundle(snapshot, execution, registry, {
           requestId: request.requestId,
           purpose: request.intent.domain === 'question_specific' ? 'question_answer' : 'section_reading',
-          narrativePolicyVersion: options.narrativePolicyVersion,
           targetClaimIds,
           ...(request.outputPreferences?.includeSourceSummaries === true
             ? { includeSourceSummaries: true }
