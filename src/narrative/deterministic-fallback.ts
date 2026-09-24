@@ -3,7 +3,6 @@ import type {
   NarrativeAssertion,
   NarrativeBlock,
   NarrativeDraft,
-  NarrativeEvidenceBundle,
   NarrativeSection,
 } from '../contracts/narrative.js';
 import type { GovernedReadingEvidenceContentV1 } from '../reading/governed-reading-evidence.js';
