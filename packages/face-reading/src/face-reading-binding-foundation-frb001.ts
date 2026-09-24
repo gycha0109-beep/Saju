@@ -12,6 +12,14 @@ import {
   type FR282Readiness,
   type FR282RegionKey,
 } from './rgb-selfie-feature-authority-matrix-fr282.js';
+import {
+  assertCanonicalRgbSelfieMorphologyPayloadFR284,
+  type FR284CanonicalRgbSelfieMorphologyPayload,
+} from './canonical-rgb-selfie-morphology-fr284.js';
+import {
+  FR284_PRODUCT_COLUMN_MAP,
+  assertFR284ProductColumnMap,
+} from './rgb-selfie-product-column-map-fr284.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export const FRB001_CONTRACT_VERSION =
@@ -263,6 +271,93 @@ readonly FRB001CanonicalFeatureAuthorityInventoryEntry[] {
         : 'not_asserted_by_fr282' as const,
     traditionalBindingIssued: false as const,
   })));
+}
+
+export function buildFR284RuntimeCapabilitiesFRB001(
+  payload: FR284CanonicalRgbSelfieMorphologyPayload,
+): readonly FRB001CanonicalFeatureRuntimeCapability[] {
+  assertCanonicalRgbSelfieMorphologyPayloadFR284(payload);
+  assertFR284ProductColumnMap();
+
+  const payloadFeatures = new Map(
+    payload.features.map((feature) => [feature.featureKey, feature] as const),
+  );
+  const pending = new Set(payload.pendingFeatureKeys);
+
+  const capabilities = FR284_PRODUCT_COLUMN_MAP.map(
+    (column): FRB001CanonicalFeatureRuntimeCapability => {
+      const feature = payloadFeatures.get(column.featureKey);
+
+      if (feature !== undefined) {
+        if (feature.status === 'available') {
+          return Object.freeze({
+            featureKey: feature.featureKey,
+            materializationState: 'materialized' as const,
+            availabilityState: 'available' as const,
+            qualityContextRefs: Object.freeze([
+              ...feature.quality.evidenceRefs,
+            ]),
+          });
+        }
+
+        if (feature.reason === 'image_model_extractor_not_materialized') {
+          return Object.freeze({
+            featureKey: feature.featureKey,
+            materializationState: 'not_materialized' as const,
+            availabilityState: 'not_evaluated' as const,
+            qualityContextRefs: Object.freeze([
+              ...feature.quality.evidenceRefs,
+            ]),
+          });
+        }
+
+        return Object.freeze({
+          featureKey: feature.featureKey,
+          materializationState: 'materialized' as const,
+          availabilityState: 'unavailable' as const,
+          qualityContextRefs: Object.freeze([
+            ...feature.quality.evidenceRefs,
+          ]),
+        });
+      }
+
+      if (!pending.has(column.featureKey)) {
+        fail(
+          `FR284 capability adapter lost feature ${column.featureKey}: neither payload feature nor pending key.`,
+        );
+      }
+
+      if (column.implementationState === 'deferred_unavailable') {
+        return Object.freeze({
+          featureKey: column.featureKey,
+          materializationState: 'unsupported' as const,
+          availabilityState: 'unavailable' as const,
+          qualityContextRefs: Object.freeze([]),
+        });
+      }
+
+      return Object.freeze({
+        featureKey: column.featureKey,
+        materializationState: 'not_materialized' as const,
+        availabilityState: 'not_evaluated' as const,
+        qualityContextRefs: Object.freeze([]),
+      });
+    },
+  );
+
+  const knownFeatures = featureMap();
+  if (capabilities.length !== knownFeatures.size) {
+    fail('FR284 capability adapter must cover the complete FR282 feature vocabulary.');
+  }
+  uniqueNonEmpty(
+    capabilities.map((capability) => capability.featureKey),
+    'fr284Capabilities.featureKey',
+  );
+  for (const capability of capabilities) {
+    assertFeatureRuntimeCapability(capability, knownFeatures);
+  }
+
+  return Object.freeze(capabilities);
 }
 
 export function assertFaceReadingMetricBindingRegistryFRB001(input: {
