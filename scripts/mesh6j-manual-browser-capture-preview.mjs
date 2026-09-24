@@ -372,7 +372,7 @@ async function main() {
         'cache-control': 'no-store',
         'content-security-policy':
           "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://raw.githubusercontent.com; " +
-          "script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://raw.githubusercontent.com; " +
+          "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com https://raw.githubusercontent.com; " +
           "img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
         'permissions-policy': 'camera=()',
         'x-content-type-options': 'nosniff',
