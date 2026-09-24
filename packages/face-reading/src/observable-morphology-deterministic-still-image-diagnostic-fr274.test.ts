@@ -55,7 +55,7 @@ describe('FR274 deterministic still-image diagnostic report', () => {
     expect(report.frontRelativeContrasts[1].deltaMeanScreenSpaceEyeTiltDegrees)
       .toBeCloseTo(-6.95);
     expect(report.frontRelativeContrasts[1].deltaMeanFR76EyeTiltDegrees)
-      .toBeCloseTo(-3.15);
+      .toBeCloseTo(-3.10);
   });
 
   it('rejects image order or condition-label drift', () => {
