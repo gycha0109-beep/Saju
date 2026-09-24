@@ -27,11 +27,6 @@ const policy: CalculationPolicySnapshot = {
   unknownBirthTimePolicy: 'preserve-unknown-and-enumerate-boundaries',
 };
 
-const integrationOptions = {
-  narrativePolicyRef: { id: 'myeonghwa-narrative-policy', version: '1.0.0-test' },
-  outputSchemaVersion: 'myeonghwa-narrative-draft-v1-test',
-} as const;
-
 function snapshot(): CanonicalSajuSnapshot {
   return calculateCanonicalSajuSnapshot(
     {
@@ -104,7 +99,7 @@ function executionWithClaims(
 }
 
 describe('Product Reading Integration Boundary', () => {
-  it('emits a grounded narrative request only after General Natal minimum-useful coverage is complete', () => {
+  it('emits an authority-neutral execution-ready preparation after General Natal minimum-useful coverage is complete', () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
     const foundation = claim(currentSnapshot.snapshotId, {
@@ -124,27 +119,15 @@ describe('Product Reading Integration Boundary', () => {
       executionWithClaims(currentSnapshot, registry, [foundation, synthesis]),
       registry,
       { requestId: 'product-general', text: '일반 사주' },
-      integrationOptions,
     );
 
-    expect(result.state).toBe('ready_for_narrative');
+    expect(result.state).toBe('ready_for_execution');
     expect(result.composition?.selection.coverageState).toBe('complete');
-    expect(result.narrativeRequest).toBeDefined();
     expect(result.composition?.evidence?.bundle).not.toHaveProperty('narrativePolicyVersion');
-    expect(result.narrativeRequest?.evidenceBundle.narrativePolicyVersion).toBe(
-      integrationOptions.narrativePolicyRef.version,
-    );
-    expect(result.narrativeRequest?.evidenceBundle.claims).toEqual(
-      result.composition?.evidence?.bundle.claims,
-    );
-    expect(result.narrativeRequest?.evidenceBundle.canonicalFacts).toEqual(
-      result.composition?.evidence?.bundle.canonicalFacts,
-    );
-    expect(result.narrativeRequest?.evidenceBundle.claimRelations).toEqual(
-      result.composition?.evidence?.bundle.claimRelations,
-    );
-    expect(result.deliveryEligibility.narrativeGeneration).toBe('allowed');
-    expect(result.deliveryEligibility.artifactAssembly).toBe('allowed_after_grounded_narrative');
+    expect(result).not.toHaveProperty('narrativeRequest');
+    expect(result).not.toHaveProperty('narrativeRequestRef');
+    expect(result.executionEligibility.readingExecution).toBe('allowed');
+    expect(result.executionEligibility.artifactAssembly).toBe('allowed_after_authority_execution');
   });
 
   it('blocks General Natal narrative generation when only one minimum-useful group is present', () => {
@@ -161,7 +144,6 @@ describe('Product Reading Integration Boundary', () => {
       executionWithClaims(currentSnapshot, registry, [foundation]),
       registry,
       { requestId: 'product-general-partial', text: '일반 사주' },
-      integrationOptions,
     );
 
     expect(result.state).toBe('partial_coverage');
@@ -169,9 +151,8 @@ describe('Product Reading Integration Boundary', () => {
     expect(result.composition?.selection.missingRequirements).toEqual([
       'NATAL_GENERAL_SYNTHESIS_CLAIM_REQUIRED',
     ]);
-    expect(result.narrativeRequest).toBeUndefined();
-    expect(result.deliveryEligibility.narrativeGeneration).toBe('blocked_coverage');
-    expect(result.deliveryEligibility.artifactAssembly).toBe('blocked_coverage');
+    expect(result.executionEligibility.readingExecution).toBe('blocked_coverage');
+    expect(result.executionEligibility.artifactAssembly).toBe('blocked_coverage');
   });
 
   it('blocks ambiguous consumer input before evidence selection or narrative generation', () => {
@@ -182,14 +163,12 @@ describe('Product Reading Integration Boundary', () => {
       executionWithClaims(currentSnapshot, registry, []),
       registry,
       { requestId: 'ambiguous-time', text: '올해 이번 달 사업운' },
-      integrationOptions,
     );
 
     expect(result.state).toBe('input_ambiguous');
     expect(result.composition).toBeUndefined();
-    expect(result.narrativeRequest).toBeUndefined();
-    expect(result.deliveryEligibility.narrativeGeneration).toBe('blocked_input');
-    expect(result.deliveryEligibility.mustSurfaceNormalizationState).toBe(true);
+    expect(result.executionEligibility.readingExecution).toBe('blocked_input');
+    expect(result.executionEligibility.mustSurfaceNormalizationState).toBe(true);
   });
 
   it('blocks unsupported free text instead of falling back to a general reading', () => {
@@ -200,13 +179,11 @@ describe('Product Reading Integration Boundary', () => {
       executionWithClaims(currentSnapshot, registry, []),
       registry,
       { requestId: 'unsupported-text', text: '요즘 왜 일이 꼬이지?' },
-      integrationOptions,
     );
 
     expect(result.state).toBe('input_unsupported');
-    expect(result.narrativeRequest).toBeUndefined();
-    expect(result.deliveryEligibility.constraints.mayFallbackUnsupportedIntentToGeneral).toBe(false);
-    expect(result.deliveryEligibility.constraints.mayFillMissingEvidenceWithLLM).toBe(false);
+    expect(result.executionEligibility.constraints.mayFallbackUnsupportedIntentToGeneral).toBe(false);
+    expect(result.executionEligibility.constraints.mayFillMissingEvidenceWithLLM).toBe(false);
   });
 
   it('preserves insufficient parent evidence and forbids model supplementation', () => {
@@ -223,15 +200,13 @@ describe('Product Reading Integration Boundary', () => {
       executionWithClaims(currentSnapshot, registry, [child]),
       registry,
       { requestId: 'parents-missing', text: '부모운' },
-      integrationOptions,
     );
 
     expect(result.state).toBe('insufficient_evidence');
     expect(result.composition?.selection.coverageState).toBe('insufficient_evidence');
     expect(result.composition?.selection.selectedClaimIds).toEqual([]);
-    expect(result.narrativeRequest).toBeUndefined();
-    expect(result.deliveryEligibility.narrativeGeneration).toBe('blocked_coverage');
-    expect(result.deliveryEligibility.mustSurfaceCoverageState).toBe(true);
+    expect(result.executionEligibility.readingExecution).toBe('blocked_coverage');
+    expect(result.executionEligibility.mustSurfaceCoverageState).toBe(true);
   });
 
   it('preserves partial annual-business evidence but blocks narrative generation until coverage is complete', () => {
@@ -251,14 +226,12 @@ describe('Product Reading Integration Boundary', () => {
         text: '올해 사업운',
         referenceDateTime: FIXED_READING_REFERENCE,
       },
-      integrationOptions,
     );
 
     expect(result.state).toBe('partial_coverage');
     expect(result.composition?.selection.selectedClaimIds).toEqual([businessNatal.claimId]);
     expect(result.composition?.evidence).toBeDefined();
-    expect(result.narrativeRequest).toBeUndefined();
-    expect(result.deliveryEligibility.artifactAssembly).toBe('blocked_coverage');
+    expect(result.executionEligibility.artifactAssembly).toBe('blocked_coverage');
   });
 
   it('preserves contradictory claims and does not resolve a methodology winner at the integration layer', () => {
@@ -287,13 +260,12 @@ describe('Product Reading Integration Boundary', () => {
       executionWithClaims(currentSnapshot, registry, [left, right], [contradiction]),
       registry,
       { requestId: 'wealth-conflict', text: '재물운' },
-      integrationOptions,
     );
 
-    expect(result.state).toBe('ready_for_narrative');
+    expect(result.state).toBe('ready_for_execution');
     expect(result.composition?.selection.selectedClaimIds).toEqual([left.claimId, right.claimId].sort());
     expect(result.composition?.selection.conflictRelationIds).toEqual([contradiction.relationId]);
-    expect(result.deliveryEligibility.constraints.mayResolveMethodologyConflicts).toBe(false);
+    expect(result.executionEligibility.constraints.mayResolveMethodologyConflicts).toBe(false);
   });
 
   it('propagates explicit question text and output detail only after authorized T11 evidence is complete', () => {
@@ -313,15 +285,13 @@ describe('Product Reading Integration Boundary', () => {
         text: '질문: 지금 이직을 고민해도 될까?',
         outputPreferences: { preferredDetail: 'concise' },
       },
-      integrationOptions,
     );
 
-    expect(result.state).toBe('ready_for_narrative');
-    expect(result.narrativeRequest?.purpose).toBe('question_answer');
-    expect(result.narrativeRequest?.userRequest).toEqual({
-      question: '지금 이직을 고민해도 될까',
-      preferredDetail: 'concise',
-    });
+    expect(result.state).toBe('ready_for_execution');
+    expect(result.composition?.evidence?.bundle.purpose).toBe('question_answer');
+    expect(result.normalization.request?.question).toBe('지금 이직을 고민해도 될까');
+    expect(result.normalization.request?.outputPreferences?.preferredDetail).toBe('concise');
+    expect(result).not.toHaveProperty('narrativeRequest');
   });
 
   it('is deterministic for identical snapshot, interpretation, consumer input, and narrative contract versions', () => {
@@ -340,18 +310,20 @@ describe('Product Reading Integration Boundary', () => {
       execution,
       registry,
       input,
-      integrationOptions,
     );
     const second = prepareProductReading(
       currentSnapshot,
       execution,
       registry,
       input,
-      integrationOptions,
     );
 
     expect(second.preparationId).toBe(first.preparationId);
-    expect(second.narrativeRequestRef).toEqual(first.narrativeRequestRef);
     expect(second.composition?.selection.selectionId).toBe(first.composition?.selection.selectionId);
+    expect(second.composition?.evidence?.evidenceBundleHash).toBe(
+      first.composition?.evidence?.evidenceBundleHash,
+    );
+    expect(first).not.toHaveProperty('narrativeRequest');
+    expect(first).not.toHaveProperty('narrativeRequestRef');
   });
 });
