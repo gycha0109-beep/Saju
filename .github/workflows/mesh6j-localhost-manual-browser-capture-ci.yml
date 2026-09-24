@@ -123,12 +123,10 @@ jobs:
           cp tools/face-geometry/capture/fr274-still-image-diagnostic.html "$export_dir/capture/"
           cp tools/face-geometry/capture/fr274-still-image-diagnostic.mjs "$export_dir/capture/"
           curl --fail --location --retry 3             --output "$export_dir/face_landmarker.task"             "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
-          {
-            echo "source_commit=$(git rev-parse HEAD)"
-            echo "tasks_vision_version=$(node -p \"require('./node_modules/@mediapipe/tasks-vision/package.json').version\")"
-            sha256sum "$export_dir/face_landmarker.task"
-            sha256sum "$export_dir/tasks-vision/vision_bundle.mjs"
-          } > "$export_dir/MANIFEST.txt"
+          git rev-parse HEAD | sed 's/^/source_commit=/' > "$export_dir/MANIFEST.txt"
+          node -e "const p=require('./node_modules/@mediapipe/tasks-vision/package.json'); process.stdout.write('tasks_vision_version='+p.version+'\\n')" >> "$export_dir/MANIFEST.txt"
+          sha256sum "$export_dir/face_landmarker.task" >> "$export_dir/MANIFEST.txt"
+          sha256sum "$export_dir/tasks-vision/vision_bundle.mjs" >> "$export_dir/MANIFEST.txt"
 
       - name: Upload FR274 offline runtime export
         uses: actions/upload-artifact@v4
