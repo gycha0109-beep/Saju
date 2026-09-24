@@ -23,6 +23,10 @@ export const FR289_PRODUCT_COLUMN_MAP = Object.freeze(
     return Object.freeze({
       ...entry,
       implementationState: 'canonical_extractor_materialized' as const,
+      sourcePrimitives: Object.freeze([
+        'packages/face-reading/src/visible-lower-face-width-fr213.ts',
+        'packages/face-reading/src/canonical-visible-lower-face-contour-fr216.ts',
+      ]),
       requiredExtractor: 'visible_lower_face_dimensions_fr289',
     });
   }),
