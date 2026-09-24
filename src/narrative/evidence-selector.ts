@@ -151,7 +151,7 @@ function activeClaimIndex(
 
 function initialClaimIds(
   execution: InterpretationExecutionResult,
-  request: EvidenceSelectionRequest,
+  request: GovernedEvidenceSelectionRequest,
 ): Set<string> {
   const active = activeClaimIndex(execution);
   if (request.purpose === 'full_reading') return new Set(active.keys());
