@@ -4,7 +4,6 @@ import type {
   ClaimNarrativeProfile,
   NarrativeAssertion,
   NarrativeEpistemicType,
-  NarrativeEvidenceBundle,
   NarrativeSection,
 } from '../contracts/narrative.js';
 
