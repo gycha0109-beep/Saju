@@ -148,11 +148,11 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
     expect(left.interpretationSignature).toBe(right.interpretationSignature);
 
     const leftPlan = buildClaimNarrativePlan(
-      left.narrativeRequest.evidenceBundle,
+      left.evidenceBundle,
       CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
     );
     const rightPlan = buildClaimNarrativePlan(
-      right.narrativeRequest.evidenceBundle,
+      right.evidenceBundle,
       CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
     );
     expect(leftPlan.items).toEqual(rightPlan.items);
@@ -164,7 +164,7 @@ describe('P6 ClaimNarrativeProfile deterministic renderer', () => {
     const after = observe(snapshot, 'p6-copy-after');
     expect(before.interpretationSignature).toBe(after.interpretationSignature);
 
-    const bundle = before.narrativeRequest.evidenceBundle;
+    const bundle = before.evidenceBundle;
     const baselinePlan = buildClaimNarrativePlan(bundle, CAREER_NATAL_CLAIM_NARRATIVE_PROFILES);
     const activeClaimType = baselinePlan.items[0]?.claimType;
     if (activeClaimType === undefined) throw new Error('Expected active Career narrative profile.');
