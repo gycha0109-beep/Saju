@@ -106,7 +106,7 @@ function sources(
           ],
           pointCount: 3,
           source: source(),
-        } as FR286ExistingSources['lowerFaceContour']
+        } as unknown as FR286ExistingSources['lowerFaceContour']
       : {
           schemaVersion:
             'fr216-visible-lower-face-contour-v1',
@@ -115,7 +115,7 @@ function sources(
             'lower_face_contour_contains_fewer_than_three_points',
           fallbackInvented: false,
           source: source(),
-        } as FR286ExistingSources['lowerFaceContour'],
+        } as unknown as FR286ExistingSources['lowerFaceContour'],
   };
 }
 
