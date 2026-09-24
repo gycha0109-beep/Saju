@@ -285,6 +285,15 @@ export const FACE_TRADITIONAL_T4_OBSERVATION_REQUIREMENTS = [
   },
   {
     methodologyRef: FACE_TRADITIONAL_T4_METHOD_REFS.mayiThreeFusThreeGovernors,
+    requirementId: 't4.req.mayi_sanfu.hairline',
+    traditionalObservationRef: 'trad.anchor.hairline',
+    traditionalLabel: '髮際',
+    semanticRequirement: '上府의 시작 경계를 식별할 수 있어야 한다.',
+    implementationOwner: 'face-observation-engine',
+    implementationStatus: 'required_unbound',
+  },
+  {
+    methodologyRef: FACE_TRADITIONAL_T4_METHOD_REFS.mayiThreeFusThreeGovernors,
     requirementId: 't4.req.mayi_sanfu.yintang',
     traditionalObservationRef: 'trad.anchor.yintang',
     traditionalLabel: '印堂',
@@ -303,6 +312,15 @@ export const FACE_TRADITIONAL_T4_OBSERVATION_REQUIREMENTS = [
   },
   {
     methodologyRef: FACE_TRADITIONAL_T4_METHOD_REFS.mayiThreeFusThreeGovernors,
+    requirementId: 't4.req.mayi_sanfu.zhuntou',
+    traditionalObservationRef: 'trad.anchor.zhuntou',
+    traditionalLabel: '準頭',
+    semanticRequirement: '中府의 종료 경계를 식별할 수 있어야 한다.',
+    implementationOwner: 'face-observation-engine',
+    implementationStatus: 'required_unbound',
+  },
+  {
+    methodologyRef: FACE_TRADITIONAL_T4_METHOD_REFS.mayiThreeFusThreeGovernors,
     requirementId: 't4.req.mayi_sanfu.renzhong',
     traditionalObservationRef: 'trad.anchor.renzhong',
     traditionalLabel: '人中',
@@ -311,13 +329,71 @@ export const FACE_TRADITIONAL_T4_OBSERVATION_REQUIREMENTS = [
     implementationStatus: 'required_unbound',
   },
   {
+    methodologyRef: FACE_TRADITIONAL_T4_METHOD_REFS.mayiThreeFusThreeGovernors,
+    requirementId: 't4.req.mayi_sanfu.dige',
+    traditionalObservationRef: 'trad.anchor.dige',
+    traditionalLabel: '地閣',
+    semanticRequirement: '下府의 종료 경계를 식별할 수 있어야 한다.',
+    implementationOwner: 'face-observation-engine',
+    implementationStatus: 'required_unbound',
+  },
+  {
     methodologyRef:
       FACE_TRADITIONAL_T4_METHOD_REFS.shenyiFuGujinNoncontiguousThreeDivisions,
-    requirementId: 't4.req.shenyi_gujin.six_anchors',
+    requirementId: 't4.req.shenyi_gujin.hairline',
     traditionalObservationRef: 'trad.anchor.hairline',
-    traditionalLabel: '髮際/印堂/山根/準頭/人中/地閣',
-    semanticRequirement:
-      '세 비연속 三停을 구성하는 여섯 source-qualified anchor semantics를 모두 구별할 수 있어야 한다. 이 항목은 집합 요구의 대표 레코드이며 개별 좌표를 정의하지 않는다.',
+    traditionalLabel: '髮際',
+    semanticRequirement: '上停의 시작 경계를 식별할 수 있어야 한다.',
+    implementationOwner: 'face-observation-engine',
+    implementationStatus: 'required_unbound',
+  },
+  {
+    methodologyRef:
+      FACE_TRADITIONAL_T4_METHOD_REFS.shenyiFuGujinNoncontiguousThreeDivisions,
+    requirementId: 't4.req.shenyi_gujin.yintang',
+    traditionalObservationRef: 'trad.anchor.yintang',
+    traditionalLabel: '印堂',
+    semanticRequirement: '上停의 종료 경계를 식별할 수 있어야 한다.',
+    implementationOwner: 'face-observation-engine',
+    implementationStatus: 'required_unbound',
+  },
+  {
+    methodologyRef:
+      FACE_TRADITIONAL_T4_METHOD_REFS.shenyiFuGujinNoncontiguousThreeDivisions,
+    requirementId: 't4.req.shenyi_gujin.shangen',
+    traditionalObservationRef: 'trad.anchor.shangen',
+    traditionalLabel: '山根',
+    semanticRequirement: '中停의 시작 경계를 식별할 수 있어야 한다.',
+    implementationOwner: 'face-observation-engine',
+    implementationStatus: 'required_unbound',
+  },
+  {
+    methodologyRef:
+      FACE_TRADITIONAL_T4_METHOD_REFS.shenyiFuGujinNoncontiguousThreeDivisions,
+    requirementId: 't4.req.shenyi_gujin.zhuntou',
+    traditionalObservationRef: 'trad.anchor.zhuntou',
+    traditionalLabel: '準頭',
+    semanticRequirement: '中停의 종료 경계를 식별할 수 있어야 한다.',
+    implementationOwner: 'face-observation-engine',
+    implementationStatus: 'required_unbound',
+  },
+  {
+    methodologyRef:
+      FACE_TRADITIONAL_T4_METHOD_REFS.shenyiFuGujinNoncontiguousThreeDivisions,
+    requirementId: 't4.req.shenyi_gujin.renzhong',
+    traditionalObservationRef: 'trad.anchor.renzhong',
+    traditionalLabel: '人中',
+    semanticRequirement: '下停의 시작 경계를 식별할 수 있어야 한다.',
+    implementationOwner: 'face-observation-engine',
+    implementationStatus: 'required_unbound',
+  },
+  {
+    methodologyRef:
+      FACE_TRADITIONAL_T4_METHOD_REFS.shenyiFuGujinNoncontiguousThreeDivisions,
+    requirementId: 't4.req.shenyi_gujin.dige',
+    traditionalObservationRef: 'trad.anchor.dige',
+    traditionalLabel: '地閣',
+    semanticRequirement: '下停의 종료 경계를 식별할 수 있어야 한다.',
     implementationOwner: 'face-observation-engine',
     implementationStatus: 'required_unbound',
   },
