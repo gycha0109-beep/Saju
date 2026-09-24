@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
-import type { NarrativeBlock, NarrativeDraft, NarrativePolicy } from '../src/contracts/narrative.js';
+import type {
+  GroundedNarrativeRequest,
+  NarrativeBlock,
+  NarrativeDraft,
+  NarrativePolicy,
+} from '../src/contracts/narrative.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import type { NarrativeModelAdapter } from '../src/llm/model-adapter.js';
 import { generateGroundedNarrative } from '../src/llm/narrative-orchestrator.js';
+import { buildNarrativeEvidenceBundleFromReadingEvidence } from '../src/narrative/evidence-selector.js';
 import { validateNarrativeDraftGrounding } from '../src/narrative/grounding-validator.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import { prepareProductReading } from '../src/reading/product-reading-integration.js';
@@ -46,11 +52,6 @@ const narrativePolicy: NarrativePolicy = {
   },
   sourceDisclosure: 'internal_only',
 };
-
-const integrationOptions = {
-  narrativePolicyRef: { id: narrativePolicy.policyId, version: narrativePolicy.version },
-  outputSchemaVersion: 'myeonghwa-narrative-draft-v1',
-} as const;
 
 const failingAdapter: NarrativeModelAdapter = {
   metadata: {
@@ -163,20 +164,14 @@ async function renderCareerCase(
     execution,
     registry,
     { requestId, text: '직업운' },
-    integrationOptions,
   );
 
-  if (
-    prepared.state !== 'ready_for_narrative' ||
-    prepared.narrativeRequest === undefined ||
-    prepared.composition === undefined
-  ) {
+  if (prepared.state !== 'ready_for_execution' || prepared.composition?.evidence === undefined) {
     return null;
   }
 
-  const isolation = assertCareerResearchPreviewEvidenceIsolation(
-    prepared.narrativeRequest.evidenceBundle,
-  );
+  const governedEvidence = prepared.composition.evidence.bundle;
+  const isolation = assertCareerResearchPreviewEvidenceIsolation(governedEvidence);
   expect(isolation.state).toBe('isolated_legacy_direct_t8');
   expect(isolation.configuredPath).toBe('legacy_direct_t8');
   expect(isolation.nonLegacyCareerT8ClaimCount).toBe(0);
@@ -194,9 +189,21 @@ async function renderCareerCase(
     throw new Error(`Missing selected Career interpretation signature for ${requestId}.`);
   }
 
+  const narrativeEvidence = buildNarrativeEvidenceBundleFromReadingEvidence(
+    governedEvidence,
+    narrativePolicy.version,
+  );
+  const narrativeRequest: GroundedNarrativeRequest = {
+    requestId,
+    purpose: governedEvidence.purpose,
+    evidenceBundle: narrativeEvidence.bundle,
+    userRequest: { requestedSection: 'career:natal' },
+    narrativePolicyRef: { id: narrativePolicy.policyId, version: narrativePolicy.version },
+    outputSchemaVersion: 'myeonghwa-narrative-draft-v1',
+  };
   const narrative = await generateGroundedNarrative(
     failingAdapter,
-    prepared.narrativeRequest,
+    narrativeRequest,
     narrativePolicy,
     {
       claimNarrativeProfiles: CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
@@ -206,7 +213,7 @@ async function renderCareerCase(
   expect(narrative.outcome).toBe('deterministic_fallback');
   const grounding = validateNarrativeDraftGrounding(
     narrative.draft,
-    prepared.narrativeRequest.evidenceBundle,
+    narrativeEvidence.bundle,
   );
   expect(grounding.valid).toBe(true);
   expect(grounding.violations).toEqual([]);
