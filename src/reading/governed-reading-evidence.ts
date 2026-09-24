@@ -8,8 +8,7 @@ import type {
 export const GOVERNED_READING_EVIDENCE_SCHEMA_VERSION =
   'myeonghwa-governed-reading-evidence-v1' as const;
 
-export interface GovernedReadingEvidenceBundleV1 {
-  schemaVersion: typeof GOVERNED_READING_EVIDENCE_SCHEMA_VERSION;
+export interface GovernedReadingEvidenceContentV1 {
   requestId: string;
   purpose: NarrativePurpose;
   snapshotId: string;
@@ -25,6 +24,11 @@ export interface GovernedReadingEvidenceBundleV1 {
     mustPreserveMethodDifferences: true;
     mustDiscloseMaterialAmbiguity: true;
   };
+}
+
+export interface GovernedReadingEvidenceBundleV1
+  extends GovernedReadingEvidenceContentV1 {
+  schemaVersion: typeof GOVERNED_READING_EVIDENCE_SCHEMA_VERSION;
 }
 
 export interface BuiltGovernedReadingEvidenceBundleV1 {
