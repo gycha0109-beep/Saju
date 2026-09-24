@@ -1,0 +1,28 @@
+name: "[WT:face-research] FR282 RGB Selfie Feature Authority Matrix"
+
+on:
+  pull_request:
+    paths:
+      - "packages/face-reading/src/rgb-selfie-feature-authority-matrix-fr282.ts"
+      - "packages/face-reading/src/rgb-selfie-feature-authority-matrix-fr282.test.ts"
+      - "research/face-reading/fr282-rgb-selfie-feature-authority-matrix.md"
+      - ".github/workflows/fr282-rgb-selfie-feature-authority-matrix.yml"
+  workflow_dispatch:
+    inputs:
+      watchtower_track:
+        description: "Watchtower Track Key"
+        required: false
+        default: "face-research"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+      - run: npm ci
+      - run: npm run face:typecheck
+      - run: npx vitest run packages/face-reading/src/rgb-selfie-feature-authority-matrix-fr282.test.ts
