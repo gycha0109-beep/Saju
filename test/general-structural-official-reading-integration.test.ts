@@ -93,9 +93,7 @@ describe('admitted General structural semantics -> Official Reading -> Reader', 
       {
         requestId: 'general-structural-reading',
         intent: { domain: 'general', temporalScope: 'natal' },
-      },
-      { narrativePolicyVersion: 'general-structural-integration-v1' },
-    );
+      });
     expect(composition.selection.coverageState).toBe('complete');
     expect(composition.selection.targetClaimIds).toContain(structuralClaim?.claimId);
     if (composition.evidence === undefined) throw new Error('Expected General reading evidence.');
