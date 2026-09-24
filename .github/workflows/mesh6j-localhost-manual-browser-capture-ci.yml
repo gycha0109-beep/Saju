@@ -107,3 +107,33 @@ jobs:
           MESH6J_TLS_KEY: /tmp/mesh6j-ci-key.pem
           MESH6J_TLS_CERT: /tmp/mesh6j-ci-cert.pem
         run: node scripts/mesh6j-manual-browser-capture-preview.mjs
+
+      - name: Stage FR274 offline runtime export
+        shell: bash
+        run: |
+          set -euo pipefail
+          export_dir=".fr274-runtime-export"
+          rm -rf "$export_dir"
+          mkdir -p "$export_dir/face" "$export_dir/cache" "$export_dir/tasks-vision" "$export_dir/capture"
+          cp -R .face-reading-dist/. "$export_dir/face/"
+          cp .cache/face-geometry/mesh6j/geometry_pipeline_metadata_landmarks.pbtxt "$export_dir/cache/"
+          cp .cache/face-geometry/mesh6j/fr76-parity-input.prototxt "$export_dir/cache/"
+          cp .cache/face-geometry/mesh6j/mediapipe-canonical-face.obj "$export_dir/cache/"
+          cp -R node_modules/@mediapipe/tasks-vision/. "$export_dir/tasks-vision/"
+          cp tools/face-geometry/capture/fr274-still-image-diagnostic.html "$export_dir/capture/"
+          cp tools/face-geometry/capture/fr274-still-image-diagnostic.mjs "$export_dir/capture/"
+          curl --fail --location --retry 3             --output "$export_dir/face_landmarker.task"             "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+          {
+            echo "source_commit=$(git rev-parse HEAD)"
+            echo "tasks_vision_version=$(node -p \"require('./node_modules/@mediapipe/tasks-vision/package.json').version\")"
+            sha256sum "$export_dir/face_landmarker.task"
+            sha256sum "$export_dir/tasks-vision/vision_bundle.mjs"
+          } > "$export_dir/MANIFEST.txt"
+
+      - name: Upload FR274 offline runtime export
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr274-offline-runtime-export
+          path: .fr274-runtime-export
+          if-no-files-found: error
+          retention-days: 1
