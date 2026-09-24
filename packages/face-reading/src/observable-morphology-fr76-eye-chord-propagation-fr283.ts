@@ -833,6 +833,19 @@ function contrast(
   });
 }
 
+function cloneStages(
+  stages: FR283SameFramePropagationEvidence['stages'],
+): FR283SameFramePropagationEvidence['stages'] {
+  return Object.freeze([
+    Object.freeze({ ...stages[0] }),
+    Object.freeze({ ...stages[1] }),
+    Object.freeze({ ...stages[2] }),
+    Object.freeze({ ...stages[3] }),
+    Object.freeze({ ...stages[4] }),
+    Object.freeze({ ...stages[5] }),
+  ]);
+}
+
 export function buildFixedStillFR76EyeChordPropagationReportFR283(input: {
   readonly generatedAt: string;
   readonly observations: readonly FR283FixedStillObservation[];
@@ -851,10 +864,7 @@ export function buildFixedStillFR76EyeChordPropagationReportFR283(input: {
   const observations = Object.freeze(input.observations.map((observation) =>
     Object.freeze({
       ...observation,
-      stages: (
-        Object.freeze(observation.stages.map((stage) => Object.freeze({ ...stage })))
-        as FR283SameFramePropagationEvidence['stages']
-      ),
+      stages: cloneStages(observation.stages),
       scales: Object.freeze({ ...observation.scales }),
     })));
 
