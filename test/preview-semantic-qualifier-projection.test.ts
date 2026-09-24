@@ -37,9 +37,7 @@ function fixture() {
     {
       requestId: 'preview-semantic-qualifier-reading',
       intent: { domain: 'general', temporalScope: 'natal' },
-    },
-    { narrativePolicyVersion: 'preview-semantic-qualifier-projection-v1' },
-  );
+    });
   if (composition.evidence === undefined) {
     throw new Error('Expected General reading evidence.');
   }
