@@ -367,7 +367,6 @@ export function buildReadingCompositionEvidence(
     execution,
     registry,
     request,
-    options,
   );
   return {
     ...base,
