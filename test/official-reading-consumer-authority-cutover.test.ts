@@ -322,6 +322,71 @@ describe('Preview Official Reading consumer authority cutover', () => {
     },
   );
 
+  it.each(DOMAIN_CASES)(
+    '$label keeps Official evidence and identity invariant across Narrative policy versions',
+    async (candidate) => {
+      const currentSnapshot = snapshot(candidate.useFiveFamilyTenGods);
+      const registry = candidate.createRegistry(NOW);
+      const interpretation = runInterpretation(currentSnapshot, registry, {
+        requestId: `official-policy-invariance-${candidate.label}-interpretation`,
+        now: new Date(NOW),
+      });
+      const secondPolicy: NarrativePolicy = {
+        ...narrativePolicy,
+        version: '2.0.0-test',
+      };
+
+      const first = await executeProductReading(
+        currentSnapshot,
+        interpretation,
+        registry,
+        { requestId: `official-policy-invariance-${candidate.label}`, text: candidate.inputText },
+        new ForbiddenNarrativeAdapter(),
+        narrativePolicy,
+        executionOptions,
+      );
+      const second = await executeProductReading(
+        currentSnapshot,
+        interpretation,
+        registry,
+        { requestId: `official-policy-invariance-${candidate.label}`, text: candidate.inputText },
+        new ForbiddenNarrativeAdapter(),
+        secondPolicy,
+        executionOptions,
+      );
+
+      const firstEvidence = first.preparation.composition?.evidence;
+      const secondEvidence = second.preparation.composition?.evidence;
+      expect(firstEvidence).toBeDefined();
+      expect(secondEvidence).toBeDefined();
+      expect(firstEvidence?.evidenceBundleHash).toBe(secondEvidence?.evidenceBundleHash);
+      expect(firstEvidence?.bundle).not.toHaveProperty('narrativePolicyVersion');
+      expect(firstEvidence?.bundle).not.toHaveProperty('model');
+      expect(firstEvidence?.bundle).not.toHaveProperty('provider');
+      expect(firstEvidence?.bundle).not.toHaveProperty('prompt');
+      expect(firstEvidence?.bundle).not.toHaveProperty('narrative');
+
+      expect(first.preparation.narrativeRequest?.evidenceBundle.narrativePolicyVersion).toBe(
+        narrativePolicy.version,
+      );
+      expect(second.preparation.narrativeRequest?.evidenceBundle.narrativePolicyVersion).toBe(
+        secondPolicy.version,
+      );
+
+      expect(first.canonicalSemantics?.sourceEvidenceHash).toBe(
+        second.canonicalSemantics?.sourceEvidenceHash,
+      );
+      expect(first.canonicalSemantics?.semanticHash).toBe(second.canonicalSemantics?.semanticHash);
+      expect(first.officialReadingPlan?.planHash).toBe(second.officialReadingPlan?.planHash);
+      expect(first.officialReadingReport?.reportHash).toBe(second.officialReadingReport?.reportHash);
+      expect(first.artifact?.readingId).toBe(second.artifact?.readingId);
+      expect(first.modelCalls).toBe(0);
+      expect(second.modelCalls).toBe(0);
+      expect(first.narrative).toBeUndefined();
+      expect(second.narrative).toBeUndefined();
+    },
+  );
+
   it('keeps Official delivery independent from a Narrative adapter that would fail if invoked', async () => {
     const currentSnapshot = snapshot(true);
     const registry = createCareerNatalReadingCandidateRegistry(NOW);
@@ -408,17 +473,23 @@ describe('Preview Official Reading consumer authority cutover', () => {
     );
     const interpretation = executionWithClaims(currentSnapshot, registry, [parents]);
 
+    const adapter = new LegacyNarrativeAdapter(true);
     const execution = await executeProductReading(
       currentSnapshot,
       interpretation,
       registry,
       { requestId: 'legacy-family-fallback', text: '부모운' },
-      new LegacyNarrativeAdapter(true),
+      adapter,
       narrativePolicy,
       executionOptions,
     );
     const delivery = buildProductReadingDelivery(execution);
 
+    expect(adapter.calls).toHaveLength(1);
+    expect(adapter.calls[0]?.evidence.narrativePolicyVersion).toBe(narrativePolicy.version);
+    expect(execution.preparation.composition?.evidence?.bundle).not.toHaveProperty(
+      'narrativePolicyVersion',
+    );
     expect(execution.consumerReadingAuthority?.authority).toBe('legacy_narrative');
     expect(execution.state).toBe('completed_with_fallback');
     expect(execution.artifact?.schemaVersion).toBe('myeonghwa-reading-artifact-v1');
