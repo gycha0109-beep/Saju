@@ -123,9 +123,7 @@ describe('natal business consumer reading research candidate', () => {
       snapshot,
       execution,
       registry,
-      { requestId: 'business-single-family', intent: { domain: 'business', temporalScope: 'natal' } },
-      { narrativePolicyVersion: 'business-natal-reading-v1' },
-    );
+      { requestId: 'business-single-family', intent: { domain: 'business', temporalScope: 'natal' } });
     expect(reading.selection.profileAuthorization.state).toBe('authorized');
     expect(reading.selection.coverageState).toBe('complete');
     const bundled =
@@ -144,9 +142,7 @@ describe('natal business consumer reading research candidate', () => {
       snapshot,
       execution,
       registry,
-      { requestId: 'business-natal-complete', intent: { domain: 'business', temporalScope: 'natal' } },
-      { narrativePolicyVersion: 'business-natal-reading-v1' },
-    );
+      { requestId: 'business-natal-complete', intent: { domain: 'business', temporalScope: 'natal' } });
 
     expect(reading.selection.coverageState).toBe('complete');
     const targets = new Set(reading.selection.targetClaimIds);
@@ -165,9 +161,7 @@ describe('natal business consumer reading research candidate', () => {
       snapshot,
       execution,
       registry,
-      { requestId: 'business-missing', intent: { domain: 'business', temporalScope: 'natal' } },
-      { narrativePolicyVersion: 'business-natal-reading-v1' },
-    );
+      { requestId: 'business-missing', intent: { domain: 'business', temporalScope: 'natal' } });
 
     expect(reading.selection.coverageState).toBe('insufficient_evidence');
     expect(reading.selection.targetClaimIds).toEqual([]);
@@ -184,9 +178,7 @@ describe('natal business consumer reading research candidate', () => {
       snapshot,
       execution,
       registry,
-      { requestId: 'business-annual-stays-closed', intent: { domain: 'business', temporalScope: 'annual' } },
-      { narrativePolicyVersion: 'business-natal-reading-v1' },
-    );
+      { requestId: 'business-annual-stays-closed', intent: { domain: 'business', temporalScope: 'annual' } });
 
     expect(annual.selection.coverageState).toBe('partial_coverage');
     expect(annual.selection.missingRequirements).toContain('ANNUAL_BUSINESS_PERIOD_CLAIM_REQUIRED');
@@ -288,9 +280,7 @@ describe('natal business consumer reading research candidate', () => {
     ] as const;
 
     for (const request of requests) {
-      const reading = buildReadingCompositionEvidence(snapshot, execution, registry, request, {
-        narrativePolicyVersion: 'business-natal-reading-v1',
-      });
+      const reading = buildReadingCompositionEvidence(snapshot, execution, registry, request);
       expect(reading.selection.coverageState).toBe('complete');
       const targets = new Set(reading.selection.targetClaimIds);
       const targetT8 = execution.claims.filter(
