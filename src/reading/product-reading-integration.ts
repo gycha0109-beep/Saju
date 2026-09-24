@@ -158,6 +158,7 @@ export function prepareProductReading(
   execution: InterpretationExecutionResult,
   registry: ResolvedRuleRegistrySnapshot,
   input: ConsumerReadingRequestInput,
+  _legacyOptions?: unknown,
 ): ProductReadingPreparationResult {
   const normalization = normalizeConsumerReadingRequest(input);
   if (normalization.state !== 'resolved' || normalization.request === undefined) {
