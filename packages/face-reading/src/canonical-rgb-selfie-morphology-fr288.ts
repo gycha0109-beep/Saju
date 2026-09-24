@@ -242,7 +242,7 @@ export function closeCanonicalRgbSelfieMorphologyFR288(
   if (
     features.length !== expectedKeys.length ||
     actualKeys.size !== expectedKeys.length ||
-    expectedKeys.some((key) => !actualKeys.has(key))
+    expectedKeys.some((key) => !actualKeys.has(key as FR284ProductFeatureKey))
   ) {
     fail('full payload must represent every FR282 feature key exactly once.');
   }
@@ -404,7 +404,7 @@ export function assertCanonicalRgbSelfieMorphologyPayloadFR288(
   if (
     payload.features.length !== 29 ||
     new Set(actualKeys).size !== 29 ||
-    expectedKeys.some((key) => !actualKeys.includes(key)) ||
+    expectedKeys.some((key) => !actualKeys.includes(key as FR284ProductFeatureKey)) ||
     payload.pendingFeatureKeys.length !== 0
   ) {
     fail('FR282 schema coverage drift.');
