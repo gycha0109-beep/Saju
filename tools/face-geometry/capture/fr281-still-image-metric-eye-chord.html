@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>명하 FR281 FR76 metric eye chord 진단</title>
+<script type="importmap">{"imports":{"@mediapipe/tasks-vision":"__MEDIAPIPE_ENTRY__"}}</script>
+<style>
+body{font-family:system-ui,sans-serif;background:#f5f5f2;color:#171717;margin:0}main{width:min(860px,calc(100% - 28px));margin:24px auto}.card{background:#fff;border:1px solid #ddd;border-radius:18px;padding:22px;margin-top:16px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}label{display:grid;gap:6px;font-weight:700}input{padding:10px}button{padding:12px 18px;border:0;border-radius:12px;background:#171717;color:#fff}.status{margin-top:12px;font-weight:600}pre{white-space:pre-wrap;word-break:break-word;background:#111;color:#eee;padding:16px;border-radius:12px;max-height:560px;overflow:auto}[hidden]{display:none!important}@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style></head><body><main>
+<div class="card"><h1>FR281 · FR76 metric eye chord 분해</h1><p>FR279와 같은 6장을 같은 FR257/FR76 경로로 실행해 canonical metric eye chord의 가로 span·signed 세로 rise를 분해합니다. 원본·raw landmark·pose matrix는 결과에 저장하지 않습니다.</p><div id="runtime-status" class="status">runtime 준비 중…</div></div>
+<div class="card"><div class="grid">
+<label>Front 1<input id="front-1" type="file" accept="image/jpeg"></label><label>Front 2<input id="front-2" type="file" accept="image/jpeg"></label>
+<label>High 1<input id="high-1" type="file" accept="image/jpeg"></label><label>High 2<input id="high-2" type="file" accept="image/jpeg"></label>
+<label>Low 1<input id="low-1" type="file" accept="image/jpeg"></label><label>Low 2<input id="low-2" type="file" accept="image/jpeg"></label>
+</div><p><button id="analyze" disabled>6장 metric chord 분석</button></p><div id="analysis-status" class="status"></div></div>
+<div id="result-card" class="card" hidden><pre id="result-json">{}</pre><button id="download">FR281 JSON 저장</button></div>
+</main><script type="module" src="/fr281/operator.mjs"></script></body></html>
