@@ -215,13 +215,21 @@ A later binding task must either:
 1. consume a canonical feature actually authorized/materialized for those spans; or
 2. send an explicit observation requirement to the engine track.
 
-## Coordination with FR284
+## FR284 engine handshake
 
-FR284 is concurrently materializing the first product-facing RGB morphology cluster.
+FR284 is now merged on main and materializes the first product-facing RGB morphology cluster.
 
-FRB001 does not depend on unmerged FR284 code and does not modify FR284 files.
+FRB001 consumes that contract only as a capability handshake. It does not alter FR284 extraction or traditional semantics.
 
-Once FR284 or its successors merge, the next binding step can adapt their canonical payload capability metadata into FRB001 runtime capabilities and declare the first real methodology-metric bindings.
+`buildFR284RuntimeCapabilitiesFRB001` maps the complete 29-column FR282/FR284 product vocabulary into FRB runtime capability states:
+
+- the four available FR284 eye geometry features -> `materialized / available`;
+- `eye.eyelid_crease_or_hooded_category` -> `not_materialized / not_evaluated`;
+- the FR284 pending feature keys -> `not_materialized / not_evaluated`;
+- the product-deferred unavailable ear feature -> `unsupported / unavailable`;
+- a per-capture unavailable `eye.outer_corner_tilt` remains `materialized / unavailable`, because its extractor exists even when that specific observation cannot be produced.
+
+FR283 evidence refs attached by FR284 to eye tilt are preserved only as quality-context refs. FRB001 does not turn them into a threshold or correction.
 
 ## What FRB001 does not do
 
@@ -247,9 +255,9 @@ Those remain owned by their respective tracks/layers.
 
 After FRB001 merges:
 
-1. wait for/consume the first merged canonical morphology payload contract from the observation-engine track;
+1. consume the merged FR284 canonical capability handshake;
 2. consume source-governed methodology requirements from the traditional-research track;
-3. declare the smallest real metric binding vertical slice;
+3. declare the smallest real metric binding vertical slice whose observation and methodology authorities both exist;
 4. materialize any required component/derived adapter in this track;
 5. only then execute existing operationalization/rule/claim contracts.
 
