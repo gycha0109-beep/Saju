@@ -42,6 +42,8 @@ The article states that:
 - depth data files contain a list of 8-byte floating-point values;
 - images are 119 pixels wide by 149 pixels high.
 
+The article's prose calls these depth artifacts `data`-extension files, while its file-structure table labels the `k1_box_xyz_depth` raw artifact as `raw`. FR300-R1I therefore accepts only the documented depth stem with either `.data` or `.raw`, and still requires the exact publisher filename/digest/size receipt before source binding.
+
 The article does **not** state the exact byte order or the exact physical unit of those floating-point values.
 
 FR300-R1I therefore binds the article to an expected candidate shape of:
