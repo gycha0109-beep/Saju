@@ -19,7 +19,7 @@ import {
   R026_HURTING_OFFICER_PROPOSITIONS,
 } from './general-natal-hurting-officer-pattern-conditions.js';
 import {
-  R027_SEVEN_KILL_PATTERN_PROPOSITIONS,
+  R027_SEVEN_KILL_PROPOSITIONS,
   R027_SEVEN_KILL_PATTERN_VERSION,
 } from './general-natal-seven-kill-pattern-conditions.js';
 import { R030_GEJU_CONFLICT_MATRIX_VERSION } from './general-natal-geju-conflict-resolution-matrix.js';
@@ -237,7 +237,6 @@ function scenario(
 }
 
 const BASE = R133_SOURCE_REFERENCES.selectedBaseText.sourceId;
-const COMMENTARY = R133_SOURCE_REFERENCES.selectedCommentary.sourceId;
 
 export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze([
   scenario({

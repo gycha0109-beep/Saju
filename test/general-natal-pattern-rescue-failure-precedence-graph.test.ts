@@ -29,7 +29,7 @@ import {
   R026_HURTING_OFFICER_PROPOSITIONS,
 } from '../src/research/general-natal-hurting-officer-pattern-conditions.js';
 import {
-  R027_SEVEN_KILL_PATTERN_PROPOSITIONS,
+  R027_SEVEN_KILL_PROPOSITIONS,
   R027_SEVEN_KILL_PATTERN_VERSION,
 } from '../src/research/general-natal-seven-kill-pattern-conditions.js';
 import { R030_GEJU_CONFLICT_MATRIX_VERSION } from '../src/research/general-natal-geju-conflict-resolution-matrix.js';
