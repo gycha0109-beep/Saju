@@ -126,13 +126,6 @@ function digest(value: string, label: string): string {
   return value;
 }
 
-function positiveInteger(value: number, label: string): number {
-  if (!Number.isSafeInteger(value) || value <= 0) {
-    fail(`${label} must be a positive safe integer.`);
-  }
-  return value;
-}
-
 export const FR300_R1_RAP3DF_V2_DATASET_EVIDENCE:
 FR300DatasetQualificationEvidence = Object.freeze({
   schemaVersion:
