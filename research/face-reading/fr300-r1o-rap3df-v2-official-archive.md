@@ -38,6 +38,6 @@ Even a successful exact archive identity match does not by itself repair the FR3
 
 FR299, FR300-R2, production, commerce, and the next product column remain blocked unless those independent gates are resolved.
 
-Product materialization remains 18/29.
+Product materialization remains 18/29. The metadata gate is fail-closed: no unique digest+size match means no identity promotion.
 
 Watchtower-Track: face-engine
