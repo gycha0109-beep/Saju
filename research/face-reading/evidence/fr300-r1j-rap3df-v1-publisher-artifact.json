@@ -1,9 +1,9 @@
 {
   "schemaVersion": "fr300-r1j-v1-publisher-artifact-evidence-v1",
   "watchtowerTrack": "face-engine",
-  "capturedAtUtc": "2026-09-25T20:40:06.963Z",
-  "workflowRunId": 36187067711,
-  "workflowHeadSha": "d49e9f2065174f4c90a901a65d82062650aa7d71",
+  "capturedAtUtc": "2026-09-25T20:41:45.060Z",
+  "workflowRunId": 36187234665,
+  "workflowHeadSha": "380dfe3af95d15863f1d921804d1fde70ab1b11f",
   "datasetRef": "doi:10.17632/kpdkpcs8zb.3",
   "datasetVersion": 3,
   "status": "source_bound_metric_authority_blocked",
