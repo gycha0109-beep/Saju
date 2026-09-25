@@ -41,6 +41,8 @@ function admittedEvidence(): FR300DatasetQualificationEvidence {
     rawDataRedistributionStatus: 'explicitly_prohibited',
     derivedReferenceMetadataPublicationStatus:
       'explicitly_allowed',
+    personalityPrivacyUseStatus: 'explicitly_allowed',
+    participantConsentScopeStatus: 'explicitly_allowed',
   };
 }
 
@@ -194,6 +196,8 @@ describe('FR300 real independent 3D nose reference pilot', () => {
         'commercial_product_development_rights_unresolved',
         'local_raw_data_processing_rights_unresolved',
         'derived_reference_metadata_publication_rights_unresolved',
+        'personality_privacy_scope_unresolved',
+        'participant_consent_scope_unresolved',
       ]));
     expect(
       FR300_IBUG_3DMDLAB_REAL_QUALIFICATION
