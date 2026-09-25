@@ -394,6 +394,38 @@ export const R125_DISCRIMINANT_CASES: readonly R125DiscriminantCase[] =
       ],
     },
     {
+      caseId: 'R125-C11B-PEER-WEAK-BODY-CAI-USE',
+      comparisonGroupId: 'WEAK-BODY-DISCRIMINANT',
+      family: 'PEER_SUPPORT',
+      discriminant: 'SEASON_OR_STRENGTH_CONTEXT',
+      sourceNature: 'LATER_COMMENTARY',
+      sourceStratum: '子平真詮評註 / 財旺身弱 context',
+      sourceRefs: ['https://www.ncc.com.tw/fate/paleo/bg/bg_034.htm'],
+      sourceStatement:
+        'Selected commentary gives a bounded weak-body context where 比劫 is used to divide strong 財.',
+      interpretiveReading:
+        'Peer support can remedy a weak-body state through peer assistance and 財 division rather than through the resource-generation mechanism.',
+      researchInference:
+        'This supplies the peer-side weak-body comparator to the resource-side 印 use without implying that the two interventions are interchangeable.',
+      equivalenceStatus: 'DISTINCT_MECHANISM',
+      peerSupportObserved: true,
+      resourceSupportObserved: false,
+      mechanismEquivalentAuthorized: false,
+      freeSubstitutionAuthorized: false,
+      numericEquivalenceAuthorized: false,
+      commonThresholdAuthorized: false,
+      commonExcessBehaviorAuthorized: false,
+      finalStrengthAuthorized: false,
+      unresolvedFactors: [
+        'the 財旺身弱 context is not interchangeable with 官重 or 傷官旺 weak-body contexts',
+        'no source supplies a peer-to-resource substitution rule',
+      ],
+      prohibitedExtensions: [
+        'WEAK_BODY_PEER_USE_EQUALS_RESOURCE_USE',
+        'PEER_WEAK_BODY_REMEDY_EQUALS_GLOBAL_SUBSTITUTION',
+      ],
+    },
+    {
       caseId: 'R125-C12-PEER-WITHOUT-ROOT-FOUR-XIN',
       comparisonGroupId: 'PEER-ROOT-DEPENDENCY',
       family: 'PEER_SUPPORT',
