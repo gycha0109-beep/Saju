@@ -21,6 +21,9 @@ export const FR300_R1F_RESEARCH_NOTE_REF =
 export const FR300_R1F_MENDELEY_API_DOCS_REF =
   'https://data.mendeley.com/api/docs/' as const;
 
+export const FR300_R1F_MENDELEY_ANONYMOUS_PUBLIC_API_REF =
+  'https://data.mendeley.com/public-api' as const;
+
 export const FR300_R1F_EXECUTION_STATE = Object.freeze({
   realRap3dfV2BytesRetrievedInCurrentExecution: false as const,
   realRap3dfV2PublicFileMetadataCaptured: false as const,
@@ -147,11 +150,25 @@ function isOfficialPublicFileMetadataRef(
 ): boolean {
   try {
     const url = new URL(value);
-    return (
-      url.protocol === 'https:' &&
+    if (url.protocol !== 'https:') {
+      return false;
+    }
+
+    const currentApiPath =
+      /^\/datasets\/kpdkpcs8zb\/files(?:\/[^/]+)?\/?$/u;
+    if (
       url.hostname === 'api.data.mendeley.com' &&
-      url.pathname.includes('/datasets/') &&
-      url.pathname.includes('/files/')
+      currentApiPath.test(url.pathname)
+    ) {
+      return true;
+    }
+
+    const anonymousPublicApiPath =
+      '/public-api/datasets/kpdkpcs8zb/files';
+    return (
+      url.hostname === 'data.mendeley.com' &&
+      url.pathname === anonymousPublicApiPath &&
+      url.searchParams.get('version') === '4'
     );
   } catch {
     return false;
