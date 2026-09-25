@@ -4,6 +4,8 @@
 > Product issue: #1638  
 > Face authority blocker: #1639  
 > Depends on: TOPIC-FACE-003
+>
+> Status update: Face authority blocker #1639 was closed by PR #1649. TOPIC-FACE-004A / #1653 connects that governed receipt to this Reader boundary; see `32-face-topic-live-fr293-reader-integration.md`.
 
 ## 1. Purpose
 
