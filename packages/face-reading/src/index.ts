@@ -85,4 +85,4 @@ export * from './three-divisions-neutral-surface-extension-fr35.js';
 export * from './three-divisions-vertical-reference-derivations-fr36.js';
 export * from './twelve-palaces-authority-fr12.js';
 export * from './twelve-palaces-research-v0.js';
-export * from './validation.js';
+export * from './validation.js';\nexport * from './topic-face-authority-receipt-002.js';\n
