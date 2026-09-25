@@ -11,10 +11,10 @@ import {
 describe('R125 peer-support versus resource-support discriminant corpus', () => {
   it('publishes the intended corpus size and comparison groups', () => {
     expect(R125_PEER_RESOURCE_DISCRIMINANT_VERSION).toBe('0.1.0-research');
-    expect(R125_DISCRIMINANT_CASES).toHaveLength(18);
-    expect(R125_SUMMARY.caseCount).toBe(18);
+    expect(R125_DISCRIMINANT_CASES).toHaveLength(19);
+    expect(R125_SUMMARY.caseCount).toBe(19);
     expect(R125_SUMMARY.comparisonGroupCount).toBe(9);
-    expect(new Set(R125_DISCRIMINANT_CASES.map((row) => row.caseId)).size).toBe(18);
+    expect(new Set(R125_DISCRIMINANT_CASES.map((row) => row.caseId)).size).toBe(19);
   });
 
   it('meets family coverage targets', () => {
@@ -138,6 +138,28 @@ describe('R125 peer-support versus resource-support discriminant corpus', () => 
       equivalenceStatus: 'NON_SUBSTITUTABLE_IN_OBSERVED_CONTEXT',
       freeSubstitutionAuthorized: false,
       numericEquivalenceAuthorized: false,
+    });
+  });
+
+  it('pairs weak-body peer and resource remedies without making them substitutes', () => {
+    const peer = R125_DISCRIMINANT_CASES.find(
+      (row) => row.caseId === 'R125-C11B-PEER-WEAK-BODY-CAI-USE',
+    );
+    const resource = R125_DISCRIMINANT_CASES.find(
+      (row) => row.caseId === 'R125-C11-RESOURCE-WEAK-BODY-USE',
+    );
+
+    expect(peer).toMatchObject({
+      comparisonGroupId: 'WEAK-BODY-DISCRIMINANT',
+      family: 'PEER_SUPPORT',
+      equivalenceStatus: 'DISTINCT_MECHANISM',
+      freeSubstitutionAuthorized: false,
+    });
+    expect(resource).toMatchObject({
+      comparisonGroupId: 'WEAK-BODY-DISCRIMINANT',
+      family: 'RESOURCE_SUPPORT',
+      equivalenceStatus: 'NON_SUBSTITUTABLE_IN_OBSERVED_CONTEXT',
+      freeSubstitutionAuthorized: false,
     });
   });
 
