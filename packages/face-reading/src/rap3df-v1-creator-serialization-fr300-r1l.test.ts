@@ -11,6 +11,20 @@ describe('FR300-R1L V1 historical creator serialization', () => {
     expect(FR300_R1L_CREATOR_SERIALIZATION_EVIDENCE).toMatchObject({
       collectionDirectory: 'rap3df_data',
       exactDepthFilename: 'k1_box_xyz_depth.data',
+      preCollectionWriterBlobSha:
+        'e9676d1999e588026be7571a1307771f125ae0f2',
+      postCollectionWriterBlobSha:
+        'e9676d1999e588026be7571a1307771f125ae0f2',
+      preCollectionFilenameContractBlobSha:
+        'dbbdc2243ff82be71f449e175149dc28998b8124',
+      postCollectionFilenameContractBlobSha:
+        'dbbdc2243ff82be71f449e175149dc28998b8124',
+      postCollectionSnapshotCommit:
+        '2331937776e532ac67d049415b852498aa2a9cc8',
+      postCollectionSnapshotDate: '2017-11-16T23:11:35Z',
+      postCollectionExactDepthBlobCount: 267,
+      postCollectionExactDepthBlobByteLength: 35462,
+      postCollectionAllExactDepthBlobsSameByteLength: true,
       writerInputType: 'std::vector<uint16_t>',
       writerScalarType: 'uint16_t',
       writerByteOrderSemantics: 'host_native_unspecified',
@@ -36,6 +50,24 @@ describe('FR300-R1L V1 historical creator serialization', () => {
       FR300_R1L_CREATOR_SERIALIZATION_EVIDENCE
         .articleReportedCollectionStart,
     ).toBe('2017-10-10');
+  });
+
+
+  it('binds the unchanged writer/filename contract across the reported collection window and the post-collection corpus', () => {
+    const evidence = FR300_R1L_CREATOR_SERIALIZATION_EVIDENCE;
+    const findings = FR300_R1L_CURRENT_SERIALIZATION_AUTHORITY.findings;
+
+    expect(evidence.preCollectionWriterBlobSha).toBe(
+      evidence.postCollectionWriterBlobSha,
+    );
+    expect(evidence.preCollectionFilenameContractBlobSha).toBe(
+      evidence.postCollectionFilenameContractBlobSha,
+    );
+    expect(evidence.postCollectionExactDepthBlobCount).toBe(267);
+    expect(evidence.postCollectionExactDepthBlobByteLength).toBe(35_462);
+    expect(findings.writerAndFilenameContractStableAcrossCollectionWindow).toBe(true);
+    expect(findings.postCollectionTreeContains267ExactDepthArtifacts).toBe(true);
+    expect(findings.postCollectionTreeAllExactDepthArtifactsAre35462Bytes).toBe(true);
   });
 
   it('treats the 12 publisher artifacts as corroboration of two-byte storage, not endian or unit authority', () => {
