@@ -22,16 +22,18 @@ A Topic can produce an execution plan only when its required authority is availa
 
 ## 2. Authority source receipt
 
-The face-reading package owns the adapter that reads its own governed surfaces:
+The product layer accepts a serializable `face-topic-authority-source-receipt-v1` through an explicit provider boundary. It does not import or modify the parity-governed `packages/face-reading` package from production `src/**`.
+
+The repository integration test derives the receipt directly from the current governed surfaces:
 
 - FR293 product column map: materialized neutral observation capabilities;
 - FR294 hard-gap frontier: represented but not materialized product capabilities;
 - FRB005 binding ledger: methodology-scoped traditional binding state;
 - T7 Three-Divisions handoff: methodology availability and fail-closed traditional state.
 
-The adapter emits a serializable `face-topic-authority-source-receipt-v1`. Topic code consumes the receipt instead of importing face-reading internals into the root product package.
+This test-time adapter is deliberately outside `packages/face-reading`. Face Reading CI byte-parity is an ownership boundary, not something topic-face may repair by changing the mirrored package.
 
-This preserves the build/package boundary and prevents topic-face from becoming an alternative Face authority.
+A runtime host must provide the same receipt contract from its authoritative Face integration surface. Topic code only validates, normalizes and consumes that receipt. This prevents topic-face from becoming an alternative Face authority while still making repository authority drift visible in CI.
 
 ## 3. Observation rule
 
