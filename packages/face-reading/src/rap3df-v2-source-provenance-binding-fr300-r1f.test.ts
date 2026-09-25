@@ -57,7 +57,7 @@ function sourceMetadata(
     datasetPageEvidenceRef:
       'https://data.mendeley.com/datasets/kpdkpcs8zb',
     fileMetadataEvidenceRef:
-      `https://api.data.mendeley.com/datasets/example/files/${FILE_ID}`,
+      `https://api.data.mendeley.com/datasets/kpdkpcs8zb/files/${FILE_ID}`,
     metadataActuallyFetched: true,
     fileId: FILE_ID,
     filename: 'depth_.data',
@@ -105,6 +105,49 @@ describe('FR300-R1F source provenance binding', () => {
     expect(receipt.metricEvidenceStatus).toBe(
       'ready_for_metric_scale_adjudication',
     );
+  });
+
+  it('accepts the anonymous Mendeley public-api files route when version 4 metadata was actually fetched', () => {
+    const byteIntake = byteReceipt(false);
+    const metadata = sourceMetadata(byteIntake);
+    const receipt = bindFR300R1FSourceProvenance({
+      schemaVersion: 'fr300-r1f-source-binding-input-v1',
+      byteIntake,
+      sourceMetadata: {
+        ...metadata,
+        fileMetadataEvidenceRef:
+          'https://data.mendeley.com/public-api/datasets/kpdkpcs8zb/files?folder_id=fixture-folder&version=4',
+      },
+    });
+
+    expect(receipt.provenanceStatus).toBe('source_bound');
+    expect(receipt.blockers).toEqual([]);
+  });
+
+  it('rejects public-api near-match hosts, wrong dataset ids and wrong versions', () => {
+    const byteIntake = byteReceipt(false);
+    const metadata = sourceMetadata(byteIntake);
+
+    for (const fileMetadataEvidenceRef of [
+      'https://evil.data.mendeley.com/public-api/datasets/kpdkpcs8zb/files?version=4',
+      'https://data.mendeley.com/public-api/datasets/not-rap3df/files?version=4',
+      'https://data.mendeley.com/public-api/datasets/kpdkpcs8zb/files?version=3',
+      'http://data.mendeley.com/public-api/datasets/kpdkpcs8zb/files?version=4',
+    ]) {
+      const receipt = bindFR300R1FSourceProvenance({
+        schemaVersion: 'fr300-r1f-source-binding-input-v1',
+        byteIntake,
+        sourceMetadata: {
+          ...metadata,
+          fileMetadataEvidenceRef,
+        },
+      });
+
+      expect(receipt.status).toBe('blocked');
+      expect(receipt.blockers).toContain(
+        'file_metadata_evidence_not_official',
+      );
+    }
   });
 
   it('fails closed when metadata was not actually fetched even if the URL looks official', () => {
