@@ -31,7 +31,6 @@ const ACQUISITION_SURFACES = Object.freeze([
       'https://commons.wikimedia.org/wiki/File:NLC892-411999032112-149659_%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E6%B3%A8%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3_%E7%AC%AC4%E5%86%8A.pdf',
     surfaceType: 'DIRECT_SCAN' as const,
     pageCount: 29 as const,
-    fileSha1: '583df5b7242162f37c73c17204a7384531ff0c89' as const,
     rawPassageStoredInRepository: false as const,
   }),
 ] as const);
