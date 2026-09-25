@@ -279,8 +279,8 @@ describe(
       ).toEqual([
         'createdAt',
         'header',
-        'readinessState',
         'readerDeliveryHash',
+        'readinessState',
         'resultRef',
         'schemaVersion',
         'topicKey',
