@@ -26,6 +26,21 @@ The RAP3DF article reports collection beginning on 2017-10-10. The pinned code t
 
 This temporal relationship is strong provenance evidence, but it is not treated as proof that the exact commit binary was the binary executed for every published sample.
 
+## Collection-window corpus binding
+
+A second creator snapshot was checked at commit `2331937776e532ac67d049415b852498aa2a9cc8` dated 2017-11-16, after the article-reported 2017-10-10 through 2017-10-27 collection period.
+
+The serialization-relevant blobs are unchanged across the boundary:
+
+- `utils.cpp` writer blob before collection: `e9676d1999e588026be7571a1307771f125ae0f2`;
+- `utils.cpp` writer blob after collection: the same blob;
+- `utils.h` filename/type contract before collection: `dbbdc2243ff82be71f449e175149dc28998b8124`;
+- `utils.h` filename/type contract after collection: the same blob.
+
+The post-collection creator tree contains exactly **267** paths ending in `k1_box_xyz_depth.data`, matching the article's 267 sample count. Every one of those 267 Git blobs is exactly **35,462 bytes**.
+
+This creates a much tighter provenance chain than temporal proximity alone: the exact writer/filename contract is unchanged across the reported collection window, and the creator's post-collection tree contains the full reported V1 sample cardinality at the same two-byte-per-pixel shape later observed from Mendeley.
+
 ## Exact V1 filename and directory binding
 
 At the pinned commit, `utils.h` defines:
