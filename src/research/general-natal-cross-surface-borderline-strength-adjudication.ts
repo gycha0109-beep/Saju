@@ -159,7 +159,7 @@ export const R128_ADJUDICATION_CASES: readonly R128CrossSurfaceAdjudicationCase[
       comparisonFamily: 'AUTUMN_WOOD_BORDERLINE',
       canonicalCaseFingerprint:
         'autumn Wood / out of season / visible 甲乙 / 寅卯 deep root / not-weak result',
-      caseMatchQuality: 'SHARED_STRUCTURAL_SCAFFOLD',
+      caseMatchQuality: 'NEAR_IDENTICAL_CASE_VARIANT',
       sourceSurfaceA: '徐樂吾 / 子平真詮評註',
       sourceSurfaceB: '任鐵樵 / 滴天髓闡微',
       sourceStratumA: 'later commentary / 論十干得時不旺失時不弱',
@@ -244,7 +244,7 @@ export const R128_ADJUDICATION_CASES: readonly R128CrossSurfaceAdjudicationCase[
       caseId: 'R128-C04-ONE-PEER-VS-MUKU',
       comparisonFamily: 'VISIBLE_PEER_VS_ROOT',
       canonicalCaseFingerprint: 'visible peer support versus one light root-class comparison',
-      caseMatchQuality: 'SHARED_STRUCTURAL_SCAFFOLD',
+      caseMatchQuality: 'NEAR_IDENTICAL_CASE_VARIANT',
       sourceSurfaceA: '徐樂吾 / 子平真詮評註',
       sourceSurfaceB: '任鐵樵 / 滴天髓闡微',
       sourceStratumA: 'later commentary root comparison',
@@ -712,12 +712,12 @@ export const R128_ADJUDICATION_CASES: readonly R128CrossSurfaceAdjudicationCase[
       sourceANativeLabel: '根之輕者',
       sourceBNativeLabel: '輕而不輕 / 則為輕矣',
       agreementType: 'QUALIFIED_AGREEMENT',
-      divergenceType: 'RATIONALE_DIVERGENCE',
+      divergenceType: 'SOURCE_POLICY_DIVERGENCE',
       labelComparable: false,
       predicateComparable: true,
       classifierRisk: 'HIGH',
       sourceStatement:
-        'The broad light-root principle survives, while Xu commentary adds temporal qualification absent from the reviewed Ren wording.',
+        'The broad light-root principle survives, while Xu commentary adds a temporal policy qualification absent from the reviewed Ren wording.',
       interpretiveReading:
         'A static Yuqi scalar would erase a source-local temporal condition.',
       researchInference:
