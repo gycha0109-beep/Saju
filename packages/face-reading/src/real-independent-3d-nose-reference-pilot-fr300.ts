@@ -46,6 +46,8 @@ export interface FR300DatasetQualificationEvidence {
   readonly rawDataRedistributionStatus: FR300RightsStatus;
   readonly derivedReferenceMetadataPublicationStatus:
     FR300RightsStatus;
+  readonly personalityPrivacyUseStatus: FR300RightsStatus;
+  readonly participantConsentScopeStatus: FR300RightsStatus;
 }
 
 export type FR300DatasetQualificationBlocker =
@@ -63,7 +65,11 @@ export type FR300DatasetQualificationBlocker =
   | 'local_raw_data_processing_rights_unresolved'
   | 'local_raw_data_processing_not_allowed'
   | 'derived_reference_metadata_publication_rights_unresolved'
-  | 'derived_reference_metadata_publication_not_allowed';
+  | 'derived_reference_metadata_publication_not_allowed'
+  | 'personality_privacy_scope_unresolved'
+  | 'personality_privacy_use_not_allowed'
+  | 'participant_consent_scope_unresolved'
+  | 'participant_consent_scope_not_allowed';
 
 export interface FR300DatasetQualificationReceipt {
   readonly schemaVersion:
@@ -278,6 +284,16 @@ export function qualifyFR300Dataset(
       'derived_reference_metadata_publication_rights_unresolved',
       'derived_reference_metadata_publication_not_allowed',
     ),
+    ...rightsBlockers(
+      evidence.personalityPrivacyUseStatus,
+      'personality_privacy_scope_unresolved',
+      'personality_privacy_use_not_allowed',
+    ),
+    ...rightsBlockers(
+      evidence.participantConsentScopeStatus,
+      'participant_consent_scope_unresolved',
+      'participant_consent_scope_not_allowed',
+    ),
   );
 
   return Object.freeze({
@@ -320,6 +336,8 @@ FR300DatasetQualificationEvidence = Object.freeze({
   localRawDataProcessingStatus: 'unresolved',
   rawDataRedistributionStatus: 'unresolved',
   derivedReferenceMetadataPublicationStatus: 'unresolved',
+  personalityPrivacyUseStatus: 'unresolved',
+  participantConsentScopeStatus: 'unresolved',
 });
 
 export const FR300_IBUG_3DMDLAB_REAL_QUALIFICATION =
