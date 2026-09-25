@@ -3,7 +3,9 @@ import {
   FR293_PRODUCT_COLUMN_MAP,
 } from './rgb-selfie-product-column-map-fr293.js';
 import {
+  FR300_R1_EXECUTION_STATE,
   FR300_R1_RAP3DF_V2_DATASET_EVIDENCE,
+  FR300_R1_RAP3DF_V2_METADATA_AUDIT,
   FR300_R1_RAP3DF_V2_QUALIFICATION,
   inspectFR300R1RawDepthArtifact,
 } from './rap3df-v2-qualification-fr300-r1.js';
@@ -165,6 +167,24 @@ describe('FR300-R1 RAP3DF V2 qualification', () => {
     expect(report.blockers).toContain(
       'byte_length_not_equal_to_grid_times_value_width',
     );
+  });
+
+  it('records the V2 volunteer-count source discrepancy without fabricating a resolution', () => {
+    expect(FR300_R1_RAP3DF_V2_METADATA_AUDIT).toEqual({
+      mendeleyVersion: 4,
+      mendeleyPublishedVolunteerCount: 80,
+      relatedThesisReportedVolunteerCount: 90,
+      volunteerCountDiscrepancyPresent: true,
+      discrepancyBlocksSingleVerifiedSamplePilot: false,
+    });
+    expect(FR300_R1_EXECUTION_STATE).toEqual({
+      sourceBytesRetrievedInCurrentExecution: false,
+      sourceArtifactDigestIssued: false,
+      rawDepthEncodingVerifiedFromBytes: false,
+      metricScaleVerified: false,
+      canonicalRegistrationReady: false,
+      realFR299BundleMaterialized: false,
+    });
   });
 
   it('preserves product materialization at 18/29', () => {
