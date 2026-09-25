@@ -26,13 +26,13 @@ function sha256(bytes) {
 }
 
 async function fetchBounded(url, maxBytes, accept) {
-  const response = await fetch(url, {
+  const response = await globalThis.fetch(url, {
     headers: {
       Accept: accept,
       'User-Agent': USER_AGENT,
     },
     redirect: 'follow',
-    signal: AbortSignal.timeout(30_000),
+    signal: globalThis.AbortSignal.timeout(30_000),
   });
   if (!response.ok) {
     throw new Error(`publisher request failed: ${response.status}`);
@@ -55,7 +55,7 @@ async function fetchJson(url) {
   const bytes = await fetchBounded(url, MAX_JSON_BYTES, ACCEPT);
   let parsed;
   try {
-    parsed = JSON.parse(new TextDecoder().decode(bytes));
+    parsed = JSON.parse(new globalThis.TextDecoder().decode(bytes));
   } catch {
     throw new Error('publisher response is not strict JSON');
   }
@@ -129,7 +129,7 @@ function fileMetadata(record, metadataUrl) {
 
   let parsedDownload;
   try {
-    parsedDownload = new URL(downloadUrl);
+    parsedDownload = new globalThis.URL(downloadUrl);
   } catch {
     throw new Error('depth file download URL is invalid');
   }
@@ -204,7 +204,7 @@ async function findDepthArtifact() {
 
 async function main() {
   const outputPath = resolve(
-    process.env.FR300_R1J_OUTPUT ??
+    globalThis.process.env.FR300_R1J_OUTPUT ??
       '.fr300-r1j-evidence/rap3df-v1-publisher-artifact.json',
   );
 
@@ -229,9 +229,9 @@ async function main() {
       `${JSON.stringify(report, null, 2)}\n`,
       'utf8',
     );
-    console.log('FR300_R1J_EVIDENCE_BEGIN');
-    console.log(JSON.stringify(report));
-    console.log('FR300_R1J_EVIDENCE_END');
+    globalThis.console.log('FR300_R1J_EVIDENCE_BEGIN');
+    globalThis.console.log(JSON.stringify(report));
+    globalThis.console.log('FR300_R1J_EVIDENCE_END');
     return;
   }
 
@@ -323,16 +323,16 @@ async function main() {
     'utf8',
   );
 
-  console.log('FR300_R1J_EVIDENCE_BEGIN');
-  console.log(JSON.stringify(report));
-  console.log('FR300_R1J_EVIDENCE_END');
+  globalThis.console.log('FR300_R1J_EVIDENCE_BEGIN');
+  globalThis.console.log(JSON.stringify(report));
+  globalThis.console.log('FR300_R1J_EVIDENCE_END');
 }
 
 main().catch((error) => {
-  console.error(
+  globalThis.console.error(
     `FR300-R1J acquisition failed closed: ${
       error instanceof Error ? error.message : String(error)
     }`,
   );
-  process.exitCode = 1;
+  globalThis.process.exitCode = 1;
 });
