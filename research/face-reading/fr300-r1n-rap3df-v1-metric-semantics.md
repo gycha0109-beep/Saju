@@ -16,7 +16,9 @@ Pinned creator source immediately before the reported collection window:
 - commit: `8049e3f576003ae7b190f99f2b855f0f70beb22e`;
 - `main.cpp` blob: `d0843d0029e946ae65182a5788014c180dd5e2a5`.
 
-The V1 extraction path performs:
+`context.cpp` binds `depth2` directly to `frames[libfreenect2::Frame::Depth]`, so this is the upstream Depth frame rather than the registered RGB frame or an inferred intermediate.
+
+The V1 extraction path then performs:
 
 ```cpp
 uint16_t depth = context->depth2->data[i+2];
@@ -38,7 +40,7 @@ Its `include/libfreenect2/frame_listener.hpp` blob `1b0bda1341cf1584bc8a3a064102
 - float format: **4 bytes per pixel**;
 - `Frame::data`: `unsigned char*`.
 
-Its registration implementation also treats depth storage as `float*` and divides the depth value by 1000 when converting millimeters to meters for XYZ geometry.
+Its registration implementation (`src/registration.cpp` blob `49a3b03e0a205a7e5f8aff562a5bca039d2cf30b`) explicitly casts `depth->data` to `float*`. The same implementation divides an undistorted depth value by `1000.0f` when producing XYZ coordinates, confirming the logical millimeter-to-meter metric path when the float is consumed correctly.
 
 The creator project does not pin an exact libfreenect2 revision, so FR300-R1N does not claim that this upstream commit is the exact binary dependency used on every collection day. It is a temporally appropriate upstream API witness.
 
@@ -65,6 +67,20 @@ written as 2-byte little-endian scalar
 FR300-R1M proved the final released `uint16_t` byte order is little-endian from the matched creator-render relationship. That does not restore the discarded float bytes or their numeric value.
 
 Therefore assigning `millimeter`, `centimeter`, or `meter` to the released scalar would be a category error. The released value is a byte-derived representation artifact, not an authoritative physical distance scalar.
+
+## Information-loss proof
+
+FR300-R1N also freezes the creator operation itself as a deterministic four-byte-to-one-byte projection. Only byte index 2 of each four-byte Depth pixel is retained before zero-extension to the released `uint16_t` container.
+
+This mapping is many-to-one independently of numeric-range plausibility. For example, these three distinct four-byte source representations:
+
+- `00 00 7a 44`;
+- `00 40 7a 44`;
+- `00 80 7a 44`;
+
+all project to the same stored pre-serialization value `0x7a` because the creator reads only byte index 2. The contract test reproduces this exact operation rather than attempting to infer a unit from the released values.
+
+Therefore the creator projection exposes at most 8 representation bits from a 32-bit float representation. The released scalar cannot serve as a reversible metric-depth representation. FR300-R1N records this as `metricDepthRecoverability = destroyed_by_single_byte_projection`.
 
 ## Disposition
 
