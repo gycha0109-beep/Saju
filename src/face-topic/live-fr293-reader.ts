@@ -665,6 +665,17 @@ function parseFact(
   });
 }
 
+function expectedObservationRef(
+  observationArtifactRef: string,
+  featureKey: string,
+): string {
+  return [
+    'face-neutral-observation:v1',
+    encodeURIComponent(observationArtifactRef),
+    encodeURIComponent(featureKey),
+  ].join(':');
+}
+
 function parseFaceEngineReceipt(
   value: unknown,
 ): FaceEngineProductDisplayReceiptV1 {
@@ -710,6 +721,19 @@ function parseFaceEngineReceipt(
     new Set(facts.map((fact) => fact.observationRef)).size !== 29
   ) {
     fail('FACE_LIVE_FR293_FEATURE_COVERAGE_INVALID');
+  }
+  for (const fact of facts) {
+    if (
+      fact.observationRef !==
+      expectedObservationRef(
+        observationArtifactRef,
+        fact.featureKey,
+      )
+    ) {
+      fail(
+        `FACE_LIVE_FR293_OBSERVATION_REF_MISMATCH:${fact.featureKey}`,
+      );
+    }
   }
 
   const coverage = asRecord(
@@ -861,17 +885,20 @@ function assertPlanReceiptBinding(
   }
 
   const byCapability = factByCapability(receipt);
+  for (const capability of topicCapabilities(plan)) {
+    if (!byCapability.has(capability)) {
+      fail(
+        `FACE_LIVE_FR293_TOPIC_FACT_MISSING:${capability}`,
+      );
+    }
+  }
+
   for (
     const capability
     of plan.requiredObservationCapabilities
   ) {
     const fact = byCapability.get(capability);
-    if (fact === undefined) {
-      fail(
-        `FACE_LIVE_FR293_REQUIRED_FACT_MISSING:${capability}`,
-      );
-    }
-    if (fact.status !== 'available') {
+    if (fact?.status !== 'available') {
       fail(
         `FACE_LIVE_FR293_REQUIRED_FACT_UNAVAILABLE:${capability}`,
       );
