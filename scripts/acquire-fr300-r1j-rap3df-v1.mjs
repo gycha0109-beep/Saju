@@ -136,7 +136,9 @@ function fileMetadata(record, metadataUrl) {
     parsedDownload.protocol !== 'https:' ||
     parsedDownload.hostname !== 'downloads.mendeley.com'
   ) {
-    throw new Error('depth file download URL is not publisher-controlled');
+    throw new Error(
+      `depth file download host is not admitted: ${parsedDownload.hostname}`,
+    );
   }
 
   return {
