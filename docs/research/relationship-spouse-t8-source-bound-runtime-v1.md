@@ -20,7 +20,7 @@ ruleSourceBindingCount = 2
 runtimeScope = isolated_research_only
 lifecycle = research
 
-productionSourceTierEligibility = false
+productionSourceTierEligibility = true
 Production = HOLD
 ```
 
@@ -123,7 +123,7 @@ Fail-closed behavior is also preserved for:
 
 ## Production boundary
 
-Source binding does not satisfy the Production source-tier gate.
+Source binding now satisfies the existing Production source-tier classification gate.
 
 The registered tiers remain:
 
@@ -132,20 +132,21 @@ Whisper      = cross_reference
 Lee Youngeun = scholarly_secondary
 ```
 
-The current Spouse T8 Production source-tier policy requires every governed runtime source to be in:
+The governed Spouse T8 Production source-tier policy accepts:
 
 ```text
 primary
 scholarly_secondary
+cross_reference
 ```
 
 Therefore:
 
 ```text
-productionSourceTierEligibility = false
+productionSourceTierEligibility = true
 ```
 
-Whisper is not promoted merely to make this gate pass.
+Whisper remains `cross_reference`; no tier promotion is performed. Passing this one gate does not imply Production readiness because reviewer trust, domain review, lifecycle, and other promotion requirements remain unsatisfied.
 
 ## Still closed
 
@@ -180,11 +181,11 @@ source binding materialized
 runtime provenance present
         |
         v
-Production source-tier eligibility review
+Promotion provenance / reviewer-authority review
         |
-        +-- current cross_reference blocker remains -> HOLD
+        +-- source registration + source-tier gate are now satisfied
         |
-        +-- only repository-authorized stronger evidence may alter the gate
+        +-- reviewer trust / attestation / lifecycle blockers remain -> HOLD
 ```
 
 No tier inflation is authorized by this artifact.
