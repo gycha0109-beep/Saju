@@ -43,7 +43,7 @@ export interface FR298ProjectionAxisEvidence {
   readonly evidenceId: string;
   readonly sourceRef: 'PMCID:PMC3819161' | 'PMID:17561054';
   readonly supportsPoseNormalizedZAsFacialDepthAxis: true;
-  readonly supportsUnsignedDepthComponentConstruction: true;
+  readonly supportsZDepthAxisForNeutralConstruction: true;
   readonly supportsTraditionalBinding: false;
   readonly note: string;
 }
@@ -128,7 +128,7 @@ const EVIDENCE: readonly FR298ProjectionAxisEvidence[] = Object.freeze([
     evidenceId: 'evidence.fr298.pose_normalized_mesh_z_depth',
     sourceRef: 'PMCID:PMC3819161' as const,
     supportsPoseNormalizedZAsFacialDepthAxis: true as const,
-    supportsUnsignedDepthComponentConstruction: true as const,
+    supportsZDepthAxisForNeutralConstruction: true as const,
     supportsTraditionalBinding: false as const,
     note:
       'Pose-normalized 3D face meshes define face width on X, height on Y, and depth on Z; pronasale is found at maximal Z and sellion at a local Z minimum on the same midline.',
@@ -137,7 +137,7 @@ const EVIDENCE: readonly FR298ProjectionAxisEvidence[] = Object.freeze([
     evidenceId: 'evidence.fr298.korean_3d_soft_tissue_axis_convention',
     sourceRef: 'PMID:17561054' as const,
     supportsPoseNormalizedZAsFacialDepthAxis: true as const,
-    supportsUnsignedDepthComponentConstruction: true as const,
+    supportsZDepthAxisForNeutralConstruction: true as const,
     supportsTraditionalBinding: false as const,
     note:
       '3D facial soft-tissue analysis uses left/right X, superior/inferior Y, and anterior/posterior Z reference axes and reports dimensionless facial distance ratios.',
@@ -279,7 +279,7 @@ void {
     authority.evidence.some(
       (entry) =>
         entry.supportsPoseNormalizedZAsFacialDepthAxis !== true ||
-        entry.supportsUnsignedDepthComponentConstruction !== true ||
+        entry.supportsZDepthAxisForNeutralConstruction !== true ||
         entry.supportsTraditionalBinding !== false ||
         entry.note.trim().length === 0,
     )
