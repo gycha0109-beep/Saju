@@ -175,8 +175,7 @@ export function buildRelationshipSpouseT8RuntimeSourceManifest() {
     RELATIONSHIP_SPOUSE_T8_RUNTIME_SOURCE_MANIFEST_SOURCES.every(
       (source) =>
         source.rights?.copyrightStatus === 'unknown' &&
-        source.rights.reusePolicy === 'metadata_only' &&
-        source.rights.license === undefined,
+        source.rights.reusePolicy === 'metadata_only',
     );
 
   const manifestComplete =
