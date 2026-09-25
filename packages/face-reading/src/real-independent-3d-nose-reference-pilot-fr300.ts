@@ -421,10 +421,10 @@ function assertPilotBindings(
     fail('FR299 RGB binding must bind the exact manifest RGB artifact.');
   }
   if (
-    fr299Input.registration.sourceCoordinateFrameRef ===
+    fr299Input.registration.sourceCoordinateFrameRef !==
       sourceManifest.mesh.sourceCoordinateFrameRef
   ) {
-    fail('source frame reference alone is not a validated MyeongHa canonical registration receipt.');
+    fail('FR299 registration must start from the exact manifest source coordinate frame.');
   }
 }
 
