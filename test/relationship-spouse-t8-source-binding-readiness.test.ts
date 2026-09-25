@@ -33,7 +33,7 @@ describe('Relationship Spouse T8 source-binding readiness', () => {
     expect(review.currentRuntime.researchEvidenceSourceIds.length).toBeGreaterThan(0);
     expect(review.researchEvidenceCandidates).toHaveLength(2);
 
-    const whisper = review.researchEvidenceCandidates[0];
+    const whisper = review.researchEvidenceCandidates[0]!;
     expect(whisper.researchIdentity).toBe(
       'WHISPER_2026_DAY_MASTER_POLARITY_ROLE_NEUTRAL_SPOUSE_SELECTOR',
     );
@@ -46,7 +46,7 @@ describe('Relationship Spouse T8 source-binding readiness', () => {
     expect(whisper.runtimeRightsReuseMetadataReviewed).toBe(false);
     expect(whisper.runtimeRuleSupportTypeAssigned).toBe(false);
 
-    const lee = review.researchEvidenceCandidates[1];
+    const lee = review.researchEvidenceCandidates[1]!;
     expect(lee.researchIdentity).toBe('LEE_YOUNGEUN_2025_KCI_KYOBO_DIRECT_PDF');
     expect(lee.directBodyInspected).toBe(true);
     expect(lee.independentNormativeProvenanceRole).toBe(true);
