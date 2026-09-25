@@ -174,3 +174,19 @@ actual depth_.data bytes
 FR300-R2 must remain blocked until a real source-bound artifact reaches the preceding evidence gates.
 
 Watchtower-Track: face-engine
+
+## FR300-R1F1 — anonymous public API route admission
+
+The provenance validator now admits two exact HTTPS publisher route families for RAP3DF V2 file metadata:
+
+- `api.data.mendeley.com/datasets/kpdkpcs8zb/files...`
+- `data.mendeley.com/public-api/datasets/kpdkpcs8zb/files?...&version=4`
+
+The anonymous route is not treated as weaker evidence merely because it is hosted below `data.mendeley.com`; it still requires `metadataActuallyFetched=true`, a valid file UUID, exact byte-derived SHA-256 equality and exact size equality.
+
+Near-match hosts, a different dataset id, a non-V4 public-api query, HTTP, or a URL string without actual fetch evidence remain blocked.
+
+This route admission does not change serialization, value-unit, participant-consent, canonical-registration, FR299, product, production or commerce authority.
+
+Watchtower-Track: face-engine
+
