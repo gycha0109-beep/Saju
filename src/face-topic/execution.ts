@@ -36,7 +36,11 @@ export interface FaceTopicAuthorizedExecutionPlan {
   readonly readinessState: 'available' | 'partial';
   readonly requiredObservationCapabilities: readonly string[];
   readonly optionalObservationCapabilities: readonly string[];
+  readonly requiredMethodologyRefs: readonly string[];
+  readonly optionalMethodologyRefs: readonly string[];
   readonly methodologyRefs: readonly string[];
+  readonly requiredSemanticClaimFamilies: readonly string[];
+  readonly optionalSemanticClaimFamilies: readonly string[];
   readonly semanticClaimFamilies: readonly string[];
   readonly bindingGroupRefs: readonly string[];
   readonly requestedInferenceKeys: readonly string[];
@@ -104,7 +108,13 @@ function executionPlanIdentity(
       plan.requiredObservationCapabilities,
     optionalObservationCapabilities:
       plan.optionalObservationCapabilities,
+    requiredMethodologyRefs: plan.requiredMethodologyRefs,
+    optionalMethodologyRefs: plan.optionalMethodologyRefs,
     methodologyRefs: plan.methodologyRefs,
+    requiredSemanticClaimFamilies:
+      plan.requiredSemanticClaimFamilies,
+    optionalSemanticClaimFamilies:
+      plan.optionalSemanticClaimFamilies,
     semanticClaimFamilies: plan.semanticClaimFamilies,
     bindingGroupRefs: plan.bindingGroupRefs,
     requestedInferenceKeys: plan.requestedInferenceKeys,
@@ -184,9 +194,21 @@ export function planFaceTopicExecution(
     optionalObservationCapabilities: Object.freeze([
       ...definition.requirements.optionalObservationCapabilities,
     ]),
+    requiredMethodologyRefs: Object.freeze([
+      ...definition.requirements.requiredMethodologyRefs,
+    ]),
+    optionalMethodologyRefs: Object.freeze([
+      ...definition.requirements.optionalMethodologyRefs,
+    ]),
     methodologyRefs: Object.freeze([
       ...definition.requirements.requiredMethodologyRefs,
       ...definition.requirements.optionalMethodologyRefs,
+    ]),
+    requiredSemanticClaimFamilies: Object.freeze([
+      ...definition.requirements.requiredSemanticClaimFamilies,
+    ]),
+    optionalSemanticClaimFamilies: Object.freeze([
+      ...definition.requirements.optionalSemanticClaimFamilies,
     ]),
     semanticClaimFamilies: Object.freeze([
       ...definition.requirements.requiredSemanticClaimFamilies,
