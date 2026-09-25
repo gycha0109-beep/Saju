@@ -65,3 +65,46 @@ If the publisher API cannot be reached, metadata is ambiguous, a file is oversiz
 Product materialization remains 18/29.
 
 Watchtower-Track: face-engine
+
+## First real publisher execution
+
+The bounded acquisition succeeded against Mendeley V3 publisher metadata.
+
+Selected artifact:
+
+- file UUID: `bd54dc2a-b810-4ac1-8f7c-7bcbf5b00085`;
+- filename: `k1_box_xyz_depth.data`;
+- publisher/local SHA-256: `bdaa756600ad3539b7a3d0de7725123bc94e11ed974c775cd11aa3a02b45feb3`;
+- publisher/local byte size: `35,462`;
+- digest equality: verified;
+- size equality: verified;
+- source provenance: `source_bound`.
+
+This result directly contradicts the FR300-R1I article-bound 8-byte-float candidate shape:
+
+```text
+article-bound candidate:
+119 × 149 × 8 = 141,848 bytes
+
+authenticated publisher artifact:
+35,462 bytes = 119 × 149 × 2
+```
+
+The equality to two bytes per article pixel is a structural observation only. It does **not** by itself authorize a uint16 interpretation, byte order, or physical unit.
+
+FR300-R1I therefore correctly returns:
+
+- `serializationStatus = blocked`;
+- `endiannessStatus = blocked`;
+- `physicalUnitStatus = blocked`;
+- `metricAdjudicationStatus = blocked`;
+- blocker `expected_float64_shape_mismatch`.
+
+The float64 descriptive views are non-authoritative under this shape mismatch. In particular, the 35,462-byte artifact is not divisible by eight, so a float64 interpretation leaves six trailing bytes.
+
+The next evidence task is FR300-R1K: reproduce the 35,462-byte structure across a bounded multi-file sample and adjudicate the publisher/article serialization discrepancy without guessing uint16, endianness or metric units.
+
+Product materialization remains 18/29.
+
+Watchtower-Track: face-engine
+
