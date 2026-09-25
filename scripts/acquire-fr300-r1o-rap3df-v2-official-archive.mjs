@@ -8,7 +8,10 @@ const PUBLIC_API_BASE = 'https://data.mendeley.com/public-api';
 const ACCEPT = 'application/vnd.mendeley-public-dataset.1+json';
 const USER_AGENT = 'MyeongHa-FR300-R1O/1';
 const MAX_JSON_BYTES = 4 * 1024 * 1024;
-const MAX_FOLDER_REQUESTS = 200;
+const DATABASE_FILENAME = 'database.json';
+const EXPECTED_DATABASE_SIZE = 273_343;
+const EXPECTED_DATABASE_SHA256 =
+  '1366f0496078a250b43bafffc3483d3f949c33afb32520a041d92d353598e3ea';
 const EXPECTED_ARCHIVE_SIZE = 66_792_678;
 const EXPECTED_ARCHIVE_SHA256 =
   '92a967bdacba4a7e5d387232f2d3308ad656022953c0139f615def2f607ccc5e';
@@ -59,15 +62,6 @@ function requireObjectList(value, label) {
   return value;
 }
 
-function folderIds(folders) {
-  const ids = new Set(['root']);
-  for (const folder of folders) {
-    const id = String(folder.id ?? '');
-    if (id) ids.add(id);
-  }
-  return [...ids].sort();
-}
-
 function compactFile(record, metadataUrl) {
   const details = record.content_details;
   if (
@@ -105,43 +99,53 @@ function compactFile(record, metadataUrl) {
   };
 }
 
-async function findArchiveIdentity() {
+async function inspectOfficialV4Root() {
   const folders = requireObjectList(
     await fetchJson(
       `${PUBLIC_API_BASE}/datasets/${DATASET_ID}/folders/${DATASET_VERSION}`,
     ),
     'publisher folders response',
   );
-
-  let folderRequests = 0;
-  const candidates = [];
-
-  for (const folderId of folderIds(folders)) {
-    folderRequests += 1;
-    if (folderRequests > MAX_FOLDER_REQUESTS) {
-      throw new Error('folder scan exceeded bounded request limit');
-    }
-    const metadataUrl =
-      `${PUBLIC_API_BASE}/datasets/${DATASET_ID}/files` +
-      `?folder_id=${encodeURIComponent(folderId)}&version=${DATASET_VERSION}`;
-    const files = requireObjectList(
-      await fetchJson(metadataUrl),
-      'publisher files response',
-    );
-
-    for (const record of files) {
-      const file = compactFile(record, metadataUrl);
-      if (
-        file !== null &&
-        (file.sizeBytes === EXPECTED_ARCHIVE_SIZE ||
-          file.sha256 === EXPECTED_ARCHIVE_SHA256)
-      ) {
-        candidates.push(file);
-      }
-    }
+  const roots = folders.filter(
+    (folder) =>
+      String(folder.name ?? '') === 'V2' &&
+      !folder.parent_id &&
+      String(folder.id ?? '').length > 0,
+  );
+  if (roots.length !== 1) {
+    throw new Error('publisher metadata has no unique V2 root folder');
   }
 
-  return { folderRequests, candidates };
+  const rootId = String(roots[0].id);
+  const metadataUrl =
+    `${PUBLIC_API_BASE}/datasets/${DATASET_ID}/files` +
+    `?folder_id=${encodeURIComponent(rootId)}&version=${DATASET_VERSION}`;
+  const files = requireObjectList(
+    await fetchJson(metadataUrl),
+    'publisher V2 root files response',
+  )
+    .map((record) => compactFile(record, metadataUrl))
+    .filter((record) => record !== null);
+
+  const databaseMatches = files.filter(
+    (file) =>
+      file.filename === DATABASE_FILENAME &&
+      file.sizeBytes === EXPECTED_DATABASE_SIZE &&
+      file.sha256 === EXPECTED_DATABASE_SHA256,
+  );
+  const archiveMatches = files.filter(
+    (file) =>
+      file.sizeBytes === EXPECTED_ARCHIVE_SIZE &&
+      file.sha256 === EXPECTED_ARCHIVE_SHA256,
+  );
+
+  return {
+    rootId,
+    metadataUrl,
+    validRootFileCount: files.length,
+    databaseMatches,
+    archiveMatches,
+  };
 }
 
 async function main() {
@@ -150,19 +154,11 @@ async function main() {
       '.fr300-r1o-evidence/rap3df-v2-official-archive.json',
   );
 
-  const found = await findArchiveIdentity();
-  const exactMatches = found.candidates.filter(
-    (file) =>
-      file.sizeBytes === EXPECTED_ARCHIVE_SIZE &&
-      file.sha256 === EXPECTED_ARCHIVE_SHA256,
-  );
-
-  const status =
-    exactMatches.length === 1
-      ? 'official_v4_archive_identity_bound'
-      : exactMatches.length === 0
-        ? 'official_v4_archive_identity_not_matched'
-        : 'official_v4_archive_identity_ambiguous';
+  const inspected = await inspectOfficialV4Root();
+  const databaseIdentityBound =
+    inspected.databaseMatches.length === 1;
+  const archiveDigestRepresentedInRootMetadata =
+    inspected.archiveMatches.length === 1;
 
   const report = {
     schemaVersion:
@@ -171,26 +167,41 @@ async function main() {
     datasetRef: DATASET_REF,
     datasetVersion: DATASET_VERSION,
     publisherMetadataActuallyFetched: true,
-    folderRequests: found.folderRequests,
+    v2RootFolderId: inspected.rootId,
+    v2RootMetadataEvidenceRef: inspected.metadataUrl,
+    validRootFileCount: inspected.validRootFileCount,
     expectedPriorArchive: {
       sizeBytes: EXPECTED_ARCHIVE_SIZE,
       sha256: `sha256:${EXPECTED_ARCHIVE_SHA256}`,
     },
-    candidateCount: found.candidates.length,
-    candidates: found.candidates.map((file) => ({
-      ...file,
-      sha256: `sha256:${file.sha256}`,
-    })),
-    exactMatchCount: exactMatches.length,
-    exactMatch:
-      exactMatches.length === 1
+    expectedPinnedDatabase: {
+      filename: DATABASE_FILENAME,
+      sizeBytes: EXPECTED_DATABASE_SIZE,
+      sha256: `sha256:${EXPECTED_DATABASE_SHA256}`,
+    },
+    databaseIdentityMatchCount:
+      inspected.databaseMatches.length,
+    databaseIdentity:
+      inspected.databaseMatches.length === 1
         ? {
-            ...exactMatches[0],
-            sha256: `sha256:${exactMatches[0].sha256}`,
+            ...inspected.databaseMatches[0],
+            sha256:
+              `sha256:${inspected.databaseMatches[0].sha256}`,
           }
         : null,
-    status,
-    archiveIdentityBound: exactMatches.length === 1,
+    archiveDigestRootMetadataMatchCount:
+      inspected.archiveMatches.length,
+    archiveDigestRepresentedInV2RootMetadata:
+      archiveDigestRepresentedInRootMetadata,
+    status:
+      databaseIdentityBound
+        ? archiveDigestRepresentedInRootMetadata
+          ? 'official_v4_archive_and_database_identity_bound'
+          : 'official_v4_database_identity_bound_archive_container_digest_not_root_metadata_bound'
+        : 'official_v4_database_identity_not_bound',
+    v4DatasetContentAnchorBound: databaseIdentityBound,
+    priorArchiveDigestPublisherMetadataBound:
+      archiveDigestRepresentedInRootMetadata,
     creatorPipelineMetricConflictResolved: false,
     participantCommercialProductUseScopeEstablished: false,
     realFR299BundleEligible: false,
@@ -209,9 +220,9 @@ async function main() {
   globalThis.console.log(JSON.stringify(report));
   globalThis.console.log('FR300_R1O_EVIDENCE_END');
 
-  if (exactMatches.length !== 1) {
+  if (!databaseIdentityBound) {
     throw new Error(
-      `official V4 archive identity match count: ${exactMatches.length}`,
+      `official V4 database identity match count: ${inspected.databaseMatches.length}`,
     );
   }
 }
