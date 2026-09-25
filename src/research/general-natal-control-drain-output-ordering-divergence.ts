@@ -749,7 +749,7 @@ export const R126_ORDERING_CASES: readonly R126OrderingCase[] = Object.freeze([
       'WEALTH_ALWAYS_EVALUATED_BEFORE_CONTROL',
       'SOURCE_SENTENCE_ORDER_EQUALS_GLOBAL_RUNTIME_PRECEDENCE',
     ],
-  },,
+  },
   {
     caseId: 'R126-C21-FOOD-MEETS-OWL',
     comparisonGroupId: 'OUTPUT-LEAKAGE-CONTEXT',
