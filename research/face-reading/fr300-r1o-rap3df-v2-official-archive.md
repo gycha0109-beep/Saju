@@ -61,3 +61,27 @@ The corrected gate:
 This distinction matters: dataset-content identity and generated archive-container identity are not silently conflated.
 
 Watchtower-Track: face-engine
+
+
+## Corrected execution result
+
+The corrected metadata gate succeeded.
+
+Official V4 root:
+
+- unique V2 root folder found;
+- valid root file count: 1;
+- root file: `database.json`;
+- publisher file UUID: `6b7f0bd4-d235-482e-a762-bf2f1f9ca5c6`;
+- publisher size: `273,343` bytes;
+- publisher SHA-256: `1366f0496078a250b43bafffc3483d3f949c33afb32520a041d92d353598e3ea`.
+
+This exactly matches the independently pinned V4 `database.json` identity used by the prior bounded V4 acquisition. The **V4 dataset content anchor is therefore source-bound to official Mendeley metadata**.
+
+The 66,792,678-byte convenience ZIP digest is not represented as a normal file record in the V2 root metadata. FR300-R1O deliberately does not promote that container digest to publisher-bound status.
+
+This removes one ambiguity: the prior V4 work is anchored to the correct official V4 content identity. It does **not** remove the FR300-R1G creator-pipeline metric conflict. The next useful task is exact member-level depth identity plus reconciliation of what the released V4 depth scalar actually represents.
+
+FR299 and FR300-R2 remain blocked. Product materialization remains 18/29.
+
+Watchtower-Track: face-engine
