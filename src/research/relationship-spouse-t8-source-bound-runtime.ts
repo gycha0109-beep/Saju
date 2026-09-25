@@ -18,6 +18,7 @@ import {
   RELATIONSHIP_SPOUSE_T8_RUNTIME_ADMISSION_PACK,
   RELATIONSHIP_SPOUSE_T8_RUNTIME_ADMISSION_RULES,
 } from './relationship-spouse-t8-runtime-admission.js';
+import { RELATIONSHIP_SPOUSE_T8_PRODUCTION_SOURCE_TIERS } from './relationship-spouse-t8-promotion-provenance-trust-readiness.js';
 import {
   RELATIONSHIP_SPOUSE_T8_RUNTIME_METHODOLOGY_SOURCE_IDS,
   RELATIONSHIP_SPOUSE_T8_RUNTIME_RULE_SOURCE_BINDINGS,
@@ -97,7 +98,12 @@ export const RELATIONSHIP_SPOUSE_T8_SOURCE_BOUND_RUNTIME_BOUNDARY = Object.freez
   runtimeScope: 'isolated_research_only' as const,
   reviewerStatusChanged: false as const,
   lifecyclePromotionAuthorized: false as const,
-  productionSourceTierEligibility: false as const,
+  productionSourceTierEligibility:
+    RELATIONSHIP_SPOUSE_T8_SOURCE_BOUND_RUNTIME_REGISTRY.sources.every((source) =>
+      new Set<string>(RELATIONSHIP_SPOUSE_T8_PRODUCTION_SOURCE_TIERS).has(
+        source.provenanceTier,
+      ),
+    ),
   consumerNarrativeActivated: false as const,
   compatibilityConsumerActivated: false as const,
   previewDefaultRouteChanged: false as const,
