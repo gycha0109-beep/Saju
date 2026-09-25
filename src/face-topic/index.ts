@@ -4,3 +4,6 @@ export * from './readiness.js';
 export * from './fixtures.js';
 export * from './authority.js';
 export * from './execution.js';
+export * from './result-receipt.js';
+export * from './grounding.js';
+export * from './projection.js';
