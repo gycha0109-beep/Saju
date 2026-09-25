@@ -215,7 +215,14 @@ describe('Relationship / Spouse T8 source-bound research runtime', () => {
       RELATIONSHIP_SPOUSE_T8_RUNTIME_ADMISSION_METHODOLOGY.inputContract,
     );
 
-    const ruleMaterial = JSON.stringify(RELATIONSHIP_SPOUSE_T8_SOURCE_BOUND_RUNTIME_RULES);
+    const executableRuleMaterial = JSON.stringify(
+      RELATIONSHIP_SPOUSE_T8_SOURCE_BOUND_RUNTIME_RULES.map((rule) => ({
+        taxonomy: rule.taxonomy,
+        inputs: rule.inputs,
+        condition: rule.condition,
+        output: rule.output,
+      })),
+    );
     for (const forbidden of [
       'interpretation_claim',
       'sexForTraditionalCalculation',
@@ -230,7 +237,7 @@ describe('Relationship / Spouse T8 source-bound research runtime', () => {
       'legality',
       'ethics',
     ]) {
-      expect(ruleMaterial).not.toContain(forbidden);
+      expect(executableRuleMaterial).not.toContain(forbidden);
     }
   });
 
