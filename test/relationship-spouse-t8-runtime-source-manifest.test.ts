@@ -46,10 +46,8 @@ describe('Relationship Spouse T8 runtime source manifest', () => {
     });
 
     expect(manifest.rightsHandlingExplicit).toBe(true);
-    expect(manifest.productionSourceTierEligibility).toBe(false);
-    expect(manifest.productionTierBlockers).toEqual([
-      'WHISPER_CROSS_REFERENCE_IS_NOT_IN_RELATIONSHIP_SPOUSE_T8_PRODUCTION_SOURCE_TIER_ALLOWLIST',
-    ]);
+    expect(manifest.productionSourceTierEligibility).toBe(true);
+    expect(manifest.productionTierBlockers).toEqual([]);
   });
 
   it('uses Whisper as direct selector basis and Lee only at methodology level', () => {
