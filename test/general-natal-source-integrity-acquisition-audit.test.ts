@@ -2,14 +2,31 @@ import { describe, expect, it } from 'vitest';
 import { buildGeneralNatalSourceIntegrityAcquisitionAudit } from '../src/research/general-natal-source-integrity-acquisition-audit.js';
 
 describe('General Natal source-integrity acquisition audit', () => {
-  it('keeps all four divergent witnesses unresolved after the bounded acquisition pass', () => {
+  it('keeps all four divergent witnesses unresolved after the bounded acquisition passes', () => {
     const audit = buildGeneralNatalSourceIntegrityAcquisitionAudit();
 
     expect(audit.counts.targetWitnessCount).toBe(4);
+    expect(audit.counts.acquiredDirectScanSurfaceCount).toBe(2);
+    expect(audit.counts.catalogLeadCount).toBe(3);
     expect(audit.counts.exactStringScanLocatedCount).toBe(2);
     expect(audit.counts.exactSameSectionIdentityEstablishedCount).toBe(0);
     expect(audit.counts.unresolvedExternalSurfaceCount).toBe(4);
     expect(audit.outcome).toBe('BLOCKED_BY_EXTERNAL_SOURCE_ACQUISITION');
+  });
+
+  it('records the 1634 same-work volume-four scan without treating OCR absence as scan proof', () => {
+    const audit = buildGeneralNatalSourceIntegrityAcquisitionAudit();
+    const check = audit.sameEditionScanBackedTranscriptionCheck;
+
+    expect(check.sameWorkAndVolumeEstablished).toBe(true);
+    expect(check.sectionLocated).toBe('四言獨步');
+    expect(check.sectionLocatedOnTranscriptionSurface).toBe(true);
+    expect(check.frozenExactWitnessSequenceLocatedOnTranscriptionSurface).toBe(false);
+    expect(check.directScanGlyphComparisonCompletedForFrozenTargets).toBe(false);
+    expect(check.ocrAbsenceTreatedAsProofOfScanAbsence).toBe(false);
+    expect(check.conclusion).toBe(
+      'SAME_EDITION_SCAN_ACQUIRED_TRANSCRIPTION_DIVERGENT_DIRECT_TARGET_GLYPH_CHECK_STILL_REQUIRED',
+    );
   });
 
   it('rejects an exact string when the scan section does not match the frozen witness section', () => {
