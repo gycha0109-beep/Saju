@@ -20,6 +20,7 @@ This artifact converts the Research-return contract merged in #1498 into an exac
 | Divergent witnesses with exact same-section identity | 0 / 4 |
 | Additional same-work 1634 volume-four scan | acquired |
 | 1634 scan-backed transcription | 四言獨步 located, frozen exact sequence not established |
+| Newly acquired alternate direct scans | 3 files / 461 pages |
 | Additional cataloged edition leads | 3 |
 | Samyeong v7 peer digital scan | page 174 directly observed |
 | Samyeong v7 full source integrity | not established |
@@ -64,6 +65,18 @@ Wikimedia Commons identifies it as a 29-page scan of the 余氏善成堂 崇禎�
 The transcription is textually divergent from the frozen witness surface. It does not establish the four frozen exact strings inside `四言獨步`. In particular, the same volume exposes `殺化爲印` outside the frozen section, which is not byte-identical to frozen `煞化為印`.
 
 This is **not** treated as proof that the scan image lacks the targets. OCR/transcription absence is not direct scan-image absence. The exact four target glyph surfaces still require direct image comparison before this 1634 scan can be accepted or rejected as the exact witness surface.
+
+## Acquisition pass 3 — Tianyi and Zhuji direct scans
+
+The acquisition frontier advanced again with three directly downloadable scan files:
+
+- Tianyi Pavilion `Tianyige-330000-1705-0005007`: `新刊合併官板音義評註淵海子平五卷`, Ming Chongzhen edition, all five volumes in one 153-page scan. Commons exposes catalog SHA-1 `2ec904422ced60bf241286c6b822623048bb8883`.
+- Zhuji Library `ZJSLib-FLDB-2458-1`: Qing Fujian Yushi edition, first book, 138 pages.
+- Zhuji Library `ZJSLib-FLDB-2458-2`: Qing Fujian Yushi edition, second book, 170 pages.
+
+These are now acquisition surfaces rather than mere catalog leads. The Tianyi file is especially useful because its metadata says the single scan contains all five volumes, so volume four cannot be missing from the acquired file.
+
+No target identity is promoted yet. The exact `四言獨步` page range and the four frozen target glyphs have not been directly compared on these newly acquired files. The two Zhuji files also require an internal volume-to-file mapping before target inspection.
 
 ## Additional acquisition leads
 

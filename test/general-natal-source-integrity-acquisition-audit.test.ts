@@ -6,7 +6,9 @@ describe('General Natal source-integrity acquisition audit', () => {
     const audit = buildGeneralNatalSourceIntegrityAcquisitionAudit();
 
     expect(audit.counts.targetWitnessCount).toBe(4);
-    expect(audit.counts.acquiredDirectScanSurfaceCount).toBe(2);
+    expect(audit.counts.acquiredDirectScanSurfaceCount).toBe(5);
+    expect(audit.counts.newlyAcquiredAlternateDirectScanCount).toBe(3);
+    expect(audit.counts.acquiredAlternateScanPageCount).toBe(461);
     expect(audit.counts.catalogLeadCount).toBe(3);
     expect(audit.counts.exactStringScanLocatedCount).toBe(2);
     expect(audit.counts.exactSameSectionIdentityEstablishedCount).toBe(0);
@@ -27,6 +29,25 @@ describe('General Natal source-integrity acquisition audit', () => {
     expect(check.conclusion).toBe(
       'SAME_EDITION_SCAN_ACQUIRED_TRANSCRIPTION_DIVERGENT_DIRECT_TARGET_GLYPH_CHECK_STILL_REQUIRED',
     );
+  });
+
+  it('registers the Tianyi and Zhuji alternate direct scans without promoting target identity', () => {
+    const audit = buildGeneralNatalSourceIntegrityAcquisitionAudit();
+    const tianyi = audit.surfaces.find(
+      (surface) => surface.surfaceId === 'SURFACE-YUANHAI-TIANYIGE-0005007-MING-CHONGZHEN',
+    );
+    const zhuji = audit.surfaces.filter((surface) =>
+      surface.surfaceId.startsWith('SURFACE-YUANHAI-ZJSLIB-FLDB-2458-'),
+    );
+
+    expect(tianyi?.pageCount).toBe(153);
+    expect('catalogFileSha1' in (tianyi ?? {})).toBe(true);
+    expect(zhuji.map((surface) => surface.pageCount)).toEqual([138, 170]);
+    expect(
+      [tianyi, ...zhuji].every(
+        (surface) => surface !== undefined && surface.directTargetGlyphComparisonCompleted === false,
+      ),
+    ).toBe(true);
   });
 
   it('rejects an exact string when the scan section does not match the frozen witness section', () => {

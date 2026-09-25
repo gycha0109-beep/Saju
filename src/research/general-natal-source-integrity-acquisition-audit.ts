@@ -1,7 +1,7 @@
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 
 export const GENERAL_NATAL_SOURCE_INTEGRITY_ACQUISITION_AUDIT_VERSION =
-  'myeonghwa-general-natal-source-integrity-acquisition-audit-v2' as const;
+  'myeonghwa-general-natal-source-integrity-acquisition-audit-v3' as const;
 
 const ACQUISITION_SURFACES = Object.freeze([
   Object.freeze({
@@ -31,6 +31,46 @@ const ACQUISITION_SURFACES = Object.freeze([
       'https://commons.wikimedia.org/wiki/File:NLC892-411999032112-149659_%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E6%B3%A8%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3_%E7%AC%AC4%E5%86%8A.pdf',
     surfaceType: 'DIRECT_SCAN' as const,
     pageCount: 29 as const,
+    rawPassageStoredInRepository: false as const,
+  }),
+  Object.freeze({
+    surfaceId: 'SURFACE-YUANHAI-TIANYIGE-0005007-MING-CHONGZHEN',
+    work: '新刊合併官板音義評註淵海子平五卷',
+    locator: 'Tianyige-330000-1705-0005007 / 善2875 / 全五卷一冊',
+    edition: '明崇禎刻本' as const,
+    url:
+      'https://commons.wikimedia.org/wiki/File:Tianyige-330000-1705-0005007_%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E8%A8%BB%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E4%BA%94%E5%8D%B7_%E5%AE%8B%E5%BE%90%E5%8D%87%E7%B7%A8_%E6%98%8E%E6%A5%8A%E6%B7%99%E5%A2%9E%E6%A0%A1_%E6%98%8E%E5%B4%87%E7%A6%8E%E5%88%BB%E6%9C%AC.pdf',
+    surfaceType: 'DIRECT_SCAN' as const,
+    pageCount: 153 as const,
+    catalogFileSha1: '2ec904422ced60bf241286c6b822623048bb8883' as const,
+    targetVolumeCoverage: 'ALL_FIVE_VOLUMES_IN_ONE_SCAN' as const,
+    directTargetGlyphComparisonCompleted: false as const,
+    rawPassageStoredInRepository: false as const,
+  }),
+  Object.freeze({
+    surfaceId: 'SURFACE-YUANHAI-ZJSLIB-FLDB-2458-1',
+    work: '新刊合併官板音義評註淵海子平五卷',
+    locator: 'ZJSLib-FLDB-2458-1 / 第一冊',
+    edition: '清福建余氏刻本' as const,
+    url:
+      'https://commons.wikimedia.org/wiki/File:ZJSLib-FLDB-2458-1_%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E8%A8%BB%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E4%BA%94%E5%8D%B7_%E7%AC%AC%E4%B8%80%E5%86%8A.pdf',
+    surfaceType: 'DIRECT_SCAN' as const,
+    pageCount: 138 as const,
+    targetVolumeCoverage: 'NOT_YET_MAPPED' as const,
+    directTargetGlyphComparisonCompleted: false as const,
+    rawPassageStoredInRepository: false as const,
+  }),
+  Object.freeze({
+    surfaceId: 'SURFACE-YUANHAI-ZJSLIB-FLDB-2458-2',
+    work: '新刊合併官板音義評註淵海子平五卷',
+    locator: 'ZJSLib-FLDB-2458-2 / 第二冊',
+    edition: '清福建余氏刻本' as const,
+    url:
+      'https://commons.wikimedia.org/wiki/File:ZJSLib-FLDB-2458-2_%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E8%A8%BB%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E4%BA%94%E5%8D%B7_%E7%AC%AC%E4%BA%8C%E5%86%8A.pdf',
+    surfaceType: 'DIRECT_SCAN' as const,
+    pageCount: 170 as const,
+    targetVolumeCoverage: 'NOT_YET_MAPPED' as const,
+    directTargetGlyphComparisonCompleted: false as const,
     rawPassageStoredInRepository: false as const,
   }),
 ] as const);
@@ -191,6 +231,8 @@ export function buildGeneralNatalSourceIntegrityAcquisitionAudit() {
         (surface) => surface.surfaceType === 'DIRECT_SCAN',
       ).length,
       catalogLeadCount: ADDITIONAL_CATALOG_LEADS.length,
+      newlyAcquiredAlternateDirectScanCount: 3 as const,
+      acquiredAlternateScanPageCount: 461 as const,
       exactStringScanLocatedCount: DIVERGENT_WITNESS_ACQUISITION.filter(
         (row) => row.exactBoundedSubstringDigestMatch,
       ).length,
@@ -206,7 +248,7 @@ export function buildGeneralNatalSourceIntegrityAcquisitionAudit() {
       requiredNow: false as const,
       candidateIfNoExactSameSectionSurfaceCanBeLocated: true as const,
       reason:
-        'A same-work 1634 volume-four scan is now acquired, but its scan-backed transcription is textually divergent and the four frozen target glyphs have not yet been directly established on that scan. Additional cataloged editions remain acquisition leads.' as const,
+        'Multiple alternate direct scans are now acquired, including a 153-page Ming Chongzhen all-five-volume Tianyi scan and a 308-page two-part Qing Fujian Yushi scan set. None has yet established the four frozen target glyphs in the required 四言獨步 section, and additional cataloged editions remain acquisition leads.' as const,
     }),
     authorityBoundary: Object.freeze({
       domainReviewAuthorityEstablished: false as const,
