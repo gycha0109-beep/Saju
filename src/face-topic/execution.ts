@@ -135,14 +135,12 @@ export function assertFaceTopicAuthorizedExecutionPlan(
     throw new Error('FACE_TOPIC_EXECUTION_PLAN_INVALID');
   }
 
-  const { requestId: _requestId, executionPlanHash, ...identity } =
-    plan;
   const expected =
     `face-topic-execution-plan:${deterministicContentHash(
-      executionPlanIdentity(identity),
+      executionPlanIdentity(plan),
     )}`;
 
-  if (executionPlanHash !== expected) {
+  if (plan.executionPlanHash !== expected) {
     throw new Error('FACE_TOPIC_EXECUTION_PLAN_HASH_MISMATCH');
   }
 }
