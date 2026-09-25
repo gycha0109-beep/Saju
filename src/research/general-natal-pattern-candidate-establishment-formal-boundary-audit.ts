@@ -825,6 +825,24 @@ export const R131_TRANSITION_AUDITS: readonly R131TransitionAudit[] = Object.fre
     authorityConsequence:
       'A branch-meeting research signal is not a canonical pattern candidate.',
   }),
+  transition({
+    transitionId: 'R131-T31-SIGNAL-TO-PATTERN-WORDING',
+    fromStage: 'SOURCE_SELECTION_SIGNAL',
+    toStage: 'SOURCE_PATTERN_WORDING',
+    transitionScope: 'EXACT_EXEMPLAR',
+    status: 'EXACT_EXEMPLAR_OBSERVATION_AUTHORIZED',
+    upstreamEvidence: [
+      'branch-meeting-selection-effect-review',
+      'candidate-identity-admission-review',
+    ],
+    observedBasis:
+      'Exact governed mixed-qi exemplars preserve direct meeting-result wording such as 印, 金局, and 傷官之局 alongside their source-aligned signals.',
+    missingBridge:
+      'This is exact-exemplar source wording only; no generalized signal-to-pattern naming predicate is authorized.',
+    directPromotionBlocked: false,
+    authorityConsequence:
+      'Exact source wording may be observed without defining canonical candidate identity.',
+  }),
 ]);
 
 export const R131_REJECTED_COLLAPSES = Object.freeze([
