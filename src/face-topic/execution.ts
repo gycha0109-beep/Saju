@@ -1,3 +1,4 @@
+import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import type {
   FaceAuthorityCoverageSnapshot,
   FaceTopicDefinitionRef,
@@ -8,6 +9,9 @@ import {
   getFaceTopicDefinition,
 } from './registry.js';
 import { resolveFaceTopicReadiness } from './readiness.js';
+
+export const FACE_TOPIC_EXECUTION_PLAN_SCHEMA_VERSION =
+  'face-topic-execution-plan-v1' as const;
 
 export interface FaceTopicExecutionInput {
   readonly topicKey: string;
@@ -20,6 +24,8 @@ export type FaceTopicExecutionKind =
   | 'traditional_face_reading';
 
 export interface FaceTopicAuthorizedExecutionPlan {
+  readonly schemaVersion:
+    typeof FACE_TOPIC_EXECUTION_PLAN_SCHEMA_VERSION;
   readonly authorized: true;
   readonly requestId: string;
   readonly topicKey: string;
@@ -34,8 +40,10 @@ export interface FaceTopicAuthorizedExecutionPlan {
   readonly semanticClaimFamilies: readonly string[];
   readonly bindingGroupRefs: readonly string[];
   readonly requestedInferenceKeys: readonly string[];
+  readonly prohibitedInferenceKeys: readonly string[];
   readonly unavailableOptionalRequirements: readonly string[];
   readonly provenanceRefs: readonly string[];
+  readonly executionPlanHash: string;
 }
 
 export interface FaceTopicBlockedExecutionPlan {
@@ -74,6 +82,61 @@ function assertExecutionInput(
   }
 }
 
+function sortedUnique(values: readonly string[]): readonly string[] {
+  return Object.freeze([...new Set(values)].sort());
+}
+
+function executionPlanIdentity(
+  plan: Omit<
+    FaceTopicAuthorizedExecutionPlan,
+    'requestId' | 'executionPlanHash'
+  >,
+): object {
+  return {
+    schemaVersion: plan.schemaVersion,
+    topicKey: plan.topicKey,
+    topicDefinitionRef: plan.topicDefinitionRef,
+    authoritySnapshotId: plan.authoritySnapshotId,
+    observationArtifactRef: plan.observationArtifactRef,
+    executionKind: plan.executionKind,
+    readinessState: plan.readinessState,
+    requiredObservationCapabilities:
+      plan.requiredObservationCapabilities,
+    optionalObservationCapabilities:
+      plan.optionalObservationCapabilities,
+    methodologyRefs: plan.methodologyRefs,
+    semanticClaimFamilies: plan.semanticClaimFamilies,
+    bindingGroupRefs: plan.bindingGroupRefs,
+    requestedInferenceKeys: plan.requestedInferenceKeys,
+    prohibitedInferenceKeys: plan.prohibitedInferenceKeys,
+    unavailableOptionalRequirements:
+      plan.unavailableOptionalRequirements,
+    provenanceRefs: plan.provenanceRefs,
+  };
+}
+
+export function assertFaceTopicAuthorizedExecutionPlan(
+  plan: FaceTopicAuthorizedExecutionPlan,
+): void {
+  if (
+    plan.schemaVersion !== FACE_TOPIC_EXECUTION_PLAN_SCHEMA_VERSION ||
+    plan.executionPlanHash.trim().length === 0
+  ) {
+    throw new Error('FACE_TOPIC_EXECUTION_PLAN_INVALID');
+  }
+
+  const { requestId: _requestId, executionPlanHash, ...identity } =
+    plan;
+  const expected =
+    `face-topic-execution-plan:${deterministicContentHash(
+      executionPlanIdentity(identity),
+    )}`;
+
+  if (executionPlanHash !== expected) {
+    throw new Error('FACE_TOPIC_EXECUTION_PLAN_HASH_MISMATCH');
+  }
+}
+
 export function planFaceTopicExecution(
   input: FaceTopicExecutionInput,
   snapshot: FaceAuthorityCoverageSnapshot,
@@ -106,9 +169,9 @@ export function planFaceTopicExecution(
       ? 'neutral_observation_projection'
       : 'traditional_face_reading';
 
-  return Object.freeze({
+  const identity = Object.freeze({
+    schemaVersion: FACE_TOPIC_EXECUTION_PLAN_SCHEMA_VERSION,
     authorized: true as const,
-    requestId: input.requestId,
     topicKey: definition.topicKey,
     topicDefinitionRef: createFaceTopicDefinitionRef(definition),
     authoritySnapshotId: snapshot.snapshotId,
@@ -137,6 +200,10 @@ export function planFaceTopicExecution(
     requestedInferenceKeys: Object.freeze([
       ...definition.requirements.requestedInferenceKeys,
     ]),
+    prohibitedInferenceKeys: sortedUnique([
+      ...snapshot.prohibitedInferenceKeys,
+      ...definition.requirements.prohibitedInferenceKeys,
+    ]),
     unavailableOptionalRequirements: Object.freeze([
       ...readiness.missingOptionalRequirements,
     ]),
@@ -144,4 +211,18 @@ export function planFaceTopicExecution(
       ...readiness.provenanceRefs,
     ]),
   });
+
+  const executionPlanHash =
+    `face-topic-execution-plan:${deterministicContentHash(
+      executionPlanIdentity(identity),
+    )}`;
+
+  const plan: FaceTopicAuthorizedExecutionPlan = Object.freeze({
+    ...identity,
+    requestId: input.requestId,
+    executionPlanHash,
+  });
+
+  assertFaceTopicAuthorizedExecutionPlan(plan);
+  return plan;
 }
