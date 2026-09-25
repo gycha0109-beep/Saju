@@ -238,11 +238,6 @@ describe('R127 strength-label instability under single-feature perturbation', ()
   it('covers every required perturbation family', () => {
     const axes = new Set(R127_PERTURBATION_CASES.map((row) => row.axis));
 
-    expect(axes).toEqual(
-      expect.objectContaining({
-        size: expect.any(Number),
-      }),
-    );
     expect(axes.has('SEASON_STATUS')).toBe(true);
     expect(axes.has('ROOT_PRESENCE')).toBe(true);
     expect(axes.has('ROOT_QUALITY')).toBe(true);
