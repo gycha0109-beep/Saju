@@ -11,7 +11,9 @@
     "performsTypedFloatDereference": false,
     "performsNumericFloatToUint16Conversion": false,
     "selectsOneFrameStorageByte": true,
-    "exactLibfreenect2RevisionPinned": false
+    "exactLibfreenect2RevisionPinned": false,
+    "contextCppBlob": "c44ffe7e77a97c8fd0bac9cb3aab31fc5074eb9c",
+    "depthFrameBindingExpression": "depth2 = frames[libfreenect2::Frame::Depth]"
   },
   "upstreamHistoricalWitness": {
     "repository": "OpenKinect/libfreenect2",
@@ -21,7 +23,10 @@
     "depthLogicalPixelType": "float",
     "depthBytesPerPixel": 4,
     "depthUnit": "millimeter",
-    "frameDataStaticType": "unsigned char*"
+    "frameDataStaticType": "unsigned char*",
+    "registrationBlob": "49a3b03e0a205a7e5f8aff562a5bca039d2cf30b",
+    "registrationDepthCast": "const float *depth_data = (float*)depth->data",
+    "metricConversionExpression": "undistorted_data[512*r+c]/1000.0f"
   },
   "releasedArtifact": {
     "scalarContainerType": "uint16_t",
@@ -36,6 +41,23 @@
     "nonMetricStructuralResearchEligible": true,
     "realFR299BundleEligible": false,
     "fr300R2Eligible": false,
-    "productMaterialization": "18/29"
+    "productMaterialization": "18/29",
+    "creatorProjectionInformationBitsUpperBound": 8,
+    "sourceFloatRepresentationBits": 32,
+    "metricDepthRecoverability": "destroyed_by_single_byte_projection",
+    "manyToOneWitness": [
+      {
+        "sourceBytesHex": "00007a44",
+        "selectedByteHex": "7a"
+      },
+      {
+        "sourceBytesHex": "00407a44",
+        "selectedByteHex": "7a"
+      },
+      {
+        "sourceBytesHex": "00807a44",
+        "selectedByteHex": "7a"
+      }
+    ]
   }
 }
