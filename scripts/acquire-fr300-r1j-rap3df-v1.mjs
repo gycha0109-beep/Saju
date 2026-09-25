@@ -132,12 +132,18 @@ function fileMetadata(record, metadataUrl) {
   } catch {
     throw new Error('depth file download URL is invalid');
   }
+  const legacyDownloadHost =
+    parsedDownload.hostname === 'downloads.mendeley.com';
+  const currentPublicFilePath =
+    parsedDownload.hostname === 'data.mendeley.com' &&
+    parsedDownload.pathname ===
+      `/public-files/datasets/${DATASET_ID}/files/${id}/file_downloaded`;
   if (
     parsedDownload.protocol !== 'https:' ||
-    parsedDownload.hostname !== 'downloads.mendeley.com'
+    (!legacyDownloadHost && !currentPublicFilePath)
   ) {
     throw new Error(
-      `depth file download host is not admitted: ${parsedDownload.hostname}`,
+      `depth file download route is not admitted: ${parsedDownload.hostname}${parsedDownload.pathname}`,
     );
   }
 
