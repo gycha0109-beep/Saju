@@ -930,7 +930,7 @@ export const R130_STRENGTH_PREDICATE_AUDITS: readonly R130StrengthPredicateAudit
       disposition: 'NON_STRENGTH_RELATION_ONLY',
       removalAudits: [
         removal('OUTPUT_CONTROLS_KILL', false, null, 'UNKNOWN', null, 'No source-local contamination rule is inferred without the pre-existing 食制煞 chain.'),
-        removal('RESOURCE_SUPPORT_PRESENT', true, true, 'NOT_REQUIRED_SUPPORTED', REF.R126, 'Without 印, the prior 食神制煞 local function remains; however the contamination target itself no longer applies.'),
+        removal('RESOURCE_SUPPORT_PRESENT', true, false, 'REQUIRED_SUPPORTED', REF.R126, 'Without 印, the prior 食神制煞 local function remains and the contamination target itself no longer applies.'),
       ],
       additionAudits: [
         addition('WEALTH_RELATION_PRESENT', true, REF.R126, 'TARGET_CHANGED_LOCAL_FUNCTION', 'Adding 財 can remove 印 and preserve 食 in the 財去印存食 rescue sequence.'),
@@ -1085,7 +1085,8 @@ export const R130_STRENGTH_PREDICATE_AUDITS: readonly R130StrengthPredicateAudit
       targetMeaning: 'Governed non-Earth Yang own-Muku relation produces bounded positive root evidence.',
       scope: 'METHODOLOGY_LOCAL',
       candidatePredicates: [
-        pred('MUKU_YANG_ROOT_BOUNDED', 'R129_PRIMITIVE', 'Governed Yang own-Muku positive-root matcher'),
+        pred('SOURCE_LOCAL_NON_EARTH_YANG_STEM', 'SOURCE_LOCAL_FACT', 'Governed non-Earth Yang stem'),
+        pred('SOURCE_LOCAL_OWN_ELEMENT_MUKU_RELATION', 'SOURCE_LOCAL_FACT', 'Governed own-element Muku relation'),
       ],
       positiveEvidenceRefs: [REF.R014, REF.R121, REF.R128, REF.R129],
       counterexampleRefs: [],
@@ -1115,7 +1116,8 @@ export const R130_STRENGTH_PREDICATE_AUDITS: readonly R130StrengthPredicateAudit
       targetMeaning: 'Attempt to apply one source-neutral positive-root rule to Yin own-Muku.',
       scope: 'UNIVERSAL_CANDIDATE',
       candidatePredicates: [
-        pred('MUKU_YIN_POLICY_DIVERGENT', 'R129_PRIMITIVE', 'Yin Muku is source-policy divergent'),
+        pred('SOURCE_LOCAL_YIN_STEM', 'SOURCE_LOCAL_FACT', 'Yin stem'),
+        pred('SOURCE_LOCAL_OWN_ELEMENT_MUKU_RELATION', 'SOURCE_LOCAL_FACT', 'Own-element Muku relation under policy disagreement'),
       ],
       positiveEvidenceRefs: [REF.R014, REF.R128],
       counterexampleRefs: [REF.R014, REF.R128],
@@ -1143,7 +1145,8 @@ export const R130_STRENGTH_PREDICATE_AUDITS: readonly R130StrengthPredicateAudit
       targetMeaning: 'Governed Yang Changsheng relation produces bounded heavy-root evidence.',
       scope: 'METHODOLOGY_LOCAL',
       candidatePredicates: [
-        pred('YANG_CHANGSHENG_ROOT_BOUNDED', 'R129_PRIMITIVE', 'Governed Yang Changsheng matcher'),
+        pred('SOURCE_LOCAL_YANG_DAY_MASTER', 'SOURCE_LOCAL_FACT', 'Governed Yang day master'),
+        pred('SOURCE_LOCAL_CHANGSHENG_RELATION', 'SOURCE_LOCAL_FACT', 'Governed Changsheng relation'),
       ],
       positiveEvidenceRefs: [REF.R016, REF.R121, REF.R128, REF.R129],
       counterexampleRefs: [],
@@ -1173,7 +1176,8 @@ export const R130_STRENGTH_PREDICATE_AUDITS: readonly R130StrengthPredicateAudit
       targetMeaning: 'Attempt to apply a universal heavy-root rule to Yin Changsheng.',
       scope: 'UNIVERSAL_CANDIDATE',
       candidatePredicates: [
-        pred('YIN_CHANGSHENG_POLICY_DIVERGENT', 'R129_PRIMITIVE', 'Yin Changsheng remains source-policy divergent'),
+        pred('SOURCE_LOCAL_YIN_DAY_MASTER', 'SOURCE_LOCAL_FACT', 'Yin day master'),
+        pred('SOURCE_LOCAL_CHANGSHENG_RELATION', 'SOURCE_LOCAL_FACT', 'Changsheng relation under policy disagreement'),
       ],
       positiveEvidenceRefs: [REF.R016, REF.R128],
       counterexampleRefs: [REF.R016, REF.R128],
@@ -1201,7 +1205,7 @@ export const R130_STRENGTH_PREDICATE_AUDITS: readonly R130StrengthPredicateAudit
       targetMeaning: 'Governed source-native Lu relation produces bounded heavy-root evidence.',
       scope: 'METHODOLOGY_LOCAL',
       candidatePredicates: [
-        pred('LU_ROOT_BOUNDED', 'R129_PRIMITIVE', 'Governed Lu heavy-root matcher'),
+        pred('SOURCE_LOCAL_GOVERNED_LU_RELATION', 'SOURCE_LOCAL_FACT', 'Governed source-native Lu relation'),
       ],
       positiveEvidenceRefs: [REF.R017, REF.R121, REF.R129],
       counterexampleRefs: [],
@@ -1231,7 +1235,7 @@ export const R130_STRENGTH_PREDICATE_AUDITS: readonly R130StrengthPredicateAudit
       targetMeaning: 'Governed source-native 旺 relation produces bounded heavy-root evidence.',
       scope: 'METHODOLOGY_LOCAL',
       candidatePredicates: [
-        pred('WANG_ROOT_BOUNDED', 'R129_PRIMITIVE', 'Governed 旺 heavy-root matcher'),
+        pred('SOURCE_LOCAL_GOVERNED_WANG_RELATION', 'SOURCE_LOCAL_FACT', 'Governed source-native 旺 relation'),
       ],
       positiveEvidenceRefs: [REF.R017, REF.R121, REF.R129],
       counterexampleRefs: [],
@@ -1261,7 +1265,7 @@ export const R130_STRENGTH_PREDICATE_AUDITS: readonly R130StrengthPredicateAudit
       targetMeaning: 'Attempt to invent a universal Earth Muku positive-root rule.',
       scope: 'UNIVERSAL_CANDIDATE',
       candidatePredicates: [
-        pred('EARTH_MUKU_UNRESOLVED', 'R129_PRIMITIVE', 'Earth Muku remains unresolved'),
+        pred('SOURCE_LOCAL_EARTH_MUKU_QUERY', 'SOURCE_LOCAL_FACT', 'Earth-stem Muku relation query remains unresolved'),
       ],
       positiveEvidenceRefs: [],
       counterexampleRefs: [REF.R014, REF.R121, REF.R129],
