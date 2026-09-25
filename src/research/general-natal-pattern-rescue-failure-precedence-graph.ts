@@ -246,7 +246,7 @@ export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze(
     scenarioKind: 'RESCUE_PATH',
     sourceNature: 'BASE_TEXT_DIRECT',
     sourceStratum: '子平真詮 / 論用神成敗救應',
-    sourceRefs: [BASE, 'R023:officer-hurting-seal-rescue'],
+    sourceRefs: [BASE, 'R023:seal-controls-hurting-protects-officer'],
     sourceStatement: '官逢傷而透印以解之',
     interpretiveReading:
       'The source presents harm to the Officer path first and exposed Resource as the bounded rescue relation.',
@@ -336,7 +336,7 @@ export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze(
     scenarioKind: 'CONTAMINATION_PATH',
     sourceNature: 'GOVERNED_REPOSITORY',
     sourceStratum: 'R023 / 子平真詮 成中有敗',
-    sourceRefs: ['R023:officer-wealth-then-hurting'],
+    sourceRefs: ['R023:officer-with-wealth-then-hurting'],
     sourceStatement: '正官逢財而又逢傷',
     interpretiveReading:
       'A favorable/supportive Officer-Wealth path can become contaminated when Hurting Officer is added.',
@@ -366,7 +366,7 @@ export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze(
     scenarioKind: 'RESCUE_PATH',
     sourceNature: 'BASE_TEXT_DIRECT',
     sourceStratum: '子平真詮 / 論用神成敗救應',
-    sourceRefs: [BASE, 'R022:wealth-robbery-food-rescue'],
+    sourceRefs: [BASE, 'R022:wealth-meets-robwealth-output-transforms'],
     sourceStatement: '財逢劫而透食以化之',
     interpretiveReading:
       'The source gives exposed Food God as one rescue path after Wealth encounters Rob Wealth.',
@@ -396,7 +396,7 @@ export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze(
     scenarioKind: 'RESCUE_PATH',
     sourceNature: 'BASE_TEXT_DIRECT',
     sourceStratum: '子平真詮 / 論用神成敗救應',
-    sourceRefs: [BASE, 'R022:wealth-robbery-officer-rescue'],
+    sourceRefs: [BASE, 'R022:generate-officer-to-control'],
     sourceStatement: '財逢劫而生官以制之',
     interpretiveReading:
       'The source gives Officer control as another rescue path for the same Wealth-versus-Rob-Wealth problem.',
@@ -426,7 +426,7 @@ export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze(
     scenarioKind: 'RESCUE_PATH',
     sourceNature: 'BASE_TEXT_DIRECT',
     sourceStratum: '子平真詮 / 論用神成敗救應',
-    sourceRefs: [BASE, 'R022:wealth-kill-food-control-rescue'],
+    sourceRefs: [BASE, 'R022:food-controls-kill-and-generates-wealth'],
     sourceStatement: '逢煞而食神制煞以生財',
     interpretiveReading:
       'Food God controls Kill inside the Wealth rescue path and is described together with preserving/generating Wealth.',
@@ -456,7 +456,7 @@ export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze(
     scenarioKind: 'RESCUE_PATH',
     sourceNature: 'BASE_TEXT_DIRECT',
     sourceStratum: '子平真詮 / 論用神成敗救應',
-    sourceRefs: [BASE, 'R022:wealth-kill-combination-rescue'],
+    sourceRefs: [BASE, 'R022:preserve-wealth-combine-kill'],
     sourceStatement: '或存財而合煞',
     interpretiveReading:
       'Combining Kill while preserving Wealth is an alternative bounded rescue.',
@@ -485,7 +485,7 @@ export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze(
     scenarioKind: 'CONTAMINATION_PATH',
     sourceNature: 'GOVERNED_REPOSITORY',
     sourceStratum: 'R022 / 子平真詮 成中有敗',
-    sourceRefs: ['R022:wealth-generates-officer-contamination'],
+    sourceRefs: ['R022:wealth-generates-officer-but-meets-hurting-or-combination'],
     sourceStatement: '財旺生官而又逢傷逢合',
     interpretiveReading:
       'An initially successful Wealth-generates-Officer path is not terminal when Hurting Officer or combination intervenes.',
@@ -876,7 +876,7 @@ export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze(
     scenarioKind: 'COUNTEREXAMPLE',
     sourceNature: 'RESEARCH_SYNTHESIS',
     sourceStratum: 'R023 vs R027',
-    sourceRefs: ['R023:officer-hurting-seal-rescue', 'R027:food-controls-kill-then-seal'],
+    sourceRefs: ['R023:seal-controls-hurting-protects-officer', 'R027:food-controls-kill-then-seal'],
     sourceStatement:
       'Resource rescues 官逢傷 in R023 but contaminates 七煞逢食制 in R027.',
     interpretiveReading:
@@ -906,7 +906,7 @@ export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze(
     scenarioKind: 'COUNTEREXAMPLE',
     sourceNature: 'RESEARCH_SYNTHESIS',
     sourceStratum: 'R026 vs R022',
-    sourceRefs: ['R026:kill-combined-rescue', 'R022:wealth-generates-officer-contamination'],
+    sourceRefs: ['R026:kill-combined-rescue', 'R022:wealth-generates-officer-but-meets-hurting-or-combination'],
     sourceStatement:
       '煞逢合 is rescue in the Hurting-Officer path, while 財又逢合 is contamination in the Wealth path.',
     interpretiveReading:
@@ -996,7 +996,7 @@ export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze(
     scenarioKind: 'COUNTEREXAMPLE',
     sourceNature: 'RESEARCH_SYNTHESIS',
     sourceStratum: 'R022 / direct rescue alternatives',
-    sourceRefs: [BASE, 'R022:wealth-robbery-food-rescue', 'R022:wealth-robbery-officer-rescue'],
+    sourceRefs: [BASE, 'R022:wealth-meets-robwealth-output-transforms', 'R022:generate-officer-to-control'],
     sourceStatement:
       '財逢劫而透食以化之，生官以制之',
     interpretiveReading:
