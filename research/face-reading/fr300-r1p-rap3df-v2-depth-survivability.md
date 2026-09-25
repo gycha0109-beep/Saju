@@ -72,6 +72,35 @@ realFR299BundleEligible = false
 fr300R2Eligible = false
 ```
 
+## Executed result
+
+Workflow run `36197639213` completed successfully against head `165abaa3f61a0e2c38384e431aba3bdfc94f85a6`.
+
+All five independent subject samples matched the official V4 publisher metadata exactly by both byte size and SHA-256:
+
+| subject | file | bytes | exact creator ↔ publisher SHA-256 |
+| --- | --- | ---: | --- |
+| P6HF7NR | depth_bgRm_VRO.data | 35,462 | yes |
+| M8D6FNE | depth_bgRm_XQ2.data | 35,462 | yes |
+| 5SSCKOW | depth_bgRm_S5F.data | 35,462 | yes |
+| FC6KAXU | depth_bgRm_2XS.data | 35,462 | yes |
+| CPUR8VH | depth_bgRm_V5J.data | 35,462 | yes |
+
+Therefore the strongest admission state is reached:
+
+```text
+status = official_v4_creator_bytes_exactly_bound
+inspectedSampleCount = 5
+exactArtifactMatchCount = 5
+creatorSingleByteProjectionLineageBound = true
+metricDepthRecoverability = destroyed_by_single_byte_projection
+metricReferenceDisposition = rejected_for_metric_reference
+```
+
+This resolves the remaining technical ambiguity from FR300-R1G for the inspected official V4 depth artifacts. They are not merely structurally similar to creator samples; publisher SHA-256 metadata binds them to the exact same bytes.
+
+RAP3DF V2 is therefore rejected from the metric-reference path. The next technical evidence target is no longer another RAP3DF unit/endian investigation; it is a commercial-compatible metric 3D candidate refresh.
+
 ## Rights and product boundary
 
 This is a technical provenance adjudication only. It does not establish participant commercial-product consent.
