@@ -16,7 +16,7 @@ describe('R137 Tiaohou-versus-structure conflict preservation', () => {
       rowCount: 24,
       comparisonGroupCount: 8,
       r039SeedReplayCount: 3,
-      coexistenceCount: 10,
+      coexistenceCount: 9,
       potentialConflictStressCount: 6,
       climateUrgentWithoutOverrideCount: 6,
       methodNotApplicableCount: 2,

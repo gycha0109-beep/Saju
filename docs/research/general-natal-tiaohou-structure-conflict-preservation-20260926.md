@@ -57,7 +57,7 @@ different method-specific needs
 rows                               24
 comparison groups                   8
 R039 direct seed replays            3
-coexistence rows                   10
+coexistence rows                    9
 potential conflict stress rows      6
 climate urgent/no override rows     6
 method-not-applicable rows          2
