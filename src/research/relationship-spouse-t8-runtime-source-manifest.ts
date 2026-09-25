@@ -8,6 +8,7 @@ import {
   RELATIONSHIP_SPOUSE_T8_RUNTIME_ADMISSION_RULES,
 } from './relationship-spouse-t8-runtime-admission.js';
 import { buildRelationshipSpouseT8SourceBindingReadiness } from './relationship-spouse-t8-source-binding-readiness.js';
+import { RELATIONSHIP_SPOUSE_T8_PRODUCTION_SOURCE_TIERS } from './relationship-spouse-t8-promotion-provenance-trust-readiness.js';
 import {
   RELATIONSHIP_SPOUSE_T8_LEE_YOUNGEUN_DIRECT_BODY_BOUNDARY_CANDIDATE,
 } from './relationship-spouse-t8-lee-youngeun-direct-body-boundary-evidence.js';
@@ -148,7 +149,9 @@ export function buildRelationshipSpouseT8RuntimeSourceManifest() {
   const sourceIds = RELATIONSHIP_SPOUSE_T8_RUNTIME_SOURCE_MANIFEST_SOURCES.map(
     (source) => source.sourceId,
   );
-  const productionEligibleTiers = new Set(['primary', 'scholarly_secondary']);
+  const productionEligibleTiers = new Set<string>(
+    RELATIONSHIP_SPOUSE_T8_PRODUCTION_SOURCE_TIERS,
+  );
 
   const exactRuleCoverage =
     runtimeRuleIds.length === manifestRuleIds.length &&
@@ -214,7 +217,7 @@ export function buildRelationshipSpouseT8RuntimeSourceManifest() {
     productionTierBlockers: productionSourceTierEligibility
       ? Object.freeze([])
       : Object.freeze([
-          'WHISPER_CROSS_REFERENCE_IS_NOT_IN_RELATIONSHIP_SPOUSE_T8_PRODUCTION_SOURCE_TIER_ALLOWLIST',
+          'REGISTERED_SOURCE_TIER_IS_OUTSIDE_RELATIONSHIP_SPOUSE_T8_PRODUCTION_SOURCE_TIER_ALLOWLIST',
         ] as const),
     runtimeRegistryMutated: false as const,
     reviewerTrustEstablished: false as const,
