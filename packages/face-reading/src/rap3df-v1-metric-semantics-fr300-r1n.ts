@@ -19,6 +19,10 @@ export const FR300_R1N_EVIDENCE = Object.freeze({
     '8049e3f576003ae7b190f99f2b855f0f70beb22e' as const,
   creatorMainCppBlob:
     'd0843d0029e946ae65182a5788014c180dd5e2a5' as const,
+  creatorContextCppBlob:
+    'c44ffe7e77a97c8fd0bac9cb3aab31fc5074eb9c' as const,
+  creatorDepthFrameBindingExpression:
+    'depth2 = frames[libfreenect2::Frame::Depth]' as const,
   creatorFrameAccessExpression:
     'context->depth2->data[i+2]' as const,
   creatorDestinationScalarType: 'uint16_t' as const,
@@ -31,6 +35,12 @@ export const FR300_R1N_EVIDENCE = Object.freeze({
     '2017-09-16T09:15:49Z' as const,
   upstreamFrameListenerBlob:
     '1b0bda1341cf1584bc8a3a064102e2f6d09fbf70' as const,
+  upstreamRegistrationBlob:
+    '49a3b03e0a205a7e5f8aff562a5bca039d2cf30b' as const,
+  upstreamRegistrationDepthCast:
+    'const float *depth_data = (float*)depth->data' as const,
+  upstreamMetricConversionExpression:
+    'undistorted_data[512*r+c]/1000.0f' as const,
   upstreamDepthLogicalPixelType: 'float' as const,
   upstreamDepthBytesPerPixel: 4 as const,
   upstreamDepthUnit: 'millimeter' as const,
@@ -53,6 +63,10 @@ export const FR300_R1N_CURRENT_METRIC_AUTHORITY = Object.freeze({
     'single_representation_byte_selection_then_zero_extension_to_uint16' as const,
   storedScalarPreservesSourceNumericValue: false as const,
   storedScalarPreservesSourcePhysicalUnit: false as const,
+  creatorProjectionInformationBitsUpperBound: 8 as const,
+  sourceFloatRepresentationBits: 32 as const,
+  metricDepthRecoverability:
+    'destroyed_by_single_byte_projection' as const,
   physicalUnitStatus:
     'not_applicable_to_released_scalar_as_metric_distance' as const,
   metricReferenceDisposition:
@@ -74,6 +88,18 @@ export const FR300_R1N_CURRENT_METRIC_AUTHORITY = Object.freeze({
     'remove_rap3df_v1_from_metric_reference_path_and_pivot_to_next_independent_3d_candidate' as const,
   researchNoteRef: FR300_R1N_RESEARCH_NOTE_REF,
 });
+
+export function projectFR300R1NCreatorDepthByte(
+  fourBytePixelStorage: Uint8Array,
+): number {
+  if (
+    !(fourBytePixelStorage instanceof Uint8Array) ||
+    fourBytePixelStorage.byteLength !== 4
+  ) {
+    fail('creator depth projection requires exactly four source bytes.');
+  }
+  return fourBytePixelStorage[2] ?? 0;
+}
 
 function fail(message: string): never {
   throw new FaceAuthorityValidationError(
@@ -97,6 +123,8 @@ export function assertFR300R1NV1MetricSemanticsContract(): void {
     evidence.creatorPerformsTypedFloatDereference !== false ||
     evidence.creatorPerformsNumericFloatToUint16Conversion !== false ||
     evidence.creatorSelectsOneFrameStorageByte !== true ||
+    evidence.creatorDepthFrameBindingExpression !==
+      'depth2 = frames[libfreenect2::Frame::Depth]' ||
     evidence.upstreamDepthLogicalPixelType !== 'float' ||
     evidence.upstreamDepthBytesPerPixel !== 4 ||
     evidence.upstreamDepthUnit !== 'millimeter' ||
@@ -109,6 +137,10 @@ export function assertFR300R1NV1MetricSemanticsContract(): void {
   if (
     current.storedScalarPreservesSourceNumericValue !== false ||
     current.storedScalarPreservesSourcePhysicalUnit !== false ||
+    current.creatorProjectionInformationBitsUpperBound !== 8 ||
+    current.sourceFloatRepresentationBits !== 32 ||
+    current.metricDepthRecoverability !==
+      'destroyed_by_single_byte_projection' ||
     current.metricReferenceDisposition !==
       'rejected_for_metric_reference' ||
     current.authority.realFR299BundleEligible !== false ||
