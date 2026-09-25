@@ -1,0 +1,37 @@
+name: "[WT:face-reading] FR300-R1K RAP3DF V1 Serialization Sample"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/acquire-fr300-r1k-rap3df-v1-sample.mjs"
+      - "research/face-reading/fr300-r1k-rap3df-v1-serialization-sample.md"
+      - ".github/workflows/fr300-r1k-rap3df-v1-sample.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  authenticate-bounded-sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build face-reading research contract
+        run: npm run face:build
+      - name: Authenticate bounded RAP3DF V1 depth sample
+        run: node scripts/acquire-fr300-r1k-rap3df-v1-sample.mjs
+      - name: Upload sanitized evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr300-r1k-rap3df-v1-serialization-sample
+          path: .fr300-r1k-evidence/rap3df-v1-serialization-sample.json
+          if-no-files-found: warn
+          retention-days: 14
