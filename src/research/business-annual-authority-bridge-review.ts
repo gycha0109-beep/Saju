@@ -41,7 +41,7 @@ export function buildBusinessAnnualAuthorityBridgeReview() {
     ...BUSINESS_ANNUAL_TENSION_RULES,
   ]);
   const reusedNatalBusinessRules = Object.freeze(
-    registry.snapshot.rules.filter(
+    registry.rules.filter(
       (rule) => rule.taxonomy.tier === 'T8' && rule.taxonomy.category === 'business',
     ),
   );
