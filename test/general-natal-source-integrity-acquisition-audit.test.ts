@@ -40,12 +40,17 @@ describe('General Natal source-integrity acquisition audit', () => {
       surface.surfaceId.startsWith('SURFACE-YUANHAI-ZJSLIB-FLDB-2458-'),
     );
 
-    expect(tianyi?.pageCount).toBe(153);
-    expect('catalogFileSha1' in (tianyi ?? {})).toBe(true);
-    expect(zhuji.map((surface) => surface.pageCount)).toEqual([138, 170]);
+    expect(tianyi !== undefined && 'pageCount' in tianyi ? tianyi.pageCount : null).toBe(153);
+    expect(tianyi !== undefined && 'catalogFileSha1' in tianyi).toBe(true);
+    expect(
+      zhuji.map((surface) => ('pageCount' in surface ? surface.pageCount : null)),
+    ).toEqual([138, 170]);
     expect(
       [tianyi, ...zhuji].every(
-        (surface) => surface !== undefined && surface.directTargetGlyphComparisonCompleted === false,
+        (surface) =>
+          surface !== undefined &&
+          'directTargetGlyphComparisonCompleted' in surface &&
+          surface.directTargetGlyphComparisonCompleted === false,
       ),
     ).toBe(true);
   });
