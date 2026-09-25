@@ -51,7 +51,7 @@ describe('R126 control, drain, and output ordering divergence', () => {
     const owl = R126_ORDERING_CASES.find(
       (row) => row.caseId === 'R126-C21-FOOD-MEETS-OWL',
     );
-    const protected = R126_ORDERING_CASES.find(
+    const protectedFood = R126_ORDERING_CASES.find(
       (row) => row.caseId === 'R126-C22-WEALTH-PROTECTS-FOOD',
     );
 
@@ -62,7 +62,7 @@ describe('R126 control, drain, and output ordering divergence', () => {
       genericChallengingCollapseAuthorized: false,
     });
     expect(owl?.family).toBe('OUTPUT');
-    expect(protected).toMatchObject({
+    expect(protectedFood).toMatchObject({
       family: 'OUTPUT',
       orderingType: 'RESCUE_CHAIN',
     });
