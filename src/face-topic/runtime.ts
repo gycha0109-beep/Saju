@@ -68,6 +68,9 @@ export interface FaceTopicRuntimeSuccessResultV1 {
   readonly topicKey: string;
   readonly observationArtifactRef: string;
   readonly authoritySnapshotId: string;
+  readonly faceEngineVersion: string;
+  readonly methodologyPackRefs: readonly string[];
+  readonly prohibitedInferences: readonly string[];
   readonly executionPlanHash: string;
   readonly sourceResultHash: string;
   readonly projectionHash: string;
@@ -226,6 +229,12 @@ function successResult(
       plan.observationArtifactRef,
     authoritySnapshotId:
       plan.authoritySnapshotId,
+    faceEngineVersion:
+      pipeline.executionResult.faceEngineVersion,
+    methodologyPackRefs:
+      pipeline.executionResult.methodologyPackRefs,
+    prohibitedInferences:
+      pipeline.projection.grounding.prohibitedInferences,
     executionPlanHash:
       plan.executionPlanHash,
     sourceResultHash:
