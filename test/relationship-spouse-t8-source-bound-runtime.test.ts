@@ -253,7 +253,7 @@ describe('Relationship / Spouse T8 source-bound research runtime', () => {
       runtimeScope: 'isolated_research_only',
       reviewerStatusChanged: false,
       lifecyclePromotionAuthorized: false,
-      productionSourceTierEligibility: false,
+      productionSourceTierEligibility: true,
       consumerNarrativeActivated: false,
       compatibilityConsumerActivated: false,
       previewDefaultRouteChanged: false,
