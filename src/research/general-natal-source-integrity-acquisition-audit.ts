@@ -1,7 +1,7 @@
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 
 export const GENERAL_NATAL_SOURCE_INTEGRITY_ACQUISITION_AUDIT_VERSION =
-  'myeonghwa-general-natal-source-integrity-acquisition-audit-v3' as const;
+  'myeonghwa-general-natal-source-integrity-acquisition-audit-v4' as const;
 
 const ACQUISITION_SURFACES = Object.freeze([
   Object.freeze({
@@ -44,7 +44,10 @@ const ACQUISITION_SURFACES = Object.freeze([
     pageCount: 153 as const,
     catalogFileSha1: '2ec904422ced60bf241286c6b822623048bb8883' as const,
     targetVolumeCoverage: 'ALL_FIVE_VOLUMES_IN_ONE_SCAN' as const,
-    directTargetGlyphComparisonCompleted: false as const,
+    targetSectionDigitalPageRange: '113..116' as const,
+    directTargetGlyphComparisonCompleted: true as const,
+    frozenExactWitnessCountInTargetSection: 0 as const,
+    governedEvidenceRef: 'R004/#921' as const,
     rawPassageStoredInRepository: false as const,
   }),
   Object.freeze({
@@ -69,8 +72,12 @@ const ACQUISITION_SURFACES = Object.freeze([
       'https://commons.wikimedia.org/wiki/File:ZJSLib-FLDB-2458-2_%E6%96%B0%E5%88%8A%E5%90%88%E4%BD%B5%E5%AE%98%E6%9D%BF%E9%9F%B3%E7%BE%A9%E8%A9%95%E8%A8%BB%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E4%BA%94%E5%8D%B7_%E7%AC%AC%E4%BA%8C%E5%86%8A.pdf',
     surfaceType: 'DIRECT_SCAN' as const,
     pageCount: 170 as const,
-    targetVolumeCoverage: 'NOT_YET_MAPPED' as const,
-    directTargetGlyphComparisonCompleted: false as const,
+    targetVolumeCoverage: 'VOLUME_FOUR_TARGET_SECTION_LOCATED' as const,
+    targetSectionDigitalPageRange: '87..91' as const,
+    transitionDigitalPage: 92 as const,
+    directTargetGlyphComparisonCompleted: true as const,
+    frozenExactWitnessCountInTargetSection: 0 as const,
+    governedEvidenceRef: 'R005/#925' as const,
     rawPassageStoredInRepository: false as const,
   }),
 ] as const);
@@ -115,11 +122,50 @@ const SAME_EDITION_SCAN_BACKED_TRANSCRIPTION_CHECK = Object.freeze({
       exactStringLocatedInFrozenSection: false as const,
     }),
   ]),
-  directScanGlyphComparisonCompletedForFrozenTargets: false as const,
+  targetSectionDigitalPageRange: '16..19' as const,
+  directScanGlyphComparisonCompletedForFrozenTargets: true as const,
+  frozenExactWitnessCountInTargetSection: 0 as const,
+  governedEvidenceRef: 'R004/#921' as const,
   ocrAbsenceTreatedAsProofOfScanAbsence: false as const,
   conclusion:
-    'SAME_EDITION_SCAN_ACQUIRED_TRANSCRIPTION_DIVERGENT_DIRECT_TARGET_GLYPH_CHECK_STILL_REQUIRED' as const,
+    'DIRECT_TARGET_SECTION_INSPECTED_FROZEN_EXACT_WITNESSES_ZERO_OF_FOUR' as const,
 });
+
+const GOVERNED_DIRECT_TARGET_INSPECTION_SUMMARY = Object.freeze({
+  inspectedTargetSurfaceCount: 3 as const,
+  inspectedSurfaceRefs: Object.freeze([
+    'Tianyi p113..116 / R004 #921',
+    'NLC 1634 p16..19 / R004 #921',
+    'Zhuji p87..91 / R005 #925',
+  ]),
+  frozenExactWitnessCountPerInspectedSurface: Object.freeze([0, 0, 0] as const),
+  everyInspectedTargetSurfaceIsZeroOfFour: true as const,
+  sameFamilyCorrespondenceEstablished: true as const,
+  exactFrozenWitnessSectionIdentityEstablished: false as const,
+  implication:
+    'CURRENT_FROZEN_WITNESS_SECTION_BINDING_REQUIRES_SEPARATE_REREGISTRATION_REVIEW' as const,
+});
+
+const EXTERNAL_ACQUISITION_BACKLOG = Object.freeze([
+  Object.freeze({
+    researchItem: 'R006' as const,
+    issue: '#933' as const,
+    surface: 'NDL 掃葉山房 microform reproduction' as const,
+    status: 'BLOCKED_EXTERNAL_ACQUISITION' as const,
+  }),
+  Object.freeze({
+    researchItem: 'R007' as const,
+    issue: '#1254' as const,
+    surface: 'Bukkyo 掃葉山房 copy reproduction' as const,
+    status: 'BLOCKED_EXTERNAL_ACQUISITION' as const,
+  }),
+  Object.freeze({
+    researchItem: 'R008' as const,
+    issue: '#1255' as const,
+    surface: 'Tokyo 敬文堂/余氏 lineage reproduction' as const,
+    status: 'BLOCKED_EXTERNAL_ACQUISITION' as const,
+  }),
+] as const);
 
 const ADDITIONAL_CATALOG_LEADS = Object.freeze([
   Object.freeze({
@@ -223,6 +269,8 @@ export function buildGeneralNatalSourceIntegrityAcquisitionAudit() {
     }),
     surfaces: ACQUISITION_SURFACES,
     sameEditionScanBackedTranscriptionCheck: SAME_EDITION_SCAN_BACKED_TRANSCRIPTION_CHECK,
+    governedDirectTargetInspectionSummary: GOVERNED_DIRECT_TARGET_INSPECTION_SUMMARY,
+    externalAcquisitionBacklog: EXTERNAL_ACQUISITION_BACKLOG,
     additionalCatalogLeads: ADDITIONAL_CATALOG_LEADS,
     witnessRows: DIVERGENT_WITNESS_ACQUISITION,
     counts: Object.freeze({
@@ -233,6 +281,8 @@ export function buildGeneralNatalSourceIntegrityAcquisitionAudit() {
       catalogLeadCount: ADDITIONAL_CATALOG_LEADS.length,
       newlyAcquiredAlternateDirectScanCount: 3 as const,
       acquiredAlternateScanPageCount: 461 as const,
+      governedDirectTargetInspectionCount: 3 as const,
+      governedDirectTargetSurfaceWithAnyFrozenExactWitnessCount: 0 as const,
       exactStringScanLocatedCount: DIVERGENT_WITNESS_ACQUISITION.filter(
         (row) => row.exactBoundedSubstringDigestMatch,
       ).length,
@@ -243,12 +293,13 @@ export function buildGeneralNatalSourceIntegrityAcquisitionAudit() {
         (row) => !row.fixedWitnessExactIdentityEstablished,
       ).length,
     }),
-    outcome: 'BLOCKED_BY_EXTERNAL_SOURCE_ACQUISITION' as const,
+    outcome: 'BLOCKED_BY_FIXED_WITNESS_REREGISTRATION' as const,
     witnessReregistrationReview: Object.freeze({
-      requiredNow: false as const,
+      requiredNow: true as const,
+      candidateSurfaceMutationAuthorized: false as const,
       candidateIfNoExactSameSectionSurfaceCanBeLocated: true as const,
       reason:
-        'Multiple alternate direct scans are now acquired, including a 153-page Ming Chongzhen all-five-volume Tianyi scan and a 308-page two-part Qing Fujian Yushi scan set. None has yet established the four frozen target glyphs in the required 四言獨步 section, and additional cataloged editions remain acquisition leads.' as const,
+        'Merged R004/R005 evidence already directly inspected Tianyi, NLC 1634, and Zhuji 四言獨步 surfaces and found 0/4 frozen exact witnesses on every bounded target surface. Remaining external reproductions are separately tracked by R006-R008, so R126 should not duplicate those acquisition blockers before a reviewed witness re-registration decision.' as const,
     }),
     authorityBoundary: Object.freeze({
       domainReviewAuthorityEstablished: false as const,

@@ -13,7 +13,9 @@ describe('General Natal source-integrity acquisition audit', () => {
     expect(audit.counts.exactStringScanLocatedCount).toBe(2);
     expect(audit.counts.exactSameSectionIdentityEstablishedCount).toBe(0);
     expect(audit.counts.unresolvedExternalSurfaceCount).toBe(4);
-    expect(audit.outcome).toBe('BLOCKED_BY_EXTERNAL_SOURCE_ACQUISITION');
+    expect(audit.counts.governedDirectTargetInspectionCount).toBe(3);
+    expect(audit.counts.governedDirectTargetSurfaceWithAnyFrozenExactWitnessCount).toBe(0);
+    expect(audit.outcome).toBe('BLOCKED_BY_FIXED_WITNESS_REREGISTRATION');
   });
 
   it('records the 1634 same-work volume-four scan without treating OCR absence as scan proof', () => {
@@ -24,10 +26,11 @@ describe('General Natal source-integrity acquisition audit', () => {
     expect(check.sectionLocated).toBe('四言獨步');
     expect(check.sectionLocatedOnTranscriptionSurface).toBe(true);
     expect(check.frozenExactWitnessSequenceLocatedOnTranscriptionSurface).toBe(false);
-    expect(check.directScanGlyphComparisonCompletedForFrozenTargets).toBe(false);
+    expect(check.directScanGlyphComparisonCompletedForFrozenTargets).toBe(true);
+    expect(check.frozenExactWitnessCountInTargetSection).toBe(0);
     expect(check.ocrAbsenceTreatedAsProofOfScanAbsence).toBe(false);
     expect(check.conclusion).toBe(
-      'SAME_EDITION_SCAN_ACQUIRED_TRANSCRIPTION_DIVERGENT_DIRECT_TARGET_GLYPH_CHECK_STILL_REQUIRED',
+      'DIRECT_TARGET_SECTION_INSPECTED_FROZEN_EXACT_WITNESSES_ZERO_OF_FOUR',
     );
   });
 
@@ -50,9 +53,30 @@ describe('General Natal source-integrity acquisition audit', () => {
         (surface) =>
           surface !== undefined &&
           'directTargetGlyphComparisonCompleted' in surface &&
-          surface.directTargetGlyphComparisonCompleted === false,
+          surface.directTargetGlyphComparisonCompleted === true,
       ),
     ).toBe(true);
+  });
+
+  it('reuses merged R004/R005 direct inspections before requesting more acquisition', () => {
+    const audit = buildGeneralNatalSourceIntegrityAcquisitionAudit();
+
+    expect(audit.governedDirectTargetInspectionSummary.inspectedTargetSurfaceCount).toBe(3);
+    expect(audit.governedDirectTargetInspectionSummary.frozenExactWitnessCountPerInspectedSurface).toEqual([
+      0,
+      0,
+      0,
+    ]);
+    expect(audit.governedDirectTargetInspectionSummary.everyInspectedTargetSurfaceIsZeroOfFour).toBe(
+      true,
+    );
+    expect(audit.witnessReregistrationReview.requiredNow).toBe(true);
+    expect(audit.witnessReregistrationReview.candidateSurfaceMutationAuthorized).toBe(false);
+    expect(audit.externalAcquisitionBacklog.map((row) => row.researchItem)).toEqual([
+      'R006',
+      'R007',
+      'R008',
+    ]);
   });
 
   it('rejects an exact string when the scan section does not match the frozen witness section', () => {

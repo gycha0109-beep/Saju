@@ -11,7 +11,7 @@ describe('General Natal source-integrity closure audit', () => {
     expect(audit.fixedWitnessSummary.textualVariantDivergenceCount).toBe(4);
     expect(audit.fixedWitnessSummary.fullSourceIntegrityEstablishedCount).toBe(0);
     expect(audit.fixedWitnessSummary.alternateExactWitnessSurfaceRequiredCount).toBe(4);
-    expect(audit.researchDisposition).toBe('BLOCKED_BY_EXTERNAL_SOURCE_ACQUISITION');
+    expect(audit.researchDisposition).toBe('BLOCKED_BY_FIXED_WITNESS_REREGISTRATION');
   });
 
   it('binds the bounded acquisition result without converting section matches into identity', () => {
@@ -20,7 +20,7 @@ describe('General Natal source-integrity closure audit', () => {
     expect(audit.acquisition.exactStringScanLocatedCount).toBe(2);
     expect(audit.acquisition.exactSameSectionIdentityEstablishedCount).toBe(0);
     expect(audit.acquisition.unresolvedExternalSurfaceCount).toBe(4);
-    expect(audit.acquisition.witnessReregistrationReviewRequiredNow).toBe(false);
+    expect(audit.acquisition.witnessReregistrationReviewRequiredNow).toBe(true);
   });
 
   it('preserves the four Yuanhai fixed-witness textual divergences', () => {

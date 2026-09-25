@@ -19,12 +19,14 @@ This artifact converts the Research-return contract merged in #1498 into an exac
 | Divergent witnesses with same exact string found on another scan | 2 / 4 |
 | Divergent witnesses with exact same-section identity | 0 / 4 |
 | Additional same-work 1634 volume-four scan | acquired |
-| 1634 scan-backed transcription | 四言獨步 located, frozen exact sequence not established |
+| 1634 bounded direct inspection | p16..19, frozen exact witnesses 0 / 4 |
+| Tianyi bounded direct inspection | p113..116, frozen exact witnesses 0 / 4 |
+| Zhuji bounded direct inspection | p87..91, frozen exact witnesses 0 / 4 |
 | Newly acquired alternate direct scans | 3 files / 461 pages |
 | Additional cataloged edition leads | 3 |
 | Samyeong v7 peer digital scan | page 174 directly observed |
 | Samyeong v7 full source integrity | not established |
-| Research terminal state | `BLOCKED_BY_EXTERNAL_SOURCE_ACQUISITION` |
+| Research terminal state | `BLOCKED_BY_FIXED_WITNESS_REREGISTRATION` |
 | Bridge re-entry | `RETURN_TO_RESEARCH` |
 
 ## Fixed textual divergences
@@ -64,7 +66,7 @@ Wikimedia Commons identifies it as a 29-page scan of the 余氏善成堂 崇禎�
 
 The transcription is textually divergent from the frozen witness surface. It does not establish the four frozen exact strings inside `四言獨步`. In particular, the same volume exposes `殺化爲印` outside the frozen section, which is not byte-identical to frozen `煞化為印`.
 
-This is **not** treated as proof that the scan image lacks the targets. OCR/transcription absence is not direct scan-image absence. The exact four target glyph surfaces still require direct image comparison before this 1634 scan can be accepted or rejected as the exact witness surface.
+Merged R004 evidence already records direct bounded inspection of NLC 1634 p16..19 and establishes 0/4 frozen exact witnesses on the target `四言獨步` surface. OCR/transcription absence is therefore not being used as the proof; the governed direct-inspection record is.
 
 ## Acquisition pass 3 — Tianyi and Zhuji direct scans
 
@@ -76,7 +78,7 @@ The acquisition frontier advanced again with three directly downloadable scan fi
 
 These are now acquisition surfaces rather than mere catalog leads. The Tianyi file is especially useful because its metadata says the single scan contains all five volumes, so volume four cannot be missing from the acquired file.
 
-No target identity is promoted yet. The exact `四言獨步` page range and the four frozen target glyphs have not been directly compared on these newly acquired files. The two Zhuji files also require an internal volume-to-file mapping before target inspection.
+No target identity is promoted. Existing merged Research work already performed the bounded direct comparisons that matter here: R004 records Tianyi p113..116 at 0/4 frozen exact witnesses, and R005 records Zhuji 第二冊 p87..91 at 0/4. R126 reuses those governed results instead of repeating the scan inspection.
 
 ## Additional acquisition leads
 
@@ -94,9 +96,19 @@ The existing evidence remains bounded to `CADAL06066043 三命通會·卷七`, d
 
 ## Current Research disposition
 
-`BLOCKED_BY_EXTERNAL_SOURCE_ACQUISITION` remains correct.
+`BLOCKED_BY_FIXED_WITNESS_REREGISTRATION` is now the R126 terminal routing result.
 
-Witness re-registration is not yet authorized or declared mandatory. It becomes the next review boundary only if continued acquisition/direct image inspection fails to establish an exact same-section scan surface.
+The reason is not an OCR-only absence claim. Merged R004/R005 already provide three bounded direct target-surface inspections:
+
+- Tianyi 崇禎 p113..116: 0/4 frozen exact witnesses;
+- NLC 1634 p16..19: 0/4;
+- Zhuji 清福建余氏 p87..91: 0/4.
+
+The available direct family evidence therefore does not support the current Wikisource-derived `四言獨步` binding for those four frozen witnesses. At the same time, exact strings or related glyph variants occur elsewhere in the work, so silently relocating or normalizing them is prohibited.
+
+R006-R008 already own the remaining NDL/Bukkyo/Tokyo external-reproduction acquisition blockers. R126 does not duplicate those blocked acquisition tracks.
+
+The next step is a **separate reviewed witness re-registration decision**. This audit does not mutate the frozen candidate surface and does not authorize re-registration by itself.
 
 ## Authority boundary
 
