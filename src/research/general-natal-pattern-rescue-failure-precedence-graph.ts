@@ -1055,7 +1055,7 @@ export const R133_GRAPH_SCENARIOS: readonly R133GraphScenario[] = Object.freeze(
     scenarioKind: 'COUNTEREXAMPLE',
     sourceNature: 'RESEARCH_SYNTHESIS',
     sourceStratum: 'R022-R027 + R126 synthesis',
-    sourceRefs: ['R126:no-global-precedence', 'R126:no-independent-chain-counting'],
+    sourceRefs: ['R126:R126-C20-NO-GLOBAL-PRECEDENCE', 'R126:R126-C19-NO-INDEPENDENT-CHAIN-COUNTING'],
     sourceStatement:
       'The governed corpus contains incompatible local actor orderings and opposite-function reuse across pattern contexts.',
     interpretiveReading:
