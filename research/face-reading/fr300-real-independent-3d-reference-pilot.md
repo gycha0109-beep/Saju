@@ -117,9 +117,13 @@ A dataset can enter the real pilot only when all of the following are evidenced:
 8. documented source 3D registration/frame;
 9. explicit permission for commercial product development;
 10. explicit permission for local raw-data processing;
-11. explicit permission to publish the derived reference metadata that will be committed as evidence.
+11. explicit permission to publish the derived reference metadata that will be committed as evidence;
+12. participant personality/privacy use scope;
+13. participant consent/image-use scope.
 
 Raw-data redistribution permission is recorded separately.
+
+FR300-R1 later separates dataset copyright/database-licence permission from participant personality/privacy and consent scope. See `repo:research/face-reading/fr300-r1-rap3df-v2-qualification.md`.
 
 MyeongHa does not need raw-data redistribution to run the local pilot, and raw face data remains forbidden from repository persistence by this contract.
 
