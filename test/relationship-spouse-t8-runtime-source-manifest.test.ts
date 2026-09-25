@@ -68,12 +68,9 @@ describe('Relationship Spouse T8 runtime source manifest', () => {
           supportType: 'direct_basis',
         }),
       ]);
-      expect(
-        binding.sourceRefs.some(
-          (sourceRef) =>
-            sourceRef.sourceId === RELATIONSHIP_SPOUSE_T8_LEE_YOUNGEUN_RUNTIME_SOURCE_ID,
-        ),
-      ).toBe(false);
+      expect(binding.sourceRefs.map((sourceRef) => sourceRef.sourceId)).toEqual([
+        RELATIONSHIP_SPOUSE_T8_WHISPER_RUNTIME_SOURCE_ID,
+      ]);
     }
 
     expect(manifest.researchToRuntimeSourceMapping[1]!.ruleApplicability).toBe(
