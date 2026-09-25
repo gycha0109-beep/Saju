@@ -6,7 +6,6 @@ import {
 import {
   FR293_PRODUCT_COLUMN_MAP,
   assertFR293ProductColumnMap,
-  type FR293ProductColumn,
 } from './rgb-selfie-product-column-map-fr293.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
@@ -15,6 +14,9 @@ export const FACE_PRODUCT_DISPLAY_FACT_RECEIPT_VERSION =
 
 export const FACE_PRODUCT_DISPLAY_FACT_AUTHORITY_REF =
   'face-engine.fr293.product-display-facts@1' as const;
+
+type FR293ProductColumn =
+  (typeof FR293_PRODUCT_COLUMN_MAP)[number];
 
 export type FaceProductDisplayUnit =
   | 'ratio'
