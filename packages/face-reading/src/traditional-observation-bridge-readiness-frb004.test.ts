@@ -38,7 +38,7 @@ describe('FRB004 T4 canonical observation bridge', () => {
     const sanfu = audit.methodologies[1]!;
     const shenyi = audit.methodologies[2]!;
     expect(sanfu.uniqueObservationRefs).toEqual(
-      expect.arrayContaining(shenyi.uniqueObservationRefs),
+      expect.arrayContaining([...shenyi.uniqueObservationRefs]),
     );
     expect(sanfu.methodologyRef).not.toBe(shenyi.methodologyRef);
     expect(audit.crossMethodologyPolicy).toEqual({
