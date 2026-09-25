@@ -121,13 +121,9 @@ describe('Saju Engine authority intake', () => {
 
   it('fails closed when ADMITTED is asserted without the complete handoff contract', () => {
     const admitted = contract('ADMITTED');
-    const result = evaluateSajuEngineAuthorityIntake(
-      {
-        ...admitted,
-        admittedAuthorityRef: undefined,
-      },
-      evidence(),
-    );
+    const incomplete = { ...admitted };
+    delete incomplete.admittedAuthorityRef;
+    const result = evaluateSajuEngineAuthorityIntake(incomplete, evidence());
 
     expect(result.routing).toBe('INVALID_EVIDENCE');
     expect(result.authorityContractComplete).toBe(false);
