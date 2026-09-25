@@ -213,13 +213,15 @@ export function assertFR294HardGapFrontier(): void {
   const ledgerKeys = FR294_HARD_GAP_FRONTIER.map(
     (candidate) => candidate.featureKey,
   );
+  const gapKeySet = new Set<string>(gapKeys);
+  const ledgerKeySet = new Set<string>(ledgerKeys);
 
   if (
     gaps.length !== FR294_HARD_GAP_COUNTS.total ||
     ledgerKeys.length !== FR294_HARD_GAP_COUNTS.total ||
-    new Set(ledgerKeys).size !== ledgerKeys.length ||
-    gapKeys.some((key) => !ledgerKeys.includes(key)) ||
-    ledgerKeys.some((key) => !gapKeys.includes(key))
+    ledgerKeySet.size !== ledgerKeys.length ||
+    gapKeys.some((key) => !ledgerKeySet.has(key)) ||
+    ledgerKeys.some((key) => !gapKeySet.has(key))
   ) {
     fail('ledger must equal the exact 11 non-materialized FR293 columns.');
   }
