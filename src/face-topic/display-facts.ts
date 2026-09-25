@@ -354,7 +354,9 @@ export function admitFaceDisplayFacts(
       .filter((fact) => {
         const unit = grounding.get(fact.observationRef);
         if (unit === undefined) {
-          return false;
+          throw new Error(
+            `FACE_DISPLAY_FACT_OBSERVATION_OUT_OF_SCOPE:${fact.observationRef}`,
+          );
         }
         if (unit.capabilityKey !== fact.capabilityKey) {
           throw new Error(
