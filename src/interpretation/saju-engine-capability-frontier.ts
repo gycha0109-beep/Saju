@@ -52,7 +52,7 @@ const CURRENT_CAPABILITY_SEEDS: readonly CapabilityFrontierSeed[] = Object.freez
   },
   {
     capabilityKey: 'general:annual',
-    upstreamDisposition: 'AUTHORITY_GAP',
+    upstreamDisposition: 'RESEARCH_GAP',
     producerRuntimeExists: true,
     currentBoundary: 'UPSTREAM_INTAKE',
   },

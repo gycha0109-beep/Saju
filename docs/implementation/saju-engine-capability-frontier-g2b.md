@@ -8,7 +8,7 @@ Authority effect: **none**
 
 ## Purpose
 
-G1 recorded the current 21-capability state in an audit document. G2A introduced the fail-closed Engine intake classifier.
+G1 recorded the original 21-capability state in an audit document. G2A introduced the fail-closed Engine intake classifier. G2B applies newer merged upstream dispositions over that baseline; in particular, merged Bridge review #1514 supersedes G1's older `general:annual = AUTHORITY_GAP` observation with `RETURN_TO_RESEARCH`.
 
 G2B materializes that audited state as deterministic Engine code so the Engine track has one executable answer to:
 
@@ -30,8 +30,8 @@ This is intentional. It prevents executable Research code from being mistaken fo
 21 total capabilities
 
 5  BOUNDED_PREVIEW_READY
-11 HOLD_AUTHORITY
-5  HOLD_RESEARCH
+10 HOLD_AUTHORITY
+6  HOLD_RESEARCH
 
 0 P0_RUNTIME
 0 P1_COMPOSITION
@@ -54,7 +54,6 @@ These five preserve the existing Canary boundary. G2B does not reinterpret Previ
 ### Authority hold
 
 ```text
-general:annual
 general:monthly
 career:annual
 career:monthly
@@ -72,6 +71,7 @@ All eleven have executable Research runtime evidence, but G2A still returns `HOL
 ### Research hold
 
 ```text
+general:annual
 family:natal:parents
 family:natal:children
 compatibility:natal
@@ -79,7 +79,7 @@ life_stage:life_stage
 question_specific:natal
 ```
 
-These remain upstream of Engine.
+General Annual is here because merged Bridge review #1514 returned the executable candidate to Research. The other five rows remain the original G1 Research gaps. Runtime existence does not override a merged `RETURN_TO_RESEARCH` disposition.
 
 ## Promotion rule
 

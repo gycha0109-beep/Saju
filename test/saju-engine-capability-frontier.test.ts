@@ -16,8 +16,8 @@ describe('Saju Engine capability frontier G2B', () => {
     expect(frontier.counts).toEqual({
       total: 21,
       boundedPreviewReady: 5,
-      holdAuthority: 11,
-      holdResearch: 5,
+      holdAuthority: 10,
+      holdResearch: 6,
       p0Runtime: 0,
       p1Composition: 0,
       p2Hardening: 0,
@@ -33,7 +33,7 @@ describe('Saju Engine capability frontier G2B', () => {
       (entry) => entry.currentRouting === 'HOLD_AUTHORITY',
     );
 
-    expect(authorityHeld).toHaveLength(11);
+    expect(authorityHeld).toHaveLength(10);
     expect(authorityHeld.every((entry) => entry.producerRuntimeExists)).toBe(true);
     expect(authorityHeld.every((entry) => entry.implementationMayProceed === false)).toBe(true);
     expect(authorityHeld.map((entry) => entry.capabilityKey)).toContain(
@@ -65,13 +65,25 @@ describe('Saju Engine capability frontier G2B', () => {
     }
   });
 
-  it('keeps family, compatibility, life-stage, and question-specific upstream of Engine', () => {
+  it('honors the merged General Annual Bridge return-to-research disposition', () => {
+    const frontier = buildCurrentSajuEngineCapabilityFrontier();
+    const generalAnnual = frontier.entries.find(
+      (entry) => entry.capabilityKey === 'general:annual',
+    );
+
+    expect(generalAnnual?.currentRouting).toBe('HOLD_RESEARCH');
+    expect(generalAnnual?.producerRuntimeExists).toBe(true);
+    expect(generalAnnual?.implementationMayProceed).toBe(false);
+  });
+
+  it('keeps current Research-return and Research-gap capabilities upstream of Engine', () => {
     const frontier = buildCurrentSajuEngineCapabilityFrontier();
     const researchHeld = frontier.entries
       .filter((entry) => entry.currentRouting === 'HOLD_RESEARCH')
       .map((entry) => entry.capabilityKey);
 
     expect(researchHeld).toEqual([
+      'general:annual',
       'family:natal:parents',
       'family:natal:children',
       'compatibility:natal',
