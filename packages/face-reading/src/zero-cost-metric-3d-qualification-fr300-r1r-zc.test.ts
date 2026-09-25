@@ -70,9 +70,12 @@ describe('FR300-R1R-ZC zero-cost-first metric 3D qualification', () => {
       'nexdata_vietnam_200_3d_liveness',
       'nexdata_40_3d_2d_liveness',
     ]);
+    const paid = new Set<string>(
+      FR300_R1R_ZC_COST_POLICY.paidCandidatesDeferred,
+    );
     expect(
       FR300_R1R_ZC_CURRENT_GATE.zeroCostQualificationQueue.some((id) =>
-        FR300_R1R_ZC_COST_POLICY.paidCandidatesDeferred.includes(id as never),
+        paid.has(id),
       ),
     ).toBe(false);
   });
