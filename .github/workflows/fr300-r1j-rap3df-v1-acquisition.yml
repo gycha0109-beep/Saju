@@ -1,0 +1,37 @@
+name: "[WT:face-reading] FR300-R1J RAP3DF V1 Publisher Artifact"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/acquire-fr300-r1j-rap3df-v1.mjs"
+      - "packages/face-reading/src/rap3df-v1-float64-artifact-fr300-r1i.ts"
+      - "research/face-reading/fr300-r1j-rap3df-v1-publisher-artifact.md"
+      - ".github/workflows/fr300-r1j-rap3df-v1-acquisition.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  acquire-one-publisher-artifact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build face-reading research contract
+        run: npm run face:build
+      - name: Acquire and authenticate one bounded V1 depth artifact
+        run: node scripts/acquire-fr300-r1j-rap3df-v1.mjs
+      - name: Upload sanitized evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr300-r1j-rap3df-v1-publisher-artifact
+          path: .fr300-r1j-evidence/rap3df-v1-publisher-artifact.json
+          if-no-files-found: error
+          retention-days: 14
