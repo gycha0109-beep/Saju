@@ -9,6 +9,8 @@ export * from './interpretation/execution-plan.js';
 export * from './interpretation/rule-evaluator.js';
 export * from './interpretation/claim-graph.js';
 export * from './interpretation/interpretation-engine.js';
+export * from './interpretation/saju-engine-authority-intake.js';
+export * from './interpretation/saju-engine-capability-frontier.js';
 export * from './research/index.js';
 export * from './research/i126-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-single-candidate-full-six-requirement-coverage-evaluation-evidence.js';
 export * from './research/i127-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-two-partial-requirement-targeted-authority-discovery-readiness-review.js';
