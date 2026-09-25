@@ -9,11 +9,11 @@ import {
   type FaceTopicExecutionInput,
 } from '../src/index.js';
 import {
-  TOPIC_FACE_002_AUTHORITY_SOURCE_RECEIPT,
-} from '../packages/face-reading/src/topic-face-authority-receipt-002.js';
+  buildRepositoryFaceAuthorityReceiptForTopicFaceTest,
+} from './support/topic-face-live-authority-source.js';
 
 const liveReceipt: FaceTopicAuthoritySourceReceipt =
-  TOPIC_FACE_002_AUTHORITY_SOURCE_RECEIPT;
+  buildRepositoryFaceAuthorityReceiptForTopicFaceTest();
 const liveSnapshot =
   buildFaceAuthorityCoverageSnapshot(liveReceipt);
 
