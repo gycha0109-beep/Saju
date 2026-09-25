@@ -97,7 +97,7 @@ function sha256(bytes) {
 
 function gitBlobSha1(bytes) {
   const header = new globalThis.TextEncoder().encode(
-    `blob ${bytes.byteLength}\\0`,
+    `blob ${bytes.byteLength}` + String.fromCharCode(0),
   );
   return createHash('sha1')
     .update(header)
