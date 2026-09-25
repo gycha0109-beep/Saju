@@ -1,31 +1,31 @@
 import {
   R032_R033_ROLE_SEPARATION_VERSION,
   R032_R033_SEMANTIC_BOUNDARY,
-} from './general-natal-xi-ji-role-separation';
+} from './general-natal-xi-ji-role-separation.js';
 import {
   R040_NONCOLLAPSING_EVIDENCE_VERSION,
   R040_AUTHORITY,
-} from './general-natal-noncollapsing-yongxi-evidence';
+} from './general-natal-noncollapsing-yongxi-evidence.js';
 import {
   R072_DAYUN_NATAL_INTERACTION_VERSION,
   R072_AUTHORITY,
-} from './general-natal-dayun-natal-interaction';
+} from './general-natal-dayun-natal-interaction.js';
 import {
   R073_TEMPORAL_LATENT_ACTIVATION_VERSION,
   R073_AUTHORITY,
-} from './general-natal-temporal-latent-activation';
+} from './general-natal-temporal-latent-activation.js';
 import {
   R076_LUCK_PATTERN_BREAK_RECOVERY_VERSION,
   R076_AUTHORITY,
-} from './general-natal-luck-pattern-break-recovery';
+} from './general-natal-luck-pattern-break-recovery.js';
 import {
   R077_LUCK_YONGXI_SHIFT_VERSION,
   R077_AUTHORITY,
-} from './general-natal-luck-yongxi-shift';
+} from './general-natal-luck-yongxi-shift.js';
 import {
   R135_ORDINARY_SPECIAL_NONMONOTONICITY_VERSION,
   R135_AUTHORITY,
-} from './general-natal-ordinary-special-pattern-transition-nonmonotonicity';
+} from './general-natal-ordinary-special-pattern-transition-nonmonotonicity.js';
 
 export const R136_YONG_XI_JI_TEMPORAL_CORPUS_VERSION = '0.1.0-research' as const;
 

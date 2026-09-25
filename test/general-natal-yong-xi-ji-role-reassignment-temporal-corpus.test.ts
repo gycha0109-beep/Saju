@@ -7,7 +7,7 @@ import {
   R136_TEMPORAL_ROLE_PROBES,
   R136_UPSTREAM_BINDINGS,
   R136_YONG_XI_JI_TEMPORAL_CORPUS_VERSION,
-} from '../src/research/general-natal-yong-xi-ji-role-reassignment-temporal-corpus';
+} from '../src/research/general-natal-yong-xi-ji-role-reassignment-temporal-corpus.js';
 
 describe('R136 Yong/Xi/Ji role-reassignment temporal corpus', () => {
   it('pins the research version and deterministic corpus shape', () => {
