@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "fr300-r1n-v1-metric-semantics-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "datasetRef": "doi:10.17632/kpdkpcs8zb.3",
+  "creator": {
+    "repository": "Piemontez/rap3df-database",
+    "preCollectionCommit": "8049e3f576003ae7b190f99f2b855f0f70beb22e",
+    "mainCppBlob": "d0843d0029e946ae65182a5788014c180dd5e2a5",
+    "frameAccessExpression": "context->depth2->data[i+2]",
+    "destinationScalarType": "uint16_t",
+    "performsTypedFloatDereference": false,
+    "performsNumericFloatToUint16Conversion": false,
+    "selectsOneFrameStorageByte": true,
+    "exactLibfreenect2RevisionPinned": false
+  },
+  "upstreamHistoricalWitness": {
+    "repository": "OpenKinect/libfreenect2",
+    "nearestPreCollectionCommit": "93769abc75654888a6848e2520c50f1f952ce72e",
+    "commitDate": "2017-09-16T09:15:49Z",
+    "frameListenerBlob": "1b0bda1341cf1584bc8a3a064102e2f6d09fbf70",
+    "depthLogicalPixelType": "float",
+    "depthBytesPerPixel": 4,
+    "depthUnit": "millimeter",
+    "frameDataStaticType": "unsigned char*"
+  },
+  "releasedArtifact": {
+    "scalarContainerType": "uint16_t",
+    "byteOrder": "little",
+    "byteOrderAuthority": "matched_creator_render_relationship"
+  },
+  "adjudication": {
+    "storedScalarPreservesSourceNumericValue": false,
+    "storedScalarPreservesSourcePhysicalUnit": false,
+    "physicalUnitStatus": "not_applicable_to_released_scalar_as_metric_distance",
+    "metricReferenceDisposition": "rejected_for_metric_reference",
+    "nonMetricStructuralResearchEligible": true,
+    "realFR299BundleEligible": false,
+    "fr300R2Eligible": false,
+    "productMaterialization": "18/29"
+  }
+}
