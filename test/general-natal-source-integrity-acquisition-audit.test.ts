@@ -1,0 +1,57 @@
+import { describe, expect, it } from 'vitest';
+import { buildGeneralNatalSourceIntegrityAcquisitionAudit } from '../src/research/general-natal-source-integrity-acquisition-audit.js';
+
+describe('General Natal source-integrity acquisition audit', () => {
+  it('keeps all four divergent witnesses unresolved after the bounded acquisition pass', () => {
+    const audit = buildGeneralNatalSourceIntegrityAcquisitionAudit();
+
+    expect(audit.counts.targetWitnessCount).toBe(4);
+    expect(audit.counts.exactStringScanLocatedCount).toBe(2);
+    expect(audit.counts.exactSameSectionIdentityEstablishedCount).toBe(0);
+    expect(audit.counts.unresolvedExternalSurfaceCount).toBe(4);
+    expect(audit.outcome).toBe('BLOCKED_BY_EXTERNAL_SOURCE_ACQUISITION');
+  });
+
+  it('rejects an exact string when the scan section does not match the frozen witness section', () => {
+    const audit = buildGeneralNatalSourceIntegrityAcquisitionAudit();
+    const row = audit.witnessRows.find(
+      (candidate) => candidate.witnessId === 'W-YUANHAI-WEALTH-OFFICER',
+    );
+
+    expect(row?.exactBoundedSubstringDigestMatch).toBe(true);
+    expect(row?.exactSectionIdentityEstablished).toBe(false);
+    expect(row?.fixedWitnessExactIdentityEstablished).toBe(false);
+    expect(row?.acquisitionStatus).toBe('EXACT_STRING_SCAN_LOCATED_SECTION_MISMATCH');
+  });
+
+  it('rejects glyph normalization as exact identity', () => {
+    const audit = buildGeneralNatalSourceIntegrityAcquisitionAudit();
+    const row = audit.witnessRows.find(
+      (candidate) => candidate.witnessId === 'W-YUANHAI-OFFICER-RESOURCE',
+    );
+
+    expect(row?.observedBoundedSubstringSha256).toBe(
+      '43c308736db89d26e3c5ec14b779aeaa2d43f32eb20709b97f96b5d41ca445ae',
+    );
+    expect(row?.exactBoundedSubstringDigestMatch).toBe(false);
+    expect(row?.acquisitionStatus).toBe('GLYPH_AND_SECTION_MISMATCH');
+  });
+
+  it('stores no raw classical passage and grants no downstream authority', () => {
+    const audit = buildGeneralNatalSourceIntegrityAcquisitionAudit();
+
+    expect(audit.searchBoundary.rawPassageStoredInRepository).toBe(false);
+    expect(audit.surfaces.every((surface) => !surface.rawPassageStoredInRepository)).toBe(true);
+    expect(audit.authorityBoundary.productionAdmissionAuthority).toBe(false);
+    expect(audit.authorityBoundary.engineAuthorityPromotionAuthorized).toBe(false);
+    expect(audit.authorityBoundary.production).toBe('HOLD');
+  });
+
+  it('is deterministic', () => {
+    const left = buildGeneralNatalSourceIntegrityAcquisitionAudit();
+    const right = buildGeneralNatalSourceIntegrityAcquisitionAudit();
+
+    expect(left.auditHash).toBe(right.auditHash);
+    expect(left.auditHash).toMatch(/^[a-f0-9]{64}$/);
+  });
+});
