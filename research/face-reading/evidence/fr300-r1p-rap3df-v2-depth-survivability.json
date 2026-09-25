@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "fr300-r1p-v2-depth-survivability-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "datasetRef": "doi:10.17632/kpdkpcs8zb.4",
+  "datasetVersion": 4,
+  "workflowRunId": 36197639213,
+  "workflowHeadSha": "165abaa3f61a0e2c38384e431aba3bdfc94f85a6",
+  "predecessorContentAnchor": {
+    "filename": "database.json",
+    "sizeBytes": 273343,
+    "sha256": "sha256:1366f0496078a250b43bafffc3483d3f949c33afb32520a041d92d353598e3ea",
+    "publisherFileId": "6b7f0bd4-d235-482e-a762-bf2f1f9ca5c6",
+    "exactMatch": true
+  },
+  "creatorCommit": "460b8873ab9a13e67ae82e0264d6dfbf10461e07",
+  "inspectedSampleCount": 5,
+  "exactArtifactMatchCount": 5,
+  "samples": [
+    {
+      "subject": "P6HF7NR",
+      "filename": "depth_bgRm_VRO.data",
+      "creatorGitBlobSha": "09e922073030f713dc24b33c2eecbebb9369edb7",
+      "sizeBytes": 35462,
+      "sha256": "sha256:cc183a37228fa4824eda206e4ddab04bc0d67e8e921c43cc20f9b9ab73f43325",
+      "publisherFileId": "9af95e81-7a80-4c83-8cf8-a874556e9ee6",
+      "exactByteIdentity": true
+    },
+    {
+      "subject": "M8D6FNE",
+      "filename": "depth_bgRm_XQ2.data",
+      "creatorGitBlobSha": "1bdf3a802eae33d03839d3788fadc797edd85d90",
+      "sizeBytes": 35462,
+      "sha256": "sha256:aaad26f20992c9cdce0f43970bf397d935cfd0d9f528a50f1f28132e3c46ab52",
+      "publisherFileId": "6b0defc7-3f14-4176-97e9-06ad19547a91",
+      "exactByteIdentity": true
+    },
+    {
+      "subject": "5SSCKOW",
+      "filename": "depth_bgRm_S5F.data",
+      "creatorGitBlobSha": "3823e9fce02049806ab1adc79d9c395b48c0d007",
+      "sizeBytes": 35462,
+      "sha256": "sha256:f72d51e3b96172a2d0f1ad542dc9015d9d36a988cd533c7c8e3ddfd585a220fb",
+      "publisherFileId": "1ef0d8b3-5c1b-4c5c-a3c8-e63084788d16",
+      "exactByteIdentity": true
+    },
+    {
+      "subject": "FC6KAXU",
+      "filename": "depth_bgRm_2XS.data",
+      "creatorGitBlobSha": "d07c7c91d3c28639221ae0d4491a980d2ad17185",
+      "sizeBytes": 35462,
+      "sha256": "sha256:fb3c0a24c12ed60f08f30d94f85d0fd5b3802810905610b929e37055e6f06a6b",
+      "publisherFileId": "d61e3ce2-db39-406f-bc3b-f73d3e95df08",
+      "exactByteIdentity": true
+    },
+    {
+      "subject": "CPUR8VH",
+      "filename": "depth_bgRm_V5J.data",
+      "creatorGitBlobSha": "4f015141e9f704118d159e3f95a57eb35d92992a",
+      "sizeBytes": 35462,
+      "sha256": "sha256:e043bdf6dd602b0ae4679ed19c5c783cafca0c66a7fdf71c775d5590b35b6dbf",
+      "publisherFileId": "363305ae-d5bf-4eaa-989f-48ac5de7ce9d",
+      "exactByteIdentity": true
+    }
+  ],
+  "status": "official_v4_creator_bytes_exactly_bound",
+  "creatorSingleByteProjectionLineageBound": true,
+  "metricDepthRecoverability": "destroyed_by_single_byte_projection",
+  "metricReferenceDisposition": "rejected_for_metric_reference",
+  "participantCommercialProductUseScopeEstablished": false,
+  "realFR299BundleEligible": false,
+  "fr300R2Eligible": false,
+  "productMaterialization": "18/29"
+}
