@@ -414,10 +414,8 @@ describe('TOPIC-FACE-004A live FR293 Reader integration', () => {
         ) {
           return fact;
         }
-        const {
-          value: _value,
-          ...withoutValue
-        } = fact;
+        const withoutValue = { ...fact };
+        delete withoutValue.value;
         return withoutValue;
       });
     receipt = {
