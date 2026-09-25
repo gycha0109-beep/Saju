@@ -26,7 +26,7 @@ same broad support context
 ## 2. Corpus size
 
 ~~~text
-cases             = 18
+cases             = 19
 comparison groups = 9
 ~~~
 
@@ -170,7 +170,28 @@ Selected 子平真詮評註 material uses 印 in bounded weak-body contexts wher
 
 The reviewed corpus does not state that 比劫 can globally substitute for these resource-specific functions.
 
-## 12. Peer support does not universally replace root
+## 12. Weak-body peer/resource remedies remain mechanism-specific
+
+The corpus now includes a paired weak-body comparison:
+
+~~~text
+財旺身弱
+→ 比劫 can divide/share 財
+
+官重 or 傷官旺 with weak body
+→ 印 can support/mediate in the selected commentary contexts
+~~~
+
+This is a direct discriminant:
+
+~~~text
+both can appear in weak-body remedies
+but
+they are not the same intervention
+and no global substitution rule is stated
+~~~
+
+## 13. Peer support does not universally replace root
 
 R019/R122 preserve exact examples:
 
@@ -185,7 +206,7 @@ This supplies a bounded peer/root discriminant.
 
 It does not establish the same limitation for resource support.
 
-## 13. Resource multiplicity has its own excess profile
+## 14. Resource multiplicity has its own excess profile
 
 三命通會 / 論印綬 preserves both:
 
@@ -203,7 +224,7 @@ COMMON PEER/RESOURCE EXCESS BEHAVIOR
 = NOT ESTABLISHED
 ~~~
 
-## 14. Mixed 比印 support
+## 15. Mixed 比印 support
 
 The governed out-of-season Wood example contains repeated 比/印 plus additional rooted support and reaches a bounded 黨眾 / 不弱 conclusion.
 
@@ -219,7 +240,7 @@ The invalid inference is:
 peer and resource are commensurable units
 ~~~
 
-## 15. Substitution audit
+## 16. Substitution audit
 
 Across the reviewed source package, R125 did not find a direct statement establishing:
 
@@ -242,7 +263,7 @@ NUMERIC EQUIVALENCE
 = NOT ESTABLISHED
 ~~~
 
-## 16. Textual provenance
+## 17. Textual provenance
 
 Source strata remain separated:
 
@@ -256,7 +277,7 @@ Source strata remain separated:
 
 Repeated or quoted traditional material is not counted automatically as independent corroboration.
 
-## 17. Main discriminants
+## 18. Main discriminants
 
 | Dimension | Peer support / 比劫 | Resource support / 印綬 | R125 disposition |
 | --- | --- | --- | --- |
@@ -271,7 +292,7 @@ Repeated or quoted traditional material is not counted automatically as independ
 | Numeric equivalence | not established | not established | rejected |
 | Final 強弱 | not authorized | not authorized | common boundary |
 
-## 18. Rejected derivations
+## 19. Rejected derivations
 
 ~~~text
 BIJIE_SUPPORT == YINSHOU_SUPPORT
@@ -289,7 +310,7 @@ common peer/resource saturation curve
 support-family presence = final 強弱
 ~~~
 
-## 19. R124 implication
+## 20. R124 implication
 
 R124 already showed that support families are not freely commensurable.
 
@@ -307,7 +328,7 @@ not merely
 = missing numeric implementation
 ~~~
 
-## 20. R121 implication
+## 21. R121 implication
 
 The R121 support-aggregation blocker remains open.
 
@@ -329,7 +350,7 @@ family-neutral support scalar
 
 No Engine handoff is justified from R125 alone.
 
-## 21. Next frontier
+## 22. Next frontier
 
 R126 should now study control, drain, and output ordering divergence.
 
@@ -345,7 +366,7 @@ remain distinct qualitative primitives.
 
 R126 can therefore study 剋 / 洩 / 生出 relations without first collapsing the support side into one number.
 
-## 22. Final status
+## 23. Final status
 
 ~~~text
 R125
