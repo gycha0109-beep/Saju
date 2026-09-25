@@ -40,9 +40,6 @@ export interface FaceTopicRuntimeEngineRequestV1 {
   readonly topicKey: string;
   readonly observationArtifactRef: string;
   readonly authoritySnapshotId: string;
-  readonly faceEngineVersion: string;
-  readonly methodologyPackRefs: readonly string[];
-  readonly prohibitedInferences: readonly string[];
   readonly executionPlanHash: string;
 }
 
@@ -71,6 +68,9 @@ export interface FaceTopicRuntimeSuccessResultV1 {
   readonly topicKey: string;
   readonly observationArtifactRef: string;
   readonly authoritySnapshotId: string;
+  readonly faceEngineVersion: string;
+  readonly methodologyPackRefs: readonly string[];
+  readonly prohibitedInferences: readonly string[];
   readonly executionPlanHash: string;
   readonly sourceResultHash: string;
   readonly projectionHash: string;
