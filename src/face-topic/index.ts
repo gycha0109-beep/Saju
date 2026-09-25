@@ -7,3 +7,5 @@ export * from './execution.js';
 export * from './result-receipt.js';
 export * from './grounding.js';
 export * from './projection.js';
+export * from './display-facts.js';
+export * from './reader.js';
