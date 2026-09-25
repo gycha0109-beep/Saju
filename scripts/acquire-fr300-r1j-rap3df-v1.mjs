@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import {
   FR300_R1I_EXPECTED_BYTE_LENGTH,
+  FR300_R1I_EXPECTED_VALUE_COUNT,
   FR300_R1I_V1_DATASET_REF,
   inspectFR300R1IV1Float64Artifact,
 } from '../.face-reading-dist/rap3df-v1-float64-artifact-fr300-r1i.js';
@@ -292,6 +293,9 @@ async function main() {
         FR300_R1I_EXPECTED_BYTE_LENGTH,
       expectedArticleBoundShapeMatches:
         bytes.byteLength === FR300_R1I_EXPECTED_BYTE_LENGTH,
+      observedBytesPerArticlePixel:
+        bytes.byteLength / FR300_R1I_EXPECTED_VALUE_COUNT,
+      float64TrailingByteCount: bytes.byteLength % 8,
     },
     r1iReceipt: {
       sourceProvenanceStatus: receipt.sourceProvenanceStatus,
