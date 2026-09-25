@@ -56,3 +56,38 @@ FR300-R2, real FR299, production, commerce, and the next product column remain b
 After the bounded publisher sample is authenticated, the result should be frozen as compact repository evidence. A separate source audit must then seek first-party V1 writer/decoder/specification evidence that explains the released 2-byte-per-pixel structure, if that structure is reproduced.
 
 Watchtower-Track: face-engine
+
+
+## First bounded publisher execution
+
+The first FR300-R1K execution completed successfully against Mendeley V3.
+
+Authenticated sample:
+
+- target: 12 distinct publisher folders;
+- authenticated artifacts: 12/12;
+- folder metadata requests required: 28;
+- publisher/local SHA-256 equality: 12/12;
+- publisher/local byte-size equality: 12/12;
+- exact filename: `k1_box_xyz_depth.data` for all 12;
+- byte-length histogram: `35,462 bytes × 12`;
+- arithmetic bytes per article pixel: `2 × 12`;
+- float64 remainder: `6 bytes × 12`.
+
+Therefore the 35,462-byte structure from FR300-R1J is no longer a single-file anomaly within this bounded sample. Every independently authenticated selected artifact reproduced:
+
+```text
+35,462 = 119 × 149 × 2
+```
+
+This materially strengthens the publisher-side structural evidence and materially weakens the article-prose 8-byte-float candidate as a description of the released `k1_box_xyz_depth.data` artifacts.
+
+It still does not establish that the two bytes are uint16, which byte order applies, or which physical unit is encoded. Those questions remain blocked until first-party serialization evidence is located.
+
+The compact frozen receipt is:
+
+`research/face-reading/evidence/fr300-r1k-rap3df-v1-serialization-sample.json`
+
+FR300-R2, real FR299, production, commerce, and the next product column remain blocked. Product materialization remains 18/29.
+
+Watchtower-Track: face-engine
