@@ -60,3 +60,4 @@ export * from './llm/index.js';
 export * from './reading/index.js';
 export * from './harness/index.js';
 export * from './preview/index.js';
+export * from './face-topic/index.js';
