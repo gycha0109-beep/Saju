@@ -248,7 +248,7 @@ export function assertFR300R1RZCZeroCostMetric3DContract(): void {
   );
   if (
     FR300_R1R_ZC_CURRENT_GATE.zeroCostQualificationQueue.some(
-      (id) => paidIds.has(id as never),
+      (id) => paidIds.has(id),
     )
   ) {
     fail('paid candidate entered zero-cost qualification queue.');
