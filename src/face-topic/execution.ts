@@ -1,3 +1,4 @@
+import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import type {
   FaceAuthorityCoverageSnapshot,
   FaceTopicDefinitionRef,
@@ -8,6 +9,9 @@ import {
   getFaceTopicDefinition,
 } from './registry.js';
 import { resolveFaceTopicReadiness } from './readiness.js';
+
+export const FACE_TOPIC_EXECUTION_PLAN_SCHEMA_VERSION =
+  'face-topic-execution-plan-v1' as const;
 
 export interface FaceTopicExecutionInput {
   readonly topicKey: string;
@@ -20,6 +24,8 @@ export type FaceTopicExecutionKind =
   | 'traditional_face_reading';
 
 export interface FaceTopicAuthorizedExecutionPlan {
+  readonly schemaVersion:
+    typeof FACE_TOPIC_EXECUTION_PLAN_SCHEMA_VERSION;
   readonly authorized: true;
   readonly requestId: string;
   readonly topicKey: string;
@@ -30,12 +36,18 @@ export interface FaceTopicAuthorizedExecutionPlan {
   readonly readinessState: 'available' | 'partial';
   readonly requiredObservationCapabilities: readonly string[];
   readonly optionalObservationCapabilities: readonly string[];
+  readonly requiredMethodologyRefs: readonly string[];
+  readonly optionalMethodologyRefs: readonly string[];
   readonly methodologyRefs: readonly string[];
+  readonly requiredSemanticClaimFamilies: readonly string[];
+  readonly optionalSemanticClaimFamilies: readonly string[];
   readonly semanticClaimFamilies: readonly string[];
   readonly bindingGroupRefs: readonly string[];
   readonly requestedInferenceKeys: readonly string[];
+  readonly prohibitedInferenceKeys: readonly string[];
   readonly unavailableOptionalRequirements: readonly string[];
   readonly provenanceRefs: readonly string[];
+  readonly executionPlanHash: string;
 }
 
 export interface FaceTopicBlockedExecutionPlan {
@@ -74,6 +86,65 @@ function assertExecutionInput(
   }
 }
 
+function sortedUnique(values: readonly string[]): readonly string[] {
+  return Object.freeze([...new Set(values)].sort());
+}
+
+function executionPlanIdentity(
+  plan: Omit<
+    FaceTopicAuthorizedExecutionPlan,
+    'requestId' | 'executionPlanHash'
+  >,
+): object {
+  return {
+    schemaVersion: plan.schemaVersion,
+    topicKey: plan.topicKey,
+    topicDefinitionRef: plan.topicDefinitionRef,
+    authoritySnapshotId: plan.authoritySnapshotId,
+    observationArtifactRef: plan.observationArtifactRef,
+    executionKind: plan.executionKind,
+    readinessState: plan.readinessState,
+    requiredObservationCapabilities:
+      plan.requiredObservationCapabilities,
+    optionalObservationCapabilities:
+      plan.optionalObservationCapabilities,
+    requiredMethodologyRefs: plan.requiredMethodologyRefs,
+    optionalMethodologyRefs: plan.optionalMethodologyRefs,
+    methodologyRefs: plan.methodologyRefs,
+    requiredSemanticClaimFamilies:
+      plan.requiredSemanticClaimFamilies,
+    optionalSemanticClaimFamilies:
+      plan.optionalSemanticClaimFamilies,
+    semanticClaimFamilies: plan.semanticClaimFamilies,
+    bindingGroupRefs: plan.bindingGroupRefs,
+    requestedInferenceKeys: plan.requestedInferenceKeys,
+    prohibitedInferenceKeys: plan.prohibitedInferenceKeys,
+    unavailableOptionalRequirements:
+      plan.unavailableOptionalRequirements,
+    provenanceRefs: plan.provenanceRefs,
+  };
+}
+
+export function assertFaceTopicAuthorizedExecutionPlan(
+  plan: FaceTopicAuthorizedExecutionPlan,
+): void {
+  if (
+    plan.schemaVersion !== FACE_TOPIC_EXECUTION_PLAN_SCHEMA_VERSION ||
+    plan.executionPlanHash.trim().length === 0
+  ) {
+    throw new Error('FACE_TOPIC_EXECUTION_PLAN_INVALID');
+  }
+
+  const expected =
+    `face-topic-execution-plan:${deterministicContentHash(
+      executionPlanIdentity(plan),
+    )}`;
+
+  if (plan.executionPlanHash !== expected) {
+    throw new Error('FACE_TOPIC_EXECUTION_PLAN_HASH_MISMATCH');
+  }
+}
+
 export function planFaceTopicExecution(
   input: FaceTopicExecutionInput,
   snapshot: FaceAuthorityCoverageSnapshot,
@@ -106,9 +177,9 @@ export function planFaceTopicExecution(
       ? 'neutral_observation_projection'
       : 'traditional_face_reading';
 
-  return Object.freeze({
+  const identity = Object.freeze({
+    schemaVersion: FACE_TOPIC_EXECUTION_PLAN_SCHEMA_VERSION,
     authorized: true as const,
-    requestId: input.requestId,
     topicKey: definition.topicKey,
     topicDefinitionRef: createFaceTopicDefinitionRef(definition),
     authoritySnapshotId: snapshot.snapshotId,
@@ -121,9 +192,21 @@ export function planFaceTopicExecution(
     optionalObservationCapabilities: Object.freeze([
       ...definition.requirements.optionalObservationCapabilities,
     ]),
+    requiredMethodologyRefs: Object.freeze([
+      ...definition.requirements.requiredMethodologyRefs,
+    ]),
+    optionalMethodologyRefs: Object.freeze([
+      ...definition.requirements.optionalMethodologyRefs,
+    ]),
     methodologyRefs: Object.freeze([
       ...definition.requirements.requiredMethodologyRefs,
       ...definition.requirements.optionalMethodologyRefs,
+    ]),
+    requiredSemanticClaimFamilies: Object.freeze([
+      ...definition.requirements.requiredSemanticClaimFamilies,
+    ]),
+    optionalSemanticClaimFamilies: Object.freeze([
+      ...definition.requirements.optionalSemanticClaimFamilies,
     ]),
     semanticClaimFamilies: Object.freeze([
       ...definition.requirements.requiredSemanticClaimFamilies,
@@ -137,6 +220,10 @@ export function planFaceTopicExecution(
     requestedInferenceKeys: Object.freeze([
       ...definition.requirements.requestedInferenceKeys,
     ]),
+    prohibitedInferenceKeys: sortedUnique([
+      ...snapshot.prohibitedInferenceKeys,
+      ...definition.requirements.prohibitedInferenceKeys,
+    ]),
     unavailableOptionalRequirements: Object.freeze([
       ...readiness.missingOptionalRequirements,
     ]),
@@ -144,4 +231,18 @@ export function planFaceTopicExecution(
       ...readiness.provenanceRefs,
     ]),
   });
+
+  const executionPlanHash =
+    `face-topic-execution-plan:${deterministicContentHash(
+      executionPlanIdentity(identity),
+    )}`;
+
+  const plan: FaceTopicAuthorizedExecutionPlan = Object.freeze({
+    ...identity,
+    requestId: input.requestId,
+    executionPlanHash,
+  });
+
+  assertFaceTopicAuthorizedExecutionPlan(plan);
+  return plan;
 }
