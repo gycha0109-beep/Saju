@@ -127,7 +127,7 @@ export const FACE_TRADITIONAL_T2_INTAKE_FORMATION_SENSE: TraditionalOfficerForma
       '唇紅端厚',
       '角弓',
       '開大合小',
-    ],
+    ] as const,
     semanticExecutionAuthorized: false,
     limitations: [
       'FR117–FR123 establish a witness-qualified NLC-1925 successor path for the 出納官 criterion passage only.',
