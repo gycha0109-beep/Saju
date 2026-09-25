@@ -497,10 +497,28 @@ export function admitFaceTopicExecutionResult(
   assertRequiredCoverage(plan, normalizedReceipt);
   assertResultAuthorityBoundary(plan, normalizedReceipt);
 
-  const {
-    requestId: _requestId,
-    ...sourceIdentity
-  } = normalizedReceipt;
+  const sourceIdentity = Object.freeze({
+    schemaVersion: normalizedReceipt.schemaVersion,
+    executionPlanHash: normalizedReceipt.executionPlanHash,
+    authoritySnapshotId: normalizedReceipt.authoritySnapshotId,
+    observationArtifactRef:
+      normalizedReceipt.observationArtifactRef,
+    executionKind: normalizedReceipt.executionKind,
+    faceEngineVersion: normalizedReceipt.faceEngineVersion,
+    ...(normalizedReceipt.faceReadingRef === undefined
+      ? {}
+      : { faceReadingRef: normalizedReceipt.faceReadingRef }),
+    methodologyPackRefs: normalizedReceipt.methodologyPackRefs,
+    bindingGroupRefs: normalizedReceipt.bindingGroupRefs,
+    observations: normalizedReceipt.observations,
+    semanticClaims: normalizedReceipt.semanticClaims,
+    approvedNarrativeBlocks:
+      normalizedReceipt.approvedNarrativeBlocks,
+    unavailableSections: normalizedReceipt.unavailableSections,
+    prohibitedInferences:
+      normalizedReceipt.prohibitedInferences,
+    provenanceRefs: normalizedReceipt.provenanceRefs,
+  });
   const sourceResultHash =
     `face-topic-source-result:${deterministicContentHash(
       sourceIdentity,
