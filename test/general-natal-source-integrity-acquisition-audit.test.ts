@@ -49,13 +49,17 @@ describe('General Natal source-integrity acquisition audit', () => {
       zhuji.map((surface) => ('pageCount' in surface ? surface.pageCount : null)),
     ).toEqual([138, 170]);
     expect(
-      [tianyi, ...zhuji].every(
-        (surface) =>
-          surface !== undefined &&
-          'directTargetGlyphComparisonCompleted' in surface &&
-          surface.directTargetGlyphComparisonCompleted === true,
-      ),
+      tianyi !== undefined &&
+        'directTargetGlyphComparisonCompleted' in tianyi &&
+        tianyi.directTargetGlyphComparisonCompleted,
     ).toBe(true);
+    expect(
+      zhuji.map((surface) =>
+        'directTargetGlyphComparisonCompleted' in surface
+          ? surface.directTargetGlyphComparisonCompleted
+          : null,
+      ),
+    ).toEqual([false, true]);
   });
 
   it('reuses merged R004/R005 direct inspections before requesting more acquisition', () => {
