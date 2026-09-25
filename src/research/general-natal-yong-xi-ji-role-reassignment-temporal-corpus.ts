@@ -1,0 +1,697 @@
+import {
+  R032_R033_ROLE_SEPARATION_VERSION,
+  R032_R033_SEMANTIC_BOUNDARY,
+} from './general-natal-xi-ji-role-separation';
+import {
+  R040_NONCOLLAPSING_EVIDENCE_VERSION,
+  R040_AUTHORITY,
+} from './general-natal-noncollapsing-yongxi-evidence';
+import {
+  R072_DAYUN_NATAL_INTERACTION_VERSION,
+  R072_AUTHORITY,
+} from './general-natal-dayun-natal-interaction';
+import {
+  R073_TEMPORAL_LATENT_ACTIVATION_VERSION,
+  R073_AUTHORITY,
+} from './general-natal-temporal-latent-activation';
+import {
+  R076_LUCK_PATTERN_BREAK_RECOVERY_VERSION,
+  R076_AUTHORITY,
+} from './general-natal-luck-pattern-break-recovery';
+import {
+  R077_LUCK_YONGXI_SHIFT_VERSION,
+  R077_AUTHORITY,
+} from './general-natal-luck-yongxi-shift';
+import {
+  R135_ORDINARY_SPECIAL_NONMONOTONICITY_VERSION,
+  R135_AUTHORITY,
+} from './general-natal-ordinary-special-pattern-transition-nonmonotonicity';
+
+export const R136_YONG_XI_JI_TEMPORAL_CORPUS_VERSION = '0.1.0-research' as const;
+
+export type R136Role = 'YONG' | 'XI' | 'JI';
+
+export type R136Mechanism =
+  | 'LUCK_SUPPORT'
+  | 'LUCK_OPPOSITION'
+  | 'LATENT_ACTIVATION'
+  | 'STRUCTURAL_COMPLETION_OR_CHANGE'
+  | 'NATAL_RESCUE_OR_BLOCKING'
+  | 'SOURCE_GOVERNED_ROLE_CHANGE_CONTROL';
+
+export type R136ResultState =
+  | 'NATAL_ROLE_RETAINED_SUPPORTED'
+  | 'NATAL_ROLE_RETAINED_OPPOSED'
+  | 'TEMPORARILY_OPERATIVE_SAME_ROLE'
+  | 'ROLE_REASSIGNMENT_UNRESOLVED'
+  | 'NATAL_CONTEXT_BLOCKS_APPARENT_SHIFT'
+  | 'SOURCE_GOVERNED_ROLE_CHANGE_CONTROL_ONLY'
+  | 'INDETERMINATE';
+
+export type R136ProvenanceKind =
+  | 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED'
+  | 'SOURCE_GOVERNED_NON_TEMPORAL_CONTROL'
+  | 'RESEARCH_SYNTHETIC_STRESS_PROBE';
+
+export interface R136TemporalRoleProbe {
+  id: string;
+  groupId: string;
+  baselineRole: R136Role;
+  baselineState: string;
+  temporalPerturbation: string;
+  mechanism: R136Mechanism;
+  resultState: R136ResultState;
+  resultingRole: R136Role | null;
+  provenanceKind: R136ProvenanceKind;
+  sourceRefs: readonly string[];
+  sourceRepresentation: string;
+  unresolvedOperands: readonly string[];
+  retainedRoleTemporalInteraction: boolean;
+  latentActivationWithoutReassignment: boolean;
+  structuralReassignmentUnresolved: boolean;
+  rescueBlockingCounterexample: boolean;
+  temporaryPermanentBoundary: boolean;
+  sourceGovernedRoleChangeControl: boolean;
+  temporalExtrapolationBlocked: boolean;
+  samePerturbationContextKey: string | null;
+  roleReassignmentObserved: boolean;
+  temporalRoleReassignmentAuthorized: false;
+  permanentNatalMutationAuthorized: false;
+  eventPredictionAuthorized: false;
+  executable: false;
+}
+
+const probe = (
+  value: Omit<
+    R136TemporalRoleProbe,
+    | 'temporalRoleReassignmentAuthorized'
+    | 'permanentNatalMutationAuthorized'
+    | 'eventPredictionAuthorized'
+    | 'executable'
+  >,
+): R136TemporalRoleProbe =>
+  Object.freeze({
+    ...value,
+    temporalRoleReassignmentAuthorized: false,
+    permanentNatalMutationAuthorized: false,
+    eventPredictionAuthorized: false,
+    executable: false,
+  });
+
+export const R136_TEMPORAL_ROLE_PROBES: readonly R136TemporalRoleProbe[] =
+  Object.freeze([
+    probe({
+      id: 'R136-P01',
+      groupId: 'G01-SUPPORT-NATAL-YONG-XI',
+      baselineRole: 'YONG',
+      baselineState: 'NATAL_YONG_ROLE',
+      temporalPerturbation: 'LUCK_SUPPORTS_NATAL_YONG',
+      mechanism: 'LUCK_SUPPORT',
+      resultState: 'NATAL_ROLE_RETAINED_SUPPORTED',
+      resultingRole: 'YONG',
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R077:NATAL_ROLE_BASIS', 'R077:LUCK_SUPPORT_OR_OPPOSITION'],
+      sourceRepresentation: '命中喜神或用神，行運助之',
+      unresolvedOperands: [],
+      retainedRoleTemporalInteraction: true,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P02',
+      groupId: 'G01-SUPPORT-NATAL-YONG-XI',
+      baselineRole: 'XI',
+      baselineState: 'NATAL_XI_ROLE',
+      temporalPerturbation: 'LUCK_SUPPORTS_NATAL_XI',
+      mechanism: 'LUCK_SUPPORT',
+      resultState: 'NATAL_ROLE_RETAINED_SUPPORTED',
+      resultingRole: 'XI',
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R077:NATAL_ROLE_BASIS', 'R077:LUCK_SUPPORT_OR_OPPOSITION'],
+      sourceRepresentation: '命中喜神或用神，行運助之',
+      unresolvedOperands: [],
+      retainedRoleTemporalInteraction: true,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P03',
+      groupId: 'G02-OPPOSE-NATAL-YONG-XI',
+      baselineRole: 'YONG',
+      baselineState: 'NATAL_YONG_ROLE',
+      temporalPerturbation: 'LUCK_OPPOSES_NATAL_YONG',
+      mechanism: 'LUCK_OPPOSITION',
+      resultState: 'NATAL_ROLE_RETAINED_OPPOSED',
+      resultingRole: 'YONG',
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R077:LUCK_SUPPORT_OR_OPPOSITION'],
+      sourceRepresentation: '命中用神或喜神...行運抑之',
+      unresolvedOperands: [],
+      retainedRoleTemporalInteraction: true,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P04',
+      groupId: 'G02-OPPOSE-NATAL-YONG-XI',
+      baselineRole: 'XI',
+      baselineState: 'NATAL_XI_ROLE',
+      temporalPerturbation: 'LUCK_OPPOSES_NATAL_XI',
+      mechanism: 'LUCK_OPPOSITION',
+      resultState: 'NATAL_ROLE_RETAINED_OPPOSED',
+      resultingRole: 'XI',
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R077:LUCK_SUPPORT_OR_OPPOSITION'],
+      sourceRepresentation: '命中用神或喜神...行運抑之',
+      unresolvedOperands: [],
+      retainedRoleTemporalInteraction: true,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P05',
+      groupId: 'G03-SAME-SUPPORT-DIFFERENT-NATAL-CONTEXT',
+      baselineRole: 'XI',
+      baselineState: 'NATAL_XI_WITH_BLOCKING_CONTEXT',
+      temporalPerturbation: 'SAME_NOMINAL_SUPPORT_ITEM',
+      mechanism: 'NATAL_RESCUE_OR_BLOCKING',
+      resultState: 'NATAL_CONTEXT_BLOCKS_APPARENT_SHIFT',
+      resultingRole: 'XI',
+      provenanceKind: 'RESEARCH_SYNTHETIC_STRESS_PROBE',
+      sourceRefs: ['R077:NATAL_RESCUE_OR_BLOCKING', 'R072:NATAL_BLOCK_OR_RESCUE'],
+      sourceRepresentation: '凡取運必兼顧四柱之神',
+      unresolvedOperands: ['NATAL_RESCUE_BLOCKING_PRECEDENCE'],
+      retainedRoleTemporalInteraction: true,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: true,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: 'SAME_NOMINAL_SUPPORT_ITEM',
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P06',
+      groupId: 'G03-SAME-SUPPORT-DIFFERENT-NATAL-CONTEXT',
+      baselineRole: 'XI',
+      baselineState: 'NATAL_XI_WITHOUT_BLOCKING_CONTEXT',
+      temporalPerturbation: 'SAME_NOMINAL_SUPPORT_ITEM',
+      mechanism: 'LUCK_SUPPORT',
+      resultState: 'NATAL_ROLE_RETAINED_SUPPORTED',
+      resultingRole: 'XI',
+      provenanceKind: 'RESEARCH_SYNTHETIC_STRESS_PROBE',
+      sourceRefs: ['R077:LUCK_SUPPORT_OR_OPPOSITION'],
+      sourceRepresentation: '命中喜神或用神，行運助之',
+      unresolvedOperands: [],
+      retainedRoleTemporalInteraction: true,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: 'SAME_NOMINAL_SUPPORT_ITEM',
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P07',
+      groupId: 'G04-LATENT-TRANSPARENCY',
+      baselineRole: 'XI',
+      baselineState: 'NATAL_LATENT_XI',
+      temporalPerturbation: 'LUCK_EXPOSES_LATENT_COMPONENT',
+      mechanism: 'LATENT_ACTIVATION',
+      resultState: 'TEMPORARILY_OPERATIVE_SAME_ROLE',
+      resultingRole: 'XI',
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R073:ACTIVATED_BY_TRANSPARENCY'],
+      sourceRepresentation: '原局支中所藏之神不一，為喜為忌，靜而待用，逢運引出，其用方顯',
+      unresolvedOperands: ['ACTIVATION_DURATION'],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: true,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: true,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P08',
+      groupId: 'G04-LATENT-TRANSPARENCY',
+      baselineRole: 'JI',
+      baselineState: 'NATAL_LATENT_JI',
+      temporalPerturbation: 'LUCK_EXPOSES_LATENT_COMPONENT',
+      mechanism: 'LATENT_ACTIVATION',
+      resultState: 'TEMPORARILY_OPERATIVE_SAME_ROLE',
+      resultingRole: 'JI',
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R073:ACTIVATED_BY_TRANSPARENCY'],
+      sourceRepresentation: '原局支中所藏之神不一，為喜為忌，靜而待用，逢運引出，其用方顯',
+      unresolvedOperands: ['ACTIVATION_DURATION'],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: true,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: true,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P09',
+      groupId: 'G05-LATENT-MEETING',
+      baselineRole: 'XI',
+      baselineState: 'NATAL_LATENT_XI',
+      temporalPerturbation: 'NATAL_AND_LUCK_BRANCHES_COMPLETE_MEETING',
+      mechanism: 'LATENT_ACTIVATION',
+      resultState: 'TEMPORARILY_OPERATIVE_SAME_ROLE',
+      resultingRole: 'XI',
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R073:ACTIVATED_BY_NATAL_LUCK_MEETING'],
+      sourceRepresentation: '命與運二支會局，亦作清論',
+      unresolvedOperands: ['ACTIVATION_DURATION', 'POLARITY_SETTLEMENT'],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: true,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: true,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P10',
+      groupId: 'G05-LATENT-MEETING',
+      baselineRole: 'JI',
+      baselineState: 'NATAL_LATENT_JI',
+      temporalPerturbation: 'NATAL_AND_LUCK_BRANCHES_COMPLETE_MEETING',
+      mechanism: 'LATENT_ACTIVATION',
+      resultState: 'TEMPORARILY_OPERATIVE_SAME_ROLE',
+      resultingRole: 'JI',
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R073:ACTIVATED_BY_NATAL_LUCK_MEETING'],
+      sourceRepresentation: '命與運二支會局，亦作清論',
+      unresolvedOperands: ['ACTIVATION_DURATION', 'POLARITY_SETTLEMENT'],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: true,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: true,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: false,
+    }),
+    ...(['YONG', 'XI', 'JI'] as const).map((baselineRole, index) =>
+      probe({
+        id: `R136-P${String(11 + index).padStart(2, '0')}`,
+        groupId: 'G06-STRUCTURAL-COMPLETION',
+        baselineRole,
+        baselineState: `NATAL_${baselineRole}_BEFORE_COMPLETION`,
+        temporalPerturbation: 'LUCK_COMPLETES_INCOMPLETE_NATAL_STRUCTURE',
+        mechanism: 'STRUCTURAL_COMPLETION_OR_CHANGE',
+        resultState: 'ROLE_REASSIGNMENT_UNRESOLVED',
+        resultingRole: null,
+        provenanceKind: 'RESEARCH_SYNTHETIC_STRESS_PROBE',
+        sourceRefs: ['R072:COMPLETE-INCOMPLETE-NATAL-STRUCTURE', 'R077:STRUCTURAL_COMPLETION_OR_CHANGE'],
+        sourceRepresentation: '本命用神成而未全，逢運配合而完成',
+        unresolvedOperands: ['COMPLETION_SUFFICIENCY', 'ROLE_PROVENANCE_CHAIN', 'TEMPORAL_ROLE_DURATION'],
+        retainedRoleTemporalInteraction: false,
+        latentActivationWithoutReassignment: false,
+        structuralReassignmentUnresolved: true,
+        rescueBlockingCounterexample: false,
+        temporaryPermanentBoundary: false,
+        sourceGovernedRoleChangeControl: false,
+        temporalExtrapolationBlocked: false,
+        samePerturbationContextKey: null,
+        roleReassignmentObserved: false,
+      }),
+    ),
+    ...(['YONG', 'XI', 'JI'] as const).map((baselineRole, index) =>
+      probe({
+        id: `R136-P${String(14 + index).padStart(2, '0')}`,
+        groupId: 'G07-STRUCTURAL-CHANGE',
+        baselineRole,
+        baselineState: `NATAL_${baselineRole}_BEFORE_STRUCTURAL_CHANGE`,
+        temporalPerturbation: 'LUCK_MEETING_OR_CLASH_CHANGES_STRUCTURE',
+        mechanism: 'STRUCTURAL_COMPLETION_OR_CHANGE',
+        resultState: 'ROLE_REASSIGNMENT_UNRESOLVED',
+        resultingRole: null,
+        provenanceKind: 'RESEARCH_SYNTHETIC_STRESS_PROBE',
+        sourceRefs: ['R072:LUCK-MEETING-CLASH-STRUCTURAL-CHANGE', 'R077:STRUCTURAL_COMPLETION_OR_CHANGE'],
+        sourceRepresentation: '運可因會合或沖而使格局變換',
+        unresolvedOperands: ['CHANGE_SUFFICIENCY', 'ROLE_PROVENANCE_CHAIN', 'TEMPORAL_ROLE_DURATION'],
+        retainedRoleTemporalInteraction: false,
+        latentActivationWithoutReassignment: false,
+        structuralReassignmentUnresolved: true,
+        rescueBlockingCounterexample: false,
+        temporaryPermanentBoundary: false,
+        sourceGovernedRoleChangeControl: false,
+        temporalExtrapolationBlocked: false,
+        samePerturbationContextKey: null,
+        roleReassignmentObserved: false,
+      }),
+    ),
+    probe({
+      id: 'R136-P17',
+      groupId: 'G08-BREAK-TRIGGER-WITH-OR-WITHOUT-RESCUE',
+      baselineRole: 'YONG',
+      baselineState: 'NATAL_OFFICER_YONG_WITHOUT_RESCUE',
+      temporalPerturbation: 'LUCK_EXPOSES_HIDDEN_HURTING_OFFICER',
+      mechanism: 'STRUCTURAL_COMPLETION_OR_CHANGE',
+      resultState: 'ROLE_REASSIGNMENT_UNRESOLVED',
+      resultingRole: null,
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R076:OFFICER-HARM-BY-LUCK-EXPOSED-HURTING'],
+      sourceRepresentation: '丁生辰月透壬用官，運逢戊可透出辰中傷官而壞用',
+      unresolvedOperands: ['BREAK_TRIGGER_MATCHING', 'TEMPORAL_DURATION', 'ROLE_PROVENANCE_CHAIN'],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: true,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: 'SAME_HIDDEN_HURTING_OFFICER_EXPOSURE',
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P18',
+      groupId: 'G08-BREAK-TRIGGER-WITH-OR-WITHOUT-RESCUE',
+      baselineRole: 'YONG',
+      baselineState: 'NATAL_OFFICER_YONG_WITH_SEAL_RESCUE',
+      temporalPerturbation: 'LUCK_EXPOSES_HIDDEN_HURTING_OFFICER',
+      mechanism: 'NATAL_RESCUE_OR_BLOCKING',
+      resultState: 'NATAL_CONTEXT_BLOCKS_APPARENT_SHIFT',
+      resultingRole: 'YONG',
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R076:NATAL-SEAL-PROTECTS-OFFICER'],
+      sourceRepresentation: '丁生辰月透壬用官，逢戊而命有甲，可護官而不忌',
+      unresolvedOperands: ['RESCUE_TRIGGER_MATCHING'],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: true,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: 'SAME_HIDDEN_HURTING_OFFICER_EXPOSURE',
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P19',
+      groupId: 'G09-MEETING-WITH-OR-WITHOUT-COUNTERFORCE',
+      baselineRole: 'YONG',
+      baselineState: 'NATAL_OFFICER_YONG_NO_COUNTERFORCE',
+      temporalPerturbation: 'LUCK_COMPLETES_WOOD_MEETING',
+      mechanism: 'STRUCTURAL_COMPLETION_OR_CHANGE',
+      resultState: 'ROLE_REASSIGNMENT_UNRESOLVED',
+      resultingRole: null,
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R076:NATAL-METAL-BLOCKS-WOOD-MEETING-CHANGE'],
+      sourceRepresentation: '卯未運可完成木局並形成結構變化條件',
+      unresolvedOperands: ['CHANGE_SETTLEMENT', 'ROLE_PROVENANCE_CHAIN'],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: true,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: 'SAME_WOOD_MEETING_LUCK',
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P20',
+      groupId: 'G09-MEETING-WITH-OR-WITHOUT-COUNTERFORCE',
+      baselineRole: 'YONG',
+      baselineState: 'NATAL_OFFICER_YONG_WITH_METAL_COUNTERFORCE',
+      temporalPerturbation: 'LUCK_COMPLETES_WOOD_MEETING',
+      mechanism: 'NATAL_RESCUE_OR_BLOCKING',
+      resultState: 'NATAL_CONTEXT_BLOCKS_APPARENT_SHIFT',
+      resultingRole: 'YONG',
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R076:NATAL-METAL-BLOCKS-WOOD-MEETING-CHANGE'],
+      sourceRepresentation: '命有庚辛/申酉可回沖而不成會局變格',
+      unresolvedOperands: ['COUNTERFORCE_PRECEDENCE'],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: true,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: 'SAME_WOOD_MEETING_LUCK',
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P21',
+      groupId: 'G10-COMPLETION-CHANGE-POLARITY-COUNTEREXAMPLES',
+      baselineRole: 'XI',
+      baselineState: 'NATAL_XI_BEFORE_APPARENT_COMPLETION',
+      temporalPerturbation: 'LUCK_SUPPLIES_APPARENT_COMPLETION',
+      mechanism: 'NATAL_RESCUE_OR_BLOCKING',
+      resultState: 'ROLE_REASSIGNMENT_UNRESOLVED',
+      resultingRole: null,
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R072:NATAL_BLOCK_OR_RESCUE', 'R076:COMPLETION-NOT-NECESSARILY-FAVORABLE'],
+      sourceRepresentation: '逢成格而不喜',
+      unresolvedOperands: ['NATAL_BLOCK_RESCUE_PRECEDENCE', 'POLARITY_SETTLEMENT', 'ROLE_PROVENANCE_CHAIN'],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: true,
+      rescueBlockingCounterexample: true,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P22',
+      groupId: 'G10-COMPLETION-CHANGE-POLARITY-COUNTEREXAMPLES',
+      baselineRole: 'JI',
+      baselineState: 'NATAL_JI_BEFORE_APPARENT_CHANGE',
+      temporalPerturbation: 'LUCK_SUPPLIES_APPARENT_STRUCTURAL_CHANGE',
+      mechanism: 'NATAL_RESCUE_OR_BLOCKING',
+      resultState: 'ROLE_REASSIGNMENT_UNRESOLVED',
+      resultingRole: null,
+      provenanceKind: 'SOURCE_GOVERNED_DIRECT_OR_BOUNDED',
+      sourceRefs: ['R072:NATAL_BLOCK_OR_RESCUE', 'R076:CHANGE-NOT-NECESSARILY-HARMFUL'],
+      sourceRepresentation: '逢變格而不忌',
+      unresolvedOperands: ['NATAL_BLOCK_RESCUE_PRECEDENCE', 'POLARITY_SETTLEMENT', 'ROLE_PROVENANCE_CHAIN'],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: true,
+      rescueBlockingCounterexample: true,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: false,
+    }),
+    probe({
+      id: 'R136-P23',
+      groupId: 'G11-R033-ROLE-CHANGE-CONTROL',
+      baselineRole: 'JI',
+      baselineState: 'SOURCE_CONFIGURATION_JI',
+      temporalPerturbation: 'NON_TEMPORAL_GOVERNED_RELATION_CONTROL',
+      mechanism: 'SOURCE_GOVERNED_ROLE_CHANGE_CONTROL',
+      resultState: 'SOURCE_GOVERNED_ROLE_CHANGE_CONTROL_ONLY',
+      resultingRole: 'XI',
+      provenanceKind: 'SOURCE_GOVERNED_NON_TEMPORAL_CONTROL',
+      sourceRefs: ['R033:CONTEXTUAL_ROLE_CHANGE'],
+      sourceRepresentation: '財化為官，忌神變為喜神',
+      unresolvedOperands: [],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: false,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: true,
+      temporalExtrapolationBlocked: false,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: true,
+    }),
+    probe({
+      id: 'R136-P24',
+      groupId: 'G11-R033-ROLE-CHANGE-CONTROL',
+      baselineRole: 'JI',
+      baselineState: 'TEMPORAL_ANALOG_WITHOUT_EXACT_ROLE_TRANSITION_PROOF',
+      temporalPerturbation: 'LUCK_CAUSES_SOME_STRUCTURAL_CHANGE',
+      mechanism: 'STRUCTURAL_COMPLETION_OR_CHANGE',
+      resultState: 'INDETERMINATE',
+      resultingRole: null,
+      provenanceKind: 'RESEARCH_SYNTHETIC_STRESS_PROBE',
+      sourceRefs: ['R033:CONTEXTUAL_ROLE_CHANGE', 'R077:STRUCTURAL_COMPLETION_OR_CHANGE'],
+      sourceRepresentation: 'source-governed Ji->Xi control does not authorize temporal extrapolation',
+      unresolvedOperands: ['EXACT_ROLE_TRANSITION_EVIDENCE', 'ROLE_PROVENANCE_CHAIN', 'TEMPORAL_ROLE_DURATION'],
+      retainedRoleTemporalInteraction: false,
+      latentActivationWithoutReassignment: false,
+      structuralReassignmentUnresolved: true,
+      rescueBlockingCounterexample: false,
+      temporaryPermanentBoundary: false,
+      sourceGovernedRoleChangeControl: false,
+      temporalExtrapolationBlocked: true,
+      samePerturbationContextKey: null,
+      roleReassignmentObserved: false,
+    }),
+  ]);
+
+export const R136_REJECTED_SHORTCUTS = Object.freeze([
+  'EVERY_DAYUN_RESELECTS_YONGSHEN',
+  'EVERY_YEAR_RESELECTS_YONGSHEN',
+  'EVERY_MONTH_RESELECTS_YONGSHEN',
+  'FIXED_ELEMENT_PERMANENT_XI_JI_TABLE',
+  'TEMPORAL_SUPPORT_EQUALS_NEW_YONGSHEN_IDENTITY',
+  'TEMPORAL_OPPOSITION_EQUALS_ROLE_REASSIGNMENT',
+  'LATENT_ACTIVATION_EQUALS_ROLE_REASSIGNMENT',
+  'STRUCTURAL_CHANGE_EQUALS_AUTOMATIC_ROLE_REASSIGNMENT',
+  'SOURCE_GOVERNED_ROLE_CHANGE_EQUALS_GENERIC_TEMPORAL_SWITCHER',
+  'TEMPORARY_OPERATIVE_STATE_EQUALS_PERMANENT_NATAL_MUTATION',
+  'SAME_LUCK_ITEM_EQUALS_SAME_ROLE_OUTCOME_ACROSS_CHARTS',
+  'ROLE_REASSIGNMENT_EQUALS_EVENT_PREDICTION',
+  'SCALAR_ROLE_SCORE_OR_CONFIDENCE',
+] as const);
+
+const samePerturbationRows = R136_TEMPORAL_ROLE_PROBES.filter(
+  (item) => item.samePerturbationContextKey !== null,
+);
+
+export const R136_SUMMARY = Object.freeze({
+  rowCount: R136_TEMPORAL_ROLE_PROBES.length,
+  comparisonGroupCount: new Set(R136_TEMPORAL_ROLE_PROBES.map((item) => item.groupId)).size,
+  representedNatalRoleCount: new Set(R136_TEMPORAL_ROLE_PROBES.map((item) => item.baselineRole)).size,
+  retainedRoleTemporalInteractionCount: R136_TEMPORAL_ROLE_PROBES.filter(
+    (item) => item.retainedRoleTemporalInteraction,
+  ).length,
+  latentActivationWithoutReassignmentCount: R136_TEMPORAL_ROLE_PROBES.filter(
+    (item) => item.latentActivationWithoutReassignment,
+  ).length,
+  structuralReassignmentUnresolvedCount: R136_TEMPORAL_ROLE_PROBES.filter(
+    (item) => item.structuralReassignmentUnresolved,
+  ).length,
+  rescueBlockingCounterexampleCount: R136_TEMPORAL_ROLE_PROBES.filter(
+    (item) => item.rescueBlockingCounterexample,
+  ).length,
+  samePerturbationContextRowCount: samePerturbationRows.length,
+  samePerturbationContextGroupCount: new Set(
+    samePerturbationRows.map((item) => item.samePerturbationContextKey),
+  ).size,
+  temporaryPermanentBoundaryCount: R136_TEMPORAL_ROLE_PROBES.filter(
+    (item) => item.temporaryPermanentBoundary,
+  ).length,
+  sourceGovernedRoleChangeControlCount: R136_TEMPORAL_ROLE_PROBES.filter(
+    (item) => item.sourceGovernedRoleChangeControl,
+  ).length,
+  temporalExtrapolationBlockedCount: R136_TEMPORAL_ROLE_PROBES.filter(
+    (item) => item.temporalExtrapolationBlocked,
+  ).length,
+  roleReassignmentObservedCount: R136_TEMPORAL_ROLE_PROBES.filter(
+    (item) => item.roleReassignmentObserved,
+  ).length,
+  temporalRoleReassignmentAuthorizedCount: R136_TEMPORAL_ROLE_PROBES.filter(
+    (item) => item.temporalRoleReassignmentAuthorized,
+  ).length,
+  permanentNatalMutationAuthorizedCount: R136_TEMPORAL_ROLE_PROBES.filter(
+    (item) => item.permanentNatalMutationAuthorized,
+  ).length,
+  eventPredictionAuthorizedCount: R136_TEMPORAL_ROLE_PROBES.filter(
+    (item) => item.eventPredictionAuthorized,
+  ).length,
+  executableCount: R136_TEMPORAL_ROLE_PROBES.filter((item) => item.executable).length,
+});
+
+export const R136_UPSTREAM_BINDINGS = Object.freeze({
+  r032r033: {
+    version: R032_R033_ROLE_SEPARATION_VERSION,
+    genericXiShenResolverAuthorized: R032_R033_SEMANTIC_BOUNDARY.genericXiShenResolverAuthorized,
+    genericJiShenResolverAuthorized: R032_R033_SEMANTIC_BOUNDARY.genericJiShenResolverAuthorized,
+    productionAuthorityPromoted: R032_R033_SEMANTIC_BOUNDARY.productionAuthorityPromoted,
+  },
+  r040: {
+    version: R040_NONCOLLAPSING_EVIDENCE_VERSION,
+    finalYongShenFieldAuthorized: R040_AUTHORITY.finalYongShenFieldAuthorized,
+    methodWinnerResolverAuthorized: R040_AUTHORITY.methodWinnerResolverAuthorized,
+    chartRoleAssignmentAuthorized: R040_AUTHORITY.chartRoleAssignmentAuthorized,
+  },
+  r072: {
+    version: R072_DAYUN_NATAL_INTERACTION_VERSION,
+    executableDayunInteractionResolverAuthorized: R072_AUTHORITY.executableDayunInteractionResolverAuthorized,
+  },
+  r073: {
+    version: R073_TEMPORAL_LATENT_ACTIVATION_VERSION,
+    executableTimingResolverAuthorized: R073_AUTHORITY.executableTimingResolverAuthorized,
+    activationImpliesPermanentNatalChange: R073_AUTHORITY.activationImpliesPermanentNatalChange,
+    activationImpliesConcreteEvent: R073_AUTHORITY.activationImpliesConcreteEvent,
+  },
+  r076: {
+    version: R076_LUCK_PATTERN_BREAK_RECOVERY_VERSION,
+    executableBreakRecoveryResolverAuthorized: R076_AUTHORITY.executableBreakRecoveryResolverAuthorized,
+    permanentNatalMutationAuthorized: R076_AUTHORITY.permanentNatalMutationAuthorized,
+  },
+  r077: {
+    version: R077_LUCK_YONGXI_SHIFT_VERSION,
+    automaticTemporalYongshenReselectionAuthorized: R077_AUTHORITY.automaticTemporalYongshenReselectionAuthorized,
+    permanentYongxiReplacementAuthorized: R077_AUTHORITY.permanentYongxiReplacementAuthorized,
+    executableTemporalYongxiSwitcherAuthorized: R077_AUTHORITY.executableTemporalYongxiSwitcherAuthorized,
+  },
+  r135: {
+    version: R135_ORDINARY_SPECIAL_NONMONOTONICITY_VERSION,
+    temporalTransitionSemanticsAuthorized: R135_AUTHORITY.temporalTransitionSemanticsAuthorized,
+    transitionResolverAuthorized: R135_AUTHORITY.transitionResolverAuthorized,
+  },
+});
+
+export const R136_AUTHORITY = Object.freeze({
+  status: 'RESEARCH_YONG_XI_JI_TEMPORAL_ROLE_CORPUS_COMPLETE' as const,
+  researchOnly: true,
+  natalRoleTemporalInteractionSeparationObserved: true,
+  latentActivationDistinctFromRoleReassignmentObserved: true,
+  sourceGovernedRoleChangeControlObserved: true,
+  samePerturbationContextDependenceObserved: true,
+  automaticTemporalYongshenReselectionAuthorized: false,
+  genericXiShenResolverAuthorized: false,
+  genericJiShenResolverAuthorized: false,
+  genericYongShenResolverAuthorized: false,
+  temporalRoleReassignmentResolverAuthorized: false,
+  structuralChangeAutoRoleReassignmentAuthorized: false,
+  latentActivationAutoRoleReassignmentAuthorized: false,
+  permanentNatalRoleMutationAuthorized: false,
+  scalarRoleScoreAuthorized: false,
+  numericRoleConfidenceAuthorized: false,
+  temporalEventPredictionAuthorized: false,
+  chartRoleFactEmissionAuthorized: false,
+  automaticEngineAdmissionAuthorized: false,
+  interpretationClaimEmissionAuthorized: false,
+  previewPromotionAuthorized: false,
+  productionAuthorityPromoted: false,
+});
