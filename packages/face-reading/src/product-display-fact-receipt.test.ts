@@ -12,7 +12,7 @@ import {
 } from './rgb-selfie-feature-authority-matrix-fr282.js';
 import {
   buildFaceProductDisplayFactReceipt,
-} from './product-display-fact-receipt.js';
+} from './index.js';
 
 function quality(
   dependency = 'canonical_metric_geometry',
