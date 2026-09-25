@@ -27,6 +27,12 @@ export const FR300_R1L_HISTORICAL_CREATOR_COMMIT_DATE =
 export const FR300_R1L_ARTICLE_REPORTED_COLLECTION_START =
   '2017-10-10' as const;
 
+export const FR300_R1L_POST_COLLECTION_SNAPSHOT_COMMIT =
+  '2331937776e532ac67d049415b852498aa2a9cc8' as const;
+
+export const FR300_R1L_POST_COLLECTION_SNAPSHOT_DATE =
+  '2017-11-16T23:11:35Z' as const;
+
 export const FR300_R1L_PUBLISHER_SAMPLE_EVIDENCE_REF =
   'repo:research/face-reading/evidence/fr300-r1k-rap3df-v1-serialization-sample.json' as const;
 
@@ -42,6 +48,21 @@ export const FR300_R1L_CREATOR_SERIALIZATION_EVIDENCE =
     articleReportedCollectionStart:
       FR300_R1L_ARTICLE_REPORTED_COLLECTION_START,
     collectionDirectory: 'rap3df_data' as const,
+    preCollectionWriterBlobSha:
+      'e9676d1999e588026be7571a1307771f125ae0f2' as const,
+    postCollectionWriterBlobSha:
+      'e9676d1999e588026be7571a1307771f125ae0f2' as const,
+    preCollectionFilenameContractBlobSha:
+      'dbbdc2243ff82be71f449e175149dc28998b8124' as const,
+    postCollectionFilenameContractBlobSha:
+      'dbbdc2243ff82be71f449e175149dc28998b8124' as const,
+    postCollectionSnapshotCommit:
+      FR300_R1L_POST_COLLECTION_SNAPSHOT_COMMIT,
+    postCollectionSnapshotDate:
+      FR300_R1L_POST_COLLECTION_SNAPSHOT_DATE,
+    postCollectionExactDepthBlobCount: 267 as const,
+    postCollectionExactDepthBlobByteLength: 35_462 as const,
+    postCollectionAllExactDepthBlobsSameByteLength: true as const,
     exactDepthFilename: 'k1_box_xyz_depth.data' as const,
     writerInputType: 'std::vector<uint16_t>' as const,
     writerScalarType: 'uint16_t' as const,
@@ -90,6 +111,9 @@ export interface FR300R1LV1SerializationAdjudication {
       true;
     readonly historicalCodeUsesV1CollectionDirectory: true;
     readonly historicalCodeNamesExactPublishedDepthArtifact: true;
+    readonly writerAndFilenameContractStableAcrossCollectionWindow: true;
+    readonly postCollectionTreeContains267ExactDepthArtifacts: true;
+    readonly postCollectionTreeAllExactDepthArtifactsAre35462Bytes: true;
     readonly writerAcceptsUint16Vector: true;
     readonly writerWritesExactlySizeofUint16PerPixel: true;
     readonly exactV1DepthSavePathUsesWriter: true;
@@ -153,6 +177,12 @@ FR300R1LV1SerializationAdjudication {
         true as const,
       historicalCodeUsesV1CollectionDirectory: true as const,
       historicalCodeNamesExactPublishedDepthArtifact: true as const,
+      writerAndFilenameContractStableAcrossCollectionWindow:
+        true as const,
+      postCollectionTreeContains267ExactDepthArtifacts:
+        true as const,
+      postCollectionTreeAllExactDepthArtifactsAre35462Bytes:
+        true as const,
       writerAcceptsUint16Vector: true as const,
       writerWritesExactlySizeofUint16PerPixel: true as const,
       exactV1DepthSavePathUsesWriter: true as const,
@@ -213,6 +243,18 @@ void {
       evidence.publisherSampleByteLength
   ) {
     fail('article/publisher serialization conflict drift.');
+  }
+
+  if (
+    evidence.preCollectionWriterBlobSha !==
+      evidence.postCollectionWriterBlobSha ||
+    evidence.preCollectionFilenameContractBlobSha !==
+      evidence.postCollectionFilenameContractBlobSha ||
+    evidence.postCollectionExactDepthBlobCount !== 267 ||
+    evidence.postCollectionExactDepthBlobByteLength !== 35_462 ||
+    evidence.postCollectionAllExactDepthBlobsSameByteLength !== true
+  ) {
+    fail('historical collection-window corpus binding drift.');
   }
 
   if (
