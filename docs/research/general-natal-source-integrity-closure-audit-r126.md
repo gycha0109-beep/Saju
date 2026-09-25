@@ -108,7 +108,7 @@ The available direct family evidence therefore does not support the current Wiki
 
 R006-R008 already own the remaining NDL/Bukkyo/Tokyo external-reproduction acquisition blockers. R126 does not duplicate those blocked acquisition tracks.
 
-The next step is a **separate reviewed witness re-registration decision**. This audit does not mutate the frozen candidate surface and does not authorize re-registration by itself.
+The next step is the **separate reviewed witness re-registration decision in #1551**. A deterministic handoff contract binds the four current witness IDs/digests, merged R004/R005 direct-inspection frontier, prohibited normalization/relocation shortcuts, and the mandatory fresh-Bridge-surface consequence of any approved mutation. This audit does not mutate the frozen candidate surface and does not authorize re-registration by itself.
 
 ## Authority boundary
 

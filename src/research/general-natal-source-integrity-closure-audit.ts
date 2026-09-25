@@ -6,7 +6,7 @@ import { buildGeneralNatalPeerTaxonomyScanBackedEvidence } from './general-natal
 import { buildGeneralNatalSourceIntegrityAcquisitionAudit } from './general-natal-source-integrity-acquisition-audit.js';
 
 export const GENERAL_NATAL_SOURCE_INTEGRITY_CLOSURE_AUDIT_VERSION =
-  'myeonghwa-general-natal-source-integrity-closure-audit-v2' as const;
+  'myeonghwa-general-natal-source-integrity-closure-audit-v3' as const;
 
 export type GeneralNatalFixedWitnessClosureClass =
   | 'ALTERNATE_EXACT_WITNESS_SURFACE_REQUIRED'
@@ -99,6 +99,7 @@ export function buildGeneralNatalSourceIntegrityClosureAudit() {
       unresolvedExternalSurfaceCount: acquisition.counts.unresolvedExternalSurfaceCount,
       witnessReregistrationReviewRequiredNow:
         acquisition.witnessReregistrationReview.requiredNow,
+      witnessReregistrationReviewIssue: '#1551' as const,
     }),
     peerTaxonomy: Object.freeze({
       sourceId: peer.source.sourceId,

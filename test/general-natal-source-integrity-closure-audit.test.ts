@@ -21,6 +21,7 @@ describe('General Natal source-integrity closure audit', () => {
     expect(audit.acquisition.exactSameSectionIdentityEstablishedCount).toBe(0);
     expect(audit.acquisition.unresolvedExternalSurfaceCount).toBe(4);
     expect(audit.acquisition.witnessReregistrationReviewRequiredNow).toBe(true);
+    expect(audit.acquisition.witnessReregistrationReviewIssue).toBe('#1551');
   });
 
   it('preserves the four Yuanhai fixed-witness textual divergences', () => {
