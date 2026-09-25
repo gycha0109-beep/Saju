@@ -34,6 +34,24 @@ export const FR300_R1_RAP3DF_ARTICLE_REF =
 export const FR300_R1_KINECT_V2_DEPTH_SEMANTICS_REF =
   'https://learn.microsoft.com/en-us/previous-versions/windows/kinect/dn772983(v=ieb.10)' as const;
 
+export const FR300_R1_RAP3DF_V2_METADATA_AUDIT =
+  Object.freeze({
+    mendeleyVersion: 4 as const,
+    mendeleyPublishedVolunteerCount: 80 as const,
+    relatedThesisReportedVolunteerCount: 90 as const,
+    volunteerCountDiscrepancyPresent: true as const,
+    discrepancyBlocksSingleVerifiedSamplePilot: false as const,
+  });
+
+export const FR300_R1_EXECUTION_STATE = Object.freeze({
+  sourceBytesRetrievedInCurrentExecution: false as const,
+  sourceArtifactDigestIssued: false as const,
+  rawDepthEncodingVerifiedFromBytes: false as const,
+  metricScaleVerified: false as const,
+  canonicalRegistrationReady: false as const,
+  realFR299BundleMaterialized: false as const,
+});
+
 export type FR300R1RawDepthInspectionBlocker =
   | 'source_bytes_not_inspected'
   | 'byte_length_not_positive'
