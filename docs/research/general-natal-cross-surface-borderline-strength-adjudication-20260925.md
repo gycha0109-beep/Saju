@@ -1,1 +1,573 @@
-# R128 — Cross-surface borderline-strength adjudication corpus\n\nDate: 2026-09-25\nIssue: #1552\nTrack: saju-research\nStatus: RESEARCH CROSS-SURFACE BORDERLINE-STRENGTH ADJUDICATION COMPLETE\n\n## 1. Purpose\n\nR128 compares borderline-strength adjudication across source and methodology surfaces without ranking schools or selecting a canonical winner.\n\nThe central distinction is:\n\n~~~text\nR127: methodology fixed, feature changes\nR128: case/scaffold held as constant as evidence permits, adjudication surface changes\n~~~\n\nCross-surface comparison is therefore treated as an adjudicator perturbation study.\n\n## 2. Why cross-surface rather than cross-school\n\nR020 already established substantial textual overlap between the reviewed Xu Lewu / 子平真詮評註 and Ren Tieqiao / 滴天髓闡微 strength passages.\n\nExact lineage is unresolved.\n\nTherefore:\n\n~~~text\ntwo source surfaces\n!= two independent schools\n!= two independent votes\n~~~\n\nR128 uses source-surface and methodology-surface terminology unless independence is independently established.\n\n## 3. Corpus\n\n~~~text\ncases             = 24\ncomparison groups = 11\n~~~\n\nCoverage includes spring/autumn Wood borderline cases, label vocabulary, visible-peer versus root reasoning, Muku, Changsheng, month authority, Yuqi, support-family reasoning, challenging-side reasoning, and textual-dependency audits.\n\n## 4. Case matching\n\nEach comparison records one of:\n\n~~~text\nEXACT_TEXTUAL_SAME_CASE\nNEAR_IDENTICAL_CASE_VARIANT\nSHARED_STRUCTURAL_SCAFFOLD\nANALOGOUS_PREDICATE_ONLY\nNOT_COMPARABLE\n~~~\n\nThis prevents similar-looking passages from being silently treated as the same chart or the same adjudication event.\n\n## 5. Spring-Wood borderline comparison\n\nBoth reviewed Xu and Ren surfaces preserve the broad result:\n\n~~~text\nspring Wood\n+ timely season\n+ heavy Metal opposition\n+ no Fire control\n=> 得時不旺 / 不旺\n~~~\n\nBut the fact bundle is not identical:\n\n~~~text\nXu:  支酉丑\nRen: 支申酉\n~~~\n\nR128 therefore records exact label agreement with a material case variant.\n\nThis is not an exact same-case independent replication.\n\n## 6. Autumn-Wood borderline comparison\n\nBoth surfaces preserve the broad scaffold:\n\n~~~text\nautumn Wood\n+ visible 甲乙\n+ 寅卯 deep root\n=> 失時不弱\n~~~\n\nThe native label agrees.\n\nHowever, the explanatory vocabulary is not treated as identical:\n\n~~~text\nXu: 得時/失時 + 黨眾/助寡 framing\nRen: 月令休囚 + 四柱有根 + root-quality framing\n~~~\n\nTherefore R128 records label agreement with rationale divergence.\n\n## 7. 旺衰 and 強弱 vocabulary\n\nXu explicitly distinguishes:\n\n~~~text\n得時 -> 旺\n失時 -> 衰\n黨眾 -> 強\n助寡 -> 弱\n~~~\n\nThe reviewed Ren passage uses 旺, 弱, and 強 contextually, but R128 does not infer an independently formalized identical two-axis taxonomy.\n\nAccordingly:\n\n~~~text\n旺 != automatically 強\n衰 != automatically 弱\n不旺 != 弱\n不弱 != 強\n~~~\n\nNative labels remain attached to source predicates.\n\n## 8. Visible peers versus rooted support\n\nBoth Xu and Ren surfaces strongly resist naive visible-stem counting.\n\nThe broad common principle is:\n\n~~~text\nrooted support can outweigh repeated visible peer support\n~~~\n\nBut the cardinal formulations differ.\n\nSelected Xu commentary preserves:\n\n~~~text\none 比肩 < one 墓庫\ntwo 比肩 < one 餘氣\nthree 比肩 < one 長生/祿刃\n~~~\n\nThe reviewed Ren passage instead groups/composes the comparison differently:\n\n~~~text\none 比肩 < one 餘氣墓庫\ntwo 比肩 < one 長生祿旺\n~~~\n\nR128 therefore preserves the qualitative direction while rejecting one cross-surface numeric or cardinal threshold.\n\n## 9. Near-duplicate friend/root metaphor\n\nBoth surfaces preserve extremely close language comparing visible peers to friends and roots to a dwelling/foundation.\n\nThe wording varies slightly, but both conclude that dry stem abundance is inferior to substantive root.\n\nThis is a prime textual-dependency case:\n\n~~~text\nsemantic stability\n!= independent corroboration count\n~~~\n\n## 10. Yang Muku\n\nR014's governed Yang non-Earth own-Muku cases align with the reviewed Ren root paragraph for relations such as:\n\n~~~text\n甲 / 未\n丙 / 戌\n庚 / 丑\n壬 / 辰\n~~~\n\nR128 records bounded agreement.\n\nIt does not generalize that agreement to Yin stems or Earth.\n\n## 11. Yin Muku\n\nThis is one of the strongest R128 policy forks.\n\nR014 preserves base-text/later-commentary tension rather than silently copying Yang treatment to Yin.\n\nThe reviewed Ren wording groups element stems more class-neutrally, including formulations such as 甲乙逢未.\n\nTherefore:\n\n~~~text\nYin Muku\n= cross-surface predicate divergence\n= classifier-blocking policy ambiguity\n~~~\n\nNo source is selected as the winner.\n\n## 12. Internal Muku stratum disagreement\n\nWithin the 子平真詮 lineage itself, R014 preserves:\n\n~~~text\nbase-text polarity-sensitive treatment\nversus\nlater-commentary critique / five-element applicability framing\n~~~\n\nThis is not two schools and not two votes.\n\nIt is one lineage with an internal source-stratum policy fork.\n\n## 13. Yang Changsheng\n\nThe governed Xu source admits Yang Changsheng into the bounded heavy-root clause.\n\nThe reviewed Ren passage also places 長生祿旺 among heavy roots.\n\nR128 treats this as qualified agreement while keeping textual dependence and polarity scope unresolved.\n\n## 14. Yin Changsheng\n\nThe Xu source explicitly preserves:\n\n~~~text\n陰長生不作此論\n~~~\n\nwhile retaining a bounded 明根 observation.\n\nThe reviewed Ren passage has broad 長生祿旺 heavy-root wording but no independently governed Yin-specific exception in that passage.\n\nTherefore:\n\n~~~text\nYin Changsheng\n= source-policy divergence\n= no cross-surface default\n~~~\n\n## 15. Month authority\n\nYuanhai and Xu commentary can look contradictory if scope is ignored.\n\nYuanhai preserves:\n\n~~~text\n月為提綱\n~~~\n\nwhile also warning:\n\n~~~text\n切不可泥之月令消詳\n~~~\n\nXu commentary preserves:\n\n~~~text\n通根之中，尤以月令之支為最重也\n~~~\n\nR128 resolves the apparent conflict by scope:\n\n~~~text\nmonth importance\n= supported\n\nmonth exclusivity\n= rejected / unsupported\n\nmonth-root priority\n= bounded within Tonggen scope\n~~~\n\nThis is an example where different wording does not create a real adjudication conflict.\n\n## 16. Yuqi policy\n\nRen's reviewed strength/root paragraph presents 墓庫餘氣 as light-root classes.\n\nXu commentary adds temporal qualification around the same broad Yuqi domain:\n\n~~~text\n清明後十二日\n-> 輕而不輕\n\n土旺之後\n-> 則為輕矣\n~~~\n\nR128 records this as source-policy divergence rather than forcing one static Yuqi rule.\n\n## 17. Yuqi versus one peer\n\nA second Yuqi difference is cardinal wording.\n\nSelected Xu commentary preserves a bounded statement that Yuqi may match one peer.\n\nThe reviewed Ren paragraph instead places one Yuqi/Muku root above one visible peer.\n\nTherefore:\n\n~~~text\nroot significance\n= shared\n\nexact equality/superiority relation\n= divergent\n\nnumeric reconciliation\n= not authorized\n~~~\n\n## 18. Exact 四辛卯 and 四丙申 cases\n\nXu commentary supplies exact weak-labeled examples:\n\n~~~text\n四辛卯 -> 金不通根 -> 仍作弱論\n四丙申 -> 火不通根 -> 仍作弱論\n~~~\n\nThe reviewed Ren surface supplies the general 干多不如根重 principle, not a second independently verified exact label for those same cases.\n\nR128 therefore does not duplicate the source label onto the analogous surface.\n\n## 19. Support-family coverage\n\nXu's reviewed 黨眾 explanation explicitly names:\n\n~~~text\n比劫\n印綬\n通根扶助\n~~~\n\nThe reviewed Ren strength paragraph directly foregrounds visible peer and root comparison.\n\nR128 treats this as overlapping support reasoning with different passage-level family coverage.\n\nPassage omission is not school rejection.\n\n## 20. Resource mechanism across surfaces\n\nXu's strength discussion can place 印綬 in a broad support context.\n\nSanming material preserves more mechanism-specific resource behavior such as 生我, 官生印, and 財破印.\n\nThe safe common result is:\n\n~~~text\nresource relevance\n= observed\n\nresource as one generic commensurable support unit\n= not established\n~~~\n\n## 21. Challenging-side methodology comparison\n\nI13 intentionally collects output, wealth, and officer as broad unweighted challenging evidence.\n\nR126 and the source-local corpus show why that must remain non-conclusive.\n\nFor example:\n\n~~~text\n身印兩旺\n+ 食傷洩氣\n-> bounded useful leakage\n~~~\n\nand:\n\n~~~text\n財多身弱\n+ 印扶身\n-> capacity-sensitive wealth/remedy relation\n~~~\n\nR128 therefore treats repository collector direction and source-local adjudication as compatible only when no fixed polarity or score is inferred.\n\n## 22. Textual dependency\n\nR020 records shared spring/autumn examples, root-class language, and friend/root metaphor between Xu and Ren surfaces.\n\nIt also records material variants.\n\nThe correct result is:\n\n~~~text\nTEXTUAL DEPENDENCY RISK\n= MATERIAL\n\nINDEPENDENT TRADITION COUNT\n= NOT SETTLED\n~~~\n\n## 23. Compilation witness boundary\n\n命理探源 provides a compilation-title witness in the relevant topology, but the target body is not preserved in the reviewed witness.\n\nTherefore:\n\n~~~text\ntitle present\n!= adjudication body present\n!= independent school vote\n~~~\n\n## 24. Direct conflict audit\n\nR128 does not find an established direct same-case opposite strength-label conflict in the reviewed corpus.\n\n~~~text\nDIRECT SAME-CASE OPPOSITE LABEL COUNT\n= 0\n~~~\n\nThis does not mean all sources agree.\n\nPredicate-level and source-policy divergences are materially present.\n\n## 25. What is stable and what is not\n\nRelatively stable cross-surface explanation candidates include:\n\n~~~text\nseason alone is insufficient\nroot matters\nroot quality matters\nvisible stem count does not equal root quality\nmonth matters but is not exclusive\n~~~\n\nPolicy-sensitive areas include:\n\n~~~text\nYin Muku\nYin Changsheng\nexact peer-to-root cardinal comparisons\nYuqi temporal/cardinal treatment\nlabel vocabulary normalization\n~~~\n\nThese are candidates for R129 and blockers/inputs for R130.\n\n## 26. Machine-readable result\n\n~~~text\ncases                                  = 24\ncomparison groups                      = 11\n\ncross-surface comparison               = OBSERVED\nshared broad principles                = OBSERVED\nmaterial textual variants              = OBSERVED\npredicate-level divergence             = OBSERVED\nsource-policy divergence               = OBSERVED\ntextual dependency risk                = MATERIAL\n\nexact independent-school agreement     = NOT ESTABLISHED\ndirect same-case opposite labels       = NOT ESTABLISHED\nindependent tradition count            = NOT SETTLED\n\nmajority-vote adjudication             = NOT AUTHORIZED\nautomatic cross-surface synthesis      = NOT AUTHORIZED\nnumeric reconciliation                 = NOT AUTHORIZED\ncanonical winning source               = NOT SELECTED\n\nfinal 強弱 / 旺衰 classifier            = NOT AUTHORIZED\n~~~\n\n## 27. Rejected derivations\n\nR128 explicitly rejects:\n\n~~~text\nSOURCE COUNT = VOTE COUNT\nTEXTUAL DUPLICATE = INDEPENDENT CORROBORATION\nSAME LABEL = SAME REASONING\nDIFFERENT WORDING = DIFFERENT ADJUDICATION\nSHARED CASE SCAFFOLD = EXACT SAME CASE\nSOURCE POLICY DIFFERENCE = ONE SOURCE IS WRONG\nMAJORITY SOURCE COUNT = CANONICAL TRUTH\nXU + REN = CROSS-SCHOOL CONSENSUS\nLATER COMMENTARY ALWAYS OVERRIDES BASE TEXT\nBASE TEXT ALWAYS OVERRIDES COMMENTARY\nWANG = QIANG\nSHUAI = RUO\nNOT_WANG = RUO\nNOT_RUO = QIANG\nTEXTUAL VARIANT = SCHOOL DIVERGENCE\nSOURCE DIVERGENCE = ENGINE CHOOSE ONE\nMAJORITY VOTE = PRODUCTION AUTHORITY\n~~~\n\n## 28. R129 handoff\n\nR129 can now extract non-numeric explanation primitives from concepts that remain useful across source surfaces without pretending that all predicates are identical.\n\nGood candidates include scoped statements such as:\n\n~~~text\nseasonal advantage/disadvantage is not sufficient by itself\nroot presence and root quality materially affect adjudication\nvisible peer repetition does not freely substitute for root\nmonth context matters without exclusive authority\n~~~\n\nPolicy-sensitive concepts must retain source/methodology metadata.\n\n## 29. R130 handoff\n\nR130 can use R128's predicate maps to ask which conditions are minimal and sufficient inside each methodology surface.\n\nIt must not create a universal predicate by majority-voting source clauses.\n\n## 30. Final status\n\n~~~text\nR128\n= RESEARCH CROSS-SURFACE BORDERLINE-STRENGTH ADJUDICATION COMPLETE\n\nSHARED BROAD PRINCIPLES\n= OBSERVED\n\nPREDICATE DIVERGENCE\n= OBSERVED\n\nSOURCE-POLICY DIVERGENCE\n= OBSERVED\n\nTEXTUAL DEPENDENCY RISK\n= MATERIAL\n\nDIRECT SAME-CASE OPPOSITE LABEL\n= NOT ESTABLISHED\n\nINDEPENDENT SCHOOL VOTE COUNT\n= NOT SETTLED\n\nMAJORITY-VOTE ADJUDICATION\n= NOT AUTHORIZED\n\nAUTOMATIC SYNTHESIS\n= NOT AUTHORIZED\n\nNUMERIC RECONCILIATION\n= NOT AUTHORIZED\n\nFINAL 強弱 / 旺衰\n= NOT AUTHORIZED\n\nAUTHORITY NOT GRANTED\nENGINE ADMISSION NOT GRANTED\nPREVIEW/PRODUCTION AUTHORITY NOT GRANTED\n~~~\n\nRESEARCH COMPLETE.\nAUTHORITY NOT GRANTED.\n\n## Source surfaces\n\n- 子平真詮 / 子平真詮評註 selected strength/root passage: https://www.ncc.com.tw/fate/paleo/bg/bg_032.htm\n- 滴天髓闡微 selected 衰旺/root passage: https://zh.wikisource.org/zh-hant/滴天髓闡微\n- 三命通會 卷六: https://zh.wikisource.org/zh-hant/三命通會/卷六\n- Yuanhai direct-visual evidence remains pinned in R012 repository metadata.
+# R128 — Cross-surface borderline-strength adjudication corpus
+
+Date: 2026-09-25
+Issue: #1552
+Track: saju-research
+Status: RESEARCH CROSS-SURFACE BORDERLINE-STRENGTH ADJUDICATION COMPLETE
+
+## 1. Purpose
+
+R128 compares borderline-strength adjudication across source and methodology surfaces without ranking schools or selecting a canonical winner.
+
+The central distinction is:
+
+~~~text
+R127: methodology fixed, feature changes
+R128: case/scaffold held as constant as evidence permits, adjudication surface changes
+~~~
+
+Cross-surface comparison is therefore treated as an adjudicator perturbation study.
+
+## 2. Why cross-surface rather than cross-school
+
+R020 already established substantial textual overlap between the reviewed Xu Lewu / 子平真詮評註 and Ren Tieqiao / 滴天髓闡微 strength passages.
+
+Exact lineage is unresolved.
+
+Therefore:
+
+~~~text
+two source surfaces
+!= two independent schools
+!= two independent votes
+~~~
+
+R128 uses source-surface and methodology-surface terminology unless independence is independently established.
+
+## 3. Corpus
+
+~~~text
+cases             = 24
+comparison groups = 11
+~~~
+
+Coverage includes spring/autumn Wood borderline cases, label vocabulary, visible-peer versus root reasoning, Muku, Changsheng, month authority, Yuqi, support-family reasoning, challenging-side reasoning, and textual-dependency audits.
+
+## 4. Case matching
+
+Each comparison records one of:
+
+~~~text
+EXACT_TEXTUAL_SAME_CASE
+NEAR_IDENTICAL_CASE_VARIANT
+SHARED_STRUCTURAL_SCAFFOLD
+ANALOGOUS_PREDICATE_ONLY
+NOT_COMPARABLE
+~~~
+
+This prevents similar-looking passages from being silently treated as the same chart or the same adjudication event.
+
+## 5. Spring-Wood borderline comparison
+
+Both reviewed Xu and Ren surfaces preserve the broad result:
+
+~~~text
+spring Wood
++ timely season
++ heavy Metal opposition
++ no Fire control
+=> 得時不旺 / 不旺
+~~~
+
+But the fact bundle is not identical:
+
+~~~text
+Xu:  支酉丑
+Ren: 支申酉
+~~~
+
+R128 therefore records exact label agreement with a material case variant.
+
+This is not an exact same-case independent replication.
+
+## 6. Autumn-Wood borderline comparison
+
+Both surfaces preserve the broad scaffold:
+
+~~~text
+autumn Wood
++ visible 甲乙
++ 寅卯 deep root
+=> 失時不弱
+~~~
+
+The native label agrees.
+
+However, the explanatory vocabulary is not treated as identical:
+
+~~~text
+Xu: 得時/失時 + 黨眾/助寡 framing
+Ren: 月令休囚 + 四柱有根 + root-quality framing
+~~~
+
+Therefore R128 records label agreement with rationale divergence.
+
+## 7. 旺衰 and 強弱 vocabulary
+
+Xu explicitly distinguishes:
+
+~~~text
+得時 -> 旺
+失時 -> 衰
+黨眾 -> 強
+助寡 -> 弱
+~~~
+
+The reviewed Ren passage uses 旺, 弱, and 強 contextually, but R128 does not infer an independently formalized identical two-axis taxonomy.
+
+Accordingly:
+
+~~~text
+旺 != automatically 強
+衰 != automatically 弱
+不旺 != 弱
+不弱 != 強
+~~~
+
+Native labels remain attached to source predicates.
+
+## 8. Visible peers versus rooted support
+
+Both Xu and Ren surfaces strongly resist naive visible-stem counting.
+
+The broad common principle is:
+
+~~~text
+rooted support can outweigh repeated visible peer support
+~~~
+
+But the cardinal formulations differ.
+
+Selected Xu commentary preserves:
+
+~~~text
+one 比肩 < one 墓庫
+two 比肩 < one 餘氣
+three 比肩 < one 長生/祿刃
+~~~
+
+The reviewed Ren passage instead groups/composes the comparison differently:
+
+~~~text
+one 比肩 < one 餘氣墓庫
+two 比肩 < one 長生祿旺
+~~~
+
+R128 therefore preserves the qualitative direction while rejecting one cross-surface numeric or cardinal threshold.
+
+## 9. Near-duplicate friend/root metaphor
+
+Both surfaces preserve extremely close language comparing visible peers to friends and roots to a dwelling/foundation.
+
+The wording varies slightly, but both conclude that dry stem abundance is inferior to substantive root.
+
+This is a prime textual-dependency case:
+
+~~~text
+semantic stability
+!= independent corroboration count
+~~~
+
+## 10. Yang Muku
+
+R014's governed Yang non-Earth own-Muku cases align with the reviewed Ren root paragraph for relations such as:
+
+~~~text
+甲 / 未
+丙 / 戌
+庚 / 丑
+壬 / 辰
+~~~
+
+R128 records bounded agreement.
+
+It does not generalize that agreement to Yin stems or Earth.
+
+## 11. Yin Muku
+
+This is one of the strongest R128 policy forks.
+
+R014 preserves base-text/later-commentary tension rather than silently copying Yang treatment to Yin.
+
+The reviewed Ren wording groups element stems more class-neutrally, including formulations such as 甲乙逢未.
+
+Therefore:
+
+~~~text
+Yin Muku
+= cross-surface predicate divergence
+= classifier-blocking policy ambiguity
+~~~
+
+No source is selected as the winner.
+
+## 12. Internal Muku stratum disagreement
+
+Within the 子平真詮 lineage itself, R014 preserves:
+
+~~~text
+base-text polarity-sensitive treatment
+versus
+later-commentary critique / five-element applicability framing
+~~~
+
+This is not two schools and not two votes.
+
+It is one lineage with an internal source-stratum policy fork.
+
+## 13. Yang Changsheng
+
+The governed Xu source admits Yang Changsheng into the bounded heavy-root clause.
+
+The reviewed Ren passage also places 長生祿旺 among heavy roots.
+
+R128 treats this as qualified agreement while keeping textual dependence and polarity scope unresolved.
+
+## 14. Yin Changsheng
+
+The Xu source explicitly preserves:
+
+~~~text
+陰長生不作此論
+~~~
+
+while retaining a bounded 明根 observation.
+
+The reviewed Ren passage has broad 長生祿旺 heavy-root wording but no independently governed Yin-specific exception in that passage.
+
+Therefore:
+
+~~~text
+Yin Changsheng
+= source-policy divergence
+= no cross-surface default
+~~~
+
+## 15. Month authority
+
+Yuanhai and Xu commentary can look contradictory if scope is ignored.
+
+Yuanhai preserves:
+
+~~~text
+月為提綱
+~~~
+
+while also warning:
+
+~~~text
+切不可泥之月令消詳
+~~~
+
+Xu commentary preserves:
+
+~~~text
+通根之中，尤以月令之支為最重也
+~~~
+
+R128 resolves the apparent conflict by scope:
+
+~~~text
+month importance
+= supported
+
+month exclusivity
+= rejected / unsupported
+
+month-root priority
+= bounded within Tonggen scope
+~~~
+
+This is an example where different wording does not create a real adjudication conflict.
+
+## 16. Yuqi policy
+
+Ren's reviewed strength/root paragraph presents 墓庫餘氣 as light-root classes.
+
+Xu commentary adds temporal qualification around the same broad Yuqi domain:
+
+~~~text
+清明後十二日
+-> 輕而不輕
+
+土旺之後
+-> 則為輕矣
+~~~
+
+R128 records this as source-policy divergence rather than forcing one static Yuqi rule.
+
+## 17. Yuqi versus one peer
+
+A second Yuqi difference is cardinal wording.
+
+Selected Xu commentary preserves a bounded statement that Yuqi may match one peer.
+
+The reviewed Ren paragraph instead places one Yuqi/Muku root above one visible peer.
+
+Therefore:
+
+~~~text
+root significance
+= shared
+
+exact equality/superiority relation
+= divergent
+
+numeric reconciliation
+= not authorized
+~~~
+
+## 18. Exact 四辛卯 and 四丙申 cases
+
+Xu commentary supplies exact weak-labeled examples:
+
+~~~text
+四辛卯 -> 金不通根 -> 仍作弱論
+四丙申 -> 火不通根 -> 仍作弱論
+~~~
+
+The reviewed Ren surface supplies the general 干多不如根重 principle, not a second independently verified exact label for those same cases.
+
+R128 therefore does not duplicate the source label onto the analogous surface.
+
+## 19. Support-family coverage
+
+Xu's reviewed 黨眾 explanation explicitly names:
+
+~~~text
+比劫
+印綬
+通根扶助
+~~~
+
+The reviewed Ren strength paragraph directly foregrounds visible peer and root comparison.
+
+R128 treats this as overlapping support reasoning with different passage-level family coverage.
+
+Passage omission is not school rejection.
+
+## 20. Resource mechanism across surfaces
+
+Xu's strength discussion can place 印綬 in a broad support context.
+
+Sanming material preserves more mechanism-specific resource behavior such as 生我, 官生印, and 財破印.
+
+The safe common result is:
+
+~~~text
+resource relevance
+= observed
+
+resource as one generic commensurable support unit
+= not established
+~~~
+
+## 21. Challenging-side methodology comparison
+
+I13 intentionally collects output, wealth, and officer as broad unweighted challenging evidence.
+
+R126 and the source-local corpus show why that must remain non-conclusive.
+
+For example:
+
+~~~text
+身印兩旺
++ 食傷洩氣
+-> bounded useful leakage
+~~~
+
+and:
+
+~~~text
+財多身弱
++ 印扶身
+-> capacity-sensitive wealth/remedy relation
+~~~
+
+R128 therefore treats repository collector direction and source-local adjudication as compatible only when no fixed polarity or score is inferred.
+
+## 22. Textual dependency
+
+R020 records shared spring/autumn examples, root-class language, and friend/root metaphor between Xu and Ren surfaces.
+
+It also records material variants.
+
+The correct result is:
+
+~~~text
+TEXTUAL DEPENDENCY RISK
+= MATERIAL
+
+INDEPENDENT TRADITION COUNT
+= NOT SETTLED
+~~~
+
+## 23. Compilation witness boundary
+
+命理探源 provides a compilation-title witness in the relevant topology, but the target body is not preserved in the reviewed witness.
+
+Therefore:
+
+~~~text
+title present
+!= adjudication body present
+!= independent school vote
+~~~
+
+## 24. Direct conflict audit
+
+R128 does not find an established direct same-case opposite strength-label conflict in the reviewed corpus.
+
+~~~text
+DIRECT SAME-CASE OPPOSITE LABEL COUNT
+= 0
+~~~
+
+This does not mean all sources agree.
+
+Predicate-level and source-policy divergences are materially present.
+
+## 25. What is stable and what is not
+
+Relatively stable cross-surface explanation candidates include:
+
+~~~text
+season alone is insufficient
+root matters
+root quality matters
+visible stem count does not equal root quality
+month matters but is not exclusive
+~~~
+
+Policy-sensitive areas include:
+
+~~~text
+Yin Muku
+Yin Changsheng
+exact peer-to-root cardinal comparisons
+Yuqi temporal/cardinal treatment
+label vocabulary normalization
+~~~
+
+These are candidates for R129 and blockers/inputs for R130.
+
+## 26. Machine-readable result
+
+~~~text
+cases                                  = 24
+comparison groups                      = 11
+
+cross-surface comparison               = OBSERVED
+shared broad principles                = OBSERVED
+material textual variants              = OBSERVED
+predicate-level divergence             = OBSERVED
+source-policy divergence               = OBSERVED
+textual dependency risk                = MATERIAL
+
+exact independent-school agreement     = NOT ESTABLISHED
+direct same-case opposite labels       = NOT ESTABLISHED
+independent tradition count            = NOT SETTLED
+
+majority-vote adjudication             = NOT AUTHORIZED
+automatic cross-surface synthesis      = NOT AUTHORIZED
+numeric reconciliation                 = NOT AUTHORIZED
+canonical winning source               = NOT SELECTED
+
+final 強弱 / 旺衰 classifier            = NOT AUTHORIZED
+~~~
+
+## 27. Rejected derivations
+
+R128 explicitly rejects:
+
+~~~text
+SOURCE COUNT = VOTE COUNT
+TEXTUAL DUPLICATE = INDEPENDENT CORROBORATION
+SAME LABEL = SAME REASONING
+DIFFERENT WORDING = DIFFERENT ADJUDICATION
+SHARED CASE SCAFFOLD = EXACT SAME CASE
+SOURCE POLICY DIFFERENCE = ONE SOURCE IS WRONG
+MAJORITY SOURCE COUNT = CANONICAL TRUTH
+XU + REN = CROSS-SCHOOL CONSENSUS
+LATER COMMENTARY ALWAYS OVERRIDES BASE TEXT
+BASE TEXT ALWAYS OVERRIDES COMMENTARY
+WANG = QIANG
+SHUAI = RUO
+NOT_WANG = RUO
+NOT_RUO = QIANG
+TEXTUAL VARIANT = SCHOOL DIVERGENCE
+SOURCE DIVERGENCE = ENGINE CHOOSE ONE
+MAJORITY VOTE = PRODUCTION AUTHORITY
+~~~
+
+## 28. R129 handoff
+
+R129 can now extract non-numeric explanation primitives from concepts that remain useful across source surfaces without pretending that all predicates are identical.
+
+Good candidates include scoped statements such as:
+
+~~~text
+seasonal advantage/disadvantage is not sufficient by itself
+root presence and root quality materially affect adjudication
+visible peer repetition does not freely substitute for root
+month context matters without exclusive authority
+~~~
+
+Policy-sensitive concepts must retain source/methodology metadata.
+
+## 29. R130 handoff
+
+R130 can use R128's predicate maps to ask which conditions are minimal and sufficient inside each methodology surface.
+
+It must not create a universal predicate by majority-voting source clauses.
+
+## 30. Final status
+
+~~~text
+R128
+= RESEARCH CROSS-SURFACE BORDERLINE-STRENGTH ADJUDICATION COMPLETE
+
+SHARED BROAD PRINCIPLES
+= OBSERVED
+
+PREDICATE DIVERGENCE
+= OBSERVED
+
+SOURCE-POLICY DIVERGENCE
+= OBSERVED
+
+TEXTUAL DEPENDENCY RISK
+= MATERIAL
+
+DIRECT SAME-CASE OPPOSITE LABEL
+= NOT ESTABLISHED
+
+INDEPENDENT SCHOOL VOTE COUNT
+= NOT SETTLED
+
+MAJORITY-VOTE ADJUDICATION
+= NOT AUTHORIZED
+
+AUTOMATIC SYNTHESIS
+= NOT AUTHORIZED
+
+NUMERIC RECONCILIATION
+= NOT AUTHORIZED
+
+FINAL 強弱 / 旺衰
+= NOT AUTHORIZED
+
+AUTHORITY NOT GRANTED
+ENGINE ADMISSION NOT GRANTED
+PREVIEW/PRODUCTION AUTHORITY NOT GRANTED
+~~~
+
+RESEARCH COMPLETE.
+AUTHORITY NOT GRANTED.
+
+## Source surfaces
+
+- 子平真詮 / 子平真詮評註 selected strength/root passage: https://www.ncc.com.tw/fate/paleo/bg/bg_032.htm
+- 滴天髓闡微 selected 衰旺/root passage: https://zh.wikisource.org/zh-hant/滴天髓闡微
+- 三命通會 卷六: https://zh.wikisource.org/zh-hant/三命通會/卷六
+- Yuanhai direct-visual evidence remains pinned in R012 repository metadata.
