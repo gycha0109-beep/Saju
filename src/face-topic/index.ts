@@ -11,3 +11,4 @@ export * from './display-facts.js';
 export * from './reader.js';
 export * from './live-fr293-reader.js';
 export * from './runtime.js';
+export * from './result-history.js';
