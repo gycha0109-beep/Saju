@@ -113,12 +113,11 @@ describe('FR298 neutral nose tip-bridge relative projection axis', () => {
     expect(result.referenceAxisDefinitionRef)
       .toBe(FR298_REFERENCE_AXIS_DEFINITION_REF);
     expect(result.value).toBeCloseTo(2 / Math.sqrt(13), 12);
-    expect(result.components)
-      .toMatchObject({
-        absoluteDepthComponentCentimeter: 2,
-        tipBridgeEuclideanDistanceCentimeter: Math.sqrt(13),
-        signDiscarded: true,
-      });
+    expect(result.components.absoluteDepthComponentCentimeter)
+      .toBe(2);
+    expect(result.components.tipBridgeEuclideanDistanceCentimeter)
+      .toBeCloseTo(Math.sqrt(13), 12);
+    expect(result.components.signDiscarded).toBe(true);
     expect(result.authorityBoundary).toMatchObject({
       referenceAxisDefinitionIssued: true,
       descriptiveBenchmarkReferenceScalarIssued: true,
