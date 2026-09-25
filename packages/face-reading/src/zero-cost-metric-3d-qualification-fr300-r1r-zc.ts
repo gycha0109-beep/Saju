@@ -243,7 +243,7 @@ export function assertFR300R1RZCZeroCostMetric3DContract(): void {
     fail('AST-Face must remain rights/metric fail-closed.');
   }
 
-  const paidIds = new Set(
+  const paidIds = new Set<string>(
     FR300_R1R_ZC_COST_POLICY.paidCandidatesDeferred,
   );
   if (
