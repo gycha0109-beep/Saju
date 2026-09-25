@@ -157,7 +157,7 @@ export const FACE_TRADITIONAL_T6_PACK_CANDIDATE: TraditionalMethodologyPackCandi
       'Gujin transmission authority must not be relabeled as original or earliest Shenyi Fu authority.',
       'Repeated wording across genealogically entangled texts does not count as independent corroboration.',
     ],
-    enabledProductionTiers: [],
+    enabledProductionTiers: [] as const,
     forbiddenObservationInputs: [
       'observations.colorAppearance',
       'unreviewed generic forehead-height proxies',
