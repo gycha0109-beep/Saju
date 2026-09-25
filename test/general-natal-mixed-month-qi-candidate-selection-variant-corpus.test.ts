@@ -125,9 +125,11 @@ describe('R132 mixed month-qi candidate-selection variant corpus', () => {
         'DIRECT_SOURCE_USE_IDENTITY_OBSERVED',
       );
       expect(row.sourceSemanticUseLabels).not.toBeNull();
-      expect(row.sourceRefs.some((sourceRef) => upstreamIds.includes(sourceRef))).toBe(
-        true,
-      );
+      expect(
+        row.sourceRefs.some((sourceRef) =>
+          upstreamIds.some((exemplarId) => exemplarId === sourceRef),
+        ),
+      ).toBe(true);
     }
   });
 
