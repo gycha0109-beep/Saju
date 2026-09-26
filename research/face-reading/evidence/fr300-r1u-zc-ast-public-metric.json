@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "fr300-r1u-zc-ast-public-metric-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-26",
+  "candidate": "ast_face_public_and_controlled",
+  "sources": [
+    {
+      "source": "https://doi.org/10.1038/s41597-026-07098-2",
+      "sourceClass": "peer_reviewed_data_descriptor",
+      "supportedFacts": [
+        "98_participants",
+        "public_tier_contains_topology_standardized_non_textured_meshes_landmarks_deformation_fields_and_AU_metadata",
+        "raw_scans_are_controlled_access_DUA_required",
+        "textured_meshes_and_synchronized_RGB_are_controlled_identifiable_modalities",
+        "all_98_consented_to_public_anonymized_non_textured_derived_data",
+        "raw_meshes_are_ICP_aligned_to_canonical_coordinates",
+        "raw_meshes_are_normalized_in_scale_before_topology_standardization",
+        "FLAME_assisted_projection_and_Edge_NICP_create_public_standardized_meshes"
+      ]
+    },
+    {
+      "source": "https://github.com/zhaopu99/AST-face/blob/main/README.md",
+      "sourceClass": "official_dataset_processing_repository",
+      "supportedFacts": [
+        "public_output_is_topology_standardized_derived_mesh",
+        "raw_scans_are_not_public_tier",
+        "raw_scans_require_DUA_controlled_access",
+        "processing_order_starts_with_ICP_then_landmarks_FLAME_BFM_projection_Edge_NICP_crop"
+      ]
+    },
+    {
+      "source": "https://github.com/zhaopu99/AST-face/blob/main/ASTFace%20Pipline/01_icp.py",
+      "sourceClass": "official_processing_source_code",
+      "supportedFacts": [
+        "normalize_centers_point_cloud_and_divides_by_max_radius_to_unit_sphere",
+        "source_centroid_and_source_scale_are_not_used_to_denormalize_output",
+        "target_centroid_and_target_scale_are_used_to_denormalize_aligned_output",
+        "therefore_original_source_absolute_scale_is_not_preserved_by_this_public_pipeline_stage"
+      ]
+    }
+  ],
+  "rightsBoundary": {
+    "publicDerivedReleaseConsentVerified": true,
+    "publicCommercialProductDevelopmentScope": "not_source_bound",
+    "controlledAccessRequiresDua": true,
+    "controlledDataAccessRequested": false,
+    "duaSignedOrSent": false,
+    "externalContactPerformed": false
+  },
+  "metricAdjudication": {
+    "publicStandardizedMeshMetricScale": "not_fr299_metric_authority_scale_normalized_derived_geometry",
+    "publicTierDisposition": "terminal_reject_public_standardized_mesh_as_fr299_metric_source",
+    "wholeCandidateTerminalReject": false,
+    "controlledRawScanDisposition": "hold_unqualified_dua_controlled_raw_geometry",
+    "publicSubjectArtifactDownloadPerformed": false,
+    "paidSpendAuthorized": false,
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29"
+  },
+  "nextActionWithoutNewAuthorization": "review_ast_face_dua_and_raw_scan_unit_authority_without_requesting_access_or_evaluate_existing_hardware_metric_reference"
+}
