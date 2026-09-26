@@ -1,4 +1,8 @@
 import type {
+  FaceCharacterGroundingBundleRefV1,
+  FaceCharacterGroundingBundleV1,
+} from './character-handoff.js';
+import type {
   FaceTopicAuthoritySourceReceipt,
 } from './authority.js';
 import {
@@ -76,6 +80,10 @@ export interface FaceTopicRuntimeSuccessResultV1 {
   readonly projectionHash: string;
   readonly groundingHash: string;
   readonly displayFactsHash: string;
+  readonly characterGrounding:
+    FaceCharacterGroundingBundleV1;
+  readonly characterGroundingRef:
+    FaceCharacterGroundingBundleRefV1;
   readonly readerDeliveryHash: string;
   readonly readerDelivery: FaceReaderDeliveryV1;
 }
@@ -245,6 +253,10 @@ function successResult(
       pipeline.projection.grounding.groundingHash,
     displayFactsHash:
       pipeline.displayFacts.displayFactsHash,
+    characterGrounding:
+      pipeline.characterGrounding,
+    characterGroundingRef:
+      pipeline.characterGroundingRef,
     readerDeliveryHash:
       pipeline.readerDelivery.readerDeliveryHash,
     readerDelivery:

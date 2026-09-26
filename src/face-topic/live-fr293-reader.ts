@@ -1,3 +1,9 @@
+import {
+  buildFaceCharacterGroundingBundleRefV1,
+  buildFaceCharacterGroundingBundleV1,
+  type FaceCharacterGroundingBundleRefV1,
+  type FaceCharacterGroundingBundleV1,
+} from './character-handoff.js';
 import type {
   FaceDisplayFactReceiptV1,
   FaceDisplayValueV1,
@@ -165,6 +171,10 @@ export interface FaceLiveReaderPipelineV1 {
   readonly displayFacts: ReturnType<
     typeof admitFaceDisplayFacts
   >;
+  readonly characterGrounding:
+    FaceCharacterGroundingBundleV1;
+  readonly characterGroundingRef:
+    FaceCharacterGroundingBundleRefV1;
   readonly readerDelivery: FaceReaderDeliveryV1;
 }
 
@@ -1185,6 +1195,15 @@ export function buildFaceLiveReaderPipeline(
       projection,
       displayReceipt,
     );
+  const characterGrounding =
+    buildFaceCharacterGroundingBundleV1(
+      projection,
+      displayFacts,
+    );
+  const characterGroundingRef =
+    buildFaceCharacterGroundingBundleRefV1(
+      characterGrounding,
+    );
   const readerDelivery =
     buildFaceReaderDelivery(
       projection,
@@ -1195,6 +1214,8 @@ export function buildFaceLiveReaderPipeline(
     executionResult,
     projection,
     displayFacts,
+    characterGrounding,
+    characterGroundingRef,
     readerDelivery,
   });
 }
