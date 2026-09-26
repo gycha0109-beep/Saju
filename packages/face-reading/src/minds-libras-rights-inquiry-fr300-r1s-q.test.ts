@@ -26,10 +26,10 @@ describe('FR300-R1S-Q MINDS rights inquiry preparation', () => {
       'frederico_guimaraes_ufmg',
     ]);
     expect(
-      FR300_R1S_Q_OFFICIAL_CONTACT_ROUTES.every((item) =>
-        item.email.endsWith('.edu.br'),
+      FR300_R1S_Q_OFFICIAL_CONTACT_ROUTES.map(
+        (item) => item.email.split('@')[1],
       ),
-    ).toBe(true);
+    ).toEqual(['ifmg.edu.br', 'ufmg.br']);
   });
 
   it('prepares exactly the five rights questions needed before subject-data inspection', () => {
