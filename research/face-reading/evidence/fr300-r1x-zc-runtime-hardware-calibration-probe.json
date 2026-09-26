@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "fr300-r1x-zc-runtime-hardware-calibration-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-26",
+  "contractVersion": "FR300-R1X-ZC-RUNTIME-HARDWARE-CALIBRATION-v1",
+  "predecessor": {
+    "contractVersion": "FR300-R1W-ZC-EXISTING-HARDWARE-METRIC-v1",
+    "disposition": "conditional_pass_to_device_probe",
+    "mergeSha": "152cd0fc24997bf821ac321ea2c40daa2e76dae6"
+  },
+  "implementation": {
+    "runtimeHardwareReceiptSchemaMaterialized": true,
+    "runtimeReceiptToR1WAssessmentBridgeMaterialized": true,
+    "nonhumanCalibrationReceiptMaterialized": true,
+    "descriptiveAccuracyMetricsMaterialized": true,
+    "descriptiveRepeatabilityMetricsMaterialized": true,
+    "externalMultiviewAntiTautologyScaleRuleMaterialized": true
+  },
+  "runtimeReceiptBoundary": {
+    "realRuntimeHardwareReceiptCollected": false,
+    "realDeviceCapabilityBound": false,
+    "syntheticTestEvidenceIsRealDeviceEvidence": false,
+    "runtimeReceiptRequiresActualDeviceExecution": true,
+    "receiptContainsBiometricArtifact": false
+  },
+  "probePolicy": {
+    "targetClass": "nonhuman_known_dimension_calibration_target",
+    "minimumValidationSegmentCount": 2,
+    "minimumRepeatsPerValidationSegment": 3,
+    "scaleAnchorMayAlsoBeValidationSegment": false,
+    "descriptiveMetricsOnly": true,
+    "acceptanceThresholdIssued": false,
+    "humanFaceAllowed": false,
+    "biometricArtifactAllowed": false
+  },
+  "descriptiveMetrics": {
+    "perSegment": [
+      "knownCm",
+      "repeatCount",
+      "meanMeasuredCm",
+      "signedBiasCm",
+      "meanAbsoluteErrorCm",
+      "meanAbsoluteRelativeError",
+      "repeatabilityRangeCm"
+    ],
+    "aggregate": [
+      "meanAbsoluteErrorCm",
+      "maxAbsoluteErrorCm",
+      "meanAbsoluteRelativeError",
+      "maxRepeatabilityRangeCm"
+    ],
+    "resultStatus": "descriptive_probe_complete_threshold_not_issued"
+  },
+  "antiTautologyBoundary": {
+    "externalMultiviewScaleAnchorRequired": true,
+    "scaleAnchorMustBeIndependentOfReconstruction": true,
+    "scaleAnchorMayNotBeValidationSegment": true,
+    "validationSegmentsMustBeIndependentlyMeasured": true
+  },
+  "authorityBoundary": {
+    "realNonhumanCalibrationProbeExecuted": false,
+    "metricAccuracyValidated": false,
+    "repeatabilityValidated": false,
+    "humanFaceCapturePerformed": false,
+    "biometricArtifactCollected": false,
+    "fr266AnnotationIssued": false,
+    "fr297AnnotationIssued": false,
+    "fr299SourceIssued": false,
+    "fr299BundleMaterialized": false,
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2Authorized": false,
+    "fr300R2EligibleCandidateCount": 0,
+    "newHardwarePurchaseAuthorized": false,
+    "paidSpendAuthorized": false,
+    "productMaterialization": "18/29",
+    "productionActivated": false,
+    "commerceActivated": false
+  },
+  "disposition": "implementation_ready_device_execution_required",
+  "externalExecutionBlocker": "real_android_device_or_equivalent_existing_hardware_runtime_receipt_required",
+  "nextFrontier": "FR300-R1Y-ZC-real-device-capability-receipt-acquisition"
+}
