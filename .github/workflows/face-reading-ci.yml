@@ -255,6 +255,14 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-runtime-candidates-fr101.test.ts
 
+      - name: Verify FR102 local ear empirical bundle boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-empirical-bundle-fr102.test.ts
+
+      - name: Verify FR102 local Florence-2 runner parser
+        working-directory: target
+        run: python tools/face-reading/ear/run_florence2_ear_empirical.py --self-test
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
