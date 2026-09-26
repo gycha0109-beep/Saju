@@ -15,7 +15,7 @@ manifestComplete                    = true
 researchRuntimeBindingMutationReady = true
 runtimeRegistryMutated              = false
 
-productionSourceTierEligibility = false
+productionSourceTierEligibility = true
 Production                      = HOLD
 ```
 
