@@ -9,7 +9,6 @@ import {
   assertFaceCharacterGroundingBundleV1,
   buildFaceAuthorityCoverageSnapshot,
   buildFaceCharacterGroundingBundleRefV1,
-  buildFaceCharacterGroundingBundleV1,
   buildFaceLiveReaderPipeline,
   evaluateFaceCharacterHandoffEligibility,
   planFaceTopicExecution,
