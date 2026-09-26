@@ -247,6 +247,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-surface-feasibility-fr99.test.ts
 
+      - name: Verify FR100 GNM neutral ear reference target boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-reference-target-fr100.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
