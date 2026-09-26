@@ -243,6 +243,10 @@ jobs:
         working-directory: target
         run: npm run face:verify:fr98-role-free-arclength-mean-neutral-metric
 
+      - name: Verify FR99 neutral ear surface feasibility boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-surface-feasibility-fr99.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
