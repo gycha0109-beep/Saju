@@ -173,11 +173,13 @@ export function assertFR300R1SQMindsRightsInquiryContract(): void {
 
   if (
     FR300_R1S_Q_OFFICIAL_CONTACT_ROUTES.length !== 2 ||
-    FR300_R1S_Q_OFFICIAL_CONTACT_ROUTES.some(
-      (contact) =>
-        !contact.email.endsWith('.edu.br') ||
-        !contact.sourceClass.startsWith('official_'),
-    )
+    FR300_R1S_Q_OFFICIAL_CONTACT_ROUTES.some((contact) => {
+      const domain = contact.email.split('@')[1];
+      return (
+        !['ifmg.edu.br', 'ufmg.br'].includes(domain ?? '') ||
+        !contact.sourceClass.startsWith('official_')
+      );
+    })
   ) {
     fail('contact routes must remain institutionally source-bound.');
   }
