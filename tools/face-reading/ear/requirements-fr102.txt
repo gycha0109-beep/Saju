@@ -1,0 +1,6 @@
+# FR102 local empirical runner only.
+# Normal PR CI MUST NOT install these dependencies or download model weights.
+torch>=2.2,<3
+transformers>=4.49,<5
+Pillow>=10,<12
+safetensors>=0.4,<1
