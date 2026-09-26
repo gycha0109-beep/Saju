@@ -278,6 +278,113 @@ describe(
       );
     });
 
+    it('rejects caller attempts to inject server-owned authority and readiness fields before providers', async () => {
+      const forbiddenInputs = [
+        { readinessState: 'available' },
+        { requiredObservationCapabilities: ['forged'] },
+        { optionalObservationCapabilities: ['forged'] },
+        { methodologyRefs: ['method.forged'] },
+        { semanticClaimFamilies: ['claim.forged'] },
+        { bindingGroupRefs: ['binding.forged'] },
+        { traditionalClaims: ['claim.forged'] },
+        { prohibitedInferenceKeys: [] },
+        { characterId: 'character:forged' },
+        { price: 1000 },
+        { entitlement: 'entitlement:forged' },
+      ] as const;
+
+      for (const injected of forbiddenInputs) {
+        const events: string[] = [];
+        const result =
+          await executeFaceTopicRuntime(
+            {
+              ...STRUCTURE_REQUEST,
+              ...injected,
+            },
+            dependencies({ events }),
+          );
+
+        expect(events).toEqual([]);
+        expect(result).toEqual(
+          expect.objectContaining({
+            state: 'failed',
+            stage: 'request',
+            errorCode:
+              'FACE_TOPIC_RUNTIME_REQUEST_SCOPE_VIOLATION',
+          }),
+        );
+      }
+    });
+
+    it('fails closed on forbidden raw, biometric, Character and Commerce engine payloads', async () => {
+      const forbiddenPayloads = [
+        { rawImage: 'data:image/jpeg;base64,forged' },
+        { rawLandmarks: [{ x: 0, y: 0 }] },
+        { mediaPipeLandmarks: [{ x: 0, y: 0 }] },
+        { identityTemplate: 'identity:forged' },
+        { faceEmbedding: [0.1, 0.2] },
+        { characterId: 'character:forged' },
+        { relationshipState: 'forged' },
+        { price: 1000 },
+        { entitlement: 'entitlement:forged' },
+      ] as const;
+
+      for (const injected of forbiddenPayloads) {
+        const result =
+          await executeFaceTopicRuntime(
+            STRUCTURE_REQUEST,
+            dependencies({
+              mutateEngineReceipt: (receipt) => ({
+                ...receipt,
+                ...injected,
+              }),
+            }),
+          );
+
+        expect(result).toEqual(
+          expect.objectContaining({
+            state: 'failed',
+            stage: 'admission',
+            errorCode:
+              'FACE_LIVE_FR293_FORBIDDEN_PAYLOAD',
+          }),
+        );
+      }
+    });
+
+    it('fails closed when engine payloads try to add semantic claims or weaken prohibited inference policy', async () => {
+      for (const injected of [
+        {
+          semanticClaims: [
+            { claimFamily: 'face.claim.forged' },
+          ],
+        },
+        {
+          prohibitedInferences: [],
+        },
+      ]) {
+        const result =
+          await executeFaceTopicRuntime(
+            STRUCTURE_REQUEST,
+            dependencies({
+              mutateEngineReceipt: (receipt) => ({
+                ...receipt,
+                ...injected,
+              }),
+            }),
+          );
+
+        expect(result).toEqual(
+          expect.objectContaining({
+            state: 'failed',
+            stage: 'admission',
+            errorCode:
+              'FACE_LIVE_FR293_RECEIPT_SCOPE_VIOLATION',
+          }),
+        );
+      }
+    });
+
     it('exposes a reusable host without adding Character or Commerce inputs', async () => {
       const host =
         createFaceTopicRuntimeHost(
