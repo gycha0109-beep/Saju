@@ -443,7 +443,7 @@ export function createFaceProductApi(
       return buildCatalog(dependencies);
     },
 
-    async requestCapture(topicKey) {
+    async requestCapture(topicKey: string) {
       assertNonEmpty(
         topicKey,
         'FACE_PRODUCT_CAPTURE_TOPIC_INVALID',
@@ -474,7 +474,7 @@ export function createFaceProductApi(
       });
     },
 
-    async analyze(input) {
+    async analyze(input: FaceProductAnalysisRequestV1) {
       const request =
         parseAnalysisRequest(input);
       const runtime =
@@ -548,7 +548,7 @@ export function createFaceProductApi(
       });
     },
 
-    async getHistoryDetail(resultRef) {
+    async getHistoryDetail(resultRef: string) {
       assertNonEmpty(
         resultRef,
         'FACE_PRODUCT_HISTORY_RESULT_REF_INVALID',
