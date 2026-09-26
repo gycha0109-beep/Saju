@@ -556,9 +556,7 @@ export function buildFaceCharacterGroundingBundleV1(
 
   if (
     projection.grounding.sourceResultHash !==
-      projection.sourceResultHash ||
-    projection.grounding.groundingHash !==
-      projection.grounding.groundingHash
+    projection.sourceResultHash
   ) {
     fail(
       'FACE_CHARACTER_GROUNDING_PROJECTION_BINDING_MISMATCH',
@@ -762,7 +760,7 @@ export function assertFaceCharacterGroundingBundleV1(
   );
   assertPrefixedHash(
     value.sourceResultHash,
-    'face-topic-result:',
+    'face-topic-source-result:',
     'FACE_CHARACTER_GROUNDING_SOURCE_RESULT_HASH_INVALID',
   );
   assertPrefixedHash(
@@ -1071,7 +1069,7 @@ export function assertFaceCharacterGroundingBundleRefV1(
   );
   assertPrefixedHash(
     value.sourceResultHash,
-    'face-topic-result:',
+    'face-topic-source-result:',
     'FACE_CHARACTER_GROUNDING_REF_SOURCE_INVALID',
   );
   assertPrefixedHash(
