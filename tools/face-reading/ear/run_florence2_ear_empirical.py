@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import platform
 import sys
 from pathlib import Path
@@ -12,7 +13,7 @@ from typing import Any, Iterable
 MODEL_ID = "microsoft/Florence-2-base"
 MODEL_REVISION = "5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac"
 TASK = "<REFERRING_EXPRESSION_SEGMENTATION>"
-SCHEMA_VERSION = "fr103-neutral-ear-candidate-validation-v1"
+SCHEMA_VERSION = "fr103-neutral-ear-dual-prompt-consensus-v2"
 DEFAULT_OUTPUT_DIR = Path(".cache/face-reading/ear-fr103")
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
 GENERIC_PROMPT_TARGET = "external ear"
@@ -156,7 +157,9 @@ def normalize_polygons(parsed: Any, width: int, height: int) -> list[dict[str, A
     return normalized
 
 
-def classify_polygons(polygons: list[dict[str, Any]]) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]], list[str]]:
+def classify_polygons(
+    polygons: list[dict[str, Any]],
+) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]], list[str]]:
     accepted = [
         polygon
         for polygon in polygons
@@ -179,6 +182,54 @@ def classify_polygons(polygons: list[dict[str, Any]]) -> tuple[str, list[dict[st
     if accepted:
         return "candidate_polygon", accepted, rejected, rejection_reasons
     return "unavailable", [], rejected, rejection_reasons
+
+
+def bbox_pair_metrics(
+    left_polygon: dict[str, Any],
+    right_polygon: dict[str, Any],
+    image_width: int,
+    image_height: int,
+) -> dict[str, Any]:
+    left_bbox = left_polygon["geometry"]["bbox"]
+    right_bbox = right_polygon["geometry"]["bbox"]
+
+    intersection_width = max(
+        0.0,
+        min(left_bbox["maxX"], right_bbox["maxX"])
+        - max(left_bbox["minX"], right_bbox["minX"]),
+    )
+    intersection_height = max(
+        0.0,
+        min(left_bbox["maxY"], right_bbox["maxY"])
+        - max(left_bbox["minY"], right_bbox["minY"]),
+    )
+    intersection_area = intersection_width * intersection_height
+    left_bbox_area = left_bbox["width"] * left_bbox["height"]
+    right_bbox_area = right_bbox["width"] * right_bbox["height"]
+    union_area = left_bbox_area + right_bbox_area - intersection_area
+    bbox_iou = intersection_area / union_area if union_area > 0.0 else 0.0
+
+    left_centroid = left_polygon["geometry"]["centroid"]
+    right_centroid = right_polygon["geometry"]["centroid"]
+    centroid_distance_pixels = math.hypot(
+        left_centroid["x"] - right_centroid["x"],
+        left_centroid["y"] - right_centroid["y"],
+    )
+    image_diagonal = math.hypot(float(image_width), float(image_height))
+    normalized_centroid_distance = (
+        centroid_distance_pixels / image_diagonal if image_diagonal > 0.0 else 0.0
+    )
+
+    return {
+        "bboxIntersectionArea": intersection_area,
+        "bboxUnionArea": union_area,
+        "bboxIoU": bbox_iou,
+        "centroidDistancePixels": centroid_distance_pixels,
+        "centroidDistanceNormalizedByImageDiagonal": normalized_centroid_distance,
+        "leftPolygonAreaRatio": left_polygon["geometry"]["areaRatio"],
+        "rightPolygonAreaRatio": right_polygon["geometry"]["areaRatio"],
+        "automaticAcceptanceThresholdApplied": False,
+    }
 
 
 def build_record(
@@ -220,6 +271,7 @@ def build_record(
             "promptMode": prompt_mode,
             "requestedSide": requested_side,
             "prompt": prompt,
+            "sideLabelAuthoritative": False,
         },
         "result": {
             "status": status,
@@ -244,6 +296,79 @@ def build_record(
             "appearanceInferenceAuthorized": False,
             "depthOrFullnessInferenceAuthorized": False,
             "numericAcceptanceThresholdAuthorized": False,
+            "productionAuthorization": False,
+        },
+    }
+
+
+def build_dual_prompt_summary(
+    *,
+    image_path: Path,
+    image_width: int,
+    image_height: int,
+    capture_case: str,
+    mirrored: bool,
+    left_record: dict[str, Any],
+    right_record: dict[str, Any],
+) -> dict[str, Any]:
+    left_candidates = left_record["result"]["candidatePolygons"]
+    right_candidates = right_record["result"]["candidatePolygons"]
+
+    if not left_candidates and not right_candidates:
+        state = "unavailable"
+        pair_metrics = None
+    elif len(left_candidates) == 1 and len(right_candidates) == 1:
+        state = "paired_candidate_evidence_manual_review_required"
+        pair_metrics = bbox_pair_metrics(
+            left_candidates[0],
+            right_candidates[0],
+            image_width,
+            image_height,
+        )
+    elif len(left_candidates) == 1 or len(right_candidates) == 1:
+        state = "single_prompt_candidate_manual_review_required"
+        pair_metrics = None
+    else:
+        state = "ambiguous_candidate_count_manual_review_required"
+        pair_metrics = None
+
+    return {
+        "schemaVersion": SCHEMA_VERSION,
+        "authorityState": "candidate_evidence_only_manual_review_required",
+        "sourceImage": {
+            "sha256": sha256_file(image_path),
+            "width": image_width,
+            "height": image_height,
+            "originalFileName": image_path.name,
+            "repositoryCommitAuthorized": False,
+        },
+        "capture": {
+            "case": capture_case,
+            "frontCameraMirrored": mirrored,
+        },
+        "promptPair": {
+            "leftPrompt": f"{TASK}left external ear",
+            "rightPrompt": f"{TASK}right external ear",
+            "sideLabelsAuthoritative": False,
+            "anatomicalLateralityAssigned": False,
+        },
+        "result": {
+            "state": state,
+            "leftStatus": left_record["result"]["status"],
+            "rightStatus": right_record["result"]["status"],
+            "leftCandidateCount": len(left_candidates),
+            "rightCandidateCount": len(right_candidates),
+            "pairMetrics": pair_metrics,
+            "automaticConsensusAcceptanceAuthorized": False,
+            "faceGeometryPlausibilityGateImplemented": False,
+            "faceGeometryPlausibilityDisposition": "not_implemented",
+            "validatedExternalEarObservation": False,
+        },
+        "authority": {
+            "promptPairMayBeCalledAnatomicalLaterality": False,
+            "pairMetricsMayBeCalledValidatedEarConsensus": False,
+            "neutralRuntimeEarObservationAuthorized": False,
+            "traditionalBindingAuthorized": False,
             "productionAuthorization": False,
         },
     }
@@ -325,11 +450,11 @@ def run_prompt(
     device: str,
     dtype,
 ) -> tuple[str, Any, str]:
-    if prompt_mode == "generic":
+    if prompt_mode == "generic_diagnostic":
         text_input = GENERIC_PROMPT_TARGET
     else:
         if side not in {"left", "right"}:
-            raise ValueError("Diagnostic side prompt requires left or right.")
+            raise ValueError("Side prompt requires left or right.")
         text_input = f"{side} external ear"
 
     prompt = TASK + text_input
@@ -377,23 +502,34 @@ def run(args: argparse.Namespace) -> int:
     ) = load_runtime(args.device)
 
     images = resolve_images(Path(args.input))
-    if args.prompt_mode == "generic":
-        requests: list[tuple[str, str | None]] = [("generic", None)]
-    else:
-        sides = ["left", "right"] if args.side == "both" else [args.side]
-        requests = [("diagnostic_side", side) for side in sides]
-
     output_root = Path(args.output_dir)
     output_root.mkdir(parents=True, exist_ok=True)
 
-    index: list[dict[str, Any]] = []
+    cases: list[dict[str, Any]] = []
     for image_path in images:
         digest = sha256_file(image_path)
         case_dir = output_root / digest[:16]
         case_dir.mkdir(parents=True, exist_ok=True)
-
         image = image_cls.open(image_path).convert("RGB")
-        for prompt_mode, requested_side in requests:
+
+        if args.prompt_mode == "dual-side":
+            requests: list[tuple[str, str | None, str]] = [
+                ("dual_side", "left", "left"),
+                ("dual_side", "right", "right"),
+            ]
+        elif args.prompt_mode == "generic-diagnostic":
+            requests = [("generic_diagnostic", None, "generic")]
+        else:
+            sides = ["left", "right"] if args.side == "both" else [args.side]
+            requests = [
+                ("single_side_diagnostic", side, str(side))
+                for side in sides
+            ]
+
+        records_by_name: dict[str, dict[str, Any]] = {}
+        record_index: list[dict[str, Any]] = []
+
+        for prompt_mode, requested_side, record_name in requests:
             generated_text, parsed, prompt = run_prompt(
                 image=image,
                 prompt_mode=prompt_mode,
@@ -417,7 +553,7 @@ def run(args: argparse.Namespace) -> int:
                 parsed=parsed,
                 runtime=versions,
             )
-            record_name = "external-ear" if prompt_mode == "generic" else str(requested_side)
+            records_by_name[record_name] = record
             record_path = case_dir / f"{record_name}.json"
             record_path.write_text(
                 json.dumps(record, ensure_ascii=False, indent=2) + "\n",
@@ -429,11 +565,9 @@ def run(args: argparse.Namespace) -> int:
                 overlay_path = case_dir / f"{record_name}-overlay.png"
                 write_overlay(image, image_draw, record, overlay_path)
 
-            index.append(
+            record_index.append(
                 {
-                    "sourceImageSha256": digest,
-                    "sourceImageName": image_path.name,
-                    "captureCase": args.capture_case,
+                    "name": record_name,
                     "promptMode": prompt_mode,
                     "requestedSide": requested_side,
                     "record": str(record_path),
@@ -445,19 +579,55 @@ def run(args: argparse.Namespace) -> int:
                 }
             )
 
+        pair_summary_path = None
+        pair_summary_state = None
+        if args.prompt_mode == "dual-side":
+            pair_summary = build_dual_prompt_summary(
+                image_path=image_path,
+                image_width=image.width,
+                image_height=image.height,
+                capture_case=args.capture_case,
+                mirrored=args.front_camera_mirrored,
+                left_record=records_by_name["left"],
+                right_record=records_by_name["right"],
+            )
+            pair_summary_path = case_dir / "pair-summary.json"
+            pair_summary_path.write_text(
+                json.dumps(pair_summary, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            pair_summary_state = pair_summary["result"]["state"]
+
+        cases.append(
+            {
+                "sourceImageSha256": digest,
+                "sourceImageName": image_path.name,
+                "captureCase": args.capture_case,
+                "promptMode": args.prompt_mode,
+                "records": record_index,
+                "pairSummary": str(pair_summary_path) if pair_summary_path else None,
+                "pairSummaryState": pair_summary_state,
+            }
+        )
+
     bundle_index = {
         "schemaVersion": SCHEMA_VERSION,
         "model": {"id": MODEL_ID, "revision": MODEL_REVISION},
-        "records": index,
+        "cases": cases,
         "privacy": {
             "sourceImagesCommitted": False,
             "outputsDefaultToGitIgnoredCache": True,
         },
         "authority": {
-            "genericExternalEarPromptPrimary": True,
+            "dualSidePromptPairPrimary": True,
+            "genericExternalEarPromptPrimary": False,
+            "genericPromptDiagnosticOnly": True,
             "sideSemanticsAuthoritative": False,
+            "automaticConsensusAcceptanceAuthorized": False,
+            "faceGeometryPlausibilityGateImplemented": False,
+            "lateralityAssignmentImplemented": False,
             "exactDegeneratePolygonRejectEnabled": True,
-            "plausibilityThresholdAuthorized": False,
+            "numericPlausibilityThresholdAuthorized": False,
             "empiricalCandidateOnly": True,
             "runtimeObservationAuthorized": False,
             "productionAuthorization": False,
@@ -514,20 +684,44 @@ def self_test() -> int:
     assert "zero_bbox_height" in reasons
     assert "zero_polygon_area" in reasons
 
-    assert normalize_polygons({TASK: {"polygons": []}}, 100, 100) == []
+    left = normalize_polygons(
+        {TASK: {"polygons": [[10, 10, 30, 10, 30, 30, 10, 30]]}},
+        100,
+        100,
+    )[0]
+    right = normalize_polygons(
+        {TASK: {"polygons": [[12, 11, 32, 11, 32, 31, 12, 31]]}},
+        100,
+        100,
+    )[0]
+    pair = bbox_pair_metrics(left, right, 100, 100)
+    assert pair["bboxIntersectionArea"] > 0.0
+    assert 0.0 < pair["bboxIoU"] <= 1.0
+    assert pair["automaticAcceptanceThresholdApplied"] is False
 
-    nested = {TASK: {"polygons": [[[1, 1, 5, 1, 5, 5, 1, 5]]]}}
-    nested_polygons = normalize_polygons(nested, 10, 10)
-    assert len(nested_polygons) == 1
-    assert nested_polygons[0]["points"][0] == [1.0, 1.0]
+    left_record = {"result": {"status": "candidate_polygon", "candidatePolygons": [left]}}
+    right_record = {"result": {"status": "candidate_polygon", "candidatePolygons": [right]}}
+    summary = build_dual_prompt_summary(
+        image_path=Path(__file__),
+        image_width=100,
+        image_height=100,
+        capture_case="self_test",
+        mirrored=False,
+        left_record=left_record,
+        right_record=right_record,
+    )
+    assert summary["result"]["state"] == "paired_candidate_evidence_manual_review_required"
+    assert summary["result"]["pairMetrics"]["bboxIoU"] > 0.0
+    assert summary["result"]["automaticConsensusAcceptanceAuthorized"] is False
+    assert summary["result"]["faceGeometryPlausibilityGateImplemented"] is False
 
-    print("FR103 Florence-2 ear candidate validation self-test: PASS")
+    print("FR103 Florence-2 dual-prompt ear validation self-test: PASS")
     return 0
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Local/offline FR103 Florence-2 external-ear candidate validator."
+        description="Local/offline FR103 Florence-2 dual-prompt external-ear validator."
     )
     parser.add_argument("--input", help="Image file or directory.")
     parser.add_argument(
@@ -536,18 +730,18 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--prompt-mode",
-        choices=["generic", "diagnostic-side"],
-        default="generic",
+        choices=["dual-side", "generic-diagnostic", "single-side-diagnostic"],
+        default="dual-side",
         help=(
-            "Use generic external-ear localization by default. "
-            "Side-specific prompts are diagnostic only and are not authoritative."
+            "Use non-authoritative left/right prompt pair by default. "
+            "Generic and single-side modes are diagnostic only."
         ),
     )
     parser.add_argument(
         "--side",
         choices=["left", "right", "both"],
         default="both",
-        help="Used only with --prompt-mode diagnostic-side.",
+        help="Used only with --prompt-mode single-side-diagnostic.",
     )
     parser.add_argument(
         "--front-camera-mirrored",
@@ -562,9 +756,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", default="auto")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
-
-    if args.prompt_mode == "diagnostic-side":
-        args.prompt_mode = "diagnostic_side"
 
     if not args.self_test:
         if not args.input:
