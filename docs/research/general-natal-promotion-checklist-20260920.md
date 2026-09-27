@@ -2,7 +2,7 @@
 
 Date: 2026-09-22  
 Issue: #1052  
-Status: FAIL-CLOSED PROMOTION CHECKLIST CONTRACT DEFINED / ELIGIBILITY IS NOT PROMOTION
+Status: FAIL-CLOSED PROMOTION CHECKLIST CONTRACT DEFINED / GATE 12 CONDITIONAL AUTHORITY PATHS EXPLICIT / ELIGIBILITY IS NOT PROMOTION
 
 ## Purpose
 
@@ -110,6 +110,38 @@ Every required gate is either:
 and gate 15 records the designated governance decision that the exact candidate is eligible for promotion.
 
 `PROMOTION_ELIGIBLE` does **not** mutate lifecycle/status.
+
+## Gate 12 conditional authority paths
+
+Gate 12 remains:
+
+```text
+REQUIRED_DOMAIN_REVIEW_ATTESTATION_SATISFIED
+```
+
+It is a conditional gate rather than an unconditional assertion that every governed candidate must have a human reviewer.
+
+Two governed paths are recognized:
+
+```text
+trusted human review
+→ SATISFIED
+
+source-adjudication v1
+→ NOT_APPLICABLE_WITH_JUSTIFICATION
+```
+
+The source-adjudication path requires all of the following:
+
+- the exact `myeonghwa-source-adjudication-promotion-policy@1.0.0` content-addressed policy ref;
+- an explicit justification;
+- an exact explicit governance decision for the candidate/version;
+- a source-adjudication-eligible bounded deterministic correspondence;
+- all evidence and fail-closed requirements defined by that policy.
+
+Without the explicit governance decision the Gate 12 result remains `PENDING`.
+
+Source-adjudication v1 may only target staging. It does not satisfy Production review authority and does not claim human domain review, ReviewerTrustGrant, ReviewAttestation, or `domain_reviewed`.
 
 ## Gate 15 versus actual lifecycle mutation
 
