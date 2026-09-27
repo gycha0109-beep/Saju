@@ -5,6 +5,7 @@ import {
   R098_CHECKLIST_STATES,
   R098_CROSS_CONTRACT_EVIDENCE_RULES,
   R098_GATE_APPLICABILITY,
+  R098_GATE_12_DOMAIN_REVIEW_APPLICABILITY_POLICY,
   R098_GATE_STATUSES,
   R098_PROMOTION_CHECKLIST_VERSION,
   R098_PROMOTION_ELIGIBILITY_RULES,
@@ -15,7 +16,7 @@ import {
 
 describe('R098 research-to-governed promotion checklist', () => {
   it('requires fifteen explicit fail-closed gates', () => {
-    expect(R098_PROMOTION_CHECKLIST_VERSION).toBe('0.2.0-research');
+    expect(R098_PROMOTION_CHECKLIST_VERSION).toBe('0.3.0-research');
     expect(R098_REQUIRED_GATES).toHaveLength(15);
     expect(R098_REQUIRED_GATES).toContain('PASSAGE_PROPOSITION_BINDING_COMPLETE');
     expect(R098_REQUIRED_GATES).toContain('COUNTEREXAMPLES_AND_DIVERGENCE_REVIEWED');
@@ -87,12 +88,47 @@ describe('R098 research-to-governed promotion checklist', () => {
     expect(R098_AUTHORITY.notApplicableRequiresPolicyAndJustification).toBe(true);
   });
 
+  it('makes Gate 12 conditional with separate trusted-human and source-adjudication paths', () => {
+    expect(R098_GATE_12_DOMAIN_REVIEW_APPLICABILITY_POLICY).toEqual({
+      gateId: 'REQUIRED_DOMAIN_REVIEW_ATTESTATION_SATISFIED',
+      applicability: 'CONDITIONAL',
+      trustedHumanReviewPath: {
+        governingStatus: 'SATISFIED',
+        trustPinnedReviewAuthorityRequired: true,
+      },
+      sourceAdjudicationPath: {
+        policyId: 'myeonghwa-source-adjudication-promotion-policy',
+        governingStatus: 'NOT_APPLICABLE_WITH_JUSTIFICATION',
+        exactPolicyRefRequired: true,
+        explicitGovernanceDecisionRequired: true,
+        justificationRequired: true,
+        maximumLifecycleTarget: 'staging',
+        humanDomainReviewClaimed: false,
+        reviewerTrustGrantClaimed: false,
+        productionAuthorityGranted: false,
+      },
+      silentSkipAuthorized: false,
+    });
+    expect(R098_PROMOTION_ELIGIBILITY_RULES).toContain(
+      'GATE_12_SOURCE_ADJUDICATION_REQUIRES_EXACT_POLICY_REF_JUSTIFICATION_AND_GOVERNANCE_DECISION',
+    );
+    expect(R098_PROMOTION_ELIGIBILITY_RULES).toContain(
+      'SOURCE_ADJUDICATION_V1_CANNOT_SATISFY_PRODUCTION_REVIEW_AUTHORITY',
+    );
+  });
+
   it('rejects merge, tests, votes, shadow success, and demand as implicit promotion', () => {
     expect(R098_REJECTED_IMPLICIT_PROMOTION).toContain('MERGE_IMPLIES_PROMOTION');
     expect(R098_REJECTED_IMPLICIT_PROMOTION).toContain('TEST_PASS_IMPLIES_PROMOTION');
     expect(R098_REJECTED_IMPLICIT_PROMOTION).toContain('EXPERT_VOTE_IMPLIES_PROMOTION');
     expect(R098_REJECTED_IMPLICIT_PROMOTION).toContain('SHADOW_PASS_IMPLIES_PROMOTION');
     expect(R098_REJECTED_IMPLICIT_PROMOTION).toContain('PRODUCT_DEMAND_IMPLIES_PROMOTION');
+    expect(R098_REJECTED_IMPLICIT_PROMOTION).toContain(
+      'SOURCE_ADJUDICATION_IMPLIES_HUMAN_DOMAIN_REVIEW',
+    );
+    expect(R098_REJECTED_IMPLICIT_PROMOTION).toContain(
+      'SOURCE_ADJUDICATION_IMPLIES_PRODUCTION_AUTHORITY',
+    );
   });
 
   it('requires lifecycle mutation to remain a separate authority action', () => {
@@ -109,6 +145,10 @@ describe('R098 research-to-governed promotion checklist', () => {
       checklistStateIsConfidenceScore: false,
       candidateHashChangeRequiresReevaluation: true,
       lifecycleMutationRequiresSeparateAuthorityAction: true,
+      gate12SourceAdjudicationStagingAlternativeDefined: true,
+      sourceAdjudicationHumanReviewClaimed: false,
+      sourceAdjudicationReviewerTrustClaimed: false,
+      sourceAdjudicationProductionAuthorityGranted: false,
       productionAuthorityPromoted: false,
     });
   });
