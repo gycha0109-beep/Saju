@@ -10,7 +10,7 @@ describe('Saju Engine capability frontier G2B', () => {
     expect(frontier.counts.total).toBe(21);
   });
 
-  it('reflects the merged Spouse T8 P0 completion without inventing additional Engine work', () => {
+  it('reflects the merged Spouse T8 P1 completion without inventing additional Engine work', () => {
     const frontier = buildCurrentSajuEngineCapabilityFrontier();
 
     expect(frontier.counts).toEqual({
@@ -19,8 +19,8 @@ describe('Saju Engine capability frontier G2B', () => {
       holdAuthority: 9,
       holdResearch: 6,
       p0Runtime: 0,
-      p1Composition: 1,
-      p2Hardening: 0,
+      p1Composition: 0,
+      p2Hardening: 1,
       readyFromAdmittedIntake: 0,
       invalidEvidence: 0,
     });
@@ -43,7 +43,7 @@ describe('Saju Engine capability frontier G2B', () => {
     );
   });
 
-  it('routes the admitted Engine-owned Spouse T8 producer to P1 composition', () => {
+  it('routes the admitted Spouse T8 producer plus governed composition to P2 hardening', () => {
     const frontier = buildCurrentSajuEngineCapabilityFrontier();
     const spouse = frontier.entries.find(
       (entry) => entry.capabilityKey === 'relationship:natal:spouse',
@@ -52,7 +52,7 @@ describe('Saju Engine capability frontier G2B', () => {
     expect(spouse).toEqual(
       expect.objectContaining({
         capabilityKey: 'relationship:natal:spouse',
-        currentRouting: 'P1_COMPOSITION',
+        currentRouting: 'P2_HARDENING',
         producerRuntimeExists: true,
         currentBoundary: 'UPSTREAM_INTAKE',
         implementationMayProceed: true,
