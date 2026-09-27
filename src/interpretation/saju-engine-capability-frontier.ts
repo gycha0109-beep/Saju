@@ -6,6 +6,11 @@ import {
   type SajuEngineImplementationRouting,
   type SajuEngineUpstreamDisposition,
 } from './saju-engine-authority-intake.js';
+import { createRelationshipSpouseT8G2AAdmittedContract } from '../research/relationship-spouse-t8-g2a-admitted-handoff.js';
+import {
+  buildRelationshipSpouseT8EngineProducerCompletionEvidence,
+  RELATIONSHIP_SPOUSE_T8_ENGINE_PRODUCER_IMPLEMENTATION_EVIDENCE,
+} from './relationship-spouse-t8-engine-producer.js';
 
 export const SAJU_ENGINE_CAPABILITY_FRONTIER_VERSION =
   'myeonghwa-saju-engine-capability-frontier-v1' as const;
@@ -132,7 +137,7 @@ const CURRENT_CAPABILITY_SEEDS: readonly CapabilityFrontierSeed[] = Object.freez
   },
   {
     capabilityKey: 'relationship:natal:spouse',
-    upstreamDisposition: 'AUTHORITY_GAP',
+    upstreamDisposition: 'ADMITTED',
     producerRuntimeExists: true,
     currentBoundary: 'UPSTREAM_INTAKE',
   },
@@ -184,9 +189,29 @@ function blockedContract(seed: CapabilityFrontierSeed): SajuEngineAuthorityIntak
   };
 }
 
+function currentIntakeContract(
+  seed: CapabilityFrontierSeed,
+): SajuEngineAuthorityIntakeContract {
+  if (seed.capabilityKey === 'relationship:natal:spouse') {
+    return createRelationshipSpouseT8G2AAdmittedContract();
+  }
+  return blockedContract(seed);
+}
+
 function implementationEvidence(
   seed: CapabilityFrontierSeed,
 ): SajuEngineImplementationEvidence {
+  if (seed.capabilityKey === 'relationship:natal:spouse') {
+    const completion = buildRelationshipSpouseT8EngineProducerCompletionEvidence();
+    if (!completion.p0Complete) {
+      return {
+        ...RELATIONSHIP_SPOUSE_T8_ENGINE_PRODUCER_IMPLEMENTATION_EVIDENCE,
+        producerRuntimeExists: false,
+      };
+    }
+    return RELATIONSHIP_SPOUSE_T8_ENGINE_PRODUCER_IMPLEMENTATION_EVIDENCE;
+  }
+
   return {
     producerRuntimeExists: seed.producerRuntimeExists,
     compositionIntegrated: false,
@@ -255,7 +280,7 @@ export function buildCurrentSajuEngineCapabilityFrontier(): SajuEngineCapability
       }
 
       const evaluation = evaluateSajuEngineAuthorityIntake(
-        blockedContract(seed),
+        currentIntakeContract(seed),
         implementationEvidence(seed),
       );
 
