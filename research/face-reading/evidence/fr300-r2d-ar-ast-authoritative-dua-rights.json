@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "fr300-r2d-ar-ast-authoritative-dua-rights-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-27",
+  "contractVersion": "FR300-R2D-AR-AST-AUTHORITATIVE-DUA-RIGHTS-v1",
+  "authoritativeDua": {
+    "source": "user_confirmed_authenticated_osf_authoritative_download",
+    "projectDoi": "10.17605/OSF.IO/XK4F6",
+    "fileName": "Data Usage Agreement (DUA) .pdf",
+    "byteLength": 89465,
+    "sha256": "dc675a134ee2a65d46271ec8851c9511a5787e7d531fc276ed8c8513f75335ab",
+    "gitBlobSha1": "5ab05af1b97cf6f1728e6c4a363414e804a650d7",
+    "officialGithubMirrorBlobSha1": "5ab05af1b97cf6f1728e6c4a363414e804a650d7",
+    "byteIdenticalToOfficialGithubMirror": true,
+    "reviewed": true
+  },
+  "rights": {
+    "industrialResearchAndDevelopment": "explicitly_allowed",
+    "internalAnalysisAndEvaluation": "explicitly_allowed",
+    "commercialProductDevelopmentValidation": "conditionally_allowed_within_bounded_internal_industrial_r_and_d",
+    "reIdentification": "explicitly_prohibited",
+    "biometricIdentification": "explicitly_prohibited",
+    "biometricVerification": "explicitly_prohibited",
+    "surveillance": "explicitly_prohibited",
+    "profiling": "explicitly_prohibited",
+    "tracking": "explicitly_prohibited",
+    "identityRecognitionTrainingOrEvaluation": "explicitly_prohibited",
+    "rawRedistribution": "explicitly_prohibited",
+    "aggregateStatisticsPublication": "explicitly_allowed_if_non_identifying_and_non_reconstructive",
+    "individualDerivedScalarExternalPublication": "not_addressed",
+    "individualDerivedScalarInternalRetention": "not_addressed",
+    "thirdPartyCloudProcessing": "not_addressed",
+    "secureStorage": "required",
+    "deletionWhenNoLongerNeeded": "required",
+    "deletionOnProviderRequest": "required",
+    "backupDeletion": "required",
+    "citation": "required",
+    "breachNotification": "required"
+  },
+  "boundedUse": {
+    "identityRecognition": false,
+    "biometricVerification": false,
+    "faceMatching": false,
+    "surveillance": false,
+    "tracking": false,
+    "demographicProfiling": false,
+    "lawEnforcementUse": false,
+    "rawRedistribution": false,
+    "rawProductRuntimeUse": false,
+    "rawGitPersistence": false,
+    "rawGitLfsPersistence": false,
+    "thirdPartyPublicCloudProcessing": false,
+    "publicRepositoryIndividualSubjectScalarPersistence": false,
+    "publicRepositoryAggregateNonIdentifyingMetricsOnly": true
+  },
+  "adjudication": {
+    "compatibility": "compatible_for_bounded_internal_industrial_r_and_d",
+    "controlledAccessScientificallyJustified": true,
+    "accessRequestExecutionAuthorizedByUser": true,
+    "rightsClarificationRequiredBeforeAccessRequest": false
+  },
+  "currentBlocker": "signer_name_affiliation_email_and_signature_binding_required",
+  "actions": {
+    "signerIdentityBound": false,
+    "duaSigned": false,
+    "duaSubmitted": false,
+    "controlledAccessRequested": false,
+    "providerAcknowledged": false,
+    "controlledAccessApproved": false,
+    "controlledParticipantArtifactDownloaded": false,
+    "controlledParticipantArtifactInspected": false,
+    "paidSpendAuthorized": false
+  },
+  "authority": {
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29",
+    "productionActivated": false,
+    "commerceActivated": false
+  },
+  "disposition": "authoritative_rights_compatible_signature_identity_required"
+}
