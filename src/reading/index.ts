@@ -19,6 +19,7 @@ export {
 } from './scenario-aware-reading-composition.js';
 export * from './consumer-reading-request-adapter.js';
 export * from './product-reading-integration.js';
+export * from './relationship-spouse-t8-engine-composition.js';
 export * from './governed-reading-execution.js';
 export * from './product-reading-delivery.js';
 export * from './product-reading-service.js';

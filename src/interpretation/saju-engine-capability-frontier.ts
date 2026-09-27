@@ -11,6 +11,10 @@ import {
   buildRelationshipSpouseT8EngineProducerCompletionEvidence,
   RELATIONSHIP_SPOUSE_T8_ENGINE_PRODUCER_IMPLEMENTATION_EVIDENCE,
 } from './relationship-spouse-t8-engine-producer.js';
+import {
+  buildRelationshipSpouseT8EngineCompositionCompletionEvidence,
+  RELATIONSHIP_SPOUSE_T8_ENGINE_COMPOSITION_IMPLEMENTATION_EVIDENCE,
+} from '../reading/relationship-spouse-t8-engine-composition.js';
 
 export const SAJU_ENGINE_CAPABILITY_FRONTIER_VERSION =
   'myeonghwa-saju-engine-capability-frontier-v1' as const;
@@ -202,14 +206,22 @@ function implementationEvidence(
   seed: CapabilityFrontierSeed,
 ): SajuEngineImplementationEvidence {
   if (seed.capabilityKey === 'relationship:natal:spouse') {
-    const completion = buildRelationshipSpouseT8EngineProducerCompletionEvidence();
-    if (!completion.p0Complete) {
+    const producerCompletion =
+      buildRelationshipSpouseT8EngineProducerCompletionEvidence();
+    if (!producerCompletion.p0Complete) {
       return {
         ...RELATIONSHIP_SPOUSE_T8_ENGINE_PRODUCER_IMPLEMENTATION_EVIDENCE,
         producerRuntimeExists: false,
       };
     }
-    return RELATIONSHIP_SPOUSE_T8_ENGINE_PRODUCER_IMPLEMENTATION_EVIDENCE;
+
+    const compositionCompletion =
+      buildRelationshipSpouseT8EngineCompositionCompletionEvidence();
+    if (!compositionCompletion.p1Complete) {
+      return RELATIONSHIP_SPOUSE_T8_ENGINE_PRODUCER_IMPLEMENTATION_EVIDENCE;
+    }
+
+    return RELATIONSHIP_SPOUSE_T8_ENGINE_COMPOSITION_IMPLEMENTATION_EVIDENCE;
   }
 
   return {
