@@ -14,8 +14,10 @@ import {
 } from './claim-graph.js';
 import {
   buildInterpretationExecutionPlan,
+  buildInterpretationExecutionPlanWithAuthority,
   type InterpretationExecutionPlan,
 } from './execution-plan.js';
+import type { InterpretationPromotionAuthorityContext } from './promotion-authority.js';
 import type { ResearchEvidenceEnvelope } from './research-evidence.js';
 import type {
   ResearchEvidenceRuntimeRegistry,
@@ -32,6 +34,8 @@ const INTERPRETATION_ENGINE_VERSION = '0.5.0';
 const DERIVED_FACT_SET_VERSION = 'myeonghwa-derived-facts-v1.4';
 export const INTERPRETATION_AUTHORIZATION_POLICY_VERSION =
   'myeonghwa-interpretation-authorization-v4';
+export const SOURCE_ADJUDICATION_STAGING_AUTHORIZATION_POLICY_VERSION =
+  'myeonghwa-interpretation-authorization-v5-source-adjudication-staging';
 
 export interface InterpretationResearchEvidenceInput {
   runtimeRegistry: ResearchEvidenceRuntimeRegistry;
@@ -53,6 +57,7 @@ export interface InterpretationRunOptions {
   now?: Date;
   temporalFacts?: Readonly<Record<string, unknown>>;
   reviewerTrustContext?: ReviewerTrustContext;
+  promotionAuthorityContext?: InterpretationPromotionAuthorityContext;
   researchEvidence?: InterpretationResearchEvidenceInput;
 }
 
@@ -243,8 +248,14 @@ function makeRunHash(
     compositionPolicyRef: registry.pack.compositionPolicyRef,
     derivedFactSetVersion: DERIVED_FACT_SET_VERSION,
     interpretationEngineVersion: INTERPRETATION_ENGINE_VERSION,
-    authorizationPolicyVersion: INTERPRETATION_AUTHORIZATION_POLICY_VERSION,
+    authorizationPolicyVersion:
+      plan.sourceAdjudicationAuthorityRef === undefined
+        ? INTERPRETATION_AUTHORIZATION_POLICY_VERSION
+        : SOURCE_ADJUDICATION_STAGING_AUTHORIZATION_POLICY_VERSION,
     reviewerTrustPolicyRef: plan.reviewerTrustPolicyRef,
+    ...(plan.sourceAdjudicationAuthorityRef === undefined
+      ? {}
+      : { sourceAdjudicationAuthorityRef: plan.sourceAdjudicationAuthorityRef }),
     evaluations: evaluations.map(stableEvaluationRecord),
     claims,
     relations,
@@ -258,7 +269,21 @@ export function runInterpretation(
 ): InterpretationExecutionResult {
   const now = options.now ?? new Date();
   const validatedResearchEvidence = validateResearchEvidenceInput(snapshot, options.researchEvidence);
-  const plan = buildInterpretationExecutionPlan(registry, options.reviewerTrustContext);
+  if (
+    options.promotionAuthorityContext !== undefined &&
+    options.reviewerTrustContext !== undefined
+  ) {
+    throw new Error(
+      'Provide either promotionAuthorityContext or reviewerTrustContext, not both.',
+    );
+  }
+  const plan =
+    options.promotionAuthorityContext === undefined
+      ? buildInterpretationExecutionPlan(registry, options.reviewerTrustContext)
+      : buildInterpretationExecutionPlanWithAuthority(
+          registry,
+          options.promotionAuthorityContext,
+        );
   const rules = ruleIndex(registry);
   const plannedRules = plan.orderedRuleRefs.map((ruleRef) => {
     const rule = rules.get(ruleKey(ruleRef.id, ruleRef.version));
@@ -340,10 +365,16 @@ export function runInterpretation(
     compositionPolicyRef: registry.pack.compositionPolicyRef,
     derivedFactSetVersion: DERIVED_FACT_SET_VERSION,
     interpretationEngineVersion: INTERPRETATION_ENGINE_VERSION,
-    authorizationPolicyVersion: INTERPRETATION_AUTHORIZATION_POLICY_VERSION,
+    authorizationPolicyVersion:
+      plan.sourceAdjudicationAuthorityRef === undefined
+        ? INTERPRETATION_AUTHORIZATION_POLICY_VERSION
+        : SOURCE_ADJUDICATION_STAGING_AUTHORIZATION_POLICY_VERSION,
     ...(plan.reviewerTrustPolicyRef === undefined
       ? {}
       : { reviewerTrustPolicyRef: plan.reviewerTrustPolicyRef }),
+    ...(plan.sourceAdjudicationAuthorityRef === undefined
+      ? {}
+      : { sourceAdjudicationAuthorityRef: plan.sourceAdjudicationAuthorityRef }),
     startedAt: timestamp,
     completedAt: timestamp,
     status,
