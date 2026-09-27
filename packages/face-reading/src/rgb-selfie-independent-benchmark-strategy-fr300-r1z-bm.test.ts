@@ -221,10 +221,10 @@ describe('FR300-R1Z-BM ordinary RGB-selfie independent benchmark strategy', () =
       featureKey: 'nose.tip_bridge_relative_projection',
       candidateScalar: 0.6,
       referenceScalar: 0.5,
-      signedError: 0.1,
-      absoluteError: 0.1,
-      relativeError: 0.2,
     });
+    expect(result.observation?.signedError).toBeCloseTo(0.1, 10);
+    expect(result.observation?.absoluteError).toBeCloseTo(0.1, 10);
+    expect(result.observation?.relativeError).toBeCloseTo(0.2, 10);
     expect(
       result.observation?.authorityBoundary
         .acceptanceThresholdIssued,
