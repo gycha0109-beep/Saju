@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'packages/face-reading/**'
+      - 'tools/face-reading/ear/**'
       - 'docs/migrations/face-reading-from-myeongha.manifest.json'
       - 'scripts/verify-face-reading-migration.mjs'
       - 'scripts/verify-fr76-mediapipe-parity.mjs'
@@ -262,6 +263,10 @@ jobs:
       - name: Verify FR102 local Florence-2 runner parser
         working-directory: target
         run: python tools/face-reading/ear/run_florence2_ear_empirical.py --self-test
+
+      - name: Verify FR103 external-ear candidate validation boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-candidate-validation-fr103.test.ts
 
       - name: Verify frozen source baseline
         working-directory: source
