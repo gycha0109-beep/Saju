@@ -2,22 +2,28 @@ import { describe, expect, it } from 'vitest';
 import { NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103 } from './neutral-ear-candidate-validation-fr103.js';
 
 describe('FR103 neutral external-ear candidate validation authority', () => {
-  it('uses generic external-ear localization as the primary prompt', () => {
-    expect(NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.primaryPrompt).toBe(
-      'external ear',
-    );
+  it('uses dual side prompts as non-authoritative localization probes', () => {
     expect(
-      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.sideSpecificPromptPrimary,
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.primaryPromptStrategy,
+    ).toBe('dual_side_prompt_pair_non_authoritative_laterality');
+    expect(
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.primaryPromptPair,
+    ).toEqual(['left external ear', 'right external ear']);
+    expect(
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.genericPromptPrimary,
     ).toBe(false);
     expect(
-      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.sideSpecificPromptAuthoritative,
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.genericPromptDiagnosticOnly,
+    ).toBe(true);
+    expect(
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.promptSideLabelsAuthoritative,
     ).toBe(false);
     expect(
       NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.sideAssignmentDeferredToFaceGeometry,
     ).toBe(true);
   });
 
-  it('admits only exact structural degeneracy rejection without inventing thresholds', () => {
+  it('keeps exact structural degeneracy rejection without inventing thresholds', () => {
     expect(
       NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.exactDegeneratePolygonReject.enabled,
     ).toBe(true);
@@ -32,24 +38,51 @@ describe('FR103 neutral external-ear candidate validation authority', () => {
       NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.exactDegeneratePolygonReject.rejectedState,
     ).toBe('unavailable');
     expect(
-      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.plausibilityEvidence
-        .numericAcceptanceThresholdAuthorized,
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.pairwiseEvidence
+        .automaticConsensusAcceptanceAuthorized,
     ).toBe(false);
     expect(
-      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.plausibilityEvidence
-        .automaticPlausibilityClassificationAuthorized,
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.pairwiseEvidence
+        .numericAcceptanceThresholdAuthorized,
     ).toBe(false);
   });
 
-  it('records the bounded empirical failure modes without overclaiming', () => {
+  it('records pairwise evidence without promoting it to validated consensus', () => {
+    expect(
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.pairwiseEvidence
+        .recordBoundingBoxIoU,
+    ).toBe(true);
+    expect(
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.pairwiseEvidence
+        .recordCentroidDistance,
+    ).toBe(true);
+    expect(
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.authority
+        .pairMetricsMayBeCalledValidatedEarConsensus,
+    ).toBe(false);
+    expect(
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.plausibilityEvidence
+        .faceGeometryPlausibilityGateImplemented,
+    ).toBe(false);
+  });
+
+  it('records the corrected empirical failure modes', () => {
     expect(
       NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.empiricalFindings
-        .clearVisibleEarLocalizationObserved,
+        .clearVisibleEarSidePromptLocalizationObserved,
     ).toBe(true);
     expect(
       NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.empiricalFindings
         .leftRightPromptSemanticSeparationObserved,
     ).toBe(false);
+    expect(
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.empiricalFindings
+        .genericPromptClearEarLeakageObserved,
+    ).toBe(true);
+    expect(
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.empiricalFindings
+        .genericPromptFrontalHallucinationObserved,
+    ).toBe(true);
     expect(
       NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.empiricalFindings
         .partialOcclusionContourCompletionReliable,
@@ -58,13 +91,9 @@ describe('FR103 neutral external-ear candidate validation authority', () => {
       NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.empiricalFindings
         .fullyOccludedRectangularMaskProducedDegeneratePolygon,
     ).toBe(true);
-    expect(
-      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.empiricalFindings
-        .frontalNoVisibleEarHallucinationObserved,
-    ).toBe(true);
   });
 
-  it('keeps privacy and semantic authority closed', () => {
+  it('keeps privacy, laterality, semantics and Production closed', () => {
     expect(
       NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.privacy
         .userImagesAllowedInRepositoryHistory,
@@ -76,6 +105,10 @@ describe('FR103 neutral external-ear candidate validation authority', () => {
     expect(
       NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.authority
         .neutralRuntimeEarObservationAuthorized,
+    ).toBe(false);
+    expect(
+      NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.authority
+        .anatomicalLateralityAuthorized,
     ).toBe(false);
     expect(
       NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103.authority
