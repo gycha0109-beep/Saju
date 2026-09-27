@@ -430,6 +430,7 @@ export interface InterpretationRun {
   interpretationEngineVersion: string;
   authorizationPolicyVersion: string;
   reviewerTrustPolicyRef?: ContentAddressedVersionedRef;
+  sourceAdjudicationAuthorityRef?: ContentAddressedVersionedRef;
   startedAt: string;
   completedAt?: string;
   status: 'completed' | 'partial' | 'failed';
