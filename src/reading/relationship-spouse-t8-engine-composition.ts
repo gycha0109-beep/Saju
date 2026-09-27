@@ -68,7 +68,14 @@ export function buildRelationshipSpouseT8EngineCompositionBinding() {
       'reading_evidence_selection_only' &&
     profileAuthorization.authorization.constraints
       .mayAuthorizeInterpretationRules === false &&
-    profileAuthorization.authorization.constraints.mayGenerateClaims === undefined;
+    profileAuthorization.authorization.constraints
+      .mayAuthorizeClaimGeneration === false &&
+    profileAuthorization.authorization.constraints
+      .mayAuthorizeDomainSemantics === false &&
+    profileAuthorization.authorization.constraints
+      .mayPromoteResearchAuthority === false &&
+    profileAuthorization.authorization.constraints
+      .mayOverrideInterpretationAuthorization === false;
 
   const registryIdentityReady =
     RELATIONSHIP_SPOUSE_T8_SOURCE_BOUND_RUNTIME_REGISTRY.snapshot
