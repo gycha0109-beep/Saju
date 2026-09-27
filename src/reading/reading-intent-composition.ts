@@ -355,7 +355,7 @@ function buildProfile(intent: ReadingIntent): DomainReadingProfile | undefined {
               `target-relationship-${intent.relationshipScope}`,
               'T8',
               'relationship',
-              intent.relationshipScope === 'general' ? undefined : 'spouse',
+              intent.relationshipScope,
             ),
           ),
         ],
