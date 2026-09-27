@@ -1,6 +1,6 @@
 # FR102/FR103 Florence-2 External-Ear Empirical Runner
 
-This directory contains a **local research harness** for the FR101 primary candidate and the FR103 candidate-validation gate.
+This directory contains a **local research harness** for the FR101 primary candidate and the corrected FR103 candidate-validation flow.
 
 It is not a Production runtime and it does not create 柳莊 semantic authority.
 
@@ -14,21 +14,26 @@ task     = <REFERRING_EXPRESSION_SEGMENTATION>
 
 ## FR103 prompt policy
 
-The primary empirical prompt is now side-neutral:
+The primary empirical strategy is a **dual side-prompt pair**:
+
+```text
+left external ear
+right external ear
+```
+
+These prompt labels are **not** anatomical laterality. The operator pass showed that both prompts can converge on the same visible ear.
+
+The pair is used only as two localization probes. The runner records pairwise geometry evidence such as bbox overlap / IoU and centroid distance, but does not auto-accept a consensus candidate.
+
+The generic prompt:
 
 ```text
 external ear
 ```
 
-Use Florence-2 only to localize an external-ear candidate. Do **not** treat model-side `left` / `right` semantics as authoritative.
+is diagnostic-only. In the bounded operator pass it produced substantial cheek/neck leakage on a clear visible-ear image and still hallucinated a central-face polygon when no ear was visible.
 
-Side-specific prompts remain available only for bounded diagnostic comparison:
-
-```text
---prompt-mode diagnostic-side --side both
-```
-
-Anatomical side assignment is deferred to a later face-geometry/pose stage.
+Anatomical laterality and visible-ear plausibility remain deferred to a governed face-geometry / pose gate.
 
 ## Setup
 
@@ -60,11 +65,17 @@ This path requires only Python stdlib and does not load Florence-2:
 python tools/face-reading/ear/run_florence2_ear_empirical.py --self-test
 ```
 
-The self-test verifies both normal polygon parsing and the FR103 exact-degeneracy rejection path.
+The self-test verifies:
+
+- normal polygon parsing;
+- exact-degeneracy rejection;
+- dual-prompt pair-metric generation;
+- no automatic consensus acceptance;
+- no face-geometry plausibility authority.
 
 ## Run one image
 
-Primary FR103 mode:
+Primary FR103 dual-prompt mode:
 
 ```bash
 python tools/face-reading/ear/run_florence2_ear_empirical.py \
@@ -73,14 +84,26 @@ python tools/face-reading/ear/run_florence2_ear_empirical.py \
   --qa-overlay
 ```
 
-Diagnostic side-prompt comparison only:
+This produces local `left.json`, `right.json`, and `pair-summary.json` records.
+
+Generic diagnostic comparison only:
 
 ```bash
 python tools/face-reading/ear/run_florence2_ear_empirical.py \
   --input /path/to/photo.jpg \
-  --capture-case diagnostic_side_prompt_comparison \
-  --prompt-mode diagnostic-side \
-  --side both \
+  --capture-case generic_prompt_diagnostic \
+  --prompt-mode generic-diagnostic \
+  --qa-overlay
+```
+
+Single-side diagnostic mode is also available:
+
+```bash
+python tools/face-reading/ear/run_florence2_ear_empirical.py \
+  --input /path/to/photo.jpg \
+  --capture-case single_side_diagnostic \
+  --prompt-mode single-side-diagnostic \
+  --side left \
   --qa-overlay
 ```
 
@@ -105,13 +128,13 @@ Default local output:
 
 This path is covered by the repository's `.cache/face-reading/` gitignore rule.
 
-Each record contains:
+Each side-prompt record contains:
 
 - image SHA-256;
 - original pixel dimensions;
 - capture-case label;
 - mirror provenance;
-- generic or diagnostic prompt provenance;
+- requested prompt side with explicit non-authoritative side semantics;
 - exact model id/revision/task;
 - raw generated text;
 - raw parsed Florence-2 output;
@@ -122,6 +145,16 @@ Each record contains:
 - runtime package/device versions;
 - fail-closed authority flags.
 
+The dual-prompt `pair-summary.json` additionally records:
+
+- left/right candidate counts and statuses;
+- bbox intersection / union / IoU when exactly one candidate exists per prompt;
+- centroid distance;
+- polygon area ratios;
+- `automaticConsensusAcceptanceAuthorized=false`;
+- `faceGeometryPlausibilityGateImplemented=false`;
+- `anatomicalLateralityAssigned=false`.
+
 ## Exact degeneracy gate
 
 FR103 may automatically reject only exact structural degeneracy:
@@ -130,9 +163,24 @@ FR103 may automatically reject only exact structural degeneracy:
 - bounding-box height is exactly zero;
 - polygon area is exactly zero.
 
-If every returned polygon is structurally degenerate, the effective state is `unavailable`.
+If every returned polygon for a prompt is structurally degenerate, that prompt result is `unavailable`.
 
-This is **not** an accuracy threshold. FR103 records plausibility geometry but does not authorize a numeric ear-likeness threshold or automatic plausibility classifier.
+This is **not** an accuracy threshold.
+
+## Pairwise evidence is not consensus authority
+
+High bbox overlap or a short centroid distance may be useful empirical evidence that both probes localized the same region. FR103 does not define a threshold for either metric.
+
+Therefore:
+
+```text
+dual-prompt overlap
+!= validated ear consensus
+!= visible-ear plausibility pass
+!= anatomical laterality
+```
+
+The next gate must validate the candidate against governed face geometry / pose and reject central-face hallucinations or implausible lateral placement before neutral runtime observation can be reconsidered.
 
 ## Privacy
 
@@ -161,4 +209,4 @@ candidate polygon
 != 色明
 ```
 
-FR103 declares no numeric acceptance threshold, no automatic anatomical side authority, no 官成 state, and no Production authority.
+FR103 declares no numeric acceptance threshold, no automatic consensus authority, no automatic anatomical side authority, no 官成 state, and no Production authority.
