@@ -15,6 +15,10 @@ import {
   buildRelationshipSpouseT8EngineCompositionCompletionEvidence,
   RELATIONSHIP_SPOUSE_T8_ENGINE_COMPOSITION_IMPLEMENTATION_EVIDENCE,
 } from '../reading/relationship-spouse-t8-engine-composition.js';
+import {
+  buildRelationshipSpouseT8EngineHardeningCompletionEvidence,
+  RELATIONSHIP_SPOUSE_T8_ENGINE_READY_IMPLEMENTATION_EVIDENCE,
+} from '../reading/relationship-spouse-t8-engine-hardening.js';
 
 export const SAJU_ENGINE_CAPABILITY_FRONTIER_VERSION =
   'myeonghwa-saju-engine-capability-frontier-v1' as const;
@@ -221,7 +225,13 @@ function implementationEvidence(
       return RELATIONSHIP_SPOUSE_T8_ENGINE_PRODUCER_IMPLEMENTATION_EVIDENCE;
     }
 
-    return RELATIONSHIP_SPOUSE_T8_ENGINE_COMPOSITION_IMPLEMENTATION_EVIDENCE;
+    const hardeningCompletion =
+      buildRelationshipSpouseT8EngineHardeningCompletionEvidence();
+    if (!hardeningCompletion.p2Complete) {
+      return RELATIONSHIP_SPOUSE_T8_ENGINE_COMPOSITION_IMPLEMENTATION_EVIDENCE;
+    }
+
+    return RELATIONSHIP_SPOUSE_T8_ENGINE_READY_IMPLEMENTATION_EVIDENCE;
   }
 
   return {
