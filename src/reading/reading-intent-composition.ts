@@ -361,7 +361,14 @@ function buildProfile(intent: ReadingIntent): DomainReadingProfile | undefined {
         ],
         intent.relationshipScope === 'spouse'
           ? [taxonomySelector('exclude-relationship-general', 'T8', 'relationship', 'general')]
-          : [],
+          : [
+              taxonomySelector(
+                'exclude-relationship-spouse',
+                'T8',
+                'relationship',
+                'spouse',
+              ),
+            ],
       );
     }
     case 'compatibility':

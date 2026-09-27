@@ -10,7 +10,7 @@ describe('Saju Engine capability frontier G2B', () => {
     expect(frontier.counts.total).toBe(21);
   });
 
-  it('reflects the merged Spouse T8 P1 completion without inventing additional Engine work', () => {
+  it('reflects the hardened Spouse T8 Engine capability as READY with an empty Engine work queue', () => {
     const frontier = buildCurrentSajuEngineCapabilityFrontier();
 
     expect(frontier.counts).toEqual({
@@ -20,13 +20,11 @@ describe('Saju Engine capability frontier G2B', () => {
       holdResearch: 6,
       p0Runtime: 0,
       p1Composition: 0,
-      p2Hardening: 1,
-      readyFromAdmittedIntake: 0,
+      p2Hardening: 0,
+      readyFromAdmittedIntake: 1,
       invalidEvidence: 0,
     });
-    expect(frontier.engineWorkQueue).toEqual([
-      'relationship:natal:spouse',
-    ]);
+    expect(frontier.engineWorkQueue).toEqual([]);
   });
 
   it('does not treat the remaining temporal Research runtimes as semantic admission', () => {
@@ -43,7 +41,7 @@ describe('Saju Engine capability frontier G2B', () => {
     );
   });
 
-  it('routes the admitted Spouse T8 producer plus governed composition to P2 hardening', () => {
+  it('routes the admitted Spouse T8 producer, composition, guards and E2E proof to READY only', () => {
     const frontier = buildCurrentSajuEngineCapabilityFrontier();
     const spouse = frontier.entries.find(
       (entry) => entry.capabilityKey === 'relationship:natal:spouse',
@@ -52,10 +50,10 @@ describe('Saju Engine capability frontier G2B', () => {
     expect(spouse).toEqual(
       expect.objectContaining({
         capabilityKey: 'relationship:natal:spouse',
-        currentRouting: 'P2_HARDENING',
+        currentRouting: 'READY',
         producerRuntimeExists: true,
         currentBoundary: 'UPSTREAM_INTAKE',
-        implementationMayProceed: true,
+        implementationMayProceed: false,
       }),
     );
     expect(spouse?.intakeEvaluationHash).toMatch(/^[a-f0-9]{64}$/);
