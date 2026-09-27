@@ -148,3 +148,4 @@ export * from './i124-challenge-combination-support-channel-untouched-support-ef
 export * from './i125-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-single-candidate-full-six-rediscovery-evidence.js';
 export * from './general-natal-conclusion-t8-alternate-witness-surface-survey.js';
 export * from './general-natal-conclusion-t8-yuanhai-acquisition-targets.js';
+export * from './source-adjudication-promotion-policy.js';
