@@ -149,3 +149,4 @@ export * from './i125-challenge-combination-support-channel-untouched-support-ef
 export * from './general-natal-conclusion-t8-alternate-witness-surface-survey.js';
 export * from './general-natal-conclusion-t8-yuanhai-acquisition-targets.js';
 export * from './source-adjudication-promotion-policy.js';
+export * from './relationship-spouse-t8-source-adjudication-candidate-evaluation.js';
