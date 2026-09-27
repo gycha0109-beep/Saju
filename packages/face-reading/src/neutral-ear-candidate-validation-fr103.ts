@@ -10,9 +10,12 @@ export const NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103 = Object.freeze({
   modelId: 'microsoft/Florence-2-base' as const,
   modelRevision:
     '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac' as const,
-  primaryPrompt: 'external ear' as const,
-  sideSpecificPromptPrimary: false as const,
-  sideSpecificPromptAuthoritative: false as const,
+  primaryPromptStrategy:
+    'dual_side_prompt_pair_non_authoritative_laterality' as const,
+  primaryPromptPair: ['left external ear', 'right external ear'] as const,
+  genericPromptPrimary: false as const,
+  genericPromptDiagnosticOnly: true as const,
+  promptSideLabelsAuthoritative: false as const,
   sideAssignmentDeferredToFaceGeometry: true as const,
   exactDegeneratePolygonReject: {
     enabled: true as const,
@@ -23,17 +26,28 @@ export const NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103 = Object.freeze({
     ] as const,
     rejectedState: 'unavailable' as const,
   },
+  pairwiseEvidence: {
+    recordBoundingBoxOverlap: true as const,
+    recordBoundingBoxIoU: true as const,
+    recordCentroidDistance: true as const,
+    recordPolygonAreaRatio: true as const,
+    automaticConsensusAcceptanceAuthorized: false as const,
+    numericAcceptanceThresholdAuthorized: false as const,
+  },
   plausibilityEvidence: {
     recordBoundingBox: true as const,
     recordCentroid: true as const,
     recordPolygonArea: true as const,
     recordImageRelativeCoordinates: true as const,
-    numericAcceptanceThresholdAuthorized: false as const,
+    faceGeometryPlausibilityGateImplemented: false as const,
     automaticPlausibilityClassificationAuthorized: false as const,
+    numericAcceptanceThresholdAuthorized: false as const,
   },
   empiricalFindings: {
-    clearVisibleEarLocalizationObserved: true as const,
+    clearVisibleEarSidePromptLocalizationObserved: true as const,
     leftRightPromptSemanticSeparationObserved: false as const,
+    genericPromptClearEarLeakageObserved: true as const,
+    genericPromptFrontalHallucinationObserved: true as const,
     partialOcclusionLocalizationObserved: true as const,
     partialOcclusionContourCompletionReliable: false as const,
     fullyOccludedRectangularMaskProducedDegeneratePolygon: true as const,
@@ -46,7 +60,9 @@ export const NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103 = Object.freeze({
     repositorySummaryMustBeDeidentified: true as const,
   },
   authority: {
+    pairMetricsMayBeCalledValidatedEarConsensus: false as const,
     neutralRuntimeEarObservationAuthorized: false as const,
+    anatomicalLateralityAuthorized: false as const,
     traditionalBindingAuthorized: false as const,
     appearanceInferenceAuthorized: false as const,
     depthOrFullnessInferenceAuthorized: false as const,
@@ -54,5 +70,5 @@ export const NEUTRAL_EAR_CANDIDATE_VALIDATION_FR103 = Object.freeze({
     productionAuthorization: false as const,
   },
   nextGate:
-    'rerun_bounded_capture_cases_with_generic_prompt_and_validate_reject_behavior' as const,
+    'validate_dual_prompt_pair_metrics_then_add_governed_face_geometry_plausibility_gate' as const,
 });
