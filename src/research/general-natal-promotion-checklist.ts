@@ -1,4 +1,4 @@
-export const R098_PROMOTION_CHECKLIST_VERSION = '0.2.0-research' as const;
+export const R098_PROMOTION_CHECKLIST_VERSION = '0.3.0-research' as const;
 
 export const R098_REQUIRED_GATES = Object.freeze([
   'CLAIM_SCOPE_FROZEN',
@@ -29,6 +29,27 @@ export const R098_GATE_APPLICABILITY = Object.freeze([
   'REQUIRED',
   'CONDITIONAL',
 ] as const);
+
+export const R098_GATE_12_DOMAIN_REVIEW_APPLICABILITY_POLICY = Object.freeze({
+  gateId: 'REQUIRED_DOMAIN_REVIEW_ATTESTATION_SATISFIED' as const,
+  applicability: 'CONDITIONAL' as const,
+  trustedHumanReviewPath: Object.freeze({
+    governingStatus: 'SATISFIED' as const,
+    trustPinnedReviewAuthorityRequired: true as const,
+  }),
+  sourceAdjudicationPath: Object.freeze({
+    policyId: 'myeonghwa-source-adjudication-promotion-policy' as const,
+    governingStatus: 'NOT_APPLICABLE_WITH_JUSTIFICATION' as const,
+    exactPolicyRefRequired: true as const,
+    explicitGovernanceDecisionRequired: true as const,
+    justificationRequired: true as const,
+    maximumLifecycleTarget: 'staging' as const,
+    humanDomainReviewClaimed: false as const,
+    reviewerTrustGrantClaimed: false as const,
+    productionAuthorityGranted: false as const,
+  }),
+  silentSkipAuthorized: false as const,
+} as const);
 
 export const R098_REQUIRED_GATE_RECORD_FIELDS = Object.freeze([
   'GATE_ID',
@@ -65,6 +86,7 @@ export const R098_CROSS_CONTRACT_EVIDENCE_RULES = Object.freeze([
   'R096_STATE_LABEL_DOES_NOT_REPLACE_GATE_EVIDENCE',
   'R097_INSPECTION_MAY_EVIDENCE_SCAN_BOUND_GATE_4',
   'R090_EXPERT_REVIEW_MAY_EVIDENCE_GATE_12_WHEN_REQUIRED',
+  'SOURCE_ADJUDICATION_POLICY_MAY_GOVERN_GATE_12_NOT_APPLICABLE_FOR_STAGING_ONLY',
 ] as const);
 
 export const R098_PROMOTION_ELIGIBILITY_RULES = Object.freeze([
@@ -73,6 +95,8 @@ export const R098_PROMOTION_ELIGIBILITY_RULES = Object.freeze([
   'GATE_15_REQUIRES_EXPLICIT_GOVERNANCE_DECISION_FOR_EXACT_CANDIDATE',
   'PROMOTION_ELIGIBLE_DOES_NOT_MUTATE_LIFECYCLE',
   'CANDIDATE_HASH_OR_VERSION_CHANGE_REQUIRES_GATE_REEVALUATION',
+  'GATE_12_SOURCE_ADJUDICATION_REQUIRES_EXACT_POLICY_REF_JUSTIFICATION_AND_GOVERNANCE_DECISION',
+  'SOURCE_ADJUDICATION_V1_CANNOT_SATISFY_PRODUCTION_REVIEW_AUTHORITY',
 ] as const);
 
 export const R098_REJECTED_IMPLICIT_PROMOTION = Object.freeze([
@@ -87,6 +111,9 @@ export const R098_REJECTED_IMPLICIT_PROMOTION = Object.freeze([
   'NOT_APPLICABLE_WITHOUT_POLICY_AND_JUSTIFICATION',
   'OLD_CHECKLIST_REUSED_AFTER_CANDIDATE_HASH_CHANGE',
   'ELIGIBLE_STATE_AUTO_MUTATES_LIFECYCLE',
+  'SOURCE_ADJUDICATION_IMPLIES_HUMAN_DOMAIN_REVIEW',
+  'SOURCE_ADJUDICATION_IMPLIES_REVIEWER_TRUST',
+  'SOURCE_ADJUDICATION_IMPLIES_PRODUCTION_AUTHORITY',
 ] as const);
 
 export const R098_AUTHORITY = Object.freeze({
@@ -99,5 +126,9 @@ export const R098_AUTHORITY = Object.freeze({
   checklistStateIsConfidenceScore: false,
   candidateHashChangeRequiresReevaluation: true,
   lifecycleMutationRequiresSeparateAuthorityAction: true,
+  gate12SourceAdjudicationStagingAlternativeDefined: true,
+  sourceAdjudicationHumanReviewClaimed: false,
+  sourceAdjudicationReviewerTrustClaimed: false,
+  sourceAdjudicationProductionAuthorityGranted: false,
   productionAuthorityPromoted: false,
 });
