@@ -338,7 +338,7 @@ describe('Relationship / Spouse T8 P2 Engine hardening', () => {
         },
       );
 
-      expect(preparation.state).toBe('unsupported_intent');
+      expect(preparation.state).toBe('input_unsupported');
       expect(preparation.composition?.selection.selectedClaimIds ?? []).toEqual(
         [],
       );
