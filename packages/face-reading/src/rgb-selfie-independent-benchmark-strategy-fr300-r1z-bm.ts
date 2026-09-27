@@ -761,11 +761,7 @@ export function assertFR300R1ZBMRgbSelfieIndependentBenchmarkContract(): void {
   if (
     gate.disposition !==
       'benchmark_strategy_frozen_reference_acquisition_next' ||
-    gate.firstBenchmarkTarget !==
-      'nose.tip_bridge.relative_projection'.replace(
-        '.relative_projection',
-        '_bridge_relative_projection',
-      )
+    gate.firstBenchmarkTarget !== FR300_R1Z_BM_FIRST_TARGET
   ) {
     fail('benchmark gate identity drift.');
   }
