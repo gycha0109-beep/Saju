@@ -12,9 +12,10 @@ from typing import Any, Iterable
 MODEL_ID = "microsoft/Florence-2-base"
 MODEL_REVISION = "5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac"
 TASK = "<REFERRING_EXPRESSION_SEGMENTATION>"
-SCHEMA_VERSION = "fr102-neutral-ear-empirical-bundle-v1"
-DEFAULT_OUTPUT_DIR = Path(".cache/face-reading/ear-fr102")
+SCHEMA_VERSION = "fr103-neutral-ear-candidate-validation-v1"
+DEFAULT_OUTPUT_DIR = Path(".cache/face-reading/ear-fr103")
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp"}
+GENERIC_PROMPT_TARGET = "external ear"
 
 
 def sha256_file(path: Path) -> str:
@@ -68,6 +69,69 @@ def _polygon_candidates(value: Any) -> Iterable[list[list[float]]]:
         yield from _polygon_candidates(item)
 
 
+def polygon_geometry(points: list[list[float]], width: int, height: int) -> dict[str, Any]:
+    xs = [point[0] for point in points]
+    ys = [point[1] for point in points]
+    min_x = min(xs)
+    max_x = max(xs)
+    min_y = min(ys)
+    max_y = max(ys)
+    bbox_width = max_x - min_x
+    bbox_height = max_y - min_y
+
+    double_signed_area = 0.0
+    for index, (x1, y1) in enumerate(points):
+        x2, y2 = points[(index + 1) % len(points)]
+        double_signed_area += (x1 * y2) - (x2 * y1)
+    signed_area = double_signed_area / 2.0
+    area = abs(signed_area)
+
+    centroid_x = sum(xs) / len(xs)
+    centroid_y = sum(ys) / len(ys)
+    image_area = float(width * height)
+    area_ratio = area / image_area if image_area else 0.0
+
+    exact_degenerate_reasons: list[str] = []
+    if bbox_width == 0.0:
+        exact_degenerate_reasons.append("zero_bbox_width")
+    if bbox_height == 0.0:
+        exact_degenerate_reasons.append("zero_bbox_height")
+    if area == 0.0:
+        exact_degenerate_reasons.append("zero_polygon_area")
+
+    return {
+        "bbox": {
+            "minX": min_x,
+            "minY": min_y,
+            "maxX": max_x,
+            "maxY": max_y,
+            "width": bbox_width,
+            "height": bbox_height,
+            "normalized": {
+                "minX": min_x / width if width else 0.0,
+                "minY": min_y / height if height else 0.0,
+                "maxX": max_x / width if width else 0.0,
+                "maxY": max_y / height if height else 0.0,
+                "width": bbox_width / width if width else 0.0,
+                "height": bbox_height / height if height else 0.0,
+            },
+        },
+        "centroid": {
+            "x": centroid_x,
+            "y": centroid_y,
+            "normalizedX": centroid_x / width if width else 0.0,
+            "normalizedY": centroid_y / height if height else 0.0,
+        },
+        "signedArea": signed_area,
+        "area": area,
+        "areaRatio": area_ratio,
+        "uniqueXCount": len(set(xs)),
+        "uniqueYCount": len(set(ys)),
+        "exactDegenerate": bool(exact_degenerate_reasons),
+        "exactDegenerateReasons": exact_degenerate_reasons,
+    }
+
+
 def normalize_polygons(parsed: Any, width: int, height: int) -> list[dict[str, Any]]:
     safe = json_safe(parsed)
     payload = safe.get(TASK, safe) if isinstance(safe, dict) else safe
@@ -86,9 +150,35 @@ def normalize_polygons(parsed: Any, width: int, height: int) -> list[dict[str, A
                 "points": points,
                 "pointCount": len(points),
                 "insideImageBounds": inside,
+                "geometry": polygon_geometry(points, width, height),
             }
         )
     return normalized
+
+
+def classify_polygons(polygons: list[dict[str, Any]]) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]], list[str]]:
+    accepted = [
+        polygon
+        for polygon in polygons
+        if not polygon["geometry"]["exactDegenerate"]
+    ]
+    rejected = [
+        polygon
+        for polygon in polygons
+        if polygon["geometry"]["exactDegenerate"]
+    ]
+
+    rejection_reasons = sorted(
+        {
+            reason
+            for polygon in rejected
+            for reason in polygon["geometry"]["exactDegenerateReasons"]
+        }
+    )
+
+    if accepted:
+        return "candidate_polygon", accepted, rejected, rejection_reasons
+    return "unavailable", [], rejected, rejection_reasons
 
 
 def build_record(
@@ -98,13 +188,15 @@ def build_record(
     image_height: int,
     capture_case: str,
     mirrored: bool,
-    requested_side: str,
+    prompt_mode: str,
+    requested_side: str | None,
     prompt: str,
     generated_text: str,
     parsed: Any,
     runtime: dict[str, Any],
 ) -> dict[str, Any]:
     polygons = normalize_polygons(parsed, image_width, image_height)
+    status, accepted, rejected, rejection_reasons = classify_polygons(polygons)
     return {
         "schemaVersion": SCHEMA_VERSION,
         "authorityState": "candidate_evidence_only_manual_review_required",
@@ -125,12 +217,22 @@ def build_record(
             "frontCameraMirrored": mirrored,
         },
         "request": {
+            "promptMode": prompt_mode,
             "requestedSide": requested_side,
             "prompt": prompt,
         },
         "result": {
-            "status": "candidate_polygon" if polygons else "unavailable",
-            "polygons": polygons,
+            "status": status,
+            "candidatePolygons": accepted,
+            "rejectedPolygons": rejected,
+            "candidateValidation": {
+                "exactDegeneracyGateApplied": True,
+                "rejectedDegenerateCount": len(rejected),
+                "rejectionReasons": rejection_reasons,
+                "plausibilityMetricsRecorded": True,
+                "plausibilityThresholdApplied": False,
+                "sideSemanticsAuthoritative": False,
+            },
             "generatedText": generated_text,
             "rawParsedOutput": json_safe(parsed),
             "validatedExternalEarObservation": False,
@@ -141,6 +243,7 @@ def build_record(
             "traditionalBindingAuthorized": False,
             "appearanceInferenceAuthorized": False,
             "depthOrFullnessInferenceAuthorized": False,
+            "numericAcceptanceThresholdAuthorized": False,
             "productionAuthorization": False,
         },
     }
@@ -172,7 +275,7 @@ def load_runtime(device_arg: str):
         from transformers import AutoModelForCausalLM, AutoProcessor
     except ImportError as error:
         raise RuntimeError(
-            "FR102 runtime dependencies are missing. "
+            "FR103 runtime dependencies are missing. "
             "Install tools/face-reading/ear/requirements-fr102.txt first."
         ) from error
 
@@ -214,21 +317,28 @@ def load_runtime(device_arg: str):
 def run_prompt(
     *,
     image,
-    side: str,
+    prompt_mode: str,
+    side: str | None,
     torch,
     processor,
     model,
     device: str,
     dtype,
 ) -> tuple[str, Any, str]:
-    text_input = f"{side} external ear"
+    if prompt_mode == "generic":
+        text_input = GENERIC_PROMPT_TARGET
+    else:
+        if side not in {"left", "right"}:
+            raise ValueError("Diagnostic side prompt requires left or right.")
+        text_input = f"{side} external ear"
+
     prompt = TASK + text_input
     inputs = processor(text=prompt, images=image, return_tensors="pt").to(device, dtype)
     with torch.inference_mode():
         generated_ids = model.generate(
             input_ids=inputs["input_ids"],
             pixel_values=inputs["pixel_values"],
-            max_new_tokens=1024,
+            max_new_tokens=512,
             do_sample=False,
             num_beams=3,
         )
@@ -247,7 +357,7 @@ def run_prompt(
 def write_overlay(image, image_draw, record: dict[str, Any], output_path: Path) -> None:
     overlay = image.copy()
     draw = image_draw.Draw(overlay)
-    for polygon in record["result"]["polygons"]:
+    for polygon in record["result"]["candidatePolygons"]:
         points = [(point[0], point[1]) for point in polygon["points"]]
         if len(points) >= 3:
             draw.line(points + [points[0]], width=3)
@@ -267,7 +377,12 @@ def run(args: argparse.Namespace) -> int:
     ) = load_runtime(args.device)
 
     images = resolve_images(Path(args.input))
-    sides = ["left", "right"] if args.side == "both" else [args.side]
+    if args.prompt_mode == "generic":
+        requests: list[tuple[str, str | None]] = [("generic", None)]
+    else:
+        sides = ["left", "right"] if args.side == "both" else [args.side]
+        requests = [("diagnostic_side", side) for side in sides]
+
     output_root = Path(args.output_dir)
     output_root.mkdir(parents=True, exist_ok=True)
 
@@ -278,10 +393,11 @@ def run(args: argparse.Namespace) -> int:
         case_dir.mkdir(parents=True, exist_ok=True)
 
         image = image_cls.open(image_path).convert("RGB")
-        for side in sides:
+        for prompt_mode, requested_side in requests:
             generated_text, parsed, prompt = run_prompt(
                 image=image,
-                side=side,
+                prompt_mode=prompt_mode,
+                side=requested_side,
                 torch=torch,
                 processor=processor,
                 model=model,
@@ -294,21 +410,23 @@ def run(args: argparse.Namespace) -> int:
                 image_height=image.height,
                 capture_case=args.capture_case,
                 mirrored=args.front_camera_mirrored,
-                requested_side=side,
+                prompt_mode=prompt_mode,
+                requested_side=requested_side,
                 prompt=prompt,
                 generated_text=generated_text,
                 parsed=parsed,
                 runtime=versions,
             )
-            record_path = case_dir / f"{side}.json"
+            record_name = "external-ear" if prompt_mode == "generic" else str(requested_side)
+            record_path = case_dir / f"{record_name}.json"
             record_path.write_text(
                 json.dumps(record, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
             )
 
             overlay_path = None
-            if args.qa_overlay and record["result"]["polygons"]:
-                overlay_path = case_dir / f"{side}-overlay.png"
+            if args.qa_overlay and record["result"]["candidatePolygons"]:
+                overlay_path = case_dir / f"{record_name}-overlay.png"
                 write_overlay(image, image_draw, record, overlay_path)
 
             index.append(
@@ -316,10 +434,14 @@ def run(args: argparse.Namespace) -> int:
                     "sourceImageSha256": digest,
                     "sourceImageName": image_path.name,
                     "captureCase": args.capture_case,
-                    "requestedSide": side,
+                    "promptMode": prompt_mode,
+                    "requestedSide": requested_side,
                     "record": str(record_path),
                     "overlay": str(overlay_path) if overlay_path else None,
                     "status": record["result"]["status"],
+                    "rejectedDegenerateCount": record["result"]["candidateValidation"][
+                        "rejectedDegenerateCount"
+                    ],
                 }
             )
 
@@ -332,6 +454,10 @@ def run(args: argparse.Namespace) -> int:
             "outputsDefaultToGitIgnoredCache": True,
         },
         "authority": {
+            "genericExternalEarPromptPrimary": True,
+            "sideSemanticsAuthoritative": False,
+            "exactDegeneratePolygonRejectEnabled": True,
+            "plausibilityThresholdAuthorized": False,
             "empiricalCandidateOnly": True,
             "runtimeObservationAuthorized": False,
             "productionAuthorization": False,
@@ -359,6 +485,35 @@ def self_test() -> int:
     assert len(polygons) == 2
     assert polygons[0]["pointCount"] == 4
     assert polygons[0]["insideImageBounds"] is True
+    assert polygons[0]["geometry"]["area"] == 600.0
+    assert polygons[0]["geometry"]["exactDegenerate"] is False
+
+    status, accepted, rejected, reasons = classify_polygons(polygons)
+    assert status == "candidate_polygon"
+    assert len(accepted) == 2
+    assert rejected == []
+    assert reasons == []
+
+    degenerate_fixture = {
+        TASK: {
+            "polygons": [
+                [10, 20, 20, 20, 30, 20, 40, 20],
+            ]
+        }
+    }
+    degenerate = normalize_polygons(degenerate_fixture, 100, 100)
+    assert len(degenerate) == 1
+    assert degenerate[0]["geometry"]["bbox"]["height"] == 0.0
+    assert degenerate[0]["geometry"]["area"] == 0.0
+    assert degenerate[0]["geometry"]["exactDegenerate"] is True
+
+    status, accepted, rejected, reasons = classify_polygons(degenerate)
+    assert status == "unavailable"
+    assert accepted == []
+    assert len(rejected) == 1
+    assert "zero_bbox_height" in reasons
+    assert "zero_polygon_area" in reasons
+
     assert normalize_polygons({TASK: {"polygons": []}}, 100, 100) == []
 
     nested = {TASK: {"polygons": [[[1, 1, 5, 1, 5, 5, 1, 5]]]}}
@@ -366,23 +521,33 @@ def self_test() -> int:
     assert len(nested_polygons) == 1
     assert nested_polygons[0]["points"][0] == [1.0, 1.0]
 
-    print("FR102 Florence-2 ear empirical runner self-test: PASS")
+    print("FR103 Florence-2 ear candidate validation self-test: PASS")
     return 0
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Local/offline FR102 Florence-2 external-ear empirical runner."
+        description="Local/offline FR103 Florence-2 external-ear candidate validator."
     )
     parser.add_argument("--input", help="Image file or directory.")
     parser.add_argument(
         "--capture-case",
-        help="Pinned empirical capture-case label from FR101.",
+        help="Pinned empirical capture-case label from FR101/FR103.",
+    )
+    parser.add_argument(
+        "--prompt-mode",
+        choices=["generic", "diagnostic-side"],
+        default="generic",
+        help=(
+            "Use generic external-ear localization by default. "
+            "Side-specific prompts are diagnostic only and are not authoritative."
+        ),
     )
     parser.add_argument(
         "--side",
         choices=["left", "right", "both"],
         default="both",
+        help="Used only with --prompt-mode diagnostic-side.",
     )
     parser.add_argument(
         "--front-camera-mirrored",
@@ -398,6 +563,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
 
+    if args.prompt_mode == "diagnostic-side":
+        args.prompt_mode = "diagnostic_side"
+
     if not args.self_test:
         if not args.input:
             parser.error("--input is required unless --self-test is used")
@@ -411,5 +579,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(self_test() if cli_args.self_test else run(cli_args))
     except Exception as error:
-        print(f"FR102 runner failed: {error}", file=sys.stderr)
+        print(f"FR103 runner failed: {error}", file=sys.stderr)
         raise
