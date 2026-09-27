@@ -10,35 +10,55 @@ describe('Saju Engine capability frontier G2B', () => {
     expect(frontier.counts.total).toBe(21);
   });
 
-  it('preserves the current G1 routing without inventing Engine work', () => {
+  it('reflects the merged Spouse T8 P0 completion without inventing additional Engine work', () => {
     const frontier = buildCurrentSajuEngineCapabilityFrontier();
 
     expect(frontier.counts).toEqual({
       total: 21,
       boundedPreviewReady: 5,
-      holdAuthority: 10,
+      holdAuthority: 9,
       holdResearch: 6,
       p0Runtime: 0,
-      p1Composition: 0,
+      p1Composition: 1,
       p2Hardening: 0,
       readyFromAdmittedIntake: 0,
       invalidEvidence: 0,
     });
-    expect(frontier.engineWorkQueue).toEqual([]);
+    expect(frontier.engineWorkQueue).toEqual([
+      'relationship:natal:spouse',
+    ]);
   });
 
-  it('does not treat temporal or spouse Research runtimes as semantic admission', () => {
+  it('does not treat the remaining temporal Research runtimes as semantic admission', () => {
     const frontier = buildCurrentSajuEngineCapabilityFrontier();
     const authorityHeld = frontier.entries.filter(
       (entry) => entry.currentRouting === 'HOLD_AUTHORITY',
     );
 
-    expect(authorityHeld).toHaveLength(10);
+    expect(authorityHeld).toHaveLength(9);
     expect(authorityHeld.every((entry) => entry.producerRuntimeExists)).toBe(true);
     expect(authorityHeld.every((entry) => entry.implementationMayProceed === false)).toBe(true);
-    expect(authorityHeld.map((entry) => entry.capabilityKey)).toContain(
+    expect(authorityHeld.map((entry) => entry.capabilityKey)).not.toContain(
       'relationship:natal:spouse',
     );
+  });
+
+  it('routes the admitted Engine-owned Spouse T8 producer to P1 composition', () => {
+    const frontier = buildCurrentSajuEngineCapabilityFrontier();
+    const spouse = frontier.entries.find(
+      (entry) => entry.capabilityKey === 'relationship:natal:spouse',
+    );
+
+    expect(spouse).toEqual(
+      expect.objectContaining({
+        capabilityKey: 'relationship:natal:spouse',
+        currentRouting: 'P1_COMPOSITION',
+        producerRuntimeExists: true,
+        currentBoundary: 'UPSTREAM_INTAKE',
+        implementationMayProceed: true,
+      }),
+    );
+    expect(spouse?.intakeEvaluationHash).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it('keeps the five current Canary capabilities bounded to Preview readiness', () => {
