@@ -55,6 +55,8 @@ const fr283PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr283-still
 const fr283ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr283-still-image-fr76-eye-chord-propagation.mjs');
 const fr104MirrorPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-pair.html');
 const fr104MirrorClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-pair.mjs');
+const fr104MirrorMultiPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-multifixture.html');
+const fr104MirrorMultiClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-multifixture.mjs');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -310,6 +312,9 @@ async function main() {
   const fr104MirrorPageTemplate = readFileSync(fr104MirrorPagePath, 'utf8');
   if (!fr104MirrorPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 mirror-pair page import-map placeholder is missing.');
   const fr104MirrorPageHtml = fr104MirrorPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104MirrorMultiPageTemplate = readFileSync(fr104MirrorMultiPagePath, 'utf8');
+  if (!fr104MirrorMultiPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 multi-fixture mirror page import-map placeholder is missing.');
+  const fr104MirrorMultiPageHtml = fr104MirrorMultiPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
 
   const requestHandler = (request, response) => {
     if (LAN_MODE) {
@@ -461,6 +466,19 @@ async function main() {
     }
     if (url.pathname === '/fr104-mirror/operator.mjs') { sendFile(response, fr104MirrorClientPath); return; }
 
+    if (url.pathname === '/fr104-mirror-multi' || url.pathname === '/fr104-mirror-multi/' || url.pathname === '/fr104-mirror-multi/index.html') {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104MirrorMultiPageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-mirror-multi/operator.mjs') { sendFile(response, fr104MirrorMultiClientPath); return; }
+
     if (url.pathname === '/runtime/config.json') {
       response.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
@@ -559,6 +577,8 @@ async function main() {
         '/fr283/operator.mjs',
         '/fr104-mirror/',
         '/fr104-mirror/operator.mjs',
+        '/fr104-mirror-multi/',
+        '/fr104-mirror-multi/operator.mjs',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
         '/runtime/fr76-parity-input.prototxt',
@@ -566,6 +586,7 @@ async function main() {
         '/face/face-eye-pair-research-bridge-fr24.js',
         '/face/mediapipe-face-landmarker-runtime-fr26.js',
         '/face/neutral-ear-mirror-pair-protocol-fr104.js',
+        '/face/neutral-ear-mirror-multifixture-protocol-fr104.js',
         '/face/mesh6h-browser-camera-frame-source.js',
         '/face/mesh6i-manual-browser-capture-controller.js',
         '/face/observable-morphology-longitudinal-repeatability-observation-fr255.js',
@@ -641,6 +662,8 @@ async function main() {
     process.stdout.write('FR279 fixed-still eye-chord decomposition: ' + base + '/fr279/\n');
     process.stdout.write('FR281 fixed-still metric eye-chord decomposition: ' + base + '/fr281/\n');
     process.stdout.write('FR283 fixed-still FR76 eye-chord propagation: ' + base + '/fr283/\n');
+    process.stdout.write('FR104 controlled mirror pair: ' + base + '/fr104-mirror/\n');
+    process.stdout.write('FR104 controlled multi-fixture mirror: ' + base + '/fr104-mirror-multi/\n');
   }
   process.stdout.write('Camera data remains in-memory; only sanitized/descriptive JSON can be exported by the browser surfaces.\n');
 }
