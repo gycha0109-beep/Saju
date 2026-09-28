@@ -360,6 +360,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-anatomical-reference-protocol-fr104.test.ts
 
+      - name: Verify FR104 U1.1 MakeHuman source geometry
+        working-directory: target
+        run: node scripts/verify-fr104-makehuman-source-geometry.mjs
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
