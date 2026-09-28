@@ -71,6 +71,15 @@ Raw landmarks are not returned or persisted.
 
 If either pair member does not produce exactly one valid 478-point provider face, the result is `unavailable_pair`.
 
+## Local execution surface
+
+The existing FR104 multi-fixture page is extended non-destructively:
+
+- route: `/fr104-mirror-multi/`
+- control: `run-independent`
+- the original four-fixture button and schema remain unchanged
+- the independent fixture produces a separate result schema
+
 ## Phase N intake
 
 The intake rechecks:
