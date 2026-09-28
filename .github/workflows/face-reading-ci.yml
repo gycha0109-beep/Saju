@@ -292,6 +292,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-mirror-pair-protocol-fr104.test.ts
 
+      - name: Verify FR104 capture-transform provenance receipt
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-capture-transform-provenance-receipt-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
