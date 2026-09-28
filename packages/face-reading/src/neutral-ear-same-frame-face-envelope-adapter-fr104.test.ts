@@ -28,10 +28,9 @@ function syntheticGeometry(): FR257EphemeralGeometryObservation {
     frameWidth: 1200,
     frameHeight: 1600,
     primaryMetric: Object.freeze({
-      metricRef:
-        'neutral.eye_pair.metric_3d.mean_outer_corner_tilt_radians@0.1.0',
+      metricRef: 'neutral.eye.outer_corner_tilt.mean_degrees@0.1.0',
       value: 0,
-      unit: 'radian',
+      unit: 'degree',
     }),
   } as FR257EphemeralGeometryObservation);
 }
