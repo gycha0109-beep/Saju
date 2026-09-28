@@ -1,4 +1,7 @@
 import type {
+  NeutralEarDualConsumerPixelFingerprintEvidenceFR104V1,
+} from './neutral-ear-dual-consumer-pixel-fingerprint-fr104.js';
+import type {
   NeutralEarOrientationMirrorProvenanceFR104V1,
 } from './neutral-ear-ephemeral-orchestration-fr104.js';
 import {
@@ -99,7 +102,7 @@ export interface NeutralEarDualConsumerTransformBindingFR104V1 {
     readonly sameIssuedReceiptObjectObservedByBothConsumers: true;
     readonly consumerFrameDimensionsMatch: true;
     readonly additionalPixelTransformsDeclaredNone: true;
-    readonly samePixelBytesIndependentlyVerified: false;
+    readonly samePixelBytesIndependentlyVerified: boolean;
     readonly boundedProviderMirrorBehaviorStatementAdmitted: true;
   };
   readonly lateralityBlockers: readonly (
@@ -255,7 +258,7 @@ export function issueNeutralEarCaptureTransformReceiptFR104(
     }),
     authority: Object.freeze({
       transformProvenanceRecorded: true as const,
-      samePixelBytesIndependentlyVerified: false as const,
+      samePixelBytesIndependentlyVerified,
       anatomicalLateralityAuthorized: false as const,
       traditionalBindingAuthorized: false as const,
       productionAuthorization: false as const,
@@ -325,6 +328,8 @@ export function acknowledgeNeutralEarTransformReceiptConsumerFR104(
 
 export function finalizeNeutralEarDualConsumerTransformBindingFR104(
   receipt: NeutralEarCaptureTransformReceiptFR104V1,
+  pixelFingerprintEvidence?:
+    NeutralEarDualConsumerPixelFingerprintEvidenceFR104V1,
 ): NeutralEarDualConsumerTransformBindingFR104V1 {
   assertIssuedReceipt(receipt);
   const consumers = CONSUMERS_BY_RECEIPT.get(receipt);
@@ -336,16 +341,43 @@ export function finalizeNeutralEarDualConsumerTransformBindingFR104(
     fail('dual-consumer binding requires both Florence and FaceLandmarker to acknowledge the same issued receipt object.');
   }
 
+  let samePixelBytesIndependentlyVerified = false;
+  if (pixelFingerprintEvidence !== undefined) {
+    if (
+      pixelFingerprintEvidence.schemaVersion
+        !== 'fr104-neutral-ear-dual-consumer-pixel-fingerprint-evidence-v1'
+      || pixelFingerprintEvidence.authorityState
+        !== 'ephemeral_dual_consumer_pixel_identity_evidence_only'
+      || pixelFingerprintEvidence.algorithm !== 'SHA-256'
+      || pixelFingerprintEvidence
+        .independentlyComputedByBothConsumers !== true
+      || pixelFingerprintEvidence.digestReturned !== false
+      || pixelFingerprintEvidence.digestPersisted !== false
+      || pixelFingerprintEvidence.rawFrameBytesRetained !== false
+      || pixelFingerprintEvidence.identityTemplateProduced !== false
+      || pixelFingerprintEvidence.authority.transformProvenanceOnly
+        !== true
+      || pixelFingerprintEvidence.authority
+        .anatomicalLateralityAuthorized !== false
+    ) {
+      fail('pixel fingerprint evidence authority drift.');
+    }
+    samePixelBytesIndependentlyVerified =
+      pixelFingerprintEvidence.frameDigestEqual === true
+      && pixelFingerprintEvidence
+        .samePixelBytesIndependentlyVerified === true;
+  }
+
   const blockers: Array<
     NeutralEarDualConsumerTransformBindingFR104V1['lateralityBlockers'][number]
   > = [];
   if (receipt.exif.application === 'unknown') {
     blockers.push('exif_orientation_application_unresolved');
   }
-  blockers.push(
-    'same_pixel_bytes_not_independently_verified',
-    'anatomical_side_mapping_not_reviewed',
-  );
+  if (!samePixelBytesIndependentlyVerified) {
+    blockers.push('same_pixel_bytes_not_independently_verified');
+  }
+  blockers.push('anatomical_side_mapping_not_reviewed');
 
   return Object.freeze({
     schemaVersion:
@@ -388,7 +420,8 @@ export function deriveNeutralEarPhaseDProvenanceFromTransformReceiptFR104(
       !== 'fr104-neutral-ear-dual-consumer-transform-binding-v1'
     || binding.bindingEvidence
       .sameIssuedReceiptObjectObservedByBothConsumers !== true
-    || binding.bindingEvidence.samePixelBytesIndependentlyVerified !== false
+    || typeof binding.bindingEvidence.samePixelBytesIndependentlyVerified
+      !== 'boolean'
     || binding.bindingEvidence
       .boundedProviderMirrorBehaviorStatementAdmitted !== true
     || binding.authority.orientationMirrorProvenanceMayBeExportedToPhaseD
@@ -418,7 +451,8 @@ export function deriveNeutralEarPhaseDProvenanceFromTransformReceiptFR104(
       'fr104-neutral-ear-orientation-mirror-provenance-v1' as const,
     sharedDecodedPixelFrame: Object.freeze({
       candidateAndGeometrySamePixelOrientationAttested: true as const,
-      independentlyVerified: false as const,
+      independentlyVerified:
+        binding.bindingEvidence.samePixelBytesIndependentlyVerified,
     }),
     exifOrientation: Object.freeze({
       state: exifState,
