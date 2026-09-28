@@ -1,4 +1,7 @@
 import {
+  NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104,
+} from './neutral-ear-anatomical-side-semantic-witness-fr104.js';
+import {
   NEUTRAL_EAR_LATERALITY_SOURCE_AUDIT_FR104,
 } from './neutral-ear-laterality-source-audit-fr104.js';
 import {
@@ -41,6 +44,27 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
         true as const,
       empiricalMirrorBehaviorMayReplaceMissingAnatomicalSemanticWitness:
         false as const,
+      directAnatomicalSemanticWitnessState:
+        NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104
+          .authorityState,
+      exactReleaseSideConflictDetected:
+        NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104
+          .pinnedProviderSurface.rotationCommentConflict
+          .conflictWithPublishedNamedTopologyDetected,
+      directAnatomicalSemanticWitnessAdmitted:
+        NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104
+          .decision.directAnatomicalSemanticWitnessAdmitted,
+    }),
+
+    implementedMechanicalGates: Object.freeze({
+      frameTransformReflectionParityContract:
+        true as const,
+      dualConsumerEphemeralPixelFingerprint:
+        true as const,
+      providerEyeAxisLateralGeometry:
+        true as const,
+      anatomicalMappingSkeleton:
+        true as const,
     }),
 
     clearedBlockers: Object.freeze([
@@ -48,10 +72,11 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
     ] as const),
 
     remainingBlockers: Object.freeze([
-      'same_pixel_bytes_not_independently_verified',
-      'provider_left_right_anatomical_semantics_not_directly_witnessed',
+      'runtime_instance_same_pixel_bytes_must_be_independently_verified',
+      'provider_left_right_anatomical_semantics_conflicting_or_ambiguous',
+      'runtime_instance_transform_parity_must_be_resolved',
       'capture_transform_provenance_may_be_attested_but_not_independently_verified',
-      'anatomical_side_mapping_not_reviewed',
+      'anatomical_side_mapping_not_admitted',
     ] as const),
 
     mappingPreconditions: Object.freeze({
@@ -60,6 +85,10 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       knownExifApplicationRequired: true as const,
       knownHorizontalMirrorStateRequired: true as const,
       sameConsumerFrameForFlorenceAndFaceLandmarkerRequired:
+        true as const,
+      independentPixelFingerprintMatchRequired:
+        true as const,
+      resolvedNetReflectionParityRequired:
         true as const,
       independentAnatomicalSideSemanticWitnessRequired:
         true as const,
@@ -77,7 +106,7 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       anatomicalLateralityAuthorized:
         false as const,
       nextGate:
-        'audit a direct anatomical-side semantic witness and define a fail-closed pixel-space-to-anatomical-side mapping contract without using Florence prompt labels' as const,
+        'obtain or design a governed anatomical-side reference protocol that resolves the exact-release side-semantic conflict; mechanical parity, pixel-identity, and provider-eye-axis gates are now implemented but do not authorize anatomy' as const,
     }),
 
     authority: Object.freeze({

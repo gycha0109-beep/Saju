@@ -43,6 +43,15 @@ describe('FR104 laterality integration readiness', () => {
       reconciliation
         .empiricalMirrorBehaviorMayReplaceMissingAnatomicalSemanticWitness,
     ).toBe(false);
+    expect(
+      reconciliation.directAnatomicalSemanticWitnessState,
+    ).toBe('conflicting_or_ambiguous');
+    expect(
+      reconciliation.exactReleaseSideConflictDetected,
+    ).toBe(true);
+    expect(
+      reconciliation.directAnatomicalSemanticWitnessAdmitted,
+    ).toBe(false);
   });
 
   it('keeps anatomical mapping closed until separate preconditions exist', () => {
@@ -50,11 +59,22 @@ describe('FR104 laterality integration readiness', () => {
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104;
 
     expect(readiness.remainingBlockers).toContain(
-      'provider_left_right_anatomical_semantics_not_directly_witnessed',
+      'provider_left_right_anatomical_semantics_conflicting_or_ambiguous',
     );
     expect(readiness.remainingBlockers).toContain(
-      'same_pixel_bytes_not_independently_verified',
+      'runtime_instance_same_pixel_bytes_must_be_independently_verified',
     );
+    expect(readiness.remainingBlockers).toContain(
+      'runtime_instance_transform_parity_must_be_resolved',
+    );
+    expect(
+      readiness.mappingPreconditions
+        .independentPixelFingerprintMatchRequired,
+    ).toBe(true);
+    expect(
+      readiness.mappingPreconditions
+        .resolvedNetReflectionParityRequired,
+    ).toBe(true);
     expect(
       readiness.mappingPreconditions
         .independentAnatomicalSideSemanticWitnessRequired,
@@ -69,6 +89,19 @@ describe('FR104 laterality integration readiness', () => {
     expect(
       readiness.decision.anatomicalLateralityAuthorized,
     ).toBe(false);
+  });
+
+  it('records the mechanical gates implemented without widening anatomical authority', () => {
+    const implemented =
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
+        .implementedMechanicalGates;
+
+    expect(implemented).toEqual({
+      frameTransformReflectionParityContract: true,
+      dualConsumerEphemeralPixelFingerprint: true,
+      providerEyeAxisLateralGeometry: true,
+      anatomicalMappingSkeleton: true,
+    });
   });
 
   it('keeps downstream authority closed', () => {

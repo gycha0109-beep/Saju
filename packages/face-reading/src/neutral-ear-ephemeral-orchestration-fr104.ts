@@ -32,7 +32,7 @@ export interface NeutralEarOrientationMirrorProvenanceFR104V1 {
     'fr104-neutral-ear-orientation-mirror-provenance-v1';
   readonly sharedDecodedPixelFrame: {
     readonly candidateAndGeometrySamePixelOrientationAttested: true;
-    readonly independentlyVerified: false;
+    readonly independentlyVerified: boolean;
   };
   readonly exifOrientation: {
     readonly state: NeutralEarExifOrientationStateFR104V1;
@@ -126,7 +126,8 @@ function validateProvenance(
       !== 'fr104-neutral-ear-orientation-mirror-provenance-v1'
     || provenance.sharedDecodedPixelFrame
       .candidateAndGeometrySamePixelOrientationAttested !== true
-    || provenance.sharedDecodedPixelFrame.independentlyVerified !== false
+    || typeof provenance.sharedDecodedPixelFrame.independentlyVerified
+      !== 'boolean'
     || provenance.exifOrientation.independentlyVerified !== false
     || provenance.frontCameraMirror.independentlyVerified !== false
   ) {
@@ -154,7 +155,8 @@ function validateProvenance(
       'fr104-neutral-ear-orientation-mirror-provenance-v1' as const,
     sharedDecodedPixelFrame: Object.freeze({
       candidateAndGeometrySamePixelOrientationAttested: true as const,
-      independentlyVerified: false as const,
+      independentlyVerified:
+        provenance.sharedDecodedPixelFrame.independentlyVerified,
     }),
     exifOrientation: Object.freeze({
       state: provenance.exifOrientation.state,
@@ -174,8 +176,11 @@ function lateralityBlockers(
 ): NeutralEarEphemeralOrchestrationResultFR104V1['laterality']['blockers'] {
   const blockers: Array<
     NeutralEarEphemeralOrchestrationResultFR104V1['laterality']['blockers'][number]
-  > = ['same_pixel_frame_not_independently_verified'];
+  > = [];
 
+  if (!provenance.sharedDecodedPixelFrame.independentlyVerified) {
+    blockers.push('same_pixel_frame_not_independently_verified');
+  }
   if (provenance.exifOrientation.state === 'unknown') {
     blockers.push('exif_orientation_provenance_unresolved');
   }

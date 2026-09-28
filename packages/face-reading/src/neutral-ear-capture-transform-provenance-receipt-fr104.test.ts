@@ -5,6 +5,9 @@ import {
   finalizeNeutralEarDualConsumerTransformBindingFR104,
   issueNeutralEarCaptureTransformReceiptFR104,
 } from './neutral-ear-capture-transform-provenance-receipt-fr104.js';
+import {
+  createNeutralEarDualConsumerPixelFingerprintSessionFR104,
+} from './neutral-ear-dual-consumer-pixel-fingerprint-fr104.js';
 
 function issueKnownMirroredReceipt() {
   return issueNeutralEarCaptureTransformReceiptFR104({
@@ -183,6 +186,81 @@ describe('FR104 capture-transform provenance receipt', () => {
     expect(
       provenance.sharedDecodedPixelFrame.independentlyVerified,
     ).toBe(false);
+  });
+
+  it('clears only the same-pixel blocker when both consumers independently hash identical frame bytes', () => {
+    const receipt = issueKnownMirroredReceipt();
+    acknowledgeBoth(receipt);
+
+    const fingerprint =
+      createNeutralEarDualConsumerPixelFingerprintSessionFR104();
+    const frame = Uint8Array.from([
+      1, 3, 3, 7, 9, 21,
+    ]);
+    fingerprint.observe('florence', frame);
+    fingerprint.observe(
+      'face_landmarker',
+      Uint8Array.from(frame),
+    );
+
+    const binding =
+      finalizeNeutralEarDualConsumerTransformBindingFR104(
+        receipt,
+        fingerprint.finalize(),
+      );
+
+    expect(
+      binding.bindingEvidence
+        .samePixelBytesIndependentlyVerified,
+    ).toBe(true);
+    expect(binding.lateralityBlockers).not.toContain(
+      'same_pixel_bytes_not_independently_verified',
+    );
+    expect(binding.lateralityBlockers).toContain(
+      'anatomical_side_mapping_not_reviewed',
+    );
+
+    const provenance =
+      deriveNeutralEarPhaseDProvenanceFromTransformReceiptFR104(
+        receipt,
+        binding,
+      );
+    expect(
+      provenance.sharedDecodedPixelFrame.independentlyVerified,
+    ).toBe(true);
+    expect(
+      binding.authority.anatomicalLateralityAuthorized,
+    ).toBe(false);
+  });
+
+  it('keeps the same-pixel blocker when independent fingerprints differ', () => {
+    const receipt = issueKnownMirroredReceipt();
+    acknowledgeBoth(receipt);
+
+    const fingerprint =
+      createNeutralEarDualConsumerPixelFingerprintSessionFR104();
+    fingerprint.observe(
+      'florence',
+      Uint8Array.from([1, 2, 3]),
+    );
+    fingerprint.observe(
+      'face_landmarker',
+      Uint8Array.from([1, 2, 4]),
+    );
+
+    const binding =
+      finalizeNeutralEarDualConsumerTransformBindingFR104(
+        receipt,
+        fingerprint.finalize(),
+      );
+
+    expect(
+      binding.bindingEvidence
+        .samePixelBytesIndependentlyVerified,
+    ).toBe(false);
+    expect(binding.lateralityBlockers).toContain(
+      'same_pixel_bytes_not_independently_verified',
+    );
   });
 
   it('keeps anatomical laterality closed even with a complete declared transform chain', () => {
