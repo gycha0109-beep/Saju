@@ -312,6 +312,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-mirror-multifixture-result-intake-fr104.test.ts
 
+      - name: Verify FR104 admitted multi-fixture empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mirror-multifixture-empirical-evidence-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
