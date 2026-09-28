@@ -1,3 +1,5 @@
+import { Buffer } from 'node:buffer';
+import process from 'node:process';
 import { createHash } from 'node:crypto';
 
 const SOURCE_REPOSITORY = 'makehumancommunity/makehuman';
@@ -54,7 +56,7 @@ function gitBlobSha1(bytes) {
 }
 
 async function fetchPinned(spec) {
-  const response = await fetch(RAW_ROOT + spec.path, {
+  const response = await globalThis.fetch(RAW_ROOT + spec.path, {
     cache: 'no-store',
     headers: {
       'user-agent': 'myeongha-fr104-makehuman-source-preflight',
