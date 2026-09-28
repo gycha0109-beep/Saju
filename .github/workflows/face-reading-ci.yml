@@ -352,6 +352,14 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-anatomical-laterality-mapping-contract-fr104.test.ts
 
+      - name: Verify FR104 U0 anatomical reference asset audit
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-anatomical-reference-asset-audit-fr104.test.ts
+
+      - name: Verify FR104 U1 MakeHuman anatomical reference protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-anatomical-reference-protocol-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
