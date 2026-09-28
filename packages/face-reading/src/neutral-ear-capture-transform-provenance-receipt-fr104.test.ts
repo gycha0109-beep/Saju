@@ -191,9 +191,12 @@ describe('FR104 capture-transform provenance receipt', () => {
     const binding =
       finalizeNeutralEarDualConsumerTransformBindingFR104(receipt);
 
+    expect(
+      binding.bindingEvidence
+        .boundedProviderMirrorBehaviorStatementAdmitted,
+    ).toBe(true);
     expect(binding.lateralityBlockers).toEqual([
       'same_pixel_bytes_not_independently_verified',
-      'provider_mirror_semantics_empirical_result_not_admitted',
       'anatomical_side_mapping_not_reviewed',
     ]);
     expect(binding.authority.anatomicalLateralityAuthorized)
