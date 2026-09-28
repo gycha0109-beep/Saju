@@ -332,6 +332,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-provider-mirror-semantics-review-fr104.test.ts
 
+      - name: Verify FR104 laterality integration readiness
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-laterality-integration-readiness-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
