@@ -40,7 +40,7 @@ export const NEUTRAL_EAR_GEOMETRY_PLAUSIBILITY_READINESS_FR104 = Object.freeze({
     fr68: Object.freeze({
       artifact: 'mediapipe-face-geometry-transform-semantics-fr68' as const,
       releaseTag:
-        MEDIAPIPE_FACE_GEOMETRY_TRANSFORM_RELEASE_WITNESS_FR68.release.tag,
+        MEDIAPIPE_FACE_GEOMETRY_TRANSFORM_RELEASE_WITNESS_FR68.releaseTag,
       transformSemanticsReviewed: true as const,
       directImage2DTransformAuthorized: false as const,
     }),
