@@ -244,9 +244,10 @@ export function attemptNeutralEarAnatomicalLateralityMappingFR104(
   }
 
   if (
-    NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104
-      .decision.directAnatomicalSemanticWitnessAdmitted
-      !== true
+    !Boolean(
+      NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104
+        .decision.directAnatomicalSemanticWitnessAdmitted,
+    )
   ) {
     blockers.push('anatomical_semantic_witness_not_admitted');
   }
