@@ -6,14 +6,17 @@ import {
   FR24_EYE_TOPOLOGY_WITNESS_EDGES,
 } from '/face/face-eye-pair-research-bridge-fr24.js';
 import {
-  FR26_MEDIAPIPE_FACE_LANDMARKER_MODEL,
-  FR26_MEDIAPIPE_WASM_ROOT,
-} from '/face/mediapipe-face-landmarker-runtime-fr26.js';
+  NEUTRAL_EAR_MIRROR_PAIR_PROTOCOL_FR104,
+} from '/face/neutral-ear-mirror-pair-protocol-fr104.js';
 
 const FIXTURE_URL =
-  'https://storage.googleapis.com/mediapipe-assets/portrait.jpg?generation=1674261630039907';
+  NEUTRAL_EAR_MIRROR_PAIR_PROTOCOL_FR104.fixture.assetUrl;
 const FIXTURE_SHA256 =
-  'a6f11efaa834706db23f275b6115058fa87fc7f14362681e6abe14e82749de3e';
+  NEUTRAL_EAR_MIRROR_PAIR_PROTOCOL_FR104.fixture.sha256;
+const FR26_MEDIAPIPE_WASM_ROOT =
+  NEUTRAL_EAR_MIRROR_PAIR_PROTOCOL_FR104.runtime.wasmRoot;
+const FR26_MEDIAPIPE_FACE_LANDMARKER_MODEL =
+  NEUTRAL_EAR_MIRROR_PAIR_PROTOCOL_FR104.runtime.modelAssetRef;
 const PROVIDER_LANDMARK_COUNT = 478;
 
 const elements = Object.freeze({
