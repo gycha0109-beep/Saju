@@ -163,3 +163,4 @@ export * from './relationship-spouse-t8-day-branch-palace-provenance-survey.js';
 export * from './relationship-spouse-t8-day-branch-palace-source-manifest-candidate.js';
 export * from './relationship-spouse-t8-day-branch-palace-claim-contract-candidate.js';
 export * from './relationship-spouse-t8-day-branch-palace-materialization.js';
+export * from './relationship-spouse-t8-day-branch-palace-bridge-reentry-admission-review.js';
