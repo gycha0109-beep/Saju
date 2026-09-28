@@ -288,6 +288,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-laterality-source-audit-fr104.test.ts
 
+      - name: Verify FR104 controlled provider mirror-pair protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mirror-pair-protocol-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
