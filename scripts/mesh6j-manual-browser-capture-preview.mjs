@@ -565,6 +565,7 @@ async function main() {
         '/runtime/weighted-adapter.json',
         '/face/face-eye-pair-research-bridge-fr24.js',
         '/face/mediapipe-face-landmarker-runtime-fr26.js',
+        '/face/neutral-ear-mirror-pair-protocol-fr104.js',
         '/face/mesh6h-browser-camera-frame-source.js',
         '/face/mesh6i-manual-browser-capture-controller.js',
         '/face/observable-morphology-longitudinal-repeatability-observation-fr255.js',
