@@ -76,9 +76,10 @@ export const NEUTRAL_EAR_MIRROR_INDEPENDENT_FIXTURE_PROTOCOL_FR104 =
 
     localHarness: Object.freeze({
       pageRoute:
-        '/fr104-mirror-independent/' as const,
+        '/fr104-mirror-multi/' as const,
       clientRoute:
-        '/fr104-mirror-independent/operator.mjs' as const,
+        '/fr104-mirror-multi/operator.mjs' as const,
+      controlId: 'run-independent' as const,
       userImageInputAccepted: false as const,
       cameraAccessAuthorized: false as const,
       fixtureDigestVerificationRequiredBeforeInference:
