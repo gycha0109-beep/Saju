@@ -130,17 +130,9 @@ const runOptions = {
   now: new Date('2026-09-28T01:00:00.000Z'),
 };
 
-function semanticProjection(result: {
-  claims: readonly {
-    claimType: string;
-    taxonomy: unknown;
-    subject: string;
-    predicate: string;
-    value: unknown;
-    polarity: string;
-    emphasis?: unknown;
-  }[];
-}) {
+function semanticProjection(
+  result: ReturnType<typeof runRelationshipSpouseT8SourceBoundRuntime>,
+) {
   return result.claims.map((claim) => ({
     claimType: claim.claimType,
     taxonomy: claim.taxonomy,
