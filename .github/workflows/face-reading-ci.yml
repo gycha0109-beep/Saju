@@ -272,6 +272,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-geometry-plausibility-readiness-fr104.test.ts
 
+      - name: Verify FR104 role-free ear plausibility evidence boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-plausibility-evidence-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
