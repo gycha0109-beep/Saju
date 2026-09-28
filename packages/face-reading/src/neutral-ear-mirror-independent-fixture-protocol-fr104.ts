@@ -38,7 +38,7 @@ export const NEUTRAL_EAR_MIRROR_INDEPENDENT_FIXTURE_PROTOCOL_FR104 =
         '84164c6fde6ece45def699e2d60d5369b18e0a51' as const,
       fileName: 'astronaut.png' as const,
       assetUrl:
-        'https://raw.githubusercontent.com/scikit-image/scikit-image/533b7694d2004ae84e49e2cfd0bcfc5f8e562f22/src/_skimage2/data/astronaut.png' as const,
+        'https://cdn.jsdelivr.net/gh/scikit-image/scikit-image@533b7694d2004ae84e49e2cfd0bcfc5f8e562f22/src/_skimage2/data/astronaut.png' as const,
       sha256:
         '88431cd9653ccd539741b555fb0a46b61558b301d4110412b5bc28b5e3ea6cb5' as const,
       expectedWidth: 512 as const,
