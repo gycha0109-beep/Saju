@@ -276,6 +276,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-plausibility-evidence-fr104.test.ts
 
+      - name: Verify FR104 ephemeral same-frame face-envelope adapter
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-same-frame-face-envelope-adapter-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
