@@ -20,9 +20,9 @@ const FR26_MEDIAPIPE_FACE_LANDMARKER_MODEL =
 const PROVIDER_LANDMARK_COUNT = 478;
 
 const elements = Object.freeze({
-  run: document.querySelector('#run'),
-  status: document.querySelector('#status'),
-  result: document.querySelector('#result'),
+  run: globalThis.document.querySelector('#run'),
+  status: globalThis.document.querySelector('#status'),
+  result: globalThis.document.querySelector('#result'),
 });
 
 function setStatus(message) {
@@ -35,7 +35,7 @@ function toHex(bytes) {
 
 async function sha256Hex(bytes) {
   return toHex(
-    new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)),
+    new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', bytes)),
   );
 }
 
@@ -95,7 +95,7 @@ function summarizeProviderResult(result) {
 }
 
 function makeCanvas(bitmap, mirrored) {
-  const canvas = document.createElement('canvas');
+  const canvas = globalThis.document.createElement('canvas');
   canvas.width = bitmap.width;
   canvas.height = bitmap.height;
   const context = canvas.getContext('2d', {
@@ -198,7 +198,7 @@ async function run() {
 
   try {
     setStatus('공개 fixture 다운로드·SHA-256 검증 중…');
-    const response = await fetch(FIXTURE_URL, { cache: 'no-store' });
+    const response = await globalThis.fetch(FIXTURE_URL, { cache: 'no-store' });
     if (!response.ok) {
       throw new Error('portrait fixture HTTP ' + response.status);
     }
@@ -213,8 +213,8 @@ async function run() {
       );
     }
 
-    bitmap = await createImageBitmap(
-      new Blob([bytes], { type: 'image/jpeg' }),
+    bitmap = await globalThis.createImageBitmap(
+      new globalThis.Blob([bytes], { type: 'image/jpeg' }),
     );
     if (!(bitmap.width > 0) || !(bitmap.height > 0)) {
       throw new Error('decoded portrait fixture dimensions are invalid.');
