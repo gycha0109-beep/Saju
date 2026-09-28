@@ -158,3 +158,5 @@ export * from './relationship-spouse-t8-production-provenance-acquisition-policy
 export * from './relationship-spouse-t8-production-provenance-candidate-survey.js';
 export * from './relationship-spouse-t8-production-provenance-closure.js';
 export * from './relationship-spouse-t8-selector-redesign-assessment.js';
+export * from './relationship-spouse-t8-day-branch-palace-provenance-policy.js';
+export * from './relationship-spouse-t8-day-branch-palace-provenance-survey.js';
