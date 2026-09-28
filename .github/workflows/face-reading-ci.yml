@@ -336,6 +336,22 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-laterality-integration-readiness-fr104.test.ts
 
+      - name: Verify FR104 anatomical-side semantic witness audit
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-anatomical-side-semantic-witness-fr104.test.ts
+
+      - name: Verify FR104 frame transform reflection parity
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-frame-transform-parity-fr104.test.ts
+
+      - name: Verify FR104 dual-consumer ephemeral pixel fingerprint
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-dual-consumer-pixel-fingerprint-fr104.test.ts
+
+      - name: Verify FR104 anatomical laterality mapping skeleton
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-anatomical-laterality-mapping-contract-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
