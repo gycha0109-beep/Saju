@@ -284,6 +284,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-ephemeral-orchestration-fr104.test.ts
 
+      - name: Verify FR104 anatomical laterality source audit
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-laterality-source-audit-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
