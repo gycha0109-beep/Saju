@@ -34,7 +34,7 @@ describe('Relationship Natal general Research-return handoff / Bridge re-entry g
     );
   });
 
-  it('materializes exactly five Research closure workstreams with all current readiness false', () => {
+  it('materializes exactly five original Research closure workstreams', () => {
     const handoff = buildRelationshipNatalGeneralResearchReturnHandoff();
 
     expect(handoff.upstreamBridgeReview.bridgeDecision).toBe(
@@ -59,7 +59,13 @@ describe('Relationship Natal general Research-return handoff / Bridge re-entry g
     expect(readiness.researchClosureReady).toBe(false);
     expect(readiness.bridgeReentryReady).toBe(false);
     expect(readiness.nextDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(readiness.remainingResearchBlockers).toHaveLength(5);
+    expect(
+      readiness.researchClosure.exactRuleRetainNarrowRemoveDecisionComplete,
+    ).toBe(true);
+    expect(readiness.remainingResearchBlockers).toHaveLength(4);
+    expect(readiness.remainingResearchBlockers).not.toContain(
+      'EXACT_11_RULE_RETAIN_NARROW_REMOVE_DECISION_INCOMPLETE',
+    );
     expect(readiness.authorityBoundary.production).toBe('HOLD');
   });
 

@@ -11,6 +11,9 @@ import {
   RELATIONSHIP_NATAL_READING_RULES,
 } from './relationship-natal-reading-candidate.js';
 import {
+  buildRelationshipNatalGeneralFinalRuleDisposition,
+} from './relationship-natal-general-final-rule-disposition.js';
+import {
   RELATIONSHIP_NATAL_GENERAL_REVIEWED_CANDIDATE_BLOB_SHA,
   RELATIONSHIP_NATAL_GENERAL_REVIEWED_RULE_IDS,
   buildRelationshipNatalGeneralResearchReturnHandoff,
@@ -101,6 +104,8 @@ export interface RelationshipNatalGeneralBridgeReentryEvidence {
 
 export function collectRelationshipNatalGeneralBridgeReentryEvidence():
   RelationshipNatalGeneralBridgeReentryEvidence {
+  const finalDisposition = buildRelationshipNatalGeneralFinalRuleDisposition();
+
   return Object.freeze({
     candidateSurface: currentCandidateSurface(),
     researchClosure: Object.freeze({
@@ -108,7 +113,8 @@ export function collectRelationshipNatalGeneralBridgeReentryEvidence():
       tenGodToRelationshipDomainMappingAuthorityComplete: false,
       scopeQualifiersCounterexamplesComplete: false,
       schoolDependenceBoundaryComplete: false,
-      exactRuleRetainNarrowRemoveDecisionComplete: false,
+      exactRuleRetainNarrowRemoveDecisionComplete:
+        finalDisposition.decision.exactRuleRetainNarrowRemoveDecisionComplete,
     }),
   });
 }
@@ -169,6 +175,7 @@ export function evaluateRelationshipNatalGeneralBridgeReentryReadiness(
       RELATIONSHIP_NATAL_GENERAL_BRIDGE_REENTRY_BASELINE.candidateSurfaceHash,
     observedCandidateSurfaceHash,
     candidateBindingFresh,
+    researchClosure: Object.freeze({ ...evidence.researchClosure }),
     researchClosureReady,
     researchReturnRequired: !researchClosureReady,
     bridgeReentryReady: candidateBindingFresh && researchClosureReady,
