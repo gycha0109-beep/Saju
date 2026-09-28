@@ -152,3 +152,4 @@ export * from './source-adjudication-promotion-policy.js';
 export * from './relationship-spouse-t8-source-adjudication-candidate-evaluation.js';
 export * from './relationship-spouse-t8-source-adjudication-governance-decision.js';
 export * from './relationship-spouse-t8-source-adjudicated-staging-runtime.js';
+export * from './relationship-spouse-t8-source-adjudicated-shadow-staging-evidence.js';
