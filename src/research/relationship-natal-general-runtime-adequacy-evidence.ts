@@ -9,7 +9,6 @@ import {
   R050_TEN_GOD_PAIR_MATRIX,
 } from './general-natal-ten-god-pair-matrix.js';
 import {
-  RELATIONSHIP_NATAL_GENERAL_TARGETED_RULE_ADEQUACY,
   buildRelationshipNatalGeneralTargetedSourceAdequacyEvidence,
 } from './relationship-natal-general-targeted-source-adequacy-evidence.js';
 import {
