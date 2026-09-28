@@ -9,6 +9,7 @@ on:
       - 'scripts/verify-face-geometry-mesh6j.mjs'
       - 'scripts/verify-fr104-ear-mirror-fixture.mjs'
       - 'scripts/verify-fr104-ear-mirror-multifixtures.mjs'
+      - 'scripts/verify-fr104-ear-mirror-independent-fixture.mjs'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.html'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.mjs'
       - 'tools/face-geometry/capture/fr251-dry-run-operator.html'
@@ -96,6 +97,8 @@ jobs:
         run: node --check tools/face-geometry/capture/fr104-ear-mirror-pair.mjs
       - name: Verify FR104 public mirror multi-fixtures
         run: node scripts/verify-fr104-ear-mirror-multifixtures.mjs
+      - name: Verify FR104 independent public mirror fixture
+        run: node scripts/verify-fr104-ear-mirror-independent-fixture.mjs
       - name: Syntax-check FR104 multi-fixture mirror client
         run: node --check tools/face-geometry/capture/fr104-ear-mirror-multifixture.mjs
       - name: Install projection dependency
