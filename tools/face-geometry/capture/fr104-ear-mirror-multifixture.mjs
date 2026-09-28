@@ -8,18 +8,33 @@ import {
 import {
   NEUTRAL_EAR_MIRROR_MULTI_FIXTURE_PROTOCOL_FR104,
 } from '/face/neutral-ear-mirror-multifixture-protocol-fr104.js';
+import {
+  NEUTRAL_EAR_MIRROR_INDEPENDENT_FIXTURE_PROTOCOL_FR104,
+} from '/face/neutral-ear-mirror-independent-fixture-protocol-fr104.js';
 
 const protocol = NEUTRAL_EAR_MIRROR_MULTI_FIXTURE_PROTOCOL_FR104;
+const independentProtocol =
+  NEUTRAL_EAR_MIRROR_INDEPENDENT_FIXTURE_PROTOCOL_FR104;
 const PROVIDER_LANDMARK_COUNT = 478;
 
 const elements = Object.freeze({
   run: globalThis.document.querySelector('#run'),
   status: globalThis.document.querySelector('#status'),
   result: globalThis.document.querySelector('#result'),
+  runIndependent:
+    globalThis.document.querySelector('#run-independent'),
+  statusIndependent:
+    globalThis.document.querySelector('#status-independent'),
+  resultIndependent:
+    globalThis.document.querySelector('#result-independent'),
 });
 
 function setStatus(message) {
   elements.status.textContent = message;
+}
+
+function setIndependentStatus(message) {
+  elements.statusIndependent.textContent = message;
 }
 
 function toHex(bytes) {
@@ -376,6 +391,179 @@ async function run() {
   }
 }
 
+async function runIndependent() {
+  elements.runIndependent.disabled = true;
+  elements.resultIndependent.textContent = '{}';
+  let landmarker = null;
+  let bitmap = null;
+
+  try {
+    setIndependentStatus('독립 공개 fixture 다운로드·검증 중…');
+    const response = await globalThis.fetch(
+      independentProtocol.fixture.assetUrl,
+      { cache: 'no-store' },
+    );
+    if (!response.ok) {
+      throw new Error(
+        'independent fixture fetch failed: HTTP '
+          + response.status,
+      );
+    }
+
+    const bytes = await response.arrayBuffer();
+    const observedSha256 = await sha256Hex(bytes);
+    if (
+      observedSha256
+        !== independentProtocol.fixture.sha256
+    ) {
+      throw new Error(
+        'independent fixture SHA-256 mismatch; controlled run aborted.',
+      );
+    }
+
+    bitmap = await globalThis.createImageBitmap(
+      new globalThis.Blob([bytes], { type: 'image/png' }),
+    );
+    if (
+      bitmap.width
+        !== independentProtocol.fixture.expectedWidth
+      || bitmap.height
+        !== independentProtocol.fixture.expectedHeight
+    ) {
+      throw new Error(
+        'independent fixture dimensions do not match the pinned protocol.',
+      );
+    }
+
+    setIndependentStatus('MediaPipe v0.10.35 runtime 준비 중…');
+    const fileset = await FilesetResolver.forVisionTasks(
+      independentProtocol.runtime.wasmRoot,
+    );
+    landmarker = await FaceLandmarker.createFromOptions(
+      fileset,
+      {
+        baseOptions: {
+          modelAssetPath:
+            independentProtocol.runtime.modelAssetRef,
+        },
+        runningMode: 'IMAGE',
+        numFaces: 1,
+        outputFaceBlendshapes: false,
+        outputFacialTransformationMatrixes: false,
+      },
+    );
+
+    setIndependentStatus('원본/수평반전 추론 중…');
+    const original = summarizeProviderResult(
+      landmarker.detect(makeCanvas(bitmap, false)),
+    );
+    const mirrored = summarizeProviderResult(
+      landmarker.detect(makeCanvas(bitmap, true)),
+    );
+    const pair = pairedScalarEvidence(
+      original,
+      mirrored,
+    );
+
+    const result = Object.freeze({
+      schemaVersion:
+        'fr104-controlled-provider-independent-fixture-mirror-result-v1',
+      authorityState:
+        'single_independent_public_fixture_scalar_evidence_only_no_general_semantics',
+      runtime: Object.freeze({
+        packageName:
+          independentProtocol.runtime.packageName,
+        packageVersion:
+          independentProtocol.runtime.packageVersion,
+        wasmRoot:
+          independentProtocol.runtime.wasmRoot,
+        modelAssetRef:
+          independentProtocol.runtime.modelAssetRef,
+        runtimeAssetByteDigestVerified: false,
+        modelAssetByteDigestVerified: false,
+      }),
+      fixture: Object.freeze({
+        fixtureRef:
+          independentProtocol.fixture.fixtureRef,
+        sourceRepository:
+          independentProtocol.fixture.sourceRepository,
+        sourceCommit:
+          independentProtocol.fixture.sourceCommit,
+        registryBlobSha:
+          independentProtocol.fixture.registryBlobSha,
+        metadataBlobSha:
+          independentProtocol.fixture.metadataBlobSha,
+        fileName:
+          independentProtocol.fixture.fileName,
+        expectedSha256:
+          independentProtocol.fixture.sha256,
+        observedSha256,
+        digestVerified: true,
+        width: bitmap.width,
+        height: bitmap.height,
+        rawFixturePersisted: false,
+        sourceRepositoryDistinctFromMediaPipeFixtureSource:
+          independentProtocol.fixture
+            .sourceRepositoryDistinctFromMediaPipeFixtureSource,
+      }),
+      transformation: Object.freeze({
+        pair: ['original', 'horizontal_mirror'],
+        resizeApplied: false,
+        cropApplied: false,
+        rotationApplied: false,
+        taskImageProcessingRotationDegrees: 0,
+      }),
+      pair,
+      privacy: Object.freeze({
+        userImageConsumed: false,
+        cameraAccessed: false,
+        sourceImagePersisted: false,
+        rawLandmarksReturned: false,
+        rawLandmarksPersisted: false,
+        embeddingProduced: false,
+        identityTemplateProduced: false,
+      }),
+      authority: Object.freeze({
+        resultMayBeCalledGeneralProviderMirrorSemantics:
+          false,
+        providerLabelMayBeCalledAnatomicalSide: false,
+        anatomicalLateralityAuthorized: false,
+        validatedExternalEarObservationAuthorized:
+          false,
+        traditionalBindingAuthorized: false,
+        productionAuthorization: false,
+      }),
+    });
+
+    elements.resultIndependent.textContent =
+      JSON.stringify(result, null, 2);
+    setIndependentStatus(
+      '완료 · scalar-only 독립 fixture 결과를 확인하십시오.',
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : String(error);
+    elements.resultIndependent.textContent =
+      JSON.stringify({
+        schemaVersion:
+          'fr104-controlled-provider-independent-fixture-mirror-error-v1',
+        authorityState: 'fail_closed',
+        error: message,
+        rawLandmarksPersisted: false,
+        userImageConsumed: false,
+      }, null, 2);
+    setIndependentStatus('실행 실패 · fail-closed');
+  } finally {
+    if (landmarker !== null) landmarker.close();
+    if (bitmap !== null) bitmap.close();
+    elements.runIndependent.disabled = false;
+  }
+}
+
 elements.run.addEventListener('click', () => {
   void run();
+});
+
+elements.runIndependent.addEventListener('click', () => {
+  void runIndependent();
 });
