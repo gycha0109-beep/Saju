@@ -91,6 +91,26 @@ const declaredProvenance: NeutralEarOrientationMirrorProvenanceFR104V1 =
     }),
   });
 
+const verifiedFrameProvenance: NeutralEarOrientationMirrorProvenanceFR104V1 =
+  Object.freeze({
+    schemaVersion:
+      'fr104-neutral-ear-orientation-mirror-provenance-v1',
+    sharedDecodedPixelFrame: Object.freeze({
+      candidateAndGeometrySamePixelOrientationAttested: true,
+      independentlyVerified: true,
+    }),
+    exifOrientation: Object.freeze({
+      state: 'absent_or_not_required',
+      source: 'capture_pipeline_attestation',
+      independentlyVerified: false,
+    }),
+    frontCameraMirror: Object.freeze({
+      state: 'not_mirrored',
+      source: 'capture_pipeline_attestation',
+      independentlyVerified: false,
+    }),
+  });
+
 function request(
   provenance: NeutralEarOrientationMirrorProvenanceFR104V1,
 ) {
@@ -170,6 +190,26 @@ describe('FR104 ephemeral ear candidate orchestration', () => {
     expect(result.laterality.blockers).toContain(
       'anatomical_mapping_not_implemented',
     );
+  });
+
+  it('removes only the same-pixel blocker after independent verification', () => {
+    const result = orchestrateNeutralEarCandidateFR104(
+      request(verifiedFrameProvenance),
+    );
+
+    expect(
+      result.provenance.sharedDecodedPixelFrame
+        .independentlyVerified,
+    ).toBe(true);
+    expect(result.laterality.blockers).not.toContain(
+      'same_pixel_frame_not_independently_verified',
+    );
+    expect(result.laterality.blockers).toContain(
+      'anatomical_mapping_not_implemented',
+    );
+    expect(result.laterality.anatomicalSide).toBe('unknown');
+    expect(result.authority.anatomicalLateralityAuthorized)
+      .toBe(false);
   });
 
   it('does not treat image-space sign, prompt side, pair agreement, or shape descriptors as acceptance', () => {
