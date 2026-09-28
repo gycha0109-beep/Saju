@@ -154,3 +154,5 @@ export * from './relationship-spouse-t8-source-adjudication-governance-decision.
 export * from './relationship-spouse-t8-source-adjudicated-staging-runtime.js';
 export * from './relationship-spouse-t8-source-adjudicated-shadow-staging-evidence.js';
 export * from './relationship-spouse-t8-production-eligibility-assessment.js';
+export * from './relationship-spouse-t8-production-provenance-acquisition-policy.js';
+export * from './relationship-spouse-t8-production-provenance-candidate-survey.js';
