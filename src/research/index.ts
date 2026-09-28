@@ -157,3 +157,4 @@ export * from './relationship-spouse-t8-production-eligibility-assessment.js';
 export * from './relationship-spouse-t8-production-provenance-acquisition-policy.js';
 export * from './relationship-spouse-t8-production-provenance-candidate-survey.js';
 export * from './relationship-spouse-t8-production-provenance-closure.js';
+export * from './relationship-spouse-t8-selector-redesign-assessment.js';
