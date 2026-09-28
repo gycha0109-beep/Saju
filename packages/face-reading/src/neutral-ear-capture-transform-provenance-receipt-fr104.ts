@@ -1,6 +1,9 @@
 import type {
   NeutralEarOrientationMirrorProvenanceFR104V1,
 } from './neutral-ear-ephemeral-orchestration-fr104.js';
+import {
+  NEUTRAL_EAR_PROVIDER_MIRROR_SEMANTICS_REVIEW_FR104,
+} from './neutral-ear-provider-mirror-semantics-review-fr104.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export type NeutralEarExifOrientationTagFR104V1 =
@@ -97,11 +100,11 @@ export interface NeutralEarDualConsumerTransformBindingFR104V1 {
     readonly consumerFrameDimensionsMatch: true;
     readonly additionalPixelTransformsDeclaredNone: true;
     readonly samePixelBytesIndependentlyVerified: false;
+    readonly boundedProviderMirrorBehaviorStatementAdmitted: true;
   };
   readonly lateralityBlockers: readonly (
     | 'exif_orientation_application_unresolved'
     | 'same_pixel_bytes_not_independently_verified'
-    | 'provider_mirror_semantics_empirical_result_not_admitted'
     | 'anatomical_side_mapping_not_reviewed'
   )[];
   readonly authority: {
@@ -341,7 +344,6 @@ export function finalizeNeutralEarDualConsumerTransformBindingFR104(
   }
   blockers.push(
     'same_pixel_bytes_not_independently_verified',
-    'provider_mirror_semantics_empirical_result_not_admitted',
     'anatomical_side_mapping_not_reviewed',
   );
 
@@ -359,6 +361,10 @@ export function finalizeNeutralEarDualConsumerTransformBindingFR104(
       consumerFrameDimensionsMatch: true as const,
       additionalPixelTransformsDeclaredNone: true as const,
       samePixelBytesIndependentlyVerified: false as const,
+      boundedProviderMirrorBehaviorStatementAdmitted:
+        NEUTRAL_EAR_PROVIDER_MIRROR_SEMANTICS_REVIEW_FR104
+          .decision
+          .boundedProviderMirrorBehaviorStatementAdmitted,
     }),
     lateralityBlockers: Object.freeze(blockers),
     authority: Object.freeze({
@@ -383,6 +389,8 @@ export function deriveNeutralEarPhaseDProvenanceFromTransformReceiptFR104(
     || binding.bindingEvidence
       .sameIssuedReceiptObjectObservedByBothConsumers !== true
     || binding.bindingEvidence.samePixelBytesIndependentlyVerified !== false
+    || binding.bindingEvidence
+      .boundedProviderMirrorBehaviorStatementAdmitted !== true
     || binding.authority.orientationMirrorProvenanceMayBeExportedToPhaseD
       !== true
   ) {
