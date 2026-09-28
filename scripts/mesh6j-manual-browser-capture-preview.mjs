@@ -53,6 +53,8 @@ const fr281PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr281-still
 const fr281ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr281-still-image-metric-eye-chord.mjs');
 const fr283PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr283-still-image-fr76-eye-chord-propagation.html');
 const fr283ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr283-still-image-fr76-eye-chord-propagation.mjs');
+const fr104MirrorPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-pair.html');
+const fr104MirrorClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-pair.mjs');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -305,6 +307,9 @@ async function main() {
   const fr283PageTemplate = readFileSync(fr283PagePath, 'utf8');
   if (!fr283PageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR283 operator page import-map placeholder is missing.');
   const fr283PageHtml = fr283PageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104MirrorPageTemplate = readFileSync(fr104MirrorPagePath, 'utf8');
+  if (!fr104MirrorPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 mirror-pair page import-map placeholder is missing.');
+  const fr104MirrorPageHtml = fr104MirrorPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
 
   const requestHandler = (request, response) => {
     if (LAN_MODE) {
@@ -443,6 +448,19 @@ async function main() {
     }
     if (url.pathname === '/fr283/operator.mjs') { sendFile(response, fr283ClientPath); return; }
 
+    if (url.pathname === '/fr104-mirror' || url.pathname === '/fr104-mirror/' || url.pathname === '/fr104-mirror/index.html') {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104MirrorPageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-mirror/operator.mjs') { sendFile(response, fr104MirrorClientPath); return; }
+
     if (url.pathname === '/runtime/config.json') {
       response.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
@@ -539,6 +557,8 @@ async function main() {
         '/fr281/operator.mjs',
         '/fr283/',
         '/fr283/operator.mjs',
+        '/fr104-mirror/',
+        '/fr104-mirror/operator.mjs',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
         '/runtime/fr76-parity-input.prototxt',
