@@ -258,7 +258,7 @@ export function issueNeutralEarCaptureTransformReceiptFR104(
     }),
     authority: Object.freeze({
       transformProvenanceRecorded: true as const,
-      samePixelBytesIndependentlyVerified,
+      samePixelBytesIndependentlyVerified: false as const,
       anatomicalLateralityAuthorized: false as const,
       traditionalBindingAuthorized: false as const,
       productionAuthorization: false as const,
@@ -392,7 +392,7 @@ export function finalizeNeutralEarDualConsumerTransformBindingFR104(
       sameIssuedReceiptObjectObservedByBothConsumers: true as const,
       consumerFrameDimensionsMatch: true as const,
       additionalPixelTransformsDeclaredNone: true as const,
-      samePixelBytesIndependentlyVerified: false as const,
+      samePixelBytesIndependentlyVerified,
       boundedProviderMirrorBehaviorStatementAdmitted:
         NEUTRAL_EAR_PROVIDER_MIRROR_SEMANTICS_REVIEW_FR104
           .decision
