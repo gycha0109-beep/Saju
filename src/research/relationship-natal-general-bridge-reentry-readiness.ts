@@ -175,6 +175,7 @@ export function evaluateRelationshipNatalGeneralBridgeReentryReadiness(
       RELATIONSHIP_NATAL_GENERAL_BRIDGE_REENTRY_BASELINE.candidateSurfaceHash,
     observedCandidateSurfaceHash,
     candidateBindingFresh,
+    researchClosure: Object.freeze({ ...evidence.researchClosure }),
     researchClosureReady,
     researchReturnRequired: !researchClosureReady,
     bridgeReentryReady: candidateBindingFresh && researchClosureReady,
