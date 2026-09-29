@@ -90,6 +90,8 @@ on:
       - 'packages/face-reading/src/neutral-ear-mediapipe-rotation-api-audit-evidence-fr104.test.ts'
       - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-result-intake-fr104.ts'
       - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-result-intake-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-empirical-evidence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-empirical-evidence-fr104.test.ts'
       - 'packages/face-reading/src/observable-morphology-ephemeral-live-camera-frame-intake-fr242.ts'
       - 'packages/face-reading/src/participant-media-resource-ceiling-fr173-shared.ts'
       - 'packages/face-geometry/docs/mesh6j-localhost-manual-browser-capture-surface.md'
