@@ -105,7 +105,7 @@ describe('FR104 U3 MakeHuman controlled transform diagnostics', () => {
 
     expect(
       authority.exactMakeHumanFixtureTransformDiagnosticsExecuted,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       authority.parityConditionedAssignmentPatternObserved,
     ).toBe(false);
@@ -119,5 +119,14 @@ describe('FR104 U3 MakeHuman controlled transform diagnostics', () => {
       .toBe(false);
     expect(authority.traditionalBindingAuthorized).toBe(false);
     expect(authority.productionAuthorization).toBe(false);
+    expect(
+      NEUTRAL_EAR_MAKEHUMAN_TRANSFORM_DIAGNOSTICS_FR104
+        .admittedDiagnosticOutcome,
+    ).toEqual({
+      state: 'incomplete_provider_coverage',
+      unavailableCaseIds: ['R270', 'M180', 'M270'],
+      hypothesisMismatchCaseIds: ['R180'],
+      anatomicalMappingReviewOutcome: 'hold',
+    });
   });
 });
