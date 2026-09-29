@@ -68,7 +68,7 @@ jobs:
         run: npm ci --no-audit --no-fund --ignore-scripts
 
       - name: Run full regression shard
-        run: npm run test -- --shard=${{ matrix.shard }}/16
+        run: npm run test -- --pool=threads --shard=${{ matrix.shard }}/16
 
   verify:
     name: CI Verify
