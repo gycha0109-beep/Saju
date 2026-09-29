@@ -420,6 +420,14 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-provider-compensated-output-frame-fr104.test.ts
 
+      - name: Verify FR104 U3.2.1 compensated output frame intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-provider-compensated-output-frame-result-intake-fr104.test.ts
+
+      - name: Verify FR104 U3.2.1 compensated output frame evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-provider-compensated-output-frame-empirical-evidence-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
