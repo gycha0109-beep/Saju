@@ -228,32 +228,90 @@ face:build
 
 Face Reading CI separately verifies the U3 protocol contract.
 
-## Two-pass admission
+## Empirical result
 
-Pass 1:
+First headless execution:
 
-1. execute all eight transforms;
-2. record transformed RGBA SHA values;
-3. record provider eligibility per case;
-4. record provider centroids/costs/relation when available;
-5. record bounded scientific summary.
+```text
+MESH6J workflow run = 36507489900
 
-Pass 2:
+canonical RGBA SHA-256
+= fce638e1b435e4d7cf2ba9e8d33b9bbadcd651a70e423a3056f229bcc4298364
+```
 
-1. add fail-closed result intake;
-2. add empirical evidence artifact;
-3. pin exact observed scalar evidence;
-4. rerun headless CI;
-5. require exact empirical reproduction before merge.
+Observed matrix:
+
+| Case | Provider | Relation | Hypothesis |
+| --- | --- | --- | --- |
+| R0 | 1 face / 478 | direct | match |
+| R90 | 1 face / 478 | direct | match |
+| R180 | 1 face / 478 | swapped | **mismatch** |
+| R270 | 0 face | unavailable | n/a |
+| M0 | 1 face / 478 | swapped | match |
+| M90 | 1 face / 478 | swapped | match |
+| M180 | 0 face | unavailable | n/a |
+| M270 | 0 face | unavailable | n/a |
+
+Exact transformed RGBA SHA-256 values:
+
+```text
+R0   fce638e1b435e4d7cf2ba9e8d33b9bbadcd651a70e423a3056f229bcc4298364
+R90  5a8da29746625ed14da6580b84d8ebf0116939a7bfe7d7369ea46f19aeac84ed
+R180 8d725e503a41e01f8e7e48f1466ff54d88c2cd7d3ab9a1df66332625bc7586fc
+R270 b6d87e6c433f971d167a5c35b8751d351c0047abbf7a1e63f959ce83bc2bcead
+M0   5f3b92f9a50d5913d5ba97ff9c5edf9d14e10bdd8a6f8be526cccb32b5f0c0d8
+M90  a0ac410ac805bee1a367df7cb41684376d30eab35c149ab73d81e7d00a9227c4
+M180 5e37e4df33d3457988e7780479fa8c8cf97b5d721b56e5a3298caf23d09e4c9f
+M270 73fef262ba0e9aa7d56ce03297e66437596a0e4f6b7da32d4541569e42e5b51b
+```
+
+Scientific summary:
+
+```text
+state = incomplete_provider_coverage
+unavailable = [R270, M180, M270]
+hypothesis mismatch = [R180]
+```
+
+The simple parity-conditioned hypothesis is therefore **not established**.
+
+In particular, the 180° orientation-preserving case changed from the expected direct relation to swapped, while three rotated cases were not detected at all. This is recorded as provider orientation dependence on this exact fixture, not repaired by retuning the frozen input.
+
+## Admission
+
+A fail-closed result intake now admits the exact eight-case result while keeping semantic authority closed.
+
+Admitted:
+
+```text
+exactMakeHumanFixtureTransformDiagnosticsExecuted = true
+diagnosticState = incomplete_provider_coverage
+anatomicalMappingReviewOutcome = hold
+```
+
+Not admitted:
+
+```text
+parityConditionedAssignmentPatternEstablished = false
+providerLabelMappedToAnatomicalSide = false
+globalProviderAnatomicalSemanticsEstablished = false
+anatomicalReferenceAdmitted = false
+anatomicalLateralityAuthorized = false
+validatedExternalEarObservationAuthorized = false
+traditionalBindingAuthorized = false
+productionAuthorization = false
+```
+
+The headless runner now compares every subsequent U3 result recursively against the exact admitted empirical matrix. Any case-level RGBA SHA, centroid, cost, relation, eligibility state, or summary drift fails CI.
 
 ## Next gate
 
-Only after U3 admission:
+Anatomical mapping remains HOLD.
+
+The next bounded research step is:
 
 ```text
-FR104 U4 — Controlled Anatomical Mapping Evidence Review
+investigate_same_fixture_provider_rotation_dependence_before_any_anatomical_mapping_admission
 ```
 
-U4 reviews whether U2 + U3 + prior mirror evidence are sufficient for any anatomical mapping rule.
-
-No runtime anatomical laterality activation is authorized by U3 alone.
+This must explain the R180 label relation reversal and the R270/M180/M270 detection gaps before any U4 anatomical mapping review is allowed.
