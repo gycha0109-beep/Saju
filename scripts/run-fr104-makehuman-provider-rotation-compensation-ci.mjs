@@ -117,11 +117,21 @@ function validateResult(result) {
     true,
     'zero.M0',
   );
-  exact(
-    probes.signedEquivalent.exactProviderResultEqual,
-    true,
+  const signed = object(
+    probes.signedEquivalent,
     'signedEquivalent',
   );
+  exact(
+    signed.canonicalRepresentation,
+    'positive_0_90_180_270_only',
+    'signedEquivalent.canonicalRepresentation',
+  );
+  if (
+    typeof signed.signedDegreesThrows !== 'boolean'
+    || typeof signed.exactProviderResultEqual !== 'boolean'
+  ) {
+    fail('signedEquivalent behavioral state malformed.');
+  }
   exact(probes.invalidRotation.throws,true,'invalidRotation.throws');
   exact(probes.invalidRotation.resultProduced,false,'invalidRotation.resultProduced');
 
