@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
+import { writeFileSync } from 'node:fs';
 import process from 'node:process';
 
 const SOURCE_REPOSITORY = 'makehumancommunity/makehuman';
@@ -871,7 +872,7 @@ async function buildCanonicalScene() {
   });
 }
 
-async function runPreflight() {
+async function runPreflight(writeRenderPath = null) {
   const scene = await buildCanonicalScene();
   const first = renderScene(scene);
   const second = renderScene(scene);
@@ -891,6 +892,10 @@ async function runPreflight() {
       'RENDER_DIGEST_DRIFT',
       'expected=' + EXPECTED_RENDER_SHA256 + ' observed=' + firstSha,
     );
+  }
+
+  if (writeRenderPath !== null) {
+    writeFileSync(writeRenderPath, first);
   }
 
   const summary = Object.freeze({
@@ -1005,13 +1010,17 @@ async function runPreflight() {
       renderSha256: firstSha,
       expectedRenderSha256: EXPECTED_RENDER_SHA256,
       renderedFixtureDigestPinned: EXPECTED_RENDER_SHA256 !== null,
-      renderedBytesPersistedByVerifier: false,
+      renderedBytesPersistedByVerifier: writeRenderPath !== null,
+      ephemeralRenderWrittenForDownstreamPreflight:
+        writeRenderPath !== null,
+      renderedImageRepositoryPersisted: false,
     }),
     privacy: Object.freeze({
       userImageConsumed: false,
       cameraAccessed: false,
       sourceAssetPersistedByVerifier: false,
-      renderedImagePersistedByVerifier: false,
+      renderedImagePersistedByVerifier: writeRenderPath !== null,
+      renderedImageRepositoryPersisted: false,
       biometricTemplateProduced: false,
     }),
     authority: Object.freeze({
@@ -1083,8 +1092,21 @@ function runSelfTest() {
   }) + '\n');
 }
 
+const writeRenderArgument = process.argv.find(
+  (argument) => argument.startsWith('--write-render='),
+);
+const writeRenderPath = writeRenderArgument === undefined
+  ? null
+  : writeRenderArgument.slice('--write-render='.length);
+if (writeRenderArgument !== undefined && writeRenderPath.length === 0) {
+  fail('INVALID_OUTPUT_PATH', '--write-render requires a non-empty path.');
+}
+
 if (process.argv.includes('--self-test')) {
+  if (writeRenderArgument !== undefined) {
+    fail('INVALID_ARGUMENTS', '--self-test cannot materialize a render.');
+  }
   runSelfTest();
 } else {
-  await runPreflight();
+  await runPreflight(writeRenderPath);
 }
