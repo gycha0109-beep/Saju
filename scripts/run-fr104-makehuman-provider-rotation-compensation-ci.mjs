@@ -14,6 +14,8 @@ const PAGE_URL =
   + '/fr104-makehuman-provider-rotation-compensation/?autorun=1';
 const RESULT_SCHEMA =
   'fr104-provider-rotation-compensation-result-v1';
+const EXPECTED_RESULT_SHA256 =
+  '9b278cf355ec497f5978ce3ae22f5cf94a84bc0ce94908990157e04322a14a0c';
 const ERROR_SCHEMA =
   'fr104-provider-rotation-compensation-error-v1';
 const POLL_TIMEOUT_MS = 180_000;
@@ -276,6 +278,14 @@ async function main() {
     const resultSha256 = createHash('sha256')
       .update(serialized)
       .digest('hex');
+    if (resultSha256 !== EXPECTED_RESULT_SHA256) {
+      fail(
+        'U3_2_RESULT_REPLAY_DRIFT expected='
+          + EXPECTED_RESULT_SHA256
+          + ' observed='
+          + resultSha256,
+      );
+    }
     process.stdout.write(
       'FR104_U3_2_RESULT_SHA256 '
       + resultSha256
