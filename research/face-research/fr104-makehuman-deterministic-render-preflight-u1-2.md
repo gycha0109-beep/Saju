@@ -200,21 +200,26 @@ The U1.2 runner fails on:
 
 ## Two-pass digest admission
 
-Initial implementation intentionally leaves:
+The first CI execution produced the canonical deterministic raster SHA-256:
 
 ```text
-EXPECTED_RENDER_SHA256 = null
+f72a976d90d61223b8ad273d8d8da98ecd6ed0d1a63dff08ded358eef54e92bb
 ```
 
-The first CI execution is an empirical observation only.
+Observed bounded geometry:
 
-After CI produces the canonical SHA-256:
+```text
+base vertices             = 19158
+body triangles            = 26756
+high-poly eye vertices    = 1064
+high-poly eye triangles   = 2040
+orthographic span         = 3.3834385172483907
+anatomical left eye image = (0.5909577633614812, 0.5)
+anatomical right eye image= (0.4090422366385188, 0.5)
+direct/matrix max error   = 0
+```
 
-1. copy that exact digest into the runner/contract;
-2. rerun CI;
-3. require exact digest equality.
-
-Only the second passing run counts as the pinned U1.2 render result.
+The runner now pins that exact digest in `EXPECTED_RENDER_SHA256`. A subsequent CI execution must reproduce the same PNG bytes and the same digest; otherwise the preflight fails with `RENDER_DIGEST_DRIFT`.
 
 ## Authority boundary
 
