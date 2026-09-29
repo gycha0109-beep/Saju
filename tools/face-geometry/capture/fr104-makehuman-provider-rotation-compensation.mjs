@@ -627,16 +627,27 @@ async function run() {
       canvas,
       protocol.sideControls.signedEquivalent.positiveDegrees,
     );
-    const signedNegative = providerDetect(
-      landmarker,
-      canvas,
-      protocol.sideControls.signedEquivalent.signedDegrees,
-    );
-    assertProviderExact(
-      signedPositive,
-      signedNegative,
-      'U3_2_SIGNED_ROTATION_EQUIVALENCE_DRIFT',
-    );
+    let signedNegative = null;
+    let signedNegativeThrows = false;
+    try {
+      signedNegative = providerDetect(
+        landmarker,
+        canvas,
+        protocol.sideControls.signedEquivalent.signedDegrees,
+      );
+    } catch {
+      signedNegativeThrows = true;
+    }
+    const signedExactProviderResultEqual =
+      !signedNegativeThrows
+      && signedNegative !== null
+      && signedPositive.state === signedNegative.state
+      && signedPositive.faceCount === signedNegative.faceCount
+      && signedPositive.landmarkCount === signedNegative.landmarkCount
+      && exactProviderPair(
+        signedPositive.providerEyeCentroids,
+        signedNegative.providerEyeCentroids,
+      );
 
     const invalidRgba = nativeBuffers.get(
       protocol.sideControls.invalidRotation.caseId,
@@ -805,8 +816,13 @@ async function run() {
             protocol.sideControls.signedEquivalent.positiveDegrees,
           signedDegrees:
             protocol.sideControls.signedEquivalent.signedDegrees,
-          exactProviderResultEqual: true,
-          result: signedPositive,
+          signedDegreesThrows: signedNegativeThrows,
+          exactProviderResultEqual:
+            signedExactProviderResultEqual,
+          positiveResult: signedPositive,
+          signedResult: signedNegative,
+          canonicalRepresentation:
+            'positive_0_90_180_270_only',
         }),
         invalidRotation: Object.freeze({
           degrees:
