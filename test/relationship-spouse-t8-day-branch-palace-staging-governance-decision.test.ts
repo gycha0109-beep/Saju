@@ -28,6 +28,7 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5G staging govern
     expect(result.decisionMaterial.lifecycleTarget).toBe('staging');
     expect(result.decisionMaterial.semanticVersion).toBe('2.0.0');
     expect(result.decisionMaterial.checks).toEqual({
+      eligibilityReviewIntegrityValid: true,
       exactEligibilityReviewBinding: true,
       exactCandidateBinding: true,
       exactPolicyBinding: true,
@@ -159,6 +160,34 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5G staging govern
         eligibilityReview: drifted,
       });
 
+    expect(
+      result.decisionMaterial.checks.exactEligibilityReviewBinding,
+    ).toBe(false);
+    expect(result.decisionRef).toBeUndefined();
+    expect(result.sourceAdjudicationAuthorityEstablished).toBe(false);
+  });
+
+  test('fails closed when SA-5F content changes while a stale reviewId is retained', () => {
+    const current =
+      buildRelationshipSpouseT8DayBranchPalaceStagingLifecycleEligibilityReview();
+    const forged = {
+      ...current,
+      evidence: {
+        ...current.evidence,
+        aiAdversarialInternalReviewComplete: false,
+      },
+    } as typeof current;
+
+    const result =
+      evaluateRelationshipSpouseT8DayBranchPalaceStagingGovernanceDecision({
+        projectOwnerDecision:
+          RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_DECISION,
+        eligibilityReview: forged,
+      });
+
+    expect(
+      result.decisionMaterial.checks.eligibilityReviewIntegrityValid,
+    ).toBe(false);
     expect(
       result.decisionMaterial.checks.exactEligibilityReviewBinding,
     ).toBe(false);
