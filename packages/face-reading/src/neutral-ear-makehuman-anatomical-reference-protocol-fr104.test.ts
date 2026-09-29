@@ -64,22 +64,30 @@ describe('FR104 U1 MakeHuman anatomical reference protocol skeleton', () => {
       .toBe(false);
   });
 
-  it('is deliberately non-executable until the render and provider preflight are implemented', () => {
+  it('admits U1.2 render execution while keeping provider preflight closed', () => {
     const protocol =
       NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104;
 
     expect(
       protocol.deterministicRenderContract.implementationState,
-    ).toBe('not_yet_implemented');
+    ).toBe('implemented_digest_pinned');
     expect(protocol.providerPreflight.executed).toBe(false);
     expect(
       protocol.providerPreflight.renderedFixtureDigestPinned,
-    ).toBe(false);
+    ).toBe(true);
+    expect(
+      protocol.deterministicRenderContract.renderedFixtureSha256,
+    ).toBe(
+      'f72a976d90d61223b8ad273d8d8da98ecd6ed0d1a63dff08ded358eef54e92bb',
+    );
     expect(
       protocol.providerPreflight.exactlyOneFaceVerified,
     ).toBe(false);
     expect(protocol.decision.protocolMayBeExecutedNow)
-      .toBe(false);
+      .toBe(true);
+    expect(
+      protocol.groundTruthProjectionContract.implementationState,
+    ).toBe('implemented_same_camera_projection_in_u1_2_runner');
     expect(
       protocol.decision
         .fixtureMayBeCalledControlledAnatomicalReference,
