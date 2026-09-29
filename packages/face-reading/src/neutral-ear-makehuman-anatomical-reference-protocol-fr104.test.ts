@@ -70,11 +70,16 @@ describe('FR104 U1 MakeHuman anatomical reference protocol skeleton', () => {
 
     expect(
       protocol.deterministicRenderContract.implementationState,
-    ).toBe('implemented_digest_observation_pending_pin');
+    ).toBe('implemented_digest_pinned');
     expect(protocol.providerPreflight.executed).toBe(false);
     expect(
       protocol.providerPreflight.renderedFixtureDigestPinned,
-    ).toBe(false);
+    ).toBe(true);
+    expect(
+      protocol.deterministicRenderContract.renderedFixtureSha256,
+    ).toBe(
+      'f72a976d90d61223b8ad273d8d8da98ecd6ed0d1a63dff08ded358eef54e92bb',
+    );
     expect(
       protocol.providerPreflight.exactlyOneFaceVerified,
     ).toBe(false);
