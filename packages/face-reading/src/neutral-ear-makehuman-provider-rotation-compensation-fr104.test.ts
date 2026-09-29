@@ -76,7 +76,7 @@ describe('FR104 U3.2B provider rotation compensation protocol', () => {
 
     expect(
       authority.providerRotationCompensationSemanticsAudited,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       authority.providerRotationCompensationEffectiveForExactFixture,
     ).toBe(false);
@@ -88,5 +88,23 @@ describe('FR104 U3.2B provider rotation compensation protocol', () => {
     expect(authority.anatomicalLateralityAuthorized).toBe(false);
     expect(authority.traditionalBindingAuthorized).toBe(false);
     expect(authority.productionAuthorization).toBe(false);
+    expect(
+      NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_COMPENSATION_FR104
+        .admittedOutcome,
+    ).toEqual({
+      state: 'provider_rotation_compensation_partially_effective',
+      availabilityRecoveredCaseIds: ['R270', 'M180', 'M270'],
+      sameLabelCompensatedCaseIds: ['R0', 'R90', 'M0'],
+      crossLabelCompensatedCaseIds: [
+        'R180',
+        'R270',
+        'M90',
+        'M180',
+        'M270',
+      ],
+      providerAvailabilityRecoveryObserved: true,
+      providerCoordinateCanonicalizationEstablished: false,
+      anatomicalMappingReviewOutcome: 'hold',
+    });
   });
 });
