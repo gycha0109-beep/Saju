@@ -12,6 +12,8 @@ import {
 
 const protocol =
   NEUTRAL_EAR_PROVIDER_COMPENSATED_OUTPUT_FRAME_FR104;
+const EXPECTED_DERIVED_RESULT_SHA256 =
+  '732268b973592f70f606000ffcbd0219e67afcc20b920e57906d14978f5cbb05';
 
 function fail(message) {
   throw new Error('FR104 U3.2.1: ' + message);
@@ -448,6 +450,14 @@ function main() {
     .update(derivedSerialized)
     .digest('hex');
 
+  if (derivedSha256 !== EXPECTED_DERIVED_RESULT_SHA256) {
+    fail(
+      'U3_2_1_RESULT_DIGEST_DRIFT expected='
+        + EXPECTED_DERIVED_RESULT_SHA256
+        + ' observed='
+        + derivedSha256,
+    );
+  }
   process.stdout.write(
     'FR104_U3_2_1_RESULT_SHA256 '
       + derivedSha256
