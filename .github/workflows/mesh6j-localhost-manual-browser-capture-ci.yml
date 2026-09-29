@@ -10,6 +10,8 @@ on:
       - 'scripts/verify-fr104-ear-mirror-fixture.mjs'
       - 'scripts/verify-fr104-ear-mirror-multifixtures.mjs'
       - 'scripts/verify-fr104-ear-mirror-independent-fixture.mjs'
+      - 'scripts/verify-fr104-makehuman-deterministic-render.mjs'
+      - 'scripts/run-fr104-makehuman-provider-preflight-ci.mjs'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.html'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.mjs'
       - 'tools/face-geometry/capture/fr251-dry-run-operator.html'
@@ -48,10 +50,15 @@ on:
       - 'tools/face-geometry/capture/fr104-ear-mirror-pair.mjs'
       - 'tools/face-geometry/capture/fr104-ear-mirror-multifixture.html'
       - 'tools/face-geometry/capture/fr104-ear-mirror-multifixture.mjs'
+      - 'tools/face-geometry/capture/fr104-makehuman-provider-preflight.html'
+      - 'tools/face-geometry/capture/fr104-makehuman-provider-preflight.mjs'
       - 'packages/face-reading/src/neutral-ear-mirror-pair-protocol-fr104.ts'
       - 'packages/face-reading/src/neutral-ear-mirror-pair-protocol-fr104.test.ts'
       - 'packages/face-reading/src/neutral-ear-mirror-multifixture-protocol-fr104.ts'
       - 'packages/face-reading/src/neutral-ear-mirror-multifixture-protocol-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-anatomical-reference-protocol-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-preflight-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-preflight-fr104.test.ts'
       - 'packages/face-reading/src/observable-morphology-ephemeral-live-camera-frame-intake-fr242.ts'
       - 'packages/face-reading/src/participant-media-resource-ceiling-fr173-shared.ts'
       - 'packages/face-geometry/docs/mesh6j-localhost-manual-browser-capture-surface.md'
@@ -101,6 +108,10 @@ jobs:
         run: node scripts/verify-fr104-ear-mirror-independent-fixture.mjs
       - name: Syntax-check FR104 multi-fixture mirror client
         run: node --check tools/face-geometry/capture/fr104-ear-mirror-multifixture.mjs
+      - name: Syntax-check FR104 MakeHuman provider preflight
+        run: |
+          node --check tools/face-geometry/capture/fr104-makehuman-provider-preflight.mjs
+          node --check scripts/run-fr104-makehuman-provider-preflight-ci.mjs
       - name: Install projection dependency
         run: python -m pip install --disable-pip-version-check numpy
       - name: Compile authoring tooling
@@ -126,6 +137,11 @@ jobs:
         env:
           MYEONGHWA_MESH6J_SMOKE: '1'
         run: node scripts/mesh6j-manual-browser-capture-preview.mjs
+      - name: Run FR104 MakeHuman FaceLandmarker preflight
+        run: |
+          google-chrome --version
+          chromedriver --version
+          node scripts/run-fr104-makehuman-provider-preflight-ci.mjs
       - name: Create ephemeral CI TLS certificate
         run: |
           openssl req -x509 -newkey rsa:2048 -nodes \
