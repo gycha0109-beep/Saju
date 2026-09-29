@@ -198,8 +198,136 @@ Pass 2:
 5. rerun headless CI for exact reproduction;
 6. merge only after all regression workflows pass.
 
+## Empirical result
+
+First successful governed execution:
+
+```text
+exact package
+@mediapipe/tasks-vision 0.10.35
+
+package.json
+size = 1084
+sha256 = 5c96247445e57a2d087758114b116fed7d46eb401342aee19b1acc56d36fe707
+
+vision.d.ts
+size = 116918
+sha256 = 3825dba564fc06720dc0934b72a22711ac6b7491ae8662e573ac205699ea016b
+
+vision_bundle.mjs
+size = 136993
+sha256 = 55d7ab624fbb70dcc5adc4ae6d7ea9cfcb569139d3dbfbf2b1deafcb966bc0fe
+```
+
+Exact installed declaration evidence:
+
+```text
+FaceLandmarker.detect accepts ImageProcessingOptions = true
+ImageProcessingOptions declared = true
+rotationDegrees property = true
+clockwise text observed = true
+multiple-of-90 text observed = true
+```
+
+Behavioral probes:
+
+```text
+R0 undefined vs rotationDegrees=0 = exact provider equality
+M0 undefined vs rotationDegrees=0 = exact provider equality
+
+R90 rotationDegrees=270
+vs
+R90 rotationDegrees=-90
+
+throws = false
+exact provider equality = false
+
+canonical representation retained:
+0 / 90 / 180 / 270
+
+rotationDegrees=45
+throws = true
+result produced = false
+```
+
+Compensation matrix:
+
+| Case | Native | Compensated | Relation to family baseline |
+| --- | --- | --- | --- |
+| R0 | available | available | same-label |
+| R90 | available | available | same-label |
+| R180 | available | available | **cross-label** |
+| R270 | unavailable | **available** | cross-label |
+| M0 | available | available | same-label |
+| M90 | available | available | **cross-label** |
+| M180 | unavailable | **available** | cross-label |
+| M270 | unavailable | **available** | cross-label |
+
+Availability recovery:
+
+```text
+R270
+M180
+M270
+```
+
+R180 was not resolved:
+
+```text
+sameLabelCost  = 0.3562492451686251
+crossLabelCost = 0.05188939610706061
+relation       = provider_cross_label_closer
+```
+
+Therefore:
+
+```text
+state = provider_rotation_compensation_partially_effective
+
+providerRotationCompensationSemanticsAudited = true
+providerAvailabilityRecoveryObserved = true
+providerCoordinateCanonicalizationEstablished = false
+providerRotationCompensationEffectiveForExactFixture = false
+canonicalProviderOrientationNormalizationAvailable = false
+
+anatomicalMappingReviewOutcome = hold
+```
+
+Full empirical result replay anchor:
+
+```text
+SHA-256
+9b278cf355ec497f5978ce3ae22f5cf94a84bc0ce94908990157e04322a14a0c
+```
+
+Every subsequent headless execution must reproduce this exact serialized result digest.
+
+## Interpretation
+
+`rotationDegrees` is effective for provider pipeline availability on the previously unavailable cardinal rotations, but the observed output provider coordinates are not established as a canonical R0/M0 coordinate frame.
+
+In particular:
+
+- R180 remains provider-cross-label closer;
+- R270 becomes available but is cross-label closer;
+- M90 changes to cross-label under compensation;
+- M180/M270 recover availability but are cross-label closer.
+
+Therefore provider-side compensation cannot yet be used as an anatomical laterality normalization rule.
+
+No detector-stage failure claim is made.
+
 ## Next gate
 
-If compensation is effective on the exact fixture, U4 anatomical mapping review may be considered, but anatomical LEFT/RIGHT remains unapproved until that separate review.
+U4 remains HOLD.
 
-If compensation is partial or unstable, U4 remains HOLD and a residual rotation/mirror interaction audit is required.
+Next bounded research:
+
+```text
+FR104 U3.2.1
+Compensated Output Coordinate Frame Semantics Audit
+```
+
+The next step must determine whether `rotationDegrees` canonicalizes inference orientation while returning landmark coordinates in the original input image frame, another rotated frame, or a provider-specific convention.
+
+No anatomical LEFT/RIGHT mapping review is authorized until that output-coordinate contract is resolved.
