@@ -211,7 +211,7 @@ export const NEUTRAL_EAR_MAKEHUMAN_TRANSFORM_DIAGNOSTICS_FR104 =
     phase:
       'FR104_MAKEHUMAN_CONTROLLED_TRANSFORM_DIAGNOSTICS_U3' as const,
     authorityState:
-      'protocol_ready_no_transform_empirical_admission' as const,
+      'empirical_transform_result_admitted_incomplete_coverage_with_r180_mismatch_no_anatomical_mapping' as const,
 
     predecessorEvidence:
       'NEUTRAL_EAR_MAKEHUMAN_PROVIDER_PREFLIGHT_EMPIRICAL_EVIDENCE_FR104' as const,
@@ -302,7 +302,7 @@ export const NEUTRAL_EAR_MAKEHUMAN_TRANSFORM_DIAGNOSTICS_FR104 =
 
     authority: Object.freeze({
       exactMakeHumanFixtureTransformDiagnosticsExecuted:
-        false as const,
+        true as const,
       parityConditionedAssignmentPatternObserved:
         false as const,
       providerLabelMappedToAnatomicalSide: false as const,
@@ -316,6 +316,22 @@ export const NEUTRAL_EAR_MAKEHUMAN_TRANSFORM_DIAGNOSTICS_FR104 =
       productionAuthorization: false as const,
     }),
 
+    empiricalEvidenceRef:
+      'NEUTRAL_EAR_MAKEHUMAN_TRANSFORM_EMPIRICAL_EVIDENCE_FR104' as const,
+
+    admittedDiagnosticOutcome: Object.freeze({
+      state: 'incomplete_provider_coverage' as const,
+      unavailableCaseIds: Object.freeze([
+        'R270',
+        'M180',
+        'M270',
+      ] as const),
+      hypothesisMismatchCaseIds: Object.freeze([
+        'R180',
+      ] as const),
+      anatomicalMappingReviewOutcome: 'hold' as const,
+    }),
+
     nextGate:
-      'execute_all_eight_cases_then_admit_only_bounded_transform_scalar_evidence_before_any_anatomical_mapping_review' as const,
+      'investigate_same_fixture_provider_rotation_dependence_before_any_anatomical_mapping_admission' as const,
   });
