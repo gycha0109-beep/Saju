@@ -17,6 +17,8 @@ on:
       - 'scripts/verify-fr85-role-free-contour-nesting.mjs'
       - 'scripts/verify-fr88-role-free-minimum-set-separation.mjs'
       - 'scripts/verify-fr98-role-free-arclength-mean-neutral-metric.mjs'
+      - 'scripts/verify-fr104-makehuman-source-geometry.mjs'
+      - 'scripts/verify-fr104-makehuman-deterministic-render.mjs'
       - 'tsconfig.face-reading.json'
       - 'tsconfig.face-reading.build.json'
       - 'package.json'
@@ -363,6 +365,12 @@ jobs:
       - name: Verify FR104 U1.1 MakeHuman source geometry
         working-directory: target
         run: node scripts/verify-fr104-makehuman-source-geometry.mjs
+
+      - name: Verify FR104 U1.2 deterministic MakeHuman render
+        working-directory: target
+        run: |
+          node scripts/verify-fr104-makehuman-deterministic-render.mjs --self-test
+          node scripts/verify-fr104-makehuman-deterministic-render.mjs
 
       - name: Verify frozen source baseline
         working-directory: source
