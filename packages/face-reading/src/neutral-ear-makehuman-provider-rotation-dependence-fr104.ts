@@ -121,7 +121,7 @@ export const NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_DEPENDENCE_FR104 =
     phase:
       'FR104_MAKEHUMAN_PROVIDER_ROTATION_DEPENDENCE_U3_1' as const,
     authorityState:
-      'protocol_ready_provider_only_rotation_investigation_no_anatomical_mapping' as const,
+      'exact_fixture_provider_rotation_dependence_admitted_no_anatomical_mapping' as const,
 
     predecessorEvidence:
       'NEUTRAL_EAR_MAKEHUMAN_TRANSFORM_EMPIRICAL_SOURCE_FR104' as const,
@@ -215,9 +215,9 @@ export const NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_DEPENDENCE_FR104 =
     }),
 
     authority: Object.freeze({
-      providerRotationDependenceInvestigated: false as const,
+      providerRotationDependenceInvestigated: true as const,
       providerRotationEquivarianceRefutedForExactFixture:
-        false as const,
+        true as const,
       providerLabelMappedToAnatomicalSide: false as const,
       globalProviderAnatomicalSemanticsEstablished: false as const,
       anatomicalReferenceAdmitted: false as const,
@@ -227,6 +227,22 @@ export const NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_DEPENDENCE_FR104 =
       productionAuthorization: false as const,
     }),
 
+    empiricalEvidenceRef:
+      'NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_EMPIRICAL_EVIDENCE_FR104' as const,
+
+    admittedOutcome: Object.freeze({
+      state: 'exact_fixture_rotation_dependence_observed' as const,
+      providerCrossLabelCaseIds: Object.freeze([
+        'R180',
+      ] as const),
+      nativeUnavailableControlRecoveredCaseIds: Object.freeze([
+        'R270',
+        'M180',
+        'M270',
+      ] as const),
+      anatomicalMappingReviewOutcome: 'hold' as const,
+    }),
+
     nextGate:
-      'execute_provider_only_inverse_rotation_and_exact_family_control_then_admit_bounded_rotation_dependence_result' as const,
+      'audit_exact_runtime_provider_side_rotation_compensation_semantics_before_any_anatomical_mapping_review' as const,
   });
