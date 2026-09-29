@@ -1,6 +1,9 @@
 import { spawn } from 'node:child_process';
 import process from 'node:process';
 import {
+  NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_EMPIRICAL_SOURCE_FR104,
+} from '../.face-reading-dist/neutral-ear-makehuman-provider-rotation-empirical-evidence-fr104.js';
+import {
   classifyNeutralEarProviderLabelRelationFR104,
   inverseNeutralEarProviderRotationDegreesFR104,
   NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_DEPENDENCE_FR104,
@@ -678,6 +681,62 @@ function validateResult(result) {
   );
 }
 
+function assertExactEmpiricalMatch(
+  actual,
+  expected,
+  path = 'result',
+) {
+  if (
+    actual === null
+    || expected === null
+    || typeof actual !== 'object'
+    || typeof expected !== 'object'
+  ) {
+    if (!Object.is(actual, expected)) {
+      fail(
+        'U3_1_RESULT_REPLAY_DRIFT at '
+          + path
+          + ': expected='
+          + expected
+          + ' observed='
+          + actual,
+      );
+    }
+    return;
+  }
+
+  if (Array.isArray(actual) || Array.isArray(expected)) {
+    if (
+      !Array.isArray(actual)
+      || !Array.isArray(expected)
+      || actual.length !== expected.length
+    ) {
+      fail('U3_1_RESULT_REPLAY_DRIFT array at ' + path);
+    }
+    for (let index = 0; index < actual.length; index += 1) {
+      assertExactEmpiricalMatch(
+        actual[index],
+        expected[index],
+        path + '[' + index + ']',
+      );
+    }
+    return;
+  }
+
+  const actualKeys = Object.keys(actual).sort();
+  const expectedKeys = Object.keys(expected).sort();
+  if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) {
+    fail('U3_1_RESULT_REPLAY_DRIFT object keys at ' + path);
+  }
+  for (const key of expectedKeys) {
+    assertExactEmpiricalMatch(
+      actual[key],
+      expected[key],
+      path + '.' + key,
+    );
+  }
+}
+
 async function waitForResult(sessionId) {
   const deadline = Date.now() + POLL_TIMEOUT_MS;
   while (Date.now() < deadline) {
@@ -717,6 +776,10 @@ async function waitForResult(sessionId) {
         );
       }
       validateResult(result);
+      assertExactEmpiricalMatch(
+        result,
+        NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_EMPIRICAL_SOURCE_FR104,
+      );
       return result;
     }
     await sleep(750);
