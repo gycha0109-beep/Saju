@@ -220,11 +220,62 @@ The browser result may truthfully record that an execution occurred. That execut
 
 ## Empirical result
 
-Pending first CI execution.
+First headless CI execution:
 
-After CI:
+```text
+MESH6J workflow run = 36504801172
+fixture SHA-256     = f72a976d90d61223b8ad273d8d8da98ecd6ed0d1a63dff08ded358eef54e92bb
+face count          = 1
+landmark count      = 478
 
-- success will record exact face/landmark counts, provider eye centroids, direct/swapped costs, and descriptive relation;
-- unavailable will record the exact bounded failure state without retuning the frozen U1.2 fixture.
+provider LEFT eye centroid
+= (0.5904278568923473, 0.512873537838459)
 
-A separate result-admission artifact must validate the CI output before any protocol authority is changed.
+provider RIGHT eye centroid
+= (0.4134050067514181, 0.5108402445912361)
+
+independent anatomical LEFT eye
+= (0.5909577633614812, 0.5)
+
+independent anatomical RIGHT eye
+= (0.4090422366385188, 0.5)
+
+direct cost  = 0.02456967216060714
+swapped cost = 0.35972525227214214
+relation     = direct_assignment_closer
+```
+
+The exact fixture therefore passed the provider eligibility preflight.
+
+A separate fail-closed intake now admits only:
+
+```text
+providerFaceDetectabilityVerifiedForExactPinnedFixture = true
+exactFixtureDirectAssignmentRelationObserved = true
+```
+
+Still false:
+
+```text
+providerLabelMappedToAnatomicalSide = false
+globalProviderAnatomicalSemanticsEstablished = false
+anatomicalReferenceAdmitted = false
+anatomicalLateralityAuthorized = false
+validatedExternalEarObservationAuthorized = false
+traditionalBindingAuthorized = false
+productionAuthorization = false
+```
+
+The committed empirical centroids, costs, and relation are now rechecked against every subsequent headless CI execution. Any scalar drift fails CI instead of silently replacing the admitted result.
+
+## Next gate
+
+Use the exact same SHA-pinned MakeHuman fixture for controlled transform diagnostics:
+
+1. original vs explicit horizontal mirror;
+2. rotations 0 / 90 / 180 / 270;
+3. preserve anatomical identity while transforming image coordinates;
+4. compare provider-labelled eye centroids against transformed independent anatomical projections;
+5. keep any anatomical mapping admission closed until the transform behavior is reviewed.
+
+No yaw sweep is admitted before the mirror/rotation diagnostics are stable.
