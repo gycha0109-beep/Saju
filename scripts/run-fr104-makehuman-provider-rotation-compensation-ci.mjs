@@ -306,7 +306,11 @@ async function main() {
     process.exitCode=1;
   } finally {
     if (sessionId !== null) {
-      try { await webdriver('/session/'+sessionId,'DELETE'); } catch {}
+      try {
+        await webdriver('/session/'+sessionId,'DELETE');
+      } catch {
+        // Cleanup failure must not replace the governed empirical result.
+      }
     }
     await terminate(driver);
     await terminate(server);
