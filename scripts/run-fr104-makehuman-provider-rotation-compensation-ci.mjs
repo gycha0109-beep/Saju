@@ -272,9 +272,18 @@ async function main() {
       {url:PAGE_URL},
     );
     const result=await waitForResult(sessionId);
+    const serialized = JSON.stringify(result);
+    const resultSha256 = createHash('sha256')
+      .update(serialized)
+      .digest('hex');
+    process.stdout.write(
+      'FR104_U3_2_RESULT_SHA256 '
+      + resultSha256
+      + '\n',
+    );
     process.stdout.write(
       'FR104_U3_2_EMPIRICAL_RESULT '
-      + JSON.stringify(result)
+      + serialized
       + '\n',
     );
   } catch (error) {
