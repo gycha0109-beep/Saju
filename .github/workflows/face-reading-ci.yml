@@ -380,6 +380,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-preflight-empirical-evidence-fr104.test.ts
 
+      - name: Verify FR104 U3 MakeHuman transform diagnostics protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-transform-diagnostics-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
