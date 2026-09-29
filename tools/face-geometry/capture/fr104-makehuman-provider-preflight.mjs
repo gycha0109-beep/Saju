@@ -150,8 +150,12 @@ function baseResult(fixture) {
       biometricEmbeddingProduced: false,
       identityTemplateProduced: false,
     }),
+    execution: Object.freeze({
+      providerPreflightExecuted: true,
+      providerFaceDetectabilityObserved: false,
+      empiricalResultAdmitted: false,
+    }),
     authority: Object.freeze({
-      providerPreflightExecuted: false,
       providerFaceDetectabilityVerified: false,
       providerLabelMappedToAnatomicalSide: false,
       anatomicalReferenceAdmitted: false,
@@ -221,6 +225,11 @@ function summarizeProviderResult(result, fixture) {
     ...shared,
     authorityState:
       'candidate_scalar_evidence_only_no_anatomical_mapping',
+    execution: Object.freeze({
+      providerPreflightExecuted: true,
+      providerFaceDetectabilityObserved: true,
+      empiricalResultAdmitted: false,
+    }),
     providerEligibility: Object.freeze({
       state: 'exact_one_face_478_landmarks_observed',
       faceCount,
