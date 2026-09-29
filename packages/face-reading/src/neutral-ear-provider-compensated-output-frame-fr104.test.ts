@@ -51,16 +51,36 @@ describe('FR104 U3.2.1 compensated output frame protocol', () => {
         .authority;
 
     expect(authority.providerCompensatedOutputFrameAudited)
-      .toBe(false);
+      .toBe(true);
     expect(authority.providerCompensatedOutputFrame)
-      .toBe('unresolved');
+      .toBe('original_input_image_frame');
     expect(
       authority
         .composedProviderOrientationNormalizationAvailableForExactFixture,
-    ).toBe(false);
+    ).toBe(true);
     expect(authority.providerLabelMappedToAnatomicalSide)
       .toBe(false);
     expect(authority.anatomicalLateralityAuthorized).toBe(false);
     expect(authority.productionAuthorization).toBe(false);
+    expect(
+      NEUTRAL_EAR_PROVIDER_COMPENSATED_OUTPUT_FRAME_FR104
+        .admittedOutcome,
+    ).toEqual({
+      state: 'original_input_frame_supported',
+      selectedHypothesis: 'original_input_image_frame',
+      quarterTurnOriginalInputFrameStrictDominance: true,
+      halfTurnIdentityRejected: true,
+      aggregateUnorderedPairCost: {
+        canonical_output_frame: 1.1000092040019644,
+        original_input_image_frame: 0.017798602734814976,
+        opposite_rotated_output_frame: 0.2062558418317363,
+      },
+      selectedSameLabelCaseIds: [
+        'R0','R90','R180','R270',
+        'M0','M90','M180','M270',
+      ],
+      selectedCrossLabelCaseIds: [],
+      anatomicalMappingReviewOutcome: 'hold',
+    });
   });
 });
