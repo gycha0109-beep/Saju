@@ -5,7 +5,7 @@ export const NEUTRAL_EAR_MEDIAPIPE_ROTATION_API_AUDIT_FR104 =
     phase:
       'FR104_MEDIAPIPE_ROTATION_API_AUDIT_U3_2A' as const,
     authorityState:
-      'protocol_ready_exact_package_artifact_audit_pending' as const,
+      'exact_installed_0_10_35_artifacts_and_runtime_rotation_behavior_audited' as const,
 
     packageIdentity: Object.freeze({
       packageName: '@mediapipe/tasks-vision' as const,
@@ -61,7 +61,7 @@ export const NEUTRAL_EAR_MEDIAPIPE_ROTATION_API_AUDIT_FR104 =
 
     authority: Object.freeze({
       providerRotationCompensationSemanticsAudited:
-        false as const,
+        true as const,
       providerRotationCompensationEffectiveForExactFixture:
         false as const,
       canonicalProviderOrientationNormalizationAvailable:
@@ -71,6 +71,9 @@ export const NEUTRAL_EAR_MEDIAPIPE_ROTATION_API_AUDIT_FR104 =
       productionAuthorization: false as const,
     }),
 
+    empiricalEvidenceRef:
+      'NEUTRAL_EAR_MEDIAPIPE_ROTATION_API_AUDIT_EVIDENCE_FR104' as const,
+
     nextGate:
-      'verify_exact_installed_0_10_35_artifacts_and_runtime_rotation_probes_before_compensation_admission' as const,
+      'consume_exact_audited_rotation_api_contract_in_bounded_compensation_evidence_only' as const,
   });
