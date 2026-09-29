@@ -1,5 +1,8 @@
 import { spawn } from 'node:child_process';
 import process from 'node:process';
+import {
+  NEUTRAL_EAR_MAKEHUMAN_PROVIDER_PREFLIGHT_EMPIRICAL_SOURCE_FR104,
+} from '../.face-reading-dist/neutral-ear-makehuman-provider-preflight-empirical-evidence-fr104.js';
 
 const SERVER_PORT = 4317;
 const DRIVER_PORT = 9515;
@@ -245,6 +248,61 @@ function validateEmpiricalResult(result) {
   }
 }
 
+function validatePinnedEmpiricalMatch(result) {
+  const expected =
+    NEUTRAL_EAR_MAKEHUMAN_PROVIDER_PREFLIGHT_EMPIRICAL_SOURCE_FR104;
+
+  const actualProvider = result.providerEyeCentroids;
+  const expectedProvider = expected.providerEyeCentroids;
+  for (const side of ['providerLeft', 'providerRight']) {
+    for (const axis of ['x', 'y']) {
+      if (
+        !Object.is(
+          actualProvider?.[side]?.[axis],
+          expectedProvider[side][axis],
+        )
+      ) {
+        fail(
+          'pinned empirical provider centroid drift: '
+            + side
+            + '.'
+            + axis
+            + ' expected='
+            + expectedProvider[side][axis]
+            + ' observed='
+            + actualProvider?.[side]?.[axis],
+        );
+      }
+    }
+  }
+
+  for (const key of ['directCost', 'swappedCost']) {
+    if (
+      !Object.is(
+        result.comparison?.[key],
+        expected.comparison[key],
+      )
+    ) {
+      fail(
+        'pinned empirical comparison drift: '
+          + key
+          + ' expected='
+          + expected.comparison[key]
+          + ' observed='
+          + result.comparison?.[key],
+      );
+    }
+  }
+  if (result.comparison?.relation !== expected.comparison.relation) {
+    fail(
+      'pinned empirical relation drift: expected='
+        + expected.comparison.relation
+        + ' observed='
+        + result.comparison?.relation,
+    );
+  }
+}
+
 async function waitForEmpiricalResult(sessionId) {
   const deadline = Date.now() + POLL_TIMEOUT_MS;
   while (Date.now() < deadline) {
@@ -276,6 +334,7 @@ async function waitForEmpiricalResult(sessionId) {
         fail('browser preflight failed closed: ' + result.error);
       }
       validateEmpiricalResult(result);
+      validatePinnedEmpiricalMatch(result);
       return result;
     }
     await sleep(750);
