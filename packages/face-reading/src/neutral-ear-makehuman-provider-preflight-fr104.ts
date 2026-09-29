@@ -9,7 +9,7 @@ import {
 export const NEUTRAL_EAR_MAKEHUMAN_PROVIDER_PREFLIGHT_FR104 = Object.freeze({
   phase: 'FR104_MAKEHUMAN_PROVIDER_PREFLIGHT_U2' as const,
   authorityState:
-    'protocol_ready_empirical_result_not_yet_admitted' as const,
+    'exact_fixture_face_detectability_admitted_direct_relation_observed_no_anatomical_mapping' as const,
 
   predecessor:
     NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104.schemaVersion,
@@ -105,8 +105,8 @@ export const NEUTRAL_EAR_MAKEHUMAN_PROVIDER_PREFLIGHT_FR104 = Object.freeze({
   }),
 
   authority: Object.freeze({
-    providerPreflightExecuted: false as const,
-    providerFaceDetectabilityVerified: false as const,
+    providerPreflightExecuted: true as const,
+    providerFaceDetectabilityVerified: true as const,
     providerLabelMappedToAnatomicalSide: false as const,
     anatomicalReferenceAdmitted: false as const,
     anatomicalLateralityAuthorized: false as const,
@@ -115,6 +115,9 @@ export const NEUTRAL_EAR_MAKEHUMAN_PROVIDER_PREFLIGHT_FR104 = Object.freeze({
     productionAuthorization: false as const,
   }),
 
+  empiricalEvidenceRef:
+    'NEUTRAL_EAR_MAKEHUMAN_PROVIDER_PREFLIGHT_EMPIRICAL_EVIDENCE_FR104' as const,
+
   nextGate:
-    'execute_exact_facelandmarker_on_pinned_makehuman_raster_then_admit_only_bounded_scalar_result' as const,
+    'run_same_pinned_fixture_horizontal_mirror_and_0_90_180_270_rotation_diagnostics_before_any_anatomical_mapping_admission' as const,
 });
