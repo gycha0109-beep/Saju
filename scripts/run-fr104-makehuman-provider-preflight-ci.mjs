@@ -24,7 +24,7 @@ function fail(message) {
 
 function sleep(milliseconds) {
   return new Promise((resolve) => {
-    setTimeout(resolve, milliseconds);
+    globalThis.setTimeout(resolve, milliseconds);
   });
 }
 
