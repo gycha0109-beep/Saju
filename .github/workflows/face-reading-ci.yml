@@ -396,6 +396,14 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-rotation-empirical-evidence-fr104.test.ts
 
+      - name: Verify FR104 U3.2A MediaPipe rotation API audit protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mediapipe-rotation-api-audit-fr104.test.ts
+
+      - name: Verify FR104 U3.2B provider rotation compensation protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
