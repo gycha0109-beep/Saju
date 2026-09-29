@@ -14,7 +14,7 @@ const RAW_ROOT =
 const OUTPUT_WIDTH = 1024;
 const OUTPUT_HEIGHT = 1024;
 const ORTHOGRAPHIC_SPAN_IN_MAKEHUMAN_UNITS = 3;
-const EXPECTED_RENDER_SHA256 = null;
+const EXPECTED_RENDER_SHA256 = 'f72a976d90d61223b8ad273d8d8da98ecd6ed0d1a63dff08ded358eef54e92bb';
 
 const BODY_COLOR = Object.freeze([198, 151, 127]);
 const EYE_COLOR = Object.freeze([220, 220, 220]);
