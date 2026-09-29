@@ -7,7 +7,7 @@ export const NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104 =
     schemaVersion:
       'fr104-makehuman-anatomical-reference-render-protocol-v1' as const,
     authorityState:
-      'protocol_skeleton_only_fixture_not_rendered_provider_preflight_not_executed' as const,
+      'deterministic_render_preflight_implemented_digest_pending_provider_preflight_not_executed' as const,
 
     auditRef:
       'NEUTRAL_EAR_ANATOMICAL_REFERENCE_ASSET_AUDIT_FR104' as const,
@@ -41,6 +41,11 @@ export const NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104 =
           'makehuman/data/eyes/high-poly/high-poly.mhclo' as const,
         proxyBlobSha:
           '22bc5f77f398c59088804f7f4c9bb0e39d38661d' as const,
+      }),
+      proxyRuntime: Object.freeze({
+        path: 'makehuman/shared/proxy.py' as const,
+        blobSha:
+          'ac98a19632b0769b23ad3276380cc6132b2e0928' as const,
       }),
       defaultSkeleton: Object.freeze({
         path:
@@ -76,7 +81,7 @@ export const NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104 =
 
     deterministicRenderContract: Object.freeze({
       implementationState:
-        'not_yet_implemented' as const,
+        'implemented_digest_observation_pending_pin' as const,
       outputFormat: 'PNG' as const,
       outputWidth: 1024 as const,
       outputHeight: 1024 as const,
@@ -99,18 +104,18 @@ export const NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104 =
           true as const,
       }),
       framingRuleState:
-        'must_be_fully_specified_before_execution' as const,
+        'eye_midpoint_center_square_span_three_makehuman_units' as const,
       lightingRuleState:
-        'must_be_fully_specified_before_execution' as const,
+        'symmetric_camera_frontal_flat_lambert_ambient_0_35_diffuse_0_65' as const,
       materialRuleState:
-        'must_be_fully_specified_before_execution' as const,
+        'fixed_symmetric_rgb_body_198_151_127_eye_220_220_220' as const,
       backgroundRuleState:
-        'must_be_fully_specified_before_execution' as const,
+        'uniform_rgb_32_32_32' as const,
     }),
 
     groundTruthProjectionContract: Object.freeze({
       implementationState:
-        'not_yet_implemented' as const,
+        'implemented_same_camera_projection_in_u1_2_runner' as const,
       anatomicalLeftEyeSource:
         'MakeHuman eye.L independent joint head' as const,
       anatomicalRightEyeSource:
@@ -143,22 +148,18 @@ export const NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104 =
     }),
 
     executionBlockers: Object.freeze([
-      'makehuman_asset_assembly_not_implemented',
-      'deterministic_framing_not_fully_specified',
-      'deterministic_lighting_material_background_not_fully_specified',
-      'independent_anatomical_eye_projection_not_implemented',
       'rendered_fixture_digest_not_pinned',
       'face_landmarker_exactly_one_face_preflight_not_executed',
     ] as const),
 
     decision: Object.freeze({
-      protocolMayBeExecutedNow: false as const,
+      protocolMayBeExecutedNow: true as const,
       fixtureMayBeCalledControlledAnatomicalReference:
         false as const,
       anatomicalMappingEvidenceMayBeAdmitted:
         false as const,
       nextGate:
-        'implement deterministic MakeHuman assembly/render/projection preflight, generate one non-user fixture, pin its digest, and verify exactly one FaceLandmarker face before any anatomical-reference admission' as const,
+        'execute the deterministic MakeHuman render preflight, pin the observed digest, then verify exactly one FaceLandmarker face before any anatomical-reference admission' as const,
     }),
 
     authority: Object.freeze({
