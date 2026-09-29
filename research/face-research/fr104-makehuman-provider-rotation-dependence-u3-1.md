@@ -176,25 +176,103 @@ U3_1_UNAUTHORIZED_AUTHORITY_PROMOTION
 
 Native R180 cross-label or native no-face states are scientific results, not harness errors.
 
-## Admission sequence
+## Empirical result
 
-Pass 1:
+First headless execution:
 
-1. run all 8 native cases;
-2. inverse-map available provider centroids;
-3. run all 8 exact rotation-canonicalized controls;
-4. record provider-only scalar evidence and summary.
+```text
+MESH6J workflow run = 36510425643
+scientific state = exact_fixture_rotation_dependence_observed
+```
 
-Pass 2:
+Provider-only inverse-rotation comparison:
 
-1. add fail-closed result intake;
-2. add empirical evidence artifact;
-3. pin exact native/control scalars and states;
-4. rerun headless CI;
-5. require exact result replay before merge.
+| Case | Native provider | Provider relation vs same-family baseline |
+| --- | --- | --- |
+| R0 | 1 face / 478 | provider_same_label_closer |
+| R90 | 1 face / 478 | provider_same_label_closer |
+| R180 | 1 face / 478 | **provider_cross_label_closer** |
+| R270 | 0 face | unavailable |
+| M0 | 1 face / 478 | provider_same_label_closer |
+| M90 | 1 face / 478 | provider_same_label_closer |
+| M180 | 0 face | unavailable |
+| M270 | 0 face | unavailable |
+
+R180 exact provider-only costs after inverse rotation:
+
+```text
+sameLabelCost  = 0.34978736535134813
+crossLabelCost = 0.025722610815087955
+relation       = provider_cross_label_closer
+```
+
+No anatomical ground truth participates in these costs.
+
+Rotation-canonicalized controls:
+
+```text
+R0/R90/R180/R270
+→ inverse rotation
+→ exact R0 RGBA SHA
+→ exact R0 provider centroid scalars
+
+M0/M90/M180/M270
+→ inverse rotation
+→ exact M0 RGBA SHA
+→ exact M0 provider centroid scalars
+```
+
+Native unavailable cases recovered by exact family controls:
+
+```text
+R270
+M180
+M270
+```
+
+Therefore the bounded result is:
+
+```text
+providerRotationDependenceInvestigated = true
+providerRotationEquivarianceRefutedForExactFixture = true
+
+crossLabelCaseIds = [R180]
+nativeUnavailableControlRecoveredCaseIds = [R270, M180, M270]
+
+anatomicalInterpretationUsed = false
+detectorStageFailureClaimed = false
+anatomicalMappingReviewOutcome = hold
+```
+
+The result supports only provider-pipeline rotation dependence on this exact fixture/runtime. It does not establish anatomical LEFT/RIGHT semantics.
+
+## Admission and replay
+
+A fail-closed result intake validates:
+
+- exact fixture/runtime identity;
+- absence of anatomical dependencies;
+- exact predecessor native RGBA SHA per case;
+- inverse-mapped provider points;
+- recomputed same/cross/unordered/midpoint/inter-eye scalars;
+- exact R0/M0 byte recovery;
+- exact family baseline provider scalar recovery;
+- scientific summary;
+- closed anatomical/traditional/Production authority.
+
+The headless runner now recursively compares every subsequent result against the admitted empirical source. Any native/control scalar, SHA, state, relation, or summary drift is `U3_1_RESULT_REPLAY_DRIFT`.
 
 ## Next gate
 
-If exact-fixture provider rotation dependence is established, anatomical mapping remains HOLD.
+Anatomical mapping remains HOLD.
 
-The next decision is whether a separate U3.2 provider-side rotation compensation audit is required before any U4 anatomical mapping review.
+U3.1 establishes that a provider-side orientation/rotation mechanism must be audited before provider labels can participate in any anatomical mapping review.
+
+Next:
+
+```text
+FR104 U3.2
+Exact Runtime Provider-Side Rotation Compensation Audit
+```
+
+U3.2 must first establish the exact `@mediapipe/tasks-vision@0.10.35` rotation-compensation API/source semantics before testing any provider-side rotation hint. No U4 anatomical mapping review is allowed before that audit.
