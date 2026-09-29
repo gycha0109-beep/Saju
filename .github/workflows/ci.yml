@@ -45,13 +45,13 @@ jobs:
         run: npm run preview:research:smoke
 
   test:
-    name: CI Tests (${{ matrix.shard }}/4)
+    name: CI Tests (${{ matrix.shard }}/8)
     runs-on: ubuntu-latest
     timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
 
     steps:
       - name: Checkout
@@ -67,7 +67,7 @@ jobs:
         run: npm ci --no-audit --no-fund --ignore-scripts
 
       - name: Run full regression shard
-        run: npm run test -- --shard=${{ matrix.shard }}/4
+        run: npm run test -- --shard=${{ matrix.shard }}/8
 
   verify:
     name: CI Verify
