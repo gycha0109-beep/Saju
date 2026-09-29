@@ -61,6 +61,8 @@ const fr104MakeHumanPreflightPagePath = resolve(repoRoot, 'tools/face-geometry/c
 const fr104MakeHumanPreflightClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-preflight.mjs');
 const fr104MakeHumanTransformPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-transform-diagnostics.html');
 const fr104MakeHumanTransformClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-transform-diagnostics.mjs');
+const fr104MakeHumanRotationDependencePagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-dependence.html');
+const fr104MakeHumanRotationDependenceClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-dependence.mjs');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -385,6 +387,9 @@ async function main() {
   const fr104MakeHumanTransformPageTemplate = readFileSync(fr104MakeHumanTransformPagePath, 'utf8');
   if (!fr104MakeHumanTransformPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 MakeHuman transform diagnostics page import-map placeholder is missing.');
   const fr104MakeHumanTransformPageHtml = fr104MakeHumanTransformPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104MakeHumanRotationDependencePageTemplate = readFileSync(fr104MakeHumanRotationDependencePagePath, 'utf8');
+  if (!fr104MakeHumanRotationDependencePageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 MakeHuman provider rotation-dependence page import-map placeholder is missing.');
+  const fr104MakeHumanRotationDependencePageHtml = fr104MakeHumanRotationDependencePageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
 
   const requestHandler = (request, response) => {
     if (LAN_MODE) {
@@ -616,6 +621,43 @@ async function main() {
       return;
     }
 
+    if (
+      url.pathname === '/fr104-makehuman-provider-rotation-dependence'
+      || url.pathname === '/fr104-makehuman-provider-rotation-dependence/'
+      || url.pathname === '/fr104-makehuman-provider-rotation-dependence/index.html'
+    ) {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104MakeHumanRotationDependencePageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-makehuman-provider-rotation-dependence/operator.mjs') {
+      sendFile(response, fr104MakeHumanRotationDependenceClientPath);
+      return;
+    }
+    if (url.pathname === '/fr104-makehuman-provider-rotation-dependence/fixture.png') {
+      try {
+        ensureFr104MakeHumanFixture();
+      } catch (error) {
+        response.writeHead(500, {
+          'content-type': 'text/plain; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-content-type-options': 'nosniff',
+        });
+        response.end(
+          error instanceof Error ? error.message : String(error),
+        );
+        return;
+      }
+      sendFile(response, fr104MakeHumanFixture);
+      return;
+    }
+
     if (url.pathname === '/runtime/config.json') {
       response.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
@@ -722,6 +764,9 @@ async function main() {
         '/fr104-makehuman-transform-diagnostics/',
         '/fr104-makehuman-transform-diagnostics/operator.mjs',
         '/fr104-makehuman-transform-diagnostics/fixture.png',
+        '/fr104-makehuman-provider-rotation-dependence/',
+        '/fr104-makehuman-provider-rotation-dependence/operator.mjs',
+        '/fr104-makehuman-provider-rotation-dependence/fixture.png',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
         '/runtime/fr76-parity-input.prototxt',
@@ -732,6 +777,7 @@ async function main() {
         '/face/neutral-ear-mirror-multifixture-protocol-fr104.js',
         '/face/neutral-ear-makehuman-provider-preflight-fr104.js',
         '/face/neutral-ear-makehuman-transform-diagnostics-fr104.js',
+        '/face/neutral-ear-makehuman-provider-rotation-dependence-fr104.js',
         '/face/mesh6h-browser-camera-frame-source.js',
         '/face/mesh6i-manual-browser-capture-controller.js',
         '/face/observable-morphology-longitudinal-repeatability-observation-fr255.js',
@@ -811,6 +857,7 @@ async function main() {
     process.stdout.write('FR104 controlled multi-fixture mirror: ' + base + '/fr104-mirror-multi/\n');
     process.stdout.write('FR104 MakeHuman provider preflight: ' + base + '/fr104-makehuman-preflight/\n');
     process.stdout.write('FR104 MakeHuman transform diagnostics: ' + base + '/fr104-makehuman-transform-diagnostics/\n');
+    process.stdout.write('FR104 MakeHuman provider rotation dependence: ' + base + '/fr104-makehuman-provider-rotation-dependence/\n');
   }
   process.stdout.write('Camera data remains in-memory; only sanitized/descriptive JSON can be exported by the browser surfaces.\n');
 }
