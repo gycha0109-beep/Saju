@@ -160,12 +160,120 @@ Pass 2:
 4. rerun U3.2 + U3.2.1 and require exact replay;
 5. merge only after all regression workflows pass.
 
+## Empirical result
+
+First governed derived execution:
+
+```text
+predecessor U3.2 result SHA-256
+9b278cf355ec497f5978ce3ae22f5cf94a84bc0ce94908990157e04322a14a0c
+
+U3.2.1 derived result SHA-256
+732268b973592f70f606000ffcbd0219e67afcc20b920e57906d14978f5cbb05
+```
+
+The exact U3.2 result was replayed live before analysis.
+
+Observed aggregate unordered-pair cost over the six rotated cases:
+
+```text
+canonical_output_frame
+= 1.1000092040019644
+
+original_input_image_frame
+= 0.017798602734814976
+
+opposite_rotated_output_frame
+= 0.2062558418317363
+```
+
+Quarter-turn result:
+
+```text
+R90  H2 < H1 and H2 < H3
+R270 H2 < H1 and H2 < H3
+M90  H2 < H1 and H2 < H3
+M270 H2 < H1 and H2 < H3
+```
+
+Half-turn result:
+
+```text
+R180 H2 == H3 < H1
+M180 H2 == H3 < H1
+```
+
+Therefore:
+
+```text
+state = original_input_frame_supported
+
+selectedHypothesis =
+original_input_image_frame
+
+quarterTurnOriginalInputFrameStrictDominance = true
+halfTurnIdentityRejected = true
+```
+
+After selecting that frame, provider label continuity becomes:
+
+```text
+same-label:
+R0 R90 R180 R270
+M0 M90 M180 M270
+
+cross-label:
+none
+```
+
+Frame selection itself did not use provider LEFT/RIGHT labels; the primary metric was unordered geometry.
+
+## Admission
+
+Admitted bounded authority:
+
+```text
+providerCompensatedOutputFrameAudited = true
+
+providerCompensatedOutputFrame =
+original_input_image_frame
+
+composedProviderOrientationNormalizationAvailableForExactFixture =
+true
+```
+
+This means the exact fixture/runtime supports the composed operation:
+
+```text
+provider rotationDegrees compensation
++
+explicit inverse rotation of returned provider coordinates
+```
+
+as a canonical provider-coordinate normalization procedure.
+
+It does **not** establish anatomical LEFT/RIGHT semantics.
+
+Still false:
+
+```text
+providerLabelMappedToAnatomicalSide = false
+globalProviderAnatomicalSemanticsEstablished = false
+anatomicalReferenceAdmitted = false
+anatomicalLateralityAuthorized = false
+validatedExternalEarObservationAuthorized = false
+traditionalBindingAuthorized = false
+productionAuthorization = false
+```
+
 ## Next gate
 
-If the bounded result supports `original_input_image_frame`, the next research gate is prospective rather than anatomical:
+This audit is retrospective, so U4 remains HOLD.
+
+Next:
 
 ```text
 FR104 U3.3 — Prospective Composed Orientation Normalization Validation
 ```
 
-No U4 anatomical mapping review is authorized from this retrospective audit alone.
+The composed normalization rule must be frozen first and then applied prospectively to an independent fixture without retuning before any anatomical mapping review is considered.
