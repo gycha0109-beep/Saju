@@ -6,7 +6,6 @@ import {
   FR24_EYE_TOPOLOGY_WITNESS_EDGES,
 } from '/face/face-eye-pair-research-bridge-fr24.js';
 import {
-  expectedNeutralEarMakeHumanRelationFR104,
   NEUTRAL_EAR_MAKEHUMAN_TRANSFORM_DIAGNOSTICS_FR104,
   transformNeutralEarMakeHumanPointFR104,
 } from '/face/neutral-ear-makehuman-transform-diagnostics-fr104.js';
