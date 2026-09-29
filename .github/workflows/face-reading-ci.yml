@@ -372,6 +372,14 @@ jobs:
           node scripts/verify-fr104-makehuman-deterministic-render.mjs --self-test
           node scripts/verify-fr104-makehuman-deterministic-render.mjs
 
+      - name: Verify FR104 U2 MakeHuman provider preflight protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-preflight-fr104.test.ts
+
+      - name: Verify FR104 U2 MakeHuman provider empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-preflight-empirical-evidence-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |

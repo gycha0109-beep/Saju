@@ -144,25 +144,26 @@ export const NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104 =
       numFaces: 1 as const,
       exactlyOneFaceRequired: true as const,
       expectedLandmarkCount: 478 as const,
-      executed: false as const,
+      executed: true as const,
       renderedFixtureDigestPinned: true as const,
-      exactlyOneFaceVerified: false as const,
+      exactlyOneFaceVerified: true as const,
       rawLandmarksPersisted: false as const,
       sourceRenderPersistedInRepository: false as const,
     }),
 
     executionBlockers: Object.freeze([
-      'face_landmarker_exactly_one_face_preflight_not_executed',
+      'controlled_mirror_rotation_diagnostics_not_executed',
+      'provider_anatomical_mapping_not_reviewed',
     ] as const),
 
     decision: Object.freeze({
-      protocolMayBeExecutedNow: true as const,
+      protocolMayBeExecutedNow: false as const,
       fixtureMayBeCalledControlledAnatomicalReference:
         false as const,
       anatomicalMappingEvidenceMayBeAdmitted:
         false as const,
       nextGate:
-        'verify the pinned deterministic fixture with exact FaceLandmarker and require exactly one 478-landmark face before any anatomical-reference admission' as const,
+        'run same-fixture mirror and 0/90/180/270 rotation diagnostics before any anatomical mapping admission' as const,
     }),
 
     authority: Object.freeze({
