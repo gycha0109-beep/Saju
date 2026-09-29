@@ -57,6 +57,8 @@ const fr104MirrorPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104
 const fr104MirrorClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-pair.mjs');
 const fr104MirrorMultiPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-multifixture.html');
 const fr104MirrorMultiClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-multifixture.mjs');
+const fr104MakeHumanPreflightPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-preflight.html');
+const fr104MakeHumanPreflightClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-preflight.mjs');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -64,6 +66,7 @@ const ontology = resolve(cacheDir, 'gnm-provider-region-ontology.json');
 const weightedAdapter = resolve(cacheDir, 'mediapipe468-weighted-region-adapter.json');
 const metadataFile = resolve(cacheDir, 'geometry_pipeline_metadata_landmarks.pbtxt');
 const parityInputFile = resolve(cacheDir, 'fr76-parity-input.prototxt');
+const fr104MakeHumanFixture = resolve(cacheDir, 'fr104-makehuman-u1-2.png');
 
 function fail(message) {
   throw new Error('MESH6J ' + message);
@@ -118,6 +121,31 @@ async function prepareRuntimeAssets() {
     fail('compiled Face Reading modules are missing; run npm run face:build before starting MESH6J.');
   }
   mkdirSync(cacheDir, { recursive: true });
+
+  const renderResult = spawnSync(
+    process.execPath,
+    [
+      'scripts/verify-fr104-makehuman-deterministic-render.mjs',
+      '--write-render=' + fr104MakeHumanFixture,
+    ],
+    {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: SMOKE ? 'pipe' : 'inherit',
+    },
+  );
+  if (renderResult.error) {
+    fail('FR104 MakeHuman fixture materialization failed: ' + renderResult.error.message);
+  }
+  if (renderResult.status !== 0) {
+    const detail = SMOKE
+      ? '\n' + (renderResult.stderr || renderResult.stdout || '')
+      : '';
+    fail('FR104 MakeHuman fixture materialization failed.' + detail);
+  }
+  if (!existsSync(fr104MakeHumanFixture) || !statSync(fr104MakeHumanFixture).isFile()) {
+    fail('FR104 MakeHuman fixture was not materialized.');
+  }
 
   runPython('tools/face-reading/blender/fetch_mediapipe_canonical_face.py', [
     '--output', canonicalObj,
@@ -201,6 +229,7 @@ function mime(path) {
     case '.txt': return 'text/plain; charset=utf-8';
     case '.wasm': return 'application/wasm';
     case '.map': return 'application/json; charset=utf-8';
+    case '.png': return 'image/png';
     default: return 'application/octet-stream';
   }
 }
@@ -315,6 +344,9 @@ async function main() {
   const fr104MirrorMultiPageTemplate = readFileSync(fr104MirrorMultiPagePath, 'utf8');
   if (!fr104MirrorMultiPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 multi-fixture mirror page import-map placeholder is missing.');
   const fr104MirrorMultiPageHtml = fr104MirrorMultiPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104MakeHumanPreflightPageTemplate = readFileSync(fr104MakeHumanPreflightPagePath, 'utf8');
+  if (!fr104MakeHumanPreflightPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 MakeHuman preflight page import-map placeholder is missing.');
+  const fr104MakeHumanPreflightPageHtml = fr104MakeHumanPreflightPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
 
   const requestHandler = (request, response) => {
     if (LAN_MODE) {
@@ -479,6 +511,20 @@ async function main() {
     }
     if (url.pathname === '/fr104-mirror-multi/operator.mjs') { sendFile(response, fr104MirrorMultiClientPath); return; }
 
+    if (url.pathname === '/fr104-makehuman-preflight' || url.pathname === '/fr104-makehuman-preflight/' || url.pathname === '/fr104-makehuman-preflight/index.html') {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104MakeHumanPreflightPageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-makehuman-preflight/operator.mjs') { sendFile(response, fr104MakeHumanPreflightClientPath); return; }
+    if (url.pathname === '/fr104-makehuman-preflight/fixture.png') { sendFile(response, fr104MakeHumanFixture); return; }
+
     if (url.pathname === '/runtime/config.json') {
       response.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
@@ -579,6 +625,9 @@ async function main() {
         '/fr104-mirror/operator.mjs',
         '/fr104-mirror-multi/',
         '/fr104-mirror-multi/operator.mjs',
+        '/fr104-makehuman-preflight/',
+        '/fr104-makehuman-preflight/operator.mjs',
+        '/fr104-makehuman-preflight/fixture.png',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
         '/runtime/fr76-parity-input.prototxt',
@@ -587,6 +636,7 @@ async function main() {
         '/face/mediapipe-face-landmarker-runtime-fr26.js',
         '/face/neutral-ear-mirror-pair-protocol-fr104.js',
         '/face/neutral-ear-mirror-multifixture-protocol-fr104.js',
+        '/face/neutral-ear-makehuman-provider-preflight-fr104.js',
         '/face/mesh6h-browser-camera-frame-source.js',
         '/face/mesh6i-manual-browser-capture-controller.js',
         '/face/observable-morphology-longitudinal-repeatability-observation-fr255.js',
@@ -664,6 +714,7 @@ async function main() {
     process.stdout.write('FR283 fixed-still FR76 eye-chord propagation: ' + base + '/fr283/\n');
     process.stdout.write('FR104 controlled mirror pair: ' + base + '/fr104-mirror/\n');
     process.stdout.write('FR104 controlled multi-fixture mirror: ' + base + '/fr104-mirror-multi/\n');
+    process.stdout.write('FR104 MakeHuman provider preflight: ' + base + '/fr104-makehuman-preflight/\n');
   }
   process.stdout.write('Camera data remains in-memory; only sanitized/descriptive JSON can be exported by the browser surfaces.\n');
 }
