@@ -15,6 +15,24 @@ import { fileURLToPath } from 'node:url';
 
 const EXPECTED_PACKAGE = '@mediapipe/tasks-vision';
 const EXPECTED_VERSION = '0.10.35';
+const EXPECTED_ARTIFACTS = Object.freeze({
+  packageJson: Object.freeze({
+    sizeBytes: 1084,
+    sha256:
+      '5c96247445e57a2d087758114b116fed7d46eb401342aee19b1acc56d36fe707',
+  }),
+  declaration: Object.freeze({
+    sizeBytes: 116918,
+    sha256:
+      '3825dba564fc06720dc0934b72a22711ac6b7491ae8662e573ac205699ea016b',
+  }),
+  runtimeEntry: Object.freeze({
+    relativePath: 'vision_bundle.mjs',
+    sizeBytes: 136993,
+    sha256:
+      '55d7ab624fbb70dcc5adc4ae6d7ea9cfcb569139d3dbfbf2b1deafcb966bc0fe',
+  }),
+});
 
 function fail(message) {
   throw new Error('FR104 U3.2A: ' + message);
@@ -91,6 +109,56 @@ if (packageJson.version !== EXPECTED_VERSION) {
   );
 }
 
+const artifactObservation = Object.freeze({
+  packageJson: Object.freeze({
+    sizeBytes: packageJsonBytes.length,
+    sha256: sha256(packageJsonBytes),
+  }),
+  declaration: Object.freeze({
+    sizeBytes: declarationBytes.length,
+    sha256: sha256(declarationBytes),
+  }),
+  runtimeEntry: Object.freeze({
+    relativePath:
+      relative(packageRoot, runtimeEntry).split(sep).join('/'),
+    sizeBytes: runtimeEntryBytes.length,
+    sha256: sha256(runtimeEntryBytes),
+  }),
+});
+
+for (const key of ['packageJson', 'declaration']) {
+  if (
+    artifactObservation[key].sizeBytes
+      !== EXPECTED_ARTIFACTS[key].sizeBytes
+    || artifactObservation[key].sha256
+      !== EXPECTED_ARTIFACTS[key].sha256
+  ) {
+    fail(
+      'U3_2_RUNTIME_ARTIFACT_SHA_DRIFT '
+        + key
+        + ' expected='
+        + JSON.stringify(EXPECTED_ARTIFACTS[key])
+        + ' observed='
+        + JSON.stringify(artifactObservation[key]),
+    );
+  }
+}
+if (
+  artifactObservation.runtimeEntry.relativePath
+    !== EXPECTED_ARTIFACTS.runtimeEntry.relativePath
+  || artifactObservation.runtimeEntry.sizeBytes
+    !== EXPECTED_ARTIFACTS.runtimeEntry.sizeBytes
+  || artifactObservation.runtimeEntry.sha256
+    !== EXPECTED_ARTIFACTS.runtimeEntry.sha256
+) {
+  fail(
+    'U3_2_RUNTIME_ARTIFACT_SHA_DRIFT runtimeEntry expected='
+      + JSON.stringify(EXPECTED_ARTIFACTS.runtimeEntry)
+      + ' observed='
+      + JSON.stringify(artifactObservation.runtimeEntry),
+  );
+}
+
 const declaration = declarationBytes.toString('utf8');
 const detectWithImageProcessingOptions =
   /detect\s*\(\s*image\s*:\s*ImageSource\s*,\s*imageProcessingOptions\s*\??\s*:\s*ImageProcessingOptions\s*\)\s*:\s*FaceLandmarkerResult\s*;/u
@@ -132,22 +200,13 @@ const result = Object.freeze({
   artifacts: Object.freeze({
     packageJson: Object.freeze({
       relativePath: 'package.json',
-      sizeBytes: packageJsonBytes.length,
-      sha256: sha256(packageJsonBytes),
+      ...artifactObservation.packageJson,
     }),
     declaration: Object.freeze({
       relativePath: 'vision.d.ts',
-      sizeBytes: declarationBytes.length,
-      sha256: sha256(declarationBytes),
+      ...artifactObservation.declaration,
     }),
-    runtimeEntry: Object.freeze({
-      relativePath:
-        relative(packageRoot, runtimeEntry)
-          .split(sep)
-          .join('/'),
-      sizeBytes: runtimeEntryBytes.length,
-      sha256: sha256(runtimeEntryBytes),
-    }),
+    runtimeEntry: artifactObservation.runtimeEntry,
   }),
   declarationEvidence: Object.freeze({
     faceLandmarkerDetectAcceptsImageProcessingOptions:
