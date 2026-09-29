@@ -16,7 +16,7 @@ export const NEUTRAL_EAR_PROVIDER_COMPENSATED_OUTPUT_FRAME_FR104 =
     studyKind:
       'retrospective_coordinate_frame_audit' as const,
     authorityState:
-      'protocol_ready_derived_empirical_result_not_yet_admitted' as const,
+      'original_input_frame_supported_retrospective_audit_admitted' as const,
 
     predecessor: Object.freeze({
       evidenceRef:
@@ -89,11 +89,11 @@ export const NEUTRAL_EAR_PROVIDER_COMPENSATED_OUTPUT_FRAME_FR104 =
     }),
 
     authority: Object.freeze({
-      providerCompensatedOutputFrameAudited: false as const,
+      providerCompensatedOutputFrameAudited: true as const,
       providerCompensatedOutputFrame:
-        'unresolved' as const,
+        'original_input_image_frame' as const,
       composedProviderOrientationNormalizationAvailableForExactFixture:
-        false as const,
+        true as const,
       providerLabelMappedToAnatomicalSide: false as const,
       globalProviderAnatomicalSemanticsEstablished:
         false as const,
@@ -105,6 +105,32 @@ export const NEUTRAL_EAR_PROVIDER_COMPENSATED_OUTPUT_FRAME_FR104 =
       productionAuthorization: false as const,
     }),
 
+    empiricalEvidenceRef:
+      'NEUTRAL_EAR_PROVIDER_COMPENSATED_OUTPUT_FRAME_EMPIRICAL_EVIDENCE_FR104' as const,
+
+    admittedOutcome: Object.freeze({
+      state: 'original_input_frame_supported' as const,
+      selectedHypothesis:
+        'original_input_image_frame' as const,
+      quarterTurnOriginalInputFrameStrictDominance:
+        true as const,
+      halfTurnIdentityRejected: true as const,
+      aggregateUnorderedPairCost: Object.freeze({
+        canonical_output_frame: 1.1000092040019644,
+        original_input_image_frame:
+          0.017798602734814976,
+        opposite_rotated_output_frame:
+          0.2062558418317363,
+      }),
+      selectedSameLabelCaseIds: Object.freeze([
+        'R0','R90','R180','R270',
+        'M0','M90','M180','M270',
+      ] as const),
+      selectedCrossLabelCaseIds:
+        Object.freeze([] as const),
+      anatomicalMappingReviewOutcome: 'hold' as const,
+    }),
+
     nextGate:
-      'derive_three_frame_hypotheses_from_exact_live_replayed_u3_2_result_then_admit_bounded_coordinate_frame_evidence' as const,
+      'prospectively_validate_composed_orientation_normalization_on_independent_fixture_before_any_anatomical_mapping_review' as const,
   });
