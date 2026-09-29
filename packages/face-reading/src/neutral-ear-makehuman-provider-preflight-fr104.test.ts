@@ -49,12 +49,12 @@ describe('FR104 U2 MakeHuman provider preflight protocol', () => {
     ).toBe(false);
   });
 
-  it('does not authorize anatomical semantics before empirical admission', () => {
+  it('admits exact-fixture detectability while keeping anatomical semantics closed', () => {
     const authority =
       NEUTRAL_EAR_MAKEHUMAN_PROVIDER_PREFLIGHT_FR104.authority;
 
-    expect(authority.providerPreflightExecuted).toBe(false);
-    expect(authority.providerFaceDetectabilityVerified).toBe(false);
+    expect(authority.providerPreflightExecuted).toBe(true);
+    expect(authority.providerFaceDetectabilityVerified).toBe(true);
     expect(authority.providerLabelMappedToAnatomicalSide).toBe(false);
     expect(authority.anatomicalReferenceAdmitted).toBe(false);
     expect(authority.anatomicalLateralityAuthorized).toBe(false);
@@ -62,5 +62,10 @@ describe('FR104 U2 MakeHuman provider preflight protocol', () => {
       .toBe(false);
     expect(authority.traditionalBindingAuthorized).toBe(false);
     expect(authority.productionAuthorization).toBe(false);
+    expect(
+      NEUTRAL_EAR_MAKEHUMAN_PROVIDER_PREFLIGHT_FR104.nextGate,
+    ).toBe(
+      'run_same_pinned_fixture_horizontal_mirror_and_0_90_180_270_rotation_diagnostics_before_any_anatomical_mapping_admission',
+    );
   });
 });
