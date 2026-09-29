@@ -68,7 +68,7 @@ describe('FR104 U3.1 provider rotation dependence protocol', () => {
     ).toBe(false);
   });
 
-  it('forbids anatomical interpretation and keeps authority closed', () => {
+  it('admits exact-fixture rotation dependence while keeping anatomical authority closed', () => {
     const protocol =
       NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_DEPENDENCE_FR104;
 
@@ -83,13 +83,23 @@ describe('FR104 U3.1 provider rotation dependence protocol', () => {
     ).toBe(false);
     expect(
       protocol.authority.providerRotationDependenceInvestigated,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       protocol.authority
         .providerRotationEquivarianceRefutedForExactFixture,
-    ).toBe(false);
+    ).toBe(true);
     expect(protocol.authority.anatomicalLateralityAuthorized)
       .toBe(false);
     expect(protocol.authority.productionAuthorization).toBe(false);
+    expect(protocol.admittedOutcome).toEqual({
+      state: 'exact_fixture_rotation_dependence_observed',
+      providerCrossLabelCaseIds: ['R180'],
+      nativeUnavailableControlRecoveredCaseIds: [
+        'R270',
+        'M180',
+        'M270',
+      ],
+      anatomicalMappingReviewOutcome: 'hold',
+    });
   });
 });
