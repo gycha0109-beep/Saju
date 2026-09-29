@@ -7,7 +7,7 @@ export const NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104 =
     schemaVersion:
       'fr104-makehuman-anatomical-reference-render-protocol-v1' as const,
     authorityState:
-      'deterministic_render_preflight_implemented_digest_pending_provider_preflight_not_executed' as const,
+      'deterministic_render_preflight_digest_pinned_provider_preflight_not_executed' as const,
 
     auditRef:
       'NEUTRAL_EAR_ANATOMICAL_REFERENCE_ASSET_AUDIT_FR104' as const,
@@ -81,7 +81,7 @@ export const NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104 =
 
     deterministicRenderContract: Object.freeze({
       implementationState:
-        'implemented_digest_observation_pending_pin' as const,
+        'implemented_digest_pinned' as const,
       outputFormat: 'PNG' as const,
       outputWidth: 1024 as const,
       outputHeight: 1024 as const,
@@ -111,6 +111,10 @@ export const NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104 =
         'fixed_symmetric_rgb_body_198_151_127_eye_220_220_220' as const,
       backgroundRuleState:
         'uniform_rgb_32_32_32' as const,
+      rendererImplementation:
+        'fr104_bounded_cpu_triangle_rasterizer_v1' as const,
+      renderedFixtureSha256:
+        'f72a976d90d61223b8ad273d8d8da98ecd6ed0d1a63dff08ded358eef54e92bb' as const,
     }),
 
     groundTruthProjectionContract: Object.freeze({
@@ -141,14 +145,13 @@ export const NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104 =
       exactlyOneFaceRequired: true as const,
       expectedLandmarkCount: 478 as const,
       executed: false as const,
-      renderedFixtureDigestPinned: false as const,
+      renderedFixtureDigestPinned: true as const,
       exactlyOneFaceVerified: false as const,
       rawLandmarksPersisted: false as const,
       sourceRenderPersistedInRepository: false as const,
     }),
 
     executionBlockers: Object.freeze([
-      'rendered_fixture_digest_not_pinned',
       'face_landmarker_exactly_one_face_preflight_not_executed',
     ] as const),
 
@@ -159,7 +162,7 @@ export const NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104 =
       anatomicalMappingEvidenceMayBeAdmitted:
         false as const,
       nextGate:
-        'execute the deterministic MakeHuman render preflight, pin the observed digest, then verify exactly one FaceLandmarker face before any anatomical-reference admission' as const,
+        'verify the pinned deterministic fixture with exact FaceLandmarker and require exactly one 478-landmark face before any anatomical-reference admission' as const,
     }),
 
     authority: Object.freeze({
