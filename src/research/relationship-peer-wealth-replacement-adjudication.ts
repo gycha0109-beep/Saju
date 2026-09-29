@@ -187,7 +187,7 @@ export function buildRelationshipPeerWealthReplacementAdjudication() {
     modernSharedResourceNarrativeEstablished &&
     runtimeBoundaryPreserved &&
     requiredPredicatesMatchPhase3 &&
-    R022_AUTHORITY.executableWealthPatternResolverAuthorized === true;
+    Boolean(R022_AUTHORITY.executableWealthPatternResolverAuthorized);
 
   const material = Object.freeze({
     version: RELATIONSHIP_PEER_WEALTH_REPLACEMENT_ADJUDICATION_VERSION,
