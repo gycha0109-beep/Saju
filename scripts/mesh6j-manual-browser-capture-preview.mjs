@@ -67,6 +67,8 @@ const weightedAdapter = resolve(cacheDir, 'mediapipe468-weighted-region-adapter.
 const metadataFile = resolve(cacheDir, 'geometry_pipeline_metadata_landmarks.pbtxt');
 const parityInputFile = resolve(cacheDir, 'fr76-parity-input.prototxt');
 const fr104MakeHumanFixture = resolve(cacheDir, 'fr104-makehuman-u1-2.png');
+const FR104_MAKEHUMAN_FIXTURE_SHA256 =
+  'f72a976d90d61223b8ad273d8d8da98ecd6ed0d1a63dff08ded358eef54e92bb';
 
 function fail(message) {
   throw new Error('MESH6J ' + message);
@@ -116,11 +118,20 @@ async function fetchExactParityInput() {
   await fetchExactRemoteAsset(PARITY_INPUT_URL, PARITY_INPUT_BLOB_SHA, parityInputFile, 'FR76 parity input');
 }
 
-async function prepareRuntimeAssets() {
-  if (!existsSync(faceDist)) {
-    fail('compiled Face Reading modules are missing; run npm run face:build before starting MESH6J.');
-  }
+function fileSha256(path) {
+  return createHash('sha256').update(readFileSync(path)).digest('hex');
+}
+
+function ensureFr104MakeHumanFixture() {
   mkdirSync(cacheDir, { recursive: true });
+  if (
+    existsSync(fr104MakeHumanFixture)
+    && statSync(fr104MakeHumanFixture).isFile()
+    && fileSha256(fr104MakeHumanFixture)
+      === FR104_MAKEHUMAN_FIXTURE_SHA256
+  ) {
+    return;
+  }
 
   const renderResult = spawnSync(
     process.execPath,
@@ -131,21 +142,43 @@ async function prepareRuntimeAssets() {
     {
       cwd: repoRoot,
       encoding: 'utf8',
-      stdio: SMOKE ? 'pipe' : 'inherit',
+      stdio: 'pipe',
     },
   );
   if (renderResult.error) {
-    fail('FR104 MakeHuman fixture materialization failed: ' + renderResult.error.message);
+    fail(
+      'FR104 MakeHuman fixture materialization failed: '
+        + renderResult.error.message,
+    );
   }
   if (renderResult.status !== 0) {
-    const detail = SMOKE
-      ? '\n' + (renderResult.stderr || renderResult.stdout || '')
-      : '';
-    fail('FR104 MakeHuman fixture materialization failed.' + detail);
+    fail(
+      'FR104 MakeHuman fixture materialization failed.\n'
+        + (renderResult.stderr || renderResult.stdout || ''),
+    );
   }
-  if (!existsSync(fr104MakeHumanFixture) || !statSync(fr104MakeHumanFixture).isFile()) {
+  if (
+    !existsSync(fr104MakeHumanFixture)
+    || !statSync(fr104MakeHumanFixture).isFile()
+  ) {
     fail('FR104 MakeHuman fixture was not materialized.');
   }
+  const observed = fileSha256(fr104MakeHumanFixture);
+  if (observed !== FR104_MAKEHUMAN_FIXTURE_SHA256) {
+    fail(
+      'FR104 MakeHuman fixture SHA-256 mismatch: expected='
+        + FR104_MAKEHUMAN_FIXTURE_SHA256
+        + ' observed='
+        + observed,
+    );
+  }
+}
+
+async function prepareRuntimeAssets() {
+  if (!existsSync(faceDist)) {
+    fail('compiled Face Reading modules are missing; run npm run face:build before starting MESH6J.');
+  }
+  mkdirSync(cacheDir, { recursive: true });
 
   runPython('tools/face-reading/blender/fetch_mediapipe_canonical_face.py', [
     '--output', canonicalObj,
@@ -523,7 +556,23 @@ async function main() {
       return;
     }
     if (url.pathname === '/fr104-makehuman-preflight/operator.mjs') { sendFile(response, fr104MakeHumanPreflightClientPath); return; }
-    if (url.pathname === '/fr104-makehuman-preflight/fixture.png') { sendFile(response, fr104MakeHumanFixture); return; }
+    if (url.pathname === '/fr104-makehuman-preflight/fixture.png') {
+      try {
+        ensureFr104MakeHumanFixture();
+      } catch (error) {
+        response.writeHead(500, {
+          'content-type': 'text/plain; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-content-type-options': 'nosniff',
+        });
+        response.end(
+          error instanceof Error ? error.message : String(error),
+        );
+        return;
+      }
+      sendFile(response, fr104MakeHumanFixture);
+      return;
+    }
 
     if (url.pathname === '/runtime/config.json') {
       response.writeHead(200, {
