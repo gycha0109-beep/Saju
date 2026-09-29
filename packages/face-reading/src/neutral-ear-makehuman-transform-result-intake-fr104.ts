@@ -320,8 +320,7 @@ export function admitNeutralEarMakeHumanTransformDiagnosticResultFR104(
   }
 
   const admittedCases = [];
-  for (let index = 0; index < protocol.cases.length; index += 1) {
-    const expected = protocol.cases[index];
+  for (const [index, expected] of protocol.cases.entries()) {
     const item = object(root.cases[index], `cases[${index}]`);
 
     exact(item.id, expected.id, `${expected.id}.id`);
@@ -553,8 +552,12 @@ export function admitNeutralEarMakeHumanTransformDiagnosticResultFR104(
     }));
   }
 
+  const r0 = admittedCases[0];
+  if (r0 === undefined) {
+    fail('R0 admitted case is unavailable.');
+  }
   exact(
-    admittedCases[0]?.transformedRgbaSha256,
+    r0.transformedRgbaSha256,
     fixture.canonicalRgbaSha256,
     'R0 transformed RGBA SHA',
   );
