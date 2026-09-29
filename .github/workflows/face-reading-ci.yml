@@ -392,6 +392,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-rotation-dependence-fr104.test.ts
 
+      - name: Verify FR104 U3.1 provider rotation empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-rotation-empirical-evidence-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
