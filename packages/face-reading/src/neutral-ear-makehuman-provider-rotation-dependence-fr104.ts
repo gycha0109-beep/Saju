@@ -23,13 +23,30 @@ export type NeutralEarProviderPointFR104V1 =
 const predecessor =
   NEUTRAL_EAR_MAKEHUMAN_TRANSFORM_EMPIRICAL_SOURCE_FR104;
 
-const r0 = predecessor.cases[0];
-const m0 = predecessor.cases[4];
+function requirePredecessorCase(
+  index: number,
+  expectedId: NeutralEarProviderRotationCaseIdFR104V1,
+) {
+  const item = predecessor.cases[index];
+  if (item === undefined || item.id !== expectedId) {
+    throw new Error(
+      `FR104 U3.1 predecessor case ${expectedId} is unavailable.`,
+    );
+  }
+  return item;
+}
+
+const r0 = requirePredecessorCase(0, 'R0');
+const r90 = requirePredecessorCase(1, 'R90');
+const r180 = requirePredecessorCase(2, 'R180');
+const r270 = requirePredecessorCase(3, 'R270');
+const m0 = requirePredecessorCase(4, 'M0');
+const m90 = requirePredecessorCase(5, 'M90');
+const m180 = requirePredecessorCase(6, 'M180');
+const m270 = requirePredecessorCase(7, 'M270');
 
 if (
-  r0.id !== 'R0'
-  || r0.providerEyeCentroids === null
-  || m0.id !== 'M0'
+  r0.providerEyeCentroids === null
   || m0.providerEyeCentroids === null
 ) {
   throw new Error(
@@ -140,14 +157,14 @@ export const NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_DEPENDENCE_FR104 =
     }),
 
     cases: Object.freeze([
-      Object.freeze({ id:'R0', family:'non_mirrored', horizontalMirror:false, clockwiseRotationDegrees:0, predecessorNativeRgbaSha256: predecessor.cases[0].transformedRgbaSha256 }),
-      Object.freeze({ id:'R90', family:'non_mirrored', horizontalMirror:false, clockwiseRotationDegrees:90, predecessorNativeRgbaSha256: predecessor.cases[1].transformedRgbaSha256 }),
-      Object.freeze({ id:'R180', family:'non_mirrored', horizontalMirror:false, clockwiseRotationDegrees:180, predecessorNativeRgbaSha256: predecessor.cases[2].transformedRgbaSha256 }),
-      Object.freeze({ id:'R270', family:'non_mirrored', horizontalMirror:false, clockwiseRotationDegrees:270, predecessorNativeRgbaSha256: predecessor.cases[3].transformedRgbaSha256 }),
-      Object.freeze({ id:'M0', family:'mirrored', horizontalMirror:true, clockwiseRotationDegrees:0, predecessorNativeRgbaSha256: predecessor.cases[4].transformedRgbaSha256 }),
-      Object.freeze({ id:'M90', family:'mirrored', horizontalMirror:true, clockwiseRotationDegrees:90, predecessorNativeRgbaSha256: predecessor.cases[5].transformedRgbaSha256 }),
-      Object.freeze({ id:'M180', family:'mirrored', horizontalMirror:true, clockwiseRotationDegrees:180, predecessorNativeRgbaSha256: predecessor.cases[6].transformedRgbaSha256 }),
-      Object.freeze({ id:'M270', family:'mirrored', horizontalMirror:true, clockwiseRotationDegrees:270, predecessorNativeRgbaSha256: predecessor.cases[7].transformedRgbaSha256 }),
+      Object.freeze({ id:'R0', family:'non_mirrored', horizontalMirror:false, clockwiseRotationDegrees:0, predecessorNativeRgbaSha256: r0.transformedRgbaSha256 }),
+      Object.freeze({ id:'R90', family:'non_mirrored', horizontalMirror:false, clockwiseRotationDegrees:90, predecessorNativeRgbaSha256: r90.transformedRgbaSha256 }),
+      Object.freeze({ id:'R180', family:'non_mirrored', horizontalMirror:false, clockwiseRotationDegrees:180, predecessorNativeRgbaSha256: r180.transformedRgbaSha256 }),
+      Object.freeze({ id:'R270', family:'non_mirrored', horizontalMirror:false, clockwiseRotationDegrees:270, predecessorNativeRgbaSha256: r270.transformedRgbaSha256 }),
+      Object.freeze({ id:'M0', family:'mirrored', horizontalMirror:true, clockwiseRotationDegrees:0, predecessorNativeRgbaSha256: m0.transformedRgbaSha256 }),
+      Object.freeze({ id:'M90', family:'mirrored', horizontalMirror:true, clockwiseRotationDegrees:90, predecessorNativeRgbaSha256: m90.transformedRgbaSha256 }),
+      Object.freeze({ id:'M180', family:'mirrored', horizontalMirror:true, clockwiseRotationDegrees:180, predecessorNativeRgbaSha256: m180.transformedRgbaSha256 }),
+      Object.freeze({ id:'M270', family:'mirrored', horizontalMirror:true, clockwiseRotationDegrees:270, predecessorNativeRgbaSha256: m270.transformedRgbaSha256 }),
     ] as const),
 
     comparison: Object.freeze({
