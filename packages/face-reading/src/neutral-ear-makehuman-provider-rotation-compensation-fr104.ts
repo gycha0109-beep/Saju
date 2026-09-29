@@ -48,7 +48,7 @@ export const NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_COMPENSATION_FR104 =
     phase:
       'FR104_MAKEHUMAN_PROVIDER_ROTATION_COMPENSATION_U3_2B' as const,
     authorityState:
-      'protocol_ready_compensation_empirical_result_not_yet_admitted' as const,
+      'partial_availability_recovery_admitted_coordinate_canonicalization_not_established' as const,
 
     apiAuditRef:
       'NEUTRAL_EAR_MEDIAPIPE_ROTATION_API_AUDIT_FR104' as const,
@@ -228,7 +228,7 @@ export const NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_COMPENSATION_FR104 =
 
     authority: Object.freeze({
       providerRotationCompensationSemanticsAudited:
-        false as const,
+        true as const,
       providerRotationCompensationEffectiveForExactFixture:
         false as const,
       canonicalProviderOrientationNormalizationAvailable:
@@ -244,6 +244,35 @@ export const NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_COMPENSATION_FR104 =
       productionAuthorization: false as const,
     }),
 
+    empiricalEvidenceRef:
+      'NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_COMPENSATION_EMPIRICAL_EVIDENCE_FR104' as const,
+
+    admittedOutcome: Object.freeze({
+      state:
+        'provider_rotation_compensation_partially_effective' as const,
+      availabilityRecoveredCaseIds: Object.freeze([
+        'R270',
+        'M180',
+        'M270',
+      ] as const),
+      sameLabelCompensatedCaseIds: Object.freeze([
+        'R0',
+        'R90',
+        'M0',
+      ] as const),
+      crossLabelCompensatedCaseIds: Object.freeze([
+        'R180',
+        'R270',
+        'M90',
+        'M180',
+        'M270',
+      ] as const),
+      providerAvailabilityRecoveryObserved: true as const,
+      providerCoordinateCanonicalizationEstablished:
+        false as const,
+      anatomicalMappingReviewOutcome: 'hold' as const,
+    }),
+
     nextGate:
-      'verify_u3_2a_exact_runtime_contract_then_execute_same_bytes_with_provider_rotation_compensation' as const,
+      'audit_compensated_output_coordinate_frame_semantics_before_any_anatomical_mapping_review' as const,
   });
