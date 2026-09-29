@@ -64,14 +64,14 @@ describe('FR104 U1 MakeHuman anatomical reference protocol skeleton', () => {
       .toBe(false);
   });
 
-  it('admits U1.2 render execution while keeping provider preflight closed', () => {
+  it('records completed U2 provider preflight while keeping mapping closed', () => {
     const protocol =
       NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104;
 
     expect(
       protocol.deterministicRenderContract.implementationState,
     ).toBe('implemented_digest_pinned');
-    expect(protocol.providerPreflight.executed).toBe(false);
+    expect(protocol.providerPreflight.executed).toBe(true);
     expect(
       protocol.providerPreflight.renderedFixtureDigestPinned,
     ).toBe(true);
@@ -82,9 +82,9 @@ describe('FR104 U1 MakeHuman anatomical reference protocol skeleton', () => {
     );
     expect(
       protocol.providerPreflight.exactlyOneFaceVerified,
-    ).toBe(false);
+    ).toBe(true);
     expect(protocol.decision.protocolMayBeExecutedNow)
-      .toBe(true);
+      .toBe(false);
     expect(
       protocol.groundTruthProjectionContract.implementationState,
     ).toBe('implemented_same_camera_projection_in_u1_2_runner');
@@ -92,6 +92,12 @@ describe('FR104 U1 MakeHuman anatomical reference protocol skeleton', () => {
       protocol.decision
         .fixtureMayBeCalledControlledAnatomicalReference,
     ).toBe(false);
+    expect(protocol.executionBlockers).toContain(
+      'controlled_mirror_rotation_diagnostics_not_executed',
+    );
+    expect(protocol.executionBlockers).toContain(
+      'provider_anatomical_mapping_not_reviewed',
+    );
   });
 
   it('keeps all downstream authority closed', () => {
