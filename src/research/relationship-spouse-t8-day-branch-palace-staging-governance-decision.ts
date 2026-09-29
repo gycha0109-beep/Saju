@@ -61,8 +61,15 @@ export function evaluateRelationshipSpouseT8DayBranchPalaceStagingGovernanceDeci
   const currentExecution =
     buildRelationshipSpouseT8DayBranchPalaceIsolatedResearchExecution();
   const eligibilityReview = input.eligibilityReview;
+  const { reviewId: declaredEligibilityReviewId, ...eligibilityReviewMaterial } =
+    eligibilityReview;
+
+  const eligibilityReviewIntegrityValid =
+    deterministicContentHash(eligibilityReviewMaterial) ===
+    declaredEligibilityReviewId;
 
   const exactEligibilityReviewBinding =
+    eligibilityReviewIntegrityValid &&
     eligibilityReview.reviewId === currentEligibility.reviewId &&
     eligibilityReview.reviewVersion === currentEligibility.reviewVersion;
 
@@ -145,6 +152,7 @@ export function evaluateRelationshipSpouseT8DayBranchPalaceStagingGovernanceDeci
     RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_DECISION;
 
   const checks = Object.freeze({
+    eligibilityReviewIntegrityValid,
     exactEligibilityReviewBinding,
     exactCandidateBinding,
     exactPolicyBinding,
