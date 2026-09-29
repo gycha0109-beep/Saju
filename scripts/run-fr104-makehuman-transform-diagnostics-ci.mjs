@@ -4,6 +4,9 @@ import {
   NEUTRAL_EAR_MAKEHUMAN_PROVIDER_PREFLIGHT_EMPIRICAL_EVIDENCE_FR104,
 } from '../.face-reading-dist/neutral-ear-makehuman-provider-preflight-empirical-evidence-fr104.js';
 import {
+  NEUTRAL_EAR_MAKEHUMAN_TRANSFORM_EMPIRICAL_SOURCE_FR104,
+} from '../.face-reading-dist/neutral-ear-makehuman-transform-empirical-evidence-fr104.js';
+import {
   expectedNeutralEarMakeHumanRelationFR104,
   NEUTRAL_EAR_MAKEHUMAN_TRANSFORM_DIAGNOSTICS_FR104,
   transformNeutralEarMakeHumanPointFR104,
@@ -672,6 +675,58 @@ function validateResult(result) {
   );
 }
 
+function assertExactEmpiricalMatch(actual, expected, path = 'result') {
+  if (
+    actual === null
+    || expected === null
+    || typeof actual !== 'object'
+    || typeof expected !== 'object'
+  ) {
+    if (!Object.is(actual, expected)) {
+      fail(
+        'pinned empirical drift at '
+          + path
+          + ': expected='
+          + expected
+          + ' observed='
+          + actual,
+      );
+    }
+    return;
+  }
+
+  if (Array.isArray(actual) || Array.isArray(expected)) {
+    if (
+      !Array.isArray(actual)
+      || !Array.isArray(expected)
+      || actual.length !== expected.length
+    ) {
+      fail('pinned empirical array drift at ' + path + '.');
+    }
+    for (let index = 0; index < actual.length; index += 1) {
+      assertExactEmpiricalMatch(
+        actual[index],
+        expected[index],
+        path + '[' + index + ']',
+      );
+    }
+    return;
+  }
+
+  const actualKeys = Object.keys(actual).sort();
+  const expectedKeys = Object.keys(expected).sort();
+  if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) {
+    fail('pinned empirical object-key drift at ' + path + '.');
+  }
+  for (const key of expectedKeys) {
+    assertExactEmpiricalMatch(
+      actual[key],
+      expected[key],
+      path + '.' + key,
+    );
+  }
+}
+
 async function waitForDiagnosticResult(sessionId) {
   const deadline = Date.now() + POLL_TIMEOUT_MS;
   while (Date.now() < deadline) {
@@ -708,6 +763,10 @@ async function waitForDiagnosticResult(sessionId) {
         fail('browser diagnostics failed closed: ' + result.error);
       }
       validateResult(result);
+      assertExactEmpiricalMatch(
+        result,
+        NEUTRAL_EAR_MAKEHUMAN_TRANSFORM_EMPIRICAL_SOURCE_FR104,
+      );
       return result;
     }
     await sleep(750);
