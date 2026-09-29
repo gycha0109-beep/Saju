@@ -12,7 +12,7 @@ export const NEUTRAL_EAR_MAKEHUMAN_PROVIDER_PREFLIGHT_FR104 = Object.freeze({
     'protocol_ready_empirical_result_not_yet_admitted' as const,
 
   predecessor:
-    NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104.phase,
+    NEUTRAL_EAR_MAKEHUMAN_ANATOMICAL_REFERENCE_PROTOCOL_FR104.schemaVersion,
 
   fixture: Object.freeze({
     route: '/fr104-makehuman-preflight/fixture.png' as const,
