@@ -66,7 +66,7 @@ describe('FR104 U3.2A MediaPipe rotation API audit', () => {
         .authority;
 
     expect(authority.providerRotationCompensationSemanticsAudited)
-      .toBe(false);
+      .toBe(true);
     expect(
       authority.providerRotationCompensationEffectiveForExactFixture,
     ).toBe(false);
