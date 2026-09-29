@@ -355,7 +355,7 @@ elements.run.addEventListener('click', () => {
 });
 
 const params =
-  new URLSearchParams(globalThis.location.search);
+  new globalThis.URLSearchParams(globalThis.location.search);
 if (params.get('autorun') === '1') {
   void run();
 }
