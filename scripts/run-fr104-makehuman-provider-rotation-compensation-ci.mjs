@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 import {
   NEUTRAL_EAR_MAKEHUMAN_PROVIDER_ROTATION_COMPENSATION_FR104,
@@ -285,6 +287,12 @@ async function main() {
           + ' observed='
           + resultSha256,
       );
+    }
+    const resultOut = process.env.FR104_U3_2_RESULT_OUT?.trim();
+    if (resultOut) {
+      const outputPath = resolve(process.cwd(), resultOut);
+      mkdirSync(dirname(outputPath), { recursive: true });
+      writeFileSync(outputPath, serialized + '\n', 'utf8');
     }
     process.stdout.write(
       'FR104_U3_2_RESULT_SHA256 '
