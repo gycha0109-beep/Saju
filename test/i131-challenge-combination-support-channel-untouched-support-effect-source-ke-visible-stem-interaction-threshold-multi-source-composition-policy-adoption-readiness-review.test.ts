@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionPolicyRequirementsReviewReport,
+} from '../src/research/i130-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-policy-requirements-review.js';
 import {
   buildI131ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionPolicyAdoptionReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionPolicyRequirementsReviewReport,
-} from '../src/index.js';
+} from '../src/research/i131-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-policy-adoption-readiness-review.js';
 
 const REQUIREMENT_IDS = [
   'SOURCE_IDENTITY_AND_WITNESS_STABILITY',
