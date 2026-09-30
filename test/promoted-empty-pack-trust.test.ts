@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
+import type { InterpretationPack } from '../src/contracts/interpretation.js';
 import {
   ExecutionPlanError,
   buildInterpretationExecutionPlan,
-  createRuleRegistrySnapshot,
-  type InterpretationPack,
-  type ReviewerTrustContext,
-} from '../src/index.js';
+} from '../src/interpretation/execution-plan.js';
+import { createRuleRegistrySnapshot } from '../src/interpretation/rule-registry.js';
+import type { ReviewerTrustContext } from '../src/interpretation/reviewer-trust.js';
 
 function promotedPack(status: 'staging' | 'production'): InterpretationPack {
   return {
