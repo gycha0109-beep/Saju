@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI20DClashRescueRouter,
-  reviewResolvedRootRelationEffects,
-  type BranchFact,
-  type EarthlyBranch,
-  type FiveElement,
-  type PillarFact,
-} from '../src/index.js';
+import type {
+  BranchFact,
+  EarthlyBranch,
+  FiveElement,
+  PillarFact,
+} from '../src/contracts/calculation.js';
+import { reviewResolvedRootRelationEffects } from '../src/research/i18d-root-relation-review.js';
+import { buildI20DClashRescueRouter } from '../src/research/i20d-clash-rescue-router.js';
 
 const BRANCH_ELEMENT: Readonly<Record<EarthlyBranch, FiveElement>> = {
   자: '수', 축: '토', 인: '목', 묘: '목', 진: '토', 사: '화',
