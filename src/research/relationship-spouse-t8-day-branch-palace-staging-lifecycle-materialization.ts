@@ -236,7 +236,7 @@ export function evaluateRelationshipSpouseT8DayBranchPalaceStagingLifecycleMater
       'relationship-spouse-t8-day-branch-palace-research-candidate' &&
     stagingPackId ===
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_PACK_ID &&
-    researchPackName !== stagingPackName;
+    String(researchPackName) !== String(stagingPackName);
 
   const exactSourceManifestPreserved =
     RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_REGISTRY.sources.length ===
