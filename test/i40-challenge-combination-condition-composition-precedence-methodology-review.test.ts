@@ -3,7 +3,7 @@ import {
   buildI40ChallengeCombinationConditionCompositionPrecedenceMethodologyReview,
   I40_CHALLENGE_COMBINATION_CONDITION_DEPENDENCY_EDGES,
   I40_CHALLENGE_COMBINATION_PARALLEL_GROUPS,
-} from '../src/index.js';
+} from '../src/research/i40-challenge-combination-condition-composition-precedence-methodology-review.js';
 
 describe('I40 challenge combination condition composition and precedence methodology review', () => {
   test('authorizes only partial prerequisite/scope ordering and blocks a global condition precedence or numeric composition', () => {
