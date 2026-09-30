@@ -1,17 +1,17 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI24ChallengeMechanismComposition,
-  buildI25ChallengeEffectMethodologyReview,
-  buildI26ChallengeContextAvailabilityV2,
-  buildI26ChallengeContextAvailabilityV3,
-  buildResolvedI27ChallengeMechanismForceEvidence,
-  buildResolvedI29ChallengeTargetIntrinsicRootEvidence,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
-  type PillarFact,
-  type StructuralPillarInput,
-} from '../src/index.js';
+import type {
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+} from '../src/contracts/calculation.js';
+import type { StructuralPillarInput } from '../src/calculation/structural-relations.js';
+import { buildI24ChallengeMechanismComposition } from '../src/research/i24-challenge-mechanism-composition.js';
+import { buildI25ChallengeEffectMethodologyReview } from '../src/research/i25-challenge-effect-methodology-review.js';
+import { buildI26ChallengeContextAvailabilityV2 } from '../src/research/i26-challenge-context-availability-v2.js';
+import { buildI26ChallengeContextAvailabilityV3 } from '../src/research/i26-challenge-context-availability-v3.js';
+import { buildResolvedI27ChallengeMechanismForceEvidence } from '../src/research/i27-challenge-mechanism-force-evidence.js';
+import { buildResolvedI29ChallengeTargetIntrinsicRootEvidence } from '../src/research/i29-challenge-target-intrinsic-root-evidence.js';
 
 const STEM: Readonly<
   Record<HeavenlyStem, { hanja: string; element: FiveElement; yinYang: '양' | '음' }>

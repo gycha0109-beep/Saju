@@ -1,12 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI14StrengthEvidenceMatrix,
-  buildI18StrengthClassificationReviewV2,
-  calculateCanonicalSajuSnapshot,
-  createI14StrengthEvidenceRegistry,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import { buildI14StrengthEvidenceMatrix } from '../src/research/i14-strength-evidence-matrix.js';
+import { createI14StrengthEvidenceRegistry } from '../src/research/i14-strength-evidence-registry.js';
+import { buildI18StrengthClassificationReviewV2 } from '../src/research/i18-strength-classification-review-v2.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/i18-review-v2-test',

@@ -3,10 +3,8 @@ import {
   expect,
   it,
 } from 'vitest';
-import type {
-  FaceProductAnalysisRequestV1,
-  FaceResultSnapshotV1,
-} from '../src/face-topic/index.js';
+import type { FaceProductAnalysisRequestV1 } from '../src/face-topic/product-api.js';
+import type { FaceResultSnapshotV1 } from '../src/face-topic/result-history.js';
 import {
   collectNormalizedKeys,
   createTopicFaceE2EHarness,

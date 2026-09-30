@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI110ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceAdapterContract,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityPromotionReadinessReviewReport,
-} from '../src/index.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityPromotionReadinessReviewReport } from '../src/research/i109-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-promotion-readiness-review.js';
+import { buildI110ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceAdapterContract } from '../src/research/i110-challenge-combination-support-channel-untouched-support-effect-source-ke-directional-evidence-adapter-contract.js';
 
 function i109(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityPromotionReadinessReviewReport {
   return {

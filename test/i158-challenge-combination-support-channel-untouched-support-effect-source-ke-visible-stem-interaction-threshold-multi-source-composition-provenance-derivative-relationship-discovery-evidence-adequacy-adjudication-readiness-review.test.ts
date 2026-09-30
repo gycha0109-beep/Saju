@@ -1,9 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import {
-  I156_DISCOVERY_REQUIREMENT_IDS,
-  buildI158ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceDerivativeRelationshipDiscoveryEvidenceAdequacyAdjudicationReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceDerivativeRelationshipAuthorityDiscoveryEvidenceReport,
-} from '../src/index.js';
+import { I156_DISCOVERY_REQUIREMENT_IDS } from '../src/research/i156-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-derivative-relationship-authority-discovery-readiness-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceDerivativeRelationshipAuthorityDiscoveryEvidenceReport } from '../src/research/i157-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-derivative-relationship-authority-discovery-evidence.js';
+import { buildI158ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceDerivativeRelationshipDiscoveryEvidenceAdequacyAdjudicationReadinessReview } from '../src/research/i158-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-derivative-relationship-discovery-evidence-adequacy-adjudication-readiness-review.js';
 
 const specs = [
   ['evidence_chen_yuan_position_distance_wuli', 'p-chen', 'DERIVATIVE_DEPENDENCY_FOUND', 'EDITORIAL_OR_LECTURE_LINEAGE', false],
