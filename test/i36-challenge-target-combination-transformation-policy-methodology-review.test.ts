@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   buildI36ChallengeTargetCombinationTransformationPolicyMethodologyReview,
-} from '../src/index.js';
+} from '../src/research/i36-challenge-target-combination-transformation-policy-methodology-review.js';
 
 describe('I36 challenge target combination transformation policy methodology review', () => {
   test('allows traditional stem-pair mappings only as day-stem-scoped references', () => {
