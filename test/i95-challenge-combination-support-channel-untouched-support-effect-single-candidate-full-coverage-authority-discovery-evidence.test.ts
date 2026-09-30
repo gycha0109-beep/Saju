@@ -1,11 +1,15 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateRegistrationContractReport,
+} from '../src/research/i87-challenge-combination-support-channel-untouched-support-effect-authority-candidate-registration-contract.js';
+import type { I88DiscoveredAuthorityCandidateInput } from '../src/research/i88-challenge-combination-support-channel-untouched-support-effect-authority-candidate-discovery-registration-evidence.js';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSingleCandidateFullCoverageAuthorityDiscoveryReadinessReviewReport,
+} from '../src/research/i94-challenge-combination-support-channel-untouched-support-effect-single-candidate-full-coverage-authority-discovery-readiness-review.js';
 import {
   buildI95ChallengeCombinationSupportChannelUntouchedSupportEffectSingleCandidateFullCoverageAuthorityDiscoveryEvidence,
   i95VerifiedChenYuanSizhuYuceCandidate,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateRegistrationContractReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSingleCandidateFullCoverageAuthorityDiscoveryReadinessReviewReport,
-  type I88DiscoveredAuthorityCandidateInput,
-} from '../src/index.js';
+} from '../src/research/i95-challenge-combination-support-channel-untouched-support-effect-single-candidate-full-coverage-authority-discovery-evidence.js';
 
 const IDS = [
   'EXPLICIT_POST_INTERACTION_UNTOUCHED_SOURCE_RULE',
