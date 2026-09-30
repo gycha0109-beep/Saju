@@ -6,7 +6,7 @@ import {
 import type {
   FaceProductAnalysisRequestV1,
   FaceResultSnapshotV1,
-} from '../src/index.js';
+} from '../src/face-topic/index.js';
 import {
   collectNormalizedKeys,
   createTopicFaceE2EHarness,
