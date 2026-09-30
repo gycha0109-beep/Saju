@@ -1,3 +1,4 @@
+import { describe, expect, test } from 'vitest';
 import type {
   ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemEffectiveInteractionEligibilityMethodologyReviewReport,
 } from '../src/research/i117-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-effective-interaction-eligibility-methodology-review.js';

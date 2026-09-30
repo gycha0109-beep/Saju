@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import type { NarrativePolicy } from '../src/contracts/narrative.js';
 import type {
   CompiledNarrativePrompt,

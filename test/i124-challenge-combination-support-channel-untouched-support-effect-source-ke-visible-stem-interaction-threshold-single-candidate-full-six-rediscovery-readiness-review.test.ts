@@ -1,3 +1,4 @@
+import { describe, expect, test } from 'vitest';
 import type {
   ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdAuthorityGapRequirementsReviewReport,
 } from '../src/research/i118-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-authority-gap-requirements-review.js';

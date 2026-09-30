@@ -1,3 +1,4 @@
+import { describe, expect, test } from 'vitest';
 import type {
   ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyBindingPromotionReadinessReviewReport,
 } from '../src/research/i104-challenge-combination-support-channel-untouched-support-effect-existing-substrate-source-vocabulary-binding-promotion-readiness-review.js';

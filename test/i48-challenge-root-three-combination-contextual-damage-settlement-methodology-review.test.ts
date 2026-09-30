@@ -1,3 +1,4 @@
+import { describe, expect, test } from 'vitest';
 import {
   buildI48ChallengeRootThreeCombinationContextualDamageSettlementMethodologyReview,
 } from '../src/research/i48-challenge-root-three-combination-contextual-damage-settlement-methodology-review.js';

@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import type {
   CalculationPolicySnapshot,
