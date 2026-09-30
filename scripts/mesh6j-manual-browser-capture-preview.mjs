@@ -65,6 +65,8 @@ const fr104MakeHumanRotationDependencePagePath = resolve(repoRoot, 'tools/face-g
 const fr104MakeHumanRotationDependenceClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-dependence.mjs');
 const fr104MakeHumanRotationCompensationPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.html');
 const fr104MakeHumanRotationCompensationClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.mjs');
+const fr104ProspectiveComposedOrientationPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.html');
+const fr104ProspectiveComposedOrientationClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.mjs');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -395,6 +397,9 @@ async function main() {
   const fr104MakeHumanRotationCompensationPageTemplate = readFileSync(fr104MakeHumanRotationCompensationPagePath, 'utf8');
   if (!fr104MakeHumanRotationCompensationPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 MakeHuman provider rotation-compensation page import-map placeholder is missing.');
   const fr104MakeHumanRotationCompensationPageHtml = fr104MakeHumanRotationCompensationPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104ProspectiveComposedOrientationPageTemplate = readFileSync(fr104ProspectiveComposedOrientationPagePath, 'utf8');
+  if (!fr104ProspectiveComposedOrientationPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 U3.3 prospective composed-orientation page import-map placeholder is missing.');
+  const fr104ProspectiveComposedOrientationPageHtml = fr104ProspectiveComposedOrientationPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
 
   const requestHandler = (request, response) => {
     if (LAN_MODE) {
@@ -700,6 +705,26 @@ async function main() {
       return;
     }
 
+    if (
+      url.pathname === '/fr104-provider-composed-orientation-validation'
+      || url.pathname === '/fr104-provider-composed-orientation-validation/'
+      || url.pathname === '/fr104-provider-composed-orientation-validation/index.html'
+    ) {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104ProspectiveComposedOrientationPageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-provider-composed-orientation-validation/operator.mjs') {
+      sendFile(response, fr104ProspectiveComposedOrientationClientPath);
+      return;
+    }
+
     if (url.pathname === '/runtime/config.json') {
       response.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
@@ -812,6 +837,8 @@ async function main() {
         '/fr104-makehuman-provider-rotation-compensation/',
         '/fr104-makehuman-provider-rotation-compensation/operator.mjs',
         '/fr104-makehuman-provider-rotation-compensation/fixture.png',
+        '/fr104-provider-composed-orientation-validation/',
+        '/fr104-provider-composed-orientation-validation/operator.mjs',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
         '/runtime/fr76-parity-input.prototxt',
@@ -826,6 +853,7 @@ async function main() {
         '/face/neutral-ear-mediapipe-rotation-api-audit-fr104.js',
         '/face/neutral-ear-makehuman-provider-rotation-compensation-fr104.js',
         '/face/neutral-ear-makehuman-provider-rotation-empirical-evidence-fr104.js',
+        '/face/neutral-ear-prospective-composed-orientation-validation-fr104.js',
         '/face/mesh6h-browser-camera-frame-source.js',
         '/face/mesh6i-manual-browser-capture-controller.js',
         '/face/observable-morphology-longitudinal-repeatability-observation-fr255.js',
@@ -906,6 +934,7 @@ async function main() {
     process.stdout.write('FR104 MakeHuman provider preflight: ' + base + '/fr104-makehuman-preflight/\n');
     process.stdout.write('FR104 MakeHuman transform diagnostics: ' + base + '/fr104-makehuman-transform-diagnostics/\n');
     process.stdout.write('FR104 MakeHuman provider rotation dependence: ' + base + '/fr104-makehuman-provider-rotation-dependence/\n');
+    process.stdout.write('FR104 U3.3 prospective composed orientation validation: ' + base + '/fr104-provider-composed-orientation-validation/\n');
   }
   process.stdout.write('Camera data remains in-memory; only sanitized/descriptive JSON can be exported by the browser surfaces.\n');
 }
