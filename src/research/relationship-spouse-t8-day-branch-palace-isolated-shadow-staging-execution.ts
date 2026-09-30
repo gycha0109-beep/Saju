@@ -130,6 +130,7 @@ export function buildRelationshipSpouseT8DayBranchPalaceShadowStagingExecutionAu
   if (
     materialization.stagingLifecycleMaterializationEstablished !== true ||
     materialization.materializationRef === undefined ||
+    materialization.governanceDecisionRef === undefined ||
     materialization.nextDisposition !==
       'RUN_SA_5I_ISOLATED_SHADOW_STAGING_EXECUTION_REVIEW' ||
     governance.sourceAdjudicationAuthorityEstablished !== true ||
@@ -186,7 +187,8 @@ export function validateRelationshipSpouseT8DayBranchPalaceShadowStagingExecutio
 
   if (
     materialization.stagingLifecycleMaterializationEstablished !== true ||
-    materialization.materializationRef === undefined
+    materialization.materializationRef === undefined ||
+    materialization.governanceDecisionRef === undefined
   ) {
     blockers.push('SA5I_STAGING_LIFECYCLE_MATERIALIZATION_NOT_ESTABLISHED');
   } else {
@@ -470,9 +472,12 @@ function resolvedBranchCase(branch: EarthlyBranch) {
     staging.claims.length === 1 &&
     staging.claims[0]?.claimType ===
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE &&
-    staging.claims[0]?.value.position === 'day_branch' &&
-    staging.claims[0]?.value.traditionalRole === 'spouse_palace' &&
-    staging.claims[0]?.value.semanticScope === 'position_only';
+    deterministicContentHash(staging.claims[0]?.value) ===
+      deterministicContentHash({
+        position: 'day_branch',
+        traditionalRole: 'spouse_palace',
+        semanticScope: 'position_only',
+      });
 
   return Object.freeze({
     branch,
