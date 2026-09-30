@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import {
-  calculateCanonicalSajuSnapshot,
-  prepareProductReading,
-  type CalculationPolicySnapshot,
-  type InterpretationClaim,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import type { InterpretationClaim } from '../src/contracts/interpretation.js';
+import { prepareProductReading } from '../src/reading/index.js';
 import {
   RELATIONSHIP_SPOUSE_T8_ENGINE_COMPOSITION_IMPLEMENTATION_EVIDENCE,
   buildRelationshipSpouseT8EngineCompositionBinding,
