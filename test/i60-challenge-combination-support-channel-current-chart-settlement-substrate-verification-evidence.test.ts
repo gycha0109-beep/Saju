@@ -1,12 +1,14 @@
 import { describe, expect, test } from 'vitest';
+import type { ChallengeTargetClashDependencyEvidenceReport } from '../src/research/i33-challenge-target-clash-dependency-evidence.js';
+import type { ChallengeTargetCombinationDependencyEvidenceReport } from '../src/research/i35-challenge-target-combination-dependency-evidence.js';
+import type { ChallengeRootThreeCombinationClashPlacementSettlementEvidenceReport } from '../src/research/i47-challenge-root-three-combination-clash-placement-settlement-evidence.js';
+import type { ChallengeCombinationSupportChannelExistingSettlementAuthorityApplicabilityEvidenceReport } from '../src/research/i58-challenge-combination-support-channel-existing-settlement-authority-applicability-evidence.js';
 import {
   buildI59ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationMethodologyReview,
+} from '../src/research/i59-challenge-combination-support-channel-current-chart-settlement-substrate-verification-methodology-review.js';
+import {
   buildI60ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationEvidence,
-  type ChallengeCombinationSupportChannelExistingSettlementAuthorityApplicabilityEvidenceReport,
-  type ChallengeRootThreeCombinationClashPlacementSettlementEvidenceReport,
-  type ChallengeTargetClashDependencyEvidenceReport,
-  type ChallengeTargetCombinationDependencyEvidenceReport,
-} from '../src/index.js';
+} from '../src/research/i60-challenge-combination-support-channel-current-chart-settlement-substrate-verification-evidence.js';
 
 type Dependency =
   | 'CURRENT_COMBINATION_BINDING_INTERACTION_SETTLEMENT'
