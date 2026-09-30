@@ -1,13 +1,19 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectAdditionalAuthorityRequirementsReviewReport,
+  I84UntouchedSupportAuthorityRequirement,
+  I84UntouchedSupportAuthorityRequirementId,
+} from '../src/research/i84-challenge-combination-support-channel-untouched-support-effect-additional-authority-requirements-review.js';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectMissingRequirementTargetedAuthorityDiscoveryReadinessReviewReport,
+  I90TargetedDiscoveryLane,
+} from '../src/research/i90-challenge-combination-support-channel-untouched-support-effect-missing-requirement-targeted-authority-discovery-readiness-review.js';
 import {
   buildI91ChallengeCombinationSupportChannelUntouchedSupportEffectTargetedAuthorityCandidateDiscoveryEvidence,
+} from '../src/research/i91-challenge-combination-support-channel-untouched-support-effect-targeted-authority-candidate-discovery-evidence.js';
+import {
   buildI92ChallengeCombinationSupportChannelUntouchedSupportEffectTargetedCandidateI84RequirementCoverageEvidence,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectAdditionalAuthorityRequirementsReviewReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectMissingRequirementTargetedAuthorityDiscoveryReadinessReviewReport,
-  type I84UntouchedSupportAuthorityRequirement,
-  type I84UntouchedSupportAuthorityRequirementId,
-  type I90TargetedDiscoveryLane,
-} from '../src/index.js';
+} from '../src/research/i92-challenge-combination-support-channel-untouched-support-effect-targeted-candidate-i84-requirement-coverage-evidence.js';
 
 const REQUIREMENTS = [
   {
