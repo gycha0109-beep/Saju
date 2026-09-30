@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
+import { buildFaceAuthorityCoverageSnapshot } from '../src/face-topic/authority.js';
 import {
-  admitFaceTopicExecutionResult,
-  buildFaceAuthorityCoverageSnapshot,
-  buildFaceProductProjection,
   planFaceTopicExecution,
   type FaceTopicAuthorizedExecutionPlan,
   type FaceTopicExecutionPlan,
+} from '../src/face-topic/execution.js';
+import { buildFaceProductProjection } from '../src/face-topic/projection.js';
+import {
+  admitFaceTopicExecutionResult,
   type FaceTopicExecutionResultReceiptV1,
-} from '../src/index.js';
+} from '../src/face-topic/result-receipt.js';
 import {
   buildRepositoryFaceAuthorityReceiptForTopicFaceTest,
 } from './support/topic-face-live-authority-source.js';

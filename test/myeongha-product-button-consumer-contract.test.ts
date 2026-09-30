@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CONSUMER_READING_REQUEST_ADAPTER_VERSION,
   normalizeConsumerReadingRequest,
-} from '../src/index.js';
+} from '../src/reading/consumer-reading-request-adapter.js';
 
 const REFERENCE_DATE_TIME = '2026-09-19T00:00:00.000Z';
 

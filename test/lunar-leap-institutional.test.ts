@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { calculateCanonicalSajuSnapshot, type CalculationPolicySnapshot } from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
 import {
   KASI_LEAP_MONTH_FIXTURES,
   KASI_LEAP_MONTH_SOURCE,

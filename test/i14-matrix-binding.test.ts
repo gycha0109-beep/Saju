@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
 import {
-  buildI14StrengthEvidenceMatrix,
-  calculateCanonicalSajuSnapshot,
-  createI13StrengthEvidenceRegistry,
-  createI14StrengthEvidenceRegistry,
   runInterpretation,
-  type CalculationPolicySnapshot,
   type InterpretationExecutionResult,
-} from '../src/index.js';
+} from '../src/interpretation/interpretation-engine.js';
+import { createI13StrengthEvidenceRegistry } from '../src/research/i13-strength-evidence-pack.js';
+import { buildI14StrengthEvidenceMatrix } from '../src/research/i14-strength-evidence-matrix.js';
+import { createI14StrengthEvidenceRegistry } from '../src/research/i14-strength-evidence-registry.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/i14-binding-test',

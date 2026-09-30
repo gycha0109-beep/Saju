@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   buildI24ChallengeMechanismComposition,
   challengeMechanismForRelation,
-} from '../src/index.js';
+} from '../src/research/i24-challenge-mechanism-composition.js';
 
 describe('I24 challenge mechanism composition', () => {
   test('maps output, wealth, and officer relations to distinct mechanisms', () => {
