@@ -1,15 +1,15 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI24ChallengeMechanismComposition,
-  buildI25ChallengeEffectMethodologyReview,
-  buildI26ChallengeContextAvailability,
-  buildI26ChallengeContextAvailabilityV2,
-  buildResolvedI27ChallengeMechanismForceEvidence,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
-  type PillarFact,
-} from '../src/index.js';
+import type {
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+} from '../src/contracts/calculation.js';
+import { buildI24ChallengeMechanismComposition } from '../src/research/i24-challenge-mechanism-composition.js';
+import { buildI25ChallengeEffectMethodologyReview } from '../src/research/i25-challenge-effect-methodology-review.js';
+import { buildI26ChallengeContextAvailability } from '../src/research/i26-challenge-context-availability.js';
+import { buildI26ChallengeContextAvailabilityV2 } from '../src/research/i26-challenge-context-availability-v2.js';
+import { buildResolvedI27ChallengeMechanismForceEvidence } from '../src/research/i27-challenge-mechanism-force-evidence.js';
 
 const STEM: Readonly<
   Record<HeavenlyStem, { hanja: string; element: FiveElement; yinYang: '양' | '음' }>
