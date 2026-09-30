@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
+  deterministicContentHash,
   verifyResolvedRegistryContentIntegrity,
 } from '../src/interpretation/rule-registry.js';
 import {
@@ -223,29 +224,27 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5H staging lifecy
   test('fails closed when the source-adjudication governance authority is no longer established', () => {
     const current =
       buildRelationshipSpouseT8DayBranchPalaceStagingGovernanceDecision();
-    const drifted = {
-      ...current,
+    const { decisionId: _currentDecisionId, ...currentMaterial } = current;
+    const driftedMaterial = {
+      ...currentMaterial,
       sourceAdjudicationAuthorityEstablished: false,
-      decisionId: '',
     };
-    const { decisionId: _ignored, ...material } = drifted;
-    const canonical = {
-      ...drifted,
-      decisionId: current.decisionId,
+    const drifted = {
+      decisionId: deterministicContentHash(driftedMaterial),
+      ...driftedMaterial,
     } as typeof current;
 
     const result =
       evaluateRelationshipSpouseT8DayBranchPalaceStagingLifecycleMaterialization({
-        governanceDecision: canonical,
+        governanceDecision: drifted,
       });
 
+    expect(result.checks.governanceDecisionIntegrityValid).toBe(true);
+    expect(result.checks.exactGovernanceDecisionBinding).toBe(false);
+    expect(result.checks.governanceAuthorityValid).toBe(false);
     expect(result.stagingLifecycleMaterializationEstablished).toBe(false);
     expect(result.materializationRef).toBeUndefined();
-    expect(
-      result.checks.governanceDecisionIntegrityValid ||
-        result.checks.governanceAuthorityValid,
-    ).toBe(false);
-    expect(material.sourceAdjudicationAuthorityEstablished).toBe(false);
+    expect(result.authorityBoundary.exactCandidateOnly).toBe(false);
   });
 
   test('is deterministic for the exact same governance decision and materialized staging surface', () => {
