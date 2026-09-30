@@ -1,9 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI24ChallengeMechanismComposition,
-  buildI25ChallengeEffectMethodologyReview,
-  buildI26ChallengeContextAvailability,
-} from '../src/index.js';
+import { buildI24ChallengeMechanismComposition } from '../src/research/i24-challenge-mechanism-composition.js';
+import { buildI25ChallengeEffectMethodologyReview } from '../src/research/i25-challenge-effect-methodology-review.js';
+import { buildI26ChallengeContextAvailability } from '../src/research/i26-challenge-context-availability.js';
 
 function reviewAllMechanisms() {
   return buildI25ChallengeEffectMethodologyReview(
