@@ -225,6 +225,7 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5H staging lifecy
     const current =
       buildRelationshipSpouseT8DayBranchPalaceStagingGovernanceDecision();
     const { decisionId: _currentDecisionId, ...currentMaterial } = current;
+    expect(_currentDecisionId).toBe(current.decisionId);
     const driftedMaterial = {
       ...currentMaterial,
       sourceAdjudicationAuthorityEstablished: false,
