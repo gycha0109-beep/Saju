@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectConditionalPersistenceMethodologyDefinitionContractReport,
+} from '../src/research/i98-challenge-combination-support-channel-untouched-support-effect-conditional-persistence-methodology-definition-contract.js';
 import {
   buildI99ChallengeCombinationSupportChannelUntouchedSupportEffectSourceRelationVocabularyRepositoryBindingReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectConditionalPersistenceMethodologyDefinitionContractReport,
-} from '../src/index.js';
+} from '../src/research/i99-challenge-combination-support-channel-untouched-support-effect-source-relation-vocabulary-repository-binding-review.js';
 
 function i98(): ChallengeCombinationSupportChannelUntouchedSupportEffectConditionalPersistenceMethodologyDefinitionContractReport {
   return {
