@@ -54,7 +54,7 @@ jobs:
       matrix:
         # Longest-processing-time-first order from the latest optimized 16-shard baseline.
         # Shard membership is unchanged; only matrix scheduling priority changes.
-        shard: [6, 1, 8, 13, 5, 14, 15, 9, 4, 2, 11, 10, 3, 12, 7, 16]
+        shard: [11, 12, 7, 3, 14, 1, 8, 9, 2, 13, 5, 15, 10, 6, 4, 16]
 
     steps:
       - name: Checkout

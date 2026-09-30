@@ -1,24 +1,28 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import type {
+  GroundedNarrativeRequest,
+  NarrativeDraft,
+  NarrativePolicy,
+} from '../src/contracts/narrative.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import type {
+  CompiledNarrativePrompt,
+  NarrativeGenerationParams,
+  NarrativeModelAdapter,
+} from '../src/llm/model-adapter.js';
+import { generateGroundedNarrative } from '../src/llm/narrative-orchestrator.js';
 import {
   NARRATIVE_PROMPT_COMPILER_VERSION,
   NarrativePromptConfigurationError,
   SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  buildDeterministicFallbackDraft,
-  buildNarrativeEvidenceBundle,
-  calculateCanonicalSajuSnapshot,
   compileNarrativePrompt,
-  createI7SeasonalSupportRegistry,
-  generateGroundedNarrative,
-  runInterpretation,
-  validateNarrativeDraftGrounding,
-  type CalculationPolicySnapshot,
-  type CompiledNarrativePrompt,
-  type GroundedNarrativeRequest,
-  type NarrativeDraft,
-  type NarrativeGenerationParams,
-  type NarrativeModelAdapter,
-  type NarrativePolicy,
-} from '../src/index.js';
+} from '../src/llm/prompt-compiler.js';
+import { buildDeterministicFallbackDraft } from '../src/narrative/deterministic-fallback.js';
+import { buildNarrativeEvidenceBundle } from '../src/narrative/evidence-selector.js';
+import { validateNarrativeDraftGrounding } from '../src/narrative/grounding-validator.js';
+import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-support-pack.js';
 
 const calculationPolicy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/i9-orchestrator-test',
