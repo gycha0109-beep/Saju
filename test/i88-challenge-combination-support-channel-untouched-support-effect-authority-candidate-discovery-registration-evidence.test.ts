@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateRegistrationContractReport } from '../src/research/i87-challenge-combination-support-channel-untouched-support-effect-authority-candidate-registration-contract.js';
 import {
   buildI88ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateDiscoveryRegistrationEvidence,
   i88VerifiedDitiansuiTiyongCandidate,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateRegistrationContractReport,
   type I88DiscoveredAuthorityCandidateInput,
-} from '../src/index.js';
+} from '../src/research/i88-challenge-combination-support-channel-untouched-support-effect-authority-candidate-discovery-registration-evidence.js';
 
 function i87(): ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateRegistrationContractReport {
   return {
