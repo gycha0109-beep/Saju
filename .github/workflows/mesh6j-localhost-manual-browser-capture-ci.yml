@@ -16,6 +16,7 @@ on:
       - 'scripts/run-fr104-makehuman-provider-rotation-dependence-ci.mjs'
       - 'scripts/verify-fr104-mediapipe-rotation-api.mjs'
       - 'scripts/run-fr104-makehuman-provider-rotation-compensation-ci.mjs'
+      - 'scripts/analyze-fr104-provider-compensated-output-frame.mjs'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.html'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.mjs'
       - 'tools/face-geometry/capture/fr251-dry-run-operator.html'
@@ -92,6 +93,12 @@ on:
       - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-result-intake-fr104.test.ts'
       - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-empirical-evidence-fr104.ts'
       - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-empirical-evidence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-result-intake-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-result-intake-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-empirical-evidence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-empirical-evidence-fr104.test.ts'
       - 'packages/face-reading/src/observable-morphology-ephemeral-live-camera-frame-intake-fr242.ts'
       - 'packages/face-reading/src/participant-media-resource-ceiling-fr173-shared.ts'
       - 'packages/face-geometry/docs/mesh6j-localhost-manual-browser-capture-surface.md'
@@ -161,6 +168,7 @@ jobs:
           node --check scripts/verify-fr104-mediapipe-rotation-api.mjs
           node --check tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.mjs
           node --check scripts/run-fr104-makehuman-provider-rotation-compensation-ci.mjs
+          node --check scripts/analyze-fr104-provider-compensated-output-frame.mjs
       - name: Install projection dependency
         run: python -m pip install --disable-pip-version-check numpy
       - name: Compile authoring tooling
@@ -202,7 +210,12 @@ jobs:
         run: node scripts/verify-fr104-mediapipe-rotation-api.mjs
 
       - name: Run FR104 MakeHuman provider rotation compensation
+        env:
+          FR104_U3_2_RESULT_OUT: .cache/face-geometry/fr104-u3-2-result.json
         run: node scripts/run-fr104-makehuman-provider-rotation-compensation-ci.mjs
+
+      - name: Run FR104 compensated output coordinate frame audit
+        run: node scripts/analyze-fr104-provider-compensated-output-frame.mjs
       - name: Create ephemeral CI TLS certificate
         run: |
           openssl req -x509 -newkey rsa:2048 -nodes \
