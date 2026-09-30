@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI110ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceAdapterContract,
-  buildI111ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceBindingEvidence,
-  calculateCanonicalSajuSnapshot,
-  type BirthInput,
-  type CalculationPolicySnapshot,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityPromotionReadinessReviewReport,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  BirthInput,
+  CalculationPolicySnapshot,
+} from '../src/contracts/calculation.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityPromotionReadinessReviewReport } from '../src/research/i109-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-promotion-readiness-review.js';
+import { buildI110ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceAdapterContract } from '../src/research/i110-challenge-combination-support-channel-untouched-support-effect-source-ke-directional-evidence-adapter-contract.js';
+import { buildI111ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceBindingEvidence } from '../src/research/i111-challenge-combination-support-channel-untouched-support-effect-source-ke-directional-evidence-binding-evidence.js';
 
 function policy(): CalculationPolicySnapshot {
   return {
