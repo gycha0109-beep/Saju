@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   buildI44ChallengeRootThreeCombinationEffectiveBureauQualificationMethodologyReview,
   I44_CHALLENGE_ROOT_THREE_COMBINATION_SOURCE_BASIS,
-} from '../src/index.js';
+} from '../src/research/i44-challenge-root-three-combination-effective-bureau-qualification-methodology-review.js';
 
 describe('I44 challenge root three-combination effective-bureau qualification methodology review', () => {
   test('authorizes structural bureau formation from complete three-branch membership without promoting post-interaction effective state', () => {
