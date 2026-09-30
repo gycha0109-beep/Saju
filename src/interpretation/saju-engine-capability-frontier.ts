@@ -1,4 +1,5 @@
 import { deterministicContentHash } from './rule-registry.js';
+import { buildRelationshipNatalGeneralTerminalBridgeClosure } from '../research/relationship-natal-general-terminal-bridge-closure.js';
 import {
   evaluateSajuEngineAuthorityIntake,
   type SajuEngineAuthorityIntakeContract,
@@ -21,7 +22,7 @@ import {
 } from '../reading/relationship-spouse-t8-engine-hardening.js';
 
 export const SAJU_ENGINE_CAPABILITY_FRONTIER_VERSION =
-  'myeonghwa-saju-engine-capability-frontier-v1' as const;
+  'myeonghwa-saju-engine-capability-frontier-v2' as const;
 
 export type SajuEngineCapabilityKey =
   | 'general:natal'
@@ -242,6 +243,14 @@ function implementationEvidence(
   };
 }
 
+export interface SajuEngineTerminalAuthorityBoundary {
+  disposition: 'UNADMITTED_NO_CURRENT_SEMANTIC_CANDIDATE';
+  bridgeClosureId: string;
+  bridgeDecision: 'CLOSED_NO_SEMANTIC_CANDIDATE';
+  currentSurfaceMayEnterEngineIntake: false;
+  futureNewCandidateRequiresNewBridgeReview: true;
+}
+
 export interface SajuEngineCapabilityFrontierEntry {
   capabilityKey: SajuEngineCapabilityKey;
   currentRouting: SajuEngineCurrentRouting;
@@ -249,6 +258,7 @@ export interface SajuEngineCapabilityFrontierEntry {
   currentBoundary: 'BOUNDED_PREVIEW' | 'UPSTREAM_INTAKE';
   intakeEvaluationHash: string | null;
   implementationMayProceed: boolean;
+  terminalAuthorityBoundary: SajuEngineTerminalAuthorityBoundary | null;
   constraints: {
     boundedPreviewReadinessIsNewEngineAdmission: false;
     researchRuntimeIsSemanticAdmission: false;
@@ -281,9 +291,44 @@ export interface SajuEngineCapabilityFrontier {
   frontierHash: string;
 }
 
+function terminalAuthorityBoundary(
+  seed: CapabilityFrontierSeed,
+): SajuEngineTerminalAuthorityBoundary | null {
+  if (seed.capabilityKey !== 'relationship:natal:general') {
+    return null;
+  }
+
+  const closure = buildRelationshipNatalGeneralTerminalBridgeClosure();
+
+  if (
+    closure.decision.bridgeDecision !== 'CLOSED_NO_SEMANTIC_CANDIDATE' ||
+    closure.decision.capabilityAuthorityDisposition !==
+      'UNADMITTED_NO_CURRENT_SEMANTIC_CANDIDATE' ||
+    closure.decision.currentSurfaceMayEnterEngineIntake !== false ||
+    closure.futureCandidateBoundary.futureNewCandidateRequiresNewBridgeReview !==
+      true
+  ) {
+    throw new Error(
+      'Relationship Natal general terminal Bridge closure is inconsistent with the Engine frontier boundary',
+    );
+  }
+
+  return Object.freeze({
+    disposition: closure.decision.capabilityAuthorityDisposition,
+    bridgeClosureId: closure.closureId,
+    bridgeDecision: closure.decision.bridgeDecision,
+    currentSurfaceMayEnterEngineIntake:
+      closure.decision.currentSurfaceMayEnterEngineIntake,
+    futureNewCandidateRequiresNewBridgeReview:
+      closure.futureCandidateBoundary.futureNewCandidateRequiresNewBridgeReview,
+  });
+}
+
 export function buildCurrentSajuEngineCapabilityFrontier(): SajuEngineCapabilityFrontier {
   const entries = Object.freeze(
     CURRENT_CAPABILITY_SEEDS.map((seed): SajuEngineCapabilityFrontierEntry => {
+      const currentTerminalAuthorityBoundary = terminalAuthorityBoundary(seed);
+
       if (seed.currentBoundary === 'BOUNDED_PREVIEW') {
         return Object.freeze({
           capabilityKey: seed.capabilityKey,
@@ -292,6 +337,7 @@ export function buildCurrentSajuEngineCapabilityFrontier(): SajuEngineCapability
           currentBoundary: seed.currentBoundary,
           intakeEvaluationHash: null,
           implementationMayProceed: false,
+          terminalAuthorityBoundary: currentTerminalAuthorityBoundary,
           constraints: Object.freeze({
             boundedPreviewReadinessIsNewEngineAdmission: false as const,
             researchRuntimeIsSemanticAdmission: false as const,
@@ -313,6 +359,7 @@ export function buildCurrentSajuEngineCapabilityFrontier(): SajuEngineCapability
         currentBoundary: seed.currentBoundary,
         intakeEvaluationHash: evaluation.evaluationHash,
         implementationMayProceed: evaluation.implementationMayProceed,
+        terminalAuthorityBoundary: currentTerminalAuthorityBoundary,
         constraints: Object.freeze({
           boundedPreviewReadinessIsNewEngineAdmission: false as const,
           researchRuntimeIsSemanticAdmission: false as const,

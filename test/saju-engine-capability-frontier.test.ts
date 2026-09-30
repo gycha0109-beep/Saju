@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { buildCurrentSajuEngineCapabilityFrontier } from '../src/interpretation/saju-engine-capability-frontier.js';
+import {
+  SAJU_ENGINE_CAPABILITY_FRONTIER_VERSION,
+  buildCurrentSajuEngineCapabilityFrontier,
+} from '../src/interpretation/saju-engine-capability-frontier.js';
 
 describe('Saju Engine capability frontier G2B', () => {
   it('materializes exactly the 21 G1 capability rows', () => {
@@ -8,6 +11,9 @@ describe('Saju Engine capability frontier G2B', () => {
     expect(frontier.entries).toHaveLength(21);
     expect(new Set(frontier.entries.map((entry) => entry.capabilityKey)).size).toBe(21);
     expect(frontier.counts.total).toBe(21);
+    expect(SAJU_ENGINE_CAPABILITY_FRONTIER_VERSION).toBe(
+      'myeonghwa-saju-engine-capability-frontier-v2',
+    );
   });
 
   it('reflects the hardened Spouse T8 Engine capability as READY with an empty Engine work queue', () => {
@@ -81,6 +87,46 @@ describe('Saju Engine capability frontier G2B', () => {
       expect(entry.constraints.boundedPreviewReadinessIsNewEngineAdmission).toBe(false);
       expect(entry.constraints.mayPromoteProductionAuthority).toBe(false);
     }
+  });
+
+  it('pins the terminal Relationship Natal semantic-authority boundary without changing Preview routing', () => {
+    const frontier = buildCurrentSajuEngineCapabilityFrontier();
+    const relationshipGeneral = frontier.entries.find(
+      (entry) => entry.capabilityKey === 'relationship:natal:general',
+    );
+
+    expect(relationshipGeneral).toEqual(
+      expect.objectContaining({
+        currentRouting: 'BOUNDED_PREVIEW_READY',
+        currentBoundary: 'BOUNDED_PREVIEW',
+        producerRuntimeExists: true,
+        implementationMayProceed: false,
+      }),
+    );
+    expect(relationshipGeneral?.terminalAuthorityBoundary).toEqual(
+      expect.objectContaining({
+        disposition: 'UNADMITTED_NO_CURRENT_SEMANTIC_CANDIDATE',
+        bridgeDecision: 'CLOSED_NO_SEMANTIC_CANDIDATE',
+        currentSurfaceMayEnterEngineIntake: false,
+        futureNewCandidateRequiresNewBridgeReview: true,
+      }),
+    );
+    expect(
+      relationshipGeneral?.terminalAuthorityBoundary?.bridgeClosureId,
+    ).toMatch(
+      /^relationship_natal_general_terminal_bridge_closure_[a-f0-9]{24}$/,
+    );
+
+    expect(
+      frontier.entries
+        .filter(
+          (entry) =>
+            entry.currentRouting === 'BOUNDED_PREVIEW_READY' &&
+            entry.capabilityKey !== 'relationship:natal:general',
+        )
+        .every((entry) => entry.terminalAuthorityBoundary === null),
+    ).toBe(true);
+    expect(frontier.engineWorkQueue).toEqual([]);
   });
 
   it('honors the merged General Annual Bridge return-to-research disposition', () => {
