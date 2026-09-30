@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateTargetedLineageAdjudicationEvidenceReport,
+} from '../src/research/i166-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-remediation-candidate-targeted-lineage-adjudication-evidence.js';
 import {
   I167_REASSESSMENT_REQUIREMENT_IDS,
   I167_REMAINING_REVIEWABLE_REMEDIATION_PATH_IDS,
   buildI167ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateTargetedLineageEvidenceAdequacyRemediationPathReassessmentReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateTargetedLineageAdjudicationEvidenceReport,
-} from '../src/index.js';
+} from '../src/research/i167-provenance-remediation-path-reassessment-review.js';
 
 function validI166(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateTargetedLineageAdjudicationEvidenceReport {
   return {
