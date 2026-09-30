@@ -167,3 +167,4 @@ export * from './relationship-spouse-t8-day-branch-palace-bridge-reentry-admissi
 export * from './relationship-spouse-t8-day-branch-palace-isolated-research-execution.js';
 export * from './relationship-spouse-t8-day-branch-palace-staging-lifecycle-eligibility-review.js';
 export * from './relationship-spouse-t8-day-branch-palace-staging-governance-decision.js';
+export * from './relationship-spouse-t8-day-branch-palace-staging-lifecycle-materialization.js';
