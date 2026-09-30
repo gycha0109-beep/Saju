@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSingleCandidateAuthorityPromotionReadinessReviewReport,
+} from '../src/research/i97-challenge-combination-support-channel-untouched-support-effect-single-candidate-authority-promotion-readiness-review.js';
 import {
   buildI98ChallengeCombinationSupportChannelUntouchedSupportEffectConditionalPersistenceMethodologyDefinitionContract,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSingleCandidateAuthorityPromotionReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i98-challenge-combination-support-channel-untouched-support-effect-conditional-persistence-methodology-definition-contract.js';
 
 function i97(): ChallengeCombinationSupportChannelUntouchedSupportEffectSingleCandidateAuthorityPromotionReadinessReviewReport {
   return {

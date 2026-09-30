@@ -1,22 +1,30 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import type {
+  InterpretationPack,
+  MethodologyDefinition,
+  RuleDefinition,
+  SourceReference,
+} from '../src/contracts/interpretation.js';
 import {
   ExecutionPlanError,
-  SOURCE_ADJUDICATION_STAGING_AUTHORIZATION_POLICY_VERSION,
   buildInterpretationExecutionPlan,
   buildInterpretationExecutionPlanWithAuthority,
+} from '../src/interpretation/execution-plan.js';
+import {
+  SOURCE_ADJUDICATION_STAGING_AUTHORIZATION_POLICY_VERSION,
+  runInterpretation,
+} from '../src/interpretation/interpretation-engine.js';
+import {
   buildSourceAdjudicationExecutionAuthorityRef,
-  calculateCanonicalSajuSnapshot,
+  type InterpretationPromotionAuthorityContext,
+  type SourceAdjudicationExecutionAuthorityMaterial,
+} from '../src/interpretation/promotion-authority.js';
+import {
   createRuleRegistrySnapshot,
   deterministicContentHash,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-  type InterpretationPack,
-  type InterpretationPromotionAuthorityContext,
-  type MethodologyDefinition,
-  type RuleDefinition,
-  type SourceAdjudicationExecutionAuthorityMaterial,
-  type SourceReference,
-} from '../src/index.js';
+} from '../src/interpretation/rule-registry.js';
 
 const calculationPolicy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/source-adjudication-execution-test',

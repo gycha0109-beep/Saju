@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   buildI46ChallengeRootThreeCombinationClashBreakDamageSettlementMethodologyReview,
-} from '../src/index.js';
+} from '../src/research/i46-challenge-root-three-combination-clash-break-damage-settlement-methodology-review.js';
 
 describe('I46 challenge root three-combination clash break/damage settlement methodology review', () => {
   test('authorizes only the tight embedded clash as a deterministic bureau-break rule', () => {
