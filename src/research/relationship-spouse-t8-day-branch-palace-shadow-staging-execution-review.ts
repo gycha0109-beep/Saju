@@ -510,8 +510,7 @@ function resolvedBranchEvidence(branch: EarthlyBranch) {
 
   const lifecycleIdentitySeparated =
     research.run.runHash !== stagingFirst.run.runHash &&
-    research.run.interpretationPackRef.id !==
-      stagingFirst.run.interpretationPackRef.id;
+    research.run.packRef.id !== stagingFirst.run.packRef.id;
 
   const casePass =
     research.integrity.valid === true &&
