@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import {
-  calculateCanonicalSajuSnapshot,
-  type CalculationPolicySnapshot,
-  type EarthlyBranch,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  CalculationPolicySnapshot,
+  EarthlyBranch,
+} from '../src/contracts/calculation.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE,
