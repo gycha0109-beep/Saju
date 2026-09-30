@@ -1,11 +1,9 @@
-import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../src/reading/governed-reading-execution.js';
-import { describe, expect, it } from 'vitest';
-import {
-  SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  type CompiledNarrativePrompt,
-  type NarrativeModelAdapter,
-  type NarrativePolicy,
-} from '../src/index.js';
+import type { NarrativePolicy } from '../src/contracts/narrative.js';
+import type {
+  CompiledNarrativePrompt,
+  NarrativeModelAdapter,
+} from '../src/llm/model-adapter.js';
+import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../src/llm/prompt-compiler.js';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import type { CanonicalSajuSnapshot } from '../src/contracts/calculation.js';
 import type { InterpretationExecutionResult } from '../src/interpretation/interpretation-engine.js';

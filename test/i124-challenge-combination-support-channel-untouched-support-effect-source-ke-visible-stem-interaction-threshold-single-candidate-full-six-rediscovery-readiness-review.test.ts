@@ -1,9 +1,12 @@
-import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdAuthorityGapRequirementsReviewReport,
+} from '../src/research/i118-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-authority-gap-requirements-review.js';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdCandidateSetCompositionPolicyReadinessReviewReport,
+} from '../src/research/i123-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-candidate-set-composition-policy-readiness-review.js';
 import {
   buildI124ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdSingleCandidateFullSixRediscoveryReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdAuthorityGapRequirementsReviewReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdCandidateSetCompositionPolicyReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i124-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-single-candidate-full-six-rediscovery-readiness-review.js';
 
 const IDS = [
   'EXPLICIT_BINARY_EFFECTIVE_INTERACTION_SEMANTICS',

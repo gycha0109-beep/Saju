@@ -1,7 +1,6 @@
-import { describe, expect, test } from 'vitest';
 import {
   buildI48ChallengeRootThreeCombinationContextualDamageSettlementMethodologyReview,
-} from '../src/index.js';
+} from '../src/research/i48-challenge-root-three-combination-contextual-damage-settlement-methodology-review.js';
 
 describe('I48 challenge root three-combination contextual damage settlement methodology review', () => {
   test('closes placement-only deterministic settlement for the two I47 contextual classes', () => {

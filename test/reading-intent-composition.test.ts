@@ -1,16 +1,21 @@
-import { describe, expect, it } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  CalculationPolicySnapshot,
+  CanonicalSajuSnapshot,
+} from '../src/contracts/calculation.js';
+import type {
+  ClaimRelation,
+  InterpretationClaim,
+} from '../src/contracts/interpretation.js';
+import {
+  runInterpretation,
+  type InterpretationExecutionResult,
+} from '../src/interpretation/interpretation-engine.js';
 import {
   buildReadingCompositionEvidence,
-  calculateCanonicalSajuSnapshot,
-  createI7SeasonalSupportRegistry,
   resolveDomainReadingProfile,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-  type CanonicalSajuSnapshot,
-  type ClaimRelation,
-  type InterpretationClaim,
-  type InterpretationExecutionResult,
-} from '../src/index.js';
+} from '../src/reading/reading-intent-composition.js';
+import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-support-pack.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/reading-intent-composition-test',

@@ -1,11 +1,10 @@
-import { describe, expect, test } from 'vitest';
-import {
-  calculateCanonicalSajuSnapshot,
-  prepareProductReading,
-  type BirthInput,
-  type CalculationPolicySnapshot,
-  type CanonicalSajuSnapshot,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  BirthInput,
+  CalculationPolicySnapshot,
+  CanonicalSajuSnapshot,
+} from '../src/contracts/calculation.js';
+import { prepareProductReading } from '../src/reading/product-reading-integration.js';
 import {
   runRelationshipSpouseT8EngineProducer,
 } from '../src/interpretation/relationship-spouse-t8-engine-producer.js';

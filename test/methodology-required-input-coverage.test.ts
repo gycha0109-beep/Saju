@@ -1,11 +1,12 @@
-import { describe, expect, test } from 'vitest';
+import type {
+  InterpretationPack,
+  MethodologyDefinition,
+  RuleDefinition,
+} from '../src/contracts/interpretation.js';
 import {
   RegistryConfigurationError,
   createRuleRegistrySnapshot,
-  type InterpretationPack,
-  type MethodologyDefinition,
-  type RuleDefinition,
-} from '../src/index.js';
+} from '../src/interpretation/rule-registry.js';
 
 type InputContract = NonNullable<MethodologyDefinition['inputContract']>;
 

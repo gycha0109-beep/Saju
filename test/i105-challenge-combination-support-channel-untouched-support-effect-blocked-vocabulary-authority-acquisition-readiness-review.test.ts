@@ -1,8 +1,9 @@
-import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyBindingPromotionReadinessReviewReport,
+} from '../src/research/i104-challenge-combination-support-channel-untouched-support-effect-existing-substrate-source-vocabulary-binding-promotion-readiness-review.js';
 import {
   buildI105ChallengeCombinationSupportChannelUntouchedSupportEffectBlockedVocabularyAuthorityAcquisitionReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyBindingPromotionReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i105-challenge-combination-support-channel-untouched-support-effect-blocked-vocabulary-authority-acquisition-readiness-review.js';
 
 function i104(): ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyBindingPromotionReadinessReviewReport {
   return {
