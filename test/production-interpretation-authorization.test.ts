@@ -1,16 +1,20 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  InterpretationPack,
+  MethodologyDefinition,
+  ReviewAttestation,
+  RuleDefinition,
+  SourceReference,
+} from '../src/contracts/interpretation.js';
 import {
   ExecutionPlanError,
   buildInterpretationExecutionPlan,
+} from '../src/interpretation/execution-plan.js';
+import {
   createRuleRegistrySnapshot,
   deterministicContentHash,
-  type InterpretationPack,
-  type MethodologyDefinition,
-  type ReviewAttestation,
-  type ReviewerTrustContext,
-  type RuleDefinition,
-  type SourceReference,
-} from '../src/index.js';
+} from '../src/interpretation/rule-registry.js';
+import type { ReviewerTrustContext } from '../src/interpretation/reviewer-trust.js';
 
 const sourceA: SourceReference = {
   sourceId: 'SOURCE-I15-SYNTHETIC-A',

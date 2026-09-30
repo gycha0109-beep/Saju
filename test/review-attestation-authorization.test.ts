@@ -1,17 +1,21 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  InterpretationPack,
+  MethodologyDefinition,
+  ReviewAttestation,
+  RuleDefinition,
+  SourceReference,
+} from '../src/contracts/interpretation.js';
 import {
   ExecutionPlanError,
-  RegistryConfigurationError,
   buildInterpretationExecutionPlan,
+} from '../src/interpretation/execution-plan.js';
+import {
+  RegistryConfigurationError,
   createRuleRegistrySnapshot,
   deterministicContentHash,
-  type InterpretationPack,
-  type MethodologyDefinition,
-  type ReviewAttestation,
-  type ReviewerTrustContext,
-  type RuleDefinition,
-  type SourceReference,
-} from '../src/index.js';
+} from '../src/interpretation/rule-registry.js';
+import type { ReviewerTrustContext } from '../src/interpretation/reviewer-trust.js';
 
 const sources: readonly SourceReference[] = [
   {

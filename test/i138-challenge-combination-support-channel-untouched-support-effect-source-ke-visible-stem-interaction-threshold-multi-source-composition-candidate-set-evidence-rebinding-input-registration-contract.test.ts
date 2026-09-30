@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionAdoptedPolicyCandidateSetEvaluationAuthorizationReadinessReviewReport } from '../src/research/i137-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-adopted-policy-candidate-set-evaluation-authorization-readiness-review.js';
 import {
   I138_INPUT_ARTIFACT_SCHEMA_IDS,
   buildI138ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionCandidateSetEvidenceRebindingInputRegistrationContract,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionAdoptedPolicyCandidateSetEvaluationAuthorizationReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i138-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-candidate-set-evidence-rebinding-input-registration-contract.js';
 
 function i137(
   overrides: Record<string, unknown> = {},
