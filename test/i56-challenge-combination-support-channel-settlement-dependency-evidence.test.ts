@@ -1,26 +1,30 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+} from '../src/contracts/calculation.js';
+import type { StructuralPillarInput } from '../src/calculation/structural-relations.js';
+import { buildResolvedI29ChallengeTargetIntrinsicRootEvidence } from '../src/research/i29-challenge-target-intrinsic-root-evidence.js';
+import { buildResolvedI31ChallengeTargetRelationParticipationEvidence } from '../src/research/i31-challenge-target-relation-participation-evidence.js';
+import { buildResolvedI35ChallengeTargetCombinationDependencyEvidence } from '../src/research/i35-challenge-target-combination-dependency-evidence.js';
+import { buildI36ChallengeTargetCombinationTransformationPolicyMethodologyReview } from '../src/research/i36-challenge-target-combination-transformation-policy-methodology-review.js';
+import { buildI37ChallengeTargetCombinationTransformationReference } from '../src/research/i37-challenge-target-combination-transformation-reference.js';
+import { buildI38ChallengeTargetCombinationConditionApplicabilityMethodologyReview } from '../src/research/i38-challenge-target-combination-condition-applicability-methodology-review.js';
+import { buildResolvedI39ChallengeTargetCombinationConditionEvidence } from '../src/research/i39-challenge-target-combination-condition-evidence.js';
+import { buildI51ChallengeCombinationSupportInterferenceEffectMethodologyReview } from '../src/research/i51-challenge-combination-support-interference-effect-methodology-review.js';
+import { buildI52ChallengeCombinationSupportChannelEvidence } from '../src/research/i52-challenge-combination-support-channel-evidence.js';
+import { buildI53ChallengeCombinationSupportChannelActivationPersistenceMethodologyReview } from '../src/research/i53-challenge-combination-support-channel-activation-persistence-methodology-review.js';
 import {
-  buildI36ChallengeTargetCombinationTransformationPolicyMethodologyReview,
-  buildI37ChallengeTargetCombinationTransformationReference,
-  buildI38ChallengeTargetCombinationConditionApplicabilityMethodologyReview,
-  buildI51ChallengeCombinationSupportInterferenceEffectMethodologyReview,
-  buildI52ChallengeCombinationSupportChannelEvidence,
-  buildI53ChallengeCombinationSupportChannelActivationPersistenceMethodologyReview,
   buildI54ChallengeCombinationSupportChannelContestTopologyEvidence,
-  buildI55ChallengeCombinationSupportChannelContestSettlementMethodologyReview,
-  buildI56ChallengeCombinationSupportChannelSettlementDependencyEvidence,
-  buildResolvedI29ChallengeTargetIntrinsicRootEvidence,
-  buildResolvedI31ChallengeTargetRelationParticipationEvidence,
-  buildResolvedI35ChallengeTargetCombinationDependencyEvidence,
-  buildResolvedI39ChallengeTargetCombinationConditionEvidence,
   type ChallengeCombinationSupportChannelContestTopologyEvidenceReport,
+} from '../src/research/i54-challenge-combination-support-channel-contest-topology-evidence.js';
+import {
+  buildI55ChallengeCombinationSupportChannelContestSettlementMethodologyReview,
   type ChallengeCombinationSupportChannelContestSettlementMethodologyReviewReport,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
-  type PillarFact,
-  type StructuralPillarInput,
-} from '../src/index.js';
+} from '../src/research/i55-challenge-combination-support-channel-contest-settlement-methodology-review.js';
+import { buildI56ChallengeCombinationSupportChannelSettlementDependencyEvidence } from '../src/research/i56-challenge-combination-support-channel-settlement-dependency-evidence.js';
 
 const STEM: Readonly<Record<HeavenlyStem, { hanja: string; element: FiveElement; yinYang: '양' | '음' }>> = {
   갑: { hanja: '甲', element: '목', yinYang: '양' },
