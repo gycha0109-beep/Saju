@@ -412,7 +412,10 @@ export function evaluateRelationshipSpouseT8DayBranchPalaceStagingLifecycleMater
     blockers,
     stagingLifecycleMaterializationEstablished,
     authorityBoundary: Object.freeze({
-      exactCandidateOnly: true as const,
+      exactCandidateOnly:
+        exactGovernanceDecisionBinding &&
+        exactResearchExecutionBinding &&
+        governanceAuthorityValid,
       sourceAdjudicationAuthorityEstablished:
         stagingLifecycleMaterializationEstablished,
       stagingLifecycleMaterialized:
