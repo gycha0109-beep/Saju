@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI132ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionPolicyDefinitionContract,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionPolicyAdoptionReadinessReviewReport,
-} from '../src/index.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionPolicyAdoptionReadinessReviewReport } from '../src/research/i131-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-policy-adoption-readiness-review.js';
+import { buildI132ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionPolicyDefinitionContract } from '../src/research/i132-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-policy-definition-contract.js';
 
 const MISSING_ARTIFACT_IDS = [
   'VERSIONED_POLICY_DEFINITION_OBJECT',

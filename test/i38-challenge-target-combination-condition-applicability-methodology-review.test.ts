@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import {
-  buildI38ChallengeTargetCombinationConditionApplicabilityMethodologyReview,
   I38_CHALLENGE_COMBINATION_CONDITION_APPLICABILITY,
-} from '../src/index.js';
+  buildI38ChallengeTargetCombinationConditionApplicabilityMethodologyReview,
+} from '../src/research/i38-challenge-target-combination-condition-applicability-methodology-review.js';
 
 function applicability(conditionId: string) {
   return I38_CHALLENGE_COMBINATION_CONDITION_APPLICABILITY.find(
