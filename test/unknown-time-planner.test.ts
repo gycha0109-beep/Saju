@@ -3,9 +3,9 @@ import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-e
 import type {
   CalculationPolicySnapshot,
   CanonicalSajuSnapshot,
-  FactState,
   PillarFact,
 } from '../src/contracts/calculation.js';
+import type { FactState } from '../src/contracts/common.js';
 
 function policy(
   overrides: Partial<CalculationPolicySnapshot> = {},
