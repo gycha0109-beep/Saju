@@ -1,16 +1,16 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI36ChallengeTargetCombinationTransformationPolicyMethodologyReview,
-  buildI37ChallengeTargetCombinationTransformationReference,
-  buildResolvedI29ChallengeTargetIntrinsicRootEvidence,
-  buildResolvedI31ChallengeTargetRelationParticipationEvidence,
-  buildResolvedI35ChallengeTargetCombinationDependencyEvidence,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
-  type PillarFact,
-  type StructuralPillarInput,
-} from '../src/index.js';
+import type {
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+} from '../src/contracts/calculation.js';
+import type { StructuralPillarInput } from '../src/calculation/structural-relations.js';
+import { buildResolvedI29ChallengeTargetIntrinsicRootEvidence } from '../src/research/i29-challenge-target-intrinsic-root-evidence.js';
+import { buildResolvedI31ChallengeTargetRelationParticipationEvidence } from '../src/research/i31-challenge-target-relation-participation-evidence.js';
+import { buildResolvedI35ChallengeTargetCombinationDependencyEvidence } from '../src/research/i35-challenge-target-combination-dependency-evidence.js';
+import { buildI36ChallengeTargetCombinationTransformationPolicyMethodologyReview } from '../src/research/i36-challenge-target-combination-transformation-policy-methodology-review.js';
+import { buildI37ChallengeTargetCombinationTransformationReference } from '../src/research/i37-challenge-target-combination-transformation-reference.js';
 
 const STEM: Readonly<
   Record<HeavenlyStem, { hanja: string; element: FiveElement; yinYang: '양' | '음' }>

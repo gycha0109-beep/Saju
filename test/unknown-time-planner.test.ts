@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import {
-  calculateCanonicalSajuSnapshot,
-  type CalculationPolicySnapshot,
-  type CanonicalSajuSnapshot,
-  type FactState,
-  type PillarFact,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  CalculationPolicySnapshot,
+  CanonicalSajuSnapshot,
+  FactState,
+  PillarFact,
+} from '../src/contracts/calculation.js';
 
 function policy(
   overrides: Partial<CalculationPolicySnapshot> = {},
