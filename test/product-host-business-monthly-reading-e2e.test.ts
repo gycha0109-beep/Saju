@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../src/reading/governed-reading-execution.js';
 import type { NarrativePolicy } from '../src/contracts/narrative.js';
 import type {
   CompiledNarrativePrompt,
