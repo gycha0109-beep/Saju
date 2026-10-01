@@ -173,3 +173,4 @@ export * from './relationship-spouse-t8-day-branch-palace-staging-consumer-evide
 export * from './relationship-spouse-t8-day-branch-palace-narrative-delivery-authority-review.js';
 export * from './relationship-spouse-t8-day-branch-palace-human-domain-materiality-request.js';
 export * from './relationship-spouse-t8-day-branch-palace-external-review-handoff-packet.js';
+export * from './relationship-spouse-t8-day-branch-palace-sa5m-readiness-review.js';
