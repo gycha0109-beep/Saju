@@ -503,3 +503,110 @@ The following remain false until a separate fail-closed result-intake step:
     validatedExternalEarObservationAuthorized = false
     traditionalBindingAuthorized = false
     productionAuthorization = false
+
+
+## U4B-C observed prospective result
+
+The first provider observation completed after U4B-A preregistration and U4B-B provider-blind fixture pin were merged.
+
+Candidate provenance:
+
+    candidate merge
+    19095a89773d517c2b6d69c45544525b9262459a
+
+    first observation workflow run
+    36852342085
+
+    exact replay workflow run
+    36852599487
+
+Candidate result:
+
+    SHA-256
+    e601205ccdad7ec66900d953ed6f742e04dbd37e6074ccc4bb36bf21dd3b16a8
+
+    state
+    prospective_independent_geometry_mapping_supported
+
+Coverage:
+
+    evaluated
+    R0 R90 R180 R270 M0 M90 M180 M270
+
+    unavailable
+    none
+
+    failed
+    none
+
+All orientation-preserving cases satisfied:
+
+    directCost < swappedCost
+
+All orientation-reversing cases satisfied:
+
+    swappedCost < directCost
+
+No numeric threshold was applied.
+
+No post-observation rule retuning occurred.
+
+The exact candidate result was reproduced with the same serialized SHA-256 after the runner lint-only repair.
+
+## U4B-C admission
+
+Admission pins the exact serialized candidate digest and fails closed over:
+
+- preregistered study kind;
+- pinned U4B fixture digest and dimensions;
+- MediaPipe package/runtime contract;
+- all eight case ids;
+- reflection parity;
+- physical rotations and compensation degrees;
+- transformed RGBA digests;
+- exact direct/swapped assignment costs;
+- exact assignment relations;
+- one-face / 478-landmark availability for every case;
+- assessment state and case sets;
+- interpretation boundary;
+- privacy invariants;
+- candidate-side authority remaining false.
+
+CI must replay the provider observation and require:
+
+    FR104_U4B_C_RESULT_SHA256
+    e601205ccdad7ec66900d953ed6f742e04dbd37e6074ccc4bb36bf21dd3b16a8
+
+Only then may the fail-closed admission script admit:
+
+    prospectiveIndependentGeometryValidationExecuted = true
+    prospectiveIndependentGeometryMappingValidated = true
+
+This authority means only:
+
+    the preregistered reflection-parity conditional mapping
+    reproduced prospectively on the second pinned MakeHuman geometry
+    under the exact tested runtime
+
+It does not establish source-family-independent semantics.
+
+The following remain false:
+
+    providerLabelMappedToAnatomicalSide = false
+    globalProviderAnatomicalSemanticsEstablished = false
+    anatomicalReferenceAdmitted = false
+    anatomicalLateralityAuthorized = false
+    validatedExternalEarObservationAuthorized = false
+    traditionalBindingAuthorized = false
+    productionAuthorization = false
+
+## Next scientific gate after U4B-C admission
+
+The next anatomical laterality gate requires a controlled anatomical reference from a different source family.
+
+Required property:
+
+    sourceFamilyIndependentFromU4a = true
+    sourceFamilyIndependentFromU4b = true
+
+Until that cross-source-family validation succeeds, runtime subject-photo anatomical laterality remains unavailable.
