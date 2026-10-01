@@ -17,6 +17,7 @@ on:
       - 'scripts/verify-fr104-mediapipe-rotation-api.mjs'
       - 'scripts/run-fr104-makehuman-provider-rotation-compensation-ci.mjs'
       - 'scripts/analyze-fr104-provider-compensated-output-frame.mjs'
+      - 'scripts/run-fr104-provider-composed-orientation-validation.mjs'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.html'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.mjs'
       - 'tools/face-geometry/capture/fr251-dry-run-operator.html'
@@ -63,6 +64,8 @@ on:
       - 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-dependence.mjs'
       - 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.html'
       - 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.mjs'
+      - 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.html'
+      - 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.mjs'
       - 'packages/face-reading/src/neutral-ear-mirror-pair-protocol-fr104.ts'
       - 'packages/face-reading/src/neutral-ear-mirror-pair-protocol-fr104.test.ts'
       - 'packages/face-reading/src/neutral-ear-mirror-multifixture-protocol-fr104.ts'
@@ -99,6 +102,9 @@ on:
       - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-result-intake-fr104.test.ts'
       - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-empirical-evidence-fr104.ts'
       - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-empirical-evidence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-composed-orientation-validation-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-composed-orientation-validation-fr104.test.ts'
+      - 'research/face-research/fr104-prospective-composed-orientation-normalization-u3-3.md'
       - 'packages/face-reading/src/observable-morphology-ephemeral-live-camera-frame-intake-fr242.ts'
       - 'packages/face-reading/src/participant-media-resource-ceiling-fr173-shared.ts'
       - 'packages/face-geometry/docs/mesh6j-localhost-manual-browser-capture-surface.md'
@@ -169,6 +175,12 @@ jobs:
           node --check tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.mjs
           node --check scripts/run-fr104-makehuman-provider-rotation-compensation-ci.mjs
           node --check scripts/analyze-fr104-provider-compensated-output-frame.mjs
+
+      - name: Syntax-check FR104 U3.3 prospective composed normalization
+        run: |
+          node --check tools/face-geometry/capture/fr104-provider-composed-orientation-validation.mjs
+          node --check scripts/run-fr104-provider-composed-orientation-validation.mjs
+
       - name: Install projection dependency
         run: python -m pip install --disable-pip-version-check numpy
       - name: Compile authoring tooling

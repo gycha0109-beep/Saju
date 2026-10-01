@@ -428,6 +428,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-provider-compensated-output-frame-empirical-evidence-fr104.test.ts
 
+      - name: Verify FR104 U3.3 prospective composed normalization preregistration
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-prospective-composed-orientation-validation-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
