@@ -341,6 +341,20 @@ function main() {
     .update(resultSerialized)
     .digest('hex');
 
+  const expectedResultSha256 =
+    process.env.FR104_U4A_EXPECTED_RESULT_SHA256?.trim();
+  if (
+    expectedResultSha256
+    && resultSha256 !== expectedResultSha256
+  ) {
+    fail(
+      'result digest drift expected='
+        + expectedResultSha256
+        + ' observed='
+        + resultSha256,
+    );
+  }
+
   const out = process.env.FR104_U4A_RESULT_OUT?.trim();
   if (out) {
     const path = resolve(process.cwd(), out);
