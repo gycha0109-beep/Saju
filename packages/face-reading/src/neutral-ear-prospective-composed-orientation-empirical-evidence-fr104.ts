@@ -7,6 +7,9 @@ export const NEUTRAL_EAR_PROSPECTIVE_COMPOSED_ORIENTATION_EMPIRICAL_EVIDENCE_FR1
 
     preregistrationMergeSha:
       '5bf66ddcfa3b6100d93f7259bd87232095c8912d' as const,
+    firstValidExecutionHeadSha:
+      '092fbae2ab0e8958e6a93a52afa9ea95a95ea6f9' as const,
+    firstValidWorkflowRunId: 36798788804 as const,
     firstValidExecutionMergeSha:
       '856ad0c19fdef2471434ed3253cf67b55850ae29' as const,
     predecessorDerivedResultSha256:
