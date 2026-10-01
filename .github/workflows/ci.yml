@@ -1,6 +1,17 @@
 name: CI
 
 on:
+  workflow_call:
+    inputs:
+      candidate_pr:
+        required: true
+        type: string
+      candidate_head:
+        required: true
+        type: string
+      candidate_base:
+        required: true
+        type: string
   pull_request:
   push:
     branches:
@@ -18,16 +29,43 @@ jobs:
     name: CI Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      full: ${{ steps.plan.outputs.full }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.candidate_head || github.sha }}
+          fetch-depth: 0
+      - name: Assemble pinned integration candidate
+        if: inputs.candidate_head != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_PR: ${{ inputs.candidate_pr }}
+          CANDIDATE_HEAD: ${{ inputs.candidate_head }}
+          CANDIDATE_BASE: ${{ inputs.candidate_base }}
+        run: node scripts/ci/integration-candidate.mjs prepare
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
+
+      - name: Require integration protection before staged CI
+        if: github.event_name == 'pull_request' && vars.CI_STAGED_VERIFICATION == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CI_STAGED_VERIFICATION: ${{ vars.CI_STAGED_VERIFICATION }}
+        run: node scripts/ci/integration-candidate.mjs policy
+      - name: Resolve PR test plan
+        id: plan
+        env:
+          CI_STAGED_VERIFICATION: ${{ vars.CI_STAGED_VERIFICATION }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ci/pr-test-plan.mjs
 
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund --ignore-scripts
@@ -41,16 +79,22 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Run affected tests and static contracts
+        if: steps.plan.outputs.full == 'false'
+        run: node scripts/ci/run-affected-tests.mjs
+
       - name: Research preview smoke
         run: npm run preview:research:smoke
 
   test:
+    needs: quality
+    if: needs.quality.outputs.full == 'true'
     name: CI Tests (${{ matrix.shard }}/16)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
-      fail-fast: false
-      max-parallel: 8
+      fail-fast: true
+      max-parallel: ${{ inputs.candidate_head != '' && 4 || 8 }}
       matrix:
         # Longest-processing-time-first order from the latest optimized 16-shard baseline.
         # Shard membership is unchanged; only matrix scheduling priority changes.
@@ -59,6 +103,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.candidate_head || github.sha }}
+          fetch-depth: 0
+      - name: Assemble pinned integration candidate
+        if: inputs.candidate_head != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_PR: ${{ inputs.candidate_pr }}
+          CANDIDATE_HEAD: ${{ inputs.candidate_head }}
+          CANDIDATE_BASE: ${{ inputs.candidate_base }}
+        run: node scripts/ci/integration-candidate.mjs prepare
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -79,15 +134,20 @@ jobs:
     needs:
       - quality
       - test
-    if: ${{ always() && !cancelled() }}
+    if: ${{ always() }}
 
     steps:
       - name: Require every CI gate
         env:
           QUALITY_RESULT: ${{ needs.quality.result }}
           TEST_RESULT: ${{ needs.test.result }}
+          FULL_SELECTED: ${{ needs.quality.outputs.full }}
         shell: bash
         run: |
           set -euo pipefail
           test "$QUALITY_RESULT" = "success"
-          test "$TEST_RESULT" = "success"
+          if [[ "$FULL_SELECTED" == "true" ]]; then
+            test "$TEST_RESULT" = "success"
+          else
+            test "$TEST_RESULT" = "skipped"
+          fi
