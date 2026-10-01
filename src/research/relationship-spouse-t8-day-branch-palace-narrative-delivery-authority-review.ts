@@ -27,7 +27,6 @@ import {
 } from './relationship-spouse-t8-day-branch-palace-claim-contract-candidate.js';
 import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_REGISTRY,
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_RULE,
 } from './relationship-spouse-t8-day-branch-palace-staging-lifecycle-materialization.js';
 import {
   runRelationshipSpouseT8DayBranchPalaceShadowStagingExecution,
@@ -157,12 +156,6 @@ export async function evaluateRelationshipSpouseT8DayBranchPalaceNarrativeDelive
     RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE_DEFINITION
       .materialForNarrative === false;
 
-  const reviewAuthorityStillUnestablished =
-    RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_RULE.quality
-      .reviewerStatus === 'unreviewed' &&
-    RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_REGISTRY
-      .reviewAttestations.length === 0;
-
   const spouseIntent = Object.freeze({
     domain: 'relationship',
     temporalScope: 'natal',
@@ -279,7 +272,6 @@ export async function evaluateRelationshipSpouseT8DayBranchPalaceNarrativeDelive
     exactConsumerAdmissionBinding,
     evidenceSelectionAdmissionValid,
     narrativeMaterialityStillDenied,
-    reviewAuthorityStillUnestablished,
     spouseSectionNotOfficialPreview,
     executionFailsClosedWithoutNarrativeRuntime,
     deliveryFailsClosedWithoutArtifact,
@@ -349,16 +341,12 @@ export async function evaluateRelationshipSpouseT8DayBranchPalaceNarrativeDelive
       previewAuthorityAuthorized: false as const,
       officialReadingAuthorityAuthorized: false as const,
       publicSemanticAuthorityAuthorized: false as const,
-      humanDomainReviewEstablished: false as const,
-      reviewAttestationCreated: false as const,
-      reviewerTrustGrantEstablished: false as const,
-      reviewerStatusPromotionAuthorized: false as const,
       provenanceQualityPromotionAuthorized: false as const,
       productionAuthorityAuthorized: false as const,
       production: 'HOLD' as const,
     }),
     nextDisposition: authorityReviewCompleted
-      ? ('REQUEST_SA_5L_EXPLICIT_HUMAN_DOMAIN_NARRATIVE_MATERIALITY_DECISION' as const)
+      ? ('RUN_SA_5L_DETERMINISTIC_POSITION_ONLY_NARRATIVE_MATERIALITY_GATE' as const)
       : ('HOLD_AND_REPAIR_SA_5K_AUTHORITY_REVIEW' as const),
   });
 

@@ -9,10 +9,6 @@ import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE_DEFINITION,
 } from '../src/research/relationship-spouse-t8-day-branch-palace-claim-contract-candidate.js';
 import {
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_REGISTRY,
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_RULE,
-} from '../src/research/relationship-spouse-t8-day-branch-palace-staging-lifecycle-materialization.js';
-import {
   buildRelationshipSpouseT8DayBranchPalaceStagingConsumerEvidenceAdmission,
 } from '../src/research/relationship-spouse-t8-day-branch-palace-staging-consumer-evidence-admission.js';
 import {
@@ -33,7 +29,7 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5K narrative and 
     expect(result.deliveryAuthorityEstablished).toBe(false);
     expect(result.decision).toBe('HOLD_NARRATIVE_AND_DELIVERY_AUTHORITY');
     expect(result.nextDisposition).toBe(
-      'REQUEST_SA_5L_EXPLICIT_HUMAN_DOMAIN_NARRATIVE_MATERIALITY_DECISION',
+      'RUN_SA_5L_DETERMINISTIC_POSITION_ONLY_NARRATIVE_MATERIALITY_GATE',
     );
     expect(result.reviewId).toMatch(/^[a-f0-9]{64}$/u);
   });
@@ -57,10 +53,6 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5K narrative and 
       previewAuthorityAuthorized: false,
       officialReadingAuthorityAuthorized: false,
       publicSemanticAuthorityAuthorized: false,
-      humanDomainReviewEstablished: false,
-      reviewAttestationCreated: false,
-      reviewerTrustGrantEstablished: false,
-      reviewerStatusPromotionAuthorized: false,
       provenanceQualityPromotionAuthorized: false,
       productionAuthorityAuthorized: false,
       production: 'HOLD',
@@ -121,7 +113,7 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5K narrative and 
     expect(result.checks.noDeliveryOrOfficialAuthorityExpansion).toBe(true);
   });
 
-  test('preserves materialForNarrative=false and the unreviewed staging authority boundary', async () => {
+  test('preserves materialForNarrative=false until the automated materiality gate', async () => {
     const result =
       await buildRelationshipSpouseT8DayBranchPalaceNarrativeDeliveryAuthorityReview();
 
@@ -129,16 +121,7 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5K narrative and 
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE_DEFINITION
         .materialForNarrative,
     ).toBe(false);
-    expect(
-      RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_RULE.quality
-        .reviewerStatus,
-    ).toBe('unreviewed');
-    expect(
-      RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_REGISTRY
-        .reviewAttestations,
-    ).toEqual([]);
     expect(result.checks.narrativeMaterialityStillDenied).toBe(true);
-    expect(result.checks.reviewAuthorityStillUnestablished).toBe(true);
   });
 
   test('fails closed when the SA-5J admission changes under a stale admissionId', async () => {
