@@ -18,6 +18,7 @@ on:
       - 'scripts/run-fr104-makehuman-provider-rotation-compensation-ci.mjs'
       - 'scripts/analyze-fr104-provider-compensated-output-frame.mjs'
       - 'scripts/analyze-fr104-controlled-anatomical-side-mapping.mjs'
+      - 'scripts/build-fr104-u4b-makehuman-morph-fixture.mjs'
       - 'scripts/admit-fr104-controlled-anatomical-side-mapping-result.mjs'
       - 'scripts/run-fr104-provider-composed-orientation-validation.mjs'
       - 'scripts/admit-fr104-provider-composed-orientation-result.mjs'
@@ -117,6 +118,9 @@ on:
       - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-result-intake-fr104.test.ts'
       - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-empirical-evidence-fr104.ts'
       - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-empirical-evidence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-independent-geometry-validation-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-independent-geometry-validation-fr104.test.ts'
+      - 'research/face-research/fr104-prospective-independent-geometry-validation-u4b.md'
       - 'research/face-research/fr104-controlled-anatomical-side-mapping-u4a.md'
       - 'research/face-research/fr104-prospective-composed-orientation-normalization-u3-3.md'
       - 'packages/face-reading/src/observable-morphology-ephemeral-live-camera-frame-intake-fr242.ts'
@@ -200,6 +204,9 @@ jobs:
         run: |
           node --check scripts/analyze-fr104-controlled-anatomical-side-mapping.mjs
           node --check scripts/admit-fr104-controlled-anatomical-side-mapping-result.mjs
+
+      - name: Syntax-check FR104 U4B preregistered render-only builder
+        run: node --check scripts/build-fr104-u4b-makehuman-morph-fixture.mjs
 
       - name: Install projection dependency
         run: python -m pip install --disable-pip-version-check numpy
