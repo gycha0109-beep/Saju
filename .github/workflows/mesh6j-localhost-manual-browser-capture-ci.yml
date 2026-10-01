@@ -18,6 +18,7 @@ on:
       - 'scripts/run-fr104-makehuman-provider-rotation-compensation-ci.mjs'
       - 'scripts/analyze-fr104-provider-compensated-output-frame.mjs'
       - 'scripts/analyze-fr104-controlled-anatomical-side-mapping.mjs'
+      - 'scripts/admit-fr104-controlled-anatomical-side-mapping-result.mjs'
       - 'scripts/run-fr104-provider-composed-orientation-validation.mjs'
       - 'scripts/admit-fr104-provider-composed-orientation-result.mjs'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.html'
@@ -112,6 +113,10 @@ on:
       - 'packages/face-reading/src/neutral-ear-prospective-composed-orientation-empirical-evidence-fr104.test.ts'
       - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-audit-fr104.ts'
       - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-audit-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-result-intake-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-result-intake-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-empirical-evidence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-empirical-evidence-fr104.test.ts'
       - 'research/face-research/fr104-controlled-anatomical-side-mapping-u4a.md'
       - 'research/face-research/fr104-prospective-composed-orientation-normalization-u3-3.md'
       - 'packages/face-reading/src/observable-morphology-ephemeral-live-camera-frame-intake-fr242.ts'
@@ -192,7 +197,9 @@ jobs:
           node --check scripts/admit-fr104-provider-composed-orientation-result.mjs
 
       - name: Syntax-check FR104 U4A controlled anatomical mapping audit
-        run: node --check scripts/analyze-fr104-controlled-anatomical-side-mapping.mjs
+        run: |
+          node --check scripts/analyze-fr104-controlled-anatomical-side-mapping.mjs
+          node --check scripts/admit-fr104-controlled-anatomical-side-mapping-result.mjs
 
       - name: Install projection dependency
         run: python -m pip install --disable-pip-version-check numpy
@@ -253,11 +260,17 @@ jobs:
           FR104_U3_3_RESULT_IN: .cache/face-geometry/fr104-u3-3-result.json
         run: node scripts/admit-fr104-provider-composed-orientation-result.mjs
 
-      - name: Run FR104 U4A controlled anatomical mapping audit
+      - name: Replay FR104 U4A controlled anatomical mapping exactly
         env:
           FR104_U3_2_RESULT_IN: .cache/face-geometry/fr104-u3-2-result.json
           FR104_U4A_RESULT_OUT: .cache/face-geometry/fr104-u4a-result.json
+          FR104_U4A_EXPECTED_RESULT_SHA256: 863b1909b2bb33437496c990fd97529d986b2fca1564addb6e1591d232b7f2cf
         run: node scripts/analyze-fr104-controlled-anatomical-side-mapping.mjs
+
+      - name: Admit exact FR104 U4A controlled anatomical mapping result
+        env:
+          FR104_U4A_RESULT_IN: .cache/face-geometry/fr104-u4a-result.json
+        run: node scripts/admit-fr104-controlled-anatomical-side-mapping-result.mjs
       - name: Create ephemeral CI TLS certificate
         run: |
           openssl req -x509 -newkey rsa:2048 -nodes \
