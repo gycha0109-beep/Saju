@@ -332,3 +332,104 @@ After U4B-A preregistration merges:
     → no provider execution
 
 Only after U4B-B merges may U4B-C observe provider behavior.
+
+
+## U4B-B first render-only observation
+
+U4B-A preregistration merged before any new fixture render:
+
+    merge
+    bec91cd06b682e26ad9d0f7d6721591235031a34
+
+The first U4B-B render-only execution then ran the frozen builder without MediaPipe or browser provider inference.
+
+Execution provenance:
+
+    execution HEAD
+    686a328caadfe3ceed5241cb6b9f2c2d41844a7b
+
+    workflow run
+    36833595821
+
+Observed deterministic fixture:
+
+    PNG SHA-256
+    91a481011618f7a74aed7380185d640c604dcde587eff69b6f44654c97585b33
+
+    repeatRenderByteEqual = true
+    repeatRenderSha256Equal = true
+
+Morphed independent-geometry anatomical ground truth:
+
+    left joint
+    eye.L____head
+
+    left source point
+    [0.36575, 7.284149999999999, 1.24535]
+
+    left normalized image coordinate
+    x = 0.6081000875693314
+    y = 0.5
+
+    right joint
+    eye.R____head
+
+    right source point
+    [-0.36575, 7.284149999999999, 1.24535]
+
+    right normalized image coordinate
+    x = 0.3918999124306686
+    y = 0.5
+
+    directVsMatrixProjectionMaximumError = 0
+
+Provider-blind boundary during first render:
+
+    renderExecuted = true
+    providerExecuted = false
+    providerResultObserved = false
+
+No U4B provider landmarks, provider labels, mapping costs, or mapping state were observed in U4B-B.
+
+## U4B-B fixture admission
+
+The exact rendered fixture evidence is now pinned separately from the frozen builder.
+
+Admitted bounded authority:
+
+    u4bFixtureDigestPinned = true
+
+Still false:
+
+    prospectiveIndependentGeometryValidationExecuted = false
+    prospectiveIndependentGeometryMappingValidated = false
+    providerLabelMappedToAnatomicalSide = false
+    globalProviderAnatomicalSemanticsEstablished = false
+    anatomicalReferenceAdmitted = false
+    anatomicalLateralityAuthorized = false
+    validatedExternalEarObservationAuthorized = false
+    traditionalBindingAuthorized = false
+    productionAuthorization = false
+
+CI re-executes the unchanged frozen builder and requires exact equality for the pinned PNG digest and anatomical ground-truth coordinates while also requiring:
+
+    providerExecuted = false
+    providerResultObserved = false
+
+## U4B-C gate
+
+Only after U4B-B is merged may the pinned PNG bytes be used for the first provider observation.
+
+U4B-C must not alter:
+
+- source commit;
+- morph target;
+- morph weight;
+- renderer;
+- fixture digest;
+- anatomical ground truth;
+- provider runtime;
+- transform order;
+- reflection-parity decision rule.
+
+The first MediaPipe result must be treated as prospective evidence and may support, refute, or leave unresolved the frozen mapping rule.
