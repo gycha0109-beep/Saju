@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
@@ -15,7 +16,7 @@ import {
   resolve,
   sep,
 } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { URL, fileURLToPath } from 'node:url';
 import process from 'node:process';
 import {
   NEUTRAL_EAR_PROSPECTIVE_INDEPENDENT_GEOMETRY_VALIDATION_FR104,
@@ -216,12 +217,6 @@ function exact(actual, expected, label) {
         + ' observed='
         + String(actual),
     );
-  }
-}
-
-function exactArray(actual, expected, label) {
-  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-    fail(label + ' mismatch.');
   }
 }
 
