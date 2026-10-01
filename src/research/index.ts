@@ -170,3 +170,4 @@ export * from './relationship-spouse-t8-day-branch-palace-staging-governance-dec
 export * from './relationship-spouse-t8-day-branch-palace-staging-lifecycle-materialization.js';
 export * from './relationship-spouse-t8-day-branch-palace-shadow-staging-execution-review.js';
 export * from './relationship-spouse-t8-day-branch-palace-staging-consumer-evidence-admission.js';
+export * from './relationship-spouse-t8-day-branch-palace-narrative-delivery-authority-review.js';
