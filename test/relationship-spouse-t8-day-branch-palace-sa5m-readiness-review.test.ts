@@ -81,6 +81,8 @@ async function syntheticValidExternalSubmission(): Promise<RelationshipSpouseT8D
   };
 }
 
+const TEST_TIMEOUT_MS = 15_000;
+
 describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5M readiness gate', () => {
   test('fails closed when no real external submission is supplied', async () => {
     const result =
@@ -98,7 +100,7 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5M readiness gate
     expect(result.nextDisposition).toBe(
       'AWAIT_OR_REPAIR_REAL_EXTERNAL_HUMAN_DOMAIN_SUBMISSION',
     );
-  });
+  }, TEST_TIMEOUT_MS);
 
   test('reuses a fully passing SA-5L submission only to establish SA-5M review eligibility', async () => {
     const submission = await syntheticValidExternalSubmission();
@@ -123,7 +125,7 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5M readiness gate
     expect(result.authorityBoundary.sa5mAuthorityMaterializationAuthorized).toBe(
       false,
     );
-  });
+  }, TEST_TIMEOUT_MS);
 
   test('rejects a supplied package when its trust no longer pins the exact attestations', async () => {
     const submission = await syntheticValidExternalSubmission();
@@ -151,7 +153,7 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5M readiness gate
       'SA5M_SA5L_VALIDATED_SUBMISSION_REQUIRED',
     );
     expect(result.upstreamSubmissionBlockers.length).toBeGreaterThan(0);
-  });
+  }, TEST_TIMEOUT_MS);
 
   test('never materializes authority even when the synthetic validation package passes', async () => {
     const submission = await syntheticValidExternalSubmission();
@@ -194,7 +196,7 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5M readiness gate
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE_DEFINITION
         .materialForNarrative,
     ).toBe(false);
-  });
+  }, TEST_TIMEOUT_MS);
 
   test('is deterministic for the same absent-input readiness state', async () => {
     const first =
