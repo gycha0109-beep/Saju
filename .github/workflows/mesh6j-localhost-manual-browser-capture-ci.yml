@@ -141,7 +141,7 @@ on:
       - 'tools/face-geometry/gnm/fetch_gnm_head.py'
       - 'tools/face-geometry/gnm/export_gnm_region_ontology.py'
       - 'tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py'
-      - 'tools/face-geometry/gnm/audit_fr104_gnm_anatomical_witness.py'
+      - 'tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py'
       - 'packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-fr104.ts'
       - 'packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-fr104.test.ts'
       - 'research/face-research/fr104-gnm-cross-source-anatomical-witness-u5a.md'
@@ -221,7 +221,7 @@ jobs:
             tools/face-geometry/gnm/fetch_gnm_head.py \
             tools/face-geometry/gnm/export_gnm_region_ontology.py \
             tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py \
-            tools/face-geometry/gnm/audit_fr104_gnm_anatomical_witness.py
+            tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py
       - name: Verify executable surface contract
         run: node scripts/verify-face-geometry-mesh6j.mjs
       - name: Verify FR269 controlled geometry report
