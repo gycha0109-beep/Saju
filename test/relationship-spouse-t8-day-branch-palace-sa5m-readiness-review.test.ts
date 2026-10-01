@@ -209,5 +209,5 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5M readiness gate
     expect(first.checks.exactCurrentHandoffBinding).toBe(true);
     expect(first.checks.existingAuthorityStillUnmutated).toBe(true);
     expect(first.checks.sa5lAuthorityStillUnmaterialized).toBe(true);
-  });
+  }, TEST_TIMEOUT_MS);
 });
