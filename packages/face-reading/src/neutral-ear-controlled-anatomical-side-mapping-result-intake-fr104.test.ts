@@ -132,7 +132,10 @@ describe('FR104 U4A controlled anatomical mapping result intake', () => {
   });
 
   it('rejects case-cost drift', () => {
-    const mutated = structuredClone(candidate());
+    const mutated =
+      structuredClone(candidate()) as unknown as {
+        cases: Array<Record<string, unknown>>;
+      };
     mutated.cases[1]!.directCost = 0.5;
 
     expect(() =>
@@ -144,7 +147,10 @@ describe('FR104 U4A controlled anatomical mapping result intake', () => {
   });
 
   it('rejects candidate-side downstream authority promotion', () => {
-    const mutated = structuredClone(candidate());
+    const mutated =
+      structuredClone(candidate()) as unknown as {
+        authority: Record<string, unknown>;
+      };
     mutated.authority.anatomicalLateralityAuthorized = true;
 
     expect(() =>
