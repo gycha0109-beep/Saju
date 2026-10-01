@@ -371,7 +371,11 @@ async function decodeCanonicalFixture() {
 }
 
 function caseById(cases, id) {
-  const item = cases.find((candidate) => candidate.id === id);
+  const item = cases.find(
+    (candidate) =>
+      candidate.id === id
+      || candidate.item?.id === id,
+  );
   if (item === undefined) {
     throw new Error('U3_3_CASE_MISSING ' + id);
   }
