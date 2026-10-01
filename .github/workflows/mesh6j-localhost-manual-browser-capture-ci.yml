@@ -228,6 +228,11 @@ jobs:
 
       - name: Run FR104 compensated output coordinate frame audit
         run: node scripts/analyze-fr104-provider-compensated-output-frame.mjs
+
+      - name: Run FR104 U3.3 first prospective composed normalization
+        env:
+          FR104_U3_3_RESULT_OUT: .cache/face-geometry/fr104-u3-3-result.json
+        run: node scripts/run-fr104-provider-composed-orientation-validation.mjs
       - name: Create ephemeral CI TLS certificate
         run: |
           openssl req -x509 -newkey rsa:2048 -nodes \
