@@ -185,7 +185,7 @@ CI may:
 CI must not:
 
 - run fetch_gnm_head.py for U5A;
-- invoke audit_fr104_gnm_anatomical_witness.py on a live NPZ;
+- invoke tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py on a live NPZ;
 - emit a live U5A result digest.
 
 ## Authority
@@ -216,3 +216,33 @@ After U5A-A merges:
 Even a successful U5A-B does not authorize subject-photo laterality.
 
 A later cross-source geometric validation must still test the already-frozen mapping against a deterministic GNM-derived controlled fixture.
+
+
+## Preregistration hygiene note
+
+An early branch revision temporarily placed the future U5A live auditor under:
+
+    tools/face-geometry/gnm/**
+
+Existing MESH3/MESH4/MESH5 pull-request workflows watch that wildcard and therefore started their pre-existing GNM regression jobs.
+
+Those workflows may fetch the already-governed FR100 GNM NPZ for their historical geometry/ontology regression duties.
+
+They do not invoke the U5A auditor and do not emit the U5A target observations:
+
+    left_eye joint index
+    right_eye joint index
+    left_eye template joint position
+    right_eye template joint position
+    U5A assessment state
+    U5A result digest
+
+The U5A scientific contract and decision rule had already been committed before those jobs were triggered.
+
+The final U5A-A branch relocates the future live auditor to:
+
+    tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py
+
+This path is outside the MESH3/MESH4/MESH5 GNM wildcard triggers.
+
+U5A-B remains the first workflow authorized to execute the U5A auditor and observe the target joint witness values under the frozen contract.
