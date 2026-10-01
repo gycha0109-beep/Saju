@@ -456,6 +456,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-prospective-independent-geometry-validation-fr104.test.ts
 
+      - name: Verify FR104 U4B-B render-only fixture evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-prospective-independent-geometry-fixture-evidence-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
