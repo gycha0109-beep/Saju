@@ -11,8 +11,7 @@ const ids = [
   'M0','M90','M180','M270',
 ] as const;
 
-function supported():
-NeutralEarProspectiveIndependentGeometryObservationFR104V1[] {
+function supported(): NeutralEarProspectiveIndependentGeometryObservationFR104V1[] {
   return ids.map((id) => {
     const preserving = id.startsWith('R');
     return {
