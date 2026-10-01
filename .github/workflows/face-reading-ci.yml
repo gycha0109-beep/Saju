@@ -468,6 +468,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-prospective-independent-geometry-empirical-evidence-fr104.test.ts
 
+      - name: Verify FR104 U5A-A GNM cross-source witness preregistration
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
