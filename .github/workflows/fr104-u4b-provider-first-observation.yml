@@ -10,6 +10,11 @@ on:
       - "tools/face-geometry/capture/fr104-u4b-provider-validation.mjs"
       - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-validation-fr104.ts"
       - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-fixture-evidence-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-result-intake-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-result-intake-fr104.test.ts"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-empirical-evidence-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-empirical-evidence-fr104.test.ts"
+      - "scripts/admit-fr104-u4b-provider-result.mjs"
       - "packages/face-reading/src/neutral-ear-mirror-independent-fixture-protocol-fr104.ts"
       - "packages/face-reading/src/neutral-ear-makehuman-provider-rotation-dependence-fr104.ts"
       - "packages/face-reading/src/face-eye-pair-research-bridge-fr24.ts"
@@ -43,6 +48,7 @@ jobs:
           node --check tools/face-geometry/capture/fr104-u4b-provider-validation.mjs
           node --check scripts/run-fr104-u4b-provider-validation.mjs
           node --check scripts/build-fr104-u4b-makehuman-morph-fixture.mjs
+          node --check scripts/admit-fr104-u4b-provider-result.mjs
 
       - name: Materialize already-pinned U4B fixture
         run: |
@@ -73,8 +79,14 @@ jobs:
           google-chrome --version
           chromedriver --version
 
-      - name: Execute first U4B-C provider observation
+      - name: Replay exact U4B-C provider observation
         env:
           FR104_U4B_FIXTURE_IN: .cache/face-geometry/fr104-u4b-morph.png
           FR104_U4B_C_RESULT_OUT: .cache/face-geometry/fr104-u4b-c-result.json
+          FR104_U4B_C_EXPECTED_RESULT_SHA256: e601205ccdad7ec66900d953ed6f742e04dbd37e6074ccc4bb36bf21dd3b16a8
         run: node scripts/run-fr104-u4b-provider-validation.mjs
+
+      - name: Admit exact U4B-C prospective result
+        env:
+          FR104_U4B_C_RESULT_IN: .cache/face-geometry/fr104-u4b-c-result.json
+        run: node scripts/admit-fr104-u4b-provider-result.mjs
