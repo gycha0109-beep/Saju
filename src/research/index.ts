@@ -174,3 +174,4 @@ export * from './relationship-spouse-t8-day-branch-palace-narrative-delivery-aut
 export * from './relationship-spouse-t8-day-branch-palace-human-domain-materiality-request.js';
 export * from './relationship-spouse-t8-day-branch-palace-external-review-handoff-packet.js';
 export * from './relationship-spouse-t8-day-branch-palace-sa5m-readiness-review.js';
+export * from './relationship-spouse-t8-day-branch-palace-sa5m-prospective-materialization-contract.js';
