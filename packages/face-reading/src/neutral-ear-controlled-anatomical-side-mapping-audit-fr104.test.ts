@@ -3,6 +3,7 @@ import { FaceAuthorityValidationError } from './validation.js';
 import {
   assessNeutralEarControlledAnatomicalMappingFR104,
   NEUTRAL_EAR_CONTROLLED_ANATOMICAL_SIDE_MAPPING_AUDIT_FR104,
+  type NeutralEarControlledAnatomicalMappingObservationFR104V1,
 } from './neutral-ear-controlled-anatomical-side-mapping-audit-fr104.js';
 
 const ids = [
@@ -10,7 +11,8 @@ const ids = [
   'M0','M90','M180','M270',
 ] as const;
 
-function supported() {
+function supported():
+NeutralEarControlledAnatomicalMappingObservationFR104V1[] {
   return ids.map((id) => {
     const preserving = id.startsWith('R');
     return {
