@@ -472,6 +472,20 @@ async function main() {
       .update(serialized)
       .digest('hex');
 
+    const expectedResultSha256 =
+      process.env.FR104_U3_3_EXPECTED_RESULT_SHA256?.trim();
+    if (
+      expectedResultSha256
+      && resultSha256 !== expectedResultSha256
+    ) {
+      fail(
+        'result digest drift expected='
+          + expectedResultSha256
+          + ' observed='
+          + resultSha256,
+      );
+    }
+
     const resultOut =
       process.env.FR104_U3_3_RESULT_OUT?.trim();
     if (resultOut) {

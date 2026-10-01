@@ -1,11 +1,11 @@
-# FR104 U3.3 — Prospective composed orientation normalization preregistration
+# FR104 U3.3 — Prospective composed orientation normalization
 
 Issue: #1810
 Watchtower-Track: face-observation-engine
 
 ## Study phase
 
-This document preregisters U3.3A only.
+This document preserves the merged U3.3A preregistration and records the later U3.3B prospective execution/admission without rewriting the preregistered rule.
 
     U3.2.1 retrospective discovery/audit
     → U3.3A preregistration merged
@@ -251,10 +251,153 @@ Still false:
 
 Even a successful U3.3 result cannot by itself establish that provider LEFT/RIGHT equals subject anatomical LEFT/RIGHT.
 
+## U3.3B first valid prospective execution
+
+U3.3A preregistration merged first:
+
+    merge SHA
+    5bf66ddcfa3b6100d93f7259bd87232095c8912d
+
+The first execution attempt after preregistration failed before any case observation was produced:
+
+    U3_3_CASE_MISSING R0
+
+Cause:
+
+    working execution entries stored the case id at item.id
+    while the lookup checked candidate.id only
+
+Only that execution-harness lookup was corrected. The frozen protocol, fixture, runtime, transform matrix, comparison metrics, and decision rule were not retuned.
+
+The first valid prospective execution then completed on the frozen independent fixture:
+
+    workflow run
+    36798788804
+
+    execution HEAD
+    092fbae2ab0e8958e6a93a52afa9ea95a95ea6f9
+
+    execution merge
+    856ad0c19fdef2471434ed3253cf67b55850ae29
+
+    result SHA-256
+    793b1059308242d11c176300bd141b70a49c2fa681a49bc6e38e1abddf4aaab4
+
+Observed preregistered state:
+
+    prospective_composed_normalization_supported
+
+Coverage:
+
+    evaluated
+    R90 R180 R270 M90 M180 M270
+
+    unavailable
+    none
+
+    failed
+    none
+
+    allSixRotatedCasesAvailable
+    true
+
+Quarter-turn controls:
+
+    R90
+    composed  = 0.004019598639518765
+    identity  = 0.8609687785387168
+    opposite  = 1.2180429934630648
+
+    R270
+    composed  = 0.0034770712559623242
+    identity  = 0.8617153750658679
+    opposite  = 1.221379652899968
+
+    M90
+    composed  = 0.004295411288492099
+    identity  = 0.8608039321032435
+    opposite  = 1.2158090456181592
+
+    M270
+    composed  = 0.004108235954123095
+    identity  = 0.8608660213756174
+    opposite  = 1.2207388445996106
+
+Every quarter turn satisfies the preregistered strict dominance rule.
+
+Half-turn controls:
+
+    R180
+    composed  = 0.00526201305598233
+    identity  = 1.2172198425550267
+    opposite  = 0.00526201305598233
+
+    M180
+    composed  = 0.005500609024443177
+    identity  = 1.2168021910668552
+    opposite  = 0.005500609024443177
+
+Both half turns reject identity exactly as preregistered. Inverse and opposite remain geometrically identical at 180 degrees.
+
+Zero-degree controls:
+
+    R0 composed unorderedPairCost = 0
+    M0 composed unorderedPairCost = 0
+
+Decision-boundary flags remained:
+
+    numericAcceptanceThresholdApplied = false
+    providerLabelsUsedForDecision = false
+    anatomicalInterpretationUsed = false
+    ruleRetunedAfterObservation = false
+
+## U3.3B admission
+
+The admitted result digest is fixed to:
+
+    793b1059308242d11c176300bd141b70a49c2fa681a49bc6e38e1abddf4aaab4
+
+Admission is fail-closed over:
+
+- predecessor digest and selected frame hypothesis;
+- pinned fixture source, commit, digest, and dimensions;
+- exact runtime package/version/mode;
+- frozen composed rule;
+- all eight case identities and transformed-raster digests;
+- exact unordered-pair comparison costs;
+- preregistered assessment state and case sets;
+- privacy invariants;
+- candidate-side authority remaining false.
+
+CI then live-replays the browser experiment and requires the serialized result SHA-256 to equal the pinned digest before the intake may admit it.
+
+Admitted bounded authority:
+
+    prospectiveComposedNormalizationValidated = true
+    providerCompensatedOutputFrameProspectivelyValidated = true
+
+Scope:
+
+    independent fixture
+    exact tested runtime
+    frozen U3.3 rule only
+
+Still false:
+
+    providerLabelMappedToAnatomicalSide = false
+    globalProviderAnatomicalSemanticsEstablished = false
+    anatomicalReferenceAdmitted = false
+    anatomicalLateralityAuthorized = false
+    validatedExternalEarObservationAuthorized = false
+    traditionalBindingAuthorized = false
+    productionAuthorization = false
+
 ## Next gate
 
-    merge U3.3A preregistration
-    → execute frozen U3.3 runner once
-    → U3.3B exact intake / replay / evidence admission
+U3.3 may now close after exact-replay CI passes.
 
-U4 anatomical mapping review remains HOLD until U3.3B is admitted.
+The next scientific question is separate:
+
+    U4 anatomical mapping review
+
+U4 requires independent anatomical ground truth and must not infer anatomical LEFT/RIGHT semantics from provider labels, screen position, mirror behavior, or the U3.3 orientation-normalization result alone.
