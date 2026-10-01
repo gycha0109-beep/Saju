@@ -160,3 +160,98 @@ If U4A supports the frozen hypothesis:
 3. design a separate prospective independent anatomical-reference validation before any runtime subject-photo anatomical laterality authorization.
 
 If U4A refutes or cannot resolve the pattern, anatomical mapping remains closed and the result is admitted as such without retuning U4A post hoc.
+
+
+## Observed U4A result
+
+The retrospective controlled audit was executed after U3.3 admission.
+
+    audit HEAD
+    a69a07b872a2bedb3bfe5611c4d383c5c2ff8325
+
+    workflow run
+    36813396882
+
+    audit merge
+    2964d334bb6264517872e9d540ed40b7e034d614
+
+    derived result SHA-256
+    863b1909b2bb33437496c990fd97529d986b2fca1564addb6e1591d232b7f2cf
+
+Observed state:
+
+    reflection_parity_conditional_mapping_supported
+
+Coverage:
+
+    evaluated
+    R0 R90 R180 R270 M0 M90 M180 M270
+
+    unavailable
+    none
+
+    failed
+    none
+
+All orientation-preserving cases satisfied:
+
+    directCost < swappedCost
+
+All orientation-reversing cases satisfied:
+
+    swappedCost < directCost
+
+No numeric threshold was applied.
+
+Provider published LEFT/RIGHT names and image-space X sign were not consumed as anatomical authority.
+
+## U4A admission
+
+Admission pins the exact derived result digest and fails closed over:
+
+- U3.2 and U3.3 predecessor digests;
+- live U3.2 replay confirmation;
+- exact controlled MakeHuman fixture digests;
+- independent anatomical ground-truth source identity;
+- normalization contract;
+- all eight case ids, reflection parity values, rotations, compensation degrees, transformed-raster digests, exact direct/swapped costs, and relations;
+- assessment state and case sets;
+- interpretation boundary;
+- privacy invariants;
+- candidate-side authority remaining false.
+
+CI replays the U4A analyzer and requires:
+
+    FR104_U4A_RESULT_SHA256
+    863b1909b2bb33437496c990fd97529d986b2fca1564addb6e1591d232b7f2cf
+
+Only after that exact replay may the fail-closed intake admit:
+
+    controlledAnatomicalMappingAudited = true
+    reflectionParityConditionalMappingSupportedOnExactFixture = true
+    controlledAnatomicalReferenceAdmittedForExactFixture = true
+
+These are exact controlled-fixture authorities only.
+
+The following global/runtime authorities remain false:
+
+    providerLabelMappedToAnatomicalSide = false
+    globalProviderAnatomicalSemanticsEstablished = false
+    anatomicalReferenceAdmitted = false
+    anatomicalLateralityAuthorized = false
+    validatedExternalEarObservationAuthorized = false
+    traditionalBindingAuthorized = false
+    productionAuthorization = false
+
+The generic anatomicalReferenceAdmitted flag intentionally remains false so downstream runtime consumers cannot treat one retrospective controlled fixture as a general anatomical reference authority.
+
+## Next scientific gate
+
+The next gate must be prospectively preregistered and use an independent anatomical reference not used to derive or tune the U4A mapping rule.
+
+Required goal:
+
+    test whether the reflection-parity-conditional mapping
+    reproduces on independent anatomical ground truth
+
+Before that prospective gate succeeds, runtime subject-photo anatomical laterality remains unavailable.

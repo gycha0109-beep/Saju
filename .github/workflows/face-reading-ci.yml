@@ -444,6 +444,14 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-audit-fr104.test.ts
 
+      - name: Verify FR104 U4A controlled anatomical mapping result intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-result-intake-fr104.test.ts
+
+      - name: Verify FR104 U4A admitted empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-empirical-evidence-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
