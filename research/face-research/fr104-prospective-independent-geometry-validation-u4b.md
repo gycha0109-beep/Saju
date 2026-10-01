@@ -433,3 +433,73 @@ U4B-C must not alter:
 - reflection-parity decision rule.
 
 The first MediaPipe result must be treated as prospective evidence and may support, refute, or leave unresolved the frozen mapping rule.
+
+
+## U4B-C first provider observation harness
+
+U4B-B merged before this provider harness is allowed to execute:
+
+    U4B-B merge
+    c81c65d6aa7dedc5fd492df663d97dd5ff1ccf93
+
+The provider harness must materialize the already-pinned fixture with the unchanged frozen builder and require:
+
+    PNG SHA-256
+    91a481011618f7a74aed7380185d640c604dcde587eff69b6f44654c97585b33
+
+before browser inference begins.
+
+The browser surface uses the already-audited FR26 / U3.3 MediaPipe runtime assets and the U4B-A frozen provider package/runtime contract:
+
+    @mediapipe/tasks-vision@0.10.35
+    runningMode = IMAGE
+    numFaces = 1
+    expected landmarks = 478
+
+The first provider observation executes exactly:
+
+    R0 R90 R180 R270
+    M0 M90 M180 M270
+
+with the frozen compensation and coordinate-normalization rules.
+
+Provider eye centroids are reduced from the existing FR24 provider topology witness. Raw 478-landmark arrays remain ephemeral and are not returned or persisted.
+
+For each available case:
+
+1. physical mirror/rotation is applied to the pinned fixture bytes;
+2. FaceLandmarker executes with the preregistered inverse physical rotation;
+3. returned provider eye centroids are explicitly inverse-rotated into the family-canonical frame;
+4. independent MakeHuman anatomical eye ground truth is placed in the same family-canonical frame;
+5. direct and swapped assignment costs are computed;
+6. the U4B-A frozen pure assessor returns supported, refuted, or unresolved.
+
+The first observation PR must not preselect an expected scientific state.
+
+All three preregistered states are valid:
+
+- prospective_independent_geometry_mapping_supported
+- prospective_independent_geometry_mapping_refuted
+- prospective_independent_geometry_mapping_unresolved
+
+The first candidate result remains unadmitted:
+
+    empiricalResultAdmitted = false
+    resultDigestPinned = false
+    ruleRetunedAfterObservation = false
+
+Candidate authority remains closed except for the already-admitted fixture digest pin:
+
+    u4bFixtureDigestPinned = true
+
+The following remain false until a separate fail-closed result-intake step:
+
+    prospectiveIndependentGeometryValidationExecuted = false
+    prospectiveIndependentGeometryMappingValidated = false
+    providerLabelMappedToAnatomicalSide = false
+    globalProviderAnatomicalSemanticsEstablished = false
+    anatomicalReferenceAdmitted = false
+    anatomicalLateralityAuthorized = false
+    validatedExternalEarObservationAuthorized = false
+    traditionalBindingAuthorized = false
+    productionAuthorization = false
