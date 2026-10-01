@@ -2,12 +2,14 @@ import { describe, expect, test } from 'vitest';
 import {
   STRUCTURAL_RELATION_SOURCE_CATALOG,
   deriveStructuralRelationCandidates,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
-  type PillarFact,
-  type YinYang,
-} from '../src/index.js';
+} from '../src/calculation/structural-relations.js';
+import type {
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+  YinYang,
+} from '../src/contracts/calculation.js';
 
 const STEM_META: Readonly<Record<HeavenlyStem, { hanja: string; element: FiveElement; yinYang: YinYang }>> = {
   갑: { hanja: '甲', element: '목', yinYang: '양' },

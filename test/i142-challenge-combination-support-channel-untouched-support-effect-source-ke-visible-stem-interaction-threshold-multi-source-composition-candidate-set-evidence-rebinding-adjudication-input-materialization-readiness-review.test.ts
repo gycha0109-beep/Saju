@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionCandidateSetSelectionMaterializationFreezeRecordReport } from '../src/research/i141-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-candidate-set-selection-materialization-freeze-record.js';
 import {
   I142_REQUIRED_INPUT_ARTIFACT_CLASSES,
   buildI142ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionCandidateSetEvidenceRebindingAdjudicationInputMaterializationReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionCandidateSetSelectionMaterializationFreezeRecordReport,
-} from '../src/index.js';
+} from '../src/research/i142-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-candidate-set-evidence-rebinding-adjudication-input-materialization-readiness-review.js';
 
 function i141(
   overrides: Record<string, unknown> = {},

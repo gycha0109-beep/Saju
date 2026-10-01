@@ -3,7 +3,7 @@ import {
   INTERPRETATION_METHODOLOGY_SOURCES,
   RESEARCH_INTERPRETATION_METHODOLOGIES,
   getResearchInterpretationMethodology,
-} from '../src/index.js';
+} from '../src/research/interpretation-methodology-catalog.js';
 
 describe('research interpretation methodology catalog', () => {
   test('methodology IDs and semantic questions are unique', () => {

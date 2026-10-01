@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildI34ChallengeTargetCombinationDependencyMethodologyReview } from '../src/index.js';
+import { buildI34ChallengeTargetCombinationDependencyMethodologyReview } from '../src/research/i34-challenge-target-combination-dependency-methodology-review.js';
 
 describe('I34 challenge target combination dependency methodology review', () => {
   test('authorizes structural combination dependency adaptation without transformation verdicts', () => {

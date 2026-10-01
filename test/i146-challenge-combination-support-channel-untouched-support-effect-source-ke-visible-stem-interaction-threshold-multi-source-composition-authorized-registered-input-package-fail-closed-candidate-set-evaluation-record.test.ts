@@ -1,10 +1,14 @@
 import { describe, expect, test } from 'vitest';
 import {
   I143_I118_REQUIREMENT_IDS,
-  buildI146ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionAuthorizedRegisteredInputPackageFailClosedCandidateSetEvaluationRecord,
   type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionCandidateSetEvidenceRebindingAdjudicationInputMaterializationRecordReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredInputPackageEvaluationAuthorizationContractReport,
-} from '../src/index.js';
+} from '../src/research/i143-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-candidate-set-evidence-rebinding-adjudication-input-materialization-record.js';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredInputPackageEvaluationAuthorizationContractReport,
+} from '../src/research/i145-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-input-package-evaluation-authorization-contract.js';
+import {
+  buildI146ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionAuthorizedRegisteredInputPackageFailClosedCandidateSetEvaluationRecord,
+} from '../src/research/i146-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-authorized-registered-input-package-fail-closed-candidate-set-evaluation-record.js';
 
 const candidateIds = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6'] as const;
 const evidenceIds = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'] as const;

@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import {
-  calculateCanonicalSajuSnapshot,
-  type CalculationPolicySnapshot,
-  type FactState,
-  type PillarFact,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  CalculationPolicySnapshot,
+  PillarFact,
+} from '../src/contracts/calculation.js';
+import type { FactState } from '../src/contracts/common.js';
 import {
   DEFAULT_CALCULATION_POLICY,
   IANA_1955_STANDARD_TIME_FIXTURE,

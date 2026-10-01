@@ -1,14 +1,16 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  BranchFact,
+  CalculationPolicySnapshot,
+  EarthlyBranch,
+  FiveElement,
+  PillarFact,
+} from '../src/contracts/calculation.js';
 import {
   buildI18DRootRelationReview,
-  calculateCanonicalSajuSnapshot,
   reviewResolvedRootRelationEffects,
-  type BranchFact,
-  type CalculationPolicySnapshot,
-  type EarthlyBranch,
-  type FiveElement,
-  type PillarFact,
-} from '../src/index.js';
+} from '../src/research/i18d-root-relation-review.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/i18d-test',

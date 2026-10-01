@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelContestSettlementDependency,
+} from '../src/research/i55-challenge-combination-support-channel-contest-settlement-methodology-review.js';
 import {
   buildI59ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationMethodologyReview,
-  type ChallengeCombinationSupportChannelContestSettlementDependency,
-} from '../src/index.js';
+} from '../src/research/i59-challenge-combination-support-channel-current-chart-settlement-substrate-verification-methodology-review.js';
 
 function requirement(dependency: ChallengeCombinationSupportChannelContestSettlementDependency) {
   const report = buildI59ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationMethodologyReview();

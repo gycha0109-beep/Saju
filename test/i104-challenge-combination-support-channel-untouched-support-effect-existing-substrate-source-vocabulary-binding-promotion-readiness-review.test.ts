@@ -1,9 +1,13 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectConditionalPersistenceMethodologyDefinitionContractReport,
+} from '../src/research/i98-challenge-combination-support-channel-untouched-support-effect-conditional-persistence-methodology-definition-contract.js';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyBindingEvidenceReport,
+} from '../src/research/i103-challenge-combination-support-channel-untouched-support-effect-existing-substrate-source-vocabulary-binding-evidence.js';
 import {
   buildI104ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyBindingPromotionReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectConditionalPersistenceMethodologyDefinitionContractReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyBindingEvidenceReport,
-} from '../src/index.js';
+} from '../src/research/i104-challenge-combination-support-channel-untouched-support-effect-existing-substrate-source-vocabulary-binding-promotion-readiness-review.js';
 
 function i98(): ChallengeCombinationSupportChannelUntouchedSupportEffectConditionalPersistenceMethodologyDefinitionContractReport {
   return {

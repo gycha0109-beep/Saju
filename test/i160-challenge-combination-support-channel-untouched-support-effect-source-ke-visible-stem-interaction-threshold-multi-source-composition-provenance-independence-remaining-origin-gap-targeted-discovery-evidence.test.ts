@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   I159_ORIGIN_GAP_DISCOVERY_REQUIREMENT_IDS,
   I159_REMAINING_ORIGIN_GAP_EVIDENCE_IDS,
-  buildI160ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemainingOriginGapTargetedDiscoveryEvidence,
   type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemainingOriginGapTargetedDiscoveryReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i159-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-remaining-origin-gap-targeted-discovery-readiness-review.js';
+import { buildI160ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemainingOriginGapTargetedDiscoveryEvidence } from '../src/research/i160-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-remaining-origin-gap-targeted-discovery-evidence.js';
 
 const frozenDerivativeIds = [
   'evidence_chen_yuan_position_distance_wuli',

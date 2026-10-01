@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import {
-  buildI90ChallengeCombinationSupportChannelUntouchedSupportEffectMissingRequirementTargetedAuthorityDiscoveryReadinessReview,
   type ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateI84RequirementCoverageEvidenceReport,
   type I89RequirementCoverageEvidence,
-} from '../src/index.js';
+} from '../src/research/i89-challenge-combination-support-channel-untouched-support-effect-authority-candidate-i84-requirement-coverage-evidence.js';
+import { buildI90ChallengeCombinationSupportChannelUntouchedSupportEffectMissingRequirementTargetedAuthorityDiscoveryReadinessReview } from '../src/research/i90-challenge-combination-support-channel-untouched-support-effect-missing-requirement-targeted-authority-discovery-readiness-review.js';
 
 const COVERAGE: readonly I89RequirementCoverageEvidence[] = [
   {

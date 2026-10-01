@@ -1,17 +1,19 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { HIDDEN_STEM_MEMBERSHIP } from '../src/calculation/hidden-stems.js';
+import type {
+  CalculationPolicySnapshot,
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+} from '../src/contracts/calculation.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import {
-  HIDDEN_STEM_MEMBERSHIP,
   I18B_HIDDEN_CHALLENGE_PACK,
   I18B_HIDDEN_CHALLENGE_RULES,
-  calculateCanonicalSajuSnapshot,
   createI18BHiddenChallengeRegistry,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
   type HiddenChallengeRelation,
-} from '../src/index.js';
+} from '../src/research/i18b-hidden-challenge-strength-evidence.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/i18b-test',

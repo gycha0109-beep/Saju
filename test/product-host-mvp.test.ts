@@ -3,19 +3,21 @@ import { readFile } from 'node:fs/promises';
 import type { AddressInfo } from 'node:net';
 import { describe, expect, it } from 'vitest';
 import * as productHostPublic from '../src/product-host.js';
-import {
-  SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  buildDeterministicFallbackDraft,
-  calculateCanonicalSajuSnapshot,
-  createI7SeasonalSupportRegistry,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-  type CanonicalSajuSnapshot,
-  type CompiledNarrativePrompt,
-  type InterpretationClaim,
-  type NarrativeModelAdapter,
-  type NarrativePolicy,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  CalculationPolicySnapshot,
+  CanonicalSajuSnapshot,
+} from '../src/contracts/calculation.js';
+import type { InterpretationClaim } from '../src/contracts/interpretation.js';
+import type { NarrativePolicy } from '../src/contracts/narrative.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import type {
+  CompiledNarrativePrompt,
+  NarrativeModelAdapter,
+} from '../src/llm/model-adapter.js';
+import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../src/llm/prompt-compiler.js';
+import { buildDeterministicFallbackDraft } from '../src/narrative/deterministic-fallback.js';
+import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-support-pack.js';
 import {
   createMyeonghwaProductHost,
   parseProductHostReadingRequest,

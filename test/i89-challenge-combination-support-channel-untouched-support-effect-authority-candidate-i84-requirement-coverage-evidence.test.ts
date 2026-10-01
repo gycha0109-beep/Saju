@@ -1,11 +1,17 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectAdditionalAuthorityRequirementsReviewReport,
+  I84UntouchedSupportAuthorityRequirement,
+} from '../src/research/i84-challenge-combination-support-channel-untouched-support-effect-additional-authority-requirements-review.js';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateRegistrationContractReport,
+} from '../src/research/i87-challenge-combination-support-channel-untouched-support-effect-authority-candidate-registration-contract.js';
 import {
   buildI88ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateDiscoveryRegistrationEvidence,
+} from '../src/research/i88-challenge-combination-support-channel-untouched-support-effect-authority-candidate-discovery-registration-evidence.js';
+import {
   buildI89ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateI84RequirementCoverageEvidence,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectAdditionalAuthorityRequirementsReviewReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateRegistrationContractReport,
-  type I84UntouchedSupportAuthorityRequirement,
-} from '../src/index.js';
+} from '../src/research/i89-challenge-combination-support-channel-untouched-support-effect-authority-candidate-i84-requirement-coverage-evidence.js';
 
 const REQUIREMENTS = [
   {

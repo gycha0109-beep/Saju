@@ -1,12 +1,14 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import {
-  calculateCanonicalSajuSnapshot,
   deriveStructuralRelationCandidates,
   STRUCTURAL_RELATION_DEFINITION_CONTENT_HASH,
   STRUCTURAL_RELATION_DERIVATION_VERSION,
-  type CalculationPolicySnapshot,
-  type PillarFact,
-} from '../src/index.js';
+} from '../src/calculation/structural-relations.js';
+import type {
+  CalculationPolicySnapshot,
+  PillarFact,
+} from '../src/contracts/calculation.js';
 import { BRANCH_CLASH_CONTEXT_ENRICHED_CANONICAL_SCHEMA_VERSION } from '../src/calculation/branch-clash-context-facts.js';
 import { BRANCH_CLASH_QUALIFIER_OBSERVATION_SCHEMA_VERSION } from '../src/calculation/branch-clash-qualifier-observation-facts.js';
 import { STRUCTURAL_RELATION_ENRICHED_CANONICAL_SCHEMA_VERSION } from '../src/calculation/structural-relation-facts.js';

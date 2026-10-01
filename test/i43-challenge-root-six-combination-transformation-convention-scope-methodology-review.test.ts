@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   buildI43ChallengeRootSixCombinationTransformationConventionScopeMethodologyReview,
   I43_CHALLENGE_ROOT_SIX_COMBINATION_SOURCE_BASIS,
-} from '../src/index.js';
+} from '../src/research/i43-challenge-root-six-combination-transformation-convention-scope-methodology-review.js';
 
 describe('I43 challenge root six-combination transformation convention scope methodology review', () => {
   test('preserves structural six-combination pairing while blocking a uniform transformed-element route', () => {

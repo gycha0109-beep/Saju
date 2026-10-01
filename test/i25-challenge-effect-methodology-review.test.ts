@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI24ChallengeMechanismComposition,
-  buildI25ChallengeEffectMethodologyReview,
-} from '../src/index.js';
+import { buildI24ChallengeMechanismComposition } from '../src/research/i24-challenge-mechanism-composition.js';
+import { buildI25ChallengeEffectMethodologyReview } from '../src/research/i25-challenge-effect-methodology-review.js';
 
 describe('I25 relation-specific challenge effect methodology review', () => {
   test('routes output leakage to relation-specific contexts without a fixed weakening direction', () => {

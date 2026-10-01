@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   I162_REMEDIATION_REQUIREMENT_IDS,
   I162_REVIEWABLE_REMEDIATION_STRATEGY_IDS,
+  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceCandidateSetRemediationRequirementsReviewReport,
+} from '../src/research/i162-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-candidate-set-remediation-requirements-review.js';
+import {
   I163_DISCOVERY_OUTPUT_REQUIREMENT_IDS,
   buildI163ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateDiscoveryReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceCandidateSetRemediationRequirementsReviewReport,
-} from '../src/index.js';
+} from '../src/research/i163-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-remediation-candidate-discovery-readiness-review.js';
 
 function validI162(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceCandidateSetRemediationRequirementsReviewReport {
   return {

@@ -1,15 +1,15 @@
 import { describe, expect, test } from 'vitest';
-import {
-  calculateCanonicalSajuSnapshot,
-  type BirthInput,
-  type CalculationPolicySnapshot,
-  type EarthlyBranch,
-  type FactState,
-  type FiveElement,
-  type HeavenlyStem,
-  type PillarFact,
-  type YinYang,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  BirthInput,
+  CalculationPolicySnapshot,
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+  YinYang,
+} from '../src/contracts/calculation.js';
+import type { FactState } from '../src/contracts/common.js';
 
 const STEMS = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'] as const satisfies readonly HeavenlyStem[];
 const BRANCHES = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'] as const satisfies readonly EarthlyBranch[];

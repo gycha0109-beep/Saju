@@ -1,15 +1,17 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ClaimTypeDefinition,
+  ClaimValueSchemaDefinition,
+  InterpretationPack,
+  MethodologyDefinition,
+  RuleDefinition,
+} from '../src/contracts/interpretation.js';
 import {
   RegistryConfigurationError,
   createRuleRegistrySnapshot,
   verifyResolvedRegistryContentIntegrity,
-  type ClaimTypeDefinition,
-  type ClaimValueSchemaDefinition,
-  type InterpretationPack,
-  type MethodologyDefinition,
   type ResolvedRuleRegistrySnapshot,
-  type RuleDefinition,
-} from '../src/index.js';
+} from '../src/interpretation/rule-registry.js';
 
 const SCHEMA: ClaimValueSchemaDefinition = {
   schemaId: 'SCHEMA-CAREER-PATTERN-V1',

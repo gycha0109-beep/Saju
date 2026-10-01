@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceRelationVocabularyRepositoryBindingReviewReport,
+} from '../src/research/i99-challenge-combination-support-channel-untouched-support-effect-source-relation-vocabulary-repository-binding-review.js';
 import {
   buildI100ChallengeCombinationSupportChannelUntouchedSupportEffectSourceVocabularyTaxonomyGapRequirementsReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceRelationVocabularyRepositoryBindingReviewReport,
-} from '../src/index.js';
+} from '../src/research/i100-challenge-combination-support-channel-untouched-support-effect-source-vocabulary-taxonomy-gap-requirements-review.js';
 
 function i99(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceRelationVocabularyRepositoryBindingReviewReport {
   const bindings = [

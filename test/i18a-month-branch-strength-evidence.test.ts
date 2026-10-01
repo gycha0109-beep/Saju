@@ -1,14 +1,16 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  CalculationPolicySnapshot,
+  FiveElement,
+} from '../src/contracts/calculation.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import {
   I18A_MONTH_BRANCH_STRENGTH_PACK,
   I18A_MONTH_BRANCH_STRENGTH_RULES,
-  calculateCanonicalSajuSnapshot,
   createI18AMonthBranchStrengthRegistry,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-  type FiveElement,
   type MonthBranchStrengthRelation,
-} from '../src/index.js';
+} from '../src/research/i18a-month-branch-strength-evidence.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/i18a-test',

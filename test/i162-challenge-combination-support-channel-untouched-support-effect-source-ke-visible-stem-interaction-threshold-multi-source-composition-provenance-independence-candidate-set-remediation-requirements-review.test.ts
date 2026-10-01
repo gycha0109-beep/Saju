@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   I161_PROVENANCE_REMEDIATION_REVIEW_REQUIREMENT_IDS,
+  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemainingOriginDiscoveryExhaustionPolicyReassessmentReviewReport,
+} from '../src/research/i161-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-remaining-origin-discovery-exhaustion-policy-reassessment-review.js';
+import {
   I162_REMEDIATION_REQUIREMENT_IDS,
   I162_REVIEWABLE_REMEDIATION_STRATEGY_IDS,
   buildI162ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceCandidateSetRemediationRequirementsReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemainingOriginDiscoveryExhaustionPolicyReassessmentReviewReport,
-} from '../src/index.js';
+} from '../src/research/i162-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-candidate-set-remediation-requirements-review.js';
 
 function validI161(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemainingOriginDiscoveryExhaustionPolicyReassessmentReviewReport {
   return {

@@ -1,14 +1,16 @@
 import { describe, expect, test } from 'vitest';
+import type { ChallengeContextAvailabilityV18Report } from '../src/research/i26-challenge-context-availability-v18.js';
+import type { ChallengeCombinationSupportChannelContestSettlementDependency } from '../src/research/i55-challenge-combination-support-channel-contest-settlement-methodology-review.js';
+import type {
+  ChallengeCombinationSupportChannelSettlementDependencyEvidenceItem,
+  ChallengeCombinationSupportChannelSettlementDependencyEvidenceReport,
+} from '../src/research/i56-challenge-combination-support-channel-settlement-dependency-evidence.js';
+import { buildI57ChallengeCombinationSupportChannelExistingSettlementAuthorityApplicabilityReview } from '../src/research/i57-challenge-combination-support-channel-existing-settlement-authority-applicability-review.js';
 import {
-  buildI26ChallengeContextAvailabilityV19,
-  buildI57ChallengeCombinationSupportChannelExistingSettlementAuthorityApplicabilityReview,
   buildI58ChallengeCombinationSupportChannelExistingSettlementAuthorityApplicabilityEvidence,
-  type ChallengeCombinationSupportChannelContestSettlementDependency,
-  type ChallengeCombinationSupportChannelSettlementDependencyEvidenceItem,
-  type ChallengeCombinationSupportChannelSettlementDependencyEvidenceReport,
-  type ChallengeContextAvailabilityV18Report,
   type ChallengeCombinationSupportChannelExistingSettlementAuthorityApplicabilityEvidenceReport,
-} from '../src/index.js';
+} from '../src/research/i58-challenge-combination-support-channel-existing-settlement-authority-applicability-evidence.js';
+import { buildI26ChallengeContextAvailabilityV19 } from '../src/research/i26-challenge-context-availability-v19.js';
 
 type Family = 'stem' | 'root';
 

@@ -52,9 +52,9 @@ jobs:
       fail-fast: false
       max-parallel: 8
       matrix:
-        # Longest-processing-time-first order from two completed 16-shard baselines.
+        # Longest-processing-time-first order from the latest optimized 16-shard baseline.
         # Shard membership is unchanged; only matrix scheduling priority changes.
-        shard: [13, 5, 14, 16, 3, 2, 6, 11, 12, 7, 9, 8, 1, 15, 4, 10]
+        shard: [11, 12, 7, 3, 14, 1, 8, 9, 2, 13, 5, 15, 10, 6, 4, 16]
 
     steps:
       - name: Checkout

@@ -1,16 +1,18 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  BranchFact,
+  CalculationPolicySnapshot,
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+} from '../src/contracts/calculation.js';
 import {
   buildI20RelativeForceEvidence,
   buildResolvedRelativeForceEvidence,
-  calculateCanonicalSajuSnapshot,
   seasonalElementPhase,
-  type BranchFact,
-  type CalculationPolicySnapshot,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
-  type PillarFact,
-} from '../src/index.js';
+} from '../src/research/i20-relative-force-evidence.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/i20-test',

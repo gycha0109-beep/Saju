@@ -13,7 +13,7 @@ import {
   type FaceProductProjectionV1,
   type FaceTopicAuthorizedExecutionPlan,
   type FaceTopicExecutionResultReceiptV1,
-} from '../src/index.js';
+} from '../src/face-topic/index.js';
 import {
   buildRepositoryFaceAuthorityReceiptForTopicFaceTest,
 } from './support/topic-face-live-authority-source.js';

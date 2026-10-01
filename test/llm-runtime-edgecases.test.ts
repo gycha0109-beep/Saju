@@ -1,16 +1,18 @@
 import { describe, expect, test } from 'vitest';
-import {
-  SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  generateGroundedNarrative,
-  parseNarrativeDraft,
-  validateNarrativeDraftGrounding,
-  type CompiledNarrativePrompt,
-  type GroundedNarrativeRequest,
-  type InterpretationClaim,
-  type NarrativeEvidenceBundle,
-  type NarrativeModelAdapter,
-  type NarrativePolicy,
-} from '../src/index.js';
+import type { InterpretationClaim } from '../src/contracts/interpretation.js';
+import type {
+  GroundedNarrativeRequest,
+  NarrativeEvidenceBundle,
+  NarrativePolicy,
+} from '../src/contracts/narrative.js';
+import type {
+  CompiledNarrativePrompt,
+  NarrativeModelAdapter,
+} from '../src/llm/model-adapter.js';
+import { parseNarrativeDraft } from '../src/llm/narrative-draft-parser.js';
+import { generateGroundedNarrative } from '../src/llm/narrative-orchestrator.js';
+import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../src/llm/prompt-compiler.js';
+import { validateNarrativeDraftGrounding } from '../src/narrative/grounding-validator.js';
 
 const policy: NarrativePolicy = {
   policyId: 'POLICY-EDGE',

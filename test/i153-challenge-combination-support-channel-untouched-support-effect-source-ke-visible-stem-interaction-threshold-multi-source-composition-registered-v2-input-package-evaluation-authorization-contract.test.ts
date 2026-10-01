@@ -1,9 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import {
-  I144_BINDING_EVALUATION_STEP_IDS,
-  buildI153ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredV2InputPackageEvaluationAuthorizationContract,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredV2InputPackageEvaluationAuthorizationReadinessReviewReport,
-} from '../src/index.js';
+import { I144_BINDING_EVALUATION_STEP_IDS } from '../src/research/i144-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-input-package-evaluation-authorization-readiness-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredV2InputPackageEvaluationAuthorizationReadinessReviewReport } from '../src/research/i152-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-v2-input-package-evaluation-authorization-readiness-review.js';
+import { buildI153ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredV2InputPackageEvaluationAuthorizationContract } from '../src/research/i153-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-v2-input-package-evaluation-authorization-contract.js';
 
 function validI152(
   overrides: Record<string, unknown> = {},

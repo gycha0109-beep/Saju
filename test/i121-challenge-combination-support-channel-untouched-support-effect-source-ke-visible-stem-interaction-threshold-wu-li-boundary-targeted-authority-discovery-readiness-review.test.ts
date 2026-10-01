@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdAuthorityCandidateDiscoveryEvidenceReport,
+} from '../src/research/i120-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-authority-candidate-discovery-evidence.js';
 import {
   buildI121ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdWuLiBoundaryTargetedAuthorityDiscoveryReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdAuthorityCandidateDiscoveryEvidenceReport,
-} from '../src/index.js';
+} from '../src/research/i121-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-wu-li-boundary-targeted-authority-discovery-readiness-review.js';
 
 const STRONGEST_ID = 'wei_qianli_i120_fixture';
 

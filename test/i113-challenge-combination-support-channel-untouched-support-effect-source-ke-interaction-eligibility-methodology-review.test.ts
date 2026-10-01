@@ -1,11 +1,19 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryReadinessReviewReport,
+} from '../src/research/i106-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-candidate-discovery-readiness-review.js';
 import {
   buildI107ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryEvidence,
+} from '../src/research/i107-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-candidate-discovery-evidence.js';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceBindingEvidenceReport,
+} from '../src/research/i111-challenge-combination-support-channel-untouched-support-effect-source-ke-directional-evidence-binding-evidence.js';
+import {
   buildI112ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalBindingPromotionReadinessReview,
+} from '../src/research/i112-challenge-combination-support-channel-untouched-support-effect-source-ke-directional-binding-promotion-readiness-review.js';
+import {
   buildI113ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeInteractionEligibilityMethodologyReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryReadinessReviewReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceBindingEvidenceReport,
-} from '../src/index.js';
+} from '../src/research/i113-challenge-combination-support-channel-untouched-support-effect-source-ke-interaction-eligibility-methodology-review.js';
 
 function i106(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryReadinessReviewReport {
   const requirements = [

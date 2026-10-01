@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import {
-  calculateCanonicalSajuSnapshot,
-  evaluateRule,
-  type CalculationPolicySnapshot,
-  type InterpretationPack,
-  type RuleDefinition,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import type {
+  InterpretationPack,
+  RuleDefinition,
+} from '../src/contracts/interpretation.js';
+import { evaluateRule } from '../src/interpretation/rule-evaluator.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/logical-fact-path-test',

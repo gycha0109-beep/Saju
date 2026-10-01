@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import { buildFaceAuthorityCoverageSnapshot } from '../src/face-topic/authority.js';
+import {
+  planFaceTopicExecution,
+  type FaceTopicAuthorizedExecutionPlan,
+} from '../src/face-topic/execution.js';
 import {
   FACE_ENGINE_FR293_AUTHORITY_STATE,
   FACE_ENGINE_FR293_SOURCE_CONTRACT_VERSION,
   FACE_ENGINE_PRODUCT_DISPLAY_AUTHORITY_REF,
   FACE_ENGINE_PRODUCT_DISPLAY_RECEIPT_SCHEMA_VERSION,
-  buildFaceAuthorityCoverageSnapshot,
   buildFaceLiveReaderPipeline,
-  planFaceTopicExecution,
-  type FaceTopicAuthorizedExecutionPlan,
-} from '../src/index.js';
+} from '../src/face-topic/live-fr293-reader.js';
 import {
   buildRepositoryFaceAuthorityReceiptForTopicFaceTest,
 } from './support/topic-face-live-authority-source.js';

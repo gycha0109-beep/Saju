@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import {
-  calculateCanonicalSajuSnapshot,
   MyeonghwaCalculationError,
-  type CalculationPolicySnapshot,
-} from '../src/index.js';
+  calculateCanonicalSajuSnapshot,
+} from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
 
 const jasiPolicy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/unknown-time-limit-test',

@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import {
   EvidenceSelectionError,
   buildNarrativeEvidenceBundle,
-  calculateCanonicalSajuSnapshot,
-  createI7SeasonalSupportRegistry,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-} from '../src/index.js';
+} from '../src/narrative/evidence-selector.js';
+import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-support-pack.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/narrative-evidence-test',

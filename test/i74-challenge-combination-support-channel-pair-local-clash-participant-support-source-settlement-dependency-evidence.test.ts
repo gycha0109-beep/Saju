@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI73ChallengeCombinationSupportChannelPairLocalClashParticipantSupportSourceSettlementDependencyCircularityMethodologyReview,
-  type ChallengeCombinationSupportChannelPairLocalClashParticipantSupportSourceContestTopologyEvidenceReport,
-} from '../src/index.js';
+import type { ChallengeCombinationSupportChannelPairLocalClashParticipantSupportSourceContestTopologyEvidenceReport } from '../src/research/i72-challenge-combination-support-channel-pair-local-clash-participant-support-source-contest-topology-evidence.js';
+import { buildI73ChallengeCombinationSupportChannelPairLocalClashParticipantSupportSourceSettlementDependencyCircularityMethodologyReview } from '../src/research/i73-challenge-combination-support-channel-pair-local-clash-participant-support-source-settlement-dependency-circularity-methodology-review.js';
 import { buildI74ChallengeCombinationSupportChannelPairLocalClashParticipantSupportSourceSettlementDependencyEvidence } from '../src/research/i74-challenge-combination-support-channel-pair-local-clash-participant-support-source-settlement-dependency-evidence.js';
 
 const EVALUATED_CLASH_ID = 'branch_clash:day:branch:인|hour:branch:신';

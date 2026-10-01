@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   buildI49ChallengeCombinationSeasonalCommandEffectMethodologyReview,
   I49_SEASONAL_DISPOSITION_BY_PHASE,
-} from '../src/index.js';
+} from '../src/research/i49-challenge-combination-seasonal-command-effect-methodology-review.js';
 
 describe('I49 challenge combination seasonal-command effect methodology review', () => {
   test('authorizes source-bounded categorical seasonal disposition only', () => {

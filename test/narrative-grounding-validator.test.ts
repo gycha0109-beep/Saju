@@ -1,15 +1,16 @@
 import { describe, expect, test } from 'vitest';
+import { ambiguous, resolved } from '../src/contracts/common.js';
+import type { InterpretationClaim } from '../src/contracts/interpretation.js';
+import type {
+  NarrativeDraft,
+  NarrativeEvidenceBundle,
+  NarrativeSection,
+} from '../src/contracts/narrative.js';
 import {
-  ambiguous,
   buildDeterministicFallbackDraft,
   buildValidatedDeterministicFallback,
-  resolved,
-  validateNarrativeDraftGrounding,
-  type InterpretationClaim,
-  type NarrativeDraft,
-  type NarrativeEvidenceBundle,
-  type NarrativeSection,
-} from '../src/index.js';
+} from '../src/narrative/deterministic-fallback.js';
+import { validateNarrativeDraftGrounding } from '../src/narrative/grounding-validator.js';
 
 const methodA = { id: 'METHOD-A', version: '1.0.0' } as const;
 const methodB = { id: 'METHOD-B', version: '1.0.0' } as const;

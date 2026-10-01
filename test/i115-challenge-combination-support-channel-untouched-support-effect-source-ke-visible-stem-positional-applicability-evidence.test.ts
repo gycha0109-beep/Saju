@@ -1,9 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI115ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemPositionalApplicabilityEvidence,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceBindingEvidenceReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemPositionalApplicabilityAdapterContractReport,
-} from '../src/index.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceBindingEvidenceReport } from '../src/research/i111-challenge-combination-support-channel-untouched-support-effect-source-ke-directional-evidence-binding-evidence.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemPositionalApplicabilityAdapterContractReport } from '../src/research/i114-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-positional-applicability-adapter-contract.js';
+import { buildI115ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemPositionalApplicabilityEvidence } from '../src/research/i115-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-positional-applicability-evidence.js';
 
 const SOURCE_ID = 'source_chenyuan_sizhu_yuce_rumen_1995_isbn9787805922515';
 

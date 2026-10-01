@@ -1,11 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI22SupportCompositionFrontier,
-  buildI23StrengthDecisionReadiness,
-  type ClashRescueRouterReport,
-  type PostRelationRootEffectReviewReport,
-  type SpecialPatternReviewRouterReport,
-} from '../src/index.js';
+import type { SpecialPatternReviewRouterReport } from '../src/research/i18e-special-pattern-review-router.js';
+import type { PostRelationRootEffectReviewReport } from '../src/research/i19-post-relation-root-effect-review.js';
+import type { ClashRescueRouterReport } from '../src/research/i20d-clash-rescue-router.js';
+import { buildI22SupportCompositionFrontier } from '../src/research/i22-support-composition-frontier.js';
+import { buildI23StrengthDecisionReadiness } from '../src/research/i23-strength-decision-readiness.js';
 
 function specialPattern(
   status: SpecialPatternReviewRouterReport['status'] = 'NO_BASELINE_SPECIAL_SIGNAL',

@@ -2,10 +2,12 @@ import { describe, expect, test } from 'vitest';
 import {
   calculateCanonicalSajuSnapshot,
   MyeonghwaCalculationError,
-  type BirthInput,
   type CalculationErrorCode,
-  type CalculationPolicySnapshot,
-} from '../src/index.js';
+} from '../src/calculation/calculation-engine.js';
+import type {
+  BirthInput,
+  CalculationPolicySnapshot,
+} from '../src/contracts/calculation.js';
 
 function policy(
   overrides: Partial<CalculationPolicySnapshot> = {},

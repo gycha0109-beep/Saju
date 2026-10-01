@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdWuLiBoundaryTargetedAuthorityDiscoveryEvidenceReport,
+} from '../src/research/i122-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-wu-li-boundary-targeted-authority-discovery-evidence.js';
 import {
   buildI123ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdCandidateSetCompositionPolicyReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdWuLiBoundaryTargetedAuthorityDiscoveryEvidenceReport,
-} from '../src/index.js';
+} from '../src/research/i123-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-candidate-set-composition-policy-readiness-review.js';
 
 function i122(
   overrides: Record<string, unknown> = {},

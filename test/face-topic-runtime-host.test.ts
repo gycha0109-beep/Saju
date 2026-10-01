@@ -9,7 +9,7 @@ import {
   executeFaceTopicRuntime,
   type FaceTopicRuntimeDependenciesV1,
   type FaceTopicRuntimeEngineRequestV1,
-} from '../src/index.js';
+} from '../src/face-topic/runtime.js';
 import {
   buildFR293ProductDisplayReceiptForTopicFaceTest,
 } from './support/topic-face-fr293-display-receipt.js';

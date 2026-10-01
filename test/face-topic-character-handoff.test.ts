@@ -3,18 +3,20 @@ import {
   expect,
   it,
 } from 'vitest';
+import { buildFaceAuthorityCoverageSnapshot } from '../src/face-topic/authority.js';
 import {
   admitFaceCharacterGroundingBundleV1,
   assertFaceCharacterGroundingBundleRefV1,
   assertFaceCharacterGroundingBundleV1,
-  buildFaceAuthorityCoverageSnapshot,
   buildFaceCharacterGroundingBundleRefV1,
-  buildFaceLiveReaderPipeline,
   evaluateFaceCharacterHandoffEligibility,
-  planFaceTopicExecution,
   type FaceCharacterGroundingBundleV1,
+} from '../src/face-topic/character-handoff.js';
+import {
+  planFaceTopicExecution,
   type FaceTopicAuthorizedExecutionPlan,
-} from '../src/index.js';
+} from '../src/face-topic/execution.js';
+import { buildFaceLiveReaderPipeline } from '../src/face-topic/live-fr293-reader.js';
 import {
   deterministicContentHash,
 } from '../src/interpretation/rule-registry.js';

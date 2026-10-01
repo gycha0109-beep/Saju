@@ -1,18 +1,20 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  CalculationPolicySnapshot,
+  FiveElement,
+} from '../src/contracts/calculation.js';
+import { ExecutionPlanError } from '../src/interpretation/execution-plan.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import { createRuleRegistrySnapshot } from '../src/interpretation/rule-registry.js';
+import type { ReviewerTrustContext } from '../src/interpretation/reviewer-trust.js';
 import {
-  ExecutionPlanError,
   I7_RESEARCH_SOURCES,
   I7_SEASONAL_SUPPORT_METHODOLOGY,
   I7_SEASONAL_SUPPORT_PACK,
   I7_SEASONAL_SUPPORT_RULES,
-  calculateCanonicalSajuSnapshot,
   createI7SeasonalSupportRegistry,
-  createRuleRegistrySnapshot,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-  type FiveElement,
-  type ReviewerTrustContext,
-} from '../src/index.js';
+} from '../src/research/i7-seasonal-support-pack.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/i7-research-pack-test',

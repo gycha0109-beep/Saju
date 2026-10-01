@@ -1,15 +1,17 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import type {
+  InterpretationPack,
+  MethodologyDefinition,
+  RuleDefinition,
+  SourceReference,
+} from '../src/contracts/interpretation.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import {
   RegistryConfigurationError,
-  calculateCanonicalSajuSnapshot,
   createRuleRegistrySnapshot,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-  type InterpretationPack,
-  type MethodologyDefinition,
-  type RuleDefinition,
-  type SourceReference,
-} from '../src/index.js';
+} from '../src/interpretation/rule-registry.js';
 
 const calculationPolicy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/interpretation-engine-test',
