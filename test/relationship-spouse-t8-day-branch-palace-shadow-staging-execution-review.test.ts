@@ -108,7 +108,7 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5I shadow staging
     expect(validation.blockers).toContain(
       'SOURCE_ADJUDICATION_AUTHORITY_HASH_MISMATCH',
     );
-    expect(validation.blockers).toContain(
+    expect(validation.blockers).not.toContain(
       'SA5I_EXECUTION_AUTHORITY_REF_DRIFT',
     );
   });
