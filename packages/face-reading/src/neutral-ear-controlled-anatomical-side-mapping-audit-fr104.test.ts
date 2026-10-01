@@ -11,8 +11,7 @@ const ids = [
   'M0','M90','M180','M270',
 ] as const;
 
-function supported():
-NeutralEarControlledAnatomicalMappingObservationFR104V1[] {
+function supported(): NeutralEarControlledAnatomicalMappingObservationFR104V1[] {
   return ids.map((id) => {
     const preserving = id.startsWith('R');
     return {
@@ -89,7 +88,7 @@ describe('FR104 U4A controlled anatomical mapping audit', () => {
   it('treats a reversed parity relation as a scientific refutation', () => {
     const input = supported();
     input[1] = {
-      ...input[1],
+      ...input[1]!,
       directCost:0.4,
       swappedCost:0.02,
     };
@@ -108,7 +107,7 @@ describe('FR104 U4A controlled anatomical mapping audit', () => {
   it('keeps incomplete evidence unresolved rather than partially promoting', () => {
     const input = supported();
     input[7] = {
-      ...input[7],
+      ...input[7]!,
       available:false,
       directCost:null,
       swappedCost:null,
@@ -129,7 +128,7 @@ describe('FR104 U4A controlled anatomical mapping audit', () => {
   it('rejects malformed parity and unavailable-cost inputs', () => {
     const parity = supported();
     parity[0] = {
-      ...parity[0],
+      ...parity[0]!,
       reflectionParity:'orientation_reversing',
     };
 
@@ -141,7 +140,7 @@ describe('FR104 U4A controlled anatomical mapping audit', () => {
 
     const unavailable = supported();
     unavailable[3] = {
-      ...unavailable[3],
+      ...unavailable[3]!,
       available:false,
       directCost:0,
       swappedCost:null,
