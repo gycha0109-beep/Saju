@@ -298,3 +298,101 @@ The following therefore remain false:
     productionAuthorization = false
 
 A separate fail-closed result-intake PR is required after the first candidate execution is merged.
+
+
+## U5A-B2 exact result admission
+
+The canonical U5A-B1 live candidate merged as:
+
+    PR
+    #1952
+
+    merge
+    d2b615c3f027860d6cf8de65f502585d54e95fdc
+
+The exact candidate result is:
+
+    SHA-256
+    7eac8cb7b030fed200cf6d4b7d8406901449f130deb3b44c7ef2b98a79b6cd21
+
+    state
+    gnm_direct_left_right_joint_witness_supported
+
+Canonical first live observation:
+
+    workflow run
+    36951791966
+
+An independent duplicate execution before admission reproduced the same serialized result digest:
+
+    workflow run
+    36952101771
+
+The observed direct-source witnesses are pinned exactly:
+
+    left_eye
+    joint index 2
+    [0.030839037150144577,
+     0.30316492915153503,
+     0.09888789802789688]
+
+    right_eye
+    joint index 3
+    [-0.030866222456097603,
+      0.3031134307384491,
+      0.09897840023040771]
+
+U5A-B2 re-fetches the exact FR100 GNM NPZ and re-executes the frozen auditor.
+
+The serialized result must reproduce the exact candidate SHA before admission.
+
+The fail-closed intake pins:
+
+- schema and study kind;
+- exact GNM repository, commit, path, blob, byte length, version and variant;
+- exact left_eye / right_eye source names;
+- exact joint counts;
+- exact joint indices;
+- exact 3D template joint positions;
+- finite/distinct anchor status;
+- exact required provider-group set and presence;
+- exact diagnostic X ordering while preserving its non-authoritative status;
+- cross-source-family interpretation boundary;
+- privacy invariants;
+- candidate-side authority remaining false.
+
+Digest, index, coordinate, source, boundary, privacy or authority drift is rejection.
+
+### Bounded authority admitted
+
+A successful exact replay and intake admits only:
+
+    gnmCrossSourceSemanticWitnessAudited = true
+
+This means:
+
+> the exact pinned Google GNM Head source independently provides
+> direct left_eye / right_eye semantic joint names with usable,
+> distinct 3D template anchors.
+
+It does not establish a MediaPipe-to-anatomy mapping.
+
+The following remain false:
+
+    gnmCrossSourceGeometricValidationExecuted = false
+    providerLabelMappedToAnatomicalSide = false
+    globalProviderAnatomicalSemanticsEstablished = false
+    anatomicalReferenceAdmitted = false
+    anatomicalLateralityAuthorized = false
+    validatedExternalEarObservationAuthorized = false
+    traditionalBindingAuthorized = false
+    productionAuthorization = false
+
+## Next gate after U5A-B2 admission
+
+The next gate is:
+
+    U5B-A
+    = preregister deterministic GNM cross-source geometric validation
+
+U5B-A must freeze the GNM-derived controlled geometry/render/projection protocol before any new GNM render or MediaPipe observation is used for the cross-source mapping test.

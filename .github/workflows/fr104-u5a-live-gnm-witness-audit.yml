@@ -7,6 +7,11 @@ on:
       - "tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py"
       - "tools/face-geometry/gnm/fetch_gnm_head.py"
       - "packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-result-intake-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-result-intake-fr104.test.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-empirical-evidence-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-empirical-evidence-fr104.test.ts"
+      - "scripts/admit-fr104-u5a-gnm-witness-result.mjs"
       - "research/face-research/fr104-gnm-cross-source-anatomical-witness-u5a.md"
   workflow_dispatch:
 
@@ -26,6 +31,18 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Face Reading
+        run: npm run face:build
+
       - name: Install audit dependency
         run: python -m pip install --disable-pip-version-check numpy
 
@@ -39,10 +56,15 @@ jobs:
           mkdir -p .cache/face-geometry
           python tools/face-geometry/gnm/fetch_gnm_head.py             --output .cache/face-geometry/gnm_head.npz             | tee /tmp/fr104-u5a-fetch.jsonl
 
-      - name: Execute first U5A-B live source witness audit
+      - name: Replay exact U5A-B live source witness audit
         run: |
           set -euo pipefail
           python tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py             --npz .cache/face-geometry/gnm_head.npz             --output .cache/face-geometry/fr104-u5a-result.json             | tee /tmp/fr104-u5a-audit.log
+
+      - name: Admit exact U5A-B witness result
+        env:
+          FR104_U5A_RESULT_IN: .cache/face-geometry/fr104-u5a-result.json
+        run: node scripts/admit-fr104-u5a-gnm-witness-result.mjs
 
       - name: Verify candidate authority boundary
         run: |
