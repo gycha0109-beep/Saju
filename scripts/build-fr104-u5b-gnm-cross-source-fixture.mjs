@@ -5,7 +5,8 @@ import process from 'node:process';
 
 const OUTPUT_WIDTH = 1024;
 const OUTPUT_HEIGHT = 1024;
-const EXPECTED_RENDER_SHA256 = null;
+const EXPECTED_RENDER_SHA256 =
+  '1af28c1677375f5551e3613bbc7e0d78bfba83e74df2438c0819a343252cc325';
 
 const MATERIAL_RGB = Object.freeze([198, 151, 127]);
 const BACKGROUND_RGB = Object.freeze([32, 32, 32]);
