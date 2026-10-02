@@ -1,0 +1,97 @@
+name: "[WT:face-reading] FR104 U5B-B GNM Render-Only Fixture"
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fr104-u5b-gnm-render-only.yml"
+      - "tools/face-reading/ear/stage_fr104_u5b_gnm_render_input.py"
+      - "tools/face-geometry/gnm/fetch_gnm_head.py"
+      - "scripts/build-fr104-u5b-gnm-fixture.mjs"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-validation-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-fixture-evidence-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-fixture-evidence-fr104.test.ts"
+      - "research/face-research/fr104-gnm-cross-source-geometric-validation-u5b.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Install staging dependency
+        run: python -m pip install --disable-pip-version-check numpy
+
+      - name: Compile render-only staging
+        run: |
+          python -m py_compile             tools/face-reading/ear/stage_fr104_u5b_gnm_render_input.py             tools/face-geometry/gnm/fetch_gnm_head.py
+
+      - name: Verify renderer synthetic self-test
+        run: node scripts/build-fr104-u5b-gnm-fixture.mjs --self-test
+
+      - name: Fetch exact pinned GNM Head NPZ
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/face-geometry/u5b
+          python tools/face-geometry/gnm/fetch_gnm_head.py             --output .cache/face-geometry/u5b/gnm_head.npz
+
+      - name: Stage exact geometry without provider execution
+        run: |
+          set -euo pipefail
+          python tools/face-reading/ear/stage_fr104_u5b_gnm_render_input.py             --npz .cache/face-geometry/u5b/gnm_head.npz             --vertices-out .cache/face-geometry/u5b/vertices.f64le             --triangles-out .cache/face-geometry/u5b/triangles.i32le             --metadata-out .cache/face-geometry/u5b/staging.json
+
+      - name: Execute deterministic GNM render only
+        run: |
+          set -euo pipefail
+          node scripts/build-fr104-u5b-gnm-fixture.mjs             --metadata=.cache/face-geometry/u5b/staging.json             --vertices=.cache/face-geometry/u5b/vertices.f64le             --triangles=.cache/face-geometry/u5b/triangles.i32le             --write-render=.cache/face-geometry/u5b/fixture.png             --write-result=.cache/face-geometry/u5b/result.json             | tee /tmp/fr104-u5b-render.log
+
+      - name: Verify render-only authority boundary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(
+              Path(".cache/face-geometry/u5b/result.json").read_text(encoding="utf-8")
+          )
+          assert result["schemaVersion"] == "fr104-u5b-gnm-render-only-result-v1"
+          assert result["authorityState"] == "render_only_candidate_not_admitted"
+          assert result["deterministicRender"]["repeatRenderByteEqual"] is True
+          assert result["deterministicRender"]["repeatRenderSha256Equal"] is True
+          assert result["execution"]["renderExecuted"] is True
+          assert result["execution"]["providerExecuted"] is False
+          assert result["execution"]["providerPackageImported"] is False
+          assert result["execution"]["providerResultObserved"] is False
+          assert result["execution"]["userImageConsumed"] is False
+          ground = result["anatomicalGroundTruth"]
+          assert ground["sameCameraMatrixAsRenderedFixture"] is True
+          assert ground["providerLandmarkDerived"] is False
+          assert ground["providerLabelDerived"] is False
+          assert ground["imageSpaceXSignDefinesAnatomicalSide"] is False
+          assert ground["gnmAxisOrderingDefinesAnatomicalSide"] is False
+          for key, value in result["privacy"].items():
+              assert value is False, key
+          authority = result["authority"]
+          assert authority["gnmCrossSourceSemanticWitnessAudited"] is True
+          for key, value in authority.items():
+              if key != "gnmCrossSourceSemanticWitnessAudited":
+                  assert value is False, key
+          print("FR104_U5B_RENDER_ONLY_BOUNDARY PASS")
+          PY
