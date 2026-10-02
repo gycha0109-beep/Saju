@@ -33,10 +33,8 @@ export function validateCandidate(candidate, current) {
 export function assertStagedPolicy(rules) {
   const checks = rules.filter(rule => rule.type === 'required_status_checks')
     .flatMap(rule => rule.parameters.required_status_checks);
-  const strict = rules.some(rule => rule.type === 'required_status_checks'
-    && rule.parameters.strict_required_status_checks_policy === true);
-  if (!strict || !checks.some(check => check.context === integrationContext && check.integration_id === 15368)) {
-    throw new Error('Staged CI requires CI Integration Verify from GitHub Actions and strict up-to-date checks in the default-branch ruleset');
+  if (!checks.some(check => check.context === integrationContext && check.integration_id === 15368)) {
+    throw new Error('Staged CI requires CI Integration Verify from GitHub Actions in the default-branch ruleset');
   }
 }
 

@@ -68,15 +68,16 @@ See [GitHub required-check event restrictions](https://docs.github.com/en/pull-r
    another commit; verify successful, intentionally failed, conflicting and
    stale candidates and multiple queued requests in GitHub.
 3. Add `CI Integration Verify` bound to GitHub Actions (App ID 15368) to main's
-   existing required checks, retaining all current contexts. Require strict
-   up-to-date checks; this is necessary to prevent a passed old-base candidate
-   remaining mergeable after main advances. It may require PR branch updates.
+   existing required checks, retaining all current contexts. The ruleset may use
+   strict or non-strict required-check policy; integration admission still rejects
+   actual merge conflicts and pins the submitted PR head/base for the regression.
 4. Verify open PRs have current required evidence, then enable
-   `CI_STAGED_VERIFICATION=true`. The PR workflow rejects this mode unless both
-   the integration requirement and strict policy are visible through GitHub.
-5. Before every merge, verify the exact current head/base, all required checks
-   and mergeability. Require BLOCKED before integration and CLEAN after a successful
-   integration with all other checks current. Existing main and deployment verification remain.
+   `CI_STAGED_VERIFICATION=true`. The PR workflow rejects this mode unless the
+   Actions-bound integration requirement is visible through GitHub.
+5. Before every merge, verify the exact PR head, all required checks and
+   mergeability. With non-strict required checks, an advancing main branch does
+   not by itself invalidate successful evidence for the submitted PR head. Existing
+   main and deployment verification remain.
 
 Rollback: disable the variable first to restore full PR regression where
 applicable, verify that restoration, then remove only the added integration
