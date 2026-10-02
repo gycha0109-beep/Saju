@@ -1,0 +1,95 @@
+name: "[WT:face-reading] FR104 U5A GNM Source Witness Audit"
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fr104-u5a-gnm-witness-live-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-source-witness-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install NumPy
+        run: python -m pip install --disable-pip-version-check numpy
+
+      - name: Compile frozen U5A tooling
+        run: |
+          python -m py_compile \
+            tools/face-geometry/gnm/fetch_gnm_head.py \
+            tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py
+
+      - name: Fetch exact pinned GNM Head asset
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fr104-u5a
+          python tools/face-geometry/gnm/fetch_gnm_head.py \
+            --output /tmp/fr104-u5a/gnm_head.npz
+
+      - name: Execute first U5A live source witness audit
+        run: |
+          set -euo pipefail
+          python tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py \
+            --npz /tmp/fr104-u5a/gnm_head.npz \
+            --output /tmp/fr104-u5a/result.json \
+            | tee /tmp/fr104-u5a/audit.log
+
+      - name: Verify candidate remains unadmitted
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(
+              Path("/tmp/fr104-u5a/result.json").read_text(encoding="utf-8")
+          )
+
+          allowed_states = {
+              "gnm_direct_left_right_joint_witness_supported",
+              "gnm_direct_left_right_joint_witness_refuted",
+              "gnm_direct_left_right_joint_witness_unresolved",
+          }
+
+          assert result["schemaVersion"] == (
+              "fr104-gnm-cross-source-anatomical-witness-live-result-v1"
+          )
+          assert result["authorityState"] == "live_candidate_not_admitted"
+          assert result["assessment"]["state"] in allowed_states
+
+          authority = result["authority"]
+          assert authority["gnmCrossSourceSemanticWitnessAudited"] is False
+          assert authority["gnmCrossSourceGeometricValidationExecuted"] is False
+          assert authority["providerLabelMappedToAnatomicalSide"] is False
+          assert authority["globalProviderAnatomicalSemanticsEstablished"] is False
+          assert authority["anatomicalReferenceAdmitted"] is False
+          assert authority["anatomicalLateralityAuthorized"] is False
+          assert authority["validatedExternalEarObservationAuthorized"] is False
+          assert authority["traditionalBindingAuthorized"] is False
+          assert authority["productionAuthorization"] is False
+
+          diagnostics = result["diagnostics"]
+          assert diagnostics["imageSpaceXSignUsedAsSemanticAuthority"] is False
+          assert diagnostics["gnmAxisOrderingUsedAsSemanticAuthority"] is False
+          assert diagnostics["mediaPipeProviderLabelsUsedAsSemanticAuthority"] is False
+
+          boundary = result["interpretationBoundary"]
+          assert boundary["sourceFamilyDistinctFromMakeHuman"] is True
+          assert boundary["sourceFamilyDistinctFromMediaPipe"] is True
+          assert boundary["crossSourceFamilyGeometricValidationExecuted"] is False
+          assert boundary["runtimeSubjectPhotoLateralityMayBeAuthorized"] is False
+
+          print("FR104_U5A_CANDIDATE_ENVELOPE_VERIFIED true")
+          PY
