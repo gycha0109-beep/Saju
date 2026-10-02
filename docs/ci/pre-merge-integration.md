@@ -24,11 +24,13 @@ permissions are unchanged.
 
 `ci-integration.yml` accepts an open, non-draft PR in this repository targeting
 the default branch. Submit through the local command below. It adds the dedicated
-ci-integration-ready label to trigger pull_request:labeled. It pins both the
-head and current default-branch SHA, checks attribution before allocating the
-full regression, merges that base into the checked-out head in isolated runners,
-runs the existing CI as a reusable workflow, and rechecks head/base before
-`CI Integration Verify` succeeds. A conflict or changed SHA fails closed.
+ci-integration-ready label to trigger pull_request:labeled. It pins the exact
+PR head plus the default-branch SHA present at submission time, checks attribution
+before allocating the full regression, merges that pinned base into the checked-out
+head in isolated runners, runs the existing CI as a reusable workflow, and rechecks
+the PR head, mergeability and required evidence before `CI Integration Verify`
+succeeds. An advancing default branch does not invalidate the candidate by itself;
+a changed PR head, unresolved mergeability or an actual merge conflict fails closed.
 No branch is pushed and no PR is merged by these scripts.
 
 From an authenticated local checkout:
@@ -50,10 +52,12 @@ The whole integration workflow queues one regression at a time with
 `queue: max` and `cancel-in-progress: false`. Up to 100 pending runs are supported;
 a full queue cancels additional requests. Waiting runs do not hold a runner.
 This is repository-scoped. It does not reserve a runner or enforce a shared
-account-wide limit across producers. Stale requests fail admission and must be
-resubmitted against a fresh head/base; arbitrary inflight deployments are not
-cancelled. A duplicate manual request is still another run, so operators should
-not repeatedly submit the same candidate.
+account-wide limit across producers. Requests with a changed PR head, unresolved mergeability or an actual merge
+conflict fail admission and must be resubmitted. Default-branch advancement alone
+does not invalidate an otherwise mergeable candidate under the active non-strict
+ruleset. Arbitrary inflight deployments are not cancelled. A duplicate manual
+request is still another run, so operators should not repeatedly submit the same
+candidate.
 
 ## Activation and rollback
 
@@ -68,15 +72,16 @@ See [GitHub required-check event restrictions](https://docs.github.com/en/pull-r
    another commit; verify successful, intentionally failed, conflicting and
    stale candidates and multiple queued requests in GitHub.
 3. Add `CI Integration Verify` bound to GitHub Actions (App ID 15368) to main's
-   existing required checks, retaining all current contexts. Require strict
-   up-to-date checks; this is necessary to prevent a passed old-base candidate
-   remaining mergeable after main advances. It may require PR branch updates.
+   existing required checks, retaining all current contexts. The active ruleset
+   intentionally uses non-strict required checks, so a mergeable PR may remain
+   behind a newer main after its pinned integration candidate succeeds.
 4. Verify open PRs have current required evidence, then enable
-   `CI_STAGED_VERIFICATION=true`. The PR workflow rejects this mode unless both
-   the integration requirement and strict policy are visible through GitHub.
-5. Before every merge, verify the exact current head/base, all required checks
-   and mergeability. Require BLOCKED before integration and CLEAN after a successful
-   integration with all other checks current. Existing main and deployment verification remain.
+   `CI_STAGED_VERIFICATION=true`. The PR workflow requires the Actions-bound
+   integration context but does not require strict up-to-date mode.
+5. Before every merge, verify the exact PR head, all required checks and current
+   mergeability. A behind branch is acceptable when GitHub still reports it
+   mergeable and the non-strict ruleset permits the merge. Existing main and
+   deployment verification remain.
 
 Rollback: disable the variable first to restore full PR regression where
 applicable, verify that restoration, then remove only the added integration
