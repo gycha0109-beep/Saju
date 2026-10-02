@@ -1,0 +1,156 @@
+name: "[WT:face-reading] FR104 U5B GNM Render-Only Fixture Pin"
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fr104-u5b-gnm-render-only.yml"
+      - "tools/face-geometry/gnm/fetch_gnm_head.py"
+      - "tools/face-geometry/gnm/prepare_fr104_u5b_fixture.py"
+      - "scripts/build-fr104-u5b-gnm-cross-source-fixture.mjs"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-validation-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-fixture-evidence-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-fixture-evidence-fr104.test.ts"
+      - "research/face-research/fr104-gnm-cross-source-geometric-validation-u5b.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Install NPZ decode dependency
+        run: python -m pip install --disable-pip-version-check numpy
+
+      - name: Self-test deterministic U5B renderer without target asset
+        run: node scripts/build-fr104-u5b-gnm-cross-source-fixture.mjs --self-test
+
+      - name: Fetch exact pinned GNM Head NPZ
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/face-geometry
+          python tools/face-geometry/gnm/fetch_gnm_head.py             --output .cache/face-geometry/gnm_head.npz             | tee /tmp/fr104-u5b-fetch.jsonl
+
+      - name: Prepare exact U5B geometry and semantic anchors
+        run: |
+          set -euo pipefail
+          python tools/face-geometry/gnm/prepare_fr104_u5b_fixture.py             --npz .cache/face-geometry/gnm_head.npz             --obj-out .cache/face-geometry/fr104-u5b-gnm.obj             --metadata-out .cache/face-geometry/fr104-u5b-gnm-metadata.json             | tee /tmp/fr104-u5b-prepare.jsonl
+
+      - name: Execute U5B-B render only
+        run: |
+          set -euo pipefail
+          node scripts/build-fr104-u5b-gnm-cross-source-fixture.mjs             --obj=.cache/face-geometry/fr104-u5b-gnm.obj             --metadata=.cache/face-geometry/fr104-u5b-gnm-metadata.json             --write-render=.cache/face-geometry/fr104-u5b-gnm.png             | tee /tmp/fr104-u5b-render.jsonl
+
+      - name: Verify render-only authority boundary
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const lines = fs.readFileSync('/tmp/fr104-u5b-render.jsonl', 'utf8')
+            .trim()
+            .split(/\r?\n/)
+            .filter(Boolean);
+          const result = JSON.parse(lines.at(-1));
+
+          if (
+            result.schemaVersion
+              !== 'fr104-u5b-gnm-cross-source-render-result-v1'
+            || result.execution?.renderExecuted !== true
+            || result.execution?.providerExecuted !== false
+            || result.execution?.providerResultObserved !== false
+            || result.deterministicRender?.repeatRenderByteEqual !== true
+            || result.deterministicRender?.repeatRenderSha256Equal !== true
+            || result.deterministicRender?.renderedFixtureDigestPinned !== false
+            || result.source?.repository !== 'google/GNM'
+            || result.source?.gitBlobSha
+              !== 'ae49903ad7d50ce1d64e464a0407441f2781873c'
+            || result.source?.variantNormalized !== 'head'
+            || result.camera?.spanRule
+              !== 'max(full_template_span_y_times_1_24,full_template_span_x_times_1_34)'
+          ) {
+            throw new Error('FR104 U5B-B render-only boundary drift.');
+          }
+
+          const left = result.anatomicalGroundTruth?.anatomicalLeftEye;
+          const right = result.anatomicalGroundTruth?.anatomicalRightEye;
+          if (
+            left?.sourceJoint !== 'left_eye'
+            || left?.sourceJointIndex !== 2
+            || JSON.stringify(left?.sourcePoint)
+              !== JSON.stringify([
+                0.030839037150144577,
+                0.30316492915153503,
+                0.09888789802789688,
+              ])
+            || right?.sourceJoint !== 'right_eye'
+            || right?.sourceJointIndex !== 3
+            || JSON.stringify(right?.sourcePoint)
+              !== JSON.stringify([
+                -0.030866222456097603,
+                0.3031134307384491,
+                0.09897840023040771,
+              ])
+            || result.anatomicalGroundTruth?.sameCameraMatrixAsRenderedFixture
+              !== true
+            || !Number.isFinite(
+              result.anatomicalGroundTruth
+                ?.directVsMatrixProjectionMaximumError,
+            )
+            || result.anatomicalGroundTruth
+                ?.directVsMatrixProjectionMaximumError > 1e-12
+            || result.anatomicalGroundTruth
+                ?.providerLandmarkDerived !== false
+            || result.anatomicalGroundTruth
+                ?.providerLabelDerived !== false
+            || result.anatomicalGroundTruth
+                ?.imageSpaceXSignDefinesAnatomicalSide !== false
+            || result.anatomicalGroundTruth
+                ?.gnmAxisOrderingDefinesAnatomicalSide !== false
+          ) {
+            throw new Error('FR104 U5B-B ground-truth boundary drift.');
+          }
+
+          console.log(
+            'FR104_U5B_RENDER_SHA256 '
+              + result.deterministicRender.renderSha256,
+          );
+          console.log(
+            'FR104_U5B_CAMERA '
+              + JSON.stringify(result.camera),
+          );
+          console.log(
+            'FR104_U5B_ANATOMICAL_LEFT '
+              + JSON.stringify(left),
+          );
+          console.log(
+            'FR104_U5B_ANATOMICAL_RIGHT '
+              + JSON.stringify(right),
+          );
+          console.log(
+            'FR104_U5B_GEOMETRY '
+              + JSON.stringify(result.geometry),
+          );
+          console.log(
+            'FR104_U5B_PROVIDER_EXECUTED '
+              + String(result.execution.providerExecuted),
+          );
+          NODE
