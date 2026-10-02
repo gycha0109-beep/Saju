@@ -248,15 +248,24 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5N ClaimNarrative
     );
   }, TEST_TIMEOUT_MS);
 
-  test('does not register the SA-5N profile into the existing relationship natal product profile set yet', () => {
+  test('keeps SA-5N authority bounded even when a later stage registers the profile downstream', async () => {
+    const result =
+      await buildRelationshipSpouseT8DayBranchPalaceClaimNarrativeProfileMaterialization();
+
     expect(
       RELATIONSHIP_NATAL_CLAIM_NARRATIVE_PROFILES.some(
         (profile) =>
           profile.claimType ===
           RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE,
       ),
+    ).toBe(true);
+    expect(
+      result.authorityBoundary.productNarrativeRuntimeIntegrationAuthorized,
     ).toBe(false);
-  });
+    expect(result.nextDisposition).toBe(
+      'RUN_SA_5O_POSITION_ONLY_NARRATIVE_CONSUMER_INTEGRATION',
+    );
+  }, TEST_TIMEOUT_MS);
 
   test('keeps runtime, delivery, Preview, Official, public semantic, and Production authority closed', async () => {
     const result =

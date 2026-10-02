@@ -3,6 +3,9 @@ import {
   RELATIONSHIP_NATAL_READING_RULES,
   type RelationshipConclusionKind,
 } from './relationship-natal-reading-candidate.js';
+import {
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE,
+} from './relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js';
 
 export const RELATIONSHIP_NATAL_NARRATIVE_PROFILE_VERSION = '0.1.0-research' as const;
 
@@ -60,4 +63,9 @@ function profileForRule(
 }
 
 export const RELATIONSHIP_NATAL_CLAIM_NARRATIVE_PROFILES: readonly ClaimNarrativeProfile[] =
-  Object.freeze(RELATIONSHIP_NATAL_READING_RULES.map((rule, index) => profileForRule(rule, 10 + index)));
+  Object.freeze([
+    RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE,
+    ...RELATIONSHIP_NATAL_READING_RULES.map((rule, index) =>
+      profileForRule(rule, 10 + index),
+    ),
+  ]);

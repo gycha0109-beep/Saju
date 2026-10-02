@@ -15,12 +15,17 @@ import {
 import { RELATIONSHIP_NATAL_READING_RULES } from '../src/research/relationship-natal-reading-candidate.js';
 
 describe('MyeongHa Relationship Annual narrative profiles', () => {
-  it('covers every Relationship Natal claim with bounded interpretation copy', () => {
-    expect(RELATIONSHIP_NATAL_CLAIM_NARRATIVE_PROFILES).toHaveLength(
-      RELATIONSHIP_NATAL_READING_RULES.length,
+  it('covers every legacy Relationship Natal rule with bounded interpretation copy', () => {
+    const legacyClaimTypes = new Set(
+      RELATIONSHIP_NATAL_READING_RULES.map((rule) => rule.output.claimType),
     );
+    const legacyProfiles = RELATIONSHIP_NATAL_CLAIM_NARRATIVE_PROFILES.filter(
+      (profile) => legacyClaimTypes.has(profile.claimType),
+    );
+
+    expect(legacyProfiles).toHaveLength(RELATIONSHIP_NATAL_READING_RULES.length);
     expect(
-      RELATIONSHIP_NATAL_CLAIM_NARRATIVE_PROFILES.every(
+      legacyProfiles.every(
         (profile) =>
           profile.allowedEpistemicTypes.length === 1 &&
           profile.allowedEpistemicTypes[0] === 'interpretation' &&
