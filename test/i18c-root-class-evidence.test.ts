@@ -1,17 +1,19 @@
 import { describe, expect, test } from 'vitest';
+import { HIDDEN_STEM_MEMBERSHIP } from '../src/calculation/hidden-stems.js';
 import {
-  HIDDEN_STEM_MEMBERSHIP,
   I18C_ROOT_CLASS_PACK,
   I18C_ROOT_CLASS_RULES,
-  calculateCanonicalSajuSnapshot,
   createI18CRootClassRegistry,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
   type IntrinsicRootClass,
-} from '../src/index.js';
+} from '../src/research/i18c-root-class-evidence.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import type {
+  CalculationPolicySnapshot,
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+} from '../src/contracts/calculation.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/i18c-test',

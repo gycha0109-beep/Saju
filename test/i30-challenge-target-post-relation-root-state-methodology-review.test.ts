@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildI30ChallengeTargetPostRelationRootStateMethodologyReview } from '../src/index.js';
+import { buildI30ChallengeTargetPostRelationRootStateMethodologyReview } from '../src/research/i30-challenge-target-post-relation-root-state-methodology-review.js';
 
 describe('I30 challenge target post-relation root-state methodology review', () => {
   test('requires a challenge-specific review instead of direct I19 reuse', () => {

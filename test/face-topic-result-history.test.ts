@@ -7,10 +7,12 @@ import {
   assertFaceResultSnapshot,
   buildFaceHistoryEntry,
   buildFaceResultSnapshot,
-  executeFaceTopicRuntime,
   type FaceResultSnapshotV1,
+} from '../src/face-topic/result-history.js';
+import {
+  executeFaceTopicRuntime,
   type FaceTopicRuntimeResultV1,
-} from '../src/index.js';
+} from '../src/face-topic/runtime.js';
 import {
   buildFR293ProductDisplayReceiptForTopicFaceTest,
 } from './support/topic-face-fr293-display-receipt.js';

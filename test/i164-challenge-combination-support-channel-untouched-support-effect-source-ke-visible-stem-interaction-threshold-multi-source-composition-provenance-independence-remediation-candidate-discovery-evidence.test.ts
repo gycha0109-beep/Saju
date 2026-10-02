@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   I163_DISCOVERY_OUTPUT_REQUIREMENT_IDS,
+  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateDiscoveryReadinessReviewReport,
+} from '../src/research/i163-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-remediation-candidate-discovery-readiness-review.js';
+import {
   I164_REMEDIATION_DISCOVERY_CANDIDATE_IDS,
   buildI164ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateDiscoveryEvidence,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateDiscoveryReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i164-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-remediation-candidate-discovery-evidence.js';
 
 function validI163(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateDiscoveryReadinessReviewReport {
   return {

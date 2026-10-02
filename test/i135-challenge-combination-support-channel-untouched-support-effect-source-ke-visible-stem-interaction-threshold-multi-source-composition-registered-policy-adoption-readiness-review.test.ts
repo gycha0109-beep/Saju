@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vitest';
 import {
   I135_REGISTERED_POLICY_ADOPTION_READINESS_REQUIREMENTS,
   buildI135ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredPolicyAdoptionReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionPolicyProspectiveRegistrationContractReport,
-} from '../src/index.js';
+} from '../src/research/i135-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-policy-adoption-readiness-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionPolicyProspectiveRegistrationContractReport } from '../src/research/i134-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-policy-prospective-registration-contract.js';
 
 function i134(
   overrides: Record<string, unknown> = {},

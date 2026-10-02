@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI103ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyBindingEvidence,
-  type ChallengeCombinationSupportChannelEvidenceReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyAdapterContractReport,
-  type StructuralPillarInput,
-} from '../src/index.js';
+import { buildI103ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyBindingEvidence } from '../src/research/i103-challenge-combination-support-channel-untouched-support-effect-existing-substrate-source-vocabulary-binding-evidence.js';
+import type { ChallengeCombinationSupportChannelEvidenceReport } from '../src/research/i52-challenge-combination-support-channel-evidence.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyAdapterContractReport } from '../src/research/i102-challenge-combination-support-channel-untouched-support-effect-existing-substrate-source-vocabulary-adapter-contract.js';
+import type { StructuralPillarInput } from '../src/calculation/structural-relations.js';
 
 function pillars(): StructuralPillarInput {
   return {

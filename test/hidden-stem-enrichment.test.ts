@@ -4,13 +4,15 @@ import {
   HIDDEN_STEM_MEMBERSHIP,
   HIDDEN_STEM_MEMBERSHIP_CONTENT_HASH,
   HIDDEN_STEM_MEMBERSHIP_SOURCE,
-  calculateCanonicalSajuSnapshot,
   getHiddenStemMembership,
-  type CalculationPolicySnapshot,
-  type EarthlyBranch,
-  type HeavenlyStem,
-  type PillarFact,
-} from '../src/index.js';
+} from '../src/calculation/hidden-stems.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type {
+  CalculationPolicySnapshot,
+  EarthlyBranch,
+  HeavenlyStem,
+  PillarFact,
+} from '../src/contracts/calculation.js';
 import { BRANCH_CLASH_CONTEXT_ENRICHED_CANONICAL_SCHEMA_VERSION } from '../src/calculation/branch-clash-context-facts.js';
 import { BRANCH_CLASH_QUALIFIER_OBSERVATION_SCHEMA_VERSION } from '../src/calculation/branch-clash-qualifier-observation-facts.js';
 import { STRUCTURAL_RELATION_ENRICHED_CANONICAL_SCHEMA_VERSION } from '../src/calculation/structural-relation-facts.js';

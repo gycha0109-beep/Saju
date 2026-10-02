@@ -1,11 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import process from 'node:process';
 import { createMyeonghwaProductHostServer } from '../dist/product-host.js';
-import {
-  SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  calculateCanonicalSajuSnapshot,
-  runInterpretation,
-} from '../dist/index.js';
+import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../dist/llm/prompt-compiler.js';
+import { calculateCanonicalSajuSnapshot } from '../dist/calculation/calculation-engine.js';
+import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
 import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
 import { CAREER_NATAL_CLAIM_NARRATIVE_PROFILES } from '../dist/research/career-natal-narrative-profiles.js';

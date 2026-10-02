@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI112ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalBindingPromotionReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceBindingEvidenceReport,
-} from '../src/index.js';
+import { buildI112ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalBindingPromotionReadinessReview } from '../src/research/i112-challenge-combination-support-channel-untouched-support-effect-source-ke-directional-binding-promotion-readiness-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceBindingEvidenceReport } from '../src/research/i111-challenge-combination-support-channel-untouched-support-effect-source-ke-directional-evidence-binding-evidence.js';
 
 function i111(
   overrides: Partial<ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeDirectionalEvidenceBindingEvidenceReport> = {},

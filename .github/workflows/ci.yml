@@ -97,9 +97,9 @@ jobs:
       fail-fast: true
       max-parallel: ${{ inputs.candidate_head != '' && 4 || 8 }}
       matrix:
-        # Longest-processing-time-first order from the latest optimized 16-shard baseline.
+        # Longest-first priority after narrowing test imports (PR #1971).
         # Shard membership is unchanged; only matrix scheduling priority changes.
-        shard: [11, 12, 7, 3, 14, 1, 8, 9, 2, 13, 5, 15, 10, 6, 4, 16]
+        shard: [13, 9, 4, 11, 5, 12, 14, 2, 3, 8, 6, 10, 7, 1, 15, 16]
 
     steps:
       - name: Checkout

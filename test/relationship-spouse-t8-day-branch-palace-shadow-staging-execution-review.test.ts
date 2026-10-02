@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  calculateCanonicalSajuSnapshot,
-  type CalculationPolicySnapshot,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
 import {
   SOURCE_ADJUDICATION_STAGING_AUTHORIZATION_POLICY_VERSION,
 } from '../src/interpretation/interpretation-engine.js';
