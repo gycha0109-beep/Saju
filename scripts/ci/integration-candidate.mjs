@@ -26,7 +26,8 @@ export function validateCandidate(candidate, current) {
   if (current.head.repo.full_name !== current.base.repo.full_name) throw new Error('Cross-repository candidates require a separate trust design');
   if (current.base.ref !== current.defaultBranch) throw new Error('Candidate must target the default branch');
   if (current.head.sha !== candidate.head) throw new Error('PR head changed; request a new candidate');
-  if (current.defaultSha !== candidate.base) throw new Error('Default branch changed; request a new candidate');
+  if (current.mergeable === false) throw new Error('PR has an actual merge conflict with the current default branch');
+  if (current.mergeable !== true) throw new Error('PR mergeability is unresolved; retry integration admission');
 }
 
 export function assertStagedPolicy(rules) {

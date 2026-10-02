@@ -4,6 +4,7 @@ import { assertSubmissionEvent, assertPrerequisites, assertStagedPolicy, validat
 const candidate = { pr: '42', head: 'a'.repeat(40), base: 'b'.repeat(40) };
 const current = () => ({
   state: 'open', draft: false,
+  mergeable: true, mergeable_state: 'clean',
   head: { sha: candidate.head, repo: { full_name: 'owner/repo' } },
   base: { ref: 'main', repo: { full_name: 'owner/repo' } },
   defaultBranch: 'main', defaultSha: candidate.base,
@@ -23,9 +24,30 @@ describe('pinned integration admission and required evidence', () => {
     const changed = current(); changed.head.sha = 'c'.repeat(40);
     expect(() => validateCandidate(candidate, changed)).toThrow('PR head changed');
   });
-  it('rejects advancing main instead of reusing old success', () => {
-    const changed = current(); changed.defaultSha = 'c'.repeat(40);
-    expect(() => validateCandidate(candidate, changed)).toThrow('Default branch changed');
+  it('allows advancing main when GitHub still reports the PR mergeable', () => {
+    const changed = current();
+    changed.defaultSha = 'c'.repeat(40);
+    changed.mergeable_state = 'behind';
+    expect(() => validateCandidate(candidate, changed)).not.toThrow();
+  });
+  it('rejects an actual merge conflict instead of treating behind as a conflict', () => {
+    const behind = current();
+    behind.defaultSha = 'c'.repeat(40);
+    behind.mergeable_state = 'behind';
+    expect(() => validateCandidate(candidate, behind)).not.toThrow();
+
+    const conflict = current();
+    conflict.defaultSha = 'c'.repeat(40);
+    conflict.mergeable = false;
+    conflict.mergeable_state = 'dirty';
+    expect(() => validateCandidate(candidate, conflict)).toThrow('actual merge conflict');
+  });
+  it('fails closed while GitHub mergeability is unresolved', () => {
+    const unresolved = current();
+    unresolved.defaultSha = 'c'.repeat(40);
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    expect(() => validateCandidate(candidate, unresolved)).toThrow('mergeability is unresolved');
   });
   it('rejects forks, closed PRs, drafts, and another base', () => {
     const fork = current(); fork.head.repo.full_name = 'other/repo';
