@@ -133,4 +133,13 @@ describe('integration workflow current-base execution', () => {
       'candidate_base: ${{ needs.admission.outputs.current_base_sha }}',
     );
   });
+
+  it('isolates integration concurrency by PR instead of repository-wide serialization', () => {
+    expect(workflow).toContain(
+      'group: ci-integration-admission-${{ inputs.pr || github.event.pull_request.number }}',
+    );
+    expect(workflow).not.toContain(
+      'group: ci-integration-admission\n',
+    );
+  });
 });
