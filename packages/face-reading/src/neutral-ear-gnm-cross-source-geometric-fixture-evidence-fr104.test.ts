@@ -18,6 +18,9 @@ describe('FR104 U5B-B GNM render-only fixture evidence', () => {
     expect(evidence.firstRenderCandidateResultSha256).toBe(
       'a994a3708cb4247d93f2a9ddda46129a55c3a9ba0e3d9f86853fab4d53469528',
     );
+    expect(evidence.exactReplayResultSha256).toBe(
+      '528b4756abad1af67849b0fb6eafe8c5bc2e8cd952044b6f7a151df41ae3f427',
+    );
     expect(evidence.renderedFixture.pngSha256).toBe(
       '1af28c1677375f5551e3613bbc7e0d78bfba83e74df2438c0819a343252cc325',
     );
