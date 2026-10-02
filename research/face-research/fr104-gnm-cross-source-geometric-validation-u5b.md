@@ -346,6 +346,10 @@ First render-only candidate result SHA-256:
 
     a994a3708cb4247d93f2a9ddda46129a55c3a9ba0e3d9f86853fab4d53469528
 
+After pinning the PNG digest, exact replay produced result SHA-256:
+
+    528b4756abad1af67849b0fb6eafe8c5bc2e8cd952044b6f7a151df41ae3f427
+
 Raster diagnostics:
 
     rasterized triangles
