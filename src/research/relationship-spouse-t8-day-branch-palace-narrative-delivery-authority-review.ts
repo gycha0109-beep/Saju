@@ -157,11 +157,9 @@ export async function evaluateRelationshipSpouseT8DayBranchPalaceNarrativeDelive
     RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE_DEFINITION
       .materialForNarrative === false;
 
-  const reviewAuthorityStillUnestablished =
+  const projectGovernancePreMaterialityBoundaryExact =
     RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_RULE.quality
-      .reviewerStatus === 'unreviewed' &&
-    RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_REGISTRY
-      .reviewAttestations.length === 0;
+      .reviewerStatus === 'unreviewed';
 
   const spouseIntent = Object.freeze({
     domain: 'relationship',
@@ -279,7 +277,7 @@ export async function evaluateRelationshipSpouseT8DayBranchPalaceNarrativeDelive
     exactConsumerAdmissionBinding,
     evidenceSelectionAdmissionValid,
     narrativeMaterialityStillDenied,
-    reviewAuthorityStillUnestablished,
+    projectGovernancePreMaterialityBoundaryExact,
     spouseSectionNotOfficialPreview,
     executionFailsClosedWithoutNarrativeRuntime,
     deliveryFailsClosedWithoutArtifact,
@@ -349,16 +347,14 @@ export async function evaluateRelationshipSpouseT8DayBranchPalaceNarrativeDelive
       previewAuthorityAuthorized: false as const,
       officialReadingAuthorityAuthorized: false as const,
       publicSemanticAuthorityAuthorized: false as const,
-      humanDomainReviewEstablished: false as const,
-      reviewAttestationCreated: false as const,
-      reviewerTrustGrantEstablished: false as const,
+      projectGovernedMaterialityDecisionEstablished: false as const,
       reviewerStatusPromotionAuthorized: false as const,
       provenanceQualityPromotionAuthorized: false as const,
       productionAuthorityAuthorized: false as const,
       production: 'HOLD' as const,
     }),
     nextDisposition: authorityReviewCompleted
-      ? ('REQUEST_SA_5L_EXPLICIT_HUMAN_DOMAIN_NARRATIVE_MATERIALITY_DECISION' as const)
+      ? ('RUN_SA_5L_PROJECT_GOVERNED_POSITION_ONLY_NARRATIVE_MATERIALITY_DECISION' as const)
       : ('HOLD_AND_REPAIR_SA_5K_AUTHORITY_REVIEW' as const),
   });
 
