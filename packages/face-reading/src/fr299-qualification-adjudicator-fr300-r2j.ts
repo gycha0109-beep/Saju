@@ -30,6 +30,7 @@ export const FR300_R2J_FR299_QUALIFICATION_ADJUDICATOR_CONTRACT_VERSION =
   'FR300-R2J-FR299-QUALIFICATION-ADJUDICATOR-v1' as const;
 
 export type FR300R2JFailureReason =
+  | 'PROVIDER_RESPONSE_RECEIPT_UNBOUND'
   | 'PROVIDER_APPROVAL_MISSING'
   | 'DUA_SCOPE_UNBOUND'
   | 'HANDLING_ENVIRONMENT_UNAPPROVED'
@@ -58,6 +59,8 @@ export interface FR300R2JLifecycleEvidence {
   readonly rawPublicCloudPersistenceObserved: boolean;
   readonly thirdPartyCloudProcessingObserved: boolean;
   readonly deletionWhenNoLongerNeededBound: boolean;
+  readonly deletionReceiptVerified: boolean;
+  readonly allTrackedArtifactPathsAbsentAfterDeletion: boolean;
   readonly deletionOnProviderRequestBound: boolean;
   readonly trackedCopiesAndBackupsDeletionBound: boolean;
   readonly publicAggregateNonIdentifyingOnly: boolean;
@@ -70,6 +73,7 @@ export interface FR300R2JQualificationInput {
   readonly artifactClass:
     | 'synthetic_fixture'
     | 'real_controlled_artifact';
+  readonly providerResponseTransitionReceiptBound: boolean;
   readonly providerApprovalGateSatisfied: boolean;
   readonly duaScopeBound: boolean;
   readonly artifactHandlingEnvironmentApproved: boolean;
@@ -157,6 +161,8 @@ function lifecycleSatisfied(
     !lifecycle.rawPublicCloudPersistenceObserved &&
     !lifecycle.thirdPartyCloudProcessingObserved &&
     lifecycle.deletionWhenNoLongerNeededBound &&
+    lifecycle.deletionReceiptVerified &&
+    lifecycle.allTrackedArtifactPathsAbsentAfterDeletion &&
     lifecycle.deletionOnProviderRequestBound &&
     lifecycle.trackedCopiesAndBackupsDeletionBound &&
     lifecycle.publicAggregateNonIdentifyingOnly &&
@@ -181,6 +187,9 @@ export function adjudicateFR300R2JFR299Qualification(
   const pilot = input.pilotAssessment;
   const registration = input.registrationAssessment;
 
+  if (!input.providerResponseTransitionReceiptBound) {
+    reasons.push('PROVIDER_RESPONSE_RECEIPT_UNBOUND');
+  }
   if (!input.providerApprovalGateSatisfied) {
     reasons.push('PROVIDER_APPROVAL_MISSING');
   }
@@ -310,6 +319,8 @@ export function adjudicateFR300R2JFR299Qualification(
 
   if (
     !input.lifecycle.deletionWhenNoLongerNeededBound ||
+    !input.lifecycle.deletionReceiptVerified ||
+    !input.lifecycle.allTrackedArtifactPathsAbsentAfterDeletion ||
     !input.lifecycle.deletionOnProviderRequestBound ||
     !input.lifecycle.trackedCopiesAndBackupsDeletionBound
   ) {
