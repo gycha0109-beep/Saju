@@ -16,6 +16,9 @@ describe('conservative staged PR coverage', () => {
     expect(resolveTestPlan([path], { staged: true }).full).toBe(true);
   });
   it('keeps main and integration candidates full even with the variable enabled', () => {
+    expect(resolveTestPlan(['test/leaf.test.ts'], {
+      staged: true, event: 'pull_request', candidateHead: 'a'.repeat(40),
+    }).full).toBe(true);
     for (const event of ['push', 'workflow_dispatch', 'workflow_call']) {
       expect(resolveTestPlan(['src/research/leaf.ts'], { staged: true, event }).full).toBe(true);
     }
