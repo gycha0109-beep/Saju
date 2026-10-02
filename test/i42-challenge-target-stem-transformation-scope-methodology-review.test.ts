@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   buildI42ChallengeTargetStemTransformationScopeMethodologyReview,
   I42_CHALLENGE_TARGET_STEM_TRANSFORMATION_SCOPE_SOURCE_BASIS,
-} from '../src/index.js';
+} from '../src/research/i42-challenge-target-stem-transformation-scope-methodology-review.js';
 
 describe('I42 challenge target stem transformation scope methodology review', () => {
   test('blocks direct transfer of the day-stem HuaQi result contract to a visible challenge-target stem', () => {

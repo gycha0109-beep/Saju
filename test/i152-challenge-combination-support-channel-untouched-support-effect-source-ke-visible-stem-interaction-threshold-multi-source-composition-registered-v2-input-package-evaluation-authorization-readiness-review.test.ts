@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import {
-  I144_BINDING_EVALUATION_STEP_IDS,
-  I149_REQUIRED_V2_PACKAGE_COMPONENTS,
-  buildI152ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredV2InputPackageEvaluationAuthorizationReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionScopeAdjudicatedV2InputPackageMaterializationRecordReport,
-} from '../src/index.js';
+import { I144_BINDING_EVALUATION_STEP_IDS } from '../src/research/i144-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-input-package-evaluation-authorization-readiness-review.js';
+import { I149_REQUIRED_V2_PACKAGE_COMPONENTS } from '../src/research/i149-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-scope-adjudication-outcome-registration-new-input-package-materialization-readiness-review.js';
+import { buildI152ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionRegisteredV2InputPackageEvaluationAuthorizationReadinessReview } from '../src/research/i152-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-v2-input-package-evaluation-authorization-readiness-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionScopeAdjudicatedV2InputPackageMaterializationRecordReport } from '../src/research/i151-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-scope-adjudicated-v2-input-package-materialization-record.js';
 
 const candidateIds = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6'] as const;
 const evidenceIds = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'] as const;

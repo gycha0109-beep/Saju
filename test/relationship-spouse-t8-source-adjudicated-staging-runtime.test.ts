@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
+import { SOURCE_ADJUDICATION_STAGING_AUTHORIZATION_POLICY_VERSION } from '../src/interpretation/interpretation-engine.js';
 import {
-  SOURCE_ADJUDICATION_STAGING_AUTHORIZATION_POLICY_VERSION,
   buildSourceAdjudicationExecutionAuthorityRef,
-  calculateCanonicalSajuSnapshot,
-  type CalculationPolicySnapshot,
   type SourceAdjudicationExecutionAuthority,
   type SourceAdjudicationExecutionAuthorityMaterial,
-} from '../src/index.js';
+} from '../src/interpretation/promotion-authority.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
 import {
   runRelationshipSpouseT8EngineProducer,
 } from '../src/interpretation/relationship-spouse-t8-engine-producer.js';

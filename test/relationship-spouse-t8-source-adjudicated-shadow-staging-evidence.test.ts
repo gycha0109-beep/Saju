@@ -1,4 +1,4 @@
-import { deterministicContentHash } from '../src/index.js';
+import { deterministicContentHash } from '../src/interpretation/rule-registry.js';
 import { describe, expect, test } from 'vitest';
 import {
   buildRelationshipSpouseT8SourceAdjudicatedShadowStagingEvidence,

@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI129ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdTwoPartialRequirementDiscoveryExhaustionContractReassessmentReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdTwoPartialRequirementTargetedAuthorityDiscoveryEvidenceReport,
-} from '../src/index.js';
+import { buildI129ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdTwoPartialRequirementDiscoveryExhaustionContractReassessmentReview } from '../src/research/i129-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-two-partial-requirement-discovery-exhaustion-contract-reassessment-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdTwoPartialRequirementTargetedAuthorityDiscoveryEvidenceReport } from '../src/research/i128-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-two-partial-requirement-targeted-authority-discovery-evidence.js';
 
 function i128(
   overrides: Record<string, unknown> = {},

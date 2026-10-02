@@ -1,19 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../src/llm/prompt-compiler.js';
+import { buildDeterministicFallbackDraft } from '../src/narrative/deterministic-fallback.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-support-pack.js';
+import { executeProductReading } from '../src/reading/governed-reading-execution.js';
 import {
-  SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  buildDeterministicFallbackDraft,
-  calculateCanonicalSajuSnapshot,
-  createI7SeasonalSupportRegistry,
-  executeProductReading,
   runInterpretation,
-  type CanonicalSajuSnapshot,
-  type CompiledNarrativePrompt,
-  type InterpretationClaim,
   type InterpretationExecutionResult,
-  type NarrativeModelAdapter,
-  type NarrativePolicy,
-  type TenGodChartFact,
-} from '../src/index.js';
+} from '../src/interpretation/interpretation-engine.js';
+import type { CanonicalSajuSnapshot, TenGodChartFact } from '../src/contracts/calculation.js';
+import type { CompiledNarrativePrompt, NarrativeModelAdapter } from '../src/llm/model-adapter.js';
+import type { InterpretationClaim } from '../src/contracts/interpretation.js';
+import type { NarrativePolicy } from '../src/contracts/narrative.js';
 import { resolved } from '../src/contracts/common.js';
 import type { ReadingIntent } from '../src/contracts/reading.js';
 import type { ResolvedRuleRegistrySnapshot } from '../src/interpretation/rule-registry.js';
