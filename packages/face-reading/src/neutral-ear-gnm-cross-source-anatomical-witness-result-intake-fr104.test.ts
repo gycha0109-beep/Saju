@@ -137,7 +137,7 @@ describe('FR104 U5A-B2 GNM witness result intake', () => {
     const mutated =
       structuredClone(candidate()) as unknown as {
         directSourceSemanticWitness:{
-          leftEyeTemplateJointPosition:number[];
+          leftEyeTemplateJointPosition:[number, number, number];
         };
       };
     mutated.directSourceSemanticWitness.leftEyeTemplateJointPosition[0] +=
