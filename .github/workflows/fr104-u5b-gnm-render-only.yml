@@ -79,7 +79,13 @@ jobs:
             || result.execution?.providerResultObserved !== false
             || result.deterministicRender?.repeatRenderByteEqual !== true
             || result.deterministicRender?.repeatRenderSha256Equal !== true
-            || result.deterministicRender?.renderedFixtureDigestPinned !== false
+            || result.deterministicRender?.renderedFixtureDigestPinned !== true
+            || result.deterministicRender?.renderSha256
+              !== '1af28c1677375f5551e3613bbc7e0d78bfba83e74df2438c0819a343252cc325'
+            || result.deterministicRender?.expectedRenderSha256
+              !== '1af28c1677375f5551e3613bbc7e0d78bfba83e74df2438c0819a343252cc325'
+            || result.execution?.renderDigestAdmitted !== true
+            || result.authority?.gnmCrossSourceFixtureDigestPinned !== true
             || result.source?.repository !== 'google/GNM'
             || result.source?.gitBlobSha
               !== 'ae49903ad7d50ce1d64e464a0407441f2781873c'
@@ -116,7 +122,22 @@ jobs:
                 ?.directVsMatrixProjectionMaximumError,
             )
             || result.anatomicalGroundTruth
-                ?.directVsMatrixProjectionMaximumError > 1e-12
+                ?.directVsMatrixProjectionMaximumError
+              !== 5.551115123125783e-17
+            || left?.normalizedImageCoordinate?.x !== 0.5729788313318006
+            || left?.normalizedImageCoordinate?.y !== 0.34220589324293194
+            || right?.normalizedImageCoordinate?.x !== 0.4272826083862617
+            || right?.normalizedImageCoordinate?.y !== 0.342327489429743
+            || result.geometry?.vertexCount !== 17821
+            || result.geometry?.triangleCount !== 35324
+            || JSON.stringify(result.geometry?.bounds?.center)
+              !== JSON.stringify([
+                -0.00006895512342453003,
+                0.23633597418665886,
+                0.0271456316113472,
+              ])
+            || result.camera?.span !== 0.4235199674963951
+            || result.camera?.halfSpan !== 0.21175998374819754
             || result.anatomicalGroundTruth
                 ?.providerLandmarkDerived !== false
             || result.anatomicalGroundTruth
