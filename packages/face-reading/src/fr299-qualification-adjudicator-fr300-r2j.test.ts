@@ -51,6 +51,8 @@ function lifecycle(
     rawPublicCloudPersistenceObserved: false,
     thirdPartyCloudProcessingObserved: false,
     deletionWhenNoLongerNeededBound: true,
+    deletionReceiptVerified: true,
+    allTrackedArtifactPathsAbsentAfterDeletion: true,
     deletionOnProviderRequestBound: true,
     trackedCopiesAndBackupsDeletionBound: true,
     publicAggregateNonIdentifyingOnly: true,
@@ -185,6 +187,7 @@ function qualification(
   return {
     schemaVersion: 'fr300-r2j-qualification-input-v1',
     artifactClass: pilotAssessment.artifactClass,
+    providerResponseTransitionReceiptBound: true,
     providerApprovalGateSatisfied: true,
     duaScopeBound: true,
     artifactHandlingEnvironmentApproved: true,
@@ -326,6 +329,7 @@ describe('FR300-R2J FR299 qualification adjudicator', () => {
   });
 
   it.each([
+    ['providerResponseTransitionReceiptBound', 'PROVIDER_RESPONSE_RECEIPT_UNBOUND'],
     ['providerApprovalGateSatisfied', 'PROVIDER_APPROVAL_MISSING'],
     ['duaScopeBound', 'DUA_SCOPE_UNBOUND'],
     [
@@ -389,6 +393,7 @@ describe('FR300-R2J FR299 qualification adjudicator', () => {
       adjudicateFR300R2JFR299Qualification({
         ...input,
         lifecycle: lifecycle({
+          deletionReceiptVerified: false,
           trackedCopiesAndBackupsDeletionBound: false,
         }),
       });
