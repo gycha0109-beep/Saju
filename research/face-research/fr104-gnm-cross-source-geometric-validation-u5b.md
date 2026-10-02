@@ -296,3 +296,106 @@ U5B-A therefore does not authorize any user-photo laterality, traditional physio
 U5B-B may render the exact frozen target and pin its deterministic digest and projected semantic anchors.
 
 MediaPipe execution remains forbidden until U5B-C.
+
+
+## U5B-B first render-only execution and fixture admission
+
+The first prospective U5B-B render-only execution ran from:
+
+    PR #1986
+    head bd9618c826f6c4c51007614f0cb9d59370bc297f
+    workflow run 37005790974
+
+The exact staged GNM geometry was:
+
+    vertex count
+    17821
+
+    triangle count
+    35324
+
+    staged vertex SHA-256
+    8dce4419d465a79a13ecc6286d75891ce5730d8292bfbedae977bda004cdbf45
+
+    staged triangle SHA-256
+    8340922b49e0a8a5520748e4f42e02a48ed5ab3c8441d0f1d4c06893cf30dd0d
+
+The observed complete-template bounds were:
+
+    min
+    [-0.12777356803417206,
+      0.06556179374456406,
+     -0.09221039712429047]
+
+    max
+    [0.127635657787323,
+     0.40711015462875366,
+     0.14650166034698486]
+
+The frozen framing rule therefore produced orthographic span:
+
+    0.4235199674963951
+
+The first provider-blind render reproduced byte-for-byte within the same execution.
+
+Pinned PNG SHA-256:
+
+    1af28c1677375f5551e3613bbc7e0d78bfba83e74df2438c0819a343252cc325
+
+First render-only candidate result SHA-256:
+
+    a994a3708cb4247d93f2a9ddda46129a55c3a9ba0e3d9f86853fab4d53469528
+
+After pinning the PNG digest, exact replay produced result SHA-256:
+
+    528b4756abad1af67849b0fb6eafe8c5bc2e8cd952044b6f7a151df41ae3f427
+
+Raster diagnostics:
+
+    rasterized triangles
+    35324
+
+    foreground pixels
+    305582
+
+The exact same-camera projected semantic anchors are:
+
+    anatomical left_eye
+    x = 0.5729788313318006
+    y = 0.34220589324293194
+
+    anatomical right_eye
+    x = 0.4272826083862617
+    y = 0.342327489429743
+
+The maximum direct-vs-matrix projection discrepancy is:
+
+    5.551115123125783e-17
+
+This discrepancy is below the preregistered projection-consistency rejection bound of 1e-12 and arises only from floating-point evaluation order. It is not a fitted tolerance and does not alter the frozen geometric mapping rule.
+
+No provider package was imported or executed. No provider landmarks, provider side labels, direct/swapped costs, or eight-case outcome were observed in U5B-B.
+
+### U5B-B bounded authority
+
+U5B-B admits only:
+
+    gnmCrossSourceSemanticWitnessAudited = true
+    gnmCrossSourceFixtureDigestPinned = true
+
+The following remain false:
+
+    gnmCrossSourceGeometricValidationExecuted
+    gnmCrossSourceGeometricMappingValidated
+    providerLabelMappedToAnatomicalSide
+    globalProviderAnatomicalSemanticsEstablished
+    anatomicalReferenceAdmitted
+    anatomicalLateralityAuthorized
+    validatedExternalEarObservationAuthorized
+    traditionalBindingAuthorized
+    productionAuthorization
+
+The next gate after U5B-B merge is:
+
+    U5B-C
+    FIRST_MEDIAPIPE_EIGHT_CASE_OBSERVATION_ON_PINNED_GNM_FIXTURE

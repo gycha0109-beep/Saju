@@ -484,6 +484,14 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-validation-fr104.test.ts
 
+      - name: Verify FR104 U5B-B deterministic GNM renderer self-test
+        working-directory: target
+        run: node scripts/build-fr104-u5b-gnm-fixture.mjs --self-test
+
+      - name: Verify FR104 U5B-B pinned GNM fixture evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-fixture-evidence-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
