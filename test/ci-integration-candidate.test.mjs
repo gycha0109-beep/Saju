@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { assertSubmissionEvent, assertPrerequisites, assertStagedPolicy, validateCandidate } from '../scripts/ci/integration-candidate.mjs';
 
@@ -104,5 +105,31 @@ describe('eligible PR submission evidence', () => {
     expect(() => assertSubmissionEvent({ ...event(), number: 43 }, candidate)).toThrow('immutable');
     expect(() => assertSubmissionEvent(event(), { ...candidate, head: 'c'.repeat(40) })).toThrow('immutable');
     expect(() => assertSubmissionEvent(event(), { ...candidate, base: 'c'.repeat(40) })).toThrow('immutable');
+  });
+});
+
+
+describe('integration workflow current-base execution', () => {
+  const workflow = readFileSync(
+    new URL('../.github/workflows/ci-integration.yml', import.meta.url),
+    'utf8',
+  );
+
+  it('executes admission and verify guards from the current default branch', () => {
+    expect(workflow).toContain(
+      'ref: ${{ github.event.repository.default_branch }}',
+    );
+    expect(
+      workflow.match(/ref: \$\{\{ github\.sha \}\}/gu) ?? [],
+    ).toHaveLength(0);
+  });
+
+  it('pins the current default branch after admission for full regression', () => {
+    expect(workflow).toContain(
+      'current_base_sha: ${{ steps.current-base.outputs.sha }}',
+    );
+    expect(workflow).toContain(
+      'candidate_base: ${{ needs.admission.outputs.current_base_sha }}',
+    );
   });
 });
