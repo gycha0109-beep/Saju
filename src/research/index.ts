@@ -172,3 +172,4 @@ export * from './relationship-spouse-t8-day-branch-palace-shadow-staging-executi
 export * from './relationship-spouse-t8-day-branch-palace-staging-consumer-evidence-admission.js';
 export * from './relationship-spouse-t8-day-branch-palace-narrative-delivery-authority-review.js';
 export * from './relationship-spouse-t8-day-branch-palace-project-governed-materiality-decision.js';
+export * from './relationship-spouse-t8-day-branch-palace-project-narrative-materialization.js';
