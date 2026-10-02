@@ -221,15 +221,23 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
       'RUN_SA_5P_POSITION_ONLY_PRODUCT_NARRATIVE_RUNTIME_AUTHORITY_REVIEW' &&
     upstream.blockers.length === 0;
 
+  const claimValue = claim?.value as
+    | {
+        position?: unknown;
+        traditionalRole?: unknown;
+        semanticScope?: unknown;
+      }
+    | undefined;
+
   const actualClaimExact =
     interpretation.integrity.valid === true &&
     claim !== undefined &&
     claim.taxonomy.tier === 'T8' &&
     claim.taxonomy.category === 'relationship' &&
     claim.taxonomy.subcategory === 'spouse' &&
-    claim.value.position === 'day_branch' &&
-    claim.value.traditionalRole === 'spouse_palace' &&
-    claim.value.semanticScope === 'position_only' &&
+    claimValue?.position === 'day_branch' &&
+    claimValue.traditionalRole === 'spouse_palace' &&
+    claimValue.semanticScope === 'position_only' &&
     claim.factRefs.length === 1 &&
     claim.factRefs[0] === 'pillars.day';
 
@@ -260,7 +268,7 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
     profileBypassExecution.consumerReadingAuthority.readingSection ===
       'relationship:natal:spouse' &&
     profileBypassExecution.modelCalls === 1 &&
-    profileBypassExecution.narrative?.outcome === 'model' &&
+    profileBypassExecution.narrative?.outcome === 'model_first_pass' &&
     profileBypassExecution.narrative.run.validation.firstPass === 'passed' &&
     profileBypassExecution.narrative.run.validation.final === 'passed' &&
     profileBypassExecution.artifact !== undefined &&
