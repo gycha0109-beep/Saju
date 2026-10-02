@@ -12,6 +12,8 @@ export const NEUTRAL_EAR_GNM_CROSS_SOURCE_GEOMETRIC_FIXTURE_EVIDENCE_FR104 =
     firstRenderWorkflowRunId: 37005790974 as const,
     firstRenderCandidateResultSha256:
       'a994a3708cb4247d93f2a9ddda46129a55c3a9ba0e3d9f86853fab4d53469528' as const,
+    exactReplayResultSha256:
+      '528b4756abad1af67849b0fb6eafe8c5bc2e8cd952044b6f7a151df41ae3f427' as const,
 
     source: Object.freeze({
       repository: 'google/GNM' as const,
