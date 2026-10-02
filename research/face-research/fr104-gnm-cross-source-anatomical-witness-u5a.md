@@ -246,3 +246,55 @@ The final U5A-A branch relocates the future live auditor to:
 This path is outside the MESH3/MESH4/MESH5 GNM wildcard triggers.
 
 U5A-B remains the first workflow authorized to execute the U5A auditor and observe the target joint witness values under the frozen contract.
+
+
+## U5A-B first live witness execution surface
+
+U5A-A preregistration merged before this execution surface:
+
+    merge
+    2868ba01d36b89dbb739216fdbc9eb6f69842a25
+
+U5A-B may now execute the frozen live auditor for the first time.
+
+Execution order is fixed:
+
+1. fetch the exact FR100 GNM Head NPZ;
+2. require byte length 53305389;
+3. require git blob ae49903ad7d50ce1d64e464a0407441f2781873c;
+4. execute the frozen U5A auditor;
+5. record the candidate JSON and serialized SHA-256;
+6. verify all candidate-side authority remains false.
+
+The first live execution may produce any preregistered state:
+
+    gnm_direct_left_right_joint_witness_supported
+    gnm_direct_left_right_joint_witness_refuted
+    gnm_direct_left_right_joint_witness_unresolved
+
+No state is preselected.
+
+The workflow may expose only the controlled witness diagnostics needed for later admission:
+
+- exact left_eye joint index;
+- exact right_eye joint index;
+- exact left_eye template joint position;
+- exact right_eye template joint position;
+- diagnostic GNM X ordering;
+- exact candidate result digest.
+
+Even if the live result is supported, this execution PR does not admit it.
+
+The following therefore remain false:
+
+    gnmCrossSourceSemanticWitnessAudited = false
+    gnmCrossSourceGeometricValidationExecuted = false
+    providerLabelMappedToAnatomicalSide = false
+    globalProviderAnatomicalSemanticsEstablished = false
+    anatomicalReferenceAdmitted = false
+    anatomicalLateralityAuthorized = false
+    validatedExternalEarObservationAuthorized = false
+    traditionalBindingAuthorized = false
+    productionAuthorization = false
+
+A separate fail-closed result-intake PR is required after the first candidate execution is merged.
