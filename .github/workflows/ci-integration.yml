@@ -23,10 +23,10 @@ permissions:
   contents: read
   pull-requests: read
 
-# Queue whole regressions without occupying a runner while waiting.
-# This group is repository-scoped, not an account-wide capacity guarantee.
+# Serialize repeated submissions for the same PR, but do not make unrelated
+# PRs wait behind one repository-wide integration queue.
 concurrency:
-  group: ci-integration-admission
+  group: ci-integration-admission-${{ inputs.pr || github.event.pull_request.number }}
   cancel-in-progress: false
   queue: max
 
