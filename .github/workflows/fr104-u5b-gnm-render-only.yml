@@ -75,6 +75,13 @@ jobs:
           assert result["authorityState"] == "render_only_candidate_not_admitted"
           assert result["deterministicRender"]["repeatRenderByteEqual"] is True
           assert result["deterministicRender"]["repeatRenderSha256Equal"] is True
+          assert result["deterministicRender"]["renderSha256"] == (
+              "1af28c1677375f5551e3613bbc7e0d78bfba83e74df2438c0819a343252cc325"
+          )
+          assert result["deterministicRender"]["expectedRenderSha256"] == (
+              "1af28c1677375f5551e3613bbc7e0d78bfba83e74df2438c0819a343252cc325"
+          )
+          assert result["deterministicRender"]["renderDigestPinned"] is True
           assert result["execution"]["renderExecuted"] is True
           assert result["execution"]["providerExecuted"] is False
           assert result["execution"]["providerPackageImported"] is False
