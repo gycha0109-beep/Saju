@@ -1,15 +1,14 @@
 import { describe, expect, test } from 'vitest';
+import { I7_SEASONAL_SUPPORT_RULES } from '../src/research/i7-seasonal-support-pack.js';
+import { I13_STRENGTH_EVIDENCE_RULES } from '../src/research/i13-strength-evidence-pack.js';
 import {
-  I7_SEASONAL_SUPPORT_RULES,
-  I13_STRENGTH_EVIDENCE_RULES,
   I14_STRENGTH_EVIDENCE_COMPOSITE_PACK,
-  buildI14StrengthEvidenceMatrix,
-  calculateCanonicalSajuSnapshot,
   createI14StrengthEvidenceRegistry,
-  runInterpretation,
-  type BirthInput,
-  type CalculationPolicySnapshot,
-} from '../src/index.js';
+} from '../src/research/i14-strength-evidence-registry.js';
+import { buildI14StrengthEvidenceMatrix } from '../src/research/i14-strength-evidence-matrix.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import type { BirthInput, CalculationPolicySnapshot } from '../src/contracts/calculation.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/i14-test',

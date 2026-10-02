@@ -1,15 +1,15 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildNarrativeEvidenceBundle,
-  calculateCanonicalSajuSnapshot,
-  createRuleRegistrySnapshot,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-  type InterpretationPack,
-  type MethodologyDefinition,
-  type RuleDefinition,
-  type SourceReference,
-} from '../src/index.js';
+import { buildNarrativeEvidenceBundle } from '../src/narrative/evidence-selector.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { createRuleRegistrySnapshot } from '../src/interpretation/rule-registry.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import type {
+  InterpretationPack,
+  MethodologyDefinition,
+  RuleDefinition,
+  SourceReference,
+} from '../src/contracts/interpretation.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/narrative-minimization-test',

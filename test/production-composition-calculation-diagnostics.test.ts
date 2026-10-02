@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import {
-  SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  createRuleRegistrySnapshot,
-  type InterpretationPack,
-  type ReviewerTrustContext,
-} from '../src/index.js';
+import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../src/llm/prompt-compiler.js';
+import { createRuleRegistrySnapshot } from '../src/interpretation/rule-registry.js';
+import type { InterpretationPack } from '../src/contracts/interpretation.js';
+import type { ReviewerTrustContext } from '../src/interpretation/reviewer-trust.js';
 import {
   createAuthorizedMyeonghwaProductionHost,
   type ProductionCalculationSensitivityObservation,

@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-support-pack.js';
 import {
-  calculateCanonicalSajuSnapshot,
-  createI7SeasonalSupportRegistry,
   runInterpretation,
-  type CalculationPolicySnapshot,
-  type CanonicalSajuSnapshot,
-  type InterpretationClaim,
   type InterpretationExecutionResult,
+} from '../src/interpretation/interpretation-engine.js';
+import type {
+  CalculationPolicySnapshot,
+  CanonicalSajuSnapshot,
+} from '../src/contracts/calculation.js';
+import type { InterpretationClaim } from '../src/contracts/interpretation.js';
+import {
   GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
   type GovernedReadingEvidenceBundleV1,
-} from '../src/index.js';
+} from '../src/reading/governed-reading-evidence.js';
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import {
   assembleOfficialReadingArtifactV1,

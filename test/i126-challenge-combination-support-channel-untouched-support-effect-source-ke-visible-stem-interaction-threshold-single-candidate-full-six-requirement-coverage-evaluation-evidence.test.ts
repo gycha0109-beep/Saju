@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI126ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdSingleCandidateFullSixRequirementCoverageEvaluationEvidence,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdSingleCandidateFullSixRediscoveryEvidenceReport,
-} from '../src/index.js';
+import { buildI126ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdSingleCandidateFullSixRequirementCoverageEvaluationEvidence } from '../src/research/i126-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-single-candidate-full-six-requirement-coverage-evaluation-evidence.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdSingleCandidateFullSixRediscoveryEvidenceReport } from '../src/research/i125-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-single-candidate-full-six-rediscovery-evidence.js';
 
 const IDS = [
   'EXPLICIT_BINARY_EFFECTIVE_INTERACTION_SEMANTICS',
