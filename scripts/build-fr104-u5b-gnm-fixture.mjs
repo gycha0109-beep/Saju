@@ -11,6 +11,7 @@ const AMBIENT = 0.35;
 const DIFFUSE = 0.65;
 const EXPECTED_ASSET_BLOB = 'ae49903ad7d50ce1d64e464a0407441f2781873c';
 const EXPECTED_ASSET_BYTES = 53305389;
+const EXPECTED_RENDER_SHA256 = '1af28c1677375f5551e3613bbc7e0d78bfba83e74df2438c0819a343252cc325';
 const EXPECTED_LEFT = Object.freeze([
   0.030839037150144577,
   0.30316492915153503,
@@ -426,7 +427,7 @@ if(process.argv.includes('--self-test')){
   const trianglesPath=arg('triangles');
   const renderOut=arg('write-render');
   const resultOut=arg('write-result');
-  const expectedRenderSha=arg('expected-render-sha256');
+  const expectedRenderSha=arg('expected-render-sha256') ?? EXPECTED_RENDER_SHA256;
   if(!metadataPath||!verticesPath||!trianglesPath||!resultOut){
     fail('INVALID_ARGUMENTS','metadata, vertices, triangles, and write-result are required');
   }
