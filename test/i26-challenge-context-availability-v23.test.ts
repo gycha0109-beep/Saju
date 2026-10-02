@@ -1,15 +1,13 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI62ChallengeCombinationSupportChannelTouchSpecificSettlementDispatchMethodologyReview,
-  buildI63ChallengeCombinationSupportChannelTouchSpecificSettlementDispatchEvidence,
-  buildI64ChallengeCombinationSupportChannelDispatchedRelationCurrentChartSettlementSubstrateVerificationMethodologyReview,
-  buildI65ChallengeCombinationSupportChannelDispatchedRelationCurrentChartSettlementSubstrateVerificationEvidence,
-  type ChallengeCombinationSupportChannelRelationIdentityPairEvidenceReport,
-  type ChallengeContextAvailabilityV22Report,
-  type ChallengeRootThreeCombinationClashPlacementSettlementEvidenceReport,
-  type ChallengeTargetClashDependencyEvidenceReport,
-  type ChallengeTargetCombinationDependencyEvidenceReport,
-} from '../src/index.js';
+import { buildI62ChallengeCombinationSupportChannelTouchSpecificSettlementDispatchMethodologyReview } from '../src/research/i62-challenge-combination-support-channel-touch-specific-settlement-dispatch-methodology-review.js';
+import { buildI63ChallengeCombinationSupportChannelTouchSpecificSettlementDispatchEvidence } from '../src/research/i63-challenge-combination-support-channel-touch-specific-settlement-dispatch-evidence.js';
+import { buildI64ChallengeCombinationSupportChannelDispatchedRelationCurrentChartSettlementSubstrateVerificationMethodologyReview } from '../src/research/i64-challenge-combination-support-channel-dispatched-relation-current-chart-settlement-substrate-verification-methodology-review.js';
+import { buildI65ChallengeCombinationSupportChannelDispatchedRelationCurrentChartSettlementSubstrateVerificationEvidence } from '../src/research/i65-challenge-combination-support-channel-dispatched-relation-current-chart-settlement-substrate-verification-evidence.js';
+import type { ChallengeCombinationSupportChannelRelationIdentityPairEvidenceReport } from '../src/research/i61-challenge-combination-support-channel-relation-identity-pair-evidence.js';
+import type { ChallengeContextAvailabilityV22Report } from '../src/research/i26-challenge-context-availability-v22.js';
+import type { ChallengeRootThreeCombinationClashPlacementSettlementEvidenceReport } from '../src/research/i47-challenge-root-three-combination-clash-placement-settlement-evidence.js';
+import type { ChallengeTargetClashDependencyEvidenceReport } from '../src/research/i33-challenge-target-clash-dependency-evidence.js';
+import type { ChallengeTargetCombinationDependencyEvidenceReport } from '../src/research/i35-challenge-target-combination-dependency-evidence.js';
 import { buildI26ChallengeContextAvailabilityV23 } from '../src/research/i26-challenge-context-availability-v23.js';
 
 const PREFIX = 'challenge-root combination support-channel';

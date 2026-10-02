@@ -1,5 +1,8 @@
 # PR feedback and pre-merge integration
 
+Full-regression import-cost optimization and its measured sample are documented
+in [test import performance](test-import-performance.md).
+
 ## Branch validation (2026-10-01)
 
 - Admission/actual Git assembly/conservative selection regressions: 32 tests passed.

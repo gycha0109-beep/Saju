@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   I165_LINEAGE_ADJUDICATION_REQUIREMENT_IDS,
-  buildI166ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateTargetedLineageAdjudicationEvidence,
   type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateEvidenceAdequacyLineageAdjudicationReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i165-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-remediation-candidate-evidence-adequacy-lineage-adjudication-readiness-review.js';
+import { buildI166ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateTargetedLineageAdjudicationEvidence } from '../src/research/i166-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-remediation-candidate-targeted-lineage-adjudication-evidence.js';
 
 function validI165(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateEvidenceAdequacyLineageAdjudicationReadinessReviewReport {
   return {

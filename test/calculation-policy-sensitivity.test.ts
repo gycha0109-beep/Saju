@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vitest';
 import {
   buildCalculationPolicyProfiles,
   runCalculationPolicySensitivity,
-  type BirthInput,
-} from '../src/index.js';
+} from '../src/calculation/calculation-policy-profiles.js';
+import type { BirthInput } from '../src/contracts/calculation.js';
 
 function baseInput(overrides: Partial<BirthInput> = {}): BirthInput {
   return {

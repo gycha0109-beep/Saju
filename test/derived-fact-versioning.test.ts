@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import {
   INTERPRETATION_AUTHORIZATION_POLICY_VERSION,
-  calculateCanonicalSajuSnapshot,
-  createI13StrengthEvidenceRegistry,
   runInterpretation,
-  type CalculationPolicySnapshot,
-} from '../src/index.js';
+} from '../src/interpretation/interpretation-engine.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { createI13StrengthEvidenceRegistry } from '../src/research/i13-strength-evidence-pack.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/derived-fact-version-test',

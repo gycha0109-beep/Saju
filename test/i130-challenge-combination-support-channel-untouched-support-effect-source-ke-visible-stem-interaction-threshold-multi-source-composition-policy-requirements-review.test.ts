@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI130ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionPolicyRequirementsReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdTwoPartialRequirementDiscoveryExhaustionContractReassessmentReviewReport,
-} from '../src/index.js';
+import { buildI130ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionPolicyRequirementsReview } from '../src/research/i130-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-policy-requirements-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdTwoPartialRequirementDiscoveryExhaustionContractReassessmentReviewReport } from '../src/research/i129-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-two-partial-requirement-discovery-exhaustion-contract-reassessment-review.js';
 
 const REQUIREMENT_IDS = [
   'SOURCE_IDENTITY_AND_WITNESS_STABILITY',

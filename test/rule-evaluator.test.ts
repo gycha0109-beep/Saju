@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
-import {
-  calculateCanonicalSajuSnapshot,
-  evaluateRule,
-  type CalculationPolicySnapshot,
-  type InterpretationClaim,
-  type InterpretationPack,
-  type RuleDefinition,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { evaluateRule } from '../src/interpretation/rule-evaluator.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import type {
+  InterpretationClaim,
+  InterpretationPack,
+  RuleDefinition,
+} from '../src/contracts/interpretation.js';
 
 const calculationPolicy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/evaluator-test',

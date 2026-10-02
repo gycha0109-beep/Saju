@@ -1,15 +1,19 @@
 import { describe, expect, it } from 'vitest';
+import { FACE_TOPIC_FOUNDATION_FIXTURE_AUTHORITY_SNAPSHOT_FR293_FRB005 } from '../src/face-topic/fixtures.js';
 import {
-  FACE_TOPIC_FOUNDATION_FIXTURE_AUTHORITY_SNAPSHOT_FR293_FRB005,
   FACE_TOPIC_REGISTRY,
   assertFaceTopicDefinition,
   createFaceTopicDefinitionRef,
-  evaluateFaceTopicDefinitionReadiness,
   getFaceTopicDefinition,
+} from '../src/face-topic/registry.js';
+import {
+  evaluateFaceTopicDefinitionReadiness,
   resolveFaceTopicReadiness,
-  type FaceAuthorityCoverageSnapshot,
-  type FaceTopicDefinition,
-} from '../src/index.js';
+} from '../src/face-topic/readiness.js';
+import type {
+  FaceAuthorityCoverageSnapshot,
+  FaceTopicDefinition,
+} from '../src/face-topic/contracts.js';
 
 const snapshot =
   FACE_TOPIC_FOUNDATION_FIXTURE_AUTHORITY_SNAPSHOT_FR293_FRB005;

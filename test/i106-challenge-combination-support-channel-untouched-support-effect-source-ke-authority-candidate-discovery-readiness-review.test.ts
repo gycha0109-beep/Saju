@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI106ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectBlockedVocabularyAuthorityAcquisitionReadinessReviewReport,
-} from '../src/index.js';
+import { buildI106ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryReadinessReview } from '../src/research/i106-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-candidate-discovery-readiness-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectBlockedVocabularyAuthorityAcquisitionReadinessReviewReport } from '../src/research/i105-challenge-combination-support-channel-untouched-support-effect-blocked-vocabulary-authority-acquisition-readiness-review.js';
 
 function i105(): ChallengeCombinationSupportChannelUntouchedSupportEffectBlockedVocabularyAuthorityAcquisitionReadinessReviewReport {
   const keLane = {

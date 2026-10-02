@@ -1,27 +1,27 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI24ChallengeMechanismComposition,
-  buildI25ChallengeEffectMethodologyReview,
-  buildI26ChallengeContextAvailabilityV11,
-  buildI36ChallengeTargetCombinationTransformationPolicyMethodologyReview,
-  buildI37ChallengeTargetCombinationTransformationReference,
-  buildI38ChallengeTargetCombinationConditionApplicabilityMethodologyReview,
-  buildI40ChallengeCombinationConditionCompositionPrecedenceMethodologyReview,
-  buildI41ChallengeCombinationConditionDependencyGraph,
-  buildI42ChallengeTargetStemTransformationScopeMethodologyReview,
-  buildI43ChallengeRootSixCombinationTransformationConventionScopeMethodologyReview,
-  buildResolvedI27ChallengeMechanismForceEvidence,
-  buildResolvedI29ChallengeTargetIntrinsicRootEvidence,
-  buildResolvedI31ChallengeTargetRelationParticipationEvidence,
-  buildResolvedI33ChallengeTargetClashDependencyEvidence,
-  buildResolvedI35ChallengeTargetCombinationDependencyEvidence,
-  buildResolvedI39ChallengeTargetCombinationConditionEvidence,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
-  type PillarFact,
-  type StructuralPillarInput,
-} from '../src/index.js';
+import { buildI24ChallengeMechanismComposition } from '../src/research/i24-challenge-mechanism-composition.js';
+import { buildI25ChallengeEffectMethodologyReview } from '../src/research/i25-challenge-effect-methodology-review.js';
+import { buildI26ChallengeContextAvailabilityV11 } from '../src/research/i26-challenge-context-availability-v11.js';
+import { buildI36ChallengeTargetCombinationTransformationPolicyMethodologyReview } from '../src/research/i36-challenge-target-combination-transformation-policy-methodology-review.js';
+import { buildI37ChallengeTargetCombinationTransformationReference } from '../src/research/i37-challenge-target-combination-transformation-reference.js';
+import { buildI38ChallengeTargetCombinationConditionApplicabilityMethodologyReview } from '../src/research/i38-challenge-target-combination-condition-applicability-methodology-review.js';
+import { buildI40ChallengeCombinationConditionCompositionPrecedenceMethodologyReview } from '../src/research/i40-challenge-combination-condition-composition-precedence-methodology-review.js';
+import { buildI41ChallengeCombinationConditionDependencyGraph } from '../src/research/i41-challenge-combination-condition-dependency-graph.js';
+import { buildI42ChallengeTargetStemTransformationScopeMethodologyReview } from '../src/research/i42-challenge-target-stem-transformation-scope-methodology-review.js';
+import { buildI43ChallengeRootSixCombinationTransformationConventionScopeMethodologyReview } from '../src/research/i43-challenge-root-six-combination-transformation-convention-scope-methodology-review.js';
+import { buildResolvedI27ChallengeMechanismForceEvidence } from '../src/research/i27-challenge-mechanism-force-evidence.js';
+import { buildResolvedI29ChallengeTargetIntrinsicRootEvidence } from '../src/research/i29-challenge-target-intrinsic-root-evidence.js';
+import { buildResolvedI31ChallengeTargetRelationParticipationEvidence } from '../src/research/i31-challenge-target-relation-participation-evidence.js';
+import { buildResolvedI33ChallengeTargetClashDependencyEvidence } from '../src/research/i33-challenge-target-clash-dependency-evidence.js';
+import { buildResolvedI35ChallengeTargetCombinationDependencyEvidence } from '../src/research/i35-challenge-target-combination-dependency-evidence.js';
+import { buildResolvedI39ChallengeTargetCombinationConditionEvidence } from '../src/research/i39-challenge-target-combination-condition-evidence.js';
+import type {
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+} from '../src/contracts/calculation.js';
+import type { StructuralPillarInput } from '../src/calculation/structural-relations.js';
 
 const STEM: Readonly<Record<HeavenlyStem, { hanja: string; element: FiveElement; yinYang: '양' | '음' }>> = {
   갑: { hanja: '甲', element: '목', yinYang: '양' },

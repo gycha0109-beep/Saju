@@ -3,8 +3,8 @@ import {
   I140_CANDIDATE_UNIVERSE_SOURCE_GATES,
   I140_PROSPECTIVE_SELECTION_CONTROL_IDS,
   buildI140ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProspectiveCandidateSetSelectionContract,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionCandidateSetInputPackageMaterializationReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i140-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-prospective-candidate-set-selection-contract.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionCandidateSetInputPackageMaterializationReadinessReviewReport } from '../src/research/i139-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-candidate-set-input-package-materialization-readiness-review.js';
 
 function i139(
   overrides: Record<string, unknown> = {},
