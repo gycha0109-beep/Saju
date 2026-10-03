@@ -47,6 +47,7 @@ const HISTORICAL_SPOUSE_AUTHORITY = Object.freeze({
     'myeonghwa-preview-official-reading-consumer-authority-v1' as const,
   readingSection: 'relationship:natal:spouse' as const,
   authority: 'legacy_narrative' as const,
+  supportedOfficialReadingSection: undefined,
   constraints: Object.freeze({
     mayPromoteProductionInterpretationAuthority: false as const,
     mayGrantPersistenceAuthority: false as const,
