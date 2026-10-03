@@ -100,7 +100,8 @@ describe('Preview semantic admission registry v1', () => {
     expect(admission.boundaries).toContain('POSITION_ONLY');
     expect(admission.boundaries).toContain('NO_SPOUSE_PERSONALITY_OR_IDENTITY');
     expect(admission.boundaries).toContain('NO_MARRIAGE_TIMING_OR_OUTCOME');
-    expect(admission.boundaries).toContain('NO_OFFICIAL_READING_PROMOTION');
+    expect(admission.boundaries).toContain('OFFICIAL_READING_PREVIEW_ALLOWED');
+    expect(admission.boundaries).toContain('NO_PRODUCTION_PROMOTION');
     expect(admission.effects.mayCreatePreviewClaim).toBe(true);
     expect(admission.effects.mayAffectProductionAuthority).toBe(false);
     expect(admission.effects.mayPromoteResearchLifecycle).toBe(false);
