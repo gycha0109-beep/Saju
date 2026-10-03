@@ -450,7 +450,7 @@ export function createNeutralEarFlorenceLiveHostTransportFR104(
     authorityState:
       'same_origin_ephemeral_rgba_transport_only' as const,
     hostInvoker,
-    takeCandidateSetHandle(providerRunRef) {
+    takeCandidateSetHandle(providerRunRef: string) {
       safeRunRef(providerRunRef);
       const handle = pendingByRunRef.get(providerRunRef);
       if (handle === undefined) {
@@ -459,7 +459,7 @@ export function createNeutralEarFlorenceLiveHostTransportFR104(
       pendingByRunRef.delete(providerRunRef);
       return handle;
     },
-    discardPendingCandidateSet(providerRunRef) {
+    discardPendingCandidateSet(providerRunRef: string) {
       safeRunRef(providerRunRef);
       const handle = pendingByRunRef.get(providerRunRef);
       if (handle === undefined) return false;
