@@ -8,6 +8,10 @@ import type {
   NeutralEarFrameTransformParityFR104V1,
 } from './neutral-ear-frame-transform-parity-fr104.js';
 import {
+  assertIssuedNeutralEarControlledCaptureMirrorProvenanceFR104,
+  type NeutralEarControlledCaptureMirrorProvenanceFR104V1,
+} from './neutral-ear-controlled-capture-mirror-provenance-fr104.js';
+import {
   NEUTRAL_EAR_PROVIDER_MIRROR_SEMANTICS_REVIEW_FR104,
 } from './neutral-ear-provider-mirror-semantics-review-fr104.js';
 import { FaceAuthorityValidationError } from './validation.js';
@@ -66,6 +70,8 @@ export interface NeutralEarAnatomicalLateralityMappingRequestFR104V1 {
     NeutralEarFrameTransformParityFR104V1;
   readonly pixelIdentityEvidence:
     NeutralEarDualConsumerPixelFingerprintEvidenceFR104V1;
+  readonly controlledCaptureMirrorProvenance:
+    NeutralEarControlledCaptureMirrorProvenanceFR104V1;
   readonly evidenceUse: {
     readonly florencePromptSideConsumedAsAnatomicalSide: false;
     readonly imageSpaceXSignConsumedAsAnatomicalSide: false;
@@ -285,9 +291,22 @@ export function attemptNeutralEarAnatomicalLateralityMappingFR104(
     blockers.push('candidate_not_outside_provider_eye_envelope');
   }
 
-  blockers.push(
-    'subject_relative_capture_mirror_provenance_unavailable',
+  assertIssuedNeutralEarControlledCaptureMirrorProvenanceFR104(
+    request.controlledCaptureMirrorProvenance,
+    {
+      frameTransformParity: request.frameTransformParity,
+      pixelIdentityEvidence: request.pixelIdentityEvidence,
+    },
   );
+
+  if (
+    request.controlledCaptureMirrorProvenance
+      .subjectRelativeMirrorProvenanceVerified !== true
+  ) {
+    blockers.push(
+      'subject_relative_capture_mirror_provenance_unavailable',
+    );
+  }
   blockers.push('anatomical_mapping_not_admitted');
 
   return Object.freeze({
