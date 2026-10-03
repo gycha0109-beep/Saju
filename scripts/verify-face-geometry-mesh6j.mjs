@@ -143,15 +143,19 @@ expectIncludes(server, "'/fr255/operator.mjs'", 'MESH6J must expose the FR255 br
 expectIncludes(server, "'permissions-policy': 'camera=()'", 'FR255 must explicitly disable camera permission on its aggregation-only page.');
 
 for (const forbidden of [
-  "request.method === 'POST'",
   "request.method === 'PUT'",
   "request.method === 'PATCH'",
   "request.method === 'DELETE'",
   'rawImage',
   'rawVideo',
   'MediaRecorder',
+  'multipart/form-data',
 ]) {
-  expectExcludes(server, forbidden, 'MESH6J server must expose no upload/raw-capture persistence path.');
+  expectExcludes(
+    server,
+    forbidden,
+    'MESH6J server must expose no mutable upload/raw-capture persistence path; the bounded FR104 POST is in-memory only.',
+  );
 }
 
 expect(normalizeRemoteAddress('::ffff:192.168.1.20') === '192.168.1.20', 'IPv4-mapped IPv6 normalization drift.');
