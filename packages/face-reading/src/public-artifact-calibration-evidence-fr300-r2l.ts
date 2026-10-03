@@ -262,8 +262,10 @@ export function assertFR300R2LPublicArtifactCalibrationEvidenceContract(): void 
   }
 
   for (const receipt of FR300_R2L_RECEIPTS) {
+    const blockers: readonly string[] = receipt.blockers;
+
     if (
-      receipt.blockers.length === 0 ||
+      blockers.length === 0 ||
       receipt.participantArtifactDownloadAuthorized ||
       receipt.restrictedAccessRequestAuthorized ||
       receipt.directFR299ReferenceEligible
