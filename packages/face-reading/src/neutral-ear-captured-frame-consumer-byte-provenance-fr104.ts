@@ -67,6 +67,8 @@ export interface NeutralEarCapturedFrameConsumerByteEvidenceFR104V1 {
     readonly sourceDigestPersisted: false;
     readonly consumerDigestsReturned: false;
     readonly consumerDigestsPersisted: false;
+    readonly sourceDigestZeroedAfterFinalize: true;
+    readonly consumerDigestsZeroedAfterFinalize: true;
     readonly rawFrameBytesPersistedByBridge: false;
     readonly bridgeOwnedSourceBytesZeroedAfterFinalize: true;
     readonly bridgeOwnedConsumerCopiesZeroedAfterCallback: true;
@@ -200,6 +202,8 @@ export async function createNeutralEarCapturedFrameConsumerByteSessionFR104(
       const materializedByteLength = sourceBytes.byteLength;
       sourceBytes.fill(0);
       sourceBytes = null;
+      sourceDigest.fill(0);
+      for (const digest of consumerDigests.values()) digest.fill(0);
       consumerDigests.clear();
       finalized = true;
 
@@ -236,6 +240,8 @@ export async function createNeutralEarCapturedFrameConsumerByteSessionFR104(
           sourceDigestPersisted: false as const,
           consumerDigestsReturned: false as const,
           consumerDigestsPersisted: false as const,
+          sourceDigestZeroedAfterFinalize: true as const,
+          consumerDigestsZeroedAfterFinalize: true as const,
           rawFrameBytesPersistedByBridge: false as const,
           bridgeOwnedSourceBytesZeroedAfterFinalize: true as const,
           bridgeOwnedConsumerCopiesZeroedAfterCallback: true as const,
@@ -311,6 +317,8 @@ export function assertNeutralEarCapturedFrameConsumerByteEvidenceFR104(
     || evidence.privacy.sourceDigestPersisted !== false
     || evidence.privacy.consumerDigestsReturned !== false
     || evidence.privacy.consumerDigestsPersisted !== false
+    || evidence.privacy.sourceDigestZeroedAfterFinalize !== true
+    || evidence.privacy.consumerDigestsZeroedAfterFinalize !== true
     || evidence.privacy.rawFrameBytesPersistedByBridge !== false
     || evidence.authority.byteOriginProvenanceOnly !== true
     || evidence.authority.subjectRelativeMirrorProvenanceAuthorized
