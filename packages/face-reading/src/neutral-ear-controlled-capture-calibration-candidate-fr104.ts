@@ -60,7 +60,8 @@ export interface NeutralEarCalibrationCandidateFR104V1 {
     stage: ControlledCaptureStageFR21BV1;
     originAttestation:
       NeutralEarCalibrationStageOriginAttestationFR104V1;
-    exactFrameOriginIndependentlyVerified: boolean;
+    exactIssuedFrameObjectOriginVerified: boolean;
+    artifactBytesIndependentlyVerified: false;
   }>[];
   readonly reviewHints: {
     readonly previewMirrorPolicyCandidate:
@@ -160,7 +161,7 @@ function finalAssertion(
     : 'image_left_is_subject_anatomical_right';
 }
 
-function exactFrameOriginVerified(
+function exactIssuedFrameObjectOriginVerified(
   stage: ControlledCaptureStageFR21BV1,
 ): boolean {
   return stage === 'raw_pixels';
@@ -346,8 +347,9 @@ export function createNeutralEarCalibrationCandidateSessionFR104(
               Object.freeze({
                 stage: stage.stage,
                 originAttestation: stage.originAttestation,
-                exactFrameOriginIndependentlyVerified:
-                  exactFrameOriginVerified(stage.stage),
+                exactIssuedFrameObjectOriginVerified:
+                  exactIssuedFrameObjectOriginVerified(stage.stage),
+                artifactBytesIndependentlyVerified: false as const,
               }),
             ),
           ),
@@ -439,13 +441,16 @@ export function assertIssuedNeutralEarCalibrationCandidateFR104(
     || candidate.capturedFrame.exactIssuedFrameObjectVerified !== true
     || candidate.stageProvenance.find(
       (stage) => stage.stage === 'raw_pixels',
-    )?.exactFrameOriginIndependentlyVerified !== true
+    )?.exactIssuedFrameObjectOriginVerified !== true
     || candidate.stageProvenance.find(
       (stage) => stage.stage === 'encoded_pixels',
-    )?.exactFrameOriginIndependentlyVerified !== false
+    )?.exactIssuedFrameObjectOriginVerified !== false
     || candidate.stageProvenance.find(
       (stage) => stage.stage === 'canonical_pixels',
-    )?.exactFrameOriginIndependentlyVerified !== false
+    )?.exactIssuedFrameObjectOriginVerified !== false
+    || candidate.stageProvenance.some(
+      (stage) => stage.artifactBytesIndependentlyVerified !== false,
+    )
     || candidate.reviewHints.hintsAreAuthority !== false
     || candidate.authority.calibrationCandidateOnly !== true
     || candidate.authority.reviewedCalibrationEvidence !== false
