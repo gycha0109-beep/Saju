@@ -22,7 +22,7 @@ The provisional approval is recorded by:
 
 ```text
 src/preview/preview-authority.ts
-approvalId = owner-provisional-preview-2026-09-19
+approvalId = owner-provisional-preview-2026-10-03-sa5t
 purpose    = consumer-screen-e2e-observation
 ```
 
@@ -37,6 +37,7 @@ The currently admitted Preview surface is intentionally bounded to the research-
 직업 · 커리어   → career:natal
 재물            → wealth:natal
 연애 · 관계     → relationship:natal:general
+배우자 · 관계   → relationship:natal:spouse  (position-only legacy Narrative Preview)
 사업            → business:natal
 ```
 
@@ -47,7 +48,6 @@ The following remain fail-closed until their own evidence path is ready for Prev
 삶의 단계
 올해
 이번 달
-배우자 · 관계
 궁합
 지금 고민으로 보기
 ```
@@ -63,9 +63,10 @@ MyeongHa server
 → authenticated Saju service request
 → POST /api/preview/readings
 → Production Calculation Authority V1
-→ current research interpretation registry
+→ section-specific governed interpretation registry
 → governed Product Reading preparation / grounding
-→ deterministic consumer Preview narrative
+→ Official Reading path for the existing five admitted sections
+   OR exact position-only legacy Narrative path for relationship:natal:spouse
 → source-owned ProductReadingResponse admission
 → x-myeonghwa-reading-lifecycle: preview
 ```
@@ -78,6 +79,19 @@ POST /api/readings
 ```
 
 The Preview endpoint is protected by the same server-owned Saju service Bearer as the calculation endpoint. The browser never receives that credential.
+
+The spouse Preview lane is intentionally distinct from Preview Official Reading authority:
+
+```text
+relationship:natal:spouse
+→ Preview supported = yes
+→ consumer authority = legacy_narrative
+→ semantic scope = traditional spouse-palace day-branch position only
+→ Official Reading authority = no
+→ Production authority = no
+```
+
+Its output is limited to the governed statement that traditional Myeongri treats the day branch as the spouse-palace position, together with the mandatory scope qualifier. It cannot infer spouse personality, identity, appearance, occupation, marriage timing or outcome, divorce/remarriage, favorable/unfavorable palace judgment, Yongshin/Jisin semantics, spouse-star auto-selection, or compatibility.
 
 ## Consumer disclosure
 
