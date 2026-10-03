@@ -153,7 +153,7 @@ export async function buildRelationshipSpouseT8DayBranchPalacePreviewAdmissionRe
     preparation.composition.selection.missingRequirements.includes(
       'RELATIONSHIP_SPOUSE_DOMAIN_CLAIM_REQUIRED',
     ) &&
-    preparation.executionEligibility.readingExecution === 'blocked';
+    preparation.executionEligibility.readingExecution === 'blocked_coverage';
 
   const protectedPreviewApprovalBoundaryIntact =
     PREVIEW_E2E_APPROVAL.lifecycle === 'preview' &&
