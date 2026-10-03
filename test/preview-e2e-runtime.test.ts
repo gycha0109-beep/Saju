@@ -69,7 +69,7 @@ function readingRequest(text: string): string {
 
 describe('provisionally approved preview E2E runtime', () => {
   it('records Preview approval without promoting research evidence to Production authority', () => {
-    expect(PREVIEW_E2E_AUTHORITY_VERSION).toBe('myeonghwa-preview-e2e-authority-v2');
+    expect(PREVIEW_E2E_AUTHORITY_VERSION).toBe('myeonghwa-preview-e2e-authority-v3');
     expect(PREVIEW_E2E_APPROVAL).toMatchObject({
       lifecycle: 'preview',
       approved: true,
