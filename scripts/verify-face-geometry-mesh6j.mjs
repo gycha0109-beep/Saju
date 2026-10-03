@@ -114,8 +114,14 @@ expectIncludes(server, "LAN mode requires MESH6J_TLS_KEY and MESH6J_TLS_CERT.", 
 expectIncludes(server, "createSecureServer(tls, requestHandler)", 'MESH6J.1 LAN mode must use HTTPS.');
 expectIncludes(server, "assertLanRequestAllowed(request.socket.remoteAddress)", 'MESH6J.1 must reject non-private remote clients.');
 expectIncludes(server, "transportMode: LAN_MODE ? 'private_lan_https' : 'localhost_http'", 'MESH6J runtime config must disclose transport mode.');
-expectIncludes(server, "request.method !== 'GET'", 'MESH6J server must reject non-GET methods.');
-expectIncludes(server, "allow: 'GET'", 'MESH6J server must advertise GET-only routing.');
+expectIncludes(server, "request.method === 'POST'", 'MESH6J must expose only an explicit POST exception for runtime operations.');
+expectIncludes(server, "url.pathname === '/runtime/fr104/florence'", 'MESH6J must scope the FR104 Florence POST exception to its exact runtime endpoint.');
+expectIncludes(server, "request.method !== 'GET'", 'MESH6J static/runtime GET surface must continue rejecting unsupported methods after explicit POST routing.');
+expectIncludes(server, "allow: 'GET, POST'", 'MESH6J method advertisement must disclose the explicit GET plus FR104 POST surface.');
+expectIncludes(server, "fr104FlorenceRunnerPath", 'MESH6J must pin the repository-local Florence runner path.');
+expectIncludes(server, "filePersistenceUsed: false", 'MESH6J FR104 Florence transport must deny image-file persistence.');
+expectIncludes(server, "responseIncludesRawCandidatePolygons: false", 'MESH6J FR104 Florence transport must not expose raw candidate polygons.');
+expectIncludes(server, "anatomicalLateralityAuthorized: false", 'MESH6J FR104 Florence transport must not authorize anatomical laterality.');
 expectIncludes(server, "rawCapturePersistenceEnabled: false", 'MESH6J runtime config must deny raw-capture persistence.');
 expectIncludes(server, "calibrationAuthorized: false", 'MESH6J runtime config must deny calibration authority.');
 expectIncludes(server, "productionMorphologyAuthorized: false", 'MESH6J runtime config must deny production morphology authority.');
