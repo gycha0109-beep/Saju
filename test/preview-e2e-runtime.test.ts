@@ -14,6 +14,11 @@ import {
   PREVIEW_E2E_APPROVAL,
   PREVIEW_E2E_AUTHORITY_VERSION,
 } from '../src/preview/preview-authority.js';
+import {
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_PROHIBITED_PHRASES,
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
+} from '../src/research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js';
 
 const ACTIVE_BEARER = 'preview-e2e-test-bearer';
 
@@ -64,7 +69,7 @@ function readingRequest(text: string): string {
 
 describe('provisionally approved preview E2E runtime', () => {
   it('records Preview approval without promoting research evidence to Production authority', () => {
-    expect(PREVIEW_E2E_AUTHORITY_VERSION).toBe('myeonghwa-preview-e2e-authority-v1');
+    expect(PREVIEW_E2E_AUTHORITY_VERSION).toBe('myeonghwa-preview-e2e-authority-v2');
     expect(PREVIEW_E2E_APPROVAL).toMatchObject({
       lifecycle: 'preview',
       approved: true,
@@ -151,6 +156,42 @@ describe('provisionally approved preview E2E runtime', () => {
       const serialized = JSON.stringify(payload);
       expect(serialized).toContain('"readingId":"official_reading_');
       for (const expectedTitle of expectedTitles) expect(serialized).toContain(expectedTitle);
+    } finally {
+      await close(runtime.server);
+    }
+  });
+
+  it('delivers spouse Preview only through the bounded legacy Narrative lane', async () => {
+    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const origin = await listenEphemeral(runtime.server);
+    try {
+      const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${ACTIVE_BEARER}`,
+          'content-type': 'application/json',
+        },
+        body: readingRequest('배우자운'),
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get(PRODUCT_READING_LIFECYCLE_HEADER)).toBe(
+        PRODUCT_READING_PREVIEW_LIFECYCLE,
+      );
+      const payload = (await response.json()) as { state?: unknown };
+      expect(payload.state).toBe('delivered');
+
+      const serialized = JSON.stringify(payload);
+      expect(serialized).toContain(
+        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
+      );
+      expect(serialized).toContain(
+        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
+      );
+      expect(serialized).not.toContain('"readingId":"official_reading_');
+      for (const prohibited of RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_PROHIBITED_PHRASES) {
+        expect(serialized).not.toContain(prohibited);
+      }
     } finally {
       await close(runtime.server);
     }

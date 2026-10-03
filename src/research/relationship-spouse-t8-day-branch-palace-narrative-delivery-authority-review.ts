@@ -172,7 +172,7 @@ export async function evaluateRelationshipSpouseT8DayBranchPalaceNarrativeDelive
 
   const spouseSectionNotOfficialPreview =
     readingSection === 'relationship:natal:spouse' &&
-    !(PREVIEW_E2E_APPROVAL.supportedReadingSections as readonly string[]).includes(
+    !(PREVIEW_E2E_APPROVAL.officialReadingSections as readonly string[]).includes(
       readingSection,
     ) &&
     previewConsumerAuthority.readingSection === readingSection &&
