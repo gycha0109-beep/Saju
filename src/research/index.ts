@@ -175,3 +175,4 @@ export * from './relationship-spouse-t8-day-branch-palace-project-governed-mater
 export * from './relationship-spouse-t8-day-branch-palace-project-governed-narrative-materialization.js';
 export * from './relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js';
 export * from './relationship-spouse-t8-day-branch-palace-narrative-consumer-integration.js';
+export * from './relationship-spouse-t8-day-branch-palace-product-narrative-runtime-authority-review.js';
