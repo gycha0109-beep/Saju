@@ -496,6 +496,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-result-intake-fr104.test.ts
 
+      - name: Verify FR104 U5B-D admitted GNM geometric evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-empirical-evidence-fr104.test.ts
+
       - name: Verify frozen source baseline
         working-directory: source
         run: |
