@@ -92,56 +92,72 @@ export async function buildRelationshipSpouseT8DayBranchPalaceOfficialReadingDel
   const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
   const origin = await listenEphemeral(runtime.server);
 
-  let unauthorizedStatus = 0;
-  let unauthorizedCode: unknown;
-  let previewStatus = 0;
-  let previewAdmissionHeader: string | null = null;
-  let previewLifecycleHeader: string | null = null;
-  let previewPayload: PreviewHttpPayload = {};
-  let previewSerialized = '';
-  let productionStatus = 0;
-  let productionCode: unknown;
+  const httpObservation = await (async () => {
+    try {
+      const unauthorized = await fetch(
+        `${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: '{not-json',
+        },
+      );
+      const unauthorizedPayload = await jsonPayload(unauthorized);
 
-  try {
-    const unauthorized = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: '{not-json',
-    });
-    unauthorizedStatus = unauthorized.status;
-    unauthorizedCode = (await jsonPayload(unauthorized)).error?.code;
+      const preview = await fetch(
+        `${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`,
+        {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${ACTIVE_BEARER}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(SPOUSE_REQUEST),
+        },
+      );
+      const previewPayload = await jsonPayload(preview);
 
-    const preview = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${ACTIVE_BEARER}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(SPOUSE_REQUEST),
-    });
-    previewStatus = preview.status;
-    previewAdmissionHeader = preview.headers.get(
-      PRODUCT_READING_RESPONSE_ADMISSION_HEADER,
-    );
-    previewLifecycleHeader = preview.headers.get(
-      PRODUCT_READING_LIFECYCLE_HEADER,
-    );
-    previewPayload = await jsonPayload(preview);
-    previewSerialized = JSON.stringify(previewPayload);
+      const production = await fetch(`${origin}/api/readings`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${ACTIVE_BEARER}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(SPOUSE_REQUEST),
+      });
+      const productionPayload = await jsonPayload(production);
 
-    const production = await fetch(`${origin}/api/readings`, {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${ACTIVE_BEARER}`,
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(SPOUSE_REQUEST),
-    });
-    productionStatus = production.status;
-    productionCode = (await jsonPayload(production)).error?.code;
-  } finally {
-    await closeServer(runtime.server);
-  }
+      return Object.freeze({
+        unauthorizedStatus: unauthorized.status,
+        unauthorizedCode: unauthorizedPayload.error?.code,
+        previewStatus: preview.status,
+        previewAdmissionHeader: preview.headers.get(
+          PRODUCT_READING_RESPONSE_ADMISSION_HEADER,
+        ),
+        previewLifecycleHeader: preview.headers.get(
+          PRODUCT_READING_LIFECYCLE_HEADER,
+        ),
+        previewPayload,
+        previewSerialized: JSON.stringify(previewPayload),
+        productionStatus: production.status,
+        productionCode: productionPayload.error?.code,
+      });
+    } finally {
+      await closeServer(runtime.server);
+    }
+  })();
+
+  const {
+    unauthorizedStatus,
+    unauthorizedCode,
+    previewStatus,
+    previewAdmissionHeader,
+    previewLifecycleHeader,
+    previewPayload,
+    previewSerialized,
+    productionStatus,
+    productionCode,
+  } = httpObservation;
 
   const upstreamImplementationExact =
     upstream.implementationEstablished === true &&
