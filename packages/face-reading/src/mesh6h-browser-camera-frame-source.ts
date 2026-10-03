@@ -110,6 +110,7 @@ export interface Mesh6HBrowserCameraHandleV1 {
 }
 
 const HANDLE_ISSUED = new WeakSet<object>();
+const FRAME_ISSUED_BY_HANDLE = new WeakMap<object, Mesh6HBrowserCameraHandleV1>();
 
 function fail(message: string): never {
   throw new FaceAuthorityValidationError('MESH6H ' + message);
@@ -364,13 +365,15 @@ export async function openMesh6HBrowserCamera(
             }
 
             try {
-              yield Object.freeze({
+              const frame: Mesh6GCapturedFrameV1 = Object.freeze({
                 image: bitmap,
                 timestampMs: trigger.timestampMs,
                 frameWidth: input.video.videoWidth,
                 frameHeight: input.video.videoHeight,
                 providerRunRef: trigger.providerRunRef,
               });
+              FRAME_ISSUED_BY_HANDLE.set(frame, handle);
+              yield frame;
             } finally {
               bitmap.close();
             }
@@ -439,4 +442,19 @@ export function assertIssuedMesh6HBrowserCameraHandle(
 ): void {
   if (!HANDLE_ISSUED.has(handle)) fail('browser camera handle was not issued by the active MESH6H boundary.');
   assertHandleBoundary(handle);
+}
+
+
+export function assertIssuedMesh6HBrowserCameraFrame(
+  handle: Mesh6HBrowserCameraHandleV1,
+  frame: Mesh6GCapturedFrameV1,
+): void {
+  assertIssuedMesh6HBrowserCameraHandle(handle);
+  if (
+    typeof frame !== 'object'
+    || frame === null
+    || FRAME_ISSUED_BY_HANDLE.get(frame) !== handle
+  ) {
+    fail('captured frame was not issued by the supplied active MESH6H handle.');
+  }
 }
