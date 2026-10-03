@@ -11,6 +11,7 @@ import {
   executeProductReading,
   LEGACY_NARRATIVE_RUNTIME_VERSION,
 } from '../reading/governed-reading-execution.js';
+import { buildProductReadingDelivery } from '../reading/product-reading-delivery.js';
 import {
   RELATIONSHIP_NATAL_CLAIM_NARRATIVE_PROFILES,
 } from './relationship-natal-narrative-profiles.js';
@@ -205,10 +206,15 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
     runtime(new ProfileBypassAdapter()),
   );
 
+  const fallbackDelivery = buildProductReadingDelivery(fallbackExecution);
+  const profileBypassDelivery = buildProductReadingDelivery(
+    profileBypassExecution,
+  );
   const fallbackEncoded = JSON.stringify(fallbackExecution.narrative?.draft ?? {});
   const bypassEncoded = JSON.stringify(
     profileBypassExecution.narrative?.draft ?? {},
   );
+  const bypassDeliveryEncoded = JSON.stringify(profileBypassDelivery);
 
   const upstreamConsumerIntegrationExact =
     upstream.narrativeConsumerIntegrationEstablished === true &&
@@ -279,6 +285,19 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
     );
 
+  const profileBypassWouldReachConsumerDelivery =
+    profileBypassDelivery.state === 'delivered' &&
+    profileBypassDelivery.messageCode === 'READING_DELIVERED' &&
+    profileBypassDelivery.requiredAction === 'none' &&
+    profileBypassDelivery.artifact?.readingId ===
+      profileBypassExecution.artifact?.readingId &&
+    bypassDeliveryEncoded.includes(
+      RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROFILE_BYPASS_TEXT,
+    ) &&
+    !bypassDeliveryEncoded.includes(
+      RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
+    );
+
   const officialAuthorityStillClosed =
     fallbackExecution.consumerReadingAuthority?.authority ===
       'legacy_narrative' &&
@@ -300,6 +319,7 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
     actualClaimExact,
     fallbackUsesBoundedProfile,
     successfulModelPathBypassesProfileSemanticBoundary,
+    profileBypassWouldReachConsumerDelivery,
     officialAuthorityStillClosed,
   });
 
@@ -324,6 +344,7 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
           'MODEL_SUCCESS_PATH_DOES_NOT_ENFORCE_CLAIM_NARRATIVE_PROFILE',
           'MANDATORY_QUALIFIER_NOT_ENFORCED_ON_MODEL_SUCCESS',
           'PROHIBITED_PHRASES_NOT_ENFORCED_ON_MODEL_SUCCESS',
+          'SEMANTICALLY_UNBOUNDED_MODEL_OUTPUT_CAN_REACH_CONSUMER_DELIVERY',
         ]
       : ['SA5P_REVIEW_INCOMPLETE'],
   );
@@ -340,7 +361,9 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
     semanticScope: 'position_only' as const,
     upstreamIntegrationId: upstream.integrationId,
     fallbackExecutionId: fallbackExecution.executionId,
+    fallbackDeliveryId: fallbackDelivery.deliveryId,
     profileBypassExecutionId: profileBypassExecution.executionId,
+    profileBypassDeliveryId: profileBypassDelivery.deliveryId,
     checks,
     reviewBlockers,
     authorizationBlockers,
@@ -380,6 +403,8 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
     reviewId: deterministicContentHash(material),
     ...material,
     fallbackExecution,
+    fallbackDelivery,
     profileBypassExecution,
+    profileBypassDelivery,
   });
 }
