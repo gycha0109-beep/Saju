@@ -224,7 +224,7 @@ export function createNeutralEarFlorenceByteAdapterFR104(
         'fr104-neutral-ear-florence-byte-adapter-v1' as const,
       authorityState:
         'exact_rgba_byte_boundary_to_external_host_port_only' as const,
-      async invoke(frame) {
+      async invoke(frame: NeutralEarRgba8FrameFR104V1) {
         validateRgbaInput(frame);
         const before = new Uint8Array(frame.bytes);
         const result = await input.hostInvoker(Object.freeze({
@@ -295,7 +295,7 @@ export function createNeutralEarFaceLandmarkerByteAdapterFR104(
         'fr104-neutral-ear-face-landmarker-byte-adapter-v1' as const,
       authorityState:
         'exact_rgba_byte_boundary_to_mediapipe_runtime_only' as const,
-      async invoke(frame) {
+      async invoke(frame: NeutralEarRgba8FrameFR104V1) {
         validateRgbaInput(frame);
         const image = createImageSource(Object.freeze({
           rgbaBytes: frame.bytes,
