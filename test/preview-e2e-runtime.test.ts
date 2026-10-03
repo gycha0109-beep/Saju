@@ -161,7 +161,7 @@ describe('provisionally approved preview E2E runtime', () => {
     }
   });
 
-  it('delivers spouse Preview only through the bounded legacy Narrative lane', async () => {
+  it('delivers spouse Preview through the bounded Official Reading lane', async () => {
     const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
@@ -182,13 +182,15 @@ describe('provisionally approved preview E2E runtime', () => {
       expect(payload.state).toBe('delivered');
 
       const serialized = JSON.stringify(payload);
+      expect(serialized).toContain('"readingId":"official_reading_');
       expect(serialized).toContain(
         RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
       );
       expect(serialized).toContain(
         RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
       );
-      expect(serialized).not.toContain('"readingId":"official_reading_');
+      expect(serialized).toContain('"title":"관계"');
+      expect(serialized).toContain('"title":"해석 범위"');
       for (const prohibited of RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_PROHIBITED_PHRASES) {
         expect(serialized).not.toContain(prohibited);
       }
