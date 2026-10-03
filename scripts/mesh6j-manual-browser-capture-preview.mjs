@@ -20,6 +20,7 @@ import {
 } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath, URL } from 'node:url';
+import { Fr104FlorenceLiveWorkerBridge } from './fr104-florence-live-worker-bridge.mjs';
 import { assertLanRequestAllowed } from './mesh6j-private-lan-transport.mjs';
 
 const RELEASE_COMMIT = 'f8ef212d5c962c0e853db7e59d217056b187084b';
@@ -35,6 +36,9 @@ const DEFAULT_PORT = 4316;
 const SMOKE = process.env.MYEONGHWA_MESH6J_SMOKE === '1';
 const LAN_SMOKE = process.env.MYEONGHWA_MESH6J_LAN_SMOKE === '1';
 const LAN_MODE = process.env.MESH6J_LAN === '1' || LAN_SMOKE;
+const FR104_FLORENCE_LIVE_ENABLED = process.env.FR104_FLORENCE_LIVE === '1';
+const FR104_FLORENCE_HTTP_SCHEMA = 'fr104-florence-live-http-v1';
+const FR104_MAX_RGBA_BYTES = 32 * 1024 * 1024;
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, '..');
@@ -289,6 +293,156 @@ function sendFile(response, path) {
   response.end(readFileSync(path));
 }
 
+function sendJson(response, status, payload) {
+  response.writeHead(status, {
+    'content-type': 'application/json; charset=utf-8',
+    'cache-control': 'no-store',
+    'x-content-type-options': 'nosniff',
+  });
+  response.end(JSON.stringify(payload));
+}
+
+function readBoundedRequestBody(request, maximumBytes) {
+  return new Promise((resolveBody, rejectBody) => {
+    const chunks = [];
+    let total = 0;
+    request.on('data', (chunk) => {
+      total += chunk.length;
+      if (total > maximumBytes) {
+        rejectBody(new Error('request body exceeds governed maximum.'));
+        request.destroy();
+        return;
+      }
+      chunks.push(Buffer.from(chunk));
+    });
+    request.once('end', () => resolveBody(Buffer.concat(chunks, total)));
+    request.once('error', rejectBody);
+  });
+}
+
+async function handleFr104FlorenceLiveRequest(request, response, bridge) {
+  if (bridge === null) {
+    sendJson(response, 503, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_disabled_no_provider_authority',
+      error: 'FR104 Florence live transport is disabled; set FR104_FLORENCE_LIVE=1 explicitly.',
+      authority: {
+        validatedExternalEarObservationAuthorized: false,
+        anatomicalLateralityAuthorized: false,
+        traditionalBindingAuthorized: false,
+        productionAuthorization: false,
+      },
+    });
+    return;
+  }
+  if (request.headers['content-type'] !== 'application/octet-stream') {
+    sendJson(response, 415, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: 'content-type must be application/octet-stream',
+    });
+    return;
+  }
+  if (request.headers['x-fr104-schema-version'] !== FR104_FLORENCE_HTTP_SCHEMA) {
+    sendJson(response, 400, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: 'x-fr104-schema-version mismatch',
+    });
+    return;
+  }
+
+  const providerRunRef = request.headers['x-fr104-provider-run-ref'];
+  const width = Number(request.headers['x-fr104-width']);
+  const height = Number(request.headers['x-fr104-height']);
+  if (
+    typeof providerRunRef !== 'string'
+    || providerRunRef.length === 0
+    || providerRunRef.length > 256
+    || /\s/u.test(providerRunRef)
+    || !Number.isInteger(width)
+    || width <= 0
+    || !Number.isInteger(height)
+    || height <= 0
+  ) {
+    sendJson(response, 400, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: 'providerRunRef/width/height headers are invalid',
+    });
+    return;
+  }
+
+  const expectedLength = width * height * 4;
+  if (
+    !Number.isSafeInteger(expectedLength)
+    || expectedLength <= 0
+    || expectedLength > FR104_MAX_RGBA_BYTES
+  ) {
+    sendJson(response, 413, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: 'RGBA payload dimensions exceed the governed bound',
+    });
+    return;
+  }
+
+  const declared = request.headers['content-length'];
+  if (
+    declared !== undefined
+    && (
+      !/^\d+$/u.test(declared)
+      || Number(declared) !== expectedLength
+    )
+  ) {
+    sendJson(response, 400, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: 'content-length must equal width * height * 4',
+    });
+    return;
+  }
+
+  try {
+    const body = await readBoundedRequestBody(
+      request,
+      FR104_MAX_RGBA_BYTES,
+    );
+    if (body.byteLength !== expectedLength) {
+      sendJson(response, 400, {
+        schemaVersion: 'fr104-florence-live-http-response-v1',
+        authorityState: 'transport_error_no_provider_authority',
+        error: 'received RGBA byte length does not equal width * height * 4',
+      });
+      return;
+    }
+
+    const workerResult = await bridge.invoke({
+      providerRunRef,
+      width,
+      height,
+      rgbaBytes: new Uint8Array(
+        body.buffer,
+        body.byteOffset,
+        body.byteLength,
+      ),
+    });
+    sendJson(response, 200, workerResult);
+  } catch (error) {
+    sendJson(response, 502, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: error instanceof Error ? error.message : String(error),
+      authority: {
+        validatedExternalEarObservationAuthorized: false,
+        anatomicalLateralityAuthorized: false,
+        traditionalBindingAuthorized: false,
+        productionAuthorization: false,
+      },
+    });
+  }
+}
+
 function requireLanTlsConfig() {
   if (!LAN_MODE) return null;
   const keyPath = process.env.MESH6J_TLS_KEY?.trim();
@@ -401,6 +555,10 @@ async function main() {
   if (!fr104ProspectiveComposedOrientationPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 U3.3 prospective composed-orientation page import-map placeholder is missing.');
   const fr104ProspectiveComposedOrientationPageHtml = fr104ProspectiveComposedOrientationPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
 
+  const florenceLiveBridge = FR104_FLORENCE_LIVE_ENABLED
+    ? new Fr104FlorenceLiveWorkerBridge()
+    : null;
+
   const requestHandler = (request, response) => {
     if (LAN_MODE) {
       try {
@@ -413,6 +571,24 @@ async function main() {
     }
     const rawUrl = request.url || '/';
     const url = new URL(rawUrl, (LAN_MODE ? 'https://' : 'http://') + (request.headers.host || LOCALHOST_HOST));
+
+    if (url.pathname === '/runtime/fr104/florence') {
+      if (request.method !== 'POST') {
+        response.writeHead(405, {
+          'content-type': 'text/plain; charset=utf-8',
+          allow: 'POST',
+        });
+        response.end('method not allowed');
+        return;
+      }
+      void handleFr104FlorenceLiveRequest(
+        request,
+        response,
+        florenceLiveBridge,
+      );
+      return;
+    }
+
     if (request.method !== 'GET') {
       response.writeHead(405, { 'content-type': 'text/plain; charset=utf-8', allow: 'GET' });
       response.end('method not allowed');
@@ -740,6 +916,9 @@ async function main() {
         fr76ParityInputBlobSha: PARITY_INPUT_BLOB_SHA,
         authorityState: 'manual_research_capture_only',
         rawCapturePersistenceEnabled: false,
+        fr104FlorenceLiveTransportImplemented: true,
+        fr104FlorenceLiveTransportEnabled: FR104_FLORENCE_LIVE_ENABLED,
+        fr104FlorenceRawRgbaPersistenceEnabled: false,
         calibrationAuthorized: false,
         productionMorphologyAuthorized: false,
       }));
@@ -879,6 +1058,9 @@ async function main() {
         || config.transportMode !== (LAN_MODE ? 'private_lan_https' : 'localhost_http')
         || config.fr76ParityInputBlobSha !== PARITY_INPUT_BLOB_SHA
         || config.rawCapturePersistenceEnabled !== false
+        || config.fr104FlorenceLiveTransportImplemented !== true
+        || config.fr104FlorenceLiveTransportEnabled !== false
+        || config.fr104FlorenceRawRgbaPersistenceEnabled !== false
         || config.calibrationAuthorized !== false
         || config.productionMorphologyAuthorized !== false
       ) {
@@ -893,10 +1075,14 @@ async function main() {
         exactParityInputVerified: true,
         weightedAdapterRegenerated: true,
         rawCapturePersistenceEnabled: false,
+        fr104FlorenceLiveTransportImplemented: true,
+        fr104FlorenceLiveTransportEnabled: false,
+        fr104FlorenceRawRgbaPersistenceEnabled: false,
         calibrationAuthorized: false,
         productionMorphologyAuthorized: false,
       }) + '\n');
     } finally {
+      florenceLiveBridge?.close();
       await new Promise((resolveClose, rejectClose) => {
         server.close((error) => error ? rejectClose(error) : resolveClose());
       });
@@ -936,7 +1122,17 @@ async function main() {
     process.stdout.write('FR104 MakeHuman provider rotation dependence: ' + base + '/fr104-makehuman-provider-rotation-dependence/\n');
     process.stdout.write('FR104 U3.3 prospective composed orientation validation: ' + base + '/fr104-provider-composed-orientation-validation/\n');
   }
+  if (FR104_FLORENCE_LIVE_ENABLED) {
+    process.stdout.write('FR104 Florence live transport enabled: POST ' + base + '/runtime/fr104/florence\n');
+  }
   process.stdout.write('Camera data remains in-memory; only sanitized/descriptive JSON can be exported by the browser surfaces.\n');
+
+  const shutdown = () => {
+    florenceLiveBridge?.close();
+    server.close();
+  };
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
 }
 
 await main();
