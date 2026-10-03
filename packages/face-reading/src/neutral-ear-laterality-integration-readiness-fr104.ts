@@ -108,6 +108,10 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
         true as const,
       controlledCaptureRuntimeFrameObjectBinding:
         true as const,
+      controlledCaptureFrontRearFacingSelection:
+        true as const,
+      exactCapturedFrameConsumerByteBinding:
+        true as const,
     }),
 
     controlledCaptureReadiness: Object.freeze({
@@ -125,7 +129,9 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       mirrorProvenanceBridgeState:
         'implemented_fail_closed' as const,
       exactRuntimeFrameToProfileBindingState:
-        'captured_frame_object_binding_implemented_consumer_bytes_unverified' as const,
+        'captured_frame_object_binding_implemented' as const,
+      exactRuntimeFrameToConsumerBytesBindingState:
+        'implemented_fail_closed_ephemeral_bridge' as const,
       ordinaryFileUploadBridgeState:
         'explicitly_rejected' as const,
     }),
@@ -141,7 +147,8 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       'runtime_instance_transform_parity_must_be_resolved',
       'subject_relative_source_pixel_mirror_provenance_not_verified',
       'verified_controlled_capture_profile_not_available',
-      'captured_frame_to_consumer_bytes_binding_not_independently_verified',
+      'runtime_byte_bridge_not_yet_integrated_into_fr104_ear_provider_invocation',
+      'fr21b_front_rear_deterministic_asymmetric_calibration_not_executed',
       'ordinary_file_upload_cannot_claim_controlled_capture_attestation',
       'runtime_anatomical_side_mapping_not_admitted',
     ] as const),
@@ -189,7 +196,7 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       anatomicalLateralityAuthorized:
         false as const,
       nextGate:
-        'execute_and_admit_fr21b_deterministic_asymmetric_front_and_rear_calibration_then_bind_consumer_bytes_to_the_exact_d2a_captured_frame_object_and_consume_reviewed_raw_pixel_mirror_policy; ordinary_file_upload_remains_fail_closed' as const,
+        'execute_and_review_fr21b_deterministic_asymmetric_front_and_rear_calibration_then_admit_verified_capture_profiles_and_integrate_the_exact_frame_consumer_byte_bridge_into_the_fr104_ear_provider_invocation; ordinary_file_upload_remains_fail_closed' as const,
     }),
 
     authority: Object.freeze({
