@@ -8,10 +8,10 @@ import {
 import {
   assessNeutralEarGnmCrossSourceGeometryFR104,
   NEUTRAL_EAR_GNM_CROSS_SOURCE_GEOMETRIC_VALIDATION_FR104,
-} from '/face/neutral-ear-prospective-independent-geometry-validation-fr104.js';
+} from '/face/neutral-ear-gnm-cross-source-geometric-validation-fr104.js';
 import {
   NEUTRAL_EAR_GNM_CROSS_SOURCE_GEOMETRIC_FIXTURE_EVIDENCE_FR104,
-} from '/face/neutral-ear-prospective-independent-geometry-fixture-evidence-fr104.js';
+} from '/face/neutral-ear-gnm-cross-source-geometric-fixture-evidence-fr104.js';
 import {
   NEUTRAL_EAR_MIRROR_INDEPENDENT_FIXTURE_PROTOCOL_FR104,
 } from '/face/neutral-ear-mirror-independent-fixture-protocol-fr104.js';
