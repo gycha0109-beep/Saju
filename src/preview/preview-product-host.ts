@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type {
+  ClaimNarrativeProfile,
   NarrativeDraft,
   NarrativeEvidenceBundle,
   NarrativePolicy,
@@ -30,13 +31,6 @@ import {
 import {
   CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
 } from '../research/career-natal-narrative-profiles.js';
-import {
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE,
-} from '../research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js';
-import {
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_NARRATIVE_MATERIALIZED_REGISTRY,
-  runRelationshipSpouseT8DayBranchPalaceNarrativeMaterializedShadowExecution,
-} from '../research/relationship-spouse-t8-day-branch-palace-project-governed-narrative-materialization.js';
 import {
   PREVIEW_E2E_APPROVAL,
   isPreviewE2eSupportedReadingSection,
@@ -493,10 +487,6 @@ class PreviewE2eNarrativeAdapter implements NarrativeModelAdapter {
   }
 }
 
-const SPOUSE_POSITION_ONLY_PROFILES = Object.freeze([
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE,
-]);
-
 class PreviewSpousePositionOnlyNarrativeAdapter implements NarrativeModelAdapter {
   readonly metadata = Object.freeze({
     provider: 'deterministic-preview',
@@ -504,11 +494,12 @@ class PreviewSpousePositionOnlyNarrativeAdapter implements NarrativeModelAdapter
     modelRevision: PREVIEW_E2E_RUNTIME_VERSION,
   });
 
+  constructor(
+    private readonly profiles: readonly ClaimNarrativeProfile[],
+  ) {}
+
   async generateStructured(prompt: CompiledNarrativePrompt): Promise<unknown> {
-    return buildDeterministicFallbackDraft(
-      prompt.evidence,
-      SPOUSE_POSITION_ONLY_PROFILES,
-    );
+    return buildDeterministicFallbackDraft(prompt.evidence, this.profiles);
   }
 }
 
@@ -546,7 +537,9 @@ function createDefaultPreviewProductHost(now: Date): MyeonghwaProductHost {
   });
 }
 
-function createSpousePositionOnlyPreviewProductHost(now: Date): MyeonghwaProductHost {
+async function createSpousePositionOnlyPreviewProductHost(
+  now: Date,
+): Promise<MyeonghwaProductHost> {
   const admission = requirePreviewSemanticAdmissionV1(
     'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE',
     'relationship:natal:spouse',
@@ -558,13 +551,25 @@ function createSpousePositionOnlyPreviewProductHost(now: Date): MyeonghwaProduct
     throw new Error('Spouse position-only Preview semantic admission is not exact.');
   }
 
+  const [profileModule, materializationModule] = await Promise.all([
+    import(
+      '../research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js'
+    ),
+    import(
+      '../research/relationship-spouse-t8-day-branch-palace-project-governed-narrative-materialization.js'
+    ),
+  ]);
+  const profiles = Object.freeze([
+    profileModule.RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE,
+  ] as const);
+
   return createMyeonghwaProductHost({
     calculate(input) {
       return calculateAuthorizedMyeonghwaProductionSnapshot(input).snapshot;
     },
     async interpret(snapshot, context) {
       const interpretation =
-        await runRelationshipSpouseT8DayBranchPalaceNarrativeMaterializedShadowExecution(
+        await materializationModule.runRelationshipSpouseT8DayBranchPalaceNarrativeMaterializedShadowExecution(
           snapshot,
           {
             requestId: context.requestId,
@@ -573,19 +578,19 @@ function createSpousePositionOnlyPreviewProductHost(now: Date): MyeonghwaProduct
         );
       return {
         registry:
-          RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_NARRATIVE_MATERIALIZED_REGISTRY,
+          materializationModule.RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_NARRATIVE_MATERIALIZED_REGISTRY,
         interpretation,
       };
     },
     legacyNarrativeRuntime: {
       runtimeVersion: LEGACY_NARRATIVE_RUNTIME_VERSION,
-      adapter: new PreviewSpousePositionOnlyNarrativeAdapter(),
+      adapter: new PreviewSpousePositionOnlyNarrativeAdapter(profiles),
       narrativePolicy: PREVIEW_NARRATIVE_POLICY,
     },
     readingOptions: {
       outputSchemaVersion: PREVIEW_E2E_OUTPUT_SCHEMA_VERSION,
       readingVersion: PREVIEW_E2E_RUNTIME_VERSION,
-      claimNarrativeProfiles: SPOUSE_POSITION_ONLY_PROFILES,
+      claimNarrativeProfiles: profiles,
       narrativeNow: now,
       artifactGeneratedAt: now,
     },
@@ -621,13 +626,19 @@ export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
 
   const now = new Date();
   const defaultHost = createDefaultPreviewProductHost(now);
-  const spouseHost = createSpousePositionOnlyPreviewProductHost(now);
+  let spouseHostPromise: Promise<MyeonghwaProductHost> | undefined;
+
+  function spouseHost(): Promise<MyeonghwaProductHost> {
+    spouseHostPromise ??= createSpousePositionOnlyPreviewProductHost(now);
+    return spouseHostPromise;
+  }
 
   return {
-    requestReading(body: unknown) {
-      return isSpousePositionOnlyPreviewRequest(body)
-        ? spouseHost.requestReading(body)
-        : defaultHost.requestReading(body);
+    async requestReading(body: unknown) {
+      if (isSpousePositionOnlyPreviewRequest(body)) {
+        return (await spouseHost()).requestReading(body);
+      }
+      return defaultHost.requestReading(body);
     },
   };
 }
