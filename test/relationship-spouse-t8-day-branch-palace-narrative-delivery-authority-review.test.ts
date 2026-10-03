@@ -73,6 +73,11 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5K narrative and 
       (PREVIEW_E2E_APPROVAL.supportedReadingSections as readonly string[]).includes(
         result.readingSection,
       ),
+    ).toBe(true);
+    expect(
+      (PREVIEW_E2E_APPROVAL.officialReadingSections as readonly string[]).includes(
+        result.readingSection,
+      ),
     ).toBe(false);
     expect(result.previewConsumerAuthority).toMatchObject({
       readingSection: 'relationship:natal:spouse',
