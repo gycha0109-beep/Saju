@@ -84,7 +84,7 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       'verified_controlled_capture_profile_not_available',
     );
     expect(readiness.remainingBlockers).toContain(
-      'exact_runtime_frame_to_verified_capture_profile_binding_not_implemented',
+      'captured_frame_to_consumer_bytes_binding_not_independently_verified',
     );
     expect(readiness.remainingBlockers).toContain(
       'ordinary_file_upload_cannot_claim_controlled_capture_attestation',
@@ -116,13 +116,20 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
     expect(capture.mirrorProvenanceBridgeState)
       .toBe('implemented_fail_closed');
     expect(capture.exactRuntimeFrameToProfileBindingState)
-      .toBe('not_implemented');
+      .toBe(
+        'captured_frame_object_binding_implemented_consumer_bytes_unverified',
+      );
     expect(capture.ordinaryFileUploadBridgeState)
       .toBe('explicitly_rejected');
     expect(
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
         .implementedMechanicalGates
         .controlledCaptureMirrorProvenanceBridge,
+    ).toBe(true);
+    expect(
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
+        .implementedMechanicalGates
+        .controlledCaptureRuntimeFrameObjectBinding,
     ).toBe(true);
     expect(
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
