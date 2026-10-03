@@ -252,7 +252,12 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
     compliantExecution.narrative.run.validation.repairAttempted === false &&
     compliantExecution.narrative.run.validation.final === 'passed' &&
     compliantExecution.narrative.run.validation.violations.length === 0 &&
-    compliantExecution.artifact?.status === 'ready' &&
+    snapshot.completeness.birthTimeKnown === true &&
+    snapshot.completeness.fullyResolved === false &&
+    snapshot.completeness.ambiguousPaths.length === 0 &&
+    snapshot.completeness.unavailablePaths.length === 1 &&
+    snapshot.completeness.unavailablePaths[0] === 'luckCycle' &&
+    compliantExecution.artifact?.status === 'ready_with_ambiguity' &&
     compliantExecution.consumerReadingAuthority?.readingSection ===
       'relationship:natal:spouse' &&
     compliantExecution.consumerReadingAuthority.authority ===
