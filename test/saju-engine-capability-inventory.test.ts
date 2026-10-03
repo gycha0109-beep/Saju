@@ -188,7 +188,7 @@ describe('Saju engine capability inventory observations', () => {
     ).map((item) => readingSectionForIntentV1(item.intent));
 
     expect([...official].sort()).toEqual([...OFFICIAL_CANARY].sort());
-    expect(PREVIEW_E2E_APPROVAL.supportedReadingSections).toEqual(OFFICIAL_CANARY);
+    expect(PREVIEW_E2E_APPROVAL.officialReadingSections).toEqual(OFFICIAL_CANARY);
 
     for (const capability of CAPABILITIES) {
       const resolution = resolvePreviewConsumerReadingAuthorityV1(capability.intent);
