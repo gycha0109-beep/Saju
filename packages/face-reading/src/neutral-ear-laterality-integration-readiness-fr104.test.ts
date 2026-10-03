@@ -83,8 +83,14 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
     expect(readiness.remainingBlockers).toContain(
       'verified_controlled_capture_profile_not_available',
     );
-    expect(readiness.remainingBlockers).toContain(
+    expect(readiness.remainingBlockers).not.toContain(
       'captured_frame_to_consumer_bytes_binding_not_independently_verified',
+    );
+    expect(readiness.remainingBlockers).toContain(
+      'runtime_byte_bridge_not_yet_integrated_into_fr104_ear_provider_invocation',
+    );
+    expect(readiness.remainingBlockers).toContain(
+      'fr21b_front_rear_deterministic_asymmetric_calibration_not_executed',
     );
     expect(readiness.remainingBlockers).toContain(
       'ordinary_file_upload_cannot_claim_controlled_capture_attestation',
@@ -116,9 +122,9 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
     expect(capture.mirrorProvenanceBridgeState)
       .toBe('implemented_fail_closed');
     expect(capture.exactRuntimeFrameToProfileBindingState)
-      .toBe(
-        'captured_frame_object_binding_implemented_consumer_bytes_unverified',
-      );
+      .toBe('captured_frame_object_binding_implemented');
+    expect(capture.exactRuntimeFrameToConsumerBytesBindingState)
+      .toBe('implemented_fail_closed_ephemeral_bridge');
     expect(capture.ordinaryFileUploadBridgeState)
       .toBe('explicitly_rejected');
     expect(
@@ -130,6 +136,16 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
         .implementedMechanicalGates
         .controlledCaptureRuntimeFrameObjectBinding,
+    ).toBe(true);
+    expect(
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
+        .implementedMechanicalGates
+        .controlledCaptureFrontRearFacingSelection,
+    ).toBe(true);
+    expect(
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
+        .implementedMechanicalGates
+        .exactCapturedFrameConsumerByteBinding,
     ).toBe(true);
     expect(
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
