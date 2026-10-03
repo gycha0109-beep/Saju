@@ -56,6 +56,9 @@ export interface NeutralEarFlorenceLiveHostTransportFR104V1 {
   readonly takeCandidateSetHandle: (
     providerRunRef: string,
   ) => NeutralEarFlorenceCandidateSetHandleFR104V1;
+  readonly discardPendingCandidateSet: (
+    providerRunRef: string,
+  ) => boolean;
   readonly boundary: {
     readonly endpoint: string;
     readonly mediaType: 'application/octet-stream';
@@ -455,6 +458,18 @@ export function createNeutralEarFlorenceLiveHostTransportFR104(
       }
       pendingByRunRef.delete(providerRunRef);
       return handle;
+    },
+    discardPendingCandidateSet(providerRunRef) {
+      safeRunRef(providerRunRef);
+      const handle = pendingByRunRef.get(providerRunRef);
+      if (handle === undefined) return false;
+      pendingByRunRef.delete(providerRunRef);
+      const state = HANDLE_STATE.get(handle);
+      if (state !== undefined && !state.consumed) {
+        clearCandidateState(state);
+        HANDLE_STATE.delete(handle);
+      }
+      return true;
     },
     boundary: Object.freeze({
       endpoint,
