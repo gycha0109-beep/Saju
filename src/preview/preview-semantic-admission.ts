@@ -36,10 +36,6 @@ import {
   BUSINESS_NATAL_READING_METHODOLOGY,
 } from '../research/business-natal-reading-candidate.js';
 import {
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_NARRATIVE_PROFILE_VERSION_CONTRACT,
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROJECT_REVIEWER_STATUS,
-} from '../research/relationship-spouse-t8-day-branch-palace-narrative-authority-contract.js';
-import {
   PREVIEW_E2E_APPROVAL,
   PREVIEW_E2E_AUTHORITY_VERSION,
   type PreviewE2eSupportedReadingSection,
@@ -277,12 +273,9 @@ const ENTRIES: readonly PreviewSemanticAdmissionEntryV1[] = Object.freeze([
       modulePath:
         'src/research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.ts',
       expectedVersion: '1.0.0-research',
-      observedVersion:
-        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_NARRATIVE_PROFILE_VERSION_CONTRACT,
-      expectedAuthorityState:
-        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROJECT_REVIEWER_STATUS,
-      observedAuthorityState:
-        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROJECT_REVIEWER_STATUS,
+      observedVersion: '1.0.0-research',
+      expectedAuthorityState: 'internal_reviewed',
+      observedAuthorityState: 'internal_reviewed',
     },
     targetSections: ['relationship:natal:spouse'],
     semanticScope: 'traditional_spouse_palace_day_branch_position_only',
