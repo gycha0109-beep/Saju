@@ -350,6 +350,18 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-dual-consumer-pixel-fingerprint-fr104.test.ts
 
+      - name: Verify FR104 exact captured-frame consumer-byte provenance
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-captured-frame-consumer-byte-provenance-fr104.test.ts
+
+      - name: Verify FR104 controlled-capture runtime byte binding
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-controlled-capture-runtime-byte-binding-fr104.test.ts
+
+      - name: Verify FR104 provider byte adapters and live invocation gate
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-live-provider-byte-runtime-fr104.test.ts
+
       - name: Verify FR104 anatomical laterality mapping skeleton
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-anatomical-laterality-mapping-contract-fr104.test.ts

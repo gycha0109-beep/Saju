@@ -92,6 +92,7 @@ export interface NeutralEarCapturedFrameConsumerByteSessionFR104V1 {
   ) => Promise<T>;
   readonly finalize: (
   ) => NeutralEarCapturedFrameConsumerByteEvidenceFR104V1;
+  readonly abort: () => void;
 }
 
 const ISSUED_EVIDENCE = new WeakSet<object>();
@@ -142,6 +143,15 @@ export async function createNeutralEarCapturedFrameConsumerByteSessionFR104(
   const consumerDigests =
     new Map<NeutralEarCapturedFrameConsumerFR104V1, Buffer>();
   let finalized = false;
+
+  const clearEphemeralState = (): void => {
+    sourceBytes?.fill(0);
+    sourceBytes = null;
+    sourceDigest.fill(0);
+    for (const digest of consumerDigests.values()) digest.fill(0);
+    consumerDigests.clear();
+    finalized = true;
+  };
 
   return Object.freeze({
     async consume<T>(
@@ -200,12 +210,7 @@ export async function createNeutralEarCapturedFrameConsumerByteSessionFR104(
       }
 
       const materializedByteLength = sourceBytes.byteLength;
-      sourceBytes.fill(0);
-      sourceBytes = null;
-      sourceDigest.fill(0);
-      for (const digest of consumerDigests.values()) digest.fill(0);
-      consumerDigests.clear();
-      finalized = true;
+      clearEphemeralState();
 
       const evidence = Object.freeze({
         schemaVersion:
@@ -269,6 +274,11 @@ export async function createNeutralEarCapturedFrameConsumerByteSessionFR104(
         }),
       );
       return evidence;
+    },
+
+    abort(): void {
+      if (finalized) return;
+      clearEphemeralState();
     },
   });
 }

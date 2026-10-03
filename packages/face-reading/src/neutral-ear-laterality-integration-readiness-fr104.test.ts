@@ -86,8 +86,14 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
     expect(readiness.remainingBlockers).not.toContain(
       'captured_frame_to_consumer_bytes_binding_not_independently_verified',
     );
-    expect(readiness.remainingBlockers).toContain(
+    expect(readiness.remainingBlockers).not.toContain(
       'runtime_byte_bridge_not_yet_integrated_into_fr104_ear_provider_invocation',
+    );
+    expect(readiness.remainingBlockers).toContain(
+      'florence_repository_native_live_host_transport_not_implemented',
+    );
+    expect(readiness.remainingBlockers).toContain(
+      'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration',
     );
     expect(readiness.remainingBlockers).toContain(
       'fr21b_front_rear_deterministic_asymmetric_calibration_not_executed',
@@ -125,6 +131,14 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       .toBe('captured_frame_object_binding_implemented');
     expect(capture.exactRuntimeFrameToConsumerBytesBindingState)
       .toBe('implemented_fail_closed_ephemeral_bridge');
+    expect(capture.providerByteInvocationState)
+      .toBe(
+        'exact_rgba_origin_bound_to_florence_host_port_and_face_landmarker_runtime',
+      );
+    expect(capture.florenceLiveRuntimeState)
+      .toBe(
+        'external_host_port_only_repository_native_transport_missing',
+      );
     expect(capture.ordinaryFileUploadBridgeState)
       .toBe('explicitly_rejected');
     expect(
@@ -146,6 +160,11 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
         .implementedMechanicalGates
         .exactCapturedFrameConsumerByteBinding,
+    ).toBe(true);
+    expect(
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
+        .implementedMechanicalGates
+        .controlledProviderByteInvocationChokePoint,
     ).toBe(true);
     expect(
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
