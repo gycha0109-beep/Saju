@@ -57,7 +57,12 @@ describe('FR104 Florence local HTTP transport', () => {
 
     expect(observedUrl).toBe(FR104_FLORENCE_LOCAL_HTTP_ENDPOINT);
     expect(observedInit?.method).toBe('POST');
-    expect(observedInit?.body).toBe(bytes);
+    expect(observedInit?.body).toBeInstanceOf(ArrayBuffer);
+    expect(
+      Array.from(
+        new Uint8Array(observedInit?.body as ArrayBuffer),
+      ),
+    ).toEqual(Array.from(bytes));
     expect(observedInit?.cache).toBe('no-store');
     expect(observedInit?.credentials).toBe('same-origin');
 
