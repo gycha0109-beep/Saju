@@ -62,8 +62,11 @@ export interface NeutralEarControlledCaptureMirrorProvenanceFR104V1 {
     readonly samePixelBytesIndependentlyVerified: boolean;
     readonly consumerFrameReflectionParityResolved: boolean;
   };
-  readonly subjectRelativeMirrorProvenanceVerified: false;
-  readonly subjectRelativeSourcePixelMirrorPolicy: 'unknown';
+  readonly subjectRelativeMirrorProvenanceVerified: boolean;
+  readonly subjectRelativeSourcePixelMirrorPolicy:
+    | 'unknown'
+    | 'mirrored_relative_to_subject'
+    | 'unmirrored_relative_to_subject';
   readonly blockers: readonly NeutralEarControlledCaptureMirrorProvenanceBlockerFR104V1[];
   readonly privacy: {
     readonly rawFrameBytesRetained: false;
