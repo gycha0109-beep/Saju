@@ -3,6 +3,7 @@ import type { GovernedReadingEvidenceContentV1 } from '../reading/governed-readi
 import type {
   ClaimNarrativeProfile,
   NarrativeAssertion,
+  NarrativeDraft,
   NarrativeEpistemicType,
   NarrativeSection,
 } from '../contracts/narrative.js';
@@ -366,4 +367,331 @@ export function claimTypesCoveredByNarrativeProfiles(
       )
       .map((claim) => claim.claimType),
   );
+}
+
+
+export type ClaimNarrativeProfileValidationViolationCode =
+  | 'PROFILE_MATCH_AMBIGUOUS_FOR_CLAIM'
+  | 'PROFILE_MULTIPLE_CONTRACTS_IN_ASSERTION'
+  | 'PROFILE_CLAIM_NOT_RENDERED'
+  | 'PROFILE_CLAIM_RENDER_COUNT_MISMATCH'
+  | 'PROFILE_SECTION_TITLE_MISMATCH'
+  | 'PROFILE_ASSERTION_TEXT_MISMATCH'
+  | 'PROFILE_EPISTEMIC_TYPE_MISMATCH'
+  | 'PROFILE_METHOD_ATTRIBUTION_MISSING'
+  | 'PROFILE_MANDATORY_QUALIFIER_MISSING'
+  | 'PROFILE_PROHIBITED_PHRASE_PRESENT'
+  | 'PROFILE_FULL_COVERAGE_UNMODELED_CONTENT';
+
+export interface ClaimNarrativeProfileValidationViolation {
+  code: ClaimNarrativeProfileValidationViolationCode;
+  message: string;
+  profileId?: string;
+  claimId?: string;
+  sectionId?: string;
+  blockIndex?: number;
+}
+
+export interface ClaimNarrativeProfileValidationResult {
+  valid: boolean;
+  violations: readonly ClaimNarrativeProfileValidationViolation[];
+}
+
+function profileValidationViolation(
+  violations: ClaimNarrativeProfileValidationViolation[],
+  code: ClaimNarrativeProfileValidationViolationCode,
+  message: string,
+  details: Omit<ClaimNarrativeProfileValidationViolation, 'code' | 'message'> = {},
+): void {
+  violations.push({ code, message, ...details });
+}
+
+function versionedRefKey(ref: { id: string; version: string }): string {
+  return `${ref.id}@${ref.version}`;
+}
+
+function samePlanProfile(
+  left: DeterministicNarrativePlanItem,
+  right: DeterministicNarrativePlanItem,
+): boolean {
+  return (
+    left.profileRef.id === right.profileRef.id &&
+    left.profileRef.version === right.profileRef.version
+  );
+}
+
+function profileForPlanItem(
+  profiles: readonly ClaimNarrativeProfile[],
+  item: DeterministicNarrativePlanItem,
+): ClaimNarrativeProfile | undefined {
+  return profiles.find(
+    (profile) =>
+      profile.profileId === item.profileRef.id &&
+      profile.version === item.profileRef.version,
+  );
+}
+
+function mandatoryProfileDisclosurePresent(
+  bundle: GovernedReadingEvidenceContentV1,
+): boolean {
+  return (
+    bundle.canonicalFacts.some(
+      (fact) =>
+        fact.scenarioRef === undefined && fact.fact.status === 'ambiguous',
+    ) ||
+    bundle.claimRelations.some((relation) => relation.relation === 'contradicts') ||
+    bundle.claims.some((claim) => claim.claimType.includes('SCOPE-GUARD'))
+  );
+}
+
+export function validateNarrativeDraftAgainstClaimNarrativeProfiles(
+  draft: NarrativeDraft,
+  bundle: GovernedReadingEvidenceContentV1,
+  profiles: readonly ClaimNarrativeProfile[],
+  language = 'ko',
+): ClaimNarrativeProfileValidationResult {
+  if (profiles.length === 0) return { valid: true, violations: [] };
+
+  const violations: ClaimNarrativeProfileValidationViolation[] = [];
+  const plan = buildClaimNarrativePlan(bundle, profiles, language);
+  const activeClaims = bundle.claims.filter((claim) => claim.state === 'active');
+  const itemByClaimId = new Map<string, DeterministicNarrativePlanItem>();
+
+  for (const claim of activeClaims) {
+    const matchingItems = plan.items.filter((item) => itemMatchesClaim(item, claim));
+    if (matchingItems.length > 1) {
+      profileValidationViolation(
+        violations,
+        'PROFILE_MATCH_AMBIGUOUS_FOR_CLAIM',
+        `Claim ${claim.claimId} matches multiple ClaimNarrativeProfile contracts.`,
+        { claimId: claim.claimId },
+      );
+      continue;
+    }
+    const only = matchingItems[0];
+    if (only !== undefined) itemByClaimId.set(claim.claimId, only);
+  }
+
+  const allActiveClaimsProfileCovered =
+    activeClaims.length > 0 && itemByClaimId.size === activeClaims.length;
+  const mayRequireNonProfileDisclosure = mandatoryProfileDisclosurePresent(bundle);
+  const renderCountByClaimId = new Map<string, number>();
+
+  for (const section of draft.sections) {
+    section.blocks.forEach((block, blockIndex) => {
+      if (block.type !== 'assertion') {
+        if (allActiveClaimsProfileCovered && !mayRequireNonProfileDisclosure) {
+          profileValidationViolation(
+            violations,
+            'PROFILE_FULL_COVERAGE_UNMODELED_CONTENT',
+            `Fully profile-covered NarrativeDraft may not add ${block.type} content outside the governed profile assertions.`,
+            { sectionId: section.sectionId, blockIndex },
+          );
+        }
+        return;
+      }
+
+      const claimRefs = block.evidenceRefs
+        .filter((ref) => ref.sourceType === 'claim')
+        .map((ref) => ref.ref);
+      const governed = claimRefs
+        .map((claimId) => ({
+          claim: activeClaims.find((candidate) => candidate.claimId === claimId),
+          item: itemByClaimId.get(claimId),
+        }))
+        .filter(
+          (
+            value,
+          ): value is {
+            claim: InterpretationClaim;
+            item: DeterministicNarrativePlanItem;
+          } => value.claim !== undefined && value.item !== undefined,
+        );
+
+      if (governed.length === 0) {
+        if (allActiveClaimsProfileCovered && !mayRequireNonProfileDisclosure) {
+          profileValidationViolation(
+            violations,
+            'PROFILE_FULL_COVERAGE_UNMODELED_CONTENT',
+            'Fully profile-covered NarrativeDraft contains an assertion outside the governed profile claim set.',
+            { sectionId: section.sectionId, blockIndex },
+          );
+        }
+        return;
+      }
+
+      const item = governed[0]?.item;
+      if (item === undefined) return;
+      if (governed.some(({ item: candidate }) => !samePlanProfile(item, candidate))) {
+        profileValidationViolation(
+          violations,
+          'PROFILE_MULTIPLE_CONTRACTS_IN_ASSERTION',
+          'One Narrative assertion cannot merge claims governed by different ClaimNarrativeProfile contracts.',
+          { sectionId: section.sectionId, blockIndex },
+        );
+        return;
+      }
+
+      const profile = profileForPlanItem(profiles, item);
+      if (profile === undefined) {
+        profileValidationViolation(
+          violations,
+          'PROFILE_MATCH_AMBIGUOUS_FOR_CLAIM',
+          `Resolved narrative plan references missing profile ${item.profileRef.id}@${item.profileRef.version}.`,
+          {
+            profileId: item.profileRef.id,
+            sectionId: section.sectionId,
+            blockIndex,
+          },
+        );
+        return;
+      }
+
+      if (section.title !== item.sectionTitle) {
+        profileValidationViolation(
+          violations,
+          'PROFILE_SECTION_TITLE_MISMATCH',
+          `ClaimNarrativeProfile ${profile.profileId} requires section title: ${item.sectionTitle}`,
+          {
+            profileId: profile.profileId,
+            sectionId: section.sectionId,
+            blockIndex,
+          },
+        );
+      }
+
+      if (!profile.allowedEpistemicTypes.includes(block.epistemicType)) {
+        profileValidationViolation(
+          violations,
+          'PROFILE_EPISTEMIC_TYPE_MISMATCH',
+          `ClaimNarrativeProfile ${profile.profileId} does not allow epistemic type ${block.epistemicType}.`,
+          {
+            profileId: profile.profileId,
+            sectionId: section.sectionId,
+            blockIndex,
+          },
+        );
+      }
+
+      if (block.text !== item.assertionText) {
+        profileValidationViolation(
+          violations,
+          'PROFILE_ASSERTION_TEXT_MISMATCH',
+          `ClaimNarrativeProfile ${profile.profileId} requires exact governed assertion text: ${item.assertionText}`,
+          {
+            profileId: profile.profileId,
+            sectionId: section.sectionId,
+            blockIndex,
+          },
+        );
+      }
+
+      if (
+        profile.mandatoryQualifier !== undefined &&
+        !block.text.includes(profile.mandatoryQualifier)
+      ) {
+        profileValidationViolation(
+          violations,
+          'PROFILE_MANDATORY_QUALIFIER_MISSING',
+          `ClaimNarrativeProfile ${profile.profileId} requires qualifier: ${profile.mandatoryQualifier}`,
+          {
+            profileId: profile.profileId,
+            sectionId: section.sectionId,
+            blockIndex,
+          },
+        );
+      }
+
+      const renderableText = `${section.title}\n${block.text}`.toLocaleLowerCase();
+      for (const phrase of profile.prohibitedPhrases ?? []) {
+        if (
+          phrase.trim().length > 0 &&
+          renderableText.includes(phrase.toLocaleLowerCase())
+        ) {
+          profileValidationViolation(
+            violations,
+            'PROFILE_PROHIBITED_PHRASE_PRESENT',
+            `ClaimNarrativeProfile ${profile.profileId} rejects prohibited phrase: ${phrase}.`,
+            {
+              profileId: profile.profileId,
+              sectionId: section.sectionId,
+              blockIndex,
+            },
+          );
+        }
+      }
+
+      for (const { claim } of governed) {
+        renderCountByClaimId.set(
+          claim.claimId,
+          (renderCountByClaimId.get(claim.claimId) ?? 0) + 1,
+        );
+        if (profile.requiredMethodAttribution) {
+          const declaredMethods = new Set(
+            (block.methodologyRefs ?? []).map(versionedRefKey),
+          );
+          if (!declaredMethods.has(versionedRefKey(claim.methodologyRef))) {
+            profileValidationViolation(
+              violations,
+              'PROFILE_METHOD_ATTRIBUTION_MISSING',
+              `ClaimNarrativeProfile ${profile.profileId} requires methodology attribution for claim ${claim.claimId}.`,
+              {
+                profileId: profile.profileId,
+                claimId: claim.claimId,
+                sectionId: section.sectionId,
+                blockIndex,
+              },
+            );
+          }
+        }
+      }
+    });
+  }
+
+  for (const [claimId, item] of itemByClaimId) {
+    const count = renderCountByClaimId.get(claimId) ?? 0;
+    if (count === 0) {
+      profileValidationViolation(
+        violations,
+        'PROFILE_CLAIM_NOT_RENDERED',
+        `Profile-governed claim ${claimId} was omitted from the NarrativeDraft.`,
+        { profileId: item.profileRef.id, claimId },
+      );
+    } else if (count !== 1) {
+      profileValidationViolation(
+        violations,
+        'PROFILE_CLAIM_RENDER_COUNT_MISMATCH',
+        `Profile-governed claim ${claimId} must be rendered exactly once, received ${count}.`,
+        { profileId: item.profileRef.id, claimId },
+      );
+    }
+  }
+
+  if (allActiveClaimsProfileCovered && !mayRequireNonProfileDisclosure) {
+    const expectedSectionCount = renderClaimNarrativeProfileSections(
+      bundle,
+      profiles,
+      language,
+    ).length;
+    if (draft.sections.length !== expectedSectionCount) {
+      profileValidationViolation(
+        violations,
+        'PROFILE_FULL_COVERAGE_UNMODELED_CONTENT',
+        `Fully profile-covered NarrativeDraft must contain exactly ${expectedSectionCount} governed profile sections, received ${draft.sections.length}.`,
+      );
+    }
+  }
+
+  return {
+    valid: violations.length === 0,
+    violations: violations.sort((left, right) =>
+      `${left.code}:${left.profileId ?? ''}:${left.claimId ?? ''}:${
+        left.sectionId ?? ''
+      }:${left.blockIndex ?? -1}:${left.message}`.localeCompare(
+        `${right.code}:${right.profileId ?? ''}:${right.claimId ?? ''}:${
+          right.sectionId ?? ''
+        }:${right.blockIndex ?? -1}:${right.message}`,
+      ),
+    ),
+  };
 }
