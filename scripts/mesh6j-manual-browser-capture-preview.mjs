@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   existsSync,
@@ -67,6 +67,7 @@ const fr104MakeHumanRotationCompensationPagePath = resolve(repoRoot, 'tools/face
 const fr104MakeHumanRotationCompensationClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.mjs');
 const fr104ProspectiveComposedOrientationPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.html');
 const fr104ProspectiveComposedOrientationClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.mjs');
+const fr104FlorenceRunnerPath = resolve(repoRoot, 'tools/face-reading/ear/run_florence2_ear_empirical.py');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -344,6 +345,267 @@ function smokeHttpsGet(url) {
   });
 }
 
+
+const FR104_FLORENCE_HOST_SCHEMA =
+  'fr104-florence-rgba-host-request-v1';
+const FR104_FLORENCE_MAX_RGBA_BYTES = 64 * 1024 * 1024;
+
+function fr104Header(request, name) {
+  const value = request.headers[name];
+  if (Array.isArray(value)) return value[0] ?? '';
+  return typeof value === 'string' ? value : '';
+}
+
+function fr104PositiveIntegerHeader(request, name) {
+  const raw = fr104Header(request, name);
+  if (!/^[1-9][0-9]*$/u.test(raw)) {
+    throw new Error(name + ' must be a positive integer header.');
+  }
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value <= 0) {
+    throw new Error(name + ' exceeds the safe integer range.');
+  }
+  return value;
+}
+
+function fr104ProviderRunRef(request) {
+  const value = fr104Header(request, 'x-fr104-provider-run-ref');
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$/u.test(value)) {
+    throw new Error(
+      'x-fr104-provider-run-ref must be a bounded opaque reference.',
+    );
+  }
+  return value;
+}
+
+function readFr104ExactBody(request, expectedLength) {
+  return new Promise((resolveBody, rejectBody) => {
+    const chunks = [];
+    let observed = 0;
+    const reject = (error) => {
+      request.removeAllListeners('data');
+      request.removeAllListeners('end');
+      rejectBody(error);
+    };
+    request.on('data', (chunk) => {
+      const bytes = Buffer.from(chunk);
+      observed += bytes.length;
+      if (observed > expectedLength) {
+        reject(
+          new Error(
+            'FR104 Florence request body exceeds declared byte length.',
+          ),
+        );
+        request.destroy();
+        return;
+      }
+      chunks.push(bytes);
+    });
+    request.on('end', () => {
+      if (observed !== expectedLength) {
+        rejectBody(
+          new Error(
+            'FR104 Florence request body length does not match the exact RGBA declaration.',
+          ),
+        );
+        return;
+      }
+      resolveBody(Buffer.concat(chunks, observed));
+    });
+    request.on('error', rejectBody);
+  });
+}
+
+function invokeFr104FlorenceHostOnce(input) {
+  return new Promise((resolveInvocation, rejectInvocation) => {
+    const executable = process.env.PYTHON?.trim() || 'python';
+    const child = spawn(
+      executable,
+      [
+        fr104FlorenceRunnerPath,
+        '--stdio-rgba-host-once',
+        '--device',
+        process.env.FR104_FLORENCE_DEVICE?.trim() || 'auto',
+      ],
+      {
+        cwd: repoRoot,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        windowsHide: true,
+      },
+    );
+
+    const stdoutChunks = [];
+    const stderrChunks = [];
+    let stdoutLength = 0;
+    let stderrLength = 0;
+    let settled = false;
+
+    const settleError = (error) => {
+      if (settled) return;
+      settled = true;
+      rejectInvocation(error);
+    };
+
+    child.on('error', (error) => {
+      settleError(
+        new Error(
+          'failed to start local Florence host: ' + error.message,
+        ),
+      );
+    });
+    child.stdout.on('data', (chunk) => {
+      if (stdoutLength <= 1024 * 1024) {
+        const bytes = Buffer.from(chunk);
+        stdoutLength += bytes.length;
+        stdoutChunks.push(bytes);
+      }
+    });
+    child.stderr.on('data', (chunk) => {
+      if (stderrLength <= 64 * 1024) {
+        const bytes = Buffer.from(chunk);
+        stderrLength += bytes.length;
+        stderrChunks.push(bytes);
+      }
+    });
+    child.on('close', (code) => {
+      if (settled) return;
+      if (code !== 0) {
+        settled = true;
+        const detail = Buffer.concat(stderrChunks)
+          .toString('utf8')
+          .trim()
+          .slice(0, 4096);
+        rejectInvocation(
+          new Error(
+            'local Florence host exited with code '
+              + code
+              + (detail ? ': ' + detail : ''),
+          ),
+        );
+        return;
+      }
+
+      try {
+        const output = Buffer.concat(stdoutChunks).toString('utf8').trim();
+        const parsed = JSON.parse(output);
+        settled = true;
+        resolveInvocation(parsed);
+      } catch (error) {
+        settleError(
+          new Error(
+            'local Florence host returned invalid JSON: '
+              + (error instanceof Error ? error.message : String(error)),
+          ),
+        );
+      }
+    });
+
+    const header = JSON.stringify({
+      schemaVersion: FR104_FLORENCE_HOST_SCHEMA,
+      providerRunRef: input.providerRunRef,
+      width: input.width,
+      height: input.height,
+      byteLength: input.bytes.length,
+      pixelFormat: 'rgba8',
+    }) + '\n';
+
+    child.stdin.on('error', settleError);
+    child.stdin.write(header, 'utf8');
+    child.stdin.end(input.bytes);
+  });
+}
+
+async function handleFr104FlorenceRequest(request, response) {
+  try {
+    if (
+      fr104Header(request, 'content-type').split(';', 1)[0].trim()
+        !== 'application/octet-stream'
+    ) {
+      throw new Error(
+        'FR104 Florence endpoint requires application/octet-stream.',
+      );
+    }
+    if (
+      fr104Header(request, 'x-fr104-schema-version')
+        !== FR104_FLORENCE_HOST_SCHEMA
+      || fr104Header(request, 'x-fr104-pixel-format') !== 'rgba8'
+    ) {
+      throw new Error('FR104 Florence request protocol headers are invalid.');
+    }
+
+    const width = fr104PositiveIntegerHeader(request, 'x-fr104-width');
+    const height = fr104PositiveIntegerHeader(request, 'x-fr104-height');
+    const declaredLength =
+      fr104PositiveIntegerHeader(request, 'x-fr104-byte-length');
+    const expectedLength = width * height * 4;
+    if (
+      !Number.isSafeInteger(expectedLength)
+      || declaredLength !== expectedLength
+    ) {
+      throw new Error(
+        'x-fr104-byte-length must equal width * height * 4.',
+      );
+    }
+    if (declaredLength > FR104_FLORENCE_MAX_RGBA_BYTES) {
+      throw new Error(
+        'FR104 Florence request exceeds the local transport safety limit.',
+      );
+    }
+
+    const contentLength = fr104Header(request, 'content-length');
+    if (
+      contentLength
+      && (
+        !/^[0-9]+$/u.test(contentLength)
+        || Number(contentLength) !== declaredLength
+      )
+    ) {
+      throw new Error(
+        'Content-Length must match x-fr104-byte-length when supplied.',
+      );
+    }
+
+    const providerRunRef = fr104ProviderRunRef(request);
+    const bytes = await readFr104ExactBody(request, declaredLength);
+    let result;
+    try {
+      result = await invokeFr104FlorenceHostOnce({
+        bytes,
+        width,
+        height,
+        providerRunRef,
+      });
+    } finally {
+      bytes.fill(0);
+    }
+
+    response.writeHead(200, {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+    });
+    response.end(JSON.stringify(result));
+  } catch (error) {
+    if (response.headersSent) {
+      response.destroy(error instanceof Error ? error : undefined);
+      return;
+    }
+    const message =
+      error instanceof Error ? error.message : 'unknown Florence host error';
+    response.writeHead(
+      /model|torch|transformers|Pillow|start local Florence|exited/u.test(message)
+        ? 503
+        : 400,
+      {
+        'content-type': 'text/plain; charset=utf-8',
+        'cache-control': 'no-store',
+        'x-content-type-options': 'nosniff',
+      },
+    );
+    response.end(message.slice(0, 4096));
+  }
+}
+
 async function main() {
   const tls = requireLanTlsConfig();
   const prepared = await prepareRuntimeAssets();
@@ -413,8 +675,19 @@ async function main() {
     }
     const rawUrl = request.url || '/';
     const url = new URL(rawUrl, (LAN_MODE ? 'https://' : 'http://') + (request.headers.host || LOCALHOST_HOST));
+    if (
+      request.method === 'POST'
+      && url.pathname === '/runtime/fr104/florence'
+    ) {
+      void handleFr104FlorenceRequest(request, response);
+      return;
+    }
+
     if (request.method !== 'GET') {
-      response.writeHead(405, { 'content-type': 'text/plain; charset=utf-8', allow: 'GET' });
+      response.writeHead(405, {
+        'content-type': 'text/plain; charset=utf-8',
+        allow: 'GET, POST',
+      });
       response.end('method not allowed');
       return;
     }
