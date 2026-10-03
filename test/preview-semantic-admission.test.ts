@@ -11,7 +11,7 @@ describe('Preview semantic admission registry v1', () => {
     const registry = createPreviewSemanticAdmissionRegistryV1();
 
     expect(registry.registryVersion).toBe(PREVIEW_SEMANTIC_ADMISSION_REGISTRY_VERSION);
-    expect(registry.entries).toHaveLength(9);
+    expect(registry.entries).toHaveLength(10);
     expect(registry.constraints).toEqual({
       explicitAdmissionRequired: true,
       researchMergeDoesNotImplyAdmission: true,
@@ -82,6 +82,28 @@ describe('Preview semantic admission registry v1', () => {
     );
     expect(admission.boundaries).toContain('NO_SPECIFIC_OCCUPATION_ASSIGNMENT');
     expect(admission.effects.mayAffectProductionAuthority).toBe(false);
+  });
+
+  it('admits only the bounded spouse-palace position claim to spouse Preview', () => {
+    const admission = requirePreviewSemanticAdmissionV1(
+      'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE',
+      'relationship:natal:spouse',
+    );
+
+    expect(admission.disposition).toBe('claim');
+    expect(admission.semanticScope).toBe(
+      'traditional_spouse_palace_day_branch_position_only',
+    );
+    expect(admission.researchRef.expectedVersion).toBe('1.0.0-research');
+    expect(admission.researchRef.observedVersion).toBe('1.0.0-research');
+    expect(admission.researchRef.observedAuthorityState).toBe('internal_reviewed');
+    expect(admission.boundaries).toContain('POSITION_ONLY');
+    expect(admission.boundaries).toContain('NO_SPOUSE_PERSONALITY_OR_IDENTITY');
+    expect(admission.boundaries).toContain('NO_MARRIAGE_TIMING_OR_OUTCOME');
+    expect(admission.boundaries).toContain('NO_OFFICIAL_READING_PROMOTION');
+    expect(admission.effects.mayCreatePreviewClaim).toBe(true);
+    expect(admission.effects.mayAffectProductionAuthority).toBe(false);
+    expect(admission.effects.mayPromoteResearchLifecycle).toBe(false);
   });
 
   it('pins the current general Relationship candidate as a ga-open Preview baseline, not Production authority', () => {
