@@ -4,6 +4,7 @@ import type {
   InterpretationPack,
   MethodologyDefinition,
   RuleDefinition,
+  RuleInputRequirement,
   SourceReference,
 } from '../src/contracts/interpretation.js';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
@@ -77,7 +78,7 @@ function methodology(
 }
 
 function rule(
-  input = SHARED_NATAL_BOUNDED_ROOT_RULE_INPUT_REQUIREMENT,
+  input: RuleInputRequirement = SHARED_NATAL_BOUNDED_ROOT_RULE_INPUT_REQUIREMENT,
 ): RuleDefinition {
   const method = methodology();
   return {
