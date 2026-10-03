@@ -121,9 +121,9 @@ async function generateAttempt(
   repair?: NarrativeRepairContext,
 ): Promise<ModelAttemptResult> {
   const prompt = compileNarrativePrompt(request, policy, repair);
+  let output: unknown;
   try {
-    const output = await adapter.generateStructured(prompt, params);
-    return validateAttempt(output, request, claimNarrativeProfiles);
+    output = await adapter.generateStructured(prompt, params);
   } catch (error) {
     return {
       violations: [
@@ -134,6 +134,7 @@ async function generateAttempt(
       providerError: true,
     };
   }
+  return validateAttempt(output, request, claimNarrativeProfiles);
 }
 
 function stableGenerationParams(
