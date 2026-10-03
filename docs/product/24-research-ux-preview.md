@@ -93,6 +93,28 @@ relationship:natal:spouse
 
 Its output is limited to the governed statement that traditional Myeongri treats the day branch as the spouse-palace position, together with the mandatory scope qualifier. It cannot infer spouse personality, identity, appearance, occupation, marriage timing or outcome, divorce/remarriage, favorable/unfavorable palace judgment, Yongshin/Jisin semantics, spouse-star auto-selection, or compatibility.
 
+## Spouse Preview delivery authority
+
+SA-5U authorizes delivery only for the exact bounded spouse position-only Preview capability.
+
+The delivery boundary is now explicitly proven to require the Saju service bearer, emit the source-owned Product Reading response admission header, and attest the `preview` lifecycle over `POST /api/preview/readings`.
+
+This does not widen semantic scope or consumer authority:
+
+```text
+relationship:natal:spouse
+→ Preview delivery authority = authorized
+→ consumer authority = legacy_narrative
+→ Official Reading authority = no
+→ public semantic authority = no
+→ commerce = no
+→ persistence = no
+→ public GA = no
+→ Production interpretation authority = no
+```
+
+The Preview-enabled process still does not expose `POST /api/readings`.
+
 ## Consumer disclosure
 
 Preview output includes a visible `프리뷰 안내` section. Its purpose is to make the lifecycle explicit without turning the result into an internal research report.
