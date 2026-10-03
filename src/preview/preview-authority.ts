@@ -1,8 +1,8 @@
-export const PREVIEW_E2E_AUTHORITY_VERSION = 'myeonghwa-preview-e2e-authority-v2' as const;
+export const PREVIEW_E2E_AUTHORITY_VERSION = 'myeonghwa-preview-e2e-authority-v3' as const;
 
 export const PREVIEW_E2E_APPROVAL = Object.freeze({
   authorityVersion: PREVIEW_E2E_AUTHORITY_VERSION,
-  approvalId: 'owner-provisional-preview-2026-10-03-sa5t',
+  approvalId: 'owner-provisional-preview-2026-10-03-sa5w',
   lifecycle: 'preview',
   approved: true,
   researchContinues: true,
@@ -24,6 +24,7 @@ export const PREVIEW_E2E_APPROVAL = Object.freeze({
     'career:natal',
     'wealth:natal',
     'relationship:natal:general',
+    'relationship:natal:spouse',
     'business:natal',
   ] as const),
 });
