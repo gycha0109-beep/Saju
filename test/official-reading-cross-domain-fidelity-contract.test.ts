@@ -5,7 +5,7 @@ import { resolved } from '../src/contracts/common.js';
 import type { ReadingIntent } from '../src/contracts/reading.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import type { ResolvedRuleRegistrySnapshot } from '../src/interpretation/rule-registry.js';
-import { PREVIEW_E2E_APPROVAL, type PreviewE2eSupportedReadingSection } from '../src/preview/preview-authority.js';
+import { PREVIEW_E2E_APPROVAL, type PreviewOfficialReadingSection } from '../src/preview/preview-authority.js';
 import {
   createPreviewSemanticAdmissionRegistryV1,
   requirePreviewSemanticAdmissionV1,
@@ -58,7 +58,7 @@ type TextAuthority = 'claim_owned' | 'explicit_projection' | 'general_structural
 
 interface DomainContractCase {
   label: string;
-  targetSection: PreviewE2eSupportedReadingSection;
+  targetSection: PreviewOfficialReadingSection;
   researchId: string;
   researchVersion: string;
   authorityState: string;
@@ -281,8 +281,8 @@ function sorted(values: readonly string[]): readonly string[] {
 }
 
 describe('cross-domain Official Reading semantic fidelity contract', () => {
-  it('keeps the Preview supported surface exactly aligned with the fidelity matrix', () => {
-    expect(sorted(PREVIEW_E2E_APPROVAL.supportedReadingSections)).toEqual(
+  it('keeps the Preview Official Reading surface exactly aligned with the fidelity matrix', () => {
+    expect(sorted(PREVIEW_E2E_APPROVAL.officialReadingSections)).toEqual(
       sorted(DOMAIN_CASES.map((candidate) => candidate.targetSection)),
     );
     expect(PREVIEW_E2E_APPROVAL.lifecycle).toBe('preview');
