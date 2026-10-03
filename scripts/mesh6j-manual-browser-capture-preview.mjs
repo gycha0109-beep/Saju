@@ -1127,6 +1127,7 @@ async function main() {
         '/face/neutral-ear-makehuman-provider-rotation-compensation-fr104.js',
         '/face/neutral-ear-makehuman-provider-rotation-empirical-evidence-fr104.js',
         '/face/neutral-ear-prospective-composed-orientation-validation-fr104.js',
+        '/face/neutral-ear-florence-local-http-transport-fr104.js',
         '/face/mesh6h-browser-camera-frame-source.js',
         '/face/mesh6i-manual-browser-capture-controller.js',
         '/face/observable-morphology-longitudinal-repeatability-observation-fr255.js',
