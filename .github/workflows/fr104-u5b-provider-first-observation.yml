@@ -1,0 +1,106 @@
+name: "[WT:face-reading] FR104 U5B-C First Provider Observation"
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fr104-u5b-provider-first-observation.yml"
+      - "scripts/build-fr104-u5b-gnm-fixture.mjs"
+      - "scripts/run-fr104-u5b-provider-validation.mjs"
+      - "tools/face-reading/ear/stage_fr104_u5b_gnm_render_input.py"
+      - "tools/face-geometry/gnm/fetch_gnm_head.py"
+      - "tools/face-geometry/capture/fr104-u5b-provider-validation.html"
+      - "tools/face-geometry/capture/fr104-u5b-provider-validation.mjs"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-validation-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-fixture-evidence-fr104.ts"
+      - "packages/face-reading/src/face-eye-pair-research-bridge-fr24.ts"
+      - "packages/face-reading/src/mediapipe-face-landmarker-runtime-fr26.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  first-provider-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install render staging dependency
+        run: python -m pip install --disable-pip-version-check numpy
+
+      - name: Build Face Reading
+        run: npm run face:build
+
+      - name: Syntax-check U5B-C harness
+        run: |
+          node --check tools/face-geometry/capture/fr104-u5b-provider-validation.mjs
+          node --check scripts/run-fr104-u5b-provider-validation.mjs
+          node --check scripts/build-fr104-u5b-gnm-fixture.mjs
+          python -m py_compile             tools/face-reading/ear/stage_fr104_u5b_gnm_render_input.py             tools/face-geometry/gnm/fetch_gnm_head.py
+
+      - name: Materialize already-pinned U5B-B GNM fixture
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/face-geometry/u5b-c
+          python tools/face-geometry/gnm/fetch_gnm_head.py             --output .cache/face-geometry/u5b-c/gnm_head.npz
+          python tools/face-reading/ear/stage_fr104_u5b_gnm_render_input.py             --npz .cache/face-geometry/u5b-c/gnm_head.npz             --vertices-out .cache/face-geometry/u5b-c/vertices.f64le             --triangles-out .cache/face-geometry/u5b-c/triangles.i32le             --metadata-out .cache/face-geometry/u5b-c/staging.json
+          node scripts/build-fr104-u5b-gnm-fixture.mjs             --metadata=.cache/face-geometry/u5b-c/staging.json             --vertices=.cache/face-geometry/u5b-c/vertices.f64le             --triangles=.cache/face-geometry/u5b-c/triangles.i32le             --write-render=.cache/face-geometry/u5b-c/fixture.png             --write-result=.cache/face-geometry/u5b-c/render-result.json             | tee /tmp/fr104-u5b-c-materialize.log
+          grep -F             "FR104_U5B_RENDER_SHA256 1af28c1677375f5551e3613bbc7e0d78bfba83e74df2438c0819a343252cc325"             /tmp/fr104-u5b-c-materialize.log
+
+      - name: Record browser runtime
+        run: |
+          google-chrome --version
+          chromedriver --version
+
+      - name: Execute first U5B-C MediaPipe eight-case observation
+        env:
+          FR104_U5B_FIXTURE_IN: .cache/face-geometry/u5b-c/fixture.png
+          FR104_U5B_C_RESULT_OUT: .cache/face-geometry/u5b-c/provider-result.json
+        run: |
+          set -euo pipefail
+          node scripts/run-fr104-u5b-provider-validation.mjs             | tee /tmp/fr104-u5b-c-provider.log
+
+      - name: Verify candidate remains unadmitted
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const result = JSON.parse(
+            fs.readFileSync(
+              '.cache/face-geometry/u5b-c/provider-result.json',
+              'utf8',
+            ),
+          );
+          if (
+            result.authorityState !== 'prospective_candidate_result_not_admitted'
+            || result.execution?.providerExecuted !== true
+            || result.execution?.empiricalResultAdmitted !== false
+            || result.execution?.resultDigestPinned !== false
+            || result.authority?.gnmCrossSourceSemanticWitnessAudited !== true
+            || result.authority?.gnmCrossSourceFixtureDigestPinned !== true
+            || result.authority?.gnmCrossSourceGeometricValidationExecuted !== false
+            || result.authority?.gnmCrossSourceGeometricMappingValidated !== false
+            || result.authority?.anatomicalLateralityAuthorized !== false
+            || result.authority?.traditionalBindingAuthorized !== false
+            || result.authority?.productionAuthorization !== false
+          ) {
+            throw new Error('FR104 U5B-C candidate authority boundary drift.');
+          }
+          console.log('FR104_U5B_C_CANDIDATE_BOUNDARY PASS');
+          NODE
