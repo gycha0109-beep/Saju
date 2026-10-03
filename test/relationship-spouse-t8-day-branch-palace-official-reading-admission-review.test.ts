@@ -21,6 +21,12 @@ type Review = Awaited<
   >
 >;
 
+function requireSuccessfulProbe(review: Review) {
+  const probe = review.probe;
+  if (!probe.ok) throw new Error(probe.error);
+  return probe;
+}
+
 describe('SA-5V spouse position-only Official Reading admission eligibility review', () => {
   let review: Review;
 
@@ -56,10 +62,10 @@ describe('SA-5V spouse position-only Official Reading admission eligibility revi
     expect(review.checks.canonicalSemanticRepresentationAvailable).toBe(true);
     expect(review.checks.mandatoryQualifierPreserved).toBe(true);
 
-    if (!review.probe.ok) throw new Error(review.probe.error);
+    const probe = requireSuccessfulProbe(review);
 
-    const unit = review.probe.semantics.units.find(
-      (candidate) => candidate.claimId === review.probe.claim.claimId,
+    const unit = probe.semantics.units.find(
+      (candidate) => candidate.claimId === probe.claim.claimId,
     );
     expect(unit).toBeDefined();
     expect(unit?.role).toBe('primary');
@@ -79,20 +85,20 @@ describe('SA-5V spouse position-only Official Reading admission eligibility revi
     expect(review.checks.officialPlanRepresentable).toBe(true);
     expect(review.checks.officialRendererMeaningPreserved).toBe(true);
 
-    if (!review.probe.ok) throw new Error(review.probe.error);
+    const probe = requireSuccessfulProbe(review);
 
     expect(
-      review.probe.plan.sections.some(
+      probe.plan.sections.some(
         (section) => section.semanticGroup === 'relationship',
       ),
     ).toBe(true);
     expect(
-      review.probe.plan.sections.some(
+      probe.plan.sections.some(
         (section) => section.semanticGroup === 'limits',
       ),
     ).toBe(true);
 
-    const encoded = JSON.stringify(review.probe.report.sections);
+    const encoded = JSON.stringify(probe.report.sections);
     expect(encoded).toContain(
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_HEADLINE,
     );
@@ -110,21 +116,21 @@ describe('SA-5V spouse position-only Official Reading admission eligibility revi
   test('preserves the relationship axis and mandatory qualifier in reader grounding', () => {
     expect(review.checks.readerGroundingMeaningPreserved).toBe(true);
 
-    if (!review.probe.ok) throw new Error(review.probe.error);
+    const probe = requireSuccessfulProbe(review);
 
-    expect(review.probe.reader.grounding.units).toHaveLength(1);
-    expect(review.probe.reader.grounding.units[0]).toMatchObject({
+    expect(probe.reader.grounding.units).toHaveLength(1);
+    expect(probe.reader.grounding.units[0]).toMatchObject({
       axis: 'relationship',
       canonicalMeaning: [
         RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
         RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
       ].join('\n'),
     });
-    expect(review.probe.reader.parity.semanticHash).toBe(
-      review.probe.semantics.semanticHash,
+    expect(probe.reader.parity.semanticHash).toBe(
+      probe.semantics.semanticHash,
     );
-    expect(review.probe.reader.parity.officialReportHash).toBe(
-      review.probe.report.reportHash,
+    expect(probe.reader.parity.officialReportHash).toBe(
+      probe.report.reportHash,
     );
   });
 
