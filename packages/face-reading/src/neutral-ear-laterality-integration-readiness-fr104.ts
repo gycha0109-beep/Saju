@@ -1,7 +1,4 @@
 import {
-  resolveControlledCaptureReadinessFR21B,
-} from './controlled-capture-attestation-fr21b.js';
-import {
   NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104,
 } from './neutral-ear-anatomical-side-semantic-witness-fr104.js';
 import {
@@ -13,9 +10,6 @@ import {
 import {
   NEUTRAL_EAR_PROVIDER_MIRROR_SEMANTICS_REVIEW_FR104,
 } from './neutral-ear-provider-mirror-semantics-review-fr104.js';
-
-const controlledCaptureReadiness =
-  resolveControlledCaptureReadinessFR21B();
 
 const crossSourceGeometry =
   NEUTRAL_EAR_GNM_CROSS_SOURCE_GEOMETRIC_EMPIRICAL_EVIDENCE_FR104;
@@ -113,16 +107,17 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
     }),
 
     controlledCaptureReadiness: Object.freeze({
-      productionReady:
-        controlledCaptureReadiness.productionReady,
-      controlledCaptureState:
-        controlledCaptureReadiness.controlledCaptureState,
-      calibrationState:
-        controlledCaptureReadiness.calibrationState,
-      anatomicalLateralityState:
-        controlledCaptureReadiness.anatomicalLateralityState,
+      authoritySource:
+        'controlled-capture-attestation-fr21b.ts' as const,
+      authorityVersion: '0.1.0' as const,
+      productionReady: false as const,
+      controlledCaptureState: 'not_implemented' as const,
+      calibrationState: 'design_only' as const,
+      anatomicalLateralityState: 'blocked' as const,
       reason:
-        controlledCaptureReadiness.reason,
+        'no_verified_controlled_capture_implementation' as const,
+      runtimeImportAvoidedToPreventAuthorityModuleCycle:
+        true as const,
     }),
 
     clearedBlockers: Object.freeze([
