@@ -491,3 +491,92 @@ The next gate is:
 
     U5B-D
     exact result digest replay + bounded admission
+
+
+## U5B-D exact replay and bounded admission
+
+U5B-D replays the exact U5B-C prospective candidate against the already-pinned
+GNM fixture and admits only the bounded cross-source geometric result.
+
+Candidate provenance:
+
+    U5B-C candidate merge
+    3424c784cbc2b15b6b0aabe39236faf5ae22c5dd
+
+    first successful provider observation workflow run
+    37084191246
+
+    candidate result SHA-256
+    7c284cad3b467676e20c44ebf63a7aee3dc66c5d22534363286ef532ba3852fe
+
+Exact U5B-D replay/admission:
+
+    PR
+    #2002
+
+    exact replay workflow run
+    37085912495
+
+The replay reproduced:
+
+    result SHA-256
+    7c284cad3b467676e20c44ebf63a7aee3dc66c5d22534363286ef532ba3852fe
+
+    state
+    gnm_cross_source_geometric_mapping_supported
+
+The eight-case relations remain unchanged:
+
+- R0/R90/R180/R270: `directCost < swappedCost`
+- M0/M90/M180/M270: `swappedCost < directCost`
+- all eight cases available;
+- exact one face and 478 landmarks in every case;
+- no numeric acceptance threshold;
+- no aggregate override;
+- no rule or camera retuning.
+
+### U5B-D admitted authority
+
+The following are admitted:
+
+    gnmCrossSourceSemanticWitnessAudited = true
+    gnmCrossSourceFixtureDigestPinned = true
+    gnmCrossSourceGeometricValidationExecuted = true
+    gnmCrossSourceGeometricMappingValidated = true
+
+The following remain false:
+
+    providerLabelMappedToAnatomicalSide
+    globalProviderAnatomicalSemanticsEstablished
+    anatomicalReferenceAdmitted
+    anatomicalLateralityAuthorized
+    validatedExternalEarObservationAuthorized
+    traditionalBindingAuthorized
+    productionAuthorization
+
+The result therefore supports the preregistered reflection-parity geometric
+mapping on an independent GNM source family. It does not make MediaPipe
+published LEFT/RIGHT names anatomical authority and does not authorize
+laterality on arbitrary runtime subject photos.
+
+### Return to FR104 Phase D
+
+The next gate returns to the original FR104 orientation/mirror/laterality
+problem:
+
+    FR104_PHASE_D_ORIENTATION_MIRROR_PROVENANCE_BEFORE_RUNTIME_LATERALITY
+
+Before runtime anatomical laterality can be authorized, the ear path must
+separately govern:
+
+- stored pixel orientation;
+- EXIF-applied orientation;
+- UI/screen side;
+- front-camera mirror provenance;
+- pose-normalized side;
+- anatomical laterality.
+
+Unknown orientation or mirror provenance must continue to fail closed to
+`laterality = unknown`.
+
+No traditional physiognomy meaning is authorized by U5B-D.
