@@ -104,6 +104,8 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
         true as const,
       independentCrossSourceGeometricValidation:
         true as const,
+      controlledCaptureMirrorProvenanceBridge:
+        true as const,
     }),
 
     controlledCaptureReadiness: Object.freeze({
@@ -118,6 +120,12 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
         'no_verified_controlled_capture_implementation' as const,
       runtimeImportAvoidedToPreventAuthorityModuleCycle:
         true as const,
+      mirrorProvenanceBridgeState:
+        'implemented_fail_closed' as const,
+      exactRuntimeFrameToProfileBindingState:
+        'not_implemented' as const,
+      ordinaryFileUploadBridgeState:
+        'explicitly_rejected' as const,
     }),
 
     clearedBlockers: Object.freeze([
@@ -131,6 +139,7 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       'runtime_instance_transform_parity_must_be_resolved',
       'subject_relative_source_pixel_mirror_provenance_not_verified',
       'verified_controlled_capture_profile_not_available',
+      'exact_runtime_frame_to_verified_capture_profile_binding_not_implemented',
       'ordinary_file_upload_cannot_claim_controlled_capture_attestation',
       'runtime_anatomical_side_mapping_not_admitted',
     ] as const),
@@ -178,7 +187,7 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       anatomicalLateralityAuthorized:
         false as const,
       nextGate:
-        'implement_and_verify_subject_relative_controlled_capture_mirror_provenance_then_bind_it_to_the_admitted_u5b_cross_source_mapping; ordinary_file_upload_remains_fail_closed' as const,
+        'execute_and_admit_fr21b_deterministic_asymmetric_controlled_capture_calibration_then_implement_exact_runtime_frame_to_verified_profile_binding; ordinary_file_upload_remains_fail_closed' as const,
     }),
 
     authority: Object.freeze({
