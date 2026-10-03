@@ -2,6 +2,7 @@ import process from 'node:process';
 
 import {
   MESH6H_NEXT_FRONTIER,
+  assertIssuedMesh6HBrowserCameraFrame,
   assertIssuedMesh6HBrowserCameraHandle,
   getMesh6HBrowserCameraAdapterContract,
   openMesh6HBrowserCamera,
@@ -145,6 +146,7 @@ expect(first.done === false, 'MESH6H first explicit trigger must yield one frame
 expect(first.value.timestampMs === 1000, 'MESH6H must preserve first trigger timestamp.');
 expect(first.value.providerRunRef === 'mesh6h:frame:1', 'MESH6H must preserve first providerRunRef.');
 expect(first.value.frameWidth === 820 && first.value.frameHeight === 1024, 'MESH6H must copy live video dimensions.');
+assertIssuedMesh6HBrowserCameraFrame(handle, first.value);
 expect(primaryEnv.counters.createImageBitmap === 1, 'MESH6H must create one bitmap per trigger.');
 expect(primaryEnv.counters.bitmapCloses[0] === 0, 'MESH6H must keep yielded bitmap alive until consumer advances.');
 
@@ -230,6 +232,20 @@ try {
   forgedRejected = true;
 }
 expect(forgedRejected, 'MESH6H must reject copied/forged camera handles.');
+let forgedFrameRejected = false;
+try {
+  assertIssuedMesh6HBrowserCameraFrame(handle, {
+    image: first.value.image,
+    timestampMs: first.value.timestampMs,
+    frameWidth: first.value.frameWidth,
+    frameHeight: first.value.frameHeight,
+    providerRunRef: first.value.providerRunRef,
+  });
+} catch {
+  forgedFrameRejected = true;
+}
+expect(forgedFrameRejected, 'MESH6H must reject copied/forged captured frame objects.');
+
 
 const contract = getMesh6HBrowserCameraAdapterContract();
 expect(contract.camera.getUserMediaCalledAtOpen === true, 'MESH6H contract must require getUserMedia at open.');
@@ -263,6 +279,7 @@ process.stdout.write(JSON.stringify({
   status: 'MESH6H_BROWSER_CAMERA_FRAME_SOURCE_PASS',
   getUserMediaOnceVerified: true,
   frontRearFacingSelectionVerified: true,
+  exactFrameIssuanceIdentityVerified: true,
   explicitTriggerOneFrameVerified: true,
   triggerOrderPreserved: true,
   bitmapCloseLifecycleVerified: true,
