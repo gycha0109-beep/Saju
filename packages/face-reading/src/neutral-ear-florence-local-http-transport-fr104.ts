@@ -1,6 +1,8 @@
-import type {
-  NeutralEarFlorenceHostInvocationResultFR104V1,
-  NeutralEarFlorenceHostInvokerFR104V1,
+import {
+  createNeutralEarFlorenceByteAdapterFR104,
+  type NeutralEarFlorenceByteAdapterFR104V1,
+  type NeutralEarFlorenceHostInvocationResultFR104V1,
+  type NeutralEarFlorenceHostInvokerFR104V1,
 } from './neutral-ear-provider-byte-adapters-fr104.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
@@ -30,6 +32,18 @@ export type NeutralEarFlorenceFetchFR104V1 = (
   input: RequestInfo | URL,
   init?: RequestInit,
 ) => Promise<Response>;
+
+const LOCAL_HTTP_ADAPTERS = new WeakSet<object>();
+
+export interface NeutralEarFlorenceLocalHttpBindingFR104V1 {
+  readonly schemaVersion:
+    'fr104-neutral-ear-florence-local-http-binding-v1';
+  readonly transport:
+    NeutralEarFlorenceLocalHttpTransportFR104V1;
+  readonly adapter:
+    NeutralEarFlorenceByteAdapterFR104V1;
+}
+
 
 function fail(message: string): never {
   throw new FaceAuthorityValidationError(
@@ -202,4 +216,30 @@ export function createNeutralEarFlorenceLocalHttpTransportFR104(
       productionAuthorization: false as const,
     }),
   });
+}
+
+export function createNeutralEarFlorenceLocalHttpBindingFR104(
+  options: Readonly<{
+    endpoint?: string;
+    fetchImpl?: NeutralEarFlorenceFetchFR104V1;
+  }> = Object.freeze({}),
+): NeutralEarFlorenceLocalHttpBindingFR104V1 {
+  const transport =
+    createNeutralEarFlorenceLocalHttpTransportFR104(options);
+  const adapter = createNeutralEarFlorenceByteAdapterFR104({
+    hostInvoker: transport.invoke,
+  });
+  LOCAL_HTTP_ADAPTERS.add(adapter);
+  return Object.freeze({
+    schemaVersion:
+      'fr104-neutral-ear-florence-local-http-binding-v1' as const,
+    transport,
+    adapter,
+  });
+}
+
+export function isNeutralEarFlorenceLocalHttpByteAdapterFR104(
+  adapter: NeutralEarFlorenceByteAdapterFR104V1,
+): boolean {
+  return LOCAL_HTTP_ADAPTERS.has(adapter);
 }
