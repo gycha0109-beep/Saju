@@ -58,7 +58,7 @@ function makeVideo({ playFails = false, width = 820, height = 1024, readyState =
   };
 }
 
-function makeEnvironment({ trackCount = 2 } = {}) {
+function makeEnvironment({ trackCount = 2, expectedFacingMode = 'user' } = {}) {
   const counters = {
     getUserMedia: 0,
     createImageBitmap: 0,
@@ -79,7 +79,10 @@ function makeEnvironment({ trackCount = 2 } = {}) {
     async getUserMedia(constraints) {
       counters.getUserMedia += 1;
       expect(constraints.audio === false, 'MESH6H must request audio=false.');
-      expect(constraints.video?.facingMode === 'user', 'MESH6H must request facingMode=user.');
+      expect(
+        constraints.video?.facingMode === expectedFacingMode,
+        'MESH6H must request the expected facingMode.',
+      );
       return stream;
     },
     async createImageBitmap() {
@@ -112,6 +115,23 @@ assertIssuedMesh6HBrowserCameraHandle(handle);
 expect(primaryEnv.counters.getUserMedia === 1, 'MESH6H must call getUserMedia exactly once at open.');
 expect(primaryVideo.state.playCalls === 1, 'MESH6H must call video.play exactly once at open.');
 expect(primaryVideo.state.srcObject === primaryEnv.stream, 'MESH6H must attach the acquired stream to the supplied video sink.');
+
+expect(handle.executionBoundary.cameraFacingRequested === 'front', 'MESH6H default cameraFacing must remain front.');
+expect(handle.executionBoundary.facingModeRequested === 'user', 'MESH6H default front camera must map to facingMode=user.');
+
+const rearVideo = makeVideo();
+const rearEnv = makeEnvironment({ trackCount: 1, expectedFacingMode: 'environment' });
+const rearHandle = await openMesh6HBrowserCamera(
+  { video: rearVideo.video, cameraFacing: 'rear' },
+  rearEnv.environment,
+);
+assertIssuedMesh6HBrowserCameraHandle(rearHandle);
+expect(rearEnv.counters.getUserMedia === 1, 'MESH6H rear open must call getUserMedia exactly once.');
+expect(rearHandle.executionBoundary.cameraFacingRequested === 'rear', 'MESH6H rear request must remain explicit on the handle.');
+expect(rearHandle.executionBoundary.facingModeRequested === 'environment', 'MESH6H rear request must map to facingMode=environment.');
+rearHandle.close();
+expect(rearEnv.counters.trackStops[0] === 1, 'MESH6H rear handle must stop its track exactly once.');
+
 
 const frameSource = handle.createSweepFrameSource(triggers([
   { timestampMs: 1000, providerRunRef: 'mesh6h:frame:1' },
@@ -213,6 +233,14 @@ expect(forgedRejected, 'MESH6H must reject copied/forged camera handles.');
 
 const contract = getMesh6HBrowserCameraAdapterContract();
 expect(contract.camera.getUserMediaCalledAtOpen === true, 'MESH6H contract must require getUserMedia at open.');
+expect(contract.camera.defaultCameraFacing === 'front', 'MESH6H contract must preserve front as the default camera.');
+expect(
+  Array.isArray(contract.camera.supportedCameraFacings)
+    && contract.camera.supportedCameraFacings.join('|') === 'front|rear',
+  'MESH6H contract must explicitly support front and rear camera requests.',
+);
+expect(contract.camera.facingModeMapping.front === 'user', 'MESH6H front mapping must remain user.');
+expect(contract.camera.facingModeMapping.rear === 'environment', 'MESH6H rear mapping must be environment.');
 expect(contract.camera.automaticCaptureTriggering === false, 'MESH6H contract must prohibit automatic capture triggering.');
 expect(contract.camera.automaticFrameSelection === false, 'MESH6H contract must prohibit automatic frame selection.');
 expect(contract.camera.automaticPoseFiltering === false, 'MESH6H contract must prohibit automatic pose filtering.');
@@ -234,6 +262,7 @@ expect(contract.nextFrontier === MESH6H_NEXT_FRONTIER, 'MESH6H next frontier dri
 process.stdout.write(JSON.stringify({
   status: 'MESH6H_BROWSER_CAMERA_FRAME_SOURCE_PASS',
   getUserMediaOnceVerified: true,
+  frontRearFacingSelectionVerified: true,
   explicitTriggerOneFrameVerified: true,
   triggerOrderPreserved: true,
   bitmapCloseLifecycleVerified: true,
