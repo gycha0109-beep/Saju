@@ -92,6 +92,15 @@ export interface NeutralEarCapturedFrameConsumerByteSessionFR104V1 {
   ) => NeutralEarCapturedFrameConsumerByteEvidenceFR104V1;
 }
 
+const ISSUED_EVIDENCE = new WeakSet<object>();
+const EVIDENCE_STATE = new WeakMap<
+  object,
+  Readonly<{
+    handle: Mesh6HBrowserCameraHandleV1;
+    frame: Mesh6GCapturedFrameV1;
+  }>
+>();
+
 function fail(message: string): never {
   throw new FaceAuthorityValidationError(
     `FR-104 captured-frame consumer-byte provenance ${message}`,
@@ -194,7 +203,7 @@ export async function createNeutralEarCapturedFrameConsumerByteSessionFR104(
       consumerDigests.clear();
       finalized = true;
 
-      return Object.freeze({
+      const evidence = Object.freeze({
         schemaVersion:
           'fr104-neutral-ear-captured-frame-consumer-byte-evidence-v1' as const,
         authorityState:
@@ -244,13 +253,43 @@ export async function createNeutralEarCapturedFrameConsumerByteSessionFR104(
           productionAuthorization: false as const,
         }),
       });
+
+      ISSUED_EVIDENCE.add(evidence);
+      EVIDENCE_STATE.set(
+        evidence,
+        Object.freeze({
+          handle: input.handle,
+          frame: input.frame,
+        }),
+      );
+      return evidence;
     },
   });
 }
 
 export function assertNeutralEarCapturedFrameConsumerByteEvidenceFR104(
   evidence: NeutralEarCapturedFrameConsumerByteEvidenceFR104V1,
+  expected?: Readonly<{
+    handle: Mesh6HBrowserCameraHandleV1;
+    frame: Mesh6GCapturedFrameV1;
+  }>,
 ): void {
+  if (!ISSUED_EVIDENCE.has(evidence)) {
+    fail('consumer-byte evidence was not issued by the active D2B runtime.');
+  }
+  const state = EVIDENCE_STATE.get(evidence);
+  if (
+    state === undefined
+    || (
+      expected !== undefined
+      && (
+        state.handle !== expected.handle
+        || state.frame !== expected.frame
+      )
+    )
+  ) {
+    fail('consumer-byte evidence is not bound to the expected exact Mesh6H handle and frame objects.');
+  }
   if (
     evidence.schemaVersion
       !== 'fr104-neutral-ear-captured-frame-consumer-byte-evidence-v1'
