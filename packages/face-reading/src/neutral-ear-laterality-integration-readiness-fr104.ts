@@ -114,6 +114,8 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
         true as const,
       controlledProviderByteInvocationChokePoint:
         true as const,
+      repositoryNativeFlorenceLocalTransport:
+        true as const,
     }),
 
     controlledCaptureReadiness: Object.freeze({
@@ -137,7 +139,7 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       providerByteInvocationState:
         'exact_rgba_origin_bound_to_florence_host_port_and_face_landmarker_runtime' as const,
       florenceLiveRuntimeState:
-        'external_host_port_only_repository_native_transport_missing' as const,
+        'repository_native_local_http_to_python_stdio_transport_implemented' as const,
       ordinaryFileUploadBridgeState:
         'explicitly_rejected' as const,
     }),
@@ -153,7 +155,6 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       'runtime_instance_transform_parity_must_be_resolved',
       'subject_relative_source_pixel_mirror_provenance_not_verified',
       'verified_controlled_capture_profile_not_available',
-      'florence_repository_native_live_host_transport_not_implemented',
       'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration',
       'fr21b_front_rear_deterministic_asymmetric_calibration_not_executed',
       'ordinary_file_upload_cannot_claim_controlled_capture_attestation',
@@ -203,7 +204,7 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       anatomicalLateralityAuthorized:
         false as const,
       nextGate:
-        'implement_repository_native_florence_live_host_transport_and_compose_provider_outputs_into_fr104_candidate_orchestration_then_execute_and_review_fr21b_deterministic_asymmetric_front_and_rear_calibration; ordinary_file_upload_remains_fail_closed' as const,
+        'compose_ephemeral_florence_candidates_and_same_frame_face_landmarker_geometry_into_fr104_candidate_orchestration_then_execute_and_review_fr21b_deterministic_asymmetric_front_and_rear_calibration; ordinary_file_upload_remains_fail_closed' as const,
     }),
 
     authority: Object.freeze({
