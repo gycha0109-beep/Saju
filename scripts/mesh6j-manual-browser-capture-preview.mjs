@@ -1012,6 +1012,15 @@ async function main() {
         geometryMetadataBlobSha: METADATA_BLOB_SHA,
         fr76ParityInputBlobSha: PARITY_INPUT_BLOB_SHA,
         authorityState: 'manual_research_capture_only',
+        fr104FlorenceLocalTransport: {
+          endpoint: '/runtime/fr104/florence',
+          requestPixelFormat: 'rgba8',
+          filePersistenceUsed: false,
+          responseIncludesRawProviderOutput: false,
+          responseIncludesRawCandidatePolygons: false,
+          anatomicalLateralityAuthorized: false,
+          productionAuthorization: false,
+        },
         rawCapturePersistenceEnabled: false,
         calibrationAuthorized: false,
         productionMorphologyAuthorized: false,
@@ -1152,6 +1161,11 @@ async function main() {
         config.schemaVersion !== 'mesh6j-localhost-runtime-config-v1'
         || config.transportMode !== (LAN_MODE ? 'private_lan_https' : 'localhost_http')
         || config.fr76ParityInputBlobSha !== PARITY_INPUT_BLOB_SHA
+        || config.fr104FlorenceLocalTransport?.endpoint !== '/runtime/fr104/florence'
+        || config.fr104FlorenceLocalTransport?.requestPixelFormat !== 'rgba8'
+        || config.fr104FlorenceLocalTransport?.filePersistenceUsed !== false
+        || config.fr104FlorenceLocalTransport?.anatomicalLateralityAuthorized !== false
+        || config.fr104FlorenceLocalTransport?.productionAuthorization !== false
         || config.rawCapturePersistenceEnabled !== false
         || config.calibrationAuthorized !== false
         || config.productionMorphologyAuthorized !== false
