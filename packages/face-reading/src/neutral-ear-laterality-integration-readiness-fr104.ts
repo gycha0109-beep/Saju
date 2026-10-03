@@ -2,18 +2,24 @@ import {
   NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104,
 } from './neutral-ear-anatomical-side-semantic-witness-fr104.js';
 import {
+  NEUTRAL_EAR_GNM_CROSS_SOURCE_GEOMETRIC_EMPIRICAL_EVIDENCE_FR104,
+} from './neutral-ear-gnm-cross-source-geometric-empirical-evidence-fr104.js';
+import {
   NEUTRAL_EAR_LATERALITY_SOURCE_AUDIT_FR104,
 } from './neutral-ear-laterality-source-audit-fr104.js';
 import {
   NEUTRAL_EAR_PROVIDER_MIRROR_SEMANTICS_REVIEW_FR104,
 } from './neutral-ear-provider-mirror-semantics-review-fr104.js';
 
+const crossSourceGeometry =
+  NEUTRAL_EAR_GNM_CROSS_SOURCE_GEOMETRIC_EMPIRICAL_EVIDENCE_FR104;
+
 export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
   Object.freeze({
     schemaVersion:
-      'fr104-neutral-ear-laterality-integration-readiness-v1' as const,
+      'fr104-neutral-ear-laterality-integration-readiness-v2' as const,
     authorityState:
-      'provider_mirror_behavior_admitted_anatomical_mapping_still_closed' as const,
+      'cross_source_geometric_mapping_admitted_capture_provenance_still_closed' as const,
 
     providerMirrorEvidence: Object.freeze({
       boundedProviderMirrorBehaviorStatementAdmitted:
@@ -32,6 +38,32 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
           .supportedStatement.includesIndependentPublicSourceFixture,
     }),
 
+    crossSourceGeometryEvidence: Object.freeze({
+      resultSha256: crossSourceGeometry.resultSha256,
+      state: crossSourceGeometry.state,
+      gnmCrossSourceSemanticWitnessAudited:
+        crossSourceGeometry.authority
+          .gnmCrossSourceSemanticWitnessAudited,
+      gnmCrossSourceFixtureDigestPinned:
+        crossSourceGeometry.authority
+          .gnmCrossSourceFixtureDigestPinned,
+      gnmCrossSourceGeometricValidationExecuted:
+        crossSourceGeometry.authority
+          .gnmCrossSourceGeometricValidationExecuted,
+      gnmCrossSourceGeometricMappingValidated:
+        crossSourceGeometry.authority
+          .gnmCrossSourceGeometricMappingValidated,
+      providerPublishedSideNamesUsedAsAnatomicalAuthority:
+        crossSourceGeometry.summary
+          .providerPublishedSideNamesUsedAsAnatomicalAuthority,
+      imageSpaceXSignUsedAsAnatomicalAuthority:
+        crossSourceGeometry.summary
+          .imageSpaceXSignUsedAsAnatomicalAuthority,
+      gnmAxisOrderingUsedAsAnatomicalAuthority:
+        crossSourceGeometry.summary
+          .gnmAxisOrderingUsedAsAnatomicalAuthority,
+    }),
+
     sourceAuditReconciliation: Object.freeze({
       literalProviderLeftRightLabelsPublished:
         NEUTRAL_EAR_LATERALITY_SOURCE_AUDIT_FR104
@@ -40,20 +72,23 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
         NEUTRAL_EAR_LATERALITY_SOURCE_AUDIT_FR104
           .providerNamedSideSurface
           .horizontalMirrorBehaviorEstablishedByPinnedLabelFile,
-      empiricalMirrorBehaviorNowAvailable:
-        true as const,
-      empiricalMirrorBehaviorMayReplaceMissingAnatomicalSemanticWitness:
-        false as const,
-      directAnatomicalSemanticWitnessState:
-        NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104
-          .authorityState,
-      exactReleaseSideConflictDetected:
+      exactReleaseProviderSideConflictStillExists:
         NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104
           .pinnedProviderSurface.rotationCommentConflict
           .conflictWithPublishedNamedTopologyDetected,
-      directAnatomicalSemanticWitnessAdmitted:
+      directProviderLabelSemanticWitnessStillAdmitted:
         NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104
           .decision.directAnatomicalSemanticWitnessAdmitted,
+      independentGnmSemanticWitnessAdmitted:
+        crossSourceGeometry.authority
+          .gnmCrossSourceSemanticWitnessAudited,
+      independentGnmGeometryMappingValidated:
+        crossSourceGeometry.authority
+          .gnmCrossSourceGeometricMappingValidated,
+      providerPublishedSideNamesNeedNotBecomeAnatomicalAuthority:
+        true as const,
+      independentCrossSourceEvidenceMaySupportConditionalMapping:
+        true as const,
     }),
 
     implementedMechanicalGates: Object.freeze({
@@ -65,51 +100,92 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
         true as const,
       anatomicalMappingSkeleton:
         true as const,
+      independentCrossSourceSemanticWitness:
+        true as const,
+      independentCrossSourceGeometricValidation:
+        true as const,
+    }),
+
+    controlledCaptureReadiness: Object.freeze({
+      authoritySource:
+        'controlled-capture-attestation-fr21b.ts' as const,
+      authorityVersion: '0.1.0' as const,
+      productionReady: false as const,
+      controlledCaptureState: 'not_implemented' as const,
+      calibrationState: 'design_only' as const,
+      anatomicalLateralityState: 'blocked' as const,
+      reason:
+        'no_verified_controlled_capture_implementation' as const,
+      runtimeImportAvoidedToPreventAuthorityModuleCycle:
+        true as const,
     }),
 
     clearedBlockers: Object.freeze([
       'provider_mirror_semantics_empirical_result_not_admitted',
+      'independent_anatomical_semantic_witness_not_admitted',
+      'cross_source_provider_anatomical_mapping_not_validated',
     ] as const),
 
     remainingBlockers: Object.freeze([
       'runtime_instance_same_pixel_bytes_must_be_independently_verified',
-      'provider_left_right_anatomical_semantics_conflicting_or_ambiguous',
       'runtime_instance_transform_parity_must_be_resolved',
-      'capture_transform_provenance_may_be_attested_but_not_independently_verified',
-      'anatomical_side_mapping_not_admitted',
+      'subject_relative_source_pixel_mirror_provenance_not_verified',
+      'verified_controlled_capture_profile_not_available',
+      'ordinary_file_upload_cannot_claim_controlled_capture_attestation',
+      'runtime_anatomical_side_mapping_not_admitted',
     ] as const),
 
     mappingPreconditions: Object.freeze({
       boundedProviderMirrorBehaviorRequired: true as const,
+      independentGnmSemanticWitnessRequired: true as const,
+      independentGnmGeometricMappingValidationRequired:
+        true as const,
       captureTransformReceiptRequired: true as const,
       knownExifApplicationRequired: true as const,
-      knownHorizontalMirrorStateRequired: true as const,
       sameConsumerFrameForFlorenceAndFaceLandmarkerRequired:
         true as const,
       independentPixelFingerprintMatchRequired:
         true as const,
-      resolvedNetReflectionParityRequired:
+      resolvedConsumerFrameReflectionParityRequired:
         true as const,
-      independentAnatomicalSideSemanticWitnessRequired:
+      subjectRelativeSourceMirrorProvenanceRequired:
         true as const,
-      providerPromptSideMaySubstituteForAnatomicalWitness:
+      verifiedControlledCaptureProfileRequired:
+        true as const,
+      providerPublishedLeftRightNameMaySubstituteForCrossSourceEvidence:
+        false as const,
+      florencePromptSideMaySubstituteForAnatomicalWitness:
         false as const,
       imageSpaceHorizontalSignMaySubstituteForAnatomicalWitness:
+        false as const,
+      ordinaryFileUploadMaySubstituteForControlledCaptureProfile:
         false as const,
     }),
 
     decision: Object.freeze({
       providerMirrorRuntimeBlockerCleared:
         true as const,
+      independentCrossSourceGeometricMappingBlockerCleared:
+        true as const,
+      exactProviderPublishedSideSemanticConflictStillExists:
+        true as const,
+      exactProviderPublishedSideSemanticConflictStillBlocksCrossSourceMapping:
+        false as const,
+      controlledCaptureProvenanceBlockerCleared:
+        false as const,
       anatomicalMappingReady:
         false as const,
       anatomicalLateralityAuthorized:
         false as const,
       nextGate:
-        'obtain or design a governed anatomical-side reference protocol that resolves the exact-release side-semantic conflict; mechanical parity, pixel-identity, and provider-eye-axis gates are now implemented but do not authorize anatomy' as const,
+        'implement_and_verify_subject_relative_controlled_capture_mirror_provenance_then_bind_it_to_the_admitted_u5b_cross_source_mapping; ordinary_file_upload_remains_fail_closed' as const,
     }),
 
     authority: Object.freeze({
+      anatomicalReferenceAdmitted:
+        false as const,
+      anatomicalLateralityAuthorized:
+        false as const,
       validatedExternalEarObservationAuthorized:
         false as const,
       traditionalBindingAuthorized: false as const,

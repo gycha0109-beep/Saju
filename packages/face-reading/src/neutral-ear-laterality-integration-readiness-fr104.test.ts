@@ -3,28 +3,42 @@ import {
   NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104,
 } from './neutral-ear-laterality-integration-readiness-fr104.js';
 
-describe('FR104 laterality integration readiness', () => {
-  it('clears only the empirical provider-mirror blocker', () => {
+describe('FR104 laterality integration readiness after U5B-D', () => {
+  it('admits the independent GNM semantic and geometric blockers as cleared', () => {
     const readiness =
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104;
 
     expect(readiness.clearedBlockers).toEqual([
       'provider_mirror_semantics_empirical_result_not_admitted',
+      'independent_anatomical_semantic_witness_not_admitted',
+      'cross_source_provider_anatomical_mapping_not_validated',
     ]);
     expect(
-      readiness.decision.providerMirrorRuntimeBlockerCleared,
+      readiness.crossSourceGeometryEvidence.state,
+    ).toBe('gnm_cross_source_geometric_mapping_supported');
+    expect(
+      readiness.crossSourceGeometryEvidence
+        .gnmCrossSourceSemanticWitnessAudited,
     ).toBe(true);
     expect(
-      readiness.providerMirrorEvidence
-        .boundedProviderMirrorBehaviorStatementAdmitted,
+      readiness.crossSourceGeometryEvidence
+        .gnmCrossSourceFixtureDigestPinned,
     ).toBe(true);
     expect(
-      readiness.providerMirrorEvidence
-        .generalUniversalProviderMirrorSemanticsAdmitted,
-    ).toBe(false);
+      readiness.crossSourceGeometryEvidence
+        .gnmCrossSourceGeometricValidationExecuted,
+    ).toBe(true);
+    expect(
+      readiness.crossSourceGeometryEvidence
+        .gnmCrossSourceGeometricMappingValidated,
+    ).toBe(true);
+    expect(
+      readiness.decision
+        .independentCrossSourceGeometricMappingBlockerCleared,
+    ).toBe(true);
   });
 
-  it('preserves the source-audit distinction between labels and anatomy', () => {
+  it('keeps provider published names non-authoritative despite the old source conflict', () => {
     const reconciliation =
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
         .sourceAuditReconciliation;
@@ -34,86 +48,92 @@ describe('FR104 laterality integration readiness', () => {
     ).toBe(true);
     expect(
       reconciliation
-        .pinnedLabelFileDirectlyEstablishesMirrorBehavior,
+        .exactReleaseProviderSideConflictStillExists,
+    ).toBe(true);
+    expect(
+      reconciliation.directProviderLabelSemanticWitnessStillAdmitted,
     ).toBe(false);
     expect(
-      reconciliation.empiricalMirrorBehaviorNowAvailable,
+      reconciliation.independentGnmSemanticWitnessAdmitted,
+    ).toBe(true);
+    expect(
+      reconciliation.independentGnmGeometryMappingValidated,
     ).toBe(true);
     expect(
       reconciliation
-        .empiricalMirrorBehaviorMayReplaceMissingAnatomicalSemanticWitness,
-    ).toBe(false);
-    expect(
-      reconciliation.directAnatomicalSemanticWitnessState,
-    ).toBe('conflicting_or_ambiguous');
-    expect(
-      reconciliation.exactReleaseSideConflictDetected,
+        .providerPublishedSideNamesNeedNotBecomeAnatomicalAuthority,
     ).toBe(true);
     expect(
-      reconciliation.directAnatomicalSemanticWitnessAdmitted,
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
+        .crossSourceGeometryEvidence
+        .providerPublishedSideNamesUsedAsAnatomicalAuthority,
     ).toBe(false);
   });
 
-  it('keeps anatomical mapping closed until separate preconditions exist', () => {
+  it('moves the remaining blocker to subject-relative capture provenance', () => {
     const readiness =
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104;
 
-    expect(readiness.remainingBlockers).toContain(
+    expect(readiness.remainingBlockers).not.toContain(
       'provider_left_right_anatomical_semantics_conflicting_or_ambiguous',
     );
     expect(readiness.remainingBlockers).toContain(
-      'runtime_instance_same_pixel_bytes_must_be_independently_verified',
+      'subject_relative_source_pixel_mirror_provenance_not_verified',
     );
     expect(readiness.remainingBlockers).toContain(
-      'runtime_instance_transform_parity_must_be_resolved',
+      'verified_controlled_capture_profile_not_available',
+    );
+    expect(readiness.remainingBlockers).toContain(
+      'ordinary_file_upload_cannot_claim_controlled_capture_attestation',
     );
     expect(
       readiness.mappingPreconditions
-        .independentPixelFingerprintMatchRequired,
+        .subjectRelativeSourceMirrorProvenanceRequired,
     ).toBe(true);
     expect(
       readiness.mappingPreconditions
-        .resolvedNetReflectionParityRequired,
+        .verifiedControlledCaptureProfileRequired,
     ).toBe(true);
     expect(
       readiness.mappingPreconditions
-        .independentAnatomicalSideSemanticWitnessRequired,
-    ).toBe(true);
-    expect(
-      readiness.mappingPreconditions
-        .providerPromptSideMaySubstituteForAnatomicalWitness,
+        .ordinaryFileUploadMaySubstituteForControlledCaptureProfile,
     ).toBe(false);
+  });
+
+  it('reflects the current FR21B controlled-capture boundary', () => {
+    const capture =
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
+        .controlledCaptureReadiness;
+
+    expect(capture.productionReady).toBe(false);
+    expect(capture.controlledCaptureState)
+      .toBe('not_implemented');
+    expect(capture.calibrationState).toBe('design_only');
+    expect(capture.anatomicalLateralityState).toBe('blocked');
     expect(
-      readiness.decision.anatomicalMappingReady,
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
+        .decision.controlledCaptureProvenanceBlockerCleared,
     ).toBe(false);
+  });
+
+  it('keeps anatomical and downstream authority closed', () => {
+    const readiness =
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104;
+
+    expect(readiness.decision.anatomicalMappingReady).toBe(false);
     expect(
       readiness.decision.anatomicalLateralityAuthorized,
     ).toBe(false);
-  });
-
-  it('records the mechanical gates implemented without widening anatomical authority', () => {
-    const implemented =
-      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
-        .implementedMechanicalGates;
-
-    expect(implemented).toEqual({
-      frameTransformReflectionParityContract: true,
-      dualConsumerEphemeralPixelFingerprint: true,
-      providerEyeAxisLateralGeometry: true,
-      anatomicalMappingSkeleton: true,
-    });
-  });
-
-  it('keeps downstream authority closed', () => {
-    const authority =
-      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
-        .authority;
-
-    expect(authority.validatedExternalEarObservationAuthorized)
+    expect(readiness.authority.anatomicalReferenceAdmitted)
       .toBe(false);
-    expect(authority.traditionalBindingAuthorized)
+    expect(readiness.authority.anatomicalLateralityAuthorized)
       .toBe(false);
-    expect(authority.productionAuthorization)
+    expect(
+      readiness.authority.validatedExternalEarObservationAuthorized,
+    ).toBe(false);
+    expect(readiness.authority.traditionalBindingAuthorized)
+      .toBe(false);
+    expect(readiness.authority.productionAuthorization)
       .toBe(false);
   });
 });

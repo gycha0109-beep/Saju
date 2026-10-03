@@ -1,6 +1,6 @@
 import {
-  NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104,
-} from './neutral-ear-anatomical-side-semantic-witness-fr104.js';
+  NEUTRAL_EAR_GNM_CROSS_SOURCE_GEOMETRIC_EMPIRICAL_EVIDENCE_FR104,
+} from './neutral-ear-gnm-cross-source-geometric-empirical-evidence-fr104.js';
 import type {
   NeutralEarDualConsumerPixelFingerprintEvidenceFR104V1,
 } from './neutral-ear-dual-consumer-pixel-fingerprint-fr104.js';
@@ -76,7 +76,7 @@ export interface NeutralEarAnatomicalLateralityMappingResultFR104V1 {
   readonly schemaVersion:
     'fr104-neutral-ear-anatomical-laterality-mapping-result-v1';
   readonly authorityState:
-    'mapping_skeleton_fail_closed_semantic_witness_unavailable';
+    'mapping_skeleton_fail_closed_capture_provenance_unavailable';
   readonly anatomicalSide: 'unknown';
   readonly providerLateralRelation:
     NeutralEarProviderLateralRelationFR104V1;
@@ -84,10 +84,11 @@ export interface NeutralEarAnatomicalLateralityMappingResultFR104V1 {
     NeutralEarFrameTransformParityFR104V1['consumerFrame']['netReflectionParityRelativeToIntendedDisplay'];
   readonly blockers: readonly (
     | 'runtime_not_exactly_reviewed'
-    | 'anatomical_semantic_witness_not_admitted'
+    | 'cross_source_geometric_mapping_not_admitted'
     | 'frame_reflection_parity_unresolved'
     | 'same_pixel_frame_not_independently_verified'
     | 'candidate_not_outside_provider_eye_envelope'
+    | 'subject_relative_capture_mirror_provenance_unavailable'
     | 'anatomical_mapping_not_admitted'
   )[];
   readonly authority: {
@@ -243,13 +244,21 @@ export function attemptNeutralEarAnatomicalLateralityMappingFR104(
     blockers.push('runtime_not_exactly_reviewed');
   }
 
+  const crossSourceEvidence =
+    NEUTRAL_EAR_GNM_CROSS_SOURCE_GEOMETRIC_EMPIRICAL_EVIDENCE_FR104;
   if (
-    !Boolean(
-      NEUTRAL_EAR_ANATOMICAL_SIDE_SEMANTIC_WITNESS_FR104
-        .decision.directAnatomicalSemanticWitnessAdmitted,
-    )
+    crossSourceEvidence.state
+      !== 'gnm_cross_source_geometric_mapping_supported'
+    || crossSourceEvidence.authority
+      .gnmCrossSourceSemanticWitnessAudited !== true
+    || crossSourceEvidence.authority
+      .gnmCrossSourceFixtureDigestPinned !== true
+    || crossSourceEvidence.authority
+      .gnmCrossSourceGeometricValidationExecuted !== true
+    || crossSourceEvidence.authority
+      .gnmCrossSourceGeometricMappingValidated !== true
   ) {
-    blockers.push('anatomical_semantic_witness_not_admitted');
+    blockers.push('cross_source_geometric_mapping_not_admitted');
   }
 
   if (
@@ -276,13 +285,16 @@ export function attemptNeutralEarAnatomicalLateralityMappingFR104(
     blockers.push('candidate_not_outside_provider_eye_envelope');
   }
 
+  blockers.push(
+    'subject_relative_capture_mirror_provenance_unavailable',
+  );
   blockers.push('anatomical_mapping_not_admitted');
 
   return Object.freeze({
     schemaVersion:
       'fr104-neutral-ear-anatomical-laterality-mapping-result-v1' as const,
     authorityState:
-      'mapping_skeleton_fail_closed_semantic_witness_unavailable' as const,
+      'mapping_skeleton_fail_closed_capture_provenance_unavailable' as const,
     anatomicalSide: 'unknown' as const,
     providerLateralRelation:
       request.providerLateralGeometry.relation,

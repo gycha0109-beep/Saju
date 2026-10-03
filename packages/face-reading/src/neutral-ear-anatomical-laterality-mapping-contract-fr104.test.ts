@@ -56,7 +56,7 @@ function geometry(candidate: { x: number; y: number }) {
   });
 }
 
-describe('FR104 anatomical laterality mapping skeleton', () => {
+describe('FR104 anatomical laterality mapping skeleton after U5B-D', () => {
   it('uses the provider eye axis rather than image center thresholds', () => {
     const left = geometry({ x: 0.95, y: 0.5 });
     const right = geometry({ x: 0.05, y: 0.5 });
@@ -87,7 +87,7 @@ describe('FR104 anatomical laterality mapping skeleton', () => {
     ).toBeNull();
   });
 
-  it('keeps anatomical side unknown even with known parity, identical pixels, and a lateral candidate', () => {
+  it('clears the cross-source mapping blocker but keeps subject-relative capture provenance fail-closed', () => {
     const result =
       attemptNeutralEarAnatomicalLateralityMappingFR104({
         schemaVersion:
@@ -107,8 +107,11 @@ describe('FR104 anatomical laterality mapping skeleton', () => {
       });
 
     expect(result.anatomicalSide).toBe('unknown');
+    expect(result.blockers).not.toContain(
+      'cross_source_geometric_mapping_not_admitted',
+    );
     expect(result.blockers).toContain(
-      'anatomical_semantic_witness_not_admitted',
+      'subject_relative_capture_mirror_provenance_unavailable',
     );
     expect(result.blockers).toContain(
       'anatomical_mapping_not_admitted',
@@ -118,7 +121,7 @@ describe('FR104 anatomical laterality mapping skeleton', () => {
     );
   });
 
-  it('keeps mirrored parity descriptive and does not perform an unauthorized anatomical swap', () => {
+  it('keeps mirrored parity descriptive until subject-relative capture provenance is verified', () => {
     const result =
       attemptNeutralEarAnatomicalLateralityMappingFR104({
         schemaVersion:
@@ -140,6 +143,9 @@ describe('FR104 anatomical laterality mapping skeleton', () => {
     expect(result.frameReflectionParity)
       .toBe('orientation_reversing');
     expect(result.anatomicalSide).toBe('unknown');
+    expect(result.blockers).toContain(
+      'subject_relative_capture_mirror_provenance_unavailable',
+    );
   });
 
   it('retains blockers for pixel mismatch and non-lateral candidate', () => {
