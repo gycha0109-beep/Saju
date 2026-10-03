@@ -4,6 +4,9 @@ import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE,
 } from './relationship-spouse-t8-day-branch-palace-claim-contract-candidate.js';
 import {
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_NARRATIVE_PROFILE_VERSION_CONTRACT,
+} from './relationship-spouse-t8-day-branch-palace-narrative-authority-contract.js';
+import {
   buildRelationshipSpouseT8DayBranchPalaceProjectGovernedNarrativeMaterialization,
 } from './relationship-spouse-t8-day-branch-palace-project-governed-narrative-materialization.js';
 
@@ -11,7 +14,7 @@ export const RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_NARRATIVE_PROFILE_MA
   'myeonghwa-relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization-v1' as const;
 
 export const RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_NARRATIVE_PROFILE_VERSION =
-  '1.0.0-research' as const;
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_NARRATIVE_PROFILE_VERSION_CONTRACT;
 
 export const RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_HEADLINE =
   '배우자궁의 전통적 위치' as const;
