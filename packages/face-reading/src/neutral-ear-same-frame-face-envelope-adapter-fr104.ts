@@ -1,12 +1,20 @@
 import type {
-  FR257EphemeralGeometryObservation,
-} from './observable-morphology-capture-geometry-attribution-fr257.js';
+  MediaPipeMetricGeometryPointFR76V1,
+} from './mediapipe-screen-to-metric-reimplementation-parity-fr76.js';
 import type {
   NeutralEarFaceEnvelopeInputFR104V1,
 } from './neutral-ear-plausibility-evidence-fr104.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 const MEDIAPIPE_GEOMETRY_LANDMARK_COUNT = 468;
+
+export interface NeutralEarSameFrameScreenGeometryFR104V1 {
+  readonly providerRunRef: string;
+  readonly screenLandmarks:
+    readonly MediaPipeMetricGeometryPointFR76V1[];
+  readonly frameWidth: number;
+  readonly frameHeight: number;
+}
 
 export interface NeutralEarSameFrameEnvelopeRequestFR104V1 {
   readonly schemaVersion: 'fr104-neutral-ear-same-frame-envelope-request-v1';
@@ -15,7 +23,7 @@ export interface NeutralEarSameFrameEnvelopeRequestFR104V1 {
     readonly height: number;
   };
   readonly sameFrameAttested: true;
-  readonly geometry: FR257EphemeralGeometryObservation;
+  readonly geometry: NeutralEarSameFrameScreenGeometryFR104V1;
 }
 
 export interface NeutralEarSameFrameEnvelopeAdapterResultFR104V1 {
@@ -109,13 +117,13 @@ export function deriveNeutralEarSameFrameFaceEnvelopeFR104(
     typeof request.geometry.providerRunRef !== 'string'
     || request.geometry.providerRunRef.trim().length === 0
   ) {
-    fail('ephemeral FR257 providerRunRef must be non-empty.');
+    fail('same-frame providerRunRef must be non-empty.');
   }
   if (
     !Array.isArray(request.geometry.screenLandmarks)
     || request.geometry.screenLandmarks.length !== MEDIAPIPE_GEOMETRY_LANDMARK_COUNT
   ) {
-    fail(`ephemeral FR257 screen geometry must contain exactly ${MEDIAPIPE_GEOMETRY_LANDMARK_COUNT} landmarks.`);
+    fail(`same-frame screen geometry must contain exactly ${MEDIAPIPE_GEOMETRY_LANDMARK_COUNT} landmarks.`);
   }
 
   let minX = Number.POSITIVE_INFINITY;
@@ -133,7 +141,7 @@ export function deriveNeutralEarSameFrameFaceEnvelopeFR104(
   });
 
   if (!(maxX > minX) || !(maxY > minY)) {
-    fail('ephemeral FR257 screen geometry must yield a positive face envelope.');
+    fail('same-frame screen geometry must yield a positive face envelope.');
   }
 
   const faceEnvelope: NeutralEarFaceEnvelopeInputFR104V1 = Object.freeze({
