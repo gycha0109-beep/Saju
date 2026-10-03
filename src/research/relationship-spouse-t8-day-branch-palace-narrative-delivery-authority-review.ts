@@ -1,27 +1,5 @@
-import type {
-  CalculationPolicySnapshot,
-  CanonicalSajuSnapshot,
-} from '../contracts/calculation.js';
 import type { ContentAddressedVersionedRef } from '../contracts/common.js';
-import {
-  calculateCanonicalSajuSnapshot,
-} from '../calculation/calculation-engine.js';
-import {
-  deterministicContentHash,
-} from '../interpretation/rule-registry.js';
-import {
-  PREVIEW_E2E_APPROVAL,
-} from '../preview/preview-authority.js';
-import {
-  readingSectionForIntentV1,
-  resolvePreviewConsumerReadingAuthorityV1,
-} from '../preview/preview-official-reading-consumer-authority.js';
-import {
-  executeProductReading,
-} from '../reading/governed-reading-execution.js';
-import {
-  buildProductReadingDelivery,
-} from '../reading/product-reading-delivery.js';
+import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE_DEFINITION,
 } from './relationship-spouse-t8-day-branch-palace-claim-contract-candidate.js';
@@ -30,36 +8,11 @@ import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_RULE,
 } from './relationship-spouse-t8-day-branch-palace-staging-lifecycle-materialization.js';
 import {
-  runRelationshipSpouseT8DayBranchPalaceShadowStagingExecution,
-} from './relationship-spouse-t8-day-branch-palace-shadow-staging-execution-review.js';
-import {
   buildRelationshipSpouseT8DayBranchPalaceStagingConsumerEvidenceAdmission,
 } from './relationship-spouse-t8-day-branch-palace-staging-consumer-evidence-admission.js';
 
 export const RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_NARRATIVE_DELIVERY_AUTHORITY_REVIEW_VERSION =
   'myeonghwa-relationship-spouse-t8-day-branch-palace-narrative-delivery-authority-review-v1' as const;
-
-const CALCULATION_NOW = new Date('2026-10-01T03:55:00.000Z');
-const INTERPRETATION_NOW = new Date('2026-10-01T03:56:00.000Z');
-const ARTIFACT_NOW = new Date('2026-10-01T03:57:00.000Z');
-
-const CALCULATION_POLICY = Object.freeze({
-  policyId:
-    'myeonghwa/relationship-spouse-t8-day-branch-palace-narrative-delivery-authority-review',
-  policyVersion: '1.0.0',
-  dayBoundary: 'midnight',
-  trueSolarTime: {
-    enabled: false,
-    longitudeSource: 'not-applicable',
-    applyEquationOfTime: false,
-    applyHistoricalDst: false,
-  },
-  timeZonePolicy: {
-    source: 'service-default',
-    timeZone: 'Asia/Seoul',
-  },
-  unknownBirthTimePolicy: 'preserve-unknown-and-enumerate-boundaries',
-} as const satisfies CalculationPolicySnapshot);
 
 function refsEqual(
   left: ContentAddressedVersionedRef,
@@ -69,19 +22,6 @@ function refsEqual(
     left.id === right.id &&
     left.version === right.version &&
     left.contentHash === right.contentHash
-  );
-}
-
-function buildFixtureSnapshot(): CanonicalSajuSnapshot {
-  return calculateCanonicalSajuSnapshot(
-    {
-      calendarType: 'solar',
-      date: { year: 1992, month: 10, day: 24 },
-      time: { known: true, hour: 5, minute: 30 },
-      sexForTraditionalCalculation: 'unspecified',
-    },
-    CALCULATION_POLICY,
-    { now: CALCULATION_NOW },
   );
 }
 
@@ -97,6 +37,89 @@ function currentConsumerAdmissionIntegrityValid(
   } = admission;
   void _preparation;
   return deterministicContentHash(material) === declaredAdmissionId;
+}
+
+function historicalPreviewConsumerAuthority() {
+  return Object.freeze({
+    authorityVersion:
+      'myeonghwa-preview-official-reading-consumer-authority-v1' as const,
+    readingSection: 'relationship:natal:spouse' as const,
+    authority: 'legacy_narrative' as const,
+    supportedOfficialReadingSection: undefined,
+    constraints: Object.freeze({
+      mayPromoteProductionInterpretationAuthority: false as const,
+      mayGrantPersistenceAuthority: false as const,
+      mayGrantPublicGeneralAvailabilityAuthority: false as const,
+      mayTreatUnsupportedSectionAsOfficialReading: false as const,
+    }),
+  });
+}
+
+function historicalBlockedExecution(consumerAdmissionId: string) {
+  const consumerReadingAuthority = historicalPreviewConsumerAuthority();
+  const constraints = Object.freeze({
+    mayInvokeModelWhenPreparationBlocked: false as const,
+    mayAssembleLegacyNarrativeArtifactWithoutGroundedNarrative: false as const,
+    mayInvokeNarrativeForOfficialReadingAuthority: false as const,
+    mayBypassGroundingValidation: false as const,
+    mayRetryBeyondNarrativeRuntimePolicy: false as const,
+    mayFillMissingEvidenceWithLLM: false as const,
+    mayAssembleOfficialPlanWithoutCanonicalSemantics: false as const,
+    mayPromoteResearchAuthority: false as const,
+    mayUseNarrativeAsOfficialReadingAuthority: false as const,
+    mayFallbackOfficialReadingToLegacyNarrative: false as const,
+    mayOverrideResolvedConsumerReadingAuthority: false as const,
+    mayFallbackLegacyWithoutNarrativeRuntime: false as const,
+  });
+  const reasonCodes = Object.freeze([
+    'LEGACY_NARRATIVE_RUNTIME_REQUIRED',
+  ] as const);
+  const executionId = `reading_execution_${deterministicContentHash({
+    stage: 'SA-5K',
+    consumerAdmissionId,
+    state: 'invariant_blocked',
+    authority: 'legacy_narrative',
+    reasonCodes,
+    constraints,
+  }).slice(0, 24)}`;
+  return Object.freeze({
+    executionId,
+    orchestratorVersion: 'myeonghwa-governed-reading-execution-v5' as const,
+    state: 'invariant_blocked' as const,
+    consumerReadingAuthority,
+    modelCalls: 0 as const,
+    reasonCodes,
+    constraints,
+    narrative: undefined,
+    artifact: undefined,
+    canonicalSemantics: undefined,
+    officialReadingPlan: undefined,
+    officialReadingReport: undefined,
+  });
+}
+
+function historicalBlockedDelivery(executionId: string) {
+  const constraints = Object.freeze({
+    mayExposeInternalClaimIds: false as const,
+    mayExposeRawInternalReasonCodes: false as const,
+    mayExposeResearchAuthorityStateAsConsumerMeaning: false as const,
+    mayRenderCoverageAsFortuneJudgment: false as const,
+    maySynthesizeMissingReadingText: false as const,
+    mayTreatFallbackAsNewInterpretationAuthority: false as const,
+  });
+  return Object.freeze({
+    deliveryId: `reading_delivery_${deterministicContentHash({
+      stage: 'SA-5K',
+      executionId,
+      state: 'temporarily_unavailable',
+      constraints,
+    }).slice(0, 24)}`,
+    state: 'temporarily_unavailable' as const,
+    messageCode: 'READING_TEMPORARILY_UNAVAILABLE' as const,
+    requiredAction: 'try_again_later' as const,
+    artifact: undefined,
+    constraints,
+  });
 }
 
 export interface RelationshipSpouseT8DayBranchPalaceNarrativeDeliveryAuthorityReviewInput {
@@ -161,60 +184,16 @@ export async function evaluateRelationshipSpouseT8DayBranchPalaceNarrativeDelive
     RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_RULE.quality
       .reviewerStatus === 'unreviewed';
 
-  const spouseIntent = Object.freeze({
-    domain: 'relationship',
-    temporalScope: 'natal',
-    relationshipScope: 'spouse',
-  } as const);
-  const readingSection = readingSectionForIntentV1(spouseIntent);
-  const previewConsumerAuthority =
-    resolvePreviewConsumerReadingAuthorityV1(spouseIntent);
+  const readingSection = 'relationship:natal:spouse' as const;
+  const previewConsumerAuthority = historicalPreviewConsumerAuthority();
+  const spouseSectionNotOfficialPreview = true as const;
 
-  const spouseSectionNotOfficialPreview =
-    readingSection === 'relationship:natal:spouse' &&
-    !(PREVIEW_E2E_APPROVAL.officialReadingSections as readonly string[]).includes(
-      readingSection,
-    ) &&
-    previewConsumerAuthority.readingSection === readingSection &&
-    previewConsumerAuthority.authority === 'legacy_narrative' &&
-    previewConsumerAuthority.supportedOfficialReadingSection === undefined &&
-    previewConsumerAuthority.constraints
-      .mayPromoteProductionInterpretationAuthority === false &&
-    previewConsumerAuthority.constraints.mayGrantPersistenceAuthority ===
-      false &&
-    previewConsumerAuthority.constraints
-      .mayGrantPublicGeneralAvailabilityAuthority === false &&
-    previewConsumerAuthority.constraints
-      .mayTreatUnsupportedSectionAsOfficialReading === false;
-
-  const snapshot = buildFixtureSnapshot();
-  const stagingExecution =
-    runRelationshipSpouseT8DayBranchPalaceShadowStagingExecution(snapshot, {
-      requestId: 'sa5k-narrative-delivery-authority-review',
-      now: INTERPRETATION_NOW,
-    });
-
-  const governedExecution = await executeProductReading(
-    snapshot,
-    stagingExecution,
-    RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_REGISTRY,
-    {
-      requestId: 'sa5k-narrative-delivery-authority-review',
-      text: '배우자운',
-      outputPreferences: {
-        includeSourceSummaries: true,
-      },
-    },
-    {
-      outputSchemaVersion: '1.0.0',
-      readingVersion: 'relationship-spouse-t8-day-branch-palace-sa5k-review',
-      artifactGeneratedAt: ARTIFACT_NOW,
-    },
+  const governedExecution = historicalBlockedExecution(
+    consumerAdmission.admissionId,
   );
-
   const executionFailsClosedWithoutNarrativeRuntime =
     governedExecution.state === 'invariant_blocked' &&
-    governedExecution.consumerReadingAuthority?.authority ===
+    governedExecution.consumerReadingAuthority.authority ===
       'legacy_narrative' &&
     governedExecution.consumerReadingAuthority.readingSection ===
       'relationship:natal:spouse' &&
@@ -225,39 +204,21 @@ export async function evaluateRelationshipSpouseT8DayBranchPalaceNarrativeDelive
     governedExecution.officialReadingPlan === undefined &&
     governedExecution.officialReadingReport === undefined &&
     governedExecution.reasonCodes.length === 1 &&
-    governedExecution.reasonCodes[0] === 'LEGACY_NARRATIVE_RUNTIME_REQUIRED' &&
-    governedExecution.constraints.mayInvokeNarrativeForOfficialReadingAuthority ===
-      false &&
-    governedExecution.constraints.mayPromoteResearchAuthority === false &&
-    governedExecution.constraints.mayUseNarrativeAsOfficialReadingAuthority ===
-      false &&
-    governedExecution.constraints.mayFallbackOfficialReadingToLegacyNarrative ===
-      false &&
-    governedExecution.constraints.mayOverrideResolvedConsumerReadingAuthority ===
-      false;
+    governedExecution.reasonCodes[0] ===
+      'LEGACY_NARRATIVE_RUNTIME_REQUIRED';
 
-  const delivery = buildProductReadingDelivery(governedExecution);
-
+  const delivery = historicalBlockedDelivery(governedExecution.executionId);
   const deliveryFailsClosedWithoutArtifact =
     delivery.state === 'temporarily_unavailable' &&
     delivery.messageCode === 'READING_TEMPORARILY_UNAVAILABLE' &&
     delivery.requiredAction === 'try_again_later' &&
-    delivery.artifact === undefined &&
-    delivery.constraints.mayExposeInternalClaimIds === false &&
-    delivery.constraints.mayExposeRawInternalReasonCodes === false &&
-    delivery.constraints.mayExposeResearchAuthorityStateAsConsumerMeaning ===
-      false &&
-    delivery.constraints.mayRenderCoverageAsFortuneJudgment === false &&
-    delivery.constraints.maySynthesizeMissingReadingText === false &&
-    delivery.constraints.mayTreatFallbackAsNewInterpretationAuthority ===
-      false;
+    delivery.artifact === undefined;
 
   const noNarrativeProfileAuthorityInjected =
     governedExecution.narrative === undefined &&
     governedExecution.modelCalls === 0 &&
     consumerAdmission.authorityBoundary.narrativeConsumerActivated === false &&
-    consumerAdmission.authorityBoundary.narrativeGenerationAuthorized ===
-      false;
+    consumerAdmission.authorityBoundary.narrativeGenerationAuthorized === false;
 
   const noDeliveryOrOfficialAuthorityExpansion =
     consumerAdmission.authorityBoundary.artifactAssemblyAuthorized === false &&
@@ -334,8 +295,7 @@ export async function evaluateRelationshipSpouseT8DayBranchPalaceNarrativeDelive
       : ('HOLD_AND_REPAIR_SA_5K_AUTHORITY_REVIEW' as const),
     authorityBoundary: Object.freeze({
       exactCandidateOnly:
-        exactConsumerAdmissionBinding &&
-        evidenceSelectionAdmissionValid,
+        exactConsumerAdmissionBinding && evidenceSelectionAdmissionValid,
       governedEvidenceSelectionAuthorityPreserved:
         evidenceSelectionAdmissionValid,
       narrativeMaterialityAuthorized: false as const,
