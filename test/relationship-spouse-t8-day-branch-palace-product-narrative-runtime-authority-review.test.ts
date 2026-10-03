@@ -22,6 +22,7 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5P product narrat
     expect(result.reviewBlockers).toEqual([]);
     expect(result.authorityReviewCompleted).toBe(true);
     expect(result.runtimeSemanticProfileEnforcementEstablished).toBe(false);
+    expect(result.downstreamRemediationObserved).toBe(true);
     expect(result.decision).toBe(
       'HOLD_PRODUCT_NARRATIVE_RUNTIME_AUTHORITY_PENDING_PROFILE_ENFORCEMENT',
     );
@@ -70,60 +71,71 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5P product narrat
     }
   }, TEST_TIMEOUT_MS);
 
-  test('proves a claim-grounded model-first-pass can bypass the profile semantic boundary', async () => {
+  test('preserves the recorded SA-5P HOLD while the same bypass probe now fails closed downstream', async () => {
     const result =
       await buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRuntimeAuthorityReview();
 
-    expect(
-      result.checks.successfulModelPathBypassesProfileSemanticBoundary,
-    ).toBe(true);
-
-    expect(result.profileBypassExecution.state).toBe('completed');
-    expect(result.profileBypassExecution.modelCalls).toBe(1);
+    expect(result.checks.recordedProfileBypassNowFailsClosed).toBe(true);
+    expect(result.profileBypassExecution.state).toBe(
+      'completed_with_fallback',
+    );
+    expect(result.profileBypassExecution.modelCalls).toBe(2);
     expect(result.profileBypassExecution.narrative?.outcome).toBe(
-      'model_first_pass',
+      'deterministic_fallback',
     );
     expect(
       result.profileBypassExecution.narrative?.run.validation.firstPass,
-    ).toBe('passed');
+    ).toBe('failed');
+    expect(
+      result.profileBypassExecution.narrative?.run.validation.repairAttempted,
+    ).toBe(true);
     expect(result.profileBypassExecution.narrative?.run.validation.final).toBe(
-      'passed',
+      'fallback',
     );
-    expect(result.profileBypassExecution.artifact).toBeDefined();
+    expect(
+      result.profileBypassExecution.narrative?.run.validation.violations,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          'PROFILE:PROFILE_ASSERTION_TEXT_MISMATCH',
+        ),
+      ]),
+    );
 
     const encoded = JSON.stringify(
       result.profileBypassExecution.narrative?.draft,
     );
-    expect(encoded).toContain(
+    expect(encoded).not.toContain(
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROFILE_BYPASS_TEXT,
     );
-    expect(encoded).not.toContain(
+    expect(encoded).toContain(
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
     );
-    expect(
-      RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_PROHIBITED_PHRASES.some(
-        (phrase) => encoded.includes(phrase),
-      ),
-    ).toBe(true);
   }, TEST_TIMEOUT_MS);
 
-  test('proves the semantically unbounded model output would reach consumer delivery', async () => {
+  test('proves the recorded unsafe delivery probe is now replaced by grounded fallback delivery', async () => {
     const result =
       await buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRuntimeAuthorityReview();
 
-    expect(result.checks.profileBypassWouldReachConsumerDelivery).toBe(true);
-    expect(result.profileBypassDelivery.state).toBe('delivered');
-    expect(result.profileBypassDelivery.messageCode).toBe('READING_DELIVERED');
+    expect(
+      result.checks.recordedProfileBypassNoLongerReachesUnsafeDelivery,
+    ).toBe(true);
+    expect(result.profileBypassDelivery.state).toBe(
+      'delivered_with_fallback',
+    );
+    expect(result.profileBypassDelivery.messageCode).toBe(
+      'READING_DELIVERED_WITH_GROUNDED_FALLBACK',
+    );
     expect(result.profileBypassDelivery.requiredAction).toBe('none');
     expect(result.profileBypassDelivery.artifact?.readingId).toBe(
       result.profileBypassExecution.artifact?.readingId,
     );
 
     const encoded = JSON.stringify(result.profileBypassDelivery);
-    expect(encoded).toContain(
+    expect(encoded).not.toContain(
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROFILE_BYPASS_TEXT,
     );
-    expect(encoded).not.toContain(
+    expect(encoded).toContain(
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
     );
   }, TEST_TIMEOUT_MS);
