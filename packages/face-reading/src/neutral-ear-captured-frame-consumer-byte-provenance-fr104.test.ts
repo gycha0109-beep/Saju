@@ -4,9 +4,11 @@ import {
   openMesh6HBrowserCamera,
   type Mesh6HBrowserEnvironmentV1,
   type Mesh6HBrowserFrameTriggerV1,
+  type Mesh6HBrowserCameraHandleV1,
   type Mesh6HCameraFacingV1,
   type Mesh6HVideoElementLikeV1,
 } from './mesh6h-browser-camera-frame-source.js';
+import type { Mesh6GCapturedFrameV1 } from './mesh6g-prospective-operator-capture-session.js';
 import {
   assertNeutralEarCapturedFrameConsumerByteEvidenceFR104,
   createNeutralEarCapturedFrameConsumerByteSessionFR104,
@@ -58,16 +60,8 @@ async function* triggers(
 async function withFrame(
   cameraFacing: Mesh6HCameraFacingV1,
   callback: (
-    handle: Awaited<ReturnType<typeof openMesh6HBrowserCamera>>,
-    frame: Awaited<
-      ReturnType<
-        ReturnType<
-          Awaited<
-            ReturnType<typeof openMesh6HBrowserCamera>
-          >['createSweepFrameSource']
-        >[typeof Symbol.asyncIterator]
-      >['next']
-    >['value'],
+    handle: Mesh6HBrowserCameraHandleV1,
+    frame: Mesh6GCapturedFrameV1,
   ) => Promise<void>,
 ): Promise<void> {
   const expectedFacing =
