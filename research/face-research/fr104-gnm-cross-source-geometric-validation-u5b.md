@@ -399,3 +399,95 @@ The next gate after U5B-B merge is:
 
     U5B-C
     FIRST_MEDIAPIPE_EIGHT_CASE_OBSERVATION_ON_PINNED_GNM_FIXTURE
+
+
+## U5B-C first MediaPipe eight-case observation
+
+The first prospective provider observation ran from:
+
+    PR #1995
+    head 36e35a50ab7503a47ed7bb6a1b3abdc4819c5dba
+    workflow run 37084191246
+
+An earlier run on head `fea6e7123af80542fde49e398f04ce50f4158761`
+failed before provider observation because the browser operator still referenced
+the U4B compiled-module paths. The fixture/materialization/runtime stages had
+already passed. The import paths were corrected without changing the frozen
+fixture, provider topology, transform matrix, ground truth, cost rule, or
+acceptance rule.
+
+The corrected first complete observation produced:
+
+    candidate result SHA-256
+    7c284cad3b467676e20c44ebf63a7aee3dc66c5d22534363286ef532ba3852fe
+
+    candidate state
+    gnm_cross_source_geometric_mapping_supported
+
+All eight cases observed exactly one face and 478 landmarks.
+
+| case | transformed RGBA SHA-256 | directCost | swappedCost | relation |
+| --- | --- | ---: | ---: | --- |
+| R0 | 45e5d55d6d179cc906f23597e6456763dc38e92f8d82662b0547dcda7327b897 | 0.012882031198933767 | 0.2859449713275122 | direct_assignment_closer |
+| R90 | a93687aa1f8652e51c40333acef87885852910fca8d3ee81f1a22bc836dc20ce | 0.01439847854266454 | 0.28563923801751523 | direct_assignment_closer |
+| R180 | c6519a12f9e98e5caa6687057c159776095e7acf18ba4563423ecdb541184ea5 | 0.014967380835671621 | 0.28673710470008695 | direct_assignment_closer |
+| R270 | db399de883e866a520e0d3e940288b685e38e1c1f0ed1c9ba943bda2ab92571b | 0.013149344314935387 | 0.2883262973150461 | direct_assignment_closer |
+| M0 | 36071374d0e60d3f03d170fcc3e211363fcfbcb2ad7cd4efc00db99bd99257c2 | 0.28979418849201966 | 0.01253495018132203 | swapped_assignment_closer |
+| M90 | 8e0a23684fe06cb84cd16d6e06681fa5dec663127b1cb14b7aa397d3e6968572 | 0.28756890003625524 | 0.015743050990045394 | swapped_assignment_closer |
+| M180 | faf0d3eff9ba7713d7b65cc6ac85765356f0797b476f2ef6989fe2091a280ee3 | 0.2883129305537383 | 0.015266341568986312 | swapped_assignment_closer |
+| M270 | 5c8f02999dc7789218f5e5bac79d16e2de76e43f774a8ffe67209ebddc2311ff | 0.2870139936542212 | 0.014249632206525012 | swapped_assignment_closer |
+
+Assessment:
+
+    evaluatedCaseIds
+    [R0,R90,R180,R270,M0,M90,M180,M270]
+
+    unavailableCaseIds
+    []
+
+    failedCaseIds
+    []
+
+    orientationPreservingDirectForEveryAvailableCase
+    true
+
+    orientationReversingSwappedForEveryAvailableCase
+    true
+
+    allEightCasesAvailable
+    true
+
+    numericAcceptanceThresholdApplied
+    false
+
+    aggregateOverrideApplied
+    false
+
+Semantic-authority diagnostics remained false:
+
+    providerPublishedSideNamesUsedAsAnatomicalAuthority
+    imageSpaceXSignUsedAsAnatomicalAuthority
+    gnmAxisOrderingUsedAsAnatomicalAuthority
+
+The U5B-C result remains a prospective candidate and is not admitted in this
+stage.
+
+Authority therefore remains:
+
+    gnmCrossSourceSemanticWitnessAudited = true
+    gnmCrossSourceFixtureDigestPinned = true
+
+    gnmCrossSourceGeometricValidationExecuted = false
+    gnmCrossSourceGeometricMappingValidated = false
+    providerLabelMappedToAnatomicalSide = false
+    globalProviderAnatomicalSemanticsEstablished = false
+    anatomicalReferenceAdmitted = false
+    anatomicalLateralityAuthorized = false
+    validatedExternalEarObservationAuthorized = false
+    traditionalBindingAuthorized = false
+    productionAuthorization = false
+
+The next gate is:
+
+    U5B-D
+    exact result digest replay + bounded admission
