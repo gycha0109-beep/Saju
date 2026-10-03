@@ -1,8 +1,8 @@
-export const PREVIEW_E2E_AUTHORITY_VERSION = 'myeonghwa-preview-e2e-authority-v1' as const;
+export const PREVIEW_E2E_AUTHORITY_VERSION = 'myeonghwa-preview-e2e-authority-v2' as const;
 
 export const PREVIEW_E2E_APPROVAL = Object.freeze({
   authorityVersion: PREVIEW_E2E_AUTHORITY_VERSION,
-  approvalId: 'owner-provisional-preview-2026-09-19',
+  approvalId: 'owner-provisional-preview-2026-10-03-sa5t',
   lifecycle: 'preview',
   approved: true,
   researchContinues: true,
@@ -16,6 +16,14 @@ export const PREVIEW_E2E_APPROVAL = Object.freeze({
     'career:natal',
     'wealth:natal',
     'relationship:natal:general',
+    'relationship:natal:spouse',
+    'business:natal',
+  ] as const),
+  officialReadingSections: Object.freeze([
+    'general:natal',
+    'career:natal',
+    'wealth:natal',
+    'relationship:natal:general',
     'business:natal',
   ] as const),
 });
@@ -23,10 +31,20 @@ export const PREVIEW_E2E_APPROVAL = Object.freeze({
 export type PreviewE2eSupportedReadingSection =
   (typeof PREVIEW_E2E_APPROVAL.supportedReadingSections)[number];
 
+export type PreviewOfficialReadingSection =
+  (typeof PREVIEW_E2E_APPROVAL.officialReadingSections)[number];
+
 const supported = new Set<string>(PREVIEW_E2E_APPROVAL.supportedReadingSections);
+const official = new Set<string>(PREVIEW_E2E_APPROVAL.officialReadingSections);
 
 export function isPreviewE2eSupportedReadingSection(
   value: string | undefined,
 ): value is PreviewE2eSupportedReadingSection {
   return value !== undefined && supported.has(value);
+}
+
+export function isPreviewOfficialReadingSection(
+  value: string | undefined,
+): value is PreviewOfficialReadingSection {
+  return value !== undefined && official.has(value);
 }
