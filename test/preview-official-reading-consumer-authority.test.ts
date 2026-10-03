@@ -36,6 +36,14 @@ const CASES: readonly {
     },
   },
   {
+    section: 'relationship:natal:spouse',
+    intent: {
+      domain: 'relationship',
+      temporalScope: 'natal',
+      relationshipScope: 'spouse',
+    },
+  },
+  {
     section: 'business:natal',
     intent: { domain: 'business', temporalScope: 'natal' },
   },
@@ -45,7 +53,7 @@ function sorted(values: readonly string[]): readonly string[] {
   return [...values].sort();
 }
 
-describe('Preview Official Reading consumer authority V2', () => {
+describe('Preview Official Reading consumer authority V3', () => {
   it('derives its Official authority surface exactly from the existing Preview approval', () => {
     expect(sorted(CASES.map((candidate) => candidate.section))).toEqual(
       sorted(PREVIEW_E2E_APPROVAL.officialReadingSections),
@@ -68,7 +76,7 @@ describe('Preview Official Reading consumer authority V2', () => {
     }
   });
 
-  it('keeps the admitted spouse Preview surface on legacy Narrative authority', () => {
+  it('promotes only the admitted spouse Preview surface to Official Reading authority', () => {
     const intent: ReadingIntent = {
       domain: 'relationship',
       temporalScope: 'natal',
@@ -77,12 +85,14 @@ describe('Preview Official Reading consumer authority V2', () => {
     const resolution = resolvePreviewConsumerReadingAuthorityV1(intent);
 
     expect(resolution.readingSection).toBe('relationship:natal:spouse');
-    expect(resolution.authority).toBe('legacy_narrative');
-    expect(resolution.supportedOfficialReadingSection).toBeUndefined();
+    expect(resolution.authority).toBe('official_reading');
+    expect(resolution.supportedOfficialReadingSection).toBe(
+      'relationship:natal:spouse',
+    );
     expect(PREVIEW_E2E_APPROVAL.supportedReadingSections).toContain(
       resolution.readingSection as PreviewE2eSupportedReadingSection,
     );
-    expect(PREVIEW_E2E_APPROVAL.officialReadingSections).not.toContain(
+    expect(PREVIEW_E2E_APPROVAL.officialReadingSections).toContain(
       resolution.readingSection as PreviewOfficialReadingSection,
     );
   });
