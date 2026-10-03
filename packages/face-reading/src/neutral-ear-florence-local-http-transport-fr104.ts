@@ -165,6 +165,10 @@ export function createNeutralEarFlorenceLocalHttpTransportFR104(
   const invoke: NeutralEarFlorenceHostInvokerFR104V1 =
     async (input) => {
       validateInput(input);
+      const requestBuffer = new ArrayBuffer(
+        input.rgbaBytes.byteLength,
+      );
+      new Uint8Array(requestBuffer).set(input.rgbaBytes);
       const response = await fetchImpl(endpoint, {
         method: 'POST',
         headers: {
@@ -178,7 +182,7 @@ export function createNeutralEarFlorenceLocalHttpTransportFR104(
           'x-fr104-byte-length':
             String(input.rgbaBytes.byteLength),
         },
-        body: input.rgbaBytes,
+        body: requestBuffer,
         cache: 'no-store',
         credentials: 'same-origin',
       });
