@@ -12,6 +12,7 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       'provider_mirror_semantics_empirical_result_not_admitted',
       'independent_anatomical_semantic_witness_not_admitted',
       'cross_source_provider_anatomical_mapping_not_validated',
+      'florence_repository_native_live_host_transport_not_implemented',
     ]);
     expect(
       readiness.crossSourceGeometryEvidence.state,
@@ -89,7 +90,7 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
     expect(readiness.remainingBlockers).not.toContain(
       'runtime_byte_bridge_not_yet_integrated_into_fr104_ear_provider_invocation',
     );
-    expect(readiness.remainingBlockers).toContain(
+    expect(readiness.remainingBlockers).not.toContain(
       'florence_repository_native_live_host_transport_not_implemented',
     );
     expect(readiness.remainingBlockers).toContain(
@@ -137,7 +138,7 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       );
     expect(capture.florenceLiveRuntimeState)
       .toBe(
-        'external_host_port_only_repository_native_transport_missing',
+        'repository_same_origin_http_to_persistent_python_worker_implemented_opt_in',
       );
     expect(capture.ordinaryFileUploadBridgeState)
       .toBe('explicitly_rejected');
@@ -165,6 +166,11 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
         .implementedMechanicalGates
         .controlledProviderByteInvocationChokePoint,
+    ).toBe(true);
+    expect(
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
+        .implementedMechanicalGates
+        .florenceRepositoryNativeLiveTransport,
     ).toBe(true);
     expect(
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
