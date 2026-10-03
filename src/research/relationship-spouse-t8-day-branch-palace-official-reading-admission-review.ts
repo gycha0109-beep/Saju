@@ -492,7 +492,6 @@ export async function buildRelationshipSpouseT8DayBranchPalaceOfficialReadingAdm
     reviewId: deterministicContentHash(material),
     ...material,
     currentAuthority,
-    upstream,
     probe,
   });
 }
