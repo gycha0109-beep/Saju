@@ -135,6 +135,7 @@ describe('FR104 D2B exact captured-frame to consumer-byte provenance', () => {
       expect(() =>
         assertNeutralEarCapturedFrameConsumerByteEvidenceFR104(
           evidence,
+          { handle, frame },
         ),
       ).not.toThrow();
     });
