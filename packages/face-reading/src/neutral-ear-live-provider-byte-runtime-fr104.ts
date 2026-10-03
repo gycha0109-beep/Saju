@@ -15,6 +15,9 @@ import {
   type NeutralEarFlorenceByteAdapterFR104V1,
   type NeutralEarFlorenceHostInvocationResultFR104V1,
 } from './neutral-ear-provider-byte-adapters-fr104.js';
+import {
+  isNeutralEarFlorenceLocalHttpByteAdapterFR104,
+} from './neutral-ear-florence-local-http-transport-fr104.js';
 import type {
   Mesh6HBrowserCameraHandleV1,
 } from './mesh6h-browser-camera-frame-source.js';
@@ -160,9 +163,19 @@ export async function runNeutralEarLiveProviderByteRuntimeFR104(
 
     const blockers: NeutralEarLiveProviderByteRuntimeBlockerFR104V1[] = [
       ...controlledCaptureBinding.blockers,
-      'florence_repository_native_live_host_transport_not_implemented',
-      'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration',
     ];
+    if (
+      !isNeutralEarFlorenceLocalHttpByteAdapterFR104(
+        input.florenceAdapter,
+      )
+    ) {
+      blockers.push(
+        'florence_repository_native_live_host_transport_not_implemented',
+      );
+    }
+    blockers.push(
+      'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration',
+    );
 
     const result: NeutralEarLiveProviderByteRuntimeResultFR104V1 =
       Object.freeze({
