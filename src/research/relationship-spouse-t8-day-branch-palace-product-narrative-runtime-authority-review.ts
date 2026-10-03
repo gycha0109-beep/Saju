@@ -37,6 +37,14 @@ export const RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PRODUCT_NARRATIVE_RUNTIME_
 export const RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROFILE_BYPASS_TEXT =
   '배우자의 성격은 강합니다.' as const;
 
+export const RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_SA5P_RECORDED_AUTHORIZATION_BLOCKERS =
+  Object.freeze([
+    'MODEL_SUCCESS_PATH_DOES_NOT_ENFORCE_CLAIM_NARRATIVE_PROFILE',
+    'MANDATORY_QUALIFIER_NOT_ENFORCED_ON_MODEL_SUCCESS',
+    'PROHIBITED_PHRASES_NOT_ENFORCED_ON_MODEL_SUCCESS',
+    'SEMANTICALLY_UNBOUNDED_MODEL_OUTPUT_CAN_REACH_CONSUMER_DELIVERY',
+  ] as const);
+
 const CALCULATION_POLICY = Object.freeze({
   policyId:
     'myeonghwa/relationship-spouse-t8-day-branch-palace-sa5p-runtime-review',
@@ -267,36 +275,49 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
       (phrase) => !fallbackEncoded.includes(phrase),
     );
 
-  const successfulModelPathBypassesProfileSemanticBoundary =
-    profileBypassExecution.state === 'completed' &&
+  const recordedProfileBypassNowFailsClosed =
+    profileBypassExecution.state === 'completed_with_fallback' &&
     profileBypassExecution.consumerReadingAuthority?.authority ===
       'legacy_narrative' &&
     profileBypassExecution.consumerReadingAuthority.readingSection ===
       'relationship:natal:spouse' &&
-    profileBypassExecution.modelCalls === 1 &&
-    profileBypassExecution.narrative?.outcome === 'model_first_pass' &&
-    profileBypassExecution.narrative.run.validation.firstPass === 'passed' &&
-    profileBypassExecution.narrative.run.validation.final === 'passed' &&
-    profileBypassExecution.artifact !== undefined &&
-    bypassEncoded.includes(
+    profileBypassExecution.modelCalls === 2 &&
+    profileBypassExecution.narrative?.outcome === 'deterministic_fallback' &&
+    profileBypassExecution.narrative.run.validation.firstPass === 'failed' &&
+    profileBypassExecution.narrative.run.validation.repairAttempted === true &&
+    profileBypassExecution.narrative.run.validation.final === 'fallback' &&
+    profileBypassExecution.narrative.run.validation.violations.some(
+      (violation) =>
+        violation.includes('PROFILE:PROFILE_ASSERTION_TEXT_MISMATCH'),
+    ) &&
+    profileBypassExecution.artifact?.status === 'narrative_fallback' &&
+    !bypassEncoded.includes(
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROFILE_BYPASS_TEXT,
     ) &&
-    !bypassEncoded.includes(
+    bypassEncoded.includes(
+      RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
+    ) &&
+    bypassEncoded.includes(
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
     );
 
-  const profileBypassWouldReachConsumerDelivery =
-    profileBypassDelivery.state === 'delivered' &&
-    profileBypassDelivery.messageCode === 'READING_DELIVERED' &&
+  const recordedProfileBypassNoLongerReachesUnsafeDelivery =
+    profileBypassDelivery.state === 'delivered_with_fallback' &&
+    profileBypassDelivery.messageCode ===
+      'READING_DELIVERED_WITH_GROUNDED_FALLBACK' &&
     profileBypassDelivery.requiredAction === 'none' &&
     profileBypassDelivery.artifact?.readingId ===
       profileBypassExecution.artifact?.readingId &&
-    bypassDeliveryEncoded.includes(
+    !bypassDeliveryEncoded.includes(
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROFILE_BYPASS_TEXT,
     ) &&
-    !bypassDeliveryEncoded.includes(
+    bypassDeliveryEncoded.includes(
       RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
     );
+
+  const downstreamRemediationObserved =
+    recordedProfileBypassNowFailsClosed &&
+    recordedProfileBypassNoLongerReachesUnsafeDelivery;
 
   const officialAuthorityStillClosed =
     fallbackExecution.consumerReadingAuthority?.authority ===
@@ -318,8 +339,8 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
     upstreamConsumerIntegrationExact,
     actualClaimExact,
     fallbackUsesBoundedProfile,
-    successfulModelPathBypassesProfileSemanticBoundary,
-    profileBypassWouldReachConsumerDelivery,
+    recordedProfileBypassNowFailsClosed,
+    recordedProfileBypassNoLongerReachesUnsafeDelivery,
     officialAuthorityStillClosed,
   });
 
@@ -341,10 +362,7 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
   const authorizationBlockers = Object.freeze(
     authorityReviewCompleted
       ? [
-          'MODEL_SUCCESS_PATH_DOES_NOT_ENFORCE_CLAIM_NARRATIVE_PROFILE',
-          'MANDATORY_QUALIFIER_NOT_ENFORCED_ON_MODEL_SUCCESS',
-          'PROHIBITED_PHRASES_NOT_ENFORCED_ON_MODEL_SUCCESS',
-          'SEMANTICALLY_UNBOUNDED_MODEL_OUTPUT_CAN_REACH_CONSUMER_DELIVERY',
+          ...RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_SA5P_RECORDED_AUTHORIZATION_BLOCKERS,
         ]
       : ['SA5P_REVIEW_INCOMPLETE'],
   );
@@ -369,6 +387,7 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProductNarrativeRu
     authorizationBlockers,
     authorityReviewCompleted,
     runtimeSemanticProfileEnforcementEstablished,
+    downstreamRemediationObserved,
     decision: authorityReviewCompleted
       ? ('HOLD_PRODUCT_NARRATIVE_RUNTIME_AUTHORITY_PENDING_PROFILE_ENFORCEMENT' as const)
       : ('HOLD_AND_REPAIR_SA_5P_PRODUCT_NARRATIVE_RUNTIME_AUTHORITY_REVIEW' as const),

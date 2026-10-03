@@ -6,6 +6,9 @@ import type {
   NarrativeRun,
 } from '../contracts/narrative.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import {
+  validateNarrativeDraftAgainstClaimNarrativeProfiles,
+} from '../narrative/claim-narrative-profile.js';
 import { buildValidatedDeterministicFallback } from '../narrative/deterministic-fallback.js';
 import { validateNarrativeDraftGrounding } from '../narrative/grounding-validator.js';
 import type {
@@ -61,6 +64,7 @@ function parseViolationStrings(value: unknown): ModelAttemptResult {
 function validateAttempt(
   rawOutput: unknown,
   request: GroundedNarrativeRequest,
+  claimNarrativeProfiles: readonly ClaimNarrativeProfile[] | undefined,
 ): ModelAttemptResult {
   const parsed = parseViolationStrings(rawOutput);
   if (parsed.draft === undefined) return parsed;
@@ -82,6 +86,24 @@ function validateAttempt(
     ),
   );
 
+  if (
+    claimNarrativeProfiles !== undefined &&
+    claimNarrativeProfiles.length > 0
+  ) {
+    const profileValidation =
+      validateNarrativeDraftAgainstClaimNarrativeProfiles(
+        parsed.draft,
+        request.evidenceBundle,
+        claimNarrativeProfiles,
+      );
+    violations.push(
+      ...profileValidation.violations.map(
+        (violation) =>
+          `PROFILE:${violation.code}:${violation.message}`,
+      ),
+    );
+  }
+
   return {
     rawOutput,
     draft: parsed.draft,
@@ -95,12 +117,13 @@ async function generateAttempt(
   request: GroundedNarrativeRequest,
   policy: NarrativePolicy,
   params: NarrativeGenerationParams | undefined,
+  claimNarrativeProfiles: readonly ClaimNarrativeProfile[] | undefined,
   repair?: NarrativeRepairContext,
 ): Promise<ModelAttemptResult> {
   const prompt = compileNarrativePrompt(request, policy, repair);
+  let output: unknown;
   try {
-    const output = await adapter.generateStructured(prompt, params);
-    return validateAttempt(output, request);
+    output = await adapter.generateStructured(prompt, params);
   } catch (error) {
     return {
       violations: [
@@ -111,6 +134,7 @@ async function generateAttempt(
       providerError: true,
     };
   }
+  return validateAttempt(output, request, claimNarrativeProfiles);
 }
 
 function stableGenerationParams(
@@ -190,6 +214,7 @@ export async function generateGroundedNarrative(
     request,
     policy,
     options.generationParams,
+    options.claimNarrativeProfiles,
   );
 
   if (first.draft !== undefined && first.violations.length === 0) {
@@ -223,6 +248,7 @@ export async function generateGroundedNarrative(
       request,
       policy,
       options.generationParams,
+      options.claimNarrativeProfiles,
       repairContext,
     );
     violations.push(...repaired.violations.map((value) => `REPAIR:${value}`));
