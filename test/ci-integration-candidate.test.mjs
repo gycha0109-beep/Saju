@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { assertSubmissionEvent, assertPrerequisites, assertStagedPolicy, validateCandidate } from '../scripts/ci/integration-candidate.mjs';
+import { assertSubmissionEvent, assertPrerequisites, assertStagedPolicy, resolveCandidateMergeability, validateCandidate } from '../scripts/ci/integration-candidate.mjs';
 
 const candidate = { pr: '42', head: 'a'.repeat(40), base: 'b'.repeat(40) };
 const current = () => ({
@@ -50,6 +50,90 @@ describe('pinned integration admission and required evidence', () => {
     unresolved.mergeable = null;
     unresolved.mergeable_state = 'unknown';
     expect(() => validateCandidate(candidate, unresolved)).toThrow('mergeability is unresolved');
+  });
+  it('re-reads transient unresolved mergeability until GitHub resolves true', () => {
+    const unresolved = current();
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    const stillUnknown = { ...current(), mergeable: null, mergeable_state: 'unknown' };
+    const resolved = current();
+    const queue = [stillUnknown, resolved];
+    let reads = 0;
+    const result = resolveCandidateMergeability(
+      candidate,
+      unresolved,
+      () => {
+        reads += 1;
+        return queue.shift();
+      },
+      { wait: () => {} },
+    );
+    expect(reads).toBe(2);
+    expect(result.mergeable).toBe(true);
+    expect(() => validateCandidate(candidate, result)).not.toThrow();
+  });
+  it('bounds unresolved mergeability re-reads and remains fail-closed', () => {
+    const unresolved = current();
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    let reads = 0;
+    const result = resolveCandidateMergeability(
+      candidate,
+      unresolved,
+      () => {
+        reads += 1;
+        return { ...current(), mergeable: null, mergeable_state: 'unknown' };
+      },
+      { wait: () => {} },
+    );
+    expect(reads).toBe(3);
+    expect(() => validateCandidate(candidate, result)).toThrow('mergeability is unresolved');
+  });
+  it('does not retry past a resolved conflict', () => {
+    const unresolved = current();
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    let reads = 0;
+    const result = resolveCandidateMergeability(
+      candidate,
+      unresolved,
+      () => {
+        reads += 1;
+        return { ...current(), mergeable: false, mergeable_state: 'dirty' };
+      },
+      { wait: () => {} },
+    );
+    expect(reads).toBe(1);
+    expect(() => validateCandidate(candidate, result)).toThrow('actual merge conflict');
+  });
+  it('fails closed when the PR changes while mergeability is being resolved', () => {
+    const unresolved = current();
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    const changedHead = current();
+    changedHead.head.sha = 'c'.repeat(40);
+    const result = resolveCandidateMergeability(
+      candidate,
+      unresolved,
+      () => changedHead,
+      { wait: () => {} },
+    );
+    expect(() => validateCandidate(candidate, result)).toThrow('PR head changed');
+  });
+  it.each([
+    { state: 'closed', draft: false },
+    { state: 'open', draft: true },
+  ])('fails closed when PR readiness changes during mergeability resolution', changed => {
+    const unresolved = current();
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    const result = resolveCandidateMergeability(
+      candidate,
+      unresolved,
+      () => ({ ...current(), ...changed, mergeable: null, mergeable_state: 'unknown' }),
+      { wait: () => {} },
+    );
+    expect(() => validateCandidate(candidate, result)).toThrow('open and ready');
   });
   it('rejects forks, closed PRs, drafts, and another base', () => {
     const fork = current(); fork.head.repo.full_name = 'other/repo';

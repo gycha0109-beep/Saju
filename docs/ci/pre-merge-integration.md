@@ -134,3 +134,27 @@ The label is CI admission metadata, never a Work Track or CI responsibility.
 Reusable candidate workflows always run the full suite even though their caller
 is a PR event. Admission/Git regressions: 24 tests passed per repository.
 Activation remains contingent on the corrected live PR/ruleset test.
+
+
+## Transient mergeability re-read (2026-10-03)
+
+GitHub may temporarily report an otherwise unchanged PR as
+`mergeable=null` / `mergeable_state=unknown` while it recomputes mergeability.
+This transient occurred after successful full integration regressions and caused
+the final guard to fail even though a later API read returned `mergeable=true`.
+
+The integration guard now performs at most three additional PR reads, separated
+by 1.5 seconds, only while `mergeable === null`.
+
+The retry does **not** relax merge safety:
+
+- `mergeable=false` remains an immediate actual-conflict failure;
+- a changed PR head remains stale and fails;
+- closed or draft PRs fail;
+- fork and default-branch target checks remain unchanged;
+- advancing main alone remains allowed under the repository's non-strict
+  required-check policy;
+- if all three re-reads remain unresolved, the guard still fails closed.
+
+This is a bounded GitHub-computation retry, not a merge-policy bypass and not a
+replacement for required CI Integration Verify evidence.
