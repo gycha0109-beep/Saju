@@ -362,6 +362,12 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-live-provider-byte-runtime-fr104.test.ts
 
+      - name: Verify FR104 repository-native local Florence transport
+        working-directory: target
+        run: |
+          npx vitest run packages/face-reading/src/neutral-ear-florence-local-http-transport-fr104.test.ts
+          python tools/face-reading/ear/run_florence2_ear_empirical.py --self-test
+
       - name: Verify FR104 anatomical laterality mapping skeleton
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-anatomical-laterality-mapping-contract-fr104.test.ts
