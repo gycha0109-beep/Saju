@@ -179,3 +179,4 @@ export * from './relationship-spouse-t8-day-branch-palace-product-narrative-runt
 export * from './relationship-spouse-t8-day-branch-palace-claim-narrative-profile-model-output-enforcement-remediation.js';
 export * from './relationship-spouse-t8-day-branch-palace-product-narrative-runtime-reauthorization-review.js';
 export * from './relationship-spouse-t8-day-branch-palace-preview-admission-review.js';
+export * from './relationship-spouse-t8-day-branch-palace-preview-legacy-narrative-lane-remediation.js';
