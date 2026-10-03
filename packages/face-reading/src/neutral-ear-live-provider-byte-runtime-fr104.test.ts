@@ -272,7 +272,10 @@ describe('FR104 D2B-B1 live provider byte runtime', () => {
       const localFlorence =
         createNeutralEarFlorenceLocalHttpBindingFR104({
           fetchImpl: async (_url, init) => {
-            expect(init?.body).toBeInstanceOf(Uint8Array);
+            expect(init?.body).toBeInstanceOf(ArrayBuffer);
+            expect(
+              Array.from(new Uint8Array(init?.body as ArrayBuffer)),
+            ).toEqual(Array.from(rgbaFixture()));
             return new Response(
               JSON.stringify({
                 schemaVersion:
