@@ -6,6 +6,9 @@ export const MESH6H_BROWSER_CAMERA_ADAPTER_RECORD_ID =
 export const MESH6H_NEXT_FRONTIER =
   'bind_mesh6h_to_a_manual_operator_capture_surface_and_collect_actual_post_preregistration_repeated_sweep_datasets_through_mesh6g' as const;
 
+export type Mesh6HCameraFacingV1 = 'front' | 'rear';
+export type Mesh6HMediaFacingModeV1 = 'user' | 'environment';
+
 export interface Mesh6HBrowserFrameTriggerV1 {
   readonly timestampMs: number;
   readonly providerRunRef: string;
@@ -36,7 +39,7 @@ export interface Mesh6HBrowserEnvironmentV1 {
   readonly getUserMedia: (constraints: {
     readonly audio: false;
     readonly video: {
-      readonly facingMode: 'user';
+      readonly facingMode: Mesh6HMediaFacingModeV1;
     };
   }) => Promise<Mesh6HMediaStreamLikeV1>;
   readonly createImageBitmap: (source: Mesh6HVideoElementLikeV1) => Promise<Mesh6HClosableImageLikeV1>;
@@ -44,6 +47,7 @@ export interface Mesh6HBrowserEnvironmentV1 {
 
 export interface Mesh6HBrowserCameraOpenInputV1 {
   readonly video: Mesh6HVideoElementLikeV1;
+  readonly cameraFacing?: Mesh6HCameraFacingV1;
 }
 
 export interface Mesh6HBrowserCameraHandleV1 {
@@ -58,7 +62,8 @@ export interface Mesh6HBrowserCameraHandleV1 {
   readonly executionBoundary: {
     readonly getUserMediaInvokedOnceAtOpen: true;
     readonly audioRequested: false;
-    readonly facingModeRequested: 'user';
+    readonly cameraFacingRequested: Mesh6HCameraFacingV1;
+    readonly facingModeRequested: Mesh6HMediaFacingModeV1;
     readonly explicitOperatorTriggerRequired: true;
     readonly automaticCaptureTriggering: false;
     readonly automaticFrameSelectionApplied: false;
@@ -121,7 +126,7 @@ function defaultEnvironment(): Mesh6HBrowserEnvironmentV1 {
   ) fail('browser camera APIs are unavailable; an explicit environment adapter is required.');
 
   return Object.freeze({
-    async getUserMedia(constraints: { readonly audio: false; readonly video: { readonly facingMode: 'user' } }) {
+    async getUserMedia(constraints: { readonly audio: false; readonly video: { readonly facingMode: Mesh6HMediaFacingModeV1 } }) {
       const stream = await navigatorValue.mediaDevices.getUserMedia(constraints);
       return stream as unknown as Mesh6HMediaStreamLikeV1;
     },
@@ -187,7 +192,14 @@ function assertHandleBoundary(handle: Mesh6HBrowserCameraHandleV1): void {
     || handle.authorityState !== 'explicit_operator_triggered_browser_frame_source_only'
     || handle.executionBoundary.getUserMediaInvokedOnceAtOpen !== true
     || handle.executionBoundary.audioRequested !== false
-    || handle.executionBoundary.facingModeRequested !== 'user'
+    || (handle.executionBoundary.cameraFacingRequested !== 'front'
+      && handle.executionBoundary.cameraFacingRequested !== 'rear')
+    || (handle.executionBoundary.facingModeRequested !== 'user'
+      && handle.executionBoundary.facingModeRequested !== 'environment')
+    || (handle.executionBoundary.cameraFacingRequested === 'front'
+      && handle.executionBoundary.facingModeRequested !== 'user')
+    || (handle.executionBoundary.cameraFacingRequested === 'rear'
+      && handle.executionBoundary.facingModeRequested !== 'environment')
     || handle.executionBoundary.explicitOperatorTriggerRequired !== true
     || handle.executionBoundary.automaticCaptureTriggering !== false
     || handle.executionBoundary.automaticFrameSelectionApplied !== false
@@ -238,7 +250,13 @@ export function getMesh6HBrowserCameraAdapterContract() {
     camera: Object.freeze({
       getUserMediaCalledAtOpen: true as const,
       audioRequested: false as const,
+      defaultCameraFacing: 'front' as const,
+      supportedCameraFacings: Object.freeze(['front', 'rear'] as const),
       facingMode: 'user' as const,
+      facingModeMapping: Object.freeze({
+        front: 'user' as const,
+        rear: 'environment' as const,
+      }),
       automaticCaptureTriggering: false as const,
       automaticFrameSelection: false as const,
       automaticPoseFiltering: false as const,
@@ -284,6 +302,12 @@ export async function openMesh6HBrowserCamera(
 ): Promise<Mesh6HBrowserCameraHandleV1> {
   if (typeof input !== 'object' || input === null) fail('camera open input must be an object.');
   validateVideo(input.video);
+  const cameraFacing = input.cameraFacing ?? 'front';
+  if (cameraFacing !== 'front' && cameraFacing !== 'rear') {
+    fail('cameraFacing must be front or rear.');
+  }
+  const facingMode: Mesh6HMediaFacingModeV1 =
+    cameraFacing === 'front' ? 'user' : 'environment';
   if (
     typeof environment !== 'object'
     || environment === null
@@ -293,7 +317,7 @@ export async function openMesh6HBrowserCamera(
 
   const stream = await environment.getUserMedia(Object.freeze({
     audio: false as const,
-    video: Object.freeze({ facingMode: 'user' as const }),
+    video: Object.freeze({ facingMode }),
   }));
   const tracks = validateStream(stream);
   let closed = false;
@@ -359,7 +383,8 @@ export async function openMesh6HBrowserCamera(
     executionBoundary: Object.freeze({
       getUserMediaInvokedOnceAtOpen: true as const,
       audioRequested: false as const,
-      facingModeRequested: 'user' as const,
+      cameraFacingRequested: cameraFacing,
+      facingModeRequested: facingMode,
       explicitOperatorTriggerRequired: true as const,
       automaticCaptureTriggering: false as const,
       automaticFrameSelectionApplied: false as const,
