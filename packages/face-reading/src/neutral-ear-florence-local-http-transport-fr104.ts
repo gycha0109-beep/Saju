@@ -147,10 +147,12 @@ export function createNeutralEarFlorenceLocalHttpTransportFR104(
 ): NeutralEarFlorenceLocalHttpTransportFR104V1 {
   const endpoint =
     options.endpoint ?? FR104_FLORENCE_LOCAL_HTTP_ENDPOINT;
-  const fetchImpl =
-    options.fetchImpl
-    ?? (globalThis.fetch?.bind(globalThis)
-      as NeutralEarFlorenceFetchFR104V1 | undefined);
+  const defaultFetch:
+    NeutralEarFlorenceFetchFR104V1 | undefined =
+    typeof globalThis.fetch === 'function'
+      ? globalThis.fetch.bind(globalThis)
+      : undefined;
+  const fetchImpl = options.fetchImpl ?? defaultFetch;
 
   if (
     typeof endpoint !== 'string'
