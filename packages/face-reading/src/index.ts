@@ -55,6 +55,7 @@ export * from './mediapipe-eye-landmark-adapter-fr25.js';
 export * from './mediapipe-eyebrow-component-geometric-role-probe-fr42.js';
 export * from './mediapipe-eyebrow-source-runtime-semantic-gap-fr40.js';
 export * from './mediapipe-face-landmarker-runtime-fr26.js';
+export * from './neutral-ear-florence-local-http-transport-fr104.js';
 export * from './mediapipe-face-oval-inferior-extremum-fr45.js';
 export * from './mediapipe-face-oval-inferior-extremum-runtime-evidence-fr45.js';
 export * from './mediapipe-npm-artifact-byte-attestation-fr30.js';
