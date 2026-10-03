@@ -29,6 +29,9 @@ import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROJECT_MATERIALITY_APPROVAL,
 } from './relationship-spouse-t8-day-branch-palace-project-governed-materiality-decision.js';
 import {
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROJECT_REVIEWER_STATUS,
+} from './relationship-spouse-t8-day-branch-palace-narrative-authority-contract.js';
+import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_METHODOLOGY,
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_PACK,
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_REGISTRY,
@@ -50,7 +53,8 @@ export const RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_INTERNAL_REVIEWED_RULE =
     ...RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_RULE,
     quality: Object.freeze({
       ...RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_STAGING_RULE.quality,
-      reviewerStatus: 'internal_reviewed',
+      reviewerStatus:
+        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROJECT_REVIEWER_STATUS,
     }),
   } as const satisfies RuleDefinition);
 
@@ -146,7 +150,8 @@ export async function buildRelationshipSpouseT8DayBranchPalaceProjectGovernedNar
 
   const ruleMutationExact =
     RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_INTERNAL_REVIEWED_RULE.quality
-      .reviewerStatus === 'internal_reviewed' &&
+      .reviewerStatus ===
+      RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PROJECT_REVIEWER_STATUS &&
     deterministicContentHash(stagingRuleWithoutQuality) ===
       deterministicContentHash(materializedRuleWithoutQuality) &&
     deterministicContentHash(stagingQualityWithoutReviewer) ===
