@@ -2,6 +2,12 @@ import type {
   MediaPipeFaceLandmarkerResultFR25V1,
 } from './mediapipe-eye-landmark-adapter-fr25.js';
 import {
+  extractMediaPipeEphemeralScreenGeometry,
+} from './mediapipe-ephemeral-screen-geometry-extractor.js';
+import type {
+  MediaPipeMetricGeometryPointFR76V1,
+} from './mediapipe-screen-to-metric-reimplementation-parity-fr76.js';
+import {
   DEFAULT_MEDIAPIPE_FACE_LANDMARKER_RUNTIME_FACTORY_FR26,
   type MediaPipeFaceLandmarkerRuntimeFactoryFR26V1,
 } from './mediapipe-face-landmarker-runtime-fr26.js';
@@ -90,6 +96,16 @@ export type NeutralEarRgbaImageSourceFactoryFR104V1 = (
     height: number;
   }>,
 ) => unknown;
+
+export type NeutralEarFaceLandmarkerScreenGeometryObserverFR104V1 = (
+  input: Readonly<{
+    providerRunRef: string;
+    width: number;
+    height: number;
+    screenLandmarks:
+      readonly MediaPipeMetricGeometryPointFR76V1[];
+  }>,
+) => void;
 
 export interface NeutralEarFaceLandmarkerByteAdapterFR104V1 {
   readonly schemaVersion:
@@ -269,6 +285,8 @@ export function createNeutralEarFaceLandmarkerByteAdapterFR104(
     factory?: MediaPipeFaceLandmarkerRuntimeFactoryFR26V1;
     createImageSource?:
       NeutralEarRgbaImageSourceFactoryFR104V1;
+    onEphemeralScreenGeometry?:
+      NeutralEarFaceLandmarkerScreenGeometryObserverFR104V1;
   }> = Object.freeze({}),
 ): NeutralEarFaceLandmarkerByteAdapterFR104V1 {
   const factory =
@@ -329,6 +347,17 @@ export function createNeutralEarFaceLandmarkerByteAdapterFR104(
           || !Array.isArray(result.faceLandmarks)
         ) {
           fail('FaceLandmarker runtime returned an invalid result.');
+        }
+
+        if (input.onEphemeralScreenGeometry !== undefined) {
+          const screenLandmarks =
+            extractMediaPipeEphemeralScreenGeometry(result);
+          input.onEphemeralScreenGeometry(Object.freeze({
+            providerRunRef: frame.providerRunRef,
+            width: frame.width,
+            height: frame.height,
+            screenLandmarks,
+          }));
         }
 
         return Object.freeze({
