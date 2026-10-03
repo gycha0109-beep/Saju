@@ -20,12 +20,23 @@ MESH6H does not run MESH6G itself. It supplies the exact frame-source shape MESH
 
 ## Camera admission
 
-The default browser environment requests:
+The default remains the front camera for backward compatibility:
 
 ```text
+cameraFacing = front
 audio = false
 video.facingMode = user
 ```
+
+A caller may explicitly request the rear camera through the same MESH6H adapter:
+
+```text
+cameraFacing = rear
+audio = false
+video.facingMode = environment
+```
+
+The mapping is mechanical only. Camera-facing selection does not establish subject-relative mirror semantics, saved-pixel mirror policy, anatomical laterality, calibration, or production authority.
 
 No resolution, frame-rate, pose, quality, or device ranking is treated as evidence authority.
 
@@ -74,6 +85,14 @@ minimum production sweep count
 acceptable pose range
 confidence score
 ```
+
+## Exact frame issuance identity
+
+Each yielded `Mesh6GCapturedFrameV1` is registered ephemerally against the exact MESH6H handle that issued it.
+
+`assertIssuedMesh6HBrowserCameraFrame(handle, frame)` accepts only the same object identity. Copies or structurally equivalent frame objects are rejected.
+
+This is a provenance primitive only. It allows downstream FR104 work to prove that byte materialization started from the exact captured frame object, but it does not establish mirror semantics or anatomical side.
 
 ## In-memory image lifecycle
 
@@ -181,6 +200,8 @@ It verifies:
 - all stream tracks stop exactly once when video setup fails;
 - close is idempotent;
 - copied/forged handles are rejected by the active issuance boundary;
+- copied/forged captured frame objects are rejected by the exact frame issuance boundary;
+- front remains the default and rear explicitly maps to `environment`;
 - no automatic selection/filtering or calibration authority is introduced.
 
 The synthetic browser fixture proves mechanics only. It is not empirical fresh participant capture evidence.
