@@ -3,6 +3,7 @@ import type { ReadingIntent } from '../src/contracts/reading.js';
 import {
   PREVIEW_E2E_APPROVAL,
   type PreviewE2eSupportedReadingSection,
+  type PreviewOfficialReadingSection,
 } from '../src/preview/preview-authority.js';
 import {
   PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION,
@@ -11,7 +12,7 @@ import {
 } from '../src/preview/preview-official-reading-consumer-authority.js';
 
 const CASES: readonly {
-  section: PreviewE2eSupportedReadingSection;
+  section: PreviewOfficialReadingSection;
   intent: ReadingIntent;
 }[] = [
   {
@@ -44,10 +45,10 @@ function sorted(values: readonly string[]): readonly string[] {
   return [...values].sort();
 }
 
-describe('Preview Official Reading consumer authority V1', () => {
+describe('Preview Official Reading consumer authority V2', () => {
   it('derives its Official authority surface exactly from the existing Preview approval', () => {
     expect(sorted(CASES.map((candidate) => candidate.section))).toEqual(
-      sorted(PREVIEW_E2E_APPROVAL.supportedReadingSections),
+      sorted(PREVIEW_E2E_APPROVAL.officialReadingSections),
     );
 
     for (const candidate of CASES) {
@@ -67,15 +68,29 @@ describe('Preview Official Reading consumer authority V1', () => {
     }
   });
 
-  it('keeps unapproved surfaces on legacy Narrative authority without widening Preview approval', () => {
+  it('keeps the admitted spouse Preview surface on legacy Narrative authority', () => {
+    const intent: ReadingIntent = {
+      domain: 'relationship',
+      temporalScope: 'natal',
+      relationshipScope: 'spouse',
+    };
+    const resolution = resolvePreviewConsumerReadingAuthorityV1(intent);
+
+    expect(resolution.readingSection).toBe('relationship:natal:spouse');
+    expect(resolution.authority).toBe('legacy_narrative');
+    expect(resolution.supportedOfficialReadingSection).toBeUndefined();
+    expect(PREVIEW_E2E_APPROVAL.supportedReadingSections).toContain(
+      resolution.readingSection as PreviewE2eSupportedReadingSection,
+    );
+    expect(PREVIEW_E2E_APPROVAL.officialReadingSections).not.toContain(
+      resolution.readingSection as PreviewOfficialReadingSection,
+    );
+  });
+
+  it('keeps surfaces outside Preview support on legacy Narrative authority without widening approval', () => {
     const unsupported: readonly ReadingIntent[] = [
       { domain: 'career', temporalScope: 'annual' },
       { domain: 'wealth', temporalScope: 'monthly' },
-      {
-        domain: 'relationship',
-        temporalScope: 'natal',
-        relationshipScope: 'spouse',
-      },
       { domain: 'compatibility', temporalScope: 'natal' },
       { domain: 'life_stage', temporalScope: 'life_stage' },
     ];
