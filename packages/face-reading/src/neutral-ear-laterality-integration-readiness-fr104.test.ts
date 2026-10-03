@@ -93,6 +93,9 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       'fr21b_front_rear_deterministic_asymmetric_calibration_not_executed',
     );
     expect(readiness.remainingBlockers).toContain(
+      'fr21b_encoded_and_canonical_stage_artifact_lineage_not_independently_verified',
+    );
+    expect(readiness.remainingBlockers).toContain(
       'ordinary_file_upload_cannot_claim_controlled_capture_attestation',
     );
     expect(
@@ -125,6 +128,8 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       .toBe('captured_frame_object_binding_implemented');
     expect(capture.exactRuntimeFrameToConsumerBytesBindingState)
       .toBe('implemented_fail_closed_ephemeral_bridge');
+    expect(capture.calibrationCandidateSessionState)
+      .toBe('implemented_unreviewed_external_artifact_lineage_required');
     expect(capture.ordinaryFileUploadBridgeState)
       .toBe('explicitly_rejected');
     expect(
@@ -146,6 +151,11 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
         .implementedMechanicalGates
         .exactCapturedFrameConsumerByteBinding,
+    ).toBe(true);
+    expect(
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
+        .implementedMechanicalGates
+        .controlledCaptureCalibrationCandidateSession,
     ).toBe(true);
     expect(
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104

@@ -112,6 +112,8 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
         true as const,
       exactCapturedFrameConsumerByteBinding:
         true as const,
+      controlledCaptureCalibrationCandidateSession:
+        true as const,
     }),
 
     controlledCaptureReadiness: Object.freeze({
@@ -132,6 +134,8 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
         'captured_frame_object_binding_implemented' as const,
       exactRuntimeFrameToConsumerBytesBindingState:
         'implemented_fail_closed_ephemeral_bridge' as const,
+      calibrationCandidateSessionState:
+        'implemented_unreviewed_external_artifact_lineage_required' as const,
       ordinaryFileUploadBridgeState:
         'explicitly_rejected' as const,
     }),
@@ -149,6 +153,7 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       'verified_controlled_capture_profile_not_available',
       'runtime_byte_bridge_not_yet_integrated_into_fr104_ear_provider_invocation',
       'fr21b_front_rear_deterministic_asymmetric_calibration_not_executed',
+      'fr21b_encoded_and_canonical_stage_artifact_lineage_not_independently_verified',
       'ordinary_file_upload_cannot_claim_controlled_capture_attestation',
       'runtime_anatomical_side_mapping_not_admitted',
     ] as const),
@@ -196,7 +201,7 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       anatomicalLateralityAuthorized:
         false as const,
       nextGate:
-        'execute_and_review_fr21b_deterministic_asymmetric_front_and_rear_calibration_then_admit_verified_capture_profiles_and_integrate_the_exact_frame_consumer_byte_bridge_into_the_fr104_ear_provider_invocation; ordinary_file_upload_remains_fail_closed' as const,
+        'execute_the_calibration_candidate_session_on_real_front_and_rear_device_captures_then_independently_verify_encoded_and_fr19_canonical_artifact_lineage_review_the_evidence_admit_verified_capture_profiles_and_integrate_the_exact_frame_consumer_byte_bridge_into_the_fr104_ear_provider_invocation; ordinary_file_upload_remains_fail_closed' as const,
     }),
 
     authority: Object.freeze({
