@@ -65,11 +65,11 @@ actual SA-5M claim
 → grounding validation
 → ClaimNarrativeProfile validation
 → model_first_pass
-→ ReadingArtifact(status=ready)
+→ ReadingArtifact(status=ready_with_ambiguity)
 → Product Reading Delivery(state=delivered)
 ```
 
-The final draft, artifact, and delivery all preserve the exact position-only summary and qualifier and contain no prohibited semantic expansion.
+The fixture intentionally leaves `sexForTraditionalCalculation` unspecified, so only `luckCycle` is unavailable and the artifact correctly reports `ready_with_ambiguity`. The spouse-palace claim itself remains grounded in the resolved `pillars.day` fact. The final draft, artifact, and delivery all preserve the exact position-only summary and qualifier and contain no prohibited semantic expansion.
 
 ### 2. Provider failure
 
