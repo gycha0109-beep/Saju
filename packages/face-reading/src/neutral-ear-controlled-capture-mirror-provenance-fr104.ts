@@ -9,6 +9,10 @@ import type {
 import type {
   NeutralEarFrameTransformParityFR104V1,
 } from './neutral-ear-frame-transform-parity-fr104.js';
+import {
+  assertIssuedNeutralEarControlledCaptureRuntimeFrameProfileBindingFR104,
+  type NeutralEarControlledCaptureRuntimeFrameProfileBindingFR104V1,
+} from './neutral-ear-controlled-capture-runtime-frame-binding-fr104.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export type NeutralEarControlledCaptureSourceFR104V1 =
@@ -18,6 +22,8 @@ export type NeutralEarControlledCaptureSourceFR104V1 =
   | Readonly<{
       kind: 'controlled_capture_profile';
       profileRef: string;
+      runtimeFrameProfileBinding?:
+        NeutralEarControlledCaptureRuntimeFrameProfileBindingFR104V1;
     }>;
 
 export type NeutralEarControlledCaptureMirrorProvenanceBlockerFR104V1 =
@@ -25,7 +31,9 @@ export type NeutralEarControlledCaptureMirrorProvenanceBlockerFR104V1 =
   | 'controlled_capture_profile_not_admitted'
   | 'controlled_capture_profile_not_verified'
   | 'controlled_capture_profile_calibration_not_reviewed'
-  | 'exact_runtime_frame_to_profile_binding_not_implemented'
+  | 'runtime_frame_profile_binding_missing'
+  | 'runtime_frame_to_verified_profile_binding_not_verified'
+  | 'captured_frame_to_consumer_bytes_not_independently_verified'
   | 'consumer_frame_reflection_parity_unresolved'
   | 'same_pixel_frame_not_independently_verified';
 
@@ -53,8 +61,15 @@ export interface NeutralEarControlledCaptureMirrorProvenanceFR104V1 {
     readonly allReferencedCalibrationReviewed: boolean;
   };
   readonly exactRuntimeBinding: {
+    readonly capturedFrameObjectBoundToVerifiedProfileImplementation:
+      boolean;
+    readonly consumerFrameBytesBoundToCapturedFrameObjectIndependentlyVerified:
+      false;
     readonly consumerFrameEvidenceBoundToProfileImplementation: false;
-    readonly bindingMechanismState: 'not_implemented';
+    readonly bindingMechanismState:
+      | 'not_applicable_ordinary_file_upload'
+      | 'missing_runtime_binding'
+      | 'mesh6h_front_captured_frame_object_binding_implemented_consumer_bytes_unverified';
   };
   readonly evidenceBinding: {
     readonly frameTransformParityObjectIdentityBound: true;
@@ -133,6 +148,14 @@ export function resolveNeutralEarControlledCaptureMirrorProvenanceFR104(
   let admittedProfileFound = false;
   let profileVerified = false;
   let allReferencedCalibrationReviewed = false;
+  let capturedFrameObjectBoundToVerifiedProfileImplementation = false;
+  let runtimeBindingState:
+    NeutralEarControlledCaptureMirrorProvenanceFR104V1[
+      'exactRuntimeBinding'
+    ]['bindingMechanismState'] =
+      request.source.kind === 'ordinary_file_upload'
+        ? 'not_applicable_ordinary_file_upload'
+        : 'missing_runtime_binding';
 
   if (request.source.kind === 'ordinary_file_upload') {
     blockers.push('ordinary_file_upload_is_not_controlled_capture');
@@ -145,6 +168,32 @@ export function resolveNeutralEarControlledCaptureMirrorProvenanceFR104(
       (entry) => entry.profileRef === profileRef,
     );
     admittedProfileFound = profile !== undefined;
+
+    if (request.source.runtimeFrameProfileBinding === undefined) {
+      blockers.push('runtime_frame_profile_binding_missing');
+    } else {
+      assertIssuedNeutralEarControlledCaptureRuntimeFrameProfileBindingFR104(
+        request.source.runtimeFrameProfileBinding,
+        {
+          profileRef,
+          frameTransformParity: request.frameTransformParity,
+          pixelIdentityEvidence: request.pixelIdentityEvidence,
+        },
+      );
+      runtimeBindingState =
+        'mesh6h_front_captured_frame_object_binding_implemented_consumer_bytes_unverified';
+      capturedFrameObjectBoundToVerifiedProfileImplementation =
+        request.source.runtimeFrameProfileBinding.binding
+          .exactFrameToVerifiedProfileBindingVerified;
+      if (!capturedFrameObjectBoundToVerifiedProfileImplementation) {
+        blockers.push(
+          'runtime_frame_to_verified_profile_binding_not_verified',
+        );
+      }
+      blockers.push(
+        'captured_frame_to_consumer_bytes_not_independently_verified',
+      );
+    }
 
     if (profile === undefined) {
       blockers.push('controlled_capture_profile_not_admitted');
@@ -192,10 +241,6 @@ export function resolveNeutralEarControlledCaptureMirrorProvenanceFR104(
     blockers.push('same_pixel_frame_not_independently_verified');
   }
 
-  blockers.push(
-    'exact_runtime_frame_to_profile_binding_not_implemented',
-  );
-
   const result = Object.freeze({
     schemaVersion:
       'fr104-neutral-ear-controlled-capture-mirror-provenance-v1' as const,
@@ -209,8 +254,11 @@ export function resolveNeutralEarControlledCaptureMirrorProvenanceFR104(
       allReferencedCalibrationReviewed,
     }),
     exactRuntimeBinding: Object.freeze({
+      capturedFrameObjectBoundToVerifiedProfileImplementation,
+      consumerFrameBytesBoundToCapturedFrameObjectIndependentlyVerified:
+        false as const,
       consumerFrameEvidenceBoundToProfileImplementation: false as const,
-      bindingMechanismState: 'not_implemented' as const,
+      bindingMechanismState: runtimeBindingState,
     }),
     evidenceBinding: Object.freeze({
       frameTransformParityObjectIdentityBound: true as const,
@@ -288,9 +336,15 @@ export function assertIssuedNeutralEarControlledCaptureMirrorProvenanceFR104(
     || provenance.subjectRelativeMirrorProvenanceVerified !== false
     || provenance.subjectRelativeSourcePixelMirrorPolicy !== 'unknown'
     || provenance.exactRuntimeBinding
+      .consumerFrameBytesBoundToCapturedFrameObjectIndependentlyVerified
+        !== false
+    || provenance.exactRuntimeBinding
       .consumerFrameEvidenceBoundToProfileImplementation !== false
-    || provenance.exactRuntimeBinding.bindingMechanismState
-      !== 'not_implemented'
+    || ![
+      'not_applicable_ordinary_file_upload',
+      'missing_runtime_binding',
+      'mesh6h_front_captured_frame_object_binding_implemented_consumer_bytes_unverified',
+    ].includes(provenance.exactRuntimeBinding.bindingMechanismState)
   ) {
     fail('issued result authority boundary drift.');
   }
