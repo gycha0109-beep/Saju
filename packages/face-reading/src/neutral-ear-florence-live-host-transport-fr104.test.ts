@@ -188,6 +188,37 @@ describe('FR104 Florence live host transport', () => {
     expect(summary.leftCandidateCount).toBe(2);
   });
 
+  it('explicitly clears pending candidate geometry on aborted downstream orchestration', async () => {
+    const transport =
+      createNeutralEarFlorenceLiveHostTransportFR104({
+        fetchImpl: async () => ({
+          ok: true,
+          status: 200,
+          json: async () => responseFixture(),
+        }),
+      });
+    await transport.hostInvoker({
+      rgbaBytes: new Uint8Array(16),
+      width: 2,
+      height: 2,
+      providerRunRef: 'fr104:live:test:001',
+    });
+
+    expect(
+      transport.discardPendingCandidateSet(
+        'fr104:live:test:001',
+      ),
+    ).toBe(true);
+    expect(
+      transport.discardPendingCandidateSet(
+        'fr104:live:test:001',
+      ),
+    ).toBe(false);
+    expect(() =>
+      transport.takeCandidateSetHandle('fr104:live:test:001'),
+    ).toThrow(/no pending candidate handle/i);
+  });
+
   it('fails closed on model-pin drift and exposes no handle', async () => {
     const fixture = responseFixture();
     fixture.model.revision = 'wrong';
