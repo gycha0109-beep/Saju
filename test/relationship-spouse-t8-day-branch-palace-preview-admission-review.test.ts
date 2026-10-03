@@ -54,7 +54,7 @@ describe('SA-5S position-only spouse Preview admission review', () => {
     ).toContain('RELATIONSHIP_SPOUSE_DOMAIN_CLAIM_REQUIRED');
     expect(
       review.currentPreviewPreparation.executionEligibility.readingExecution,
-    ).toBe('blocked');
+    ).toBe('blocked_coverage');
   });
 
   test('holds Preview admission instead of silently promoting the SA-5R lane to Official Reading', async () => {
