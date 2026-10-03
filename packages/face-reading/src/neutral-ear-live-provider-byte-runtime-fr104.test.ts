@@ -14,6 +14,9 @@ import {
   createNeutralEarFlorenceByteAdapterFR104,
 } from './neutral-ear-provider-byte-adapters-fr104.js';
 import {
+  createNeutralEarFlorenceLocalHttpBindingFR104,
+} from './neutral-ear-florence-local-http-transport-fr104.js';
+import {
   assertIssuedNeutralEarLiveProviderByteRuntimeResultFR104,
   runNeutralEarLiveProviderByteRuntimeFR104,
 } from './neutral-ear-live-provider-byte-runtime-fr104.js';
@@ -261,6 +264,70 @@ describe('FR104 D2B-B1 live provider byte runtime', () => {
         }),
       ).rejects.toThrow(/width \* height \* 4/i);
       expect(hostCalls).toBe(0);
+    });
+  });
+
+  it('clears only the Florence transport blocker for an issued repository-native local binding', async () => {
+    await withFrame(async (handle, frame) => {
+      const localFlorence =
+        createNeutralEarFlorenceLocalHttpBindingFR104({
+          fetchImpl: async (_url, init) => {
+            expect(init?.body).toBeInstanceOf(Uint8Array);
+            return new Response(
+              JSON.stringify({
+                schemaVersion:
+                  'fr104-neutral-ear-florence-host-invocation-result-v1',
+                authorityState:
+                  'provider_candidate_summary_only_no_ear_acceptance',
+                providerRunRef: 'fr104:b1:frame:001',
+                leftPromptStatus: 'unavailable',
+                rightPromptStatus: 'unavailable',
+                leftCandidateCount: 0,
+                rightCandidateCount: 0,
+                promptSideConsumedAsAnatomicalSide: false,
+                rawProviderResponsePersisted: false,
+                rawPolygonBundleReturned: false,
+                validatedExternalEarObservationAuthorized: false,
+                anatomicalLateralityAuthorized: false,
+              }),
+              { status: 200 },
+            );
+          },
+        });
+      const faceLandmarkerAdapter =
+        createNeutralEarFaceLandmarkerByteAdapterFR104({
+          factory: {
+            create: async () => ({
+              detect: () => ({
+                faceLandmarks: [],
+                faceBlendshapes: [],
+                facialTransformationMatrixes: [],
+              }),
+              close: () => undefined,
+            }),
+          },
+          createImageSource: () => ({}),
+        });
+
+      const result = await runNeutralEarLiveProviderByteRuntimeFR104({
+        handle,
+        frame,
+        profileRef: 'fr21b.profile.front.pending',
+        materializeRgbaBytes: () => rgbaFixture(),
+        florenceAdapter: localFlorence.adapter,
+        faceLandmarkerAdapter,
+      });
+
+      expect(result.blockers).not.toContain(
+        'florence_repository_native_live_host_transport_not_implemented',
+      );
+      expect(result.blockers).toContain(
+        'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration',
+      );
+      expect(result.authority.anatomicalLateralityAuthorized)
+        .toBe(false);
+      expect(result.authority.productionAuthorization)
+        .toBe(false);
     });
   });
 
