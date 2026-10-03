@@ -57,7 +57,13 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5R product narrat
     expect(
       result.compliantExecution.narrative?.run.validation.violations,
     ).toEqual([]);
-    expect(result.compliantExecution.artifact?.status).toBe('ready');
+    expect(result.compliantExecution.artifact?.status).toBe(
+      'ready_with_ambiguity',
+    );
+    expect(
+      result.compliantExecution.preparation.composition?.evidence?.bundle
+        .canonicalFacts.some((fact) => fact.ref === 'pillars.day'),
+    ).toBe(true);
 
     expect(result.compliantDelivery.state).toBe('delivered');
     expect(result.compliantDelivery.messageCode).toBe('READING_DELIVERED');
