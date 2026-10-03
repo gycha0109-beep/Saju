@@ -1,6 +1,6 @@
 import type {
-  FR257EphemeralGeometryObservation,
-} from './observable-morphology-capture-geometry-attribution-fr257.js';
+  NeutralEarSameFrameScreenGeometryFR104V1,
+} from './neutral-ear-same-frame-face-envelope-adapter-fr104.js';
 import {
   deriveNeutralEarCandidateShapeEvidenceFR104,
   deriveNeutralEarFaceRelativeEvidenceFR104,
@@ -55,7 +55,7 @@ export interface NeutralEarEphemeralOrchestrationRequestFR104V1 {
     readonly height: number;
   };
   readonly sameFrameAttested: true;
-  readonly geometry: FR257EphemeralGeometryObservation;
+  readonly geometry: NeutralEarSameFrameScreenGeometryFR104V1;
   readonly orientationMirrorProvenance:
     NeutralEarOrientationMirrorProvenanceFR104V1;
 }
