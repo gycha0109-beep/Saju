@@ -112,7 +112,7 @@ const CAPABILITIES: readonly CapabilityObservation[] = Object.freeze([
     key: 'relationship:natal:spouse',
     intent: { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'spouse' },
     profileId: 'myeonghwa-reading-profile-relationship-spouse-natal-v1',
-    consumerAuthority: 'legacy_narrative',
+    consumerAuthority: 'official_reading',
   },
   {
     key: 'family:natal:parents',
@@ -151,6 +151,7 @@ const OFFICIAL_CANARY = Object.freeze([
   'career:natal',
   'wealth:natal',
   'relationship:natal:general',
+  'relationship:natal:spouse',
   'business:natal',
 ] as const);
 
@@ -182,7 +183,7 @@ describe('Saju engine capability inventory observations', () => {
     }
   });
 
-  it('keeps Official consumer authority bounded to the existing Canary five only', () => {
+  it('keeps Official consumer authority bounded to the admitted Preview surface', () => {
     const official = CAPABILITIES.filter(
       (item) => resolvePreviewConsumerReadingAuthorityV1(item.intent).authority === 'official_reading',
     ).map((item) => readingSectionForIntentV1(item.intent));

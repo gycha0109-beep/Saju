@@ -6,7 +6,7 @@ import {
 } from './preview-authority.js';
 
 export const PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION =
-  'myeonghwa-preview-official-reading-consumer-authority-v2' as const;
+  'myeonghwa-preview-official-reading-consumer-authority-v3' as const;
 
 export type PreviewConsumerReadingAuthorityV1 =
   | 'official_reading'

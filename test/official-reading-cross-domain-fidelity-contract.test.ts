@@ -283,7 +283,10 @@ function sorted(values: readonly string[]): readonly string[] {
 describe('cross-domain Official Reading semantic fidelity contract', () => {
   it('keeps the Preview Official Reading surface exactly aligned with the fidelity matrix', () => {
     expect(sorted(PREVIEW_E2E_APPROVAL.officialReadingSections)).toEqual(
-      sorted(DOMAIN_CASES.map((candidate) => candidate.targetSection)),
+      sorted([
+        ...DOMAIN_CASES.map((candidate) => candidate.targetSection),
+        'relationship:natal:spouse',
+      ]),
     );
     expect(PREVIEW_E2E_APPROVAL.lifecycle).toBe('preview');
     expect(PREVIEW_E2E_APPROVAL.productionInterpretationAuthorityGranted).toBe(false);

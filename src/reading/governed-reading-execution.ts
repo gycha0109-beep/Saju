@@ -49,7 +49,7 @@ import {
 import type { ConsumerReadingRequestInput } from './consumer-reading-request-adapter.js';
 
 export const GOVERNED_READING_EXECUTION_VERSION =
-  'myeonghwa-governed-reading-execution-v5';
+  'myeonghwa-governed-reading-execution-v6';
 
 export const LEGACY_NARRATIVE_RUNTIME_VERSION =
   'myeonghwa-legacy-narrative-runtime-v1' as const;
@@ -411,24 +411,41 @@ export async function executeProductReading(
   );
 
   if (consumerReadingAuthority.authority === 'official_reading') {
-    const semanticTextBindings = buildPreviewSemanticTextBindingsV1({
-      intent: preparation.normalization.request.intent,
-      registry,
-      evidence: governedEvidence,
-      targetClaimIds: preparation.composition.selection.targetClaimIds,
-    });
-    const semanticQualifierBindings = buildPreviewSemanticQualifierBindingsV1({
-      intent: preparation.normalization.request.intent,
-      registry,
-      evidence: governedEvidence,
-      targetClaimIds: preparation.composition.selection.targetClaimIds,
-    });
+    const readingSection = readingSectionForIntentV1(
+      preparation.normalization.request.intent,
+    );
+    const semanticProjection =
+      readingSection === 'relationship:natal:spouse'
+        ? await import(
+            '../preview/preview-spouse-official-reading-semantic-projection.js'
+          ).then((module) =>
+            module.buildPreviewSpouseOfficialReadingSemanticProjectionV1({
+              intent: preparation.normalization.request!.intent,
+              registry,
+              evidence: governedEvidence,
+              targetClaimIds: preparation.composition!.selection.targetClaimIds,
+            }),
+          )
+        : {
+            semanticTextBindings: buildPreviewSemanticTextBindingsV1({
+              intent: preparation.normalization.request.intent,
+              registry,
+              evidence: governedEvidence,
+              targetClaimIds: preparation.composition.selection.targetClaimIds,
+            }),
+            semanticQualifierBindings: buildPreviewSemanticQualifierBindingsV1({
+              intent: preparation.normalization.request.intent,
+              registry,
+              evidence: governedEvidence,
+              targetClaimIds: preparation.composition.selection.targetClaimIds,
+            }),
+          };
     const canonicalSemantics = buildCanonicalReadingSemanticBundleV1({
       intent: preparation.normalization.request.intent,
       evidence: governedEvidence,
       targetClaimIds: preparation.composition.selection.targetClaimIds,
-      semanticTextBindings,
-      semanticQualifierBindings,
+      semanticTextBindings: semanticProjection.semanticTextBindings,
+      semanticQualifierBindings: semanticProjection.semanticQualifierBindings,
     });
     const officialReadingPlan = buildOfficialReadingPlanV1(canonicalSemantics);
     const officialReadingReport = canRenderOfficialReadingV1(

@@ -3,9 +3,6 @@ import {
   deterministicContentHash,
 } from '../src/interpretation/rule-registry.js';
 import {
-  PREVIEW_E2E_APPROVAL,
-} from '../src/preview/preview-authority.js';
-import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE_DEFINITION,
 } from '../src/research/relationship-spouse-t8-day-branch-palace-claim-contract-candidate.js';
 import {
@@ -64,21 +61,11 @@ describe('Relationship / Spouse T8 Day-Branch spouse-palace SA-5K narrative and 
     });
   });
 
-  test('proves spouse natal is not an Official Reading Preview section and resolves to legacy_narrative', async () => {
+  test('preserves the historical pre-admission spouse Preview authority state', async () => {
     const result =
       await buildRelationshipSpouseT8DayBranchPalaceNarrativeDeliveryAuthorityReview();
 
     expect(result.readingSection).toBe('relationship:natal:spouse');
-    expect(
-      (PREVIEW_E2E_APPROVAL.supportedReadingSections as readonly string[]).includes(
-        result.readingSection,
-      ),
-    ).toBe(true);
-    expect(
-      (PREVIEW_E2E_APPROVAL.officialReadingSections as readonly string[]).includes(
-        result.readingSection,
-      ),
-    ).toBe(false);
     expect(result.previewConsumerAuthority).toMatchObject({
       readingSection: 'relationship:natal:spouse',
       authority: 'legacy_narrative',

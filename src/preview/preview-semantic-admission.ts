@@ -44,7 +44,7 @@ import {
 export const PREVIEW_SEMANTIC_ADMISSION_SCHEMA_VERSION =
   'myeonghwa-preview-semantic-admission-v1' as const;
 export const PREVIEW_SEMANTIC_ADMISSION_REGISTRY_VERSION =
-  'myeonghwa-preview-semantic-admission-registry-2026-10-03-v5' as const;
+  'myeonghwa-preview-semantic-admission-registry-2026-10-03-v6' as const;
 
 export type PreviewSemanticAdmissionDisposition =
   | 'claim'
@@ -281,7 +281,7 @@ const ENTRIES: readonly PreviewSemanticAdmissionEntryV1[] = Object.freeze([
     semanticScope: 'traditional_spouse_palace_day_branch_position_only',
     disposition: 'claim',
     rationale:
-      'Admits only the governed position-only statement that traditional Myeongri treats the day branch as the spouse-palace position. Preview admission does not promote this claim to Official Reading or Production authority.',
+      'Admits only the governed position-only statement that traditional Myeongri treats the day branch as the spouse-palace position. The exact claim may enter Preview Official Reading while every broader semantic and Production boundary remains closed.',
     boundaries: [
       'POSITION_ONLY',
       'NO_SPOUSE_PERSONALITY_OR_IDENTITY',
@@ -292,8 +292,11 @@ const ENTRIES: readonly PreviewSemanticAdmissionEntryV1[] = Object.freeze([
       'NO_YONGSHIN_JISIN_SEMANTICS',
       'NO_SPOUSE_STAR_AUTO_SELECTION',
       'NO_SECOND_CHART_COMPATIBILITY',
-      'LEGACY_NARRATIVE_PREVIEW_ONLY',
-      'NO_OFFICIAL_READING_PROMOTION',
+      'OFFICIAL_READING_PREVIEW_ALLOWED',
+      'NO_PUBLIC_SEMANTIC_PROMOTION',
+      'NO_PERSISTENCE_PROMOTION',
+      'NO_PUBLIC_GA_PROMOTION',
+      'NO_PRODUCTION_PROMOTION',
     ],
   }),
   entry({
