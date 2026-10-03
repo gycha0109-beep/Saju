@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 import platform
+import re
 import sys
 from pathlib import Path
 from typing import Any, Iterable
@@ -374,6 +375,167 @@ def build_dual_prompt_summary(
     }
 
 
+
+LIVE_HOST_REQUEST_SCHEMA = "fr104-florence-rgba-host-request-v1"
+LIVE_HOST_RESPONSE_SCHEMA = "fr104-neutral-ear-florence-host-invocation-result-v1"
+LIVE_HOST_AUTHORITY_STATE = "provider_candidate_summary_only_no_ear_acceptance"
+LIVE_HOST_RUN_REF = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$")
+
+
+def validate_live_host_request_header(header: Any) -> dict[str, Any]:
+    if not isinstance(header, dict):
+        raise ValueError("live host request header must be a JSON object")
+    expected_keys = {
+        "schemaVersion",
+        "providerRunRef",
+        "width",
+        "height",
+        "byteLength",
+        "pixelFormat",
+    }
+    if set(header.keys()) != expected_keys:
+        raise ValueError("live host request header fields must match the exact v1 contract")
+    if header["schemaVersion"] != LIVE_HOST_REQUEST_SCHEMA:
+        raise ValueError("unsupported live host request schemaVersion")
+    if header["pixelFormat"] != "rgba8":
+        raise ValueError("live host request pixelFormat must be rgba8")
+    provider_run_ref = header["providerRunRef"]
+    if not isinstance(provider_run_ref, str) or not LIVE_HOST_RUN_REF.fullmatch(provider_run_ref):
+        raise ValueError("providerRunRef must be a bounded opaque reference")
+    width = header["width"]
+    height = header["height"]
+    byte_length = header["byteLength"]
+    if (
+        not isinstance(width, int)
+        or isinstance(width, bool)
+        or width <= 0
+        or not isinstance(height, int)
+        or isinstance(height, bool)
+        or height <= 0
+        or not isinstance(byte_length, int)
+        or isinstance(byte_length, bool)
+        or byte_length <= 0
+    ):
+        raise ValueError("width, height, and byteLength must be positive integers")
+    expected_length = width * height * 4
+    if byte_length != expected_length:
+        raise ValueError("byteLength must equal width * height * 4 for rgba8")
+    return {
+        "schemaVersion": LIVE_HOST_REQUEST_SCHEMA,
+        "providerRunRef": provider_run_ref,
+        "width": width,
+        "height": height,
+        "byteLength": byte_length,
+        "pixelFormat": "rgba8",
+    }
+
+
+def live_host_prompt_status(candidate_count: int) -> str:
+    if candidate_count == 0:
+        return "unavailable"
+    if candidate_count == 1:
+        return "candidate_polygon"
+    return "ambiguous"
+
+
+def build_live_host_response(
+    *,
+    provider_run_ref: str,
+    left_candidate_count: int,
+    right_candidate_count: int,
+) -> dict[str, Any]:
+    if left_candidate_count < 0 or right_candidate_count < 0:
+        raise ValueError("candidate counts cannot be negative")
+    return {
+        "schemaVersion": LIVE_HOST_RESPONSE_SCHEMA,
+        "authorityState": LIVE_HOST_AUTHORITY_STATE,
+        "providerRunRef": provider_run_ref,
+        "leftPromptStatus": live_host_prompt_status(left_candidate_count),
+        "rightPromptStatus": live_host_prompt_status(right_candidate_count),
+        "leftCandidateCount": left_candidate_count,
+        "rightCandidateCount": right_candidate_count,
+        "promptSideConsumedAsAnatomicalSide": False,
+        "rawProviderResponsePersisted": False,
+        "rawPolygonBundleReturned": False,
+        "validatedExternalEarObservationAuthorized": False,
+        "anatomicalLateralityAuthorized": False,
+    }
+
+
+def read_exact_stdin_bytes(length: int) -> bytes:
+    remaining = length
+    chunks: list[bytes] = []
+    while remaining > 0:
+        chunk = sys.stdin.buffer.read(remaining)
+        if not chunk:
+            raise ValueError("stdin ended before the declared RGBA byteLength")
+        chunks.append(chunk)
+        remaining -= len(chunk)
+    trailing = sys.stdin.buffer.read(1)
+    if trailing:
+        raise ValueError("stdin contains trailing bytes after the exact RGBA payload")
+    return b"".join(chunks)
+
+
+def run_live_host_once(device_arg: str) -> int:
+    header_line = sys.stdin.buffer.readline()
+    if not header_line:
+        raise ValueError("live host request header line is required")
+    try:
+        header = validate_live_host_request_header(
+            json.loads(header_line.decode("utf-8"))
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ValueError("live host request header must be one UTF-8 JSON line") from error
+
+    rgba = read_exact_stdin_bytes(header["byteLength"])
+    (
+        torch,
+        image_cls,
+        _image_draw,
+        processor,
+        model,
+        device,
+        dtype,
+        _versions,
+    ) = load_runtime(device_arg)
+
+    image = image_cls.frombytes(
+        "RGBA",
+        (header["width"], header["height"]),
+        rgba,
+    ).convert("RGB")
+
+    counts: dict[str, int] = {}
+    for side in ("left", "right"):
+        _generated_text, parsed, _prompt = run_prompt(
+            image=image,
+            prompt_mode="dual_side",
+            side=side,
+            torch=torch,
+            processor=processor,
+            model=model,
+            device=device,
+            dtype=dtype,
+        )
+        polygons = normalize_polygons(
+            parsed,
+            header["width"],
+            header["height"],
+        )
+        _status, accepted, _rejected, _reasons = classify_polygons(polygons)
+        counts[side] = len(accepted)
+
+    response = build_live_host_response(
+        provider_run_ref=header["providerRunRef"],
+        left_candidate_count=counts["left"],
+        right_candidate_count=counts["right"],
+    )
+    sys.stdout.write(json.dumps(response, ensure_ascii=False, separators=(",", ":")) + "\n")
+    sys.stdout.flush()
+    return 0
+
+
 def resolve_images(input_path: Path) -> list[Path]:
     if input_path.is_file():
         if input_path.suffix.lower() not in IMAGE_SUFFIXES:
@@ -715,6 +877,27 @@ def self_test() -> int:
     assert summary["result"]["automaticConsensusAcceptanceAuthorized"] is False
     assert summary["result"]["faceGeometryPlausibilityGateImplemented"] is False
 
+    live_header = validate_live_host_request_header(
+        {
+            "schemaVersion": LIVE_HOST_REQUEST_SCHEMA,
+            "providerRunRef": "fr104:self-test:001",
+            "width": 2,
+            "height": 1,
+            "byteLength": 8,
+            "pixelFormat": "rgba8",
+        }
+    )
+    assert live_header["byteLength"] == 8
+    live_response = build_live_host_response(
+        provider_run_ref="fr104:self-test:001",
+        left_candidate_count=1,
+        right_candidate_count=2,
+    )
+    assert live_response["leftPromptStatus"] == "candidate_polygon"
+    assert live_response["rightPromptStatus"] == "ambiguous"
+    assert live_response["rawPolygonBundleReturned"] is False
+    assert live_response["anatomicalLateralityAuthorized"] is False
+
     print("FR103 Florence-2 dual-prompt ear validation self-test: PASS")
     return 0
 
@@ -755,9 +938,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--qa-overlay", action="store_true")
     parser.add_argument("--device", default="auto")
     parser.add_argument("--self-test", action="store_true")
+    parser.add_argument(
+        "--stdio-rgba-host-once",
+        action="store_true",
+        help=(
+            "Read one exact v1 JSON header line plus raw RGBA8 bytes from stdin, "
+            "run the dual-side Florence candidate path entirely in memory, and "
+            "write one bounded JSON result to stdout."
+        ),
+    )
     args = parser.parse_args()
 
-    if not args.self_test:
+    if not args.self_test and not args.stdio_rgba_host_once:
         if not args.input:
             parser.error("--input is required unless --self-test is used")
         if not args.capture_case:
@@ -768,7 +960,11 @@ def parse_args() -> argparse.Namespace:
 if __name__ == "__main__":
     cli_args = parse_args()
     try:
-        raise SystemExit(self_test() if cli_args.self_test else run(cli_args))
+        if cli_args.self_test:
+            raise SystemExit(self_test())
+        if cli_args.stdio_rgba_host_once:
+            raise SystemExit(run_live_host_once(cli_args.device))
+        raise SystemExit(run(cli_args))
     except Exception as error:
         print(f"FR103 runner failed: {error}", file=sys.stderr)
         raise
