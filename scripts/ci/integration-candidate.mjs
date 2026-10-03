@@ -7,6 +7,43 @@ import process from 'node:process';
 export const integrationContext = 'CI Integration Verify';
 export const integrationLabel = 'ci-integration-ready';
 
+export const mergeabilityRetryCount = 3;
+export const mergeabilityRetryDelayMs = 1500;
+
+const mergeabilityWaitBuffer = new Int32Array(new SharedArrayBuffer(4));
+
+export function sleepForMergeability(ms) {
+  Atomics.wait(mergeabilityWaitBuffer, 0, 0, ms);
+}
+
+export function resolveCandidateMergeability(
+  candidate,
+  current,
+  refetch,
+  {
+    retryCount = mergeabilityRetryCount,
+    wait = sleepForMergeability,
+  } = {},
+) {
+  let resolved = current;
+  for (
+    let attempt = 0;
+    attempt < retryCount && resolved.mergeable === null;
+    attempt += 1
+  ) {
+    wait(mergeabilityRetryDelayMs);
+    resolved = refetch();
+    if (
+      resolved.state !== 'open'
+      || resolved.draft
+      || resolved.head?.sha !== candidate.head
+    ) {
+      break;
+    }
+  }
+  return resolved;
+}
+
 export function assertSubmissionEvent(event, candidate) {
   if (event.action !== 'labeled' || event.label?.name !== integrationLabel) {
     throw new Error('Integration requires the dedicated CI submission label event');
@@ -91,7 +128,12 @@ export function checkCandidate(candidate, repo) {
   if (process.env.GITHUB_EVENT_NAME === 'pull_request') {
     assertSubmissionEvent(JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')), candidate);
   }
-  const current = currentCandidate(repo, candidate.pr);
+  let current = currentCandidate(repo, candidate.pr);
+  current = resolveCandidateMergeability(
+    candidate,
+    current,
+    () => currentCandidate(repo, candidate.pr),
+  );
   validateCandidate(candidate, current);
   if (process.env.GITHUB_EVENT_NAME === 'pull_request') assertRepositoryPrerequisites(repo, current);
   return current;
