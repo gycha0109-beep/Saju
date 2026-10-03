@@ -36,6 +36,12 @@ import {
   BUSINESS_NATAL_READING_METHODOLOGY,
 } from '../research/business-natal-reading-candidate.js';
 import {
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_NARRATIVE_PROFILE_VERSION,
+} from '../research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js';
+import {
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_INTERNAL_REVIEWED_RULE,
+} from '../research/relationship-spouse-t8-day-branch-palace-project-governed-narrative-materialization.js';
+import {
   PREVIEW_E2E_APPROVAL,
   PREVIEW_E2E_AUTHORITY_VERSION,
   type PreviewE2eSupportedReadingSection,
@@ -44,7 +50,7 @@ import {
 export const PREVIEW_SEMANTIC_ADMISSION_SCHEMA_VERSION =
   'myeonghwa-preview-semantic-admission-v1' as const;
 export const PREVIEW_SEMANTIC_ADMISSION_REGISTRY_VERSION =
-  'myeonghwa-preview-semantic-admission-registry-2026-09-23-v4' as const;
+  'myeonghwa-preview-semantic-admission-registry-2026-10-03-v5' as const;
 
 export type PreviewSemanticAdmissionDisposition =
   | 'claim'
@@ -263,6 +269,40 @@ const ENTRIES: readonly PreviewSemanticAdmissionEntryV1[] = Object.freeze([
       'NO_CAREER_SUCCESS_OR_INCOME_OUTCOME',
       'NO_FUTURE_CAREER_TIMING',
       'NO_NUMERIC_SCORING',
+    ],
+  }),
+  entry({
+    admissionId: 'preview-admit-relationship-spouse-day-branch-palace-position-only-v1',
+    researchRef: {
+      researchId:
+        'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE',
+      modulePath:
+        'src/research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.ts',
+      expectedVersion: '1.0.0-research',
+      observedVersion:
+        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_NARRATIVE_PROFILE_VERSION,
+      expectedAuthorityState: 'internal_reviewed',
+      observedAuthorityState:
+        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_INTERNAL_REVIEWED_RULE.quality
+          .reviewerStatus,
+    },
+    targetSections: ['relationship:natal:spouse'],
+    semanticScope: 'traditional_spouse_palace_day_branch_position_only',
+    disposition: 'claim',
+    rationale:
+      'Admits only the governed position-only statement that traditional Myeongri treats the day branch as the spouse-palace position. Preview admission does not promote this claim to Official Reading or Production authority.',
+    boundaries: [
+      'POSITION_ONLY',
+      'NO_SPOUSE_PERSONALITY_OR_IDENTITY',
+      'NO_SPOUSE_APPEARANCE_OR_OCCUPATION',
+      'NO_MARRIAGE_TIMING_OR_OUTCOME',
+      'NO_DIVORCE_OR_REMARRIAGE',
+      'NO_FAVORABLE_UNFAVORABLE_SPOUSE_PALACE_JUDGMENT',
+      'NO_YONGSHIN_JISIN_SEMANTICS',
+      'NO_SPOUSE_STAR_AUTO_SELECTION',
+      'NO_SECOND_CHART_COMPATIBILITY',
+      'LEGACY_NARRATIVE_PREVIEW_ONLY',
+      'NO_OFFICIAL_READING_PROMOTION',
     ],
   }),
   entry({
