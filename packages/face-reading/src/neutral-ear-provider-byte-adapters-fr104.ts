@@ -107,6 +107,10 @@ export type NeutralEarFaceLandmarkerScreenGeometryObserverFR104V1 = (
   }>,
 ) => void;
 
+export type NeutralEarFaceLandmarkerInvocationSummaryObserverFR104V1 = (
+  summary: NeutralEarFaceLandmarkerByteInvocationSummaryFR104V1,
+) => void;
+
 export interface NeutralEarFaceLandmarkerByteAdapterFR104V1 {
   readonly schemaVersion:
     'fr104-neutral-ear-face-landmarker-byte-adapter-v1';
@@ -287,6 +291,8 @@ export function createNeutralEarFaceLandmarkerByteAdapterFR104(
       NeutralEarRgbaImageSourceFactoryFR104V1;
     onEphemeralScreenGeometry?:
       NeutralEarFaceLandmarkerScreenGeometryObserverFR104V1;
+    onInvocationSummary?:
+      NeutralEarFaceLandmarkerInvocationSummaryObserverFR104V1;
   }> = Object.freeze({}),
 ): NeutralEarFaceLandmarkerByteAdapterFR104V1 {
   const factory =
@@ -360,19 +366,23 @@ export function createNeutralEarFaceLandmarkerByteAdapterFR104(
           }));
         }
 
-        return Object.freeze({
-          schemaVersion:
-            'fr104-neutral-ear-face-landmarker-byte-invocation-summary-v1' as const,
-          authorityState:
-            'provider_runtime_invoked_from_exact_rgba_boundary_summary_only' as const,
-          providerRunRef: frame.providerRunRef,
-          faceCount: result.faceLandmarks.length,
-          rawProviderLandmarksReturned: false as const,
-          rawProviderResponsePersisted: false as const,
-          additionalHorizontalMirrorApplied: false as const,
-          additionalRotationApplied: false as const,
-          anatomicalLateralityAuthorized: false as const,
-        });
+        const summary:
+          NeutralEarFaceLandmarkerByteInvocationSummaryFR104V1 =
+          Object.freeze({
+            schemaVersion:
+              'fr104-neutral-ear-face-landmarker-byte-invocation-summary-v1' as const,
+            authorityState:
+              'provider_runtime_invoked_from_exact_rgba_boundary_summary_only' as const,
+            providerRunRef: frame.providerRunRef,
+            faceCount: result.faceLandmarks.length,
+            rawProviderLandmarksReturned: false as const,
+            rawProviderResponsePersisted: false as const,
+            additionalHorizontalMirrorApplied: false as const,
+            additionalRotationApplied: false as const,
+            anatomicalLateralityAuthorized: false as const,
+          });
+        input.onInvocationSummary?.(summary);
+        return summary;
       },
       boundary: Object.freeze({
         repositoryRuntimeFactoryUsed: true as const,
