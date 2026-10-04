@@ -393,8 +393,11 @@ function effectiveSemanticLanes(
     const leftRoot = find(left.unitId);
     const rightRoot = find(right.unitId);
     if (leftRoot === rightRoot) return;
-    const [first, second] = [leftRoot, rightRoot].sort();
-    parent.set(second, first);
+    if (leftRoot.localeCompare(rightRoot) <= 0) {
+      parent.set(rightRoot, leftRoot);
+    } else {
+      parent.set(leftRoot, rightRoot);
+    }
   };
 
   const scenarioUnitsBySemanticKey = new Map<
