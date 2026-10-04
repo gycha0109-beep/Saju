@@ -1,7 +1,6 @@
 /* global Blob, URL, createImageBitmap, document, performance, window */
 
 import {
-  assertFr21bCalibrationRegistriesRemainUnadmittedFR104,
   buildNeutralEarFr21bCalibrationCandidateFR104,
 } from '/face/neutral-ear-controlled-capture-calibration-tooling-fr104.js';
 import {
@@ -249,8 +248,6 @@ function encodedExifOrientation() {
 }
 
 function buildCandidate() {
-  assertFr21bCalibrationRegistriesRemainUnadmittedFR104();
-
   const evidenceRef = nonEmpty(
     elements.evidenceRef,
     'Evidence ref',
@@ -404,4 +401,3 @@ updatePreviewTransform();
 applySuggestedRefs();
 clearCanvas(elements.rawCanvas);
 clearCanvas(elements.encodedCanvas);
-assertFr21bCalibrationRegistriesRemainUnadmittedFR104();
