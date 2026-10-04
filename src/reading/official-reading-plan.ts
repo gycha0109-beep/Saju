@@ -327,13 +327,6 @@ function limitsSection(
   };
 }
 
-function sectionsForBundle(
-  bundle: CanonicalReadingSemanticBundleV1,
-): readonly OfficialReadingPlanSectionV1[] {
-  const sections = [...sectionsForBundle(bundle)];
-  return sections;
-}
-
 function planHashMaterial(
   value: Omit<OfficialReadingPlanV1, 'planId' | 'planHash'>,
 ): Omit<OfficialReadingPlanV1, 'planId' | 'planHash'> {
