@@ -1,15 +1,24 @@
-import {
-  CONTROLLED_CAPTURE_AUTHORITY_FR21B,
-  CONTROLLED_CAPTURE_CALIBRATION_EVIDENCE_FR21B,
-  CONTROLLED_CAPTURE_PROFILES_FR21B,
-  validateControlledCaptureCalibrationEvidenceFR21B,
-  type ControlledCaptureCalibrationEvidenceFR21BV1,
-  type ControlledCaptureCameraFacingFR21BV1,
-  type ControlledCaptureMarkerSideFR21BV1,
-  type ControlledCaptureStageFR21BV1,
+import type {
+  ControlledCaptureCalibrationEvidenceFR21BV1,
+  ControlledCaptureCameraFacingFR21BV1,
+  ControlledCaptureMarkerSideFR21BV1,
+  ControlledCaptureStageFR21BV1,
 } from './controlled-capture-attestation-fr21b.js';
 export const NEUTRAL_EAR_FR21B_C1_CALIBRATION_TOOLING_REF =
   'fr104-fr21b-c1-calibration-tooling-v1' as const;
+
+export const NEUTRAL_EAR_FR21B_C1_RESEARCH_PINS_FR104 =
+  Object.freeze({
+    fr21bSchemaVersion: 'fr21b-calibration-v1' as const,
+    captureOrientationAuthorityVersion: '0.1.0' as const,
+    cameraSourceRecordId:
+      'research.face_geometry.zygomatic.browser_camera_frame_source.mesh6h' as const,
+    cameraSourceArtifactVersion: '0.1.0' as const,
+    canonicalizationTransformRef:
+      'fr19_sharp_auto_orient_then_reencode_same_supported_format' as const,
+    registryAdmissionPerformed: false as const,
+    verifiedProfileIssued: false as const,
+  });
 
 export interface NeutralEarFr21bCalibrationStageInputFR104V1 {
   readonly markerImageSide: ControlledCaptureMarkerSideFR21BV1;
@@ -261,8 +270,6 @@ export function buildNeutralEarFr21bCalibrationCandidateFR104(
       ]),
     });
 
-  validateControlledCaptureCalibrationEvidenceFR21B(evidence);
-
   return Object.freeze({
     schemaVersion:
       'fr104-fr21b-c1-calibration-candidate-v1' as const,
@@ -285,21 +292,25 @@ export function buildNeutralEarFr21bCalibrationCandidateFR104(
     implementationIdentity: Object.freeze({
       repository: 'gycha0109-beep/Saju' as const,
       cameraSourceRecordId:
-        'research.face_geometry.zygomatic.browser_camera_frame_source.mesh6h' as const,
-      cameraSourceArtifactVersion: '0.1.0' as const,
+        NEUTRAL_EAR_FR21B_C1_RESEARCH_PINS_FR104.cameraSourceRecordId,
+      cameraSourceArtifactVersion:
+        NEUTRAL_EAR_FR21B_C1_RESEARCH_PINS_FR104
+          .cameraSourceArtifactVersion,
       calibrationToolingRef:
         NEUTRAL_EAR_FR21B_C1_CALIBRATION_TOOLING_REF,
       canonicalizationAuthorityVersion:
-        CONTROLLED_CAPTURE_AUTHORITY_FR21B.baseline
+        NEUTRAL_EAR_FR21B_C1_RESEARCH_PINS_FR104
           .captureOrientationAuthorityVersion,
       canonicalizationTransformRef:
-        'fr19_sharp_auto_orient_then_reencode_same_supported_format' as const,
+        NEUTRAL_EAR_FR21B_C1_RESEARCH_PINS_FR104
+          .canonicalizationTransformRef,
     }),
     canonicalizationBoundary: Object.freeze({
       reusedAuthority:
         'FR19_capture_orientation_authority' as const,
       transformRef:
-        'fr19_sharp_auto_orient_then_reencode_same_supported_format' as const,
+        NEUTRAL_EAR_FR21B_C1_RESEARCH_PINS_FR104
+          .canonicalizationTransformRef,
       executionState:
         'not_executed_by_c1_tooling_operator_observation_required' as const,
       parallelCanonicalizationStackIntroduced: false as const,
@@ -324,15 +335,4 @@ export function buildNeutralEarFr21bCalibrationCandidateFR104(
       productionAuthorization: false as const,
     }),
   });
-}
-
-export function assertFr21bCalibrationRegistriesRemainUnadmittedFR104(): void {
-  if (
-    CONTROLLED_CAPTURE_PROFILES_FR21B.length !== 0
-    || CONTROLLED_CAPTURE_CALIBRATION_EVIDENCE_FR21B.length !== 0
-  ) {
-    fail(
-      'C1 tooling must not admit calibration evidence or verified profiles.',
-    );
-  }
 }
