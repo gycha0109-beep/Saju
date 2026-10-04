@@ -21,11 +21,15 @@ export const OFFICIAL_READING_RENDERER_VERSION =
   'myeonghwa-official-reading-renderer-v1' as const;
 export const OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION =
   'myeonghwa-official-reading-structural-realization-policy-v1' as const;
+export const OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION =
+  'myeonghwa-official-reading-ordinary-multi-claim-presentation-policy-v1' as const;
 
 export interface OfficialReadingRenderedContentV1 {
   rendererVersion: typeof OFFICIAL_READING_RENDERER_VERSION;
   structuralRealizationPolicyVersion:
     typeof OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION;
+  ordinaryMultiClaimPresentationPolicyVersion:
+    typeof OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION;
   reportId: string;
   reportHash: string;
   sourceSemanticHash: string;
@@ -246,6 +250,20 @@ function structuralUnitText(
   ].join('\n');
 }
 
+function ordinaryRunBlocks(
+  units: readonly CanonicalReadingSemanticUnitV1[],
+): ReadingSectionView['blocks'] {
+  if (units.length <= 1) return primaryBlocks(units);
+
+  const items = units.map(structuralUnitText);
+  if (items.some((item) => item.length === 0)) {
+    throw new TypeError(
+      'Official Reading ordinary multi-claim presentation received an empty canonical unit.',
+    );
+  }
+  return [{ type: 'key_points', items }];
+}
+
 interface StructuralUnitGroup {
   kind: 'scenario' | 'contradiction';
   units: readonly CanonicalReadingSemanticUnitV1[];
@@ -359,13 +377,22 @@ function structurallyPreservedBlocks(
   const groups = structuralGroupsForSection(bundle, units);
   const emittedGroups = new Set<StructuralUnitGroup>();
   const blocks: ReadingSectionView['blocks'][number][] = [];
+  let ordinaryRun: CanonicalReadingSemanticUnitV1[] = [];
+
+  const flushOrdinaryRun = (): void => {
+    if (ordinaryRun.length === 0) return;
+    blocks.push(...ordinaryRunBlocks(ordinaryRun));
+    ordinaryRun = [];
+  };
 
   for (const unit of units) {
     const group = groups.get(unit.unitId);
     if (group === undefined) {
-      blocks.push(...primaryBlocks([unit]));
+      ordinaryRun.push(unit);
       continue;
     }
+
+    flushOrdinaryRun();
     if (emittedGroups.has(group)) continue;
     emittedGroups.add(group);
 
@@ -407,6 +434,7 @@ function structurallyPreservedBlocks(
     });
   }
 
+  flushOrdinaryRun();
   return blocks;
 }
 
@@ -528,6 +556,8 @@ export function renderOfficialReadingV1(
     rendererVersion: OFFICIAL_READING_RENDERER_VERSION,
     structuralRealizationPolicyVersion:
       OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
+    ordinaryMultiClaimPresentationPolicyVersion:
+      OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
     sections,

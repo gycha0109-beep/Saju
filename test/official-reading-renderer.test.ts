@@ -7,6 +7,7 @@ import {
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import {
+  OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
   canRenderOfficialReadingV1,
   renderOfficialReadingV1,
@@ -361,6 +362,128 @@ describe('Official Reading renderer v1', () => {
             text: 'fit headline\nfit summary',
           },
         ],
+      },
+    ]);
+  });
+
+  it('compacts consecutive ordinary claims into one governed key-point list without losing canonical pairs', () => {
+    const alpha = structuredPrimary({
+      claimId: 'ordinary-alpha',
+      subcategory: 'alpha_conclusion',
+      claimType: 'GENERAL_ALPHA_CONCLUSION',
+      headline: '알파 핵심',
+      summary: '알파 설명',
+    });
+    const zeta = structuredPrimary({
+      claimId: 'ordinary-zeta',
+      subcategory: 'zeta_conclusion',
+      claimType: 'GENERAL_ZETA_CONCLUSION',
+      headline: '제타 핵심',
+      summary: '제타 설명',
+    });
+    const bundle = structuredSemantics([zeta, alpha]);
+    const rendered = renderOfficialReadingV1(
+      bundle,
+      buildOfficialReadingPlanV1(bundle),
+    );
+    const interpretation = rendered.sections.find(
+      (section) => section.title === '주요 해석',
+    );
+
+    expect(OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION).toBe(
+      'myeonghwa-official-reading-ordinary-multi-claim-presentation-policy-v1',
+    );
+    expect(rendered.ordinaryMultiClaimPresentationPolicyVersion).toBe(
+      OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
+    );
+    expect(interpretation?.blocks).toEqual([
+      {
+        type: 'key_points',
+        items: ['알파 핵심\n알파 설명', '제타 핵심\n제타 설명'],
+      },
+    ]);
+  });
+
+  it('compacts only consecutive ordinary runs and keeps structural groups at their governed position', () => {
+    const claims = [
+      structuredPrimary({
+        claimId: 'run-left-a',
+        subcategory: 'alpha_a_conclusion',
+        claimType: 'GENERAL_ALPHA_A_CONCLUSION',
+        headline: '왼쪽 A 핵심',
+        summary: '왼쪽 A 설명',
+      }),
+      structuredPrimary({
+        claimId: 'run-left-b',
+        subcategory: 'alpha_b_conclusion',
+        claimType: 'GENERAL_ALPHA_B_CONCLUSION',
+        headline: '왼쪽 B 핵심',
+        summary: '왼쪽 B 설명',
+      }),
+      structuredPrimary({
+        claimId: 'run-conflict-a',
+        subcategory: 'beta_conclusion',
+        claimType: 'GENERAL_BETA_CONCLUSION',
+        headline: '충돌 A 핵심',
+        summary: '충돌 A 설명',
+      }),
+      structuredPrimary({
+        claimId: 'run-conflict-b',
+        subcategory: 'gamma_conclusion',
+        claimType: 'GENERAL_GAMMA_CONCLUSION',
+        headline: '충돌 B 핵심',
+        summary: '충돌 B 설명',
+      }),
+      structuredPrimary({
+        claimId: 'run-right-a',
+        subcategory: 'zeta_a_conclusion',
+        claimType: 'GENERAL_ZETA_A_CONCLUSION',
+        headline: '오른쪽 A 핵심',
+        summary: '오른쪽 A 설명',
+      }),
+      structuredPrimary({
+        claimId: 'run-right-b',
+        subcategory: 'zeta_b_conclusion',
+        claimType: 'GENERAL_ZETA_B_CONCLUSION',
+        headline: '오른쪽 B 핵심',
+        summary: '오른쪽 B 설명',
+      }),
+    ];
+    const bundle = structuredSemantics(
+      [...claims].reverse(),
+      [
+        {
+          relationId: 'run-conflict',
+          fromClaimId: 'run-conflict-a',
+          toClaimId: 'run-conflict-b',
+          relation: 'contradicts',
+        },
+      ],
+    );
+    const rendered = renderOfficialReadingV1(
+      bundle,
+      buildOfficialReadingPlanV1(bundle),
+    );
+    const interpretation = rendered.sections.find(
+      (section) => section.title === '주요 해석',
+    );
+
+    expect(interpretation?.blocks).toEqual([
+      {
+        type: 'key_points',
+        items: ['왼쪽 A 핵심\n왼쪽 A 설명', '왼쪽 B 핵심\n왼쪽 B 설명'],
+      },
+      {
+        type: 'comparison',
+        title: '함께 보존되는 상반된 해석',
+        perspectives: [
+          { label: '관점 1', text: '충돌 A 핵심\n충돌 A 설명' },
+          { label: '관점 2', text: '충돌 B 핵심\n충돌 B 설명' },
+        ],
+      },
+      {
+        type: 'key_points',
+        items: ['오른쪽 A 핵심\n오른쪽 A 설명', '오른쪽 B 핵심\n오른쪽 B 설명'],
       },
     ]);
   });
