@@ -14,6 +14,7 @@ import {
   type OfficialReadingPlanSectionV1,
   type OfficialReadingPlanV1,
   type OfficialReadingSemanticGroup,
+  type OfficialReadingSemanticLane,
 } from './official-reading-plan.js';
 
 export const OFFICIAL_READING_RENDERER_VERSION =
@@ -68,6 +69,26 @@ const SECTION_TITLES: Readonly<
   }),
 });
 
+const LANE_TITLES: Readonly<Record<OfficialReadingSemanticLane, string>> =
+  Object.freeze({
+    'career.driver': '일의 동력',
+    'career.fit': '맞는 역할·조건',
+    'career.environment': '업무 환경',
+    'career.friction': '일의 마찰',
+    'relationship.closeness': '가까워지는 방식',
+    'relationship.expression': '표현과 소통',
+    'relationship.values': '관계에서 중요하게 보는 기준',
+    'relationship.boundary': '경계와 책임',
+    'relationship.friction': '관계의 마찰',
+    'business.decision_execution': '판단과 실행',
+    'business.uncertainty': '불확실성 다루기',
+    'business.allocation': '자원 배분',
+    'business.accountability': '책임과 기준',
+    'business.partnership': '파트너십',
+    'business.pressure': '운영 압박',
+    'business.friction': '사업상의 마찰',
+  });
+
 const LIMIT_LABELS: Readonly<Record<string, string>> = Object.freeze({
   netWorthAuthorized: '현재 재산 규모',
   investmentReturnAuthorized: '투자 수익률',
@@ -89,9 +110,15 @@ const LIMIT_LABELS: Readonly<Record<string, string>> = Object.freeze({
 function titleFor(
   domain: CanonicalReadingSemanticBundleV1['intent']['domain'],
   group: OfficialReadingSemanticGroup,
+  lane: OfficialReadingSemanticLane | undefined,
 ): string {
+  if (lane !== undefined) return LANE_TITLES[lane];
   const domainTitles =
-    domain === 'general' ? SECTION_TITLES.general : domain === 'wealth' ? SECTION_TITLES.wealth : SECTION_TITLES.default;
+    domain === 'general'
+      ? SECTION_TITLES.general
+      : domain === 'wealth'
+        ? SECTION_TITLES.wealth
+        : SECTION_TITLES.default;
   return domainTitles[group] ?? SECTION_TITLES.default[group] ?? '주요 해석';
 }
 
@@ -476,7 +503,11 @@ export function renderOfficialReadingV1(
     sections.push({
       sectionId: section.sectionId,
       sectionType: sectionTypeFor(section.semanticGroup),
-      title: titleFor(bundle.intent.domain, section.semanticGroup),
+      title: titleFor(
+        bundle.intent.domain,
+        section.semanticGroup,
+        section.semanticLane,
+      ),
       blocks,
       state: 'complete',
       explainabilityRefs: [explainability.explainabilityRef],
