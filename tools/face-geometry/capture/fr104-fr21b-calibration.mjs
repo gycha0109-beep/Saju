@@ -201,8 +201,7 @@ async function captureFrame() {
   const providerRunRef =
     `fr104:calibration:${facing}:frame:${captureOrdinal}`;
   const iterator = camera
-    .createSweepFrameSource(singleTrigger(providerRunRef))
-    [Symbol.asyncIterator]();
+    .createSweepFrameSource(singleTrigger(providerRunRef))[Symbol.asyncIterator]();
 
   const next = await iterator.next();
   if (next.done) {
