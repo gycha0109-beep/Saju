@@ -69,9 +69,9 @@ function availableMaterialization(
       axisConvention:
         'x_right_y_down_unit_square',
       selectionRule:
-        'arc_length_weighted_vertical_coordinate_over_visible_boundary_segments',
+        'arc_length_weighted_y_centroid_of_explicitly_visible_boundary_polyline',
       visibilitySemantics:
-        'visible_hair_skin_boundary_segments_only_no_hidden_completion',
+        'visible_segments_only_no_hidden_completion',
       failClosedWhenUnavailable: true,
       crossAnchorSpanReady: false,
       crossAnchorSpanBlocker:
@@ -79,14 +79,24 @@ function availableMaterialization(
       bridgeReviewState:
         'neutral_observation_ready_for_explicit_binding_review_but_cross_anchor_span_blocked',
       source: {
-        admissionReceiptVerified: true,
-        exactModelIdentityAndRevisionMatched: true,
-        visibleBoundaryObservationConsumed: true,
+        modelId: 'microsoft/Florence-2-base',
+        exactRevision:
+          '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+        targetClass:
+          'visible_hair_skin_boundary_segmentation',
+        coordinateFrame:
+          'canonical_image_normalized_2d',
+        axisConvention:
+          'x_right_y_down_unit_square',
+        visibilityHandlingValidated: true,
+        occlusionHandlingValidated: true,
+        hiddenHairlineCompletionAllowed: false,
+        faceOvalSubstitutionAllowed: false,
+        faceMeshTopVertexSubstitutionAllowed: false,
+        sourceImageDigestRetainedInternally: true,
+        sourceImageDigestExposed: false,
         sourceObservationRefsRetainedInternally: true,
         sourceObservationRefsExposed: false,
-        sourceImageDigestExposed: false,
-        rawBoundaryPolylineExposed: false,
-        providerSpecificIndicesExposed: false,
         traditionalSemanticsExposed: false,
       },
       authorityBoundary: {
@@ -94,7 +104,10 @@ function availableMaterialization(
         anatomicalHairlineGroundTruthIssued: false,
         traditionalHairlineEquivalenceIssued: false,
         traditionalBindingIssued: false,
-        commonFrameBridgeIssued: false,
+        hiddenHairlineCompletionIssued: false,
+        faceOvalHairlineSubstitutionIssued: false,
+        faceMeshTopVertexHairlineSubstitutionIssued: false,
+        canonicalMetricXYRelabelingIssued: false,
         crossFrameSubtractionAllowed: false,
         threeDivisionsBoundaryIssued: false,
         threeDivisionsSpanIssued: false,
