@@ -11,6 +11,7 @@ import {
   type OfficialReadingPlanV1,
 } from './official-reading-plan.js';
 import {
+  OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_RENDERER_VERSION,
   OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
   type OfficialReadingRenderedContentV1,
