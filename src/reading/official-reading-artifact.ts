@@ -13,7 +13,7 @@ import {
 import {
   OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_RENDERER_VERSION,
-  OFFICIAL_READING_STRUCTURAL_INSIGHT_MATERIALIZATION_POLICY_VERSION,
+  OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
   type OfficialReadingRenderedContentV1,
 } from './official-reading-renderer.js';
@@ -79,7 +79,7 @@ function assertReportBinding(
   }
   if (
     report.structuredInsightMaterializationPolicyVersion !==
-    OFFICIAL_READING_STRUCTURAL_INSIGHT_MATERIALIZATION_POLICY_VERSION
+    OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION
   ) {
     throw new TypeError(
       'Official Reading artifact received an unsupported structured insight materialization policy version.',
