@@ -209,6 +209,9 @@ jobs:
           node --check scripts/run-fr104-provider-composed-orientation-validation.mjs
           node --check scripts/admit-fr104-provider-composed-orientation-result.mjs
 
+      - name: Syntax-check FR104 FR21b calibration client
+        run: node --check tools/face-geometry/capture/fr104-fr21b-calibration.mjs
+
       - name: Syntax-check FR104 U4A controlled anatomical mapping audit
         run: |
           node --check scripts/analyze-fr104-controlled-anatomical-side-mapping.mjs
