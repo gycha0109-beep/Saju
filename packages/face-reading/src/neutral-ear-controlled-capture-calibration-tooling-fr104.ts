@@ -1,4 +1,5 @@
 import {
+  CONTROLLED_CAPTURE_AUTHORITY_FR21B,
   CONTROLLED_CAPTURE_CALIBRATION_EVIDENCE_FR21B,
   CONTROLLED_CAPTURE_PROFILES_FR21B,
   validateControlledCaptureCalibrationEvidenceFR21B,
@@ -7,14 +8,6 @@ import {
   type ControlledCaptureMarkerSideFR21BV1,
   type ControlledCaptureStageFR21BV1,
 } from './controlled-capture-attestation-fr21b.js';
-import {
-  CAPTURE_ORIENTATION_AUTHORITY_FR19,
-} from './capture-orientation-authority-fr19.js';
-import {
-  MESH6H_BROWSER_CAMERA_ADAPTER_RECORD_ID,
-} from './mesh6h-browser-camera-frame-source.js';
-import { FaceAuthorityValidationError } from './validation.js';
-
 export const NEUTRAL_EAR_FR21B_C1_CALIBRATION_TOOLING_REF =
   'fr104-fr21b-c1-calibration-tooling-v1' as const;
 
@@ -65,19 +58,19 @@ export interface NeutralEarFr21bCalibrationCandidateFR104V1 {
   readonly implementationIdentity: {
     readonly repository: 'gycha0109-beep/Saju';
     readonly cameraSourceRecordId:
-      typeof MESH6H_BROWSER_CAMERA_ADAPTER_RECORD_ID;
+      'research.face_geometry.zygomatic.browser_camera_frame_source.mesh6h';
     readonly cameraSourceArtifactVersion: '0.1.0';
     readonly calibrationToolingRef:
       typeof NEUTRAL_EAR_FR21B_C1_CALIBRATION_TOOLING_REF;
     readonly canonicalizationAuthorityVersion: string;
-    readonly canonicalizationOperation:
-      typeof CAPTURE_ORIENTATION_AUTHORITY_FR19.canonicalization.operation;
+    readonly canonicalizationTransformRef:
+      'fr19_sharp_auto_orient_then_reencode_same_supported_format';
   };
   readonly canonicalizationBoundary: {
     readonly reusedAuthority:
       'FR19_capture_orientation_authority';
-    readonly operation:
-      typeof CAPTURE_ORIENTATION_AUTHORITY_FR19.canonicalization.operation;
+    readonly transformRef:
+      'fr19_sharp_auto_orient_then_reencode_same_supported_format';
     readonly executionState:
       'not_executed_by_c1_tooling_operator_observation_required';
     readonly parallelCanonicalizationStackIntroduced: false;
@@ -110,8 +103,12 @@ const STAGE_ORDER = Object.freeze([
   'canonical_pixels',
 ] as const satisfies readonly ControlledCaptureStageFR21BV1[]);
 
+class Fr21bCalibrationToolingValidationError extends Error {
+  override readonly name = 'Fr21bCalibrationToolingValidationError';
+}
+
 function fail(message: string): never {
-  throw new FaceAuthorityValidationError(
+  throw new Fr21bCalibrationToolingValidationError(
     `FR-104 FR21B C1 calibration tooling ${message}`,
   );
 }
@@ -288,20 +285,21 @@ export function buildNeutralEarFr21bCalibrationCandidateFR104(
     implementationIdentity: Object.freeze({
       repository: 'gycha0109-beep/Saju' as const,
       cameraSourceRecordId:
-        MESH6H_BROWSER_CAMERA_ADAPTER_RECORD_ID,
+        'research.face_geometry.zygomatic.browser_camera_frame_source.mesh6h' as const,
       cameraSourceArtifactVersion: '0.1.0' as const,
       calibrationToolingRef:
         NEUTRAL_EAR_FR21B_C1_CALIBRATION_TOOLING_REF,
       canonicalizationAuthorityVersion:
-        CAPTURE_ORIENTATION_AUTHORITY_FR19.authorityVersion,
-      canonicalizationOperation:
-        CAPTURE_ORIENTATION_AUTHORITY_FR19.canonicalization.operation,
+        CONTROLLED_CAPTURE_AUTHORITY_FR21B.baseline
+          .captureOrientationAuthorityVersion,
+      canonicalizationTransformRef:
+        'fr19_sharp_auto_orient_then_reencode_same_supported_format' as const,
     }),
     canonicalizationBoundary: Object.freeze({
       reusedAuthority:
         'FR19_capture_orientation_authority' as const,
-      operation:
-        CAPTURE_ORIENTATION_AUTHORITY_FR19.canonicalization.operation,
+      transformRef:
+        'fr19_sharp_auto_orient_then_reencode_same_supported_format' as const,
       executionState:
         'not_executed_by_c1_tooling_operator_observation_required' as const,
       parallelCanonicalizationStackIntroduced: false as const,
