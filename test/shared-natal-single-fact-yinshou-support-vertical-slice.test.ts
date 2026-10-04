@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { ambiguous, resolved, unavailable } from '../src/contracts/common.js';
+import {
+  ambiguous,
+  resolved,
+  unavailable,
+  type FactState,
+} from '../src/contracts/common.js';
 import type {
   CanonicalSajuSnapshot,
   EarthlyBranch,
@@ -24,6 +29,10 @@ import {
   SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_RESEARCH_EVIDENCE_RUNTIME_ADAPTER,
   validateSharedNatalSingleFactYinshouSupportResearchEvidence,
 } from '../src/research/shared-natal-single-fact-yinshou-support-research-evidence-adapter.js';
+import type {
+  SharedNatalSuppliedSingleTenGodFactBindingInput,
+  SharedNatalSuppliedSingleTenGodSourceFactRef,
+} from '../src/research/shared-natal-supplied-single-ten-god-fact-binding.js';
 import {
   createSharedNatalSingleFactYinshouSupportResearchRegistry,
   SHARED_NATAL_SINGLE_FACT_JEONGIN_YINSHOU_SUPPORT_CLAIM_VALUE,
@@ -166,16 +175,47 @@ function snapshot(
   };
 }
 
+function suppliedBinding(
+  base: CanonicalSajuSnapshot,
+  sourceFactRef: SharedNatalSuppliedSingleTenGodSourceFactRef,
+): SharedNatalSuppliedSingleTenGodFactBindingInput {
+  if (base.derivedFacts.tenGods.status !== 'resolved') {
+    throw new Error('synthetic Ten-God chart must be resolved for caller binding');
+  }
+
+  const chart = base.derivedFacts.tenGods.value;
+  const rawFact =
+    sourceFactRef === 'derivedFacts.tenGods.year.stem'
+      ? chart.year.stem
+      : sourceFactRef === 'derivedFacts.tenGods.month.stem'
+        ? chart.month.stem
+        : chart.hour.stem;
+
+  if (rawFact === undefined) {
+    throw new Error('synthetic caller binding source fact missing');
+  }
+
+  if (rawFact.status === 'resolved' && rawFact.value === '일간') {
+    throw new Error('synthetic caller binding source is not a Ten-God fact');
+  }
+
+  return {
+    sourceFactRef,
+    fact: rawFact as FactState<TenGod>,
+  };
+}
+
 function evidence(
   base: CanonicalSajuSnapshot,
-  slot: 'year' | 'month' | 'hour',
+  sourceFactRef: SharedNatalSuppliedSingleTenGodSourceFactRef,
 ) {
-  const built =
-    buildSharedNatalSingleFactYinshouSupportResearchEvidence(base, slot);
+  const built = buildSharedNatalSingleFactYinshouSupportResearchEvidence(
+    base,
+    suppliedBinding(base, sourceFactRef),
+  );
   if (built.status !== 'resolved') throw new Error(built.reasonCode);
   return built.envelope;
 }
-
 function runtimeRegistry() {
   return createResearchEvidenceRuntimeRegistry([
     SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_RESEARCH_EVIDENCE_RUNTIME_ADAPTER,
@@ -187,16 +227,18 @@ describe('SAJU-R9 single-fact Yinshou support constituent vertical slice', () =>
     ['정인', '正印'],
     ['편인', '偏印'],
   ] as const)(
-    'materializes selected resolved %s as exactly one 印綬 support constituent',
+    'materializes caller-supplied resolved %s as exactly one 印綬 support constituent',
     (canonical, sourceLabel) => {
       const base = snapshot(
         tenGodChart('비견', canonical, '정관'),
         canonical === '정인' ? '1' : '2',
       );
-      const envelope = evidence(base, 'month');
+      const envelope = evidence(base, 'derivedFacts.tenGods.month.stem');
 
-      expect(envelope.payload.selectedPillarSlot).toBe('month');
-      expect(envelope.payload.selectedCanonicalTenGod).toBe(canonical);
+      expect(envelope.payload.sourceFactRef).toBe(
+        'derivedFacts.tenGods.month.stem',
+      );
+      expect(envelope.payload.boundCanonicalTenGod).toBe(canonical);
       expect(envelope.payload.membershipEvaluation).toMatchObject({
         state: 'yinshou_source_category_member_observed',
         canonicalLabel: canonical,
@@ -220,19 +262,19 @@ describe('SAJU-R9 single-fact Yinshou support constituent vertical slice', () =>
         false,
       );
       expect(
-        envelope.payload.constraints.selectedPositionSemanticWeightAuthorized,
+        envelope.payload.constraints.sourceFactRefSemanticWeightAuthorized,
       ).toBe(false);
     },
   );
 
-  test('does not scan another pillar when the caller-selected fact is outside Yinshou scope', () => {
+  test('does not scan another fact when the caller-supplied bound fact is outside Yinshou scope', () => {
     const base = snapshot(
       tenGodChart('비견', '정인', '정관'),
       '3',
     );
-    const envelope = evidence(base, 'year');
+    const envelope = evidence(base, 'derivedFacts.tenGods.year.stem');
 
-    expect(envelope.payload.selectedCanonicalTenGod).toBe('비견');
+    expect(envelope.payload.boundCanonicalTenGod).toBe('비견');
     expect(envelope.payload.membershipEvaluation.state).toBe(
       'resolved_outside_authorized_yin_label_scope',
     );
@@ -260,11 +302,14 @@ describe('SAJU-R9 single-fact Yinshou support constituent vertical slice', () =>
     expect(
       buildSharedNatalSingleFactYinshouSupportResearchEvidence(
         outerUnavailable,
-        'month',
+        {
+          sourceFactRef: 'derivedFacts.tenGods.month.stem',
+          fact: resolved('정인'),
+        },
       ),
     ).toEqual({
       status: 'unavailable',
-      reasonCode: 'single-fact-yinshou-support-ten-god-chart-unresolved',
+      reasonCode: 'single-canonical-ten-god-binding-ten-god-chart-unresolved',
     });
 
     const chart = tenGodChart('비견', '정인', '정관');
@@ -297,12 +342,33 @@ describe('SAJU-R9 single-fact Yinshou support constituent vertical slice', () =>
     expect(
       buildSharedNatalSingleFactYinshouSupportResearchEvidence(
         selectedAmbiguous,
-        'month',
+        suppliedBinding(
+          selectedAmbiguous,
+          'derivedFacts.tenGods.month.stem',
+        ),
       ),
     ).toEqual({
       status: 'unavailable',
       reasonCode:
-        'single-fact-yinshou-support-selected-visible-stem-fact-unresolved',
+        'single-fact-yinshou-support-supplied-fact-unresolved',
+    });
+  });
+
+  test('rejects a caller-supplied fact that does not match its exact snapshot source ref', () => {
+    const base = snapshot(
+      tenGodChart('비견', '정인', '정관'),
+      '9',
+    );
+
+    expect(
+      buildSharedNatalSingleFactYinshouSupportResearchEvidence(base, {
+        sourceFactRef: 'derivedFacts.tenGods.month.stem',
+        fact: resolved('편인'),
+      }),
+    ).toEqual({
+      status: 'unavailable',
+      reasonCode:
+        'single-canonical-ten-god-binding-supplied-fact-mismatch',
     });
   });
 
@@ -311,7 +377,7 @@ describe('SAJU-R9 single-fact Yinshou support constituent vertical slice', () =>
       tenGodChart('비견', '정인', '정관'),
       '5',
     );
-    const original = evidence(base, 'month');
+    const original = evidence(base, 'derivedFacts.tenGods.month.stem');
 
     expect(runtimeRegistry().validate(original, base).status).toBe('validated');
 
@@ -358,7 +424,7 @@ describe('SAJU-R9 single-fact Yinshou support constituent vertical slice', () =>
         tenGodChart('비견', canonical, '정관'),
         canonical === '정인' ? '6' : '7',
       );
-      const envelope = evidence(base, 'month');
+      const envelope = evidence(base, 'derivedFacts.tenGods.month.stem');
       const registry =
         createSharedNatalSingleFactYinshouSupportResearchRegistry(
           '2026-10-04T03:26:00.000Z',
@@ -393,7 +459,7 @@ describe('SAJU-R9 single-fact Yinshou support constituent vertical slice', () =>
       expect(
         Object.prototype.hasOwnProperty.call(
           result.claims[0]?.value,
-          'selectedPillarSlot',
+          'sourceFactRef',
         ),
       ).toBe(false);
     },
@@ -404,7 +470,7 @@ describe('SAJU-R9 single-fact Yinshou support constituent vertical slice', () =>
       tenGodChart('비견', '정재', '정관'),
       '8',
     );
-    const envelope = evidence(base, 'month');
+    const envelope = evidence(base, 'derivedFacts.tenGods.month.stem');
     const registry =
       createSharedNatalSingleFactYinshouSupportResearchRegistry(
         '2026-10-04T03:26:00.000Z',
@@ -457,8 +523,9 @@ describe('SAJU-R9 single-fact Yinshou support constituent vertical slice', () =>
       runtimeScope: 'isolated_research_pack_only',
       exactR9EvidenceBindingRequired: true,
       callerSuppliedSingleFactBindingRequired: true,
+      callerSuppliedSourceFactRefRequired: true,
       internalPillarSelectionAuthorized: false,
-      selectedPositionSemanticWeightAuthorized: false,
+      sourceFactRefSemanticWeightAuthorized: false,
       wholeChartYinScanAuthorized: false,
       wholeChartYinCountAuthorized: false,
       branchTenGodScanAuthorized: false,

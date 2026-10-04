@@ -1,3 +1,4 @@
+import type { FactState } from '../contracts/common.js';
 import type {
   CanonicalSajuSnapshot,
   TenGod,
@@ -21,6 +22,14 @@ import {
   GENERAL_NATAL_YINSHOU_DANG_ZHONG_SUPPORT_CONSTITUENT_AUTHORITY,
   type YinshouDangZhongSupportConstituentEvaluation,
 } from './general-natal-yinshou-dang-zhong-support-constituent-authority.js';
+import {
+  bindSuppliedSingleCanonicalTenGodFactToSnapshot,
+  isSharedNatalSuppliedSingleTenGodSourceFactRef,
+  SHARED_NATAL_SUPPLIED_SINGLE_TEN_GOD_FACT_BINDING_AUTHORITY,
+  type SharedNatalSuppliedSingleTenGodFactBindingInput,
+  type SharedNatalSuppliedSingleTenGodFactBindingUnavailableReason,
+  type SharedNatalSuppliedSingleTenGodSourceFactRef,
+} from './shared-natal-supplied-single-ten-god-fact-binding.js';
 
 export const SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_RESEARCH_EVIDENCE_VERSION =
   'myeonghwa-shared-natal-single-fact-yinshou-support-evidence-v1' as const;
@@ -28,20 +37,20 @@ export const SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_RESEARCH_EVIDENCE_VERSION 
 export const SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_RESEARCH_EVIDENCE_TYPE =
   'SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_CONSTITUENT_EVIDENCE' as const;
 
-export type SelectedVisibleTenGodStemSlot = 'year' | 'month' | 'hour';
-
 export interface SharedNatalSingleFactYinshouSupportResearchEvidencePayload {
   readonly evidenceVersion: typeof SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_RESEARCH_EVIDENCE_VERSION;
   readonly snapshotId: string;
-  readonly selectedPillarSlot: SelectedVisibleTenGodStemSlot;
-  readonly selectedCanonicalTenGod: TenGod;
+  readonly sourceFactRef: SharedNatalSuppliedSingleTenGodSourceFactRef;
+  readonly boundCanonicalFact: FactState<TenGod>;
+  readonly boundCanonicalTenGod: TenGod;
   readonly membershipEvaluation: CanonicalYinshouCategoryMemberEvaluation;
   readonly supportEvaluation: YinshouDangZhongSupportConstituentEvaluation;
   readonly supportConstituentObserved: boolean;
   readonly constraints: {
     readonly callerSuppliedSingleFactBindingRequired: true;
+    readonly callerSuppliedSourceFactRefRequired: true;
     readonly internalPillarSelectionAuthorized: false;
-    readonly selectedPositionSemanticWeightAuthorized: false;
+    readonly sourceFactRefSemanticWeightAuthorized: false;
     readonly wholeChartYinScanAuthorized: false;
     readonly wholeChartYinCountAuthorized: false;
     readonly branchTenGodScanAuthorized: false;
@@ -93,11 +102,9 @@ export type SharedNatalSingleFactYinshouSupportResearchEvidenceBuildResult =
   | {
       readonly status: 'unavailable';
       readonly reasonCode:
+        | SharedNatalSuppliedSingleTenGodFactBindingUnavailableReason
         | 'single-fact-yinshou-support-scenario-materialization-required'
-        | 'single-fact-yinshou-support-ten-god-chart-unresolved'
-        | 'single-fact-yinshou-support-selected-visible-stem-fact-missing'
-        | 'single-fact-yinshou-support-selected-visible-stem-fact-unresolved'
-        | 'single-fact-yinshou-support-selected-visible-stem-semantic-mismatch'
+        | 'single-fact-yinshou-support-supplied-fact-unresolved'
         | 'single-fact-yinshou-support-upstream-parity-unresolved';
     };
 
@@ -106,17 +113,14 @@ type ReproductionResult =
       readonly status: 'resolved';
       readonly payload: SharedNatalSingleFactYinshouSupportResearchEvidencePayload;
     }
-  | Exclude<SharedNatalSingleFactYinshouSupportResearchEvidenceBuildResult, { status: 'resolved' }>;
-
-function isSelectedVisibleTenGodStemSlot(
-  value: unknown,
-): value is SelectedVisibleTenGodStemSlot {
-  return value === 'year' || value === 'month' || value === 'hour';
-}
+  | Exclude<
+      SharedNatalSingleFactYinshouSupportResearchEvidenceBuildResult,
+      { status: 'resolved' }
+    >;
 
 function reproducePayload(
   snapshot: CanonicalSajuSnapshot,
-  selectedPillarSlot: SelectedVisibleTenGodStemSlot,
+  bindingInput: SharedNatalSuppliedSingleTenGodFactBindingInput,
 ): ReproductionResult {
   if (snapshot.scenarios.length > 0) {
     return {
@@ -125,42 +129,23 @@ function reproducePayload(
     };
   }
 
-  if (snapshot.derivedFacts.tenGods.status !== 'resolved') {
+  const bound = bindSuppliedSingleCanonicalTenGodFactToSnapshot(
+    snapshot,
+    bindingInput,
+  );
+  if (bound.status !== 'resolved') return bound;
+
+  const boundCanonicalFact = bound.binding.fact;
+  if (boundCanonicalFact.status !== 'resolved') {
     return {
       status: 'unavailable',
-      reasonCode: 'single-fact-yinshou-support-ten-god-chart-unresolved',
+      reasonCode: 'single-fact-yinshou-support-supplied-fact-unresolved',
     };
   }
 
-  const selectedStemFact =
-    snapshot.derivedFacts.tenGods.value[selectedPillarSlot].stem;
-
-  if (selectedStemFact === undefined) {
-    return {
-      status: 'unavailable',
-      reasonCode: 'single-fact-yinshou-support-selected-visible-stem-fact-missing',
-    };
-  }
-
-  if (selectedStemFact.status !== 'resolved') {
-    return {
-      status: 'unavailable',
-      reasonCode: 'single-fact-yinshou-support-selected-visible-stem-fact-unresolved',
-    };
-  }
-
-  if (selectedStemFact.value === '일간') {
-    return {
-      status: 'unavailable',
-      reasonCode: 'single-fact-yinshou-support-selected-visible-stem-semantic-mismatch',
-    };
-  }
-
-  const selectedCanonicalTenGod = selectedStemFact.value;
-  const membershipEvaluation = admitResolvedCanonicalYinToYinshouCategory({
-    status: 'resolved',
-    value: selectedCanonicalTenGod,
-  });
+  const boundCanonicalTenGod = boundCanonicalFact.value;
+  const membershipEvaluation =
+    admitResolvedCanonicalYinToYinshouCategory(boundCanonicalFact);
   const supportEvaluation =
     bindGovernedYinshouMemberToDangZhongSupportConstituent(
       membershipEvaluation,
@@ -209,16 +194,18 @@ function reproducePayload(
       evidenceVersion:
         SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_RESEARCH_EVIDENCE_VERSION,
       snapshotId: snapshot.snapshotId,
-      selectedPillarSlot,
-      selectedCanonicalTenGod,
+      sourceFactRef: bound.binding.sourceFactRef,
+      boundCanonicalFact,
+      boundCanonicalTenGod,
       membershipEvaluation,
       supportEvaluation,
       supportConstituentObserved:
         supportEvaluation.supportConstituentObserved,
       constraints: Object.freeze({
         callerSuppliedSingleFactBindingRequired: true as const,
+        callerSuppliedSourceFactRefRequired: true as const,
         internalPillarSelectionAuthorized: false as const,
-        selectedPositionSemanticWeightAuthorized: false as const,
+        sourceFactRefSemanticWeightAuthorized: false as const,
         wholeChartYinScanAuthorized: false as const,
         wholeChartYinCountAuthorized: false as const,
         branchTenGodScanAuthorized: false as const,
@@ -242,9 +229,9 @@ function reproducePayload(
 
 export function buildSharedNatalSingleFactYinshouSupportResearchEvidence(
   snapshot: CanonicalSajuSnapshot,
-  selectedPillarSlot: SelectedVisibleTenGodStemSlot,
+  bindingInput: SharedNatalSuppliedSingleTenGodFactBindingInput,
 ): SharedNatalSingleFactYinshouSupportResearchEvidenceBuildResult {
-  const reproduced = reproducePayload(snapshot, selectedPillarSlot);
+  const reproduced = reproducePayload(snapshot, bindingInput);
   if (reproduced.status !== 'resolved') return reproduced;
 
   return {
@@ -273,20 +260,32 @@ export function validateSharedNatalSingleFactYinshouSupportResearchEvidence(
   const errors = [...base.errors];
   const payload = envelope.payload;
 
-  const selectedPillarSlot =
+  const sourceFactRef =
     isRecord(payload) &&
-    isSelectedVisibleTenGodStemSlot(payload.selectedPillarSlot)
-      ? payload.selectedPillarSlot
+    isSharedNatalSuppliedSingleTenGodSourceFactRef(payload.sourceFactRef)
+      ? payload.sourceFactRef
       : null;
 
-  if (selectedPillarSlot === null) {
-    errors.push('single_fact_yinshou_support_selected_pillar_slot_invalid');
+  const boundCanonicalFact =
+    isRecord(payload) && isRecord(payload.boundCanonicalFact)
+      ? (payload.boundCanonicalFact as unknown as FactState<TenGod>)
+      : null;
+
+  if (sourceFactRef === null) {
+    errors.push('single_fact_yinshou_support_source_fact_ref_invalid');
+  }
+
+  if (boundCanonicalFact === null) {
+    errors.push('single_fact_yinshou_support_bound_canonical_fact_invalid');
   }
 
   const reproduced =
-    selectedPillarSlot === null
+    sourceFactRef === null || boundCanonicalFact === null
       ? null
-      : reproducePayload(snapshot, selectedPillarSlot);
+      : reproducePayload(snapshot, {
+          sourceFactRef,
+          fact: boundCanonicalFact,
+        });
 
   if (reproduced !== null && reproduced.status !== 'resolved') {
     errors.push(reproduced.reasonCode.replaceAll('-', '_'));
@@ -298,8 +297,9 @@ export function validateSharedNatalSingleFactYinshouSupportResearchEvidence(
     if (
       !isRecord(payload.constraints) ||
       payload.constraints.callerSuppliedSingleFactBindingRequired !== true ||
+      payload.constraints.callerSuppliedSourceFactRefRequired !== true ||
       payload.constraints.internalPillarSelectionAuthorized !== false ||
-      payload.constraints.selectedPositionSemanticWeightAuthorized !== false ||
+      payload.constraints.sourceFactRefSemanticWeightAuthorized !== false ||
       payload.constraints.wholeChartYinScanAuthorized !== false ||
       payload.constraints.wholeChartYinCountAuthorized !== false ||
       payload.constraints.branchTenGodScanAuthorized !== false ||
@@ -360,6 +360,11 @@ export const SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_RESEARCH_EVIDENCE_RUNTIME_
 
 export const SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_RESEARCH_EVIDENCE_BOUNDARY =
   Object.freeze({
+    bindingVersion:
+      SHARED_NATAL_SUPPLIED_SINGLE_TEN_GOD_FACT_BINDING_AUTHORITY.version,
+    bindingDefinitionHash:
+      SHARED_NATAL_SUPPLIED_SINGLE_TEN_GOD_FACT_BINDING_AUTHORITY
+        .definitionHash,
     membershipVersion:
       GENERAL_NATAL_CANONICAL_YIN_YINSHOU_CATEGORY_MEMBER_AUTHORITY.version,
     membershipDefinitionHash:
@@ -371,8 +376,9 @@ export const SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_RESEARCH_EVIDENCE_BOUNDARY
       GENERAL_NATAL_YINSHOU_DANG_ZHONG_SUPPORT_CONSTITUENT_AUTHORITY
         .definitionHash,
     callerSuppliedSingleFactBindingRequired: true as const,
+    callerSuppliedSourceFactRefRequired: true as const,
     internalPillarSelectionAuthorized: false as const,
-    selectedPositionSemanticWeightAuthorized: false as const,
+    sourceFactRefSemanticWeightAuthorized: false as const,
     wholeChartYinScanAuthorized: false as const,
     wholeChartYinCountAuthorized: false as const,
     branchTenGodScanAuthorized: false as const,

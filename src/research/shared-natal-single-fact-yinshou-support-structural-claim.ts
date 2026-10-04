@@ -52,7 +52,7 @@ export const SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_METHODOLOGY_RESEARCH_INPUT
       SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_EVIDENCE_DEFINITION_REF,
     mode: 'allowed',
     rationale:
-      'Consumes only exact snapshot-bound R9 evidence produced from one caller-selected resolved visible stem Ten-God fact. It does not scan/count 印綬, assign selected-position semantics, aggregate support families, or settle 黨眾/助寡/強弱/旺衰.',
+      'Consumes only exact snapshot-bound R9 evidence produced from one caller-supplied canonical Ten-God fact whose exact source fact ref has been structurally verified against the snapshot. It does not select a pillar, scan/count 印綬, assign source-ref semantics, aggregate support families, or settle 黨眾/助寡/強弱/旺衰.',
   }) satisfies MethodologyResearchEvidenceInputContract;
 
 export const SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_RULE_INPUT_REQUIREMENT =
@@ -383,8 +383,9 @@ export const SHARED_NATAL_SINGLE_FACT_YINSHOU_SUPPORT_AUTHORITY_BOUNDARY =
     runtimeScope: 'isolated_research_pack_only' as const,
     exactR9EvidenceBindingRequired: true as const,
     callerSuppliedSingleFactBindingRequired: true as const,
+    callerSuppliedSourceFactRefRequired: true as const,
     internalPillarSelectionAuthorized: false as const,
-    selectedPositionSemanticWeightAuthorized: false as const,
+    sourceFactRefSemanticWeightAuthorized: false as const,
     wholeChartYinScanAuthorized: false as const,
     wholeChartYinCountAuthorized: false as const,
     branchTenGodScanAuthorized: false as const,
