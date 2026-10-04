@@ -16,7 +16,9 @@ describe('FR309 traditional face-region lexicon', () => {
     const keys = new Set(issued.entries.map((entry) => entry.termKey));
     for (const expected of [
       'hairline',
+      'tianzhong',
       'tianting',
+      'sikong',
       'sun_horn',
       'moon_horn',
       'zhongzheng',
@@ -28,12 +30,15 @@ describe('FR309 traditional face-region lexicon', () => {
       'yuwei',
       'jianmen',
       'shangen',
+      'nian_shang',
+      'shou_shang',
       'nian_shou',
       'zhuntou',
       'cheekbone',
       'renshong',
       'ear_outline',
       'ear_gate',
+      'chengjiang',
       'dige',
       'dijiao',
       'bian_sai',
@@ -52,7 +57,16 @@ describe('FR309 traditional face-region lexicon', () => {
     expect(byKey.get('brow_corner')?.lineageKeys).toEqual(['shenxiang']);
     expect(byKey.get('brow_tail')?.lineageKeys).toEqual(['liuzhuang']);
     expect(byKey.get('wocan')?.sourceRefs).toEqual(['passage.liuzhuang.twelve_palaces.children.locator']);
-    expect(byKey.get('shangen')?.systemKeys).toEqual(['five_officers', 'twelve_palaces', 'three_divisions']);
+    expect(byKey.get('shangen')?.systemKeys).toEqual([
+      'five_officers',
+      'twelve_palaces',
+      'three_divisions',
+      'thirteen_positions_family',
+    ]);
+    expect(byKey.get('tianzhong')?.referenceState).toBe('external_transcription_candidate');
+    expect(byKey.get('nian_shang')?.referenceState).toBe('external_transcription_candidate');
+    expect(byKey.get('shou_shang')?.referenceState).toBe('external_transcription_candidate');
+    expect(byKey.get('chengjiang')?.referenceState).toBe('external_transcription_candidate');
   });
 
   it('covers every FR192 parent component without pretending every term has an exact modern region', () => {
@@ -83,7 +97,7 @@ describe('FR309 traditional face-region lexicon', () => {
     const issued = issueTraditionalFaceRegionLexiconFR309();
 
     for (const entry of issued.entries) {
-      expect(entry.referenceState).toBe('existing_repository_reference');
+      expect(['existing_repository_reference', 'external_transcription_candidate']).toContain(entry.referenceState);
       expect(entry.sourceRefs.length).toBeGreaterThan(0);
       expect(entry.interpretationAuthorized).toBe(false);
       expect(entry.providerGeometryBindingAuthorized).toBe(false);
