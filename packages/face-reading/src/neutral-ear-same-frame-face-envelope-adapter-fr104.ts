@@ -23,6 +23,7 @@ export interface NeutralEarSameFrameEnvelopeRequestFR104V1 {
     readonly height: number;
   };
   readonly sameFrameAttested: true;
+  readonly sameFrameIndependentlyVerified?: boolean;
   readonly geometry: NeutralEarSameFrameScreenGeometryFR104V1;
 }
 
@@ -38,7 +39,8 @@ export interface NeutralEarSameFrameEnvelopeAdapterResultFR104V1 {
   readonly faceEnvelope: NeutralEarFaceEnvelopeInputFR104V1;
   readonly bindingEvidence: {
     readonly candidateAndGeometryFrameDimensionsMatch: true;
-    readonly sameFrameAttestationAcceptedButNotIndependentlyVerified: true;
+    readonly sameFrameAttestationAcceptedButNotIndependentlyVerified: boolean;
+    readonly sameFrameIndependentlyVerified: boolean;
     readonly providerRunRefPreserved: true;
   };
   readonly provenanceResolution: {
@@ -150,7 +152,9 @@ export function deriveNeutralEarSameFrameFaceEnvelopeFR104(
     sourceAuthority:
       'governed_same_frame_face_geometry_adapter_required' as const,
     sameFrameBinding:
-      'caller_attested_ephemeral_not_independently_verified' as const,
+      request.sameFrameIndependentlyVerified === true
+        ? 'exact_runtime_byte_origin_independently_verified' as const
+        : 'caller_attested_ephemeral_not_independently_verified' as const,
     minX,
     minY,
     maxX,
@@ -170,7 +174,10 @@ export function deriveNeutralEarSameFrameFaceEnvelopeFR104(
     faceEnvelope,
     bindingEvidence: Object.freeze({
       candidateAndGeometryFrameDimensionsMatch: true as const,
-      sameFrameAttestationAcceptedButNotIndependentlyVerified: true as const,
+      sameFrameAttestationAcceptedButNotIndependentlyVerified:
+        request.sameFrameIndependentlyVerified !== true,
+      sameFrameIndependentlyVerified:
+        request.sameFrameIndependentlyVerified === true,
       providerRunRefPreserved: true as const,
     }),
     provenanceResolution: Object.freeze({
