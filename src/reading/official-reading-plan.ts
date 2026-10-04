@@ -13,6 +13,8 @@ export const OFFICIAL_READING_PLAN_POLICY_VERSION =
   'myeonghwa-official-reading-plan-policy-v1' as const;
 export const OFFICIAL_READING_SECTION_ORDER_POLICY_VERSION =
   'myeonghwa-official-reading-section-order-policy-v1' as const;
+export const OFFICIAL_READING_WITHIN_SECTION_ORDER_POLICY_VERSION =
+  'myeonghwa-official-reading-within-section-order-policy-v1' as const;
 
 export type OfficialReadingSemanticGroup =
   | 'core'
@@ -128,6 +130,37 @@ function semanticGroupRank(
   return rank;
 }
 
+function comparePrimarySemanticUnits(
+  left: CanonicalReadingSemanticUnitV1,
+  right: CanonicalReadingSemanticUnitV1,
+): number {
+  return (
+    left.semanticKey.localeCompare(right.semanticKey) ||
+    (left.scenarioRef ?? '').localeCompare(right.scenarioRef ?? '') ||
+    left.methodologyRef.id.localeCompare(right.methodologyRef.id) ||
+    left.methodologyRef.version.localeCompare(right.methodologyRef.version) ||
+    left.claimId.localeCompare(right.claimId)
+  );
+}
+
+function orderedPrimaryUnitRefs(
+  refs: readonly string[],
+  unitsByUnitId: ReadonlyMap<string, CanonicalReadingSemanticUnitV1>,
+): readonly string[] {
+  return refs
+    .map((ref) => {
+      const unit = unitsByUnitId.get(ref);
+      if (unit === undefined) {
+        throw new TypeError(
+          `Official Reading within-section order received unknown canonical unit ref: ${ref}`,
+        );
+      }
+      return unit;
+    })
+    .sort(comparePrimarySemanticUnits)
+    .map((unit) => unit.unitId);
+}
+
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
@@ -231,6 +264,7 @@ function primarySections(
   bundle: CanonicalReadingSemanticBundleV1,
 ): readonly OfficialReadingPlanSectionV1[] {
   const unitsByClaimId = new Map(bundle.units.map((unit) => [unit.claimId, unit]));
+  const unitsByUnitId = new Map(bundle.units.map((unit) => [unit.unitId, unit]));
   const primaryUnits = bundle.targetClaimIds
     .map((claimId) => {
       const unit = unitsByClaimId.get(claimId);
@@ -278,7 +312,10 @@ function primarySections(
       return leftRank - rightRank || left.localeCompare(right);
     })
     .map(([group, material]) => {
-      const primaryUnitRefs = [...material.primaryUnitRefs].sort();
+      const primaryUnitRefs = orderedPrimaryUnitRefs(
+        [...material.primaryUnitRefs],
+        unitsByUnitId,
+      );
       const supportingUnitRefs = [...material.supportingUnitRefs].sort();
       return {
         sectionId: sectionId(group, primaryUnitRefs, supportingUnitRefs),
@@ -385,6 +422,7 @@ export function assertOfficialReadingPlanV1(
   }
 
   const unitIds = new Set(bundle.units.map((unit) => unit.unitId));
+  const unitsByUnitId = new Map(bundle.units.map((unit) => [unit.unitId, unit]));
   const primaryUnitIds = new Set(
     bundle.units
       .filter(
@@ -429,6 +467,19 @@ export function assertOfficialReadingPlanV1(
       }
     }
     if (section.semanticGroup !== 'limits' && section.semanticGroup !== 'evidence') {
+      const expectedPrimaryUnitRefs = orderedPrimaryUnitRefs(
+        section.primaryUnitRefs,
+        unitsByUnitId,
+      );
+      if (
+        expectedPrimaryUnitRefs.some(
+          (ref, index) => ref !== section.primaryUnitRefs[index],
+        )
+      ) {
+        throw new TypeError(
+          'OfficialReadingPlanV1 primary units do not match the governed within-section semantic order.',
+        );
+      }
       for (const ref of section.primaryUnitRefs) {
         if (!primaryUnitIds.has(ref)) {
           throw new TypeError('OfficialReadingPlanV1 primary ref is not a primary canonical unit.');
