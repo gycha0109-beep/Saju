@@ -8,6 +8,7 @@ import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-
 import {
   OFFICIAL_READING_PLAN_POLICY_VERSION,
   OFFICIAL_READING_SECTION_ORDER_POLICY_VERSION,
+  OFFICIAL_READING_WITHIN_SECTION_ORDER_POLICY_VERSION,
   assertOfficialReadingPlanV1,
   buildOfficialReadingPlanV1,
   officialReadingSectionOrderForDomainV1,
@@ -117,6 +118,32 @@ function generalConclusion(
       subcategory: `${conclusionKind}_conclusion`,
     },
     claimType: `GENERAL_${conclusionKind.toUpperCase()}_CONCLUSION`,
+  };
+}
+
+function generalInterpretationConclusion(
+  claimId: string,
+  subcategory: string,
+  claimType: string,
+  headline: string,
+): InterpretationClaim {
+  return {
+    ...claim(
+      claimId,
+      'T8',
+      {
+        conclusionKind: 'strength',
+        headline,
+        summary: `${headline} summary`,
+        futureTimingAuthorized: false,
+      },
+    ),
+    taxonomy: {
+      tier: 'T8',
+      category: 'general',
+      subcategory,
+    },
+    claimType,
   };
 }
 
@@ -278,6 +305,70 @@ describe('OfficialReadingPlanV1', () => {
       'tension',
       'limits',
     ]);
+  });
+
+  it('uses stable semantic identity order inside a section and rejects manual reordering', () => {
+    const primaries = [
+      generalInterpretationConclusion(
+        'general-zeta',
+        'zeta_conclusion',
+        'GENERAL_ZETA_CONCLUSION',
+        'Zeta',
+      ),
+      generalInterpretationConclusion(
+        'general-alpha',
+        'alpha_conclusion',
+        'GENERAL_ALPHA_CONCLUSION',
+        'Alpha',
+      ),
+    ];
+    const semantics = semanticBundleFor('general', primaries);
+    const plan = buildOfficialReadingPlanV1(semantics);
+    const interpretation = plan.sections.find(
+      (section) => section.semanticGroup === 'interpretation',
+    );
+    const unitsById = new Map(semantics.units.map((unit) => [unit.unitId, unit]));
+
+    expect(OFFICIAL_READING_WITHIN_SECTION_ORDER_POLICY_VERSION).toBe(
+      'myeonghwa-official-reading-within-section-order-policy-v1',
+    );
+    expect(
+      interpretation?.primaryUnitRefs.map((ref) => unitsById.get(ref)?.claimId),
+    ).toEqual(['general-alpha', 'general-zeta']);
+
+    const permutedSemantics = semanticBundleFor('general', [...primaries].reverse());
+    const permutedPlan = buildOfficialReadingPlanV1(permutedSemantics);
+    const permutedInterpretation = permutedPlan.sections.find(
+      (section) => section.semanticGroup === 'interpretation',
+    );
+    const permutedUnitsById = new Map(
+      permutedSemantics.units.map((unit) => [unit.unitId, unit]),
+    );
+    expect(
+      permutedInterpretation?.primaryUnitRefs.map(
+        (ref) => permutedUnitsById.get(ref)?.claimId,
+      ),
+    ).toEqual(['general-alpha', 'general-zeta']);
+
+    if (interpretation === undefined) {
+      throw new Error('fixture must contain interpretation section');
+    }
+    const reorderedPrimaryRefs = [...interpretation.primaryUnitRefs].reverse();
+    expect(() =>
+      assertOfficialReadingPlanV1(
+        {
+          ...plan,
+          sections: plan.sections.map((section) =>
+            section.semanticGroup === 'interpretation'
+              ? { ...section, primaryUnitRefs: reorderedPrimaryRefs }
+              : section,
+          ),
+          planId: 'official_reading_plan_fake',
+          planHash: 'fake',
+        },
+        semantics,
+      ),
+    ).toThrow(/within-section semantic order/u);
   });
 
   it('keeps section synthesis deterministic across evidence permutation and rejects a policy-reordered plan', () => {
