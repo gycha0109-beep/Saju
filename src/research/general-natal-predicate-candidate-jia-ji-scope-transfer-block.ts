@@ -31,14 +31,10 @@ export const R178_EXACT_PAIR_SCOPE = Object.freeze({
   dayMasterHanja: '壬' as const,
   pair: R177_JIA_JI_DUAL_RELATION_SURFACE.koreanPair,
   pairHanja: R177_JIA_JI_DUAL_RELATION_SURFACE.pair,
-  leftIsDayMaster:
-    R177_JIA_JI_DUAL_RELATION_SURFACE.koreanPair[0] === '임',
-  rightIsDayMaster:
-    R177_JIA_JI_DUAL_RELATION_SURFACE.koreanPair[1] === '임',
-  bothParticipantsAreNonDayMaster:
-    R177_JIA_JI_DUAL_RELATION_SURFACE.koreanPair.every(
-      (stem) => stem !== '임',
-    ),
+  // The exact upstream pair is statically bound to 갑/기 under 임 day master.
+  leftIsDayMaster: false as const,
+  rightIsDayMaster: false as const,
+  bothParticipantsAreNonDayMaster: true as const,
   structuralRelationKind:
     R177_JIA_JI_DUAL_RELATION_SURFACE.structuralRelationKind,
   structuralRelationId:
@@ -156,8 +152,7 @@ export const R178_GOVERNANCE = Object.freeze({
 
 export const R178_SUMMARY = Object.freeze({
   participantCount: R178_EXACT_PAIR_SCOPE.pair.length,
-  nonDayMasterParticipantCount:
-    R178_EXACT_PAIR_SCOPE.pair.filter((stem) => stem !== '임').length,
+  nonDayMasterParticipantCount: R178_EXACT_PAIR_SCOPE.pair.length,
   structuralRelationKindCount: 1,
   authorizedTransformationOutcomeCount: 0,
   authorizedBindingOutcomeCount: 0,
