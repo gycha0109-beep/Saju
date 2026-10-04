@@ -22,6 +22,7 @@ import {
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import {
   OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
+  OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
   renderOfficialReadingV1,
 } from '../src/reading/official-reading-renderer.js';
@@ -145,6 +146,9 @@ describe('Official Reading Artifact V1', () => {
     expect(report.ordinaryMultiClaimPresentationPolicyVersion).toBe(
       OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
     );
+    expect(report.structuredInsightMaterializationPolicyVersion).toBe(
+      OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
+    );
     expect(artifact.readingId).toMatch(/^official_reading_[a-f0-9]{24}$/u);
     expect(artifact.status).toBe(
       currentSnapshot.completeness.fullyResolved ? 'ready' : 'ready_with_ambiguity',
@@ -262,6 +266,24 @@ describe('Official Reading Artifact V1', () => {
         { readingVersion: 'official-reading-artifact-test-v1' },
       ),
     ).toThrow(/ordinary multi-claim presentation policy version/u);
+  });
+
+  it('rejects a report that declares a different structured insight materialization policy', () => {
+    const { currentSnapshot, interpretation, semantics, plan, report } = fixture();
+
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        {
+          ...report,
+          structuredInsightMaterializationPolicyVersion: 'tampered-policy' as never,
+        },
+        { readingVersion: 'official-reading-artifact-test-v1' },
+      ),
+    ).toThrow(/structured insight materialization policy version/u);
   });
 
   it('rejects a valid report produced from different canonical meaning', () => {
