@@ -6,7 +6,7 @@ import {
   PRODUCT_READING_RESPONSE_ADMISSION_HEADER,
 } from '../host/http-server.js';
 import {
-  createMyeonghwaProductionCalculationProcessV1,
+  createMyeonghwaProductionPreviewOnlyCalculationProcessV1,
   PRODUCTION_CALCULATION_PROCESS_ENV_V1,
 } from '../production-calculation-process.js';
 import {
@@ -254,7 +254,7 @@ async function observeCandidateHttp() {
 }
 
 async function observeDeployedProcessStillPreviewOnly() {
-  const runtime = createMyeonghwaProductionCalculationProcessV1({
+  const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1({
     [PRODUCTION_CALCULATION_PROCESS_ENV_V1.serviceBearer]: ACTIVE_BEARER,
     [PRODUCTION_CALCULATION_PROCESS_ENV_V1.host]: '127.0.0.1',
     [PRODUCTION_CALCULATION_PROCESS_ENV_V1.port]: '3000',

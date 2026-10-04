@@ -246,6 +246,8 @@ function createMyeonghwaHttpServer(
   authorizeCalculationRequest?: (request: IncomingMessage) => boolean,
   authorizeReadingRequest?: (request: IncomingMessage) => boolean,
   readingRoute: MyeonghwaReadingHttpRoute = PRODUCT_READING_ROUTE,
+  secondaryReadingHost?: MyeonghwaProductHost,
+  secondaryReadingRoute?: MyeonghwaReadingHttpRoute,
 ): Server {
   const bodyLimit = maxRequestBytes(options);
   const groundingBodyLimit = characterGroundingMaxRequestBytes(options);
@@ -319,7 +321,15 @@ function createMyeonghwaHttpServer(
       }
       return;
     }
-    if (path === readingRoute.path && readingHost !== undefined) {
+    const matchedReading =
+      path === readingRoute.path && readingHost !== undefined
+        ? { host: readingHost, route: readingRoute }
+        : secondaryReadingHost !== undefined &&
+            secondaryReadingRoute !== undefined &&
+            path === secondaryReadingRoute.path
+          ? { host: secondaryReadingHost, route: secondaryReadingRoute }
+          : undefined;
+    if (matchedReading !== undefined) {
       if (method !== 'POST') {
         response.setHeader('allow', 'POST');
         sendJson(response, 405, {
@@ -333,13 +343,16 @@ function createMyeonghwaHttpServer(
       }
       try {
         const body = await readJsonBody(request, bodyLimit);
-        const result = await readingHost.requestReading(body);
+        const result = await matchedReading.host.requestReading(body);
         const admitted = admitProductReadingResponse(result);
         sendJson(response, 200, admitted, {
           [PRODUCT_READING_RESPONSE_ADMISSION_HEADER]: PRODUCT_READING_RESPONSE_VERSION,
-          ...(readingRoute.lifecycle === undefined
+          ...(matchedReading.route.lifecycle === undefined
             ? {}
-            : { [PRODUCT_READING_LIFECYCLE_HEADER]: readingRoute.lifecycle }),
+            : {
+                [PRODUCT_READING_LIFECYCLE_HEADER]:
+                  matchedReading.route.lifecycle,
+              }),
         });
       } catch (error) {
         if (!handleKnownError(response, error)) sendReadingOperationalError(response);
@@ -397,6 +410,27 @@ export function createMyeonghwaProductionPreviewHostServer(
     serverOptions,
     authorizeRequest,
     authorizeRequest,
+    PREVIEW_READING_ROUTE,
+  );
+}
+
+export function createMyeonghwaProductionReadingHostServer(
+  productionReadingHost: MyeonghwaProductHost,
+  previewReadingHost: MyeonghwaProductHost,
+  options: MyeonghwaProductionProductHostServerOptions = {},
+): Server {
+  const { serviceBearer, previousServiceBearer, ...serverOptions } = options;
+  const authorizeRequest = createMyeonghwaProductionServiceBearerAuthorizer({
+    activeBearer: serviceBearer,
+    previousBearer: previousServiceBearer,
+  });
+  return createMyeonghwaHttpServer(
+    productionReadingHost,
+    serverOptions,
+    authorizeRequest,
+    authorizeRequest,
+    PRODUCT_READING_ROUTE,
+    previewReadingHost,
     PREVIEW_READING_ROUTE,
   );
 }

@@ -1,6 +1,10 @@
 import type { Server } from 'node:http';
-import { createMyeonghwaProductionPreviewHostServer } from './production-calculation-host.js';
+import {
+  createMyeonghwaProductionPreviewHostServer,
+  createMyeonghwaProductionReadingHostServer,
+} from './production-calculation-host.js';
 import { createApprovedPreviewE2eProductHost } from './preview/preview-product-host.js';
+import { createBoundedProductionSpouseOfficialReadingHostV1 } from './production/production-spouse-official-reading-host.js';
 
 export const PRODUCTION_CALCULATION_PROCESS_ENV_V1 = {
   serviceBearer: 'SAJU_PRODUCTION_SERVICE_BEARER',
@@ -110,18 +114,39 @@ export function readMyeonghwaProductionCalculationProcessConfigV1(
   };
 }
 
-export function createMyeonghwaProductionCalculationProcessV1(
+function readingServerOptions(config: ProductionCalculationProcessConfigV1) {
+  return {
+    serviceBearer: config.serviceBearer,
+    ...(config.previousServiceBearer === undefined
+      ? {}
+      : { previousServiceBearer: config.previousServiceBearer }),
+  };
+}
+
+export function createMyeonghwaProductionPreviewOnlyCalculationProcessV1(
   env: Environment = process.env,
 ): MyeonghwaProductionCalculationProcessV1 {
   const config = readMyeonghwaProductionCalculationProcessConfigV1(env);
   const server = createMyeonghwaProductionPreviewHostServer(
     createApprovedPreviewE2eProductHost(),
-    {
-      serviceBearer: config.serviceBearer,
-      ...(config.previousServiceBearer === undefined
-        ? {}
-        : { previousServiceBearer: config.previousServiceBearer }),
-    },
+    readingServerOptions(config),
+  );
+
+  return {
+    server,
+    host: config.host,
+    port: config.port,
+  };
+}
+
+export function createMyeonghwaProductionCalculationProcessV1(
+  env: Environment = process.env,
+): MyeonghwaProductionCalculationProcessV1 {
+  const config = readMyeonghwaProductionCalculationProcessConfigV1(env);
+  const server = createMyeonghwaProductionReadingHostServer(
+    createBoundedProductionSpouseOfficialReadingHostV1(),
+    createApprovedPreviewE2eProductHost(),
+    readingServerOptions(config),
   );
 
   return {
