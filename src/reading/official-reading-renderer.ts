@@ -23,6 +23,8 @@ export const OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION =
 
 export interface OfficialReadingRenderedContentV1 {
   rendererVersion: typeof OFFICIAL_READING_RENDERER_VERSION;
+  structuralRealizationPolicyVersion:
+    typeof OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION;
   reportId: string;
   reportHash: string;
   sourceSemanticHash: string;
@@ -286,6 +288,11 @@ function contradictionGroups(
 
     for (const claimId of component) visited.add(claimId);
     if (component.size < 2) continue;
+    if (component.size > 2) {
+      throw new TypeError(
+        'Official Reading structural realization does not support complex contradiction topology.',
+      );
+    }
     groups.push({
       kind: 'contradiction',
       units: units.filter((candidate) => component.has(candidate.claimId)),
@@ -493,6 +500,8 @@ export function renderOfficialReadingV1(
   };
   const reportMaterial = {
     rendererVersion: OFFICIAL_READING_RENDERER_VERSION,
+    structuralRealizationPolicyVersion:
+      OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
     sections,
