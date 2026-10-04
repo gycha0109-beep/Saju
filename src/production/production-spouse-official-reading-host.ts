@@ -13,9 +13,6 @@ import {
   resolveProductionSpouseOfficialReadingDeliveryAuthorityV1,
 } from './production-spouse-official-reading-delivery-authority.js';
 import {
-  buildProductionSpouseOfficialReadingDeliverySemanticProjectionV1,
-} from './production-spouse-official-reading-delivery-semantic-projection.js';
-import {
   assertProductionSpouseOfficialReadingRequestV1,
 } from './production-spouse-official-reading-scope.js';
 
@@ -42,8 +39,14 @@ export function createProductionSpouseOfficialReadingDeliveryExecutionOptionsV1(
     artifactGeneratedAt: now,
     consumerReadingAuthorityResolver:
       resolveProductionSpouseOfficialReadingDeliveryAuthorityV1,
-    officialReadingSemanticProjectionResolver:
-      buildProductionSpouseOfficialReadingDeliverySemanticProjectionV1,
+    officialReadingSemanticProjectionResolver: async (input) =>
+      import(
+        './production-spouse-official-reading-delivery-semantic-projection.js'
+      ).then((module) =>
+        module.buildProductionSpouseOfficialReadingDeliverySemanticProjectionV1(
+          input,
+        ),
+      ),
   };
 }
 
