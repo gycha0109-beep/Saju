@@ -13,6 +13,7 @@ import {
 import {
   OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_RENDERER_VERSION,
+  OFFICIAL_READING_STRUCTURAL_INSIGHT_MATERIALIZATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
   type OfficialReadingRenderedContentV1,
 } from './official-reading-renderer.js';
@@ -76,6 +77,14 @@ function assertReportBinding(
       'Official Reading artifact received an unsupported ordinary multi-claim presentation policy version.',
     );
   }
+  if (
+    report.structuredInsightMaterializationPolicyVersion !==
+    OFFICIAL_READING_STRUCTURAL_INSIGHT_MATERIALIZATION_POLICY_VERSION
+  ) {
+    throw new TypeError(
+      'Official Reading artifact received an unsupported structured insight materialization policy version.',
+    );
+  }
   if (report.sourceSemanticHash !== semantics.semanticHash) {
     throw new TypeError('Official Reading artifact report semantic hash does not match canonical semantics.');
   }
@@ -89,6 +98,8 @@ function assertReportBinding(
       report.structuralRealizationPolicyVersion,
     ordinaryMultiClaimPresentationPolicyVersion:
       report.ordinaryMultiClaimPresentationPolicyVersion,
+    structuredInsightMaterializationPolicyVersion:
+      report.structuredInsightMaterializationPolicyVersion,
     sourceSemanticHash: report.sourceSemanticHash,
     sourcePlanHash: report.sourcePlanHash,
     sections: report.sections,
