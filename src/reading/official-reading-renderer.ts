@@ -1,5 +1,6 @@
 import type {
   ExplainabilityIndex,
+  InsightItemView,
   ReadingDisclosureView,
   ReadingSectionView,
 } from '../contracts/reading.js';
@@ -23,6 +24,8 @@ export const OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION =
   'myeonghwa-official-reading-structural-realization-policy-v1' as const;
 export const OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION =
   'myeonghwa-official-reading-ordinary-multi-claim-presentation-policy-v1' as const;
+export const OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION =
+  'myeonghwa-official-reading-structured-insight-materialization-policy-v1' as const;
 
 export interface OfficialReadingRenderedContentV1 {
   rendererVersion: typeof OFFICIAL_READING_RENDERER_VERSION;
@@ -30,6 +33,8 @@ export interface OfficialReadingRenderedContentV1 {
     typeof OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION;
   ordinaryMultiClaimPresentationPolicyVersion:
     typeof OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION;
+  structuredInsightMaterializationPolicyVersion:
+    typeof OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION;
   reportId: string;
   reportHash: string;
   sourceSemanticHash: string;
@@ -193,46 +198,10 @@ function explainabilityEntry(
   };
 }
 
-function primaryBlocks(units: readonly CanonicalReadingSemanticUnitV1[]) {
-  return units.flatMap((unit) => {
-    const headline = unit.canonicalText?.headline?.trim();
-    const summary = unit.canonicalText?.summary?.trim();
-    const semanticBlocks =
-      headline === undefined && summary === undefined
-        ? []
-        : headline !== undefined && summary !== undefined && headline !== summary
-          ? [
-              { type: 'key_points' as const, items: [headline] },
-              { type: 'paragraph' as const, text: summary },
-            ]
-          : [{ type: 'paragraph' as const, text: summary ?? headline ?? '' }];
-
-    const qualifierTexts = [
-      ...new Set(
-        (unit.semanticQualifiers ?? [])
-          .map(
-            (qualifier) =>
-              qualifier.canonicalText?.summary?.trim() ??
-              qualifier.canonicalText?.headline?.trim(),
-          )
-          .filter((text): text is string => text !== undefined && text.length > 0),
-      ),
-    ];
-    return [
-      ...semanticBlocks,
-      ...(qualifierTexts.length === 0
-        ? []
-        : [{ type: 'key_points' as const, items: qualifierTexts }]),
-    ];
-  });
-}
-
-function structuralUnitText(
+function qualifierTextsFor(
   unit: CanonicalReadingSemanticUnitV1,
-): string {
-  const headline = unit.canonicalText?.headline?.trim();
-  const summary = unit.canonicalText?.summary?.trim();
-  const qualifierTexts = [
+): readonly string[] {
+  return [
     ...new Set(
       (unit.semanticQualifiers ?? [])
         .map(
@@ -243,25 +212,49 @@ function structuralUnitText(
         .filter((text): text is string => text !== undefined && text.length > 0),
     ),
   ];
+}
+
+function insightItem(
+  unit: CanonicalReadingSemanticUnitV1,
+): InsightItemView {
+  const headline = unit.canonicalText?.headline?.trim();
+  const summary = unit.canonicalText?.summary?.trim();
+  const qualifiers = qualifierTextsFor(unit);
+  if (headline === undefined && summary === undefined) {
+    throw new TypeError(
+      'Official Reading structured insight materialization requires canonical text.',
+    );
+  }
+  return {
+    ...(headline === undefined ? {} : { headline }),
+    ...(summary === undefined ? {} : { summary }),
+    ...(qualifiers.length === 0 ? {} : { qualifiers }),
+  };
+}
+
+function structuralUnitText(
+  unit: CanonicalReadingSemanticUnitV1,
+): string {
+  const item = insightItem(unit);
   return [
-    ...(headline === undefined ? [] : [headline]),
-    ...(summary === undefined || summary === headline ? [] : [summary]),
-    ...qualifierTexts,
+    ...(item.headline === undefined ? [] : [item.headline]),
+    ...(item.summary === undefined || item.summary === item.headline
+      ? []
+      : [item.summary]),
+    ...(item.qualifiers ?? []),
   ].join('\n');
 }
 
 function ordinaryRunBlocks(
   units: readonly CanonicalReadingSemanticUnitV1[],
 ): ReadingSectionView['blocks'] {
-  if (units.length <= 1) return primaryBlocks(units);
-
-  const items = units.map(structuralUnitText);
-  if (items.some((item) => item.length === 0)) {
-    throw new TypeError(
-      'Official Reading ordinary multi-claim presentation received an empty canonical unit.',
-    );
-  }
-  return [{ type: 'key_points', items }];
+  if (units.length === 0) return [];
+  return [
+    {
+      type: 'insights',
+      items: units.map(insightItem),
+    },
+  ];
 }
 
 interface StructuralUnitGroup {
@@ -558,6 +551,8 @@ export function renderOfficialReadingV1(
       OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
     ordinaryMultiClaimPresentationPolicyVersion:
       OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
+    structuredInsightMaterializationPolicyVersion:
+      OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
     sections,
