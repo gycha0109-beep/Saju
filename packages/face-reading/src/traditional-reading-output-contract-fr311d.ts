@@ -98,6 +98,7 @@ export interface TraditionalReadingOutputFR311D {
 }
 
 const LENS_LABELS: Readonly<Record<EvidenceLensKeyFR311C, string>> = Object.freeze({
+  temperament: '성정',
   inbok: '인복·관계',
   interpersonal_relations: '대인관계',
   wealth: '재물',
