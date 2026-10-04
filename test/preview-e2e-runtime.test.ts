@@ -1,7 +1,7 @@
 import type { Server } from 'node:http';
 import { describe, expect, it } from 'vitest';
 import {
-  createMyeonghwaProductionCalculationProcessV1,
+  createMyeonghwaProductionPreviewOnlyCalculationProcessV1,
   PRODUCTION_CALCULATION_PROCESS_ENV_V1,
 } from '../src/production-calculation-process.js';
 import {
@@ -83,7 +83,7 @@ describe('provisionally approved preview E2E runtime', () => {
   });
 
   it('requires the service Bearer before parsing Preview Reading JSON', async () => {
-    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
       const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
@@ -102,7 +102,7 @@ describe('provisionally approved preview E2E runtime', () => {
   });
 
   it('delivers an admitted General Natal Preview and attests the lifecycle', async () => {
-    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
       const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
@@ -139,7 +139,7 @@ describe('provisionally approved preview E2E runtime', () => {
     ['연애운', ['관계', '해석 범위']],
     ['사업운', ['일·성과', '해석 범위']],
   ] as const)('delivers supported natal Preview %s', async (text, expectedTitles) => {
-    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
       const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
@@ -162,7 +162,7 @@ describe('provisionally approved preview E2E runtime', () => {
   });
 
   it('delivers spouse Preview through the bounded Official Reading lane', async () => {
-    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
       const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
@@ -200,7 +200,7 @@ describe('provisionally approved preview E2E runtime', () => {
   });
 
   it('does not expose the Production Product Reading route from the Preview-enabled process', async () => {
-    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
       const response = await fetch(`${origin}/api/readings`, {
@@ -222,7 +222,7 @@ describe('provisionally approved preview E2E runtime', () => {
   });
 
   it('keeps unsupported Preview intents fail-closed instead of substituting General Natal', async () => {
-    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
       const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
