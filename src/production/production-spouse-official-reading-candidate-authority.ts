@@ -3,12 +3,16 @@ import {
   readingSectionForIntentV1,
   type ConsumerReadingAuthorityResolutionV1,
 } from '../reading/consumer-reading-authority.js';
+import {
+  PRODUCTION_SPOUSE_OFFICIAL_READING_ALLOWED_SECTIONS,
+  isProductionSpouseOfficialReadingSectionV1,
+} from './production-spouse-official-reading-scope.js';
 
 export const PRODUCTION_SPOUSE_OFFICIAL_READING_CANDIDATE_AUTHORITY_VERSION =
   'myeonghwa-production-spouse-official-reading-candidate-authority-v1' as const;
 
 export const PRODUCTION_SPOUSE_OFFICIAL_READING_CANDIDATE_ALLOWED_SECTIONS =
-  Object.freeze(['relationship:natal:spouse'] as const);
+  PRODUCTION_SPOUSE_OFFICIAL_READING_ALLOWED_SECTIONS;
 
 export const PRODUCTION_SPOUSE_OFFICIAL_READING_CANDIDATE_AUTHORITY =
   Object.freeze({
@@ -40,14 +44,8 @@ const CONSTRAINTS = Object.freeze({
   mayTreatUnsupportedSectionAsOfficialReading: false as const,
 });
 
-export function isProductionSpouseOfficialReadingCandidateSectionV1(
-  section: string,
-): section is
-  (typeof PRODUCTION_SPOUSE_OFFICIAL_READING_CANDIDATE_ALLOWED_SECTIONS)[number] {
-  return (
-    PRODUCTION_SPOUSE_OFFICIAL_READING_CANDIDATE_ALLOWED_SECTIONS as readonly string[]
-  ).includes(section);
-}
+export const isProductionSpouseOfficialReadingCandidateSectionV1 =
+  isProductionSpouseOfficialReadingSectionV1;
 
 export function resolveProductionSpouseOfficialReadingCandidateAuthorityV1(
   intent: ReadingIntent,

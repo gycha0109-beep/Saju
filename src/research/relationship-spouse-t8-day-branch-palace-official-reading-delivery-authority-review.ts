@@ -7,7 +7,7 @@ import {
   PRODUCT_READING_RESPONSE_ADMISSION_HEADER,
 } from '../production-calculation-host.js';
 import {
-  createMyeonghwaProductionCalculationProcessV1,
+  createMyeonghwaProductionPreviewOnlyCalculationProcessV1,
   PRODUCTION_CALCULATION_PROCESS_ENV_V1,
 } from '../production-calculation-process.js';
 import { PREVIEW_E2E_APPROVAL } from '../preview/preview-authority.js';
@@ -89,7 +89,8 @@ export async function buildRelationshipSpouseT8DayBranchPalaceOfficialReadingDel
   const upstream =
     await buildRelationshipSpouseT8DayBranchPalaceOfficialReadingAdmissionImplementation();
 
-  const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+  const runtime =
+    createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
   const origin = await listenEphemeral(runtime.server);
 
   const httpObservation = await (async () => {
