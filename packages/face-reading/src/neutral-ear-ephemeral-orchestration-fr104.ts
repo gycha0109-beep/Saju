@@ -215,6 +215,8 @@ export function orchestrateNeutralEarCandidateFR104(
       'fr104-neutral-ear-same-frame-envelope-request-v1',
     candidateFrame: request.candidateFrame,
     sameFrameAttested: true,
+    sameFrameIndependentlyVerified:
+      provenance.sharedDecodedPixelFrame.independentlyVerified,
     geometry: request.geometry,
   });
   const relative = deriveNeutralEarFaceRelativeEvidenceFR104(
