@@ -374,6 +374,14 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-florence-live-host-transport-fr104.test.ts
 
+      - name: Verify FR104 same-run FaceLandmarker geometry handle
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-face-landmarker-geometry-handle-fr104.test.ts
+
+      - name: Verify FR104 same-runtime provider output composition
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-provider-output-composition-fr104.test.ts
+
       - name: Verify FR104 anatomical laterality mapping skeleton
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-anatomical-laterality-mapping-contract-fr104.test.ts
