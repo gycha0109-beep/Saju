@@ -728,7 +728,6 @@ export function assertOfficialReadingPlanV1(
       );
     }
     sectionKeys.add(sectionKey);
-    if (groupRank !== previousGroupRank) previousLaneRank = -1;
     previousGroupRank = groupRank;
     previousLaneRank = laneRank;
     if (sectionIds.has(section.sectionId)) {
