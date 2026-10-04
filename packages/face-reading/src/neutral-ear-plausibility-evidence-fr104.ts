@@ -57,7 +57,8 @@ export interface NeutralEarFaceEnvelopeInputFR104V1 {
   readonly sourceAuthority:
     'governed_same_frame_face_geometry_adapter_required';
   readonly sameFrameBinding:
-    'caller_attested_ephemeral_not_independently_verified';
+    | 'caller_attested_ephemeral_not_independently_verified'
+    | 'exact_runtime_byte_origin_independently_verified';
   readonly minX: number;
   readonly minY: number;
   readonly maxX: number;
@@ -73,7 +74,8 @@ export interface NeutralEarFaceRelativeEvidenceFR104V1 {
   readonly faceEnvelopeSourceAuthority:
     'governed_same_frame_face_geometry_adapter_required';
   readonly sameFrameBinding:
-    'caller_attested_ephemeral_not_independently_verified';
+    | 'caller_attested_ephemeral_not_independently_verified'
+    | 'exact_runtime_byte_origin_independently_verified';
   readonly candidateCentroidOffsetFromFaceCenterXInFaceWidths: number;
   readonly candidateCentroidAbsoluteOffsetFromFaceCenterXInFaceWidths: number;
   readonly candidateCentroidOffsetFromFaceCenterYInFaceHeights: number;
@@ -226,7 +228,12 @@ function validateFaceEnvelope(
     envelope.schemaVersion !== 'fr104-neutral-ear-face-envelope-input-v1'
     || envelope.coordinateFrame !== 'canonical_image_normalized_2d'
     || envelope.sourceAuthority !== 'governed_same_frame_face_geometry_adapter_required'
-    || envelope.sameFrameBinding !== 'caller_attested_ephemeral_not_independently_verified'
+    || (
+      envelope.sameFrameBinding
+        !== 'caller_attested_ephemeral_not_independently_verified'
+      && envelope.sameFrameBinding
+        !== 'exact_runtime_byte_origin_independently_verified'
+    )
   ) {
     fail('face envelope must preserve the FR104 governed same-frame adapter boundary.');
   }

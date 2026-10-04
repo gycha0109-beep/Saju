@@ -116,6 +116,8 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
         true as const,
       florenceRepositoryNativeLiveTransport:
         true as const,
+      sameRuntimeProviderOutputComposition:
+        true as const,
     }),
 
     controlledCaptureReadiness: Object.freeze({
@@ -140,6 +142,12 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
         'exact_rgba_origin_bound_to_florence_host_port_and_face_landmarker_runtime' as const,
       florenceLiveRuntimeState:
         'repository_same_origin_http_to_persistent_python_worker_implemented_opt_in' as const,
+      providerOutputCompositionState:
+        'same_runtime_exact_summary_bound_handles_composed_descriptively' as const,
+      runtimeSamePixelBindingState:
+        'independently_verified_for_composed_provider_instance' as const,
+      runtimeTransformParityState:
+        'same_rgba_origin_no_additional_provider_mirror_or_rotation' as const,
       ordinaryFileUploadBridgeState:
         'explicitly_rejected' as const,
     }),
@@ -149,14 +157,14 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       'independent_anatomical_semantic_witness_not_admitted',
       'cross_source_provider_anatomical_mapping_not_validated',
       'florence_repository_native_live_host_transport_not_implemented',
+      'runtime_instance_same_pixel_bytes_must_be_independently_verified',
+      'runtime_instance_transform_parity_must_be_resolved',
+      'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration',
     ] as const),
 
     remainingBlockers: Object.freeze([
-      'runtime_instance_same_pixel_bytes_must_be_independently_verified',
-      'runtime_instance_transform_parity_must_be_resolved',
       'subject_relative_source_pixel_mirror_provenance_not_verified',
       'verified_controlled_capture_profile_not_available',
-      'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration',
       'fr21b_front_rear_deterministic_asymmetric_calibration_not_executed',
       'ordinary_file_upload_cannot_claim_controlled_capture_attestation',
       'runtime_anatomical_side_mapping_not_admitted',
@@ -205,7 +213,7 @@ export const NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104 =
       anatomicalLateralityAuthorized:
         false as const,
       nextGate:
-        'compose_the_issued_florence_candidate_handle_and_same_runtime_face_landmarker_geometry_into_fr104_candidate_orchestration_then_execute_and_review_fr21b_deterministic_asymmetric_front_and_rear_calibration; ordinary_file_upload_remains_fail_closed' as const,
+        'execute_and_review_fr21b_deterministic_asymmetric_front_and_rear_calibration_then_admit_verified_controlled_capture_profiles_before_any_anatomical_laterality_mapping; ordinary_file_upload_remains_fail_closed' as const,
     }),
 
     authority: Object.freeze({

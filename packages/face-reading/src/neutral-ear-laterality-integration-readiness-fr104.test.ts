@@ -13,6 +13,9 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       'independent_anatomical_semantic_witness_not_admitted',
       'cross_source_provider_anatomical_mapping_not_validated',
       'florence_repository_native_live_host_transport_not_implemented',
+      'runtime_instance_same_pixel_bytes_must_be_independently_verified',
+      'runtime_instance_transform_parity_must_be_resolved',
+      'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration',
     ]);
     expect(
       readiness.crossSourceGeometryEvidence.state,
@@ -93,8 +96,14 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
     expect(readiness.remainingBlockers).not.toContain(
       'florence_repository_native_live_host_transport_not_implemented',
     );
-    expect(readiness.remainingBlockers).toContain(
+    expect(readiness.remainingBlockers).not.toContain(
       'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration',
+    );
+    expect(readiness.remainingBlockers).not.toContain(
+      'runtime_instance_same_pixel_bytes_must_be_independently_verified',
+    );
+    expect(readiness.remainingBlockers).not.toContain(
+      'runtime_instance_transform_parity_must_be_resolved',
     );
     expect(readiness.remainingBlockers).toContain(
       'fr21b_front_rear_deterministic_asymmetric_calibration_not_executed',
@@ -140,6 +149,18 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       .toBe(
         'repository_same_origin_http_to_persistent_python_worker_implemented_opt_in',
       );
+    expect(capture.providerOutputCompositionState)
+      .toBe(
+        'same_runtime_exact_summary_bound_handles_composed_descriptively',
+      );
+    expect(capture.runtimeSamePixelBindingState)
+      .toBe(
+        'independently_verified_for_composed_provider_instance',
+      );
+    expect(capture.runtimeTransformParityState)
+      .toBe(
+        'same_rgba_origin_no_additional_provider_mirror_or_rotation',
+      );
     expect(capture.ordinaryFileUploadBridgeState)
       .toBe('explicitly_rejected');
     expect(
@@ -171,6 +192,11 @@ describe('FR104 laterality integration readiness after U5B-D', () => {
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
         .implementedMechanicalGates
         .florenceRepositoryNativeLiveTransport,
+    ).toBe(true);
+    expect(
+      NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104
+        .implementedMechanicalGates
+        .sameRuntimeProviderOutputComposition,
     ).toBe(true);
     expect(
       NEUTRAL_EAR_LATERALITY_INTEGRATION_READINESS_FR104

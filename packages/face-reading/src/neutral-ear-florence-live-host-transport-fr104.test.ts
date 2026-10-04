@@ -4,6 +4,7 @@ import {
   createNeutralEarFlorenceByteAdapterFR104,
 } from './neutral-ear-provider-byte-adapters-fr104.js';
 import {
+  assertNeutralEarFlorenceCandidateSetBoundToInvocationFR104,
   consumeIssuedNeutralEarFlorenceCandidateSetFR104,
   createNeutralEarFlorenceLiveHostTransportFR104,
 } from './neutral-ear-florence-live-host-transport-fr104.js';
@@ -154,6 +155,44 @@ describe('FR104 Florence live host transport', () => {
         () => undefined,
       ),
     ).toThrow(/already been consumed or cleared/i);
+  });
+
+  it('binds a candidate handle to the exact live invocation summary object', async () => {
+    const transport =
+      createNeutralEarFlorenceLiveHostTransportFR104({
+        fetchImpl: async () => ({
+          ok: true,
+          status: 200,
+          json: async () => responseFixture(),
+        }),
+      });
+    const summary = await transport.hostInvoker({
+      rgbaBytes: new Uint8Array(16),
+      width: 2,
+      height: 2,
+      providerRunRef: 'fr104:live:test:001',
+    });
+    const handle = transport.takeCandidateSetHandle(
+      'fr104:live:test:001',
+    );
+
+    expect(() =>
+      assertNeutralEarFlorenceCandidateSetBoundToInvocationFR104(
+        summary,
+        handle,
+      ),
+    ).not.toThrow();
+    expect(() =>
+      assertNeutralEarFlorenceCandidateSetBoundToInvocationFR104(
+        { ...summary },
+        handle,
+      ),
+    ).toThrow(/exact Florence invocation summary/i);
+
+    consumeIssuedNeutralEarFlorenceCandidateSetFR104(
+      handle,
+      () => undefined,
+    );
   });
 
   it('keeps multi-candidate prompt output ambiguous rather than selecting one', async () => {

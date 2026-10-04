@@ -25,7 +25,7 @@ import { FaceAuthorityValidationError } from './validation.js';
 
 export type NeutralEarLiveProviderByteRuntimeBlockerFR104V1 =
   | NeutralEarControlledCaptureRuntimeByteBindingFR104V1['blockers'][number]
-  | 'florence_repository_native_live_host_transport_not_implemented'
+  | 'florence_live_transport_not_attested_by_b1_result'
   | 'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration';
 
 export interface NeutralEarLiveProviderByteRuntimeResultFR104V1 {
@@ -40,7 +40,7 @@ export interface NeutralEarLiveProviderByteRuntimeResultFR104V1 {
     readonly faceLandmarkerRuntimeInvokedFromExactRgbaBoundary: true;
     readonly sameMaterializedRgbaOriginVerifiedForBothProviders: true;
     readonly directRawFrameConsumerInvocationAllowed: false;
-    readonly repositoryNativeFlorenceRuntimeImplemented: false;
+    readonly repositoryNativeFlorenceTransportAttestedByThisResult: false;
   };
   readonly florence:
     NeutralEarFlorenceHostInvocationResultFR104V1;
@@ -160,7 +160,7 @@ export async function runNeutralEarLiveProviderByteRuntimeFR104(
 
     const blockers: NeutralEarLiveProviderByteRuntimeBlockerFR104V1[] = [
       ...controlledCaptureBinding.blockers,
-      'florence_repository_native_live_host_transport_not_implemented',
+      'florence_live_transport_not_attested_by_b1_result',
       'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration',
     ];
 
@@ -180,7 +180,7 @@ export async function runNeutralEarLiveProviderByteRuntimeFR104(
           sameMaterializedRgbaOriginVerifiedForBothProviders:
             true as const,
           directRawFrameConsumerInvocationAllowed: false as const,
-          repositoryNativeFlorenceRuntimeImplemented:
+          repositoryNativeFlorenceTransportAttestedByThisResult:
             false as const,
         }),
         florence,
