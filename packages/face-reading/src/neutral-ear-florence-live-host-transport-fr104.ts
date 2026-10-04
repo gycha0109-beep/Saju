@@ -105,6 +105,10 @@ type CandidateState = {
 
 const ISSUED_HANDLES = new WeakSet<object>();
 const HANDLE_STATE = new WeakMap<object, CandidateState>();
+const INVOCATION_HANDLE = new WeakMap<
+  object,
+  NeutralEarFlorenceCandidateSetHandleFR104V1
+>();
 
 function fail(message: string): never {
   throw new FaceAuthorityValidationError(
@@ -441,6 +445,7 @@ export function createNeutralEarFlorenceLiveHostTransportFR104(
             false as const,
           anatomicalLateralityAuthorized: false as const,
         });
+      INVOCATION_HANDLE.set(result, handle);
       return result;
     };
 
@@ -488,6 +493,24 @@ export function createNeutralEarFlorenceLiveHostTransportFR104(
       productionAuthorization: false as const,
     }),
   });
+}
+
+export function assertNeutralEarFlorenceCandidateSetBoundToInvocationFR104(
+  summary: NeutralEarFlorenceHostInvocationResultFR104V1,
+  handle: NeutralEarFlorenceCandidateSetHandleFR104V1,
+): void {
+  if (
+    INVOCATION_HANDLE.get(summary) !== handle
+    || !ISSUED_HANDLES.has(handle)
+    || HANDLE_STATE.get(handle) === undefined
+    || summary.providerRunRef !== handle.providerRunRef
+    || summary.leftCandidateCount !== handle.candidateCounts.leftPrompt
+    || summary.rightCandidateCount !== handle.candidateCounts.rightPrompt
+  ) {
+    fail(
+      'candidate handle is not bound to the exact Florence invocation summary.',
+    );
+  }
 }
 
 export function consumeIssuedNeutralEarFlorenceCandidateSetFR104<T>(
