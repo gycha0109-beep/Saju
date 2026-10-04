@@ -12,6 +12,7 @@ import {
 } from './official-reading-plan.js';
 import {
   OFFICIAL_READING_RENDERER_VERSION,
+  OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
   type OfficialReadingRenderedContentV1,
 } from './official-reading-renderer.js';
 import { buildReadingArtifactShell } from './reading-artifact-shell.js';
@@ -58,6 +59,14 @@ function assertReportBinding(
   if (report.rendererVersion !== OFFICIAL_READING_RENDERER_VERSION) {
     throw new TypeError('Official Reading artifact received an unsupported renderer version.');
   }
+  if (
+    report.structuralRealizationPolicyVersion !==
+    OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION
+  ) {
+    throw new TypeError(
+      'Official Reading artifact received an unsupported structural realization policy version.',
+    );
+  }
   if (report.sourceSemanticHash !== semantics.semanticHash) {
     throw new TypeError('Official Reading artifact report semantic hash does not match canonical semantics.');
   }
@@ -67,6 +76,8 @@ function assertReportBinding(
 
   const reportMaterial = {
     rendererVersion: report.rendererVersion,
+    structuralRealizationPolicyVersion:
+      report.structuralRealizationPolicyVersion,
     sourceSemanticHash: report.sourceSemanticHash,
     sourcePlanHash: report.sourcePlanHash,
     sections: report.sections,

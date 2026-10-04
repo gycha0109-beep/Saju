@@ -18,9 +18,13 @@ import {
 
 export const OFFICIAL_READING_RENDERER_VERSION =
   'myeonghwa-official-reading-renderer-v1' as const;
+export const OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION =
+  'myeonghwa-official-reading-structural-realization-policy-v1' as const;
 
 export interface OfficialReadingRenderedContentV1 {
   rendererVersion: typeof OFFICIAL_READING_RENDERER_VERSION;
+  structuralRealizationPolicyVersion:
+    typeof OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION;
   reportId: string;
   reportHash: string;
   sourceSemanticHash: string;
@@ -192,6 +196,212 @@ function primaryBlocks(units: readonly CanonicalReadingSemanticUnitV1[]) {
   });
 }
 
+function structuralUnitText(
+  unit: CanonicalReadingSemanticUnitV1,
+): string {
+  const headline = unit.canonicalText?.headline?.trim();
+  const summary = unit.canonicalText?.summary?.trim();
+  const qualifierTexts = [
+    ...new Set(
+      (unit.semanticQualifiers ?? [])
+        .map(
+          (qualifier) =>
+            qualifier.canonicalText?.summary?.trim() ??
+            qualifier.canonicalText?.headline?.trim(),
+        )
+        .filter((text): text is string => text !== undefined && text.length > 0),
+    ),
+  ];
+  return [
+    ...(headline === undefined ? [] : [headline]),
+    ...(summary === undefined || summary === headline ? [] : [summary]),
+    ...qualifierTexts,
+  ].join('\n');
+}
+
+interface StructuralUnitGroup {
+  kind: 'scenario' | 'contradiction';
+  units: readonly CanonicalReadingSemanticUnitV1[];
+}
+
+function scenarioGroups(
+  units: readonly CanonicalReadingSemanticUnitV1[],
+): readonly StructuralUnitGroup[] {
+  const bySemanticKey = new Map<
+    string,
+    CanonicalReadingSemanticUnitV1[]
+  >();
+
+  for (const unit of units) {
+    if (unit.scenarioRef === undefined) continue;
+    const current = bySemanticKey.get(unit.semanticKey) ?? [];
+    current.push(unit);
+    bySemanticKey.set(unit.semanticKey, current);
+  }
+
+  return [...bySemanticKey.values()]
+    .filter(
+      (group) =>
+        new Set(group.map((unit) => unit.scenarioRef)).size > 1,
+    )
+    .map((group) => ({ kind: 'scenario' as const, units: group }));
+}
+
+function contradictionGroups(
+  bundle: CanonicalReadingSemanticBundleV1,
+  units: readonly CanonicalReadingSemanticUnitV1[],
+): readonly StructuralUnitGroup[] {
+  const byClaimId = new Map(units.map((unit) => [unit.claimId, unit]));
+  const adjacency = new Map<string, Set<string>>();
+
+  for (const relation of bundle.claimRelations) {
+    if (relation.relation !== 'contradicts') continue;
+    if (
+      relation.fromClaimId === relation.toClaimId ||
+      !byClaimId.has(relation.fromClaimId) ||
+      !byClaimId.has(relation.toClaimId)
+    ) {
+      continue;
+    }
+    const from = adjacency.get(relation.fromClaimId) ?? new Set<string>();
+    const to = adjacency.get(relation.toClaimId) ?? new Set<string>();
+    from.add(relation.toClaimId);
+    to.add(relation.fromClaimId);
+    adjacency.set(relation.fromClaimId, from);
+    adjacency.set(relation.toClaimId, to);
+  }
+
+  const visited = new Set<string>();
+  const groups: StructuralUnitGroup[] = [];
+
+  for (const unit of units) {
+    if (visited.has(unit.claimId) || !adjacency.has(unit.claimId)) continue;
+    const pending = [unit.claimId];
+    const component = new Set<string>();
+
+    while (pending.length > 0) {
+      const claimId = pending.shift();
+      if (claimId === undefined || component.has(claimId)) continue;
+      component.add(claimId);
+      for (const neighbor of adjacency.get(claimId) ?? []) pending.push(neighbor);
+    }
+
+    for (const claimId of component) visited.add(claimId);
+    if (component.size < 2) continue;
+    groups.push({
+      kind: 'contradiction',
+      units: units.filter((candidate) => component.has(candidate.claimId)),
+    });
+  }
+
+  return groups;
+}
+
+function structuralGroupsForSection(
+  bundle: CanonicalReadingSemanticBundleV1,
+  units: readonly CanonicalReadingSemanticUnitV1[],
+): ReadonlyMap<string, StructuralUnitGroup> {
+  const scenarios = scenarioGroups(units);
+  const contradictions = contradictionGroups(bundle, units);
+  const scenarioUnitIds = new Set(
+    scenarios.flatMap((group) => group.units.map((unit) => unit.unitId)),
+  );
+  const contradictionUnitIds = new Set(
+    contradictions.flatMap((group) => group.units.map((unit) => unit.unitId)),
+  );
+
+  if (
+    [...scenarioUnitIds].some((unitId) => contradictionUnitIds.has(unitId))
+  ) {
+    throw new TypeError(
+      'Official Reading structural realization does not support overlapping scenario and contradiction groups.',
+    );
+  }
+
+  const result = new Map<string, StructuralUnitGroup>();
+  for (const group of [...scenarios, ...contradictions]) {
+    for (const unit of group.units) result.set(unit.unitId, group);
+  }
+  return result;
+}
+
+function structurallyPreservedBlocks(
+  bundle: CanonicalReadingSemanticBundleV1,
+  units: readonly CanonicalReadingSemanticUnitV1[],
+): ReadingSectionView['blocks'] {
+  const groups = structuralGroupsForSection(bundle, units);
+  const emittedGroups = new Set<StructuralUnitGroup>();
+  const blocks: ReadingSectionView['blocks'][number][] = [];
+
+  for (const unit of units) {
+    const group = groups.get(unit.unitId);
+    if (group === undefined) {
+      blocks.push(...primaryBlocks([unit]));
+      continue;
+    }
+    if (emittedGroups.has(group)) continue;
+    emittedGroups.add(group);
+
+    if (group.kind === 'scenario') {
+      const scenarioRefs: string[] = [];
+      const unitsByScenario = new Map<string, CanonicalReadingSemanticUnitV1[]>();
+      for (const member of group.units) {
+        const scenarioRef = member.scenarioRef;
+        if (scenarioRef === undefined) {
+          throw new TypeError(
+            'Official Reading scenario group contains a unit without scenarioRef.',
+          );
+        }
+        if (!unitsByScenario.has(scenarioRef)) scenarioRefs.push(scenarioRef);
+        const current = unitsByScenario.get(scenarioRef) ?? [];
+        current.push(member);
+        unitsByScenario.set(scenarioRef, current);
+      }
+      blocks.push({
+        type: 'ambiguity',
+        summary: '서로 다른 시나리오를 하나로 합치지 않고 함께 표시합니다.',
+        scenarios: scenarioRefs.map((scenarioRef, index) => ({
+          label: `시나리오 ${index + 1}`,
+          text: (unitsByScenario.get(scenarioRef) ?? [])
+            .map(structuralUnitText)
+            .join('\n\n'),
+        })),
+      });
+      continue;
+    }
+
+    blocks.push({
+      type: 'comparison',
+      title: '함께 보존되는 상반된 해석',
+      perspectives: group.units.map((member, index) => ({
+        label: `관점 ${index + 1}`,
+        text: structuralUnitText(member),
+      })),
+    });
+  }
+
+  return blocks;
+}
+
+function assertStructuralRealizationSupported(
+  bundle: CanonicalReadingSemanticBundleV1,
+  plan: OfficialReadingPlanV1,
+  index: ReadonlyMap<string, CanonicalReadingSemanticUnitV1>,
+): void {
+  for (const section of plan.sections) {
+    if (
+      section.semanticGroup === 'evidence' ||
+      section.semanticGroup === 'limits'
+    ) {
+      continue;
+    }
+    structuralGroupsForSection(
+      bundle,
+      unitsForRefs(section.primaryUnitRefs, index),
+    );
+  }
+}
+
 function limitText(prohibitedExtensions: readonly string[]): string {
   const knownLabels = [
     ...new Set(
@@ -217,6 +427,11 @@ export function canRenderOfficialReadingV1(
   assertCanonicalReadingSemanticBundleV1(bundle);
   assertOfficialReadingPlanV1(plan, bundle);
   const index = unitMap(bundle);
+  try {
+    assertStructuralRealizationSupported(bundle, plan, index);
+  } catch {
+    return false;
+  }
   return plan.sections
     .filter((section) => section.semanticGroup !== 'evidence' && section.semanticGroup !== 'limits')
     .flatMap((section) => unitsForRefs(section.primaryUnitRefs, index))
@@ -232,13 +447,14 @@ export function renderOfficialReadingV1(
 ): OfficialReadingRenderedContentV1 {
   assertCanonicalReadingSemanticBundleV1(bundle);
   assertOfficialReadingPlanV1(plan, bundle);
+  const index = unitMap(bundle);
+  assertStructuralRealizationSupported(bundle, plan, index);
   if (!canRenderOfficialReadingV1(bundle, plan)) {
     throw new TypeError(
       'Official Reading canonical renderer requires realizable text for every primary semantic unit.',
     );
   }
 
-  const index = unitMap(bundle);
   const sections: ReadingSectionView[] = [];
   const explainabilityEntries: ExplainabilityIndex['entries'][number][] = [];
 
@@ -253,7 +469,7 @@ export function renderOfficialReadingV1(
         ? section.prohibitedExtensions.length === 0
           ? []
           : [{ type: 'paragraph' as const, text: limitText(section.prohibitedExtensions) }]
-        : primaryBlocks(primaryUnits);
+        : structurallyPreservedBlocks(bundle, primaryUnits);
 
     if (blocks.length === 0) continue;
     explainabilityEntries.push(explainability);
@@ -279,6 +495,8 @@ export function renderOfficialReadingV1(
   };
   const reportMaterial = {
     rendererVersion: OFFICIAL_READING_RENDERER_VERSION,
+    structuralRealizationPolicyVersion:
+      OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
     sections,
