@@ -19,10 +19,16 @@ import type {
   NarrativeModelAdapter,
 } from '../llm/model-adapter.js';
 import {
-  readingSectionForIntentV1,
   resolvePreviewConsumerReadingAuthorityV1,
-  type PreviewConsumerReadingAuthorityResolutionV1,
 } from '../preview/preview-official-reading-consumer-authority.js';
+import {
+  readingSectionForIntentV1,
+  type ConsumerReadingAuthorityResolutionV1,
+  type ConsumerReadingAuthorityResolverV1,
+} from './consumer-reading-authority.js';
+import type {
+  OfficialReadingSemanticProjectionResolverV1,
+} from './official-reading-semantic-projection.js';
 import { buildPreviewSemanticQualifierBindingsV1 } from '../preview/preview-semantic-qualifier-projection.js';
 import { buildPreviewSemanticTextBindingsV1 } from '../preview/preview-semantic-text-projection.js';
 import { buildNarrativeEvidenceBundleFromReadingEvidence } from '../narrative/evidence-selector.js';
@@ -73,6 +79,8 @@ export interface GovernedReadingExecutionOptions {
   claimNarrativeProfiles?: readonly ClaimNarrativeProfile[];
   narrativeNow?: Date;
   artifactGeneratedAt?: Date;
+  consumerReadingAuthorityResolver?: ConsumerReadingAuthorityResolverV1;
+  officialReadingSemanticProjectionResolver?: OfficialReadingSemanticProjectionResolverV1;
 }
 
 export interface GovernedReadingExecutionResult {
@@ -84,7 +92,7 @@ export interface GovernedReadingExecutionResult {
   canonicalSemantics?: CanonicalReadingSemanticBundleV1;
   officialReadingPlan?: OfficialReadingPlanV1;
   officialReadingReport?: OfficialReadingRenderedContentV1;
-  consumerReadingAuthority?: PreviewConsumerReadingAuthorityResolutionV1;
+  consumerReadingAuthority?: ConsumerReadingAuthorityResolutionV1;
   artifact?: ReadingArtifact;
   modelCalls: number;
   reasonCodes: readonly string[];
@@ -198,7 +206,7 @@ function resultIdentity(
   preparation: ProductReadingPreparationResult,
   modelCalls: number,
   reasonCodes: readonly string[],
-  consumerReadingAuthority?: PreviewConsumerReadingAuthorityResolutionV1,
+  consumerReadingAuthority?: ConsumerReadingAuthorityResolutionV1,
   narrative?: NarrativeGenerationResult,
   canonicalSemantics?: CanonicalReadingSemanticBundleV1,
   officialReadingPlan?: OfficialReadingPlanV1,
@@ -250,7 +258,7 @@ function blockedResult(
 
 function officialAuthorityBlockedResult(
   preparation: ProductReadingPreparationResult,
-  consumerReadingAuthority: PreviewConsumerReadingAuthorityResolutionV1,
+  consumerReadingAuthority: ConsumerReadingAuthorityResolutionV1,
   reasonCodes: readonly string[],
   canonicalSemantics: CanonicalReadingSemanticBundleV1,
   officialReadingPlan: OfficialReadingPlanV1,
@@ -286,7 +294,7 @@ function officialAuthorityBlockedResult(
 
 function legacyNarrativeRuntimeBlockedResult(
   preparation: ProductReadingPreparationResult,
-  consumerReadingAuthority: PreviewConsumerReadingAuthorityResolutionV1,
+  consumerReadingAuthority: ConsumerReadingAuthorityResolutionV1,
 ): GovernedReadingExecutionResult {
   const state: GovernedReadingExecutionState = 'invariant_blocked';
   const reasonCodes = ['LEGACY_NARRATIVE_RUNTIME_REQUIRED'] as const;
@@ -406,40 +414,42 @@ export async function executeProductReading(
   }
 
   const governedEvidence = preparation.composition.evidence.bundle;
-  const consumerReadingAuthority = resolvePreviewConsumerReadingAuthorityV1(
-    preparation.normalization.request.intent,
-  );
+  const consumerReadingAuthority =
+    (
+      options.consumerReadingAuthorityResolver ??
+      resolvePreviewConsumerReadingAuthorityV1
+    )(preparation.normalization.request.intent);
 
   if (consumerReadingAuthority.authority === 'official_reading') {
     const readingSection = readingSectionForIntentV1(
       preparation.normalization.request.intent,
     );
+    const projectionInput = {
+      intent: preparation.normalization.request.intent,
+      registry,
+      evidence: governedEvidence,
+      targetClaimIds: preparation.composition.selection.targetClaimIds,
+    };
     const semanticProjection =
-      readingSection === 'relationship:natal:spouse'
-        ? await import(
-            '../preview/preview-spouse-official-reading-semantic-projection.js'
-          ).then((module) =>
-            module.buildPreviewSpouseOfficialReadingSemanticProjectionV1({
-              intent: preparation.normalization.request!.intent,
-              registry,
-              evidence: governedEvidence,
-              targetClaimIds: preparation.composition!.selection.targetClaimIds,
-            }),
+      options.officialReadingSemanticProjectionResolver !== undefined
+        ? await options.officialReadingSemanticProjectionResolver(
+            projectionInput,
           )
-        : {
-            semanticTextBindings: buildPreviewSemanticTextBindingsV1({
-              intent: preparation.normalization.request.intent,
-              registry,
-              evidence: governedEvidence,
-              targetClaimIds: preparation.composition.selection.targetClaimIds,
-            }),
-            semanticQualifierBindings: buildPreviewSemanticQualifierBindingsV1({
-              intent: preparation.normalization.request.intent,
-              registry,
-              evidence: governedEvidence,
-              targetClaimIds: preparation.composition.selection.targetClaimIds,
-            }),
-          };
+        : readingSection === 'relationship:natal:spouse'
+          ? await import(
+              '../preview/preview-spouse-official-reading-semantic-projection.js'
+            ).then((module) =>
+              module.buildPreviewSpouseOfficialReadingSemanticProjectionV1(
+                projectionInput,
+              ),
+            )
+          : {
+              semanticTextBindings: buildPreviewSemanticTextBindingsV1(
+                projectionInput,
+              ),
+              semanticQualifierBindings:
+                buildPreviewSemanticQualifierBindingsV1(projectionInput),
+            };
     const canonicalSemantics = buildCanonicalReadingSemanticBundleV1({
       intent: preparation.normalization.request.intent,
       evidence: governedEvidence,

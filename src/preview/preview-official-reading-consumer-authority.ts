@@ -1,5 +1,10 @@
 import type { ReadingIntent } from '../contracts/reading.js';
 import {
+  readingSectionForIntentV1,
+  type ConsumerReadingAuthorityResolutionV1,
+  type ConsumerReadingAuthorityV1,
+} from '../reading/consumer-reading-authority.js';
+import {
   PREVIEW_E2E_APPROVAL,
   isPreviewOfficialReadingSection,
   type PreviewOfficialReadingSection,
@@ -9,21 +14,16 @@ export const PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION =
   'myeonghwa-preview-official-reading-consumer-authority-v3' as const;
 
 export type PreviewConsumerReadingAuthorityV1 =
-  | 'official_reading'
-  | 'legacy_narrative';
+  ConsumerReadingAuthorityV1;
 
-export interface PreviewConsumerReadingAuthorityResolutionV1 {
-  authorityVersion: typeof PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION;
-  readingSection: string;
-  authority: PreviewConsumerReadingAuthorityV1;
+export interface PreviewConsumerReadingAuthorityResolutionV1
+  extends ConsumerReadingAuthorityResolutionV1 {
+  authorityVersion:
+    typeof PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION;
   supportedOfficialReadingSection?: PreviewOfficialReadingSection;
-  constraints: {
-    mayPromoteProductionInterpretationAuthority: false;
-    mayGrantPersistenceAuthority: false;
-    mayGrantPublicGeneralAvailabilityAuthority: false;
-    mayTreatUnsupportedSectionAsOfficialReading: false;
-  };
 }
+
+export { readingSectionForIntentV1 };
 
 const CONSTRAINTS = Object.freeze({
   mayPromoteProductionInterpretationAuthority: false as const,
@@ -31,12 +31,6 @@ const CONSTRAINTS = Object.freeze({
   mayGrantPublicGeneralAvailabilityAuthority: false as const,
   mayTreatUnsupportedSectionAsOfficialReading: false as const,
 });
-
-export function readingSectionForIntentV1(intent: ReadingIntent): string {
-  return intent.relationshipScope === undefined
-    ? `${intent.domain}:${intent.temporalScope}`
-    : `${intent.domain}:${intent.temporalScope}:${intent.relationshipScope}`;
-}
 
 export function resolvePreviewConsumerReadingAuthorityV1(
   intent: ReadingIntent,
@@ -60,7 +54,8 @@ export function resolvePreviewConsumerReadingAuthorityV1(
   }
 
   return {
-    authorityVersion: PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION,
+    authorityVersion:
+      PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION,
     readingSection,
     authority: official ? 'official_reading' : 'legacy_narrative',
     ...(official ? { supportedOfficialReadingSection: readingSection } : {}),
