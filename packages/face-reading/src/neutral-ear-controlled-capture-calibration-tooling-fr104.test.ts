@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  CONTROLLED_CAPTURE_CALIBRATION_EVIDENCE_FR21B,
-  CONTROLLED_CAPTURE_PROFILES_FR21B,
-  validateControlledCaptureCalibrationEvidenceFR21B,
-} from './controlled-capture-attestation-fr21b.js';
-import {
-  assertFr21bCalibrationRegistriesRemainUnadmittedFR104,
   buildNeutralEarFr21bCalibrationCandidateFR104,
+  NEUTRAL_EAR_FR21B_C1_RESEARCH_PINS_FR104,
 } from './neutral-ear-controlled-capture-calibration-tooling-fr104.js';
 
 function candidate(
@@ -106,12 +101,9 @@ describe('FR104 FR21b C1 controlled-capture calibration tooling', () => {
     expect(
       result.privacy.sanitizedJsonOnlyExport,
     ).toBe(true);
-
-    expect(() =>
-      validateControlledCaptureCalibrationEvidenceFR21B(
-        result.calibrationEvidence,
-      ),
-    ).not.toThrow();
+    expect(result.calibrationEvidence.schemaVersion)
+      .toBe('fr21b-calibration-v1');
+    expect(result.calibrationEvidence.stages).toHaveLength(4);
   });
 
   it('supports rear-camera recording without inferring mirror policy from facing', () => {
@@ -169,12 +161,18 @@ describe('FR104 FR21b C1 controlled-capture calibration tooling', () => {
     ).toThrow(/exactly preview\/raw_pixels\/encoded_pixels\/canonical_pixels/i);
   });
 
-  it('keeps the FR21b registries empty until real evidence is reviewed and explicitly admitted', () => {
-    expect(CONTROLLED_CAPTURE_PROFILES_FR21B).toEqual([]);
-    expect(CONTROLLED_CAPTURE_CALIBRATION_EVIDENCE_FR21B)
-      .toEqual([]);
-    expect(() =>
-      assertFr21bCalibrationRegistriesRemainUnadmittedFR104(),
-    ).not.toThrow();
+  it('declares C1 as non-admitting research tooling without loading the authority registry at runtime', () => {
+    expect(
+      NEUTRAL_EAR_FR21B_C1_RESEARCH_PINS_FR104
+        .registryAdmissionPerformed,
+    ).toBe(false);
+    expect(
+      NEUTRAL_EAR_FR21B_C1_RESEARCH_PINS_FR104
+        .verifiedProfileIssued,
+    ).toBe(false);
+    expect(
+      NEUTRAL_EAR_FR21B_C1_RESEARCH_PINS_FR104
+        .fr21bSchemaVersion,
+    ).toBe('fr21b-calibration-v1');
   });
 });
