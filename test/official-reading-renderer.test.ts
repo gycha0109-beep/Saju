@@ -335,7 +335,7 @@ describe('Official Reading renderer v1', () => {
     expect(JSON.stringify(interpretation?.blocks)).toContain('관점 B 설명');
   });
 
-  it('fails closed on complex contradiction topology instead of inventing a merged comparison', () => {
+  it('preserves a multi-claim contradiction component without selecting a winner', () => {
     const first = structuredPrimary({
       claimId: 'complex-a',
       subcategory: 'alpha_conclusion',
@@ -374,12 +374,25 @@ describe('Official Reading renderer v1', () => {
         },
       ],
     );
-    const plan = buildOfficialReadingPlanV1(bundle);
-
-    expect(canRenderOfficialReadingV1(bundle, plan)).toBe(false);
-    expect(() => renderOfficialReadingV1(bundle, plan)).toThrow(
-      /complex contradiction topology/u,
+    const rendered = renderOfficialReadingV1(
+      bundle,
+      buildOfficialReadingPlanV1(bundle),
     );
+    const interpretation = rendered.sections.find(
+      (section) => section.title === '주요 해석',
+    );
+
+    expect(interpretation?.blocks).toEqual([
+      {
+        type: 'comparison',
+        title: '함께 보존되는 상반된 해석',
+        perspectives: [
+          { label: '관점 1', text: '복합 A 핵심\n복합 A 설명' },
+          { label: '관점 2', text: '복합 B 핵심\n복합 B 설명' },
+          { label: '관점 3', text: '복합 C 핵심\n복합 C 설명' },
+        ],
+      },
+    ]);
   });
 
   it('fails closed when scenario and contradiction grouping overlap', () => {
