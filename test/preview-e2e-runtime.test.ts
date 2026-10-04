@@ -134,10 +134,10 @@ describe('provisionally approved preview E2E runtime', () => {
   });
 
   it.each([
-    ['직업운', ['일·성과', '해석 범위']],
+    ['직업운', ['일의 동력', '맞는 역할·조건', '해석 범위']],
     ['재물운', ['가치가 만들어지는 방식', '돈을 쓰는 기준', '관리 방식', '충돌·흔들림', '해석 범위']],
     ['연애운', ['관계', '해석 범위']],
-    ['사업운', ['일·성과', '해석 범위']],
+    ['사업운', ['판단과 실행', '불확실성 다루기', '자원 배분', '책임과 기준', '운영 압박', '해석 범위']],
   ] as const)('delivers supported natal Preview %s', async (text, expectedTitles) => {
     const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
