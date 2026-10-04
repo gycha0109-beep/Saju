@@ -141,7 +141,7 @@ function morphologySelectionMatchesRule(
   selected: readonly string[] | undefined,
   ruleTerms: readonly string[],
 ): boolean {
-  if (selected === undefined || selected.length === 0) return true;
+  if (selected === undefined || selected.length === 0) return false;
   const selectedSet = new Set(selected);
   return ruleTerms.every((term) => selectedSet.has(term));
 }
