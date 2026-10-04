@@ -107,8 +107,9 @@ describe('FR104 same-run FaceLandmarker geometry handle', () => {
       ),
     ).toThrow(/exact FaceLandmarker invocation summary/i);
 
-    geometryCapture.discardPendingGeometry(
-      'fr104:b3:geometry:002',
+    consumeIssuedNeutralEarFaceLandmarkerGeometryFR104(
+      handle,
+      () => undefined,
     );
   });
 
