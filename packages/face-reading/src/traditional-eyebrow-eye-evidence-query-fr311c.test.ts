@@ -140,4 +140,27 @@ describe('FR311C integrated eyebrow-eye evidence index and resolver', () => {
     expect(shrimp.some((item) => item.certainty === 'phrase_uncertain')).toBe(true);
     expect(shrimp.some((item) => item.certainty === 'direct_clear')).toBe(true);
   });
+
+  it('does not leak all named-form claims into morphology-only queries', () => {
+    const result = queryIntegratedTraditionalEvidenceFR311C({
+      lensKey: 'wealth',
+      morphologyTermKeys: ['eye.short', 'brow.long'],
+    });
+
+    expect(result.status).toBe('direct_source_combination');
+    expect(result.namedEvidenceIds).toEqual([]);
+    expect(result.combinationRuleIds).toEqual(['fr311.combo.eye_short_brow_long']);
+  });
+
+  it('keeps morphology-only inbok queries limited to matching direct rules', () => {
+    const result = queryIntegratedTraditionalEvidenceFR311C({
+      lensKey: 'inbok',
+      morphologyTermKeys: ['brow.flat', 'eye.tail_down'],
+    });
+
+    expect(result.status).toBe('parallel_evidence_only');
+    expect(result.namedEvidenceIds).toEqual([]);
+    expect(result.directRuleIds).toEqual(['fr311.eye.tail_down']);
+  });
+
 });
