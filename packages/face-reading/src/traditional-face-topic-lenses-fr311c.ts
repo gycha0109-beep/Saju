@@ -5,6 +5,7 @@ import {
 } from './traditional-eyebrow-eye-evidence-index-fr311c.js';
 
 export type EvidenceLensKeyFR311C =
+  | 'temperament'
   | 'inbok'
   | 'interpersonal_relations'
   | 'wealth'
@@ -27,6 +28,12 @@ interface EvidenceLensDefinitionFR311C {
 }
 
 export const EVIDENCE_LENSES_FR311C: readonly EvidenceLensDefinitionFR311C[] = Object.freeze([
+  Object.freeze({
+    lensKey: 'temperament' as const,
+    topicKeys: Object.freeze(['temperament']),
+    relationTargets: Object.freeze([]),
+    ruleTopicKeys: Object.freeze(['temperament']),
+  }),
   Object.freeze({
     lensKey: 'inbok' as const,
     topicKeys: Object.freeze([
