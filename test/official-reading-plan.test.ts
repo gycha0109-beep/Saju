@@ -7,10 +7,12 @@ import {
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import {
   OFFICIAL_READING_PLAN_POLICY_VERSION,
+  OFFICIAL_READING_SECTION_COMPOSITION_POLICY_VERSION,
   OFFICIAL_READING_SECTION_ORDER_POLICY_VERSION,
   OFFICIAL_READING_WITHIN_SECTION_ORDER_POLICY_VERSION,
   assertOfficialReadingPlanV1,
   buildOfficialReadingPlanV1,
+  officialReadingLaneOrderForDomainV1,
   officialReadingSectionOrderForDomainV1,
 } from '../src/reading/official-reading-plan.js';
 
@@ -171,9 +173,41 @@ function wealthConclusion(
   };
 }
 
+function domainKindConclusion(
+  domain: 'career' | 'relationship' | 'business',
+  claimId: string,
+  kind: string,
+): InterpretationClaim {
+  const kindKey =
+    domain === 'career'
+      ? 'careerKind'
+      : domain === 'relationship'
+        ? 'relationshipKind'
+        : 'businessKind';
+  return {
+    ...claim(
+      claimId,
+      'T8',
+      {
+        [kindKey]: kind,
+        headline: `${kind} headline`,
+        summary: `${kind} summary`,
+        futureTimingAuthorized: false,
+      },
+    ),
+    taxonomy: {
+      tier: 'T8',
+      category: domain,
+      subcategory: kind,
+    },
+    claimType: `${domain.toUpperCase()}_${kind.toUpperCase()}_CONCLUSION`,
+  };
+}
+
 function semanticBundleFor(
-  domain: 'general' | 'wealth',
+  domain: 'general' | 'wealth' | 'career' | 'relationship' | 'business',
   primaries: readonly InterpretationClaim[],
+  claimRelations: GovernedReadingEvidenceBundleV1['claimRelations'] = [],
 ) {
   const evidence: GovernedReadingEvidenceBundleV1 = {
     requestId: `request-${domain}-multi`,
@@ -183,7 +217,7 @@ function semanticBundleFor(
     registrySnapshotId: 'registry-1',
     canonicalFacts: [],
     claims: [...primaries],
-    claimRelations: [],
+    claimRelations: [...claimRelations],
     schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
     constraints: {
       mayRecalculate: false,
@@ -305,6 +339,174 @@ describe('OfficialReadingPlanV1', () => {
       'tension',
       'limits',
     ]);
+  });
+
+  it('preserves explicit domain-kind lanes for Career, Relationship, and Business', () => {
+    expect(OFFICIAL_READING_SECTION_COMPOSITION_POLICY_VERSION).toBe(
+      'myeonghwa-official-reading-section-composition-policy-v1',
+    );
+    expect(officialReadingLaneOrderForDomainV1('career')).toEqual([
+      'career.driver',
+      'career.fit',
+      'career.environment',
+      'career.friction',
+    ]);
+    expect(officialReadingLaneOrderForDomainV1('relationship')).toEqual([
+      'relationship.closeness',
+      'relationship.expression',
+      'relationship.values',
+      'relationship.boundary',
+      'relationship.friction',
+    ]);
+    expect(officialReadingLaneOrderForDomainV1('business')).toEqual([
+      'business.decision_execution',
+      'business.uncertainty',
+      'business.allocation',
+      'business.accountability',
+      'business.partnership',
+      'business.pressure',
+      'business.friction',
+    ]);
+
+    const career = buildOfficialReadingPlanV1(
+      semanticBundleFor('career', [
+        domainKindConclusion('career', 'career-friction', 'friction'),
+        domainKindConclusion('career', 'career-environment', 'environment'),
+        domainKindConclusion('career', 'career-fit', 'fit'),
+        domainKindConclusion('career', 'career-driver', 'driver'),
+      ]),
+    );
+    expect(
+      career.sections
+        .filter((section) => section.semanticGroup === 'work')
+        .map((section) => section.semanticLane),
+    ).toEqual([
+      'career.driver',
+      'career.fit',
+      'career.environment',
+      'career.friction',
+    ]);
+
+    const relationship = buildOfficialReadingPlanV1(
+      semanticBundleFor('relationship', [
+        domainKindConclusion('relationship', 'relationship-friction', 'friction'),
+        domainKindConclusion('relationship', 'relationship-boundary', 'boundary'),
+        domainKindConclusion('relationship', 'relationship-values', 'values'),
+        domainKindConclusion('relationship', 'relationship-expression', 'expression'),
+        domainKindConclusion('relationship', 'relationship-closeness', 'closeness'),
+      ]),
+    );
+    expect(
+      relationship.sections
+        .filter((section) => section.semanticGroup === 'relationship')
+        .map((section) => section.semanticLane),
+    ).toEqual([
+      'relationship.closeness',
+      'relationship.expression',
+      'relationship.values',
+      'relationship.boundary',
+      'relationship.friction',
+    ]);
+
+    const business = buildOfficialReadingPlanV1(
+      semanticBundleFor('business', [
+        domainKindConclusion('business', 'business-friction', 'friction'),
+        domainKindConclusion('business', 'business-pressure', 'pressure'),
+        domainKindConclusion('business', 'business-partnership', 'partnership'),
+        domainKindConclusion('business', 'business-accountability', 'accountability'),
+        domainKindConclusion('business', 'business-allocation', 'allocation'),
+        domainKindConclusion('business', 'business-uncertainty', 'uncertainty'),
+        domainKindConclusion('business', 'business-decision', 'decision_execution'),
+      ]),
+    );
+    expect(
+      business.sections
+        .filter((section) => section.semanticGroup === 'work')
+        .map((section) => section.semanticLane),
+    ).toEqual([
+      'business.decision_execution',
+      'business.uncertainty',
+      'business.allocation',
+      'business.accountability',
+      'business.partnership',
+      'business.pressure',
+      'business.friction',
+    ]);
+  });
+
+  it('keeps unknown domain kinds in the coarse fallback section without inference', () => {
+    const semantics = semanticBundleFor('career', [
+      domainKindConclusion('career', 'career-unknown', 'unknown_kind'),
+    ]);
+    const plan = buildOfficialReadingPlanV1(semantics);
+    const work = plan.sections.find((section) => section.semanticGroup === 'work');
+
+    expect(work?.semanticLane).toBeUndefined();
+    expect(work?.primaryUnitRefs).toHaveLength(1);
+  });
+
+  it('keeps cross-lane contradiction components indivisible in the coarse fallback section', () => {
+    const driver = domainKindConclusion('career', 'career-driver-conflict', 'driver');
+    const fit = domainKindConclusion('career', 'career-fit-conflict', 'fit');
+    const semantics = semanticBundleFor(
+      'career',
+      [fit, driver],
+      [
+        {
+          relationId: 'career-cross-lane-conflict',
+          fromClaimId: 'career-driver-conflict',
+          toClaimId: 'career-fit-conflict',
+          relation: 'contradicts',
+        },
+      ],
+    );
+    const plan = buildOfficialReadingPlanV1(semantics);
+    const workSections = plan.sections.filter(
+      (section) => section.semanticGroup === 'work',
+    );
+
+    expect(workSections).toHaveLength(1);
+    expect(workSections[0]?.semanticLane).toBeUndefined();
+    expect(workSections[0]?.primaryUnitRefs).toHaveLength(2);
+  });
+
+  it('keeps domain-kind section composition deterministic across evidence permutation', () => {
+    const primaries = [
+      domainKindConclusion('business', 'business-allocation', 'allocation'),
+      domainKindConclusion('business', 'business-friction', 'friction'),
+      domainKindConclusion('business', 'business-decision', 'decision_execution'),
+    ];
+    const forward = semanticBundleFor('business', primaries);
+    const reverse = semanticBundleFor('business', [...primaries].reverse());
+    const first = buildOfficialReadingPlanV1(forward);
+    const second = buildOfficialReadingPlanV1(reverse);
+
+    expect(second.sections).toEqual(first.sections);
+  });
+
+  it('rejects manual reassignment of a primary unit to a different domain-kind lane', () => {
+    const semantics = semanticBundleFor('career', [
+      domainKindConclusion('career', 'career-driver', 'driver'),
+    ]);
+    const plan = buildOfficialReadingPlanV1(semantics);
+    const work = plan.sections.find((section) => section.semanticGroup === 'work');
+    if (work === undefined) throw new Error('fixture must contain work section');
+
+    expect(() =>
+      assertOfficialReadingPlanV1(
+        {
+          ...plan,
+          sections: plan.sections.map((section) =>
+            section.sectionId === work.sectionId
+              ? { ...section, semanticLane: 'career.fit' as const }
+              : section,
+          ),
+          planId: 'official_reading_plan_fake',
+          planHash: 'fake',
+        },
+        semantics,
+      ),
+    ).toThrow(/wrong semantic lane/u);
   });
 
   it('uses stable semantic identity order inside a section and rejects manual reordering', () => {
