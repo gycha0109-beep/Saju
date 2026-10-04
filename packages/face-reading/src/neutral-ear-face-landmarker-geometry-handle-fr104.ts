@@ -7,6 +7,7 @@ import type {
 import {
   createNeutralEarFaceLandmarkerByteAdapterFR104,
   type NeutralEarFaceLandmarkerByteAdapterFR104V1,
+  type NeutralEarFaceLandmarkerByteInvocationSummaryFR104V1,
   type NeutralEarRgbaImageSourceFactoryFR104V1,
 } from './neutral-ear-provider-byte-adapters-fr104.js';
 import type {
@@ -68,6 +69,10 @@ type GeometryState = {
 
 const ISSUED_HANDLES = new WeakSet<object>();
 const HANDLE_STATE = new WeakMap<object, GeometryState>();
+const INVOCATION_HANDLE = new WeakMap<
+  object,
+  NeutralEarFaceLandmarkerGeometryHandleFR104V1
+>();
 
 function fail(message: string): never {
   throw new FaceAuthorityValidationError(
@@ -170,6 +175,15 @@ export function createNeutralEarFaceLandmarkerGeometryCaptureFR104(
         HANDLE_STATE.set(handle, state);
         pendingByRunRef.set(geometry.providerRunRef, handle);
       },
+      onInvocationSummary: (summary) => {
+        const handle = pendingByRunRef.get(summary.providerRunRef);
+        if (handle === undefined) {
+          fail(
+            'invocation summary has no same-run pending geometry handle.',
+          );
+        }
+        INVOCATION_HANDLE.set(summary, handle);
+      },
     });
 
   return Object.freeze({
@@ -209,6 +223,23 @@ export function createNeutralEarFaceLandmarkerGeometryCaptureFR104(
       productionAuthorization: false as const,
     }),
   });
+}
+
+export function assertNeutralEarFaceLandmarkerGeometryBoundToInvocationFR104(
+  summary: NeutralEarFaceLandmarkerByteInvocationSummaryFR104V1,
+  handle: NeutralEarFaceLandmarkerGeometryHandleFR104V1,
+): void {
+  if (
+    INVOCATION_HANDLE.get(summary) !== handle
+    || !ISSUED_HANDLES.has(handle)
+    || HANDLE_STATE.get(handle) === undefined
+    || summary.providerRunRef !== handle.providerRunRef
+    || summary.faceCount !== 1
+  ) {
+    fail(
+      'geometry handle is not bound to the exact FaceLandmarker invocation summary.',
+    );
+  }
 }
 
 export function consumeIssuedNeutralEarFaceLandmarkerGeometryFR104<T>(
