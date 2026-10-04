@@ -280,7 +280,7 @@ describe('OfficialReadingPlanV1', () => {
     ]);
   });
 
-  it('is permutation-deterministic and rejects a hash-valid but policy-reordered plan', () => {
+  it('keeps section synthesis deterministic across evidence permutation and rejects a policy-reordered plan', () => {
     const primaries = [
       generalConclusion('general-core', 'core'),
       generalConclusion('general-work', 'work'),
@@ -292,7 +292,8 @@ describe('OfficialReadingPlanV1', () => {
     const first = buildOfficialReadingPlanV1(forward);
     const second = buildOfficialReadingPlanV1(reversed);
 
-    expect(second).toEqual(first);
+    expect(second.sections).toEqual(first.sections);
+    expect(second.sourceSemanticHash).not.toBe(first.sourceSemanticHash);
 
     const reorderedSections = [...first.sections].reverse();
     expect(() =>
