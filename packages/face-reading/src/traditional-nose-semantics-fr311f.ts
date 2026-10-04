@@ -977,7 +977,7 @@ const RAW_NAMED_FORMS = [
     ]
   },
   {
-    "key": "nose.named偏凹",
+    "key": "nose.named.indented",
     "label": "偏凹鼻",
     "text": "年壽低壓山根小，鼻面相生差不多。準頭臺尉些須見，不夭不貧疾見磨。",
     "d": [
