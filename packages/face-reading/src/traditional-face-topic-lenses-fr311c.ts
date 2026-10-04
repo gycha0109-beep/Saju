@@ -152,7 +152,8 @@ export function queryEvidenceLensFR311C(query: EvidenceLensQueryFR311C): Evidenc
 
   const named = INTEGRATED_NAMED_FORM_EVIDENCE_FR311C.filter(
     (claim) =>
-      (formSet === null || formSet.has(claim.formKey)) &&
+      formSet !== null &&
+      formSet.has(claim.formKey) &&
       claimMatchesLens(claim, lens),
   );
 
