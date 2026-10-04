@@ -7,6 +7,7 @@ import {
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import {
+  OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
   canRenderOfficialReadingV1,
   renderOfficialReadingV1,
 } from '../src/reading/official-reading-renderer.js';
@@ -84,6 +85,76 @@ function semantics() {
   });
 }
 
+function structuredPrimary(input: {
+  claimId: string;
+  headline: string;
+  summary: string;
+  scenarioRef?: string;
+  subcategory?: string;
+  claimType?: string;
+}): InterpretationClaim {
+  return {
+    claimId: input.claimId,
+    schemaVersion: 'renderer-structure-test',
+    snapshotId: 'snapshot-1',
+    ...(input.scenarioRef === undefined ? {} : { scenarioRef: input.scenarioRef }),
+    taxonomy: {
+      tier: 'T8',
+      category: 'general',
+      subcategory: input.subcategory ?? 'strength_conclusion',
+    },
+    claimType: input.claimType ?? 'GENERAL_STRENGTH_CONCLUSION',
+    subject: 'natal_chart',
+    predicate: 'consumer_conclusion',
+    value: {
+      conclusionKind: 'strength',
+      headline: input.headline,
+      summary: input.summary,
+      futureTimingAuthorized: false,
+    },
+    methodologyRef: { id: 'method-general', version: '1' },
+    ruleRefs: [
+      {
+        ruleId: `rule-${input.claimId}`,
+        version: '1',
+        evaluationId: `eval-${input.claimId}`,
+      },
+    ],
+    factRefs: [],
+    upstreamClaimRefs: [],
+    sourceRefs: ['source-structure'],
+    state: 'active',
+  };
+}
+
+function structuredSemantics(
+  claims: readonly InterpretationClaim[],
+  claimRelations: GovernedReadingEvidenceBundleV1['claimRelations'] = [],
+) {
+  const evidenceBundle: GovernedReadingEvidenceBundleV1 = {
+    requestId: 'request-structure',
+    purpose: 'full_reading',
+    snapshotId: 'snapshot-1',
+    interpretationRunId: 'interpretation-structure',
+    registrySnapshotId: 'registry-1',
+    canonicalFacts: [],
+    claims: [...claims],
+    claimRelations: [...claimRelations],
+    schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
+    constraints: {
+      mayRecalculate: false,
+      mayInventRules: false,
+      mustPreserveMethodDifferences: true,
+      mustDiscloseMaterialAmbiguity: true,
+    },
+  };
+  return buildCanonicalReadingSemanticBundleV1({
+    intent: { domain: 'general', temporalScope: 'natal' },
+    evidence: evidenceBundle,
+    targetClaimIds: claims.map((claim) => claim.claimId),
+  });
+}
+
 describe('Official Reading renderer v1', () => {
   it('renders report text only from canonical primary meaning', () => {
     const bundle = semantics();
@@ -137,6 +208,160 @@ describe('Official Reading renderer v1', () => {
         text: '현재 근거 범위에서는 미래 사건 시기 · 수치 점수·등급까지 확정하지 않습니다.',
       },
     ]);
+  });
+
+  it('preserves distinct same-semantic-key scenarios as one ambiguity block', () => {
+    const claims = [
+      structuredPrimary({
+        claimId: 'scenario-b',
+        scenarioRef: 'scenario-b',
+        headline: '시나리오 B 핵심',
+        summary: '시나리오 B 설명',
+      }),
+      structuredPrimary({
+        claimId: 'scenario-a',
+        scenarioRef: 'scenario-a',
+        headline: '시나리오 A 핵심',
+        summary: '시나리오 A 설명',
+      }),
+    ];
+    const bundle = structuredSemantics(claims);
+    const plan = buildOfficialReadingPlanV1(bundle);
+    const rendered = renderOfficialReadingV1(bundle, plan);
+    const interpretation = rendered.sections.find(
+      (section) => section.title === '주요 해석',
+    );
+
+    expect(OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION).toBe(
+      'myeonghwa-official-reading-structural-realization-policy-v1',
+    );
+    expect(interpretation?.blocks).toEqual([
+      {
+        type: 'ambiguity',
+        summary: '서로 다른 시나리오를 하나로 합치지 않고 함께 표시합니다.',
+        scenarios: [
+          {
+            label: '시나리오 1',
+            text: '시나리오 A 핵심\n시나리오 A 설명',
+          },
+          {
+            label: '시나리오 2',
+            text: '시나리오 B 핵심\n시나리오 B 설명',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('keeps scenario rendering invariant to evidence permutation', () => {
+    const claims = [
+      structuredPrimary({
+        claimId: 'scenario-a',
+        scenarioRef: 'scenario-a',
+        headline: '시나리오 A 핵심',
+        summary: '시나리오 A 설명',
+      }),
+      structuredPrimary({
+        claimId: 'scenario-b',
+        scenarioRef: 'scenario-b',
+        headline: '시나리오 B 핵심',
+        summary: '시나리오 B 설명',
+      }),
+    ];
+    const forward = structuredSemantics(claims);
+    const reverse = structuredSemantics([...claims].reverse());
+    const forwardReport = renderOfficialReadingV1(
+      forward,
+      buildOfficialReadingPlanV1(forward),
+    );
+    const reverseReport = renderOfficialReadingV1(
+      reverse,
+      buildOfficialReadingPlanV1(reverse),
+    );
+
+    expect(reverseReport.sections.map((section) => section.blocks)).toEqual(
+      forwardReport.sections.map((section) => section.blocks),
+    );
+  });
+
+  it('preserves explicit same-section contradictions as a comparison block without choosing a winner', () => {
+    const left = structuredPrimary({
+      claimId: 'conflict-left',
+      subcategory: 'alpha_conclusion',
+      claimType: 'GENERAL_ALPHA_CONCLUSION',
+      headline: '관점 A 핵심',
+      summary: '관점 A 설명',
+    });
+    const right = structuredPrimary({
+      claimId: 'conflict-right',
+      subcategory: 'beta_conclusion',
+      claimType: 'GENERAL_BETA_CONCLUSION',
+      headline: '관점 B 핵심',
+      summary: '관점 B 설명',
+    });
+    const bundle = structuredSemantics(
+      [right, left],
+      [
+        {
+          relationId: 'relation-contradiction',
+          fromClaimId: 'conflict-left',
+          toClaimId: 'conflict-right',
+          relation: 'contradicts',
+        },
+      ],
+    );
+    const rendered = renderOfficialReadingV1(
+      bundle,
+      buildOfficialReadingPlanV1(bundle),
+    );
+    const interpretation = rendered.sections.find(
+      (section) => section.title === '주요 해석',
+    );
+
+    expect(interpretation?.blocks).toEqual([
+      {
+        type: 'comparison',
+        title: '함께 보존되는 상반된 해석',
+        perspectives: [
+          { label: '관점 1', text: '관점 A 핵심\n관점 A 설명' },
+          { label: '관점 2', text: '관점 B 핵심\n관점 B 설명' },
+        ],
+      },
+    ]);
+    expect(JSON.stringify(interpretation?.blocks)).toContain('관점 A 설명');
+    expect(JSON.stringify(interpretation?.blocks)).toContain('관점 B 설명');
+  });
+
+  it('fails closed when scenario and contradiction grouping overlap', () => {
+    const left = structuredPrimary({
+      claimId: 'overlap-a',
+      scenarioRef: 'scenario-a',
+      headline: '겹침 A 핵심',
+      summary: '겹침 A 설명',
+    });
+    const right = structuredPrimary({
+      claimId: 'overlap-b',
+      scenarioRef: 'scenario-b',
+      headline: '겹침 B 핵심',
+      summary: '겹침 B 설명',
+    });
+    const bundle = structuredSemantics(
+      [left, right],
+      [
+        {
+          relationId: 'relation-overlap',
+          fromClaimId: 'overlap-a',
+          toClaimId: 'overlap-b',
+          relation: 'contradicts',
+        },
+      ],
+    );
+    const plan = buildOfficialReadingPlanV1(bundle);
+
+    expect(canRenderOfficialReadingV1(bundle, plan)).toBe(false);
+    expect(() => renderOfficialReadingV1(bundle, plan)).toThrow(
+      /overlapping scenario and contradiction groups/u,
+    );
   });
 
   it('refuses canonical report rendering when a primary unit has no realizable text', () => {
