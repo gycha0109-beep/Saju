@@ -178,6 +178,17 @@ export interface KeyPointBlock {
   items: readonly string[];
 }
 
+export interface InsightItemView {
+  headline?: string;
+  summary?: string;
+  qualifiers?: readonly string[];
+}
+
+export interface InsightBlock {
+  type: 'insights';
+  items: readonly InsightItemView[];
+}
+
 export interface ComparisonBlock {
   type: 'comparison';
   title: string;
@@ -221,6 +232,7 @@ export interface SourceHintBlock {
 export type ReadingBlockView =
   | ParagraphBlock
   | KeyPointBlock
+  | InsightBlock
   | ComparisonBlock
   | AmbiguityBlock
   | TimelineBlock

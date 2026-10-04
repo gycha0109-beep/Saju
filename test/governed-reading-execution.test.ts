@@ -252,10 +252,14 @@ describe('Governed Reading Execution Orchestrator', () => {
       '해석 범위',
     ]);
     expect(result.officialReadingReport?.sections[0]?.blocks).toEqual([
-      { type: 'key_points', items: ['준비와 결과 사이의 긴장'] },
       {
-        type: 'paragraph',
-        text: '배움에 더 투자할지 지금 결과를 만들지 사이에서 긴장이 생길 수 있습니다.',
+        type: 'insights',
+        items: [
+          {
+            headline: '준비와 결과 사이의 긴장',
+            summary: '배움에 더 투자할지 지금 결과를 만들지 사이에서 긴장이 생길 수 있습니다.',
+          },
+        ],
       },
     ]);
     expect(result.officialReadingReport?.sourceSemanticHash).toBe(

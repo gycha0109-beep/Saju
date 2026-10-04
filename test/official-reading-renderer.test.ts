@@ -4,10 +4,14 @@ import {
   GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
   type GovernedReadingEvidenceBundleV1,
 } from '../src/reading/governed-reading-evidence.js';
-import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
+import {
+  buildCanonicalReadingSemanticBundleV1,
+  type CanonicalReadingSemanticQualifierBindingV1,
+} from '../src/reading/canonical-reading-semantics.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import {
   OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
+  OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
   canRenderOfficialReadingV1,
   renderOfficialReadingV1,
@@ -131,6 +135,7 @@ function structuredPrimary(input: {
 function structuredSemantics(
   claims: readonly InterpretationClaim[],
   claimRelations: GovernedReadingEvidenceBundleV1['claimRelations'] = [],
+  semanticQualifierBindings: readonly CanonicalReadingSemanticQualifierBindingV1[] = [],
 ) {
   const evidenceBundle: GovernedReadingEvidenceBundleV1 = {
     requestId: 'request-structure',
@@ -153,6 +158,9 @@ function structuredSemantics(
     intent: { domain: 'general', temporalScope: 'natal' },
     evidence: evidenceBundle,
     targetClaimIds: claims.map((claim) => claim.claimId),
+    ...(semanticQualifierBindings.length === 0
+      ? {}
+      : { semanticQualifierBindings }),
   });
 }
 
@@ -231,12 +239,13 @@ describe('Official Reading renderer v1', () => {
     ]);
     expect(rendered.sections[0]?.blocks).toEqual([
       {
-        type: 'key_points',
-        items: ['실행 속도와 충분한 준비 사이의 긴장'],
-      },
-      {
-        type: 'paragraph',
-        text: '현실 결과를 빨리 만들려는 축과 더 배우고 검토하려는 축이 서로 견제합니다.',
+        type: 'insights',
+        items: [
+          {
+            headline: '실행 속도와 충분한 준비 사이의 긴장',
+            summary: '현실 결과를 빨리 만들려는 축과 더 배우고 검토하려는 축이 서로 견제합니다.',
+          },
+        ],
       },
     ]);
     expect(JSON.stringify(rendered.sections)).not.toContain('support-resource');
@@ -306,8 +315,10 @@ describe('Official Reading renderer v1', () => {
       );
       expect(semanticSection?.title).toBe(expectedTitle);
       expect(semanticSection?.blocks).toEqual([
-        { type: 'key_points', items: [`${kind} headline`] },
-        { type: 'paragraph', text: `${kind} summary` },
+        {
+          type: 'insights',
+          items: [{ headline: `${kind} headline`, summary: `${kind} summary` }],
+        },
       ]);
     }
   });
@@ -322,8 +333,10 @@ describe('Official Reading renderer v1', () => {
     const work = rendered.sections.find((section) => section.title === '일·성과');
 
     expect(work?.blocks).toEqual([
-      { type: 'key_points', items: ['unknown_kind headline'] },
-      { type: 'paragraph', text: 'unknown_kind summary' },
+      {
+        type: 'insights',
+        items: [{ headline: 'unknown_kind headline', summary: 'unknown_kind summary' }],
+      },
     ]);
   });
 
@@ -396,10 +409,19 @@ describe('Official Reading renderer v1', () => {
     expect(rendered.ordinaryMultiClaimPresentationPolicyVersion).toBe(
       OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
     );
+    expect(OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION).toBe(
+      'myeonghwa-official-reading-structured-insight-materialization-policy-v1',
+    );
+    expect(rendered.structuredInsightMaterializationPolicyVersion).toBe(
+      OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
+    );
     expect(interpretation?.blocks).toEqual([
       {
-        type: 'key_points',
-        items: ['알파 핵심\n알파 설명', '제타 핵심\n제타 설명'],
+        type: 'insights',
+        items: [
+          { headline: '알파 핵심', summary: '알파 설명' },
+          { headline: '제타 핵심', summary: '제타 설명' },
+        ],
       },
     ]);
   });
@@ -470,8 +492,11 @@ describe('Official Reading renderer v1', () => {
 
     expect(interpretation?.blocks).toEqual([
       {
-        type: 'key_points',
-        items: ['왼쪽 A 핵심\n왼쪽 A 설명', '왼쪽 B 핵심\n왼쪽 B 설명'],
+        type: 'insights',
+        items: [
+          { headline: '왼쪽 A 핵심', summary: '왼쪽 A 설명' },
+          { headline: '왼쪽 B 핵심', summary: '왼쪽 B 설명' },
+        ],
       },
       {
         type: 'comparison',
@@ -482,8 +507,73 @@ describe('Official Reading renderer v1', () => {
         ],
       },
       {
-        type: 'key_points',
-        items: ['오른쪽 A 핵심\n오른쪽 A 설명', '오른쪽 B 핵심\n오른쪽 B 설명'],
+        type: 'insights',
+        items: [
+          { headline: '오른쪽 A 핵심', summary: '오른쪽 A 설명' },
+          { headline: '오른쪽 B 핵심', summary: '오른쪽 B 설명' },
+        ],
+      },
+    ]);
+  });
+
+  it('preserves canonical qualifiers as structured insight fields instead of flattening them into prose', () => {
+    const claim = structuredPrimary({
+      claimId: 'qualified-ordinary',
+      subcategory: 'qualified_conclusion',
+      claimType: 'GENERAL_QUALIFIED_CONCLUSION',
+      headline: '조건부 핵심',
+      summary: '조건부 설명',
+    });
+    const semanticKey = [
+      'T8',
+      'general',
+      'qualified_conclusion',
+      'GENERAL_QUALIFIED_CONCLUSION',
+      'natal_chart',
+      'consumer_conclusion',
+    ].join(':');
+    const bundle = structuredSemantics(
+      [claim],
+      [],
+      [
+        {
+          targetClaimId: claim.claimId,
+          qualifier: {
+            qualifierId: 'qualifier-ordinary-1',
+            kind: 'qualifier',
+            semanticScope: 'qualified_conclusion',
+            semanticKeys: [semanticKey],
+            canonicalText: { summary: '이 해석은 조건이 충족되는 범위에서만 적용합니다.' },
+            prohibitedExtensions: [],
+            provenance: {
+              admissionId: 'admission-qualifier-1',
+              admissionRegistryVersion: '1',
+              researchId: 'research-qualifier-1',
+              researchVersion: '1',
+              authorityState: 'active',
+            },
+          },
+        },
+      ],
+    );
+    const rendered = renderOfficialReadingV1(
+      bundle,
+      buildOfficialReadingPlanV1(bundle),
+    );
+    const interpretation = rendered.sections.find(
+      (section) => section.title === '주요 해석',
+    );
+
+    expect(interpretation?.blocks).toEqual([
+      {
+        type: 'insights',
+        items: [
+          {
+            headline: '조건부 핵심',
+            summary: '조건부 설명',
+            qualifiers: ['이 해석은 조건이 충족되는 범위에서만 적용합니다.'],
+          },
+        ],
       },
     ]);
   });
