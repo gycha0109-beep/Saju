@@ -391,16 +391,6 @@ export function assertOfficialReadingPlanV1(
     throw new TypeError('OfficialReadingPlanV1 reading domain mismatch.');
   }
 
-  const expectedSections = sectionsForBundle(bundle);
-  if (
-    deterministicContentHash(value.sections) !==
-    deterministicContentHash(expectedSections)
-  ) {
-    throw new TypeError(
-      'OfficialReadingPlanV1 section composition/order does not match the governed policy.',
-    );
-  }
-
   const unitIds = new Set(bundle.units.map((unit) => unit.unitId));
   const primaryUnitIds = new Set(
     bundle.units
@@ -411,8 +401,31 @@ export function assertOfficialReadingPlanV1(
   );
   const plannedPrimaryRefs = new Set<string>();
   const sectionIds = new Set<string>();
+  const semanticGroups = new Set<OfficialReadingSemanticGroup>();
+  const governedOrder = officialReadingSectionOrderForDomainV1(
+    value.readingDomain,
+  );
+  let previousGroupRank = -1;
 
   for (const section of value.sections) {
+    const groupRank = governedOrder.indexOf(section.semanticGroup);
+    if (groupRank < 0) {
+      throw new TypeError(
+        'OfficialReadingPlanV1 contains a semantic group outside the governed section-order policy.',
+      );
+    }
+    if (groupRank < previousGroupRank) {
+      throw new TypeError(
+        'OfficialReadingPlanV1 section order does not match the governed policy.',
+      );
+    }
+    if (semanticGroups.has(section.semanticGroup)) {
+      throw new TypeError(
+        'OfficialReadingPlanV1 semantic groups must not be duplicated.',
+      );
+    }
+    semanticGroups.add(section.semanticGroup);
+    previousGroupRank = groupRank;
     if (sectionIds.has(section.sectionId)) {
       throw new TypeError('OfficialReadingPlanV1 section IDs must be unique.');
     }
