@@ -174,7 +174,7 @@ describe('FR104 D2B-B1 live provider byte runtime', () => {
         'controlled_capture_profile_not_admitted',
       );
       expect(result.blockers).toContain(
-        'florence_repository_native_live_host_transport_not_implemented',
+        'florence_live_transport_not_attested_by_b1_result',
       );
       expect(result.blockers).toContain(
         'provider_outputs_not_yet_composed_into_fr104_candidate_orchestration',
