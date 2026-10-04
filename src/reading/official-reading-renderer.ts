@@ -288,11 +288,6 @@ function contradictionGroups(
 
     for (const claimId of component) visited.add(claimId);
     if (component.size < 2) continue;
-    if (component.size > 2) {
-      throw new TypeError(
-        'Official Reading structural realization does not support complex contradiction topology.',
-      );
-    }
     groups.push({
       kind: 'contradiction',
       units: units.filter((candidate) => component.has(candidate.claimId)),
