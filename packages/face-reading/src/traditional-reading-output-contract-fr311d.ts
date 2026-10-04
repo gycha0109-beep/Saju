@@ -14,10 +14,14 @@ import {
 import {
   type EvidenceLensKeyFR311C,
 } from './traditional-face-topic-lenses-fr311c.js';
+import {
+  DIRECT_CROSS_REGION_EVIDENCE_FR311E,
+} from './traditional-eyebrow-eye-cross-region-evidence-fr311e.js';
 
 export type ReadingOutputStatusFR311D =
   | 'conflict'
   | 'direct_combination'
+  | 'direct_relation'
   | 'named_form_context'
   | 'parallel_evidence'
   | 'evidence'
@@ -26,6 +30,7 @@ export type ReadingOutputStatusFR311D =
 export type ReadingEvidenceKindFR311D =
   | 'named_form_claim'
   | 'direct_rule'
+  | 'cross_region_rule'
   | 'named_form_context';
 
 export type ReadingEvidenceCertaintyFR311D =
@@ -63,12 +68,14 @@ export interface ReadingEvidenceSectionsFR311D {
 export interface ReadingCombinationAssessmentFR311D {
   readonly sourceStatus:
     | 'direct_source_combination'
+    | 'direct_source_relation'
     | 'named_form_context'
     | 'parallel_evidence_only'
     | 'unsupported';
   readonly statement: string;
   readonly directCombinationRuleIds: readonly string[];
   readonly contextIds: readonly string[];
+  readonly relationKeys: readonly string[];
   readonly reinforcementAuthorized: false;
   readonly cancellationAuthorized: false;
 }
@@ -107,6 +114,8 @@ function mapOutputStatus(status: IntegratedQueryStatusFR311C): ReadingOutputStat
       return 'conflict';
     case 'direct_source_combination':
       return 'direct_combination';
+    case 'direct_source_relation':
+      return 'direct_relation';
     case 'named_form_context':
       return 'named_form_context';
     case 'parallel_evidence_only':
@@ -143,20 +152,42 @@ function namedClaimToItem(evidenceId: string): ReadingEvidenceItemFR311D {
 
 function directRuleToItem(ruleId: string): ReadingEvidenceItemFR311D {
   const rule = INTEGRATED_DIRECT_RULES_FR311C.find((candidate) => candidate.ruleId === ruleId);
-  if (rule === undefined) throw new Error(`fr311d_missing_direct_rule:${ruleId}`);
+  if (rule !== undefined) {
+    return Object.freeze({
+      evidenceId: rule.evidenceId,
+      kind: 'direct_rule' as const,
+      label: rule.regionScope,
+      sourceExpression: rule.sourceExpression,
+      meaningSummary: rule.traditionalMeaningSummary,
+      topicKey: rule.topicKeys.length === 1 ? rule.topicKeys[0] ?? null : null,
+      relationTarget: null,
+      lifeStage: null,
+      polarity: null,
+      certainty: 'direct_rule' as const,
+      sourceRefs: Object.freeze([...rule.sourceRefs]),
+      combinationSemanticAuthorized: false as const,
+      modernScientificFactAuthorized: false as const,
+      productPredictionAuthorized: false as const,
+    });
+  }
+
+  const crossRegion = DIRECT_CROSS_REGION_EVIDENCE_FR311E.find(
+    (candidate) => candidate.ruleId === ruleId,
+  );
+  if (crossRegion === undefined) throw new Error(`fr311d_missing_direct_rule:${ruleId}`);
 
   return Object.freeze({
-    evidenceId: rule.evidenceId,
-    kind: 'direct_rule' as const,
-    label: rule.regionScope,
-    sourceExpression: rule.sourceExpression,
-    meaningSummary: rule.traditionalMeaningSummary,
-    topicKey: rule.topicKeys.length === 1 ? rule.topicKeys[0] ?? null : null,
+    evidenceId: `fr311d.cross.${crossRegion.ruleId}`,
+    kind: 'cross_region_rule' as const,
+    label: crossRegion.evidenceType,
+    sourceExpression: crossRegion.sourceExpression,
+    meaningSummary: crossRegion.traditionalMeaningSummary,
+    topicKey: crossRegion.topicKeys.length === 1 ? crossRegion.topicKeys[0] ?? null : null,
     relationTarget: null,
     lifeStage: null,
     polarity: null,
     certainty: 'direct_rule' as const,
-    sourceRefs: Object.freeze([...rule.sourceRefs]),
+    sourceRefs: Object.freeze([...crossRegion.sourceRefs]),
     combinationSemanticAuthorized: false as const,
     modernScientificFactAuthorized: false as const,
     productPredictionAuthorized: false as const,
@@ -196,6 +227,8 @@ function headlineFor(status: ReadingOutputStatusFR311D, lensKey: EvidenceLensKey
       return `${label}에 관한 직접 근거가 서로 다른 방향을 가리킨다.`;
     case 'direct_combination':
       return `${label}에 관한 문헌의 직접 조합 근거가 있다.`;
+    case 'direct_relation':
+      return `${label}에 관한 눈·눈썹 상대 관계의 직접 문헌 근거가 있다.`;
     case 'named_form_context':
       return `${label} 관련 근거와 명명형 내부 동반 문맥이 확인된다.`;
     case 'parallel_evidence':
@@ -211,6 +244,8 @@ function combinationStatement(status: IntegratedQueryStatusFR311C): ReadingCombi
   switch (status) {
     case 'direct_source_combination':
       return '문헌이 이 정확한 특징 조합을 하나의 규칙으로 직접 다룬다. 그 원문 의미만 제시하며 추가 강화·상쇄는 만들지 않는다.';
+    case 'direct_source_relation':
+      return '문헌이 눈과 눈썹의 이 상대 관계 자체에 직접 의미를 부여한다. 독립 특징이나 수치에서 이 관계를 자동 추론하지 않는다.';
     case 'named_form_context':
       return '특정 명명형 설명 안에서 해당 특징이 동반 조건으로 등장한다. 이를 모든 얼굴에 적용되는 독립 조합 공식으로 일반화하지 않는다.';
     case 'parallel_evidence_only':
@@ -227,6 +262,8 @@ function combinationStatusFor(status: IntegratedQueryStatusFR311C): ReadingCombi
   switch (status) {
     case 'direct_source_combination':
       return 'direct_source_combination';
+    case 'direct_source_relation':
+      return 'direct_source_relation';
     case 'named_form_context':
       return 'named_form_context';
     case 'parallel_evidence_only':
@@ -301,6 +338,7 @@ export function buildTraditionalReadingOutputFR311D(
       statement: combinationStatement(result.status),
       directCombinationRuleIds: Object.freeze([...result.combinationRuleIds]),
       contextIds: Object.freeze([...result.namedFormContextIds]),
+      relationKeys: Object.freeze([...result.relationKeys]),
       reinforcementAuthorized: false as const,
       cancellationAuthorized: false as const,
     }),
