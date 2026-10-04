@@ -235,6 +235,9 @@ describe('Official Reading renderer v1', () => {
     expect(OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION).toBe(
       'myeonghwa-official-reading-structural-realization-policy-v1',
     );
+    expect(rendered.structuralRealizationPolicyVersion).toBe(
+      OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
+    );
     expect(interpretation?.blocks).toEqual([
       {
         type: 'ambiguity',
@@ -330,6 +333,53 @@ describe('Official Reading renderer v1', () => {
     ]);
     expect(JSON.stringify(interpretation?.blocks)).toContain('관점 A 설명');
     expect(JSON.stringify(interpretation?.blocks)).toContain('관점 B 설명');
+  });
+
+  it('fails closed on complex contradiction topology instead of inventing a merged comparison', () => {
+    const first = structuredPrimary({
+      claimId: 'complex-a',
+      subcategory: 'alpha_conclusion',
+      claimType: 'GENERAL_ALPHA_CONCLUSION',
+      headline: '복합 A 핵심',
+      summary: '복합 A 설명',
+    });
+    const second = structuredPrimary({
+      claimId: 'complex-b',
+      subcategory: 'beta_conclusion',
+      claimType: 'GENERAL_BETA_CONCLUSION',
+      headline: '복합 B 핵심',
+      summary: '복합 B 설명',
+    });
+    const third = structuredPrimary({
+      claimId: 'complex-c',
+      subcategory: 'gamma_conclusion',
+      claimType: 'GENERAL_GAMMA_CONCLUSION',
+      headline: '복합 C 핵심',
+      summary: '복합 C 설명',
+    });
+    const bundle = structuredSemantics(
+      [first, second, third],
+      [
+        {
+          relationId: 'relation-complex-ab',
+          fromClaimId: 'complex-a',
+          toClaimId: 'complex-b',
+          relation: 'contradicts',
+        },
+        {
+          relationId: 'relation-complex-bc',
+          fromClaimId: 'complex-b',
+          toClaimId: 'complex-c',
+          relation: 'contradicts',
+        },
+      ],
+    );
+    const plan = buildOfficialReadingPlanV1(bundle);
+
+    expect(canRenderOfficialReadingV1(bundle, plan)).toBe(false);
+    expect(() => renderOfficialReadingV1(bundle, plan)).toThrow(
+      /complex contradiction topology/u,
+    );
   });
 
   it('fails closed when scenario and contradiction grouping overlap', () => {
