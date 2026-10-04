@@ -79,10 +79,11 @@ export const R174_PARTIAL_MAPPING_AUDIT = Object.freeze({
     R174_VARIANT_CLASS_MAPPING.find(
       (item) => item.variantClass === 'JIA_ONLY',
     )?.physicalScanPageBound === true,
-  jiaYiPhysicalScanPageBound:
+  jiaYiPhysicalScanPageBound: Boolean(
     R174_VARIANT_CLASS_MAPPING.find(
       (item) => item.variantClass === 'JIA_YI',
-    )?.physicalScanPageBound === true,
+    )?.physicalScanPageBound,
+  ),
   asymmetricPhysicalMappingObserved: true,
   partialPhysicalVariantMappingEstablished: true,
   completePhysicalVariantMappingEstablished: false,
