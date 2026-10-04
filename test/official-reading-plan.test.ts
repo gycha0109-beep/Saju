@@ -306,6 +306,6 @@ describe('OfficialReadingPlanV1', () => {
         },
         forward,
       ),
-    ).toThrow(/section composition\/order/u);
+    ).toThrow(/section order/u);
   });
 });
