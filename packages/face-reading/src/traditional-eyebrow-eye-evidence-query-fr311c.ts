@@ -38,12 +38,12 @@ export function queryIntegratedTraditionalEvidenceFR311C(
 ): IntegratedTraditionalEvidenceResultFR311C {
   const lens = queryEvidenceLensFR311C({
     lensKey: query.lensKey,
-    formKeys: query.formKeys,
-    morphologyTermKeys: query.morphologyTermKeys,
+    ...(query.formKeys === undefined ? {} : { formKeys: query.formKeys }),
+    ...(query.morphologyTermKeys === undefined ? {} : { morphologyTermKeys: query.morphologyTermKeys }),
   });
   const combination = resolveTraditionalCombinationFR311C({
-    formKeys: query.formKeys,
-    morphologyTermKeys: query.morphologyTermKeys,
+    ...(query.formKeys === undefined ? {} : { formKeys: query.formKeys }),
+    ...(query.morphologyTermKeys === undefined ? {} : { morphologyTermKeys: query.morphologyTermKeys }),
   });
 
   let status: IntegratedQueryStatusFR311C;
