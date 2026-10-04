@@ -231,7 +231,7 @@ describe('OfficialReadingPlanV1', () => {
     const plan = buildOfficialReadingPlanV1(semantics);
 
     expect(OFFICIAL_READING_PLAN_POLICY_VERSION).toBe(
-      'myeonghwa-official-reading-plan-policy-v2',
+      'myeonghwa-official-reading-plan-policy-v1',
     );
     expect(OFFICIAL_READING_SECTION_ORDER_POLICY_VERSION).toBe(
       'myeonghwa-official-reading-section-order-policy-v1',

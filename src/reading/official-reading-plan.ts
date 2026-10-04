@@ -10,7 +10,7 @@ import {
 export const OFFICIAL_READING_PLAN_SCHEMA_VERSION =
   'myeonghwa-official-reading-plan-v1' as const;
 export const OFFICIAL_READING_PLAN_POLICY_VERSION =
-  'myeonghwa-official-reading-plan-policy-v2' as const;
+  'myeonghwa-official-reading-plan-policy-v1' as const;
 export const OFFICIAL_READING_SECTION_ORDER_POLICY_VERSION =
   'myeonghwa-official-reading-section-order-policy-v1' as const;
 
