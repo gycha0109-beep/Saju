@@ -10,53 +10,44 @@ import type {
   GovernedReadingExecutionOptions,
 } from '../reading/governed-reading-execution.js';
 import {
-  resolveProductionSpouseOfficialReadingCandidateAuthorityV1,
-} from './production-spouse-official-reading-candidate-authority.js';
+  resolveProductionSpouseOfficialReadingDeliveryAuthorityV1,
+} from './production-spouse-official-reading-delivery-authority.js';
+import {
+  buildProductionSpouseOfficialReadingDeliverySemanticProjectionV1,
+} from './production-spouse-official-reading-delivery-semantic-projection.js';
 import {
   assertProductionSpouseOfficialReadingRequestV1,
 } from './production-spouse-official-reading-scope.js';
-import {
-  buildProductionSpouseOfficialReadingSemanticProjectionV1,
-} from './production-spouse-official-reading-semantic-projection.js';
 
-export const PRODUCTION_SPOUSE_OFFICIAL_READING_CANDIDATE_RUNTIME_VERSION =
-  'myeonghwa-production-spouse-official-reading-candidate-runtime-v1' as const;
+export const PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_RUNTIME_VERSION =
+  'myeonghwa-production-spouse-official-reading-delivery-runtime-v1' as const;
 
-export const PRODUCTION_SPOUSE_OFFICIAL_READING_CANDIDATE_OUTPUT_SCHEMA_VERSION =
+export const PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_OUTPUT_SCHEMA_VERSION =
   'myeonghwa-narrative-draft-v1' as const;
 
-export function createProductionSpouseOfficialReadingCandidateExecutionOptionsV1(
+export function createProductionSpouseOfficialReadingDeliveryExecutionOptionsV1(
   now: Date,
 ): GovernedReadingExecutionOptions {
   if (!(now instanceof Date) || Number.isNaN(now.getTime())) {
     throw new TypeError(
-      'Production spouse Official Reading candidate requires a valid clock.',
+      'Production spouse Official Reading delivery requires a valid clock.',
     );
   }
   return {
     outputSchemaVersion:
-      PRODUCTION_SPOUSE_OFFICIAL_READING_CANDIDATE_OUTPUT_SCHEMA_VERSION,
+      PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_OUTPUT_SCHEMA_VERSION,
     readingVersion:
-      PRODUCTION_SPOUSE_OFFICIAL_READING_CANDIDATE_RUNTIME_VERSION,
+      PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_RUNTIME_VERSION,
     narrativeNow: now,
     artifactGeneratedAt: now,
     consumerReadingAuthorityResolver:
-      resolveProductionSpouseOfficialReadingCandidateAuthorityV1,
+      resolveProductionSpouseOfficialReadingDeliveryAuthorityV1,
     officialReadingSemanticProjectionResolver:
-      buildProductionSpouseOfficialReadingSemanticProjectionV1,
+      buildProductionSpouseOfficialReadingDeliverySemanticProjectionV1,
   };
 }
 
-export function assertProductionSpouseOfficialReadingCandidateRequestV1(
-  body: unknown,
-): void {
-  assertProductionSpouseOfficialReadingRequestV1(
-    body,
-    'production_spouse_candidate_scope_guard',
-  );
-}
-
-async function createSpousePositionOnlyProductionCandidateProductHost(
+async function createSpousePositionOnlyProductionProductHost(
   now: Date,
 ): Promise<MyeonghwaProductHost> {
   const materializationModule = await import(
@@ -83,26 +74,27 @@ async function createSpousePositionOnlyProductionCandidateProductHost(
       };
     },
     readingOptions:
-      createProductionSpouseOfficialReadingCandidateExecutionOptionsV1(now),
-    requestIdFactory: () =>
-      `production_spouse_candidate_${randomUUID()}`,
+      createProductionSpouseOfficialReadingDeliveryExecutionOptionsV1(now),
+    requestIdFactory: () => `production_spouse_${randomUUID()}`,
   });
 }
 
-export function createBoundedProductionSpouseOfficialReadingCandidateHostV1(
+export function createBoundedProductionSpouseOfficialReadingHostV1(
   now: Date = new Date(),
 ): MyeonghwaProductHost {
   let spouseHostPromise: Promise<MyeonghwaProductHost> | undefined;
 
   function spouseHost(): Promise<MyeonghwaProductHost> {
-    spouseHostPromise ??=
-      createSpousePositionOnlyProductionCandidateProductHost(now);
+    spouseHostPromise ??= createSpousePositionOnlyProductionProductHost(now);
     return spouseHostPromise;
   }
 
   return {
     async requestReading(body: unknown) {
-      assertProductionSpouseOfficialReadingCandidateRequestV1(body);
+      assertProductionSpouseOfficialReadingRequestV1(
+        body,
+        'production_spouse_delivery_scope_guard',
+      );
       return (await spouseHost()).requestReading(body);
     },
   };
