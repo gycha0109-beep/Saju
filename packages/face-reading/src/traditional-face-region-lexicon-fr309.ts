@@ -23,7 +23,7 @@ export type TraditionalFaceParentRelationFR309 =
 
 export type TraditionalFaceRegionReferenceStateFR309 =
   | 'existing_repository_reference'
-  | 'coverage_placeholder';
+  | 'external_transcription_candidate';
 
 export interface TraditionalFaceRegionLexiconEntryFR309 {
   readonly termKey: string;
@@ -61,7 +61,7 @@ function entry(
   value: Omit<
     TraditionalFaceRegionLexiconEntryFR309,
     'referenceState' | 'interpretationAuthorized' | 'providerGeometryBindingAuthorized'
-  >,
+  > & { readonly referenceState?: TraditionalFaceRegionReferenceStateFR309 },
 ): TraditionalFaceRegionLexiconEntryFR309 {
   return Object.freeze({
     ...value,
@@ -69,7 +69,7 @@ function entry(
     systemKeys: Object.freeze([...value.systemKeys]),
     sourceRefs: Object.freeze([...value.sourceRefs]),
     relatedTermKeys: Object.freeze([...value.relatedTermKeys]),
-    referenceState: 'existing_repository_reference' as const,
+    referenceState: value.referenceState ?? 'existing_repository_reference',
     interpretationAuthorized: false as const,
     providerGeometryBindingAuthorized: false as const,
   });
@@ -91,6 +91,20 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       locationSummary: '삼정 계열에서 상부 경계로 사용되는 머리카락 시작선.',
     }),
     entry({
+      termKey: 'tianzhong',
+      traditionalLabel: '天中',
+      koreanLabel: '천중',
+      parentComponentKey: 'forehead',
+      parentRelation: 'nearest_existing_parent',
+      regionForm: 'local',
+      lineageKeys: ['shenxiang_gujin'],
+      systemKeys: ['thirteen_positions_family'],
+      sourceRefs: ['external_candidate:wikisource.gujin.art631.thirteen_positions'],
+      relatedTermKeys: ['tianting', 'sikong'],
+      locationSummary: '십삼부위 총가에서 첫 번째로 열거되는 상부 중앙 계열 명칭. 현대 경계는 아직 확정하지 않음.',
+      referenceState: 'external_transcription_candidate',
+    }),
+    entry({
       termKey: 'tianting',
       traditionalLabel: '天庭',
       koreanLabel: '천정',
@@ -98,7 +112,7 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       parentRelation: 'direct',
       regionForm: 'local',
       lineageKeys: ['shenxiang'],
-      systemKeys: ['six_fus'],
+      systemKeys: ['six_fus', 'thirteen_positions_family'],
       sourceRefs: ['passage.shenxiang.six_fus.mapping'],
       relatedTermKeys: ['sun_horn', 'moon_horn'],
       locationSummary: '신상 계열 육부의 상부 쌍을 구성하는 이마 측 명칭.',
@@ -130,6 +144,20 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       locationSummary: '천정과 함께 육부 상부 쌍에 언급되는 양측 이마 부위 중 하나.',
     }),
     entry({
+      termKey: 'sikong',
+      traditionalLabel: '司空',
+      koreanLabel: '사공',
+      parentComponentKey: 'forehead',
+      parentRelation: 'direct',
+      regionForm: 'local',
+      lineageKeys: ['shenxiang_gujin'],
+      systemKeys: ['thirteen_positions_family'],
+      sourceRefs: ['external_candidate:wikisource.gujin.art631.thirteen_positions'],
+      relatedTermKeys: ['tianzhong', 'zhongzheng'],
+      locationSummary: '십삼부위 총가의 세 번째 상부 중앙 계열 명칭. 이마 구획 내부의 정확한 현대 경계는 별도 대조 대상.',
+      referenceState: 'external_transcription_candidate',
+    }),
+    entry({
       termKey: 'zhongzheng',
       traditionalLabel: '中正',
       koreanLabel: '중정',
@@ -137,7 +165,7 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       parentRelation: 'direct',
       regionForm: 'local',
       lineageKeys: ['shenxiang', 'liuzhuang'],
-      systemKeys: ['twelve_palaces'],
+      systemKeys: ['twelve_palaces', 'thirteen_positions_family'],
       sourceRefs: [
         'passage.shenxiang.twelve_palaces.career.locator',
         'passage.liuzhuang.twelve_palaces.career.locator',
@@ -169,7 +197,7 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       parentRelation: 'nearest_existing_parent',
       regionForm: 'local',
       lineageKeys: ['shenxiang', 'mayi', 'shenyi_fu'],
-      systemKeys: ['five_officers', 'twelve_palaces', 'three_divisions'],
+      systemKeys: ['five_officers', 'twelve_palaces', 'three_divisions', 'thirteen_positions_family'],
       sourceRefs: [
         'passage.shenxiang.five_officers.discernment',
         'passage.shenxiang.twelve_palaces.illness.locator',
@@ -290,7 +318,7 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       parentRelation: 'direct',
       regionForm: 'local',
       lineageKeys: ['shenxiang', 'liuzhuang', 'mayi', 'shenyi_fu'],
-      systemKeys: ['five_officers', 'twelve_palaces', 'three_divisions'],
+      systemKeys: ['five_officers', 'twelve_palaces', 'three_divisions', 'thirteen_positions_family'],
       sourceRefs: [
         'passage.shenxiang.five_officers.discernment',
         'passage.shenxiang.twelve_palaces.illness.locator',
@@ -312,6 +340,34 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       sourceRefs: ['passage.shenxiang.five_officers.discernment'],
       relatedTermKeys: ['shangen', 'nian_shou', 'zhuntou'],
       locationSummary: '심변관 성립 조건에서 코의 세로 기둥 계열을 지칭하는 표현.',
+    }),
+    entry({
+      termKey: 'nian_shang',
+      traditionalLabel: '年上',
+      koreanLabel: '연상',
+      parentComponentKey: 'nose',
+      parentRelation: 'direct',
+      regionForm: 'local',
+      lineageKeys: ['shenxiang_gujin'],
+      systemKeys: ['thirteen_positions_family'],
+      sourceRefs: ['external_candidate:wikisource.gujin.art631.thirteen_positions'],
+      relatedTermKeys: ['shangen', 'shou_shang', 'nian_shou'],
+      locationSummary: '십삼부위 총가에서 산근 아래·수상 위의 코 중앙 계열 명칭으로 독립 열거됨.',
+      referenceState: 'external_transcription_candidate',
+    }),
+    entry({
+      termKey: 'shou_shang',
+      traditionalLabel: '壽上',
+      koreanLabel: '수상',
+      parentComponentKey: 'nose',
+      parentRelation: 'direct',
+      regionForm: 'local',
+      lineageKeys: ['shenxiang_gujin'],
+      systemKeys: ['thirteen_positions_family'],
+      sourceRefs: ['external_candidate:wikisource.gujin.art631.thirteen_positions'],
+      relatedTermKeys: ['nian_shang', 'zhuntou', 'nian_shou'],
+      locationSummary: '십삼부위 총가에서 연상 아래·준두 위의 코 중앙 계열 명칭으로 독립 열거됨.',
+      referenceState: 'external_transcription_candidate',
     }),
     entry({
       termKey: 'nian_shou',
@@ -337,7 +393,7 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       parentRelation: 'direct',
       regionForm: 'local',
       lineageKeys: ['mayi', 'shenyi_fu'],
-      systemKeys: ['three_divisions'],
+      systemKeys: ['three_divisions', 'thirteen_positions_family'],
       sourceRefs: ['github:issue/1365', 'github:issue/1368'],
       relatedTermKeys: ['shangen', 'nian_shou'],
       locationSummary: '삼정 계열에서 코끝 측 세로 기준으로 사용되는 명칭.',
@@ -363,7 +419,7 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       parentRelation: 'nearest_existing_parent',
       regionForm: 'local',
       lineageKeys: ['mayi', 'shenyi_fu'],
-      systemKeys: ['three_divisions'],
+      systemKeys: ['three_divisions', 'thirteen_positions_family'],
       sourceRefs: ['github:issue/1365', 'github:issue/1368'],
       relatedTermKeys: ['dige', 'zhuntou'],
       locationSummary: '코 아래와 입 위 중앙 홈 계열로, 삼정 비연속 식의 하부 시작점에 등장.',
@@ -376,7 +432,7 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       parentRelation: 'direct',
       regionForm: 'local',
       lineageKeys: ['shenxiang', 'liuzhuang'],
-      systemKeys: ['twelve_palaces'],
+      systemKeys: ['twelve_palaces', 'thirteen_positions_family'],
       sourceRefs: [
         'passage.shenxiang.twelve_palaces.servants.locator',
         'passage.liuzhuang.twelve_palaces.servants.locator',
@@ -411,6 +467,20 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       locationSummary: '채청관 성립 조건에서 귀 내부 입구 계열로 언급되는 명칭.',
     }),
     entry({
+      termKey: 'chengjiang',
+      traditionalLabel: '承漿',
+      koreanLabel: '승장',
+      parentComponentKey: 'chin_lower_face',
+      parentRelation: 'nearest_existing_parent',
+      regionForm: 'local',
+      lineageKeys: ['shenxiang_gujin'],
+      systemKeys: ['thirteen_positions_family'],
+      sourceRefs: ['external_candidate:wikisource.gujin.art631.thirteen_positions'],
+      relatedTermKeys: ['water_star', 'dige'],
+      locationSummary: '십삼부위 총가에서 수성 다음·지각 이전에 열거되는 입 아래 중앙 계열 명칭.',
+      referenceState: 'external_transcription_candidate',
+    }),
+    entry({
       termKey: 'dige',
       traditionalLabel: '地閣',
       koreanLabel: '지각',
@@ -418,7 +488,7 @@ export const TRADITIONAL_FACE_REGION_LEXICON_ENTRIES_FR309: readonly Traditional
       parentRelation: 'direct',
       regionForm: 'local',
       lineageKeys: ['shenxiang', 'liuzhuang', 'mayi', 'shenyi_fu'],
-      systemKeys: ['six_fus', 'twelve_palaces', 'three_divisions'],
+      systemKeys: ['six_fus', 'twelve_palaces', 'three_divisions', 'thirteen_positions_family'],
       sourceRefs: [
         'passage.shenxiang.twelve_palaces.servants.locator',
         'passage.shenxiang.twelve_palaces.fortune_virtue.locator',
@@ -597,8 +667,11 @@ export function assertTraditionalFaceRegionLexiconFR309(value: TraditionalFaceRe
     for (const related of candidate.relatedTermKeys) {
       if (!keys.has(related)) throw new Error(`fr309_unknown_related_term:${candidate.termKey}:${related}`);
     }
-    if (candidate.referenceState !== 'existing_repository_reference') {
-      throw new Error(`fr309_reference_state_widening:${candidate.termKey}`);
+    if (
+      candidate.referenceState !== 'existing_repository_reference' &&
+      candidate.referenceState !== 'external_transcription_candidate'
+    ) {
+      throw new Error(`fr309_reference_state_invalid:${candidate.termKey}`);
     }
     if (candidate.interpretationAuthorized !== false) {
       throw new Error(`fr309_interpretation_authority_widening:${candidate.termKey}`);
