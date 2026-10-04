@@ -66,6 +66,8 @@ function availableMaterialization(
       unit: 'normalized_ratio',
       coordinateFrame:
         'canonical_image_normalized_2d',
+      axisConvention:
+        'x_right_y_down_unit_square',
       selectionRule:
         'arc_length_weighted_vertical_coordinate_over_visible_boundary_segments',
       visibilitySemantics:
