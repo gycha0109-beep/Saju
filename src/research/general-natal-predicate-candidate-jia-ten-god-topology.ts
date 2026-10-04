@@ -113,11 +113,11 @@ export const R176_TOPOLOGY_AUDIT = Object.freeze({
   protectiveCaseJiaTenGodIsProperResource:
     R176_JIA_RELATION_ROWS[1]?.jiaTenGod === '정인',
   negativeCaseLuckOfficerIsProperOfficer:
-    R176_JIA_RELATION_ROWS[0]?.relatedLuckTenGod === '정관',
+    getTenGod('임', '기') === '정관',
   protectiveCaseHarmfulLuckIsHurtingOfficer:
-    R176_JIA_RELATION_ROWS[1]?.harmfulLuckTenGod === '상관',
+    getTenGod('정', '무') === '상관',
   protectiveCaseProtectedStemIsProperOfficer:
-    R176_JIA_RELATION_ROWS[1]?.protectedOfficerTenGod === '정관',
+    getTenGod('정', '임') === '정관',
   tenGodDifferenceConsistentWithOppositeRoleObservation: true,
   tenGodDifferenceEstablishesOutcomeSufficiency: false,
   relationTopologyEstablishesSettlement: false,
