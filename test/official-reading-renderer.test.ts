@@ -155,6 +155,69 @@ function structuredSemantics(
   });
 }
 
+function domainPrimary(
+  domain: 'career' | 'relationship' | 'business',
+  claimId: string,
+  kind: string,
+): InterpretationClaim {
+  const kindKey =
+    domain === 'career'
+      ? 'careerKind'
+      : domain === 'relationship'
+        ? 'relationshipKind'
+        : 'businessKind';
+  return {
+    ...structuredPrimary({
+      claimId,
+      headline: `${kind} headline`,
+      summary: `${kind} summary`,
+      subcategory: kind,
+      claimType: `${domain.toUpperCase()}_${kind.toUpperCase()}_CONCLUSION`,
+    }),
+    taxonomy: {
+      tier: 'T8',
+      category: domain,
+      subcategory: kind,
+    },
+    predicate: `${domain}_conclusion`,
+    value: {
+      [kindKey]: kind,
+      headline: `${kind} headline`,
+      summary: `${kind} summary`,
+      futureTimingAuthorized: false,
+    },
+  };
+}
+
+function domainSemantics(
+  domain: 'career' | 'relationship' | 'business',
+  claims: readonly InterpretationClaim[],
+  claimRelations: GovernedReadingEvidenceBundleV1['claimRelations'] = [],
+) {
+  const evidenceBundle: GovernedReadingEvidenceBundleV1 = {
+    requestId: `request-${domain}-renderer`,
+    purpose: 'full_reading',
+    snapshotId: 'snapshot-1',
+    interpretationRunId: `interpretation-${domain}-renderer`,
+    registrySnapshotId: 'registry-1',
+    canonicalFacts: [],
+    claims: [...claims],
+    claimRelations: [...claimRelations],
+    schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
+    constraints: {
+      mayRecalculate: false,
+      mayInventRules: false,
+      mustPreserveMethodDifferences: true,
+      mustDiscloseMaterialAmbiguity: true,
+    },
+  };
+  return buildCanonicalReadingSemanticBundleV1({
+    intent: { domain, temporalScope: 'natal' },
+    evidence: evidenceBundle,
+    targetClaimIds: claims.map((claim) => claim.claimId),
+  });
+}
+
 describe('Official Reading renderer v1', () => {
   it('renders report text only from canonical primary meaning', () => {
     const bundle = semantics();
@@ -206,6 +269,98 @@ describe('Official Reading renderer v1', () => {
       {
         type: 'paragraph',
         text: '현재 근거 범위에서는 미래 사건 시기 · 수치 점수·등급까지 확정하지 않습니다.',
+      },
+    ]);
+  });
+
+  it('renders domain-kind sections with deterministic consumer titles', () => {
+    const cases = [
+      ['career', 'driver', '일의 동력'],
+      ['career', 'fit', '맞는 역할·조건'],
+      ['career', 'environment', '업무 환경'],
+      ['career', 'friction', '일의 마찰'],
+      ['relationship', 'closeness', '가까워지는 방식'],
+      ['relationship', 'expression', '표현과 소통'],
+      ['relationship', 'values', '관계에서 중요하게 보는 기준'],
+      ['relationship', 'boundary', '경계와 책임'],
+      ['relationship', 'friction', '관계의 마찰'],
+      ['business', 'decision_execution', '판단과 실행'],
+      ['business', 'uncertainty', '불확실성 다루기'],
+      ['business', 'allocation', '자원 배분'],
+      ['business', 'accountability', '책임과 기준'],
+      ['business', 'partnership', '파트너십'],
+      ['business', 'pressure', '운영 압박'],
+      ['business', 'friction', '사업상의 마찰'],
+    ] as const;
+
+    for (const [domain, kind, expectedTitle] of cases) {
+      const claim = domainPrimary(domain, `${domain}-${kind}`, kind);
+      const bundle = domainSemantics(domain, [claim]);
+      const rendered = renderOfficialReadingV1(
+        bundle,
+        buildOfficialReadingPlanV1(bundle),
+      );
+      const semanticSection = rendered.sections.find(
+        (section) => section.title !== '해석 범위',
+      );
+      expect(semanticSection?.title).toBe(expectedTitle);
+      expect(semanticSection?.blocks).toEqual([
+        { type: 'key_points', items: [`${kind} headline`] },
+        { type: 'paragraph', text: `${kind} summary` },
+      ]);
+    }
+  });
+
+  it('renders unknown domain kinds through the existing coarse section title', () => {
+    const claim = domainPrimary('career', 'career-unknown', 'unknown_kind');
+    const bundle = domainSemantics('career', [claim]);
+    const rendered = renderOfficialReadingV1(
+      bundle,
+      buildOfficialReadingPlanV1(bundle),
+    );
+    const work = rendered.sections.find((section) => section.title === '일·성과');
+
+    expect(work?.blocks).toEqual([
+      { type: 'key_points', items: ['unknown_kind headline'] },
+      { type: 'paragraph', text: 'unknown_kind summary' },
+    ]);
+  });
+
+  it('keeps a cross-lane contradiction in one coarse section for SA-6C comparison rendering', () => {
+    const driver = domainPrimary('career', 'career-driver-conflict', 'driver');
+    const fit = domainPrimary('career', 'career-fit-conflict', 'fit');
+    const bundle = domainSemantics(
+      'career',
+      [fit, driver],
+      [
+        {
+          relationId: 'career-cross-lane-conflict',
+          fromClaimId: 'career-driver-conflict',
+          toClaimId: 'career-fit-conflict',
+          relation: 'contradicts',
+        },
+      ],
+    );
+    const rendered = renderOfficialReadingV1(
+      bundle,
+      buildOfficialReadingPlanV1(bundle),
+    );
+    const work = rendered.sections.find((section) => section.title === '일·성과');
+
+    expect(work?.blocks).toEqual([
+      {
+        type: 'comparison',
+        title: '함께 보존되는 상반된 해석',
+        perspectives: [
+          {
+            label: '관점 1',
+            text: 'driver headline\ndriver summary',
+          },
+          {
+            label: '관점 2',
+            text: 'fit headline\nfit summary',
+          },
+        ],
       },
     ]);
   });
