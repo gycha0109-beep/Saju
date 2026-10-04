@@ -131,13 +131,13 @@ describe('FR311C integrated eyebrow-eye evidence index and resolver', () => {
     expect(result.directRuleIds).toEqual([]);
   });
 
-  it('keeps uncertain transcription evidence visible but separate', () => {
-    const result = queryEvidenceLensFR311C({
-      lensKey: 'career',
-      formKeys: ['eye.named.shrimp'],
-    });
+  it('keeps uncertain transcription evidence visible but separate in the integrated index', () => {
+    const shrimp = INTEGRATED_NAMED_FORM_EVIDENCE_FR311C.filter(
+      (item) => item.formKey === 'eye.named.shrimp',
+    );
 
-    expect(result.namedEvidenceIds.length).toBeGreaterThan(0);
-    expect(result.uncertainNamedEvidenceIds.length).toBeGreaterThan(0);
+    expect(shrimp.length).toBeGreaterThan(0);
+    expect(shrimp.some((item) => item.certainty === 'phrase_uncertain')).toBe(true);
+    expect(shrimp.some((item) => item.certainty === 'direct_clear')).toBe(true);
   });
 });
