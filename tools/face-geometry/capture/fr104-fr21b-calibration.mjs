@@ -1,4 +1,4 @@
-/* global Blob, URL, createImageBitmap, document, performance */
+/* global Blob, URL, createImageBitmap, document, performance, window */
 
 import {
   assertFr21bCalibrationRegistriesRemainUnadmittedFR104,
