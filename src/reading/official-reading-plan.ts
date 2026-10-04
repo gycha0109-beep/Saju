@@ -10,7 +10,9 @@ import {
 export const OFFICIAL_READING_PLAN_SCHEMA_VERSION =
   'myeonghwa-official-reading-plan-v1' as const;
 export const OFFICIAL_READING_PLAN_POLICY_VERSION =
-  'myeonghwa-official-reading-plan-policy-v1' as const;
+  'myeonghwa-official-reading-plan-policy-v2' as const;
+export const OFFICIAL_READING_SECTION_ORDER_POLICY_VERSION =
+  'myeonghwa-official-reading-section-order-policy-v1' as const;
 
 export type OfficialReadingSemanticGroup =
   | 'core'
@@ -56,6 +58,75 @@ const CONSTRAINTS = Object.freeze({
   mayCollapseScenarios: false as const,
   mayPromoteResearchAuthority: false as const,
 });
+
+type PrimaryOfficialReadingSemanticGroup = Exclude<
+  OfficialReadingSemanticGroup,
+  'evidence' | 'limits'
+>;
+
+const DEFAULT_PRIMARY_SECTION_ORDER = Object.freeze([
+  'core',
+  'interpretation',
+  'work',
+  'wealth',
+  'relationship',
+  'decision_style',
+  'management',
+  'tension',
+] as const satisfies readonly PrimaryOfficialReadingSemanticGroup[]);
+
+const GENERAL_PRIMARY_SECTION_ORDER = Object.freeze([
+  'core',
+  'interpretation',
+  'work',
+  'wealth',
+  'relationship',
+  'tension',
+  'decision_style',
+  'management',
+] as const satisfies readonly PrimaryOfficialReadingSemanticGroup[]);
+
+const WEALTH_PRIMARY_SECTION_ORDER = Object.freeze([
+  'core',
+  'wealth',
+  'decision_style',
+  'management',
+  'tension',
+  'interpretation',
+  'work',
+  'relationship',
+] as const satisfies readonly PrimaryOfficialReadingSemanticGroup[]);
+
+function primarySectionOrder(
+  domain: ReadingDomain,
+): readonly PrimaryOfficialReadingSemanticGroup[] {
+  if (domain === 'general') return GENERAL_PRIMARY_SECTION_ORDER;
+  if (domain === 'wealth') return WEALTH_PRIMARY_SECTION_ORDER;
+  return DEFAULT_PRIMARY_SECTION_ORDER;
+}
+
+export function officialReadingSectionOrderForDomainV1(
+  domain: ReadingDomain,
+): readonly OfficialReadingSemanticGroup[] {
+  return Object.freeze([
+    ...primarySectionOrder(domain),
+    'evidence',
+    'limits',
+  ]);
+}
+
+function semanticGroupRank(
+  domain: ReadingDomain,
+  group: PrimaryOfficialReadingSemanticGroup,
+): number {
+  const rank = primarySectionOrder(domain).indexOf(group);
+  if (rank < 0) {
+    throw new TypeError(
+      `Official Reading section-order policy does not cover semantic group: ${group}`,
+    );
+  }
+  return rank;
+}
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -195,7 +266,17 @@ function primarySections(
   }
 
   return [...grouped.entries()]
-    .sort(([left], [right]) => left.localeCompare(right))
+    .sort(([left], [right]) => {
+      const leftRank = semanticGroupRank(
+        bundle.intent.domain,
+        left as PrimaryOfficialReadingSemanticGroup,
+      );
+      const rightRank = semanticGroupRank(
+        bundle.intent.domain,
+        right as PrimaryOfficialReadingSemanticGroup,
+      );
+      return leftRank - rightRank || left.localeCompare(right);
+    })
     .map(([group, material]) => {
       const primaryUnitRefs = [...material.primaryUnitRefs].sort();
       const supportingUnitRefs = [...material.supportingUnitRefs].sort();
@@ -244,6 +325,13 @@ function limitsSection(
     supportingUnitRefs: [],
     prohibitedExtensions,
   };
+}
+
+function sectionsForBundle(
+  bundle: CanonicalReadingSemanticBundleV1,
+): readonly OfficialReadingPlanSectionV1[] {
+  const sections = [...sectionsForBundle(bundle)];
+  return sections;
 }
 
 function planHashMaterial(
@@ -301,6 +389,16 @@ export function assertOfficialReadingPlanV1(
   }
   if (value.readingDomain !== bundle.intent.domain) {
     throw new TypeError('OfficialReadingPlanV1 reading domain mismatch.');
+  }
+
+  const expectedSections = sectionsForBundle(bundle);
+  if (
+    deterministicContentHash(value.sections) !==
+    deterministicContentHash(expectedSections)
+  ) {
+    throw new TypeError(
+      'OfficialReadingPlanV1 section composition/order does not match the governed policy.',
+    );
   }
 
   const unitIds = new Set(bundle.units.map((unit) => unit.unitId));

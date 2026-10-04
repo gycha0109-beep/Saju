@@ -6,8 +6,11 @@ import {
 } from '../src/reading/governed-reading-evidence.js';
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import {
+  OFFICIAL_READING_PLAN_POLICY_VERSION,
+  OFFICIAL_READING_SECTION_ORDER_POLICY_VERSION,
   assertOfficialReadingPlanV1,
   buildOfficialReadingPlanV1,
+  officialReadingSectionOrderForDomainV1,
 } from '../src/reading/official-reading-plan.js';
 
 function claim(
@@ -86,6 +89,89 @@ function semanticBundle() {
   });
 }
 
+
+function generalConclusion(
+  claimId: string,
+  conclusionKind:
+    | 'core'
+    | 'strength'
+    | 'work'
+    | 'money'
+    | 'relationship'
+    | 'tension',
+): InterpretationClaim {
+  return {
+    ...claim(
+      claimId,
+      'T8',
+      {
+        conclusionKind,
+        headline: `${conclusionKind} headline`,
+        summary: `${conclusionKind} summary`,
+        futureTimingAuthorized: false,
+      },
+    ),
+    taxonomy: {
+      tier: 'T8',
+      category: 'general',
+      subcategory: `${conclusionKind}_conclusion`,
+    },
+    claimType: `GENERAL_${conclusionKind.toUpperCase()}_CONCLUSION`,
+  };
+}
+
+function wealthConclusion(
+  claimId: string,
+  wealthKind: 'value_creation' | 'spending' | 'management' | 'friction',
+): InterpretationClaim {
+  return {
+    ...claim(
+      claimId,
+      'T8',
+      {
+        wealthKind,
+        headline: `${wealthKind} headline`,
+        summary: `${wealthKind} summary`,
+        futureMoneyTimingAuthorized: false,
+      },
+    ),
+    taxonomy: {
+      tier: 'T8',
+      category: 'wealth',
+      subcategory: wealthKind,
+    },
+    claimType: `WEALTH_${wealthKind.toUpperCase()}_CONCLUSION`,
+  };
+}
+
+function semanticBundleFor(
+  domain: 'general' | 'wealth',
+  primaries: readonly InterpretationClaim[],
+) {
+  const evidence: GovernedReadingEvidenceBundleV1 = {
+    requestId: `request-${domain}-multi`,
+    purpose: 'full_reading',
+    snapshotId: 'snapshot-1',
+    interpretationRunId: `interpretation-${domain}-multi`,
+    registrySnapshotId: 'registry-1',
+    canonicalFacts: [],
+    claims: [...primaries],
+    claimRelations: [],
+    schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
+    constraints: {
+      mayRecalculate: false,
+      mayInventRules: false,
+      mustPreserveMethodDifferences: true,
+      mustDiscloseMaterialAmbiguity: true,
+    },
+  };
+  return buildCanonicalReadingSemanticBundleV1({
+    intent: { domain, temporalScope: 'natal' },
+    evidence,
+    targetClaimIds: primaries.map((candidate) => candidate.claimId),
+  });
+}
+
 describe('OfficialReadingPlanV1', () => {
   it('assigns every primary semantic unit exactly once and preserves upstream support', () => {
     const semantics = semanticBundle();
@@ -130,5 +216,95 @@ describe('OfficialReadingPlanV1', () => {
         semantics,
       ),
     ).toThrow(TypeError);
+  });
+
+  it('uses an explicit versioned consumer synthesis order for General multi-section readings', () => {
+    const primaries = [
+      generalConclusion('general-tension', 'tension'),
+      generalConclusion('general-relationship', 'relationship'),
+      generalConclusion('general-money', 'money'),
+      generalConclusion('general-work', 'work'),
+      generalConclusion('general-strength', 'strength'),
+      generalConclusion('general-core', 'core'),
+    ];
+    const semantics = semanticBundleFor('general', primaries);
+    const plan = buildOfficialReadingPlanV1(semantics);
+
+    expect(OFFICIAL_READING_PLAN_POLICY_VERSION).toBe(
+      'myeonghwa-official-reading-plan-policy-v2',
+    );
+    expect(OFFICIAL_READING_SECTION_ORDER_POLICY_VERSION).toBe(
+      'myeonghwa-official-reading-section-order-policy-v1',
+    );
+    expect(
+      plan.sections.map((section) => section.semanticGroup),
+    ).toEqual([
+      'core',
+      'interpretation',
+      'work',
+      'wealth',
+      'relationship',
+      'tension',
+      'limits',
+    ]);
+    expect(officialReadingSectionOrderForDomainV1('general')).toEqual([
+      'core',
+      'interpretation',
+      'work',
+      'wealth',
+      'relationship',
+      'tension',
+      'decision_style',
+      'management',
+      'evidence',
+      'limits',
+    ]);
+  });
+
+  it('uses wealth-specific section flow without changing section membership', () => {
+    const primaries = [
+      wealthConclusion('wealth-friction', 'friction'),
+      wealthConclusion('wealth-management', 'management'),
+      wealthConclusion('wealth-spending', 'spending'),
+      wealthConclusion('wealth-value', 'value_creation'),
+    ];
+    const semantics = semanticBundleFor('wealth', primaries);
+    const plan = buildOfficialReadingPlanV1(semantics);
+
+    expect(plan.sections.map((section) => section.semanticGroup)).toEqual([
+      'wealth',
+      'decision_style',
+      'management',
+      'tension',
+      'limits',
+    ]);
+  });
+
+  it('is permutation-deterministic and rejects a hash-valid but policy-reordered plan', () => {
+    const primaries = [
+      generalConclusion('general-core', 'core'),
+      generalConclusion('general-work', 'work'),
+      generalConclusion('general-money', 'money'),
+      generalConclusion('general-tension', 'tension'),
+    ];
+    const forward = semanticBundleFor('general', primaries);
+    const reversed = semanticBundleFor('general', [...primaries].reverse());
+    const first = buildOfficialReadingPlanV1(forward);
+    const second = buildOfficialReadingPlanV1(reversed);
+
+    expect(second).toEqual(first);
+
+    const reorderedSections = [...first.sections].reverse();
+    expect(() =>
+      assertOfficialReadingPlanV1(
+        {
+          ...first,
+          sections: reorderedSections,
+          planId: 'official_reading_plan_fake',
+          planHash: 'fake',
+        },
+        forward,
+      ),
+    ).toThrow(/section composition\/order/u);
   });
 });
