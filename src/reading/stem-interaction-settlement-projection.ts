@@ -1,8 +1,8 @@
 import type {
   StemInteractionSettlementFact,
-  StructureImpact,
 } from '../contracts/calculation.js';
 import type {
+  StructureImpact,
   StructureRoleDisposition,
 } from '../calculation/stem-interaction-settlement.js';
 import {
