@@ -88,6 +88,8 @@ export interface TraditionalFaceReadingOutputFR311J {
     combinationKeys: readonly string[];
     reinforcementAuthorized: false;
     cancellationAuthorized: false;
+    relationInferenceAuthorized: false;
+    combinationInferenceAuthorized: false;
     contextSemanticPromotionAuthorized: false;
   }>;
   readonly sourceRefs: readonly string[];
@@ -99,6 +101,8 @@ export interface TraditionalFaceReadingOutputFR311J {
   readonly sourcePriorityInferenceAuthorized: false;
   readonly traditionalRuleInferenceAuthorized: false;
   readonly topicRemappingInferenceAuthorized: false;
+  readonly relationInferenceAuthorized: false;
+  readonly combinationInferenceAuthorized: false;
   readonly healthDiagnosisAuthorized: false;
   readonly lifespanPredictionAuthorized: false;
   readonly fertilityPredictionAuthorized: false;
@@ -474,6 +478,8 @@ export function buildTraditionalFaceReadingOutputFR311J(
       combinationKeys: Object.freeze([...result.combinationKeys]),
       reinforcementAuthorized: false as const,
       cancellationAuthorized: false as const,
+      relationInferenceAuthorized: false as const,
+      combinationInferenceAuthorized: false as const,
       contextSemanticPromotionAuthorized: false as const,
     }),
     sourceRefs: Object.freeze(sourceRefs),
@@ -485,6 +491,8 @@ export function buildTraditionalFaceReadingOutputFR311J(
     sourcePriorityInferenceAuthorized: false as const,
     traditionalRuleInferenceAuthorized: false as const,
     topicRemappingInferenceAuthorized: false as const,
+    relationInferenceAuthorized: false as const,
+    combinationInferenceAuthorized: false as const,
     healthDiagnosisAuthorized: false as const,
     lifespanPredictionAuthorized: false as const,
     fertilityPredictionAuthorized: false as const,
@@ -502,6 +510,8 @@ export const FR311J_OUTPUT_AUTHORITY_BOUNDARY = Object.freeze({
   sourcePriorityInferenceAuthorized: false as const,
   traditionalRuleInferenceAuthorized: false as const,
   topicRemappingInferenceAuthorized: false as const,
+  relationInferenceAuthorized: false as const,
+  combinationInferenceAuthorized: false as const,
   contextSemanticPromotionAuthorized: false as const,
   healthDiagnosisAuthorized: false as const,
   lifespanPredictionAuthorized: false as const,
