@@ -67,6 +67,9 @@ export interface NoseDirectRuleFR311F {
   readonly sourceExpression: string;
   readonly meaningSummary: string;
   readonly topicKeys: readonly NoseSemanticTopicFR311F[];
+  readonly polarity: NosePolarityFR311F;
+  readonly lifeStage: NoseLifeStageFR311F;
+  readonly relationTarget: string | null;
   readonly sourceRefs: readonly string[];
   readonly historicalTraditionalDoctrineOnly: true;
   readonly modernScientificFactAuthorized: false;
@@ -316,19 +319,58 @@ const RAW_RULES = [
   ]
 ] as const;
 
+const NOSE_DIRECT_RULE_METADATA_FR311G: Readonly<Record<
+  string,
+  Readonly<{
+    polarity: NosePolarityFR311F;
+    lifeStage: NoseLifeStageFR311F;
+    relationTarget: string | null;
+  }>
+>> = Object.freeze({
+  'fr311f.shangen.high_not_low': Object.freeze({ polarity: 'favorable', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.shangen.luminous_straight': Object.freeze({ polarity: 'favorable', lifeStage: 'late', relationTarget: null }),
+  'fr311f.shangen.to_forehead': Object.freeze({ polarity: 'favorable', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.shangen.folded': Object.freeze({ polarity: 'challenging', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.shangen.dry_dark': Object.freeze({ polarity: 'challenging', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.shangen.not_sunken': Object.freeze({ polarity: 'favorable', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.shangen.crooked': Object.freeze({ polarity: 'challenging', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.nose.tip_round_nostrils_hidden': Object.freeze({ polarity: 'favorable', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.nose.luminous_full': Object.freeze({ polarity: 'favorable', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.nose.dark_thin': Object.freeze({ polarity: 'challenging', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.nose.high_bridge': Object.freeze({ polarity: 'favorable', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.tip.full_large': Object.freeze({ polarity: 'favorable', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.tip.pointed_thin': Object.freeze({ polarity: 'challenging', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.bridge.round_to_yintang': Object.freeze({ polarity: 'favorable', lifeStage: 'whole_life', relationTarget: 'spouse' }),
+  'fr311f.nostril.up_exposed': Object.freeze({ polarity: 'challenging', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.tip.full_risen': Object.freeze({ polarity: 'favorable', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.tip.round_fat': Object.freeze({ polarity: 'favorable', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.tip.pointed_thin_poor': Object.freeze({ polarity: 'challenging', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.nose.reaches_tianting': Object.freeze({ polarity: 'favorable', lifeStage: 'whole_life', relationTarget: null }),
+  'fr311f.bridge.no_bone': Object.freeze({ polarity: 'challenging', lifeStage: 'whole_life', relationTarget: null }),
+});
+
 export const NOSE_DIRECT_RULES_FR311F: readonly NoseDirectRuleFR311F[] =
-  Object.freeze(RAW_RULES.map(([ruleId, region, sourceExpression, meaningSummary, topicKeys]) =>
-    Object.freeze({
+  Object.freeze(RAW_RULES.map(([ruleId, region, sourceExpression, meaningSummary, topicKeys]) => {
+    const metadata = NOSE_DIRECT_RULE_METADATA_FR311G[ruleId];
+    if (metadata === undefined) {
+      throw new Error(`fr311f_missing_direct_rule_metadata:${ruleId}`);
+    }
+
+    return Object.freeze({
       ruleId,
       region,
       sourceExpression,
       meaningSummary,
       topicKeys: Object.freeze([...topicKeys]),
+      polarity: metadata.polarity,
+      lifeStage: metadata.lifeStage,
+      relationTarget: metadata.relationTarget,
       sourceRefs: Object.freeze([GUJIN_634]),
       historicalTraditionalDoctrineOnly: true as const,
       modernScientificFactAuthorized: false as const,
       productInterpretationAuthorized: false as const,
-    })));
+    });
+  }));
 
 const RAW_NAMED_FORMS = [
   {
