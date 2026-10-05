@@ -220,6 +220,74 @@ describe('Myeonghwa Product Host MVP', () => {
     expect(parsed).not.toHaveProperty('registry');
   });
 
+  it('accepts only the bounded product detail preference surface', () => {
+    for (const preferredDetail of ['concise', 'standard', 'detailed'] as const) {
+      const parsed = parseProductHostReadingRequest({
+        ...validBody,
+        reading: {
+          text: '부모운',
+          outputPreferences: { preferredDetail },
+        },
+      });
+      expect(parsed.reading.outputPreferences).toEqual({ preferredDetail });
+    }
+
+    expect(() =>
+      parseProductHostReadingRequest({
+        ...validBody,
+        reading: {
+          text: '부모운',
+          outputPreferences: { preferredDetail: 'verbose' },
+        },
+      }),
+    ).toThrow(/preferredDetail must be concise, standard, or detailed/u);
+
+    expect(() =>
+      parseProductHostReadingRequest({
+        ...validBody,
+        reading: {
+          text: '부모운',
+          outputPreferences: { includeSourceSummaries: true },
+        },
+      }),
+    ).toThrow(/Unexpected field: includeSourceSummaries/u);
+
+    expect(() =>
+      parseProductHostReadingRequest({
+        ...validBody,
+        reading: {
+          text: '부모운',
+          outputPreferences: {},
+        },
+      }),
+    ).toThrow(/preferredDetail must be concise, standard, or detailed/u);
+  });
+
+  it('carries the product detail preference into the normalized governed reading request', async () => {
+    const base = dependencies();
+    let observedDetail: unknown;
+
+    const host = createMyeonghwaProductHost({
+      ...base,
+      requestNowFactory: () => new Date('2026-10-05T07:00:00.000Z'),
+      async interpret(snapshot, context, requestContext) {
+        observedDetail =
+          requestContext?.readingRequest.outputPreferences?.preferredDetail;
+        return base.interpret(snapshot, context, requestContext);
+      },
+    });
+
+    await host.requestReading({
+      birth: validBody.birth,
+      reading: {
+        text: '올해 사업운',
+        outputPreferences: { preferredDetail: 'concise' },
+      },
+    });
+
+    expect(observedDetail).toBe('concise');
+  });
+
   it('passes unknown birth time into the real calculation engine through the injected TEST-ONLY calculator', async () => {
     let observedSnapshot: CanonicalSajuSnapshot | undefined;
     const base = dependencies();
@@ -274,6 +342,33 @@ describe('Myeonghwa Product Host MVP', () => {
     expect(adapter.calls).toHaveLength(0);
   });
 
+  it('keeps internal detail fallback metadata out of the product response', async () => {
+    const adapter = new TestNarrativeAdapter();
+    const base = dependencies((snapshot) => [wealthOfficialClaim(snapshot)], adapter);
+    const officialOnlyDependencies = { ...base };
+    delete officialOnlyDependencies.legacyNarrativeRuntime;
+    const host = createMyeonghwaProductHost(officialOnlyDependencies);
+
+    for (const preferredDetail of ['concise', 'detailed'] as const) {
+      const result = await host.requestReading({
+        ...validBody,
+        reading: {
+          text: '재물운',
+          outputPreferences: { preferredDetail },
+        },
+      });
+      const serialized = JSON.stringify(result);
+      expect(result.state).toBe('delivered');
+      expect(serialized).not.toContain(
+        'myeonghwa-official-reading-detail-presentation-policy-v1',
+      );
+      expect(serialized).not.toContain('fallback_to_standard');
+      expect(serialized).not.toContain('missing_text_role_authority');
+      expect(serialized).not.toContain('missing_expansion_material');
+    }
+    expect(adapter.calls).toHaveLength(0);
+  });
+
   it('fails closed instead of falling back to Official Reading when a Legacy request has no runtime', async () => {
     const adapter = new TestNarrativeAdapter();
     const base = dependencies((snapshot) => [parentsClaim(snapshot)], adapter);
@@ -317,6 +412,22 @@ describe('Myeonghwa Product Host MVP', () => {
       expect(payload.state).toBe('delivered');
       expect(payload).not.toHaveProperty('artifact');
       expect(JSON.stringify(payload)).not.toContain('claim-product-host-family-parents');
+
+      const detailedResponse = await fetch(`${server.baseUrl}/api/readings`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...validBody,
+          reading: {
+            text: '부모운',
+            outputPreferences: { preferredDetail: 'standard' },
+          },
+        }),
+      });
+      expect(detailedResponse.status).toBe(200);
+      expect((await detailedResponse.json()) as Record<string, unknown>).toMatchObject({
+        state: 'delivered',
+      });
     } finally {
       await server.close();
     }
@@ -413,6 +524,15 @@ describe('Myeonghwa Product Host MVP', () => {
       host.requestReading({
         birth: { calendarType: 'solar', date: '2024-03-10', time: '12:00' },
         reading: { text: '' },
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_READING_REQUEST' });
+    await expect(
+      host.requestReading({
+        birth: { calendarType: 'solar', date: '2024-03-10', time: '12:00' },
+        reading: {
+          text: '부모운',
+          outputPreferences: { preferredDetail: 'invalid' },
+        },
       }),
     ).rejects.toMatchObject({ code: 'INVALID_READING_REQUEST' });
     expect(calculationCalls).toBe(0);
