@@ -13,8 +13,8 @@ describe('FR311I mouth, lip, and philtrum traditional semantics', () => {
     expect(() => assertMouthPhiltrumTraditionalSemanticsFR311I()).not.toThrow();
     expect(FR311I_SEMANTIC_SUMMARY).toEqual({
       traditionalRegions: 6,
-      directRules: 69,
-      philtrumDirectRules: 20,
+      directRules: 104,
+      philtrumDirectRules: 34,
       mouthNamedForms: 16,
       namedFormDescriptors: 43,
       namedFormClaims: 45,
@@ -145,6 +145,63 @@ describe('FR311I mouth, lip, and philtrum traditional semantics', () => {
     )).toBe(true);
   });
 
+  it('classifies morphology, color, marks, lines, dynamics, and cross-region context separately', () => {
+    const kinds = new Set(MOUTH_PHILTRUM_DIRECT_RULES_FR311I.map((item) => item.observationKind));
+    expect(kinds).toEqual(new Set([
+      'morphology',
+      'color',
+      'surface_mark',
+      'wrinkle_or_line',
+      'dynamic_behavior',
+      'cross_region_context',
+    ]));
+
+    const monkey = MOUTH_NAMED_FORM_SEMANTICS_FR311I.find(
+      (item) => item.formKey === 'mouth.named.monkey',
+    );
+    expect(monkey?.descriptors.find(
+      (item) => item.sourceFragment === '人中破竹更為良',
+    )?.observationKind).toBe('cross_region_context');
+  });
+
+  it('preserves philtrum marks and lines without granting fertility or child-sex prediction authority', () => {
+    const upperMark = MOUTH_PHILTRUM_DIRECT_RULES_FR311I.find(
+      (item) => item.ruleId === 'fr311i.philtrum.upper_black_mark_many_children',
+    );
+    const leftRight = MOUTH_PHILTRUM_DIRECT_RULES_FR311I.find(
+      (item) => item.ruleId === 'fr311i.philtrum.left_right_child_sex',
+    );
+    const horizontal = MOUTH_PHILTRUM_DIRECT_RULES_FR311I.find(
+      (item) => item.ruleId === 'fr311i.philtrum.horizontal_line_no_children',
+    );
+
+    expect(upperMark?.observationKind).toBe('surface_mark');
+    expect(horizontal?.observationKind).toBe('wrinkle_or_line');
+    expect(leftRight?.sourceExpression).toBe('偏左生兒右生女');
+
+    for (const rule of [upperMark, leftRight, horizontal]) {
+      expect(rule?.fertilityPredictionAuthorized).toBe(false);
+      expect(rule?.childSexPredictionAuthorized).toBe(false);
+      expect(rule?.modernScientificFactAuthorized).toBe(false);
+    }
+  });
+
+  it('preserves mouth surface and dynamic evidence as source-local rules', () => {
+    const blackMark = MOUTH_PHILTRUM_DIRECT_RULES_FR311I.find(
+      (item) => item.ruleId === 'fr311i.mouth.black_mark_food',
+    );
+    const lipMoves = MOUTH_PHILTRUM_DIRECT_RULES_FR311I.find(
+      (item) => item.ruleId === 'fr311i.mouth.lip_moves_before_speech',
+    );
+    const tongueContext = MOUTH_PHILTRUM_DIRECT_RULES_FR311I.find(
+      (item) => item.ruleId === 'fr311i.mouth.large_tongue_small_mouth',
+    );
+
+    expect(blackMark?.observationKind).toBe('surface_mark');
+    expect(lipMoves?.observationKind).toBe('dynamic_behavior');
+    expect(tongueContext?.observationKind).toBe('cross_region_context');
+  });
+
   it('keeps all automatic observation and product bridges closed', () => {
     expect(FR311I_SOURCE_BOUNDARY).toEqual({
       mouthOfficerBaselineSourceRef: 'witness.gujin473.art632.wikisource',
@@ -158,6 +215,7 @@ describe('FR311I mouth, lip, and philtrum traditional semantics', () => {
       healthDiagnosisAuthorized: false,
       lifespanPredictionAuthorized: false,
       fertilityPredictionAuthorized: false,
+      childSexPredictionAuthorized: false,
       personalityFactAuthorized: false,
       criminalityInferenceAuthorized: false,
       modernScientificFactAuthorized: false,
