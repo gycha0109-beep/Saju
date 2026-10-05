@@ -1,5 +1,7 @@
 # FR318 / FR319 private local evidence executor
 
+> For the full FR313 → FR319 operator path, use `README-fr313-fr319-local-pipeline.md`. This document remains the backward-compatible FR318-entry path.
+
 This runner executes the already-governed FR318 and FR319 contracts against **private local evidence**.
 
 It does not create evidence, infer missing authority, or promote repository state.
