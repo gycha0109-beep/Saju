@@ -793,9 +793,11 @@ describe('Official Reading renderer v1', () => {
       );
       for (const scenario of ambiguity.scenarios) {
         expect(scenario.explainabilityRefs).toHaveLength(1);
+        const [scenarioExplainabilityRef] = scenario.explainabilityRefs ?? [];
+        expect(scenarioExplainabilityRef).toBeDefined();
         expect(
           rendered.explainability.entries.some(
-            (entry) => entry.explainabilityRef === scenario.explainabilityRefs[0],
+            (entry) => entry.explainabilityRef === scenarioExplainabilityRef,
           ),
         ).toBe(true);
       }
