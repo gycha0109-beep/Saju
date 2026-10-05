@@ -356,10 +356,10 @@ describe('Official Reading concise presentation profile contract', () => {
     );
   });
 
-  it('does not activate concise output during the profile-contract phase', () => {
+  it('exposes concise as conditional on complete approved material', () => {
     expect(OFFICIAL_READING_DETAIL_CAPABILITY_V1.concise).toEqual({
-      state: 'fallback_only',
-      fallbackReason: 'missing_text_role_authority',
+      state: 'conditional',
+      fallbackReason: 'missing_approved_concise_material',
     });
   });
 });
