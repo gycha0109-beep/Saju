@@ -71,7 +71,7 @@ source ref:
 
 ## 人中 일반 규칙
 
-이번 단계에서 20개 source-local rule을 구조화한다.
+이번 단계에서 34개 source-local rule을 구조화한다.
 
 대표:
 
@@ -159,6 +159,58 @@ source ref:
 - 許負相脣篇에는 `上脣厚，命非久`가 별도 문구로 존재
 
 FR311I는 둘을 하나의 정답으로 합치지 않고 source-local rule로 병렬 보존한다.
+
+## 관찰 종류 분리
+
+FR311I는 전통 문구의 관찰 대상을 한 종류의 morphology로 평탄화하지 않는다.
+
+직접 규칙과 명명형 descriptor는 다음 여섯 종류 중 하나를 갖는다.
+
+- `morphology`: 길이·폭·두께·방향·형상 등 형태 기술
+- `color`: 紅 / 紫 / 青 / 黑 / 黃 등 색 기술
+- `surface_mark`: 黑子 같은 표면 표식
+- `wrinkle_or_line`: 紋 / 理 같은 주름·결·선
+- `dynamic_behavior`: 입 움직임·말하기 전 입술 움직임·독어 등 동적 문구
+- `cross_region_context`: 치아·혀·인중 등 다른 부위와 함께 성립하는 문맥
+
+이 분류는 neutral metric 또는 provider landmark 연결 권한을 뜻하지 않는다.
+
+### 人中 표식·선 문구
+
+기존 형태 규칙 외에 다음 source-local 문구도 별도 보존한다.
+
+- 上有黑子者，多子
+- 下有黑子者多女
+- 中有黑子者婚妻易而養兒難
+- 有兩黑子者，主雙生
+- 有橫理者至老無兒
+- 有豎理者，主養他子
+- 有縱理者，主兒宿疾
+- 偏左生兒右生女
+
+흑점은 `surface_mark`, 紋/理는 `wrinkle_or_line`로 분리한다.
+
+특히 자녀 성별에 관한 문구는 역사적 기록으로만 보존하고:
+
+`childSexPredictionAuthorized = false`
+
+를 유지한다.
+
+### 口 / 脣 표식·행동·타부위 문맥
+
+추가로 다음 계열을 독립 규칙으로 보존한다.
+
+- 口中黑子
+- 黑子當脣
+- 縱理入口
+- 口中有理
+- 無人獨語
+- 口末語，將脣起
+- 舌大口小
+- 口寬舌薄
+
+혀·치아처럼 다른 부위가 들어간 문구는 `cross_region_context`이며,
+해당 부위를 입 자체 morphology로 재라벨하지 않는다.
 
 ## 입 명명형 16종
 
@@ -270,6 +322,7 @@ FR311I는 이 문장을 역사적 자료로 보존할 뿐 다음을 허용하지
 
 - `lifespanPredictionAuthorized`
 - `fertilityPredictionAuthorized`
+- `childSexPredictionAuthorized`
 - `personalityFactAuthorized`
 - `criminalityInferenceAuthorized`
 - `modernScientificFactAuthorized`
@@ -279,8 +332,8 @@ FR311I는 이 문장을 역사적 자료로 보존할 뿐 다음을 허용하지
 FR311I 현재 corpus:
 
 - traditional regions: 6
-- direct rules: 69
-- philtrum direct rules: 20
+- direct rules: 104
+- philtrum direct rules: 34
 - mouth named forms: 16
 - descriptors: 43
 - named-form claims: 45
