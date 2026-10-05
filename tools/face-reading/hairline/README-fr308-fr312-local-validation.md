@@ -1,5 +1,7 @@
 # FR308 → FR312 local deidentified validation executor
 
+> To compile FR307 private candidate evidence into this executor's deidentified input without hand-writing contract JSON, use `README-fr307-review-packet.md`.
+
 This runner connects the existing FR308, FR310, and FR312 contracts into one local-only engineering validation path.
 
 It does not create evidence, perform human review, infer demographics, or promote model authority.

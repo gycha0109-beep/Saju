@@ -64,3 +64,8 @@ The runner cannot authorize:
 - Production or Commerce.
 
 Real operator images, QA overlays, raw polygon bundles and private image digests remain local.
+
+
+## Human-review handoff
+
+After collecting the required FR307 local outputs, use `README-fr307-review-packet.md` to prepare a private human-review worksheet and compile only the completed deidentified findings for FR308/FR312.
