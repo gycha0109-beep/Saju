@@ -458,11 +458,26 @@ export async function executeProductReading(
       semanticQualifierBindings: semanticProjection.semanticQualifierBindings,
     });
     const officialReadingPlan = buildOfficialReadingPlanV1(canonicalSemantics);
+    const sourceSummariesRequested =
+      preparation.normalization.request.outputPreferences?.includeSourceSummaries === true;
+    if (sourceSummariesRequested && governedEvidence.sourceSummaries === undefined) {
+      return officialAuthorityBlockedResult(
+        preparation,
+        consumerReadingAuthority,
+        ['OFFICIAL_READING_SOURCE_SUMMARIES_REQUIRED'],
+        canonicalSemantics,
+        officialReadingPlan,
+      );
+    }
     const officialReadingReport = canRenderOfficialReadingV1(
       canonicalSemantics,
       officialReadingPlan,
     )
-      ? renderOfficialReadingV1(canonicalSemantics, officialReadingPlan)
+      ? renderOfficialReadingV1(canonicalSemantics, officialReadingPlan, {
+          ...(sourceSummariesRequested
+            ? { sourceSummaries: governedEvidence.sourceSummaries ?? [] }
+            : {}),
+        })
       : undefined;
 
     if (officialReadingReport === undefined) {
