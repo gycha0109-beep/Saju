@@ -182,6 +182,7 @@ export interface InsightItemView {
   headline?: string;
   summary?: string;
   qualifiers?: readonly string[];
+  explainabilityRef: string;
 }
 
 export interface InsightBlock {
@@ -195,6 +196,7 @@ export interface ComparisonBlock {
   perspectives: readonly {
     label: string;
     text: string;
+    explainabilityRef: string;
   }[];
 }
 
@@ -204,6 +206,7 @@ export interface AmbiguityBlock {
   scenarios: readonly {
     label: string;
     text: string;
+    explainabilityRefs: readonly string[];
   }[];
 }
 
@@ -272,6 +275,8 @@ export interface ReadingDisclosureView {
 export interface ExplainabilityIndex {
   entries: readonly {
     explainabilityRef: string;
+    primaryUnitRefs: readonly string[];
+    supportingUnitRefs: readonly string[];
     claimIds: readonly string[];
     factRefs: readonly string[];
     methodologyIds: readonly string[];
