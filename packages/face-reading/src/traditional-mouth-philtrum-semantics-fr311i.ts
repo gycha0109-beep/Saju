@@ -1562,6 +1562,283 @@ const RAW_DIRECT_RULES = [
     "whole_life",
     null,
     "direct_clear"
+  ],,
+
+  [
+    "fr311i.philtrum.preferred_form",
+    "人中論",
+    "philtrum",
+    "欲長而不欲縮，中深而外闊，直而不斜，闊而下垂者，皆善相也",
+    "인중은 길고 깊으며 곧고 아래로 넓게 이어지는 형태를 좋게 본다는 전통 총론을 보존한다.",
+    ["traditional_auspice"],
+    "favorable",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.broad_flat_child_crying",
+    "相人中篇",
+    "philtrum",
+    "人中廣平，養子不成。雖即生產，常聞哭聲",
+    "넓고 평평한 인중을 자녀 양육의 불리함과 울음에 관한 전통 판단으로 확장해 기록한다.",
+    ["children_family"],
+    "challenging",
+    "whole_life",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.nianshou_children_context",
+    "相人中篇",
+    "context",
+    "兼有年壽，更益兒郎",
+    "년수라는 다른 전통 부위와 함께 자녀에 관한 판단을 붙이는 문구를 문맥으로 보존한다.",
+    ["children_family"],
+    "favorable",
+    "whole_life",
+    "children",
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.mouth.pointed_reversed_thin",
+    "相口",
+    "mouth_whole",
+    "足尖而反，偏而薄，寒賤不言",
+    "전사상 첫 글자가 불안정한 뾰족하고 뒤집히며 치우치고 얇은 입 문구를 빈한한 판단과 연결해 보존한다.",
+    ["wealth","status"],
+    "challenging",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.mouth.shengchun_virtuous",
+    "相口",
+    "mouth_whole",
+    "口如生脣，必是賢人。非特口德，又且性純",
+    "생순으로 표기된 입을 현명함·순박함과 연결하는 전통 성정 판단을 보존한다.",
+    ["integrity_trust","temperament"],
+    "favorable",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.mouth.xufu_cinnabar_wealth_office",
+    "許負相口篇",
+    "mouth_whole",
+    "口如含丹，不受飢寒。一則主富，二則主官",
+    "단사를 머금은 듯한 입을 빈곤 회피·부·관직과 연결하는 허부 계통 문구를 별도 보존한다.",
+    ["livelihood","wealth","status"],
+    "favorable",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.shrunken_bag_child_separate_house",
+    "許負相口篇",
+    "mouth_whole",
+    "口如縮囊，饑死無糧。縱然有子，必主別房",
+    "오그라든 자루 같은 입을 식량 부족과 자녀의 별거에 관한 전통 판단에 연결한다.",
+    ["livelihood","children_family","household"],
+    "challenging",
+    "whole_life",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.dragon_lip_phoenix_untrustworthy",
+    "許負相口篇",
+    "lips_pair",
+    "龍脣鳳口。不可為友。好說不真，常懷麤酌",
+    "용순봉구라는 표현에 교우·진실성에 관한 부정적 전통 판단을 붙인 문구를 보존한다.",
+    ["interpersonal_relations","integrity_trust","speech_conduct"],
+    "challenging",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.mouth.red_cinnabar_female_spouse",
+    "許負相口篇",
+    "mouth_whole",
+    "口如赤丹，不入殷蘭。若是女子，亦得夫憐",
+    "붉은 단사 같은 입을 여성의 배우자 관계에 관한 전통 판단과 연결하는 문구를 보존한다.",
+    ["spouse_relationship"],
+    "favorable",
+    "whole_life",
+    "spouse",
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.mouth.wide_thin_tongue_no_evil",
+    "許負相口篇",
+    "context",
+    "口寬舌薄，必好歌樂。如此之人，永無凶惡",
+    "넓은 입과 얇은 혀 조합을 음악 선호와 흉악하지 않다는 전통 판단에 연결한다.",
+    ["temperament","conduct_risk"],
+    "favorable",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.red_lips_sprinkled_sand_glory",
+    "許負相口篇",
+    "lip_color",
+    "貴人脣紅似潑砂，更加四字足榮華",
+    "붉은 입술과 사자형 입을 영화에 연결하는 전통 문구를 보존한다.",
+    ["status","wealth"],
+    "favorable",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.mouse_green_black_estate_loss",
+    "許負相口篇",
+    "mouth_whole",
+    "貧賤似鼠常青黑，破盡田園不顧家",
+    "쥐에 비유된 청흑색 입을 빈곤과 전답 손실에 연결하는 전통 문구를 보존한다.",
+    ["wealth","inheritance","household"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.lip_lines_blue_thin_hunger",
+    "許負相口篇",
+    "lips_pair",
+    "脣上紋多仔細相，青薄川紋餓死名",
+    "입술의 많은 주름·청색·얇음·천자형 무늬를 굶주림과 연결한 문구를 경계 불확실 상태로 보존한다.",
+    ["livelihood","longevity"],
+    "challenging",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.lip.chicken_liver_poverty",
+    "論脣",
+    "lip_color",
+    "脣如雞肝，至老貧寒",
+    "닭의 간 같은 입술을 노년의 빈곤과 연결한다.",
+    ["wealth","life_course"],
+    "challenging",
+    "late",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.lip.green_black_hunger",
+    "論脣",
+    "lip_color",
+    "脣如青黑，餓死塗陌",
+    "청흑색 입술을 극단적으로 불리한 식생활·수명 판단과 연결한다.",
+    ["livelihood","longevity"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.lip.pale_black_poison",
+    "論脣",
+    "lip_color",
+    "脣色淡黑，毒殺之客",
+    "담흑색 입술을 독살에 관한 전통 건강·위험 판단과 연결한다.",
+    ["traditional_health","conduct_risk"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.lip.flat_not_raised_hunger",
+    "論脣",
+    "lips_pair",
+    "脣平不起，饑餓莫比",
+    "평평하고 도드라지지 않는 입술을 굶주림과 연결한다.",
+    ["livelihood"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.lip_missing_sunken_low_status",
+    "論脣",
+    "lips_pair",
+    "脣缺而陷，主人下賤",
+    "입술이 이지러지고 함몰된 조건을 낮은 신분에 관한 전통 판단과 연결한다.",
+    ["status"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.lip.long_lip_short_teeth_longevity",
+    "論脣",
+    "context",
+    "長脣短齒，長命不死",
+    "긴 입술과 짧은 치아 조합을 장수에 연결하는 전통 문구를 보존한다.",
+    ["longevity"],
+    "favorable",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.lip.not_upright_speech",
+    "論脣",
+    "lips_pair",
+    "脣生不正，言詞難定",
+    "입술이 바르지 않은 조건을 말의 불확실성과 연결한다.",
+    ["speech_conduct"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.lip.lower_over_upper_spouse",
+    "許負相脣篇",
+    "lips_pair",
+    "下脣過，上脣妨夫的是真",
+    "아랫입술과 윗입술의 상대 관계를 배우자에게 불리하다는 전통 판단과 연결하는 문구를 경계 불확실 상태로 보존한다.",
+    ["spouse_relationship"],
+    "challenging",
+    "whole_life",
+    "spouse",
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.lip.upper_over_lower_falsehood",
+    "許負相脣篇",
+    "lips_pair",
+    "上脣過，下脣法多虛假人",
+    "윗입술과 아랫입술의 상대 관계를 허위성에 연결하는 전통 문구를 경계 불확실 상태로 보존한다.",
+    ["integrity_trust"],
+    "challenging",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.lip.female_purple_spouse_child",
+    "許負相脣篇",
+    "lip_color",
+    "女脣紫，夫早死，兼妨首子",
+    "여성의 자색 입술을 배우자와 첫 자녀에 관한 불리한 전통 판단에 연결한다.",
+    ["spouse_relationship","children_family","longevity"],
+    "challenging",
+    "whole_life",
+    "family",
+    "direct_clear"
   ],
 ] as const;
 
@@ -2406,7 +2683,7 @@ export function assertMouthPhiltrumTraditionalSemanticsFR311I(): void {
   if (MOUTH_PHILTRUM_TRADITIONAL_REGIONS_FR311I.length !== 6) {
     throw new Error('fr311i_requires_6_regions');
   }
-  if (MOUTH_PHILTRUM_DIRECT_RULES_FR311I.length !== 104) {
+  if (MOUTH_PHILTRUM_DIRECT_RULES_FR311I.length !== 126) {
     throw new Error(`fr311i_direct_rule_count_drift:${MOUTH_PHILTRUM_DIRECT_RULES_FR311I.length}`);
   }
   if (MOUTH_NAMED_FORM_SEMANTICS_FR311I.length !== 16) {
