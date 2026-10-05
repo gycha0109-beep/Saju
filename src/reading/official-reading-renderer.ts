@@ -45,7 +45,7 @@ export interface OfficialReadingRenderedContentV1 {
     typeof OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION;
   explainabilityBindingPolicyVersion:
     typeof OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION;
-  sourceSummaryPresentationPolicyVersion:
+  sourceSummaryPresentationPolicyVersion?:
     typeof OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION;
   reportId: string;
   reportHash: string;
@@ -717,8 +717,12 @@ export function renderOfficialReadingV1(
       OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
     explainabilityBindingPolicyVersion:
       OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
-    sourceSummaryPresentationPolicyVersion:
-      OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION,
+    ...(summariesBySourceId === undefined
+      ? {}
+      : {
+          sourceSummaryPresentationPolicyVersion:
+            OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION,
+        }),
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
     sections,
