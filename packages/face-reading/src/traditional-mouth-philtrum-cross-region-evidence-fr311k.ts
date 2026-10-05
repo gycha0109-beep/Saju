@@ -963,22 +963,6 @@ export function resolveMouthPhiltrumCrossRegionEvidenceFR311K(
       combinationSet.has(item.combinationKey) &&
       topicAllowed(item.topicKeys, query.allowedTopicKeys),
   );
-
-  if (combinations.length > 0) {
-    return Object.freeze({
-      status: 'direct_source_combination' as const,
-      matchedEvidenceIds: Object.freeze(combinations.map((item) => item.evidenceId)),
-      matchedRelationKeys: Object.freeze([]),
-      matchedCombinationKeys: Object.freeze([...new Set(combinations.flatMap((item) =>
-        item.combinationKey === null ? [] : [item.combinationKey]
-      ))]),
-      semanticCombinationAuthorized: false as const,
-      relationInferenceAuthorized: false as const,
-      combinationInferenceAuthorized: false as const,
-      reason: '원문이 명시한 정확한 다부위 조합 key가 입력된 경우에만 해당 근거를 반환한다. 독립 특징들로부터 조합 key를 자동 생성하지 않는다.',
-    });
-  }
-
   const relations = MOUTH_PHILTRUM_DIRECT_CROSS_REGION_EVIDENCE_FR311K.filter(
     (item) =>
       item.evidenceKind === 'direct_cross_region_relation' &&
@@ -987,18 +971,29 @@ export function resolveMouthPhiltrumCrossRegionEvidenceFR311K(
       topicAllowed(item.topicKeys, query.allowedTopicKeys),
   );
 
-  if (relations.length > 0) {
+  if (combinations.length > 0 || relations.length > 0) {
+    const status = combinations.length > 0
+      ? 'direct_source_combination' as const
+      : 'direct_source_relation' as const;
+
     return Object.freeze({
-      status: 'direct_source_relation' as const,
-      matchedEvidenceIds: Object.freeze(relations.map((item) => item.evidenceId)),
+      status,
+      matchedEvidenceIds: Object.freeze([
+        ...combinations.map((item) => item.evidenceId),
+        ...relations.map((item) => item.evidenceId),
+      ]),
       matchedRelationKeys: Object.freeze([...new Set(relations.flatMap((item) =>
         item.relationKey === null ? [] : [item.relationKey]
       ))]),
-      matchedCombinationKeys: Object.freeze([]),
+      matchedCombinationKeys: Object.freeze([...new Set(combinations.flatMap((item) =>
+        item.combinationKey === null ? [] : [item.combinationKey]
+      ))]),
       semanticCombinationAuthorized: false as const,
       relationInferenceAuthorized: false as const,
       combinationInferenceAuthorized: false as const,
-      reason: '원문이 명시한 정확한 부위 관계 key가 입력된 경우에만 해당 근거를 반환한다. 독립 특징들로부터 관계 key를 자동 추론하지 않는다.',
+      reason: combinations.length > 0
+        ? '원문이 명시한 정확한 조합·관계 key만 함께 반환한다. 상태는 직접 조합을 우선 표시하지만 관계 근거를 버리거나 독립 특징에서 새 key를 추론하지 않는다.'
+        : '원문이 명시한 정확한 부위 관계 key가 입력된 경우에만 해당 근거를 반환한다. 독립 특징들로부터 관계 key를 자동 추론하지 않는다.',
     });
   }
 
