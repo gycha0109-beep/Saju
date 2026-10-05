@@ -406,7 +406,7 @@ describe('Official Reading renderer v1', () => {
       requestedDetail: 'concise',
       resolvedDetail: 'standard',
       resolution: 'fallback_to_standard',
-      fallbackReason: 'missing_text_role_authority',
+      fallbackReason: 'missing_approved_concise_material',
     });
 
     expect(detailed.sections).toEqual(baseline.sections);

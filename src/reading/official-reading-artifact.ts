@@ -23,6 +23,15 @@ import {
   OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION,
   resolveOfficialReadingDetailPreferenceV1,
 } from './official-reading-detail-presentation.js';
+import {
+  OFFICIAL_READING_CONCISE_PRESENTATION_READINESS_POLICY_VERSION,
+  assessOfficialReadingConcisePresentationReadinessV1,
+} from './official-reading-concise-presentation.js';
+import {
+  OFFICIAL_READING_APPROVED_CONCISE_REGISTRY_VERSION,
+  approvedOfficialReadingConciseProfileSetHashV1,
+  buildApprovedOfficialReadingConciseProfilesV1,
+} from './official-reading-concise-presentation-registry.js';
 import { buildReadingArtifactShell } from './reading-artifact-shell.js';
 
 export const OFFICIAL_READING_ARTIFACT_SCHEMA_VERSION =
@@ -225,8 +234,23 @@ function assertReportBinding(
         'Official Reading detail preference resolution requires the governed detail presentation policy.',
       );
     }
+    const approvedConciseProfiles =
+      report.detailPreferenceResolution.requestedDetail === 'concise'
+        ? buildApprovedOfficialReadingConciseProfilesV1(semantics, plan)
+        : [];
+    const conciseReadiness =
+      report.detailPreferenceResolution.requestedDetail === 'concise'
+        ? assessOfficialReadingConcisePresentationReadinessV1(
+            semantics,
+            plan,
+            approvedConciseProfiles,
+          )
+        : undefined;
     const expectedDetailResolution = resolveOfficialReadingDetailPreferenceV1(
       report.detailPreferenceResolution.requestedDetail,
+      {
+        conciseAvailable: conciseReadiness?.state === 'ready',
+      },
     );
     if (
       report.detailPreferenceResolution.resolvedDetail !==
@@ -240,6 +264,43 @@ function assertReportBinding(
         'Official Reading detail preference resolution does not match the governed policy.',
       );
     }
+
+    if (expectedDetailResolution.resolvedDetail === 'concise') {
+      const expectedProfileSetHash =
+        conciseReadiness === undefined
+          ? undefined
+          : approvedOfficialReadingConciseProfileSetHashV1(
+              conciseReadiness,
+            );
+      if (
+        report.concisePresentationReadinessPolicyVersion !==
+          OFFICIAL_READING_CONCISE_PRESENTATION_READINESS_POLICY_VERSION ||
+        report.concisePresentationRegistryVersion !==
+          OFFICIAL_READING_APPROVED_CONCISE_REGISTRY_VERSION ||
+        expectedProfileSetHash === undefined ||
+        report.concisePresentationProfileSetHash !== expectedProfileSetHash
+      ) {
+        throw new TypeError(
+          'Official Reading concise presentation metadata does not match the approved registry.',
+        );
+      }
+    } else if (
+      report.concisePresentationReadinessPolicyVersion !== undefined ||
+      report.concisePresentationRegistryVersion !== undefined ||
+      report.concisePresentationProfileSetHash !== undefined
+    ) {
+      throw new TypeError(
+        'Official Reading standard presentation must not carry concise profile metadata.',
+      );
+    }
+  } else if (
+    report.concisePresentationReadinessPolicyVersion !== undefined ||
+    report.concisePresentationRegistryVersion !== undefined ||
+    report.concisePresentationProfileSetHash !== undefined
+  ) {
+    throw new TypeError(
+      'Official Reading concise metadata requires an explicit detail preference.',
+    );
   }
   if (
     report.explainabilityBindingPolicyVersion !==
@@ -281,6 +342,16 @@ function assertReportBinding(
           detailPresentationPolicyVersion:
             report.detailPresentationPolicyVersion,
           detailPreferenceResolution: report.detailPreferenceResolution,
+        }),
+    ...(report.concisePresentationProfileSetHash === undefined
+      ? {}
+      : {
+          concisePresentationReadinessPolicyVersion:
+            report.concisePresentationReadinessPolicyVersion,
+          concisePresentationRegistryVersion:
+            report.concisePresentationRegistryVersion,
+          concisePresentationProfileSetHash:
+            report.concisePresentationProfileSetHash,
         }),
     sourceSemanticHash: report.sourceSemanticHash,
     sourcePlanHash: report.sourcePlanHash,

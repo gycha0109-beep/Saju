@@ -7,14 +7,14 @@ import {
 } from '../src/reading/official-reading-detail-presentation.js';
 
 describe('Official Reading detail presentation policy v1', () => {
-  it('keeps standard as the only directly supported presentation level', () => {
+  it('supports standard directly and concise conditionally on approved material', () => {
     expect(OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION).toBe(
       'myeonghwa-official-reading-detail-presentation-policy-v1',
     );
     expect(OFFICIAL_READING_DETAIL_CAPABILITY_V1).toEqual({
       concise: {
-        state: 'fallback_only',
-        fallbackReason: 'missing_text_role_authority',
+        state: 'conditional',
+        fallbackReason: 'missing_approved_concise_material',
       },
       standard: {
         state: 'supported',
@@ -26,7 +26,7 @@ describe('Official Reading detail presentation policy v1', () => {
     });
   });
 
-  it('resolves concise and detailed requests to standard without inventing presentation meaning', () => {
+  it('resolves concise only when approved material is complete and keeps detailed on standard fallback', () => {
     expect(resolveOfficialReadingDetailPreferenceV1('standard')).toEqual({
       requestedDetail: 'standard',
       resolvedDetail: 'standard',
@@ -36,7 +36,16 @@ describe('Official Reading detail presentation policy v1', () => {
       requestedDetail: 'concise',
       resolvedDetail: 'standard',
       resolution: 'fallback_to_standard',
-      fallbackReason: 'missing_text_role_authority',
+      fallbackReason: 'missing_approved_concise_material',
+    });
+    expect(
+      resolveOfficialReadingDetailPreferenceV1('concise', {
+        conciseAvailable: true,
+      }),
+    ).toEqual({
+      requestedDetail: 'concise',
+      resolvedDetail: 'concise',
+      resolution: 'exact',
     });
     expect(resolveOfficialReadingDetailPreferenceV1('detailed')).toEqual({
       requestedDetail: 'detailed',

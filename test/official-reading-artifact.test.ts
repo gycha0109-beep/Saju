@@ -14,7 +14,10 @@ import {
   GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
   type GovernedReadingEvidenceBundleV1,
 } from '../src/reading/governed-reading-evidence.js';
-import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
+import {
+  buildCanonicalReadingSemanticBundleV1,
+  type CanonicalReadingSemanticQualifierBindingV1,
+} from '../src/reading/canonical-reading-semantics.js';
 import {
   assembleOfficialReadingArtifactV1,
   OFFICIAL_READING_ARTIFACT_SCHEMA_VERSION,
@@ -30,6 +33,10 @@ import {
   renderOfficialReadingV1,
 } from '../src/reading/official-reading-renderer.js';
 import { buildReadingArtifactShell } from '../src/reading/reading-artifact-shell.js';
+import {
+  GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CLAIM_TYPE,
+  GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY,
+} from '../src/research/general-natal-t8-structural-summary-candidate.js';
 
 const calculationPolicy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/official-reading-artifact-test',
@@ -123,6 +130,121 @@ function fixture(summary = '실행과 준비가 서로 견제합니다.') {
   });
   const plan = buildOfficialReadingPlanV1(semantics);
   const report = renderOfficialReadingV1(semantics, plan);
+  return { currentSnapshot, interpretation, semantics, plan, report };
+}
+
+function conciseFixture() {
+  const currentSnapshot = snapshot();
+  const registry = createI7SeasonalSupportRegistry();
+  const base = runInterpretation(currentSnapshot, registry, {
+    requestId: 'official-artifact-concise-interpretation',
+    now: new Date('2026-09-23T00:01:00.000Z'),
+  });
+  const claim: InterpretationClaim = {
+    claimId: 'claim-official-artifact-general-month-branch',
+    schemaVersion: 'official-reading-artifact-concise-test',
+    snapshotId: currentSnapshot.snapshotId,
+    taxonomy: {
+      tier: 'T8',
+      category: 'general',
+      subcategory: 'month_branch_structural_context',
+    },
+    claimType: GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CLAIM_TYPE,
+    subject: 'natal_chart',
+    predicate: 'month_branch_structural_context',
+    value: {
+      relation: 'peer',
+      structuralRelationship: 'same_element',
+      headline: '월지와 일간이 같은 오행 관계입니다',
+      summary:
+        '월지의 오행이 일간과 같은 오행으로 연결됩니다. 이 관찰은 월지라는 한 구조축을 설명할 뿐, 명식 전체의 강약이나 길흉을 확정하지 않습니다.',
+      semanticScope: 'month_branch_structural_context_non_conclusive',
+      classificationAuthorized: false,
+      numericScoringAuthorized: false,
+      fortunePolarityAuthorized: false,
+      upstreamEvidenceDirectionAsFortuneMeaningAuthorized: false,
+    },
+    methodologyRef: {
+      id: GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY.methodologyId,
+      version: GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY.version,
+    },
+    ruleRefs: [
+      {
+        ruleId: 'rule-official-artifact-general-month-branch',
+        version: '1',
+        evaluationId: 'eval-official-artifact-general-month-branch',
+      },
+    ],
+    factRefs: ['pillars.month.branch', 'pillars.day.stem'],
+    upstreamClaimRefs: [],
+    sourceRefs: ['source-official-artifact-general'],
+    state: 'active',
+  };
+  const interpretation: InterpretationExecutionResult = {
+    ...base,
+    claims: [claim],
+    claimRelations: [],
+    integrity: { valid: true, errors: [] },
+    evidenceIndex: {},
+  };
+  const evidence: GovernedReadingEvidenceBundleV1 = {
+    requestId: 'official-artifact-concise-reading',
+    purpose: 'full_reading',
+    snapshotId: currentSnapshot.snapshotId,
+    interpretationRunId: interpretation.run.interpretationRunId,
+    registrySnapshotId: 'registry-official-artifact-concise',
+    canonicalFacts: [],
+    claims: [claim],
+    claimRelations: [],
+    schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
+    constraints: {
+      mayRecalculate: false,
+      mayInventRules: false,
+      mustPreserveMethodDifferences: true,
+      mustDiscloseMaterialAmbiguity: true,
+    },
+  };
+  const qualifierBinding: CanonicalReadingSemanticQualifierBindingV1 = {
+    targetClaimId: claim.claimId,
+    qualifier: {
+      qualifierId: 'preview_qualifier_r012_month_branch_priority_v1',
+      kind: 'qualifier',
+      semanticScope: 'month_branch_priority_scope_boundary',
+      semanticKeys: [
+        'MONTH_BRANCH_IMPORTANCE_NOT_EXCLUSIVE_AUTHORITY',
+        'TONGGEN_PRIORITY_NOT_UNIVERSAL_ROOT_ORDERING',
+        'NO_NUMERIC_MONTH_BRANCH_MULTIPLIER',
+        'NO_STRENGTH_CLASSIFIER',
+      ],
+      canonicalText: {
+        summary:
+          '월지는 명식을 읽을 때 중요한 구조축으로 보되, 그것만으로 명식 전체를 단독 판정하지 않습니다. 통근 범위에서의 월지 우선성도 모든 뿌리의 보편 순위나 수치 가중치로 확장하지 않습니다.',
+      },
+      prohibitedExtensions: [
+        'monthBranchExclusiveAuthority',
+        'universalRootOrdering',
+        'numericMonthBranchMultiplier',
+        'strengthClassifier',
+      ],
+      provenance: {
+        admissionId: 'preview-admit-r012-month-branch-priority-qualifier-v1',
+        admissionRegistryVersion: 'artifact-concise-test',
+        researchId: 'R012_MONTH_BRANCH_PRIORITY',
+        researchVersion: '0.2.0-research',
+        authorityState: 'VERIFIED_BOUNDED_DIRECT_VISUAL_CLOSURE_COMPLETE',
+      },
+    },
+  };
+  const semantics = buildCanonicalReadingSemanticBundleV1({
+    intent: { domain: 'general', temporalScope: 'natal' },
+    evidence,
+    targetClaimIds: [claim.claimId],
+    semanticQualifierBindings: [qualifierBinding],
+  });
+  const plan = buildOfficialReadingPlanV1(semantics);
+  const report = renderOfficialReadingV1(semantics, plan, {
+    preferredDetail: 'concise',
+  });
   return { currentSnapshot, interpretation, semantics, plan, report };
 }
 
@@ -326,6 +448,45 @@ describe('Official Reading Artifact V1', () => {
         { readingVersion: 'official-reading-artifact-test-v1' },
       ),
     ).toThrow(/detail preference resolution does not match/u);
+  });
+
+  it('accepts exact concise registry metadata and rejects a tampered profile-set identity', () => {
+    const { currentSnapshot, interpretation, semantics, plan, report } =
+      conciseFixture();
+
+    expect(report.detailPreferenceResolution).toEqual({
+      requestedDetail: 'concise',
+      resolvedDetail: 'concise',
+      resolution: 'exact',
+    });
+    expect(report.concisePresentationProfileSetHash).toMatch(
+      /^[0-9a-f]{64}$/u,
+    );
+
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        report,
+        { readingVersion: 'official-reading-artifact-concise-test-v1' },
+      ),
+    ).not.toThrow();
+
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        {
+          ...report,
+          concisePresentationProfileSetHash: '0'.repeat(64),
+        },
+        { readingVersion: 'official-reading-artifact-concise-test-v1' },
+      ),
+    ).toThrow(/concise presentation metadata does not match/u);
   });
 
   it('rejects a report that declares a different source-summary presentation policy', () => {
