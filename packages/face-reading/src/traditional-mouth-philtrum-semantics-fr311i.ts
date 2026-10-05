@@ -18,6 +18,7 @@ export type MouthPhiltrumSemanticTopicFR311I =
   | 'traditional_auspice'
   | 'life_course'
   | 'inheritance'
+  | 'household'
   | 'legal_penalty';
 
 export type MouthPhiltrumRegionKeyFR311I =
