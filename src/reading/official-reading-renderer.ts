@@ -31,6 +31,7 @@ import {
 } from './official-reading-concise-presentation.js';
 import {
   OFFICIAL_READING_APPROVED_CONCISE_REGISTRY_VERSION,
+  approvedOfficialReadingConciseProfileSetHashV1,
   buildApprovedOfficialReadingConciseProfilesV1,
 } from './official-reading-concise-presentation-registry.js';
 
@@ -700,21 +701,12 @@ export function renderOfficialReadingV1(
         )
       : undefined;
   const concisePresentationProfileSetHash =
-    conciseTextByUnitId === undefined
+    conciseTextByUnitId === undefined ||
+    concisePresentationReadiness === undefined
       ? undefined
-      : deterministicContentHash({
-          registryVersion:
-            OFFICIAL_READING_APPROVED_CONCISE_REGISTRY_VERSION,
-          readinessPolicyVersion:
-            OFFICIAL_READING_CONCISE_PRESENTATION_READINESS_POLICY_VERSION,
-          bindings: concisePresentationReadiness?.bindings.map((binding) => ({
-            unitId: binding.unitId,
-            profileId: binding.profileId,
-            profileVersion: binding.profileVersion,
-            sourcePresentationHash: binding.sourcePresentationHash,
-            conciseText: binding.conciseText,
-          })),
-        });
+      : approvedOfficialReadingConciseProfileSetHashV1(
+          concisePresentationReadiness,
+        );
 
   for (const section of plan.sections) {
     if (section.semanticGroup === 'evidence') continue;
