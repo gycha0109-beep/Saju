@@ -342,6 +342,33 @@ describe('Myeonghwa Product Host MVP', () => {
     expect(adapter.calls).toHaveLength(0);
   });
 
+  it('keeps internal detail fallback metadata out of the product response', async () => {
+    const adapter = new TestNarrativeAdapter();
+    const base = dependencies((snapshot) => [wealthOfficialClaim(snapshot)], adapter);
+    const officialOnlyDependencies = { ...base };
+    delete officialOnlyDependencies.legacyNarrativeRuntime;
+    const host = createMyeonghwaProductHost(officialOnlyDependencies);
+
+    for (const preferredDetail of ['concise', 'detailed'] as const) {
+      const result = await host.requestReading({
+        ...validBody,
+        reading: {
+          text: '재물운',
+          outputPreferences: { preferredDetail },
+        },
+      });
+      const serialized = JSON.stringify(result);
+      expect(result.state).toBe('delivered');
+      expect(serialized).not.toContain(
+        'myeonghwa-official-reading-detail-presentation-policy-v1',
+      );
+      expect(serialized).not.toContain('fallback_to_standard');
+      expect(serialized).not.toContain('missing_text_role_authority');
+      expect(serialized).not.toContain('missing_expansion_material');
+    }
+    expect(adapter.calls).toHaveLength(0);
+  });
+
   it('fails closed instead of falling back to Official Reading when a Legacy request has no runtime', async () => {
     const adapter = new TestNarrativeAdapter();
     const base = dependencies((snapshot) => [parentsClaim(snapshot)], adapter);
@@ -385,6 +412,22 @@ describe('Myeonghwa Product Host MVP', () => {
       expect(payload.state).toBe('delivered');
       expect(payload).not.toHaveProperty('artifact');
       expect(JSON.stringify(payload)).not.toContain('claim-product-host-family-parents');
+
+      const detailedResponse = await fetch(`${server.baseUrl}/api/readings`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...validBody,
+          reading: {
+            text: '부모운',
+            outputPreferences: { preferredDetail: 'standard' },
+          },
+        }),
+      });
+      expect(detailedResponse.status).toBe(200);
+      expect((await detailedResponse.json()) as Record<string, unknown>).toMatchObject({
+        state: 'delivered',
+      });
     } finally {
       await server.close();
     }
