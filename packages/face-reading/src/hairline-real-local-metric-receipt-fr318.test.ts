@@ -238,6 +238,35 @@ function realRegistrationInput(
   };
 }
 
+function realIndependentRegistrationInput(): FR316RegistrationInput {
+  const calibrated = realRegistrationInput();
+
+  return {
+    ...calibrated,
+    method: 'independent_correspondence_registration',
+    evidence: {
+      ...calibrated.evidence,
+      calibratedSurface: null,
+      independentRegistration: {
+        schemaVersion:
+          'fr316-independent-registration-evidence-v1',
+        sourceIndependentCorrespondences: true,
+        exactMetricScaleBoundBeforeRegistration: true,
+        fitCorrespondenceCount: 3,
+        heldOutCorrespondenceCount: 2,
+        fitHeldOutIdentityDisjoint: true,
+        heldOutValidationExecuted: true,
+        acceptanceCriteriaPreregistered: true,
+        acceptanceCriteriaSatisfied: true,
+        registrationOutputFinite: true,
+        evaluatedCorrespondenceEnvelopeIncludesVisibleHairlineSupportRegion:
+          true,
+        extrapolationBeyondValidatedEnvelopeUsed: false,
+      },
+    },
+  };
+}
+
 function localMetricExecution(
   overrides: Partial<FR318PrivateLocalMetricExecution> = {},
 ): FR318PrivateLocalMetricExecution {
@@ -429,6 +458,86 @@ describe('FR318 real-local hairline metric materialization receipt', () => {
     expect(result.nextAction).toBe(
       'fr319_assemble_exact_capture_seven_reference_common_frame_bundle',
     );
+  });
+
+  it('materializes through the independent correspondence registration path', () => {
+    const result =
+      materializeRealLocalHairlineMetricReferenceFR318({
+        schemaVersion:
+          'fr318-real-local-hairline-metric-materialization-input-v1',
+        registrationInput: realIndependentRegistrationInput(),
+        localMetricExecution: localMetricExecution({
+          method:
+            'independent_correspondence_registration',
+        }),
+      });
+
+    expect(result.status).toBe('available');
+    if (result.status !== 'available') {
+      throw new Error('expected available FR318 independent result');
+    }
+
+    expect(
+      result.runtimeOnlyMetricVerticalReference.registrationMethod,
+    ).toBe('independent_correspondence_registration');
+    expect(
+      result.runtimeOnlyMetricVerticalReference.value,
+    ).toBe(3.5);
+    expect(result.repoSafeReceipt).toMatchObject({
+      realLocalFR316EligibilityRevalidated: true,
+      localMetricMappingExecuted: true,
+      metricNeutralReferenceAvailable: true,
+      sourceBoundaryCardinalityPreserved: true,
+      sourceBoundaryPointOrderPreserved: true,
+      hairlineSupportRegionStayedWithinValidatedEnvelope:
+        true,
+      hairlineMetricReferenceReadyForSevenReferenceAssembly:
+        true,
+    });
+  });
+
+  it('rejects missing source-to-transformed point-order binding', () => {
+    expect(() =>
+      materializeRealLocalHairlineMetricReferenceFR318({
+        schemaVersion:
+          'fr318-real-local-hairline-metric-materialization-input-v1',
+        registrationInput: realRegistrationInput(),
+        localMetricExecution: localMetricExecution({
+          sourceBoundaryPointOrderBound: false,
+        } as never),
+      }),
+    ).toThrow(/private local metric execution boundary drift/);
+  });
+
+  it('rejects non-finite transformed metric coordinates', () => {
+    expect(() =>
+      materializeRealLocalHairlineMetricReferenceFR318({
+        schemaVersion:
+          'fr318-real-local-hairline-metric-materialization-input-v1',
+        registrationInput: realRegistrationInput(),
+        localMetricExecution: localMetricExecution({
+          transformedBoundaryPolyline: [
+            { xCm: -2, yCm: 3 },
+            { xCm: Number.NaN, yCm: 4 },
+            { xCm: 2, yCm: 3 },
+          ],
+        }),
+      }),
+    ).toThrow(/must be finite/);
+  });
+
+  it('rejects execution outside the validated hairline support envelope', () => {
+    expect(() =>
+      materializeRealLocalHairlineMetricReferenceFR318({
+        schemaVersion:
+          'fr318-real-local-hairline-metric-materialization-input-v1',
+        registrationInput: realRegistrationInput(),
+        localMetricExecution: localMetricExecution({
+          noExtrapolationBeyondValidatedHairlineSupportRegion:
+            false,
+        } as never),
+      }),
+    ).toThrow(/private local metric execution boundary drift/);
   });
 
   it('rejects synthetic FR316 inputs from the real-local executor', () => {
