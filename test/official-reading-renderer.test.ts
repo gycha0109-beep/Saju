@@ -15,6 +15,7 @@ import {
 } from '../src/reading/official-reading-plan.js';
 import {
   OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
+  OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
   canRenderOfficialReadingV1,
@@ -325,6 +326,56 @@ describe('Official Reading renderer v1', () => {
     if (insight?.type === 'insights') {
       expect(insight.items[0]?.explainabilityRef).toBe(entry?.explainabilityRef);
     }
+  });
+
+  it('emits requested source summaries from the exact atom explainability source set', () => {
+    const bundle = semantics();
+    const plan = buildOfficialReadingPlanV1(bundle);
+    const rendered = renderOfficialReadingV1(bundle, plan, {
+      sourceSummaries: [
+        {
+          sourceId: 'source-1',
+          title: '검증 출처',
+          summary: '이 atom의 등록된 출처 요약입니다.',
+        },
+      ],
+    });
+    const tension = rendered.sections.find((section) => section.title === '구조적 긴장');
+    const insight = tension?.blocks[0];
+    if (insight?.type !== 'insights') {
+      throw new Error('fixture must render an insight block');
+    }
+    const explainabilityRef = insight.items[0]?.explainabilityRef;
+    expect(explainabilityRef).toBeDefined();
+    expect(rendered.sourceSummaryPresentationPolicyVersion).toBe(
+      OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION,
+    );
+    expect(tension?.blocks[1]).toEqual({
+      type: 'source_hint',
+      text: '출처: 검증 출처 — 이 atom의 등록된 출처 요약입니다.',
+      explainabilityRef,
+    });
+  });
+
+  it('does not emit source hints when source summaries were not requested', () => {
+    const bundle = semantics();
+    const plan = buildOfficialReadingPlanV1(bundle);
+    const rendered = renderOfficialReadingV1(bundle, plan);
+
+    expect(
+      rendered.sections.flatMap((section) => section.blocks).some(
+        (block) => block.type === 'source_hint',
+      ),
+    ).toBe(false);
+  });
+
+  it('fails closed when requested source metadata cannot satisfy an atom source binding', () => {
+    const bundle = semantics();
+    const plan = buildOfficialReadingPlanV1(bundle);
+
+    expect(() =>
+      renderOfficialReadingV1(bundle, plan, { sourceSummaries: [] }),
+    ).toThrow(/missing source metadata: source-1/u);
   });
 
   it('isolates primary-specific upstream provenance inside a shared insight section', () => {
