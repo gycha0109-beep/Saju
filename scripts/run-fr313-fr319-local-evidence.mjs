@@ -47,6 +47,7 @@ const FORBIDDEN_OUTPUT_KEYS = new Set([
 function usage() {
   return `Usage:
   npm run face:run:fr313-fr319-local -- --input <private.json>
+  npm run face:run:fr313-fr319-local -- --input <private.json> --fr312-receipt <safe-fr312-receipt.json>
   npm run face:run:fr313-fr319-local -- --input <private.json> --output <safe-receipt.json>
   npm run face:run:fr313-fr319-local -- --self-check
 
@@ -61,6 +62,7 @@ function parseArgs(argv) {
   const parsed = {
     input: null,
     output: DEFAULT_OUTPUT,
+    fr312Receipt: null,
     selfCheck: false,
     help: false,
   };
@@ -76,6 +78,11 @@ function parseArgs(argv) {
       const value = argv[index + 1];
       if (!value) throw new Error('MISSING_OUTPUT_ARGUMENT');
       parsed.output = value;
+      index += 1;
+    } else if (arg === '--fr312-receipt') {
+      const value = argv[index + 1];
+      if (!value) throw new Error('MISSING_FR312_RECEIPT_ARGUMENT');
+      parsed.fr312Receipt = value;
       index += 1;
     } else if (arg === '--self-check') {
       parsed.selfCheck = true;
@@ -430,6 +437,52 @@ function assertGuardRejectsUnsafeOutput() {
   }
 }
 
+function assertFR312ReceiptHandoffSelfCheck() {
+  const input = {
+    fr313: {
+      expandedValidation: null,
+    },
+  };
+  const receipt = {
+    schemaVersion:
+      'fr312-expanded-hairline-validation-receipt-v1',
+    disposition:
+      'eligible_for_model_admission_review',
+    modelAdmissionReviewEligible: true,
+  };
+
+  injectFR312Receipt(input, receipt);
+
+  if (input.fr313.expandedValidation !== receipt) {
+    throw new Error(
+      'FR312_RECEIPT_HANDOFF_SELF_CHECK_FAILED',
+    );
+  }
+
+  let ambiguousRejected = false;
+  try {
+    injectFR312Receipt(
+      {
+        fr313: {
+          expandedValidation: receipt,
+        },
+      },
+      receipt,
+    );
+  } catch (error) {
+    ambiguousRejected =
+      error instanceof Error &&
+      error.message ===
+        'FR312_RECEIPT_SOURCE_AMBIGUOUS';
+  }
+
+  if (!ambiguousRejected) {
+    throw new Error(
+      'FR312_RECEIPT_AMBIGUITY_SELF_CHECK_FAILED',
+    );
+  }
+}
+
 async function runSelfCheck() {
   const contracts = await importContracts();
   for (const [name, contract] of Object.entries(contracts)) {
@@ -441,6 +494,7 @@ async function runSelfCheck() {
   }
 
   assertGuardRejectsUnsafeOutput();
+  assertFR312ReceiptHandoffSelfCheck();
 
   const receipt = {
     ...baseReceipt(),
@@ -449,6 +503,7 @@ async function runSelfCheck() {
     importedContractCount: Object.keys(contracts).length,
     privacyGuardRejectsSubjectScalar: true,
     privacyGuardRejectsDigest: true,
+    fr312ReceiptHandoffVerified: true,
   };
 
   assertOutputIsSafe(receipt);
@@ -471,6 +526,39 @@ function assertOptionalStage(value, schema, code) {
   if (value.schemaVersion !== schema) {
     throw new Error(code);
   }
+}
+
+function injectFR312Receipt(input, receipt) {
+  assertObject(
+    receipt,
+    'FR312_RECEIPT_MUST_BE_OBJECT',
+  );
+
+  if (
+    receipt.schemaVersion !==
+      'fr312-expanded-hairline-validation-receipt-v1' ||
+    receipt.disposition !==
+      'eligible_for_model_admission_review' ||
+    receipt.modelAdmissionReviewEligible !== true
+  ) {
+    throw new Error(
+      'FR312_RECEIPT_NOT_ELIGIBLE_FOR_MODEL_ADMISSION',
+    );
+  }
+
+  assertObject(input.fr313, 'FR313_PRIVATE_INPUT_MISSING');
+
+  if (
+    input.fr313.expandedValidation !== null &&
+    input.fr313.expandedValidation !== undefined
+  ) {
+    throw new Error('FR312_RECEIPT_SOURCE_AMBIGUOUS');
+  }
+
+  input.fr313 = {
+    ...input.fr313,
+    expandedValidation: receipt,
+  };
 }
 
 function assertTopLevelInput(input) {
@@ -707,6 +795,16 @@ async function main() {
 
   const raw = await readFile(inputPath, 'utf8');
   const input = JSON.parse(raw);
+
+  if (args.fr312Receipt !== null) {
+    const fr312ReceiptPath =
+      assertPrivateInputPath(args.fr312Receipt);
+    const fr312Raw =
+      await readFile(fr312ReceiptPath, 'utf8');
+    const fr312Receipt = JSON.parse(fr312Raw);
+    injectFR312Receipt(input, fr312Receipt);
+  }
+
   const { receipt, exitCode } =
     await executePrivateInput(input);
 
@@ -720,6 +818,8 @@ async function main() {
       safeReceiptPath: written,
       privateInputEchoed: false,
       subjectLevelValuesPrinted: false,
+      fr312ReceiptInjected:
+        args.fr312Receipt !== null,
       repositoryAuthorityMutated: false,
     })}\n`,
   );

@@ -1,5 +1,7 @@
 # FR313 → FR319 private local evidence pipeline
 
+> FR308 → FR312 engineering validation is handled by `README-fr308-fr312-local-validation.md`. Its governed FR312 receipt can be injected with `--fr312-receipt`.
+
 This runner connects the already-governed hairline contracts into one local-only execution path.
 
 It does **not** create evidence, repair missing authority, promote repository state, or persist subject-level geometry.
