@@ -7,6 +7,7 @@ import {
   type CanonicalReadingSemanticBundleV1,
 } from './canonical-reading-semantics.js';
 import {
+  OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
   assertOfficialReadingPlanV1,
   type OfficialReadingPlanV1,
 } from './official-reading-plan.js';
@@ -85,6 +86,16 @@ function assertReportBinding(
       'Official Reading artifact received an unsupported structured insight materialization policy version.',
     );
   }
+  if (
+    report.explainabilityBindingPolicyVersion !==
+    OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION ||
+    report.explainabilityBindingPolicyVersion !==
+    plan.explainabilityBindingPolicyVersion
+  ) {
+    throw new TypeError(
+      'Official Reading artifact received an unsupported explainability binding policy version.',
+    );
+  }
   if (report.sourceSemanticHash !== semantics.semanticHash) {
     throw new TypeError('Official Reading artifact report semantic hash does not match canonical semantics.');
   }
@@ -100,6 +111,8 @@ function assertReportBinding(
       report.ordinaryMultiClaimPresentationPolicyVersion,
     structuredInsightMaterializationPolicyVersion:
       report.structuredInsightMaterializationPolicyVersion,
+    explainabilityBindingPolicyVersion:
+      report.explainabilityBindingPolicyVersion,
     sourceSemanticHash: report.sourceSemanticHash,
     sourcePlanHash: report.sourcePlanHash,
     sections: report.sections,
