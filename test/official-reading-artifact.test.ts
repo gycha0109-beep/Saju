@@ -156,9 +156,7 @@ describe('Official Reading Artifact V1', () => {
     expect(report.explainabilityBindingPolicyVersion).toBe(
       OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
     );
-    expect(report.sourceSummaryPresentationPolicyVersion).toBe(
-      OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION,
-    );
+    expect(report.sourceSummaryPresentationPolicyVersion).toBeUndefined();
     expect(artifact.readingId).toMatch(/^official_reading_[a-f0-9]{24}$/u);
     expect(artifact.status).toBe(
       currentSnapshot.completeness.fullyResolved ? 'ready' : 'ready_with_ambiguity',
