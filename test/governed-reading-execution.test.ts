@@ -25,6 +25,10 @@ import {
   I7_RESEARCH_SOURCES,
   createI7SeasonalSupportRegistry,
 } from '../src/research/i7-seasonal-support-pack.js';
+import {
+  GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CLAIM_TYPE,
+  GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY,
+} from '../src/research/general-natal-t8-structural-summary-candidate.js';
 
 const FIXED_READING_REFERENCE = '2026-09-03T12:00:00.000Z';
 
@@ -332,6 +336,67 @@ describe('Governed Reading Execution Orchestrator', () => {
     expect(result.modelCalls).toBe(0);
     expect(result.narrative).toBeUndefined();
     expect(result.artifact?.schemaVersion).toBe('myeonghwa-official-reading-artifact-v1');
+  });
+
+  it('renders approved concise general meaning with zero model calls', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const generalBase = claim(currentSnapshot.snapshotId, {
+      id: 'claim-general-approved-concise',
+      tier: 'T8',
+      category: 'general',
+      subcategory: 'month_branch_structural_context',
+    });
+    const general: InterpretationClaim = {
+      ...generalBase,
+      claimType: GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CLAIM_TYPE,
+      predicate: 'month_branch_structural_context',
+      value: {
+        relation: 'peer',
+        structuralRelationship: 'same_element',
+        headline: '월지와 일간이 같은 오행 관계입니다',
+        summary:
+          '월지의 오행이 일간과 같은 오행으로 연결됩니다. 이 관찰은 월지라는 한 구조축을 설명할 뿐, 명식 전체의 강약이나 길흉을 확정하지 않습니다.',
+        semanticScope: 'month_branch_structural_context_non_conclusive',
+        classificationAuthorized: false,
+        numericScoringAuthorized: false,
+        fortunePolarityAuthorized: false,
+        upstreamEvidenceDirectionAsFortuneMeaningAuthorized: false,
+      },
+      methodologyRef: {
+        id: GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY.methodologyId,
+        version: GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY.version,
+      },
+      sourceRefs: [],
+    };
+
+    const result = await executeProductReading(
+      currentSnapshot,
+      executionWithClaims(currentSnapshot, registry, [general]),
+      registry,
+      {
+        requestId: 'execution-official-approved-concise-general',
+        text: '사주',
+        outputPreferences: { preferredDetail: 'concise' },
+      },
+      executionOptions,
+    );
+
+    expect(result.state).toBe('completed');
+    expect(result.consumerReadingAuthority?.authority).toBe('official_reading');
+    expect(result.modelCalls).toBe(0);
+    expect(result.narrative).toBeUndefined();
+    expect(result.officialReadingReport?.detailPreferenceResolution).toEqual({
+      requestedDetail: 'concise',
+      resolvedDetail: 'concise',
+      resolution: 'exact',
+    });
+    expect(JSON.stringify(result.officialReadingReport?.sections)).toContain(
+      '월지와 일간은 같은 오행으로 연결되며, 이는 명식 전체의 강약이나 길흉을 확정하는 판정이 아닙니다.',
+    );
+    expect(JSON.stringify(result.officialReadingReport?.sections)).not.toContain(
+      '월지의 오행이 일간과 같은 오행으로 연결됩니다. 이 관찰은 월지라는 한 구조축을 설명할 뿐, 명식 전체의 강약이나 길흉을 확정하지 않습니다.',
+    );
   });
 
   it('activates includeSourceSummaries only for Official Reading requests that ask for it', async () => {
