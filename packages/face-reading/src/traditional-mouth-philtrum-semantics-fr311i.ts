@@ -47,6 +47,14 @@ export type MouthPhiltrumCertaintyFR311I =
   | 'direct_clear'
   | 'phrase_uncertain';
 
+export type MouthPhiltrumObservationKindFR311I =
+  | 'morphology'
+  | 'color'
+  | 'surface_mark'
+  | 'wrinkle_or_line'
+  | 'dynamic_behavior'
+  | 'cross_region_context';
+
 export type MouthPhiltrumSourceSectionFR311I =
   | '人中論'
   | '相人中篇'
@@ -68,6 +76,7 @@ export interface MouthPhiltrumDirectRuleFR311I {
   readonly sourceSection: MouthPhiltrumSourceSectionFR311I;
   readonly region: MouthPhiltrumRegionKeyFR311I;
   readonly sourceExpression: string;
+  readonly observationKind: MouthPhiltrumObservationKindFR311I;
   readonly meaningSummary: string;
   readonly topicKeys: readonly MouthPhiltrumSemanticTopicFR311I[];
   readonly polarity: MouthPhiltrumPolarityFR311I;
@@ -80,6 +89,7 @@ export interface MouthPhiltrumDirectRuleFR311I {
   readonly healthDiagnosisAuthorized: false;
   readonly lifespanPredictionAuthorized: false;
   readonly fertilityPredictionAuthorized: false;
+  readonly childSexPredictionAuthorized: false;
   readonly personalityFactAuthorized: false;
   readonly criminalityInferenceAuthorized: false;
   readonly productInterpretationAuthorized: false;
@@ -89,6 +99,7 @@ export interface MouthNamedFormDescriptorFR311I {
   readonly descriptorId: string;
   readonly region: MouthPhiltrumRegionKeyFR311I;
   readonly sourceFragment: string;
+  readonly observationKind: MouthPhiltrumObservationKindFR311I;
   readonly neutralGloss: string;
   readonly certainty: MouthPhiltrumCertaintyFR311I;
   readonly neutralGeometryBindingAuthorized: false;
@@ -106,6 +117,7 @@ export interface MouthNamedFormClaimFR311I {
   readonly healthDiagnosisAuthorized: false;
   readonly lifespanPredictionAuthorized: false;
   readonly fertilityPredictionAuthorized: false;
+  readonly childSexPredictionAuthorized: false;
   readonly personalityFactAuthorized: false;
   readonly criminalityInferenceAuthorized: false;
   readonly productInterpretationAuthorized: false;
@@ -1129,7 +1141,445 @@ const RAW_DIRECT_RULES = [
     null,
     "direct_clear"
   ]
+
+  [
+    "fr311i.philtrum.upper_black_mark_many_children",
+    "人中論",
+    "philtrum",
+    "上有黑子者，多子",
+    "인중 위쪽의 흑점을 자녀가 많다는 전통 판단과 연결한다.",
+    ["children_family"],
+    "favorable",
+    "whole_life",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.lower_black_mark_many_daughters",
+    "人中論",
+    "philtrum",
+    "下有黑子者多女",
+    "인중 아래쪽의 흑점을 딸이 많다는 전통 판단과 연결한다.",
+    ["children_family"],
+    "neutral",
+    "whole_life",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.middle_black_mark_marriage_child_rearing",
+    "人中論",
+    "philtrum",
+    "中有黑子者婚妻易而養兒難",
+    "인중 가운데 흑점을 혼인과 자녀 양육에 관한 전통 판단과 연결한다.",
+    ["spouse_relationship","children_family"],
+    "mixed",
+    "whole_life",
+    "family",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.two_black_marks_twins",
+    "人中論",
+    "philtrum",
+    "有兩黑子者，主雙生",
+    "인중의 두 흑점을 쌍생에 관한 전통 판단과 연결한다.",
+    ["children_family"],
+    "neutral",
+    "whole_life",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.horizontal_line_no_children",
+    "人中論",
+    "philtrum",
+    "有橫理者至老無兒",
+    "인중의 가로 결을 노년까지 자녀가 없다는 전통 판단과 연결한다.",
+    ["children_family","life_course"],
+    "challenging",
+    "late",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.vertical_line_raise_other_child",
+    "人中論",
+    "philtrum",
+    "有豎理者，主養他子",
+    "인중의 세로 결을 타인의 자녀를 기른다는 전통 판단과 연결한다.",
+    ["children_family"],
+    "neutral",
+    "whole_life",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.longitudinal_line_child_illness",
+    "人中論",
+    "philtrum",
+    "有縱理者，主兒宿疾",
+    "인중의 세로 결을 자녀의 오래된 질병에 관한 전통 주장과 연결한다.",
+    ["children_family","traditional_health"],
+    "challenging",
+    "whole_life",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.flat_absent_hollow",
+    "人中論",
+    "philtrum",
+    "若人中漫漫平而無者，是謂傾陷，至老絕嗣，窮苦之相也",
+    "인중이 평평해 거의 드러나지 않는 조건을 노년의 자손 단절과 빈곤에 연결한다.",
+    ["children_family","wealth","life_course"],
+    "challenging",
+    "late",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.two_black_uncertain",
+    "相人中篇",
+    "philtrum",
+    "人中兩黑，的生可儗",
+    "인중의 두 검은 표식에 관한 문구를 전사 경계가 불안정한 상태로 보존한다.",
+    ["children_family"],
+    "neutral",
+    "whole_life",
+    "children",
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.philtrum.flat_shallow_short_no_trust_children",
+    "相人中篇",
+    "philtrum",
+    "人中平淺短何堪，無信無兒見者嫌",
+    "평평하고 얕고 짧은 인중을 신의와 자녀에 불리한 전통 판단과 연결한다.",
+    ["integrity_trust","children_family"],
+    "challenging",
+    "whole_life",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.straight_deep_long_children",
+    "相人中篇",
+    "philtrum",
+    "若見直深長一寸，定知兒女轉加添",
+    "곧고 깊고 긴 인중을 자녀 증가에 관한 전통 판단과 연결한다.",
+    ["children_family"],
+    "favorable",
+    "whole_life",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.flat_children_fail",
+    "相人中篇",
+    "philtrum",
+    "人中平平子不成",
+    "평평한 인중을 자녀에 불리한 전통 판단과 연결한다.",
+    ["children_family"],
+    "challenging",
+    "whole_life",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.philtrum.well_horizontal_line_travel_risk",
+    "相人中篇",
+    "philtrum",
+    "人中井部水橫紋，每到臨船莫進程",
+    "인중의 특정 가로 결을 배를 타는 이동을 피하라는 전통 경계와 연결한다.",
+    ["conduct_risk","life_course"],
+    "challenging",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.philtrum.left_right_child_sex",
+    "相人中篇",
+    "philtrum",
+    "偏左生兒右生女",
+    "인중의 좌우 치우침을 자녀 성별과 연결하는 전통 주장을 보존한다.",
+    ["children_family"],
+    "neutral",
+    "whole_life",
+    "children",
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.dog_vertical_lines_hunger",
+    "相口",
+    "mouth_whole",
+    "狗口平下縱紋，入口飢餓",
+    "개 입에 비유한 형태와 입으로 들어가는 세로 결을 굶주림에 연결한다.",
+    ["livelihood"],
+    "challenging",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.mouth.open_teeth_no_mechanism",
+    "相口",
+    "context",
+    "口開齒露者無機",
+    "입을 벌릴 때 치아가 드러나는 조건을 불리한 전통 판단과 연결한다.",
+    ["conduct_risk"],
+    "challenging",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.mouth.black_mark_food_drink",
+    "相口",
+    "mouth_whole",
+    "有黑子者主酒食",
+    "입의 흑점을 음식과 술에 관한 전통 판단과 연결한다.",
+    ["livelihood"],
+    "favorable",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.speaks_alone",
+    "相口",
+    "mouth_whole",
+    "無人獨語者，其賤如鼠",
+    "사람이 없을 때 혼자 말하는 행동을 낮은 신분에 관한 전통 판단과 연결한다.",
+    ["status","speech_conduct"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.large_tongue_small_mouth",
+    "相口",
+    "context",
+    "舌大口小，貧薄折夭",
+    "큰 혀와 작은 입의 조합을 빈곤과 불리한 수명 판단에 연결한다.",
+    ["wealth","longevity"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.sprinkled_cinnabar",
+    "相口",
+    "mouth_whole",
+    "口如潑砂，食祿榮華",
+    "입을 붉은 모래를 뿌린 듯한 상태로 묘사하며 식록과 영화에 연결한다.",
+    ["wealth","status"],
+    "favorable",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.mouth.red_vermilion",
+    "相口",
+    "mouth_whole",
+    "口如紅硃，富貴相宜",
+    "붉은 주사 같은 입을 부귀와 연결한다.",
+    ["wealth_status"],
+    "favorable",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.gathered_pursed_serving",
+    "許負相口篇",
+    "mouth_whole",
+    "口如撮聚，供承人後，虛用心情",
+    "오므라든 입을 타인을 받드는 생활과 헛된 마음씀에 연결하는 전통 문구를 보존한다.",
+    ["life_course","conduct_risk"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.shrunken_snail_solitary_song",
+    "許負相口篇",
+    "mouth_whole",
+    "口如縮螺，常樂獨歌",
+    "달팽이처럼 오므라든 입을 혼자 노래하기를 즐기는 행동과 연결한다.",
+    ["interpersonal_relations","speech_conduct"],
+    "neutral",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.wide_thin_tongue_music",
+    "許負相口篇",
+    "context",
+    "口寬舌薄，必好歌樂",
+    "넓은 입과 얇은 혀의 조합을 노래와 음악을 좋아한다는 전통 판단에 연결한다.",
+    ["temperament"],
+    "neutral",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.vertical_line_hunger",
+    "許負相口篇",
+    "mouth_whole",
+    "縱理入口，饑死不久",
+    "입으로 들어가는 세로 결을 극단적으로 불리한 식생활·수명 판단에 연결한다.",
+    ["livelihood","longevity"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.inner_lines_wealth",
+    "許負相口篇",
+    "mouth_whole",
+    "口中有理，長相對益。豐財足祿，終無妨害",
+    "입 안의 결을 재물과 식록에 유리한 전통 판단과 연결한다.",
+    ["wealth","livelihood"],
+    "favorable",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.mouth.lip_moves_before_speech",
+    "許負相口篇",
+    "mouth_whole",
+    "口末語，將脣起，奸邪在心，常懷不足",
+    "말하기 전 입술이 먼저 움직이는 행동을 간사함과 불만에 연결하는 전통 주장을 보존한다.",
+    ["speech_conduct","integrity_trust"],
+    "challenging",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.mouth.black_mark_food",
+    "許負相口篇",
+    "mouth_whole",
+    "口中黑子，食噉皆美",
+    "입 안의 흑점을 음식에 관한 유리한 전통 판단과 연결한다.",
+    ["livelihood"],
+    "favorable",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.water_star_square",
+    "許負相口篇",
+    "mouth_whole",
+    "水星得地口脣方，榮貴肥家子息昌",
+    "방정한 입술과 수성의 득지라는 전통 표현을 영화·가문·자손과 연결한다.",
+    ["status","household","children_family"],
+    "favorable",
+    "whole_life",
+    "family",
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.biased_thin_edges_slander",
+    "許負相口篇",
+    "lips_pair",
+    "上下各偏稜角薄，出言毀謗大難防",
+    "위아래가 치우치고 모서리가 얇은 입술을 비방하는 말과 연결한다.",
+    ["speech_conduct"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.left_bias_spouse",
+    "許負相口篇",
+    "mouth_whole",
+    "偏左妨妻婦死迍",
+    "왼쪽으로 치우친 입에 배우자 관련 불리한 전통 판단을 붙인 문구를 보존한다.",
+    ["spouse_relationship"],
+    "challenging",
+    "whole_life",
+    "spouse",
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.mouth.right_vertical_property",
+    "許負相口篇",
+    "mouth_whole",
+    "右畔豎門田產破",
+    "오른쪽의 세로 표식을 전답 손실에 연결하는 전통 문구를 보존한다.",
+    ["inheritance","wealth"],
+    "challenging",
+    "whole_life",
+    null,
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.lip.black_mark_poison",
+    "許負相口篇",
+    "lips_pair",
+    "黑子當脣藥毒頻",
+    "입술의 흑점을 약독과 연결하는 전통 건강 문구를 보존한다.",
+    ["traditional_health"],
+    "challenging",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
+  [
+    "fr311i.mouth.three_lips_adopted_child",
+    "許負相口篇",
+    "context",
+    "面上三脣有義兒",
+    "얼굴에 세 입술이라는 표현을 의자에 관한 전통 판단과 연결하며 문구 자체를 불확실하게 보존한다.",
+    ["children_family"],
+    "neutral",
+    "whole_life",
+    "children",
+    "phrase_uncertain"
+  ],
+  [
+    "fr311i.lip.red_many_lines_wealth",
+    "許負相脣篇",
+    "lips_pair",
+    "脣上紋多紅似花，一生富貴足榮華",
+    "입술 위의 많은 붉은 주름을 평생의 부귀영화와 연결한다.",
+    ["wealth_status","life_course"],
+    "favorable",
+    "whole_life",
+    null,
+    "direct_clear"
+  ],
 ] as const;
+
+function classifyObservationKindFR311I(
+  region: MouthPhiltrumRegionKeyFR311I,
+  sourceExpression: string,
+): MouthPhiltrumObservationKindFR311I {
+  if (region === 'context') return 'cross_region_context';
+  if (sourceExpression.includes('黑子')) return 'surface_mark';
+  if (sourceExpression.includes('紋') || sourceExpression.includes('理')) return 'wrinkle_or_line';
+  if (
+    region === 'lip_color' ||
+    /色|紅|青|紫|黃|丹砂|硃|丹/.test(sourceExpression)
+  ) return 'color';
+  if (
+    /口動|獨語|將脣起|歌樂|涎流|笑而|語音/.test(sourceExpression)
+  ) return 'dynamic_behavior';
+  return 'morphology';
+}
 
 export const MOUTH_PHILTRUM_DIRECT_RULES_FR311I:
 readonly MouthPhiltrumDirectRuleFR311I[] = Object.freeze(
@@ -1140,6 +1590,7 @@ readonly MouthPhiltrumDirectRuleFR311I[] = Object.freeze(
     sourceSection,
     region,
     sourceExpression,
+    observationKind: classifyObservationKindFR311I(region, sourceExpression),
     meaningSummary,
     topicKeys: Object.freeze([...topicKeys]),
     polarity,
@@ -1152,6 +1603,7 @@ readonly MouthPhiltrumDirectRuleFR311I[] = Object.freeze(
     healthDiagnosisAuthorized: false as const,
     lifespanPredictionAuthorized: false as const,
     fertilityPredictionAuthorized: false as const,
+    childSexPredictionAuthorized: false as const,
     personalityFactAuthorized: false as const,
     criminalityInferenceAuthorized: false as const,
     productInterpretationAuthorized: false as const,
@@ -1891,6 +2343,7 @@ readonly MouthNamedFormSemanticRecordFR311I[] = Object.freeze(
       descriptorId: `fr311i.${raw.key}.descriptor.${index + 1}`,
       region,
       sourceFragment,
+      observationKind: classifyObservationKindFR311I(region, sourceFragment),
       neutralGloss,
       certainty,
       neutralGeometryBindingAuthorized: false as const,
@@ -1907,6 +2360,7 @@ readonly MouthNamedFormSemanticRecordFR311I[] = Object.freeze(
       healthDiagnosisAuthorized: false as const,
       lifespanPredictionAuthorized: false as const,
       fertilityPredictionAuthorized: false as const,
+      childSexPredictionAuthorized: false as const,
       personalityFactAuthorized: false as const,
       criminalityInferenceAuthorized: false as const,
       productInterpretationAuthorized: false as const,
@@ -1936,6 +2390,7 @@ export const FR311I_SOURCE_BOUNDARY = Object.freeze({
   healthDiagnosisAuthorized: false as const,
   lifespanPredictionAuthorized: false as const,
   fertilityPredictionAuthorized: false as const,
+  childSexPredictionAuthorized: false as const,
   personalityFactAuthorized: false as const,
   criminalityInferenceAuthorized: false as const,
   modernScientificFactAuthorized: false as const,
@@ -1950,7 +2405,7 @@ export function assertMouthPhiltrumTraditionalSemanticsFR311I(): void {
   if (MOUTH_PHILTRUM_TRADITIONAL_REGIONS_FR311I.length !== 6) {
     throw new Error('fr311i_requires_6_regions');
   }
-  if (MOUTH_PHILTRUM_DIRECT_RULES_FR311I.length !== 69) {
+  if (MOUTH_PHILTRUM_DIRECT_RULES_FR311I.length !== 104) {
     throw new Error(`fr311i_direct_rule_count_drift:${MOUTH_PHILTRUM_DIRECT_RULES_FR311I.length}`);
   }
   if (MOUTH_NAMED_FORM_SEMANTICS_FR311I.length !== 16) {
@@ -1987,6 +2442,7 @@ export function assertMouthPhiltrumTraditionalSemanticsFR311I(): void {
         rule.healthDiagnosisAuthorized !== false ||
         rule.lifespanPredictionAuthorized !== false ||
         rule.fertilityPredictionAuthorized !== false ||
+        rule.childSexPredictionAuthorized !== false ||
         rule.personalityFactAuthorized !== false ||
         rule.criminalityInferenceAuthorized !== false ||
         rule.productInterpretationAuthorized !== false) {
@@ -2016,6 +2472,7 @@ export function assertMouthPhiltrumTraditionalSemanticsFR311I(): void {
           claim.healthDiagnosisAuthorized !== false ||
           claim.lifespanPredictionAuthorized !== false ||
           claim.fertilityPredictionAuthorized !== false ||
+          claim.childSexPredictionAuthorized !== false ||
           claim.personalityFactAuthorized !== false ||
           claim.criminalityInferenceAuthorized !== false ||
           claim.productInterpretationAuthorized !== false) {
