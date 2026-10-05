@@ -332,7 +332,7 @@ FR311I는 이 문장을 역사적 자료로 보존할 뿐 다음을 허용하지
 FR311I 현재 corpus:
 
 - traditional regions: 6
-- direct rules: 126
+- direct rules: 127
 - philtrum direct rules: 37
 - mouth named forms: 16
 - descriptors: 43
