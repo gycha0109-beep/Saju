@@ -18,7 +18,7 @@ import {
   R179_AUTHORITY,
   R179_GLOBAL_SETTLEMENT_BOUNDARY,
   R179_PAIR_LOCAL_OUTCOME_EVIDENCE_REQUIREMENTS,
-  R179_PAIR_LOCAL_REQUIREMENT_IDS,
+  type R179PairLocalRequirementId,
 } from './general-natal-predicate-candidate-jia-ji-pair-local-outcome-evidence-requirements.js';
 
 export const R180_JIA_JI_REPOSITORY_EVIDENCE_COVERAGE_AUDIT_VERSION =
@@ -30,7 +30,7 @@ export type R180RepositoryCoverageClass =
   | 'REPOSITORY_GOVERNANCE_ONLY';
 
 export interface R180RequirementCoverageRow {
-  requirementId: (typeof R179_PAIR_LOCAL_REQUIREMENT_IDS)[number];
+  requirementId: R179PairLocalRequirementId;
   coverageClass: R180RepositoryCoverageClass;
   repositorySubstrateAvailable: boolean;
   repositoryGovernanceBoundaryAvailable: boolean;
