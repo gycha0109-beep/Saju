@@ -503,7 +503,6 @@ function primarySections(
 ): readonly OfficialReadingPlanSectionV1[] {
   const unitsByClaimId = new Map(bundle.units.map((unit) => [unit.claimId, unit]));
   const unitsByUnitId = new Map(bundle.units.map((unit) => [unit.unitId, unit]));
-  const unitsByClaimId = new Map(bundle.units.map((unit) => [unit.claimId, unit]));
   const primaryUnits = bundle.targetClaimIds
     .map((claimId) => {
       const unit = unitsByClaimId.get(claimId);
@@ -715,6 +714,7 @@ export function assertOfficialReadingPlanV1(
 
   const unitIds = new Set(bundle.units.map((unit) => unit.unitId));
   const unitsByUnitId = new Map(bundle.units.map((unit) => [unit.unitId, unit]));
+  const unitsByClaimId = new Map(bundle.units.map((unit) => [unit.claimId, unit]));
   const primaryUnitIds = new Set(
     bundle.units
       .filter(
