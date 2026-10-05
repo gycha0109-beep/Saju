@@ -71,7 +71,7 @@ source ref:
 
 ## 人中 일반 규칙
 
-이번 단계에서 34개 source-local rule을 구조화한다.
+이번 단계에서 37개 source-local rule을 구조화한다.
 
 대표:
 
@@ -332,11 +332,33 @@ FR311I는 이 문장을 역사적 자료로 보존할 뿐 다음을 허용하지
 FR311I 현재 corpus:
 
 - traditional regions: 6
-- direct rules: 104
-- philtrum direct rules: 34
+- direct rules: 126
+- philtrum direct rules: 37
 - mouth named forms: 16
 - descriptors: 43
 - named-form claims: 45
+
+## 추가 출전 보강
+
+초기 구조화 뒤 제634권 본문을 다시 대조해 訣 / 許負 계통의 직접 문구를 추가했다.
+
+대표적으로:
+
+- 口如生脣，必是賢人
+- 口如縮囊 ... 必主別房
+- 龍脣鳳口 ... 好說不真
+- 口寬舌薄 ... 永無凶惡
+- 貴人脣紅似潑砂
+- 貧賤似鼠常青黑
+- 脣如雞肝
+- 脣如青黑
+- 脣缺而陷
+- 長脣短齒
+- 女脣紫，夫早死，兼妨首子
+
+를 source-local rule로 병렬 보존한다.
+
+서로 모순하거나 중복되는 문구도 하나로 합치거나 상쇄하지 않는다.
 
 ## 이번 단계의 비범위
 
