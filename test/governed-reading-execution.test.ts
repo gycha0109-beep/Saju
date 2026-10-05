@@ -21,7 +21,10 @@ import {
   executeProductReading,
   type LegacyNarrativeRuntimeV1,
 } from '../src/reading/governed-reading-execution.js';
-import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-support-pack.js';
+import {
+  I7_RESEARCH_SOURCES,
+  createI7SeasonalSupportRegistry,
+} from '../src/research/i7-seasonal-support-pack.js';
 
 const FIXED_READING_REFERENCE = '2026-09-03T12:00:00.000Z';
 
@@ -329,6 +332,80 @@ describe('Governed Reading Execution Orchestrator', () => {
     expect(result.modelCalls).toBe(0);
     expect(result.narrative).toBeUndefined();
     expect(result.artifact?.schemaVersion).toBe('myeonghwa-official-reading-artifact-v1');
+  });
+
+  it('activates includeSourceSummaries only for Official Reading requests that ask for it', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const wealthBase = claim(currentSnapshot.snapshotId, {
+      id: 'claim-wealth-official-source-summary',
+      tier: 'T8',
+      category: 'wealth',
+      subcategory: 'friction',
+    });
+    const wealth: InterpretationClaim = {
+      ...wealthBase,
+      predicate: 'wealth_conclusion',
+      value: {
+        wealthKind: 'friction',
+        headline: '준비와 결과 사이의 긴장',
+        summary: '배움과 실행 사이의 긴장을 함께 봅니다.',
+        futureMoneyTimingAuthorized: false,
+        numericScoringAuthorized: false,
+      },
+      sourceRefs: [I7_RESEARCH_SOURCES.ditianSui.sourceId],
+    };
+    const interpretation = executionWithClaims(currentSnapshot, registry, [wealth]);
+
+    const requested = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      {
+        requestId: 'execution-official-source-summary-on',
+        text: '재물운',
+        outputPreferences: { includeSourceSummaries: true },
+      },
+      executionOptions,
+    );
+    const omitted = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      {
+        requestId: 'execution-official-source-summary-off',
+        text: '재물운',
+      },
+      executionOptions,
+    );
+
+    const source = registry.sources.find(
+      (candidate) => candidate.sourceId === I7_RESEARCH_SOURCES.ditianSui.sourceId,
+    );
+    if (source === undefined) throw new Error('fixture source must exist');
+    const expectedText =
+      `출처: ${source.title} — ${source.notes ?? 'Registered source metadata; no source text included.'}`;
+    const requestedHints =
+      requested.officialReadingReport?.sections.flatMap((section) =>
+        section.blocks.filter((block) => block.type === 'source_hint'),
+      ) ?? [];
+    const omittedHints =
+      omitted.officialReadingReport?.sections.flatMap((section) =>
+        section.blocks.filter((block) => block.type === 'source_hint'),
+      ) ?? [];
+
+    expect(requested.state).toBe('completed');
+    expect(requested.preparation.composition?.evidence?.bundle.sourceSummaries).toBeDefined();
+    expect(requestedHints).toHaveLength(1);
+    expect(requestedHints[0]).toMatchObject({
+      type: 'source_hint',
+      text: expectedText,
+    });
+    expect(omitted.state).toBe('completed');
+    expect(omitted.preparation.composition?.evidence?.bundle.sourceSummaries).toBeUndefined();
+    expect(omittedHints).toEqual([]);
+    expect(requested.modelCalls).toBe(0);
+    expect(omitted.modelCalls).toBe(0);
   });
 
   it('does not inspect a malformed Legacy Narrative runtime for an Official Reading request', async () => {
