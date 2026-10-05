@@ -14,6 +14,9 @@ import {
 import {
   resolveTraditionalCombinationFR311C,
 } from './traditional-eyebrow-eye-combination-resolver-fr311c.js';
+import {
+  resolveNoseCrossRegionEvidenceFR311H,
+} from './traditional-nose-cross-region-evidence-fr311h.js';
 
 export type FaceEvidenceLensKeyFR311G =
   | EvidenceLensKeyFR311C
@@ -83,7 +86,11 @@ export const FACE_EVIDENCE_LENSES_FR311G: readonly FaceEvidenceLensDefinitionFR3
       lensKey: lens.lensKey,
       topicKeys: Object.freeze([...lens.topicKeys]),
       relationTargets: Object.freeze([...lens.relationTargets]),
-      ruleTopicKeys: Object.freeze([...lens.ruleTopicKeys]),
+      ruleTopicKeys: Object.freeze(
+        lens.lensKey === 'career'
+          ? unique([...lens.ruleTopicKeys, 'reputation'])
+          : [...lens.ruleTopicKeys],
+      ),
     })),
     ...NEW_LENSES_FR311G,
   ]);
@@ -97,6 +104,7 @@ export interface FaceEvidenceQueryFR311G {
   readonly formKeys?: readonly string[];
   readonly morphologyTermKeys?: readonly string[];
   readonly relationKeys?: readonly string[];
+  readonly crossRegionFeatureKeys?: readonly string[];
   readonly traditionalRuleIds?: readonly string[];
 }
 
@@ -181,10 +189,23 @@ export function queryFaceEvidenceFR311G(
     allowedTopicKeys: unique([...lens.topicKeys, ...lens.ruleTopicKeys]),
   });
 
+  const noseCrossRegion = resolveNoseCrossRegionEvidenceFR311H({
+    ...(query.formKeys === undefined ? {} : { formKeys: query.formKeys }),
+    ...(query.relationKeys === undefined ? {} : { relationKeys: query.relationKeys }),
+    ...(query.crossRegionFeatureKeys === undefined
+      ? {}
+      : { crossRegionFeatureKeys: query.crossRegionFeatureKeys }),
+    allowedTopicKeys: unique([...lens.topicKeys, ...lens.ruleTopicKeys]),
+  });
+
   const directRuleIds = unique([
     ...legacyDirectRuleIds,
     ...selectedExplicitRules.map((rule) => rule.ruleId),
+    ...noseCrossRegion.matchedDirectRuleIds,
   ]);
+  const selectedDirectRules = FACE_DIRECT_RULE_EVIDENCE_FR311G.filter(
+    (rule) => directRuleIds.includes(rule.ruleId),
+  );
   const clearNamed = selectedNamed.filter((claim) => claim.certainty === 'direct_clear');
   const uncertainNamed = selectedNamed.filter((claim) => claim.certainty === 'phrase_uncertain');
 
@@ -192,7 +213,7 @@ export function queryFaceEvidenceFR311G(
     ...clearNamed
       .filter((claim) => claim.polarity === 'favorable')
       .map((claim) => claim.evidenceId),
-    ...selectedExplicitRules
+    ...selectedDirectRules
       .filter((rule) => rule.polarity === 'favorable')
       .map((rule) => rule.evidenceId),
   ];
@@ -200,7 +221,7 @@ export function queryFaceEvidenceFR311G(
     ...clearNamed
       .filter((claim) => claim.polarity === 'challenging')
       .map((claim) => claim.evidenceId),
-    ...selectedExplicitRules
+    ...selectedDirectRules
       .filter((rule) => rule.polarity === 'challenging')
       .map((rule) => rule.evidenceId),
   ];
@@ -211,7 +232,7 @@ export function queryFaceEvidenceFR311G(
         claim.polarity === 'conditional' ||
         claim.polarity === 'neutral')
       .map((claim) => claim.evidenceId),
-    ...selectedExplicitRules
+    ...selectedDirectRules
       .filter((rule) =>
         rule.polarity === 'mixed' ||
         rule.polarity === 'conditional' ||
@@ -223,15 +244,21 @@ export function queryFaceEvidenceFR311G(
     favorableEvidenceIds.length > 0 &&
     challengingEvidenceIds.length > 0;
 
-  const hasEvidence =
+  const hasSemanticEvidence =
     selectedNamed.length > 0 ||
     directRuleIds.length > 0 ||
-    combination.matchedDirectRuleIds.length > 0 ||
-    combination.matchedContextIds.length > 0;
+    combination.matchedDirectRuleIds.length > 0;
+
+  const hasEvidence =
+    hasSemanticEvidence ||
+    combination.matchedContextIds.length > 0 ||
+    noseCrossRegion.matchedContextIds.length > 0;
 
   let status: FaceEvidenceQueryStatusFR311G;
   if (hasConflict || legacyStatus === 'source_conflict') {
     status = 'source_conflict';
+  } else if (noseCrossRegion.status === 'direct_source_relation') {
+    status = 'direct_source_relation';
   } else if (
     combination.status === 'direct_source_combination' ||
     combination.status === 'direct_source_relation' ||
@@ -239,7 +266,12 @@ export function queryFaceEvidenceFR311G(
     combination.status === 'parallel_evidence_only'
   ) {
     status = combination.status;
-  } else if (hasEvidence) {
+  } else if (
+    noseCrossRegion.status === 'named_form_context' &&
+    hasSemanticEvidence
+  ) {
+    status = 'named_form_context';
+  } else if (hasSemanticEvidence) {
     status = 'evidence_only';
   } else {
     status = 'no_evidence';
@@ -251,7 +283,10 @@ export function queryFaceEvidenceFR311G(
     namedEvidenceIds: Object.freeze(selectedNamed.map((claim) => claim.evidenceId)),
     directRuleIds: Object.freeze(directRuleIds),
     combinationRuleIds: Object.freeze([...combination.matchedDirectRuleIds]),
-    namedFormContextIds: Object.freeze([...combination.matchedContextIds]),
+    namedFormContextIds: Object.freeze(unique([
+      ...combination.matchedContextIds,
+      ...noseCrossRegion.matchedContextIds,
+    ])),
     relationKeys: Object.freeze(unique([...(query.relationKeys ?? [])])),
     favorableEvidenceIds: Object.freeze(unique(favorableEvidenceIds)),
     challengingEvidenceIds: Object.freeze(unique(challengingEvidenceIds)),
@@ -264,7 +299,9 @@ export function queryFaceEvidenceFR311G(
     reason: status === 'source_conflict'
       ? '같은 질문 주제에 favorable와 challenging 직접 근거가 함께 존재한다. 어느 하나를 우선하거나 평균내지 않는다.'
       : status === 'no_evidence'
-        ? '선택된 명명형·직접 규칙에서 이 질문 주제의 근거를 확인하지 못했다. 다른 주제의 의미로 빈칸을 채우지 않는다.'
+        ? hasEvidence
+          ? '명명형 내부의 동반 문맥은 확인되지만 이 질문 주제의 직접 의미 근거는 없다. context를 의미 근거로 일반화하지 않는다.'
+          : '선택된 명명형·직접 규칙에서 이 질문 주제의 근거를 확인하지 못했다. 다른 주제의 의미로 빈칸을 채우지 않는다.'
         : '확인된 직접 근거만 반환하며 점수화·강화·상쇄·주제 간 의미 변환은 하지 않는다.',
   });
 }
