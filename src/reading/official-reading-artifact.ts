@@ -187,13 +187,13 @@ function assertReportBinding(
       'Official Reading artifact received an unsupported explainability binding policy version.',
     );
   }
-  assertOfficialExplainabilityBindings(semantics, report);
   if (report.sourceSemanticHash !== semantics.semanticHash) {
     throw new TypeError('Official Reading artifact report semantic hash does not match canonical semantics.');
   }
   if (report.sourcePlanHash !== plan.planHash) {
     throw new TypeError('Official Reading artifact report plan hash does not match the Official Reading plan.');
   }
+  assertOfficialExplainabilityBindings(semantics, report);
 
   const reportMaterial = {
     rendererVersion: report.rendererVersion,
