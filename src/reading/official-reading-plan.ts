@@ -17,6 +17,8 @@ export const OFFICIAL_READING_WITHIN_SECTION_ORDER_POLICY_VERSION =
   'myeonghwa-official-reading-within-section-order-policy-v1' as const;
 export const OFFICIAL_READING_SECTION_COMPOSITION_POLICY_VERSION =
   'myeonghwa-official-reading-section-composition-policy-v1' as const;
+export const OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION =
+  'myeonghwa-official-reading-explainability-binding-policy-v1' as const;
 
 export type OfficialReadingSemanticGroup =
   | 'core'
@@ -48,12 +50,18 @@ export type OfficialReadingSemanticLane =
   | 'business.pressure'
   | 'business.friction';
 
+export interface OfficialReadingPrimaryEvidenceBindingV1 {
+  primaryUnitRef: string;
+  supportingUnitRefs: readonly string[];
+}
+
 export interface OfficialReadingPlanSectionV1 {
   sectionId: string;
   semanticGroup: OfficialReadingSemanticGroup;
   semanticLane?: OfficialReadingSemanticLane;
   primaryUnitRefs: readonly string[];
   supportingUnitRefs: readonly string[];
+  primaryEvidenceBindings: readonly OfficialReadingPrimaryEvidenceBindingV1[];
   prohibitedExtensions: readonly string[];
 }
 
@@ -62,6 +70,8 @@ export interface OfficialReadingPlanV1 {
   policyVersion: typeof OFFICIAL_READING_PLAN_POLICY_VERSION;
   sectionCompositionPolicyVersion:
     typeof OFFICIAL_READING_SECTION_COMPOSITION_POLICY_VERSION;
+  explainabilityBindingPolicyVersion:
+    typeof OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION;
   planId: string;
   planHash: string;
   sourceSemanticHash: string;
@@ -472,15 +482,19 @@ function sectionId(
   lane: OfficialReadingSemanticLane | undefined,
   primaryUnitRefs: readonly string[],
   supportingUnitRefs: readonly string[],
+  primaryEvidenceBindings: readonly OfficialReadingPrimaryEvidenceBindingV1[],
 ): string {
   return `official_section_${deterministicContentHash({
     policyVersion: OFFICIAL_READING_PLAN_POLICY_VERSION,
     sectionCompositionPolicyVersion:
       OFFICIAL_READING_SECTION_COMPOSITION_POLICY_VERSION,
+    explainabilityBindingPolicyVersion:
+      OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
     group,
     lane,
     primaryUnitRefs,
     supportingUnitRefs,
+    primaryEvidenceBindings,
   }).slice(0, 24)}`;
 }
 
@@ -489,6 +503,7 @@ function primarySections(
 ): readonly OfficialReadingPlanSectionV1[] {
   const unitsByClaimId = new Map(bundle.units.map((unit) => [unit.claimId, unit]));
   const unitsByUnitId = new Map(bundle.units.map((unit) => [unit.unitId, unit]));
+  const unitsByClaimId = new Map(bundle.units.map((unit) => [unit.claimId, unit]));
   const primaryUnits = bundle.targetClaimIds
     .map((claimId) => {
       const unit = unitsByClaimId.get(claimId);
@@ -507,6 +522,7 @@ function primarySections(
       semanticLane: OfficialReadingSemanticLane | undefined;
       primaryUnitRefs: Set<string>;
       supportingUnitRefs: Set<string>;
+      primaryEvidenceBindings: Map<string, readonly string[]>;
       prohibitedExtensions: Set<string>;
     }
   >();
@@ -522,10 +538,13 @@ function primarySections(
         semanticLane,
         primaryUnitRefs: new Set<string>(),
         supportingUnitRefs: new Set<string>(),
+        primaryEvidenceBindings: new Map<string, readonly string[]>(),
         prohibitedExtensions: new Set<string>(),
       };
     current.primaryUnitRefs.add(unit.unitId);
-    for (const ref of upstreamUnitRefs(unit, unitsByClaimId)) current.supportingUnitRefs.add(ref);
+    const upstreamRefs = upstreamUnitRefs(unit, unitsByClaimId);
+    current.primaryEvidenceBindings.set(unit.unitId, upstreamRefs);
+    for (const ref of upstreamRefs) current.supportingUnitRefs.add(ref);
     for (const extension of unit.prohibitedExtensions) current.prohibitedExtensions.add(extension);
     grouped.set(key, current);
   }
@@ -553,12 +572,18 @@ function primarySections(
         unitsByUnitId,
       );
       const supportingUnitRefs = [...material.supportingUnitRefs].sort();
+      const primaryEvidenceBindings = primaryUnitRefs.map((primaryUnitRef) => ({
+        primaryUnitRef,
+        supportingUnitRefs:
+          material.primaryEvidenceBindings.get(primaryUnitRef) ?? [],
+      }));
       return {
         sectionId: sectionId(
           material.semanticGroup,
           material.semanticLane,
           primaryUnitRefs,
           supportingUnitRefs,
+          primaryEvidenceBindings,
         ),
         semanticGroup: material.semanticGroup,
         ...(material.semanticLane === undefined
@@ -566,6 +591,7 @@ function primarySections(
           : { semanticLane: material.semanticLane }),
         primaryUnitRefs,
         supportingUnitRefs,
+        primaryEvidenceBindings,
         prohibitedExtensions: [...material.prohibitedExtensions].sort(),
       };
     });
@@ -580,10 +606,11 @@ function evidenceSection(
     .sort();
   if (supportingUnitRefs.length === 0) return undefined;
   return {
-    sectionId: sectionId('evidence', undefined, [], supportingUnitRefs),
+    sectionId: sectionId('evidence', undefined, [], supportingUnitRefs, []),
     semanticGroup: 'evidence',
     primaryUnitRefs: [],
     supportingUnitRefs,
+    primaryEvidenceBindings: [],
     prohibitedExtensions: [],
   };
 }
@@ -600,10 +627,11 @@ function limitsSection(
     .map((unit) => unit.unitId)
     .sort();
   return {
-    sectionId: sectionId('limits', undefined, primaryUnitRefs, []),
+    sectionId: sectionId('limits', undefined, primaryUnitRefs, [], []),
     semanticGroup: 'limits',
     primaryUnitRefs,
     supportingUnitRefs: [],
+    primaryEvidenceBindings: [],
     prohibitedExtensions,
   };
 }
@@ -634,6 +662,8 @@ export function buildOfficialReadingPlanV1(
     policyVersion: OFFICIAL_READING_PLAN_POLICY_VERSION,
     sectionCompositionPolicyVersion:
       OFFICIAL_READING_SECTION_COMPOSITION_POLICY_VERSION,
+    explainabilityBindingPolicyVersion:
+      OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
     sourceSemanticHash: bundle.semanticHash,
     readingDomain: bundle.intent.domain,
     sections,
@@ -666,6 +696,14 @@ export function assertOfficialReadingPlanV1(
   ) {
     throw new TypeError(
       'OfficialReadingPlanV1.sectionCompositionPolicyVersion is invalid.',
+    );
+  }
+  if (
+    value.explainabilityBindingPolicyVersion !==
+    OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION
+  ) {
+    throw new TypeError(
+      'OfficialReadingPlanV1.explainabilityBindingPolicyVersion is invalid.',
     );
   }
   if (value.sourceSemanticHash !== bundle.semanticHash) {
@@ -737,6 +775,74 @@ export function assertOfficialReadingPlanV1(
     for (const ref of [...section.primaryUnitRefs, ...section.supportingUnitRefs]) {
       if (!unitIds.has(ref)) {
         throw new TypeError('OfficialReadingPlanV1 contains an unknown canonical unit ref.');
+      }
+    }
+    if (
+      section.semanticGroup === 'limits' ||
+      section.semanticGroup === 'evidence'
+    ) {
+      if (section.primaryEvidenceBindings.length !== 0) {
+        throw new TypeError(
+          'OfficialReadingPlanV1 evidence/limits sections must not declare primary evidence bindings.',
+        );
+      }
+    } else {
+      if (
+        section.primaryEvidenceBindings.length !==
+        section.primaryUnitRefs.length
+      ) {
+        throw new TypeError(
+          'OfficialReadingPlanV1 primary evidence bindings must cover every primary unit exactly once.',
+        );
+      }
+      const bindingSupportUnion = new Set<string>();
+      section.primaryEvidenceBindings.forEach((binding, index) => {
+        const expectedPrimaryRef = section.primaryUnitRefs[index];
+        if (binding.primaryUnitRef !== expectedPrimaryRef) {
+          throw new TypeError(
+            'OfficialReadingPlanV1 primary evidence bindings must follow governed primary order.',
+          );
+        }
+        const primaryUnit = unitsByUnitId.get(binding.primaryUnitRef);
+        if (primaryUnit === undefined) {
+          throw new TypeError(
+            'OfficialReadingPlanV1 primary evidence binding has no canonical primary unit.',
+          );
+        }
+        const expectedSupportingRefs = upstreamUnitRefs(
+          primaryUnit,
+          unitsByClaimId,
+        );
+        if (
+          binding.supportingUnitRefs.length !== expectedSupportingRefs.length ||
+          binding.supportingUnitRefs.some(
+            (ref, supportingIndex) =>
+              ref !== expectedSupportingRefs[supportingIndex],
+          )
+        ) {
+          throw new TypeError(
+            'OfficialReadingPlanV1 primary evidence binding does not match the canonical upstream closure.',
+          );
+        }
+        for (const ref of binding.supportingUnitRefs) {
+          if (!unitIds.has(ref)) {
+            throw new TypeError(
+              'OfficialReadingPlanV1 primary evidence binding contains an unknown canonical unit ref.',
+            );
+          }
+          bindingSupportUnion.add(ref);
+        }
+      });
+      const expectedSectionSupport = [...bindingSupportUnion].sort();
+      if (
+        expectedSectionSupport.length !== section.supportingUnitRefs.length ||
+        expectedSectionSupport.some(
+          (ref, supportIndex) => ref !== section.supportingUnitRefs[supportIndex],
+        )
+      ) {
+        throw new TypeError(
+          'OfficialReadingPlanV1 section supporting refs must equal the union of primary evidence bindings.',
+        );
       }
     }
     if (section.semanticGroup !== 'limits' && section.semanticGroup !== 'evidence') {
