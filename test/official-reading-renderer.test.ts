@@ -785,6 +785,21 @@ describe('Official Reading renderer v1', () => {
         ],
       },
     ]);
+    const ambiguity = interpretation?.blocks[0];
+    expect(ambiguity?.type).toBe('ambiguity');
+    if (ambiguity?.type === 'ambiguity') {
+      expect(ambiguity.scenarios.flatMap((scenario) => scenario.explainabilityRefs)).toEqual(
+        interpretation?.explainabilityRefs,
+      );
+      for (const scenario of ambiguity.scenarios) {
+        expect(scenario.explainabilityRefs).toHaveLength(1);
+        expect(
+          rendered.explainability.entries.some(
+            (entry) => entry.explainabilityRef === scenario.explainabilityRefs[0],
+          ),
+        ).toBe(true);
+      }
+    }
   });
 
   it('keeps scenario rendering invariant to evidence permutation', () => {
@@ -862,6 +877,13 @@ describe('Official Reading renderer v1', () => {
         ],
       },
     ]);
+    const comparison = interpretation?.blocks[0];
+    expect(comparison?.type).toBe('comparison');
+    if (comparison?.type === 'comparison') {
+      expect(comparison.perspectives.map((item) => item.explainabilityRef)).toEqual(
+        interpretation?.explainabilityRefs,
+      );
+    }
     expect(JSON.stringify(interpretation?.blocks)).toContain('관점 A 설명');
     expect(JSON.stringify(interpretation?.blocks)).toContain('관점 B 설명');
   });
