@@ -477,6 +477,12 @@ export async function executeProductReading(
           ...(sourceSummariesRequested
             ? { sourceSummaries: governedEvidence.sourceSummaries ?? [] }
             : {}),
+          ...(preparation.normalization.request.outputPreferences?.preferredDetail === undefined
+            ? {}
+            : {
+                preferredDetail:
+                  preparation.normalization.request.outputPreferences.preferredDetail,
+              }),
         })
       : undefined;
 
