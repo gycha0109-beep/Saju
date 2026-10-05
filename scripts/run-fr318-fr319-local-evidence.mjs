@@ -281,10 +281,8 @@ function assertTopLevelInput(input) {
 }
 
 function buildFR319Input(stage, hairline) {
-  const {
-    schemaVersion: _stageSchema,
-    ...rest
-  } = stage;
+  const rest = { ...stage };
+  delete rest.schemaVersion;
 
   return {
     schemaVersion:
