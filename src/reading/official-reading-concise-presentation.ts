@@ -150,6 +150,7 @@ function normalizedProfile(
     );
   }
 
+  const scenarioRef = normalizedOptional(profile.scenarioRef);
   return {
     schemaVersion: OFFICIAL_READING_CONCISE_PRESENTATION_PROFILE_SCHEMA_VERSION,
     profileId: normalizedRequired(profile.profileId, 'profileId'),
@@ -163,9 +164,7 @@ function normalizedProfile(
         'methodologyRef.version',
       ),
     },
-    ...(normalizedOptional(profile.scenarioRef) === undefined
-      ? {}
-      : { scenarioRef: normalizedOptional(profile.scenarioRef) }),
+    ...(scenarioRef === undefined ? {} : { scenarioRef }),
     sourcePresentationHash,
     conciseText: normalizedRequired(profile.conciseText, 'conciseText'),
   };
