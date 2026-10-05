@@ -185,8 +185,6 @@ export function queryFaceEvidenceFR311G(
     ...legacyDirectRuleIds,
     ...selectedExplicitRules.map((rule) => rule.ruleId),
   ]);
-  const directRuleEvidenceIds = selectedExplicitRules.map((rule) => rule.evidenceId);
-
   const clearNamed = selectedNamed.filter((claim) => claim.certainty === 'direct_clear');
   const uncertainNamed = selectedNamed.filter((claim) => claim.certainty === 'phrase_uncertain');
 
