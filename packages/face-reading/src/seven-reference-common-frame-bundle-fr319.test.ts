@@ -231,7 +231,7 @@ FR304NasalBridgeRootVerticalReferenceHandoff {
     coordinateFrame:
       'canonical_aligned_right_handed_metric_xy',
     projectionRuleRef:
-      'fr265:canonical-metric-xy-orthographic@0.1.0',
+      'neutral.face.canonical_metric_xy_projection@0.1.0',
     visibilitySemantics:
       'available_only_when_a_governed_fr297_provider_independent_annotation_instance_exists',
     automatedRgbExtractionReady: false,
@@ -242,7 +242,7 @@ FR304NasalBridgeRootVerticalReferenceHandoff {
       sourceKind:
         'fr297_provider_independent_nasal_bridge_root',
       sourceReferenceRef:
-        'neutral.face.nasal_bridge_root.provider_independent_3d_reference@0.1.0',
+        'neutral.face.nasal_bridge_root.curvature_reference@0.1.0',
       sourceAuthority:
         'benchmark_reference_component_only',
       sourceCoordinateFrame:
@@ -284,7 +284,7 @@ function centralGroove(): FR315CentralGrooveMetricBridgeResult {
     fr79ProjectionRuleRef:
       'fr79:canonical-metric-xy-orthographic@0.1.0',
     fr265ProjectionRuleRef:
-      'fr265:canonical-metric-xy-orthographic@0.1.0',
+      'neutral.face.canonical_metric_xy_projection@0.1.0',
     sourceRecentered: false,
     sourceRescaled: false,
     perspectiveReprojectionApplied: false,
