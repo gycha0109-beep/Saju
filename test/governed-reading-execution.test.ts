@@ -408,6 +408,130 @@ describe('Governed Reading Execution Orchestrator', () => {
     expect(omitted.modelCalls).toBe(0);
   });
 
+  it('applies Official Reading detail preference resolution without changing visible governed content', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const wealthBase = claim(currentSnapshot.snapshotId, {
+      id: 'claim-wealth-official-detail-preference',
+      tier: 'T8',
+      category: 'wealth',
+      subcategory: 'friction',
+    });
+    const wealth: InterpretationClaim = {
+      ...wealthBase,
+      predicate: 'wealth_conclusion',
+      value: {
+        wealthKind: 'friction',
+        headline: '준비와 결과 사이의 긴장',
+        summary: '배움과 실행 사이의 긴장을 함께 봅니다.',
+        futureMoneyTimingAuthorized: false,
+        numericScoringAuthorized: false,
+      },
+    };
+    const interpretation = executionWithClaims(currentSnapshot, registry, [wealth]);
+
+    const baseline = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      {
+        requestId: 'execution-official-detail-baseline',
+        text: '재물운',
+      },
+      executionOptions,
+    );
+    const standard = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      {
+        requestId: 'execution-official-detail-standard',
+        text: '재물운',
+        outputPreferences: { preferredDetail: 'standard' },
+      },
+      executionOptions,
+    );
+    const concise = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      {
+        requestId: 'execution-official-detail-concise',
+        text: '재물운',
+        outputPreferences: { preferredDetail: 'concise' },
+      },
+      executionOptions,
+    );
+    const detailed = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      {
+        requestId: 'execution-official-detail-detailed',
+        text: '재물운',
+        outputPreferences: { preferredDetail: 'detailed' },
+      },
+      executionOptions,
+    );
+
+    expect([
+      baseline.state,
+      standard.state,
+      concise.state,
+      detailed.state,
+    ]).toEqual(['completed', 'completed', 'completed', 'completed']);
+    expect([
+      baseline.modelCalls,
+      standard.modelCalls,
+      concise.modelCalls,
+      detailed.modelCalls,
+    ]).toEqual([0, 0, 0, 0]);
+
+    expect(baseline.officialReadingReport?.detailPreferenceResolution).toBeUndefined();
+    expect(standard.officialReadingReport?.sections).toEqual(
+      baseline.officialReadingReport?.sections,
+    );
+    expect(concise.officialReadingReport?.sections).toEqual(
+      baseline.officialReadingReport?.sections,
+    );
+    expect(detailed.officialReadingReport?.sections).toEqual(
+      baseline.officialReadingReport?.sections,
+    );
+    expect(concise.officialReadingReport?.explainability).toEqual(
+      baseline.officialReadingReport?.explainability,
+    );
+    expect(detailed.officialReadingReport?.explainability).toEqual(
+      baseline.officialReadingReport?.explainability,
+    );
+
+    expect(standard.officialReadingReport?.detailPreferenceResolution).toEqual({
+      requestedDetail: 'standard',
+      resolvedDetail: 'standard',
+      resolution: 'exact',
+    });
+    expect(concise.officialReadingReport?.detailPreferenceResolution).toEqual({
+      requestedDetail: 'concise',
+      resolvedDetail: 'standard',
+      resolution: 'fallback_to_standard',
+      fallbackReason: 'missing_text_role_authority',
+    });
+    expect(detailed.officialReadingReport?.detailPreferenceResolution).toEqual({
+      requestedDetail: 'detailed',
+      resolvedDetail: 'standard',
+      resolution: 'fallback_to_standard',
+      fallbackReason: 'missing_expansion_material',
+    });
+
+    expect(concise.artifact?.sections).toEqual(baseline.artifact?.sections);
+    expect(detailed.artifact?.sections).toEqual(baseline.artifact?.sections);
+    expect(JSON.stringify(concise.artifact)).not.toContain(
+      'myeonghwa-official-reading-detail-presentation-policy-v1',
+    );
+    expect(JSON.stringify(concise.artifact)).not.toContain(
+      'missing_text_role_authority',
+    );
+  });
+
   it('does not inspect a malformed Legacy Narrative runtime for an Official Reading request', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
