@@ -437,6 +437,52 @@ function assertGuardRejectsUnsafeOutput() {
   }
 }
 
+function assertFR312ReceiptHandoffSelfCheck() {
+  const input = {
+    fr313: {
+      expandedValidation: null,
+    },
+  };
+  const receipt = {
+    schemaVersion:
+      'fr312-expanded-hairline-validation-receipt-v1',
+    disposition:
+      'eligible_for_model_admission_review',
+    modelAdmissionReviewEligible: true,
+  };
+
+  injectFR312Receipt(input, receipt);
+
+  if (input.fr313.expandedValidation !== receipt) {
+    throw new Error(
+      'FR312_RECEIPT_HANDOFF_SELF_CHECK_FAILED',
+    );
+  }
+
+  let ambiguousRejected = false;
+  try {
+    injectFR312Receipt(
+      {
+        fr313: {
+          expandedValidation: receipt,
+        },
+      },
+      receipt,
+    );
+  } catch (error) {
+    ambiguousRejected =
+      error instanceof Error &&
+      error.message ===
+        'FR312_RECEIPT_SOURCE_AMBIGUOUS';
+  }
+
+  if (!ambiguousRejected) {
+    throw new Error(
+      'FR312_RECEIPT_AMBIGUITY_SELF_CHECK_FAILED',
+    );
+  }
+}
+
 async function runSelfCheck() {
   const contracts = await importContracts();
   for (const [name, contract] of Object.entries(contracts)) {
@@ -448,6 +494,7 @@ async function runSelfCheck() {
   }
 
   assertGuardRejectsUnsafeOutput();
+  assertFR312ReceiptHandoffSelfCheck();
 
   const receipt = {
     ...baseReceipt(),
@@ -456,6 +503,7 @@ async function runSelfCheck() {
     importedContractCount: Object.keys(contracts).length,
     privacyGuardRejectsSubjectScalar: true,
     privacyGuardRejectsDigest: true,
+    fr312ReceiptHandoffVerified: true,
   };
 
   assertOutputIsSafe(receipt);
