@@ -116,7 +116,7 @@ export const R185_AUTHORITY_BOUNDARY = Object.freeze({
   displayedNameDoesNotEqualVerifiedOriginalAuthor: true,
   repostLectureLabelDoesNotEqualOriginalLectureManuscript: true,
   duplicateTextDoesNotEqualIndependentCorroboration: true,
-  2011ModernSurfaceDoesNotEqualClassicalCanonicalAuthority: true,
+  modern2011SurfaceDoesNotEqualClassicalCanonicalAuthority: true,
   ruleFamilyLineageDoesNotTransferToDirectCaseWithoutEvidence: true,
   provenanceProgressDoesNotEqualSemanticAdmission: true,
 });

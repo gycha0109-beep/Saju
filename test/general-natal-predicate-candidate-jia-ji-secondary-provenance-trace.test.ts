@@ -101,7 +101,7 @@ describe('R185 Jia-Ji secondary provenance trace', () => {
       displayedNameDoesNotEqualVerifiedOriginalAuthor: true,
       repostLectureLabelDoesNotEqualOriginalLectureManuscript: true,
       duplicateTextDoesNotEqualIndependentCorroboration: true,
-      2011ModernSurfaceDoesNotEqualClassicalCanonicalAuthority: true,
+      modern2011SurfaceDoesNotEqualClassicalCanonicalAuthority: true,
       ruleFamilyLineageDoesNotTransferToDirectCaseWithoutEvidence: true,
       provenanceProgressDoesNotEqualSemanticAdmission: true,
     });
