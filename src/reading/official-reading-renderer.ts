@@ -11,6 +11,7 @@ import {
   type CanonicalReadingSemanticUnitV1,
 } from './canonical-reading-semantics.js';
 import {
+  OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
   assertOfficialReadingPlanV1,
   type OfficialReadingPlanSectionV1,
   type OfficialReadingPlanV1,
@@ -35,6 +36,8 @@ export interface OfficialReadingRenderedContentV1 {
     typeof OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION;
   structuredInsightMaterializationPolicyVersion:
     typeof OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION;
+  explainabilityBindingPolicyVersion:
+    typeof OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION;
   reportId: string;
   reportHash: string;
   sourceSemanticHash: string;
@@ -175,6 +178,8 @@ function explainabilityEntry(
   primaryUnits: readonly CanonicalReadingSemanticUnitV1[],
   supportingUnits: readonly CanonicalReadingSemanticUnitV1[],
 ): ExplainabilityIndex['entries'][number] {
+  const primaryUnitRefs = primaryUnits.map((unit) => unit.unitId);
+  const supportingUnitRefs = supportingUnits.map((unit) => unit.unitId).sort();
   const units = [...primaryUnits, ...supportingUnits];
   const claimIds = [...new Set(units.map((unit) => unit.claimId))].sort();
   const factRefs = [...new Set(units.flatMap((unit) => unit.factRefs))].sort();
@@ -183,7 +188,10 @@ function explainabilityEntry(
   ].sort();
   const sourceIds = [...new Set(units.flatMap((unit) => unit.sourceRefs))].sort();
   const explainabilityRef = `explain_official_${deterministicContentHash({
+    policyVersion: OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
     sectionId: section.sectionId,
+    primaryUnitRefs,
+    supportingUnitRefs,
     claimIds,
     factRefs,
     methodologyIds,
@@ -191,6 +199,8 @@ function explainabilityEntry(
   }).slice(0, 16)}`;
   return {
     explainabilityRef,
+    primaryUnitRefs,
+    supportingUnitRefs,
     claimIds,
     factRefs,
     methodologyIds,
@@ -214,9 +224,9 @@ function qualifierTextsFor(
   ];
 }
 
-function insightItem(
+function insightMaterial(
   unit: CanonicalReadingSemanticUnitV1,
-): InsightItemView {
+): Omit<InsightItemView, 'explainabilityRef'> {
   const headline = unit.canonicalText?.headline?.trim();
   const summary = unit.canonicalText?.summary?.trim();
   const qualifiers = qualifierTextsFor(unit);
@@ -232,10 +242,20 @@ function insightItem(
   };
 }
 
+function insightItem(
+  unit: CanonicalReadingSemanticUnitV1,
+  explainabilityRef: string,
+): InsightItemView {
+  return {
+    ...insightMaterial(unit),
+    explainabilityRef,
+  };
+}
+
 function structuralUnitText(
   unit: CanonicalReadingSemanticUnitV1,
 ): string {
-  const item = insightItem(unit);
+  const item = insightMaterial(unit);
   return [
     ...(item.headline === undefined ? [] : [item.headline]),
     ...(item.summary === undefined || item.summary === item.headline
@@ -245,14 +265,30 @@ function structuralUnitText(
   ].join('\n');
 }
 
+function refForUnit(
+  refsByUnitId: ReadonlyMap<string, string>,
+  unitId: string,
+): string {
+  const ref = refsByUnitId.get(unitId);
+  if (ref === undefined) {
+    throw new TypeError(
+      `Official Reading explainability binding is missing for canonical unit: ${unitId}`,
+    );
+  }
+  return ref;
+}
+
 function ordinaryRunBlocks(
   units: readonly CanonicalReadingSemanticUnitV1[],
+  refsByUnitId: ReadonlyMap<string, string>,
 ): ReadingSectionView['blocks'] {
   if (units.length === 0) return [];
   return [
     {
       type: 'insights',
-      items: units.map(insightItem),
+      items: units.map((unit) =>
+        insightItem(unit, refForUnit(refsByUnitId, unit.unitId)),
+      ),
     },
   ];
 }
@@ -366,6 +402,7 @@ function structuralGroupsForSection(
 function structurallyPreservedBlocks(
   bundle: CanonicalReadingSemanticBundleV1,
   units: readonly CanonicalReadingSemanticUnitV1[],
+  refsByUnitId: ReadonlyMap<string, string>,
 ): ReadingSectionView['blocks'] {
   const groups = structuralGroupsForSection(bundle, units);
   const emittedGroups = new Set<StructuralUnitGroup>();
@@ -374,7 +411,7 @@ function structurallyPreservedBlocks(
 
   const flushOrdinaryRun = (): void => {
     if (ordinaryRun.length === 0) return;
-    blocks.push(...ordinaryRunBlocks(ordinaryRun));
+    blocks.push(...ordinaryRunBlocks(ordinaryRun, refsByUnitId));
     ordinaryRun = [];
   };
 
@@ -407,12 +444,16 @@ function structurallyPreservedBlocks(
       blocks.push({
         type: 'ambiguity',
         summary: '서로 다른 시나리오를 하나로 합치지 않고 함께 표시합니다.',
-        scenarios: scenarioRefs.map((scenarioRef, index) => ({
-          label: `시나리오 ${index + 1}`,
-          text: (unitsByScenario.get(scenarioRef) ?? [])
-            .map(structuralUnitText)
-            .join('\n\n'),
-        })),
+        scenarios: scenarioRefs.map((scenarioRef, index) => {
+          const scenarioUnits = unitsByScenario.get(scenarioRef) ?? [];
+          return {
+            label: `시나리오 ${index + 1}`,
+            text: scenarioUnits.map(structuralUnitText).join('\n\n'),
+            explainabilityRefs: scenarioUnits.map((member) =>
+              refForUnit(refsByUnitId, member.unitId),
+            ),
+          };
+        }),
       });
       continue;
     }
@@ -423,6 +464,7 @@ function structurallyPreservedBlocks(
       perspectives: group.units.map((member, index) => ({
         label: `관점 ${index + 1}`,
         text: structuralUnitText(member),
+        explainabilityRef: refForUnit(refsByUnitId, member.unitId),
       })),
     });
   }
@@ -510,17 +552,59 @@ export function renderOfficialReadingV1(
     if (section.semanticGroup === 'evidence') continue;
 
     const primaryUnits = unitsForRefs(section.primaryUnitRefs, index);
-    const supportingUnits = unitsForRefs(section.supportingUnitRefs, index);
-    const explainability = explainabilityEntry(section, primaryUnits, supportingUnits);
-    const blocks =
-      section.semanticGroup === 'limits'
-        ? section.prohibitedExtensions.length === 0
-          ? []
-          : [{ type: 'paragraph' as const, text: limitText(section.prohibitedExtensions) }]
-        : structurallyPreservedBlocks(bundle, primaryUnits);
+    let blocks: ReadingSectionView['blocks'];
+    let sectionExplainabilityRefs: readonly string[];
+
+    if (section.semanticGroup === 'limits') {
+      if (section.prohibitedExtensions.length === 0) continue;
+      const explainability = explainabilityEntry(section, primaryUnits, []);
+      explainabilityEntries.push(explainability);
+      blocks = [
+        {
+          type: 'paragraph',
+          text: limitText(section.prohibitedExtensions),
+        },
+      ];
+      sectionExplainabilityRefs = [explainability.explainabilityRef];
+    } else {
+      const bindingsByPrimaryRef = new Map(
+        section.primaryEvidenceBindings.map((binding) => [
+          binding.primaryUnitRef,
+          binding,
+        ]),
+      );
+      const refsByUnitId = new Map<string, string>();
+      const sectionEntries = primaryUnits.map((primaryUnit) => {
+        const binding = bindingsByPrimaryRef.get(primaryUnit.unitId);
+        if (binding === undefined) {
+          throw new TypeError(
+            `Official Reading renderer received no evidence binding for primary unit: ${primaryUnit.unitId}`,
+          );
+        }
+        const supportingUnits = unitsForRefs(
+          binding.supportingUnitRefs,
+          index,
+        );
+        const entry = explainabilityEntry(
+          section,
+          [primaryUnit],
+          supportingUnits,
+        );
+        refsByUnitId.set(primaryUnit.unitId, entry.explainabilityRef);
+        return entry;
+      });
+      explainabilityEntries.push(...sectionEntries);
+      blocks = structurallyPreservedBlocks(
+        bundle,
+        primaryUnits,
+        refsByUnitId,
+      );
+      sectionExplainabilityRefs = primaryUnits.map((unit) =>
+        refForUnit(refsByUnitId, unit.unitId),
+      );
+    }
 
     if (blocks.length === 0) continue;
-    explainabilityEntries.push(explainability);
     sections.push({
       sectionId: section.sectionId,
       sectionType: sectionTypeFor(section.semanticGroup),
@@ -531,7 +615,7 @@ export function renderOfficialReadingV1(
       ),
       blocks,
       state: 'complete',
-      explainabilityRefs: [explainability.explainabilityRef],
+      explainabilityRefs: sectionExplainabilityRefs,
     });
   }
 
@@ -553,6 +637,8 @@ export function renderOfficialReadingV1(
       OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
     structuredInsightMaterializationPolicyVersion:
       OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
+    explainabilityBindingPolicyVersion:
+      OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
     sections,

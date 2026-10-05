@@ -6,6 +6,7 @@ import {
 } from '../src/reading/governed-reading-evidence.js';
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import {
+  OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
   OFFICIAL_READING_PLAN_POLICY_VERSION,
   OFFICIAL_READING_SECTION_COMPOSITION_POLICY_VERSION,
   OFFICIAL_READING_SECTION_ORDER_POLICY_VERSION,
@@ -242,10 +243,52 @@ describe('OfficialReadingPlanV1', () => {
     expect(tension?.primaryUnitRefs).toEqual([
       semantics.units.find((unit) => unit.claimId === 'primary-tension')?.unitId,
     ]);
-    expect(tension?.supportingUnitRefs).toEqual([
-      semantics.units.find((unit) => unit.claimId === 'support-resource')?.unitId,
+    const primaryUnitRef = semantics.units.find(
+      (unit) => unit.claimId === 'primary-tension',
+    )?.unitId;
+    const supportingUnitRef = semantics.units.find(
+      (unit) => unit.claimId === 'support-resource',
+    )?.unitId;
+    expect(tension?.supportingUnitRefs).toEqual([supportingUnitRef]);
+    expect(tension?.primaryEvidenceBindings).toEqual([
+      {
+        primaryUnitRef,
+        supportingUnitRefs: [supportingUnitRef],
+      },
     ]);
+    expect(plan.explainabilityBindingPolicyVersion).toBe(
+      OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
+    );
     expect(plan.sourceSemanticHash).toBe(semantics.semanticHash);
+  });
+
+  it('fails closed when a primary evidence binding leaks or drops canonical upstream support', () => {
+    const semantics = semanticBundle();
+    const plan = buildOfficialReadingPlanV1(semantics);
+    const tension = plan.sections.find((section) => section.semanticGroup === 'tension');
+    if (tension === undefined) throw new Error('fixture must contain tension section');
+
+    expect(() =>
+      assertOfficialReadingPlanV1(
+        {
+          ...plan,
+          sections: plan.sections.map((section) =>
+            section.sectionId === tension.sectionId
+              ? {
+                  ...section,
+                  primaryEvidenceBindings: section.primaryEvidenceBindings.map((binding) => ({
+                    ...binding,
+                    supportingUnitRefs: [],
+                  })),
+                }
+              : section,
+          ),
+          planId: 'official_reading_plan_fake',
+          planHash: 'fake',
+        },
+        semantics,
+      ),
+    ).toThrow(/canonical upstream closure/u);
   });
 
   it('separates evidence and explicit interpretation limits without inventing meaning', () => {
@@ -556,13 +599,20 @@ describe('OfficialReadingPlanV1', () => {
       throw new Error('fixture must contain interpretation section');
     }
     const reorderedPrimaryRefs = [...interpretation.primaryUnitRefs].reverse();
+    const reorderedEvidenceBindings = [
+      ...interpretation.primaryEvidenceBindings,
+    ].reverse();
     expect(() =>
       assertOfficialReadingPlanV1(
         {
           ...plan,
           sections: plan.sections.map((section) =>
             section.semanticGroup === 'interpretation'
-              ? { ...section, primaryUnitRefs: reorderedPrimaryRefs }
+              ? {
+                  ...section,
+                  primaryUnitRefs: reorderedPrimaryRefs,
+                  primaryEvidenceBindings: reorderedEvidenceBindings,
+                }
               : section,
           ),
           planId: 'official_reading_plan_fake',

@@ -258,10 +258,23 @@ describe('Governed Reading Execution Orchestrator', () => {
           {
             headline: '준비와 결과 사이의 긴장',
             summary: '배움에 더 투자할지 지금 결과를 만들지 사이에서 긴장이 생길 수 있습니다.',
+            explainabilityRef: expect.stringMatching(
+              /^explain_official_[0-9a-f]{16}$/u,
+            ),
           },
         ],
       },
     ]);
+    const officialInsight = result.officialReadingReport?.sections[0]?.blocks[0];
+    if (officialInsight?.type !== 'insights') {
+      throw new Error('fixture must render an Official insight block');
+    }
+    const officialExplainabilityRef = officialInsight.items[0]?.explainabilityRef;
+    expect(
+      result.officialReadingReport?.explainability.entries.some(
+        (entry) => entry.explainabilityRef === officialExplainabilityRef,
+      ),
+    ).toBe(true);
     expect(result.officialReadingReport?.sourceSemanticHash).toBe(
       result.canonicalSemantics?.semanticHash,
     );

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { InterpretationClaim } from '../src/contracts/interpretation.js';
+import type { ReadingBlockView } from '../src/contracts/reading.js';
 import {
   GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
   type GovernedReadingEvidenceBundleV1,
@@ -8,7 +9,10 @@ import {
   buildCanonicalReadingSemanticBundleV1,
   type CanonicalReadingSemanticQualifierBindingV1,
 } from '../src/reading/canonical-reading-semantics.js';
-import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
+import {
+  OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
+  buildOfficialReadingPlanV1,
+} from '../src/reading/official-reading-plan.js';
 import {
   OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
@@ -227,6 +231,44 @@ function domainSemantics(
   });
 }
 
+function withoutAtomExplainability(
+  blocks: readonly ReadingBlockView[] | undefined,
+): unknown {
+  return blocks?.map((block) => {
+    switch (block.type) {
+      case 'insights':
+        return {
+          ...block,
+          items: block.items.map((item) => {
+            const { explainabilityRef, ...visible } = item;
+            void explainabilityRef;
+            return visible;
+          }),
+        };
+      case 'comparison':
+        return {
+          ...block,
+          perspectives: block.perspectives.map((item) => {
+            const { explainabilityRef, ...visible } = item;
+            void explainabilityRef;
+            return visible;
+          }),
+        };
+      case 'ambiguity':
+        return {
+          ...block,
+          scenarios: block.scenarios.map((item) => {
+            const { explainabilityRefs, ...visible } = item;
+            void explainabilityRefs;
+            return visible;
+          }),
+        };
+      default:
+        return block;
+    }
+  });
+}
+
 describe('Official Reading renderer v1', () => {
   it('renders report text only from canonical primary meaning', () => {
     const bundle = semantics();
@@ -237,7 +279,7 @@ describe('Official Reading renderer v1', () => {
       '구조적 긴장',
       '해석 범위',
     ]);
-    expect(rendered.sections[0]?.blocks).toEqual([
+    expect(withoutAtomExplainability(rendered.sections[0]?.blocks)).toEqual([
       {
         type: 'insights',
         items: [
@@ -263,10 +305,131 @@ describe('Official Reading renderer v1', () => {
       (candidate) => candidate.explainabilityRef === ref,
     );
 
+    const primaryUnitRef = bundle.units.find(
+      (unit) => unit.claimId === 'primary-tension',
+    )?.unitId;
+    const supportingUnitRef = bundle.units.find(
+      (unit) => unit.claimId === 'support-resource',
+    )?.unitId;
+    expect(rendered.explainabilityBindingPolicyVersion).toBe(
+      OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
+    );
+    expect(entry?.primaryUnitRefs).toEqual([primaryUnitRef]);
+    expect(entry?.supportingUnitRefs).toEqual([supportingUnitRef]);
     expect(entry?.claimIds).toEqual(['primary-tension', 'support-resource']);
     expect(entry?.factRefs).toEqual(['derivedFacts.tenGods']);
     expect(entry?.methodologyIds).toEqual(['method-family@1', 'method-general@1']);
     expect(entry?.sourceIds).toEqual(['source-1']);
+    const insight = tension?.blocks[0];
+    expect(insight?.type).toBe('insights');
+    if (insight?.type === 'insights') {
+      expect(insight.items[0]?.explainabilityRef).toBe(entry?.explainabilityRef);
+    }
+  });
+
+  it('isolates primary-specific upstream provenance inside a shared insight section', () => {
+    const baseSupport = evidence().claims.find(
+      (claim) => claim.claimId === 'support-resource',
+    );
+    if (baseSupport === undefined) throw new Error('fixture must contain support');
+
+    const supportA: InterpretationClaim = {
+      ...baseSupport,
+      claimId: 'support-a',
+      methodologyRef: { id: 'method-support-a', version: '1' },
+      factRefs: ['facts.supportA'],
+      sourceRefs: ['source-a'],
+    };
+    const supportB: InterpretationClaim = {
+      ...baseSupport,
+      claimId: 'support-b',
+      methodologyRef: { id: 'method-support-b', version: '1' },
+      factRefs: ['facts.supportB'],
+      sourceRefs: ['source-b'],
+    };
+    const primaryA: InterpretationClaim = {
+      ...structuredPrimary({
+        claimId: 'primary-a',
+        subcategory: 'alpha_conclusion',
+        claimType: 'GENERAL_ALPHA_CONCLUSION',
+        headline: 'A 핵심',
+        summary: 'A 설명',
+      }),
+      upstreamClaimRefs: ['support-a'],
+    };
+    const primaryB: InterpretationClaim = {
+      ...structuredPrimary({
+        claimId: 'primary-b',
+        subcategory: 'beta_conclusion',
+        claimType: 'GENERAL_BETA_CONCLUSION',
+        headline: 'B 핵심',
+        summary: 'B 설명',
+      }),
+      upstreamClaimRefs: ['support-b'],
+    };
+    const evidenceBundle: GovernedReadingEvidenceBundleV1 = {
+      requestId: 'request-isolated-explainability',
+      purpose: 'full_reading',
+      snapshotId: 'snapshot-1',
+      interpretationRunId: 'interpretation-isolated-explainability',
+      registrySnapshotId: 'registry-1',
+      canonicalFacts: [],
+      claims: [primaryB, supportA, primaryA, supportB],
+      claimRelations: [
+        {
+          relationId: 'relation-primary-a-support-a',
+          fromClaimId: 'primary-a',
+          toClaimId: 'support-a',
+          relation: 'derived_from',
+        },
+        {
+          relationId: 'relation-primary-b-support-b',
+          fromClaimId: 'primary-b',
+          toClaimId: 'support-b',
+          relation: 'derived_from',
+        },
+      ],
+      schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
+      constraints: {
+        mayRecalculate: false,
+        mayInventRules: false,
+        mustPreserveMethodDifferences: true,
+        mustDiscloseMaterialAmbiguity: true,
+      },
+    };
+    const bundle = buildCanonicalReadingSemanticBundleV1({
+      intent: { domain: 'general', temporalScope: 'natal' },
+      evidence: evidenceBundle,
+      targetClaimIds: ['primary-b', 'primary-a'],
+    });
+    const rendered = renderOfficialReadingV1(
+      bundle,
+      buildOfficialReadingPlanV1(bundle),
+    );
+    const section = rendered.sections.find((candidate) => candidate.title === '주요 해석');
+    const block = section?.blocks[0];
+    expect(block?.type).toBe('insights');
+    if (block?.type !== 'insights') throw new Error('fixture must render insights');
+
+    const byHeadline = new Map(block.items.map((item) => [item.headline, item]));
+    const entryA = rendered.explainability.entries.find(
+      (entry) => entry.explainabilityRef === byHeadline.get('A 핵심')?.explainabilityRef,
+    );
+    const entryB = rendered.explainability.entries.find(
+      (entry) => entry.explainabilityRef === byHeadline.get('B 핵심')?.explainabilityRef,
+    );
+
+    expect(entryA?.claimIds).toEqual(['primary-a', 'support-a']);
+    expect(entryA?.factRefs).toEqual(['facts.supportA']);
+    expect(entryA?.sourceIds).toEqual(['source-a', 'source-structure']);
+    expect(entryB?.claimIds).toEqual(['primary-b', 'support-b']);
+    expect(entryB?.factRefs).toEqual(['facts.supportB']);
+    expect(entryB?.sourceIds).toEqual(['source-b', 'source-structure']);
+    expect(entryA?.claimIds).not.toContain('support-b');
+    expect(entryB?.claimIds).not.toContain('support-a');
+    expect(section?.explainabilityRefs).toEqual(
+      block.items.map((item) => item.explainabilityRef),
+    );
   });
 
   it('renders explicit scope limits without converting them into positive fortune claims', () => {
@@ -275,7 +438,7 @@ describe('Official Reading renderer v1', () => {
     const rendered = renderOfficialReadingV1(bundle, plan);
     const limits = rendered.sections.find((section) => section.title === '해석 범위');
 
-    expect(limits?.blocks).toEqual([
+    expect(withoutAtomExplainability(limits?.blocks)).toEqual([
       {
         type: 'paragraph',
         text: '현재 근거 범위에서는 미래 사건 시기 · 수치 점수·등급까지 확정하지 않습니다.',
@@ -314,7 +477,7 @@ describe('Official Reading renderer v1', () => {
         (section) => section.title !== '해석 범위',
       );
       expect(semanticSection?.title).toBe(expectedTitle);
-      expect(semanticSection?.blocks).toEqual([
+      expect(withoutAtomExplainability(semanticSection?.blocks)).toEqual([
         {
           type: 'insights',
           items: [{ headline: `${kind} headline`, summary: `${kind} summary` }],
@@ -332,7 +495,7 @@ describe('Official Reading renderer v1', () => {
     );
     const work = rendered.sections.find((section) => section.title === '일·성과');
 
-    expect(work?.blocks).toEqual([
+    expect(withoutAtomExplainability(work?.blocks)).toEqual([
       {
         type: 'insights',
         items: [{ headline: 'unknown_kind headline', summary: 'unknown_kind summary' }],
@@ -361,7 +524,7 @@ describe('Official Reading renderer v1', () => {
     );
     const work = rendered.sections.find((section) => section.title === '일·성과');
 
-    expect(work?.blocks).toEqual([
+    expect(withoutAtomExplainability(work?.blocks)).toEqual([
       {
         type: 'comparison',
         title: '함께 보존되는 상반된 해석',
@@ -415,7 +578,7 @@ describe('Official Reading renderer v1', () => {
     expect(rendered.structuredInsightMaterializationPolicyVersion).toBe(
       OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
     );
-    expect(interpretation?.blocks).toEqual([
+    expect(withoutAtomExplainability(interpretation?.blocks)).toEqual([
       {
         type: 'insights',
         items: [
@@ -490,7 +653,7 @@ describe('Official Reading renderer v1', () => {
       (section) => section.title === '주요 해석',
     );
 
-    expect(interpretation?.blocks).toEqual([
+    expect(withoutAtomExplainability(interpretation?.blocks)).toEqual([
       {
         type: 'insights',
         items: [
@@ -564,7 +727,7 @@ describe('Official Reading renderer v1', () => {
       (section) => section.title === '주요 해석',
     );
 
-    expect(interpretation?.blocks).toEqual([
+    expect(withoutAtomExplainability(interpretation?.blocks)).toEqual([
       {
         type: 'insights',
         items: [
@@ -606,7 +769,7 @@ describe('Official Reading renderer v1', () => {
     expect(rendered.structuralRealizationPolicyVersion).toBe(
       OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
     );
-    expect(interpretation?.blocks).toEqual([
+    expect(withoutAtomExplainability(interpretation?.blocks)).toEqual([
       {
         type: 'ambiguity',
         summary: '서로 다른 시나리오를 하나로 합치지 않고 함께 표시합니다.',
@@ -622,6 +785,23 @@ describe('Official Reading renderer v1', () => {
         ],
       },
     ]);
+    const ambiguity = interpretation?.blocks[0];
+    expect(ambiguity?.type).toBe('ambiguity');
+    if (ambiguity?.type === 'ambiguity') {
+      expect(ambiguity.scenarios.flatMap((scenario) => scenario.explainabilityRefs)).toEqual(
+        interpretation?.explainabilityRefs,
+      );
+      for (const scenario of ambiguity.scenarios) {
+        expect(scenario.explainabilityRefs).toHaveLength(1);
+        const [scenarioExplainabilityRef] = scenario.explainabilityRefs ?? [];
+        expect(scenarioExplainabilityRef).toBeDefined();
+        expect(
+          rendered.explainability.entries.some(
+            (entry) => entry.explainabilityRef === scenarioExplainabilityRef,
+          ),
+        ).toBe(true);
+      }
+    }
   });
 
   it('keeps scenario rendering invariant to evidence permutation', () => {
@@ -689,7 +869,7 @@ describe('Official Reading renderer v1', () => {
       (section) => section.title === '주요 해석',
     );
 
-    expect(interpretation?.blocks).toEqual([
+    expect(withoutAtomExplainability(interpretation?.blocks)).toEqual([
       {
         type: 'comparison',
         title: '함께 보존되는 상반된 해석',
@@ -699,6 +879,13 @@ describe('Official Reading renderer v1', () => {
         ],
       },
     ]);
+    const comparison = interpretation?.blocks[0];
+    expect(comparison?.type).toBe('comparison');
+    if (comparison?.type === 'comparison') {
+      expect(comparison.perspectives.map((item) => item.explainabilityRef)).toEqual(
+        interpretation?.explainabilityRefs,
+      );
+    }
     expect(JSON.stringify(interpretation?.blocks)).toContain('관점 A 설명');
     expect(JSON.stringify(interpretation?.blocks)).toContain('관점 B 설명');
   });
@@ -750,7 +937,7 @@ describe('Official Reading renderer v1', () => {
       (section) => section.title === '주요 해석',
     );
 
-    expect(interpretation?.blocks).toEqual([
+    expect(withoutAtomExplainability(interpretation?.blocks)).toEqual([
       {
         type: 'comparison',
         title: '함께 보존되는 상반된 해석',

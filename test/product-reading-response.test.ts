@@ -75,6 +75,8 @@ function artifact(): ReadingArtifact {
       entries: [
         {
           explainabilityRef: 'explainability-ref-secret',
+          primaryUnitRefs: ['canonical_reading_unit_primary_secret'],
+          supportingUnitRefs: ['canonical_reading_unit_support_secret'],
           claimIds: ['claim-secret-123'],
           factRefs: ['fact.secret.path'],
           methodologyIds: ['method-secret@1'],
@@ -139,6 +141,11 @@ describe('Product Reading Consumer Transport Response', () => {
     expect(json).not.toContain('claim-secret-123');
     expect(json).not.toContain('source-secret-456');
     expect(json).not.toContain('method-secret@1');
+    expect(json).not.toContain('canonical_reading_unit_primary_secret');
+    expect(json).not.toContain('canonical_reading_unit_support_secret');
+    expect(json).not.toContain('explainabilityRef');
+    expect(json).not.toContain('primaryUnitRefs');
+    expect(json).not.toContain('supportingUnitRefs');
     expect(json).not.toContain('snapshot-secret');
     expect(json).not.toContain('interpretation-secret');
     expect(json).not.toContain('narrative-secret');
@@ -198,6 +205,7 @@ describe('Product Reading Consumer Transport Response', () => {
                       headline: '내부 핵심',
                       summary: '내부 설명',
                       qualifiers: ['내부 조건'],
+                      explainabilityRef: 'explainability-ref-secret',
                     },
                   ],
                 },
@@ -233,10 +241,12 @@ describe('Product Reading Consumer Transport Response', () => {
                       headline: '알파 핵심',
                       summary: '알파 설명',
                       qualifiers: ['알파 조건'],
+                      explainabilityRef: 'explainability-ref-secret',
                     },
                     {
                       headline: '베타 핵심',
                       summary: '베타 설명',
+                      explainabilityRef: 'explainability-ref-secret-2',
                     },
                   ],
                 },
