@@ -367,7 +367,7 @@ describe('Myeonghwa Product Host MVP', () => {
       expect(serialized).not.toContain('missing_approved_concise_material');
       expect(serialized).not.toContain('missing_expansion_material');
       expect(serialized).not.toContain(
-        'myeonghwa-official-reading-approved-concise-registry-v1',
+        'myeonghwa-official-reading-approved-concise-registry-v2',
       );
       expect(serialized).not.toContain(
         'myeonghwa-official-reading-concise-presentation-readiness-v1',
