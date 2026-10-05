@@ -293,6 +293,41 @@ describe('Official Reading Artifact V1', () => {
     ).toThrow(/structured insight materialization policy version/u);
   });
 
+  it('accepts governed detail fallback metadata and rejects a tampered resolution', () => {
+    const { currentSnapshot, interpretation, semantics, plan } = fixture();
+    const report = renderOfficialReadingV1(semantics, plan, {
+      preferredDetail: 'concise',
+    });
+
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        report,
+        { readingVersion: 'official-reading-artifact-test-v1' },
+      ),
+    ).not.toThrow();
+
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        {
+          ...report,
+          detailPreferenceResolution: {
+            ...report.detailPreferenceResolution!,
+            fallbackReason: 'missing_expansion_material',
+          },
+        },
+        { readingVersion: 'official-reading-artifact-test-v1' },
+      ),
+    ).toThrow(/detail preference resolution does not match/u);
+  });
+
   it('rejects a report that declares a different source-summary presentation policy', () => {
     const { currentSnapshot, interpretation, semantics, plan, report } = fixture();
 

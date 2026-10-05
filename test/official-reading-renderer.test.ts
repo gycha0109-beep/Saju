@@ -14,6 +14,9 @@ import {
   buildOfficialReadingPlanV1,
 } from '../src/reading/official-reading-plan.js';
 import {
+  OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION,
+} from '../src/reading/official-reading-detail-presentation.js';
+import {
   OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
@@ -355,6 +358,78 @@ describe('Official Reading renderer v1', () => {
       text: '출처: 검증 출처 — 이 atom의 등록된 출처 요약입니다.',
       explainabilityRef,
     });
+  });
+
+  it('resolves detail requests without changing governed visible meaning or source-summary behavior', () => {
+    const bundle = semantics();
+    const plan = buildOfficialReadingPlanV1(bundle);
+    const baseline = renderOfficialReadingV1(bundle, plan);
+    const standard = renderOfficialReadingV1(bundle, plan, {
+      preferredDetail: 'standard',
+    });
+    const concise = renderOfficialReadingV1(bundle, plan, {
+      preferredDetail: 'concise',
+    });
+    const detailed = renderOfficialReadingV1(bundle, plan, {
+      preferredDetail: 'detailed',
+    });
+    const conciseWithSource = renderOfficialReadingV1(bundle, plan, {
+      preferredDetail: 'concise',
+      sourceSummaries: [
+        {
+          sourceId: 'source-1',
+          title: '검증 출처',
+          summary: '등록된 출처 요약',
+        },
+      ],
+    });
+
+    expect(baseline.detailPresentationPolicyVersion).toBeUndefined();
+    expect(baseline.detailPreferenceResolution).toBeUndefined();
+
+    expect(standard.sections).toEqual(baseline.sections);
+    expect(standard.disclosures).toEqual(baseline.disclosures);
+    expect(standard.explainability).toEqual(baseline.explainability);
+    expect(standard.detailPresentationPolicyVersion).toBe(
+      OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION,
+    );
+    expect(standard.detailPreferenceResolution).toEqual({
+      requestedDetail: 'standard',
+      resolvedDetail: 'standard',
+      resolution: 'exact',
+    });
+
+    expect(concise.sections).toEqual(baseline.sections);
+    expect(concise.disclosures).toEqual(baseline.disclosures);
+    expect(concise.explainability).toEqual(baseline.explainability);
+    expect(concise.detailPreferenceResolution).toEqual({
+      requestedDetail: 'concise',
+      resolvedDetail: 'standard',
+      resolution: 'fallback_to_standard',
+      fallbackReason: 'missing_text_role_authority',
+    });
+
+    expect(detailed.sections).toEqual(baseline.sections);
+    expect(detailed.disclosures).toEqual(baseline.disclosures);
+    expect(detailed.explainability).toEqual(baseline.explainability);
+    expect(detailed.detailPreferenceResolution).toEqual({
+      requestedDetail: 'detailed',
+      resolvedDetail: 'standard',
+      resolution: 'fallback_to_standard',
+      fallbackReason: 'missing_expansion_material',
+    });
+
+    expect(
+      conciseWithSource.sections.flatMap((section) => section.blocks).some(
+        (block) => block.type === 'source_hint',
+      ),
+    ).toBe(true);
+    expect(conciseWithSource.sourceSummaryPresentationPolicyVersion).toBe(
+      OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION,
+    );
+    expect(conciseWithSource.detailPreferenceResolution).toEqual(
+      concise.detailPreferenceResolution,
+    );
   });
 
   it('does not emit source hints when source summaries were not requested', () => {
