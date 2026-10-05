@@ -1141,7 +1141,7 @@ const RAW_DIRECT_RULES = [
     "whole_life",
     null,
     "direct_clear"
-  ]
+  ],
 
   [
     "fr311i.philtrum.upper_black_mark_many_children",
