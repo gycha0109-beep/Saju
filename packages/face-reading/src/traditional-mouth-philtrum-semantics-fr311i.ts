@@ -1769,7 +1769,7 @@ const RAW_DIRECT_RULES = [
     "direct_clear"
   ],
   [
-    "fr311i.lip_missing_sunken_low_status",
+    "fr311i.lip.missing_sunken_low_status",
     "論脣",
     "lips_pair",
     "脣缺而陷，主人下賤",
@@ -2683,7 +2683,7 @@ export function assertMouthPhiltrumTraditionalSemanticsFR311I(): void {
   if (MOUTH_PHILTRUM_TRADITIONAL_REGIONS_FR311I.length !== 6) {
     throw new Error('fr311i_requires_6_regions');
   }
-  if (MOUTH_PHILTRUM_DIRECT_RULES_FR311I.length !== 126) {
+  if (MOUTH_PHILTRUM_DIRECT_RULES_FR311I.length !== 127) {
     throw new Error(`fr311i_direct_rule_count_drift:${MOUTH_PHILTRUM_DIRECT_RULES_FR311I.length}`);
   }
   if (MOUTH_NAMED_FORM_SEMANTICS_FR311I.length !== 16) {
