@@ -14,6 +14,7 @@ import {
 import {
   OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_RENDERER_VERSION,
+  OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
   type OfficialReadingRenderedContentV1,
@@ -114,7 +115,16 @@ function assertOfficialExplainabilityBindings(
     };
 
     for (const block of section.blocks) {
-      if (block.type === 'insights') {
+      if (block.type === 'source_hint') {
+        if (
+          !entriesByRef.has(block.explainabilityRef) ||
+          !sectionRefs.includes(block.explainabilityRef)
+        ) {
+          throw new TypeError(
+            'Official Reading source hint is not bound to a visible atom in its section.',
+          );
+        }
+      } else if (block.type === 'insights') {
         for (const item of block.items) addAtomRef(item.explainabilityRef);
       } else if (block.type === 'comparison') {
         for (const item of block.perspectives) addAtomRef(item.explainabilityRef);
@@ -178,6 +188,14 @@ function assertReportBinding(
     );
   }
   if (
+    report.sourceSummaryPresentationPolicyVersion !==
+    OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION
+  ) {
+    throw new TypeError(
+      'Official Reading artifact received an unsupported source-summary presentation policy version.',
+    );
+  }
+  if (
     report.explainabilityBindingPolicyVersion !==
     OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION ||
     report.explainabilityBindingPolicyVersion !==
@@ -205,6 +223,8 @@ function assertReportBinding(
       report.structuredInsightMaterializationPolicyVersion,
     explainabilityBindingPolicyVersion:
       report.explainabilityBindingPolicyVersion,
+    sourceSummaryPresentationPolicyVersion:
+      report.sourceSummaryPresentationPolicyVersion,
     sourceSemanticHash: report.sourceSemanticHash,
     sourcePlanHash: report.sourcePlanHash,
     sections: report.sections,
