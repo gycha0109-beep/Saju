@@ -19,6 +19,10 @@ import {
   OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
   type OfficialReadingRenderedContentV1,
 } from './official-reading-renderer.js';
+import {
+  OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION,
+  resolveOfficialReadingDetailPreferenceV1,
+} from './official-reading-detail-presentation.js';
 import { buildReadingArtifactShell } from './reading-artifact-shell.js';
 
 export const OFFICIAL_READING_ARTIFACT_SCHEMA_VERSION =
@@ -208,6 +212,35 @@ function assertReportBinding(
       'Official Reading source hints require the governed source-summary presentation policy.',
     );
   }
+  const hasDetailPolicy =
+    report.detailPresentationPolicyVersion !== undefined ||
+    report.detailPreferenceResolution !== undefined;
+  if (hasDetailPolicy) {
+    if (
+      report.detailPresentationPolicyVersion !==
+        OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION ||
+      report.detailPreferenceResolution === undefined
+    ) {
+      throw new TypeError(
+        'Official Reading detail preference resolution requires the governed detail presentation policy.',
+      );
+    }
+    const expectedDetailResolution = resolveOfficialReadingDetailPreferenceV1(
+      report.detailPreferenceResolution.requestedDetail,
+    );
+    if (
+      report.detailPreferenceResolution.resolvedDetail !==
+        expectedDetailResolution.resolvedDetail ||
+      report.detailPreferenceResolution.resolution !==
+        expectedDetailResolution.resolution ||
+      report.detailPreferenceResolution.fallbackReason !==
+        expectedDetailResolution.fallbackReason
+    ) {
+      throw new TypeError(
+        'Official Reading detail preference resolution does not match the governed policy.',
+      );
+    }
+  }
   if (
     report.explainabilityBindingPolicyVersion !==
     OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION ||
@@ -241,6 +274,13 @@ function assertReportBinding(
       : {
           sourceSummaryPresentationPolicyVersion:
             report.sourceSummaryPresentationPolicyVersion,
+        }),
+    ...(report.detailPresentationPolicyVersion === undefined
+      ? {}
+      : {
+          detailPresentationPolicyVersion:
+            report.detailPresentationPolicyVersion,
+          detailPreferenceResolution: report.detailPreferenceResolution,
         }),
     sourceSemanticHash: report.sourceSemanticHash,
     sourcePlanHash: report.sourcePlanHash,
