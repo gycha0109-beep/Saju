@@ -12,6 +12,10 @@ import {
   type FaceEvidenceCertaintyFR311J,
   type FaceNamedFormEvidenceFR311J,
 } from './traditional-face-evidence-index-fr311j.js';
+import {
+  MOUTH_PHILTRUM_DIRECT_CROSS_REGION_EVIDENCE_FR311K,
+  resolveMouthPhiltrumCrossRegionEvidenceFR311K,
+} from './traditional-mouth-philtrum-cross-region-evidence-fr311k.js';
 
 export type FaceEvidenceLensKeyFR311J =
   | FaceEvidenceLensKeyFR311G
@@ -101,6 +105,7 @@ export interface FaceEvidenceQueryFR311J {
   readonly crossRegionFeatureKeys?: readonly string[];
   readonly traditionalRuleIds?: readonly string[];
   readonly mouthContextDescriptorIds?: readonly string[];
+  readonly combinationKeys?: readonly string[];
 }
 
 export interface FaceEvidenceQueryResultFR311J {
@@ -110,7 +115,9 @@ export interface FaceEvidenceQueryResultFR311J {
   readonly directRuleIds: readonly string[];
   readonly combinationRuleIds: readonly string[];
   readonly namedFormContextIds: readonly string[];
+  readonly crossRegionEvidenceIds: readonly string[];
   readonly relationKeys: readonly string[];
+  readonly combinationKeys: readonly string[];
   readonly favorableEvidenceIds: readonly string[];
   readonly challengingEvidenceIds: readonly string[];
   readonly mixedOrConditionalEvidenceIds: readonly string[];
@@ -121,6 +128,7 @@ export interface FaceEvidenceQueryResultFR311J {
   readonly traditionalRuleInferenceAuthorized: false;
   readonly topicRemappingInferenceAuthorized: false;
   readonly contextSemanticPromotionAuthorized: false;
+  readonly combinationInferenceAuthorized: false;
   readonly reason: string;
 }
 
@@ -178,6 +186,12 @@ export function queryFaceEvidenceFR311J(
       requestedContextDescriptorIds.has(context.descriptorId),
   );
 
+  const crossRegion = resolveMouthPhiltrumCrossRegionEvidenceFR311K({
+    ...(query.relationKeys === undefined ? {} : { relationKeys: query.relationKeys }),
+    ...(query.combinationKeys === undefined ? {} : { combinationKeys: query.combinationKeys }),
+    allowedTopicKeys: ruleTopicKeys,
+  });
+
   const legacy = isLegacyLensFR311J(query.lensKey)
     ? queryFaceEvidenceFR311G({
       lensKey: query.lensKey,
@@ -202,6 +216,7 @@ export function queryFaceEvidenceFR311J(
     ...selectedExplicitRules.map((item) => item.ruleId),
   ]);
   const combinationRuleIds = unique([...(legacy?.combinationRuleIds ?? [])]);
+  const crossRegionEvidenceIds = unique([...crossRegion.matchedEvidenceIds]);
   const namedFormContextIds = unique([
     ...(legacy?.namedFormContextIds ?? []),
     ...selectedMouthContexts.map((item) => item.contextId),
@@ -212,6 +227,9 @@ export function queryFaceEvidenceFR311J(
   );
   const directEvidence = FACE_DIRECT_RULE_EVIDENCE_FR311J.filter(
     (item) => directRuleIds.includes(item.ruleId) || combinationRuleIds.includes(item.ruleId),
+  );
+  const crossRegionEvidence = MOUTH_PHILTRUM_DIRECT_CROSS_REGION_EVIDENCE_FR311K.filter(
+    (item) => crossRegionEvidenceIds.includes(item.evidenceId),
   );
 
   const clearNamed = namedEvidence.filter((item) => isClear(item.certainty));
@@ -232,12 +250,18 @@ export function queryFaceEvidenceFR311J(
     ...clearRules
       .filter((item) => item.polarity === 'favorable')
       .map((item) => item.evidenceId),
+    ...crossRegionEvidence
+      .filter((item) => item.polarity === 'favorable')
+      .map((item) => item.evidenceId),
   ]);
   const challengingEvidenceIds = unique([
     ...clearNamed
       .filter((item) => item.polarity === 'challenging')
       .map((item) => item.evidenceId),
     ...clearRules
+      .filter((item) => item.polarity === 'challenging')
+      .map((item) => item.evidenceId),
+    ...crossRegionEvidence
       .filter((item) => item.polarity === 'challenging')
       .map((item) => item.evidenceId),
   ]);
@@ -254,6 +278,12 @@ export function queryFaceEvidenceFR311J(
         item.polarity === 'conditional' ||
         item.polarity === 'neutral')
       .map((item) => item.evidenceId),
+    ...crossRegionEvidence
+      .filter((item) =>
+        item.polarity === 'mixed' ||
+        item.polarity === 'conditional' ||
+        item.polarity === 'neutral')
+      .map((item) => item.evidenceId),
   ]);
 
   const hasConflict =
@@ -262,12 +292,17 @@ export function queryFaceEvidenceFR311J(
   const hasSemanticEvidence =
     namedEvidenceIds.length > 0 ||
     directRuleIds.length > 0 ||
-    combinationRuleIds.length > 0;
+    combinationRuleIds.length > 0 ||
+    crossRegionEvidenceIds.length > 0;
   const hasContext = namedFormContextIds.length > 0;
 
   let status: FaceEvidenceQueryStatusFR311J;
   if (hasConflict || legacy?.status === 'source_conflict') {
     status = 'source_conflict';
+  } else if (crossRegion.status === 'direct_source_combination') {
+    status = 'direct_source_combination';
+  } else if (crossRegion.status === 'direct_source_relation') {
+    status = 'direct_source_relation';
   } else if (
     legacy?.status === 'direct_source_combination' ||
     legacy?.status === 'direct_source_relation' ||
@@ -292,7 +327,15 @@ export function queryFaceEvidenceFR311J(
     directRuleIds: Object.freeze(directRuleIds),
     combinationRuleIds: Object.freeze(combinationRuleIds),
     namedFormContextIds: Object.freeze(namedFormContextIds),
-    relationKeys: Object.freeze(unique([...(query.relationKeys ?? [])])),
+    crossRegionEvidenceIds: Object.freeze(crossRegionEvidenceIds),
+    relationKeys: Object.freeze(unique([
+      ...(query.relationKeys ?? []),
+      ...crossRegion.matchedRelationKeys,
+    ])),
+    combinationKeys: Object.freeze(unique([
+      ...(query.combinationKeys ?? []),
+      ...crossRegion.matchedCombinationKeys,
+    ])),
     favorableEvidenceIds: Object.freeze(favorableEvidenceIds),
     challengingEvidenceIds: Object.freeze(challengingEvidenceIds),
     mixedOrConditionalEvidenceIds: Object.freeze(mixedOrConditionalEvidenceIds),
@@ -303,6 +346,7 @@ export function queryFaceEvidenceFR311J(
     traditionalRuleInferenceAuthorized: false as const,
     topicRemappingInferenceAuthorized: false as const,
     contextSemanticPromotionAuthorized: false as const,
+    combinationInferenceAuthorized: false as const,
     reason: status === 'source_conflict'
       ? '같은 질문 주제에 서로 반대 방향의 확정 직접 근거가 함께 존재한다. 불확실 문구는 충돌 판정에 포함하지 않고 어느 한쪽도 우선하지 않는다.'
       : status === 'no_evidence'
@@ -320,6 +364,7 @@ export const FR311J_QUERY_AUTHORITY_BOUNDARY = Object.freeze({
   traditionalRuleInferenceAuthorized: false as const,
   topicRemappingInferenceAuthorized: false as const,
   contextSemanticPromotionAuthorized: false as const,
+  combinationInferenceAuthorized: false as const,
   wealthStatusSplitAuthorized: false as const,
 });
 

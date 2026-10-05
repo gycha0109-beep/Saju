@@ -10,6 +10,9 @@ import {
   type FaceEvidenceRegionFR311J,
 } from './traditional-face-evidence-index-fr311j.js';
 import {
+  MOUTH_PHILTRUM_DIRECT_CROSS_REGION_EVIDENCE_FR311K,
+} from './traditional-mouth-philtrum-cross-region-evidence-fr311k.js';
+import {
   isLegacyLensFR311J,
   queryFaceEvidenceFR311J,
   type FaceEvidenceLensKeyFR311J,
@@ -29,12 +32,13 @@ export type FaceReadingOutputStatusFR311J =
 export type FaceReadingEvidenceKindFR311J =
   | 'named_form_claim'
   | 'direct_rule'
+  | 'cross_region_direct'
   | 'named_form_context';
 
 export interface FaceReadingEvidenceItemFR311J {
   readonly evidenceId: string;
   readonly kind: FaceReadingEvidenceKindFR311J;
-  readonly region: FaceEvidenceRegionFR311J;
+  readonly region: FaceEvidenceRegionFR311J | 'cross_region';
   readonly label: string;
   readonly sourceExpression: string;
   readonly meaningSummary: string;
@@ -78,10 +82,14 @@ export interface TraditionalFaceReadingOutputFR311J {
       | 'parallel_evidence_only'
       | 'unsupported';
     directCombinationRuleIds: readonly string[];
+    directCrossRegionEvidenceIds: readonly string[];
     contextIds: readonly string[];
     relationKeys: readonly string[];
+    combinationKeys: readonly string[];
     reinforcementAuthorized: false;
     cancellationAuthorized: false;
+    relationInferenceAuthorized: false;
+    combinationInferenceAuthorized: false;
     contextSemanticPromotionAuthorized: false;
   }>;
   readonly sourceRefs: readonly string[];
@@ -93,6 +101,8 @@ export interface TraditionalFaceReadingOutputFR311J {
   readonly sourcePriorityInferenceAuthorized: false;
   readonly traditionalRuleInferenceAuthorized: false;
   readonly topicRemappingInferenceAuthorized: false;
+  readonly relationInferenceAuthorized: false;
+  readonly combinationInferenceAuthorized: false;
   readonly healthDiagnosisAuthorized: false;
   readonly lifespanPredictionAuthorized: false;
   readonly fertilityPredictionAuthorized: false;
@@ -233,6 +243,39 @@ function directItem(ruleId: string): FaceReadingEvidenceItemFR311J {
   });
 }
 
+function crossRegionItem(evidenceId: string): FaceReadingEvidenceItemFR311J {
+  const item = MOUTH_PHILTRUM_DIRECT_CROSS_REGION_EVIDENCE_FR311K.find(
+    (candidate) => candidate.evidenceId === evidenceId,
+  );
+  if (item === undefined) {
+    throw new Error('fr311k_missing_cross_region_evidence:' + evidenceId);
+  }
+
+  return Object.freeze({
+    evidenceId: item.evidenceId,
+    kind: 'cross_region_direct' as const,
+    region: 'cross_region' as const,
+    label: item.relationKey ?? item.combinationKey ?? item.candidateId,
+    sourceExpression: item.sourceExpression,
+    meaningSummary: item.meaningSummary,
+    topicKey: item.topicKeys.length === 1 ? item.topicKeys[0] ?? null : null,
+    relationTarget: item.relationTarget,
+    lifeStage: item.lifeStage,
+    polarity: item.polarity,
+    certainty: 'direct_clear' as const,
+    sourceRefs: Object.freeze([...item.sourceRefs]),
+    historicalTraditionalDoctrineOnly: true as const,
+    modernScientificFactAuthorized: false as const,
+    healthDiagnosisAuthorized: false as const,
+    lifespanPredictionAuthorized: false as const,
+    fertilityPredictionAuthorized: false as const,
+    childSexPredictionAuthorized: false as const,
+    personalityFactAuthorized: false as const,
+    criminalityInferenceAuthorized: false as const,
+    productPredictionAuthorized: false as const,
+  });
+}
+
 function legacyContextItems(
   query: FaceEvidenceQueryFR311J,
 ): readonly FaceReadingEvidenceItemFR311J[] {
@@ -348,7 +391,8 @@ export function buildTraditionalFaceReadingOutputFR311J(
   const named = result.namedEvidenceIds.map(namedItem);
   const directIds = unique([...result.directRuleIds, ...result.combinationRuleIds]);
   const direct = directIds.map(directItem);
-  const allEvidence = [...named, ...direct];
+  const crossRegion = result.crossRegionEvidenceIds.map(crossRegionItem);
+  const allEvidence = [...named, ...direct, ...crossRegion];
   const uncertainSet = new Set(result.uncertainEvidenceIds);
 
   const favorable = allEvidence.filter(
@@ -393,6 +437,7 @@ export function buildTraditionalFaceReadingOutputFR311J(
     'wealth_status 같은 복합 주제를 재물·관직 등으로 임의 분해하지 않는다.',
     '전통 명명형이나 세부 부위를 현대 사진 특징·랜드마크와 자동 동일시하지 않는다.',
     '명명형 내부 타부위 문맥을 독립적인 일반 조합 공식으로 승격하지 않는다.',
+    '교차부위 관계·조합은 원문에서 승인된 정확한 key가 명시 입력된 경우에만 사용하며 독립 특징으로부터 자동 추론하지 않는다.',
   ];
 
   if (outputStatus === 'conflict') {
@@ -427,10 +472,14 @@ export function buildTraditionalFaceReadingOutputFR311J(
     combinationAssessment: Object.freeze({
       sourceStatus: combinationStatus(result.status),
       directCombinationRuleIds: Object.freeze([...result.combinationRuleIds]),
+      directCrossRegionEvidenceIds: Object.freeze([...result.crossRegionEvidenceIds]),
       contextIds: Object.freeze([...result.namedFormContextIds]),
       relationKeys: Object.freeze([...result.relationKeys]),
+      combinationKeys: Object.freeze([...result.combinationKeys]),
       reinforcementAuthorized: false as const,
       cancellationAuthorized: false as const,
+      relationInferenceAuthorized: false as const,
+      combinationInferenceAuthorized: false as const,
       contextSemanticPromotionAuthorized: false as const,
     }),
     sourceRefs: Object.freeze(sourceRefs),
@@ -442,6 +491,8 @@ export function buildTraditionalFaceReadingOutputFR311J(
     sourcePriorityInferenceAuthorized: false as const,
     traditionalRuleInferenceAuthorized: false as const,
     topicRemappingInferenceAuthorized: false as const,
+    relationInferenceAuthorized: false as const,
+    combinationInferenceAuthorized: false as const,
     healthDiagnosisAuthorized: false as const,
     lifespanPredictionAuthorized: false as const,
     fertilityPredictionAuthorized: false as const,
@@ -459,6 +510,8 @@ export const FR311J_OUTPUT_AUTHORITY_BOUNDARY = Object.freeze({
   sourcePriorityInferenceAuthorized: false as const,
   traditionalRuleInferenceAuthorized: false as const,
   topicRemappingInferenceAuthorized: false as const,
+  relationInferenceAuthorized: false as const,
+  combinationInferenceAuthorized: false as const,
   contextSemanticPromotionAuthorized: false as const,
   healthDiagnosisAuthorized: false as const,
   lifespanPredictionAuthorized: false as const,
