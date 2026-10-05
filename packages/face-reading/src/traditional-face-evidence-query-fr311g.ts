@@ -11,6 +11,9 @@ import {
   queryIntegratedTraditionalEvidenceFR311C,
   type IntegratedQueryStatusFR311C,
 } from './traditional-eyebrow-eye-evidence-query-fr311c.js';
+import {
+  resolveTraditionalCombinationFR311C,
+} from './traditional-eyebrow-eye-combination-resolver-fr311c.js';
 
 export type FaceEvidenceLensKeyFR311G =
   | EvidenceLensKeyFR311C
@@ -159,9 +162,6 @@ export function queryFaceEvidenceFR311G(
 
   let legacyStatus: IntegratedQueryStatusFR311C = 'no_evidence';
   let legacyDirectRuleIds: readonly string[] = [];
-  let legacyCombinationRuleIds: readonly string[] = [];
-  let legacyContextIds: readonly string[] = [];
-  let legacyRelationKeys: readonly string[] = [];
 
   if (isLegacyLens(query.lensKey)) {
     const legacy = queryIntegratedTraditionalEvidenceFR311C({
@@ -172,10 +172,14 @@ export function queryFaceEvidenceFR311G(
     });
     legacyStatus = legacy.status;
     legacyDirectRuleIds = legacy.directRuleIds;
-    legacyCombinationRuleIds = legacy.combinationRuleIds;
-    legacyContextIds = legacy.namedFormContextIds;
-    legacyRelationKeys = legacy.relationKeys;
   }
+
+  const combination = resolveTraditionalCombinationFR311C({
+    ...(query.formKeys === undefined ? {} : { formKeys: query.formKeys }),
+    ...(query.morphologyTermKeys === undefined ? {} : { morphologyTermKeys: query.morphologyTermKeys }),
+    ...(query.relationKeys === undefined ? {} : { relationKeys: query.relationKeys }),
+    allowedTopicKeys: unique([...lens.topicKeys, ...lens.ruleTopicKeys]),
+  });
 
   const directRuleIds = unique([
     ...legacyDirectRuleIds,
@@ -224,19 +228,19 @@ export function queryFaceEvidenceFR311G(
   const hasEvidence =
     selectedNamed.length > 0 ||
     directRuleIds.length > 0 ||
-    legacyCombinationRuleIds.length > 0 ||
-    legacyContextIds.length > 0;
+    combination.matchedDirectRuleIds.length > 0 ||
+    combination.matchedContextIds.length > 0;
 
   let status: FaceEvidenceQueryStatusFR311G;
   if (hasConflict || legacyStatus === 'source_conflict') {
     status = 'source_conflict';
   } else if (
-    legacyStatus === 'direct_source_combination' ||
-    legacyStatus === 'direct_source_relation' ||
-    legacyStatus === 'named_form_context' ||
-    legacyStatus === 'parallel_evidence_only'
+    combination.status === 'direct_source_combination' ||
+    combination.status === 'direct_source_relation' ||
+    combination.status === 'named_form_context' ||
+    combination.status === 'parallel_evidence_only'
   ) {
-    status = legacyStatus;
+    status = combination.status;
   } else if (hasEvidence) {
     status = 'evidence_only';
   } else {
@@ -248,12 +252,9 @@ export function queryFaceEvidenceFR311G(
     status,
     namedEvidenceIds: Object.freeze(selectedNamed.map((claim) => claim.evidenceId)),
     directRuleIds: Object.freeze(directRuleIds),
-    combinationRuleIds: Object.freeze([...legacyCombinationRuleIds]),
-    namedFormContextIds: Object.freeze([...legacyContextIds]),
-    relationKeys: Object.freeze(unique([
-      ...legacyRelationKeys,
-      ...(query.relationKeys ?? []),
-    ])),
+    combinationRuleIds: Object.freeze([...combination.matchedDirectRuleIds]),
+    namedFormContextIds: Object.freeze([...combination.matchedContextIds]),
+    relationKeys: Object.freeze(unique([...(query.relationKeys ?? [])])),
     favorableEvidenceIds: Object.freeze(unique(favorableEvidenceIds)),
     challengingEvidenceIds: Object.freeze(unique(challengingEvidenceIds)),
     mixedOrConditionalEvidenceIds: Object.freeze(unique(mixedOrConditionalEvidenceIds)),
