@@ -71,7 +71,7 @@ source ref:
 
 ## 人中 일반 규칙
 
-이번 단계에서 37개 source-local rule을 구조화한다.
+이번 단계에서 36개 philtrum-region direct rule과 인중 관련 cross-region context 1건을 구조화한다.
 
 대표:
 
@@ -333,7 +333,8 @@ FR311I 현재 corpus:
 
 - traditional regions: 6
 - direct rules: 127
-- philtrum direct rules: 37
+- philtrum direct rules: 36
+- philtrum-related cross-region context rules: 1
 - mouth named forms: 16
 - descriptors: 43
 - named-form claims: 45
