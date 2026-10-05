@@ -1,3 +1,4 @@
+import type { SourceSummary } from '../contracts/narrative.js';
 import type {
   ExplainabilityIndex,
   InsightItemView,
@@ -27,6 +28,12 @@ export const OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION =
   'myeonghwa-official-reading-ordinary-multi-claim-presentation-policy-v1' as const;
 export const OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION =
   'myeonghwa-official-reading-structured-insight-materialization-policy-v1' as const;
+export const OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION =
+  'myeonghwa-official-reading-source-summary-presentation-policy-v1' as const;
+
+export interface OfficialReadingRenderOptionsV1 {
+  sourceSummaries?: readonly SourceSummary[];
+}
 
 export interface OfficialReadingRenderedContentV1 {
   rendererVersion: typeof OFFICIAL_READING_RENDERER_VERSION;
@@ -38,6 +45,8 @@ export interface OfficialReadingRenderedContentV1 {
     typeof OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION;
   explainabilityBindingPolicyVersion:
     typeof OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION;
+  sourceSummaryPresentationPolicyVersion?:
+    typeof OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION;
   reportId: string;
   reportHash: string;
   sourceSemanticHash: string;
@@ -206,6 +215,62 @@ function explainabilityEntry(
     methodologyIds,
     sourceIds,
   };
+}
+
+function sourceSummaryIndex(
+  sourceSummaries: readonly SourceSummary[] | undefined,
+): ReadonlyMap<string, SourceSummary> | undefined {
+  if (sourceSummaries === undefined) return undefined;
+  const result = new Map<string, SourceSummary>();
+  for (const summary of sourceSummaries) {
+    const sourceId = summary.sourceId.trim();
+    const title = summary.title.trim();
+    const text = summary.summary.trim();
+    if (sourceId.length === 0 || title.length === 0 || text.length === 0) {
+      throw new TypeError(
+        'Official Reading source summary presentation requires complete source metadata.',
+      );
+    }
+    if (result.has(sourceId)) {
+      throw new TypeError(
+        `Official Reading source summary presentation received duplicate source: ${sourceId}`,
+      );
+    }
+    result.set(sourceId, { sourceId, title, summary: text });
+  }
+  return result;
+}
+
+function sourceHintBlocks(
+  explainabilityRefs: readonly string[],
+  entriesByRef: ReadonlyMap<string, ExplainabilityIndex['entries'][number]>,
+  summariesBySourceId: ReadonlyMap<string, SourceSummary> | undefined,
+): ReadingSectionView['blocks'] {
+  if (summariesBySourceId === undefined) return [];
+
+  const blocks: ReadingSectionView['blocks'][number][] = [];
+  for (const explainabilityRef of explainabilityRefs) {
+    const entry = entriesByRef.get(explainabilityRef);
+    if (entry === undefined) {
+      throw new TypeError(
+        'Official Reading source summary presentation received an unknown explainability ref.',
+      );
+    }
+    for (const sourceId of entry.sourceIds) {
+      const source = summariesBySourceId.get(sourceId);
+      if (source === undefined) {
+        throw new TypeError(
+          `Official Reading source summary presentation is missing source metadata: ${sourceId}`,
+        );
+      }
+      blocks.push({
+        type: 'source_hint',
+        text: `출처: ${source.title} — ${source.summary}`,
+        explainabilityRef,
+      });
+    }
+  }
+  return blocks;
 }
 
 function qualifierTextsFor(
@@ -534,6 +599,7 @@ export function canRenderOfficialReadingV1(
 export function renderOfficialReadingV1(
   bundle: CanonicalReadingSemanticBundleV1,
   plan: OfficialReadingPlanV1,
+  options: OfficialReadingRenderOptionsV1 = {},
 ): OfficialReadingRenderedContentV1 {
   assertCanonicalReadingSemanticBundleV1(bundle);
   assertOfficialReadingPlanV1(plan, bundle);
@@ -547,6 +613,7 @@ export function renderOfficialReadingV1(
 
   const sections: ReadingSectionView[] = [];
   const explainabilityEntries: ExplainabilityIndex['entries'][number][] = [];
+  const summariesBySourceId = sourceSummaryIndex(options.sourceSummaries);
 
   for (const section of plan.sections) {
     if (section.semanticGroup === 'evidence') continue;
@@ -602,6 +669,17 @@ export function renderOfficialReadingV1(
       sectionExplainabilityRefs = primaryUnits.map((unit) =>
         refForUnit(refsByUnitId, unit.unitId),
       );
+      const entriesByRef = new Map(
+        sectionEntries.map((entry) => [entry.explainabilityRef, entry]),
+      );
+      blocks = [
+        ...blocks,
+        ...sourceHintBlocks(
+          sectionExplainabilityRefs,
+          entriesByRef,
+          summariesBySourceId,
+        ),
+      ];
     }
 
     if (blocks.length === 0) continue;
@@ -639,6 +717,12 @@ export function renderOfficialReadingV1(
       OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
     explainabilityBindingPolicyVersion:
       OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
+    ...(summariesBySourceId === undefined
+      ? {}
+      : {
+          sourceSummaryPresentationPolicyVersion:
+            OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION,
+        }),
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
     sections,

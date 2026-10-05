@@ -155,6 +155,7 @@ describe('Official Reading Artifact V1', () => {
     expect(report.explainabilityBindingPolicyVersion).toBe(
       OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION,
     );
+    expect(report.sourceSummaryPresentationPolicyVersion).toBeUndefined();
     expect(artifact.readingId).toMatch(/^official_reading_[a-f0-9]{24}$/u);
     expect(artifact.status).toBe(
       currentSnapshot.completeness.fullyResolved ? 'ready' : 'ready_with_ambiguity',
@@ -290,6 +291,24 @@ describe('Official Reading Artifact V1', () => {
         { readingVersion: 'official-reading-artifact-test-v1' },
       ),
     ).toThrow(/structured insight materialization policy version/u);
+  });
+
+  it('rejects a report that declares a different source-summary presentation policy', () => {
+    const { currentSnapshot, interpretation, semantics, plan, report } = fixture();
+
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        {
+          ...report,
+          sourceSummaryPresentationPolicyVersion: 'tampered-policy' as never,
+        },
+        { readingVersion: 'official-reading-artifact-test-v1' },
+      ),
+    ).toThrow(/source-summary presentation policy version/u);
   });
 
   it('rejects a report that declares a different explainability binding policy', () => {
