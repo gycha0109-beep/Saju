@@ -187,12 +187,25 @@ function assertReportBinding(
       'Official Reading artifact received an unsupported structured insight materialization policy version.',
     );
   }
+  const hasSourceHints = report.sections.some((section) =>
+    section.blocks.some((block) => block.type === 'source_hint'),
+  );
   if (
+    report.sourceSummaryPresentationPolicyVersion !== undefined &&
     report.sourceSummaryPresentationPolicyVersion !==
-    OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION
+      OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION
   ) {
     throw new TypeError(
       'Official Reading artifact received an unsupported source-summary presentation policy version.',
+    );
+  }
+  if (
+    hasSourceHints &&
+    report.sourceSummaryPresentationPolicyVersion !==
+      OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION
+  ) {
+    throw new TypeError(
+      'Official Reading source hints require the governed source-summary presentation policy.',
     );
   }
   if (
@@ -223,8 +236,12 @@ function assertReportBinding(
       report.structuredInsightMaterializationPolicyVersion,
     explainabilityBindingPolicyVersion:
       report.explainabilityBindingPolicyVersion,
-    sourceSummaryPresentationPolicyVersion:
-      report.sourceSummaryPresentationPolicyVersion,
+    ...(report.sourceSummaryPresentationPolicyVersion === undefined
+      ? {}
+      : {
+          sourceSummaryPresentationPolicyVersion:
+            report.sourceSummaryPresentationPolicyVersion,
+        }),
     sourceSemanticHash: report.sourceSemanticHash,
     sourcePlanHash: report.sourcePlanHash,
     sections: report.sections,
