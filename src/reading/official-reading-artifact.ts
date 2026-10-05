@@ -54,6 +54,97 @@ function officialReadingStatus(
   return 'ready';
 }
 
+function assertOfficialExplainabilityBindings(
+  semantics: CanonicalReadingSemanticBundleV1,
+  report: OfficialReadingRenderedContentV1,
+): void {
+  const semanticUnitIds = new Set(semantics.units.map((unit) => unit.unitId));
+  const entriesByRef = new Map(
+    report.explainability.entries.map((entry) => [
+      entry.explainabilityRef,
+      entry,
+    ]),
+  );
+  if (entriesByRef.size !== report.explainability.entries.length) {
+    throw new TypeError(
+      'Official Reading explainability refs must be unique.',
+    );
+  }
+
+  for (const entry of report.explainability.entries) {
+    if (
+      entry.primaryUnitRefs === undefined ||
+      entry.supportingUnitRefs === undefined ||
+      entry.primaryUnitRefs.length === 0
+    ) {
+      throw new TypeError(
+        'Official Reading explainability entries require canonical unit bindings.',
+      );
+    }
+    for (const ref of [
+      ...entry.primaryUnitRefs,
+      ...entry.supportingUnitRefs,
+    ]) {
+      if (!semanticUnitIds.has(ref)) {
+        throw new TypeError(
+          'Official Reading explainability entry contains an unknown canonical unit ref.',
+        );
+      }
+    }
+  }
+
+  for (const section of report.sections) {
+    const sectionRefs = section.explainabilityRefs ?? [];
+    for (const ref of sectionRefs) {
+      if (!entriesByRef.has(ref)) {
+        throw new TypeError(
+          'Official Reading section contains a dangling explainability ref.',
+        );
+      }
+    }
+
+    const atomRefs: string[] = [];
+    const addAtomRef = (ref: string | undefined): void => {
+      if (ref === undefined || !entriesByRef.has(ref)) {
+        throw new TypeError(
+          'Official Reading visible atom is missing a valid explainability ref.',
+        );
+      }
+      if (!atomRefs.includes(ref)) atomRefs.push(ref);
+    };
+
+    for (const block of section.blocks) {
+      if (block.type === 'insights') {
+        for (const item of block.items) addAtomRef(item.explainabilityRef);
+      } else if (block.type === 'comparison') {
+        for (const item of block.perspectives) addAtomRef(item.explainabilityRef);
+      } else if (block.type === 'ambiguity') {
+        for (const scenario of block.scenarios) {
+          if (
+            scenario.explainabilityRefs === undefined ||
+            scenario.explainabilityRefs.length === 0
+          ) {
+            throw new TypeError(
+              'Official Reading ambiguity scenario is missing explainability refs.',
+            );
+          }
+          for (const ref of scenario.explainabilityRefs) addAtomRef(ref);
+        }
+      }
+    }
+
+    if (
+      atomRefs.length > 0 &&
+      (atomRefs.length !== sectionRefs.length ||
+        atomRefs.some((ref, index) => ref !== sectionRefs[index]))
+    ) {
+      throw new TypeError(
+        'Official Reading section explainability refs must equal its visible atom ref union.',
+      );
+    }
+  }
+}
+
 function assertReportBinding(
   semantics: CanonicalReadingSemanticBundleV1,
   plan: OfficialReadingPlanV1,
@@ -96,6 +187,7 @@ function assertReportBinding(
       'Official Reading artifact received an unsupported explainability binding policy version.',
     );
   }
+  assertOfficialExplainabilityBindings(semantics, report);
   if (report.sourceSemanticHash !== semantics.semanticHash) {
     throw new TypeError('Official Reading artifact report semantic hash does not match canonical semantics.');
   }
