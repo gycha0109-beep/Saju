@@ -19,6 +19,12 @@ import {
   type OfficialReadingSemanticGroup,
   type OfficialReadingSemanticLane,
 } from './official-reading-plan.js';
+import {
+  OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION,
+  resolveOfficialReadingDetailPreferenceV1,
+  type OfficialReadingDetailPreferenceResolutionV1,
+  type OfficialReadingDetailPreferenceV1,
+} from './official-reading-detail-presentation.js';
 
 export const OFFICIAL_READING_RENDERER_VERSION =
   'myeonghwa-official-reading-renderer-v1' as const;
@@ -33,6 +39,7 @@ export const OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION =
 
 export interface OfficialReadingRenderOptionsV1 {
   sourceSummaries?: readonly SourceSummary[];
+  preferredDetail?: OfficialReadingDetailPreferenceV1;
 }
 
 export interface OfficialReadingRenderedContentV1 {
@@ -47,6 +54,9 @@ export interface OfficialReadingRenderedContentV1 {
     typeof OFFICIAL_READING_EXPLAINABILITY_BINDING_POLICY_VERSION;
   sourceSummaryPresentationPolicyVersion?:
     typeof OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION;
+  detailPresentationPolicyVersion?:
+    typeof OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION;
+  detailPreferenceResolution?: OfficialReadingDetailPreferenceResolutionV1;
   reportId: string;
   reportHash: string;
   sourceSemanticHash: string;
@@ -614,6 +624,10 @@ export function renderOfficialReadingV1(
   const sections: ReadingSectionView[] = [];
   const explainabilityEntries: ExplainabilityIndex['entries'][number][] = [];
   const summariesBySourceId = sourceSummaryIndex(options.sourceSummaries);
+  const detailPreferenceResolution =
+    options.preferredDetail === undefined
+      ? undefined
+      : resolveOfficialReadingDetailPreferenceV1(options.preferredDetail);
 
   for (const section of plan.sections) {
     if (section.semanticGroup === 'evidence') continue;
@@ -722,6 +736,13 @@ export function renderOfficialReadingV1(
       : {
           sourceSummaryPresentationPolicyVersion:
             OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION,
+        }),
+    ...(detailPreferenceResolution === undefined
+      ? {}
+      : {
+          detailPresentationPolicyVersion:
+            OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION,
+          detailPreferenceResolution,
         }),
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
