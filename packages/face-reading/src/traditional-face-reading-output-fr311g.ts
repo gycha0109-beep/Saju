@@ -12,6 +12,9 @@ import {
 import {
   NAMED_FORM_CONTEXT_LINKS_FR311C,
 } from './traditional-eyebrow-eye-combination-resolver-fr311c.js';
+import {
+  NOSE_NAMED_FORM_CROSS_REGION_CONTEXTS_FR311H,
+} from './traditional-nose-cross-region-evidence-fr311h.js';
 
 export type FaceReadingOutputStatusFR311G =
   | 'conflict'
@@ -171,24 +174,46 @@ function directItem(ruleId: string): FaceReadingEvidenceItemFR311G {
 }
 
 function contextItem(contextId: string): FaceReadingEvidenceItemFR311G {
-  const context = NAMED_FORM_CONTEXT_LINKS_FR311C.find(
+  const legacyContext = NAMED_FORM_CONTEXT_LINKS_FR311C.find(
     (candidate) => candidate.contextId === contextId,
   );
-  if (context === undefined) throw new Error(`fr311g_missing_context:${contextId}`);
+  if (legacyContext !== undefined) {
+    return Object.freeze({
+      evidenceId: legacyContext.contextId,
+      kind: 'named_form_context' as const,
+      region: 'context' as const,
+      label: legacyContext.formKey,
+      sourceExpression: legacyContext.sourceExpression,
+      meaningSummary: '특정 명명형의 원문 내부에서 함께 나타나는 문맥 조건이며 독립적인 일반 조합 공식으로 확장하지 않는다.',
+      topicKey: null,
+      relationTarget: null,
+      lifeStage: null,
+      polarity: null,
+      certainty: 'context_only' as const,
+      sourceRefs: Object.freeze([legacyContext.sourceRef]),
+      modernScientificFactAuthorized: false as const,
+      productPredictionAuthorized: false as const,
+    });
+  }
+
+  const noseContext = NOSE_NAMED_FORM_CROSS_REGION_CONTEXTS_FR311H.find(
+    (candidate) => candidate.contextId === contextId,
+  );
+  if (noseContext === undefined) throw new Error(`fr311g_missing_context:${contextId}`);
 
   return Object.freeze({
-    evidenceId: context.contextId,
+    evidenceId: noseContext.contextId,
     kind: 'named_form_context' as const,
     region: 'context' as const,
-    label: context.formKey,
-    sourceExpression: context.sourceExpression,
-    meaningSummary: '특정 명명형의 원문 내부에서 함께 나타나는 문맥 조건이며 독립적인 일반 조합 공식으로 확장하지 않는다.',
+    label: noseContext.formKey,
+    sourceExpression: noseContext.sourceExpression,
+    meaningSummary: noseContext.meaningSummary,
     topicKey: null,
     relationTarget: null,
     lifeStage: null,
     polarity: null,
     certainty: 'context_only' as const,
-    sourceRefs: Object.freeze([context.sourceRef]),
+    sourceRefs: Object.freeze([...noseContext.sourceRefs]),
     modernScientificFactAuthorized: false as const,
     productPredictionAuthorized: false as const,
   });
