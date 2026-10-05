@@ -190,6 +190,8 @@ function collectInternalTokens(artifact: ReadingArtifact): readonly string[] {
 
   for (const entry of artifact.explainability.entries) {
     add(entry.explainabilityRef);
+    entry.primaryUnitRefs.forEach(add);
+    entry.supportingUnitRefs.forEach(add);
     entry.claimIds.forEach(add);
     entry.factRefs.forEach(add);
     entry.methodologyIds.forEach(add);
@@ -201,7 +203,15 @@ function collectInternalTokens(artifact: ReadingArtifact): readonly string[] {
     section.disclosureRefs?.forEach(add);
     section.explainabilityRefs?.forEach(add);
     for (const block of section.blocks) {
-      if (block.type === 'source_hint') add(block.explainabilityRef);
+      if (block.type === 'source_hint') {
+        add(block.explainabilityRef);
+      } else if (block.type === 'insights') {
+        block.items.forEach((item) => add(item.explainabilityRef));
+      } else if (block.type === 'comparison') {
+        block.perspectives.forEach((item) => add(item.explainabilityRef));
+      } else if (block.type === 'ambiguity') {
+        block.scenarios.forEach((item) => item.explainabilityRefs.forEach(add));
+      }
     }
   }
 
