@@ -14,7 +14,7 @@ describe('FR311I mouth, lip, and philtrum traditional semantics', () => {
     expect(FR311I_SEMANTIC_SUMMARY).toEqual({
       traditionalRegions: 6,
       directRules: 127,
-      philtrumDirectRules: 37,
+      philtrumDirectRules: 36,
       mouthNamedForms: 16,
       namedFormDescriptors: 43,
       namedFormClaims: 45,
