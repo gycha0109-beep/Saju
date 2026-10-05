@@ -9,9 +9,11 @@ import type {
 } from './canonical-reading-semantics.js';
 import {
   OFFICIAL_READING_CONCISE_PRESENTATION_PROFILE_SCHEMA_VERSION,
+  OFFICIAL_READING_CONCISE_PRESENTATION_READINESS_POLICY_VERSION,
   OFFICIAL_READING_STANDARD_PRESENTATION_FINGERPRINT_POLICY_VERSION,
   officialReadingStandardPresentationHashV1,
   type OfficialReadingConcisePresentationProfileV1,
+  type OfficialReadingConcisePresentationReadinessV1,
 } from './official-reading-concise-presentation.js';
 import type { OfficialReadingPlanV1 } from './official-reading-plan.js';
 
@@ -198,5 +200,24 @@ export function buildApprovedOfficialReadingConciseProfilesV1(
     );
     if (scenarioOrder !== 0) return scenarioOrder;
     return left.profileId.localeCompare(right.profileId);
+  });
+}
+
+
+export function approvedOfficialReadingConciseProfileSetHashV1(
+  readiness: OfficialReadingConcisePresentationReadinessV1,
+): string | undefined {
+  if (readiness.state !== 'ready') return undefined;
+  return deterministicContentHash({
+    registryVersion: OFFICIAL_READING_APPROVED_CONCISE_REGISTRY_VERSION,
+    readinessPolicyVersion:
+      OFFICIAL_READING_CONCISE_PRESENTATION_READINESS_POLICY_VERSION,
+    bindings: readiness.bindings.map((binding) => ({
+      unitId: binding.unitId,
+      profileId: binding.profileId,
+      profileVersion: binding.profileVersion,
+      sourcePresentationHash: binding.sourcePresentationHash,
+      conciseText: binding.conciseText,
+    })),
   });
 }
