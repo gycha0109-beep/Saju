@@ -19,6 +19,7 @@ import {
   type CalculationAdapterOptions,
 } from './manseryeok-adapter.js';
 import { enrichCanonicalStructuralRelations } from './structural-relation-facts.js';
+import { enrichCanonicalStemInteractionSettlements } from './stem-interaction-settlement-facts.js';
 
 const SOLAR_TERM_MIN_YEAR = 1800;
 const SOLAR_TERM_MAX_YEAR = 2300;
@@ -250,7 +251,8 @@ export function calculateCanonicalSajuSnapshot(
     const hiddenStemSnapshot = enrichCanonicalHiddenStems(adapterSnapshot);
     const structuralRelationSnapshot = enrichCanonicalStructuralRelations(hiddenStemSnapshot);
     const branchClashContextSnapshot = enrichCanonicalBranchClashContexts(structuralRelationSnapshot);
-    const snapshot = enrichCanonicalBranchClashQualifierObservations(branchClashContextSnapshot);
+    const branchClashQualifierSnapshot = enrichCanonicalBranchClashQualifierObservations(branchClashContextSnapshot);
+    const snapshot = enrichCanonicalStemInteractionSettlements(branchClashQualifierSnapshot);
     enforceScenarioLimit(snapshot, options);
     const solarTermContext = buildSolarTermContext(snapshot, policy);
     return solarTermContext === undefined ? snapshot : { ...snapshot, solarTermContext };

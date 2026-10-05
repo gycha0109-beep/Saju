@@ -3,6 +3,7 @@ export * from './calculation/calculation-engine.js';
 export * from './calculation/calculation-policy-profiles.js';
 export * from './calculation/hidden-stems.js';
 export * from './calculation/structural-relations.js';
+export * from './calculation/stem-interaction-settlement.js';
 export * from './interpretation/rule-registry.js';
 export * from './interpretation/reviewer-trust.js';
 export * from './interpretation/promotion-authority.js';
