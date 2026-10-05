@@ -599,13 +599,20 @@ describe('OfficialReadingPlanV1', () => {
       throw new Error('fixture must contain interpretation section');
     }
     const reorderedPrimaryRefs = [...interpretation.primaryUnitRefs].reverse();
+    const reorderedEvidenceBindings = [
+      ...interpretation.primaryEvidenceBindings,
+    ].reverse();
     expect(() =>
       assertOfficialReadingPlanV1(
         {
           ...plan,
           sections: plan.sections.map((section) =>
             section.semanticGroup === 'interpretation'
-              ? { ...section, primaryUnitRefs: reorderedPrimaryRefs }
+              ? {
+                  ...section,
+                  primaryUnitRefs: reorderedPrimaryRefs,
+                  primaryEvidenceBindings: reorderedEvidenceBindings,
+                }
               : section,
           ),
           planId: 'official_reading_plan_fake',
