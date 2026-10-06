@@ -285,6 +285,23 @@ function assertTopLevelInput(input) {
     throw new Error('LOCAL_INPUT_SCHEMA_VERSION_MISMATCH');
   }
 
+  if (input.candidate !== undefined && input.candidate !== null) {
+    assertObject(input.candidate, 'CANDIDATE_INPUT_INVALID');
+    for (const key of [
+      'candidateId',
+      'runtimeContractVersion',
+      'modelId',
+      'modelRevision',
+    ]) {
+      if (
+        typeof input.candidate[key] !== 'string' ||
+        input.candidate[key].trim().length === 0
+      ) {
+        throw new Error(`CANDIDATE_IDENTITY_FIELD_INVALID:${key}`);
+      }
+    }
+  }
+
   assertObject(input.fr308, 'FR308_INPUT_MISSING');
   if (!Array.isArray(input.fr308.caseFindings)) {
     throw new Error('FR308_CASE_FINDINGS_MISSING');
@@ -320,12 +337,22 @@ async function execute(input) {
     adjudicateExpanded,
   } = await importContracts();
 
+  const candidate =
+    input.candidate ?? {
+      candidateId: undefined,
+      runtimeContractVersion: runnerContractVersion,
+      modelId: model.id,
+      modelRevision: model.revision,
+    };
+
   const fr308 = issueBundle({
     schemaVersion:
       'fr308-bounded-hairline-bundle-input-v1',
-    runnerContractVersion,
-    modelId: model.id,
-    modelRevision: model.revision,
+    candidateId: candidate.candidateId,
+    runnerContractVersion:
+      candidate.runtimeContractVersion,
+    modelId: candidate.modelId,
+    modelRevision: candidate.modelRevision,
     localOnlyExecution: true,
     caseFindings: input.fr308.caseFindings,
   });
@@ -333,10 +360,11 @@ async function execute(input) {
   const fr310 = adjudicateBounded({
     schemaVersion:
       'fr310-hairline-evidence-adjudication-input-v1',
+    candidateId: candidate.candidateId,
     bundleReceipt: fr308,
     caseFindings: input.fr308.caseFindings,
-    modelId: model.id,
-    modelRevision: model.revision,
+    modelId: candidate.modelId,
+    modelRevision: candidate.modelRevision,
     humanReview: input.fr310.humanReview,
   });
 
@@ -356,8 +384,9 @@ async function execute(input) {
     schemaVersion:
       'fr312-expanded-hairline-validation-input-v1',
     prerequisiteAdjudication: fr310,
-    modelId: model.id,
-    modelRevision: model.revision,
+    candidateId: candidate.candidateId,
+    modelId: candidate.modelId,
+    modelRevision: candidate.modelRevision,
     humanReviewCompleted:
       input.fr312.humanReviewCompleted,
     sessionLabelsOpaque:
