@@ -342,6 +342,7 @@ function normalizedDefinition(
     );
   }
   const sourceRefs = normalizedStrings(definition.provenance.sourceRefs);
+  const scenarioRef = optional(definition.scenarioRef);
   if (sourceRefs.length === 0) {
     throw new TypeError(
       'Official Reading detailed material requires provenance.sourceRefs.',
@@ -361,9 +362,7 @@ function normalizedDefinition(
         'methodologyRef.version',
       ),
     },
-    ...(optional(definition.scenarioRef) === undefined
-      ? {}
-      : { scenarioRef: optional(definition.scenarioRef) }),
+    ...(scenarioRef === undefined ? {} : { scenarioRef }),
     role: definition.role,
     approvedText: required(definition.approvedText, 'approvedText'),
     standardText: definition.standardText,
