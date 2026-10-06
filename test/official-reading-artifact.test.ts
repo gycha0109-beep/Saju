@@ -535,10 +535,8 @@ describe('Official Reading Artifact V1', () => {
       ),
     ).toThrow(/detailed presentation metadata does not match/u);
 
-    const {
-      detailedRealizationPolicyVersion: _omittedDetailedPolicy,
-      ...reportWithoutDetailedPolicy
-    } = report;
+    const reportWithoutDetailedPolicy = { ...report };
+    delete reportWithoutDetailedPolicy.detailedRealizationPolicyVersion;
     expect(() =>
       assembleOfficialReadingArtifactV1(
         currentSnapshot,
