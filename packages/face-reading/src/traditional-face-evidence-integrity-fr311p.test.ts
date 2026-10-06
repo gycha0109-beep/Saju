@@ -52,6 +52,7 @@ import {
 } from './traditional-ear-cross-region-evidence-fr311m.js';
 import {
   COMBINATION_KEY_OWNER_CONFLICTS_FR311P,
+  CROSS_LAYER_KEY_REUSES_FR311P,
   DUPLICATE_CANONICAL_EVIDENCE_IDS_FR311P,
   FACE_CANONICAL_EVIDENCE_FR311P,
   FACE_EVIDENCE_REUSES_FR311P,
@@ -169,6 +170,20 @@ describe('FR311P face-wide evidence integrity audit', () => {
         ),
       ).toHaveLength(1);
     }
+  });
+
+  it('keeps FR311K relation-key ownership when FR311M contributes a new witness', () => {
+    expect(FR311P_EVIDENCE_INVENTORY.crossLayerKeyReuses).toBe(1);
+    expect(CROSS_LAYER_KEY_REUSES_FR311P).toEqual([
+      expect.objectContaining({
+        key: 'ear_mouth.earlobe_toward_mouth',
+        keyOwner: 'fr311k',
+        evidenceOwner: 'fr311m',
+        evidenceId: 'fr311m.relation.earlobe_toward_mouth.634a',
+        kind: 'relation',
+      }),
+    ]);
+    expect(RELATION_KEY_OWNER_CONFLICTS_FR311P).toEqual([]);
   });
 
   it('keeps unsupported topic tokens visible without creating orphan evidence', () => {
