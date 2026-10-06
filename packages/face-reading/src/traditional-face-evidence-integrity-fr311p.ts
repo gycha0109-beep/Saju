@@ -398,6 +398,27 @@ export function assertFaceWideEvidenceIntegrityFR311P(): void {
   if (FR311P_EVIDENCE_INVENTORY.namedClaims !== 348) {
     throw new Error('fr311p_named_claim_count_drift:' + FR311P_EVIDENCE_INVENTORY.namedClaims);
   }
+  if (FR311P_EVIDENCE_INVENTORY.directRules !== 230) {
+    throw new Error('fr311p_direct_rule_count_drift:' + FR311P_EVIDENCE_INVENTORY.directRules);
+  }
+  if (FR311P_EVIDENCE_INVENTORY.eyebrowEyeDirectCrossRegionEvidence !== 10) {
+    throw new Error(
+      'fr311p_eyebrow_eye_cross_region_count_drift:' +
+      FR311P_EVIDENCE_INVENTORY.eyebrowEyeDirectCrossRegionEvidence,
+    );
+  }
+  if (FR311P_EVIDENCE_INVENTORY.noseDirectCrossRegionRelations !== 3) {
+    throw new Error(
+      'fr311p_nose_cross_region_count_drift:' +
+      FR311P_EVIDENCE_INVENTORY.noseDirectCrossRegionRelations,
+    );
+  }
+  if (FR311P_EVIDENCE_INVENTORY.mouthPhiltrumDirectCrossRegionEvidence !== 21) {
+    throw new Error(
+      'fr311p_mouth_cross_region_count_drift:' +
+      FR311P_EVIDENCE_INVENTORY.mouthPhiltrumDirectCrossRegionEvidence,
+    );
+  }
   if (FR311P_EVIDENCE_INVENTORY.earCrossRegionOwnedEvidence !== 22) {
     throw new Error(
       'fr311p_ear_owned_evidence_count_drift:' +
@@ -409,6 +430,32 @@ export function assertFaceWideEvidenceIntegrityFR311P(): void {
       'fr311p_ear_reuse_count_drift:' +
       FR311P_EVIDENCE_INVENTORY.earCrossRegionReusedEvidence,
     );
+  }
+  if (FR311P_EVIDENCE_INVENTORY.canonicalEvidence !== 621) {
+    throw new Error(
+      'fr311p_canonical_evidence_count_drift:' +
+      FR311P_EVIDENCE_INVENTORY.canonicalEvidence,
+    );
+  }
+  if (FR311P_EVIDENCE_INVENTORY.relationKeys !== 24) {
+    throw new Error(
+      'fr311p_relation_key_count_drift:' +
+      FR311P_EVIDENCE_INVENTORY.relationKeys,
+    );
+  }
+  if (FR311P_EVIDENCE_INVENTORY.combinationKeys !== 21) {
+    throw new Error(
+      'fr311p_combination_key_count_drift:' +
+      FR311P_EVIDENCE_INVENTORY.combinationKeys,
+    );
+  }
+  if (
+    FR311P_CONTEXT_INVENTORY.eyebrowEyeNamedFormContexts !== 4 ||
+    FR311P_CONTEXT_INVENTORY.noseNamedFormAndCompanionContexts !== 12 ||
+    FR311P_CONTEXT_INVENTORY.mouthNamedFormContexts !== 9 ||
+    FR311P_CONTEXT_INVENTORY.earNamedFormContexts !== 10
+  ) {
+    throw new Error('fr311p_context_inventory_drift');
   }
 
   if (DUPLICATE_CANONICAL_EVIDENCE_IDS_FR311P.length > 0) {
