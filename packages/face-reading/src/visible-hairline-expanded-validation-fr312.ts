@@ -3,8 +3,8 @@ import {
   type FR310AdjudicationReceipt,
 } from './visible-hairline-evidence-adjudicator-fr310.js';
 import {
-  FR307_PRIMARY_MODEL,
-} from './visible-hairline-empirical-runner-fr307.js';
+  resolveFR306EmpiricalRuntimeCandidate,
+} from './visible-hairline-runtime-candidates-fr306.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export const FR312_EXPANDED_HAIRLINE_VALIDATION_CONTRACT_VERSION =
@@ -67,9 +67,8 @@ export interface FR312ExpandedValidationInput {
     'fr312-expanded-hairline-validation-input-v1';
   readonly prerequisiteAdjudication:
     FR310AdjudicationReceipt;
-  readonly modelId: typeof FR307_PRIMARY_MODEL.id;
-  readonly modelRevision:
-    typeof FR307_PRIMARY_MODEL.revision;
+  readonly modelId: string;
+  readonly modelRevision: string;
   readonly humanReviewCompleted: boolean;
   readonly sessionLabelsOpaque: boolean;
   readonly demographicAttributesCollected: false;
@@ -122,6 +121,10 @@ export interface FR312ExpandedValidationReceipt {
   readonly subjectCoverage: FR312SubjectCoverage;
   readonly representativeOrdinaryRgbReady: false;
   readonly representativeCoverageReviewRequired: true;
+  readonly candidateId: string;
+  readonly runtimeProviderId: string;
+  readonly exactRevision: string;
+  readonly runnerContractVersion: string;
   readonly exactModelRevisionBound: true;
   readonly deidentifiedBoundarySatisfied: boolean;
   readonly nextAction:
@@ -299,11 +302,23 @@ export function adjudicateExpandedHairlineValidationFR312(
 
   assertPrerequisite(input.prerequisiteAdjudication);
 
+  const candidate = resolveFR306EmpiricalRuntimeCandidate(
+    input.modelId,
+    input.modelRevision,
+    input.prerequisiteAdjudication.runnerContractVersion,
+  );
+
   if (
-    input.modelId !== FR307_PRIMARY_MODEL.id ||
-    input.modelRevision !== FR307_PRIMARY_MODEL.revision
+    input.prerequisiteAdjudication.candidateId !==
+      candidate.candidateId ||
+    input.prerequisiteAdjudication.runtimeProviderId !==
+      candidate.runtimeProviderId ||
+    input.prerequisiteAdjudication.exactRevision !==
+      candidate.exactRevision ||
+    input.prerequisiteAdjudication.runnerContractVersion !==
+      candidate.runnerContractVersion
   ) {
-    fail('exact model identity/revision mismatch.');
+    fail('FR310 candidate identity does not match FR312 input.');
   }
 
   if (input.demographicAttributesCollected !== false) {
@@ -546,6 +561,11 @@ export function adjudicateExpandedHairlineValidationFR312(
     subjectCoverage: input.subjectCoverage,
     representativeOrdinaryRgbReady: false as const,
     representativeCoverageReviewRequired: true as const,
+    candidateId: candidate.candidateId,
+    runtimeProviderId: candidate.runtimeProviderId,
+    exactRevision: candidate.exactRevision,
+    runnerContractVersion:
+      input.prerequisiteAdjudication.runnerContractVersion,
     exactModelRevisionBound: true as const,
     deidentifiedBoundarySatisfied,
     nextAction,
