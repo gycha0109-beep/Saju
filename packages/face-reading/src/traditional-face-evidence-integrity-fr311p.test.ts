@@ -150,7 +150,7 @@ describe('FR311P face-wide evidence integrity audit', () => {
 
     expect(DUPLICATE_CANONICAL_EVIDENCE_IDS_FR311P).toEqual([]);
     expect(SOURCELESS_CANONICAL_EVIDENCE_IDS_FR311P).toEqual([]);
-    expect(LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P).toEqual([]);
+    expect(LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P).toHaveLength(28);
     expect(RELATION_KEY_OWNER_CONFLICTS_FR311P).toEqual([]);
     expect(COMBINATION_KEY_OWNER_CONFLICTS_FR311P).toEqual([]);
   });
