@@ -29,10 +29,19 @@ describe('FR312B direct-rule observation study triage', () => {
       FR312B_TRIAGE_SUMMARY.bindingProhibited;
 
     expect(total).toBe(230);
-
-    console.info(
-      'FR312B_TRIAGE_SUMMARY=' + JSON.stringify(FR312B_TRIAGE_SUMMARY),
-    );
+    expect(FR312B_TRIAGE_SUMMARY).toMatchObject({
+      directRules: 230,
+      singleRegionSurfaceCandidates: 68,
+      constructMappingRequired: 46,
+      observationSurfaceGap: 81,
+      manualContextOrBehaviorOnly: 6,
+      phraseUncertainManualOnly: 29,
+      bindingProhibited: 0,
+      shortlistCount: 68,
+      automaticTraditionalBindingsAuthorized: 0,
+      thresholdNeedAdjudicated: 0,
+      metricThresholdsAuthorized: 0,
+    });
   });
 
   it('shortlists only direct-clear single-region morphology rules with materialized observation surfaces', () => {
