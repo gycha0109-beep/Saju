@@ -1,4 +1,8 @@
 import {
+  FR306_PRIMARY_CANDIDATE_ID,
+  resolveEmpiricalHairlineCandidateIdentityFR306,
+} from './visible-hairline-runtime-candidates-fr306.js';
+import {
   FR307_CURRENT_GATE,
   FR307_LOCAL_RUNNER,
   FR307_PRIMARY_MODEL,
@@ -59,12 +63,10 @@ export interface FR308DeidentifiedCaseFinding {
 export interface FR308BoundedBundleInput {
   readonly schemaVersion:
     'fr308-bounded-hairline-bundle-input-v1';
-  readonly runnerContractVersion:
-    typeof FR307_VISIBLE_HAIRLINE_EMPIRICAL_RUNNER_CONTRACT_VERSION;
-  readonly modelId:
-    typeof FR307_PRIMARY_MODEL.id;
-  readonly modelRevision:
-    typeof FR307_PRIMARY_MODEL.revision;
+  readonly candidateId?: string;
+  readonly runnerContractVersion: string;
+  readonly modelId: string;
+  readonly modelRevision: string;
   readonly localOnlyExecution: true;
   readonly caseFindings:
     readonly FR308DeidentifiedCaseFinding[];
@@ -77,6 +79,10 @@ export interface FR308BoundedBundleReceipt {
     typeof FR308_BOUNDED_HAIRLINE_CAPTURE_CONTRACT_VERSION;
   readonly authorityState:
     'bounded_deidentified_empirical_evidence_only';
+  readonly candidateId: string;
+  readonly runtimeContractVersion: string;
+  readonly modelId: string;
+  readonly modelRevision: string;
   readonly captureCaseCount: 4;
   readonly captureCases:
     readonly FR308CaptureCase[];
@@ -213,15 +219,19 @@ export function issueBoundedHairlineBundleReceiptFR308(
   if (
     input.schemaVersion !==
       'fr308-bounded-hairline-bundle-input-v1' ||
-    input.runnerContractVersion !==
-      FR307_VISIBLE_HAIRLINE_EMPIRICAL_RUNNER_CONTRACT_VERSION ||
-    input.modelId !== FR307_PRIMARY_MODEL.id ||
-    input.modelRevision !==
-      FR307_PRIMARY_MODEL.revision ||
     input.localOnlyExecution !== true
   ) {
     fail('bundle input identity/runtime boundary drift.');
   }
+
+  const candidateIdentity =
+    resolveEmpiricalHairlineCandidateIdentityFR306({
+      candidateId: input.candidateId,
+      modelId: input.modelId,
+      modelRevision: input.modelRevision,
+      runtimeContractVersion:
+        input.runnerContractVersion,
+    });
 
   if (input.caseFindings.length !== 4) {
     fail('bounded bundle requires exactly four case findings.');
@@ -249,6 +259,11 @@ export function issueBoundedHairlineBundleReceiptFR308(
       FR308_BOUNDED_HAIRLINE_CAPTURE_CONTRACT_VERSION,
     authorityState:
       'bounded_deidentified_empirical_evidence_only' as const,
+    candidateId: candidateIdentity.candidateId,
+    runtimeContractVersion:
+      candidateIdentity.runtimeContractVersion,
+    modelId: candidateIdentity.modelId,
+    modelRevision: candidateIdentity.modelRevision,
     captureCaseCount: 4 as const,
     captureCases: FR308_CAPTURE_CASES,
     localOnlyExecutionVerifiedByContract: true as const,
@@ -269,7 +284,18 @@ export function issueBoundedHairlineBundleReceiptFR308(
 }
 
 export function assertFR308Protocol(): void {
+  const primaryIdentity =
+    resolveEmpiricalHairlineCandidateIdentityFR306({
+      candidateId: FR306_PRIMARY_CANDIDATE_ID,
+      modelId: FR307_PRIMARY_MODEL.id,
+      modelRevision: FR307_PRIMARY_MODEL.revision,
+      runtimeContractVersion:
+        FR307_VISIBLE_HAIRLINE_EMPIRICAL_RUNNER_CONTRACT_VERSION,
+    });
+
   if (
+    primaryIdentity.candidateId !==
+      FR306_PRIMARY_CANDIDATE_ID ||
     FR308_CAPTURE_CASES.length !== 4 ||
     new Set(FR308_CAPTURE_CASES).size !== 4 ||
     FR308_PROTOCOL.minimumImagesPerCase !== 1 ||
