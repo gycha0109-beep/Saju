@@ -196,6 +196,30 @@ function syntheticBaselineBundle(summary: string) {
   });
 }
 
+function syntheticUnsupportedDetailedBundle() {
+  const base = syntheticBaselineClaim(
+    '승인 상세 재료가 없는 유효한 합성 공식 의미입니다.',
+  );
+  const claim: InterpretationClaim = {
+    ...base,
+    claimId: 'general-unapproved-detailed-test',
+    claimType: 'GENERAL_NATAL_UNAPPROVED_DETAILED_TEST',
+    predicate: 'unapproved_detailed_test',
+    ruleRefs: [
+      {
+        ruleId: 'RULE-GENERAL-NATAL-UNAPPROVED-DETAILED-TEST',
+        version: '0.1.0-test',
+        evaluationId: 'eval-general-unapproved-detailed-test',
+      },
+    ],
+  };
+  return buildCanonicalReadingSemanticBundleV1({
+    intent: { domain: 'general', temporalScope: 'natal' },
+    evidence: syntheticEvidence([claim]),
+    targetClaimIds: [claim.claimId],
+  });
+}
+
 function syntheticThemeClaim(
   upstreamClaimRefs: readonly string[],
 ): InterpretationClaim {
@@ -421,7 +445,7 @@ describe('Official Reading general natal detailed material pilot', () => {
         relationshipScope: 'spouse' as const,
       },
     };
-    const plan = buildOfficialReadingPlanV1(spouseLike);
+    const plan = buildOfficialReadingPlanV1(generalRelationship);
     const coverage = assessApprovedOfficialReadingDetailedCoverageV1(
       spouseLike,
       plan,
@@ -616,31 +640,21 @@ describe('Official Reading detailed renderer connection', () => {
     ).toBeUndefined();
   });
 
-  it('fails closed instead of rendering detail outside approved authority', () => {
-    const generalRelationship = semanticsFor({
-      label: 'relationship-spouse-renderer-boundary',
-      intent: {
-        domain: 'relationship',
-        temporalScope: 'natal',
-        relationshipScope: 'general',
-      },
-      registry: createRelationshipNatalReadingCandidateRegistry(NOW),
-    });
-    const spouseLike = {
-      ...generalRelationship,
-      intent: {
-        domain: 'relationship' as const,
-        temporalScope: 'natal' as const,
-        relationshipScope: 'spouse' as const,
-      },
-    };
-    const plan = buildOfficialReadingPlanV1(spouseLike);
+  it('fails closed instead of partially rendering a valid unit without approved detailed material', () => {
+    const semantics = syntheticUnsupportedDetailedBundle();
+    const plan = buildOfficialReadingPlanV1(semantics);
+    const coverage = assessApprovedOfficialReadingDetailedCoverageV1(
+      semantics,
+      plan,
+    );
 
+    expect(coverage.state).toBe('incomplete');
+    expect(coverage.missingTargetCount).toBeGreaterThan(0);
     expect(
-      buildApprovedOfficialReadingDetailedRealizationV1(spouseLike, plan),
+      buildApprovedOfficialReadingDetailedRealizationV1(semantics, plan),
     ).toBeUndefined();
     expect(() =>
-      renderApprovedDetailedOfficialReadingV1(spouseLike, plan),
+      renderApprovedDetailedOfficialReadingV1(semantics, plan),
     ).toThrow(/requires complete current detailed material/iu);
   });
 
