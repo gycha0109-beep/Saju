@@ -16,6 +16,7 @@ import type {
 import { BRANCH_CLASH_CONTEXT_ENRICHED_CANONICAL_SCHEMA_VERSION } from '../src/calculation/branch-clash-context-facts.js';
 import { BRANCH_CLASH_QUALIFIER_OBSERVATION_SCHEMA_VERSION } from '../src/calculation/branch-clash-qualifier-observation-facts.js';
 import { STRUCTURAL_RELATION_ENRICHED_CANONICAL_SCHEMA_VERSION } from '../src/calculation/structural-relation-facts.js';
+import { STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION } from '../src/calculation/stem-interaction-settlement-facts.js';
 
 const EXPECTED_MEMBERSHIP: Readonly<Record<EarthlyBranch, readonly HeavenlyStem[]>> = {
   자: ['계'],
@@ -81,9 +82,10 @@ describe('hidden-stem structural enrichment', () => {
     expect(ENRICHED_CANONICAL_SCHEMA_VERSION).toBe('saju-canonical-v1.1');
     expect(STRUCTURAL_RELATION_ENRICHED_CANONICAL_SCHEMA_VERSION).toBe('saju-canonical-v1.2');
     expect(BRANCH_CLASH_CONTEXT_ENRICHED_CANONICAL_SCHEMA_VERSION).toBe('saju-canonical-v1.3');
-    expect(snapshot.schemaVersion).toBe(BRANCH_CLASH_QUALIFIER_OBSERVATION_SCHEMA_VERSION);
-    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.4');
-    expect(snapshot.provenance.schema.version).toBe(BRANCH_CLASH_QUALIFIER_OBSERVATION_SCHEMA_VERSION);
+    expect(BRANCH_CLASH_QUALIFIER_OBSERVATION_SCHEMA_VERSION).toBe('saju-canonical-v1.4');
+    expect(snapshot.schemaVersion).toBe(STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION);
+    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.5');
+    expect(snapshot.provenance.schema.version).toBe(STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION);
     expect(snapshot.derivedFacts.hiddenStems).toBeDefined();
 
     const hidden = snapshot.derivedFacts.hiddenStems;
