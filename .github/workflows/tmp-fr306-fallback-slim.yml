@@ -1,0 +1,69 @@
+name: tmp-fr306-fallback-slim
+
+on:
+  push:
+    branches:
+      - ops/tmp-fr306-fallback-runtime-20261006
+    paths:
+      - .github/workflows/tmp-fr306-fallback-slim.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  slim:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: fr306-fallback-runtime-parts
+          path: source
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 37420626431
+
+      - name: Extract minimal runtime only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p slim/bundle/site-packages
+          cat source/fallback-runtime.part.* | tar -x -C slim             ./bundle/grounding-dino             ./bundle/sam2             ./bundle/site-packages/transformers             ./bundle/site-packages/transformers-4.57.1.dist-info             ./bundle/site-packages/tokenizers             ./bundle/site-packages/tokenizers-0.22.2.dist-info             ./bundle/site-packages/huggingface_hub             ./bundle/site-packages/huggingface_hub-0.35.3.dist-info             ./bundle/site-packages/safetensors             ./bundle/site-packages/safetensors-0.8.0.dist-info             ./bundle/site-packages/einops             ./bundle/site-packages/einops-0.8.2.dist-info || true
+
+          du -sh slim
+          tar -cf slim-runtime.tar -C slim .
+          split -b 240M -d -a 2 slim-runtime.tar slim.part.
+          ls -lh slim.part.*
+
+          mkdir -p uploads
+          for p in slim.part.*; do
+            suffix="${p##*.}"
+            mkdir -p "uploads/$suffix"
+            mv "$p" "uploads/$suffix/"
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/00/*') != '' }}
+        with: { name: fr306-slim-00, path: uploads/00, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/01/*') != '' }}
+        with: { name: fr306-slim-01, path: uploads/01, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/02/*') != '' }}
+        with: { name: fr306-slim-02, path: uploads/02, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/03/*') != '' }}
+        with: { name: fr306-slim-03, path: uploads/03, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/04/*') != '' }}
+        with: { name: fr306-slim-04, path: uploads/04, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/05/*') != '' }}
+        with: { name: fr306-slim-05, path: uploads/05, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/06/*') != '' }}
+        with: { name: fr306-slim-06, path: uploads/06, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/07/*') != '' }}
+        with: { name: fr306-slim-07, path: uploads/07, retention-days: 1, compression-level: 0 }
