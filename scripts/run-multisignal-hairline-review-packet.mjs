@@ -833,7 +833,9 @@ function syntheticWorksheet() {
     });
   };
 
-  FR308_CASES.forEach((caseName) => {\n    add(caseName, null, null);\n  });
+  FR308_CASES.forEach((caseName) => {
+    add(caseName, null, null);
+  });
 
   FR312_CASES.forEach((caseName, index) => {
     add(caseName === FR308_CASES[0] ? caseName : null, caseName, `session-${index % 3}`);
