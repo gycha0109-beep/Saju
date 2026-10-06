@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "multisignal-visible-hairline-manifest-v1",
+  "records": [
+    {
+      "recordId": "exp-01",
+      "sourcePath": "/private/exp-01.jpg",
+      "experimentTag": "clear_visible_interface",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-02",
+      "sourcePath": "/private/exp-02.jpg",
+      "experimentTag": "clear_visible_interface",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-03",
+      "sourcePath": "/private/exp-03.jpg",
+      "experimentTag": "partial_hair_occlusion",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-04",
+      "sourcePath": "/private/exp-04.jpg",
+      "experimentTag": "partial_hair_occlusion",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-05",
+      "sourcePath": "/private/exp-05.jpg",
+      "experimentTag": "substantial_hair_occlusion",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-06",
+      "sourcePath": "/private/exp-06.jpg",
+      "experimentTag": "upper_frame_truncation",
+      "frameTopTruncated": true,
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-07",
+      "sourcePath": "/private/exp-07.jpg",
+      "experimentTag": "m_or_widows_peak_visible_contour",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-08",
+      "sourcePath": "/private/exp-08.jpg",
+      "experimentTag": "m_or_widows_peak_visible_contour",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-09",
+      "sourcePath": "/private/exp-09.jpg",
+      "experimentTag": "side_recession_or_asymmetry",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-10",
+      "sourcePath": "/private/exp-10.jpg",
+      "experimentTag": "side_recession_or_asymmetry",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-11",
+      "sourcePath": "/private/exp-11.jpg",
+      "experimentTag": "low_local_color_contrast",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-12",
+      "sourcePath": "/private/exp-12.jpg",
+      "experimentTag": "low_local_color_contrast",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-13",
+      "sourcePath": "/private/exp-13.jpg",
+      "experimentTag": "background_contrast_stress",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-14",
+      "sourcePath": "/private/exp-14.jpg",
+      "experimentTag": "no_visible_hairline_control",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-15",
+      "sourcePath": "/private/exp-15.jpg",
+      "experimentTag": "no_visible_hairline_control",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-16",
+      "sourcePath": "/private/exp-16.jpg",
+      "experimentTag": "low_color_contrast_short_hair",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-17",
+      "sourcePath": "/private/exp-17.jpg",
+      "experimentTag": "long_hair_visible_forehead",
+      "qaOverlay": true
+    },
+    {
+      "recordId": "exp-18",
+      "sourcePath": "/private/exp-18.jpg",
+      "experimentTag": "no_visible_hairline_control",
+      "qaOverlay": true
+    }
+  ]
+}
