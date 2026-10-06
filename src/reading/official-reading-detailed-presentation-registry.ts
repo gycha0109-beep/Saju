@@ -4,6 +4,7 @@ import type {
   CanonicalReadingSemanticUnitV1,
 } from './canonical-reading-semantics.js';
 import type {
+  ApprovedOfficialReadingDetailedMaterialDefinitionV1,
   OfficialReadingDetailedDomainKeyV1,
   OfficialReadingDetailedMaterialRoleV1,
 } from './official-reading-detailed-presentation-definition.js';
@@ -40,6 +41,14 @@ export const APPROVED_OFFICIAL_READING_DETAILED_SOURCE_PROFILES_V1:
   readonly ApprovedOfficialReadingDetailedSourceProfileV1[] = Object.freeze([
     ...GENERAL_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
   ]);
+
+/**
+ * Bound material records remain request-specific because their semantic keys and
+ * currentness baselines come from the current canonical bundle and plan.
+ */
+export const APPROVED_OFFICIAL_READING_DETAILED_MATERIALS_V1:
+  readonly ApprovedOfficialReadingDetailedMaterialDefinitionV1[] =
+  Object.freeze([]);
 
 export interface OfficialReadingDetailedDomainCoverageV1 {
   domainKey?: OfficialReadingDetailedDomainKeyV1;
