@@ -13,7 +13,7 @@ import type { ResolvedRuleRegistrySnapshot } from '../src/interpretation/rule-re
 import { buildPreviewSemanticQualifierBindingsV1 } from '../src/preview/preview-semantic-qualifier-projection.js';
 import { buildPreviewSemanticTextBindingsV1 } from '../src/preview/preview-semantic-text-projection.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
-import { createCareerNatalReadingCandidateRegistry } from '../src/research/career-natal-reading-candidate.js';
+import { createRelationshipNatalReadingCandidateRegistry } from '../src/research/relationship-natal-reading-candidate.js';
 import {
   GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
   GENERAL_NATAL_USEFUL_READING_SOURCE,
@@ -403,20 +403,32 @@ describe('Official Reading general natal detailed material pilot', () => {
     expect(changedCoverage.staleTargetCount).toBe(2);
   });
 
-  it('keeps other supported domains incomplete until their own approved detailed material exists', () => {
-    const semantics = semanticsFor({
-      label: 'career',
-      intent: { domain: 'career', temporalScope: 'natal' },
-      registry: createCareerNatalReadingCandidateRegistry(NOW),
+  it('keeps spouse relationship readings outside detailed authority', () => {
+    const generalRelationship = semanticsFor({
+      label: 'relationship-general-authority-boundary',
+      intent: {
+        domain: 'relationship',
+        temporalScope: 'natal',
+        relationshipScope: 'general',
+      },
+      registry: createRelationshipNatalReadingCandidateRegistry(NOW),
     });
-    const plan = buildOfficialReadingPlanV1(semantics);
+    const spouseLike = {
+      ...generalRelationship,
+      intent: {
+        domain: 'relationship' as const,
+        temporalScope: 'natal' as const,
+        relationshipScope: 'spouse' as const,
+      },
+    };
+    const plan = buildOfficialReadingPlanV1(spouseLike);
     const coverage = assessApprovedOfficialReadingDetailedCoverageV1(
-      semantics,
+      spouseLike,
       plan,
     );
 
-    expect(coverage.domainKey).toBe('career:natal');
-    expect(coverage.state).toBe('incomplete');
+    expect(coverage.domainKey).toBeUndefined();
+    expect(coverage.state).toBe('unsupported_domain');
     expect(coverage.approvedMaterialCount).toBe(0);
     expect(coverage.requiredMaterialCount).toBeGreaterThan(0);
     expect(coverage.missingTargetCount).toBe(
@@ -604,19 +616,31 @@ describe('Official Reading detailed renderer connection', () => {
     ).toBeUndefined();
   });
 
-  it('fails closed instead of partially rendering detail for an incomplete domain', () => {
-    const semantics = semanticsFor({
-      label: 'career-renderer-connection',
-      intent: { domain: 'career', temporalScope: 'natal' },
-      registry: createCareerNatalReadingCandidateRegistry(NOW),
+  it('fails closed instead of rendering detail outside approved authority', () => {
+    const generalRelationship = semanticsFor({
+      label: 'relationship-spouse-renderer-boundary',
+      intent: {
+        domain: 'relationship',
+        temporalScope: 'natal',
+        relationshipScope: 'general',
+      },
+      registry: createRelationshipNatalReadingCandidateRegistry(NOW),
     });
-    const plan = buildOfficialReadingPlanV1(semantics);
+    const spouseLike = {
+      ...generalRelationship,
+      intent: {
+        domain: 'relationship' as const,
+        temporalScope: 'natal' as const,
+        relationshipScope: 'spouse' as const,
+      },
+    };
+    const plan = buildOfficialReadingPlanV1(spouseLike);
 
     expect(
-      buildApprovedOfficialReadingDetailedRealizationV1(semantics, plan),
+      buildApprovedOfficialReadingDetailedRealizationV1(spouseLike, plan),
     ).toBeUndefined();
     expect(() =>
-      renderApprovedDetailedOfficialReadingV1(semantics, plan),
+      renderApprovedDetailedOfficialReadingV1(spouseLike, plan),
     ).toThrow(/requires complete current detailed material/iu);
   });
 
