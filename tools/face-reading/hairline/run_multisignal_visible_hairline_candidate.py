@@ -132,6 +132,25 @@ def _safe_output_path(path: str) -> Path:
     return absolute
 
 
+def _private_input_path(path: str | Path) -> Path:
+    absolute = Path(path).expanduser().resolve()
+    cwd = Path.cwd().resolve()
+    try:
+        rel = absolute.relative_to(cwd)
+    except ValueError:
+        return absolute
+
+    rel_text = rel.as_posix()
+    if not (
+        rel_text == ".cache/face-reading"
+        or rel_text.startswith(".cache/face-reading/")
+    ):
+        raise ValueError(
+            "repository-local private input must stay under .cache/face-reading/"
+        )
+    return absolute
+
+
 def _assert_safe_receipt(value: Any, path: str = "receipt") -> None:
     if value is None:
         return
@@ -587,7 +606,7 @@ def run_actual(manifest_path: Path, output_path: Path) -> None:
 
     results: list[dict[str, Any]] = []
     for record in records:
-        image_path = Path(record["sourcePath"]).expanduser().resolve()
+        image_path = _private_input_path(record["sourcePath"])
         if not image_path.is_file():
             raise ValueError(f"source image not found for {record['recordId']}")
         results.append(_extract_record(image_path, record, output_path))
@@ -725,7 +744,7 @@ def main() -> int:
         return 0
     if not args.manifest:
         raise ValueError("--manifest is required unless --self-check is used")
-    manifest_path = Path(args.manifest).expanduser().resolve()
+    manifest_path = _private_input_path(args.manifest)
     if not manifest_path.is_file():
         raise ValueError("manifest file not found")
     output_path = _safe_output_path(args.output)
