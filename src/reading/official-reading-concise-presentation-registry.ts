@@ -355,18 +355,6 @@ function expectedSourcePresentationHash(
   });
 }
 
-function approvalKey(input: {
-  claimType: string;
-  methodologyRef: { id: string; version: string };
-  sourcePresentationHash: string;
-}): string {
-  return deterministicContentHash({
-    claimType: input.claimType,
-    methodologyRef: input.methodologyRef,
-    sourcePresentationHash: input.sourcePresentationHash,
-  });
-}
-
 function conciseDomainKey(
   bundle: CanonicalReadingSemanticBundleV1,
 ): OfficialReadingConciseDomainKeyV1 | undefined {
