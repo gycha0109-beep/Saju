@@ -718,6 +718,13 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
             "pathCoverage": path_coverage,
             "pathContinuity": path_continuity,
             "scalpSkinContinuity": scalp_skin_continuity,
+            "aboveSkinSupport": above_skin_support,
+            "belowSkinLocalSupport": below_skin_local_support,
+            "materialTransition": material_transition,
+            "textureRatio": texture_ratio,
+            "relativePathLevel": relative_path_level,
+            "faceBasisStable": face_basis_stable,
+            "eyePairDetected": len(eye_pair) == 2,
             "truncationRisk": float(truncation_risk),
             "occlusionRisk": occlusion_risk,
         },
@@ -733,14 +740,50 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
 
     if record.get("qaOverlay", False):
         draw = ImageDraw.Draw(image)
-        points = [(int(px), int(py)) for px, py in zip(global_x.tolist(), global_y.tolist())]
-        if len(points) >= 2:
-            draw.line(points, fill=(255, 0, 0), width=max(2, width // 250))
+        points = [
+            (int(px), int(py))
+            for px, py in zip(global_x.tolist(), global_y.tolist())
+        ]
+        if preview_state == "visible_interface_candidate" and len(points) >= 2:
+            draw.line(
+                points,
+                fill=(255, 0, 0),
+                width=max(2, width // 250),
+            )
+        elif (
+            preview_state == "partially_visible_or_occluded"
+            and len(points) >= 2
+        ):
+            draw.line(
+                points,
+                fill=(255, 165, 0),
+                width=max(2, width // 250),
+            )
+        elif preview_state == "unavailable" and len(points) >= 2:
+            draw.line(
+                points,
+                fill=(128, 128, 128),
+                width=max(2, width // 250),
+            )
+
+        # For no-visible-hairline state, intentionally suppress the candidate
+        # boundary so the QA image cannot be mistaken for an accepted line.
         draw.rectangle(
             [x, y, x + w, y + h],
             outline=(0, 255, 0),
             width=max(1, width // 350),
         )
+        for eye_x, eye_y, eye_w, eye_h in eye_pair:
+            draw.rectangle(
+                [
+                    eye_x,
+                    eye_y,
+                    eye_x + eye_w,
+                    eye_y + eye_h,
+                ],
+                outline=(0, 160, 255),
+                width=max(1, width // 500),
+            )
         image.save(record_dir / "overlay.jpg", quality=92)
 
     return {
@@ -756,6 +799,9 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
             "pathCoverage": path_coverage,
             "pathContinuity": path_continuity,
             "scalpSkinContinuity": scalp_skin_continuity,
+            "aboveSkinSupport": above_skin_support,
+            "materialTransition": material_transition,
+            "relativePathLevel": relative_path_level,
             "truncationRisk": float(truncation_risk),
             "occlusionRisk": occlusion_risk,
         },
@@ -803,6 +849,9 @@ def _safe_receipt(results: list[dict[str, Any]]) -> dict[str, Any]:
         "pathCoverage",
         "pathContinuity",
         "scalpSkinContinuity",
+        "aboveSkinSupport",
+        "materialTransition",
+        "relativePathLevel",
         "truncationRisk",
         "occlusionRisk",
     )
@@ -886,21 +935,95 @@ def run_actual(manifest_path: Path, output_path: Path) -> None:
 
 def self_check() -> None:
     visible = classify_preview(
-        PreviewSignals(0.76, 0.91, 0.84, 0.18, 0.0, 0.08)
+        PreviewSignals(
+            0.62,
+            0.45,
+            0.84,
+            0.30,
+            0.0,
+            0.08,
+            0.10,
+            0.25,
+            0.05,
+            True,
+        )
     )
     occluded = classify_preview(
-        PreviewSignals(0.49, 0.47, 0.31, 0.24, 0.0, 0.66)
+        PreviewSignals(
+            0.55,
+            0.15,
+            0.80,
+            0.20,
+            0.0,
+            0.20,
+            0.10,
+            0.20,
+            0.05,
+            True,
+        )
     )
-    bald = classify_preview(
-        PreviewSignals(0.18, 0.88, 0.80, 0.91, 0.0, 0.10)
+    no_hair_internal = classify_preview(
+        PreviewSignals(
+            0.54,
+            0.60,
+            0.80,
+            0.60,
+            0.0,
+            0.10,
+            0.48,
+            0.10,
+            0.15,
+            True,
+        )
+    )
+    no_hair_outer = classify_preview(
+        PreviewSignals(
+            0.42,
+            0.30,
+            0.80,
+            0.70,
+            0.0,
+            0.10,
+            0.05,
+            0.10,
+            -0.18,
+            True,
+        )
+    )
+    unstable_basis = classify_preview(
+        PreviewSignals(
+            0.62,
+            0.60,
+            0.80,
+            0.20,
+            0.0,
+            0.08,
+            0.10,
+            0.25,
+            0.05,
+            False,
+        )
     )
     unavailable = classify_preview(
-        PreviewSignals(0.70, 0.90, 0.90, 0.12, 0.95, 0.02)
+        PreviewSignals(
+            0.70,
+            0.90,
+            0.90,
+            0.12,
+            0.95,
+            0.02,
+            0.10,
+            0.30,
+            0.02,
+            True,
+        )
     )
     if (
         visible != "visible_interface_candidate"
         or occluded != "partially_visible_or_occluded"
-        or bald != "no_visible_hairline_candidate"
+        or no_hair_internal != "no_visible_hairline_candidate"
+        or no_hair_outer != "no_visible_hairline_candidate"
+        or unstable_basis != "partially_visible_or_occluded"
         or unavailable != "unavailable"
     ):
         raise RuntimeError("preview-state synthetic self-check failed")
@@ -914,25 +1037,31 @@ def self_check() -> None:
                     "luminanceContrast": 0.7,
                     "textureContrast": 0.8,
                     "edgeStrength": 0.7,
-                    "interfaceEvidence": 0.76,
-                    "pathCoverage": 0.91,
+                    "interfaceEvidence": 0.62,
+                    "pathCoverage": 0.45,
                     "pathContinuity": 0.84,
-                    "scalpSkinContinuity": 0.18,
+                    "scalpSkinContinuity": 0.30,
+                    "aboveSkinSupport": 0.10,
+                    "materialTransition": 0.25,
+                    "relativePathLevel": 0.05,
                     "truncationRisk": 0.0,
                     "occlusionRisk": 0.08,
                 },
             },
             {
-                "engineeringPreviewState": bald,
+                "engineeringPreviewState": no_hair_internal,
                 "signals": {
                     "colorContrast": 0.1,
                     "luminanceContrast": 0.1,
                     "textureContrast": 0.1,
                     "edgeStrength": 0.1,
-                    "interfaceEvidence": 0.18,
-                    "pathCoverage": 0.88,
+                    "interfaceEvidence": 0.54,
+                    "pathCoverage": 0.60,
                     "pathContinuity": 0.80,
-                    "scalpSkinContinuity": 0.91,
+                    "scalpSkinContinuity": 0.60,
+                    "aboveSkinSupport": 0.48,
+                    "materialTransition": 0.10,
+                    "relativePathLevel": 0.15,
                     "truncationRisk": 0.0,
                     "occlusionRisk": 0.10,
                 },
@@ -952,9 +1081,13 @@ def self_check() -> None:
     print(
         json.dumps(
             {
-                "schemaVersion": "multisignal-visible-hairline-self-check-v1",
+                "schemaVersion": "multisignal-visible-hairline-self-check-v2",
                 "status": "self_check_pass",
                 "previewStatesVerified": list(PREVIEW_STATES),
+                "noHairInternalSurfaceCheck": True,
+                "noHairOuterSilhouetteCheck": True,
+                "unstableFaceBasisFailsClosed": True,
+                "noVisibleHairlineOverlaySuppressesBoundary": True,
                 "hairColorClassificationApplied": False,
                 "demographicInferenceApplied": False,
                 "hiddenHairlineCompletionApplied": False,
@@ -963,7 +1096,6 @@ def self_check() -> None:
             }
         )
     )
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
