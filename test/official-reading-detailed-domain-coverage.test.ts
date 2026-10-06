@@ -342,22 +342,31 @@ describe('Official Reading detailed core natal domain expansion', () => {
       throw new Error('Expected a visible Wealth semantic unit.');
     }
 
-    const changedTextBindings = material.semanticTextBindings.map((binding) =>
-      binding.targetClaimId === target.claimId
-        ? {
-            ...binding,
-            canonicalText: {
-              ...binding.canonicalText,
-              summary: `${binding.canonicalText.summary ?? ''} 변경됨`,
-            },
-          }
-        : binding,
-    );
+    const changedEvidence = {
+      ...material.evidence,
+      claims: material.evidence.claims.map((claim) => {
+        if (claim.claimId !== target.claimId) return claim;
+        if (
+          claim.value === null ||
+          typeof claim.value !== 'object' ||
+          Array.isArray(claim.value)
+        ) {
+          throw new Error('Expected object Wealth claim value.');
+        }
+        return {
+          ...claim,
+          value: {
+            ...claim.value,
+            summary: `${target.canonicalText?.summary ?? ''} 변경됨`,
+          },
+        };
+      }),
+    };
     const changed = buildCanonicalReadingSemanticBundleV1({
       intent: candidate.intent,
-      evidence: material.evidence,
+      evidence: changedEvidence,
       targetClaimIds: material.targetClaimIds,
-      semanticTextBindings: changedTextBindings,
+      semanticTextBindings: material.semanticTextBindings,
       semanticQualifierBindings: material.semanticQualifierBindings,
     });
     const coverage = assessApprovedOfficialReadingDetailedCoverageV1(
