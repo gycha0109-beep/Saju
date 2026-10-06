@@ -20,9 +20,14 @@ import {
   type OfficialReadingRenderedContentV1,
 } from './official-reading-renderer.js';
 import {
+  OFFICIAL_READING_DETAILED_PRODUCT_ACTIVATION_STATE_V1,
   OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION,
   resolveOfficialReadingDetailPreferenceV1,
 } from './official-reading-detail-presentation.js';
+import {
+  OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+  buildApprovedOfficialReadingDetailedRealizationV1,
+} from './official-reading-detailed-realization.js';
 import {
   OFFICIAL_READING_CONCISE_PRESENTATION_READINESS_POLICY_VERSION,
   assessOfficialReadingConcisePresentationReadinessV1,
@@ -246,12 +251,27 @@ function assertReportBinding(
             approvedConciseProfiles,
           )
         : undefined;
-    const expectedDetailResolution = resolveOfficialReadingDetailPreferenceV1(
-      report.detailPreferenceResolution.requestedDetail,
-      {
-        conciseAvailable: conciseReadiness?.state === 'ready',
-      },
-    );
+    const detailedRealization =
+      report.detailPreferenceResolution.requestedDetail === 'detailed'
+        ? buildApprovedOfficialReadingDetailedRealizationV1(
+            semantics,
+            plan,
+          )
+        : undefined;
+    const detailedExact =
+      report.detailPreferenceResolution.requestedDetail === 'detailed' &&
+      report.detailPreferenceResolution.resolvedDetail === 'detailed';
+    const expectedDetailResolution =
+      resolveOfficialReadingDetailPreferenceV1(
+        report.detailPreferenceResolution.requestedDetail,
+        {
+          conciseAvailable: conciseReadiness?.state === 'ready',
+          detailedAvailable: detailedRealization !== undefined,
+          detailedProductActivation: detailedExact
+            ? 'enabled'
+            : OFFICIAL_READING_DETAILED_PRODUCT_ACTIVATION_STATE_V1,
+        },
+      );
     if (
       report.detailPreferenceResolution.resolvedDetail !==
         expectedDetailResolution.resolvedDetail ||
@@ -290,16 +310,33 @@ function assertReportBinding(
       report.concisePresentationProfileSetHash !== undefined
     ) {
       throw new TypeError(
-        'Official Reading standard presentation must not carry concise profile metadata.',
+        'Official Reading non-concise presentation must not carry concise profile metadata.',
+      );
+    }
+
+    if (expectedDetailResolution.resolvedDetail === 'detailed') {
+      if (
+        detailedRealization === undefined ||
+        report.detailedRealizationPolicyVersion !==
+          OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION
+      ) {
+        throw new TypeError(
+          'Official Reading detailed presentation metadata does not match current approved material.',
+        );
+      }
+    } else if (report.detailedRealizationPolicyVersion !== undefined) {
+      throw new TypeError(
+        'Official Reading non-detailed presentation must not carry detailed realization metadata.',
       );
     }
   } else if (
     report.concisePresentationReadinessPolicyVersion !== undefined ||
     report.concisePresentationRegistryVersion !== undefined ||
-    report.concisePresentationProfileSetHash !== undefined
+    report.concisePresentationProfileSetHash !== undefined ||
+    report.detailedRealizationPolicyVersion !== undefined
   ) {
     throw new TypeError(
-      'Official Reading concise metadata requires an explicit detail preference.',
+      'Official Reading presentation metadata requires an explicit detail preference.',
     );
   }
   if (
@@ -352,6 +389,12 @@ function assertReportBinding(
             report.concisePresentationRegistryVersion,
           concisePresentationProfileSetHash:
             report.concisePresentationProfileSetHash,
+        }),
+    ...(report.detailedRealizationPolicyVersion === undefined
+      ? {}
+      : {
+          detailedRealizationPolicyVersion:
+            report.detailedRealizationPolicyVersion,
         }),
     sourceSemanticHash: report.sourceSemanticHash,
     sourcePlanHash: report.sourcePlanHash,
