@@ -7,6 +7,7 @@ import {
   FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATES,
   assertFR306CurrentGate,
   assertVisibleHairlineRuntimeCandidatesFR306,
+  resolveFR306EmpiricalRuntimeCandidate,
 } from './visible-hairline-runtime-candidates-fr306.js';
 
 describe('FR306 visible hairline runtime candidate selection', () => {
@@ -74,6 +75,59 @@ describe('FR306 visible hairline runtime candidate selection', () => {
     ).toBe(false);
   });
 
+  it('registers the deterministic multi-signal v3.1 candidate without widening authority', () => {
+    const candidate =
+      FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATES.find(
+        (entry) =>
+          entry.state === 'additional_empirical_candidate',
+      );
+
+    expect(candidate).toMatchObject({
+      candidateId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      runtimeProviderId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      exactRevision: '0.2.0',
+      runnerContractVersion:
+        'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+      mayIssueFR305AdmissionReceipt: false,
+      runtimeHairlineObservationAuthorized: false,
+      hiddenHairlineCompletionAuthorized: false,
+      productionAuthorization: false,
+    });
+    expect(candidate?.components[0]?.artifact).toBe(
+      'repo:tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py',
+    );
+  });
+
+  it('resolves only an exact registered empirical runtime identity', () => {
+    expect(
+      resolveFR306EmpiricalRuntimeCandidate(
+        'microsoft/Florence-2-base',
+        '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+        'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
+      ).candidateId,
+    ).toBe(
+      'candidate.hairline.florence2_base.referring_segmentation.fr306',
+    );
+
+    expect(
+      resolveFR306EmpiricalRuntimeCandidate(
+        'candidate.hairline.multisignal_visible_interface.fr306',
+        '0.2.0',
+        'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+      ).state,
+    ).toBe('additional_empirical_candidate');
+
+    expect(() =>
+      resolveFR306EmpiricalRuntimeCandidate(
+        'candidate.hairline.multisignal_visible_interface.fr306',
+        '0.2.1',
+        'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+      ),
+    ).toThrow();
+  });
+
   it('excludes CelebAMask-HQ-derived face parsing from the product path', () => {
     const excluded =
       FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATES.find(
@@ -132,6 +186,8 @@ describe('FR306 visible hairline runtime candidate selection', () => {
       parentIssue: 1521,
       empiricalRunnerImplemented: false,
       empiricalRealCaptureEvidenceCollected: false,
+      additionalCandidate:
+        'candidate.hairline.multisignal_visible_interface.fr306',
       admittedHairlineRuntimeProviders: 0,
       fr305AdmissionReceiptIssued: false,
       handoffReadyNeutralReferenceCapabilityCount: 6,
