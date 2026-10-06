@@ -360,7 +360,7 @@ describe('Myeonghwa Product Host MVP', () => {
       const serialized = JSON.stringify(result);
       expect(result.state).toBe('delivered');
       expect(serialized).not.toContain(
-        'myeonghwa-official-reading-detail-presentation-policy-v1',
+        'myeonghwa-official-reading-detail-presentation-policy-v2',
       );
       expect(serialized).not.toContain('fallback_to_standard');
       expect(serialized).not.toContain('missing_text_role_authority');
