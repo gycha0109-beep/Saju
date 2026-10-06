@@ -1,0 +1,96 @@
+name: tmp-fr306-fallback-runtime
+
+on:
+  push:
+    branches:
+      - ops/tmp-fr306-fallback-runtime-20261006
+    paths:
+      - .github/workflows/tmp-fr306-fallback-runtime.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Prepare fallback runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bundle/site-packages bundle/grounding-dino bundle/sam2
+
+          python -m pip install --upgrade pip
+          python -m pip install --target bundle/site-packages             transformers==4.57.1             huggingface-hub==0.35.3             safetensors             tokenizers             timm             einops
+
+          PYTHONPATH="$PWD/bundle/site-packages" python - <<'PY'
+          import transformers
+          names = [
+              "GroundingDinoForObjectDetection",
+              "AutoProcessor",
+              "Sam2Model",
+              "Sam2Processor",
+          ]
+          print("transformers", transformers.__version__)
+          for name in names:
+              print(name, hasattr(transformers, name))
+          assert hasattr(transformers, "GroundingDinoForObjectDetection")
+          assert hasattr(transformers, "Sam2Model")
+          assert hasattr(transformers, "Sam2Processor")
+          PY
+
+          PYTHONPATH="$PWD/bundle/site-packages" python - <<'PY'
+          from huggingface_hub import snapshot_download
+          snapshot_download(
+              repo_id="IDEA-Research/grounding-dino-base",
+              revision="12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+              local_dir="bundle/grounding-dino",
+              local_dir_use_symlinks=False,
+          )
+          snapshot_download(
+              repo_id="facebook/sam2.1-hiera-small",
+              revision="e07df6aa19f5c6545121551bf89957b7663ee715",
+              local_dir="bundle/sam2",
+              local_dir_use_symlinks=False,
+          )
+          PY
+
+          PYTHONPATH="$PWD/bundle/site-packages" python - <<'PY'
+          import torch
+          from transformers import AutoProcessor, GroundingDinoForObjectDetection, Sam2Model, Sam2Processor
+
+          gd_p = AutoProcessor.from_pretrained("bundle/grounding-dino", local_files_only=True)
+          gd_m = GroundingDinoForObjectDetection.from_pretrained("bundle/grounding-dino", local_files_only=True)
+          sam_p = Sam2Processor.from_pretrained("bundle/sam2", local_files_only=True)
+          sam_m = Sam2Model.from_pretrained("bundle/sam2", local_files_only=True)
+
+          print("grounding params", sum(p.numel() for p in gd_m.parameters()))
+          print("sam2 params", sum(p.numel() for p in sam_m.parameters()))
+          print("runtime_load_pass")
+          PY
+
+          tar -cf fallback-runtime.tar -C bundle .
+          split -b 240M -d -a 2 fallback-runtime.tar fallback-runtime.part.
+          ls -lh fallback-runtime.part.*
+
+      - name: Upload parts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for p in fallback-runtime.part.*; do
+            echo "$p"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fr306-fallback-runtime-parts
+          path: fallback-runtime.part.*
+          retention-days: 1
+          compression-level: 0
