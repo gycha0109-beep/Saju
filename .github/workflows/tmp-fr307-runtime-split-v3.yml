@@ -1,0 +1,74 @@
+name: tmp-fr307-runtime-split-v3
+
+on:
+  push:
+    branches:
+      - ops/tmp-fr307-runtime-export-20261006
+    paths:
+      - .github/workflows/tmp-fr307-runtime-split-v3.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  split:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: fr307-runtime-bundle-v2
+          path: source
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 37414891357
+
+      - name: Split bundle below connector limit
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -cf runtime-bundle.tar -C source .
+          split -b 240M -d -a 2 runtime-bundle.tar runtime-bundle.part.
+          ls -lh runtime-bundle.part.*
+          test -f runtime-bundle.part.00
+          test -f runtime-bundle.part.01
+          test -f runtime-bundle.part.02
+          test -f runtime-bundle.part.03
+          test -f runtime-bundle.part.04
+          test ! -f runtime-bundle.part.05
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fr307-runtime-part-00
+          path: runtime-bundle.part.00
+          retention-days: 1
+          compression-level: 0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fr307-runtime-part-01
+          path: runtime-bundle.part.01
+          retention-days: 1
+          compression-level: 0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fr307-runtime-part-02
+          path: runtime-bundle.part.02
+          retention-days: 1
+          compression-level: 0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fr307-runtime-part-03
+          path: runtime-bundle.part.03
+          retention-days: 1
+          compression-level: 0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fr307-runtime-part-04
+          path: runtime-bundle.part.04
+          retention-days: 1
+          compression-level: 0
