@@ -25,7 +25,7 @@ from typing import Any, Iterable
 SCHEMA_VERSION = "multisignal-visible-hairline-local-candidate-v1"
 SAFE_RECEIPT_SCHEMA = "multisignal-visible-hairline-repo-safe-receipt-v1"
 METHOD_ID = "adaptive_skin_edge_texture_continuity"
-METHOD_VERSION = "0.1.0"
+METHOD_VERSION = "0.2.0"
 
 PREVIEW_STATES = (
     "visible_interface_candidate",
@@ -36,13 +36,17 @@ PREVIEW_STATES = (
 
 # Engineering preview thresholds only. They do not confer authority.
 PREVIEW_THRESHOLDS = {
-    "visible_interface_min": 0.56,
-    "visible_coverage_min": 0.70,
-    "visible_continuity_min": 0.52,
-    "no_hairline_interface_max": 0.30,
-    "no_hairline_scalp_continuity_min": 0.72,
-    "partial_coverage_max": 0.68,
-    "partial_continuity_max": 0.42,
+    "visible_interface_min": 0.47,
+    "visible_coverage_min": 0.28,
+    "visible_continuity_min": 0.42,
+    "partial_coverage_max": 0.26,
+    "partial_continuity_max": 0.35,
+    "no_hair_internal_above_skin_min": 0.40,
+    "no_hair_internal_material_transition_max": 0.16,
+    "no_hair_scalp_continuity_min": 0.50,
+    "no_hair_outer_relative_path_max": -0.13,
+    "no_hair_outer_interface_max": 0.48,
+    "no_hair_outer_scalp_continuity_min": 0.55,
 }
 
 PRIVATE_KEYS = {
@@ -66,6 +70,10 @@ class PreviewSignals:
     scalp_skin_continuity: float
     truncation_risk: float
     occlusion_risk: float
+    above_skin_support: float
+    material_transition: float
+    relative_path_level: float
+    face_basis_stable: bool
 
 
 def _finite_unit(value: float, label: str) -> float:
@@ -83,37 +91,57 @@ def classify_preview(signals: PreviewSignals) -> str:
         ("scalp_skin_continuity", signals.scalp_skin_continuity),
         ("truncation_risk", signals.truncation_risk),
         ("occlusion_risk", signals.occlusion_risk),
+        ("above_skin_support", signals.above_skin_support),
+        ("material_transition", signals.material_transition),
     ):
         _finite_unit(value, name)
+
+    if not math.isfinite(signals.relative_path_level):
+        raise ValueError("relative_path_level must be finite")
+    if not isinstance(signals.face_basis_stable, bool):
+        raise ValueError("face_basis_stable must be boolean")
 
     if signals.truncation_risk >= 0.70:
         return "unavailable"
 
-    if (
-        signals.interface_evidence <= PREVIEW_THRESHOLDS["no_hairline_interface_max"]
+    no_hair_internal_surface = (
+        signals.above_skin_support
+        >= PREVIEW_THRESHOLDS["no_hair_internal_above_skin_min"]
+        and signals.material_transition
+        <= PREVIEW_THRESHOLDS["no_hair_internal_material_transition_max"]
         and signals.scalp_skin_continuity
-        >= PREVIEW_THRESHOLDS["no_hairline_scalp_continuity_min"]
-        and signals.occlusion_risk < 0.55
-    ):
+        >= PREVIEW_THRESHOLDS["no_hair_scalp_continuity_min"]
+    )
+    no_hair_outer_silhouette = (
+        signals.relative_path_level
+        <= PREVIEW_THRESHOLDS["no_hair_outer_relative_path_max"]
+        and signals.scalp_skin_continuity
+        >= PREVIEW_THRESHOLDS["no_hair_outer_scalp_continuity_min"]
+        and signals.interface_evidence
+        < PREVIEW_THRESHOLDS["no_hair_outer_interface_max"]
+    )
+    if no_hair_internal_surface or no_hair_outer_silhouette:
         return "no_visible_hairline_candidate"
+
+    if not signals.face_basis_stable:
+        return "partially_visible_or_occluded"
 
     if (
         signals.interface_evidence >= PREVIEW_THRESHOLDS["visible_interface_min"]
         and signals.path_coverage >= PREVIEW_THRESHOLDS["visible_coverage_min"]
         and signals.path_continuity >= PREVIEW_THRESHOLDS["visible_continuity_min"]
-        and signals.occlusion_risk < 0.45
+        and signals.occlusion_risk < 0.50
     ):
         return "visible_interface_candidate"
 
     if (
-        signals.path_coverage <= PREVIEW_THRESHOLDS["partial_coverage_max"]
-        or signals.path_continuity <= PREVIEW_THRESHOLDS["partial_continuity_max"]
+        signals.path_coverage < PREVIEW_THRESHOLDS["partial_coverage_max"]
+        or signals.path_continuity < PREVIEW_THRESHOLDS["partial_continuity_max"]
         or signals.occlusion_risk >= 0.45
     ):
         return "partially_visible_or_occluded"
 
     return "unavailable"
-
 
 def _safe_output_path(path: str) -> Path:
     absolute = Path(path).expanduser().resolve()
