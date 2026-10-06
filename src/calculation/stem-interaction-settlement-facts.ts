@@ -7,14 +7,14 @@ import type {
 } from '../contracts/calculation.js';
 import {
   deriveAdoptedStemInteractionSettlements,
-  JIA_JI_NON_DAY_MASTER_SETTLEMENT_POLICY,
-  JIA_JI_NON_DAY_MASTER_SETTLEMENT_POLICY_CONTENT_HASH,
+  STEM_FIVE_COMBINATION_SETTLEMENT_POLICY,
+  STEM_FIVE_COMBINATION_SETTLEMENT_POLICY_CONTENT_HASH,
 } from './stem-interaction-settlement.js';
 
 export const STEM_INTERACTION_SETTLEMENT_DERIVATION_VERSION =
-  'myeongha-stem-interaction-settlement-v1' as const;
+  'myeongha-stem-interaction-settlement-v2' as const;
 export const STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION =
-  'saju-canonical-v1.5' as const;
+  'saju-canonical-v1.6' as const;
 
 const RELATIONS_UNRESOLVED_REASON =
   'stem-interaction-settlement-requires-resolved-structural-relations';
@@ -117,7 +117,7 @@ export function enrichCanonicalStemInteractionSettlements(
         baseCalculationHash: snapshot.calculationHash,
         schemaVersion: STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION,
         settlementDerivationVersion: STEM_INTERACTION_SETTLEMENT_DERIVATION_VERSION,
-        policyContentHash: JIA_JI_NON_DAY_MASTER_SETTLEMENT_POLICY_CONTENT_HASH,
+        policyContentHash: STEM_FIVE_COMBINATION_SETTLEMENT_POLICY_CONTENT_HASH,
       }),
     )
     .digest('hex');
@@ -126,11 +126,11 @@ export function enrichCanonicalStemInteractionSettlements(
   const datasets = [
     ...(snapshot.provenance.datasets ?? []),
     {
-      name: 'myeongha-stem-interaction-settlement-policy',
-      version: JIA_JI_NON_DAY_MASTER_SETTLEMENT_POLICY.policyVersion,
-      source: 'docs/decisions/ADR-0007-jia-ji-non-day-master-settlement-v1.md',
+      name: 'myeongha-stem-five-combination-settlement-policy',
+      version: STEM_FIVE_COMBINATION_SETTLEMENT_POLICY.policyVersion,
+      source: 'docs/decisions/ADR-0008-stem-five-combination-settlement-v1.md',
       notes:
-        `MyeongHa V1 product convention; policyId=${JIA_JI_NON_DAY_MASTER_SETTLEMENT_POLICY.policyId} contentHash=${JIA_JI_NON_DAY_MASTER_SETTLEMENT_POLICY_CONTENT_HASH}`,
+        `MyeongHa V1 product convention; policyId=${STEM_FIVE_COMBINATION_SETTLEMENT_POLICY.policyId} contentHash=${STEM_FIVE_COMBINATION_SETTLEMENT_POLICY_CONTENT_HASH}; extends=GH-2219`,
     },
   ];
 

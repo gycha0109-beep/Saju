@@ -203,19 +203,15 @@ export interface StemInteractionSettlementFact {
   settlementId: string;
   relationId: string;
   kind: 'stem_five_combination';
-  scope: 'non_day_master_jia_ji';
-  pair: readonly ['갑', '기'];
+  scope: 'non_day_master_stem_five_combination';
+  pair: readonly [HeavenlyStem, HeavenlyStem];
   transformationApplied: false;
-  activeRelations: readonly ['stem_five_combination', 'jia_controls_ji'];
+  activeRelations: readonly ['stem_five_combination', 'element_control'];
   participants: {
-    jia: StemInteractionSettlementParticipant & {
-      stem: '갑';
-      element: '목';
+    controller: StemInteractionSettlementParticipant & {
       functionState: 'constrained';
     };
-    ji: StemInteractionSettlementParticipant & {
-      stem: '기';
-      element: '토';
+    controlled: StemInteractionSettlementParticipant & {
       functionState: 'impaired';
     };
   };

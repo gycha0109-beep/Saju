@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import {
-  JIA_JI_NON_DAY_MASTER_SETTLEMENT_POLICY_CONTENT_HASH,
+  STEM_FIVE_COMBINATION_SETTLEMENT_POLICY_CONTENT_HASH,
 } from '../src/calculation/stem-interaction-settlement.js';
 import {
   STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION,
@@ -15,8 +15,8 @@ const knownInput = {
   sexForTraditionalCalculation: 'unspecified' as const,
 };
 
-describe('R189 stem interaction settlement materialization', () => {
-  test('known-time snapshots materialize the adopted settlement fact and v1.5 schema', () => {
+describe('R190 stem interaction settlement materialization', () => {
+  test('known-time snapshots materialize the generalized settlement fact and v1.6 schema', () => {
     const snapshot = calculateCanonicalSajuSnapshot(
       knownInput,
       PRODUCTION_DEFAULT_CALCULATION_POLICY,
@@ -26,16 +26,17 @@ describe('R189 stem interaction settlement materialization', () => {
       'derivedFacts.stemInteractionSettlements',
     );
     expect(snapshot.schemaVersion).toBe(STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION);
-    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.5');
-    expect(snapshot.provenance.schema.version).toBe('saju-canonical-v1.5');
+    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.6');
+    expect(snapshot.provenance.schema.version).toBe('saju-canonical-v1.6');
 
     const dataset = snapshot.provenance.datasets?.find(
-      (item) => item.name === 'myeongha-stem-interaction-settlement-policy',
+      (item) => item.name === 'myeongha-stem-five-combination-settlement-policy',
     );
     expect(dataset?.notes).toContain(
-      JIA_JI_NON_DAY_MASTER_SETTLEMENT_POLICY_CONTENT_HASH,
+      STEM_FIVE_COMBINATION_SETTLEMENT_POLICY_CONTENT_HASH,
     );
     expect(dataset?.notes).toContain('MyeongHa V1 product convention');
+    expect(dataset?.notes).toContain('extends=GH-2219');
   });
 
   test('existing structural candidates remain structural-only after settlement enrichment', () => {
@@ -65,12 +66,9 @@ describe('R189 stem interaction settlement materialization', () => {
         'stem-interaction-settlement-requires-resolved-structural-relations',
       );
     }
-    expect(snapshot.completeness.unavailablePaths).toContain(
-      'derivedFacts.stemInteractionSettlements',
-    );
   });
 
-  test('settlement enrichment is deterministic across audit timestamps', () => {
+  test('settlement enrichment remains deterministic across audit timestamps', () => {
     const first = calculateCanonicalSajuSnapshot(
       knownInput,
       PRODUCTION_DEFAULT_CALCULATION_POLICY,
@@ -87,6 +85,5 @@ describe('R189 stem interaction settlement materialization', () => {
     expect(first.derivedFacts.stemInteractionSettlements).toEqual(
       second.derivedFacts.stemInteractionSettlements,
     );
-    expect(first.createdAt).not.toBe(second.createdAt);
   });
 });

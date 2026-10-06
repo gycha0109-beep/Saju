@@ -84,7 +84,7 @@ describe('hidden-stem structural enrichment', () => {
     expect(BRANCH_CLASH_CONTEXT_ENRICHED_CANONICAL_SCHEMA_VERSION).toBe('saju-canonical-v1.3');
     expect(BRANCH_CLASH_QUALIFIER_OBSERVATION_SCHEMA_VERSION).toBe('saju-canonical-v1.4');
     expect(snapshot.schemaVersion).toBe(STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION);
-    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.5');
+    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.6');
     expect(snapshot.provenance.schema.version).toBe(STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION);
     expect(snapshot.derivedFacts.hiddenStems).toBeDefined();
 
