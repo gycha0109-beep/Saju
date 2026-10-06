@@ -465,11 +465,19 @@ describe('FR311P face-wide evidence integrity audit', () => {
 
     for (const item of FACE_NAMED_FORM_EVIDENCE_FR311G) {
       const lensKey = firstLensForNamed(item.topicKey, item.relationTarget);
-      if (lensKey === null || !FACE_EVIDENCE_LENSES_FR311G.some((lens) => lens.lensKey === lensKey)) {
-        continue;
-      }
-      const base = queryFaceEvidenceFR311G({ lensKey, formKeys: [item.formKey] });
-      const latest = queryFaceEvidenceFR311O({ lensKey, formKeys: [item.formKey] });
+      if (lensKey === null) continue;
+      const legacyLens = FACE_EVIDENCE_LENSES_FR311G.find(
+        (lens) => lens.lensKey === lensKey,
+      );
+      if (legacyLens === undefined) continue;
+      const base = queryFaceEvidenceFR311G({
+        lensKey: legacyLens.lensKey,
+        formKeys: [item.formKey],
+      });
+      const latest = queryFaceEvidenceFR311O({
+        lensKey: legacyLens.lensKey,
+        formKeys: [item.formKey],
+      });
       expect(latest.namedEvidenceIds, item.evidenceId).toEqual(base.namedEvidenceIds);
       expect(latest.directRuleIds, item.evidenceId).toEqual(base.directRuleIds);
       expect(latest.combinationRuleIds, item.evidenceId).toEqual(base.combinationRuleIds);
