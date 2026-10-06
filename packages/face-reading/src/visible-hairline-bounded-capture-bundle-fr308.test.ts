@@ -97,6 +97,13 @@ describe('FR308 bounded visible-hairline capture bundle', () => {
         'FR308-BOUNDED-HAIRLINE-CAPTURE-BUNDLE-v1',
       authorityState:
         'bounded_deidentified_empirical_evidence_only',
+      candidateId:
+        'candidate.hairline.florence2_base.referring_segmentation.fr306',
+      runtimeContractVersion:
+        'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
+      modelId: 'microsoft/Florence-2-base',
+      modelRevision:
+        '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
       captureCaseCount: 4,
       captureCases: FR308_CAPTURE_CASES,
       localOnlyExecutionVerifiedByContract: true,
