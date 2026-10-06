@@ -176,10 +176,17 @@ function visiblePrimaryUnits(bundle: CanonicalReadingSemanticBundleV1) {
 }
 
 describe('Official Reading concise domain coverage', () => {
-  it('keeps concise presentation coverage aligned with the five supported Preview Official Reading Natal surfaces', () => {
+  it('keeps concise coverage bounded to the five cross-domain Natal surfaces without widening other Official Reading authority', () => {
+    const officialSections = new Set(
+      PREVIEW_E2E_APPROVAL.supportedReadingSections,
+    );
+    expect(OFFICIAL_READING_CONCISE_SUPPORTED_DOMAIN_KEYS_V1).toHaveLength(5);
+    for (const domainKey of OFFICIAL_READING_CONCISE_SUPPORTED_DOMAIN_KEYS_V1) {
+      expect(officialSections.has(domainKey)).toBe(true);
+    }
     expect(
-      [...OFFICIAL_READING_CONCISE_SUPPORTED_DOMAIN_KEYS_V1].sort(),
-    ).toEqual([...PREVIEW_E2E_APPROVAL.supportedReadingSections].sort());
+      OFFICIAL_READING_CONCISE_SUPPORTED_DOMAIN_KEYS_V1,
+    ).not.toContain('relationship:natal:spouse');
   });
 
   it.each(CASES)(
