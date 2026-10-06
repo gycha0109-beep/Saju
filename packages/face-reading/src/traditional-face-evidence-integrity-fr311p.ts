@@ -240,6 +240,43 @@ export const LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P = Object.freeze([
     .map((item) => item.evidenceId),
 ].sort());
 
+export interface FaceEvidenceKeyReuseFR311P {
+  readonly key: string;
+  readonly keyOwner: 'fr311k';
+  readonly evidenceOwner: 'fr311m';
+  readonly evidenceId: string;
+  readonly kind: 'relation' | 'combination';
+}
+
+function fr311kOwnsKey(
+  kind: 'relation' | 'combination',
+  key: string,
+): boolean {
+  return MOUTH_PHILTRUM_DIRECT_CROSS_REGION_EVIDENCE_FR311K.some((item) =>
+    (kind === 'relation' ? item.relationKey : item.combinationKey) === key,
+  );
+}
+
+export const CROSS_LAYER_KEY_REUSES_FR311P:
+readonly FaceEvidenceKeyReuseFR311P[] = Object.freeze(
+  FR311M_OWNED.flatMap((item) => {
+    const kind = item.evidenceKind === 'direct_cross_region_relation'
+      ? 'relation' as const
+      : 'combination' as const;
+    const key = kind === 'relation' ? item.relationKey : item.combinationKey;
+    if (key === null || !fr311kOwnsKey(kind, key)) {
+      return [];
+    }
+    return [Object.freeze({
+      key,
+      keyOwner: 'fr311k' as const,
+      evidenceOwner: 'fr311m' as const,
+      evidenceId: item.evidenceId,
+      kind,
+    })];
+  }),
+);
+
 function keyOwnership(
   kind: 'relation' | 'combination',
 ): readonly FaceEvidenceKeyOwnershipFR311P[] {
@@ -279,7 +316,11 @@ function keyOwnership(
   for (const item of FR311M_OWNED) {
     const key = kind === 'relation' ? item.relationKey : item.combinationKey;
     if (key !== null) {
-      entries.push({ key, owner: 'fr311m', evidenceId: item.evidenceId });
+      entries.push({
+        key,
+        owner: fr311kOwnsKey(kind, key) ? 'fr311k' : 'fr311m',
+        evidenceId: item.evidenceId,
+      });
     }
   }
 
@@ -334,6 +375,7 @@ export const FR311P_EVIDENCE_INVENTORY = Object.freeze({
     MOUTH_PHILTRUM_DIRECT_CROSS_REGION_EVIDENCE_FR311K.length,
   earCrossRegionOwnedEvidence: FR311M_OWNED.length,
   earCrossRegionReusedEvidence: FR311M_REUSED.length,
+  crossLayerKeyReuses: CROSS_LAYER_KEY_REUSES_FR311P.length,
   canonicalEvidence: FACE_CANONICAL_EVIDENCE_FR311P.length,
   canonicalEvidenceIds: new Set(
     FACE_CANONICAL_EVIDENCE_FR311P.map((item) => item.canonicalId),
@@ -430,6 +472,14 @@ export function assertFaceWideEvidenceIntegrityFR311P(): void {
       'fr311p_ear_reuse_count_drift:' +
       FR311P_EVIDENCE_INVENTORY.earCrossRegionReusedEvidence,
     );
+  }
+  if (
+    FR311P_EVIDENCE_INVENTORY.crossLayerKeyReuses !== 1 ||
+    CROSS_LAYER_KEY_REUSES_FR311P[0]?.key !== 'ear_mouth.earlobe_toward_mouth' ||
+    CROSS_LAYER_KEY_REUSES_FR311P[0]?.evidenceId !==
+      'fr311m.relation.earlobe_toward_mouth.634a'
+  ) {
+    throw new Error('fr311p_cross_layer_key_reuse_drift');
   }
   if (FR311P_EVIDENCE_INVENTORY.canonicalEvidence !== 621) {
     throw new Error(
