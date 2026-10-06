@@ -88,9 +88,11 @@ readonly FR306EmpiricalCandidateIdentity[] = Object.freeze([
 ]);
 
 export function resolveEmpiricalHairlineCandidateIdentityFR306(
-  input: Partial<FR306EmpiricalCandidateIdentity> & {
+  input: {
+    readonly candidateId?: string | undefined;
     readonly modelId: string;
     readonly modelRevision: string;
+    readonly runtimeContractVersion?: string | undefined;
   },
 ): FR306EmpiricalCandidateIdentity {
   const candidateId =
