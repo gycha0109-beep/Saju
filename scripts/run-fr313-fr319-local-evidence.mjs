@@ -449,6 +449,13 @@ function assertFR312ReceiptHandoffSelfCheck() {
     disposition:
       'eligible_for_model_admission_review',
     modelAdmissionReviewEligible: true,
+    candidateId:
+      'candidate.hairline.florence2_base.referring_segmentation.fr306',
+    runtimeProviderId: 'microsoft/Florence-2-base',
+    exactRevision:
+      '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+    runnerContractVersion:
+      'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
   };
 
   injectFR312Receipt(input, receipt);
@@ -481,6 +488,35 @@ function assertFR312ReceiptHandoffSelfCheck() {
       'FR312_RECEIPT_AMBIGUITY_SELF_CHECK_FAILED',
     );
   }
+
+  let identityRejected = false;
+  try {
+    injectFR312Receipt(
+      {
+        fr313: {
+          expandedValidation: null,
+        },
+      },
+      {
+        schemaVersion:
+          'fr312-expanded-hairline-validation-receipt-v1',
+        disposition:
+          'eligible_for_model_admission_review',
+        modelAdmissionReviewEligible: true,
+      },
+    );
+  } catch (error) {
+    identityRejected =
+      error instanceof Error &&
+      error.message ===
+        'FR312_RECEIPT_NOT_ELIGIBLE_FOR_MODEL_ADMISSION';
+  }
+
+  if (!identityRejected) {
+    throw new Error(
+      'FR312_RECEIPT_IDENTITY_SELF_CHECK_FAILED',
+    );
+  }
 }
 
 async function runSelfCheck() {
@@ -504,6 +540,7 @@ async function runSelfCheck() {
     privacyGuardRejectsSubjectScalar: true,
     privacyGuardRejectsDigest: true,
     fr312ReceiptHandoffVerified: true,
+    fr312CandidateIdentityRequired: true,
   };
 
   assertOutputIsSafe(receipt);
@@ -539,7 +576,15 @@ function injectFR312Receipt(input, receipt) {
       'fr312-expanded-hairline-validation-receipt-v1' ||
     receipt.disposition !==
       'eligible_for_model_admission_review' ||
-    receipt.modelAdmissionReviewEligible !== true
+    receipt.modelAdmissionReviewEligible !== true ||
+    typeof receipt.candidateId !== 'string' ||
+    receipt.candidateId.trim().length === 0 ||
+    typeof receipt.runtimeProviderId !== 'string' ||
+    receipt.runtimeProviderId.trim().length === 0 ||
+    typeof receipt.exactRevision !== 'string' ||
+    receipt.exactRevision.trim().length === 0 ||
+    typeof receipt.runnerContractVersion !== 'string' ||
+    receipt.runnerContractVersion.trim().length === 0
   ) {
     throw new Error(
       'FR312_RECEIPT_NOT_ELIGIBLE_FOR_MODEL_ADMISSION',
