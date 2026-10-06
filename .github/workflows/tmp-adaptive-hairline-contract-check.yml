@@ -1,0 +1,27 @@
+name: tmp-adaptive-hairline-contract-check
+
+on:
+  push:
+    branches:
+      - research/face-observation-engine/adaptive-visible-skin-boundary
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Face typecheck
+        run: npm run face:typecheck
+      - name: Face build
+        run: npm run face:build
+      - name: Hairline focused tests
+        run: npx vitest run packages/face-reading/src/visible-hairline-runtime-candidates-fr306.test.ts packages/face-reading/src/visible-hairline-bounded-capture-bundle-fr308.test.ts packages/face-reading/src/visible-hairline-evidence-adjudicator-fr310.test.ts packages/face-reading/src/visible-hairline-expanded-validation-fr312.test.ts packages/face-reading/src/visible-hairline-model-admission-review-fr313.test.ts
