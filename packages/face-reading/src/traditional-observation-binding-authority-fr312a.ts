@@ -76,15 +76,16 @@ function unique(values: readonly string[]): string[] {
   return [...new Set(values)].sort();
 }
 
-const productColumnByFeature = new Map(
-  FR293_PRODUCT_COLUMN_MAP.map((item) => [item.featureKey, item]),
+const productColumnByFeature:
+ReadonlyMap<string, (typeof FR293_PRODUCT_COLUMN_MAP)[number]> = new Map(
+  FR293_PRODUCT_COLUMN_MAP.map((item) => [item.featureKey, item] as const),
 );
 
 export const NEUTRAL_OBSERVATION_SURFACE_FR312A:
 readonly NeutralObservationSurfaceFR312A[] = Object.freeze(
   FACE_READING_RGB_SELFIE_FEATURE_AUTHORITY_MATRIX_FR282.featureEntries
     .map((entry) => {
-      const productColumn = productColumnByFeature.get(entry.featureKey as never);
+      const productColumn = productColumnByFeature.get(entry.featureKey);
       if (productColumn === undefined) {
         throw new Error('fr312a_missing_fr293_product_column:' + entry.featureKey);
       }
