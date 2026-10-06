@@ -44,6 +44,13 @@ const expandedValidation: FR312ExpandedValidationReceipt = {
   subjectCoverage: 'multiple_subjects',
   representativeOrdinaryRgbReady: false,
   representativeCoverageReviewRequired: true,
+  candidateId:
+    'candidate.hairline.florence2_base.referring_segmentation.fr306',
+  runtimeProviderId: 'microsoft/Florence-2-base',
+  exactRevision:
+    '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+  runnerContractVersion:
+    'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
   exactModelRevisionBound: true,
   deidentifiedBoundarySatisfied: true,
   nextAction:

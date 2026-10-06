@@ -11,6 +11,7 @@ export const FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATE_CONTRACT_VERSION =
 export type FR306HairlineCandidateState =
   | 'primary_empirical_candidate'
   | 'fallback_empirical_candidate'
+  | 'additional_empirical_candidate'
   | 'excluded_product_path';
 
 export interface FR306HairlineCandidateComponent {
@@ -23,6 +24,9 @@ export interface FR306HairlineCandidateComponent {
 export interface FR306HairlineRuntimeCandidate {
   readonly candidateId: string;
   readonly state: FR306HairlineCandidateState;
+  readonly runtimeProviderId: string;
+  readonly exactRevision: string;
+  readonly runnerContractVersion: string | null;
   readonly components:
     readonly FR306HairlineCandidateComponent[];
   readonly evidenceRefs: readonly string[];
@@ -42,6 +46,11 @@ readonly FR306HairlineRuntimeCandidate[] = Object.freeze([
     candidateId:
       'candidate.hairline.florence2_base.referring_segmentation.fr306',
     state: 'primary_empirical_candidate' as const,
+    runtimeProviderId: 'microsoft/Florence-2-base',
+    exactRevision:
+      '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+    runnerContractVersion:
+      'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
     components: Object.freeze([
       Object.freeze({
         artifact: 'microsoft/Florence-2-base',
@@ -95,6 +104,11 @@ readonly FR306HairlineRuntimeCandidate[] = Object.freeze([
     candidateId:
       'candidate.hairline.grounding_dino_sam2.fr306',
     state: 'fallback_empirical_candidate' as const,
+    runtimeProviderId:
+      'candidate.hairline.grounding_dino_sam2.fr306',
+    exactRevision:
+      'grounding-dino@12bdfa3120f3e7ec7b434d90674b3396eccf88eb+sam2.1@e07df6aa19f5c6545121551bf89957b7663ee715',
+    runnerContractVersion: null,
     components: Object.freeze([
       Object.freeze({
         artifact: 'IDEA-Research/grounding-dino-base',
@@ -149,8 +163,69 @@ readonly FR306HairlineRuntimeCandidate[] = Object.freeze([
   }),
   Object.freeze({
     candidateId:
+      'candidate.hairline.multisignal_visible_interface.fr306',
+    state: 'additional_empirical_candidate' as const,
+    runtimeProviderId:
+      'candidate.hairline.multisignal_visible_interface.fr306',
+    exactRevision: '0.2.0',
+    runnerContractVersion:
+      'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+    components: Object.freeze([
+      Object.freeze({
+        artifact:
+          'repo:tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py',
+        revision: '0.2.0',
+        declaredLicense:
+          'repository-controlled implementation; runtime dependency versions/licenses must be pinned before production admission',
+        role:
+          'deterministic_adaptive_skin_edge_texture_continuity_visible_interface_candidate',
+      }),
+    ]),
+    evidenceRefs: Object.freeze([
+      'repo:tools/face-reading/hairline/README-multisignal-visible-hairline-candidate.md',
+      'repo:tools/face-reading/hairline/multisignal-18-capture-manifest.example.json',
+      'repo:issue/2213#comment-6015144275',
+      'repo:pull/2275',
+    ]),
+    promptPolicy: Object.freeze([
+      'no_hair_color_classification',
+      'combine_skin_transition_luminance_chroma_texture_edge_and_path_continuity',
+      'no_visible_hairline_is_a_valid_fail_closed_image_state',
+      'hidden_or_cropped_segments_are_never_completed',
+      'engineering_preview_thresholds_never_issue_FR305_admission',
+    ]),
+    proposedOutputs: Object.freeze([
+      'candidate visible hair-skin interface polyline',
+      'partial-or-occluded state',
+      'no-visible-hairline candidate state',
+      'unavailable state',
+      'deidentified aggregate signal summary only',
+    ]),
+    strengths: Object.freeze([
+      'does not depend on open-vocabulary hair prompt grounding',
+      'low local color contrast can be supported by edge and texture evidence',
+      'explicit no-visible-hairline state prevents mandatory false boundary generation',
+      '18-capture local engineering run exercised contrast occlusion crop asymmetry and no-hairline controls',
+    ]),
+    blockers: Object.freeze([
+      '18-capture result is engineering evidence and has not passed governed FR310/FR312 review',
+      'representative ordinary-RGB coverage has not been established',
+      'runtime dependency versions/licenses are not yet pinned for production admission',
+      'candidate output has not satisfied FR305 admission requirements',
+    ]),
+    mayIssueFR305AdmissionReceipt: false as const,
+    runtimeHairlineObservationAuthorized: false as const,
+    hiddenHairlineCompletionAuthorized: false as const,
+    productionAuthorization: false as const,
+  }),
+  Object.freeze({
+    candidateId:
       'excluded.hairline.celebamask_hq_face_parsing.fr306',
     state: 'excluded_product_path' as const,
+    runtimeProviderId:
+      'excluded.hairline.celebamask_hq_face_parsing.fr306',
+    exactRevision: 'excluded_noncommercial_path',
+    runnerContractVersion: null,
     components: Object.freeze([
       Object.freeze({
         artifact:
@@ -235,6 +310,8 @@ export const FR306_CURRENT_GATE = Object.freeze({
     'candidate.hairline.florence2_base.referring_segmentation.fr306' as const,
   fallbackCandidate:
     'candidate.hairline.grounding_dino_sam2.fr306' as const,
+  additionalCandidate:
+    'candidate.hairline.multisignal_visible_interface.fr306' as const,
   excludedProductPath:
     'excluded.hairline.celebamask_hq_face_parsing.fr306' as const,
   empiricalRunnerImplemented: false as const,
@@ -269,6 +346,26 @@ function assertRefs(
   }
 }
 
+export function resolveFR306EmpiricalRuntimeCandidate(
+  runtimeProviderId: string,
+  exactRevision: string,
+  runnerContractVersion: string,
+): FR306HairlineRuntimeCandidate {
+  const candidate = FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATES.find(
+    (entry) =>
+      entry.state !== 'excluded_product_path' &&
+      entry.runtimeProviderId === runtimeProviderId &&
+      entry.exactRevision === exactRevision &&
+      entry.runnerContractVersion === runnerContractVersion,
+  );
+
+  if (candidate == null) {
+    fail('runtime provider identity is not an exact registered empirical candidate.');
+  }
+
+  return candidate;
+}
+
 export function assertVisibleHairlineRuntimeCandidatesFR306(): void {
   assertFR305CurrentGate();
 
@@ -284,11 +381,11 @@ export function assertVisibleHairlineRuntimeCandidatesFR306(): void {
 
   const candidates = FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATES;
   if (
-    candidates.length !== 3 ||
+    candidates.length !== 4 ||
     new Set(candidates.map((entry) => entry.candidateId)).size !==
-      3
+      4
   ) {
-    fail('candidate registry must contain exactly three unique entries.');
+    fail('candidate registry must contain exactly four unique entries.');
   }
 
   const primary = candidates.find(
@@ -298,6 +395,10 @@ export function assertVisibleHairlineRuntimeCandidatesFR306(): void {
   const fallback = candidates.find(
     (entry) =>
       entry.state === 'fallback_empirical_candidate',
+  );
+  const additional = candidates.find(
+    (entry) =>
+      entry.state === 'additional_empirical_candidate',
   );
   const excluded = candidates.find(
     (entry) =>
@@ -334,6 +435,23 @@ export function assertVisibleHairlineRuntimeCandidatesFR306(): void {
   }
 
   if (
+    additional?.candidateId !==
+      FR306_CURRENT_GATE.additionalCandidate ||
+    additional.runtimeProviderId !==
+      'candidate.hairline.multisignal_visible_interface.fr306' ||
+    additional.exactRevision !== '0.2.0' ||
+    additional.runnerContractVersion !==
+      'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1' ||
+    additional.components.length !== 1 ||
+    additional.components[0]?.artifact !==
+      'repo:tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py' ||
+    additional.runtimeHairlineObservationAuthorized !== false ||
+    additional.mayIssueFR305AdmissionReceipt !== false
+  ) {
+    fail('additional deterministic multi-signal candidate drift.');
+  }
+
+  if (
     excluded?.candidateId !==
       FR306_CURRENT_GATE.excludedProductPath ||
     !excluded.components[0]?.declaredLicense.includes(
@@ -346,6 +464,8 @@ export function assertVisibleHairlineRuntimeCandidatesFR306(): void {
   for (const candidate of candidates) {
     assertRefs(candidate.evidenceRefs, candidate.candidateId);
     if (
+      candidate.runtimeProviderId.trim().length === 0 ||
+      candidate.exactRevision.trim().length === 0 ||
       candidate.promptPolicy.length === 0 ||
       candidate.proposedOutputs.length === 0 ||
       candidate.strengths.length === 0 ||

@@ -221,17 +221,25 @@ function availableAtFR312(fr308, fr310, fr312) {
 }
 
 async function importContracts() {
-  const [fr307Module, fr308Module, fr310Module, fr312Module] =
-    await Promise.all([
-      import('../.face-reading-dist/visible-hairline-empirical-runner-fr307.js'),
-      import('../.face-reading-dist/visible-hairline-bounded-capture-bundle-fr308.js'),
-      import('../.face-reading-dist/visible-hairline-evidence-adjudicator-fr310.js'),
-      import('../.face-reading-dist/visible-hairline-expanded-validation-fr312.js'),
-    ]);
+  const [
+    fr306Module,
+    fr307Module,
+    fr308Module,
+    fr310Module,
+    fr312Module,
+  ] = await Promise.all([
+    import('../.face-reading-dist/visible-hairline-runtime-candidates-fr306.js'),
+    import('../.face-reading-dist/visible-hairline-empirical-runner-fr307.js'),
+    import('../.face-reading-dist/visible-hairline-bounded-capture-bundle-fr308.js'),
+    import('../.face-reading-dist/visible-hairline-evidence-adjudicator-fr310.js'),
+    import('../.face-reading-dist/visible-hairline-expanded-validation-fr312.js'),
+  ]);
 
-  const model = fr307Module.FR307_PRIMARY_MODEL;
-  const runnerContractVersion =
+  const defaultModel = fr307Module.FR307_PRIMARY_MODEL;
+  const defaultRunnerContractVersion =
     fr307Module.FR307_VISIBLE_HAIRLINE_EMPIRICAL_RUNNER_CONTRACT_VERSION;
+  const resolveCandidate =
+    fr306Module.resolveFR306EmpiricalRuntimeCandidate;
   const issueBundle =
     fr308Module.issueBoundedHairlineBundleReceiptFR308;
   const adjudicateBounded =
@@ -240,14 +248,17 @@ async function importContracts() {
     fr312Module.adjudicateExpandedHairlineValidationFR312;
 
   if (
-    model == null ||
-    typeof model.id !== 'string' ||
-    typeof model.revision !== 'string'
+    defaultModel == null ||
+    typeof defaultModel.id !== 'string' ||
+    typeof defaultModel.revision !== 'string'
   ) {
     throw new Error('FR307_MODEL_EXPORT_MISSING');
   }
-  if (typeof runnerContractVersion !== 'string') {
+  if (typeof defaultRunnerContractVersion !== 'string') {
     throw new Error('FR307_CONTRACT_EXPORT_MISSING');
+  }
+  if (typeof resolveCandidate !== 'function') {
+    throw new Error('FR306_CANDIDATE_RESOLVER_EXPORT_MISSING');
   }
   if (typeof issueBundle !== 'function') {
     throw new Error('FR308_EXECUTOR_EXPORT_MISSING');
@@ -260,8 +271,9 @@ async function importContracts() {
   }
 
   return {
-    model,
-    runnerContractVersion,
+    defaultModel,
+    defaultRunnerContractVersion,
+    resolveCandidate,
     issueBundle,
     adjudicateBounded,
     adjudicateExpanded,
@@ -283,6 +295,22 @@ function assertTopLevelInput(input) {
 
   if (input.schemaVersion !== INPUT_SCHEMA) {
     throw new Error('LOCAL_INPUT_SCHEMA_VERSION_MISMATCH');
+  }
+
+  if (input.candidate !== undefined) {
+    assertObject(input.candidate, 'CANDIDATE_INPUT_INVALID');
+    for (const key of [
+      'modelId',
+      'modelRevision',
+      'runnerContractVersion',
+    ]) {
+      if (
+        typeof input.candidate[key] !== 'string' ||
+        input.candidate[key].trim().length === 0
+      ) {
+        throw new Error(`CANDIDATE_${key.toUpperCase()}_INVALID`);
+      }
+    }
   }
 
   assertObject(input.fr308, 'FR308_INPUT_MISSING');
@@ -313,19 +341,33 @@ async function execute(input) {
   assertTopLevelInput(input);
 
   const {
-    model,
-    runnerContractVersion,
+    defaultModel,
+    defaultRunnerContractVersion,
+    resolveCandidate,
     issueBundle,
     adjudicateBounded,
     adjudicateExpanded,
   } = await importContracts();
 
+  const requestedCandidate = input.candidate ?? {
+    modelId: defaultModel.id,
+    modelRevision: defaultModel.revision,
+    runnerContractVersion:
+      defaultRunnerContractVersion,
+  };
+  const candidate = resolveCandidate(
+    requestedCandidate.modelId,
+    requestedCandidate.modelRevision,
+    requestedCandidate.runnerContractVersion,
+  );
+
   const fr308 = issueBundle({
     schemaVersion:
       'fr308-bounded-hairline-bundle-input-v1',
-    runnerContractVersion,
-    modelId: model.id,
-    modelRevision: model.revision,
+    runnerContractVersion:
+      requestedCandidate.runnerContractVersion,
+    modelId: candidate.runtimeProviderId,
+    modelRevision: candidate.exactRevision,
     localOnlyExecution: true,
     caseFindings: input.fr308.caseFindings,
   });
@@ -335,8 +377,8 @@ async function execute(input) {
       'fr310-hairline-evidence-adjudication-input-v1',
     bundleReceipt: fr308,
     caseFindings: input.fr308.caseFindings,
-    modelId: model.id,
-    modelRevision: model.revision,
+    modelId: candidate.runtimeProviderId,
+    modelRevision: candidate.exactRevision,
     humanReview: input.fr310.humanReview,
   });
 
@@ -356,8 +398,8 @@ async function execute(input) {
     schemaVersion:
       'fr312-expanded-hairline-validation-input-v1',
     prerequisiteAdjudication: fr310,
-    modelId: model.id,
-    modelRevision: model.revision,
+    modelId: candidate.runtimeProviderId,
+    modelRevision: candidate.exactRevision,
     humanReviewCompleted:
       input.fr312.humanReviewCompleted,
     sessionLabelsOpaque:
@@ -461,6 +503,8 @@ async function selfCheck() {
     status: 'self_check_pass',
     importedContractCount: 3,
     pinnedModelIdentityAvailable: true,
+    registeredCandidateResolverAvailable: true,
+    legacyFlorenceDefaultPreserved: true,
     privacyGuardRejectsCaptureLevelPayload: true,
     privacyGuardRejectsDigest: true,
   };

@@ -300,6 +300,13 @@ describe('FR310 visible hairline evidence adjudicator', () => {
       repeatRequired: false,
       expandedValidationEligible: true,
       reviewedCaseCount: 4,
+      candidateId:
+        'candidate.hairline.florence2_base.referring_segmentation.fr306',
+      runtimeProviderId: 'microsoft/Florence-2-base',
+      exactRevision:
+        '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+      runnerContractVersion:
+        'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
       exactModelRevisionBound: true,
       deidentifiedBoundarySatisfied: true,
       nextAction:
@@ -318,6 +325,57 @@ describe('FR310 visible hairline evidence adjudicator', () => {
     });
   });
 
+  it('accepts a registered multi-signal candidate when FR308 and FR310 identities match', () => {
+    const caseFindings = findings({
+      heavy_bangs_hairline_substantially_hidden: {
+        diagnosticHairlineCandidateObserved: false,
+        visibleInterfaceCandidateObserved: null,
+        directPromptFailureMode: 'unavailable',
+        disposition: 'supports_further_evaluation',
+      },
+      cropped_upper_forehead: {
+        visibleInterfaceCandidateObserved: null,
+        directPromptFailureMode: 'unavailable',
+        disposition: 'supports_further_evaluation',
+      },
+    });
+    const bundleReceipt =
+      issueBoundedHairlineBundleReceiptFR308({
+        schemaVersion:
+          'fr308-bounded-hairline-bundle-input-v1',
+        runnerContractVersion:
+          'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+        modelId:
+          'candidate.hairline.multisignal_visible_interface.fr306',
+        modelRevision: '0.2.0',
+        localOnlyExecution: true,
+        caseFindings,
+      });
+
+    const result = adjudicateHairlineEvidenceFR310({
+      schemaVersion:
+        'fr310-hairline-evidence-adjudication-input-v1',
+      bundleReceipt,
+      caseFindings,
+      modelId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      modelRevision: '0.2.0',
+      humanReview: review(),
+    });
+
+    expect(result).toMatchObject({
+      disposition: 'eligible_for_expanded_validation',
+      candidateId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      runtimeProviderId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      exactRevision: '0.2.0',
+      runnerContractVersion:
+        'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+      expandedValidationEligible: true,
+    });
+  });
+
   it('rejects an exact-model revision mismatch before adjudication', () => {
     const base = input(findings());
 
@@ -326,7 +384,20 @@ describe('FR310 visible hairline evidence adjudicator', () => {
         ...base,
         modelRevision: 'different-revision',
       } as never),
-    ).toThrow(/exact model identity\/revision mismatch/);
+    ).toThrow(/registered empirical candidate/);
+  });
+
+  it('rejects candidate swapping between FR308 and FR310', () => {
+    const base = input(findings());
+
+    expect(() =>
+      adjudicateHairlineEvidenceFR310({
+        ...base,
+        modelId:
+          'candidate.hairline.multisignal_visible_interface.fr306',
+        modelRevision: '0.2.0',
+      }),
+    ).toThrow();
   });
 
   it('keeps the current repository gate at six of seven with no real adjudication executed', () => {

@@ -32,6 +32,8 @@ The self-check:
 - imports all five governed contract functions;
 - verifies the output guard rejects a subject-level scalar;
 - verifies the output guard rejects a digest-shaped string;
+- verifies an injected FR312 receipt carries exact candidate identity fields;
+- rejects ambiguous or identity-incomplete FR312 handoff;
 - uses no real or synthetic biometric evidence.
 
 ## Run
@@ -113,6 +115,15 @@ admitted_for_neutral_visible_hair_skin_boundary_runtime
 ```
 
 The input must already contain a genuine FR312 expanded-validation receipt and separately reviewed representative ordinary-RGB coverage/model-behavior evidence.
+
+The FR312 receipt must also contain one exact registered FR306 candidate identity:
+
+- non-empty `candidateId`;
+- non-empty `runtimeProviderId`;
+- non-empty `exactRevision`;
+- non-empty `runnerContractVersion`.
+
+The FR313 input `modelId` / `modelRevision` must resolve to that same registered candidate. Provider, revision, or runner-contract swapping between FR312 and FR313 is rejected. The same identity requirement applies when the receipt is injected through `--fr312-receipt`.
 
 The runner does not:
 

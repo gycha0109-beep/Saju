@@ -8,9 +8,8 @@ import {
   type FR308DeidentifiedCaseFinding,
 } from './visible-hairline-bounded-capture-bundle-fr308.js';
 import {
-  FR307_PRIMARY_MODEL,
-  FR307_VISIBLE_HAIRLINE_EMPIRICAL_RUNNER_CONTRACT_VERSION,
-} from './visible-hairline-empirical-runner-fr307.js';
+  resolveFR306EmpiricalRuntimeCandidate,
+} from './visible-hairline-runtime-candidates-fr306.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export const FR310_HAIRLINE_EVIDENCE_ADJUDICATOR_CONTRACT_VERSION =
@@ -66,9 +65,8 @@ export interface FR310AdjudicationInput {
   readonly bundleReceipt: FR308BoundedBundleReceipt;
   readonly caseFindings:
     readonly FR308DeidentifiedCaseFinding[];
-  readonly modelId: typeof FR307_PRIMARY_MODEL.id;
-  readonly modelRevision:
-    typeof FR307_PRIMARY_MODEL.revision;
+  readonly modelId: string;
+  readonly modelRevision: string;
   readonly humanReview: FR310HumanReviewAttestation;
 }
 
@@ -86,6 +84,10 @@ export interface FR310AdjudicationReceipt {
   readonly repeatRequired: boolean;
   readonly expandedValidationEligible: boolean;
   readonly reviewedCaseCount: 4;
+  readonly candidateId: string;
+  readonly runtimeProviderId: string;
+  readonly exactRevision: string;
+  readonly runnerContractVersion: string;
   readonly exactModelRevisionBound: true;
   readonly deidentifiedBoundarySatisfied: boolean;
   readonly nextAction:
@@ -228,12 +230,22 @@ export function adjudicateHairlineEvidenceFR310(
     fail('adjudication input schemaVersion drift.');
   }
 
+  const candidate = resolveFR306EmpiricalRuntimeCandidate(
+    input.modelId,
+    input.modelRevision,
+    input.bundleReceipt.runnerContractVersion,
+  );
+
   if (
-    input.modelId !== FR307_PRIMARY_MODEL.id ||
-    input.modelRevision !==
-      FR307_PRIMARY_MODEL.revision
+    input.bundleReceipt.candidateId !== candidate.candidateId ||
+    input.bundleReceipt.runtimeProviderId !==
+      candidate.runtimeProviderId ||
+    input.bundleReceipt.exactRevision !==
+      candidate.exactRevision ||
+    input.bundleReceipt.runnerContractVersion !==
+      candidate.runnerContractVersion
   ) {
-    fail('exact model identity/revision mismatch.');
+    fail('FR308 candidate identity does not match FR310 input.');
   }
 
   if (
@@ -277,7 +289,7 @@ export function adjudicateHairlineEvidenceFR310(
       schemaVersion:
         'fr308-bounded-hairline-bundle-input-v1',
       runnerContractVersion:
-        FR307_VISIBLE_HAIRLINE_EMPIRICAL_RUNNER_CONTRACT_VERSION,
+        input.bundleReceipt.runnerContractVersion,
       modelId: input.modelId,
       modelRevision: input.modelRevision,
       localOnlyExecution: true,
@@ -290,7 +302,15 @@ export function adjudicateHairlineEvidenceFR310(
     replayedReceipt.captureCaseCount !==
       input.bundleReceipt.captureCaseCount ||
     replayedReceipt.authorityState !==
-      input.bundleReceipt.authorityState
+      input.bundleReceipt.authorityState ||
+    replayedReceipt.candidateId !==
+      input.bundleReceipt.candidateId ||
+    replayedReceipt.runtimeProviderId !==
+      input.bundleReceipt.runtimeProviderId ||
+    replayedReceipt.exactRevision !==
+      input.bundleReceipt.exactRevision ||
+    replayedReceipt.runnerContractVersion !==
+      input.bundleReceipt.runnerContractVersion
   ) {
     fail('FR308 bundle receipt replay mismatch.');
   }
@@ -530,6 +550,11 @@ export function adjudicateHairlineEvidenceFR310(
       disposition ===
       'eligible_for_expanded_validation',
     reviewedCaseCount: 4 as const,
+    candidateId: candidate.candidateId,
+    runtimeProviderId: candidate.runtimeProviderId,
+    exactRevision: candidate.exactRevision,
+    runnerContractVersion:
+      input.bundleReceipt.runnerContractVersion,
     exactModelRevisionBound: true as const,
     deidentifiedBoundarySatisfied:
       privacySatisfied,

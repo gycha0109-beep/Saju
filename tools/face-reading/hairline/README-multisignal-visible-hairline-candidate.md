@@ -182,6 +182,18 @@ For each capture, inspect the overlay and ask:
 5. In a no-visible-hairline control, does it avoid inventing an internal line?
 6. For long hair or braids, does it follow the forehead interface rather than the side hair mass?
 
+## Governed human-review handoff
+
+After a local v3.1 run, do not hand-write FR308/FR312 JSON from preview states.
+
+Use:
+
+```text
+tools/face-reading/hairline/README-multisignal-review-packet.md
+```
+
+The review packet requires explicit human inspection and carries the exact registered FR306 candidate identity through FR308, FR310 and FR312.
+
 ## Authority boundary
 
 This is candidate evidence only.
