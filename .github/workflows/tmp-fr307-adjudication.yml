@@ -1,0 +1,150 @@
+name: tmp-fr307-adjudication
+
+on:
+  push:
+    branches:
+      - ops/tmp-fr307-adjudication-20261006
+    paths:
+      - .github/workflows/tmp-fr307-adjudication.yml
+
+permissions:
+  contents: read
+
+jobs:
+  adjudicate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install and build face-reading contracts
+        run: |
+          npm ci
+          npm run face:build
+
+      - name: Execute deidentified FR308 to FR312 runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/face-reading/fr308-fr312-local
+          cat > .cache/face-reading/fr308-fr312-local/private-input.json <<'JSON'
+          {
+            "schemaVersion": "fr308-fr312-local-deidentified-validation-input-v1",
+            "fr308": {
+              "caseFindings": [
+                {
+                  "schemaVersion": "fr308-deidentified-hairline-case-finding-v1",
+                  "case": "clear_unobstructed_central_hairline",
+                  "visibleHairCandidateObserved": true,
+                  "foreheadSkinCandidateObserved": true,
+                  "diagnosticHairlineCandidateObserved": true,
+                  "grossMislocalizationObserved": false,
+                  "hiddenCompletionObserved": false,
+                  "outOfFrameCompletionObserved": false,
+                  "visibleInterfaceCandidateObserved": true,
+                  "directPromptFailureMode": "leakage",
+                  "disposition": "supports_further_evaluation",
+                  "containsSourceImage": false,
+                  "containsOverlay": false,
+                  "containsRawPolygonCoordinates": false,
+                  "containsSourceImageDigest": false,
+                  "containsFileNameOrPersonalIdentifier": false
+                },
+                {
+                  "schemaVersion": "fr308-deidentified-hairline-case-finding-v1",
+                  "case": "partial_bangs_occlusion",
+                  "visibleHairCandidateObserved": true,
+                  "foreheadSkinCandidateObserved": false,
+                  "diagnosticHairlineCandidateObserved": false,
+                  "grossMislocalizationObserved": true,
+                  "hiddenCompletionObserved": false,
+                  "outOfFrameCompletionObserved": false,
+                  "visibleInterfaceCandidateObserved": false,
+                  "directPromptFailureMode": "leakage",
+                  "disposition": "rejects_current_candidate_behavior",
+                  "containsSourceImage": false,
+                  "containsOverlay": false,
+                  "containsRawPolygonCoordinates": false,
+                  "containsSourceImageDigest": false,
+                  "containsFileNameOrPersonalIdentifier": false
+                },
+                {
+                  "schemaVersion": "fr308-deidentified-hairline-case-finding-v1",
+                  "case": "heavy_bangs_hairline_substantially_hidden",
+                  "visibleHairCandidateObserved": true,
+                  "foreheadSkinCandidateObserved": false,
+                  "diagnosticHairlineCandidateObserved": false,
+                  "grossMislocalizationObserved": true,
+                  "hiddenCompletionObserved": false,
+                  "outOfFrameCompletionObserved": false,
+                  "visibleInterfaceCandidateObserved": false,
+                  "directPromptFailureMode": "leakage",
+                  "disposition": "rejects_current_candidate_behavior",
+                  "containsSourceImage": false,
+                  "containsOverlay": false,
+                  "containsRawPolygonCoordinates": false,
+                  "containsSourceImageDigest": false,
+                  "containsFileNameOrPersonalIdentifier": false
+                },
+                {
+                  "schemaVersion": "fr308-deidentified-hairline-case-finding-v1",
+                  "case": "cropped_upper_forehead",
+                  "visibleHairCandidateObserved": true,
+                  "foreheadSkinCandidateObserved": true,
+                  "diagnosticHairlineCandidateObserved": true,
+                  "grossMislocalizationObserved": false,
+                  "hiddenCompletionObserved": false,
+                  "outOfFrameCompletionObserved": false,
+                  "visibleInterfaceCandidateObserved": true,
+                  "directPromptFailureMode": "leakage",
+                  "disposition": "supports_further_evaluation",
+                  "containsSourceImage": false,
+                  "containsOverlay": false,
+                  "containsRawPolygonCoordinates": false,
+                  "containsSourceImageDigest": false,
+                  "containsFileNameOrPersonalIdentifier": false
+                }
+              ]
+            },
+            "fr310": {
+              "humanReview": {
+                "schemaVersion": "fr310-hairline-human-review-attestation-v1",
+                "completed": true,
+                "reviewOutputDeidentified": true,
+                "sourceImageAbsent": true,
+                "overlayAbsent": true,
+                "rawPolygonCoordinatesAbsent": true,
+                "sourceImageDigestAbsent": true,
+                "fileNameOrPersonalIdentifierAbsent": true,
+                "assessmentBlockedCases": [],
+                "directPromptAuthoritativeMisinterpretationRiskCases": []
+              }
+            },
+            "fr312": {
+              "humanReviewCompleted": false,
+              "sessionLabelsOpaque": true,
+              "demographicAttributesCollected": false,
+              "subjectCoverage": "unknown",
+              "captures": []
+            }
+          }
+          JSON
+
+          set +e
+          node scripts/run-fr308-fr312-local-validation.mjs             --input .cache/face-reading/fr308-fr312-local/private-input.json
+          code=$?
+          set -e
+
+          cat .cache/face-reading/fr308-fr312-local/repo-safe-receipt.json
+          test "$code" -eq 2
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fr307-adjudication-safe-receipt
+          path: .cache/face-reading/fr308-fr312-local/repo-safe-receipt.json
+          retention-days: 1
