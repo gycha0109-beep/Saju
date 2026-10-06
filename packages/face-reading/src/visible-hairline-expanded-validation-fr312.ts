@@ -8,12 +8,12 @@ import {
 import { FaceAuthorityValidationError } from './validation.js';
 
 export const FR312_EXPANDED_HAIRLINE_VALIDATION_CONTRACT_VERSION =
-  'FR312-EXPANDED-HAIRLINE-VALIDATION-v1' as const;
+  'FR312-EXPANDED-HAIRLINE-VALIDATION-v1.1' as const;
 
 export const FR312_EXPANDED_CASES = Object.freeze([
   'm_shaped_or_widows_peak_visible_contour',
   'side_recession_or_asymmetric_visible_hairline',
-  'headwear_occlusion_if_available',
+  'upper_hairline_visibility_loss',
   'dark_hair_dark_background',
   'light_hair_or_low_local_contrast',
   'ordinary_indoor_illumination_variation',
