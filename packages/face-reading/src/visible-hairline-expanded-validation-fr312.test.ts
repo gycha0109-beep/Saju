@@ -26,6 +26,13 @@ const prerequisite: FR310AdjudicationReceipt = {
   repeatRequired: false,
   expandedValidationEligible: true,
   reviewedCaseCount: 4,
+  candidateId:
+    'candidate.hairline.florence2_base.referring_segmentation.fr306',
+  runtimeProviderId: 'microsoft/Florence-2-base',
+  exactRevision:
+    '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+  runnerContractVersion:
+    'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
   exactModelRevisionBound: true,
   deidentifiedBoundarySatisfied: true,
   nextAction:
@@ -319,6 +326,13 @@ describe('FR312 expanded visible-hairline validation', () => {
       subjectCoverage: 'single_subject',
       representativeOrdinaryRgbReady: false,
       representativeCoverageReviewRequired: true,
+      candidateId:
+        'candidate.hairline.florence2_base.referring_segmentation.fr306',
+      runtimeProviderId: 'microsoft/Florence-2-base',
+      exactRevision:
+        '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+      runnerContractVersion:
+        'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
       exactModelRevisionBound: true,
       deidentifiedBoundarySatisfied: true,
       nextAction:
@@ -335,6 +349,55 @@ describe('FR312 expanded visible-hairline validation', () => {
       productionActivated: false,
       commerceActivated: false,
     });
+  });
+
+  it('accepts the registered multi-signal candidate when FR310 and FR312 identities match', () => {
+    const multiSignalPrerequisite: FR310AdjudicationReceipt = {
+      ...prerequisite,
+      candidateId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      runtimeProviderId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      exactRevision: '0.2.0',
+      runnerContractVersion:
+        'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+    };
+
+    const result =
+      adjudicateExpandedHairlineValidationFR312(
+        input(completeCaptures(), {
+          prerequisiteAdjudication:
+            multiSignalPrerequisite,
+          modelId:
+            'candidate.hairline.multisignal_visible_interface.fr306',
+          modelRevision: '0.2.0',
+        }),
+      );
+
+    expect(result).toMatchObject({
+      disposition:
+        'eligible_for_model_admission_review',
+      candidateId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      runtimeProviderId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      exactRevision: '0.2.0',
+      runnerContractVersion:
+        'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+      modelAdmissionReviewEligible: true,
+    });
+  });
+
+  it('rejects candidate swapping between FR310 and FR312', () => {
+    expect(() =>
+      adjudicateExpandedHairlineValidationFR312(
+        input(completeCaptures(), {
+          modelId:
+            'candidate.hairline.multisignal_visible_interface.fr306',
+          modelRevision: '0.2.0',
+        }),
+      ),
+    ).toThrow();
   });
 
   it('never treats single-subject engineering evidence as representative ordinary RGB coverage', () => {
