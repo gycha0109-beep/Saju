@@ -20,6 +20,13 @@ const expandedValidation: FR312ExpandedValidationReceipt = {
     'FR312-EXPANDED-HAIRLINE-VALIDATION-v1.1',
   authorityState:
     'expanded_engineering_validation_only',
+  candidateId:
+    'candidate.hairline.florence2_base.referring_segmentation.fr306',
+  runtimeContractVersion:
+    'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
+  modelId: 'microsoft/Florence-2-base',
+  modelRevision:
+    '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
   disposition:
     'eligible_for_model_admission_review',
   failureReasons: [],
