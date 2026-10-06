@@ -32,11 +32,19 @@ import {
   OFFICIAL_READING_DETAIL_CAPABILITY_V1,
 } from '../src/reading/official-reading-detail-presentation.js';
 import {
+  OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+  OFFICIAL_READING_DETAILED_ROLE_ORDER_V1,
+  buildApprovedOfficialReadingDetailedRealizationV1,
+} from '../src/reading/official-reading-detailed-realization.js';
+import {
   GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
   type GovernedReadingEvidenceBundleV1,
 } from '../src/reading/governed-reading-evidence.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
-import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
+import {
+  renderApprovedDetailedOfficialReadingV1,
+  renderOfficialReadingV1,
+} from '../src/reading/official-reading-renderer.js';
 import { buildReadingCompositionEvidence } from '../src/reading/reading-profile-authorization.js';
 
 const NOW = '2026-10-06T05:00:00.000Z';
@@ -415,5 +423,243 @@ describe('Official Reading general natal detailed material pilot', () => {
       coverage.requiredMaterialCount,
     );
     expect(coverage.staleTargetCount).toBe(0);
+  });
+});
+
+
+describe('Official Reading detailed renderer connection', () => {
+  function generalFixture() {
+    const semantics = semanticsFor({
+      label: 'general-renderer-connection',
+      intent: { domain: 'general', temporalScope: 'natal' },
+      registry: createGeneralNatalUsefulReadingCandidateRegistry(NOW),
+    });
+    return {
+      semantics,
+      plan: buildOfficialReadingPlanV1(semantics),
+    };
+  }
+
+  function insightItems(
+    report: ReturnType<typeof renderOfficialReadingV1>,
+  ) {
+    return report.sections.flatMap((section) =>
+      section.blocks.flatMap((block) =>
+        block.type === 'insights' ? [...block.items] : [],
+      ),
+    );
+  }
+
+  function sourceHintCount(
+    report: ReturnType<typeof renderOfficialReadingV1>,
+  ): number {
+    return report.sections.reduce(
+      (count, section) =>
+        count +
+        section.blocks.filter((block) => block.type === 'source_hint').length,
+      0,
+    );
+  }
+
+  it('realizes every visible primary unit in canonical plan order with deterministic role order', () => {
+    const { semantics, plan } = generalFixture();
+    const realization = buildApprovedOfficialReadingDetailedRealizationV1(
+      semantics,
+      plan,
+    );
+    expect(realization).toBeDefined();
+    expect(realization?.policyVersion).toBe(
+      OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+    );
+
+    const visibleUnitIds: string[] = [];
+    const seen = new Set<string>();
+    for (const section of plan.sections) {
+      if (
+        section.semanticGroup === 'evidence' ||
+        section.semanticGroup === 'limits'
+      ) {
+        continue;
+      }
+      for (const unitId of section.primaryUnitRefs) {
+        if (seen.has(unitId)) continue;
+        seen.add(unitId);
+        visibleUnitIds.push(unitId);
+      }
+    }
+
+    expect(realization?.units.map((unit) => unit.unitId)).toEqual(
+      visibleUnitIds,
+    );
+
+    const order = new Map(
+      OFFICIAL_READING_DETAILED_ROLE_ORDER_V1.map((role, index) => [
+        role,
+        index,
+      ]),
+    );
+    for (const unit of realization?.units ?? []) {
+      const roleIndexes = unit.roleTexts.map((item) => order.get(item.role));
+      expect(roleIndexes.every((index) => index !== undefined)).toBe(true);
+      expect(roleIndexes).toEqual(
+        [...roleIndexes].sort(
+          (left, right) => (left ?? -1) - (right ?? -1),
+        ),
+      );
+      expect(
+        unit.summarySuffixes.length + unit.qualifierSuffixes.length,
+      ).toBe(unit.roleTexts.length);
+    }
+  });
+
+  it('renders approved detail as a strict semantic-preserving expansion of standard output', () => {
+    const { semantics, plan } = generalFixture();
+    const standard = renderOfficialReadingV1(semantics, plan);
+    const detailed = renderApprovedDetailedOfficialReadingV1(
+      semantics,
+      plan,
+    );
+
+    expect(detailed.detailedRealizationPolicyVersion).toBe(
+      OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+    );
+    expect(
+      detailed.sections.map((section) => ({
+        sectionId: section.sectionId,
+        sectionType: section.sectionType,
+        title: section.title,
+        state: section.state,
+        explainabilityRefs: section.explainabilityRefs,
+        blockTypes: section.blocks.map((block) => block.type),
+      })),
+    ).toEqual(
+      standard.sections.map((section) => ({
+        sectionId: section.sectionId,
+        sectionType: section.sectionType,
+        title: section.title,
+        state: section.state,
+        explainabilityRefs: section.explainabilityRefs,
+        blockTypes: section.blocks.map((block) => block.type),
+      })),
+    );
+    expect(detailed.explainability).toEqual(standard.explainability);
+
+    const standardItems = insightItems(standard);
+    const detailedItems = insightItems(detailed);
+    expect(detailedItems.map((item) => item.explainabilityRef)).toEqual(
+      standardItems.map((item) => item.explainabilityRef),
+    );
+    expect(detailedItems).toHaveLength(standardItems.length);
+
+    let expansionObserved = false;
+    for (let index = 0; index < standardItems.length; index += 1) {
+      const standardItem = standardItems[index];
+      const detailedItem = detailedItems[index];
+      expect(detailedItem?.headline).toBe(standardItem?.headline);
+      if (standardItem?.summary !== undefined) {
+        expect(detailedItem?.summary?.startsWith(standardItem.summary)).toBe(
+          true,
+        );
+      }
+      for (const qualifier of standardItem?.qualifiers ?? []) {
+        expect(detailedItem?.qualifiers).toContain(qualifier);
+      }
+      if (
+        detailedItem?.summary !== standardItem?.summary ||
+        (detailedItem?.qualifiers?.length ?? 0) >
+          (standardItem?.qualifiers?.length ?? 0)
+      ) {
+        expansionObserved = true;
+      }
+    }
+    expect(expansionObserved).toBe(true);
+
+    const standardLimits = standard.sections.find(
+      (section) => section.title === '해석 범위',
+    );
+    const detailedLimits = detailed.sections.find(
+      (section) => section.title === '해석 범위',
+    );
+    expect(detailedLimits?.blocks).toEqual(standardLimits?.blocks);
+  });
+
+  it('keeps the public detailed preference on standard fallback even when internal detailed material is ready', () => {
+    const { semantics, plan } = generalFixture();
+    const standard = renderOfficialReadingV1(semantics, plan);
+    const publicDetailedRequest = renderOfficialReadingV1(
+      semantics,
+      plan,
+      { preferredDetail: 'detailed' },
+    );
+
+    expect(publicDetailedRequest.sections).toEqual(standard.sections);
+    expect(publicDetailedRequest.detailPreferenceResolution).toEqual({
+      requestedDetail: 'detailed',
+      resolvedDetail: 'standard',
+      resolution: 'fallback_to_standard',
+      fallbackReason: 'missing_expansion_material',
+    });
+    expect(
+      publicDetailedRequest.detailedRealizationPolicyVersion,
+    ).toBeUndefined();
+  });
+
+  it('fails closed instead of partially rendering detail for an incomplete domain', () => {
+    const semantics = semanticsFor({
+      label: 'career-renderer-connection',
+      intent: { domain: 'career', temporalScope: 'natal' },
+      registry: createCareerNatalReadingCandidateRegistry(NOW),
+    });
+    const plan = buildOfficialReadingPlanV1(semantics);
+
+    expect(
+      buildApprovedOfficialReadingDetailedRealizationV1(semantics, plan),
+    ).toBeUndefined();
+    expect(() =>
+      renderApprovedDetailedOfficialReadingV1(semantics, plan),
+    ).toThrow(/requires complete current detailed material/iu);
+  });
+
+  it('keeps source summaries independent from detailed realization and exposes no registry diagnostics', () => {
+    const { semantics, plan } = generalFixture();
+    const withoutSummaries = renderApprovedDetailedOfficialReadingV1(
+      semantics,
+      plan,
+    );
+    expect(sourceHintCount(withoutSummaries)).toBe(0);
+
+    const sourceIds = [
+      ...new Set(
+        withoutSummaries.explainability.entries.flatMap(
+          (entry) => entry.sourceIds,
+        ),
+      ),
+    ];
+    const withSummaries = renderApprovedDetailedOfficialReadingV1(
+      semantics,
+      plan,
+      {
+        sourceSummaries: sourceIds.map((sourceId, index) => ({
+          sourceId,
+          title: `승인 출처 ${index + 1}`,
+          summary: `승인된 출처 요약 ${index + 1}`,
+        })),
+      },
+    );
+    expect(sourceHintCount(withSummaries)).toBeGreaterThan(0);
+
+    const serialized = JSON.stringify(withoutSummaries);
+    expect(serialized).not.toContain('missingTargets');
+    expect(serialized).not.toContain('staleTargets');
+    expect(serialized).not.toContain('materialId');
+    expect(serialized).not.toContain('profileId');
+    expect(serialized).not.toContain('authorityId');
+
+    const repeated = renderApprovedDetailedOfficialReadingV1(
+      semantics,
+      plan,
+    );
+    expect(repeated.reportHash).toBe(withoutSummaries.reportHash);
+    expect(repeated.sections).toEqual(withoutSummaries.sections);
   });
 });
