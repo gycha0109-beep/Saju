@@ -653,8 +653,10 @@ describe('Official Reading detailed material readiness foundation', () => {
 
     expect(coverage.state).toBe('incomplete');
     expect(OFFICIAL_READING_DETAIL_CAPABILITY_V1.detailed).toEqual({
-      state: 'fallback_only',
-      fallbackReason: 'missing_expansion_material',
+      materialState: 'conditional',
+      productState: 'pre_activation',
+      missingMaterialFallbackReason: 'missing_expansion_material',
+      inactiveFallbackReason: 'detailed_not_activated',
     });
     expect(resolveOfficialReadingDetailPreferenceV1('detailed')).toEqual({
       requestedDetail: 'detailed',
