@@ -131,7 +131,7 @@ function snapshot(): CanonicalSajuSnapshot {
   };
 }
 
-function semanticsFor(candidate: DomainCase): CanonicalReadingSemanticBundleV1 {
+function materialFor(candidate: DomainCase) {
   const natalSnapshot = snapshot();
   const registry = candidate.createRegistry(NOW);
   const execution = runInterpretation(natalSnapshot, registry, {
@@ -160,26 +160,39 @@ function semanticsFor(candidate: DomainCase): CanonicalReadingSemanticBundleV1 {
     );
   }
 
+  const evidence = composition.evidence.bundle;
+  const targetClaimIds = composition.selection.targetClaimIds;
   const semanticTextBindings = buildPreviewSemanticTextBindingsV1({
     intent: candidate.intent,
     registry,
-    evidence: composition.evidence.bundle,
-    targetClaimIds: composition.selection.targetClaimIds,
+    evidence,
+    targetClaimIds,
   });
   const semanticQualifierBindings = buildPreviewSemanticQualifierBindingsV1({
     intent: candidate.intent,
     registry,
-    evidence: composition.evidence.bundle,
-    targetClaimIds: composition.selection.targetClaimIds,
+    evidence,
+    targetClaimIds,
   });
-
-  return buildCanonicalReadingSemanticBundleV1({
+  const semantics = buildCanonicalReadingSemanticBundleV1({
     intent: candidate.intent,
-    evidence: composition.evidence.bundle,
-    targetClaimIds: composition.selection.targetClaimIds,
+    evidence,
+    targetClaimIds,
     semanticTextBindings,
     semanticQualifierBindings,
   });
+
+  return {
+    semantics,
+    evidence,
+    targetClaimIds,
+    semanticTextBindings,
+    semanticQualifierBindings,
+  };
+}
+
+function semanticsFor(candidate: DomainCase): CanonicalReadingSemanticBundleV1 {
+  return materialFor(candidate).semantics;
 }
 
 function visiblePrimaryUnits(bundle: CanonicalReadingSemanticBundleV1) {
@@ -323,30 +336,33 @@ describe('Official Reading detailed core natal domain expansion', () => {
   it('marks changed approved wording as stale rather than silently accepting it', () => {
     const candidate = CASES.find((entry) => entry.label === 'wealth');
     if (candidate === undefined) throw new Error('wealth fixture missing');
-    const semantics = semanticsFor(candidate);
-    const plan = buildOfficialReadingPlanV1(semantics);
-    const target = visiblePrimaryUnits(semantics)[0];
+    const material = materialFor(candidate);
+    const target = visiblePrimaryUnits(material.semantics)[0];
     if (target === undefined || target.canonicalText === undefined) {
       throw new Error('Expected a visible Wealth semantic unit.');
     }
 
-    const changed: CanonicalReadingSemanticBundleV1 = {
-      ...semantics,
-      units: semantics.units.map((unit) =>
-        unit.unitId === target.unitId
-          ? {
-              ...unit,
-              canonicalText: {
-                ...unit.canonicalText,
-                summary: `${unit.canonicalText?.summary ?? ''} 변경됨`,
-              },
-            }
-          : unit,
-      ),
-    };
+    const changedTextBindings = material.semanticTextBindings.map((binding) =>
+      binding.targetClaimId === target.claimId
+        ? {
+            ...binding,
+            canonicalText: {
+              ...binding.canonicalText,
+              summary: `${binding.canonicalText.summary ?? ''} 변경됨`,
+            },
+          }
+        : binding,
+    );
+    const changed = buildCanonicalReadingSemanticBundleV1({
+      intent: candidate.intent,
+      evidence: material.evidence,
+      targetClaimIds: material.targetClaimIds,
+      semanticTextBindings: changedTextBindings,
+      semanticQualifierBindings: material.semanticQualifierBindings,
+    });
     const coverage = assessApprovedOfficialReadingDetailedCoverageV1(
       changed,
-      plan,
+      buildOfficialReadingPlanV1(changed),
     );
     expect(coverage.state).toBe('incomplete');
     expect(coverage.missingTargetCount).toBe(0);
@@ -356,48 +372,35 @@ describe('Official Reading detailed core natal domain expansion', () => {
   it('marks changed required supporting structure as stale', () => {
     const candidate = CASES.find((entry) => entry.label === 'business');
     if (candidate === undefined) throw new Error('business fixture missing');
-    const semantics = semanticsFor(candidate);
-    const plan = buildOfficialReadingPlanV1(semantics);
-
-    const sectionIndex = plan.sections.findIndex((section) =>
-      section.primaryEvidenceBindings.some(
-        (binding) => binding.supportingUnitRefs.length > 0,
-      ),
+    const material = materialFor(candidate);
+    const target = visiblePrimaryUnits(material.semantics).find(
+      (unit) => unit.upstreamClaimRefs.length > 0,
     );
-    expect(sectionIndex).toBeGreaterThanOrEqual(0);
-    const section = plan.sections[sectionIndex];
-    if (section === undefined) throw new Error('supporting section missing');
-    const bindingIndex = section.primaryEvidenceBindings.findIndex(
-      (binding) => binding.supportingUnitRefs.length > 0,
-    );
-    const binding = section.primaryEvidenceBindings[bindingIndex];
-    if (binding === undefined) throw new Error('supporting binding missing');
+    if (target === undefined) {
+      throw new Error('Expected a Business unit with supporting claims.');
+    }
 
-    const changedPlan = {
-      ...plan,
-      sections: plan.sections.map((candidateSection, index) =>
-        index !== sectionIndex
-          ? candidateSection
-          : {
-              ...candidateSection,
-              primaryEvidenceBindings:
-                candidateSection.primaryEvidenceBindings.map(
-                  (candidateBinding, candidateIndex) =>
-                    candidateIndex !== bindingIndex
-                      ? candidateBinding
-                      : {
-                          ...candidateBinding,
-                          supportingUnitRefs:
-                            candidateBinding.supportingUnitRefs.slice(1),
-                        },
-                ),
-            },
+    const changedEvidence = {
+      ...material.evidence,
+      claims: material.evidence.claims.map((claim) =>
+        claim.claimId === target.claimId
+          ? {
+              ...claim,
+              upstreamClaimRefs: claim.upstreamClaimRefs.slice(1),
+            }
+          : claim,
       ),
     };
-
+    const changed = buildCanonicalReadingSemanticBundleV1({
+      intent: candidate.intent,
+      evidence: changedEvidence,
+      targetClaimIds: material.targetClaimIds,
+      semanticTextBindings: material.semanticTextBindings,
+      semanticQualifierBindings: material.semanticQualifierBindings,
+    });
     const coverage = assessApprovedOfficialReadingDetailedCoverageV1(
-      semantics,
-      changedPlan,
+      changed,
+      buildOfficialReadingPlanV1(changed),
     );
     expect(coverage.state).toBe('incomplete');
     expect(coverage.missingTargetCount).toBe(0);
