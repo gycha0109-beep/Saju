@@ -3,8 +3,8 @@ import {
   type FR305HairlineModelAdmissionReceipt,
 } from './visible-hairline-vertical-reference-fr305.js';
 import {
-  FR307_PRIMARY_MODEL,
-} from './visible-hairline-empirical-runner-fr307.js';
+  resolveFR306EmpiricalRuntimeCandidate,
+} from './visible-hairline-runtime-candidates-fr306.js';
 import {
   FR312_CURRENT_GATE,
   FR312_EXPANDED_HAIRLINE_VALIDATION_CONTRACT_VERSION,
@@ -61,9 +61,8 @@ export interface FR313AdmissionReviewInput {
     'fr313-hairline-model-admission-review-input-v1';
   readonly expandedValidation:
     FR312ExpandedValidationReceipt;
-  readonly modelId: typeof FR307_PRIMARY_MODEL.id;
-  readonly modelRevision:
-    typeof FR307_PRIMARY_MODEL.revision;
+  readonly modelId: string;
+  readonly modelRevision: string;
   readonly representativeCoverage:
     FR313RepresentativeCoverageAssessment;
   readonly modelBehavior:
@@ -107,6 +106,10 @@ export interface FR313AdmissionReviewReceipt {
     readonly FR313FailureReason[];
   readonly representativeCoverageValidated: boolean;
   readonly modelBehaviorValidated: boolean;
+  readonly candidateId: string;
+  readonly runtimeProviderId: string;
+  readonly exactRevision: string;
+  readonly runnerContractVersion: string;
   readonly fr305AdmissionReceiptIssued: boolean;
   readonly fr305AdmissionReceipt:
     | FR305HairlineModelAdmissionReceipt
@@ -280,11 +283,23 @@ export function reviewHairlineModelAdmissionFR313(
     input.expandedValidation,
   );
 
+  const candidate = resolveFR306EmpiricalRuntimeCandidate(
+    input.modelId,
+    input.modelRevision,
+    input.expandedValidation.runnerContractVersion,
+  );
+
   if (
-    input.modelId !== FR307_PRIMARY_MODEL.id ||
-    input.modelRevision !== FR307_PRIMARY_MODEL.revision
+    input.expandedValidation.candidateId !==
+      candidate.candidateId ||
+    input.expandedValidation.runtimeProviderId !==
+      candidate.runtimeProviderId ||
+    input.expandedValidation.exactRevision !==
+      candidate.exactRevision ||
+    input.expandedValidation.runnerContractVersion !==
+      candidate.runnerContractVersion
   ) {
-    fail('exact model identity/revision mismatch.');
+    fail('FR312 candidate identity does not match FR313 input.');
   }
 
   assertCoverageShape(input.representativeCoverage);
@@ -418,6 +433,11 @@ export function reviewHairlineModelAdmissionFR313(
       failureReasons: combinedReasons,
       representativeCoverageValidated,
       modelBehaviorValidated: false as const,
+      candidateId: candidate.candidateId,
+      runtimeProviderId: candidate.runtimeProviderId,
+      exactRevision: candidate.exactRevision,
+      runnerContractVersion:
+        input.expandedValidation.runnerContractVersion,
       fr305AdmissionReceiptIssued: false as const,
       fr305AdmissionReceipt: null,
       admittedHairlineRuntimeProviders: 0 as const,
@@ -446,6 +466,11 @@ export function reviewHairlineModelAdmissionFR313(
       failureReasons: combinedReasons,
       representativeCoverageValidated: false as const,
       modelBehaviorValidated: true as const,
+      candidateId: candidate.candidateId,
+      runtimeProviderId: candidate.runtimeProviderId,
+      exactRevision: candidate.exactRevision,
+      runnerContractVersion:
+        input.expandedValidation.runnerContractVersion,
       fr305AdmissionReceiptIssued: false as const,
       fr305AdmissionReceipt: null,
       admittedHairlineRuntimeProviders: 0 as const,
@@ -516,6 +541,11 @@ export function reviewHairlineModelAdmissionFR313(
     failureReasons: Object.freeze([]),
     representativeCoverageValidated: true as const,
     modelBehaviorValidated: true as const,
+    candidateId: candidate.candidateId,
+    runtimeProviderId: candidate.runtimeProviderId,
+    exactRevision: candidate.exactRevision,
+    runnerContractVersion:
+      input.expandedValidation.runnerContractVersion,
     fr305AdmissionReceiptIssued: true as const,
     fr305AdmissionReceipt: admissionReceipt,
     admittedHairlineRuntimeProviders: 1 as const,
