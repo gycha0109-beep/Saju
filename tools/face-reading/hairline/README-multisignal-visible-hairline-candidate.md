@@ -1,0 +1,191 @@
+# Multi-signal visible-hairline candidate
+
+Local-only engineering candidate used after the pinned FR306 primary and fallback model paths failed real bounded validation.
+
+This method is intentionally **not** a hair-color classifier and does not infer demographic attributes.
+
+## Why this exists
+
+Real local evidence showed:
+
+- Florence-2 failed the partial-bangs / heavy-occlusion bounded cases and was rejected by FR310.
+- Grounding DINO + SAM2.1 could load and execute, but the grounding stage grossly mislocalized the critical partial-bangs forehead region. SAM2.1 cannot repair a semantically wrong grounding box.
+
+The next candidate therefore uses direct image evidence instead of another prompt-defined hair category.
+
+## Signals
+
+For each local image the runner combines:
+
+- adaptive skin/non-skin transition;
+- luminance edge;
+- opponent-chroma edge;
+- local texture contrast;
+- edge strength;
+- horizontal path continuity;
+- central upper-face skin continuity;
+- truncation risk;
+- occlusion risk.
+
+A weak color difference does **not** imply failure by itself. Strong edge or texture evidence may still support a visible-interface candidate.
+
+## No-visible-hairline state
+
+A capture may legitimately contain no visible hair/skin interface.
+
+The engineering preview state can therefore be:
+
+- `visible_interface_candidate`
+- `partially_visible_or_occluded`
+- `no_visible_hairline_candidate`
+- `unavailable`
+
+The no-visible-hairline state is an image-observation state only. It is not a medical diagnosis, demographic inference, or identity attribute.
+
+## Hidden completion
+
+The runner never fills a hidden or cropped hairline.
+
+If continuity/coverage/visibility evidence is weak, the output must degrade to partial/unavailable rather than inventing a full line.
+
+## Install
+
+Actual image execution requires local Pillow and NumPy:
+
+```bash
+python -m pip install pillow numpy
+```
+
+Normal CI does not need these packages because `--self-check` uses only the Python standard library.
+
+## Self-check
+
+```bash
+python3 tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py --self-check
+```
+
+This verifies:
+
+- all four preview states;
+- no hair-color classification;
+- no demographic inference;
+- no hidden completion;
+- safe-receipt privacy guard;
+- no authority promotion.
+
+## 18-capture experiment
+
+Copy:
+
+```text
+tools/face-reading/hairline/multisignal-18-capture-manifest.example.json
+```
+
+to a local/private path and replace only the `sourcePath` values.
+
+The example tags describe image conditions only:
+
+- clear visible interface;
+- partial/substantial occlusion;
+- upper-frame truncation;
+- M / widow's-peak contour;
+- side recession / asymmetry;
+- low local color contrast;
+- background contrast stress;
+- no-visible-hairline controls;
+- low-color-contrast short hair;
+- long hair with visible forehead.
+
+Do not add race, ethnicity, subject identity, or other demographic attributes to the manifest.
+
+## Optional local face ROI
+
+A manifest record may contain:
+
+```json
+{
+  "faceRoi": [120, 60, 320, 430]
+}
+```
+
+This is a local image-space rectangle only.
+
+If omitted, the runner uses a conservative central portrait heuristic. The heuristic is not anatomical authority and cannot auto-admit a result.
+
+## Frame truncation
+
+If the source capture is known to be top-frame truncated, set:
+
+```json
+{
+  "frameTopTruncated": true
+}
+```
+
+This forces the engineering preview to fail closed as unavailable.
+
+## Run
+
+```bash
+python3 tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py \
+  --manifest /local/private/multisignal-manifest.json \
+  --output .cache/face-reading/hairline-multisignal-candidate
+```
+
+Outputs:
+
+```text
+.cache/face-reading/hairline-multisignal-candidate/
+  <recordId>/
+    candidate.json
+    overlay.jpg        # only when qaOverlay=true
+  private-summary.json
+  repo-safe-receipt.json
+```
+
+The detailed candidate file may contain local source paths, digests, ROI and raw boundary points. It must remain local.
+
+Only `repo-safe-receipt.json` is designed to be repository-safe.
+
+## Engineering preview thresholds
+
+The v1 thresholds are deliberately labeled **engineering preview only**.
+
+They may sort captures for human review but may not:
+
+- issue FR305 admission;
+- authorize a neutral runtime hairline observation;
+- change repository readiness from 6/7 to 7/7;
+- create traditional physiognomy semantics;
+- authorize Three-Divisions spans;
+- materialize Product/Production/Commerce.
+
+Real-capture calibration must be reviewed separately before any threshold can become authority.
+
+## Human review questions
+
+For each capture, inspect the overlay and ask:
+
+1. Does the candidate follow the visible skin/hair interface rather than face silhouette, shadow, eyebrow or background?
+2. In low color contrast, is the path supported by edge/texture rather than merely color distance?
+3. In partial occlusion, does it remain partial instead of completing hidden segments?
+4. In top-frame truncation, does it fail closed?
+5. In a no-visible-hairline control, does it avoid inventing an internal line?
+6. For long hair or braids, does it follow the forehead interface rather than the side hair mass?
+
+## Authority boundary
+
+This is candidate evidence only.
+
+It does not authorize:
+
+- FR305 model admission;
+- a production neutral hairline reference;
+- hidden-hairline completion;
+- face-oval / mesh-top substitution;
+- 髮際 traditional binding;
+- Three-Divisions spans;
+- Product materialization;
+- Production or Commerce.
+
+Watchtower-Track: face-observation-engine
