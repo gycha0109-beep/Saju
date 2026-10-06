@@ -708,7 +708,7 @@ describe('Governed Reading Execution Orchestrator', () => {
     expect(concise.artifact?.sections).toEqual(baseline.artifact?.sections);
     expect(detailed.artifact?.sections).toEqual(baseline.artifact?.sections);
     expect(JSON.stringify(concise.artifact)).not.toContain(
-      'myeonghwa-official-reading-detail-presentation-policy-v1',
+      'myeonghwa-official-reading-detail-presentation-policy-v2',
     );
     expect(JSON.stringify(concise.artifact)).not.toContain(
       'missing_text_role_authority',
