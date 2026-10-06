@@ -24,6 +24,7 @@ import {
   canRenderOfficialReadingV1,
   renderOfficialReadingV1,
 } from '../src/reading/official-reading-renderer.js';
+import { buildOfficialReadingAnnualTemporalSectionV1 } from '../src/reading/official-reading-annual-temporal-presentation.js';
 
 function evidence(summary = '현실 결과를 빨리 만들려는 축과 더 배우고 검토하려는 축이 서로 견제합니다.'): GovernedReadingEvidenceBundleV1 {
   const support: InterpretationClaim = {
@@ -1179,4 +1180,84 @@ describe('Official Reading renderer v1', () => {
     expect(canRenderOfficialReadingV1(bundle, plan)).toBe(false);
     expect(() => renderOfficialReadingV1(bundle, plan)).toThrow(TypeError);
   });
+  it('materializes one deterministic annual temporal timing section from settled projection semantics', () => {
+    const section = buildOfficialReadingAnnualTemporalSectionV1({
+      schemaVersion: 'myeongha-reading-annual-temporal-structure-v1',
+      integrationId: 'annual-integration-2026',
+      structureId: 'structure-1',
+      targetYear: 2026,
+      annualPillar: {
+        stem: '병',
+        branch: '오',
+        cycleIndex: 42,
+      },
+      annualStemTenGod: '편재',
+      transition: {
+        schemaVersion: 'myeongha-reading-temporal-structure-transition-v1',
+        transitionId: 'transition-2026',
+        structureId: 'structure-1',
+        period: {
+          scope: 'annual',
+          periodKey: 'annual:2026',
+          sequence: 2026,
+        },
+        previousState: 'intact',
+        periodImpact: 'weakens_structure',
+        aggregationRule: 'single_direction',
+        transitionKind: 'degraded',
+        nextState: 'weakened',
+      },
+    });
+
+    expect(section.sectionType).toBe('timing');
+    expect(section.title).toBe('2026년 구조 흐름');
+    expect(section.blocks).toEqual([
+      {
+        type: 'fact_table',
+        rows: [
+          { label: '연간 기둥', value: '병오' },
+          { label: '이전 구조 상태', value: '정상' },
+          { label: '이번 구조 방향', value: '구조 약화 방향' },
+          { label: '다음 구조 상태', value: '약화' },
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: '기존 구조가 한 단계 약해지는 흐름입니다.',
+      },
+    ]);
+  });
+
+  it('refuses annual temporal presentation when its period identity is internally inconsistent', () => {
+    expect(() =>
+      buildOfficialReadingAnnualTemporalSectionV1({
+        schemaVersion: 'myeongha-reading-annual-temporal-structure-v1',
+        integrationId: 'annual-integration-invalid',
+        structureId: 'structure-1',
+        targetYear: 2026,
+        annualPillar: {
+          stem: '병',
+          branch: '오',
+          cycleIndex: 42,
+        },
+        annualStemTenGod: '편재',
+        transition: {
+          schemaVersion: 'myeongha-reading-temporal-structure-transition-v1',
+          transitionId: 'transition-invalid',
+          structureId: 'structure-1',
+          period: {
+            scope: 'annual',
+            periodKey: 'annual:2025',
+            sequence: 2025,
+          },
+          previousState: 'intact',
+          periodImpact: 'maintains_structure',
+          aggregationRule: 'all_maintain',
+          transitionKind: 'stable',
+          nextState: 'intact',
+        },
+      }),
+    ).toThrow(/internally consistent annual projection/u);
+  });
+
 });

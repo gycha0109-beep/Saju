@@ -23,6 +23,8 @@ import {
   executeProductReading,
   type LegacyNarrativeRuntimeV1,
 } from '../src/reading/governed-reading-execution.js';
+import { buildProductReadingDelivery } from '../src/reading/product-reading-delivery.js';
+import { buildProductReadingResponse } from '../src/reading/product-reading-response.js';
 import {
   I7_RESEARCH_SOURCES,
   createI7SeasonalSupportRegistry,
@@ -991,4 +993,200 @@ describe('Governed Reading Execution Orchestrator', () => {
     expect(second.artifact?.readingId).toBe(first.artifact?.readingId);
     expect(second.artifact?.generatedAt).not.toBe(first.artifact?.generatedAt);
   });
+  it('routes governed annual structure transition through Official Reading artifact and public response when explicit annual authority is supplied', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const annualClaim = claim(currentSnapshot.snapshotId, {
+      id: 'claim-general-annual-r195',
+      tier: 'T9',
+      category: 'general',
+      subcategory: 'annual',
+    });
+    const interpretation = executionWithClaims(
+      currentSnapshot,
+      registry,
+      [annualClaim],
+    );
+
+    const result = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      {
+        requestId: 'execution-r195-general-annual',
+        text: '올해 사주',
+        referenceDateTime: '2026-06-15T12:00:00.000Z',
+      },
+      {
+        ...executionOptions,
+        artifactGeneratedAt: new Date('2026-10-06T10:30:00.000Z'),
+        consumerReadingAuthorityResolver: (intent) => ({
+          authorityVersion: 'test-r195-annual-official-v1',
+          readingSection: `${intent.domain}:${intent.temporalScope}`,
+          authority: 'official_reading',
+          supportedOfficialReadingSection: 'general:annual',
+          constraints: {
+            mayPromoteProductionInterpretationAuthority: false,
+            mayGrantPersistenceAuthority: false,
+            mayGrantPublicGeneralAvailabilityAuthority: false,
+            mayTreatUnsupportedSectionAsOfficialReading: false,
+          },
+        }),
+        officialReadingSemanticProjectionResolver: ({ targetClaimIds }) => ({
+          semanticTextBindings: targetClaimIds.map((targetClaimId) => ({
+            targetClaimId,
+            canonicalText: {
+              headline: '연간 흐름의 기준',
+              summary: '등록된 연간 claim 의미를 그대로 사용합니다.',
+            },
+            provenance: {
+              admissionId: 'test-r195-admission',
+              admissionRegistryVersion: '1.0.0-test',
+              researchId: 'test-r195-research',
+              researchVersion: '1.0.0-test',
+              authorityState: 'test_official',
+            },
+          })),
+          semanticQualifierBindings: [],
+        }),
+        governedAnnualTemporalStructure: {
+          baseline: {
+            baselineId: 'r195-baseline',
+            structureId: 'r195-structure',
+            authority: 'governed_upstream',
+            state: 'intact',
+          },
+          assessments: [
+            {
+              status: 'resolved',
+              assessmentId: 'r195-assessment',
+              settlementId: 'r195-settlement',
+              structureId: 'r195-structure',
+              participantImpacts: [
+                {
+                  participantRole: 'controller',
+                  roleAssignmentId: 'r195-role-primary',
+                  pillar: 'year',
+                  stem: '갑',
+                  tenGod: '식신',
+                  disposition: 'supports_structure',
+                  criticality: 'core',
+                  functionState: 'impaired',
+                  impact: 'weakens_structure',
+                },
+                {
+                  participantRole: 'controlled',
+                  roleAssignmentId: 'r195-role-neutral',
+                  pillar: 'month',
+                  stem: '기',
+                  tenGod: '정관',
+                  disposition: 'neutral',
+                  criticality: 'secondary',
+                  functionState: 'preserved',
+                  impact: 'maintains_structure',
+                },
+              ],
+              overallImpact: 'weakens_structure',
+              decisionRule: 'single_direction',
+              decisiveRoleAssignmentIds: ['r195-role-primary'],
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.state).toBe('completed');
+    expect(result.consumerReadingAuthority?.authority).toBe('official_reading');
+    const timing = result.artifact?.sections.find(
+      (section) => section.sectionType === 'timing',
+    );
+    expect(timing?.title).toBe('2026년 구조 흐름');
+    expect(timing?.blocks).toEqual([
+      {
+        type: 'fact_table',
+        rows: [
+          { label: '연간 기둥', value: '병오' },
+          { label: '이전 구조 상태', value: '정상' },
+          { label: '이번 구조 방향', value: '구조 약화 방향' },
+          { label: '다음 구조 상태', value: '약화' },
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: '기존 구조가 한 단계 약해지는 흐름입니다.',
+      },
+    ]);
+
+    const response = buildProductReadingResponse(
+      buildProductReadingDelivery(result),
+    );
+    const publicTiming = response.reading?.sections.find(
+      (section) => section.sectionType === 'timing',
+    );
+    expect(publicTiming).toEqual({
+      sectionType: 'timing',
+      title: '2026년 구조 흐름',
+      blocks: [
+        {
+          type: 'fact_table',
+          rows: [
+            { label: '연간 기둥', value: '병오' },
+            { label: '이전 구조 상태', value: '정상' },
+            { label: '이번 구조 방향', value: '구조 약화 방향' },
+            { label: '다음 구조 상태', value: '약화' },
+          ],
+        },
+        {
+          type: 'paragraph',
+          text: '기존 구조가 한 단계 약해지는 흐름입니다.',
+        },
+      ],
+      state: 'complete',
+    });
+    expect(JSON.stringify(response)).not.toMatch(
+      /r195-assessment|r195-settlement|r195-role-primary|governed_upstream/u,
+    );
+  });
+
+  it('does not silently mix governed annual temporal structure into the default legacy annual path', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const annualClaim = claim(currentSnapshot.snapshotId, {
+      id: 'claim-general-annual-r195-default-authority',
+      tier: 'T9',
+      category: 'general',
+      subcategory: 'annual',
+    });
+    const interpretation = executionWithClaims(
+      currentSnapshot,
+      registry,
+      [annualClaim],
+    );
+
+    await expect(
+      executeProductReading(
+        currentSnapshot,
+        interpretation,
+        registry,
+        {
+          requestId: 'execution-r195-default-annual',
+          text: '올해 사주',
+          referenceDateTime: '2026-06-15T12:00:00.000Z',
+        },
+        {
+          ...executionOptions,
+          governedAnnualTemporalStructure: {
+            baseline: {
+              baselineId: 'r195-default-baseline',
+              structureId: 'r195-default-structure',
+              authority: 'governed_upstream',
+              state: 'intact',
+            },
+            assessments: [],
+          },
+        },
+      ),
+    ).rejects.toThrow(/requires Official Reading authority/u);
+  });
+
 });

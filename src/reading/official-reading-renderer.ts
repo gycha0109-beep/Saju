@@ -41,6 +41,10 @@ import {
   type OfficialReadingDetailedRealizationV1,
   type OfficialReadingDetailedUnitPresentationV1,
 } from './official-reading-detailed-realization.js';
+import {
+  buildOfficialReadingAnnualTemporalSectionV1,
+} from './official-reading-annual-temporal-presentation.js';
+import type { ReadingAnnualTemporalStructureV1 } from './annual-temporal-structure-projection.js';
 
 export const OFFICIAL_READING_RENDERER_VERSION =
   'myeonghwa-official-reading-renderer-v1' as const;
@@ -56,6 +60,7 @@ export const OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION =
 export interface OfficialReadingRenderOptionsV1 {
   sourceSummaries?: readonly SourceSummary[];
   preferredDetail?: OfficialReadingDetailPreferenceV1;
+  annualTemporalStructure?: ReadingAnnualTemporalStructureV1;
 }
 
 export interface OfficialReadingRenderedContentV1 {
@@ -861,6 +866,19 @@ function renderOfficialReadingInternalV1(
       state: 'complete',
       explainabilityRefs: sectionExplainabilityRefs,
     });
+  }
+
+  if (options.annualTemporalStructure !== undefined) {
+    if (bundle.intent.temporalScope !== 'annual') {
+      throw new TypeError(
+        'Official Reading annual temporal presentation requires an annual semantic bundle.',
+      );
+    }
+    sections.push(
+      buildOfficialReadingAnnualTemporalSectionV1(
+        options.annualTemporalStructure,
+      ),
+    );
   }
 
   if (sections.length === 0) {

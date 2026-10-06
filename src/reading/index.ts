@@ -31,6 +31,7 @@ export * from './structural-role-impact-projection.js';
 export * from './temporal-structure-transition-projection.js';
 export * from './annual-temporal-structure-integration.js';
 export * from './annual-temporal-structure-projection.js';
+export * from './official-reading-annual-temporal-presentation.js';
 
 export * from './official-reading-detailed-presentation-definition.js';
 export * from './official-reading-detailed-presentation.js';
