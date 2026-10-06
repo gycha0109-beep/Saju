@@ -102,3 +102,37 @@ Repository evidence is limited to aggregate, non-identifying failure-mode conclu
 Build a local Florence-2 hairline empirical runner by reusing FR103 parser/runtime mechanics.
 
 Normal CI must test deterministic parsing and authority boundaries with synthetic fixtures only and must not download the model.
+
+
+## Post-freeze empirical update
+
+The original FR306 freeze remains historical context for the Florence-2 primary lane, Grounding-DINO + SAM2 fallback lane, and the excluded non-commercial face-parsing path.
+
+Subsequent real local bounded work produced the following governed engineering outcome:
+
+- Florence-2 primary reached FR310 and was rejected on critical occlusion behavior.
+- Grounding-DINO + SAM2.1 fallback was executed locally but failed the critical partial-bangs grounding condition; segmentation refinement could not repair the wrong grounding.
+- A repository-controlled deterministic multi-signal candidate was then implemented and calibrated locally:
+  - provider ID: `candidate.hairline.multisignal_visible_interface.fr306`
+  - exact revision: `0.2.0`
+  - runner contract: `MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1`
+  - method: adaptive skin transition + luminance/chroma edge + texture + horizontal continuity + explicit occlusion/truncation/no-visible-hairline handling.
+
+The 18-capture local engineering run is recorded only as deidentified aggregate evidence. It does not constitute FR310 or FR312 approval.
+
+The candidate registry therefore includes this v3.1 implementation as an additional empirical candidate, while preserving all authority boundaries:
+
+- FR305 admission issued: false
+- admitted runtime providers: 0
+- repository neutral-reference readiness: 6/7
+- real FR318 hairline metric reference: false
+- real FR319 seven-reference bundle: false
+- traditional binding: 0
+- Three-Divisions execution: false
+- Product / Production / Commerce: false
+
+Validation identity is now required to remain exact across FR308, FR310, FR312 and FR313. Candidate swapping between stages is rejected.
+
+Actual v3.1 evidence must pass the private human-review packet before it can enter governed FR308 → FR312 execution. Preview state and numeric signal values are not accepted as automatic human judgments.
+
+Watchtower-Track: face-observation-engine
