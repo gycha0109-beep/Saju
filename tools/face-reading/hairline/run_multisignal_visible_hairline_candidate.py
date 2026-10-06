@@ -25,7 +25,7 @@ from typing import Any, Iterable
 SCHEMA_VERSION = "multisignal-visible-hairline-local-candidate-v1"
 SAFE_RECEIPT_SCHEMA = "multisignal-visible-hairline-repo-safe-receipt-v1"
 METHOD_ID = "adaptive_skin_edge_texture_continuity"
-METHOD_VERSION = "0.1.0"
+METHOD_VERSION = "0.2.0"
 
 PREVIEW_STATES = (
     "visible_interface_candidate",
@@ -36,13 +36,17 @@ PREVIEW_STATES = (
 
 # Engineering preview thresholds only. They do not confer authority.
 PREVIEW_THRESHOLDS = {
-    "visible_interface_min": 0.56,
-    "visible_coverage_min": 0.70,
-    "visible_continuity_min": 0.52,
-    "no_hairline_interface_max": 0.30,
-    "no_hairline_scalp_continuity_min": 0.72,
-    "partial_coverage_max": 0.68,
-    "partial_continuity_max": 0.42,
+    "visible_interface_min": 0.47,
+    "visible_coverage_min": 0.28,
+    "visible_continuity_min": 0.42,
+    "partial_coverage_max": 0.26,
+    "partial_continuity_max": 0.35,
+    "no_hair_internal_above_skin_min": 0.40,
+    "no_hair_internal_material_transition_max": 0.16,
+    "no_hair_scalp_continuity_min": 0.50,
+    "no_hair_outer_relative_path_max": -0.13,
+    "no_hair_outer_interface_max": 0.48,
+    "no_hair_outer_scalp_continuity_min": 0.55,
 }
 
 PRIVATE_KEYS = {
@@ -66,6 +70,10 @@ class PreviewSignals:
     scalp_skin_continuity: float
     truncation_risk: float
     occlusion_risk: float
+    above_skin_support: float
+    material_transition: float
+    relative_path_level: float
+    face_basis_stable: bool
 
 
 def _finite_unit(value: float, label: str) -> float:
@@ -83,37 +91,57 @@ def classify_preview(signals: PreviewSignals) -> str:
         ("scalp_skin_continuity", signals.scalp_skin_continuity),
         ("truncation_risk", signals.truncation_risk),
         ("occlusion_risk", signals.occlusion_risk),
+        ("above_skin_support", signals.above_skin_support),
+        ("material_transition", signals.material_transition),
     ):
         _finite_unit(value, name)
+
+    if not math.isfinite(signals.relative_path_level):
+        raise ValueError("relative_path_level must be finite")
+    if not isinstance(signals.face_basis_stable, bool):
+        raise ValueError("face_basis_stable must be boolean")
 
     if signals.truncation_risk >= 0.70:
         return "unavailable"
 
-    if (
-        signals.interface_evidence <= PREVIEW_THRESHOLDS["no_hairline_interface_max"]
+    no_hair_internal_surface = (
+        signals.above_skin_support
+        >= PREVIEW_THRESHOLDS["no_hair_internal_above_skin_min"]
+        and signals.material_transition
+        <= PREVIEW_THRESHOLDS["no_hair_internal_material_transition_max"]
         and signals.scalp_skin_continuity
-        >= PREVIEW_THRESHOLDS["no_hairline_scalp_continuity_min"]
-        and signals.occlusion_risk < 0.55
-    ):
+        >= PREVIEW_THRESHOLDS["no_hair_scalp_continuity_min"]
+    )
+    no_hair_outer_silhouette = (
+        signals.relative_path_level
+        <= PREVIEW_THRESHOLDS["no_hair_outer_relative_path_max"]
+        and signals.scalp_skin_continuity
+        >= PREVIEW_THRESHOLDS["no_hair_outer_scalp_continuity_min"]
+        and signals.interface_evidence
+        < PREVIEW_THRESHOLDS["no_hair_outer_interface_max"]
+    )
+    if no_hair_internal_surface or no_hair_outer_silhouette:
         return "no_visible_hairline_candidate"
+
+    if not signals.face_basis_stable:
+        return "partially_visible_or_occluded"
 
     if (
         signals.interface_evidence >= PREVIEW_THRESHOLDS["visible_interface_min"]
         and signals.path_coverage >= PREVIEW_THRESHOLDS["visible_coverage_min"]
         and signals.path_continuity >= PREVIEW_THRESHOLDS["visible_continuity_min"]
-        and signals.occlusion_risk < 0.45
+        and signals.occlusion_risk < 0.50
     ):
         return "visible_interface_candidate"
 
     if (
-        signals.path_coverage <= PREVIEW_THRESHOLDS["partial_coverage_max"]
-        or signals.path_continuity <= PREVIEW_THRESHOLDS["partial_continuity_max"]
+        signals.path_coverage < PREVIEW_THRESHOLDS["partial_coverage_max"]
+        or signals.path_continuity < PREVIEW_THRESHOLDS["partial_continuity_max"]
         or signals.occlusion_risk >= 0.45
     ):
         return "partially_visible_or_occluded"
 
     return "unavailable"
-
 
 def _safe_output_path(path: str) -> Path:
     absolute = Path(path).expanduser().resolve()
@@ -240,27 +268,57 @@ def _candidate_path(score: Any, continuity_penalty: float = 0.14) -> tuple[Any, 
 
 def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) -> dict[str, Any]:
     try:
+        import cv2
         import numpy as np
         from PIL import Image, ImageDraw
     except ImportError as error:
         raise RuntimeError(
-            "actual image mode requires Pillow and NumPy; "
+            "actual image mode requires OpenCV, Pillow and NumPy; "
             "install them locally before running"
         ) from error
 
     image = Image.open(image_path).convert("RGB")
-    rgb = np.asarray(image).astype(np.float32)
+    rgb_u8 = np.asarray(image)
+    rgb = rgb_u8.astype(np.float32)
     height, width, _ = rgb.shape
+    gray = cv2.cvtColor(rgb_u8, cv2.COLOR_RGB2GRAY)
 
     roi = record.get("faceRoi")
     if roi is None:
-        # Deliberately conservative portrait heuristic. This is not a face landmark
-        # or anatomical authority and never auto-admits a result.
-        x = int(round(width * 0.16))
-        y = int(round(height * 0.05))
-        w = int(round(width * 0.68))
-        h = int(round(height * 0.70))
-        roi_source = "central_portrait_heuristic"
+        face_cascade = cv2.CascadeClassifier(
+            cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+        )
+        min_side = max(45, min(width, height) // 10)
+        faces = face_cascade.detectMultiScale(
+            gray,
+            1.08,
+            5,
+            minSize=(min_side, min_side),
+        )
+        if len(faces) > 0:
+            image_cx = width / 2.0
+            image_cy = height / 2.0
+            ranked = []
+            for fx, fy, fw, fh in faces:
+                area = float(fw * fh)
+                distance = (
+                    ((fx + fw / 2.0 - image_cx) / max(1.0, width)) ** 2
+                    + ((fy + fh / 2.0 - image_cy) / max(1.0, height)) ** 2
+                )
+                ranked.append(
+                    (
+                        area * (1.0 - 0.5 * distance),
+                        (int(fx), int(fy), int(fw), int(fh)),
+                    )
+                )
+            x, y, w, h = max(ranked, key=lambda item: item[0])[1]
+            roi_source = "opencv_haar_face"
+        else:
+            x = int(round(width * 0.18))
+            y = int(round(height * 0.12))
+            w = int(round(width * 0.64))
+            h = int(round(height * 0.62))
+            roi_source = "central_portrait_heuristic"
     else:
         if (
             not isinstance(roi, list)
@@ -276,32 +334,81 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     w = max(2, min(width - x, w))
     h = max(2, min(height - y, h))
 
-    # Color representation: luminance + two opponent chroma axes.
-    r = rgb[:, :, 0]
-    g = rgb[:, :, 1]
-    b = rgb[:, :, 2]
-    lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-    c1 = r - g
-    c2 = 0.5 * (r + g) - b
+    eye_cascade = cv2.CascadeClassifier(
+        cv2.data.haarcascades + "haarcascade_eye.xml"
+    )
+    eye_roi = gray[y : y + int(round(h * 0.65)), x : x + w]
+    raw_eyes = eye_cascade.detectMultiScale(
+        eye_roi,
+        1.08,
+        5,
+        minSize=(max(12, w // 12), max(10, h // 16)),
+    )
+    eye_candidates = []
+    for ex, ey, ew, eh in raw_eyes:
+        if ey + eh / 2.0 < h * 0.58 and ew < w * 0.42:
+            eye_candidates.append(
+                (x + int(ex), y + int(ey), int(ew), int(eh))
+            )
 
-    sx1 = x + int(round(w * 0.30))
-    sx2 = x + int(round(w * 0.70))
-    sy1 = y + int(round(h * 0.45))
-    sy2 = y + int(round(h * 0.67))
-    if sx2 <= sx1 or sy2 <= sy1:
-        raise ValueError("face ROI too small for adaptive skin sample")
+    eye_pair = []
+    best_pair_score = None
+    for index, first in enumerate(eye_candidates):
+        for second in eye_candidates[index + 1 :]:
+            ax, ay, aw, ah = first
+            bx, by, bw, bh = second
+            separation = abs((ax + aw / 2.0) - (bx + bw / 2.0))
+            y_difference = abs((ay + ah / 2.0) - (by + bh / 2.0))
+            if (
+                separation < w * 0.18
+                or separation > w * 0.78
+                or y_difference > h * 0.18
+            ):
+                continue
+            pair_score = separation - 2.0 * y_difference
+            if best_pair_score is None or pair_score > best_pair_score:
+                best_pair_score = pair_score
+                eye_pair = [first, second]
 
-    sample_l = lum[sy1:sy2, sx1:sx2]
-    sample_c1 = c1[sy1:sy2, sx1:sx2]
-    sample_c2 = c2[sy1:sy2, sx1:sx2]
-    ml, sl = _robust_scale(sample_l, 12.0)
-    mc1, sc1 = _robust_scale(sample_c1, 5.0)
-    mc2, sc2 = _robust_scale(sample_c2, 5.0)
+    eye_top = min((eye[1] for eye in eye_pair), default=None)
+    face_basis_stable = not (
+        roi_source == "central_portrait_heuristic" and len(eye_pair) < 2
+    )
 
-    rx1 = max(0, x + int(round(w * 0.07)))
-    rx2 = min(width, x + int(round(w * 0.93)))
-    ry1 = max(0, y - int(round(h * 0.12)))
-    ry2 = min(height, y + int(round(h * 0.48)))
+    lab = cv2.cvtColor(rgb_u8, cv2.COLOR_RGB2LAB).astype(np.float32)
+    lum, c1, c2 = cv2.split(lab)
+
+    sample_patches = []
+    for x_start, x_end in ((0.22, 0.43), (0.57, 0.78)):
+        sx1 = max(0, x + int(round(w * x_start)))
+        sx2 = min(width, x + int(round(w * x_end)))
+        sy1 = max(0, y + int(round(h * 0.46)))
+        sy2 = min(height, y + int(round(h * 0.64)))
+        if sx2 > sx1 and sy2 > sy1:
+            sample_patches.append(lab[sy1:sy2, sx1:sx2].reshape(-1, 3))
+
+    if not sample_patches:
+        sx1 = x + int(round(w * 0.32))
+        sx2 = x + int(round(w * 0.68))
+        sy1 = y + int(round(h * 0.45))
+        sy2 = y + int(round(h * 0.65))
+        sample_patches.append(lab[sy1:sy2, sx1:sx2].reshape(-1, 3))
+
+    sample = np.concatenate(sample_patches, axis=0)
+    ml, sl = _robust_scale(sample[:, 0], 10.0)
+    mc1, sc1 = _robust_scale(sample[:, 1], 5.0)
+    mc2, sc2 = _robust_scale(sample[:, 2], 5.0)
+
+    rx1 = max(0, x + int(round(w * 0.08)))
+    rx2 = min(width, x + int(round(w * 0.92)))
+    ry1 = max(0, y - int(round(h * 0.18)))
+    search_bottom = y + int(round(h * 0.40))
+    if eye_top is not None:
+        search_bottom = min(
+            search_bottom,
+            eye_top - int(round(h * 0.055)),
+        )
+    ry2 = min(height, max(ry1 + 18, search_bottom))
     if rx2 - rx1 < 8 or ry2 - ry1 < 8:
         raise ValueError("hairline search ROI too small")
 
@@ -310,7 +417,7 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     c2_roi = c2[ry1:ry2, rx1:rx2]
 
     z2 = (
-        ((lum_roi - ml) / sl) ** 2
+        0.45 * ((lum_roi - ml) / sl) ** 2
         + ((c1_roi - mc1) / sc1) ** 2
         + ((c2_roi - mc2) / sc2) ** 2
     )
@@ -352,23 +459,41 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     # No hair-color category exists here. Weak color contrast may be compensated
     # by luminance edge or texture contrast.
     score = (
-        0.34 * transition
-        + 0.21 * gl
-        + 0.16 * gc
-        + 0.19 * td
+        0.31 * transition
+        + 0.23 * gl
+        + 0.15 * gc
+        + 0.21 * td
         + 0.10 * skin_below
     )
 
-    # Avoid lower face. Search only above the central face sample.
-    max_search_y = max(4, min(score.shape[0], y + int(round(h * 0.43)) - ry1))
+    # Downweight side/background ambiguity without substituting a face-oval or
+    # average-face hairline prior.
+    x_axis = np.linspace(-1.0, 1.0, score.shape[1], dtype=np.float32)
+    x_prior = (0.82 + 0.18 * np.exp(-((x_axis / 0.75) ** 4)))[None, :]
+    score = score * x_prior
+
+    # Avoid lower face. Search only above the central face sample / detected eyes.
+    max_search_y = max(
+        4,
+        min(score.shape[0], y + int(round(h * 0.43)) - ry1),
+    )
     score = score[:max_search_y, :]
-    path_y, path_scores = _candidate_path(score)
+    skin_conf = skin_conf[:max_search_y, :]
+    skin_below = skin_below[:max_search_y, :]
+    skin_above = skin_above[:max_search_y, :]
+    texture_mean = texture_mean[:max_search_y, :]
+    gl = gl[:max_search_y, :]
+    gc = gc[:max_search_y, :]
+    td = td[:max_search_y, :]
+    path_y, path_scores = _candidate_path(
+        score,
+        continuity_penalty=0.095,
+    )
 
     xs = np.arange(score.shape[1])
     global_x = xs + rx1
     global_y = path_y + ry1
 
-    # Signal summaries around the selected path.
     p_skin_below = skin_below[path_y, xs]
     p_skin_above = skin_above[path_y, xs]
     p_gl = gl[path_y, xs]
@@ -382,35 +507,130 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     skin_below_support = float(np.mean(p_skin_below))
     non_skin_above_support = float(np.mean(1.0 - p_skin_above))
 
+    # Candidate-local material check. A visible interface should generally
+    # transition from skin below to non-skin and/or different texture above.
+    local_band = max(3, int(round(h * 0.035)))
+    above_skin_values = []
+    below_skin_values = []
+    above_texture_values = []
+    below_texture_values = []
+    for column, path_row in enumerate(path_y.tolist()):
+        above_start = max(0, path_row - local_band)
+        above_end = max(0, path_row - 1)
+        below_start = min(skin_conf.shape[0], path_row + 2)
+        below_end = min(
+            skin_conf.shape[0],
+            path_row + local_band + 1,
+        )
+        if above_end > above_start and below_end > below_start:
+            above_skin_values.append(
+                float(
+                    np.mean(
+                        skin_conf[
+                            above_start:above_end,
+                            column,
+                        ]
+                    )
+                )
+            )
+            below_skin_values.append(
+                float(
+                    np.mean(
+                        skin_conf[
+                            below_start:below_end,
+                            column,
+                        ]
+                    )
+                )
+            )
+            above_texture_values.append(
+                float(
+                    np.mean(
+                        texture_mean[
+                            above_start:above_end,
+                            column,
+                        ]
+                    )
+                )
+            )
+            below_texture_values.append(
+                float(
+                    np.mean(
+                        texture_mean[
+                            below_start:below_end,
+                            column,
+                        ]
+                    )
+                )
+            )
+
+    above_skin_support = (
+        float(np.mean(above_skin_values))
+        if above_skin_values
+        else 0.0
+    )
+    below_skin_local_support = (
+        float(np.mean(below_skin_values))
+        if below_skin_values
+        else 0.0
+    )
+    above_texture_mean = (
+        float(np.mean(above_texture_values))
+        if above_texture_values
+        else 0.0
+    )
+    below_texture_mean = (
+        float(np.mean(below_texture_values))
+        if below_texture_values
+        else 0.0
+    )
+    material_transition = float(
+        np.clip(
+            below_skin_local_support - above_skin_support,
+            0.0,
+            1.0,
+        )
+    )
+    texture_ratio = float(
+        above_texture_mean / max(1e-6, below_texture_mean)
+    )
+
     dy = np.diff(global_y.astype(np.float32))
-    dy_scale = max(1.0, float(h) * 0.03)
-    path_continuity = float(math.exp(-float(np.median(np.abs(dy))) / dy_scale))
+    dy_scale = max(1.0, float(h) * 0.025)
+    path_continuity = float(
+        math.exp(
+            -float(np.median(np.abs(dy))) / dy_scale
+        )
+    )
     path_support = (
-        (p_skin_below >= 0.35)
-        & (np.maximum.reduce([p_gl, p_gc, p_td]) >= 0.25)
+        (p_skin_below >= 0.22)
+        & (np.maximum.reduce([p_gl, p_gc, p_td]) >= 0.28)
     )
     path_coverage = float(np.mean(path_support))
 
     interface_evidence = float(
         np.clip(
-            0.23 * color_contrast
-            + 0.24 * luminance_contrast
+            0.16 * color_contrast
+            + 0.23 * luminance_contrast
             + 0.22 * texture_contrast
-            + 0.16 * edge_strength
-            + 0.08 * skin_below_support
-            + 0.07 * non_skin_above_support,
+            + 0.14 * edge_strength
+            + 0.10 * skin_below_support
+            + 0.07 * non_skin_above_support
+            + 0.08 * material_transition,
             0.0,
             1.0,
         )
     )
 
-    # Bald/no-visible-hairline evidence: central upper face remains skin-like and
-    # no strong local interface is found. This is deliberately not a demographic
-    # or medical inference.
+    # No-visible-hairline evidence is an image-state check only. It is not a
+    # medical, demographic, identity, or traditional-physiognomy inference.
     cx1 = max(0, int(round(score.shape[1] * 0.30)))
     cx2 = min(score.shape[1], int(round(score.shape[1] * 0.70)))
-    scalp_y1 = max(0, y + int(round(h * 0.02)) - ry1)
-    scalp_y2 = min(skin_conf.shape[0], y + int(round(h * 0.32)) - ry1)
+    scalp_y1 = max(0, y + int(round(h * 0.01)) - ry1)
+    scalp_y2 = min(
+        skin_conf.shape[0],
+        y + int(round(h * 0.28)) - ry1,
+    )
     if scalp_y2 <= scalp_y1 or cx2 <= cx1:
         scalp_skin_continuity = 0.0
     else:
@@ -421,17 +641,32 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     frame_top_truncated = record.get("frameTopTruncated", False)
     if not isinstance(frame_top_truncated, bool):
         raise ValueError("frameTopTruncated must be boolean when supplied")
-    truncation_risk = 1.0 if frame_top_truncated else (
-        0.75 if y <= max(2, int(round(height * 0.015))) else 0.0
-    )
+    truncation_risk = 1.0 if frame_top_truncated else 0.0
 
-    # Occlusion risk rises when the path is fragmented/unstable or falls unusually
-    # low into the upper face. It never completes a hidden segment.
-    central_path = global_y[int(len(global_y) * 0.25): int(len(global_y) * 0.75)]
-    central_level = float(np.median(central_path)) if len(central_path) else float(y)
-    low_path = np.clip((central_level - (y + 0.23 * h)) / max(1.0, 0.22 * h), 0.0, 1.0)
+    central_path = global_y[
+        int(len(global_y) * 0.25):
+        int(len(global_y) * 0.75)
+    ]
+    central_level = (
+        float(np.median(central_path))
+        if len(central_path)
+        else float(y)
+    )
+    relative_path_level = float(
+        (central_level - y) / max(1.0, float(h))
+    )
+    low_path = np.clip(
+        (relative_path_level - 0.20) / 0.18,
+        0.0,
+        1.0,
+    )
     occlusion_risk = float(
-        np.clip(0.62 * (1.0 - path_continuity) + 0.38 * low_path, 0.0, 1.0)
+        np.clip(
+            0.48 * (1.0 - path_continuity)
+            + 0.52 * low_path,
+            0.0,
+            1.0,
+        )
     )
 
     preview_signals = PreviewSignals(
@@ -441,6 +676,10 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
         scalp_skin_continuity=scalp_skin_continuity,
         truncation_risk=float(truncation_risk),
         occlusion_risk=occlusion_risk,
+        above_skin_support=above_skin_support,
+        material_transition=material_transition,
+        relative_path_level=relative_path_level,
+        face_basis_stable=face_basis_stable,
     )
     preview_state = classify_preview(preview_signals)
 
@@ -479,6 +718,13 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
             "pathCoverage": path_coverage,
             "pathContinuity": path_continuity,
             "scalpSkinContinuity": scalp_skin_continuity,
+            "aboveSkinSupport": above_skin_support,
+            "belowSkinLocalSupport": below_skin_local_support,
+            "materialTransition": material_transition,
+            "textureRatio": texture_ratio,
+            "relativePathLevel": relative_path_level,
+            "faceBasisStable": face_basis_stable,
+            "eyePairDetected": len(eye_pair) == 2,
             "truncationRisk": float(truncation_risk),
             "occlusionRisk": occlusion_risk,
         },
@@ -494,14 +740,50 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
 
     if record.get("qaOverlay", False):
         draw = ImageDraw.Draw(image)
-        points = [(int(px), int(py)) for px, py in zip(global_x.tolist(), global_y.tolist())]
-        if len(points) >= 2:
-            draw.line(points, fill=(255, 0, 0), width=max(2, width // 250))
+        points = [
+            (int(px), int(py))
+            for px, py in zip(global_x.tolist(), global_y.tolist())
+        ]
+        if preview_state == "visible_interface_candidate" and len(points) >= 2:
+            draw.line(
+                points,
+                fill=(255, 0, 0),
+                width=max(2, width // 250),
+            )
+        elif (
+            preview_state == "partially_visible_or_occluded"
+            and len(points) >= 2
+        ):
+            draw.line(
+                points,
+                fill=(255, 165, 0),
+                width=max(2, width // 250),
+            )
+        elif preview_state == "unavailable" and len(points) >= 2:
+            draw.line(
+                points,
+                fill=(128, 128, 128),
+                width=max(2, width // 250),
+            )
+
+        # For no-visible-hairline state, intentionally suppress the candidate
+        # boundary so the QA image cannot be mistaken for an accepted line.
         draw.rectangle(
             [x, y, x + w, y + h],
             outline=(0, 255, 0),
             width=max(1, width // 350),
         )
+        for eye_x, eye_y, eye_w, eye_h in eye_pair:
+            draw.rectangle(
+                [
+                    eye_x,
+                    eye_y,
+                    eye_x + eye_w,
+                    eye_y + eye_h,
+                ],
+                outline=(0, 160, 255),
+                width=max(1, width // 500),
+            )
         image.save(record_dir / "overlay.jpg", quality=92)
 
     return {
@@ -517,6 +799,9 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
             "pathCoverage": path_coverage,
             "pathContinuity": path_continuity,
             "scalpSkinContinuity": scalp_skin_continuity,
+            "aboveSkinSupport": above_skin_support,
+            "materialTransition": material_transition,
+            "relativePathLevel": relative_path_level,
             "truncationRisk": float(truncation_risk),
             "occlusionRisk": occlusion_risk,
         },
@@ -564,6 +849,9 @@ def _safe_receipt(results: list[dict[str, Any]]) -> dict[str, Any]:
         "pathCoverage",
         "pathContinuity",
         "scalpSkinContinuity",
+        "aboveSkinSupport",
+        "materialTransition",
+        "relativePathLevel",
         "truncationRisk",
         "occlusionRisk",
     )
@@ -647,21 +935,95 @@ def run_actual(manifest_path: Path, output_path: Path) -> None:
 
 def self_check() -> None:
     visible = classify_preview(
-        PreviewSignals(0.76, 0.91, 0.84, 0.18, 0.0, 0.08)
+        PreviewSignals(
+            0.62,
+            0.45,
+            0.84,
+            0.30,
+            0.0,
+            0.08,
+            0.10,
+            0.25,
+            0.05,
+            True,
+        )
     )
     occluded = classify_preview(
-        PreviewSignals(0.49, 0.47, 0.31, 0.24, 0.0, 0.66)
+        PreviewSignals(
+            0.55,
+            0.15,
+            0.80,
+            0.20,
+            0.0,
+            0.20,
+            0.10,
+            0.20,
+            0.05,
+            True,
+        )
     )
-    bald = classify_preview(
-        PreviewSignals(0.18, 0.88, 0.80, 0.91, 0.0, 0.10)
+    no_hair_internal = classify_preview(
+        PreviewSignals(
+            0.54,
+            0.60,
+            0.80,
+            0.60,
+            0.0,
+            0.10,
+            0.48,
+            0.10,
+            0.15,
+            True,
+        )
+    )
+    no_hair_outer = classify_preview(
+        PreviewSignals(
+            0.42,
+            0.30,
+            0.80,
+            0.70,
+            0.0,
+            0.10,
+            0.05,
+            0.10,
+            -0.18,
+            True,
+        )
+    )
+    unstable_basis = classify_preview(
+        PreviewSignals(
+            0.62,
+            0.60,
+            0.80,
+            0.20,
+            0.0,
+            0.08,
+            0.10,
+            0.25,
+            0.05,
+            False,
+        )
     )
     unavailable = classify_preview(
-        PreviewSignals(0.70, 0.90, 0.90, 0.12, 0.95, 0.02)
+        PreviewSignals(
+            0.70,
+            0.90,
+            0.90,
+            0.12,
+            0.95,
+            0.02,
+            0.10,
+            0.30,
+            0.02,
+            True,
+        )
     )
     if (
         visible != "visible_interface_candidate"
         or occluded != "partially_visible_or_occluded"
-        or bald != "no_visible_hairline_candidate"
+        or no_hair_internal != "no_visible_hairline_candidate"
+        or no_hair_outer != "no_visible_hairline_candidate"
+        or unstable_basis != "partially_visible_or_occluded"
         or unavailable != "unavailable"
     ):
         raise RuntimeError("preview-state synthetic self-check failed")
@@ -675,25 +1037,31 @@ def self_check() -> None:
                     "luminanceContrast": 0.7,
                     "textureContrast": 0.8,
                     "edgeStrength": 0.7,
-                    "interfaceEvidence": 0.76,
-                    "pathCoverage": 0.91,
+                    "interfaceEvidence": 0.62,
+                    "pathCoverage": 0.45,
                     "pathContinuity": 0.84,
-                    "scalpSkinContinuity": 0.18,
+                    "scalpSkinContinuity": 0.30,
+                    "aboveSkinSupport": 0.10,
+                    "materialTransition": 0.25,
+                    "relativePathLevel": 0.05,
                     "truncationRisk": 0.0,
                     "occlusionRisk": 0.08,
                 },
             },
             {
-                "engineeringPreviewState": bald,
+                "engineeringPreviewState": no_hair_internal,
                 "signals": {
                     "colorContrast": 0.1,
                     "luminanceContrast": 0.1,
                     "textureContrast": 0.1,
                     "edgeStrength": 0.1,
-                    "interfaceEvidence": 0.18,
-                    "pathCoverage": 0.88,
+                    "interfaceEvidence": 0.54,
+                    "pathCoverage": 0.60,
                     "pathContinuity": 0.80,
-                    "scalpSkinContinuity": 0.91,
+                    "scalpSkinContinuity": 0.60,
+                    "aboveSkinSupport": 0.48,
+                    "materialTransition": 0.10,
+                    "relativePathLevel": 0.15,
                     "truncationRisk": 0.0,
                     "occlusionRisk": 0.10,
                 },
@@ -713,9 +1081,13 @@ def self_check() -> None:
     print(
         json.dumps(
             {
-                "schemaVersion": "multisignal-visible-hairline-self-check-v1",
+                "schemaVersion": "multisignal-visible-hairline-self-check-v2",
                 "status": "self_check_pass",
                 "previewStatesVerified": list(PREVIEW_STATES),
+                "noHairInternalSurfaceCheck": True,
+                "noHairOuterSilhouetteCheck": True,
+                "unstableFaceBasisFailsClosed": True,
+                "noVisibleHairlineOverlaySuppressesBoundary": True,
                 "hairColorClassificationApplied": False,
                 "demographicInferenceApplied": False,
                 "hiddenHairlineCompletionApplied": False,
@@ -724,7 +1096,6 @@ def self_check() -> None:
             }
         )
     )
-
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()

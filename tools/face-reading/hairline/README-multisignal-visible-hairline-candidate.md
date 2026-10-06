@@ -50,10 +50,10 @@ If continuity/coverage/visibility evidence is weak, the output must degrade to p
 
 ## Install
 
-Actual image execution requires local Pillow and NumPy:
+Actual image execution requires local OpenCV, Pillow and NumPy:
 
 ```bash
-python -m pip install pillow numpy
+python -m pip install opencv-python-headless pillow numpy
 ```
 
 Normal CI does not need these packages because `--self-check` uses only the Python standard library.
@@ -144,6 +144,15 @@ Outputs:
 ```
 
 The detailed candidate file may contain local source paths, digests, ROI and raw boundary points. It must remain local.
+
+QA overlay semantics:
+
+- red line: visible-interface engineering candidate;
+- orange line: partial/occluded engineering candidate;
+- gray line: unavailable engineering candidate;
+- no-visible-hairline: candidate boundary is intentionally suppressed so the image cannot be mistaken for an accepted hairline;
+- green box: local face ROI;
+- blue boxes: locally detected eye pair when available.
 
 Only `repo-safe-receipt.json` is designed to be repository-safe.
 
