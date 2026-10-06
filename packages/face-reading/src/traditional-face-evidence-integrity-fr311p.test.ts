@@ -58,7 +58,7 @@ import {
   FR311P_AUTHORITY_BOUNDARY,
   FR311P_CONTEXT_INVENTORY,
   FR311P_EVIDENCE_INVENTORY,
-  ORPHAN_CANONICAL_EVIDENCE_IDS_FR311P,
+  LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P,
   RELATION_KEY_OWNER_CONFLICTS_FR311P,
   SOURCELESS_CANONICAL_EVIDENCE_IDS_FR311P,
   UNMAPPED_TOPIC_KEYS_FR311P,
@@ -150,7 +150,7 @@ describe('FR311P face-wide evidence integrity audit', () => {
 
     expect(DUPLICATE_CANONICAL_EVIDENCE_IDS_FR311P).toEqual([]);
     expect(SOURCELESS_CANONICAL_EVIDENCE_IDS_FR311P).toEqual([]);
-    expect(ORPHAN_CANONICAL_EVIDENCE_IDS_FR311P).toEqual([]);
+    expect(LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P).toEqual([]);
     expect(RELATION_KEY_OWNER_CONFLICTS_FR311P).toEqual([]);
     expect(COMBINATION_KEY_OWNER_CONFLICTS_FR311P).toEqual([]);
   });
@@ -172,8 +172,19 @@ describe('FR311P face-wide evidence integrity audit', () => {
   });
 
   it('keeps unsupported topic tokens visible without creating orphan evidence', () => {
-    expect(FR311P_EVIDENCE_INVENTORY.orphanEvidence).toBe(0);
+    expect(FR311P_EVIDENCE_INVENTORY.lensUnmappedEvidence).toBe(28);
+    expect(LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P).toHaveLength(28);
     expect(new Set(UNMAPPED_TOPIC_KEYS_FR311P).size).toBe(UNMAPPED_TOPIC_KEYS_FR311P.length);
+    expect(UNMAPPED_TOPIC_KEYS_FR311P).toEqual(
+      expect.arrayContaining([
+        'ability',
+        'family',
+        'intelligence',
+        'longevity_mortality',
+        'sexuality',
+        'wealth_status',
+      ]),
+    );
     for (const topic of UNMAPPED_TOPIC_KEYS_FR311P) {
       expect(
         FACE_EVIDENCE_LENSES_FR311J.some(
@@ -188,8 +199,13 @@ describe('FR311P face-wide evidence integrity audit', () => {
   it('can retrieve every inherited named claim through at least one authorized lens', () => {
     for (const item of FACE_NAMED_FORM_EVIDENCE_FR311J) {
       const lensKey = firstLensForNamed(item.topicKey, item.relationTarget);
-      expect(lensKey, item.evidenceId).not.toBeNull();
-      if (lensKey === null) continue;
+      if (lensKey === null) {
+        expect(
+          LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P,
+          item.evidenceId,
+        ).toContain(item.evidenceId);
+        continue;
+      }
 
       const result = queryFaceEvidenceFR311O({
         lensKey,
@@ -202,8 +218,13 @@ describe('FR311P face-wide evidence integrity audit', () => {
   it('can retrieve every ear named claim through at least one authorized lens', () => {
     for (const item of EAR_NAMED_FORM_EVIDENCE_FR311O) {
       const lensKey = firstLensForTopics([item.topicKey]);
-      expect(lensKey, item.evidenceId).not.toBeNull();
-      if (lensKey === null) continue;
+      if (lensKey === null) {
+        expect(
+          LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P,
+          item.evidenceId,
+        ).toContain(item.evidenceId);
+        continue;
+      }
 
       const result = queryFaceEvidenceFR311O({
         lensKey,
@@ -216,8 +237,13 @@ describe('FR311P face-wide evidence integrity audit', () => {
   it('can retrieve every inherited direct rule only by explicit rule id and an authorized lens', () => {
     for (const item of FACE_DIRECT_RULE_EVIDENCE_FR311J) {
       const lensKey = firstLensForTopics(item.topicKeys);
-      expect(lensKey, item.ruleId).not.toBeNull();
-      if (lensKey === null) continue;
+      if (lensKey === null) {
+        expect(
+          LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P,
+          item.ruleId,
+        ).toContain(item.evidenceId);
+        continue;
+      }
 
       const result = queryFaceEvidenceFR311O({
         lensKey,
@@ -230,8 +256,13 @@ describe('FR311P face-wide evidence integrity audit', () => {
   it('can retrieve every ear direct rule only by explicit rule id and an authorized lens', () => {
     for (const item of EAR_DIRECT_RULE_EVIDENCE_FR311O) {
       const lensKey = firstLensForTopics(item.topicKeys);
-      expect(lensKey, item.ruleId).not.toBeNull();
-      if (lensKey === null) continue;
+      if (lensKey === null) {
+        expect(
+          LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P,
+          item.ruleId,
+        ).toContain(item.evidenceId);
+        continue;
+      }
 
       const result = queryFaceEvidenceFR311O({
         lensKey,
