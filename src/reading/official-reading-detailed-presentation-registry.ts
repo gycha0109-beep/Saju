@@ -5,13 +5,25 @@ import type {
 } from './canonical-reading-semantics.js';
 import type {
   ApprovedOfficialReadingDetailedMaterialDefinitionV1,
+  ApprovedOfficialReadingDetailedSourceProfileV1,
   OfficialReadingDetailedDomainKeyV1,
   OfficialReadingDetailedMaterialRoleV1,
 } from './official-reading-detailed-presentation-definition.js';
 import {
   GENERAL_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
-  type ApprovedOfficialReadingDetailedSourceProfileV1,
 } from './official-reading-detailed-presentation-general.js';
+import {
+  CAREER_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+} from './official-reading-detailed-presentation-career.js';
+import {
+  WEALTH_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+} from './official-reading-detailed-presentation-wealth.js';
+import {
+  RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+} from './official-reading-detailed-presentation-relationship.js';
+import {
+  BUSINESS_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+} from './official-reading-detailed-presentation-business.js';
 import {
   OFFICIAL_READING_DETAILED_READINESS_POLICY_VERSION,
   officialReadingDetailedMaterialBaselineV1,
@@ -26,7 +38,7 @@ import {
 import type { OfficialReadingPlanV1 } from './official-reading-plan.js';
 
 export const OFFICIAL_READING_APPROVED_DETAILED_REGISTRY_VERSION =
-  'myeonghwa-official-reading-approved-detailed-registry-v2' as const;
+  'myeonghwa-official-reading-approved-detailed-registry-v3' as const;
 
 export const OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1 =
   Object.freeze([
@@ -40,6 +52,10 @@ export const OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1 =
 export const APPROVED_OFFICIAL_READING_DETAILED_SOURCE_PROFILES_V1:
   readonly ApprovedOfficialReadingDetailedSourceProfileV1[] = Object.freeze([
     ...GENERAL_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+    ...CAREER_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+    ...WEALTH_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+    ...RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+    ...BUSINESS_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
   ]);
 
 /**
@@ -144,7 +160,6 @@ function sourceProfileCandidates(
   domainKey: OfficialReadingDetailedDomainKeyV1,
   unit: CanonicalReadingSemanticUnitV1,
 ): readonly ApprovedOfficialReadingDetailedSourceProfileV1[] {
-  if (domainKey !== 'general:natal') return [];
   return APPROVED_OFFICIAL_READING_DETAILED_SOURCE_PROFILES_V1.filter(
     (profile) =>
       profile.owner === domainKey &&

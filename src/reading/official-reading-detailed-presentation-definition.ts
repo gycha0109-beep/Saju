@@ -32,6 +32,27 @@ export interface OfficialReadingDetailedMaterialProvenanceV1 {
   sourceRefs: readonly string[];
 }
 
+export interface ApprovedOfficialReadingDetailedSourceProfileV1 {
+  owner: OfficialReadingDetailedDomainKeyV1;
+  profileId: string;
+  profileVersion: string;
+  claimType: string;
+  methodologyRef: {
+    id: string;
+    version: string;
+  };
+  standardText: CanonicalReadingSemanticTextV1;
+  semanticQualifiers: readonly unknown[];
+  prohibitedExtensions: readonly string[];
+  supportingClaimTypes: readonly string[];
+  scenarioPolicy: 'none' | 'preserve';
+  contradictionPolicy: 'none' | 'preserve';
+  approvedTextByRole: Readonly<
+    Partial<Record<OfficialReadingDetailedMaterialRoleV1, string>>
+  >;
+  provenance: OfficialReadingDetailedMaterialProvenanceV1;
+}
+
 export interface ApprovedOfficialReadingDetailedMaterialDefinitionV1 {
   schemaVersion: typeof OFFICIAL_READING_DETAILED_MATERIAL_SCHEMA_VERSION;
   owner: OfficialReadingDetailedDomainKeyV1;
