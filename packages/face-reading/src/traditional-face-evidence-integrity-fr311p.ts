@@ -13,10 +13,12 @@ import {
   EAR_NAMED_FORM_EVIDENCE_FR311O,
 } from './traditional-face-ear-evidence-index-fr311o.js';
 import {
-  CROSS_REGION_RELATIONS_FR311E,
-  DIRECT_CROSS_REGION_EVIDENCE_FR311E,
   NAMED_FORM_CONTEXT_LINKS_FR311C,
 } from './traditional-eyebrow-eye-combination-resolver-fr311c.js';
+import {
+  CROSS_REGION_RELATIONS_FR311E,
+  DIRECT_CROSS_REGION_EVIDENCE_FR311E,
+} from './traditional-eyebrow-eye-cross-region-evidence-fr311e.js';
 import {
   NOSE_DIRECT_CROSS_REGION_RELATIONS_FR311H,
   NOSE_NAMED_FORM_CROSS_REGION_CONTEXTS_FR311H,
