@@ -8,6 +8,7 @@ import type {
 } from './official-reading-detailed-presentation-definition.js';
 import {
   assessOfficialReadingDetailedPresentationReadinessV1,
+  requiredOfficialReadingDetailedMaterialRolesV1,
   type OfficialReadingDetailedPresentationReadinessV1,
 } from './official-reading-detailed-presentation.js';
 import type { OfficialReadingPlanV1 } from './official-reading-plan.js';
@@ -84,11 +85,18 @@ export function assessApprovedOfficialReadingDetailedCoverageV1(
 ): OfficialReadingDetailedDomainCoverageV1 {
   const domainKey = detailedDomainKey(bundle);
   if (domainKey === undefined) {
+    const requiredMaterialCount = visiblePrimaryUnits(bundle, plan).reduce(
+      (count, unit) =>
+        count +
+        requiredOfficialReadingDetailedMaterialRolesV1(bundle, plan, unit)
+          .length,
+      0,
+    );
     return {
       state: 'unsupported_domain',
-      requiredMaterialCount: visiblePrimaryUnits(bundle, plan).length,
+      requiredMaterialCount,
       approvedMaterialCount: 0,
-      missingTargetCount: visiblePrimaryUnits(bundle, plan).length,
+      missingTargetCount: requiredMaterialCount,
       staleTargetCount: 0,
     };
   }
