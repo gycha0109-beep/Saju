@@ -4,6 +4,8 @@
 
 This runner connects the existing FR308, FR310, and FR312 contracts into one local-only engineering validation path.
 
+Candidate identity is resolved against the governed FR306 runtime-candidate registry. The historical Florence input remains the default only when the private input omits an explicit `candidate` block. New candidates must provide their exact registered provider ID, revision, and runner contract.
+
 It does not create evidence, perform human review, infer demographics, or promote model authority.
 
 ## Pipeline
@@ -54,6 +56,11 @@ Do not force-add local validation input to Git.
 ```json
 {
   "schemaVersion": "fr308-fr312-local-deidentified-validation-input-v1",
+  "candidate": {
+    "modelId": "candidate.hairline.multisignal_visible_interface.fr306",
+    "modelRevision": "0.2.0",
+    "runnerContractVersion": "MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1"
+  },
   "fr308": {
     "caseFindings": [
       "... exactly four FR308DeidentifiedCaseFinding values ..."
@@ -82,7 +89,11 @@ Do not copy synthetic fixtures into a real run.
 
 ## FR308 boundary
 
-The executor injects the pinned FR307 Florence model identity/revision and local-only contract identity automatically.
+The executor resolves the exact candidate identity through FR306.
+
+For legacy FR307 Florence review-packet output, omission of `candidate` preserves the pinned Florence provider/revision/runner contract.
+
+For any other empirical candidate, `candidate` is required in practice and must exactly match a registered FR306 runtime provider. Candidate swapping between FR308, FR310, FR312, and FR313 is rejected by the governed contracts.
 
 The operator supplies exactly four deidentified findings:
 
