@@ -326,7 +326,7 @@ describe('FR310 visible hairline evidence adjudicator', () => {
         ...base,
         modelRevision: 'different-revision',
       } as never),
-    ).toThrow(/exact model identity\/revision mismatch/);
+    ).toThrow(/not registered at the exact runtime\/model revision/);
   });
 
   it('keeps the current repository gate at six of seven with no real adjudication executed', () => {
