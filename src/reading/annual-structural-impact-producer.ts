@@ -26,7 +26,6 @@ import {
 } from './annual-structural-impact-bundle.js';
 import {
   resolveDayunTemporalContext,
-  type ResolvedDayunTemporalContext,
   type UnavailableDayunTemporalContext,
 } from './dayun-temporal-context.js';
 import { buildTemporalReadingContext } from './temporal-reading-context.js';
@@ -48,6 +47,7 @@ export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY = Object.freeze({
   boundaryRule: 'FAIL_CLOSED_ON_MULTI_DAYUN_SEGMENT_YEAR',
   mutationRule: 'DO_NOT_MUTATE_CANONICAL_NATAL_SETTLEMENT',
   numericWeightRule: 'NONE',
+  effectRule: 'REQUIRE_TEMPORAL_FUNCTION_STATE_CHANGE',
   eventRule: 'NONE',
   extendsDecisionRef: 'GH-2284',
 } as const);
@@ -130,6 +130,7 @@ export interface UnavailableAnnualStructuralImpactProductionV1 {
     | 'annual_root_support_requires_settlement'
     | 'dayun_root_support_requires_settlement'
     | 'branch_relation_requires_settlement'
+    | 'no_temporal_stem_effect'
     | 'structural_role_impact_unavailable';
   dayunReasonCode?: UnavailableDayunTemporalContext['reasonCode'];
   structuralRoleReasonCode?: UnavailableStructuralRoleImpact['reasonCode'];
@@ -267,6 +268,13 @@ export function deriveAnnualTemporalSettlementOverlayV1(
   targetYear: number,
   sources: readonly AnnualTemporalStemSourceV1[],
 ): AnnualTemporalSettlementOverlayV1 {
+  for (const source of sources) {
+    if (source.element !== getHeavenlyStemElement(source.stem)) {
+      throw new TypeError(
+        `Temporal source element mismatch for ${source.layer}:${source.stem}.`,
+      );
+    }
+  }
   const canonicalSources = [...sources].sort((a, b) =>
     `${a.layer}:${a.stem}`.localeCompare(`${b.layer}:${b.stem}`),
   );
@@ -383,7 +391,8 @@ function branchRelationIds(
         result.add(`self_punishment:${left.key}|${right.key}:${left.branch}`);
       }
       for (const group of BRANCH_PUNISHMENT_GROUPS) {
-        if (group.includes(left.branch) && group.includes(right.branch)) {
+        const members = group as readonly EarthlyBranch[];
+        if (members.includes(left.branch) && members.includes(right.branch)) {
           result.add(`punishment_group:${left.key}:${left.branch}|${right.key}:${right.branch}`);
         }
       }
@@ -393,8 +402,9 @@ function branchRelationIds(
   const present = new Set(values.map((item) => item.branch));
   for (const group of BRANCH_THREE_COMBINATIONS) {
     if (!group.every((branch) => present.has(branch))) continue;
+    const members = group as readonly EarthlyBranch[];
     const temporalParticipates =
-      group.includes(annualBranch) || group.includes(dayunBranch);
+      members.includes(annualBranch) || members.includes(dayunBranch);
     if (temporalParticipates) {
       result.add(`three_combination:${group.join('-')}`);
     }
@@ -552,6 +562,14 @@ export function produceAnnualStructuralImpactBundleV1(
       targetYear,
       sources,
     );
+    const stateChanged =
+      overlay.settlement.participants.controller.functionState !==
+        settlement.participants.controller.functionState ||
+      overlay.settlement.participants.controlled.functionState !==
+        settlement.participants.controlled.functionState ||
+      overlay.settlement.pairControlEffective !== settlement.pairControlEffective;
+    if (!stateChanged) continue;
+
     const assessment = resolveStructuralRoleImpact(
       overlay.settlement,
       structureId,
@@ -571,6 +589,12 @@ export function produceAnnualStructuralImpactBundleV1(
     }
     overlays.push(overlay);
     assessments.push(assessment);
+  }
+
+  if (assessments.length === 0) {
+    return unavailable(snapshot, structureId, 'no_temporal_stem_effect', {
+      targetYear,
+    });
   }
 
   overlays.sort((a, b) => a.overlayId.localeCompare(b.overlayId));

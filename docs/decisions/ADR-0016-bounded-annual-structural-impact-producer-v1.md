@@ -55,6 +55,10 @@ For each natal R191 settlement participant:
 
 The canonical natal R191 final state is the baseline.
 
+A settlement is emitted as an annual assessment only when the temporal overlay changes at least one participant
+function state or pair-control state. A completely unchanged natal settlement is not relabeled as an annual
+effect.
+
 - an already impaired controller is not restored by SUPPORT;
 - temporal CONTROL impairs the controller;
 - an impaired controller disables pair control;
