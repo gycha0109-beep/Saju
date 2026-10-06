@@ -233,19 +233,27 @@ describe('R189-R191 deterministic stem interaction settlement policy', () => {
   });
 
   test('participant order cannot reverse controller and controlled roles', () => {
+    const visibleStems = [
+      visible('year', '정'),
+      visible('month', '임'),
+      visible('hour', '무'),
+    ] as const;
     const forward = deriveAdoptedStemInteractionSettlements(
       [relation({ pillar: 'year', value: '정' }, { pillar: 'month', value: '임' })],
       tenGods,
       '갑',
-      [visible('year', '정'), visible('month', '임'), visible('hour', '무')],
+      visibleStems,
     );
     const reverse = deriveAdoptedStemInteractionSettlements(
       [relation({ pillar: 'month', value: '임' }, { pillar: 'year', value: '정' })],
       tenGods,
       '갑',
+      visibleStems,
     );
     expect(forward[0]?.participants.controller.stem).toBe('임');
-    expect(reverse[0]?.participants.controller.stem).toBe('임');
+    expect(reverse[0]?.participants).toEqual(forward[0]?.participants);
+    expect(reverse[0]?.externalInfluences).toEqual(forward[0]?.externalInfluences);
+    expect(reverse[0]?.pairControlEffective).toBe(forward[0]?.pairControlEffective);
   });
 
   test('day-pillar participation and day-master identity inside the pair remain outside v1 scope', () => {
