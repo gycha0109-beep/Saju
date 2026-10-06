@@ -30,7 +30,7 @@ FR311P는 새 조회 계층을 만들지 않는다. 최신 조회 계약은 FR31
   - FR311K 재사용 4건
 - 정식 canonical evidence: 621건
 - 직접 관계 key: 24개
-- 직접 조합 key: 21개
+- 직접 조합 key: 20개
 
 context-only 인벤토리:
 
@@ -100,12 +100,26 @@ FR311M 역방향 감사에서 FR311K 근거를 재사용하는 4건은 새 소�
 
 named claim은 기존 계약과 동일하게 relationTarget을 통한 직접 연결도 인정한다.
 
-두 결과를 분리한다.
+감사 과정에서 현재 21개 렌즈로 직접 조회할 수 없는 canonical evidence 28건이 확인되었다. 이는 색인 누락이나 소유권 오류가 아니라 기존 렌즈 계약이 의도적으로 다루지 않는 주제를 가진 근거다.
 
-- orphan evidence: 해당 evidence 전체를 조회할 수 있는 렌즈가 하나도 없음 → 오류
-- unmapped topic token: evidence가 여러 topic을 가졌고 그중 일부 개별 topic 문자열만 현재 렌즈에 직접 연결되지 않음 → 기록 대상
+현재 확인된 미지원 topic token에는 다음이 포함된다.
 
-FR311P는 unmapped topic을 비슷한 개념의 렌즈로 임의 재매핑하지 않는다.
+- intelligence
+- ability
+- longevity_mortality
+- sexuality
+- wealth_status
+- family
+
+특히 wealth_status는 기존 FR311J가 wealth/status 자동 분해를 명시적으로 금지한다. 따라서 FR311P에서 재물 또는 관직 렌즈로 임의 분해하지 않는다. longevity_mortality 역시 longevity로 자동 치환하지 않는다.
+
+감사 결과는 다음을 분리한다.
+
+- lens-mapped evidence: 기존 렌즈에 직접 대응하며 실제 조회 가능성을 전수 검증
+- lens-unmapped evidence: 현재 렌즈 계약에 직접 대응하지 않는 근거로 별도 기록
+- unmapped topic token: evidence의 topic 중 현재 렌즈에 직접 연결되지 않은 개별 주제 문자열
+
+FR311P는 미지원 주제를 비슷한 개념의 렌즈로 임의 재매핑하지 않는다. 따라서 28건은 통합 결함으로 숨기지 않고 기준선의 명시적 렌즈 공백으로 동결한다.
 
 ## 6. 전수 조회 감사
 
@@ -272,9 +286,9 @@ FR311P와 최신 FR311O query/output에서 다음은 false다.
 
 ## 14. 종료 조건
 
-A. canonical 누락·고아·출처 누락 0  
+A. canonical 누락·출처 누락 0, 렌즈 미지원 evidence 28건은 명시적 공백으로 별도 기록  
 B. evidence ID 중복 및 관계/조합 소유권 충돌 0  
-C. 허용 렌즈 조회 실패 및 비허용 렌즈 누출 0  
+C. 렌즈가 정의된 근거의 허용 렌즈 조회 실패 및 비허용 렌즈 누출 0  
 D. FR311G/J/N 회귀 0  
 E. phrase_uncertain의 확정 판정 참여 0  
 F. context-only 의미 승격 0  
