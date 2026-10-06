@@ -31,3 +31,4 @@ export * from './stem-interaction-settlement-projection.js';
 export * from './official-reading-detailed-presentation-definition.js';
 export * from './official-reading-detailed-presentation.js';
 export * from './official-reading-detailed-presentation-registry.js';
+export * from './official-reading-detailed-presentation-general.js';
