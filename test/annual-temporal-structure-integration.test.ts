@@ -308,13 +308,14 @@ describe('R194/R196 product annual temporal structure integration', () => {
     });
   });
 
-  test('Dayun capability remains explicitly unavailable', () => {
+  test('Dayun temporal context is available without promoting a semantic Dayun resolver', () => {
     expect(PRODUCT_DAYUN_TEMPORAL_RUNTIME_CAPABILITY).toEqual({
-      runtimeAvailable: false,
-      reasonCode: 'DAYUN_RUNTIME_INPUT_NOT_AVAILABLE',
+      runtimeAvailable: true,
+      temporalContextAvailable: true,
       readingTemporalScopeAvailable: false,
       readingTargetPeriodAvailable: false,
       executableDayunMethodResolverAvailable: false,
+      semanticCompositionAvailable: false,
     });
   });
 

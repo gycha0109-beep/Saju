@@ -55,11 +55,12 @@ export const PRODUCT_ANNUAL_TEMPORAL_STRUCTURE_INTEGRATION_POLICY_CONTENT_HASH =
     .digest('hex');
 
 export const PRODUCT_DAYUN_TEMPORAL_RUNTIME_CAPABILITY = Object.freeze({
-  runtimeAvailable: false as const,
-  reasonCode: 'DAYUN_RUNTIME_INPUT_NOT_AVAILABLE' as const,
+  runtimeAvailable: true as const,
+  temporalContextAvailable: true as const,
   readingTemporalScopeAvailable: false as const,
   readingTargetPeriodAvailable: false as const,
   executableDayunMethodResolverAvailable: false as const,
+  semanticCompositionAvailable: false as const,
 });
 
 export interface ResolvedAnnualTemporalStructureIntegration {
