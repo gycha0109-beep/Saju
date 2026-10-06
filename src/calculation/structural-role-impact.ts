@@ -254,7 +254,12 @@ export function resolveStructuralRoleImpact(
       duplicate.push(role);
       continue;
     }
-    matched[role] = candidates[0];
+    const candidate = candidates[0];
+    if (candidate === undefined) {
+      missing.push(role);
+      continue;
+    }
+    matched[role] = candidate;
   }
 
   if (duplicate.length > 0) {
