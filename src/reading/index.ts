@@ -34,3 +34,4 @@ export * from './official-reading-detailed-presentation-definition.js';
 export * from './official-reading-detailed-presentation.js';
 export * from './official-reading-detailed-presentation-registry.js';
 export * from './official-reading-detailed-presentation-general.js';
+export * from './official-reading-detailed-realization.js';

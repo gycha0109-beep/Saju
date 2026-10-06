@@ -34,6 +34,13 @@ import {
   approvedOfficialReadingConciseProfileSetHashV1,
   buildApprovedOfficialReadingConciseProfilesV1,
 } from './official-reading-concise-presentation-registry.js';
+import {
+  OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+  buildApprovedOfficialReadingDetailedRealizationV1,
+  detailedOfficialReadingUnitPresentationMapV1,
+  type OfficialReadingDetailedRealizationV1,
+  type OfficialReadingDetailedUnitPresentationV1,
+} from './official-reading-detailed-realization.js';
 
 export const OFFICIAL_READING_RENDERER_VERSION =
   'myeonghwa-official-reading-renderer-v1' as const;
@@ -71,6 +78,8 @@ export interface OfficialReadingRenderedContentV1 {
   concisePresentationRegistryVersion?:
     typeof OFFICIAL_READING_APPROVED_CONCISE_REGISTRY_VERSION;
   concisePresentationProfileSetHash?: string;
+  detailedRealizationPolicyVersion?:
+    typeof OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION;
   reportId: string;
   reportHash: string;
   sourceSemanticHash: string;
@@ -313,9 +322,19 @@ function qualifierTextsFor(
   ];
 }
 
+type OfficialReadingUnitPresentationV1 =
+  | {
+      mode: 'concise';
+      conciseText: string;
+    }
+  | {
+      mode: 'detailed';
+      detailed: OfficialReadingDetailedUnitPresentationV1;
+    };
+
 function insightMaterial(
   unit: CanonicalReadingSemanticUnitV1,
-  conciseText?: string,
+  presentation?: OfficialReadingUnitPresentationV1,
 ): Omit<InsightItemView, 'explainabilityRef'> {
   const headline = unit.canonicalText?.headline?.trim();
   const summary = unit.canonicalText?.summary?.trim();
@@ -325,8 +344,8 @@ function insightMaterial(
       'Official Reading structured insight materialization requires canonical text.',
     );
   }
-  if (conciseText !== undefined) {
-    const normalizedConciseText = conciseText.trim();
+  if (presentation?.mode === 'concise') {
+    const normalizedConciseText = presentation.conciseText.trim();
     if (normalizedConciseText.length === 0) {
       throw new TypeError(
         'Official Reading concise presentation requires non-empty approved text.',
@@ -335,6 +354,32 @@ function insightMaterial(
     return {
       summary: normalizedConciseText,
       ...(qualifiers.length === 0 ? {} : { qualifiers }),
+    };
+  }
+  if (presentation?.mode === 'detailed') {
+    if (presentation.detailed.unitId !== unit.unitId) {
+      throw new TypeError(
+        'Official Reading detailed presentation unit does not match canonical unit.',
+      );
+    }
+    const summaryParts = [
+      ...(summary === undefined ? [] : [summary]),
+      ...presentation.detailed.summarySuffixes,
+    ];
+    const detailedQualifiers = [
+      ...new Set([
+        ...qualifiers,
+        ...presentation.detailed.qualifierSuffixes,
+      ]),
+    ];
+    return {
+      ...(headline === undefined ? {} : { headline }),
+      ...(summaryParts.length === 0
+        ? {}
+        : { summary: summaryParts.join('\n\n') }),
+      ...(detailedQualifiers.length === 0
+        ? {}
+        : { qualifiers: detailedQualifiers }),
     };
   }
   return {
@@ -347,19 +392,19 @@ function insightMaterial(
 function insightItem(
   unit: CanonicalReadingSemanticUnitV1,
   explainabilityRef: string,
-  conciseText?: string,
+  presentation?: OfficialReadingUnitPresentationV1,
 ): InsightItemView {
   return {
-    ...insightMaterial(unit, conciseText),
+    ...insightMaterial(unit, presentation),
     explainabilityRef,
   };
 }
 
 function structuralUnitText(
   unit: CanonicalReadingSemanticUnitV1,
-  conciseText?: string,
+  presentation?: OfficialReadingUnitPresentationV1,
 ): string {
-  const item = insightMaterial(unit, conciseText);
+  const item = insightMaterial(unit, presentation);
   return [
     ...(item.headline === undefined ? [] : [item.headline]),
     ...(item.summary === undefined || item.summary === item.headline
@@ -385,7 +430,7 @@ function refForUnit(
 function ordinaryRunBlocks(
   units: readonly CanonicalReadingSemanticUnitV1[],
   refsByUnitId: ReadonlyMap<string, string>,
-  conciseTextByUnitId?: ReadonlyMap<string, string>,
+  presentationByUnitId?: ReadonlyMap<string, OfficialReadingUnitPresentationV1>,
 ): ReadingSectionView['blocks'] {
   if (units.length === 0) return [];
   return [
@@ -395,7 +440,7 @@ function ordinaryRunBlocks(
         insightItem(
           unit,
           refForUnit(refsByUnitId, unit.unitId),
-          conciseTextByUnitId?.get(unit.unitId),
+          presentationByUnitId?.get(unit.unitId),
         ),
       ),
     },
@@ -512,7 +557,7 @@ function structurallyPreservedBlocks(
   bundle: CanonicalReadingSemanticBundleV1,
   units: readonly CanonicalReadingSemanticUnitV1[],
   refsByUnitId: ReadonlyMap<string, string>,
-  conciseTextByUnitId?: ReadonlyMap<string, string>,
+  presentationByUnitId?: ReadonlyMap<string, OfficialReadingUnitPresentationV1>,
 ): ReadingSectionView['blocks'] {
   const groups = structuralGroupsForSection(bundle, units);
   const emittedGroups = new Set<StructuralUnitGroup>();
@@ -522,7 +567,7 @@ function structurallyPreservedBlocks(
   const flushOrdinaryRun = (): void => {
     if (ordinaryRun.length === 0) return;
     blocks.push(
-      ...ordinaryRunBlocks(ordinaryRun, refsByUnitId, conciseTextByUnitId),
+      ...ordinaryRunBlocks(ordinaryRun, refsByUnitId, presentationByUnitId),
     );
     ordinaryRun = [];
   };
@@ -564,7 +609,7 @@ function structurallyPreservedBlocks(
               .map((member) =>
                 structuralUnitText(
                   member,
-                  conciseTextByUnitId?.get(member.unitId),
+                  presentationByUnitId?.get(member.unitId),
                 ),
               )
               .join('\n\n'),
@@ -584,7 +629,7 @@ function structurallyPreservedBlocks(
         label: `관점 ${index + 1}`,
         text: structuralUnitText(
           member,
-          conciseTextByUnitId?.get(member.unitId),
+          presentationByUnitId?.get(member.unitId),
         ),
         explainabilityRef: refForUnit(refsByUnitId, member.unitId),
       })),
@@ -653,10 +698,11 @@ export function canRenderOfficialReadingV1(
     );
 }
 
-export function renderOfficialReadingV1(
+function renderOfficialReadingInternalV1(
   bundle: CanonicalReadingSemanticBundleV1,
   plan: OfficialReadingPlanV1,
-  options: OfficialReadingRenderOptionsV1 = {},
+  options: OfficialReadingRenderOptionsV1,
+  detailedRealization?: OfficialReadingDetailedRealizationV1,
 ): OfficialReadingRenderedContentV1 {
   assertCanonicalReadingSemanticBundleV1(bundle);
   assertOfficialReadingPlanV1(plan, bundle);
@@ -671,11 +717,21 @@ export function renderOfficialReadingV1(
   const sections: ReadingSectionView[] = [];
   const explainabilityEntries: ExplainabilityIndex['entries'][number][] = [];
   const summariesBySourceId = sourceSummaryIndex(options.sourceSummaries);
+  if (
+    detailedRealization !== undefined &&
+    options.preferredDetail !== undefined
+  ) {
+    throw new TypeError(
+      'Official Reading internal detailed rendering cannot combine with a public detail preference.',
+    );
+  }
   const approvedConciseProfiles =
+    detailedRealization === undefined &&
     options.preferredDetail === 'concise'
       ? buildApprovedOfficialReadingConciseProfilesV1(bundle, plan)
       : [];
   const concisePresentationReadiness =
+    detailedRealization === undefined &&
     options.preferredDetail === 'concise'
       ? assessOfficialReadingConcisePresentationReadinessV1(
           bundle,
@@ -684,24 +740,40 @@ export function renderOfficialReadingV1(
         )
       : undefined;
   const detailPreferenceResolution =
-    options.preferredDetail === undefined
+    detailedRealization !== undefined || options.preferredDetail === undefined
       ? undefined
       : resolveOfficialReadingDetailPreferenceV1(options.preferredDetail, {
           conciseAvailable:
             concisePresentationReadiness?.state === 'ready',
         });
-  const conciseTextByUnitId =
-    detailPreferenceResolution?.resolvedDetail === 'concise' &&
-    concisePresentationReadiness?.state === 'ready'
+  const presentationByUnitId:
+    | ReadonlyMap<string, OfficialReadingUnitPresentationV1>
+    | undefined =
+    detailedRealization !== undefined
       ? new Map(
-          concisePresentationReadiness.bindings.map((binding) => [
-            binding.unitId,
-            binding.conciseText,
-          ]),
+          [...detailedOfficialReadingUnitPresentationMapV1(detailedRealization)]
+            .map(([unitId, detailed]) => [
+              unitId,
+              {
+                mode: 'detailed' as const,
+                detailed,
+              },
+            ]),
         )
-      : undefined;
+      : detailPreferenceResolution?.resolvedDetail === 'concise' &&
+          concisePresentationReadiness?.state === 'ready'
+        ? new Map(
+            concisePresentationReadiness.bindings.map((binding) => [
+              binding.unitId,
+              {
+                mode: 'concise' as const,
+                conciseText: binding.conciseText,
+              },
+            ]),
+          )
+        : undefined;
   const concisePresentationProfileSetHash =
-    conciseTextByUnitId === undefined ||
+    detailPreferenceResolution?.resolvedDetail !== 'concise' ||
     concisePresentationReadiness === undefined
       ? undefined
       : approvedOfficialReadingConciseProfileSetHashV1(
@@ -758,7 +830,7 @@ export function renderOfficialReadingV1(
         bundle,
         primaryUnits,
         refsByUnitId,
-        conciseTextByUnitId,
+        presentationByUnitId,
       );
       sectionExplainabilityRefs = primaryUnits.map((unit) =>
         refForUnit(refsByUnitId, unit.unitId),
@@ -833,6 +905,12 @@ export function renderOfficialReadingV1(
             OFFICIAL_READING_APPROVED_CONCISE_REGISTRY_VERSION,
           concisePresentationProfileSetHash,
         }),
+    ...(detailedRealization === undefined
+      ? {}
+      : {
+          detailedRealizationPolicyVersion:
+            OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+        }),
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
     sections,
@@ -845,4 +923,37 @@ export function renderOfficialReadingV1(
     reportId: `official_reading_report_${reportHash.slice(0, 24)}`,
     reportHash,
   };
+}
+
+
+export function renderOfficialReadingV1(
+  bundle: CanonicalReadingSemanticBundleV1,
+  plan: OfficialReadingPlanV1,
+  options: OfficialReadingRenderOptionsV1 = {},
+): OfficialReadingRenderedContentV1 {
+  return renderOfficialReadingInternalV1(bundle, plan, options);
+}
+
+export function renderApprovedDetailedOfficialReadingV1(
+  bundle: CanonicalReadingSemanticBundleV1,
+  plan: OfficialReadingPlanV1,
+  options: Pick<OfficialReadingRenderOptionsV1, 'sourceSummaries'> = {},
+): OfficialReadingRenderedContentV1 {
+  const detailedRealization =
+    buildApprovedOfficialReadingDetailedRealizationV1(bundle, plan);
+  if (detailedRealization === undefined) {
+    throw new TypeError(
+      'Official Reading approved detailed rendering requires complete current detailed material.',
+    );
+  }
+  return renderOfficialReadingInternalV1(
+    bundle,
+    plan,
+    {
+      ...(options.sourceSummaries === undefined
+        ? {}
+        : { sourceSummaries: options.sourceSummaries }),
+    },
+    detailedRealization,
+  );
 }
