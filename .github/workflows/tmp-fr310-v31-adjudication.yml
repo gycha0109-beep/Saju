@@ -1,0 +1,56 @@
+name: tmp-fr310-v31-adjudication
+
+on:
+  push:
+    branches:
+      - ops/tmp-fr310-v31-adjudication-20261007
+
+permissions:
+  contents: read
+
+jobs:
+  adjudicate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund --ignore-scripts
+      - run: npm run face:build
+      - name: Execute governed FR308-FR310 adjudication
+        shell: bash
+        run: |
+          mkdir -p .cache/face-reading/fr308-fr312-local
+          cp tmp/fr310-v31-deidentified-input.json .cache/face-reading/fr308-fr312-local/private-input.json
+          set +e
+          node scripts/run-fr308-fr312-local-validation.mjs \
+            --input .cache/face-reading/fr308-fr312-local/private-input.json \
+            --output .cache/face-reading/fr308-fr312-local/repo-safe-receipt.json
+          code=$?
+          set -e
+          cat .cache/face-reading/fr308-fr312-local/repo-safe-receipt.json
+          test "$code" -eq 2
+          node - <<'NODE'
+          const fs = require('fs');
+          const p = '.cache/face-reading/fr308-fr312-local/repo-safe-receipt.json';
+          const r = JSON.parse(fs.readFileSync(p, 'utf8'));
+          if (r.status !== 'blocked_at_fr310') throw new Error('expected blocked_at_fr310');
+          if (r.fr310Receipt?.disposition !== 'reject_current_candidate') throw new Error('expected reject_current_candidate');
+          const reasons = new Set(r.fr310Receipt?.failureReasons ?? []);
+          for (const required of [
+            'PARTIAL_BANGS_CASE_REJECTED',
+            'PARTIAL_BANGS_GROSS_MISLOCALIZATION',
+            'HIDDEN_CASE_REJECTED'
+          ]) {
+            if (!reasons.has(required)) throw new Error('missing reason: ' + required);
+          }
+          if (r.fr312Attempted !== false) throw new Error('FR312 must not run after FR310 reject');
+          console.log(JSON.stringify({
+            status:r.status,
+            disposition:r.fr310Receipt.disposition,
+            failureReasons:[...reasons],
+            fr312Attempted:r.fr312Attempted
+          }));
+          NODE
