@@ -1,5 +1,8 @@
 import type {
+  FiveElement,
   HeavenlyStem,
+  PillarSlot,
+  StemInteractionExternalInfluenceKind,
   StemInteractionSettlementFact,
 } from '../contracts/calculation.js';
 import type {
@@ -13,6 +16,33 @@ import {
 export const READING_STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION =
   'myeongha-reading-stem-interaction-settlement-v3' as const;
 
+export interface ReadingStemInteractionExternalInfluenceV1 {
+  influenceId: string;
+  actorPillar: PillarSlot;
+  actorStem: HeavenlyStem;
+  actorElement: FiveElement;
+  targetRole: 'controller' | 'controlled';
+  targetPillar: PillarSlot;
+  targetStem: HeavenlyStem;
+  kind: StemInteractionExternalInfluenceKind;
+}
+
+type ReadingControllerParticipant =
+  Omit<
+    StemInteractionSettlementFact['participants']['controller'],
+    'incomingInfluences'
+  > & {
+    incomingInfluences: readonly ReadingStemInteractionExternalInfluenceV1[];
+  };
+
+type ReadingControlledParticipant =
+  Omit<
+    StemInteractionSettlementFact['participants']['controlled'],
+    'incomingInfluences'
+  > & {
+    incomingInfluences: readonly ReadingStemInteractionExternalInfluenceV1[];
+  };
+
 export interface ReadingStemInteractionSettlementV3 {
   schemaVersion: typeof READING_STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION;
   settlementId: string;
@@ -20,8 +50,11 @@ export interface ReadingStemInteractionSettlementV3 {
   transformationApplied: false;
   activeRelations: readonly ['stem_five_combination', 'element_control'];
   pairControlEffective: boolean;
-  externalInfluences: StemInteractionSettlementFact['externalInfluences'];
-  participants: StemInteractionSettlementFact['participants'];
+  externalInfluences: readonly ReadingStemInteractionExternalInfluenceV1[];
+  participants: {
+    controller: ReadingControllerParticipant;
+    controlled: ReadingControlledParticipant;
+  };
 }
 
 export interface ReadingStemInteractionStructureImpactV3 {
@@ -31,6 +64,21 @@ export interface ReadingStemInteractionStructureImpactV3 {
   roleDisposition: StructureRoleDisposition;
   functionState: StemInteractionSettlementFact['participants']['controlled']['functionState'];
   structureImpact: StructureImpact;
+}
+
+function projectInfluence(
+  influence: StemInteractionSettlementFact['externalInfluences'][number],
+): ReadingStemInteractionExternalInfluenceV1 {
+  return {
+    influenceId: influence.influenceId,
+    actorPillar: influence.sourcePillar,
+    actorStem: influence.sourceStem,
+    actorElement: influence.sourceElement,
+    targetRole: influence.targetRole,
+    targetPillar: influence.targetPillar,
+    targetStem: influence.targetStem,
+    kind: influence.kind,
+  };
 }
 
 export function projectStemInteractionSettlementForReading(
@@ -43,19 +91,17 @@ export function projectStemInteractionSettlementForReading(
     transformationApplied: settlement.transformationApplied,
     activeRelations: settlement.activeRelations,
     pairControlEffective: settlement.pairControlEffective,
-    externalInfluences: settlement.externalInfluences.map((item) => ({ ...item })),
+    externalInfluences: settlement.externalInfluences.map(projectInfluence),
     participants: {
       controller: {
         ...settlement.participants.controller,
-        incomingInfluences: settlement.participants.controller.incomingInfluences.map(
-          (item) => ({ ...item }),
-        ),
+        incomingInfluences:
+          settlement.participants.controller.incomingInfluences.map(projectInfluence),
       },
       controlled: {
         ...settlement.participants.controlled,
-        incomingInfluences: settlement.participants.controlled.incomingInfluences.map(
-          (item) => ({ ...item }),
-        ),
+        incomingInfluences:
+          settlement.participants.controlled.incomingInfluences.map(projectInfluence),
       },
     },
   };
