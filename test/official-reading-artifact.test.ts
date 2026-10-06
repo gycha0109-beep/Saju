@@ -30,8 +30,12 @@ import {
   OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
+  renderApprovedDetailedOfficialReadingV1,
   renderOfficialReadingV1,
 } from '../src/reading/official-reading-renderer.js';
+import {
+  OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+} from '../src/reading/official-reading-detailed-realization.js';
 import { buildReadingArtifactShell } from '../src/reading/reading-artifact-shell.js';
 import {
   GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CLAIM_TYPE,
@@ -487,6 +491,63 @@ describe('Official Reading Artifact V1', () => {
         { readingVersion: 'official-reading-artifact-concise-test-v1' },
       ),
     ).toThrow(/concise presentation metadata does not match/u);
+  });
+
+  it('accepts exact governed detailed metadata and rejects tampered detailed authority', () => {
+    const { currentSnapshot, interpretation, semantics, plan } =
+      conciseFixture();
+    const report = renderApprovedDetailedOfficialReadingV1(
+      semantics,
+      plan,
+    );
+
+    expect(report.detailPreferenceResolution).toEqual({
+      requestedDetail: 'detailed',
+      resolvedDetail: 'detailed',
+      resolution: 'exact',
+    });
+    expect(report.detailedRealizationPolicyVersion).toBe(
+      OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+    );
+
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        report,
+        { readingVersion: 'official-reading-artifact-detailed-test-v1' },
+      ),
+    ).not.toThrow();
+
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        {
+          ...report,
+          detailedRealizationPolicyVersion: 'tampered-policy' as never,
+        },
+        { readingVersion: 'official-reading-artifact-detailed-test-v1' },
+      ),
+    ).toThrow(/detailed presentation metadata does not match/u);
+
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        {
+          ...report,
+          detailedRealizationPolicyVersion: undefined,
+        },
+        { readingVersion: 'official-reading-artifact-detailed-test-v1' },
+      ),
+    ).toThrow(/detailed presentation metadata does not match/u);
   });
 
   it('rejects a report that declares a different source-summary presentation policy', () => {
