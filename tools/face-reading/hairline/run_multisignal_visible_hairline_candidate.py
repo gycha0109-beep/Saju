@@ -459,23 +459,41 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     # No hair-color category exists here. Weak color contrast may be compensated
     # by luminance edge or texture contrast.
     score = (
-        0.34 * transition
-        + 0.21 * gl
-        + 0.16 * gc
-        + 0.19 * td
+        0.31 * transition
+        + 0.23 * gl
+        + 0.15 * gc
+        + 0.21 * td
         + 0.10 * skin_below
     )
 
-    # Avoid lower face. Search only above the central face sample.
-    max_search_y = max(4, min(score.shape[0], y + int(round(h * 0.43)) - ry1))
+    # Downweight side/background ambiguity without substituting a face-oval or
+    # average-face hairline prior.
+    x_axis = np.linspace(-1.0, 1.0, score.shape[1], dtype=np.float32)
+    x_prior = (0.82 + 0.18 * np.exp(-((x_axis / 0.75) ** 4)))[None, :]
+    score = score * x_prior
+
+    # Avoid lower face. Search only above the central face sample / detected eyes.
+    max_search_y = max(
+        4,
+        min(score.shape[0], y + int(round(h * 0.43)) - ry1),
+    )
     score = score[:max_search_y, :]
-    path_y, path_scores = _candidate_path(score)
+    skin_conf = skin_conf[:max_search_y, :]
+    skin_below = skin_below[:max_search_y, :]
+    skin_above = skin_above[:max_search_y, :]
+    texture_mean = texture_mean[:max_search_y, :]
+    gl = gl[:max_search_y, :]
+    gc = gc[:max_search_y, :]
+    td = td[:max_search_y, :]
+    path_y, path_scores = _candidate_path(
+        score,
+        continuity_penalty=0.095,
+    )
 
     xs = np.arange(score.shape[1])
     global_x = xs + rx1
     global_y = path_y + ry1
 
-    # Signal summaries around the selected path.
     p_skin_below = skin_below[path_y, xs]
     p_skin_above = skin_above[path_y, xs]
     p_gl = gl[path_y, xs]
@@ -489,35 +507,130 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     skin_below_support = float(np.mean(p_skin_below))
     non_skin_above_support = float(np.mean(1.0 - p_skin_above))
 
+    # Candidate-local material check. A visible interface should generally
+    # transition from skin below to non-skin and/or different texture above.
+    local_band = max(3, int(round(h * 0.035)))
+    above_skin_values = []
+    below_skin_values = []
+    above_texture_values = []
+    below_texture_values = []
+    for column, path_row in enumerate(path_y.tolist()):
+        above_start = max(0, path_row - local_band)
+        above_end = max(0, path_row - 1)
+        below_start = min(skin_conf.shape[0], path_row + 2)
+        below_end = min(
+            skin_conf.shape[0],
+            path_row + local_band + 1,
+        )
+        if above_end > above_start and below_end > below_start:
+            above_skin_values.append(
+                float(
+                    np.mean(
+                        skin_conf[
+                            above_start:above_end,
+                            column,
+                        ]
+                    )
+                )
+            )
+            below_skin_values.append(
+                float(
+                    np.mean(
+                        skin_conf[
+                            below_start:below_end,
+                            column,
+                        ]
+                    )
+                )
+            )
+            above_texture_values.append(
+                float(
+                    np.mean(
+                        texture_mean[
+                            above_start:above_end,
+                            column,
+                        ]
+                    )
+                )
+            )
+            below_texture_values.append(
+                float(
+                    np.mean(
+                        texture_mean[
+                            below_start:below_end,
+                            column,
+                        ]
+                    )
+                )
+            )
+
+    above_skin_support = (
+        float(np.mean(above_skin_values))
+        if above_skin_values
+        else 0.0
+    )
+    below_skin_local_support = (
+        float(np.mean(below_skin_values))
+        if below_skin_values
+        else 0.0
+    )
+    above_texture_mean = (
+        float(np.mean(above_texture_values))
+        if above_texture_values
+        else 0.0
+    )
+    below_texture_mean = (
+        float(np.mean(below_texture_values))
+        if below_texture_values
+        else 0.0
+    )
+    material_transition = float(
+        np.clip(
+            below_skin_local_support - above_skin_support,
+            0.0,
+            1.0,
+        )
+    )
+    texture_ratio = float(
+        above_texture_mean / max(1e-6, below_texture_mean)
+    )
+
     dy = np.diff(global_y.astype(np.float32))
-    dy_scale = max(1.0, float(h) * 0.03)
-    path_continuity = float(math.exp(-float(np.median(np.abs(dy))) / dy_scale))
+    dy_scale = max(1.0, float(h) * 0.025)
+    path_continuity = float(
+        math.exp(
+            -float(np.median(np.abs(dy))) / dy_scale
+        )
+    )
     path_support = (
-        (p_skin_below >= 0.35)
-        & (np.maximum.reduce([p_gl, p_gc, p_td]) >= 0.25)
+        (p_skin_below >= 0.22)
+        & (np.maximum.reduce([p_gl, p_gc, p_td]) >= 0.28)
     )
     path_coverage = float(np.mean(path_support))
 
     interface_evidence = float(
         np.clip(
-            0.23 * color_contrast
-            + 0.24 * luminance_contrast
+            0.16 * color_contrast
+            + 0.23 * luminance_contrast
             + 0.22 * texture_contrast
-            + 0.16 * edge_strength
-            + 0.08 * skin_below_support
-            + 0.07 * non_skin_above_support,
+            + 0.14 * edge_strength
+            + 0.10 * skin_below_support
+            + 0.07 * non_skin_above_support
+            + 0.08 * material_transition,
             0.0,
             1.0,
         )
     )
 
-    # Bald/no-visible-hairline evidence: central upper face remains skin-like and
-    # no strong local interface is found. This is deliberately not a demographic
-    # or medical inference.
+    # No-visible-hairline evidence is an image-state check only. It is not a
+    # medical, demographic, identity, or traditional-physiognomy inference.
     cx1 = max(0, int(round(score.shape[1] * 0.30)))
     cx2 = min(score.shape[1], int(round(score.shape[1] * 0.70)))
-    scalp_y1 = max(0, y + int(round(h * 0.02)) - ry1)
-    scalp_y2 = min(skin_conf.shape[0], y + int(round(h * 0.32)) - ry1)
+    scalp_y1 = max(0, y + int(round(h * 0.01)) - ry1)
+    scalp_y2 = min(
+        skin_conf.shape[0],
+        y + int(round(h * 0.28)) - ry1,
+    )
     if scalp_y2 <= scalp_y1 or cx2 <= cx1:
         scalp_skin_continuity = 0.0
     else:
@@ -528,17 +641,32 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     frame_top_truncated = record.get("frameTopTruncated", False)
     if not isinstance(frame_top_truncated, bool):
         raise ValueError("frameTopTruncated must be boolean when supplied")
-    truncation_risk = 1.0 if frame_top_truncated else (
-        0.75 if y <= max(2, int(round(height * 0.015))) else 0.0
-    )
+    truncation_risk = 1.0 if frame_top_truncated else 0.0
 
-    # Occlusion risk rises when the path is fragmented/unstable or falls unusually
-    # low into the upper face. It never completes a hidden segment.
-    central_path = global_y[int(len(global_y) * 0.25): int(len(global_y) * 0.75)]
-    central_level = float(np.median(central_path)) if len(central_path) else float(y)
-    low_path = np.clip((central_level - (y + 0.23 * h)) / max(1.0, 0.22 * h), 0.0, 1.0)
+    central_path = global_y[
+        int(len(global_y) * 0.25):
+        int(len(global_y) * 0.75)
+    ]
+    central_level = (
+        float(np.median(central_path))
+        if len(central_path)
+        else float(y)
+    )
+    relative_path_level = float(
+        (central_level - y) / max(1.0, float(h))
+    )
+    low_path = np.clip(
+        (relative_path_level - 0.20) / 0.18,
+        0.0,
+        1.0,
+    )
     occlusion_risk = float(
-        np.clip(0.62 * (1.0 - path_continuity) + 0.38 * low_path, 0.0, 1.0)
+        np.clip(
+            0.48 * (1.0 - path_continuity)
+            + 0.52 * low_path,
+            0.0,
+            1.0,
+        )
     )
 
     preview_signals = PreviewSignals(
@@ -548,6 +676,10 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
         scalp_skin_continuity=scalp_skin_continuity,
         truncation_risk=float(truncation_risk),
         occlusion_risk=occlusion_risk,
+        above_skin_support=above_skin_support,
+        material_transition=material_transition,
+        relative_path_level=relative_path_level,
+        face_basis_stable=face_basis_stable,
     )
     preview_state = classify_preview(preview_signals)
 
