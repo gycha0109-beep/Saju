@@ -183,6 +183,44 @@ export interface StructuralRelationCandidate {
   };
 }
 
+
+export type StemInteractionFunctionState =
+  | 'preserved'
+  | 'constrained'
+  | 'impaired'
+  | 'lost';
+
+export interface StemInteractionSettlementParticipant {
+  pillar: PillarSlot;
+  stem: HeavenlyStem;
+  tenGod: TenGod;
+  element: FiveElement;
+  identityPreserved: true;
+  functionState: StemInteractionFunctionState;
+}
+
+export interface StemInteractionSettlementFact {
+  settlementId: string;
+  relationId: string;
+  kind: 'stem_five_combination';
+  scope: 'non_day_master_jia_ji';
+  pair: readonly ['갑', '기'];
+  transformationApplied: false;
+  activeRelations: readonly ['stem_five_combination', 'jia_controls_ji'];
+  participants: {
+    jia: StemInteractionSettlementParticipant & {
+      stem: '갑';
+      element: '목';
+      functionState: 'constrained';
+    };
+    ji: StemInteractionSettlementParticipant & {
+      stem: '기';
+      element: '토';
+      functionState: 'impaired';
+    };
+  };
+}
+
 export interface BranchClashContextParticipant {
   pillar: PillarSlot;
   branch: EarthlyBranch;
@@ -266,6 +304,7 @@ export interface DerivedFacts {
   hiddenStems?: HiddenStemChartFact;
   fiveElementCounts?: FactState<Readonly<Record<FiveElement, number>>>;
   structuralRelations?: FactState<readonly StructuralRelationCandidate[]>;
+  stemInteractionSettlements?: FactState<readonly StemInteractionSettlementFact[]>;
   branchClashContexts?: FactState<BranchClashContextIndex>;
   branchClashQualifierObservations?: FactState<BranchClashQualifierObservationIndex>;
 }
