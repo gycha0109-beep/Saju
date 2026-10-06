@@ -34,15 +34,41 @@ const FR308_CASES = Object.freeze([
 const FR312_CASES = Object.freeze([
   'm_shaped_or_widows_peak_visible_contour',
   'side_recession_or_asymmetric_visible_hairline',
-  'headwear_occlusion_if_available',
+  'upper_hairline_visibility_loss',
   'dark_hair_dark_background',
   'light_hair_or_low_local_contrast',
   'ordinary_indoor_illumination_variation',
 ]);
 
+const FR312_SOURCE_CASES = Object.freeze([
+  'm_shaped_or_widows_peak_visible_contour',
+  'side_recession_or_asymmetric_visible_hairline',
+  'headwear_occlusion_if_available',
+  'cropped_upper_forehead',
+  'heavy_bangs_hairline_substantially_hidden',
+  'dark_hair_dark_background',
+  'light_hair_or_low_local_contrast',
+  'ordinary_indoor_illumination_variation',
+]);
+
+function toFR312Case(captureCase) {
+  if (
+    captureCase === 'headwear_occlusion_if_available' ||
+    captureCase === 'cropped_upper_forehead' ||
+    captureCase === 'heavy_bangs_hairline_substantially_hidden' ||
+    captureCase === 'upper_hairline_visibility_loss'
+  ) {
+    return 'upper_hairline_visibility_loss';
+  }
+
+  return FR312_CASES.includes(captureCase)
+    ? captureCase
+    : null;
+}
+
 const ALL_CASES = new Set([
   ...FR308_CASES,
-  ...FR312_CASES,
+  ...FR312_SOURCE_CASES,
 ]);
 
 const FR308_FAILURE_MODES = new Set([
@@ -309,7 +335,7 @@ function blankRouting(captureCase) {
     derivedFromAnotherCapture: null,
     eligibleScopes: {
       fr308: FR308_CASES.includes(captureCase),
-      fr312: FR312_CASES.includes(captureCase),
+      fr312: toFR312Case(captureCase) !== null,
     },
   };
 }
@@ -594,10 +620,17 @@ function fr312Capture(record, captureOrdinal) {
     `FR312_DERIVED_CAPTURE_ATTESTATION_REQUIRED:${record.recordId}`,
   );
 
+  const expandedCase = toFR312Case(record.captureCase);
+  if (expandedCase === null) {
+    throw new Error(
+      `FR312_INCLUDED_CAPTURE_CASE_INVALID:${record.recordId}`,
+    );
+  }
+
   return {
     schemaVersion:
       'fr312-deidentified-expanded-capture-finding-v1',
-    case: record.captureCase,
+    case: expandedCase,
     captureOrdinal,
     opaqueSessionLabel: label.trim(),
     independentCaptureAttested:
@@ -709,7 +742,7 @@ function compileWorksheet(worksheet) {
   if (
     selectedFR312.some(
       (record) =>
-        !FR312_CASES.includes(record.captureCase),
+        toFR312Case(record.captureCase) === null,
     )
   ) {
     throw new Error(
@@ -721,7 +754,7 @@ function compileWorksheet(worksheet) {
     if (
       selectedFR312.filter(
         (record) =>
-          record.captureCase === captureCase,
+          toFR312Case(record.captureCase) === captureCase,
       ).length < 2
     ) {
       throw new Error(
@@ -773,9 +806,15 @@ function compileWorksheet(worksheet) {
       a.recordId.localeCompare(b.recordId),
     )
     .map((record) => {
+      const expandedCase = toFR312Case(record.captureCase);
+      if (expandedCase === null) {
+        throw new Error(
+          `FR312_INCLUDED_CAPTURE_CASE_INVALID:${record.recordId}`,
+        );
+      }
       const next =
-        (perCaseOrdinal.get(record.captureCase) ?? 0) + 1;
-      perCaseOrdinal.set(record.captureCase, next);
+        (perCaseOrdinal.get(expandedCase) ?? 0) + 1;
+      perCaseOrdinal.set(expandedCase, next);
       return fr312Capture(record, next);
     });
 
@@ -962,6 +1001,19 @@ function syntheticWorksheet() {
 }
 
 function selfCheck() {
+  if (
+    toFR312Case('headwear_occlusion_if_available') !==
+      'upper_hairline_visibility_loss' ||
+    toFR312Case('cropped_upper_forehead') !==
+      'upper_hairline_visibility_loss' ||
+    toFR312Case('heavy_bangs_hairline_substantially_hidden') !==
+      'upper_hairline_visibility_loss'
+  ) {
+    throw new Error(
+      'FR312_UPPER_VISIBILITY_SOURCE_MAPPING_SELF_CHECK_FAILED',
+    );
+  }
+
   const compiled =
     compileWorksheet(syntheticWorksheet());
 
