@@ -20,6 +20,7 @@ import {
   type OfficialReadingSemanticLane,
 } from './official-reading-plan.js';
 import {
+  OFFICIAL_READING_DETAILED_PRODUCT_ACTIVATION_STATE_V1,
   OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION,
   resolveOfficialReadingDetailPreferenceV1,
   type OfficialReadingDetailPreferenceResolutionV1,
@@ -708,6 +709,7 @@ function renderOfficialReadingInternalV1(
   plan: OfficialReadingPlanV1,
   options: OfficialReadingRenderOptionsV1,
   detailedRealization?: OfficialReadingDetailedRealizationV1,
+  detailedResolutionOverride?: OfficialReadingDetailPreferenceResolutionV1,
 ): OfficialReadingRenderedContentV1 {
   assertCanonicalReadingSemanticBundleV1(bundle);
   assertOfficialReadingPlanV1(plan, bundle);
@@ -730,6 +732,19 @@ function renderOfficialReadingInternalV1(
       'Official Reading internal detailed rendering cannot combine with a public detail preference.',
     );
   }
+  if (
+    detailedResolutionOverride !== undefined &&
+    (detailedRealization === undefined ||
+      detailedResolutionOverride.requestedDetail !== 'detailed' ||
+      detailedResolutionOverride.resolvedDetail !== 'detailed' ||
+      detailedResolutionOverride.resolution !== 'exact' ||
+      detailedResolutionOverride.fallbackReason !== undefined)
+  ) {
+    throw new TypeError(
+      'Official Reading internal detailed resolution override must describe exact detailed output.',
+    );
+  }
+
   const approvedConciseProfiles =
     detailedRealization === undefined &&
     options.preferredDetail === 'concise'
@@ -744,26 +759,43 @@ function renderOfficialReadingInternalV1(
           approvedConciseProfiles,
         )
       : undefined;
+  const publicDetailedRealization =
+    detailedRealization === undefined &&
+    options.preferredDetail === 'detailed'
+      ? buildApprovedOfficialReadingDetailedRealizationV1(bundle, plan)
+      : undefined;
   const detailPreferenceResolution =
-    detailedRealization !== undefined || options.preferredDetail === undefined
+    detailedResolutionOverride ??
+    (options.preferredDetail === undefined
       ? undefined
       : resolveOfficialReadingDetailPreferenceV1(options.preferredDetail, {
           conciseAvailable:
             concisePresentationReadiness?.state === 'ready',
-        });
+          detailedAvailable: publicDetailedRealization !== undefined,
+          detailedProductActivation:
+            OFFICIAL_READING_DETAILED_PRODUCT_ACTIVATION_STATE_V1,
+        }));
+  const effectiveDetailedRealization =
+    detailedRealization ??
+    (detailPreferenceResolution?.resolvedDetail === 'detailed'
+      ? publicDetailedRealization
+      : undefined);
   const presentationByUnitId:
     | ReadonlyMap<string, OfficialReadingUnitPresentationV1>
     | undefined =
-    detailedRealization !== undefined
+    effectiveDetailedRealization !== undefined
       ? new Map(
-          [...detailedOfficialReadingUnitPresentationMapV1(detailedRealization)]
-            .map(([unitId, detailed]) => [
-              unitId,
-              {
-                mode: 'detailed' as const,
-                detailed,
-              },
-            ]),
+          [
+            ...detailedOfficialReadingUnitPresentationMapV1(
+              effectiveDetailedRealization,
+            ),
+          ].map(([unitId, detailed]) => [
+            unitId,
+            {
+              mode: 'detailed' as const,
+              detailed,
+            },
+          ]),
         )
       : detailPreferenceResolution?.resolvedDetail === 'concise' &&
           concisePresentationReadiness?.state === 'ready'
@@ -923,7 +955,7 @@ function renderOfficialReadingInternalV1(
             OFFICIAL_READING_APPROVED_CONCISE_REGISTRY_VERSION,
           concisePresentationProfileSetHash,
         }),
-    ...(detailedRealization === undefined
+    ...(effectiveDetailedRealization === undefined
       ? {}
       : {
           detailedRealizationPolicyVersion:
@@ -973,5 +1005,10 @@ export function renderApprovedDetailedOfficialReadingV1(
         : { sourceSummaries: options.sourceSummaries }),
     },
     detailedRealization,
+    {
+      requestedDetail: 'detailed',
+      resolvedDetail: 'detailed',
+      resolution: 'exact',
+    },
   );
 }

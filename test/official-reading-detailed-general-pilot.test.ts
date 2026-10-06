@@ -371,14 +371,16 @@ describe('Official Reading general natal detailed material pilot', () => {
     expect(readiness?.staleTargets).toEqual([]);
 
     expect(OFFICIAL_READING_DETAIL_CAPABILITY_V1.detailed).toEqual({
-      state: 'fallback_only',
-      fallbackReason: 'missing_expansion_material',
+      materialState: 'conditional',
+      productState: 'pre_activation',
+      missingMaterialFallbackReason: 'missing_expansion_material',
+      inactiveFallbackReason: 'detailed_not_activated',
     });
     expect(report.detailPreferenceResolution).toEqual({
       requestedDetail: 'detailed',
       resolvedDetail: 'standard',
       resolution: 'fallback_to_standard',
-      fallbackReason: 'missing_expansion_material',
+      fallbackReason: 'detailed_not_activated',
     });
   });
 
@@ -556,6 +558,11 @@ describe('Official Reading detailed renderer connection', () => {
       plan,
     );
 
+    expect(detailed.detailPreferenceResolution).toEqual({
+      requestedDetail: 'detailed',
+      resolvedDetail: 'detailed',
+      resolution: 'exact',
+    });
     expect(detailed.detailedRealizationPolicyVersion).toBe(
       OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
     );
@@ -633,7 +640,7 @@ describe('Official Reading detailed renderer connection', () => {
       requestedDetail: 'detailed',
       resolvedDetail: 'standard',
       resolution: 'fallback_to_standard',
-      fallbackReason: 'missing_expansion_material',
+      fallbackReason: 'detailed_not_activated',
     });
     expect(
       publicDetailedRequest.detailedRealizationPolicyVersion,

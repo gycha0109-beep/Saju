@@ -30,13 +30,21 @@ import {
   OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION,
   OFFICIAL_READING_STRUCTURAL_REALIZATION_POLICY_VERSION,
+  renderApprovedDetailedOfficialReadingV1,
   renderOfficialReadingV1,
 } from '../src/reading/official-reading-renderer.js';
+import {
+  OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+} from '../src/reading/official-reading-detailed-realization.js';
 import { buildReadingArtifactShell } from '../src/reading/reading-artifact-shell.js';
 import {
   GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CLAIM_TYPE,
   GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY,
 } from '../src/research/general-natal-t8-structural-summary-candidate.js';
+import {
+  GENERAL_NATAL_USEFUL_READING_SOURCE,
+  GENERAL_NATAL_USEFUL_SYNTHESIS_METHODOLOGY,
+} from '../src/research/general-natal-useful-reading-candidate.js';
 
 const calculationPolicy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/official-reading-artifact-test',
@@ -246,6 +254,80 @@ function conciseFixture() {
     preferredDetail: 'concise',
   });
   return { currentSnapshot, interpretation, semantics, plan, report };
+}
+
+function detailedArtifactFixture() {
+  const currentSnapshot = snapshot();
+  const registry = createI7SeasonalSupportRegistry();
+  const base = runInterpretation(currentSnapshot, registry, {
+    requestId: 'official-artifact-detailed-interpretation',
+    now: new Date('2026-09-23T00:01:00.000Z'),
+  });
+  const claim: InterpretationClaim = {
+    claimId: 'claim-official-artifact-general-day-master-wood',
+    schemaVersion: 'official-reading-artifact-detailed-test',
+    snapshotId: currentSnapshot.snapshotId,
+    taxonomy: {
+      tier: 'T8',
+      category: 'general',
+      subcategory: 'day_master_baseline',
+    },
+    claimType: 'GENERAL_NATAL_DAY_MASTER_BASELINE',
+    subject: 'natal_chart',
+    predicate: 'day_master_baseline',
+    value: {
+      headline: '성장과 관계를 향하는 기본축',
+      summary:
+        '전통 오행 성정에서 목은 인(仁), 성장·확장·배려의 방향과 연결됩니다. 이는 일간의 기본 바탕을 설명하는 한 축일 뿐 전체 성격을 단정하지 않습니다.',
+      wholePersonConclusionAuthorized: false,
+    },
+    methodologyRef: {
+      id: GENERAL_NATAL_USEFUL_SYNTHESIS_METHODOLOGY.methodologyId,
+      version: GENERAL_NATAL_USEFUL_SYNTHESIS_METHODOLOGY.version,
+    },
+    ruleRefs: [
+      {
+        ruleId: 'rule-official-artifact-general-day-master-wood',
+        version: '1',
+        evaluationId: 'eval-official-artifact-general-day-master-wood',
+      },
+    ],
+    factRefs: ['pillars.day.stem'],
+    upstreamClaimRefs: [],
+    sourceRefs: [GENERAL_NATAL_USEFUL_READING_SOURCE.sourceId],
+    state: 'active',
+  };
+  const interpretation: InterpretationExecutionResult = {
+    ...base,
+    claims: [claim],
+    claimRelations: [],
+    integrity: { valid: true, errors: [] },
+    evidenceIndex: {},
+  };
+  const evidence: GovernedReadingEvidenceBundleV1 = {
+    requestId: 'official-artifact-detailed-reading',
+    purpose: 'full_reading',
+    snapshotId: currentSnapshot.snapshotId,
+    interpretationRunId: interpretation.run.interpretationRunId,
+    registrySnapshotId: 'registry-official-artifact-detailed',
+    canonicalFacts: [],
+    claims: [claim],
+    claimRelations: [],
+    schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
+    constraints: {
+      mayRecalculate: false,
+      mayInventRules: false,
+      mustPreserveMethodDifferences: true,
+      mustDiscloseMaterialAmbiguity: true,
+    },
+  };
+  const semantics = buildCanonicalReadingSemanticBundleV1({
+    intent: { domain: 'general', temporalScope: 'natal' },
+    evidence,
+    targetClaimIds: [claim.claimId],
+  });
+  const plan = buildOfficialReadingPlanV1(semantics);
+  return { currentSnapshot, interpretation, semantics, plan };
 }
 
 describe('Official Reading Artifact V1', () => {
@@ -487,6 +569,62 @@ describe('Official Reading Artifact V1', () => {
         { readingVersion: 'official-reading-artifact-concise-test-v1' },
       ),
     ).toThrow(/concise presentation metadata does not match/u);
+  });
+
+  it('accepts exact governed detailed metadata and rejects tampered detailed authority', () => {
+    const { currentSnapshot, interpretation, semantics, plan } =
+      detailedArtifactFixture();
+    const report = renderApprovedDetailedOfficialReadingV1(
+      semantics,
+      plan,
+    );
+
+    expect(report.detailPreferenceResolution).toEqual({
+      requestedDetail: 'detailed',
+      resolvedDetail: 'detailed',
+      resolution: 'exact',
+    });
+    expect(report.detailedRealizationPolicyVersion).toBe(
+      OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+    );
+
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        report,
+        { readingVersion: 'official-reading-artifact-detailed-test-v1' },
+      ),
+    ).not.toThrow();
+
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        {
+          ...report,
+          detailedRealizationPolicyVersion: 'tampered-policy' as never,
+        },
+        { readingVersion: 'official-reading-artifact-detailed-test-v1' },
+      ),
+    ).toThrow(/detailed presentation metadata does not match/u);
+
+    const reportWithoutDetailedPolicy = { ...report };
+    delete reportWithoutDetailedPolicy.detailedRealizationPolicyVersion;
+    expect(() =>
+      assembleOfficialReadingArtifactV1(
+        currentSnapshot,
+        interpretation,
+        semantics,
+        plan,
+        reportWithoutDetailedPolicy,
+        { readingVersion: 'official-reading-artifact-detailed-test-v1' },
+      ),
+    ).toThrow(/detailed presentation metadata does not match/u);
   });
 
   it('rejects a report that declares a different source-summary presentation policy', () => {

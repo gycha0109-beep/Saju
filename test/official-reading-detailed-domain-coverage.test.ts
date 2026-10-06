@@ -321,11 +321,16 @@ describe('Official Reading detailed core natal domain expansion', () => {
       }
 
       expect(publicDetailed.sections).toEqual(standard.sections);
+      expect(internalDetailed.detailPreferenceResolution).toEqual({
+        requestedDetail: 'detailed',
+        resolvedDetail: 'detailed',
+        resolution: 'exact',
+      });
       expect(publicDetailed.detailPreferenceResolution).toEqual({
         requestedDetail: 'detailed',
         resolvedDetail: 'standard',
         resolution: 'fallback_to_standard',
-        fallbackReason: 'missing_expansion_material',
+        fallbackReason: 'detailed_not_activated',
       });
       expect(
         publicDetailed.detailedRealizationPolicyVersion,
