@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type {
+  FiveElement,
   HeavenlyStem,
   PillarSlot,
   StemInteractionFunctionState,
@@ -22,6 +23,20 @@ export const JIA_JI_NON_DAY_MASTER_SETTLEMENT_POLICY = Object.freeze({
   resultRule: 'JIA_CONSTRAINED_JI_IMPAIRED',
 } as const);
 
+export const STEM_FIVE_COMBINATION_SETTLEMENT_POLICY = Object.freeze({
+  policyId: 'myeongha/stem-five-combination-settlement-v1',
+  policyVersion: '1.0.0',
+  decisionAuthority: 'PROJECT_OWNER',
+  decisionRef: 'GH-2230',
+  scope: 'ALL_FIVE_NON_DAY_MASTER_STEM_COMBINATIONS',
+  transformationRule: 'DO_NOT_APPLY_UNLESS_CANONICALLY_ESTABLISHED',
+  identityRule: 'PRESERVE_ORIGINAL_STEM_ELEMENT_AND_TEN_GOD_WHEN_NOT_TRANSFORMED',
+  combinationRule: 'CONSTRAIN_BOTH_PARTICIPANTS',
+  controlRule: 'PRESERVE_ORIGINAL_FIVE_ELEMENT_CONTROL_DIRECTION',
+  resultRule: 'CONTROLLER_CONSTRAINED_CONTROLLED_IMPAIRED',
+  extendsDecisionRef: 'GH-2219',
+} as const);
+
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value === null || typeof value !== 'object') return value;
@@ -38,6 +53,10 @@ export const JIA_JI_NON_DAY_MASTER_SETTLEMENT_POLICY_CONTENT_HASH = createHash('
   .update(JSON.stringify(canonicalize(JIA_JI_NON_DAY_MASTER_SETTLEMENT_POLICY)))
   .digest('hex');
 
+export const STEM_FIVE_COMBINATION_SETTLEMENT_POLICY_CONTENT_HASH = createHash('sha256')
+  .update(JSON.stringify(canonicalize(STEM_FIVE_COMBINATION_SETTLEMENT_POLICY)))
+  .digest('hex');
+
 export type StructureRoleDisposition =
   | 'supports_structure'
   | 'harms_structure'
@@ -47,6 +66,33 @@ export type StructureImpact =
   | 'weakens_structure'
   | 'strengthens_structure'
   | 'maintains_structure';
+
+const STEM_ELEMENT = Object.freeze({
+  갑: '목',
+  을: '목',
+  병: '화',
+  정: '화',
+  무: '토',
+  기: '토',
+  경: '금',
+  신: '금',
+  임: '수',
+  계: '수',
+} as const satisfies Readonly<Record<HeavenlyStem, FiveElement>>);
+
+export interface StemFiveCombinationControlDefinition {
+  pair: readonly [HeavenlyStem, HeavenlyStem];
+  controller: HeavenlyStem;
+  controlled: HeavenlyStem;
+}
+
+export const STEM_FIVE_COMBINATION_CONTROL_DEFINITIONS = Object.freeze([
+  Object.freeze({ pair: ['갑', '기'] as const, controller: '갑' as const, controlled: '기' as const }),
+  Object.freeze({ pair: ['을', '경'] as const, controller: '경' as const, controlled: '을' as const }),
+  Object.freeze({ pair: ['병', '신'] as const, controller: '병' as const, controlled: '신' as const }),
+  Object.freeze({ pair: ['정', '임'] as const, controller: '임' as const, controlled: '정' as const }),
+  Object.freeze({ pair: ['무', '계'] as const, controller: '무' as const, controlled: '계' as const }),
+] satisfies readonly StemFiveCombinationControlDefinition[]);
 
 function resolvedStemTenGod(
   tenGods: TenGodChartFact,
@@ -59,12 +105,24 @@ function resolvedStemTenGod(
   return state.value;
 }
 
-function exactJiaJiParticipants(
+function matchingDefinition(
+  left: HeavenlyStem,
+  right: HeavenlyStem,
+): StemFiveCombinationControlDefinition | undefined {
+  return STEM_FIVE_COMBINATION_CONTROL_DEFINITIONS.find(({ pair }) =>
+    (pair[0] === left && pair[1] === right) ||
+    (pair[0] === right && pair[1] === left),
+  );
+}
+
+function exactNonDayMasterParticipants(
   relation: StructuralRelationCandidate,
+  dayMaster: HeavenlyStem,
 ):
   | {
-      jia: { pillar: PillarSlot; stem: '갑' };
-      ji: { pillar: PillarSlot; stem: '기' };
+      definition: StemFiveCombinationControlDefinition;
+      controller: { pillar: PillarSlot; stem: HeavenlyStem };
+      controlled: { pillar: PillarSlot; stem: HeavenlyStem };
     }
   | undefined {
   if (
@@ -75,19 +133,40 @@ function exactJiaJiParticipants(
     return undefined;
   }
 
-  const stemParticipants = relation.participants.filter(
+  const stems = relation.participants.filter(
     (participant) => participant.component === 'stem',
   );
-  if (stemParticipants.length !== 2) return undefined;
+  if (stems.length !== 2) return undefined;
 
-  const jia = stemParticipants.find((participant) => participant.value === '갑');
-  const ji = stemParticipants.find((participant) => participant.value === '기');
-  if (jia === undefined || ji === undefined) return undefined;
-  if (jia.pillar === 'day' || ji.pillar === 'day') return undefined;
+  const left = stems[0];
+  const right = stems[1];
+  if (left === undefined || right === undefined) return undefined;
+  if (left.pillar === 'day' || right.pillar === 'day') return undefined;
+
+  const leftStem = left.value as HeavenlyStem;
+  const rightStem = right.value as HeavenlyStem;
+  const definition = matchingDefinition(leftStem, rightStem);
+  if (definition === undefined) return undefined;
+  if (definition.pair.includes(dayMaster)) return undefined;
+
+  const controller = stems.find(
+    (participant) => participant.value === definition.controller,
+  );
+  const controlled = stems.find(
+    (participant) => participant.value === definition.controlled,
+  );
+  if (controller === undefined || controlled === undefined) return undefined;
 
   return {
-    jia: { pillar: jia.pillar, stem: '갑' },
-    ji: { pillar: ji.pillar, stem: '기' },
+    definition,
+    controller: {
+      pillar: controller.pillar,
+      stem: definition.controller,
+    },
+    controlled: {
+      pillar: controlled.pillar,
+      stem: definition.controlled,
+    },
   };
 }
 
@@ -96,40 +175,38 @@ export function deriveAdoptedStemInteractionSettlements(
   tenGods: TenGodChartFact,
   dayMaster: HeavenlyStem,
 ): readonly StemInteractionSettlementFact[] {
-  if (dayMaster === '갑' || dayMaster === '기') return [];
-
   const settlements: StemInteractionSettlementFact[] = [];
 
   for (const relation of relations) {
-    const participants = exactJiaJiParticipants(relation);
-    if (participants === undefined) continue;
+    const match = exactNonDayMasterParticipants(relation, dayMaster);
+    if (match === undefined) continue;
 
-    const jiaTenGod = resolvedStemTenGod(tenGods, participants.jia.pillar);
-    const jiTenGod = resolvedStemTenGod(tenGods, participants.ji.pillar);
-    if (jiaTenGod === undefined || jiTenGod === undefined) continue;
+    const controllerTenGod = resolvedStemTenGod(tenGods, match.controller.pillar);
+    const controlledTenGod = resolvedStemTenGod(tenGods, match.controlled.pillar);
+    if (controllerTenGod === undefined || controlledTenGod === undefined) continue;
 
     settlements.push({
-      settlementId: `jia_ji_settlement:${relation.relationId}`,
+      settlementId: `stem_five_combination_settlement:${relation.relationId}`,
       relationId: relation.relationId,
       kind: 'stem_five_combination',
-      scope: 'non_day_master_jia_ji',
-      pair: ['갑', '기'],
+      scope: 'non_day_master_stem_five_combination',
+      pair: match.definition.pair,
       transformationApplied: false,
-      activeRelations: ['stem_five_combination', 'jia_controls_ji'],
+      activeRelations: ['stem_five_combination', 'element_control'],
       participants: {
-        jia: {
-          pillar: participants.jia.pillar,
-          stem: '갑',
-          tenGod: jiaTenGod,
-          element: '목',
+        controller: {
+          pillar: match.controller.pillar,
+          stem: match.controller.stem,
+          tenGod: controllerTenGod,
+          element: STEM_ELEMENT[match.controller.stem],
           identityPreserved: true,
           functionState: 'constrained',
         },
-        ji: {
-          pillar: participants.ji.pillar,
-          stem: '기',
-          tenGod: jiTenGod,
-          element: '토',
+        controlled: {
+          pillar: match.controlled.pillar,
+          stem: match.controlled.stem,
+          tenGod: controlledTenGod,
+          element: STEM_ELEMENT[match.controlled.stem],
           identityPreserved: true,
           functionState: 'impaired',
         },
