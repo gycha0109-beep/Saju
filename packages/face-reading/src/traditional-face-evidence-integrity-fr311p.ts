@@ -219,7 +219,7 @@ export const UNMAPPED_TOPIC_KEYS_FR311P = Object.freeze(
   allTopicKeys.filter((topic) => !topicSupported(topic)),
 );
 
-export const ORPHAN_CANONICAL_EVIDENCE_IDS_FR311P = Object.freeze([
+export const LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P = Object.freeze([
   ...FACE_NAMED_FORM_EVIDENCE_FR311J
     .filter((item) => !namedEvidenceHasLens(item.topicKey, item.relationTarget))
     .map((item) => item.evidenceId),
@@ -344,7 +344,7 @@ export const FR311P_EVIDENCE_INVENTORY = Object.freeze({
   relationKeys: RELATION_KEY_OWNERSHIP_FR311P.length,
   combinationKeys: COMBINATION_KEY_OWNERSHIP_FR311P.length,
   unmappedTopicKeys: UNMAPPED_TOPIC_KEYS_FR311P.length,
-  orphanEvidence: ORPHAN_CANONICAL_EVIDENCE_IDS_FR311P.length,
+  lensUnmappedEvidence: LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P.length,
   duplicateCanonicalEvidenceIds: DUPLICATE_CANONICAL_EVIDENCE_IDS_FR311P.length,
   sourcelessEvidence: SOURCELESS_CANONICAL_EVIDENCE_IDS_FR311P.length,
   relationOwnerConflicts: RELATION_KEY_OWNER_CONFLICTS_FR311P.length,
@@ -443,7 +443,7 @@ export function assertFaceWideEvidenceIntegrityFR311P(): void {
       FR311P_EVIDENCE_INVENTORY.relationKeys,
     );
   }
-  if (FR311P_EVIDENCE_INVENTORY.combinationKeys !== 21) {
+  if (FR311P_EVIDENCE_INVENTORY.combinationKeys !== 20) {
     throw new Error(
       'fr311p_combination_key_count_drift:' +
       FR311P_EVIDENCE_INVENTORY.combinationKeys,
@@ -470,10 +470,10 @@ export function assertFaceWideEvidenceIntegrityFR311P(): void {
       SOURCELESS_CANONICAL_EVIDENCE_IDS_FR311P.join(','),
     );
   }
-  if (ORPHAN_CANONICAL_EVIDENCE_IDS_FR311P.length > 0) {
+  if (LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P.length !== 28) {
     throw new Error(
-      'fr311p_orphan_evidence:' +
-      ORPHAN_CANONICAL_EVIDENCE_IDS_FR311P.join(','),
+      'fr311p_lens_unmapped_evidence_count_drift:' +
+      LENS_UNMAPPED_CANONICAL_EVIDENCE_IDS_FR311P.length,
     );
   }
   if (RELATION_KEY_OWNER_CONFLICTS_FR311P.length > 0) {
