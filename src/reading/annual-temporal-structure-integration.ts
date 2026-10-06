@@ -97,7 +97,7 @@ function unavailable(
   baseline: GovernedTemporalStructureBaseline,
   assessments: readonly ResolvedStructuralRoleImpact[],
   reasonCode: UnavailableAnnualTemporalStructureIntegration['reasonCode'],
-  transitionReasonCode?: UnavailableTemporalStructureIntegration['reasonCode'],
+  transitionReasonCode?: UnavailableAnnualTemporalStructureIntegration['transitionReasonCode'],
 ): UnavailableAnnualTemporalStructureIntegration {
   return {
     status: 'unavailable',
