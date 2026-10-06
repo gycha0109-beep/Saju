@@ -1,0 +1,89 @@
+name: tmp-fr306-fallback-slim-fresh
+
+on:
+  push:
+    branches:
+      - ops/tmp-fr306-fallback-runtime-20261006
+    paths:
+      - .github/workflows/tmp-fr306-fallback-slim-fresh.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Prepare minimal fallback runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p slim/bundle/site-packages slim/bundle/grounding-dino slim/bundle/sam2
+
+          python -m pip install huggingface-hub==0.35.3
+
+          python -m pip install --target slim/bundle/site-packages --no-deps             transformers==4.57.1             huggingface-hub==0.35.3             tokenizers==0.22.2             safetensors==0.6.2
+
+          python - <<'PY'
+          from huggingface_hub import snapshot_download
+          patterns = [
+              "*.json", "*.txt", "*.model", "*.safetensors",
+              "vocab.*", "merges.*", "tokenizer.*", "*.py"
+          ]
+          snapshot_download(
+              repo_id="IDEA-Research/grounding-dino-base",
+              revision="12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+              local_dir="slim/bundle/grounding-dino",
+              allow_patterns=patterns,
+          )
+          snapshot_download(
+              repo_id="facebook/sam2.1-hiera-small",
+              revision="e07df6aa19f5c6545121551bf89957b7663ee715",
+              local_dir="slim/bundle/sam2",
+              allow_patterns=patterns,
+          )
+          PY
+
+          du -sh slim/bundle slim/bundle/grounding-dino slim/bundle/sam2 slim/bundle/site-packages
+          find slim/bundle/grounding-dino -maxdepth 2 -type f -printf 'GD %P %s\n' | sort
+          find slim/bundle/sam2 -maxdepth 2 -type f -printf 'SAM %P %s\n' | sort
+
+          tar -cf slim-runtime.tar -C slim .
+          split -b 240M -d -a 2 slim-runtime.tar slim.part.
+          mkdir -p uploads
+          for p in slim.part.*; do
+            suffix="${p##*.}"
+            mkdir -p "uploads/$suffix"
+            mv "$p" "uploads/$suffix/"
+          done
+          find uploads -type f -printf '%P %s\n' | sort
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/00/*') != '' }}
+        with: { name: fr306-fresh-00, path: uploads/00, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/01/*') != '' }}
+        with: { name: fr306-fresh-01, path: uploads/01, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/02/*') != '' }}
+        with: { name: fr306-fresh-02, path: uploads/02, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/03/*') != '' }}
+        with: { name: fr306-fresh-03, path: uploads/03, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/04/*') != '' }}
+        with: { name: fr306-fresh-04, path: uploads/04, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/05/*') != '' }}
+        with: { name: fr306-fresh-05, path: uploads/05, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/06/*') != '' }}
+        with: { name: fr306-fresh-06, path: uploads/06, retention-days: 1, compression-level: 0 }
+      - uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('uploads/07/*') != '' }}
+        with: { name: fr306-fresh-07, path: uploads/07, retention-days: 1, compression-level: 0 }
