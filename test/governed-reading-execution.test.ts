@@ -3,7 +3,9 @@ import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-e
 import type {
   CalculationPolicySnapshot,
   CanonicalSajuSnapshot,
+  TenGodChartFact,
 } from '../src/contracts/calculation.js';
+import { resolved } from '../src/contracts/common.js';
 import type { InterpretationClaim } from '../src/contracts/interpretation.js';
 import type { NarrativePolicy } from '../src/contracts/narrative.js';
 import {
@@ -26,6 +28,10 @@ import {
   createI7SeasonalSupportRegistry,
 } from '../src/research/i7-seasonal-support-pack.js';
 import { createGeneralNatalUsefulReadingCandidateRegistry } from '../src/research/general-natal-useful-reading-candidate.js';
+import { createCareerNatalReadingCandidateRegistry } from '../src/research/career-natal-reading-candidate.js';
+import { createWealthNatalReadingCandidateRegistry } from '../src/research/wealth-natal-reading-candidate.js';
+import { createRelationshipNatalReadingCandidateRegistry } from '../src/research/relationship-natal-reading-candidate.js';
+import { createBusinessNatalReadingCandidateRegistry } from '../src/research/business-natal-reading-candidate.js';
 
 const FIXED_READING_REFERENCE = '2026-09-03T12:00:00.000Z';
 
@@ -108,6 +114,24 @@ function snapshot(): CanonicalSajuSnapshot {
     calculationPolicy,
     { now: new Date('2026-08-24T00:00:00.000Z') },
   );
+}
+
+const FIVE_FAMILY_TEN_GODS: TenGodChartFact = {
+  year: { stem: resolved('비견'), branch: resolved('정인') },
+  month: { stem: resolved('편재'), branch: resolved('정재') },
+  day: { stem: resolved('일간'), branch: resolved('상관') },
+  hour: { stem: resolved('편관'), branch: resolved('식신') },
+};
+
+function fiveFamilySnapshot(): CanonicalSajuSnapshot {
+  const base = snapshot();
+  return {
+    ...base,
+    derivedFacts: {
+      ...base.derivedFacts,
+      tenGods: resolved(FIVE_FAMILY_TEN_GODS),
+    },
+  };
 }
 
 interface ClaimFixture {
@@ -410,6 +434,86 @@ describe('Governed Reading Execution Orchestrator', () => {
       true,
     );
   });
+
+  it.each([
+    {
+      label: 'career',
+      text: '직업운',
+      createRegistry: createCareerNatalReadingCandidateRegistry,
+    },
+    {
+      label: 'wealth',
+      text: '재물운',
+      createRegistry: createWealthNatalReadingCandidateRegistry,
+    },
+    {
+      label: 'relationship',
+      text: '관계운',
+      createRegistry: createRelationshipNatalReadingCandidateRegistry,
+    },
+    {
+      label: 'business',
+      text: '사업운',
+      createRegistry: createBusinessNatalReadingCandidateRegistry,
+    },
+  ])(
+    'renders approved concise $label Official Reading with zero model calls',
+    async ({ label, text, createRegistry }) => {
+      const currentSnapshot = fiveFamilySnapshot();
+      const registry = createRegistry('2026-10-06T01:10:00.000Z');
+      const interpretation = runInterpretation(currentSnapshot, registry, {
+        requestId: `execution-official-approved-concise-${label}-interpretation`,
+        now: new Date('2026-10-06T01:11:00.000Z'),
+      });
+
+      const baseline = await executeProductReading(
+        currentSnapshot,
+        interpretation,
+        registry,
+        {
+          requestId: `execution-official-approved-${label}-standard`,
+          text,
+        },
+        executionOptions,
+      );
+      const concise = await executeProductReading(
+        currentSnapshot,
+        interpretation,
+        registry,
+        {
+          requestId: `execution-official-approved-${label}-concise`,
+          text,
+          outputPreferences: { preferredDetail: 'concise' },
+        },
+        executionOptions,
+      );
+
+      expect([baseline.state, concise.state]).toEqual([
+        'completed',
+        'completed',
+      ]);
+      expect([
+        baseline.consumerReadingAuthority?.authority,
+        concise.consumerReadingAuthority?.authority,
+      ]).toEqual(['official_reading', 'official_reading']);
+      expect([baseline.modelCalls, concise.modelCalls]).toEqual([0, 0]);
+      expect(baseline.narrative).toBeUndefined();
+      expect(concise.narrative).toBeUndefined();
+      expect(concise.officialReadingReport?.detailPreferenceResolution).toEqual(
+        {
+          requestedDetail: 'concise',
+          resolvedDetail: 'concise',
+          resolution: 'exact',
+        },
+      );
+      expect(concise.officialReadingReport?.explainability).toEqual(
+        baseline.officialReadingReport?.explainability,
+      );
+      expect(concise.officialReadingReport?.sections).not.toEqual(
+        baseline.officialReadingReport?.sections,
+      );
+    },
+  );
 
   it('activates includeSourceSummaries only for Official Reading requests that ask for it', async () => {
     const currentSnapshot = snapshot();

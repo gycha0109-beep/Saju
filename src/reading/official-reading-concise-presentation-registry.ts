@@ -9,7 +9,16 @@ import {
 import type {
   CanonicalReadingSemanticBundleV1,
   CanonicalReadingSemanticTextV1,
+  CanonicalReadingSemanticUnitV1,
 } from './canonical-reading-semantics.js';
+import {
+  type ApprovedOfficialReadingConciseDefinitionV1,
+  type OfficialReadingConciseDomainKeyV1,
+} from './official-reading-concise-presentation-definition.js';
+import { CAREER_NATAL_APPROVED_CONCISE_DEFINITIONS } from './official-reading-concise-presentation-career.js';
+import { WEALTH_NATAL_APPROVED_CONCISE_DEFINITIONS } from './official-reading-concise-presentation-wealth.js';
+import { RELATIONSHIP_NATAL_APPROVED_CONCISE_DEFINITIONS } from './official-reading-concise-presentation-relationship.js';
+import { BUSINESS_NATAL_APPROVED_CONCISE_DEFINITIONS } from './official-reading-concise-presentation-business.js';
 import {
   OFFICIAL_READING_CONCISE_PRESENTATION_PROFILE_SCHEMA_VERSION,
   OFFICIAL_READING_CONCISE_PRESENTATION_READINESS_POLICY_VERSION,
@@ -21,20 +30,24 @@ import {
 import type { OfficialReadingPlanV1 } from './official-reading-plan.js';
 
 export const OFFICIAL_READING_APPROVED_CONCISE_REGISTRY_VERSION =
-  'myeonghwa-official-reading-approved-concise-registry-v2' as const;
+  'myeonghwa-official-reading-approved-concise-registry-v3' as const;
 
-interface ApprovedConciseDefinitionV1 {
-  profileId: string;
-  profileVersion: '1';
-  claimType: string;
-  methodologyRef: {
-    id: string;
-    version: string;
-  };
-  standardText: CanonicalReadingSemanticTextV1;
-  semanticQualifiers: readonly unknown[];
-  prohibitedExtensions: readonly string[];
-  conciseText: string;
+export const OFFICIAL_READING_CONCISE_SUPPORTED_DOMAIN_KEYS_V1 =
+  Object.freeze([
+    'general:natal',
+    'career:natal',
+    'wealth:natal',
+    'relationship:natal:general',
+    'business:natal',
+  ] as const);
+
+export interface OfficialReadingConciseDomainCoverageV1 {
+  domainKey?: OfficialReadingConciseDomainKeyV1;
+  state: 'complete' | 'incomplete' | 'unsupported_domain';
+  requiredUnitCount: number;
+  approvedUnitCount: number;
+  missingUnitRefs: readonly string[];
+  staleUnitRefs: readonly string[];
 }
 
 const MONTH_BRANCH_QUALIFIER_MATERIAL = Object.freeze([
@@ -85,8 +98,9 @@ function structuralDefinition(
   profileId: string,
   standardText: CanonicalReadingSemanticTextV1,
   conciseText: string,
-): ApprovedConciseDefinitionV1 {
+): ApprovedOfficialReadingConciseDefinitionV1 {
   return {
+    owner: 'general:natal',
     profileId,
     profileVersion: '1',
     claimType: GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_CLAIM_TYPE,
@@ -107,8 +121,9 @@ function usefulDefinition(
   standardText: CanonicalReadingSemanticTextV1,
   prohibitedExtensions: readonly string[],
   conciseText: string,
-): ApprovedConciseDefinitionV1 {
+): ApprovedOfficialReadingConciseDefinitionV1 {
   return {
+    owner: 'general:natal',
     profileId,
     profileVersion: '1',
     claimType,
@@ -123,7 +138,7 @@ function usefulDefinition(
   };
 }
 
-const STRUCTURAL_DEFINITIONS: readonly ApprovedConciseDefinitionV1[] =
+const STRUCTURAL_DEFINITIONS: readonly ApprovedOfficialReadingConciseDefinitionV1[] =
   Object.freeze([
     Object.freeze(
       structuralDefinition(
@@ -182,7 +197,7 @@ const STRUCTURAL_DEFINITIONS: readonly ApprovedConciseDefinitionV1[] =
     ),
   ]);
 
-const BASELINE_DEFINITIONS: readonly ApprovedConciseDefinitionV1[] =
+const BASELINE_DEFINITIONS: readonly ApprovedOfficialReadingConciseDefinitionV1[] =
   Object.freeze([
     Object.freeze(
       usefulDefinition(
@@ -289,7 +304,7 @@ const THEME_COPY = Object.freeze({
   }),
 });
 
-const THEME_DEFINITIONS: readonly ApprovedConciseDefinitionV1[] =
+const THEME_DEFINITIONS: readonly ApprovedOfficialReadingConciseDefinitionV1[] =
   Object.freeze(
     (
       [
@@ -317,15 +332,19 @@ const THEME_DEFINITIONS: readonly ApprovedConciseDefinitionV1[] =
     ),
   );
 
-const APPROVED_CONCISE_DEFINITIONS: readonly ApprovedConciseDefinitionV1[] =
+const APPROVED_CONCISE_DEFINITIONS: readonly ApprovedOfficialReadingConciseDefinitionV1[] =
   Object.freeze([
     ...STRUCTURAL_DEFINITIONS,
     ...BASELINE_DEFINITIONS,
     ...THEME_DEFINITIONS,
+    ...CAREER_NATAL_APPROVED_CONCISE_DEFINITIONS,
+    ...WEALTH_NATAL_APPROVED_CONCISE_DEFINITIONS,
+    ...RELATIONSHIP_NATAL_APPROVED_CONCISE_DEFINITIONS,
+    ...BUSINESS_NATAL_APPROVED_CONCISE_DEFINITIONS,
   ]);
 
 function expectedSourcePresentationHash(
-  definition: ApprovedConciseDefinitionV1,
+  definition: ApprovedOfficialReadingConciseDefinitionV1,
 ): string {
   return deterministicContentHash({
     policyVersion:
@@ -336,59 +355,145 @@ function expectedSourcePresentationHash(
   });
 }
 
-function approvalKey(input: {
-  claimType: string;
-  methodologyRef: { id: string; version: string };
-  sourcePresentationHash: string;
-}): string {
-  return deterministicContentHash({
-    claimType: input.claimType,
-    methodologyRef: input.methodologyRef,
-    sourcePresentationHash: input.sourcePresentationHash,
-  });
+function conciseDomainKey(
+  bundle: CanonicalReadingSemanticBundleV1,
+): OfficialReadingConciseDomainKeyV1 | undefined {
+  const intent = bundle.intent;
+  if (intent.temporalScope !== 'natal') return undefined;
+  if (intent.domain === 'general' && intent.relationshipScope === undefined) {
+    return 'general:natal';
+  }
+  if (intent.domain === 'career' && intent.relationshipScope === undefined) {
+    return 'career:natal';
+  }
+  if (intent.domain === 'wealth' && intent.relationshipScope === undefined) {
+    return 'wealth:natal';
+  }
+  if (intent.domain === 'business' && intent.relationshipScope === undefined) {
+    return 'business:natal';
+  }
+  if (
+    intent.domain === 'relationship' &&
+    intent.relationshipScope === 'general'
+  ) {
+    return 'relationship:natal:general';
+  }
+  return undefined;
 }
 
-const APPROVAL_BY_TARGET = new Map(
-  APPROVED_CONCISE_DEFINITIONS.map((definition) => [
-    approvalKey({
-      claimType: definition.claimType,
-      methodologyRef: definition.methodologyRef,
-      sourcePresentationHash: expectedSourcePresentationHash(definition),
-    }),
-    definition,
-  ]),
-);
+function primaryUnitsInPlanOrder(
+  bundle: CanonicalReadingSemanticBundleV1,
+  plan: OfficialReadingPlanV1,
+): readonly CanonicalReadingSemanticUnitV1[] {
+  const unitsById = new Map(bundle.units.map((unit) => [unit.unitId, unit]));
+  const seen = new Set<string>();
+  const units: CanonicalReadingSemanticUnitV1[] = [];
+  for (const section of plan.sections) {
+    if (
+      section.semanticGroup === 'evidence' ||
+      section.semanticGroup === 'limits'
+    ) {
+      continue;
+    }
+    for (const unitId of section.primaryUnitRefs) {
+      if (seen.has(unitId)) continue;
+      seen.add(unitId);
+      const unit = unitsById.get(unitId);
+      if (unit === undefined) {
+        throw new TypeError(
+          `Official Reading concise coverage references unknown canonical unit: ${unitId}`,
+        );
+      }
+      units.push(unit);
+    }
+  }
+  return units;
+}
+
+function targetDefinitions(
+  domainKey: OfficialReadingConciseDomainKeyV1,
+  unit: CanonicalReadingSemanticUnitV1,
+): readonly ApprovedOfficialReadingConciseDefinitionV1[] {
+  return APPROVED_CONCISE_DEFINITIONS.filter(
+    (definition) =>
+      definition.owner === domainKey &&
+      definition.claimType === unit.claimType &&
+      definition.methodologyRef.id === unit.methodologyRef.id &&
+      definition.methodologyRef.version === unit.methodologyRef.version,
+  );
+}
+
+function exactDefinition(
+  domainKey: OfficialReadingConciseDomainKeyV1,
+  unit: CanonicalReadingSemanticUnitV1,
+): ApprovedOfficialReadingConciseDefinitionV1 | undefined {
+  const sourcePresentationHash =
+    officialReadingStandardPresentationHashV1(unit);
+  return targetDefinitions(domainKey, unit).find(
+    (definition) =>
+      expectedSourcePresentationHash(definition) === sourcePresentationHash,
+  );
+}
+
+export function assessApprovedOfficialReadingConciseCoverageV1(
+  bundle: CanonicalReadingSemanticBundleV1,
+  plan: OfficialReadingPlanV1,
+): OfficialReadingConciseDomainCoverageV1 {
+  const domainKey = conciseDomainKey(bundle);
+  const units = primaryUnitsInPlanOrder(bundle, plan);
+  if (domainKey === undefined) {
+    return {
+      state: 'unsupported_domain',
+      requiredUnitCount: units.length,
+      approvedUnitCount: 0,
+      missingUnitRefs: units.map((unit) => unit.unitId),
+      staleUnitRefs: [],
+    };
+  }
+
+  const missingUnitRefs: string[] = [];
+  const staleUnitRefs: string[] = [];
+  let approvedUnitCount = 0;
+  for (const unit of units) {
+    const definitions = targetDefinitions(domainKey, unit);
+    if (definitions.length === 0) {
+      missingUnitRefs.push(unit.unitId);
+      continue;
+    }
+    if (exactDefinition(domainKey, unit) === undefined) {
+      staleUnitRefs.push(unit.unitId);
+      continue;
+    }
+    approvedUnitCount += 1;
+  }
+
+  return {
+    domainKey,
+    state:
+      approvedUnitCount === units.length &&
+      missingUnitRefs.length === 0 &&
+      staleUnitRefs.length === 0
+        ? 'complete'
+        : 'incomplete',
+    requiredUnitCount: units.length,
+    approvedUnitCount,
+    missingUnitRefs,
+    staleUnitRefs,
+  };
+}
 
 export function buildApprovedOfficialReadingConciseProfilesV1(
   bundle: CanonicalReadingSemanticBundleV1,
   plan: OfficialReadingPlanV1,
 ): readonly OfficialReadingConcisePresentationProfileV1[] {
-  const primaryIds = new Set(
-    plan.sections
-      .filter(
-        (section) =>
-          section.semanticGroup !== 'evidence' &&
-          section.semanticGroup !== 'limits',
-      )
-      .flatMap((section) => section.primaryUnitRefs),
-  );
+  const domainKey = conciseDomainKey(bundle);
+  if (domainKey === undefined) return [];
 
   const profiles: OfficialReadingConcisePresentationProfileV1[] = [];
-  for (const unit of bundle.units) {
-    if (!primaryIds.has(unit.unitId)) continue;
-
+  for (const unit of primaryUnitsInPlanOrder(bundle, plan)) {
     const sourcePresentationHash =
       officialReadingStandardPresentationHashV1(unit);
-    const definition = APPROVAL_BY_TARGET.get(
-      approvalKey({
-        claimType: unit.claimType,
-        methodologyRef: {
-          id: unit.methodologyRef.id,
-          version: unit.methodologyRef.version,
-        },
-        sourcePresentationHash,
-      }),
-    );
+    const definition = exactDefinition(domainKey, unit);
     if (definition === undefined) continue;
 
     profiles.push({
