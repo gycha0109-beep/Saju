@@ -102,6 +102,13 @@ describe('FR308 bounded visible-hairline capture bundle', () => {
       localOnlyExecutionVerifiedByContract: true,
       deidentifiedRepositorySummaryOnly: true,
       realCaptureBundleComplete: true,
+      candidateId:
+        'candidate.hairline.florence2_base.referring_segmentation.fr306',
+      runtimeProviderId: 'microsoft/Florence-2-base',
+      exactRevision:
+        '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+      runnerContractVersion:
+        'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
       admittedHairlineRuntimeProviders: 0,
       fr305AdmissionReceiptIssued: false,
       neutralRuntimeHairlineObservationAuthorized: false,
@@ -114,6 +121,41 @@ describe('FR308 bounded visible-hairline capture bundle', () => {
       nextAction:
         'perform_separate_human_adjudication_before_any_fr305_model_admission',
     });
+  });
+
+  it('accepts the registered multi-signal candidate identity without changing bounded authority', () => {
+    const receipt =
+      issueBoundedHairlineBundleReceiptFR308({
+        ...completeBundle(),
+        runnerContractVersion:
+          'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+        modelId:
+          'candidate.hairline.multisignal_visible_interface.fr306',
+        modelRevision: '0.2.0',
+      });
+
+    expect(receipt).toMatchObject({
+      candidateId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      runtimeProviderId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      exactRevision: '0.2.0',
+      runnerContractVersion:
+        'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+      fr305AdmissionReceiptIssued: false,
+      neutralRuntimeHairlineObservationAuthorized: false,
+    });
+  });
+
+  it('rejects candidate identity or runner-contract drift', () => {
+    expect(() =>
+      issueBoundedHairlineBundleReceiptFR308({
+        ...completeBundle(),
+        modelId:
+          'candidate.hairline.multisignal_visible_interface.fr306',
+        modelRevision: '0.2.0',
+      }),
+    ).toThrow(/registered empirical candidate/);
   });
 
   it('rejects missing or duplicate capture cases', () => {
