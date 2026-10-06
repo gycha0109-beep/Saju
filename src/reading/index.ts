@@ -31,6 +31,7 @@ export * from './structural-role-impact-projection.js';
 export * from './temporal-structure-transition-projection.js';
 export * from './dayun-temporal-context.js';
 export * from './annual-structural-impact-bundle.js';
+export * from './annual-structural-impact-producer.js';
 export * from './annual-temporal-structure-integration.js';
 export * from './annual-temporal-structure-projection.js';
 export * from './official-reading-annual-temporal-presentation.js';
