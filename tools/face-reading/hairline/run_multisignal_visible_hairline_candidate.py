@@ -157,17 +157,17 @@ def _box_mean(arr: Any, radius: int) -> Any:
 
     h, w = arr.shape
     padded = np.pad(arr, ((radius, radius), (radius, radius)), mode="reflect")
-    integral = padded.cumsum(axis=0).cumsum(axis=1)
-    y1 = np.arange(h)
-    y2 = y1 + 2 * radius
-    x1 = np.arange(w)
-    x2 = x1 + 2 * radius
-    # +1 because integral coordinates are inclusive after padding.
+    integral = np.pad(padded, ((1, 0), (1, 0)), mode="constant")
+    integral = integral.cumsum(axis=0).cumsum(axis=1)
+    y0 = np.arange(h)
+    y1 = y0 + 2 * radius + 1
+    x0 = np.arange(w)
+    x1 = x0 + 2 * radius + 1
     out = (
-        integral[(y2 + 1)[:, None], (x2 + 1)[None, :]]
-        - integral[y1[:, None], (x2 + 1)[None, :]]
-        - integral[(y2 + 1)[:, None], x1[None, :]]
-        + integral[y1[:, None], x1[None, :]]
+        integral[y1[:, None], x1[None, :]]
+        - integral[y0[:, None], x1[None, :]]
+        - integral[y1[:, None], x0[None, :]]
+        + integral[y0[:, None], x0[None, :]]
     )
     return out / float((2 * radius + 1) ** 2)
 
@@ -366,7 +366,11 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     dy = np.diff(global_y.astype(np.float32))
     dy_scale = max(1.0, float(h) * 0.03)
     path_continuity = float(math.exp(-float(np.median(np.abs(dy))) / dy_scale))
-    path_coverage = float(np.mean(path_scores >= np.percentile(path_scores, 20)))
+    path_support = (
+        (p_skin_below >= 0.35)
+        & (np.maximum.reduce([p_gl, p_gc, p_td]) >= 0.25)
+    )
+    path_coverage = float(np.mean(path_support))
 
     interface_evidence = float(
         np.clip(
@@ -386,15 +390,21 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     # or medical inference.
     cx1 = max(0, int(round(score.shape[1] * 0.30)))
     cx2 = min(score.shape[1], int(round(score.shape[1] * 0.70)))
-    top_band_end = max(1, int(round(score.shape[0] * 0.60)))
-    scalp_skin_continuity = float(np.mean(skin_conf[:top_band_end, cx1:cx2]))
+    scalp_y1 = max(0, y + int(round(h * 0.02)) - ry1)
+    scalp_y2 = min(skin_conf.shape[0], y + int(round(h * 0.32)) - ry1)
+    if scalp_y2 <= scalp_y1 or cx2 <= cx1:
+        scalp_skin_continuity = 0.0
+    else:
+        scalp_skin_continuity = float(
+            np.mean(skin_conf[scalp_y1:scalp_y2, cx1:cx2])
+        )
 
-    left_margin = float(np.mean(global_x <= x + 0.12 * w))
-    right_margin = float(np.mean(global_x >= x + 0.88 * w))
-    truncation_risk = 1.0 if (
-        y <= max(2, int(round(height * 0.02)))
-        and (left_margin > 0.10 or right_margin > 0.10)
-    ) else 0.0
+    frame_top_truncated = record.get("frameTopTruncated", False)
+    if not isinstance(frame_top_truncated, bool):
+        raise ValueError("frameTopTruncated must be boolean when supplied")
+    truncation_risk = 1.0 if frame_top_truncated else (
+        0.75 if y <= max(2, int(round(height * 0.015))) else 0.0
+    )
 
     # Occlusion risk rises when the path is fragmented/unstable or falls unusually
     # low into the upper face. It never completes a hidden segment.
