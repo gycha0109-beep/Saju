@@ -5,6 +5,7 @@ export * from './calculation/hidden-stems.js';
 export * from './calculation/structural-relations.js';
 export * from './calculation/stem-interaction-settlement.js';
 export * from './calculation/structural-role-impact.js';
+export * from './calculation/temporal-structure-transition.js';
 export * from './interpretation/rule-registry.js';
 export * from './interpretation/reviewer-trust.js';
 export * from './interpretation/promotion-authority.js';
