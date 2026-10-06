@@ -20,16 +20,16 @@ import { buildTemporalReadingContext } from './temporal-reading-context.js';
 
 export const PRODUCT_ANNUAL_TEMPORAL_STRUCTURE_INTEGRATION_POLICY = Object.freeze({
   policyId: 'myeongha/product-annual-temporal-structure-integration-v1',
-  policyVersion: '1.1.0',
+  policyVersion: '1.2.0',
   decisionAuthority: 'PROJECT_OWNER',
-  decisionRef: 'GH-2277',
+  decisionRef: 'GH-2284',
   annualFactRule: 'ANNUAL_FACTS_ARE_PERIOD_INPUTS_NOT_INTERPRETATION_AUTHORITY',
   semanticInputRule: 'REQUIRE_GOVERNED_ANNUAL_STRUCTURAL_IMPACT_BUNDLE',
   semanticBindingRule: 'MATCH_SNAPSHOT_YEAR_AND_STRUCTURE',
   transitionRule: 'DELEGATE_TO_R193',
   annualStemMeaningRule: 'DO_NOT_INFER_STRUCTURE_IMPACT',
   annualBranchMeaningRule: 'DO_NOT_INFER_BREAK_OR_EVENT',
-  dayunRuntimeRule: 'UNAVAILABLE_UNTIL_GOVERNED_PRODUCT_INPUT_EXISTS',
+  dayunRuntimeRule: 'TEMPORAL_CONTEXT_AVAILABLE_SEMANTIC_COMPOSITION_UNAVAILABLE',
   extendsDecisionRef: 'GH-2271',
 } as const);
 

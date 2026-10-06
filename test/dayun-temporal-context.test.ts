@@ -52,16 +52,19 @@ describe('R197 Dayun temporal context', () => {
     const [before, after] = boundary.segments;
     expect(before).toBeDefined();
     expect(after).toBeDefined();
-    expect(before?.endExclusiveLocalDateTime).toBe(
-      after?.startLocalDateTime,
+    if (before === undefined || after === undefined) {
+      throw new Error('expected two boundary segments');
+    }
+    expect(before.endExclusiveLocalDateTime).toBe(
+      after.startLocalDateTime,
     );
-    expect(before?.annualOverlapStartLocalDateTime).toBe(
+    expect(before.annualOverlapStartLocalDateTime).toBe(
       `${boundary.targetYear}-01-01T00:00`,
     );
-    expect(after?.annualOverlapEndExclusiveLocalDateTime).toBe(
+    expect(after.annualOverlapEndExclusiveLocalDateTime).toBe(
       `${boundary.targetYear + 1}-01-01T00:00`,
     );
-    expect(before?.ageMarker + 10).toBe(after?.ageMarker);
+    expect(before.ageMarker + 10).toBe(after.ageMarker);
   });
 
   test('uses half-open interval behavior at the exact Dayun boundary', () => {
@@ -70,8 +73,11 @@ describe('R197 Dayun temporal context', () => {
     );
     if (boundary === undefined) throw new Error('expected boundary year');
     const [before, after] = boundary.segments;
-    expect(before?.annualOverlapEndExclusiveLocalDateTime).toBe(
-      after?.annualOverlapStartLocalDateTime,
+    if (before === undefined || after === undefined) {
+      throw new Error('expected two boundary segments');
+    }
+    expect(before.annualOverlapEndExclusiveLocalDateTime).toBe(
+      after.annualOverlapStartLocalDateTime,
     );
   });
 

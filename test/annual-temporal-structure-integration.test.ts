@@ -361,7 +361,7 @@ describe('R194/R196 product annual temporal structure integration', () => {
   test('integration policy identity is content-addressed', () => {
     expect(
       PRODUCT_ANNUAL_TEMPORAL_STRUCTURE_INTEGRATION_POLICY.policyVersion,
-    ).toBe('1.1.0');
+    ).toBe('1.2.0');
     expect(
       PRODUCT_ANNUAL_TEMPORAL_STRUCTURE_INTEGRATION_POLICY_CONTENT_HASH,
     ).toMatch(/^[0-9a-f]{64}$/);
