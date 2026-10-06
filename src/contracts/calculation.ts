@@ -190,12 +190,33 @@ export type StemInteractionFunctionState =
   | 'impaired'
   | 'lost';
 
+export type StemInteractionExternalInfluenceKind = 'control' | 'support';
+export type StemInteractionInfluenceSummary =
+  | 'none'
+  | 'support_only'
+  | 'control_only'
+  | 'mixed';
+
+export interface StemInteractionExternalInfluence {
+  influenceId: string;
+  sourcePillar: PillarSlot;
+  sourceStem: HeavenlyStem;
+  sourceElement: FiveElement;
+  targetRole: 'controller' | 'controlled';
+  targetPillar: PillarSlot;
+  targetStem: HeavenlyStem;
+  kind: StemInteractionExternalInfluenceKind;
+}
+
 export interface StemInteractionSettlementParticipant {
   pillar: PillarSlot;
   stem: HeavenlyStem;
   tenGod: TenGod;
   element: FiveElement;
   identityPreserved: true;
+  baseFunctionState: StemInteractionFunctionState;
+  incomingInfluenceSummary: StemInteractionInfluenceSummary;
+  incomingInfluences: readonly StemInteractionExternalInfluence[];
   functionState: StemInteractionFunctionState;
 }
 
@@ -207,12 +228,16 @@ export interface StemInteractionSettlementFact {
   pair: readonly [HeavenlyStem, HeavenlyStem];
   transformationApplied: false;
   activeRelations: readonly ['stem_five_combination', 'element_control'];
+  pairControlEffective: boolean;
+  externalInfluences: readonly StemInteractionExternalInfluence[];
   participants: {
     controller: StemInteractionSettlementParticipant & {
-      functionState: 'constrained';
+      baseFunctionState: 'constrained';
+      functionState: 'constrained' | 'impaired';
     };
     controlled: StemInteractionSettlementParticipant & {
-      functionState: 'impaired';
+      baseFunctionState: 'impaired';
+      functionState: 'constrained' | 'impaired';
     };
   };
 }

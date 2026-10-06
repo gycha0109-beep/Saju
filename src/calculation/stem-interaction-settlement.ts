@@ -3,7 +3,9 @@ import type {
   FiveElement,
   HeavenlyStem,
   PillarSlot,
+  StemInteractionExternalInfluence,
   StemInteractionFunctionState,
+  StemInteractionInfluenceSummary,
   StemInteractionSettlementFact,
   StructuralRelationCandidate,
   TenGod,
@@ -37,6 +39,24 @@ export const STEM_FIVE_COMBINATION_SETTLEMENT_POLICY = Object.freeze({
   extendsDecisionRef: 'GH-2219',
 } as const);
 
+export const STEM_THIRD_PARTY_INTERFERENCE_POLICY = Object.freeze({
+  policyId: 'myeongha/stem-third-party-interference-v1',
+  policyVersion: '1.0.0',
+  decisionAuthority: 'PROJECT_OWNER',
+  decisionRef: 'GH-2236',
+  scope: 'VISIBLE_NON_DAY_MASTER_DIRECT_ONE_HOP',
+  sourceRule: 'EXCLUDE_DAY_STEM_AND_PAIR_PARTICIPANTS',
+  relationRule: 'INCOMING_ELEMENT_CONTROL_OR_GENERATION_ONLY',
+  sameTargetConflictRule: 'CONTROL_OVER_SUPPORT',
+  recursionRule: 'NO_RECURSIVE_SOURCE_STATE_PROPAGATION',
+  controllerRule: 'INCOMING_CONTROL_IMPAIRS_OTHERWISE_REMAINS_CONSTRAINED',
+  pairControlRule: 'CONTROLLER_IMPAIRED_DISABLING_PAIR_CONTROL',
+  controlledRule:
+    'DIRECT_CONTROL_IMPAIRS_ELSE_SUPPORT_OR_DISABLED_PAIR_CONTROL_CONSTRAINS_ELSE_IMPAIRS',
+  numericWeightRule: 'NONE',
+  extendsDecisionRef: 'GH-2230',
+} as const);
+
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (value === null || typeof value !== 'object') return value;
@@ -57,6 +77,10 @@ export const STEM_FIVE_COMBINATION_SETTLEMENT_POLICY_CONTENT_HASH = createHash('
   .update(JSON.stringify(canonicalize(STEM_FIVE_COMBINATION_SETTLEMENT_POLICY)))
   .digest('hex');
 
+export const STEM_THIRD_PARTY_INTERFERENCE_POLICY_CONTENT_HASH = createHash('sha256')
+  .update(JSON.stringify(canonicalize(STEM_THIRD_PARTY_INTERFERENCE_POLICY)))
+  .digest('hex');
+
 export type StructureRoleDisposition =
   | 'supports_structure'
   | 'harms_structure'
@@ -66,6 +90,12 @@ export type StructureImpact =
   | 'weakens_structure'
   | 'strengthens_structure'
   | 'maintains_structure';
+
+export interface VisibleStemInteractionSubject {
+  pillar: PillarSlot;
+  stem: HeavenlyStem;
+  element: FiveElement;
+}
 
 const STEM_ELEMENT = Object.freeze({
   갑: '목',
@@ -79,6 +109,22 @@ const STEM_ELEMENT = Object.freeze({
   임: '수',
   계: '수',
 } as const satisfies Readonly<Record<HeavenlyStem, FiveElement>>);
+
+const ELEMENT_CONTROLS = Object.freeze({
+  목: '토',
+  화: '금',
+  토: '수',
+  금: '목',
+  수: '화',
+} as const satisfies Readonly<Record<FiveElement, FiveElement>>);
+
+const ELEMENT_GENERATES = Object.freeze({
+  목: '화',
+  화: '토',
+  토: '금',
+  금: '수',
+  수: '목',
+} as const satisfies Readonly<Record<FiveElement, FiveElement>>);
 
 export interface StemFiveCombinationControlDefinition {
   pair: readonly [HeavenlyStem, HeavenlyStem];
@@ -170,10 +216,85 @@ function exactNonDayMasterParticipants(
   };
 }
 
+function summarizeInfluences(
+  influences: readonly StemInteractionExternalInfluence[],
+): StemInteractionInfluenceSummary {
+  const hasControl = influences.some((item) => item.kind === 'control');
+  const hasSupport = influences.some((item) => item.kind === 'support');
+  if (hasControl && hasSupport) return 'mixed';
+  if (hasControl) return 'control_only';
+  if (hasSupport) return 'support_only';
+  return 'none';
+}
+
+function directInfluenceKind(
+  source: FiveElement,
+  target: FiveElement,
+): StemInteractionExternalInfluence['kind'] | undefined {
+  if (ELEMENT_CONTROLS[source] === target) return 'control';
+  if (ELEMENT_GENERATES[source] === target) return 'support';
+  return undefined;
+}
+
+function externalInfluencesForMatch(
+  match: {
+    controller: { pillar: PillarSlot; stem: HeavenlyStem };
+    controlled: { pillar: PillarSlot; stem: HeavenlyStem };
+  },
+  visibleStems: readonly VisibleStemInteractionSubject[],
+): readonly StemInteractionExternalInfluence[] {
+  const controllerElement = STEM_ELEMENT[match.controller.stem];
+  const controlledElement = STEM_ELEMENT[match.controlled.stem];
+  const result: StemInteractionExternalInfluence[] = [];
+
+  for (const source of visibleStems) {
+    if (source.pillar === 'day') continue;
+    if (
+      source.pillar === match.controller.pillar ||
+      source.pillar === match.controlled.pillar
+    ) {
+      continue;
+    }
+
+    const controllerKind = directInfluenceKind(source.element, controllerElement);
+    if (controllerKind !== undefined) {
+      result.push({
+        influenceId:
+          `${controllerKind}:${source.pillar}:${source.stem}->controller:${match.controller.pillar}:${match.controller.stem}`,
+        sourcePillar: source.pillar,
+        sourceStem: source.stem,
+        sourceElement: source.element,
+        targetRole: 'controller',
+        targetPillar: match.controller.pillar,
+        targetStem: match.controller.stem,
+        kind: controllerKind,
+      });
+    }
+
+    const controlledKind = directInfluenceKind(source.element, controlledElement);
+    if (controlledKind !== undefined) {
+      result.push({
+        influenceId:
+          `${controlledKind}:${source.pillar}:${source.stem}->controlled:${match.controlled.pillar}:${match.controlled.stem}`,
+        sourcePillar: source.pillar,
+        sourceStem: source.stem,
+        sourceElement: source.element,
+        targetRole: 'controlled',
+        targetPillar: match.controlled.pillar,
+        targetStem: match.controlled.stem,
+        kind: controlledKind,
+      });
+    }
+  }
+
+  return result.sort((left, right) => left.influenceId.localeCompare(right.influenceId));
+}
+
 export function deriveAdoptedStemInteractionSettlements(
   relations: readonly StructuralRelationCandidate[],
   tenGods: TenGodChartFact,
   dayMaster: HeavenlyStem,
+  visibleStems: readonly VisibleStemInteractionSubject[] = [],
 ): readonly StemInteractionSettlementFact[] {
   const settlements: StemInteractionSettlementFact[] = [];
 
@@ -185,6 +306,37 @@ export function deriveAdoptedStemInteractionSettlements(
     const controlledTenGod = resolvedStemTenGod(tenGods, match.controlled.pillar);
     if (controllerTenGod === undefined || controlledTenGod === undefined) continue;
 
+    const externalInfluences = externalInfluencesForMatch(match, visibleStems);
+    const controllerInfluences = externalInfluences.filter(
+      (item) => item.targetRole === 'controller',
+    );
+    const controlledInfluences = externalInfluences.filter(
+      (item) => item.targetRole === 'controlled',
+    );
+
+    const controllerSummary = summarizeInfluences(controllerInfluences);
+    const controlledSummary = summarizeInfluences(controlledInfluences);
+
+    const controllerHasControl = controllerInfluences.some(
+      (item) => item.kind === 'control',
+    );
+    const controlledHasControl = controlledInfluences.some(
+      (item) => item.kind === 'control',
+    );
+    const controlledHasSupport = controlledInfluences.some(
+      (item) => item.kind === 'support',
+    );
+
+    const controllerFinalState: 'constrained' | 'impaired' =
+      controllerHasControl ? 'impaired' : 'constrained';
+    const pairControlEffective = controllerFinalState === 'constrained';
+    const controlledFinalState: 'constrained' | 'impaired' =
+      controlledHasControl
+        ? 'impaired'
+        : controlledHasSupport || !pairControlEffective
+          ? 'constrained'
+          : 'impaired';
+
     settlements.push({
       settlementId: `stem_five_combination_settlement:${relation.relationId}`,
       relationId: relation.relationId,
@@ -193,6 +345,8 @@ export function deriveAdoptedStemInteractionSettlements(
       pair: match.definition.pair,
       transformationApplied: false,
       activeRelations: ['stem_five_combination', 'element_control'],
+      pairControlEffective,
+      externalInfluences,
       participants: {
         controller: {
           pillar: match.controller.pillar,
@@ -200,7 +354,10 @@ export function deriveAdoptedStemInteractionSettlements(
           tenGod: controllerTenGod,
           element: STEM_ELEMENT[match.controller.stem],
           identityPreserved: true,
-          functionState: 'constrained',
+          baseFunctionState: 'constrained',
+          incomingInfluenceSummary: controllerSummary,
+          incomingInfluences: controllerInfluences,
+          functionState: controllerFinalState,
         },
         controlled: {
           pillar: match.controlled.pillar,
@@ -208,7 +365,10 @@ export function deriveAdoptedStemInteractionSettlements(
           tenGod: controlledTenGod,
           element: STEM_ELEMENT[match.controlled.stem],
           identityPreserved: true,
-          functionState: 'impaired',
+          baseFunctionState: 'impaired',
+          incomingInfluenceSummary: controlledSummary,
+          incomingInfluences: controlledInfluences,
+          functionState: controlledFinalState,
         },
       },
     });

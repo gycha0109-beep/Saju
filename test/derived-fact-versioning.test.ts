@@ -34,7 +34,7 @@ describe('derived fact and interpretation authority versioning', () => {
     );
     const result = runInterpretation(snapshot, createI13StrengthEvidenceRegistry());
 
-    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.6');
+    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.7');
     expect(snapshot.derivedFacts.hiddenStems).toBeDefined();
     expect(snapshot.derivedFacts.structuralRelations).toBeDefined();
     expect(snapshot.derivedFacts.branchClashContexts).toBeDefined();
