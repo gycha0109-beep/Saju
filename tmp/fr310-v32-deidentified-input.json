@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "fr308-fr312-local-deidentified-validation-input-v1",
+  "candidate": {
+    "modelId": "candidate.hairline.multisignal_visible_interface.fr306",
+    "modelRevision": "0.3.0",
+    "runnerContractVersion": "MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1"
+  },
+  "fr308": {
+    "caseFindings": [
+      {
+        "schemaVersion": "fr308-deidentified-hairline-case-finding-v1",
+        "case": "clear_unobstructed_central_hairline",
+        "visibleHairCandidateObserved": true,
+        "foreheadSkinCandidateObserved": true,
+        "diagnosticHairlineCandidateObserved": true,
+        "grossMislocalizationObserved": false,
+        "hiddenCompletionObserved": false,
+        "outOfFrameCompletionObserved": false,
+        "visibleInterfaceCandidateObserved": true,
+        "directPromptFailureMode": "useful_candidate",
+        "disposition": "supports_further_evaluation",
+        "containsSourceImage": false,
+        "containsOverlay": false,
+        "containsRawPolygonCoordinates": false,
+        "containsSourceImageDigest": false,
+        "containsFileNameOrPersonalIdentifier": false
+      },
+      {
+        "schemaVersion": "fr308-deidentified-hairline-case-finding-v1",
+        "case": "partial_bangs_occlusion",
+        "visibleHairCandidateObserved": true,
+        "foreheadSkinCandidateObserved": true,
+        "diagnosticHairlineCandidateObserved": false,
+        "grossMislocalizationObserved": false,
+        "hiddenCompletionObserved": false,
+        "outOfFrameCompletionObserved": false,
+        "visibleInterfaceCandidateObserved": null,
+        "directPromptFailureMode": "unavailable",
+        "disposition": "supports_further_evaluation",
+        "containsSourceImage": false,
+        "containsOverlay": false,
+        "containsRawPolygonCoordinates": false,
+        "containsSourceImageDigest": false,
+        "containsFileNameOrPersonalIdentifier": false
+      },
+      {
+        "schemaVersion": "fr308-deidentified-hairline-case-finding-v1",
+        "case": "heavy_bangs_hairline_substantially_hidden",
+        "visibleHairCandidateObserved": true,
+        "foreheadSkinCandidateObserved": false,
+        "diagnosticHairlineCandidateObserved": false,
+        "grossMislocalizationObserved": false,
+        "hiddenCompletionObserved": false,
+        "outOfFrameCompletionObserved": false,
+        "visibleInterfaceCandidateObserved": null,
+        "directPromptFailureMode": "unavailable",
+        "disposition": "supports_further_evaluation",
+        "containsSourceImage": false,
+        "containsOverlay": false,
+        "containsRawPolygonCoordinates": false,
+        "containsSourceImageDigest": false,
+        "containsFileNameOrPersonalIdentifier": false
+      },
+      {
+        "schemaVersion": "fr308-deidentified-hairline-case-finding-v1",
+        "case": "cropped_upper_forehead",
+        "visibleHairCandidateObserved": true,
+        "foreheadSkinCandidateObserved": true,
+        "diagnosticHairlineCandidateObserved": false,
+        "grossMislocalizationObserved": false,
+        "hiddenCompletionObserved": false,
+        "outOfFrameCompletionObserved": false,
+        "visibleInterfaceCandidateObserved": null,
+        "directPromptFailureMode": "unavailable",
+        "disposition": "supports_further_evaluation",
+        "containsSourceImage": false,
+        "containsOverlay": false,
+        "containsRawPolygonCoordinates": false,
+        "containsSourceImageDigest": false,
+        "containsFileNameOrPersonalIdentifier": false
+      }
+    ]
+  },
+  "fr310": {
+    "humanReview": {
+      "schemaVersion": "fr310-hairline-human-review-attestation-v1",
+      "completed": true,
+      "reviewOutputDeidentified": true,
+      "sourceImageAbsent": true,
+      "overlayAbsent": true,
+      "rawPolygonCoordinatesAbsent": true,
+      "sourceImageDigestAbsent": true,
+      "fileNameOrPersonalIdentifierAbsent": true,
+      "assessmentBlockedCases": [],
+      "directPromptAuthoritativeMisinterpretationRiskCases": []
+    }
+  },
+  "fr312": {
+    "humanReviewCompleted": false,
+    "sessionLabelsOpaque": true,
+    "demographicAttributesCollected": false,
+    "subjectCoverage": "multiple_subjects",
+    "captures": []
+  }
+}
