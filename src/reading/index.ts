@@ -35,3 +35,8 @@ export * from './official-reading-detailed-presentation.js';
 export * from './official-reading-detailed-presentation-registry.js';
 export * from './official-reading-detailed-presentation-general.js';
 export * from './official-reading-detailed-realization.js';
+export * from './official-reading-detailed-presentation-domain.js';
+export * from './official-reading-detailed-presentation-career.js';
+export * from './official-reading-detailed-presentation-wealth.js';
+export * from './official-reading-detailed-presentation-relationship.js';
+export * from './official-reading-detailed-presentation-business.js';
