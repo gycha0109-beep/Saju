@@ -300,7 +300,7 @@ describe('FR313 visible hairline model admission review', () => {
         ...base,
         modelRevision: 'different-revision',
       } as never),
-    ).toThrow(/exact model identity\/revision mismatch/);
+    ).toThrow(/not registered at the exact runtime\/model revision/);
   });
 
   it('keeps demographic inference and exposed identities outside the coverage contract', () => {
