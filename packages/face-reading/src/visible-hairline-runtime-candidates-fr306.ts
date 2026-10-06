@@ -11,6 +11,7 @@ export const FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATE_CONTRACT_VERSION =
 export type FR306HairlineCandidateState =
   | 'primary_empirical_candidate'
   | 'fallback_empirical_candidate'
+  | 'secondary_empirical_candidate'
   | 'excluded_product_path';
 
 export interface FR306HairlineCandidateComponent {
@@ -36,11 +37,97 @@ export interface FR306HairlineRuntimeCandidate {
   readonly productionAuthorization: false;
 }
 
+export const FR306_PRIMARY_CANDIDATE_ID =
+  'candidate.hairline.florence2_base.referring_segmentation.fr306' as const;
+export const FR306_FALLBACK_CANDIDATE_ID =
+  'candidate.hairline.grounding_dino_sam2.fr306' as const;
+export const FR306_ADAPTIVE_BOUNDARY_CANDIDATE_ID =
+  'candidate.hairline.adaptive_visible_skin_upper_boundary.fr306' as const;
+
+export const FR306_ADAPTIVE_BOUNDARY_RUNTIME = Object.freeze({
+  modelId:
+    'myeongha/adaptive-visible-skin-upper-boundary' as const,
+  revision: '0.1.0-research' as const,
+  runtimeContractVersion:
+    'FR306-ADAPTIVE-VISIBLE-SKIN-UPPER-BOUNDARY-RUNTIME-v1' as const,
+});
+
+export interface FR306EmpiricalCandidateIdentity {
+  readonly candidateId: string;
+  readonly modelId: string;
+  readonly modelRevision: string;
+  readonly runtimeContractVersion: string;
+}
+
+export const FR306_EMPIRICAL_CANDIDATE_IDENTITIES:
+readonly FR306EmpiricalCandidateIdentity[] = Object.freeze([
+  Object.freeze({
+    candidateId: FR306_PRIMARY_CANDIDATE_ID,
+    modelId: 'microsoft/Florence-2-base',
+    modelRevision:
+      '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+    runtimeContractVersion:
+      'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
+  }),
+  Object.freeze({
+    candidateId: FR306_FALLBACK_CANDIDATE_ID,
+    modelId:
+      'IDEA-Research/grounding-dino-base+facebook/sam2.1-hiera-small',
+    modelRevision:
+      '12bdfa3120f3e7ec7b434d90674b3396eccf88eb+e07df6aa19f5c6545121551bf89957b7663ee715',
+    runtimeContractVersion:
+      'FR306-GROUNDING-DINO-SAM2-EMPIRICAL-RUNTIME-v1',
+  }),
+  Object.freeze({
+    candidateId: FR306_ADAPTIVE_BOUNDARY_CANDIDATE_ID,
+    modelId: FR306_ADAPTIVE_BOUNDARY_RUNTIME.modelId,
+    modelRevision: FR306_ADAPTIVE_BOUNDARY_RUNTIME.revision,
+    runtimeContractVersion:
+      FR306_ADAPTIVE_BOUNDARY_RUNTIME.runtimeContractVersion,
+  }),
+]);
+
+export function resolveEmpiricalHairlineCandidateIdentityFR306(
+  input: Partial<FR306EmpiricalCandidateIdentity> & {
+    readonly modelId: string;
+    readonly modelRevision: string;
+  },
+): FR306EmpiricalCandidateIdentity {
+  const candidateId =
+    input.candidateId ??
+    (
+      input.modelId === 'microsoft/Florence-2-base' &&
+      input.modelRevision ===
+        '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac'
+        ? FR306_PRIMARY_CANDIDATE_ID
+        : null
+    );
+
+  const match = FR306_EMPIRICAL_CANDIDATE_IDENTITIES.find(
+    (candidate) =>
+      candidate.candidateId === candidateId &&
+      candidate.modelId === input.modelId &&
+      candidate.modelRevision === input.modelRevision &&
+      (
+        input.runtimeContractVersion == null ||
+        candidate.runtimeContractVersion ===
+          input.runtimeContractVersion
+      ),
+  );
+
+  if (!match) {
+    throw new FaceAuthorityValidationError(
+      'FR-306 empirical hairline candidate identity is not registered at the exact runtime/model revision.',
+    );
+  }
+
+  return match;
+}
+
 export const FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATES:
 readonly FR306HairlineRuntimeCandidate[] = Object.freeze([
   Object.freeze({
-    candidateId:
-      'candidate.hairline.florence2_base.referring_segmentation.fr306',
+    candidateId: FR306_PRIMARY_CANDIDATE_ID,
     state: 'primary_empirical_candidate' as const,
     components: Object.freeze([
       Object.freeze({
@@ -92,8 +179,7 @@ readonly FR306HairlineRuntimeCandidate[] = Object.freeze([
     productionAuthorization: false as const,
   }),
   Object.freeze({
-    candidateId:
-      'candidate.hairline.grounding_dino_sam2.fr306',
+    candidateId: FR306_FALLBACK_CANDIDATE_ID,
     state: 'fallback_empirical_candidate' as const,
     components: Object.freeze([
       Object.freeze({
@@ -140,6 +226,56 @@ readonly FR306HairlineRuntimeCandidate[] = Object.freeze([
       'project-specific visible-hair grounding reliability is unverified',
       'project-specific forehead-skin grounding reliability is unverified',
       'mask refinement cannot rescue a wrongly grounded region',
+      'candidate output has not satisfied FR305 admission requirements',
+    ]),
+    mayIssueFR305AdmissionReceipt: false as const,
+    runtimeHairlineObservationAuthorized: false as const,
+    hiddenHairlineCompletionAuthorized: false as const,
+    productionAuthorization: false as const,
+  }),
+  Object.freeze({
+    candidateId: FR306_ADAPTIVE_BOUNDARY_CANDIDATE_ID,
+    state: 'secondary_empirical_candidate' as const,
+    components: Object.freeze([
+      Object.freeze({
+        artifact:
+          'MyeongHa adaptive visible-skin upper-boundary algorithm',
+        revision:
+          FR306_ADAPTIVE_BOUNDARY_RUNTIME.revision,
+        declaredLicense:
+          'project-owned implementation; external runtime dependencies reviewed separately',
+        role:
+          'image_derived_visible_face_skin_upper_boundary_candidate_with_fail_closed_visibility_gate',
+      }),
+    ]),
+    evidenceRefs: Object.freeze([
+      'repo:research/face-reading/fr306-visible-hairline-runtime-candidates.md',
+      'issue:#2213',
+      'issue:#2253',
+    ]),
+    promptPolicy: Object.freeze([
+      'no_text_prompt_used',
+      'derive_candidate_from_visible_face_skin_component_only',
+      'face_or_eye_detection_may_gate_visibility_but_must_not_supply_hairline_geometry',
+      'crop_or_insufficient_visibility_returns_unavailable',
+      'hidden_hairline_completion_forbidden',
+    ]),
+    proposedOutputs: Object.freeze([
+      'visible face-skin upper-boundary polyline candidate',
+      'visibility availability state',
+      'runtime algorithm revision provenance',
+      'no hidden boundary completion',
+    ]),
+    strengths: Object.freeze([
+      'deterministic image-derived boundary rather than open-vocabulary hairline semantics',
+      'explicitly fails closed on crop and low visible-interface clearance',
+      'does not depend on CelebAMask-HQ-derived restricted training labels',
+      '13-image exploratory local evidence separates visible and occluded failure modes',
+    ]),
+    blockers: Object.freeze([
+      'current 13-image evidence is exploratory and not representative admission authority',
+      'visibility safety rule requires governed expanded validation',
+      'runtime dependency packaging is not yet a production provider admission',
       'candidate output has not satisfied FR305 admission requirements',
     ]),
     mayIssueFR305AdmissionReceipt: false as const,
@@ -234,7 +370,9 @@ export const FR306_CURRENT_GATE = Object.freeze({
   primaryCandidate:
     'candidate.hairline.florence2_base.referring_segmentation.fr306' as const,
   fallbackCandidate:
-    'candidate.hairline.grounding_dino_sam2.fr306' as const,
+    FR306_FALLBACK_CANDIDATE_ID,
+  secondaryCandidate:
+    FR306_ADAPTIVE_BOUNDARY_CANDIDATE_ID,
   excludedProductPath:
     'excluded.hairline.celebamask_hq_face_parsing.fr306' as const,
   empiricalRunnerImplemented: false as const,
@@ -284,9 +422,9 @@ export function assertVisibleHairlineRuntimeCandidatesFR306(): void {
 
   const candidates = FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATES;
   if (
-    candidates.length !== 3 ||
+    candidates.length !== 4 ||
     new Set(candidates.map((entry) => entry.candidateId)).size !==
-      3
+      4
   ) {
     fail('candidate registry must contain exactly three unique entries.');
   }
@@ -298,6 +436,10 @@ export function assertVisibleHairlineRuntimeCandidatesFR306(): void {
   const fallback = candidates.find(
     (entry) =>
       entry.state === 'fallback_empirical_candidate',
+  );
+  const secondary = candidates.find(
+    (entry) =>
+      entry.state === 'secondary_empirical_candidate',
   );
   const excluded = candidates.find(
     (entry) =>
@@ -331,6 +473,29 @@ export function assertVisibleHairlineRuntimeCandidatesFR306(): void {
       'e07df6aa19f5c6545121551bf89957b7663ee715'
   ) {
     fail('fallback Grounding-DINO/SAM2 candidate drift.');
+  }
+
+  if (
+    secondary?.candidateId !==
+      FR306_CURRENT_GATE.secondaryCandidate ||
+    secondary.components.length !== 1 ||
+    secondary.components[0]?.revision !==
+      FR306_ADAPTIVE_BOUNDARY_RUNTIME.revision ||
+    secondary.hiddenHairlineCompletionAuthorized !== false ||
+    secondary.productionAuthorization !== false
+  ) {
+    fail('secondary adaptive visible-boundary candidate drift.');
+  }
+
+  if (
+    FR306_EMPIRICAL_CANDIDATE_IDENTITIES.length !== 3 ||
+    new Set(
+      FR306_EMPIRICAL_CANDIDATE_IDENTITIES.map(
+        (entry) => entry.candidateId,
+      ),
+    ).size !== 3
+  ) {
+    fail('empirical candidate identity registry drift.');
   }
 
   if (
