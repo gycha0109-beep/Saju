@@ -316,13 +316,18 @@ export function assertDirectRuleStudyTriageFR312B(): void {
   }
 
   if (
-    FR312B_TRIAGE_SUMMARY.shortlistCount !==
-      FR312B_TRIAGE_SUMMARY.singleRegionSurfaceCandidates ||
+    FR312B_TRIAGE_SUMMARY.singleRegionSurfaceCandidates !== 68 ||
+    FR312B_TRIAGE_SUMMARY.constructMappingRequired !== 46 ||
+    FR312B_TRIAGE_SUMMARY.observationSurfaceGap !== 81 ||
+    FR312B_TRIAGE_SUMMARY.manualContextOrBehaviorOnly !== 6 ||
+    FR312B_TRIAGE_SUMMARY.phraseUncertainManualOnly !== 29 ||
+    FR312B_TRIAGE_SUMMARY.bindingProhibited !== 0 ||
+    FR312B_TRIAGE_SUMMARY.shortlistCount !== 68 ||
     FR312B_TRIAGE_SUMMARY.automaticTraditionalBindingsAuthorized !== 0 ||
     FR312B_TRIAGE_SUMMARY.thresholdNeedAdjudicated !== 0 ||
     FR312B_TRIAGE_SUMMARY.metricThresholdsAuthorized !== 0
   ) {
-    throw new Error('fr312b_summary_authority_drift');
+    throw new Error('fr312b_summary_baseline_drift');
   }
 
   for (const item of DIRECT_RULE_STUDY_TRIAGE_FR312B) {
