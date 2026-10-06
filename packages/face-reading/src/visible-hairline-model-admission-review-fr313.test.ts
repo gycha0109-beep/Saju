@@ -29,6 +29,13 @@ const expandedValidation: FR312ExpandedValidationReceipt = {
   subjectCoverage: 'single_subject',
   representativeOrdinaryRgbReady: false,
   representativeCoverageReviewRequired: true,
+  candidateId:
+    'candidate.hairline.florence2_base.referring_segmentation.fr306',
+  runtimeProviderId: 'microsoft/Florence-2-base',
+  exactRevision:
+    '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+  runnerContractVersion:
+    'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
   exactModelRevisionBound: true,
   deidentifiedBoundarySatisfied: true,
   nextAction:
@@ -220,6 +227,13 @@ describe('FR313 visible hairline model admission review', () => {
       failureReasons: [],
       representativeCoverageValidated: true,
       modelBehaviorValidated: true,
+      candidateId:
+        'candidate.hairline.florence2_base.referring_segmentation.fr306',
+      runtimeProviderId: 'microsoft/Florence-2-base',
+      exactRevision:
+        '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
+      runnerContractVersion:
+        'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
       fr305AdmissionReceiptIssued: true,
       admittedHairlineRuntimeProviders: 1,
       neutralReferenceCapabilityReadyCount: 7,
@@ -265,6 +279,58 @@ describe('FR313 visible hairline model admission review', () => {
     });
   });
 
+  it('supports the registered multi-signal candidate identity without special-casing Florence', () => {
+    const multiSignalExpanded: FR312ExpandedValidationReceipt = {
+      ...expandedValidation,
+      candidateId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      runtimeProviderId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      exactRevision: '0.2.0',
+      runnerContractVersion:
+        'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+    };
+
+    const result = reviewHairlineModelAdmissionFR313({
+      schemaVersion:
+        'fr313-hairline-model-admission-review-input-v1',
+      expandedValidation: multiSignalExpanded,
+      modelId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      modelRevision: '0.2.0',
+      representativeCoverage: coverage(),
+      modelBehavior: behavior(),
+    });
+
+    expect(result).toMatchObject({
+      disposition:
+        'admitted_for_neutral_visible_hair_skin_boundary_runtime',
+      candidateId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      runtimeProviderId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      exactRevision: '0.2.0',
+      runnerContractVersion:
+        'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
+    });
+    expect(result.fr305AdmissionReceipt).toMatchObject({
+      modelId:
+        'candidate.hairline.multisignal_visible_interface.fr306',
+      exactRevision: '0.2.0',
+    });
+  });
+
+  it('rejects candidate swapping between FR312 and FR313', () => {
+    expect(() =>
+      reviewHairlineModelAdmissionFR313({
+        ...input(coverage(), behavior()),
+        modelId:
+          'candidate.hairline.multisignal_visible_interface.fr306',
+        modelRevision: '0.2.0',
+      }),
+    ).toThrow();
+  });
+
   it('does not convert 7-of-7 neutral reference capability into Three-Divisions span authority', () => {
     const result = reviewHairlineModelAdmissionFR313(
       input(coverage(), behavior()),
@@ -293,7 +359,7 @@ describe('FR313 visible hairline model admission review', () => {
         ...base,
         modelRevision: 'different-revision',
       } as never),
-    ).toThrow(/exact model identity\/revision mismatch/);
+    ).toThrow(/registered empirical candidate/);
   });
 
   it('keeps demographic inference and exposed identities outside the coverage contract', () => {
