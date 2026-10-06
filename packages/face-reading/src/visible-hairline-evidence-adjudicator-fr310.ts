@@ -8,9 +8,11 @@ import {
   type FR308DeidentifiedCaseFinding,
 } from './visible-hairline-bounded-capture-bundle-fr308.js';
 import {
-  FR307_PRIMARY_MODEL,
   FR307_VISIBLE_HAIRLINE_EMPIRICAL_RUNNER_CONTRACT_VERSION,
 } from './visible-hairline-empirical-runner-fr307.js';
+import {
+  resolveEmpiricalHairlineCandidateIdentityFR306,
+} from './visible-hairline-runtime-candidates-fr306.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export const FR310_HAIRLINE_EVIDENCE_ADJUDICATOR_CONTRACT_VERSION =
@@ -66,9 +68,9 @@ export interface FR310AdjudicationInput {
   readonly bundleReceipt: FR308BoundedBundleReceipt;
   readonly caseFindings:
     readonly FR308DeidentifiedCaseFinding[];
-  readonly modelId: typeof FR307_PRIMARY_MODEL.id;
-  readonly modelRevision:
-    typeof FR307_PRIMARY_MODEL.revision;
+  readonly candidateId?: string;
+  readonly modelId: string;
+  readonly modelRevision: string;
   readonly humanReview: FR310HumanReviewAttestation;
 }
 
@@ -79,6 +81,10 @@ export interface FR310AdjudicationReceipt {
     typeof FR310_HAIRLINE_EVIDENCE_ADJUDICATOR_CONTRACT_VERSION;
   readonly authorityState:
     'bounded_evidence_adjudication_only';
+  readonly candidateId: string;
+  readonly runtimeContractVersion: string;
+  readonly modelId: string;
+  readonly modelRevision: string;
   readonly disposition: FR310Disposition;
   readonly failureReasons:
     readonly FR310FailureReason[];
@@ -173,6 +179,10 @@ function assertBundleReceipt(
       FR308_BOUNDED_HAIRLINE_CAPTURE_CONTRACT_VERSION ||
     receipt.authorityState !==
       'bounded_deidentified_empirical_evidence_only' ||
+    receipt.candidateId.trim().length === 0 ||
+    receipt.runtimeContractVersion.trim().length === 0 ||
+    receipt.modelId.trim().length === 0 ||
+    receipt.modelRevision.trim().length === 0 ||
     receipt.captureCaseCount !== 4 ||
     receipt.captureCases.length !== 4 ||
     FR308_CAPTURE_CASES.some(
@@ -228,12 +238,26 @@ export function adjudicateHairlineEvidenceFR310(
     fail('adjudication input schemaVersion drift.');
   }
 
+  const candidateIdentity =
+    resolveEmpiricalHairlineCandidateIdentityFR306({
+      candidateId:
+        input.candidateId ??
+        input.bundleReceipt.candidateId,
+      modelId: input.modelId,
+      modelRevision: input.modelRevision,
+      runtimeContractVersion:
+        input.bundleReceipt.runtimeContractVersion,
+    });
+
   if (
-    input.modelId !== FR307_PRIMARY_MODEL.id ||
-    input.modelRevision !==
-      FR307_PRIMARY_MODEL.revision
+    input.bundleReceipt.candidateId !==
+      candidateIdentity.candidateId ||
+    input.bundleReceipt.modelId !==
+      candidateIdentity.modelId ||
+    input.bundleReceipt.modelRevision !==
+      candidateIdentity.modelRevision
   ) {
-    fail('exact model identity/revision mismatch.');
+    fail('candidate identity must match the FR308 bundle receipt.');
   }
 
   if (
@@ -276,10 +300,11 @@ export function adjudicateHairlineEvidenceFR310(
     issueBoundedHairlineBundleReceiptFR308({
       schemaVersion:
         'fr308-bounded-hairline-bundle-input-v1',
+      candidateId: candidateIdentity.candidateId,
       runnerContractVersion:
-        FR307_VISIBLE_HAIRLINE_EMPIRICAL_RUNNER_CONTRACT_VERSION,
-      modelId: input.modelId,
-      modelRevision: input.modelRevision,
+        candidateIdentity.runtimeContractVersion,
+      modelId: candidateIdentity.modelId,
+      modelRevision: candidateIdentity.modelRevision,
       localOnlyExecution: true,
       caseFindings: input.caseFindings,
     });
@@ -287,6 +312,14 @@ export function adjudicateHairlineEvidenceFR310(
   if (
     replayedReceipt.contractVersion !==
       input.bundleReceipt.contractVersion ||
+    replayedReceipt.candidateId !==
+      input.bundleReceipt.candidateId ||
+    replayedReceipt.runtimeContractVersion !==
+      input.bundleReceipt.runtimeContractVersion ||
+    replayedReceipt.modelId !==
+      input.bundleReceipt.modelId ||
+    replayedReceipt.modelRevision !==
+      input.bundleReceipt.modelRevision ||
     replayedReceipt.captureCaseCount !==
       input.bundleReceipt.captureCaseCount ||
     replayedReceipt.authorityState !==
@@ -521,6 +554,11 @@ export function adjudicateHairlineEvidenceFR310(
       FR310_HAIRLINE_EVIDENCE_ADJUDICATOR_CONTRACT_VERSION,
     authorityState:
       'bounded_evidence_adjudication_only' as const,
+    candidateId: candidateIdentity.candidateId,
+    runtimeContractVersion:
+      candidateIdentity.runtimeContractVersion,
+    modelId: candidateIdentity.modelId,
+    modelRevision: candidateIdentity.modelRevision,
     disposition,
     failureReasons: Object.freeze([...reasons]),
     hardRejectTriggered,
