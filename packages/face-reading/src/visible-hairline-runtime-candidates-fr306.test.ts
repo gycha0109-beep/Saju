@@ -4,7 +4,11 @@ import {
   FR306_EMPIRICAL_CAPTURE_CASES,
   FR306_EMPIRICAL_REVIEW_QUESTIONS,
   FR306_PRIVACY_BOUNDARY,
+  FR306_ADAPTIVE_BOUNDARY_CANDIDATE_ID,
+  FR306_ADAPTIVE_BOUNDARY_RUNTIME,
+  FR306_EMPIRICAL_CANDIDATE_IDENTITIES,
   FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATES,
+  resolveEmpiricalHairlineCandidateIdentityFR306,
   assertFR306CurrentGate,
   assertVisibleHairlineRuntimeCandidatesFR306,
 } from './visible-hairline-runtime-candidates-fr306.js';
@@ -72,6 +76,41 @@ describe('FR306 visible hairline runtime candidate selection', () => {
     expect(
       fallback?.runtimeHairlineObservationAuthorized,
     ).toBe(false);
+  });
+
+  it('registers the deterministic adaptive visible-skin boundary as a secondary empirical candidate only', () => {
+    const secondary =
+      FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATES.find(
+        (candidate) =>
+          candidate.state === 'secondary_empirical_candidate',
+      );
+
+    expect(secondary).toMatchObject({
+      candidateId: FR306_ADAPTIVE_BOUNDARY_CANDIDATE_ID,
+      mayIssueFR305AdmissionReceipt: false,
+      runtimeHairlineObservationAuthorized: false,
+      hiddenHairlineCompletionAuthorized: false,
+      productionAuthorization: false,
+    });
+    expect(secondary?.components).toHaveLength(1);
+    expect(secondary?.components[0]?.revision).toBe(
+      FR306_ADAPTIVE_BOUNDARY_RUNTIME.revision,
+    );
+
+    expect(FR306_EMPIRICAL_CANDIDATE_IDENTITIES).toHaveLength(3);
+    expect(
+      resolveEmpiricalHairlineCandidateIdentityFR306({
+        candidateId: FR306_ADAPTIVE_BOUNDARY_CANDIDATE_ID,
+        modelId: FR306_ADAPTIVE_BOUNDARY_RUNTIME.modelId,
+        modelRevision: FR306_ADAPTIVE_BOUNDARY_RUNTIME.revision,
+        runtimeContractVersion:
+          FR306_ADAPTIVE_BOUNDARY_RUNTIME.runtimeContractVersion,
+      }),
+    ).toMatchObject({
+      candidateId: FR306_ADAPTIVE_BOUNDARY_CANDIDATE_ID,
+      modelId: FR306_ADAPTIVE_BOUNDARY_RUNTIME.modelId,
+      modelRevision: FR306_ADAPTIVE_BOUNDARY_RUNTIME.revision,
+    });
   });
 
   it('excludes CelebAMask-HQ-derived face parsing from the product path', () => {
