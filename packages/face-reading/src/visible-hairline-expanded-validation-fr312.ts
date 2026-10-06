@@ -3,8 +3,8 @@ import {
   type FR310AdjudicationReceipt,
 } from './visible-hairline-evidence-adjudicator-fr310.js';
 import {
-  FR307_PRIMARY_MODEL,
-} from './visible-hairline-empirical-runner-fr307.js';
+  resolveEmpiricalHairlineCandidateIdentityFR306,
+} from './visible-hairline-runtime-candidates-fr306.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export const FR312_EXPANDED_HAIRLINE_VALIDATION_CONTRACT_VERSION =
@@ -67,9 +67,9 @@ export interface FR312ExpandedValidationInput {
     'fr312-expanded-hairline-validation-input-v1';
   readonly prerequisiteAdjudication:
     FR310AdjudicationReceipt;
-  readonly modelId: typeof FR307_PRIMARY_MODEL.id;
-  readonly modelRevision:
-    typeof FR307_PRIMARY_MODEL.revision;
+  readonly candidateId?: string;
+  readonly modelId: string;
+  readonly modelRevision: string;
   readonly humanReviewCompleted: boolean;
   readonly sessionLabelsOpaque: boolean;
   readonly demographicAttributesCollected: false;
@@ -109,6 +109,10 @@ export interface FR312ExpandedValidationReceipt {
     typeof FR312_EXPANDED_HAIRLINE_VALIDATION_CONTRACT_VERSION;
   readonly authorityState:
     'expanded_engineering_validation_only';
+  readonly candidateId: string;
+  readonly runtimeContractVersion: string;
+  readonly modelId: string;
+  readonly modelRevision: string;
   readonly disposition: FR312Disposition;
   readonly failureReasons:
     readonly FR312FailureReason[];
@@ -299,11 +303,26 @@ export function adjudicateExpandedHairlineValidationFR312(
 
   assertPrerequisite(input.prerequisiteAdjudication);
 
+  const candidateIdentity =
+    resolveEmpiricalHairlineCandidateIdentityFR306({
+      candidateId:
+        input.candidateId ??
+        input.prerequisiteAdjudication.candidateId,
+      modelId: input.modelId,
+      modelRevision: input.modelRevision,
+      runtimeContractVersion:
+        input.prerequisiteAdjudication.runtimeContractVersion,
+    });
+
   if (
-    input.modelId !== FR307_PRIMARY_MODEL.id ||
-    input.modelRevision !== FR307_PRIMARY_MODEL.revision
+    input.prerequisiteAdjudication.candidateId !==
+      candidateIdentity.candidateId ||
+    input.prerequisiteAdjudication.modelId !==
+      candidateIdentity.modelId ||
+    input.prerequisiteAdjudication.modelRevision !==
+      candidateIdentity.modelRevision
   ) {
-    fail('exact model identity/revision mismatch.');
+    fail('candidate identity must match the FR310 prerequisite.');
   }
 
   if (input.demographicAttributesCollected !== false) {
@@ -532,6 +551,11 @@ export function adjudicateExpandedHairlineValidationFR312(
       FR312_EXPANDED_HAIRLINE_VALIDATION_CONTRACT_VERSION,
     authorityState:
       'expanded_engineering_validation_only' as const,
+    candidateId: candidateIdentity.candidateId,
+    runtimeContractVersion:
+      candidateIdentity.runtimeContractVersion,
+    modelId: candidateIdentity.modelId,
+    modelRevision: candidateIdentity.modelRevision,
     disposition,
     failureReasons: Object.freeze([...reasons]),
     hardRejectTriggered,
