@@ -29,7 +29,7 @@ const expandedValidation: FR312ExpandedValidationReceipt = {
   schemaVersion:
     'fr312-expanded-hairline-validation-receipt-v1',
   contractVersion:
-    'FR312-EXPANDED-HAIRLINE-VALIDATION-v1',
+    'FR312-EXPANDED-HAIRLINE-VALIDATION-v1.1',
   authorityState:
     'expanded_engineering_validation_only',
   disposition:
