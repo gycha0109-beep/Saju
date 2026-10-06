@@ -1,0 +1,53 @@
+name: tmp-fr310-v32-adjudication-r2
+
+on:
+  push:
+    branches:
+      - ops/tmp-fr310-v32-adjudication-r2-20261007
+
+permissions:
+  contents: read
+
+jobs:
+  adjudicate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund --ignore-scripts
+      - name: Verify v3.2 candidate exposure self-check
+        run: python3 tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py --self-check
+      - run: npm run face:build
+      - name: Execute governed FR308-FR310 v3.2 adjudication
+        shell: bash
+        run: |
+          mkdir -p .cache/face-reading/fr308-fr312-local
+          cp tmp/fr310-v32-deidentified-input.json .cache/face-reading/fr308-fr312-local/private-input.json
+          set +e
+          node scripts/run-fr308-fr312-local-validation.mjs \
+            --input .cache/face-reading/fr308-fr312-local/private-input.json \
+            --output .cache/face-reading/fr308-fr312-local/repo-safe-receipt.json
+          code=$?
+          set -e
+          test "$code" -eq 2
+          node - <<'NODE'
+          const fs = require('fs');
+          const p = '.cache/face-reading/fr308-fr312-local/repo-safe-receipt.json';
+          const r = JSON.parse(fs.readFileSync(p, 'utf8'));
+          if (r.status !== 'blocked_at_fr312') throw new Error('expected blocked_at_fr312');
+          if (r.fr310Receipt?.disposition !== 'eligible_for_expanded_validation') throw new Error('FR310 did not become eligible');
+          if (r.fr310Receipt?.expandedValidationEligible !== true) throw new Error('FR310 expandedValidationEligible false');
+          if ((r.fr310Receipt?.failureReasons ?? []).length !== 0) throw new Error('unexpected FR310 failure reasons');
+          if (r.fr312Attempted !== true) throw new Error('expected FR312 attempt');
+          if (r.fr312Receipt?.disposition !== 'repeat_expanded_validation') throw new Error('expected empty FR312 repeat');
+          console.log(JSON.stringify({
+            status:r.status,
+            fr310Disposition:r.fr310Receipt.disposition,
+            fr310FailureReasons:r.fr310Receipt.failureReasons,
+            fr312Attempted:r.fr312Attempted,
+            fr312Disposition:r.fr312Receipt.disposition
+          }));
+          NODE
