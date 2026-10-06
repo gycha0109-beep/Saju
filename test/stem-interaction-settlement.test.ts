@@ -237,7 +237,7 @@ describe('R189-R191 deterministic stem interaction settlement policy', () => {
       [relation({ pillar: 'year', value: '정' }, { pillar: 'month', value: '임' })],
       tenGods,
       '갑',
-      [visible('year', '정'), visible('month', '임'), visible('hour', '토' as HeavenlyStem)],
+      [visible('year', '정'), visible('month', '임'), visible('hour', '무')],
     );
     const reverse = deriveAdoptedStemInteractionSettlements(
       [relation({ pillar: 'month', value: '임' }, { pillar: 'year', value: '정' })],
@@ -246,6 +246,36 @@ describe('R189-R191 deterministic stem interaction settlement policy', () => {
     );
     expect(forward[0]?.participants.controller.stem).toBe('임');
     expect(reverse[0]?.participants.controller.stem).toBe('임');
+  });
+
+  test('day-pillar participation and day-master identity inside the pair remain outside v1 scope', () => {
+    for (const definition of STEM_FIVE_COMBINATION_CONTROL_DEFINITIONS) {
+      expect(
+        deriveAdoptedStemInteractionSettlements(
+          [
+            relation(
+              { pillar: 'day', value: definition.pair[0] },
+              { pillar: 'month', value: definition.pair[1] },
+            ),
+          ],
+          tenGods,
+          definition.pair[0],
+        ),
+      ).toEqual([]);
+
+      expect(
+        deriveAdoptedStemInteractionSettlements(
+          [
+            relation(
+              { pillar: 'year', value: definition.pair[0] },
+              { pillar: 'month', value: definition.pair[1] },
+            ),
+          ],
+          tenGods,
+          definition.pair[1],
+        ),
+      ).toEqual([]);
+    }
   });
 
   test('structure impact remains a deterministic function of final controlled-role state', () => {
