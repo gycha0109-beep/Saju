@@ -19,6 +19,13 @@ const prerequisite: FR310AdjudicationReceipt = {
     'FR310-HAIRLINE-EVIDENCE-ADJUDICATOR-v1',
   authorityState:
     'bounded_evidence_adjudication_only',
+  candidateId:
+    'candidate.hairline.florence2_base.referring_segmentation.fr306',
+  runtimeContractVersion:
+    'FR307-VISIBLE-HAIRLINE-EMPIRICAL-RUNNER-v1',
+  modelId: 'microsoft/Florence-2-base',
+  modelRevision:
+    '5ca5edf5bd017b9919c05d08aebef5e4c7ac3bac',
   disposition:
     'eligible_for_expanded_validation',
   failureReasons: [],
