@@ -184,7 +184,7 @@ describe('FR311N face-wide ear cross-region integration', () => {
           evidenceId: 'fr311m.relation.ear_whiter_than_face.634',
           kind: 'cross_region_direct',
           region: 'cross_region',
-          sourceExpression: '耳白於面，名聞四方',
+          sourceExpression: '耳白於面，名滿赤縣',
           historicalTraditionalDoctrineOnly: true,
           modernScientificFactAuthorized: false,
           productPredictionAuthorized: false,
