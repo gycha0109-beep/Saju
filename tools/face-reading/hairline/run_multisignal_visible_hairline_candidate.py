@@ -144,6 +144,13 @@ def classify_preview(signals: PreviewSignals) -> str:
 
     return "unavailable"
 
+
+def _candidate_boundary_exposed(preview_state: str) -> bool:
+    if preview_state not in PREVIEW_STATES:
+        raise ValueError("unknown engineering preview state")
+    return preview_state == "visible_interface_candidate"
+
+
 def _safe_output_path(path: str) -> Path:
     absolute = Path(path).expanduser().resolve()
     cwd = Path.cwd().resolve()
@@ -714,7 +721,7 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
                 [int(px), int(py)]
                 for px, py in zip(global_x.tolist(), global_y.tolist())
             ]
-            if preview_state == "visible_interface_candidate"
+            if _candidate_boundary_exposed(preview_state)
             else []
         ),
         "diagnosticBoundaryPoints": [
@@ -722,7 +729,7 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
             for px, py in zip(global_x.tolist(), global_y.tolist())
         ],
         "candidateBoundaryExposed":
-            preview_state == "visible_interface_candidate",
+            _candidate_boundary_exposed(preview_state),
         "rawSignals": {
             "colorContrast": color_contrast,
             "luminanceContrast": luminance_contrast,
@@ -762,7 +769,7 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
             (int(px), int(py))
             for px, py in zip(global_x.tolist(), global_y.tolist())
         ]
-        if preview_state == "visible_interface_candidate" and len(points) >= 2:
+        if _candidate_boundary_exposed(preview_state) and len(points) >= 2:
             draw.line(
                 points,
                 fill=(255, 0, 0),
@@ -1075,6 +1082,18 @@ def self_check() -> None:
     )
     if receipt["captureCount"] != 2:
         raise RuntimeError("safe receipt capture count self-check failed")
+
+    boundary_exposure = {
+        state: _candidate_boundary_exposed(state)
+        for state in PREVIEW_STATES
+    }
+    if boundary_exposure != {
+        "visible_interface_candidate": True,
+        "partially_visible_or_occluded": False,
+        "no_visible_hairline_candidate": False,
+        "unavailable": False,
+    }:
+        raise RuntimeError("candidate boundary exposure self-check failed")
 
     try:
         _assert_safe_receipt({"sourcePath": "/private/source.jpg"})
