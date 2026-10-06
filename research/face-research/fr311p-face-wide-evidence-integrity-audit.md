@@ -66,7 +66,7 @@ FR311P canonical evidence는 다음만 새 의미 단위로 센다.
 
 ### FR311M의 FR311K 재사용
 
-FR311M 역방향 감사에서 FR311K 근거를 재사용하는 4건은 새 소유권이 아니다.
+FR311M 역방향 감사에서 FR311K 근거를 그대로 재사용하는 4건은 새 evidence 소유권이 아니다.
 
 조건:
 
@@ -74,12 +74,22 @@ FR311M 역방향 감사에서 FR311K 근거를 재사용하는 4건은 새 소�
 - relationKey 또는 combinationKey가 동일
 - FR311P canonical inventory에는 한 번만 존재
 
+별도로 FR311M에는 `fr311m.relation.earlobe_toward_mouth.634a`라는 추가 원문 witness가 있다. 이 레코드의 evidence 자체는 FR311M 소유지만, 사용하는 관계 key `ear_mouth.earlobe_toward_mouth`는 FR311K가 먼저 정의했다.
+
+따라서 FR311P는 다음을 분리한다.
+
+- evidence owner: FR311M
+- relation-key owner: FR311K
+- cross-layer key reuse: 1건
+
+새 witness가 추가됐다는 이유로 기존 relation key의 소유권을 FR311M이 중복 획득한 것으로 계산하지 않는다.
+
 ## 4. 중복 판정
 
 ### 오류로 판정
 
 - canonical evidenceId가 둘 이상의 소유 레코드에 존재
-- 동일 relationKey를 서로 다른 canonical owner가 소유
+- 동일 relationKey를 서로 다른 canonical key owner가 독립적으로 소유
 - 동일 combinationKey를 서로 다른 canonical owner가 소유
 - reuse가 새 canonical record로 다시 생성됨
 
