@@ -1,4 +1,6 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { ResolvedStructuralRoleImpact } from '../calculation/structural-role-impact.js';
+import type { GovernedTemporalStructureBaseline } from '../calculation/temporal-structure-transition.js';
 import type {
   ClaimNarrativeProfile,
   GroundedNarrativeRequest,
@@ -53,6 +55,8 @@ import {
   type ProductReadingPreparationState,
 } from './product-reading-integration.js';
 import type { ConsumerReadingRequestInput } from './consumer-reading-request-adapter.js';
+import { resolveAnnualTemporalStructureIntegration } from './annual-temporal-structure-integration.js';
+import { projectAnnualTemporalStructureForReading } from './annual-temporal-structure-projection.js';
 
 export const GOVERNED_READING_EXECUTION_VERSION =
   'myeonghwa-governed-reading-execution-v6';
@@ -71,6 +75,11 @@ export type GovernedReadingExecutionState =
   | 'completed'
   | 'completed_with_fallback';
 
+export interface GovernedAnnualTemporalStructureInputV1 {
+  baseline: GovernedTemporalStructureBaseline;
+  assessments: readonly ResolvedStructuralRoleImpact[];
+}
+
 export interface GovernedReadingExecutionOptions {
   outputSchemaVersion: string;
   readingVersion: string;
@@ -81,6 +90,7 @@ export interface GovernedReadingExecutionOptions {
   artifactGeneratedAt?: Date;
   consumerReadingAuthorityResolver?: ConsumerReadingAuthorityResolverV1;
   officialReadingSemanticProjectionResolver?: OfficialReadingSemanticProjectionResolverV1;
+  governedAnnualTemporalStructure?: GovernedAnnualTemporalStructureInputV1;
 }
 
 export interface GovernedReadingExecutionResult {
@@ -420,6 +430,19 @@ export async function executeProductReading(
       resolvePreviewConsumerReadingAuthorityV1
     )(preparation.normalization.request.intent);
 
+  if (options.governedAnnualTemporalStructure !== undefined) {
+    if (preparation.normalization.request.intent.temporalScope !== 'annual') {
+      throw new TypeError(
+        'Governed annual temporal structure input requires an annual reading request.',
+      );
+    }
+    if (consumerReadingAuthority.authority !== 'official_reading') {
+      throw new TypeError(
+        'Governed annual temporal structure input requires Official Reading authority.',
+      );
+    }
+  }
+
   if (consumerReadingAuthority.authority === 'official_reading') {
     const readingSection = readingSectionForIntentV1(
       preparation.normalization.request.intent,
@@ -458,6 +481,41 @@ export async function executeProductReading(
       semanticQualifierBindings: semanticProjection.semanticQualifierBindings,
     });
     const officialReadingPlan = buildOfficialReadingPlanV1(canonicalSemantics);
+    const annualTemporalStructure =
+      options.governedAnnualTemporalStructure === undefined
+        ? undefined
+        : resolveAnnualTemporalStructureIntegration(
+            snapshot,
+            preparation.normalization.request,
+            options.governedAnnualTemporalStructure.baseline,
+            options.governedAnnualTemporalStructure.assessments,
+          );
+
+    if (
+      annualTemporalStructure !== undefined &&
+      annualTemporalStructure.status !== 'resolved'
+    ) {
+      return officialAuthorityBlockedResult(
+        preparation,
+        consumerReadingAuthority,
+        [
+          `OFFICIAL_READING_ANNUAL_TEMPORAL_STRUCTURE_BLOCKED:${annualTemporalStructure.reasonCode}`,
+          ...(annualTemporalStructure.transitionReasonCode === undefined
+            ? []
+            : [
+                `OFFICIAL_READING_ANNUAL_TEMPORAL_TRANSITION_BLOCKED:${annualTemporalStructure.transitionReasonCode}`,
+              ]),
+        ],
+        canonicalSemantics,
+        officialReadingPlan,
+      );
+    }
+
+    const annualTemporalProjection =
+      annualTemporalStructure?.status === 'resolved'
+        ? projectAnnualTemporalStructureForReading(annualTemporalStructure)
+        : undefined;
+
     const sourceSummariesRequested =
       preparation.normalization.request.outputPreferences?.includeSourceSummaries === true;
     if (sourceSummariesRequested && governedEvidence.sourceSummaries === undefined) {
@@ -483,6 +541,9 @@ export async function executeProductReading(
                 preferredDetail:
                   preparation.normalization.request.outputPreferences.preferredDetail,
               }),
+          ...(annualTemporalProjection === undefined
+            ? {}
+            : { annualTemporalStructure: annualTemporalProjection }),
         })
       : undefined;
 
