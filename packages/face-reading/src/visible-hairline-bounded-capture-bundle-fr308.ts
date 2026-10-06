@@ -6,6 +6,9 @@ import {
   assertFR307CurrentGate,
   assertVisibleHairlineEmpiricalRunnerFR307,
 } from './visible-hairline-empirical-runner-fr307.js';
+import {
+  resolveFR306EmpiricalRuntimeCandidate,
+} from './visible-hairline-runtime-candidates-fr306.js';
 import { FaceAuthorityValidationError } from './validation.js';
 
 export const FR308_BOUNDED_HAIRLINE_CAPTURE_CONTRACT_VERSION =
@@ -59,12 +62,9 @@ export interface FR308DeidentifiedCaseFinding {
 export interface FR308BoundedBundleInput {
   readonly schemaVersion:
     'fr308-bounded-hairline-bundle-input-v1';
-  readonly runnerContractVersion:
-    typeof FR307_VISIBLE_HAIRLINE_EMPIRICAL_RUNNER_CONTRACT_VERSION;
-  readonly modelId:
-    typeof FR307_PRIMARY_MODEL.id;
-  readonly modelRevision:
-    typeof FR307_PRIMARY_MODEL.revision;
+  readonly runnerContractVersion: string;
+  readonly modelId: string;
+  readonly modelRevision: string;
   readonly localOnlyExecution: true;
   readonly caseFindings:
     readonly FR308DeidentifiedCaseFinding[];
@@ -83,6 +83,10 @@ export interface FR308BoundedBundleReceipt {
   readonly localOnlyExecutionVerifiedByContract: true;
   readonly deidentifiedRepositorySummaryOnly: true;
   readonly realCaptureBundleComplete: true;
+  readonly candidateId: string;
+  readonly runtimeProviderId: string;
+  readonly exactRevision: string;
+  readonly runnerContractVersion: string;
   readonly admittedHairlineRuntimeProviders: 0;
   readonly fr305AdmissionReceiptIssued: false;
   readonly neutralRuntimeHairlineObservationAuthorized: false;
@@ -207,20 +211,23 @@ function assertCaseFinding(
 export function issueBoundedHairlineBundleReceiptFR308(
   input: FR308BoundedBundleInput,
 ): FR308BoundedBundleReceipt {
-  assertVisibleHairlineEmpiricalRunnerFR307();
-  assertFR307CurrentGate();
-
   if (
     input.schemaVersion !==
       'fr308-bounded-hairline-bundle-input-v1' ||
-    input.runnerContractVersion !==
-      FR307_VISIBLE_HAIRLINE_EMPIRICAL_RUNNER_CONTRACT_VERSION ||
-    input.modelId !== FR307_PRIMARY_MODEL.id ||
-    input.modelRevision !==
-      FR307_PRIMARY_MODEL.revision ||
     input.localOnlyExecution !== true
   ) {
     fail('bundle input identity/runtime boundary drift.');
+  }
+
+  const candidate = resolveFR306EmpiricalRuntimeCandidate(
+    input.modelId,
+    input.modelRevision,
+    input.runnerContractVersion,
+  );
+
+  if (candidate.state === 'primary_empirical_candidate') {
+    assertVisibleHairlineEmpiricalRunnerFR307();
+    assertFR307CurrentGate();
   }
 
   if (input.caseFindings.length !== 4) {
@@ -254,6 +261,10 @@ export function issueBoundedHairlineBundleReceiptFR308(
     localOnlyExecutionVerifiedByContract: true as const,
     deidentifiedRepositorySummaryOnly: true as const,
     realCaptureBundleComplete: true as const,
+    candidateId: candidate.candidateId,
+    runtimeProviderId: candidate.runtimeProviderId,
+    exactRevision: candidate.exactRevision,
+    runnerContractVersion: input.runnerContractVersion,
     admittedHairlineRuntimeProviders: 0 as const,
     fr305AdmissionReceiptIssued: false as const,
     neutralRuntimeHairlineObservationAuthorized: false as const,
