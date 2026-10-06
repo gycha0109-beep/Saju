@@ -9,36 +9,12 @@ import {
   GENERAL_NATAL_USEFUL_READING_SOURCE,
   GENERAL_NATAL_USEFUL_SYNTHESIS_METHODOLOGY,
 } from '../research/general-natal-useful-reading-candidate.js';
-import type { CanonicalReadingSemanticTextV1 } from './canonical-reading-semantics.js';
-import type { OfficialReadingDetailedMaterialRoleV1 } from './official-reading-detailed-presentation-definition.js';
+import type {
+  ApprovedOfficialReadingDetailedSourceProfileV1,
+} from './official-reading-detailed-presentation-definition.js';
 
 export const OFFICIAL_READING_GENERAL_NATAL_DETAILED_SOURCE_PROFILE_VERSION =
   'myeonghwa-official-reading-general-natal-detailed-source-profile-v1' as const;
-
-export interface ApprovedOfficialReadingDetailedSourceProfileV1 {
-  owner: 'general:natal';
-  profileId: string;
-  profileVersion: '1';
-  claimType: string;
-  methodologyRef: {
-    id: string;
-    version: string;
-  };
-  standardText: CanonicalReadingSemanticTextV1;
-  semanticQualifiers: readonly unknown[];
-  prohibitedExtensions: readonly string[];
-  supportingClaimTypes: readonly string[];
-  scenarioPolicy: 'none';
-  contradictionPolicy: 'none';
-  approvedTextByRole: Readonly<
-    Partial<Record<OfficialReadingDetailedMaterialRoleV1, string>>
-  >;
-  provenance: {
-    authorityId: string;
-    authorityVersion: string;
-    sourceRefs: readonly string[];
-  };
-}
 
 const AUTHORITY_ID = 'SA-6Q-GENERAL-NATAL-DETAILED-MATERIAL-PILOT';
 const AUTHORITY_VERSION = '1';
@@ -93,11 +69,15 @@ const MONTH_BRANCH_QUALIFIER_MATERIAL = Object.freeze([
   }),
 ]);
 
-function profile(input: Omit<ApprovedOfficialReadingDetailedSourceProfileV1, 'owner' | 'profileVersion'>):
-  ApprovedOfficialReadingDetailedSourceProfileV1 {
+function profile(
+  input: Omit<
+    ApprovedOfficialReadingDetailedSourceProfileV1,
+    'owner' | 'profileVersion'
+  >,
+): ApprovedOfficialReadingDetailedSourceProfileV1 {
   return Object.freeze({
     owner: 'general:natal' as const,
-    profileVersion: '1' as const,
+    profileVersion: '1',
     ...input,
   });
 }
