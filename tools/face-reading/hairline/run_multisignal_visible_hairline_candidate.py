@@ -268,27 +268,57 @@ def _candidate_path(score: Any, continuity_penalty: float = 0.14) -> tuple[Any, 
 
 def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) -> dict[str, Any]:
     try:
+        import cv2
         import numpy as np
         from PIL import Image, ImageDraw
     except ImportError as error:
         raise RuntimeError(
-            "actual image mode requires Pillow and NumPy; "
+            "actual image mode requires OpenCV, Pillow and NumPy; "
             "install them locally before running"
         ) from error
 
     image = Image.open(image_path).convert("RGB")
-    rgb = np.asarray(image).astype(np.float32)
+    rgb_u8 = np.asarray(image)
+    rgb = rgb_u8.astype(np.float32)
     height, width, _ = rgb.shape
+    gray = cv2.cvtColor(rgb_u8, cv2.COLOR_RGB2GRAY)
 
     roi = record.get("faceRoi")
     if roi is None:
-        # Deliberately conservative portrait heuristic. This is not a face landmark
-        # or anatomical authority and never auto-admits a result.
-        x = int(round(width * 0.16))
-        y = int(round(height * 0.05))
-        w = int(round(width * 0.68))
-        h = int(round(height * 0.70))
-        roi_source = "central_portrait_heuristic"
+        face_cascade = cv2.CascadeClassifier(
+            cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+        )
+        min_side = max(45, min(width, height) // 10)
+        faces = face_cascade.detectMultiScale(
+            gray,
+            1.08,
+            5,
+            minSize=(min_side, min_side),
+        )
+        if len(faces) > 0:
+            image_cx = width / 2.0
+            image_cy = height / 2.0
+            ranked = []
+            for fx, fy, fw, fh in faces:
+                area = float(fw * fh)
+                distance = (
+                    ((fx + fw / 2.0 - image_cx) / max(1.0, width)) ** 2
+                    + ((fy + fh / 2.0 - image_cy) / max(1.0, height)) ** 2
+                )
+                ranked.append(
+                    (
+                        area * (1.0 - 0.5 * distance),
+                        (int(fx), int(fy), int(fw), int(fh)),
+                    )
+                )
+            x, y, w, h = max(ranked, key=lambda item: item[0])[1]
+            roi_source = "opencv_haar_face"
+        else:
+            x = int(round(width * 0.18))
+            y = int(round(height * 0.12))
+            w = int(round(width * 0.64))
+            h = int(round(height * 0.62))
+            roi_source = "central_portrait_heuristic"
     else:
         if (
             not isinstance(roi, list)
@@ -304,32 +334,81 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     w = max(2, min(width - x, w))
     h = max(2, min(height - y, h))
 
-    # Color representation: luminance + two opponent chroma axes.
-    r = rgb[:, :, 0]
-    g = rgb[:, :, 1]
-    b = rgb[:, :, 2]
-    lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-    c1 = r - g
-    c2 = 0.5 * (r + g) - b
+    eye_cascade = cv2.CascadeClassifier(
+        cv2.data.haarcascades + "haarcascade_eye.xml"
+    )
+    eye_roi = gray[y : y + int(round(h * 0.65)), x : x + w]
+    raw_eyes = eye_cascade.detectMultiScale(
+        eye_roi,
+        1.08,
+        5,
+        minSize=(max(12, w // 12), max(10, h // 16)),
+    )
+    eye_candidates = []
+    for ex, ey, ew, eh in raw_eyes:
+        if ey + eh / 2.0 < h * 0.58 and ew < w * 0.42:
+            eye_candidates.append(
+                (x + int(ex), y + int(ey), int(ew), int(eh))
+            )
 
-    sx1 = x + int(round(w * 0.30))
-    sx2 = x + int(round(w * 0.70))
-    sy1 = y + int(round(h * 0.45))
-    sy2 = y + int(round(h * 0.67))
-    if sx2 <= sx1 or sy2 <= sy1:
-        raise ValueError("face ROI too small for adaptive skin sample")
+    eye_pair = []
+    best_pair_score = None
+    for index, first in enumerate(eye_candidates):
+        for second in eye_candidates[index + 1 :]:
+            ax, ay, aw, ah = first
+            bx, by, bw, bh = second
+            separation = abs((ax + aw / 2.0) - (bx + bw / 2.0))
+            y_difference = abs((ay + ah / 2.0) - (by + bh / 2.0))
+            if (
+                separation < w * 0.18
+                or separation > w * 0.78
+                or y_difference > h * 0.18
+            ):
+                continue
+            pair_score = separation - 2.0 * y_difference
+            if best_pair_score is None or pair_score > best_pair_score:
+                best_pair_score = pair_score
+                eye_pair = [first, second]
 
-    sample_l = lum[sy1:sy2, sx1:sx2]
-    sample_c1 = c1[sy1:sy2, sx1:sx2]
-    sample_c2 = c2[sy1:sy2, sx1:sx2]
-    ml, sl = _robust_scale(sample_l, 12.0)
-    mc1, sc1 = _robust_scale(sample_c1, 5.0)
-    mc2, sc2 = _robust_scale(sample_c2, 5.0)
+    eye_top = min((eye[1] for eye in eye_pair), default=None)
+    face_basis_stable = not (
+        roi_source == "central_portrait_heuristic" and len(eye_pair) < 2
+    )
 
-    rx1 = max(0, x + int(round(w * 0.07)))
-    rx2 = min(width, x + int(round(w * 0.93)))
-    ry1 = max(0, y - int(round(h * 0.12)))
-    ry2 = min(height, y + int(round(h * 0.48)))
+    lab = cv2.cvtColor(rgb_u8, cv2.COLOR_RGB2LAB).astype(np.float32)
+    lum, c1, c2 = cv2.split(lab)
+
+    sample_patches = []
+    for x_start, x_end in ((0.22, 0.43), (0.57, 0.78)):
+        sx1 = max(0, x + int(round(w * x_start)))
+        sx2 = min(width, x + int(round(w * x_end)))
+        sy1 = max(0, y + int(round(h * 0.46)))
+        sy2 = min(height, y + int(round(h * 0.64)))
+        if sx2 > sx1 and sy2 > sy1:
+            sample_patches.append(lab[sy1:sy2, sx1:sx2].reshape(-1, 3))
+
+    if not sample_patches:
+        sx1 = x + int(round(w * 0.32))
+        sx2 = x + int(round(w * 0.68))
+        sy1 = y + int(round(h * 0.45))
+        sy2 = y + int(round(h * 0.65))
+        sample_patches.append(lab[sy1:sy2, sx1:sx2].reshape(-1, 3))
+
+    sample = np.concatenate(sample_patches, axis=0)
+    ml, sl = _robust_scale(sample[:, 0], 10.0)
+    mc1, sc1 = _robust_scale(sample[:, 1], 5.0)
+    mc2, sc2 = _robust_scale(sample[:, 2], 5.0)
+
+    rx1 = max(0, x + int(round(w * 0.08)))
+    rx2 = min(width, x + int(round(w * 0.92)))
+    ry1 = max(0, y - int(round(h * 0.18)))
+    search_bottom = y + int(round(h * 0.40))
+    if eye_top is not None:
+        search_bottom = min(
+            search_bottom,
+            eye_top - int(round(h * 0.055)),
+        )
+    ry2 = min(height, max(ry1 + 18, search_bottom))
     if rx2 - rx1 < 8 or ry2 - ry1 < 8:
         raise ValueError("hairline search ROI too small")
 
@@ -338,7 +417,7 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     c2_roi = c2[ry1:ry2, rx1:rx2]
 
     z2 = (
-        ((lum_roi - ml) / sl) ** 2
+        0.45 * ((lum_roi - ml) / sl) ** 2
         + ((c1_roi - mc1) / sc1) ** 2
         + ((c2_roi - mc2) / sc2) ** 2
     )
