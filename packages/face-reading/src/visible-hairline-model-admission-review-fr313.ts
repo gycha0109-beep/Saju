@@ -3,8 +3,8 @@ import {
   type FR305HairlineModelAdmissionReceipt,
 } from './visible-hairline-vertical-reference-fr305.js';
 import {
-  FR307_PRIMARY_MODEL,
-} from './visible-hairline-empirical-runner-fr307.js';
+  resolveEmpiricalHairlineCandidateIdentityFR306,
+} from './visible-hairline-runtime-candidates-fr306.js';
 import {
   FR312_CURRENT_GATE,
   FR312_EXPANDED_HAIRLINE_VALIDATION_CONTRACT_VERSION,
@@ -61,9 +61,9 @@ export interface FR313AdmissionReviewInput {
     'fr313-hairline-model-admission-review-input-v1';
   readonly expandedValidation:
     FR312ExpandedValidationReceipt;
-  readonly modelId: typeof FR307_PRIMARY_MODEL.id;
-  readonly modelRevision:
-    typeof FR307_PRIMARY_MODEL.revision;
+  readonly candidateId?: string;
+  readonly modelId: string;
+  readonly modelRevision: string;
   readonly representativeCoverage:
     FR313RepresentativeCoverageAssessment;
   readonly modelBehavior:
@@ -280,11 +280,26 @@ export function reviewHairlineModelAdmissionFR313(
     input.expandedValidation,
   );
 
+  const candidateIdentity =
+    resolveEmpiricalHairlineCandidateIdentityFR306({
+      candidateId:
+        input.candidateId ??
+        input.expandedValidation.candidateId,
+      modelId: input.modelId,
+      modelRevision: input.modelRevision,
+      runtimeContractVersion:
+        input.expandedValidation.runtimeContractVersion,
+    });
+
   if (
-    input.modelId !== FR307_PRIMARY_MODEL.id ||
-    input.modelRevision !== FR307_PRIMARY_MODEL.revision
+    input.expandedValidation.candidateId !==
+      candidateIdentity.candidateId ||
+    input.expandedValidation.modelId !==
+      candidateIdentity.modelId ||
+    input.expandedValidation.modelRevision !==
+      candidateIdentity.modelRevision
   ) {
-    fail('exact model identity/revision mismatch.');
+    fail('candidate identity must match the FR312 receipt.');
   }
 
   assertCoverageShape(input.representativeCoverage);
@@ -477,8 +492,8 @@ export function reviewHairlineModelAdmissionFR313(
         'fr305-hairline-model-admission-receipt-v1' as const,
       authorityState:
         'validated_visible_hair_skin_boundary_model_only' as const,
-      modelId: input.modelId,
-      exactRevision: input.modelRevision,
+      modelId: candidateIdentity.modelId,
+      exactRevision: candidateIdentity.modelRevision,
       targetClass:
         'visible_hair_skin_boundary_segmentation' as const,
       coordinateFrame:
