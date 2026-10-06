@@ -122,7 +122,7 @@ The operator supplies deidentified expanded-capture findings.
 The existing FR312 contract still requires, at minimum:
 
 - at least 12 captures;
-- all six expanded cases represented;
+- all six expanded failure-mode conditions represented;\n- the upper-hairline visibility-loss condition may come from independent headwear, framing/cropping, or substantial-hair-occlusion captures rather than requiring headwear as its own mandatory family;
 - at least two independent captures per case;
 - at least three opaque session labels;
 - independent-capture attestation;

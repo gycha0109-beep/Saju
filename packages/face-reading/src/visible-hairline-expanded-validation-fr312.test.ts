@@ -123,7 +123,7 @@ describe('FR312 expanded visible-hairline validation', () => {
     expect(FR312_EXPANDED_CASES).toEqual([
       'm_shaped_or_widows_peak_visible_contour',
       'side_recession_or_asymmetric_visible_hairline',
-      'headwear_occlusion_if_available',
+      'upper_hairline_visibility_loss',
       'dark_hair_dark_background',
       'light_hair_or_low_local_contrast',
       'ordinary_indoor_illumination_variation',

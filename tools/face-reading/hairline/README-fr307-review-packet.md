@@ -60,16 +60,24 @@ Exactly one reviewed capture must ultimately be selected for each:
 3. `heavy_bangs_hairline_substantially_hidden`
 4. `cropped_upper_forehead`
 
-### FR312 expanded cases
+### FR312 expanded conditions
 
 At least two independent reviewed captures are required for each:
 
 1. `m_shaped_or_widows_peak_visible_contour`
 2. `side_recession_or_asymmetric_visible_hairline`
-3. `headwear_occlusion_if_available`
+3. `upper_hairline_visibility_loss`
 4. `dark_hair_dark_background`
 5. `light_hair_or_low_local_contrast`
 6. `ordinary_indoor_illumination_variation`
+
+For `upper_hairline_visibility_loss`, the local FR307 source capture may be any genuinely independent capture from:
+
+- `headwear_occlusion_if_available`
+- `cropped_upper_forehead`
+- `heavy_bangs_hairline_substantially_hidden`
+
+These are alternative causes of the same missing-visibility failure mode, not three separate mandatory photo families.
 
 The FR312 contract also requires at least 12 total captures and at least 3 opaque sessions.
 
@@ -240,7 +248,7 @@ The compiler fails closed unless:
 - FR310 human review is explicitly completed;
 - privacy review is explicitly confirmed;
 - FR312 has at least 12 included captures;
-- every FR312 case has at least two included captures;
+- every FR312 expanded condition has at least two included independent captures;
 - at least three opaque session labels exist;
 - every FR312 included capture has independence/derivation attestations;
 - demographics collection remains false.

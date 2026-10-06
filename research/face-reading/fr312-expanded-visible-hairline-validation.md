@@ -20,7 +20,7 @@ Each of the following requires at least two independent local captures:
 
 1. `m_shaped_or_widows_peak_visible_contour`
 2. `side_recession_or_asymmetric_visible_hairline`
-3. `headwear_occlusion_if_available`
+3. `upper_hairline_visibility_loss`
 4. `dark_hair_dark_background`
 5. `light_hair_or_low_local_contrast`
 6. `ordinary_indoor_illumination_variation`
@@ -31,7 +31,7 @@ Minimum engineering bundle:
 - 12 total captures;
 - at least 3 opaque capture-session labels.
 
-A resized, cropped, recolored or copied derivative of another capture does not count as an independent capture.
+The `upper_hairline_visibility_loss` condition may be supplied by a real independent capture where the upper hairline is unavailable because of headwear, framing/cropping, or substantial hair occlusion. These causes are not separate mandatory case families.\n\nA resized, cropped, recolored or copied derivative of another capture does not count as an independent capture.
 
 ## Local/private evidence
 
