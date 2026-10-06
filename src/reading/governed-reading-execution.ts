@@ -1,5 +1,4 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
-import type { ResolvedStructuralRoleImpact } from '../calculation/structural-role-impact.js';
 import type { GovernedTemporalStructureBaseline } from '../calculation/temporal-structure-transition.js';
 import type {
   ClaimNarrativeProfile,
@@ -57,6 +56,7 @@ import {
 import type { ConsumerReadingRequestInput } from './consumer-reading-request-adapter.js';
 import { resolveAnnualTemporalStructureIntegration } from './annual-temporal-structure-integration.js';
 import { projectAnnualTemporalStructureForReading } from './annual-temporal-structure-projection.js';
+import type { GovernedAnnualStructuralImpactBundleV1 } from './annual-structural-impact-bundle.js';
 
 export const GOVERNED_READING_EXECUTION_VERSION =
   'myeonghwa-governed-reading-execution-v6';
@@ -77,7 +77,7 @@ export type GovernedReadingExecutionState =
 
 export interface GovernedAnnualTemporalStructureInputV1 {
   baseline: GovernedTemporalStructureBaseline;
-  assessments: readonly ResolvedStructuralRoleImpact[];
+  impactBundle: GovernedAnnualStructuralImpactBundleV1;
 }
 
 export interface GovernedReadingExecutionOptions {
@@ -488,7 +488,7 @@ export async function executeProductReading(
             snapshot,
             preparation.normalization.request,
             options.governedAnnualTemporalStructure.baseline,
-            options.governedAnnualTemporalStructure.assessments,
+            options.governedAnnualTemporalStructure.impactBundle,
           );
 
     if (

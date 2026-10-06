@@ -1,7 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
-import type { ResolvedStructuralRoleImpact } from '../calculation/structural-role-impact.js';
 import {
   resolveTemporalStructureTransition,
   type GovernedTemporalStructureBaseline,
@@ -10,6 +9,10 @@ import {
   type UnavailableTemporalStructureTransition,
 } from '../calculation/temporal-structure-transition.js';
 import {
+  assertGovernedAnnualStructuralImpactBundleV1,
+  type GovernedAnnualStructuralImpactBundleV1,
+} from './annual-structural-impact-bundle.js';
+import {
   buildAnnualInterpretationFacts,
   type AnnualInterpretationFacts,
 } from './annual-interpretation-facts.js';
@@ -17,16 +20,17 @@ import { buildTemporalReadingContext } from './temporal-reading-context.js';
 
 export const PRODUCT_ANNUAL_TEMPORAL_STRUCTURE_INTEGRATION_POLICY = Object.freeze({
   policyId: 'myeongha/product-annual-temporal-structure-integration-v1',
-  policyVersion: '1.0.0',
+  policyVersion: '1.1.0',
   decisionAuthority: 'PROJECT_OWNER',
-  decisionRef: 'GH-2260',
+  decisionRef: 'GH-2277',
   annualFactRule: 'ANNUAL_FACTS_ARE_PERIOD_INPUTS_NOT_INTERPRETATION_AUTHORITY',
-  semanticInputRule: 'REQUIRE_GOVERNED_R192_ASSESSMENTS',
+  semanticInputRule: 'REQUIRE_GOVERNED_ANNUAL_STRUCTURAL_IMPACT_BUNDLE',
+  semanticBindingRule: 'MATCH_SNAPSHOT_YEAR_AND_STRUCTURE',
   transitionRule: 'DELEGATE_TO_R193',
   annualStemMeaningRule: 'DO_NOT_INFER_STRUCTURE_IMPACT',
   annualBranchMeaningRule: 'DO_NOT_INFER_BREAK_OR_EVENT',
   dayunRuntimeRule: 'UNAVAILABLE_UNTIL_GOVERNED_PRODUCT_INPUT_EXISTS',
-  extendsDecisionRef: 'GH-2255',
+  extendsDecisionRef: 'GH-2271',
 } as const);
 
 function canonicalize(value: unknown): unknown {
@@ -69,6 +73,7 @@ export interface ResolvedAnnualTemporalStructureIntegration {
     scope: 'annual';
   };
   transition: ResolvedTemporalStructureTransition;
+  semanticInputBundleId: string;
   semanticInputAssessmentIds: readonly string[];
 }
 
@@ -82,8 +87,13 @@ export interface UnavailableAnnualTemporalStructureIntegration {
     | 'ANNUAL_TARGET_PERIOD_REQUIRED'
     | 'ANNUAL_CONTEXT_BUILD_FAILED'
     | 'ANNUAL_FACT_BUILD_FAILED'
+    | 'ANNUAL_IMPACT_BUNDLE_INVALID'
+    | 'ANNUAL_IMPACT_SNAPSHOT_MISMATCH'
+    | 'ANNUAL_IMPACT_YEAR_MISMATCH'
+    | 'ANNUAL_IMPACT_STRUCTURE_MISMATCH'
     | 'TEMPORAL_STRUCTURE_TRANSITION_UNAVAILABLE';
   transitionReasonCode?: UnavailableTemporalStructureTransition['reasonCode'];
+  semanticInputBundleId: string;
   semanticInputAssessmentIds: readonly string[];
 }
 
@@ -95,7 +105,7 @@ function unavailable(
   snapshot: CanonicalSajuSnapshot,
   request: ReadingRequest,
   baseline: GovernedTemporalStructureBaseline,
-  assessments: readonly ResolvedStructuralRoleImpact[],
+  impactBundle: GovernedAnnualStructuralImpactBundleV1,
   reasonCode: UnavailableAnnualTemporalStructureIntegration['reasonCode'],
   transitionReasonCode?: UnavailableAnnualTemporalStructureIntegration['transitionReasonCode'],
 ): UnavailableAnnualTemporalStructureIntegration {
@@ -106,7 +116,8 @@ function unavailable(
     structureId: baseline.structureId,
     reasonCode,
     ...(transitionReasonCode === undefined ? {} : { transitionReasonCode }),
-    semanticInputAssessmentIds: assessments
+    semanticInputBundleId: impactBundle.bundleId,
+    semanticInputAssessmentIds: impactBundle.assessments
       .map((item) => item.assessmentId)
       .sort(),
   };
@@ -116,14 +127,14 @@ export function resolveAnnualTemporalStructureIntegration(
   snapshot: CanonicalSajuSnapshot,
   request: ReadingRequest,
   baseline: GovernedTemporalStructureBaseline,
-  assessments: readonly ResolvedStructuralRoleImpact[],
+  impactBundle: GovernedAnnualStructuralImpactBundleV1,
 ): AnnualTemporalStructureIntegrationResult {
   if (request.intent.temporalScope !== 'annual') {
     return unavailable(
       snapshot,
       request,
       baseline,
-      assessments,
+      impactBundle,
       'ANNUAL_REQUEST_REQUIRED',
     );
   }
@@ -133,7 +144,7 @@ export function resolveAnnualTemporalStructureIntegration(
       snapshot,
       request,
       baseline,
-      assessments,
+      impactBundle,
       'ANNUAL_TARGET_PERIOD_REQUIRED',
     );
   }
@@ -146,7 +157,7 @@ export function resolveAnnualTemporalStructureIntegration(
       snapshot,
       request,
       baseline,
-      assessments,
+      impactBundle,
       'ANNUAL_CONTEXT_BUILD_FAILED',
     );
   }
@@ -156,7 +167,7 @@ export function resolveAnnualTemporalStructureIntegration(
       snapshot,
       request,
       baseline,
-      assessments,
+      impactBundle,
       'ANNUAL_CONTEXT_BUILD_FAILED',
     );
   }
@@ -169,8 +180,50 @@ export function resolveAnnualTemporalStructureIntegration(
       snapshot,
       request,
       baseline,
-      assessments,
+      impactBundle,
       'ANNUAL_FACT_BUILD_FAILED',
+    );
+  }
+
+  try {
+    assertGovernedAnnualStructuralImpactBundleV1(impactBundle);
+  } catch {
+    return unavailable(
+      snapshot,
+      request,
+      baseline,
+      impactBundle,
+      'ANNUAL_IMPACT_BUNDLE_INVALID',
+    );
+  }
+
+  if (impactBundle.snapshotId !== snapshot.snapshotId) {
+    return unavailable(
+      snapshot,
+      request,
+      baseline,
+      impactBundle,
+      'ANNUAL_IMPACT_SNAPSHOT_MISMATCH',
+    );
+  }
+
+  if (impactBundle.targetYear !== annualFacts.targetYear) {
+    return unavailable(
+      snapshot,
+      request,
+      baseline,
+      impactBundle,
+      'ANNUAL_IMPACT_YEAR_MISMATCH',
+    );
+  }
+
+  if (impactBundle.structureId !== baseline.structureId) {
+    return unavailable(
+      snapshot,
+      request,
+      baseline,
+      impactBundle,
+      'ANNUAL_IMPACT_STRUCTURE_MISMATCH',
     );
   }
 
@@ -183,7 +236,7 @@ export function resolveAnnualTemporalStructureIntegration(
   const transition = resolveTemporalStructureTransition(
     baseline,
     period,
-    assessments,
+    impactBundle.assessments,
   );
 
   if (transition.status !== 'resolved') {
@@ -191,13 +244,13 @@ export function resolveAnnualTemporalStructureIntegration(
       snapshot,
       request,
       baseline,
-      assessments,
+      impactBundle,
       'TEMPORAL_STRUCTURE_TRANSITION_UNAVAILABLE',
       transition.reasonCode,
     );
   }
 
-  const semanticInputAssessmentIds = assessments
+  const semanticInputAssessmentIds = impactBundle.assessments
     .map((item) => item.assessmentId)
     .sort();
   const integrationMaterial = {
@@ -212,6 +265,7 @@ export function resolveAnnualTemporalStructureIntegration(
       annualStemTenGod: annualFacts.annualStemTenGod,
     },
     period,
+    semanticInputBundleId: impactBundle.bundleId,
     semanticInputAssessmentIds,
     transitionId: transition.transitionId,
   };
@@ -229,6 +283,7 @@ export function resolveAnnualTemporalStructureIntegration(
     annualFacts,
     period,
     transition,
+    semanticInputBundleId: impactBundle.bundleId,
     semanticInputAssessmentIds,
   };
 }
