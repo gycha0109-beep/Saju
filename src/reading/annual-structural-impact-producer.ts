@@ -32,10 +32,10 @@ import { buildTemporalReadingContext } from './temporal-reading-context.js';
 
 export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY = Object.freeze({
   policyId: 'myeongha/annual-structural-impact-producer-v1',
-  policyVersion: '1.4.0',
+  policyVersion: '1.5.0',
   decisionAuthority: 'PROJECT_OWNER',
-  decisionRef: 'GH-2345',
-  scope: 'ISOLATED_LIUHE_LIUCHONG_OR_SELF_PUNISHMENT_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
+  decisionRef: 'GH-2354',
+  scope: 'ISOLATED_LIUHE_LIUCHONG_SELF_PUNISHMENT_OR_ZIMAO_PUNISHMENT_PAIR_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
   annualRule: 'RETAIN_STEM_AND_BRANCH_CONTEXT',
   dayunRule: 'REQUIRE_ONE_ACTIVE_DAYUN_SEGMENT',
   stemSourceRule: 'ANNUAL_AND_DAYUN_STEMS_COEXIST_WITHOUT_PRECEDENCE',
@@ -43,20 +43,22 @@ export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY = Object.freeze({
   sameTargetConflictRule: 'CONTROL_OVER_SUPPORT',
   natalStateRule: 'START_FROM_CANONICAL_R191_FINAL_STATE',
   branchRule:
-    'ADMIT_ONE_ISOLATED_SIX_COMBINATION_SIX_CLASH_OR_SELF_PUNISHMENT_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
+    'ADMIT_ONE_ISOLATED_SIX_COMBINATION_SIX_CLASH_SELF_PUNISHMENT_OR_ZIMAO_PUNISHMENT_PAIR_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
   sixCombinationRule:
     'QUALIFIER_ONLY_NO_TRANSFORMATION_OR_CONFLICT_RESOLUTION',
   sixClashRule:
     'PAIR_IDENTITY_ONLY_NO_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
   selfPunishmentRule:
     'RELATION_IDENTITY_ONLY_NO_PUNISHMENT_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
+  punishmentPairRule:
+    'ZIMAO_RELATION_IDENTITY_ONLY_NO_PUNISHMENT_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
   rootRule: 'OBSERVE_AS_QUALIFIER_WITHOUT_WEIGHT_OR_OVERRIDE',
   boundaryRule: 'FAIL_CLOSED_ON_MULTI_DAYUN_SEGMENT_YEAR',
   mutationRule: 'DO_NOT_MUTATE_CANONICAL_NATAL_SETTLEMENT',
   numericWeightRule: 'NONE',
   effectRule: 'REQUIRE_TEMPORAL_FUNCTION_STATE_CHANGE',
   eventRule: 'NONE',
-  extendsDecisionRef: 'GH-2334',
+  extendsDecisionRef: 'GH-2345',
 } as const);
 
 function canonicalize(value: unknown): unknown {
@@ -156,6 +158,22 @@ export interface AnnualTemporalSelfPunishmentObservationV1 {
   };
 }
 
+export interface AnnualTemporalPunishmentPairObservationV1 {
+  relationId: string;
+  relationKind: 'punishment_pair';
+  semantics: {
+    qualifierOnly: true;
+    relationIdentityObserved: true;
+    reciprocalPunishmentPairObserved: true;
+    punishmentEffectAuthorized: false;
+    favorableOrHarmfulInferenceAuthorized: false;
+    conflictResolutionAuthorized: false;
+    functionStateOverrideAuthorized: false;
+    temporalPrecedenceAuthorized: false;
+    numericWeightAssigned: false;
+  };
+}
+
 export interface AnnualTemporalSettlementOverlayV1 {
   overlayId: string;
   baseSettlementId: string;
@@ -179,6 +197,7 @@ export interface ResolvedAnnualStructuralImpactProductionV1 {
   sixCombinationObservations: readonly AnnualTemporalSixCombinationObservationV1[];
   sixClashObservations: readonly AnnualTemporalSixClashObservationV1[];
   selfPunishmentObservations: readonly AnnualTemporalSelfPunishmentObservationV1[];
+  punishmentPairObservations: readonly AnnualTemporalPunishmentPairObservationV1[];
   overlays: readonly AnnualTemporalSettlementOverlayV1[];
   assessments: readonly ResolvedStructuralRoleImpact[];
   bundle: GovernedAnnualStructuralImpactBundleV1;
@@ -503,6 +522,22 @@ function branchRelationIds(
   return [...result].sort();
 }
 
+function isCanonicalZiMaoPunishmentPairRelationId(relationId: string): boolean {
+  if (!relationId.startsWith('punishment_pair:')) return false;
+  const payload = relationId.slice('punishment_pair:'.length);
+  const parts = payload.split('|');
+  if (parts.length !== 2) return false;
+  const left = parts[0];
+  const right = parts[1];
+  if (left === undefined || right === undefined) return false;
+  const leftBranch = left.slice(left.lastIndexOf(':') + 1);
+  const rightBranch = right.slice(right.lastIndexOf(':') + 1);
+  return (
+    (leftBranch === '자' && rightBranch === '묘') ||
+    (leftBranch === '묘' && rightBranch === '자')
+  );
+}
+
 function isolatedBranchQualifierObservations(
   relationIds: readonly string[],
 ):
@@ -510,6 +545,7 @@ function isolatedBranchQualifierObservations(
       sixCombinationObservations: readonly AnnualTemporalSixCombinationObservationV1[];
       sixClashObservations: readonly AnnualTemporalSixClashObservationV1[];
       selfPunishmentObservations: readonly AnnualTemporalSelfPunishmentObservationV1[];
+      punishmentPairObservations: readonly AnnualTemporalPunishmentPairObservationV1[];
     }
   | undefined {
   if (relationIds.length === 0) {
@@ -517,6 +553,7 @@ function isolatedBranchQualifierObservations(
       sixCombinationObservations: [],
       sixClashObservations: [],
       selfPunishmentObservations: [],
+      punishmentPairObservations: [],
     };
   }
   if (relationIds.length !== 1 || relationIds[0] === undefined) {
@@ -543,6 +580,7 @@ function isolatedBranchQualifierObservations(
       ],
       sixClashObservations: [],
       selfPunishmentObservations: [],
+      punishmentPairObservations: [],
     };
   }
   if (relationId.startsWith('clash:')) {
@@ -565,6 +603,7 @@ function isolatedBranchQualifierObservations(
         },
       ],
       selfPunishmentObservations: [],
+      punishmentPairObservations: [],
     };
   }
   if (relationId.startsWith('self_punishment:')) {
@@ -579,6 +618,31 @@ function isolatedBranchQualifierObservations(
             qualifierOnly: true,
             relationIdentityObserved: true,
             repeatedSameBranchObserved: true,
+            punishmentEffectAuthorized: false,
+            favorableOrHarmfulInferenceAuthorized: false,
+            conflictResolutionAuthorized: false,
+            functionStateOverrideAuthorized: false,
+            temporalPrecedenceAuthorized: false,
+            numericWeightAssigned: false,
+          },
+        },
+      ],
+      punishmentPairObservations: [],
+    };
+  }
+  if (isCanonicalZiMaoPunishmentPairRelationId(relationId)) {
+    return {
+      sixCombinationObservations: [],
+      sixClashObservations: [],
+      selfPunishmentObservations: [],
+      punishmentPairObservations: [
+        {
+          relationId,
+          relationKind: 'punishment_pair',
+          semantics: {
+            qualifierOnly: true,
+            relationIdentityObserved: true,
+            reciprocalPunishmentPairObserved: true,
             punishmentEffectAuthorized: false,
             favorableOrHarmfulInferenceAuthorized: false,
             conflictResolutionAuthorized: false,
@@ -722,6 +786,7 @@ export function produceAnnualStructuralImpactBundleV1(
     sixCombinationObservations,
     sixClashObservations,
     selfPunishmentObservations,
+    punishmentPairObservations,
   } = branchQualifierObservations;
 
   const sources: readonly AnnualTemporalStemSourceV1[] = [
@@ -807,6 +872,7 @@ export function produceAnnualStructuralImpactBundleV1(
     sixCombinationObservations,
     sixClashObservations,
     selfPunishmentObservations,
+    punishmentPairObservations,
     overlayIds: overlays.map((item) => item.overlayId),
     bundleId: bundle.bundleId,
   };
@@ -829,6 +895,7 @@ export function produceAnnualStructuralImpactBundleV1(
     sixCombinationObservations,
     sixClashObservations,
     selfPunishmentObservations,
+    punishmentPairObservations,
     overlays,
     assessments,
     bundle,
