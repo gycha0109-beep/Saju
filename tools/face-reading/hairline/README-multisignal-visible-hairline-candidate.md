@@ -55,10 +55,12 @@ Starting with exact revision 0.3.0, every non-visible state also suppresses cand
 Actual image execution requires local OpenCV, Pillow and NumPy:
 
 ```bash
-python -m pip install opencv-python-headless pillow numpy
+python -m pip install "opencv-python-headless>=4,<5" pillow numpy
 ```
 
 Normal CI does not need these packages because `--self-check` uses only the Python standard library.
+The actual runner uses the OpenCV 4.x Haar cascade API (`CascadeClassifier`);
+OpenCV 5.x is incompatible with this frozen candidate. Use a private virtual environment.
 
 ## Self-check
 
@@ -145,7 +147,9 @@ Outputs:
   repo-safe-receipt.json
 ```
 
-The detailed candidate file may contain local source paths, digests, ROI and raw boundary points. It must remain local.
+The detailed candidate file contains local source paths, ROI and raw boundary points. It must remain local.
+The runner does not compute or persist source-image digests. This privacy-only output
+change does not change revision 0.4.0's extraction, thresholds, guards or preview states.
 
 QA overlay semantics:
 

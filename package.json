@@ -83,6 +83,7 @@
     "face:review:fr307": "node scripts/run-fr307-hairline-review-packet.mjs",
     "face:verify:fr307-review-packet": "node scripts/run-fr307-hairline-review-packet.mjs --self-check",
     "face:run:hairline-multisignal-candidate": "python3 tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py",
+    "face:run:hairline-fresh-validation": "npm run face:build && node scripts/run-fresh-hairline-validation.mjs",
     "face:verify:hairline-multisignal-candidate": "python3 tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py --self-check",
     "face:review:hairline-multisignal": "npm run face:build && node scripts/run-multisignal-hairline-review-packet.mjs",
     "face:verify:hairline-multisignal-review-packet": "npm run face:build && node scripts/run-multisignal-hairline-review-packet.mjs --self-check"

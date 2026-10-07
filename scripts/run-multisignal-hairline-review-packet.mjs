@@ -13,6 +13,7 @@ import {
   resolve,
 } from 'node:path';
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
 
 const PRIVATE_SUMMARY_SCHEMA =
   'multisignal-visible-hairline-private-summary-v1';
@@ -38,14 +39,14 @@ const PREVIEW_STATES = new Set([
   'unavailable',
 ]);
 
-const FR308_CASES = Object.freeze([
+export const FR308_CASES = Object.freeze([
   'clear_unobstructed_central_hairline',
   'partial_bangs_occlusion',
   'heavy_bangs_hairline_substantially_hidden',
   'cropped_upper_forehead',
 ]);
 
-const FR312_CASES = Object.freeze([
+export const FR312_CASES = Object.freeze([
   'm_shaped_or_widows_peak_visible_contour',
   'side_recession_or_asymmetric_visible_hairline',
   'upper_hairline_visibility_loss',
@@ -147,7 +148,7 @@ function parseArgs(argv) {
 function localPrivatePath(path, code) {
   const absolute = resolve(path);
   const cwd = resolve(process.cwd());
-  const rel = relative(cwd, absolute);
+  const rel = relative(cwd, absolute).replaceAll('\\', '/');
 
   if (
     rel !== '' &&
@@ -165,7 +166,7 @@ function localPrivatePath(path, code) {
 function localOutputPath(path, code) {
   const absolute = resolve(path);
   const cwd = resolve(process.cwd());
-  const rel = relative(cwd, absolute);
+  const rel = relative(cwd, absolute).replaceAll('\\', '/');
 
   if (
     rel === '' ||
@@ -255,7 +256,7 @@ async function writeJson(path, value) {
   );
 }
 
-async function assertRegisteredCandidate() {
+export async function assertRegisteredCandidate() {
   const module = await import(
     '../.face-reading-dist/visible-hairline-runtime-candidates-fr306.js'
   );
@@ -312,7 +313,7 @@ function blankRouting() {
   };
 }
 
-async function prepareWorksheet(summaryPath) {
+export async function prepareWorksheet(summaryPath) {
   await assertRegisteredCandidate();
 
   const summary = await readJson(summaryPath);
@@ -536,7 +537,7 @@ function validateCompletedReview(record) {
   }
 }
 
-function compileWorksheet(worksheet) {
+export function compileWorksheet(worksheet, { boundedOnly = false } = {}) {
   validateWorksheetHeader(worksheet);
 
   const selectedFR308 = worksheet.records.filter(
@@ -632,6 +633,41 @@ function compileWorksheet(worksheet) {
         containsFileNameOrPersonalIdentifier: false,
       };
     });
+
+  const compiled = {
+    schemaVersion: OUTPUT_SCHEMA,
+    candidate: {
+      modelId: MODEL_ID,
+      modelRevision: MODEL_REVISION,
+      runnerContractVersion:
+        RUNNER_CONTRACT_VERSION,
+    },
+    fr308: { caseFindings },
+    fr310: {
+      humanReview: {
+        schemaVersion:
+          'fr310-hairline-human-review-attestation-v1',
+        completed: true,
+        reviewOutputDeidentified: true,
+        sourceImageAbsent: true,
+        overlayAbsent: true,
+        rawPolygonCoordinatesAbsent: true,
+        sourceImageDigestAbsent: true,
+        fileNameOrPersonalIdentifierAbsent: true,
+        assessmentBlockedCases:
+          [...fr310.assessmentBlockedCases],
+        directPromptAuthoritativeMisinterpretationRiskCases:
+          [
+            ...fr310
+              .directPromptAuthoritativeMisinterpretationRiskCases,
+          ],
+      },
+    },
+  };
+  if (boundedOnly) {
+    assertSafeCompiledOutput(compiled);
+    return compiled;
+  }
 
   const selectedFR312 = worksheet.records.filter(
     (record) =>
@@ -771,42 +807,12 @@ function compileWorksheet(worksheet) {
     );
   }
 
-  const compiled = {
-    schemaVersion: OUTPUT_SCHEMA,
-    candidate: {
-      modelId: MODEL_ID,
-      modelRevision: MODEL_REVISION,
-      runnerContractVersion:
-        RUNNER_CONTRACT_VERSION,
-    },
-    fr308: { caseFindings },
-    fr310: {
-      humanReview: {
-        schemaVersion:
-          'fr310-hairline-human-review-attestation-v1',
-        completed: true,
-        reviewOutputDeidentified: true,
-        sourceImageAbsent: true,
-        overlayAbsent: true,
-        rawPolygonCoordinatesAbsent: true,
-        sourceImageDigestAbsent: true,
-        fileNameOrPersonalIdentifierAbsent: true,
-        assessmentBlockedCases:
-          [...fr310.assessmentBlockedCases],
-        directPromptAuthoritativeMisinterpretationRiskCases:
-          [
-            ...fr310
-              .directPromptAuthoritativeMisinterpretationRiskCases,
-          ],
-      },
-    },
-    fr312: {
-      humanReviewCompleted: true,
-      sessionLabelsOpaque: true,
-      demographicAttributesCollected: false,
-      subjectCoverage: fr312.subjectCoverage,
-      captures,
-    },
+  compiled.fr312 = {
+    humanReviewCompleted: true,
+    sessionLabelsOpaque: true,
+    demographicAttributesCollected: false,
+    subjectCoverage: fr312.subjectCoverage,
+    captures,
   };
 
   assertSafeCompiledOutput(compiled);
@@ -1067,23 +1073,26 @@ async function main() {
   throw new Error('MODE_REQUIRED');
 }
 
-try {
-  await main();
-} catch (error) {
-  const message =
-    error instanceof Error ? error.message : String(error);
-  process.stderr.write(
-    `${JSON.stringify({
-      schemaVersion:
-        'multisignal-hairline-review-packet-error-v1',
-      status: 'error',
-      error: message
-        .replace(/sha256:[0-9a-f]{64}/giu, '[redacted-digest]')
-        .replace(/[0-9a-f]{64}/giu, '[redacted-hex64]'),
-      privateInputEchoed: false,
-      stackPrinted: false,
-      authorityPromoted: false,
-    })}\n`,
-  );
-  process.exitCode = 1;
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  try {
+    await main();
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : String(error);
+    process.stderr.write(
+      `${JSON.stringify({
+        schemaVersion:
+          'multisignal-hairline-review-packet-error-v1',
+        status: 'error',
+        error: message
+          .replace(/sha256:[0-9a-f]{64}/giu, '[redacted-digest]')
+          .replace(/[0-9a-f]{64}/giu, '[redacted-hex64]'),
+        privateInputEchoed: false,
+        stackPrinted: false,
+        authorityPromoted: false,
+      })}\n`,
+    );
+    process.exitCode = 1;
+  }
+
 }

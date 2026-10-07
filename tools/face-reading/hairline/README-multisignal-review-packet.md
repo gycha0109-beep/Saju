@@ -29,6 +29,14 @@ runner contract:
 
 The compiler verifies this identity against the FR306 runtime-candidate registry before preparing or compiling a worksheet.
 
+## Fresh independent validation (#2337)
+
+Use [the staged fresh-validation protocol](README-fresh-validation.md) for #2337.
+It freezes routing before any candidate execution, compiles FR308 without FR312 findings,
+and re-adjudicates FR310 before invoking the expanded image runner. The combined legacy
+packet below remains useful for development/regression evidence; preparing all outputs
+together does not establish fresh independent validation.
+
 ## Build and self-check
 
 ```bash
