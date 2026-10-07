@@ -608,11 +608,23 @@ describe('Governed Reading Execution Orchestrator', () => {
       expect(detailed.officialReadingReport?.sections).not.toEqual(
         standard.officialReadingReport?.sections,
       );
-      expect(detailed.canonicalSemantics?.semanticHash).toBe(
-        standard.canonicalSemantics?.semanticHash,
+      expect(detailed.canonicalSemantics?.intent).toEqual(
+        standard.canonicalSemantics?.intent,
       );
-      expect(detailed.officialReadingPlan?.planHash).toBe(
-        standard.officialReadingPlan?.planHash,
+      expect(detailed.canonicalSemantics?.targetClaimIds).toEqual(
+        standard.canonicalSemantics?.targetClaimIds,
+      );
+      expect(detailed.canonicalSemantics?.units).toEqual(
+        standard.canonicalSemantics?.units,
+      );
+      expect(detailed.canonicalSemantics?.canonicalFacts).toEqual(
+        standard.canonicalSemantics?.canonicalFacts,
+      );
+      expect(detailed.canonicalSemantics?.claimRelations).toEqual(
+        standard.canonicalSemantics?.claimRelations,
+      );
+      expect(detailed.officialReadingPlan?.sections).toEqual(
+        standard.officialReadingPlan?.sections,
       );
       expect(detailed.artifact?.sections).not.toEqual(
         standard.artifact?.sections,
