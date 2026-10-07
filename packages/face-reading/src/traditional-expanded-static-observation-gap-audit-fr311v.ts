@@ -66,14 +66,14 @@ interface AuditSeedFR311V {
   readonly nextResearchLane: ExpandedStaticNextResearchLaneFR311V;
 }
 
-const MATERIALIZED_FEATURE_KEYS_FR311V = new Set(
+const MATERIALIZED_FEATURE_KEYS_FR311V: ReadonlySet<string> = new Set(
   FR293_PRODUCT_COLUMN_MAP
     .filter((item) =>
       item.implementationState === 'canonical_extractor_materialized')
     .map((item) => item.featureKey),
 );
 
-const KNOWN_NEUTRAL_FEATURE_KEYS_FR311V = new Set(
+const KNOWN_NEUTRAL_FEATURE_KEYS_FR311V: ReadonlySet<string> = new Set(
   FR282_RGB_SELFIE_FEATURE_ENTRIES.map((item) => item.featureKey),
 );
 
