@@ -61,6 +61,7 @@ describe('SA-7B spouse standard Official Reading authority closure', () => {
       mayPromoteProductionInterpretationAuthority: false,
       mayGrantPersistenceAuthority: false,
       mayGrantPublicGeneralAvailabilityAuthority: false,
+      mayTreatUnsupportedSectionAsOfficialReading: false,
     });
   });
 
