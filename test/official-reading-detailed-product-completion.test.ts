@@ -18,6 +18,9 @@ import {
   RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
 } from '../src/reading/official-reading-detailed-presentation-relationship.js';
 import {
+  RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+} from '../src/reading/official-reading-detailed-presentation-spouse.js';
+import {
   WEALTH_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
 } from '../src/reading/official-reading-detailed-presentation-wealth.js';
 import {
@@ -34,6 +37,7 @@ const SUPPORTED_DOMAINS = [
   'career:natal',
   'wealth:natal',
   'relationship:natal:general',
+  'relationship:natal:spouse',
   'business:natal',
 ] as const;
 
@@ -42,6 +46,7 @@ const PROFILE_COUNTS = {
   'career:natal': 20,
   'wealth:natal': 11,
   'relationship:natal:general': 11,
+  'relationship:natal:spouse': 1,
   'business:natal': 11,
 } as const;
 
@@ -51,10 +56,10 @@ const APPROVED_ROLES = new Set([
   'boundary',
 ]);
 
-describe('SA-6X detailed Official Reading product completion contract', () => {
-  it('freezes the completed product scope to the five governed natal domains', () => {
+describe('Detailed Official Reading product completion contract', () => {
+  it('extends the governed natal detailed scope to the SA-7C spouse position-only pilot', () => {
     expect(OFFICIAL_READING_APPROVED_DETAILED_REGISTRY_VERSION).toBe(
-      'myeonghwa-official-reading-approved-detailed-registry-v3',
+      'myeonghwa-official-reading-approved-detailed-registry-v4',
     );
     expect(OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1).toEqual(
       SUPPORTED_DOMAINS,
@@ -66,6 +71,8 @@ describe('SA-6X detailed Official Reading product completion contract', () => {
       'wealth:natal': WEALTH_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
       'relationship:natal:general':
         RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+      'relationship:natal:spouse':
+        RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
       'business:natal': BUSINESS_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
     } as const;
 
@@ -160,7 +167,6 @@ describe('SA-6X detailed Official Reading product completion contract', () => {
 
   it('keeps unsupported detailed scope out of the completion declaration', () => {
     for (const unsupported of [
-      'relationship:natal:spouse',
       'general:annual',
       'career:annual',
       'wealth:monthly',
