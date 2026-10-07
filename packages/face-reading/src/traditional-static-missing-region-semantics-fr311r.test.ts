@@ -13,8 +13,8 @@ describe('FR311R missing static face-region semantics', () => {
 
     expect(FR311R_STATIC_REGION_SUMMARY).toEqual({
       traditionalRegions: 7,
-      directRules: 29,
-      foreheadRules: 10,
+      directRules: 30,
+      foreheadRules: 11,
       cheekboneRules: 5,
       chinLowerFaceRules: 11,
       wholeFaceRules: 3,
