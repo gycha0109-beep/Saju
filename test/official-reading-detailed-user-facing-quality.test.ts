@@ -278,6 +278,22 @@ function qualityAudit(candidate: DomainCase) {
     }))
     .sort((left, right) => left.text.localeCompare(right.text));
 
+  const duplicateBoundaryTextGroups = duplicateRoleTextGroups.filter(
+    (group) =>
+      group.occurrences.length > 1 &&
+      group.occurrences.every((occurrence) => occurrence.role === 'boundary'),
+  );
+  const renderedDetailedTexts = detailedTexts.map(normalizedText);
+  const renderedDuplicateBoundaryCounts = duplicateBoundaryTextGroups.map(
+    (group) => ({
+      text: group.text,
+      count: renderedDetailedTexts.reduce((count, renderedText) => {
+        if (group.text.length === 0) return count;
+        return count + renderedText.split(group.text).length - 1;
+      }, 0),
+    }),
+  );
+
   return {
     label: candidate.label,
     domainKey: candidate.domainKey,
@@ -309,6 +325,8 @@ function qualityAudit(candidate: DomainCase) {
     }),
     roleCounts,
     duplicateRoleTextGroups,
+    duplicateBoundaryTextGroups,
+    renderedDuplicateBoundaryCounts,
     standardLimitSectionTexts: standard.sections
       .filter((section) => section.title === '해석 범위')
       .flatMap(sectionTexts),
@@ -350,6 +368,9 @@ describe('Official Reading detailed user-facing quality audit', () => {
         resolvedDetail: 'detailed',
         resolution: 'exact',
       });
+      for (const boundary of audit.renderedDuplicateBoundaryCounts) {
+        expect(boundary.count).toBe(1);
+      }
 
       process.stdout.write(
         `[SA-6V][${candidate.domainKey}] ${JSON.stringify({
@@ -362,6 +383,9 @@ describe('Official Reading detailed user-facing quality audit', () => {
           sectionLengths: audit.sectionLengths,
           roleCounts: audit.roleCounts,
           duplicateRoleTextGroups: audit.duplicateRoleTextGroups,
+          duplicateBoundaryTextGroups: audit.duplicateBoundaryTextGroups,
+          renderedDuplicateBoundaryCounts:
+            audit.renderedDuplicateBoundaryCounts,
           standardLimitSectionTexts: audit.standardLimitSectionTexts,
           detailedLimitSectionTexts: audit.detailedLimitSectionTexts,
         })}\n`,
