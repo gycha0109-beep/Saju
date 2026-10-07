@@ -12,8 +12,8 @@ describe('FR311T V1 static traditional face-research closure', () => {
     assertStaticFaceResearchClosureFR311T();
 
     expect(FR311T_STATIC_RESEARCH_CLOSURE).toMatchObject({
-      staticCoreAreas: 19,
-      staticCoreResearchComplete: 19,
+      staticCoreAreas: 23,
+      staticCoreResearchComplete: 23,
       staticCoreResearchMissing: 0,
       explicitArchitectureExclusions: 2,
       missingTraditionalRegions: 0,
@@ -24,7 +24,7 @@ describe('FR311T V1 static traditional face-research closure', () => {
       productInterpretationsAuthorized: 0,
     });
 
-    expect(STATIC_FACE_RESEARCH_COVERAGE_FR311T).toHaveLength(19);
+    expect(STATIC_FACE_RESEARCH_COVERAGE_FR311T).toHaveLength(23);
   });
 
   it('makes the previously missing forehead, cheekbone, chin/lower-face and whole-face areas explicit', () => {
@@ -58,6 +58,10 @@ describe('FR311T V1 static traditional face-research closure', () => {
       'five_stars_six_luminaries',
       'study_halls',
       'five_element_forms',
+      'ten_observations',
+      'five_methods',
+      'three_masters',
+      'three_pillars',
     ];
 
     const completed = new Set(
