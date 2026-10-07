@@ -22,6 +22,9 @@ import {
   RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
 } from './official-reading-detailed-presentation-relationship.js';
 import {
+  RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+} from './official-reading-detailed-presentation-spouse.js';
+import {
   BUSINESS_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
 } from './official-reading-detailed-presentation-business.js';
 import {
@@ -38,7 +41,7 @@ import {
 import type { OfficialReadingPlanV1 } from './official-reading-plan.js';
 
 export const OFFICIAL_READING_APPROVED_DETAILED_REGISTRY_VERSION =
-  'myeonghwa-official-reading-approved-detailed-registry-v3' as const;
+  'myeonghwa-official-reading-approved-detailed-registry-v4' as const;
 
 export const OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1 =
   Object.freeze([
@@ -46,6 +49,7 @@ export const OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1 =
     'career:natal',
     'wealth:natal',
     'relationship:natal:general',
+    'relationship:natal:spouse',
     'business:natal',
   ] as const);
 
@@ -55,6 +59,7 @@ export const APPROVED_OFFICIAL_READING_DETAILED_SOURCE_PROFILES_V1:
     ...CAREER_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
     ...WEALTH_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
     ...RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+    ...RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
     ...BUSINESS_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
   ]);
 
@@ -92,11 +97,13 @@ function detailedDomainKey(
   if (intent.domain === 'business' && intent.relationshipScope === undefined) {
     return 'business:natal';
   }
-  if (
-    intent.domain === 'relationship' &&
-    intent.relationshipScope === 'general'
-  ) {
-    return 'relationship:natal:general';
+  if (intent.domain === 'relationship') {
+    if (intent.relationshipScope === 'general') {
+      return 'relationship:natal:general';
+    }
+    if (intent.relationshipScope === 'spouse') {
+      return 'relationship:natal:spouse';
+    }
   }
   return undefined;
 }
