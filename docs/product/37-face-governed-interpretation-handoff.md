@@ -1,7 +1,18 @@
 # TOPIC-FACE-005K — Source-owned governed interpretation handoff
 
-Status: IMPLEMENTED; validation and hosted CI are recorded in the linked PR.
+Status: MERGED / contract VERIFIED (not production authority).
 Watchtower-Track: topic-face
+
+Source: [Saju #2342](https://github.com/gycha0109-beep/Saju/pull/2342),
+merge `ff2c72039cbf5b6fd4a769b3c382ab64056cde47`.
+Consumer: [MyeongHa #1687](https://github.com/gycha0109-beep/MyeongHa/pull/1687),
+merge `796c45d660235386116e1481d4b1400c4f526ba9`.
+Both required PR CI/Integration gates passed; MyeongHa merged-main CI/Governance
+also passed. Saju topic-face targeted tests: 11 files / 133 tests; consumer
+targeted tests: 4 files / 19 tests. Both root TypeScript checks passed; source
+build/ESLint passed. Direct execution of the compiled Saju builder and current
+MyeongHa validator also passed using the exact same canonical JSON. These are
+synthetic contract results only.
 
 ## Authority and compatibility
 
