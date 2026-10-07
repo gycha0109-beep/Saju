@@ -182,6 +182,8 @@ ordinary_indoor_illumination_variation
 
 At least twelve total captures and at least three opaque sessions are required.
 
+For fresh independent validation, a record selected for FR308 must **not** be reused in FR312. The review-packet compiler rejects FR308/FR312 source-record overlap, so the bounded 4-capture set and expanded 12-capture set require at least 16 distinct source captures.
+
 Example routing shape:
 
 ```json
