@@ -56,6 +56,23 @@ FR312C까지 진행된 연구는 기존 FR311 corpus를 전제로 했다.
 
 현재 static core research missing = **0**.
 
+## 관찰 엔진 지역 커버리지 감사
+
+현재 FR282가 선언한 정적 얼굴 관찰 지역 8개를 연구 영역에 명시적으로 대응시킨다.
+
+- forehead → 이마
+- eyebrow → 눈썹
+- eye_pair → 눈
+- nose → 코
+- mouth_lips → 인중/입/입술
+- ear → 귀
+- cheek_mid_face → 광대
+- chin_lower_face → 턱/하관
+
+결과: **8/8 연구 영역 존재, 미연구 관찰 지역 0**.
+
+이 대응은 연구 커버리지 감사용이며 neutral geometry와 전통 부위를 동일시하는 binding이 아니다.
+
 ## 확장 연구 인덱스
 
 기존 FR311P의 canonical evidence 기준선 621은 변경하지 않는다.
