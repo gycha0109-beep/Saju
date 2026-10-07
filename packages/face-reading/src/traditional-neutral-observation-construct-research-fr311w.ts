@@ -668,10 +668,10 @@ export function assertNeutralObservationConstructResearchFR311W(): void {
     throw new Error('fr311w_duplicate_construct_key');
   }
 
-  const knownRegistered = new Set(
+  const knownRegistered: ReadonlySet<string> = new Set(
     FR282_RGB_SELFIE_FEATURE_ENTRIES.map((item) => item.featureKey),
   );
-  const materialized = new Set(
+  const materialized: ReadonlySet<string> = new Set(
     FR293_PRODUCT_COLUMN_MAP
       .filter((item) =>
         item.implementationState === 'canonical_extractor_materialized')
