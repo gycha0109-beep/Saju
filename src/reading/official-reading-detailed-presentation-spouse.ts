@@ -1,41 +1,34 @@
 import type {
   ApprovedOfficialReadingDetailedSourceProfileV1,
 } from './official-reading-detailed-presentation-definition.js';
-import {
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_CONTRACT_VERSION,
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE,
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_METHODOLOGY_ID,
-} from '../research/relationship-spouse-t8-day-branch-palace-claim-contract-candidate.js';
-import {
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_METHODOLOGY_SOURCE_IDS,
-} from '../research/relationship-spouse-t8-day-branch-palace-source-manifest-candidate.js';
-import {
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_HEADLINE,
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
-  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
-} from '../research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js';
-import {
-  SPOUSE_POSITION_ONLY_OFFICIAL_READING_PROHIBITED_EXTENSIONS,
-} from './spouse-position-only-official-reading-semantic-projection.js';
 
 export const SPOUSE_NATAL_DETAILED_MATERIAL_AUTHORITY_ID =
   'SA-7C-RELATIONSHIP-NATAL-SPOUSE-POSITION-ONLY-DETAILED-MATERIAL' as const;
 export const SPOUSE_NATAL_DETAILED_MATERIAL_AUTHORITY_VERSION = '1' as const;
 
-const QUALIFIER_PROVENANCE = Object.freeze({
-  admissionId: 'sa5ab-production-active-relationship-spouse-position-only-v1',
-  admissionRegistryVersion:
-    'myeonghwa-production-spouse-official-reading-delivery-authority-v1',
-  researchId:
-    'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PRODUCTION_DELIVERY_ACTIVATION_AUTHORITY_REVIEW',
-  researchVersion:
-    'myeonghwa-relationship-spouse-t8-day-branch-palace-production-delivery-activation-authority-review-v1',
-  authorityState:
-    'AUTHORIZE_POSITION_ONLY_PRODUCTION_DELIVERY_ACTIVATION_IMPLEMENTATION',
-});
+const CLAIM_TYPE =
+  'relationship.spouse.traditional_spouse_palace_position' as const;
+const METHODOLOGY_ID =
+  'relationship-spouse-t8-day-branch-spouse-palace-position' as const;
+const METHODOLOGY_VERSION = '2.0.0' as const;
+
+const STANDARD_HEADLINE = '배우자궁의 전통적 위치' as const;
+const STANDARD_SUMMARY =
+  '전통 명리에서는 일지(日支)를 배우자궁의 위치로 봅니다.' as const;
+const STANDARD_BOUNDARY =
+  '이는 배우자궁의 위치에 대한 전통적 분류이며, 배우자의 성격이나 정체, 결혼 시기 또는 관계 결과를 의미하지 않습니다.' as const;
 
 const PROHIBITED_EXTENSIONS = Object.freeze(
-  [...SPOUSE_POSITION_ONLY_OFFICIAL_READING_PROHIBITED_EXTENSIONS].sort(),
+  [
+    'NO_DIVORCE_OR_REMARRIAGE',
+    'NO_FAVORABLE_UNFAVORABLE_SPOUSE_PALACE_JUDGMENT',
+    'NO_MARRIAGE_TIMING_OR_OUTCOME',
+    'NO_SECOND_CHART_COMPATIBILITY',
+    'NO_SPOUSE_APPEARANCE_OR_OCCUPATION',
+    'NO_SPOUSE_PERSONALITY_OR_IDENTITY',
+    'NO_SPOUSE_STAR_AUTO_SELECTION',
+    'NO_YONGSHIN_JISIN_SEMANTICS',
+  ] as const,
 );
 
 const SEMANTIC_QUALIFIERS = Object.freeze([
@@ -49,11 +42,21 @@ const SEMANTIC_QUALIFIERS = Object.freeze([
       'relationship:spouse:traditional_spouse_palace_position:position_only',
     ]),
     canonicalText: Object.freeze({
-      summary:
-        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
+      summary: STANDARD_BOUNDARY,
     }),
     prohibitedExtensions: PROHIBITED_EXTENSIONS,
-    provenance: QUALIFIER_PROVENANCE,
+    provenance: Object.freeze({
+      admissionId:
+        'sa5ab-production-active-relationship-spouse-position-only-v1',
+      admissionRegistryVersion:
+        'myeonghwa-production-spouse-official-reading-delivery-authority-v1',
+      researchId:
+        'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PRODUCTION_DELIVERY_ACTIVATION_AUTHORITY_REVIEW',
+      researchVersion:
+        'myeonghwa-relationship-spouse-t8-day-branch-palace-production-delivery-activation-authority-review-v1',
+      authorityState:
+        'AUTHORIZE_POSITION_ONLY_PRODUCTION_DELIVERY_ACTIVATION_IMPLEMENTATION',
+    }),
   }),
 ]);
 
@@ -64,17 +67,14 @@ export const RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 =
       profileId:
         'PROFILE-RELATIONSHIP-SPOUSE-T8-DAY-BRANCH-PALACE-POSITION-ONLY-DETAILED-V1',
       profileVersion: '1',
-      claimType: RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_TYPE,
+      claimType: CLAIM_TYPE,
       methodologyRef: Object.freeze({
-        id: RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_METHODOLOGY_ID,
-        version:
-          RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_CLAIM_CONTRACT_VERSION,
+        id: METHODOLOGY_ID,
+        version: METHODOLOGY_VERSION,
       }),
       standardText: Object.freeze({
-        headline:
-          RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_HEADLINE,
-        summary:
-          RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
+        headline: STANDARD_HEADLINE,
+        summary: STANDARD_SUMMARY,
       }),
       semanticQualifiers: SEMANTIC_QUALIFIERS,
       prohibitedExtensions: PROHIBITED_EXTENSIONS,
@@ -90,7 +90,10 @@ export const RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 =
       provenance: Object.freeze({
         authorityId: SPOUSE_NATAL_DETAILED_MATERIAL_AUTHORITY_ID,
         authorityVersion: SPOUSE_NATAL_DETAILED_MATERIAL_AUTHORITY_VERSION,
-        sourceRefs: RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_METHODOLOGY_SOURCE_IDS,
+        sourceRefs: Object.freeze([
+          'SRC-RELATIONSHIP-SPOUSE-T8-JUNG-SUA-2025-DAY-BRANCH-PALACE',
+          'SRC-RELATIONSHIP-SPOUSE-T8-SAJU-ATELIER-2026-DAY-BRANCH-PALACE',
+        ]),
       }),
     } satisfies ApprovedOfficialReadingDetailedSourceProfileV1),
   ] as const);
