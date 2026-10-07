@@ -41,6 +41,9 @@ import {
   RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
 } from '../src/reading/official-reading-detailed-presentation-relationship.js';
 import {
+  RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+} from '../src/reading/official-reading-detailed-presentation-spouse.js';
+import {
   WEALTH_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
 } from '../src/reading/official-reading-detailed-presentation-wealth.js';
 import {
@@ -227,7 +230,7 @@ function structuralSignature(
 }
 
 describe('Official Reading detailed core natal domain expansion', () => {
-  it('registers exactly the governed core-natal profile surfaces without spouse expansion', () => {
+  it('registers the governed natal profile surfaces including the spouse position-only pilot', () => {
     expect(GENERAL_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1).toHaveLength(20);
     expect(CAREER_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1).toHaveLength(20);
     expect(WEALTH_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1).toHaveLength(11);
@@ -235,19 +238,20 @@ describe('Official Reading detailed core natal domain expansion', () => {
       RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
     ).toHaveLength(11);
     expect(BUSINESS_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1).toHaveLength(11);
+    expect(
+      RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+    ).toHaveLength(1);
     expect(APPROVED_OFFICIAL_READING_DETAILED_SOURCE_PROFILES_V1).toHaveLength(
-      73,
+      74,
     );
     expect(OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1).toEqual([
       'general:natal',
       'career:natal',
       'wealth:natal',
       'relationship:natal:general',
+      'relationship:natal:spouse',
       'business:natal',
     ]);
-    expect(OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1).not.toContain(
-      'relationship:natal:spouse',
-    );
   });
 
   it.each(CASES)(
@@ -424,7 +428,7 @@ describe('Official Reading detailed core natal domain expansion', () => {
     expect(coverage.staleTargetCount).toBeGreaterThan(0);
   });
 
-  it('does not widen detailed authority to spouse relationship readings', () => {
+  it('does not reuse general relationship detailed material for spouse semantics', () => {
     const candidate = CASES.find((entry) => entry.label === 'relationship');
     if (candidate === undefined) throw new Error('relationship fixture missing');
     const semantics = semanticsFor(candidate);
@@ -442,9 +446,9 @@ describe('Official Reading detailed core natal domain expansion', () => {
       spouseLike,
       plan,
     );
-    expect(coverage.state).toBe('unsupported_domain');
-    expect(coverage.domainKey).toBeUndefined();
+    expect(coverage.state).toBe('incomplete');
+    expect(coverage.domainKey).toBe('relationship:natal:spouse');
     expect(coverage.approvedMaterialCount).toBe(0);
-    expect(coverage.missingTargetCount).toBeGreaterThan(0);
+    expect(coverage.missingTargetCount + coverage.staleTargetCount).toBeGreaterThan(0);
   });
 });
