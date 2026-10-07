@@ -28,12 +28,14 @@ const STEMS: Record<'갑' | '기' | '경' | '임', StemFact> = {
   경: { value: '경', hanja: '庚', element: '금', yinYang: '양' },
   임: { value: '임', hanja: '壬', element: '수', yinYang: '양' },
 };
-const BRANCHES: Record<'사' | '오' | '진' | '축' | '자', BranchFact> = {
+const BRANCHES: Record<'사' | '오' | '진' | '축' | '자' | '인' | '유', BranchFact> = {
   사: { value: '사', hanja: '巳', element: '화', yinYang: '음' },
   오: { value: '오', hanja: '午', element: '화', yinYang: '양' },
   진: { value: '진', hanja: '辰', element: '토', yinYang: '양' },
   축: { value: '축', hanja: '丑', element: '토', yinYang: '음' },
   자: { value: '자', hanja: '子', element: '수', yinYang: '양' },
+  인: { value: '인', hanja: '寅', element: '목', yinYang: '양' },
+  유: { value: '유', hanja: '酉', element: '금', yinYang: '음' },
 };
 
 function pillar(stem: keyof typeof STEMS, branch: keyof typeof BRANCHES): PillarFact {
@@ -92,7 +94,7 @@ function request(year: number): ReadingRequest {
   };
 }
 
-function snapshot(dayunBranch: '오' | '진' | '자' = '오'): CanonicalSajuSnapshot {
+function snapshot(dayunBranch: '오' | '진' | '자' | '인' = '오'): CanonicalSajuSnapshot {
   const base = calculateCanonicalSajuSnapshot(
     {
       calendarType: 'solar',
@@ -250,9 +252,74 @@ describe('R198 bounded annual structural impact producer', () => {
     }
   });
 
-  test('fails closed when an unsupported punishment-pair relation requires settlement', () => {
+  test('admits exactly one isolated temporal Zi-Mao punishment pair as qualifier-only context', () => {
     const result = produceAnnualStructuralImpactBundleV1(
       snapshot('자'),
+      request(2035),
+      'structure-r198',
+      assignments,
+    );
+    expect(result.status).toBe('resolved');
+    if (result.status !== 'resolved') throw new Error('expected resolved');
+
+    expect(result.annualFacts.annualPillar).toMatchObject({
+      stem: '을',
+      branch: '묘',
+    });
+    expect(result.punishmentPairObservations).toEqual([
+      {
+        relationId: 'punishment_pair:annual:묘|dayun:자',
+        relationKind: 'punishment_pair',
+        semantics: {
+          qualifierOnly: true,
+          relationIdentityObserved: true,
+          reciprocalPunishmentPairObserved: true,
+          punishmentEffectAuthorized: false,
+          favorableOrHarmfulInferenceAuthorized: false,
+          conflictResolutionAuthorized: false,
+          functionStateOverrideAuthorized: false,
+          temporalPrecedenceAuthorized: false,
+          numericWeightAssigned: false,
+        },
+      },
+    ]);
+    expect(result.overlays[0]?.settlement.participants.controller.functionState).toBe(
+      'impaired',
+    );
+    expect(result.overlays[0]?.settlement.participants.controlled.functionState).toBe(
+      'impaired',
+    );
+    expect(result.overlays[0]?.settlement.pairControlEffective).toBe(false);
+    expect(result.overlays[0]?.temporalInfluences).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceLayer: 'annual',
+          sourceStem: '을',
+          targetRole: 'controlled',
+          kind: 'control',
+        }),
+        expect.objectContaining({
+          sourceLayer: 'dayun',
+          sourceStem: '경',
+          targetRole: 'controller',
+          kind: 'control',
+        }),
+      ]),
+    );
+  });
+
+  test('keeps Zi-Mao punishment pair blocked when another branch relation competes', () => {
+    const current = snapshot('자');
+    const mixed = {
+      ...current,
+      pillars: {
+        ...current.pillars,
+        year: resolved(pillar('갑', '유')),
+      },
+    } satisfies CanonicalSajuSnapshot;
+
+    const result = produceAnnualStructuralImpactBundleV1(
+      mixed,
       request(2035),
       'structure-r198',
       assignments,
@@ -261,7 +328,27 @@ describe('R198 bounded annual structural impact producer', () => {
     if (result.status !== 'unavailable') throw new Error('expected unavailable');
     expect(result.reasonCode).toBe('branch_relation_requires_settlement');
     expect(result.branchRelationIds).toEqual(
-      expect.arrayContaining(['punishment_pair:annual:묘|dayun:자']),
+      expect.arrayContaining([
+        'clash:natal:year:유|annual:묘',
+        'punishment_pair:annual:묘|dayun:자',
+      ]),
+    );
+  });
+
+  test('keeps punishment-group relations blocked pending separate three-member-family settlement', () => {
+    const result = produceAnnualStructuralImpactBundleV1(
+      snapshot('인'),
+      request(2037),
+      'structure-r198',
+      assignments,
+    );
+    expect(result.status).toBe('unavailable');
+    if (result.status !== 'unavailable') throw new Error('expected unavailable');
+    expect(result.reasonCode).toBe('branch_relation_requires_settlement');
+    expect(result.branchRelationIds).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('punishment_group:'),
+      ]),
     );
   });
 
@@ -614,11 +701,11 @@ describe('R198 bounded annual structural impact producer', () => {
 
   test('policy remains bounded and non-event-producing', () => {
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.scope).toBe(
-      'ISOLATED_LIUHE_LIUCHONG_OR_SELF_PUNISHMENT_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
+      'ISOLATED_LIUHE_LIUCHONG_SELF_PUNISHMENT_OR_ZIMAO_PUNISHMENT_PAIR_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.eventRule).toBe('NONE');
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.branchRule).toBe(
-      'ADMIT_ONE_ISOLATED_SIX_COMBINATION_SIX_CLASH_OR_SELF_PUNISHMENT_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
+      'ADMIT_ONE_ISOLATED_SIX_COMBINATION_SIX_CLASH_SELF_PUNISHMENT_OR_ZIMAO_PUNISHMENT_PAIR_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.sixCombinationRule).toBe(
       'QUALIFIER_ONLY_NO_TRANSFORMATION_OR_CONFLICT_RESOLUTION',
@@ -628,6 +715,9 @@ describe('R198 bounded annual structural impact producer', () => {
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.selfPunishmentRule).toBe(
       'RELATION_IDENTITY_ONLY_NO_PUNISHMENT_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
+    );
+    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.punishmentPairRule).toBe(
+      'ZIMAO_RELATION_IDENTITY_ONLY_NO_PUNISHMENT_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.rootRule).toBe(
       'OBSERVE_AS_QUALIFIER_WITHOUT_WEIGHT_OR_OVERRIDE',

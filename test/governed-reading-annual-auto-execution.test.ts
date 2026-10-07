@@ -48,9 +48,10 @@ const STEMS: Record<'갑' | '기' | '경', StemFact> = {
   경: { value: '경', hanja: '庚', element: '금', yinYang: '양' },
 };
 
-const BRANCHES: Record<'사' | '오', BranchFact> = {
+const BRANCHES: Record<'사' | '오' | '자', BranchFact> = {
   사: { value: '사', hanja: '巳', element: '화', yinYang: '음' },
   오: { value: '오', hanja: '午', element: '화', yinYang: '양' },
+  자: { value: '자', hanja: '子', element: '수', yinYang: '양' },
 };
 
 function pillar(stem: keyof typeof STEMS, branch: keyof typeof BRANCHES): PillarFact {
@@ -95,7 +96,7 @@ function natalSettlement(): StemInteractionSettlementFact {
   };
 }
 
-function autoSnapshot(): CanonicalSajuSnapshot {
+function autoSnapshot(dayunBranch: '오' | '자' = '오'): CanonicalSajuSnapshot {
   const base = calculateCanonicalSajuSnapshot(
     {
       calendarType: 'solar',
@@ -120,7 +121,7 @@ function autoSnapshot(): CanonicalSajuSnapshot {
       start: { age: 1, years: 1, months: 0, days: 0 },
       pillars: Array.from({ length: 10 }, (_, index) => ({
         age: 1 + index * 10,
-        pillar: pillar('경', '오'),
+        pillar: pillar('경', dayunBranch),
       })),
     }),
     derivedFacts: {
@@ -479,6 +480,48 @@ describe('R199 automatic annual Official Reading production', () => {
     expect(JSON.stringify(timing)).toContain('병오');
     expect(JSON.stringify(response)).not.toMatch(
       /selfPunishment|relationIdentityObserved|repeatedSameBranchObserved|punishmentEffectAuthorized|qualifierOnly|r199-controller-core-support/u,
+    );
+  });
+
+  test('isolated Zi-Mao punishment pair qualifier reaches public timing without leaking punishment metadata', async () => {
+    const currentSnapshot = autoSnapshot('자');
+    const { registry, interpretation } = interpretationWithAnnualClaim(
+      currentSnapshot,
+      'r204-isolated-zimao-punishment-public',
+    );
+
+    const result = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      {
+        requestId: 'r204-isolated-zimao-punishment-public',
+        text: '올해 사주',
+        referenceDateTime: '2035-06-15T12:00:00.000Z',
+      },
+      {
+        ...executionOptions,
+        consumerReadingAuthorityResolver: officialAuthority,
+        officialReadingSemanticProjectionResolver: semanticProjection,
+        governedAnnualTemporalProduction: {
+          baseline,
+          roleAssignments: roles,
+        },
+      },
+    );
+
+    expect(result.state).toBe('completed');
+    expect(result.modelCalls).toBe(0);
+    const response = buildProductReadingResponse(
+      buildProductReadingDelivery(result),
+    );
+    const timing = response.reading?.sections.find(
+      (section) => section.sectionType === 'timing',
+    );
+    expect(timing?.title).toBe('2035년 구조 흐름');
+    expect(JSON.stringify(timing)).toContain('을묘');
+    expect(JSON.stringify(response)).not.toMatch(
+      /punishmentPair|reciprocalPunishmentPairObserved|punishmentEffectAuthorized|relationIdentityObserved|qualifierOnly|GH-2354|r199-controller-core-support/u,
     );
   });
 
