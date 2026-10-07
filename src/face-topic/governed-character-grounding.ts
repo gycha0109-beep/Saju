@@ -280,6 +280,35 @@ export function assertFaceGovernedCharacterGroundingV1(
 ): void {
   assertNoPrivacyForbiddenFields(candidate);
 
+  const exactKeys = new Set([
+    'schemaVersion',
+    'projectionVersion',
+    'realizationPolicyRegistryVersion',
+    'mode',
+    'topicKey',
+    'sourceContractVersion',
+    'sourceAuthorityRef',
+    'sourceResultHash',
+    'authorizationReceiptRef',
+    'handoffHash',
+    'faceEngineVersion',
+    'faceReadingRef',
+    'methodologyPackRefs',
+    'bindingGroupRefs',
+    'units',
+    'unavailableSections',
+    'prohibitedInferences',
+    'provenanceRefs',
+    'bundleHash',
+  ]);
+  if (
+    Object.keys(candidate).some(
+      (key) => !exactKeys.has(key),
+    )
+  ) {
+    fail('FACE_GOVERNED_CHARACTER_GROUNDING_SCOPE_VIOLATION');
+  }
+
   if (
     candidate.schemaVersion !==
       FACE_GOVERNED_CHARACTER_GROUNDING_SCHEMA_VERSION_V1 ||
@@ -302,9 +331,15 @@ export function assertFaceGovernedCharacterGroundingV1(
   }
 
   for (const unit of candidate.units) {
-    admitFaceGovernedInterpretationUnitV1(unit);
+    const {
+      realizationPolicyRef,
+      ...interpretation
+    } = unit;
+    admitFaceGovernedInterpretationUnitV1(
+      interpretation,
+    );
     if (
-      unit.realizationPolicyRef !==
+      realizationPolicyRef !==
         FACE_GOVERNED_CHARACTER_REALIZATION_POLICY_V1
     ) {
       fail('FACE_GOVERNED_CHARACTER_GROUNDING_REALIZATION_POLICY_INVALID');
