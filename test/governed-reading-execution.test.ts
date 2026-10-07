@@ -518,6 +518,120 @@ describe('Governed Reading Execution Orchestrator', () => {
     },
   );
 
+  it.each([
+    {
+      label: 'general',
+      text: '사주',
+      snapshotFactory: snapshot,
+      createRegistry: createGeneralNatalUsefulReadingCandidateRegistry,
+    },
+    {
+      label: 'career',
+      text: '직업운',
+      snapshotFactory: fiveFamilySnapshot,
+      createRegistry: createCareerNatalReadingCandidateRegistry,
+    },
+    {
+      label: 'wealth',
+      text: '재물운',
+      snapshotFactory: fiveFamilySnapshot,
+      createRegistry: createWealthNatalReadingCandidateRegistry,
+    },
+    {
+      label: 'relationship',
+      text: '관계운',
+      snapshotFactory: fiveFamilySnapshot,
+      createRegistry: createRelationshipNatalReadingCandidateRegistry,
+    },
+    {
+      label: 'business',
+      text: '사업운',
+      snapshotFactory: fiveFamilySnapshot,
+      createRegistry: createBusinessNatalReadingCandidateRegistry,
+    },
+  ])(
+    'delivers governed detailed $label Official Reading with zero model calls',
+    async ({ label, text, snapshotFactory, createRegistry }) => {
+      const currentSnapshot = snapshotFactory();
+      const registry = createRegistry('2026-10-07T03:30:00.000Z');
+      const interpretation = runInterpretation(currentSnapshot, registry, {
+        requestId: `execution-official-approved-detailed-${label}-interpretation`,
+        now: new Date('2026-10-07T03:31:00.000Z'),
+      });
+
+      const standard = await executeProductReading(
+        currentSnapshot,
+        interpretation,
+        registry,
+        {
+          requestId: `execution-official-approved-${label}-detail-parity-sa6u`,
+          text,
+        },
+        executionOptions,
+      );
+      const detailed = await executeProductReading(
+        currentSnapshot,
+        interpretation,
+        registry,
+        {
+          requestId: `execution-official-approved-${label}-detail-parity-sa6u`,
+          text,
+          outputPreferences: { preferredDetail: 'detailed' },
+        },
+        executionOptions,
+      );
+
+      expect([standard.state, detailed.state]).toEqual([
+        'completed',
+        'completed',
+      ]);
+      expect([
+        standard.consumerReadingAuthority?.authority,
+        detailed.consumerReadingAuthority?.authority,
+      ]).toEqual(['official_reading', 'official_reading']);
+      expect([standard.modelCalls, detailed.modelCalls]).toEqual([0, 0]);
+      expect(standard.narrative).toBeUndefined();
+      expect(detailed.narrative).toBeUndefined();
+      expect(detailed.officialReadingReport?.detailPreferenceResolution).toEqual(
+        {
+          requestedDetail: 'detailed',
+          resolvedDetail: 'detailed',
+          resolution: 'exact',
+        },
+      );
+      expect(
+        detailed.officialReadingReport?.detailedRealizationPolicyVersion,
+      ).toBeTruthy();
+      expect(detailed.officialReadingReport?.explainability).toEqual(
+        standard.officialReadingReport?.explainability,
+      );
+      expect(detailed.officialReadingReport?.sections).not.toEqual(
+        standard.officialReadingReport?.sections,
+      );
+      expect(detailed.canonicalSemantics?.intent).toEqual(
+        standard.canonicalSemantics?.intent,
+      );
+      expect(detailed.canonicalSemantics?.targetClaimIds).toEqual(
+        standard.canonicalSemantics?.targetClaimIds,
+      );
+      expect(detailed.canonicalSemantics?.units).toEqual(
+        standard.canonicalSemantics?.units,
+      );
+      expect(detailed.canonicalSemantics?.canonicalFacts).toEqual(
+        standard.canonicalSemantics?.canonicalFacts,
+      );
+      expect(detailed.canonicalSemantics?.claimRelations).toEqual(
+        standard.canonicalSemantics?.claimRelations,
+      );
+      expect(detailed.officialReadingPlan?.sections).toEqual(
+        standard.officialReadingPlan?.sections,
+      );
+      expect(detailed.artifact?.sections).not.toEqual(
+        standard.artifact?.sections,
+      );
+    },
+  );
+
   it('activates includeSourceSummaries only for Official Reading requests that ask for it', async () => {
     const currentSnapshot = snapshot();
     const registry = createI7SeasonalSupportRegistry();
@@ -709,7 +823,7 @@ describe('Governed Reading Execution Orchestrator', () => {
     expect(concise.artifact?.sections).toEqual(baseline.artifact?.sections);
     expect(detailed.artifact?.sections).toEqual(baseline.artifact?.sections);
     expect(JSON.stringify(concise.artifact)).not.toContain(
-      'myeonghwa-official-reading-detail-presentation-policy-v2',
+      'myeonghwa-official-reading-detail-presentation-policy-v3',
     );
     expect(JSON.stringify(concise.artifact)).not.toContain(
       'missing_text_role_authority',

@@ -7,13 +7,13 @@ import {
   resolveOfficialReadingDetailPreferenceV1,
 } from '../src/reading/official-reading-detail-presentation.js';
 
-describe('Official Reading detail presentation policy v2', () => {
-  it('supports standard directly, concise conditionally, and keeps detailed product activation closed', () => {
+describe('Official Reading detail presentation policy v3', () => {
+  it('supports standard directly, concise conditionally, and enables governed detailed product output', () => {
     expect(OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION).toBe(
-      'myeonghwa-official-reading-detail-presentation-policy-v2',
+      'myeonghwa-official-reading-detail-presentation-policy-v3',
     );
     expect(OFFICIAL_READING_DETAILED_PRODUCT_ACTIVATION_STATE_V1).toBe(
-      'pre_activation',
+      'enabled',
     );
     expect(OFFICIAL_READING_DETAIL_CAPABILITY_V1).toEqual({
       concise: {
@@ -25,14 +25,14 @@ describe('Official Reading detail presentation policy v2', () => {
       },
       detailed: {
         materialState: 'conditional',
-        productState: 'pre_activation',
+        productState: 'enabled',
         missingMaterialFallbackReason: 'missing_expansion_material',
         inactiveFallbackReason: 'detailed_not_activated',
       },
     });
   });
 
-  it('separates missing detailed material from the closed product activation gate', () => {
+  it('resolves ready detailed material exactly while preserving fail-closed and rollback states', () => {
     expect(resolveOfficialReadingDetailPreferenceV1('standard')).toEqual({
       requestedDetail: 'standard',
       resolvedDetail: 'standard',
@@ -66,19 +66,19 @@ describe('Official Reading detail presentation policy v2', () => {
       }),
     ).toEqual({
       requestedDetail: 'detailed',
-      resolvedDetail: 'standard',
-      resolution: 'fallback_to_standard',
-      fallbackReason: 'detailed_not_activated',
+      resolvedDetail: 'detailed',
+      resolution: 'exact',
     });
     expect(
       resolveOfficialReadingDetailPreferenceV1('detailed', {
         detailedAvailable: true,
-        detailedProductActivation: 'enabled',
+        detailedProductActivation: 'pre_activation',
       }),
     ).toEqual({
       requestedDetail: 'detailed',
-      resolvedDetail: 'detailed',
-      resolution: 'exact',
+      resolvedDetail: 'standard',
+      resolution: 'fallback_to_standard',
+      fallbackReason: 'detailed_not_activated',
     });
   });
 });

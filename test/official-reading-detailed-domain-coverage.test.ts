@@ -251,7 +251,7 @@ describe('Official Reading detailed core natal domain expansion', () => {
   });
 
   it.each(CASES)(
-    '$label is fully ready for governed internal detailed rendering while public detailed stays off',
+    '$label is fully ready for governed public detailed rendering',
     (candidate) => {
       const semantics = semanticsFor(candidate);
       const plan = buildOfficialReadingPlanV1(semantics);
@@ -320,7 +320,11 @@ describe('Official Reading detailed core natal domain expansion', () => {
         }
       }
 
-      expect(publicDetailed.sections).toEqual(standard.sections);
+      expect(publicDetailed.sections).toEqual(internalDetailed.sections);
+      expect(structuralSignature(publicDetailed)).toEqual(
+        structuralSignature(standard),
+      );
+      expect(publicDetailed.explainability).toEqual(standard.explainability);
       expect(internalDetailed.detailPreferenceResolution).toEqual({
         requestedDetail: 'detailed',
         resolvedDetail: 'detailed',
@@ -328,13 +332,12 @@ describe('Official Reading detailed core natal domain expansion', () => {
       });
       expect(publicDetailed.detailPreferenceResolution).toEqual({
         requestedDetail: 'detailed',
-        resolvedDetail: 'standard',
-        resolution: 'fallback_to_standard',
-        fallbackReason: 'detailed_not_activated',
+        resolvedDetail: 'detailed',
+        resolution: 'exact',
       });
-      expect(
-        publicDetailed.detailedRealizationPolicyVersion,
-      ).toBeUndefined();
+      expect(publicDetailed.detailedRealizationPolicyVersion).toBe(
+        internalDetailed.detailedRealizationPolicyVersion,
+      );
     },
   );
 

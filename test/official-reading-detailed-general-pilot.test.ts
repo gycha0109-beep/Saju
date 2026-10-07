@@ -372,16 +372,18 @@ describe('Official Reading general natal detailed material pilot', () => {
 
     expect(OFFICIAL_READING_DETAIL_CAPABILITY_V1.detailed).toEqual({
       materialState: 'conditional',
-      productState: 'pre_activation',
+      productState: 'enabled',
       missingMaterialFallbackReason: 'missing_expansion_material',
       inactiveFallbackReason: 'detailed_not_activated',
     });
     expect(report.detailPreferenceResolution).toEqual({
       requestedDetail: 'detailed',
-      resolvedDetail: 'standard',
-      resolution: 'fallback_to_standard',
-      fallbackReason: 'detailed_not_activated',
+      resolvedDetail: 'detailed',
+      resolution: 'exact',
     });
+    expect(report.detailedRealizationPolicyVersion).toBe(
+      OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+    );
   });
 
   it('classifies changed canonical wording as stale approved material', () => {
@@ -626,25 +628,32 @@ describe('Official Reading detailed renderer connection', () => {
     expect(detailedLimits?.blocks).toEqual(standardLimits?.blocks);
   });
 
-  it('keeps the public detailed preference on standard fallback even when internal detailed material is ready', () => {
+  it('activates the public detailed preference when approved detailed material is ready', () => {
     const { semantics, plan } = generalFixture();
     const standard = renderOfficialReadingV1(semantics, plan);
+    const internalDetailed = renderApprovedDetailedOfficialReadingV1(
+      semantics,
+      plan,
+    );
     const publicDetailedRequest = renderOfficialReadingV1(
       semantics,
       plan,
       { preferredDetail: 'detailed' },
     );
 
-    expect(publicDetailedRequest.sections).toEqual(standard.sections);
+    expect(publicDetailedRequest.sections).toEqual(internalDetailed.sections);
+    expect(publicDetailedRequest.sections).not.toEqual(standard.sections);
+    expect(publicDetailedRequest.explainability).toEqual(
+      standard.explainability,
+    );
     expect(publicDetailedRequest.detailPreferenceResolution).toEqual({
       requestedDetail: 'detailed',
-      resolvedDetail: 'standard',
-      resolution: 'fallback_to_standard',
-      fallbackReason: 'detailed_not_activated',
+      resolvedDetail: 'detailed',
+      resolution: 'exact',
     });
-    expect(
-      publicDetailedRequest.detailedRealizationPolicyVersion,
-    ).toBeUndefined();
+    expect(publicDetailedRequest.detailedRealizationPolicyVersion).toBe(
+      OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+    );
   });
 
   it('fails closed instead of partially rendering a valid unit without approved detailed material', () => {

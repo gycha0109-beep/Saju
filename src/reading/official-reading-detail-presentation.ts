@@ -1,7 +1,7 @@
 import type { ReadingRequest } from '../contracts/reading.js';
 
 export const OFFICIAL_READING_DETAIL_PRESENTATION_POLICY_VERSION =
-  'myeonghwa-official-reading-detail-presentation-policy-v2' as const;
+  'myeonghwa-official-reading-detail-presentation-policy-v3' as const;
 
 export type OfficialReadingDetailPreferenceV1 = NonNullable<
   NonNullable<ReadingRequest['outputPreferences']>['preferredDetail']
@@ -35,7 +35,7 @@ export interface OfficialReadingDetailResolutionOptionsV1 {
 }
 
 export const OFFICIAL_READING_DETAILED_PRODUCT_ACTIVATION_STATE_V1:
-  OfficialReadingDetailedProductActivationStateV1 = 'pre_activation';
+  OfficialReadingDetailedProductActivationStateV1 = 'enabled';
 
 export const OFFICIAL_READING_DETAIL_CAPABILITY_V1 = Object.freeze({
   concise: Object.freeze({
@@ -86,7 +86,10 @@ export function resolveOfficialReadingDetailPreferenceV1(
           fallbackReason: 'missing_expansion_material',
         };
       }
-      if (options.detailedProductActivation !== 'enabled') {
+      const detailedProductActivation =
+        options.detailedProductActivation ??
+        OFFICIAL_READING_DETAILED_PRODUCT_ACTIVATION_STATE_V1;
+      if (detailedProductActivation !== 'enabled') {
         return {
           requestedDetail,
           resolvedDetail: 'standard',
