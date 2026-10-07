@@ -1,0 +1,841 @@
+{
+  "classification": "review_proposal_only_not_authority",
+  "topicKey": "face.reading.three_divisions",
+  "researchMethodologyRef": "method.mayi.face_three_divisions.fr261@0.2.0",
+  "proposedReviewedSuccessorRef": "method.mayi.face_three_divisions.fr261@0.3.0",
+  "proposedReviewedSuccessorNotIssued": {
+    "methodologyId": "method.mayi.face_three_divisions.fr261",
+    "version": "0.3.0",
+    "traditionalTerm": "三停",
+    "scope": "static_face",
+    "sourceRefs": [
+      "passage.mayi.fr261.contiguous_three_divisions"
+    ],
+    "description": "麻衣相法 1925 NLC witness의 FR261 successor 판독에 따라 上停=髮際→眉, 中停=眉→準頭, 下停=準頭→地閣의 연속 삼정 체계를 보존한다.",
+    "limitations": [
+      "기존 method.mayi.face_three_divisions@0.1.0의 거친 source passage를 역사 기록으로 유지하고 이 정의가 successor authority 역할을 한다.",
+      "平等/相稱의 수치 허용오차를 정의하지 않는다.",
+      "RGB 좌표, landmark, pixel, angle, camera calibration을 정의하지 않는다.",
+      "연령/운세/성격 결과를 이 methodology 자체에서 활성화하지 않는다.",
+      "Production authorization이 아니다."
+    ],
+    "reviewStatus": "reviewed"
+  },
+  "targetSpecificProjectOwnerApprovalPresent": false,
+  "sourceSnapshotHash": "face-traditional-review-source:f4bbaa5e03d373406f85f5442d97c5f61116f58e433bb6563a0fde1c43404413",
+  "sourceSnapshot": {
+    "passages": [
+      {
+        "passageId": "passage.mayi.fr261.three_fus_three_governors",
+        "witnessId": "witness.mayi_xiangfa.nlc_1925_v1",
+        "volume": "卷一",
+        "chapter": "三才三停論",
+        "scanPage": 35,
+        "originalText": "髮際至印堂為上府，是初主。自山根至準頭為中府，是中主。自人中至地閣為下府，是末主。",
+        "normalizedText": "FR261 successor reading: 上府=髮際→印堂/初主; 中府=山根→準頭/中主; 下府=人中→地閣/末主. This triplet is not admitted as the Mayi Three-Divisions boundary.",
+        "verificationStatus": "scan_checked"
+      },
+      {
+        "passageId": "passage.mayi.fr261.contiguous_three_divisions",
+        "witnessId": "witness.mayi_xiangfa.nlc_1925_v1",
+        "volume": "卷一",
+        "chapter": "三才三停論",
+        "scanPage": 35,
+        "originalText": "自髮際至眉為上停，眉至準頭為中停，準頭至地閣為下停。",
+        "normalizedText": "FR261 successor reading: 上停=髮際→眉; 中停=眉→準頭; 下停=準頭→地閣.",
+        "verificationStatus": "scan_checked"
+      },
+      {
+        "passageId": "passage.shenyi_fu.gujin_636.noncontiguous_three_divisions",
+        "witnessId": "witness.shenyi_fu.gujin_636_transmission",
+        "volume": "博物彙編 / 藝術典 / 第636卷",
+        "chapter": "神相全編六 / 神異賦",
+        "scanPage": 48,
+        "originalText": "三停平等，一生衣祿無虧。自髮際至印堂為上停，山根至於準頭為中停，人中至地閣為下停，此面上三停也。",
+        "normalizedText": "Transmission-only evidence: 上停=髮際→印堂; 中停=山根→準頭; 下停=人中→地閣. This does not establish an original Shenyi Fu manuscript.",
+        "verificationStatus": "scan_checked"
+      },
+      {
+        "passageId": "passage.shenxiang.nlc_1925.sancai_three_divisions_ocr_locator",
+        "witnessId": "witness.shenxiang_quanbian.nlc_1925",
+        "volume": "卷二",
+        "chapter": "三才三停論",
+        "originalText": "三才者額為天。欲闊而圓。名曰有天著貴。鼻為人。欲旺而齊。名曰有人者壽。頤為地。欲方而闊。名曰有地者富。三停者髮際至印堂為上輔。是初主。自山根至準頭為中輔。是中主。自人中至地閣為下輔。是末主。自髮際至眉為上停。眉至準頭為中停。準頭至地閣為下停。",
+        "normalizedText": "Direct NLC-PDF OCR locator only. Exact scan page has not been visually pinned in T3; OCR variants such as 輔/府 and 頤/頦 require page-level checking before promotion.",
+        "verificationStatus": "unverified_ocr"
+      },
+      {
+        "passageId": "passage.taiqing.nlc_1925.face_three_divisions_ocr_locator",
+        "witnessId": "witness.taiqing_shenjian.nlc_1925",
+        "volume": "卷五",
+        "chapter": "論面部",
+        "originalText": "論面部　面之三停白髮際下至眉間為上停自眉間至鼻準為中停自準八中至頤為下停夫三停者以像三才也上像天中像人下像地",
+        "normalizedText": "Direct NLC-PDF OCR locator only. The direct PDF search index supports 頤 for the lower endpoint, while other electronic transcriptions contain OCR variants; exact scan page remains unpinned.",
+        "verificationStatus": "unverified_ocr"
+      }
+    ],
+    "methodologies": [
+      {
+        "methodologyId": "method.mayi.face_three_divisions.fr261",
+        "version": "0.2.0",
+        "traditionalTerm": "三停",
+        "scope": "static_face",
+        "sourceRefs": [
+          "passage.mayi.fr261.contiguous_three_divisions"
+        ],
+        "description": "麻衣相法 1925 NLC witness의 FR261 successor 판독에 따라 上停=髮際→眉, 中停=眉→準頭, 下停=準頭→地閣의 연속 삼정 체계를 보존한다.",
+        "limitations": [
+          "기존 method.mayi.face_three_divisions@0.1.0의 거친 source passage를 역사 기록으로 유지하고 이 정의가 successor authority 역할을 한다.",
+          "平等/相稱의 수치 허용오차를 정의하지 않는다.",
+          "RGB 좌표, landmark, pixel, angle, camera calibration을 정의하지 않는다.",
+          "연령/운세/성격 결과를 이 methodology 자체에서 활성화하지 않는다.",
+          "Production authorization이 아니다."
+        ],
+        "reviewStatus": "research"
+      },
+      {
+        "methodologyId": "method.mayi.three_fus_three_governors.fr261",
+        "version": "0.1.0",
+        "traditionalTerm": "三府 / 三主",
+        "scope": "static_face",
+        "sourceRefs": [
+          "passage.mayi.fr261.three_fus_three_governors"
+        ],
+        "description": "같은 麻衣 1925 문맥의 上府/中府/下府와 初主/中主/末主를 三停과 분리된 관련 체계로 보존한다.",
+        "limitations": [
+          "三府의 세 span은 麻衣 三停 boundary로 재명명하지 않는다.",
+          "初主/中主/末主를 보편 연령구간으로 수치화하지 않는다.",
+          "三才 또는 三表와의 전역 alias를 만들지 않는다.",
+          "Production authorization이 아니다."
+        ],
+        "reviewStatus": "research"
+      },
+      {
+        "methodologyId": "method.shenyi_fu.gujin_636.face_three_divisions",
+        "version": "0.1.0",
+        "traditionalTerm": "面上三停",
+        "scope": "static_face",
+        "sourceRefs": [
+          "passage.shenyi_fu.gujin_636.noncontiguous_three_divisions"
+        ],
+        "description": "古今圖書集成 第636卷의 神異賦 transmission에서 上停=髮際→印堂, 中停=山根→準頭, 下停=人中→地閣으로 제시된 비연속 삼정 체계를 transmission-qualified methodology로 보존한다.",
+        "limitations": [
+          "古今圖書集成 transmission의 scan-checked 증거이며 神異賦 원본/초기 독립 witness authority를 확립하지 않는다.",
+          "Harvard 萬曆 witness의 target passage가 아직 pin되지 않았다.",
+          "麻衣 三府와 geometry가 같아도 semantic identity를 선언하지 않는다.",
+          "平等은 질적 표현으로만 보존하며 numeric tolerance를 만들지 않는다.",
+          "Production authorization이 아니다."
+        ],
+        "reviewStatus": "research"
+      }
+    ],
+    "pack": {
+      "packId": "pack.face.three_divisions.t6_candidate",
+      "version": "0.1.0",
+      "status": "research_candidate_fail_closed",
+      "sourceWitnessRefs": [
+        "witness.mayi_xiangfa.nlc_1925_v1",
+        "witness.shenyi_fu.gujin_636_transmission"
+      ],
+      "sourcePassageRefs": [
+        "passage.mayi.fr261.contiguous_three_divisions",
+        "passage.mayi.fr261.three_fus_three_governors",
+        "passage.shenyi_fu.gujin_636.noncontiguous_three_divisions"
+      ],
+      "methodologyRefs": [
+        "method.mayi.face_three_divisions.fr261@0.2.0",
+        "method.mayi.three_fus_three_governors.fr261@0.1.0",
+        "method.shenyi_fu.gujin_636.face_three_divisions@0.1.0"
+      ],
+      "spanSpecificationRefs": [
+        "t5.span.mayi_santing.upper",
+        "t5.span.mayi_santing.middle",
+        "t5.span.mayi_santing.lower",
+        "t5.span.mayi_sanfu.upper",
+        "t5.span.mayi_sanfu.middle",
+        "t5.span.mayi_sanfu.lower",
+        "t5.span.shenyi_gujin_santing.upper",
+        "t5.span.shenyi_gujin_santing.middle",
+        "t5.span.shenyi_gujin_santing.lower"
+      ],
+      "comparisonSpecificationRefs": [
+        "t5.compare.mayi_santing.measurement_only",
+        "t5.compare.mayi_sanfu.measurement_only",
+        "t5.compare.shenyi_gujin_santing.balance"
+      ],
+      "bindingPrerequisiteRefs": [
+        "t5.binding.hairline",
+        "t5.binding.brow",
+        "t5.binding.yintang",
+        "t5.binding.shangen",
+        "t5.binding.zhuntou",
+        "t5.binding.renzhong",
+        "t5.binding.dige"
+      ],
+      "slots": [
+        {
+          "slot": "source_witness_set",
+          "status": "pinned",
+          "refs": [
+            "witness-set.face.three_divisions.t6_candidate@0.1.0"
+          ],
+          "reason": "T3 scan-qualified witness/passages are explicitly pinned."
+        },
+        {
+          "slot": "methodology_definitions",
+          "status": "pinned",
+          "refs": [
+            "method.mayi.face_three_divisions.fr261@0.2.0",
+            "method.mayi.three_fus_three_governors.fr261@0.1.0",
+            "method.shenyi_fu.gujin_636.face_three_divisions@0.1.0"
+          ],
+          "reason": "T4 reconstructed three separate source-qualified methodology identities."
+        },
+        {
+          "slot": "region_maps",
+          "status": "blocked_pending_binding",
+          "refs": [],
+          "reason": "No successor coordinate frame or region map is authorized before governed traditional anchor bindings exist."
+        },
+        {
+          "slot": "metric_registry",
+          "status": "research_spec_only",
+          "refs": [
+            "t5.span.mayi_santing.upper",
+            "t5.span.mayi_santing.middle",
+            "t5.span.mayi_santing.lower",
+            "t5.span.mayi_sanfu.upper",
+            "t5.span.mayi_sanfu.middle",
+            "t5.span.mayi_sanfu.lower",
+            "t5.span.shenyi_gujin_santing.upper",
+            "t5.span.shenyi_gujin_santing.middle",
+            "t5.span.shenyi_gujin_santing.lower"
+          ],
+          "reason": "T5 defines abstract comparable-vertical-extent requirements only; executable FaceMetricDefinition formulas are not authorized."
+        },
+        {
+          "slot": "operationalization_registry",
+          "status": "research_spec_only",
+          "refs": [
+            "t5.compare.mayi_santing.measurement_only",
+            "t5.compare.mayi_sanfu.measurement_only",
+            "t5.compare.shenyi_gujin_santing.balance"
+          ],
+          "reason": "T5 preserves measurement-only and qualitative-balance semantics; executable classification bands remain blocked."
+        },
+        {
+          "slot": "claim_type_registry",
+          "status": "blocked_not_authorized",
+          "refs": [],
+          "reason": "This successor slice has not authorized a claim type mapping from the reconstructed methodologies."
+        },
+        {
+          "slot": "rule_registry",
+          "status": "blocked_not_authorized",
+          "refs": [],
+          "reason": "No executable rule may be created until observation binding and operationalization gates are satisfied."
+        },
+        {
+          "slot": "comparison_policy",
+          "status": "blocked_not_authorized",
+          "refs": [],
+          "reason": "The legacy research-v0 comparison policy is not silently inherited by this successor pack candidate."
+        }
+      ],
+      "lineageIsolationAssertions": [
+        "Mayi contiguous 三停 remains distinct from Mayi 三府/三主.",
+        "Mayi 三府/三主 remains distinct from Shenyi Fu Gujin transmission 三停 even where span geometry matches.",
+        "Gujin transmission authority must not be relabeled as original or earliest Shenyi Fu authority.",
+        "Repeated wording across genealogically entangled texts does not count as independent corroboration."
+      ],
+      "enabledProductionTiers": [],
+      "forbiddenObservationInputs": [
+        "observations.colorAppearance",
+        "unreviewed generic forehead-height proxies",
+        "eyebrow shape metrics substituted for 眉 vertical reference",
+        "nose bridge shape metrics substituted for 山根 vertical reference",
+        "nose tip shape metrics substituted for 準頭 vertical reference",
+        "philtrum shape metrics substituted for 人中 vertical reference",
+        "generic chin/lower-face contour substituted for 地閣 vertical reference"
+      ],
+      "productionAuthorization": false
+    },
+    "gates": {
+      "sourceWitnessSetPinned": true,
+      "sourcePassagesPinned": true,
+      "methodologyDefinitionsPinned": true,
+      "abstractSpanSpecificationsPinned": true,
+      "qualitativeComparisonSemanticsPinned": true,
+      "governedObservationBindingsReady": false,
+      "executableRegionMapsReady": false,
+      "executableMetricRegistryReady": false,
+      "executableOperationalizationRegistryReady": false,
+      "claimTypeRegistryReady": false,
+      "ruleRegistryReady": false,
+      "numericBalanceToleranceAuthorized": false,
+      "universalAgeMapAuthorized": false,
+      "crossLineageMergeAuthorized": false,
+      "productionAuthorization": false
+    },
+    "closeout": {
+      "phase": "T7_BINDING_HANDOFF",
+      "traditionalResearchStatus": "complete_for_current_three_divisions_slice",
+      "downstreamBindingStatus": "blocked",
+      "sourceResearchReopened": false,
+      "methodologyReconstructionReopened": false,
+      "observationImplementationPerformedHere": false,
+      "faceReadingBindingPerformedHere": false,
+      "executableReadingAuthorized": false,
+      "productionAuthorization": false,
+      "nextOwners": [
+        "face-observation-engine",
+        "face-reading-binding"
+      ]
+    },
+    "bindingLedger": {
+      "schemaVersion": "frb005-t7-binding-ledger-v1",
+      "contractVersion": "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1",
+      "track": "face-bridge",
+      "upstream": {
+        "frb004ContractVersion": "FRB004-T4-CANONICAL-OBSERVATION-BRIDGE-v1",
+        "t7BaselinePackRef": "pack.face.three_divisions.t6_candidate@0.1.0",
+        "traditionalResearchStatus": "complete_for_current_three_divisions_slice",
+        "t7ObservationBindingReady": false
+      },
+      "slotCount": 16,
+      "uniqueTraditionalAnchorCount": 7,
+      "admittedTraditionalBindingCount": 0,
+      "bindingSlots": [
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.mayi.face_three_divisions.fr261@0.2.0::t4.req.mayi.hairline",
+          "methodologyRef": "method.mayi.face_three_divisions.fr261@0.2.0",
+          "requirementId": "t4.req.mayi.hairline",
+          "traditionalObservationRef": "trad.anchor.hairline",
+          "traditionalLabel": "髮際",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "forehead.visible_hairline_boundary"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR287 remaining-column inventory",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Materialize a governed product-neutral visible hairline boundary and expose a reviewable vertical-reference contract without traditional semantics."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.mayi.face_three_divisions.fr261@0.2.0::t4.req.mayi.brow",
+          "methodologyRef": "method.mayi.face_three_divisions.fr261@0.2.0",
+          "requirementId": "t4.req.mayi.brow",
+          "traditionalObservationRef": "trad.anchor.brow",
+          "traditionalLabel": "眉",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "FR292 visible eyebrow pair geometry",
+            "neutral.eyebrow.visible_pair.mean_span_to_face_width_ratio@0.1.0",
+            "neutral.eyebrow.visible_pair.mean_arch_amplitude_to_span_ratio@0.1.0",
+            "neutral.eyebrow.visible_pair.mean_lateral_endpoint_tilt_degrees@0.1.0"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR292",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [
+            "eyebrow.span_arch_tail_orientation"
+          ],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Govern an observation-side brow vertical reference policy over admitted visible eyebrow geometry, then bind that policy explicitly to each methodology that requires 眉."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.mayi.face_three_divisions.fr261@0.2.0::t4.req.mayi.zhuntou",
+          "methodologyRef": "method.mayi.face_three_divisions.fr261@0.2.0",
+          "requirementId": "t4.req.mayi.zhuntou",
+          "traditionalObservationRef": "trad.anchor.zhuntou",
+          "traditionalLabel": "準頭",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "FR287 canonical RGB nose morphology",
+            "neutral.nose.tip.contour_circularity@0.1.0"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR287",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [
+            "nose.tip_contour_circularity"
+          ],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Provide a governed neutral visible nose-tip vertical reference with explicit observation authority and no traditional interpretation."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.mayi.face_three_divisions.fr261@0.2.0::t4.req.mayi.dige",
+          "methodologyRef": "method.mayi.face_three_divisions.fr261@0.2.0",
+          "requirementId": "t4.req.mayi.dige",
+          "traditionalObservationRef": "trad.anchor.dige",
+          "traditionalLabel": "地閣",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "FR216 canonical visible soft-tissue lower-face contour",
+            "FR289 visible lower-face dimensions",
+            "neutral.lower_face.visible_height_to_width_ratio@0.1.0"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR289",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [
+            "chin_lower_face.visible_contour"
+          ],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Adjudicate a governed neutral inferior lower-face vertical reference and separately justify any traditional 地閣 binding."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.hairline",
+          "methodologyRef": "method.mayi.three_fus_three_governors.fr261@0.1.0",
+          "requirementId": "t4.req.mayi_sanfu.hairline",
+          "traditionalObservationRef": "trad.anchor.hairline",
+          "traditionalLabel": "髮際",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "forehead.visible_hairline_boundary"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR287 remaining-column inventory",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Materialize a governed product-neutral visible hairline boundary and expose a reviewable vertical-reference contract without traditional semantics."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.yintang",
+          "methodologyRef": "method.mayi.three_fus_three_governors.fr261@0.1.0",
+          "requirementId": "t4.req.mayi_sanfu.yintang",
+          "traditionalObservationRef": "trad.anchor.yintang",
+          "traditionalLabel": "印堂",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Define a product-neutral governed interbrow reference surface independently of the traditional 印堂 label, with explicit visibility and coordinate-frame semantics."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.shangen",
+          "methodologyRef": "method.mayi.three_fus_three_governors.fr261@0.1.0",
+          "requirementId": "t4.req.mayi_sanfu.shangen",
+          "traditionalObservationRef": "trad.anchor.shangen",
+          "traditionalLabel": "山根",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "FR287 canonical RGB nose morphology",
+            "neutral.nose.bridge.centerline_rms_deviation@0.1.0"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR287",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [
+            "nose.bridge_centerline_deviation"
+          ],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Provide a neutral, governed nose-root/bridge vertical reference contract whose semantic extent is independently reviewable before traditional binding."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.zhuntou",
+          "methodologyRef": "method.mayi.three_fus_three_governors.fr261@0.1.0",
+          "requirementId": "t4.req.mayi_sanfu.zhuntou",
+          "traditionalObservationRef": "trad.anchor.zhuntou",
+          "traditionalLabel": "準頭",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "FR287 canonical RGB nose morphology",
+            "neutral.nose.tip.contour_circularity@0.1.0"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR287",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [
+            "nose.tip_contour_circularity"
+          ],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Provide a governed neutral visible nose-tip vertical reference with explicit observation authority and no traditional interpretation."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.renzhong",
+          "methodologyRef": "method.mayi.three_fus_three_governors.fr261@0.1.0",
+          "requirementId": "t4.req.mayi_sanfu.renzhong",
+          "traditionalObservationRef": "trad.anchor.renzhong",
+          "traditionalLabel": "人中",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "FR291 visible philtrum neutral axes",
+            "neutral.mouth.visible_central_groove.axis_length_to_mouth_width_ratio@0.1.0",
+            "neutral.mouth.visible_central_groove.corridor_width_to_mouth_width_ratio@0.1.0"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR291",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [
+            "mouth.philtrum_length_width"
+          ],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Adjudicate a neutral vertical reference over governed visible central-groove geometry, then create an explicit traditional 人中 binding without relabeling the existing ratios."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.dige",
+          "methodologyRef": "method.mayi.three_fus_three_governors.fr261@0.1.0",
+          "requirementId": "t4.req.mayi_sanfu.dige",
+          "traditionalObservationRef": "trad.anchor.dige",
+          "traditionalLabel": "地閣",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "FR216 canonical visible soft-tissue lower-face contour",
+            "FR289 visible lower-face dimensions",
+            "neutral.lower_face.visible_height_to_width_ratio@0.1.0"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR289",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [
+            "chin_lower_face.visible_contour"
+          ],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Adjudicate a governed neutral inferior lower-face vertical reference and separately justify any traditional 地閣 binding."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.hairline",
+          "methodologyRef": "method.shenyi_fu.gujin_636.face_three_divisions@0.1.0",
+          "requirementId": "t4.req.shenyi_gujin.hairline",
+          "traditionalObservationRef": "trad.anchor.hairline",
+          "traditionalLabel": "髮際",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "forehead.visible_hairline_boundary"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR287 remaining-column inventory",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Materialize a governed product-neutral visible hairline boundary and expose a reviewable vertical-reference contract without traditional semantics."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.yintang",
+          "methodologyRef": "method.shenyi_fu.gujin_636.face_three_divisions@0.1.0",
+          "requirementId": "t4.req.shenyi_gujin.yintang",
+          "traditionalObservationRef": "trad.anchor.yintang",
+          "traditionalLabel": "印堂",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Define a product-neutral governed interbrow reference surface independently of the traditional 印堂 label, with explicit visibility and coordinate-frame semantics."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.shangen",
+          "methodologyRef": "method.shenyi_fu.gujin_636.face_three_divisions@0.1.0",
+          "requirementId": "t4.req.shenyi_gujin.shangen",
+          "traditionalObservationRef": "trad.anchor.shangen",
+          "traditionalLabel": "山根",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "FR287 canonical RGB nose morphology",
+            "neutral.nose.bridge.centerline_rms_deviation@0.1.0"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR287",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [
+            "nose.bridge_centerline_deviation"
+          ],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Provide a neutral, governed nose-root/bridge vertical reference contract whose semantic extent is independently reviewable before traditional binding."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.zhuntou",
+          "methodologyRef": "method.shenyi_fu.gujin_636.face_three_divisions@0.1.0",
+          "requirementId": "t4.req.shenyi_gujin.zhuntou",
+          "traditionalObservationRef": "trad.anchor.zhuntou",
+          "traditionalLabel": "準頭",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "FR287 canonical RGB nose morphology",
+            "neutral.nose.tip.contour_circularity@0.1.0"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR287",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [
+            "nose.tip_contour_circularity"
+          ],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Provide a governed neutral visible nose-tip vertical reference with explicit observation authority and no traditional interpretation."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.renzhong",
+          "methodologyRef": "method.shenyi_fu.gujin_636.face_three_divisions@0.1.0",
+          "requirementId": "t4.req.shenyi_gujin.renzhong",
+          "traditionalObservationRef": "trad.anchor.renzhong",
+          "traditionalLabel": "人中",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "FR291 visible philtrum neutral axes",
+            "neutral.mouth.visible_central_groove.axis_length_to_mouth_width_ratio@0.1.0",
+            "neutral.mouth.visible_central_groove.corridor_width_to_mouth_width_ratio@0.1.0"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR291",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [
+            "mouth.philtrum_length_width"
+          ],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Adjudicate a neutral vertical reference over governed visible central-groove geometry, then create an explicit traditional 人中 binding without relabeling the existing ratios."
+        },
+        {
+          "bindingSlotId": "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.dige",
+          "methodologyRef": "method.shenyi_fu.gujin_636.face_three_divisions@0.1.0",
+          "requirementId": "t4.req.shenyi_gujin.dige",
+          "traditionalObservationRef": "trad.anchor.dige",
+          "traditionalLabel": "地閣",
+          "neutralObservationRef": null,
+          "neutralCandidateRefs": [
+            "FR216 canonical visible soft-tissue lower-face contour",
+            "FR289 visible lower-face dimensions",
+            "neutral.lower_face.visible_height_to_width_ratio@0.1.0"
+          ],
+          "currentEvidenceRefs": [
+            "FRB003",
+            "FR289",
+            "FRB005-T7-METHODOLOGY-SCOPED-BINDING-LEDGER-v1"
+          ],
+          "rejectedProxyFeatureKeys": [
+            "chin_lower_face.visible_contour"
+          ],
+          "reviewState": "blocked_pending_governed_vertical_reference",
+          "observationImplementationOwner": "face-observation-engine",
+          "bridgeTrack": "face-bridge",
+          "upstreamBindingOwnerLabel": "face-reading-binding",
+          "unavailablePolicy": "fail_closed",
+          "traditionalBindingAuthorized": false,
+          "bindingProvenanceReady": false,
+          "promotionRequirement": "Adjudicate a governed neutral inferior lower-face vertical reference and separately justify any traditional 地閣 binding."
+        }
+      ],
+      "methodologyStatuses": [
+        {
+          "methodologyRef": "method.mayi.face_three_divisions.fr261@0.2.0",
+          "topology": "contiguous_chain",
+          "bindingSlotIds": [
+            "binding-slot.face.three_divisions::method.mayi.face_three_divisions.fr261@0.2.0::t4.req.mayi.hairline",
+            "binding-slot.face.three_divisions::method.mayi.face_three_divisions.fr261@0.2.0::t4.req.mayi.brow",
+            "binding-slot.face.three_divisions::method.mayi.face_three_divisions.fr261@0.2.0::t4.req.mayi.zhuntou",
+            "binding-slot.face.three_divisions::method.mayi.face_three_divisions.fr261@0.2.0::t4.req.mayi.dige"
+          ],
+          "requiredObservationRefs": [
+            "trad.anchor.hairline",
+            "trad.anchor.brow",
+            "trad.anchor.zhuntou",
+            "trad.anchor.dige"
+          ],
+          "admittedBindingCount": 0,
+          "requiredBindingCount": 4,
+          "bindingReady": false,
+          "missingAnchorPolicy": "fail_closed",
+          "sameGeometryAllowsSemanticMerge": false
+        },
+        {
+          "methodologyRef": "method.mayi.three_fus_three_governors.fr261@0.1.0",
+          "topology": "noncontiguous_three_spans",
+          "bindingSlotIds": [
+            "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.hairline",
+            "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.yintang",
+            "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.shangen",
+            "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.zhuntou",
+            "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.renzhong",
+            "binding-slot.face.three_divisions::method.mayi.three_fus_three_governors.fr261@0.1.0::t4.req.mayi_sanfu.dige"
+          ],
+          "requiredObservationRefs": [
+            "trad.anchor.hairline",
+            "trad.anchor.yintang",
+            "trad.anchor.shangen",
+            "trad.anchor.zhuntou",
+            "trad.anchor.renzhong",
+            "trad.anchor.dige"
+          ],
+          "admittedBindingCount": 0,
+          "requiredBindingCount": 6,
+          "bindingReady": false,
+          "missingAnchorPolicy": "fail_closed",
+          "sameGeometryAllowsSemanticMerge": false
+        },
+        {
+          "methodologyRef": "method.shenyi_fu.gujin_636.face_three_divisions@0.1.0",
+          "topology": "noncontiguous_three_spans",
+          "bindingSlotIds": [
+            "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.hairline",
+            "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.yintang",
+            "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.shangen",
+            "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.zhuntou",
+            "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.renzhong",
+            "binding-slot.face.three_divisions::method.shenyi_fu.gujin_636.face_three_divisions@0.1.0::t4.req.shenyi_gujin.dige"
+          ],
+          "requiredObservationRefs": [
+            "trad.anchor.hairline",
+            "trad.anchor.yintang",
+            "trad.anchor.shangen",
+            "trad.anchor.zhuntou",
+            "trad.anchor.renzhong",
+            "trad.anchor.dige"
+          ],
+          "admittedBindingCount": 0,
+          "requiredBindingCount": 6,
+          "bindingReady": false,
+          "missingAnchorPolicy": "fail_closed",
+          "sameGeometryAllowsSemanticMerge": false
+        }
+      ],
+      "promotionGate": {
+        "allSevenGovernedObservationContractsRequired": true,
+        "exactMethodologyScopeRequired": true,
+        "neutralObservationProvenanceRequired": true,
+        "missingAnchorFailsClosed": true,
+        "independentBalanceCalibrationRequired": true,
+        "bindingHandoffEnablesClaimOrRule": false
+      },
+      "authorityBoundary": {
+        "observationExtractorImplementedHere": false,
+        "providerLandmarkIdsIssued": false,
+        "neutralObservationRefInvented": false,
+        "traditionalAnchorBindingAdmitted": false,
+        "t5SpanExecuted": false,
+        "t5ComparisonExecuted": false,
+        "coordinateFormulaIssued": false,
+        "numericToleranceIssued": false,
+        "ruleExecuted": false,
+        "faceClaimIssued": false,
+        "productionActivated": false
+      }
+    }
+  },
+  "reviewPacketHash": "face-traditional-review-packet:0868afd3f6bf9457bd92cfcf3f01472b77aa7c065acc506cf921152d3a42dc9b"
+}
