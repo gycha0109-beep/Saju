@@ -86,7 +86,10 @@ export function resolveOfficialReadingDetailPreferenceV1(
           fallbackReason: 'missing_expansion_material',
         };
       }
-      if (options.detailedProductActivation !== 'enabled') {
+      const detailedProductActivation =
+        options.detailedProductActivation ??
+        OFFICIAL_READING_DETAILED_PRODUCT_ACTIVATION_STATE_V1;
+      if (detailedProductActivation !== 'enabled') {
         return {
           requestedDetail,
           resolvedDetail: 'standard',
