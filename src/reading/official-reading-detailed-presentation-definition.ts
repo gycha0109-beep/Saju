@@ -8,6 +8,7 @@ export type OfficialReadingDetailedDomainKeyV1 =
   | 'career:natal'
   | 'wealth:natal'
   | 'relationship:natal:general'
+  | 'relationship:natal:spouse'
   | 'business:natal';
 
 export type OfficialReadingDetailedMaterialRoleV1 =
