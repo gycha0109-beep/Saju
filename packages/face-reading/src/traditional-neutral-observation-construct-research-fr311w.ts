@@ -438,7 +438,7 @@ readonly TargetConstructResearchFR311W[] = Object.freeze([
 
   plan(
     'fr311r.cheekbones.bilateral_support',
-    'components_defined_existing_geometry_only',
+    'components_defined_extractor_research_required',
     [
       'cheek_midface.visible_width_ratio',
       'cheek_midface.visible_contour_prominence',
