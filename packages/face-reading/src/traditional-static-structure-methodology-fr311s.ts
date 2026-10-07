@@ -9,7 +9,11 @@ export type StaticStructureKindFR311S =
   | 'five_stars_six_luminaries'
   | 'four_study_halls'
   | 'eight_study_halls'
-  | 'five_element_forms';
+  | 'five_element_forms'
+  | 'ten_observations'
+  | 'five_methods'
+  | 'three_masters'
+  | 'three_pillars';
 
 export interface StaticStructureMemberFR311S {
   readonly memberKey: string;
@@ -366,6 +370,68 @@ export const FIVE_ELEMENT_FORMS_FR311S = methodology(
   ],
 );
 
+
+export const TEN_OBSERVATIONS_FR311S = methodology(
+  'fr311s.gujin631.ten_observations',
+  'ten_observations',
+  'shenxiang_quanbian.gujin631',
+  '神相全編一.十觀',
+  GUJIN_631,
+  [
+    member('01_demeanor', '一取威儀', '威儀', '첫째 관찰로 위의·전체 태도를 살피는 전통 방법'),
+    member('02_weight_spirit', '二看敦重及精神', '敦重及精神', '둘째 관찰로 중후함과 정신 상태를 함께 살피는 방법'),
+    member('03_clear_turbid', '三取清濁', '清濁', '셋째 관찰로 청탁을 구분하는 전통 방법'),
+    member('04_head_forehead', '四看頭員頂額高', '頭員頂額高', '넷째 관찰로 머리와 이마의 형태를 살피는 방법'),
+    member('05_mountains_divisions', '五看五嶽及三停', '五嶽及三停', '다섯째 관찰로 오악과 삼정을 함께 살피는 방법'),
+    member('06_officers_ministries', '六取五官六府', '五官六府', '여섯째 관찰로 오관과 육부를 함께 살피는 방법'),
+    member('07_waist_back', '七取腰圓背厚', '腰圓背厚', '일곱째 관찰로 허리와 등의 형세를 살피는 방법'),
+    member('08_hands_feet', '八取手足', '手足', '여덟째 관찰로 손발의 형세를 살피는 방법'),
+    member('09_voice', '九取聲音', '聲音', '아홉째 관찰로 목소리를 살피는 방법'),
+    member('10_sitting_walking', '十觀形局', '形局', '열째 관찰로 전체 형국과 동작을 살피는 방법'),
+  ],
+);
+
+export const FIVE_METHODS_FR311S = methodology(
+  'fr311s.gujin631.five_methods',
+  'five_methods',
+  'shenxiang_quanbian.gujin631',
+  '神相全編一.五法',
+  GUJIN_631,
+  [
+    member('association', '擇交在眼', '眼', '교우 판단을 눈과 연결하는 전통 방법'),
+    member('status', '問貴在眼', '眼', '귀함 판단을 눈과 연결하는 전통 방법'),
+    member('wealth', '問富在鼻', '鼻', '부유함 판단을 코와 연결하는 전통 방법'),
+    member('longevity', '問壽在神', '神', '수명 판단을 신과 연결하는 전통 방법'),
+    member('completion', '求全在聲', '聲', '전체 성취 판단을 목소리와 연결하는 전통 방법'),
+  ],
+);
+
+export const THREE_MASTERS_FR311S = methodology(
+  'fr311s.gujin632.three_masters',
+  'three_masters',
+  'shenxiang_quanbian.gujin632',
+  '神相全編二.相三主',
+  GUJIN_632,
+  [
+    member('early', '初主', '額', '초기 시기를 이마와 연결하는 전통 삼주 배치'),
+    member('middle', '中主', '鼻', '중기 시기를 코와 연결하는 전통 삼주 배치'),
+    member('late', '末主', '地閣', '말기 시기를 지각과 연결하는 전통 삼주 배치'),
+  ],
+);
+
+export const THREE_PILLARS_FR311S = methodology(
+  'fr311s.gujin632.three_pillars',
+  'three_pillars',
+  'shenxiang_quanbian.gujin632',
+  '神相全編二.論三柱',
+  GUJIN_632,
+  [
+    member('longevity_pillar', '壽柱', '頭', '머리를 수주로 두는 전통 배치'),
+    member('beam_pillar', '梁柱', '鼻', '코를 양주로 두는 전통 배치'),
+    member('building_pillar', '楝柱', '足', '발을 동주로 두는 전통 배치'),
+  ],
+);
+
 export const STATIC_METHODOLOGIES_FR311S:
 readonly StaticMethodologyDefinitionFR311S[] = Object.freeze([
   FIVE_OFFICERS_FR311S,
@@ -380,6 +446,10 @@ readonly StaticMethodologyDefinitionFR311S[] = Object.freeze([
   FOUR_STUDY_HALLS_FR311S,
   EIGHT_STUDY_HALLS_FR311S,
   FIVE_ELEMENT_FORMS_FR311S,
+  TEN_OBSERVATIONS_FR311S,
+  FIVE_METHODS_FR311S,
+  THREE_MASTERS_FR311S,
+  THREE_PILLARS_FR311S,
 ]);
 
 export const FR311S_STATIC_STRUCTURE_SUMMARY = Object.freeze({
@@ -399,6 +469,10 @@ export const FR311S_STATIC_STRUCTURE_SUMMARY = Object.freeze({
   fourStudyHalls: FOUR_STUDY_HALLS_FR311S.members.length,
   eightStudyHalls: EIGHT_STUDY_HALLS_FR311S.members.length,
   fiveElementForms: FIVE_ELEMENT_FORMS_FR311S.members.length,
+  tenObservations: TEN_OBSERVATIONS_FR311S.members.length,
+  fiveMethods: FIVE_METHODS_FR311S.members.length,
+  threeMasters: THREE_MASTERS_FR311S.members.length,
+  threePillars: THREE_PILLARS_FR311S.members.length,
 });
 
 export const FR311S_STATIC_STRUCTURE_AUTHORITY_BOUNDARY = Object.freeze({
@@ -421,7 +495,7 @@ export function assertStaticStructureMethodologyFR311S(): void {
   }
 
   if (
-    FR311S_STATIC_STRUCTURE_SUMMARY.methodologyDefinitions !== 12 ||
+    FR311S_STATIC_STRUCTURE_SUMMARY.methodologyDefinitions !== 16 ||
     FR311S_STATIC_STRUCTURE_SUMMARY.lineageSpecificThreeDivisionDefinitions !== 2 ||
     FR311S_STATIC_STRUCTURE_SUMMARY.thirteenParts !== 13 ||
     FR311S_STATIC_STRUCTURE_SUMMARY.numberedTwelvePalaces !== 12 ||
@@ -432,7 +506,11 @@ export function assertStaticStructureMethodologyFR311S(): void {
     FR311S_STATIC_STRUCTURE_SUMMARY.fiveStarsSixLuminaries !== 11 ||
     FR311S_STATIC_STRUCTURE_SUMMARY.fourStudyHalls !== 4 ||
     FR311S_STATIC_STRUCTURE_SUMMARY.eightStudyHalls !== 8 ||
-    FR311S_STATIC_STRUCTURE_SUMMARY.fiveElementForms !== 5
+    FR311S_STATIC_STRUCTURE_SUMMARY.fiveElementForms !== 5 ||
+    FR311S_STATIC_STRUCTURE_SUMMARY.tenObservations !== 10 ||
+    FR311S_STATIC_STRUCTURE_SUMMARY.fiveMethods !== 5 ||
+    FR311S_STATIC_STRUCTURE_SUMMARY.threeMasters !== 3 ||
+    FR311S_STATIC_STRUCTURE_SUMMARY.threePillars !== 3
   ) {
     throw new Error('fr311s_summary_drift');
   }
