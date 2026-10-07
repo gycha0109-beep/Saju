@@ -46,7 +46,10 @@ describe('FR312E morphology-only annotation specification', () => {
   });
 
   it('preserves source provenance while hiding historical semantic tails from annotators', () => {
-    const expected = new Map([
+    const expected = new Map<
+      string,
+      readonly [string, readonly string[], readonly string[]]
+    >([
       [
         'fr311i.philtrum.thin_narrow',
         ['細而狹者，衣食逼迫', ['細而狹'], ['衣食逼迫']],
