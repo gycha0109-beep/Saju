@@ -142,7 +142,7 @@ export const GENERAL_ANNUAL_SOURCE_CANDIDATES = Object.freeze([
   Object.freeze({
     candidateId: 'LEE_KIM_2022_TEN_GOD_CLASSIC_MODERN_BOUNDARY',
     sourceIdentity: Object.freeze({
-      title: '명리학 십성(十星)의 현대적 해석에 관한 연구',
+      title: '명리학에서 십성(十星)의 성립과 개념 확장에 관한 연구',
       authors: Object.freeze(['이남연', '김기승'] as const),
       publicationYear: 2022,
       sourceClass: 'scholarly_secondary_semantic_boundary',
