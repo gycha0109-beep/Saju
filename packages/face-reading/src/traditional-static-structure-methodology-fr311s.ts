@@ -386,7 +386,7 @@ export const TEN_OBSERVATIONS_FR311S = methodology(
     member('06_officers_ministries', '六取五官六府', '五官六府', '여섯째 관찰로 오관과 육부를 함께 살피는 방법'),
     member('07_waist_back', '七取腰圓背厚', '腰圓背厚', '일곱째 관찰로 허리와 등의 형세를 살피는 방법'),
     member('08_hands_feet', '八取手足', '手足', '여덟째 관찰로 손발의 형세를 살피는 방법'),
-    member('09_voice', '九取聲音', '聲音', '아홉째 관찰로 목소리를 살피는 방법'),
+    member('09_voice_and_mind', '九取聲音與心田', '聲音與心田', '아홉째 관찰로 목소리와 전통적 심전 문맥을 함께 살피는 방법; 현대 도덕성 사실 판정은 승인하지 않음'),
     member('10_sitting_walking', '十觀形局', '形局', '열째 관찰로 전체 형국과 동작을 살피는 방법'),
   ],
 );
