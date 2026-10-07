@@ -1,27 +1,4 @@
 import {
-  FR260_REFERENCE_REF,
-} from './visible-lower-face-inferior-vertical-reference-fr260.js';
-import {
-  FR302_BROW_VERTICAL_REFERENCE_REF,
-  FR302_INTERBROW_VERTICAL_REFERENCE_REF,
-  FR302_CURRENT_GATE,
-} from './brow-interbrow-vertical-reference-fr302.js';
-import {
-  FR304_CURRENT_GATE,
-  FR304_NASAL_APEX_HANDOFF_REF,
-  FR304_NASAL_BRIDGE_ROOT_VERTICAL_REFERENCE_REF,
-} from './nasal-vertical-reference-handoffs-fr304.js';
-import {
-  FR315_CENTRAL_GROOVE_METRIC_REFERENCE_REF,
-  FR315_CURRENT_GATE,
-} from './common-frame-bridge-fr315.js';
-import {
-  FR318_CURRENT_GATE,
-} from './hairline-real-local-metric-receipt-fr318.js';
-import {
-  FR319_CURRENT_GATE,
-} from './seven-reference-common-frame-bundle-fr319.js';
-import {
   T7_METHODOLOGY_SCOPED_BINDING_LEDGER_FRB005,
   assertT7MethodologyScopedBindingLedgerFRB005,
 } from './traditional-three-divisions-binding-ledger-frb005.js';
@@ -72,6 +49,14 @@ export interface FRB006PartialBindingLedger {
   readonly contractVersion: typeof FRB006_CONTRACT_VERSION;
   readonly track: 'face-bridge';
   readonly baselineContractVersion: string;
+  readonly observationReviewSnapshot: {
+    readonly reviewedNeutralReferenceCapabilityCount: 6;
+    readonly remainingNeutralReferenceCapabilityCount: 1;
+    readonly remainingNeutralReference:
+      'face.vertical_reference.visible_hairline';
+    readonly reviewBasisRefs: readonly string[];
+    readonly observationRuntimeImportedIntoBridge: false;
+  };
   readonly slotCount: 16;
   readonly uniqueTraditionalAnchorCount: 7;
   readonly admittedTraditionalBindingCount: 13;
@@ -101,44 +86,60 @@ export interface FRB006PartialBindingLedger {
   };
 }
 
+const REVIEW_BASIS_REFS = Object.freeze([
+  'packages/face-reading/src/lower-face-vertical-reference-handoff-fr301.ts',
+  'packages/face-reading/src/brow-interbrow-vertical-reference-fr302.ts',
+  'packages/face-reading/src/visible-central-groove-vertical-reference-fr303.ts',
+  'packages/face-reading/src/nasal-vertical-reference-handoffs-fr304.ts',
+  'packages/face-reading/src/common-frame-bridge-fr315.ts',
+  'packages/face-reading/src/hairline-real-local-metric-receipt-fr318.ts',
+  'packages/face-reading/src/seven-reference-common-frame-bundle-fr319.ts',
+] as const);
+
 const ADMITTED_NEUTRAL_REFERENCES = Object.freeze({
   'trad.anchor.brow': Object.freeze({
-    observationRef: FR302_BROW_VERTICAL_REFERENCE_REF,
+    observationRef:
+      'neutral.face.visible_eyebrow_pair.arc_length_weighted_vertical_coordinate@0.1.0',
     sourceContractRefs: Object.freeze([
       'FR302-BROW-INTERBROW-VERTICAL-REFERENCE-v1',
       'packages/face-reading/src/brow-interbrow-vertical-reference-fr302.ts',
     ]),
   }),
   'trad.anchor.yintang': Object.freeze({
-    observationRef: FR302_INTERBROW_VERTICAL_REFERENCE_REF,
+    observationRef:
+      'neutral.face.visible_interbrow.medial_endpoint_midpoint_vertical_coordinate@0.1.0',
     sourceContractRefs: Object.freeze([
       'FR302-BROW-INTERBROW-VERTICAL-REFERENCE-v1',
       'packages/face-reading/src/brow-interbrow-vertical-reference-fr302.ts',
     ]),
   }),
   'trad.anchor.shangen': Object.freeze({
-    observationRef: FR304_NASAL_BRIDGE_ROOT_VERTICAL_REFERENCE_REF,
+    observationRef:
+      'neutral.face.nasal_bridge_root.vertical_coordinate@0.1.0',
     sourceContractRefs: Object.freeze([
       'FR304-NASAL-VERTICAL-REFERENCE-HANDOFF-v1',
       'packages/face-reading/src/nasal-vertical-reference-handoffs-fr304.ts',
     ]),
   }),
   'trad.anchor.zhuntou': Object.freeze({
-    observationRef: FR304_NASAL_APEX_HANDOFF_REF,
+    observationRef:
+      'neutral.face.nasal_apex.vertical_coordinate@0.1.0',
     sourceContractRefs: Object.freeze([
       'FR304-NASAL-VERTICAL-REFERENCE-HANDOFF-v1',
       'packages/face-reading/src/nasal-vertical-reference-handoffs-fr304.ts',
     ]),
   }),
   'trad.anchor.renzhong': Object.freeze({
-    observationRef: FR315_CENTRAL_GROOVE_METRIC_REFERENCE_REF,
+    observationRef:
+      'neutral.face.visible_central_groove.axis_midpoint_vertical_coordinate.canonical_metric_xy@0.1.0',
     sourceContractRefs: Object.freeze([
       'FR315-COMMON-FRAME-BRIDGE-v1',
       'packages/face-reading/src/common-frame-bridge-fr315.ts',
     ]),
   }),
   'trad.anchor.dige': Object.freeze({
-    observationRef: FR260_REFERENCE_REF,
+    observationRef:
+      'neutral.face.visible_lower_face.inferior_vertical_coordinate@0.1.0',
     sourceContractRefs: Object.freeze([
       'FR301-LOWER-FACE-VERTICAL-REFERENCE-HANDOFF-v1',
       'packages/face-reading/src/lower-face-vertical-reference-handoff-fr301.ts',
@@ -170,21 +171,6 @@ function admittedReference(
   }
 
   return candidate;
-}
-
-function assertObservationPreconditions(): void {
-  if (
-    FR302_CURRENT_GATE.browVerticalReferenceCapabilityReady !== true ||
-    FR302_CURRENT_GATE.interbrowVerticalReferenceCapabilityReady !== true ||
-    FR304_CURRENT_GATE.nasalApexReferenceContractReady !== true ||
-    FR304_CURRENT_GATE.nasalBridgeRootReferenceContractReady !== true ||
-    FR315_CURRENT_GATE.centralGrooveMetricBridgeImplemented !== true ||
-    FR319_CURRENT_GATE.repositoryActualNeutralReferenceCapabilityCount !== 6 ||
-    FR319_CURRENT_GATE.repositoryRemainingNeutralReferenceCapabilityCount !== 1 ||
-    FR318_CURRENT_GATE.realFR318HairlineMetricReferenceMaterialized !== false
-  ) {
-    fail('neutral observation precondition drift.');
-  }
 }
 
 function buildBindingSlots():
@@ -277,7 +263,6 @@ FRB006PartialBindingLedger {
   assertT7MethodologyScopedBindingLedgerFRB005(
     T7_METHODOLOGY_SCOPED_BINDING_LEDGER_FRB005,
   );
-  assertObservationPreconditions();
 
   const bindingSlots = buildBindingSlots();
   const methodologyStatuses =
@@ -290,6 +275,14 @@ FRB006PartialBindingLedger {
     track: 'face-bridge' as const,
     baselineContractVersion:
       T7_METHODOLOGY_SCOPED_BINDING_LEDGER_FRB005.contractVersion,
+    observationReviewSnapshot: Object.freeze({
+      reviewedNeutralReferenceCapabilityCount: 6 as const,
+      remainingNeutralReferenceCapabilityCount: 1 as const,
+      remainingNeutralReference:
+        'face.vertical_reference.visible_hairline' as const,
+      reviewBasisRefs: REVIEW_BASIS_REFS,
+      observationRuntimeImportedIntoBridge: false as const,
+    }),
     slotCount: 16 as const,
     uniqueTraditionalAnchorCount: 7 as const,
     admittedTraditionalBindingCount: 13 as const,
@@ -336,7 +329,12 @@ export function assertFRB006PartialBindingLedger(
     ledger.admittedTraditionalBindingCount !== 13 ||
     ledger.blockedTraditionalBindingCount !== 3 ||
     ledger.admittedUniqueTraditionalAnchorCount !== 6 ||
-    ledger.blockedUniqueTraditionalAnchorCount !== 1
+    ledger.blockedUniqueTraditionalAnchorCount !== 1 ||
+    ledger.observationReviewSnapshot.reviewedNeutralReferenceCapabilityCount !== 6 ||
+    ledger.observationReviewSnapshot.remainingNeutralReferenceCapabilityCount !== 1 ||
+    ledger.observationReviewSnapshot.remainingNeutralReference !==
+      'face.vertical_reference.visible_hairline' ||
+    ledger.observationReviewSnapshot.observationRuntimeImportedIntoBridge !== false
   ) {
     fail('ledger identity/cardinality drift.');
   }
@@ -376,7 +374,8 @@ export function assertFRB006PartialBindingLedger(
       slot.reviewState !==
         'admitted_governed_neutral_vertical_reference' ||
       slot.bindingProvenanceReady !== true ||
-      slot.runtimeUnavailablePolicy !== 'fail_closed'
+      slot.runtimeUnavailablePolicy !== 'fail_closed' ||
+      slot.sourceContractRefs.length < 2
     ) {
       fail(`admitted binding drift: ${slot.bindingSlotId}.`);
     }
