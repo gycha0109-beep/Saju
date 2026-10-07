@@ -431,7 +431,7 @@ describe('Official Reading general natal detailed material pilot', () => {
     expect(changedCoverage.staleTargetCount).toBe(2);
   });
 
-  it('keeps spouse relationship readings outside detailed authority', () => {
+  it('does not let general relationship material satisfy spouse detailed authority', () => {
     const generalRelationship = semanticsFor({
       label: 'relationship-general-authority-boundary',
       intent: {
@@ -455,14 +455,13 @@ describe('Official Reading general natal detailed material pilot', () => {
       plan,
     );
 
-    expect(coverage.domainKey).toBeUndefined();
-    expect(coverage.state).toBe('unsupported_domain');
+    expect(coverage.domainKey).toBe('relationship:natal:spouse');
+    expect(coverage.state).toBe('incomplete');
     expect(coverage.approvedMaterialCount).toBe(0);
     expect(coverage.requiredMaterialCount).toBeGreaterThan(0);
-    expect(coverage.missingTargetCount).toBe(
+    expect(coverage.missingTargetCount + coverage.staleTargetCount).toBe(
       coverage.requiredMaterialCount,
     );
-    expect(coverage.staleTargetCount).toBe(0);
   });
 });
 
