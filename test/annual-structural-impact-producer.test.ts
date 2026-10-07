@@ -94,7 +94,10 @@ function request(year: number): ReadingRequest {
   };
 }
 
-function snapshot(dayunBranch: '오' | '진' | '자' | '인' = '오'): CanonicalSajuSnapshot {
+function snapshot(
+  dayunBranch: '오' | '진' | '자' | '인' | '사' | '축' = '오',
+  natalBranch: '사' | '자' = '사',
+): CanonicalSajuSnapshot {
   const base = calculateCanonicalSajuSnapshot(
     {
       calendarType: 'solar',
@@ -104,7 +107,7 @@ function snapshot(dayunBranch: '오' | '진' | '자' | '인' = '오'): Canonical
     },
     PRODUCTION_DEFAULT_CALCULATION_POLICY,
   );
-  const safeNatalPillar = pillar('갑', '사');
+  const safeNatalPillar = pillar('갑', natalBranch);
   const luckPillars = Array.from({ length: 10 }, (_, index) => ({
     age: 1 + index * 10,
     pillar: pillar('경', dayunBranch),
@@ -114,7 +117,7 @@ function snapshot(dayunBranch: '오' | '진' | '자' | '인' = '오'): Canonical
     ...base,
     pillars: {
       year: resolved(safeNatalPillar),
-      month: resolved(pillar('기', '사')),
+      month: resolved(pillar('기', natalBranch)),
       day: resolved(safeNatalPillar),
       hour: resolved(safeNatalPillar),
     },
@@ -335,9 +338,9 @@ describe('R198 bounded annual structural impact producer', () => {
     );
   });
 
-  test('keeps punishment-group relations blocked pending separate three-member-family settlement', () => {
+  test('preserves source-directed Yin-Si punishment identity and keeps it fail-closed', () => {
     const result = produceAnnualStructuralImpactBundleV1(
-      snapshot('인'),
+      snapshot('인', '자'),
       request(2037),
       'structure-r198',
       assignments,
@@ -345,11 +348,39 @@ describe('R198 bounded annual structural impact producer', () => {
     expect(result.status).toBe('unavailable');
     if (result.status !== 'unavailable') throw new Error('expected unavailable');
     expect(result.reasonCode).toBe('branch_relation_requires_settlement');
-    expect(result.branchRelationIds).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining('punishment_group:'),
-      ]),
+    expect(result.branchRelationIds).toEqual([
+      'punishment_directed_pair:punisher:dayun:인->punished:annual:사',
+    ]);
+  });
+
+  test('canonicalizes the same Yin-Si source direction when annual/dayun layers are reversed', () => {
+    const result = produceAnnualStructuralImpactBundleV1(
+      snapshot('사', '자'),
+      request(2034),
+      'structure-r198',
+      assignments,
     );
+    expect(result.status).toBe('unavailable');
+    if (result.status !== 'unavailable') throw new Error('expected unavailable');
+    expect(result.reasonCode).toBe('branch_relation_requires_settlement');
+    expect(result.branchRelationIds).toEqual([
+      'punishment_directed_pair:punisher:annual:인->punished:dayun:사',
+    ]);
+  });
+
+  test('preserves the second Chou-Xu-Wei directed punishment family and keeps it fail-closed', () => {
+    const result = produceAnnualStructuralImpactBundleV1(
+      snapshot('축'),
+      request(2030),
+      'structure-r198',
+      assignments,
+    );
+    expect(result.status).toBe('unavailable');
+    if (result.status !== 'unavailable') throw new Error('expected unavailable');
+    expect(result.reasonCode).toBe('branch_relation_requires_settlement');
+    expect(result.branchRelationIds).toEqual([
+      'punishment_directed_pair:punisher:dayun:축->punished:annual:술',
+    ]);
   });
 
   test('admits branch-quiet annual root support as qualifier-only context', () => {
@@ -719,6 +750,11 @@ describe('R198 bounded annual structural impact producer', () => {
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.punishmentPairRule).toBe(
       'ZIMAO_RELATION_IDENTITY_ONLY_NO_PUNISHMENT_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
     );
+    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.punishmentFamilyDetectionRule).toBe(
+      'SOURCE_DIRECTED_PAIR_IDENTITY_ONLY_FAIL_CLOSED_PENDING_QUALIFIER_AUTHORITY',
+    );
+    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.policyVersion).toBe('1.5.1');
+    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.decisionRef).toBe('GH-2369');
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.rootRule).toBe(
       'OBSERVE_AS_QUALIFIER_WITHOUT_WEIGHT_OR_OVERRIDE',
     );
