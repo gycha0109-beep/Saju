@@ -29,9 +29,11 @@ describe('SA-7B spouse standard Official Reading authority closure', () => {
     });
 
     const resolved =
-      resolveProductionSpouseOfficialReadingDeliveryAuthorityV1(
-        'relationship:natal:spouse',
-      );
+      resolveProductionSpouseOfficialReadingDeliveryAuthorityV1({
+        domain: 'relationship',
+        temporalScope: 'natal',
+        relationshipScope: 'spouse',
+      });
 
     expect(resolved).toMatchObject({
       readingSection: 'relationship:natal:spouse',
@@ -49,9 +51,11 @@ describe('SA-7B spouse standard Official Reading authority closure', () => {
     });
 
     const resolved =
-      resolveProductionSpouseOfficialReadingDeliveryAuthorityV1(
-        'relationship:natal:spouse',
-      );
+      resolveProductionSpouseOfficialReadingDeliveryAuthorityV1({
+        domain: 'relationship',
+        temporalScope: 'natal',
+        relationshipScope: 'spouse',
+      });
 
     expect(resolved.constraints).toEqual({
       mayPromoteProductionInterpretationAuthority: false,
@@ -69,13 +73,23 @@ describe('SA-7B spouse standard Official Reading authority closure', () => {
   });
 
   it('fails non-spouse sections out of the bounded Official Reading authority', () => {
-    for (const section of [
-      'relationship:natal:general',
-      'general:natal',
-      'relationship:annual:general',
-    ]) {
+    const intents = [
+      {
+        domain: 'relationship',
+        temporalScope: 'natal',
+        relationshipScope: 'general',
+      },
+      { domain: 'general', temporalScope: 'natal' },
+      {
+        domain: 'relationship',
+        temporalScope: 'annual',
+        relationshipScope: 'general',
+      },
+    ] as const;
+
+    for (const intent of intents) {
       const resolved =
-        resolveProductionSpouseOfficialReadingDeliveryAuthorityV1(section);
+        resolveProductionSpouseOfficialReadingDeliveryAuthorityV1(intent);
 
       expect(resolved.authority).toBe('legacy_narrative');
       expect(resolved.supportedOfficialReadingSection).toBeUndefined();
