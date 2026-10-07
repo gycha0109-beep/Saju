@@ -1,0 +1,644 @@
+import { createHash } from 'node:crypto';
+import { getHeavenlyStemElement } from 'manseryeok';
+import {
+  resolveStructuralRoleImpact,
+  type ResolvedStructuralRoleImpact,
+  type StructuralRoleAssignment,
+  type UnavailableStructuralRoleImpact,
+} from '../calculation/structural-role-impact.js';
+import { getHiddenStemMembership } from '../calculation/hidden-stems.js';
+import type {
+  CanonicalSajuSnapshot,
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+  StemInteractionSettlementFact,
+} from '../contracts/calculation.js';
+import type { ReadingRequest } from '../contracts/reading.js';
+import {
+  buildAnnualInterpretationFacts,
+  type AnnualInterpretationFacts,
+} from './annual-interpretation-facts.js';
+import {
+  createGovernedAnnualStructuralImpactBundleV1,
+  type GovernedAnnualStructuralImpactBundleV1,
+} from './annual-structural-impact-bundle.js';
+import {
+  resolveDayunTemporalContext,
+  type UnavailableDayunTemporalContext,
+} from './dayun-temporal-context.js';
+import { buildTemporalReadingContext } from './temporal-reading-context.js';
+
+export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY = Object.freeze({
+  policyId: 'myeongha/annual-structural-impact-producer-v1',
+  policyVersion: '1.0.0',
+  decisionAuthority: 'PROJECT_OWNER',
+  decisionRef: 'GH-2288',
+  scope: 'BRANCH_QUIET_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
+  annualRule: 'RETAIN_STEM_AND_BRANCH_CONTEXT',
+  dayunRule: 'REQUIRE_ONE_ACTIVE_DAYUN_SEGMENT',
+  stemSourceRule: 'ANNUAL_AND_DAYUN_STEMS_COEXIST_WITHOUT_PRECEDENCE',
+  directRelationRule: 'INCOMING_ELEMENT_CONTROL_OR_GENERATION_ONLY',
+  sameTargetConflictRule: 'CONTROL_OVER_SUPPORT',
+  natalStateRule: 'START_FROM_CANONICAL_R191_FINAL_STATE',
+  branchRule: 'FAIL_CLOSED_WHEN_TEMPORAL_BRANCH_RELATION_IS_OBSERVED',
+  rootRule: 'FAIL_CLOSED_WHEN_TEMPORAL_STEM_ROOT_SUPPORT_IS_OBSERVED',
+  boundaryRule: 'FAIL_CLOSED_ON_MULTI_DAYUN_SEGMENT_YEAR',
+  mutationRule: 'DO_NOT_MUTATE_CANONICAL_NATAL_SETTLEMENT',
+  numericWeightRule: 'NONE',
+  effectRule: 'REQUIRE_TEMPORAL_FUNCTION_STATE_CHANGE',
+  eventRule: 'NONE',
+  extendsDecisionRef: 'GH-2284',
+} as const);
+
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value === null || typeof value !== 'object') return value;
+  const record = value as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.keys(record)
+      .sort()
+      .filter((key) => record[key] !== undefined)
+      .map((key) => [key, canonicalize(record[key])]),
+  );
+}
+
+export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY_CONTENT_HASH =
+  createHash('sha256')
+    .update(JSON.stringify(canonicalize(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY)))
+    .digest('hex');
+
+export type AnnualTemporalStemLayer = 'annual' | 'dayun';
+
+export interface AnnualTemporalStemSourceV1 {
+  layer: AnnualTemporalStemLayer;
+  stem: HeavenlyStem;
+  element: FiveElement;
+}
+
+export interface AnnualTemporalStemInfluenceV1 {
+  influenceId: string;
+  sourceLayer: AnnualTemporalStemLayer;
+  sourceStem: HeavenlyStem;
+  sourceElement: FiveElement;
+  targetRole: 'controller' | 'controlled';
+  targetStem: HeavenlyStem;
+  targetElement: FiveElement;
+  kind: 'control' | 'support';
+}
+
+export interface AnnualTemporalSettlementOverlayV1 {
+  overlayId: string;
+  baseSettlementId: string;
+  targetYear: number;
+  temporalSources: readonly AnnualTemporalStemSourceV1[];
+  temporalInfluences: readonly AnnualTemporalStemInfluenceV1[];
+  settlement: StemInteractionSettlementFact;
+}
+
+export interface ResolvedAnnualStructuralImpactProductionV1 {
+  status: 'resolved';
+  producerId: string;
+  snapshotId: string;
+  targetYear: number;
+  structureId: string;
+  annualFacts: AnnualInterpretationFacts;
+  dayunContextId: string;
+  dayunSegmentIndex: number;
+  dayunPillar: PillarFact;
+  overlays: readonly AnnualTemporalSettlementOverlayV1[];
+  assessments: readonly ResolvedStructuralRoleImpact[];
+  bundle: GovernedAnnualStructuralImpactBundleV1;
+}
+
+export interface UnavailableAnnualStructuralImpactProductionV1 {
+  status: 'unavailable';
+  snapshotId: string;
+  targetYear?: number;
+  structureId: string;
+  reasonCode:
+    | 'annual_request_required'
+    | 'annual_target_period_required'
+    | 'annual_context_unavailable'
+    | 'annual_facts_unavailable'
+    | 'dayun_context_unavailable'
+    | 'dayun_boundary_year_unsupported'
+    | 'natal_settlements_unavailable'
+    | 'no_natal_stem_settlements'
+    | 'natal_pillar_unavailable'
+    | 'annual_root_support_requires_settlement'
+    | 'dayun_root_support_requires_settlement'
+    | 'branch_relation_requires_settlement'
+    | 'no_temporal_stem_effect'
+    | 'structural_role_impact_unavailable';
+  dayunReasonCode?: UnavailableDayunTemporalContext['reasonCode'];
+  structuralRoleReasonCode?: UnavailableStructuralRoleImpact['reasonCode'];
+  settlementId?: string;
+  branchRelationIds?: readonly string[];
+}
+
+export type AnnualStructuralImpactProductionResultV1 =
+  | ResolvedAnnualStructuralImpactProductionV1
+  | UnavailableAnnualStructuralImpactProductionV1;
+
+const ELEMENT_CONTROLS = Object.freeze({
+  목: '토',
+  화: '금',
+  토: '수',
+  금: '목',
+  수: '화',
+} as const satisfies Readonly<Record<FiveElement, FiveElement>>);
+
+const ELEMENT_GENERATES = Object.freeze({
+  목: '화',
+  화: '토',
+  토: '금',
+  금: '수',
+  수: '목',
+} as const satisfies Readonly<Record<FiveElement, FiveElement>>);
+
+const BRANCH_SIX_COMBINATIONS = [
+  ['자', '축'],
+  ['인', '해'],
+  ['묘', '술'],
+  ['진', '유'],
+  ['사', '신'],
+  ['오', '미'],
+] as const satisfies readonly (readonly [EarthlyBranch, EarthlyBranch])[];
+
+const BRANCH_CLASHES = [
+  ['자', '오'],
+  ['축', '미'],
+  ['인', '신'],
+  ['묘', '유'],
+  ['진', '술'],
+  ['사', '해'],
+] as const satisfies readonly (readonly [EarthlyBranch, EarthlyBranch])[];
+
+const BRANCH_THREE_COMBINATIONS = [
+  ['인', '오', '술'],
+  ['사', '유', '축'],
+  ['신', '자', '진'],
+  ['해', '묘', '미'],
+] as const satisfies readonly (readonly [EarthlyBranch, EarthlyBranch, EarthlyBranch])[];
+
+const BRANCH_PUNISHMENT_GROUPS = [
+  ['인', '사', '신'],
+  ['축', '술', '미'],
+] as const satisfies readonly (readonly [EarthlyBranch, EarthlyBranch, EarthlyBranch])[];
+
+const BRANCH_PUNISHMENT_PAIRS = [
+  ['자', '묘'],
+] as const satisfies readonly (readonly [EarthlyBranch, EarthlyBranch])[];
+
+const SELF_PUNISHMENT_BRANCHES = new Set<EarthlyBranch>(['진', '오', '유', '해']);
+
+interface BranchLayerValue {
+  key: string;
+  layer: 'annual' | 'dayun' | 'natal';
+  branch: EarthlyBranch;
+}
+
+function pairMatches(
+  left: EarthlyBranch,
+  right: EarthlyBranch,
+  pairs: readonly (readonly [EarthlyBranch, EarthlyBranch])[],
+): boolean {
+  return pairs.some(
+    ([a, b]) => (left === a && right === b) || (left === b && right === a),
+  );
+}
+
+function directInfluenceKind(
+  source: FiveElement,
+  target: FiveElement,
+): AnnualTemporalStemInfluenceV1['kind'] | undefined {
+  if (ELEMENT_CONTROLS[source] === target) return 'control';
+  if (ELEMENT_GENERATES[source] === target) return 'support';
+  return undefined;
+}
+
+function temporalInfluencesForSettlement(
+  settlement: StemInteractionSettlementFact,
+  sources: readonly AnnualTemporalStemSourceV1[],
+): readonly AnnualTemporalStemInfluenceV1[] {
+  const result: AnnualTemporalStemInfluenceV1[] = [];
+  for (const source of sources) {
+    for (const targetRole of ['controller', 'controlled'] as const) {
+      const target = settlement.participants[targetRole];
+      const kind = directInfluenceKind(source.element, target.element);
+      if (kind === undefined) continue;
+      result.push({
+        influenceId:
+          `${kind}:${source.layer}:${source.stem}->${targetRole}:${target.stem}`,
+        sourceLayer: source.layer,
+        sourceStem: source.stem,
+        sourceElement: source.element,
+        targetRole,
+        targetStem: target.stem,
+        targetElement: target.element,
+        kind,
+      });
+    }
+  }
+  return result.sort((a, b) => a.influenceId.localeCompare(b.influenceId));
+}
+
+function hasControl(
+  influences: readonly AnnualTemporalStemInfluenceV1[],
+  targetRole: 'controller' | 'controlled',
+): boolean {
+  return influences.some(
+    (item) => item.targetRole === targetRole && item.kind === 'control',
+  );
+}
+
+function hasSupport(
+  influences: readonly AnnualTemporalStemInfluenceV1[],
+  targetRole: 'controller' | 'controlled',
+): boolean {
+  return influences.some(
+    (item) => item.targetRole === targetRole && item.kind === 'support',
+  );
+}
+
+export function deriveAnnualTemporalSettlementOverlayV1(
+  settlement: StemInteractionSettlementFact,
+  targetYear: number,
+  sources: readonly AnnualTemporalStemSourceV1[],
+): AnnualTemporalSettlementOverlayV1 {
+  for (const source of sources) {
+    if (source.element !== getHeavenlyStemElement(source.stem)) {
+      throw new TypeError(
+        `Temporal source element mismatch for ${source.layer}:${source.stem}.`,
+      );
+    }
+  }
+  const canonicalSources = [...sources].sort((a, b) =>
+    `${a.layer}:${a.stem}`.localeCompare(`${b.layer}:${b.stem}`),
+  );
+  const influences = temporalInfluencesForSettlement(settlement, canonicalSources);
+
+  const controllerBase = settlement.participants.controller.functionState;
+  const controllerState =
+    controllerBase === 'impaired' || hasControl(influences, 'controller')
+      ? 'impaired'
+      : 'constrained';
+  const pairControlEffective = controllerState === 'constrained';
+
+  const controlledBase = settlement.participants.controlled.functionState;
+  const controlledState = hasControl(influences, 'controlled')
+    ? 'impaired'
+    : hasSupport(influences, 'controlled') || !pairControlEffective
+      ? 'constrained'
+      : controlledBase;
+
+  const overlayMaterial = {
+    policyContentHash: ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY_CONTENT_HASH,
+    baseSettlementId: settlement.settlementId,
+    targetYear,
+    temporalSources: canonicalSources,
+    temporalInfluences: influences,
+    controllerState,
+    controlledState,
+    pairControlEffective,
+  };
+  const overlayId = `annual_settlement_overlay_${createHash('sha256')
+    .update(JSON.stringify(canonicalize(overlayMaterial)))
+    .digest('hex')
+    .slice(0, 24)}`;
+
+  return {
+    overlayId,
+    baseSettlementId: settlement.settlementId,
+    targetYear,
+    temporalSources: canonicalSources,
+    temporalInfluences: influences,
+    settlement: {
+      ...settlement,
+      settlementId: overlayId,
+      pairControlEffective,
+      participants: {
+        controller: {
+          ...settlement.participants.controller,
+          functionState: controllerState,
+        },
+        controlled: {
+          ...settlement.participants.controlled,
+          functionState: controlledState,
+        },
+      },
+    },
+  };
+}
+
+function rootSupportObserved(stem: HeavenlyStem, branch: EarthlyBranch): boolean {
+  const sourceElement = getHeavenlyStemElement(stem);
+  return getHiddenStemMembership(branch).some(
+    (hiddenStem) => getHeavenlyStemElement(hiddenStem) === sourceElement,
+  );
+}
+
+function resolvedNatalBranches(
+  snapshot: CanonicalSajuSnapshot,
+): readonly BranchLayerValue[] | undefined {
+  const result: BranchLayerValue[] = [];
+  for (const slot of ['year', 'month', 'day', 'hour'] as const) {
+    const state = snapshot.pillars[slot];
+    if (state.status !== 'resolved') return undefined;
+    result.push({
+      key: `natal:${slot}`,
+      layer: 'natal',
+      branch: state.value.branch.value,
+    });
+  }
+  return result;
+}
+
+function branchRelationIds(
+  natal: readonly BranchLayerValue[],
+  annualBranch: EarthlyBranch,
+  dayunBranch: EarthlyBranch,
+): readonly string[] {
+  const values: BranchLayerValue[] = [
+    ...natal,
+    { key: 'annual', layer: 'annual', branch: annualBranch },
+    { key: 'dayun', layer: 'dayun', branch: dayunBranch },
+  ];
+  const result = new Set<string>();
+
+  for (let i = 0; i < values.length; i += 1) {
+    for (let j = i + 1; j < values.length; j += 1) {
+      const left = values[i];
+      const right = values[j];
+      if (left === undefined || right === undefined) continue;
+      if (left.layer === 'natal' && right.layer === 'natal') continue;
+
+      if (pairMatches(left.branch, right.branch, BRANCH_CLASHES)) {
+        result.add(`clash:${left.key}:${left.branch}|${right.key}:${right.branch}`);
+      }
+      if (pairMatches(left.branch, right.branch, BRANCH_SIX_COMBINATIONS)) {
+        result.add(`six_combination:${left.key}:${left.branch}|${right.key}:${right.branch}`);
+      }
+      if (pairMatches(left.branch, right.branch, BRANCH_PUNISHMENT_PAIRS)) {
+        result.add(`punishment_pair:${left.key}:${left.branch}|${right.key}:${right.branch}`);
+      }
+      if (
+        left.branch === right.branch &&
+        SELF_PUNISHMENT_BRANCHES.has(left.branch)
+      ) {
+        result.add(`self_punishment:${left.key}|${right.key}:${left.branch}`);
+      }
+      for (const group of BRANCH_PUNISHMENT_GROUPS) {
+        const members = group as readonly EarthlyBranch[];
+        if (members.includes(left.branch) && members.includes(right.branch)) {
+          result.add(`punishment_group:${left.key}:${left.branch}|${right.key}:${right.branch}`);
+        }
+      }
+    }
+  }
+
+  const present = new Set(values.map((item) => item.branch));
+  for (const group of BRANCH_THREE_COMBINATIONS) {
+    if (!group.every((branch) => present.has(branch))) continue;
+    const members = group as readonly EarthlyBranch[];
+    const temporalParticipates =
+      members.includes(annualBranch) || members.includes(dayunBranch);
+    if (temporalParticipates) {
+      result.add(`three_combination:${group.join('-')}`);
+    }
+  }
+
+  return [...result].sort();
+}
+
+function unavailable(
+  snapshot: CanonicalSajuSnapshot,
+  structureId: string,
+  reasonCode: UnavailableAnnualStructuralImpactProductionV1['reasonCode'],
+  extras: Partial<Omit<
+    UnavailableAnnualStructuralImpactProductionV1,
+    'status' | 'snapshotId' | 'structureId' | 'reasonCode'
+  >> = {},
+): UnavailableAnnualStructuralImpactProductionV1 {
+  return {
+    status: 'unavailable',
+    snapshotId: snapshot.snapshotId,
+    structureId,
+    reasonCode,
+    ...extras,
+  };
+}
+
+export function produceAnnualStructuralImpactBundleV1(
+  snapshot: CanonicalSajuSnapshot,
+  request: ReadingRequest,
+  structureId: string,
+  assignments: readonly StructuralRoleAssignment[],
+): AnnualStructuralImpactProductionResultV1 {
+  if (request.intent.temporalScope !== 'annual') {
+    return unavailable(snapshot, structureId, 'annual_request_required');
+  }
+  if (request.targetPeriod === undefined || request.targetPeriod.scope !== 'annual') {
+    return unavailable(snapshot, structureId, 'annual_target_period_required');
+  }
+
+  const targetYear = request.targetPeriod.year;
+  let temporalContext;
+  try {
+    temporalContext = buildTemporalReadingContext(request);
+  } catch {
+    return unavailable(snapshot, structureId, 'annual_context_unavailable', {
+      targetYear,
+    });
+  }
+  if (temporalContext === undefined || temporalContext.scope !== 'annual') {
+    return unavailable(snapshot, structureId, 'annual_context_unavailable', {
+      targetYear,
+    });
+  }
+
+  let annualFacts: AnnualInterpretationFacts;
+  try {
+    annualFacts = buildAnnualInterpretationFacts(snapshot, temporalContext);
+  } catch {
+    return unavailable(snapshot, structureId, 'annual_facts_unavailable', {
+      targetYear,
+    });
+  }
+
+  const dayun = resolveDayunTemporalContext(snapshot, targetYear);
+  if (dayun.status !== 'resolved') {
+    return unavailable(snapshot, structureId, 'dayun_context_unavailable', {
+      targetYear,
+      dayunReasonCode: dayun.reasonCode,
+    });
+  }
+  if (dayun.segments.length !== 1) {
+    return unavailable(snapshot, structureId, 'dayun_boundary_year_unsupported', {
+      targetYear,
+    });
+  }
+  const dayunSegment = dayun.segments[0];
+  if (dayunSegment === undefined) {
+    return unavailable(snapshot, structureId, 'dayun_context_unavailable', {
+      targetYear,
+    });
+  }
+
+  const settlementsState = snapshot.derivedFacts.stemInteractionSettlements;
+  if (settlementsState === undefined || settlementsState.status !== 'resolved') {
+    return unavailable(snapshot, structureId, 'natal_settlements_unavailable', {
+      targetYear,
+    });
+  }
+  if (settlementsState.value.length === 0) {
+    return unavailable(snapshot, structureId, 'no_natal_stem_settlements', {
+      targetYear,
+    });
+  }
+
+  const natalBranches = resolvedNatalBranches(snapshot);
+  if (natalBranches === undefined) {
+    return unavailable(snapshot, structureId, 'natal_pillar_unavailable', {
+      targetYear,
+    });
+  }
+
+  const annualStem = annualFacts.annualPillar.stem;
+  const annualBranch = annualFacts.annualPillar.branch;
+  const dayunStem = dayunSegment.pillar.stem.value;
+  const dayunBranch = dayunSegment.pillar.branch.value;
+
+  if (rootSupportObserved(annualStem, annualBranch)) {
+    return unavailable(
+      snapshot,
+      structureId,
+      'annual_root_support_requires_settlement',
+      { targetYear },
+    );
+  }
+  if (rootSupportObserved(dayunStem, dayunBranch)) {
+    return unavailable(
+      snapshot,
+      structureId,
+      'dayun_root_support_requires_settlement',
+      { targetYear },
+    );
+  }
+
+  const branchRelations = branchRelationIds(
+    natalBranches,
+    annualBranch,
+    dayunBranch,
+  );
+  if (branchRelations.length > 0) {
+    return unavailable(snapshot, structureId, 'branch_relation_requires_settlement', {
+      targetYear,
+      branchRelationIds: branchRelations,
+    });
+  }
+
+  const sources: readonly AnnualTemporalStemSourceV1[] = [
+    {
+      layer: 'annual',
+      stem: annualStem,
+      element: getHeavenlyStemElement(annualStem),
+    },
+    {
+      layer: 'dayun',
+      stem: dayunStem,
+      element: dayunSegment.pillar.stem.element,
+    },
+  ];
+
+  const overlays: AnnualTemporalSettlementOverlayV1[] = [];
+  const assessments: ResolvedStructuralRoleImpact[] = [];
+
+  for (const settlement of settlementsState.value) {
+    const overlay = deriveAnnualTemporalSettlementOverlayV1(
+      settlement,
+      targetYear,
+      sources,
+    );
+    const stateChanged =
+      overlay.settlement.participants.controller.functionState !==
+        settlement.participants.controller.functionState ||
+      overlay.settlement.participants.controlled.functionState !==
+        settlement.participants.controlled.functionState ||
+      overlay.settlement.pairControlEffective !== settlement.pairControlEffective;
+    if (!stateChanged) continue;
+
+    const assessment = resolveStructuralRoleImpact(
+      overlay.settlement,
+      structureId,
+      assignments,
+    );
+    if (assessment.status !== 'resolved') {
+      return unavailable(
+        snapshot,
+        structureId,
+        'structural_role_impact_unavailable',
+        {
+          targetYear,
+          settlementId: settlement.settlementId,
+          structuralRoleReasonCode: assessment.reasonCode,
+        },
+      );
+    }
+    overlays.push(overlay);
+    assessments.push(assessment);
+  }
+
+  if (assessments.length === 0) {
+    return unavailable(snapshot, structureId, 'no_temporal_stem_effect', {
+      targetYear,
+    });
+  }
+
+  overlays.sort((a, b) => a.overlayId.localeCompare(b.overlayId));
+  assessments.sort((a, b) => a.assessmentId.localeCompare(b.assessmentId));
+
+  const bundle = createGovernedAnnualStructuralImpactBundleV1({
+    snapshotId: snapshot.snapshotId,
+    targetYear,
+    structureId,
+    producerRef: {
+      id: ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.policyId,
+      version: ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.policyVersion,
+    },
+    assessments,
+  });
+
+  const producerMaterial = {
+    policyContentHash: ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY_CONTENT_HASH,
+    snapshotId: snapshot.snapshotId,
+    targetYear,
+    structureId,
+    annualPillar: annualFacts.annualPillar,
+    dayunContextId: dayun.contextId,
+    dayunSegmentIndex: dayunSegment.index,
+    overlayIds: overlays.map((item) => item.overlayId),
+    bundleId: bundle.bundleId,
+  };
+  const producerId = `annual_impact_producer_${createHash('sha256')
+    .update(JSON.stringify(canonicalize(producerMaterial)))
+    .digest('hex')
+    .slice(0, 24)}`;
+
+  return {
+    status: 'resolved',
+    producerId,
+    snapshotId: snapshot.snapshotId,
+    targetYear,
+    structureId,
+    annualFacts,
+    dayunContextId: dayun.contextId,
+    dayunSegmentIndex: dayunSegment.index,
+    dayunPillar: dayunSegment.pillar,
+    overlays,
+    assessments,
+    bundle,
+  };
+}

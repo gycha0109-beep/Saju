@@ -295,16 +295,17 @@ describe('R194/R196 product annual temporal structure integration', () => {
     expect(result.reasonCode).toBe('ANNUAL_REQUEST_REQUIRED');
   });
 
-  test('automatic annual semantic producer remains explicitly unavailable', () => {
+  test('bounded annual structural-impact production is available without promoting unresolved branch or trigger semantics', () => {
     expect(PRODUCT_ANNUAL_STRUCTURAL_IMPACT_PRODUCER_CAPABILITY).toEqual({
-      runtimeAvailable: false,
-      reasonCodes: [
-        'R153_EXECUTABLE_ANNUAL_COMPOSITION_RESOLVER_NOT_AUTHORIZED',
-        'R159_TEMPORAL_TRIGGER_SUFFICIENCY_NOT_ESTABLISHED',
-      ],
+      runtimeAvailable: true,
+      boundedRuntimeAvailable: true,
+      scope: 'BRANCH_QUIET_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
       annualStemOnlyAuthorized: false,
       annualBranchIgnoringAuthorized: false,
-      executableTemporalOutcomeResolverAuthorized: false,
+      branchSemanticSettlementAvailable: false,
+      dayunBoundarySettlementAvailable: false,
+      executableTemporalTriggerOutcomeResolverAuthorized: false,
+      deterministicEventAuthorized: false,
     });
   });
 

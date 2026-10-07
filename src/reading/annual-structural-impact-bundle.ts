@@ -17,14 +17,15 @@ export const GOVERNED_ANNUAL_STRUCTURAL_IMPACT_BUNDLE_POLICY = Object.freeze({
 } as const);
 
 export const PRODUCT_ANNUAL_STRUCTURAL_IMPACT_PRODUCER_CAPABILITY = Object.freeze({
-  runtimeAvailable: false as const,
-  reasonCodes: [
-    'R153_EXECUTABLE_ANNUAL_COMPOSITION_RESOLVER_NOT_AUTHORIZED',
-    'R159_TEMPORAL_TRIGGER_SUFFICIENCY_NOT_ESTABLISHED',
-  ] as const,
+  runtimeAvailable: true as const,
+  boundedRuntimeAvailable: true as const,
+  scope: 'BRANCH_QUIET_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY' as const,
   annualStemOnlyAuthorized: false as const,
   annualBranchIgnoringAuthorized: false as const,
-  executableTemporalOutcomeResolverAuthorized: false as const,
+  branchSemanticSettlementAvailable: false as const,
+  dayunBoundarySettlementAvailable: false as const,
+  executableTemporalTriggerOutcomeResolverAuthorized: false as const,
+  deterministicEventAuthorized: false as const,
 });
 
 export interface GovernedAnnualStructuralImpactProducerRefV1 {
