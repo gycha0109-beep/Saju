@@ -6,11 +6,15 @@ import {
   planFaceTopicExecution,
   type FaceTopicAuthorizedExecutionPlan,
 } from './execution.js';
-import {
-  buildFaceGovernedInterpretationHandoffV1,
-  type FaceGovernedInterpretationHandoffDecisionV1,
-  type FaceGovernedInterpretationHandoffV1,
+import type {
+  FaceGovernedInterpretationHandoffV1,
 } from './governed-interpretation-handoff.js';
+import {
+  buildFaceGovernedCharacterGroundingV1,
+  type FaceGovernedCharacterGroundingBundleV1,
+  type FaceGovernedCharacterGroundingDecisionV1,
+  type FaceGovernedCharacterGroundingRefV1,
+} from './governed-character-grounding.js';
 import type {
   FaceTopicExecutionResultReceiptV1,
 } from './result-receipt.js';
@@ -64,6 +68,8 @@ export interface FaceGovernedHandoffEligibleRuntimeResultV1 {
     readonly authorizationReceiptRef: string;
   };
   readonly handoff: FaceGovernedInterpretationHandoffV1;
+  readonly grounding: FaceGovernedCharacterGroundingBundleV1;
+  readonly groundingRef: FaceGovernedCharacterGroundingRefV1;
 }
 
 export interface FaceGovernedHandoffNotEligibleRuntimeResultV1 {
@@ -73,7 +79,7 @@ export interface FaceGovernedHandoffNotEligibleRuntimeResultV1 {
   readonly requestId: string;
   readonly topicKey: string;
   readonly reason:
-    FaceGovernedInterpretationHandoffDecisionV1 extends infer Decision
+    FaceGovernedCharacterGroundingDecisionV1 extends infer Decision
       ? Decision extends { state: 'not_eligible'; reason: infer Reason }
         ? Reason
         : never
@@ -344,10 +350,10 @@ export async function executeFaceGovernedHandoffRuntimeV1(
   }
 
   let decision:
-    FaceGovernedInterpretationHandoffDecisionV1;
+    FaceGovernedCharacterGroundingDecisionV1;
   try {
     decision =
-      buildFaceGovernedInterpretationHandoffV1({
+      buildFaceGovernedCharacterGroundingV1({
         authorityReceipt,
         plan,
         receipt:
@@ -405,6 +411,10 @@ export async function executeFaceGovernedHandoffRuntimeV1(
           handoff.authorizationReceiptRef,
       }),
     handoff,
+    grounding:
+      decision.grounding,
+    groundingRef:
+      decision.groundingRef,
   });
 }
 
