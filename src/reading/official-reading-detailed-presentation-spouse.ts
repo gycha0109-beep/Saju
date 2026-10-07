@@ -47,6 +47,18 @@ const SEMANTIC_QUALIFIERS = Object.freeze([
       summary: STANDARD_BOUNDARY,
     }),
     prohibitedExtensions: QUALIFIER_PROHIBITED_EXTENSIONS,
+    provenance: Object.freeze({
+      admissionId:
+        'sa5ab-production-active-relationship-spouse-position-only-v1',
+      admissionRegistryVersion:
+        'myeonghwa-production-spouse-official-reading-delivery-authority-v1',
+      researchId:
+        'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PRODUCTION_DELIVERY_ACTIVATION_AUTHORITY_REVIEW',
+      researchVersion:
+        'myeonghwa-relationship-spouse-t8-day-branch-palace-production-delivery-activation-authority-review-v1',
+      authorityState:
+        'AUTHORIZE_POSITION_ONLY_PRODUCTION_DELIVERY_ACTIVATION_IMPLEMENTATION',
+    }),
   }),
 ]);
 
