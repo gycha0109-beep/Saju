@@ -9,6 +9,8 @@ export * from './grounding.js';
 export * from './projection.js';
 export * from './display-facts.js';
 export * from './character-handoff.js';
+export * from './governed-interpretation-unit.js';
+export * from './governed-interpretation-handoff.js';
 export * from './reader.js';
 export * from './live-fr293-reader.js';
 export * from './runtime.js';

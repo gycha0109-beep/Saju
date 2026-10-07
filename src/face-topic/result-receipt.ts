@@ -1,4 +1,8 @@
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import {
+  admitFaceGovernedInterpretationUnitV1,
+  type FaceGovernedInterpretationUnitV1,
+} from './governed-interpretation-unit.js';
 import type {
   FaceTopicAuthorizedExecutionPlan,
   FaceTopicExecutionKind,
@@ -26,6 +30,7 @@ export interface FaceSemanticClaimResultUnitV1 {
   readonly kind: 'traditional_claim';
   readonly claimFamily: string;
   readonly claimRef: string;
+  readonly governedInterpretation?: FaceGovernedInterpretationUnitV1;
   readonly methodologyRef: string;
   readonly inferenceKeys: readonly string[];
   readonly qualifiers: readonly string[];
@@ -115,6 +120,7 @@ const CLAIM_KEYS = new Set([
   'kind',
   'claimFamily',
   'claimRef',
+  'governedInterpretation',
   'methodologyRef',
   'inferenceKeys',
   'qualifiers',
@@ -247,6 +253,9 @@ function normalizeClaim(
     kind: unit.kind,
     claimFamily: unit.claimFamily,
     claimRef: unit.claimRef,
+    ...(unit.governedInterpretation === undefined ? {} : {
+      governedInterpretation: admitFaceGovernedInterpretationUnitV1(unit.governedInterpretation),
+    }),
     methodologyRef: unit.methodologyRef,
     inferenceKeys: sortedUnique(unit.inferenceKeys),
     qualifiers: sortedUnique(unit.qualifiers),

@@ -45,7 +45,16 @@ export interface FaceTopicAuthoritySourceReceipt {
     readonly methodologyRefs: readonly string[];
     readonly semanticClaimFamilies: readonly string[];
     readonly provenanceRefs: readonly string[];
+    /** Trusted source-provider decision; never inferred from a merged PR. */
+    readonly characterPublicationDecision?: FaceCharacterPublicationDecisionV1;
   };
+}
+
+export interface FaceCharacterPublicationDecisionV1 {
+  readonly state: 'product_authorized';
+  readonly scope: 'character_public_reading';
+  readonly decisionRef: string;
+  readonly topicKeys: readonly string[];
 }
 
 function sortedUnique(values: readonly string[]): readonly string[] {
@@ -80,6 +89,26 @@ export function assertFaceTopicAuthoritySourceReceipt(
     receipt.traditional.authorityRef,
     'FACE_TOPIC_TRADITIONAL_AUTHORITY_REF_MISSING',
   );
+
+  const publication = receipt.traditional.characterPublicationDecision;
+  if (publication !== undefined) {
+    if (
+      publication === null ||
+      Object.keys(publication).some((key) =>
+        !['state', 'scope', 'decisionRef', 'topicKeys'].includes(key)) ||
+      publication.state !== 'product_authorized' ||
+      publication.scope !== 'character_public_reading' ||
+      typeof publication.decisionRef !== 'string' ||
+      !publication.decisionRef.trim() ||
+      !Array.isArray(publication.topicKeys) ||
+      publication.topicKeys.length === 0 ||
+      publication.topicKeys.some((key: unknown) =>
+        typeof key !== 'string' || !key.trim()) ||
+      new Set(publication.topicKeys).size !== publication.topicKeys.length
+    ) {
+      throw new Error('FACE_TOPIC_CHARACTER_PUBLICATION_DECISION_INVALID');
+    }
+  }
 
   const materialized = new Set(
     receipt.observation.materializedCapabilities,
@@ -178,6 +207,9 @@ export function buildFaceAuthorityCoverageSnapshot(
     observationAuthorityRef: receipt.observation.authorityRef,
     bridgeAuthorityRef: receipt.bridge.authorityRef,
     traditionalAuthorityRef: receipt.traditional.authorityRef,
+    ...(receipt.traditional.characterPublicationDecision === undefined ? {} : {
+      characterPublicationDecision: receipt.traditional.characterPublicationDecision,
+    }),
     availableObservationCapabilities,
     availableMethodologyRefs,
     availableSemanticClaimFamilies,
