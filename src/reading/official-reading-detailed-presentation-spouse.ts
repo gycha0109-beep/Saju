@@ -88,7 +88,7 @@ export const RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 =
         clarification:
           '여기서 배우자궁은 전통 명리에서 일지라는 자리를 배우자·혼인 주제를 살피는 위치로 부르는 명칭입니다. 이 표시는 일지의 위치 역할을 설명할 뿐, 그 자리만으로 특정 배우자 개인의 특성을 정하는 해석은 아닙니다.',
         boundary:
-          '이 항목은 일지가 전통적으로 배우자궁 위치로 분류된다는 사실에만 한정됩니다. 상대 개인의 성격·정체·외모·직업, 결혼 시기나 성패, 관계의 미래 결과, 궁합·길흉·점수, 용신·기신 또는 배우자성 선택으로 확장하지 않습니다.',
+          '이 항목은 일지가 전통적으로 배우자궁 위치로 분류된다는 사실에만 한정됩니다. 상대 개인의 성격·정체·외모·직업, 결혼 시기나 성패, 관계의 미래 결과, 궁합·길흉·점수 또는 특정 별을 배우자 지표로 자동 지정하는 해석으로 확장하지 않습니다.',
       }),
       provenance: Object.freeze({
         authorityId: SPOUSE_NATAL_DETAILED_MATERIAL_AUTHORITY_ID,
