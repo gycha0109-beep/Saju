@@ -446,7 +446,7 @@ export function assertVisibleHairlineRuntimeCandidatesFR306(): void {
       FR306_CURRENT_GATE.additionalCandidate ||
     additional.runtimeProviderId !==
       'candidate.hairline.multisignal_visible_interface.fr306' ||
-    additional.exactRevision !== '0.3.0' ||
+    additional.exactRevision !== '0.4.0' ||
     additional.runnerContractVersion !==
       'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1' ||
     additional.components.length !== 1 ||
