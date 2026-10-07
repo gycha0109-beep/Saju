@@ -136,3 +136,20 @@ SA-7B는 다음을 회귀 테스트로 고정한다.
 - non-spouse section은 bounded spouse Official Reading으로 승격되지 않음
 
 이 계약이 깨지면 SA-7C detailed 파일럿을 진행하면 안 된다.
+
+## 9. 제출 게이트
+
+PR: #2346
+
+SA-7B는 submitted head에서 다음을 모두 통과해야 종료한다.
+
+- lint / typecheck / build
+- ordinary regression 16/16
+- Production Calculation Container
+- PIE
+- CI Verify
+- integration admission
+- integration full regression 16/16
+- CI Integration Verify
+
+실패 시 SA-7C를 시작하지 않는다.
