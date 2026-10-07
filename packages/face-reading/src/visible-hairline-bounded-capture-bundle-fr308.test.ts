@@ -131,7 +131,7 @@ describe('FR308 bounded visible-hairline capture bundle', () => {
           'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
         modelId:
           'candidate.hairline.multisignal_visible_interface.fr306',
-        modelRevision: '0.3.0',
+        modelRevision: '0.4.0',
       });
 
     expect(receipt).toMatchObject({
@@ -139,7 +139,7 @@ describe('FR308 bounded visible-hairline capture bundle', () => {
         'candidate.hairline.multisignal_visible_interface.fr306',
       runtimeProviderId:
         'candidate.hairline.multisignal_visible_interface.fr306',
-      exactRevision: '0.3.0',
+      exactRevision: '0.4.0',
       runnerContractVersion:
         'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
       fr305AdmissionReceiptIssued: false,
@@ -153,7 +153,7 @@ describe('FR308 bounded visible-hairline capture bundle', () => {
         ...completeBundle(),
         modelId:
           'candidate.hairline.multisignal_visible_interface.fr306',
-        modelRevision: '0.3.0',
+        modelRevision: '0.4.0',
       }),
     ).toThrow(/registered empirical candidate/);
   });
