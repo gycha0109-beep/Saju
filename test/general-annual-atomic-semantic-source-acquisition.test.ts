@@ -49,33 +49,35 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
       'GUJIN_TUSHU_JICHENG_VOL470_PAGE50_SANMING_TONGHUI_LUN_TAISUI',
     );
 
-    expect(witness.disposition).toBe(
-      'EXACT_HISTORICAL_TRANSMISSION_CORROBORATION',
-    );
-    expect(witness.acquisition).toMatchObject({
-      directPageSurfaceAcquired: true,
-      reproducible: true,
-      exactPageBound: true,
-      primary1578EditionScan: false,
-    });
-    expect(witness.evidence).toMatchObject({
-      annualStemToDayStemRelationExplicit: true,
-      gengYearControlsJiaDayAsPianGuanExplicit: true,
-      jiaDayControlsWuYearAsPianCaiExplicit: true,
-      currentModernThemeSemanticsExplicit: false,
+    expect(witness).toMatchObject({
+      disposition: 'EXACT_HISTORICAL_TRANSMISSION_CORROBORATION',
+      acquisition: {
+        directPageSurfaceAcquired: true,
+        reproducible: true,
+        exactPageBound: true,
+        primary1578EditionScan: false,
+      },
+      evidence: {
+        annualStemToDayStemRelationExplicit: true,
+        gengYearControlsJiaDayAsPianGuanExplicit: true,
+        jiaDayControlsWuYearAsPianCaiExplicit: true,
+        currentModernThemeSemanticsExplicit: false,
+      },
     });
   });
 
   test('keeps the preferred 1578 scan fail-closed until the exact page is visually verified', () => {
     const primary = byId('NCL_1578_SANMING_TONGHUI_VOLUME2_SCAN');
 
-    expect(primary.disposition).toBe('PRIMARY_SCAN_PAGE_VERIFICATION_REQUIRED');
-    expect(primary.acquisition).toMatchObject({
-      scanObjectLocated: true,
-      reproducible: true,
-      exactLunTaisuiPageBound: false,
-      relevantPassageVisuallyVerified: false,
-      contentHashBound: false,
+    expect(primary).toMatchObject({
+      disposition: 'PRIMARY_SCAN_PAGE_VERIFICATION_REQUIRED',
+      acquisition: {
+        scanObjectLocated: true,
+        reproducible: true,
+        exactLunTaisuiPageBound: false,
+        relevantPassageVisuallyVerified: false,
+        contentHashBound: false,
+      },
     });
     expect(acquisition.observations).toMatchObject({
       primary1578ScanObjectLocated: true,
