@@ -752,8 +752,6 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
             "occlusionRisk": occlusion_risk,
         },
         "engineeringPreviewState": preview_state,
-        "candidateBoundaryExposed":
-            preview_state == "visible_interface_candidate",
         "humanReviewRequired": True,
         "automaticAdmissionAuthorized": False,
         "neutralRuntimeHairlineObservationAuthorized": False,
