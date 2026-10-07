@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createFaceGovernedHandoffRuntimeHostV1,
+  type FaceGovernedHandoffEngineRequestV1,
   type FaceGovernedHandoffRuntimeDependenciesV1,
 } from '../src/face-topic/governed-handoff-runtime.js';
 import {
@@ -39,9 +40,11 @@ function readingHost(): MyeonghwaProductHost {
 }
 
 function blockedRuntime(
-  engine: ReturnType<typeof vi.fn> = vi.fn(async () => {
+  engine: (
+    request: FaceGovernedHandoffEngineRequestV1,
+  ) => Promise<unknown> = async () => {
     throw new Error('blocked path must not execute engine');
-  }),
+  },
 ) {
   return createFaceGovernedHandoffRuntimeHostV1({
     authorityProvider: {
