@@ -193,7 +193,7 @@ describe('SA-7C spouse position-only detailed Official Reading pilot', () => {
 
   it('falls the whole response back to standard when a valid spouse canonical presentation becomes stale', async () => {
     const execution = await execute('detailed');
-    const evidence = execution.preparation.composition?.evidence;
+    const evidence = execution.preparation.composition?.evidence?.bundle;
     const current = execution.canonicalSemantics;
     if (evidence === undefined || current === undefined) {
       throw new Error('SA-7C expected governed spouse evidence and canonical semantics.');
@@ -215,7 +215,13 @@ describe('SA-7C spouse position-only detailed Official Reading pilot', () => {
             ...primary.canonicalText,
             summary: '승인된 배우자 position-only 표준 문구와 다른 변경 문구입니다.',
           },
-          provenance: primary.provenance,
+          provenance: primary.canonicalTextProvenance ?? {
+            admissionId: 'sa7c-test-stale-presentation',
+            admissionRegistryVersion: '1',
+            researchId: 'SA-7C-STALE-PRESENTATION-FIXTURE',
+            researchVersion: '1',
+            authorityState: 'TEST_ONLY',
+          },
         },
       ],
       semanticQualifierBindings: (primary.semanticQualifiers ?? []).map(
