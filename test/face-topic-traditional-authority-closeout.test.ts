@@ -13,6 +13,7 @@ import {
 } from '../packages/face-reading/src/traditional-three-divisions-methodology-pack-t6.js';
 import { FACE_TRADITIONAL_T7_CLOSEOUT } from '../packages/face-reading/src/traditional-three-divisions-binding-handoff-t7.js';
 import { T7_METHODOLOGY_SCOPED_BINDING_LEDGER_FRB005 } from '../packages/face-reading/src/traditional-three-divisions-binding-ledger-frb005.js';
+import { T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006 } from '../packages/face-reading/src/traditional-three-divisions-partial-binding-ledger-frb006.js';
 import { buildRepositoryFaceAuthorityReceiptForTopicFaceTest } from './support/topic-face-live-authority-source.js';
 import { syntheticGovernedFaceSource } from './support/topic-face-governed-synthetic.js';
 
@@ -62,18 +63,24 @@ describe('TOPIC-FACE-005L real source authority closure audit', () => {
     expect(FACE_TRADITIONAL_T7_CLOSEOUT.executableReadingAuthorized).toBe(false);
   });
 
-  it('reports every real missing capability and preserves the unapproved binding/claim boundaries', () => {
+  it('consumes the six current governed vertical-reference capabilities while preserving the hairline/binding/claim blockers', () => {
     const receipt = buildRepositoryFaceAuthorityReceiptForTopicFaceTest();
     const readiness = resolveFaceTopicReadiness(
       topicKey,
       buildFaceAuthorityCoverageSnapshot(receipt),
     );
     expect(readiness.state).toBe('blocked');
-    expect(
-      readiness.blockers.filter(
-        (blocker) => blocker.code === 'REQUIRED_OBSERVATION_CAPABILITY_MISSING',
-      ),
-    ).toHaveLength(7);
+
+    const observationBlockers = readiness.blockers.filter(
+      (blocker) => blocker.code === 'REQUIRED_OBSERVATION_CAPABILITY_MISSING',
+    );
+    expect(observationBlockers).toHaveLength(1);
+    expect(observationBlockers[0]).toEqual(
+      expect.objectContaining({
+        ref: 'face.vertical_reference.visible_hairline',
+      }),
+    );
+
     expect(readiness.blockers).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -86,8 +93,20 @@ describe('TOPIC-FACE-005L real source authority closure audit', () => {
         }),
       ]),
     );
+
     expect(receipt.traditional.characterPublicationDecision).toBeUndefined();
-    expect(T7_METHODOLOGY_SCOPED_BINDING_LEDGER_FRB005.admittedTraditionalBindingCount).toBe(0);
+    expect(
+      T7_METHODOLOGY_SCOPED_BINDING_LEDGER_FRB005
+        .admittedTraditionalBindingCount,
+    ).toBe(0);
+    expect(
+      T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006
+        .admittedTraditionalBindingCount,
+    ).toBe(13);
+    expect(
+      T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006
+        .blockedTraditionalBindingCount,
+    ).toBe(3);
   });
 
   it('blocks the real runtime before engine execution and never returns Character meaning', async () => {
@@ -106,7 +125,7 @@ describe('TOPIC-FACE-005L real source authority closure audit', () => {
     expect(result).not.toHaveProperty('sourceResultHash');
   });
 
-  it('cannot bypass missing authority by adding a publication decision alone', () => {
+  it('cannot bypass the remaining hairline/binding/claim authority by adding a publication decision alone', () => {
     const source = syntheticGovernedFaceSource();
     const receipt = buildRepositoryFaceAuthorityReceiptForTopicFaceTest();
     const authorityReceipt = {
