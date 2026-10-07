@@ -48,10 +48,11 @@ const STEMS: Record<'갑' | '기' | '경', StemFact> = {
   경: { value: '경', hanja: '庚', element: '금', yinYang: '양' },
 };
 
-const BRANCHES: Record<'사' | '오' | '자', BranchFact> = {
+const BRANCHES: Record<'사' | '오' | '자' | '인', BranchFact> = {
   사: { value: '사', hanja: '巳', element: '화', yinYang: '음' },
   오: { value: '오', hanja: '午', element: '화', yinYang: '양' },
   자: { value: '자', hanja: '子', element: '수', yinYang: '양' },
+  인: { value: '인', hanja: '寅', element: '목', yinYang: '양' },
 };
 
 function pillar(stem: keyof typeof STEMS, branch: keyof typeof BRANCHES): PillarFact {
@@ -96,7 +97,10 @@ function natalSettlement(): StemInteractionSettlementFact {
   };
 }
 
-function autoSnapshot(dayunBranch: '오' | '자' = '오'): CanonicalSajuSnapshot {
+function autoSnapshot(
+  dayunBranch: '오' | '자' | '인' = '오',
+  natalBranch: '사' | '자' = '사',
+): CanonicalSajuSnapshot {
   const base = calculateCanonicalSajuSnapshot(
     {
       calendarType: 'solar',
@@ -107,12 +111,12 @@ function autoSnapshot(dayunBranch: '오' | '자' = '오'): CanonicalSajuSnapshot
     calculationPolicy,
     { now: new Date('2042-06-15T00:00:00.000Z') },
   );
-  const safeNatal = pillar('갑', '사');
+  const safeNatal = pillar('갑', natalBranch);
   return {
     ...base,
     pillars: {
       year: resolved(safeNatal),
-      month: resolved(pillar('기', '사')),
+      month: resolved(pillar('기', natalBranch)),
       day: resolved(safeNatal),
       hour: resolved(safeNatal),
     },
@@ -522,6 +526,48 @@ describe('R199 automatic annual Official Reading production', () => {
     expect(JSON.stringify(timing)).toContain('을묘');
     expect(JSON.stringify(response)).not.toMatch(
       /punishmentPair|reciprocalPunishmentPairObserved|punishmentEffectAuthorized|relationIdentityObserved|qualifierOnly|GH-2354|r199-controller-core-support/u,
+    );
+  });
+
+  test('isolated directed punishment qualifier reaches public timing without leaking internal metadata', async () => {
+    const currentSnapshot = autoSnapshot('인', '자');
+    const { registry, interpretation } = interpretationWithAnnualClaim(
+      currentSnapshot,
+      'r206-isolated-directed-punishment-public',
+    );
+
+    const result = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      {
+        requestId: 'r206-isolated-directed-punishment-public',
+        text: '올해 사주',
+        referenceDateTime: '2037-06-15T12:00:00.000Z',
+      },
+      {
+        ...executionOptions,
+        consumerReadingAuthorityResolver: officialAuthority,
+        officialReadingSemanticProjectionResolver: semanticProjection,
+        governedAnnualTemporalProduction: {
+          baseline,
+          roleAssignments: roles,
+        },
+      },
+    );
+
+    expect(result.state).toBe('completed');
+    expect(result.modelCalls).toBe(0);
+    const response = buildProductReadingResponse(
+      buildProductReadingDelivery(result),
+    );
+    const timing = response.reading?.sections.find(
+      (section) => section.sectionType === 'timing',
+    );
+    expect(timing?.title).toBe('2037년 구조 흐름');
+    expect(JSON.stringify(timing)).toContain('정사');
+    expect(JSON.stringify(response)).not.toMatch(
+      /directedPunishment|punishment_directed_pair|punisherBranch|punishedBranch|sourceDirectionObserved|punishmentEffectAuthorized|fullFamilyAmplificationAuthorized|qualifierOnly|GH-2377|r199-controller-core-support/u,
     );
   });
 
