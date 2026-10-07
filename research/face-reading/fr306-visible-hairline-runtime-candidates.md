@@ -162,3 +162,15 @@ Authority remains closed:
 - Product / Production / Commerce: false
 
 Watchtower-Track: face-observation-engine
+
+
+## v3.3 post-FR312 exposure guards
+
+Real expanded FR312 validation of revision `0.3.0` was hard-rejected. The deidentified failure pattern was not hidden completion; it was inappropriate exposure of a raw visible-interface path in two conditions:
+
+- low-local-contrast/light-hair: candidate localized inside/above the actual visible skin-hair interface;
+- asymmetric/fringe: candidate followed a lower fringe/hair edge.
+
+Revision `0.4.0` therefore keeps the existing multi-signal extractor but adds conservative post-classifier exposure guards for ambiguous material direction and low fringe-edge risk. Guarded raw-visible states are downgraded to `partially_visible_or_occluded`, which suppresses external boundary exposure.
+
+This is engineering candidate revision only. The observed FR312 bundle becomes regression evidence and cannot be reused as an untouched independent holdout. FR305 admission, FR313, real FR318/FR319, traditional binding, Three-Divisions execution, Product, Production and Commerce remain unauthorized.
