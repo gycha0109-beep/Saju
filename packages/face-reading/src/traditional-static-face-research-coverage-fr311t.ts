@@ -43,7 +43,11 @@ export type StaticResearchAreaKeyFR311T =
   | 'twelve_palaces'
   | 'five_stars_six_luminaries'
   | 'study_halls'
-  | 'five_element_forms';
+  | 'five_element_forms'
+  | 'ten_observations'
+  | 'five_methods'
+  | 'three_masters'
+  | 'three_pillars';
 
 export interface StaticResearchCoverageEntryFR311T {
   readonly areaKey: StaticResearchAreaKeyFR311T;
@@ -194,6 +198,26 @@ readonly StaticResearchCoverageEntryFR311T[] = Object.freeze([
     'methodology_structure',
     methodCount('five_element_forms'),
   ),
+  coverage(
+    'ten_observations',
+    'methodology_structure',
+    methodCount('ten_observations'),
+  ),
+  coverage(
+    'five_methods',
+    'methodology_structure',
+    methodCount('five_methods'),
+  ),
+  coverage(
+    'three_masters',
+    'methodology_structure',
+    methodCount('three_masters'),
+  ),
+  coverage(
+    'three_pillars',
+    'methodology_structure',
+    methodCount('three_pillars'),
+  ),
 ]);
 
 export const ARCHITECTURE_EXCLUDED_RESEARCH_AREAS_FR311T:
@@ -254,8 +278,8 @@ export function assertStaticFaceResearchClosureFR311T(): void {
     .map((item) => item.areaKey);
   if (
     new Set(areaKeys).size !== areaKeys.length ||
-    FR311T_STATIC_RESEARCH_CLOSURE.staticCoreAreas !== 19 ||
-    FR311T_STATIC_RESEARCH_CLOSURE.staticCoreResearchComplete !== 19 ||
+    FR311T_STATIC_RESEARCH_CLOSURE.staticCoreAreas !== 23 ||
+    FR311T_STATIC_RESEARCH_CLOSURE.staticCoreResearchComplete !== 23 ||
     FR311T_STATIC_RESEARCH_CLOSURE.staticCoreResearchMissing !== 0 ||
     FR311T_STATIC_RESEARCH_CLOSURE.explicitArchitectureExclusions !== 2 ||
     FR311T_STATIC_RESEARCH_CLOSURE.missingTraditionalRegions !== 0
