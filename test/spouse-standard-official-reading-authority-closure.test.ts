@@ -65,12 +65,18 @@ describe('SA-7B spouse standard Official Reading authority closure', () => {
     });
   });
 
-  it('does not confuse completed standard authority with detailed presentation authority', () => {
+  it('recognizes the later SA-7C detailed presentation authority without widening product-owned authorities', () => {
     expect(
       (OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1 as readonly string[]).includes(
         'relationship:natal:spouse',
       ),
-    ).toBe(false);
+    ).toBe(true);
+    expect(PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_AUTHORITY).toMatchObject({
+      publicSemanticAuthorityAuthorized: false,
+      publicGeneralAvailabilityAuthorityAuthorized: false,
+      persistenceAuthorityAuthorized: false,
+      commerceAuthorityAuthorized: false,
+    });
   });
 
   it('fails non-spouse sections out of the bounded Official Reading authority', () => {
