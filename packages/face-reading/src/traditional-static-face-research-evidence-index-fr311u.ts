@@ -140,7 +140,7 @@ export function assertStaticFaceResearchEvidenceIndexFR311U(): void {
   if (
     FR311P_EVIDENCE_INVENTORY.canonicalEvidence !== 621 ||
     FR311U_STATIC_RESEARCH_INDEX_SUMMARY.addedMissingRegionDirectRules !== 24 ||
-    FR311U_STATIC_RESEARCH_INDEX_SUMMARY.addedStaticMethodologyDefinitions !== 12 ||
+    FR311U_STATIC_RESEARCH_INDEX_SUMMARY.addedStaticMethodologyDefinitions !== 16 ||
     FR311U_STATIC_RESEARCH_INDEX_SUMMARY.staticCoreResearchMissing !== 0
   ) {
     throw new Error('fr311u_baseline_or_expansion_drift');
