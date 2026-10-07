@@ -428,27 +428,25 @@ describe('Official Reading detailed core natal domain expansion', () => {
     expect(coverage.staleTargetCount).toBeGreaterThan(0);
   });
 
-  it('does not reuse general relationship detailed material for spouse semantics', () => {
-    const candidate = CASES.find((entry) => entry.label === 'relationship');
-    if (candidate === undefined) throw new Error('relationship fixture missing');
-    const semantics = semanticsFor(candidate);
-    const plan = buildOfficialReadingPlanV1(semantics);
-    const spouseLike: CanonicalReadingSemanticBundleV1 = {
-      ...semantics,
-      intent: {
-        domain: 'relationship',
-        temporalScope: 'natal',
-        relationshipScope: 'spouse',
-      },
-    };
+  it('keeps general relationship and spouse detailed materials structurally isolated', () => {
+    expect(
+      RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.every(
+        (profile) => profile.owner === 'relationship:natal:general',
+      ),
+    ).toBe(true);
+    expect(
+      RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.every(
+        (profile) => profile.owner === 'relationship:natal:spouse',
+      ),
+    ).toBe(true);
 
-    const coverage = assessApprovedOfficialReadingDetailedCoverageV1(
-      spouseLike,
-      plan,
+    const generalClaimTypes = new Set(
+      RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.map(
+        (profile) => profile.claimType,
+      ),
     );
-    expect(coverage.state).toBe('incomplete');
-    expect(coverage.domainKey).toBe('relationship:natal:spouse');
-    expect(coverage.approvedMaterialCount).toBe(0);
-    expect(coverage.missingTargetCount + coverage.staleTargetCount).toBeGreaterThan(0);
+    for (const profile of RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1) {
+      expect(generalClaimTypes.has(profile.claimType)).toBe(false);
+    }
   });
 });
