@@ -1,5 +1,8 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
+import type {
+  FaceGovernedHandoffRuntimeHostV1,
+} from '../face-topic/governed-handoff-runtime.js';
 import { admitProductReadingResponse } from '../reading/product-reading-response-admission.js';
 import { PRODUCT_READING_RESPONSE_VERSION } from '../reading/product-reading-response.js';
 import {
@@ -19,6 +22,12 @@ import {
   CharacterGroundingHttpRequestError,
   projectCharacterGroundingHttpRequestV1,
 } from './character-grounding-http.js';
+import {
+  FACE_GOVERNED_HANDOFF_HTTP_ADMISSION_HEADER,
+  FACE_GOVERNED_HANDOFF_HTTP_ADMISSION_VERSION,
+  FACE_GOVERNED_HANDOFF_HTTP_PATH,
+  faceGovernedHandoffHttpStatusV1,
+} from './face-governed-handoff-http.js';
 import { PRODUCT_HOST_APP_SCRIPT, PRODUCT_HOST_PAGE } from './static-page.js';
 
 export const DEFAULT_PRODUCT_HOST_MAX_REQUEST_BYTES = 16 * 1024;
@@ -248,6 +257,7 @@ function createMyeonghwaHttpServer(
   readingRoute: MyeonghwaReadingHttpRoute = PRODUCT_READING_ROUTE,
   secondaryReadingHost?: MyeonghwaProductHost,
   secondaryReadingRoute?: MyeonghwaReadingHttpRoute,
+  faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
 ): Server {
   const bodyLimit = maxRequestBytes(options);
   const groundingBodyLimit = characterGroundingMaxRequestBytes(options);
@@ -294,6 +304,43 @@ function createMyeonghwaHttpServer(
       }
       return;
     }
+    if (
+      path === FACE_GOVERNED_HANDOFF_HTTP_PATH &&
+      faceGovernedHandoffHost !== undefined &&
+      authorizeReadingRequest !== undefined
+    ) {
+      if (method !== 'POST') {
+        response.setHeader('allow', 'POST');
+        sendJson(response, 405, {
+          error: { code: 'HOST_METHOD_NOT_ALLOWED', message: 'POST is required.' },
+        });
+        return;
+      }
+      if (!authorizeReadingRequest(request)) {
+        sendAuthRequired(response);
+        return;
+      }
+      try {
+        const body = await readJsonBody(request, bodyLimit);
+        const result =
+          await faceGovernedHandoffHost.execute(body);
+        sendJson(
+          response,
+          faceGovernedHandoffHttpStatusV1(result),
+          result,
+          {
+            [FACE_GOVERNED_HANDOFF_HTTP_ADMISSION_HEADER]:
+              FACE_GOVERNED_HANDOFF_HTTP_ADMISSION_VERSION,
+          },
+        );
+      } catch (error) {
+        if (!handleKnownError(response, error)) {
+          sendReadingOperationalError(response);
+        }
+      }
+      return;
+    }
+
     if (
       path === CHARACTER_GROUNDING_HTTP_PATH &&
       authorizeReadingRequest !== undefined
@@ -381,6 +428,7 @@ export function createMyeonghwaProductionCalculationHostServer(
 export function createMyeonghwaProductionProductHostServer(
   readingHost: MyeonghwaProductHost,
   options: MyeonghwaProductionProductHostServerOptions = {},
+  faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
 ): Server {
   const { serviceBearer, previousServiceBearer, ...serverOptions } = options;
   const authorizeRequest = createMyeonghwaProductionServiceBearerAuthorizer({
@@ -393,12 +441,16 @@ export function createMyeonghwaProductionProductHostServer(
     authorizeRequest,
     authorizeRequest,
     PRODUCT_READING_ROUTE,
+    undefined,
+    undefined,
+    faceGovernedHandoffHost,
   );
 }
 
 export function createMyeonghwaProductionPreviewHostServer(
   readingHost: MyeonghwaProductHost,
   options: MyeonghwaProductionProductHostServerOptions = {},
+  faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
 ): Server {
   const { serviceBearer, previousServiceBearer, ...serverOptions } = options;
   const authorizeRequest = createMyeonghwaProductionServiceBearerAuthorizer({
@@ -411,6 +463,9 @@ export function createMyeonghwaProductionPreviewHostServer(
     authorizeRequest,
     authorizeRequest,
     PREVIEW_READING_ROUTE,
+    undefined,
+    undefined,
+    faceGovernedHandoffHost,
   );
 }
 
@@ -418,6 +473,7 @@ export function createMyeonghwaProductionReadingHostServer(
   productionReadingHost: MyeonghwaProductHost,
   previewReadingHost: MyeonghwaProductHost,
   options: MyeonghwaProductionProductHostServerOptions = {},
+  faceGovernedHandoffHost?: FaceGovernedHandoffRuntimeHostV1,
 ): Server {
   const { serviceBearer, previousServiceBearer, ...serverOptions } = options;
   const authorizeRequest = createMyeonghwaProductionServiceBearerAuthorizer({
@@ -432,6 +488,7 @@ export function createMyeonghwaProductionReadingHostServer(
     PRODUCT_READING_ROUTE,
     previewReadingHost,
     PREVIEW_READING_ROUTE,
+    faceGovernedHandoffHost,
   );
 }
 
