@@ -17,10 +17,6 @@ import {
   assertFRB006PartialBindingLedger,
 } from '../../packages/face-reading/src/traditional-three-divisions-partial-binding-ledger-frb006.js';
 import {
-  FR319_CURRENT_GATE,
-  FR319_SEVEN_REFERENCE_COMMON_FRAME_BUNDLE_CONTRACT_VERSION,
-} from '../../packages/face-reading/src/seven-reference-common-frame-bundle-fr319.js';
-import {
   FACE_TRADITIONAL_T7_BASELINE,
   FACE_TRADITIONAL_T7_CLOSEOUT,
   FACE_TRADITIONAL_T7_METHODOLOGY_BINDING_ACCEPTANCE,
@@ -72,8 +68,10 @@ FaceTopicAuthoritySourceReceipt {
   }
 
   if (
-    FR319_CURRENT_GATE.repositoryActualNeutralReferenceCapabilityCount !== 6 ||
-    FR319_CURRENT_GATE.repositoryRemainingNeutralReferenceCapabilityCount !== 1 ||
+    ledger.observationReviewSnapshot.reviewedNeutralReferenceCapabilityCount !== 6 ||
+    ledger.observationReviewSnapshot.remainingNeutralReferenceCapabilityCount !== 1 ||
+    ledger.observationReviewSnapshot.remainingNeutralReference !==
+      'face.vertical_reference.visible_hairline' ||
     ledger.admittedTraditionalBindingCount !== 13 ||
     ledger.blockedTraditionalBindingCount !== 3 ||
     ledger.authorityBoundary.semanticClaimIssued !== false ||
@@ -98,17 +96,13 @@ FaceTopicAuthoritySourceReceipt {
     schemaVersion: 'face-topic-authority-source-receipt-v1',
     observation: Object.freeze({
       authorityRef:
-        `${FR293_COLUMN_MAP_CONTRACT_VERSION}+${FR294_HARD_GAP_FRONTIER_CONTRACT_VERSION}+${FR319_SEVEN_REFERENCE_COMMON_FRAME_BUNDLE_CONTRACT_VERSION}`,
+        `${FR293_COLUMN_MAP_CONTRACT_VERSION}+${FR294_HARD_GAP_FRONTIER_CONTRACT_VERSION}+FRB006-reviewed-neutral-vertical-reference-snapshot`,
       materializedCapabilities,
       unavailableOrHardGapCapabilities,
       provenanceRefs: Object.freeze([
         'packages/face-reading/src/rgb-selfie-product-column-map-fr293.ts',
         'packages/face-reading/src/rgb-selfie-hard-gap-frontier-fr294.ts',
-        'packages/face-reading/src/lower-face-vertical-reference-handoff-fr301.ts',
-        'packages/face-reading/src/brow-interbrow-vertical-reference-fr302.ts',
-        'packages/face-reading/src/nasal-vertical-reference-handoffs-fr304.ts',
-        'packages/face-reading/src/common-frame-bridge-fr315.ts',
-        'packages/face-reading/src/seven-reference-common-frame-bundle-fr319.ts',
+        'packages/face-reading/src/traditional-three-divisions-partial-binding-ledger-frb006.ts',
       ]),
     }),
     bridge: Object.freeze({
