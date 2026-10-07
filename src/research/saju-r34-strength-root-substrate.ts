@@ -8,8 +8,8 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import {
   INTRINSIC_TONGGEN_AUTHORITY,
   INTRINSIC_TONGGEN_SLOTS,
-  projectIntrinsicTonggen,
 } from './phase-independent-intrinsic-tonggen-authority.js';
+import type { projectIntrinsicTonggen } from './phase-independent-intrinsic-tonggen-authority.js';
 import {
   buildIntrinsicTonggenResearchEvidence,
   validateIntrinsicTonggenResearchEvidence,

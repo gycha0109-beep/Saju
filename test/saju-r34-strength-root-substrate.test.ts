@@ -156,9 +156,21 @@ describe('SAJU-R34 intrinsic root strength substrate', () => {
     const evidence = buildIntrinsicTonggenResearchEvidence(snapshot);
     if (evidence.status !== 'resolved') throw new Error(evidence.reasonCode);
 
-    const forged = structuredClone(evidence.envelope) as any;
-    forged.payload.branches.year.tonggen = false;
-    forged.payloadHash = deterministicContentHash(forged.payload);
+    const forgedPayload = {
+      ...evidence.envelope.payload,
+      branches: {
+        ...evidence.envelope.payload.branches,
+        year: {
+          ...evidence.envelope.payload.branches.year,
+          tonggen: false,
+        },
+      },
+    };
+    const forged = {
+      ...evidence.envelope,
+      payload: forgedPayload,
+      payloadHash: deterministicContentHash(forgedPayload),
+    };
 
     const result = buildSajuR34StrengthRootSubstrateFromEvidence(
       snapshot,
