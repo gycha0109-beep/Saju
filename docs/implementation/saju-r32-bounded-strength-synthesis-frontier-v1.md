@@ -4,6 +4,12 @@ Issue: #2355
 
 Watchtower-Track: saju
 
+후속 정책 (2026-10-07): 사용자 추가 연구는 十二長生과 intrinsic 通根을 분리하는
+새 프로젝트 정의를 채택했다. [R33](saju-r33-phase-independent-tonggen-v1.md)은
+그 독립 정의를 구현하며, 아래 R32 source-local UNRESOLVED flag와 기존 frontier를
+소급 변경하지 않는다. 아래 router 권장은 R32 시점의 후보이고 R33 우선순위를
+대체하지 않는다.
+
 ## 목적
 
 R31까지 visible 比劫, visible 印綬, hidden symbolic 比印, bounded root facets가 하나의
@@ -109,6 +115,7 @@ R32는 다음을 전혀 허용하지 않는다.
 R32 완료는 strength가 판정됐다는 뜻이 아니다.
 
 완료 조건은:
+
 - 입력/시나리오 문제와 methodology 문제를 분리했고,
 - special-pattern routing을 ordinary path와 분리했고,
 - root/support/challenge/classifier blocker를 deterministic하게 투영했고,
