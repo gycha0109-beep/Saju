@@ -564,7 +564,7 @@ describe('Governed Reading Execution Orchestrator', () => {
         interpretation,
         registry,
         {
-          requestId: `execution-official-approved-${label}-standard-sa6u`,
+          requestId: `execution-official-approved-${label}-detail-parity-sa6u`,
           text,
         },
         executionOptions,
@@ -574,7 +574,7 @@ describe('Governed Reading Execution Orchestrator', () => {
         interpretation,
         registry,
         {
-          requestId: `execution-official-approved-${label}-detailed-sa6u`,
+          requestId: `execution-official-approved-${label}-detail-parity-sa6u`,
           text,
           outputPreferences: { preferredDetail: 'detailed' },
         },
