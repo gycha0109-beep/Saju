@@ -12,6 +12,7 @@ import {
   type OfficialReadingPlanV1,
 } from './official-reading-plan.js';
 import {
+  OFFICIAL_READING_DETAILED_BOUNDARY_COMPACTION_POLICY_VERSION,
   OFFICIAL_READING_ORDINARY_MULTI_CLAIM_PRESENTATION_POLICY_VERSION,
   OFFICIAL_READING_RENDERER_VERSION,
   OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION,
@@ -318,13 +319,18 @@ function assertReportBinding(
       if (
         detailedRealization === undefined ||
         report.detailedRealizationPolicyVersion !==
-          OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION
+          OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION ||
+        report.detailedBoundaryCompactionPolicyVersion !==
+          OFFICIAL_READING_DETAILED_BOUNDARY_COMPACTION_POLICY_VERSION
       ) {
         throw new TypeError(
           'Official Reading detailed presentation metadata does not match current approved material.',
         );
       }
-    } else if (report.detailedRealizationPolicyVersion !== undefined) {
+    } else if (
+      report.detailedRealizationPolicyVersion !== undefined ||
+      report.detailedBoundaryCompactionPolicyVersion !== undefined
+    ) {
       throw new TypeError(
         'Official Reading non-detailed presentation must not carry detailed realization metadata.',
       );
@@ -333,7 +339,8 @@ function assertReportBinding(
     report.concisePresentationReadinessPolicyVersion !== undefined ||
     report.concisePresentationRegistryVersion !== undefined ||
     report.concisePresentationProfileSetHash !== undefined ||
-    report.detailedRealizationPolicyVersion !== undefined
+    report.detailedRealizationPolicyVersion !== undefined ||
+    report.detailedBoundaryCompactionPolicyVersion !== undefined
   ) {
     throw new TypeError(
       'Official Reading presentation metadata requires an explicit detail preference.',
@@ -395,6 +402,8 @@ function assertReportBinding(
       : {
           detailedRealizationPolicyVersion:
             report.detailedRealizationPolicyVersion,
+          detailedBoundaryCompactionPolicyVersion:
+            report.detailedBoundaryCompactionPolicyVersion,
         }),
     sourceSemanticHash: report.sourceSemanticHash,
     sourcePlanHash: report.sourcePlanHash,
