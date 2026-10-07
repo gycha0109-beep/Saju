@@ -18,17 +18,19 @@ const STANDARD_SUMMARY =
 const STANDARD_BOUNDARY =
   '이는 배우자궁의 위치에 대한 전통적 분류이며, 배우자의 성격이나 정체, 결혼 시기 또는 관계 결과를 의미하지 않습니다.' as const;
 
+const QUALIFIER_PROHIBITED_EXTENSIONS = Object.freeze([
+  'NO_SPOUSE_PERSONALITY_OR_IDENTITY',
+  'NO_SPOUSE_APPEARANCE_OR_OCCUPATION',
+  'NO_MARRIAGE_TIMING_OR_OUTCOME',
+  'NO_DIVORCE_OR_REMARRIAGE',
+  'NO_FAVORABLE_UNFAVORABLE_SPOUSE_PALACE_JUDGMENT',
+  'NO_YONGSHIN_JISIN_SEMANTICS',
+  'NO_SPOUSE_STAR_AUTO_SELECTION',
+  'NO_SECOND_CHART_COMPATIBILITY',
+] as const);
+
 const PROHIBITED_EXTENSIONS = Object.freeze(
-  [
-    'NO_DIVORCE_OR_REMARRIAGE',
-    'NO_FAVORABLE_UNFAVORABLE_SPOUSE_PALACE_JUDGMENT',
-    'NO_MARRIAGE_TIMING_OR_OUTCOME',
-    'NO_SECOND_CHART_COMPATIBILITY',
-    'NO_SPOUSE_APPEARANCE_OR_OCCUPATION',
-    'NO_SPOUSE_PERSONALITY_OR_IDENTITY',
-    'NO_SPOUSE_STAR_AUTO_SELECTION',
-    'NO_YONGSHIN_JISIN_SEMANTICS',
-  ] as const,
+  [...QUALIFIER_PROHIBITED_EXTENSIONS].sort(),
 );
 
 const SEMANTIC_QUALIFIERS = Object.freeze([
@@ -44,19 +46,7 @@ const SEMANTIC_QUALIFIERS = Object.freeze([
     canonicalText: Object.freeze({
       summary: STANDARD_BOUNDARY,
     }),
-    prohibitedExtensions: PROHIBITED_EXTENSIONS,
-    provenance: Object.freeze({
-      admissionId:
-        'sa5ab-production-active-relationship-spouse-position-only-v1',
-      admissionRegistryVersion:
-        'myeonghwa-production-spouse-official-reading-delivery-authority-v1',
-      researchId:
-        'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PRODUCTION_DELIVERY_ACTIVATION_AUTHORITY_REVIEW',
-      researchVersion:
-        'myeonghwa-relationship-spouse-t8-day-branch-palace-production-delivery-activation-authority-review-v1',
-      authorityState:
-        'AUTHORIZE_POSITION_ONLY_PRODUCTION_DELIVERY_ACTIVATION_IMPLEMENTATION',
-    }),
+    prohibitedExtensions: QUALIFIER_PROHIBITED_EXTENSIONS,
   }),
 ]);
 
