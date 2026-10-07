@@ -309,6 +309,12 @@ function qualityAudit(candidate: DomainCase) {
     }),
     roleCounts,
     duplicateRoleTextGroups,
+    standardLimitSectionTexts: standard.sections
+      .filter((section) => section.title === '해석 범위')
+      .flatMap(sectionTexts),
+    detailedLimitSectionTexts: detailed.sections
+      .filter((section) => section.title === '해석 범위')
+      .flatMap(sectionTexts),
     sourceSemanticHash: standard.sourceSemanticHash,
     sourcePlanHash: standard.sourcePlanHash,
     standardSectionIds: standard.sections.map((section) => section.sectionId),
@@ -356,6 +362,8 @@ describe('Official Reading detailed user-facing quality audit', () => {
           sectionLengths: audit.sectionLengths,
           roleCounts: audit.roleCounts,
           duplicateRoleTextGroups: audit.duplicateRoleTextGroups,
+          standardLimitSectionTexts: audit.standardLimitSectionTexts,
+          detailedLimitSectionTexts: audit.detailedLimitSectionTexts,
         })}\n`,
       );
     },
