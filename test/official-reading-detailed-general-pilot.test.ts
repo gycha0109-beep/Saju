@@ -13,7 +13,6 @@ import type { ResolvedRuleRegistrySnapshot } from '../src/interpretation/rule-re
 import { buildPreviewSemanticQualifierBindingsV1 } from '../src/preview/preview-semantic-qualifier-projection.js';
 import { buildPreviewSemanticTextBindingsV1 } from '../src/preview/preview-semantic-text-projection.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
-import { createRelationshipNatalReadingCandidateRegistry } from '../src/research/relationship-natal-reading-candidate.js';
 import {
   GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
   GENERAL_NATAL_USEFUL_READING_SOURCE,
@@ -24,6 +23,9 @@ import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-
 import {
   GENERAL_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
 } from '../src/reading/official-reading-detailed-presentation-general.js';
+import {
+  RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+} from '../src/reading/official-reading-detailed-presentation-spouse.js';
 import {
   assessApprovedOfficialReadingDetailedCoverageV1,
   buildApprovedOfficialReadingDetailedReadinessV1,
@@ -431,37 +433,21 @@ describe('Official Reading general natal detailed material pilot', () => {
     expect(changedCoverage.staleTargetCount).toBe(2);
   });
 
-  it('does not let general relationship material satisfy spouse detailed authority', () => {
-    const generalRelationship = semanticsFor({
-      label: 'relationship-general-authority-boundary',
-      intent: {
-        domain: 'relationship',
-        temporalScope: 'natal',
-        relationshipScope: 'general',
-      },
-      registry: createRelationshipNatalReadingCandidateRegistry(NOW),
-    });
-    const spouseLike = {
-      ...generalRelationship,
-      intent: {
-        domain: 'relationship' as const,
-        temporalScope: 'natal' as const,
-        relationshipScope: 'spouse' as const,
-      },
-    };
-    const plan = buildOfficialReadingPlanV1(generalRelationship);
-    const coverage = assessApprovedOfficialReadingDetailedCoverageV1(
-      spouseLike,
-      plan,
-    );
-
-    expect(coverage.domainKey).toBe('relationship:natal:spouse');
-    expect(coverage.state).toBe('incomplete');
-    expect(coverage.approvedMaterialCount).toBe(0);
-    expect(coverage.requiredMaterialCount).toBeGreaterThan(0);
-    expect(coverage.missingTargetCount + coverage.staleTargetCount).toBe(
-      coverage.requiredMaterialCount,
-    );
+  it('keeps the spouse pilot outside the general natal material family', () => {
+    expect(
+      RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+    ).toHaveLength(1);
+    expect(
+      RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1[0]?.owner,
+    ).toBe('relationship:natal:spouse');
+    expect(
+      GENERAL_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.some(
+        (profile) =>
+          profile.claimType ===
+          RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1[0]
+            ?.claimType,
+      ),
+    ).toBe(false);
   });
 });
 
