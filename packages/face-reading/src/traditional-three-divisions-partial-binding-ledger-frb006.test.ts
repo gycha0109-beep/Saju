@@ -1,26 +1,39 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  FR260_REFERENCE_REF,
-} from './visible-lower-face-inferior-vertical-reference-fr260.js';
-import {
-  FR302_BROW_VERTICAL_REFERENCE_REF,
-  FR302_INTERBROW_VERTICAL_REFERENCE_REF,
-} from './brow-interbrow-vertical-reference-fr302.js';
-import {
-  FR304_NASAL_APEX_HANDOFF_REF,
-  FR304_NASAL_BRIDGE_ROOT_VERTICAL_REFERENCE_REF,
-} from './nasal-vertical-reference-handoffs-fr304.js';
-import {
-  FR315_CENTRAL_GROOVE_METRIC_REFERENCE_REF,
-} from './common-frame-bridge-fr315.js';
-import {
   T7_METHODOLOGY_SCOPED_BINDING_LEDGER_FRB005,
 } from './traditional-three-divisions-binding-ledger-frb005.js';
 import {
   T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006,
   assertFRB006PartialBindingLedger,
 } from './traditional-three-divisions-partial-binding-ledger-frb006.js';
+
+const EXPECTED = new Map([
+  [
+    'trad.anchor.brow',
+    'neutral.face.visible_eyebrow_pair.arc_length_weighted_vertical_coordinate@0.1.0',
+  ],
+  [
+    'trad.anchor.yintang',
+    'neutral.face.visible_interbrow.medial_endpoint_midpoint_vertical_coordinate@0.1.0',
+  ],
+  [
+    'trad.anchor.shangen',
+    'neutral.face.nasal_bridge_root.vertical_coordinate@0.1.0',
+  ],
+  [
+    'trad.anchor.zhuntou',
+    'neutral.face.nasal_apex.vertical_coordinate@0.1.0',
+  ],
+  [
+    'trad.anchor.renzhong',
+    'neutral.face.visible_central_groove.axis_midpoint_vertical_coordinate.canonical_metric_xy@0.1.0',
+  ],
+  [
+    'trad.anchor.dige',
+    'neutral.face.visible_lower_face.inferior_vertical_coordinate@0.1.0',
+  ],
+] as const);
 
 describe('FRB006 partial governed vertical-reference binding ledger', () => {
   it('admits exactly six neutral anchor mappings and leaves only hairline blocked', () => {
@@ -36,6 +49,9 @@ describe('FRB006 partial governed vertical-reference binding ledger', () => {
     expect(ledger.blockedTraditionalBindingCount).toBe(3);
     expect(ledger.admittedUniqueTraditionalAnchorCount).toBe(6);
     expect(ledger.blockedUniqueTraditionalAnchorCount).toBe(1);
+    expect(
+      ledger.observationReviewSnapshot.observationRuntimeImportedIntoBridge,
+    ).toBe(false);
 
     const blocked = ledger.bindingSlots.filter(
       (slot) => !slot.traditionalBindingAuthorized,
@@ -52,24 +68,9 @@ describe('FRB006 partial governed vertical-reference binding ledger', () => {
     ).toBe(true);
   });
 
-  it('pins the exact reviewed neutral reference for each admitted traditional anchor', () => {
+  it('pins the exact reviewed neutral reference identity for each admitted traditional anchor', () => {
     const ledger =
       T7_PARTIAL_GOVERNED_VERTICAL_REFERENCE_BINDING_LEDGER_FRB006;
-
-    const expected = new Map([
-      ['trad.anchor.brow', FR302_BROW_VERTICAL_REFERENCE_REF],
-      ['trad.anchor.yintang', FR302_INTERBROW_VERTICAL_REFERENCE_REF],
-      [
-        'trad.anchor.shangen',
-        FR304_NASAL_BRIDGE_ROOT_VERTICAL_REFERENCE_REF,
-      ],
-      ['trad.anchor.zhuntou', FR304_NASAL_APEX_HANDOFF_REF],
-      [
-        'trad.anchor.renzhong',
-        FR315_CENTRAL_GROOVE_METRIC_REFERENCE_REF,
-      ],
-      ['trad.anchor.dige', FR260_REFERENCE_REF],
-    ]);
 
     for (const slot of ledger.bindingSlots) {
       if (
@@ -80,7 +81,7 @@ describe('FRB006 partial governed vertical-reference binding ledger', () => {
       }
 
       expect(slot.neutralObservationRef).toBe(
-        expected.get(slot.traditionalObservationRef),
+        EXPECTED.get(slot.traditionalObservationRef),
       );
       expect(slot.coordinateFrame).toBe(
         'canonical_aligned_right_handed_metric_xy',
@@ -90,6 +91,7 @@ describe('FRB006 partial governed vertical-reference binding ledger', () => {
       );
       expect(slot.bindingProvenanceReady).toBe(true);
       expect(slot.runtimeUnavailablePolicy).toBe('fail_closed');
+      expect(slot.sourceContractRefs.length).toBeGreaterThanOrEqual(2);
     }
   });
 
