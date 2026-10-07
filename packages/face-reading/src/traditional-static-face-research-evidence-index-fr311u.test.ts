@@ -13,7 +13,7 @@ describe('FR311U full static face-research evidence index', () => {
     expect(FR311U_STATIC_RESEARCH_INDEX_SUMMARY).toMatchObject({
       legacyCanonicalEvidenceBaseline: 621,
       addedMissingRegionDirectRules: 24,
-      addedStaticMethodologyDefinitions: 12,
+      addedStaticMethodologyDefinitions: 16,
       staticCoreResearchMissing: 0,
       empiricalValidationStarted: false,
       automaticTraditionalBindingsAuthorized: 0,
