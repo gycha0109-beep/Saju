@@ -15,6 +15,8 @@ import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_PROHIBITED_PHRASES,
 } from '../src/research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js';
 import { executeProductReading } from '../src/reading/governed-reading-execution.js';
+import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
+import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import {
   RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
 } from '../src/reading/official-reading-detailed-presentation-spouse.js';
@@ -189,44 +191,49 @@ describe('SA-7C spouse position-only detailed Official Reading pilot', () => {
     }
   });
 
-  it('falls the whole response back to standard when the spouse source presentation becomes stale', async () => {
+  it('falls the whole response back to standard when a valid spouse canonical presentation becomes stale', async () => {
     const execution = await execute('detailed');
-    if (
-      execution.canonicalSemantics === undefined ||
-      execution.officialReadingPlan === undefined
-    ) {
-      throw new Error('SA-7C expected canonical spouse Official Reading inputs.');
+    const evidence = execution.preparation.composition?.evidence;
+    const current = execution.canonicalSemantics;
+    if (evidence === undefined || current === undefined) {
+      throw new Error('SA-7C expected governed spouse evidence and canonical semantics.');
     }
 
-    const unit = execution.canonicalSemantics.units.find(
-      (candidate) => candidate.role === 'primary',
-    );
-    if (unit === undefined || unit.canonicalText === undefined) {
+    const primary = current.units.find((candidate) => candidate.role === 'primary');
+    if (primary === undefined || primary.canonicalText === undefined) {
       throw new Error('SA-7C expected one visible spouse primary unit.');
     }
 
-    const changed = {
-      ...execution.canonicalSemantics,
-      units: execution.canonicalSemantics.units.map((candidate) =>
-        candidate.unitId === unit.unitId
-          ? {
-              ...candidate,
-              canonicalText: {
-                ...candidate.canonicalText,
-                summary: '승인된 배우자 position-only 표준 문구와 다른 변경 문구입니다.',
-              },
-            }
-          : candidate,
+    const changed = buildCanonicalReadingSemanticBundleV1({
+      intent: current.intent,
+      evidence,
+      targetClaimIds: current.targetClaimIds,
+      semanticTextBindings: [
+        {
+          targetClaimId: primary.claimId,
+          canonicalText: {
+            ...primary.canonicalText,
+            summary: '승인된 배우자 position-only 표준 문구와 다른 변경 문구입니다.',
+          },
+          provenance: primary.provenance,
+        },
+      ],
+      semanticQualifierBindings: (primary.semanticQualifiers ?? []).map(
+        (qualifier) => ({
+          targetClaimId: primary.claimId,
+          qualifier,
+        }),
       ),
-    };
+    });
+    const changedPlan = buildOfficialReadingPlanV1(changed);
 
     const coverage = assessApprovedOfficialReadingDetailedCoverageV1(
       changed,
-      execution.officialReadingPlan,
+      changedPlan,
     );
     const readiness = buildApprovedOfficialReadingDetailedReadinessV1(
       changed,
-      execution.officialReadingPlan,
+      changedPlan,
     );
 
     expect(coverage.domainKey).toBe('relationship:natal:spouse');
