@@ -345,7 +345,7 @@ describe('R198 bounded annual structural impact producer', () => {
   test('admits exactly one isolated temporal six-combination as qualifier-only context', () => {
     const result = produceAnnualStructuralImpactBundleV1(
       snapshot(),
-      request(2051),
+      request(2039),
       'structure-r198',
       assignments,
     );
@@ -353,7 +353,7 @@ describe('R198 bounded annual structural impact producer', () => {
     if (result.status !== 'resolved') throw new Error('expected resolved');
 
     expect(result.annualFacts.annualPillar).toMatchObject({
-      stem: '신',
+      stem: '기',
       branch: '미',
     });
     expect(result.sixCombinationObservations).toEqual([
@@ -391,7 +391,7 @@ describe('R198 bounded annual structural impact producer', () => {
 
     const result = produceAnnualStructuralImpactBundleV1(
       mixed,
-      request(2051),
+      request(2039),
       'structure-r198',
       assignments,
     );

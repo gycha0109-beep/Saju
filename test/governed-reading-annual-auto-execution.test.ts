@@ -370,7 +370,7 @@ describe('R199 automatic annual Official Reading production', () => {
       {
         requestId: 'r201-isolated-liuhe-public',
         text: '올해 사주',
-        referenceDateTime: '2051-06-15T12:00:00.000Z',
+        referenceDateTime: '2039-06-15T12:00:00.000Z',
       },
       {
         ...executionOptions,
@@ -391,8 +391,8 @@ describe('R199 automatic annual Official Reading production', () => {
     const timing = response.reading?.sections.find(
       (section) => section.sectionType === 'timing',
     );
-    expect(timing?.title).toBe('2051년 구조 흐름');
-    expect(JSON.stringify(timing)).toContain('신미');
+    expect(timing?.title).toBe('2039년 구조 흐름');
+    expect(JSON.stringify(timing)).toContain('기미');
     expect(JSON.stringify(response)).not.toMatch(
       /sixCombination|bindingObserved|conflictResolutionAuthorized|qualifierOnly|r199-controller-core-support/u,
     );
