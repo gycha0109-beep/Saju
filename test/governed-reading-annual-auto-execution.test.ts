@@ -16,6 +16,8 @@ import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../src/llm/prompt-compiler.js
 import {
   executeProductReading,
 } from '../src/reading/governed-reading-execution.js';
+import type { ConsumerReadingAuthorityResolverV1 } from '../src/reading/consumer-reading-authority.js';
+import type { OfficialReadingSemanticProjectionResolverV1 } from '../src/reading/official-reading-semantic-projection.js';
 import { buildProductReadingDelivery } from '../src/reading/product-reading-delivery.js';
 import { buildProductReadingResponse } from '../src/reading/product-reading-response.js';
 import { createGovernedAnnualStructuralImpactBundleV1 } from '../src/reading/annual-structural-impact-bundle.js';
@@ -210,7 +212,7 @@ const baseline = {
   state: 'intact' as const,
 };
 
-function officialAuthority(intent: { domain: string; temporalScope: string }) {
+const officialAuthority: ConsumerReadingAuthorityResolverV1 = (intent) => {
   return {
     authorityVersion: 'r199-test-annual-official-v1',
     readingSection: `${intent.domain}:${intent.temporalScope}`,
@@ -223,9 +225,11 @@ function officialAuthority(intent: { domain: string; temporalScope: string }) {
       mayTreatUnsupportedSectionAsOfficialReading: false as const,
     },
   };
-}
+};
 
-const semanticProjection = ({ targetClaimIds }: { targetClaimIds: readonly string[] }) => ({
+const semanticProjection: OfficialReadingSemanticProjectionResolverV1 = ({
+  targetClaimIds,
+}) => ({
   semanticTextBindings: targetClaimIds.map((targetClaimId) => ({
     targetClaimId,
     canonicalText: {
