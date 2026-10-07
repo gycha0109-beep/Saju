@@ -18,6 +18,7 @@ import type {
 import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../src/llm/prompt-compiler.js';
 import { buildDeterministicFallbackDraft } from '../src/narrative/deterministic-fallback.js';
 import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-support-pack.js';
+import { createGeneralNatalUsefulReadingCandidateRegistry } from '../src/research/general-natal-useful-reading-candidate.js';
 import {
   createMyeonghwaProductHost,
   parseProductHostReadingRequest,
@@ -174,6 +175,27 @@ function dependencies(
       artifactGeneratedAt: new Date('2026-08-24T01:03:00.000Z'),
     },
     requestIdFactory: () => 'test-request',
+  };
+}
+
+function approvedGeneralDependencies(
+  adapter = new TestNarrativeAdapter(),
+): MyeonghwaProductHostDependencies {
+  const base = dependencies(() => [], adapter);
+  return {
+    ...base,
+    interpret(snapshot) {
+      const registry = createGeneralNatalUsefulReadingCandidateRegistry(
+        '2026-10-07T03:40:00.000Z',
+      );
+      return {
+        registry,
+        interpretation: runInterpretation(snapshot, registry, {
+          requestId: 'product-host-approved-general-detailed-interpretation',
+          now: new Date('2026-10-07T03:41:00.000Z'),
+        }),
+      };
+    },
   };
 }
 
@@ -342,6 +364,44 @@ describe('Myeonghwa Product Host MVP', () => {
     expect(adapter.calls).toHaveLength(0);
   });
 
+  it('delivers approved governed detailed content through the product response', async () => {
+    const adapter = new TestNarrativeAdapter();
+    const host = createMyeonghwaProductHost(
+      approvedGeneralDependencies(adapter),
+    );
+
+    const standard = await host.requestReading({
+      ...validBody,
+      reading: { text: '사주' },
+    });
+    const detailed = await host.requestReading({
+      ...validBody,
+      reading: {
+        text: '사주',
+        outputPreferences: { preferredDetail: 'detailed' },
+      },
+    });
+
+    expect([standard.state, detailed.state]).toEqual([
+      'delivered',
+      'delivered',
+    ]);
+    expect(detailed.reading?.sections).not.toEqual(
+      standard.reading?.sections,
+    );
+    expect(adapter.calls).toHaveLength(0);
+
+    const serialized = JSON.stringify(detailed);
+    expect(serialized).not.toContain(
+      'myeonghwa-official-reading-detail-presentation-policy-v3',
+    );
+    expect(serialized).not.toContain('fallback_to_standard');
+    expect(serialized).not.toContain('missing_expansion_material');
+    expect(serialized).not.toContain('detailed_not_activated');
+    expect(serialized).not.toContain('profileId');
+    expect(serialized).not.toContain('baselineHash');
+  });
+
   it('keeps internal detail fallback metadata out of the product response', async () => {
     const adapter = new TestNarrativeAdapter();
     const base = dependencies((snapshot) => [wealthOfficialClaim(snapshot)], adapter);
@@ -360,7 +420,7 @@ describe('Myeonghwa Product Host MVP', () => {
       const serialized = JSON.stringify(result);
       expect(result.state).toBe('delivered');
       expect(serialized).not.toContain(
-        'myeonghwa-official-reading-detail-presentation-policy-v2',
+        'myeonghwa-official-reading-detail-presentation-policy-v3',
       );
       expect(serialized).not.toContain('fallback_to_standard');
       expect(serialized).not.toContain('missing_text_role_authority');
@@ -435,6 +495,63 @@ describe('Myeonghwa Product Host MVP', () => {
       expect((await detailedResponse.json()) as Record<string, unknown>).toMatchObject({
         state: 'delivered',
       });
+    } finally {
+      await server.close();
+    }
+  });
+
+  it('serves approved governed detailed content through POST /api/readings', async () => {
+    const adapter = new TestNarrativeAdapter();
+    const server = await listen(approvedGeneralDependencies(adapter));
+    try {
+      const standardResponse = await fetch(`${server.baseUrl}/api/readings`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...validBody,
+          reading: { text: '사주' },
+        }),
+      });
+      const detailedResponse = await fetch(`${server.baseUrl}/api/readings`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          ...validBody,
+          reading: {
+            text: '사주',
+            outputPreferences: { preferredDetail: 'detailed' },
+          },
+        }),
+      });
+
+      const standardPayload = (await standardResponse.json()) as {
+        state?: unknown;
+        reading?: { sections?: unknown };
+      };
+      const detailedPayload = (await detailedResponse.json()) as {
+        state?: unknown;
+        reading?: { sections?: unknown };
+      };
+
+      expect([standardResponse.status, detailedResponse.status]).toEqual([
+        200,
+        200,
+      ]);
+      expect([standardPayload.state, detailedPayload.state]).toEqual([
+        'delivered',
+        'delivered',
+      ]);
+      expect(detailedPayload.reading?.sections).not.toEqual(
+        standardPayload.reading?.sections,
+      );
+      const serialized = JSON.stringify(detailedPayload);
+      expect(serialized).not.toContain(
+        'myeonghwa-official-reading-detail-presentation-policy-v3',
+      );
+      expect(serialized).not.toContain('fallback_to_standard');
+      expect(serialized).not.toContain('missing_expansion_material');
+      expect(serialized).not.toContain('detailed_not_activated');
+      expect(adapter.calls).toHaveLength(0);
     } finally {
       await server.close();
     }
