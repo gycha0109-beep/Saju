@@ -1,10 +1,8 @@
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { GENERAL_NATAL_BOUNDED_SIZHU_ROOT_PRESENCE_COMPLETENESS_REVIEW_AUTHORITY } from './general-natal-bounded-sizhu-root-presence-completeness-authority-review.js';
 import { GENERAL_NATAL_YIN_CHANGSHENG_MINGGEN_SOURCE_STRATA_CONFLICT_AUTHORITY } from './general-natal-yin-changsheng-minggen-source-strata-conflict-authority.js';
-import {
-  collectGovernedBiyinSupportInventory,
-  GOVERNED_BIYIN_SUPPORT_INVENTORY_AUTHORITY,
-} from './governed-biyin-support-inventory-authority.js';
+import { GOVERNED_BIYIN_SUPPORT_INVENTORY_AUTHORITY } from './governed-biyin-support-inventory-authority.js';
+import type { collectGovernedBiyinSupportInventory } from './governed-biyin-support-inventory-authority.js';
 import {
   I23_STRENGTH_DECISION_READINESS_VERSION,
   type StrengthDecisionBlocker,
