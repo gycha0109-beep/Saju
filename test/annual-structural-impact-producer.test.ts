@@ -28,12 +28,14 @@ const STEMS: Record<'갑' | '기' | '경' | '임', StemFact> = {
   경: { value: '경', hanja: '庚', element: '금', yinYang: '양' },
   임: { value: '임', hanja: '壬', element: '수', yinYang: '양' },
 };
-const BRANCHES: Record<'사' | '오' | '진' | '축' | '자', BranchFact> = {
+const BRANCHES: Record<'사' | '오' | '진' | '축' | '자' | '인' | '유', BranchFact> = {
   사: { value: '사', hanja: '巳', element: '화', yinYang: '음' },
   오: { value: '오', hanja: '午', element: '화', yinYang: '양' },
   진: { value: '진', hanja: '辰', element: '토', yinYang: '양' },
   축: { value: '축', hanja: '丑', element: '토', yinYang: '음' },
   자: { value: '자', hanja: '子', element: '수', yinYang: '양' },
+  인: { value: '인', hanja: '寅', element: '목', yinYang: '양' },
+  유: { value: '유', hanja: '酉', element: '금', yinYang: '음' },
 };
 
 function pillar(stem: keyof typeof STEMS, branch: keyof typeof BRANCHES): PillarFact {
