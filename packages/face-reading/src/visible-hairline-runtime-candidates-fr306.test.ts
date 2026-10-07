@@ -75,7 +75,7 @@ describe('FR306 visible hairline runtime candidate selection', () => {
     ).toBe(false);
   });
 
-  it('registers the deterministic multi-signal v3.2 candidate without widening authority', () => {
+  it('registers the deterministic multi-signal v3.3 candidate without widening authority', () => {
     const candidate =
       FR306_VISIBLE_HAIRLINE_RUNTIME_CANDIDATES.find(
         (entry) =>
@@ -87,7 +87,7 @@ describe('FR306 visible hairline runtime candidate selection', () => {
         'candidate.hairline.multisignal_visible_interface.fr306',
       runtimeProviderId:
         'candidate.hairline.multisignal_visible_interface.fr306',
-      exactRevision: '0.3.0',
+      exactRevision: '0.4.0',
       runnerContractVersion:
         'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
       mayIssueFR305AdmissionReceipt: false,
@@ -114,7 +114,7 @@ describe('FR306 visible hairline runtime candidate selection', () => {
     expect(
       resolveFR306EmpiricalRuntimeCandidate(
         'candidate.hairline.multisignal_visible_interface.fr306',
-        '0.3.0',
+        '0.4.0',
         'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
       ).state,
     ).toBe('additional_empirical_candidate');
@@ -122,7 +122,7 @@ describe('FR306 visible hairline runtime candidate selection', () => {
     expect(() =>
       resolveFR306EmpiricalRuntimeCandidate(
         'candidate.hairline.multisignal_visible_interface.fr306',
-        '0.3.1',
+        '0.4.1',
         'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
       ),
     ).toThrow();
