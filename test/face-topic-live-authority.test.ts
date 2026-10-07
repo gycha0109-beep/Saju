@@ -30,19 +30,28 @@ function requiredTopic(topicKey: string) {
 }
 
 describe('TOPIC-FACE-002 live authority coverage and execution gate', () => {
-  it('derives the product coverage partition from governed FR293/FR294 authority', () => {
+  it('derives current product and vertical-reference coverage from governed authority', () => {
     expect(
       liveReceipt.observation.materializedCapabilities,
-    ).toHaveLength(18);
+    ).toHaveLength(24);
     expect(
       liveReceipt.observation.unavailableOrHardGapCapabilities,
-    ).toHaveLength(11);
+    ).toHaveLength(12);
     expect(
       new Set([
         ...liveReceipt.observation.materializedCapabilities,
         ...liveReceipt.observation.unavailableOrHardGapCapabilities,
       ]).size,
-    ).toBe(29);
+    ).toBe(36);
+    expect(
+      liveSnapshot.availableObservationCapabilities.filter(
+        (capability) =>
+          capability.startsWith('face.vertical_reference.'),
+      ),
+    ).toHaveLength(6);
+    expect(
+      liveSnapshot.availableObservationCapabilities,
+    ).not.toContain('face.vertical_reference.visible_hairline');
     expect(
       liveSnapshot.availableObservationCapabilities,
     ).not.toContain('forehead.visible_width_shape');
@@ -136,11 +145,18 @@ describe('TOPIC-FACE-002 live authority coverage and execution gate', () => {
       observation: {
         ...liveReceipt.observation,
         materializedCapabilities: [
-          ...liveReceipt.observation.materializedCapabilities,
-          ...topic.requirements.requiredObservationCapabilities,
+          ...new Set([
+            ...liveReceipt.observation.materializedCapabilities,
+            ...topic.requirements.requiredObservationCapabilities,
+          ]),
         ],
         unavailableOrHardGapCapabilities:
-          liveReceipt.observation.unavailableOrHardGapCapabilities,
+          liveReceipt.observation.unavailableOrHardGapCapabilities.filter(
+            (capability) =>
+              !topic.requirements.requiredObservationCapabilities.includes(
+                capability,
+              ),
+          ),
       },
     };
     const snapshot =
@@ -232,7 +248,7 @@ describe('TOPIC-FACE-002 live authority coverage and execution gate', () => {
     );
   });
 
-  it('keeps the live bridge group at FRB005 zero-admission fail-closed state', () => {
+  it('keeps the live bridge group partially admitted but fail-closed until hairline is bound', () => {
     const group = liveSnapshot.bindingGroups.find(
       (candidate) =>
         candidate.bindingGroupRef ===
@@ -240,7 +256,7 @@ describe('TOPIC-FACE-002 live authority coverage and execution gate', () => {
     );
     expect(group).toBeDefined();
     expect(group?.requiredBindingCount).toBe(16);
-    expect(group?.admittedBindingCount).toBe(0);
+    expect(group?.admittedBindingCount).toBe(13);
     expect(group?.bindingReady).toBe(false);
   });
 });
