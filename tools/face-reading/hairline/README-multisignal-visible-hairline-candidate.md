@@ -214,3 +214,17 @@ It does not authorize:
 - Production or Commerce.
 
 Watchtower-Track: face-observation-engine
+
+
+## v3.3 exposure-guard revision — 0.4.0
+
+Real FR312 on v3.2 `0.3.0` rejected two expanded-validation captures for gross mislocalization: one low-local-contrast/light-hair exposure localized inside hair mass, and one asymmetric/fringe exposure localized a lower fringe edge.
+
+Revision `0.4.0` does not reconstruct hidden hairline geometry and does not retune the original multi-signal preview thresholds. It adds a conservative publication guard after the raw preview classifier:
+
+- ambiguous material direction: weak skin-to-hair material transition plus weak above/below texture direction downgrades a raw visible candidate to `partially_visible_or_occluded`;
+- low fringe-edge risk: a raw visible candidate that sits unusually low in the face basis while path support is weak is downgraded to `partially_visible_or_occluded`;
+- any downgraded state exposes no candidate boundary and no QA red line;
+- the private diagnostic path remains local-only.
+
+The rejected FR312 bundle is development/regression evidence for this revision. It is not an untouched independent holdout for v3.3 and cannot by itself establish FR312 or FR305 admission.

@@ -25,7 +25,7 @@ from typing import Any, Iterable
 SCHEMA_VERSION = "multisignal-visible-hairline-local-candidate-v1"
 SAFE_RECEIPT_SCHEMA = "multisignal-visible-hairline-repo-safe-receipt-v1"
 METHOD_ID = "adaptive_skin_edge_texture_continuity"
-METHOD_VERSION = "0.3.0"
+METHOD_VERSION = "0.4.0"
 
 PREVIEW_STATES = (
     "visible_interface_candidate",
@@ -47,6 +47,17 @@ PREVIEW_THRESHOLDS = {
     "no_hair_outer_relative_path_max": -0.13,
     "no_hair_outer_interface_max": 0.48,
     "no_hair_outer_scalp_continuity_min": 0.55,
+}
+
+# v3.3 exposure guards are conservative publication gates, not anatomical
+# hairline reconstruction. They only suppress a raw visible-interface
+# candidate when local material direction is ambiguous or the path is both
+# unusually low in the face basis and weakly supported.
+EXPOSURE_GUARD_THRESHOLDS = {
+    "material_transition_min": 0.16,
+    "texture_ratio_min_when_material_weak": 0.80,
+    "low_fringe_relative_path_min": 0.075,
+    "low_fringe_path_coverage_max": 0.55,
 }
 
 PRIVATE_KEYS = {
@@ -149,6 +160,45 @@ def _candidate_boundary_exposed(preview_state: str) -> bool:
     if preview_state not in PREVIEW_STATES:
         raise ValueError("unknown engineering preview state")
     return preview_state == "visible_interface_candidate"
+
+
+def _apply_exposure_guard(
+    preview_state: str,
+    *,
+    material_transition: float,
+    texture_ratio: float,
+    relative_path_level: float,
+    path_coverage: float,
+) -> tuple[str, tuple[str, ...]]:
+    if preview_state != "visible_interface_candidate":
+        return preview_state, ()
+
+    reasons: list[str] = []
+    if (
+        material_transition
+        < EXPOSURE_GUARD_THRESHOLDS["material_transition_min"]
+        and texture_ratio
+        < EXPOSURE_GUARD_THRESHOLDS[
+            "texture_ratio_min_when_material_weak"
+        ]
+    ):
+        reasons.append("ambiguous_material_direction")
+
+    if (
+        relative_path_level
+        > EXPOSURE_GUARD_THRESHOLDS[
+            "low_fringe_relative_path_min"
+        ]
+        and path_coverage
+        < EXPOSURE_GUARD_THRESHOLDS[
+            "low_fringe_path_coverage_max"
+        ]
+    ):
+        reasons.append("low_fringe_edge_risk")
+
+    if reasons:
+        return "partially_visible_or_occluded", tuple(reasons)
+    return preview_state, ()
 
 
 def _safe_output_path(path: str) -> Path:
@@ -689,7 +739,14 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
         relative_path_level=relative_path_level,
         face_basis_stable=face_basis_stable,
     )
-    preview_state = classify_preview(preview_signals)
+    raw_preview_state = classify_preview(preview_signals)
+    preview_state, exposure_guard_reasons = _apply_exposure_guard(
+        raw_preview_state,
+        material_transition=material_transition,
+        texture_ratio=texture_ratio,
+        relative_path_level=relative_path_level,
+        path_coverage=path_coverage,
+    )
 
     record_dir = output_dir / str(record["recordId"])
     record_dir.mkdir(parents=True, exist_ok=True)
@@ -751,7 +808,9 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
             "truncationRisk": float(truncation_risk),
             "occlusionRisk": occlusion_risk,
         },
+        "rawEngineeringPreviewState": raw_preview_state,
         "engineeringPreviewState": preview_state,
+        "exposureGuardReasons": list(exposure_guard_reasons),
         "humanReviewRequired": True,
         "automaticAdmissionAuthorized": False,
         "neutralRuntimeHairlineObservationAuthorized": False,
@@ -799,7 +858,9 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     return {
         "recordId": str(record["recordId"]),
         "experimentTag": str(record.get("experimentTag", "unspecified")),
+        "rawEngineeringPreviewState": raw_preview_state,
         "engineeringPreviewState": preview_state,
+        "exposureGuardTriggered": bool(exposure_guard_reasons),
         "signals": {
             "colorContrast": color_contrast,
             "luminanceContrast": luminance_contrast,
@@ -1038,6 +1099,37 @@ def self_check() -> None:
     ):
         raise RuntimeError("preview-state synthetic self-check failed")
 
+    guarded_material, material_reasons = _apply_exposure_guard(
+        "visible_interface_candidate",
+        material_transition=0.10,
+        texture_ratio=0.50,
+        relative_path_level=0.01,
+        path_coverage=0.60,
+    )
+    guarded_fringe, fringe_reasons = _apply_exposure_guard(
+        "visible_interface_candidate",
+        material_transition=0.30,
+        texture_ratio=1.20,
+        relative_path_level=0.10,
+        path_coverage=0.40,
+    )
+    unguarded_clear, clear_reasons = _apply_exposure_guard(
+        "visible_interface_candidate",
+        material_transition=0.30,
+        texture_ratio=1.20,
+        relative_path_level=0.02,
+        path_coverage=0.60,
+    )
+    if (
+        guarded_material != "partially_visible_or_occluded"
+        or material_reasons != ("ambiguous_material_direction",)
+        or guarded_fringe != "partially_visible_or_occluded"
+        or fringe_reasons != ("low_fringe_edge_risk",)
+        or unguarded_clear != "visible_interface_candidate"
+        or clear_reasons != ()
+    ):
+        raise RuntimeError("v3.3 exposure guard self-check failed")
+
     receipt = _safe_receipt(
         [
             {
@@ -1111,6 +1203,8 @@ def self_check() -> None:
                 "unstableFaceBasisFailsClosed": True,
                 "nonVisibleStatesSuppressCandidateBoundary": True,
                 "diagnosticBoundaryRemainsLocalOnly": True,
+                "ambiguousMaterialDirectionFailsClosed": True,
+                "lowFringeEdgeRiskFailsClosed": True,
                 "hairColorClassificationApplied": False,
                 "demographicInferenceApplied": False,
                 "hiddenHairlineCompletionApplied": False,

@@ -25,7 +25,7 @@ const OUTPUT_SCHEMA =
 
 const MODEL_ID =
   'candidate.hairline.multisignal_visible_interface.fr306';
-const MODEL_REVISION = '0.3.0';
+const MODEL_REVISION = '0.4.0';
 const RUNNER_CONTRACT_VERSION =
   'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1';
 const METHOD_ID =

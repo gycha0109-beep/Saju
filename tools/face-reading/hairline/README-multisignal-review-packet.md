@@ -1,6 +1,6 @@
 # Multi-signal hairline human-review packet
 
-This packet connects the local/private multi-signal v3.2 candidate output to the governed FR308 → FR310 → FR312 validation path.
+This packet connects the local/private multi-signal v3.3 candidate output to the governed FR308 → FR310 → FR312 validation path.
 
 It does **not** convert engineering preview states into human judgments and it does **not** issue authority.
 
@@ -22,7 +22,7 @@ The registered candidate identity is fixed to:
 provider:
   candidate.hairline.multisignal_visible_interface.fr306
 revision:
-  0.3.0
+  0.4.0
 runner contract:
   MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1
 ```
@@ -38,14 +38,14 @@ npm run face:verify:hairline-multisignal-review-packet
 
 The self-check verifies:
 
-- the v3.2 provider is an exact registered FR306 empirical candidate;
+- the v3.3 provider is an exact registered FR306 empirical candidate;
 - four FR308 findings can be compiled;
 - twelve FR312 captures can be compiled;
 - no private path or digest leaks into the compiled input;
 - no human judgment is automatically generated;
 - no authority is promoted.
 
-## Step 1 — run the v3.2 candidate locally
+## Step 1 — run the v3.3 candidate locally
 
 Use the existing multi-signal runner:
 
@@ -92,7 +92,7 @@ For every record used by FR308 or FR312, inspect the source image and local over
 
 The engineering preview state and numeric signals are review aids only.
 
-For revision 0.3.0, `candidateBoundaryExposed=false` is expected for partial/occluded, unavailable, and no-visible-hairline states. The private diagnostic path is not a candidate boundary and must not be scored as one.
+For revision 0.4.0, `candidateBoundaryExposed=false` is expected for partial/occluded, unavailable, and no-visible-hairline states. The private diagnostic path is not a candidate boundary and must not be scored as one.
 
 They must **not** automatically determine:
 
@@ -137,7 +137,7 @@ The current FR308/FR312 governed schemas were originally designed around the Flo
 - `diagnosticHairlineCandidateObserved`
 - `directPromptFailureMode`
 
-For the non-prompt v3.2 candidate, the reviewer must explicitly fill these compatibility fields from the actual evidence.
+For the non-prompt v3.3 candidate, the reviewer must explicitly fill these compatibility fields from the actual evidence.
 
 The packet never fabricates them from preview signals.
 
@@ -241,7 +241,7 @@ npm run face:review:hairline-multisignal -- \
   --output .cache/face-reading/fr308-fr312-local/multisignal-private-input.json
 ```
 
-The compiled input includes the exact registered v3.2 candidate identity and strips:
+The compiled input includes the exact registered v3.3 candidate identity and strips:
 
 - private candidate paths;
 - overlay paths;

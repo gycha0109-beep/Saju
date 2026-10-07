@@ -347,7 +347,7 @@ describe('FR310 visible hairline evidence adjudicator', () => {
           'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
         modelId:
           'candidate.hairline.multisignal_visible_interface.fr306',
-        modelRevision: '0.3.0',
+        modelRevision: '0.4.0',
         localOnlyExecution: true,
         caseFindings,
       });
@@ -359,7 +359,7 @@ describe('FR310 visible hairline evidence adjudicator', () => {
       caseFindings,
       modelId:
         'candidate.hairline.multisignal_visible_interface.fr306',
-      modelRevision: '0.3.0',
+      modelRevision: '0.4.0',
       humanReview: review(),
     });
 
@@ -369,7 +369,7 @@ describe('FR310 visible hairline evidence adjudicator', () => {
         'candidate.hairline.multisignal_visible_interface.fr306',
       runtimeProviderId:
         'candidate.hairline.multisignal_visible_interface.fr306',
-      exactRevision: '0.3.0',
+      exactRevision: '0.4.0',
       runnerContractVersion:
         'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
       expandedValidationEligible: true,
@@ -395,7 +395,7 @@ describe('FR310 visible hairline evidence adjudicator', () => {
         ...base,
         modelId:
           'candidate.hairline.multisignal_visible_interface.fr306',
-        modelRevision: '0.3.0',
+        modelRevision: '0.4.0',
       }),
     ).toThrow();
   });
