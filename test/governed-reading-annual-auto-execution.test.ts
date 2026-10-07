@@ -314,6 +314,48 @@ describe('R199 automatic annual Official Reading production', () => {
     );
   });
 
+  test('root qualifier-only annual context reaches public timing without leaking root metadata', async () => {
+    const currentSnapshot = autoSnapshot();
+    const { registry, interpretation } = interpretationWithAnnualClaim(
+      currentSnapshot,
+      'r200-root-qualifier-public',
+    );
+
+    const result = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      {
+        requestId: 'r200-root-qualifier-public',
+        text: '올해 사주',
+        referenceDateTime: '2048-06-15T12:00:00.000Z',
+      },
+      {
+        ...executionOptions,
+        consumerReadingAuthorityResolver: officialAuthority,
+        officialReadingSemanticProjectionResolver: semanticProjection,
+        governedAnnualTemporalProduction: {
+          baseline,
+          roleAssignments: roles,
+        },
+      },
+    );
+
+    expect(result.state).toBe('completed');
+    expect(result.modelCalls).toBe(0);
+    const response = buildProductReadingResponse(
+      buildProductReadingDelivery(result),
+    );
+    const timing = response.reading?.sections.find(
+      (section) => section.sectionType === 'timing',
+    );
+    expect(timing?.title).toBe('2048년 구조 흐름');
+    expect(JSON.stringify(timing)).toContain('무진');
+    expect(JSON.stringify(response)).not.toMatch(
+      /rootSupport|sameElementHiddenStems|hiddenStems|qualifierOnly|r199-controller-core-support/u,
+    );
+  });
+
   test('bounded producer failure blocks Official Reading instead of falling back to legacy narrative', async () => {
     const currentSnapshot = autoSnapshot();
     const { registry, interpretation } = interpretationWithAnnualClaim(
@@ -345,7 +387,7 @@ describe('R199 automatic annual Official Reading production', () => {
     expect(result.modelCalls).toBe(0);
     expect(result.artifact).toBeUndefined();
     expect(result.reasonCodes).toContain(
-      'OFFICIAL_READING_ANNUAL_STRUCTURAL_IMPACT_PRODUCTION_BLOCKED:annual_root_support_requires_settlement',
+      'OFFICIAL_READING_ANNUAL_STRUCTURAL_IMPACT_PRODUCTION_BLOCKED:branch_relation_requires_settlement',
     );
   });
 

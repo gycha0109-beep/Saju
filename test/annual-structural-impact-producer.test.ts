@@ -14,6 +14,7 @@ import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/product
 import {
   ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY,
   ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY_CONTENT_HASH,
+  deriveAnnualTemporalRootSupportObservationV1,
   deriveAnnualTemporalSettlementOverlayV1,
   produceAnnualStructuralImpactBundleV1,
   type AnnualTemporalStemSourceV1,
@@ -262,17 +263,81 @@ describe('R198 bounded annual structural impact producer', () => {
     );
   });
 
-  test('fails closed when annual root/support is observed', () => {
+  test('admits branch-quiet annual root support as qualifier-only context', () => {
     const result = produceAnnualStructuralImpactBundleV1(
       snapshot(),
-      request(2026),
+      request(2048),
       'structure-r198',
       assignments,
     );
-    expect(result.status).toBe('unavailable');
-    if (result.status !== 'unavailable') throw new Error('expected unavailable');
-    expect(result.reasonCode).toBe(
-      'annual_root_support_requires_settlement',
+    expect(result.status).toBe('resolved');
+    if (result.status !== 'resolved') throw new Error('expected resolved');
+
+    expect(result.annualFacts.annualPillar).toMatchObject({
+      stem: '무',
+      branch: '진',
+    });
+    expect(result.rootSupportObservations).toEqual([
+      {
+        layer: 'annual',
+        stem: '무',
+        branch: '진',
+        stemElement: '토',
+        hiddenStems: ['을', '무', '계'],
+        sameElementHiddenStems: ['무'],
+        rootSupportObserved: true,
+        semantics: {
+          qualifierOnly: true,
+          numericWeightAssigned: false,
+          functionStateOverrideAuthorized: false,
+          temporalPrecedenceAuthorized: false,
+        },
+      },
+      {
+        layer: 'dayun',
+        stem: '경',
+        branch: '오',
+        stemElement: '금',
+        hiddenStems: ['정', '기'],
+        sameElementHiddenStems: [],
+        rootSupportObserved: false,
+        semantics: {
+          qualifierOnly: true,
+          numericWeightAssigned: false,
+          functionStateOverrideAuthorized: false,
+          temporalPrecedenceAuthorized: false,
+        },
+      },
+    ]);
+    expect(result.overlays[0]?.settlement.participants.controller.functionState).toBe(
+      'impaired',
+    );
+    expect(result.overlays[0]?.settlement.participants.controlled.functionState).toBe(
+      'constrained',
+    );
+  });
+
+  test('root support observation itself does not change stem overlay state', () => {
+    const observation = deriveAnnualTemporalRootSupportObservationV1(
+      'annual',
+      '무',
+      '진',
+    );
+    expect(observation.rootSupportObserved).toBe(true);
+
+    const overlay = deriveAnnualTemporalSettlementOverlayV1(
+      settlement(),
+      2048,
+      [
+        { layer: 'annual', stem: '무', element: '토' },
+        { layer: 'dayun', stem: '경', element: '금' },
+      ],
+    );
+    expect(overlay.settlement.participants.controller.functionState).toBe(
+      'impaired',
+    );
+    expect(overlay.settlement.participants.controlled.functionState).toBe(
+      'constrained',
     );
   });
 
@@ -354,6 +419,9 @@ describe('R198 bounded annual structural impact producer', () => {
       'BRANCH_QUIET_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.eventRule).toBe('NONE');
+    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.rootRule).toBe(
+      'OBSERVE_AS_QUALIFIER_WITHOUT_WEIGHT_OR_OVERRIDE',
+    );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.numericWeightRule).toBe(
       'NONE',
     );
