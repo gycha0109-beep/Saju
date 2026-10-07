@@ -358,7 +358,7 @@ describe('FR312 expanded visible-hairline validation', () => {
         'candidate.hairline.multisignal_visible_interface.fr306',
       runtimeProviderId:
         'candidate.hairline.multisignal_visible_interface.fr306',
-      exactRevision: '0.3.0',
+      exactRevision: '0.4.0',
       runnerContractVersion:
         'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
     };
@@ -370,7 +370,7 @@ describe('FR312 expanded visible-hairline validation', () => {
             multiSignalPrerequisite,
           modelId:
             'candidate.hairline.multisignal_visible_interface.fr306',
-          modelRevision: '0.3.0',
+          modelRevision: '0.4.0',
         }),
       );
 
@@ -381,7 +381,7 @@ describe('FR312 expanded visible-hairline validation', () => {
         'candidate.hairline.multisignal_visible_interface.fr306',
       runtimeProviderId:
         'candidate.hairline.multisignal_visible_interface.fr306',
-      exactRevision: '0.3.0',
+      exactRevision: '0.4.0',
       runnerContractVersion:
         'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
       modelAdmissionReviewEligible: true,
@@ -394,7 +394,7 @@ describe('FR312 expanded visible-hairline validation', () => {
         input(completeCaptures(), {
           modelId:
             'candidate.hairline.multisignal_visible_interface.fr306',
-          modelRevision: '0.3.0',
+          modelRevision: '0.4.0',
         }),
       ),
     ).toThrow();
