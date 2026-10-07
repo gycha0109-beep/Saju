@@ -285,7 +285,24 @@ describe('R198 bounded annual structural impact producer', () => {
       'impaired',
     );
     expect(result.overlays[0]?.settlement.participants.controlled.functionState).toBe(
-      'constrained',
+      'impaired',
+    );
+    expect(result.overlays[0]?.settlement.pairControlEffective).toBe(false);
+    expect(result.overlays[0]?.temporalInfluences).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceLayer: 'annual',
+          sourceStem: '을',
+          targetRole: 'controlled',
+          kind: 'control',
+        }),
+        expect.objectContaining({
+          sourceLayer: 'dayun',
+          sourceStem: '경',
+          targetRole: 'controller',
+          kind: 'control',
+        }),
+      ]),
     );
   });
 
