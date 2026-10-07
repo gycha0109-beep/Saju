@@ -32,9 +32,9 @@ import { buildTemporalReadingContext } from './temporal-reading-context.js';
 
 export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY = Object.freeze({
   policyId: 'myeongha/annual-structural-impact-producer-v1',
-  policyVersion: '1.0.0',
+  policyVersion: '1.1.0',
   decisionAuthority: 'PROJECT_OWNER',
-  decisionRef: 'GH-2288',
+  decisionRef: 'GH-2302',
   scope: 'BRANCH_QUIET_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
   annualRule: 'RETAIN_STEM_AND_BRANCH_CONTEXT',
   dayunRule: 'REQUIRE_ONE_ACTIVE_DAYUN_SEGMENT',
@@ -43,13 +43,13 @@ export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY = Object.freeze({
   sameTargetConflictRule: 'CONTROL_OVER_SUPPORT',
   natalStateRule: 'START_FROM_CANONICAL_R191_FINAL_STATE',
   branchRule: 'FAIL_CLOSED_WHEN_TEMPORAL_BRANCH_RELATION_IS_OBSERVED',
-  rootRule: 'FAIL_CLOSED_WHEN_TEMPORAL_STEM_ROOT_SUPPORT_IS_OBSERVED',
+  rootRule: 'OBSERVE_AS_QUALIFIER_WITHOUT_WEIGHT_OR_OVERRIDE',
   boundaryRule: 'FAIL_CLOSED_ON_MULTI_DAYUN_SEGMENT_YEAR',
   mutationRule: 'DO_NOT_MUTATE_CANONICAL_NATAL_SETTLEMENT',
   numericWeightRule: 'NONE',
   effectRule: 'REQUIRE_TEMPORAL_FUNCTION_STATE_CHANGE',
   eventRule: 'NONE',
-  extendsDecisionRef: 'GH-2284',
+  extendsDecisionRef: 'GH-2288',
 } as const);
 
 function canonicalize(value: unknown): unknown {
@@ -88,6 +88,22 @@ export interface AnnualTemporalStemInfluenceV1 {
   kind: 'control' | 'support';
 }
 
+export interface AnnualTemporalRootSupportObservationV1 {
+  layer: AnnualTemporalStemLayer;
+  stem: HeavenlyStem;
+  branch: EarthlyBranch;
+  stemElement: FiveElement;
+  hiddenStems: readonly HeavenlyStem[];
+  sameElementHiddenStems: readonly HeavenlyStem[];
+  rootSupportObserved: boolean;
+  semantics: {
+    qualifierOnly: true;
+    numericWeightAssigned: false;
+    functionStateOverrideAuthorized: false;
+    temporalPrecedenceAuthorized: false;
+  };
+}
+
 export interface AnnualTemporalSettlementOverlayV1 {
   overlayId: string;
   baseSettlementId: string;
@@ -107,6 +123,7 @@ export interface ResolvedAnnualStructuralImpactProductionV1 {
   dayunContextId: string;
   dayunSegmentIndex: number;
   dayunPillar: PillarFact;
+  rootSupportObservations: readonly AnnualTemporalRootSupportObservationV1[];
   overlays: readonly AnnualTemporalSettlementOverlayV1[];
   assessments: readonly ResolvedStructuralRoleImpact[];
   bundle: GovernedAnnualStructuralImpactBundleV1;
@@ -127,8 +144,6 @@ export interface UnavailableAnnualStructuralImpactProductionV1 {
     | 'natal_settlements_unavailable'
     | 'no_natal_stem_settlements'
     | 'natal_pillar_unavailable'
-    | 'annual_root_support_requires_settlement'
-    | 'dayun_root_support_requires_settlement'
     | 'branch_relation_requires_settlement'
     | 'no_temporal_stem_effect'
     | 'structural_role_impact_unavailable';
@@ -333,11 +348,31 @@ export function deriveAnnualTemporalSettlementOverlayV1(
   };
 }
 
-function rootSupportObserved(stem: HeavenlyStem, branch: EarthlyBranch): boolean {
-  const sourceElement = getHeavenlyStemElement(stem);
-  return getHiddenStemMembership(branch).some(
-    (hiddenStem) => getHeavenlyStemElement(hiddenStem) === sourceElement,
+export function deriveAnnualTemporalRootSupportObservationV1(
+  layer: AnnualTemporalStemLayer,
+  stem: HeavenlyStem,
+  branch: EarthlyBranch,
+): AnnualTemporalRootSupportObservationV1 {
+  const stemElement = getHeavenlyStemElement(stem);
+  const hiddenStems = [...getHiddenStemMembership(branch)];
+  const sameElementHiddenStems = hiddenStems.filter(
+    (hiddenStem) => getHeavenlyStemElement(hiddenStem) === stemElement,
   );
+  return {
+    layer,
+    stem,
+    branch,
+    stemElement,
+    hiddenStems,
+    sameElementHiddenStems,
+    rootSupportObserved: sameElementHiddenStems.length > 0,
+    semantics: {
+      qualifierOnly: true,
+      numericWeightAssigned: false,
+      functionStateOverrideAuthorized: false,
+      temporalPrecedenceAuthorized: false,
+    },
+  };
 }
 
 function resolvedNatalBranches(
@@ -511,22 +546,18 @@ export function produceAnnualStructuralImpactBundleV1(
   const dayunStem = dayunSegment.pillar.stem.value;
   const dayunBranch = dayunSegment.pillar.branch.value;
 
-  if (rootSupportObserved(annualStem, annualBranch)) {
-    return unavailable(
-      snapshot,
-      structureId,
-      'annual_root_support_requires_settlement',
-      { targetYear },
-    );
-  }
-  if (rootSupportObserved(dayunStem, dayunBranch)) {
-    return unavailable(
-      snapshot,
-      structureId,
-      'dayun_root_support_requires_settlement',
-      { targetYear },
-    );
-  }
+  const rootSupportObservations: readonly AnnualTemporalRootSupportObservationV1[] = [
+    deriveAnnualTemporalRootSupportObservationV1(
+      'annual',
+      annualStem,
+      annualBranch,
+    ),
+    deriveAnnualTemporalRootSupportObservationV1(
+      'dayun',
+      dayunStem,
+      dayunBranch,
+    ),
+  ];
 
   const branchRelations = branchRelationIds(
     natalBranches,
@@ -619,6 +650,7 @@ export function produceAnnualStructuralImpactBundleV1(
     annualPillar: annualFacts.annualPillar,
     dayunContextId: dayun.contextId,
     dayunSegmentIndex: dayunSegment.index,
+    rootSupportObservations,
     overlayIds: overlays.map((item) => item.overlayId),
     bundleId: bundle.bundleId,
   };
@@ -637,6 +669,7 @@ export function produceAnnualStructuralImpactBundleV1(
     dayunContextId: dayun.contextId,
     dayunSegmentIndex: dayunSegment.index,
     dayunPillar: dayunSegment.pillar,
+    rootSupportObservations,
     overlays,
     assessments,
     bundle,
