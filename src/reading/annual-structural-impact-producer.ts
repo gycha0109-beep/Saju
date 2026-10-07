@@ -32,24 +32,27 @@ import { buildTemporalReadingContext } from './temporal-reading-context.js';
 
 export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY = Object.freeze({
   policyId: 'myeongha/annual-structural-impact-producer-v1',
-  policyVersion: '1.1.0',
+  policyVersion: '1.2.0',
   decisionAuthority: 'PROJECT_OWNER',
-  decisionRef: 'GH-2302',
-  scope: 'BRANCH_QUIET_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
+  decisionRef: 'GH-2317',
+  scope: 'ISOLATED_LIUHE_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
   annualRule: 'RETAIN_STEM_AND_BRANCH_CONTEXT',
   dayunRule: 'REQUIRE_ONE_ACTIVE_DAYUN_SEGMENT',
   stemSourceRule: 'ANNUAL_AND_DAYUN_STEMS_COEXIST_WITHOUT_PRECEDENCE',
   directRelationRule: 'INCOMING_ELEMENT_CONTROL_OR_GENERATION_ONLY',
   sameTargetConflictRule: 'CONTROL_OVER_SUPPORT',
   natalStateRule: 'START_FROM_CANONICAL_R191_FINAL_STATE',
-  branchRule: 'FAIL_CLOSED_WHEN_TEMPORAL_BRANCH_RELATION_IS_OBSERVED',
+  branchRule:
+    'ADMIT_ONE_ISOLATED_SIX_COMBINATION_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
+  sixCombinationRule:
+    'QUALIFIER_ONLY_NO_TRANSFORMATION_OR_CONFLICT_RESOLUTION',
   rootRule: 'OBSERVE_AS_QUALIFIER_WITHOUT_WEIGHT_OR_OVERRIDE',
   boundaryRule: 'FAIL_CLOSED_ON_MULTI_DAYUN_SEGMENT_YEAR',
   mutationRule: 'DO_NOT_MUTATE_CANONICAL_NATAL_SETTLEMENT',
   numericWeightRule: 'NONE',
   effectRule: 'REQUIRE_TEMPORAL_FUNCTION_STATE_CHANGE',
   eventRule: 'NONE',
-  extendsDecisionRef: 'GH-2288',
+  extendsDecisionRef: 'GH-2302',
 } as const);
 
 function canonicalize(value: unknown): unknown {
@@ -104,6 +107,20 @@ export interface AnnualTemporalRootSupportObservationV1 {
   };
 }
 
+export interface AnnualTemporalSixCombinationObservationV1 {
+  relationId: string;
+  relationKind: 'six_combination';
+  semantics: {
+    qualifierOnly: true;
+    bindingObserved: true;
+    transformationApplied: false;
+    conflictResolutionAuthorized: false;
+    functionStateOverrideAuthorized: false;
+    temporalPrecedenceAuthorized: false;
+    numericWeightAssigned: false;
+  };
+}
+
 export interface AnnualTemporalSettlementOverlayV1 {
   overlayId: string;
   baseSettlementId: string;
@@ -124,6 +141,7 @@ export interface ResolvedAnnualStructuralImpactProductionV1 {
   dayunSegmentIndex: number;
   dayunPillar: PillarFact;
   rootSupportObservations: readonly AnnualTemporalRootSupportObservationV1[];
+  sixCombinationObservations: readonly AnnualTemporalSixCombinationObservationV1[];
   overlays: readonly AnnualTemporalSettlementOverlayV1[];
   assessments: readonly ResolvedStructuralRoleImpact[];
   bundle: GovernedAnnualStructuralImpactBundleV1;
@@ -448,6 +466,35 @@ function branchRelationIds(
   return [...result].sort();
 }
 
+function isolatedSixCombinationObservations(
+  relationIds: readonly string[],
+): readonly AnnualTemporalSixCombinationObservationV1[] | undefined {
+  if (relationIds.length === 0) return [];
+  if (
+    relationIds.length !== 1 ||
+    relationIds[0] === undefined ||
+    !relationIds[0].startsWith('six_combination:')
+  ) {
+    return undefined;
+  }
+
+  return [
+    {
+      relationId: relationIds[0],
+      relationKind: 'six_combination',
+      semantics: {
+        qualifierOnly: true,
+        bindingObserved: true,
+        transformationApplied: false,
+        conflictResolutionAuthorized: false,
+        functionStateOverrideAuthorized: false,
+        temporalPrecedenceAuthorized: false,
+        numericWeightAssigned: false,
+      },
+    },
+  ];
+}
+
 function unavailable(
   snapshot: CanonicalSajuSnapshot,
   structureId: string,
@@ -564,7 +611,9 @@ export function produceAnnualStructuralImpactBundleV1(
     annualBranch,
     dayunBranch,
   );
-  if (branchRelations.length > 0) {
+  const sixCombinationObservations =
+    isolatedSixCombinationObservations(branchRelations);
+  if (sixCombinationObservations === undefined) {
     return unavailable(snapshot, structureId, 'branch_relation_requires_settlement', {
       targetYear,
       branchRelationIds: branchRelations,
@@ -651,6 +700,7 @@ export function produceAnnualStructuralImpactBundleV1(
     dayunContextId: dayun.contextId,
     dayunSegmentIndex: dayunSegment.index,
     rootSupportObservations,
+    sixCombinationObservations,
     overlayIds: overlays.map((item) => item.overlayId),
     bundleId: bundle.bundleId,
   };
@@ -670,6 +720,7 @@ export function produceAnnualStructuralImpactBundleV1(
     dayunSegmentIndex: dayunSegment.index,
     dayunPillar: dayunSegment.pillar,
     rootSupportObservations,
+    sixCombinationObservations,
     overlays,
     assessments,
     bundle,

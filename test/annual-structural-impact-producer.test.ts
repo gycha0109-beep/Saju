@@ -28,10 +28,11 @@ const STEMS: Record<'갑' | '기' | '경' | '임', StemFact> = {
   경: { value: '경', hanja: '庚', element: '금', yinYang: '양' },
   임: { value: '임', hanja: '壬', element: '수', yinYang: '양' },
 };
-const BRANCHES: Record<'사' | '오' | '진', BranchFact> = {
+const BRANCHES: Record<'사' | '오' | '진' | '축', BranchFact> = {
   사: { value: '사', hanja: '巳', element: '화', yinYang: '음' },
   오: { value: '오', hanja: '午', element: '화', yinYang: '양' },
   진: { value: '진', hanja: '辰', element: '토', yinYang: '양' },
+  축: { value: '축', hanja: '丑', element: '토', yinYang: '음' },
 };
 
 function pillar(stem: keyof typeof STEMS, branch: keyof typeof BRANCHES): PillarFact {
@@ -341,6 +342,70 @@ describe('R198 bounded annual structural impact producer', () => {
     );
   });
 
+  test('admits exactly one isolated temporal six-combination as qualifier-only context', () => {
+    const result = produceAnnualStructuralImpactBundleV1(
+      snapshot(),
+      request(2039),
+      'structure-r198',
+      assignments,
+    );
+    expect(result.status).toBe('resolved');
+    if (result.status !== 'resolved') throw new Error('expected resolved');
+
+    expect(result.annualFacts.annualPillar).toMatchObject({
+      stem: '기',
+      branch: '미',
+    });
+    expect(result.sixCombinationObservations).toEqual([
+      {
+        relationId: 'six_combination:annual:미|dayun:오',
+        relationKind: 'six_combination',
+        semantics: {
+          qualifierOnly: true,
+          bindingObserved: true,
+          transformationApplied: false,
+          conflictResolutionAuthorized: false,
+          functionStateOverrideAuthorized: false,
+          temporalPrecedenceAuthorized: false,
+          numericWeightAssigned: false,
+        },
+      },
+    ]);
+    expect(result.overlays[0]?.settlement.participants.controller.functionState).toBe(
+      'impaired',
+    );
+    expect(result.overlays[0]?.settlement.participants.controlled.functionState).toBe(
+      'constrained',
+    );
+  });
+
+  test('keeps a six-combination blocked when another branch relation competes', () => {
+    const current = snapshot();
+    const mixed = {
+      ...current,
+      pillars: {
+        ...current.pillars,
+        year: resolved(pillar('갑', '축')),
+      },
+    } satisfies CanonicalSajuSnapshot;
+
+    const result = produceAnnualStructuralImpactBundleV1(
+      mixed,
+      request(2039),
+      'structure-r198',
+      assignments,
+    );
+    expect(result.status).toBe('unavailable');
+    if (result.status !== 'unavailable') throw new Error('expected unavailable');
+    expect(result.reasonCode).toBe('branch_relation_requires_settlement');
+    expect(result.branchRelationIds).toEqual(
+      expect.arrayContaining([
+        'clash:natal:year:축|annual:미',
+        'six_combination:annual:미|dayun:오',
+      ]),
+    );
+  });
+
   test('fails closed instead of collapsing a Dayun transition year', () => {
     const result = produceAnnualStructuralImpactBundleV1(
       snapshot(),
@@ -416,9 +481,15 @@ describe('R198 bounded annual structural impact producer', () => {
 
   test('policy remains bounded and non-event-producing', () => {
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.scope).toBe(
-      'BRANCH_QUIET_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
+      'ISOLATED_LIUHE_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.eventRule).toBe('NONE');
+    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.branchRule).toBe(
+      'ADMIT_ONE_ISOLATED_SIX_COMBINATION_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
+    );
+    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.sixCombinationRule).toBe(
+      'QUALIFIER_ONLY_NO_TRANSFORMATION_OR_CONFLICT_RESOLUTION',
+    );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.rootRule).toBe(
       'OBSERVE_AS_QUALIFIER_WITHOUT_WEIGHT_OR_OVERRIDE',
     );

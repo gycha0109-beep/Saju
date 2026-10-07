@@ -356,6 +356,48 @@ describe('R199 automatic annual Official Reading production', () => {
     );
   });
 
+  test('isolated six-combination qualifier reaches public timing without leaking branch metadata', async () => {
+    const currentSnapshot = autoSnapshot();
+    const { registry, interpretation } = interpretationWithAnnualClaim(
+      currentSnapshot,
+      'r201-isolated-liuhe-public',
+    );
+
+    const result = await executeProductReading(
+      currentSnapshot,
+      interpretation,
+      registry,
+      {
+        requestId: 'r201-isolated-liuhe-public',
+        text: '올해 사주',
+        referenceDateTime: '2039-06-15T12:00:00.000Z',
+      },
+      {
+        ...executionOptions,
+        consumerReadingAuthorityResolver: officialAuthority,
+        officialReadingSemanticProjectionResolver: semanticProjection,
+        governedAnnualTemporalProduction: {
+          baseline,
+          roleAssignments: roles,
+        },
+      },
+    );
+
+    expect(result.state).toBe('completed');
+    expect(result.modelCalls).toBe(0);
+    const response = buildProductReadingResponse(
+      buildProductReadingDelivery(result),
+    );
+    const timing = response.reading?.sections.find(
+      (section) => section.sectionType === 'timing',
+    );
+    expect(timing?.title).toBe('2039년 구조 흐름');
+    expect(JSON.stringify(timing)).toContain('기미');
+    expect(JSON.stringify(response)).not.toMatch(
+      /sixCombination|bindingObserved|conflictResolutionAuthorized|qualifierOnly|r199-controller-core-support/u,
+    );
+  });
+
   test('bounded producer failure blocks Official Reading instead of falling back to legacy narrative', async () => {
     const currentSnapshot = autoSnapshot();
     const { registry, interpretation } = interpretationWithAnnualClaim(
