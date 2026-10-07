@@ -51,11 +51,11 @@ const CURRENT_DETAILED_SCOPE = [
   'career:natal',
   'wealth:natal',
   'relationship:natal:general',
+  'relationship:natal:spouse',
   'business:natal',
 ] as const;
 
 const FUTURE_SCOPE = [
-  'relationship:natal:spouse',
   'general:annual',
   'career:annual',
   'wealth:annual',
@@ -69,7 +69,7 @@ const FUTURE_SCOPE = [
 ] as const;
 
 describe('SA-7A detailed Official Reading expansion roadmap audit', () => {
-  it('keeps every roadmap candidate outside the SA-6X frozen detailed scope', () => {
+  it('tracks the current detailed scope after the SA-7C spouse pilot while keeping temporal candidates outside', () => {
     expect(OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1).toEqual(
       CURRENT_DETAILED_SCOPE,
     );
@@ -83,7 +83,7 @@ describe('SA-7A detailed Official Reading expansion roadmap audit', () => {
     }
   });
 
-  it('identifies spouse natal as an implemented model-free Official Reading candidate that is not public production authority', () => {
+  it('preserves the historical bounded spouse production-candidate authority contract', () => {
     expect(PRODUCTION_SPOUSE_OFFICIAL_READING_CANDIDATE_AUTHORITY).toMatchObject({
       lifecycle: 'production_candidate',
       implementationAuthorized: true,
