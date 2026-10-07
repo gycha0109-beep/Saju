@@ -249,6 +249,17 @@ const RULE_SEEDS: readonly RuleSeed[] = [
     GUJIN_642,
   ],
   [
+    'fr311r.forehead.hairline_irregular',
+    '神相全編一.十觀',
+    'forehead',
+    '部位傾陷，髮際參差者',
+    'morphology',
+    '부위가 기울거나 함몰되고 발제가 고르지 않은 조건을 불리하게 보는 전통 문맥을 보존한다.',
+    ['life_course'],
+    'challenging',
+    GUJIN_631,
+  ],
+  [
     'fr311r.forehead.square_raised',
     '神相全編十二.額部相',
     'forehead',
