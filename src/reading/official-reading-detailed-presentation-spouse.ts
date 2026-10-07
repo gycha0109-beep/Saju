@@ -17,9 +17,6 @@ import {
 import {
   SPOUSE_POSITION_ONLY_OFFICIAL_READING_PROHIBITED_EXTENSIONS,
 } from './spouse-position-only-official-reading-semantic-projection.js';
-import {
-  PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_AUTHORITY,
-} from '../production/production-spouse-official-reading-delivery-authority.js';
 
 export const SPOUSE_NATAL_DETAILED_MATERIAL_AUTHORITY_ID =
   'SA-7C-RELATIONSHIP-NATAL-SPOUSE-POSITION-ONLY-DETAILED-MATERIAL' as const;
@@ -28,13 +25,13 @@ export const SPOUSE_NATAL_DETAILED_MATERIAL_AUTHORITY_VERSION = '1' as const;
 const QUALIFIER_PROVENANCE = Object.freeze({
   admissionId: 'sa5ab-production-active-relationship-spouse-position-only-v1',
   admissionRegistryVersion:
-    PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_AUTHORITY.authorityVersion,
+    'myeonghwa-production-spouse-official-reading-delivery-authority-v1',
   researchId:
     'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_PRODUCTION_DELIVERY_ACTIVATION_AUTHORITY_REVIEW',
   researchVersion:
-    PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_AUTHORITY.sourceReviewVersion,
+    'myeonghwa-relationship-spouse-t8-day-branch-palace-production-delivery-activation-authority-review-v1',
   authorityState:
-    PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_AUTHORITY.sourceDecision,
+    'AUTHORIZE_POSITION_ONLY_PRODUCTION_DELIVERY_ACTIVATION_IMPLEMENTATION',
 });
 
 const PROHIBITED_EXTENSIONS = Object.freeze(
