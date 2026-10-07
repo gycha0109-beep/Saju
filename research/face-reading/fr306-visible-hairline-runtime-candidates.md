@@ -136,3 +136,29 @@ Validation identity is now required to remain exact across FR308, FR310, FR312 a
 Actual v3.1 evidence must pass the private human-review packet before it can enter governed FR308 → FR312 execution. Preview state and numeric signal values are not accepted as automatic human judgments.
 
 Watchtower-Track: face-observation-engine
+
+
+## v3.2 fail-closed boundary exposure update
+
+Governed FR308/FR310 review of revision 0.2.0 rejected the candidate because partial-bangs and substantially-hidden captures exposed an internal diagnostic path as if it were a hairline boundary.
+
+The 0.3.0 revision keeps the same multi-signal preview classifier and changes only candidate-boundary exposure:
+
+- `visible_interface_candidate`: candidate boundary may be exposed;
+- `partially_visible_or_occluded`: candidate boundary suppressed;
+- `unavailable`: candidate boundary suppressed;
+- `no_visible_hairline_candidate`: candidate boundary suppressed;
+- dynamic-programming path remains local/private diagnostic evidence only.
+
+This change does not itself establish FR310 eligibility. The same bounded cases require fresh human review and governed adjudication.
+
+Authority remains closed:
+- FR305 admission: false
+- neutral reference capability: 6/7
+- real FR318: false
+- real FR319: false
+- traditional binding: 0
+- Three-Divisions execution: false
+- Product / Production / Commerce: false
+
+Watchtower-Track: face-observation-engine

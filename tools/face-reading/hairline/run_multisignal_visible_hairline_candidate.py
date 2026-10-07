@@ -25,7 +25,7 @@ from typing import Any, Iterable
 SCHEMA_VERSION = "multisignal-visible-hairline-local-candidate-v1"
 SAFE_RECEIPT_SCHEMA = "multisignal-visible-hairline-repo-safe-receipt-v1"
 METHOD_ID = "adaptive_skin_edge_texture_continuity"
-METHOD_VERSION = "0.2.0"
+METHOD_VERSION = "0.3.0"
 
 PREVIEW_STATES = (
     "visible_interface_candidate",
@@ -54,6 +54,7 @@ PRIVATE_KEYS = {
     "sourceImageDigest",
     "sourceFileName",
     "boundaryPoints",
+    "diagnosticBoundaryPoints",
     "faceRoi",
     "rawSignals",
     "subjectId",
@@ -142,6 +143,13 @@ def classify_preview(signals: PreviewSignals) -> str:
         return "partially_visible_or_occluded"
 
     return "unavailable"
+
+
+def _candidate_boundary_exposed(preview_state: str) -> bool:
+    if preview_state not in PREVIEW_STATES:
+        raise ValueError("unknown engineering preview state")
+    return preview_state == "visible_interface_candidate"
+
 
 def _safe_output_path(path: str) -> Path:
     absolute = Path(path).expanduser().resolve()
@@ -704,9 +712,24 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
         "sourceImageDigest": f"sha256:{digest}",
         "faceRoi": [x, y, w, h],
         "faceRoiSource": roi_source,
-        "boundaryPoints": [
-            [int(px), int(py)] for px, py in zip(global_x.tolist(), global_y.tolist())
+        # Only a fully visible-interface state may expose a candidate boundary.
+        # Other states retain the dynamic-programming path as local diagnostic
+        # material only so a fringe edge or outer hair silhouette cannot be
+        # mistaken for an accepted anatomical hairline candidate.
+        "boundaryPoints": (
+            [
+                [int(px), int(py)]
+                for px, py in zip(global_x.tolist(), global_y.tolist())
+            ]
+            if _candidate_boundary_exposed(preview_state)
+            else []
+        ),
+        "diagnosticBoundaryPoints": [
+            [int(px), int(py)]
+            for px, py in zip(global_x.tolist(), global_y.tolist())
         ],
+        "candidateBoundaryExposed":
+            _candidate_boundary_exposed(preview_state),
         "rawSignals": {
             "colorContrast": color_contrast,
             "luminanceContrast": luminance_contrast,
@@ -744,30 +767,17 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
             (int(px), int(py))
             for px, py in zip(global_x.tolist(), global_y.tolist())
         ]
-        if preview_state == "visible_interface_candidate" and len(points) >= 2:
+        if _candidate_boundary_exposed(preview_state) and len(points) >= 2:
             draw.line(
                 points,
                 fill=(255, 0, 0),
                 width=max(2, width // 250),
             )
-        elif (
-            preview_state == "partially_visible_or_occluded"
-            and len(points) >= 2
-        ):
-            draw.line(
-                points,
-                fill=(255, 165, 0),
-                width=max(2, width // 250),
-            )
-        elif preview_state == "unavailable" and len(points) >= 2:
-            draw.line(
-                points,
-                fill=(128, 128, 128),
-                width=max(2, width // 250),
-            )
 
-        # For no-visible-hairline state, intentionally suppress the candidate
-        # boundary so the QA image cannot be mistaken for an accepted line.
+        # For every non-visible state, intentionally suppress the diagnostic
+        # path from the QA overlay. The path remains in candidate.json only as
+        # local/private diagnostic evidence and is never exposed as a candidate
+        # hairline boundary.
         draw.rectangle(
             [x, y, x + w, y + h],
             outline=(0, 255, 0),
@@ -1071,6 +1081,18 @@ def self_check() -> None:
     if receipt["captureCount"] != 2:
         raise RuntimeError("safe receipt capture count self-check failed")
 
+    boundary_exposure = {
+        state: _candidate_boundary_exposed(state)
+        for state in PREVIEW_STATES
+    }
+    if boundary_exposure != {
+        "visible_interface_candidate": True,
+        "partially_visible_or_occluded": False,
+        "no_visible_hairline_candidate": False,
+        "unavailable": False,
+    }:
+        raise RuntimeError("candidate boundary exposure self-check failed")
+
     try:
         _assert_safe_receipt({"sourcePath": "/private/source.jpg"})
     except ValueError:
@@ -1081,13 +1103,14 @@ def self_check() -> None:
     print(
         json.dumps(
             {
-                "schemaVersion": "multisignal-visible-hairline-self-check-v2",
+                "schemaVersion": "multisignal-visible-hairline-self-check-v3",
                 "status": "self_check_pass",
                 "previewStatesVerified": list(PREVIEW_STATES),
                 "noHairInternalSurfaceCheck": True,
                 "noHairOuterSilhouetteCheck": True,
                 "unstableFaceBasisFailsClosed": True,
-                "noVisibleHairlineOverlaySuppressesBoundary": True,
+                "nonVisibleStatesSuppressCandidateBoundary": True,
+                "diagnosticBoundaryRemainsLocalOnly": True,
                 "hairColorClassificationApplied": False,
                 "demographicInferenceApplied": False,
                 "hiddenHairlineCompletionApplied": False,

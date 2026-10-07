@@ -48,6 +48,8 @@ The runner never fills a hidden or cropped hairline.
 
 If continuity/coverage/visibility evidence is weak, the output must degrade to partial/unavailable rather than inventing a full line.
 
+Starting with exact revision 0.3.0, every non-visible state also suppresses candidate-boundary exposure. A diagnostic path may exist privately for debugging, but downstream review must not treat it as a hairline candidate.
+
 ## Install
 
 Actual image execution requires local OpenCV, Pillow and NumPy:
@@ -147,12 +149,14 @@ The detailed candidate file may contain local source paths, digests, ROI and raw
 
 QA overlay semantics:
 
-- red line: visible-interface engineering candidate;
-- orange line: partial/occluded engineering candidate;
-- gray line: unavailable engineering candidate;
-- no-visible-hairline: candidate boundary is intentionally suppressed so the image cannot be mistaken for an accepted hairline;
+- red line: only a `visible_interface_candidate` may expose a candidate boundary;
+- `partially_visible_or_occluded`: no candidate line is drawn;
+- `unavailable`: no candidate line is drawn;
+- `no_visible_hairline_candidate`: no candidate line is drawn;
 - green box: local face ROI;
 - blue boxes: locally detected eye pair when available.
+
+The dynamic-programming path is still retained in the private `candidate.json` as `diagnosticBoundaryPoints` for engineering review. It is never exposed as `boundaryPoints` unless the preview state is `visible_interface_candidate`.
 
 Only `repo-safe-receipt.json` is designed to be repository-safe.
 
@@ -184,7 +188,7 @@ For each capture, inspect the overlay and ask:
 
 ## Governed human-review handoff
 
-After a local v3.1 run, do not hand-write FR308/FR312 JSON from preview states.
+After a local v3.2 run, do not hand-write FR308/FR312 JSON from preview states.
 
 Use:
 

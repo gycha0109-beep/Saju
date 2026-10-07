@@ -286,7 +286,7 @@ describe('FR313 visible hairline model admission review', () => {
         'candidate.hairline.multisignal_visible_interface.fr306',
       runtimeProviderId:
         'candidate.hairline.multisignal_visible_interface.fr306',
-      exactRevision: '0.2.0',
+      exactRevision: '0.3.0',
       runnerContractVersion:
         'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
     };
@@ -297,7 +297,7 @@ describe('FR313 visible hairline model admission review', () => {
       expandedValidation: multiSignalExpanded,
       modelId:
         'candidate.hairline.multisignal_visible_interface.fr306',
-      modelRevision: '0.2.0',
+      modelRevision: '0.3.0',
       representativeCoverage: coverage(),
       modelBehavior: behavior(),
     });
@@ -309,14 +309,14 @@ describe('FR313 visible hairline model admission review', () => {
         'candidate.hairline.multisignal_visible_interface.fr306',
       runtimeProviderId:
         'candidate.hairline.multisignal_visible_interface.fr306',
-      exactRevision: '0.2.0',
+      exactRevision: '0.3.0',
       runnerContractVersion:
         'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
     });
     expect(result.fr305AdmissionReceipt).toMatchObject({
       modelId:
         'candidate.hairline.multisignal_visible_interface.fr306',
-      exactRevision: '0.2.0',
+      exactRevision: '0.3.0',
     });
   });
 
@@ -326,7 +326,7 @@ describe('FR313 visible hairline model admission review', () => {
         ...input(coverage(), behavior()),
         modelId:
           'candidate.hairline.multisignal_visible_interface.fr306',
-        modelRevision: '0.2.0',
+        modelRevision: '0.3.0',
       }),
     ).toThrow();
   });

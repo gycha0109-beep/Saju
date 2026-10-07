@@ -167,14 +167,14 @@ readonly FR306HairlineRuntimeCandidate[] = Object.freeze([
     state: 'additional_empirical_candidate' as const,
     runtimeProviderId:
       'candidate.hairline.multisignal_visible_interface.fr306',
-    exactRevision: '0.2.0',
+    exactRevision: '0.3.0',
     runnerContractVersion:
       'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1',
     components: Object.freeze([
       Object.freeze({
         artifact:
           'repo:tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py',
-        revision: '0.2.0',
+        revision: '0.3.0',
         declaredLicense:
           'repository-controlled implementation; runtime dependency versions/licenses must be pinned before production admission',
         role:
@@ -186,12 +186,15 @@ readonly FR306HairlineRuntimeCandidate[] = Object.freeze([
       'repo:tools/face-reading/hairline/multisignal-18-capture-manifest.example.json',
       'repo:issue/2213#comment-6015144275',
       'repo:pull/2275',
+      'repo:issue/2290',
     ]),
     promptPolicy: Object.freeze([
       'no_hair_color_classification',
       'combine_skin_transition_luminance_chroma_texture_edge_and_path_continuity',
       'no_visible_hairline_is_a_valid_fail_closed_image_state',
       'hidden_or_cropped_segments_are_never_completed',
+      'candidate_boundary_is_exposed_only_for_visible_interface_candidate_state',
+      'occluded_unavailable_and_no_visible_hairline_states_suppress_candidate_boundary',
       'engineering_preview_thresholds_never_issue_FR305_admission',
     ]),
     proposedOutputs: Object.freeze([
@@ -208,7 +211,8 @@ readonly FR306HairlineRuntimeCandidate[] = Object.freeze([
       '18-capture local engineering run exercised contrast occlusion crop asymmetry and no-hairline controls',
     ]),
     blockers: Object.freeze([
-      '18-capture result is engineering evidence and has not passed governed FR310/FR312 review',
+      'v3.1 revision 0.2.0 was rejected by governed FR310 on partial-bangs and substantially-hidden boundary exposure',
+      'v3.2 revision 0.3.0 requires fresh real-capture FR308/FR310 adjudication before FR312',
       'representative ordinary-RGB coverage has not been established',
       'runtime dependency versions/licenses are not yet pinned for production admission',
       'candidate output has not satisfied FR305 admission requirements',
@@ -439,7 +443,7 @@ export function assertVisibleHairlineRuntimeCandidatesFR306(): void {
       FR306_CURRENT_GATE.additionalCandidate ||
     additional.runtimeProviderId !==
       'candidate.hairline.multisignal_visible_interface.fr306' ||
-    additional.exactRevision !== '0.2.0' ||
+    additional.exactRevision !== '0.3.0' ||
     additional.runnerContractVersion !==
       'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1' ||
     additional.components.length !== 1 ||

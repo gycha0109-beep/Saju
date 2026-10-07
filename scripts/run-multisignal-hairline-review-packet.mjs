@@ -25,7 +25,7 @@ const OUTPUT_SCHEMA =
 
 const MODEL_ID =
   'candidate.hairline.multisignal_visible_interface.fr306';
-const MODEL_REVISION = '0.2.0';
+const MODEL_REVISION = '0.3.0';
 const RUNNER_CONTRACT_VERSION =
   'MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1';
 const METHOD_ID =
@@ -80,6 +80,7 @@ const PRIVATE_OUTPUT_KEYS = new Set([
   'sourcePath',
   'sourceImageDigest',
   'boundaryPoints',
+  'diagnosticBoundaryPoints',
   'rawSignals',
   'faceRoi',
   'fileName',
@@ -364,6 +365,10 @@ async function prepareWorksheet(summaryPath) {
     await access(candidatePath);
     const candidate = await readJson(candidatePath);
 
+    const boundaryShouldBeExposed =
+      result.engineeringPreviewState ===
+      'visible_interface_candidate';
+
     if (
       candidate.schemaVersion !== CANDIDATE_DETAIL_SCHEMA ||
       candidate.recordId !== result.recordId ||
@@ -379,7 +384,20 @@ async function prepareWorksheet(summaryPath) {
       candidate.neutralRuntimeHairlineObservationAuthorized !==
         false ||
       candidate.engineeringPreviewState !==
-        result.engineeringPreviewState
+        result.engineeringPreviewState ||
+      candidate.candidateBoundaryExposed !==
+        boundaryShouldBeExposed ||
+      !Array.isArray(candidate.boundaryPoints) ||
+      (
+        boundaryShouldBeExposed &&
+        candidate.boundaryPoints.length === 0
+      ) ||
+      (
+        !boundaryShouldBeExposed &&
+        candidate.boundaryPoints.length !== 0
+      ) ||
+      !Array.isArray(candidate.diagnosticBoundaryPoints) ||
+      candidate.diagnosticBoundaryPoints.length === 0
     ) {
       throw new Error('MULTISIGNAL_CANDIDATE_DETAIL_DRIFT');
     }
