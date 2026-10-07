@@ -184,6 +184,17 @@ describe('TOPIC-FACE-005M-A governed Face handoff source runtime', () => {
         authoritySnapshotId: source.plan.authoritySnapshotId,
         executionPlanHash: source.plan.executionPlanHash,
         handoff: expected.handoff,
+        grounding: expect.objectContaining({
+          mode: 'governed_traditional_interpretation',
+          sourceResultHash: expected.handoff.sourceResultHash,
+          authorizationReceiptRef: expected.handoff.authorizationReceiptRef,
+          handoffHash: expected.handoff.handoffHash,
+        }),
+        groundingRef: expect.objectContaining({
+          mode: 'governed_traditional_interpretation',
+          sourceResultHash: expected.handoff.sourceResultHash,
+          handoffHash: expected.handoff.handoffHash,
+        }),
         sourceBinding: {
           sourceContractVersion: expected.handoff.sourceContractVersion,
           sourceAuthorityRef: expected.handoff.sourceAuthorityRef,

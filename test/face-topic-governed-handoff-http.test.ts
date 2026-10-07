@@ -259,6 +259,16 @@ describe('TOPIC-FACE-005M-A authenticated governed Face handoff HTTP route', () 
         units?: readonly unknown[];
         handoffHash?: unknown;
       };
+      grounding?: {
+        bundleHash?: unknown;
+        handoffHash?: unknown;
+        mode?: unknown;
+      };
+      groundingRef?: {
+        bundleHash?: unknown;
+        handoffHash?: unknown;
+        mode?: unknown;
+      };
     };
     expect(body.state).toBe('eligible');
     expect(body.handoff?.units).toEqual(
@@ -268,6 +278,22 @@ describe('TOPIC-FACE-005M-A authenticated governed Face handoff HTTP route', () 
     );
     expect(body.handoff?.handoffHash).toMatch(
       /^face-governed-interpretation:/u,
+    );
+    expect(body.grounding?.mode).toBe(
+      'governed_traditional_interpretation',
+    );
+    expect(body.grounding?.handoffHash).toBe(
+      body.handoff?.handoffHash,
+    );
+    expect(body.grounding?.bundleHash).toMatch(
+      /^face-governed-character-grounding:/u,
+    );
+    expect(body.groundingRef).toEqual(
+      expect.objectContaining({
+        mode: 'governed_traditional_interpretation',
+        handoffHash: body.handoff?.handoffHash,
+        bundleHash: body.grounding?.bundleHash,
+      }),
     );
   });
 
