@@ -1,0 +1,84 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_AUTHORITY,
+  resolveProductionSpouseOfficialReadingDeliveryAuthorityV1,
+} from '../src/production/production-spouse-official-reading-delivery-authority.js';
+import {
+  PRODUCTION_SPOUSE_OFFICIAL_READING_ALLOWED_SECTIONS,
+} from '../src/production/production-spouse-official-reading-scope.js';
+import {
+  OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1,
+} from '../src/reading/official-reading-detailed-presentation-registry.js';
+
+describe('SA-7B spouse standard Official Reading authority closure', () => {
+  it('confirms the spouse position-only standard Official Reading lane is already active in bounded Production', () => {
+    expect(PRODUCTION_SPOUSE_OFFICIAL_READING_ALLOWED_SECTIONS).toEqual([
+      'relationship:natal:spouse',
+    ]);
+
+    expect(PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_AUTHORITY).toMatchObject({
+      lifecycle: 'production',
+      allowedReadingSections: ['relationship:natal:spouse'],
+      productionTransportAuthorityActive: true,
+      productionSemanticDeliveryAuthorityActive: true,
+      nonSpouseProductionSemanticAuthorityAuthorized: false,
+      legacyNarrativeRuntimeAllowedForSpouse: false,
+      maximumSpouseModelCalls: 0,
+      production: 'ACTIVE_BOUNDED',
+    });
+
+    const resolved =
+      resolveProductionSpouseOfficialReadingDeliveryAuthorityV1(
+        'relationship:natal:spouse',
+      );
+
+    expect(resolved).toMatchObject({
+      readingSection: 'relationship:natal:spouse',
+      authority: 'official_reading',
+      supportedOfficialReadingSection: 'relationship:natal:spouse',
+    });
+  });
+
+  it('keeps broader product-owned authorities closed instead of silently promoting them', () => {
+    expect(PRODUCTION_SPOUSE_OFFICIAL_READING_DELIVERY_AUTHORITY).toMatchObject({
+      publicSemanticAuthorityAuthorized: false,
+      publicGeneralAvailabilityAuthorityAuthorized: false,
+      persistenceAuthorityAuthorized: false,
+      commerceAuthorityAuthorized: false,
+    });
+
+    const resolved =
+      resolveProductionSpouseOfficialReadingDeliveryAuthorityV1(
+        'relationship:natal:spouse',
+      );
+
+    expect(resolved.constraints).toEqual({
+      mayPromoteProductionInterpretationAuthority: false,
+      mayGrantPersistenceAuthority: false,
+      mayGrantPublicGeneralAvailabilityAuthority: false,
+    });
+  });
+
+  it('does not confuse completed standard authority with detailed presentation authority', () => {
+    expect(
+      (OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1 as readonly string[]).includes(
+        'relationship:natal:spouse',
+      ),
+    ).toBe(false);
+  });
+
+  it('fails non-spouse sections out of the bounded Official Reading authority', () => {
+    for (const section of [
+      'relationship:natal:general',
+      'general:natal',
+      'relationship:annual:general',
+    ]) {
+      const resolved =
+        resolveProductionSpouseOfficialReadingDeliveryAuthorityV1(section);
+
+      expect(resolved.authority).toBe('legacy_narrative');
+      expect(resolved.supportedOfficialReadingSection).toBeUndefined();
+    }
+  });
+});
