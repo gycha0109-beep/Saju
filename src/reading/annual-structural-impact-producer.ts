@@ -32,9 +32,9 @@ import { buildTemporalReadingContext } from './temporal-reading-context.js';
 
 export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY = Object.freeze({
   policyId: 'myeongha/annual-structural-impact-producer-v1',
-  policyVersion: '1.5.0',
+  policyVersion: '1.5.1',
   decisionAuthority: 'PROJECT_OWNER',
-  decisionRef: 'GH-2354',
+  decisionRef: 'GH-2369',
   scope: 'ISOLATED_LIUHE_LIUCHONG_SELF_PUNISHMENT_OR_ZIMAO_PUNISHMENT_PAIR_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
   annualRule: 'RETAIN_STEM_AND_BRANCH_CONTEXT',
   dayunRule: 'REQUIRE_ONE_ACTIVE_DAYUN_SEGMENT',
@@ -52,13 +52,15 @@ export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY = Object.freeze({
     'RELATION_IDENTITY_ONLY_NO_PUNISHMENT_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
   punishmentPairRule:
     'ZIMAO_RELATION_IDENTITY_ONLY_NO_PUNISHMENT_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
+  punishmentFamilyDetectionRule:
+    'SOURCE_DIRECTED_PAIR_IDENTITY_ONLY_FAIL_CLOSED_PENDING_QUALIFIER_AUTHORITY',
   rootRule: 'OBSERVE_AS_QUALIFIER_WITHOUT_WEIGHT_OR_OVERRIDE',
   boundaryRule: 'FAIL_CLOSED_ON_MULTI_DAYUN_SEGMENT_YEAR',
   mutationRule: 'DO_NOT_MUTATE_CANONICAL_NATAL_SETTLEMENT',
   numericWeightRule: 'NONE',
   effectRule: 'REQUIRE_TEMPORAL_FUNCTION_STATE_CHANGE',
   eventRule: 'NONE',
-  extendsDecisionRef: 'GH-2345',
+  extendsDecisionRef: 'GH-2354',
 } as const);
 
 function canonicalize(value: unknown): unknown {
@@ -272,10 +274,14 @@ const BRANCH_THREE_COMBINATIONS = [
   ['해', '묘', '미'],
 ] as const satisfies readonly (readonly [EarthlyBranch, EarthlyBranch, EarthlyBranch])[];
 
-const BRANCH_PUNISHMENT_GROUPS = [
-  ['인', '사', '신'],
-  ['축', '술', '미'],
-] as const satisfies readonly (readonly [EarthlyBranch, EarthlyBranch, EarthlyBranch])[];
+const BRANCH_DIRECTED_PUNISHMENT_PAIRS = [
+  ['인', '사'],
+  ['사', '신'],
+  ['신', '인'],
+  ['축', '술'],
+  ['술', '미'],
+  ['미', '축'],
+] as const satisfies readonly (readonly [EarthlyBranch, EarthlyBranch])[];
 
 const BRANCH_PUNISHMENT_PAIRS = [
   ['자', '묘'],
@@ -297,6 +303,26 @@ function pairMatches(
   return pairs.some(
     ([a, b]) => (left === a && right === b) || (left === b && right === a),
   );
+}
+
+function directedPunishmentPair(
+  left: BranchLayerValue,
+  right: BranchLayerValue,
+):
+  | {
+      punisher: BranchLayerValue;
+      punished: BranchLayerValue;
+    }
+  | undefined {
+  for (const [punisherBranch, punishedBranch] of BRANCH_DIRECTED_PUNISHMENT_PAIRS) {
+    if (left.branch === punisherBranch && right.branch === punishedBranch) {
+      return { punisher: left, punished: right };
+    }
+    if (right.branch === punisherBranch && left.branch === punishedBranch) {
+      return { punisher: right, punished: left };
+    }
+  }
+  return undefined;
 }
 
 function directInfluenceKind(
@@ -499,11 +525,11 @@ function branchRelationIds(
       ) {
         result.add(`self_punishment:${left.key}|${right.key}:${left.branch}`);
       }
-      for (const group of BRANCH_PUNISHMENT_GROUPS) {
-        const members = group as readonly EarthlyBranch[];
-        if (members.includes(left.branch) && members.includes(right.branch)) {
-          result.add(`punishment_group:${left.key}:${left.branch}|${right.key}:${right.branch}`);
-        }
+      const directedPunishment = directedPunishmentPair(left, right);
+      if (directedPunishment !== undefined) {
+        result.add(
+          `punishment_directed_pair:punisher:${directedPunishment.punisher.key}:${directedPunishment.punisher.branch}->punished:${directedPunishment.punished.key}:${directedPunishment.punished.branch}`,
+        );
       }
     }
   }
