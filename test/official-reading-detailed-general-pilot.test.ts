@@ -625,7 +625,29 @@ describe('Official Reading detailed renderer connection', () => {
     const detailedLimits = detailed.sections.find(
       (section) => section.title === '해석 범위',
     );
-    expect(detailedLimits?.blocks).toEqual(standardLimits?.blocks);
+    expect(detailedLimits?.blocks.map((block) => block.type)).toEqual(
+      standardLimits?.blocks.map((block) => block.type),
+    );
+    const standardLimitParagraph = standardLimits?.blocks.find(
+      (block) => block.type === 'paragraph',
+    );
+    const detailedLimitParagraph = detailedLimits?.blocks.find(
+      (block) => block.type === 'paragraph',
+    );
+    expect(standardLimitParagraph?.type).toBe('paragraph');
+    expect(detailedLimitParagraph?.type).toBe('paragraph');
+    if (
+      standardLimitParagraph?.type !== 'paragraph' ||
+      detailedLimitParagraph?.type !== 'paragraph'
+    ) {
+      throw new Error('Expected Official Reading limit paragraphs.');
+    }
+    expect(detailedLimitParagraph.text.startsWith(standardLimitParagraph.text)).toBe(
+      true,
+    );
+    expect(detailedLimitParagraph.text.length).toBeGreaterThan(
+      standardLimitParagraph.text.length,
+    );
   });
 
   it('activates the public detailed preference when approved detailed material is ready', () => {

@@ -57,6 +57,8 @@ export const OFFICIAL_READING_STRUCTURED_INSIGHT_MATERIALIZATION_POLICY_VERSION 
   'myeonghwa-official-reading-structured-insight-materialization-policy-v1' as const;
 export const OFFICIAL_READING_SOURCE_SUMMARY_PRESENTATION_POLICY_VERSION =
   'myeonghwa-official-reading-source-summary-presentation-policy-v1' as const;
+export const OFFICIAL_READING_DETAILED_BOUNDARY_COMPACTION_POLICY_VERSION =
+  'myeonghwa-official-reading-detailed-boundary-compaction-v1' as const;
 
 export interface OfficialReadingRenderOptionsV1 {
   sourceSummaries?: readonly SourceSummary[];
@@ -86,6 +88,8 @@ export interface OfficialReadingRenderedContentV1 {
   concisePresentationProfileSetHash?: string;
   detailedRealizationPolicyVersion?:
     typeof OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION;
+  detailedBoundaryCompactionPolicyVersion?:
+    typeof OFFICIAL_READING_DETAILED_BOUNDARY_COMPACTION_POLICY_VERSION;
   reportId: string;
   reportHash: string;
   sourceSemanticHash: string;
@@ -683,6 +687,59 @@ function limitText(prohibitedExtensions: readonly string[]): string {
   return `현재 근거 범위에서는 ${labels.join(' · ')}까지 확정하지 않습니다.`;
 }
 
+function repeatedDetailedBoundaryTexts(
+  realization: OfficialReadingDetailedRealizationV1 | undefined,
+  plan: OfficialReadingPlanV1,
+): readonly string[] {
+  if (
+    realization === undefined ||
+    !plan.sections.some(
+      (section) =>
+        section.semanticGroup === 'limits' &&
+        section.prohibitedExtensions.length > 0,
+    )
+  ) {
+    return [];
+  }
+
+  const counts = new Map<string, number>();
+  const order: string[] = [];
+  for (const unit of realization.units) {
+    for (const roleText of unit.roleTexts) {
+      if (roleText.role !== 'boundary') continue;
+      const text = roleText.text.trim();
+      if (text.length === 0) continue;
+      if (!counts.has(text)) order.push(text);
+      counts.set(text, (counts.get(text) ?? 0) + 1);
+    }
+  }
+
+  return order.filter((text) => (counts.get(text) ?? 0) > 1);
+}
+
+function compactDetailedBoundaryQualifiers(
+  detailed: OfficialReadingDetailedUnitPresentationV1,
+  repeatedBoundaryTextSet: ReadonlySet<string>,
+): OfficialReadingDetailedUnitPresentationV1 {
+  if (repeatedBoundaryTextSet.size === 0) return detailed;
+  const compactedForUnit = new Set(
+    detailed.roleTexts
+      .filter(
+        (item) =>
+          item.role === 'boundary' &&
+          repeatedBoundaryTextSet.has(item.text.trim()),
+      )
+      .map((item) => item.text.trim()),
+  );
+  if (compactedForUnit.size === 0) return detailed;
+  return {
+    ...detailed,
+    qualifierSuffixes: detailed.qualifierSuffixes.filter(
+      (text) => !compactedForUnit.has(text.trim()),
+    ),
+  };
+}
+
 export function canRenderOfficialReadingV1(
   bundle: CanonicalReadingSemanticBundleV1,
   plan: OfficialReadingPlanV1,
@@ -780,6 +837,11 @@ function renderOfficialReadingInternalV1(
     (detailPreferenceResolution?.resolvedDetail === 'detailed'
       ? publicDetailedRealization
       : undefined);
+  const compactedBoundaryTexts = repeatedDetailedBoundaryTexts(
+    effectiveDetailedRealization,
+    plan,
+  );
+  const compactedBoundaryTextSet = new Set(compactedBoundaryTexts);
   const presentationByUnitId:
     | ReadonlyMap<string, OfficialReadingUnitPresentationV1>
     | undefined =
@@ -793,7 +855,10 @@ function renderOfficialReadingInternalV1(
             unitId,
             {
               mode: 'detailed' as const,
-              detailed,
+              detailed: compactDetailedBoundaryQualifiers(
+                detailed,
+                compactedBoundaryTextSet,
+              ),
             },
           ]),
         )
@@ -831,7 +896,10 @@ function renderOfficialReadingInternalV1(
       blocks = [
         {
           type: 'paragraph',
-          text: limitText(section.prohibitedExtensions),
+          text: [
+            limitText(section.prohibitedExtensions),
+            ...compactedBoundaryTexts,
+          ].join('\n\n'),
         },
       ];
       sectionExplainabilityRefs = [explainability.explainabilityRef];
@@ -960,6 +1028,8 @@ function renderOfficialReadingInternalV1(
       : {
           detailedRealizationPolicyVersion:
             OFFICIAL_READING_DETAILED_REALIZATION_POLICY_VERSION,
+          detailedBoundaryCompactionPolicyVersion:
+            OFFICIAL_READING_DETAILED_BOUNDARY_COMPACTION_POLICY_VERSION,
         }),
     sourceSemanticHash: bundle.semanticHash,
     sourcePlanHash: plan.planHash,
