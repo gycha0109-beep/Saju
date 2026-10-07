@@ -637,6 +637,20 @@ function compileWorksheet(worksheet) {
     (record) =>
       record.routing?.includeInFR312 === true,
   );
+
+  const fr308RecordIds = new Set(
+    selectedFR308.map((record) => record.recordId),
+  );
+  if (
+    selectedFR312.some((record) =>
+      fr308RecordIds.has(record.recordId),
+    )
+  ) {
+    throw new Error(
+      'FR308_FR312_SOURCE_CAPTURE_OVERLAP_FORBIDDEN',
+    );
+  }
+
   if (selectedFR312.length < 12) {
     throw new Error(
       'FR312_REQUIRES_AT_LEAST_TWELVE_INCLUDED_CAPTURES',
@@ -916,6 +930,37 @@ async function selfCheck() {
     );
   }
 
+  const overlapWorksheet = syntheticWorksheet();
+  const fr308Record = overlapWorksheet.records.find(
+    (record) => record.routing.selectedForFR308 === true,
+  );
+  if (!fr308Record) {
+    throw new Error(
+      'MULTISIGNAL_REVIEW_PACKET_OVERLAP_FIXTURE_MISSING',
+    );
+  }
+  fr308Record.routing.includeInFR312 = true;
+  fr308Record.routing.fr312Case = FR312_CASES[0];
+  fr308Record.routing.opaqueSessionLabel =
+    'session-overlap';
+  fr308Record.routing.independentCaptureAttested = true;
+  fr308Record.routing.derivedFromAnotherCapture = false;
+
+  let overlapRejected = false;
+  try {
+    compileWorksheet(overlapWorksheet);
+  } catch (error) {
+    overlapRejected =
+      error instanceof Error &&
+      error.message ===
+        'FR308_FR312_SOURCE_CAPTURE_OVERLAP_FORBIDDEN';
+  }
+  if (!overlapRejected) {
+    throw new Error(
+      'MULTISIGNAL_REVIEW_PACKET_OVERLAP_GUARD_FAILED',
+    );
+  }
+
   const serialized = JSON.stringify(compiled);
   if (
     serialized.includes('/private/') ||
@@ -934,6 +979,7 @@ async function selfCheck() {
       registeredCandidateVerified: true,
       fr308FindingCount: 4,
       fr312CaptureCount: 12,
+      fr308Fr312CaptureOverlapRejected: true,
       humanJudgmentAutomated: false,
       privateEvidenceLeaked: false,
       authorityPromoted: false,
