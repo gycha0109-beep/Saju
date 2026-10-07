@@ -1,4 +1,8 @@
 import {
+  FR282_RGB_SELFIE_FEATURE_ENTRIES,
+  type FR282RegionKey,
+} from './rgb-selfie-feature-authority-matrix-fr282.js';
+import {
   EYEBROW_NAMED_FORM_SEMANTICS_FR311A,
 } from './traditional-eyebrow-named-form-semantics-fr311a.js';
 import {
@@ -93,6 +97,18 @@ function coverage(
 const missingRegionRules = (region: string): number =>
   STATIC_MISSING_REGION_DIRECT_RULES_FR311R
     .filter((item) => item.region === region).length;
+
+export const OBSERVATION_REGION_TO_RESEARCH_AREA_FR311T:
+Readonly<Record<FR282RegionKey, StaticResearchAreaKeyFR311T>> = Object.freeze({
+  forehead: 'forehead',
+  eyebrow: 'eyebrow',
+  eye_pair: 'eye',
+  nose: 'nose',
+  mouth_lips: 'mouth_philtrum_lips',
+  ear: 'ear',
+  cheek_mid_face: 'cheekbones',
+  chin_lower_face: 'chin_lower_face',
+});
 
 export const STATIC_FACE_RESEARCH_COVERAGE_FR311T:
 readonly StaticResearchCoverageEntryFR311T[] = Object.freeze([
@@ -236,6 +252,24 @@ readonly ArchitectureExcludedResearchAreaFR311T[] = Object.freeze([
   }),
 ]);
 
+const OBSERVATION_SURFACE_REGIONS_FR311T = Object.freeze([
+  ...new Set(
+    FR282_RGB_SELFIE_FEATURE_ENTRIES.map((item) => item.regionKey),
+  ),
+]);
+
+const RESEARCH_AREA_KEYS_FR311T = new Set(
+  STATIC_FACE_RESEARCH_COVERAGE_FR311T.map((item) => item.areaKey),
+);
+
+const MISSING_OBSERVATION_SURFACE_RESEARCH_FR311T =
+  OBSERVATION_SURFACE_REGIONS_FR311T.filter(
+    (region) =>
+      !RESEARCH_AREA_KEYS_FR311T.has(
+        OBSERVATION_REGION_TO_RESEARCH_AREA_FR311T[region],
+      ),
+  );
+
 export const FR311T_STATIC_RESEARCH_CLOSURE = Object.freeze({
   staticCoreAreas: STATIC_FACE_RESEARCH_COVERAGE_FR311T.length,
   staticCoreResearchComplete:
@@ -250,6 +284,13 @@ export const FR311T_STATIC_RESEARCH_CLOSURE = Object.freeze({
       .length,
   explicitArchitectureExclusions:
     ARCHITECTURE_EXCLUDED_RESEARCH_AREAS_FR311T.length,
+  observationSurfaceRegions:
+    OBSERVATION_SURFACE_REGIONS_FR311T.length,
+  observationSurfaceRegionsCoveredByResearch:
+    OBSERVATION_SURFACE_REGIONS_FR311T.length -
+    MISSING_OBSERVATION_SURFACE_RESEARCH_FR311T.length,
+  observationSurfaceResearchMissing:
+    MISSING_OBSERVATION_SURFACE_RESEARCH_FR311T.length,
   missingTraditionalRegions:
     STATIC_TRADITIONAL_REGIONS_FR311R
       .filter((item) => item.sourceRefs.length === 0).length,
@@ -282,6 +323,9 @@ export function assertStaticFaceResearchClosureFR311T(): void {
     FR311T_STATIC_RESEARCH_CLOSURE.staticCoreResearchComplete !== 23 ||
     FR311T_STATIC_RESEARCH_CLOSURE.staticCoreResearchMissing !== 0 ||
     FR311T_STATIC_RESEARCH_CLOSURE.explicitArchitectureExclusions !== 2 ||
+    FR311T_STATIC_RESEARCH_CLOSURE.observationSurfaceRegions !== 8 ||
+    FR311T_STATIC_RESEARCH_CLOSURE.observationSurfaceRegionsCoveredByResearch !== 8 ||
+    FR311T_STATIC_RESEARCH_CLOSURE.observationSurfaceResearchMissing !== 0 ||
     FR311T_STATIC_RESEARCH_CLOSURE.missingTraditionalRegions !== 0
   ) {
     throw new Error('fr311t_static_research_coverage_drift');
