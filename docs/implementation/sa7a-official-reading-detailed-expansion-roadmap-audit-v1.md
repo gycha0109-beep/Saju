@@ -192,3 +192,20 @@ SA-7B가 승인된 경우에만:
 3. **월운** — 연운보다 하위 temporal layer이며 상위 연운 context 의존성이 명시돼 있으므로 마지막에 진행한다.
 
 따라서 다음 실제 구현 트랙은 **SA-7B 배우자 position-only 공개 Official Reading 권한 검토 및 전환**으로 고정한다.
+
+## 10. 검증 게이트
+
+PR: #2338
+
+이 감사 결과는 문서 판정만으로 종료하지 않는다. submitted head에서 다음이 모두 통과해야 SA-7A를 종료한다.
+
+- lint / typecheck / build
+- ordinary regression 16/16
+- Production Calculation Container
+- PIE
+- integration admission
+- integration full regression 16/16
+- CI Verify
+- CI Integration Verify
+
+실패 시 확장 우선순위 결론을 병합하지 않고 원인을 먼저 교정한다.
