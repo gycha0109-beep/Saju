@@ -143,12 +143,13 @@ describe('FR312F morphology pilot dataset and capture protocol', () => {
   });
 
   it('keeps metric extraction downstream of capture admission and hidden from annotation', () => {
-    expect(FR312F_METRIC_TIMING.comparatorKeys).toEqual([
+    expect(FR312F_METRIC_TIMING.comparatorKeys).toHaveLength(4);
+    expect(new Set(FR312F_METRIC_TIMING.comparatorKeys)).toEqual(new Set([
       'mouth.philtrum_length_width',
       'mouth.width_and_relative_size',
       'mouth.corner_orientation',
       'mouth.visible_lip_fullness',
-    ]);
+    ]));
     expect(FR312F_METRIC_TIMING.extractionRequiresCaptureAdmission).toBe(true);
     expect(
       FR312F_METRIC_TIMING.extractionBeforeQualityDecisionAuthorized,
