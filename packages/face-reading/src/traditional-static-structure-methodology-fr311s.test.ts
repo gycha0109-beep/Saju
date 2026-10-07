@@ -5,15 +5,19 @@ import {
   FIVE_MOUNTAINS_FR311S,
   FIVE_OFFICERS_FR311S,
   FIVE_STARS_SIX_LUMINARIES_FR311S,
+  FIVE_METHODS_FR311S,
   FOUR_STUDY_HALLS_FR311S,
   FOUR_WATERWAYS_FR311S,
   FR311S_STATIC_STRUCTURE_AUTHORITY_BOUNDARY,
   FR311S_STATIC_STRUCTURE_SUMMARY,
   SIX_MINISTRIES_FR311S,
   STATIC_METHODOLOGIES_FR311S,
+  TEN_OBSERVATIONS_FR311S,
   THIRTEEN_PARTS_FR311S,
   THREE_DIVISIONS_GUJIN631_FR311S,
   THREE_DIVISIONS_GUJIN632_FR311S,
+  THREE_MASTERS_FR311S,
+  THREE_PILLARS_FR311S,
   TWELVE_PALACE_SUPPLEMENT_FR311S,
   TWELVE_PALACES_FR311S,
   assertStaticStructureMethodologyFR311S,
@@ -24,7 +28,7 @@ describe('FR311S static traditional structure methodology', () => {
     assertStaticStructureMethodologyFR311S();
 
     expect(FR311S_STATIC_STRUCTURE_SUMMARY).toEqual({
-      methodologyDefinitions: 12,
+      methodologyDefinitions: 16,
       lineageSpecificThreeDivisionDefinitions: 2,
       thirteenParts: 13,
       numberedTwelvePalaces: 12,
@@ -37,6 +41,10 @@ describe('FR311S static traditional structure methodology', () => {
       fourStudyHalls: 4,
       eightStudyHalls: 8,
       fiveElementForms: 5,
+      tenObservations: 10,
+      fiveMethods: 5,
+      threeMasters: 3,
+      threePillars: 3,
     });
   });
 
@@ -69,6 +77,10 @@ describe('FR311S static traditional structure methodology', () => {
     expect(FOUR_STUDY_HALLS_FR311S.members).toHaveLength(4);
     expect(EIGHT_STUDY_HALLS_FR311S.members).toHaveLength(8);
     expect(FIVE_ELEMENT_FORMS_FR311S.members).toHaveLength(5);
+    expect(TEN_OBSERVATIONS_FR311S.members).toHaveLength(10);
+    expect(FIVE_METHODS_FR311S.members).toHaveLength(5);
+    expect(THREE_MASTERS_FR311S.members).toHaveLength(3);
+    expect(THREE_PILLARS_FR311S.members).toHaveLength(3);
   });
 
   it('does not silently turn the parent-palace supplement into a thirteenth numbered palace', () => {
