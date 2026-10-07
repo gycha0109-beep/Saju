@@ -32,10 +32,10 @@ import { buildTemporalReadingContext } from './temporal-reading-context.js';
 
 export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY = Object.freeze({
   policyId: 'myeongha/annual-structural-impact-producer-v1',
-  policyVersion: '1.2.0',
+  policyVersion: '1.3.0',
   decisionAuthority: 'PROJECT_OWNER',
-  decisionRef: 'GH-2317',
-  scope: 'ISOLATED_LIUHE_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
+  decisionRef: 'GH-2334',
+  scope: 'ISOLATED_LIUHE_OR_LIUCHONG_PAIR_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
   annualRule: 'RETAIN_STEM_AND_BRANCH_CONTEXT',
   dayunRule: 'REQUIRE_ONE_ACTIVE_DAYUN_SEGMENT',
   stemSourceRule: 'ANNUAL_AND_DAYUN_STEMS_COEXIST_WITHOUT_PRECEDENCE',
@@ -43,16 +43,18 @@ export const ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY = Object.freeze({
   sameTargetConflictRule: 'CONTROL_OVER_SUPPORT',
   natalStateRule: 'START_FROM_CANONICAL_R191_FINAL_STATE',
   branchRule:
-    'ADMIT_ONE_ISOLATED_SIX_COMBINATION_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
+    'ADMIT_ONE_ISOLATED_SIX_COMBINATION_OR_SIX_CLASH_PAIR_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
   sixCombinationRule:
     'QUALIFIER_ONLY_NO_TRANSFORMATION_OR_CONFLICT_RESOLUTION',
+  sixClashRule:
+    'PAIR_IDENTITY_ONLY_NO_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
   rootRule: 'OBSERVE_AS_QUALIFIER_WITHOUT_WEIGHT_OR_OVERRIDE',
   boundaryRule: 'FAIL_CLOSED_ON_MULTI_DAYUN_SEGMENT_YEAR',
   mutationRule: 'DO_NOT_MUTATE_CANONICAL_NATAL_SETTLEMENT',
   numericWeightRule: 'NONE',
   effectRule: 'REQUIRE_TEMPORAL_FUNCTION_STATE_CHANGE',
   eventRule: 'NONE',
-  extendsDecisionRef: 'GH-2302',
+  extendsDecisionRef: 'GH-2317',
 } as const);
 
 function canonicalize(value: unknown): unknown {
@@ -121,6 +123,21 @@ export interface AnnualTemporalSixCombinationObservationV1 {
   };
 }
 
+export interface AnnualTemporalSixClashObservationV1 {
+  relationId: string;
+  relationKind: 'clash';
+  semantics: {
+    qualifierOnly: true;
+    pairIdentityObserved: true;
+    effectiveClashAuthorized: false;
+    conflictResolutionAuthorized: false;
+    favorableOrHarmfulInferenceAuthorized: false;
+    functionStateOverrideAuthorized: false;
+    temporalPrecedenceAuthorized: false;
+    numericWeightAssigned: false;
+  };
+}
+
 export interface AnnualTemporalSettlementOverlayV1 {
   overlayId: string;
   baseSettlementId: string;
@@ -142,6 +159,7 @@ export interface ResolvedAnnualStructuralImpactProductionV1 {
   dayunPillar: PillarFact;
   rootSupportObservations: readonly AnnualTemporalRootSupportObservationV1[];
   sixCombinationObservations: readonly AnnualTemporalSixCombinationObservationV1[];
+  sixClashObservations: readonly AnnualTemporalSixClashObservationV1[];
   overlays: readonly AnnualTemporalSettlementOverlayV1[];
   assessments: readonly ResolvedStructuralRoleImpact[];
   bundle: GovernedAnnualStructuralImpactBundleV1;
@@ -466,33 +484,67 @@ function branchRelationIds(
   return [...result].sort();
 }
 
-function isolatedSixCombinationObservations(
+function isolatedBranchQualifierObservations(
   relationIds: readonly string[],
-): readonly AnnualTemporalSixCombinationObservationV1[] | undefined {
-  if (relationIds.length === 0) return [];
-  if (
-    relationIds.length !== 1 ||
-    relationIds[0] === undefined ||
-    !relationIds[0].startsWith('six_combination:')
-  ) {
+):
+  | {
+      sixCombinationObservations: readonly AnnualTemporalSixCombinationObservationV1[];
+      sixClashObservations: readonly AnnualTemporalSixClashObservationV1[];
+    }
+  | undefined {
+  if (relationIds.length === 0) {
+    return {
+      sixCombinationObservations: [],
+      sixClashObservations: [],
+    };
+  }
+  if (relationIds.length !== 1 || relationIds[0] === undefined) {
     return undefined;
   }
 
-  return [
-    {
-      relationId: relationIds[0],
-      relationKind: 'six_combination',
-      semantics: {
-        qualifierOnly: true,
-        bindingObserved: true,
-        transformationApplied: false,
-        conflictResolutionAuthorized: false,
-        functionStateOverrideAuthorized: false,
-        temporalPrecedenceAuthorized: false,
-        numericWeightAssigned: false,
-      },
-    },
-  ];
+  const relationId = relationIds[0];
+  if (relationId.startsWith('six_combination:')) {
+    return {
+      sixCombinationObservations: [
+        {
+          relationId,
+          relationKind: 'six_combination',
+          semantics: {
+            qualifierOnly: true,
+            bindingObserved: true,
+            transformationApplied: false,
+            conflictResolutionAuthorized: false,
+            functionStateOverrideAuthorized: false,
+            temporalPrecedenceAuthorized: false,
+            numericWeightAssigned: false,
+          },
+        },
+      ],
+      sixClashObservations: [],
+    };
+  }
+  if (relationId.startsWith('clash:')) {
+    return {
+      sixCombinationObservations: [],
+      sixClashObservations: [
+        {
+          relationId,
+          relationKind: 'clash',
+          semantics: {
+            qualifierOnly: true,
+            pairIdentityObserved: true,
+            effectiveClashAuthorized: false,
+            conflictResolutionAuthorized: false,
+            favorableOrHarmfulInferenceAuthorized: false,
+            functionStateOverrideAuthorized: false,
+            temporalPrecedenceAuthorized: false,
+            numericWeightAssigned: false,
+          },
+        },
+      ],
+    };
+  }
+  return undefined;
 }
 
 function unavailable(
@@ -611,14 +663,19 @@ export function produceAnnualStructuralImpactBundleV1(
     annualBranch,
     dayunBranch,
   );
-  const sixCombinationObservations =
-    isolatedSixCombinationObservations(branchRelations);
-  if (sixCombinationObservations === undefined) {
+  const branchQualifierObservations =
+    isolatedBranchQualifierObservations(branchRelations);
+  if (branchQualifierObservations === undefined) {
     return unavailable(snapshot, structureId, 'branch_relation_requires_settlement', {
       targetYear,
       branchRelationIds: branchRelations,
     });
   }
+
+  const {
+    sixCombinationObservations,
+    sixClashObservations,
+  } = branchQualifierObservations;
 
   const sources: readonly AnnualTemporalStemSourceV1[] = [
     {
@@ -701,6 +758,7 @@ export function produceAnnualStructuralImpactBundleV1(
     dayunSegmentIndex: dayunSegment.index,
     rootSupportObservations,
     sixCombinationObservations,
+    sixClashObservations,
     overlayIds: overlays.map((item) => item.overlayId),
     bundleId: bundle.bundleId,
   };
@@ -721,6 +779,7 @@ export function produceAnnualStructuralImpactBundleV1(
     dayunPillar: dayunSegment.pillar,
     rootSupportObservations,
     sixCombinationObservations,
+    sixClashObservations,
     overlays,
     assessments,
     bundle,
