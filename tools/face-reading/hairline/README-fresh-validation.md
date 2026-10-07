@@ -51,6 +51,14 @@ On Windows the executor defaults to `python`; elsewhere it defaults to `python3`
 Set `FACE_READING_PYTHON` to the Python executable in a private virtual environment
 when needed. No image execution runs in GitHub Actions.
 
+For a Windows private runtime:
+
+```powershell
+python -m venv .cache/face-reading/fr2337-runtime
+$env:FACE_READING_PYTHON = (Resolve-Path .cache/face-reading/fr2337-runtime/Scripts/python.exe).Path
+& $env:FACE_READING_PYTHON -m pip install "opencv-python-headless>=4,<5" pillow numpy
+```
+
 ```powershell
 npm run face:run:hairline-fresh-validation -- --run-bounded --campaign .cache/face-reading/fr2337-fresh-v33
 ```
