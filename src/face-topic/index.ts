@@ -12,6 +12,7 @@ export * from './character-handoff.js';
 export * from './governed-interpretation-unit.js';
 export * from './governed-interpretation-handoff.js';
 export * from './governed-handoff-runtime.js';
+export * from './governed-character-grounding.js';
 export * from './reader.js';
 export * from './live-fr293-reader.js';
 export * from './runtime.js';
