@@ -1,5 +1,6 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import type { GovernedTemporalStructureBaseline } from '../calculation/temporal-structure-transition.js';
+import type { StructuralRoleAssignment } from '../calculation/structural-role-impact.js';
 import type {
   ClaimNarrativeProfile,
   GroundedNarrativeRequest,
@@ -57,9 +58,10 @@ import type { ConsumerReadingRequestInput } from './consumer-reading-request-ada
 import { resolveAnnualTemporalStructureIntegration } from './annual-temporal-structure-integration.js';
 import { projectAnnualTemporalStructureForReading } from './annual-temporal-structure-projection.js';
 import type { GovernedAnnualStructuralImpactBundleV1 } from './annual-structural-impact-bundle.js';
+import { produceAnnualStructuralImpactBundleV1 } from './annual-structural-impact-producer.js';
 
 export const GOVERNED_READING_EXECUTION_VERSION =
-  'myeonghwa-governed-reading-execution-v6';
+  'myeonghwa-governed-reading-execution-v7';
 
 export const LEGACY_NARRATIVE_RUNTIME_VERSION =
   'myeonghwa-legacy-narrative-runtime-v1' as const;
@@ -80,6 +82,11 @@ export interface GovernedAnnualTemporalStructureInputV1 {
   impactBundle: GovernedAnnualStructuralImpactBundleV1;
 }
 
+export interface GovernedAnnualTemporalProductionInputV1 {
+  baseline: GovernedTemporalStructureBaseline;
+  roleAssignments: readonly StructuralRoleAssignment[];
+}
+
 export interface GovernedReadingExecutionOptions {
   outputSchemaVersion: string;
   readingVersion: string;
@@ -91,6 +98,7 @@ export interface GovernedReadingExecutionOptions {
   consumerReadingAuthorityResolver?: ConsumerReadingAuthorityResolverV1;
   officialReadingSemanticProjectionResolver?: OfficialReadingSemanticProjectionResolverV1;
   governedAnnualTemporalStructure?: GovernedAnnualTemporalStructureInputV1;
+  governedAnnualTemporalProduction?: GovernedAnnualTemporalProductionInputV1;
 }
 
 export interface GovernedReadingExecutionResult {
@@ -430,15 +438,28 @@ export async function executeProductReading(
       resolvePreviewConsumerReadingAuthorityV1
     )(preparation.normalization.request.intent);
 
-  if (options.governedAnnualTemporalStructure !== undefined) {
+  if (
+    options.governedAnnualTemporalStructure !== undefined &&
+    options.governedAnnualTemporalProduction !== undefined
+  ) {
+    throw new TypeError(
+      'Manual and automatic governed annual temporal inputs are mutually exclusive.',
+    );
+  }
+
+  const hasGovernedAnnualTemporalInput =
+    options.governedAnnualTemporalStructure !== undefined ||
+    options.governedAnnualTemporalProduction !== undefined;
+
+  if (hasGovernedAnnualTemporalInput) {
     if (preparation.normalization.request.intent.temporalScope !== 'annual') {
       throw new TypeError(
-        'Governed annual temporal structure input requires an annual reading request.',
+        'Governed annual temporal input requires an annual reading request.',
       );
     }
     if (consumerReadingAuthority.authority !== 'official_reading') {
       throw new TypeError(
-        'Governed annual temporal structure input requires Official Reading authority.',
+        'Governed annual temporal input requires Official Reading authority.',
       );
     }
   }
@@ -481,14 +502,59 @@ export async function executeProductReading(
       semanticQualifierBindings: semanticProjection.semanticQualifierBindings,
     });
     const officialReadingPlan = buildOfficialReadingPlanV1(canonicalSemantics);
+
+    const annualImpactProduction =
+      options.governedAnnualTemporalProduction === undefined
+        ? undefined
+        : produceAnnualStructuralImpactBundleV1(
+            snapshot,
+            preparation.normalization.request,
+            options.governedAnnualTemporalProduction.baseline.structureId,
+            options.governedAnnualTemporalProduction.roleAssignments,
+          );
+
+    if (
+      annualImpactProduction !== undefined &&
+      annualImpactProduction.status !== 'resolved'
+    ) {
+      return officialAuthorityBlockedResult(
+        preparation,
+        consumerReadingAuthority,
+        [
+          `OFFICIAL_READING_ANNUAL_STRUCTURAL_IMPACT_PRODUCTION_BLOCKED:${annualImpactProduction.reasonCode}`,
+          ...(annualImpactProduction.dayunReasonCode === undefined
+            ? []
+            : [
+                `OFFICIAL_READING_ANNUAL_DAYUN_CONTEXT_BLOCKED:${annualImpactProduction.dayunReasonCode}`,
+              ]),
+          ...(annualImpactProduction.structuralRoleReasonCode === undefined
+            ? []
+            : [
+                `OFFICIAL_READING_ANNUAL_STRUCTURAL_ROLE_BLOCKED:${annualImpactProduction.structuralRoleReasonCode}`,
+              ]),
+        ],
+        canonicalSemantics,
+        officialReadingPlan,
+      );
+    }
+
+    const annualTemporalInput: GovernedAnnualTemporalStructureInputV1 | undefined =
+      options.governedAnnualTemporalStructure ??
+      (annualImpactProduction?.status === 'resolved'
+        ? {
+            baseline: options.governedAnnualTemporalProduction!.baseline,
+            impactBundle: annualImpactProduction.bundle,
+          }
+        : undefined);
+
     const annualTemporalStructure =
-      options.governedAnnualTemporalStructure === undefined
+      annualTemporalInput === undefined
         ? undefined
         : resolveAnnualTemporalStructureIntegration(
             snapshot,
             preparation.normalization.request,
-            options.governedAnnualTemporalStructure.baseline,
-            options.governedAnnualTemporalStructure.impactBundle,
+            annualTemporalInput.baseline,
+            annualTemporalInput.impactBundle,
           );
 
     if (
