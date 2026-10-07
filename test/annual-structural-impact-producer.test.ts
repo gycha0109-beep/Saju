@@ -338,19 +338,57 @@ describe('R198 bounded annual structural impact producer', () => {
     );
   });
 
-  test('preserves source-directed Yin-Si punishment identity and keeps it fail-closed', () => {
+  test('admits one isolated source-directed Yin-Si punishment pair as qualifier-only context', () => {
     const result = produceAnnualStructuralImpactBundleV1(
       snapshot('인', '자'),
       request(2037),
       'structure-r198',
       assignments,
     );
-    expect(result.status).toBe('unavailable');
-    if (result.status !== 'unavailable') throw new Error('expected unavailable');
-    expect(result.reasonCode).toBe('branch_relation_requires_settlement');
-    expect(result.branchRelationIds).toEqual([
-      'punishment_directed_pair:punisher:dayun:인->punished:annual:사',
+    expect(result.status).toBe('resolved');
+    if (result.status !== 'resolved') throw new Error('expected resolved');
+
+    expect(result.directedPunishmentPairObservations).toEqual([
+      {
+        relationId:
+          'punishment_directed_pair:punisher:dayun:인->punished:annual:사',
+        relationKind: 'punishment_directed_pair',
+        punisherBranch: '인',
+        punishedBranch: '사',
+        semantics: {
+          qualifierOnly: true,
+          relationIdentityObserved: true,
+          sourceDirectionObserved: true,
+          punishmentEffectAuthorized: false,
+          favorableOrHarmfulInferenceAuthorized: false,
+          conflictResolutionAuthorized: false,
+          functionStateOverrideAuthorized: false,
+          temporalPrecedenceAuthorized: false,
+          numericWeightAssigned: false,
+          fullFamilyAmplificationAuthorized: false,
+        },
+      },
     ]);
+    expect(result.overlays[0]?.settlement.participants.controller.functionState).toBe(
+      'impaired',
+    );
+    expect(result.overlays[0]?.settlement.participants.controlled.functionState).toBe(
+      'constrained',
+    );
+    expect(result.overlays[0]?.settlement.pairControlEffective).toBe(false);
+
+    const repeated = produceAnnualStructuralImpactBundleV1(
+      snapshot('인', '자'),
+      request(2037),
+      'structure-r198',
+      assignments,
+    );
+    expect(repeated.status).toBe('resolved');
+    if (repeated.status !== 'resolved') throw new Error('expected resolved');
+    expect(repeated.producerId).toBe(result.producerId);
+    expect(repeated.directedPunishmentPairObservations).toEqual(
+      result.directedPunishmentPairObservations,
+    );
   });
 
   test('canonicalizes the same Yin-Si source direction when annual/dayun layers are reversed', () => {
@@ -360,27 +398,59 @@ describe('R198 bounded annual structural impact producer', () => {
       'structure-r198',
       assignments,
     );
-    expect(result.status).toBe('unavailable');
-    if (result.status !== 'unavailable') throw new Error('expected unavailable');
-    expect(result.reasonCode).toBe('branch_relation_requires_settlement');
-    expect(result.branchRelationIds).toEqual([
-      'punishment_directed_pair:punisher:annual:인->punished:dayun:사',
+    expect(result.status).toBe('resolved');
+    if (result.status !== 'resolved') throw new Error('expected resolved');
+    expect(result.directedPunishmentPairObservations).toEqual([
+      expect.objectContaining({
+        relationId:
+          'punishment_directed_pair:punisher:annual:인->punished:dayun:사',
+        punisherBranch: '인',
+        punishedBranch: '사',
+      }),
     ]);
   });
 
-  test('preserves the second Chou-Xu-Wei directed punishment family and keeps it fail-closed', () => {
+  test('admits one isolated Chou-Xu directed punishment pair without promoting effect', () => {
     const result = produceAnnualStructuralImpactBundleV1(
       snapshot('축'),
       request(2030),
       'structure-r198',
       assignments,
     );
+    expect(result.status).toBe('resolved');
+    if (result.status !== 'resolved') throw new Error('expected resolved');
+    expect(result.directedPunishmentPairObservations).toEqual([
+      expect.objectContaining({
+        relationId:
+          'punishment_directed_pair:punisher:dayun:축->punished:annual:술',
+        punisherBranch: '축',
+        punishedBranch: '술',
+        semantics: expect.objectContaining({
+          qualifierOnly: true,
+          punishmentEffectAuthorized: false,
+          favorableOrHarmfulInferenceAuthorized: false,
+          fullFamilyAmplificationAuthorized: false,
+        }),
+      }),
+    ]);
+  });
+
+  test('keeps directed punishment pairs fail-closed when another directed relation competes', () => {
+    const result = produceAnnualStructuralImpactBundleV1(
+      snapshot('인'),
+      request(2037),
+      'structure-r198',
+      assignments,
+    );
     expect(result.status).toBe('unavailable');
     if (result.status !== 'unavailable') throw new Error('expected unavailable');
     expect(result.reasonCode).toBe('branch_relation_requires_settlement');
-    expect(result.branchRelationIds).toEqual([
-      'punishment_directed_pair:punisher:dayun:축->punished:annual:술',
-    ]);
+    expect(result.branchRelationIds?.length).toBeGreaterThan(1);
+    expect(result.branchRelationIds).toEqual(
+      expect.arrayContaining([
+        'punishment_directed_pair:punisher:dayun:인->punished:annual:사',
+      ]),
+    );
   });
 
   test('admits branch-quiet annual root support as qualifier-only context', () => {
@@ -732,11 +802,11 @@ describe('R198 bounded annual structural impact producer', () => {
 
   test('policy remains bounded and non-event-producing', () => {
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.scope).toBe(
-      'ISOLATED_LIUHE_LIUCHONG_SELF_PUNISHMENT_OR_ZIMAO_PUNISHMENT_PAIR_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
+      'ISOLATED_LIUHE_LIUCHONG_SELF_PUNISHMENT_ZIMAO_OR_DIRECTED_PUNISHMENT_PAIR_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.eventRule).toBe('NONE');
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.branchRule).toBe(
-      'ADMIT_ONE_ISOLATED_SIX_COMBINATION_SIX_CLASH_SELF_PUNISHMENT_OR_ZIMAO_PUNISHMENT_PAIR_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
+      'ADMIT_ONE_ISOLATED_SIX_COMBINATION_SIX_CLASH_SELF_PUNISHMENT_ZIMAO_OR_DIRECTED_PUNISHMENT_PAIR_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.sixCombinationRule).toBe(
       'QUALIFIER_ONLY_NO_TRANSFORMATION_OR_CONFLICT_RESOLUTION',
@@ -751,10 +821,13 @@ describe('R198 bounded annual structural impact producer', () => {
       'ZIMAO_RELATION_IDENTITY_ONLY_NO_PUNISHMENT_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.punishmentFamilyDetectionRule).toBe(
-      'SOURCE_DIRECTED_PAIR_IDENTITY_ONLY_FAIL_CLOSED_PENDING_QUALIFIER_AUTHORITY',
+      'SOURCE_DIRECTED_PAIR_IDENTITY_ONLY',
     );
-    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.policyVersion).toBe('1.5.1');
-    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.decisionRef).toBe('GH-2369');
+    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.directedPunishmentPairRule).toBe(
+      'SOURCE_DIRECTION_IDENTITY_ONLY_NO_PUNISHMENT_EFFECT_POLARITY_CONFLICT_RESOLUTION_OR_FAMILY_AMPLIFICATION',
+    );
+    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.policyVersion).toBe('1.6.0');
+    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.decisionRef).toBe('GH-2377');
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.rootRule).toBe(
       'OBSERVE_AS_QUALIFIER_WITHOUT_WEIGHT_OR_OVERRIDE',
     );
