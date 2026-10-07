@@ -654,7 +654,7 @@ describe('Official Reading detailed material readiness foundation', () => {
     expect(coverage.state).toBe('incomplete');
     expect(OFFICIAL_READING_DETAIL_CAPABILITY_V1.detailed).toEqual({
       materialState: 'conditional',
-      productState: 'pre_activation',
+      productState: 'enabled',
       missingMaterialFallbackReason: 'missing_expansion_material',
       inactiveFallbackReason: 'detailed_not_activated',
     });
