@@ -139,7 +139,7 @@ export const FR311U_STATIC_RESEARCH_INDEX_AUTHORITY_BOUNDARY = Object.freeze({
 export function assertStaticFaceResearchEvidenceIndexFR311U(): void {
   if (
     FR311P_EVIDENCE_INVENTORY.canonicalEvidence !== 621 ||
-    FR311U_STATIC_RESEARCH_INDEX_SUMMARY.addedMissingRegionDirectRules !== 24 ||
+    FR311U_STATIC_RESEARCH_INDEX_SUMMARY.addedMissingRegionDirectRules !== 29 ||
     FR311U_STATIC_RESEARCH_INDEX_SUMMARY.addedStaticMethodologyDefinitions !== 16 ||
     FR311U_STATIC_RESEARCH_INDEX_SUMMARY.staticCoreResearchMissing !== 0
   ) {
