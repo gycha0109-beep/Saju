@@ -201,17 +201,15 @@ function materialFor(
 }
 
 describe('Official Reading detailed material readiness foundation', () => {
-  it('keeps the production detailed registry empty and bounded to the five approved natal surfaces', () => {
+  it('keeps request-bound material empty while registering the six approved natal detailed surfaces', () => {
     expect(OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1).toEqual([
       'general:natal',
       'career:natal',
       'wealth:natal',
       'relationship:natal:general',
+      'relationship:natal:spouse',
       'business:natal',
     ]);
-    expect(OFFICIAL_READING_DETAILED_SUPPORTED_DOMAIN_KEYS_V1).not.toContain(
-      'relationship:natal:spouse',
-    );
     expect(APPROVED_OFFICIAL_READING_DETAILED_MATERIALS_V1).toEqual([]);
   });
 
