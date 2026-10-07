@@ -19,10 +19,14 @@ export const GOVERNED_ANNUAL_STRUCTURAL_IMPACT_BUNDLE_POLICY = Object.freeze({
 export const PRODUCT_ANNUAL_STRUCTURAL_IMPACT_PRODUCER_CAPABILITY = Object.freeze({
   runtimeAvailable: true as const,
   boundedRuntimeAvailable: true as const,
-  scope: 'BRANCH_QUIET_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY' as const,
+  scope:
+    'ISOLATED_LIUHE_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY' as const,
   annualStemOnlyAuthorized: false as const,
   annualBranchIgnoringAuthorized: false as const,
   branchSemanticSettlementAvailable: false as const,
+  isolatedSixCombinationQualifierAvailable: true as const,
+  sixCombinationTransformationAvailable: false as const,
+  sixCombinationConflictResolutionAvailable: false as const,
   rootQualifierObservationAvailable: true as const,
   rootSemanticWeightingAvailable: false as const,
   rootFunctionStateOverrideAuthorized: false as const,
