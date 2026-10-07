@@ -20,7 +20,7 @@ export const PRODUCT_ANNUAL_STRUCTURAL_IMPACT_PRODUCER_CAPABILITY = Object.freez
   runtimeAvailable: true as const,
   boundedRuntimeAvailable: true as const,
   scope:
-    'ISOLATED_LIUHE_OR_LIUCHONG_PAIR_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY' as const,
+    'ISOLATED_LIUHE_LIUCHONG_OR_SELF_PUNISHMENT_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY' as const,
   annualStemOnlyAuthorized: false as const,
   annualBranchIgnoringAuthorized: false as const,
   branchSemanticSettlementAvailable: false as const,
@@ -31,6 +31,9 @@ export const PRODUCT_ANNUAL_STRUCTURAL_IMPACT_PRODUCER_CAPABILITY = Object.freez
   sixClashEffectiveSettlementAvailable: false as const,
   sixClashPolarityInferenceAvailable: false as const,
   sixClashConflictResolutionAvailable: false as const,
+  isolatedSelfPunishmentQualifierAvailable: true as const,
+  selfPunishmentEffectSettlementAvailable: false as const,
+  selfPunishmentPolarityInferenceAvailable: false as const,
   rootQualifierObservationAvailable: true as const,
   rootSemanticWeightingAvailable: false as const,
   rootFunctionStateOverrideAuthorized: false as const,

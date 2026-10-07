@@ -299,7 +299,7 @@ describe('R194/R196 product annual temporal structure integration', () => {
     expect(PRODUCT_ANNUAL_STRUCTURAL_IMPACT_PRODUCER_CAPABILITY).toEqual({
       runtimeAvailable: true,
       boundedRuntimeAvailable: true,
-      scope: 'ISOLATED_LIUHE_OR_LIUCHONG_PAIR_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
+      scope: 'ISOLATED_LIUHE_LIUCHONG_OR_SELF_PUNISHMENT_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
       annualStemOnlyAuthorized: false,
       annualBranchIgnoringAuthorized: false,
       branchSemanticSettlementAvailable: false,
@@ -310,6 +310,9 @@ describe('R194/R196 product annual temporal structure integration', () => {
       sixClashEffectiveSettlementAvailable: false,
       sixClashPolarityInferenceAvailable: false,
       sixClashConflictResolutionAvailable: false,
+      isolatedSelfPunishmentQualifierAvailable: true,
+      selfPunishmentEffectSettlementAvailable: false,
+      selfPunishmentPolarityInferenceAvailable: false,
       rootQualifierObservationAvailable: true,
       rootSemanticWeightingAvailable: false,
       rootFunctionStateOverrideAuthorized: false,

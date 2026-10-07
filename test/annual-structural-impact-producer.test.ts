@@ -92,7 +92,7 @@ function request(year: number): ReadingRequest {
   };
 }
 
-function snapshot(dayunBranch: '오' | '진' = '오'): CanonicalSajuSnapshot {
+function snapshot(dayunBranch: '오' | '진' | '자' = '오'): CanonicalSajuSnapshot {
   const base = calculateCanonicalSajuSnapshot(
     {
       calendarType: 'solar',
@@ -250,10 +250,10 @@ describe('R198 bounded annual structural impact producer', () => {
     }
   });
 
-  test('fails closed when an unsupported temporal branch relation requires settlement', () => {
+  test('fails closed when an unsupported punishment-pair relation requires settlement', () => {
     const result = produceAnnualStructuralImpactBundleV1(
-      snapshot(),
-      request(2026),
+      snapshot('자'),
+      request(2035),
       'structure-r198',
       assignments,
     );
@@ -261,7 +261,7 @@ describe('R198 bounded annual structural impact producer', () => {
     if (result.status !== 'unavailable') throw new Error('expected unavailable');
     expect(result.reasonCode).toBe('branch_relation_requires_settlement');
     expect(result.branchRelationIds).toEqual(
-      expect.arrayContaining(['self_punishment:annual|dayun:오']),
+      expect.arrayContaining(['punishment_pair:annual:묘|dayun:자']),
     );
   });
 
@@ -445,6 +445,73 @@ describe('R198 bounded annual structural impact producer', () => {
     );
   });
 
+  test('admits exactly one isolated temporal self-punishment as qualifier-only context', () => {
+    const result = produceAnnualStructuralImpactBundleV1(
+      snapshot(),
+      request(2026),
+      'structure-r198',
+      assignments,
+    );
+    expect(result.status).toBe('resolved');
+    if (result.status !== 'resolved') throw new Error('expected resolved');
+
+    expect(result.annualFacts.annualPillar).toMatchObject({
+      stem: '병',
+      branch: '오',
+    });
+    expect(result.selfPunishmentObservations).toEqual([
+      {
+        relationId: 'self_punishment:annual|dayun:오',
+        relationKind: 'self_punishment',
+        semantics: {
+          qualifierOnly: true,
+          relationIdentityObserved: true,
+          repeatedSameBranchObserved: true,
+          punishmentEffectAuthorized: false,
+          favorableOrHarmfulInferenceAuthorized: false,
+          conflictResolutionAuthorized: false,
+          functionStateOverrideAuthorized: false,
+          temporalPrecedenceAuthorized: false,
+          numericWeightAssigned: false,
+        },
+      },
+    ]);
+    expect(result.overlays[0]?.settlement.participants.controller.functionState).toBe(
+      'impaired',
+    );
+    expect(result.overlays[0]?.settlement.participants.controlled.functionState).toBe(
+      'constrained',
+    );
+  });
+
+  test('keeps self-punishment blocked when another branch relation competes', () => {
+    const current = snapshot();
+    const mixed = {
+      ...current,
+      pillars: {
+        ...current.pillars,
+        year: resolved(pillar('갑', '자')),
+      },
+    } satisfies CanonicalSajuSnapshot;
+
+    const result = produceAnnualStructuralImpactBundleV1(
+      mixed,
+      request(2026),
+      'structure-r198',
+      assignments,
+    );
+    expect(result.status).toBe('unavailable');
+    if (result.status !== 'unavailable') throw new Error('expected unavailable');
+    expect(result.reasonCode).toBe('branch_relation_requires_settlement');
+    expect(result.branchRelationIds).toEqual(
+      expect.arrayContaining([
+        'clash:natal:year:자|annual:오',
+        'clash:natal:year:자|dayun:오',
+        'self_punishment:annual|dayun:오',
+      ]),
+    );
+  });
+
   test('keeps a six-clash pair blocked when a six-combination competes', () => {
     const current = snapshot();
     const mixed = {
@@ -547,17 +614,20 @@ describe('R198 bounded annual structural impact producer', () => {
 
   test('policy remains bounded and non-event-producing', () => {
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.scope).toBe(
-      'ISOLATED_LIUHE_OR_LIUCHONG_PAIR_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
+      'ISOLATED_LIUHE_LIUCHONG_OR_SELF_PUNISHMENT_QUALIFIER_SINGLE_DAYUN_SEGMENT_STEM_OVERLAY',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.eventRule).toBe('NONE');
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.branchRule).toBe(
-      'ADMIT_ONE_ISOLATED_SIX_COMBINATION_OR_SIX_CLASH_PAIR_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
+      'ADMIT_ONE_ISOLATED_SIX_COMBINATION_SIX_CLASH_OR_SELF_PUNISHMENT_AS_QUALIFIER_OTHERWISE_FAIL_CLOSED',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.sixCombinationRule).toBe(
       'QUALIFIER_ONLY_NO_TRANSFORMATION_OR_CONFLICT_RESOLUTION',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.sixClashRule).toBe(
       'PAIR_IDENTITY_ONLY_NO_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
+    );
+    expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.selfPunishmentRule).toBe(
+      'RELATION_IDENTITY_ONLY_NO_PUNISHMENT_EFFECT_POLARITY_OR_CONFLICT_RESOLUTION',
     );
     expect(ANNUAL_STRUCTURAL_IMPACT_PRODUCER_POLICY.rootRule).toBe(
       'OBSERVE_AS_QUALIFIER_WITHOUT_WEIGHT_OR_OVERRIDE',
