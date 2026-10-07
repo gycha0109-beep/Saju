@@ -41,7 +41,8 @@ export type StaticSourceSectionFR311R =
   | '神相全編十二.額部相'
   | '神相全編十二.論額'
   | '神相全編十二.相骨節'
-  | '神相全編十二.相面部骨格';
+  | '神相全編十二.相面部骨格'
+  | '神相全編三.相面';
 
 export interface StaticTraditionalRegionFR311R {
   readonly regionKey: StaticMissingRegionFR311R;
@@ -301,6 +302,61 @@ const RULE_SEEDS: readonly RuleSeed[] = [
     ['status', 'wealth'],
     'conditional',
     GUJIN_631,
+  ],
+  [
+    'fr311r.cheekbones.high_narrow',
+    '神相全編三.相面',
+    'cheekbone_pair',
+    '顴骨有壽紋入耳，若兼入鬢者貴。高狹者孤',
+    'bone_structure',
+    '광대 문맥에서 높고 좁은 형태를 고립과 연결하는 전통 문구를 보존한다.',
+    ['interpersonal_relations'],
+    'challenging',
+    GUJIN_633,
+  ],
+  [
+    'fr311r.lower_face.yi_bone.square_horizontal',
+    '神相全編三.相面',
+    'jaw_lower_face',
+    '頤骨方而橫者貴',
+    'bone_structure',
+    '이골이 네모지고 가로로 벌어진 형태를 귀함과 연결하는 전통 문구를 보존한다.',
+    ['status'],
+    'favorable',
+    GUJIN_633,
+  ],
+  [
+    'fr311r.lower_face.han_bone.broad',
+    '神相全編三.相面',
+    'jaw_lower_face',
+    '頷骨闊者富',
+    'bone_structure',
+    '하악골이 넓은 형태를 부유함과 연결하는 전통 문구를 보존한다.',
+    ['wealth'],
+    'favorable',
+    GUJIN_633,
+  ],
+  [
+    'fr311r.lower_face.han_bone.sharp',
+    '神相全編三.相面',
+    'jaw_lower_face',
+    '頷骨闊者富，尖者窮',
+    'bone_structure',
+    '같은 하악골 문맥에서 뾰족한 형태를 빈곤과 연결하는 전통 문구를 보존한다.',
+    ['wealth'],
+    'challenging',
+    GUJIN_633,
+  ],
+  [
+    'fr311r.whole_face.upper_lower_pointed_datepit',
+    '神相全編三.相面',
+    'whole_face',
+    '若上下尖如棗核者',
+    'morphology',
+    '얼굴 위아래가 대추씨처럼 뾰족한 형태를 불리하게 보는 전통 문구를 보존한다.',
+    ['life_course'],
+    'challenging',
+    GUJIN_633,
   ],
   [
     'fr311r.chin.square_broad',
