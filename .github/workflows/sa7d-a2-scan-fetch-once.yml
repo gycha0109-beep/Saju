@@ -63,14 +63,55 @@ jobs:
                 canvas=canvas.crop((0,0,1100,1770))
                 canvas.save(out/filename_img,'JPEG',quality=58,optimize=True)
                 bs=base64.b64encode((out/filename_img).read_bytes()).decode('ascii')
-                print('SCAN_IMAGE_BEGIN',filename_img,len(bs),flush=True)
-                for j in range(0,len(bs),6000): print('SCAN_IMAGE_CHUNK',bs[j:j+6000],flush=True)
-                print('SCAN_IMAGE_END',filename_img,flush=True)
+                print('SHEET_SAVED',filename_img,len(bs),flush=True)
             except Exception as exc:
               print('SOURCE_FAILED',tag,str(exc)[:500],flush=True)
           (out/'manifest.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False),encoding='utf-8')
           if not manifest: raise RuntimeError('All public scan downloads failed')
           print('SOURCE_ACQUISITION_COMPLETED',len(manifest),flush=True)
+          PY
+      - name: Locate classical section by provisional OCR and emit original page images
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq tesseract-ocr-chi-tra-vert
+          python3 - <<'PY'
+          import base64, io, json, re, subprocess
+          from pathlib import Path
+          import fitz
+          out=Path('/tmp/sa7d-a2')
+          indicators=[('論太歲',30),('太歲',10),('歲君',7),('偏官',5),('偏財',5),('庚年',6),('戊年',6),('小運',5),('甲日',6),('一歲之主',12)]
+          found=[]
+          for tag in ['ming_upper','ming_lower']:
+            doc=fitz.open(str(out/(tag+'.pdf')))
+            for page_idx in range(1,len(doc)-1):
+              page=doc[page_idx]
+              pix=page.get_pixmap(matrix=fitz.Matrix(1.25,1.25),alpha=False)
+              im=out/f'ocr_{tag}_{page_idx+1}.png'
+              pix.save(str(im))
+              try:
+                o=subprocess.run(['tesseract',str(im),'stdout','-l','chi_tra_vert','--psm','5'],capture_output=True,text=True,timeout=24)
+                clean=re.sub(r'\\s+','',o.stdout)
+                hits=[f'{word}({clean.count(word)})' for word,weight in indicators if word in clean]
+                score=sum(clean.count(word)*weight for word,weight in indicators)
+                found.append({'tag':tag,'page':page_idx+1,'index':page_idx,'score':score,'hits':hits,'excerpt':clean[:600]})
+                if hits: print('OCR_HIT',tag,page_idx+1,score,' '.join(hits),flush=True)
+              except Exception as e:print('OCR_ERROR',tag,page_idx+1,str(e)[:120],flush=True)
+              finally:im.unlink(missing_ok=True)
+          found.sort(key=lambda x:-x['score'])
+          print('OCR_TOP',json.dumps(found[:28],ensure_ascii=False),flush=True)
+          (out/'ocr_index.json').write_text(json.dumps(found,ensure_ascii=False,indent=2),encoding='utf-8')
+          for cand in found[:8]:
+            doc=fitz.open(str(out/(cand['tag']+'.pdf')))
+            pix=doc[cand['index']].get_pixmap(matrix=fitz.Matrix(1.12,1.12),alpha=False)
+            jbytes=pix.tobytes('jpeg')
+            ident=f"{cand['tag']}_pdfpage{cand['page']}.jpg"
+            (out/ident).write_bytes(jbytes)
+            b64=base64.b64encode(jbytes).decode('ascii')
+            print('EVIDENCE_PAGE_BEGIN',ident,len(b64),flush=True)
+            for j in range(0,len(b64),6000):print('EVIDENCE_PAGE_CHUNK',b64[j:j+6000],flush=True)
+            print('EVIDENCE_PAGE_END',ident,flush=True)
           PY
       - name: Publish temporary visual witness contact sheets
         if: always()
@@ -80,5 +121,6 @@ jobs:
           path: |
             /tmp/sa7d-a2/*.jpg
             /tmp/sa7d-a2/manifest.json
+            /tmp/sa7d-a2/ocr_index.json
           if-no-files-found: warn
           retention-days: 3
