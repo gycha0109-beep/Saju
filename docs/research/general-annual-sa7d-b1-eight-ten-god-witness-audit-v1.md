@@ -87,3 +87,11 @@ Research 파일: `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`.
 - 임시 PDF 취득/페이지 미리보기 스크립트·일회성 GitHub Actions workflow는 연구 브랜치에서만 사용하고, 본 보충 문서의 정리 PR에는 포함하지 않는다.
 
 **종료:** A=4종 L1 검증 일부 PASS / B=전체 PDF 바이트, 4종 미확보, Annual L2 미확보 HOLD / C=권한 경계 보호 PASS.
+  
+## 8. 2026-10-09 제9책·제14책 추가 인쇄본 L1 (직전 4/8 스냅샷 뒤의 최신 상태)
+
+- 원전 직접 판면: 第9冊 卷五上 PDF 32쪽 `論正財`: `正財者乃甲見己乙見戊之例`. **甲→己 正財**를 직접 확인.
+- 원전 직접 판면: 第14冊 卷七下 PDF 46쪽 `論六親`: `六甲生人以癸水爲母癸爲正印如遇己土正財`. **甲→癸 正印** 직접 확인; 정재 짝 독립 교차 확인.
+- 정확한 PDF 인덱스, 원본 식별자, JPEG SHA-256, 실행·아티팩트, 판독 한계 및 `甲→乙 劫財/敗財` 사조 간 용어 차이는 `general-annual-sa7d-b1-ming-six-l1-and-school-label-audit-v1.md` 참고.
+- 최신 합산: Ming 직접 인쇄본 개별 **L1 6/8**, 비견·겁재 **L1 미확보**, 유년 직접 **L2 0/8**, Annual `INSUFFICIENT` **8/8**, `bridgeReentryReady=false`, `Production=HOLD`.
+- `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`는 이전 증거 시점의 v1 snapshot. 이번 추가 인쇄본은 연구용 감사 보충자료이며 의미론 승격이나 v1의 임의 변경 근거가 아니다.
