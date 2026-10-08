@@ -194,10 +194,13 @@ describe('R41 exact source 甲 庚 己 intervening nonjoining', () => {
       DEFAULT_CALCULATION_POLICY,
       { now },
     );
-    for (const s of [a, forged, scenarios, unknown]) {
+    for (const s of [a, forged, unknown]) {
       expect(build(s).status).toBe('unavailable');
       expect(runInterpretation(s, registry(), { now }).claims).toHaveLength(0);
     }
+    // The synthetic scenario lacks claim-graph fields; only the R41 projector
+    // is under test for that deliberately malformed input.
+    expect(build(scenarios).status).toBe('unavailable');
   });
 
   test.each([
