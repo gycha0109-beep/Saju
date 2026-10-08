@@ -1,0 +1,32 @@
+name: "[WT:saju-research] SA-7D-B1 1937 Annual Method Printed Once"
+on:
+  push:
+    branches:
+      - research/saju-research/sa7d-b1-volume5-scan
+    paths:
+      - scripts/research/sa7d_b1_1937_mingli_tanyuan_scan.py
+      - .github/workflows/sa7d-b1-1937-mingli-method-once.yml
+permissions:
+  contents: read
+concurrency:
+  group: sa7d-b1-1937-mingli-annual-method-once
+  cancel-in-progress: false
+jobs:
+  source-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install fixed JPEG validator
+        run: python -m pip install --disable-pip-version-check --no-cache-dir "Pillow==11.3.0"
+      - name: Inspect 1937 printed annual-day relation evidence without PDF original
+        run: python scripts/research/sa7d_b1_1937_mingli_tanyuan_scan.py
+      - name: Save page manifests with SHA256
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sa7d-b1-1937-mingli-method-print-pages
+          path: .scan-1937-mingli/
+          retention-days: 5
+          if-no-files-found: warn
+          include-hidden-files: true
