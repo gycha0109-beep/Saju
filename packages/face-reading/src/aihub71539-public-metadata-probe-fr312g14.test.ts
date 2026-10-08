@@ -79,7 +79,9 @@ describe('FR312G14 AI-Hub 71539 public documentary metadata field probe', () => 
 
   it('rejects duplicate, missing and nonfinite landmarks without substituting the 468-point canonical map', () => {
     const duplicate = syntheticPublicFieldFixture();
-    duplicate.landmarks[67].id = 0;
+    const last = duplicate.landmarks.at(-1);
+    if (last === undefined) throw new Error('synthetic landmark fixture empty');
+    last.id = 0;
     expect(probeAihub71539PublicMetadataShapeFR312G14(duplicate).issues).toContain(
       'landmark_id_invalid_or_duplicate',
     );
@@ -91,7 +93,9 @@ describe('FR312G14 AI-Hub 71539 public documentary metadata field probe', () => 
     );
 
     const nonfinite = syntheticPublicFieldFixture();
-    nonfinite.landmarks[0].z = Number.NaN;
+    const first = nonfinite.landmarks.at(0);
+    if (first === undefined) throw new Error('synthetic landmark fixture empty');
+    first.z = Number.NaN;
     expect(
       probeAihub71539PublicMetadataShapeFR312G14(nonfinite).issues,
     ).toContain('landmark_coordinate_invalid');
