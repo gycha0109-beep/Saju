@@ -97,8 +97,9 @@ describe('2B-3A source Reading in-process proof readiness inventory', () => {
     const changed = structuredClone(source);
     changed.interpretation.run.snapshotId = 'snapshot-from-another-user';
     expect(inspectSourceReadingProofReadinessV1(changed)).toMatchObject({
-      state: 'blocked', reason: 'invalid_source_identity', material: undefined,
+      state: 'blocked', reason: 'invalid_source_identity',
     });
+    expect(inspectSourceReadingProofReadinessV1(changed)).not.toHaveProperty('material');
   });
 
   it('rejects registry snapshot drift even if public response still says delivered', async () => {
@@ -157,7 +158,11 @@ describe('2B-3A source Reading in-process proof readiness inventory', () => {
     const source = await fixture();
     const changed = structuredClone(source);
     if (!changed.delivery.artifact) throw new Error('Fixture expected DeliveryArtifact');
-    (changed.delivery.artifact as { readingId: string }).readingId = 'another-reading';
+    // Break the source's shared artifact reference to simulate a substituted delivery.
+    changed.delivery = {
+      ...changed.delivery,
+      artifact: { ...changed.delivery.artifact, readingId: 'another-reading' },
+    };
     expect(inspectSourceReadingProofReadinessV1(changed)).toMatchObject({
       state: 'blocked', reason: 'artifact_identity_mismatch',
     });
