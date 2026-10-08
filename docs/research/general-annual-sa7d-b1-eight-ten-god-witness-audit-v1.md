@@ -110,3 +110,10 @@ Research 파일: `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`.
 - `歲運`은 대운·유년을 혼합하는 일반 범위이므로, 명칭 L1 7/8 + 일반 歲運 문장만으로 8종의 개별 `日干×流年天干→十神` L2를 조합·자동 승격해서는 안 된다.
 - 결과 **L1 7/8, 신규 대상의 L2 0/8, Annual `INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`**. 2건의 기존 A2 개별 연운 직접 명칭은 보존.
 - 전사문 `基礎`의 `甲見乙：劫財、敗財`는 직접 명대 제본 판면과 아직 결속되지 않은 L0 단서; 같은 인쇄본 `論劫財`의 방향별 구분을 덮어쓰지 않는다.
+
+## 11. 2026-10-09 명대 직접 판면: 流歲 천간 입력 + 甲乙 복합 용어 검증
+
+- 『三命通會』 명 만력 간본 **제19책 권10상 PDF 2쪽 `看命口訣`**에서 `流歲取天干`, `日取天干`, `年取天干`, `大運取支神`, `年為本日為主`를 직접 확인. **특정 유년 천간을 살피는 원전 방법 범위 확인**이지만, 8개 십신의 각 개별 연운 명칭을 확정하는 직접 증거는 아님.
+- 별개 『刻京臺增補淵海子平大全』 명대 **제1책 PDF 10쪽 `天干五陽通變`**에서 `甲` 기준 `乙`에 `爲劫財敗財`의 **복합 명칭 원전 판면**을 직접 확인. 같은 인쇄 서명 제2책 PDF 10쪽 `論劫財`의 `五陽見五陰爲敗財` / `五陰見五陽爲劫財` 세부 규칙과 구분하여 기록.
+- 원본 서지 ID, PDF zero/one 인덱스, 파생 JPEG SHA-256, 14쪽의 실제 수신·검사 로그, 실행 ID 및 엄격한 Level/권한 판정은 `general-annual-sa7d-b1-ming-printed-annual-stem-and-jiecai-baicai-composite-witness-v1.md`에서 추적.
+- 새 사실: `METHOD_SCOPE_L1_PRINT_VERIFIED` 및 `L1_GROUPED_HISTORICAL_TERMINOLOGY=VERIFIED`. **불변:** 독립적 `甲→乙 劫財` 명칭 미해결, 대상의 정확한 개별 `甲日×流年天干→十神` L2 **0/8**, Annual `INSUFFICIENT` **8/8**, `bridgeReentryReady=false`, `Production=HOLD`.
