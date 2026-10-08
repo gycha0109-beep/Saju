@@ -193,7 +193,7 @@ describe('2B-3A source Reading in-process proof readiness inventory', () => {
       ...section,
       title: section.title + ' (altered)',
     };
-    (changed.response.reading as { sections: typeof newSections }).sections = newSections;
+    (changed.response.reading as unknown as { sections: typeof newSections }).sections = newSections;
     expect(inspectSourceReadingProofReadinessV1(changed)).toMatchObject({
       state: 'blocked', reason: 'response_delivery_mismatch',
     });
