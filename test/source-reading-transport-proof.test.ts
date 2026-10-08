@@ -191,9 +191,9 @@ describe('2B-3B authenticated Preview-only source transport material', () => {
     })).toBeNull();
     const changedResponse = structuredClone(good.response);
     if (!changedResponse.reading) throw new Error('expected response reading');
-    changedResponse.reading.sections[0] = {
-      ...changedResponse.reading.sections[0]!, title: '수정됨',
-    };
+    const sections = [...changedResponse.reading.sections];
+    sections[0] = { ...sections[0]!, title: '수정됨' };
+    (changedResponse.reading as unknown as { sections: typeof sections }).sections = sections;
     expect(issueHeldSourceReadingTransportProofV1({
       ...good, response: changedResponse,
     })).toBeNull();
