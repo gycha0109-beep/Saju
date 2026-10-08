@@ -101,7 +101,7 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
     });
   });
 
-  test('maps Ming Wanli 卷之二上/下 scan objects without claiming an exact 論太歲 page', () => {
+  test('binds an exact Ming Wanli primary scan page while separating the unverified 1578 Taiwan edition', () => {
     const upper = byId('NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_UPPER_SCAN');
     const lower = byId('NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_LOWER_SCAN');
     if (upper.candidateId !== 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_UPPER_SCAN') {
@@ -124,32 +124,62 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
     expect(upper.acquisition).toMatchObject({
       pageCount: 38,
       workVolumeTwoIdentityEstablished: true,
-      contentHashBound: false,
+      contentHashBound: true,
+      fileSha1: 'd340e84e9aa4c788f004e3c63781327148edca4b',
+      exactLunTaisuiPageBound: false,
+      relevantPassageVisuallyVerified: false,
+      exactEditionIdentityWith1578NclTaiwanEstablished: false,
     });
     expect(lower.acquisition).toMatchObject({
       pageCount: 55,
       commonsSha1: '790baba8f4b7abc2ab706db2ae8eff4651c270ff',
+      calculatedSha1: '790baba8f4b7abc2ab706db2ae8eff4651c270ff',
+      calculatedSha256: '3e2e924984f51628207bfec441729b1b616e4f051cfa3ea6661262888bba1f18',
+      sha1MatchedPublishedObject: true,
       workVolumeTwoIdentityEstablished: true,
+      exactLunTaisuiPageBound: true,
+      pdfPageOneBased: 25,
+      pdfPageZeroBased: 24,
+      historicalPrintedFolioIndexVerified: false,
+      relevantPassageVisuallyVerified: true,
+      exactEditionIdentityWith1578NclTaiwanEstablished: false,
       contentHashBound: true,
+      evidenceRunId: 37752324421,
     });
-    for (const source of [upper, lower]) {
-      expect(source.acquisition).toMatchObject({
-        exactLunTaisuiPageBound: false,
-        relevantPassageVisuallyVerified: false,
-        exactEditionIdentityWith1578NclTaiwanEstablished: false,
-      });
-      expect(source.disposition).toBe(
-        'MING_WORK_VOLUME_MAPPED_SCAN_PAGE_VERIFICATION_REQUIRED',
-      );
-    }
+    expect(lower.acquisition.examplesOnLeftLeaf).toEqual([
+      '歲君傷日者如庚剋甲日為偏官',
+      '日犯歲君如甲日剋戊年為偏財',
+    ]);
+    expect(lower.disposition).toBe(
+      'EXACT_MING_PRIMARY_PRINT_IMAGE_VERIFIED_ATOMIC_RELATION_ONLY',
+    );
     expect(acquisition.observations).toMatchObject({
       mingWanliExplicitVolumeTwoUpperLowerScanObjectsLocated: true,
-      exactMingLunTaisuiPageBound: false,
-      exactMingLunTaisuiPassageVisuallyVerified: false,
-      atomicStemRelationSourceQualified: false,
+      exactMingLunTaisuiPageBound: true,
+      exactMingLunTaisuiPassageVisuallyVerified: true,
+      atomicStemRelationSourceQualified: true,
+      currentModernThemeSemanticsSourceQualified: false,
       bridgeReentryReady: false,
     });
     expect(acquisition.authorityBoundary.production).toBe('HOLD');
+  });
+
+  test('separates direct source text, classical relation identity, research inference and school exceptions', () => {
+    const evidence = acquisition.atomicStemRelationAdjudication;
+    expect(evidence.supportGrade).toBe(
+      'DIRECT_MING_PRIMARY_PRINT_VERIFIED_ATOMIC_IDENTITY_ONLY',
+    );
+    expect(evidence.sourceStatement).toHaveLength(2);
+    expect(evidence.interpretiveReading).toContain('Ten-God relation identities');
+    expect(evidence.researchInference).toContain('bounded relation identity');
+    expect(evidence.requiredInputs).toHaveLength(2);
+    expect(evidence.qualifiers.length).toBeGreaterThan(0);
+    expect(evidence.exceptions.length).toBeGreaterThan(0);
+    expect(evidence.counterexamples.length).toBeGreaterThan(0);
+    expect(evidence.schoolDependencies.length).toBeGreaterThan(0);
+    expect(evidence.nonImplications).toContain('NO_BRIDGE_REENTRY');
+    expect(evidence.evidenceOnly).toBe(true);
+    expect(evidence.production).toBe('HOLD');
   });
 
   test('does not inherit the atomic relation into any current modern annual theme key', () => {
@@ -189,7 +219,7 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
 
   test('keeps Engine, Official Reading, Production, detailed, and monthly authority closed', () => {
     expect(acquisition.nextDisposition).toBe(
-      'LOCATE_1578_VOLUME_TWO_PAGE_AND_VERIFY_LUN_TAISUI_BEFORE_ATOMIC_ADJUDICATION',
+      'SEPARATELY_ADJUDICATE_TEN_CURRENT_ANNUAL_THEMES_BEFORE_BRIDGE_REREVIEW',
     );
     expect(acquisition.authorityBoundary).toEqual({
       researchEvidenceOnly: true,

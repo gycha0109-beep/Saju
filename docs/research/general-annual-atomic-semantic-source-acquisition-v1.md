@@ -77,15 +77,24 @@ content hash bound = false
 
 **검증된 범위:** 해당 스캔 *객체의 서지 메타데이터*에 작품 권차가 명시되어 있다. 파일명이 `卷二`를 암시한다는 추론이 아니다.
 
-**검증되지 않은 범위:** 두 스캔 중 `論太歲`가 수록된 쪽, 원문이 적힌 페이지 번호, 해당 페이지의 실제 문자, 별도의 대만 NCL 1578년판과 정확히 같은 판본인지 여부.
+**2026-10-08 직접 스캔 확인 결과:** GitHub의 독립 실행 환경에서 원본 PDF를 직접 내려받았고, 두 책 전 페이지(38+55)를 이미지로 재생성했다. 검색 스니펫·전사·기계 번역만으로 승인한 것이 아니다.
 
-웹 접근에서 원본 PDF가 각각 15.6MB/23.8MB로 리더의 객체 크기 제한을 초과했다. 이 접근 실패는 스캔 원문에 대한 반증도 육안 확인도 아니다. 차후 직접 이미지 접근 가능한 환경에서 판면별로 `論小運` 뒤의 `論太歲` 표제와 `庚年尅甲日`·`甲日尅戊年` 양 예문을 함께 확인하고, 파일 고유 ID / PDF 페이지 번호 / 인쇄면 표기 / 판면 이미지 / 해시를 보존한다.
+- **제3책(卷之二上)**: 38쪽 원본 다운로드 및 판면 렌더 완료. 계산 SHA-1 `d340e84e9aa4c788f004e3c63781327148edca4b`, SHA-256 `112084f6f463038285d87c477a6f80527d44a3e3d4d16a5e0ecfb24159f320d2`. 목표 표제/본문의 판면은 이 책이 아니라 아래 제4책에서 결박했다.
+- **제4책(卷之二下)**: 55쪽 원본 다운로드 및 판면 렌더 완료. 계산 SHA-1 `790baba8f4b7abc2ab706db2ae8eff4651c270ff`가 Commons의 게시값과 일치, 계산 SHA-256 `3e2e924984f51628207bfec441729b1b616e4f051cfa3ea6661262888bba1f18`.
+- **정확한 원문 판면**: 제4책 **PDF 25쪽(1-based) / index 24(0-based)**, 한 이미지에 양쪽 판면이 수록됨. 오른쪽 판면에 `論太歲` 제목, 왼쪽 판면에 아래 두 구절이 직접 보임.
+- `歲君傷日者如庚剋甲日為偏官`
+- `日犯歲君如甲日剋戊年為偏財`
+- 재현 증거: GitHub Actions [실행 37752324421](https://github.com/gycha0109-beep/Saju/actions/runs/37752324421) (25쪽 고해상도 직접 렌더 로그 및 단기 보관 아티팩트), 원본 [Commons 第4冊](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67187_三命通會_第4冊.pdf).
+- **별도 미확인**: 스캔 안의 역사적 인쇄면 번호, 대만 NCL 1578 판본과의 정확한 동일 판본 여부. 1578 업로드 청크는 별도 미검증으로 유지한다.
+
+직접 확인한 두 예문이 허용하는 결론은 **연간 천간과 출생 일간의 십신 관계 identity**뿐이다. 고전 원문의 군신·부자 비유 및 길흉 설명을 현대식 연운 테마·사건 확정·점수로 자동 확장하지 않는다.
 
 ```text
 mingVolumeTwoUpperLowerScanObjectsLocated = true
-exactMingLunTaisuiPageBound = false
-exactMingLunTaisuiPassageVisuallyVerified = false
-atomicStemRelationSourceQualified = false
+exactMingLunTaisuiPageBound = true
+exactMingLunTaisuiPassageVisuallyVerified = true
+atomicStemRelationSourceQualified = true (identity_only)
+modernAnnualThemeSemanticsSourceQualified = false
 bridgeReentryReady = false
 Production = HOLD
 ```
@@ -125,16 +134,33 @@ primary 1578 work-volume-two chunk identified = false
 
 exact primary 1578 論太歲 page bound = false
 exact primary passage visually verified = false
-atomic stem relation source-qualified = false
+atomic stem relation source-qualified = true (Ming direct image, identity_only)
 modern annual theme semantics source-qualified = false
 generic annual clash tension source-qualified = false
 Bridge re-entry ready = false
 ```
 
-다음 단계는 `LOCATE_1578_VOLUME_TWO_PAGE → VERIFY_LUN_TAISUI_VISUALLY → atomic proposition adjudication → current theme RETAIN/NARROW/REPLACE/REMOVE → Bridge re-review`다.
+다음 단계는 `current theme 10개 개별 RETAIN/NARROW/REPLACE/REMOVE 근거 판정 → 별도 Bridge re-review`다. 1578 대만 판본의 원전 페이지 검증은 독립 provenance 후속 과제이며, 현재 직접 검증한 명대 刻本과 동일하다고 취급하지 않는다.
 
 ## 7. Authority ceiling
 
 이번 작업이 병합되어도 Engine, Preview, Official Reading, Production admission, public GA, persistence, commerce, annual detailed, monthly authority는 모두 false이고 `Production = HOLD`를 유지한다.
 
 원본 page 검증과 후속 adjudication 없이 R199 test seam을 Production authority로 복제하지 않는다.
+## 8. 출처 진술 / 해석 / 추론 경계
+
+| 층위 | Source-qualified 범위 |
+|---|---|
+| 출처 진술 | 明萬曆 刻本 第4冊 卷之二下 PDF 25쪽: `歲君傷日者如庚剋甲日為偏官`, `日犯歲君如甲日剋戊年為偏財` |
+| 전통적 관계 해석 | 연간 庚이 일간 甲을 剋할 때 偏官, 일간 甲이 연간 戊를 剋할 때 偏財라는 **방향성이 있는 십신 관계** |
+| Research 추론 | 이미 확정된 일간·해당 연도의 천간으로 governed Ten-God relation table이 **원자적 identity**를 반환할 수 있음 |
+| 비허용 확대 | 사건 발생·재물 손실·질병·직업 성과·성격 개조·심리적 연간 테마·길흉 수치·동일 관계의 월운 자동 승격 |
+
+### 조건·예외·반례
+
+- 입력: 출생 일간과 기준 연도의 천간이 모두 확정되어야 하며, 불명확하면 결과 생성 금지
+- 방향 반례: 연간 庚→일간 甲의 偏官과 일간 甲→연간 戊의 偏財는 서로 치환할 수 없음
+- 고전 본문에 등장하는 신하·군주 비유 및 구조적 구제 조건은 **문헌 맥락**이지 보편적인 결과 예측 규칙으로 승인한 것이 아님
+- 학파마다 뒤따르는 결과 해석이 다를 수 있으므로 전통 십신 taxonomy 이외의 심리·사건 해석에는 별도 직접 출처 및 Bridge adjudication이 필요
+- 現 10개 General Annual theme는 여전히 `REQUIRES_SEPARATE_DIRECT_SUPPORT`; 4개 지지 충 해석 또한 자동 승인하지 않음
+- 원자 근거 증명 `true`는 **Research 단계에 국한**되며 Engine / Preview / Official Reading / Production 및 Bridge 반환 가능 상태를 변경하지 않음
