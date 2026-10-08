@@ -19,9 +19,13 @@ import {
   type TemporalReadingContext,
 } from '../reading/temporal-reading-context.js';
 import {
-  requestProductReading,
+  runProductReadingInternals,
   type ProductReadingServiceOptions,
 } from '../reading/product-reading-service.js';
+import {
+  inspectSourceReadingProofReadinessV1,
+  type SourceReadingProofReadinessV1,
+} from '../reading/source-reading-proof-readiness.js';
 import type { LegacyNarrativeRuntimeV1 } from '../reading/governed-reading-execution.js';
 import type { ProductReadingResponse } from '../reading/product-reading-response.js';
 
@@ -394,33 +398,63 @@ function assertDependencies(dependencies: MyeonghwaProductHostDependencies): voi
   }
 }
 
+/** Saju-internal only; not exported by the consumer product-host entrypoint. */
+export interface MyeonghwaSourceReadingProofHost {
+  requestReadingWithProofReadiness(body: unknown): Promise<{
+    readonly response: ProductReadingResponse;
+    readonly readiness: SourceReadingProofReadinessV1;
+  }>;
+}
+
+async function runProductHostReadingInternals(
+  dependencies: MyeonghwaProductHostDependencies,
+  body: unknown,
+) {
+  const parsed = parseProductHostReadingRequest(body);
+  const requestId = nextRequestId(dependencies.requestIdFactory);
+  const context: ProductHostExecutionContext = {
+    requestId,
+    requestedAt: nextRequestedAt(dependencies.requestNowFactory),
+  };
+  const input = consumerInput(parsed, context);
+  const snapshot = await dependencies.calculate(toBirthInput(parsed.birth), context);
+  const requestContext = temporalInterpretationContext(input, snapshot);
+  const { interpretation, registry } =
+    requestContext === undefined
+      ? await dependencies.interpret(snapshot, context)
+      : await dependencies.interpret(snapshot, context, requestContext);
+  const reading = await runProductReadingInternals(
+    snapshot,
+    interpretation,
+    registry,
+    input,
+    dependencies.readingOptions,
+    dependencies.legacyNarrativeRuntime,
+  );
+  return { snapshot, interpretation, registry, ...reading };
+}
+
 export function createMyeonghwaProductHost(
   dependencies: MyeonghwaProductHostDependencies,
 ): MyeonghwaProductHost {
   assertDependencies(dependencies);
   return {
     async requestReading(body: unknown): Promise<ProductReadingResponse> {
-      const parsed = parseProductHostReadingRequest(body);
-      const requestId = nextRequestId(dependencies.requestIdFactory);
-      const context: ProductHostExecutionContext = {
-        requestId,
-        requestedAt: nextRequestedAt(dependencies.requestNowFactory),
-      };
-      const input = consumerInput(parsed, context);
-      const snapshot = await dependencies.calculate(toBirthInput(parsed.birth), context);
-      const requestContext = temporalInterpretationContext(input, snapshot);
-      const { interpretation, registry } =
-        requestContext === undefined
-          ? await dependencies.interpret(snapshot, context)
-          : await dependencies.interpret(snapshot, context, requestContext);
-      return requestProductReading(
-        snapshot,
-        interpretation,
-        registry,
-        input,
-        dependencies.readingOptions,
-        dependencies.legacyNarrativeRuntime,
-      );
+      return (await runProductHostReadingInternals(dependencies, body)).response;
+    },
+  };
+}
+
+/** The future service-authenticated HTTP issuer may call only this server-side seam. */
+export function createMyeonghwaSourceReadingProofHost(
+  dependencies: MyeonghwaProductHostDependencies,
+): MyeonghwaSourceReadingProofHost {
+  assertDependencies(dependencies);
+  return {
+    async requestReadingWithProofReadiness(body: unknown) {
+      const run = await runProductHostReadingInternals(dependencies, body);
+      const readiness = inspectSourceReadingProofReadinessV1(run);
+      return { response: run.response, readiness };
     },
   };
 }
