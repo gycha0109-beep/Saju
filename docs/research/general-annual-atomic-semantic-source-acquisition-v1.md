@@ -39,11 +39,27 @@ Exact page: `Page:Gujin Tushu Jicheng, Volume 470 (1700-1725).djvu/50`.
 
 1578 초간본 자체의 exact page verification은 아니며 현재 modern annual theme key를 지지하지 않는다.
 
-### 4.2 NCL 1578 scan
+### 4.2 NCL 1578 primary-edition scan objects
 
-`三命通會`, 萬民英, 明萬曆戊寅六年(1578)刊本, National Central Library, Taiwan. Commons의 `NCL-06589 2 三命通會.pdf`, 187 pages.
+`三命通會`, 萬民英, 明萬曆戊寅六年(1578)刊본, National Central Library, Taiwan.
 
-현재 `scan object located=true`, `reproducible=true`지만 exact 論太歲 page / relevant passage visual verification / content hash binding은 아직 없다.
+Commons에는 현재 최소 두 개의 upload object가 확인된다.
+
+- `NCL-06589 1 三命通會.pdf`: 1,000 pages
+- `NCL-06589 2 三命通會.pdf`: 187 pages
+
+중요: 파일명의 `_1`, `_2`는 Commons upload chunk 식별자로 취급한다. 이를 작품의 `卷一`, `卷二`와 동일시하지 않는다.
+
+현재 상태는 두 object 모두 `scan object located=true`, `reproducible=true`이지만, 어느 upload object의 어느 page가 실제 `卷二·論太歲`인지 아직 시각적으로 결박하지 않았다.
+
+따라서:
+
+```text
+work-volume-two mapping = false
+exact 論太歲 page bound = false
+relevant passage visually verified = false
+content hash bound = false
+```
 
 판정: `PRIMARY_SCAN_PAGE_VERIFICATION_REQUIRED`.
 
@@ -77,7 +93,8 @@ annual-to-natal branch clash는 `deterministic relation fact → bounded structu
 
 ```text
 exact historical transmission page bound = true
-primary 1578 scan object located = true
+primary 1578 edition scan chunks located = true
+primary 1578 work-volume-two chunk identified = false
 
 exact primary 1578 論太歲 page bound = false
 exact primary passage visually verified = false
@@ -87,7 +104,7 @@ generic annual clash tension source-qualified = false
 Bridge re-entry ready = false
 ```
 
-다음 단계는 `VERIFY_PRIMARY_SCAN_PAGE_FOR_LUN_TAISUI → atomic proposition adjudication → current theme RETAIN/NARROW/REPLACE/REMOVE → Bridge re-review`다.
+다음 단계는 `LOCATE_1578_VOLUME_TWO_PAGE → VERIFY_LUN_TAISUI_VISUALLY → atomic proposition adjudication → current theme RETAIN/NARROW/REPLACE/REMOVE → Bridge re-review`다.
 
 ## 7. Authority ceiling
 
