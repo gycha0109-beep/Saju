@@ -117,3 +117,11 @@ Research 파일: `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`.
 - 별개 『刻京臺增補淵海子平大全』 명대 **제1책 PDF 10쪽 `天干五陽通變`**에서 `甲` 기준 `乙`에 `爲劫財敗財`의 **복합 명칭 원전 판면**을 직접 확인. 같은 인쇄 서명 제2책 PDF 10쪽 `論劫財`의 `五陽見五陰爲敗財` / `五陰見五陽爲劫財` 세부 규칙과 구분하여 기록.
 - 원본 서지 ID, PDF zero/one 인덱스, 파생 JPEG SHA-256, 14쪽의 실제 수신·검사 로그, 실행 ID 및 엄격한 Level/권한 판정은 `general-annual-sa7d-b1-ming-printed-annual-stem-and-jiecai-baicai-composite-witness-v1.md`에서 추적.
 - 새 사실: `METHOD_SCOPE_L1_PRINT_VERIFIED` 및 `L1_GROUPED_HISTORICAL_TERMINOLOGY=VERIFIED`. **불변:** 독립적 `甲→乙 劫財` 명칭 미해결, 대상의 정확한 개별 `甲日×流年天干→十神` L2 **0/8**, Annual `INSUFFICIENT` **8/8**, `bridgeReentryReady=false`, `Production=HOLD`.
+
+## 12. 2026-10-09 1935년 『千里命稿』 전사·실제 소장본 동일성 확인 보류
+
+- 『千里命稿』 `比劫祿刃篇` 온라인 전사에서 `甲日遇乙…故乙為甲之劫財` 단일 현대 명칭 **텍스트 단서 L0**를 확인. 명대 『淵海子平』의 `劫財敗財` 복합 명칭 및 `敗財` 방향 규칙과 **판본·시대가 다른 자료**이므로 자동 병합 금지.
+- NLC `NLC416-01jh000372-10197` **民國24[1935]** 서명 `千里命稿` 직접 파생 인쇄 JPEG **22쪽**(전반 6, 중간 8, 후반 8) 시각 감사 및 **22/22 SHA-256 PASS**. 확인한 표제 `千里命稿 第一集`, 서문·명례·권말 안내와 전사 `比劫祿刃篇` 사이의 **동일 인쇄판 본문 결속은 미성립**.
+- 표본 22/123으로 책 전체의 구절 부재는 주장하지 않음. 원본 PDF 전체 다운로드/검증도 미수행.
+- PDF 정확한 쪽·실물 서지·직접 이미지 실행/아티팩트·허용된 사실·불허 사실은 `general-annual-sa7d-b1-qianli-1935-edition-binding-audit-v1.md`에 별도 기록.
+- **불변:** 명대 일간 십신 독립 인쇄 L1 **7/8**, 甲乙 단독 劫財 L1 **未BOUND**, 개별 연운 L2 **0/8**, Annual `INSUFFICIENT` **8/8**, `bridgeReentryReady=false`, `Production=HOLD`.
