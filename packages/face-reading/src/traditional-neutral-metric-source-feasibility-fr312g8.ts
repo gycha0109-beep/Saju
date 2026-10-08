@@ -43,7 +43,7 @@ export interface SourceFeasibilityFR312G8 {
 
 /** S01-S07 retain FR312G7 stable source IDs; no facial assets are fetched. */
 export const FR312G8_SOURCE_FEASIBILITY: readonly SourceFeasibilityFR312G8[] =
-  Object.freeze([
+  Object.freeze(([
     {
       sourceId: 'FR312G7-S01',
       accessRoute: 'stale_distribution_link',
@@ -142,7 +142,7 @@ export const FR312G8_SOURCE_FEASIBILITY: readonly SourceFeasibilityFR312G8[] =
       requestAction: 'methodological_reference_only',
       evidentiaryBlocker: 'An agreement-method paper gives no participant-specific variance or unavailable-case distribution for the eight FR312G axes.',
     },
-  ].map((entry) => Object.freeze(entry)));
+  ] as const).map((entry) => Object.freeze(entry)));
 
 export const FR312G8_EXACT_AXIS_REPRODUCTION_REQUIREMENTS = Object.freeze([
   'FR291 visible central groove axis endpoints and visible mouth-width denominator; 2-session participant-paired ratio observations',
