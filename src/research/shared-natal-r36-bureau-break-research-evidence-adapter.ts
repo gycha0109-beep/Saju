@@ -177,36 +177,57 @@ export function projectSajuR36BureauBreak(snapshot: CanonicalSajuSnapshot) {
   ) return fail('upstream-chain-unresolved');
 
   const outcomes = Object.fromEntries(SAJU_R36_MECHANISMS.map((mechanism) => {
-    const items = settlements.items.filter((item) => item.mechanism === mechanism);
-    const one = items.length === 1 ? items[0] : undefined;
-    const match = one?.clashes.filter((clash) =>
-      clash.placementClass === definition.directBreakPlacement &&
-      clash.settlement === definition.directBreakSettlement &&
-      clash.deterministicBureauState === definition.directBreakVerdict
-    ) ?? [];
-    // Never merge outcomes of independent bureaus or multiple direct breaks.
-    const admitted = one !== undefined &&
-      one.trackedClashCount === 1 &&
-      one.directBreakCount === 1 &&
-      one.postInteractionBureauState === definition.directBreakVerdict &&
-      one.postInteractionBureauStateBasis === 'SINGLE_SOURCE_BOUNDED_TIGHT_EMBEDDED_CLASH' &&
-      match.length === 1;
-    const clash = admitted ? match[0] : undefined;
-    const identity: BreakIdentity | null = admitted && one !== undefined && clash !== undefined
-      ? {
-          mechanism,
-          formationRelationId: one.formationRelationId,
-          bureauParticipantPositions: [...one.bureauParticipantPositions],
-          bureauSpanStart: one.bureauSpanStart,
-          bureauSpanEnd: one.bureauSpanEnd,
-          clashRelationId: clash.clashRelationId,
-          clashedBureauParticipantPosition: clash.clashedBureauParticipantPosition,
-          clashCounterpartPosition: clash.clashCounterpartPosition,
-          placementClass: definition.directBreakPlacement,
-          postInteractionBureauState: definition.directBreakVerdict,
-        }
-      : null;
-    return [mechanism, { observed: admitted, identity }];
+    // I35/I39/I45 may carry several observations of one structural
+    // bureau (one per target-root subject). Preserve the I47 decision
+    // per unique bureau/clash identity instead of falsely requiring one
+    // observational I45 item for the entire mechanism.
+    const admittedIdentities: BreakIdentity[] = [];
+    const keys = new Set<string>();
+    for (const item of settlements.items) {
+      if (
+        item.mechanism !== mechanism ||
+        item.directBreakCount !== 1 ||
+        item.postInteractionBureauState !== definition.directBreakVerdict ||
+        item.postInteractionBureauStateBasis !== 'SINGLE_SOURCE_BOUNDED_TIGHT_EMBEDDED_CLASH'
+      ) continue;
+
+      const direct = item.clashes.filter((clash) =>
+        clash.placementClass === definition.directBreakPlacement &&
+        clash.settlement === definition.directBreakSettlement &&
+        clash.deterministicBureauState === definition.directBreakVerdict,
+      );
+      if (direct.length !== 1) continue;
+      const clash = direct[0]!;
+      const identity: BreakIdentity = {
+        mechanism,
+        formationRelationId: item.formationRelationId,
+        bureauParticipantPositions: [...item.bureauParticipantPositions],
+        bureauSpanStart: item.bureauSpanStart,
+        bureauSpanEnd: item.bureauSpanEnd,
+        clashRelationId: clash.clashRelationId,
+        clashedBureauParticipantPosition: clash.clashedBureauParticipantPosition,
+        clashCounterpartPosition: clash.clashCounterpartPosition,
+        placementClass: definition.directBreakPlacement,
+        postInteractionBureauState: definition.directBreakVerdict,
+      };
+      const identityKey = deterministicContentHash(identity);
+      if (!keys.has(identityKey)) {
+        keys.add(identityKey);
+        admittedIdentities.push(identity);
+      }
+    }
+
+    // Multiple distinct positive bureaus/clashes per mechanism are not
+    // aggregated into one conclusion. Repeated observations of the
+    // same exact relation and clash are one already-settled I47 fact.
+    const observed = admittedIdentities.length === 1;
+    return [
+      mechanism,
+      {
+        observed,
+        identity: observed ? admittedIdentities[0]! : null,
+      },
+    ];
   })) as Record<ChallengeMechanism, { readonly observed: boolean; readonly identity: BreakIdentity | null }>;
 
   return {
