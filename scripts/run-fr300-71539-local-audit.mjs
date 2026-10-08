@@ -7,6 +7,8 @@
  * Repository output is deliberately forbidden; private output is gitignored.
  */
 import { createHash } from 'node:crypto';
+import { Buffer } from 'node:buffer';
+import console from 'node:console';
 import { createReadStream } from 'node:fs';
 import { readFile, writeFile, mkdir, lstat, realpath, mkdtemp, rm } from 'node:fs/promises';
 import { createInterface } from 'node:readline';
@@ -17,7 +19,6 @@ import process from 'node:process';
 
 const INPUT_SCHEMA = 'fr312g16-aihub71539-local-audit-input-v1';
 const RECEIPT_SCHEMA = 'fr312g16-aihub71539-private-preflight-receipt-v1';
-const OUTPUT = '.cache/face-reading/fr312g16/private-preflight-receipt.json';
 const maxSize = { rgb: 256 * 1024 * 1024, obj: 512 * 1024 * 1024,
   label: 8 * 1024 * 1024, camera: 1 * 1024 * 1024 };
 const extensions = {
