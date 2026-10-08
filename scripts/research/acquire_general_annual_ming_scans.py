@@ -51,7 +51,9 @@ def fetch_pdf(item: dict) -> bytes:
             last_error = str(exc)
             print(f"RETRY {item['id']} {attempt+1}/3: {last_error}", flush=True)
             if attempt < 2:
-                time.sleep(2 * (attempt + 1))
+                delay = 35 * (attempt + 1) if "429" in last_error else 3 * (attempt + 1)
+                print(f"BACKOFF {item['id']} {delay}s", flush=True)
+                time.sleep(delay)
     raise RuntimeError(f"original download unavailable: {last_error}")
 
 
@@ -103,7 +105,8 @@ def main() -> None:
         "sources": [],
     }
     failed = False
-    for item in SCANS:
+    candidates = [item for item in SCANS if item['id'].endswith('67187')] if os.environ.get('SA7DA2_ONLY_LOWER') == 'true' else SCANS
+    for item in candidates:
         result = {k: v for k, v in item.items() if k != "name"}
         manifest["sources"].append(result)
         try:

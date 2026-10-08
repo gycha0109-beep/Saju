@@ -17,6 +17,8 @@ jobs:
       - name: Acquire public-domain scans and produce evidence contact sheets
         id: acquire
         run: python scripts/research/acquire_general_annual_ming_scans.py
+        env:
+          SA7DA2_ONLY_LOWER: "true"
       - name: Upload inspected-page candidates and provenance
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -25,3 +27,4 @@ jobs:
           path: .scan-evidence/
           if-no-files-found: warn
           retention-days: 5
+          include-hidden-files: true
