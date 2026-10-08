@@ -84,7 +84,7 @@ describe('2B-3C-1 single Saju product execution and source readiness', () => {
       responseBodyHash: deterministicContentHash(response),
     });
     expect(readiness.material?.executionId).toMatch(/^reading_execution_/u);
-    expect(readiness.material?.preparationId).toMatch(/^reading_preparation_/u);
+    expect(readiness.material?.preparationId).toMatch(/^product_reading_/u);
     expect(readiness.material?.selectionId).toBeTruthy();
     expect(readiness.material?.evidenceBundleHash).toMatch(/^[0-9a-f]{64}$/u);
     expect(readiness.material?.profileRef.contentHash).toMatch(/^[0-9a-f]{64}$/u);
