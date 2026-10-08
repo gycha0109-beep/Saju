@@ -1,0 +1,37 @@
+name: "[WT:saju-research] SA-7D-B1 Two Ming Print Witnesses Once"
+on:
+  push:
+    branches:
+      - research/saju-research/sa7d-b1-volume5-scan
+    paths:
+      - scripts/research/sa7d_b1_volume6_7_source_locator.py
+      - scripts/research/sa7d_b1_yuanhai_ming_locator.py
+      - .github/workflows/sa7d-b1-l1-l2-two-witness-once.yml
+permissions:
+  contents: read
+concurrency:
+  group: sa7d-b1-l1-l2-two-witnesses-once
+  cancel-in-progress: false
+jobs:
+  source-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install pinned image validator
+        run: python -m pip install --disable-pip-version-check --no-cache-dir "Pillow==11.3.0"
+      - name: Inspect Ming Sanming Tonghui volume10 upper exact 6 pages
+        run: python scripts/research/sa7d_b1_volume6_7_source_locator.py
+      - name: Inspect separate Ming Yuanhai Ziping paired table 8 pages
+        run: python scripts/research/sa7d_b1_yuanhai_ming_locator.py
+      - name: Save verified PDF-derived JPEG evidence; never source PDF
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sa7d-b1-two-witnesses-print-page-evidence
+          path: |
+            .scan-evidence-6-7/
+            .scan-evidence-yuanhai/
+          if-no-files-found: warn
+          retention-days: 5
+          include-hidden-files: true
