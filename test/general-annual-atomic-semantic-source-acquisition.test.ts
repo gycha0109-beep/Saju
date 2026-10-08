@@ -104,6 +104,12 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
   test('maps Ming Wanli 卷之二上/下 scan objects without claiming an exact 論太歲 page', () => {
     const upper = byId('NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_UPPER_SCAN');
     const lower = byId('NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_LOWER_SCAN');
+    if (upper.candidateId !== 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_UPPER_SCAN') {
+      throw new Error('Missing upper Ming scan candidate');
+    }
+    if (lower.candidateId !== 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_LOWER_SCAN') {
+      throw new Error('Missing lower Ming scan candidate');
+    }
 
     expect(upper.sourceIdentity).toMatchObject({
       volume: '第3冊',
