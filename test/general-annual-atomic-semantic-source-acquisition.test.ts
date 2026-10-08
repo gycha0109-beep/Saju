@@ -196,6 +196,82 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
     );
   });
 
+  test('adjudicates all ten modern annual theme meanings individually without granting release authority', () => {
+    const adjudication = acquisition.currentThemeSemanticAdjudication;
+    const expected = [
+      ['ANNUAL_PEER_SELF_DIRECTION', '비견', 'self_direction'],
+      ['ANNUAL_PEER_COMPETITION_COORDINATION', '겁재', 'competition_coordination'],
+      ['ANNUAL_OUTPUT_STEADY_PRODUCTION', '식신', 'steady_production'],
+      ['ANNUAL_OUTPUT_EXPRESSION_CHANGE', '상관', 'expression_change'],
+      ['ANNUAL_WEALTH_EXTERNAL_RESOURCES', '편재', 'external_resources'],
+      ['ANNUAL_WEALTH_STRUCTURED_RESOURCES', '정재', 'structured_resources'],
+      ['ANNUAL_OFFICER_PRESSURE_RESPONSE', '편관', 'pressure_response'],
+      ['ANNUAL_OFFICER_ROLE_RESPONSIBILITY', '정관', 'role_responsibility'],
+      ['ANNUAL_RESOURCE_ALTERNATIVE_LEARNING', '편인', 'alternative_learning'],
+      ['ANNUAL_RESOURCE_SUPPORT_LEARNING', '정인', 'support_learning'],
+    ];
+    expect(adjudication.decisions.map(
+      (item) => [item.semanticKey, item.tenGod, item.originalModernClaim],
+    )).toEqual(expected);
+    expect(adjudication.decisions.map((item) => item.semanticKey)).toEqual(
+      [...GENERAL_ANNUAL_CURRENT_THEME_KEYS],
+    );
+    const perKeyDecisions = adjudication.decisions;
+    const exactIdentityWitnessed = perKeyDecisions.filter(
+      (item) => item.identitySourceSupportGrade === 'PRIMARY_SUPPORTED',
+    );
+    expect(exactIdentityWitnessed.map((item) => item.tenGod)).toEqual(['편재', '편관']);
+    expect(perKeyDecisions.filter((item) =>
+      item.semanticDisposition === 'REPLACE',
+    )).toHaveLength(2);
+    expect(perKeyDecisions.filter((item) =>
+      item.semanticDisposition === 'REQUIRES_SEPARATE_DIRECT_SUPPORT',
+    )).toHaveLength(8);
+    for (const item of perKeyDecisions) {
+      for (const field of [
+        'semanticKey', 'currentClaim', 'sourceRefs', 'sourceStatement',
+        'interpretiveReading', 'researchInference', 'preconditions',
+        'meaningStrength', 'qualifiers', 'exceptions', 'counterexamples',
+        'schoolDependencies', 'nonImplications', 'sourceSupportGrade',
+        'semanticDisposition', 'unresolvedEvidence',
+      ]) {
+        expect(Object.hasOwn(item, field), `${item.semanticKey}: ${field}`).toBe(true);
+      }
+      expect(item.sourceRefs).toHaveLength(3);
+      expect(item.sourceSupportGrade).toBe('INSUFFICIENT');
+      expect(item.sourceQualifiedModernAnnualMeaning).toBe(false);
+      expect(item.originalModernMeaningGate).toBe('REQUIRES_SEPARATE_DIRECT_SUPPORT');
+      expect(item.successorMeaningCeiling).toBe('relation_identity_only');
+      expect(item.independentlyGovernedTenGodTaxonomyRequired).toBe(true);
+      expect(item.candidateCodeChanged).toBe(false);
+      expect(item.productionAuthorization).toBe(false);
+      expect(item.qualifiers.length).toBeGreaterThan(0);
+      expect(item.exceptions.length).toBeGreaterThan(0);
+      expect(item.counterexamples.length).toBeGreaterThan(0);
+      expect(item.schoolDependencies.length).toBeGreaterThan(0);
+      expect(item.nonImplications).toContain('NO_MONTHLY_AUTHORITY');
+      expect(item.unresolvedEvidence.length).toBeGreaterThan(0);
+      if (item.identitySourceSupportGrade === 'PRIMARY_SUPPORTED') {
+        expect(item.sourceStatement).not.toBeNull();
+        expect(item.semanticDisposition).toBe('REPLACE');
+      } else {
+        expect(item.sourceStatement).toBeNull();
+        expect(item.semanticDisposition).toBe('REQUIRES_SEPARATE_DIRECT_SUPPORT');
+      }
+    }
+    expect(adjudication.sourceBoundary).toMatchObject({
+      exactPrimaryWitnessCandidateId: 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_LOWER_SCAN',
+      exactPrimaryPdfPageOneBased: 25,
+      sourceExamplesAreExhaustiveTenGodTaxonomy: false,
+      reviewedSourcesDoNotProveAbsenceOfOtherHistoricalAnnualSemantics: true,
+    });
+    expect(adjudication.schoolAndExceptionBoundaries).toContain(
+      'REPLACE_IS_A_RESEARCH_DECISION_NOT_A_RELEASE_OR_PROOF_OF_GLOBAL_HISTORICAL_ABSENCE',
+    );
+    expect(adjudication.bridgeReentryReady).toBe(false);
+    expect(adjudication.production).toBe('HOLD');
+  });
+
   test('separates deterministic branch relation input from annual tension and event semantics', () => {
     expect(acquisition.annualBranchClashBoundary).toEqual({
       deterministicRelationFactMayBeInputEvidence: true,
@@ -218,7 +294,7 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
 
   test('keeps Engine, Official Reading, Production, detailed, and monthly authority closed', () => {
     expect(acquisition.nextDisposition).toBe(
-      'SEPARATELY_ADJUDICATE_TEN_CURRENT_ANNUAL_THEMES_BEFORE_BRIDGE_REREVIEW',
+      'SEPARATELY_ADJUDICATE_FOUR_ANNUAL_BRANCH_CLASH_TENSIONS_BEFORE_BRIDGE_REREVIEW',
     );
     expect(acquisition.authorityBoundary).toEqual({
       researchEvidenceOnly: true,

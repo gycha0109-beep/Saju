@@ -17,6 +17,19 @@ export const GENERAL_ANNUAL_CURRENT_THEME_KEYS = Object.freeze([
   'ANNUAL_RESOURCE_SUPPORT_LEARNING',
 ] as const);
 
+const GENERAL_ANNUAL_THEME_KEY_MEANINGS = Object.freeze([
+  Object.freeze({ semanticKey: 'ANNUAL_PEER_SELF_DIRECTION', tenGod: '비견', modernClaim: 'self_direction' }),
+  Object.freeze({ semanticKey: 'ANNUAL_PEER_COMPETITION_COORDINATION', tenGod: '겁재', modernClaim: 'competition_coordination' }),
+  Object.freeze({ semanticKey: 'ANNUAL_OUTPUT_STEADY_PRODUCTION', tenGod: '식신', modernClaim: 'steady_production' }),
+  Object.freeze({ semanticKey: 'ANNUAL_OUTPUT_EXPRESSION_CHANGE', tenGod: '상관', modernClaim: 'expression_change' }),
+  Object.freeze({ semanticKey: 'ANNUAL_WEALTH_EXTERNAL_RESOURCES', tenGod: '편재', modernClaim: 'external_resources' }),
+  Object.freeze({ semanticKey: 'ANNUAL_WEALTH_STRUCTURED_RESOURCES', tenGod: '정재', modernClaim: 'structured_resources' }),
+  Object.freeze({ semanticKey: 'ANNUAL_OFFICER_PRESSURE_RESPONSE', tenGod: '편관', modernClaim: 'pressure_response' }),
+  Object.freeze({ semanticKey: 'ANNUAL_OFFICER_ROLE_RESPONSIBILITY', tenGod: '정관', modernClaim: 'role_responsibility' }),
+  Object.freeze({ semanticKey: 'ANNUAL_RESOURCE_ALTERNATIVE_LEARNING', tenGod: '편인', modernClaim: 'alternative_learning' }),
+  Object.freeze({ semanticKey: 'ANNUAL_RESOURCE_SUPPORT_LEARNING', tenGod: '정인', modernClaim: 'support_learning' }),
+] as const);
+
 export const GENERAL_ANNUAL_ATOMIC_STEM_RELATION_PROPOSITION = Object.freeze({
   propositionId: 'GENERAL_ANNUAL_STEM_TO_DAY_MASTER_TEN_GOD_RELATION_IDENTITY',
   inputs: Object.freeze([
@@ -293,6 +306,132 @@ export function buildGeneralAnnualAtomicSourceAcquisition() {
     ),
   );
 
+  const directWitness = GENERAL_ANNUAL_SOURCE_CANDIDATES.find(
+    (source) => source.candidateId === 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_LOWER_SCAN',
+  );
+  if (
+    directWitness?.candidateId !== 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_LOWER_SCAN'
+    || !directWitness.acquisition.relevantPassageVisuallyVerified
+    || !directWitness.acquisition.exactLunTaisuiPageBound
+  ) {
+    throw new Error('Annual theme adjudication requires a directly verified Ming primary witness');
+  }
+  const currentThemeSemanticAdjudication = Object.freeze({
+    version: 'sa7d-a3-annual-theme-adjudication-v2' as const,
+    sourceBoundary: Object.freeze({
+      exactPrimaryWitnessCandidateId: directWitness.candidateId,
+      exactPrimaryPdfPageOneBased: directWitness.acquisition.pdfPageOneBased,
+      originalCandidateSourceId: 'SRC-MYEONGHA-ANNUAL-INTERPRETATION-POLICY-V1' as const,
+      modernExpansionBoundaryDoi: '10.21186/IPR.2022.7.1.025' as const,
+      directlyQualifiedProposition:
+        'GENERAL_ANNUAL_STEM_TO_DAY_MASTER_TEN_GOD_RELATION_IDENTITY' as const,
+      sourceExamplesAreExhaustiveTenGodTaxonomy: false as const,
+      reviewedSourcesDoNotProveAbsenceOfOtherHistoricalAnnualSemantics: true as const,
+      originalModernMeaningGateRemainsPendingForAllTen: true as const,
+      primaryWitnessOnlyDirectlyDemonstrates: Object.freeze(['편관', '편재'] as const),
+    }),
+    decisions: Object.freeze(GENERAL_ANNUAL_THEME_KEY_MEANINGS.map((entry) => {
+      const directIdentityExample = entry.tenGod === '편관' || entry.tenGod === '편재';
+      const directPassage = entry.tenGod === '편관'
+        ? '歲君傷日者如庚剋甲日為偏官'
+        : entry.tenGod === '편재'
+          ? '日犯歲君如甲日剋戊年為偏財'
+          : null;
+      return Object.freeze({
+        semanticKey: entry.semanticKey,
+        tenGod: entry.tenGod,
+        currentClaim: entry.modernClaim,
+        originalModernClaim: entry.modernClaim,
+        sourceRefs: Object.freeze([
+          directWitness.candidateId,
+          'LEE_KIM_2022_TEN_GOD_CLASSIC_MODERN_BOUNDARY',
+          'SRC-MYEONGHA-ANNUAL-INTERPRETATION-POLICY-V1',
+        ] as const),
+        sourceStatement: directPassage,
+        interpretiveReading: directIdentityExample
+          ? 'The cited Ming example names this exact directed annual-stem versus natal-day-master Ten-God relation, not this modern annual theme.'
+          : 'The two directly verified Ming examples do not name this Ten-God label; no matching direct classical annual passage is currently bound.',
+        researchInference: directIdentityExample
+          ? 'Replace the unsupported modern theme only with the cited exact Ten-God relation identity after separately governed relation computation.'
+          : 'Retain Research hold for the modern theme and the proposed identity successor until its exact Ten-God relation is separately source-qualified.',
+        preconditions: Object.freeze([
+          'RESOLVED_NATAL_DAY_MASTER',
+          'RESOLVED_TARGET_YEAR_ANNUAL_STEM',
+          'EXACT_GOVERNED_DIRECTIONAL_TEN_GOD_RELATION',
+        ] as const),
+        meaningStrength: 'identity_only' as const,
+        qualifiers: Object.freeze([
+          'PRIMARY_WITNESS_SUPPORTS_ONLY_TWO_EXPLICIT_EXAMPLES',
+          'MODERN_ANNUAL_CLAIM_NOT_DIRECTLY_SUPPORTED',
+          'ANNUAL_SCOPE_CANNOT_BE_INHERITED_BY_MONTHLY',
+        ] as const),
+        exceptions: Object.freeze([
+          'MISSING_OR_AMBIGUOUS_DAY_MASTER_OR_YEAR_STEM_FAIL_CLOSED',
+          'UNGOVERNED_TEN_GOD_TAXONOMY_NOT_ADMITTED',
+        ] as const),
+        counterexamples: Object.freeze([
+          '庚_ANNUAL_CONTROLS_甲_DAY_IS_偏官_NOT_偏財',
+          '甲_DAY_CONTROLS_戊_ANNUAL_IS_偏財_NOT_偏官',
+          'IDENTITY_ALONE_CANNOT_PROVE_' + entry.modernClaim.toUpperCase(),
+        ]),
+        schoolDependencies: Object.freeze([
+          'EXACT_GOVERNED_TEN_GOD_RELATION_TAXONOMY_REQUIRED',
+          'MODERN_ANNUAL_MEANING_AND_SCHOOL_SPECIFIC_OUTCOMES_NEED_NEW_DIRECT_WITNESS',
+        ] as const),
+        nonImplications: Object.freeze([
+          'NO_MODERN_ANNUAL_THEME_AUTHORITY',
+          'NO_LUCK_SCORE_OR_EVENT_GUARANTEE',
+          'NO_PERSONALITY_CAREER_WEALTH_RELATIONSHIP_HEALTH_OUTCOME',
+          'NO_MONTHLY_AUTHORITY',
+          'NO_BRIDGE_ENGINE_PREVIEW_OFFICIAL_READING_OR_PRODUCTION',
+        ] as const),
+        sourceSupportGrade: 'INSUFFICIENT' as const,
+        identitySourceSupportGrade: directIdentityExample
+          ? 'PRIMARY_SUPPORTED' as const
+          : 'INSUFFICIENT' as const,
+        originalModernMeaningGate: 'REQUIRES_SEPARATE_DIRECT_SUPPORT' as const,
+        semanticDisposition: directIdentityExample
+          ? 'REPLACE' as const
+          : 'REQUIRES_SEPARATE_DIRECT_SUPPORT' as const,
+        researchDisposition: directIdentityExample
+          ? 'REPLACE' as const
+          : 'REQUIRES_SEPARATE_DIRECT_SUPPORT' as const,
+        sourceQualifiedModernAnnualMeaning: false as const,
+        proposedSuccessor: directIdentityExample
+          ? 'ANNUAL_STEM_TO_DAY_MASTER_TEN_GOD_IDENTITY_ONLY' as const
+          : 'PENDING_INDEPENDENT_TEN_GOD_RELATION_WITNESS' as const,
+        successorMeaningCeiling: 'relation_identity_only' as const,
+        independentlyGovernedTenGodTaxonomyRequired: true as const,
+        unresolvedEvidence: directIdentityExample
+          ? Object.freeze([
+              'DIRECT_ANNUAL_SPECIFIC_SOURCE_SUPPORT_FOR_' + entry.modernClaim.toUpperCase(),
+              'INDEPENDENT_GOVERNANCE_ADMISSION_OF_EXACT_TEN_GOD_TABLE',
+              'SCHOOL_EXCEPTION_AND_NON_EVENT_CONCLUSION_REVIEW',
+            ])
+          : Object.freeze([
+              'DIRECT_MING_OR_OTHER_PRIMARY_PASSAGE_FOR_' + entry.tenGod,
+              'DIRECT_ANNUAL_SPECIFIC_SOURCE_SUPPORT_FOR_' + entry.modernClaim.toUpperCase(),
+              'INDEPENDENT_GOVERNANCE_ADMISSION_OF_EXACT_TEN_GOD_TABLE',
+              'SCHOOL_EXCEPTION_AND_NON_EVENT_CONCLUSION_REVIEW',
+            ]),
+        candidateCodeChanged: false as const,
+        productionAuthorization: false as const,
+      });
+    })),
+    schoolAndExceptionBoundaries: Object.freeze([
+      'MISSING_OR_AMBIGUOUS_NATAL_DAY_MASTER_FAIL_CLOSED',
+      'MISSING_OR_AMBIGUOUS_ANNUAL_STEM_FAIL_CLOSED',
+      'CLASSICAL_EXAMPLES_DO_NOT_ENUMERATE_ALL_TEN_GOD_LABELS',
+      'MODERN_ANNUAL_PSYCHOLOGY_AND_LIFE_DOMAIN_EVENTS_REQUIRE_SEPARATE_DIRECT_EVIDENCE',
+      'REPLACE_IS_A_RESEARCH_DECISION_NOT_A_RELEASE_OR_PROOF_OF_GLOBAL_HISTORICAL_ABSENCE',
+      'NO_SCHOOL_SPECIFIC_EVENT_POLARITY_INHERITANCE',
+    ] as const),
+    sourceQualifiedSuccessorClaimOnly: true as const,
+    candidateSurfaceMutated: false as const,
+    bridgeReentryReady: false as const,
+    production: 'HOLD' as const,
+  });
+
   const material = Object.freeze({
     version: GENERAL_ANNUAL_ATOMIC_SOURCE_ACQUISITION_VERSION,
     issue: '#2386' as const,
@@ -354,6 +493,7 @@ export function buildGeneralAnnualAtomicSourceAcquisition() {
     }),
     sourceCandidates: GENERAL_ANNUAL_SOURCE_CANDIDATES,
     themeDispositions,
+    currentThemeSemanticAdjudication,
     annualBranchClashBoundary: Object.freeze({
       deterministicRelationFactMayBeInputEvidence: true as const,
       branchInteractionStructuralResearchRelevant: true as const,
@@ -384,7 +524,7 @@ export function buildGeneralAnnualAtomicSourceAcquisition() {
       bridgeReentryReady: false as const,
     }),
     nextDisposition:
-      'SEPARATELY_ADJUDICATE_TEN_CURRENT_ANNUAL_THEMES_BEFORE_BRIDGE_REREVIEW' as const,
+      'SEPARATELY_ADJUDICATE_FOUR_ANNUAL_BRANCH_CLASH_TENSIONS_BEFORE_BRIDGE_REREVIEW' as const,
     authorityBoundary: Object.freeze({
       researchEvidenceOnly: true as const,
       currentCandidateMutated: false as const,
