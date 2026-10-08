@@ -165,7 +165,7 @@ export function projectSajuR37SupportPrecedence(snapshot: CanonicalSajuSnapshot)
       }
     }
   }
-  const comparisons = Object.fromEntries(SAJU_R37_ROOT_CLASSES.map((rootClass) => {
+  const comparisonFor = (rootClass: AdmittedRootClass) => {
     const roots = rootedCandidates.filter((root) => root.rootClass === rootClass);
     const sourceOrder = compareDayMasterSupportEvidence(
       rootClass as DayMasterSupportEvidenceClass,
@@ -173,22 +173,21 @@ export function projectSajuR37SupportPrecedence(snapshot: CanonicalSajuSnapshot)
     );
     const observed = roots.length > 0 && bijianWitnesses.length > 0 &&
       sourceOrder === 'LEFT_PRECEDES';
-    return [rootClass, {
+    return {
       observed,
       sourceOrder: observed ? 'LEFT_PRECEDES' as const : 'not_emitted' as const,
       rootWitnesses: observed ? roots : [],
       bijianWitnesses: observed ? bijianWitnesses : [],
       effectiveSupport: 'not_determined' as const,
       numericMagnitude: 'not_assigned' as const,
-    }];
-  })) as Record<AdmittedRootClass, {
-    readonly observed: boolean;
-    readonly sourceOrder: 'LEFT_PRECEDES' | 'not_emitted';
-    readonly rootWitnesses: readonly SajuR37RootWitness[];
-    readonly bijianWitnesses: readonly SajuR37BijianWitness[];
-    readonly effectiveSupport: 'not_determined';
-    readonly numericMagnitude: 'not_assigned';
-  }>;
+    };
+  };
+  // Explicit exhaustive keys avoid the unsound Record assertion on
+  // Object.fromEntries, which is typed as a generic string-keyed object.
+  const comparisons = {
+    strong_birth_lu_wang_candidate: comparisonFor('strong_birth_lu_wang_candidate'),
+    residual_storage_candidate: comparisonFor('residual_storage_candidate'),
+  } satisfies Record<AdmittedRootClass, ReturnType<typeof comparisonFor>>;
 
   return {
     status: 'resolved' as const,
