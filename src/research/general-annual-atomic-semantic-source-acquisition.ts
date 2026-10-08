@@ -67,28 +67,56 @@ export const GENERAL_ANNUAL_SOURCE_CANDIDATES = Object.freeze([
       'Exact historical page-level transmission of the annual-stem/day-stem examples. It corroborates the atomic relation proposition but is not treated as the visually verified 1578 primary-edition page.',
   }),
   Object.freeze({
-    candidateId: 'NCL_1578_SANMING_TONGHUI_VOLUME2_SCAN',
+    candidateId: 'NCL_1578_SANMING_TONGHUI_SCAN_CHUNK_1',
     sourceIdentity: Object.freeze({
       title: '三命通會',
       author: '萬民英',
       edition: '明萬曆戊寅六年刊本',
       publicationYear: 1578,
       holder: 'National Central Library, Taiwan',
-      sourceClass: 'primary_edition_scan_object',
+      sourceClass: 'primary_edition_scan_upload_chunk',
       locator:
-        'https://commons.wikimedia.org/wiki/File:NCL-06589_2_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83.pdf',
+        'https://commons.wikimedia.org/wiki/File:NCL-06589_1_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83.pdf',
     }),
     acquisition: Object.freeze({
       scanObjectLocated: true,
       reproducible: true,
-      pageCount: 187,
+      commonsUploadChunk: 1 as const,
+      pageCount: 1000,
+      workVolumeTwoIdentityEstablished: false,
       exactLunTaisuiPageBound: false,
       relevantPassageVisuallyVerified: false,
       contentHashBound: false,
     }),
     disposition: 'PRIMARY_SCAN_PAGE_VERIFICATION_REQUIRED' as const,
     notes:
-      'Preferred primary-edition witness. The scan object is located, but the exact 論太歲 page and relevant passage have not yet been visually verified and content-addressed.',
+      'This is Commons upload chunk 1 for the 1578 edition. The suffix "_1" is an upload-object index, not verified evidence that this object maps to a particular work volume. Locate and visually bind 論太歲 before treating the primary edition as direct proposition evidence.',
+  }),
+  Object.freeze({
+    candidateId: 'NCL_1578_SANMING_TONGHUI_SCAN_CHUNK_2',
+    sourceIdentity: Object.freeze({
+      title: '三命通會',
+      author: '萬民英',
+      edition: '明萬曆戊寅六年刊本',
+      publicationYear: 1578,
+      holder: 'National Central Library, Taiwan',
+      sourceClass: 'primary_edition_scan_upload_chunk',
+      locator:
+        'https://commons.wikimedia.org/wiki/File:NCL-06589_2_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83.pdf',
+    }),
+    acquisition: Object.freeze({
+      scanObjectLocated: true,
+      reproducible: true,
+      commonsUploadChunk: 2 as const,
+      pageCount: 187,
+      workVolumeTwoIdentityEstablished: false,
+      exactLunTaisuiPageBound: false,
+      relevantPassageVisuallyVerified: false,
+      contentHashBound: false,
+    }),
+    disposition: 'PRIMARY_SCAN_PAGE_VERIFICATION_REQUIRED' as const,
+    notes:
+      'This is Commons upload chunk 2 for the 1578 edition. The suffix "_2" must not be read as 三命通會 卷二. Exact work-volume and page mapping remain unverified.',
   }),
   Object.freeze({
     candidateId: 'NLC_1926_SANMING_TONGHUI_SCAN',
@@ -222,7 +250,8 @@ export function buildGeneralAnnualAtomicSourceAcquisition() {
     }),
     observations: Object.freeze({
       exactHistoricalTransmissionPageBound: true as const,
-      primary1578ScanObjectLocated: true as const,
+      primary1578EditionScanChunksLocated: true as const,
+      primary1578WorkVolumeTwoChunkIdentified: false as const,
       exactPrimary1578LunTaisuiPageBound: false as const,
       exactPrimary1578PassageVisuallyVerified: false as const,
       atomicStemRelationSourceQualified: false as const,
@@ -232,7 +261,7 @@ export function buildGeneralAnnualAtomicSourceAcquisition() {
       bridgeReentryReady: false as const,
     }),
     nextDisposition:
-      'VERIFY_PRIMARY_SCAN_PAGE_FOR_LUN_TAISUI_AND_ADJUDICATE_ATOMIC_SUCCESSOR' as const,
+      'LOCATE_1578_VOLUME_TWO_PAGE_AND_VERIFY_LUN_TAISUI_BEFORE_ATOMIC_ADJUDICATION' as const,
     authorityBoundary: Object.freeze({
       researchEvidenceOnly: true as const,
       currentCandidateMutated: false as const,
