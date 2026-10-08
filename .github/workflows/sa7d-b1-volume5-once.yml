@@ -1,0 +1,38 @@
+name: "[WT:saju-research] SA-7D-B1 Volume5 One-shot Source"
+on:
+  push:
+    branches:
+      - research/saju-research/sa7d-b1-volume5-scan
+    paths:
+      - scripts/research/acquire_sa7d_b1_volume5_scan.py
+      - .github/workflows/sa7d-b1-volume5-once.yml
+  workflow_dispatch:
+    inputs:
+      watchtower_track:
+        description: CI Watchtower Track Key
+        required: false
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: sa7d-b1-volume5-original-acquisition
+  cancel-in-progress: false
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install exact scan renderer versions
+        run: python -m pip install --disable-pip-version-check --no-cache-dir "PyMuPDF==1.26.4" "Pillow==11.3.0"
+      - name: Acquire NLC volume five, hash and render
+        run: python scripts/research/acquire_sa7d_b1_volume5_scan.py
+      - name: Upload original, manifest and 45-page evidence renders
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sa7d-b1-volume5-original-proof
+          path: .scan-evidence/
+          if-no-files-found: warn
+          retention-days: 5
+          include-hidden-files: true
