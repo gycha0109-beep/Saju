@@ -164,3 +164,36 @@ Bridge re-entry ready = false
 - 학파마다 뒤따르는 결과 해석이 다를 수 있으므로 전통 십신 taxonomy 이외의 심리·사건 해석에는 별도 직접 출처 및 Bridge adjudication이 필요
 - 現 10개 General Annual theme는 여전히 `REQUIRES_SEPARATE_DIRECT_SUPPORT`; 4개 지지 충 해석 또한 자동 승인하지 않음
 - 원자 근거 증명 `true`는 **Research 단계에 국한**되며 Engine / Preview / Official Reading / Production 및 Bridge 반환 가능 상태를 변경하지 않음
+
+## 9. SA-7D-A3 — 기존 현대식 Annual 테마 10개 개별 연구 판정
+
+본 판정은 아래 세 층위를 서로 혼동하지 않는다.
+
+1. 명 만력 刻本 『三命通會』 제4책 PDF 25쪽에서 직접 확인된 사실: 연간과 일간을 비교하는 **방향성 있는 십신 관계** 예시 두 개
+2. 현재 서비스 후보: 내부 정책 `SRC-MYEONGHA-ANNUAL-INTERPRETATION-POLICY-V1`에 기초한 현대식 연운 활성화 테마 10개
+3. 대체 연구 대상: 별도 Governed Ten-God taxonomy가 계산한 **관계 이름(identity)**만을 연운 입력 사실로 전달하는 구조
+
+자료 범위에서 (1)은 source-qualified다. 반면 (2)의 직업·책임·학습·생산·경쟁·자원 관리 등 현대적 연운 의미는 직접 인용 가능한 별도 근거가 없다. 이남연·김기승(2022)은 고전 십성 개념과 후대 확장 경계를 다루는 보조 근거이며 각 테마의 annual-specific 심리 의미를 직접 승인하는 문헌이 아니다.
+
+| 기존 현대식 semanticKey | 대응 십신 | 현대적 주장 | Research 판정 |
+|---|---|---|---|
+| ANNUAL_PEER_SELF_DIRECTION | 비견 | 자기 방향성 | REPLACE |
+| ANNUAL_PEER_COMPETITION_COORDINATION | 겁재 | 경쟁·조율 | REPLACE |
+| ANNUAL_OUTPUT_STEADY_PRODUCTION | 식신 | 꾸준한 생산 | REPLACE |
+| ANNUAL_OUTPUT_EXPRESSION_CHANGE | 상관 | 표현·변화 | REPLACE |
+| ANNUAL_WEALTH_EXTERNAL_RESOURCES | 편재 | 외부 자원 | REPLACE |
+| ANNUAL_WEALTH_STRUCTURED_RESOURCES | 정재 | 구조적 자원 | REPLACE |
+| ANNUAL_OFFICER_PRESSURE_RESPONSE | 편관 | 압박 대응 | REPLACE |
+| ANNUAL_OFFICER_ROLE_RESPONSIBILITY | 정관 | 역할·책임 | REPLACE |
+| ANNUAL_RESOURCE_ALTERNATIVE_LEARNING | 편인 | 대안적 학습 | REPLACE |
+| ANNUAL_RESOURCE_SUPPORT_LEARNING | 정인 | 지원·학습 | REPLACE |
+
+열 개 모두 **현재 근거 목록에서 현대식 의미로는 source-qualified가 아님**을 개별 판정한다. 따라서 기존 semanticKey를 그대로 승격하지 않고 관계 identity만 제안하는 `REPLACE`이다. 각 십신의 전체 taxonomy가 『三命通會』 두 예문만으로 전부 직접 입증됐다는 뜻은 아니며, 관계 계산은 별도 승인된 taxonomy를 필요로 한다.
+
+이 표는 전통 명리학 전체에 이러한 현대식 의미가 *어디에도 없다*는 부재 증명이 아니다. **현재 해당 후보와 제출된 출처에 대한 제품 연구 판정**이다.
+
+**전제·예외·반례:** 출생 일간 또는 연간이 없거나 모호하면 identity를 구성하지 않는다. 일간→연간과 연간→일간의 극 관계를 치환하지 않는다. 군신 관계의 고전적 길흉 설명이나 후대 학파의 심리·직업 확장은 별도 직접 출처가 없으면 기존 테마로 유입하지 않는다.
+
+**권한 경계:** `REPLACE`는 Research disposition이며 실행 코드 변경, Reader용 문장 승인, Bridge 재진입, Production 승격이 아니다. 기존 candidate `0.1.0-research` 코드·규칙은 이 작업에서 수정하지 않는다. `currentModernThemeSemanticsSourceQualified=false`, `bridgeReentryReady=false`, `Production=HOLD`.
+
+**후속:** 원래 Annual Branch-Clash Tension 네 개의 출처·추론·판정 층을 별도 검토한 다음 Bridge return eligibility를 재판정한다.
