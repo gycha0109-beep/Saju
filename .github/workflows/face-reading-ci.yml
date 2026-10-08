@@ -371,6 +371,10 @@ jobs:
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-controlled-capture-runtime-byte-binding-fr104.test.ts
 
+      - name: Verify FR104 FR21b calibration tooling boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-controlled-capture-calibration-tooling-fr104.test.ts
+
       - name: Verify FR104 provider byte adapters and live invocation gate
         working-directory: target
         run: npx vitest run packages/face-reading/src/neutral-ear-live-provider-byte-runtime-fr104.test.ts
