@@ -96,7 +96,6 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
       primary1578WorkVolumeTwoChunkIdentified: false,
       exactPrimary1578LunTaisuiPageBound: false,
       exactPrimary1578PassageVisuallyVerified: false,
-      atomicStemRelationSourceQualified: false,
       bridgeReentryReady: false,
     });
   });
