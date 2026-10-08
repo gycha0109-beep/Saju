@@ -8,7 +8,7 @@ Status: **INCOMPLETE — exact target scan page image verification remains open*
 
 The current 0.1.0-research General Annual candidate must **not** be preserved by inertia.
 
-The direct annual source supports a much narrower proposition:
+Current transcriptions and scan-object metadata provide a **provisional locator** for a much narrower proposition. Primary-scan image support is NOT yet confirmed:
 
 ~~~text
 resolved annual heavenly stem
@@ -31,18 +31,20 @@ Primary direct scan object:
 - Commons object: File:NLC416-13jh000156-94145 三命通會.pdf
 - media pages: 455
 - SHA-1: 0585bf97a47dedbcadf78e657a896bfdd20c0550
-- locator: 卷二，印刷頁四二（42），「論太歲」首段
+- candidate locator: PDF file page 120 / printed page 42, 「論太歲」. Exact volume heading and source-page alignment **not visually verified**.
 
-Page-bound statements used for the atomic proposition:
+Transcription-only locator statements (not verified on the target scan image):
 
 - 庚年克甲日為偏官
 - 甲日克戊年為偏財
 
-The direct object metadata, checksum, printed-page locator, and page-bound body text are fixed. During this pass the target-page image renderer repeatedly returned cache-miss, so **manual target-page image verification is not recorded as complete**.
+Commons object metadata and its published SHA-1 have been bound; the page number is a **candidate** inferred from a separate, human-unreviewed machine reading. PDF retrieval/image inspection has not succeeded. Accordingly `directPageBoundTextVerified = false`, `primaryScanPrintedPageBound = false`, and source support is **CROSS_REFERENCE_ONLY**, not PRIMARY_SUPPORTED.
 
 A transcription such as Wikisource is retained only as a locator/cross-edition aid.
 
 ## 3. Source / interpretation / inference separation
+
+Current Ten-God source support: **CROSS_REFERENCE_ONLY (primary-scan image pending)**. Do not interpret the following candidate reading as admitted authority.
 
 ### Source statement
 
@@ -121,10 +123,12 @@ Natal Authority != Annual Authority != Monthly Authority
 
 ## 7. Remaining blocker
 
-Only one explicit blocker remains in this artifact:
+Several explicit blockers remain; completion is not automatically triggered by one image check:
 
 ~~~text
 manualTargetPageImageVerificationComplete = false
+primaryScanPrintedPageBound = false
+annualSpecificScopeAndSchoolExceptionsFullyReviewed = false
 ~~~
 
 Until that is closed:
@@ -134,10 +138,18 @@ researchEvidenceComplete = false
 bridgeReentryReady = false
 ~~~
 
-The next permitted state after exact scan-page image verification is:
+The next permitted state after direct image verification **and** unresolved source-stratum review is:
 
 ~~~text
 READY_FOR_BRIDGE_REREVIEW
 ~~~
 
 This is **not** Engine, Preview, Official Reading, or Production admission.
+
+## 8. Open research questions
+
+- Confirm PDF source-file page 120, printed page 42, chapter heading and exact text directly from the historical scan image
+- Reassess Ten-God support grade only after exact primary witness inspection
+- Recheck school-specific exceptions/counterexamples and whether annual use can borrow only the relation identity
+- Establish a separately supported annual-to-natal clash interpretation if anything beyond the relation fact is proposed
+- Rebind changed candidate content to a fresh Bridge review; no automatic lifecycle promotion

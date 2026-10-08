@@ -11,20 +11,24 @@ describe('SA-7D-A General Annual source-qualified evidence', () => {
       kind: 'primary_scan',
       mediaSha1: '0585bf97a47dedbcadf78e657a896bfdd20c0550',
       mediaPages: 455,
-      locator: '卷二，印刷頁四二（42），「論太歲」首段',
+      locator: 'candidate: PDF file page 120 / printed page 42; 「論太歲」; volume heading unverified in scan image',
       verification: {
         directObjectMetadataVerified: true,
-        directPageBoundTextVerified: true,
+        directPageBoundTextVerified: false,
+        machineTranslatedPageCandidateIdentified: true,
         manualTargetPageImageVerificationComplete: false,
       },
     });
   });
 
-  it('supports only annual-stem to Day-Master Ten-God identity, not the current modern theme copy', () => {
+  it('records only provisional cross-reference support for Ten-God identity pending scan verification', () => {
     const evidence = buildGeneralAnnualSourceQualifiedEvidence();
 
     expect(evidence.propositions.annualStemDayMasterTenGodIdentity.support).toBe(
-      'PRIMARY_SUPPORTED',
+      'CROSS_REFERENCE_ONLY',
+    );
+    expect(evidence.propositions.annualStemDayMasterTenGodIdentity.witnessStatus).toBe(
+      'PRIMARY_SCAN_IMAGE_PENDING',
     );
     expect(evidence.propositions.annualStemDayMasterTenGodIdentity.meaningStrength).toBe(
       'identity_only',
@@ -97,12 +101,31 @@ describe('SA-7D-A General Annual source-qualified evidence', () => {
         semanticDispositionEstablished: true,
         primaryScanObjectBound: true,
         primaryScanChecksumBound: true,
-        primaryScanPrintedPageBound: true,
+        primaryScanPrintedPageBound: false,
+        candidatePageLocatorIdentified: true,
         manualTargetPageImageVerificationComplete: false,
+        annualSpecificScopeAndSchoolExceptionsFullyReviewed: false,
         researchEvidenceComplete: false,
         bridgeReentryReady: false,
         authorityCeiling: 'READY_FOR_BRIDGE_REREVIEW',
       }),
+    );
+  });
+
+  it('records scope, qualifications, exception cases, and unresolved source-stratum questions', () => {
+    const evidence = buildGeneralAnnualSourceQualifiedEvidence();
+    const stem = evidence.propositions.annualStemDayMasterTenGodIdentity;
+    const clash = evidence.propositions.annualToNatalSixClashRelationFact;
+    expect(stem.qualifiers.length).toBeGreaterThan(0);
+    expect(stem.exceptions.length).toBeGreaterThan(0);
+    expect(stem.counterexamples.length).toBeGreaterThan(0);
+    expect(stem.schoolDependencies.length).toBeGreaterThan(0);
+    expect(clash.requiredInputs).toContain('resolved_named_natal_earthly_branch');
+    expect(clash.counterexamples).toContain(
+      'SIX_CLASH_WITH_COMPETING_RELATIONS_DOES_NOT_YIELD_A_WINNER',
+    );
+    expect(evidence.unresolvedQuestions).toContain(
+      'VERIFY_PRIMARY_SCAN_PDF_FILE_PAGE_120_AND_PRINTED_PAGE_42_AGAINST_ORIGINAL_IMAGE',
     );
   });
 

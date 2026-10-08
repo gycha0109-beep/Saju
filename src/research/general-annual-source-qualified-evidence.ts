@@ -47,17 +47,18 @@ const SOURCES = Object.freeze([
       'https://commons.wikimedia.org/wiki/File:NLC416-13jh000156-94145_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83.pdf',
     mediaSha1: '0585bf97a47dedbcadf78e657a896bfdd20c0550',
     mediaPages: 455,
-    locator: '卷二，印刷頁四二（42），「論太歲」首段',
-    pageBoundStatements: Object.freeze([
+    locator: 'candidate: PDF file page 120 / printed page 42; 「論太歲」; volume heading unverified in scan image',
+    transcriptionLocatorStatements: Object.freeze([
       '庚年克甲日為偏官',
       '甲日克戊年為偏財',
     ] as const),
     verification: Object.freeze({
       directObjectMetadataVerified: true as const,
-      directPageBoundTextVerified: true as const,
+      directPageBoundTextVerified: false as const,
+      machineTranslatedPageCandidateIdentified: true as const,
       manualTargetPageImageVerificationComplete: false as const,
       note:
-        'Direct PDF object, checksum, printed-page locator, and page-bound body text are fixed. Target-page image rendering repeatedly returned cache-miss during this pass, so manual visual confirmation is explicitly left open.',
+        'Commons metadata binds an existing scan object and published SHA-1. A separate, unreviewed machine translation points to PDF file page 120 / printed page 42. Exact volume header, original text, and page correspondence are NOT visually verified; transcription quotes are locator leads only.',
     }),
   }),
   Object.freeze({
@@ -143,7 +144,8 @@ export function buildGeneralAnnualSourceQualifiedEvidence() {
     propositions: Object.freeze({
       annualStemDayMasterTenGodIdentity: Object.freeze({
         propositionId: 'ANNUAL_STEM_DAY_MASTER_TEN_GOD_IDENTITY' as const,
-        support: 'PRIMARY_SUPPORTED' as GeneralAnnualResearchSupport,
+        support: 'CROSS_REFERENCE_ONLY' as GeneralAnnualResearchSupport,
+        witnessStatus: 'PRIMARY_SCAN_IMAGE_PENDING' as const,
         sourceStatement: Object.freeze([
           '庚年克甲日為偏官',
           '甲日克戊年為偏財',
@@ -152,6 +154,23 @@ export function buildGeneralAnnualSourceQualifiedEvidence() {
           'The annual heavenly stem is explicitly evaluated in relation to the natal day stem using Ten-God categories.',
         researchInference:
           'When the target-year stem and natal Day Master are both resolved, the governed Ten-God relation table may produce an annual-stem Ten-God identity fact. This inference does not import later functional or psychological theme copy.',
+        scope: 'annual_stem_to_natal_day_master' as const,
+        qualifiers: Object.freeze([
+          'CLASSICAL_EXAMPLES_CONFIRM_RELATION_IDENTITY_ONLY',
+          'PRIMARY_SCAN_IMAGE_NOT_YET_VISUALLY_VERIFIED',
+        ] as const),
+        exceptions: Object.freeze([
+          'MISSING_OR_AMBIGUOUS_DAY_MASTER_FAIL_CLOSED',
+          'MISSING_OR_AMBIGUOUS_ANNUAL_STEM_FAIL_CLOSED',
+        ] as const),
+        counterexamples: Object.freeze([
+          'REVERSE_ANNUAL_TO_DAY_DIRECTION_IS_NOT_INTERCHANGEABLE',
+          'TEN_GOD_IDENTITY_DOES_NOT_IMPLY_MODERN_PSYCHOLOGICAL_THEME',
+        ] as const),
+        schoolDependencies: Object.freeze([
+          'TRADITIONAL_TEN_GOD_RELATION_TAXONOMY',
+          'SCHOOL_VARIANCE_IN_OUTCOME_INTERPRETATION_UNSETTLED',
+        ] as const),
         requiredInputs: Object.freeze([
           'resolved_target_year',
           'resolved_annual_heavenly_stem',
@@ -175,8 +194,33 @@ export function buildGeneralAnnualSourceQualifiedEvidence() {
       annualToNatalSixClashRelationFact: Object.freeze({
         propositionId: 'ANNUAL_TO_NATAL_SIX_CLASH_RELATION_FACT' as const,
         support: 'MULTI_SOURCE_SUPPORTED' as GeneralAnnualResearchSupport,
+        sourceStatement:
+          'Source-stratified Six-Clash pair identities are recorded in the existing R059 research; modern branch-interaction scholarship does not by itself establish annual event effects.',
         interpretiveReading:
           'A resolved annual branch may stand in a Six-Clash relation to a resolved natal branch. The relation fact is separate from its effect.',
+        scope: 'annual_branch_to_named_natal_branch' as const,
+        requiredInputs: Object.freeze([
+          'resolved_target_year',
+          'resolved_annual_earthly_branch',
+          'resolved_named_natal_earthly_branch',
+        ] as const),
+        qualifiers: Object.freeze([
+          'SIX_CLASH_RELATION_IDENTITY_ONLY',
+          'PILLAR_POSITION_DOES_NOT_AUTHORIZE_SEVERITY',
+          'OTHER_CONCURRENT_RELATIONS_MAY_EXIST',
+        ] as const),
+        exceptions: Object.freeze([
+          'MISSING_NATAL_PILLAR_FAIL_CLOSED',
+          'MISSING_ANNUAL_BRANCH_FAIL_CLOSED',
+        ] as const),
+        counterexamples: Object.freeze([
+          'SIX_CLASH_WITHOUT_DEMONSTRATED_EFFECT_IS_NOT_A_NEGATIVE_EVENT',
+          'SIX_CLASH_WITH_COMPETING_RELATIONS_DOES_NOT_YIELD_A_WINNER',
+        ] as const),
+        schoolDependencies: Object.freeze([
+          'SOURCE_STRATUM_DEPENDENT_CONFLICT_SEMANTICS',
+          'NO_UNIVERSAL_CLASH_COMBINATION_PRECEDENCE',
+        ] as const),
         researchInference:
           'The relation identity may be used as bounded input evidence. It does not by itself establish loss, illness, separation, accident, financial harm, or a pillar-specific severity.',
         meaningStrength: 'relation_identity_only' as const,
@@ -227,6 +271,13 @@ export function buildGeneralAnnualSourceQualifiedEvidence() {
         'RESEARCH_INFERENCE',
       ] as const),
     }),
+    unresolvedQuestions: Object.freeze([
+      'VERIFY_PRIMARY_SCAN_PDF_FILE_PAGE_120_AND_PRINTED_PAGE_42_AGAINST_ORIGINAL_IMAGE',
+      'VERIFY_ACTUAL_VOLUME_HEADING_AND_EXACT_EXAMPLES_IN_DIRECT_SCAN',
+      'REVIEW_SCHOOL_DEPENDENCIES_AND_COUNTEREXAMPLES_AT_CLAIM_LEVEL',
+      'CONFIRM_DIRECT_ANNUAL_APPLICATION_OF_SIX_CLASH_BEYOND_RELATION_IDENTITY',
+      'FRESH_BRIDGE_REVIEW_MUST_REBIND_NEW_CANDIDATE_SURFACE',
+    ] as const),
     prohibitedExtensions: Object.freeze([
       'NO_CURRENT_THEME_KEY_RETAINED_WITHOUT_DIRECT_SUPPORT',
       'NO_NATAL_TO_ANNUAL_WHOLESALE_INHERITANCE',
@@ -244,12 +295,14 @@ export function buildGeneralAnnualSourceQualifiedEvidence() {
       semanticDispositionEstablished: true as const,
       primaryScanObjectBound: true as const,
       primaryScanChecksumBound: true as const,
-      primaryScanPrintedPageBound: true as const,
+      primaryScanPrintedPageBound: false as const,
+      candidatePageLocatorIdentified: true as const,
       manualTargetPageImageVerificationComplete: false as const,
+      annualSpecificScopeAndSchoolExceptionsFullyReviewed: false as const,
       researchEvidenceComplete: false as const,
       bridgeReentryReady: false as const,
       nextDisposition:
-        'COMPLETE_TARGET_PAGE_IMAGE_VERIFICATION_THEN_READY_FOR_BRIDGE_REREVIEW' as const,
+        'VERIFY_PRIMARY_SCAN_IMAGE_AND_COMPLETE_SOURCE_STRATUM_REVIEW_BEFORE_BRIDGE_REREVIEW' as const,
       authorityCeiling: 'READY_FOR_BRIDGE_REREVIEW' as const,
     }),
   });
