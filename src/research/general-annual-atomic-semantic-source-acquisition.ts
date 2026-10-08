@@ -317,7 +317,7 @@ export function buildGeneralAnnualAtomicSourceAcquisition() {
     throw new Error('Annual theme adjudication requires a directly verified Ming primary witness');
   }
   const currentThemeSemanticAdjudication = Object.freeze({
-    version: 'sa7d-a3-annual-theme-adjudication-v1' as const,
+    version: 'sa7d-a3-annual-theme-adjudication-v2' as const,
     sourceBoundary: Object.freeze({
       exactPrimaryWitnessCandidateId: directWitness.candidateId,
       exactPrimaryPdfPageOneBased: directWitness.acquisition.pdfPageOneBased,
@@ -327,23 +327,97 @@ export function buildGeneralAnnualAtomicSourceAcquisition() {
         'GENERAL_ANNUAL_STEM_TO_DAY_MASTER_TEN_GOD_RELATION_IDENTITY' as const,
       sourceExamplesAreExhaustiveTenGodTaxonomy: false as const,
       reviewedSourcesDoNotProveAbsenceOfOtherHistoricalAnnualSemantics: true as const,
+      originalModernMeaningGateRemainsPendingForAllTen: true as const,
+      primaryWitnessOnlyDirectlyDemonstrates: Object.freeze(['편관', '편재'] as const),
     }),
-    decisions: Object.freeze(GENERAL_ANNUAL_THEME_KEY_MEANINGS.map((entry) =>
-      Object.freeze({
+    decisions: Object.freeze(GENERAL_ANNUAL_THEME_KEY_MEANINGS.map((entry) => {
+      const directIdentityExample = entry.tenGod === '편관' || entry.tenGod === '편재';
+      const directPassage = entry.tenGod === '편관'
+        ? '歲君傷日者如庚剋甲日為偏官'
+        : entry.tenGod === '편재'
+          ? '日犯歲君如甲日剋戊年為偏財'
+          : null;
+      return Object.freeze({
         semanticKey: entry.semanticKey,
         tenGod: entry.tenGod,
+        currentClaim: entry.modernClaim,
         originalModernClaim: entry.modernClaim,
-        researchDisposition: 'REPLACE' as const,
+        sourceRefs: Object.freeze([
+          directWitness.candidateId,
+          'LEE_KIM_2022_TEN_GOD_CLASSIC_MODERN_BOUNDARY',
+          'SRC-MYEONGHA-ANNUAL-INTERPRETATION-POLICY-V1',
+        ] as const),
+        sourceStatement: directPassage,
+        interpretiveReading: directIdentityExample
+          ? 'The cited Ming example names this exact directed annual-stem versus natal-day-master Ten-God relation, not this modern annual theme.'
+          : 'The two directly verified Ming examples do not name this Ten-God label; no matching direct classical annual passage is currently bound.',
+        researchInference: directIdentityExample
+          ? 'Replace the unsupported modern theme only with the cited exact Ten-God relation identity after separately governed relation computation.'
+          : 'Retain Research hold for the modern theme and the proposed identity successor until its exact Ten-God relation is separately source-qualified.',
+        preconditions: Object.freeze([
+          'RESOLVED_NATAL_DAY_MASTER',
+          'RESOLVED_TARGET_YEAR_ANNUAL_STEM',
+          'EXACT_GOVERNED_DIRECTIONAL_TEN_GOD_RELATION',
+        ] as const),
+        meaningStrength: 'identity_only' as const,
+        qualifiers: Object.freeze([
+          'PRIMARY_WITNESS_SUPPORTS_ONLY_TWO_EXPLICIT_EXAMPLES',
+          'MODERN_ANNUAL_CLAIM_NOT_DIRECTLY_SUPPORTED',
+          'ANNUAL_SCOPE_CANNOT_BE_INHERITED_BY_MONTHLY',
+        ] as const),
+        exceptions: Object.freeze([
+          'MISSING_OR_AMBIGUOUS_DAY_MASTER_OR_YEAR_STEM_FAIL_CLOSED',
+          'UNGOVERNED_TEN_GOD_TAXONOMY_NOT_ADMITTED',
+        ] as const),
+        counterexamples: Object.freeze([
+          '庚_ANNUAL_CONTROLS_甲_DAY_IS_偏官_NOT_偏財',
+          '甲_DAY_CONTROLS_戊_ANNUAL_IS_偏財_NOT_偏官',
+          'IDENTITY_ALONE_CANNOT_PROVE_' + entry.modernClaim.toUpperCase(),
+        ]),
+        schoolDependencies: Object.freeze([
+          'EXACT_GOVERNED_TEN_GOD_RELATION_TAXONOMY_REQUIRED',
+          'MODERN_ANNUAL_MEANING_AND_SCHOOL_SPECIFIC_OUTCOMES_NEED_NEW_DIRECT_WITNESS',
+        ] as const),
+        nonImplications: Object.freeze([
+          'NO_MODERN_ANNUAL_THEME_AUTHORITY',
+          'NO_LUCK_SCORE_OR_EVENT_GUARANTEE',
+          'NO_PERSONALITY_CAREER_WEALTH_RELATIONSHIP_HEALTH_OUTCOME',
+          'NO_MONTHLY_AUTHORITY',
+          'NO_BRIDGE_ENGINE_PREVIEW_OFFICIAL_READING_OR_PRODUCTION',
+        ] as const),
+        sourceSupportGrade: 'INSUFFICIENT' as const,
+        identitySourceSupportGrade: directIdentityExample
+          ? 'PRIMARY_SUPPORTED' as const
+          : 'INSUFFICIENT' as const,
+        originalModernMeaningGate: 'REQUIRES_SEPARATE_DIRECT_SUPPORT' as const,
+        semanticDisposition: directIdentityExample
+          ? 'REPLACE' as const
+          : 'REQUIRES_SEPARATE_DIRECT_SUPPORT' as const,
+        researchDisposition: directIdentityExample
+          ? 'REPLACE' as const
+          : 'REQUIRES_SEPARATE_DIRECT_SUPPORT' as const,
         sourceQualifiedModernAnnualMeaning: false as const,
-        proposedSuccessor: 'ANNUAL_STEM_TO_DAY_MASTER_TEN_GOD_IDENTITY_ONLY' as const,
+        proposedSuccessor: directIdentityExample
+          ? 'ANNUAL_STEM_TO_DAY_MASTER_TEN_GOD_IDENTITY_ONLY' as const
+          : 'PENDING_INDEPENDENT_TEN_GOD_RELATION_WITNESS' as const,
         successorMeaningCeiling: 'relation_identity_only' as const,
         independentlyGovernedTenGodTaxonomyRequired: true as const,
+        unresolvedEvidence: directIdentityExample
+          ? Object.freeze([
+              'DIRECT_ANNUAL_SPECIFIC_SOURCE_SUPPORT_FOR_' + entry.modernClaim.toUpperCase(),
+              'INDEPENDENT_GOVERNANCE_ADMISSION_OF_EXACT_TEN_GOD_TABLE',
+              'SCHOOL_EXCEPTION_AND_NON_EVENT_CONCLUSION_REVIEW',
+            ])
+          : Object.freeze([
+              'DIRECT_MING_OR_OTHER_PRIMARY_PASSAGE_FOR_' + entry.tenGod,
+              'DIRECT_ANNUAL_SPECIFIC_SOURCE_SUPPORT_FOR_' + entry.modernClaim.toUpperCase(),
+              'INDEPENDENT_GOVERNANCE_ADMISSION_OF_EXACT_TEN_GOD_TABLE',
+              'SCHOOL_EXCEPTION_AND_NON_EVENT_CONCLUSION_REVIEW',
+            ]),
         candidateCodeChanged: false as const,
         productionAuthorization: false as const,
-        rationale:
-          'Primary witness establishes directional annual stem-to-day stem identity examples, not the candidate modern theme meaning; internal policy is insufficient traditional authority.',
-      }),
-    )),
+      });
+    })),
     schoolAndExceptionBoundaries: Object.freeze([
       'MISSING_OR_AMBIGUOUS_NATAL_DAY_MASTER_FAIL_CLOSED',
       'MISSING_OR_AMBIGUOUS_ANNUAL_STEM_FAIL_CLOSED',
