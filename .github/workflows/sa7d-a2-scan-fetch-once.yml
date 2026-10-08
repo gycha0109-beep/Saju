@@ -1,0 +1,84 @@
+name: SA7D-A2 public scan witness acquisition one-shot
+
+on:
+  push:
+    branches:
+      - research/saju-research/sa7d-a2-scan-fetch-once
+    paths:
+      - .github/workflows/sa7d-a2-scan-fetch-once.yml
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Download public-domain scanned witnesses and generate page contact sheets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sa7d-a2
+          python3 -m pip install -q --disable-pip-version-check pymupdf Pillow
+          python3 - <<'PY'
+          import base64, hashlib, io, json, math, os, subprocess, urllib.parse
+          from pathlib import Path
+          import fitz
+          from PIL import Image, ImageDraw
+          out=Path('/tmp/sa7d-a2')
+          names=[
+           ('ming_upper','NLC892-411999029701-67186_三命通會_第3冊.pdf'),
+           ('ming_lower','NLC892-411999029701-67187_三命通會_第4冊.pdf'),
+           ('edition1909','SSID-13035019_改良三命通會_卷2.pdf')
+          ]
+          manifest=[]
+          for tag,filename in names:
+            url='https://commons.wikimedia.org/wiki/Special:Redirect/file/'+urllib.parse.quote(filename)
+            path=out/(tag+'.pdf')
+            print('SOURCE_TRY',tag,url,flush=True)
+            try:
+              subprocess.run(['curl','-fsSL','--retry','1','--connect-timeout','12','--max-time','95','-A','SA7D-A2 archival scan research','-o',str(path),url],check=True,timeout=105)
+              data=path.read_bytes()
+              if not data.startswith(b'%PDF-'): raise ValueError('Not PDF')
+              doc=fitz.open(str(path))
+              row={'tag':tag,'source':url,'pages':len(doc),'bytes':len(data),'sha1':hashlib.sha1(data).hexdigest(),'sha256':hashlib.sha256(data).hexdigest()}
+              manifest.append(row)
+              print('SOURCE_OK',json.dumps(row,ensure_ascii=False),flush=True)
+              for start in range(0,len(doc),12):
+                pages=list(range(start,min(start+12,len(doc))))
+                canvas=Image.new('RGB',(1100,1770),'white')
+                draw=ImageDraw.Draw(canvas)
+                for i,pno in enumerate(pages):
+                  page=doc.load_page(pno)
+                  pix=page.get_pixmap(matrix=fitz.Matrix(0.40,0.40),alpha=False)
+                  im=Image.open(io.BytesIO(pix.tobytes('jpeg')))
+                  im.thumbnail((360,550))
+                  x=(i%3)*366+3
+                  y=(i//3)*442+26
+                  if im.height>415:im.thumbnail((340,415))
+                  canvas.paste(im,(x,y))
+                  draw.text((x,y-16),f'{tag}: PDF page {pno+1} (index {pno})',fill='black')
+                filename_img=f'{tag}_pages_{start+1}_{pages[-1]+1}.jpg'
+                canvas=canvas.crop((0,0,1100,1770))
+                canvas.save(out/filename_img,'JPEG',quality=58,optimize=True)
+                bs=base64.b64encode((out/filename_img).read_bytes()).decode('ascii')
+                print('SCAN_IMAGE_BEGIN',filename_img,len(bs),flush=True)
+                for j in range(0,len(bs),6000): print('SCAN_IMAGE_CHUNK',bs[j:j+6000],flush=True)
+                print('SCAN_IMAGE_END',filename_img,flush=True)
+            except Exception as exc:
+              print('SOURCE_FAILED',tag,str(exc)[:500],flush=True)
+          (out/'manifest.json').write_text(json.dumps(manifest,indent=2,ensure_ascii=False),encoding='utf-8')
+          if not manifest: raise RuntimeError('All public scan downloads failed')
+          print('SOURCE_ACQUISITION_COMPLETED',len(manifest),flush=True)
+          PY
+      - name: Publish temporary visual witness contact sheets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sa7d-a2-public-scan-contact-sheets
+          path: |
+            /tmp/sa7d-a2/*.jpg
+            /tmp/sa7d-a2/manifest.json
+          if-no-files-found: warn
+          retention-days: 3
