@@ -12,7 +12,7 @@ DIR = Path(".scan-1935-jingxuan")
 DIR.mkdir(exist_ok=True)
 FILE = "NLC416-17jh002578-109774_精選命理約言.pdf"
 API = "https://commons.wikimedia.org/w/api.php"
-PAGES = (50, 60, 70, 75, 80, 85, 90, 95)
+PAGES = (86, 87, 88, 89, 91, 92, 93, 94)
 HEADERS = {
     "User-Agent": "Saju-Research-SA7D-B1/1.0 (https://github.com/gycha0109-beep/Saju; printed-witness)",
     "Accept": "image/jpeg, application/json",
