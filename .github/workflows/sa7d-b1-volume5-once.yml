@@ -1,4 +1,4 @@
-name: "[WT:saju-research] SA-7D-B1 Volume6 One-shot Page Proof"
+name: "[WT:saju-research] SA-7D-B1 Volume5 Lower One-shot Page Proof"
 on:
   push:
     branches:
@@ -7,6 +7,7 @@ on:
       - scripts/research/acquire_sa7d_b1_volume5_scan.py
       - scripts/research/acquire_sa7d_b1_volume5_page_previews.py
       - scripts/research/acquire_sa7d_b1_volume6_lower_page_previews.py
+      - scripts/research/acquire_sa7d_b1_volume5_lower_page_previews.py
       - .github/workflows/sa7d-b1-volume5-once.yml
   workflow_dispatch:
     inputs:
@@ -28,12 +29,12 @@ jobs:
       - name: Install exact PDF page image validator
         run: python -m pip install --disable-pip-version-check --no-cache-dir "Pillow==11.3.0"
       - name: Acquire Commons-issued page thumbnails, not PDF original
-        run: python scripts/research/acquire_sa7d_b1_volume6_lower_page_previews.py
+        run: python scripts/research/acquire_sa7d_b1_volume5_lower_page_previews.py
       - name: Upload direct PDF-derived preview manifest (not primary PDF evidence)
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: sa7d-b1-volume6-lower-page-previews
+          name: sa7d-b1-volume5-lower-page-previews
           path: .scan-evidence/
           if-no-files-found: warn
           retention-days: 5
