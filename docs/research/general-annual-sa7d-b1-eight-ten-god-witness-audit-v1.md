@@ -102,3 +102,11 @@ Research 파일: `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`.
 - 같은 고전 인쇄본 **PDF 10쪽** `論劫財`는 `五陽見五陰爲敗財`, `五陰見五陽爲劫財`를 구분. `甲→乙 劫財`를 확정하는 쌍별 문장은 미확인. `敗財`를 `劫財`로 조용히 치환 금지.
 - 원본 PDF 실제 바이트 취득과 전체 SHA-1/SHA-256 검증 미완료; 공식 PDF 파생 판면 JPEG 개별 SHA-256 확인. 판본·원문·쪽수·해시·실행 artifact·용어 충돌의 분리 증거는 `general-annual-sa7d-b1-yuanhai-ming-printed-bijian-and-term-split-v1.md` 참고.
 - **최신 L1 직접 원전 7/8, 현대 타깃 `甲→乙 劫財` 1/8 미충족.** 원전 Annual 적용 L2 **0/8**, 8개 Annual `sourceSupportGrade=INSUFFICIENT`, `bridgeReentryReady=false`, `Production=HOLD`. 기존 A2의 2개 독립 직접 증거에는 영향 없음.
+
+## 10. 2026-10-09 歲運 일반 방법의 명대 판면 대조 (개별 연운 신분과 분리)
+
+- 『刻京臺增補淵海子平大全』 명대 제2책 PDF **15·16쪽** `六親總篇`에서 일간을 기준으로 육친 관계를 설명하고 `此必以歲運見何字則剋何人`으로 판정 대상 시기를 연결하는 **일반 歲運 방법 문맥을 직접 대조**했다.
+- 구체적인 직접 JPEG·PDF 인덱스·SHA-256·Commons 서지와 재현 URL·기존 `劫財/敗財` 충돌의 개별 분리는 `general-annual-sa7d-b1-ming-yuanhai-suiyun-method-witness-v1.md` 참고.
+- `歲運`은 대운·유년을 혼합하는 일반 범위이므로, 명칭 L1 7/8 + 일반 歲運 문장만으로 8종의 개별 `日干×流年天干→十神` L2를 조합·자동 승격해서는 안 된다.
+- 결과 **L1 7/8, 신규 대상의 L2 0/8, Annual `INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`**. 2건의 기존 A2 개별 연운 직접 명칭은 보존.
+- 전사문 `基礎`의 `甲見乙：劫財、敗財`는 직접 명대 제본 판면과 아직 결속되지 않은 L0 단서; 같은 인쇄본 `論劫財`의 방향별 구분을 덮어쓰지 않는다.
