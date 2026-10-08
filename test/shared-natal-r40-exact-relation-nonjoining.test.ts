@@ -126,7 +126,7 @@ describe('SAJU-R40 exact R38 relation -> I61/I65 support source alignment',()=>{
   });
   test.each([
     ['relationId', 'FORGED_RELATION'],
-    ['supportSourcePillar', 'hour'],
+    ['supportSourcePillar', 'FORGED_PILLAR'],
     ['supportSourceValue', 'FORGED_STEM'],
     ['supportChannelKind', 'FORGED_CHANNEL'],
     ['targetParticipantValue', 'FORGED_TARGET'],
