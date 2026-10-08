@@ -63,6 +63,33 @@ content hash bound = false
 
 판정: `PRIMARY_SCAN_PAGE_VERIFICATION_REQUIRED`.
 
+### 4.2a 명대 刻本 · 작품 권차가 명시된 독립 스캔 2종
+
+기존 대만 NCL 1578년판 업로드 단위(`_1`/`_2`)와 **다른 소장처·파일 집합**이다.
+
+- 중국 국가도서관 `NLC892-411999029701-67186 三命通會 第3冊.pdf`
+  - Commons catalogue: `卷之二上`, 명 만력 연간[1573–1620], 刻本, **38 pages**
+  - 업로드 URL: https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67186_三命通會_第3冊.pdf
+- 중국 국가도서관 `NLC892-411999029701-67187 三命通會 第4冊.pdf`
+  - Commons catalogue: `卷之二下`, 명 만력 연간[1573–1620], 刻本, **55 pages**
+  - 업로드 SHA-1(Commons 공개값): `790baba8f4b7abc2ab706db2ae8eff4651c270ff`
+  - 업로드 URL: https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67187_三命通會_第4冊.pdf
+
+**검증된 범위:** 해당 스캔 *객체의 서지 메타데이터*에 작품 권차가 명시되어 있다. 파일명이 `卷二`를 암시한다는 추론이 아니다.
+
+**검증되지 않은 범위:** 두 스캔 중 `論太歲`가 수록된 쪽, 원문이 적힌 페이지 번호, 해당 페이지의 실제 문자, 별도의 대만 NCL 1578년판과 정확히 같은 판본인지 여부.
+
+웹 접근에서 원본 PDF가 각각 15.6MB/23.8MB로 리더의 객체 크기 제한을 초과했다. 이 접근 실패는 스캔 원문에 대한 반증도 육안 확인도 아니다. 차후 직접 이미지 접근 가능한 환경에서 판면별로 `論小運` 뒤의 `論太歲` 표제와 `庚年尅甲日`·`甲日尅戊年` 양 예문을 함께 확인하고, 파일 고유 ID / PDF 페이지 번호 / 인쇄면 표기 / 판면 이미지 / 해시를 보존한다.
+
+```text
+mingVolumeTwoUpperLowerScanObjectsLocated = true
+exactMingLunTaisuiPageBound = false
+exactMingLunTaisuiPassageVisuallyVerified = false
+atomicStemRelationSourceQualified = false
+bridgeReentryReady = false
+Production = HOLD
+```
+
 ### 4.3 NLC 1926 scan
 
 `三命通會`, 秦慎安校勘, 文明書局, 1926, National Library of China, 455 pages. Commons SHA-1 `0585bf97a47dedbcadf78e657a896bfdd20c0550`.

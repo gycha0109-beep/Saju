@@ -101,6 +101,57 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
     });
   });
 
+  test('maps Ming Wanli 卷之二上/下 scan objects without claiming an exact 論太歲 page', () => {
+    const upper = byId('NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_UPPER_SCAN');
+    const lower = byId('NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_LOWER_SCAN');
+    if (upper.candidateId !== 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_UPPER_SCAN') {
+      throw new Error('Missing upper Ming scan candidate');
+    }
+    if (lower.candidateId !== 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_LOWER_SCAN') {
+      throw new Error('Missing lower Ming scan candidate');
+    }
+
+    expect(upper.sourceIdentity).toMatchObject({
+      volume: '第3冊',
+      workVolume: '卷之二上',
+      publicationPeriod: '明萬曆[1573-1620]',
+    });
+    expect(lower.sourceIdentity).toMatchObject({
+      volume: '第4冊',
+      workVolume: '卷之二下',
+      publicationPeriod: '明萬曆[1573-1620]',
+    });
+    expect(upper.acquisition).toMatchObject({
+      pageCount: 38,
+      workVolumeTwoIdentityEstablished: true,
+      contentHashBound: false,
+    });
+    expect(lower.acquisition).toMatchObject({
+      pageCount: 55,
+      commonsSha1: '790baba8f4b7abc2ab706db2ae8eff4651c270ff',
+      workVolumeTwoIdentityEstablished: true,
+      contentHashBound: true,
+    });
+    for (const source of [upper, lower]) {
+      expect(source.acquisition).toMatchObject({
+        exactLunTaisuiPageBound: false,
+        relevantPassageVisuallyVerified: false,
+        exactEditionIdentityWith1578NclTaiwanEstablished: false,
+      });
+      expect(source.disposition).toBe(
+        'MING_WORK_VOLUME_MAPPED_SCAN_PAGE_VERIFICATION_REQUIRED',
+      );
+    }
+    expect(acquisition.observations).toMatchObject({
+      mingWanliExplicitVolumeTwoUpperLowerScanObjectsLocated: true,
+      exactMingLunTaisuiPageBound: false,
+      exactMingLunTaisuiPassageVisuallyVerified: false,
+      atomicStemRelationSourceQualified: false,
+      bridgeReentryReady: false,
+    });
+    expect(acquisition.authorityBoundary.production).toBe('HOLD');
+  });
+
   test('does not inherit the atomic relation into any current modern annual theme key', () => {
     expect(GENERAL_ANNUAL_CURRENT_THEME_KEYS).toHaveLength(10);
     expect(acquisition.themeDispositions).toHaveLength(10);
