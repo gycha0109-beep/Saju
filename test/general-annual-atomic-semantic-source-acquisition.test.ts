@@ -216,14 +216,49 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
     expect(adjudication.decisions.map((item) => item.semanticKey)).toEqual(
       [...GENERAL_ANNUAL_CURRENT_THEME_KEYS],
     );
-    expect(adjudication.decisions.every((item) =>
-      item.researchDisposition === 'REPLACE'
-      && item.sourceQualifiedModernAnnualMeaning === false
-      && item.successorMeaningCeiling === 'relation_identity_only'
-      && item.independentlyGovernedTenGodTaxonomyRequired === true
-      && item.candidateCodeChanged === false
-      && item.productionAuthorization === false
-    )).toBe(true);
+    const perKeyDecisions = adjudication.decisions;
+    const exactIdentityWitnessed = perKeyDecisions.filter(
+      (item) => item.identitySourceSupportGrade === 'PRIMARY_SUPPORTED',
+    );
+    expect(exactIdentityWitnessed.map((item) => item.tenGod)).toEqual(['편재', '편관']);
+    expect(perKeyDecisions.filter((item) =>
+      item.semanticDisposition === 'REPLACE',
+    )).toHaveLength(2);
+    expect(perKeyDecisions.filter((item) =>
+      item.semanticDisposition === 'REQUIRES_SEPARATE_DIRECT_SUPPORT',
+    )).toHaveLength(8);
+    for (const item of perKeyDecisions) {
+      for (const field of [
+        'semanticKey', 'currentClaim', 'sourceRefs', 'sourceStatement',
+        'interpretiveReading', 'researchInference', 'preconditions',
+        'meaningStrength', 'qualifiers', 'exceptions', 'counterexamples',
+        'schoolDependencies', 'nonImplications', 'sourceSupportGrade',
+        'semanticDisposition', 'unresolvedEvidence',
+      ]) {
+        expect(Object.hasOwn(item, field), `${item.semanticKey}: ${field}`).toBe(true);
+      }
+      expect(item.sourceRefs).toHaveLength(3);
+      expect(item.sourceSupportGrade).toBe('INSUFFICIENT');
+      expect(item.sourceQualifiedModernAnnualMeaning).toBe(false);
+      expect(item.originalModernMeaningGate).toBe('REQUIRES_SEPARATE_DIRECT_SUPPORT');
+      expect(item.successorMeaningCeiling).toBe('relation_identity_only');
+      expect(item.independentlyGovernedTenGodTaxonomyRequired).toBe(true);
+      expect(item.candidateCodeChanged).toBe(false);
+      expect(item.productionAuthorization).toBe(false);
+      expect(item.qualifiers.length).toBeGreaterThan(0);
+      expect(item.exceptions.length).toBeGreaterThan(0);
+      expect(item.counterexamples.length).toBeGreaterThan(0);
+      expect(item.schoolDependencies.length).toBeGreaterThan(0);
+      expect(item.nonImplications).toContain('NO_MONTHLY_AUTHORITY');
+      expect(item.unresolvedEvidence.length).toBeGreaterThan(0);
+      if (item.identitySourceSupportGrade === 'PRIMARY_SUPPORTED') {
+        expect(item.sourceStatement).not.toBeNull();
+        expect(item.semanticDisposition).toBe('REPLACE');
+      } else {
+        expect(item.sourceStatement).toBeNull();
+        expect(item.semanticDisposition).toBe('REQUIRES_SEPARATE_DIRECT_SUPPORT');
+      }
+    }
     expect(adjudication.sourceBoundary).toMatchObject({
       exactPrimaryWitnessCandidateId: 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_LOWER_SCAN',
       exactPrimaryPdfPageOneBased: 25,
