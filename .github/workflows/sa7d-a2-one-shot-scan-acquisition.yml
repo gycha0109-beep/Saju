@@ -19,6 +19,7 @@ jobs:
         run: python scripts/research/acquire_general_annual_ming_scans.py
         env:
           SA7DA2_ONLY_LOWER: "true"
+          SA7DA2_FOCUS_PAGES: "19,20,21,22,23,24,25,26,27,28,29"
       - name: Upload inspected-page candidates and provenance
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

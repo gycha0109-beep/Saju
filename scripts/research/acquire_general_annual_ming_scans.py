@@ -94,6 +94,34 @@ def make_contact_sheets(item: dict, raw: bytes, result: dict) -> None:
     doc.close()
 
 
+
+def make_focus_pages(item: dict, raw: bytes, result: dict) -> None:
+    import fitz
+    from PIL import Image
+
+    doc = fitz.open(stream=raw, filetype="pdf")
+    selected = [int(v) for v in os.environ.get("SA7DA2_FOCUS_PAGES", "").split(",") if v]
+    rendered = []
+    for number in selected:
+        if not 1 <= number <= len(doc):
+            continue
+        page = doc[number-1]
+        pix = page.get_pixmap(matrix=fitz.Matrix(1.25, 1.25), alpha=False)
+        img = Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
+        img.thumbnail((2550, 2250))
+        output = OUTPUT / f"FOCUS_{item['id']}_page_{number:02}.jpg"
+        img.save(output, "JPEG", quality=73, optimize=True)
+        rendered.append(str(output))
+        encoded = base64.b64encode(output.read_bytes()).decode("ascii")
+        tag = f"{item['id']}_page_{number:02}"
+        print(f"SCAN_FOCUS_BEGIN {tag} {len(encoded)}", flush=True)
+        for start in range(0, len(encoded), 3900):
+            print(f"SCAN_FOCUS_PART {tag} {start//3900} {encoded[start:start+3900]}", flush=True)
+        print(f"SCAN_FOCUS_END {tag}", flush=True)
+    result["focus_pages"] = rendered
+    doc.close()
+
+
 def main() -> None:
     manifest = {
         "task": "SA-7D-A2 / Issue #2395",
@@ -116,7 +144,10 @@ def main() -> None:
             result["sha256"] = hashlib.sha256(data).hexdigest()
             if item.get("commons_sha1") and result["sha1"] != item["commons_sha1"]:
                 raise ValueError(f"commons SHA-1 mismatch: {result['sha1']}")
-            make_contact_sheets(item, data, result)
+            if os.environ.get("SA7DA2_FOCUS_PAGES"):
+                make_focus_pages(item, data, result)
+            else:
+                make_contact_sheets(item, data, result)
             print(f"SCAN_ACQUIRED {item['id']} {result['sha1']} {result['sha256']}", flush=True)
         except Exception as exc:
             failed = True
