@@ -37,7 +37,7 @@ export interface ExternalSourceFR312G7 {
   readonly numericEvidenceForExactFR312GAxes: false;
   readonly independentParticipantVarianceUsable: false;
   readonly missingnessAndWithdrawalUsable: false;
-  readonly suitability: Exclude<SourceSuitabilityFR312G7, 'eligible_for_numeric_review'>;
+  readonly suitability: SourceSuitabilityFR312G7;
   readonly limitation: string;
 }
 
