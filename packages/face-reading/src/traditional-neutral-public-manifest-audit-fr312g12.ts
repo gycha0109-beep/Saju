@@ -85,7 +85,7 @@ export function auditHSRDManifestFR312G12(): FR312G12PublicStructureFinding {
     (name) => 'manifest/' + name === d.readmeConfigInventory,
   );
   const divergentPaths = (Object.keys(d.poseManifestPaths) as Array<keyof typeof d.poseManifestPaths>)
-    .filter((key) => d.poseManifestPaths[key] !== d.csvManifestPaths[key]);
+    .filter((key) => String(d.poseManifestPaths[key]) !== String(d.csvManifestPaths[key]));
   if (!manifestMissing || divergentPaths.length !== 3 || d.exampleCsvFileSize !== 0 ||
       d.exampleCsvSha256 !== '' || d.actualZipBytesInspected) {
     throw new Error('fr312g12_hsrd_public_source_snapshot_changed_requires_reaudit');
