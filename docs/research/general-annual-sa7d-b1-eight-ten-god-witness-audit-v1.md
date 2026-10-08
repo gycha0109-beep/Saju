@@ -60,3 +60,30 @@ Research 파일: `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`.
 - **C. Bridge/Engine/Official Reading/Production 승인:** 허가하지 않음. `bridgeReentryReady=false`, `Production=HOLD`, Annual→Monthly 불허.
 
 기존 #2386의 Closed 상태, #2425 병합 상태를 신규 전통 의미의 승인으로 해석하지 않는다.
+
+## 6. 2026-10-09 원본 재취득 실행 및 차단 증거 (L0 유지)
+
+- 실행 브랜치: `research/saju-research/sa7d-b1-volume5-scan`
+- 실행 커밋: `975a2e1d32530975a23884bf5821a8f6f32926a0`
+- 실제 실행: [GitHub Actions #37801081281](https://github.com/gycha0109-beep/Saju/actions/runs/37801081281) (실패 종료)
+- 실행 증거 아티팩트: `sa7d-b1-volume5-original-proof`, ID `11561235665`. 실패 manifest만 생성됨. **PDF/판면 이미지 아티팩트 아님.**
+- 취득 대상: `NLC892-411999029701-67240 三命通會 第9冊.pdf`; Wikimedia Commons 원본 URL의 `/wikipedia/commons/8/8f/` 경로는 공개 검색과 일치함.
+- 차단: GitHub runner의 원본 GET 두 번 모두 HTTP `429 Too Many Requests`; 최종 `DOWNLOAD_FAILED`, `SCAN_FAILED`, exit 1. 소요 약 25초. HTTP 429를 원본 부재나 판본 불일치로 해석하지 않음.
+- 외부 PDF 서지: [Commons 파일 목록](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_%E7%AC%AC9%E5%86%8A.pdf)의 **45쪽 / 13.38MB / 卷之五上** 정보만 다시 확인. 실제 다운로드 바이트, 파일 SHA-1/256, 목표 절 PDF index는 미확보.
+- 별도 위치 단서: [중국 국가도서관 계열 전사](https://www.shidianguji.com/zh/book/NGJ89241199902970167139/chapter/1lvorfakpmlnt)에 `論古人立印食、官財名義`, `論正官`, `論倒食` 등의 텍스트가 검색됨. `甲見辛`은 정관, `甲食丙`은 식신 관련, `甲見壬`은 도식/편인 관련 **L0 검색 단서**에 한정함. 전사/OCR의 오자 가능성과 PDF 상·하권 위치 불명은 별도로 검증해야 함.
+- 검증되지 않은 대안 판본은 별도 witness로 기록해야 하며 Commons 제9책과 동일 바이트 객체라고 가정하지 않음.
+
+**재개 조건:** 단순히 동일 URL을 즉시 반복 호출하지 말고, 429 제한이 해소됐다는 근거가 있거나 같은 원본 스캔 객체의 공개 배포 경로를 확정할 때만 일회성 취득을 재개한다. 실제 바이너리 확보 → Commons SHA-1/크기 대조 → SHA-256 및 45쪽 구조 검증 → 원문 판면과 두 방향 천간 문맥 직접 대조 → 독립 Annual 범위 검증 순서를 준수한다. 증거 확보 전 기존 연구 코드·테스트·14종 A3/A4 판정·8종 `INSUFFICIENT`는 변경하지 않는다. `bridgeReentryReady=false`, `Production=HOLD`를 유지한다.
+
+## 7. 보충 판면 증거 입증 상태 (2026-10-09)
+
+같은 독립 원전의 2개 판본 스캔 식별자만으로 그 판본의 **실제 인쇄 판면**을 Commons 공식 PDF 파생 이미지로 34쪽(제9책 6쪽 + 제10책 28쪽) 취득·대조하였다. 원본 PDF 바이너리를 로컬에서 다운로드하여 SHA를 검증한 것은 아니므로 "원본 PDF 원본 해시 검증 완료"라고 보고하지 않는다.
+
+- 제9책(卷之五上): `general-annual-sa7d-b1-ming-volume5-page-preview-witness-v1.md`에서 `甲→辛 正官` L1 확인.
+- 제10책(卷之五下): `general-annual-sa7d-b1-ming-volume5-lower-four-l1-witness-audit-v1.md`에서 `甲→丙 食神`, `甲→丁 傷官`, `甲→壬 偏印` L1 확인.
+- **직접 인쇄본 일간-십신 명칭 L1: 4/8**; 나머지 比肩, 劫財, 正財, 正印은 인쇄본 짝별 명칭 미확보.
+- **유년 천간 직접 증거 L2: 0/8.** Annual `sourceSupportGrade=INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`.
+- 기존 TypeScript `general-annual-sa7d-b1-ten-god-witness-audit.ts`는 **이 보충 판면 증거 취득 이전의 B1 v1 감사 스냅샷**이다. 그 문서 내 `primaryScanPageVerified: false` 같은 기존 스냅샷 속성은 보충 문서의 새 L1 판독 결과와 별도로 취급한다. 이 기록은 엔진 승인, 현대 테마, Annual 의미론 승격을 의미하지 않는다.
+- 임시 PDF 취득/페이지 미리보기 스크립트·일회성 GitHub Actions workflow는 연구 브랜치에서만 사용하고, 본 보충 문서의 정리 PR에는 포함하지 않는다.
+
+**종료:** A=4종 L1 검증 일부 PASS / B=전체 PDF 바이트, 4종 미확보, Annual L2 미확보 HOLD / C=권한 경계 보호 PASS.
