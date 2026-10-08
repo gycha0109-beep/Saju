@@ -66,21 +66,34 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
     });
   });
 
-  test('keeps the preferred 1578 scan fail-closed until the exact page is visually verified', () => {
-    const primary = byId('NCL_1578_SANMING_TONGHUI_VOLUME2_SCAN');
+  test('keeps both 1578 Commons upload chunks fail-closed without inventing a 卷二 mapping', () => {
+    const chunk1 = byId('NCL_1578_SANMING_TONGHUI_SCAN_CHUNK_1');
+    const chunk2 = byId('NCL_1578_SANMING_TONGHUI_SCAN_CHUNK_2');
 
-    expect(primary).toMatchObject({
-      disposition: 'PRIMARY_SCAN_PAGE_VERIFICATION_REQUIRED',
-      acquisition: {
-        scanObjectLocated: true,
-        reproducible: true,
-        exactLunTaisuiPageBound: false,
-        relevantPassageVisuallyVerified: false,
-        contentHashBound: false,
-      },
+    for (const primary of [chunk1, chunk2]) {
+      expect(primary).toMatchObject({
+        disposition: 'PRIMARY_SCAN_PAGE_VERIFICATION_REQUIRED',
+        acquisition: {
+          scanObjectLocated: true,
+          reproducible: true,
+          workVolumeTwoIdentityEstablished: false,
+          exactLunTaisuiPageBound: false,
+          relevantPassageVisuallyVerified: false,
+          contentHashBound: false,
+        },
+      });
+    }
+
+    expect(chunk1).toMatchObject({
+      acquisition: { commonsUploadChunk: 1, pageCount: 1000 },
     });
+    expect(chunk2).toMatchObject({
+      acquisition: { commonsUploadChunk: 2, pageCount: 187 },
+    });
+
     expect(acquisition.observations).toMatchObject({
-      primary1578ScanObjectLocated: true,
+      primary1578EditionScanChunksLocated: true,
+      primary1578WorkVolumeTwoChunkIdentified: false,
       exactPrimary1578LunTaisuiPageBound: false,
       exactPrimary1578PassageVisuallyVerified: false,
       atomicStemRelationSourceQualified: false,
@@ -125,7 +138,7 @@ describe('SA-7D-A General Annual atomic semantic source acquisition', () => {
 
   test('keeps Engine, Official Reading, Production, detailed, and monthly authority closed', () => {
     expect(acquisition.nextDisposition).toBe(
-      'VERIFY_PRIMARY_SCAN_PAGE_FOR_LUN_TAISUI_AND_ADJUDICATE_ATOMIC_SUCCESSOR',
+      'LOCATE_1578_VOLUME_TWO_PAGE_AND_VERIFY_LUN_TAISUI_BEFORE_ATOMIC_ADJUDICATION',
     );
     expect(acquisition.authorityBoundary).toEqual({
       researchEvidenceOnly: true,
