@@ -1,0 +1,171 @@
+{
+  "schemaVersion": "fr2337-private-preregistration-v1",
+  "candidate": {
+    "modelId": "candidate.hairline.multisignal_visible_interface.fr306",
+    "modelRevision": "0.4.0",
+    "runnerContractVersion": "MULTISIGNAL-VISIBLE-HAIRLINE-LOCAL-CANDIDATE-v1"
+  },
+  "frozenBeforeCandidateExecution": false,
+  "records": [
+    {
+      "recordId": "capture-01",
+      "sourcePath": ".cache/face-reading/private-sources/capture-01.jpg",
+      "stage": "fr308",
+      "case": "clear_unobstructed_central_hairline",
+      "opaqueSessionLabel": "session-01",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-02",
+      "sourcePath": ".cache/face-reading/private-sources/capture-02.jpg",
+      "stage": "fr308",
+      "case": "partial_bangs_occlusion",
+      "opaqueSessionLabel": "session-02",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-03",
+      "sourcePath": ".cache/face-reading/private-sources/capture-03.jpg",
+      "stage": "fr308",
+      "case": "heavy_bangs_hairline_substantially_hidden",
+      "opaqueSessionLabel": "session-03",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-04",
+      "sourcePath": ".cache/face-reading/private-sources/capture-04.jpg",
+      "stage": "fr308",
+      "case": "cropped_upper_forehead",
+      "opaqueSessionLabel": "session-01",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-05",
+      "sourcePath": ".cache/face-reading/private-sources/capture-05.jpg",
+      "stage": "fr312",
+      "case": "m_shaped_or_widows_peak_visible_contour",
+      "opaqueSessionLabel": "session-02",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-06",
+      "sourcePath": ".cache/face-reading/private-sources/capture-06.jpg",
+      "stage": "fr312",
+      "case": "m_shaped_or_widows_peak_visible_contour",
+      "opaqueSessionLabel": "session-03",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-07",
+      "sourcePath": ".cache/face-reading/private-sources/capture-07.jpg",
+      "stage": "fr312",
+      "case": "side_recession_or_asymmetric_visible_hairline",
+      "opaqueSessionLabel": "session-01",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-08",
+      "sourcePath": ".cache/face-reading/private-sources/capture-08.jpg",
+      "stage": "fr312",
+      "case": "side_recession_or_asymmetric_visible_hairline",
+      "opaqueSessionLabel": "session-02",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-09",
+      "sourcePath": ".cache/face-reading/private-sources/capture-09.jpg",
+      "stage": "fr312",
+      "case": "upper_hairline_visibility_loss",
+      "opaqueSessionLabel": "session-03",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-10",
+      "sourcePath": ".cache/face-reading/private-sources/capture-10.jpg",
+      "stage": "fr312",
+      "case": "upper_hairline_visibility_loss",
+      "opaqueSessionLabel": "session-01",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-11",
+      "sourcePath": ".cache/face-reading/private-sources/capture-11.jpg",
+      "stage": "fr312",
+      "case": "dark_hair_dark_background",
+      "opaqueSessionLabel": "session-02",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-12",
+      "sourcePath": ".cache/face-reading/private-sources/capture-12.jpg",
+      "stage": "fr312",
+      "case": "dark_hair_dark_background",
+      "opaqueSessionLabel": "session-03",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-13",
+      "sourcePath": ".cache/face-reading/private-sources/capture-13.jpg",
+      "stage": "fr312",
+      "case": "light_hair_or_low_local_contrast",
+      "opaqueSessionLabel": "session-01",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-14",
+      "sourcePath": ".cache/face-reading/private-sources/capture-14.jpg",
+      "stage": "fr312",
+      "case": "light_hair_or_low_local_contrast",
+      "opaqueSessionLabel": "session-02",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-15",
+      "sourcePath": ".cache/face-reading/private-sources/capture-15.jpg",
+      "stage": "fr312",
+      "case": "ordinary_indoor_illumination_variation",
+      "opaqueSessionLabel": "session-03",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    },
+    {
+      "recordId": "capture-16",
+      "sourcePath": ".cache/face-reading/private-sources/capture-16.jpg",
+      "stage": "fr312",
+      "case": "ordinary_indoor_illumination_variation",
+      "opaqueSessionLabel": "session-01",
+      "freshIndependentCaptureAttested": false,
+      "usedForDevelopment": null,
+      "derivedFromAnotherCapture": null
+    }
+  ]
+}

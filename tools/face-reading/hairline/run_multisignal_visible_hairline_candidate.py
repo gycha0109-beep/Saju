@@ -13,7 +13,6 @@ Python standard library so normal CI never needs image/ML dependencies.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 import os
@@ -751,7 +750,6 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
     record_dir = output_dir / str(record["recordId"])
     record_dir.mkdir(parents=True, exist_ok=True)
 
-    digest = hashlib.sha256(image_path.read_bytes()).hexdigest()
     detailed = {
         "schemaVersion": SCHEMA_VERSION,
         "method": {
@@ -766,7 +764,6 @@ def _extract_record(image_path: Path, record: dict[str, Any], output_dir: Path) 
         "recordId": str(record["recordId"]),
         "experimentTag": str(record.get("experimentTag", "unspecified")),
         "sourcePath": str(image_path),
-        "sourceImageDigest": f"sha256:{digest}",
         "faceRoi": [x, y, w, h],
         "faceRoiSource": roi_source,
         # Only a fully visible-interface state may expose a candidate boundary.

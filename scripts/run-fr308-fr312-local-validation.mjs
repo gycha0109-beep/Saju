@@ -3,6 +3,7 @@
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
 
 const INPUT_SCHEMA =
   'fr308-fr312-local-deidentified-validation-input-v1';
@@ -92,7 +93,7 @@ function redactMessage(message) {
 function assertLocalInputPath(inputPath) {
   const absolute = resolve(inputPath);
   const cwd = resolve(process.cwd());
-  const rel = relative(cwd, absolute);
+  const rel = relative(cwd, absolute).replaceAll('\\', '/');
 
   if (
     rel !== '' &&
@@ -110,7 +111,7 @@ function assertLocalInputPath(inputPath) {
 function assertSafeOutputPath(outputPath) {
   const absolute = resolve(outputPath);
   const cwd = resolve(process.cwd());
-  const rel = relative(cwd, absolute);
+  const rel = relative(cwd, absolute).replaceAll('\\', '/');
 
   if (
     rel === '' ||
@@ -324,6 +325,7 @@ function assertTopLevelInput(input) {
     'FR310_HUMAN_REVIEW_MISSING',
   );
 
+  if (input.fr312 === undefined) return;
   assertObject(input.fr312, 'FR312_INPUT_MISSING');
   if (!Array.isArray(input.fr312.captures)) {
     throw new Error('FR312_CAPTURES_MISSING');
@@ -337,7 +339,7 @@ function assertTopLevelInput(input) {
   }
 }
 
-async function execute(input) {
+export async function execute(input) {
   assertTopLevelInput(input);
 
   const {
@@ -391,6 +393,21 @@ async function execute(input) {
       receipt: blockedAtFR310(fr308, fr310),
       fr312Receipt: null,
       exitCode: 2,
+    };
+  }
+
+  if (input.fr312 === undefined) {
+    return {
+      receipt: {
+        ...baseReceipt(),
+        status: 'fr310_eligible_for_expanded_validation',
+        fr308Receipt: fr308,
+        fr310Receipt: fr310,
+        fr312Attempted: false,
+        fr312Status: 'not_attempted',
+      },
+      fr312Receipt: null,
+      exitCode: 0,
     };
   }
 
@@ -570,22 +587,25 @@ async function main() {
   process.exitCode = exitCode;
 }
 
-try {
-  await main();
-} catch (error) {
-  const message =
-    error instanceof Error ? error.message : String(error);
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  try {
+    await main();
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : String(error);
 
-  process.stderr.write(
-    `${JSON.stringify({
-      schemaVersion:
-        'fr308-fr312-local-validation-error-v1',
-      status: 'error',
-      error: redactMessage(message),
-      inputEchoed: false,
-      stackPrinted: false,
-      repositoryAuthorityMutated: false,
-    })}\n`,
-  );
-  process.exitCode = 1;
+    process.stderr.write(
+      `${JSON.stringify({
+        schemaVersion:
+          'fr308-fr312-local-validation-error-v1',
+        status: 'error',
+        error: redactMessage(message),
+        inputEchoed: false,
+        stackPrinted: false,
+        repositoryAuthorityMutated: false,
+      })}\n`,
+    );
+    process.exitCode = 1;
+  }
+
 }
