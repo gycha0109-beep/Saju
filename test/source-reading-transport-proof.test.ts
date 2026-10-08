@@ -94,7 +94,20 @@ function issued() {
   if (proof === null) throw new Error('expected held synthetic proof');
   return proof;
 }
-function clone(): any { return structuredClone(issued()); }
+function mutateAt(root: unknown, path: readonly string[], value: unknown, remove = false): void {
+  let object: unknown = root;
+  for (const key of path.slice(0, -1)) {
+    if (!object || typeof object !== 'object' || !(key in object)) {
+      throw new Error('Malformed synthetic adversarial path');
+    }
+    object = (object as Record<string, unknown>)[key];
+  }
+  if (!object || typeof object !== 'object') throw new Error('Missing mutation target');
+  const key = path[path.length - 1];
+  if (key === undefined) throw new Error('Empty synthetic mutation path');
+  if (remove) delete (object as Record<string, unknown>)[key];
+  else (object as Record<string, unknown>)[key] = value;
+}
 
 describe('2B-3B authenticated Preview-only source transport material', () => {
   it('verifies HMAC with pinned request and response but does not authorize execution or sale', async () => {
@@ -123,30 +136,30 @@ describe('2B-3B authenticated Preview-only source transport material', () => {
   });
 
   it.each([
-    ['request-mutation', (p: any, v: any) => { v.expectedRequestBody = { ...requestBody, reading: { text: '연애운' } }; }],
-    ['response-mutation', (p: any, v: any) => { v.response.reading.sections[0].title = '변조된 제목'; }],
-    ['changed-profile-ref', (p: any) => { p.payload.material.profileRef.contentHash = 'f'.repeat(64); }],
-    ['changed-evidence-hash', (p: any) => { p.payload.material.evidenceBundleHash = 'e'.repeat(64); }],
-    ['changed-signature', (p: any) => { p.signatureHex = '0'.repeat(64); }],
-    ['changed-audience', (p: any) => { p.payload.audience = 'other-service'; }],
-    ['changed-key-id', (p: any) => { p.payload.keyId = 'unknown-key'; }],
-    ['changed-lifecycle', (p: any) => { p.payload.lifecycle = 'production'; }],
-    ['claim-execution', (p: any) => { p.payload.canExecute = true; }],
-    ['extra-root-field', (p: any) => { p.productionAuthorization = true; }],
-    ['extra-payload-field', (p: any) => { p.payload.commerceEntitlement = 'paid'; }],
-    ['missing-material-field', (p: any) => { delete p.payload.material.snapshotId; }],
-    ['wrong-issuer-config', (p: any, v: any) => { v.trustedIssuer = 'other-service'; }],
-    ['wrong-nonce', (p: any, v: any) => { v.expectedNonce = 'X'.repeat(24); }],
-    ['wrong-key', (p: any, v: any) => { v.keyBytes = Buffer.alloc(32, 81); }],
-    ['expired', (p: any, v: any) => { v.nowMs = nowMs + 61_000; }],
-    ['future', (p: any, v: any) => { v.nowMs = nowMs - 20_000; }],
-    ['oversize-ttl', (p: any) => { p.payload.expiresAtMs = nowMs + 500_000; }],
-  ])('blocks %s with no nonce consumption', async (_case, mutate) => {
-    const p = clone();
-    const v: any = verifier();
-    mutate(p, v);
-    const result = await verifyHeldSourceReadingTransportProofV1(p, v);
-    expect(result).toMatchObject({ state: 'blocked', canSell: false });
+    ['request-mutation','verifier',['expectedRequestBody'],{ ...requestBody, reading: { text: '연애운' } }],
+    ['response-mutation','verifier',['response','reading','sections','0','title'],'변조된 제목'],
+    ['changed-profile-ref','proof',['payload','material','profileRef','contentHash'],'f'.repeat(64)],
+    ['changed-evidence-hash','proof',['payload','material','evidenceBundleHash'],'e'.repeat(64)],
+    ['changed-signature','proof',['signatureHex'],'0'.repeat(64)],
+    ['changed-audience','proof',['payload','audience'],'other-service'],
+    ['changed-key-id','proof',['payload','keyId'],'unknown-key'],
+    ['changed-lifecycle','proof',['payload','lifecycle'],'production'],
+    ['claim-execution','proof',['payload','canExecute'],true],
+    ['extra-root-field','proof',['productionAuthorization'],true],
+    ['extra-payload-field','proof',['payload','commerceEntitlement'],'paid'],
+    ['missing-material-field','proof',['payload','material','snapshotId'],undefined],
+    ['wrong-issuer-config','verifier',['trustedIssuer'],'other-service'],
+    ['wrong-nonce','verifier',['expectedNonce'],'X'.repeat(24)],
+    ['wrong-key','verifier',['keyBytes'],Buffer.alloc(32,81)],
+    ['expired','verifier',['nowMs'],nowMs+61_000],
+    ['future','verifier',['nowMs'],nowMs-20_000],
+    ['oversize-ttl','proof',['payload','expiresAtMs'],nowMs+500_000],
+  ] as const)('blocks %s with no nonce consumption', async (name,target,path,value) => {
+    const p=structuredClone(issued());
+    const v=verifier();
+    mutateAt(target==='proof'?p:v,path,value,name==='missing-material-field');
+    const result=await verifyHeldSourceReadingTransportProofV1(p,v);
+    expect(result).toMatchObject({state:'blocked',canSell:false});
     expect(v.claimNonceOnce).not.toHaveBeenCalled();
   });
 
