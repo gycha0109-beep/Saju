@@ -12,7 +12,7 @@ DIR = Path(".scan-1937-mingli")
 DIR.mkdir(exist_ok=True)
 FILE = "NLC416-07jh011647-5318_命理探源.pdf"
 API = "https://commons.wikimedia.org/w/api.php"
-PAGES = (60, 70, 80, 90, 100, 110, 120, 130, 140, 150)
+PAGES = (72, 73, 74, 75, 76, 77, 78, 79)
 HEADERS = {
     "User-Agent": "Saju-Research-SA7D-B1/1.0 (https://github.com/gycha0109-beep/Saju; printed-witness)",
     "Accept": "image/jpeg, application/json",
