@@ -111,9 +111,10 @@ describe('SAJU-R36 tight embedded bureau break — research T2', () => {
           productionAuthority: false,
         },
       });
-      const evidenceItem = e.payload.mechanismOutcomes[
-        claim.value.mechanism as keyof typeof e.payload.mechanismOutcomes
-      ];
+      const mechanism = (claim.value as {
+        mechanism: (typeof SAJU_R36_MECHANISMS)[number];
+      }).mechanism;
+      const evidenceItem = e.payload.mechanismOutcomes[mechanism];
       expect(evidenceItem.observed).toBe(true);
       expect(evidenceItem.identity?.formationRelationId).toBeTruthy();
       expect(evidenceItem.identity?.clashRelationId).toBeTruthy();
@@ -191,11 +192,22 @@ describe('SAJU-R36 tight embedded bureau break — research T2', () => {
       forgedPayload.mechanismOutcomes[mechanism].observed,
     );
     if (selected === undefined) throw new Error('expected a positive case');
-    forgedPayload.mechanismOutcomes[selected].identity!.clashRelationId = 'forged';
+    const original = forgedPayload.mechanismOutcomes[selected].identity;
+    if (original === null) throw new Error('expected exact source identity');
+    const replacement = {
+      ...forgedPayload,
+      mechanismOutcomes: {
+        ...forgedPayload.mechanismOutcomes,
+        [selected]: {
+          observed: true,
+          identity: { ...original, clashRelationId: 'forged' },
+        },
+      },
+    };
     const forged = {
       ...e,
-      payload: forgedPayload,
-      payloadHash: deterministicContentHash(forgedPayload),
+      payload: replacement,
+      payloadHash: deterministicContentHash(replacement),
     };
     const outcome = validateSajuR36BureauBreakResearchEvidence(forged, snapshot);
     expect(outcome.valid).toBe(false);
