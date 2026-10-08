@@ -165,35 +165,60 @@ Bridge re-entry ready = false
 - 現 10개 General Annual theme는 여전히 `REQUIRES_SEPARATE_DIRECT_SUPPORT`; 4개 지지 충 해석 또한 자동 승인하지 않음
 - 원자 근거 증명 `true`는 **Research 단계에 국한**되며 Engine / Preview / Official Reading / Production 및 Bridge 반환 가능 상태를 변경하지 않음
 
-## 9. SA-7D-A3 — 기존 현대식 Annual 테마 10개 개별 연구 판정
+## 9. SA-7D-A3 — 기존 현대식 Annual 테마 10개 독립 판정 (보완)
 
-본 판정은 아래 세 층위를 서로 혼동하지 않는다.
+### 9.1 증거의 두 축
 
-1. 명 만력 刻本 『三命通會』 제4책 PDF 25쪽에서 직접 확인된 사실: 연간과 일간을 비교하는 **방향성 있는 십신 관계** 예시 두 개
-2. 현재 서비스 후보: 내부 정책 `SRC-MYEONGHA-ANNUAL-INTERPRETATION-POLICY-V1`에 기초한 현대식 연운 활성화 테마 10개
-3. 대체 연구 대상: 별도 Governed Ten-God taxonomy가 계산한 **관계 이름(identity)**만을 연운 입력 사실로 전달하는 구조
+**현대식 의미의 출처 등급**과 **고전 원전에서 직접 확인한 십신 identity의 출처 등급**은 별개입니다.
 
-자료 범위에서 (1)은 source-qualified다. 반면 (2)의 직업·책임·학습·생산·경쟁·자원 관리 등 현대적 연운 의미는 직접 인용 가능한 별도 근거가 없다. 이남연·김기승(2022)은 고전 십성 개념과 후대 확장 경계를 다루는 보조 근거이며 각 테마의 annual-specific 심리 의미를 직접 승인하는 문헌이 아니다.
+- 명 만력 刻本 『三命通會』 제4책 PDF **25쪽**의 `論太歲` 두 예문은 `庚` 연간이 `甲` 일간을 극하는 **偏官**, `甲` 일간이 `戊` 연간을 극하는 **偏財**에 대해 방향성이 있는 원자적 관계 identity를 직접 확인합니다.
+- 이 두 예문은 나머지 여덟 십신 이름·분류 전체를 열거하는 직접 증거가 아닙니다. 전부를 해석하려면 별도 관리되는 십신 관계 taxonomy와 정확한 추가 문헌이 필요합니다.
+- 이남연·김기승(2022), DOI `10.21186/IPR.2022.7.1.025`는 고전 관계 identity와 후대 심리·기능 확장의 **차이를 설명하는 현대 학술 자료**입니다. 기존 연운 테마의 직접 고전 근거로 사용하지 않습니다.
+- 내부 제품 정책 `SRC-MYEONGHA-ANNUAL-INTERPRETATION-POLICY-V1`은 현재 후보 문구의 출처일 뿐 전통 명리 근거가 아닙니다.
 
-| 기존 현대식 semanticKey | 대응 십신 | 현대적 주장 | Research 판정 |
-|---|---|---|---|
-| ANNUAL_PEER_SELF_DIRECTION | 비견 | 자기 방향성 | REPLACE |
-| ANNUAL_PEER_COMPETITION_COORDINATION | 겁재 | 경쟁·조율 | REPLACE |
-| ANNUAL_OUTPUT_STEADY_PRODUCTION | 식신 | 꾸준한 생산 | REPLACE |
-| ANNUAL_OUTPUT_EXPRESSION_CHANGE | 상관 | 표현·변화 | REPLACE |
-| ANNUAL_WEALTH_EXTERNAL_RESOURCES | 편재 | 외부 자원 | REPLACE |
-| ANNUAL_WEALTH_STRUCTURED_RESOURCES | 정재 | 구조적 자원 | REPLACE |
-| ANNUAL_OFFICER_PRESSURE_RESPONSE | 편관 | 압박 대응 | REPLACE |
-| ANNUAL_OFFICER_ROLE_RESPONSIBILITY | 정관 | 역할·책임 | REPLACE |
-| ANNUAL_RESOURCE_ALTERNATIVE_LEARNING | 편인 | 대안적 학습 | REPLACE |
-| ANNUAL_RESOURCE_SUPPORT_LEARNING | 정인 | 지원·학습 | REPLACE |
+열 가지 **기존 현대적 주장 자체의** `sourceSupportGrade`는 모두 `INSUFFICIENT`이며, `originalModernMeaningGate=REQUIRES_SEPARATE_DIRECT_SUPPORT`로 유지합니다. 이것은 전체 전통 문헌에 그 의미가 *없다*는 부재 증명이 아닙니다.
 
-열 개 모두 **현재 근거 목록에서 현대식 의미로는 source-qualified가 아님**을 개별 판정한다. 따라서 기존 semanticKey를 그대로 승격하지 않고 관계 identity만 제안하는 `REPLACE`이다. 각 십신의 전체 taxonomy가 『三命通會』 두 예문만으로 전부 직접 입증됐다는 뜻은 아니며, 관계 계산은 별도 승인된 taxonomy를 필요로 한다.
+### 9.2 각 후보·원전·승계의 개별 연구 판정
 
-이 표는 전통 명리학 전체에 이러한 현대식 의미가 *어디에도 없다*는 부재 증명이 아니다. **현재 해당 후보와 제출된 출처에 대한 제품 연구 판정**이다.
+| semanticKey | 십신 | 현재 현대식 주장 | 확인한 고전 십신 identity | 현대식 출처 등급 | 연구 처분 |
+|---|---|---|---|---|---|
+| `ANNUAL_PEER_SELF_DIRECTION` | 비견 | 자기 방향성 | 별도 직접 판면 미확인 | INSUFFICIENT | REQUIRES_SEPARATE_DIRECT_SUPPORT |
+| `ANNUAL_PEER_COMPETITION_COORDINATION` | 겁재 | 경쟁·조율 | 별도 직접 판면 미확인 | INSUFFICIENT | REQUIRES_SEPARATE_DIRECT_SUPPORT |
+| `ANNUAL_OUTPUT_STEADY_PRODUCTION` | 식신 | 꾸준한 생산 | 별도 직접 판면 미확인 | INSUFFICIENT | REQUIRES_SEPARATE_DIRECT_SUPPORT |
+| `ANNUAL_OUTPUT_EXPRESSION_CHANGE` | 상관 | 표현·변화 | 별도 직접 판면 미확인 | INSUFFICIENT | REQUIRES_SEPARATE_DIRECT_SUPPORT |
+| `ANNUAL_WEALTH_EXTERNAL_RESOURCES` | 편재 | 외부 자원 | `甲日剋戊年為偏財` — PRIMARY_SUPPORTED (identity only) | INSUFFICIENT | REPLACE |
+| `ANNUAL_WEALTH_STRUCTURED_RESOURCES` | 정재 | 구조적 자원 | 별도 직접 판면 미확인 | INSUFFICIENT | REQUIRES_SEPARATE_DIRECT_SUPPORT |
+| `ANNUAL_OFFICER_PRESSURE_RESPONSE` | 편관 | 압박 대응 | `庚剋甲日為偏官` — PRIMARY_SUPPORTED (identity only) | INSUFFICIENT | REPLACE |
+| `ANNUAL_OFFICER_ROLE_RESPONSIBILITY` | 정관 | 역할·책임 | 별도 직접 판면 미확인 | INSUFFICIENT | REQUIRES_SEPARATE_DIRECT_SUPPORT |
+| `ANNUAL_RESOURCE_ALTERNATIVE_LEARNING` | 편인 | 대안적 학습 | 별도 직접 판면 미확인 | INSUFFICIENT | REQUIRES_SEPARATE_DIRECT_SUPPORT |
+| `ANNUAL_RESOURCE_SUPPORT_LEARNING` | 정인 | 지원·학습 | 별도 직접 판면 미확인 | INSUFFICIENT | REQUIRES_SEPARATE_DIRECT_SUPPORT |
 
-**전제·예외·반례:** 출생 일간 또는 연간이 없거나 모호하면 identity를 구성하지 않는다. 일간→연간과 연간→일간의 극 관계를 치환하지 않는다. 군신 관계의 고전적 길흉 설명이나 후대 학파의 심리·직업 확장은 별도 직접 출처가 없으면 기존 테마로 유입하지 않는다.
+위 **2개 REPLACE는 기존 현대식 의미의 승인·변경 명령이 아닙니다.** 정확히 증명된 identity만을 향후 successor 후보로 제시하는 **Research 판정**입니다. 남은 8개는 별도의 정확한 십신 고전 직접 증거까지 `REQUIRES_SEPARATE_DIRECT_SUPPORT`를 유지합니다.
 
-**권한 경계:** `REPLACE`는 Research disposition이며 실행 코드 변경, Reader용 문장 승인, Bridge 재진입, Production 승격이 아니다. 기존 candidate `0.1.0-research` 코드·규칙은 이 작업에서 수정하지 않는다. `currentModernThemeSemanticsSourceQualified=false`, `bridgeReentryReady=false`, `Production=HOLD`.
+기존 `themeDispositions`의 10/10 미해결은 *현대식 테마의 기존 권한 게이트*를 나타내고, `currentThemeSemanticAdjudication.decisions`의 2/10 `REPLACE`는 **현재 두 직접 판면 identity에 한한 successor 연구 판정**입니다. 서로 별개의 축이며 기존 후보를 자동 변경하거나 Product/Bridge 권한을 열지 않습니다.
 
-**후속:** 원래 Annual Branch-Clash Tension 네 개의 출처·추론·판정 층을 별도 검토한 다음 Bridge return eligibility를 재판정한다.
+### 9.3 각 항목의 독립 판단 필드
+
+개별 decision은 다음을 명시합니다.
+
+```text
+semanticKey / currentClaim / sourceRefs / sourceStatement
+interpretiveReading / researchInference / preconditions / meaningStrength
+qualifiers / exceptions / counterexamples / schoolDependencies
+nonImplications / sourceSupportGrade / identitySourceSupportGrade
+semanticDisposition / originalModernMeaningGate / unresolvedEvidence
+```
+
+**공통 전제:** 출생 일간과 목표 연운의 천간이 모두 특정되어야 하며, 방향을 보존하는 governed 십신 관계표가 필요합니다. 값의 누락·모호성에는 fail closed합니다.
+
+**예외·반례:** `庚年剋甲日`의 편관과 `甲日剋戊年`의 편재는 교환할 수 없습니다. 또한 편관이란 관계가 확인되더라도 해당 해의 직무 압박이나 사고가 필연적으로 일어나지 않고, 편재 identity가 확인되어도 외부 자원이나 재물 성과를 보증하지 않습니다. 십신 학파·문헌에 따른 추가 결과 규정은 별도 직접 증거가 필요합니다.
+
+**미해결 근거:** 각 현대 의미의 구체적 원문과 연운 범위, 두 예문 외 나머지 8개 십신의 exact witness, 전통 십신 taxonomy의 별도 governance, 학파별 조건과 반례.
+
+### 9.4 허용되지 않는 확대 및 다음 단계
+
+`relation_identity_only`는 직업 성과·경쟁·생산·학습·재물 변화·인간관계·건강·사고·길흉 점수·특정 시기 사건을 승인하지 않습니다. 출생 원국의 방법론을 연운으로 무단 상속하거나 연운 해석을 월운으로 전용하지 않습니다.
+
+이 판정으로 Engine, Preview, Official Reading, Production, Bridge 재진입 권한은 **전부 HOLD**입니다. 실제 `general-annual-reading-candidate.ts` 규칙·상품 후보·의미 문구는 변경하지 않았습니다.
+
+이후 **SA-7D-A4 지지충 4종 독립 연구**를 포함한 #2386의 모든 미해결 증거를 확인하고, 가능하다면 별도 Bridge 재심사 자격만 판단합니다. 절대 Production 승격을 의미하지 않습니다.
