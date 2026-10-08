@@ -16,8 +16,7 @@ OUTPUT.mkdir(exist_ok=True)
 API = "https://commons.wikimedia.org/w/api.php"
 AGENT = "MyeongHa-Saju-Research/2.0 (https://github.com/gycha0109-beep/Saju)"
 BOOKS = (
-    ("1", "210287", 48, (5, 12, 22, 36)),
-    ("2", "210288", 30, (2, 7, 12, 16, 20, 25, 29)),
+    ("2", "210288", 30, (13, 14, 15, 17, 18, 19)),
 )
 MAX_BYTES = 2500000
 
