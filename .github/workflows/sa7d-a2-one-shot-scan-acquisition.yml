@@ -1,0 +1,27 @@
+name: "[WT:saju] SA-7D-A2 One-shot Scan Acquisition"
+on:
+  push:
+    branches:
+      - research/saju-research/sa7d-a2-scan-acquire-2395
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install scan renderer
+        run: python -m pip install --disable-pip-version-check --no-cache-dir "PyMuPDF==1.26.4" "Pillow==11.3.0"
+      - name: Acquire public-domain scans and produce evidence contact sheets
+        id: acquire
+        run: python scripts/research/acquire_general_annual_ming_scans.py
+      - name: Upload inspected-page candidates and provenance
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sa7d-a2-ming-source-acquisition
+          path: .scan-evidence/
+          if-no-files-found: warn
+          retention-days: 5
