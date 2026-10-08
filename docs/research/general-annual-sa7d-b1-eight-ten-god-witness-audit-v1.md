@@ -95,3 +95,10 @@ Research 파일: `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`.
 - 정확한 PDF 인덱스, 원본 식별자, JPEG SHA-256, 실행·아티팩트, 판독 한계 및 `甲→乙 劫財/敗財` 사조 간 용어 차이는 `general-annual-sa7d-b1-ming-six-l1-and-school-label-audit-v1.md` 참고.
 - 최신 합산: Ming 직접 인쇄본 개별 **L1 6/8**, 비견·겁재 **L1 미확보**, 유년 직접 **L2 0/8**, Annual `INSUFFICIENT` **8/8**, `bridgeReentryReady=false`, `Production=HOLD`.
 - `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`는 이전 증거 시점의 v1 snapshot. 이번 추가 인쇄본은 연구용 감사 보충자료이며 의미론 승격이나 v1의 임의 변경 근거가 아니다.
+
+## 9. 2026-10-09 刻京臺增補淵海子平大全 별도 명대 판본: 비견 7/8, 劫財/敗財 분리
+
+- 명대 직접 인쇄 원전 `NLC892-2642-210288` 第2冊 卷三 **PDF 17쪽** `論兄弟姊妹`: `比肩者兄弟也且如甲見甲爲兄`. `甲→甲 比肩` 일간 L1 추가 확인.
+- 같은 고전 인쇄본 **PDF 10쪽** `論劫財`는 `五陽見五陰爲敗財`, `五陰見五陽爲劫財`를 구분. `甲→乙 劫財`를 확정하는 쌍별 문장은 미확인. `敗財`를 `劫財`로 조용히 치환 금지.
+- 원본 PDF 실제 바이트 취득과 전체 SHA-1/SHA-256 검증 미완료; 공식 PDF 파생 판면 JPEG 개별 SHA-256 확인. 판본·원문·쪽수·해시·실행 artifact·용어 충돌의 분리 증거는 `general-annual-sa7d-b1-yuanhai-ming-printed-bijian-and-term-split-v1.md` 참고.
+- **최신 L1 직접 원전 7/8, 현대 타깃 `甲→乙 劫財` 1/8 미충족.** 원전 Annual 적용 L2 **0/8**, 8개 Annual `sourceSupportGrade=INSUFFICIENT`, `bridgeReentryReady=false`, `Production=HOLD`. 기존 A2의 2개 독립 직접 증거에는 영향 없음.
