@@ -403,6 +403,8 @@ export interface MyeonghwaSourceReadingProofHost {
   requestReadingWithProofReadiness(body: unknown): Promise<{
     readonly response: ProductReadingResponse;
     readonly readiness: SourceReadingProofReadinessV1;
+    /** Parsed and normalized by the Saju host for this same execution. */
+    readonly executedRequestBody: ProductHostReadingRequestBody;
   }>;
 }
 
@@ -431,7 +433,7 @@ async function runProductHostReadingInternals(
     dependencies.readingOptions,
     dependencies.legacyNarrativeRuntime,
   );
-  return { snapshot, interpretation, registry, ...reading };
+  return { executedRequestBody: parsed, snapshot, interpretation, registry, ...reading };
 }
 
 export function createMyeonghwaProductHost(
@@ -454,7 +456,7 @@ export function createMyeonghwaSourceReadingProofHost(
     async requestReadingWithProofReadiness(body: unknown) {
       const run = await runProductHostReadingInternals(dependencies, body);
       const readiness = inspectSourceReadingProofReadinessV1(run);
-      return { response: run.response, readiness };
+      return { response: run.response, readiness, executedRequestBody: run.executedRequestBody };
     },
   };
 }
