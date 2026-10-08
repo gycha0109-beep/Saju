@@ -23,10 +23,13 @@ Canonical Saju Snapshot (4 resolved pillars, exact pinned stem/branch metadata, 
 각 메커니즘(OUTPUT_LEAKAGE, WEALTH_EXPENDITURE_CONTROL,
 OFFICER_CONTROL_PRESSURE)을 서로 합치지 않는다.
 
-확정 가능한 경우는 **해당 메커니즘에 정확히 하나의 bureau item**이 있고,
-그 item에 **추적된 충이 정확히 하나**, 그 충이 국 내부에 있으며 직접 충한
+확정 가능한 경우는 **해당 메커니즘에 정확히 하나의 고유한 파국 identity**가 있고,
+해당 I47 item의 **directBreakCount가 정확히 하나**, 그 충이 국 내부에 있으며 직접 충한
 삼합 구성 지지와 인접하고, I46 settlement가 정확히 BREAK_AUTHORIZED이며,
 I47의 postInteractionBureauState가 직접 파괴로 확정된 경우뿐이다.
+같은 삼합·충 identity를 다른 target-root subject에서 반복 관찰한 item은
+하나로 보존한다. 서로 다른 파국 identity를 합산하지 않는다. 이는 현재
+adapter 구현에 맞춘 문서 정정이며 판정 로직 변경이 아니다.
 
 기존 I47에 더 많은 복합 사례가 존재하더라도 이 R36은 결론을 만들어내지 않는다.
 
@@ -67,10 +70,13 @@ Claim value에는 메커니즘과 제한적인 bureauBreak 사실만 들어가�
 - resolved metadata, scenario, no false-to-negative
 - I45/I47/R33/R34/R35 불간섭 및 typecheck/lint/build/회귀 테스트
 
-**검증 전에는 PASS를 주장하지 않는다.**
-실제 출생일 계산 결과에서 positive 사례까지 검증할지는 별도
-fixture 발견 및 추가 검사가 필요하다. Synthetic source-domain fixture를
-실제 출생일 표본으로 주장하지 않는다.
+실제 출생일 positive와 기존 제품 경로의 차단 검증은 issue #2435의
+`test/saju-refresh-canonical-product-boundary-smoke.test.ts`에 추가했다.
+1989-09-08 01:30의 금국 및 1992-01-12 05:30의 목국에서 계산된
+원본 snapshot을 수정하지 않고 실제 T2 및 exact 삼합·충 위치를 검증한다.
+제품 facade는 두 positive 모두 General Natal의 필수 근거 부족으로 차단한다.
+상세 범위는 [post-R37 제품 경계 감사](saju-refresh-post-r37-product-boundary-audit-2026-10-09.md)를 따른다.
+Synthetic source-domain fixture는 실제 출생일 표본과 구분한다.
 
 ## 후속
 

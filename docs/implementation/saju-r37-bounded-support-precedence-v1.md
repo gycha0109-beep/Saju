@@ -18,6 +18,7 @@ I21은 서로 다른 support class의 소수 비교만 허용하며 supportEffec
 ## R37 실제 predicate
 
 조건:
+
 1. 단일 resolved canonical snapshot (ID/hash), 시나리오 없음.
 2. R31 inventory replay가 성공하고 R34 root substrate가 성공해야 한다.
 3. 연·월·시 *천간*의 exact canonical 十神이 `비견`인 occurrence만 사용한다.
@@ -30,6 +31,7 @@ I21은 서로 다른 support class의 소수 비교만 허용하며 supportEffec
    반드시 I21의 `LEFT_PRECEDES`가 나오는 비교만 발행.
 
 결과:
+
 - 각 root class별 `observed=true`인 positive-only qualitative precedence.
 - exact stem/root witnesses, pillar slots, root kind, validated input hashes.
 - 일반 support force/usable effect/身強/身弱은 모두 not_determined.
@@ -69,5 +71,14 @@ product/default registry, public API, DB, narrative pipeline에 연결하지 않
 conditions 및 관계 이후 상태에 대해 실제 방법론 채택 근거를 조사하고,
 그 후에만 좁은 effect predicate를 확장한다.
 
-A: focused tests/typecheck/build/lint/format, B: ordinary CI + Container + PIE +
-Integration, C: squash merge/main inclusion. 검증 전 PASS 주장 금지.
+로컬/hosted/병합 검증과 전체 Saju Refresh의 A/B/C 완료 기준을 구분한다.
+전체 A는 governed semantic chain, B는 실제 제품 소비, C는 실제 제품 해석
+smoke까지 포함한 검증이다. R37의 CI나 병합만으로 이 기준을 충족하지 않는다.
+
+Issue #2435의 `test/saju-refresh-canonical-product-boundary-smoke.test.ts`는
+1992-01-02 13:30의 餘氣 및 1992-01-05 09:30의 長生 root 비교를
+원본 계산 snapshot에서 실제 T2로 실행한다. exact root/比肩 위치와
+evidence provenance를 검증하며, 기존 General Natal 제품 경로에서는
+필수 근거 부족으로 차단되고 Narrative가 호출되지 않음을 확인한다.
+이는 긍정적인 제품 해석 smoke나 Production 권한이 아니다.
+상세 결과는 [post-R37 제품 경계 감사](saju-refresh-post-r37-product-boundary-audit-2026-10-09.md)를 따른다.
