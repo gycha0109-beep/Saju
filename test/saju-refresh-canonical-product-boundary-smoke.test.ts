@@ -18,11 +18,25 @@ import {
   SAJU_R37_SUPPORT_PRECEDENCE_RUNTIME_ADAPTER,
 } from '../src/research/shared-natal-r37-support-precedence-research-evidence-adapter.js';
 import { createSajuR37SupportPrecedenceResearchRegistry } from '../src/research/shared-natal-r37-support-precedence-structural-claim.js';
+import {
+  buildSajuR38RemoteNonjoiningResearchEvidence,
+  validateSajuR38RemoteNonjoiningResearchEvidence,
+  SAJU_R38_REMOTE_NONJOINING_RUNTIME_ADAPTER,
+} from '../src/research/shared-natal-r38-remote-stem-nonjoining-research-evidence-adapter.js';
+import { createSajuR38RemoteNonjoiningResearchRegistry } from '../src/research/shared-natal-r38-remote-stem-nonjoining-structural-claim.js';
 import { DEFAULT_CALCULATION_POLICY } from './fixtures/calculation-fixtures.js';
 
 const now = new Date('2026-10-08T00:00:00Z');
 // Actual date inputs: no pillar, Ten-God, hidden-membership or hash replacement.
 const fixtures = [
+  {
+    track: 'R38',
+    year: 1984,
+    month: 2,
+    day: 6,
+    hour: 5,
+    pillars: ['甲子', '丙寅', '庚午', '己卯'],
+  },
   {
     track: 'R36',
     year: 1989,
@@ -108,22 +122,30 @@ describe('Saju Refresh actual canonical positive / existing product boundary smo
       const r36 = fixture.track === 'R36';
       const built = r36
         ? buildSajuR36BureauBreakResearchEvidence(snapshot)
-        : buildSajuR37SupportPrecedenceResearchEvidence(snapshot);
+        : fixture.track === 'R38'
+          ? buildSajuR38RemoteNonjoiningResearchEvidence(snapshot)
+          : buildSajuR37SupportPrecedenceResearchEvidence(snapshot);
       if (built.status !== 'resolved') throw new Error(built.reasonCode);
       const validate = r36
         ? validateSajuR36BureauBreakResearchEvidence
-        : validateSajuR37SupportPrecedenceResearchEvidence;
+        : fixture.track === 'R38'
+          ? validateSajuR38RemoteNonjoiningResearchEvidence
+          : validateSajuR37SupportPrecedenceResearchEvidence;
       expect(validate(built.envelope, snapshot).valid).toBe(true);
       const registry = r36
         ? createSajuR36BureauBreakResearchRegistry()
-        : createSajuR37SupportPrecedenceResearchRegistry();
+        : fixture.track === 'R38'
+          ? createSajuR38RemoteNonjoiningResearchRegistry()
+          : createSajuR37SupportPrecedenceResearchRegistry();
       const options = {
         now,
         researchEvidence: {
           runtimeRegistry: createResearchEvidenceRuntimeRegistry([
             r36
               ? SAJU_R36_BUREAU_BREAK_RUNTIME_ADAPTER
-              : SAJU_R37_SUPPORT_PRECEDENCE_RUNTIME_ADAPTER,
+              : fixture.track === 'R38'
+                ? SAJU_R38_REMOTE_NONJOINING_RUNTIME_ADAPTER
+                : SAJU_R37_SUPPORT_PRECEDENCE_RUNTIME_ADAPTER,
           ]),
           envelopes: [built.envelope],
         },
@@ -165,7 +187,7 @@ describe('Saju Refresh actual canonical positive / existing product boundary smo
           rootDestruction: 'not_determined',
           supportEffect: 'not_determined',
         });
-      } else {
+      } else if (fixture.track === 'R37') {
         expect(interpretation.claims[0]?.value).toMatchObject({ rootClass: fixture.rootClass });
         expect(built.envelope.payload).toMatchObject({
           comparisons: {
@@ -186,6 +208,11 @@ describe('Saju Refresh actual canonical positive / existing product boundary smo
               ],
             },
           },
+        });
+      } else {
+        expect(interpretation.claims[0]?.value).toMatchObject({
+          fullJoining: false,
+          partialEffect: 'not_determined',
         });
       }
       expect(runInterpretation(snapshot, registry, options)).toEqual(interpretation);
@@ -236,7 +263,7 @@ describe('Saju Refresh actual canonical positive / existing product boundary smo
     },
   );
 
-  test.each(['R36', 'R37'] as const)(
+  test.each(['R36', 'R37', 'R38'] as const)(
     '%s preserves unknown time rather than emitting a negative conclusion',
     (track) => {
       const snapshot = calculateCanonicalSajuSnapshot(
@@ -252,12 +279,16 @@ describe('Saju Refresh actual canonical positive / existing product boundary smo
       const built =
         track === 'R36'
           ? buildSajuR36BureauBreakResearchEvidence(snapshot)
-          : buildSajuR37SupportPrecedenceResearchEvidence(snapshot);
+          : track === 'R38'
+            ? buildSajuR38RemoteNonjoiningResearchEvidence(snapshot)
+            : buildSajuR37SupportPrecedenceResearchEvidence(snapshot);
       expect(built.status).toBe('unavailable');
       const registry =
         track === 'R36'
           ? createSajuR36BureauBreakResearchRegistry()
-          : createSajuR37SupportPrecedenceResearchRegistry();
+          : track === 'R38'
+            ? createSajuR38RemoteNonjoiningResearchRegistry()
+            : createSajuR37SupportPrecedenceResearchRegistry();
       expect(runInterpretation(snapshot, registry, { now }).claims).toHaveLength(0);
     },
   );
