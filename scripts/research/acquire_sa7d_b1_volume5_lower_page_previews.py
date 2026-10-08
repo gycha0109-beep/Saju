@@ -21,7 +21,7 @@ FILE = "NLC892-411999029701-67241_三命通會_第10冊.pdf"
 CATALOG = "https://commons.wikimedia.org/wiki/File:" + FILE
 API = "https://commons.wikimedia.org/w/api.php"
 USER_AGENT = "MyeongHa-Saju-Research/1.1 (https://github.com/gycha0109-beep/Saju; public-domain-archival-audit)"
-PAGES = (17, 19, 20, 21, 23, 24, 31, 33)
+PAGES = (7, 11, 13, 16, 18, 34, 36, 39)
 MAX_BYTES = 2_500_000
 
 def get(url, accept):
