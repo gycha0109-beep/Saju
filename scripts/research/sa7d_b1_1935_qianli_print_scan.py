@@ -12,7 +12,7 @@ DIR = Path(".scan-1935-qianli")
 DIR.mkdir(exist_ok=True)
 FILE = "NLC416-01jh000372-10197_千里命稿.pdf"
 API = "https://commons.wikimedia.org/w/api.php"
-PAGES = (94, 99, 104, 108, 112, 116, 120, 123)
+PAGES = (3, 12, 22, 32, 42, 50)
 HEADERS = {
     "User-Agent": "Saju-Research-SA7D-B1/1.0 (https://github.com/gycha0109-beep/Saju; printed-witness)",
     "Accept": "image/jpeg, application/json",
