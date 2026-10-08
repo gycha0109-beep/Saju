@@ -125,3 +125,11 @@ Research 파일: `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`.
 - 표본 22/123으로 책 전체의 구절 부재는 주장하지 않음. 원본 PDF 전체 다운로드/검증도 미수행.
 - PDF 정확한 쪽·실물 서지·직접 이미지 실행/아티팩트·허용된 사실·불허 사실은 `general-annual-sa7d-b1-qianli-1935-edition-binding-audit-v1.md`에 별도 기록.
 - **불변:** 명대 일간 십신 독립 인쇄 L1 **7/8**, 甲乙 단독 劫財 L1 **未BOUND**, 개별 연운 L2 **0/8**, Annual `INSUFFICIENT` **8/8**, `bridgeReentryReady=false`, `Production=HOLD`.
+
+## 13. 2026-10-09 1935년 직접 연운 개별 정관 사례 — 이 문서 이후 최신 L2 1/8
+
+- 별도 소장 『千里命稿 第一集』(1935) `NLC416-17jh002565-109431` (124 PDF쪽)의 **PDF 67쪽 / 인쇄 64쪽**: `夫甲木日元`, `干透辛金正官`, `四十七歲辛亥年又屬正官之鄉`이 같은 실물 인쇄 페이지에 나타남.
+- 이 자료는 표본 22쪽만 조사했던 **다른 소장본** `NLC416-01jh000372-10197` (123쪽)과 별도 PDF 원본 객체. 새 소장본의 직접 인쇄 페이지를 이전 소장본의 특정 페이지로 잘못 인용하면 안 된다.
+- 정확한 원본 ID·PDF 인덱스·직접 JPEG SHA-256·실행 아티팩트·문맥 결합과 사용 범위: `general-annual-sa7d-b1-1935-george-v-exact-annual-zhengguan-l2-v1.md`.
+- **신규 연구 근거의 증분:** 명대 일간 십신 독립 이름 `L1=7/8` **유지**. 신규 후보 중 **`甲日×辛亥流年→正官`의 인쇄 직접 용례 `L2=1/8`** 확보. 위쪽 보충문서의 0/8은 *기존 조사 당시의 기록*임을 명시.
+- **제품 의미론과 별개:** 특정 명례의 `正官之鄉`을 `ANNUAL_OFFICER_ROLE_RESPONSIBILITY` 현대 테마, 사건 예측, 모든 辛년의 보편 규칙으로 치환 금지. 8종의 Annual `sourceSupportGrade=INSUFFICIENT`, `bridgeReentryReady=false`, `Production=HOLD`. 기존 A2의 2개 별도 `甲日×庚/戊年` 직접 사례 유지.
