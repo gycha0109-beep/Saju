@@ -11,6 +11,7 @@ import { createReadStream } from 'node:fs';
 import { readFile, writeFile, mkdir, lstat, realpath, mkdtemp, rm } from 'node:fs/promises';
 import { createInterface } from 'node:readline';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import process from 'node:process';
 
@@ -138,9 +139,10 @@ async function inspectObj(path) {
 
 export async function auditLocal71539(manifestPath) {
   const input = validatePrivatePath(manifestPath);
-  const inputDir = await realpath(dirname(input));
   await checkedFile(input, 64 * 1024);
-  const manifest = JSON.parse((await readFile(input)).toString('utf8'));
+  const inputDir = await realpath(dirname(input));
+  const manifestBytes = await boundedRead(input, 64 * 1024);
+  const manifest = JSON.parse(manifestBytes.toString('utf8'));
   guard(object(manifest) && manifest.schemaVersion === INPUT_SCHEMA &&
     manifest.datasetRef === 'aihub:71539:release-1.1',
     'MANIFEST_SCHEMA_INVALID');
@@ -280,7 +282,7 @@ async function main() {
     JSON.stringify(privateReceipt,null,2)+'\n',{mode:0o600});
   console.log(JSON.stringify(publicSummary(privateReceipt)));
 }
-if (process.argv[1] && resolve(process.argv[1])===resolve(new URL(import.meta.url).pathname)) {
+if (process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   main().catch(error=>{
     // Do not print filenames, IDs, locations, SHA-256 or exception stacks.
     const safeCodes = /^[A-Z][A-Z0-9_]+$/u;
