@@ -178,7 +178,7 @@ export function reviewSyntheticNumericPacketFR312G6(
     ['outcome_or_holdout_tuning_not_excluded', packet.noOutcomeAwareOrHoldoutTuning],
     ['missing_independent_review_signoff', packet.reviewerSignoffRecorded],
     ['missing_versioned_non_biometric_audit', packet.versionedNonBiometricAuditRecorded],
-  ] as const);
+  ] as const;
   for (const [violation, passed] of evidenceChecks) {
     if (!passed) violations.push(violation);
   }
