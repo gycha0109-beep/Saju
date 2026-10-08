@@ -8,12 +8,14 @@ import type { CanonicalSajuSnapshot } from '../src/contracts/calculation.js';
 import { resolved, unavailable, ambiguous } from '../src/contracts/common.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import { createResearchEvidenceRuntimeRegistry } from '../src/interpretation/research-evidence-runtime.js';
+import { createResearchEvidenceEnvelope } from '../src/interpretation/research-evidence.js';
 import { deterministicContentHash } from '../src/interpretation/rule-registry.js';
 import { projectSajuR38RemoteNonjoining } from '../src/research/shared-natal-r38-remote-stem-nonjoining-research-evidence-adapter.js';
 import {
   buildSajuR40ExactRelationNonjoiningResearchEvidence as build,
   projectSajuR40ExactRelationNonjoining as project,
   validateSajuR40ExactRelationNonjoiningResearchEvidence as validate,
+  SAJU_R40_EVIDENCE_DEFINITION as definition,
   SAJU_R40_RUNTIME_ADAPTER as adapter,
   SAJU_R40_AUTHORITY as authority,
 } from '../src/research/shared-natal-r40-exact-relation-nonjoining-research-evidence-adapter.js';
@@ -100,10 +102,9 @@ describe('SAJU-R40 exact R38 relation -> I61/I65 support source alignment',()=>{
     const e=envelope(actual);
     expect(projectSajuR38RemoteNonjoining(actual).status).toBe('resolved');
     expect(e.payload.noAlignedItemsMeansNoSupport).toBe(false);
-    if(!e.payload.exactSourceRelationFullJoiningDenied){
-      expect(e.payload.alignedItems).toEqual([]);
-      expect(run(actual).claims).toHaveLength(0);
-    }
+    expect(e.payload.exactSourceRelationFullJoiningDenied).toBe(false);
+    expect(e.payload.alignedItems).toEqual([]);
+    expect(run(actual).claims).toHaveLength(0);
   });
   test.each([
     ['甲','己','辛','丙'],
@@ -114,24 +115,34 @@ describe('SAJU-R40 exact R38 relation -> I61/I65 support source alignment',()=>{
     const s=supplied(stems);
     const r38=projectSajuR38RemoteNonjoining(s);
     const projection=project(s);
+    expect(r38.status).toBe('resolved');
     expect(projection.status).toBe('resolved');
-    if(r38.status==='resolved'&&r38.projection.state!=='remote_nonjoining' &&
-      projection.status==='resolved'){
-      expect(projection.projection.exactSourceRelationFullJoiningDenied).toBe(false);
-      expect(run(s).claims).toHaveLength(0);
-    }
+    if(r38.status!=='resolved'||projection.status!=='resolved')
+      throw new Error('Expected resolved negative projection');
+    expect(r38.projection.state).not.toBe('remote_nonjoining');
+    expect(projection.projection.exactSourceRelationFullJoiningDenied).toBe(false);
+    expect(projection.projection.alignedItems).toEqual([]);
+    expect(run(s).claims).toHaveLength(0);
   });
-  test('rejects forged re-enveloped joining, source, and relation identities',()=>{
+  test.each([
+    ['relationId', 'FORGED_RELATION'],
+    ['supportSourcePillar', 'hour'],
+    ['supportSourceValue', 'FORGED_STEM'],
+    ['supportChannelKind', 'FORGED_CHANNEL'],
+    ['targetParticipantValue', 'FORGED_TARGET'],
+    ['fullJoining', true],
+  ] as const)('rejects correctly re-enveloped forged %s exact identity', (field,value)=>{
     const s=supplied(['甲','丙','辛','己']);
     const e=envelope(s);
+    expect(e.payload.alignedItems.length).toBeGreaterThan(0);
     const altered={
       ...e.payload,
-      alignedItems: e.payload.alignedItems.map((v,i)=>
-        i===0?{...v,sourceValue:'FORGED',fullJoining:false}:v),
+      alignedItems:e.payload.alignedItems.map((v,i)=>i===0?{...v,[field]:value}:v),
     };
-    const forged={...e,payload:altered,payloadHash:deterministicContentHash(altered)};
-    expect(validate(forged,s).valid).toBe(false);
-    expect(validate(forged,s).errors).toContain('r40_full_i61_i65_exact_relation_replay_mismatch');
+    const forged=createResearchEvidenceEnvelope(definition,s,altered);
+    const verdict=validate(forged,s);
+    expect(verdict.valid).toBe(false);
+    expect(verdict.errors).toContain('r40_full_i61_i65_exact_relation_replay_mismatch');
   });
   test('missing, ambiguous, invalid stem and scenario never infer nonjoining',()=>{
     const missing=supplied(['甲','丙','辛','己']);
