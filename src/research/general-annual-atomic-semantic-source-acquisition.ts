@@ -119,6 +119,63 @@ export const GENERAL_ANNUAL_SOURCE_CANDIDATES = Object.freeze([
       'This is Commons upload chunk 2 for the 1578 edition. The suffix "_2" must not be read as 三命通會 卷二. Exact work-volume and page mapping remain unverified.',
   }),
   Object.freeze({
+    candidateId: 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_UPPER_SCAN',
+    sourceIdentity: Object.freeze({
+      title: '三命通會',
+      author: '萬民英',
+      holder: 'National Library of China',
+      edition: '刻本',
+      publicationPeriod: '明萬曆[1573-1620]',
+      volume: '第3冊',
+      workVolume: '卷之二上',
+      sourceClass: 'ming_woodblock_scan_with_explicit_work_volume_mapping',
+      locator:
+        'https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67186_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_%E7%AC%AC3%E5%86%8A.pdf',
+    }),
+    acquisition: Object.freeze({
+      scanObjectLocated: true,
+      reproducible: true,
+      pageCount: 38,
+      workVolumeTwoIdentityEstablished: true,
+      exactLunTaisuiPageBound: false,
+      relevantPassageVisuallyVerified: false,
+      exactEditionIdentityWith1578NclTaiwanEstablished: false,
+      contentHashBound: false,
+    }),
+    disposition: 'MING_WORK_VOLUME_MAPPED_SCAN_PAGE_VERIFICATION_REQUIRED' as const,
+    notes:
+      'The catalogue explicitly describes 第3冊 as 卷之二上; this verifies the work-volume mapping, not which image contains 論太歲. No original text has been checked in the PDF. Ming Wanli [1573-1620] does not prove identity with the separately catalogued Taiwan 1578 edition.',
+  }),
+  Object.freeze({
+    candidateId: 'NLC_MING_WANLI_SANMING_TONGHUI_VOLUME2_LOWER_SCAN',
+    sourceIdentity: Object.freeze({
+      title: '三命通會',
+      author: '萬民英',
+      holder: 'National Library of China',
+      edition: '刻本',
+      publicationPeriod: '明萬曆[1573-1620]',
+      volume: '第4冊',
+      workVolume: '卷之二下',
+      sourceClass: 'ming_woodblock_scan_with_explicit_work_volume_mapping',
+      locator:
+        'https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67187_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_%E7%AC%AC4%E5%86%8A.pdf',
+    }),
+    acquisition: Object.freeze({
+      scanObjectLocated: true,
+      reproducible: true,
+      pageCount: 55,
+      commonsSha1: '790baba8f4b7abc2ab706db2ae8eff4651c270ff',
+      workVolumeTwoIdentityEstablished: true,
+      exactLunTaisuiPageBound: false,
+      relevantPassageVisuallyVerified: false,
+      exactEditionIdentityWith1578NclTaiwanEstablished: false,
+      contentHashBound: true,
+    }),
+    disposition: 'MING_WORK_VOLUME_MAPPED_SCAN_PAGE_VERIFICATION_REQUIRED' as const,
+    notes:
+      'The catalogue explicitly describes 第4冊 as 卷之二下. Commons publishes the file SHA-1, but no page of the manuscript has been visually checked. The published hash binds an upload object, not the passage. Never infer page identity or 1578-edition equivalence from this.',
+  }),
+  Object.freeze({
     candidateId: 'NLC_1926_SANMING_TONGHUI_SCAN',
     sourceIdentity: Object.freeze({
       title: '三命通會',
@@ -251,6 +308,9 @@ export function buildGeneralAnnualAtomicSourceAcquisition() {
     observations: Object.freeze({
       exactHistoricalTransmissionPageBound: true as const,
       primary1578EditionScanChunksLocated: true as const,
+      mingWanliExplicitVolumeTwoUpperLowerScanObjectsLocated: true as const,
+      exactMingLunTaisuiPageBound: false as const,
+      exactMingLunTaisuiPassageVisuallyVerified: false as const,
       primary1578WorkVolumeTwoChunkIdentified: false as const,
       exactPrimary1578LunTaisuiPageBound: false as const,
       exactPrimary1578PassageVisuallyVerified: false as const,
