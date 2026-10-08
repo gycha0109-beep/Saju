@@ -114,13 +114,14 @@ export function probeAihub71539PublishedLabelShapeFR312G15(
     issues.push('landmark_count_invalid');
   }
 
-  if (!Array.isArray(root?.landmarks) || root.landmarks.length !== 68) {
+  const landmarks = root?.landmarks;
+  if (!Array.isArray(landmarks) || landmarks.length !== 68) {
     issues.push('landmark_list_invalid');
   } else {
     const ids = new Set<number>();
     let invalidId = false;
     let invalidCoordinate = false;
-    for (const pointValue of root.landmarks as unknown[]) {
+    for (const pointValue of landmarks as unknown[]) {
       const point = object(pointValue);
       const id = point?.id;
       if (
