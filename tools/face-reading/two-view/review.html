@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'unsafe-inline'; img-src 'self' blob:; connect-src 'self'; base-uri 'none'; form-action 'none'"
+    />
+    <title>얼굴 측정</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #10151d;
+        color: #edf2fc;
+        font: 14px/1.5 system-ui;
+      }
+      main {
+        max-width: 960px;
+        margin: auto;
+        padding: 16px;
+      }
+      header,
+      .actions,
+      .tabs {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      header {
+        justify-content: space-between;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0;
+      }
+      a {
+        color: #a9bcff;
+      }
+      button,
+      .file {
+        font: inherit;
+        border: 1px solid #43546e;
+        background: #202b3c;
+        color: inherit;
+        border-radius: 9px;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      .inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 16px 0;
+      }
+      .file {
+        display: block;
+        text-align: center;
+      }
+      .file input {
+        display: block;
+        width: 100%;
+        margin-top: 8px;
+        font-size: 12px;
+      }
+      .viewer {
+        background: #080e16;
+        border: 1px solid #344156;
+        border-radius: 12px;
+        height: 55vh;
+        min-height: 260px;
+        margin: 12px 0;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+      .viewer img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .viewer p {
+        color: #adbbd1;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 8px;
+      }
+      .metric {
+        background: #192331;
+        border: 1px solid #344156;
+        border-radius: 9px;
+        padding: 12px;
+      }
+      .metric strong {
+        display: block;
+        font-size: 21px;
+      }
+      .metric small,
+      .note {
+        color: #b0bfd2;
+        font-size: 12px;
+      }
+      .strip {
+        display: flex;
+        gap: 8px;
+        overflow: auto;
+        margin: 12px 0;
+      }
+      .thumb {
+        padding: 4px;
+        min-width: 54px;
+      }
+      .thumb img {
+        width: 42px;
+        height: 48px;
+        object-fit: cover;
+        display: block;
+      }
+      .thumb.active {
+        border-color: #a8b7ff;
+      }
+      .tabs .active {
+        border-color: #a8b7ff;
+      }
+      .error {
+        color: #ffb6a7;
+      }
+      #status {
+        min-height: 22px;
+      }
+      #count {
+        font-size: 13px;
+        margin: 10px 0;
+      }
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 8px 0;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 500px) {
+        main {
+          padding: 12px;
+        }
+        .metrics {
+          grid-template-columns: 1fr 1fr;
+        }
+        .metric {
+          padding: 9px;
+        }
+        .metric strong {
+          font-size: 18px;
+        }
+        .inputs {
+          grid-template-columns: 1fr;
+        }
+        .viewer {
+          height: 44vh;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>얼굴 측정</h1>
+        <a href="/">기존 전체 표시</a>
+      </header>
+      <div class="inputs">
+        <label class="file"
+          >정면 사진<input
+            id="frontal"
+            type="file"
+            accept="image/jpeg,image/png,image/webp" /></label
+        ><label class="file"
+          >측면 사진<input id="profile" type="file" accept="image/jpeg,image/png,image/webp"
+        /></label>
+      </div>
+      <div class="actions">
+        <button id="analyze" disabled>전체 분석</button
+        ><button id="batch">기존 18장 모두 분석</button><button id="cancel" hidden>중단</button>
+      </div>
+      <p id="status" role="status">사진을 선택하거나 기존 사진을 확인하세요.</p>
+      <p id="count"></p>
+      <div id="tabs" class="tabs"></div>
+      <div class="toolbar">
+        <button id="original" hidden>원본 보기</button
+        ><label id="old-label" hidden
+          ><input id="old-overlay" type="checkbox" />기존 헤어라인·코 표시 함께 보기</label
+        >
+      </div>
+      <div class="viewer">
+        <p id="empty">원본과 측정 표시를 여기서 확인합니다.</p>
+        <img id="image" alt="선택한 사진의 측정 표시" hidden />
+      </div>
+      <nav id="strip" class="strip" aria-label="전체 사진 목록"></nav>
+      <div id="metrics" class="metrics"></div>
+      <p class="note">
+        사진 평면의 모델 수치 후보입니다. 눈·입·윤곽을 계산합니다. 측면 옆선·헤어라인·귀의 새 측정은
+        후속 단계입니다.
+      </p>
+    </main>
+    <script type="module" src="/two-view/review.mjs"></script>
+  </body>
+</html>
