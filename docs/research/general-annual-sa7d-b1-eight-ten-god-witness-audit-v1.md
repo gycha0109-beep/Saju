@@ -163,3 +163,10 @@ P1 감사의 문서 완료는 **직접 인쇄 L2-C 7종 신규 확보**와 동�
 - `sa7d-b1-r4-evidence-sufficiency-and-handoff-v1.md`: **십신명의 조건부 계산·역사적 개별 연운 직접 인쇄 증명·현대 제품 사건 예측** 각각의 증거 충분성 기준과 권한 차단 명시.
 - **R4 추가된 甲일간 독립 L2-C = 0건**. 직전 누적 L1 단독 명칭 7/8·L2-C 직접 역사 사례 1/8·Product 0/8 **그대로 유지**. 조건부 연구 도출 L2-D를 L2-C로 세거나 Annual 제품 `SUFFICIENT`로 승격하지 않는다.
 - `sourceSupportGrade=INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`, 연구 문서 외 소스/CI 변경 없음.
+
+## 17. 2026-10-09 R5 계산 계약·명칭 정책·Bridge 진입 조건 심사
+
+- `sa7d-b1-r5-computation-and-historical-naming-compatibility-audit-v1.md` — 현대 十神 열 이름·甲의 열천간 분류 후보는 코드계약/관행에 대한 **문서상 연구 제안**. B1의 대상 8개와 기존 A2의 戊·庚을 혼동하지 않고 역사적 이름 L1 직접 7/8, `甲乙 劫財敗財` 그룹과 단독 `劫財` 미충족을 구분.
+- `sa7d-b1-r5-annual-input-provenance-and-authority-gate-v1.md` — `natal dayMaster`, 요청 civil `targetYear`, `annualPillar` time boundary, `annualStemTenGod`·연운 의미의 **단계별 분리**. 모호·결측 입력과 별도 판본/명칭 정책은 실패폐쇄 처리 요구.
+- `sa7d-b1-r5-independent-admission-readiness-and-handoff-v1.md` — 기존 Bridge Review의 `RETURN_TO_RESEARCH`, Engine Authority Intake의 `HOLD_RESEARCH/HOLD_AUTHORITY`에 맞춘 연구 반환. 실제 승인·타입 변경 없음.
+- **R5 직접 인쇄 신규 L2-C=0건**, 누적 명대 개별 십신 이름 L1=7/8, 개별 역사 연운 L2-C=1/8, Product 해석 승인 0/8, `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. L2-D 현대 계산 추론을 고전 직접 인쇄 사례·정식 코드 테스트 PASS로 기록하지 않음.
