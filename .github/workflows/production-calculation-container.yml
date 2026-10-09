@@ -39,6 +39,9 @@ jobs:
           unauth_body="${RUNNER_TEMP}/saju-container-unauth.txt"
           auth_body="${RUNNER_TEMP}/saju-container-auth.txt"
           wrong_body="${RUNNER_TEMP}/saju-container-wrong.txt"
+          production_body="${RUNNER_TEMP}/saju-container-production-reading.txt"
+          production_reject_body="${RUNNER_TEMP}/saju-container-production-reject.txt"
+          preview_body="${RUNNER_TEMP}/saju-container-preview-reading.txt"
           log_file="${RUNNER_TEMP}/saju-container.log"
 
           cleanup() {
@@ -65,7 +68,10 @@ jobs:
             fi
             sleep 1
           done
-          test "$health_status" = '200'
+          if [ "$health_status" != '200' ]; then
+            docker logs "$container" >&2 || true
+            exit 1
+          fi
 
           unauth_status="$(curl --silent --show-error --output "$unauth_body" --write-out '%{http_code}' \
             --request POST \
@@ -90,7 +96,35 @@ jobs:
             http://127.0.0.1:18080/api/calculations)"
           test "$wrong_status" = '401'
 
-          for response_file in "$health_body" "$unauth_body" "$auth_body" "$wrong_body"; do
+          production_status="$(curl --silent --show-error --output "$production_body" --write-out '%{http_code}' \
+            --request POST \
+            --header "Authorization: Bearer $bearer" \
+            --header 'Content-Type: application/json' \
+            --data '{"birth":{"calendarType":"solar","date":"2024-03-10","time":"12:00","sex":"unspecified"},"reading":{"text":"배우자운"}}' \
+            http://127.0.0.1:18080/api/readings)"
+          test "$production_status" = '200'
+          grep -Fq 'official_reading_' "$production_body"
+          grep -Fq '전통 명리에서는 일지(日支)를 배우자궁의 위치로 봅니다.' "$production_body"
+
+          production_reject_status="$(curl --silent --show-error --output "$production_reject_body" --write-out '%{http_code}' \
+            --request POST \
+            --header "Authorization: Bearer $bearer" \
+            --header 'Content-Type: application/json' \
+            --data '{"birth":{"calendarType":"solar","date":"2024-03-10","time":"12:00","sex":"unspecified"},"reading":{"text":"재물운"}}' \
+            http://127.0.0.1:18080/api/readings)"
+          test "$production_reject_status" = '400'
+          grep -Fq 'HOST_INVALID_READING_REQUEST' "$production_reject_body"
+
+          preview_status="$(curl --silent --show-error --output "$preview_body" --write-out '%{http_code}' \
+            --request POST \
+            --header "Authorization: Bearer $bearer" \
+            --header 'Content-Type: application/json' \
+            --data '{"birth":{"calendarType":"solar","date":"2024-03-10","time":"12:00","sex":"unspecified"},"reading":{"text":"배우자운"}}' \
+            http://127.0.0.1:18080/api/preview/readings)"
+          test "$preview_status" = '200'
+          grep -Fq 'official_reading_' "$preview_body"
+
+          for response_file in "$health_body" "$unauth_body" "$auth_body" "$wrong_body" "$production_body" "$production_reject_body" "$preview_body"; do
             if grep -Fq "$bearer" "$response_file"; then
               echo 'Production calculation container reflected its service credential in an HTTP response.' >&2
               exit 1

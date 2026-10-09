@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI107ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryEvidence,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryReadinessReviewReport,
-} from '../src/index.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryReadinessReviewReport } from '../src/research/i106-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-candidate-discovery-readiness-review.js';
+import { buildI107ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryEvidence } from '../src/research/i107-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-candidate-discovery-evidence.js';
 
 function i106(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryReadinessReviewReport {
   const requirements = [

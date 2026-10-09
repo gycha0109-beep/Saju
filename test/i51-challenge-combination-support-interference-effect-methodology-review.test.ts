@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildI51ChallengeCombinationSupportInterferenceEffectMethodologyReview } from '../src/index.js';
+import { buildI51ChallengeCombinationSupportInterferenceEffectMethodologyReview } from '../src/research/i51-challenge-combination-support-interference-effect-methodology-review.js';
 
 describe('I51 challenge combination support/interference effect methodology review', () => {
   test('authorizes only same-element and resource support-channel direction', () => {

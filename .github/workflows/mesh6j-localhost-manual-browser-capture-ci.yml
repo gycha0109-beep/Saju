@@ -5,8 +5,24 @@ on:
     paths:
       - '.github/workflows/mesh6j-localhost-manual-browser-capture-ci.yml'
       - 'scripts/mesh6j-manual-browser-capture-preview.mjs'
+      - 'scripts/fr104-florence-live-worker-bridge.mjs'
       - 'scripts/mesh6j-private-lan-transport.mjs'
       - 'scripts/verify-face-geometry-mesh6j.mjs'
+      - 'scripts/verify-fr104-ear-mirror-fixture.mjs'
+      - 'scripts/verify-fr104-ear-mirror-multifixtures.mjs'
+      - 'scripts/verify-fr104-ear-mirror-independent-fixture.mjs'
+      - 'scripts/verify-fr104-makehuman-deterministic-render.mjs'
+      - 'scripts/run-fr104-makehuman-provider-preflight-ci.mjs'
+      - 'scripts/run-fr104-makehuman-transform-diagnostics-ci.mjs'
+      - 'scripts/run-fr104-makehuman-provider-rotation-dependence-ci.mjs'
+      - 'scripts/verify-fr104-mediapipe-rotation-api.mjs'
+      - 'scripts/run-fr104-makehuman-provider-rotation-compensation-ci.mjs'
+      - 'scripts/analyze-fr104-provider-compensated-output-frame.mjs'
+      - 'scripts/analyze-fr104-controlled-anatomical-side-mapping.mjs'
+      - 'scripts/build-fr104-u4b-makehuman-morph-fixture.mjs'
+      - 'scripts/admit-fr104-controlled-anatomical-side-mapping-result.mjs'
+      - 'scripts/run-fr104-provider-composed-orientation-validation.mjs'
+      - 'scripts/admit-fr104-provider-composed-orientation-result.mjs'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.html'
       - 'tools/face-geometry/capture/mesh6j-operator-capture.mjs'
       - 'tools/face-geometry/capture/fr251-dry-run-operator.html'
@@ -41,6 +57,73 @@ on:
       - 'packages/face-reading/src/observable-morphology-fixed-still-metric-eye-chord-fr281.test.ts'
       - 'research/face-reading/fr281-fixed-still-metric-eye-chord-decomposition.md'
       - 'research/face-reading/evidence/fr281-fixed-still-metric-eye-chord/**'
+      - 'tools/face-geometry/capture/fr104-ear-mirror-pair.html'
+      - 'tools/face-geometry/capture/fr104-ear-mirror-pair.mjs'
+      - 'tools/face-geometry/capture/fr104-ear-mirror-multifixture.html'
+      - 'tools/face-geometry/capture/fr104-ear-mirror-multifixture.mjs'
+      - 'tools/face-geometry/capture/fr104-makehuman-provider-preflight.html'
+      - 'tools/face-geometry/capture/fr104-makehuman-provider-preflight.mjs'
+      - 'tools/face-geometry/capture/fr104-makehuman-transform-diagnostics.html'
+      - 'tools/face-geometry/capture/fr104-makehuman-transform-diagnostics.mjs'
+      - 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-dependence.html'
+      - 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-dependence.mjs'
+      - 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.html'
+      - 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.mjs'
+      - 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.html'
+      - 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.mjs'
+      - 'packages/face-reading/src/neutral-ear-mirror-pair-protocol-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-mirror-pair-protocol-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-mirror-multifixture-protocol-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-mirror-multifixture-protocol-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-anatomical-reference-protocol-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-preflight-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-preflight-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-preflight-result-intake-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-preflight-empirical-evidence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-preflight-empirical-evidence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-transform-diagnostics-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-transform-diagnostics-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-transform-result-intake-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-transform-empirical-evidence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-transform-empirical-evidence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-dependence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-dependence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-result-intake-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-empirical-evidence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-empirical-evidence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-mediapipe-rotation-api-audit-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-mediapipe-rotation-api-audit-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-mediapipe-rotation-api-audit-evidence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-mediapipe-rotation-api-audit-evidence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-result-intake-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-result-intake-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-empirical-evidence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-empirical-evidence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-result-intake-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-result-intake-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-empirical-evidence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-provider-compensated-output-frame-empirical-evidence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-composed-orientation-validation-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-composed-orientation-validation-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-composed-orientation-result-intake-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-composed-orientation-result-intake-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-composed-orientation-empirical-evidence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-composed-orientation-empirical-evidence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-audit-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-audit-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-result-intake-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-result-intake-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-empirical-evidence-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-empirical-evidence-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-independent-geometry-validation-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-prospective-independent-geometry-validation-fr104.test.ts'
+      - 'research/face-research/fr104-prospective-independent-geometry-validation-u4b.md'
+      - 'research/face-research/fr104-controlled-anatomical-side-mapping-u4a.md'
+      - 'research/face-research/fr104-prospective-composed-orientation-normalization-u3-3.md'
       - 'packages/face-reading/src/observable-morphology-ephemeral-live-camera-frame-intake-fr242.ts'
       - 'packages/face-reading/src/participant-media-resource-ceiling-fr173-shared.ts'
       - 'packages/face-geometry/docs/mesh6j-localhost-manual-browser-capture-surface.md'
@@ -59,6 +142,14 @@ on:
       - 'tools/face-geometry/gnm/fetch_gnm_head.py'
       - 'tools/face-geometry/gnm/export_gnm_region_ontology.py'
       - 'tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py'
+      - 'tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py'
+      - 'tools/face-reading/ear/run_florence2_ear_empirical.py'
+      - 'tools/face-reading/ear/run_florence2_ear_live_worker.py'
+      - 'packages/face-reading/src/neutral-ear-florence-live-host-transport-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-florence-live-host-transport-fr104.test.ts'
+      - 'packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-fr104.ts'
+      - 'packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-fr104.test.ts'
+      - 'research/face-research/fr104-gnm-cross-source-anatomical-witness-u5a.md'
   workflow_dispatch:
 
 jobs:
@@ -80,15 +171,70 @@ jobs:
         run: npm run face:typecheck
       - name: Build Face Reading
         run: npm run face:build
+      - name: Verify FR104 public mirror fixture
+        run: node scripts/verify-fr104-ear-mirror-fixture.mjs
+      - name: Syntax-check FR104 mirror client
+        run: node --check tools/face-geometry/capture/fr104-ear-mirror-pair.mjs
+      - name: Verify FR104 public mirror multi-fixtures
+        run: node scripts/verify-fr104-ear-mirror-multifixtures.mjs
+      - name: Verify FR104 independent public mirror fixture
+        run: node scripts/verify-fr104-ear-mirror-independent-fixture.mjs
+      - name: Syntax-check FR104 multi-fixture mirror client
+        run: node --check tools/face-geometry/capture/fr104-ear-mirror-multifixture.mjs
+      - name: Syntax-check FR104 MakeHuman provider preflight
+        run: |
+          node --check tools/face-geometry/capture/fr104-makehuman-provider-preflight.mjs
+          node --check scripts/run-fr104-makehuman-provider-preflight-ci.mjs
+
+      - name: Syntax-check FR104 MakeHuman transform diagnostics
+        run: |
+          node --check tools/face-geometry/capture/fr104-makehuman-transform-diagnostics.mjs
+          node --check scripts/run-fr104-makehuman-transform-diagnostics-ci.mjs
+
+      - name: Syntax-check FR104 MakeHuman provider rotation dependence
+        run: |
+          node --check tools/face-geometry/capture/fr104-makehuman-provider-rotation-dependence.mjs
+          node --check scripts/run-fr104-makehuman-provider-rotation-dependence-ci.mjs
+
+      - name: Syntax-check FR104 MakeHuman provider rotation compensation
+        run: |
+          node --check scripts/verify-fr104-mediapipe-rotation-api.mjs
+          node --check tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.mjs
+          node --check scripts/run-fr104-makehuman-provider-rotation-compensation-ci.mjs
+          node --check scripts/analyze-fr104-provider-compensated-output-frame.mjs
+
+      - name: Syntax-check FR104 U3.3 prospective composed normalization
+        run: |
+          node --check tools/face-geometry/capture/fr104-provider-composed-orientation-validation.mjs
+          node --check scripts/run-fr104-provider-composed-orientation-validation.mjs
+          node --check scripts/admit-fr104-provider-composed-orientation-result.mjs
+
+      - name: Syntax-check FR104 U4A controlled anatomical mapping audit
+        run: |
+          node --check scripts/analyze-fr104-controlled-anatomical-side-mapping.mjs
+          node --check scripts/admit-fr104-controlled-anatomical-side-mapping-result.mjs
+
+      - name: Syntax-check FR104 U4B preregistered render-only builder
+        run: node --check scripts/build-fr104-u4b-makehuman-morph-fixture.mjs
+
       - name: Install projection dependency
         run: python -m pip install --disable-pip-version-check numpy
+      - name: Verify FR104 Florence live transport protocol
+        run: |
+          python tools/face-reading/ear/run_florence2_ear_live_worker.py --self-test
+          node scripts/fr104-florence-live-worker-bridge.mjs --self-test
+          node --check scripts/mesh6j-manual-browser-capture-preview.mjs
+
       - name: Compile authoring tooling
         run: |
           python -m py_compile \
             tools/face-reading/blender/fetch_mediapipe_canonical_face.py \
             tools/face-geometry/gnm/fetch_gnm_head.py \
             tools/face-geometry/gnm/export_gnm_region_ontology.py \
-            tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py
+            tools/face-geometry/gnm/project_gnm_regions_to_mediapipe468_weighted.py \
+            tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py \
+            tools/face-reading/ear/run_florence2_ear_empirical.py \
+            tools/face-reading/ear/run_florence2_ear_live_worker.py
       - name: Verify executable surface contract
         run: node scripts/verify-face-geometry-mesh6j.mjs
       - name: Verify FR269 controlled geometry report
@@ -105,6 +251,51 @@ jobs:
         env:
           MYEONGHWA_MESH6J_SMOKE: '1'
         run: node scripts/mesh6j-manual-browser-capture-preview.mjs
+      - name: Run FR104 MakeHuman FaceLandmarker preflight
+        run: |
+          google-chrome --version
+          chromedriver --version
+          node scripts/run-fr104-makehuman-provider-preflight-ci.mjs
+
+      - name: Run FR104 MakeHuman transform diagnostics
+        run: node scripts/run-fr104-makehuman-transform-diagnostics-ci.mjs
+
+      - name: Run FR104 MakeHuman provider rotation dependence
+        run: node scripts/run-fr104-makehuman-provider-rotation-dependence-ci.mjs
+
+      - name: Verify FR104 MediaPipe rotation API artifact
+        run: node scripts/verify-fr104-mediapipe-rotation-api.mjs
+
+      - name: Run FR104 MakeHuman provider rotation compensation
+        env:
+          FR104_U3_2_RESULT_OUT: .cache/face-geometry/fr104-u3-2-result.json
+        run: node scripts/run-fr104-makehuman-provider-rotation-compensation-ci.mjs
+
+      - name: Run FR104 compensated output coordinate frame audit
+        run: node scripts/analyze-fr104-provider-compensated-output-frame.mjs
+
+      - name: Replay FR104 U3.3 prospective composed normalization exactly
+        env:
+          FR104_U3_3_RESULT_OUT: .cache/face-geometry/fr104-u3-3-result.json
+          FR104_U3_3_EXPECTED_RESULT_SHA256: 793b1059308242d11c176300bd141b70a49c2fa681a49bc6e38e1abddf4aaab4
+        run: node scripts/run-fr104-provider-composed-orientation-validation.mjs
+
+      - name: Admit exact FR104 U3.3 prospective result
+        env:
+          FR104_U3_3_RESULT_IN: .cache/face-geometry/fr104-u3-3-result.json
+        run: node scripts/admit-fr104-provider-composed-orientation-result.mjs
+
+      - name: Replay FR104 U4A controlled anatomical mapping exactly
+        env:
+          FR104_U3_2_RESULT_IN: .cache/face-geometry/fr104-u3-2-result.json
+          FR104_U4A_RESULT_OUT: .cache/face-geometry/fr104-u4a-result.json
+          FR104_U4A_EXPECTED_RESULT_SHA256: 863b1909b2bb33437496c990fd97529d986b2fca1564addb6e1591d232b7f2cf
+        run: node scripts/analyze-fr104-controlled-anatomical-side-mapping.mjs
+
+      - name: Admit exact FR104 U4A controlled anatomical mapping result
+        env:
+          FR104_U4A_RESULT_IN: .cache/face-geometry/fr104-u4a-result.json
+        run: node scripts/admit-fr104-controlled-anatomical-side-mapping-result.mjs
       - name: Create ephemeral CI TLS certificate
         run: |
           openssl req -x509 -newkey rsa:2048 -nodes \

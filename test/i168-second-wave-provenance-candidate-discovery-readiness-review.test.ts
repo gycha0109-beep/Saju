@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   I167_REASSESSMENT_REQUIREMENT_IDS,
   I167_REMAINING_REVIEWABLE_REMEDIATION_PATH_IDS,
+  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateTargetedLineageEvidenceAdequacyRemediationPathReassessmentReviewReport,
+} from '../src/research/i167-provenance-remediation-path-reassessment-review.js';
+import {
   I168_DISCOVERY_REQUIREMENT_IDS,
   I168_QUERY_CONCEPT_IDS,
   I168_SEARCH_CHANNEL_IDS,
   buildI168SecondWaveProvenanceCandidateDiscoveryReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateTargetedLineageEvidenceAdequacyRemediationPathReassessmentReviewReport,
-} from '../src/index.js';
+} from '../src/research/i168-second-wave-provenance-candidate-discovery-readiness-review.js';
 
 function validI167(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceRemediationCandidateTargetedLineageEvidenceAdequacyRemediationPathReassessmentReviewReport {
   return {

@@ -1,12 +1,14 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+} from '../src/contracts/calculation.js';
 import {
   buildResolvedI27ChallengeMechanismForceEvidence,
   challengeTargetElement,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
-  type PillarFact,
-} from '../src/index.js';
+} from '../src/research/i27-challenge-mechanism-force-evidence.js';
 
 const STEM: Readonly<Record<HeavenlyStem, { hanja: string; element: FiveElement; yinYang: '양' | '음' }>> = {
   갑: { hanja: '甲', element: '목', yinYang: '양' }, 을: { hanja: '乙', element: '목', yinYang: '음' },

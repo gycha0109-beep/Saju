@@ -1,9 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI94ChallengeCombinationSupportChannelUntouchedSupportEffectSingleCandidateFullCoverageAuthorityDiscoveryReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectAdditionalAuthorityRequirementsReviewReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectCandidateSetCompositionPolicyReadinessReviewReport,
-} from '../src/index.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectAdditionalAuthorityRequirementsReviewReport } from '../src/research/i84-challenge-combination-support-channel-untouched-support-effect-additional-authority-requirements-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectCandidateSetCompositionPolicyReadinessReviewReport } from '../src/research/i93-challenge-combination-support-channel-untouched-support-effect-candidate-set-composition-policy-readiness-review.js';
+import { buildI94ChallengeCombinationSupportChannelUntouchedSupportEffectSingleCandidateFullCoverageAuthorityDiscoveryReadinessReview } from '../src/research/i94-challenge-combination-support-channel-untouched-support-effect-single-candidate-full-coverage-authority-discovery-readiness-review.js';
 
 const IDS = [
   'EXPLICIT_POST_INTERACTION_UNTOUCHED_SOURCE_RULE',

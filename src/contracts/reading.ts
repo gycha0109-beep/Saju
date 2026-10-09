@@ -178,12 +178,25 @@ export interface KeyPointBlock {
   items: readonly string[];
 }
 
+export interface InsightItemView {
+  headline?: string;
+  summary?: string;
+  qualifiers?: readonly string[];
+  explainabilityRef?: string;
+}
+
+export interface InsightBlock {
+  type: 'insights';
+  items: readonly InsightItemView[];
+}
+
 export interface ComparisonBlock {
   type: 'comparison';
   title: string;
   perspectives: readonly {
     label: string;
     text: string;
+    explainabilityRef?: string;
   }[];
 }
 
@@ -193,6 +206,7 @@ export interface AmbiguityBlock {
   scenarios: readonly {
     label: string;
     text: string;
+    explainabilityRefs?: readonly string[];
   }[];
 }
 
@@ -221,6 +235,7 @@ export interface SourceHintBlock {
 export type ReadingBlockView =
   | ParagraphBlock
   | KeyPointBlock
+  | InsightBlock
   | ComparisonBlock
   | AmbiguityBlock
   | TimelineBlock
@@ -260,6 +275,8 @@ export interface ReadingDisclosureView {
 export interface ExplainabilityIndex {
   entries: readonly {
     explainabilityRef: string;
+    primaryUnitRefs?: readonly string[];
+    supportingUnitRefs?: readonly string[];
     claimIds: readonly string[];
     factRefs: readonly string[];
     methodologyIds: readonly string[];

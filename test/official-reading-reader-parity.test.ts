@@ -18,6 +18,22 @@ import {
 } from '../src/reading/product-reading-response.js';
 
 function semantics(summary = '실행과 준비가 서로 견제합니다.') {
+  const support: InterpretationClaim = {
+    claimId: 'claim-general-support',
+    schemaVersion: 'parity-test',
+    snapshotId: 'snapshot-1',
+    taxonomy: { tier: 'T5', category: 'ten_gods', subcategory: 'family_presence' },
+    claimType: 'TEN_GOD_FAMILY_RESOURCE_PRESENT',
+    subject: 'natal_chart',
+    predicate: 'ten_god_family_presence',
+    value: { family: 'resource', presence: 'observed', dominance: 'not_scored' },
+    methodologyRef: { id: 'method-support', version: '1' },
+    ruleRefs: [{ ruleId: 'rule-support', version: '1', evaluationId: 'eval-support' }],
+    factRefs: ['derivedFacts.tenGods'],
+    upstreamClaimRefs: [],
+    sourceRefs: ['source-support'],
+    state: 'active',
+  };
   const claim: InterpretationClaim = {
     claimId: 'claim-general-tension',
     schemaVersion: 'parity-test',
@@ -35,7 +51,7 @@ function semantics(summary = '실행과 준비가 서로 견제합니다.') {
     methodologyRef: { id: 'method-1', version: '1' },
     ruleRefs: [{ ruleId: 'rule-1', version: '1', evaluationId: 'eval-1' }],
     factRefs: [],
-    upstreamClaimRefs: [],
+    upstreamClaimRefs: ['claim-general-support'],
     sourceRefs: ['source-1'],
     state: 'active',
   };
@@ -46,8 +62,15 @@ function semantics(summary = '실행과 준비가 서로 견제합니다.') {
     interpretationRunId: 'interpretation-1',
     registrySnapshotId: 'registry-1',
     canonicalFacts: [],
-    claims: [claim],
-    claimRelations: [],
+    claims: [claim, support],
+    claimRelations: [
+      {
+        relationId: 'relation-general-support',
+        fromClaimId: claim.claimId,
+        toClaimId: support.claimId,
+        relation: 'derived_from',
+      },
+    ],
     schemaVersion: GOVERNED_READING_EVIDENCE_SCHEMA_VERSION,
     constraints: {
       mayRecalculate: false,
@@ -128,6 +151,14 @@ describe('Official Reading ↔ Reader semantic parity', () => {
     expect(result.parity.semanticHash).toBe(bundle.semanticHash);
     expect(result.parity.officialReportHash).toBe(report.reportHash);
     expect(result.parity.groundingHash).toBe(result.grounding.groundingHash);
+    const officialEntry = report.explainability.entries[0];
+    const groundingUnit = result.grounding.units[0];
+    expect(officialEntry).toBeDefined();
+    expect(groundingUnit).toBeDefined();
+    expect([
+      ...(officialEntry?.primaryUnitRefs ?? []),
+      ...(officialEntry?.supportingUnitRefs ?? []),
+    ].sort()).toEqual([...(groundingUnit?.sourceCanonicalUnitRefs ?? [])].sort());
     expect(() =>
       assertOfficialReadingReaderParityReceiptV1(
         result.parity,

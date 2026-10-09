@@ -1,14 +1,17 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import {
-  calculateCanonicalSajuSnapshot,
   deriveStructuralRelationCandidates,
   STRUCTURAL_RELATION_DEFINITION_CONTENT_HASH,
   STRUCTURAL_RELATION_DERIVATION_VERSION,
-  type CalculationPolicySnapshot,
-  type PillarFact,
-} from '../src/index.js';
+} from '../src/calculation/structural-relations.js';
+import type {
+  CalculationPolicySnapshot,
+  PillarFact,
+} from '../src/contracts/calculation.js';
 import { BRANCH_CLASH_CONTEXT_ENRICHED_CANONICAL_SCHEMA_VERSION } from '../src/calculation/branch-clash-context-facts.js';
 import { BRANCH_CLASH_QUALIFIER_OBSERVATION_SCHEMA_VERSION } from '../src/calculation/branch-clash-qualifier-observation-facts.js';
+import { STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION } from '../src/calculation/stem-interaction-settlement-facts.js';
 import { STRUCTURAL_RELATION_ENRICHED_CANONICAL_SCHEMA_VERSION } from '../src/calculation/structural-relation-facts.js';
 
 const policy: CalculationPolicySnapshot = {
@@ -73,9 +76,10 @@ describe('structural relation candidate materialization', () => {
     const snapshot = calculateCanonicalSajuSnapshot(knownInput, policy);
     expect(STRUCTURAL_RELATION_ENRICHED_CANONICAL_SCHEMA_VERSION).toBe('saju-canonical-v1.2');
     expect(BRANCH_CLASH_CONTEXT_ENRICHED_CANONICAL_SCHEMA_VERSION).toBe('saju-canonical-v1.3');
-    expect(snapshot.schemaVersion).toBe(BRANCH_CLASH_QUALIFIER_OBSERVATION_SCHEMA_VERSION);
-    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.4');
-    expect(snapshot.provenance.schema.version).toBe('saju-canonical-v1.4');
+    expect(BRANCH_CLASH_QUALIFIER_OBSERVATION_SCHEMA_VERSION).toBe('saju-canonical-v1.4');
+    expect(snapshot.schemaVersion).toBe(STEM_INTERACTION_SETTLEMENT_SCHEMA_VERSION);
+    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.7');
+    expect(snapshot.provenance.schema.version).toBe('saju-canonical-v1.7');
     expect(STRUCTURAL_RELATION_DERIVATION_VERSION).toBe('myeonghwa-structural-relations-v1');
     expect(STRUCTURAL_RELATION_DEFINITION_CONTENT_HASH).toMatch(/^[0-9a-f]{64}$/);
 

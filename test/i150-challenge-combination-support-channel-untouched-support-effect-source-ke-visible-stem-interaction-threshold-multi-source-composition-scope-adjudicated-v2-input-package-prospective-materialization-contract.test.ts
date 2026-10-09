@@ -2,10 +2,12 @@ import { describe, expect, test } from 'vitest';
 import {
   I149_REQUIRED_V2_PACKAGE_COMPONENTS,
   I149_TARGET_INPUT_PACKAGE_VERSION,
+  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionScopeAdjudicationOutcomeRegistrationNewInputPackageMaterializationReadinessReviewReport,
+} from '../src/research/i149-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-scope-adjudication-outcome-registration-new-input-package-materialization-readiness-review.js';
+import {
   I150_V2_MATERIALIZATION_RULE_IDS,
   buildI150ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionScopeAdjudicatedV2InputPackageProspectiveMaterializationContract,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionScopeAdjudicationOutcomeRegistrationNewInputPackageMaterializationReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i150-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-scope-adjudicated-v2-input-package-prospective-materialization-contract.js';
 
 function i149(
   overrides: Record<string, unknown> = {},

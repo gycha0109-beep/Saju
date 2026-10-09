@@ -183,6 +183,65 @@ export interface StructuralRelationCandidate {
   };
 }
 
+
+export type StemInteractionFunctionState =
+  | 'preserved'
+  | 'constrained'
+  | 'impaired'
+  | 'lost';
+
+export type StemInteractionExternalInfluenceKind = 'control' | 'support';
+export type StemInteractionInfluenceSummary =
+  | 'none'
+  | 'support_only'
+  | 'control_only'
+  | 'mixed';
+
+export interface StemInteractionExternalInfluence {
+  influenceId: string;
+  sourcePillar: PillarSlot;
+  sourceStem: HeavenlyStem;
+  sourceElement: FiveElement;
+  targetRole: 'controller' | 'controlled';
+  targetPillar: PillarSlot;
+  targetStem: HeavenlyStem;
+  kind: StemInteractionExternalInfluenceKind;
+}
+
+export interface StemInteractionSettlementParticipant {
+  pillar: PillarSlot;
+  stem: HeavenlyStem;
+  tenGod: TenGod;
+  element: FiveElement;
+  identityPreserved: true;
+  baseFunctionState: StemInteractionFunctionState;
+  incomingInfluenceSummary: StemInteractionInfluenceSummary;
+  incomingInfluences: readonly StemInteractionExternalInfluence[];
+  functionState: StemInteractionFunctionState;
+}
+
+export interface StemInteractionSettlementFact {
+  settlementId: string;
+  relationId: string;
+  kind: 'stem_five_combination';
+  scope: 'non_day_master_stem_five_combination';
+  pair: readonly [HeavenlyStem, HeavenlyStem];
+  transformationApplied: false;
+  activeRelations: readonly ['stem_five_combination', 'element_control'];
+  pairControlEffective: boolean;
+  externalInfluences: readonly StemInteractionExternalInfluence[];
+  participants: {
+    controller: StemInteractionSettlementParticipant & {
+      baseFunctionState: 'constrained';
+      functionState: 'constrained' | 'impaired';
+    };
+    controlled: StemInteractionSettlementParticipant & {
+      baseFunctionState: 'impaired';
+      functionState: 'constrained' | 'impaired';
+    };
+  };
+}
+
 export interface BranchClashContextParticipant {
   pillar: PillarSlot;
   branch: EarthlyBranch;
@@ -266,6 +325,7 @@ export interface DerivedFacts {
   hiddenStems?: HiddenStemChartFact;
   fiveElementCounts?: FactState<Readonly<Record<FiveElement, number>>>;
   structuralRelations?: FactState<readonly StructuralRelationCandidate[]>;
+  stemInteractionSettlements?: FactState<readonly StemInteractionSettlementFact[]>;
   branchClashContexts?: FactState<BranchClashContextIndex>;
   branchClashQualifierObservations?: FactState<BranchClashQualifierObservationIndex>;
 }

@@ -190,6 +190,8 @@ function collectInternalTokens(artifact: ReadingArtifact): readonly string[] {
 
   for (const entry of artifact.explainability.entries) {
     add(entry.explainabilityRef);
+    entry.primaryUnitRefs?.forEach(add);
+    entry.supportingUnitRefs?.forEach(add);
     entry.claimIds.forEach(add);
     entry.factRefs.forEach(add);
     entry.methodologyIds.forEach(add);
@@ -201,7 +203,15 @@ function collectInternalTokens(artifact: ReadingArtifact): readonly string[] {
     section.disclosureRefs?.forEach(add);
     section.explainabilityRefs?.forEach(add);
     for (const block of section.blocks) {
-      if (block.type === 'source_hint') add(block.explainabilityRef);
+      if (block.type === 'source_hint') {
+        add(block.explainabilityRef);
+      } else if (block.type === 'insights') {
+        block.items.forEach((item) => add(item.explainabilityRef));
+      } else if (block.type === 'comparison') {
+        block.perspectives.forEach((item) => add(item.explainabilityRef));
+      } else if (block.type === 'ambiguity') {
+        block.scenarios.forEach((item) => item.explainabilityRefs?.forEach(add));
+      }
     }
   }
 
@@ -268,51 +278,99 @@ function calculationSummary(
   };
 }
 
-function readingBlock(
+function insightCompatibilityBlocks(
+  block: Extract<ReadingBlockView, { type: 'insights' }>,
+  redact: RedactInternalText,
+): readonly ProductReadingResponseBlock[] {
+  if (block.items.length === 0) return [];
+
+  if (block.items.length === 1) {
+    const item = block.items[0];
+    if (item === undefined) return [];
+    const headline = item.headline === undefined ? undefined : redact(item.headline);
+    const summary = item.summary === undefined ? undefined : redact(item.summary);
+    const qualifiers = (item.qualifiers ?? []).map((qualifier) => redact(qualifier));
+    const semanticBlocks: ProductReadingResponseBlock[] =
+      headline === undefined && summary === undefined
+        ? []
+        : headline !== undefined && summary !== undefined && headline !== summary
+          ? [
+              { type: 'key_points', items: [headline] },
+              { type: 'paragraph', text: summary },
+            ]
+          : [{ type: 'paragraph', text: summary ?? headline ?? '' }];
+
+    return [
+      ...semanticBlocks,
+      ...(qualifiers.length === 0
+        ? []
+        : [{ type: 'key_points' as const, items: qualifiers }]),
+    ];
+  }
+
+  return [
+    {
+      type: 'key_points',
+      items: block.items.map((item) =>
+        [
+          ...(item.headline === undefined ? [] : [redact(item.headline)]),
+          ...(item.summary === undefined || item.summary === item.headline
+            ? []
+            : [redact(item.summary)]),
+          ...(item.qualifiers ?? []).map((qualifier) => redact(qualifier)),
+        ].join('\n'),
+      ),
+    },
+  ];
+}
+
+function readingBlocks(
   block: ReadingBlockView,
   redact: RedactInternalText,
-): ProductReadingResponseBlock {
+): readonly ProductReadingResponseBlock[] {
   switch (block.type) {
+    case 'insights':
+      return insightCompatibilityBlocks(block, redact);
     case 'paragraph':
-      return { type: 'paragraph', text: redact(block.text) };
+      return [{ type: 'paragraph', text: redact(block.text) }];
     case 'key_points':
-      return { type: 'key_points', items: block.items.map((item) => redact(item)) };
+      return [{ type: 'key_points', items: block.items.map((item) => redact(item)) }];
     case 'comparison':
-      return {
+      return [{
         type: 'comparison',
         title: redact(block.title),
         perspectives: block.perspectives.map((item) => ({
           label: redact(item.label),
           text: redact(item.text),
         })),
-      };
+      }];
     case 'ambiguity':
-      return {
+      return [{
         type: 'ambiguity',
         summary: redact(block.summary),
         scenarios: block.scenarios.map((item) => ({
           label: redact(item.label),
           text: redact(item.text),
         })),
-      };
+      }];
     case 'timeline':
-      return {
+      return [{
         type: 'timeline',
         entries: block.entries.map((item) => ({
           label: redact(item.label),
           text: redact(item.text),
         })),
-      };
+      }];
     case 'fact_table':
-      return {
+      return [{
         type: 'fact_table',
         rows: block.rows.map((item) => ({
           label: redact(item.label),
           value: redact(item.value),
         })),
-      };
+      }];
     case 'source_hint':
-      return { type: 'source_hint', text: redact(block.text) };
+      return [{ type: 'source_hint', text: redact(block.text) }];
   }
 }
 
@@ -348,7 +406,7 @@ function readingView(artifact: ReadingArtifact): ProductReadingResponseReading {
     sections: artifact.sections.map((section) => ({
       sectionType: section.sectionType,
       title: redact(section.title),
-      blocks: section.blocks.map((block) => readingBlock(block, redact)),
+      blocks: section.blocks.flatMap((block) => readingBlocks(block, redact)),
       state: section.state,
     })),
     disclosures: artifact.disclosures.map((disclosure) => ({

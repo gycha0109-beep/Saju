@@ -75,6 +75,8 @@ function artifact(): ReadingArtifact {
       entries: [
         {
           explainabilityRef: 'explainability-ref-secret',
+          primaryUnitRefs: ['canonical_reading_unit_primary_secret'],
+          supportingUnitRefs: ['canonical_reading_unit_support_secret'],
           claimIds: ['claim-secret-123'],
           factRefs: ['fact.secret.path'],
           methodologyIds: ['method-secret@1'],
@@ -139,6 +141,11 @@ describe('Product Reading Consumer Transport Response', () => {
     expect(json).not.toContain('claim-secret-123');
     expect(json).not.toContain('source-secret-456');
     expect(json).not.toContain('method-secret@1');
+    expect(json).not.toContain('canonical_reading_unit_primary_secret');
+    expect(json).not.toContain('canonical_reading_unit_support_secret');
+    expect(json).not.toContain('explainabilityRef');
+    expect(json).not.toContain('primaryUnitRefs');
+    expect(json).not.toContain('supportingUnitRefs');
     expect(json).not.toContain('snapshot-secret');
     expect(json).not.toContain('interpretation-secret');
     expect(json).not.toContain('narrative-secret');
@@ -180,6 +187,83 @@ describe('Product Reading Consumer Transport Response', () => {
       { type: 'scope_limitation', text: '확인된 범위만 설명합니다.' },
     ]);
     expect(JSON.stringify(response)).not.toContain('disclosure-internal-secret');
+  });
+
+  it('projects a single internal insight item to the pre-SA-6F response-v2 block shape', () => {
+    const source = artifact();
+    const insightArtifact: ReadingArtifact = {
+      ...source,
+      sections: source.sections.map((section, index) =>
+        index === 0
+          ? {
+              ...section,
+              blocks: [
+                {
+                  type: 'insights',
+                  items: [
+                    {
+                      headline: '내부 핵심',
+                      summary: '내부 설명',
+                      qualifiers: ['내부 조건'],
+                      explainabilityRef: 'explainability-ref-secret',
+                    },
+                  ],
+                },
+              ],
+            }
+          : section,
+      ),
+    };
+    const response = buildProductReadingResponse(delivered({ artifact: insightArtifact }));
+
+    expect(response.responseVersion).toBe('myeonghwa-product-reading-response-v2');
+    expect(response.reading?.sections[0]?.blocks).toEqual([
+      { type: 'key_points', items: ['내부 핵심'] },
+      { type: 'paragraph', text: '내부 설명' },
+      { type: 'key_points', items: ['내부 조건'] },
+    ]);
+    expect(JSON.stringify(response)).not.toContain('"type":"insights"');
+  });
+
+  it('projects multiple internal insight items to the exact SA-6E key-point compatibility shape', () => {
+    const source = artifact();
+    const insightArtifact: ReadingArtifact = {
+      ...source,
+      sections: source.sections.map((section, index) =>
+        index === 0
+          ? {
+              ...section,
+              blocks: [
+                {
+                  type: 'insights',
+                  items: [
+                    {
+                      headline: '알파 핵심',
+                      summary: '알파 설명',
+                      qualifiers: ['알파 조건'],
+                      explainabilityRef: 'explainability-ref-secret',
+                    },
+                    {
+                      headline: '베타 핵심',
+                      summary: '베타 설명',
+                      explainabilityRef: 'explainability-ref-secret-2',
+                    },
+                  ],
+                },
+              ],
+            }
+          : section,
+      ),
+    };
+    const response = buildProductReadingResponse(delivered({ artifact: insightArtifact }));
+
+    expect(response.reading?.sections[0]?.blocks).toEqual([
+      {
+        type: 'key_points',
+        items: ['알파 핵심\n알파 설명\n알파 조건', '베타 핵심\n베타 설명'],
+      },
+    ]);
+    expect(JSON.stringify(response)).not.toContain('"type":"insights"');
   });
 
   it('copies clarification candidates into transport-owned scalar option shapes', () => {

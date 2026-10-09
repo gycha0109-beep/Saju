@@ -8,9 +8,11 @@ import type {
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import {
   createMyeonghwaProductHost,
+  parseProductHostReadingRequest,
   type MyeonghwaProductHost,
 } from '../host/product-host.js';
 import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../reading/governed-reading-execution.js';
+import { normalizeConsumerReadingRequest } from '../reading/consumer-reading-request-adapter.js';
 import {
   runInterpretation,
 } from '../interpretation/interpretation-engine.js';
@@ -31,8 +33,9 @@ import {
   PREVIEW_E2E_APPROVAL,
   isPreviewE2eSupportedReadingSection,
 } from './preview-authority.js';
+import { requirePreviewSemanticAdmissionV1 } from './preview-semantic-admission.js';
 
-export const PREVIEW_E2E_RUNTIME_VERSION = 'myeonghwa-preview-e2e-runtime-v1' as const;
+export const PREVIEW_E2E_RUNTIME_VERSION = 'myeonghwa-preview-e2e-runtime-v3' as const;
 export const PREVIEW_E2E_OUTPUT_SCHEMA_VERSION = 'myeonghwa-narrative-draft-v1' as const;
 
 const SCOPE_GUARD_CLAIM_TYPE = 'GENERAL_NATAL_USEFUL_READING_SCOPE-GUARD';
@@ -369,6 +372,10 @@ function previewDraft(prompt: CompiledNarrativePrompt): NarrativeDraft {
     );
   }
 
+  if (requestedSection === 'relationship:natal:spouse') {
+    throw new Error('PREVIEW_SPOUSE_POSITION_ONLY_LANE_REQUIRED');
+  }
+
   if (requestedSection === 'general:natal') {
     return generalNatalDraft(prompt.evidence);
   }
@@ -478,12 +485,7 @@ class PreviewE2eNarrativeAdapter implements NarrativeModelAdapter {
   }
 }
 
-export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
-  if (!PREVIEW_E2E_APPROVAL.approved) {
-    throw new Error('Preview E2E authority is not approved.');
-  }
-
-  const now = new Date();
+function createDefaultPreviewProductHost(now: Date): MyeonghwaProductHost {
   return createMyeonghwaProductHost({
     calculate(input) {
       return calculateAuthorizedMyeonghwaProductionSnapshot(input).snapshot;
@@ -515,4 +517,97 @@ export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
     },
     requestIdFactory: () => `preview_${randomUUID()}`,
   });
+}
+
+async function createSpousePositionOnlyPreviewProductHost(
+  now: Date,
+): Promise<MyeonghwaProductHost> {
+  const admission = requirePreviewSemanticAdmissionV1(
+    'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE',
+    'relationship:natal:spouse',
+  );
+  if (
+    admission.disposition !== 'claim' ||
+    admission.semanticScope !== 'traditional_spouse_palace_day_branch_position_only' ||
+    !admission.boundaries.includes('OFFICIAL_READING_PREVIEW_ALLOWED')
+  ) {
+    throw new Error('Spouse position-only Preview semantic admission is not exact.');
+  }
+
+  const materializationModule = await import(
+    '../research/relationship-spouse-t8-day-branch-palace-project-governed-narrative-materialization.js'
+  );
+
+  return createMyeonghwaProductHost({
+    calculate(input) {
+      return calculateAuthorizedMyeonghwaProductionSnapshot(input).snapshot;
+    },
+    async interpret(snapshot, context) {
+      const interpretation =
+        await materializationModule.runRelationshipSpouseT8DayBranchPalaceNarrativeMaterializedShadowExecution(
+          snapshot,
+          {
+            requestId: context.requestId,
+            now: new Date(context.requestedAt),
+          },
+        );
+      return {
+        registry:
+          materializationModule.RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_NARRATIVE_MATERIALIZED_REGISTRY,
+        interpretation,
+      };
+    },
+    readingOptions: {
+      outputSchemaVersion: PREVIEW_E2E_OUTPUT_SCHEMA_VERSION,
+      readingVersion: PREVIEW_E2E_RUNTIME_VERSION,
+      narrativeNow: now,
+      artifactGeneratedAt: now,
+    },
+    requestIdFactory: () => `preview_spouse_${randomUUID()}`,
+  });
+}
+
+function isSpousePositionOnlyPreviewRequest(body: unknown): boolean {
+  try {
+    const parsed = parseProductHostReadingRequest(body);
+    const normalized = normalizeConsumerReadingRequest({
+      requestId: 'preview_spouse_route_probe',
+      text: parsed.reading.text,
+      ...(parsed.reading.targetPersonRef === undefined
+        ? {}
+        : { targetPersonRef: parsed.reading.targetPersonRef }),
+    });
+    return (
+      normalized.state === 'resolved' &&
+      normalized.request?.intent.domain === 'relationship' &&
+      normalized.request.intent.temporalScope === 'natal' &&
+      normalized.request.intent.relationshipScope === 'spouse'
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
+  if (!PREVIEW_E2E_APPROVAL.approved) {
+    throw new Error('Preview E2E authority is not approved.');
+  }
+
+  const now = new Date();
+  const defaultHost = createDefaultPreviewProductHost(now);
+  let spouseHostPromise: Promise<MyeonghwaProductHost> | undefined;
+
+  function spouseHost(): Promise<MyeonghwaProductHost> {
+    spouseHostPromise ??= createSpousePositionOnlyPreviewProductHost(now);
+    return spouseHostPromise;
+  }
+
+  return {
+    async requestReading(body: unknown) {
+      if (isSpousePositionOnlyPreviewRequest(body)) {
+        return (await spouseHost()).requestReading(body);
+      }
+      return defaultHost.requestReading(body);
+    },
+  };
 }

@@ -1,0 +1,161 @@
+{
+  "schemaVersion": "fr300-r1w-zc-existing-hardware-metric-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-26",
+  "contractVersion": "FR300-R1W-ZC-EXISTING-HARDWARE-METRIC-v1",
+  "sources": [
+    {
+      "source": "https://developer.android.com/reference/android/hardware/camera2/CameraMetadata#REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT",
+      "sourceClass": "official_android_api_reference",
+      "supportedFacts": [
+        "DEPTH_OUTPUT_capability_can_produce_depth_measurements",
+        "DEPTH_OUTPUT_requires_DEPTH16_output_support",
+        "DEPTH_OUTPUT_requires_pose_translation",
+        "DEPTH_OUTPUT_requires_pose_rotation",
+        "DEPTH_OUTPUT_requires_intrinsic_calibration",
+        "DEPTH_OUTPUT_requires_lens_distortion",
+        "DEPTH_OUTPUT_requires_depth_is_exclusive_metadata"
+      ]
+    },
+    {
+      "source": "https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics#DEPTH_DEPTH_IS_EXCLUSIVE",
+      "sourceClass": "official_android_api_reference",
+      "supportedFacts": [
+        "depth_is_exclusive_false_allows_single_request_color_and_depth",
+        "depth_is_exclusive_true_requires_interleaved_color_and_depth"
+      ]
+    },
+    {
+      "source": "https://developers.google.com/ar/develop/depth",
+      "sourceClass": "official_arcore_documentation",
+      "supportedFacts": [
+        "ARCore_Depth_uses_depth_from_motion",
+        "ARCore_Depth_may_fuse_supported_hardware_depth",
+        "Depth_API_device_support_must_be_checked",
+        "depth_image_matches_camera_frame_and_intrinsics"
+      ]
+    },
+    {
+      "source": "https://developers.google.com/ar/develop/unity-arf/depth/raw-depth",
+      "sourceClass": "official_arcore_documentation",
+      "supportedFacts": [
+        "Raw_Depth_is_more_accurate_than_full_depth_but_sparse",
+        "Raw_Depth_has_matching_confidence_image",
+        "Raw_Depth_does_not_require_hardware_depth_sensor"
+      ]
+    },
+    {
+      "source": "https://developers.google.com/ar/reference/c/group/ar-frame",
+      "sourceClass": "official_arcore_api_reference",
+      "supportedFacts": [
+        "Raw_Depth_16bit_values_are_millimeters_along_camera_principal_axis",
+        "Raw_Depth_corresponds_to_current_frame",
+        "raw_depth_confidence_range_is_0_to_255",
+        "raw_depth_is_primarily_estimated_from_world_facing_camera_motion"
+      ]
+    },
+    {
+      "source": "https://colmap.github.io/faq.html",
+      "sourceClass": "official_colmap_documentation",
+      "supportedFacts": [
+        "known_camera_intrinsics_can_be_supplied",
+        "external_calibration_can_be_reused",
+        "3D_similarity_alignment_can_transform_reconstruction_to_external_coordinate_frame"
+      ],
+      "authorityLimitation": "COLMAP_capability_does_not_by_itself_verify_physical_metric_accuracy_or_repeatability_for_this_use_case"
+    }
+  ],
+  "deviceOwnershipBoundary": {
+    "concreteDeviceModelBound": false,
+    "camera2DepthDeviceOwnershipEstablished": false,
+    "tofOwnershipEstablished": false,
+    "lidarOwnershipEstablished": false,
+    "stereoDepthCameraOwnershipEstablished": false,
+    "externalCalibratedScannerOwnershipEstablished": false
+  },
+  "laneAdjudication": [
+    {
+      "lane": "android_camera2_calibrated_hardware_depth",
+      "disposition": "conditional_nonhuman_probe",
+      "requirements": [
+        "runtime_DEPTH_OUTPUT_capability",
+        "DEPTH16_output",
+        "calibration_metadata",
+        "lens_pose",
+        "lens_distortion",
+        "color_output",
+        "known_dimension_nonhuman_target",
+        "independent_target_measurement",
+        "accuracy_validation_plan",
+        "repeatability_validation_plan"
+      ],
+      "sameCapturePotential": "only_if_user_facing_and_depth_not_exclusive_and_simultaneous_color_depth_verified"
+    },
+    {
+      "lane": "arcore_raw_depth",
+      "disposition": "conditional_nonhuman_probe",
+      "requirements": [
+        "runtime_depth_api_support",
+        "raw_depth",
+        "raw_depth_confidence",
+        "millimeter_depth_semantics",
+        "current_frame_binding",
+        "camera_intrinsics",
+        "world_facing_camera",
+        "known_dimension_nonhuman_target",
+        "accuracy_validation_plan",
+        "repeatability_validation_plan"
+      ],
+      "sameCapturePotential": false,
+      "futureFR299RegistrationRequired": true
+    },
+    {
+      "lane": "external_calibrated_multiview_rgb",
+      "disposition": "conditional_nonhuman_probe",
+      "requirements": [
+        "multi_view_capture",
+        "known_or_calibratable_intrinsics",
+        "external_similarity_scale_anchor",
+        "scale_anchor_independent_of_reconstruction",
+        "reconstruction_provider_independent_of_candidate",
+        "known_dimension_nonhuman_target",
+        "accuracy_validation_plan",
+        "repeatability_validation_plan"
+      ],
+      "sameCapturePotential": false,
+      "futureFR299RegistrationRequired": true
+    },
+    {
+      "lane": "ordinary_monocular_rgb_only",
+      "disposition": "blocked_as_independent_metric_truth",
+      "blocker": "no_independent_physical_metric_scale_by_default"
+    }
+  ],
+  "nonhumanProbeBoundary": {
+    "targetClass": "nonhuman_known_dimension_calibration_target",
+    "humanFaceAllowed": false,
+    "biometricArtifactAllowed": false,
+    "knownPhysicalDimensionsRequired": true,
+    "independentMeasurementReferenceRequired": true,
+    "accuracyValidationRequired": true,
+    "repeatabilityValidationRequired": true,
+    "providerBlindReferenceConstructionRequired": true,
+    "traditionalLabelBlindReferenceConstructionRequired": true,
+    "acceptanceThresholdIssued": false
+  },
+  "operationalBoundary": {
+    "runtimeHardwareManifestCollected": false,
+    "nonhumanCalibrationProbeExecuted": false,
+    "humanFaceCapturePerformed": false,
+    "biometricArtifactCollected": false,
+    "newHardwarePurchaseAuthorized": false,
+    "paidSpendAuthorized": false,
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29",
+    "productionActivated": false,
+    "commerceActivated": false
+  },
+  "disposition": "conditional_pass_to_device_probe",
+  "nextActionWithoutNewExternalAuthorization": "collect_runtime_existing_hardware_manifest_then_run_nonhuman_known_dimension_calibration_probe_for_first_eligible_lane"
+}

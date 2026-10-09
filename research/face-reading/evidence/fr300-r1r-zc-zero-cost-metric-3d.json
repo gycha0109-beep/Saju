@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "fr300-r1r-zc-zero-cost-metric-3d-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-26",
+  "spendPolicy": {
+    "policy": "zero_cost_first",
+    "paidSpendAuthorized": false,
+    "paidPurchaseRequiresSeparateExplicitAuthority": true,
+    "priority": [
+      "zero_cost_public",
+      "zero_cost_on_request",
+      "existing_hardware_only",
+      "paid_required"
+    ]
+  },
+  "sourceReceipts": [
+    {
+      "candidate": "minds_libras_rgbd",
+      "source": "https://live.european-language-grid.eu/catalogue/lcr/21907",
+      "sourceClass": "dataset_catalog_record_from_zenodo_metadata",
+      "supportedFacts": [
+        "dataset_doi_10_5281_zenodo_4322984",
+        "downloadable_distribution",
+        "creative_commons_attribution_4_0_international",
+        "open_access"
+      ]
+    },
+    {
+      "candidate": "minds_libras_rgbd",
+      "source": "https://repositorio.ufmg.br/bitstream/1843/39785/3/Tamires_Tese_MINDS.pdf",
+      "sourceClass": "creator_thesis",
+      "supportedFacts": [
+        "kinect_v2_rgbd_capture",
+        "rgb_and_depth_video",
+        "1347_face_model_xyz_points",
+        "face_model_uses_sensor_center_reference",
+        "face_model_xyz_ranges_are_documented_in_meters",
+        "color_face_model_maps_same_1347_points_to_rgb_frame",
+        "depth_face_model_maps_same_1347_points_to_depth_frame",
+        "nose_tip_index_18",
+        "nose_top_index_24"
+      ],
+      "unresolved": [
+        "participant_commercial_product_development_scope",
+        "exact_zenodo_artifact_identity",
+        "fr299_nose_root_mapping"
+      ]
+    },
+    {
+      "candidate": "ul_dd_zed2",
+      "source": "https://zenodo.org/records/17978727",
+      "sourceClass": "publisher_dataset_record",
+      "supportedFacts": [
+        "research_use_license",
+        "bona_fide_commercial_r_and_d_is_permitted",
+        "dataset_is_restricted_access",
+        "no_purchase_requirement_identified_in_public_record"
+      ]
+    },
+    {
+      "candidate": "ul_dd_zed2",
+      "source": "https://www.nature.com/articles/s41597-025-06540-1",
+      "sourceClass": "peer_reviewed_data_descriptor",
+      "supportedFacts": [
+        "zed_2_3d_camera_capture",
+        "participants_informed_facial_and_video_data_would_be_released",
+        "only_explicit_post_collection_consented_releases_were_published",
+        "irb_22_038_iri",
+        "public_3d_video_split_to_left_and_right_440x370_views",
+        "released_r3d_l3d_files_are_mp4"
+      ],
+      "unresolved": [
+        "physical_metric_depth_survives_public_mp4_release",
+        "device_specific_calibration_is_released_and_bound",
+        "fr299_usable_same_frame_metric_geometry"
+      ]
+    },
+    {
+      "candidate": "ast_face_public_and_controlled",
+      "source": "https://www.nature.com/articles/s41597-026-07098-2",
+      "sourceClass": "peer_reviewed_data_descriptor",
+      "supportedFacts": [
+        "98_participant_structured_light_3d_capture",
+        "public_topology_standardized_obj_meshes",
+        "raw_scans_controlled_dua",
+        "synchronized_rgb_controlled_dua_for_52_participants",
+        "all_98_consented_to_public_anonymized_nontextured_derived_data",
+        "topology_unification_uses_flame_bfm_projection_and_edge_nicp",
+        "processing_uses_normalized_units_and_regularization"
+      ],
+      "unresolved": [
+        "dataset_commercial_product_development_license",
+        "public_standardized_mesh_physical_unit",
+        "physical_scale_preservation_through_standardization"
+      ]
+    }
+  ],
+  "adjudication": {
+    "qualifyZeroCostNext": [
+      "minds_libras_rgbd"
+    ],
+    "technicalHold": [
+      "ul_dd_zed2"
+    ],
+    "rightsHold": [
+      "ast_face_public_and_controlled"
+    ],
+    "paidCandidatesDeferred": [
+      "bfm2009_example_scans",
+      "nexdata_vietnam_200_3d_liveness",
+      "nexdata_40_3d_2d_liveness"
+    ],
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29"
+  },
+  "nextEvidencePriority": [
+    "minds_libras_exact_artifact_identity_participant_scope_and_fr299_landmark_mapping",
+    "ul_dd_released_zed2_metric_survivability_and_calibration",
+    "existing_hardware_metric_3d_reference_feasibility"
+  ]
+}

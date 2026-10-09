@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildI32ChallengeTargetClashDependencyMethodologyReview } from '../src/index.js';
+import { buildI32ChallengeTargetClashDependencyMethodologyReview } from '../src/research/i32-challenge-target-clash-dependency-methodology-review.js';
 
 describe('I32 challenge target clash dependency methodology review', () => {
   test('requires a challenge-specific adapter and rejects direct I20-series report contract reuse', () => {

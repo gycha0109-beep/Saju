@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "fr300-r2b-par-ast-public-authority-resolution-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-27",
+  "contractVersion": "FR300-R2B-PAR-AST-PUBLIC-AUTHORITY-RESOLUTION-v1",
+  "dua": {
+    "state": "public_evidence_exhausted",
+    "authoritativeOsfDeclared": true,
+    "githubMirrorBlobSha": "5ab05af1b97cf6f1728e6c4a363414e804a650d7",
+    "byteIdentityVerified": false,
+    "semanticEquivalenceVerified": false,
+    "authoritativeRightsGateResolved": false
+  },
+  "metric": {
+    "level": "M1_device_class_metric_capable",
+    "structuredLight": true,
+    "highPrecisionScanner": true,
+    "exactScannerModel": false,
+    "rawObjPhysicalUnit": "unknown_not_source_bound",
+    "rawObjExportScale": "unknown_not_source_bound",
+    "m3": false,
+    "fr299MetricScaleVerified": false
+  },
+  "pairing": {
+    "level": "P2_same_neutral_acquisition_condition",
+    "neutral3DAndSynchronizedRgb": true,
+    "simultaneousRgbViews": true,
+    "standardizedRigGeometry": true,
+    "spatialAlignmentDocumented": true,
+    "unifiedNaming": true,
+    "publicControlledManifest": false,
+    "publicExtrinsics": false,
+    "p3": false,
+    "fr299CorrespondenceVerified": false
+  },
+  "readiness": {
+    "scientificallyPromising": true,
+    "controlledIntakeMayResolveRemainingTechnicalAuthority": true,
+    "controlledAccessScientificallyJustifiedNow": false,
+    "controlledAccessOperationallyAuthorized": false
+  },
+  "actions": {
+    "controlledAccessRequested": false,
+    "duaSigned": false,
+    "duaSubmitted": false,
+    "externalContact": false,
+    "participantArtifactDownloaded": false,
+    "participantArtifactInspected": false,
+    "paidSpendAuthorized": false
+  },
+  "authority": {
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29",
+    "productionActivated": false,
+    "commerceActivated": false
+  },
+  "disposition": "public_authority_exhausted_controlled_intake_may_resolve"
+}

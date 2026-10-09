@@ -10,6 +10,15 @@
       "changeClass": "additive_authority_governed_core_extension",
       "historicalProvenanceMutation": false,
       "methodologySemanticChange": false
+    },
+    {
+      "path": "packages/face-reading/src/index.ts",
+      "sourceBlobSha": "97151f021e3c8b7eb4e1178dbb6bb29fb77f9909",
+      "targetBlobSha": "a8caf2a4d816c55ed7e71487eb7307e47f3b0c97",
+      "authorityRef": "FACE-ENGINE-1639",
+      "changeClass": "additive_authority_governed_core_extension",
+      "historicalProvenanceMutation": false,
+      "methodologySemanticChange": false
     }
   ]
 }

@@ -1,10 +1,14 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelSettlementDependencyEvidenceItem,
+  ChallengeCombinationSupportChannelSettlementDependencyEvidenceReport,
+} from '../src/research/i56-challenge-combination-support-channel-settlement-dependency-evidence.js';
 import {
   buildI57ChallengeCombinationSupportChannelExistingSettlementAuthorityApplicabilityReview,
+} from '../src/research/i57-challenge-combination-support-channel-existing-settlement-authority-applicability-review.js';
+import {
   buildI58ChallengeCombinationSupportChannelExistingSettlementAuthorityApplicabilityEvidence,
-  type ChallengeCombinationSupportChannelSettlementDependencyEvidenceItem,
-  type ChallengeCombinationSupportChannelSettlementDependencyEvidenceReport,
-} from '../src/index.js';
+} from '../src/research/i58-challenge-combination-support-channel-existing-settlement-authority-applicability-evidence.js';
 
 function baseItem(
   dependencies: ChallengeCombinationSupportChannelSettlementDependencyEvidenceItem['requiredSettlementDependencies'],

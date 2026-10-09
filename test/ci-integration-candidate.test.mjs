@@ -1,0 +1,227 @@
+import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
+import { describe, expect, it } from 'vitest';
+import { assertSubmissionEvent, assertPrerequisites, assertStagedPolicy, resolveCandidateMergeability, validateCandidate } from '../scripts/ci/integration-candidate.mjs';
+
+const candidate = { pr: '42', head: 'a'.repeat(40), base: 'b'.repeat(40) };
+const current = () => ({
+  state: 'open', draft: false,
+  mergeable: true, mergeable_state: 'clean',
+  head: { sha: candidate.head, repo: { full_name: 'owner/repo' } },
+  base: { ref: 'main', repo: { full_name: 'owner/repo' } },
+  defaultBranch: 'main', defaultSha: candidate.base,
+});
+const check = (id = 1, name = 'CI Verify', conclusion = 'success', app = 15368) => ({
+  id, name, conclusion, status: 'completed', app: { id: app },
+});
+
+describe('pinned integration admission and required evidence', () => {
+  it('accepts the exact open PR against the current default branch', () => {
+    expect(() => validateCandidate(candidate, current())).not.toThrow();
+  });
+  it.each(['../42', '42;echo', '', '0'])('rejects invalid PR input %s', pr => {
+    expect(() => validateCandidate({ ...candidate, pr }, current())).toThrow('Invalid pinned');
+  });
+  it('rejects stale PR heads', () => {
+    const changed = current(); changed.head.sha = 'c'.repeat(40);
+    expect(() => validateCandidate(candidate, changed)).toThrow('PR head changed');
+  });
+  it('allows advancing main when GitHub still reports the PR mergeable', () => {
+    const changed = current();
+    changed.defaultSha = 'c'.repeat(40);
+    changed.mergeable_state = 'behind';
+    expect(() => validateCandidate(candidate, changed)).not.toThrow();
+  });
+  it('rejects an actual merge conflict instead of treating behind as a conflict', () => {
+    const behind = current();
+    behind.defaultSha = 'c'.repeat(40);
+    behind.mergeable_state = 'behind';
+    expect(() => validateCandidate(candidate, behind)).not.toThrow();
+
+    const conflict = current();
+    conflict.defaultSha = 'c'.repeat(40);
+    conflict.mergeable = false;
+    conflict.mergeable_state = 'dirty';
+    expect(() => validateCandidate(candidate, conflict)).toThrow('actual merge conflict');
+  });
+  it('fails closed while GitHub mergeability is unresolved', () => {
+    const unresolved = current();
+    unresolved.defaultSha = 'c'.repeat(40);
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    expect(() => validateCandidate(candidate, unresolved)).toThrow('mergeability is unresolved');
+  });
+  it('re-reads transient unresolved mergeability until GitHub resolves true', () => {
+    const unresolved = current();
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    const stillUnknown = { ...current(), mergeable: null, mergeable_state: 'unknown' };
+    const resolved = current();
+    const queue = [stillUnknown, resolved];
+    let reads = 0;
+    const result = resolveCandidateMergeability(
+      candidate,
+      unresolved,
+      () => {
+        reads += 1;
+        return queue.shift();
+      },
+      { wait: () => {} },
+    );
+    expect(reads).toBe(2);
+    expect(result.mergeable).toBe(true);
+    expect(() => validateCandidate(candidate, result)).not.toThrow();
+  });
+  it('bounds unresolved mergeability re-reads and remains fail-closed', () => {
+    const unresolved = current();
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    let reads = 0;
+    const result = resolveCandidateMergeability(
+      candidate,
+      unresolved,
+      () => {
+        reads += 1;
+        return { ...current(), mergeable: null, mergeable_state: 'unknown' };
+      },
+      { wait: () => {} },
+    );
+    expect(reads).toBe(3);
+    expect(() => validateCandidate(candidate, result)).toThrow('mergeability is unresolved');
+  });
+  it('does not retry past a resolved conflict', () => {
+    const unresolved = current();
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    let reads = 0;
+    const result = resolveCandidateMergeability(
+      candidate,
+      unresolved,
+      () => {
+        reads += 1;
+        return { ...current(), mergeable: false, mergeable_state: 'dirty' };
+      },
+      { wait: () => {} },
+    );
+    expect(reads).toBe(1);
+    expect(() => validateCandidate(candidate, result)).toThrow('actual merge conflict');
+  });
+  it('fails closed when the PR changes while mergeability is being resolved', () => {
+    const unresolved = current();
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    const changedHead = current();
+    changedHead.head.sha = 'c'.repeat(40);
+    const result = resolveCandidateMergeability(
+      candidate,
+      unresolved,
+      () => changedHead,
+      { wait: () => {} },
+    );
+    expect(() => validateCandidate(candidate, result)).toThrow('PR head changed');
+  });
+  it.each([
+    { state: 'closed', draft: false },
+    { state: 'open', draft: true },
+  ])('fails closed when PR readiness changes during mergeability resolution', changed => {
+    const unresolved = current();
+    unresolved.mergeable = null;
+    unresolved.mergeable_state = 'unknown';
+    const result = resolveCandidateMergeability(
+      candidate,
+      unresolved,
+      () => ({ ...current(), ...changed, mergeable: null, mergeable_state: 'unknown' }),
+      { wait: () => {} },
+    );
+    expect(() => validateCandidate(candidate, result)).toThrow('open and ready');
+  });
+  it('rejects forks, closed PRs, drafts, and another base', () => {
+    const fork = current(); fork.head.repo.full_name = 'other/repo';
+    expect(() => validateCandidate(candidate, fork)).toThrow('Cross-repository');
+    expect(() => validateCandidate(candidate, { ...current(), state: 'closed' })).toThrow('open');
+    expect(() => validateCandidate(candidate, { ...current(), draft: true })).toThrow('ready');
+    const other = current(); other.base.ref = 'release';
+    expect(() => validateCandidate(candidate, other)).toThrow('default branch');
+  });
+  it('requires the Actions-bound integration check under both strict and loose freshness policies', () => {
+    expect(() => assertStagedPolicy([])).toThrow('Staged CI requires');
+    const rules = (app, strict) => [{ type: 'required_status_checks', parameters: {
+      strict_required_status_checks_policy: strict,
+      required_status_checks: [{ context: 'CI Integration Verify', integration_id: app }],
+    } }];
+    expect(() => assertStagedPolicy(rules(7, true))).toThrow();
+    expect(() => assertStagedPolicy(rules(15368, true))).not.toThrow();
+    expect(() => assertStagedPolicy(rules(15368, false))).not.toThrow();
+  });
+  it('requires every selected check and ignores only the integration check being requested', () => {
+    const required = [{ context: 'CI Verify', integration_id: 15368 }, { context: 'CI Integration Verify', integration_id: 15368 }];
+    expect(() => assertPrerequisites(required, [check()], [])).not.toThrow();
+    expect(() => assertPrerequisites(required, [], [])).toThrow('missing');
+  });
+  it.each(['failure', 'cancelled', 'skipped'])('rejects %s required evidence', conclusion => {
+    expect(() => assertPrerequisites([{ context: 'CI Verify', integration_id: 15368 }], [check(1, 'CI Verify', conclusion)], [])).toThrow('not successful');
+  });
+  it('rejects queued checks and newer failures even when an old attempt passed', () => {
+    const required = [{ context: 'CI Verify', integration_id: 15368 }];
+    expect(() => assertPrerequisites(required, [{ ...check(), status: 'queued' }], [])).toThrow();
+    expect(() => assertPrerequisites(required, [check(1), check(2, 'CI Verify', 'failure')], [])).toThrow();
+  });
+  it('rejects evidence from another app and spoofed same-name commit statuses', () => {
+    expect(() => assertPrerequisites([{ context: 'CI Verify', integration_id: 15368 }],
+      [check(1, 'CI Verify', 'success', 7)], [{ context: 'CI Verify', state: 'success' }])).toThrow('missing');
+  });
+});
+
+describe('eligible PR submission evidence', () => {
+  const event = () => ({ action: 'labeled', label: { name: 'ci-integration-ready' }, number: 42,
+    pull_request: { head: { sha: candidate.head }, base: { sha: candidate.base } } });
+  it('accepts the dedicated label with the pinned PR event', () => {
+    expect(() => assertSubmissionEvent(event(), candidate)).not.toThrow();
+  });
+  it.each(['synchronize', 'opened', 'unlabeled'])('rejects unrelated action %s', action => {
+    expect(() => assertSubmissionEvent({ ...event(), action }, candidate)).toThrow('dedicated');
+  });
+  it('rejects an unrelated label instead of a skipped required gate', () => {
+    expect(() => assertSubmissionEvent({ ...event(), label: { name: 'ops' } }, candidate)).toThrow('dedicated');
+  });
+  it('does not borrow a different PR or newer head/base', () => {
+    expect(() => assertSubmissionEvent({ ...event(), number: 43 }, candidate)).toThrow('immutable');
+    expect(() => assertSubmissionEvent(event(), { ...candidate, head: 'c'.repeat(40) })).toThrow('immutable');
+    expect(() => assertSubmissionEvent(event(), { ...candidate, base: 'c'.repeat(40) })).toThrow('immutable');
+  });
+});
+
+
+describe('integration workflow current-base execution', () => {
+  const workflow = readFileSync(
+    new URL('../.github/workflows/ci-integration.yml', import.meta.url),
+    'utf8',
+  );
+
+  it('executes admission and verify guards from the current default branch', () => {
+    expect(workflow).toContain(
+      'ref: ${{ github.event.repository.default_branch }}',
+    );
+    expect(
+      workflow.match(/ref: \$\{\{ github\.sha \}\}/gu) ?? [],
+    ).toHaveLength(0);
+  });
+
+  it('pins the current default branch after admission for full regression', () => {
+    expect(workflow).toContain(
+      'current_base_sha: ${{ steps.current-base.outputs.sha }}',
+    );
+    expect(workflow).toContain(
+      'candidate_base: ${{ needs.admission.outputs.current_base_sha }}',
+    );
+  });
+
+  it('isolates integration concurrency by PR instead of repository-wide serialization', () => {
+    expect(workflow).toContain(
+      'group: ci-integration-admission-${{ inputs.pr || github.event.pull_request.number }}',
+    );
+    expect(workflow).not.toContain(
+      'group: ci-integration-admission\n',
+    );
+  });
+});

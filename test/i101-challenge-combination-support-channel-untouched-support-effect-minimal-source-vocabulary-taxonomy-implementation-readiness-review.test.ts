@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI101ChallengeCombinationSupportChannelUntouchedSupportEffectMinimalSourceVocabularyTaxonomyImplementationReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceVocabularyTaxonomyGapRequirementsReviewReport,
-} from '../src/index.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceVocabularyTaxonomyGapRequirementsReviewReport } from '../src/research/i100-challenge-combination-support-channel-untouched-support-effect-source-vocabulary-taxonomy-gap-requirements-review.js';
+import { buildI101ChallengeCombinationSupportChannelUntouchedSupportEffectMinimalSourceVocabularyTaxonomyImplementationReadinessReview } from '../src/research/i101-challenge-combination-support-channel-untouched-support-effect-minimal-source-vocabulary-taxonomy-implementation-readiness-review.js';
 
 function requirement(
   sourceTerm: '克' | '合' | '刑' | '冲' | '生' | '卫',

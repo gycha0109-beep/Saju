@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI93ChallengeCombinationSupportChannelUntouchedSupportEffectCandidateSetCompositionPolicyReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectAdditionalAuthorityRequirementsReviewReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateI84RequirementCoverageEvidenceReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectTargetedCandidateI84RequirementCoverageEvidenceReport,
-} from '../src/index.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectAdditionalAuthorityRequirementsReviewReport } from '../src/research/i84-challenge-combination-support-channel-untouched-support-effect-additional-authority-requirements-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectAuthorityCandidateI84RequirementCoverageEvidenceReport } from '../src/research/i89-challenge-combination-support-channel-untouched-support-effect-authority-candidate-i84-requirement-coverage-evidence.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectTargetedCandidateI84RequirementCoverageEvidenceReport } from '../src/research/i92-challenge-combination-support-channel-untouched-support-effect-targeted-candidate-i84-requirement-coverage-evidence.js';
+import { buildI93ChallengeCombinationSupportChannelUntouchedSupportEffectCandidateSetCompositionPolicyReadinessReview } from '../src/research/i93-challenge-combination-support-channel-untouched-support-effect-candidate-set-composition-policy-readiness-review.js';
 
 const REQUIREMENT_IDS = [
   'EXPLICIT_POST_INTERACTION_UNTOUCHED_SOURCE_RULE',

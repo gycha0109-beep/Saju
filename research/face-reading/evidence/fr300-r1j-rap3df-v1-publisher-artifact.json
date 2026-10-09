@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "fr300-r1j-v1-publisher-artifact-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "capturedAtUtc": "2026-09-25T20:41:45.060Z",
+  "workflowRunId": 36187234665,
+  "workflowHeadSha": "380dfe3af95d15863f1d921804d1fde70ab1b11f",
+  "datasetRef": "doi:10.17632/kpdkpcs8zb.3",
+  "datasetVersion": 3,
+  "status": "source_bound_metric_authority_blocked",
+  "publisherMetadataActuallyFetched": true,
+  "folderRequests": 6,
+  "realArtifactDownloaded": true,
+  "selectedArtifact": {
+    "fileId": "bd54dc2a-b810-4ac1-8f7c-7bcbf5b00085",
+    "filename": "k1_box_xyz_depth.data",
+    "metadataEvidenceRef": "https://data.mendeley.com/public-api/datasets/kpdkpcs8zb/files?folder_id=0f4b4eeb-b3b1-4fbe-8ec1-c8f1858117fe&version=3",
+    "publisherSha256": "sha256:bdaa756600ad3539b7a3d0de7725123bc94e11ed974c775cd11aa3a02b45feb3",
+    "localSha256": "sha256:bdaa756600ad3539b7a3d0de7725123bc94e11ed974c775cd11aa3a02b45feb3",
+    "publisherSizeBytes": 35462,
+    "localSizeBytes": 35462,
+    "digestMatches": true,
+    "sizeMatches": true,
+    "expectedArticleBoundByteLength": 141848,
+    "expectedArticleBoundShapeMatches": false,
+    "observedBytesPerArticlePixel": 2,
+    "float64TrailingByteCount": 6
+  },
+  "r1iReceipt": {
+    "sourceProvenanceStatus": "source_bound",
+    "serializationStatus": "blocked",
+    "endiannessStatus": "blocked",
+    "physicalUnitStatus": "blocked",
+    "metricAdjudicationStatus": "blocked",
+    "blockers": [
+      "expected_float64_shape_mismatch",
+      "endianness_evidence_missing",
+      "physical_unit_evidence_missing"
+    ],
+    "littleEndianStatistics": {
+      "endianness": "little",
+      "valueCount": 4432,
+      "finiteValueCount": 4432,
+      "positiveFiniteValueCount": 2251,
+      "zeroValueCount": 2181,
+      "negativeFiniteValueCount": 0,
+      "nonFiniteValueCount": 0,
+      "minimumFiniteValue": 0,
+      "maximumFiniteValue": 7.120236347223044e-306
+    },
+    "bigEndianStatistics": {
+      "endianness": "big",
+      "valueCount": 4432,
+      "finiteValueCount": 4432,
+      "positiveFiniteValueCount": 2127,
+      "zeroValueCount": 2182,
+      "negativeFiniteValueCount": 123,
+      "nonFiniteValueCount": 0,
+      "minimumFiniteValue": -1.6121256482182955e-207,
+      "maximumFiniteValue": 5.660246894802334e+303
+    },
+    "selectedStatistics": null,
+    "authorityBoundary": {
+      "numericRangeSelectsEndianness": false,
+      "numericRangeSelectsPhysicalUnit": false,
+      "articleCcByEqualsParticipantCommercialConsent": false,
+      "ethicsApprovalEqualsParticipantCommercialConsent": false,
+      "canonicalRegistrationIssued": false,
+      "realFR299BundleIssued": false,
+      "fr300R2Authorized": false,
+      "productColumnMaterialized": false,
+      "productionActivated": false,
+      "commerceActivated": false
+    }
+  },
+  "participantCommercialProductUseScopeEstablished": false,
+  "realFR299BundleIssued": false,
+  "fr300R2Authorized": false,
+  "productMaterialization": "18/29",
+  "note": "observedBytesPerArticlePixel and float64TrailingByteCount are arithmetic annotations added from the authenticated 35,462-byte receipt; they do not authorize a 2-byte encoding, endianness, or physical unit"
+}

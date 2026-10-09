@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemPositionalApplicabilityEvidenceReport,
+} from '../src/research/i115-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-positional-applicability-evidence.js';
 import {
   buildI116ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemPositionalApplicabilityPromotionReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemPositionalApplicabilityEvidenceReport,
-} from '../src/index.js';
+} from '../src/research/i116-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-positional-applicability-promotion-readiness-review.js';
 
 function item() {
   return {

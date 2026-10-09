@@ -1,0 +1,38 @@
+name: "[WT:face-reading] FR300-R1P RAP3DF V2 Depth Survivability"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/acquire-fr300-r1p-rap3df-v2-depth-survivability.mjs"
+      - ".github/workflows/fr300-r1p-rap3df-v2-depth-survivability.yml"
+      - "research/face-reading/fr300-r1p-rap3df-v2-depth-survivability.md"
+      - "research/face-reading/evidence/fr300-r1p-rap3df-v2-depth-survivability.json"
+      - "packages/face-reading/src/rap3df-v2-depth-survivability-fr300-r1p.ts"
+      - "packages/face-reading/src/rap3df-v2-depth-survivability-fr300-r1p.test.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  adjudicate-depth-survivability:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Bind official V4 depth artifacts to creator bytes
+        run: node scripts/acquire-fr300-r1p-rap3df-v2-depth-survivability.mjs
+      - name: Upload sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr300-r1p-rap3df-v2-depth-survivability
+          path: .fr300-r1p-evidence/rap3df-v2-depth-survivability.json
+          if-no-files-found: warn
+          retention-days: 14

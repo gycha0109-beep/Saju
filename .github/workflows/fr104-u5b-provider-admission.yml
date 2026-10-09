@@ -1,0 +1,88 @@
+name: "[WT:face-reading] FR104 U5B-D Exact Provider Admission"
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fr104-u5b-provider-admission.yml"
+      - "scripts/build-fr104-u5b-gnm-fixture.mjs"
+      - "scripts/run-fr104-u5b-provider-validation.mjs"
+      - "scripts/admit-fr104-u5b-provider-result.mjs"
+      - "tools/face-reading/ear/stage_fr104_u5b_gnm_render_input.py"
+      - "tools/face-geometry/gnm/fetch_gnm_head.py"
+      - "tools/face-geometry/capture/fr104-u5b-provider-validation.html"
+      - "tools/face-geometry/capture/fr104-u5b-provider-validation.mjs"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-validation-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-fixture-evidence-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-result-intake-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-result-intake-fr104.test.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-empirical-evidence-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-empirical-evidence-fr104.test.ts"
+      - "research/face-research/fr104-gnm-cross-source-geometric-validation-u5b.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-replay-admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install render staging dependency
+        run: python -m pip install --disable-pip-version-check numpy
+
+      - name: Build Face Reading
+        run: npm run face:build
+
+      - name: Syntax-check U5B-D surfaces
+        run: |
+          node --check tools/face-geometry/capture/fr104-u5b-provider-validation.mjs
+          node --check scripts/run-fr104-u5b-provider-validation.mjs
+          node --check scripts/build-fr104-u5b-gnm-fixture.mjs
+          node --check scripts/admit-fr104-u5b-provider-result.mjs
+          python -m py_compile             tools/face-reading/ear/stage_fr104_u5b_gnm_render_input.py             tools/face-geometry/gnm/fetch_gnm_head.py
+
+      - name: Materialize exact U5B-B pinned fixture
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/face-geometry/u5b-d
+          python tools/face-geometry/gnm/fetch_gnm_head.py             --output .cache/face-geometry/u5b-d/gnm_head.npz
+          python tools/face-reading/ear/stage_fr104_u5b_gnm_render_input.py             --npz .cache/face-geometry/u5b-d/gnm_head.npz             --vertices-out .cache/face-geometry/u5b-d/vertices.f64le             --triangles-out .cache/face-geometry/u5b-d/triangles.i32le             --metadata-out .cache/face-geometry/u5b-d/staging.json
+          node scripts/build-fr104-u5b-gnm-fixture.mjs             --metadata=.cache/face-geometry/u5b-d/staging.json             --vertices=.cache/face-geometry/u5b-d/vertices.f64le             --triangles=.cache/face-geometry/u5b-d/triangles.i32le             --write-render=.cache/face-geometry/u5b-d/fixture.png             --write-result=.cache/face-geometry/u5b-d/render-result.json             | tee /tmp/fr104-u5b-d-materialize.log
+          grep -F             "FR104_U5B_RENDER_SHA256 1af28c1677375f5551e3613bbc7e0d78bfba83e74df2438c0819a343252cc325"             /tmp/fr104-u5b-d-materialize.log
+
+      - name: Record browser runtime
+        run: |
+          google-chrome --version
+          chromedriver --version
+
+      - name: Replay exact U5B-C provider result
+        env:
+          FR104_U5B_FIXTURE_IN: .cache/face-geometry/u5b-d/fixture.png
+          FR104_U5B_C_RESULT_OUT: .cache/face-geometry/u5b-d/provider-result.json
+          FR104_U5B_C_EXPECTED_RESULT_SHA256: 7c284cad3b467676e20c44ebf63a7aee3dc66c5d22534363286ef532ba3852fe
+        run: |
+          set -euo pipefail
+          node scripts/run-fr104-u5b-provider-validation.mjs             | tee /tmp/fr104-u5b-d-provider.log
+
+      - name: Admit exact U5B-D result
+        env:
+          FR104_U5B_D_RESULT_IN: .cache/face-geometry/u5b-d/provider-result.json
+        run: node scripts/admit-fr104-u5b-provider-result.mjs

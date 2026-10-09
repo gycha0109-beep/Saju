@@ -1,0 +1,71 @@
+{
+  "schemaVersion": "fr300-r1t-zc-uldd-public-metric-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-26",
+  "candidate": "ul_dd_zed2",
+  "sources": [
+    {
+      "source": "https://zenodo.org/records/17978727",
+      "sourceClass": "publisher_dataset_record",
+      "supportedFacts": [
+        "dataset_is_restricted_access",
+        "bona_fide_research_including_commercial_r_and_d_is_permitted",
+        "no_purchase_requirement_is_stated_in_public_record"
+      ]
+    },
+    {
+      "source": "https://www.nature.com/articles/s41597-025-06540-1",
+      "sourceClass": "peer_reviewed_data_descriptor",
+      "supportedFacts": [
+        "capture_device_is_ZED_2",
+        "source_3d_video_is_1344x376_at_60_fps_mp4",
+        "public_release_splits_left_and_right_views",
+        "public_left_and_right_views_are_resized_to_440x370",
+        "participants_were_informed_data_and_video_would_be_released",
+        "only_explicit_post_collection_consented_video_releases_were_published",
+        "study_and_release_approved_under_IRB_22_038_IRI",
+        "published_face_landmarks_are_68x2_xy_from_IR_video_using_Dlib"
+      ]
+    },
+    {
+      "source": "https://www.stereolabs.com/docs/development/zed-sdk/modules/camera/camera-calibration",
+      "sourceClass": "device_vendor_calibration_documentation",
+      "supportedFacts": [
+        "each_ZED_stereo_camera_has_dedicated_factory_calibration",
+        "calibration_contains_per_eye_intrinsics",
+        "calibration_contains_stereo_transform",
+        "baseline_and_translation_are_metric_mm",
+        "raw_and_rectified_calibration_are_distinct"
+      ]
+    }
+  ],
+  "publicAuthorityNotLocated": [
+    "exact_capture_device_serial_number",
+    "exact_capture_device_factory_calibration_file",
+    "exact_left_and_right_intrinsics_for_capture_device",
+    "exact_stereo_extrinsics_and_metric_baseline_for_capture_device",
+    "exact_rectification_state_of_released_mp4_views",
+    "exact_split_resize_crop_transform_from_capture_pixels_to_public_440x370_views"
+  ],
+  "adjudication": {
+    "metricReconstructionFromPublicRelease": "not_source_bound",
+    "disposition": "hold_zero_cost_technical_public_release_not_fr299_metric_authority",
+    "terminalReject": false,
+    "genericZed2CalibrationMaySubstitute": false,
+    "ir2DFacialLandmarksMaySubstitute": false,
+    "restrictedArtifactAccessRequested": false,
+    "subjectArtifactDownloadPerformed": false,
+    "externalContactPerformed": false,
+    "paidSpendAuthorized": false,
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29"
+  },
+  "reopenOnlyIf": [
+    "exact_capture_device_calibration_is_source_bound",
+    "exact_release_resize_crop_rectification_transform_is_source_bound",
+    "same_frame_left_right_correspondence_is_verified",
+    "released_or_authorized_artifact_geometry_is_inspected_without_scale_destroying_processing"
+  ],
+  "nextActionWithoutNewAuthorization": "hold_uldd_and_evaluate_ast_face_public_path_or_existing_hardware_metric_reference"
+}

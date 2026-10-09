@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import type { ReadingIntent } from '../src/contracts/reading.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import {
   READING_PROFILE_SELECTION_AUTHORIZATIONS,
   READING_PROFILE_SELECTION_AUTHORIZATION_POLICY_VERSION,
   buildReadingCompositionEvidence,
-  calculateCanonicalSajuSnapshot,
-  createI7SeasonalSupportRegistry,
-  resolveDomainReadingProfile,
   resolveReadingProfileSelectionAuthorization,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-  type ReadingIntent,
-} from '../src/index.js';
+} from '../src/reading/reading-profile-authorization.js';
+import { resolveDomainReadingProfile } from '../src/reading/reading-intent-composition.js';
+import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-support-pack.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/reading-profile-authorization-test',

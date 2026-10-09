@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
+import type { ChallengeCombinationSupportChannelRelationIdentityPair } from '../src/research/i61-challenge-combination-support-channel-relation-identity-pair-evidence.js';
 import {
   buildI62ChallengeCombinationSupportChannelTouchSpecificSettlementDispatchMethodologyReview,
   routeI62TouchSpecificSettlementPair,
-  type ChallengeCombinationSupportChannelRelationIdentityPair,
-} from '../src/index.js';
+} from '../src/research/i62-challenge-combination-support-channel-touch-specific-settlement-dispatch-methodology-review.js';
 
 function pair(
   relationId: string,

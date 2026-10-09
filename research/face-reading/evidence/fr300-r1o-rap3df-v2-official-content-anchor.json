@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "fr300-r1o-v2-official-archive-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "datasetRef": "doi:10.17632/kpdkpcs8zb.4",
+  "datasetVersion": 4,
+  "workflowRunId": 36196941034,
+  "workflowHeadSha": "53b849c16095837fe52f8c26faf144d02006b71c",
+  "publisherMetadataActuallyFetched": true,
+  "v2RootFolderId": "67f0c597-b978-426e-b3df-8c1a6f2db2ef",
+  "validRootFileCount": 1,
+  "databaseIdentity": {
+    "fileId": "6b7f0bd4-d235-482e-a762-bf2f1f9ca5c6",
+    "filename": "database.json",
+    "sizeBytes": 273343,
+    "sha256": "sha256:1366f0496078a250b43bafffc3483d3f949c33afb32520a041d92d353598e3ea"
+  },
+  "priorConvenienceArchive": {
+    "sizeBytes": 66792678,
+    "sha256": "sha256:92a967bdacba4a7e5d387232f2d3308ad656022953c0139f615def2f607ccc5e",
+    "digestRepresentedInV2RootMetadata": false,
+    "publisherMetadataBound": false
+  },
+  "status": "official_v4_database_identity_bound_archive_container_digest_not_root_metadata_bound",
+  "v4DatasetContentAnchorBound": true,
+  "creatorPipelineMetricConflictResolved": false,
+  "participantCommercialProductUseScopeEstablished": false,
+  "realFR299BundleEligible": false,
+  "fr300R2Eligible": false,
+  "productMaterialization": "18/29"
+}

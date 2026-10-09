@@ -1,7 +1,7 @@
 import type { Server } from 'node:http';
 import { describe, expect, it } from 'vitest';
 import {
-  createMyeonghwaProductionCalculationProcessV1,
+  createMyeonghwaProductionPreviewOnlyCalculationProcessV1,
   PRODUCTION_CALCULATION_PROCESS_ENV_V1,
 } from '../src/production-calculation-process.js';
 import {
@@ -14,6 +14,11 @@ import {
   PREVIEW_E2E_APPROVAL,
   PREVIEW_E2E_AUTHORITY_VERSION,
 } from '../src/preview/preview-authority.js';
+import {
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_PROHIBITED_PHRASES,
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
+} from '../src/research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js';
 
 const ACTIVE_BEARER = 'preview-e2e-test-bearer';
 
@@ -64,7 +69,7 @@ function readingRequest(text: string): string {
 
 describe('provisionally approved preview E2E runtime', () => {
   it('records Preview approval without promoting research evidence to Production authority', () => {
-    expect(PREVIEW_E2E_AUTHORITY_VERSION).toBe('myeonghwa-preview-e2e-authority-v1');
+    expect(PREVIEW_E2E_AUTHORITY_VERSION).toBe('myeonghwa-preview-e2e-authority-v3');
     expect(PREVIEW_E2E_APPROVAL).toMatchObject({
       lifecycle: 'preview',
       approved: true,
@@ -78,7 +83,7 @@ describe('provisionally approved preview E2E runtime', () => {
   });
 
   it('requires the service Bearer before parsing Preview Reading JSON', async () => {
-    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
       const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
@@ -97,7 +102,7 @@ describe('provisionally approved preview E2E runtime', () => {
   });
 
   it('delivers an admitted General Natal Preview and attests the lifecycle', async () => {
-    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
       const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
@@ -129,12 +134,12 @@ describe('provisionally approved preview E2E runtime', () => {
   });
 
   it.each([
-    ['직업운', ['일·성과', '해석 범위']],
+    ['직업운', ['일의 동력', '맞는 역할·조건', '해석 범위']],
     ['재물운', ['가치가 만들어지는 방식', '돈을 쓰는 기준', '관리 방식', '충돌·흔들림', '해석 범위']],
     ['연애운', ['관계', '해석 범위']],
-    ['사업운', ['일·성과', '해석 범위']],
+    ['사업운', ['판단과 실행', '불확실성 다루기', '자원 배분', '책임과 기준', '운영 압박', '해석 범위']],
   ] as const)('delivers supported natal Preview %s', async (text, expectedTitles) => {
-    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
       const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
@@ -156,8 +161,46 @@ describe('provisionally approved preview E2E runtime', () => {
     }
   });
 
+  it('delivers spouse Preview through the bounded Official Reading lane', async () => {
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
+    const origin = await listenEphemeral(runtime.server);
+    try {
+      const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${ACTIVE_BEARER}`,
+          'content-type': 'application/json',
+        },
+        body: readingRequest('배우자운'),
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get(PRODUCT_READING_LIFECYCLE_HEADER)).toBe(
+        PRODUCT_READING_PREVIEW_LIFECYCLE,
+      );
+      const payload = (await response.json()) as { state?: unknown };
+      expect(payload.state).toBe('delivered');
+
+      const serialized = JSON.stringify(payload);
+      expect(serialized).toContain('"readingId":"official_reading_');
+      expect(serialized).toContain(
+        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
+      );
+      expect(serialized).toContain(
+        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
+      );
+      expect(serialized).toContain('"title":"관계"');
+      expect(serialized).toContain('"title":"해석 범위"');
+      for (const prohibited of RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_PROHIBITED_PHRASES) {
+        expect(serialized).not.toContain(prohibited);
+      }
+    } finally {
+      await close(runtime.server);
+    }
+  });
+
   it('does not expose the Production Product Reading route from the Preview-enabled process', async () => {
-    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
       const response = await fetch(`${origin}/api/readings`, {
@@ -179,7 +222,7 @@ describe('provisionally approved preview E2E runtime', () => {
   });
 
   it('keeps unsupported Preview intents fail-closed instead of substituting General Natal', async () => {
-    const runtime = createMyeonghwaProductionCalculationProcessV1(environment());
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
     try {
       const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {

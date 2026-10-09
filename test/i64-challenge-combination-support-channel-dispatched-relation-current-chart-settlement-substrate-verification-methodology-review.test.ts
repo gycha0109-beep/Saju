@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildI59ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationMethodologyReview } from '../src/index.js';
+import { buildI59ChallengeCombinationSupportChannelCurrentChartSettlementSubstrateVerificationMethodologyReview } from '../src/research/i59-challenge-combination-support-channel-current-chart-settlement-substrate-verification-methodology-review.js';
 import { buildI64ChallengeCombinationSupportChannelDispatchedRelationCurrentChartSettlementSubstrateVerificationMethodologyReview } from '../src/research/i64-challenge-combination-support-channel-dispatched-relation-current-chart-settlement-substrate-verification-methodology-review.js';
 
 describe('I64 dispatched relation current-chart settlement substrate verification methodology', () => {

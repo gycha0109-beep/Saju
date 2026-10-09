@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import {
   INTERPRETATION_AUTHORIZATION_POLICY_VERSION,
-  calculateCanonicalSajuSnapshot,
-  createI13StrengthEvidenceRegistry,
   runInterpretation,
-  type CalculationPolicySnapshot,
-} from '../src/index.js';
+} from '../src/interpretation/interpretation-engine.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { createI13StrengthEvidenceRegistry } from '../src/research/i13-strength-evidence-pack.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/derived-fact-version-test',
@@ -34,11 +34,12 @@ describe('derived fact and interpretation authority versioning', () => {
     );
     const result = runInterpretation(snapshot, createI13StrengthEvidenceRegistry());
 
-    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.4');
+    expect(snapshot.schemaVersion).toBe('saju-canonical-v1.7');
     expect(snapshot.derivedFacts.hiddenStems).toBeDefined();
     expect(snapshot.derivedFacts.structuralRelations).toBeDefined();
     expect(snapshot.derivedFacts.branchClashContexts).toBeDefined();
     expect(snapshot.derivedFacts.branchClashQualifierObservations).toBeDefined();
+    expect(snapshot.derivedFacts.stemInteractionSettlements).toBeDefined();
     expect(result.run.derivedFactSetVersion).toBe('myeonghwa-derived-facts-v1.4');
     expect(result.run.interpretationEngineVersion).toBe('0.5.0');
     expect(result.run.authorizationPolicyVersion).toBe(

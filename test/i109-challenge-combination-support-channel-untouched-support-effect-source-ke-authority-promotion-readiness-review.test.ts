@@ -1,10 +1,16 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryReadinessReviewReport,
+} from '../src/research/i106-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-candidate-discovery-readiness-review.js';
 import {
   buildI107ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryEvidence,
+} from '../src/research/i107-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-candidate-discovery-evidence.js';
+import {
   buildI108ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityRequirementCoverageEvaluationEvidence,
+} from '../src/research/i108-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-requirement-coverage-evaluation-evidence.js';
+import {
   buildI109ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityPromotionReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i109-challenge-combination-support-channel-untouched-support-effect-source-ke-authority-promotion-readiness-review.js';
 
 function i106(): ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeAuthorityCandidateDiscoveryReadinessReviewReport {
   const requirements = [

@@ -1,14 +1,14 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI20BClashSeasonalAdvantage,
-  buildResolvedRelativeForceEvidence,
-  reviewResolvedRootRelationEffects,
-  type BranchFact,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
-  type PillarFact,
-} from '../src/index.js';
+import type {
+  BranchFact,
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+} from '../src/contracts/calculation.js';
+import { reviewResolvedRootRelationEffects } from '../src/research/i18d-root-relation-review.js';
+import { buildResolvedRelativeForceEvidence } from '../src/research/i20-relative-force-evidence.js';
+import { buildI20BClashSeasonalAdvantage } from '../src/research/i20b-clash-seasonal-advantage.js';
 
 const STEM_ELEMENT: Readonly<Record<HeavenlyStem, FiveElement>> = {
   갑: '목', 을: '목', 병: '화', 정: '화', 무: '토', 기: '토', 경: '금', 신: '금', 임: '수', 계: '수',

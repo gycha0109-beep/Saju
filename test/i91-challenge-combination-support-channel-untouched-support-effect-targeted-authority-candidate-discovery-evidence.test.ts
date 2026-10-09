@@ -2,10 +2,12 @@ import { describe, expect, test } from 'vitest';
 import {
   buildI91ChallengeCombinationSupportChannelUntouchedSupportEffectTargetedAuthorityCandidateDiscoveryEvidence,
   i91VerifiedSanmingTonghuiYinshouCandidate,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectMissingRequirementTargetedAuthorityDiscoveryReadinessReviewReport,
-  type I84UntouchedSupportAuthorityRequirementId,
-  type I90TargetedDiscoveryLane,
-} from '../src/index.js';
+} from '../src/research/i91-challenge-combination-support-channel-untouched-support-effect-targeted-authority-candidate-discovery-evidence.js';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectMissingRequirementTargetedAuthorityDiscoveryReadinessReviewReport,
+  I90TargetedDiscoveryLane,
+} from '../src/research/i90-challenge-combination-support-channel-untouched-support-effect-missing-requirement-targeted-authority-discovery-readiness-review.js';
+import type { I84UntouchedSupportAuthorityRequirementId } from '../src/research/i84-challenge-combination-support-channel-untouched-support-effect-additional-authority-requirements-review.js';
 
 const IDS = [
   'EXPLICIT_POST_INTERACTION_UNTOUCHED_SOURCE_RULE',

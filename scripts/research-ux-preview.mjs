@@ -1,11 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import process from 'node:process';
 import { createMyeonghwaProductHostServer } from '../dist/product-host.js';
-import {
-  SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  calculateCanonicalSajuSnapshot,
-  runInterpretation,
-} from '../dist/index.js';
+import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../dist/llm/prompt-compiler.js';
+import { calculateCanonicalSajuSnapshot } from '../dist/calculation/calculation-engine.js';
+import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
 import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
 import { CAREER_NATAL_CLAIM_NARRATIVE_PROFILES } from '../dist/research/career-natal-narrative-profiles.js';
@@ -642,6 +640,14 @@ function assertNoInternalLeak(serialized) {
   }
 }
 
+function assertAnySection(serialized, label, titles) {
+  if (!titles.some((title) => serialized.includes(title))) {
+    throw new Error(
+      `${label} Official Reading is missing every governed domain-kind section: ${titles.join(', ')}`,
+    );
+  }
+}
+
 async function runSmoke(baseUrl) {
   const health = await fetchRequest(`${baseUrl}/health`);
   if (!health.ok) throw new Error(`Preview health check failed: ${health.status}`);
@@ -657,11 +663,15 @@ async function runSmoke(baseUrl) {
 
   const careerPayload = await requestReading(baseUrl, '직업운');
   const careerSerialized = JSON.stringify(careerPayload);
-  for (const required of ['일·성과', '해석 범위']) {
-    if (!careerSerialized.includes(required)) {
-      throw new Error(`Career Official Reading is missing required section: ${required}`);
-    }
+  if (!careerSerialized.includes('해석 범위')) {
+    throw new Error('Career Official Reading is missing required section: 해석 범위');
   }
+  assertAnySection(careerSerialized, 'Career', [
+    '일의 동력',
+    '맞는 역할·조건',
+    '업무 환경',
+    '일의 마찰',
+  ]);
   for (const forbiddenPromise of ['취업하게 됩니다', '승진하게 됩니다', '연봉이', '성공합니다', '정답 직업']) {
     if (careerSerialized.includes(forbiddenPromise)) {
       throw new Error(`Career preview contains deterministic career promise: ${forbiddenPromise}`);
@@ -685,11 +695,16 @@ async function runSmoke(baseUrl) {
 
   const relationshipPayload = await requestReading(baseUrl, '연애운');
   const relationshipSerialized = JSON.stringify(relationshipPayload);
-  for (const required of ['관계', '해석 범위']) {
-    if (!relationshipSerialized.includes(required)) {
-      throw new Error(`Relationship Official Reading is missing required section: ${required}`);
-    }
+  if (!relationshipSerialized.includes('해석 범위')) {
+    throw new Error('Relationship Official Reading is missing required section: 해석 범위');
   }
+  assertAnySection(relationshipSerialized, 'Relationship', [
+    '가까워지는 방식',
+    '표현과 소통',
+    '관계에서 중요하게 보는 기준',
+    '경계와 책임',
+    '관계의 마찰',
+  ]);
   for (const forbiddenPromise of ['결혼하게 됩니다', '이별하게 됩니다', '바람을 피웁니다', '배우자는 ', '만나게 됩니다']) {
     if (relationshipSerialized.includes(forbiddenPromise)) {
       throw new Error(`Relationship preview contains deterministic relationship promise: ${forbiddenPromise}`);
@@ -699,11 +714,18 @@ async function runSmoke(baseUrl) {
 
   const businessPayload = await requestReading(baseUrl, '사업운');
   const businessSerialized = JSON.stringify(businessPayload);
-  for (const required of ['일·성과', '해석 범위']) {
-    if (!businessSerialized.includes(required)) {
-      throw new Error(`Business Official Reading is missing required section: ${required}`);
-    }
+  if (!businessSerialized.includes('해석 범위')) {
+    throw new Error('Business Official Reading is missing required section: 해석 범위');
   }
+  assertAnySection(businessSerialized, 'Business', [
+    '판단과 실행',
+    '불확실성 다루기',
+    '자원 배분',
+    '책임과 기준',
+    '파트너십',
+    '운영 압박',
+    '사업상의 마찰',
+  ]);
   for (const forbiddenPromise of ['사업하면 성공', '창업하면 성공', '매출이 오릅니다', '투자를 받습니다', '폐업하게 됩니다', '사업가 체질입니다']) {
     if (businessSerialized.includes(forbiddenPromise)) {
       throw new Error(`Business preview contains deterministic business promise: ${forbiddenPromise}`);

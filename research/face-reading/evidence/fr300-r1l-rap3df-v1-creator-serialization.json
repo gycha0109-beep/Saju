@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "fr300-r1l-v1-creator-serialization-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "datasetRef": "doi:10.17632/kpdkpcs8zb.3",
+  "creatorRepository": "Piemontez/rap3df-database",
+  "preCollectionCommit": "8049e3f576003ae7b190f99f2b855f0f70beb22e",
+  "preCollectionCommitDate": "2017-10-09T23:32:49Z",
+  "articleReportedCollectionWindow": {
+    "start": "2017-10-10",
+    "end": "2017-10-27"
+  },
+  "postCollectionCommit": "2331937776e532ac67d049415b852498aa2a9cc8",
+  "postCollectionCommitDate": "2017-11-16T23:11:35Z",
+  "stableBlobs": {
+    "writerUtilsCpp": "e9676d1999e588026be7571a1307771f125ae0f2",
+    "filenameContractUtilsH": "dbbdc2243ff82be71f449e175149dc28998b8124"
+  },
+  "creatorContract": {
+    "directory": "rap3df_data",
+    "exactDepthFilename": "k1_box_xyz_depth.data",
+    "savedVector": "context->depthInBoxXYZ",
+    "savedVectorType": "std::vector<uint16_t>",
+    "writer": "fwrite(&dataVec[i], 1, sizeof(uint16_t), filePtr)",
+    "reader": "fread(&info, 1, sizeof(uint16_t), dataFile)",
+    "scalarContainerType": "uint16_t",
+    "scalarWidthBytes": 2,
+    "byteOrder": "host_native_unspecified",
+    "sourceExtractionExpression": "context->depth2->data[i+2]"
+  },
+  "postCollectionTree": {
+    "exactDepthArtifactCount": 267,
+    "exactDepthArtifactByteLength": 35462,
+    "allExactDepthArtifactsSameByteLength": true
+  },
+  "publisherCorroboration": {
+    "sampleCount": 12,
+    "exactByteLength": 35462,
+    "allDigestAndSizeBindingsValid": true,
+    "allTwoBytesPerArticlePixel": true
+  },
+  "adjudication": {
+    "serializationContainerStatus": "source_bound_uint16",
+    "endiannessStatus": "blocked",
+    "physicalUnitStatus": "blocked",
+    "nativeKinectMetricEquivalence": false,
+    "articleEightByteFloatProseConflictsWithCreatorAndPublisherBytes": true,
+    "realFR299BundleEligible": false,
+    "fr300R2Eligible": false,
+    "productMaterialization": "18/29"
+  },
+  "note": "The creator writer and filename contract is byte-identical immediately before and after the reported V1 collection window. The post-collection creator tree contains exactly 267 exact V1 frontal depth artifacts and all are 35,462 bytes. This resolves the released scalar container to uint16_t but does not resolve host-native byte order or physical metric semantics."
+}

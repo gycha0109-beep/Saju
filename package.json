@@ -71,9 +71,22 @@
     "face:verify:fr159-eye-pair-prospective-repeatability-protocol": "node scripts/verify-fr159-eye-pair-prospective-repeatability-protocol.mjs",
     "face:verify:fr160-eye-pair-prospective-acquisition-runtime": "node scripts/verify-fr160-eye-pair-prospective-acquisition-runtime.mjs",
     "face:verify:fr178-eye-pair-geometric-y-span": "node scripts/verify-fr178-eye-pair-geometric-y-span.mjs",
-    "check:face-reading": "npm run face:verify:manifest && npm run face:typecheck && npm run face:build && npm run face:verify:fr158-role-invariant-eye-pair-neutral-shape && npm run face:verify:fr159-eye-pair-prospective-repeatability-protocol && npm run face:verify:fr160-eye-pair-prospective-acquisition-runtime && npm run face:verify:fr178-eye-pair-geometric-y-span",
+    "check:face-reading": "npm run face:verify:manifest && npm run face:typecheck && npm run face:build && npm run face:verify:fr158-role-invariant-eye-pair-neutral-shape && npm run face:verify:fr159-eye-pair-prospective-repeatability-protocol && npm run face:verify:fr160-eye-pair-prospective-acquisition-runtime && npm run face:verify:fr178-eye-pair-geometric-y-span && npm run face:verify:fr318-fr319-local-executor && npm run face:verify:fr313-fr319-local-executor && npm run face:verify:fr308-fr312-local-executor && npm run face:verify:fr307-review-packet && npm run face:verify:hairline-multisignal-candidate && npm run face:verify:hairline-multisignal-review-packet",
     "face:dry-run:operator": "npm run face:build && node scripts/mesh6j-manual-browser-capture-preview.mjs",
-    "face:dry-run:phone": "npm run face:build && node -e \"process.env.MESH6J_LAN='1'; import('./scripts/mesh6j-manual-browser-capture-preview.mjs')\""
+    "face:dry-run:phone": "npm run face:build && node -e \"process.env.MESH6J_LAN='1'; import('./scripts/mesh6j-manual-browser-capture-preview.mjs')\"",
+    "face:run:fr318-fr319-local": "npm run face:build && node scripts/run-fr318-fr319-local-evidence.mjs",
+    "face:verify:fr318-fr319-local-executor": "node scripts/run-fr318-fr319-local-evidence.mjs --self-check",
+    "face:run:fr313-fr319-local": "npm run face:build && node scripts/run-fr313-fr319-local-evidence.mjs",
+    "face:verify:fr313-fr319-local-executor": "node scripts/run-fr313-fr319-local-evidence.mjs --self-check",
+    "face:run:fr308-fr312-local": "npm run face:build && node scripts/run-fr308-fr312-local-validation.mjs",
+    "face:verify:fr308-fr312-local-executor": "node scripts/run-fr308-fr312-local-validation.mjs --self-check",
+    "face:review:fr307": "node scripts/run-fr307-hairline-review-packet.mjs",
+    "face:verify:fr307-review-packet": "node scripts/run-fr307-hairline-review-packet.mjs --self-check",
+    "face:run:hairline-multisignal-candidate": "python3 tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py",
+    "face:run:hairline-fresh-validation": "npm run face:build && node scripts/run-fresh-hairline-validation.mjs",
+    "face:verify:hairline-multisignal-candidate": "python3 tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py --self-check",
+    "face:review:hairline-multisignal": "npm run face:build && node scripts/run-multisignal-hairline-review-packet.mjs",
+    "face:verify:hairline-multisignal-review-packet": "npm run face:build && node scripts/run-multisignal-hairline-review-packet.mjs --self-check"
   },
   "dependencies": {
     "manseryeok": "2.0.0"

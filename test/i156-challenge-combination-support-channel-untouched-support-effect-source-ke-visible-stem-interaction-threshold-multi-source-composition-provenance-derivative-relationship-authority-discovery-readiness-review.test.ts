@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import {
   I155_PROVENANCE_ADJUDICATION_REQUIREMENT_IDS,
+  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceAdjudicationReadinessReviewReport,
+} from '../src/research/i155-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-adjudication-readiness-review.js';
+import {
   I156_DISCOVERY_REQUIREMENT_IDS,
   buildI156ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceDerivativeRelationshipAuthorityDiscoveryReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceAdjudicationReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i156-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-derivative-relationship-authority-discovery-readiness-review.js';
 
 const evidenceIds = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'] as const;
 

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildI53ChallengeCombinationSupportChannelActivationPersistenceMethodologyReview } from '../src/index.js';
+import { buildI53ChallengeCombinationSupportChannelActivationPersistenceMethodologyReview } from '../src/research/i53-challenge-combination-support-channel-activation-persistence-methodology-review.js';
 
 describe('I53 challenge combination support-channel activation/persistence methodology review', () => {
   test('authorizes only direct contest topology routing', () => {

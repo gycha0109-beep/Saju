@@ -1,29 +1,29 @@
 import type { ReadingIntent } from '../contracts/reading.js';
 import {
+  readingSectionForIntentV1,
+  type ConsumerReadingAuthorityResolutionV1,
+  type ConsumerReadingAuthorityV1,
+} from '../reading/consumer-reading-authority.js';
+import {
   PREVIEW_E2E_APPROVAL,
-  isPreviewE2eSupportedReadingSection,
-  type PreviewE2eSupportedReadingSection,
+  isPreviewOfficialReadingSection,
+  type PreviewOfficialReadingSection,
 } from './preview-authority.js';
 
 export const PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION =
-  'myeonghwa-preview-official-reading-consumer-authority-v1' as const;
+  'myeonghwa-preview-official-reading-consumer-authority-v3' as const;
 
 export type PreviewConsumerReadingAuthorityV1 =
-  | 'official_reading'
-  | 'legacy_narrative';
+  ConsumerReadingAuthorityV1;
 
-export interface PreviewConsumerReadingAuthorityResolutionV1 {
-  authorityVersion: typeof PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION;
-  readingSection: string;
-  authority: PreviewConsumerReadingAuthorityV1;
-  supportedOfficialReadingSection?: PreviewE2eSupportedReadingSection;
-  constraints: {
-    mayPromoteProductionInterpretationAuthority: false;
-    mayGrantPersistenceAuthority: false;
-    mayGrantPublicGeneralAvailabilityAuthority: false;
-    mayTreatUnsupportedSectionAsOfficialReading: false;
-  };
+export interface PreviewConsumerReadingAuthorityResolutionV1
+  extends ConsumerReadingAuthorityResolutionV1 {
+  authorityVersion:
+    typeof PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION;
+  supportedOfficialReadingSection?: PreviewOfficialReadingSection;
 }
+
+export { readingSectionForIntentV1 };
 
 const CONSTRAINTS = Object.freeze({
   mayPromoteProductionInterpretationAuthority: false as const,
@@ -32,17 +32,11 @@ const CONSTRAINTS = Object.freeze({
   mayTreatUnsupportedSectionAsOfficialReading: false as const,
 });
 
-export function readingSectionForIntentV1(intent: ReadingIntent): string {
-  return intent.relationshipScope === undefined
-    ? `${intent.domain}:${intent.temporalScope}`
-    : `${intent.domain}:${intent.temporalScope}:${intent.relationshipScope}`;
-}
-
 export function resolvePreviewConsumerReadingAuthorityV1(
   intent: ReadingIntent,
 ): PreviewConsumerReadingAuthorityResolutionV1 {
   const readingSection = readingSectionForIntentV1(intent);
-  const official = isPreviewE2eSupportedReadingSection(readingSection);
+  const official = isPreviewOfficialReadingSection(readingSection);
 
   if (
     official &&
@@ -60,7 +54,8 @@ export function resolvePreviewConsumerReadingAuthorityV1(
   }
 
   return {
-    authorityVersion: PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION,
+    authorityVersion:
+      PREVIEW_OFFICIAL_READING_CONSUMER_AUTHORITY_VERSION,
     readingSection,
     authority: official ? 'official_reading' : 'legacy_narrative',
     ...(official ? { supportedOfficialReadingSection: readingSection } : {}),

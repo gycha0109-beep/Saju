@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import type { StructuralPillarInput } from '../src/calculation/structural-relations.js';
+import type { ClashSupportContextReport } from '../src/research/i20c-clash-support-context.js';
+import type {
+  ChallengeCombinationSupportChannelPairLocalClashRelativeForceComparativeEvidenceReport,
+} from '../src/research/i68-challenge-combination-support-channel-pair-local-clash-relative-force-comparative-evidence.js';
 import {
   buildI71ChallengeCombinationSupportChannelPairLocalClashParticipantSupportSourceContestTopologyMethodologyReview,
-  type ChallengeCombinationSupportChannelPairLocalClashRelativeForceComparativeEvidenceReport,
-  type ClashSupportContextReport,
-} from '../src/index.js';
+} from '../src/research/i71-challenge-combination-support-channel-pair-local-clash-participant-support-source-contest-topology-methodology-review.js';
 import { buildI72ChallengeCombinationSupportChannelPairLocalClashParticipantSupportSourceContestTopologyEvidence } from '../src/research/i72-challenge-combination-support-channel-pair-local-clash-participant-support-source-contest-topology-evidence.js';
 
 const EVALUATED_CLASH_ID = 'branch_clash:day:branch:인|hour:branch:신';

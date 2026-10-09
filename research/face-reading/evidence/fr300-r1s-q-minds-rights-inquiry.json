@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "fr300-r1s-q-minds-rights-inquiry-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-26",
+  "publicSearch": {
+    "state": "public_source_search_exhausted_for_current_surface",
+    "surfaces": [
+      "UFMG repository and thesis",
+      "MINDS project site",
+      "IFMG MINDS-Libras expansion project page",
+      "IFMG institutional pages",
+      "UFMG institutional pages",
+      "related MINDS-Libras publications",
+      "Zenodo-derived public dataset metadata"
+    ],
+    "terms": [
+      "consent",
+      "consentimento",
+      "informed consent",
+      "ethical approval",
+      "CAAE",
+      "CEP",
+      "TCLE",
+      "uso de imagem",
+      "direito de imagem",
+      "commercial use",
+      "commercial product development"
+    ],
+    "result": "no_public_source_authority_located_for_participant_commercial_product_development_scope",
+    "semantics": "not_proof_that_consent_never_existed"
+  },
+  "additionalSourceReceipts": [
+    {
+      "source": "https://minds.eng.ufmg.br/projects.php",
+      "sourceClass": "official_minds_project_page",
+      "supportedFacts": [
+        "MINDS-Libras_RGB-D_Zenodo_DOI_is_project-listed"
+      ],
+      "participantCommercialProductDevelopmentConsentStatementLocated": false
+    },
+    {
+      "source": "https://ouropreto.ifmg.edu.br/ouropreto/sobre-o-campus/area-de-imprensa/conhecimento-em-um-minuto-1/ampliacao-da-base-minds-libras-a-partir-da-disponibilizacao-em-massa-de-videos-como-consequencia-das-atividades-remotas-devido-a-pandemia-da-covid-19",
+      "sourceClass": "official_ifmg_project_page",
+      "supportedFacts": [
+        "MINDS-Libras_expansion_research_context",
+        "Silvia_Almeida_official_project_contact"
+      ],
+      "participantCommercialProductDevelopmentConsentStatementLocated": false
+    },
+    {
+      "source": "https://dcc.ufmg.br/professor/frederico-gadelha-guimaraes/",
+      "sourceClass": "official_ufmg_faculty_page",
+      "supportedFacts": [
+        "Frederico_Guimaraes_official_UFMG_contact"
+      ],
+      "participantCommercialProductDevelopmentConsentStatementLocated": false
+    },
+    {
+      "source": "https://live.european-language-grid.eu/catalogue/lcr/21907",
+      "sourceClass": "zenodo_derived_public_catalog_metadata",
+      "supportedFacts": [
+        "CC_BY_4_0",
+        "open_access",
+        "RGB-D_distribution_DOI_10_5281_zenodo_4322984"
+      ],
+      "participantCommercialProductDevelopmentConsentStatementLocated": false
+    }
+  ],
+  "officialContactRoutes": [
+    {
+      "contactId": "silvia_almeida_ifmg",
+      "name": "Silvia Grasiella Moreira Almeida",
+      "email": "silvia.almeida@ifmg.edu.br",
+      "authoritySource": "official_ifmg_project_page"
+    },
+    {
+      "contactId": "frederico_guimaraes_ufmg",
+      "name": "Frederico Gadelha Guimaraes",
+      "email": "fredericoguimaraes@ufmg.br",
+      "authoritySource": "official_ufmg_faculty_page"
+    }
+  ],
+  "inquiry": {
+    "prepared": true,
+    "sendAuthorized": false,
+    "sendPerformed": false,
+    "questionIds": [
+      "Q1",
+      "Q2",
+      "Q3",
+      "Q4",
+      "Q5"
+    ]
+  },
+  "gate": {
+    "participantCommercialProductDevelopmentScope": "unresolved_after_additional_public_search",
+    "paidSpendAuthorized": false,
+    "subjectArtifactInspectionAuthorized": false,
+    "subjectArtifactDownloadPerformed": false,
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29"
+  },
+  "nextActionWithoutNewAuthorization": "hold_minds_and_evaluate_next_zero_cost_candidate_or_existing_hardware_path"
+}

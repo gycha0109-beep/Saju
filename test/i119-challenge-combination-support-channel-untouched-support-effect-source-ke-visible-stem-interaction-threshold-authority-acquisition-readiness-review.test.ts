@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdAuthorityGapRequirementsReviewReport,
+} from '../src/research/i118-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-authority-gap-requirements-review.js';
 import {
   buildI119ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdAuthorityAcquisitionReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdAuthorityGapRequirementsReviewReport,
-} from '../src/index.js';
+} from '../src/research/i119-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-authority-acquisition-readiness-review.js';
 
 const SOURCE_ID = 'source_chenyuan_sizhu_yuce_rumen_1995_isbn9787805922515';
 const REQUIREMENT_IDS = [

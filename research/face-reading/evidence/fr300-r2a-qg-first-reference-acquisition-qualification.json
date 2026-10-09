@@ -1,0 +1,137 @@
+{
+  "schemaVersion": "fr300-r2a-qg-first-reference-acquisition-qualification-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-27",
+  "contractVersion": "FR300-R2A-QG-FIRST-REFERENCE-ACQUISITION-QUALIFICATION-v1",
+  "targetFeatureKey": "nose.tip_bridge_relative_projection",
+  "criticalGates": [
+    "Q1_rights",
+    "Q2_rgb_availability",
+    "Q3_independent_3d",
+    "Q4_metric_scale_authority",
+    "Q5_rgb_3d_correspondence",
+    "Q8_acquisition_authority"
+  ],
+  "candidates": [
+    {
+      "candidateKey": "ast_face_controlled",
+      "officialRefs": [
+        "https://doi.org/10.1038/s41597-026-07098-2",
+        "https://doi.org/10.17605/OSF.IO/XK4F6",
+        "https://github.com/zhaopu99/AST-face"
+      ],
+      "gates": {
+        "Q0_source_identity": "pass",
+        "Q1_rights": "promising_unverified",
+        "Q2_rgb_availability": "pass",
+        "Q3_independent_3d": "pass",
+        "Q4_metric_scale_authority": "blocked",
+        "Q5_rgb_3d_correspondence": "promising_unverified",
+        "Q6_canonical_registration_feasibility": "feasible_not_executed",
+        "Q7_provider_blind_annotation_feasibility": "feasible_not_executed",
+        "Q8_acquisition_authority": "blocked"
+      },
+      "sourceBoundFacts": {
+        "rawControlledScansExist": true,
+        "structuredLightCaptureDocumented": true,
+        "neutral3DAndSynchronizedRgbDocumented": true,
+        "synchronizedRgbConsentingParticipantCount": 52,
+        "rawObjPhysicalUnitPubliclySourceBound": false,
+        "rawObjExportScalePubliclySourceBound": false,
+        "exactControlledArtifactPairingPubliclyVerified": false,
+        "osfDuaDeclaredAuthoritative": true,
+        "osfDuaByteVerifiedAgainstInspectedGithubMirror": false
+      },
+      "disposition": "hold_public_authority_gap",
+      "acquisitionReady": false
+    },
+    {
+      "candidateKey": "ul_dd_restricted_stereo",
+      "officialRefs": [
+        "https://doi.org/10.1038/s41597-025-06540-1",
+        "https://doi.org/10.5281/zenodo.17978727",
+        "https://docs.stereolabs.com/docs/development/zed-sdk/modules/camera/camera-calibration"
+      ],
+      "gates": {
+        "Q0_source_identity": "pass",
+        "Q1_rights": "pass",
+        "Q2_rgb_availability": "pass",
+        "Q3_independent_3d": "promising_unverified",
+        "Q4_metric_scale_authority": "blocked",
+        "Q5_rgb_3d_correspondence": "promising_unverified",
+        "Q6_canonical_registration_feasibility": "blocked",
+        "Q7_provider_blind_annotation_feasibility": "feasible_not_executed",
+        "Q8_acquisition_authority": "blocked"
+      },
+      "sourceBoundFacts": {
+        "commercialResearchAndDevelopmentPermitted": true,
+        "captureDevice": "ZED_2",
+        "captureCombinedResolution": "1344x376",
+        "captureFps": 60,
+        "releasedStereoRepresentation": "split_left_right_mp4",
+        "releasedEyeResolution": "440x370",
+        "exactCaptureCalibrationPubliclySourceBound": false,
+        "exactReleasePixelTransformPubliclySourceBound": false,
+        "genericZedCalibrationMaySubstitute": false
+      },
+      "disposition": "hold_exact_calibration_authority",
+      "acquisitionReady": false
+    },
+    {
+      "candidateKey": "minds_libras_public_rgbd",
+      "officialRefs": [
+        "https://hdl.handle.net/1843/39785",
+        "https://doi.org/10.5281/zenodo.4322984"
+      ],
+      "gates": {
+        "Q0_source_identity": "pass",
+        "Q1_rights": "blocked",
+        "Q2_rgb_availability": "pass",
+        "Q3_independent_3d": "promising_unverified",
+        "Q4_metric_scale_authority": "promising_unverified",
+        "Q5_rgb_3d_correspondence": "promising_unverified",
+        "Q6_canonical_registration_feasibility": "feasible_not_executed",
+        "Q7_provider_blind_annotation_feasibility": "feasible_not_executed",
+        "Q8_acquisition_authority": "blocked"
+      },
+      "sourceBoundFacts": {
+        "rgbDocumented": true,
+        "depthDocumented": true,
+        "faceModelPointCount": 1347,
+        "colorFaceModelMappingDocumented": true,
+        "depthFaceModelMappingDocumented": true,
+        "creatorMeterSpaceSemanticsDocumented": true,
+        "releasedByteMeterSurvivabilityVerified": false,
+        "participantCommercialProductDevelopmentScopeResolved": false,
+        "ccByMaySubstituteParticipantConsent": false
+      },
+      "disposition": "hold_external_rights_authority",
+      "acquisitionReady": false
+    }
+  ],
+  "publicOnlyResult": {
+    "candidateCount": 3,
+    "acquisitionReadyCandidateCount": 0,
+    "disposition": "all_candidates_hold_before_acquisition_authorization",
+    "preferredPublicAuthorityFrontier": "ast_face_controlled_metric_scale_and_exact_pairing_authority"
+  },
+  "stageActions": {
+    "controlledAccessRequested": false,
+    "restrictedAccessRequested": false,
+    "duaSigned": false,
+    "duaSubmitted": false,
+    "externalContactAuthorized": false,
+    "externalContactPerformed": false,
+    "participantArtifactDownloaded": false,
+    "participantArtifactInspected": false,
+    "paidSpendAuthorized": false
+  },
+  "authorityBoundary": {
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29",
+    "productionActivated": false,
+    "commerceActivated": false
+  },
+  "nextActionWithoutNewExternalAuthorization": "resolve_candidate_specific_public_or_external_authority_gaps_before_any_subject_artifact_acquisition"
+}

@@ -1,0 +1,172 @@
+import { describe, expect, it } from 'vitest';
+import {
+  SAJU_ENGINE_CAPABILITY_FRONTIER_VERSION,
+  buildCurrentSajuEngineCapabilityFrontier,
+} from '../src/interpretation/saju-engine-capability-frontier.js';
+
+describe('Saju Engine capability frontier G2B', () => {
+  it('materializes exactly the 21 G1 capability rows', () => {
+    const frontier = buildCurrentSajuEngineCapabilityFrontier();
+
+    expect(frontier.entries).toHaveLength(21);
+    expect(new Set(frontier.entries.map((entry) => entry.capabilityKey)).size).toBe(21);
+    expect(frontier.counts.total).toBe(21);
+    expect(SAJU_ENGINE_CAPABILITY_FRONTIER_VERSION).toBe(
+      'myeonghwa-saju-engine-capability-frontier-v2',
+    );
+  });
+
+  it('reflects the hardened Spouse T8 Engine capability as READY with an empty Engine work queue', () => {
+    const frontier = buildCurrentSajuEngineCapabilityFrontier();
+
+    expect(frontier.counts).toEqual({
+      total: 21,
+      boundedPreviewReady: 5,
+      holdAuthority: 9,
+      holdResearch: 6,
+      p0Runtime: 0,
+      p1Composition: 0,
+      p2Hardening: 0,
+      readyFromAdmittedIntake: 1,
+      invalidEvidence: 0,
+    });
+    expect(frontier.engineWorkQueue).toEqual([]);
+  });
+
+  it('does not treat the remaining temporal Research runtimes as semantic admission', () => {
+    const frontier = buildCurrentSajuEngineCapabilityFrontier();
+    const authorityHeld = frontier.entries.filter(
+      (entry) => entry.currentRouting === 'HOLD_AUTHORITY',
+    );
+
+    expect(authorityHeld).toHaveLength(9);
+    expect(authorityHeld.every((entry) => entry.producerRuntimeExists)).toBe(true);
+    expect(authorityHeld.every((entry) => entry.implementationMayProceed === false)).toBe(true);
+    expect(authorityHeld.map((entry) => entry.capabilityKey)).not.toContain(
+      'relationship:natal:spouse',
+    );
+  });
+
+  it('routes the admitted Spouse T8 producer, composition, guards and E2E proof to READY only', () => {
+    const frontier = buildCurrentSajuEngineCapabilityFrontier();
+    const spouse = frontier.entries.find(
+      (entry) => entry.capabilityKey === 'relationship:natal:spouse',
+    );
+
+    expect(spouse).toEqual(
+      expect.objectContaining({
+        capabilityKey: 'relationship:natal:spouse',
+        currentRouting: 'READY',
+        producerRuntimeExists: true,
+        currentBoundary: 'UPSTREAM_INTAKE',
+        implementationMayProceed: false,
+      }),
+    );
+    expect(spouse?.intakeEvaluationHash).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('keeps the five current Canary capabilities bounded to Preview readiness', () => {
+    const frontier = buildCurrentSajuEngineCapabilityFrontier();
+    const previewReady = frontier.entries
+      .filter((entry) => entry.currentRouting === 'BOUNDED_PREVIEW_READY')
+      .map((entry) => entry.capabilityKey);
+
+    expect(previewReady).toEqual([
+      'general:natal',
+      'career:natal',
+      'wealth:natal',
+      'business:natal',
+      'relationship:natal:general',
+    ]);
+
+    for (const entry of frontier.entries.filter(
+      (candidate) => candidate.currentRouting === 'BOUNDED_PREVIEW_READY',
+    )) {
+      expect(entry.intakeEvaluationHash).toBeNull();
+      expect(entry.implementationMayProceed).toBe(false);
+      expect(entry.constraints.boundedPreviewReadinessIsNewEngineAdmission).toBe(false);
+      expect(entry.constraints.mayPromoteProductionAuthority).toBe(false);
+    }
+  });
+
+  it('pins the terminal Relationship Natal semantic-authority boundary without changing Preview routing', () => {
+    const frontier = buildCurrentSajuEngineCapabilityFrontier();
+    const relationshipGeneral = frontier.entries.find(
+      (entry) => entry.capabilityKey === 'relationship:natal:general',
+    );
+
+    expect(relationshipGeneral).toEqual(
+      expect.objectContaining({
+        currentRouting: 'BOUNDED_PREVIEW_READY',
+        currentBoundary: 'BOUNDED_PREVIEW',
+        producerRuntimeExists: true,
+        implementationMayProceed: false,
+      }),
+    );
+    expect(relationshipGeneral?.terminalAuthorityBoundary).toEqual(
+      expect.objectContaining({
+        disposition: 'UNADMITTED_NO_CURRENT_SEMANTIC_CANDIDATE',
+        bridgeDecision: 'CLOSED_NO_SEMANTIC_CANDIDATE',
+        currentSurfaceMayEnterEngineIntake: false,
+        futureNewCandidateRequiresNewBridgeReview: true,
+      }),
+    );
+    expect(
+      relationshipGeneral?.terminalAuthorityBoundary?.bridgeClosureId,
+    ).toMatch(
+      /^relationship_natal_general_terminal_bridge_closure_[a-f0-9]{24}$/,
+    );
+
+    expect(
+      frontier.entries
+        .filter(
+          (entry) =>
+            entry.currentRouting === 'BOUNDED_PREVIEW_READY' &&
+            entry.capabilityKey !== 'relationship:natal:general',
+        )
+        .every((entry) => entry.terminalAuthorityBoundary === null),
+    ).toBe(true);
+    expect(frontier.engineWorkQueue).toEqual([]);
+  });
+
+  it('honors the merged General Annual Bridge return-to-research disposition', () => {
+    const frontier = buildCurrentSajuEngineCapabilityFrontier();
+    const generalAnnual = frontier.entries.find(
+      (entry) => entry.capabilityKey === 'general:annual',
+    );
+
+    expect(generalAnnual?.currentRouting).toBe('HOLD_RESEARCH');
+    expect(generalAnnual?.producerRuntimeExists).toBe(true);
+    expect(generalAnnual?.implementationMayProceed).toBe(false);
+  });
+
+  it('keeps current Research-return and Research-gap capabilities upstream of Engine', () => {
+    const frontier = buildCurrentSajuEngineCapabilityFrontier();
+    const researchHeld = frontier.entries
+      .filter((entry) => entry.currentRouting === 'HOLD_RESEARCH')
+      .map((entry) => entry.capabilityKey);
+
+    expect(researchHeld).toEqual([
+      'general:annual',
+      'family:natal:parents',
+      'family:natal:children',
+      'compatibility:natal',
+      'life_stage:life_stage',
+      'question_specific:natal',
+    ]);
+  });
+
+  it('is deterministic and cannot itself promote authority', () => {
+    const left = buildCurrentSajuEngineCapabilityFrontier();
+    const right = buildCurrentSajuEngineCapabilityFrontier();
+
+    expect(left.frontierHash).toBe(right.frontierHash);
+    expect(left.frontierHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(left.constraints).toEqual({
+      snapshotIsAuthoritySource: false,
+      mayPromoteResearchAuthority: false,
+      mayTreatPreviewAsProductionAuthority: false,
+      mayCreateSemanticsFromInventory: false,
+    });
+  });
+});

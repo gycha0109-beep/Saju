@@ -5,7 +5,7 @@ import { resolved } from '../src/contracts/common.js';
 import type { ReadingIntent } from '../src/contracts/reading.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import type { ResolvedRuleRegistrySnapshot } from '../src/interpretation/rule-registry.js';
-import { PREVIEW_E2E_APPROVAL, type PreviewE2eSupportedReadingSection } from '../src/preview/preview-authority.js';
+import { PREVIEW_E2E_APPROVAL, type PreviewOfficialReadingSection } from '../src/preview/preview-authority.js';
 import {
   createPreviewSemanticAdmissionRegistryV1,
   requirePreviewSemanticAdmissionV1,
@@ -58,7 +58,7 @@ type TextAuthority = 'claim_owned' | 'explicit_projection' | 'general_structural
 
 interface DomainContractCase {
   label: string;
-  targetSection: PreviewE2eSupportedReadingSection;
+  targetSection: PreviewOfficialReadingSection;
   researchId: string;
   researchVersion: string;
   authorityState: string;
@@ -68,6 +68,7 @@ interface DomainContractCase {
   semanticUnitPredicate: (unit: CanonicalReadingSemanticUnitV1) => boolean;
   textAuthority: TextAuthority;
   expectedSemanticGroups: readonly string[];
+  expectedLanePrefix?: 'career.' | 'relationship.' | 'business.';
   expectedAxes: readonly string[];
   exactAxes: boolean;
   prohibitedExtensions: readonly string[];
@@ -115,6 +116,7 @@ const DOMAIN_CASES: readonly DomainContractCase[] = [
       unit.predicate === 'career_conclusion' || unit.predicate === 'career_context',
     textAuthority: 'explicit_projection',
     expectedSemanticGroups: ['work', 'limits'],
+    expectedLanePrefix: 'career.',
     expectedAxes: ['work'],
     exactAxes: true,
     prohibitedExtensions: [
@@ -162,6 +164,7 @@ const DOMAIN_CASES: readonly DomainContractCase[] = [
     semanticUnitPredicate: (unit) => unit.predicate === 'relationship_conclusion',
     textAuthority: 'claim_owned',
     expectedSemanticGroups: ['relationship', 'limits'],
+    expectedLanePrefix: 'relationship.',
     expectedAxes: ['relationship'],
     exactAxes: true,
     prohibitedExtensions: [
@@ -188,6 +191,7 @@ const DOMAIN_CASES: readonly DomainContractCase[] = [
     semanticUnitPredicate: (unit) => unit.predicate === 'business_conclusion',
     textAuthority: 'claim_owned',
     expectedSemanticGroups: ['work', 'limits'],
+    expectedLanePrefix: 'business.',
     expectedAxes: ['work'],
     exactAxes: true,
     prohibitedExtensions: [
@@ -281,9 +285,12 @@ function sorted(values: readonly string[]): readonly string[] {
 }
 
 describe('cross-domain Official Reading semantic fidelity contract', () => {
-  it('keeps the Preview supported surface exactly aligned with the fidelity matrix', () => {
-    expect(sorted(PREVIEW_E2E_APPROVAL.supportedReadingSections)).toEqual(
-      sorted(DOMAIN_CASES.map((candidate) => candidate.targetSection)),
+  it('keeps the Preview Official Reading surface exactly aligned with the fidelity matrix', () => {
+    expect(sorted(PREVIEW_E2E_APPROVAL.officialReadingSections)).toEqual(
+      sorted([
+        ...DOMAIN_CASES.map((candidate) => candidate.targetSection),
+        'relationship:natal:spouse',
+      ]),
     );
     expect(PREVIEW_E2E_APPROVAL.lifecycle).toBe('preview');
     expect(PREVIEW_E2E_APPROVAL.productionInterpretationAuthorityGranted).toBe(false);
@@ -476,6 +483,29 @@ describe('cross-domain Official Reading semantic fidelity contract', () => {
       expect(plan.sourceSemanticHash).toBe(semantics.semanticHash);
       for (const semanticGroup of candidate.expectedSemanticGroups) {
         expect(plan.sections.some((section) => section.semanticGroup === semanticGroup)).toBe(true);
+      }
+      if (candidate.expectedLanePrefix !== undefined) {
+        const laneSections = plan.sections.filter((section) =>
+          section.semanticLane?.startsWith(candidate.expectedLanePrefix ?? ''),
+        );
+        expect(laneSections.length).toBeGreaterThan(0);
+        const payloadKey =
+          candidate.intent.domain === 'career'
+            ? 'careerKind'
+            : candidate.intent.domain === 'relationship'
+              ? 'relationshipKind'
+              : 'businessKind';
+        for (const section of laneSections) {
+          const expectedKind = section.semanticLane?.slice(
+            candidate.expectedLanePrefix.length,
+          );
+          expect(expectedKind).toBeDefined();
+          for (const ref of section.primaryUnitRefs) {
+            const unit = semantics.units.find((candidateUnit) => candidateUnit.unitId === ref);
+            expect(isRecord(unit?.semanticPayload) ? unit.semanticPayload[payloadKey] : undefined)
+              .toBe(expectedKind);
+          }
+        }
       }
       const limits = plan.sections.find((section) => section.semanticGroup === 'limits');
       expect(limits).toBeDefined();

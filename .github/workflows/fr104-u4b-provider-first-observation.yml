@@ -1,0 +1,92 @@
+name: "[WT:face-reading] FR104 U4B-C First Provider Observation"
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fr104-u4b-provider-first-observation.yml"
+      - "scripts/build-fr104-u4b-makehuman-morph-fixture.mjs"
+      - "scripts/run-fr104-u4b-provider-validation.mjs"
+      - "tools/face-geometry/capture/fr104-u4b-provider-validation.html"
+      - "tools/face-geometry/capture/fr104-u4b-provider-validation.mjs"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-validation-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-fixture-evidence-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-result-intake-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-result-intake-fr104.test.ts"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-empirical-evidence-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-empirical-evidence-fr104.test.ts"
+      - "scripts/admit-fr104-u4b-provider-result.mjs"
+      - "packages/face-reading/src/neutral-ear-mirror-independent-fixture-protocol-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-makehuman-provider-rotation-dependence-fr104.ts"
+      - "packages/face-reading/src/face-eye-pair-research-bridge-fr24.ts"
+      - "packages/face-reading/src/mediapipe-face-landmarker-runtime-fr26.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  first-provider-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Face Reading
+        run: npm run face:build
+
+      - name: Syntax-check U4B-C harness
+        run: |
+          node --check tools/face-geometry/capture/fr104-u4b-provider-validation.mjs
+          node --check scripts/run-fr104-u4b-provider-validation.mjs
+          node --check scripts/build-fr104-u4b-makehuman-morph-fixture.mjs
+          node --check scripts/admit-fr104-u4b-provider-result.mjs
+
+      - name: Materialize already-pinned U4B fixture
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/face-geometry
+          node scripts/build-fr104-u4b-makehuman-morph-fixture.mjs             --write-render=.cache/face-geometry/fr104-u4b-morph.png             | tee /tmp/fr104-u4b-materialize.jsonl
+          node <<'NODE'
+          const fs = require('node:fs');
+          const lines = fs.readFileSync(
+            '/tmp/fr104-u4b-materialize.jsonl',
+            'utf8',
+          ).trim().split(/\r?\n/).filter(Boolean);
+          const result = JSON.parse(lines.at(-1));
+          if (
+            result.deterministicRender?.renderSha256
+              !== '91a481011618f7a74aed7380185d640c604dcde587eff69b6f44654c97585b33'
+            || result.execution?.providerExecuted !== false
+            || result.execution?.providerResultObserved !== false
+          ) {
+            throw new Error(
+              'FR104 U4B-C fixture materialization drift.',
+            );
+          }
+          NODE
+
+      - name: Record browser runtime
+        run: |
+          google-chrome --version
+          chromedriver --version
+
+      - name: Replay exact U4B-C provider observation
+        env:
+          FR104_U4B_FIXTURE_IN: .cache/face-geometry/fr104-u4b-morph.png
+          FR104_U4B_C_RESULT_OUT: .cache/face-geometry/fr104-u4b-c-result.json
+          FR104_U4B_C_EXPECTED_RESULT_SHA256: e601205ccdad7ec66900d953ed6f742e04dbd37e6074ccc4bb36bf21dd3b16a8
+        run: node scripts/run-fr104-u4b-provider-validation.mjs
+
+      - name: Admit exact U4B-C prospective result
+        env:
+          FR104_U4B_C_RESULT_IN: .cache/face-geometry/fr104-u4b-c-result.json
+        run: node scripts/admit-fr104-u4b-provider-result.mjs

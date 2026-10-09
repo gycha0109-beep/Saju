@@ -1,0 +1,149 @@
+name: "[WT:face-reading] FR104 U5A-B Live GNM Witness Audit"
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fr104-u5a-live-gnm-witness-audit.yml"
+      - "tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py"
+      - "tools/face-geometry/gnm/fetch_gnm_head.py"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-result-intake-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-result-intake-fr104.test.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-empirical-evidence-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-empirical-evidence-fr104.test.ts"
+      - "scripts/admit-fr104-u5a-gnm-witness-result.mjs"
+      - "research/face-research/fr104-gnm-cross-source-anatomical-witness-u5a.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-witness-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Face Reading
+        run: npm run face:build
+
+      - name: Install audit dependency
+        run: python -m pip install --disable-pip-version-check numpy
+
+      - name: Compile frozen U5A auditor
+        run: |
+          python -m py_compile             tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py             tools/face-geometry/gnm/fetch_gnm_head.py
+
+      - name: Fetch exact pinned FR100 GNM Head NPZ
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/face-geometry
+          python tools/face-geometry/gnm/fetch_gnm_head.py             --output .cache/face-geometry/gnm_head.npz             | tee /tmp/fr104-u5a-fetch.jsonl
+
+      - name: Replay exact U5A-B live source witness audit
+        run: |
+          set -euo pipefail
+          python tools/face-reading/ear/audit_fr104_gnm_anatomical_witness.py             --npz .cache/face-geometry/gnm_head.npz             --output .cache/face-geometry/fr104-u5a-result.json             | tee /tmp/fr104-u5a-audit.log
+
+      - name: Admit exact U5A-B witness result
+        env:
+          FR104_U5A_RESULT_IN: .cache/face-geometry/fr104-u5a-result.json
+        run: node scripts/admit-fr104-u5a-gnm-witness-result.mjs
+
+      - name: Verify candidate authority boundary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(
+              Path(".cache/face-geometry/fr104-u5a-result.json")
+              .read_text(encoding="utf-8")
+          )
+
+          allowed_states = {
+              "gnm_direct_left_right_joint_witness_supported",
+              "gnm_direct_left_right_joint_witness_refuted",
+              "gnm_direct_left_right_joint_witness_unresolved",
+          }
+
+          assert result["schemaVersion"] == (
+              "fr104-gnm-cross-source-anatomical-witness-live-result-v1"
+          )
+          assert result["authorityState"] == "live_candidate_not_admitted"
+          assert result["assessment"]["state"] in allowed_states
+
+          asset = result["asset"]
+          assert asset["expectedGitBlobSha"] == (
+              "ae49903ad7d50ce1d64e464a0407441f2781873c"
+          )
+          assert asset["observedGitBlobSha"] == asset["expectedGitBlobSha"]
+          assert asset["expectedByteLength"] == 53305389
+          assert asset["observedByteLength"] == asset["expectedByteLength"]
+          assert asset["assetVerified"] is True
+
+          diagnostics = result["diagnostics"]
+          assert diagnostics["imageSpaceXSignUsedAsSemanticAuthority"] is False
+          assert diagnostics["gnmAxisOrderingUsedAsSemanticAuthority"] is False
+          assert diagnostics["mediaPipeProviderLabelsUsedAsSemanticAuthority"] is False
+
+          boundary = result["interpretationBoundary"]
+          assert boundary["sourceFamilyDistinctFromMakeHuman"] is True
+          assert boundary["sourceFamilyDistinctFromMediaPipe"] is True
+          assert boundary["crossSourceFamilyGeometricValidationExecuted"] is False
+          assert boundary["gnmJointNamingAlreadyAdmittedAsRuntimeMapping"] is False
+          assert boundary["globalProviderAnatomicalSemanticsMayBeEstablished"] is False
+          assert boundary["runtimeSubjectPhotoLateralityMayBeAuthorized"] is False
+
+          for key, value in result["privacy"].items():
+              assert value is False, key
+
+          authority = result["authority"]
+          for key, value in authority.items():
+              assert value is False, key
+
+          print("FR104_U5A_CANDIDATE_STATE", result["assessment"]["state"])
+          print(
+              "FR104_U5A_LEFT_EYE_JOINT_INDEX",
+              result["directSourceSemanticWitness"]["leftEyeJointIndex"],
+          )
+          print(
+              "FR104_U5A_RIGHT_EYE_JOINT_INDEX",
+              result["directSourceSemanticWitness"]["rightEyeJointIndex"],
+          )
+          print(
+              "FR104_U5A_LEFT_EYE_POSITION",
+              json.dumps(
+                  result["directSourceSemanticWitness"][
+                      "leftEyeTemplateJointPosition"
+                  ],
+                  separators=(",", ":"),
+              ),
+          )
+          print(
+              "FR104_U5A_RIGHT_EYE_POSITION",
+              json.dumps(
+                  result["directSourceSemanticWitness"][
+                      "rightEyeTemplateJointPosition"
+                  ],
+                  separators=(",", ":"),
+              ),
+          )
+          PY

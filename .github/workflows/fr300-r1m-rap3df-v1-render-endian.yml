@@ -1,0 +1,35 @@
+name: "[WT:face-reading] FR300-R1M RAP3DF V1 Render Endian"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/acquire-fr300-r1m-rap3df-v1-render-endian.mjs"
+      - "research/face-reading/fr300-r1m-rap3df-v1-render-endian.md"
+      - ".github/workflows/fr300-r1m-rap3df-v1-render-endian.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  adjudicate-render-endian:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Authenticate matched publisher pair and adjudicate endian
+        run: node scripts/acquire-fr300-r1m-rap3df-v1-render-endian.mjs
+      - name: Upload sanitized evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fr300-r1m-rap3df-v1-render-endian
+          path: .fr300-r1m-evidence/rap3df-v1-render-endian.json
+          if-no-files-found: warn
+          retention-days: 14

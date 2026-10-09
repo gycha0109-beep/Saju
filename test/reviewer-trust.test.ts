@@ -1,22 +1,26 @@
 import { describe, expect, test } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import type {
+  InterpretationPack,
+  MethodologyDefinition,
+  ReviewAttestation,
+  RuleDefinition,
+  SourceReference,
+} from '../src/contracts/interpretation.js';
+import { buildInterpretationExecutionPlan } from '../src/interpretation/execution-plan.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import {
-  buildInterpretationExecutionPlan,
-  calculateCanonicalSajuSnapshot,
   createRuleRegistrySnapshot,
   deterministicContentHash,
+} from '../src/interpretation/rule-registry.js';
+import {
   normalizeReviewerTrustContext,
   reviewerIsTrustedForLevel,
   reviewerTrustPolicyRef,
   reviewerTrustsAttestation,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-  type InterpretationPack,
-  type MethodologyDefinition,
-  type ReviewAttestation,
   type ReviewerTrustContext,
-  type RuleDefinition,
-  type SourceReference,
-} from '../src/index.js';
+} from '../src/interpretation/reviewer-trust.js';
 
 const sources: readonly SourceReference[] = [
   {

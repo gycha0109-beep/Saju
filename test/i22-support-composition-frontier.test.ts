@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildI22SupportCompositionFrontier } from '../src/index.js';
+import { buildI22SupportCompositionFrontier } from '../src/research/i22-support-composition-frontier.js';
 
 describe('I22 support composition frontier', () => {
   test('removes only evidence dominated by the authorized root-peer partial order', () => {

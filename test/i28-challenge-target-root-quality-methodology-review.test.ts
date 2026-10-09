@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildI28ChallengeTargetRootQualityMethodologyReview } from '../src/index.js';
+import { buildI28ChallengeTargetRootQualityMethodologyReview } from '../src/research/i28-challenge-target-root-quality-methodology-review.js';
 
 describe('I28 challenge target root-quality methodology review', () => {
   test('requires challenge-specific modified reuse instead of direct I18C reuse', () => {

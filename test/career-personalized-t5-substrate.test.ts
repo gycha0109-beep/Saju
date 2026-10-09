@@ -1,9 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import {
-  calculateCanonicalSajuSnapshot,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
 import {
   CAREER_PERSONALIZED_T5_FAMILY_RELATION_RULES,
   CAREER_PERSONALIZED_T5_PACK,

@@ -1,11 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { buildI26ChallengeContextAvailabilityV22 } from '../src/research/i26-challenge-context-availability-v22.js';
-import {
-  buildI62ChallengeCombinationSupportChannelTouchSpecificSettlementDispatchMethodologyReview,
-  buildI63ChallengeCombinationSupportChannelTouchSpecificSettlementDispatchEvidence,
-  type ChallengeCombinationSupportChannelRelationIdentityPairEvidenceReport,
-  type ChallengeContextAvailabilityV21Report,
-} from '../src/index.js';
+import type { ChallengeContextAvailabilityV21Report } from '../src/research/i26-challenge-context-availability-v21.js';
+import type { ChallengeCombinationSupportChannelRelationIdentityPairEvidenceReport } from '../src/research/i61-challenge-combination-support-channel-relation-identity-pair-evidence.js';
+import { buildI62ChallengeCombinationSupportChannelTouchSpecificSettlementDispatchMethodologyReview } from '../src/research/i62-challenge-combination-support-channel-touch-specific-settlement-dispatch-methodology-review.js';
+import { buildI63ChallengeCombinationSupportChannelTouchSpecificSettlementDispatchEvidence } from '../src/research/i63-challenge-combination-support-channel-touch-specific-settlement-dispatch-evidence.js';
 
 function pairEvidence(): ChallengeCombinationSupportChannelRelationIdentityPairEvidenceReport {
   return {

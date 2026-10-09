@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import {
   I156_DISCOVERY_REQUIREMENT_IDS,
-  buildI157ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceDerivativeRelationshipAuthorityDiscoveryEvidence,
   type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceDerivativeRelationshipAuthorityDiscoveryReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i156-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-derivative-relationship-authority-discovery-readiness-review.js';
+import { buildI157ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceDerivativeRelationshipAuthorityDiscoveryEvidence } from '../src/research/i157-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-derivative-relationship-authority-discovery-evidence.js';
 
 const targets = [
   ['evidence_chen_yuan_position_distance_wuli', 'source_chenyuan_sizhu_yuce_rumen_1995_isbn9787805922515', []],

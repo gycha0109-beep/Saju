@@ -19,9 +19,13 @@ import {
   type TemporalReadingContext,
 } from '../reading/temporal-reading-context.js';
 import {
-  requestProductReading,
+  runProductReadingInternals,
   type ProductReadingServiceOptions,
 } from '../reading/product-reading-service.js';
+import {
+  inspectSourceReadingProofReadinessV1,
+  type SourceReadingProofReadinessV1,
+} from '../reading/source-reading-proof-readiness.js';
 import type { LegacyNarrativeRuntimeV1 } from '../reading/governed-reading-execution.js';
 import type { ProductReadingResponse } from '../reading/product-reading-response.js';
 
@@ -53,9 +57,18 @@ export interface ProductHostBirthRequest {
   sex?: SexForTraditionalCalculation;
 }
 
+export type ProductHostPreferredDetail = NonNullable<
+  NonNullable<ReadingRequest['outputPreferences']>['preferredDetail']
+>;
+
+export interface ProductHostReadingOutputPreferences {
+  preferredDetail: ProductHostPreferredDetail;
+}
+
 export interface ProductHostReadingRequest {
   text: string;
   targetPersonRef?: string;
+  outputPreferences?: ProductHostReadingOutputPreferences;
 }
 
 export interface ProductHostReadingRequestBody {
@@ -206,11 +219,43 @@ function parseBirth(value: unknown): BirthInput {
   };
 }
 
+function parseReadingOutputPreferences(
+  value: unknown,
+): ProductHostReadingOutputPreferences | undefined {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) {
+    throw new ProductHostRequestError(
+      'INVALID_READING_REQUEST',
+      'reading.outputPreferences must be an object.',
+    );
+  }
+  assertOnlyKeys(
+    value,
+    ['preferredDetail'],
+    'INVALID_READING_REQUEST',
+  );
+  if (
+    value.preferredDetail !== 'concise' &&
+    value.preferredDetail !== 'standard' &&
+    value.preferredDetail !== 'detailed'
+  ) {
+    throw new ProductHostRequestError(
+      'INVALID_READING_REQUEST',
+      'reading.outputPreferences.preferredDetail must be concise, standard, or detailed.',
+    );
+  }
+  return { preferredDetail: value.preferredDetail };
+}
+
 function parseReading(value: unknown): ProductHostReadingRequest {
   if (!isRecord(value)) {
     throw new ProductHostRequestError('INVALID_READING_REQUEST', 'reading must be an object.');
   }
-  assertOnlyKeys(value, ['text', 'targetPersonRef'], 'INVALID_READING_REQUEST');
+  assertOnlyKeys(
+    value,
+    ['text', 'targetPersonRef', 'outputPreferences'],
+    'INVALID_READING_REQUEST',
+  );
   if (typeof value.text !== 'string') {
     throw new ProductHostRequestError('INVALID_READING_REQUEST', 'reading.text must be a string.');
   }
@@ -235,9 +280,15 @@ function parseReading(value: unknown): ProductHostReadingRequest {
       `reading.targetPersonRef must not exceed ${MAX_TARGET_PERSON_REF_LENGTH} characters.`,
     );
   }
+  const outputPreferences = parseReadingOutputPreferences(
+    value.outputPreferences,
+  );
   return {
     text,
-    ...(targetPersonRef === undefined || targetPersonRef.length === 0 ? {} : { targetPersonRef }),
+    ...(targetPersonRef === undefined || targetPersonRef.length === 0
+      ? {}
+      : { targetPersonRef }),
+    ...(outputPreferences === undefined ? {} : { outputPreferences }),
   };
 }
 
@@ -311,6 +362,9 @@ function consumerInput(
     ...(parsed.reading.targetPersonRef === undefined
       ? {}
       : { targetPersonRef: parsed.reading.targetPersonRef }),
+    ...(parsed.reading.outputPreferences === undefined
+      ? {}
+      : { outputPreferences: parsed.reading.outputPreferences }),
   };
 }
 
@@ -344,33 +398,65 @@ function assertDependencies(dependencies: MyeonghwaProductHostDependencies): voi
   }
 }
 
+/** Saju-internal only; not exported by the consumer product-host entrypoint. */
+export interface MyeonghwaSourceReadingProofHost {
+  requestReadingWithProofReadiness(body: unknown): Promise<{
+    readonly response: ProductReadingResponse;
+    readonly readiness: SourceReadingProofReadinessV1;
+    /** Parsed and normalized by the Saju host for this same execution. */
+    readonly executedRequestBody: ProductHostReadingRequestBody;
+  }>;
+}
+
+async function runProductHostReadingInternals(
+  dependencies: MyeonghwaProductHostDependencies,
+  body: unknown,
+) {
+  const parsed = parseProductHostReadingRequest(body);
+  const requestId = nextRequestId(dependencies.requestIdFactory);
+  const context: ProductHostExecutionContext = {
+    requestId,
+    requestedAt: nextRequestedAt(dependencies.requestNowFactory),
+  };
+  const input = consumerInput(parsed, context);
+  const snapshot = await dependencies.calculate(toBirthInput(parsed.birth), context);
+  const requestContext = temporalInterpretationContext(input, snapshot);
+  const { interpretation, registry } =
+    requestContext === undefined
+      ? await dependencies.interpret(snapshot, context)
+      : await dependencies.interpret(snapshot, context, requestContext);
+  const reading = await runProductReadingInternals(
+    snapshot,
+    interpretation,
+    registry,
+    input,
+    dependencies.readingOptions,
+    dependencies.legacyNarrativeRuntime,
+  );
+  return { executedRequestBody: parsed, snapshot, interpretation, registry, ...reading };
+}
+
 export function createMyeonghwaProductHost(
   dependencies: MyeonghwaProductHostDependencies,
 ): MyeonghwaProductHost {
   assertDependencies(dependencies);
   return {
     async requestReading(body: unknown): Promise<ProductReadingResponse> {
-      const parsed = parseProductHostReadingRequest(body);
-      const requestId = nextRequestId(dependencies.requestIdFactory);
-      const context: ProductHostExecutionContext = {
-        requestId,
-        requestedAt: nextRequestedAt(dependencies.requestNowFactory),
-      };
-      const input = consumerInput(parsed, context);
-      const snapshot = await dependencies.calculate(toBirthInput(parsed.birth), context);
-      const requestContext = temporalInterpretationContext(input, snapshot);
-      const { interpretation, registry } =
-        requestContext === undefined
-          ? await dependencies.interpret(snapshot, context)
-          : await dependencies.interpret(snapshot, context, requestContext);
-      return requestProductReading(
-        snapshot,
-        interpretation,
-        registry,
-        input,
-        dependencies.readingOptions,
-        dependencies.legacyNarrativeRuntime,
-      );
+      return (await runProductHostReadingInternals(dependencies, body)).response;
+    },
+  };
+}
+
+/** The future service-authenticated HTTP issuer may call only this server-side seam. */
+export function createMyeonghwaSourceReadingProofHost(
+  dependencies: MyeonghwaProductHostDependencies,
+): MyeonghwaSourceReadingProofHost {
+  assertDependencies(dependencies);
+  return {
+    async requestReadingWithProofReadiness(body: unknown) {
+      const run = await runProductHostReadingInternals(dependencies, body);
+      const readiness = inspectSourceReadingProofReadinessV1(run);
+      return { response: run.response, readiness, executedRequestBody: run.executedRequestBody };
     },
   };
 }

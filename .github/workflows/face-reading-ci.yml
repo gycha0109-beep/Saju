@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'packages/face-reading/**'
+      - 'tools/face-reading/ear/**'
+      - 'tools/face-reading/hairline/**'
       - 'docs/migrations/face-reading-from-myeongha.manifest.json'
       - 'scripts/verify-face-reading-migration.mjs'
       - 'scripts/verify-fr76-mediapipe-parity.mjs'
@@ -16,6 +18,8 @@ on:
       - 'scripts/verify-fr85-role-free-contour-nesting.mjs'
       - 'scripts/verify-fr88-role-free-minimum-set-separation.mjs'
       - 'scripts/verify-fr98-role-free-arclength-mean-neutral-metric.mjs'
+      - 'scripts/verify-fr104-makehuman-source-geometry.mjs'
+      - 'scripts/verify-fr104-makehuman-deterministic-render.mjs'
       - 'tsconfig.face-reading.json'
       - 'tsconfig.face-reading.build.json'
       - 'package.json'
@@ -242,6 +246,296 @@ jobs:
       - name: Verify FR98 exact arclength mean neutral metric value binding
         working-directory: target
         run: npm run face:verify:fr98-role-free-arclength-mean-neutral-metric
+
+      - name: Verify FR99 neutral ear surface feasibility boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-surface-feasibility-fr99.test.ts
+
+      - name: Verify FR100 GNM neutral ear reference target boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-reference-target-fr100.test.ts
+
+      - name: Verify FR101 runtime external-ear candidate boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-runtime-candidates-fr101.test.ts
+
+      - name: Verify FR102 local ear empirical bundle boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-empirical-bundle-fr102.test.ts
+
+      - name: Verify FR102 local Florence-2 runner parser
+        working-directory: target
+        run: python tools/face-reading/ear/run_florence2_ear_empirical.py --self-test
+
+      - name: Verify FR307 local Florence-2 hairline runner parser
+        working-directory: target
+        run: python tools/face-reading/hairline/run_florence2_hairline_empirical.py --self-test
+
+      - name: Verify FR104 Florence live worker protocol
+        working-directory: target
+        run: python tools/face-reading/ear/run_florence2_ear_live_worker.py --self-test
+
+      - name: Verify FR104 Florence worker bridge framing
+        working-directory: target
+        run: node scripts/fr104-florence-live-worker-bridge.mjs --self-test
+
+      - name: Verify FR103 external-ear candidate validation boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-candidate-validation-fr103.test.ts
+
+      - name: Verify FR104 external-ear geometry plausibility readiness boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-geometry-plausibility-readiness-fr104.test.ts
+
+      - name: Verify FR104 role-free ear plausibility evidence boundary
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-plausibility-evidence-fr104.test.ts
+
+      - name: Verify FR104 ephemeral same-frame face-envelope adapter
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-same-frame-face-envelope-adapter-fr104.test.ts
+
+      - name: Verify FR104 orientation-safe ephemeral ear orchestration
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-ephemeral-orchestration-fr104.test.ts
+
+      - name: Verify FR104 anatomical laterality source audit
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-laterality-source-audit-fr104.test.ts
+
+      - name: Verify FR104 controlled provider mirror-pair protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mirror-pair-protocol-fr104.test.ts
+
+      - name: Verify FR104 capture-transform provenance receipt
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-capture-transform-provenance-receipt-fr104.test.ts
+
+      - name: Verify FR104 controlled mirror-pair result intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mirror-pair-result-intake-fr104.test.ts
+
+      - name: Verify FR104 first controlled mirror empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mirror-pair-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 controlled multi-fixture mirror protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mirror-multifixture-protocol-fr104.test.ts
+
+      - name: Verify FR104 multi-fixture mirror result intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mirror-multifixture-result-intake-fr104.test.ts
+
+      - name: Verify FR104 admitted multi-fixture empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mirror-multifixture-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 independent public fixture mirror protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mirror-independent-fixture-protocol-fr104.test.ts
+
+      - name: Verify FR104 independent public fixture result intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mirror-independent-fixture-result-intake-fr104.test.ts
+
+      - name: Verify FR104 independent public fixture empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mirror-independent-fixture-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 provider mirror semantics review
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-provider-mirror-semantics-review-fr104.test.ts
+
+      - name: Verify FR104 laterality integration readiness
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-laterality-integration-readiness-fr104.test.ts
+
+      - name: Verify FR104 anatomical-side semantic witness audit
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-anatomical-side-semantic-witness-fr104.test.ts
+
+      - name: Verify FR104 frame transform reflection parity
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-frame-transform-parity-fr104.test.ts
+
+      - name: Verify FR104 dual-consumer ephemeral pixel fingerprint
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-dual-consumer-pixel-fingerprint-fr104.test.ts
+
+      - name: Verify FR104 exact captured-frame consumer-byte provenance
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-captured-frame-consumer-byte-provenance-fr104.test.ts
+
+      - name: Verify FR104 controlled-capture runtime byte binding
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-controlled-capture-runtime-byte-binding-fr104.test.ts
+
+      - name: Verify FR104 provider byte adapters and live invocation gate
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-live-provider-byte-runtime-fr104.test.ts
+
+      - name: Verify FR104 Florence same-origin live host transport
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-florence-live-host-transport-fr104.test.ts
+
+      - name: Verify FR104 same-run FaceLandmarker geometry handle
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-face-landmarker-geometry-handle-fr104.test.ts
+
+      - name: Verify FR104 same-runtime provider output composition
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-provider-output-composition-fr104.test.ts
+
+      - name: Verify FR104 anatomical laterality mapping skeleton
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-anatomical-laterality-mapping-contract-fr104.test.ts
+
+      - name: Verify FR104 U0 anatomical reference asset audit
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-anatomical-reference-asset-audit-fr104.test.ts
+
+      - name: Verify FR104 U1 MakeHuman anatomical reference protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-anatomical-reference-protocol-fr104.test.ts
+
+      - name: Verify FR104 U1.1 MakeHuman source geometry
+        working-directory: target
+        run: node scripts/verify-fr104-makehuman-source-geometry.mjs
+
+      - name: Verify FR104 U1.2 deterministic MakeHuman render
+        working-directory: target
+        run: |
+          node scripts/verify-fr104-makehuman-deterministic-render.mjs --self-test
+          node scripts/verify-fr104-makehuman-deterministic-render.mjs
+
+      - name: Verify FR104 U2 MakeHuman provider preflight protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-preflight-fr104.test.ts
+
+      - name: Verify FR104 U2 MakeHuman provider empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-preflight-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 U3 MakeHuman transform diagnostics protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-transform-diagnostics-fr104.test.ts
+
+      - name: Verify FR104 U3 MakeHuman transform empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-transform-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 U3.1 provider rotation dependence protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-rotation-dependence-fr104.test.ts
+
+      - name: Verify FR104 U3.1 provider rotation empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-rotation-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 U3.2A MediaPipe rotation API audit protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mediapipe-rotation-api-audit-fr104.test.ts
+
+      - name: Verify FR104 U3.2B provider rotation compensation protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-fr104.test.ts
+
+      - name: Verify FR104 U3.2A MediaPipe rotation API evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-mediapipe-rotation-api-audit-evidence-fr104.test.ts
+
+      - name: Verify FR104 U3.2B provider rotation compensation intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-result-intake-fr104.test.ts
+
+      - name: Verify FR104 U3.2B provider rotation compensation evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-makehuman-provider-rotation-compensation-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 U3.2.1 compensated output frame protocol
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-provider-compensated-output-frame-fr104.test.ts
+
+      - name: Verify FR104 U3.2.1 compensated output frame intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-provider-compensated-output-frame-result-intake-fr104.test.ts
+
+      - name: Verify FR104 U3.2.1 compensated output frame evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-provider-compensated-output-frame-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 U3.3 prospective composed normalization preregistration
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-prospective-composed-orientation-validation-fr104.test.ts
+
+      - name: Verify FR104 U3.3B prospective result intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-prospective-composed-orientation-result-intake-fr104.test.ts
+
+      - name: Verify FR104 U3.3B admitted empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-prospective-composed-orientation-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 U4A controlled anatomical mapping audit
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-audit-fr104.test.ts
+
+      - name: Verify FR104 U4A controlled anatomical mapping result intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-result-intake-fr104.test.ts
+
+      - name: Verify FR104 U4A admitted empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-controlled-anatomical-side-mapping-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 U4B-A prospective independent geometry preregistration
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-prospective-independent-geometry-validation-fr104.test.ts
+
+      - name: Verify FR104 U4B-B render-only fixture evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-prospective-independent-geometry-fixture-evidence-fr104.test.ts
+
+      - name: Verify FR104 U4B-C prospective result intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-prospective-independent-geometry-result-intake-fr104.test.ts
+
+      - name: Verify FR104 U4B-C admitted empirical evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-prospective-independent-geometry-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 U5A-A GNM cross-source witness preregistration
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-fr104.test.ts
+
+      - name: Verify FR104 U5A-B2 GNM witness result intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-result-intake-fr104.test.ts
+
+      - name: Verify FR104 U5A-B2 admitted GNM witness evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-anatomical-witness-empirical-evidence-fr104.test.ts
+
+      - name: Verify FR104 U5B-A GNM cross-source geometric preregistration
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-validation-fr104.test.ts
+
+      - name: Verify FR104 U5B-B deterministic GNM renderer self-test
+        working-directory: target
+        run: node scripts/build-fr104-u5b-gnm-fixture.mjs --self-test
+
+      - name: Verify FR104 U5B-B pinned GNM fixture evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-fixture-evidence-fr104.test.ts
+
+      - name: Verify FR104 U5B-D exact GNM provider result intake
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-result-intake-fr104.test.ts
+
+      - name: Verify FR104 U5B-D admitted GNM geometric evidence
+        working-directory: target
+        run: npx vitest run packages/face-reading/src/neutral-ear-gnm-cross-source-geometric-empirical-evidence-fr104.test.ts
 
       - name: Verify frozen source baseline
         working-directory: source

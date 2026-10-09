@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI128ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdTwoPartialRequirementTargetedAuthorityDiscoveryEvidence,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdTwoPartialRequirementTargetedAuthorityDiscoveryReadinessReviewReport,
-} from '../src/index.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdTwoPartialRequirementTargetedAuthorityDiscoveryReadinessReviewReport } from '../src/research/i127-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-two-partial-requirement-targeted-authority-discovery-readiness-review.js';
+import { buildI128ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdTwoPartialRequirementTargetedAuthorityDiscoveryEvidence } from '../src/research/i128-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-two-partial-requirement-targeted-authority-discovery-evidence.js';
 
 const TARGET_IDS = [
   'VISIBLE_STEM_POSITION_SCOPE_AND_POSITION_CLASS_APPLICABILITY',

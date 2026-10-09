@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI67ChallengeCombinationSupportChannelPairLocalClashRelativeForceSettlementMethodologyReview,
-  type ChallengeCombinationSupportChannelDispatchedRelationCurrentChartSettlementSubstrateVerificationEvidenceReport,
-  type ChallengeTargetClashDependencyEvidenceReport,
-  type ClashSupportContextReport,
-} from '../src/index.js';
+import type { ClashSupportContextReport } from '../src/research/i20c-clash-support-context.js';
+import type { ChallengeTargetClashDependencyEvidenceReport } from '../src/research/i33-challenge-target-clash-dependency-evidence.js';
+import type { ChallengeCombinationSupportChannelDispatchedRelationCurrentChartSettlementSubstrateVerificationEvidenceReport } from '../src/research/i65-challenge-combination-support-channel-dispatched-relation-current-chart-settlement-substrate-verification-evidence.js';
+import { buildI67ChallengeCombinationSupportChannelPairLocalClashRelativeForceSettlementMethodologyReview } from '../src/research/i67-challenge-combination-support-channel-pair-local-clash-relative-force-settlement-methodology-review.js';
 import { buildI68ChallengeCombinationSupportChannelPairLocalClashRelativeForceComparativeEvidence } from '../src/research/i68-challenge-combination-support-channel-pair-local-clash-relative-force-comparative-evidence.js';
 
 function i33(

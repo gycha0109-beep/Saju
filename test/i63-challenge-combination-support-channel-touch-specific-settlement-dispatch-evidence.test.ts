@@ -1,9 +1,13 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelRelationIdentityPairEvidenceReport,
+} from '../src/research/i61-challenge-combination-support-channel-relation-identity-pair-evidence.js';
 import {
   buildI62ChallengeCombinationSupportChannelTouchSpecificSettlementDispatchMethodologyReview,
+} from '../src/research/i62-challenge-combination-support-channel-touch-specific-settlement-dispatch-methodology-review.js';
+import {
   buildI63ChallengeCombinationSupportChannelTouchSpecificSettlementDispatchEvidence,
-  type ChallengeCombinationSupportChannelRelationIdentityPairEvidenceReport,
-} from '../src/index.js';
+} from '../src/research/i63-challenge-combination-support-channel-touch-specific-settlement-dispatch-evidence.js';
 
 function pairEvidence(): ChallengeCombinationSupportChannelRelationIdentityPairEvidenceReport {
   return {

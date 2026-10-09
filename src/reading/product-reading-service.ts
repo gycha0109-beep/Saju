@@ -8,8 +8,12 @@ import {
   executeProductReading,
   type GovernedReadingExecutionOptions,
   type LegacyNarrativeRuntimeV1,
+  type GovernedReadingExecutionResult,
 } from './governed-reading-execution.js';
-import { buildProductReadingDelivery } from './product-reading-delivery.js';
+import {
+  buildProductReadingDelivery,
+  type ProductReadingDeliveryResult,
+} from './product-reading-delivery.js';
 import {
   buildProductReadingResponse,
   type ProductReadingResponse,
@@ -18,6 +22,36 @@ import {
 export const PRODUCT_READING_SERVICE_VERSION = 'myeonghwa-product-reading-service-v3';
 
 export type ProductReadingServiceOptions = GovernedReadingExecutionOptions;
+
+/** Internal Saju server execution artifacts. Never expose this from consumer entrypoints. */
+export interface ProductReadingInternals {
+  readonly execution: GovernedReadingExecutionResult;
+  readonly delivery: ProductReadingDeliveryResult;
+  readonly response: ProductReadingResponse;
+}
+
+function assembleProductReadingInternals(
+  execution: GovernedReadingExecutionResult,
+): ProductReadingInternals {
+  const delivery = buildProductReadingDelivery(execution);
+  return { execution, delivery, response: buildProductReadingResponse(delivery) };
+}
+
+/** One governed execution; retained solely for Saju-internal provenance inspection. */
+export async function runProductReadingInternals(
+  snapshot: CanonicalSajuSnapshot,
+  interpretation: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+  input: ConsumerReadingRequestInput,
+  options: ProductReadingServiceOptions,
+  legacyNarrativeRuntime?: LegacyNarrativeRuntimeV1,
+): Promise<ProductReadingInternals> {
+  const execution = await executeProductReading(
+    snapshot, interpretation, registry, input, options, legacyNarrativeRuntime,
+  );
+  return assembleProductReadingInternals(execution);
+}
+
 
 /**
  * Governed product-facing reading facade.
@@ -62,23 +96,16 @@ export async function requestProductReading(
   runtimeOrPolicy?: LegacyNarrativeRuntimeV1 | NarrativePolicy,
   legacyOptions?: ProductReadingServiceOptions,
 ): Promise<ProductReadingResponse> {
-  const execution = isNarrativeModelAdapter(optionsOrAdapter)
-    ? await executeProductReading(
-        snapshot,
-        interpretation,
-        registry,
-        input,
-        optionsOrAdapter,
-        runtimeOrPolicy as NarrativePolicy,
-        legacyOptions as ProductReadingServiceOptions,
-      )
-    : await executeProductReading(
-        snapshot,
-        interpretation,
-        registry,
-        input,
-        optionsOrAdapter,
-        runtimeOrPolicy as LegacyNarrativeRuntimeV1 | undefined,
-      );
-  return buildProductReadingResponse(buildProductReadingDelivery(execution));
+  if (isNarrativeModelAdapter(optionsOrAdapter)) {
+    const execution = await executeProductReading(
+      snapshot, interpretation, registry, input,
+      optionsOrAdapter, runtimeOrPolicy as NarrativePolicy,
+      legacyOptions as ProductReadingServiceOptions,
+    );
+    return assembleProductReadingInternals(execution).response;
+  }
+  return (await runProductReadingInternals(
+    snapshot, interpretation, registry, input,
+    optionsOrAdapter, runtimeOrPolicy as LegacyNarrativeRuntimeV1 | undefined,
+  )).response;
 }

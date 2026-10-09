@@ -1,4 +1,6 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { GovernedTemporalStructureBaseline } from '../calculation/temporal-structure-transition.js';
+import type { StructuralRoleAssignment } from '../calculation/structural-role-impact.js';
 import type {
   ClaimNarrativeProfile,
   GroundedNarrativeRequest,
@@ -19,10 +21,16 @@ import type {
   NarrativeModelAdapter,
 } from '../llm/model-adapter.js';
 import {
-  readingSectionForIntentV1,
   resolvePreviewConsumerReadingAuthorityV1,
-  type PreviewConsumerReadingAuthorityResolutionV1,
 } from '../preview/preview-official-reading-consumer-authority.js';
+import {
+  readingSectionForIntentV1,
+  type ConsumerReadingAuthorityResolutionV1,
+  type ConsumerReadingAuthorityResolverV1,
+} from './consumer-reading-authority.js';
+import type {
+  OfficialReadingSemanticProjectionResolverV1,
+} from './official-reading-semantic-projection.js';
 import { buildPreviewSemanticQualifierBindingsV1 } from '../preview/preview-semantic-qualifier-projection.js';
 import { buildPreviewSemanticTextBindingsV1 } from '../preview/preview-semantic-text-projection.js';
 import { buildNarrativeEvidenceBundleFromReadingEvidence } from '../narrative/evidence-selector.js';
@@ -47,9 +55,13 @@ import {
   type ProductReadingPreparationState,
 } from './product-reading-integration.js';
 import type { ConsumerReadingRequestInput } from './consumer-reading-request-adapter.js';
+import { resolveAnnualTemporalStructureIntegration } from './annual-temporal-structure-integration.js';
+import { projectAnnualTemporalStructureForReading } from './annual-temporal-structure-projection.js';
+import type { GovernedAnnualStructuralImpactBundleV1 } from './annual-structural-impact-bundle.js';
+import { produceAnnualStructuralImpactBundleV1 } from './annual-structural-impact-producer.js';
 
 export const GOVERNED_READING_EXECUTION_VERSION =
-  'myeonghwa-governed-reading-execution-v5';
+  'myeonghwa-governed-reading-execution-v7';
 
 export const LEGACY_NARRATIVE_RUNTIME_VERSION =
   'myeonghwa-legacy-narrative-runtime-v1' as const;
@@ -65,6 +77,16 @@ export type GovernedReadingExecutionState =
   | 'completed'
   | 'completed_with_fallback';
 
+export interface GovernedAnnualTemporalStructureInputV1 {
+  baseline: GovernedTemporalStructureBaseline;
+  impactBundle: GovernedAnnualStructuralImpactBundleV1;
+}
+
+export interface GovernedAnnualTemporalProductionInputV1 {
+  baseline: GovernedTemporalStructureBaseline;
+  roleAssignments: readonly StructuralRoleAssignment[];
+}
+
 export interface GovernedReadingExecutionOptions {
   outputSchemaVersion: string;
   readingVersion: string;
@@ -73,6 +95,10 @@ export interface GovernedReadingExecutionOptions {
   claimNarrativeProfiles?: readonly ClaimNarrativeProfile[];
   narrativeNow?: Date;
   artifactGeneratedAt?: Date;
+  consumerReadingAuthorityResolver?: ConsumerReadingAuthorityResolverV1;
+  officialReadingSemanticProjectionResolver?: OfficialReadingSemanticProjectionResolverV1;
+  governedAnnualTemporalStructure?: GovernedAnnualTemporalStructureInputV1;
+  governedAnnualTemporalProduction?: GovernedAnnualTemporalProductionInputV1;
 }
 
 export interface GovernedReadingExecutionResult {
@@ -84,7 +110,7 @@ export interface GovernedReadingExecutionResult {
   canonicalSemantics?: CanonicalReadingSemanticBundleV1;
   officialReadingPlan?: OfficialReadingPlanV1;
   officialReadingReport?: OfficialReadingRenderedContentV1;
-  consumerReadingAuthority?: PreviewConsumerReadingAuthorityResolutionV1;
+  consumerReadingAuthority?: ConsumerReadingAuthorityResolutionV1;
   artifact?: ReadingArtifact;
   modelCalls: number;
   reasonCodes: readonly string[];
@@ -198,7 +224,7 @@ function resultIdentity(
   preparation: ProductReadingPreparationResult,
   modelCalls: number,
   reasonCodes: readonly string[],
-  consumerReadingAuthority?: PreviewConsumerReadingAuthorityResolutionV1,
+  consumerReadingAuthority?: ConsumerReadingAuthorityResolutionV1,
   narrative?: NarrativeGenerationResult,
   canonicalSemantics?: CanonicalReadingSemanticBundleV1,
   officialReadingPlan?: OfficialReadingPlanV1,
@@ -250,7 +276,7 @@ function blockedResult(
 
 function officialAuthorityBlockedResult(
   preparation: ProductReadingPreparationResult,
-  consumerReadingAuthority: PreviewConsumerReadingAuthorityResolutionV1,
+  consumerReadingAuthority: ConsumerReadingAuthorityResolutionV1,
   reasonCodes: readonly string[],
   canonicalSemantics: CanonicalReadingSemanticBundleV1,
   officialReadingPlan: OfficialReadingPlanV1,
@@ -286,7 +312,7 @@ function officialAuthorityBlockedResult(
 
 function legacyNarrativeRuntimeBlockedResult(
   preparation: ProductReadingPreparationResult,
-  consumerReadingAuthority: PreviewConsumerReadingAuthorityResolutionV1,
+  consumerReadingAuthority: ConsumerReadingAuthorityResolutionV1,
 ): GovernedReadingExecutionResult {
   const state: GovernedReadingExecutionState = 'invariant_blocked';
   const reasonCodes = ['LEGACY_NARRATIVE_RUNTIME_REQUIRED'] as const;
@@ -406,36 +432,185 @@ export async function executeProductReading(
   }
 
   const governedEvidence = preparation.composition.evidence.bundle;
-  const consumerReadingAuthority = resolvePreviewConsumerReadingAuthorityV1(
-    preparation.normalization.request.intent,
-  );
+  const consumerReadingAuthority =
+    (
+      options.consumerReadingAuthorityResolver ??
+      resolvePreviewConsumerReadingAuthorityV1
+    )(preparation.normalization.request.intent);
+
+  if (
+    options.governedAnnualTemporalStructure !== undefined &&
+    options.governedAnnualTemporalProduction !== undefined
+  ) {
+    throw new TypeError(
+      'Manual and automatic governed annual temporal inputs are mutually exclusive.',
+    );
+  }
+
+  const hasGovernedAnnualTemporalInput =
+    options.governedAnnualTemporalStructure !== undefined ||
+    options.governedAnnualTemporalProduction !== undefined;
+
+  if (hasGovernedAnnualTemporalInput) {
+    if (preparation.normalization.request.intent.temporalScope !== 'annual') {
+      throw new TypeError(
+        'Governed annual temporal input requires an annual reading request.',
+      );
+    }
+    if (consumerReadingAuthority.authority !== 'official_reading') {
+      throw new TypeError(
+        'Governed annual temporal input requires Official Reading authority.',
+      );
+    }
+  }
 
   if (consumerReadingAuthority.authority === 'official_reading') {
-    const semanticTextBindings = buildPreviewSemanticTextBindingsV1({
+    const readingSection = readingSectionForIntentV1(
+      preparation.normalization.request.intent,
+    );
+    const projectionInput = {
       intent: preparation.normalization.request.intent,
       registry,
       evidence: governedEvidence,
       targetClaimIds: preparation.composition.selection.targetClaimIds,
-    });
-    const semanticQualifierBindings = buildPreviewSemanticQualifierBindingsV1({
-      intent: preparation.normalization.request.intent,
-      registry,
-      evidence: governedEvidence,
-      targetClaimIds: preparation.composition.selection.targetClaimIds,
-    });
+    };
+    const semanticProjection =
+      options.officialReadingSemanticProjectionResolver !== undefined
+        ? await options.officialReadingSemanticProjectionResolver(
+            projectionInput,
+          )
+        : readingSection === 'relationship:natal:spouse'
+          ? await import(
+              '../preview/preview-spouse-official-reading-semantic-projection.js'
+            ).then((module) =>
+              module.buildPreviewSpouseOfficialReadingSemanticProjectionV1(
+                projectionInput,
+              ),
+            )
+          : {
+              semanticTextBindings: buildPreviewSemanticTextBindingsV1(
+                projectionInput,
+              ),
+              semanticQualifierBindings:
+                buildPreviewSemanticQualifierBindingsV1(projectionInput),
+            };
     const canonicalSemantics = buildCanonicalReadingSemanticBundleV1({
       intent: preparation.normalization.request.intent,
       evidence: governedEvidence,
       targetClaimIds: preparation.composition.selection.targetClaimIds,
-      semanticTextBindings,
-      semanticQualifierBindings,
+      semanticTextBindings: semanticProjection.semanticTextBindings,
+      semanticQualifierBindings: semanticProjection.semanticQualifierBindings,
     });
     const officialReadingPlan = buildOfficialReadingPlanV1(canonicalSemantics);
+
+    const annualImpactProduction =
+      options.governedAnnualTemporalProduction === undefined
+        ? undefined
+        : produceAnnualStructuralImpactBundleV1(
+            snapshot,
+            preparation.normalization.request,
+            options.governedAnnualTemporalProduction.baseline.structureId,
+            options.governedAnnualTemporalProduction.roleAssignments,
+          );
+
+    if (
+      annualImpactProduction !== undefined &&
+      annualImpactProduction.status !== 'resolved'
+    ) {
+      return officialAuthorityBlockedResult(
+        preparation,
+        consumerReadingAuthority,
+        [
+          `OFFICIAL_READING_ANNUAL_STRUCTURAL_IMPACT_PRODUCTION_BLOCKED:${annualImpactProduction.reasonCode}`,
+          ...(annualImpactProduction.dayunReasonCode === undefined
+            ? []
+            : [
+                `OFFICIAL_READING_ANNUAL_DAYUN_CONTEXT_BLOCKED:${annualImpactProduction.dayunReasonCode}`,
+              ]),
+          ...(annualImpactProduction.structuralRoleReasonCode === undefined
+            ? []
+            : [
+                `OFFICIAL_READING_ANNUAL_STRUCTURAL_ROLE_BLOCKED:${annualImpactProduction.structuralRoleReasonCode}`,
+              ]),
+        ],
+        canonicalSemantics,
+        officialReadingPlan,
+      );
+    }
+
+    const annualTemporalInput: GovernedAnnualTemporalStructureInputV1 | undefined =
+      options.governedAnnualTemporalStructure ??
+      (annualImpactProduction?.status === 'resolved'
+        ? {
+            baseline: options.governedAnnualTemporalProduction!.baseline,
+            impactBundle: annualImpactProduction.bundle,
+          }
+        : undefined);
+
+    const annualTemporalStructure =
+      annualTemporalInput === undefined
+        ? undefined
+        : resolveAnnualTemporalStructureIntegration(
+            snapshot,
+            preparation.normalization.request,
+            annualTemporalInput.baseline,
+            annualTemporalInput.impactBundle,
+          );
+
+    if (
+      annualTemporalStructure !== undefined &&
+      annualTemporalStructure.status !== 'resolved'
+    ) {
+      return officialAuthorityBlockedResult(
+        preparation,
+        consumerReadingAuthority,
+        [
+          `OFFICIAL_READING_ANNUAL_TEMPORAL_STRUCTURE_BLOCKED:${annualTemporalStructure.reasonCode}`,
+          ...(annualTemporalStructure.transitionReasonCode === undefined
+            ? []
+            : [
+                `OFFICIAL_READING_ANNUAL_TEMPORAL_TRANSITION_BLOCKED:${annualTemporalStructure.transitionReasonCode}`,
+              ]),
+        ],
+        canonicalSemantics,
+        officialReadingPlan,
+      );
+    }
+
+    const annualTemporalProjection =
+      annualTemporalStructure?.status === 'resolved'
+        ? projectAnnualTemporalStructureForReading(annualTemporalStructure)
+        : undefined;
+
+    const sourceSummariesRequested =
+      preparation.normalization.request.outputPreferences?.includeSourceSummaries === true;
+    if (sourceSummariesRequested && governedEvidence.sourceSummaries === undefined) {
+      return officialAuthorityBlockedResult(
+        preparation,
+        consumerReadingAuthority,
+        ['OFFICIAL_READING_SOURCE_SUMMARIES_REQUIRED'],
+        canonicalSemantics,
+        officialReadingPlan,
+      );
+    }
     const officialReadingReport = canRenderOfficialReadingV1(
       canonicalSemantics,
       officialReadingPlan,
     )
-      ? renderOfficialReadingV1(canonicalSemantics, officialReadingPlan)
+      ? renderOfficialReadingV1(canonicalSemantics, officialReadingPlan, {
+          ...(sourceSummariesRequested
+            ? { sourceSummaries: governedEvidence.sourceSummaries ?? [] }
+            : {}),
+          ...(preparation.normalization.request.outputPreferences?.preferredDetail === undefined
+            ? {}
+            : {
+                preferredDetail:
+                  preparation.normalization.request.outputPreferences.preferredDetail,
+              }),
+          ...(annualTemporalProjection === undefined
+            ? {}
+            : { annualTemporalStructure: annualTemporalProjection }),
+        })
       : undefined;
 
     if (officialReadingReport === undefined) {

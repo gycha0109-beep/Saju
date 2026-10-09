@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import {
-  calculateCanonicalSajuSnapshot,
-  createI13StrengthEvidenceRegistry,
-  runInterpretation,
-  type CalculationPolicySnapshot,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import { createI13StrengthEvidenceRegistry } from '../src/research/i13-strength-evidence-pack.js';
 
 const basePolicy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/scenario-evaluation-audit-test',

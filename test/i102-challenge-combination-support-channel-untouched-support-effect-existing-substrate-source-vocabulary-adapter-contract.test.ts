@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'vitest';
+import type {
+  ChallengeCombinationSupportChannelUntouchedSupportEffectMinimalSourceVocabularyTaxonomyImplementationReadinessReviewReport,
+} from '../src/research/i101-challenge-combination-support-channel-untouched-support-effect-minimal-source-vocabulary-taxonomy-implementation-readiness-review.js';
 import {
   buildI102ChallengeCombinationSupportChannelUntouchedSupportEffectExistingSubstrateSourceVocabularyAdapterContract,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectMinimalSourceVocabularyTaxonomyImplementationReadinessReviewReport,
-} from '../src/index.js';
+} from '../src/research/i102-challenge-combination-support-channel-untouched-support-effect-existing-substrate-source-vocabulary-adapter-contract.js';
 
 function i101(): ChallengeCombinationSupportChannelUntouchedSupportEffectMinimalSourceVocabularyTaxonomyImplementationReadinessReviewReport {
   return {

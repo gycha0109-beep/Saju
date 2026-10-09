@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionCandidateSetEvidenceRebindingAdjudicationInputMaterializationRecordReport } from '../src/research/i143-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-candidate-set-evidence-rebinding-adjudication-input-materialization-record.js';
+import { I144_BINDING_EVALUATION_STEP_IDS } from '../src/research/i144-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-input-package-evaluation-authorization-readiness-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionAuthorizedRegisteredInputPackageFailClosedCandidateSetEvaluationRecordReport } from '../src/research/i146-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-authorized-registered-input-package-fail-closed-candidate-set-evaluation-record.js';
 import {
-  I144_BINDING_EVALUATION_STEP_IDS,
   I147_SCOPE_COMPATIBILITY_PROCEDURE,
   buildI147ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionScopeCompatibilityAdjudicationReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionAuthorizedRegisteredInputPackageFailClosedCandidateSetEvaluationRecordReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionCandidateSetEvidenceRebindingAdjudicationInputMaterializationRecordReport,
-} from '../src/index.js';
+} from '../src/research/i147-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-scope-compatibility-adjudication-readiness-review.js';
 
 const evidenceIds = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'] as const;
 

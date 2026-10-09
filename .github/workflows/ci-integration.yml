@@ -1,0 +1,111 @@
+name: CI Integration
+run-name: "Integration PR #${{ inputs.pr || github.event.pull_request.number }} at ${{ inputs.head_sha || github.event.pull_request.head.sha }}"
+
+on:
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: PR number targeting the default branch
+        required: true
+        type: string
+      head_sha:
+        description: Exact PR head SHA
+        required: true
+        type: string
+      base_sha:
+        description: Exact PR submission-event base SHA
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+# Serialize repeated submissions for the same PR, but do not make unrelated
+# PRs wait behind one repository-wide integration queue.
+concurrency:
+  group: ci-integration-admission-${{ inputs.pr || github.event.pull_request.number }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      current_base_sha: ${{ steps.current-base.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          # Always execute the admission guard from the current default branch.
+          # A pull_request merge ref may still point at the PR's historical base.
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Reject stale or misattributed requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_PR: ${{ inputs.pr || github.event.pull_request.number }}
+          CANDIDATE_HEAD: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          CANDIDATE_BASE: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
+        run: node scripts/ci/integration-candidate.mjs guard
+      - id: current-base
+        name: Pin current default branch for full regression
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          current_base="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${DEFAULT_BRANCH}" --jq .sha)"
+          [[ "$current_base" =~ ^[a-f0-9]{40}$ ]]
+          printf 'sha=%s\n' "$current_base" >> "$GITHUB_OUTPUT"
+
+  full:
+    needs: admission
+    uses: ./.github/workflows/ci.yml
+    with:
+      candidate_pr: ${{ inputs.pr || github.event.pull_request.number }}
+      candidate_head: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+      # Integrate the PR head against the default-branch SHA captured after
+      # admission, not the potentially historical base recorded by the event.
+      candidate_base: ${{ needs.admission.outputs.current_base_sha }}
+
+  verify:
+    name: CI Integration Verify
+    needs: [admission, full]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Require full candidate regression
+        env:
+          ADMISSION_RESULT: ${{ needs.admission.result }}
+          FULL_RESULT: ${{ needs.full.result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$ADMISSION_RESULT" = "success"
+          test "$FULL_RESULT" = "success"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          # Recheck with the current guard implementation. Do not execute a
+          # stale PR merge-ref copy of integration-candidate.mjs.
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Recheck head and mergeability before reporting success
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_PR: ${{ inputs.pr || github.event.pull_request.number }}
+          CANDIDATE_HEAD: ${{ inputs.head_sha || github.event.pull_request.head.sha }}
+          CANDIDATE_BASE: ${{ inputs.base_sha || github.event.pull_request.base.sha }}
+        run: node scripts/ci/integration-candidate.mjs guard

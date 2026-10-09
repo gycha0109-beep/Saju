@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   compareDayMasterSupportEvidence,
   I21_SUPPORT_PRECEDENCE_POLICY,
-} from '../src/index.js';
+} from '../src/research/i21-support-precedence-policy.js';
 
 describe('I21 day-master support precedence policy', () => {
   test('authorizes only the source-backed root-versus-peer partial order', () => {

@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "fr300-r2c-dar-ast-authoritative-dua-access-readiness-evidence-v1",
+  "watchtowerTrack": "face-engine",
+  "recordedAt": "2026-09-27",
+  "contractVersion": "FR300-R2C-DAR-AST-AUTHORITATIVE-DUA-ACCESS-READINESS-v1",
+  "publicAttempt": {
+    "officialRepositoryReviewed": true,
+    "scientificDataArticleReviewed": true,
+    "osfProjectRef": "https://osf.io/xk4f6/",
+    "osfDoi": "10.17605/OSF.IO/XK4F6",
+    "authoritativeOsfDuaDeclared": true,
+    "authoritativeDuaRetrieved": false,
+    "authoritativeDuaReviewed": false,
+    "githubMirrorMaySubstitute": false,
+    "state": "unavailable_in_current_non_authenticated_public_path"
+  },
+  "purpose": {
+    "class": "internal_commercial_product_r_and_d_validation",
+    "identityRecognition": false,
+    "biometricVerification": false,
+    "surveillance": false,
+    "tracking": false,
+    "demographicProfiling": false,
+    "lawEnforcementUse": false,
+    "rawArtifactRedistribution": false
+  },
+  "authoritativeRights": {
+    "reviewed": false,
+    "compatibility": "not_adjudicable_without_authoritative_document",
+    "commercialProductValidation": "not_adjudicable",
+    "derivedMetricRetention": "not_adjudicable",
+    "aggregatePublication": "not_adjudicable"
+  },
+  "technicalReadiness": {
+    "metricAuthorityLevel": "M1_device_class_metric_capable",
+    "pairingAuthorityLevel": "P2_same_neutral_acquisition_condition",
+    "controlledIntakeMayResolveRemainingTechnicalAuthority": true
+  },
+  "preparedArtifacts": {
+    "accessRequestPacket": true,
+    "clarificationPacket": true,
+    "sent": false
+  },
+  "actions": {
+    "osfAccountCreated": false,
+    "duaSigned": false,
+    "duaSubmitted": false,
+    "controlledAccessRequested": false,
+    "externalContactPerformed": false,
+    "participantArtifactDownloaded": false,
+    "participantArtifactInspected": false,
+    "paidSpendAuthorized": false
+  },
+  "authority": {
+    "fr299EligibleCandidateCount": 0,
+    "fr300R2EligibleCandidateCount": 0,
+    "productMaterialization": "18/29",
+    "productionActivated": false,
+    "commerceActivated": false
+  },
+  "disposition": "authoritative_dua_unavailable_in_current_public_path_request_packet_prepared",
+  "nextAction": "explicitly_authorized_authenticated_osf_dua_retrieval_or_controlled_access_request_stage"
+}

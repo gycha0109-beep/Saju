@@ -1,0 +1,110 @@
+name: "[WT:face-reading] FR104 U4B Render-Only Fixture Pin"
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fr104-u4b-render-only.yml"
+      - "scripts/build-fr104-u4b-makehuman-morph-fixture.mjs"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-validation-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-fixture-evidence-fr104.ts"
+      - "packages/face-reading/src/neutral-ear-prospective-independent-geometry-fixture-evidence-fr104.test.ts"
+      - "research/face-research/fr104-prospective-independent-geometry-validation-u4b.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Record Node runtime
+        run: node --version
+
+      - name: Syntax-check frozen U4B builder
+        run: node --check scripts/build-fr104-u4b-makehuman-morph-fixture.mjs
+
+      - name: Execute U4B-B render only
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/face-geometry
+          node scripts/build-fr104-u4b-makehuman-morph-fixture.mjs \
+            --write-render=.cache/face-geometry/fr104-u4b-morph.png \
+            | tee /tmp/fr104-u4b-render.jsonl
+
+      - name: Verify render-only authority boundary
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const lines = fs.readFileSync('/tmp/fr104-u4b-render.jsonl', 'utf8')
+            .trim()
+            .split(/\r?\n/)
+            .filter(Boolean);
+          const result = JSON.parse(lines.at(-1));
+
+          if (
+            result.schemaVersion !== 'fr104-u4b-makehuman-morph-render-result-v1'
+            || result.execution?.renderExecuted !== true
+            || result.execution?.providerExecuted !== false
+            || result.execution?.providerResultObserved !== false
+            || result.deterministicRender?.repeatRenderByteEqual !== true
+            || result.deterministicRender?.repeatRenderSha256Equal !== true
+            || result.deterministicRender?.renderedFixtureDigestPinned !== false
+            || result.morph?.targetPath !== 'makehuman/data/targets/head/head-scale-horiz-incr.target'
+            || result.morph?.targetGitBlobSha1 !== '9a32e90f7bd4d0a90092052d89137a365e272a67'
+            || result.morph?.targetWeight !== 1
+          ) {
+            throw new Error('FR104 U4B-B render-only boundary drift.');
+          }
+
+          const left =
+            result.anatomicalGroundTruth?.anatomicalLeftEye
+              ?.normalizedImageCoordinate;
+          const right =
+            result.anatomicalGroundTruth?.anatomicalRightEye
+              ?.normalizedImageCoordinate;
+          if (
+            result.deterministicRender?.renderSha256
+              !== '91a481011618f7a74aed7380185d640c604dcde587eff69b6f44654c97585b33'
+            || result.anatomicalGroundTruth?.anatomicalLeftEye?.sourceJoint
+              !== 'eye.L____head'
+            || JSON.stringify(
+              result.anatomicalGroundTruth?.anatomicalLeftEye?.sourcePoint,
+            ) !== JSON.stringify([0.36575,7.284149999999999,1.24535])
+            || left?.x !== 0.6081000875693314
+            || left?.y !== 0.5
+            || result.anatomicalGroundTruth?.anatomicalRightEye?.sourceJoint
+              !== 'eye.R____head'
+            || JSON.stringify(
+              result.anatomicalGroundTruth?.anatomicalRightEye?.sourcePoint,
+            ) !== JSON.stringify([-0.36575,7.284149999999999,1.24535])
+            || right?.x !== 0.3918999124306686
+            || right?.y !== 0.5
+            || result.anatomicalGroundTruth
+              ?.directVsMatrixProjectionMaximumError !== 0
+          ) {
+            throw new Error('FR104 U4B-B exact fixture evidence drift.');
+          }
+
+          console.log(
+            'FR104_U4B_RENDER_SHA256 '
+              + result.deterministicRender.renderSha256,
+          );
+          console.log(
+            'FR104_U4B_ANATOMICAL_LEFT '
+              + JSON.stringify(result.anatomicalGroundTruth.anatomicalLeftEye),
+          );
+          console.log(
+            'FR104_U4B_ANATOMICAL_RIGHT '
+              + JSON.stringify(result.anatomicalGroundTruth.anatomicalRightEye),
+          );
+          console.log(
+            'FR104_U4B_PROVIDER_EXECUTED '
+              + String(result.execution.providerExecuted),
+          );
+          NODE

@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildI114ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemPositionalApplicabilityAdapterContract,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeInteractionEligibilityMethodologyReviewReport,
-} from '../src/index.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeInteractionEligibilityMethodologyReviewReport } from '../src/research/i113-challenge-combination-support-channel-untouched-support-effect-source-ke-interaction-eligibility-methodology-review.js';
+import { buildI114ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemPositionalApplicabilityAdapterContract } from '../src/research/i114-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-positional-applicability-adapter-contract.js';
 
 function i113(
   overrides: Partial<ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeInteractionEligibilityMethodologyReviewReport> = {},

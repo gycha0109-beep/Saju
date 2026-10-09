@@ -20,6 +20,7 @@ import {
 } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath, URL } from 'node:url';
+import { Fr104FlorenceLiveWorkerBridge } from './fr104-florence-live-worker-bridge.mjs';
 import { assertLanRequestAllowed } from './mesh6j-private-lan-transport.mjs';
 
 const RELEASE_COMMIT = 'f8ef212d5c962c0e853db7e59d217056b187084b';
@@ -35,6 +36,9 @@ const DEFAULT_PORT = 4316;
 const SMOKE = process.env.MYEONGHWA_MESH6J_SMOKE === '1';
 const LAN_SMOKE = process.env.MYEONGHWA_MESH6J_LAN_SMOKE === '1';
 const LAN_MODE = process.env.MESH6J_LAN === '1' || LAN_SMOKE;
+const FR104_FLORENCE_LIVE_ENABLED = process.env.FR104_FLORENCE_LIVE === '1';
+const FR104_FLORENCE_HTTP_SCHEMA = 'fr104-florence-live-http-v1';
+const FR104_MAX_RGBA_BYTES = 32 * 1024 * 1024;
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, '..');
@@ -53,6 +57,20 @@ const fr281PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr281-still
 const fr281ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr281-still-image-metric-eye-chord.mjs');
 const fr283PagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr283-still-image-fr76-eye-chord-propagation.html');
 const fr283ClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr283-still-image-fr76-eye-chord-propagation.mjs');
+const fr104MirrorPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-pair.html');
+const fr104MirrorClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-pair.mjs');
+const fr104MirrorMultiPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-multifixture.html');
+const fr104MirrorMultiClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-ear-mirror-multifixture.mjs');
+const fr104MakeHumanPreflightPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-preflight.html');
+const fr104MakeHumanPreflightClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-preflight.mjs');
+const fr104MakeHumanTransformPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-transform-diagnostics.html');
+const fr104MakeHumanTransformClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-transform-diagnostics.mjs');
+const fr104MakeHumanRotationDependencePagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-dependence.html');
+const fr104MakeHumanRotationDependenceClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-dependence.mjs');
+const fr104MakeHumanRotationCompensationPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.html');
+const fr104MakeHumanRotationCompensationClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-makehuman-provider-rotation-compensation.mjs');
+const fr104ProspectiveComposedOrientationPagePath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.html');
+const fr104ProspectiveComposedOrientationClientPath = resolve(repoRoot, 'tools/face-geometry/capture/fr104-provider-composed-orientation-validation.mjs');
 const cacheDir = resolve(repoRoot, '.cache/face-geometry/mesh6j');
 const canonicalObj = resolve(cacheDir, 'mediapipe-canonical-face.obj');
 const gnmHead = resolve(cacheDir, 'gnm_head.npz');
@@ -60,6 +78,9 @@ const ontology = resolve(cacheDir, 'gnm-provider-region-ontology.json');
 const weightedAdapter = resolve(cacheDir, 'mediapipe468-weighted-region-adapter.json');
 const metadataFile = resolve(cacheDir, 'geometry_pipeline_metadata_landmarks.pbtxt');
 const parityInputFile = resolve(cacheDir, 'fr76-parity-input.prototxt');
+const fr104MakeHumanFixture = resolve(cacheDir, 'fr104-makehuman-u1-2.png');
+const FR104_MAKEHUMAN_FIXTURE_SHA256 =
+  'f72a976d90d61223b8ad273d8d8da98ecd6ed0d1a63dff08ded358eef54e92bb';
 
 function fail(message) {
   throw new Error('MESH6J ' + message);
@@ -107,6 +128,62 @@ async function fetchExactMetadata() {
 
 async function fetchExactParityInput() {
   await fetchExactRemoteAsset(PARITY_INPUT_URL, PARITY_INPUT_BLOB_SHA, parityInputFile, 'FR76 parity input');
+}
+
+function fileSha256(path) {
+  return createHash('sha256').update(readFileSync(path)).digest('hex');
+}
+
+function ensureFr104MakeHumanFixture() {
+  mkdirSync(cacheDir, { recursive: true });
+  if (
+    existsSync(fr104MakeHumanFixture)
+    && statSync(fr104MakeHumanFixture).isFile()
+    && fileSha256(fr104MakeHumanFixture)
+      === FR104_MAKEHUMAN_FIXTURE_SHA256
+  ) {
+    return;
+  }
+
+  const renderResult = spawnSync(
+    process.execPath,
+    [
+      'scripts/verify-fr104-makehuman-deterministic-render.mjs',
+      '--write-render=' + fr104MakeHumanFixture,
+    ],
+    {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: 'pipe',
+    },
+  );
+  if (renderResult.error) {
+    fail(
+      'FR104 MakeHuman fixture materialization failed: '
+        + renderResult.error.message,
+    );
+  }
+  if (renderResult.status !== 0) {
+    fail(
+      'FR104 MakeHuman fixture materialization failed.\n'
+        + (renderResult.stderr || renderResult.stdout || ''),
+    );
+  }
+  if (
+    !existsSync(fr104MakeHumanFixture)
+    || !statSync(fr104MakeHumanFixture).isFile()
+  ) {
+    fail('FR104 MakeHuman fixture was not materialized.');
+  }
+  const observed = fileSha256(fr104MakeHumanFixture);
+  if (observed !== FR104_MAKEHUMAN_FIXTURE_SHA256) {
+    fail(
+      'FR104 MakeHuman fixture SHA-256 mismatch: expected='
+        + FR104_MAKEHUMAN_FIXTURE_SHA256
+        + ' observed='
+        + observed,
+    );
+  }
 }
 
 async function prepareRuntimeAssets() {
@@ -197,6 +274,7 @@ function mime(path) {
     case '.txt': return 'text/plain; charset=utf-8';
     case '.wasm': return 'application/wasm';
     case '.map': return 'application/json; charset=utf-8';
+    case '.png': return 'image/png';
     default: return 'application/octet-stream';
   }
 }
@@ -213,6 +291,156 @@ function sendFile(response, path) {
     'x-content-type-options': 'nosniff',
   });
   response.end(readFileSync(path));
+}
+
+function sendJson(response, status, payload) {
+  response.writeHead(status, {
+    'content-type': 'application/json; charset=utf-8',
+    'cache-control': 'no-store',
+    'x-content-type-options': 'nosniff',
+  });
+  response.end(JSON.stringify(payload));
+}
+
+function readBoundedRequestBody(request, maximumBytes) {
+  return new Promise((resolveBody, rejectBody) => {
+    const chunks = [];
+    let total = 0;
+    request.on('data', (chunk) => {
+      total += chunk.length;
+      if (total > maximumBytes) {
+        rejectBody(new Error('request body exceeds governed maximum.'));
+        request.destroy();
+        return;
+      }
+      chunks.push(Buffer.from(chunk));
+    });
+    request.once('end', () => resolveBody(Buffer.concat(chunks, total)));
+    request.once('error', rejectBody);
+  });
+}
+
+async function handleFr104FlorenceLiveRequest(request, response, bridge) {
+  if (bridge === null) {
+    sendJson(response, 503, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_disabled_no_provider_authority',
+      error: 'FR104 Florence live transport is disabled; set FR104_FLORENCE_LIVE=1 explicitly.',
+      authority: {
+        validatedExternalEarObservationAuthorized: false,
+        anatomicalLateralityAuthorized: false,
+        traditionalBindingAuthorized: false,
+        productionAuthorization: false,
+      },
+    });
+    return;
+  }
+  if (request.headers['content-type'] !== 'application/octet-stream') {
+    sendJson(response, 415, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: 'content-type must be application/octet-stream',
+    });
+    return;
+  }
+  if (request.headers['x-fr104-schema-version'] !== FR104_FLORENCE_HTTP_SCHEMA) {
+    sendJson(response, 400, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: 'x-fr104-schema-version mismatch',
+    });
+    return;
+  }
+
+  const providerRunRef = request.headers['x-fr104-provider-run-ref'];
+  const width = Number(request.headers['x-fr104-width']);
+  const height = Number(request.headers['x-fr104-height']);
+  if (
+    typeof providerRunRef !== 'string'
+    || providerRunRef.length === 0
+    || providerRunRef.length > 256
+    || /\s/u.test(providerRunRef)
+    || !Number.isInteger(width)
+    || width <= 0
+    || !Number.isInteger(height)
+    || height <= 0
+  ) {
+    sendJson(response, 400, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: 'providerRunRef/width/height headers are invalid',
+    });
+    return;
+  }
+
+  const expectedLength = width * height * 4;
+  if (
+    !Number.isSafeInteger(expectedLength)
+    || expectedLength <= 0
+    || expectedLength > FR104_MAX_RGBA_BYTES
+  ) {
+    sendJson(response, 413, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: 'RGBA payload dimensions exceed the governed bound',
+    });
+    return;
+  }
+
+  const declared = request.headers['content-length'];
+  if (
+    declared !== undefined
+    && (
+      !/^\d+$/u.test(declared)
+      || Number(declared) !== expectedLength
+    )
+  ) {
+    sendJson(response, 400, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: 'content-length must equal width * height * 4',
+    });
+    return;
+  }
+
+  try {
+    const body = await readBoundedRequestBody(
+      request,
+      FR104_MAX_RGBA_BYTES,
+    );
+    if (body.byteLength !== expectedLength) {
+      sendJson(response, 400, {
+        schemaVersion: 'fr104-florence-live-http-response-v1',
+        authorityState: 'transport_error_no_provider_authority',
+        error: 'received RGBA byte length does not equal width * height * 4',
+      });
+      return;
+    }
+
+    const workerResult = await bridge.invoke({
+      providerRunRef,
+      width,
+      height,
+      rgbaBytes: new Uint8Array(
+        body.buffer,
+        body.byteOffset,
+        body.byteLength,
+      ),
+    });
+    sendJson(response, 200, workerResult);
+  } catch (error) {
+    sendJson(response, 502, {
+      schemaVersion: 'fr104-florence-live-http-response-v1',
+      authorityState: 'transport_error_no_provider_authority',
+      error: error instanceof Error ? error.message : String(error),
+      authority: {
+        validatedExternalEarObservationAuthorized: false,
+        anatomicalLateralityAuthorized: false,
+        traditionalBindingAuthorized: false,
+        productionAuthorization: false,
+      },
+    });
+  }
 }
 
 function requireLanTlsConfig() {
@@ -305,6 +533,31 @@ async function main() {
   const fr283PageTemplate = readFileSync(fr283PagePath, 'utf8');
   if (!fr283PageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR283 operator page import-map placeholder is missing.');
   const fr283PageHtml = fr283PageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104MirrorPageTemplate = readFileSync(fr104MirrorPagePath, 'utf8');
+  if (!fr104MirrorPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 mirror-pair page import-map placeholder is missing.');
+  const fr104MirrorPageHtml = fr104MirrorPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104MirrorMultiPageTemplate = readFileSync(fr104MirrorMultiPagePath, 'utf8');
+  if (!fr104MirrorMultiPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 multi-fixture mirror page import-map placeholder is missing.');
+  const fr104MirrorMultiPageHtml = fr104MirrorMultiPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104MakeHumanPreflightPageTemplate = readFileSync(fr104MakeHumanPreflightPagePath, 'utf8');
+  if (!fr104MakeHumanPreflightPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 MakeHuman preflight page import-map placeholder is missing.');
+  const fr104MakeHumanPreflightPageHtml = fr104MakeHumanPreflightPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104MakeHumanTransformPageTemplate = readFileSync(fr104MakeHumanTransformPagePath, 'utf8');
+  if (!fr104MakeHumanTransformPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 MakeHuman transform diagnostics page import-map placeholder is missing.');
+  const fr104MakeHumanTransformPageHtml = fr104MakeHumanTransformPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104MakeHumanRotationDependencePageTemplate = readFileSync(fr104MakeHumanRotationDependencePagePath, 'utf8');
+  if (!fr104MakeHumanRotationDependencePageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 MakeHuman provider rotation-dependence page import-map placeholder is missing.');
+  const fr104MakeHumanRotationDependencePageHtml = fr104MakeHumanRotationDependencePageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104MakeHumanRotationCompensationPageTemplate = readFileSync(fr104MakeHumanRotationCompensationPagePath, 'utf8');
+  if (!fr104MakeHumanRotationCompensationPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 MakeHuman provider rotation-compensation page import-map placeholder is missing.');
+  const fr104MakeHumanRotationCompensationPageHtml = fr104MakeHumanRotationCompensationPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+  const fr104ProspectiveComposedOrientationPageTemplate = readFileSync(fr104ProspectiveComposedOrientationPagePath, 'utf8');
+  if (!fr104ProspectiveComposedOrientationPageTemplate.includes('__MEDIAPIPE_ENTRY__')) fail('FR104 U3.3 prospective composed-orientation page import-map placeholder is missing.');
+  const fr104ProspectiveComposedOrientationPageHtml = fr104ProspectiveComposedOrientationPageTemplate.replaceAll('__MEDIAPIPE_ENTRY__', importMapTarget);
+
+  const florenceLiveBridge = FR104_FLORENCE_LIVE_ENABLED
+    ? new Fr104FlorenceLiveWorkerBridge()
+    : null;
 
   const requestHandler = (request, response) => {
     if (LAN_MODE) {
@@ -318,6 +571,24 @@ async function main() {
     }
     const rawUrl = request.url || '/';
     const url = new URL(rawUrl, (LAN_MODE ? 'https://' : 'http://') + (request.headers.host || LOCALHOST_HOST));
+
+    if (url.pathname === '/runtime/fr104/florence') {
+      if (request.method !== 'POST') {
+        response.writeHead(405, {
+          'content-type': 'text/plain; charset=utf-8',
+          allow: 'POST',
+        });
+        response.end('method not allowed');
+        return;
+      }
+      void handleFr104FlorenceLiveRequest(
+        request,
+        response,
+        florenceLiveBridge,
+      );
+      return;
+    }
+
     if (request.method !== 'GET') {
       response.writeHead(405, { 'content-type': 'text/plain; charset=utf-8', allow: 'GET' });
       response.end('method not allowed');
@@ -443,6 +714,193 @@ async function main() {
     }
     if (url.pathname === '/fr283/operator.mjs') { sendFile(response, fr283ClientPath); return; }
 
+    if (url.pathname === '/fr104-mirror' || url.pathname === '/fr104-mirror/' || url.pathname === '/fr104-mirror/index.html') {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104MirrorPageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-mirror/operator.mjs') { sendFile(response, fr104MirrorClientPath); return; }
+
+    if (url.pathname === '/fr104-mirror-multi' || url.pathname === '/fr104-mirror-multi/' || url.pathname === '/fr104-mirror-multi/index.html') {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104MirrorMultiPageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-mirror-multi/operator.mjs') { sendFile(response, fr104MirrorMultiClientPath); return; }
+
+    if (url.pathname === '/fr104-makehuman-preflight' || url.pathname === '/fr104-makehuman-preflight/' || url.pathname === '/fr104-makehuman-preflight/index.html') {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104MakeHumanPreflightPageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-makehuman-preflight/operator.mjs') { sendFile(response, fr104MakeHumanPreflightClientPath); return; }
+    if (url.pathname === '/fr104-makehuman-preflight/fixture.png') {
+      try {
+        ensureFr104MakeHumanFixture();
+      } catch (error) {
+        response.writeHead(500, {
+          'content-type': 'text/plain; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-content-type-options': 'nosniff',
+        });
+        response.end(
+          error instanceof Error ? error.message : String(error),
+        );
+        return;
+      }
+      sendFile(response, fr104MakeHumanFixture);
+      return;
+    }
+
+    if (
+      url.pathname === '/fr104-makehuman-transform-diagnostics'
+      || url.pathname === '/fr104-makehuman-transform-diagnostics/'
+      || url.pathname === '/fr104-makehuman-transform-diagnostics/index.html'
+    ) {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104MakeHumanTransformPageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-makehuman-transform-diagnostics/operator.mjs') {
+      sendFile(response, fr104MakeHumanTransformClientPath);
+      return;
+    }
+    if (url.pathname === '/fr104-makehuman-transform-diagnostics/fixture.png') {
+      try {
+        ensureFr104MakeHumanFixture();
+      } catch (error) {
+        response.writeHead(500, {
+          'content-type': 'text/plain; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-content-type-options': 'nosniff',
+        });
+        response.end(
+          error instanceof Error ? error.message : String(error),
+        );
+        return;
+      }
+      sendFile(response, fr104MakeHumanFixture);
+      return;
+    }
+
+    if (
+      url.pathname === '/fr104-makehuman-provider-rotation-dependence'
+      || url.pathname === '/fr104-makehuman-provider-rotation-dependence/'
+      || url.pathname === '/fr104-makehuman-provider-rotation-dependence/index.html'
+    ) {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104MakeHumanRotationDependencePageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-makehuman-provider-rotation-dependence/operator.mjs') {
+      sendFile(response, fr104MakeHumanRotationDependenceClientPath);
+      return;
+    }
+    if (url.pathname === '/fr104-makehuman-provider-rotation-dependence/fixture.png') {
+      try {
+        ensureFr104MakeHumanFixture();
+      } catch (error) {
+        response.writeHead(500, {
+          'content-type': 'text/plain; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-content-type-options': 'nosniff',
+        });
+        response.end(
+          error instanceof Error ? error.message : String(error),
+        );
+        return;
+      }
+      sendFile(response, fr104MakeHumanFixture);
+      return;
+    }
+
+    if (
+      url.pathname === '/fr104-makehuman-provider-rotation-compensation'
+      || url.pathname === '/fr104-makehuman-provider-rotation-compensation/'
+      || url.pathname === '/fr104-makehuman-provider-rotation-compensation/index.html'
+    ) {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104MakeHumanRotationCompensationPageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-makehuman-provider-rotation-compensation/operator.mjs') {
+      sendFile(response, fr104MakeHumanRotationCompensationClientPath);
+      return;
+    }
+    if (url.pathname === '/fr104-makehuman-provider-rotation-compensation/fixture.png') {
+      try {
+        ensureFr104MakeHumanFixture();
+      } catch (error) {
+        response.writeHead(500, {
+          'content-type': 'text/plain; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-content-type-options': 'nosniff',
+        });
+        response.end(
+          error instanceof Error ? error.message : String(error),
+        );
+        return;
+      }
+      sendFile(response, fr104MakeHumanFixture);
+      return;
+    }
+
+    if (
+      url.pathname === '/fr104-provider-composed-orientation-validation'
+      || url.pathname === '/fr104-provider-composed-orientation-validation/'
+      || url.pathname === '/fr104-provider-composed-orientation-validation/index.html'
+    ) {
+      response.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'cache-control': 'no-store',
+        'content-security-policy': "default-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com; img-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:;",
+        'permissions-policy': 'camera=()',
+        'x-content-type-options': 'nosniff',
+      });
+      response.end(fr104ProspectiveComposedOrientationPageHtml);
+      return;
+    }
+    if (url.pathname === '/fr104-provider-composed-orientation-validation/operator.mjs') {
+      sendFile(response, fr104ProspectiveComposedOrientationClientPath);
+      return;
+    }
+
     if (url.pathname === '/runtime/config.json') {
       response.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
@@ -458,6 +916,9 @@ async function main() {
         fr76ParityInputBlobSha: PARITY_INPUT_BLOB_SHA,
         authorityState: 'manual_research_capture_only',
         rawCapturePersistenceEnabled: false,
+        fr104FlorenceLiveTransportImplemented: true,
+        fr104FlorenceLiveTransportEnabled: FR104_FLORENCE_LIVE_ENABLED,
+        fr104FlorenceRawRgbaPersistenceEnabled: false,
         calibrationAuthorized: false,
         productionMorphologyAuthorized: false,
       }));
@@ -539,10 +1000,39 @@ async function main() {
         '/fr281/operator.mjs',
         '/fr283/',
         '/fr283/operator.mjs',
+        '/fr104-mirror/',
+        '/fr104-mirror/operator.mjs',
+        '/fr104-mirror-multi/',
+        '/fr104-mirror-multi/operator.mjs',
+        '/fr104-makehuman-preflight/',
+        '/fr104-makehuman-preflight/operator.mjs',
+        '/fr104-makehuman-preflight/fixture.png',
+        '/fr104-makehuman-transform-diagnostics/',
+        '/fr104-makehuman-transform-diagnostics/operator.mjs',
+        '/fr104-makehuman-transform-diagnostics/fixture.png',
+        '/fr104-makehuman-provider-rotation-dependence/',
+        '/fr104-makehuman-provider-rotation-dependence/operator.mjs',
+        '/fr104-makehuman-provider-rotation-dependence/fixture.png',
+        '/fr104-makehuman-provider-rotation-compensation/',
+        '/fr104-makehuman-provider-rotation-compensation/operator.mjs',
+        '/fr104-makehuman-provider-rotation-compensation/fixture.png',
+        '/fr104-provider-composed-orientation-validation/',
+        '/fr104-provider-composed-orientation-validation/operator.mjs',
         '/runtime/config.json',
         '/runtime/geometry-metadata.pbtxt',
         '/runtime/fr76-parity-input.prototxt',
         '/runtime/weighted-adapter.json',
+        '/face/face-eye-pair-research-bridge-fr24.js',
+        '/face/mediapipe-face-landmarker-runtime-fr26.js',
+        '/face/neutral-ear-mirror-pair-protocol-fr104.js',
+        '/face/neutral-ear-mirror-multifixture-protocol-fr104.js',
+        '/face/neutral-ear-makehuman-provider-preflight-fr104.js',
+        '/face/neutral-ear-makehuman-transform-diagnostics-fr104.js',
+        '/face/neutral-ear-makehuman-provider-rotation-dependence-fr104.js',
+        '/face/neutral-ear-mediapipe-rotation-api-audit-fr104.js',
+        '/face/neutral-ear-makehuman-provider-rotation-compensation-fr104.js',
+        '/face/neutral-ear-makehuman-provider-rotation-empirical-evidence-fr104.js',
+        '/face/neutral-ear-prospective-composed-orientation-validation-fr104.js',
         '/face/mesh6h-browser-camera-frame-source.js',
         '/face/mesh6i-manual-browser-capture-controller.js',
         '/face/observable-morphology-longitudinal-repeatability-observation-fr255.js',
@@ -568,6 +1058,9 @@ async function main() {
         || config.transportMode !== (LAN_MODE ? 'private_lan_https' : 'localhost_http')
         || config.fr76ParityInputBlobSha !== PARITY_INPUT_BLOB_SHA
         || config.rawCapturePersistenceEnabled !== false
+        || config.fr104FlorenceLiveTransportImplemented !== true
+        || config.fr104FlorenceLiveTransportEnabled !== false
+        || config.fr104FlorenceRawRgbaPersistenceEnabled !== false
         || config.calibrationAuthorized !== false
         || config.productionMorphologyAuthorized !== false
       ) {
@@ -582,10 +1075,14 @@ async function main() {
         exactParityInputVerified: true,
         weightedAdapterRegenerated: true,
         rawCapturePersistenceEnabled: false,
+        fr104FlorenceLiveTransportImplemented: true,
+        fr104FlorenceLiveTransportEnabled: false,
+        fr104FlorenceRawRgbaPersistenceEnabled: false,
         calibrationAuthorized: false,
         productionMorphologyAuthorized: false,
       }) + '\n');
     } finally {
+      florenceLiveBridge?.close();
       await new Promise((resolveClose, rejectClose) => {
         server.close((error) => error ? rejectClose(error) : resolveClose());
       });
@@ -618,8 +1115,24 @@ async function main() {
     process.stdout.write('FR279 fixed-still eye-chord decomposition: ' + base + '/fr279/\n');
     process.stdout.write('FR281 fixed-still metric eye-chord decomposition: ' + base + '/fr281/\n');
     process.stdout.write('FR283 fixed-still FR76 eye-chord propagation: ' + base + '/fr283/\n');
+    process.stdout.write('FR104 controlled mirror pair: ' + base + '/fr104-mirror/\n');
+    process.stdout.write('FR104 controlled multi-fixture mirror: ' + base + '/fr104-mirror-multi/\n');
+    process.stdout.write('FR104 MakeHuman provider preflight: ' + base + '/fr104-makehuman-preflight/\n');
+    process.stdout.write('FR104 MakeHuman transform diagnostics: ' + base + '/fr104-makehuman-transform-diagnostics/\n');
+    process.stdout.write('FR104 MakeHuman provider rotation dependence: ' + base + '/fr104-makehuman-provider-rotation-dependence/\n');
+    process.stdout.write('FR104 U3.3 prospective composed orientation validation: ' + base + '/fr104-provider-composed-orientation-validation/\n');
+  }
+  if (FR104_FLORENCE_LIVE_ENABLED) {
+    process.stdout.write('FR104 Florence live transport enabled: POST ' + base + '/runtime/fr104/florence\n');
   }
   process.stdout.write('Camera data remains in-memory; only sanitized/descriptive JSON can be exported by the browser surfaces.\n');
+
+  const shutdown = () => {
+    florenceLiveBridge?.close();
+    server.close();
+  };
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
 }
 
 await main();

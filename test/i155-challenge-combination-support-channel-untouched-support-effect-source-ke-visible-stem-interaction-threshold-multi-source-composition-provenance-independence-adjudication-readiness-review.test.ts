@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
+import { I144_BINDING_EVALUATION_STEP_IDS } from '../src/research/i144-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-registered-input-package-evaluation-authorization-readiness-review.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionScopeAdjudicatedV2InputPackageMaterializationRecordReport } from '../src/research/i151-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-scope-adjudicated-v2-input-package-materialization-record.js';
+import type { ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionAuthorizedRegisteredV2InputPackageFailClosedCandidateSetEvaluationRecordReport } from '../src/research/i154-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-authorized-registered-v2-input-package-fail-closed-candidate-set-evaluation-record.js';
 import {
-  I144_BINDING_EVALUATION_STEP_IDS,
   I155_PROVENANCE_ADJUDICATION_REQUIREMENT_IDS,
   buildI155ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionProvenanceIndependenceAdjudicationReadinessReview,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionAuthorizedRegisteredV2InputPackageFailClosedCandidateSetEvaluationRecordReport,
-  type ChallengeCombinationSupportChannelUntouchedSupportEffectSourceKeVisibleStemInteractionThresholdMultiSourceCompositionScopeAdjudicatedV2InputPackageMaterializationRecordReport,
-} from '../src/index.js';
+} from '../src/research/i155-challenge-combination-support-channel-untouched-support-effect-source-ke-visible-stem-interaction-threshold-multi-source-composition-provenance-independence-adjudication-readiness-review.js';
 
 const evidenceIds = ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'] as const;
 const expectedStates = [

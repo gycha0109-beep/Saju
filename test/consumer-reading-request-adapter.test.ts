@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CONSUMER_READING_REQUEST_ADAPTER_VERSION,
   normalizeConsumerReadingRequest,
-} from '../src/index.js';
+} from '../src/reading/consumer-reading-request-adapter.js';
 
 const SEOUL_YEAR_BOUNDARY_REFERENCE = '2026-12-31T15:30:00.000Z';
 

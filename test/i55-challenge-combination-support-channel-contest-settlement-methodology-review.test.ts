@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   buildI55ChallengeCombinationSupportChannelContestSettlementMethodologyReview,
   routeI55ChallengeCombinationSupportChannelContestSettlement,
-} from '../src/index.js';
+} from '../src/research/i55-challenge-combination-support-channel-contest-settlement-methodology-review.js';
 
 describe('I55 challenge combination support-channel contest settlement methodology review', () => {
   test('keeps NO_TRACKED_RELATION_TOUCH free of direct contest settlement while blocking ACTIVE/PERSISTED inference', () => {

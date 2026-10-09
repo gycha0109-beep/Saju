@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import {
-  buildResolvedI29ChallengeTargetIntrinsicRootEvidence,
-  type EarthlyBranch,
-  type FiveElement,
-  type HeavenlyStem,
-  type PillarFact,
-} from '../src/index.js';
+import type {
+  EarthlyBranch,
+  FiveElement,
+  HeavenlyStem,
+  PillarFact,
+} from '../src/contracts/calculation.js';
+import { buildResolvedI29ChallengeTargetIntrinsicRootEvidence } from '../src/research/i29-challenge-target-intrinsic-root-evidence.js';
 
 const STEM: Readonly<
   Record<HeavenlyStem, { hanja: string; element: FiveElement; yinYang: '양' | '음' }>

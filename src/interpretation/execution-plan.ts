@@ -7,6 +7,10 @@ import type {
   SourceReference,
 } from '../contracts/interpretation.js';
 import {
+  validateSourceAdjudicationExecutionAuthority,
+  type InterpretationPromotionAuthorityContext,
+} from './promotion-authority.js';
+import {
   reviewerTrustPolicyRef,
   reviewerTrustsAttestation,
   type ReviewerTrustContext,
@@ -26,6 +30,9 @@ export type ExecutionPlanErrorCode =
   | 'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK'
   | 'RULE_SOURCE_NOT_AUTHORIZED_FOR_PACK'
   | 'REVIEWER_TRUST_CONTEXT_REQUIRED'
+  | 'PROMOTION_AUTHORITY_CONTEXT_REQUIRED'
+  | 'SOURCE_ADJUDICATION_AUTHORITY_INVALID'
+  | 'SOURCE_ADJUDICATION_NOT_AUTHORIZED_FOR_PRODUCTION'
   | 'REVIEW_ATTESTATION_NOT_AUTHORIZED_FOR_PACK'
   | 'RULE_METHODOLOGY_NOT_ENABLED'
   | 'RULE_VERSION_SELECTION_AMBIGUOUS'
@@ -60,6 +67,7 @@ export interface InterpretationExecutionPlan {
   registrySnapshotId: string;
   packRef: ContentAddressedVersionedRef;
   reviewerTrustPolicyRef?: ContentAddressedVersionedRef;
+  sourceAdjudicationAuthorityRef?: ContentAddressedVersionedRef;
   orderedRuleRefs: readonly ContentAddressedVersionedRef[];
   dependencyEdges: readonly RuleDependencyEdge[];
   stages: readonly ExecutionPlanStage[];
@@ -115,17 +123,45 @@ function assertRegistryContentIntegrity(registry: ResolvedRuleRegistrySnapshot):
   );
 }
 
-function requirePromotedTrustContext(
+function requirePromotedAuthorityContext(
   registry: ResolvedRuleRegistrySnapshot,
-  trustContext: ReviewerTrustContext | undefined,
-): ReviewerTrustContext | undefined {
-  if (registry.pack.status === 'research') return undefined;
-  if (registry.pack.status === 'deprecated') return trustContext;
-  if (trustContext !== undefined) return trustContext;
-  throw new ExecutionPlanError(
-    'REVIEWER_TRUST_CONTEXT_REQUIRED',
-    `${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version} requires an externally supplied reviewer trust policy.`,
-  );
+  authorityContext: InterpretationPromotionAuthorityContext | undefined,
+): InterpretationPromotionAuthorityContext | undefined {
+  if (registry.pack.status === 'research') {
+    if (authorityContext?.mode === 'source_adjudication') {
+      throw new ExecutionPlanError(
+        'SOURCE_ADJUDICATION_AUTHORITY_INVALID',
+        'Source-adjudication execution authority is valid only for an exact staging registry.',
+      );
+    }
+    return undefined;
+  }
+  if (registry.pack.status === 'deprecated') return authorityContext;
+  if (authorityContext === undefined) {
+    throw new ExecutionPlanError(
+      'PROMOTION_AUTHORITY_CONTEXT_REQUIRED',
+      `${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version} requires an explicit promotion authority context.`,
+    );
+  }
+  if (authorityContext.mode === 'source_adjudication') {
+    if (registry.pack.status === 'production') {
+      throw new ExecutionPlanError(
+        'SOURCE_ADJUDICATION_NOT_AUTHORIZED_FOR_PRODUCTION',
+        `Source-adjudication v1 cannot authorize production pack ${registry.pack.packId}@${registry.pack.version}.`,
+      );
+    }
+    const validation = validateSourceAdjudicationExecutionAuthority(
+      registry,
+      authorityContext.sourceAdjudicationAuthority,
+    );
+    if (!validation.valid) {
+      throw new ExecutionPlanError(
+        'SOURCE_ADJUDICATION_AUTHORITY_INVALID',
+        `Source-adjudication execution authority is invalid: ${validation.blockers.join(', ')}`,
+      );
+    }
+  }
+  return authorityContext;
 }
 
 function contentRefFor(
@@ -174,9 +210,15 @@ function assertReviewAuthorization(
   registry: ResolvedRuleRegistrySnapshot,
   subjectType: ReviewAttestation['subjectType'],
   subjectRef: ContentAddressedVersionedRef,
-  trustContext: ReviewerTrustContext | undefined,
+  authorityContext: InterpretationPromotionAuthorityContext | undefined,
 ): void {
   if (registry.pack.status === 'research') return;
+  if (authorityContext?.mode === 'source_adjudication') return;
+
+  const trustContext =
+    authorityContext?.mode === 'trusted_review'
+      ? authorityContext.reviewerTrustContext
+      : undefined;
   if (trustContext === undefined) {
     throw new ExecutionPlanError(
       'REVIEWER_TRUST_CONTEXT_REQUIRED',
@@ -227,7 +269,7 @@ function methodologyStatusAllowed(
 
 function assertMethodologyAuthorization(
   registry: ResolvedRuleRegistrySnapshot,
-  trustContext: ReviewerTrustContext | undefined,
+  authorityContext: InterpretationPromotionAuthorityContext | undefined,
 ): void {
   const sources = sourceIndex(registry);
   for (const methodology of registry.methodologies) {
@@ -267,7 +309,7 @@ function assertMethodologyAuthorization(
       registry,
       'methodology',
       contentRefForMethodology(registry, methodology),
-      trustContext,
+      authorityContext,
     );
   }
 }
@@ -279,9 +321,23 @@ function allowedRuleStatus(rule: RuleDefinition, pack: InterpretationPack): bool
   return rule.status === 'active' || rule.status === 'reviewed' || rule.status === 'research';
 }
 
-function assertRuleQualityAuthorization(rule: RuleDefinition, pack: InterpretationPack): void {
+function assertRuleQualityAuthorization(
+  rule: RuleDefinition,
+  pack: InterpretationPack,
+  authorityContext: InterpretationPromotionAuthorityContext | undefined,
+): void {
   if (pack.status === 'research') return;
   if (pack.status === 'staging') {
+    if (authorityContext?.mode === 'source_adjudication') {
+      if (!STAGING_TEST_COVERAGE.has(rule.quality.testCoverage)) {
+        throw new ExecutionPlanError(
+          'RULE_QUALITY_NOT_AUTHORIZED_FOR_PACK',
+          `${rule.ruleId}@${rule.version} source-adjudicated staging still requires staging-grade test coverage; tests=${rule.quality.testCoverage}.`,
+        );
+      }
+      return;
+    }
+
     const reviewerAllowed =
       rule.quality.reviewerStatus === 'internal_reviewed' ||
       rule.quality.reviewerStatus === 'domain_reviewed';
@@ -374,9 +430,9 @@ function assertSingleSelectedVersion(rules: readonly RuleDefinition[]): void {
 
 function selectRules(
   registry: ResolvedRuleRegistrySnapshot,
-  trustContext: ReviewerTrustContext | undefined,
+  authorityContext: InterpretationPromotionAuthorityContext | undefined,
 ): readonly RuleDefinition[] {
-  assertMethodologyAuthorization(registry, trustContext);
+  assertMethodologyAuthorization(registry, authorityContext);
   const enabledSets = new Set(registry.pack.enabledRuleSets);
   const disabled = new Set(registry.pack.disabledRuleIds ?? []);
   const enabledMethodologies = new Set(
@@ -400,9 +456,14 @@ function selectRules(
         `${rule.ruleId}@${rule.version} requires methodology ${rule.methodologyRef.id}@${rule.methodologyRef.version} outside the pack`,
       );
     }
-    assertRuleQualityAuthorization(rule, registry.pack);
+    assertRuleQualityAuthorization(rule, registry.pack, authorityContext);
     assertRuleSourceAuthorization(rule, registry);
-    assertReviewAuthorization(registry, 'rule', contentRefFor(registry, ref(rule)), trustContext);
+    assertReviewAuthorization(
+      registry,
+      'rule',
+      contentRefFor(registry, ref(rule)),
+      authorityContext,
+    );
   }
   return sortRules(selected);
 }
@@ -516,9 +577,9 @@ function buildStages(
   return stages;
 }
 
-export function buildInterpretationExecutionPlan(
+export function buildInterpretationExecutionPlanWithAuthority(
   registry: ResolvedRuleRegistrySnapshot,
-  trustContext?: ReviewerTrustContext,
+  authorityContext?: InterpretationPromotionAuthorityContext,
 ): InterpretationExecutionPlan {
   assertRegistryContentIntegrity(registry);
   if (registry.pack.status === 'deprecated') {
@@ -528,8 +589,11 @@ export function buildInterpretationExecutionPlan(
     );
   }
 
-  const promotedTrustContext = requirePromotedTrustContext(registry, trustContext);
-  const rules = selectRules(registry, promotedTrustContext);
+  const promotedAuthorityContext = requirePromotedAuthorityContext(
+    registry,
+    authorityContext,
+  );
+  const rules = selectRules(registry, promotedAuthorityContext);
   const edges = uniqueEdges([...explicitDependencies(rules), ...claimDependencies(rules)]);
   const staged = buildStages(rules, edges);
   const stages: ExecutionPlanStage[] = staged.map((stage, stageIndex) => ({
@@ -537,14 +601,24 @@ export function buildInterpretationExecutionPlan(
     ruleRefs: stage.refs.map((value) => contentRefFor(registry, value)),
   }));
   const orderedRuleRefs = stages.flatMap((stage) => stage.ruleRefs);
+
   const trustPolicyRef =
-    registry.pack.status === 'research' || promotedTrustContext === undefined
+    registry.pack.status === 'research' ||
+    promotedAuthorityContext?.mode !== 'trusted_review'
       ? undefined
-      : reviewerTrustPolicyRef(promotedTrustContext);
+      : reviewerTrustPolicyRef(promotedAuthorityContext.reviewerTrustContext);
+  const sourceAdjudicationAuthorityRef =
+    promotedAuthorityContext?.mode === 'source_adjudication'
+      ? promotedAuthorityContext.sourceAdjudicationAuthority.authorityRef
+      : undefined;
+
   const planMaterial = {
     registrySnapshotId: registry.snapshot.registrySnapshotId,
     packRef: registry.snapshot.packRef,
-    reviewerTrustPolicyRef: trustPolicyRef,
+    ...(trustPolicyRef === undefined ? {} : { reviewerTrustPolicyRef: trustPolicyRef }),
+    ...(sourceAdjudicationAuthorityRef === undefined
+      ? {}
+      : { sourceAdjudicationAuthorityRef }),
     orderedRuleRefs,
     dependencyEdges: edges,
     stages,
@@ -556,9 +630,37 @@ export function buildInterpretationExecutionPlan(
     registrySnapshotId: registry.snapshot.registrySnapshotId,
     packRef: registry.snapshot.packRef,
     ...(trustPolicyRef === undefined ? {} : { reviewerTrustPolicyRef: trustPolicyRef }),
+    ...(sourceAdjudicationAuthorityRef === undefined
+      ? {}
+      : { sourceAdjudicationAuthorityRef }),
     orderedRuleRefs,
     dependencyEdges: edges,
     stages,
     planHash,
   };
+}
+
+export function buildInterpretationExecutionPlan(
+  registry: ResolvedRuleRegistrySnapshot,
+  trustContext?: ReviewerTrustContext,
+): InterpretationExecutionPlan {
+  if (
+    (registry.pack.status === 'staging' || registry.pack.status === 'production') &&
+    trustContext === undefined
+  ) {
+    throw new ExecutionPlanError(
+      'REVIEWER_TRUST_CONTEXT_REQUIRED',
+      `${registry.pack.status} pack ${registry.pack.packId}@${registry.pack.version} requires an externally supplied reviewer trust policy.`,
+    );
+  }
+
+  return buildInterpretationExecutionPlanWithAuthority(
+    registry,
+    trustContext === undefined
+      ? undefined
+      : {
+          mode: 'trusted_review',
+          reviewerTrustContext: trustContext,
+        },
+  );
 }

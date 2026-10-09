@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
-  calculateCanonicalSajuSnapshot,
-  runInterpretation,
-} from '../src/index.js';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../src/llm/prompt-compiler.js';
 import { createMyeonghwaProductHost } from '../src/host/product-host.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import { createGeneralNatalUsefulReadingCandidateRegistry } from '../src/research/general-natal-useful-reading-candidate.js';
