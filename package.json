@@ -86,7 +86,8 @@
     "face:run:hairline-fresh-validation": "npm run face:build && node scripts/run-fresh-hairline-validation.mjs",
     "face:verify:hairline-multisignal-candidate": "python3 tools/face-reading/hairline/run_multisignal_visible_hairline_candidate.py --self-check",
     "face:review:hairline-multisignal": "npm run face:build && node scripts/run-multisignal-hairline-review-packet.mjs",
-    "face:verify:hairline-multisignal-review-packet": "npm run face:build && node scripts/run-multisignal-hairline-review-packet.mjs --self-check"
+    "face:verify:hairline-multisignal-review-packet": "npm run face:build && node scripts/run-multisignal-hairline-review-packet.mjs --self-check",
+    "start:source-proof-staging": "node dist/source-reading-proof-server.js"
   },
   "dependencies": {
     "manseryeok": "2.0.0"
