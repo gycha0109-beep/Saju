@@ -76,14 +76,28 @@ function parsedInstant(value: string, expression: RegExp): number | undefined {
   return instant;
 }
 
-function seoulYear(instantMs: number): number {
-  const part = new Intl.DateTimeFormat('en-US', {
+function seoulCalendarParts(instantMs: number): {
+  year: number;
+  month: number;
+  day: number;
+} {
+  const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'Asia/Seoul',
     year: 'numeric',
-  })
-    .formatToParts(new Date(instantMs))
-    .find((item) => item.type === 'year');
-  return Number(part?.value);
+    month: 'numeric',
+    day: 'numeric',
+  }).formatToParts(new Date(instantMs));
+  const numberPart = (type: 'year' | 'month' | 'day'): number =>
+    Number(parts.find((item) => item.type === type)?.value);
+  return {
+    year: numberPart('year'),
+    month: numberPart('month'),
+    day: numberPart('day'),
+  };
+}
+
+function seoulYear(instantMs: number): number {
+  return seoulCalendarParts(instantMs).year;
 }
 
 /**
@@ -122,11 +136,18 @@ export function resolveAnnualLichunPeriodCandidate(
   }
 
   const boundaryMs = parsedInstant(boundary.instantUtc, CANONICAL_UTC_SECOND);
+  if (boundaryMs === undefined) return unavailable('BOUNDARY_EVIDENCE_INVALID');
+  const localBoundary = seoulCalendarParts(boundaryMs);
+
+  // Broad 2–6 February plausibility guard only; NOT an ephemeris or provenance check.
+  // A syntactically verified-looking source must not supply e.g. 31 December as LiChun.
   if (
-    boundaryMs === undefined ||
     new Date(boundaryMs).toISOString() !== boundary.instantUtc ||
     boundary.year !== displayYear ||
-    seoulYear(boundaryMs) !== displayYear ||
+    localBoundary.year !== displayYear ||
+    localBoundary.month !== 2 ||
+    localBoundary.day < 2 ||
+    localBoundary.day > 6 ||
     !['minute', 'second'].includes(boundary.precision) ||
     boundary.sourceRef.trim().length === 0 ||
     boundary.sourceVersion.trim().length === 0 ||
