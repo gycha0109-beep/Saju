@@ -1,3 +1,4 @@
+import { URL } from 'node:url';
 import type { ReadingRequest } from '../contracts/reading.js';
 import {
   resolveAnnualLichunRequestCandidate,
@@ -17,7 +18,7 @@ import type { AnnualLichunBoundaryEvidence } from './annual-lichun-period-candid
  * KASA announcements or KASI prepublication tables alone MUST NOT be pinned
  * as if they were directly audited official almanac primary witnesses.
  */
-interface PinnedPrimaryLichunWitness {
+export interface PinnedPrimaryLichunWitness {
   year: number;
   instantUtc: string;
   precision: 'minute' | 'second';
@@ -56,24 +57,69 @@ export type PrimaryLichunSourceLookup =
       productionAuthorized: false;
     };
 
-function validSourceWitness(item: PinnedPrimaryLichunWitness): boolean {
-  const documentUri = item.primaryDocumentUri;
-  const officialDocumentHost = /^https:\/\/(?:[^/]+\.)?(?:gwanbo\.go\.kr|kasa\.go\.kr)\//.test(
-    documentUri,
-  );
+/**
+ * Mechanical consistency checks for a code-pinned witness.
+ *
+ * Passing this function does NOT authenticate a document, digest, reviewer,
+ * published time, or precision. Those facts require independent human review.
+ */
+export function isStructurallyValidPinnedPrimaryLichunWitness(
+  item: Readonly<PinnedPrimaryLichunWitness>,
+): boolean {
+  let documentUrl: URL;
+  try {
+    documentUrl = new URL(item.primaryDocumentUri);
+  } catch {
+    return false;
+  }
+
+  const host = documentUrl.hostname.toLowerCase();
+  const officialDocumentHost =
+    host === 'kasa.go.kr' ||
+    host.endsWith('.kasa.go.kr') ||
+    host === 'gwanbo.go.kr' ||
+    host.endsWith('.gwanbo.go.kr');
+
+  const timestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.000Z$/;
+  const timestampMs = Date.parse(item.instantUtc);
+  if (
+    !timestampPattern.test(item.instantUtc) ||
+    !Number.isFinite(timestampMs) ||
+    new Date(timestampMs).toISOString() !== item.instantUtc
+  ) {
+    return false;
+  }
+  const localParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  }).formatToParts(new Date(timestampMs));
+  const localNumber = (type: 'year' | 'month' | 'day'): number =>
+    Number(localParts.find((part) => part.type === type)?.value);
+
   return (
     Number.isSafeInteger(item.year) &&
     item.year >= 2 &&
     item.year <= 9999 &&
+    localNumber('year') === item.year &&
+    localNumber('month') === 2 &&
+    localNumber('day') >= 2 &&
+    localNumber('day') <= 6 &&
     item.sourceRef.trim().length > 0 &&
     item.sourceVersion.trim().length > 0 &&
+    documentUrl.protocol === 'https:' &&
+    documentUrl.username === '' &&
+    documentUrl.password === '' &&
+    documentUrl.port === '' &&
     officialDocumentHost &&
     /^[a-f0-9]{64}$/.test(item.primaryDocumentSha256) &&
     Number.isSafeInteger(item.primaryDocumentPage) &&
     item.primaryDocumentPage > 0 &&
     item.printedLichunText.includes('입춘') &&
     item.reviewerDecisionRef.trim().length > 0 &&
-    (item.precision === 'minute' || item.precision === 'second')
+    (item.precision === 'minute' || item.precision === 'second') &&
+    (item.precision === 'second' || new Date(timestampMs).getUTCSeconds() === 0)
   );
 }
 
@@ -91,7 +137,7 @@ export function getPinnedPrimaryLichunBoundary(year: number): PrimaryLichunSourc
     return { ...common, state: 'unavailable', reasonCode: 'CONFLICTING_PINNED_PRIMARY_WITNESSES' };
   }
   const item = matches[0];
-  if (item === undefined || !validSourceWitness(item)) {
+  if (item === undefined || !isStructurallyValidPinnedPrimaryLichunWitness(item)) {
     return { ...common, state: 'unavailable', reasonCode: 'INVALID_PINNED_PRIMARY_WITNESS' };
   }
 
