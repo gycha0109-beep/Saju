@@ -141,3 +141,16 @@ Research 파일: `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`.
 - 1935년 『精選命理約言』(NLC `NLC416-17jh002578-109774`) 직접 인쇄본 **PDF 88쪽(인쇄 「五」) 「流年賦」 시작과 89쪽 후속**에서 `先觀歲與日干`, `犯必日之財官`, `合必日之正配，非官即財`를 직접 확인. JPEG 2회 16/16 SHA-256 검증 PASS. 전사문의 `太歲合日干者 如甲見己 乙見庚之類 非正財即正官` 상세 소자(小字)와 두 이름의 개별 방향까지 정확 판면 결속은 불충분하므로 **甲日×己流年 正財의 독립 개별 L2 직접 승인 없음**.
 - 서지·1937/1935 인쇄본 직접 확인 쪽수·각 이미지 SHA-256·초안의 세부 전사 단서 및 제한 조건은 `general-annual-sa7d-b1-alternate-annual-method-print-locator-v1.md` 참고. PDF 원본 전체 바이너리 해시는 확보하지 않음.
 - **실제 승인 건수 불변:** 甲 기준 십신 단독 고전 명칭 L1=7/8; 역사적 개별 연운 명칭 L2=1/8 (`甲日×辛亥年 正官`); Annual 제품 `INSUFFICIENT` 8/8; `bridgeReentryReady=false`; `Production=HOLD`.
+
+## 15. B1-R2(2026-10-09) 최신 원장 및 판정 계약 — 본문 위 단계의 스냅샷 보존
+
+이 절 이전의 4/8·6/8·7/8, 0/8·1/8은 **증거 수집 순서에 따른 당시의 기록**이다. 과거 항목을 소급 수정하지 않는다. **다음 네 문서가 최신 R2 진입점이며 신규 증거를 억지로 생성하지 않는다.**
+
+1. `sa7d-b1-witness-ledger-v2.md` — 최신 甲日 독립 원전 명칭 L1=7/8, 직접 유년 사례 L2-C=1/8, 8종별 미해결 상태·출처 ID·기존 A2 제외.
+2. `sa7d-b1-jiecai-baicai-terminology-contract-v1.md` — 명대 `劫財敗財` 복합명, `敗財/劫財` 방향별 분리, 근현대 전사 단독명칭의 판본/증거 레벨 구분.
+3. `sa7d-b1-zhengcai-annual-directness-audit-v1.md` — `甲見己正財` 명식 L1 및 `流年賦` 방법은 PASS, 특정 `甲日×己流年→正財` 역사적 직접 문맥 L2-C는 미확인.
+4. `sa7d-b1-annual-rule-applicability-audit-v1.md` — 유년 일반 방법 L2-M/타 일간 사례/갑일간 직접 역사적 L2-C/출처 결합 추론 L2-D의 독립 판정, 반례 감사 R01–R10.
+
+**현재 R2 결과:** L1 7/8 · 甲日 직접 역사적 연운 L2-C 1/8 · 제품 의미 승인 0/8. 연구용 L2-M·L2-C·L2-D는 **제안된 문서 레벨**이며 현행 소스 코드의 enum/authority를 바꾸지 않는다. `sourceSupportGrade=INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`.
+
+P1 감사의 문서 완료는 **직접 인쇄 L2-C 7종 신규 확보**와 동의어가 아니다. 역사적 미충족 상태를 유지하면서 P2/P3 전사 위치·출판본 확인 후 다음 후보로 이동한다.
