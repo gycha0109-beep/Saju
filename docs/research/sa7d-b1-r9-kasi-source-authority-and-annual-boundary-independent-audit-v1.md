@@ -62,7 +62,7 @@ KASI `달력자료`는 자기 페이지에서 **“이 자료는 공식 발표 �
 
 - **A — 역사 인쇄 근거:** PDF p18 직접 인쇄명 재열람 및 Commons 서지 **PASS**. 원본 PDF 바이트 전체 SHA-256, 정확 출판연도 **HOLD**. 새로운 직접 甲日×특정 流年 L2-C **0건**.
 - **B — 명칭·기간 계약:** D1은 제안으로 decision-ready, **정식 채택 HOLD**. D2는 KASI 제공 **달력자료 값** 확인, 공식 관보 시각 원문 일치 **HOLD**, 초 단위 **HOLD**, 자동 테스트 **미실행**.
-- **C — 권한/CI 무결성:** 이 문서는 `docs/research/` 내 연구 기록만 추가. CI 새 실행 0건; 계산/Official/Engine/Reader/Bridge/Monthly/Production, TypeScript enum·source grade·admission gate 변경 **0건**. 본 PR은 **Draft/Open/미병합** 유지 대상.
+- **C — 권한/CI 무결성:** 이 문서는 `docs/research/` 내 연구 기록만 추가. 별도 CI workflow 생성·수동 dispatch 0건. 문서 커밋으로 **기존 GitHub Actions가 자동 기동되어 실행 중**이므로 `CI 실행 0건`이라 주장하지 않음. 이 R9 경계 행렬의 새로운 전용 자동 테스트는 미작성·미실행. 계산/Official/Engine/Reader/Bridge/Monthly/Production, TypeScript enum·source grade·admission gate 변경 **0건**. 본 PR은 **Draft/Open/미병합** 유지 대상.
 - **수치 불변:** 明刻 단독 L1 **7/8** / 교차 저본 L1 **8/8** / 甲일간 직접 L2-C **1/8** / Annual 제품 의미 **0/8**. Annual 8종 `sourceSupportGrade='INSUFFICIENT'`, `bridgeReentryReady=false`, `Production=HOLD`.
 
 다음 독립 연구는 **공식 2026 월력요항 관보의 판면·절기 실제 문구 직접 확보**(중복 다운로드·상시 CI 금지) → 기관 `달력자료`와 일치 여부 확인 → 기간 owner에게 범위별 차단/회귀 fixtures 전달이다. 관보 미확보 시 시각 근거를 `KASI 기관 데이터(비공식 달력자료)`로만 표기하고 종료한다.
