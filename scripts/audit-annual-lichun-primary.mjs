@@ -1,8 +1,10 @@
 #!/usr/bin/env node
+import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
+import process from 'node:process';
 import { createReadStream } from 'node:fs';
 import { open, stat } from 'node:fs/promises';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, URL } from 'node:url';
 
 const MAX_BYTES = 64 * 1024 * 1024;
 
