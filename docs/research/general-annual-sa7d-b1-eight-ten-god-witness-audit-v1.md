@@ -155,3 +155,11 @@ Research 파일: `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`.
 **현재 R2 결과:** L1 7/8 · 甲日 직접 역사적 연운 L2-C 1/8 · 제품 의미 승인 0/8. 연구용 L2-M·L2-C·L2-D는 **제안된 문서 레벨**이며 현행 소스 코드의 enum/authority를 바꾸지 않는다. `sourceSupportGrade=INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`.
 
 P1 감사의 문서 완료는 **직접 인쇄 L2-C 7종 신규 확보**와 동의어가 아니다. 역사적 미충족 상태를 유지하면서 P2/P3 전사 위치·출판본 확인 후 다음 후보로 이동한다.
+
+## 16. 2026-10-09 R4 증거 충분성 — 계산 규칙과 직접 사례를 분리
+
+- `sa7d-b1-r4-annual-case-reverse-index-v1.md`: 대상 4저술의 유년/태세 실례를 **甲일간 직접 십신 용례·다른 일간·출생 年柱/時干/大運·십신 이름 없는 年干 사용례**로 구분하는 연구 색인.
+- `sa7d-b1-r4-general-annual-rule-closure-v1.md`: 명대 `流歲取天干`, 四庫全書本 전사 `看流年歲君只用天元`, 민국 `庚日乙卯年 正財`의 **방법 근거 층위**. 명대 인쇄본의 확인 문구와 四庫別本 **전사**의 추가 문구를 동일 인쇄 페이지라고 하지 않는다.
+- `sa7d-b1-r4-evidence-sufficiency-and-handoff-v1.md`: **십신명의 조건부 계산·역사적 개별 연운 직접 인쇄 증명·현대 제품 사건 예측** 각각의 증거 충분성 기준과 권한 차단 명시.
+- **R4 추가된 甲일간 독립 L2-C = 0건**. 직전 누적 L1 단독 명칭 7/8·L2-C 직접 역사 사례 1/8·Product 0/8 **그대로 유지**. 조건부 연구 도출 L2-D를 L2-C로 세거나 Annual 제품 `SUFFICIENT`로 승격하지 않는다.
+- `sourceSupportGrade=INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`, 연구 문서 외 소스/CI 변경 없음.
