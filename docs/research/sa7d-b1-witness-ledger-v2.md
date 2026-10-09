@@ -117,3 +117,10 @@
 `sa7d-b1-r7-modern-label-convention-and-annual-period-decision-packet-v1.md`: owner D1(현대 겁재 canonical label + 역사 raw literal provenance 분리 **권고, 아직 미승인**), D2(Seoul civil `DISPLAY_YEAR`와 입춘 기반 `ASTROLOGICAL_EFFECTIVE_ANNUAL_PILLAR` 구분 **심사 요청**), D3(Annual semantic authority 별도) 및 기간 경계/입춘/모호입력 부정 테스트 **11개 미실행**.
 
 **권한 불변:** `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. 새 소스 인용이 자동 Bridge/Engine/Reader/Official/Monthly/제품에 들어가지 않음. 연구 문서 전용, 신규 CI 실행 없음.
+
+## 12. 2026-10-09 R8 原印 페이지 무결성·KASI 2026 입춘 분기 검증
+
+- `sa7d-b1-r8-ziping-printed-witness-binary-integrity-audit-v1.md`: NLC `NLC416-11jh010455-35296` 『子平真詮』 287-page PDF **index 17/p18(printed 九)**의 `甲逢乙為劫財` 원문을 다시 시각 검증. 원본 PDF 자체의 **전체 SHA 검증은 다운로드 실패로 미실시**. 글자 직접 대조와 binary integrity 분리.
+- `sa7d-b1-r8-official-2026-lichun-annual-pillar-divergence-evidence-v1.md`: 한국천문연구원 2026 월력요항 공식 **입춘 2026-02-04 05:02 KST(분 단위)**, 현행 `annualSexagenaryPillar(2026)=丙午`. 입춘 경계를 연주 효력 정책으로 **가정하는 비교**에서 2026-01-15 甲일간은 `乙巳→겁재` 반면 civil year-only는 `丙午→식신`. 정확 초 단위 값과 정책 승인·실제 경계 E2E는 미확보. **달력 표시 연도와 입춘 연간 효력 기간을 동일화하지 말 것**.
+- **R8 역사 직접 연운 신규 L2-C=0건**. `MING_PRINT_L1_EXACT=7/8`, 시대 혼합의 *명칭 존재* `CROSS_EDITION_PRINT_L1_EXACT=8/8`, `ANNUAL_PRINT_L2_C=1/8`, 현대 Annual 제품 의미 승인=0/8 불변.
+- `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. 연구 문서만 변경하고 새 CI·실제 계산/표기 정책 코드를 수정하지 않는다.
