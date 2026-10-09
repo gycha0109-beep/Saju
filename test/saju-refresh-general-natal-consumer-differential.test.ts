@@ -7,6 +7,7 @@ import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../src/llm/prompt-compiler.js
 import { inspectMyeonghwaProductionComposition } from '../src/production/production-composition.js';
 import { buildReadingCompositionEvidence } from '../src/reading/reading-intent-composition.js';
 import { runProductReadingInternals } from '../src/reading/product-reading-service.js';
+import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../src/reading/governed-reading-execution.js';
 import { createGeneralNatalUsefulReadingCandidateRegistry } from '../src/research/general-natal-useful-reading-candidate.js';
 import {
   buildSajuR36BureauBreakResearchEvidence,
@@ -36,6 +37,26 @@ const options = {
   readingVersion: 'saju-refresh-general-natal-consumer-differential-v1',
   artifactGeneratedAt: now,
 };
+const narrativePolicy = {
+  policyId: 'saju-refresh-general-natal-consumer-differential',
+  version: '1.0.0-test',
+  language: 'ko',
+  certaintyPolicy: {
+    deterministicFacts: 'direct',
+    interpretationClaims: 'method_attributed',
+    contestedClaims: 'explicit_difference',
+    ambiguousFacts: 'explicit_uncertainty',
+    futureClaims: 'non_deterministic',
+  },
+  tone: { style: 'clear', avoidFatalism: true, avoidFearInduction: true },
+  sensitiveDomains: {
+    health: 'non_diagnostic',
+    finance: 'non_advisory',
+    legal: 'non_advisory',
+    safety: 'no_harmful_direction',
+  },
+  sourceDisclosure: 'internal_only',
+} as const;
 const requiredMissing = [
   'NATAL_GENERAL_FOUNDATION_CLAIM_REQUIRED',
   'NATAL_GENERAL_SYNTHESIS_CLAIM_REQUIRED',
@@ -161,6 +182,11 @@ describe('Refresh General Natal actual-chart producer-to-consumer differential',
       built.registry,
       request,
       options,
+      {
+        runtimeVersion: LEGACY_NARRATIVE_RUNTIME_VERSION,
+        narrativePolicy,
+        adapter: { metadata: { provider: 'test', modelId: 'must-not-run', modelRevision: '1' }, generateStructured: model },
+      },
     );
     expect(t2Product.execution.preparation.normalization.state).toBe('resolved');
     expect(t2Product.execution.preparation.normalization.request?.intent).toEqual({
