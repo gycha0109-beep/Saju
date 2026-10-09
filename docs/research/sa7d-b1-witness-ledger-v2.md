@@ -70,3 +70,12 @@
 - `sourceSupportGrade='INSUFFICIENT'` 8/8, `bridgeReentryReady=false`, `Production=HOLD`. 월간·Official·Reader·Engine·Bridge 진입 차단; 기존 A2 두 직접 관계와 독립성 보존.
 
 **종료 조건 A:** 명칭 L1 7/8·직접 甲년 L2-C 1/8를 일관된 원장으로 정리 **PASS**. **B:** 나머지 7종 L2-C 및 겁재 독립 명칭·원본 PDF binary 미검증 **HOLD**. **C:** 연구 전용 문서, Production/Bridge 및 CI 경계 유지 **PASS**.
+
+## 7. 2026-10-09 R3 최신 후보 감사 (R2 판정 불변)
+
+- **R3 신규 독립 甲일간 직접 연운 L2-C = 0건**, 누적 **1/8** 유지. 그 밖의 명대 일간 단독 명칭 L1 **7/8**, 제품 Annual 승인 **0/8** 유지.
+- 새 후보 기록: `sa7d-b1-r3-p2-p3-five-annual-witness-source-audit-v1.md`. **P2 식신/상관/편인, P3 정인/비견** 총 5종의 전사·명식·時柱·流年 구별을 각자 판정.
+- 중요한 새 전사 단서: 『三命通會』 卷二 `甲子日見甲子太歲，謂之日年相併`. **정확 太歲/甲年**을 언급하지만 해당 구절에는 **比肩** 이름이 없다. `甲→甲` **L2-C 승격 금지**.
+- 『三命通會』 `論傷官`의 `甲日人...丁卯年生`은 **출생 연주**이며 뒤 `流年再見`은 별도 범위. 『三命通會』 卷八 `甲日壬申時`는 **時柱**. 두 사례 모두 정확한 신규 연운 직접 명칭이 아니다.
+- 이번 R3는 **전사 및 웹 검색 1차 선별**이며, 새 원전 인쇄 페이지/JPEG/PDF 취득 또는 해시 검증 **0건**. 이전 인쇄본 증거·해시는 재검증 수행했다고 표현하지 않는다.
+- **상태 불변:** `sourceSupportGrade=INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`. 문서 전용, CI/Engine/Official/Reader/Bridge/Monthly 비변경.
