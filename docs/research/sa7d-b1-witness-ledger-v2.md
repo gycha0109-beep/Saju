@@ -124,3 +124,13 @@
 - `sa7d-b1-r8-official-2026-lichun-annual-pillar-divergence-evidence-v1.md`: 한국천문연구원 2026 월력요항 공식 **입춘 2026-02-04 05:02 KST(분 단위)**, 현행 `annualSexagenaryPillar(2026)=丙午`. 입춘 경계를 연주 효력 정책으로 **가정하는 비교**에서 2026-01-15 甲일간은 `乙巳→겁재` 반면 civil year-only는 `丙午→식신`. 정확 초 단위 값과 정책 승인·실제 경계 E2E는 미확보. **달력 표시 연도와 입춘 연간 효력 기간을 동일화하지 말 것**.
 - **R8 역사 직접 연운 신규 L2-C=0건**. `MING_PRINT_L1_EXACT=7/8`, 시대 혼합의 *명칭 존재* `CROSS_EDITION_PRINT_L1_EXACT=8/8`, `ANNUAL_PRINT_L2_C=1/8`, 현대 Annual 제품 의미 승인=0/8 불변.
 - `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. 연구 문서만 변경하고 새 CI·실제 계산/표기 정책 코드를 수정하지 않는다.
+
+
+## 21. 2026-10-09 R9 기관 달력자료와 공식 월력요항의 출처 등급 재감사
+
+- 추가 연구 문서 `sa7d-b1-r9-kasi-source-authority-and-annual-boundary-independent-audit-v1.md`는 R8 두 문서 **생성/등록 완료**를 다시 확인하고, PDF p18/printed 九의 `甲逢乙為劫財` 인쇄 확인과 **원본 PDF SHA 미확보**를 분리한다.
+- **필수 출처 지위 교정:** 한국천문연구원 2026 **달력자료**는 立春 **2026-02-04 05:02 KST(분 단위)**를 제시하지만, 자기 페이지에서 **“이 자료는 공식 발표 자료가 아닙니다”**라고 고지한다. 공식 자료는 별도 **2026 월력요항**이며, 2024년부터 우주항공청이 **전자관보**에 게재하는 계열이다. 이 R9에서는 **관보 본문을 직접 확보해 그 시각을 재확인하지 못함**. 따라서 R8의 `공식 월력요항 입춘 시각` 식 표현은 후속 증거 평가에서 **기관 비공식 달력자료의 관측 시각**으로 제한하며 **공식 관보와의 직접 일치 판정=HOLD**. 과거 R8 문서는 역사적 스냅샷으로 보존.
+- R9 정적 코드 대조: `Asia/Seoul` civil 연도 추출 → `annualSexagenaryPillar(year)`의 year-only 연주 → `deriveAnnualStemTenGod`. Annual과 Monthly는 `buildTemporalReadingContext`에서 같은 year-only annual helper를 호출하므로 정책 변경은 owner 통제 필요. **테스트 및 CI 미실행**.
+- 경계 연구 fixture 추가: 2025-12-31 23:59:59 KST → 2026-01-01 00:00:00 KST의 civil 교체, 이와 동치인 UTC 표시, 2026-01-15, KASI 달력자료 입춘 분값 전/후 05:01/05:03, 05:02±1초 **기대값 보류**, unresolved dayMaster, Monthly 비상속. 입춘 기반 年柱는 **가정 정책**이지 현행 구현 아님.
+- **R9 신규 L1/직접 L2-C=0건**. 집계 불변: **明代 PRINT L1 7/8**, **교차 인쇄 저본 L1 8/8**, **甲日 구체 流年 L2-C 1/8**, **Annual 제품 의미 0/8**. `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`.
+- **D1 제안만 결정 준비**, `MODERN_CANONICAL_WITH_SOURCE_EXACT_QUOTE` 미채택. **D2**는 공식 관보 원문 결속과 정책 owner의 절입 기준·소비자 표시·테스트 승인 **HOLD**. 기타 Engine/Official/Reader/Bridge/Monthly/CI 무변경.
