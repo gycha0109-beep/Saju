@@ -87,3 +87,11 @@
 - `sa7d-b1-r4-general-annual-rule-closure-v1.md`: `流歲取天干`(명대 직접 인쇄), `看流年歲君只用天元`(四庫全書本 전사; 명대 p2 직접 판면으로 미결속), `庚日乙卯年 正財`(1937 직접 인쇄)의 서로 다른 방법론·판본 범위; **7종 단독 L1에서 조건부 L2-D 후보 계산 가능성을 논의**했으나 **학파/시대 가교와 제품승인 미충족**, L2-C 직접 수치 변화 없음.
 - `sa7d-b1-r4-evidence-sufficiency-and-handoff-v1.md`: **십신명 계산 분류의 증거 요구**와 **특정 역사 인쇄 연운 실례의 증거 요구**와 **현대 개인 운세/이벤트 해석의 제품 증거 요구**를 별도 계약으로 구분. 직접 명례 8/8은 계산 방식 논의를 위한 논리적 선행 필수조건이라고 자동 단정하지 않되, 역사적 직접 용례의 존재 주장에는 계속 L2-C 증거 요구.
 - **상태 불변:** `甲→乙 劫財` 단독 명대 이름 미확인, `甲→己 正財` 정확 유년 직접 문구 미확인; `bridgeReentryReady=false`; `Production=HOLD`. 현재 모든 결과는 Research/doc-only.
+
+## 9. 2026-10-09 R5 독립 계산 계약·권한 게이트 심사 (최신)
+
+- **새 인쇄 직접 L2-C 0건**. 대상 8종 중 **명대 단독 명칭 L1=7/8**, 역사적 甲日 직접 특정 流年 사용례 `L2-C=1/8`, 현대 제품 의미 `0/8`은 불변. 본 원장은 R1~R4 이력과 R5 계산 충분성 심사를 별개의 버전/목적 기록으로 보존.
+- `sa7d-b1-r5-computation-and-historical-naming-compatibility-audit-v1.md`: 기존 `TenGod` 10개 타입과 B1 **8대상**의 모집단 분리. 甲의 10간 현대 계산 **연구 후보표**와 明刻 `劫財敗財/敗財` 원문/현대 `겁재` 표기의 호환 문제; 명대 직접 甲乙 劫財 이름 **HOLD**.
+- `sa7d-b1-r5-annual-input-provenance-and-authority-gate-v1.md`: `FactState`의 resolved/ambiguous/unavailable, civil `targetYear`/요청기간·역법 `annualPillar`·십신명 결과 `annualStemTenGod`·T9 의미 승인 각각의 책임 경계. 立春/절입·요청 연도 정책을 연구 임의로 가정 금지.
+- `sa7d-b1-r5-independent-admission-readiness-and-handoff-v1.md`: 실제 `general-annual-authority-bridge-review.ts`의 `RETURN_TO_RESEARCH`, `general-annual-research-return-handoff.ts`의 향후 `READY_FOR_BRIDGE_REREVIEW` 최대 범위, `saju-engine-authority-intake.ts`의 `HOLD_RESEARCH/HOLD_AUTHORITY`와 대조. **문서용 분류계산 계약 감사 완료 ≠ Bridge 또는 Engine 승인**.
+- **최종 권한:** `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. 연구 문서 외 코드·CI 변경 없음. 현대 제품 해석의 과학적 실증을 의미하지 않는다.
