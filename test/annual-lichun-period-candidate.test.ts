@@ -135,6 +135,9 @@ describe('D2-B source-gated LiChun annual-period candidate (not production)', ()
       resolveAnnualLichunPeriodCandidate(2026, 'no-date', TEST_BOUNDARY),
     ).toMatchObject({ state: 'unavailable', reasonCode: 'INVALID_REFERENCE_INSTANT' });
     expect(
+      resolveAnnualLichunPeriodCandidate(2026, '2026-02-30T12:00:00+09:00', TEST_BOUNDARY),
+    ).toMatchObject({ state: 'unavailable', reasonCode: 'INVALID_REFERENCE_INSTANT' });
+    expect(
       resolveAnnualLichunPeriodCandidate(2025, '2026-01-15T12:00:00+09:00', TEST_BOUNDARY),
     ).toMatchObject({ state: 'unavailable', reasonCode: 'DISPLAY_YEAR_MISMATCH' });
   });
