@@ -55,8 +55,17 @@ const ALTERNATE_SCAN_CORROBORATION = Object.freeze({
     splitPdfPage: 32,
     digitalScanPageFromContiguousPdfSplit: 182,
     sectionObserved: '兄弟引例章',
-    boundedPropositionObserved: '兄弟者即劫財比肩',
-    matchesGovernedScanRecordedBoundedProposition: true,
+    // Preserve the scan's 刼 glyph. The governed recorded prose uses 劫;
+    // semantic equivalence is not literal source/transcription identity.
+    boundedPropositionObserved: '兄弟者即刼財比肩',
+    governedRecordedPropositionForComparison: '兄弟者即劫財比肩',
+    matchesGovernedScanRecordedBoundedProposition: false,
+    semanticCorrespondenceOnly: true,
+    originalPdfPages: 206,
+    originalPdfSha256: '87509016d7b897c1a1e92cf79bee6e00e19b3b09a010f9288a5c9d44fafaff21',
+    splitPdfSha256: 'cc82851a3b448cdba09bad22e812ff0720b3c257114b318645d2a44abf03b180',
+    originalPdfPageAndSplitPageRasterIdentical: true,
+    identicalRasterSha256At2xRgb: '6c2db6e0300cd502f8ae65f58e56f98636c84597981ae388d0deffd5e3677075',
     originalDjvuPageImageIndependentlyDecoded: false,
   }),
   qualification: Object.freeze({
