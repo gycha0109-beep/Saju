@@ -184,3 +184,10 @@ P1 감사의 문서 완료는 **직접 인쇄 L2-C 7종 신규 확보**와 동�
 - `sa7d-b1-r7-modern-label-convention-and-annual-period-decision-packet-v1.md` — 현대 canonical `겁재` 표기와 역사 raw `劫財敗財/敗財/劫財`를 판본별 보존하는 **명칭 owner 제안**; consumer civil targetYear와 실제 立春 절입 年柱 유효기간 선택/구분의 **temporal owner 제안**, 미실행 11개 경계 테스트.
 - **명대 단독 인쇄 L1=7/8 그대로**, 대신 시대·판본 교차 인쇄 **단독명칭 존재 = 8/8**를 별도 연구 지표로 신설. **실제 甲日×特定 流年 직접 L2-C=1/8**, Annual 제품 의미 승인은 0/8. `L1=8/8`만 단독으로 적어 동일 명대 전승에서 모두 확인됐다고 오독하지 말 것.
 - `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. Product/Engine/Bridge/Reader/Official/Monthly·CI 변경 0건.
+
+## 20. 2026-10-09 R8 인쇄본 PDF 재대조와 공식 절기 경계 후보
+
+- `sa7d-b1-r8-ziping-printed-witness-binary-integrity-audit-v1.md` — R7 인쇄본 『子平真詮』의 `甲逢乙為劫財`을 PDF **p18**에서 다시 읽음. 원본 PDF 전체 바이너리 다운로드/해시 확인은 못 했으므로 **integrity=UNVERIFIED**.
+- `sa7d-b1-r8-official-2026-lichun-annual-pillar-divergence-evidence-v1.md` — 한국천문연구원 공식 [2026년 월력요항](https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026) **입춘 2/4 05:02 KST 분 단위**와 현행 year-only 干支 도출 반례. `2026-01-15`의 甲日 유년은 정책에 따라 `丙午/식신`과 (입춘 효력정책 가정) `乙巳/겁재`가 달라짐; source-minute vs exact-second 차이와 D2 정책 미승인 유지.
+- 이번 R8 **연운 역사 직접 L2-C 신규 0건**; 명대 단독 십신 이름 `7/8`, 시대·출판본 간 명칭 존재 `8/8`, 개별 甲일간 실제 유년 직접 예 `1/8`, 제품 Annual 의미 승인 `0/8`.
+- `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`; R8 CI/시스템 코드/Bridge/Engine/Monthly/Official/Reader 변경 없음.
