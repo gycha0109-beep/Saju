@@ -7,7 +7,7 @@ import {
 } from './general-natal-conclusion-source-bounded-candidate.js';
 
 export const GENERAL_NATAL_PEER_TAXONOMY_SCAN_EVIDENCE_VERSION =
-  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v2' as const;
+  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v3' as const;
 
 const PEER_RULE_ID = 'RULE-GENERAL-NATAL-SOURCE-BOUNDED-FAMILY-PEER-PRESENT' as const;
 const SAMYEONG_V5_SOURCE_ID =
@@ -31,6 +31,40 @@ const SCAN_AUTHORITY = Object.freeze({
     boundedPropositionObserved: '兄弟者即劫財比肩',
     pageFormDjvuSha256: 'f0d83bf196e4b9752d63ad4340f5d74a1f29a6bebf88315b601488fb8fc62ba9',
     pageSjbzSha256: 'fcdd51135abeeb0b22637b7852c809848c74b482ae71a0092d336a2f75cca57b',
+  }),
+} as const);
+
+
+/**
+ * Independently observed alternate scan image, not a replacement for the
+ * governed CADAL06066043 witness or its source-integrity qualifications.
+ * PDF pages 151–206 were printed from the authenticated 206-page DjVu.
+ */
+const ALTERNATE_SCAN_CORROBORATION = Object.freeze({
+  authorityId: 'SCAN-SAMYEONG-SIKU-CADAL06056483',
+  title: '三命通會·卷七',
+  edition: '欽定四庫全書本',
+  digitization: 'CADAL06056483',
+  scanUrl:
+    'https://commons.wikimedia.org/wiki/File:CADAL06056483_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83%C2%B7%E5%8D%B7%E4%B8%83.djvu',
+  pageCount: 206,
+  authenticatedDjvuSha1: '87834f5ff930189c57a5031af2dfa1e6a6a43676',
+  authenticatedDjvuSha256: 'debf222f9448e447217d21e11f116c285eb3ab57debdcd2c6c5acf8af2b351bd',
+  directPdfImageInspection: Object.freeze({
+    splitPdfPageRange: '151-206',
+    splitPdfPage: 32,
+    digitalScanPageFromContiguousPdfSplit: 182,
+    sectionObserved: '兄弟引例章',
+    boundedPropositionObserved: '兄弟者即劫財比肩',
+    matchesGovernedScanRecordedBoundedProposition: true,
+    originalDjvuPageImageIndependentlyDecoded: false,
+  }),
+  qualification: Object.freeze({
+    exactPhysicalPageOrFolioVerified: false,
+    completePassageTranscriptionIdentityEstablished: false,
+    scanDerivedWitnessDigestReproduced: false,
+    fullSourceIntegrityQualificationEstablished: false,
+    productionAdmissionAuthority: false,
   }),
 } as const);
 
@@ -72,6 +106,7 @@ export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
       ),
     }),
     scanAuthority: SCAN_AUTHORITY,
+    alternateScanCorroboration: ALTERNATE_SCAN_CORROBORATION,
     qualification: Object.freeze({
       sameEditionScanAuthorityLocated: true as const,
       sameEditionDigitizationFamilyEstablished: true as const,

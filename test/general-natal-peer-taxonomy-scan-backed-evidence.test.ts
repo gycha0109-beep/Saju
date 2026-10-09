@@ -71,6 +71,51 @@ describe('general natal Samyeong v7 peer-taxonomy scan-backed evidence', () => {
     });
   });
 
+  it('records exact alternate PDF image location without elevating the governed witness', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const alternate = evidence.alternateScanCorroboration;
+
+    expect(alternate.authorityId).toBe('SCAN-SAMYEONG-SIKU-CADAL06056483');
+    expect(alternate.digitization).toBe('CADAL06056483');
+    expect(alternate.edition).toBe(evidence.scanAuthority.edition);
+    expect(alternate.pageCount).toBe(206);
+    expect(alternate.authenticatedDjvuSha1).toBe(
+      '87834f5ff930189c57a5031af2dfa1e6a6a43676',
+    );
+    expect(alternate.authenticatedDjvuSha256).toBe(
+      'debf222f9448e447217d21e11f116c285eb3ab57debdcd2c6c5acf8af2b351bd',
+    );
+    expect(alternate.directPdfImageInspection).toEqual({
+      splitPdfPageRange: '151-206',
+      splitPdfPage: 32,
+      digitalScanPageFromContiguousPdfSplit: 182,
+      sectionObserved: '兄弟引例章',
+      boundedPropositionObserved: '兄弟者即劫財比肩',
+      matchesGovernedScanRecordedBoundedProposition: true,
+      originalDjvuPageImageIndependentlyDecoded: false,
+    });
+    expect(
+      alternate.directPdfImageInspection.digitalScanPageFromContiguousPdfSplit -
+        evidence.scanAuthority.directInspection.digitalScanPage,
+    ).toBe(8);
+    expect(alternate.pageCount - evidence.scanAuthority.pageCount).toBe(8);
+  });
+
+  it('keeps all stronger source-integrity and production gates closed for alternate scan', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    expect(evidence.alternateScanCorroboration.qualification).toEqual({
+      exactPhysicalPageOrFolioVerified: false,
+      completePassageTranscriptionIdentityEstablished: false,
+      scanDerivedWitnessDigestReproduced: false,
+      fullSourceIntegrityQualificationEstablished: false,
+      productionAdmissionAuthority: false,
+    });
+    expect(evidence.qualification.exactPhysicalPageOrFolioVerified).toBe(false);
+    expect(evidence.qualification.exactWitnessHashReproducedFromScan).toBe(false);
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
   it('keeps provenance, domain review, and Production authority fail-closed', () => {
     const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
     const peerRule = GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES.find(
