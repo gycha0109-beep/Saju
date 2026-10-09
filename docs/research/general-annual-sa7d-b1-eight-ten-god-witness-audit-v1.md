@@ -150,6 +150,7 @@ Research 파일: `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`.
 2. `sa7d-b1-jiecai-baicai-terminology-contract-v1.md` — 명대 `劫財敗財` 복합명, `敗財/劫財` 방향별 분리, 근현대 전사 단독명칭의 판본/증거 레벨 구분.
 3. `sa7d-b1-zhengcai-annual-directness-audit-v1.md` — `甲見己正財` 명식 L1 및 `流年賦` 방법은 PASS, 특정 `甲日×己流年→正財` 역사적 직접 문맥 L2-C는 미확인.
 4. `sa7d-b1-annual-rule-applicability-audit-v1.md` — 유년 일반 방법 L2-M/타 일간 사례/갑일간 직접 역사적 L2-C/출처 결합 추론 L2-D의 독립 판정, 반례 감사 R01–R10.
+5. `sa7d-b1-p2-p3-candidate-triage-v1.md` — 甲日 식신·상관·편인·정인·비견 5종의 **1차 역사적 유년 후보 검색 기각 이유**(출생 年柱/現代文獻/전사문 OCR 충돌), 정확 원전 쪽 후보가 특정되지 않아 신규 직접 L2-C 추가 0건.
 
 **현재 R2 결과:** L1 7/8 · 甲日 직접 역사적 연운 L2-C 1/8 · 제품 의미 승인 0/8. 연구용 L2-M·L2-C·L2-D는 **제안된 문서 레벨**이며 현행 소스 코드의 enum/authority를 바꾸지 않는다. `sourceSupportGrade=INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`.
 
