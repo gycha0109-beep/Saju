@@ -200,3 +200,12 @@ P1 감사의 문서 완료는 **직접 인쇄 L2-C 7종 신규 확보**와 동�
 - 코드 경로 재열람: 서울 civil 연도, `annualSexagenaryPillar(year)`, `deriveAnnualStemTenGod()`; `buildTemporalReadingContext`의 Annual/Monthly 공용 年柱 도출. 입춘 효력분기와 timeZone/UTC 동일 순간, 날짜 바뀜, 日干 불확실성에 대한 R9-01~R9-09는 **시험 설계**이며 자동 실행 **0건**.
 - 지표 변화 **없음**: 명대 단독 7/8, 시대·판본 교차 단독 8/8, 甲日 특정 流年 직접 L2-C 1/8, 현대 Annual 의미 0/8. `L1 + L2-M ≠ L2-C`, `L2-C ≠ L3`.
 - D1 현대 canonical `겁재`와 판본 raw `劫財敗財/敗財/劫財`를 분리하는 정책은 **소유자 승인 전 제안**. D2 연도 표시/入春효력·정확 관보 출처·시각 유효구간/Annual·Monthly 권한 비상속·테스트 역시 **소유자 정책 HOLD**. `sourceSupportGrade='INSUFFICIENT'` 8/8, `bridgeReentryReady=false`, `Production=HOLD`; docs-only, CI/Engine/Reader/Official/Bridge/Monthly 변경 없음.
+
+
+## 22. 2026-10-09 R10 우주항공청 공식 발표 계보와 관보 원문 시각 미결 감사
+
+- 신규 연구 기록 [R10 월력요항 발표·관보 경계 감사](sa7d-b1-r10-official-2026-almanac-publication-and-gazette-boundary-audit-v1.md). 우주항공청이 **2025-06-30** 「2026년 월력요항」 공식 **발표**를 게시한 사실은 정부 원 게시물에서 직접 확인([우주항공청 원 게시](https://www.kasa.go.kr/prog/bbsArticle/BBSMSTR_000000000010/view.do?bbsId=BBSMSTR_000000000010&nttId=B000000001860Pe2zT3)). 발표문은 그날부터 전자관보 등에서 월력요항을 조회하라고 안내하지만, **입춘 실제 시각은 발표문 본문에 나타나지 않는다**.
+- [KASI 2026 달력자료](https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026)는 `2026-02-04 05:02 KST`(분 단위)를 제시하나 **비공식이라고 자체 고지**. KASI 관보 이동 링크와 전자관보 초기 열람 화면만 확인; **2025-06-30 전자관보 해당 호/판면/PDF에서 입춘 시간 문구 직접 판독 미완료**. `OFFICIAL_PUBLICATION_ANNOUNCED=YES`, `GAZETTE_LICHUN_TIME_MATCH=UNVERIFIED`. 공식 발표 존재와 관보 **수치 대조를 혼동하지 않는다**.
+- 2026-02-02 제정·시행으로 재게시된 「월력요항 작성에 관한 규정」은 **2025-06-30에 소급 적용하지 않고**, 법령 원문·별표 1차 출처 대조도 이 R10 범위에서는 **HOLD**. 24기 공표와 명리 Annual 유효기간 채택은 **별도 소유권**.
+- D1 현대 `겁재`/역사 `劫財敗財·敗財·劫財` 병행 제안, D2 `DISPLAY_YEAR`와 `EFFECTIVE_ANNUAL_PILLAR` 정책 선택, D3 현대 Annual 의미 근거는 모두 **정식 채택·승인 없음**. R9 9종 경계 fixture는 **미실행**, KASI 시·분 미만 절입 순간 기대값은 **보류**.
+- **역사 카운트·권한 불변:** 명대 단독 L1 **7/8**, 시대·판본 혼합 단독 L1 **8/8**, 甲日×특정 流年 직접 L2-C **1/8**, 현대 제품 의미 승인 **0/8**, Annual 8종 `sourceSupportGrade='INSUFFICIENT'`, `bridgeReentryReady=false`, `Production=HOLD`. PDF 원본 전체 SHA·관보 판면 모두 HOLD. 변경은 `docs/research/` 한정, Engine/Reader/Official/Bridge/Monthly/CI workflow/TS 코드/제품 무변경. 기존 Actions 자동 시작 가능, CI 전체 통과 주장 금지.
