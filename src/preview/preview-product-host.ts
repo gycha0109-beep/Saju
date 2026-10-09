@@ -10,6 +10,7 @@ import {
   createMyeonghwaProductHost,
   parseProductHostReadingRequest,
   type MyeonghwaProductHost,
+  type MyeonghwaProductHostDependencies,
 } from '../host/product-host.js';
 import { LEGACY_NARRATIVE_RUNTIME_VERSION } from '../reading/governed-reading-execution.js';
 import { normalizeConsumerReadingRequest } from '../reading/consumer-reading-request-adapter.js';
@@ -485,8 +486,12 @@ class PreviewE2eNarrativeAdapter implements NarrativeModelAdapter {
   }
 }
 
-function createDefaultPreviewProductHost(now: Date): MyeonghwaProductHost {
-  return createMyeonghwaProductHost({
+/** Reuse the existing approved Preview E2E general-natal calculation and interpretation wiring. */
+export function createApprovedSourceProofPreviewDependenciesV1(
+  now: Date = new Date(),
+): MyeonghwaProductHostDependencies {
+  if (!PREVIEW_E2E_APPROVAL.approved) throw new Error('Preview E2E authority is not approved.');
+  return {
     calculate(input) {
       return calculateAuthorizedMyeonghwaProductionSnapshot(input).snapshot;
     },
@@ -516,7 +521,11 @@ function createDefaultPreviewProductHost(now: Date): MyeonghwaProductHost {
       artifactGeneratedAt: now,
     },
     requestIdFactory: () => `preview_${randomUUID()}`,
-  });
+  };
+}
+
+function createDefaultPreviewProductHost(now: Date): MyeonghwaProductHost {
+  return createMyeonghwaProductHost(createApprovedSourceProofPreviewDependenciesV1(now));
 }
 
 async function createSpousePositionOnlyPreviewProductHost(
