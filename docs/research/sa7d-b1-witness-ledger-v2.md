@@ -162,3 +162,12 @@
 - **D3** `general-annual-authority-bridge-review.ts` 실제 `RETURN_TO_RESEARCH` / `production='HOLD'` 재열람; 원문 십신명·입춘 시각 확인·연간 계산은 현대 Annual 해석의 **semantic authority가 아님**. Reader/Official/Bridge/Engine/Monthly/TS schema/CI workflows/제품 코드 미변경.
 - **역사 수치 불변:** 명대 단독 L1 **7/8**, 시대·저본 교차 L1 **8/8**, 甲日×특정 流年 L2-C **1/8**, Product Annual L3 **0/8**. `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`. R11 관보 `GAZETTE_LICHUN_TIME_MATCH=UNVERIFIED`, 전체 SHA와 절입 초 단위 HOLD.
 - **A:** 증거 분류 PASS / 관보 원문 HOLD. **B:** 정책 선택 패킷·회귀 설계 PASS / D1/D2/D3 채택·자동 테스트 HOLD. **C:** `docs/research/`·기존 PR 설명 범위만 / Draft·Open·미병합 유지, 수동 workflow 실행 0건. 문서 push는 기존 CI 자동실행 유발 가능, 전체 PASS 주장 금지.
+
+
+## 25. 2026-10-09 R13 L2-C 증거 충분성·제한 외부 후보 역추적 (T-COMP/T-HIST 분리)
+
+- 신규 [R13 직접 유년 십신 증거 충분성·근접 후보 감사](sa7d-b1-r13-annual-direct-witness-evidence-sufficiency-and-bounded-search-v1.md). **R4 T-COMP의 십신 일반 분류계산 심사에는 B1의 역사적 구체 유년 사례 8/8이 논리적 필수조건이 아님**을 재확인. 단 **해당 고전이 특정 甲日×특정 流年×十神 이름을 직접 인쇄했다는 T-HIST 주장**에는 각 사례의 직접 L2-C가 계속 요구된다. D1 역사 명칭 가교·D2 입춘 기간/공식 관보 검증·D3 현대 Annual semantic authority는 서로 다른 소유권이며 아직 미승인.
+- **제한적 외부 전사 탐색(모두 L0):** 『淵海子平』 甲辰日 명식의 **六十五歲逢壬辰年**은 확인되지만 壬辰 유년의 직접 명칭 **偏印 미확인**(`ANNUAL_CASE_WITHOUT_TARGET_LABEL`, 좁은 후속 리드); 『千里命稿』 `甲木日干遇丁 … 傷官`은 **일반 분류**로 특정 丁流年 아님; 『三命通會』 `歲帶正馬`의 甲日午年己/巳 전사 차이는 **출생 연주/글자 불확실**; 『命理探源』 庚日×乙卯年 正財는 **다른 일간**; 『千里命稿』 英王 甲日×辛亥年 正官은 **기인정 동일 사례의 전사 중복**. 어떤 전사도 이번에 인쇄 판면 신규 L2-C로 승격하지 않음.
+- 『千里命稿』 웹 `推年以立春為標準`은 출생 당시 **Natal 年柱 교체** 설명의 L0 후보로 확인했을 뿐, **미래 타깃 Annual 有效期間 정책 D2 승인/2026 공식 관보 입춘 분초 검증으로 소급 금지**. 새 원본 PDF 전체 SHA·절입 초 단위·전자관보 판면 검증 없음.
+- **최신 증거 수치 불변:** 명대 단독 L1 **7/8**, 다른 시대·인쇄 저본 교차 단독 L1 **8/8**, 甲日 특정 실제 流年 직접 L2-C **1/8**, 현대 Annual 제품 의미 **0/8**. `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`.
+- **A:** 증거 필요성·근접사례 역할 분리 PASS / 7개 역사 직접 L2-C HOLD. **B:** 무차별 8/8 스캔 대신 직접 리드 P0~P3·소유자 반환 기준 PASS / D1/D2/D3 정책 선택·R12 13개 자동 테스트 HOLD. **C:** `docs/research/` 범위/기존 PR 설명만 변경, Engine/Reader/Official/Bridge/Monthly/TS/CI workflow/제품 수정 없음. 신규 수동 CI dispatch 없음; 문서 커밋에 따른 기존 Actions 자동실행은 별도 확인, CI 전체 PASS 미선언. PR Draft/Open/미병합 유지.
