@@ -45,8 +45,34 @@ const ONE_MINUTE_MS = 60_000;
 
 function parsedInstant(value: string, expression: RegExp): number | undefined {
   if (!expression.test(value)) return undefined;
+  const parts =
+    /^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})(?:\\.(\\d{1,3}))?(Z|[+-]\\d{2}:\\d{2})$/.exec(
+      value,
+    );
+  if (parts === null) return undefined;
+
   const instant = Date.parse(value);
   if (!Number.isFinite(instant)) return undefined;
+
+  const zone = parts[8]!;
+  const offsetHour = zone === 'Z' ? 0 : Number(zone.slice(1, 3));
+  const offsetMinute = zone === 'Z' ? 0 : Number(zone.slice(4, 6));
+  if (offsetHour > 23 || offsetMinute > 59) return undefined;
+  const offsetSign = zone.startsWith('-') ? -1 : 1;
+  const offsetMs = offsetSign * (offsetHour * 60 + offsetMinute) * ONE_MINUTE_MS;
+  const reconstructed = new Date(instant + offsetMs);
+
+  if (
+    reconstructed.getUTCFullYear() !== Number(parts[1]) ||
+    reconstructed.getUTCMonth() + 1 !== Number(parts[2]) ||
+    reconstructed.getUTCDate() !== Number(parts[3]) ||
+    reconstructed.getUTCHours() !== Number(parts[4]) ||
+    reconstructed.getUTCMinutes() !== Number(parts[5]) ||
+    reconstructed.getUTCSeconds() !== Number(parts[6]) ||
+    reconstructed.getUTCMilliseconds() !== Number((parts[7] ?? '0').padEnd(3, '0'))
+  ) {
+    return undefined;
+  }
   return instant;
 }
 
