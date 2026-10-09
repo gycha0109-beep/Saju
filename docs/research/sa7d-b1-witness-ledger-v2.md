@@ -171,3 +171,12 @@
 - 『千里命稿』 웹 `推年以立春為標準`은 출생 당시 **Natal 年柱 교체** 설명의 L0 후보로 확인했을 뿐, **미래 타깃 Annual 有效期間 정책 D2 승인/2026 공식 관보 입춘 분초 검증으로 소급 금지**. 새 원본 PDF 전체 SHA·절입 초 단위·전자관보 판면 검증 없음.
 - **최신 증거 수치 불변:** 명대 단독 L1 **7/8**, 다른 시대·인쇄 저본 교차 단독 L1 **8/8**, 甲日 특정 실제 流年 직접 L2-C **1/8**, 현대 Annual 제품 의미 **0/8**. `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`.
 - **A:** 증거 필요성·근접사례 역할 분리 PASS / 7개 역사 직접 L2-C HOLD. **B:** 무차별 8/8 스캔 대신 직접 리드 P0~P3·소유자 반환 기준 PASS / D1/D2/D3 정책 선택·R12 13개 자동 테스트 HOLD. **C:** `docs/research/` 범위/기존 PR 설명만 변경, Engine/Reader/Official/Bridge/Monthly/TS/CI workflow/제품 수정 없음. 신규 수동 CI dispatch 없음; 문서 커밋에 따른 기존 Actions 자동실행은 별도 확인, CI 전체 PASS 미선언. PR Draft/Open/미병합 유지.
+
+
+## 26. 2026-10-09 R14 『淵海子平』 甲辰日×壬辰年의 年干 설명과 偏印 직접 명명 분리
+
+- 신규 [R14 壬辰年 연간 사용과 偏印 L2-C 직접 명명 감사](sa7d-b1-r14-yuanhai-jiachen-renchen-annual-stem-vs-pianyin-direct-name-audit-v1.md) 추가. 『淵海子平』 [論正財 전사](https://www.chinese-classics.org/read/shushu/mingli/yuan-hai-zi-ping/001)의 `戊子·丁巳·甲辰·丙寅`은 **甲辰日 명식**, `六十五歲逢壬辰年`은 그 인물의 **특정 壬辰 流年**, `壬辰透出壬水`는 **해당 年干 壬水를 설명하는 논변**이다. 세 요소의 존재는 웹 L0 문맥 확인이나, 그 유년을 **`偏印`으로 직접 명명한 글자**는 해당 사례에서 미확인.
+- 같은 웹 편집본 머리의 일반 `見壬：為倒食、偏印、梟神`은 **분리된 현대 전사 일반 十神 대응표**이며, 특정 `壬辰年`의 직접 인쇄 이름을 뜻하지 않는다. `癸亥`의 `印綬`도 **大運** 맥락이어서 `壬辰流年=偏印` L2-C로 이동 불가. L0 명례+一般名 L0 조합은 조건부 L2-D일 뿐 L2-C가 아니다.
+- 복수 온라인 전사에서 동일한 명식·壬辰·壬水 해설이 반복되나 **독립 인쇄 증인이 아님**. `忌火沖水` / `忌水沖火` 등의 전사 차이로 판본별 정확 글자 검증 필요. Commons의 명대 刻本 [NLC892-2642-210287 第1冊](https://commons.wikimedia.org/wiki/File:NLC892-2642-210287_刻京臺增補淵海子平大全_第1冊.pdf) **48쪽 서지 객체**가 확인됐지만, 해당 `論正財` 명례가 실제 이 판본의 몇 쪽에 어떻게 찍혔는지 **PDF 판면 직접 재열람·전체 원본 SHA 검증은 미완료**. Commons 등록 SHA와 스스로 계산한 binary 해시 혼동 금지.
+- **R14 신규 L1/L2-C=0건**. 기존 **Ming 단독 L1 7/8**, 시대 교차 인쇄 단독 L1 **8/8**, 甲日 특정 流年 직접 명칭 L2-C **1/8**, 현대 Annual 제품 의미 **0/8** 불변. Annual 8종 `sourceSupportGrade='INSUFFICIENT'`, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`.
+- **A:** 연간 사용 문맥 L0 추가 검토 PASS / 판면·偏印 직접명칭 HOLD. **B:** P1 해당 전사 반복 검색 종료·인쇄 직접 이름 리드 시에만 재진입 / D1/D2/D3·R12 자동테스트 HOLD. **C:** `docs/research/` 문서/PR 설명만 변경, Engine/Reader/Official/Bridge/Monthly/TS/CI workflow/제품 권한 무변경, PR Draft/Open/미병합. 수동 CI dispatch 없음, 자동 Actions 전체 PASS는 확인 전 주장 금지.
