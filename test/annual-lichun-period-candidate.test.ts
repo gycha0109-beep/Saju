@@ -113,6 +113,26 @@ describe('D2-B source-gated LiChun annual-period candidate (not production)', ()
     ).toMatchObject({ state: 'unavailable', reasonCode: 'BOUNDARY_EVIDENCE_INVALID' });
   });
 
+  it('rejects a false LiChun claim outside the seasonal window even if flagged verified', () => {
+    for (const instantUtc of [
+      '2026-01-01T00:00:00.000Z',
+      '2026-12-31T00:00:00.000Z',
+      '2026-02-08T00:00:00.000Z',
+    ]) {
+      expect(
+        resolveAnnualLichunPeriodCandidate(
+          2026,
+          '2026-02-04T12:00:00+09:00',
+          { ...TEST_BOUNDARY, instantUtc },
+        ),
+      ).toMatchObject({
+        state: 'unavailable',
+        reasonCode: 'BOUNDARY_EVIDENCE_INVALID',
+        productionAuthorized: false,
+      });
+    }
+  });
+
   it('normalizes equivalent UTC and Korean-offset instants without changing results', () => {
     const kst = resolveAnnualLichunPeriodCandidate(
       2026,
