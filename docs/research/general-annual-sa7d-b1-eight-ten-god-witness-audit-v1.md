@@ -170,3 +170,10 @@ P1 감사의 문서 완료는 **직접 인쇄 L2-C 7종 신규 확보**와 동�
 - `sa7d-b1-r5-annual-input-provenance-and-authority-gate-v1.md` — `natal dayMaster`, 요청 civil `targetYear`, `annualPillar` time boundary, `annualStemTenGod`·연운 의미의 **단계별 분리**. 모호·결측 입력과 별도 판본/명칭 정책은 실패폐쇄 처리 요구.
 - `sa7d-b1-r5-independent-admission-readiness-and-handoff-v1.md` — 기존 Bridge Review의 `RETURN_TO_RESEARCH`, Engine Authority Intake의 `HOLD_RESEARCH/HOLD_AUTHORITY`에 맞춘 연구 반환. 실제 승인·타입 변경 없음.
 - **R5 직접 인쇄 신규 L2-C=0건**, 누적 명대 개별 십신 이름 L1=7/8, 개별 역사 연운 L2-C=1/8, Product 해석 승인 0/8, `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. L2-D 현대 계산 추론을 고전 직접 인쇄 사례·정식 코드 테스트 PASS로 기록하지 않음.
+
+## 18. 2026-10-09 R6 별도 Natal 어휘 증거·year-only 실제 연운 기간 심사
+
+- `sa7d-b1-r6-jia-yi-historical-label-cross-track-reconciliation-v1.md` — `general-natal-jia-yi-jiecai-exact-relation-authority.ts`에서 후대 『子平真詮/評註』 전사 `甲逢乙為劫財`의 Natal bounded **research-only** 관찰 사실을 확인. 이는 명대 『淵海子平』의 직접 甲乙 그룹 `劫財敗財`/방향 `敗財`와 **다른 시대·텍스트 모달리티**로 취급. 직접 明刻 독립 甲乙 劫財 L1 승격 **없음**.
+- `sa7d-b1-r6-civil-year-vs-solar-term-annual-period-owner-audit-v1.md` — consumer adapter가 Seoul civil `targetYear` 선택, `annualSexagenaryPillar(year)`는 1984 기준 **정수 연도만으로 年柱** 산출(節入 시각 인자 없음), `deriveAnnualStemTenGod()`는 年干의 현대 십신 분류. 연운 유효기간을 入春基準으로 쓰려면 **별도 기간 정책·코드 owner의 명시적 결정과 테스트** 필요. 기존 코드를 틀렸다고 단정하지 않음.
+- `sa7d-b1-r6-cross-track-admission-trigger-and-stop-review-v1.md` — Natal label observation, annual calculation/period facts, Annual `ANNUAL_*` 의미, Bridge/Engine/Production Authority를 독립 소유권으로 분리.
+- **총계 불변:** 명대 십신 단독 이름 L1 7/8 · 역사적 甲日×특정 年干의 연운 직접 용례 L2-C 1/8 · 현대 의미 승인 0/8. R6 신규 직접 인쇄 판면 **0**, CI 실행 **0**, `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`.
