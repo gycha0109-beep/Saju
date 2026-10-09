@@ -103,3 +103,17 @@
 - `sa7d-b1-r6-cross-track-admission-trigger-and-stop-review-v1.md` — Natal 어휘 research-only, Annual period resolver, Bridge `RETURN_TO_RESEARCH` 및 Engine `HOLD_RESEARCH/HOLD_AUTHORITY` 사이 **소유권·재심사 트리거/금지**.
 - **신규 인쇄 원본 직접 검증·R6 L2-C 증분=0**, R6의 좁은 범위 후대 전사 L0와 canonical 어휘 매핑을 명대/annual 직접 인쇄 증거 수치에 포함하지 않음. **최신 집계 L1(명대 독립명)=7/8, 甲일간 특정 역사 流年 L2-C=1/8, 제품 Annual 의미 승인=0/8**.
 - **권한 불변:** `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. 연구 문서만 추가; 코드/타입/테스트/CI/Official/Reader/Bridge/Engine/Monthly/제품 변경 없음.
+
+## 11. 2026-10-09 R7 후대 인쇄본 단독 甲乙 劫財 및 기간·명칭 Decision Packet
+
+**판면 신규 직접 확인:** 국립도서관 인쇄 『子平真詮』 소장번호 `NLC416-11jh010455-35296`, PDF **p18(1-based)**/인쇄 **九**, 「論十干配合性情」에 **`甲逢乙為劫財` 단독 문장**이 인쇄돼 있다. `sa7d-b1-r7-ziping-zhenquan-later-printed-jia-yi-jiecai-direct-l1-v1.md` 참고. 정확 발행연도 `[19--?]`, 원본 PDF 전체 바이너리 SHA 검증 미완료.
+
+**서로 다른 모집단 분리:**
+- `MING_PRINT_L1_EXACT=7/8` — 명대 刻本만 한정한 기존 수치 **불변**.
+- `CROSS_EDITION_PRINT_L1_EXACT=8/8` — 명대·후대 **서로 다른 시대/판본을 합친 인쇄 원전 십신 단독명칭 존재**라는 R7 새 연구 지표. **동일시대/학파의 이름 통일성/전역 동의어 증명이 아님**.
+- `ANNUAL_PRINT_L2_C=1/8` — 甲日×特定 流年×十神 이름 직접 사용례 **불변**. 새 인쇄 구절은 일반 日干 이름이므로 乙流年 직접 증거 아님.
+- `PRODUCT_L3=0/8` — Annual 제품 의미 승인 **불변**.
+
+`sa7d-b1-r7-modern-label-convention-and-annual-period-decision-packet-v1.md`: owner D1(현대 겁재 canonical label + 역사 raw literal provenance 분리 **권고, 아직 미승인**), D2(Seoul civil `DISPLAY_YEAR`와 입춘 기반 `ASTROLOGICAL_EFFECTIVE_ANNUAL_PILLAR` 구분 **심사 요청**), D3(Annual semantic authority 별도) 및 기간 경계/입춘/모호입력 부정 테스트 **11개 미실행**.
+
+**권한 불변:** `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. 새 소스 인용이 자동 Bridge/Engine/Reader/Official/Monthly/제품에 들어가지 않음. 연구 문서 전용, 신규 CI 실행 없음.
