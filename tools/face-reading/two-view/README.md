@@ -1,6 +1,6 @@
 # Local two-view job and frontal metric preview
 
-Issues: #2452 (P0/P1), #2454 (P2). Watchtower-Track: face-observation-engine.
+Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures). Watchtower-Track: face-observation-engine.
 
 This implements P0/P1 and the P2 parsing comparison of the two-view design. Users can select a frontal and a
 profile image, execute the supported jobs together, cancel work, and inspect
@@ -30,6 +30,23 @@ parser asset is described below. Source
 mappings, user photos and overlays are not repository fixtures. The model byte
 hash is checked against the existing pinned asset; no source-image hash is
 created. No model or dependency is downloaded automatically.
+
+An optional ignored `additional-inventory.json` accepts separately supplied local
+captures with unique opaque `recordId`, private `sourcePath` and an explicit
+existing `viewRole` (`frontal` or `profile`). This is engineering input routing,
+not automatic pose admission or freshness/independence attestation. The original
+inventory and its capture order remain unchanged; additions appear after it.
+Original files are read from their supplied locations, never copied. Invalid
+additional inventory fails startup rather than silently dropping captures.
+
+A complete saved base batch can be restored while additions are pending. Unknown,
+duplicate or arbitrarily partial saved batches remain invalid. The batch action
+executes pending captures first, then saves the complete combined batch, reusing
+previous numerical rows and validated mask bytes without repeating base inference.
+New run directories preserve previous outputs. Explicit profile entries persist
+empty frontal metric rows and continue to receive parser candidates. Photo counts
+follow the inventory instead of assuming 18. A fully completed batch can still be
+rerun by the existing batch action.
 
 The owning browser executes model inference in a classic worker. MediaPipe
 0.10.35's WASM loader calls `importScripts`; a module worker cannot execute that

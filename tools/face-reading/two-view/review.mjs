@@ -390,10 +390,10 @@ async function start(tasks, save) {
   $('cancel').hidden = true;
   $('batch').disabled = false;
   $('analyze').disabled = files.size === 0;
-  $('status').textContent = '분석이 끝났습니다. 모든 사진의 수치와 원본을 확인하세요.';
+  $('status').textContent = '분석이 끝났습니다. 사진별 결과와 원본을 확인하세요.';
   render();
   if (save) {
-    const recordsToSave = tasks.map((task) => {
+    const recordsToSave = state.records.map((task) => {
       const result = results.get(task.captureRef);
       return {
         captureRef: task.captureRef,
@@ -413,10 +413,21 @@ async function start(tasks, save) {
       });
       if (localGeneration !== runGeneration) return;
       if (!response.ok) throw Error('RESULT_SAVE_FAILED');
-      $('status').textContent = '18장 전체 계산 결과를 로컬에 저장했습니다.';
+      $('status').textContent = `${state.records.length}장 전체 계산 결과를 로컬에 저장했습니다.`;
       const parsingRecords = await Promise.all(
-        tasks.map(async (task) => {
+        state.records.map(async (task) => {
           const result = results.get(task.captureRef);
+          const layers =
+            result?.layers ||
+            Object.fromEntries(
+              await Promise.all(
+                Object.entries(result?.layerUrls || {}).map(async ([name, url]) => {
+                  const response = await fetch(url);
+                  if (!response.ok) throw Error('PARSING_SAVE_FAILED');
+                  return [name, await response.blob()];
+                }),
+              ),
+            );
           return {
             captureRef: task.captureRef,
             parsing: result?.parsing || {
@@ -427,10 +438,7 @@ async function start(tasks, save) {
             },
             layers: Object.fromEntries(
               await Promise.all(
-                Object.entries(result?.layers || {}).map(async ([name, blob]) => [
-                  name,
-                  await base64(blob),
-                ]),
+                Object.entries(layers).map(async ([name, blob]) => [name, await base64(blob)]),
               ),
             ),
           };
@@ -448,14 +456,18 @@ async function start(tasks, save) {
       });
       if (localGeneration !== runGeneration) return;
       if (!parsingResponse.ok) throw Error('PARSING_SAVE_FAILED');
-      $('status').textContent = '전체 18장의 수치와 영역 표시를 로컬에 저장했습니다.';
+      $('status').textContent =
+        `전체 ${state.records.length}장의 수치와 영역 표시를 로컬에 저장했습니다.`;
     } catch {
       if (localGeneration !== runGeneration) return;
       $('status').textContent =
         '결과는 확인할 수 있지만 일부 저장에 실패했습니다. 화면을 닫기 전에 확인하세요.';
     }
   }
-  if (localGeneration === runGeneration) document.body.dataset.batchComplete = String(save);
+  if (localGeneration === runGeneration) {
+    updateBatchLabel();
+    document.body.dataset.batchComplete = String(save);
+  }
 }
 for (const role of ['frontal', 'profile'])
   $(role).onchange = () => {
@@ -482,9 +494,22 @@ for (const role of ['frontal', 'profile'])
     $('status').textContent = '선택한 사진을 한 번에 분석합니다.';
   };
 $('analyze').onclick = () => start([...files.values()], false);
+function pendingRecords() {
+  return state.records.filter((r) => {
+    const saved = results.get(r.captureRef);
+    return !saved || !Array.isArray(saved.metrics) || saved.parsing?.status !== 'completed';
+  });
+}
+function updateBatchLabel() {
+  const pending = pendingRecords().length;
+  $('batch').textContent = pending
+    ? `추가·미완료 ${pending}장 분석`
+    : `기존 ${state.records.length}장 모두 분석`;
+}
 $('batch').onclick = () => {
   setRecords(state.records, 'existing');
-  start(state.records, true);
+  const pending = pendingRecords();
+  start(pending.length ? pending : state.records, true);
 };
 $('cancel').onclick = () => {
   stop();
@@ -521,11 +546,16 @@ try {
       layerUrls: saved.layers,
     });
   setRecords(state.records, 'existing');
-  $('batch').textContent = `기존 ${state.records.length}장 모두 분석`;
+  const photo = Number(new URL(location.href).searchParams.get('photo'));
+  if (Number.isInteger(photo) && photo >= 1 && photo <= records.length) {
+    selected = photo - 1;
+    render();
+  }
+  updateBatchLabel();
   const completed = state.savedRecords?.length || 0;
-  $('count').textContent = `전체 ${state.records.length}장 · 저장된 수치 ${completed}장`;
+  $('count').textContent = `전체 ${state.records.length}장 · 결과 저장 ${completed}장`;
   $('status').textContent = completed
-    ? '저장된 전체 사진 수치를 확인하세요. 새 사진은 위에서 선택할 수 있습니다.'
+    ? '저장된 전체 사진 결과를 확인하세요. 새 사진은 위에서 선택할 수 있습니다.'
     : '기존 사진 전체를 분석하거나 정면·측면 사진을 선택하세요.';
   if (state.parsingRestoreFailed)
     $('status').textContent =

@@ -169,6 +169,29 @@ describe('image-plane frontal preview', () => {
   });
 });
 
+describe('mixed-role persistence', () => {
+  it('stores an explicitly routed profile without converting it to frontal scalars', () => {
+    const metrics = computeFrontalMetrics(fixture());
+    const roles = new Map<string, 'frontal' | 'profile'>([['side', 'profile']]);
+    const input = {
+      methodVersion: METHOD_VERSION,
+      records: [
+        { captureRef: 'fixture', metrics },
+        { captureRef: 'side', metrics: [] },
+      ],
+    };
+    expect(validateBatch(input, ['fixture', 'side'], roles)[1]!.metrics).toEqual([]);
+    expect(() => validateBatch(input, ['fixture', 'side'])).toThrow('BATCH_INVALID');
+    expect(() =>
+      validateBatch(
+        { ...input, records: [input.records[0]!, { captureRef: 'side', metrics }] },
+        ['fixture', 'side'],
+        roles,
+      ),
+    ).toThrow('METRIC_INVALID');
+  });
+});
+
 describe('bounded all-capture jobs', () => {
   afterEach(() => vi.useRealTimers());
   it('schedules all 18 captures and continues after one provider fails', async () => {

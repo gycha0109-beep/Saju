@@ -6,6 +6,7 @@ export function validateBatch(
     records: { captureRef: string; metrics: PreviewMetric[]; error?: string }[];
   },
   ids: string[],
+  roles?: Map<string, 'frontal' | 'profile'>,
 ): { captureRef: string; metrics: PreviewMetric[]; error?: string }[];
 export function createLocalReviewServer(options?: {
   intake?: string;

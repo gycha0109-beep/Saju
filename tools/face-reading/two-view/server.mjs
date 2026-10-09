@@ -27,7 +27,7 @@ const json = (res, status, value) => {
 };
 const definitionMap = new Map(METRIC_DEFINITIONS.map((d) => ['engineering.frontal.' + d.id, d]));
 
-export function validateBatch(input, ids) {
+export function validateBatch(input, ids, roles = new Map()) {
   if (
     input.methodVersion !== METHOD_VERSION ||
     !Array.isArray(input.records) ||
@@ -44,6 +44,10 @@ export function validateBatch(input, ids) {
       if (!['TASK_FAILED', 'TASK_TIMEOUT'].includes(record.error) || record.metrics?.length)
         throw Error('BATCH_INVALID');
       return { captureRef: record.captureRef, error: record.error, metrics: [] };
+    }
+    if (roles.get(record.captureRef) === 'profile') {
+      if (!Array.isArray(record.metrics) || record.metrics.length) throw Error('METRIC_INVALID');
+      return { captureRef: record.captureRef, metrics: [] };
     }
     if (
       !Array.isArray(record.metrics) ||
@@ -122,7 +126,22 @@ export async function createLocalReviewServer({
       .digest('hex') !== '64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff'
   )
     throw Error('MODEL_PIN_INVALID');
-  const inventory = JSON.parse(await readFile(resolve(intake, 'inventory.json'), 'utf8'));
+  const baseInventory = JSON.parse(await readFile(resolve(intake, 'inventory.json'), 'utf8'));
+  let additionalInventory = [];
+  try {
+    additionalInventory = JSON.parse(
+      await readFile(resolve(intake, 'additional-inventory.json'), 'utf8'),
+    );
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw Error('ADDITIONAL_INVENTORY_INVALID', { cause: error });
+  }
+  if (
+    !Array.isArray(baseInventory) ||
+    !Array.isArray(additionalInventory) ||
+    additionalInventory.some((r) => !['frontal', 'profile'].includes(r.viewRole))
+  )
+    throw Error('INVENTORY_INVALID');
+  const inventory = [...baseInventory, ...additionalInventory];
   if (
     !Array.isArray(inventory) ||
     new Set(inventory.map((r) => r.recordId)).size !== inventory.length ||
@@ -135,15 +154,19 @@ export async function createLocalReviewServer({
     throw Error('INVENTORY_INVALID');
   const render = JSON.parse(await readFile(resolve(intake, 'combined-active.json'), 'utf8'));
   const manifest = JSON.parse(await readFile(resolve(render.path, 'manifest.json'), 'utf8'));
-  const ids = [
+  if (manifest.recordIds.some((id) => !baseInventory.some((r) => r.recordId === id)))
+    throw Error('INVENTORY_INVALID');
+  const baseIds = [
     ...manifest.recordIds,
-    ...inventory.map((r) => r.recordId).filter((id) => !manifest.recordIds.includes(id)),
+    ...baseInventory.map((r) => r.recordId).filter((id) => !manifest.recordIds.includes(id)),
   ];
+  const ids = [...baseIds, ...additionalInventory.map((r) => r.recordId)];
   if (ids.length !== inventory.length || new Set(ids).size !== inventory.length)
     throw Error('INVENTORY_INVALID');
+  const roles = new Map(additionalInventory.map((r) => [r.recordId, r.viewRole]));
   const records = ids.map((captureRef) => ({
     captureRef,
-    viewRole: 'frontal',
+    viewRole: roles.get(captureRef) || 'frontal',
     image: '/image/' + captureRef,
     ...(manifest.recordIds.includes(captureRef)
       ? { oldOverlay: '/review-artifact/' + captureRef + '/full.png' }
@@ -170,6 +193,17 @@ export async function createLocalReviewServer({
     parsingRunId,
     parsingSaving = false;
   let parsingRestoreFailed = false;
+  // A previous complete base batch can be shown while new captures are pending.
+  // Arbitrary partial, duplicate or unknown stored batches remain invalid.
+  function restoredIds(saved) {
+    const stored = saved?.records?.map((r) => r.captureRef);
+    if (!Array.isArray(stored) || new Set(stored).size !== stored.length)
+      throw Error('PREVIOUS_BATCH_INVALID');
+    const expected = stored.length === ids.length ? ids : baseIds;
+    if (stored.length !== expected.length || stored.some((id) => !expected.includes(id)))
+      throw Error('PREVIOUS_BATCH_INVALID');
+    return expected;
+  }
   try {
     const ortPackage = JSON.parse(
       await readFile(resolve(repository, 'node_modules/onnxruntime-web/package.json'), 'utf8'),
@@ -189,14 +223,9 @@ export async function createLocalReviewServer({
     const saved = JSON.parse(
       await readFile(resolve(parsingRoot, active.runId, 'summary.json'), 'utf8'),
     );
-    if (
-      saved.methodVersion !== PARSING_VERSION ||
-      !Array.isArray(saved.records) ||
-      saved.records.length !== ids.length ||
-      new Set(saved.records.map((r) => r.captureRef)).size !== ids.length ||
-      saved.records.some((r) => !ids.includes(r.captureRef))
-    )
+    if (saved.methodVersion !== PARSING_VERSION || !Array.isArray(saved.records))
       throw Error('PARSING_RUN_INVALID');
+    restoredIds(saved);
     parsingSaved = saved.records.map((r) => ({
       captureRef: r.captureRef,
       parsing: validateParsingSummary(r.parsing),
@@ -212,7 +241,7 @@ export async function createLocalReviewServer({
     const saved = JSON.parse(
       await readFile(resolve(runRoot, active.runId, 'metrics.json'), 'utf8'),
     );
-    savedRecords = validateBatch(saved, ids);
+    savedRecords = validateBatch(saved, restoredIds(saved), roles);
   } catch (error) {
     if (error.code !== 'ENOENT') throw Error('PREVIOUS_METRICS_INVALID', { cause: error });
   }
@@ -399,7 +428,7 @@ export async function createLocalReviewServer({
       const input = await requestJson(req);
       if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
       if (saving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
-      const next = validateBatch(input, ids);
+      const next = validateBatch(input, ids, roles);
       saving = true;
       try {
         for (const previous of sourceFileStates) {
