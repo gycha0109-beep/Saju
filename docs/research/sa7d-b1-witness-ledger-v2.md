@@ -95,3 +95,11 @@
 - `sa7d-b1-r5-annual-input-provenance-and-authority-gate-v1.md`: `FactState`의 resolved/ambiguous/unavailable, civil `targetYear`/요청기간·역법 `annualPillar`·십신명 결과 `annualStemTenGod`·T9 의미 승인 각각의 책임 경계. 立春/절입·요청 연도 정책을 연구 임의로 가정 금지.
 - `sa7d-b1-r5-independent-admission-readiness-and-handoff-v1.md`: 실제 `general-annual-authority-bridge-review.ts`의 `RETURN_TO_RESEARCH`, `general-annual-research-return-handoff.ts`의 향후 `READY_FOR_BRIDGE_REREVIEW` 최대 범위, `saju-engine-authority-intake.ts`의 `HOLD_RESEARCH/HOLD_AUTHORITY`와 대조. **문서용 분류계산 계약 감사 완료 ≠ Bridge 또는 Engine 승인**.
 - **최종 권한:** `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. 연구 문서 외 코드·CI 변경 없음. 현대 제품 해석의 과학적 실증을 의미하지 않는다.
+
+## 10. 2026-10-09 R6 현대·역사 명칭과 실제 연운 기간 계산 소유권 심사
+
+- `sa7d-b1-r6-jia-yi-historical-label-cross-track-reconciliation-v1.md` — **원국 Natal 연구에 이미 존재한** `甲逢乙為劫財` 『子平真詮/評註』 후대 **전사+주석**의 exact 甲→乙 relation **research-only** 관찰과 `겁재→劫財` modern lexical bridge를 확인. **명대 淵海 `劫財敗財/敗財` 판면과 별개 문헌/시대/모달리티**. 명대 직접 단독 劫財 L1 甲乙 HOLD, 甲乙 annual L2-C HOLD.
+- `sa7d-b1-r6-civil-year-vs-solar-term-annual-period-owner-audit-v1.md` — **실제 함수 경로**: `consumer-reading-request-adapter.ts`의 서울 civil year 결정 → `temporal-reading-context.ts`의 `annualSexagenaryPillar(year)`에 `1984` 기준 60갑자 연도 연산 → `annual-interpretation-facts.ts`의 일간↔연간 五行陰陽 십신 도출. 연운 year-only resolver에는 立春/절입 시각 분기 **없음**. 입춘 기준 기간으로 제품에서 해석해도 되는지 policy/역법 owner의 별도 승인 필요.
+- `sa7d-b1-r6-cross-track-admission-trigger-and-stop-review-v1.md` — Natal 어휘 research-only, Annual period resolver, Bridge `RETURN_TO_RESEARCH` 및 Engine `HOLD_RESEARCH/HOLD_AUTHORITY` 사이 **소유권·재심사 트리거/금지**.
+- **신규 인쇄 원본 직접 검증·R6 L2-C 증분=0**, R6의 좁은 범위 후대 전사 L0와 canonical 어휘 매핑을 명대/annual 직접 인쇄 증거 수치에 포함하지 않음. **최신 집계 L1(명대 독립명)=7/8, 甲일간 특정 역사 流年 L2-C=1/8, 제품 Annual 의미 승인=0/8**.
+- **권한 불변:** `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. 연구 문서만 추가; 코드/타입/테스트/CI/Official/Reader/Bridge/Engine/Monthly/제품 변경 없음.
