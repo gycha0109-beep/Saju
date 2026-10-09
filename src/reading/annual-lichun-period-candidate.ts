@@ -103,7 +103,7 @@ function seoulYear(instantMs: number): number {
 /**
  * Research-only conditional resolver for the APPROVED D2-B direction.
  *
- * For minute-granularity boundaries, [T - 60s, T + 60s) is unresolved:
+ * For minute-granularity boundaries, (T - 60s, T + 60s) is unresolved:
  * the source may have truncated, rounded, or ceiling-formatted its minute.
  * Its displayed :00 seconds are only a reference anchor, not an exact instant.
  * An exact second boundary is likewise conditional on external source review.
@@ -159,7 +159,7 @@ export function resolveAnnualLichunPeriodCandidate(
 
   if (
     boundary.precision === 'minute' &&
-    referenceMs >= boundaryMs - ONE_MINUTE_MS &&
+    referenceMs > boundaryMs - ONE_MINUTE_MS &&
     referenceMs < boundaryMs + ONE_MINUTE_MS
   ) {
     return unavailable('BOUNDARY_MINUTE_AMBIGUOUS');
