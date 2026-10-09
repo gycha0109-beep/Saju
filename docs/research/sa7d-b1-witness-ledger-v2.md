@@ -152,3 +152,13 @@
 - 우주항공청 [2025-12-12 월력요항 작성에 관한 규정 제정안 행정예고](https://www.kasa.go.kr/prog/bbsArticle/BBSMSTR_000000000170/view.do?bbsId=BBSMSTR_000000000170&nttId=B000000002580Wk5aX2) 공식 게시까지는 확인. 이 후속 규정 제정절차와 2026-02-02 최종 훈령 재게시 정황을 **2025-06-30에 소급 적용하거나** 명리의 入春 年柱 정책과 혼동하지 않음.
 - **R11 신규 인쇄 L1/직접 L2-C=0건; 수치 불변**: 명대 PRINT L1 **7/8**, 인쇄 교차판본 L1 **8/8**, 甲日×실제 流年 직접 L2-C **1/8**, 현대 Annual 제품 의미 **0/8**. D1 modern `겁재`/historical raw label 정책은 제안 상태, D2 표시연도 vs 연간효력 경계(특히 `05:02±1초`) HOLD, D3 의미 별도. `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`.
 - **A=부분 확인/관보 원문 HOLD, B=명칭·기간·의미 정책 HOLD, C=docs/research-only 무결성 PASS**. Engine/Official/Reader/Bridge/Monthly/계산/TS schema/CI workflow 변경·실제 자동 경계테스트·수동 CI dispatch 없음. 문서 push에 따른 기존 Actions 자동 실행은 별도로 가능하며 CI 전체 PASS를 주장하지 않음. PR Draft/Open/미병합 유지.
+
+
+## 24. 2026-10-09 R12 D1 명칭·D2 연운 기간·D3 제품 의미 별도 소유자 결정 패킷
+
+- 신규 연구 [R12 D1/D2/D3 소유자 결정 패킷](sa7d-b1-r12-naming-and-annual-temporal-owner-decision-packet-v1.md) 추가. **최신 `main` 정적 코드 재대조**: `consumer-reading-request-adapter.ts`는 서울 달력연도와 월 추출, relative 연·월운 referenceDateTime 결측/invalid 시 정해진 invalid reason; `temporal-reading-context.ts:annualSexagenaryPillar(year)`은 1984년 기점 year-only 干支 계산, `buildTemporalReadingContext`는 Annual/Monthly 동일 helper 공유; `annual-interpretation-facts.ts`는 日干 resolved일 때만 연간 현대 십신 계산. **절입 유효시각/공식 sourceRef는 이 year-only 계산에 입력되지 않음**.
+- **D1** 현대 `겁재` canonical와 원전 서지별 `劫財敗財`/방향 `敗財`/후대 인쇄 `劫財` raw exact를 병행 보존하는 **`MODERN_CANONICAL_WITH_SOURCE_EXACT_QUOTE` 채택 심사 제안**만 유지. D1-B/C 비교와 scope/owner/서명 artifact 항목 작성, **정식 채택 0건**.
+- **D2** 세 가지 선택지·DEFER: `CIVIL_YEAR_ONLY` 현행 범위를 정확히 표시, `DISPLAY_CIVIL_YEAR__EFFECTIVE_SOLAR_TERM_PILLAR`(**공식 관보 원문·기간 owner 확정 후 조건부 검토**), `ANNUAL_PERIOD_UNRESOLVED_FAIL_CLOSED`. 같은 instant UTC/KST·서울 연말/연초·입춘 `05:01/05:03`·초단위 HOLD·invalid referenceDateTime·unresolved 日主·월운 비상속 등 **13개 회귀/음성 사례를 설계만 했고 실행하지 않음**.
+- **D3** `general-annual-authority-bridge-review.ts` 실제 `RETURN_TO_RESEARCH` / `production='HOLD'` 재열람; 원문 십신명·입춘 시각 확인·연간 계산은 현대 Annual 해석의 **semantic authority가 아님**. Reader/Official/Bridge/Engine/Monthly/TS schema/CI workflows/제품 코드 미변경.
+- **역사 수치 불변:** 명대 단독 L1 **7/8**, 시대·저본 교차 L1 **8/8**, 甲日×특정 流年 L2-C **1/8**, Product Annual L3 **0/8**. `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`. R11 관보 `GAZETTE_LICHUN_TIME_MATCH=UNVERIFIED`, 전체 SHA와 절입 초 단위 HOLD.
+- **A:** 증거 분류 PASS / 관보 원문 HOLD. **B:** 정책 선택 패킷·회귀 설계 PASS / D1/D2/D3 채택·자동 테스트 HOLD. **C:** `docs/research/`·기존 PR 설명 범위만 / Draft·Open·미병합 유지, 수동 workflow 실행 0건. 문서 push는 기존 CI 자동실행 유발 가능, 전체 PASS 주장 금지.
