@@ -3,6 +3,8 @@ import type { ReadingRequest } from '../src/contracts/reading.js';
 import {
   ANNUAL_LICHUN_PRIMARY_REGISTRY_VERSION,
   getPinnedPrimaryLichunBoundary,
+  isStructurallyValidPinnedPrimaryLichunWitness,
+  type PinnedPrimaryLichunWitness,
   resolveAnnualLichunCycleWithReviewedSources,
   resolveAnnualLichunRequestWithReviewedSource,
 } from '../src/reading/annual-lichun-reviewed-source-registry.js';
@@ -86,5 +88,59 @@ describe('Primary LiChun source registration fails closed before direct source a
       reasonCode: 'ANNUAL_TARGET_PERIOD_REQUIRED',
       productionAuthorized: false,
     });
+  });
+});
+
+describe('structural validation of source-owner-pinned witnesses (NOT proof of authenticity)', () => {
+  const synthetic: PinnedPrimaryLichunWitness = {
+    year: 2026,
+    instantUtc: '2026-02-03T20:02:00.000Z',
+    precision: 'minute',
+    sourceRef: 'synthetic-test-not-an-official-source',
+    sourceVersion: 'synthetic-test-v1',
+    primaryDocumentUri: 'https://www.kasa.go.kr/files/synthetic-primary.pdf',
+    primaryDocumentSha256: 'a'.repeat(64),
+    primaryDocumentPage: 2,
+    printedLichunText: '입춘 2월 4일 오전 5시 2분 (synthetic, not audited)',
+    reviewerDecisionRef: 'synthetic-review-not-a-real-attestation',
+  };
+
+  it('accepts a structurally coherent fixture without registering or authorizing it', () => {
+    expect(isStructurallyValidPinnedPrimaryLichunWitness(synthetic)).toBe(true);
+    expect(getPinnedPrimaryLichunBoundary(2026)).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'NO_PINNED_PRIMARY_WITNESS',
+      productionAuthorized: false,
+    });
+  });
+
+  it('rejects implausible dates, wrong local years, and wrong declared minute precision', () => {
+    for (const change of [
+      { instantUtc: '2026-01-01T00:00:00.000Z' },
+      { instantUtc: '2026-12-31T23:00:00.000Z' },
+      { instantUtc: '2026-02-30T20:02:00.000Z' },
+      { instantUtc: '2026-02-03T20:02:42.000Z' },
+      { instantUtc: '2026-02-03T20:02:00.100Z' },
+      { year: 2025 },
+      { year: 2027 },
+    ]) {
+      expect(isStructurallyValidPinnedPrimaryLichunWitness({ ...synthetic, ...change })).toBe(false);
+    }
+  });
+
+  it('rejects URL impersonation, credentials, ports, malformed hashes, and empty reviews', () => {
+    for (const change of [
+      { primaryDocumentUri: 'https://www.kasa.go.kr.attacker.test/not-official.pdf' },
+      { primaryDocumentUri: 'https://fake-gwanbo.go.kr/not-official.pdf' },
+      { primaryDocumentUri: 'http://www.kasa.go.kr/file.pdf' },
+      { primaryDocumentUri: 'https://attacker@www.kasa.go.kr/file.pdf' },
+      { primaryDocumentUri: 'https://www.kasa.go.kr:444/file.pdf' },
+      { primaryDocumentSha256: 'xyz' },
+      { primaryDocumentPage: 0 },
+      { reviewerDecisionRef: ' ' },
+      { printedLichunText: 'unrelated document' },
+    ]) {
+      expect(isStructurallyValidPinnedPrimaryLichunWitness({ ...synthetic, ...change })).toBe(false);
+    }
   });
 });
