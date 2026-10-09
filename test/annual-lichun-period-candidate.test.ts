@@ -5,6 +5,7 @@ import {
   type AnnualLichunBoundaryEvidence,
 } from '../src/reading/annual-lichun-period-candidate.js';
 import { buildTemporalReadingContext } from '../src/reading/temporal-reading-context.js';
+import { resolveAnnualLichunRequestCandidate } from '../src/reading/annual-lichun-request-candidate.js';
 
 // A synthetic test boundary, NOT an asserted astronomical or official instant.
 const TEST_BOUNDARY: AnnualLichunBoundaryEvidence = {
@@ -205,6 +206,143 @@ describe('D2-B source-gated LiChun annual-period candidate (not production)', ()
       state: 'candidate',
       effectiveAnnualPillar: { stem: '을', branch: '사' },
       productionAuthorized: false,
+    });
+  });
+});
+
+describe('D2-B isolated Annual request-instant binding (not a full annual reading)', () => {
+  const annualRequest = (
+    referenceDateTime: string,
+    year = 2026,
+  ): ReadingRequest => ({
+    requestId: 'annual-request-candidate',
+    intent: { domain: 'general', temporalScope: 'annual' },
+    targetPeriod: {
+      scope: 'annual',
+      year,
+      timeZone: 'Asia/Seoul',
+      referenceDateTime,
+      resolution: 'relative_current',
+    },
+  });
+
+  it('binds the effective year to the request instant while retaining civil display year', () => {
+    const request = annualRequest('2026-01-15T03:00:00.000Z');
+    const output = resolveAnnualLichunRequestCandidate(request, TEST_BOUNDARY);
+    expect(output).toMatchObject({
+      state: 'candidate',
+      requestId: request.requestId,
+      context: {
+        scope: 'annual_reference_instant',
+        displayYear: 2026,
+        effectiveYear: 2025,
+        effectiveAnnualPillar: { stem: '을', branch: '사' },
+        boundarySourceRef: TEST_BOUNDARY.sourceRef,
+        boundarySourceVersion: TEST_BOUNDARY.sourceVersion,
+        boundaryPrecision: 'minute',
+      },
+      productionAuthorized: false,
+      constraints: {
+        mayAuthorizeAnnualSemantics: false,
+        mayUseAsWholeYearReading: false,
+        mayChangeMonthlyContext: false,
+        mayEnterProduction: false,
+      },
+    });
+    expect(request.targetPeriod?.year).toBe(2026);
+  });
+
+  it('is isolated from Monthly and refuses accidental scope promotion', () => {
+    const monthly: ReadingRequest = {
+      requestId: 'monthly-not-annual',
+      intent: { domain: 'general', temporalScope: 'monthly' },
+      targetPeriod: {
+        scope: 'monthly',
+        year: 2026,
+        month: 1,
+        timeZone: 'Asia/Seoul',
+        referenceDateTime: '2026-01-15T03:00:00.000Z',
+        resolution: 'relative_current',
+      },
+    };
+    expect(resolveAnnualLichunRequestCandidate(monthly, TEST_BOUNDARY)).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'ANNUAL_INTENT_REQUIRED',
+      productionAuthorized: false,
+    });
+    expect(buildTemporalReadingContext(monthly)).toMatchObject({
+      scope: 'monthly',
+      annualPillar: { stem: '병', branch: '오' },
+    });
+  });
+
+  it('fails closed on a missing period or intent/target scope mismatch', () => {
+    const request: ReadingRequest = annualRequest('2026-01-15T03:00:00.000Z');
+    expect(resolveAnnualLichunRequestCandidate({
+      requestId: 'missing-target',
+      intent: { domain: 'general', temporalScope: 'annual' },
+    }, TEST_BOUNDARY)).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'ANNUAL_TARGET_PERIOD_REQUIRED',
+    });
+
+    const mismatched: ReadingRequest = {
+      ...request,
+      targetPeriod: {
+        scope: 'monthly',
+        year: 2026,
+        month: 1,
+        timeZone: 'Asia/Seoul',
+        referenceDateTime: '2026-01-15T03:00:00.000Z',
+        resolution: 'relative_current',
+      },
+    };
+    expect(resolveAnnualLichunRequestCandidate(mismatched, TEST_BOUNDARY)).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'ANNUAL_TARGET_SCOPE_MISMATCH',
+    });
+  });
+
+  it('does not silently fall back to civil-year pillar when provenance is missing', () => {
+    const request = annualRequest('2026-01-15T03:00:00.000Z');
+    expect(resolveAnnualLichunRequestCandidate(request)).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'BOUNDARY_EVIDENCE_REQUIRED',
+      productionAuthorized: false,
+    });
+    expect(resolveAnnualLichunRequestCandidate(request, {
+      ...TEST_BOUNDARY,
+      verification: 'unverified',
+    })).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'BOUNDARY_EVIDENCE_UNVERIFIED',
+      productionAuthorized: false,
+    });
+  });
+
+  it('uses the same epoch for UTC/KST and rejects year-mismatched requests', () => {
+    const kst = resolveAnnualLichunRequestCandidate(
+      annualRequest('2026-02-04T05:03:00+09:00'),
+      TEST_BOUNDARY,
+    );
+    const utc = resolveAnnualLichunRequestCandidate(
+      annualRequest('2026-02-03T20:03:00.000Z'),
+      TEST_BOUNDARY,
+    );
+    expect(kst).toMatchObject({
+      state: 'candidate',
+      context: { displayYear: 2026, effectiveYear: 2026 },
+    });
+    expect(utc).toMatchObject({
+      state: 'candidate',
+      context: { displayYear: 2026, effectiveYear: 2026 },
+    });
+    expect(resolveAnnualLichunRequestCandidate(
+      annualRequest('2026-01-15T03:00:00.000Z', 2025),
+      TEST_BOUNDARY,
+    )).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'DISPLAY_YEAR_MISMATCH',
     });
   });
 });
