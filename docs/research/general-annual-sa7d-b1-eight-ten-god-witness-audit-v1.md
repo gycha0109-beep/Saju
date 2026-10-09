@@ -191,3 +191,12 @@ P1 감사의 문서 완료는 **직접 인쇄 L2-C 7종 신규 확보**와 동�
 - `sa7d-b1-r8-official-2026-lichun-annual-pillar-divergence-evidence-v1.md` — 한국천문연구원 공식 [2026년 월력요항](https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026) **입춘 2/4 05:02 KST 분 단위**와 현행 year-only 干支 도출 반례. `2026-01-15`의 甲日 유년은 정책에 따라 `丙午/식신`과 (입춘 효력정책 가정) `乙巳/겁재`가 달라짐; source-minute vs exact-second 차이와 D2 정책 미승인 유지.
 - 이번 R8 **연운 역사 직접 L2-C 신규 0건**; 명대 단독 십신 이름 `7/8`, 시대·출판본 간 명칭 존재 `8/8`, 개별 甲일간 실제 유년 직접 예 `1/8`, 제품 Annual 의미 승인 `0/8`.
 - `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`; R8 CI/시스템 코드/Bridge/Engine/Monthly/Official/Reader 변경 없음.
+
+
+## 21. 2026-10-09 R9 KASI 달력자료의 공식성 재평가 및 연운 기간 비상속 독립 감사
+
+- [R9 감사 문서](sa7d-b1-r9-kasi-source-authority-and-annual-boundary-independent-audit-v1.md) 추가. R8 인쇄본 287p PDF p18(인쇄 九)의 `甲逢乙為劫財`는 **직접 인쇄 증거**로 유지한다. 원본 PDF 전체 SHA/정확한 출판연대는 **미검증**.
+- **R8 출처 지위 한정:** [KASI 2026 달력자료](https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026)는 `立春 02-04 05:02` (KST, 분 단위)를 제시하지만, 동시에 **공식 발표 자료가 아니며 공식 자료는 월력요항을 확인하라**고 명시한다. [공식 월력요항 진입점](https://astro.kasi.re.kr/kor/life/post/almanac?search_year=2026)에서는 2026년 월력요항과 대한민국 전자관보 안내 확인. **전자관보 발표문 원문 대조는 이번 R9에서 미완료**. 과거 R8 기록의 `공식` 표기는 이 감사 결과가 우선하는 출처 상태 **NOT_OFFICIAL_CALENDAR_DATA / OFFICIAL_GAZETTE_DIRECT_READ=HOLD**로 해석한다.
+- 코드 경로 재열람: 서울 civil 연도, `annualSexagenaryPillar(year)`, `deriveAnnualStemTenGod()`; `buildTemporalReadingContext`의 Annual/Monthly 공용 年柱 도출. 입춘 효력분기와 timeZone/UTC 동일 순간, 날짜 바뀜, 日干 불확실성에 대한 R9-01~R9-09는 **시험 설계**이며 자동 실행 **0건**.
+- 지표 변화 **없음**: 명대 단독 7/8, 시대·판본 교차 단독 8/8, 甲日 특정 流年 직접 L2-C 1/8, 현대 Annual 의미 0/8. `L1 + L2-M ≠ L2-C`, `L2-C ≠ L3`.
+- D1 현대 canonical `겁재`와 판본 raw `劫財敗財/敗財/劫財`를 분리하는 정책은 **소유자 승인 전 제안**. D2 연도 표시/入春효력·정확 관보 출처·시각 유효구간/Annual·Monthly 권한 비상속·테스트 역시 **소유자 정책 HOLD**. `sourceSupportGrade='INSUFFICIENT'` 8/8, `bridgeReentryReady=false`, `Production=HOLD`; docs-only, CI/Engine/Reader/Official/Bridge/Monthly 변경 없음.
