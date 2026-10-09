@@ -115,6 +115,11 @@ l/r labels are not anatomical left/right authority.
 The inverse display transform stretches the square mask back to the decoded
 original aspect within the same object-fit viewport. This is a mask display
 transform, not a perspective/pose correction or a source-file modification.
+The base image fills that viewport absolutely; its intrinsic image height must
+not enlarge a grid track and move the image centre away from the mask centre.
+Browser alignment checks cover position as well as extent across photo changes,
+reload and narrow/wide viewports. This display correction does not rerun inference
+or alter saved masks, method versions, original assets or numerical results.
 Skin includes more than forehead. Hair includes fringe and external hair extent.
 Red pixels are skin pixels with a direct four-neighbour hair neighbour; no gaps
 are bridged, missing hairlines completed, or resulting forehead scalar issued.
