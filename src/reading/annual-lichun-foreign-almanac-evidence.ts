@@ -39,14 +39,14 @@ const SOURCE = [
   {
     year: 2026,
     uri: 'https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2026.pdf',
-    printedText: '立春 315 2月4日 5時02分',
+    printedText: '立 春 315 2 4 5 2',
     localMinute: '2026-02-04 05:02',
     anchorUtc: '2026-02-03T20:02:00.000Z',
   },
   {
     year: 2027,
     uri: 'https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2027.pdf',
-    printedText: '立春 315 2月4日 10時46分',
+    printedText: '立 春 315 2 4 10 46',
     localMinute: '2027-02-04 10:46',
     anchorUtc: '2027-02-04T01:46:00.000Z',
   },
