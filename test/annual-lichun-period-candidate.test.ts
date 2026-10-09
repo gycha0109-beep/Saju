@@ -39,7 +39,7 @@ describe('D2-B source-gated LiChun annual-period candidate (not production)', ()
       '사',
     );
     assertCandidate(
-      resolveAnnualLichunPeriodCandidate(2026, '2026-02-04T05:01:59+09:00', TEST_BOUNDARY),
+      resolveAnnualLichunPeriodCandidate(2026, '2026-02-04T05:01:00+09:00', TEST_BOUNDARY),
       2025,
       '을',
       '사',
@@ -52,8 +52,10 @@ describe('D2-B source-gated LiChun annual-period candidate (not production)', ()
     );
   });
 
-  it('does not invent an exact second within a minute-precision boundary', () => {
+  it('does not assign a pillar within one minute on either side of a minute-only boundary', () => {
     for (const instant of [
+      '2026-02-04T05:01:01+09:00',
+      '2026-02-04T05:01:59+09:00',
       '2026-02-04T05:02:00+09:00',
       '2026-02-04T05:02:01+09:00',
       '2026-02-04T05:02:59.999+09:00',
@@ -65,6 +67,19 @@ describe('D2-B source-gated LiChun annual-period candidate (not production)', ()
         productionAuthorized: false,
       });
     }
+  });
+
+  it('keeps the before-side uncertainty interval consistent across UTC and Seoul time', () => {
+    const result = resolveAnnualLichunPeriodCandidate(
+      2026,
+      '2026-02-03T20:01:59.000Z',
+      TEST_BOUNDARY,
+    );
+    expect(result).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'BOUNDARY_MINUTE_AMBIGUOUS',
+      productionAuthorized: false,
+    });
   });
 
   it('resolves at an exact second only with independently supplied second-level evidence', () => {
