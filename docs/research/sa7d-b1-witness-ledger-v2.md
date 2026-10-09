@@ -143,3 +143,12 @@
 - 2026-02-02 제정·시행으로 재게시된 「월력요항 작성에 관한 규정」은 **2025-06-30에 소급 적용하지 않고**, 법령 원문·별표 1차 출처 대조도 이 R10 범위에서는 **HOLD**. 24기 공표와 명리 Annual 유효기간 채택은 **별도 소유권**.
 - D1 현대 `겁재`/역사 `劫財敗財·敗財·劫財` 병행 제안, D2 `DISPLAY_YEAR`와 `EFFECTIVE_ANNUAL_PILLAR` 정책 선택, D3 현대 Annual 의미 근거는 모두 **정식 채택·승인 없음**. R9 9종 경계 fixture는 **미실행**, KASI 시·분 미만 절입 순간 기대값은 **보류**.
 - **역사 카운트·권한 불변:** 명대 단독 L1 **7/8**, 시대·판본 혼합 단독 L1 **8/8**, 甲日×특정 流年 직접 L2-C **1/8**, 현대 제품 의미 승인 **0/8**, Annual 8종 `sourceSupportGrade='INSUFFICIENT'`, `bridgeReentryReady=false`, `Production=HOLD`. PDF 원본 전체 SHA·관보 판면 모두 HOLD. 변경은 `docs/research/` 한정, Engine/Reader/Official/Bridge/Monthly/CI workflow/TS 코드/제품 무변경. 기존 Actions 자동 시작 가능, CI 전체 통과 주장 금지.
+
+
+## 23. 2026-10-09 R11 공식 관보 원문 추적 및 2026 입춘 출처 선후관계 감사
+
+- 새 연구 문서 [R11 관보 1차 증거 추적·KASI 사전 달력자료 계보 감사](sa7d-b1-r11-official-gazette-primary-witness-retrieval-and-lichun-source-chain-audit-v1.md) 추가. 우주항공청 2026 월력요항 **2025-06-30 발표**와 한국천문연구원 2026년 **비공식 사전 달력자료 V1.0a 생성일 2024-07-25 16:57**를 각각 직접 대조. 立春 값 **2026-02-04 05:02 KST(시·분)**는 **사전 기관 게시 자료**이며 **관보 원문 수치 직접 대조 결과가 아니다**.
+- 대한민국 전자관보 [일자별 진입 화면](https://gwanbo.go.kr/user/search/searchDaily.do)은 확인했으나 **2025-06-30 해당 관보 호수·본문 원본·입춘 판면·PDF 원본 SHA를 확보하지 못함**. 공식 관보의 해당 분값 존재·일치 여부 `UNVERIFIED`. 초기 화면에 표시된 기본 날짜·0건을 해당 대상 관보의 부존재로 오인하지 않음. 다른 연도 2027 월력요항 PDF 게시 사례도 2026 문헌의 직접 증거가 아님.
+- 우주항공청 [2025-12-12 월력요항 작성에 관한 규정 제정안 행정예고](https://www.kasa.go.kr/prog/bbsArticle/BBSMSTR_000000000170/view.do?bbsId=BBSMSTR_000000000170&nttId=B000000002580Wk5aX2) 공식 게시까지는 확인. 이 후속 규정 제정절차와 2026-02-02 최종 훈령 재게시 정황을 **2025-06-30에 소급 적용하거나** 명리의 入春 年柱 정책과 혼동하지 않음.
+- **R11 신규 인쇄 L1/직접 L2-C=0건; 수치 불변**: 명대 PRINT L1 **7/8**, 인쇄 교차판본 L1 **8/8**, 甲日×실제 流年 직접 L2-C **1/8**, 현대 Annual 제품 의미 **0/8**. D1 modern `겁재`/historical raw label 정책은 제안 상태, D2 표시연도 vs 연간효력 경계(특히 `05:02±1초`) HOLD, D3 의미 별도. `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`.
+- **A=부분 확인/관보 원문 HOLD, B=명칭·기간·의미 정책 HOLD, C=docs/research-only 무결성 PASS**. Engine/Official/Reader/Bridge/Monthly/계산/TS schema/CI workflow 변경·실제 자동 경계테스트·수동 CI dispatch 없음. 문서 push에 따른 기존 Actions 자동 실행은 별도로 가능하며 CI 전체 PASS를 주장하지 않음. PR Draft/Open/미병합 유지.
