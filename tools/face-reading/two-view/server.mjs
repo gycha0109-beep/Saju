@@ -1,11 +1,18 @@
 import http from 'node:http';
 import process from 'node:process';
 import { Buffer } from 'node:buffer';
-import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, stat, rename } from 'node:fs/promises';
 import { resolve, dirname, extname } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
+import {
+  PARSING_VERSION,
+  PARSING_PIN,
+  PARSING_GROUPS,
+  validateParsingSummary,
+} from './parsing-contract.mjs';
+import { validateParsingBatch } from './parsing-storage.mjs';
 
 const sourceDir = dirname(fileURLToPath(import.meta.url));
 const repository = resolve(sourceDir, '../../..');
@@ -85,12 +92,12 @@ export function validateBatch(input, ids) {
   });
 }
 
-async function requestJson(req) {
+async function requestJson(req, limit = 200000) {
   let size = 0;
   const chunks = [];
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 200000) throw Error('REQUEST_TOO_LARGE');
+    if (size > limit) throw Error('REQUEST_TOO_LARGE');
     chunks.push(chunk);
   }
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
@@ -157,6 +164,47 @@ export async function createLocalReviewServer({
   const token = randomBytes(24).toString('hex');
   const origin = 'http://127.0.0.1:' + port;
   const runRoot = resolve(intake, 'two-view-runs');
+  const parsingRoot = resolve(intake, 'parsing-runs');
+  let parsingModel = null,
+    parsingSaved = [],
+    parsingRunId,
+    parsingSaving = false;
+  let parsingRestoreFailed = false;
+  try {
+    const ortPackage = JSON.parse(
+      await readFile(resolve(repository, 'node_modules/onnxruntime-web/package.json'), 'utf8'),
+    );
+    const bytes = await readFile(resolve(intake, 'assets/parsing-resnet18-v0.0.2.onnx'));
+    if (
+      ortPackage.version === PARSING_PIN.runtime &&
+      createHash('sha256').update(bytes).digest('hex') === PARSING_PIN.sha256
+    )
+      parsingModel = bytes;
+  } catch {
+    /* Missing optional parser cannot break the existing review path. */
+  }
+  try {
+    const active = JSON.parse(await readFile(resolve(parsingRoot, 'active.json'), 'utf8'));
+    if (!/^[a-f0-9-]{36}$/.test(active.runId)) throw Error('PARSING_RUN_INVALID');
+    const saved = JSON.parse(
+      await readFile(resolve(parsingRoot, active.runId, 'summary.json'), 'utf8'),
+    );
+    if (
+      saved.methodVersion !== PARSING_VERSION ||
+      !Array.isArray(saved.records) ||
+      saved.records.length !== ids.length ||
+      new Set(saved.records.map((r) => r.captureRef)).size !== ids.length ||
+      saved.records.some((r) => !ids.includes(r.captureRef))
+    )
+      throw Error('PARSING_RUN_INVALID');
+    parsingSaved = saved.records.map((r) => ({
+      captureRef: r.captureRef,
+      parsing: validateParsingSummary(r.parsing),
+    }));
+    parsingRunId = active.runId;
+  } catch (error) {
+    if (error.code !== 'ENOENT') parsingRestoreFailed = true;
+  }
   let savedRecords = [],
     saving = false;
   try {
@@ -169,11 +217,24 @@ export async function createLocalReviewServer({
     if (error.code !== 'ENOENT') throw Error('PREVIOUS_METRICS_INVALID', { cause: error });
   }
   const assets = new Map(
-    ['review.mjs', 'jobs.mjs', 'frontal-metrics.mjs', 'landmarks-worker.mjs'].map((name) => [
-      '/two-view/' + name,
-      [resolve(sourceDir, name), 'text/javascript'],
-    ]),
+    [
+      'review.mjs',
+      'jobs.mjs',
+      'frontal-metrics.mjs',
+      'landmarks-worker.mjs',
+      'parsing-contract.mjs',
+      'parsing-worker.mjs',
+    ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
+  for (const name of [
+    'ort.wasm.bundle.min.mjs',
+    'ort-wasm-simd-threaded.mjs',
+    'ort-wasm-simd-threaded.wasm',
+  ])
+    assets.set('/local-assets/ort/' + name, [
+      resolve(repository, 'node_modules/onnxruntime-web/dist', name),
+      name.endsWith('.wasm') ? 'application/wasm' : 'text/javascript',
+    ]);
   assets.set('/local-assets/vision_bundle.mjs', [
     resolve(repository, 'node_modules/@mediapipe/tasks-vision/vision_bundle.mjs'),
     'text/javascript',
@@ -263,6 +324,11 @@ export async function createLocalReviewServer({
     if (req.headers.host !== '127.0.0.1:' + port)
       return json(res, 403, { error: 'LOCAL_HOST_REQUIRED' });
     const url = new URL(req.url, origin);
+    if (req.method === 'GET' && url.pathname === '/local-assets/parsing-resnet18.onnx') {
+      if (!parsingModel) return json(res, 503, { error: 'PARSING_MODEL_UNAVAILABLE' });
+      res.writeHead(200, { ...staticHeaders, 'Content-Type': 'application/octet-stream' });
+      return res.end(parsingModel);
+    }
     if (req.method === 'GET' && assets.has(url.pathname)) {
       const [path, type] = assets.get(url.pathname);
       return file(res, path, type);
@@ -275,10 +341,37 @@ export async function createLocalReviewServer({
         token,
         records,
         savedRecords,
+        parsingAvailable: Boolean(parsingModel),
+        parsingRestoreFailed,
+        parsingSaved: parsingSaved.map((r) => ({
+          ...r,
+          layers:
+            r.parsing.status === 'completed'
+              ? Object.fromEntries(
+                  PARSING_GROUPS.map((g) => [
+                    g.id,
+                    `/parsing-artifact/${r.captureRef}/${g.id}.png?run=${parsingRunId}`,
+                  ]),
+                )
+              : {},
+        })),
         methodVersion: METHOD_VERSION,
         formalValidation: false,
         authorityPromoted: false,
       });
+    if (req.method === 'GET' && url.pathname.startsWith('/parsing-artifact/')) {
+      const match = /^\/parsing-artifact\/(capture-[0-9]{2,})\/([a-z]+)\.png$/.exec(url.pathname);
+      const runId = url.searchParams.get('run');
+      if (
+        !match ||
+        !ids.includes(match[1]) ||
+        !PARSING_GROUPS.some((g) => g.id === match[2]) ||
+        runId !== parsingRunId ||
+        !parsingSaved.some((r) => r.captureRef === match[1] && r.parsing.status === 'completed')
+      )
+        return json(res, 404, { error: 'NOT_FOUND' });
+      return file(res, resolve(parsingRoot, runId, match[1], match[2] + '.png'), 'image/png');
+    }
     if (req.method === 'GET' && url.pathname.startsWith('/image/')) {
       const record = inventory.find((r) => r.recordId === url.pathname.slice(7));
       if (!record) return json(res, 404, { error: 'NOT_FOUND' });
@@ -349,11 +442,70 @@ export async function createLocalReviewServer({
         saving = false;
       }
     }
+    if (req.method === 'POST' && url.pathname === '/two-view/parsing-results') {
+      if (req.headers.origin !== origin) return json(res, 403, { error: 'LOCAL_ORIGIN_REQUIRED' });
+      const input = await requestJson(req, 12000000);
+      if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
+      if (parsingSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
+      const next = validateParsingBatch(input, ids);
+      parsingSaving = true;
+      try {
+        for (const previous of sourceFileStates) {
+          const current = await stat(previous.sourcePath);
+          if (
+            current.size !== previous.size ||
+            current.mtimeMs !== previous.mtimeMs ||
+            current.ino !== previous.ino
+          )
+            throw Error('SOURCE_CHANGED');
+        }
+        const runId = randomUUID();
+        await mkdir(resolve(parsingRoot, runId), { recursive: true });
+        for (const r of next) {
+          await mkdir(resolve(parsingRoot, runId, r.captureRef));
+          for (const [name, png] of Object.entries(r.layers))
+            await writeFile(resolve(parsingRoot, runId, r.captureRef, name + '.png'), png, {
+              flag: 'wx',
+            });
+        }
+        const summary = next.map(({ captureRef, parsing }) => ({ captureRef, parsing }));
+        await writeFile(
+          resolve(parsingRoot, runId, 'summary.json'),
+          JSON.stringify({
+            methodVersion: PARSING_VERSION,
+            records: summary,
+            formalValidation: false,
+            canonicalReceiptIssued: false,
+          }),
+          { flag: 'wx' },
+        );
+        const pendingPointer = resolve(parsingRoot, 'active-' + runId + '.tmp');
+        await writeFile(pendingPointer, JSON.stringify({ runId }), { flag: 'wx' });
+        await rename(pendingPointer, resolve(parsingRoot, 'active.json'));
+        parsingSaved = summary;
+        parsingRunId = runId;
+        parsingRestoreFailed = false;
+        return json(res, 200, { saved: true, count: next.length, formalValidation: false });
+      } finally {
+        parsingSaving = false;
+      }
+    }
     return json(res, 404, { error: 'NOT_FOUND' });
   }
   return http.createServer((req, res) => {
-    handle(req, res).catch(() => {
-      if (!res.headersSent) json(res, 400, { error: 'LOCAL_REVIEW_FAILED' });
+    handle(req, res).catch((error) => {
+      const code = [
+        'PARSING_BATCH_INVALID',
+        'PARSING_SUMMARY_INVALID',
+        'PARSING_LAYERS_INVALID',
+        'BATCH_INVALID',
+        'METRIC_INVALID',
+        'REQUEST_TOO_LARGE',
+        'SOURCE_CHANGED',
+      ].includes(error.message)
+        ? error.message
+        : 'LOCAL_REVIEW_FAILED';
+      if (!res.headersSent) json(res, 400, { error: code });
       else res.end();
     });
   });

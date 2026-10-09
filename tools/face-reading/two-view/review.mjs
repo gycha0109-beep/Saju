@@ -1,6 +1,7 @@
-/* global document, location, window, Worker, Image, createImageBitmap, fetch, URL, crypto */
+/* global document, location, window, Worker, Image, createImageBitmap, fetch, URL, crypto, AbortController, setTimeout, clearTimeout, ResizeObserver, FileReader */
 import { PreviewJobs } from './jobs.mjs';
 import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
+import { PARSING_GROUPS, PARSING_VERSION, containSize } from './parsing-contract.mjs';
 const $ = (id) => document.getElementById(id);
 const reasons = {
   profile_method_not_implemented: '측면 옆선 측정은 다음 단계입니다',
@@ -24,6 +25,7 @@ let state,
   mode = 'existing',
   original = false,
   worker,
+  parsingWorker,
   runGeneration = 0,
   busy = false;
 const results = new Map(),
@@ -34,6 +36,14 @@ function urlFor(blob) {
   blobUrls.add(url);
   return url;
 }
+function releaseResult(captureRef) {
+  const previous = results.get(captureRef);
+  for (const url of [previous?.overlayUrl, ...Object.values(previous?.layerUrls || {})])
+    if (blobUrls.has(url)) {
+      URL.revokeObjectURL(url);
+      blobUrls.delete(url);
+    }
+}
 function progress(items) {
   const completed = items.filter((i) => i.state === 'completed').length,
     failed = items.filter((i) => i.state === 'failed').length,
@@ -41,12 +51,54 @@ function progress(items) {
   $('count').textContent =
     `전체 ${items.length}장 · 완료 ${completed}장 · 실패 ${failed}장${cancelled ? ' · 중단 ' + cancelled + '장' : ''}`;
 }
-const jobs = new PreviewJobs({ onChange: progress });
+const jobs = new PreviewJobs({ deadlineMs: 95000, onChange: progress });
+const layerNodes = new Map(),
+  enabledLayers = new Map();
+for (const group of PARSING_GROUPS) {
+  const label = document.createElement('label'),
+    checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = true;
+  enabledLayers.set(group.id, true);
+  checkbox.onchange = () => {
+    enabledLayers.set(group.id, checkbox.checked);
+    render();
+  };
+  label.append(checkbox, document.createTextNode(group.label));
+  $('parsing-controls').append(label);
+  const image = new Image();
+  image.className = 'parsing-layer';
+  image.style.opacity = group.id === 'interface' ? '1' : group.id === 'skin' ? '0.14' : '0.41';
+  image.alt = '';
+  image.hidden = true;
+  image.onerror = () => {
+    image.hidden = true;
+    $('parsing-status').textContent =
+      '영역 표시를 불러오지 못했습니다. 원본과 수치는 계속 볼 수 있습니다.';
+  };
+  $('image').parentElement.append(image);
+  layerNodes.set(group.id, image);
+}
+function alignLayers() {
+  const image = $('image'),
+    box = image.getBoundingClientRect();
+  if (!image.naturalWidth || !image.naturalHeight) return;
+  if (!box.width || !box.height) return;
+  const size = containSize(image.naturalWidth, image.naturalHeight, box.width, box.height);
+  for (const layer of layerNodes.values()) {
+    layer.style.width = size.width + 'px';
+    layer.style.height = size.height + 'px';
+  }
+}
+$('image').onload = alignLayers;
+new ResizeObserver(alignLayers).observe($('image').parentElement);
 function stop() {
   runGeneration++;
   jobs.cancel();
   worker?.terminate();
   worker = null;
+  parsingWorker?.terminate();
+  parsingWorker = null;
   busy = false;
   $('cancel').hidden = true;
   $('batch').disabled = false;
@@ -66,6 +118,20 @@ function render() {
     : $('old-overlay').checked && record.oldOverlay
       ? record.oldOverlay
       : result?.overlayUrl || record.image;
+  const parsing = result?.parsing;
+  $('parsing-controls').hidden = parsing?.status !== 'completed';
+  $('parsing-status').textContent =
+    parsing?.status === 'completed'
+      ? `영역 분할 완료 · 귀 후보 ${parsing.counts[7] + parsing.counts[8] > 0 ? '표시됨' : '미검출'} · 머리–피부 접경 ${parsing.interfacePixels > 0 ? '표시됨' : '미검출'}`
+      : parsing?.status === 'failed'
+        ? '영역 분할을 완료하지 못했습니다. 다른 측정 결과는 유지합니다.'
+        : '';
+  for (const [name, layer] of layerNodes) {
+    const src = result?.layerUrls?.[name];
+    layer.hidden = original || !src || !enabledLayers.get(name);
+    if (src && layer.getAttribute('src') !== src) layer.src = src;
+  }
+  alignLayers();
   $('metrics').replaceChildren();
   const metrics =
     result?.metrics ||
@@ -135,7 +201,7 @@ function setRecords(next, nextMode) {
   });
   render();
 }
-async function infer(task, { signal, generation }) {
+async function inferFrontal(task, { signal, generation }) {
   if (task.viewRole === 'profile')
     return { metrics: [], profileUnavailable: true, providerState: 'profile_not_executed' };
   const input =
@@ -186,6 +252,110 @@ async function infer(task, { signal, generation }) {
     );
   });
 }
+async function inferParsing(task, { signal, generation }) {
+  if (!state.parsingAvailable) throw Error('PARSING_MODEL_UNAVAILABLE');
+  const response = task.file ? null : await fetch(task.image, { signal });
+  if (response && !response.ok) throw Error('IMAGE_UNAVAILABLE');
+  const bitmap = await createImageBitmap(task.file || (await response.blob()), {
+    imageOrientation: 'from-image',
+  });
+  if (signal.aborted) {
+    bitmap.close();
+    throw Error('TASK_CANCELLED');
+  }
+  if (!parsingWorker)
+    parsingWorker = new Worker('/two-view/parsing-worker.mjs', { type: 'module' });
+  const owner = parsingWorker;
+  return new Promise((resolve, reject) => {
+    const clean = () => {
+      owner.removeEventListener('message', message);
+      owner.removeEventListener('error', error);
+      signal.removeEventListener('abort', abort);
+    };
+    const abort = () => {
+      owner.terminate();
+      if (parsingWorker === owner) parsingWorker = null;
+      clean();
+      reject(Error('TASK_CANCELLED'));
+    };
+    const error = () => {
+      owner.terminate();
+      if (parsingWorker === owner) parsingWorker = null;
+      clean();
+      reject(Error('PARSING_FAILED'));
+    };
+    const message = ({ data }) => {
+      if (data.generation !== generation || data.captureRef !== task.captureRef) return;
+      clean();
+      if (data.error) {
+        owner.terminate();
+        if (parsingWorker === owner) parsingWorker = null;
+        reject(Error(data.error));
+      } else resolve(data);
+    };
+    owner.addEventListener('message', message);
+    owner.addEventListener('error', error);
+    signal.addEventListener('abort', abort, { once: true });
+    owner.postMessage({ generation, captureRef: task.captureRef, bitmap }, [bitmap]);
+  });
+}
+async function boundedProvider(fn, task, context, timeoutMs) {
+  const controller = new AbortController(),
+    abort = () => controller.abort();
+  context.signal.addEventListener('abort', abort, { once: true });
+  if (context.signal.aborted) controller.abort();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  try {
+    return await fn(task, { ...context, signal: controller.signal });
+  } catch (error) {
+    if (timedOut)
+      throw Error(fn === inferParsing ? 'PARSING_TIMEOUT' : 'TASK_TIMEOUT', { cause: error });
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    context.signal.removeEventListener('abort', abort);
+  }
+}
+async function infer(task, context) {
+  const [frontal, parsing] = await Promise.allSettled([
+    boundedProvider(inferFrontal, task, context, 30000),
+    boundedProvider(inferParsing, task, context, 60000),
+  ]);
+  if (context.signal.aborted) throw Error('TASK_CANCELLED');
+  const result =
+    frontal.status === 'fulfilled'
+      ? frontal.value
+      : {
+          metrics: [],
+          error: frontal.reason.message === 'TASK_TIMEOUT' ? 'TASK_TIMEOUT' : 'TASK_FAILED',
+        };
+  if (parsing.status === 'fulfilled') Object.assign(result, parsing.value);
+  else
+    result.parsing = {
+      methodVersion: PARSING_VERSION,
+      candidateOnly: true,
+      status: 'failed',
+      reason:
+        parsing.reason.message === 'PARSING_TIMEOUT'
+          ? 'PARSING_TIMEOUT'
+          : parsing.reason.message === 'PARSING_MODEL_UNAVAILABLE'
+            ? 'PARSING_MODEL_UNAVAILABLE'
+            : 'PARSING_FAILED',
+    };
+  return result;
+}
+function base64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(Error('PARSING_SAVE_FAILED'));
+    reader.readAsDataURL(blob);
+  });
+}
 async function start(tasks, save) {
   stop();
   const localGeneration = runGeneration;
@@ -198,17 +368,20 @@ async function start(tasks, save) {
   const run = await jobs.run(tasks, async (task, context) => {
     const result = await infer(task, context);
     if (context.signal.aborted || localGeneration !== runGeneration) throw Error('TASK_CANCELLED');
+    releaseResult(task.captureRef);
     if (result.overlay) {
-      const previous = results.get(task.captureRef)?.overlayUrl;
-      if (previous) {
-        URL.revokeObjectURL(previous);
-        blobUrls.delete(previous);
-      }
       result.overlayUrl = urlFor(result.overlay);
     }
+    result.layerUrls = Object.fromEntries(
+      Object.entries(result.layers || {}).map(([name, blob]) => [name, urlFor(blob)]),
+    );
     results.set(task.captureRef, result);
     if (records[selected]?.captureRef === task.captureRef) render();
-    return { metrics: result.metrics, providerState: result.providerState };
+    return {
+      metrics: result.metrics,
+      providerState: result.providerState,
+      parsing: result.parsing,
+    };
   });
   if (!run.current || localGeneration !== runGeneration) return;
   for (const failed of run.results.filter((r) => r.error))
@@ -241,10 +414,45 @@ async function start(tasks, save) {
       if (localGeneration !== runGeneration) return;
       if (!response.ok) throw Error('RESULT_SAVE_FAILED');
       $('status').textContent = '18장 전체 계산 결과를 로컬에 저장했습니다.';
+      const parsingRecords = await Promise.all(
+        tasks.map(async (task) => {
+          const result = results.get(task.captureRef);
+          return {
+            captureRef: task.captureRef,
+            parsing: result?.parsing || {
+              methodVersion: PARSING_VERSION,
+              candidateOnly: true,
+              status: 'failed',
+              reason: 'PARSING_FAILED',
+            },
+            layers: Object.fromEntries(
+              await Promise.all(
+                Object.entries(result?.layers || {}).map(async ([name, blob]) => [
+                  name,
+                  await base64(blob),
+                ]),
+              ),
+            ),
+          };
+        }),
+      );
+      if (localGeneration !== runGeneration) return;
+      const parsingResponse = await fetch('/two-view/parsing-results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: state.token,
+          methodVersion: PARSING_VERSION,
+          records: parsingRecords,
+        }),
+      });
+      if (localGeneration !== runGeneration) return;
+      if (!parsingResponse.ok) throw Error('PARSING_SAVE_FAILED');
+      $('status').textContent = '전체 18장의 수치와 영역 표시를 로컬에 저장했습니다.';
     } catch {
       if (localGeneration !== runGeneration) return;
       $('status').textContent =
-        '수치는 확인할 수 있지만 저장하지 못했습니다. 화면을 닫기 전에 확인하세요.';
+        '결과는 확인할 수 있지만 일부 저장에 실패했습니다. 화면을 닫기 전에 확인하세요.';
     }
   }
   if (localGeneration === runGeneration) document.body.dataset.batchComplete = String(save);
@@ -254,6 +462,8 @@ for (const role of ['frontal', 'profile'])
     stop();
     const previous = files.get(role);
     if (previous) {
+      releaseResult(previous.captureRef);
+      results.delete(previous.captureRef);
       URL.revokeObjectURL(previous.image);
       blobUrls.delete(previous.image);
     }
@@ -304,6 +514,12 @@ try {
   if (!response.ok) throw Error('STATE_UNAVAILABLE');
   state = await response.json();
   for (const saved of state.savedRecords || []) results.set(saved.captureRef, saved);
+  for (const saved of state.parsingSaved || [])
+    results.set(saved.captureRef, {
+      ...results.get(saved.captureRef),
+      parsing: saved.parsing,
+      layerUrls: saved.layers,
+    });
   setRecords(state.records, 'existing');
   $('batch').textContent = `기존 ${state.records.length}장 모두 분석`;
   const completed = state.savedRecords?.length || 0;
@@ -311,6 +527,9 @@ try {
   $('status').textContent = completed
     ? '저장된 전체 사진 수치를 확인하세요. 새 사진은 위에서 선택할 수 있습니다.'
     : '기존 사진 전체를 분석하거나 정면·측면 사진을 선택하세요.';
+  if (state.parsingRestoreFailed)
+    $('status').textContent =
+      '저장된 영역 표시를 읽지 못했습니다. 원본과 수치는 유지하며, 전체 분석으로 다시 저장할 수 있습니다.';
   document.body.dataset.ready = 'true';
   if (location.search.includes('run=existing')) await start(state.records, true);
 } catch {
@@ -327,6 +546,7 @@ window.twoViewSnapshot = () => ({
     viewRole: r.viewRole,
     metrics: results.get(r.captureRef)?.metrics || [],
     error: results.get(r.captureRef)?.error || null,
+    parsing: results.get(r.captureRef)?.parsing || null,
   })),
   methodVersion: METHOD_VERSION,
 });

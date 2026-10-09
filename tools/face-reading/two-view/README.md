@@ -1,11 +1,11 @@
 # Local two-view job and frontal metric preview
 
-Issue: #2452. Watchtower-Track: face-observation-engine.
+Issues: #2452 (P0/P1), #2454 (P2). Watchtower-Track: face-observation-engine.
 
-This implements P0/P1 of the two-view design. Users can select a frontal and a
+This implements P0/P1 and the P2 parsing comparison of the two-view design. Users can select a frontal and a
 profile image, execute the supported jobs together, cancel work, and inspect
 every existing local engineering capture in one batch. The profile slot is
-managed, but profile measurement is explicitly unavailable in this stage.
+managed and parsed, but profile metric measurement is explicitly unavailable in this stage.
 
 ## Run
 
@@ -25,7 +25,8 @@ handles; they are not uploaded or copied by this feature.
 
 The private prerequisites are under the already ignored
 `.cache/face-reading/fr2337-intake`: inventory, existing combined render pointer,
-legacy static viewer assets, and the pinned Face Landmarker model. Source
+legacy static viewer assets, and the pinned Face Landmarker model. The optional
+parser asset is described below. Source
 mappings, user photos and overlays are not repository fixtures. The model byte
 hash is checked against the existing pinned asset; no source-image hash is
 created. No model or dependency is downloaded automatically.
@@ -87,8 +88,67 @@ The existing overlays are available through a clearly labelled comparison
 control. A browser-local fresh inference overlay is shown during a numeric run;
 numeric results survive reopening through separate private run directories.
 Reopening retains the original and prior overlay comparison, without saving raw
-landmarks or reconstructing them from PNGs. Profile contour, parsing, forehead,
-ear, nose semantic measurements and official admission are later stages.
+landmarks or reconstructing them from PNGs. Profile contour, validated forehead,
+ear, nose semantic measurements and official admission are later stages. P2
+parsing masks are separate candidates, not those validated semantic measurements.
+
+## P2 parsing provider and local outputs
+
+The parser is pinned to [yakhyo/face-parsing](https://github.com/yakhyo/face-parsing)
+source revision `8a4729d95118d0e97c44185f9bdef3d6bfeaaf99`, release
+[`v0.0.2/resnet18.onnx`](https://github.com/yakhyo/face-parsing/releases/tag/v0.0.2),
+SHA-256 `0d9bd318e46987c3bdbfacae9e2c0f461cae1c6ac6ea6d43bbe541a91727e33f`.
+Its static model checksum is not a user-image digest. Place the manually acquired
+asset at `.cache/face-reading/fr2337-intake/assets/parsing-resnet18-v0.0.2.onnx`.
+No automatic model download is performed. An unavailable/mismatched asset disables
+only the parser; frontal numerical measurement remains usable.
+
+ONNX Runtime Web is locked at `1.23.2`, served from the local installed dependency,
+with CPU WASM, one thread and a dedicated module worker. The author's preprocessing
+is RGB, full-image 512×512 bilinear stretch, channel-major float32 and ImageNet
+mean `[0.485, 0.456, 0.406]` / std `[0.229, 0.224, 0.225]`. The first of three model
+outputs must have shape `[1,19,512,512]`; non-finite logits or shape drift fail.
+The exact provider label order is in `parsing-contract.mjs`. Ear labels 7/8 are
+combined for display, while jewellery/accessory label 9 is excluded. Provider
+l/r labels are not anatomical left/right authority.
+
+The inverse display transform stretches the square mask back to the decoded
+original aspect within the same object-fit viewport. This is a mask display
+transform, not a perspective/pose correction or a source-file modification.
+Skin includes more than forehead. Hair includes fringe and external hair extent.
+Red pixels are skin pixels with a direct four-neighbour hair neighbour; no gaps
+are bridged, missing hairlines completed, or resulting forehead scalar issued.
+No hair class means model non-detection, not a baldness finding. Ear class pixels
+mean model candidates, not verified visibility or whole-ear geometry. Segmentation
+success and class counts are execution evidence, not accepted accuracy.
+
+The author publishes a [MIT code license](https://github.com/yakhyo/face-parsing/blob/8a4729d95118d0e97c44185f9bdef3d6bfeaaf99/LICENSE)
+and describes training on CelebAMask-HQ. This work uses the weights for local
+engineering comparison only. Code license is not treated as independent evidence
+of commercial clearance for weights/training data; Product/Production adoption is
+not granted here. No training dataset or upstream user-face image is downloaded.
+
+Both supported frontal and profile input roles are parsed. Frontal and parser
+jobs have separate 30/60-second deadlines and failure states, so a parser failure
+preserves frontal metrics, and a frontal failure preserves parser candidates.
+The per-capture scheduler has a 95-second outer deadline. Failed parser workers
+are terminated before retry; cancellation owns only this page's workers. Source
+photos are decoded in browser memory and never posted to the server.
+
+Seven transparent label masks per engineering capture can be saved locally to
+new ignored `parsing-runs/<opaque-run>/` directories. The same-origin token route
+requires the complete allowlisted batch and version, validates bounded summaries,
+PNG dimensions/CRC/filter data and group-specific opaque label colours with
+zero-colour transparent background. It rejects source-colour pixels, unknown
+layers and text/metadata chunks. Source file metadata is rechecked before save;
+old mask directories and original assets are not overwritten. Masks contain only
+classification colours, not original RGB, landmarks or reconstructed geometry.
+Only the latest active run's allowlisted masks can be fetched. Numeric runs and
+canonical/old review receipts remain separate. Uploaded-image candidates stay
+in this page and are not persisted by the existing engineering batch route.
+The active mask pointer is replaced atomically only after all masks and summaries
+are written. Invalid optional parser restoration is reported independently and
+does not prevent the original/numeric viewer from starting.
 
 Safe local persistence rebuilds allowlisted numeric rows and stores every
 capture's completed/unavailable/failed outcome. It rejects incomplete batches,
@@ -101,6 +161,7 @@ old rendered artifacts. Logs contain only bounded startup/error codes.
 
 ```powershell
 npx vitest run test/face-two-view-preview.test.ts
+npx vitest run test/face-parsing-preview.test.ts
 npx eslint tools/face-reading/two-view test/face-two-view-preview.test.ts
 npx prettier --check tools/face-reading/two-view test/face-two-view-preview.test.ts
 ```
@@ -113,6 +174,14 @@ existing files. Only aggregate operational results can be recorded publicly;
 rendering/measurement execution is not human visual acceptance or formal fresh
 validation.
 
+P2 direct tests cover exact labels/RGB tensor layout, output shape and non-finite
+drift, direct contacts/no wrap or hidden completion, bounded summaries, complete
+batch identity, failed-capture isolation and mask privacy/CRC rejection. Private
+browser verification runs all 18 and checks all 126 saved layers, original toggle,
+region toggle, reload, profile parser, cancellation, parser failure with retained
+frontal metrics and retry. Aggregate evidence is recorded in the PR; no user
+photos/masks are test fixtures or Actions artifacts.
+
 ## Architecture Check
 
 - Docs updated: yes, local engine entry point and coordinate/authority contracts.
@@ -122,3 +191,7 @@ validation.
   are explicitly introduced because the existing canonical frame has different
   inputs/authority. No public API/DB, anatomical laterality, implicit
   normalization fallback or legacy Product branch is added.
+  P2 additionally pins the browser ONNX runtime and parsing method, with an
+  independent ignored mask store and explicit restore/failure state. These are
+  local engineering routes; Product contracts and Production dependencies are
+  unchanged. Segmentation labels are not alias-normalized into canonical inputs.
