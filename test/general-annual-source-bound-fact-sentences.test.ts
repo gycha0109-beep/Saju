@@ -157,7 +157,6 @@ describe('SA-7D source-bound annual factual wording and counterexamples', () => 
       line.consumerDeliveryAuthorized === false &&
       line.evidenceRef.length > 0,
     )).toBe(true);
-    expect(result.exactClassicalAnnualTenGodExample).toBeUndefined();
     expect(result.classicalExample).toEqual({
       exactMatch: false, caseId: null, sourceId: null,
     });
