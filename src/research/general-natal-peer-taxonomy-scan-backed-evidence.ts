@@ -7,7 +7,7 @@ import {
 } from './general-natal-conclusion-source-bounded-candidate.js';
 
 export const GENERAL_NATAL_PEER_TAXONOMY_SCAN_EVIDENCE_VERSION =
-  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v3' as const;
+  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v4' as const;
 
 const PEER_RULE_ID = 'RULE-GENERAL-NATAL-SOURCE-BOUNDED-FAMILY-PEER-PRESENT' as const;
 const SAMYEONG_V5_SOURCE_ID =
@@ -77,6 +77,50 @@ const ALTERNATE_SCAN_CORROBORATION = Object.freeze({
   }),
 } as const);
 
+
+/**
+ * Image-only reinspection of the older scan page supplied by the user.
+ *
+ * The uploaded crop matches the alternate PDF page geometrically, but its
+ * parent CADAL06066043 DjVu bytes have NOT been independently authenticated
+ * in this session. Do not count the two renderings as independent witnesses
+ * and do not overwrite the historical frozen recorded transcription.
+ */
+const EXISTING_SCAN_IMAGE_REINSPECTION = Object.freeze({
+  suppliedAs: Object.freeze({
+    digitization: 'CADAL06066043',
+    claimedDigitalScanPage: 174,
+    submittedImageSha256: 'ad13f9bb2dd1882a5e689f963eec8f5ac9f49df7891f3b722c074fb322f92b08',
+    imageWidth: 281,
+    imageHeight: 401,
+    originDjvuByteIdentityVerified: false,
+  }),
+  directlyObserved: Object.freeze({
+    section: '兄弟引例章',
+    boundedProposition: '兄弟者即刼財比肩',
+    historicalGovernedRecordedProposition: '兄弟者即劫財比肩',
+    literalIdentityToHistoricalRecord: false,
+    literalIdentityToAlternatePdf: true,
+  }),
+  imageCorrespondence: Object.freeze({
+    alternateDigitization: 'CADAL06056483',
+    alternatePdfPage: 182,
+    algorithm: 'SIFT_RATIO_0_70_RANSAC_4PX',
+    featureMatches: 78,
+    geometricInlierMatches: 76,
+    nearIdenticalPrintedPageLayout: true,
+    independentWitnessCorroborationEstablished: false,
+  }),
+  qualification: Object.freeze({
+    exactOriginScanImageAuthenticated: false,
+    physicalFolioVerified: false,
+    fullPassageGlyphIdentityEstablished: false,
+    scanDerivedWitnessDigestReproduced: false,
+    fullSourceIntegrityQualificationEstablished: false,
+    productionAdmissionAuthority: false,
+  }),
+} as const);
+
 export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
   const registry = createGeneralNatalSourceBoundedRegistry();
   const peerRule = GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES.find(
@@ -116,6 +160,7 @@ export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
     }),
     scanAuthority: SCAN_AUTHORITY,
     alternateScanCorroboration: ALTERNATE_SCAN_CORROBORATION,
+    existingScanImageReinspection: EXISTING_SCAN_IMAGE_REINSPECTION,
     qualification: Object.freeze({
       sameEditionScanAuthorityLocated: true as const,
       sameEditionDigitizationFamilyEstablished: true as const,
