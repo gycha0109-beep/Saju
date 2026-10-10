@@ -7,7 +7,7 @@ import {
 } from './general-natal-conclusion-source-bounded-candidate.js';
 
 export const GENERAL_NATAL_PEER_TAXONOMY_SCAN_EVIDENCE_VERSION =
-  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v6' as const;
+  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v7' as const;
 
 const PEER_RULE_ID = 'RULE-GENERAL-NATAL-SOURCE-BOUNDED-FAMILY-PEER-PRESENT' as const;
 const SAMYEONG_V5_SOURCE_ID =
@@ -34,6 +34,48 @@ const SCAN_AUTHORITY = Object.freeze({
   }),
 } as const);
 
+
+
+/**
+ * Independently reproduced from the user-uploaded, catalog-SHA1-matching
+ * original 198-page CADAL06066043 DjVu binary. These are encoded-source
+ * byte hashes; no DjVu glyph decoder, PDF-derivation proof, chapter-wide
+ * collation, folio authority, or Production promotion is implied.
+ * Re-run: node scripts/research/verify-samyeong-v7-djvu-bytes.mjs <source.djvu>
+ */
+const VERIFIED_ORIGIN_DJVU_BYTES = Object.freeze({
+  fileName: 'CADAL06066043_三命通會·卷七.djvu',
+  fileByteLength: 9793070,
+  fileSha1: 'eeb9f80eb97fd385a580aa5bfda28c292aa7761c',
+  fileSha256: '406704d9095a6bf3635a9557dfcd27a93e051fb4ebbffe1c252ddfe4294f1d1a',
+  multipageFormat: 'DJVM',
+  numberOfDjvuPageForms: 198,
+  authenticatedDigitalPage: 174,
+  pageForm: Object.freeze({
+    byteOffset: 8566660,
+    byteLength: 44342,
+    rawFormWithHeaderSha256:
+      'f0d83bf196e4b9752d63ad4340f5d74a1f29a6bebf88315b601488fb8fc62ba9',
+    reproducesFrozenRegisteredHash: true,
+  }),
+  pageSjbzChunk: Object.freeze({
+    hashScope: 'CHUNK_HEADER_AND_BODY',
+    rawChunkWithHeaderSha256:
+      'fcdd51135abeeb0b22637b7852c809848c74b482ae71a0092d336a2f75cca57b',
+    reproducesFrozenRegisteredHash: true,
+  }),
+  verification: Object.freeze({
+    sourceDjvuBytesAuthenticated: true,
+    exactPageEncodedBytesAuthenticated: true,
+    screenshotProvenDirectDjvuDecode: false,
+    pdfBinaryDerivationFromSourceDjvuVerified: false,
+    chapterFullGlyphCollationVerified: false,
+    printedFolioVerified: false,
+    fullPassageWitnessDigestReproduced: false,
+    completeSourceIntegrityAuthorized: false,
+    productionAdmissionAuthority: false,
+  }),
+} as const);
 
 /**
  * Independently observed alternate scan image, not a replacement for the
@@ -82,8 +124,9 @@ const ALTERNATE_SCAN_CORROBORATION = Object.freeze({
  * Image-only reinspection of the older scan page supplied by the user.
  *
  * The uploaded crop matches the alternate PDF page geometrically, but its
- * parent CADAL06066043 DjVu bytes have NOT been independently authenticated
- * in this session. Do not count the two renderings as independent witnesses
+ * parent CADAL06066043 DjVu bytes were independently authenticated later,
+ * but direct PDF-from-DjVu conversion was not reproduced. The screenshot
+ * association remains PDF-image-based. Do not count two renderings as independent witnesses
  * and do not overwrite the historical frozen recorded transcription.
  */
 const EXISTING_SCAN_IMAGE_REINSPECTION = Object.freeze({
@@ -171,7 +214,7 @@ const EXISTING_SCAN_IMAGE_REINSPECTION = Object.freeze({
   // This is a Research disposition, not approval to rewrite source refs.
   exactGlyphRegistrationReview: Object.freeze({
     disposition: 'REVIEW_REQUIRED_FOR_EXACT_GLYPH_BINDING',
-    originalDjvuIdentityStillRequired: true,
+    originalDjvuIdentityStillRequired: false,
     exactPrintedFolioStillRequired: true,
     completePassageCollationStillRequired: true,
     automaticWitnessReregistrationAuthorized: false,
@@ -226,6 +269,7 @@ export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
       ),
     }),
     scanAuthority: SCAN_AUTHORITY,
+    verifiedOriginDjvuBytes: VERIFIED_ORIGIN_DJVU_BYTES,
     alternateScanCorroboration: ALTERNATE_SCAN_CORROBORATION,
     existingScanImageReinspection: EXISTING_SCAN_IMAGE_REINSPECTION,
     qualification: Object.freeze({

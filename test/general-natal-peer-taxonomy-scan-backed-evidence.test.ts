@@ -72,6 +72,54 @@ describe('general natal Samyeong v7 peer-taxonomy scan-backed evidence', () => {
     });
   });
 
+  it('reproduces the actual original DjVu p174 pinned encoded FORM and Sjbz bytes', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const source = evidence.scanAuthority.directInspection;
+    const original = evidence.verifiedOriginDjvuBytes;
+
+    expect(original.fileName).toBe('CADAL06066043_三命通會·卷七.djvu');
+    expect(original.fileByteLength).toBe(9793070);
+    expect(original.fileSha1).toBe(source.uploadedDjvuSha1);
+    expect(original.fileSha256).toBe(
+      '406704d9095a6bf3635a9557dfcd27a93e051fb4ebbffe1c252ddfe4294f1d1a',
+    );
+    expect(original.multipageFormat).toBe('DJVM');
+    expect(original.numberOfDjvuPageForms).toBe(evidence.scanAuthority.pageCount);
+    expect(original.authenticatedDigitalPage).toBe(source.digitalScanPage);
+    expect(original.pageForm).toEqual({
+      byteOffset: 8566660,
+      byteLength: 44342,
+      rawFormWithHeaderSha256: source.pageFormDjvuSha256,
+      reproducesFrozenRegisteredHash: true,
+    });
+    expect(original.pageSjbzChunk).toEqual({
+      hashScope: 'CHUNK_HEADER_AND_BODY',
+      rawChunkWithHeaderSha256: source.pageSjbzSha256,
+      reproducesFrozenRegisteredHash: true,
+    });
+  });
+
+  it('distinguishes authenticated source bytes from page rendering and full-witness promotion', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    expect(evidence.verifiedOriginDjvuBytes.verification).toEqual({
+      sourceDjvuBytesAuthenticated: true,
+      exactPageEncodedBytesAuthenticated: true,
+      screenshotProvenDirectDjvuDecode: false,
+      pdfBinaryDerivationFromSourceDjvuVerified: false,
+      chapterFullGlyphCollationVerified: false,
+      printedFolioVerified: false,
+      fullPassageWitnessDigestReproduced: false,
+      completeSourceIntegrityAuthorized: false,
+      productionAdmissionAuthority: false,
+    });
+    expect(evidence.existingScanImageReinspection.suppliedAs.originDjvuByteIdentityVerified).toBe(false);
+    expect(evidence.existingScanImageReinspection.uploadedPdfPageBinding.uploadedPdfBoundToCatalogDjvuBytes).toBe(false);
+    expect(evidence.existingScanImageReinspection.exactGlyphRegistrationReview.originalDjvuIdentityStillRequired).toBe(false);
+    expect(evidence.qualification.exactWitnessHashReproducedFromScan).toBe(false);
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
   it('records exact alternate PDF image location without elevating the governed witness', () => {
     const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
     const alternate = evidence.alternateScanCorroboration;
@@ -243,7 +291,7 @@ describe('general natal Samyeong v7 peer-taxonomy scan-backed evidence', () => {
     const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
     expect(evidence.existingScanImageReinspection.exactGlyphRegistrationReview).toEqual({
       disposition: 'REVIEW_REQUIRED_FOR_EXACT_GLYPH_BINDING',
-      originalDjvuIdentityStillRequired: true,
+      originalDjvuIdentityStillRequired: false,
       exactPrintedFolioStillRequired: true,
       completePassageCollationStillRequired: true,
       automaticWitnessReregistrationAuthorized: false,
