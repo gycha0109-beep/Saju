@@ -16,10 +16,3 @@ export {
 } from './host/http-server.js';
 
 export type { LegacyNarrativeRuntimeV1 } from './reading/governed-reading-execution.js';
-
-/** Opt-in research-lifecycle General Natal Preview host; never a Production authority. */
-export {
-  GENERAL_NATAL_INTEGRATED_PREVIEW_HOST_VERSION,
-  createGeneralNatalIntegratedPreviewProductHost,
-  type GeneralNatalIntegratedPreviewHostOptions,
-} from './host/general-natal-integrated-preview-host.js';
