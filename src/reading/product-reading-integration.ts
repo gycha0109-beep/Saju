@@ -208,6 +208,27 @@ export function prepareProductReading(
           composition,
         );
       }
+      // Coverage is not semantic materiality: a selected research T8 may
+      // structurally satisfy a Profile while explicitly forbidding consumer prose.
+      const targetClaimIds = new Set(composition.selection.targetClaimIds);
+      const projectionDenied = execution.claims.some(
+        (claim) =>
+          targetClaimIds.has(claim.claimId) &&
+          typeof claim.value === 'object' &&
+          claim.value !== null &&
+          !Array.isArray(claim.value) &&
+          'consumerProjectionAuthorized' in claim.value &&
+          claim.value.consumerProjectionAuthorized === false,
+      );
+      if (projectionDenied) {
+        return buildResult(
+          'invariant_blocked',
+          normalization,
+          ['TARGET_CLAIM_CONSUMER_PROJECTION_NOT_AUTHORIZED'],
+          invariantBlockedEligibility(),
+          composition,
+        );
+      }
       return buildResult(
         'ready_for_execution',
         normalization,
