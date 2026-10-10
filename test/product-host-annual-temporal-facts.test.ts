@@ -94,4 +94,46 @@ describe('product host annual temporal facts', () => {
     );
     expect(requestContext.temporalFacts.annualBranchRelations).toBeDefined();
   });
+  it('passes the midnight-based annual pillar to the actual product host interpretation input', async () => {
+    const captured: ProductHostInterpretationRequestContext[] = [];
+    let time = new Date('2026-02-03T14:59:59.000Z');
+    const host = createMyeonghwaProductHost({
+      calculate(input) {
+        return calculateCanonicalSajuSnapshot(input, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: time });
+      },
+      interpret(_snapshot, _context, requestContext) {
+        if (requestContext !== undefined) captured.push(requestContext);
+        throw STOP_AFTER_INTERPRET;
+      },
+      legacyNarrativeRuntime: {
+        runtimeVersion: LEGACY_NARRATIVE_RUNTIME_VERSION,
+        adapter: unusedAdapter,
+        narrativePolicy: unusedNarrativePolicy,
+      },
+      readingOptions: unusedReadingOptions,
+      requestIdFactory: () => 'annual-civil-day-runtime',
+      requestNowFactory: () => time,
+    });
+    const body = {
+      birth: { calendarType: 'solar', date: '1996-01-09', time: '09:30', sex: 'male' },
+      reading: { text: '올해 운세' },
+    };
+    await expect(host.requestReading(body)).rejects.toBe(STOP_AFTER_INTERPRET);
+    time = new Date('2026-02-03T15:00:00.000Z');
+    await expect(host.requestReading(body)).rejects.toBe(STOP_AFTER_INTERPRET);
+    expect(captured).toHaveLength(2);
+    expect(captured[0]?.temporalContext).toMatchObject({
+      targetYear: 2026, annualPillar: { stem: '을', branch: '사' },
+    });
+    expect(captured[0]?.temporalFacts).toMatchObject({
+      targetYear: 2026, annualPillar: { stem: '을', branch: '사' },
+    });
+    expect(captured[1]?.temporalContext).toMatchObject({
+      targetYear: 2026, annualPillar: { stem: '병', branch: '오' },
+    });
+    expect(captured[1]?.temporalFacts).toMatchObject({
+      targetYear: 2026, annualPillar: { stem: '병', branch: '오' },
+    });
+  });
+
 });

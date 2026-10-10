@@ -46,7 +46,7 @@ function annualRequest(year: number): ReadingRequest {
       scope: 'annual',
       year,
       timeZone: 'Asia/Seoul',
-      referenceDateTime: NOW.toISOString(),
+      referenceDateTime: new Date(Date.UTC(year, 8, 3, 13)).toISOString(),
       resolution: 'relative_current',
     },
   };

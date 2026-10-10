@@ -1,5 +1,5 @@
 import type { ReadingRequest } from '../contracts/reading.js';
-import { annualSexagenaryPillar } from './temporal-reading-context.js';
+import { annualSexagenaryPillar } from './annual-sexagenary-pillar.js';
 
 /**
  * E1: independently corroborated astronomical evidence, NOT a Korean
