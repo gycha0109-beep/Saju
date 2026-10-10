@@ -123,7 +123,7 @@ describe('WS-D: execute existing General Natal structural and theme claims in on
     );
     expect(first.run.interpretationRunId).toBe(second.run.interpretationRunId);
     expect(GENERAL_NATAL_INTEGRATED_READING_PACK.status).toBe('research');
-    expect(registry.resolvedRules.every((rule) => rule.status === 'research')).toBe(true);
+    expect(registry.rules.every((rule) => rule.status === 'research')).toBe(true);
     const production = inspectMyeonghwaProductionComposition({ registry });
     expect(production.status).toBe('blocked');
     if (production.status !== 'blocked') throw new Error('Research pack cannot be Production.');
