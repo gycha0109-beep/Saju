@@ -76,10 +76,12 @@ describe('SA-7D fourteen-rule research decision and factual annual successor', (
 
   test('proposes only two exact identity replacements and four relation-fact successors, never a modern theme', () => {
     const decisions = buildGeneralAnnualFourteenRuleDecision().decisions;
-    expect(decisions.filter((decision) =>
+    expect(decisions.flatMap((decision) =>
       decision.kind === 'modern_ten_god_theme' &&
-      decision.proposedResearchHandling === 'REPLACE_WITH_RELATION_IDENTITY_ONLY',
-    ).map((decision) => decision.tenGod)).toEqual(['편재', '편관']);
+      decision.proposedResearchHandling === 'REPLACE_WITH_RELATION_IDENTITY_ONLY'
+        ? [decision.tenGod]
+        : [],
+    )).toEqual(['편재', '편관']);
     expect(decisions.filter((decision) =>
       decision.kind === 'modern_ten_god_theme' &&
       decision.proposedResearchHandling === 'HOLD',
