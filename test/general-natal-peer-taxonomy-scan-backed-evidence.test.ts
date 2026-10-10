@@ -72,6 +72,70 @@ describe('general natal Samyeong v7 peer-taxonomy scan-backed evidence', () => {
     });
   });
 
+  it('reproduces the directly collated 117-glyph opening prose across PDF p174-p175', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const prose = evidence.peerOpeningProseImageCollation;
+
+    expect(prose.source).toBe('CADAL06066043');
+    expect(prose.section).toBe('兄弟引例章');
+    expect(prose.digitalPagesInspected).toEqual([174, 175]);
+    expect(prose.glyphStringWithoutPunctuation.startsWith(prose.paragraphBegins)).toBe(true);
+    expect(prose.glyphStringWithoutPunctuation.endsWith(prose.paragraphEnds)).toBe(true);
+    expect(prose.glyphStringWithoutPunctuation).toContain('如庚日生寅');
+    expect(prose.glyphStringWithoutPunctuation).not.toContain('如庚日坐寅');
+    expect(prose.glyphStringWithoutPunctuation).not.toContain('本經云');
+    expect(prose.glyphStringWithoutPunctuation).not.toContain('歌云');
+    expect(prose.unicodeNormalization).toBe('NONE');
+    expect(prose.insertedPunctuation).toBe(false);
+    expect(prose.glyphStringWithoutPunctuation.length).toBe(117);
+    expect(Buffer.byteLength(prose.glyphStringWithoutPunctuation, 'utf8')).toBe(351);
+    expect(prose.glyphCount).toBe(117);
+    expect(prose.utf8ByteLength).toBe(351);
+    expect(
+      createHash('sha256')
+        .update(prose.glyphStringWithoutPunctuation, 'utf8')
+        .digest('hex'),
+    ).toBe('f5f35344b0db4e699731ab158586677783e16d89ef611e16fe4fdca66297817b');
+    expect(prose.sha256).toBe(
+      'f5f35344b0db4e699731ab158586677783e16d89ef611e16fe4fdca66297817b',
+    );
+  });
+
+  it('keeps page-175 annotation, printed folio and 生/坐 variants separate from authority', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const prose = evidence.peerOpeningProseImageCollation;
+    expect(prose.printedInterlinearAnnotation).toEqual({
+      text: '本經云',
+      location: 'PDF p175, following 五行自然不和',
+      includedInMainString: false,
+    });
+    expect(prose.adjacentPageFolioObservation).toEqual({
+      digitalPage: 175,
+      marginalGlyphs: '九十一',
+      digitalPage174PhysicalFolioAuthenticated: false,
+    });
+    expect(prose.variantCollation).toEqual({
+      scanGlyphNearFirstExample: '如庚日生寅',
+      externallyTranscribedVariant: '如庚日坐寅',
+      literalMatch: false,
+      originalPageImageTakesPrecedence: true,
+      transcriptionAuthorityPromoted: false,
+    });
+    expect(prose.qualification).toEqual({
+      openingProseManualImageCollationRecorded: true,
+      openingProseIndependentReviewerApproved: false,
+      originalDjvuPageDirectlyPixelDecoded: false,
+      wholeSectionTranscribed: false,
+      fullSourceQualifiedWitnessDigestReproduced: false,
+      exactPrintedFolioOf174Established: false,
+      fixedWitnessReRegistrationAuthorized: false,
+      productionAdmissionAuthority: false,
+    });
+    expect(evidence.source.directScanObservedText).toBe('兄弟者即劫財比肩');
+    expect(evidence.qualification.fullSourceIntegrityQualificationEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
   it('reproduces the actual original DjVu p174 pinned encoded FORM and Sjbz bytes', () => {
     const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
     const source = evidence.scanAuthority.directInspection;
