@@ -145,6 +145,64 @@ export function inspectIndependentLichunE1Packet(
   return { state: 'structurally_eligible_not_authorized', productionAuthorized: false };
 }
 
+/**
+ * Code-pinned metadata copied from the byte-and-row-checked capture run #5.
+ * These fingerprints are observations, NOT a source-owner review or an E1 grant.
+ * KASI fingerprints identify specific HTML responses, not permanent publication IDs.
+ *
+ * Any later approved E1 packet must match an explicitly reviewed captured version.
+ * A new source snapshot needs a separate reviewed code change and corresponding
+ * updated evidence manifest before it may enter the code-owned approval list.
+ */
+export const AUDITED_E1_CAPTURE_FINGERPRINTS = Object.freeze([
+  Object.freeze({
+    year: 2026,
+    captureRunId: 38042070143,
+    minuteAnchorUtc: '2026-02-03T20:02:00.000Z',
+    naojUri: 'https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2026.pdf',
+    naojOriginalPdfSha256: 'ee5f0a743c0e7e577fa4115a07eef7fa752cee9d6ce1022e06305a09f33f3d6d',
+    kasiUri: 'https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026',
+    kasiCapturedHtmlSha256: '716b1801d129dbcdef24fb6150a0ceec9dd9f0e4b53339a9eda8e14fea5ab056',
+  }),
+  Object.freeze({
+    year: 2027,
+    captureRunId: 38042070143,
+    minuteAnchorUtc: '2027-02-04T01:46:00.000Z',
+    naojUri: 'https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2027.pdf',
+    naojOriginalPdfSha256: 'f7998e5730bc7a5de5f122a692ca96626f3e0c8c035b30a1c71d6eb7718272e3',
+    kasiUri: 'https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2027',
+    kasiCapturedHtmlSha256: '7ead0a04d367a1efa1bf1d27a50d2d639ed8a098208dd66f6ffef272990bab9a',
+  }),
+] as const);
+
+export type E1CaptureBindingReview =
+  | { state: 'capture_matched_review_still_required'; captureRunId: number; productionAuthorized: false }
+  | { state: 'unavailable'; reasonCode: 'NO_PINNED_CAPTURE' | 'CAPTURE_DIGEST_OR_MINUTE_MISMATCH'; productionAuthorized: false };
+
+/**
+ * Mechanical byte-fingerprint binding only. This does not verify signer identity,
+ * approval scope, or that the now-expiring source files can be independently reproduced.
+ */
+export function inspectIndependentE1CaptureBinding(
+  packet: Readonly<IndependentLichunE1Packet>,
+): E1CaptureBindingReview {
+  const capture = AUDITED_E1_CAPTURE_FINGERPRINTS.find((item) => item.year === packet.year);
+  if (capture === undefined) {
+    return { state: 'unavailable', reasonCode: 'NO_PINNED_CAPTURE', productionAuthorized: false };
+  }
+  if (
+    capture.minuteAnchorUtc !== packet.displayedMinuteUtc ||
+    capture.naojUri !== packet.publishedJapaneseAlmanac.uri ||
+    capture.naojOriginalPdfSha256 !== packet.publishedJapaneseAlmanac.originalPdfSha256 ||
+    capture.kasiUri !== packet.independentKoreanObservation.uri ||
+    capture.kasiCapturedHtmlSha256 !== packet.independentKoreanObservation.capturedPageSha256 ||
+    capture.minuteAnchorUtc !== packet.independentKoreanObservation.displayedMinuteUtc
+  ) {
+    return { state: 'unavailable', reasonCode: 'CAPTURE_DIGEST_OR_MINUTE_MISMATCH', productionAuthorized: false };
+  }
+  return { state: 'capture_matched_review_still_required', captureRunId: capture.captureRunId, productionAuthorized: false };
+}
+
 // Deliberately empty: neither NAOJ original PDF digest nor KASI captured page
 // digest and the independent source-owner review have been established.
 // Never populate from caller-provided flags, strings, or synthetic tests.
@@ -175,7 +233,11 @@ export function getCodeApprovedIndependentLichunBoundary(year: number): Approved
   if (matches.length === 0) return { state: 'unavailable', year, reasonCode: 'NO_CODE_APPROVED_E1_WITNESS', productionAuthorized: false };
   if (matches.length !== 1) return { state: 'unavailable', year, reasonCode: 'CONFLICTING_E1_WITNESSES', productionAuthorized: false };
   const packet = matches[0];
-  if (packet === undefined || inspectIndependentLichunE1Packet(packet).state !== 'structurally_eligible_not_authorized') {
+  if (
+    packet === undefined ||
+    inspectIndependentLichunE1Packet(packet).state !== 'structurally_eligible_not_authorized' ||
+    inspectIndependentE1CaptureBinding(packet).state !== 'capture_matched_review_still_required'
+  ) {
     return { state: 'unavailable', year, reasonCode: 'INVALID_APPROVED_E1_WITNESS', productionAuthorized: false };
   }
   return {
