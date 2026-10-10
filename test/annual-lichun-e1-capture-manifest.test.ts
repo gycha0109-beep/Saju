@@ -126,7 +126,7 @@ describe('durable E1 capture evidence record (never an approval)', () => {
     }
   });
 
-  it('keeps approval, human attestation, legal publication, seconds, and production CLOSED', () => {
+  it('preserves original capture status even after later delegated-only research registration', () => {
     expect(manifest.review).toEqual({
       sourceOwnerIdentity: null,
       sourceOwnerDecisionRef: null,
@@ -141,8 +141,9 @@ describe('durable E1 capture evidence record (never an approval)', () => {
     expect(manifest.provenanceCautions.some((note) => note.includes('snapshot-specific'))).toBe(true);
     for (const x of YEAR_EXPECTATIONS) {
       expect(getCodeApprovedIndependentLichunBoundary(x.year)).toMatchObject({
-        state: 'unavailable',
-        reasonCode: 'NO_CODE_APPROVED_E1_WITNESS',
+        state: 'approved_research_calculation_source',
+        reviewProvenance: 'OWNER_DELEGATED_AI',
+        independentHumanReviewCompleted: false,
         productionAuthorized: false,
       });
       expect(getPinnedPrimaryLichunBoundary(x.year)).toMatchObject({
@@ -151,10 +152,10 @@ describe('durable E1 capture evidence record (never an approval)', () => {
         productionAuthorized: false,
       });
     }
-    expect(resolveAnnualCycleWithCodeApprovedIndependentE1(2026).state).toBe('source_unavailable');
+    expect(resolveAnnualCycleWithCodeApprovedIndependentE1(2026)).toMatchObject({ state: 'research_candidate', productionAuthorized: false });
   });
 
-  it('distinguishes captured file hashes from an independently signed reviewer approval', () => {
+  it('never treats synthetic reviewer fields or the later owner delegation as independent human inspection', () => {
     for (const x of YEAR_EXPECTATIONS) {
       const pdf = manifest.rowEvidence.find((row) => row.year === x.year && row.institution === 'NAOJ')!;
       const html = manifest.rowEvidence.find((row) => row.year === x.year && row.institution === 'KASI')!;
@@ -182,7 +183,7 @@ describe('durable E1 capture evidence record (never an approval)', () => {
         state: 'structurally_eligible_not_authorized',
         productionAuthorized: false,
       });
-      expect(getCodeApprovedIndependentLichunBoundary(x.year).state).toBe('unavailable');
+      expect(getCodeApprovedIndependentLichunBoundary(x.year)).toMatchObject({ state: 'approved_research_calculation_source', independentHumanReviewCompleted: false });
     }
   });
 });
