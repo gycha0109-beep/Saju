@@ -19,6 +19,15 @@ import {
   I18A_MONTH_BRANCH_STRENGTH_SOURCES,
 } from '../research/i18a-month-branch-strength-evidence.js';
 
+import {
+  GENERAL_NATAL_PEER_TAXONOMY_SOURCE,
+  GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES,
+  GENERAL_NATAL_SOURCE_BOUNDED_METHODOLOGY,
+  GENERAL_NATAL_SOURCE_BOUNDED_PACK,
+  GENERAL_NATAL_SOURCE_BOUNDED_RELATION_RULES,
+} from '../research/general-natal-conclusion-source-bounded-candidate.js';
+import { GENERAL_NATAL_CONCLUSION_SOURCE } from '../research/general-natal-conclusion-synthesis-candidate.js';
+
 /**
  * Assemble existing bounded General Natal T8 producers into one executable
  * chart-level reading. This is a research-lifecycle composition, NOT a new
@@ -81,6 +90,67 @@ export function createGeneralNatalIntegratedReadingRegistry(
       ],
     },
     GENERAL_NATAL_INTEGRATED_READING_PACK,
+    createdAt,
+  );
+}
+
+/**
+ * WS-C1: opt-in, interpretation-only composition for existing source-bounded
+ * T5 -> T8 relations. The default Preview registry above is deliberately
+ * unchanged. These claims explicitly prohibit consumer projection; the
+ * ProductReading gate must reject their selection even when the two General
+ * Natal profile coverage groups are otherwise satisfied.
+ */
+export const GENERAL_NATAL_INTEGRATED_SOURCE_BOUNDED_RESEARCH_PACK: InterpretationPack =
+  Object.freeze({
+    ...GENERAL_NATAL_INTEGRATED_READING_PACK,
+    packId: 'PACK-GENERAL-NATAL-INTEGRATED-SOURCE-BOUNDED-RESEARCH',
+    name: 'General Natal source-bounded structural integration (internal research)',
+    methodologyRefs: [
+      ...GENERAL_NATAL_INTEGRATED_READING_PACK.methodologyRefs,
+      ...GENERAL_NATAL_SOURCE_BOUNDED_PACK.methodologyRefs,
+    ],
+    enabledRuleSets: [
+      ...new Set([
+        ...GENERAL_NATAL_INTEGRATED_READING_PACK.enabledRuleSets,
+        ...GENERAL_NATAL_SOURCE_BOUNDED_PACK.enabledRuleSets,
+      ]),
+    ],
+    compositionPolicyRef: {
+      id: 'COMPOSITION-GENERAL-NATAL-SOURCE-BOUNDED-INTERNAL-RESEARCH',
+      version: GENERAL_NATAL_INTEGRATED_READING_VERSION,
+    },
+    status: 'research',
+  });
+
+export function createGeneralNatalIntegratedSourceBoundedResearchRegistry(
+  createdAt = '1970-01-01T00:00:00.000Z',
+) {
+  return createRuleRegistrySnapshot(
+    {
+      rules: [
+        ...I18A_MONTH_BRANCH_STRENGTH_RULES,
+        ...GENERAL_NATAL_USEFUL_TEN_GOD_RULES,
+        ...GENERAL_NATAL_USEFUL_T8_RULES,
+        ...GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_RULES,
+        ...GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES,
+        ...GENERAL_NATAL_SOURCE_BOUNDED_RELATION_RULES,
+      ],
+      methodologies: [
+        I18A_MONTH_BRANCH_STRENGTH_METHODOLOGY,
+        GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
+        GENERAL_NATAL_USEFUL_SYNTHESIS_METHODOLOGY,
+        GENERAL_NATAL_T8_STRUCTURAL_SUMMARY_METHODOLOGY,
+        GENERAL_NATAL_SOURCE_BOUNDED_METHODOLOGY,
+      ],
+      sources: [
+        ...I18A_MONTH_BRANCH_STRENGTH_SOURCES,
+        GENERAL_NATAL_USEFUL_READING_SOURCE,
+        GENERAL_NATAL_CONCLUSION_SOURCE,
+        GENERAL_NATAL_PEER_TAXONOMY_SOURCE,
+      ],
+    },
+    GENERAL_NATAL_INTEGRATED_SOURCE_BOUNDED_RESEARCH_PACK,
     createdAt,
   );
 }
