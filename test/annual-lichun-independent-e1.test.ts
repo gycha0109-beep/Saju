@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { ReadingRequest } from '../src/contracts/reading.js';
 import {
   getCodeApprovedIndependentLichunBoundary,
+  previewIndependentAnnualE1CycleMath,
+  resolveAnnualCycleWithCodeApprovedIndependentE1,
   inspectIndependentLichunE1Packet,
   previewIndependentAnnualE1Math,
   resolveAnnualWithCodeApprovedIndependentE1,
@@ -152,6 +154,81 @@ describe('E1 independent source review, structurally checkable but never caller 
     })).toMatchObject({ state: 'rejected', reasonCode: 'INVALID_NAOJ_WITNESS' });
     expect(getCodeApprovedIndependentLichunBoundary(2027)).toMatchObject({
       state: 'unavailable', reasonCode: 'NO_CODE_APPROVED_E1_WITNESS',
+    });
+  });
+});
+
+
+describe('E1 whole-year interval requires TWO separately reviewed years', () => {
+  const nextYearSynthetic: IndependentLichunE1Packet = {
+    ...SYNTHETIC,
+    year: 2027,
+    displayedMinuteUtc: '2027-02-04T01:46:00.000Z',
+    publishedJapaneseAlmanac: {
+      ...SYNTHETIC.publishedJapaneseAlmanac,
+      uri: 'https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2027.pdf',
+      printedRow: '立 春 315 2 4 10 46',
+    },
+    independentKoreanObservation: {
+      ...SYNTHETIC.independentKoreanObservation,
+      uri: 'https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2027',
+      displayedMinuteUtc: '2027-02-04T01:46:00.000Z',
+    },
+  };
+
+  it('previews a 2026 interval without pretending either minute is an exact second', () => {
+    expect(previewIndependentAnnualE1CycleMath(2026, SYNTHETIC, nextYearSynthetic)).toEqual({
+      state: 'research_math_preview_only',
+      displayYear: 2026,
+      annualPillar: { stem: '병', branch: '오', cycleIndex: 42 },
+      start: {
+        displayedMinuteUtc: '2026-02-03T20:02:00.000Z',
+        earliestPossibleUtc: '2026-02-03T20:01:00.000Z',
+        latestPossibleExclusiveUtc: '2026-02-03T20:03:00.000Z',
+      },
+      end: {
+        displayedMinuteUtc: '2027-02-04T01:46:00.000Z',
+        earliestPossibleUtc: '2027-02-04T01:45:00.000Z',
+        latestPossibleExclusiveUtc: '2027-02-04T01:47:00.000Z',
+      },
+      exactEffectiveIntervalEstablished: false,
+      mayGenerateAnnualInterpretation: false,
+      productionAuthorized: false,
+    });
+  });
+
+  it('never fills a missing year with January 1 or an assumed 365-day period', () => {
+    expect(previewIndependentAnnualE1CycleMath(2026, SYNTHETIC)).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'BOTH_E1_PACKETS_REQUIRED',
+      productionAuthorized: false,
+    });
+    expect(previewIndependentAnnualE1CycleMath(2026, SYNTHETIC, SYNTHETIC)).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'INVALID_E1_PACKETS',
+    });
+    expect(previewIndependentAnnualE1CycleMath(9999)).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'INVALID_TARGET_YEAR',
+    });
+  });
+
+  it('does not turn synthetic source fixtures into a code-approved whole-year cycle', () => {
+    expect(resolveAnnualCycleWithCodeApprovedIndependentE1(2026)).toEqual({
+      state: 'source_unavailable',
+      displayYear: 2026,
+      missingYear: 2026,
+      reasonCode: 'NO_CODE_APPROVED_E1_WITNESS',
+      productionAuthorized: false,
+    });
+    expect(resolveAnnualCycleWithCodeApprovedIndependentE1(2027)).toMatchObject({
+      state: 'source_unavailable',
+      missingYear: 2027,
+      productionAuthorized: false,
+    });
+    expect(getPinnedPrimaryLichunBoundary(2027)).toMatchObject({
+      state: 'unavailable',
+      reasonCode: 'NO_PINNED_PRIMARY_WITNESS',
     });
   });
 });
