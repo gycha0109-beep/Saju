@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import { resolved, unavailable } from '../src/contracts/common.js';
 import type {
-  CanonicalSajuSnapshot, EarthlyBranch, PillarFact, PillarSlot,
+  CanonicalSajuSnapshot, PillarFact, PillarSlot,
 } from '../src/contracts/calculation.js';
 import type { ReadingRequest } from '../src/contracts/reading.js';
 import { deterministicContentHash } from '../src/interpretation/rule-registry.js';
