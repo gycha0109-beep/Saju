@@ -7,7 +7,7 @@ import {
 } from './general-natal-conclusion-source-bounded-candidate.js';
 
 export const GENERAL_NATAL_PEER_TAXONOMY_SCAN_EVIDENCE_VERSION =
-  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v8' as const;
+  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v9' as const;
 
 const PEER_RULE_ID = 'RULE-GENERAL-NATAL-SOURCE-BOUNDED-FAMILY-PEER-PRESENT' as const;
 const SAMYEONG_V5_SOURCE_ID =
@@ -308,6 +308,36 @@ export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
     throw new Error('Peer-family rule is not bound to the Samyeong volume-7 taxonomy source.');
   }
 
+  // Bounded research support is NOT admission authority. The eight image
+  // glyphs establish only peer-family grouping (比肩/劫財), not a consumer
+  // interpretation, and the frozen transcription differs at 刼/劫.
+  const narrowTaxonomySupport = Object.freeze({
+    assessedRuleId: peerRule.ruleId,
+    assessedClaimType: peerRule.output.claimType,
+    observedSourceGlyphs: PEER_OPENING_PROSE_IMAGE_COLLATION.paragraphBegins,
+    frozenRecordedGlyphs: EXISTING_SCAN_IMAGE_REINSPECTION.directlyObserved.historicalGovernedRecordedProposition,
+    claimSupportDisposition: 'RESEARCH_NARROW_PEER_GROUPING_SUPPORTED' as const,
+    supportedOnly: Object.freeze(['비견', '겁재'] as const),
+    fullSectionTranscriptionRequiredToObserveThisEightGlyphGrouping: false as const,
+    fullSectionTranscriptionCompleted: false as const,
+    literalIdentityWithFrozenRecordEstablished: false as const,
+    independentlyReviewedSourceReregistrationApproved: false as const,
+    sourceIntegrityAdmissionAuthorized: false as const,
+    behavioralInferenceAuthorized: false as const,
+    consumerProjectionAuthorized: false as const,
+    bridgeReentryAuthorized: false as const,
+    productionAdmissionAuthorized: false as const,
+    nextResearchAction: 'INDEPENDENT_REVIEW_OF_FROZEN_GLYPH_REGISTRATION' as const,
+  });
+  if (
+    narrowTaxonomySupport.assessedClaimType !==
+      'GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_PEER_PRESENT' ||
+    narrowTaxonomySupport.observedSourceGlyphs !== '兄弟者即刼財比肩' ||
+    narrowTaxonomySupport.frozenRecordedGlyphs === narrowTaxonomySupport.observedSourceGlyphs
+  ) {
+    throw new Error('Peer-source narrow taxonomy assessment no longer matches the pinned evidence.');
+  }
+
   const material = Object.freeze({
     evidenceVersion: GENERAL_NATAL_PEER_TAXONOMY_SCAN_EVIDENCE_VERSION,
     issue: '#829' as const,
@@ -327,6 +357,7 @@ export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
     scanAuthority: SCAN_AUTHORITY,
     verifiedOriginDjvuBytes: VERIFIED_ORIGIN_DJVU_BYTES,
     peerOpeningProseImageCollation: PEER_OPENING_PROSE_IMAGE_COLLATION,
+    narrowTaxonomySupport,
     alternateScanCorroboration: ALTERNATE_SCAN_CORROBORATION,
     existingScanImageReinspection: EXISTING_SCAN_IMAGE_REINSPECTION,
     qualification: Object.freeze({
