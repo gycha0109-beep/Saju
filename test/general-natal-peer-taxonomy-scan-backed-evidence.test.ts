@@ -112,6 +112,62 @@ describe('general natal Samyeong v7 peer-taxonomy scan-backed evidence', () => {
     expect(alternate.pageCount - evidence.scanAuthority.pageCount).toBe(8);
   });
 
+  it('preserves the older-page image glyph without promoting screenshot provenance', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const reinspection = evidence.existingScanImageReinspection;
+    const older = evidence.scanAuthority.directInspection;
+    const alternate = evidence.alternateScanCorroboration.directPdfImageInspection;
+
+    expect(reinspection.suppliedAs).toEqual({
+      digitization: 'CADAL06066043',
+      claimedDigitalScanPage: 174,
+      submittedImageSha256: 'ad13f9bb2dd1882a5e689f963eec8f5ac9f49df7891f3b722c074fb322f92b08',
+      imageWidth: 281,
+      imageHeight: 401,
+      originDjvuByteIdentityVerified: false,
+    });
+    expect(reinspection.directlyObserved).toEqual({
+      section: '兄弟引例章',
+      boundedProposition: '兄弟者即刼財比肩',
+      historicalGovernedRecordedProposition: '兄弟者即劫財比肩',
+      literalIdentityToHistoricalRecord: false,
+      literalIdentityToAlternatePdf: true,
+    });
+    expect(reinspection.directlyObserved.boundedProposition).toBe(
+      alternate.boundedPropositionObserved,
+    );
+    expect(reinspection.directlyObserved.historicalGovernedRecordedProposition).toBe(
+      older.boundedPropositionObserved,
+    );
+    expect(reinspection.directlyObserved.boundedProposition).not.toBe(
+      older.boundedPropositionObserved,
+    );
+    expect(reinspection.imageCorrespondence).toEqual({
+      alternateDigitization: 'CADAL06056483',
+      alternatePdfPage: 182,
+      algorithm: 'SIFT_RATIO_0_70_RANSAC_4PX',
+      featureMatches: 78,
+      geometricInlierMatches: 76,
+      nearIdenticalPrintedPageLayout: true,
+      independentWitnessCorroborationEstablished: false,
+    });
+  });
+
+  it('does not upgrade source-integrity or production from page-image similarity', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    expect(evidence.existingScanImageReinspection.qualification).toEqual({
+      exactOriginScanImageAuthenticated: false,
+      physicalFolioVerified: false,
+      fullPassageGlyphIdentityEstablished: false,
+      scanDerivedWitnessDigestReproduced: false,
+      fullSourceIntegrityQualificationEstablished: false,
+      productionAdmissionAuthority: false,
+    });
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.qualification.fullSourceIntegrityQualificationEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
   it('keeps all stronger source-integrity and production gates closed for alternate scan', () => {
     const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
     expect(evidence.alternateScanCorroboration.qualification).toEqual({
