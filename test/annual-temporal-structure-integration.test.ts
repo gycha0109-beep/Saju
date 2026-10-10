@@ -129,6 +129,33 @@ function bundle(
 }
 
 describe('R194/R196 product annual temporal structure integration', () => {
+  test('annual governed facts use the same LiChun-midnight pillar as the host without changing display year', () => {
+    const packet = bundle(2026, [assessment('midnight-2026', 'maintains_structure')]);
+    const before = {
+      ...request(2026),
+      targetPeriod: {
+        scope: 'annual' as const, year: 2026, timeZone: 'Asia/Seoul' as const,
+        referenceDateTime: '2026-02-03T14:59:59.000Z', resolution: 'relative_current' as const,
+      },
+    };
+    const after = {
+      ...before,
+      targetPeriod: { ...before.targetPeriod, referenceDateTime: '2026-02-03T15:00:00.000Z' },
+    };
+    const previous = resolveAnnualTemporalStructureIntegration(snapshot, before, baseline, packet);
+    const current = resolveAnnualTemporalStructureIntegration(snapshot, after, baseline, packet);
+    expect(previous.status).toBe('resolved');
+    expect(current.status).toBe('resolved');
+    if (previous.status !== 'resolved' || current.status !== 'resolved') return;
+    expect(previous.annualFacts).toMatchObject({
+      targetYear: 2026, annualPillar: { stem: '을', branch: '사' },
+    });
+    expect(current.annualFacts).toMatchObject({
+      targetYear: 2026, annualPillar: { stem: '병', branch: '오' },
+    });
+    expect(previous.period).toEqual(current.period);
+  });
+
   test('binds an actual annual request and exact governed annual impact bundle to R193 transition', () => {
     const impactBundle = bundle(2026, [
       assessment('weaken-2026', 'weakens_structure'),
