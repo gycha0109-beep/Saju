@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createGeneralNatalIntegratedPreviewProductHost,
   GENERAL_NATAL_INTEGRATED_PREVIEW_HOST_VERSION,
-} from '../src/product-host.js';
+} from '../src/preview/index.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../src/interpretation/general-natal-integrated-reading-registry.js';
 import { inspectMyeonghwaProductionComposition } from '../src/production/production-composition.js';
 
