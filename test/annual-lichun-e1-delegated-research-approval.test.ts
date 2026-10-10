@@ -50,6 +50,8 @@ describe('Owner-delegated AI E1 research exception -- NO human independent revie
       state: 'research_candidate',
       displayYear: 2026,
       annualPillar: { stem: '병', branch: '오' },
+      reviewProvenance: 'OWNER_DELEGATED_AI',
+      independentHumanReviewCompleted: false,
       start: {
         displayedMinuteUtc: '2026-02-03T20:02:00.000Z',
         earliestPossibleUtc: '2026-02-03T20:01:00.000Z',
@@ -85,6 +87,8 @@ describe('Owner-delegated AI E1 research exception -- NO human independent revie
       state: 'research_candidate',
       effectiveYear: 2025,
       annualPillar: { stem: '을', branch: '사' },
+      reviewProvenance: 'OWNER_DELEGATED_AI',
+      independentHumanReviewCompleted: false,
       mayGenerateAnnualInterpretation: false,
       productionAuthorized: false,
     });
@@ -94,6 +98,42 @@ describe('Owner-delegated AI E1 research exception -- NO human independent revie
       annualPillar: { stem: '병', branch: '오' },
       mayGenerateAnnualInterpretation: false,
       productionAuthorized: false,
+    });
+  });
+
+  it('normalizes UTC and KST instants, rejects invalid zones/dates, and preserves the 2027 minute hold', () => {
+    const utc = resolveAnnualWithCodeApprovedIndependentE1(annual('2026-02-03T20:03:00Z', 2026));
+    const kst = resolveAnnualWithCodeApprovedIndependentE1(annual('2026-02-04T05:03:00+09:00', 2026));
+    expect(utc).toEqual(kst);
+    expect(kst).toMatchObject({
+      state: 'research_candidate',
+      effectiveYear: 2026,
+      reviewProvenance: 'OWNER_DELEGATED_AI',
+      independentHumanReviewCompleted: false,
+      mayGenerateAnnualInterpretation: false,
+      productionAuthorized: false,
+    });
+
+    const base = annual('2026-02-04T05:03:00+09:00', 2026);
+    const wrongZone = {
+      ...base,
+      targetPeriod: { ...base.targetPeriod, timeZone: 'Invalid/Zone' },
+    } as unknown as ReadingRequest;
+    for (const req of [
+      wrongZone,
+      annual('2026-02-30T05:03:00+09:00', 2026),
+      annual('2026-02-04T05:03:00', 2026),
+    ]) {
+      expect(resolveAnnualWithCodeApprovedIndependentE1(req)).toMatchObject({
+        state: 'unavailable', reasonCode: 'INVALID_REQUEST_TIME', productionAuthorized: false,
+      });
+    }
+    expect(resolveAnnualWithCodeApprovedIndependentE1(annual('2027-02-04T10:45:30+09:00', 2027))).toMatchObject({
+      state: 'unavailable', reasonCode: 'BOUNDARY_MINUTE_AMBIGUOUS', productionAuthorized: false,
+    });
+    expect(resolveAnnualWithCodeApprovedIndependentE1(annual('2027-02-04T10:47:00+09:00', 2027))).toMatchObject({
+      state: 'research_candidate', effectiveYear: 2027,
+      reviewProvenance: 'OWNER_DELEGATED_AI', productionAuthorized: false,
     });
   });
 

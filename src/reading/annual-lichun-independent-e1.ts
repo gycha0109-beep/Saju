@@ -262,6 +262,17 @@ const CODE_APPROVED_E1_PACKETS: readonly IndependentLichunE1Packet[] = Object.fr
   }),
 ]);
 
+/**
+ * Explicit code-side E1 research revocation control. This deterministic
+ * module does NOT detect changes to or deletion of the GitHub approval comment.
+ * On withdrawal, change the relevant year to 'revoked' in a reviewed code
+ * change. Historical research outputs must be invalidated by consumers.
+ */
+const OWNER_DELEGATED_E1_GRANT_STATUS: Readonly<Record<number, 'active' | 'revoked'>> = Object.freeze({
+  2026: 'active',
+  2027: 'active',
+});
+
 export type ApprovedIndependentLichunBoundary =
   | {
       state: 'approved_research_calculation_source';
@@ -281,7 +292,8 @@ export type ApprovedIndependentLichunBoundary =
       reasonCode:
         | 'NO_CODE_APPROVED_E1_WITNESS'
         | 'CONFLICTING_E1_WITNESSES'
-        | 'INVALID_APPROVED_E1_WITNESS';
+        | 'INVALID_APPROVED_E1_WITNESS'
+        | 'RESEARCH_APPROVAL_REVOKED';
       productionAuthorized: false;
     };
 
@@ -289,6 +301,9 @@ export function getCodeApprovedIndependentLichunBoundary(year: number): Approved
   const matches = CODE_APPROVED_E1_PACKETS.filter((p) => p.year === year);
   if (matches.length === 0) return { state: 'unavailable', year, reasonCode: 'NO_CODE_APPROVED_E1_WITNESS', productionAuthorized: false };
   if (matches.length !== 1) return { state: 'unavailable', year, reasonCode: 'CONFLICTING_E1_WITNESSES', productionAuthorized: false };
+  if (OWNER_DELEGATED_E1_GRANT_STATUS[year] !== 'active') {
+    return { state: 'unavailable', year, reasonCode: 'RESEARCH_APPROVAL_REVOKED', productionAuthorized: false };
+  }
   const packet = matches[0];
   if (
     packet === undefined ||
@@ -367,6 +382,7 @@ export function previewIndependentAnnualE1Math(
   if (request.intent.temporalScope !== 'annual' || request.targetPeriod?.scope !== 'annual') {
     return unavailable('ANNUAL_REQUEST_REQUIRED');
   }
+  if (request.targetPeriod.timeZone !== 'Asia/Seoul') return unavailable('INVALID_REQUEST_TIME');
   const year = request.targetPeriod.year;
   if (packet.year !== year || inspectIndependentLichunE1Packet(packet).state !== 'structurally_eligible_not_authorized') {
     return unavailable('INVALID_PACKET');
@@ -408,6 +424,8 @@ export type RegisteredIndependentAnnualResult =
       effectiveYear: number;
       annualPillar: ReturnType<typeof annualSexagenaryPillar>;
       evidenceTier: 'E1_INDEPENDENT_ASTRONOMY';
+      reviewProvenance: 'OWNER_DELEGATED_AI';
+      independentHumanReviewCompleted: false;
       mayGenerateAnnualInterpretation: false;
       productionAuthorized: false;
     };
@@ -422,6 +440,9 @@ export function resolveAnnualWithCodeApprovedIndependentE1(request: ReadingReque
     return { state: 'source_unavailable', requestId: request.requestId, reasonCode: approved.reasonCode, productionAuthorized: false };
   }
   const year = request.targetPeriod.year;
+  if (request.targetPeriod.timeZone !== 'Asia/Seoul') {
+    return { state: 'unavailable', requestId: request.requestId, reasonCode: 'INVALID_REQUEST_TIME', productionAuthorized: false };
+  }
   const requestMs = validatedInstant(request.targetPeriod.referenceDateTime);
   if (requestMs === undefined || seoulParts(requestMs).year !== year) {
     return { state: 'unavailable', requestId: request.requestId, reasonCode: 'INVALID_REQUEST_TIME', productionAuthorized: false };
@@ -437,6 +458,8 @@ export function resolveAnnualWithCodeApprovedIndependentE1(request: ReadingReque
     effectiveYear,
     annualPillar: annualSexagenaryPillar(effectiveYear),
     evidenceTier: 'E1_INDEPENDENT_ASTRONOMY',
+    reviewProvenance: approved.reviewProvenance,
+    independentHumanReviewCompleted: approved.independentHumanReviewCompleted,
     mayGenerateAnnualInterpretation: false,
     productionAuthorized: false,
   };
@@ -536,6 +559,8 @@ export type RegisteredIndependentE1CycleResult =
       start: ReturnType<typeof conservativeMinuteWindow>;
       end: ReturnType<typeof conservativeMinuteWindow>;
       exactEffectiveIntervalEstablished: false;
+      reviewProvenance: 'OWNER_DELEGATED_AI';
+      independentHumanReviewCompleted: false;
       mayGenerateAnnualInterpretation: false;
       productionAuthorized: false;
     };
@@ -562,6 +587,8 @@ export function resolveAnnualCycleWithCodeApprovedIndependentE1(
     start: conservativeMinuteWindow(start.displayedMinuteUtc),
     end: conservativeMinuteWindow(end.displayedMinuteUtc),
     exactEffectiveIntervalEstablished: false,
+    reviewProvenance: start.reviewProvenance,
+    independentHumanReviewCompleted: start.independentHumanReviewCompleted,
     mayGenerateAnnualInterpretation: false,
     productionAuthorized: false,
   };
