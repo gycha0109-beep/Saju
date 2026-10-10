@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import {
   GENERAL_NATAL_PEER_TAXONOMY_SOURCE,
@@ -151,6 +152,56 @@ describe('general natal Samyeong v7 peer-taxonomy scan-backed evidence', () => {
       nearIdenticalPrintedPageLayout: true,
       independentWitnessCorroborationEstablished: false,
     });
+  });
+
+  it('reproduces exact UTF-8 SHA-256 of the directly observed eight glyphs without Unicode normalization', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const d = evidence.existingScanImageReinspection.boundedClauseDigest;
+    const observed = evidence.existingScanImageReinspection.directlyObserved;
+    const hash = (text: string) => createHash('sha256').update(text, 'utf8').digest('hex');
+
+    expect(d.scope).toBe('EIGHT_GLYPH_CLAUSE_ONLY');
+    expect(d.originalGlyphString).toBe(observed.boundedProposition);
+    expect(d.historicalRecordedString).toBe(observed.historicalGovernedRecordedProposition);
+    expect(d.encoding).toBe('UTF-8');
+    expect(d.unicodeNormalization).toBe('NONE');
+    expect(d.punctuationTransform).toBe('NONE');
+    expect(d.hashAlgorithm).toBe('SHA-256');
+    expect(Buffer.byteLength(d.originalGlyphString, 'utf8')).toBe(24);
+    expect(Buffer.byteLength(d.historicalRecordedString, 'utf8')).toBe(24);
+    expect(d.byteLengthEach).toBe(24);
+    expect(hash(d.originalGlyphString)).toBe(
+      '13d5f00d5a8575c28cb462b531c7e15aa621aa766635c6fe76daa5691c617096',
+    );
+    expect(hash(d.historicalRecordedString)).toBe(
+      'dcd8d2ae1f1e4daf64c6445f9f784d1a71e7b6cb337853f7cf4a1a3fb6d4876d',
+    );
+    expect(hash(d.originalGlyphString)).toBe(d.originalGlyphSha256);
+    expect(hash(d.historicalRecordedString)).toBe(d.historicalRecordedSha256);
+    expect(d.originalGlyphSha256).not.toBe(d.historicalRecordedSha256);
+    expect(d.hashesEqual).toBe(false);
+    expect(d.completePassageHashReproduced).toBe(false);
+    expect(d.sourceBoundWitnessDigestQualified).toBe(false);
+  });
+
+  it('requires reviewed glyph binding while keeping source registration immutable', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    expect(evidence.existingScanImageReinspection.exactGlyphRegistrationReview).toEqual({
+      disposition: 'REVIEW_REQUIRED_FOR_EXACT_GLYPH_BINDING',
+      originalDjvuIdentityStillRequired: true,
+      exactPrintedFolioStillRequired: true,
+      completePassageCollationStillRequired: true,
+      automaticWitnessReregistrationAuthorized: false,
+      fixedSourceTranscriptionMutationAuthorized: false,
+      reviewerApprovalRecorded: false,
+    });
+    expect(evidence.scanAuthority.directInspection.boundedPropositionObserved).toBe(
+      '兄弟者即劫財比肩',
+    );
+    expect(evidence.source.directScanObservedText).toBe('兄弟者即劫財比肩');
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.qualification.exactWitnessHashReproducedFromScan).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
   });
 
   it('does not upgrade source-integrity or production from page-image similarity', () => {
