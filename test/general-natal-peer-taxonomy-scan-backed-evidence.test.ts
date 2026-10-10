@@ -72,6 +72,52 @@ describe('general natal Samyeong v7 peer-taxonomy scan-backed evidence', () => {
     });
   });
 
+  it('limits the observed paragraph to research-only peer taxonomy, not consumer admission', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const scope = evidence.narrowTaxonomySupport;
+    const peer = GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_RULES.find(
+      (rule) => rule.ruleId === scope.assessedRuleId,
+    );
+
+    expect(peer).toBeDefined();
+    expect(scope.assessedRuleId).toBe('RULE-GENERAL-NATAL-SOURCE-BOUNDED-FAMILY-PEER-PRESENT');
+    expect(scope.assessedClaimType).toBe(
+      'GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_PEER_PRESENT',
+    );
+    expect(scope.assessedClaimType).toBe(peer?.output.claimType);
+    expect(scope.observedSourceGlyphs).toBe(
+      evidence.peerOpeningProseImageCollation.paragraphBegins,
+    );
+    expect(scope.frozenRecordedGlyphs).toBe(
+      evidence.existingScanImageReinspection.directlyObserved.historicalGovernedRecordedProposition,
+    );
+    expect(scope.observedSourceGlyphs).not.toBe(scope.frozenRecordedGlyphs);
+    expect(scope.claimSupportDisposition).toBe('RESEARCH_NARROW_PEER_GROUPING_SUPPORTED');
+    expect(scope.supportedOnly).toEqual(['비견', '겁재']);
+    expect(scope.fullSectionTranscriptionRequiredToObserveThisEightGlyphGrouping).toBe(false);
+    expect(scope.fullSectionTranscriptionCompleted).toBe(false);
+    expect(peer?.status).toBe('research');
+    expect(peer?.quality.reviewerStatus).toBe('unreviewed');
+    expect(peer?.quality.provenanceQuality).toBe('secondary_only');
+  });
+
+  it('requires independent frozen glyph-registration review before any stronger authority', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const scope = evidence.narrowTaxonomySupport;
+    expect(scope.independentlyReviewedSourceReregistrationApproved).toBe(false);
+    expect(scope.literalIdentityWithFrozenRecordEstablished).toBe(false);
+    expect(scope.sourceIntegrityAdmissionAuthorized).toBe(false);
+    expect(scope.behavioralInferenceAuthorized).toBe(false);
+    expect(scope.consumerProjectionAuthorized).toBe(false);
+    expect(scope.bridgeReentryAuthorized).toBe(false);
+    expect(scope.productionAdmissionAuthorized).toBe(false);
+    expect(scope.nextResearchAction).toBe('INDEPENDENT_REVIEW_OF_FROZEN_GLYPH_REGISTRATION');
+    expect(evidence.peerOpeningProseImageCollation.qualification.openingProseIndependentReviewerApproved).toBe(false);
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.qualification.fullSourceIntegrityQualificationEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
   it('reproduces the directly collated 117-glyph opening prose across PDF p174-p175', () => {
     const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
     const prose = evidence.peerOpeningProseImageCollation;
