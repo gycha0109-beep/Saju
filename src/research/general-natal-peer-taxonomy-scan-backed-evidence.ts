@@ -7,7 +7,7 @@ import {
 } from './general-natal-conclusion-source-bounded-candidate.js';
 
 export const GENERAL_NATAL_PEER_TAXONOMY_SCAN_EVIDENCE_VERSION =
-  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v7' as const;
+  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v8' as const;
 
 const PEER_RULE_ID = 'RULE-GENERAL-NATAL-SOURCE-BOUNDED-FAMILY-PEER-PRESENT' as const;
 const SAMYEONG_V5_SOURCE_ID =
@@ -73,6 +73,62 @@ const VERIFIED_ORIGIN_DJVU_BYTES = Object.freeze({
     printedFolioVerified: false,
     fullPassageWitnessDigestReproduced: false,
     completeSourceIntegrityAuthorized: false,
+    productionAdmissionAuthority: false,
+  }),
+} as const);
+
+
+/**
+ * Page-image collation of the complete OPENING PROSE paragraph only.
+ * Read right-to-left columns of the directly inspected old 198-page PDF:
+ * digital p174 leftmost column -> digital p175 right-to-left columns,
+ * stopping immediately before the later '歌云' verse.
+ *
+ * No conjectural punctuation, Unicode normalization, or small interlinear
+ * note is injected into the main paragraph's SHA-256. This is NOT a
+ * transcription of the entire 兄弟引例章 section, an independently decoded
+ * DjVu-page glyph proof, or a Production-qualified witness.
+ */
+const PEER_OPENING_PROSE_IMAGE_COLLATION = Object.freeze({
+  source: 'CADAL06066043',
+  edition: '欽定四庫全書本',
+  section: '兄弟引例章',
+  digitalPagesInspected: Object.freeze([174, 175] as const),
+  paragraphBegins: '兄弟者即刼財比肩',
+  paragraphEnds: '庚辛與甲乙交差此之謂也餘倣此推',
+  glyphStringWithoutPunctuation:
+    '兄弟者即刼財比肩甲見乙乙見甲之類如庚日生寅午戌之上或臨死墓之鄉却有辛酉自旺之弟帶財得時主弟自明顯兄不及弟之福如兄弟相和強弱相分其理則一如不和者乃四柱帶庚丁辛丙之類兄之官星尅弟之本身如此五行自然不和不仁不義庚辛與甲乙交差此之謂也餘倣此推',
+  encoding: 'UTF-8',
+  unicodeNormalization: 'NONE',
+  insertedPunctuation: false,
+  glyphCount: 117,
+  utf8ByteLength: 351,
+  sha256: 'f5f35344b0db4e699731ab158586677783e16d89ef611e16fe4fdca66297817b',
+  printedInterlinearAnnotation: Object.freeze({
+    text: '本經云',
+    location: 'PDF p175, following 五行自然不和',
+    includedInMainString: false,
+  }),
+  adjacentPageFolioObservation: Object.freeze({
+    digitalPage: 175,
+    marginalGlyphs: '九十一',
+    digitalPage174PhysicalFolioAuthenticated: false,
+  }),
+  variantCollation: Object.freeze({
+    scanGlyphNearFirstExample: '如庚日生寅',
+    externallyTranscribedVariant: '如庚日坐寅',
+    literalMatch: false,
+    originalPageImageTakesPrecedence: true,
+    transcriptionAuthorityPromoted: false,
+  }),
+  qualification: Object.freeze({
+    openingProseManualImageCollationRecorded: true,
+    openingProseIndependentReviewerApproved: false,
+    originalDjvuPageDirectlyPixelDecoded: false,
+    wholeSectionTranscribed: false,
+    fullSourceQualifiedWitnessDigestReproduced: false,
+    exactPrintedFolioOf174Established: false,
+    fixedWitnessReRegistrationAuthorized: false,
     productionAdmissionAuthority: false,
   }),
 } as const);
@@ -270,6 +326,7 @@ export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
     }),
     scanAuthority: SCAN_AUTHORITY,
     verifiedOriginDjvuBytes: VERIFIED_ORIGIN_DJVU_BYTES,
+    peerOpeningProseImageCollation: PEER_OPENING_PROSE_IMAGE_COLLATION,
     alternateScanCorroboration: ALTERNATE_SCAN_CORROBORATION,
     existingScanImageReinspection: EXISTING_SCAN_IMAGE_REINSPECTION,
     qualification: Object.freeze({
