@@ -125,7 +125,7 @@ describe('SA-7D personalized annual interpretation design only', () => {
         strengthRanking: null,
         eventImplication: null,
       });
-    expect(plan.coexistence.find((pair) => pair.pairKey === 'annual:natal:day'))
+    expect(plan.coexistence.find((pair) => pair.pairKey === 'annual:natal:day')
       ?.observedRelationKinds).toContain('branch_clash');
     expect(plan.slots.map((item) => item.slot)).toEqual([
       'annual_ten_god_theme',
