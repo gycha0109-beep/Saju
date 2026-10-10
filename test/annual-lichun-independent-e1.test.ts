@@ -127,9 +127,12 @@ describe('E1 independent source review, structurally checkable but never caller 
       effectiveYear: 2026,
       annualPillar: { stem: '병', branch: '오' },
     });
-    for (const time of ['2026-02-04T05:01:00+09:00', '2026-02-04T05:02:10+09:00', '2026-02-04T05:02:59.999+09:00']) {
+    expect(previewIndependentAnnualE1Math(request('2026-02-03T23:59:59+09:00'), SYNTHETIC)).toMatchObject({
+      state: 'research_math_preview_only', effectiveYear: 2025,
+    });
+    for (const time of ['2026-02-04T00:00:00+09:00', '2026-02-04T05:01:00+09:00', '2026-02-04T05:02:10+09:00']) {
       expect(previewIndependentAnnualE1Math(request(time), SYNTHETIC)).toMatchObject({
-        state: 'unavailable', reasonCode: 'BOUNDARY_MINUTE_AMBIGUOUS',
+        state: 'research_math_preview_only', effectiveYear: 2026,
       });
     }
     expect(previewIndependentAnnualE1Math(request('2026-02-03T20:03:00.000Z'), SYNTHETIC)).toMatchObject({

@@ -353,6 +353,21 @@ function validatedInstant(value: string): number | undefined {
   return ms;
 }
 
+/**
+ * Owner-selected calendar convention: switch Annual at 00:00 Asia/Seoul
+ * on the observed LiChun date. This is NOT the astronomical LiChun instant.
+ * Keep original observed minutes intact for provenance.
+ */
+export const ANNUAL_LICHUN_CIVIL_DAY_POLICY = 'lichun-date-00-kst-v1' as const;
+
+function policyBoundaryMidnightKst(observedMinuteUtc: string): number {
+  const day = seoulParts(Date.parse(observedMinuteUtc));
+  const yyyy = String(day.year).padStart(4, '0');
+  const mm = String(day.month).padStart(2, '0');
+  const dd = String(day.day).padStart(2, '0');
+  return Date.parse(`${yyyy}-${mm}-${dd}T00:00:00+09:00`);
+}
+
 export type IndependentAnnualResearchPreview =
   | {
       state: 'research_math_preview_only';
@@ -389,10 +404,7 @@ export function previewIndependentAnnualE1Math(
   }
   const requestMs = validatedInstant(request.targetPeriod.referenceDateTime);
   if (requestMs === undefined || seoulParts(requestMs).year !== year) return unavailable('INVALID_REQUEST_TIME');
-  const boundaryMs = Date.parse(packet.displayedMinuteUtc);
-  if (requestMs >= boundaryMs - 60_000 && requestMs < boundaryMs + 60_000) {
-    return unavailable('BOUNDARY_MINUTE_AMBIGUOUS');
-  }
+  const boundaryMs = policyBoundaryMidnightKst(packet.displayedMinuteUtc);
   const effectiveYear = requestMs < boundaryMs ? year - 1 : year;
   return {
     state: 'research_math_preview_only',
@@ -447,10 +459,7 @@ export function resolveAnnualWithCodeApprovedIndependentE1(request: ReadingReque
   if (requestMs === undefined || seoulParts(requestMs).year !== year) {
     return { state: 'unavailable', requestId: request.requestId, reasonCode: 'INVALID_REQUEST_TIME', productionAuthorized: false };
   }
-  const boundaryMs = Date.parse(approved.displayedMinuteUtc);
-  if (requestMs >= boundaryMs - 60_000 && requestMs < boundaryMs + 60_000) {
-    return { state: 'unavailable', requestId: request.requestId, reasonCode: 'BOUNDARY_MINUTE_AMBIGUOUS', productionAuthorized: false };
-  }
+  const boundaryMs = policyBoundaryMidnightKst(approved.displayedMinuteUtc);
   const effectiveYear = requestMs < boundaryMs ? year - 1 : year;
   return {
     state: 'research_candidate',
