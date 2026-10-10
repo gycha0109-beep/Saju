@@ -164,14 +164,18 @@ export function auditAnnualTripleClashPriorityAdmissibility(
     throw new Error('Structural or source authority drift requires review');
   }
   const source = buildAnnualTripleClashPrioritySourceAdmissibility();
+  // Preserve discriminated-union narrowing inside the mapping closure.
+  const pairMatches = pairs.pairMatches;
+  const pairChecks = pairs.pairChecks;
+  const tripleChecks = triples.checks;
   const overlapCases = prior.comparisons.map((x) => {
-    const triple = triples.checks.find((t) =>
+    const triple = tripleChecks.find((t) =>
       t.slots.join('|') === x.tripleSlots.join('|') &&
       t.candidateKind === 'branch_three_combination');
-    const pair = pairs.pairChecks.find((p) => p.pairKey === x.clashPairKey);
-    const pairClash = pairs.pairMatches.find((p) =>
+    const pair = pairChecks.find((p) => p.pairKey === x.clashPairKey);
+    const pairClash = pairMatches.find((p) =>
       p.pairKey === x.clashPairKey && p.kind === 'branch_clash');
-    const stemFiveCombinationOnClashPair = pairs.pairMatches.some((p) =>
+    const stemFiveCombinationOnClashPair = pairMatches.some((p) =>
       p.pairKey === x.clashPairKey && p.kind === 'stem_five_combination');
     if (!triple || !pair?.observedKinds.includes('branch_clash') ||
         !pairClash || !pairClash.structuralMatchOnly ||
