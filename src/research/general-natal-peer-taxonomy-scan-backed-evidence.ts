@@ -7,7 +7,7 @@ import {
 } from './general-natal-conclusion-source-bounded-candidate.js';
 
 export const GENERAL_NATAL_PEER_TAXONOMY_SCAN_EVIDENCE_VERSION =
-  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v5' as const;
+  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v6' as const;
 
 const PEER_RULE_ID = 'RULE-GENERAL-NATAL-SOURCE-BOUNDED-FAMILY-PEER-PRESENT' as const;
 const SAMYEONG_V5_SOURCE_ID =
@@ -94,6 +94,46 @@ const EXISTING_SCAN_IMAGE_REINSPECTION = Object.freeze({
     imageWidth: 281,
     imageHeight: 401,
     originDjvuByteIdentityVerified: false,
+  }),
+  // Verified against the actual 198-page user-uploaded PDF in this run.
+  // Rendered PDF page evidence is distinct from parent DJVU-byte provenance.
+  uploadedPdfPageBinding: Object.freeze({
+    pdfFile: 'CADAL06066043_三命通會·卷七.pdf',
+    pdfSizeBytes: 235952141,
+    pdfPageCount: 198,
+    pdfSha256: '42385450d1fc028baf16b648c0623b4b5064a952f92c98a8fb26d090498f281c',
+    digitalPdfPage: 174,
+    renderedPage: Object.freeze({
+      scale: 2,
+      colorSpace: 'RGB',
+      alpha: false,
+      width: 1191,
+      height: 1684,
+      pixelSampleSha256: 'e1dcbfea6b2e9dc81d3c24a99869425ffbb2f200709cda1e0aee996f6bf63df9',
+    }),
+    userSubmittedScreenshot: Object.freeze({
+      pngSha256: 'aa2158758f659019b69de19e68c090caa660edc7c45199bc9088e8becd654368',
+      width: 287,
+      height: 388,
+      featureMatches: 719,
+      geometricInlierMatches: 700,
+      screenshotToPdfPageCorrespondenceVerified: true,
+    }),
+    alternatePdfCorrespondence: Object.freeze({
+      digitization: 'CADAL06056483',
+      alternatePdfPage: 182,
+      featureMatches: 3080,
+      geometricInlierMatches: 2222,
+      samePrintedLeafLayoutStronglyCorroborated: true,
+      rawRenderedRasterIdentical: false,
+      independentWitnessEstablished: false,
+    }),
+    sourceDjvuSha1KnownFromCatalog: 'eeb9f80eb97fd385a580aa5bfda28c292aa7761c',
+    uploadedPdfBoundToCatalogDjvuBytes: false,
+    exactPhysicalFolioReadFromImage: false,
+    fullChapterGlyphTranscriptionVerified: false,
+    chapterWitnessDigestReproduced: false,
+    productionAdmissionAuthority: false,
   }),
   directlyObserved: Object.freeze({
     section: '兄弟引例章',
