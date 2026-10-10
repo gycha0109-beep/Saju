@@ -154,6 +154,61 @@ describe('general natal Samyeong v7 peer-taxonomy scan-backed evidence', () => {
     });
   });
 
+  it('authenticates the uploaded full 198-page PDF p174 screenshot without claiming DjVu-byte identity', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const pdf = evidence.existingScanImageReinspection.uploadedPdfPageBinding;
+    const old = evidence.existingScanImageReinspection;
+
+    expect(pdf.pdfFile).toBe('CADAL06066043_三命通會·卷七.pdf');
+    expect(pdf.pdfSizeBytes).toBe(235952141);
+    expect(pdf.pdfPageCount).toBe(evidence.scanAuthority.pageCount);
+    expect(pdf.pdfSha256).toBe('42385450d1fc028baf16b648c0623b4b5064a952f92c98a8fb26d090498f281c');
+    expect(pdf.digitalPdfPage).toBe(evidence.scanAuthority.directInspection.digitalScanPage);
+    expect(pdf.renderedPage).toEqual({
+      scale: 2,
+      colorSpace: 'RGB',
+      alpha: false,
+      width: 1191,
+      height: 1684,
+      pixelSampleSha256: 'e1dcbfea6b2e9dc81d3c24a99869425ffbb2f200709cda1e0aee996f6bf63df9',
+    });
+    expect(pdf.userSubmittedScreenshot).toEqual({
+      pngSha256: 'aa2158758f659019b69de19e68c090caa660edc7c45199bc9088e8becd654368',
+      width: 287,
+      height: 388,
+      featureMatches: 719,
+      geometricInlierMatches: 700,
+      screenshotToPdfPageCorrespondenceVerified: true,
+    });
+    expect(pdf.alternatePdfCorrespondence).toEqual({
+      digitization: 'CADAL06056483',
+      alternatePdfPage: evidence.alternateScanCorroboration.directPdfImageInspection.digitalScanPageFromContiguousPdfSplit,
+      featureMatches: 3080,
+      geometricInlierMatches: 2222,
+      samePrintedLeafLayoutStronglyCorroborated: true,
+      rawRenderedRasterIdentical: false,
+      independentWitnessEstablished: false,
+    });
+    expect(pdf.sourceDjvuSha1KnownFromCatalog).toBe(
+      evidence.scanAuthority.directInspection.uploadedDjvuSha1,
+    );
+    expect(old.suppliedAs.originDjvuByteIdentityVerified).toBe(false);
+    expect(pdf.uploadedPdfBoundToCatalogDjvuBytes).toBe(false);
+  });
+
+  it('does not promote full source-integrity or physical folio from PDF image correspondence', () => {
+    const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
+    const p = evidence.existingScanImageReinspection.uploadedPdfPageBinding;
+    expect(p.exactPhysicalFolioReadFromImage).toBe(false);
+    expect(p.fullChapterGlyphTranscriptionVerified).toBe(false);
+    expect(p.chapterWitnessDigestReproduced).toBe(false);
+    expect(p.productionAdmissionAuthority).toBe(false);
+    expect(evidence.qualification.exactPhysicalPageOrFolioVerified).toBe(false);
+    expect(evidence.qualification.exactTranscriptionIdentityEstablished).toBe(false);
+    expect(evidence.qualification.fullSourceIntegrityQualificationEstablished).toBe(false);
+    expect(evidence.authority.production).toBe('HOLD');
+  });
+
   it('reproduces exact UTF-8 SHA-256 of the directly observed eight glyphs without Unicode normalization', () => {
     const evidence = buildGeneralNatalPeerTaxonomyScanBackedEvidence();
     const d = evidence.existingScanImageReinspection.boundedClauseDigest;
