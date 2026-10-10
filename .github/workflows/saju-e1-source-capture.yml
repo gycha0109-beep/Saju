@@ -1,0 +1,114 @@
+name: E1 Source Capture (evidence only)
+run-name: "[WT:saju] E1 PDF Source Capture"
+
+# Runs only when this one-shot, single-job capture workflow is first added or edited.
+# Does not run on routine PR pushes and NEVER changes E1 authorization.
+on:
+  pull_request:
+    paths:
+      - .github/workflows/saju-e1-source-capture.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Source bytes and digests only
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Fetch fixed government astronomy sources and calculate raw SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import re
+          import sys
+          from datetime import datetime, timezone
+          from urllib.error import HTTPError, URLError
+          from urllib.parse import urlparse
+          from urllib.request import Request, urlopen
+
+          sources = [
+              (2026, "naoj", "https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2026.pdf", 12_000_000),
+              (2027, "naoj", "https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2027.pdf", 12_000_000),
+              (2026, "kasi", "https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026", 8_000_000),
+              (2027, "kasi", "https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2027", 8_000_000),
+          ]
+
+          report = {
+              "schemaVersion": "saju-e1-original-source-byte-capture-v1",
+              "capturedAtUtc": datetime.now(timezone.utc).isoformat(),
+              "authority": "RESEARCH_EVIDENCE_ONLY",
+              "mayRegisterE1": False,
+              "mayRegisterKoreanGazetteE2": False,
+              "productionAuthorized": False,
+              "records": [],
+          }
+
+          def capture(year, kind, source_url, limit):
+              record = {"year": year, "source": kind, "requestedUrl": source_url,
+                        "state": "UNAVAILABLE", "sourceOwnerReviewed": False,
+                        "productionAuthorized": False}
+              try:
+                  request = Request(source_url, headers={"User-Agent": "MyeongHa-SourceAudit/1.0 (research; no rehosting)", "Accept": "application/pdf,text/html"})
+                  with urlopen(request, timeout=18) as response:
+                      final_url = response.geturl()
+                      host = urlparse(final_url)
+                      expected_host = "eco.mtk.nao.ac.jp" if kind == "naoj" else "astro.kasi.re.kr"
+                      if host.scheme != "https" or host.hostname != expected_host or host.port is not None:
+                          raise ValueError("unexpected redirect target (official HTTPS hostname required)")
+                      body = response.read(limit + 1)
+                      if not 100 < len(body) <= limit:
+                          raise ValueError("download size out of bounds")
+                      ctype = response.headers.get("Content-Type", "")
+                  if kind == "naoj":
+                      if not body.startswith(b"%PDF-") or b"%%EOF" not in body[-2048:]:
+                          raise ValueError("PDF signature or trailer missing")
+                      if "pdf" not in ctype.lower() and "octet-stream" not in ctype.lower():
+                          raise ValueError("server MIME is not recognized as PDF")
+                      record["state"] = "PDF_BYTES_CAPTURED_NOT_PAGE_AUTHENTICATED"
+                  else:
+                      if "html" not in ctype.lower():
+                          raise ValueError("KASI page is not HTML")
+                      page = body.decode("utf-8", "replace")
+                      clean = re.sub(r"<[^>]+>", " ", page)
+                      clean = re.sub(r"\s+", " ", clean)
+                      record["containsLichunTerm"] = "입춘" in clean
+                      record["containsTargetYear"] = str(year) in clean
+                      record["officialPublicationDisclaimerPresent"] = "공식 발표 자료가 아닙니다" in clean
+                      record["state"] = "KASI_HTML_BYTES_CAPTURED_CONTENT_UNREVIEWED"
+                  record["resolvedUrl"] = final_url
+                  record["contentType"] = ctype
+                  record["byteLength"] = len(body)
+                  record["sha256"] = hashlib.sha256(body).hexdigest()
+              except (HTTPError, URLError, TimeoutError, OSError, ValueError) as error:
+                  record["error"] = str(error)[:350]
+              return record
+
+          for args in sources:
+              record = capture(*args)
+              report["records"].append(record)
+              print(json.dumps(record, ensure_ascii=False, sort_keys=True), flush=True)
+
+          report_file = pathlib.Path(os.environ["RUNNER_TEMP"]) / "saju-e1-source-byte-capture.json"
+          report_file.write_text(json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2), encoding="utf-8")
+          print("Source digest report:", report_file)
+          if any("sha256" not in item for item in report["records"]):
+              print("PARTIAL: some official source bytes unavailable. No E1 or E2 approval.", file=sys.stderr)
+              sys.exit(1)
+          print("CAPTURED: four source hashes available; still not reviewed or authorized.")
+
+      - name: Upload digest metadata only (never the copyrighted source files)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-e1-source-byte-digests
+          path: /tmp/saju-e1-source-byte-capture.json
+          if-no-files-found: ignore
+          retention-days: 7
