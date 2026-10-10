@@ -84,8 +84,8 @@ describe('WS-C2 positional Ten-God T5 lineage through existing T8', () => {
           keyof typeof positions, 'stem' | 'branch',
         ];
         const position = positions[pillar][channel];
-        expect(position.status).toBe('resolved');
-        if (position.status !== 'resolved') continue;
+        expect(position?.status).toBe('resolved');
+        if (position?.status !== 'resolved') continue;
         const family = Object.entries(FAMILIES).find(([, gods]) =>
           gods.includes(position.value as TenGod),
         )?.[0];
