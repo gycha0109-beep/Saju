@@ -6,7 +6,7 @@ import { buildGeneralNatalPeerTaxonomyScanBackedEvidence } from './general-natal
 import { buildGeneralNatalSourceIntegrityAcquisitionAudit } from './general-natal-source-integrity-acquisition-audit.js';
 
 export const GENERAL_NATAL_SOURCE_INTEGRITY_CLOSURE_AUDIT_VERSION =
-  'myeonghwa-general-natal-source-integrity-closure-audit-v3' as const;
+  'myeonghwa-general-natal-source-integrity-closure-audit-v4' as const;
 
 export type GeneralNatalFixedWitnessClosureClass =
   | 'ALTERNATE_EXACT_WITNESS_SURFACE_REQUIRED'
@@ -107,6 +107,14 @@ export function buildGeneralNatalSourceIntegrityClosureAudit() {
       digitalScanPage: peer.scanAuthority.directInspection.digitalScanPage,
       boundedPropositionDirectlyObservedInScan:
         peer.qualification.boundedPropositionDirectlyObservedInScan,
+      narrowResearchDisposition: peer.narrowTaxonomySupport.claimSupportDisposition,
+      observedSourceGlyphs: peer.narrowTaxonomySupport.observedSourceGlyphs,
+      frozenRegisteredGlyphs: peer.narrowTaxonomySupport.frozenRecordedGlyphs,
+      literalIdentityWithFrozenRecordEstablished:
+        peer.narrowTaxonomySupport.literalIdentityWithFrozenRecordEstablished,
+      independentlyReviewedSourceReregistrationApproved:
+        peer.narrowTaxonomySupport.independentlyReviewedSourceReregistrationApproved,
+      nextResearchAction: peer.narrowTaxonomySupport.nextResearchAction,
       exactPhysicalPageOrFolioVerified: peer.qualification.exactPhysicalPageOrFolioVerified,
       exactWitnessHashReproducedFromScan: peer.qualification.exactWitnessHashReproducedFromScan,
       exactTranscriptionIdentityEstablished: peer.qualification.exactTranscriptionIdentityEstablished,
