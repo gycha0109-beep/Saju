@@ -84,7 +84,7 @@ export function buildAnnualSourceBoundEvidenceCasebook() {
     ) ||
     acquisition.currentThemeSemanticAdjudication.decisions.length !== 10 ||
     clash.decisions.length !== 4 ||
-    clash.boundary.genericAnnualTensionSemanticAuthorized ||
+    clash.boundary.genericTensionAuthorized ||
     clash.boundary.productionAdmissionAuthorized
   ) throw new Error('Annual source evidence changed: fresh review required');
 
