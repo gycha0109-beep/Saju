@@ -30,7 +30,7 @@ export type AnnualSemanticEvidenceRequirement =
 export interface AnnualPersonalSemanticCandidateReview {
   ruleId: string;
   semanticKey: string;
-  kind: 'modern_ten_god_theme' | 'annual_natal_branch_clash_tension';
+  kind: 'ten_god_modern_theme' | 'annual_natal_branch_clash_tension';
   matchedComputedInput: boolean;
   applicability: AnnualCandidateApplicability;
   matchedTenGod: TenGod | null;
