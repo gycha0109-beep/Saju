@@ -7,7 +7,7 @@ import {
 } from './general-natal-conclusion-source-bounded-candidate.js';
 
 export const GENERAL_NATAL_PEER_TAXONOMY_SCAN_EVIDENCE_VERSION =
-  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v4' as const;
+  'myeonghwa-general-natal-peer-taxonomy-scan-backed-evidence-v5' as const;
 
 const PEER_RULE_ID = 'RULE-GENERAL-NATAL-SOURCE-BOUNDED-FAMILY-PEER-PRESENT' as const;
 const SAMYEONG_V5_SOURCE_ID =
@@ -110,6 +110,33 @@ const EXISTING_SCAN_IMAGE_REINSPECTION = Object.freeze({
     geometricInlierMatches: 76,
     nearIdenticalPrintedPageLayout: true,
     independentWitnessCorroborationEstablished: false,
+  }),
+  // Byte-reproducible short-clause hash only: NOT a full passage or
+  // origin-DjVu-backed witness digest. No punctuation or Unicode folding.
+  boundedClauseDigest: Object.freeze({
+    scope: 'EIGHT_GLYPH_CLAUSE_ONLY',
+    originalGlyphString: '兄弟者即刼財比肩',
+    historicalRecordedString: '兄弟者即劫財比肩',
+    encoding: 'UTF-8',
+    unicodeNormalization: 'NONE',
+    punctuationTransform: 'NONE',
+    hashAlgorithm: 'SHA-256',
+    byteLengthEach: 24,
+    originalGlyphSha256: '13d5f00d5a8575c28cb462b531c7e15aa621aa766635c6fe76daa5691c617096',
+    historicalRecordedSha256: 'dcd8d2ae1f1e4daf64c6445f9f784d1a71e7b6cb337853f7cf4a1a3fb6d4876d',
+    hashesEqual: false,
+    completePassageHashReproduced: false,
+    sourceBoundWitnessDigestQualified: false,
+  }),
+  // This is a Research disposition, not approval to rewrite source refs.
+  exactGlyphRegistrationReview: Object.freeze({
+    disposition: 'REVIEW_REQUIRED_FOR_EXACT_GLYPH_BINDING',
+    originalDjvuIdentityStillRequired: true,
+    exactPrintedFolioStillRequired: true,
+    completePassageCollationStillRequired: true,
+    automaticWitnessReregistrationAuthorized: false,
+    fixedSourceTranscriptionMutationAuthorized: false,
+    reviewerApprovalRecorded: false,
   }),
   qualification: Object.freeze({
     exactOriginScanImageAuthenticated: false,
