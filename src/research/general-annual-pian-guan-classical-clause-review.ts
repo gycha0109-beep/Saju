@@ -68,9 +68,9 @@ export type PianGuanExactCaseGrade =
 export function inspectPianGuanExactClassicalCase(
   dayStem: HeavenlyStem,
   annualStem: HeavenlyStem,
-  calculatedTenGod: TenGod,
+  calculatedTenGod: TenGod | null,
 ) {
-  const matched = matchExactPrimaryAnnualTenGodCase(
+  const matched = calculatedTenGod === null ? null : matchExactPrimaryAnnualTenGodCase(
     dayStem,
     annualStem,
     calculatedTenGod,
@@ -80,7 +80,7 @@ export function inspectPianGuanExactClassicalCase(
     dayStem,
     annualStem,
     calculatedTenGod,
-    exactPrimaryRelationCaseId: exact ? matched.caseId : null,
+    exactPrimaryRelationCaseId: exact ? matched?.caseId ?? null : null,
     exactPrimaryCaseMatched: exact,
     evidenceGrade: (exact
       ? 'EXACT_MING_PRIMARY_RELATION_IDENTITY_ONLY'
@@ -128,7 +128,8 @@ export function buildPianGuanClassicalClauseEvidenceReview() {
     matchingRules.length !== 1 ||
     matchingRules[0]?.modernMeaningStatus !== 'RESEARCH_HOLD' ||
     matchingRules[0]?.exactPrimaryExampleIds.length !== 1 ||
-    matchingRules[0]?.exactPrimaryExampleIds[0] !== exact?.caseId ||
+    exact === null ||
+    matchingRules[0]?.exactPrimaryExampleIds[0] !== exact.caseId ||
     matchingRules[0]?.fortuneSentenceAuthorized ||
     acquired.observations.currentModernThemeSemanticsSourceQualified ||
     acquired.observations.bridgeReentryReady
@@ -240,7 +241,7 @@ export function reviewPianGuanForAnnualRequest(
   const exact = inspectPianGuanExactClassicalCase(
     audit.natalDayStem as HeavenlyStem,
     audit.annualStem as HeavenlyStem,
-    rule.matchedComputedInput ? '편관' : ('정관' as TenGod),
+    rule.matchedComputedInput ? '편관' : null,
   );
   if (
     (exact.exactPrimaryCaseMatched && (
@@ -264,8 +265,9 @@ export function reviewPianGuanForAnnualRequest(
     exactPrimaryRelationCaseMatched: exact.exactPrimaryCaseMatched,
     grade: exact.evidenceGrade,
     unresolved: PIAN_GUAN_SEMANTIC_MISSING_PREREQUISITES,
-    sourceOnlyStatement:
-      '고전에서 갑일간·경년의 편관 관계가 예시됩니다. 해당 사례의 역사적 서술만으로 개인의 길흉이나 직장·건강 사건은 판단하지 않습니다.',
+    sourceOnlyStatement: exact.exactPrimaryCaseMatched
+      ? '고전에서 이 갑일간·경년 조합을 편관으로 기록합니다. 이 사실만으로 개인의 길흉이나 특정 사건을 판단하지 않습니다.'
+      : '고전의 갑일간·경년 편관 사례는 이 요청의 조합과 다릅니다. 다른 조합으로 확대하여 길흉을 판단하지 않습니다.',
     outputFortuneText: null,
     authority: {
       annualInterpretationAuthorized: false as const,
