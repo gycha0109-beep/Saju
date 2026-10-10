@@ -458,8 +458,8 @@ export function resolveAnnualWithCodeApprovedIndependentE1(request: ReadingReque
     effectiveYear,
     annualPillar: annualSexagenaryPillar(effectiveYear),
     evidenceTier: 'E1_INDEPENDENT_ASTRONOMY',
-    reviewProvenance: approved.reviewProvenance,
-    independentHumanReviewCompleted: approved.independentHumanReviewCompleted,
+    reviewProvenance: 'OWNER_DELEGATED_AI',
+    independentHumanReviewCompleted: false,
     mayGenerateAnnualInterpretation: false,
     productionAuthorized: false,
   };
@@ -587,8 +587,8 @@ export function resolveAnnualCycleWithCodeApprovedIndependentE1(
     start: conservativeMinuteWindow(start.displayedMinuteUtc),
     end: conservativeMinuteWindow(end.displayedMinuteUtc),
     exactEffectiveIntervalEstablished: false,
-    reviewProvenance: start.reviewProvenance,
-    independentHumanReviewCompleted: start.independentHumanReviewCompleted,
+    reviewProvenance: 'OWNER_DELEGATED_AI',
+    independentHumanReviewCompleted: false,
     mayGenerateAnnualInterpretation: false,
     productionAuthorized: false,
   };
