@@ -79,6 +79,13 @@ function getPath(root: unknown, path: string): { found: boolean; value?: unknown
 
   let cursor: unknown = root;
   for (const segment of segments) {
+    // Exact fact paths may descend through an enclosing resolved FactState,
+    // e.g. derivedFacts.tenGods.year.stem. Never unwrap an ambiguous or
+    // unavailable parent: an unresolved parent is not negative evidence.
+    while (isFactState(cursor)) {
+      if (cursor.status !== 'resolved') return { found: false };
+      cursor = cursor.value;
+    }
     if (!isRecord(cursor) || !Object.prototype.hasOwnProperty.call(cursor, segment)) {
       return { found: false };
     }
