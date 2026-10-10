@@ -115,7 +115,7 @@ describe('SA-7D source-bound personalized annual semantic admission audit', () =
     expect(result.candidates).toHaveLength(14);
     expect(new Set(result.candidates.map((row) => row.ruleId)).size).toBe(14);
     expect(new Set(result.candidates.map((row) => row.semanticKey)).size).toBe(14);
-    expect(result.candidates.filter((row) => row.kind === 'modern_ten_god_theme'))
+    expect(result.candidates.filter((row) => row.kind === 'ten_god_modern_theme'))
       .toHaveLength(10);
     expect(result.candidates.filter((row) => row.kind === 'annual_natal_branch_clash_tension'))
       .toHaveLength(4);
