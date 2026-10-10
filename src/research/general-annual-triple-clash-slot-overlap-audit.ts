@@ -87,6 +87,9 @@ export function auditAnnualTripleClashSlotOverlap(
     pairs.limits.productionAuthorized
   ) throw new Error('Source-bound triple or pair authority drifted; new review required');
 
+  // Capture the discriminated union's resolved natal array before entering
+  // a nested function; TypeScript does not narrow the outer union in closures.
+  const natalPillars = pairs.natal;
   const branches: Readonly<Record<AnnualTripleSlot, EarthlyBranch>> = {
     annual: pairs.annualPillar.branch,
     dayun: pairs.dayun.branch,
@@ -96,7 +99,7 @@ export function auditAnnualTripleClashSlotOverlap(
     'natal:hour': requireNatal('hour'),
   };
   function requireNatal(slot: 'year' | 'month' | 'day' | 'hour'): EarthlyBranch {
-    const entry = pairs.natal.find((item) => item.slot === slot);
+    const entry = natalPillars.find((item) => item.slot === slot);
     if (!entry) throw new Error('Missing natal pillar ' + slot);
     return entry.branch;
   }
