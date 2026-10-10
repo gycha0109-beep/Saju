@@ -3,6 +3,9 @@
  * node scripts/research/verify-samyeong-v7-djvu-bytes.mjs /path/source.djvu
  * Proves encoded bytes, NOT glyphs, folio, PDF derivation, witness admission.
  */
+import { Buffer } from 'node:buffer';
+import console from 'node:console';
+import process from 'node:process';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
