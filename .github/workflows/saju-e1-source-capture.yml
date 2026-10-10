@@ -1,12 +1,10 @@
 name: E1 Source Capture (evidence only)
 run-name: "[WT:saju] E1 PDF Source Capture"
 
-# Runs only when this one-shot, single-job capture workflow is first added or edited.
-# Does not run on routine PR pushes and NEVER changes E1 authorization.
+# Manually dispatched research capture only; not run for PR sync or routine CI.
+# Once the workflow exists on the default branch, run it when a new evidence snapshot is required.
+# NEVER changes E1 authorization, even when all source bytes match.
 on:
-  pull_request:
-    paths:
-      - .github/workflows/saju-e1-source-capture.yml
   workflow_dispatch:
 
 permissions:
