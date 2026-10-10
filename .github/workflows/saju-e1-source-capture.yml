@@ -109,6 +109,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: saju-e1-source-byte-digests
-          path: /tmp/saju-e1-source-byte-capture.json
+          path: ${{ runner.temp }}/saju-e1-source-byte-capture.json
           if-no-files-found: ignore
           retention-days: 7
