@@ -317,3 +317,128 @@ export function resolveAnnualWithCodeApprovedIndependentE1(request: ReadingReque
     productionAuthorized: false,
   };
 }
+
+
+export type IndependentE1CycleResearchPreview =
+  | {
+      state: 'research_math_preview_only';
+      displayYear: number;
+      annualPillar: ReturnType<typeof annualSexagenaryPillar>;
+      start: {
+        displayedMinuteUtc: string;
+        earliestPossibleUtc: string;
+        latestPossibleExclusiveUtc: string;
+      };
+      end: {
+        displayedMinuteUtc: string;
+        earliestPossibleUtc: string;
+        latestPossibleExclusiveUtc: string;
+      };
+      exactEffectiveIntervalEstablished: false;
+      mayGenerateAnnualInterpretation: false;
+      productionAuthorized: false;
+    }
+  | {
+      state: 'unavailable';
+      displayYear: number;
+      reasonCode: 'INVALID_TARGET_YEAR' | 'BOTH_E1_PACKETS_REQUIRED' | 'INVALID_E1_PACKETS';
+      productionAuthorized: false;
+    };
+
+function conservativeMinuteWindow(anchorUtc: string): {
+  displayedMinuteUtc: string;
+  earliestPossibleUtc: string;
+  latestPossibleExclusiveUtc: string;
+} {
+  const ms = Date.parse(anchorUtc);
+  return {
+    displayedMinuteUtc: anchorUtc,
+    earliestPossibleUtc: new Date(ms - 60_000).toISOString(),
+    latestPossibleExclusiveUtc: new Date(ms + 60_000).toISOString(),
+  };
+}
+
+/** Synthetic E1 packets can test math, NEVER produce an approved annual reading. */
+export function previewIndependentAnnualE1CycleMath(
+  displayYear: number,
+  start?: Readonly<IndependentLichunE1Packet>,
+  end?: Readonly<IndependentLichunE1Packet>,
+): IndependentE1CycleResearchPreview {
+  const fail = (
+    reasonCode: Extract<IndependentE1CycleResearchPreview, { state: 'unavailable' }>['reasonCode'],
+  ): IndependentE1CycleResearchPreview =>
+    ({ state: 'unavailable', displayYear, reasonCode, productionAuthorized: false });
+  if (!Number.isSafeInteger(displayYear) || displayYear < 2 || displayYear > 9998) {
+    return fail('INVALID_TARGET_YEAR');
+  }
+  if (start === undefined || end === undefined) return fail('BOTH_E1_PACKETS_REQUIRED');
+  if (
+    start.year !== displayYear ||
+    end.year !== displayYear + 1 ||
+    inspectIndependentLichunE1Packet(start).state !== 'structurally_eligible_not_authorized' ||
+    inspectIndependentLichunE1Packet(end).state !== 'structurally_eligible_not_authorized'
+  ) return fail('INVALID_E1_PACKETS');
+
+  return {
+    state: 'research_math_preview_only',
+    displayYear,
+    annualPillar: annualSexagenaryPillar(displayYear),
+    start: conservativeMinuteWindow(start.displayedMinuteUtc),
+    end: conservativeMinuteWindow(end.displayedMinuteUtc),
+    exactEffectiveIntervalEstablished: false,
+    mayGenerateAnnualInterpretation: false,
+    productionAuthorized: false,
+  };
+}
+
+export type RegisteredIndependentE1CycleResult =
+  | {
+      state: 'source_unavailable';
+      displayYear: number;
+      missingYear: number;
+      reasonCode: Extract<ApprovedIndependentLichunBoundary, { state: 'unavailable' }>['reasonCode'];
+      productionAuthorized: false;
+    }
+  | {
+      state: 'unavailable';
+      displayYear: number;
+      reasonCode: 'INVALID_TARGET_YEAR';
+      productionAuthorized: false;
+    }
+  | {
+      state: 'research_candidate';
+      displayYear: number;
+      annualPillar: ReturnType<typeof annualSexagenaryPillar>;
+      start: ReturnType<typeof conservativeMinuteWindow>;
+      end: ReturnType<typeof conservativeMinuteWindow>;
+      exactEffectiveIntervalEstablished: false;
+      mayGenerateAnnualInterpretation: false;
+      productionAuthorized: false;
+    };
+
+/** No user- or LLM-injected witness records; requires two code-approved E1 years. */
+export function resolveAnnualCycleWithCodeApprovedIndependentE1(
+  displayYear: number,
+): RegisteredIndependentE1CycleResult {
+  if (!Number.isSafeInteger(displayYear) || displayYear < 2 || displayYear > 9998) {
+    return { state: 'unavailable', displayYear, reasonCode: 'INVALID_TARGET_YEAR', productionAuthorized: false };
+  }
+  const start = getCodeApprovedIndependentLichunBoundary(displayYear);
+  if (start.state === 'unavailable') {
+    return { state: 'source_unavailable', displayYear, missingYear: displayYear, reasonCode: start.reasonCode, productionAuthorized: false };
+  }
+  const end = getCodeApprovedIndependentLichunBoundary(displayYear + 1);
+  if (end.state === 'unavailable') {
+    return { state: 'source_unavailable', displayYear, missingYear: displayYear + 1, reasonCode: end.reasonCode, productionAuthorized: false };
+  }
+  return {
+    state: 'research_candidate',
+    displayYear,
+    annualPillar: annualSexagenaryPillar(displayYear),
+    start: conservativeMinuteWindow(start.displayedMinuteUtc),
+    end: conservativeMinuteWindow(end.displayedMinuteUtc),
+    exactEffectiveIntervalEstablished: false,
+    mayGenerateAnnualInterpretation: false,
+    productionAuthorized: false,
+  };
+}
