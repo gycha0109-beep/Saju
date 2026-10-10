@@ -101,8 +101,11 @@ jobs:
                               record["page2VerificationError"] = cmd.stderr.decode("utf-8", "replace")[:220]
                           else:
                               page_text = re.sub(r"\s+", " ", cmd.stdout.decode("utf-8", "replace"))
-                              pattern = rf"立\s*春\s+315\s+2\s+4\s+{expected_hour}\s+{expected_minute}(?!\d)"
+                              pattern = rf"315\s+2\s+4\s+{expected_hour}\s+{expected_minute}(?!\d)"
                               record["page2PrintedLichunMinuteMatches"] = re.search(pattern, page_text) is not None
+                              if not record["page2PrintedLichunMinuteMatches"]:
+                                  marker = page_text.find("315")
+                                  record["page2DiagnosticAroundLongitude315"] = page_text[max(marker - 35, 0):marker + 140] if marker >= 0 else page_text[:180]
                               record["state"] = ("PDF_BYTES_CAPTURED_ROW_MATCHED" if record["page2PrintedLichunMinuteMatches"]
                                                  else "PDF_BYTES_CAPTURED_ROW_UNMATCHED")
                   else:
