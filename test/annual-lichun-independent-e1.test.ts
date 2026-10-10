@@ -45,20 +45,25 @@ function request(instant: string, scope: 'annual' | 'monthly' = 'annual'): Readi
 }
 
 describe('E1 independent source review, structurally checkable but never caller approved', () => {
-  it('requires source owner code review even when synthetic hashes and approval strings look valid', () => {
+  it('separates synthetic tokens from a recorded owner-delegated AI E1 research decision', () => {
     expect(inspectIndependentLichunE1Packet(SYNTHETIC)).toEqual({
       state: 'structurally_eligible_not_authorized',
       productionAuthorized: false,
     });
     expect(getCodeApprovedIndependentLichunBoundary(2026)).toMatchObject({
-      state: 'unavailable',
-      reasonCode: 'NO_CODE_APPROVED_E1_WITNESS',
+      state: 'approved_research_calculation_source',
+      year: 2026,
+      reviewProvenance: 'OWNER_DELEGATED_AI',
+      independentHumanReviewCompleted: false,
+      mayGenerateAnnualInterpretation: false,
       productionAuthorized: false,
     });
-    expect(resolveAnnualWithCodeApprovedIndependentE1(request('2026-02-04T07:00:00+09:00'))).toEqual({
-      state: 'source_unavailable',
+    expect(resolveAnnualWithCodeApprovedIndependentE1(request('2026-02-04T07:00:00+09:00'))).toMatchObject({
+      state: 'research_candidate',
       requestId: 'synthetic-e1',
-      reasonCode: 'NO_CODE_APPROVED_E1_WITNESS',
+      effectiveYear: 2026,
+      annualPillar: { stem: '병', branch: '오' },
+      mayGenerateAnnualInterpretation: false,
       productionAuthorized: false,
     });
   });
@@ -153,7 +158,10 @@ describe('E1 independent source review, structurally checkable but never caller 
       publishedJapaneseAlmanac: { ...SYNTHETIC.publishedJapaneseAlmanac, originalPdfSha256: '' },
     })).toMatchObject({ state: 'rejected', reasonCode: 'INVALID_NAOJ_WITNESS' });
     expect(getCodeApprovedIndependentLichunBoundary(2027)).toMatchObject({
-      state: 'unavailable', reasonCode: 'NO_CODE_APPROVED_E1_WITNESS',
+      state: 'approved_research_calculation_source',
+      reviewProvenance: 'OWNER_DELEGATED_AI',
+      independentHumanReviewCompleted: false,
+      productionAuthorized: false,
     });
   });
 });
@@ -213,17 +221,18 @@ describe('E1 whole-year interval requires TWO separately reviewed years', () => 
     });
   });
 
-  it('does not turn synthetic source fixtures into a code-approved whole-year cycle', () => {
-    expect(resolveAnnualCycleWithCodeApprovedIndependentE1(2026)).toEqual({
-      state: 'source_unavailable',
+  it('uses only registered years, retaining research-only provenance and requiring 2028 for 2027 cycle', () => {
+    expect(resolveAnnualCycleWithCodeApprovedIndependentE1(2026)).toMatchObject({
+      state: 'research_candidate',
       displayYear: 2026,
-      missingYear: 2026,
-      reasonCode: 'NO_CODE_APPROVED_E1_WITNESS',
+      annualPillar: { stem: '병', branch: '오' },
+      exactEffectiveIntervalEstablished: false,
+      mayGenerateAnnualInterpretation: false,
       productionAuthorized: false,
     });
     expect(resolveAnnualCycleWithCodeApprovedIndependentE1(2027)).toMatchObject({
       state: 'source_unavailable',
-      missingYear: 2027,
+      missingYear: 2028,
       productionAuthorized: false,
     });
     expect(getPinnedPrimaryLichunBoundary(2027)).toMatchObject({
