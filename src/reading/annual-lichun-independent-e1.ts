@@ -29,6 +29,8 @@ export interface IndependentLichunE1Packet {
   reviewerRef: string;
   reviewerDecisionRef: string;
   reviewerDecision: 'approved_for_research_calculation';
+  /** Explicit source of review authority; owner-delegated AI is NOT independent human inspection. */
+  reviewProvenance?: 'OWNER_DELEGATED_AI' | 'INDEPENDENT_HUMAN';
 }
 
 export type E1PacketReview =
@@ -203,10 +205,73 @@ export function inspectIndependentE1CaptureBinding(
   return { state: 'capture_matched_review_still_required', captureRunId: capture.captureRunId, productionAuthorized: false };
 }
 
-// Deliberately empty: neither NAOJ original PDF digest nor KASI captured page
-// digest and the independent source-owner review have been established.
-// Never populate from caller-provided flags, strings, or synthetic tests.
-const CODE_APPROVED_E1_PACKETS: readonly IndependentLichunE1Packet[] = Object.freeze([]);
+/**
+ * E1 RESEARCH-ONLY OWNER-DELEGATED EXCEPTION.
+ * The project owner expressly delegated creation of the decision to an AI.
+ * An AI prepared/posted the decision via the connected owner GitHub account:
+ * https://github.com/gycha0109-beep/Saju/issues/2466#issuecomment-6097137685
+ * There was NO independent HUMAN source review and NO attestation of the
+ * owner's personal inspection. Do not present these records as such.
+ *
+ * Four source file hashes are pinned to capture run #5 and crosschecked by
+ * inspectIndependentE1CaptureBinding. E2, Annual interpretation, Monthly and
+ * Production remain prohibited. The draft PR requires its own code review.
+ */
+const CODE_APPROVED_E1_PACKETS: readonly IndependentLichunE1Packet[] = Object.freeze([
+  Object.freeze({
+    year: 2026,
+    displayedMinuteUtc: '2026-02-03T20:02:00.000Z',
+    publishedJapaneseAlmanac: {
+      uri: 'https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2026.pdf',
+      originalPdfSha256: 'ee5f0a743c0e7e577fa4115a07eef7fa752cee9d6ce1022e06305a09f33f3d6d',
+      pdfPage: 2,
+      printedRow: '立 春 315 2 4 5 2',
+      timezone: 'Asia/Tokyo' as const,
+    },
+    independentKoreanObservation: {
+      uri: 'https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026',
+      capturedPageSha256: '716b1801d129dbcdef24fb6150a0ceec9dd9f0e4b53339a9eda8e14fea5ab056',
+      displayedMinuteUtc: '2026-02-03T20:02:00.000Z',
+      timezone: 'Asia/Seoul' as const,
+    },
+    reviewerRef: 'gycha0109-beep (owner delegation; source examined by AI)',
+    reviewerDecisionRef: 'https://github.com/gycha0109-beep/Saju/issues/2466#issuecomment-6097137685',
+    reviewerDecision: 'approved_for_research_calculation' as const,
+    reviewProvenance: 'OWNER_DELEGATED_AI' as const,
+  }),
+  Object.freeze({
+    year: 2027,
+    displayedMinuteUtc: '2027-02-04T01:46:00.000Z',
+    publishedJapaneseAlmanac: {
+      uri: 'https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2027.pdf',
+      originalPdfSha256: 'f7998e5730bc7a5de5f122a692ca96626f3e0c8c035b30a1c71d6eb7718272e3',
+      pdfPage: 2,
+      printedRow: '立 春 315 2 4 10 46',
+      timezone: 'Asia/Tokyo' as const,
+    },
+    independentKoreanObservation: {
+      uri: 'https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2027',
+      capturedPageSha256: '7ead0a04d367a1efa1bf1d27a50d2d639ed8a098208dd66f6ffef272990bab9a',
+      displayedMinuteUtc: '2027-02-04T01:46:00.000Z',
+      timezone: 'Asia/Seoul' as const,
+    },
+    reviewerRef: 'gycha0109-beep (owner delegation; source examined by AI)',
+    reviewerDecisionRef: 'https://github.com/gycha0109-beep/Saju/issues/2466#issuecomment-6097137685',
+    reviewerDecision: 'approved_for_research_calculation' as const,
+    reviewProvenance: 'OWNER_DELEGATED_AI' as const,
+  }),
+]);
+
+/**
+ * Explicit code-side E1 research revocation control. This deterministic
+ * module does NOT detect changes to or deletion of the GitHub approval comment.
+ * On withdrawal, change the relevant year to 'revoked' in a reviewed code
+ * change. Historical research outputs must be invalidated by consumers.
+ */
+const OWNER_DELEGATED_E1_GRANT_STATUS: Readonly<Record<number, 'active' | 'revoked'>> = Object.freeze({
+  2026: 'active',
+  2027: 'active',
+});
 
 export type ApprovedIndependentLichunBoundary =
   | {
@@ -216,6 +281,9 @@ export type ApprovedIndependentLichunBoundary =
       displayedMinuteUtc: string;
       sourceVersion: typeof INDEPENDENT_LICHUN_E1_VERSION;
       sourceRefs: readonly [string, string];
+      reviewProvenance: 'OWNER_DELEGATED_AI' | 'INDEPENDENT_HUMAN';
+      independentHumanReviewCompleted: boolean;
+      mayGenerateAnnualInterpretation: false;
       productionAuthorized: false;
     }
   | {
@@ -224,7 +292,8 @@ export type ApprovedIndependentLichunBoundary =
       reasonCode:
         | 'NO_CODE_APPROVED_E1_WITNESS'
         | 'CONFLICTING_E1_WITNESSES'
-        | 'INVALID_APPROVED_E1_WITNESS';
+        | 'INVALID_APPROVED_E1_WITNESS'
+        | 'RESEARCH_APPROVAL_REVOKED';
       productionAuthorized: false;
     };
 
@@ -232,11 +301,16 @@ export function getCodeApprovedIndependentLichunBoundary(year: number): Approved
   const matches = CODE_APPROVED_E1_PACKETS.filter((p) => p.year === year);
   if (matches.length === 0) return { state: 'unavailable', year, reasonCode: 'NO_CODE_APPROVED_E1_WITNESS', productionAuthorized: false };
   if (matches.length !== 1) return { state: 'unavailable', year, reasonCode: 'CONFLICTING_E1_WITNESSES', productionAuthorized: false };
+  if (OWNER_DELEGATED_E1_GRANT_STATUS[year] !== 'active') {
+    return { state: 'unavailable', year, reasonCode: 'RESEARCH_APPROVAL_REVOKED', productionAuthorized: false };
+  }
   const packet = matches[0];
   if (
     packet === undefined ||
     inspectIndependentLichunE1Packet(packet).state !== 'structurally_eligible_not_authorized' ||
-    inspectIndependentE1CaptureBinding(packet).state !== 'capture_matched_review_still_required'
+    inspectIndependentE1CaptureBinding(packet).state !== 'capture_matched_review_still_required' ||
+    packet.reviewProvenance !== 'OWNER_DELEGATED_AI' ||
+    packet.reviewerDecisionRef !== 'https://github.com/gycha0109-beep/Saju/issues/2466#issuecomment-6097137685'
   ) {
     return { state: 'unavailable', year, reasonCode: 'INVALID_APPROVED_E1_WITNESS', productionAuthorized: false };
   }
@@ -247,6 +321,9 @@ export function getCodeApprovedIndependentLichunBoundary(year: number): Approved
     displayedMinuteUtc: packet.displayedMinuteUtc,
     sourceVersion: INDEPENDENT_LICHUN_E1_VERSION,
     sourceRefs: [packet.publishedJapaneseAlmanac.uri, packet.independentKoreanObservation.uri],
+    reviewProvenance: 'OWNER_DELEGATED_AI',
+    independentHumanReviewCompleted: false,
+    mayGenerateAnnualInterpretation: false,
     productionAuthorized: false,
   };
 }
@@ -274,6 +351,21 @@ function validatedInstant(value: string): number | undefined {
     local.getUTCMilliseconds() !== Number((p[7] ?? '0').padEnd(3, '0'))
   ) return undefined;
   return ms;
+}
+
+/**
+ * Owner-selected calendar convention: switch Annual at 00:00 Asia/Seoul
+ * on the observed LiChun date. This is NOT the astronomical LiChun instant.
+ * Keep original observed minutes intact for provenance.
+ */
+export const ANNUAL_LICHUN_CIVIL_DAY_POLICY = 'lichun-date-00-kst-v1' as const;
+
+function policyBoundaryMidnightKst(observedMinuteUtc: string): number {
+  const day = seoulParts(Date.parse(observedMinuteUtc));
+  const yyyy = String(day.year).padStart(4, '0');
+  const mm = String(day.month).padStart(2, '0');
+  const dd = String(day.day).padStart(2, '0');
+  return Date.parse(`${yyyy}-${mm}-${dd}T00:00:00+09:00`);
 }
 
 export type IndependentAnnualResearchPreview =
@@ -305,16 +397,14 @@ export function previewIndependentAnnualE1Math(
   if (request.intent.temporalScope !== 'annual' || request.targetPeriod?.scope !== 'annual') {
     return unavailable('ANNUAL_REQUEST_REQUIRED');
   }
+  if (request.targetPeriod.timeZone !== 'Asia/Seoul') return unavailable('INVALID_REQUEST_TIME');
   const year = request.targetPeriod.year;
   if (packet.year !== year || inspectIndependentLichunE1Packet(packet).state !== 'structurally_eligible_not_authorized') {
     return unavailable('INVALID_PACKET');
   }
   const requestMs = validatedInstant(request.targetPeriod.referenceDateTime);
   if (requestMs === undefined || seoulParts(requestMs).year !== year) return unavailable('INVALID_REQUEST_TIME');
-  const boundaryMs = Date.parse(packet.displayedMinuteUtc);
-  if (requestMs >= boundaryMs - 60_000 && requestMs < boundaryMs + 60_000) {
-    return unavailable('BOUNDARY_MINUTE_AMBIGUOUS');
-  }
+  const boundaryMs = policyBoundaryMidnightKst(packet.displayedMinuteUtc);
   const effectiveYear = requestMs < boundaryMs ? year - 1 : year;
   return {
     state: 'research_math_preview_only',
@@ -346,6 +436,8 @@ export type RegisteredIndependentAnnualResult =
       effectiveYear: number;
       annualPillar: ReturnType<typeof annualSexagenaryPillar>;
       evidenceTier: 'E1_INDEPENDENT_ASTRONOMY';
+      reviewProvenance: 'OWNER_DELEGATED_AI';
+      independentHumanReviewCompleted: false;
       mayGenerateAnnualInterpretation: false;
       productionAuthorized: false;
     };
@@ -360,14 +452,14 @@ export function resolveAnnualWithCodeApprovedIndependentE1(request: ReadingReque
     return { state: 'source_unavailable', requestId: request.requestId, reasonCode: approved.reasonCode, productionAuthorized: false };
   }
   const year = request.targetPeriod.year;
+  if (request.targetPeriod.timeZone !== 'Asia/Seoul') {
+    return { state: 'unavailable', requestId: request.requestId, reasonCode: 'INVALID_REQUEST_TIME', productionAuthorized: false };
+  }
   const requestMs = validatedInstant(request.targetPeriod.referenceDateTime);
   if (requestMs === undefined || seoulParts(requestMs).year !== year) {
     return { state: 'unavailable', requestId: request.requestId, reasonCode: 'INVALID_REQUEST_TIME', productionAuthorized: false };
   }
-  const boundaryMs = Date.parse(approved.displayedMinuteUtc);
-  if (requestMs >= boundaryMs - 60_000 && requestMs < boundaryMs + 60_000) {
-    return { state: 'unavailable', requestId: request.requestId, reasonCode: 'BOUNDARY_MINUTE_AMBIGUOUS', productionAuthorized: false };
-  }
+  const boundaryMs = policyBoundaryMidnightKst(approved.displayedMinuteUtc);
   const effectiveYear = requestMs < boundaryMs ? year - 1 : year;
   return {
     state: 'research_candidate',
@@ -375,6 +467,8 @@ export function resolveAnnualWithCodeApprovedIndependentE1(request: ReadingReque
     effectiveYear,
     annualPillar: annualSexagenaryPillar(effectiveYear),
     evidenceTier: 'E1_INDEPENDENT_ASTRONOMY',
+    reviewProvenance: 'OWNER_DELEGATED_AI',
+    independentHumanReviewCompleted: false,
     mayGenerateAnnualInterpretation: false,
     productionAuthorized: false,
   };
@@ -474,6 +568,8 @@ export type RegisteredIndependentE1CycleResult =
       start: ReturnType<typeof conservativeMinuteWindow>;
       end: ReturnType<typeof conservativeMinuteWindow>;
       exactEffectiveIntervalEstablished: false;
+      reviewProvenance: 'OWNER_DELEGATED_AI';
+      independentHumanReviewCompleted: false;
       mayGenerateAnnualInterpretation: false;
       productionAuthorized: false;
     };
@@ -500,6 +596,8 @@ export function resolveAnnualCycleWithCodeApprovedIndependentE1(
     start: conservativeMinuteWindow(start.displayedMinuteUtc),
     end: conservativeMinuteWindow(end.displayedMinuteUtc),
     exactEffectiveIntervalEstablished: false,
+    reviewProvenance: 'OWNER_DELEGATED_AI',
+    independentHumanReviewCompleted: false,
     mayGenerateAnnualInterpretation: false,
     productionAuthorized: false,
   };

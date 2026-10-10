@@ -70,7 +70,7 @@ describe('E1 captured-file fingerprint binding, NOT a source-owner approval', ()
     expect(Object.isFrozen(AUDITED_E1_CAPTURE_FINGERPRINTS)).toBe(true);
   });
 
-  it('returns an observed capture match without manufacturing a human reviewer decision', () => {
+  it('keeps source capture distinct from the later owner-delegated nonhuman research approval', () => {
     for (const year of [2026, 2027] as const) {
       const packet = candidate(year);
       expect(inspectIndependentLichunE1Packet(packet)).toEqual({
@@ -83,12 +83,18 @@ describe('E1 captured-file fingerprint binding, NOT a source-owner approval', ()
         productionAuthorized: false,
       });
       expect(getCodeApprovedIndependentLichunBoundary(year)).toMatchObject({
-        state: 'unavailable',
-        reasonCode: 'NO_CODE_APPROVED_E1_WITNESS',
+        state: 'approved_research_calculation_source',
+        reviewProvenance: 'OWNER_DELEGATED_AI',
+        independentHumanReviewCompleted: false,
+        mayGenerateAnnualInterpretation: false,
         productionAuthorized: false,
       });
     }
-    expect(resolveAnnualCycleWithCodeApprovedIndependentE1(2026).state).toBe('source_unavailable');
+    expect(resolveAnnualCycleWithCodeApprovedIndependentE1(2026)).toMatchObject({
+      state: 'research_candidate',
+      mayGenerateAnnualInterpretation: false,
+      productionAuthorized: false,
+    });
   });
 
   it('rejects well-formed but invented digests, changed snapshot bytes and changed minutes', () => {
