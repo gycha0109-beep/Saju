@@ -333,7 +333,7 @@ export function buildGeneralNatalPeerTaxonomyScanBackedEvidence() {
     narrowTaxonomySupport.assessedClaimType !==
       'GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_PEER_PRESENT' ||
     narrowTaxonomySupport.observedSourceGlyphs !== '兄弟者即刼財比肩' ||
-    narrowTaxonomySupport.frozenRecordedGlyphs === narrowTaxonomySupport.observedSourceGlyphs
+    String(narrowTaxonomySupport.frozenRecordedGlyphs) === String(narrowTaxonomySupport.observedSourceGlyphs)
   ) {
     throw new Error('Peer-source narrow taxonomy assessment no longer matches the pinned evidence.');
   }
