@@ -52,6 +52,23 @@ describe('General Natal source-integrity closure audit', () => {
     expect(audit.peerTaxonomy.fullSourceIntegrityEstablished).toBe(false);
   });
 
+  it('routes the verified peer grouping separately from the frozen glyph-registration mismatch', () => {
+    const audit = buildGeneralNatalSourceIntegrityClosureAudit();
+    const peer = audit.peerTaxonomy;
+
+    expect(peer.narrowResearchDisposition).toBe('RESEARCH_NARROW_PEER_GROUPING_SUPPORTED');
+    expect(peer.observedSourceGlyphs).toBe('兄弟者即刼財比肩');
+    expect(peer.frozenRegisteredGlyphs).toBe('兄弟者即劫財比肩');
+    expect(peer.observedSourceGlyphs).not.toBe(peer.frozenRegisteredGlyphs);
+    expect(peer.literalIdentityWithFrozenRecordEstablished).toBe(false);
+    expect(peer.independentlyReviewedSourceReregistrationApproved).toBe(false);
+    expect(peer.nextResearchAction).toBe('INDEPENDENT_REVIEW_OF_FROZEN_GLYPH_REGISTRATION');
+    expect(audit.currentReentry.remainingResearchBlockers).toContain(
+      'SAMYEONG_V7_PEER_SOURCE_INTEGRITY_INCOMPLETE',
+    );
+    expect(audit.currentReentry.nextDisposition).toBe('RETURN_TO_RESEARCH');
+  });
+
   it('remains fail-closed for Bridge and every downstream authority', () => {
     const audit = buildGeneralNatalSourceIntegrityClosureAudit();
 
