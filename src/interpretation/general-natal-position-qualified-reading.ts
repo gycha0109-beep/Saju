@@ -1,5 +1,14 @@
 import type { InterpretationPack, RuleDefinition, RuleExpression } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from './rule-registry.js';
+import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import {
+  runInterpretation,
+  type InterpretationRunOptions,
+} from './interpretation-engine.js';
+import {
+  bindGeneralNatalStemInteractionWitnesses,
+  type GeneralNatalStemInteractionWitness,
+} from './general-natal-stem-interaction-witness.js';
 import {
   GENERAL_NATAL_USEFUL_READING_SOURCE,
   GENERAL_NATAL_TEN_GOD_THEME_METHODOLOGY,
@@ -183,4 +192,44 @@ export function createGeneralNatalPositionQualifiedCareerT6ResearchRegistry(
     pack,
     createdAt,
   );
+}
+
+/**
+ * Executes existing positioned T5, source-bounded branch-clash T6, and
+ * unchanged General Natal T8 in one research run, then binds canonical
+ * visible-stem settlements to exactly the T5 claims emitted by that run.
+ *
+ * An unresolved canonical settlement is not interpreted as an empty pair.
+ * These are internal structural witnesses, not T6 semantic-effect claims.
+ */
+export type GeneralNatalC2StemEvidence =
+  | { readonly status: 'resolved'; readonly witnesses: readonly GeneralNatalStemInteractionWitness[] }
+  | { readonly status: 'ambiguous'; readonly reasonCodes: readonly string[] }
+  | { readonly status: 'unavailable'; readonly reasonCode: string };
+
+export function executeGeneralNatalPositionQualifiedC2Research(
+  snapshot: CanonicalSajuSnapshot,
+  p4Report: CareerT6PublicClassicBoundedScopeMethodologyReviewReport,
+  options: InterpretationRunOptions = {},
+) {
+  const registry = createGeneralNatalPositionQualifiedCareerT6ResearchRegistry(
+    p4Report,
+    options.now?.toISOString(),
+  );
+  const interpretation = runInterpretation(snapshot, registry, options);
+  const settlement = snapshot.derivedFacts.stemInteractionSettlements;
+  let stemEvidence: GeneralNatalC2StemEvidence;
+  if (settlement === undefined) {
+    stemEvidence = { status: 'unavailable', reasonCode: 'canonical_stem_settlement_absent' };
+  } else if (settlement.status === 'unavailable') {
+    stemEvidence = { status: 'unavailable', reasonCode: settlement.reasonCode };
+  } else if (settlement.status === 'ambiguous') {
+    stemEvidence = { status: 'ambiguous', reasonCodes: [...settlement.reasonCodes] };
+  } else {
+    stemEvidence = {
+      status: 'resolved',
+      witnesses: bindGeneralNatalStemInteractionWitnesses(snapshot, interpretation),
+    };
+  }
+  return { registry, interpretation, stemEvidence };
 }
