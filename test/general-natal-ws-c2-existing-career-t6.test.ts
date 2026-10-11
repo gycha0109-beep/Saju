@@ -4,6 +4,7 @@ import { runInterpretation } from '../src/interpretation/interpretation-engine.j
 import {
   createGeneralNatalPositionQualifiedResearchRegistry,
   createGeneralNatalPositionQualifiedCareerT6ResearchRegistry,
+  executeGeneralNatalPositionQualifiedC2Research,
 } from '../src/interpretation/general-natal-position-qualified-reading.js';
 import type {
   CareerT6PublicClassicBoundedScopeMethodologyReviewReport,
@@ -149,6 +150,84 @@ describe('WS-C2 reuse existing authorized-scope T6 in one General Natal interpre
     const closed = runInterpretation(unavailable, registry, { now });
     expect(closed.claims.some((claim) =>
       claim.claimType === CAREER_T6_BRANCH_CLASH_CONTEXT_CLAIM_TYPE
+    )).toBe(false);
+  });
+
+  it('binds visible-stem settlements to exact T5 in the same T6/T8 run', () => {
+    const baselineRegistry = createGeneralNatalPositionQualifiedResearchRegistry();
+    let bound = 0;
+    for (const date of dates) {
+      const snapshot = chart(date);
+      const run = executeGeneralNatalPositionQualifiedC2Research(snapshot, p4, { now });
+      expect(run.interpretation.integrity.valid).toBe(true);
+      expect(executeGeneralNatalPositionQualifiedC2Research(snapshot, p4, { now }))
+        .toEqual(run);
+      const existing = runInterpretation(snapshot, baselineRegistry, { now });
+      expect(run.interpretation.claims.filter((claim) => claim.taxonomy.tier === 'T8')
+        .map((claim) => ({ type: claim.claimType, value: claim.value })))
+        .toEqual(existing.claims.filter((claim) => claim.taxonomy.tier === 'T8')
+          .map((claim) => ({ type: claim.claimType, value: claim.value })));
+      const settlement = snapshot.derivedFacts.stemInteractionSettlements;
+      if (settlement?.status === 'resolved') {
+        expect(run.stemEvidence.status).toBe('resolved');
+        if (run.stemEvidence.status !== 'resolved') continue;
+        expect(run.stemEvidence.witnesses).toHaveLength(settlement.value.length * 2);
+        for (const witness of run.stemEvidence.witnesses) {
+          bound += 1;
+          const original = settlement.value.find((value) =>
+            value.settlementId === witness.settlementId);
+          expect(original).toBeDefined();
+          expect(witness.functionState).toBe(
+            original?.participants[witness.participantRole].functionState,
+          );
+          expect(witness.pairControlEffective).toBe(original?.pairControlEffective);
+          expect(witness.tenGod).toBe(original?.participants[witness.participantRole].tenGod);
+          expect(run.interpretation.claims.find((claim) =>
+            claim.claimId === witness.claimId)?.factRefs)
+            .toContain(witness.sourceFactRef);
+          expect(witness.t6EffectClaimAuthorized).toBe(false);
+          expect(witness.consumerProjectionAuthorized).toBe(false);
+        }
+      } else {
+        expect(run.stemEvidence.status).not.toBe('resolved');
+      }
+      const reading = buildReadingCompositionEvidence(snapshot, run.interpretation, run.registry, {
+        requestId: 'ws-c2-same-run',
+        intent: { domain: 'general', temporalScope: 'natal' },
+      });
+      expect(reading.selection.coverageState).toBe('complete');
+      expect(reading.selection.selectedClaimIds.every((id) => {
+        const claim = run.interpretation.claims.find((item) => item.claimId === id);
+        return claim?.taxonomy.tier !== 'T6';
+      })).toBe(true);
+    }
+    expect(bound).toBeGreaterThan(0);
+  });
+
+  it('does not silently turn unresolved canonical stems into an empty resolved pair', () => {
+    const unknown = chart(dates[0]!, false);
+    const result = executeGeneralNatalPositionQualifiedC2Research(unknown, p4, { now });
+    const state = unknown.derivedFacts.stemInteractionSettlements;
+    if (state?.status !== 'resolved') {
+      expect(result.stemEvidence.status).toBe(state?.status ?? 'unavailable');
+    }
+    const blocked = {
+      ...unknown,
+      derivedFacts: {
+        ...unknown.derivedFacts,
+        stemInteractionSettlements: {
+          status: 'unavailable' as const,
+          reasonCode: 'birth_hour_unresolved',
+        },
+      },
+    };
+    const closed = executeGeneralNatalPositionQualifiedC2Research(blocked, p4, { now });
+    expect(closed.stemEvidence).toEqual({
+      status: 'unavailable',
+      reasonCode: 'birth_hour_unresolved',
+    });
+    expect(closed.interpretation.claims.some((claim) =>
+      claim.taxonomy.tier === 'T6' && claim.predicate.includes('stem_effect'),
     )).toBe(false);
   });
 });
