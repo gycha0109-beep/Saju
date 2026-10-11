@@ -86,7 +86,7 @@ export const ANNUAL_JUAN2_PRINT_REMAINING_HOLDS = Object.freeze([
 
 export function buildAnnualJuan2PrintImageCollation() {
   const digital = buildAnnualSourceGlyphWitnessCollation();
-  const digitalIds = new Set(digital.witnesses.map((item) => item.id));
+  const digitalIds = new Set<string>(digital.witnesses.map((item) => item.id));
   if (
     digital.authority.productionAuthorized ||
     digital.authority.tripleClashGlobalPriorityAdmitted ||
