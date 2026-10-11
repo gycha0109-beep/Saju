@@ -15,6 +15,7 @@ export interface GeneralNatalStemInteractionWitness {
   readonly snapshotId: string;
   readonly claimId: string;
   readonly settlementId: string;
+  readonly pairControlEffective: boolean;
   readonly relationId: string;
   readonly sourceFactRef: string;
   readonly participantRole: 'controller' | 'controlled';
@@ -51,11 +52,37 @@ export function bindGeneralNatalStemInteractionWitnesses(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
 ): readonly GeneralNatalStemInteractionWitness[] {
-  if (execution.run.snapshotId !== snapshot.snapshotId) {
+  if (execution.run.snapshotId !== snapshot.snapshotId || execution.run.snapshotHash !== snapshot.calculationHash) {
     throw new Error('WS_C2_SNAPSHOT_MISMATCH');
+  }
+  if (!execution.integrity.valid) throw new Error('WS_C2_CLAIM_GRAPH_INVALID');
+  if (execution.claims.some((claim) => claim.snapshotId !== snapshot.snapshotId)) {
+    throw new Error('WS_C2_CLAIM_SNAPSHOT_MISMATCH');
   }
   const settlements = snapshot.derivedFacts.stemInteractionSettlements;
   if (settlements?.status !== 'resolved') return [];
+  const structuralRelations = snapshot.derivedFacts.structuralRelations;
+  if (structuralRelations?.status !== 'resolved' || snapshot.derivedFacts.tenGods.status !== 'resolved') {
+    throw new Error('WS_C2_CANONICAL_FACT_MISMATCH');
+  }
+  for (const item of settlements.value) {
+    const relations = structuralRelations.value.filter((relation) =>
+      relation.relationId === item.relationId && relation.kind === 'stem_five_combination'
+    );
+    if (relations.length !== 1 || item.kind !== 'stem_five_combination' || item.transformationApplied !== false) {
+      throw new Error('WS_C2_SETTLEMENT_RELATION_MISMATCH');
+    }
+    const expected = relations[0]!.participants.map((participant) =>
+      participant.pillar + ':' + participant.component + ':' + participant.value
+    ).sort();
+    const actual = (['controller', 'controlled'] as const).map((role) => {
+      const participant = item.participants[role];
+      return participant.pillar + ':stem:' + participant.stem;
+    }).sort();
+    if (expected.length !== 2 || expected.some((value, index) => value !== actual[index])) {
+      throw new Error('WS_C2_SETTLEMENT_PARTICIPANT_MISMATCH');
+    }
+  }
   const witness: GeneralNatalStemInteractionWitness[] = [];
   for (const claim of execution.claims) {
     if (claim.snapshotId !== snapshot.snapshotId || claim.state !== 'active') continue;
@@ -67,10 +94,25 @@ export function bindGeneralNatalStemInteractionWitnesses(
     if (fact?.status !== 'resolved') continue;
     const family = claim.value as { family?: string; channel?: string };
     if (family?.channel !== 'visible_stems') continue;
+    const godFamily: Readonly<Record<TenGod, string>> = {
+      비견: 'peer', 겁재: 'peer',
+      식신: 'output', 상관: 'output',
+      편재: 'wealth', 정재: 'wealth',
+      편관: 'officer', 정관: 'officer',
+      편인: 'resource', 정인: 'resource',
+    };
+    if (
+      typeof family.family !== 'string' ||
+      family.family !== godFamily[fact.value as TenGod] ||
+      claim.claimType !== 'TEN_GOD_' + family.family.toUpperCase() + '_VISIBLE_STEMS_THEME' ||
+      claim.taxonomy.subcategory !== family.family + '_visible_stems' ||
+      !claim.ruleRefs.some((ref) => ref.ruleId.endsWith('-POSITION-' + pillar.toUpperCase() + '-STEM'))
+    ) continue;
     for (const item of settlements.value) {
       for (const role of ['controller', 'controlled'] as const) {
         const participant = item.participants[role];
         if (participant.pillar !== pillar || participant.tenGod !== fact.value) continue;
+        if (participant.identityPreserved !== true) throw new Error('WS_C2_SETTLEMENT_PARTICIPANT_MISMATCH');
         if (snapshot.pillars[pillar].status !== 'resolved') continue;
         const stem = snapshot.pillars[pillar];
         if (stem.status !== 'resolved' || stem.value.stem.value !== participant.stem) continue;
@@ -86,6 +128,7 @@ export function bindGeneralNatalStemInteractionWitnesses(
           snapshotId: snapshot.snapshotId,
           claimId: claim.claimId,
           settlementId: item.settlementId,
+          pairControlEffective: item.pairControlEffective,
           relationId: item.relationId,
           sourceFactRef: claim.factRefs[0]!,
           participantRole: role,
@@ -100,5 +143,12 @@ export function bindGeneralNatalStemInteractionWitnesses(
       }
     }
   }
-  return Object.freeze(witness.sort((a,b)=>a.witnessId.localeCompare(b.witnessId)));
+  for (const item of settlements.value) {
+    for (const role of ['controller', 'controlled'] as const) {
+      const matches = witness.filter((entry) => entry.settlementId === item.settlementId &&
+        entry.participantRole === role);
+      if (matches.length !== 1) throw new Error('WS_C2_POSITION_T5_NOT_UNIQUE');
+    }
+  }
+  return Object.freeze(witness.sort((a, b) => a.witnessId.localeCompare(b.witnessId)));
 }
