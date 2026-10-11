@@ -102,6 +102,7 @@ export function bindGeneralNatalStemInteractionWitnesses(
       편인: 'resource', 정인: 'resource',
     };
     if (
+      typeof family.family !== 'string' ||
       family.family !== godFamily[fact.value as TenGod] ||
       claim.claimType !== 'TEN_GOD_' + family.family.toUpperCase() + '_VISIBLE_STEMS_THEME' ||
       claim.taxonomy.subcategory !== family.family + '_visible_stems' ||
