@@ -164,9 +164,11 @@ describe('WS-C2 reuse existing authorized-scope T6 in one General Natal interpre
         .toEqual(run);
       const existing = runInterpretation(snapshot, baselineRegistry, { now });
       expect(run.interpretation.claims.filter((claim) => claim.taxonomy.tier === 'T8')
-        .map((claim) => ({ type: claim.claimType, value: claim.value })))
+        .map((claim) => ({ type: claim.claimType, value: claim.value }))
+        .sort((left, right) => left.type.localeCompare(right.type)))
         .toEqual(existing.claims.filter((claim) => claim.taxonomy.tier === 'T8')
-          .map((claim) => ({ type: claim.claimType, value: claim.value })));
+          .map((claim) => ({ type: claim.claimType, value: claim.value }))
+          .sort((left, right) => left.type.localeCompare(right.type)));
       const settlement = snapshot.derivedFacts.stemInteractionSettlements;
       if (settlement?.status === 'resolved') {
         expect(run.stemEvidence.status).toBe('resolved');
