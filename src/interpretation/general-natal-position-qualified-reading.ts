@@ -17,6 +17,13 @@ import {
   I18A_MONTH_BRANCH_STRENGTH_SOURCES,
 } from '../research/i18a-month-branch-strength-evidence.js';
 import {
+  createCareerT6BranchClashContextRegistry,
+} from '../research/career-personalized-t6-branch-clash-hidden-stem-context.js';
+import type {
+  CareerT6PublicClassicBoundedScopeMethodologyReviewReport,
+} from '../research/career-personalization-t6-public-classic-bounded-scope-methodology-review.js';
+
+import {
   GENERAL_NATAL_INTEGRATED_READING_PACK,
   GENERAL_NATAL_INTEGRATED_READING_VERSION,
 } from './general-natal-integrated-reading-registry.js';
@@ -136,6 +143,44 @@ export function createGeneralNatalPositionQualifiedResearchRegistry(
       ],
     },
     GENERAL_NATAL_POSITION_QUALIFIED_RESEARCH_PACK,
+    createdAt,
+  );
+}
+
+/**
+ * WS-C2 opt-in composition: execute the already governed Career T6
+ * branch-clash context in the same run as positioned Ten-God T5 and General
+ * Natal T8. The P4 gate is delegated to the existing Career T6 registry.
+ * No cross-domain T8 dependency, effect conclusion or consumer permission
+ * is introduced by this composition.
+ */
+export function createGeneralNatalPositionQualifiedCareerT6ResearchRegistry(
+  p4Report: CareerT6PublicClassicBoundedScopeMethodologyReviewReport,
+  createdAt = '1970-01-01T00:00:00.000Z',
+) {
+  const natal = createGeneralNatalPositionQualifiedResearchRegistry(createdAt);
+  const careerT6 = createCareerT6BranchClashContextRegistry(p4Report, createdAt);
+  const pack: InterpretationPack = {
+    ...natal.pack,
+    packId: 'PACK-GENERAL-NATAL-POSITION-T5-CAREER-CLASH-T6-RESEARCH',
+    name: 'Position-qualified General Natal with existing bounded Career T6 context (research)',
+    methodologyRefs: [...natal.pack.methodologyRefs, ...careerT6.pack.methodologyRefs],
+    enabledRuleSets: [...new Set([...natal.pack.enabledRuleSets, ...careerT6.pack.enabledRuleSets])],
+    compositionPolicyRef: {
+      id: 'COMPOSITION-GENERAL-NATAL-POSITION-T5-CAREER-CLASH-T6-RESEARCH',
+      version: GENERAL_NATAL_INTEGRATED_READING_VERSION,
+    },
+    status: 'research',
+  };
+  return createRuleRegistrySnapshot(
+    {
+      rules: [...natal.rules, ...careerT6.rules],
+      methodologies: [...natal.methodologies, ...careerT6.methodologies],
+      sources: [...natal.sources, ...careerT6.sources],
+      claimTypeDefinitions: careerT6.claimTypeDefinitions,
+      claimValueSchemas: careerT6.claimValueSchemas,
+    },
+    pack,
     createdAt,
   );
 }
