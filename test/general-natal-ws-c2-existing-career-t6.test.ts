@@ -67,7 +67,7 @@ describe('WS-C2 reuse existing authorized-scope T6 in one General Natal interpre
   it('rejects an unauthorized P4 scope instead of promoting a research rule', () => {
     expect(() => createGeneralNatalPositionQualifiedCareerT6ResearchRegistry({
       ...p4,
-      careerT8SynthesisAuthorizedByThisGate: true,
+      status: 'UPSTREAM_BOUNDARY_INVALID',
     })).toThrow('P4 Career T6 gate');
   });
 
