@@ -167,6 +167,54 @@ describe('provisionally approved preview E2E runtime', () => {
     }
   });
 
+  it('preserves one canonical chart across all five real natal Preview HTTP domains', async () => {
+    const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
+    const origin = await listenEphemeral(runtime.server);
+    const summaries: Array<{
+      pillars: Record<string, unknown>;
+      fiveElements?: readonly unknown[];
+      tenGods?: readonly unknown[];
+    }> = [];
+    try {
+      for (const domain of ['사주', '직업운', '재물운', '사업운', '연애운']) {
+        const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${ACTIVE_BEARER}`,
+            'content-type': 'application/json',
+          },
+          body: readingRequest(domain),
+        });
+        expect(response.status).toBe(200);
+        const payload = (await response.json()) as {
+          state?: unknown;
+          reading?: {
+            calculationSummary?: {
+              pillars: Record<string, unknown>;
+              fiveElements?: readonly unknown[];
+              tenGods?: readonly unknown[];
+            };
+          };
+        };
+        expect(payload.state).toBe('delivered');
+        const calculationSummary = payload.reading?.calculationSummary;
+        expect(calculationSummary?.pillars).toBeDefined();
+        if (calculationSummary === undefined) {
+          throw new Error(`Missing real canonical calculation summary for ${domain}.`);
+        }
+        summaries.push(calculationSummary);
+      }
+      expect(summaries).toHaveLength(5);
+      for (const summary of summaries.slice(1)) {
+        expect(summary.pillars).toEqual(summaries[0]?.pillars);
+        expect(summary.fiveElements).toEqual(summaries[0]?.fiveElements);
+        expect(summary.tenGods).toEqual(summaries[0]?.tenGods);
+      }
+    } finally {
+      await close(runtime.server);
+    }
+  });
+
   it('delivers spouse Preview through the bounded Official Reading lane', async () => {
     const runtime = createMyeonghwaProductionPreviewOnlyCalculationProcessV1(environment());
     const origin = await listenEphemeral(runtime.server);
