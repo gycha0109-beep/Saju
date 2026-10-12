@@ -35,6 +35,7 @@ import {
   isPreviewE2eSupportedReadingSection,
 } from './preview-authority.js';
 import { requirePreviewSemanticAdmissionV1 } from './preview-semantic-admission.js';
+import { createGeneralNatalIntegratedPreviewProductHost } from '../host/general-natal-integrated-preview-host.js';
 
 export const PREVIEW_E2E_RUNTIME_VERSION = 'myeonghwa-preview-e2e-runtime-v3' as const;
 export const PREVIEW_E2E_OUTPUT_SCHEMA_VERSION = 'myeonghwa-narrative-draft-v1' as const;
@@ -576,25 +577,30 @@ async function createSpousePositionOnlyPreviewProductHost(
   });
 }
 
-function isSpousePositionOnlyPreviewRequest(body: unknown): boolean {
+type PreviewReadingLane = 'general_natal' | 'spouse_position_only' | 'default';
+
+function previewReadingLane(body: unknown): PreviewReadingLane {
   try {
     const parsed = parseProductHostReadingRequest(body);
     const normalized = normalizeConsumerReadingRequest({
-      requestId: 'preview_spouse_route_probe',
+      requestId: 'preview_route_probe',
       text: parsed.reading.text,
       ...(parsed.reading.targetPersonRef === undefined
         ? {}
         : { targetPersonRef: parsed.reading.targetPersonRef }),
     });
-    return (
-      normalized.state === 'resolved' &&
-      normalized.request?.intent.domain === 'relationship' &&
-      normalized.request.intent.temporalScope === 'natal' &&
-      normalized.request.intent.relationshipScope === 'spouse'
-    );
+    const intent = normalized.request?.intent;
+    if (normalized.state !== 'resolved' || intent?.temporalScope !== 'natal') {
+      return 'default';
+    }
+    if (intent.domain === 'general') return 'general_natal';
+    if (intent.domain === 'relationship' && intent.relationshipScope === 'spouse') {
+      return 'spouse_position_only';
+    }
   } catch {
-    return false;
+    // Let the existing host return the governed invalid-input result.
   }
+  return 'default';
 }
 
 export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
@@ -604,6 +610,9 @@ export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
 
   const now = new Date();
   const defaultHost = createDefaultPreviewProductHost(now);
+  // General's integrated bounded T8 registry excludes the research-only
+  // cross-family consumer synthesis bundled by the specialist registry.
+  const generalHost = createGeneralNatalIntegratedPreviewProductHost();
   let spouseHostPromise: Promise<MyeonghwaProductHost> | undefined;
 
   function spouseHost(): Promise<MyeonghwaProductHost> {
@@ -613,9 +622,9 @@ export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
 
   return {
     async requestReading(body: unknown) {
-      if (isSpousePositionOnlyPreviewRequest(body)) {
-        return (await spouseHost()).requestReading(body);
-      }
+      const lane = previewReadingLane(body);
+      if (lane === 'general_natal') return generalHost.requestReading(body);
+      if (lane === 'spouse_position_only') return (await spouseHost()).requestReading(body);
       return defaultHost.requestReading(body);
     },
   };

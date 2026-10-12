@@ -128,6 +128,12 @@ describe('provisionally approved preview E2E runtime', () => {
       expect(serialized).toContain('"readingId":"official_reading_');
       expect(serialized).toContain('주요 해석');
       expect(serialized).toContain('해석 범위');
+      // The default specialist pack also contains unadmitted General
+      // cross-family consumer syntheses. General Preview must not use them.
+      expect(serialized).toContain('월지');
+      expect(serialized).not.toContain(
+        '여러 가지를 두루 생각하지만, 결국 직접 해보고 결과를 만들어야',
+      );
     } finally {
       await close(runtime.server);
     }
