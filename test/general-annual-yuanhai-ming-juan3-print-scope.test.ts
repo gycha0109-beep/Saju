@@ -169,7 +169,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(sequence).toEqual(a.fiveRatsStemBranchSequence);
     expect(sequence[5]).toBe('己巳');
     expect(a.mechanicallyValidHourPillar).toBe('己巳');
-    expect(heavenly.includes(a.anomalousOcrHourPillar[0])).toBe(false);
+    expect(heavenly.includes(a.anomalousOcrHourPillar.charAt(0))).toBe(false);
     expect(a.anomalousOcrHourPillar).toBe('巳巳');
     expect(a.originalHourFirstGlyphPalaeographicallyAdjudicated).toBe(false);
     expect(a.historicalPersonBirthPillarsAuthenticated).toBe(false);
