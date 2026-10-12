@@ -13,7 +13,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v5');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v6');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -82,11 +82,13 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED)
       .toContain('TARGET_JUAN_THREE_IS_NLC_PHYSICAL_BOOK_TWO_NOT_BOOK_ONE');
     expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED)
-      .toContain('NO_INDEPENDENT_SECOND_PHYSICAL_EDITION_WITH_FOCAL_GLYPHS_COLLATED');
+      .toContain('CHONGZHEN_1634_PRINTED_WOOD_VARIANT_VERIFIED_ARCHETYPE_UNDECIDED');
+    expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED)
+      .toContain('CONFIRMED_PRINT_VARIANT_DOES_NOT_LICENSE_GENERAL_TRIPLE_CLASH_PRECEDENCE');
     expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED)
       .toContain('PREVIOUS_NLC_PRINT_WOOD_READING_RETRACTED_AFTER_SECOND_PASS');
     expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED)
-      .toContain('OTHER_MING_EDITION_OCR_WOOD_REQUIRES_INDEPENDENT_PRINT_COLLATION');
+      .toContain('WANLI_WEI_VERSUS_CHONGZHEN_WOOD_DISTINCT_SETTING_NO_TEXTUAL_GENEALOGY_DECISION');
   });
 
   test('second 160-page Taiwan scan aligns to NLC without inventing independent edition or semantic authorization', () => {
@@ -109,7 +111,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     );
   });
 
-  test('Chongzhen 1634 wood OCR is traced to physical book two/printed juan two, without fake glyph verification', () => {
+  test('Chongzhen 1634 printed juan two p19 directly reads 木 in a distinct focal print setting', () => {
     expect(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR).toMatchObject({
       ocrBookCollectionId: 'NGJ892411999032112149610',
       scannedPhysicalBookId: 'NLC892-411999032112-149611',
@@ -118,29 +120,39 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       printedJuan: 2,
       scanPdfPageCount: 36,
       observedOcrPhrase: '亥卯木合起羊刃',
-      targetPdfPageOneBased: null,
-      targetColumn: null,
-      originalPrintGlyph: null,
-      directOriginalPrintInspectionCompleted: false,
-      distinctFocalWoodblocksEstablished: false,
-      independentCollationCredit: 0,
-      evidenceTier: 'ocr_with_bibliographic_source_located_print_uninspected',
+      targetPdfPageOneBased: 19,
+      targetColumn: 'left-hand folio, vertical column containing 亥卯木合起羊刃',
+      scannedPageImageWidthPx: 4081,
+      scannedPageImageHeightPx: 3563,
+      originalPrintGlyph: '木',
+      directlyInspectedPrintPhrase: '亥卯木合起羊刃',
+      hourPillarVisualCandidate: '己巳',
+      hourFirstGlyphFinallyAdjudicated: false,
+      directOriginalPrintInspectionCompleted: true,
+      distinctFocalTypesettingObserved: true,
+      distinctFocalWoodblocksEstablished: true,
+      textualGenealogyIndependenceEstablished: false,
+      independentCollationCredit: 1,
+      evidenceTier: 'facsimile_directly_inspected_distinct_focal_setting',
     });
     expect(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.pdfUrl)
       .toContain('149611_');
+    expect(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.originalPdfSha256)
+      .toMatch(/^[0-9a-f]{64}$/);
     expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED).toContain(
-      'CHONGZHEN_1634_PRINTED_JUAN_TWO_SECOND_PHYSICAL_BOOK_IDENTIFIED_UNINSPECTED',
+      'CHONGZHEN_1634_PRINTED_WOOD_VARIANT_VERIFIED_ARCHETYPE_UNDECIDED',
     );
   });
 
-  test('one confirmed local edition lineage and two inspected scans plus one uninspected locator never promote semantics', () => {
+  test('two distinct printed settings from three scans prove variant, never authorize semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
-      'ming_juan3_page11_wei_verified_hour_stem_provisional',
+      'wanli_wei_and_chongzhen_wood_print_variant_confirmed_meaning_held',
     );
     expect(scope.digitalWitnessRecordsTotal).toBe(6);
-    expect(scope.independentlyCollatedPrintedWitnessCount).toBe(1);
-    expect(scope.directlyInspectedScanDocumentsCount).toBe(2);
+    expect(scope.independentlyCollatedPrintedWitnessCount).toBe(2);
+    expect(scope.directlyInspectedScanDocumentsCount).toBe(3);
+    expect(scope.textualGenealogyIndependenceEstablished).toBe(false);
     expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
     expect(scope.woodOcrOriginPrintLocator).toBe(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR);
     expect(scope.additionalTextWitnesses)
@@ -150,12 +162,13 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       twoMoreDigitalTranscriptsCompared: true,
       sourcePdfPageColumnIdentified: true,
       secondPrintScanLocusDirectlyCompared: true,
-      independentSecondPrintEditionEstablished: false,
+      independentSecondPrintEditionEstablished: true,
+      textualGenealogyIndependenceEstablished: false,
       chongzhenOcrOriginIdentified: true,
-      chongzhenFocalPrintGlyphVerified: false,
-      distinctChongzhenFocalWoodblocksEstablished: false,
+      chongzhenFocalPrintGlyphVerified: true,
+      distinctChongzhenFocalWoodblocksEstablished: true,
       actualPrintedUnGlyphConfirmed: true,
-      actualPrintedWoodGlyphConfirmed: false,
+      actualPrintedWoodGlyphConfirmed: true,
       actualPrintedHourStemConfirmed: false,
       digitalMajorityVoteAuthorized: false,
       fullyValidatedSixPillarHistoricalCase: false,
@@ -180,7 +193,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     });
     expect(scope.verifiedLocalNlcPrint.pdfSha256).toMatch(/^[0-9a-f]{64}$/);
     expect(scope.authority.actualPrintedUnGlyphConfirmed).toBe(true);
-    expect(scope.authority.actualPrintedWoodGlyphConfirmed).toBe(false);
+    expect(scope.authority.actualPrintedWoodGlyphConfirmed).toBe(true);
     expect(scope.authority.actualPrintedHourStemConfirmed).toBe(false);
     expect(scope.adjudicatedPrintedGlyph).toBeNull();
     expect(scope.adjudicatedHistoricalWinner).toBeNull();
