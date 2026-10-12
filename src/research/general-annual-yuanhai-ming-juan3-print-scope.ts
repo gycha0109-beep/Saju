@@ -7,11 +7,13 @@ import {
 /**
  * Bibliographic location is NOT a leaf-level facsimile collation.
  * The referenced NLC physical book #2 contains printed juan 3. Two
- * further text witnesses are derived from print/normalized transcripts;
- * neither authorizes majority voting or an annual clash resolver.
+ * further text witnesses are derived from print/normalized transcripts.
+ * Direct user-supplied NLC PDF p.11 visual inspection reads 木, not the
+ * same NLC OCR's 未. This single witness does not settle other editions,
+ * ambiguous hour-stem form, or an annual clash resolver.
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-ming-juan3-book-correction-and-digital-witness-v1' as const;
+  'sa7d-yuanhai-ming-juan3-direct-print-collation-v2' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -38,9 +40,9 @@ export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
     relevantTargetJuanThreePresent: true as const,
     suitableForTargetGlyphInspection: true as const,
     editionDateCatalogRange: '明萬曆 (1573–1620)' as const,
-    targetLeafPageOneBasedConfirmed: null,
-    targetPrintColumnConfirmed: null,
-    targetPrintedUnOrMuGlyphConfirmed: null,
+    targetLeafPageOneBasedConfirmed: 11 as const,
+    targetPrintColumnConfirmed: 'right-hand folio, column containing 運行辛亥亥卯木合起羊刃' as const,
+    targetPrintedUnOrMuGlyphConfirmed: '木' as const,
   }),
 ] as const);
 
@@ -96,7 +98,9 @@ export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
 
 export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'TARGET_JUAN_THREE_IS_NLC_PHYSICAL_BOOK_TWO_NOT_BOOK_ONE',
-  'ACTUAL_TARGET_PAGE_COLUMN_AND_PRINTED_WEI_OR_MU_GLYPH_NOT_YET_VERIFIED',
+  'ONE_NLC_PRINTED_WOOD_GLYPH_CONFIRMED_OTHER_EDITION_GLYPHS_NOT_ADJUDICATED',
+  'NLC_OCR_WEI_DISAGREES_WITH_VISUALLY_INSPECTED_NLC_PRINT_WOOD',
+  'NLC_PRINTED_HOUR_FIRST_GLYPH_STILL_PALEOGRAPHICALLY_UNRESOLVED',
   'NLC_PRINT_DERIVED_OCR_HOUR_PILLAR_SAYS_SI_SI_WHILE_OTHER_TRANSCRIPTS_SAY_JI_SI',
   'NO_INDEPENDENT_SECOND_PHYSICAL_EDITION_WITH_FOCAL_GLYPHS_COLLATED',
   'WEB_TEXT_VOTES_DO_NOT_ESTABLISH_ORIGINAL_GLYPH_OR_EDITION_LINEAGE',
@@ -116,7 +120,8 @@ export function buildYuanHaiMingJuan3PrintScope() {
     additions.length !== 2 ||
     books[0]?.relevantTargetJuanThreePresent !== false ||
     books[1]?.relevantTargetJuanThreePresent !== true ||
-    books[1]?.targetLeafPageOneBasedConfirmed !== null ||
+    books[1]?.targetLeafPageOneBasedConfirmed !== 11 ||
+    books[1]?.targetPrintedUnOrMuGlyphConfirmed !== '木' ||
     additions.some((x) =>
       x.focalPrintImagePageAndColumnVerified ||
       x.physicallyIndependentFromOtherScansEstablished) ||
@@ -138,21 +143,35 @@ export function buildYuanHaiMingJuan3PrintScope() {
   }
 
   const material = {
-    status: 'ming_physical_book_location_corrected_leaf_glyph_still_unverified' as const,
+    status: 'ming_juan3_page11_wood_glyph_verified_hour_stem_unresolved' as const,
     version: YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION,
     upstreamDigitalSixPillarHash: prior.witnessHash,
     sources: books,
     additionalTextWitnesses: additions,
     digitalWitnessRecordsTotal: 6 as const,
-    independentlyCollatedPrintedWitnessCount: 0 as const,
+    independentlyCollatedPrintedWitnessCount: 1 as const,
+    verifiedLocalNlcPrint: Object.freeze({
+      sourceBookId: 'NLC892-2642-210288' as const,
+      pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
+      pdfPageOneBased: 11 as const,
+      scannedPageImageWidthPx: 1483 as const,
+      scannedPageImageHeightPx: 1404 as const,
+      locus: 'right-hand folio, column 運行辛亥亥卯木合起羊刃' as const,
+      printedPhrase: '亥卯木合起羊刃' as const,
+      verifiedTripleFinalGlyph: '木' as const,
+      conflictingNlcOcrPhrase: '亥卯未合起羊刃' as const,
+      hourPillarFirstGlyph: null,
+      printReadingScope: 'single_NLC_physical_print_only' as const,
+      inspection: 'manual_visual_scan_checked' as const,
+    }),
     unresolvedTextualDisagreements: YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
     unresolved: YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
     authority: Object.freeze({
       correctPhysicalBookForPrintedJuanThreeIdentified: true as const,
       twoMoreDigitalTranscriptsCompared: true as const,
-      sourcePdfPageColumnIdentified: false as const,
+      sourcePdfPageColumnIdentified: true as const,
       actualPrintedUnGlyphConfirmed: false as const,
-      actualPrintedWoodGlyphConfirmed: false as const,
+      actualPrintedWoodGlyphConfirmed: true as const,
       actualPrintedHourStemConfirmed: false as const,
       digitalMajorityVoteAuthorized: false as const,
       fullyValidatedSixPillarHistoricalCase: false as const,
@@ -161,7 +180,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
       personalAnnualReadingAuthorized: false as const,
       productionAuthorized: false as const,
     }),
-    adjudicatedPrintedGlyph: null,
+    adjudicatedPrintedGlyph: null, // no cross-edition archetype adjudication
     adjudicatedHistoricalWinner: null,
     modernInterpretationClaim: null,
   };
