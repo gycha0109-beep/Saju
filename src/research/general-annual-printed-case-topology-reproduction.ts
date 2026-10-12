@@ -72,17 +72,21 @@ export function buildAnnualPrintedTopologyEvidence() {
     patternIds.size !== 2 ||
     ANNUAL_PRINTED_TOPOLOGY_PATTERNS.some((x) =>
       !caseIds.has(x.clauseId) ||
-      !x.branchTriple.includes(x.sharedBranch) ||
-      !x.branchClash.includes(x.sharedBranch) ||
+      !new Set<string>(x.branchTriple).has(x.sharedBranch) ||
+      !new Set<string>(x.branchClash).has(x.sharedBranch) ||
       x.printQuoteProvesCrossTemporalMethod ||
       x.printQuoteProvesGlobalWinner)
   ) throw new Error('Printed analogy evidence or method authority changed');
 
+  const branchToHanja: Readonly<Record<'해' | '묘' | '미' | '유' | '사' | '축', string>> = {
+    해: '亥', 묘: '卯', 미: '未', 유: '酉', 사: '巳', 축: '丑',
+  };
   for (const pattern of ANNUAL_PRINTED_TOPOLOGY_PATTERNS) {
     const clause = CLASSICAL_RESOLUTION_CLAUSES.find((x) => x.id === pattern.clauseId);
+    const classicalGlyphs = new Set<string>(clause?.referencedBranches ?? []);
     if (!clause?.historicalExampleAffirmsResolution ||
-        !pattern.branchTriple.every((x) => clause.referencedBranches.includes(x)) ||
-        !pattern.branchClash.every((x) => clause.referencedBranches.includes(x))) {
+        !pattern.branchTriple.every((x) => classicalGlyphs.has(branchToHanja[x])) ||
+        !pattern.branchClash.every((x) => classicalGlyphs.has(branchToHanja[x]))) {
       throw new Error('Historical quote does not contain the stated branch topology');
     }
   }
