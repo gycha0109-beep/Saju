@@ -159,6 +159,7 @@ export function auditAnnualPrintedTopologyReproduction(
     const sharedSlotAnalogies = branchValueAnalogies.filter((pattern) => {
       if (comparison.sharedSlots.length !== 1) return false;
       const shared = comparison.sharedSlots[0];
+      if (shared === undefined) return false;
       const tripleIndex = comparison.tripleSlots.indexOf(shared);
       const clashIndex = clash.slots.indexOf(shared);
       return tripleIndex !== -1 && clashIndex !== -1 &&
