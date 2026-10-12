@@ -277,13 +277,11 @@ describe('WS-C2 reuse existing authorized-scope T6 in one General Natal interpre
             ? 'VISIBLE_STEMS' : 'BRANCHES'}_THEME`,
         );
         expect(linked?.factRefs).toEqual([item.sourceFactRef]);
-        expect(item.tenGod).toBe(
-          snapshot.derivedFacts.tenGods.status === 'resolved'
-            ? snapshot.derivedFacts.tenGods.value[item.pillar][item.component]?.status === 'resolved'
-              ? snapshot.derivedFacts.tenGods.value[item.pillar][item.component]?.value
-              : undefined
-            : undefined,
-        );
+        if (snapshot.derivedFacts.tenGods.status === 'resolved') {
+          const canonical = snapshot.derivedFacts.tenGods.value[item.pillar][item.component];
+          expect(canonical?.status).toBe('resolved');
+          if (canonical?.status === 'resolved') expect(item.tenGod).toBe(canonical.value);
+        }
       }
       for (const item of evidence.hiddenStemObservations) {
         const fact = snapshot.derivedFacts.hiddenStems?.[item.pillar];
