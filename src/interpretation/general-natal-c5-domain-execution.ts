@@ -132,9 +132,11 @@ export function executeGeneralNatalC5SharedDomainResearch(
     p4Report, options.now?.toISOString(),
   );
   const interpretation = runInterpretation(snapshot, registry, options);
-  if (!interpretation.integrity.valid || interpretation.run.status !== 'completed') {
-    throw new Error('WS_C5_INTERPRETATION_NOT_COMPLETE');
+  if (!interpretation.integrity.valid || interpretation.run.status === 'failed') {
+    throw new Error('WS_C5_INTERPRETATION_INVALID');
   }
+  // A partial research run is legitimate when some optional rules are not
+  // applicable; each domain ReadingProfile reports its own coverage state.
   const domainSource = createBusinessNatalReadingCandidateRegistry(
     options.now?.toISOString(),
   );
@@ -187,6 +189,7 @@ export function executeGeneralNatalC5SharedDomainResearch(
     schemaVersion: GENERAL_NATAL_C5_SHARED_DOMAIN_VERSION,
     registry,
     interpretation,
+    executionCompleteness: interpretation.run.completeness,
     stemEvidence: stemEvidence(snapshot, interpretation),
     c3Evidence,
     c4Evidence,
