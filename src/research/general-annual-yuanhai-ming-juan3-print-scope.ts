@@ -12,10 +12,13 @@ import {
  * horizontal strokes), matching the NLC OCR. The previous p.11 木 reading
  * was an erroneous first-pass visual conclusion; it is explicitly superseded.
  * The hour pillar visually resembles 己巳 but is not independently
- * double-checked, nor does this print establish other editions or precedence.
+ * double-checked. NCL Taiwan PDF p.55 has now been visually compared
+ * with NLC China p.11; a similar column setting is visible. Two PDF
+ * facsimiles do NOT establish two independent woodblock editions,
+ * nor a universal annual clash resolver.
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-ming-juan3-corrected-print-collation-v3' as const;
+  'sa7d-yuanhai-ming-juan3-ncl-second-scan-comparison-v4' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -81,6 +84,28 @@ export const YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES = Object.freeze([
   }),
 ]);
 
+/** A second directly inspected scan, not an independently established edition. */
+export const YUANHAI_NCL_TAIWAN_PRINT_SCAN = Object.freeze({
+  id: 'NCL-06593' as const,
+  originalPdfUrl: 'https://commons.wikimedia.org/wiki/File:NCL-06593_刻京臺增補淵海子平大全.pdf' as const,
+  pdfSha256: '9e95627dd6811e6f3daff83c8413dd32a748362f09591be1dadcea1d2be277a6' as const,
+  pdfPageCount: 160 as const,
+  printedJuan: 3 as const,
+  pdfPageOneBased: 55 as const,
+  referenceNlcPdfPageOneBased: 11 as const,
+  pageRasterWidthPx: 3185 as const,
+  pageRasterHeightPx: 3139 as const,
+  location: 'right-hand folio immediately before 論刑合' as const,
+  directVisualTripleGlyphReading: '未' as const,
+  contextualPhrase: '運行辛亥亥卯未合起羊刃' as const,
+  hourPillarVisualCandidate: '己巳' as const,
+  hourStemIndependentlyAdjudicated: false as const,
+  matchingColumnArrangementObserved: true as const,
+  distinctWoodblockEditionEstablished: false as const,
+  independentWitnessCredit: 0 as const,
+  origin: 'user_provided_full_pdf_manual_visual_comparison' as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,
@@ -101,6 +126,7 @@ export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
 export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'TARGET_JUAN_THREE_IS_NLC_PHYSICAL_BOOK_TWO_NOT_BOOK_ONE',
   'OTHER_MING_EDITION_OCR_WOOD_REQUIRES_INDEPENDENT_PRINT_COLLATION',
+  'NCL_TAIWAN_AND_NLC_SCANS_MATCH_SETTING_BUT_INDEPENDENT_EDITION_NOT_ESTABLISHED',
   'NLC_PRINTED_HOUR_FIRST_GLYPH_VISUALLY_FAVORS_JI_NEEDS_SECOND_INDEPENDENT_READING',
   'PREVIOUS_NLC_PRINT_WOOD_READING_RETRACTED_AFTER_SECOND_PASS',
   'NLC_PRINT_DERIVED_OCR_HOUR_PILLAR_SAYS_SI_SI_WHILE_OTHER_TRANSCRIPTS_SAY_JI_SI',
@@ -120,6 +146,8 @@ export function buildYuanHaiMingJuan3PrintScope() {
     prior.authority.productionAuthorized ||
     books.length !== 2 ||
     additions.length !== 2 ||
+    YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_NCL_TAIWAN_PRINT_SCAN.distinctWoodblockEditionEstablished ||
     books[0]?.relevantTargetJuanThreePresent !== false ||
     books[1]?.relevantTargetJuanThreePresent !== true ||
     books[1]?.targetLeafPageOneBasedConfirmed !== 11 ||
@@ -151,7 +179,9 @@ export function buildYuanHaiMingJuan3PrintScope() {
     sources: books,
     additionalTextWitnesses: additions,
     digitalWitnessRecordsTotal: 6 as const,
-    independentlyCollatedPrintedWitnessCount: 1 as const,
+    independentlyCollatedPrintedWitnessCount: 1 as const, // not two independent woodblock witnesses
+    directlyInspectedScanDocumentsCount: 2 as const,
+    nclTaiwanFacsimile: YUANHAI_NCL_TAIWAN_PRINT_SCAN,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
@@ -176,6 +206,8 @@ export function buildYuanHaiMingJuan3PrintScope() {
       correctPhysicalBookForPrintedJuanThreeIdentified: true as const,
       twoMoreDigitalTranscriptsCompared: true as const,
       sourcePdfPageColumnIdentified: true as const,
+      secondPrintScanLocusDirectlyCompared: true as const,
+      independentSecondPrintEditionEstablished: false as const,
       actualPrintedUnGlyphConfirmed: true as const,
       actualPrintedWoodGlyphConfirmed: false as const,
       actualPrintedHourStemConfirmed: false as const,
