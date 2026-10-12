@@ -11,7 +11,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v2');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v3');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -29,8 +29,8 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       relevantTargetJuanThreePresent: true,
       suitableForTargetGlyphInspection: true,
       targetLeafPageOneBasedConfirmed: 11,
-      targetPrintColumnConfirmed: 'right-hand folio, column containing 運行辛亥亥卯木合起羊刃',
-      targetPrintedUnOrMuGlyphConfirmed: '木',
+      targetPrintColumnConfirmed: 'right-hand folio, column containing 運行辛亥亥卯未合起羊刃',
+      targetPrintedUnOrMuGlyphConfirmed: '未',
     });
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[1].originalPdfUrl).toContain(
       'upload.wikimedia.org/wikipedia/commons/e/e9/NLC892-2642-210288_',
@@ -63,7 +63,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     )).toBe(true);
   });
 
-  test('local print reads 木 but cross-edition 未/木 and 己/巳 disagreements remain non-normalized', () => {
+  test('second-pass NLC print reads 未, retracts prior 木 misreading and preserves other-edition uncertainty', () => {
     expect(YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS).toHaveLength(2);
     expect(YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS[0]).toMatchObject({
       locus: 'HAI_MAO_WEI_OR_WOOD',
@@ -82,13 +82,15 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED)
       .toContain('NO_INDEPENDENT_SECOND_PHYSICAL_EDITION_WITH_FOCAL_GLYPHS_COLLATED');
     expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED)
-      .toContain('NLC_OCR_WEI_DISAGREES_WITH_VISUALLY_INSPECTED_NLC_PRINT_WOOD');
+      .toContain('PREVIOUS_NLC_PRINT_WOOD_READING_RETRACTED_AFTER_SECOND_PASS');
+    expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED)
+      .toContain('OTHER_MING_EDITION_OCR_WOOD_REQUIRES_INDEPENDENT_PRINT_COLLATION');
   });
 
-  test('one directly inspected NLC print is separate from six digital transcriptions and does not promote semantics', () => {
+  test('one inspected NLC print with corrected 未 is separate from six digital transcriptions and never promotes semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
-      'ming_juan3_page11_wood_glyph_verified_hour_stem_unresolved',
+      'ming_juan3_page11_wei_verified_hour_stem_provisional',
     );
     expect(scope.digitalWitnessRecordsTotal).toBe(6);
     expect(scope.independentlyCollatedPrintedWitnessCount).toBe(1);
@@ -98,8 +100,8 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       correctPhysicalBookForPrintedJuanThreeIdentified: true,
       twoMoreDigitalTranscriptsCompared: true,
       sourcePdfPageColumnIdentified: true,
-      actualPrintedUnGlyphConfirmed: false,
-      actualPrintedWoodGlyphConfirmed: true,
+      actualPrintedUnGlyphConfirmed: true,
+      actualPrintedWoodGlyphConfirmed: false,
       actualPrintedHourStemConfirmed: false,
       digitalMajorityVoteAuthorized: false,
       fullyValidatedSixPillarHistoricalCase: false,
@@ -111,15 +113,20 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.verifiedLocalNlcPrint).toMatchObject({
       sourceBookId: 'NLC892-2642-210288',
       pdfPageOneBased: 11,
-      verifiedTripleFinalGlyph: '木',
-      printedPhrase: '亥卯木合起羊刃',
-      conflictingNlcOcrPhrase: '亥卯未合起羊刃',
+      verifiedTripleFinalGlyph: '未',
+      printedPhrase: '亥卯未合起羊刃',
+      matchingNlcOcrPhrase: '亥卯未合起羊刃',
+      differentEditionOcrPhrase: '亥卯木合起羊刃',
+      hourPillarVisualCandidate: '己巳',
       hourPillarFirstGlyph: null,
+      hourPillarReviewState: 'single_scan_visual_candidate_not_double_checked',
+      firstPassWoodReadingRetracted: true,
       printReadingScope: 'single_NLC_physical_print_only',
       inspection: 'manual_visual_scan_checked',
     });
     expect(scope.verifiedLocalNlcPrint.pdfSha256).toMatch(/^[0-9a-f]{64}$/);
-    expect(scope.authority.actualPrintedUnGlyphConfirmed).toBe(false);
+    expect(scope.authority.actualPrintedUnGlyphConfirmed).toBe(true);
+    expect(scope.authority.actualPrintedWoodGlyphConfirmed).toBe(false);
     expect(scope.authority.actualPrintedHourStemConfirmed).toBe(false);
     expect(scope.adjudicatedPrintedGlyph).toBeNull();
     expect(scope.adjudicatedHistoricalWinner).toBeNull();
