@@ -4,6 +4,7 @@ import {
   YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION,
   YUANHAI_NLC_PHYSICAL_BOOKS,
   YUANHAI_NCL_TAIWAN_PRINT_SCAN,
+  YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -12,7 +13,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v4');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v5');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -108,7 +109,31 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     );
   });
 
-  test('one confirmed local edition lineage and two scanned documents never promote semantics', () => {
+  test('Chongzhen 1634 wood OCR is traced to physical book two/printed juan two, without fake glyph verification', () => {
+    expect(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR).toMatchObject({
+      ocrBookCollectionId: 'NGJ892411999032112149610',
+      scannedPhysicalBookId: 'NLC892-411999032112-149611',
+      notTargetFirstBookId: 'NLC892-411999032112-149610',
+      physicalBookNumber: 2,
+      printedJuan: 2,
+      scanPdfPageCount: 36,
+      observedOcrPhrase: '亥卯木合起羊刃',
+      targetPdfPageOneBased: null,
+      targetColumn: null,
+      originalPrintGlyph: null,
+      directOriginalPrintInspectionCompleted: false,
+      distinctFocalWoodblocksEstablished: false,
+      independentCollationCredit: 0,
+      evidenceTier: 'ocr_with_bibliographic_source_located_print_uninspected',
+    });
+    expect(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.pdfUrl)
+      .toContain('149611_');
+    expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED).toContain(
+      'CHONGZHEN_1634_PRINTED_JUAN_TWO_SECOND_PHYSICAL_BOOK_IDENTIFIED_UNINSPECTED',
+    );
+  });
+
+  test('one confirmed local edition lineage and two inspected scans plus one uninspected locator never promote semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
       'ming_juan3_page11_wei_verified_hour_stem_provisional',
@@ -117,6 +142,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.independentlyCollatedPrintedWitnessCount).toBe(1);
     expect(scope.directlyInspectedScanDocumentsCount).toBe(2);
     expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
+    expect(scope.woodOcrOriginPrintLocator).toBe(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR);
     expect(scope.additionalTextWitnesses)
       .toBe(YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES);
     expect(scope.authority).toMatchObject({
@@ -125,6 +151,9 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       sourcePdfPageColumnIdentified: true,
       secondPrintScanLocusDirectlyCompared: true,
       independentSecondPrintEditionEstablished: false,
+      chongzhenOcrOriginIdentified: true,
+      chongzhenFocalPrintGlyphVerified: false,
+      distinctChongzhenFocalWoodblocksEstablished: false,
       actualPrintedUnGlyphConfirmed: true,
       actualPrintedWoodGlyphConfirmed: false,
       actualPrintedHourStemConfirmed: false,
