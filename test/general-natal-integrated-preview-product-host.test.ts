@@ -39,6 +39,20 @@ describe('WS-D integrated General Natal actual ProductHost entry', () => {
     expect(GENERAL_NATAL_INTEGRATED_PREVIEW_HOST_VERSION).toContain('preview');
   });
 
+  it('does not present an unknown birth hour as a resolved hour in a real consumer reading', async () => {
+    const response = await host().requestReading({
+      birth: { ...birth, time: null },
+      reading: { text: '전체 사주', outputPreferences: { preferredDetail: 'standard' } },
+    });
+    if (response.reading === undefined) {
+      expect(response.state).not.toBe('delivered');
+      return;
+    }
+    expect(response.state).toBe('delivered');
+    expect(response.reading.subject.birthInputDisplay.timeKnown).toBe(false);
+    expect(response.reading.calculationSummary.pillars.hour.status).not.toBe('resolved');
+  });
+
   it('does not turn General Natal research producers into Career or Annual coverage', async () => {
     const client = host();
     for (const reading of ['직업 사주', '올해 운세']) {
