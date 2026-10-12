@@ -15,10 +15,14 @@ import {
  * double-checked. NCL Taiwan PDF p.55 has now been visually compared
  * with NLC China p.11; a similar column setting is visible. Two PDF
  * facsimiles do NOT establish two independent woodblock editions,
- * nor a universal annual clash resolver.
+ * nor a universal annual clash resolver. User-supplied Chongzhen (1634)
+ * NLC book two PDF p.19 LEFT folio now directly reads 亥卯木合起羊刃.
+ * It has a demonstrably different focal print layout from the Wanli
+ * 未 reading (but archetype, genealogy and semantic precedence remain open).
+
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-chongzhen-vol2-source-identified-unread-v5' as const;
+  'sa7d-yuanhai-chongzhen-page19-wood-print-variant-v6' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -109,8 +113,10 @@ export const YUANHAI_NCL_TAIWAN_PRINT_SCAN = Object.freeze({
 /**
  * Origin of the contradictory 木 OCR is now bibliographically located:
  * a 1634 Chongzhen imprint, printed juan two in physical book two.
- * Its facsimile has NOT been acquired or inspected at the target glyph;
- * a different edition/title/date does not prove different focal woodblocks.
+ * The full facsimile is now directly inspected: printed juan two in physical
+ * book two, PDF p.19 left folio. The locus has 木 in 亥卯木合起羊刃.
+ * Divergent column typography/layout against the Wanli p.11 print is observed.
+ * This proves a local print variant, not an archetypal reading or a fate rule.
  */
 export const YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR = Object.freeze({
   ocrBookCollectionId: 'NGJ892411999032112149610' as const,
@@ -124,13 +130,21 @@ export const YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR = Object.freeze({
   physicalBookNumber: 2 as const,
   printedJuan: 2 as const,
   scanPdfPageCount: 36 as const,
-  targetPdfPageOneBased: null,
-  targetColumn: null,
-  originalPrintGlyph: null,
-  directOriginalPrintInspectionCompleted: false as const,
-  distinctFocalWoodblocksEstablished: false as const,
-  independentCollationCredit: 0 as const,
-  evidenceTier: 'ocr_with_bibliographic_source_located_print_uninspected' as const,
+  targetPdfPageOneBased: 19 as const,
+  targetColumn: 'left-hand folio, vertical column containing 亥卯木合起羊刃' as const,
+  scannedPageImageWidthPx: 4081 as const,
+  scannedPageImageHeightPx: 3563 as const,
+  originalPdfSha256: '43b9444f485422618353dbaf21815384cab815418cf0994cfa5e72f0f4f5b23f' as const,
+  originalPrintGlyph: '木' as const,
+  directlyInspectedPrintPhrase: '亥卯木合起羊刃' as const,
+  hourPillarVisualCandidate: '己巳' as const,
+  hourFirstGlyphFinallyAdjudicated: false as const,
+  directOriginalPrintInspectionCompleted: true as const,
+  distinctFocalTypesettingObserved: true as const,
+  distinctFocalWoodblocksEstablished: true as const,
+  textualGenealogyIndependenceEstablished: false as const,
+  independentCollationCredit: 1 as const,
+  evidenceTier: 'facsimile_directly_inspected_distinct_focal_setting' as const,
 } as const);
 
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
@@ -152,13 +166,13 @@ export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
 
 export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'TARGET_JUAN_THREE_IS_NLC_PHYSICAL_BOOK_TWO_NOT_BOOK_ONE',
-  'OTHER_MING_EDITION_OCR_WOOD_REQUIRES_INDEPENDENT_PRINT_COLLATION',
-  'CHONGZHEN_1634_PRINTED_JUAN_TWO_SECOND_PHYSICAL_BOOK_IDENTIFIED_UNINSPECTED',
+  'CHONGZHEN_1634_PRINTED_WOOD_VARIANT_VERIFIED_ARCHETYPE_UNDECIDED',
+  'WANLI_WEI_VERSUS_CHONGZHEN_WOOD_DISTINCT_SETTING_NO_TEXTUAL_GENEALOGY_DECISION',
   'NCL_TAIWAN_AND_NLC_SCANS_MATCH_SETTING_BUT_INDEPENDENT_EDITION_NOT_ESTABLISHED',
   'NLC_PRINTED_HOUR_FIRST_GLYPH_VISUALLY_FAVORS_JI_NEEDS_SECOND_INDEPENDENT_READING',
   'PREVIOUS_NLC_PRINT_WOOD_READING_RETRACTED_AFTER_SECOND_PASS',
   'NLC_PRINT_DERIVED_OCR_HOUR_PILLAR_SAYS_SI_SI_WHILE_OTHER_TRANSCRIPTS_SAY_JI_SI',
-  'NO_INDEPENDENT_SECOND_PHYSICAL_EDITION_WITH_FOCAL_GLYPHS_COLLATED',
+  'CONFIRMED_PRINT_VARIANT_DOES_NOT_LICENSE_GENERAL_TRIPLE_CLASH_PRECEDENCE',
   'WEB_TEXT_VOTES_DO_NOT_ESTABLISH_ORIGINAL_GLYPH_OR_EDITION_LINEAGE',
   'NO_CLASSICAL_GLOBAL_TRIPLE_CLASH_WINNER_METHOD_FROM_SOURCE_TEXT',
   'MODERN_YEAR_OUTCOME_OR_PERSONAL_FORECAST_NOT_AUTHORIZED',
@@ -177,8 +191,12 @@ export function buildYuanHaiMingJuan3PrintScope() {
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
     YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.physicalBookNumber !== 2 ||
     YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.printedJuan !== 2 ||
-    YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.directOriginalPrintInspectionCompleted ||
-    YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.independentCollationCredit !== 0 ||
+    !YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.directOriginalPrintInspectionCompleted ||
+    YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.originalPrintGlyph !== '木' ||
+    YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.targetPdfPageOneBased !== 19 ||
+    !YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.distinctFocalWoodblocksEstablished ||
+    YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.independentCollationCredit !== 1 ||
+    YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.textualGenealogyIndependenceEstablished ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.distinctWoodblockEditionEstablished ||
     books[0]?.relevantTargetJuanThreePresent !== false ||
     books[1]?.relevantTargetJuanThreePresent !== true ||
@@ -205,14 +223,15 @@ export function buildYuanHaiMingJuan3PrintScope() {
   }
 
   const material = {
-    status: 'ming_juan3_page11_wei_verified_hour_stem_provisional' as const,
+    status: 'wanli_wei_and_chongzhen_wood_print_variant_confirmed_meaning_held' as const,
     version: YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION,
     upstreamDigitalSixPillarHash: prior.witnessHash,
     sources: books,
     additionalTextWitnesses: additions,
     digitalWitnessRecordsTotal: 6 as const,
-    independentlyCollatedPrintedWitnessCount: 1 as const, // not two independent woodblock witnesses
-    directlyInspectedScanDocumentsCount: 2 as const,
+    independentlyCollatedPrintedWitnessCount: 2 as const, // 2 distinct target-page print settings, not 2 stemmata
+    directlyInspectedScanDocumentsCount: 3 as const, // Wanli NLC + Taiwan NCL + Chongzhen NLC
+    textualGenealogyIndependenceEstablished: false as const,
     nclTaiwanFacsimile: YUANHAI_NCL_TAIWAN_PRINT_SCAN,
     woodOcrOriginPrintLocator: YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR,
     verifiedLocalNlcPrint: Object.freeze({
@@ -240,12 +259,13 @@ export function buildYuanHaiMingJuan3PrintScope() {
       twoMoreDigitalTranscriptsCompared: true as const,
       sourcePdfPageColumnIdentified: true as const,
       secondPrintScanLocusDirectlyCompared: true as const,
-      independentSecondPrintEditionEstablished: false as const,
+      independentSecondPrintEditionEstablished: true as const, // different target-page woodblock setting
+      textualGenealogyIndependenceEstablished: false as const,
       chongzhenOcrOriginIdentified: true as const,
-      chongzhenFocalPrintGlyphVerified: false as const,
-      distinctChongzhenFocalWoodblocksEstablished: false as const,
+      chongzhenFocalPrintGlyphVerified: true as const,
+      distinctChongzhenFocalWoodblocksEstablished: true as const,
       actualPrintedUnGlyphConfirmed: true as const,
-      actualPrintedWoodGlyphConfirmed: false as const,
+      actualPrintedWoodGlyphConfirmed: true as const,
       actualPrintedHourStemConfirmed: false as const,
       digitalMajorityVoteAuthorized: false as const,
       fullyValidatedSixPillarHistoricalCase: false as const,
@@ -254,7 +274,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
       personalAnnualReadingAuthorized: false as const,
       productionAuthorized: false as const,
     }),
-    adjudicatedPrintedGlyph: null, // NLC local print 未 != cross-edition archetype adjudication
+    adjudicatedPrintedGlyph: null, // verified separate 未/木 print variants; archetype undecided
     adjudicatedHistoricalWinner: null,
     modernInterpretationClaim: null,
   };
