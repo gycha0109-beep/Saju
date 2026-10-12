@@ -6,6 +6,7 @@ import {
   YUANHAI_NCL_TAIWAN_PRINT_SCAN,
   YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR,
   YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT,
+  YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -14,7 +15,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v7');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v8');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -176,6 +177,39 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(a.permissionToPromoteModernAnnualSemantics).toBe(false);
   });
 
+  test('1548 attributed compilation without a verified facsimile cannot be a printed focal glyph witness', () => {
+    const q = YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT;
+    expect(q.jiajingCompilation1548).toMatchObject({
+      attributedCompilationYear: 1548,
+      attributedCompiler: '楊淙',
+      survivingOriginalFacsimileIdentified: false,
+      verifiedHoldingIdentifier: null,
+      targetPassagePrinted: null,
+      targetPassagePage: null,
+      originalPrintGlyph: null,
+      independentPrintWitnessCredit: 0,
+    });
+    expect(q.searchConclusion).toBe('no_pre1600_focal_locus_directly_collated');
+    expect(q.originalGlyphReconstructionAllowed).toBe(false);
+    expect(q.pre1600IndependentPrintWitnessesAdded).toBe(0);
+  });
+
+  test('Korean original-source tradition is a separate text, not a presumed 1548 copy or proof of anecdote', () => {
+    const q = YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT.koreanEarlierSourceTradition;
+    expect(q).toMatchObject({
+      title: '子平三命通變淵源',
+      prefaceDateClaim: '寶祐元年(1253)',
+      prefaceDateNotSurvivingManuscriptDate: true,
+      reportedWoodblockHolding: 'National Library of Korea',
+      reportedManuscriptHolding: 'Kyujanggak, Seoul National University',
+      focalYuanhaiAnecdotePresent: null,
+      matchesJiajingCompilation1548: false,
+      targetPhraseRead: null,
+      independentPrintWitnessCredit: 0,
+    });
+    expect(q.peerReviewedStudyUrl).toContain('ART001708343');
+  });
+
   test('two distinct printed settings from three scans prove variant, never authorize semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
@@ -185,6 +219,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.independentlyCollatedPrintedWitnessCount).toBe(2);
     expect(scope.directlyInspectedScanDocumentsCount).toBe(3);
     expect(scope.criticalAssessment).toBe(YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT);
+    expect(scope.preWanliSourceAccessAudit).toBe(YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT);
     expect(scope.textualGenealogyIndependenceEstablished).toBe(false);
     expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
     expect(scope.woodOcrOriginPrintLocator).toBe(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR);
@@ -199,6 +234,8 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       textualGenealogyIndependenceEstablished: false,
       annotatedWorkingBaseSelected: true,
       canonicalArchetypeEstablished: false,
+      preWanliOriginalGlyphVerified: false,
+      relatedKoreanSourceFocalPassageVerified: false,
       hourPillarMechanicallyValidated: true,
       hourPillarOriginalGlyphAdjudicated: false,
       chongzhenOcrOriginIdentified: true,
