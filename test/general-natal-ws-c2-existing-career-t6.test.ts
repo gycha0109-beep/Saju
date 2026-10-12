@@ -309,8 +309,18 @@ describe('WS-C2 reuse existing authorized-scope T6 in one General Natal interpre
         intent: { domain: 'general', temporalScope: 'natal' },
       });
       expect(selection.selection.coverageState).toBe('complete');
-      expect(selection.selection.selectedClaimIds).not.toContain(evidence.month.status ===
-        'resolved' ? evidence.month.claimId : '__unresolved__');
+      expect(selection.selection.targetClaimIds.every((id) =>
+        c3.interpretation.claims.find((claim) => claim.claimId === id)?.taxonomy.tier === 'T8'
+      )).toBe(true);
+      // Existing month T2 evidence is already valid upstream reading context.
+      // C3 adds no new claim to the existing interpretation or product selection.
+      const baseline = executeGeneralNatalPositionQualifiedC2Research(snapshot, p4, { now });
+      const priorSelection = buildReadingCompositionEvidence(snapshot, baseline.interpretation,
+        baseline.registry, {
+          requestId: 'ws-c3-internal-axes',
+          intent: { domain: 'general', temporalScope: 'natal' },
+        });
+      expect(selection.selection).toEqual(priorSelection.selection);
     }
     expect(seen).toEqual(new Set(['supporting', 'challenging']));
   });
