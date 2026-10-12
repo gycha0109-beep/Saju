@@ -89,8 +89,13 @@ describe('WS-H: one actual Canonical chart across five Preview Natal readings', 
       expect(semantics.intent.domain).toBe(reading.domain);
       expect(report.sourceSemanticHash).toBe(semantics.semanticHash);
       expect(consumer.calculationSummary.pillars.day.value).toBeTruthy();
-      expect(consumer.calculationSummary.pillars.day.value)
-        .toBe(snapshot.pillars.day.stem + snapshot.pillars.day.branch);
+      if (snapshot.pillars.day.status !== 'resolved') {
+        throw new Error('Known-time real chart must resolve its day pillar.');
+      }
+      const dayPillar = snapshot.pillars.day.value;
+      expect(consumer.calculationSummary.pillars.day.value).toBe(
+        `${dayPillar.stem.value}${dayPillar.branch.value} (${dayPillar.stem.hanja}${dayPillar.branch.hanja})`,
+      );
       const selected = output.execution.preparation.composition?.selection.targetClaimIds ?? [];
       expect(selected.length).toBeGreaterThan(0);
       for (const target of selected) {
