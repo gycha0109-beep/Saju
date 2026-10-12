@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-reading-criticism-working-base-v7' as const;
+  'sa7d-yuanhai-prewanli-source-access-audit-v8' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -192,6 +192,46 @@ export const YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT = Object.freeze({
   permissionToAutoCorrectPrintedWitness: false as const,
 } as const);
 
+/**
+ * Pre-1600 witness search audit. These are bibliographic/research leads,
+ * NOT print collations and not even verified carriers of the focal anecdote.
+ * A 1253 preface date is not a date of any surviving Korean scan.
+ */
+export const YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT = Object.freeze({
+  version: 'yuanhai-prewanli-source-access-audit-v1' as const,
+  jiajingCompilation1548: Object.freeze({
+    attributedCompilationYear: 1548 as const,
+    attributedCompiler: '楊淙' as const,
+    secondaryBibliographyUrl: 'https://www.donglishuzhai.net/books/111.html' as const,
+    modernBibliographicDescriptionUrl: 'https://books.google.com/books?id=pWFeAAAAIAAJ' as const,
+    survivingOriginalFacsimileIdentified: false as const,
+    verifiedHoldingIdentifier: null,
+    targetPassagePrinted: null,
+    targetPassagePage: null,
+    originalPrintGlyph: null,
+    independentPrintWitnessCredit: 0 as const,
+    sourceTier: 'secondary_bibliographic_attribution_no_original_facsimile' as const,
+  }),
+  koreanEarlierSourceTradition: Object.freeze({
+    title: '子平三命通變淵源' as const,
+    prefaceDateClaim: '寶祐元年(1253)' as const,
+    prefaceDateNotSurvivingManuscriptDate: true as const,
+    peerReviewedStudyUrl: 'https://www.kci.go.kr/kciportal/landing/article.kci?arti_id=ART001708343' as const,
+    koreanBibliographicSurveyUrl: 'https://pungseok.com/wp-content/uploads/2018/08/%EC%A1%B0%EC%84%A0%EC%8B%9C%EB%8C%80-%EC%9D%8C%EC%96%91%EA%B3%BC%EC%97%90-%EA%B4%80%ED%95%9C-%EC%97%B0%EA%B5%AC.pdf' as const,
+    reportedWoodblockHolding: 'National Library of Korea' as const,
+    reportedManuscriptHolding: 'Kyujanggak, Seoul National University' as const,
+    focalYuanhaiAnecdotePresent: null,
+    matchesJiajingCompilation1548: false as const,
+    targetPhraseRead: null,
+    independentPrintWitnessCredit: 0 as const,
+    sourceTier: 'related_earlier_work_holdings_not_focal_passage_verified' as const,
+  }),
+  searchConclusion: 'no_pre1600_focal_locus_directly_collated' as const,
+  originalGlyphReconstructionAllowed: false as const,
+  retainWanliLocusWorkingBaseOnly: true as const,
+  pre1600IndependentPrintWitnessesAdded: 0 as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,
@@ -214,6 +254,9 @@ export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'CHONGZHEN_1634_PRINTED_WOOD_VARIANT_VERIFIED_ARCHETYPE_UNDECIDED',
   'WANLI_WEI_VERSUS_CHONGZHEN_WOOD_DISTINCT_SETTING_NO_TEXTUAL_GENEALOGY_DECISION',
   'WORKING_BASE_WANLI_ONLY_NO_ARCHETYPE_ESTABLISHED',
+  'JIAJING_1548_COMPILATION_REFERENCED_ORIGINAL_FACSIMILE_NOT_LOCATED',
+  'KOREAN_ZIPING_YUANYUAN_HOLDINGS_IDENTIFIED_TARGET_ANECDOTE_UNVERIFIED',
+  'PREFACE_1253_NOT_DATE_OF_SURVIVING_MANUSCRIPT',
   'HOUR_JI_SI_CONSISTENT_WITH_FIVE_RATS_BUT_ORIGINAL_GLYPH_NOT_ADJUDICATED',
   'LATER_EDITED_TEXT_MAY_SILENTLY_EMEND_AND_IS_NOT_PRINT_WITNESS',
   'NCL_TAIWAN_AND_NLC_SCANS_MATCH_SETTING_BUT_INDEPENDENT_EDITION_NOT_ESTABLISHED',
@@ -237,6 +280,12 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT.jiajingCompilation1548.survivingOriginalFacsimileIdentified ||
+    YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT.jiajingCompilation1548.originalPrintGlyph !== null ||
+    YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT.koreanEarlierSourceTradition.focalYuanhaiAnecdotePresent !== null ||
+    YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT.koreanEarlierSourceTradition.independentPrintWitnessCredit !== 0 ||
+    YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT.pre1600IndependentPrintWitnessesAdded !== 0 ||
+    YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT.originalGlyphReconstructionAllowed ||
     YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT.mechanicallyValidHourPillar !== '己巳' ||
     YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT.reconstructedArchetypalGlyph !== null ||
     YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT.originalHourFirstGlyphPalaeographicallyAdjudicated ||
@@ -287,6 +336,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     nclTaiwanFacsimile: YUANHAI_NCL_TAIWAN_PRINT_SCAN,
     woodOcrOriginPrintLocator: YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR,
     criticalAssessment: YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT,
+    preWanliSourceAccessAudit: YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
@@ -316,6 +366,8 @@ export function buildYuanHaiMingJuan3PrintScope() {
       textualGenealogyIndependenceEstablished: false as const,
       annotatedWorkingBaseSelected: true as const,
       canonicalArchetypeEstablished: false as const,
+      preWanliOriginalGlyphVerified: false as const,
+      relatedKoreanSourceFocalPassageVerified: false as const,
       hourPillarMechanicallyValidated: true as const,
       hourPillarOriginalGlyphAdjudicated: false as const,
       chongzhenOcrOriginIdentified: true as const,
