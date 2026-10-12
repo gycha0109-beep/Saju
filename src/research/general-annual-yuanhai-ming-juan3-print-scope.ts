@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-chongzhen-page19-wood-print-variant-v6' as const;
+  'sa7d-yuanhai-reading-criticism-working-base-v7' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -147,6 +147,51 @@ export const YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR = Object.freeze({
   evidenceTier: 'facsimile_directly_inspected_distinct_focal_setting' as const,
 } as const);
 
+/**
+ * Textual criticism and calendrical consistency are separate from material
+ * glyph readings and from historical prediction authority.
+ *
+ * The 1600 printed 未 is chosen only as a transparent provisional *locus*
+ * working text: older among the inspected print settings and explicitly
+ * naming the natal year branch in 亥卯未. No earliest-archetype claim.
+ *
+ * For a 甲日, traditional 五鼠遁 yields 甲子 → 乙丑 → 丙寅 → 丁卯
+ * → 戊辰 → 己巳. An OCR `巳巳` cannot be a valid stem/branch pair.
+ * Mechanical admissibility is NOT independent palaeographic confirmation
+ * of the original hour glyph or historical authenticity of the horoscope.
+ */
+export const YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT = Object.freeze({
+  version: 'saju-yuanhai-text-critical-assessment-v1' as const,
+  observedPrintVariants: Object.freeze([
+    Object.freeze({edition: 'wanli_1600' as const, pdfPage: 11 as const, glyph: '未' as const}),
+    Object.freeze({edition: 'chongzhen_1634' as const, pdfPage: 19 as const, glyph: '木' as const}),
+  ] as const),
+  prefaceHistoricalClaim: '1634_preface_claims_merger_and_correction_of_earlier_books' as const,
+  prefaceClaimIndependentVerification: false as const,
+  laterEditionPracticesSilentEmendations: true as const,
+  laterEditedTextAsIndependentPrintWitness: false as const,
+  selectedResearchWorkingBase: 'wanli_1600_printed_亥卯未' as const,
+  workingBasePurpose: 'explicit_locus_specific_annotated_reading_only' as const,
+  workingBaseReason: 'earlier_of_inspected_printings_and_explicit_hai_mao_wei_branch_set' as const,
+  workingBaseIsArchetype: false as const,
+  reconstructedArchetypalGlyph: null,
+  variantCausation: null,
+  chongzhenWoodReadingToBeSilentlyNormalized: false as const,
+  hourPillarFromTranscripts: Object.freeze(['己巳','巳巳'] as const),
+  dayPillarForHourRule: '甲子' as const,
+  assumedHourBranch: '巳' as const,
+  fiveRatsStemBranchSequence: Object.freeze([
+    '甲子','乙丑','丙寅','丁卯','戊辰','己巳',
+  ] as const),
+  mechanicallyValidHourPillar: '己巳' as const,
+  anomalousOcrHourPillar: '巳巳' as const,
+  anomalousOcrReason: 'first_character_is_an_earthly_branch_not_a_heavenly_stem' as const,
+  originalHourFirstGlyphPalaeographicallyAdjudicated: false as const,
+  historicalPersonBirthPillarsAuthenticated: false as const,
+  permissionToPromoteModernAnnualSemantics: false as const,
+  permissionToAutoCorrectPrintedWitness: false as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,
@@ -168,6 +213,9 @@ export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'TARGET_JUAN_THREE_IS_NLC_PHYSICAL_BOOK_TWO_NOT_BOOK_ONE',
   'CHONGZHEN_1634_PRINTED_WOOD_VARIANT_VERIFIED_ARCHETYPE_UNDECIDED',
   'WANLI_WEI_VERSUS_CHONGZHEN_WOOD_DISTINCT_SETTING_NO_TEXTUAL_GENEALOGY_DECISION',
+  'WORKING_BASE_WANLI_ONLY_NO_ARCHETYPE_ESTABLISHED',
+  'HOUR_JI_SI_CONSISTENT_WITH_FIVE_RATS_BUT_ORIGINAL_GLYPH_NOT_ADJUDICATED',
+  'LATER_EDITED_TEXT_MAY_SILENTLY_EMEND_AND_IS_NOT_PRINT_WITNESS',
   'NCL_TAIWAN_AND_NLC_SCANS_MATCH_SETTING_BUT_INDEPENDENT_EDITION_NOT_ESTABLISHED',
   'NLC_PRINTED_HOUR_FIRST_GLYPH_VISUALLY_FAVORS_JI_NEEDS_SECOND_INDEPENDENT_READING',
   'PREVIOUS_NLC_PRINT_WOOD_READING_RETRACTED_AFTER_SECOND_PASS',
@@ -189,6 +237,10 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT.mechanicallyValidHourPillar !== '己巳' ||
+    YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT.reconstructedArchetypalGlyph !== null ||
+    YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT.originalHourFirstGlyphPalaeographicallyAdjudicated ||
+    YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT.permissionToPromoteModernAnnualSemantics ||
     YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.physicalBookNumber !== 2 ||
     YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.printedJuan !== 2 ||
     !YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.directOriginalPrintInspectionCompleted ||
@@ -234,6 +286,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     textualGenealogyIndependenceEstablished: false as const,
     nclTaiwanFacsimile: YUANHAI_NCL_TAIWAN_PRINT_SCAN,
     woodOcrOriginPrintLocator: YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR,
+    criticalAssessment: YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
@@ -261,6 +314,10 @@ export function buildYuanHaiMingJuan3PrintScope() {
       secondPrintScanLocusDirectlyCompared: true as const,
       independentSecondPrintEditionEstablished: true as const, // different target-page woodblock setting
       textualGenealogyIndependenceEstablished: false as const,
+      annotatedWorkingBaseSelected: true as const,
+      canonicalArchetypeEstablished: false as const,
+      hourPillarMechanicallyValidated: true as const,
+      hourPillarOriginalGlyphAdjudicated: false as const,
       chongzhenOcrOriginIdentified: true as const,
       chongzhenFocalPrintGlyphVerified: true as const,
       distinctChongzhenFocalWoodblocksEstablished: true as const,
