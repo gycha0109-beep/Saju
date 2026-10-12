@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import { createBusinessNatalReadingCandidateRegistry } from '../src/research/business-natal-reading-candidate.js';
+import { executeGeneralNatalC5SharedDomainResearch } from '../src/interpretation/general-natal-c5-domain-execution.js';
 import {
   createGeneralNatalPositionQualifiedResearchRegistry,
   createGeneralNatalPositionQualifiedCareerT6ResearchRegistry,
@@ -457,5 +459,108 @@ describe('WS-C2 reuse existing authorized-scope T6 in one General Natal interpre
     expect(hour?.status).not.toBe('resolved');
     expect(original.tiaohou.climateRequirement).toBe('not_determined');
     expect(original.yongxi.primaryUse).toBe('not_determined');
+  });
+
+  it('C5 preserves existing four-domain T8 meanings on the same canonical snapshot', () => {
+    const domains = ['career', 'wealth', 'business', 'relationship'] as const;
+    const baselineRegistry = createBusinessNatalReadingCandidateRegistry(now.toISOString());
+    const observed = new Set<string>();
+    for (const date of dates) {
+      const snapshot = chart(date);
+      const result = executeGeneralNatalC5SharedDomainResearch(snapshot, p4, { now });
+      expect(result).toEqual(executeGeneralNatalC5SharedDomainResearch(snapshot, p4, { now }));
+      const baseline = runInterpretation(snapshot, baselineRegistry, { now });
+      expect(result.interpretation.integrity.valid).toBe(true);
+      expect(result.interpretation.run.snapshotHash).toBe(snapshot.calculationHash);
+      expect(result.c3Evidence.interpretationRunId)
+        .toBe(result.interpretation.run.interpretationRunId);
+      expect(result.c4Evidence.interpretationRunId)
+        .toBe(result.interpretation.run.interpretationRunId);
+      expect(result.productionAuthorityPromoted).toBe(false);
+      expect(result.newT8SemanticsIntroduced).toBe(false);
+      for (const domain of domains) {
+        const view = result.domainReadings[domain];
+        expect(view.semantics).toBe('existing_research_t8_only');
+        expect(view.consumerAuthorizationGranted).toBe(false);
+        expect(view.sharedContextUsedAsDomainPremise).toBe(false);
+        expect(view.selection.intent).toEqual({ domain, temporalScope: 'natal' });
+        const baselineReading = buildReadingCompositionEvidence(
+          snapshot, baseline, baselineRegistry, {
+            requestId: 'ws-c5-baseline-' + domain,
+            intent: { domain, temporalScope: 'natal' },
+          },
+        );
+        const baselineT8 = baseline.claims
+          .filter((claim) =>
+            claim.state === 'active' &&
+            claim.taxonomy.tier === 'T8' &&
+            claim.taxonomy.category === domain
+          )
+          .map((claim) => ({
+            claimType: claim.claimType, value: claim.value,
+            methodologyRef: claim.methodologyRef,
+          }))
+          .sort((left, right) => left.claimType.localeCompare(right.claimType));
+        const c5T8 = result.interpretation.claims
+          .filter((claim) =>
+            claim.state === 'active' &&
+            claim.taxonomy.tier === 'T8' &&
+            claim.taxonomy.category === domain
+          )
+          .map((claim) => ({
+            claimType: claim.claimType, value: claim.value,
+            methodologyRef: claim.methodologyRef,
+          }))
+          .sort((left, right) => left.claimType.localeCompare(right.claimType));
+        expect(c5T8).toEqual(baselineT8);
+        expect(view.selection.coverageState).toBe(baselineReading.selection.coverageState);
+        expect(view.targetClaims.map((claim) => claim.claimType).sort()).toEqual(
+          baselineReading.selection.targetClaimIds.map((id) =>
+            baseline.claims.find((claim) => claim.claimId === id)?.claimType
+          ).sort(),
+        );
+        for (const target of view.targetClaims) {
+          observed.add(domain);
+          const original = result.interpretation.claims.find((claim) =>
+            claim.claimId === target.claimId);
+          expect(original?.taxonomy.category).toBe(domain);
+          expect(original?.taxonomy.tier).toBe('T8');
+          expect(original?.methodologyRef).toEqual(target.methodologyRef);
+          expect(original?.upstreamClaimRefs).toEqual(target.upstreamClaimRefs);
+          expect(original?.factRefs).toEqual(target.factRefs);
+        }
+        expect(view.selection.selectedClaimIds.every((id) =>
+          result.interpretation.claims.some((claim) => claim.claimId === id)
+        )).toBe(true);
+      }
+      const t6ids = new Set(result.interpretation.claims
+        .filter((claim) => claim.taxonomy.tier === 'T6')
+        .map((claim) => claim.claimId));
+      for (const domain of domains) {
+        expect(result.domainReadings[domain].selection.targetClaimIds.every((id) =>
+          !t6ids.has(id)
+        )).toBe(true);
+      }
+      expect(result.c3Evidence.root.tonggen).toBe('not_determined');
+      expect(result.c4Evidence.geju.candidate).toBe('not_determined');
+      expect(result.c4Evidence.yongxi.primaryUse).toBe('not_determined');
+    }
+    expect([...observed].sort()).toEqual([...domains].sort());
+  });
+
+  it('C5 preserves unknown-hour missing positions and requires an intact P4 gate', () => {
+    const snapshot = chart(dates[0]!, false);
+    const result = executeGeneralNatalC5SharedDomainResearch(snapshot, p4, { now });
+    const hour = result.c3Evidence.positionedTenGods.find((item) =>
+      item.pillar === 'hour' && item.component === 'stem'
+    );
+    expect(hour?.status).not.toBe('resolved');
+    expect(result.c4Evidence.tiaohou.climateRequirement).toBe('not_determined');
+    expect(result.c4Evidence.geju.candidate).toBe('not_determined');
+    expect(result.domainReadings.relationship.consumerAuthorizationGranted).toBe(false);
+    const invalidP4 = { ...p4, status: 'UPSTREAM_BOUNDARY_INVALID' as const };
+    expect(() => executeGeneralNatalC5SharedDomainResearch(
+      chart(dates[0]!), invalidP4, { now },
+    )).toThrow();
   });
 });
