@@ -158,7 +158,9 @@ export function executeGeneralNatalC5SharedDomainResearch(
         registry,
         {
           requestId: (options.requestId ?? 'ws-c5-shared') + '-' + domain,
-          intent: { domain, temporalScope: 'natal' },
+          intent: domain === 'relationship'
+            ? { domain, temporalScope: 'natal', relationshipScope: 'general' }
+            : { domain, temporalScope: 'natal' },
         },
       );
       if (reading.profile === undefined) {
