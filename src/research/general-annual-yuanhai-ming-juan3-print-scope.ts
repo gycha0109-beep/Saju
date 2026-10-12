@@ -18,7 +18,7 @@ import {
  * nor a universal annual clash resolver.
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-ming-juan3-ncl-second-scan-comparison-v4' as const;
+  'sa7d-yuanhai-chongzhen-vol2-source-identified-unread-v5' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -106,6 +106,33 @@ export const YUANHAI_NCL_TAIWAN_PRINT_SCAN = Object.freeze({
   origin: 'user_provided_full_pdf_manual_visual_comparison' as const,
 } as const);
 
+/**
+ * Origin of the contradictory 木 OCR is now bibliographically located:
+ * a 1634 Chongzhen imprint, printed juan two in physical book two.
+ * Its facsimile has NOT been acquired or inspected at the target glyph;
+ * a different edition/title/date does not prove different focal woodblocks.
+ */
+export const YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR = Object.freeze({
+  ocrBookCollectionId: 'NGJ892411999032112149610' as const,
+  originalOcrUrl: 'https://www.shidianguji.com/zh/book/NGJ892411999032112149610/chapter/1lqsbrh19ji9f' as const,
+  observedOcrPhrase: '亥卯木合起羊刃' as const,
+  title: '新刊合併官板音義評注淵海子平' as const,
+  printing: '余氏善成堂 明崇禎七年 (1634)' as const,
+  scannedPhysicalBookId: 'NLC892-411999032112-149611' as const,
+  notTargetFirstBookId: 'NLC892-411999032112-149610' as const,
+  pdfUrl: 'https://commons.wikimedia.org/wiki/File:NLC892-411999032112-149611_新刊合併官板音義評注淵海子平_第2冊.pdf' as const,
+  physicalBookNumber: 2 as const,
+  printedJuan: 2 as const,
+  scanPdfPageCount: 36 as const,
+  targetPdfPageOneBased: null,
+  targetColumn: null,
+  originalPrintGlyph: null,
+  directOriginalPrintInspectionCompleted: false as const,
+  distinctFocalWoodblocksEstablished: false as const,
+  independentCollationCredit: 0 as const,
+  evidenceTier: 'ocr_with_bibliographic_source_located_print_uninspected' as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,
@@ -126,6 +153,7 @@ export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
 export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'TARGET_JUAN_THREE_IS_NLC_PHYSICAL_BOOK_TWO_NOT_BOOK_ONE',
   'OTHER_MING_EDITION_OCR_WOOD_REQUIRES_INDEPENDENT_PRINT_COLLATION',
+  'CHONGZHEN_1634_PRINTED_JUAN_TWO_SECOND_PHYSICAL_BOOK_IDENTIFIED_UNINSPECTED',
   'NCL_TAIWAN_AND_NLC_SCANS_MATCH_SETTING_BUT_INDEPENDENT_EDITION_NOT_ESTABLISHED',
   'NLC_PRINTED_HOUR_FIRST_GLYPH_VISUALLY_FAVORS_JI_NEEDS_SECOND_INDEPENDENT_READING',
   'PREVIOUS_NLC_PRINT_WOOD_READING_RETRACTED_AFTER_SECOND_PASS',
@@ -147,6 +175,10 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.physicalBookNumber !== 2 ||
+    YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.printedJuan !== 2 ||
+    YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.directOriginalPrintInspectionCompleted ||
+    YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR.independentCollationCredit !== 0 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.distinctWoodblockEditionEstablished ||
     books[0]?.relevantTargetJuanThreePresent !== false ||
     books[1]?.relevantTargetJuanThreePresent !== true ||
@@ -182,6 +214,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     independentlyCollatedPrintedWitnessCount: 1 as const, // not two independent woodblock witnesses
     directlyInspectedScanDocumentsCount: 2 as const,
     nclTaiwanFacsimile: YUANHAI_NCL_TAIWAN_PRINT_SCAN,
+    woodOcrOriginPrintLocator: YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
@@ -208,6 +241,9 @@ export function buildYuanHaiMingJuan3PrintScope() {
       sourcePdfPageColumnIdentified: true as const,
       secondPrintScanLocusDirectlyCompared: true as const,
       independentSecondPrintEditionEstablished: false as const,
+      chongzhenOcrOriginIdentified: true as const,
+      chongzhenFocalPrintGlyphVerified: false as const,
+      distinctChongzhenFocalWoodblocksEstablished: false as const,
       actualPrintedUnGlyphConfirmed: true as const,
       actualPrintedWoodGlyphConfirmed: false as const,
       actualPrintedHourStemConfirmed: false as const,
