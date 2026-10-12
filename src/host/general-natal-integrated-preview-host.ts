@@ -1,8 +1,7 @@
-import { calculateCanonicalSajuSnapshot } from '../calculation/calculation-engine.js';
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../interpretation/general-natal-integrated-reading-registry.js';
 import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../llm/prompt-compiler.js';
-import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../production/production-calculation-policy.js';
+import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import {
   createMyeonghwaProductHost,
   type MyeonghwaProductHost,
@@ -31,11 +30,9 @@ export function createGeneralNatalIntegratedPreviewProductHost(
 ): MyeonghwaProductHost {
   return createMyeonghwaProductHost({
     calculate(input, context) {
-      return calculateCanonicalSajuSnapshot(
-        input,
-        PRODUCTION_DEFAULT_CALCULATION_POLICY,
-        { now: new Date(context.requestedAt) },
-      );
+      return calculateAuthorizedMyeonghwaProductionSnapshot(input, {
+        now: new Date(context.requestedAt),
+      }).snapshot;
     },
     interpret(snapshot, context) {
       const registry = createGeneralNatalIntegratedReadingRegistry(context.requestedAt);
