@@ -7,6 +7,7 @@ import {
   YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR,
   YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT,
   YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT,
+  YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -15,7 +16,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v8');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v9');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -210,6 +211,48 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(q.peerReviewedStudyUrl).toContain('ART001708343');
   });
 
+  test('an earlier Korean woodblock-backed scholarly Yangren quotation is theory evidence, not the target case print', () => {
+    const x = YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH;
+    expect(x.earlierYangrenTheoryTraceableInScholarlyQuotation).toBe(true);
+    expect(x.koreanOriginalWoodblockScholarlyWitness).toMatchObject({
+      originalWork: '子平三命通變淵源',
+      studySection: '卷上 看命入式 日刃·陽刃',
+      quotedYangrenClause: '獨陽刃以時言之，四柱中不要入財鄕，怕衝陽刃',
+      examinedScholarlyQuotationContainsFullFocalAnecdote: false,
+      originalPrintedLeafDirectlyOpened: false,
+      originalPrintedPageAndColumn: null,
+      focalAnecdotePresentInOriginal: null,
+      focalCaseGlyph: null,
+      doesScholarlyExampleJiSiProveFocalFourPillars: false,
+      independentFocalPrintWitnessCredit: 0,
+    });
+    expect(x.preciseCaseHasPre1600VerifiedProvenance).toBe(false);
+    expect(x.earlyPrintGlyphReconstructionAuthorized).toBe(false);
+    expect(x.originalFocalPrintWitnessesAdded).toBe(0);
+  });
+
+  test('1518 Korea University San-che commentary is distinct from the 1548 imprint and never a verified target print', () => {
+    const c = YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH.earlierSeparateCommentary1518;
+    expect(c).toMatchObject({
+      catalogTitle: '新編三車一覽子平淵源註解',
+      reportedHistoricalPrintingYear: 1518,
+      catalogControlNumber: '000000724230',
+      recordedType: '乙亥字',
+      volumes: 'three_juan_three_books',
+      sameAs1548YangCongEdition: false,
+      sameAsTwoJuanKoreanOriginal: false,
+      particularSurvivingCopyPrintDateVerified: false,
+      focalYangrenAnecdotePresent: null,
+      originalTargetLeafOpened: false,
+      originalPrintGlyph: null,
+      independentFocalPrintWitnessCredit: 0,
+    });
+    expect(c.catalogRecordUpper).toContain('000000134095');
+    expect(c.catalogRecordLower).toContain('000000134097');
+    expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED)
+      .toContain('KOREA_UNIVERSITY_1518_SAN_CHE_DERIVATIVE_NOT_1548_YANG_CONG');
+  });
+
   test('two distinct printed settings from three scans prove variant, never authorize semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
@@ -220,6 +263,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.directlyInspectedScanDocumentsCount).toBe(3);
     expect(scope.criticalAssessment).toBe(YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT);
     expect(scope.preWanliSourceAccessAudit).toBe(YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT);
+    expect(scope.koreanEarlierYangrenResearch).toBe(YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH);
     expect(scope.textualGenealogyIndependenceEstablished).toBe(false);
     expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
     expect(scope.woodOcrOriginPrintLocator).toBe(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR);
@@ -236,6 +280,8 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       canonicalArchetypeEstablished: false,
       preWanliOriginalGlyphVerified: false,
       relatedKoreanSourceFocalPassageVerified: false,
+      earlierYangrenTheoryScholarlyQuoted: true,
+      koreaUniversity1518FocalGlyphDirectlyInspected: false,
       hourPillarMechanicallyValidated: true,
       hourPillarOriginalGlyphAdjudicated: false,
       chongzhenOcrOriginIdentified: true,
