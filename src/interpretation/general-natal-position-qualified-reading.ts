@@ -1,6 +1,7 @@
 import type { InterpretationPack, RuleDefinition, RuleExpression } from '../contracts/interpretation.js';
 import { createRuleRegistrySnapshot } from './rule-registry.js';
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import { bindGeneralNatalC3StructuralEvidence } from './general-natal-c3-structural-evidence.js';
 import {
   runInterpretation,
   type InterpretationRunOptions,
@@ -232,4 +233,21 @@ export function executeGeneralNatalPositionQualifiedC2Research(
     };
   }
   return { registry, interpretation, stemEvidence };
+}
+
+/**
+ * Opt-in C3 extension of the same C2 research execution. Preserve all T2/T5/T6
+ * claims and T8 meanings, and expose source-bound structural evidence only.
+ * Neither this wrapper nor hidden-stem membership creates Tonggen/strength.
+ */
+export function executeGeneralNatalPositionQualifiedC3Research(
+  snapshot: CanonicalSajuSnapshot,
+  p4Report: CareerT6PublicClassicBoundedScopeMethodologyReviewReport,
+  options: InterpretationRunOptions = {},
+) {
+  const c2 = executeGeneralNatalPositionQualifiedC2Research(snapshot, p4Report, options);
+  return {
+    ...c2,
+    c3Evidence: bindGeneralNatalC3StructuralEvidence(snapshot, c2.interpretation),
+  };
 }
