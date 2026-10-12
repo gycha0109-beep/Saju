@@ -247,19 +247,20 @@ describe('WS-C2 reuse existing authorized-scope T6 in one General Natal interpre
       expect(evidence.snapshotId).toBe(snapshot.snapshotId);
       expect(evidence.interpretationRunId).toBe(c3.interpretation.run.interpretationRunId);
       expect(evidence.month.status).toBe('resolved');
-      if (evidence.month.status === 'resolved') {
-        seen.add(evidence.month.direction);
+      const monthEvidence = evidence.month;
+      if (monthEvidence.status === 'resolved') {
+        seen.add(monthEvidence.direction);
         const monthClaim = c3.interpretation.claims.find((claim) =>
-          claim.claimId === evidence.month.claimId);
+          claim.claimId === monthEvidence.claimId);
         expect(monthClaim?.claimType).toBe('DAY_MASTER_MONTH_BRANCH_EVIDENCE');
         expect(monthClaim?.value).toMatchObject({
-          relation: evidence.month.relation,
-          direction: evidence.month.direction,
+          relation: monthEvidence.relation,
+          direction: monthEvidence.direction,
           weight: 'not_assigned',
           overallStrength: 'not_determined',
         });
         expect(c3.interpretation.claims.some((claim) =>
-          claim.claimId === evidence.month.guardClaimId &&
+          claim.claimId === monthEvidence.guardClaimId &&
           claim.claimType === 'DAY_MASTER_MONTH_BRANCH_SCOPE_GUARD'
         )).toBe(true);
       }
