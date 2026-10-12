@@ -166,6 +166,23 @@ export function prepareProductReading(
     return blockedFromNormalization(normalization);
   }
 
+  // A failed interpretation or invalid Claim Graph cannot become a consumer
+  // reading merely because its remaining T8 targets satisfy a ReadingProfile.
+  // Partial execution is intentionally allowed: coverage still decides which
+  // approved claims are sufficiently supported for this particular reading.
+  if (
+    !execution.integrity.valid ||
+    execution.run.status === 'failed' ||
+    execution.run.completeness.state === 'failed'
+  ) {
+    return buildResult(
+      'invariant_blocked',
+      normalization,
+      ['INTERPRETATION_EXECUTION_INTEGRITY_BLOCKED'],
+      invariantBlockedEligibility(),
+    );
+  }
+
   const composition = buildReadingCompositionEvidence(
     snapshot,
     execution,
