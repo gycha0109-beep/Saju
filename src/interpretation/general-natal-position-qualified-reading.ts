@@ -2,6 +2,7 @@ import type { InterpretationPack, RuleDefinition, RuleExpression } from '../cont
 import { createRuleRegistrySnapshot } from './rule-registry.js';
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { bindGeneralNatalC3StructuralEvidence } from './general-natal-c3-structural-evidence.js';
+import { bindGeneralNatalC4MethodScopedEvidence } from './general-natal-c4-method-scoped-evidence.js';
 import {
   runInterpretation,
   type InterpretationRunOptions,
@@ -249,5 +250,24 @@ export function executeGeneralNatalPositionQualifiedC3Research(
   return {
     ...c2,
     c3Evidence: bindGeneralNatalC3StructuralEvidence(snapshot, c2.interpretation),
+  };
+}
+
+/**
+ * WS-C4: observe governed, exact-source Gyeokguk signals on the same C3 run.
+ * No GEJU candidate, climate requirement, Yong-Xi-Ji role or T8 consumer
+ * semantic is inferred from the signals.
+ */
+export function executeGeneralNatalPositionQualifiedC4Research(
+  snapshot: CanonicalSajuSnapshot,
+  p4Report: CareerT6PublicClassicBoundedScopeMethodologyReviewReport,
+  options: InterpretationRunOptions = {},
+) {
+  const c3 = executeGeneralNatalPositionQualifiedC3Research(snapshot, p4Report, options);
+  return {
+    ...c3,
+    c4Evidence: bindGeneralNatalC4MethodScopedEvidence(
+      snapshot, c3.interpretation, c3.c3Evidence,
+    ),
   };
 }

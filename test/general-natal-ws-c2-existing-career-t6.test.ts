@@ -6,6 +6,7 @@ import {
   createGeneralNatalPositionQualifiedCareerT6ResearchRegistry,
   executeGeneralNatalPositionQualifiedC2Research,
   executeGeneralNatalPositionQualifiedC3Research,
+  executeGeneralNatalPositionQualifiedC4Research,
 } from '../src/interpretation/general-natal-position-qualified-reading.js';
 import type {
   CareerT6PublicClassicBoundedScopeMethodologyReviewReport,
@@ -14,6 +15,8 @@ import {
   CAREER_T6_BRANCH_CLASH_CONTEXT_CLAIM_TYPE,
   CAREER_T6_BRANCH_CLASH_CONTEXT_RULES,
 } from '../src/research/career-personalized-t6-branch-clash-hidden-stem-context.js';
+import { bindGeneralNatalC4MethodScopedEvidence } from '../src/interpretation/general-natal-c4-method-scoped-evidence.js';
+import { buildGeneralNatalGejuSelectionSignalObservation } from '../src/research/general-natal-geju-selection-signal-observation.js';
 import { bindGeneralNatalC3StructuralEvidence } from '../src/interpretation/general-natal-c3-structural-evidence.js';
 import { buildReadingCompositionEvidence } from '../src/reading/reading-intent-composition.js';
 import { inspectMyeonghwaProductionComposition } from '../src/production/production-composition.js';
@@ -361,5 +364,98 @@ describe('WS-C2 reuse existing authorized-scope T6 in one General Natal interpre
     expect(result.c3Evidence.root.status).toBe('not_authorized');
     expect(result.c3Evidence.synthesis.finalStrength).toBe('not_determined');
     expect(result.c3Evidence.month.status).toBe('resolved');
+  });
+
+  it('C4 reuses exact source-governed Gyeokguk signals without inventing candidates', () => {
+    const observed = new Set<string>();
+    for (const date of dates) {
+      const snapshot = chart(date);
+      const c4 = executeGeneralNatalPositionQualifiedC4Research(snapshot, p4, { now });
+      const c3 = executeGeneralNatalPositionQualifiedC3Research(snapshot, p4, { now });
+      expect(c4.interpretation).toEqual(c3.interpretation);
+      expect(c4.c3Evidence).toEqual(c3.c3Evidence);
+      expect(executeGeneralNatalPositionQualifiedC4Research(snapshot, p4, { now })).toEqual(c4);
+
+      const geju = c4.c4Evidence.geju;
+      expect(geju.observation).toEqual(buildGeneralNatalGejuSelectionSignalObservation(snapshot));
+      expect(geju.links).toHaveLength(geju.observation.signalCount);
+      observed.add(geju.observation.status);
+      expect(geju.candidate).toBe('not_determined');
+      expect(geju.establishment).toBe('not_determined');
+      expect(geju.winner).toBe('not_authorized');
+      expect(geju.observation.signalSetExhaustiveAuthorized).toBe(false);
+      expect(geju.observation.zeroSignalMeansNoCandidateAuthorized).toBe(false);
+      for (const link of geju.links) {
+        const sourceSignal = geju.observation.signals.find((item) => item.signalId === link.signalId);
+        expect(sourceSignal).toBeDefined();
+        expect(link.signalKind).toBe(sourceSignal?.signalKind);
+        expect(sourceSignal?.candidateEmitted).toBe(false);
+        if (sourceSignal?.signalKind === 'transparency') {
+          expect(link.canonicalFactRefs).toContain('derivedFacts.hiddenStems.month');
+          const sourceMonth = snapshot.derivedFacts.hiddenStems?.month;
+          expect(sourceMonth?.status).toBe('resolved');
+          if (sourceMonth?.status === 'resolved') expect(sourceMonth.value).toContain(sourceSignal.stem);
+          for (const position of sourceSignal.sourceObservedExactMatchPositions) {
+            expect(link.canonicalFactRefs).toContain('pillars.' + position);
+            expect(snapshot.pillars[position].status).toBe('resolved');
+          }
+          for (const id of link.exactT5ClaimIds) {
+            const claim = c4.interpretation.claims.find((item) => item.claimId === id);
+            expect(claim?.taxonomy.tier).toBe('T5');
+            expect(claim?.factRefs.length).toBe(1);
+          }
+        } else if (sourceSignal?.signalKind === 'branch_meeting') {
+          expect(link.canonicalFactRefs).toContain(
+            'derivedFacts.structuralRelations.' + sourceSignal.relationId
+          );
+          expect(link.t5LineageState).toBe('not_applicable');
+          expect(link.exactT5ClaimIds).toEqual([]);
+        }
+      }
+
+      expect(c4.c4Evidence.tiaohou).toMatchObject({
+        status: 'unresolved_no_governed_chart_resolver',
+        climateRequirement: 'not_determined',
+        executableResolverAuthorized: false,
+      });
+      expect(c4.c4Evidence.yongxi).toMatchObject({
+        status: 'unresolved_no_governed_role_assignment',
+        primaryUse: 'not_determined',
+        singleWinnerAuthorized: false,
+      });
+      expect(c4.c4Evidence.t8SynthesisAuthorized).toBe(false);
+      expect(c4.c4Evidence.consumerProjectionAuthorized).toBe(false);
+      const reading = buildReadingCompositionEvidence(snapshot, c4.interpretation, c4.registry, {
+        requestId: 'ws-c4-source-only', intent: { domain: 'general', temporalScope: 'natal' },
+      });
+      const before = buildReadingCompositionEvidence(snapshot, c3.interpretation, c3.registry, {
+        requestId: 'ws-c4-source-only', intent: { domain: 'general', temporalScope: 'natal' },
+      });
+      expect(reading.selection).toEqual(before.selection);
+    }
+    expect(observed.size).toBeGreaterThan(0);
+  });
+
+  it('C4 fails closed for mismatched C3 evidence and preserves unknown-hour uncertainty', () => {
+    const snapshot = chart(dates[0]!, false);
+    const c3 = executeGeneralNatalPositionQualifiedC3Research(snapshot, p4, { now });
+    const original = bindGeneralNatalC4MethodScopedEvidence(
+      snapshot, c3.interpretation, c3.c3Evidence
+    );
+    expect(original.snapshotId).toBe(snapshot.snapshotId);
+    expect(original.geju.observation.candidateDerivationAuthorized).toBe(false);
+    expect(() => bindGeneralNatalC4MethodScopedEvidence(snapshot, c3.interpretation, {
+      ...c3.c3Evidence, snapshotId: 'foreign_snapshot',
+    })).toThrow('WS_C4_EXECUTION_IDENTITY_MISMATCH');
+    expect(() => bindGeneralNatalC4MethodScopedEvidence(snapshot, {
+      ...c3.interpretation,
+      integrity: { valid: false, errors: ['invalid'] },
+    }, c3.c3Evidence)).toThrow('WS_C4_CLAIM_GRAPH_INVALID');
+    const hour = c3.c3Evidence.positionedTenGods.find((item) =>
+      item.pillar === 'hour' && item.component === 'stem'
+    );
+    expect(hour?.status).not.toBe('resolved');
+    expect(original.tiaohou.climateRequirement).toBe('not_determined');
+    expect(original.yongxi.primaryUse).toBe('not_determined');
   });
 });
