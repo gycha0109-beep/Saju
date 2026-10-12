@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
+import type * as ProductionCalculationRuntime from '../src/production/production-calculation-runtime.js';
 import { createGeneralNatalIntegratedPreviewProductHost } from '../src/host/general-natal-integrated-preview-host.js';
 
 const authorityCalls = vi.hoisted(() => ({ timestamps: [] as string[] }));
 
 vi.mock('../src/production/production-calculation-runtime.js', async (importOriginal) => {
   const original =
-    await importOriginal<typeof import('../src/production/production-calculation-runtime.js')>();
+    await importOriginal<typeof ProductionCalculationRuntime>();
   return {
     ...original,
     calculateAuthorizedMyeonghwaProductionSnapshot: (
