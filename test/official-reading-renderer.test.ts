@@ -982,6 +982,69 @@ describe('Official Reading renderer v1', () => {
     }
   });
 
+  it('keeps one scenario-qualified claim conditional instead of presenting it as a universal conclusion', () => {
+    const bundle = structuredSemantics([
+      structuredPrimary({
+        claimId: 'time-dependent-claim',
+        scenarioRef: 'unknown-hour-scenario-a',
+        headline: '조건부 해석',
+        summary: '이 시나리오에서만 확인된 근거',
+      }),
+    ]);
+    const plan = buildOfficialReadingPlanV1(bundle);
+    expect(canRenderOfficialReadingV1(bundle, plan)).toBe(true);
+    const report = renderOfficialReadingV1(bundle, plan);
+    const blocks = report.sections.flatMap((section) => section.blocks);
+    const conditional = blocks.find((block) => block.type === 'ambiguity');
+    expect(conditional).toEqual(expect.objectContaining({
+      type: 'ambiguity',
+      summary: '이 해석은 해당 시나리오에서만 성립하며, 다른 경우까지 확정하지 않습니다.',
+      scenarios: [
+        expect.objectContaining({
+          label: '시나리오 1',
+          text: '조건부 해석\\n이 시나리오에서만 확인된 근거'.replace('\\n', '\n'),
+          explainabilityRefs: [expect.any(String)],
+        }),
+      ],
+    }));
+    expect(
+      blocks.filter((block) => block.type === 'insights')
+        .some((block) => JSON.stringify(block).includes('조건부 해석')),
+    ).toBe(false);
+  });
+
+  it('does not collapse distinct scenario-qualified semantic keys or drop their provenance', () => {
+    const bundle = structuredSemantics([
+      structuredPrimary({
+        claimId: 'scenario-a-structural',
+        scenarioRef: 'hour-scenario-a',
+        headline: 'A 구조',
+        summary: 'A에 한정',
+      }),
+      structuredPrimary({
+        claimId: 'scenario-b-interpretation',
+        scenarioRef: 'hour-scenario-b',
+        subcategory: 'core_conclusion',
+        claimType: 'GENERAL_CORE_CONCLUSION',
+        headline: 'B 해석',
+        summary: 'B에 한정',
+      }),
+    ]);
+    const report = renderOfficialReadingV1(
+      bundle, buildOfficialReadingPlanV1(bundle),
+    );
+    const ambiguities = report.sections
+      .flatMap((section) => section.blocks)
+      .filter((block) => block.type === 'ambiguity');
+    expect(ambiguities).toHaveLength(2);
+    expect(ambiguities.flatMap((block) => block.scenarios.map((scenario) => scenario.text)))
+      .toEqual(expect.arrayContaining(['A 구조\\nA에 한정'.replace('\\n', '\n'), 'B 해석\\nB에 한정'.replace('\\n', '\n')]));
+    expect(ambiguities.every((block) =>
+      block.scenarios.length === 1 &&
+      block.scenarios[0]?.explainabilityRefs?.length === 1
+    )).toBe(true);
+  });
+
   it('keeps scenario rendering invariant to evidence permutation', () => {
     const claims = [
       structuredPrimary({

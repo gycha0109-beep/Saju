@@ -477,11 +477,11 @@ function scenarioGroups(
     bySemanticKey.set(unit.semanticKey, current);
   }
 
+  // Even one scenario-qualified claim is conditional: rendering it as an
+  // ordinary insight silently drops its scenarioRef and makes it look certain.
+  // Keep grouping by semanticKey, without claiming that unrelated semantic
+  // axes are interchangeable scenario alternatives.
   return [...bySemanticKey.values()]
-    .filter(
-      (group) =>
-        new Set(group.map((unit) => unit.scenarioRef)).size > 1,
-    )
     .map((group) => ({ kind: 'scenario' as const, units: group }));
 }
 
@@ -610,7 +610,9 @@ function structurallyPreservedBlocks(
       }
       blocks.push({
         type: 'ambiguity',
-        summary: '서로 다른 시나리오를 하나로 합치지 않고 함께 표시합니다.',
+        summary: scenarioRefs.length > 1
+          ? '서로 다른 시나리오를 하나로 합치지 않고 함께 표시합니다.'
+          : '이 해석은 해당 시나리오에서만 성립하며, 다른 경우까지 확정하지 않습니다.',
         scenarios: scenarioRefs.map((scenarioRef, index) => {
           const scenarioUnits = unitsByScenario.get(scenarioRef) ?? [];
           return {
