@@ -483,11 +483,15 @@ describe('WS-C2 reuse existing authorized-scope T6 in one General Natal interpre
         expect(view.semantics).toBe('existing_research_t8_only');
         expect(view.consumerAuthorizationGranted).toBe(false);
         expect(view.sharedContextUsedAsDomainPremise).toBe(false);
-        expect(view.selection.intent).toEqual({ domain, temporalScope: 'natal' });
+        expect(view.selection.intent).toEqual(domain === 'relationship'
+          ? { domain, temporalScope: 'natal', relationshipScope: 'general' }
+          : { domain, temporalScope: 'natal' });
         const baselineReading = buildReadingCompositionEvidence(
           snapshot, baseline, baselineRegistry, {
             requestId: 'ws-c5-baseline-' + domain,
-            intent: { domain, temporalScope: 'natal' },
+            intent: domain === 'relationship'
+              ? { domain, temporalScope: 'natal', relationshipScope: 'general' }
+              : { domain, temporalScope: 'natal' },
           },
         );
         const baselineT8 = baseline.claims
