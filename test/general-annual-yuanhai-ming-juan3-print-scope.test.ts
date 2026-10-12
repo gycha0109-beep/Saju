@@ -3,6 +3,7 @@ import { deterministicContentHash } from '../src/interpretation/rule-registry.js
 import {
   YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION,
   YUANHAI_NLC_PHYSICAL_BOOKS,
+  YUANHAI_NCL_TAIWAN_PRINT_SCAN,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -11,7 +12,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v3');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v4');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -87,19 +88,43 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       .toContain('OTHER_MING_EDITION_OCR_WOOD_REQUIRES_INDEPENDENT_PRINT_COLLATION');
   });
 
-  test('one inspected NLC print with corrected 未 is separate from six digital transcriptions and never promotes semantics', () => {
+  test('second 160-page Taiwan scan aligns to NLC without inventing independent edition or semantic authorization', () => {
+    expect(YUANHAI_NCL_TAIWAN_PRINT_SCAN).toMatchObject({
+      id: 'NCL-06593',
+      pdfPageCount: 160,
+      printedJuan: 3,
+      pdfPageOneBased: 55,
+      referenceNlcPdfPageOneBased: 11,
+      directVisualTripleGlyphReading: '未',
+      hourPillarVisualCandidate: '己巳',
+      hourStemIndependentlyAdjudicated: false,
+      matchingColumnArrangementObserved: true,
+      distinctWoodblockEditionEstablished: false,
+      independentWitnessCredit: 0,
+    });
+    expect(YUANHAI_NCL_TAIWAN_PRINT_SCAN.pdfSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED).toContain(
+      'NCL_TAIWAN_AND_NLC_SCANS_MATCH_SETTING_BUT_INDEPENDENT_EDITION_NOT_ESTABLISHED',
+    );
+  });
+
+  test('one confirmed local edition lineage and two scanned documents never promote semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
       'ming_juan3_page11_wei_verified_hour_stem_provisional',
     );
     expect(scope.digitalWitnessRecordsTotal).toBe(6);
     expect(scope.independentlyCollatedPrintedWitnessCount).toBe(1);
+    expect(scope.directlyInspectedScanDocumentsCount).toBe(2);
+    expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
     expect(scope.additionalTextWitnesses)
       .toBe(YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES);
     expect(scope.authority).toMatchObject({
       correctPhysicalBookForPrintedJuanThreeIdentified: true,
       twoMoreDigitalTranscriptsCompared: true,
       sourcePdfPageColumnIdentified: true,
+      secondPrintScanLocusDirectlyCompared: true,
+      independentSecondPrintEditionEstablished: false,
       actualPrintedUnGlyphConfirmed: true,
       actualPrintedWoodGlyphConfirmed: false,
       actualPrintedHourStemConfirmed: false,
