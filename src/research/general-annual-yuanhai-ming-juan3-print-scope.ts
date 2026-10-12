@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-prewanli-source-access-audit-v8' as const;
+  'sa7d-yuanhai-korean-earlier-yangren-text-and-1518-candidate-v9' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -232,6 +232,59 @@ export const YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT = Object.freeze({
   pre1600IndependentPrintWitnessesAdded: 0 as const,
 } as const);
 
+/**
+ * Korean source-bearing scholarship vs actual pre-1600 printed folio:
+ * a 2019 dissertation quotes the 日刃/陽刃 section in 子平三命通變淵源,
+ * but DOES NOT verify the specific 癸未乙卯甲子己巳 anecdote.
+ * Separately, a catalogued 1518 三車一覽 derivative is not the 1548 imprint
+ * or the same work as the two-juan original. Its target leaves are unread.
+ */
+export const YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH = Object.freeze({
+  version: 'saju-earlier-yangren-scholarly-excerpt-v1' as const,
+  koreanOriginalWoodblockScholarlyWitness: Object.freeze({
+    originalWork: '子平三命通變淵源' as const,
+    originalWorkAlternateTitle: '子平淵源' as const,
+    repositoryReported: 'National Library of Korea' as const,
+    originalPrintMetadata: 'two_juan_one_book_10_lines_17_characters' as const,
+    scholarlyStudy: '김면수 (2019) 명리원전 子平三命通變淵源 연구' as const,
+    studyCatalogUrl: 'https://dl.nanet.go.kr/detail/KDMT1201930296' as const,
+    studyExtractUrl: 'https://www.scribd.com/document/1061771789/子平三命通變淵源연구' as const,
+    studySection: '卷上 看命入式 日刃·陽刃' as const,
+    quotedYangrenClause: '獨陽刃以時言之，四柱中不要入財鄕，怕衝陽刃' as const,
+    quotedClauseEvidenceTier: 'academic_transcription_attributed_to_national_library_print' as const,
+    examinedScholarlyQuotationContainsFullFocalAnecdote: false as const,
+    originalPrintedLeafDirectlyOpened: false as const,
+    originalPrintedPageAndColumn: null,
+    focalAnecdotePresentInOriginal: null,
+    focalCaseGlyph: null,
+    doesScholarlyExampleJiSiProveFocalFourPillars: false as const,
+    independentFocalPrintWitnessCredit: 0 as const,
+  }),
+  earlierSeparateCommentary1518: Object.freeze({
+    catalogTitle: '新編三車一覽子平淵源註解' as const,
+    institutionalHolding: 'Korea University Library' as const,
+    catalogRecordUpper: 'https://dcollection.korea.ac.kr/srch/srchDetail/000000134095' as const,
+    catalogRecordLower: 'https://dcollection.korea.ac.kr/srch/srchDetail/000000134097' as const,
+    catalogControlNumber: '000000724230' as const,
+    reportedHistoricalPrintingYear: 1518 as const,
+    recordedType: '乙亥字' as const,
+    volumes: 'three_juan_three_books' as const,
+    reportedCompilers: '徐大昇 撰次 / 逸人 集解 / 熊上恩 訂刊' as const,
+    sameAs1548YangCongEdition: false as const,
+    sameAsTwoJuanKoreanOriginal: false as const,
+    particularSurvivingCopyPrintDateVerified: false as const,
+    focalYangrenAnecdotePresent: null,
+    originalTargetLeafOpened: false as const,
+    originalPrintGlyph: null,
+    independentFocalPrintWitnessCredit: 0 as const,
+    evidenceTier: 'catalogued_earlier_separate_commentary_target_folio_unchecked' as const,
+  }),
+  earlierYangrenTheoryTraceableInScholarlyQuotation: true as const,
+  preciseCaseHasPre1600VerifiedProvenance: false as const,
+  earlyPrintGlyphReconstructionAuthorized: false as const,
+  originalFocalPrintWitnessesAdded: 0 as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,
@@ -256,6 +309,9 @@ export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'WORKING_BASE_WANLI_ONLY_NO_ARCHETYPE_ESTABLISHED',
   'JIAJING_1548_COMPILATION_REFERENCED_ORIGINAL_FACSIMILE_NOT_LOCATED',
   'KOREAN_ZIPING_YUANYUAN_HOLDINGS_IDENTIFIED_TARGET_ANECDOTE_UNVERIFIED',
+  'KOREAN_WOODBLOCK_SCHOLARLY_YANGREN_QUOTE_NOT_FOCAL_CASE',
+  'KOREA_UNIVERSITY_1518_SAN_CHE_DERIVATIVE_NOT_1548_YANG_CONG',
+  'KOREA_1518_DERIVATIVE_FOCAL_PRINT_UNINSPECTED',
   'PREFACE_1253_NOT_DATE_OF_SURVIVING_MANUSCRIPT',
   'HOUR_JI_SI_CONSISTENT_WITH_FIVE_RATS_BUT_ORIGINAL_GLYPH_NOT_ADJUDICATED',
   'LATER_EDITED_TEXT_MAY_SILENTLY_EMEND_AND_IS_NOT_PRINT_WITNESS',
@@ -280,6 +336,13 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    !YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH.earlierYangrenTheoryTraceableInScholarlyQuotation ||
+    YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH.preciseCaseHasPre1600VerifiedProvenance ||
+    YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH.originalFocalPrintWitnessesAdded !== 0 ||
+    YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH.koreanOriginalWoodblockScholarlyWitness.originalPrintedLeafDirectlyOpened ||
+    YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH.koreanOriginalWoodblockScholarlyWitness.focalAnecdotePresentInOriginal !== null ||
+    YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH.earlierSeparateCommentary1518.sameAs1548YangCongEdition ||
+    YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH.earlierSeparateCommentary1518.independentFocalPrintWitnessCredit !== 0 ||
     YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT.jiajingCompilation1548.survivingOriginalFacsimileIdentified ||
     YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT.jiajingCompilation1548.originalPrintGlyph !== null ||
     YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT.koreanEarlierSourceTradition.focalYuanhaiAnecdotePresent !== null ||
@@ -337,6 +400,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     woodOcrOriginPrintLocator: YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR,
     criticalAssessment: YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT,
     preWanliSourceAccessAudit: YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT,
+    koreanEarlierYangrenResearch: YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
@@ -368,6 +432,8 @@ export function buildYuanHaiMingJuan3PrintScope() {
       canonicalArchetypeEstablished: false as const,
       preWanliOriginalGlyphVerified: false as const,
       relatedKoreanSourceFocalPassageVerified: false as const,
+      earlierYangrenTheoryScholarlyQuoted: true as const,
+      koreaUniversity1518FocalGlyphDirectlyInspected: false as const,
       hourPillarMechanicallyValidated: true as const,
       hourPillarOriginalGlyphAdjudicated: false as const,
       chongzhenOcrOriginIdentified: true as const,
