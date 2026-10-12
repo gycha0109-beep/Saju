@@ -42,7 +42,7 @@ export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
     targetPrintColumnConfirmed: null,
     targetPrintedUnOrMuGlyphConfirmed: null,
   }),
-]);
+] as const);
 
 export const YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES = Object.freeze([
   Object.freeze({
