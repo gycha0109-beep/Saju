@@ -5,6 +5,7 @@ import {
   createGeneralNatalPositionQualifiedResearchRegistry,
   createGeneralNatalPositionQualifiedCareerT6ResearchRegistry,
   executeGeneralNatalPositionQualifiedC2Research,
+  executeGeneralNatalPositionQualifiedC3Research,
 } from '../src/interpretation/general-natal-position-qualified-reading.js';
 import type {
   CareerT6PublicClassicBoundedScopeMethodologyReviewReport,
@@ -13,6 +14,7 @@ import {
   CAREER_T6_BRANCH_CLASH_CONTEXT_CLAIM_TYPE,
   CAREER_T6_BRANCH_CLASH_CONTEXT_RULES,
 } from '../src/research/career-personalized-t6-branch-clash-hidden-stem-context.js';
+import { bindGeneralNatalC3StructuralEvidence } from '../src/interpretation/general-natal-c3-structural-evidence.js';
 import { buildReadingCompositionEvidence } from '../src/reading/reading-intent-composition.js';
 import { inspectMyeonghwaProductionComposition } from '../src/production/production-composition.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
@@ -231,5 +233,124 @@ describe('WS-C2 reuse existing authorized-scope T6 in one General Natal interpre
     expect(closed.interpretation.claims.some((claim) =>
       claim.taxonomy.tier === 'T6' && claim.predicate.includes('stem_effect'),
     )).toBe(false);
+  });
+
+  it('C3 combines original month direction with seven exact T5 positions and raw hidden stems', () => {
+    const seen = new Set<string>();
+    for (const date of dates) {
+      const snapshot = chart(date);
+      const c3 = executeGeneralNatalPositionQualifiedC3Research(snapshot, p4, { now });
+      const rerun = executeGeneralNatalPositionQualifiedC3Research(snapshot, p4, { now });
+      expect(rerun).toEqual(c3);
+      expect(c3.interpretation.integrity.valid).toBe(true);
+      const evidence = c3.c3Evidence;
+      expect(evidence.snapshotId).toBe(snapshot.snapshotId);
+      expect(evidence.interpretationRunId).toBe(c3.interpretation.run.interpretationRunId);
+      expect(evidence.month.status).toBe('resolved');
+      if (evidence.month.status === 'resolved') {
+        seen.add(evidence.month.direction);
+        const monthClaim = c3.interpretation.claims.find((claim) =>
+          claim.claimId === evidence.month.claimId);
+        expect(monthClaim?.claimType).toBe('DAY_MASTER_MONTH_BRANCH_EVIDENCE');
+        expect(monthClaim?.value).toMatchObject({
+          relation: evidence.month.relation,
+          direction: evidence.month.direction,
+          weight: 'not_assigned',
+          overallStrength: 'not_determined',
+        });
+        expect(c3.interpretation.claims.some((claim) =>
+          claim.claimId === evidence.month.guardClaimId &&
+          claim.claimType === 'DAY_MASTER_MONTH_BRANCH_SCOPE_GUARD'
+        )).toBe(true);
+      }
+      expect(evidence.positionedTenGods).toHaveLength(7);
+      expect(evidence.hiddenStemObservations).toHaveLength(4);
+      for (const item of evidence.positionedTenGods) {
+        expect(item.sourceFactRef).toBe(
+          `derivedFacts.tenGods.${item.pillar}.${item.component}`,
+        );
+        if (item.status !== 'resolved') continue;
+        const linked = c3.interpretation.claims.find((claim) =>
+          claim.claimId === item.claimId);
+        expect(linked?.claimType).toBe(
+          `TEN_GOD_${item.family!.toUpperCase()}_${item.component === 'stem'
+            ? 'VISIBLE_STEMS' : 'BRANCHES'}_THEME`,
+        );
+        expect(linked?.factRefs).toEqual([item.sourceFactRef]);
+        expect(item.tenGod).toBe(
+          snapshot.derivedFacts.tenGods.status === 'resolved'
+            ? snapshot.derivedFacts.tenGods.value[item.pillar][item.component]?.status === 'resolved'
+              ? snapshot.derivedFacts.tenGods.value[item.pillar][item.component]?.value
+              : undefined
+            : undefined,
+        );
+      }
+      for (const item of evidence.hiddenStemObservations) {
+        const fact = snapshot.derivedFacts.hiddenStems?.[item.pillar];
+        expect(item.sourceFactRef).toBe(`derivedFacts.hiddenStems.${item.pillar}`);
+        expect(item.status).toBe(fact?.status ?? 'unavailable');
+        if (item.status === 'resolved') {
+          expect(item.stems).toEqual(fact?.status === 'resolved' ? fact.value : undefined);
+        }
+      }
+      expect(evidence.root).toEqual({
+        status: 'not_authorized',
+        tonggen: 'not_determined',
+        fourPillarHasRoot: 'not_determined',
+        rootWeight: 'not_assigned',
+      });
+      expect(evidence.synthesis).toMatchObject({
+        scope: 'independent_evidence_axes_only',
+        finalStrength: 'not_determined',
+        numericStrength: 'not_authorized',
+        consumerProjectionAuthorized: false,
+      });
+      const selection = buildReadingCompositionEvidence(snapshot, c3.interpretation, c3.registry, {
+        requestId: 'ws-c3-internal-axes',
+        intent: { domain: 'general', temporalScope: 'natal' },
+      });
+      expect(selection.selection.coverageState).toBe('complete');
+      expect(selection.selection.selectedClaimIds).not.toContain(evidence.month.status ===
+        'resolved' ? evidence.month.claimId : '__unresolved__');
+    }
+    expect(seen).toEqual(new Set(['supporting', 'challenging']));
+  });
+
+  it('C3 rejects mismatched execution and missing or duplicated month source claims', () => {
+    const snapshot = chart(dates[0]!);
+    const c2 = executeGeneralNatalPositionQualifiedC2Research(snapshot, p4, { now });
+    expect(() => bindGeneralNatalC3StructuralEvidence(snapshot, {
+      ...c2.interpretation,
+      run: { ...c2.interpretation.run, snapshotHash: 'stale' },
+    })).toThrow('WS_C3_SNAPSHOT_MISMATCH');
+    const guard = c2.interpretation.claims.find((claim) =>
+      claim.claimType === 'DAY_MASTER_MONTH_BRANCH_SCOPE_GUARD');
+    expect(guard).toBeDefined();
+    expect(() => bindGeneralNatalC3StructuralEvidence(snapshot, {
+      ...c2.interpretation,
+      claims: c2.interpretation.claims.filter((claim) => claim.claimId !== guard?.claimId),
+    })).toThrow('WS_C3_MONTH_EVIDENCE_NOT_UNIQUE');
+    if (guard !== undefined) {
+      expect(() => bindGeneralNatalC3StructuralEvidence(snapshot, {
+        ...c2.interpretation,
+        claims: [...c2.interpretation.claims, { ...guard, claimId: 'fake-duplicate' }],
+      })).toThrow('WS_C3_MONTH_EVIDENCE_NOT_UNIQUE');
+    }
+    expect(() => bindGeneralNatalC3StructuralEvidence(snapshot, {
+      ...c2.interpretation,
+      integrity: { valid: false, errors: ['tamper'] },
+    })).toThrow('WS_C3_CLAIM_GRAPH_INVALID');
+  });
+
+  it('C3 retains unknown-hour unavailability without inventing no root or final strength', () => {
+    const snapshot = chart(dates[0]!, false);
+    const result = executeGeneralNatalPositionQualifiedC3Research(snapshot, p4, { now });
+    const hour = result.c3Evidence.positionedTenGods.find((item) =>
+      item.pillar === 'hour' && item.component === 'stem');
+    expect(hour).toBeDefined();
+    expect(hour?.status).not.toBe('resolved');
+    expect(result.c3Evidence.root.status).toBe('not_authorized');
+    expect(result.c3Evidence.synthesis.finalStrength).toBe('not_determined');
+    expect(result.c3Evidence.month.status).toBe('resolved');
   });
 });
