@@ -5,6 +5,7 @@ import {
   YUANHAI_NLC_PHYSICAL_BOOKS,
   YUANHAI_NCL_TAIWAN_PRINT_SCAN,
   YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR,
+  YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -13,7 +14,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v6');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v7');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -144,6 +145,37 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     );
   });
 
+  test('working base is editorial and cannot overwrite either verified printing or the unknown archetype', () => {
+    const a = YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT;
+    expect(a.observedPrintVariants).toEqual([
+      { edition: 'wanli_1600', pdfPage: 11, glyph: '未' },
+      { edition: 'chongzhen_1634', pdfPage: 19, glyph: '木' },
+    ]);
+    expect(a.selectedResearchWorkingBase).toBe('wanli_1600_printed_亥卯未');
+    expect(a.workingBaseIsArchetype).toBe(false);
+    expect(a.reconstructedArchetypalGlyph).toBeNull();
+    expect(a.variantCausation).toBeNull();
+    expect(a.chongzhenWoodReadingToBeSilentlyNormalized).toBe(false);
+    expect(a.laterEditedTextAsIndependentPrintWitness).toBe(false);
+    expect(a.prefaceClaimIndependentVerification).toBe(false);
+    expect(a.permissionToAutoCorrectPrintedWitness).toBe(false);
+  });
+
+  test('甲子 day at 巳 hour mechanically gives 己巳; OCR 巳巳 remains a print-glyph HOLD', () => {
+    const a = YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT;
+    const heavenly = Array.from('甲乙丙丁戊己庚辛壬癸');
+    const earthly = Array.from('子丑寅卯辰巳午未申酉戌亥');
+    const sequence = earthly.slice(0, 6).map((branch,i) => heavenly[i] + branch);
+    expect(sequence).toEqual(a.fiveRatsStemBranchSequence);
+    expect(sequence[5]).toBe('己巳');
+    expect(a.mechanicallyValidHourPillar).toBe('己巳');
+    expect(heavenly.includes(a.anomalousOcrHourPillar[0])).toBe(false);
+    expect(a.anomalousOcrHourPillar).toBe('巳巳');
+    expect(a.originalHourFirstGlyphPalaeographicallyAdjudicated).toBe(false);
+    expect(a.historicalPersonBirthPillarsAuthenticated).toBe(false);
+    expect(a.permissionToPromoteModernAnnualSemantics).toBe(false);
+  });
+
   test('two distinct printed settings from three scans prove variant, never authorize semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
@@ -152,6 +184,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.digitalWitnessRecordsTotal).toBe(6);
     expect(scope.independentlyCollatedPrintedWitnessCount).toBe(2);
     expect(scope.directlyInspectedScanDocumentsCount).toBe(3);
+    expect(scope.criticalAssessment).toBe(YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT);
     expect(scope.textualGenealogyIndependenceEstablished).toBe(false);
     expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
     expect(scope.woodOcrOriginPrintLocator).toBe(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR);
@@ -164,6 +197,10 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       secondPrintScanLocusDirectlyCompared: true,
       independentSecondPrintEditionEstablished: true,
       textualGenealogyIndependenceEstablished: false,
+      annotatedWorkingBaseSelected: true,
+      canonicalArchetypeEstablished: false,
+      hourPillarMechanicallyValidated: true,
+      hourPillarOriginalGlyphAdjudicated: false,
       chongzhenOcrOriginIdentified: true,
       chongzhenFocalPrintGlyphVerified: true,
       distinctChongzhenFocalWoodblocksEstablished: true,
