@@ -742,6 +742,32 @@ export const YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT = Object.freeze({
       proves1578OriginalLeafCarriedCase: false as const,
       directMaterialWitnessCredit: 0 as const,
     }),
+    // A NEW same-locus OCR tied to the NLC's Ming Wanli printed book family.
+    // Its 作飛 token is candidate OCR for 岳飛, not a verified woodblock glyph.
+    // The two final 已 are unsafe OCR for a sexagenary hour pillar.
+    nlcMingFocalCasePrintDerivedOcr: Object.freeze({
+      parentPrintedBookCatalogFamily: 'NLC892-411999029701' as const,
+      linkedDigitizedBookId: 'NGJ89241199902970167139' as const,
+      onlineOcrUrl: 'https://www.shidianguji.com/zh/book/NGJ89241199902970167139/chapter/1lvorfxfggvly' as const,
+      publicationDateRangeInCatalog: '明萬曆[1573-1620]' as const,
+      printedJuan: 8 as const,
+      headingAsOcr: '六甲已巳時斷' as const,
+      targetCaseOcrVerbatim: '申子辰戍火貴神白云化氣，主貴作飛。癸未乙卯、甲子已已萬衣布政' as const,
+      nameTokenObservedInOcr: '作飛' as const,
+      candidateNameBasedOnParallelTransmission: '岳飛' as const,
+      exactPrintedNameGlyphVerified: false as const,
+      observedPillarsInOcr: Object.freeze(['癸未','乙卯','甲子','已已'] as const),
+      lastHourPillarOcrInvalidAsConfirmedJiSi: true as const,
+      originalHourStemDirectlyRead: false as const,
+      sameCaseLocationCrossCheckedWithLaterYuefeiTransmission: true as const,
+      exactBoundFascicleForTargetIdentified: false as const,
+      targetPdfPageAndColumn: null,
+      focalPrintImageDirectlyRead: false as const,
+      independentPrintSettingEstablishedRelativeTo1578Ncl: false as const,
+      original1578FocalPrintVerifiedByThisOcr: false as const,
+      additionalDirectlyCollatedMingFocalWitnessCredit: 0 as const,
+      printedUnWoodArchetypeDecisionAuthorized: false as const,
+    }),
     nlcOtherWanliMingScanLocator: Object.freeze({
       work: '三命通會' as const,
       catalogGrouping: 'NLC892-411999029701' as const,
