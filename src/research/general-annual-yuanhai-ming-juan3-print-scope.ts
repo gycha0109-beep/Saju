@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-nlk-secondary-citation-callmark-v13' as const;
+  'sa7d-yuanhai-no-contact-free-mirrors-japan-print-review-v14' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -469,6 +469,64 @@ export const YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY = Object.
   nextAcquisitionAction: 'cross_check_callmark_with_nlk_catalog_and_request_juan_shang_kanmingrushi_riyangren_folio' as const,
 } as const);
 
+/**
+ * Non-institutional no-contact source acquisition paths.
+ * URLs and passwords are public leads, NOT accessed files, facsimile
+ * provenance, proof of complete leaves, or a new textual witness.
+ * The 2017 Japanese-copy appendix is an editorial reproduction claim;
+ * without checking its target page, no literal printed glyph is known.
+ */
+export const YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT = Object.freeze({
+  version: 'yuanhai-free-mirror-japan-appendix-access-v1' as const,
+  koreaUniversityDerivativePhotoMirror: Object.freeze({
+    targetWork: '新編三車一覽子平淵源註解' as const,
+    institutionOriginalReference: 'Korea University Library, three books, 乙亥字' as const,
+    forumUrl: 'https://www.shuge.org/meet/topic/142530/' as const,
+    publicCloudShareUrl: 'https://pan.baidu.com/s/1wuAfsAvyF93-U9YVGib6Cw?pwd=YYDS' as const,
+    publishedShareAccessCode: 'YYDS' as const,
+    otherSharesDiscussedOnForum: true as const,
+    somePagesReportedMissingByForumParticipants: true as const,
+    provenanceOfSharedImagesAuthenticated: false as const,
+    publicCloudShareFileBytesObtained: false as const,
+    scannedSpecificYangrenSection: false as const,
+    inspectedFocalPillars: null,
+    directFocalPrintWitnessCredit: 0 as const,
+    accessClass: 'public_community_cloud_share_requires_access_verification' as const,
+  }),
+  japaneseRepositoryReportedIn2017Edition: Object.freeze({
+    reportedOriginalWork: '子平三命通變淵源' as const,
+    namedHolding: '靜嘉堂文庫' as const,
+    editorPublicationDate: '2017-07-08' as const,
+    modernBookTitle: '三車一覽子平淵源註解 附子平三命通變淵源眉批本' as const,
+    modernPublisher: '星易' as const,
+    isbn13: '9789887736172' as const,
+    publisherOrRetailBibliography: 'https://www.chinyuan.com.tw/all_book/more?id=8565' as const,
+    editor2017Announcement: 'https://blog.sina.com.cn/s/blog_49536d2a0102wxto.html' as const,
+    editorReportsJapaneseCopyCompleteFrontAndBack: true as const,
+    editorReportsJapaneseCopyHasMarginalNotes: true as const,
+    separateJapaneseSourceTextIncludedAsAppendix: true as const,
+    exactFocalPageShownInPublicSample: false as const,
+    publiclyVerifiedSourceFolioImage: false as const,
+    republicationIsUntouchedFacsimileVerified: false as const,
+    editedTextIsIndependentHistoricalPrintWitness: false as const,
+    japaneseOriginalPrintedFocalGlyph: null,
+    directlyCollatedOriginalFocalWitnessCredit: 0 as const,
+    accessClass: 'verified_2017_bibliography_editor_claim_no_locus_inspection' as const,
+  }),
+  historicalPublicationDisambiguation: Object.freeze({
+    reportedMingZhengde13Date: 1518 as const,
+    historicalColophonQuotedIn2017EditorPreface: '皇明正德十三年歲在戊寅孟秋書林熬峰熊氏厚德堂新刊' as const,
+    physicalKoreaUniversityMetalTypeImpressionDateEstablished: false as const,
+    chineseHistoricalPrinterAndKoreanSurvivingMetalTypeSameSettingProved: false as const,
+    sourceDocumentPrintingRelationshipResolved: false as const,
+  }),
+  targetEarlyTextPassageDirectlyInspected: false as const,
+  focalAnecdoteInEarlyTexts: null,
+  reconstructedVariantAncestor: null,
+  newDirectFocalPrintWitnesses: 0 as const,
+  modernAnnualPriorityAuthorized: false as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,
@@ -506,6 +564,10 @@ export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'EARLY_ACADEMIC_AND_EXEGETICAL_QUOTATIONS_DO_NOT_PROVE_SPECIFIC_FOUR_PILLAR_CASE',
   'NLK_CALLMARK_CANDIDATE_SECONDARY_BIBLIOGRAPHY_NOT_MARC_VERIFIED',
   'NLK_CALLMARK_DOES_NOT_ESTABLISH_FOCAL_FOLIO_OR_EARLY_GLYPH',
+  'FREE_1518_COMMUNITY_BAIDU_PHOTO_LINK_HAS_NOT_BEEN_DOWNLOADED_OR_COLLATED',
+  'FREE_1518_COMMUNITY_COPY_MAY_HAVE_MISSING_PAGES',
+  'JAPAN_SEIKADO_2017_APPENDIX_FULL_TEXT_CLAIM_NOT_DIRECT_PRINT_PAGE_INSPECTION',
+  '1518_MING_COLOPHON_DOES_NOT_DATE_SPECIFIC_KOREAN_METAL_TYPE_IMPRESSION',
   'KOREA_UNIVERSITY_JUNGJONG15_1518_CALENDAR_LABEL_CONFLICT',
   'PREFACE_1253_NOT_DATE_OF_SURVIVING_MANUSCRIPT',
   'HOUR_JI_SI_CONSISTENT_WITH_FIVE_RATS_BUT_ORIGINAL_GLYPH_NOT_ADJUDICATED',
@@ -531,6 +593,12 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT.targetEarlyTextPassageDirectlyInspected ||
+    YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT.focalAnecdoteInEarlyTexts !== null ||
+    YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT.newDirectFocalPrintWitnesses !== 0 ||
+    YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT.modernAnnualPriorityAuthorized ||
+    YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT.koreaUniversityDerivativePhotoMirror.directFocalPrintWitnessCredit !== 0 ||
+    YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT.japaneseRepositoryReportedIn2017Edition.directlyCollatedOriginalFocalWitnessCredit !== 0 ||
     YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY.institutionMARCRecordConfirmed ||
     YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY.institutionKorcisRecKey !== null ||
     YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY.originalImageStableUrl !== null ||
@@ -623,6 +691,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     koreanFacsimileRetrievalRoute: YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE,
     earlierYangrenDerivedClauseComparison: YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON,
     nlkCandidateCallmarkFromAcademicBibliography: YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY,
+    noContactEarlyPrintAccessAudit: YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
@@ -666,6 +735,10 @@ export function buildYuanHaiMingJuan3PrintScope() {
       earlySpecificMingFourPillarAnecdoteAuthenticated: false as const,
       nlkSecondaryCitationCallmarkCandidateIdentified: true as const,
       nlkHoldingRecordIndependentlyConfirmed: false as const,
+      publicEarlyPhotoShareIdentified: true as const,
+      publicEarlyPhotoShareAccessAndProvenanceVerified: false as const,
+      japanese2017AppendixBibliographyVerified: true as const,
+      japanesePrintedYangrenFolioAdjudicated: false as const,
       hourPillarMechanicallyValidated: true as const,
       hourPillarOriginalGlyphAdjudicated: false as const,
       chongzhenOcrOriginIdentified: true as const,
