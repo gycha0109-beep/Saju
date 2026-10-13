@@ -1,7 +1,7 @@
 # Saju Engine — 실행 로드맵
 
 > 범위: 이 저장소의 **사주 계산 → 명식 → 해석 → Official Reading → 제품 실행**. 관상/캐릭터/결제 트랙의 자체 로드맵을 대체하지 않는다.  
-> 기준 스냅샷: 2026-10-13 KST, `main` = `7f37dec215da2801ab4666fdc99b2fcb549162ea`.  
+> 기준 스냅샷: 2026-10-13 KST, `main` = `257a7d0caa59f0f86847ef21e614ca2de40533a3`.  
 > 상태: **작업 우선순위 문서**. 새로운 명리 의미·Production·공개·저장·판매 권한을 발행하지 않는다.  
 > 담당 트랙: `saju`; 의미 판정/독립 review는 기존 Research / Bridge의 소유권을 존중한다.
 
@@ -34,18 +34,24 @@
 
 ## 2. 실행 백로그 — 높은 우선순위부터
 
-### P0 — 진행 중 PR/CI 정리 (즉시)
+### P0 — Production spouse 요청 시각 문제 정리 (병합 완료, 사후 CI 검증 중)
 
-**작성 시점 후보: PR #2517** — `fix/saju/production-spouse-request-provenance`, SHA `114ed409db77ef86f0ce33e4476d9c2ec281d047`.
+**병합 완료: PR #2517** — `fix/saju/production-spouse-request-provenance`, SHA `114ed409db77ef86f0ce33e4476d9c2ec281d047`.
 
-- [ ] 최신 PR HEAD·base·mergeability·표준 CI·PIE·Production Container를 **실시간 재확인**한다.
-- [ ] 제출 HEAD의 일반 CI Quality + full regression 16/16 + CI Verify가 성공했고 컨테이너/PIE도 성공했다면 `ci-integration-ready`로 **해당 HEAD에 고정된 Integration 실행**을 요청한다. 다른 SHA의 결과를 재사용하지 않는다.
-- [ ] integration admission / full Quality / 16개 full test / full Verify / CI Integration Verify가 전부 성공하면 exact expected HEAD로 **squash merge**한다.
+- [x] 최신 PR HEAD·base·mergeability·표준 CI·PIE·Production Container를 **실시간 재확인**한다.
+- [x] 제출 HEAD의 일반 CI Quality + full regression 16/16 + CI Verify가 성공했고 컨테이너/PIE도 성공했다면 `ci-integration-ready`로 **해당 HEAD에 고정된 Integration 실행**을 요청한다. 다른 SHA의 결과를 재사용하지 않는다.
+- [x] integration admission / full Quality / 16개 full test / full Verify / CI Integration Verify가 전부 성공하면 exact expected HEAD로 **squash merge**한다.
 - [ ] 병합 후 `main` SHA와 `main` CI Quality / 16개 테스트 / CI Verify / Production Container를 검증한다.
 - [ ] PR #2517의 의도: bounded **Production 배우자운**의 명식 `createdAt`·공식 해석 결과물 `generatedAt`·Narrative clock을 **각 요청 시각**에 맞추되, 기존 semantic/consumer authority resolver와 spouse-only scope를 유지한다.
 - [ ] 실패 시 정확한 샤드 로그를 분석해 최소 수정 → 새 SHA에서 처음부터 검증한다. 16-shard 워커 부하로 인한 장시간 Full Interpretation 테스트를 새 단위 테스트에 중복 생성하지 않는다.
 
 PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현재 결과에 맞게 갱신하고 **미완료 선행 PR부터** 처리한다.
+
+**2026-10-13 실제 실행 근거**
+
+- 로드맵 선행 PR [#2518](https://github.com/gycha0109-beep/Saju/pull/2518): SHA `62f2e0d803a2748d6ceb156c477de6894ef68df9` 통합 20개 job PASS, squash merge `e53556e3cfd2e2d53a1104acb2fcb8162a854b92`. 해당 `main`의 CI Quality + 16/16 + Verify + Production Container PASS.
+- Production spouse 요청 시각 수정 [#2517](https://github.com/gycha0109-beep/Saju/pull/2517): 정확한 HEAD `114ed409db77ef86f0ce33e4476d9c2ec281d047`, 일반 CI / PIE / Production Container 및 [SHA-pinned Integration](https://github.com/gycha0109-beep/Saju/actions/runs/38354513635) admission + Quality + 16/16 + Verify + Integration Verify PASS; squash merge `257a7d0caa59f0f86847ef21e614ca2de40533a3`.
+- #2517 병합 후 `main` 검증: [CI](https://github.com/gycha0109-beep/Saju/actions/runs/38355835988)는 **진행 중**이며 완료 판정 전, [Production Container](https://github.com/gycha0109-beep/Saju/actions/runs/38355836024)는 PASS. 위 체크박스의 사후 검증은 CI 종료 후에만 체크한다.
 
 ### P1 — 현행 Natal/Spouse 제품 경로의 실행 무결성 (P0 이후)
 
@@ -57,12 +63,26 @@ PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현�
 - [ ] **검증에서 실제 관측된 결함만** 작은 PR로 보완한다. 중복 실행이나 캐시 도입은 별도 요구·보안/정합성 검토 없이는 하지 않는다.
 - 완료 기준: 허용된 범위의 HTTP/Host E2E 및 실패/unknown-time 사례 PASS, unadmitted cross-domain 의미 없음, 기존 Production/Preview/Source Proof 권한 변경 없음.
 
+**P1 감사 증거 및 미충족 항목 (2026-10-13)**
+
+- `test/preview-e2e-runtime.test.ts`는 5개 Natal Preview 실제 HTTP 요청의 pillars / fiveElements / tenGods 표시값 동등성을 검증한다. 다만 소비자 응답은 내부 `snapshotId`를 노출하지 않으므로 이것만으로 모든 실행 레인의 내부 ID 동일성을 주장하지 않는다.
+- `test/preview-calculation-request-clock.test.ts`와 `test/preview-reading-artifact-request-clock.test.ts`는 Preview 시각 정합성, `test/production-spouse-official-request-clock.test.ts`는 bounded Production spouse의 snapshot / narrative / artifact 요청 시각 및 spouse-only gate를 검증한다.
+- `test/source-reading-proof-readiness.test.ts`는 snapshot/registry/interpretation/evidence/artifact identity mismatch 차단을 검증한다. Source Proof는 **HOLD**이고 `canExecute / canPublish / canSell = false`; Proof metadata 또는 transport 무결성은 의미 승인이나 판매 허가가 아니다.
+- 새 경량 테스트 [#2519](https://github.com/gycha0109-beep/Saju/pull/2519)는 출생시간 확정/미상에서 Production spouse, Preview spouse, Source Proof 계산 경계의 내부 `snapshotId` 직접 일치 여부를 검증하도록 추가했다. 현재 **CI 미확정**, P1 완료 처리하지 않는다.
+- 기존 승인된 registry/semantic/authority 경로에서 결함 확정 전까지 해석 의미, 캐시, 계산 방식, public/persistence/commerce를 변경하지 않는다.
+
 ### P2 — Spouse standard/detailed 파일럿의 현재 상태 확정
 
 - [ ] SA-7B가 승인한 **bounded Production standard**와 SA-7C **position-only detailed** 코드를 실제 Production host/renderer/contract test로 확인한다.
 - [ ] standard/detailed canonical meaning, source semantic hash, plan/evidence/disclosure 보존과 `modelCalls=0`, 미허용 의미 표현 0건, material mismatch 전체 standard fallback을 확인한다.
 - [ ] 이미 입증된 구현은 중복 구현하지 않는다. 결함이 확인될 때만 보완한다.
 - **금지:** 배우자 외모·성격·특정 인물·혼인 결과 예측, public GA/persistence/commerce 자동 승인.
+
+**기존 증거 확인 (재구현 없음)**
+
+- `docs/implementation/sa7b-spouse-standard-official-reading-authority-closure-v1.md`는 Production standard의 `ACTIVE_BOUNDED`(position-only)를 명시한다.
+- `test/official-reading-detailed-spouse-pilot.test.ts`는 standard/detailed 동일 canonical semantic hash·plan hash·disclosures·explainability, `modelCalls=0`, 제한 문구 미노출 및 stale material의 **whole-response standard fallback**을 검증한다. 해당 파일럿은 기존 통합 회귀에서 PASS됐지만 새 공개·판매 권한을 뜻하지 않는다.
+- P2의 추가 구현은 실제 위반이 재현될 때만 별도 작업으로 연다. SA-7D의 General Annual은 `RETURN_TO_RESEARCH`, `Production HOLD`를 유지한다.
 
 ### P3 — SA-7D: Annual standard Official Reading의 **의미 권한 선행 조건** (BLOCKED: Research/Bridge)
 
