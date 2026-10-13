@@ -11,6 +11,7 @@ import {
   YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT,
   YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE,
   YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON,
+  YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -19,7 +20,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v12');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v13');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -364,6 +365,28 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(x.extraEarlyPrintedLociVerified).toBe(0);
   });
 
+  test('secondary thesis citation identifies candidate NLK callmark without spoofing a library MARC record or inspected print', () => {
+    const x = YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY;
+    expect(x).toMatchObject({
+      canonicalWorkTitle: '子平三命通變淵源',
+      bibliographyCallmarkVerbatim: '한古朝19-104',
+      owningInstitutionAttributedInCitation: '국립중앙도서관',
+      citingBibliographyEntry: 24,
+      sourceTier: 'secondary_academic_reference_list_holding_callmark_candidate',
+      institutionMARCRecordConfirmed: false,
+      institutionKorcisRecKey: null,
+      originalImageStableUrl: null,
+      callmarkMatchedAgainstCurrentInstitutionHoldings: false,
+      originalTargetFolioOpened: false,
+      actualCaseInPrintEstablished: null,
+      printedEarlyGlyph: null,
+      independentPrintedFocalWitnessCredit: 0,
+    });
+    expect(x.sourceUrl).toContain('d08ee38324aa6aeaffe0bdc3ef48d419');
+    expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED)
+      .toContain('NLK_CALLMARK_CANDIDATE_SECONDARY_BIBLIOGRAPHY_NOT_MARC_VERIFIED');
+  });
+
   test('two distinct printed settings from three scans prove variant, never authorize semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
@@ -378,6 +401,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.koreanPrimaryHoldingsAccessAudit).toBe(YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT);
     expect(scope.koreanFacsimileRetrievalRoute).toBe(YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE);
     expect(scope.earlierYangrenDerivedClauseComparison).toBe(YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON);
+    expect(scope.nlkCandidateCallmarkFromAcademicBibliography).toBe(YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY);
     expect(scope.textualGenealogyIndependenceEstablished).toBe(false);
     expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
     expect(scope.woodOcrOriginPrintLocator).toBe(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR);
@@ -404,6 +428,8 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       originalKoreanFocalFolioRetrieved: false,
       earlyGeneralJiaDayYouLuckQuotationCompared: true,
       earlySpecificMingFourPillarAnecdoteAuthenticated: false,
+      nlkSecondaryCitationCallmarkCandidateIdentified: true,
+      nlkHoldingRecordIndependentlyConfirmed: false,
       hourPillarMechanicallyValidated: true,
       hourPillarOriginalGlyphAdjudicated: false,
       chongzhenOcrOriginIdentified: true,
