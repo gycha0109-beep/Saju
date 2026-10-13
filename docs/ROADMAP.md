@@ -34,16 +34,16 @@
 
 ## 2. 실행 백로그 — 높은 우선순위부터
 
-### P0 — Production spouse 요청 시각 문제 정리 (병합 완료, 사후 CI 검증 중)
+### P0 — Production spouse 요청 시각 문제 정리 (완료)
 
 **병합 완료: PR #2517** — `fix/saju/production-spouse-request-provenance`, SHA `114ed409db77ef86f0ce33e4476d9c2ec281d047`.
 
 - [x] 최신 PR HEAD·base·mergeability·표준 CI·PIE·Production Container를 **실시간 재확인**한다.
 - [x] 제출 HEAD의 일반 CI Quality + full regression 16/16 + CI Verify가 성공했고 컨테이너/PIE도 성공했다면 `ci-integration-ready`로 **해당 HEAD에 고정된 Integration 실행**을 요청한다. 다른 SHA의 결과를 재사용하지 않는다.
 - [x] integration admission / full Quality / 16개 full test / full Verify / CI Integration Verify가 전부 성공하면 exact expected HEAD로 **squash merge**한다.
-- [ ] 병합 후 `main` SHA와 `main` CI Quality / 16개 테스트 / CI Verify / Production Container를 검증한다.
+- [x] 병합 후 `main` SHA와 `main` CI Quality / 16개 테스트 / CI Verify / Production Container를 검증한다.
 - [ ] PR #2517의 의도: bounded **Production 배우자운**의 명식 `createdAt`·공식 해석 결과물 `generatedAt`·Narrative clock을 **각 요청 시각**에 맞추되, 기존 semantic/consumer authority resolver와 spouse-only scope를 유지한다.
-- [ ] 실패 시 정확한 샤드 로그를 분석해 최소 수정 → 새 SHA에서 처음부터 검증한다. 16-shard 워커 부하로 인한 장시간 Full Interpretation 테스트를 새 단위 테스트에 중복 생성하지 않는다.
+- 실패 시 원칙: 정확한 샤드 로그를 분석해 최소 수정 → 새 SHA에서 처음부터 검증한다. 16-shard 워커 부하로 인한 장시간 Full Interpretation 테스트를 새 단위 테스트에 중복 생성하지 않는다.
 
 PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현재 결과에 맞게 갱신하고 **미완료 선행 PR부터** 처리한다.
 
@@ -51,7 +51,7 @@ PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현�
 
 - 로드맵 선행 PR [#2518](https://github.com/gycha0109-beep/Saju/pull/2518): SHA `62f2e0d803a2748d6ceb156c477de6894ef68df9` 통합 20개 job PASS, squash merge `e53556e3cfd2e2d53a1104acb2fcb8162a854b92`. 해당 `main`의 CI Quality + 16/16 + Verify + Production Container PASS.
 - Production spouse 요청 시각 수정 [#2517](https://github.com/gycha0109-beep/Saju/pull/2517): 정확한 HEAD `114ed409db77ef86f0ce33e4476d9c2ec281d047`, 일반 CI / PIE / Production Container 및 [SHA-pinned Integration](https://github.com/gycha0109-beep/Saju/actions/runs/38354513635) admission + Quality + 16/16 + Verify + Integration Verify PASS; squash merge `257a7d0caa59f0f86847ef21e614ca2de40533a3`.
-- #2517 병합 후 `main` 검증: [CI](https://github.com/gycha0109-beep/Saju/actions/runs/38355835988)는 **진행 중**이며 완료 판정 전, [Production Container](https://github.com/gycha0109-beep/Saju/actions/runs/38355836024)는 PASS. 위 체크박스의 사후 검증은 CI 종료 후에만 체크한다.
+- #2517 병합 후 `main` 검증: [CI](https://github.com/gycha0109-beep/Saju/actions/runs/38355835988)의 Quality + 16/16 + CI Verify **모두 PASS**, [Production Container](https://github.com/gycha0109-beep/Saju/actions/runs/38355836024) **PASS**. P0 완료.
 
 ### P1 — 현행 Natal/Spouse 제품 경로의 실행 무결성 (P0 이후)
 
@@ -134,7 +134,7 @@ PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현�
 
 ## 4. 다음 세션 시작 위치
 
-1. 현재 `main` / PR #2517 / 전체 관련 CI를 다시 확인한다.
+1. 현재 `main` / P1 검증 PR #2519 / 전체 관련 CI를 다시 확인한다. P0 #2517은 병합 및 main 사후 검증 완료.
 2. P0가 미완료면 우선 종료한다.
 3. P1의 실제 실행 parity 결함이 있는지 검사하고 확인된 결함만 수정한다.
 4. P2 구현/SA-7C 코드의 parity·권한·fallback 상태를 감사한다.
