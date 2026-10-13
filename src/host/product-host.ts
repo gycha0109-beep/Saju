@@ -101,6 +101,7 @@ export interface MyeonghwaProductHostDependencies {
     snapshot: CanonicalSajuSnapshot,
     context: ProductHostExecutionContext,
     requestContext?: ProductHostInterpretationRequestContext,
+    resolvedReadingRequest?: ReadingRequest,
   ) => ProductHostInterpretationBundle | Promise<ProductHostInterpretationBundle>;
   readingOptions: ProductReadingServiceOptions;
   legacyNarrativeRuntime?: LegacyNarrativeRuntimeV1;
@@ -369,19 +370,18 @@ function consumerInput(
 }
 
 function temporalInterpretationContext(
-  input: ConsumerReadingRequestInput,
+  readingRequest: ReadingRequest | undefined,
   snapshot: CanonicalSajuSnapshot,
 ): ProductHostInterpretationRequestContext | undefined {
-  const normalization = normalizeConsumerReadingRequest(input);
-  if (normalization.state !== 'resolved' || normalization.request === undefined) return undefined;
-  const temporalContext = buildTemporalReadingContext(normalization.request);
+  if (readingRequest === undefined) return undefined;
+  const temporalContext = buildTemporalReadingContext(readingRequest);
   if (temporalContext === undefined) return undefined;
   const temporalFacts =
     temporalContext.scope === 'annual'
       ? { ...buildAnnualInterpretationFacts(snapshot, temporalContext) }
       : { ...buildMonthlyInterpretationFacts(snapshot, temporalContext) };
   return {
-    readingRequest: normalization.request,
+    readingRequest,
     temporalContext,
     temporalFacts,
   };
@@ -419,12 +419,16 @@ async function runProductHostReadingInternals(
     requestedAt: nextRequestedAt(dependencies.requestNowFactory),
   };
   const input = consumerInput(parsed, context);
+  const normalization = normalizeConsumerReadingRequest(input);
+  const resolvedReadingRequest =
+    normalization.state === 'resolved' ? normalization.request : undefined;
   const snapshot = await dependencies.calculate(toBirthInput(parsed.birth), context);
-  const requestContext = temporalInterpretationContext(input, snapshot);
-  const { interpretation, registry } =
-    requestContext === undefined
-      ? await dependencies.interpret(snapshot, context)
-      : await dependencies.interpret(snapshot, context, requestContext);
+  const requestContext = temporalInterpretationContext(resolvedReadingRequest, snapshot);
+  // Give governed interpretation the same resolved intent used for temporal facts.
+  // This does not authorize unresolved, unadmitted, or research-only readings.
+  const { interpretation, registry } = await dependencies.interpret(
+    snapshot, context, requestContext, resolvedReadingRequest,
+  );
   const reading = await runProductReadingInternals(
     snapshot,
     interpretation,
