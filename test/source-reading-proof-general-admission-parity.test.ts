@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { createMyeonghwaSourceReadingProofHost } from '../src/host/product-host.js';
-import { createApprovedSourceProofPreviewDependenciesV1 } from '../src/preview/preview-product-host.js';
+import {
+  createApprovedPreviewE2eProductHost,
+  createApprovedSourceProofPreviewDependenciesV1,
+} from '../src/preview/preview-product-host.js';
+import {
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_PROHIBITED_PHRASES,
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
+  RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
+} from '../src/research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js';
 
 const BIRTH = {
   calendarType: 'solar',
@@ -46,5 +54,36 @@ describe('Preview Source Reading Proof domain admission parity', () => {
     });
     expect(unsupported.response.state).not.toBe('delivered');
     expect(unsupported.readiness.state).toBe('blocked');
+  });
+
+  it('keeps spouse Source Proof aligned with the bounded Preview-only day-branch interpretation', async () => {
+    const now = new Date('2026-10-13T00:00:00.000Z');
+    const source = createMyeonghwaSourceReadingProofHost(
+      createApprovedSourceProofPreviewDependenciesV1(now),
+    );
+    const body = { birth: BIRTH, reading: { text: '배우자운' } };
+    const [sourceResult, previewResult] = await Promise.all([
+      source.requestReadingWithProofReadiness(body),
+      createApprovedPreviewE2eProductHost().requestReading(body),
+    ]);
+    expect(previewResult.state).toBe('delivered');
+    expect(sourceResult.response.state).toBe('delivered');
+    for (const response of [sourceResult.response, previewResult]) {
+      const serialized = JSON.stringify(response);
+      expect(serialized).toContain(
+        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
+      );
+      expect(serialized).toContain(
+        RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
+      );
+      for (const phrase of RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_PROHIBITED_PHRASES) {
+        expect(serialized).not.toContain(phrase);
+      }
+    }
+    expect(sourceResult.readiness.productionInterpretationAuthority).toBe('NOT_EVALUATED');
+    expect(sourceResult.readiness.releaseAuthorization).toBe('NOT_EVALUATED');
+    expect(sourceResult.readiness.canExecute).toBe(false);
+    expect(sourceResult.readiness.canPublish).toBe(false);
+    expect(sourceResult.readiness.canSell).toBe(false);
   });
 });

@@ -488,6 +488,25 @@ class PreviewE2eNarrativeAdapter implements NarrativeModelAdapter {
   }
 }
 
+/** Apply the same narrow admission guard to both the Preview and Source Proof spouse lanes. */
+async function loadAdmittedSpousePositionOnlyPreviewMaterialization() {
+  const admission = requirePreviewSemanticAdmissionV1(
+    'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE',
+    'relationship:natal:spouse',
+  );
+  if (
+    admission.disposition !== 'claim' ||
+    admission.semanticScope !== 'traditional_spouse_palace_day_branch_position_only' ||
+    !admission.boundaries.includes('OFFICIAL_READING_PREVIEW_ALLOWED')
+  ) {
+    throw new Error('Spouse position-only Preview semantic admission is not exact.');
+  }
+
+  return import(
+    '../research/relationship-spouse-t8-day-branch-palace-project-governed-narrative-materialization.js'
+  );
+}
+
 /** Shared governed Preview calculation and domain-scoped source-proof interpretation wiring. */
 export function createApprovedSourceProofPreviewDependenciesV1(
   now: Date = new Date(),
@@ -497,7 +516,26 @@ export function createApprovedSourceProofPreviewDependenciesV1(
     calculate(input) {
       return calculateAuthorizedMyeonghwaProductionSnapshot(input).snapshot;
     },
-    interpret(snapshot, context, requestContext, resolvedReadingRequest) {
+    async interpret(snapshot, context, requestContext, resolvedReadingRequest) {
+      const spouseNatal = resolvedReadingRequest?.intent.domain === 'relationship' &&
+        resolvedReadingRequest.intent.temporalScope === 'natal' &&
+        resolvedReadingRequest.intent.relationshipScope === 'spouse';
+      if (spouseNatal) {
+        // Share the exact bounded spouse execution and admission with the
+        // actual Preview lane; never use the broader specialist research pack.
+        const materializationModule =
+          await loadAdmittedSpousePositionOnlyPreviewMaterialization();
+        const interpretation =
+          await materializationModule.runRelationshipSpouseT8DayBranchPalaceNarrativeMaterializedShadowExecution(
+            snapshot,
+            { requestId: context.requestId, now: new Date(context.requestedAt) },
+          );
+        return {
+          registry:
+            materializationModule.RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_NARRATIVE_MATERIALIZED_REGISTRY,
+          interpretation,
+        };
+      }
       // The source-proof issuer must not return General consumer syntheses
       // excluded from the actual approved General Natal Preview HTTP lane.
       const generalNatal = resolvedReadingRequest?.intent.domain === 'general' &&
@@ -539,21 +577,8 @@ function createDefaultPreviewProductHost(now: Date): MyeonghwaProductHost {
 async function createSpousePositionOnlyPreviewProductHost(
   now: Date,
 ): Promise<MyeonghwaProductHost> {
-  const admission = requirePreviewSemanticAdmissionV1(
-    'RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_CLAIM_NARRATIVE_PROFILE',
-    'relationship:natal:spouse',
-  );
-  if (
-    admission.disposition !== 'claim' ||
-    admission.semanticScope !== 'traditional_spouse_palace_day_branch_position_only' ||
-    !admission.boundaries.includes('OFFICIAL_READING_PREVIEW_ALLOWED')
-  ) {
-    throw new Error('Spouse position-only Preview semantic admission is not exact.');
-  }
-
-  const materializationModule = await import(
-    '../research/relationship-spouse-t8-day-branch-palace-project-governed-narrative-materialization.js'
-  );
+  const materializationModule =
+    await loadAdmittedSpousePositionOnlyPreviewMaterialization();
 
   return createMyeonghwaProductHost({
     calculate(input) {
