@@ -538,9 +538,14 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     const q = YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.conditionalCalendarDayCorroboration;
     const stems = [...'甲乙丙丁戊己庚辛壬癸'];
     const branches = [...'子丑寅卯辰巳午未申酉戌亥'];
-    const sexagenary = Array.from({ length: 60 }, (_, i) =>
-      stems[i % stems.length] + branches[i % branches.length]
-    );
+    const sexagenary = Array.from({ length: 60 }, (_, i) => {
+      const stem = stems[i % stems.length];
+      const branch = branches[i % branches.length];
+      if (stem === undefined || branch === undefined) {
+        throw new Error('Sexagenary cycle indexing must resolve');
+      }
+      return stem + branch;
+    });
     const first = sexagenary.indexOf(q.reconstructedFirstDayGanzhi);
     expect(first).toBeGreaterThanOrEqual(0);
     const atDay = (lunarDay: number) => sexagenary[(first + lunarDay - 1) % 60];
