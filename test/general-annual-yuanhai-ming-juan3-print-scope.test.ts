@@ -482,6 +482,30 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       independentPrintedWitnessCredit: 0,
       originalWeiWoodArchetypeSupported: false,
     });
+    expect(q.receivedXiJiParallelLocus.chongzhenXiJiOcrScope).toMatchObject({
+      parentPhysicalBookId: 'NLC892-411999032112-149610',
+      printedJuanForChapter: 1,
+      observedAphorism: '刼財陽刃切忌時逢歲運併臨災殃立至',
+      fullFourPillarsInInspectedOcr: false,
+      yueFeiNameInInspectedOcr: false,
+      xinHaiXinYouEventInInspectedOcr: false,
+      originalPrintedAnectodeAbsenceEstablished: false,
+      physicalXiJiFolioDirectlyInspected: false,
+      focalPrintPageAndColumn: null,
+      provesSameCaseInChongzhenXiJi: false,
+      independentlyCollatedFocalWitnessesAdded: 0,
+    });
+    expect(q.receivedXiJiParallelLocus.chongzhenJuanOneInteractionOcrScope).toMatchObject({
+      receivedTriple: '亥卯未',
+      receivedClash: '卯酉相冲',
+      directPrintedGlyphCheck: false,
+      allowsConjecturalExplanationOfChongzhenWoodGlyph: false,
+      allowsAutomaticNormalizationOfWoodToWei: false,
+      globalCombinationClashPrecedenceAuthorized: false,
+      independentPrintedWitnessCredit: 0,
+    });
+    expect(q.receivedXiJiParallelLocus.chongzhenPrintedJuanForThisParallelCase).toBeNull();
+    expect(q.receivedXiJiParallelLocus.chongzhenPhysicalBookForThisParallelCase).toBeNull();
     expect(q.historyOrHistoricalBirthHourAuthenticated).toBe(false);
     expect(q.textualGenealogyIndependentWitnessesAdded).toBe(0);
     expect(q.printedFocalCollationsAdded).toBe(0);
