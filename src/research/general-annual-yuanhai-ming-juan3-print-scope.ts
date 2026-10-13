@@ -748,6 +748,17 @@ export const YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT = Object.freeze({
     nlcMingFocalCasePrintDerivedOcr: Object.freeze({
       parentPrintedBookCatalogFamily: 'NLC892-411999029701' as const,
       linkedDigitizedBookId: 'NGJ89241199902970167139' as const,
+      // The portal's book ID points to the catalog's FIRST bound fascicle,
+      // but the portal chapter is a composite logical-book view (Juan 8).
+      linkedIdPhysicalFascicle: 1 as const,
+      logicalJuanEightCannotBeLocatedInBoundFascicleOneByPortalId: true as const,
+      completeNlcCommonsFascicleIndexUrl: 'https://commons.wikimedia.org/wiki/Commons:Library_back_up_project/file_list/NLC/%E6%95%B8%E5%AD%97%E5%8F%A4%E7%B1%8D/11' as const,
+      completePhysicalFascicleInventoryCount: 24 as const,
+      nlcFascicle15Candidate: 'NLC892-411999029701-66492' as const,
+      nlcFascicle15CommonsUrl: 'https://commons.wikimedia.org/wiki/File:NLC892-411999029701-66492_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_%E7%AC%AC15%E5%86%8A.pdf' as const,
+      nlcFascicle16Confirmed: 'NLC892-411999029701-66488' as const,
+      fascicle15PrintedJuanEightUpperDirectlyVerified: false as const,
+      targetedSectionInPhysicalFascicle15DirectlyVerified: false as const,
       onlineOcrUrl: 'https://www.shidianguji.com/zh/book/NGJ89241199902970167139/chapter/1lvorfxfggvly' as const,
       publicationDateRangeInCatalog: '明萬曆[1573-1620]' as const,
       printedJuan: 8 as const,
