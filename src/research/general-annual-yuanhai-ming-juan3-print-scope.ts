@@ -647,6 +647,92 @@ export const YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT = Object.freeze({
   modernAnnualPrecedenceAuthorized: false as const,
 } as const);
 
+/**
+ * Cross-genre source-criticism register:
+ * Song biographical record != authenticated hour of birth;
+ * later transcription of Sanming Tonghui != direct collation of its 1578 leaf;
+ * OCR oddities != printed textual variants.
+ */
+export const YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT = Object.freeze({
+  version: 'yuanhai-yuefei-cross-genre-print-path-audit-v1' as const,
+  biographicalBirthRecord: Object.freeze({
+    title: '宋少保岳鄂王行實編年' as const,
+    traditionalCompiler: '岳珂' as const,
+    transmittedTextUrl: 'https://www.shidianguji.com/zh/book/CADAL02020924/chapter/1l5i7mh2vbgo8' as const,
+    recordedYear: '崇寧二年癸未' as const,
+    recordedLunarBirthDay: '二月十五日' as const,
+    yearAndLunarDateTextWitnessed: true as const,
+    yearStemBranchSupportsNatalYearOnly: true as const,
+    fourPillarsAllPresent: false as const,
+    birthHourGiven: false as const,
+    originalSongAutographExamined: false as const,
+    sourceTier: 'later_reprint_ocr_of_southern_song_family_biography' as const,
+  }),
+  chronologicalDeathRecord: Object.freeze({
+    title: '建炎以來繫年要錄' as const,
+    traditionalCompiler: '李心傳' as const,
+    textUrl: 'https://zh.wikisource.org/zh-hant/建炎以來繫年要錄/卷143' as const,
+    corroboratingOcrUrl: 'https://www.shidianguji.com/zh/book/CADAL01058521/chapter/1ljw7zfk6ff2z' as const,
+    regnalYear: '紹興十一年' as const,
+    regnalLunarMonth: '十二月' as const,
+    dayStemBranch: '癸巳' as const,
+    deathInstitution: '大理寺' as const,
+    recordedDeathAge: 39 as const,
+    deathEpisodeAndTraditionalAgeCorroborated: true as const,
+    xinYouSolarYearAmbiguityMustBeAvoided: true as const,
+    birthHourOrFullNatalChartEstablished: false as const,
+    originalSongAutographExamined: false as const,
+  }),
+  mingSanmingTonghuiLocus: Object.freeze({
+    work: '三命通會' as const,
+    chapter: '卷八·六甲日己巳時斷·甲子日己巳時' as const,
+    originalEditionCatalogYear: 1578 as const,
+    official1578EditionCatalogUrl: 'https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2&sourceWhereString=&whereString=IChEYXRlX0NyZWF0ZWQgbGlrZSAnJTE1NzglJyBvciBEb2N1bWVudF9ZZWFyIGxpa2UgJyUxNTc4JScgKSA1.IuMldaBSQarjxhBn_BeTs0yAImbyvOSAYg5y7FFSAGw_' as const,
+    officialCatalogCallmark: '06590' as const,
+    similarlyLabeledCommonsScanId: 'NCL-06589' as const,
+    twoCatalogIdentifiersReconciled: false as const,
+    laterExcerptWork: '古今圖書集成·藝術典卷613' as const,
+    laterExcerptOcrUrl: 'https://www.shidianguji.com/zh/book/GJTS17/chapter/1lpxdjgfa407e' as const,
+    laterExcerptMentionsYueFeiAndFourPillars: true as const,
+    laterExcerptBirthPillars: Object.freeze(['癸未','乙卯','甲子','己巳'] as const),
+    receivedWikisourceUrl: 'https://zh.wikisource.org/zh-hant/三命通會/卷八' as const,
+    receivedWikisourceSectionOmittedNamedExample: true as const,
+    separateBookImageDerivedOcrUrl: 'https://www.shidianguji.com/zh/book/HY1521/chapter/1knweoxh848i3' as const,
+    separatelyInspectedOcrSectionOmitsName: true as const,
+    original1578FocalLeafDirectlyCollated: false as const,
+    laterExcerptProves1578IdenticalNamedExample: false as const,
+    textualRelationshipAndOmissionCauseEstablished: false as const,
+    independentMingPrintedFocalWitnessCredit: 0 as const,
+  }),
+  shenfengSuspiciousPrintOcr: Object.freeze({
+    work: '神峰通考' as const,
+    scannedPdfUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d1/NLC511-027032013020556-10361_神峰通考_第2卷.pdf' as const,
+    indexedOcrDayPillarCandidate: '甲申' as const,
+    indexedOcrYearlyMarkerCandidate: '辛丑' as const,
+    differingReceivedDigitalReadings: Object.freeze(['甲子','辛酉'] as const),
+    originalExactFocalPageVisuallyExamined: false as const,
+    printVariantVersusOcrMisreadAdjudicated: false as const,
+    mustNotCountAsConfirmedAlternativeNatalChart: true as const,
+    independentlyCollatedPrintedWitnessCredit: 0 as const,
+  }),
+  additionalMingHoldingCandidate: Object.freeze({
+    title: '新刊合併官板音義評註淵海子平五卷' as const,
+    institution: '天一閣博物院' as const,
+    catalogIdentifier: 'Tianyige-330000-1705-0005007' as const,
+    editionMetadata: '明崇禎刻本' as const,
+    pdfPages: 153 as const,
+    commonsFileUrl: 'https://commons.wikimedia.org/wiki/File:Tianyige-330000-1705-0005007_新刊合併官板音義評註淵海子平五卷_宋徐升編_明楊淙增校_明崇禎刻本.pdf' as const,
+    originalFocalPageAndColumnInspected: false as const,
+    physicallyIndependentTypesettingVerified: false as const,
+    additionalIndependentFocalWitnessCredit: 0 as const,
+  }),
+  verifiedHistoricalYearDayOrEventMeansAuthenticatedBirthHour: false as const,
+  allNewFocalPrintedWitnessesAdded: 0 as const,
+  previouslyConfirmedPrintedUnWoodVariantRemainsUnresolved: true as const,
+  globalAnnualMeaningAuthorization: false as const,
+  productionAuthorization: false as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,

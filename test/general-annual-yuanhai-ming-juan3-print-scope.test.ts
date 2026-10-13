@@ -14,6 +14,7 @@ import {
   YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY,
   YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT,
   YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT,
+  YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -510,6 +511,63 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(q.textualGenealogyIndependentWitnessesAdded).toBe(0);
     expect(q.printedFocalCollationsAdded).toBe(0);
     expect(q.modernAnnualPrecedenceAuthorized).toBe(false);
+  });
+
+  test('Song death and family birth records confirm dated events, not the alleged hour', () => {
+    const q = YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT;
+    expect(q.biographicalBirthRecord).toMatchObject({
+      recordedYear: '崇寧二年癸未',
+      recordedLunarBirthDay: '二月十五日',
+      birthHourGiven: false,
+      fourPillarsAllPresent: false,
+      originalSongAutographExamined: false,
+    });
+    expect(q.chronologicalDeathRecord).toMatchObject({
+      regnalYear: '紹興十一年',
+      regnalLunarMonth: '十二月',
+      dayStemBranch: '癸巳',
+      deathInstitution: '大理寺',
+      recordedDeathAge: 39,
+      deathEpisodeAndTraditionalAgeCorroborated: true,
+      birthHourOrFullNatalChartEstablished: false,
+    });
+    expect(q.verifiedHistoricalYearDayOrEventMeansAuthenticatedBirthHour).toBe(false);
+  });
+
+  test('1578 Sanming Tonghui date does not prove its Yue Fei example was printed in that edition', () => {
+    const q = YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT;
+    expect(q.mingSanmingTonghuiLocus).toMatchObject({
+      originalEditionCatalogYear: 1578,
+      officialCatalogCallmark: '06590',
+      similarlyLabeledCommonsScanId: 'NCL-06589',
+      twoCatalogIdentifiersReconciled: false,
+      laterExcerptMentionsYueFeiAndFourPillars: true,
+      laterExcerptBirthPillars: ['癸未', '乙卯', '甲子', '己巳'],
+      receivedWikisourceSectionOmittedNamedExample: true,
+      separatelyInspectedOcrSectionOmitsName: true,
+      original1578FocalLeafDirectlyCollated: false,
+      laterExcerptProves1578IdenticalNamedExample: false,
+      textualRelationshipAndOmissionCauseEstablished: false,
+      independentMingPrintedFocalWitnessCredit: 0,
+    });
+    expect(q.shenfengSuspiciousPrintOcr).toMatchObject({
+      indexedOcrDayPillarCandidate: '甲申',
+      indexedOcrYearlyMarkerCandidate: '辛丑',
+      differingReceivedDigitalReadings: ['甲子','辛酉'],
+      originalExactFocalPageVisuallyExamined: false,
+      printVariantVersusOcrMisreadAdjudicated: false,
+      mustNotCountAsConfirmedAlternativeNatalChart: true,
+    });
+    expect(q.additionalMingHoldingCandidate).toMatchObject({
+      catalogIdentifier: 'Tianyige-330000-1705-0005007',
+      editionMetadata: '明崇禎刻本',
+      originalFocalPageAndColumnInspected: false,
+      physicallyIndependentTypesettingVerified: false,
+      additionalIndependentFocalWitnessCredit: 0,
+    });
+    expect(q.allNewFocalPrintedWitnessesAdded).toBe(0);
+    expect(q.globalAnnualMeaningAuthorization).toBe(false);
+    expect(q.productionAuthorization).toBe(false);
   });
 
   test('Shenfeng Tongkao 已巳 in received web text is neither JiSi print evidence nor independent stemma', () => {
