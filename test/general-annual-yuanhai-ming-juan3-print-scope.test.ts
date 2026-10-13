@@ -22,7 +22,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v15');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v16');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -451,6 +451,11 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     });
     expect(q.receivedXiJiParallelLocus).toMatchObject({
       textAttributedPerson: '岳飛',
+      receivedWebsiteChapterLabel: '卷一',
+      wanliPrintedContentsJuanNumber: 2,
+      wanliPrintedContentsVerifiedFromNclPdfPage: 1,
+      chongzhenPrintedJuanForThisParallelCase: null,
+      chongzhenPhysicalBookForThisParallelCase: null,
       textDescribesDeathAge: '三十九歲',
       textDescribesDeathSetting: '獄中',
       firstEditionPhysicalBookOne: 'NLC892-2642-210287',
@@ -533,6 +538,8 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       japanesePrintedYangrenFolioAdjudicated: false,
       sameReceivedFourPillarsInParallelXiJiAndYangrenLoci: true,
       bookOneParallelXiJiFocalOriginalVerified: false,
+      wanliXiJiPrintContentsJuanTwoVerified: true,
+      chongzhenXiJiPhysicalBookUnresolved: true,
       historicalYuefeiBirthHourVerified: false,
       hourPillarMechanicallyValidated: true,
       hourPillarOriginalGlyphAdjudicated: false,
