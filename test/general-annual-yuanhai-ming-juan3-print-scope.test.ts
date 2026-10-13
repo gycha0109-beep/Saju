@@ -13,6 +13,7 @@ import {
   YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON,
   YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY,
   YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT,
+  YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -21,7 +22,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v14');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v15');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -431,6 +432,56 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       .toContain('JAPAN_SEIKADO_2017_APPENDIX_FULL_TEXT_CLAIM_NOT_DIRECT_PRINT_PAGE_INSPECTION');
   });
 
+  test('parallel four-pillar anecdote in Xiji and Yangren is a received textual cross-locus, not two inspected print settings', () => {
+    const q = YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT;
+    expect(q.fourPillarsDigitalTranscription).toEqual(['癸未', '乙卯', '甲子', '己巳']);
+    expect(q.largeLuckRecorded).toBe('辛亥');
+    expect(q.annualMarkerRecorded).toBe('辛酉');
+    expect(q.sameCaseNarrativeAcrossTwoReceivedTextLocations).toBe(true);
+    expect(q.mingYangrenPrintLocus).toMatchObject({
+      wanliNlcBookTwoPdfPage: 11,
+      wanliDirectlyRead: '亥卯未合起羊刃',
+      chongzhenNlcBookTwoPdfPage: 19,
+      chongzhenDirectlyRead: '亥卯木合起羊刃',
+      chongzhenNatalYearCharacterOnSamePage: '未',
+      chongzhenYearAndCompoundWoodBothVisibleInSamePrintedCase: true,
+      printedParagraphExplicitlyNamesYueFei: false,
+      localClashOrCombinationWinnerAlgorithmEstablished: false,
+      newPrintedWitnessCredit: 0,
+    });
+    expect(q.receivedXiJiParallelLocus).toMatchObject({
+      textAttributedPerson: '岳飛',
+      textDescribesDeathAge: '三十九歲',
+      textDescribesDeathSetting: '獄中',
+      firstEditionPhysicalBookOne: 'NLC892-2642-210287',
+      firstEditionBookOnePdfPagesTotal: 48,
+      secondEditionPhysicalBookOne: 'NLC892-411999032112-149610',
+      secondEditionBookOnePdfPagesTotal: 37,
+      targetPageInEitherPrintedBookOne: null,
+      anyBookOneOriginalPdfBytesObtained: false,
+      originalBookOneFocalFolioDirectlyInspected: false,
+      attributionIsVerifiedIndependentHistoricalBirthRecord: false,
+      newPrintedWitnessCredit: 0,
+    });
+    expect(q.historyOrHistoricalBirthHourAuthenticated).toBe(false);
+    expect(q.textualGenealogyIndependentWitnessesAdded).toBe(0);
+    expect(q.printedFocalCollationsAdded).toBe(0);
+    expect(q.modernAnnualPrecedenceAuthorized).toBe(false);
+  });
+
+  test('Shenfeng Tongkao 已巳 in received web text is neither JiSi print evidence nor independent stemma', () => {
+    const q = YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.additionalReceivedText;
+    expect(q).toMatchObject({
+      work: '神峰通考',
+      transmittedHourPillarString: '已巳',
+      glyphEqualsMechanicallyValidJiSi: false,
+      independentMaterialWitnessCollated: false,
+      editionDependenceDetermined: false,
+      printedOriginalHourStemVerified: false,
+      newPrintedWitnessCredit: 0,
+    });
+  });
+
   test('two distinct printed settings from three scans prove variant, never authorize semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
@@ -447,6 +498,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.earlierYangrenDerivedClauseComparison).toBe(YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON);
     expect(scope.nlkCandidateCallmarkFromAcademicBibliography).toBe(YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY);
     expect(scope.noContactEarlyPrintAccessAudit).toBe(YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT);
+    expect(scope.parallelYuefeiNatalLocusAudit).toBe(YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT);
     expect(scope.textualGenealogyIndependenceEstablished).toBe(false);
     expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
     expect(scope.woodOcrOriginPrintLocator).toBe(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR);
@@ -479,6 +531,9 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       publicEarlyPhotoShareAccessAndProvenanceVerified: false,
       japanese2017AppendixBibliographyVerified: true,
       japanesePrintedYangrenFolioAdjudicated: false,
+      sameReceivedFourPillarsInParallelXiJiAndYangrenLoci: true,
+      bookOneParallelXiJiFocalOriginalVerified: false,
+      historicalYuefeiBirthHourVerified: false,
       hourPillarMechanicallyValidated: true,
       hourPillarOriginalGlyphAdjudicated: false,
       chongzhenOcrOriginIdentified: true,
