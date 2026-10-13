@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-korean-earlier-yangren-text-and-1518-candidate-v9' as const;
+  'sa7d-yuanhai-korean-primary-plate-register-access-audit-v10' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -285,6 +285,67 @@ export const YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH = Object.freeze({
   originalFocalPrintWitnessesAdded: 0 as const,
 } as const);
 
+/**
+ * Institutional access audit: historical archival record of stored plates
+ * != collation of any surviving National Library of Korea imprint.
+ * Korea University catalog lists selected volumes; an indexed TOC and
+ * "full text" label are not access to a target folio.
+ */
+export const YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT = Object.freeze({
+  version: 'saju-korean-primary-plate-and-locus-access-v1' as const,
+  joseonArchivePrimaryRecord: Object.freeze({
+    title: '書雲觀志' as const,
+    location: '卷四 書器' as const,
+    governmentTranscriptionUrl: 'https://db.history.go.kr/joseon/item/level.do?levelId=jlawb_650_0050_0010' as const,
+    recordId: 'jlawb_650_0050_0010' as const,
+    recordedWorkTitle: '徐子平三命通變淵源' as const,
+    recordedVolumeCount: 2 as const,
+    recordedAttributedAuthor: '宋徐大升' as const,
+    archivedPlateHoldingStatement: '本監藏板' as const,
+    originalBookPagesDigitallyInspected: false as const,
+    provesPresentNationalLibraryCopyFromSamePlates: false as const,
+    provesFocalAnecdotePrinted: false as const,
+    originalTargetGlyph: null,
+    printWitnessCredit: 0 as const,
+    evidenceTier: 'historical_institutional_plate_inventory_not_focal_leaf' as const,
+  }),
+  koreaUniversityCatalogAccess: Object.freeze({
+    title: '新編三車一覽子平淵源註解' as const,
+    controlNumber: '000000724230' as const,
+    cataloguedVolumeCount: 3 as const,
+    indexedCatalogVolumeTian: Object.freeze({
+      url: 'https://dcollection.korea.ac.kr/srch/srchDetail/000000134095' as const,
+      volume: '天' as const,
+      registrationNumber: '461225367' as const,
+      shelfMark: '화산 貴135 1' as const,
+      tocContainsZhengZhenLun: true as const,
+      tocContainsXingHeGe: true as const,
+      targetYangrenFolioDirectlyOpened: false as const,
+    }),
+    indexedCatalogVolumeRen: Object.freeze({
+      url: 'https://dcollection.korea.ac.kr/srch/srchDetail/000000134097' as const,
+      volume: '人' as const,
+      registrationNumber: '461225369' as const,
+      shelfMark: '화산 貴135 3' as const,
+      tocOpening: '繼善篇' as const,
+      targetYangrenFolioDirectlyOpened: false as const,
+    }),
+    catalogCalendarLabelVerbatim: '中宗15(1518)' as const,
+    historicalImprintDateFromSecondarySource: '正德十三年(1518)' as const,
+    compositeCatalogDatingInternallyInconsistent: true as const,
+    physicalSurvivingCopyDatingAuthenticated: false as const,
+    targetAncestralFocalCasePresence: null,
+    originalTargetGlyph: null,
+    printWitnessCredit: 0 as const,
+  }),
+  koreanNationalLibraryTargetFolioOpened: false as const,
+  kyujanggakManuscriptTargetFolioOpened: false as const,
+  koreaUniversityTargetFolioOpened: false as const,
+  firstPersonOriginalFocalCaseNegativeClaimAuthorized: false as const,
+  independentlyInspectedFocalPrintsAdded: 0 as const,
+  preWanliGlyphAdjudicationAuthorized: false as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,
@@ -312,6 +373,9 @@ export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'KOREAN_WOODBLOCK_SCHOLARLY_YANGREN_QUOTE_NOT_FOCAL_CASE',
   'KOREA_UNIVERSITY_1518_SAN_CHE_DERIVATIVE_NOT_1548_YANG_CONG',
   'KOREA_1518_DERIVATIVE_FOCAL_PRINT_UNINSPECTED',
+  'SEOUNGWANJI_BON_GAM_JANG_PAN_ATTESTS_HISTORICAL_PLATE_HOLDING_NOT_SURVIVING_FOCAL_COPY',
+  'KOREA_UNIVERSITY_CATALOG_TOC_NOT_ORIGINAL_FOLIO_ACCESS',
+  'KOREA_UNIVERSITY_JUNGJONG15_1518_CALENDAR_LABEL_CONFLICT',
   'PREFACE_1253_NOT_DATE_OF_SURVIVING_MANUSCRIPT',
   'HOUR_JI_SI_CONSISTENT_WITH_FIVE_RATS_BUT_ORIGINAL_GLYPH_NOT_ADJUDICATED',
   'LATER_EDITED_TEXT_MAY_SILENTLY_EMEND_AND_IS_NOT_PRINT_WITNESS',
@@ -336,6 +400,12 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT.joseonArchivePrimaryRecord.provesPresentNationalLibraryCopyFromSamePlates ||
+    YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT.joseonArchivePrimaryRecord.provesFocalAnecdotePrinted ||
+    !YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT.koreaUniversityCatalogAccess.compositeCatalogDatingInternallyInconsistent ||
+    YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT.koreaUniversityCatalogAccess.targetAncestralFocalCasePresence !== null ||
+    YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT.independentlyInspectedFocalPrintsAdded !== 0 ||
+    YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT.firstPersonOriginalFocalCaseNegativeClaimAuthorized ||
     !YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH.earlierYangrenTheoryTraceableInScholarlyQuotation ||
     YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH.preciseCaseHasPre1600VerifiedProvenance ||
     YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH.originalFocalPrintWitnessesAdded !== 0 ||
@@ -401,6 +471,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     criticalAssessment: YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT,
     preWanliSourceAccessAudit: YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT,
     koreanEarlierYangrenResearch: YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH,
+    koreanPrimaryHoldingsAccessAudit: YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
@@ -434,6 +505,10 @@ export function buildYuanHaiMingJuan3PrintScope() {
       relatedKoreanSourceFocalPassageVerified: false as const,
       earlierYangrenTheoryScholarlyQuoted: true as const,
       koreaUniversity1518FocalGlyphDirectlyInspected: false as const,
+      koreanInstitutionalPlateInventoryAttested: true as const,
+      survivingNlkPrintFromRecordedPlatesVerified: false as const,
+      koreaUniversityCatalogTocLocated: true as const,
+      koreanOriginalFocalCaseAbsentProved: false as const,
       hourPillarMechanicallyValidated: true as const,
       hourPillarOriginalGlyphAdjudicated: false as const,
       chongzhenOcrOriginIdentified: true as const,
