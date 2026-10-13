@@ -534,6 +534,37 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(q.verifiedHistoricalYearDayOrEventMeansAuthenticatedBirthHour).toBe(false);
   });
 
+  test('Song 1103 month 2 day 15 falls on Jiazi by calendar, not by asserted birth hour', () => {
+    const q = YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.conditionalCalendarDayCorroboration;
+    const stems = [...'甲乙丙丁戊己庚辛壬癸'];
+    const branches = [...'子丑寅卯辰巳午未申酉戌亥'];
+    const sexagenary = Array.from({ length: 60 }, (_, i) =>
+      stems[i % stems.length] + branches[i % branches.length]
+    );
+    const first = sexagenary.indexOf(q.reconstructedFirstDayGanzhi);
+    expect(first).toBeGreaterThanOrEqual(0);
+    const atDay = (lunarDay: number) => sexagenary[(first + lunarDay - 1) % 60];
+    expect(q).toMatchObject({
+      historicalLunisolarMonth: '崇寧二年二月',
+      reconstructedFirstDayGregorian: '1103-03-10',
+      reconstructedFirstDayGanzhi: '庚戌',
+      recordedBirthLunarDay: 15,
+      sexagenaryDayOffsetFromFirst: 14,
+      computedBirthDayGanzhi: '甲子',
+      reconstructedGregorianDate: '1103-03-24',
+      alignsReceivedYueFeiDayPillarIfBirthDateAccurate: true,
+      songChronicleExplicitlyStatesYueFeiBirthday: false,
+      validatesBirthHourJiSi: false,
+      mathematicallyValidDayPillarMeansBiographicallyAuthenticatedFourPillars: false,
+      independentPrintedMingFocalWitnessCredit: 0,
+    });
+    expect(atDay(q.recordedBirthLunarDay)).toBe(q.computedBirthDayGanzhi);
+    for (const entry of q.chronicleInMonthCrossCheck) {
+      expect(atDay(entry.day)).toBe(entry.ganzhi);
+    }
+    expect(q.validatesSajuPredictionOrShenShaInterpretation).toBe(false);
+  });
+
   test('1578 Sanming Tonghui date does not prove its Yue Fei example was printed in that edition', () => {
     const q = YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT;
     expect(q.mingSanmingTonghuiLocus).toMatchObject({
