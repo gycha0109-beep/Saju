@@ -46,6 +46,13 @@ export function createGeneralNatalIntegratedPreviewProductHost(
       outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
       readingVersion: GENERAL_NATAL_INTEGRATED_PREVIEW_HOST_VERSION,
     },
+    readingOptionsForRequest(context) {
+      return {
+        outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
+        readingVersion: GENERAL_NATAL_INTEGRATED_PREVIEW_HOST_VERSION,
+        artifactGeneratedAt: new Date(context.requestedAt),
+      };
+    },
     ...(options.requestIdFactory === undefined
       ? {}
       : { requestIdFactory: options.requestIdFactory }),
