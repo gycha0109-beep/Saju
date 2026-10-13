@@ -568,6 +568,16 @@ export function createApprovedSourceProofPreviewDependenciesV1(
       narrativeNow: now,
       artifactGeneratedAt: now,
     },
+    readingOptionsForRequest(context) {
+      const requestedAt = new Date(context.requestedAt);
+      return {
+        outputSchemaVersion: PREVIEW_E2E_OUTPUT_SCHEMA_VERSION,
+        readingVersion: PREVIEW_E2E_RUNTIME_VERSION,
+        claimNarrativeProfiles: CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
+        narrativeNow: requestedAt,
+        artifactGeneratedAt: requestedAt,
+      };
+    },
     requestIdFactory: () => `preview_${randomUUID()}`,
   };
 }
@@ -608,6 +618,15 @@ async function createSpousePositionOnlyPreviewProductHost(
       readingVersion: PREVIEW_E2E_RUNTIME_VERSION,
       narrativeNow: now,
       artifactGeneratedAt: now,
+    },
+    readingOptionsForRequest(context) {
+      const requestedAt = new Date(context.requestedAt);
+      return {
+        outputSchemaVersion: PREVIEW_E2E_OUTPUT_SCHEMA_VERSION,
+        readingVersion: PREVIEW_E2E_RUNTIME_VERSION,
+        narrativeNow: requestedAt,
+        artifactGeneratedAt: requestedAt,
+      };
     },
     requestIdFactory: () => `preview_spouse_${randomUUID()}`,
   });
