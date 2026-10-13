@@ -58,8 +58,10 @@ async function createSpousePositionOnlyProductionProductHost(
   );
 
   return createMyeonghwaProductHost({
-    calculate(input) {
-      return calculateAuthorizedMyeonghwaProductionSnapshot(input).snapshot;
+    calculate(input, context) {
+      return calculateAuthorizedMyeonghwaProductionSnapshot(input, {
+        now: new Date(context.requestedAt),
+      }).snapshot;
     },
     async interpret(snapshot, context) {
       const interpretation =
@@ -78,6 +80,11 @@ async function createSpousePositionOnlyProductionProductHost(
     },
     readingOptions:
       createProductionSpouseOfficialReadingDeliveryExecutionOptionsV1(now),
+    readingOptionsForRequest(context) {
+      return createProductionSpouseOfficialReadingDeliveryExecutionOptionsV1(
+        new Date(context.requestedAt),
+      );
+    },
     requestIdFactory: () => `production_spouse_${randomUUID()}`,
   });
 }
