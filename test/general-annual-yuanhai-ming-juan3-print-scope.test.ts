@@ -9,6 +9,7 @@ import {
   YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT,
   YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH,
   YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT,
+  YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -17,7 +18,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v10');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v11');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -301,6 +302,40 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     });
   });
 
+  test('KORCIS discovery route and alternate titles cannot be mistaken for holding record or original scan', () => {
+    const k = YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE;
+    expect(k.institutionalCatalog.publicSimpleSearchUrl).toBe('https://www.nl.go.kr/korcis/search/simple.do');
+    expect(k.institutionalCatalog.publicSearchAndOriginalImageViewingNoLoginRequired).toBe(true);
+    expect(k.institutionalCatalog.apiRecordFields).toContain('REC_KEY');
+    expect(k.institutionalCatalog.apiHoldingFields).toContain('CALL_NO');
+    expect(k.institutionalCatalog.apiHoldingFields).toContain('ORIGINAL_YN');
+    expect(k.institutionalCatalog.exactTargetCatalogRecordKey).toBeNull();
+    expect(k.institutionalCatalog.exactTargetHoldingCallNumber).toBeNull();
+    expect(k.institutionalCatalog.originalAvailabilityVerifiedForTarget).toBeNull();
+    expect(k.institutionalCatalog.originalImageUrlVerifiedForTarget).toBeNull();
+    expect(k.institutionalCatalog.originalTargetFolioDirectlyViewed).toBe(false);
+    expect(k.institutionalCatalog.queriedXmlResponseSuccessfullyParsed).toBe(false);
+    expect(k.attestedNameFormsForBroadCatalogSearch).toContain('子平淵源');
+    expect(k.attestedNameFormsForBroadCatalogSearch).toContain('子平三命通變淵源');
+    expect(k.ambiguousXuZipingShortTitleNeedsAuthorAndVolumeDisambiguation).toBe(true);
+  });
+
+  test('catalogued third-party manuscript-like PDF filename is not a verified focal print', () => {
+    const k = YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE;
+    expect(k.relatedMaterialNotYetProvenOriginal).toMatchObject({
+      actualFileBytesObtained: false,
+      matchesNlkOrKyujanggakHoldingVerified: false,
+      originalTargetFolioAndGlyphVerified: false,
+      originalCasePresence: null,
+      independentPrintWitnessCredit: 0,
+    });
+    expect(k.externalInstitutionOriginalFolioRetrieved).toBe(false);
+    expect(k.historicalFocalCasePreWanliPresence).toBeNull();
+    expect(k.newlyAuthorizedIndependentWitnesses).toBe(0);
+    expect(k.archetypeDeterminationAuthorized).toBe(false);
+    expect(k.modernAnnualSemanticsAuthorized).toBe(false);
+  });
+
   test('two distinct printed settings from three scans prove variant, never authorize semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
@@ -313,6 +348,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.preWanliSourceAccessAudit).toBe(YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT);
     expect(scope.koreanEarlierYangrenResearch).toBe(YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH);
     expect(scope.koreanPrimaryHoldingsAccessAudit).toBe(YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT);
+    expect(scope.koreanFacsimileRetrievalRoute).toBe(YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE);
     expect(scope.textualGenealogyIndependenceEstablished).toBe(false);
     expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
     expect(scope.woodOcrOriginPrintLocator).toBe(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR);
@@ -335,6 +371,8 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       survivingNlkPrintFromRecordedPlatesVerified: false,
       koreaUniversityCatalogTocLocated: true,
       koreanOriginalFocalCaseAbsentProved: false,
+      officialKorcisSearchRouteVerified: true,
+      originalKoreanFocalFolioRetrieved: false,
       hourPillarMechanicallyValidated: true,
       hourPillarOriginalGlyphAdjudicated: false,
       chongzhenOcrOriginIdentified: true,
