@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xijipian-yuefei-source-audit-v15' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v16' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -533,8 +533,10 @@ export const YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT = Object.freeze({
  * It is NOT an independent second Ming printing and is NOT historical
  * proof of the biographical attribution to 岳飛.
  *
- * The original printed Juan 1 target folio of either edition is still
- * uninspected. The 1600/1634 print collations are ONLY of 論羊刃.
+ * Wanli's PRINTED contents places 喜忌篇 in Juan 2, although a received
+ * website labels its chapter "卷一". Chongzhen physical-book location
+ * of the parallel locus remains unverified. Both printed XiJi folios
+ * are uninspected; collated Ming folios here belong to 論羊刃 only.
  */
 export const YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT = Object.freeze({
   version: 'yuanhai-two-loci-yuefei-provenance-v1' as const,
@@ -557,6 +559,11 @@ export const YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT = Object.freeze({
   }),
   receivedXiJiParallelLocus: Object.freeze({
     title: '喜忌篇' as const,
+    receivedWebsiteChapterLabel: '卷一' as const,
+    wanliPrintedContentsJuanNumber: 2 as const,
+    wanliPrintedContentsVerifiedFromNclPdfPage: 1 as const,
+    chongzhenPrintedJuanForThisParallelCase: null,
+    chongzhenPhysicalBookForThisParallelCase: null,
     subsection: '劫財羊刃，切忌時逢；歲運並臨，災殃立至' as const,
     modernTranscriptionUrl: 'https://www.btko.net/Show-33' as const,
     crossCheckTranscriptionUrl: 'https://www.getit01.com/p201805252314174/' as const,
@@ -637,6 +644,8 @@ export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   '1518_MING_COLOPHON_DOES_NOT_DATE_SPECIFIC_KOREAN_METAL_TYPE_IMPRESSION',
   'YUEFEI_FOUR_PILLARS_RECEIVED_IN_TWO_YUANHAI_SECTIONS_NOT_TWO_PRINT_WITNESSES',
   'XIJI_PARALLEL_NLC_BOOK_ONE_TARGET_FOLIO_UNINSPECTED',
+  'WEB_CHAPTER_JUAN_ONE_LABEL_DIFFERS_FROM_WANLI_PRINTED_JUAN_TWO',
+  'CHONGZHEN_PARALLEL_XIJI_PRINTED_JUAN_AND_BOOK_UNVERIFIED',
   'SHENFENG_HOUR_YI_SI_DIGITAL_READING_REQUIRES_PHYSICAL_GLYPH_COLLATION',
   'YUEFEI_HISTORICAL_BIRTH_RECORD_NOT_AUTHENTICATED',
   'KOREA_UNIVERSITY_JUNGJONG15_1518_CALENDAR_LABEL_CONFLICT',
@@ -664,6 +673,9 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.receivedXiJiParallelLocus.wanliPrintedContentsJuanNumber !== 2 ||
+    YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.receivedXiJiParallelLocus.chongzhenPrintedJuanForThisParallelCase !== null ||
+    YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.receivedXiJiParallelLocus.chongzhenPhysicalBookForThisParallelCase !== null ||
     YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.receivedXiJiParallelLocus.anyBookOneOriginalPdfBytesObtained ||
     YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.receivedXiJiParallelLocus.newPrintedWitnessCredit !== 0 ||
     YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.additionalReceivedText.independentMaterialWitnessCollated ||
@@ -821,6 +833,8 @@ export function buildYuanHaiMingJuan3PrintScope() {
       japanesePrintedYangrenFolioAdjudicated: false as const,
       sameReceivedFourPillarsInParallelXiJiAndYangrenLoci: true as const,
       bookOneParallelXiJiFocalOriginalVerified: false as const,
+      wanliXiJiPrintContentsJuanTwoVerified: true as const,
+      chongzhenXiJiPhysicalBookUnresolved: true as const,
       historicalYuefeiBirthHourVerified: false as const,
       hourPillarMechanicallyValidated: true as const,
       hourPillarOriginalGlyphAdjudicated: false as const,
