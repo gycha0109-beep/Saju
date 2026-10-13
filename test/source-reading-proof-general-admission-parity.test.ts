@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { createMyeonghwaSourceReadingProofHost } from '../src/host/product-host.js';
-import { createApprovedSourceProofPreviewDependenciesV1 } from '../src/preview/preview-product-host.js';
-
+import {
+  createApprovedPreviewE2eProductHost,
+  createApprovedSourceProofPreviewDependenciesV1,
+} from '../src/preview/preview-product-host.js';
 import {
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_PROHIBITED_PHRASES,
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_QUALIFIER,
   RELATIONSHIP_SPOUSE_T8_DAY_BRANCH_PALACE_POSITION_ONLY_SUMMARY,
 } from '../src/research/relationship-spouse-t8-day-branch-palace-claim-narrative-profile-materialization.js';
-import { createApprovedPreviewE2eProductHost } from '../src/preview/preview-product-host.js';
 
 const BIRTH = {
   calendarType: 'solar',
@@ -54,6 +55,7 @@ describe('Preview Source Reading Proof domain admission parity', () => {
     expect(unsupported.response.state).not.toBe('delivered');
     expect(unsupported.readiness.state).toBe('blocked');
   });
+
   it('keeps spouse Source Proof aligned with the bounded Preview-only day-branch interpretation', async () => {
     const now = new Date('2026-10-13T00:00:00.000Z');
     const source = createMyeonghwaSourceReadingProofHost(
