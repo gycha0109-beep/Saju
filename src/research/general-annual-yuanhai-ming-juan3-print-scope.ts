@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-korcis-facsimile-retrieval-route-v11' as const;
+  'sa7d-yuanhai-early-yangren-attributed-clause-comparison-v12' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -399,6 +399,49 @@ export const YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE = Object.freeze({
   modernAnnualSemanticsAuthorized: false as const,
 } as const);
 
+/**
+ * A newly found contemporary exegetical source QUOTES an alleged
+ * early 子平三命通變淵源 '日刃/陽刃' segment with explicit 甲日...忌酉運
+ * and 不喜會合. Unlike the 2019 academic excerpt, this is only a modern
+ * secondary quotation, NOT a first-person collation of a printed page.
+ * The overlap with 甲子-day/辛酉-year in a separate Ming example
+ * cannot establish that the earlier exemplar contained that example
+ * or which of 合/沖 "wins".
+ */
+export const YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON = Object.freeze({
+  version: 'saju-yangren-attributed-clause-collation-v1' as const,
+  academicallyCitedEarlySource: Object.freeze({
+    sourceWork: '子平三命通變淵源' as const,
+    citedSection: '卷上 看命入式 日刃·陽刃' as const,
+    citationUrl: 'https://www.scribd.com/document/1061771789/子平三命通變淵源연구' as const,
+    citedShortClause: '怕衝陽刃' as const,
+    sourceTier: '2019_research_academic_transcription' as const,
+    directlyInspectedOriginalBookFolio: false as const,
+    containsSpecificMingFourPillarAnecdoteInCitedExtract: false as const,
+    focalPrintedWitnessCredit: 0 as const,
+  }),
+  modernExegeticalAttributedQuotation: Object.freeze({
+    commentaryTitle: '子平遗风系列之格局大义' as const,
+    section: '第十二节论日刃、阳刃' as const,
+    sourceUrl: 'https://www.scribd.com/document/978363995/凌雪衣-青衿名士-子平遗风系列之格局大义140页-0' as const,
+    attributedSourceWork: '子平三命通變淵源' as const,
+    exampleQuotedJoinDisapproval: '不喜会合' as const,
+    exampleQuotedJiaDayYouLuckAversion: '忌酉运' as const,
+    generalJiaDayAndYouLuckOverlapWithMingExample: true as const,
+    specificNatalPillarsQuoteFoundInExaminedSegment: false as const,
+    independentEarlyPrintedFolioVerified: false as const,
+    verifiedOriginalGlyphWeiOrWood: null,
+    modernCommentaryContainsIndependentPrintAuthority: false as const,
+    focalPrintedWitnessCredit: 0 as const,
+    sourceTier: 'modern_exegetical_attributed_quotation_no_print' as const,
+  }),
+  sameHistoricalAnecdoteAcrossSourcesEstablished: false as const,
+  earlierPrintedPassageNegativelyCheckedForAnecdote: false as const,
+  generalClashVersusCombinationPriorityEstablished: false as const,
+  personalAnnualOutcomeAuthorized: false as const,
+  extraEarlyPrintedLociVerified: 0 as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,
@@ -431,6 +474,9 @@ export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'KORCIS_PUBLIC_SEARCH_FOUND_TARGET_REC_KEY_AND_ORIGINAL_IMAGE_STILL_UNVERIFIED',
   'ALTERNATE_COVER_TITLE_MUST_NOT_CREATE_DUPLICATE_EDITION_WITNESSES',
   'UNVERIFIED_THIRD_PARTY_MANUSCRIPT_SCAN_FILENAME_NOT_ORIGINAL_FOLIO',
+  'EARLY_YANGREN_GENERAL_JIA_DAY_YOU_LUCK_QUOTED_BY_MODERN_COMMENTARY_NOT_PRINT',
+  'EARLY_YANGREN_JOINING_DISAPPROVAL_DOES_NOT_RESOLVE_MING_COMBINATION_CLASH',
+  'EARLY_ACADEMIC_AND_EXEGETICAL_QUOTATIONS_DO_NOT_PROVE_SPECIFIC_FOUR_PILLAR_CASE',
   'KOREA_UNIVERSITY_JUNGJONG15_1518_CALENDAR_LABEL_CONFLICT',
   'PREFACE_1253_NOT_DATE_OF_SURVIVING_MANUSCRIPT',
   'HOUR_JI_SI_CONSISTENT_WITH_FIVE_RATS_BUT_ORIGINAL_GLYPH_NOT_ADJUDICATED',
@@ -456,6 +502,11 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON.extraEarlyPrintedLociVerified !== 0 ||
+    YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON.sameHistoricalAnecdoteAcrossSourcesEstablished ||
+    YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON.generalClashVersusCombinationPriorityEstablished ||
+    YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON.modernExegeticalAttributedQuotation.focalPrintedWitnessCredit !== 0 ||
+    YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON.modernExegeticalAttributedQuotation.verifiedOriginalGlyphWeiOrWood !== null ||
     YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE.institutionalCatalog.exactTargetCatalogRecordKey !== null ||
     YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE.institutionalCatalog.originalTargetFolioDirectlyViewed ||
     YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE.relatedMaterialNotYetProvenOriginal.independentPrintWitnessCredit !== 0 ||
@@ -536,6 +587,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     koreanEarlierYangrenResearch: YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH,
     koreanPrimaryHoldingsAccessAudit: YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT,
     koreanFacsimileRetrievalRoute: YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE,
+    earlierYangrenDerivedClauseComparison: YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
@@ -575,6 +627,8 @@ export function buildYuanHaiMingJuan3PrintScope() {
       koreanOriginalFocalCaseAbsentProved: false as const,
       officialKorcisSearchRouteVerified: true as const,
       originalKoreanFocalFolioRetrieved: false as const,
+      earlyGeneralJiaDayYouLuckQuotationCompared: true as const,
+      earlySpecificMingFourPillarAnecdoteAuthenticated: false as const,
       hourPillarMechanicallyValidated: true as const,
       hourPillarOriginalGlyphAdjudicated: false as const,
       chongzhenOcrOriginIdentified: true as const,
