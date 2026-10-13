@@ -513,8 +513,10 @@ export function createApprovedSourceProofPreviewDependenciesV1(
 ): MyeonghwaProductHostDependencies {
   if (!PREVIEW_E2E_APPROVAL.approved) throw new Error('Preview E2E authority is not approved.');
   return {
-    calculate(input) {
-      return calculateAuthorizedMyeonghwaProductionSnapshot(input).snapshot;
+    calculate(input, context) {
+      return calculateAuthorizedMyeonghwaProductionSnapshot(input, {
+        now: new Date(context.requestedAt),
+      }).snapshot;
     },
     async interpret(snapshot, context, requestContext, resolvedReadingRequest) {
       const spouseNatal = resolvedReadingRequest?.intent.domain === 'relationship' &&
@@ -581,8 +583,10 @@ async function createSpousePositionOnlyPreviewProductHost(
     await loadAdmittedSpousePositionOnlyPreviewMaterialization();
 
   return createMyeonghwaProductHost({
-    calculate(input) {
-      return calculateAuthorizedMyeonghwaProductionSnapshot(input).snapshot;
+    calculate(input, context) {
+      return calculateAuthorizedMyeonghwaProductionSnapshot(input, {
+        now: new Date(context.requestedAt),
+      }).snapshot;
     },
     async interpret(snapshot, context) {
       const interpretation =
