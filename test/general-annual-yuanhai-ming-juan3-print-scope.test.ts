@@ -10,6 +10,7 @@ import {
   YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH,
   YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT,
   YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE,
+  YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -18,7 +19,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v11');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v12');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -336,6 +337,33 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(k.modernAnnualSemanticsAuthorized).toBe(false);
   });
 
+  test('scholarly versus modern quoted Yangren clauses never create an original early print witness', () => {
+    const x = YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON;
+    expect(x.academicallyCitedEarlySource).toMatchObject({
+      citedSection: '卷上 看命入式 日刃·陽刃',
+      citedShortClause: '怕衝陽刃',
+      sourceTier: '2019_research_academic_transcription',
+      directlyInspectedOriginalBookFolio: false,
+      containsSpecificMingFourPillarAnecdoteInCitedExtract: false,
+      focalPrintedWitnessCredit: 0,
+    });
+    expect(x.modernExegeticalAttributedQuotation).toMatchObject({
+      exampleQuotedJoinDisapproval: '不喜会合',
+      exampleQuotedJiaDayYouLuckAversion: '忌酉运',
+      generalJiaDayAndYouLuckOverlapWithMingExample: true,
+      specificNatalPillarsQuoteFoundInExaminedSegment: false,
+      independentEarlyPrintedFolioVerified: false,
+      verifiedOriginalGlyphWeiOrWood: null,
+      modernCommentaryContainsIndependentPrintAuthority: false,
+      focalPrintedWitnessCredit: 0,
+    });
+    expect(x.sameHistoricalAnecdoteAcrossSourcesEstablished).toBe(false);
+    expect(x.earlierPrintedPassageNegativelyCheckedForAnecdote).toBe(false);
+    expect(x.generalClashVersusCombinationPriorityEstablished).toBe(false);
+    expect(x.personalAnnualOutcomeAuthorized).toBe(false);
+    expect(x.extraEarlyPrintedLociVerified).toBe(0);
+  });
+
   test('two distinct printed settings from three scans prove variant, never authorize semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
@@ -349,6 +377,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.koreanEarlierYangrenResearch).toBe(YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH);
     expect(scope.koreanPrimaryHoldingsAccessAudit).toBe(YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT);
     expect(scope.koreanFacsimileRetrievalRoute).toBe(YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE);
+    expect(scope.earlierYangrenDerivedClauseComparison).toBe(YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON);
     expect(scope.textualGenealogyIndependenceEstablished).toBe(false);
     expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
     expect(scope.woodOcrOriginPrintLocator).toBe(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR);
@@ -373,6 +402,8 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       koreanOriginalFocalCaseAbsentProved: false,
       officialKorcisSearchRouteVerified: true,
       originalKoreanFocalFolioRetrieved: false,
+      earlyGeneralJiaDayYouLuckQuotationCompared: true,
+      earlySpecificMingFourPillarAnecdoteAuthenticated: false,
       hourPillarMechanicallyValidated: true,
       hourPillarOriginalGlyphAdjudicated: false,
       chongzhenOcrOriginIdentified: true,
