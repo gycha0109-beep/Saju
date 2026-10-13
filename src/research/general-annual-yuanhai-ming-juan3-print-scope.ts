@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-no-contact-free-mirrors-japan-print-review-v14' as const;
+  'sa7d-yuanhai-parallel-xijipian-yuefei-source-audit-v15' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -527,6 +527,73 @@ export const YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT = Object.freeze({
   modernAnnualPriorityAuthorized: false as const,
 } as const);
 
+/**
+ * The same four natal pillars and 辛亥/辛酉 markers occur in TWO textual
+ * locations in received editions of 淵海子平: 喜忌篇 劫財羊刃, and 論羊刃.
+ * It is NOT an independent second Ming printing and is NOT historical
+ * proof of the biographical attribution to 岳飛.
+ *
+ * The original printed Juan 1 target folio of either edition is still
+ * uninspected. The 1600/1634 print collations are ONLY of 論羊刃.
+ */
+export const YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT = Object.freeze({
+  version: 'yuanhai-two-loci-yuefei-provenance-v1' as const,
+  fourPillarsDigitalTranscription: Object.freeze(['癸未','乙卯','甲子','己巳'] as const),
+  largeLuckRecorded: '辛亥' as const,
+  annualMarkerRecorded: '辛酉' as const,
+  sameCaseNarrativeAcrossTwoReceivedTextLocations: true as const,
+  mingYangrenPrintLocus: Object.freeze({
+    title: '論羊刃' as const,
+    wanliNlcBookTwoPdfPage: 11 as const,
+    wanliDirectlyRead: '亥卯未合起羊刃' as const,
+    chongzhenNlcBookTwoPdfPage: 19 as const,
+    chongzhenDirectlyRead: '亥卯木合起羊刃' as const,
+    chongzhenNatalYearCharacterOnSamePage: '未' as const,
+    chongzhenYearAndCompoundWoodBothVisibleInSamePrintedCase: true as const,
+    printedParagraphExplicitlyNamesYueFei: false as const,
+    observedLocalClosingExpression: '不可一合一沖也' as const,
+    localClashOrCombinationWinnerAlgorithmEstablished: false as const,
+    newPrintedWitnessCredit: 0 as const,
+  }),
+  receivedXiJiParallelLocus: Object.freeze({
+    title: '喜忌篇' as const,
+    subsection: '劫財羊刃，切忌時逢；歲運並臨，災殃立至' as const,
+    modernTranscriptionUrl: 'https://www.btko.net/Show-33' as const,
+    crossCheckTranscriptionUrl: 'https://www.getit01.com/p201805252314174/' as const,
+    textAttributedPerson: '岳飛' as const,
+    textDescribesDeathAge: '三十九歲' as const,
+    textDescribesDeathSetting: '獄中' as const,
+    firstEditionPhysicalBookOne: 'NLC892-2642-210287' as const,
+    firstEditionBookOnePdfPagesTotal: 48 as const,
+    firstEditionBookOneUrl: 'https://commons.wikimedia.org/wiki/File:NLC892-2642-210287_刻京臺增補淵海子平大全_第1冊.pdf' as const,
+    secondEditionPhysicalBookOne: 'NLC892-411999032112-149610' as const,
+    secondEditionBookOnePdfPagesTotal: 37 as const,
+    secondEditionBookOneUrl: 'https://commons.wikimedia.org/wiki/File:NLC892-411999032112-149610_新刊合併官板音義評注淵海子平_第1冊.pdf' as const,
+    targetPageInEitherPrintedBookOne: null,
+    anyBookOneOriginalPdfBytesObtained: false as const,
+    originalBookOneFocalFolioDirectlyInspected: false as const,
+    attributionIsVerifiedIndependentHistoricalBirthRecord: false as const,
+    newPrintedWitnessCredit: 0 as const,
+    sourceTier: 'received_digital_transcription_unverified_book_one_print' as const,
+  }),
+  additionalReceivedText: Object.freeze({
+    work: '神峰通考' as const,
+    publicTranscriptionUrl: 'https://zh.wikisource.org/zh-hant/神峰通考' as const,
+    textNamesYueFei: true as const,
+    transmittedHourPillarString: '已巳' as const,
+    glyphEqualsMechanicallyValidJiSi: false as const,
+    independentMaterialWitnessCollated: false as const,
+    editionDependenceDetermined: false as const,
+    printedOriginalHourStemVerified: false as const,
+    newPrintedWitnessCredit: 0 as const,
+  }),
+  historyOrHistoricalBirthHourAuthenticated: false as const,
+  textualGenealogyIndependentWitnessesAdded: 0 as const,
+  printedFocalCollationsAdded: 0 as const,
+  archetypalVariantChoiceAuthorized: false as const,
+  modernAnnualPrecedenceAuthorized: false as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,
@@ -568,6 +635,10 @@ export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'FREE_1518_COMMUNITY_COPY_MAY_HAVE_MISSING_PAGES',
   'JAPAN_SEIKADO_2017_APPENDIX_FULL_TEXT_CLAIM_NOT_DIRECT_PRINT_PAGE_INSPECTION',
   '1518_MING_COLOPHON_DOES_NOT_DATE_SPECIFIC_KOREAN_METAL_TYPE_IMPRESSION',
+  'YUEFEI_FOUR_PILLARS_RECEIVED_IN_TWO_YUANHAI_SECTIONS_NOT_TWO_PRINT_WITNESSES',
+  'XIJI_PARALLEL_NLC_BOOK_ONE_TARGET_FOLIO_UNINSPECTED',
+  'SHENFENG_HOUR_YI_SI_DIGITAL_READING_REQUIRES_PHYSICAL_GLYPH_COLLATION',
+  'YUEFEI_HISTORICAL_BIRTH_RECORD_NOT_AUTHENTICATED',
   'KOREA_UNIVERSITY_JUNGJONG15_1518_CALENDAR_LABEL_CONFLICT',
   'PREFACE_1253_NOT_DATE_OF_SURVIVING_MANUSCRIPT',
   'HOUR_JI_SI_CONSISTENT_WITH_FIVE_RATS_BUT_ORIGINAL_GLYPH_NOT_ADJUDICATED',
@@ -593,6 +664,14 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.receivedXiJiParallelLocus.anyBookOneOriginalPdfBytesObtained ||
+    YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.receivedXiJiParallelLocus.newPrintedWitnessCredit !== 0 ||
+    YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.additionalReceivedText.independentMaterialWitnessCollated ||
+    YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.textualGenealogyIndependentWitnessesAdded !== 0 ||
+    YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.printedFocalCollationsAdded !== 0 ||
+    YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.historyOrHistoricalBirthHourAuthenticated ||
+    YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.archetypalVariantChoiceAuthorized ||
+    YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.modernAnnualPrecedenceAuthorized ||
     YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT.targetEarlyTextPassageDirectlyInspected ||
     YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT.focalAnecdoteInEarlyTexts !== null ||
     YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT.newDirectFocalPrintWitnesses !== 0 ||
@@ -692,6 +771,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     earlierYangrenDerivedClauseComparison: YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON,
     nlkCandidateCallmarkFromAcademicBibliography: YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY,
     noContactEarlyPrintAccessAudit: YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT,
+    parallelYuefeiNatalLocusAudit: YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
@@ -739,6 +819,9 @@ export function buildYuanHaiMingJuan3PrintScope() {
       publicEarlyPhotoShareAccessAndProvenanceVerified: false as const,
       japanese2017AppendixBibliographyVerified: true as const,
       japanesePrintedYangrenFolioAdjudicated: false as const,
+      sameReceivedFourPillarsInParallelXiJiAndYangrenLoci: true as const,
+      bookOneParallelXiJiFocalOriginalVerified: false as const,
+      historicalYuefeiBirthHourVerified: false as const,
       hourPillarMechanicallyValidated: true as const,
       hourPillarOriginalGlyphAdjudicated: false as const,
       chongzhenOcrOriginIdentified: true as const,
