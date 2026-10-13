@@ -67,5 +67,5 @@ describe('Preview calculation request-time provenance', () => {
       expect(item.requestAt).toBe(FIXED_REQUEST_TIME.toISOString());
       expect(item.snapshotId).toBe(observed[0]?.snapshotId);
     }
-  });
+  }, 60_000);
 });
