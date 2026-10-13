@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-early-yangren-attributed-clause-comparison-v12' as const;
+  'sa7d-yuanhai-nlk-secondary-citation-callmark-v13' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -442,6 +442,33 @@ export const YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON = Object.freeze({
   extraEarlyPrintedLociVerified: 0 as const,
 } as const);
 
+/**
+ * The first actionable candidate NLK call mark found in the reference
+ * list of a separate Korean academic thesis. The printed citation is NOT
+ * the institution's MARC/holding record and cannot confirm the scan URI.
+ *
+ * This is not a new copy/witness and has zero textual collation credit.
+ */
+export const YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY = Object.freeze({
+  version: 'nlk-callmark-secondary-reference-v1' as const,
+  canonicalWorkTitle: '子平三命通變淵源' as const,
+  bibliographyCallmarkVerbatim: '한古朝19-104' as const,
+  owningInstitutionAttributedInCitation: '국립중앙도서관' as const,
+  linkedAcademicWorkTitle: '『命理約言』의 知命體系 硏究' as const,
+  citingBibliographyEntry: 24 as const,
+  sourceUrl: 'https://www.riss.kr/search/detail/DetailView.do?control_no=d08ee38324aa6aeaffe0bdc3ef48d419&p_mat_type=be54d9b8bc7cdb09' as const,
+  sourceTier: 'secondary_academic_reference_list_holding_callmark_candidate' as const,
+  institutionMARCRecordConfirmed: false as const,
+  institutionKorcisRecKey: null,
+  originalImageStableUrl: null,
+  callmarkMatchedAgainstCurrentInstitutionHoldings: false as const,
+  originalTargetFolioOpened: false as const,
+  actualCaseInPrintEstablished: null,
+  printedEarlyGlyph: null,
+  independentPrintedFocalWitnessCredit: 0 as const,
+  nextAcquisitionAction: 'cross_check_callmark_with_nlk_catalog_and_request_juan_shang_kanmingrushi_riyangren_folio' as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,
@@ -477,6 +504,8 @@ export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'EARLY_YANGREN_GENERAL_JIA_DAY_YOU_LUCK_QUOTED_BY_MODERN_COMMENTARY_NOT_PRINT',
   'EARLY_YANGREN_JOINING_DISAPPROVAL_DOES_NOT_RESOLVE_MING_COMBINATION_CLASH',
   'EARLY_ACADEMIC_AND_EXEGETICAL_QUOTATIONS_DO_NOT_PROVE_SPECIFIC_FOUR_PILLAR_CASE',
+  'NLK_CALLMARK_CANDIDATE_SECONDARY_BIBLIOGRAPHY_NOT_MARC_VERIFIED',
+  'NLK_CALLMARK_DOES_NOT_ESTABLISH_FOCAL_FOLIO_OR_EARLY_GLYPH',
   'KOREA_UNIVERSITY_JUNGJONG15_1518_CALENDAR_LABEL_CONFLICT',
   'PREFACE_1253_NOT_DATE_OF_SURVIVING_MANUSCRIPT',
   'HOUR_JI_SI_CONSISTENT_WITH_FIVE_RATS_BUT_ORIGINAL_GLYPH_NOT_ADJUDICATED',
@@ -502,6 +531,11 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY.institutionMARCRecordConfirmed ||
+    YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY.institutionKorcisRecKey !== null ||
+    YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY.originalImageStableUrl !== null ||
+    YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY.independentPrintedFocalWitnessCredit !== 0 ||
+    YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY.actualCaseInPrintEstablished !== null ||
     YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON.extraEarlyPrintedLociVerified !== 0 ||
     YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON.sameHistoricalAnecdoteAcrossSourcesEstablished ||
     YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON.generalClashVersusCombinationPriorityEstablished ||
@@ -588,6 +622,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     koreanPrimaryHoldingsAccessAudit: YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT,
     koreanFacsimileRetrievalRoute: YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE,
     earlierYangrenDerivedClauseComparison: YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON,
+    nlkCandidateCallmarkFromAcademicBibliography: YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
@@ -629,6 +664,8 @@ export function buildYuanHaiMingJuan3PrintScope() {
       originalKoreanFocalFolioRetrieved: false as const,
       earlyGeneralJiaDayYouLuckQuotationCompared: true as const,
       earlySpecificMingFourPillarAnecdoteAuthenticated: false as const,
+      nlkSecondaryCitationCallmarkCandidateIdentified: true as const,
+      nlkHoldingRecordIndependentlyConfirmed: false as const,
       hourPillarMechanicallyValidated: true as const,
       hourPillarOriginalGlyphAdjudicated: false as const,
       chongzhenOcrOriginIdentified: true as const,
