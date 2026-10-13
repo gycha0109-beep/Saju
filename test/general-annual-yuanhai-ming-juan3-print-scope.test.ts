@@ -468,6 +468,20 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       attributionIsVerifiedIndependentHistoricalBirthRecord: false,
       newPrintedWitnessCredit: 0,
     });
+    expect(q.receivedXiJiParallelLocus.nlcPrintDerivedOcr).toMatchObject({
+      linkedPrintedBookId: 'NLC892-2642-210287',
+      printedJuan: 2,
+      printedSection: '喜忌篇',
+      incompleteNatalFragmentVerbatim: expect.stringContaining('假如癸未乙'),
+      eventFragmentVerbatim: expect.stringContaining('行運辛亥'),
+      completeFourPillarsResolvedFromOcr: false,
+      yueFeiNameResolvedFromOcr: false,
+      scannedTargetPdfPage: null,
+      scannedTargetPrintColumn: null,
+      originalFolioDirectlyRead: false,
+      independentPrintedWitnessCredit: 0,
+      originalWeiWoodArchetypeSupported: false,
+    });
     expect(q.historyOrHistoricalBirthHourAuthenticated).toBe(false);
     expect(q.textualGenealogyIndependentWitnessesAdded).toBe(0);
     expect(q.printedFocalCollationsAdded).toBe(0);
