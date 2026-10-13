@@ -689,8 +689,18 @@ export const YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT = Object.freeze({
     originalEditionCatalogYear: 1578 as const,
     official1578EditionCatalogUrl: 'https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2&sourceWhereString=&whereString=IChEYXRlX0NyZWF0ZWQgbGlrZSAnJTE1NzglJyBvciBEb2N1bWVudF9ZZWFyIGxpa2UgJyUxNTc4JScgKSA1.IuMldaBSQarjxhBn_BeTs0yAImbyvOSAYg5y7FFSAGw_' as const,
     officialCatalogCallmark: '06590' as const,
-    similarlyLabeledCommonsScanId: 'NCL-06589' as const,
-    twoCatalogIdentifiersReconciled: false as const,
+    // 06589 and 06590 are TWO catalogued exemplars of 1578 edition.
+    // Wikimedia expressly identifies its scan as callmark 306.5 06589.
+    // Matching catalog metadata does not constitute focal-leaf collation.
+    commonsScanId: 'NCL-06589' as const,
+    commons06589BookOnePages: 1000 as const,
+    commons06589BookTwoPages: 187 as const,
+    commonsScanCatalogCallmark: '306.5 06589' as const,
+    official06589CatalogUrl: 'https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=26447d6c7bce4f449022760431185858fDU3MDkwMg2.stq2HEhfWJC_eUYaQeBiD_PNb2MtZqMpJAZgsDYhhYk_&page=&sourceWhereString=&whereString=IChDcmVhdGVyX05hbWUgbGlrZSAnJeiQrOawkeiLsSUnIG9yIERvY3VtZW50X1dyaXRlciBsaWtlICcl6JCs5rCR6IuxJScgb3IgSm91cm5hbF9Xcml0ZXIgbGlrZSAnJeiQrOawkeiLsSUnICkg0.kCozK1ger_VDKjWLmYeI3_nb0xMenmNBgvJUAAV7WaE_' as const,
+    official1578CatalogCallmarks: Object.freeze(['06589', '06590'] as const),
+    twoSeparateCataloguedHoldingRecordsConfirmed: true as const,
+    commonsMetadataMatches06589Catalog: true as const,
+    booksOriginalFocalFoliosComparedBetween06589And06590: false as const,
     laterExcerptWork: '古今圖書集成·藝術典卷613' as const,
     laterExcerptOcrUrl: 'https://www.shidianguji.com/zh/book/GJTS17/chapter/1lpxdjgfa407e' as const,
     laterExcerptMentionsYueFeiAndFourPillars: true as const,

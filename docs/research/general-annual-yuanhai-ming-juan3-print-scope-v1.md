@@ -499,3 +499,14 @@
 - **검증 수량 동결:** 원본에서 확인한 `未/木` 목표 조판 **2종**, 기존 직접 스캔 **3건** 그대로. 이번 추가 직접 읽은 목표 판면 **0건**, 독립 명대 『喜忌篇』·『三命通會』 사례 인용 인쇄물 가산 **0건**. 원형 정본 선택, 사망 예언 정당화, 대운·세운 일반 알고리즘, 실제 출생 시각 인증, 현대 연운 승인 0/14 및 Production 모두 **HOLD**.
 
 **다음 우선순위:** (1) 1578 대만 원간본의 정확한 卷八 인명 예시 유무, (2) 만력 『喜忌篇』 원본 주석행의 岳飛 이름·時干, (3) 숭정 『喜忌篇』 실제 판면 누락/축약 여부, (4) 天一閣 추가 목판의 木/未 실물 인쇄 여부를 사진·쪽·열·이미지 체크섬으로만 승격.
+
+### 18.11 1578년 원간본 NCL 06589 / 06590 개체 구분 정정
+
+초기 §18.9에서는 『三命通會』 서지 `06590`과 Commons `NCL-06589`가 같은 원본인지 미해명으로 표시했지만, 추가로 검색한 대만 국가도서관 **고서연합목록에 `06589`와 `06590`가 각각 별도로 등재**된 것을 직접 확인했다.
+
+- [06589 고서연합목록](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=26447d6c7bce4f449022760431185858fDU3MDkwMg2.stq2HEhfWJC_eUYaQeBiD_PNb2MtZqMpJAZgsDYhhYk_&page=&sourceWhereString=&whereString=IChDcmVhdGVyX05hbWUgbGlrZSAnJeiQrOawkeiLsSUnIG9yIERvY3VtZW50X1dyaXRlciBsaWtlICcl6JCs5rCR6IuxJScgb3IgSm91cm5hbF9Xcml0ZXIgbGlrZSAnJeiQrOawkeiLsSUnICkg0.kCozK1ger_VDKjWLmYeI3_nb0xMenmNBgvJUAAV7WaE_): 萬曆6년(1578) 간, `書號 06589`, `索書號 306.5 06589`, 12책, 李子… 인장 언급.
+- [06590 원간본 서지](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2&sourceWhereString=&whereString=IChEYXRlX0NyZWF0ZWQgbGlrZSAnJTE1NzglJyBvciBEb2N1bWVudF9ZZWFyIGxpa2UgJyUxNTc4JScgKSA1.IuMldaBSQarjxhBn_BeTs0yAImbyvOSAYg5y7FFSAGw_): 1578년, `書號 06590`, `索書號 306.5 06590`, 12책.
+- 공개 Commons [NCL-06589 1](https://commons.wikimedia.org/wiki/File:NCL-06589_1_三命通會.pdf), [NCL-06589 2](https://commons.wikimedia.org/wiki/File:NCL-06589_2_三命通會.pdf)는 각각 **1000쪽/187쪽** PDF이며 파일 메타데이터에 **`索書號 306.5 06589`** 명시. 따라서 `06590`의 번호 오기였던 것이 아니라, **`06589`와 `06590`은 별도로 소장 등록된 1578년 계통**임이 확인된다. 다만 동일 목판의 재인인지, 판면 전체가 같으며 독립 예시 수록인지는 개별 원본 대조까지 미정.
+- **부재 증명 금지:** 1000쪽 PDF 원본 바이트가 100MB급이라 웹 PDF 직접 열람에 용량 제한이 있었고, `卷八·甲子日己巳時` 실제 쪽/열·岳飛 명식 수록 여부는 확인하지 못했다. 공용 스캔 존재 확인만으로 1578년에 해당 명식이 수록됐다고 서술할 수 없다.
+
+**서지학적 주의:** [CiNii의 掃葉山房본](https://ci.nii.ac.jp/ncid/BB08850892?l=ja)은 청대 간본이면서 서문에 `崇禎七年孟冬吉日重梓`라고 적는다. **1634년 서문 날짜만 보고 그 실물의 인쇄연도를 1634년으로 계산하지 않는다.** 해당 소장본을 명대 숭정판 직접 인쇄 표본으로 가산하지 않는다.
