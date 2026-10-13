@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-korean-primary-plate-register-access-audit-v10' as const;
+  'sa7d-yuanhai-korcis-facsimile-retrieval-route-v11' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -346,6 +346,59 @@ export const YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT = Object.freeze({
   preWanliGlyphAdjudicationAuthorized: false as const,
 } as const);
 
+/**
+ * Public KORCIS provides bibliography/original-availability fields.
+ * Its catalog search XML was not parsed in this inspection environment.
+ * A search service and filename-only third-party scan are acquisition routes,
+ * never automatically an identified holding, inspected page or print witness.
+ */
+export const YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE = Object.freeze({
+  version: 'saju-korean-original-facsimile-retrieval-v1' as const,
+  institutionalCatalog: Object.freeze({
+    name: 'KORCIS' as const,
+    publicSimpleSearchUrl: 'https://www.nl.go.kr/korcis/search/simple.do' as const,
+    publicApiGuideUrl: 'https://www.nl.go.kr/korcis/openAPIGuide/contents.do' as const,
+    officialFaqUrl: 'https://www.nl.go.kr/korcis/english/faq/contents.do' as const,
+    publicSearchAndOriginalImageViewingNoLoginRequired: true as const,
+    bibliographicApiResponse: 'application/xml' as const,
+    apiRequiredSearchParams: Object.freeze(['search_field','search_value','page','display'] as const),
+    apiRecordFields: Object.freeze(['REC_KEY','TITLE','LIB_NAME'] as const),
+    apiHoldingFields: Object.freeze(['CALL_NO','ORIGINAL_YN','LIB_CODE'] as const),
+    exactTargetCatalogRecordKey: null,
+    exactTargetHoldingCallNumber: null,
+    originalAvailabilityVerifiedForTarget: null,
+    originalImageUrlVerifiedForTarget: null,
+    originalTargetFolioDirectlyViewed: false as const,
+    queriedXmlResponseSuccessfullyParsed: false as const,
+  }),
+  attestedNameFormsForBroadCatalogSearch: Object.freeze([
+    '子平淵源',
+    '子平三命通變淵源',
+    '通變淵源',
+    '徐子平三命通變淵源',
+    '子平三命通辯淵源',
+    '徐子平',
+  ] as const),
+  coverTitleDifferentFromInternalTitleAttestedByScholarlyStudy: true as const,
+  ambiguousXuZipingShortTitleNeedsAuthorAndVolumeDisambiguation: true as const,
+  relatedMaterialNotYetProvenOriginal: Object.freeze({
+    sourceListingUrl: 'https://www.linglonghui.com/?dir=%2F%E5%85%AB%E5%AD%97%E7%94%B5%E5%AD%90%E4%B9%A6%E5%90%88%E9%9B%86&tag=34&ts=34' as const,
+    listedScanFilename: '徐大升[宋] - 子平三命通变渊源（手抄扫描版）.pdf' as const,
+    listedEditedFilename: '徐大升[宋] - 子平三命通变渊源（三命堂尤武伟校）.pdf' as const,
+    listedScanApproximateBytes: '11.35MB' as const,
+    actualFileBytesObtained: false as const,
+    matchesNlkOrKyujanggakHoldingVerified: false as const,
+    originalTargetFolioAndGlyphVerified: false as const,
+    originalCasePresence: null,
+    independentPrintWitnessCredit: 0 as const,
+  }),
+  externalInstitutionOriginalFolioRetrieved: false as const,
+  historicalFocalCasePreWanliPresence: null,
+  newlyAuthorizedIndependentWitnesses: 0 as const,
+  archetypeDeterminationAuthorized: false as const,
+  modernAnnualSemanticsAuthorized: false as const,
+} as const);
+
 export const YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS = Object.freeze([
   Object.freeze({
     locus: 'HAI_MAO_WEI_OR_WOOD' as const,
@@ -375,6 +428,9 @@ export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'KOREA_1518_DERIVATIVE_FOCAL_PRINT_UNINSPECTED',
   'SEOUNGWANJI_BON_GAM_JANG_PAN_ATTESTS_HISTORICAL_PLATE_HOLDING_NOT_SURVIVING_FOCAL_COPY',
   'KOREA_UNIVERSITY_CATALOG_TOC_NOT_ORIGINAL_FOLIO_ACCESS',
+  'KORCIS_PUBLIC_SEARCH_FOUND_TARGET_REC_KEY_AND_ORIGINAL_IMAGE_STILL_UNVERIFIED',
+  'ALTERNATE_COVER_TITLE_MUST_NOT_CREATE_DUPLICATE_EDITION_WITNESSES',
+  'UNVERIFIED_THIRD_PARTY_MANUSCRIPT_SCAN_FILENAME_NOT_ORIGINAL_FOLIO',
   'KOREA_UNIVERSITY_JUNGJONG15_1518_CALENDAR_LABEL_CONFLICT',
   'PREFACE_1253_NOT_DATE_OF_SURVIVING_MANUSCRIPT',
   'HOUR_JI_SI_CONSISTENT_WITH_FIVE_RATS_BUT_ORIGINAL_GLYPH_NOT_ADJUDICATED',
@@ -400,6 +456,13 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE.institutionalCatalog.exactTargetCatalogRecordKey !== null ||
+    YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE.institutionalCatalog.originalTargetFolioDirectlyViewed ||
+    YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE.relatedMaterialNotYetProvenOriginal.independentPrintWitnessCredit !== 0 ||
+    YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE.externalInstitutionOriginalFolioRetrieved ||
+    YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE.newlyAuthorizedIndependentWitnesses !== 0 ||
+    YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE.archetypeDeterminationAuthorized ||
+    YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE.modernAnnualSemanticsAuthorized ||
     YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT.joseonArchivePrimaryRecord.provesPresentNationalLibraryCopyFromSamePlates ||
     YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT.joseonArchivePrimaryRecord.provesFocalAnecdotePrinted ||
     !YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT.koreaUniversityCatalogAccess.compositeCatalogDatingInternallyInconsistent ||
@@ -472,6 +535,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     preWanliSourceAccessAudit: YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT,
     koreanEarlierYangrenResearch: YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH,
     koreanPrimaryHoldingsAccessAudit: YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT,
+    koreanFacsimileRetrievalRoute: YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
@@ -509,6 +573,8 @@ export function buildYuanHaiMingJuan3PrintScope() {
       survivingNlkPrintFromRecordedPlatesVerified: false as const,
       koreaUniversityCatalogTocLocated: true as const,
       koreanOriginalFocalCaseAbsentProved: false as const,
+      officialKorcisSearchRouteVerified: true as const,
+      originalKoreanFocalFolioRetrieved: false as const,
       hourPillarMechanicallyValidated: true as const,
       hourPillarOriginalGlyphAdjudicated: false as const,
       chongzhenOcrOriginIdentified: true as const,
