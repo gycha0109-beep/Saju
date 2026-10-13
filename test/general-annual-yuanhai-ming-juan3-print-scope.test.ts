@@ -8,6 +8,7 @@ import {
   YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT,
   YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT,
   YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH,
+  YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -16,7 +17,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v9');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v10');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -253,6 +254,53 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       .toContain('KOREA_UNIVERSITY_1518_SAN_CHE_DERIVATIVE_NOT_1548_YANG_CONG');
   });
 
+  test('historical Seoungwanji plate inventory is primary evidence of historical holdings, not an examined target folio', () => {
+    const a = YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT;
+    expect(a.joseonArchivePrimaryRecord).toMatchObject({
+      recordId: 'jlawb_650_0050_0010',
+      location: '卷四 書器',
+      recordedWorkTitle: '徐子平三命通變淵源',
+      recordedVolumeCount: 2,
+      archivedPlateHoldingStatement: '本監藏板',
+      originalBookPagesDigitallyInspected: false,
+      provesPresentNationalLibraryCopyFromSamePlates: false,
+      provesFocalAnecdotePrinted: false,
+      originalTargetGlyph: null,
+      printWitnessCredit: 0,
+    });
+    expect(a.firstPersonOriginalFocalCaseNegativeClaimAuthorized).toBe(false);
+    expect(a.independentlyInspectedFocalPrintsAdded).toBe(0);
+    expect(a.preWanliGlyphAdjudicationAuthorized).toBe(false);
+  });
+
+  test('Korea University TOC and chronologically inconsistent catalog year do not prove 1518 target words', () => {
+    const a = YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT.koreaUniversityCatalogAccess;
+    expect(a).toMatchObject({
+      controlNumber: '000000724230',
+      cataloguedVolumeCount: 3,
+      catalogCalendarLabelVerbatim: '中宗15(1518)',
+      historicalImprintDateFromSecondarySource: '正德十三年(1518)',
+      compositeCatalogDatingInternallyInconsistent: true,
+      physicalSurvivingCopyDatingAuthenticated: false,
+      targetAncestralFocalCasePresence: null,
+      originalTargetGlyph: null,
+      printWitnessCredit: 0,
+    });
+    expect(a.indexedCatalogVolumeTian).toMatchObject({
+      volume: '天',
+      registrationNumber: '461225367',
+      tocContainsZhengZhenLun: true,
+      tocContainsXingHeGe: true,
+      targetYangrenFolioDirectlyOpened: false,
+    });
+    expect(a.indexedCatalogVolumeRen).toMatchObject({
+      volume: '人',
+      registrationNumber: '461225369',
+      tocOpening: '繼善篇',
+      targetYangrenFolioDirectlyOpened: false,
+    });
+  });
+
   test('two distinct printed settings from three scans prove variant, never authorize semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
@@ -264,6 +312,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.criticalAssessment).toBe(YUANHAI_PRINT_VARIANT_CRITICAL_ASSESSMENT);
     expect(scope.preWanliSourceAccessAudit).toBe(YUANHAI_PREWANLI_SOURCE_ACCESS_AUDIT);
     expect(scope.koreanEarlierYangrenResearch).toBe(YUANHAI_KOREAN_EARLIER_YANGREN_RESEARCH);
+    expect(scope.koreanPrimaryHoldingsAccessAudit).toBe(YUANHAI_KOREAN_PRIMARY_HOLDINGS_ACCESS_AUDIT);
     expect(scope.textualGenealogyIndependenceEstablished).toBe(false);
     expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
     expect(scope.woodOcrOriginPrintLocator).toBe(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR);
@@ -282,6 +331,10 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       relatedKoreanSourceFocalPassageVerified: false,
       earlierYangrenTheoryScholarlyQuoted: true,
       koreaUniversity1518FocalGlyphDirectlyInspected: false,
+      koreanInstitutionalPlateInventoryAttested: true,
+      survivingNlkPrintFromRecordedPlatesVerified: false,
+      koreaUniversityCatalogTocLocated: true,
+      koreanOriginalFocalCaseAbsentProved: false,
       hourPillarMechanicallyValidated: true,
       hourPillarOriginalGlyphAdjudicated: false,
       chongzhenOcrOriginIdentified: true,
