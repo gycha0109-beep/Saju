@@ -12,6 +12,7 @@ import {
   YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE,
   YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON,
   YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY,
+  YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -20,7 +21,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v13');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v14');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -387,6 +388,49 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       .toContain('NLK_CALLMARK_CANDIDATE_SECONDARY_BIBLIOGRAPHY_NOT_MARC_VERIFIED');
   });
 
+  test('1518 public community photo cloud-share identifier is a source lead, never counted as original', () => {
+    const x = YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT;
+    expect(x.koreaUniversityDerivativePhotoMirror).toMatchObject({
+      publicCloudShareUrl: 'https://pan.baidu.com/s/1wuAfsAvyF93-U9YVGib6Cw?pwd=YYDS',
+      publishedShareAccessCode: 'YYDS',
+      somePagesReportedMissingByForumParticipants: true,
+      provenanceOfSharedImagesAuthenticated: false,
+      publicCloudShareFileBytesObtained: false,
+      scannedSpecificYangrenSection: false,
+      inspectedFocalPillars: null,
+      directFocalPrintWitnessCredit: 0,
+    });
+    expect(x.targetEarlyTextPassageDirectlyInspected).toBe(false);
+    expect(x.focalAnecdoteInEarlyTexts).toBeNull();
+    expect(x.newDirectFocalPrintWitnesses).toBe(0);
+    expect(x.modernAnnualPriorityAuthorized).toBe(false);
+  });
+
+  test('2017 Japanese-copy appendix reference and Ming colophon cannot authenticate an early original focal leaf', () => {
+    const x = YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT;
+    expect(x.japaneseRepositoryReportedIn2017Edition).toMatchObject({
+      namedHolding: '靜嘉堂文庫',
+      isbn13: '9789887736172',
+      editorReportsJapaneseCopyCompleteFrontAndBack: true,
+      separateJapaneseSourceTextIncludedAsAppendix: true,
+      exactFocalPageShownInPublicSample: false,
+      publiclyVerifiedSourceFolioImage: false,
+      republicationIsUntouchedFacsimileVerified: false,
+      editedTextIsIndependentHistoricalPrintWitness: false,
+      japaneseOriginalPrintedFocalGlyph: null,
+      directlyCollatedOriginalFocalWitnessCredit: 0,
+    });
+    expect(x.historicalPublicationDisambiguation).toMatchObject({
+      reportedMingZhengde13Date: 1518,
+      physicalKoreaUniversityMetalTypeImpressionDateEstablished: false,
+      chineseHistoricalPrinterAndKoreanSurvivingMetalTypeSameSettingProved: false,
+      sourceDocumentPrintingRelationshipResolved: false,
+    });
+    expect(x.reconstructedVariantAncestor).toBeNull();
+    expect(YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED)
+      .toContain('JAPAN_SEIKADO_2017_APPENDIX_FULL_TEXT_CLAIM_NOT_DIRECT_PRINT_PAGE_INSPECTION');
+  });
+
   test('two distinct printed settings from three scans prove variant, never authorize semantics', () => {
     const scope = buildYuanHaiMingJuan3PrintScope();
     expect(scope.status).toBe(
@@ -402,6 +446,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.koreanFacsimileRetrievalRoute).toBe(YUANHAI_KOREAN_FACSIMILE_RETRIEVAL_ROUTE);
     expect(scope.earlierYangrenDerivedClauseComparison).toBe(YUANHAI_EARLIER_YANGREN_DERIVED_CLAUSE_COMPARISON);
     expect(scope.nlkCandidateCallmarkFromAcademicBibliography).toBe(YUANHAI_NLK_CANDIDATE_CALLMARK_FROM_ACADEMIC_BIBLIOGRAPHY);
+    expect(scope.noContactEarlyPrintAccessAudit).toBe(YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT);
     expect(scope.textualGenealogyIndependenceEstablished).toBe(false);
     expect(scope.nclTaiwanFacsimile).toBe(YUANHAI_NCL_TAIWAN_PRINT_SCAN);
     expect(scope.woodOcrOriginPrintLocator).toBe(YUANHAI_CHONGZHEN_WOOD_OCR_PRINT_LOCATOR);
@@ -430,6 +475,10 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       earlySpecificMingFourPillarAnecdoteAuthenticated: false,
       nlkSecondaryCitationCallmarkCandidateIdentified: true,
       nlkHoldingRecordIndependentlyConfirmed: false,
+      publicEarlyPhotoShareIdentified: true,
+      publicEarlyPhotoShareAccessAndProvenanceVerified: false,
+      japanese2017AppendixBibliographyVerified: true,
+      japanesePrintedYangrenFolioAdjudicated: false,
       hourPillarMechanicallyValidated: true,
       hourPillarOriginalGlyphAdjudicated: false,
       chongzhenOcrOriginIdentified: true,
