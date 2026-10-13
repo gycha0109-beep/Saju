@@ -36,6 +36,7 @@ import {
 } from './preview-authority.js';
 import { requirePreviewSemanticAdmissionV1 } from './preview-semantic-admission.js';
 import { createGeneralNatalIntegratedPreviewProductHost } from '../host/general-natal-integrated-preview-host.js';
+import { createGeneralNatalIntegratedReadingRegistry } from '../interpretation/general-natal-integrated-reading-registry.js';
 
 export const PREVIEW_E2E_RUNTIME_VERSION = 'myeonghwa-preview-e2e-runtime-v3' as const;
 export const PREVIEW_E2E_OUTPUT_SCHEMA_VERSION = 'myeonghwa-narrative-draft-v1' as const;
@@ -487,7 +488,7 @@ class PreviewE2eNarrativeAdapter implements NarrativeModelAdapter {
   }
 }
 
-/** Reuse the existing approved Preview E2E general-natal calculation and interpretation wiring. */
+/** Shared governed Preview calculation and domain-scoped source-proof interpretation wiring. */
 export function createApprovedSourceProofPreviewDependenciesV1(
   now: Date = new Date(),
 ): MyeonghwaProductHostDependencies {
@@ -496,14 +497,20 @@ export function createApprovedSourceProofPreviewDependenciesV1(
     calculate(input) {
       return calculateAuthorizedMyeonghwaProductionSnapshot(input).snapshot;
     },
-    interpret(snapshot, context, requestContext) {
-      const registry = createBusinessNatalReadingCandidateRegistry(context.requestedAt);
+    interpret(snapshot, context, requestContext, resolvedReadingRequest) {
+      // The source-proof issuer must not return General consumer syntheses
+      // excluded from the actual approved General Natal Preview HTTP lane.
+      const generalNatal = resolvedReadingRequest?.intent.domain === 'general' &&
+        resolvedReadingRequest.intent.temporalScope === 'natal';
+      const registry = generalNatal
+        ? createGeneralNatalIntegratedReadingRegistry(context.requestedAt)
+        : createBusinessNatalReadingCandidateRegistry(context.requestedAt);
       return {
         registry,
         interpretation: runInterpretation(snapshot, registry, {
           requestId: context.requestId,
           now: new Date(context.requestedAt),
-          ...(requestContext === undefined
+          ...(requestContext?.temporalFacts === undefined
             ? {}
             : { temporalFacts: requestContext.temporalFacts }),
         }),
