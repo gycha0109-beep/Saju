@@ -104,6 +104,10 @@ export interface MyeonghwaProductHostDependencies {
     resolvedReadingRequest?: ReadingRequest,
   ) => ProductHostInterpretationBundle | Promise<ProductHostInterpretationBundle>;
   readingOptions: ProductReadingServiceOptions;
+  /** Optional request-bound execution metadata; must not change reading authority. */
+  readingOptionsForRequest?: (
+    context: ProductHostExecutionContext,
+  ) => ProductReadingServiceOptions;
   legacyNarrativeRuntime?: LegacyNarrativeRuntimeV1;
   requestIdFactory?: () => string;
   requestNowFactory?: () => Date;
@@ -393,6 +397,10 @@ function assertDependencies(dependencies: MyeonghwaProductHostDependencies): voi
   if (dependencies.readingOptions === undefined) {
     throw new TypeError('readingOptions dependency is required.');
   }
+  if (dependencies.readingOptionsForRequest !== undefined
+    && typeof dependencies.readingOptionsForRequest !== 'function') {
+    throw new TypeError('readingOptionsForRequest must be a function when provided.');
+  }
   if (dependencies.requestNowFactory !== undefined && typeof dependencies.requestNowFactory !== 'function') {
     throw new TypeError('requestNowFactory must be a function when provided.');
   }
@@ -434,7 +442,7 @@ async function runProductHostReadingInternals(
     interpretation,
     registry,
     input,
-    dependencies.readingOptions,
+    dependencies.readingOptionsForRequest?.(context) ?? dependencies.readingOptions,
     dependencies.legacyNarrativeRuntime,
   );
   return { executedRequestBody: parsed, snapshot, interpretation, registry, ...reading };
