@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  parseProductHostCalculationRequest,
-} from '../src/host/product-host.js';
+import { parseProductHostCalculationRequest } from '../src/host/product-host.js';
 import { createApprovedSourceProofPreviewDependenciesV1 } from '../src/preview/preview-product-host.js';
 
 const FIXED_REQUEST_TIME = new Date('2026-10-13T02:10:00.000Z');
@@ -33,5 +31,4 @@ describe('Preview calculation request-time provenance', () => {
       expect(later.pillars).toEqual(first.pillars);
     }
   });
-
 });
