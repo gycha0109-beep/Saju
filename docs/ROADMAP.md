@@ -1,7 +1,7 @@
 # Saju Engine — 실행 로드맵
 
 > 범위: 이 저장소의 **사주 계산 → 명식 → 해석 → Official Reading → 제품 실행**. 관상/캐릭터/결제 트랙의 자체 로드맵을 대체하지 않는다.  
-> 기준 스냅샷: 2026-10-14 KST, `main` = `225728a0ab2017b3218bb0a03ee46c734c18e702`. #2523까지 병합 및 해당 SHA의 사후 CI/Container 완료.  
+> 기준 스냅샷: 2026-10-14 KST, `main` = `1992e429b98861c46882c75f95cb84917cb1613b`. #2524까지 병합 및 해당 SHA의 사후 CI/Container 완료.  
 > 상태: **작업 우선순위 문서**. 새로운 명리 의미·Production·공개·저장·판매 권한을 발행하지 않는다.  
 > 담당 트랙: `saju`; 의미 판정/독립 review는 기존 Research / Bridge의 소유권을 존중한다.
 
@@ -87,7 +87,20 @@ PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현�
 - `test/relationship-spouse-t8-day-branch-palace-production-delivery-activation-implementation.test.ts`는 실제 `/api/readings` HTTP 활성화, 비허용 Production 요청 10건 차단, bounded 의미와 `modelCalls=0`, broader authority false를 검증한다. #2519의 일반/통합 16개 샤드에서 회귀 성공을 확인했다.
 - P2는 **기존 bounded 구현 감사 기준 완료**다. 추가 구현은 실제 위반이 재현될 때만 별도 작업으로 연다. SA-7D의 General Annual은 `RETURN_TO_RESEARCH`, `Production HOLD`를 유지한다.
 
-### P3 — SA-7D: Annual standard Official Reading의 **의미 권한 선행 조건** (BLOCKED: Research/Bridge)
+### P3-A — General Annual 소비자 경험 **내부 미리보기 개발** (ACTIVE, P3-B와 독립)
+
+**실행 원칙 변경(2026-10-14):** 고전 원문 직접 판독·독립 심사는 **Official Reading의 주장/승격 승인에만** 필요하다. 내부 상품 UX 시제품의 작성, 개인화 문구 조합, 사용자 테스트, 품질 실험은 그 완료를 기다릴 필요가 없다. 새로운 문헌 연구를 이 트랙의 선행 작업으로 요청하지 않는다.
+
+- [x] 기존 `buildAnnualInterpretationFacts`와 연운 테마/충 관계 14개 연구 문구를 **별도 내부 소비자 미리보기 보고서**에서 재사용한다. 십신별 중심 메시지와 실제 관측된 충 신호만 출력하며, 미상 기둥은 억지로 해석하지 않는다.
+- [x] `src/preview/general-annual-exploration-report.ts`와 `src/preview/index.ts`에 **독립 리포트 조합 경로**를 둔다. `test/general-annual-exploration-report.test.ts`는 10십신, 연도 변화, 출생시간 미상, 충 관계 및 권한 차단을 검증한다.
+- [x] `npm run preview:annual:demo -- 2026 annual-exploration-preview.html`로 **실제 계산 샘플→연운 해석 문구→열 수 있는 HTML 리포트**를 작성하는 로컬 명령을 추가한다. 테스트 결과가 아닌 구현 항목 체크이며, 이 브랜치의 CI 결과는 해당 PR에서 별도 확인한다.
+- [ ] 다음 제품 작업: 연운 허브→세부 문구→월별 연결의 UX 및 카피 비교, 실제 샘플 품질평가, 내부 데모의 사용자 피드백 반영. HTTP·회원/저장·공개/판매 경로는 별도 검토한다.
+- **입력 사실 구분:** 현재 `annualSexagenaryPillar(year)`는 서울 **달력 연도**에 따른 연주이다. 입춘 순간 기준 年柱 효력이라고 주장하지 않는다. 세부 예측·금액·질병·확정 사건 등 검증되지 않은 내용은 만들지 않는다.
+- **권한 구분:** `internal_exploration` / `not_official_reading` / `mayPublish=false` / `maySell=false`; 현재 Official/Bridge/Production 경로 및 그 권한을 바꾸지 않는다.
+
+**P3-A 완료 판단은 내부 미리보기 품질 및 기능 사용성으로 한다.** 원전 수집 건수, #2462 종료, Bridge ADMITTED를 이 시제품의 선행조건이나 완료 지표로 다시 추가하지 않는다.
+
+### P3-B — SA-7D: Annual standard **Official Reading 승격 전용** (BLOCKED: Research/Bridge)
 
 **선후관계:** 연운 Engine/렌더러 신규 제작보다 **연운 고유 source-qualified semantic prerequisite**가 먼저다. [독립 근거 심사 #2462](https://github.com/gycha0109-beep/Saju/issues/2462)는 10개 현대 십신 연운 테마 및 4개 지지충돌 tension 규칙의 직접 source authority가 미확립됐음을 기록한다. 이는 이미 승인됐다는 증거가 아니며 Research/Bridge HOLD를 유지한다.
 
@@ -145,7 +158,7 @@ PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현�
 ## 4. 다음 세션 시작 위치
 
 1. 현재 `main` SHA / 열린 PR / CI를 재확인한다. P0 #2517, P1 #2519·#2520, P2 bounded 배우자 standard/detailed 감사, 종료 정리 #2521 및 검증/수리 #2522·#2523은 모두 병합·해당 main 사후 CI 완료. 완료 범위를 신규 Annual 의미 승인으로 소급하지 않는다.
-2. **가장 높은 미완료 항목은 P3**이나, General Annual semantic source authority가 부족한 SA-7D Case C이므로 임의 Production Official Reading 구현·연운 의미 승격 금지.
-3. [연운 독립 근거 심사 #2462](https://github.com/gycha0109-beep/Saju/issues/2462)의 정확한 문헌 원문/locator, 현대 10개 테마 및 지지충돌 4개 규칙별 positive/negative evidence, scope/exception/counterexample, Research/Bridge 독립 판정을 우선 확보한다.
+2. **다음 실행 우선순위는 P3-A 실제 연운 소비자 경험의 내부 미리보기·UX 검증**이다. 연구 source 심사를 일반 기능 개발의 선행조건으로 다시 넣지 않는다. 별개인 P3-B의 Production Official Reading 승격만 SA-7D Case C에 따라 보류한다.
+3. P3-A는 `npm run preview:annual:demo -- 2026 annual-exploration-preview.html`로 HTML 리포트를 열어 실제 문구/흐름을 평가한다. 고전 근거 확인 [#2462](https://github.com/gycha0109-beep/Saju/issues/2462)는 **병렬 연구 트랙**으로 유지하며 P3-A 개발을 멈추게 하지 않는다.
 4. Bridge가 exact annual semantic producer를 실제 `ADMITTED` 처리한 이후에만 P3의 해당 domain Official Reading cutover를 개별 검증한다. P4–P6은 각각의 선행 승인 전 HOLD.
-5. 연구자료·승인 부재라면 종료 조건 **C (외부 원자료·독립 review 필요)**로 명시하고, 기존 Runtime/권한 코드를 불필요하게 변경하지 않는다. 이후 진행 때마다 본 `docs/ROADMAP.md`를 사실에 맞게 갱신한다.
+5. P3-B 원자료·review가 부족해도 **P3-A의 품질·제품 UX 개발은 계속**한다. 새 승인 없이 기존 Official/Production 코드로 우회 진입하지 않는다. 이후 각 PR의 실행 결과만 기록하고 단순 증거 문서 재발행을 새로운 제품 진척으로 계산하지 않는다.
