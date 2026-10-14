@@ -221,6 +221,29 @@ function periodNumber(date: Date, type: 'year' | 'month'): number {
   return parsed;
 }
 
+// A Date constructor alone silently rolls over impossible calendar dates
+// (e.g. 2026-02-30 => 2026-03-02). Require an unambiguous offset-bearing
+// date-time and validate the written calendar day before parsing its instant.
+const REFERENCE_DATETIME_WITH_OFFSET =
+  /^(\d{4})-(\d{2})-(\d{2})T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,9})?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/u;
+
+function parseValidReferenceDateTime(value: string): Date | undefined {
+  const match = REFERENCE_DATETIME_WITH_OFFSET.exec(value);
+  if (match === null) return undefined;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (year < 1 || month < 1 || month > 12 || day < 1) return undefined;
+
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const maxDays = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (day > maxDays[month - 1]!) return undefined;
+
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed : undefined;
+}
+
 function resolveTargetPeriod(
   intent: ReadingIntent,
   referenceDateTime: string | undefined,
@@ -232,8 +255,8 @@ function resolveTargetPeriod(
     return { state: 'invalid', reasonCode: 'REFERENCE_DATETIME_REQUIRED_FOR_RELATIVE_PERIOD' };
   }
 
-  const reference = new Date(referenceDateTime);
-  if (Number.isNaN(reference.getTime())) {
+  const reference = parseValidReferenceDateTime(referenceDateTime);
+  if (reference === undefined) {
     return { state: 'invalid', reasonCode: 'REFERENCE_DATETIME_INVALID' };
   }
   const canonicalReferenceDateTime = reference.toISOString();
