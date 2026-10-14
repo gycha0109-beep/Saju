@@ -118,6 +118,61 @@ describe('consumer reading request adapter', () => {
     expect(invalid.request).toBeUndefined();
   });
 
+  it('rejects impossible dates and ambiguous instants instead of silently changing the requested period', () => {
+    const invalidReferences = [
+      '2026-02-30T12:00:00.000Z',
+      '2026-04-31T00:00:00+09:00',
+      '2025-02-29T12:00:00.000Z',
+      '2026-00-01T12:00:00Z',
+      '2026-13-01T12:00:00Z',
+      '2026-02-04T24:00:00Z',
+      '2026-02-04T05:02:60+09:00',
+      '2026-02-04T05:02:00',
+      '2026-02-04',
+      '2026-02-04T05:02:00+25:00',
+      '2026-02-04T05:02:00+09:99',
+      '02/04/2026 05:02',
+    ] as const;
+
+    for (const text of ['연운', '월운'] as const) {
+      for (const referenceDateTime of invalidReferences) {
+        const result = normalizeConsumerReadingRequest({
+          requestId: `invalid-reference-${text}`,
+          text,
+          referenceDateTime,
+        });
+        expect(result.state, `${text}: ${referenceDateTime}`).toBe('invalid');
+        expect(result.reasonCodes).toEqual(['REFERENCE_DATETIME_INVALID']);
+        expect(result.request).toBeUndefined();
+      }
+    }
+  });
+
+  it('preserves leap-day and explicit-offset instants without changing Seoul period semantics', () => {
+    const leap = normalizeConsumerReadingRequest({
+      requestId: 'leap-day',
+      text: '월운',
+      referenceDateTime: '2024-02-29T23:59:59.999+09:00',
+    });
+    expect(leap.state).toBe('resolved');
+    expect(leap.request?.targetPeriod).toMatchObject({
+      year: 2024,
+      month: 2,
+      referenceDateTime: '2024-02-29T14:59:59.999Z',
+    });
+
+    const offset = normalizeConsumerReadingRequest({
+      requestId: 'explicit-offset',
+      text: '연운',
+      referenceDateTime: '2026-01-01T00:00+09:00',
+    });
+    expect(offset.state).toBe('resolved');
+    expect(offset.request?.targetPeriod).toMatchObject({
+      year: 2026,
+      referenceDateTime: '2025-12-31T15:00:00.000Z',
+    });
+  });
+
   it('canonicalizes equivalent reference instants before target-period identity is built', () => {
     const first = normalizeConsumerReadingRequest({
       requestId: 'canonical-reference',
