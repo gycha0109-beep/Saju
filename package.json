@@ -54,6 +54,7 @@
     "test": "vitest run",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run preview:research:smoke",
     "preview:natal:audit": "npm run build && node scripts/natal-personalization-audit.mjs",
+    "preview:natal:demo": "npm run build && node scripts/natal-personalized-preview.mjs",
     "preview:research": "npm run build && node scripts/research-ux-preview.mjs",
     "preview:research:smoke": "MYEONGHWA_PREVIEW_SMOKE=1 node scripts/research-ux-preview.mjs",
     "face:verify:manifest": "node scripts/verify-face-reading-migration.mjs",
