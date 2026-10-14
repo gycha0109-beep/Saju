@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createBoundedProductionSpouseOfficialReadingHostV1 } from '../src/production/production-spouse-official-reading-host.js';
 import { resolveProductionSpouseOfficialReadingDeliveryAuthorityV1 } from '../src/production/production-spouse-official-reading-delivery-authority.js';
+import {
+  createApprovedPreviewE2eProductHost,
+  createApprovedSourceProofPreviewDependenciesV1,
+} from '../src/preview/preview-product-host.js';
 
 const observed = vi.hoisted(() => ({
   runs: [] as Array<{
@@ -92,6 +96,45 @@ describe('Production spouse official reading request-time provenance', () => {
       expect(run?.consumerAuthority)
         .toBe(resolveProductionSpouseOfficialReadingDeliveryAuthorityV1);
       expect(typeof run?.projectionResolver).toBe('function');
+    }
+  });
+
+  it('shares the canonical natal snapshot identity across Production spouse, Preview spouse and Source Proof calculation for known and unknown hours', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    const requestTime = '2026-10-13T07:00:00.000Z';
+    vi.setSystemTime(new Date(requestTime));
+
+    const productionHost = createBoundedProductionSpouseOfficialReadingHostV1();
+    const previewHost = createApprovedPreviewE2eProductHost();
+    const sourceProofDependencies = createApprovedSourceProofPreviewDependenciesV1(
+      new Date('2020-01-01T00:00:00.000Z'),
+    );
+
+    for (const time of ['12:00', null]) {
+      const offset = observed.runs.length;
+      const body = { ...REQUEST, birth: { ...REQUEST.birth, time } };
+      const production = await productionHost.requestReading(body);
+      const preview = await previewHost.requestReading(body);
+      const sourceSnapshot = await sourceProofDependencies.calculate(
+        {
+          calendarType: 'solar',
+          date: { year: 2024, month: 3, day: 10 },
+          time: time === null
+            ? { known: false }
+            : { known: true, hour: 12, minute: 0 },
+          sexForTraditionalCalculation: 'unspecified',
+        },
+        { requestId: 'source-proof-same-natal-basis', requestedAt: requestTime },
+      );
+
+      const runs = observed.runs.slice(offset);
+      expect(runs).toHaveLength(2);
+      expect(production.reading?.generatedAt).toBe(requestTime);
+      expect(preview.reading?.generatedAt).toBe(requestTime);
+      expect(sourceSnapshot.createdAt).toBe(requestTime);
+      expect(runs.map((run) => run.calculationAt)).toEqual([requestTime, requestTime]);
+      expect(runs[0]?.snapshotId).toBe(sourceSnapshot.snapshotId);
+      expect(runs[1]?.snapshotId).toBe(sourceSnapshot.snapshotId);
     }
   });
 
