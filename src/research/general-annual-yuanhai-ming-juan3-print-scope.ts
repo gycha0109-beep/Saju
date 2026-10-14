@@ -1147,6 +1147,65 @@ export const YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT = Object.fre
   productionAuthorized: false as const,
 });
 
+
+/**
+ * Printed Qing comparison bounded by supplied Harvard facsimile screenshots:
+ * section starts on PDF p14 and passes to Jia-Yin on p15. No 岳飛 is visible
+ * in the inspected 甲子日己巳時 example group, unlike both inspected Ming scans.
+ * Screenshots are NOT a complete independent archive of the original PDF.
+ */
+export const YUANHAI_SANMING_HARVARD_1735_JUAN8_LOCAL_COLLATION = Object.freeze({
+  work: '三命通會' as const,
+  institution: 'Harvard-Yenching Library' as const,
+  repositoryRecordId: '53262215' as const,
+  qingPrintedJuan: 8 as const,
+  editionCatalogDate: '清雍正13年(1735?)補刻本' as const,
+  editionDateIsCatalogApproximation: true as const,
+  printedPageLayout: '10_lines_20_characters' as const,
+  sourcePdfCommonsUrl: 'https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_v.8%E5%8D%B7%E4%B9%8B%E5%85%AB.pdf' as const,
+  officialIiifManifestUrl: 'https://iiif.lib.harvard.edu/manifests/view/drs:53262215' as const,
+  sourcePdfCatalogPages: 126 as const,
+  localScreenshots: Object.freeze([
+    Object.freeze({
+      filename: 'image(20261014-052848).png' as const,
+      viewerPdfPageOneBased: 14 as const,
+      byteCount: 626435 as const,
+      sha256: 'bcddbf9825f5e1b0e4eebeced59dacdd7fd5f4316d7c9ad9cc9612931c8334cb' as const,
+      observedLocus: '六甲日己巳時斷 / 甲子日己巳時' as const,
+    }),
+    Object.freeze({
+      filename: 'image(20261014-053300).png' as const,
+      viewerPdfPageOneBased: 15 as const,
+      byteCount: 611750 as const,
+      sha256: '1dc33d3090326226c0a80f45d35b830e233f541a9483496b951e8c441a122a3c' as const,
+      observedLocus: '甲子日己巳時 examples end; 甲寅日己巳時 begins' as const,
+    }),
+  ] as const),
+  examinedScope: '甲子日己巳時 between heading on p14 and next 甲寅日己巳時 heading on p15' as const,
+  targetLocalPassageSpansTwoViewerPages: true as const,
+  mingNlcCasePrintedOnPage: 14 as const,
+  mingNclCasePrintedOnPage: 654 as const,
+  mingNamedExample: '岳飛癸未乙卯甲子己巳' as const,
+  nameYueFeiVisibleInExaminedHarvardLocalPassage: false as const,
+  nameYueWuMuVisibleInExaminedHarvardLocalPassage: false as const,
+  correspondingNamedFourPillarExampleVisibleInExaminedHarvardLocalPassage: false as const,
+  visualGrade: 'A_scanned_original_page_screenshots_scope_limited' as const,
+  screenshotsCoverWholeBook: false as const,
+  originalFull126PagePdfDownloaded: false as const,
+  entireBookOmissionProved: false as const,
+  deliberateEditorialDeletionProved: false as const,
+  harvardCopyPrintedFromOriginalMingBlocks: false as const,
+  physicalPrintedEditionDifferentSettingFromMingEstablished: true as const,
+  sameExactSourceAsPortalHY1521Proved: false as const,
+  portalHY1521Link: 'https://www.shidianguji.com/zh/book/HY1521/chapter/1knweoxh848i3' as const,
+  portalHY1521CatalogEditionFamilyMatches: true as const,
+  additionalDirectMingPrintWitnesses: 0 as const,
+  historicallyVerifiedBirthHour: false as const,
+  originalYuanhaiWeiVsWoodResolved: false as const,
+  modernAnnualPriorityAuthorized: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1272,6 +1331,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     directSanmingJuanEightMingPrint: YUANHAI_SANMING_NLC_JUAN8_UPPER_DIRECT_PRINT,
     original1578SanmingTaiwanCopy: YUANHAI_SANMING_NCL_06589_1578_DIRECT_PRINT,
     duplicateAndNextWitnessAudit: YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT,
+    harvardQingLocalPrintedExampleComparison: YUANHAI_SANMING_HARVARD_1735_JUAN8_LOCAL_COLLATION,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({

@@ -20,6 +20,7 @@ import {
   YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
   YUANHAI_SANMING_NCL_06589_1578_DIRECT_PRINT,
   YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT,
+  YUANHAI_SANMING_HARVARD_1735_JUAN8_LOCAL_COLLATION,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -684,6 +685,54 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
   });
 
 
+
+
+  test('Harvard Qing facsimile pp14-15 has no visible named Yue Fei example at the complete local Jiazi-Jisi passage', () => {
+    const q = YUANHAI_SANMING_HARVARD_1735_JUAN8_LOCAL_COLLATION;
+    expect(q).toMatchObject({
+      repositoryRecordId: '53262215',
+      qingPrintedJuan: 8,
+      editionCatalogDate: '清雍正13年(1735?)補刻本',
+      editionDateIsCatalogApproximation: true,
+      printedPageLayout: '10_lines_20_characters',
+      sourcePdfCatalogPages: 126,
+      localScreenshots: [
+        {
+          viewerPdfPageOneBased: 14,
+          sha256: 'bcddbf9825f5e1b0e4eebeced59dacdd7fd5f4316d7c9ad9cc9612931c8334cb',
+          observedLocus: '六甲日己巳時斷 / 甲子日己巳時',
+        },
+        {
+          viewerPdfPageOneBased: 15,
+          sha256: '1dc33d3090326226c0a80f45d35b830e233f541a9483496b951e8c441a122a3c',
+          observedLocus: '甲子日己巳時 examples end; 甲寅日己巳時 begins',
+        },
+      ],
+      targetLocalPassageSpansTwoViewerPages: true,
+      mingNamedExample: '岳飛癸未乙卯甲子己巳',
+      nameYueFeiVisibleInExaminedHarvardLocalPassage: false,
+      nameYueWuMuVisibleInExaminedHarvardLocalPassage: false,
+      correspondingNamedFourPillarExampleVisibleInExaminedHarvardLocalPassage: false,
+      visualGrade: 'A_scanned_original_page_screenshots_scope_limited',
+      screenshotsCoverWholeBook: false,
+      originalFull126PagePdfDownloaded: false,
+      entireBookOmissionProved: false,
+      deliberateEditorialDeletionProved: false,
+      physicalPrintedEditionDifferentSettingFromMingEstablished: true,
+      sameExactSourceAsPortalHY1521Proved: false,
+      portalHY1521CatalogEditionFamilyMatches: true,
+      additionalDirectMingPrintWitnesses: 0,
+      historicallyVerifiedBirthHour: false,
+      originalYuanhaiWeiVsWoodResolved: false,
+      modernAnnualPriorityAuthorized: false,
+      productionAuthorized: false,
+    });
+    const built = buildYuanHaiMingJuan3PrintScope();
+    expect(built.harvardQingLocalPrintedExampleComparison).toEqual(q);
+    expect(built.sourceCriticalAudit.directPrintedCopiesCompared).toBe(2);
+    expect(built.sourceCriticalAudit.independentSettingCountVerified).toBe(0);
+    expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.allNewFocalPrintedWitnessesAdded).toBe(2);
+  });
 
   test('Baidu rehost does not produce a third Ming direct-print witness', () => {
     const a = YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT;
