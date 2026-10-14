@@ -1,5 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import process from 'node:process';
 import { calculateCanonicalSajuSnapshot } from '../dist/calculation/calculation-engine.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../dist/production/production-calculation-policy.js';
 import { buildTemporalReadingContext } from '../dist/reading/temporal-reading-context.js';
@@ -98,4 +99,4 @@ const html = `<!doctype html>
 </body>
 </html>`;
 writeFileSync(output, html, 'utf8');
-console.log(`Annual exploration preview written: ${output}`);
+process.stdout.write(`Annual exploration preview written: ${output}\n`);
