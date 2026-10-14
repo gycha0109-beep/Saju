@@ -15,6 +15,7 @@ import {
   YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT,
   YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT,
   YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT,
+  YUANHAI_SANMING_PARALLEL_DIGITAL_PASSAGE_COMPARISON,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -595,6 +596,32 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(stems[(stems.indexOf('甲') + 1) % 10] + '卯').toBe(q.secondMonthPillarConditional);
     expect(q.apparentSolarLongitudeAtNoonDegreesApprox).toBeGreaterThan(0);
     expect(q.apparentSolarLongitudeAtNoonDegreesApprox).toBeLessThan(15);
+  });
+
+  test('parallel portal passages do not prove the named example was absent from a printed leaf', () => {
+    const a = YUANHAI_SANMING_PARALLEL_DIGITAL_PASSAGE_COMPARISON;
+    expect(a.nlcWanliLinkedOcr).toMatchObject({
+      evidenceTier: 'B_print_linked_unverified_OCR',
+      observedExcerpt: expect.stringContaining('主貴作飛。癸未乙卯'),
+      originalPrintedNameAndPillarsVerified: false,
+    });
+    expect(a.alternativePortalText).toMatchObject({
+      digitalSourceIdentifier: 'HY1521',
+      evidenceTier: 'C_unpinned_digital_text',
+      observedExcerpt: expect.stringContaining('化氣主貴。甲寅日己巳時'),
+      yuefeiNamedExampleVisibleInExaminedParagraph: false,
+      editionOrPrintImageIdentityVerified: false,
+      omissionFromHistoricalPrintedEditionProved: false,
+    });
+    expect(a.comparison).toMatchObject({
+      physicalLeafOmissionEstablished: false,
+      nlcFascicle15UpperJuanAndTargetLeafDirectlyInspected: false,
+      original1578NclNamedCaseVerified: false,
+      independentPrintedFocalWitnessesAdded: 0,
+      historicalBirthHourVerified: false,
+      generalClashCombinationSemanticsAuthorized: false,
+      productionAuthorized: false,
+    });
   });
 
   test('1578 Sanming Tonghui date does not prove its Yue Fei example was printed in that edition', () => {

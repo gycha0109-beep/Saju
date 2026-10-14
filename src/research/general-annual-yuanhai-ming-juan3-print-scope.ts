@@ -940,6 +940,39 @@ export const YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED = Object.freeze([
   'MODERN_YEAR_OUTCOME_OR_PERSONAL_FORECAST_NOT_AUTHORIZED',
 ] as const);
 
+/** Compare online passage displays only; neither counts as a newly collated print leaf. */
+export const YUANHAI_SANMING_PARALLEL_DIGITAL_PASSAGE_COMPARISON = Object.freeze({
+  locus: '三命通會 卷八 六甲日己巳時斷 甲子日己巳時' as const,
+  nlcWanliLinkedOcr: Object.freeze({
+    url: 'https://www.shidianguji.com/zh/book/NGJ89241199902970167139/chapter/1lvorfxfggvly' as const,
+    digitalSourceIdentifier: 'NGJ89241199902970167139' as const,
+    observedExcerpt: '申子辰戍火貴神白云化氣，主貴作飛。癸未乙卯、甲子已已' as const,
+    evidenceTier: 'B_print_linked_unverified_OCR' as const,
+    originalPrintedNameAndPillarsVerified: false as const,
+  }),
+  alternativePortalText: Object.freeze({
+    url: 'https://www.shidianguji.com/zh/book/HY1521/chapter/1knweoxh848i3' as const,
+    digitalSourceIdentifier: 'HY1521' as const,
+    observedExcerpt: '申子辰戌大貴，化氣主貴。甲寅日己巳時' as const,
+    evidenceTier: 'C_unpinned_digital_text' as const,
+    yuefeiNamedExampleVisibleInExaminedParagraph: false as const,
+    editionOrPrintImageIdentityVerified: false as const,
+    omissionFromHistoricalPrintedEditionProved: false as const,
+  }),
+  comparison: Object.freeze({
+    nearbyBaseParagraphOverlaps: true as const,
+    digitalExampleSequenceDiffers: true as const,
+    physicalLeafOmissionEstablished: false as const,
+    nlcFascicle15UpperJuanAndTargetLeafDirectlyInspected: false as const,
+    nlcFascicle15PrioritizedFromAdjacentBookMetadata: true as const,
+    original1578NclNamedCaseVerified: false as const,
+    independentPrintedFocalWitnessesAdded: 0 as const,
+    historicalBirthHourVerified: false as const,
+    generalClashCombinationSemanticsAuthorized: false as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
