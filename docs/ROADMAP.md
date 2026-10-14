@@ -1,7 +1,7 @@
 # Saju Engine — 실행 로드맵
 
 > 범위: 이 저장소의 **사주 계산 → 명식 → 해석 → Official Reading → 제품 실행**. 관상/캐릭터/결제 트랙의 자체 로드맵을 대체하지 않는다.  
-> 기준 스냅샷: 2026-10-14 KST, `main` = `4da989a58b9409b4e8d6d38f6f6c4877a1b3daf8`. #2520까지 병합 및 사후 CI 완료.  
+> 기준 스냅샷: 2026-10-14 KST, `main` = `225728a0ab2017b3218bb0a03ee46c734c18e702`. #2523까지 병합 및 해당 SHA의 사후 CI/Container 완료.  
 > 상태: **작업 우선순위 문서**. 새로운 명리 의미·Production·공개·저장·판매 권한을 발행하지 않는다.  
 > 담당 트랙: `saju`; 의미 판정/독립 review는 기존 Research / Bridge의 소유권을 존중한다.
 
@@ -98,6 +98,13 @@ PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현�
 
 기존 R194–R200 annual temporal calculation, impact bundle, timing renderer 및 R199 자동 연결은 **재사용**한다. fallback 성공·Profile 선택·Research 후보 실행을 semantic authority라고 부르지 않는다.
 
+**P3 진입 전 검증·결함 수리 완료 증거 (2026-10-14, 의미 승인과 분리)**
+
+- [#2521](https://github.com/gycha0109-beep/Saju/pull/2521): P1 natal parity·P2 bounded spouse audit의 완료/차단 범위를 로드맵에 확정. exact HEAD `662e212f7087a79bc8ea6d50da451667d2c4e29c` [Integration 20/20 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38503930370), squash `36c1ff08230d4008a526bdcf57d127b138a434ec`; [main CI 18/18 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38507050469), [Container PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38507050570).
+- [#2522](https://github.com/gycha0109-beep/Saju/pull/2522): `deriveAnnualStemTenGod`의 **일간 10 × 비교 연간 10 = 100개 현대 계산 분류**에 독립 리터럴 기대값 회귀를 추가. `internal_research / unreviewed` 14개 Annual 규칙과 `RETURN_TO_RESEARCH / Production HOLD` 차단 회귀 유지. exact HEAD `43d65efc3cadf672beb2e597b5486385407ea95f` [Integration 20/20 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38509324549), squash `feefd74fb6e2112e52e33cade2e42e6ef1c42b8f`; [main CI 18/18 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38510473839), [Container PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38510473809).
+- [#2523](https://github.com/gycha0109-beep/Saju/pull/2523): 상대 Annual/Monthly `referenceDateTime`에서 존재하지 않는 그레고리력 날짜를 `Date`가 조용히 보정하던 입력 결함을 수정. UTC/수치 offset 명시·윤년·월말/시간/오프셋 음성 검증 추가; **입춘 효력 年柱 정책 및 기존 의미·권한은 미변경**. exact HEAD `721f423b61cc46ad8a3f07792e583a3bba451d3a` [Integration 20/20 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38514827639), squash `225728a0ab2017b3218bb0a03ee46c734c18e702`; [main CI 18/18 PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38516557294), [Container PASS](https://github.com/gycha0109-beep/Saju/actions/runs/38516557310).
+- **경계:** 계산 분류 100쌍 PASS / 입력 오류 수정 PASS는 **역사 십신 표기 직접 증거, 연운 10개 현대 해석 테마 + 지지충돌 4개 tension의 Annual-specific semantic authority, D2 공적 입춘 원문/초 정밀도, 실재 reviewer attestation/Bridge ADMITTED**를 생성하지 않는다. #2462는 Open, 연구 Draft #2441·#2461·#2468과 후속 쌓인 Draft는 미병합 유지. P3 `RETURN_TO_RESEARCH`, Production `HOLD`; P4~P6 자동 승격 금지.
+
 ### P4 — SA-7E: Annual detailed 확대 (P3의 개별 도메인 승인 후)
 
 - [ ] **Standard Official Reading이 승인·실행되는 정확한 annual domain만** detailed material, source semantic hash/plan/evidence parity 및 fail-closed fallback을 구현한다.
@@ -137,7 +144,7 @@ PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현�
 
 ## 4. 다음 세션 시작 위치
 
-1. 현재 `main` SHA / 열린 PR / CI를 재확인한다. P0 #2517, P1 #2519·#2520은 각각 병합 및 `main` 사후 검증 종료. P2 bounded 배우자 standard/detailed는 기존 구현 감사 완료.
+1. 현재 `main` SHA / 열린 PR / CI를 재확인한다. P0 #2517, P1 #2519·#2520, P2 bounded 배우자 standard/detailed 감사, 종료 정리 #2521 및 검증/수리 #2522·#2523은 모두 병합·해당 main 사후 CI 완료. 완료 범위를 신규 Annual 의미 승인으로 소급하지 않는다.
 2. **가장 높은 미완료 항목은 P3**이나, General Annual semantic source authority가 부족한 SA-7D Case C이므로 임의 Production Official Reading 구현·연운 의미 승격 금지.
 3. [연운 독립 근거 심사 #2462](https://github.com/gycha0109-beep/Saju/issues/2462)의 정확한 문헌 원문/locator, 현대 10개 테마 및 지지충돌 4개 규칙별 positive/negative evidence, scope/exception/counterexample, Research/Bridge 독립 판정을 우선 확보한다.
 4. Bridge가 exact annual semantic producer를 실제 `ADMITTED` 처리한 이후에만 P3의 해당 domain Official Reading cutover를 개별 검증한다. P4–P6은 각각의 선행 승인 전 HOLD.
