@@ -64,14 +64,14 @@ export interface GeneralAnnualExplorationReport {
 
 function profileCopy(claimType: string, key: string): { headline: string; summary: string } {
   const profiles = GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.filter(
-    (profile) => profile.claimType === claimType && profile.semanticKeys.includes(key),
+    (profile) => profile.claimType === claimType && profile.semanticKeys?.includes(key) === true,
   );
   if (profiles.length !== 1) {
     throw new Error(`Expected exactly one annual narrative profile for ${key}.`);
   }
   const templates = profiles[0]!.templates;
-  const headline = templates.find((template) => template.templateKey === 'headline' && template.language === 'ko')?.text;
-  const summary = templates.find((template) => template.templateKey === 'summary' && template.language === 'ko')?.text;
+  const headline = templates?.find((template) => template.templateKey === 'headline' && template.language === 'ko')?.text;
+  const summary = templates?.find((template) => template.templateKey === 'summary' && template.language === 'ko')?.text;
   if (!headline || !summary) {
     throw new Error(`Annual narrative profile ${key} is missing consumer copy.`);
   }
