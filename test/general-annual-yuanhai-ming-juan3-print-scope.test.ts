@@ -21,6 +21,7 @@ import {
   YUANHAI_SANMING_NCL_06589_1578_DIRECT_PRINT,
   YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT,
   YUANHAI_SANMING_JAPAN_QING_JUAN8_LOCAL_COLLATION,
+  YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -688,7 +689,50 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
 
 
 
-  test('Japan National Archives is screenshot source, Harvard original not yet read', () => {
+
+  test('Qing Japan and Harvard print split 岳武穆, retract prior absence assertion', () => {
+    const q = YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT;
+    expect(q).toMatchObject({
+      person: '岳飛',
+      printedName: '岳武穆',
+      target: '甲子日己巳時',
+      twoLinePrintedName: ['岳武', '穆'],
+      yearMonthInTable: ['癸未', '乙卯'],
+      dayHourFromSection: ['甲子', '己巳'],
+      Harvard: {
+        drsId: '53262215',
+        page14Sha256: '7f08253073244977cb43e54000c772b4581e5de31b910b7629601759245c1aa8',
+        page15Sha256: '458e4d15c001086a8800bbfd65b4e138556072ce704a7a7e5f2d16a7a9ba1074',
+        targetCasePrintedNameDirectlyRead: true,
+        fullOriginalPdfBytesObtained: false,
+      },
+      Japan: {
+        callmark: '305-0295',
+        physicalBook: 8,
+        targetCasePrintedNameDirectlyRead: true,
+      },
+      SikuReceivedText: { evidenceTier: 'C_received_transcription' },
+      comparedHarvardJapanPage14FeatureMatches: 345,
+      comparedHarvardJapanPage14HomographyInliers: 196,
+      distinctPhotoCaptureObserved: true,
+      identicalWoodblockProved: false,
+      independentWoodblockProved: false,
+      fourPillarTableColumnsFullyAdjudicated: false,
+      priorOmissionClaimRetracted: true,
+      QingPhysicalCopiesWithNamedCase: 2,
+      newMingPrintedWitnessCredit: 0,
+      historicalBirthHourAuthenticated: false,
+      yuanhaiWeiWoodVariantArchetypeEstablished: false,
+      modernAnnualSemanticsAuthorized: false,
+      productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().qingTwoCopyNamedCase).toEqual(q);
+    expect(YUANHAI_SANMING_JAPAN_QING_JUAN8_LOCAL_COLLATION.nameYueWuMuVisibleInExaminedJapaneseLocalPassage).toBe(true);
+    expect(YUANHAI_SANMING_JAPAN_QING_JUAN8_LOCAL_COLLATION.uninspectedHarvardCatalog.targetOriginalImageVisuallyInspected).toBe(true);
+    expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.allNewFocalPrintedWitnessesAdded).toBe(2);
+  });
+
+  test('Japan was source of first screenshots; Harvard print now separately examined', () => {
     const q = YUANHAI_SANMING_JAPAN_QING_JUAN8_LOCAL_COLLATION;
     expect(q).toMatchObject({
       sourceInstitution: 'National Archives of Japan, Cabinet Library',
@@ -710,7 +754,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       },
       localLocus: '甲子日己巳時',
       nameYueFeiVisibleInExaminedJapaneseLocalPassage: false,
-      nameYueWuMuVisibleInExaminedJapaneseLocalPassage: false,
+      nameYueWuMuVisibleInExaminedJapaneseLocalPassage: true,
       matchingNamedFourPillarsVisibleInJapaneseLocalPassage: false,
       japanEntireBookOmissionProved: false,
       editorialDeletionIntentProved: false,
@@ -718,10 +762,13 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       uninspectedHarvardCatalog: {
         repositoryRecordId: '53262215',
         catalogPageCount: 126,
-        targetOriginalImageVisuallyInspected: false,
+        targetOriginalImageVisuallyInspected: true,
         samePhysicalPrintAsJapanEstablished: false,
         nameAbsentFromFocalPassageProved: false,
-        newPrintedWitnessCredit: 0,
+        splitNameYueWumuPrintedInTable: true,
+        HarvardPage14Sha256: '7f08253073244977cb43e54000c772b4581e5de31b910b7629601759245c1aa8',
+        HarvardPage15Sha256: '458e4d15c001086a8800bbfd65b4e138556072ce704a7a7e5f2d16a7a9ba1074',
+        newPrintedWitnessCredit: 1,
       },
       additionalDirectMingPrintWitnesses: 0,
       historicalYueFeiBirthHourVerified: false,
