@@ -570,6 +570,33 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(q.validatesSajuPredictionOrShenShaInterpretation).toBe(false);
   });
 
+  test('1103 solar term reconstruction conditionally supports Yi-Mao month but not a historical hour', () => {
+    const q = YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.conditionalSolarMonthCrossCheck;
+    expect(q).toMatchObject({
+      recordBirthDate: '崇寧二年二月十五',
+      prolepticGregorianDate: '1103-03-24',
+      computationMethod: 'pyswisseph 2.10.03 FLG_MOSEPH',
+      jingzheLongitudeDegrees: 345,
+      jingzheComputedDayUtc: '1103-03-06',
+      qingmingLongitudeDegrees: 15,
+      qingmingComputedDayUtc: '1103-04-06',
+      guiYearTigerMonth: '甲寅',
+      secondMonthPillarConditional: '乙卯',
+      birthDateHistoricallyAuthenticatedByThis: false,
+      officialSongAlmanacIndependentlyCollated: false,
+      allegedJiSiBirthHourAuthenticatedByThis: false,
+      fullyAuthenticatedFourPillars: false,
+      newPrintedWitnessCredit: 0,
+      productionMeaningAuthorized: false,
+    });
+    expect(q.jingzheComputedDayUtc < q.prolepticGregorianDate).toBe(true);
+    expect(q.prolepticGregorianDate < q.qingmingComputedDayUtc).toBe(true);
+    const stems = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+    expect(stems[(stems.indexOf('甲') + 1) % 10] + '卯').toBe(q.secondMonthPillarConditional);
+    expect(q.apparentSolarLongitudeAtNoonDegreesApprox).toBeGreaterThan(0);
+    expect(q.apparentSolarLongitudeAtNoonDegreesApprox).toBeLessThan(15);
+  });
+
   test('1578 Sanming Tonghui date does not prove its Yue Fei example was printed in that edition', () => {
     const q = YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT;
     expect(q.mingSanmingTonghuiLocus).toMatchObject({
