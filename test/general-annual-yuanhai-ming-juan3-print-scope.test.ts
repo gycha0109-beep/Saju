@@ -16,6 +16,7 @@ import {
   YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT,
   YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT,
   YUANHAI_SANMING_PARALLEL_DIGITAL_PASSAGE_COMPARISON,
+  YUANHAI_SANMING_NLC_JUAN8_UPPER_DIRECT_PRINT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -615,12 +616,45 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     });
     expect(a.comparison).toMatchObject({
       physicalLeafOmissionEstablished: false,
-      nlcFascicle15UpperJuanAndTargetLeafDirectlyInspected: false,
+      nlcFascicle15UpperJuanAndTargetLeafDirectlyInspected: true,
       original1578NclNamedCaseVerified: false,
       independentPrintedFocalWitnessesAdded: 0,
       historicalBirthHourVerified: false,
       generalClashCombinationSemanticsAuthorized: false,
       productionAuthorized: false,
+    });
+  });
+
+
+  test('NLC fascicle 15 proves the printed Yue Fei four pillars without authenticating actual birth hour', () => {
+    const p = YUANHAI_SANMING_NLC_JUAN8_UPPER_DIRECT_PRINT;
+    expect(p).toMatchObject({
+      volumeId: 'NLC892-411999029701-66492',
+      printedJuanOnCover: '卷八上',
+      sourcePdfSha256: '009396f2dfd848194d7fa73c6e02ea51c010d3a9f0d5f3eb83be35d6b6a2e777',
+      sourcePdfPageCount: 57,
+      sectionHeadingPageOneBased: 13,
+      directPrintedCasePdfPageOneBased: 14,
+      directPrintedCaseColumnFromRight: 2,
+      printedRun: '岳飛癸未乙卯甲子己巳',
+      printedPillars: ['癸未', '乙卯', '甲子', '己巳'],
+      evidenceTier: 'A_original_print_facsimile_direct_visual',
+      directPrintedNameAndFourPillarsConfirmed: true,
+      ocrNameMisreading: '作飛',
+      ocrHourMisreading: '已已',
+      printedSettingsIndependentOfNcl1578Established: false,
+      original1578PrintedExampleConfirmed: false,
+      historicallyVerifiedBirthHour: false,
+      modernAnnualReadingAuthorized: false,
+      productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().directSanmingJuanEightMingPrint).toEqual(p);
+    expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.mingSanmingTonghuiLocus.nlcMingFocalCasePrintDerivedOcr).toMatchObject({
+      targetedSectionInPhysicalFascicle15DirectlyVerified: true,
+      exactPrintedNameGlyphVerified: true,
+      originalHourStemDirectlyRead: true,
+      additionalDirectlyCollatedMingFocalWitnessCredit: 1,
+      original1578FocalPrintVerifiedByThisOcr: false,
     });
   });
 
@@ -670,24 +704,24 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
         completePhysicalFascicleInventoryCount: 24,
         nlcFascicle15Candidate: 'NLC892-411999029701-66492',
         nlcFascicle16Confirmed: 'NLC892-411999029701-66488',
-        fascicle15PrintedJuanEightUpperDirectlyVerified: false,
-        targetedSectionInPhysicalFascicle15DirectlyVerified: false,
+        fascicle15PrintedJuanEightUpperDirectlyVerified: true,
+        targetedSectionInPhysicalFascicle15DirectlyVerified: true,
         printedJuan: 8,
         headingAsOcr: '六甲已巳時斷',
         targetCaseOcrVerbatim: expect.stringContaining('主貴作飛。癸未乙卯、甲子已已'),
         nameTokenObservedInOcr: '作飛',
         candidateNameBasedOnParallelTransmission: '岳飛',
-        exactPrintedNameGlyphVerified: false,
+        exactPrintedNameGlyphVerified: true,
         observedPillarsInOcr: ['癸未','乙卯','甲子','已已'],
         lastHourPillarOcrInvalidAsConfirmedJiSi: true,
-        originalHourStemDirectlyRead: false,
+        originalHourStemDirectlyRead: true,
         sameCaseLocationCrossCheckedWithLaterYuefeiTransmission: true,
-        exactBoundFascicleForTargetIdentified: false,
-        targetPdfPageAndColumn: null,
-        focalPrintImageDirectlyRead: false,
+        exactBoundFascicleForTargetIdentified: true,
+        targetPdfPageAndColumn: 'PDF p.14 right folio, second vertical column from right',
+        focalPrintImageDirectlyRead: true,
         independentPrintSettingEstablishedRelativeTo1578Ncl: false,
         original1578FocalPrintVerifiedByThisOcr: false,
-        additionalDirectlyCollatedMingFocalWitnessCredit: 0,
+        additionalDirectlyCollatedMingFocalWitnessCredit: 1,
         printedUnWoodArchetypeDecisionAuthorized: false,
       },
       nlcOtherWanliMingScanLocator: {
