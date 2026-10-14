@@ -22,6 +22,7 @@ import {
   YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT,
   YUANHAI_SANMING_JAPAN_QING_JUAN8_LOCAL_COLLATION,
   YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT,
+  YUANHAI_SANMING_QING_YUEWUMU_COLUMN_SAFE_COLLATION,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -689,6 +690,52 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
 
 
 
+
+
+  test('Yue Wumu Qing columns do not steal Jiazi from adjacent Tongpan example', () => {
+    const c = YUANHAI_SANMING_QING_YUEWUMU_COLUMN_SAFE_COLLATION;
+    expect(c).toMatchObject({
+      locus: '甲子日己巳時',
+      targetFigure: '岳武穆',
+      printedTableTarget: {
+        rowOneYearAndName: { printedYear: '癸未', firstNameFragment: '岳武' },
+        rowTwoMonthAndName: { printedMonth: '乙卯', lastNameFragment: '穆' },
+        tableDirectPrintImageEvidenceTier: 'A_scope_bounded_printed_leaf',
+        rowToSingleFigurePairingFromVisualAlignment: true,
+        allOriginalTableCellsColumnByColumnVerified: false,
+      },
+      sectionContext: {
+        sectionDay: '甲子',
+        sectionHour: '己巳',
+        dayAndHourNotSeparateTableGlyphsForYueWumu: true,
+      },
+      contextualFourPillars: ['癸未','乙卯','甲子','己巳'],
+      MingOriginalCorroboration: {
+        printedContinuousNameAndFourPillars: '岳飛癸未乙卯甲子己巳',
+      },
+      receivedSikuTableText: {
+        adjacentSecondColumn: { year: '戊寅', month: '己未', figure: '布政' },
+        adjacentThirdColumn: { year: '甲子', month: '癸酉', figure: '通判' },
+        adjacentFourthColumn: { year: '癸酉', month: '丁巳', figure: '指揮' },
+        evidenceTier: 'C_received_transcription',
+        adjoiningCaseJiaziIsNotYueFeiDayOrYear: true,
+      },
+      editedNoNamedChartsWebpage: {
+        exampleChartsOmittedInDisplayedEdition: true,
+        lackOfPrintedOriginalExampleEstablished: false,
+        deliberateQingDeletionEstablished: false,
+      },
+      fullySourceAutonomousQingFourPillarCaseWithoutSectionContext: false,
+      historicBirthHourAuthenticated: false,
+      qingWoodblockIndependenceProved: false,
+      newMingPrintedWitnessCredit: 0,
+      modernAnnualReadingAuthorized: false,
+      productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().qingNamedColumnSafeCollation).toEqual(c);
+    expect(YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT.QingPhysicalCopiesWithNamedCase).toBe(2);
+    expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.allNewFocalPrintedWitnessesAdded).toBe(2);
+  });
 
   test('Qing Japan and Harvard print split 岳武穆, retract prior absence assertion', () => {
     const q = YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT;

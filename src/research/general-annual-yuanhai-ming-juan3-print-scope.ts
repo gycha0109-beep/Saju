@@ -1279,6 +1279,74 @@ export const YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT = Object.freeze({
   productionAuthorized: false as const,
 });
 
+
+/**
+ * Column-safe collation of the Yue Wumu small-font chart. The named year and
+ * month come from two aligned TABLE rows, whereas Jiazi/Jisi are the SECTION
+ * day/hour. An adjacent "甲子通判" belongs to another exemplar and MUST NOT
+ * be silently counted as a second Yue Fei day/column source.
+ *
+ * This is the evidence ROUTE, not proof of a historically accurate natal hour.
+ */
+export const YUANHAI_SANMING_QING_YUEWUMU_COLUMN_SAFE_COLLATION = Object.freeze({
+  locus: '甲子日己巳時' as const,
+  targetFigure: '岳武穆' as const,
+  historicalFigure: '岳飛' as const,
+  printedTableTarget: Object.freeze({
+    observedOriginalImages: Object.freeze([
+      'Harvard DRS 53262215 PDF p.14: image(20261014-063703).png',
+      'Japan N.A. 305-0295 book 8 viewer p.14: image(20261014-052848).png',
+    ] as const),
+    rowOneYearAndName: Object.freeze({ printedYear: '癸未' as const, firstNameFragment: '岳武' as const }),
+    rowTwoMonthAndName: Object.freeze({ printedMonth: '乙卯' as const, lastNameFragment: '穆' as const }),
+    joinedNameIsNotLiterallyOneUnbrokenVerticalString: true as const,
+    tableDirectPrintImageEvidenceTier: 'A_scope_bounded_printed_leaf' as const,
+    rowToSingleFigurePairingFromVisualAlignment: true as const,
+    allOriginalTableCellsColumnByColumnVerified: false as const,
+  }),
+  sectionContext: Object.freeze({
+    sectionDay: '甲子' as const,
+    sectionHour: '己巳' as const,
+    sectionLiteral: '甲子日己巳時' as const,
+    dayAndHourNotSeparateTableGlyphsForYueWumu: true as const,
+    evidenceTier: 'A_scope_bounded_printed_leaf' as const,
+  }),
+  contextualFourPillars: Object.freeze(['癸未','乙卯','甲子','己巳'] as const),
+  contextualCombinationMethod: 'printed_named_year_month_pair_plus_heading_day_hour' as const,
+  MingOriginalCorroboration: Object.freeze({
+    NLC: 'NLC892-411999029701-66492 PDF p.14' as const,
+    NCL: 'NCL-06589_1 PDF p.654' as const,
+    printedContinuousNameAndFourPillars: '岳飛癸未乙卯甲子己巳' as const,
+    printedDirectEvidenceTier: 'A_original_printed_page' as const,
+  }),
+  receivedSikuTableText: Object.freeze({
+    url: 'https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_(%E5%9B%9B%E5%BA%AB%E5%85%A8%E6%9B%B8%E6%9C%AC)/%E5%8D%B708' as const,
+    namedFirstColumnFlattened: '癸未岳武 / 乙卯穆' as const,
+    adjacentSecondColumn: Object.freeze({ year: '戊寅' as const, month: '己未' as const, figure: '布政' as const }),
+    adjacentThirdColumn: Object.freeze({ year: '甲子' as const, month: '癸酉' as const, figure: '通判' as const }),
+    adjacentFourthColumn: Object.freeze({ year: '癸酉' as const, month: '丁巳' as const, figure: '指揮' as const }),
+    CtextOnlyNeighborColumnsWereNotIndependentlyTranscribedFromHighResPrint: true as const,
+    evidenceTier: 'C_received_transcription' as const,
+    adjoiningCaseJiaziIsNotYueFeiDayOrYear: true as const,
+  }),
+  editedNoNamedChartsWebpage: Object.freeze({
+    url: 'https://zh.wikisource.org/zh-hant/%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83/%E5%8D%B7%E5%85%AB' as const,
+    sameTargetHeadingAndGenericExpositionDisplayed: true as const,
+    exampleChartsOmittedInDisplayedEdition: true as const,
+    noLiteralYueFeiOrYueWumuInDisplayedTargetText: true as const,
+    lackOfPrintedOriginalExampleEstablished: false as const,
+    deliberateQingDeletionEstablished: false as const,
+    rank: 'C_edited_text_presentation_not_original_print' as const,
+  }),
+  fullySourceAutonomousQingFourPillarCaseWithoutSectionContext: false as const,
+  historicBirthHourAuthenticated: false as const,
+  qingWoodblockIndependenceProved: false as const,
+  newMingPrintedWitnessCredit: 0 as const,
+  yuanhaiVariantArchetypeChosen: false as const,
+  modernAnnualReadingAuthorized: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1406,6 +1474,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     duplicateAndNextWitnessAudit: YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT,
     japanQingLocalPrintedExampleComparison: YUANHAI_SANMING_JAPAN_QING_JUAN8_LOCAL_COLLATION,
     qingTwoCopyNamedCase: YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT,
+    qingNamedColumnSafeCollation: YUANHAI_SANMING_QING_YUEWUMU_COLUMN_SAFE_COLLATION,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
