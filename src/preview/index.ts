@@ -8,3 +8,5 @@ export {
   createGeneralNatalIntegratedPreviewProductHost,
   type GeneralNatalIntegratedPreviewHostOptions,
 } from '../host/general-natal-integrated-preview-host.js';
+
+export * from './general-annual-exploration-report.js';
