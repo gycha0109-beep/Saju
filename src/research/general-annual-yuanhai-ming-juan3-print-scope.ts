@@ -763,7 +763,7 @@ export const YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT = Object.freeze({
     receivedWikisourceSectionOmittedNamedExample: true as const,
     separateBookImageDerivedOcrUrl: 'https://www.shidianguji.com/zh/book/HY1521/chapter/1knweoxh848i3' as const,
     separatelyInspectedOcrSectionOmitsName: true as const,
-    original1578FocalLeafDirectlyCollated: false as const,
+    original1578FocalLeafDirectlyCollated: true as const,
 
     // The received Siku Quanshu text DOES preserve 岳武穆, not 岳飛:
     // flattening a multi-column natal-case table separates 岳武 / 穆.
@@ -829,7 +829,7 @@ export const YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT = Object.freeze({
       targetPdfPageAndColumn: 'PDF p.14 right folio, second vertical column from right',
       focalPrintImageDirectlyRead: true as const,
       independentPrintSettingEstablishedRelativeTo1578Ncl: false as const,
-      original1578FocalPrintVerifiedByThisOcr: false as const,
+      original1578FocalPrintVerifiedByThisOcr: false as const, // NCL p654 is direct PRINT, unrelated to online NLC OCR verification
       additionalDirectlyCollatedMingFocalWitnessCredit: 1 as const,
       printedUnWoodArchetypeDecisionAuthorized: false as const,
     }),
@@ -873,7 +873,7 @@ export const YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT = Object.freeze({
     additionalIndependentFocalWitnessCredit: 0 as const,
   }),
   verifiedHistoricalYearDayOrEventMeansAuthenticatedBirthHour: false as const,
-  allNewFocalPrintedWitnessesAdded: 1 as const, // one newly read NLC Ming original; does not prove independence from NCL 1578
+  allNewFocalPrintedWitnessesAdded: 2 as const, // 2 physically separate collated Ming copies; independent typesetting NOT established
   previouslyConfirmedPrintedUnWoodVariantRemainsUnresolved: true as const,
   globalAnnualMeaningAuthorization: false as const,
   productionAuthorization: false as const,
@@ -1033,10 +1033,56 @@ export const YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE = Object.freeze({
   original1578TaiwanCommonsPartOnePages: 1000 as const,
   original1578TaiwanCommonsPartTwoPages: 187 as const,
   nlcMingPrintedFascicle15Is1578FirstCutIndependentlyAuthenticated: false as const,
-  ncl1578FocalJuanEightPageDirectlyObtained: false as const,
+  ncl1578FocalJuanEightPageDirectlyObtained: true as const,
   specificYuefeiLocusComparedInCriticalEditionOriginalFacsimile: false as const,
   printedFocalCasesDirectlyAddedByThisEditorialSource: 0 as const,
   actualHistoricalYuefeiBirthHourAuthenticated: false as const,
+  productionAuthorized: false as const,
+});
+
+
+/**
+ * DIRECT printed-leaf reading of the NCL Taiwan 06589 copy catalogued as
+ * Wanli year six (1578): not merely a digital transcript or OCR.
+ * The 1578 YEAR is catalog attribution, not a date printed on focal leaf.
+ * Same column layout with NLC fascicle 15 does NOT prove separate plates.
+ */
+export const YUANHAI_SANMING_NCL_06589_1578_DIRECT_PRINT = Object.freeze({
+  work: '三命通會' as const,
+  taiwanHoldingCallmark: '06589' as const,
+  sourceCommonsFile: 'NCL-06589_1_三命通會.pdf' as const,
+  sourceUrl: 'https://commons.wikimedia.org/wiki/File:NCL-06589_1_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83.pdf' as const,
+  pdfSha256: '3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd' as const,
+  pdfByteCount: 101956385 as const,
+  fullPdfPageCount: 1000 as const,
+  catalogImprintYear: 1578 as const,
+  catalogYearDirectlyEngravedOnFocalLeaf: false as const,
+  scannedBoundBookNumberWithinMergedFile: 8 as const,
+  boundBookScanStartPageOneBased: 639 as const,
+  printedJuanFirstPageOneBased: 642 as const,
+  printedJuanHeading: '三命通會卷之八' as const,
+  sectionFirstPageOneBased: 653 as const,
+  sectionHeading: '六甲日己巳時斷' as const,
+  focalCasePdfPageOneBased: 654 as const,
+  focalCaseLocation: 'right_folio_second_vertical_column_from_right' as const,
+  locus: '甲子日己巳時' as const,
+  printedCaseRun: '岳飛癸未乙卯甲子己巳' as const,
+  printedName: '岳飛' as const,
+  printedFourPillars: Object.freeze(['癸未','乙卯','甲子','己巳'] as const),
+  originalLeafVisuallyCollated: true as const,
+  evidenceTierForPrintedCase: 'A_direct_original_print_image' as const,
+  evidenceTierForEditionYear: 'catalog_attributed_1578' as const,
+  sameCaseAndNeighboringColumnOrderAsNlcFascicle15: true as const,
+  nlcComparisonFascicleId: 'NLC892-411999029701-66492' as const,
+  nlcComparisonPageOneBased: 14 as const,
+  physicallySeparateCopyExamined: true as const,
+  independentTypesettingOrWoodblockEstablished: false as const,
+  printedRunAddedOnlyInLaterQingEditions: false as const,
+  transmissionBefore1578Verified: false as const,
+  recordedBirthHourHistoricallyAuthenticated: false as const,
+  originalYuanhaiUnWoodArchetypeResolved: false as const,
+  generalClashCombinationSemanticsAuthorized: false as const,
+  modernPersonalAnnualMeaningAuthorized: false as const,
   productionAuthorized: false as const,
 });
 
@@ -1163,7 +1209,9 @@ export function buildYuanHaiMingJuan3PrintScope() {
     noContactEarlyPrintAccessAudit: YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT,
     parallelYuefeiNatalLocusAudit: YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT,
     directSanmingJuanEightMingPrint: YUANHAI_SANMING_NLC_JUAN8_UPPER_DIRECT_PRINT,
+    original1578SanmingTaiwanCopy: YUANHAI_SANMING_NCL_06589_1578_DIRECT_PRINT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
+    sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,

@@ -18,6 +18,7 @@ import {
   YUANHAI_SANMING_PARALLEL_DIGITAL_PASSAGE_COMPARISON,
   YUANHAI_SANMING_NLC_JUAN8_UPPER_DIRECT_PRINT,
   YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
+  YUANHAI_SANMING_NCL_06589_1578_DIRECT_PRINT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -671,17 +672,60 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       companionPrefaceAttestsEditorialCorrectionsToSimilarGlyphsJiSi: true,
       original1578TaiwanCommonsPartOnePages: 1000,
       nlcMingPrintedFascicle15Is1578FirstCutIndependentlyAuthenticated: false,
-      ncl1578FocalJuanEightPageDirectlyObtained: false,
+      ncl1578FocalJuanEightPageDirectlyObtained: true,
       printedFocalCasesDirectlyAddedByThisEditorialSource: 0,
       actualHistoricalYuefeiBirthHourAuthenticated: false,
       productionAuthorized: false,
     });
     expect(buildYuanHaiMingJuan3PrintScope().original1578CriticalEditorialRoute).toEqual(q);
-    expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.allNewFocalPrintedWitnessesAdded).toBe(1);
+    expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.allNewFocalPrintedWitnessesAdded).toBe(2);
     expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.mingSanmingTonghuiLocus.independentMingPrintedFocalWitnessCredit).toBe(0);
   });
 
-  test('1578 Sanming Tonghui date does not prove its Yue Fei example was printed in that edition', () => {
+
+  test('NCL 06589 first-cut-catalogued print has Yue Fei on actual p654, not just in OCR', () => {
+    const n = YUANHAI_SANMING_NCL_06589_1578_DIRECT_PRINT;
+    expect(n).toMatchObject({
+      taiwanHoldingCallmark: '06589',
+      pdfSha256: '3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd',
+      pdfByteCount: 101956385,
+      fullPdfPageCount: 1000,
+      catalogImprintYear: 1578,
+      catalogYearDirectlyEngravedOnFocalLeaf: false,
+      scannedBoundBookNumberWithinMergedFile: 8,
+      printedJuanFirstPageOneBased: 642,
+      printedJuanHeading: '三命通會卷之八',
+      sectionFirstPageOneBased: 653,
+      sectionHeading: '六甲日己巳時斷',
+      focalCasePdfPageOneBased: 654,
+      focalCaseLocation: 'right_folio_second_vertical_column_from_right',
+      printedCaseRun: '岳飛癸未乙卯甲子己巳',
+      printedFourPillars: ['癸未','乙卯','甲子','己巳'],
+      originalLeafVisuallyCollated: true,
+      evidenceTierForPrintedCase: 'A_direct_original_print_image',
+      evidenceTierForEditionYear: 'catalog_attributed_1578',
+      sameCaseAndNeighboringColumnOrderAsNlcFascicle15: true,
+      physicallySeparateCopyExamined: true,
+      independentTypesettingOrWoodblockEstablished: false,
+      recordedBirthHourHistoricallyAuthenticated: false,
+      modernPersonalAnnualMeaningAuthorized: false,
+      productionAuthorized: false,
+    });
+    const scope = buildYuanHaiMingJuan3PrintScope();
+    expect(scope.original1578SanmingTaiwanCopy).toEqual(n);
+    expect(scope.sourceCriticalAudit).toMatchObject({
+      original1578TargetLeafPhysicallyInspected: true,
+      directPrintedCopiesCompared: 2,
+      independentSettingCountVerified: 0,
+      biographicalHourAuthenticated: false,
+      productionAuthorized: false,
+    });
+    expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.mingSanmingTonghuiLocus.original1578FocalLeafDirectlyCollated).toBe(true);
+    expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.allNewFocalPrintedWitnessesAdded).toBe(2);
+    expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.mingSanmingTonghuiLocus.independentMingPrintedFocalWitnessCredit).toBe(0);
+  });
+
+  test('1578 catalog year alone is insufficient, but the original NCL 06589 focal leaf is now directly inspected', () => {
     const q = YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT;
     expect(q.mingSanmingTonghuiLocus).toMatchObject({
       originalEditionCatalogYear: 1578,
@@ -757,7 +801,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
         originalFocalFolioDirectlyExamined: false,
         independentMingPrintedWitnessCredit: 0,
       },
-      original1578FocalLeafDirectlyCollated: false,
+      original1578FocalLeafDirectlyCollated: true,
       laterExcerptProves1578IdenticalNamedExample: false,
       textualRelationshipAndOmissionCauseEstablished: false,
       independentMingPrintedFocalWitnessCredit: 0,
@@ -777,7 +821,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       physicallyIndependentTypesettingVerified: false,
       additionalIndependentFocalWitnessCredit: 0,
     });
-    expect(q.allNewFocalPrintedWitnessesAdded).toBe(1);
+    expect(q.allNewFocalPrintedWitnessesAdded).toBe(2);
     expect(q.globalAnnualMeaningAuthorization).toBe(false);
     expect(q.productionAuthorization).toBe(false);
   });
