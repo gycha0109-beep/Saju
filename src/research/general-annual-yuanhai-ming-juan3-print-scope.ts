@@ -1086,6 +1086,67 @@ export const YUANHAI_SANMING_NCL_06589_1578_DIRECT_PRINT = Object.freeze({
   productionAuthorized: false as const,
 });
 
+
+/** Target-leaf image provenance, not proof of independent Ming print blocks. */
+export const YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT = Object.freeze({
+  visualMethod: 'OpenCV SIFT 7000 features, Lowe ratio 0.7, RANSAC 4px' as const,
+  baiduRehostOfNlcScan: Object.freeze({
+    submittedScreenshot: 'image(20261014-041136).png' as const,
+    originalNlcPrintedBook: 'NLC892-411999029701-66492' as const,
+    originalPdfPageOneBased: 14 as const,
+    originalSide: 'right_folio' as const,
+    descriptorMatches: 1368 as const,
+    ransacInliers: 1340 as const,
+    inlierFractionApprox: 0.97953 as const,
+    perspectiveCorrectedPixelCorrelationApprox: 0.92076 as const,
+    nearlyUniformImageScaleApprox: 1.975 as const,
+    duplicateDigitalScanConfirmed: true as const,
+    newPhysicalPrintWitnessAdded: 0 as const,
+    independentWoodblockCredit: 0 as const,
+  }),
+  twoPhysicalCopiesPrintAlignment: Object.freeze({
+    physicalScanOne: 'NLC892-411999029701-66492 p14' as const,
+    physicalScanTwo: 'NCL-06589_1 p654' as const,
+    siftCandidateMatches: 351 as const,
+    homographyInliers: 290 as const,
+    fractionApprox: 0.82621 as const,
+    separateColorVsGrayscaleCaptureAndAnnotations: true as const,
+    directlyInspectedCopies: 2 as const,
+    independentWoodblockTypesettingVerified: false as const,
+    sameActualWoodblockProven: false as const,
+  }),
+  taiwanNcl06590Candidate: Object.freeze({
+    officialCatalogUrl: 'https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2&sourceWhereString=&whereString=IChEYXRlX0NyZWF0ZWQgbGlrZSAnJTE1NzglJyBvciBEb2N1bWVudF9ZZWFyIGxpa2UgJyUxNTc4JScgKSA1.IuMldaBSQarjxhBn_BeTs0yAImbyvOSAYg5y7FFSAGw_' as const,
+    callmark: '306.5 06590' as const,
+    catalogEditionYear: 1578 as const,
+    numberOfBooks: 12 as const,
+    originalJuanEightFocalLeafInspected: false as const,
+    separatePrintedSettingEstablished: false as const,
+    newWitnessCredit: 0 as const,
+  }),
+  laterTransmissionCandidate: Object.freeze({
+    japanNationalArchivesUrl: 'https://www.digital.archives.go.jp/file/en/1076363.html' as const,
+    japanCatalogCallmark: '305-0295' as const,
+    japanCatalogEdition: '清雍正' as const,
+    japanListedCorrector: '蔣國祥' as const,
+    japanBookEightListed: true as const,
+    japanOriginal1578Print: false as const,
+    japanFocalImageRead: false as const,
+    zhejiangSikuJuanEightCommonsUrl: 'https://commons.wikimedia.org/wiki/File:CADAL06066044_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83%C2%B7%E5%8D%B7%E5%85%AB.djvu' as const,
+    zhejiangSikuDigitalID: 'CADAL06066044' as const,
+    zhejiangSikuScanPages: 304 as const,
+    zhejiangSikuOriginal1578Print: false as const,
+    zhejiangSikuFocalImageRead: false as const,
+    newMingPrintedWitnessCredit: 0 as const,
+  }),
+  directOriginalMingCopyCountUnchanged: 2 as const,
+  additionalIndependentMingWoodblocksEstablished: 0 as const,
+  yueFeiHistoricalHourVerified: false as const,
+  yuanhaiWeiOrWoodArchetypeEstablished: false as const,
+  modernAnnualReadingAuthorized: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1210,8 +1271,9 @@ export function buildYuanHaiMingJuan3PrintScope() {
     parallelYuefeiNatalLocusAudit: YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT,
     directSanmingJuanEightMingPrint: YUANHAI_SANMING_NLC_JUAN8_UPPER_DIRECT_PRINT,
     original1578SanmingTaiwanCopy: YUANHAI_SANMING_NCL_06589_1578_DIRECT_PRINT,
+    duplicateAndNextWitnessAudit: YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
-    sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
+    sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,

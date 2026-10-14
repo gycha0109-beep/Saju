@@ -19,6 +19,7 @@ import {
   YUANHAI_SANMING_NLC_JUAN8_UPPER_DIRECT_PRINT,
   YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
   YUANHAI_SANMING_NCL_06589_1578_DIRECT_PRINT,
+  YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -683,6 +684,57 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
   });
 
 
+
+  test('Baidu rehost does not produce a third Ming direct-print witness', () => {
+    const a = YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT;
+    expect(a.baiduRehostOfNlcScan).toMatchObject({
+      originalNlcPrintedBook: 'NLC892-411999029701-66492',
+      originalPdfPageOneBased: 14,
+      descriptorMatches: 1368,
+      ransacInliers: 1340,
+      inlierFractionApprox: 0.97953,
+      duplicateDigitalScanConfirmed: true,
+      newPhysicalPrintWitnessAdded: 0,
+      independentWoodblockCredit: 0,
+    });
+    expect(a.twoPhysicalCopiesPrintAlignment).toMatchObject({
+      siftCandidateMatches: 351,
+      homographyInliers: 290,
+      directlyInspectedCopies: 2,
+      independentWoodblockTypesettingVerified: false,
+      sameActualWoodblockProven: false,
+    });
+    expect(a.taiwanNcl06590Candidate).toMatchObject({
+      callmark: '306.5 06590',
+      catalogEditionYear: 1578,
+      originalJuanEightFocalLeafInspected: false,
+      separatePrintedSettingEstablished: false,
+      newWitnessCredit: 0,
+    });
+    expect(a.laterTransmissionCandidate).toMatchObject({
+      japanCatalogCallmark: '305-0295',
+      japanCatalogEdition: '清雍正',
+      japanListedCorrector: '蔣國祥',
+      japanBookEightListed: true,
+      japanOriginal1578Print: false,
+      japanFocalImageRead: false,
+      zhejiangSikuDigitalID: 'CADAL06066044',
+      zhejiangSikuScanPages: 304,
+      zhejiangSikuOriginal1578Print: false,
+      zhejiangSikuFocalImageRead: false,
+      newMingPrintedWitnessCredit: 0,
+    });
+    expect(a.directOriginalMingCopyCountUnchanged).toBe(2);
+    expect(a.additionalIndependentMingWoodblocksEstablished).toBe(0);
+    expect(a.yueFeiHistoricalHourVerified).toBe(false);
+    expect(a.yuanhaiWeiOrWoodArchetypeEstablished).toBe(false);
+    expect(a.modernAnnualReadingAuthorized).toBe(false);
+    expect(a.productionAuthorized).toBe(false);
+    const built = buildYuanHaiMingJuan3PrintScope();
+    expect(built.duplicateAndNextWitnessAudit).toEqual(a);
+    expect(built.sourceCriticalAudit.thirdRehostDuplicateNotCounted).toBe(true);
+  });
+
   test('NCL 06589 first-cut-catalogued print has Yue Fei on actual p654, not just in OCR', () => {
     const n = YUANHAI_SANMING_NCL_06589_1578_DIRECT_PRINT;
     expect(n).toMatchObject({
@@ -717,6 +769,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       original1578TargetLeafPhysicallyInspected: true,
       directPrintedCopiesCompared: 2,
       independentSettingCountVerified: 0,
+      thirdRehostDuplicateNotCounted: true,
       biographicalHourAuthenticated: false,
       productionAuthorized: false,
     });
