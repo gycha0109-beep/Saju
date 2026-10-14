@@ -23,6 +23,7 @@ import {
   YUANHAI_SANMING_JAPAN_QING_JUAN8_LOCAL_COLLATION,
   YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT,
   YUANHAI_SANMING_QING_YUEWUMU_COLUMN_SAFE_COLLATION,
+  YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -735,6 +736,72 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(buildYuanHaiMingJuan3PrintScope().qingNamedColumnSafeCollation).toEqual(c);
     expect(YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT.QingPhysicalCopiesWithNamedCase).toBe(2);
     expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.allNewFocalPrintedWitnessesAdded).toBe(2);
+  });
+
+
+  test('four matched NLC/NCL Ming print openings preserve two material copies but prove no block lineage', () => {
+    const q = YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT;
+    expect(q).toMatchObject({
+      originalCopiesCompared: 2,
+      sourceCopies: {
+        nlc: {
+          sourceId: 'NLC892-411999029701-66492',
+          pdfSha256: '009396f2dfd848194d7fa73c6e02ea51c010d3a9f0d5f3eb83be35d6b6a2e777',
+          targetPage: 14,
+          embeddedPrintImageDimensionsPx: [4192, 3523],
+        },
+        ncl: {
+          sourceId: 'NCL-06589',
+          pdfSha256: '3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd',
+          targetPage: 654,
+          embeddedPrintImageDimensionsPx: [842, 586],
+        },
+      },
+      reproducibleDeterministicBfAudit: {
+        matchingHalfPages: 8,
+        matchCandidates: 1071,
+        geometricInliers: 888,
+        wrongPageOffsetHalfPageControls: 16,
+        wrongPageMaxInliers: 15,
+        wrongPageMedianInliers: 6,
+        deterministicRerunConfirmed: true,
+      },
+      higherFeatureCountCrossCheck: {
+        matchingHalfPages: 8,
+        matchCandidates: 4522,
+        geometricInliers: 3805,
+        maximumWrongPageInliers: 25,
+      },
+      imageInkOverlayCrossCheck: {
+        comparedHalves: 8,
+        minimumScore: 0.9275,
+        maximumScore: 0.9725,
+        notIdenticalDigitalScanProof: true,
+      },
+      printedNameExampleBoth: '岳飛癸未乙卯甲子己巳',
+      fourAdjacentPrintOpeningsShareDetailedTypesetting: true,
+      twoIndependentMaterialScanCaptures: true,
+      strongSameSettingOrFaithfulSamePlateTradition: true,
+      independentlyReengravedPageSettingDemonstrated: false,
+      microscopicSharedCuttingDefectsEstablished: false,
+      sameHistoricalWoodblockSetProved: false,
+      distinctHistoricalWoodblockSetsProved: false,
+      additionalDirectMingCopiesAdded: 0,
+      additionalIndependentMingWoodblockSetsEstablished: 0,
+      mingNlcNclPhysicalCopyCountRemains: 2,
+      actualYueFeiBirthHourAuthenticated: false,
+      yuanhaiWeiWoodArchetypeResolved: false,
+      modernAnnualRulePriorityAuthorized: false,
+      productionAuthorized: false,
+    });
+    expect(q.layoutPairs.map(p => [p.nlcPage, p.nclPage])).toEqual([
+      [13, 653], [14, 654], [15, 655], [16, 656],
+    ]);
+    expect(q.layoutPairs.reduce((n, p) => n + p.left.inliers + p.right.inliers, 0)).toBe(888);
+    expect(q.layoutPairs.reduce((n, p) => n + p.left.candidates + p.right.candidates, 0)).toBe(1071);
+    expect(buildYuanHaiMingJuan3PrintScope().mingNlcNclFourOpeningsBlockAudit).toEqual(q);
+    expect(YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT.twoPhysicalCopiesPrintAlignment.sameActualWoodblockProven).toBe(false);
+    expect(YUANHAI_SANMING_JUAN8_DUPLICATE_AND_NEXT_WITNESS_AUDIT.twoPhysicalCopiesPrintAlignment.independentWoodblockTypesettingVerified).toBe(false);
   });
 
   test('Qing Japan and Harvard print split 岳武穆, retract prior absence assertion', () => {

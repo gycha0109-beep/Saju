@@ -1347,6 +1347,87 @@ export const YUANHAI_SANMING_QING_YUEWUMU_COLUMN_SAFE_COLLATION = Object.freeze(
   productionAuthorized: false as const,
 });
 
+
+/**
+ * Direct ORIGINAL-PDF collation of four consecutive 卷八 openings, NLC pp13-16
+ * to Taiwan NCL 06589 pp653-656. The BF result is reproducible using the
+ * research script and original PDF SHA256 keys below. HIGH geometric
+ * correspondence is NOT proof that the two physical books were printed from
+ * the very same woodblocks; low-resolution NCL pages obscure microscopic
+ * cutting flaws needed to test unique-block identity.
+ */
+export const YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT = Object.freeze({
+  originalCopiesCompared: 2 as const,
+  printedJuan: 8 as const,
+  sourceCopies: Object.freeze({
+    nlc: Object.freeze({
+      sourceId: 'NLC892-411999029701-66492' as const,
+      boundBook: 15 as const,
+      pdfPages: 57 as const,
+      pdfSha256: '009396f2dfd848194d7fa73c6e02ea51c010d3a9f0d5f3eb83be35d6b6a2e777' as const,
+      targetPage: 14 as const,
+      embeddedPrintImageDimensionsPx: Object.freeze([4192, 3523] as const),
+      capture: 'separate_NLC_grayscale_scan' as const,
+    }),
+    ncl: Object.freeze({
+      sourceId: 'NCL-06589' as const,
+      pdfPages: 1000 as const,
+      pdfSha256: '3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd' as const,
+      targetPage: 654 as const,
+      embeddedPrintImageDimensionsPx: Object.freeze([842, 586] as const),
+      capture: 'separate_NCL_color_scan_with_ruler_and_annotations' as const,
+    }),
+  }),
+  layoutPairs: Object.freeze([
+    Object.freeze({ nlcPage: 13 as const, nclPage: 653 as const, left: Object.freeze({ candidates: 215 as const, inliers: 200 as const }), right: Object.freeze({ candidates: 57 as const, inliers: 34 as const }) }),
+    Object.freeze({ nlcPage: 14 as const, nclPage: 654 as const, left: Object.freeze({ candidates: 174 as const, inliers: 142 as const }), right: Object.freeze({ candidates: 86 as const, inliers: 73 as const }) }),
+    Object.freeze({ nlcPage: 15 as const, nclPage: 655 as const, left: Object.freeze({ candidates: 201 as const, inliers: 177 as const }), right: Object.freeze({ candidates: 81 as const, inliers: 63 as const }) }),
+    Object.freeze({ nlcPage: 16 as const, nclPage: 656 as const, left: Object.freeze({ candidates: 160 as const, inliers: 129 as const }), right: Object.freeze({ candidates: 97 as const, inliers: 70 as const }) }),
+  ] as const),
+  reproducibleDeterministicBfAudit: Object.freeze({
+    methodology: 'PyMuPDF 1.75x + CLAHE(clip2.0/tile10) + SIFT(nfeatures1200/contrast0.018/edge15) + BF-L2 Lowe0.70 + RANSAC(3px/max10000/conf0.995)' as const,
+    matchingHalfPages: 8 as const,
+    matchCandidates: 1071 as const,
+    geometricInliers: 888 as const,
+    inlierFractionApprox: 0.82913 as const,
+    wrongPageOffsetHalfPageControls: 16 as const,
+    wrongPageMaxInliers: 15 as const,
+    wrongPageMedianInliers: 6 as const,
+    deterministicRerunConfirmed: true as const,
+    cropAndAlgorithmGivenInResearchScript: true as const,
+  }),
+  higherFeatureCountCrossCheck: Object.freeze({
+    method: 'SIFT nfeatures8500 / FLANN Lowe0.70 / RANSAC3px' as const,
+    matchingHalfPages: 8 as const,
+    matchCandidates: 4522 as const,
+    geometricInliers: 3805 as const,
+    maximumWrongPageInliers: 25 as const,
+  }),
+  imageInkOverlayCrossCheck: Object.freeze({
+    comparedHalves: 8 as const,
+    method: 'registered_gray_adaptive_ink_F1_with_2px_dilation_tolerance' as const,
+    minimumScore: 0.9275 as const,
+    maximumScore: 0.9725 as const,
+    notIdenticalDigitalScanProof: true as const,
+    sensitiveToRenderingThresholdAndInkDensity: true as const,
+  }),
+  printedNameExampleBoth: '岳飛癸未乙卯甲子己巳' as const,
+  fourAdjacentPrintOpeningsShareDetailedTypesetting: true as const,
+  twoIndependentMaterialScanCaptures: true as const,
+  strongSameSettingOrFaithfulSamePlateTradition: true as const,
+  independentlyReengravedPageSettingDemonstrated: false as const,
+  microscopicSharedCuttingDefectsEstablished: false as const,
+  sameHistoricalWoodblockSetProved: false as const,
+  distinctHistoricalWoodblockSetsProved: false as const,
+  additionalDirectMingCopiesAdded: 0 as const,
+  additionalIndependentMingWoodblockSetsEstablished: 0 as const,
+  mingNlcNclPhysicalCopyCountRemains: 2 as const,
+  actualYueFeiBirthHourAuthenticated: false as const,
+  yuanhaiWeiWoodArchetypeResolved: false as const,
+  modernAnnualRulePriorityAuthorized: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1475,6 +1556,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     japanQingLocalPrintedExampleComparison: YUANHAI_SANMING_JAPAN_QING_JUAN8_LOCAL_COLLATION,
     qingTwoCopyNamedCase: YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT,
     qingNamedColumnSafeCollation: YUANHAI_SANMING_QING_YUEWUMU_COLUMN_SAFE_COLLATION,
+    mingNlcNclFourOpeningsBlockAudit: YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
