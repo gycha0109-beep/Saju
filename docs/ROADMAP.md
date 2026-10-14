@@ -1,7 +1,7 @@
 # Saju Engine — 실행 로드맵
 
 > 범위: 이 저장소의 **사주 계산 → 명식 → 해석 → Official Reading → 제품 실행**. 관상/캐릭터/결제 트랙의 자체 로드맵을 대체하지 않는다.  
-> 기준 스냅샷: 2026-10-13 KST, `main` = `257a7d0caa59f0f86847ef21e614ca2de40533a3`.  
+> 기준 스냅샷: 2026-10-14 KST, `main` = `7fa4a3bd1d2a2d5cadde8c725f6ef6fe919ee6ad`. #2520 변경은 별도 PR에서 검증 중.  
 > 상태: **작업 우선순위 문서**. 새로운 명리 의미·Production·공개·저장·판매 권한을 발행하지 않는다.  
 > 담당 트랙: `saju`; 의미 판정/독립 review는 기존 Research / Bridge의 소유권을 존중한다.
 
@@ -53,14 +53,14 @@ PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현�
 - Production spouse 요청 시각 수정 [#2517](https://github.com/gycha0109-beep/Saju/pull/2517): 정확한 HEAD `114ed409db77ef86f0ce33e4476d9c2ec281d047`, 일반 CI / PIE / Production Container 및 [SHA-pinned Integration](https://github.com/gycha0109-beep/Saju/actions/runs/38354513635) admission + Quality + 16/16 + Verify + Integration Verify PASS; squash merge `257a7d0caa59f0f86847ef21e614ca2de40533a3`.
 - #2517 병합 후 `main` 검증: [CI](https://github.com/gycha0109-beep/Saju/actions/runs/38355835988)의 Quality + 16/16 + CI Verify **모두 PASS**, [Production Container](https://github.com/gycha0109-beep/Saju/actions/runs/38355836024) **PASS**. P0 완료.
 
-### P1 — 현행 Natal/Spouse 제품 경로의 실행 무결성 (P0 이후)
+### P1 — 현행 Natal/Spouse 제품 경로의 실행 무결성 (검증 마무리 진행 중)
 
 **목표:** ONE PERSON → ONE CANONICAL NATAL BASIS → MANY BOUNDED READINGS의 런타임 불일치 없이 소비자 응답까지 전달.
 
 - [ ] 5개 Natal Preview + spouse position-only Production/Preview + Source Proof의 **같은 출생정보·같은 계산 정책에 대한 명식 ID/시간 미상 처리/증거/해석 범위**를 확인한다.
-- [ ] 일반 Natal과 spouse의 정확한 registry/admission을 유지한다. Source Proof가 더 넓은 Research registry 의미로 조용히 이동하지 않도록 regression을 유지한다.
-- [ ] 각 요청의 `requestedAt`, snapshot `createdAt`, report `generatedAt`, 재현성·도메인 격리·HOLD/no-sell을 검증한다.
-- [ ] **검증에서 실제 관측된 결함만** 작은 PR로 보완한다. 중복 실행이나 캐시 도입은 별도 요구·보안/정합성 검토 없이는 하지 않는다.
+- [x] 일반 Natal과 spouse의 정확한 registry/admission을 유지한다. Source Proof가 더 넓은 Research registry 의미로 조용히 이동하지 않도록 regression을 유지한다. (Preview admission / official reading fidelity / Source Proof mismatch 차단 tests)
+- [x] 각 요청의 `requestedAt`, snapshot `createdAt`, report `generatedAt`, 재현성·도메인 격리·HOLD/no-sell을 검증한다. (Preview + Production request-clock / Source Proof HOLD tests)
+- [x] **검증에서 실제 관측된 결함만** 작은 PR로 보완한다. #2519/#2520은 검증 증거만 추가했고 계산·캐시·의미·권한 구현은 변경하지 않는다.
 - 완료 기준: 허용된 범위의 HTTP/Host E2E 및 실패/unknown-time 사례 PASS, unadmitted cross-domain 의미 없음, 기존 Production/Preview/Source Proof 권한 변경 없음.
 
 **P1 감사 증거 및 미충족 항목 (2026-10-13)**
@@ -68,25 +68,27 @@ PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현�
 - `test/preview-e2e-runtime.test.ts`는 5개 Natal Preview 실제 HTTP 요청의 pillars / fiveElements / tenGods 표시값 동등성을 검증한다. 다만 소비자 응답은 내부 `snapshotId`를 노출하지 않으므로 이것만으로 모든 실행 레인의 내부 ID 동일성을 주장하지 않는다.
 - `test/preview-calculation-request-clock.test.ts`와 `test/preview-reading-artifact-request-clock.test.ts`는 Preview 시각 정합성, `test/production-spouse-official-request-clock.test.ts`는 bounded Production spouse의 snapshot / narrative / artifact 요청 시각 및 spouse-only gate를 검증한다.
 - `test/source-reading-proof-readiness.test.ts`는 snapshot/registry/interpretation/evidence/artifact identity mismatch 차단을 검증한다. Source Proof는 **HOLD**이고 `canExecute / canPublish / canSell = false`; Proof metadata 또는 transport 무결성은 의미 승인이나 판매 허가가 아니다.
-- 새 경량 테스트 [#2519](https://github.com/gycha0109-beep/Saju/pull/2519)는 출생시간 확정/미상에서 Production spouse, Preview spouse, Source Proof 계산 경계의 내부 `snapshotId` 직접 일치 여부를 검증하도록 추가했다. 현재 **CI 미확정**, P1 완료 처리하지 않는다.
+- 새 경량 테스트 [#2519](https://github.com/gycha0109-beep/Saju/pull/2519)는 출생시간 확정/미상에서 Production spouse, Preview spouse, Source Proof 계산 경계의 내부 `snapshotId` 직접 일치를 검증한다. HEAD `b45662ef5b3224382d2f7f2194709592c55e948b`는 일반 CI / 16개 샤드 / PIE / Container 및 [SHA 고정 Integration 20/20](https://github.com/gycha0109-beep/Saju/actions/runs/38491557892) PASS, squash merge `7fa4a3bd1d2a2d5cadde8c725f6ef6fe919ee6ad`. 병합 후 [`main` CI](https://github.com/gycha0109-beep/Saju/actions/runs/38494172239)는 검증 진행 중이며 [Container](https://github.com/gycha0109-beep/Saju/actions/runs/38494172274) PASS.
+- [#2520](https://github.com/gycha0109-beep/Saju/pull/2520)은 기존 5개 Natal Preview HTTP E2E에서 실제 governed 계산 경계의 내부 snapshotId를 관측·비교하는 **추가 regression**이다. 이 PR의 필수 CI/통합/병합 후 검증 전까지 첫 번째 P1 체크박스와 P1 전체 완료 판정은 미완료 상태를 유지한다.
 - 기존 승인된 registry/semantic/authority 경로에서 결함 확정 전까지 해석 의미, 캐시, 계산 방식, public/persistence/commerce를 변경하지 않는다.
 
 ### P2 — Spouse standard/detailed 파일럿의 현재 상태 확정
 
-- [ ] SA-7B가 승인한 **bounded Production standard**와 SA-7C **position-only detailed** 코드를 실제 Production host/renderer/contract test로 확인한다.
-- [ ] standard/detailed canonical meaning, source semantic hash, plan/evidence/disclosure 보존과 `modelCalls=0`, 미허용 의미 표현 0건, material mismatch 전체 standard fallback을 확인한다.
-- [ ] 이미 입증된 구현은 중복 구현하지 않는다. 결함이 확인될 때만 보완한다.
+- [x] SA-7B가 승인한 **bounded Production standard**와 SA-7C **position-only detailed** 코드를 실제 Production host/renderer/contract test로 확인한다.
+- [x] standard/detailed canonical meaning, source semantic hash, plan/evidence/disclosure 보존과 `modelCalls=0`, 미허용 의미 표현 0건, material mismatch 전체 standard fallback을 확인한다.
+- [x] 이미 입증된 구현은 중복 구현하지 않는다. 결함이 확인될 때만 보완한다.
 - **금지:** 배우자 외모·성격·특정 인물·혼인 결과 예측, public GA/persistence/commerce 자동 승인.
 
-**기존 증거 확인 (재구현 없음)**
+**P2 기존 증거 확인 — 감사 완료, 재구현 없음 (2026-10-14)**
 
 - `docs/implementation/sa7b-spouse-standard-official-reading-authority-closure-v1.md`는 Production standard의 `ACTIVE_BOUNDED`(position-only)를 명시한다.
 - `test/official-reading-detailed-spouse-pilot.test.ts`는 standard/detailed 동일 canonical semantic hash·plan hash·disclosures·explainability, `modelCalls=0`, 제한 문구 미노출 및 stale material의 **whole-response standard fallback**을 검증한다. 해당 파일럿은 기존 통합 회귀에서 PASS됐지만 새 공개·판매 권한을 뜻하지 않는다.
-- P2의 추가 구현은 실제 위반이 재현될 때만 별도 작업으로 연다. SA-7D의 General Annual은 `RETURN_TO_RESEARCH`, `Production HOLD`를 유지한다.
+- `test/relationship-spouse-t8-day-branch-palace-production-delivery-activation-implementation.test.ts`는 실제 `/api/readings` HTTP 활성화, 비허용 Production 요청 10건 차단, bounded 의미와 `modelCalls=0`, broader authority false를 검증한다. #2519의 일반/통합 16개 샤드에서 회귀 성공을 확인했다.
+- P2는 **기존 bounded 구현 감사 기준 완료**다. 추가 구현은 실제 위반이 재현될 때만 별도 작업으로 연다. SA-7D의 General Annual은 `RETURN_TO_RESEARCH`, `Production HOLD`를 유지한다.
 
 ### P3 — SA-7D: Annual standard Official Reading의 **의미 권한 선행 조건** (BLOCKED: Research/Bridge)
 
-**선후관계:** 연운 Engine/렌더러 신규 제작보다 **연운 고유 source-qualified semantic prerequisite**가 먼저다.
+**선후관계:** 연운 Engine/렌더러 신규 제작보다 **연운 고유 source-qualified semantic prerequisite**가 먼저다. [독립 근거 심사 #2462](https://github.com/gycha0109-beep/Saju/issues/2462)는 10개 현대 십신 연운 테마 및 4개 지지충돌 tension 규칙의 직접 source authority가 미확립됐음을 기록한다. 이는 이미 승인됐다는 증거가 아니며 Research/Bridge HOLD를 유지한다.
 
 1. [ ] General Annual의 출처 원문, 정확한 locator, 명제, exception/counterexample, scope, provenance, domain review와 bridge disposition을 확보한다.
 2. [ ] 실제 Bridge decision이 `ADMITTED`를 명시할 때에만 exact annual semantic producer의 Engine 경로·해당 scope/rule/claim 테스트를 연다.
