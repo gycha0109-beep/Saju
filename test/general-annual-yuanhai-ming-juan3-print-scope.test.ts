@@ -17,6 +17,7 @@ import {
   YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT,
   YUANHAI_SANMING_PARALLEL_DIGITAL_PASSAGE_COMPARISON,
   YUANHAI_SANMING_NLC_JUAN8_UPPER_DIRECT_PRINT,
+  YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -658,6 +659,28 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     });
   });
 
+  test('modern 1578 critical-edition collation account remains C rather than first-edition original', () => {
+    const q = YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE;
+    expect(q).toMatchObject({
+      sourceTier: 'C_modern_critical_editorial_account',
+      editorialClaimOriginalPrintYear: 1578,
+      editorialClaimCollatedHoldings: ['中國國家圖書館', '浙江省圖書館', '臺灣國家圖書館'],
+      editorialClaimThreeCollatedCopiesLargelyAgree: true,
+      editorialClaimTaiwanCopyHasCorrectionsAndMarginalNotes: true,
+      editorialClaim1735RevisedEditionAddsPostWanliExamples: true,
+      companionPrefaceAttestsEditorialCorrectionsToSimilarGlyphsJiSi: true,
+      original1578TaiwanCommonsPartOnePages: 1000,
+      nlcMingPrintedFascicle15Is1578FirstCutIndependentlyAuthenticated: false,
+      ncl1578FocalJuanEightPageDirectlyObtained: false,
+      printedFocalCasesDirectlyAddedByThisEditorialSource: 0,
+      actualHistoricalYuefeiBirthHourAuthenticated: false,
+      productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().original1578CriticalEditorialRoute).toEqual(q);
+    expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.allNewFocalPrintedWitnessesAdded).toBe(1);
+    expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.mingSanmingTonghuiLocus.independentMingPrintedFocalWitnessCredit).toBe(0);
+  });
+
   test('1578 Sanming Tonghui date does not prove its Yue Fei example was printed in that edition', () => {
     const q = YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT;
     expect(q.mingSanmingTonghuiLocus).toMatchObject({
@@ -754,7 +777,7 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       physicallyIndependentTypesettingVerified: false,
       additionalIndependentFocalWitnessCredit: 0,
     });
-    expect(q.allNewFocalPrintedWitnessesAdded).toBe(0);
+    expect(q.allNewFocalPrintedWitnessesAdded).toBe(1);
     expect(q.globalAnnualMeaningAuthorization).toBe(false);
     expect(q.productionAuthorization).toBe(false);
   });

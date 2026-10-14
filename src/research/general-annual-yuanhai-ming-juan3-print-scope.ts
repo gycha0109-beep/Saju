@@ -873,7 +873,7 @@ export const YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT = Object.freeze({
     additionalIndependentFocalWitnessCredit: 0 as const,
   }),
   verifiedHistoricalYearDayOrEventMeansAuthenticatedBirthHour: false as const,
-  allNewFocalPrintedWitnessesAdded: 0 as const,
+  allNewFocalPrintedWitnessesAdded: 1 as const, // one newly read NLC Ming original; does not prove independence from NCL 1578
   previouslyConfirmedPrintedUnWoodVariantRemainsUnresolved: true as const,
   globalAnnualMeaningAuthorization: false as const,
   productionAuthorization: false as const,
@@ -1009,6 +1009,37 @@ export const YUANHAI_SANMING_NLC_JUAN8_UPPER_DIRECT_PRINT = Object.freeze({
   productionAuthorized: false as const,
 });
 
+
+/**
+ * Critical-editorial COLLATION ROUTE, not a direct first-edition leaf witness.
+ * A modern editor's source families and emendation principles are research
+ * leads only; they do not authenticate NLC fascicle 15 as first-cut 1578.
+ */
+export const YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE = Object.freeze({
+  sourceTier: 'C_modern_critical_editorial_account' as const,
+  criticalEditionTitle: '增訂萬曆初刻三命通會' as const,
+  criticalEditionEditor: '李鏘濤' as const,
+  criticalEditionForewordAndMethodUrl: 'https://ftp.xinyi.hk/goods-9310.html' as const,
+  editorialClaimOriginalPrintYear: 1578 as const,
+  editorialClaimCollatedHoldings: Object.freeze(['中國國家圖書館', '浙江省圖書館', '臺灣國家圖書館'] as const),
+  editorialClaimThreeCollatedCopiesLargelyAgree: true as const,
+  editorialClaimTaiwanCopyHasCorrectionsAndMarginalNotes: true as const,
+  editorialClaimLater1726CompilationAddsSomeMingExampleCharts: true as const,
+  editorialClaim1735RevisedEditionAddsPostWanliExamples: true as const,
+  companionHistoricalResearchPrefaceUrl: 'https://www.xingmao.co/products/%E3%80%8A%E5%A2%9E%E8%A8%82%E8%90%AC%E6%9B%86%E5%88%9D%E5%88%BB%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83%E3%80%8B%E5%BE%B5%E5%BC%95%E4%BA%BA%E7%89%A9%E5%B1%A5%E6%AD%B7%E9%95%B7%E7%B7%A8%E7%AC%AC%E4%B8%80%E8%BC%AF%EF%BC%88%E6%9D%8E%E9%8F%98%E6%BF%A4%E7%B7%A8%E6%92%B0%EF%BC%89' as const,
+  companionPrefaceAttestsEditorialCorrectionsToSimilarGlyphsJiSi: true as const,
+  original1578TaiwanCatalog06589Url: 'https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=69577a07b3444caf9b20e35e84a103e0fDcyODE10.578_oDtdzxby6wX5_W8cCvt1j5rqk4Hzy3GeKFoIIHA_&page=2&sourceWhereString=&whereString=IChEYXRlX0NyZWF0ZWQgbGlrZSAnJTE1NzglJyBvciBEb2N1bWVudF9ZZWFyIGxpa2UgJyUxNTc4JScgKSA1.IuMldaBSQarjxhBn_BeTs0yAImbyvOSAYg5y7FFSAGw_' as const,
+  original1578TaiwanCommonsPartOneUrl: 'https://commons.wikimedia.org/wiki/File:NCL-06589_1_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83.pdf' as const,
+  original1578TaiwanCommonsPartOnePages: 1000 as const,
+  original1578TaiwanCommonsPartTwoPages: 187 as const,
+  nlcMingPrintedFascicle15Is1578FirstCutIndependentlyAuthenticated: false as const,
+  ncl1578FocalJuanEightPageDirectlyObtained: false as const,
+  specificYuefeiLocusComparedInCriticalEditionOriginalFacsimile: false as const,
+  printedFocalCasesDirectlyAddedByThisEditorialSource: 0 as const,
+  actualHistoricalYuefeiBirthHourAuthenticated: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1132,6 +1163,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     noContactEarlyPrintAccessAudit: YUANHAI_NO_CONTACT_EARLY_PRINT_ACCESS_AUDIT,
     parallelYuefeiNatalLocusAudit: YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT,
     directSanmingJuanEightMingPrint: YUANHAI_SANMING_NLC_JUAN8_UPPER_DIRECT_PRINT,
+    original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     verifiedLocalNlcPrint: Object.freeze({
       sourceBookId: 'NLC892-2642-210288' as const,
       pdfSha256: 'de9973d1edf51f0e244863302a4c90b7eb13daea0aa53486f590e2039483f552' as const,
