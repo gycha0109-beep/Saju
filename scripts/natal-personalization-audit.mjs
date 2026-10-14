@@ -73,7 +73,7 @@ async function main() {
   const origin = await listenEphemeral(runtime.server);
   try {
     for (const fixture of fixtures) {
-      const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
+      const response = await globalThis.fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
         method: 'POST',
         headers: {
           authorization: `Bearer ${bearer}`,
