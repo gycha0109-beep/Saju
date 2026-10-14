@@ -6,7 +6,10 @@ import {
 } from '../src/production-calculation-process.js';
 import { PRODUCT_PREVIEW_READING_HTTP_PATH } from '../src/production-calculation-host.js';
 import type { ProductReadingResponse } from '../src/reading/product-reading-response.js';
-import { buildNatalPersonalizationBaselineReport } from '../src/preview/natal-personalization-baseline.js';
+import {
+  buildNatalPersonalizationBaselineReport,
+  type NatalPersonalizationBaselineInput,
+} from '../src/preview/natal-personalization-baseline.js';
 
 const bearer = 'natal-baseline-test-bearer';
 
@@ -46,7 +49,7 @@ describe('N0 natal personalization baseline on actual Preview HTTP consumer path
       { caseId: 'b', date: '1989-09-08', time: '01:30' },
       { caseId: 'unknown-hour', date: '2024-03-10', time: null },
     ];
-    const inputs = [];
+    const inputs: NatalPersonalizationBaselineInput[] = [];
     try {
       for (const fixture of fixtures) {
         const response = await fetch(`${origin}${PRODUCT_PREVIEW_READING_HTTP_PATH}`, {
