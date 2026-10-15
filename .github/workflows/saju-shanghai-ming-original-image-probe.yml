@@ -1,0 +1,93 @@
+# Public, unauthenticated, bounded original-image discovery only.
+# This probe never promotes catalog records or thumbnails to A-grade source evidence.
+name: "[WT:saju] Shanghai Ming Original Image Probe"
+on:
+  pull_request:
+    branches:
+      - research/saju/annual-yuanhai-three-layer-case-witness
+    paths:
+      - .github/workflows/saju-shanghai-ming-original-image-probe.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-shanghai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install headless browser
+        run: |
+          python -m pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+      - name: Inspect public Shanghai Library catalog and image availability
+        env:
+          REPORT_DIR: ${{ runner.temp }}/shanghai
+        run: |
+          mkdir -p "$REPORT_DIR"
+          python - <<'PY'
+          import asyncio, json, os, re
+          from pathlib import Path
+          from playwright.async_api import async_playwright
+          out=Path(os.environ['REPORT_DIR'])
+          targets=[
+            'https://gj.library.sh.cn/org/shl',
+            'https://gj.library.sh.cn/gjxz/index',
+          ]
+          queries=['星学纲目正传','星學綱目正傳','新刊京本釐正總括天機星學正傳','杨淙']
+          rows=[]
+          async def inspect(page,url,index):
+            rec={'url':url,'http_status':None,'title':None,'body_excerpt':None,'search_attempts':[],
+                 'potential_records':[],'image_pages_directly_verified':False,'errors':[]}
+            try:
+              resp=await page.goto(url,wait_until='domcontentloaded',timeout=40000)
+              await page.wait_for_timeout(5500)
+              rec['http_status']=resp.status if resp else None
+              rec['final_url']=page.url
+              rec['title']=await page.title()
+              rec['body_excerpt']=(await page.locator('body').inner_text(timeout=8000))[:2400]
+              rec['inputs']=await page.evaluate("""() => [...document.querySelectorAll('input')].map(e=>({placeholder:e.placeholder,type:e.type,outer:e.outerHTML.slice(0,200)})).slice(0,15)""")
+              rec['links']=await page.evaluate("""() => [...document.querySelectorAll('a')].map(a=>({t:(a.innerText||'').trim().slice(0,70),href:a.href})).filter(x=>/古籍|搜索|图像|影像|目录|上海|查询/.test(x.t)).slice(0,25)""")
+              await page.screenshot(path=str(out/f'site-{index}-before.png'),full_page=False)
+              inp=page.locator('input:not([type=hidden]):not([type=checkbox])').first
+              if await inp.count():
+                for qi,query in enumerate(queries[:2]):
+                  try:
+                    await inp.fill(query,timeout=3000)
+                    await inp.press('Enter',timeout=3000)
+                    await page.wait_for_timeout(4200)
+                    text=(await page.locator('body').inner_text(timeout=7000))
+                    rec['search_attempts'].append({'query':query,'final_url':page.url,
+                      'text_excerpt':text[:2800],
+                      'target_title_seen':('星学纲目' in text or '星學綱目' in text),
+                      'target_author_seen':('楊淙' in text or '杨淙' in text)})
+                    await page.screenshot(path=str(out/f'site-{index}-search-{qi}.png'),full_page=False)
+                  except Exception as ex:rec['search_attempts'].append({'query':query,'error':str(ex)[:350]})
+              rec['potential_records']=await page.evaluate("""() => [...document.querySelectorAll('a')].map(a=>({text:(a.innerText||'').trim().slice(0,120),url:a.href})).filter(x=>/星[学學]|天機|楊淙|杨淙/.test(x.text)).slice(0,25)""")
+              rec['status']='public_catalog_scoped_probe_done'
+            except Exception as ex:
+              rec['status']='probe_failed'
+              rec['errors'].append(str(ex)[:800])
+            return rec
+          async def main():
+            async with async_playwright() as p:
+              browser=await p.chromium.launch(headless=True,args=['--no-sandbox'])
+              context=await browser.new_context(viewport={'width':1440,'height':960},locale='zh-CN')
+              for i,url in enumerate(targets):
+                page=await context.new_page()
+                rows.append(await inspect(page,url,i))
+                await page.close()
+              await browser.close()
+          try: asyncio.run(main())
+          finally:
+            (out/'shanghai-access.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2),encoding='utf-8')
+            print(json.dumps(rows,ensure_ascii=False)[:16000])
+          PY
+      - name: Preserve bounded public-catalog inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-shanghai-1582-ming-copy-public-catalog-probe
+          path: ${{ runner.temp }}/shanghai/
+          retention-days: 7
+          if-no-files-found: warn
