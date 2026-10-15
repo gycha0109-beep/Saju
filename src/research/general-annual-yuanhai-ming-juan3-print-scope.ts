@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v18' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v19' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2035,6 +2035,32 @@ export const YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL = Object.freeze
 });
 
 
+/** Exact NLC original p.4 office/name directly collated; obscured role verb held. */
+export const YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT = Object.freeze({
+  sourceOriginalBookId: 'NLC892-2642-210287' as const,
+  bibliographicEditionYear: 1600 as const,
+  imprintYearOnThisPageIndependentlyVerified: false as const,
+  targetPdfPageOneBased: 4 as const,
+  locus: 'right_folio_vertical_editorial_column_beneath_title' as const,
+  sourceByteCount: 14387365 as const,
+  sourceSha1Verified: '4092ec5b420ebd84eee3959d2ac00a73580e6b4e' as const,
+  sourceSha256Verified: '17eb28b3a65d0b28908c4646017ebd409ef875366f48945071bb68675f737c82' as const,
+  highResolutionRasterDpi: 400 as const,
+  originalPrintedOfficeAndNameRead: '欽天監承德郎李欽' as const,
+  originalPrintedOfficeAndNameTier: 'A_direct_original_print_image' as const,
+  originalPrintedRoleVerbZengBuRead: false as const,
+  inscriptionBelowNamePartiallyObscuredByDarkMark: true as const,
+  noReadIsNotProofOfAbsence: true as const,
+  originalPrintedLiQinFuRead: false as const,
+  provesSameLiQinAsCatalogLiQinFu: false as const,
+  additionalIndependentWoodblockSettingCredit: 0 as const,
+  newlyRead1582FocalPrints: 0 as const,
+  newlyReadYuanHaiWeiMuFocalPrints: 0 as const,
+  yuefeiHistoricalJiSiHourAuthenticated: false as const,
+  modernAnnualRulesApproved: 0 as const,
+  productionAuthorized: false as const,
+});
+
 /** A published PDF checksum never substitutes for local byte verification or printed glyphs. */
 export const YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES = Object.freeze({
   nlcWanliBookOne: Object.freeze({
@@ -2219,6 +2245,11 @@ export function buildYuanHaiMingJuan3PrintScope() {
     prior.authority.productionAuthorized ||
     books.length !== 2 ||
     additions.length !== 2 ||
+    YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT.originalPrintedRoleVerbZengBuRead ||
+    YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT.provesSameLiQinAsCatalogLiQinFu ||
+    YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT.newlyRead1582FocalPrints !== 0 ||
+    YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT.newlyReadYuanHaiWeiMuFocalPrints !== 0 ||
+    YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT.productionAuthorized ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
     YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS.originalPrintedLiQinZengbuLineVerified ||
     YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS.totalAbsenceOfNameLineProved ||
@@ -2357,6 +2388,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     tianji1582VsWanli1600TextualAlignment: YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT,
     liqinLiqinfu1600AuthorityCollisionAudit: YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT,
     liqinEditorRoleAndJisiOcrControl: YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL,
+    nlc1600BookOneEditorialNamePrintAudit: YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT,
     sourcePdfChecksumAndAccessGates: YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
     housa1582AndToyoCopyAudit: YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
