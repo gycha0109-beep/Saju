@@ -73,7 +73,7 @@ describe('N4 chart-conditional interpretation context based on actual canonical 
     expect(unknown.applied.statements.flatMap((x) => x.positions)
       .every((position) => position.pillar !== 'hour')).toBe(true);
     expect(() => buildNatalAppliedThemeContext(unknown.evidence, known.research))
-      .toThrow(/same.*canonical snapshot/u);
+      .toThrow(/exact canonical snapshot/u);
   });
 
   it('rejects research themes whose matching calculated Ten God cannot be shown', () => {
