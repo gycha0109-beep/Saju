@@ -154,6 +154,42 @@ async function main() {
       `${meaningQuality.pairsSeparatedOnlyByCalculatedFacts} differ only by factual prose, ` +
       `${meaningQuality.actualRepeatedConsumerPairs} repeated full consumer pairs; ${meaningOutputPath}\n`,
   );
+  // N9: fail if a consumer General Natal key-point list still repeats
+  // identical visible text. Never count reduced repetition as additional
+  // individualized meaning; N6 compares the actual post-compaction body.
+  const n9Repeated = inputs.map((input) => {
+    const blocks = input.response.reading?.sections
+      .filter((section) => section.title === '주요 해석' && section.state === 'complete')
+      .flatMap((section) => section.blocks)
+      .filter((block) => block.type === 'key_points') ?? [];
+    const duplicateCount = blocks.reduce((count, block) =>
+      count + block.items.length - new Set(block.items).size, 0);
+    return { caseId: input.caseId, duplicateCount };
+  });
+  const n9 = {
+    version: 'saju-natal-n9-consumer-repeat-compaction-quality-v1',
+    lifecycle: 'internal_quality_audit',
+    mayPublish: false,
+    maySell: false,
+    cases: inputs.length,
+    exactRepeatItemsAfterCompaction: n9Repeated.reduce(
+      (sum, item) => sum + item.duplicateCount, 0),
+    casesWithExactRepeatsAfterCompaction: n9Repeated.filter(
+      (item) => item.duplicateCount > 0),
+    distinctMeaningFingerprintsAfterCompaction: meaningQuality.meaningTextUnique,
+    repeatedMeaningPairsAfterCompaction: meaningQuality.repeatedMeaningPairs,
+    semanticCompletionGranted: false,
+    limitation: 'This presentation-only cleanup hides no known interpretations in canonical semantics, plan, or Official report; it does not add or authorize new chart meaning.',
+  };
+  const n9Path = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0, -5) + '.n9-repetition.json'
+    : outputPath + '.n9-repetition.json');
+  writeFileSync(n9Path, JSON.stringify(n9, null, 2) + '\n', 'utf8');
+  if (n9.exactRepeatItemsAfterCompaction !== 0) {
+    throw new Error('N9 General Natal Preview still repeats exact consumer insight text.');
+  }
+  process.stdout.write(`Natal N9: 0 exact duplicate consumer insights across ${n9.cases} cases, ${n9.repeatedMeaningPairsAfterCompaction} meaning-only repeated pairs (not disguised by duplication); ${n9Path}\n`);
+
   const roleTextByCaseId = new Map(inputs.map((input) => [
     input.caseId,
     input.response.reading?.sections.flatMap((section) => section.blocks.flatMap((block) =>
@@ -220,8 +256,16 @@ async function main() {
 
   // N8: reproduce three actual meaning collisions through every existing
   // internal stage. This is quality evidence, not another consumer renderer.
+  // N8 keeps exact historical A-pair identity even if truthful N9
+  // compaction reveals NEW text collisions that N3 must report separately.
+  const n8PairKeys = new Set([
+    'solar-1984-01-07-00:30|solar-1984-01-07-12:30',
+    'solar-1984-01-07-12:30|solar-1984-01-07-19:30',
+    'solar-2010-02-03-05:30|solar-2010-02-03-19:30',
+  ]);
   const n8Pairs = n3.pairsWithSameCopyDifferentFacts.filter((pair) =>
-    pair.disposition === 'SAME_COPY_DIFFERENT_RULES');
+    pair.disposition === 'SAME_COPY_DIFFERENT_RULES' &&
+    n8PairKeys.has([pair.left, pair.right].sort().join('|')));
   const n8CaseIds = [...new Set(n8Pairs.flatMap((pair) => [pair.left, pair.right]))].sort();
   const admission = resolvePreviewSemanticAdmissionV1(
     'GENERAL_NATAL_USEFUL_READING_CANDIDATE', 'general:natal',
