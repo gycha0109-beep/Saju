@@ -87,9 +87,10 @@ jobs:
       - name: Natal internal personalization and five-domain HTML smoke
         run: |
           node scripts/natal-personalization-audit.mjs "$RUNNER_TEMP/natal-baseline.json"
+          node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const c=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.context.json','utf8')); assert.equal(c.caseCount,35); assert.equal(c.mayPublish,false); assert.equal(c.maySell,false); assert.equal(c.previousRepeatedPairs,6); assert.ok(c.contextualizedPairs>0); assert.ok(c.contextualizedPairs<=c.previousRepeatedPairs);"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const x=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.rules.json','utf8')); const b=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.json','utf8')); assert.equal(x.numberOfCases,35); assert.equal(x.mayPublish,false); assert.equal(x.maySell,false); assert.equal(x.researchEvidenceIsNotProductionAuthority,true); assert.equal(x.pairsWithSameCopyDifferentFacts.length,b.contrasts.filter(p=>p.kind==='different_facts_same_interpretation').length);"
           node scripts/natal-personalized-preview.mjs 1996-01-09 09:30 "$RUNNER_TEMP/natal-preview.html"
-          node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const report=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.json','utf8')); assert.equal(report.numberOfCases,35); assert.equal(report.mayPublish,false); assert.equal(report.maySell,false); const html=readFileSync(process.env.RUNNER_TEMP+'/natal-preview.html','utf8'); assert.match(html,/명식을 종합해서 읽는 출발점/u); assert.match(html,/MYEONGHA/u)"
+          node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const report=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.json','utf8')); assert.equal(report.numberOfCases,35); assert.equal(report.mayPublish,false); assert.equal(report.maySell,false); const html=readFileSync(process.env.RUNNER_TEMP+'/natal-preview.html','utf8'); assert.match(html,/명식을 종합해서 읽는 출발점/u); assert.match(html,/내 명식의 구조를 반영한 해석/u); assert.match(html,/MYEONGHA/u)"
 
       - name: Upload internal natal N3 evidence
         uses: actions/upload-artifact@v4
@@ -98,6 +99,7 @@ jobs:
           path: |
             ${{ runner.temp }}/natal-baseline.json
             ${{ runner.temp }}/natal-baseline.rules.json
+            ${{ runner.temp }}/natal-baseline.context.json
             ${{ runner.temp }}/natal-preview.html
           if-no-files-found: error
           retention-days: 7
