@@ -3,9 +3,9 @@
 name: "[WT:saju] NLC 1600 Book1 Original Access"
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     branches:
-      - research/saju/yuanhai-ming-juan3-print-scope
+      - research/saju/annual-yuanhai-three-layer-case-witness
     paths:
       - .github/workflows/saju-nlc1600-book1-original-access.yml
 permissions:
