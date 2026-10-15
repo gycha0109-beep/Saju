@@ -39,6 +39,7 @@ import {
   YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
   YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
+  YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -47,7 +48,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v17');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v18');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -880,6 +881,31 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(script).toContain('catalog_page_count');
     expect(readFileSync('tools/research/test_verify_nlc1600_book1_pdf.py', 'utf8')).toContain('test_wrong_size_or_hash_fails_and_no_manifest_written');
     expect(buildYuanHaiMingJuan3PrintScope().nlc1600SourceFingerprintWorkflow).toEqual(a);
+  });
+
+  test('verified NLC source PDF p21 title cannot promote personal editor attribution', () => {
+    const a = YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS;
+    expect(a).toMatchObject({
+      fileId: 'NLC892-2642-210287', verifiedBytes: 14387365,
+      verifiedSha1: '4092ec5b420ebd84eee3959d2ac00a73580e6b4e',
+      originalSourceDownloadedByGithubRunner: true,
+      originalBytesAndSha1Verified: true, totalPdfPages: 48,
+      rasterizedOriginalPages: 48, originalPdfBytesInArtifact: false,
+      githubActionRunId: 38705480087, verifiedRasterArtifactId: 11958810428,
+      directlyInspectedPdfPage: 21, directlyInspectedPrintedJuan: 2,
+      directlyReadPrintedTitle: '刻京臺增補淵海子平大全卷之二',
+      titleEvidenceTier: 'A_direct_original_print_image',
+      titleZengbuDoesNotProveLiQinEditorRole: true,
+      originalPrintedLiQinZengbuLineVerified: false,
+      totalAbsenceOfNameLineProved: false,
+      exact1600PrintYearOnTitleLeafAuthenticated: false,
+      newWeiMuTargetFoliosAuthenticated: 0,
+      earlier1582OriginalTargetFolioRead: false,
+      historicalYuefeiHourAuthenticated: false,
+      modernAnnualRulesApproved: 0, productionAuthorized: false,
+    });
+    expect(a.computedRunnerSha256).toBe('17eb28b3a65d0b28908c4646017ebd409ef875366f48945071bb68675f737c82');
+    expect(buildYuanHaiMingJuan3PrintScope().nlc1600DirectFacsimileAccess).toEqual(a);
   });
 
   test('Nagoya 1582 title alias and Toyo 1600 photographic reprint cannot become independent original leaves', () => {
