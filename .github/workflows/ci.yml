@@ -84,6 +84,12 @@ jobs:
         if: steps.plan.outputs.full == 'false'
         run: node scripts/ci/run-affected-tests.mjs
 
+      - name: Natal internal personalization and five-domain HTML smoke
+        run: |
+          node scripts/natal-personalization-audit.mjs "$RUNNER_TEMP/natal-baseline.json"
+          node scripts/natal-personalized-preview.mjs 1996-01-09 09:30 "$RUNNER_TEMP/natal-preview.html"
+          node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const report=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.json','utf8')); assert.equal(report.numberOfCases,35); assert.equal(report.mayPublish,false); assert.equal(report.maySell,false); const html=readFileSync(process.env.RUNNER_TEMP+'/natal-preview.html','utf8'); assert.match(html,/명식을 종합해서 읽는 출발점/u); assert.match(html,/MYEONGHA/u)"
+
       - name: Research preview smoke
         run: npm run preview:research:smoke
 
