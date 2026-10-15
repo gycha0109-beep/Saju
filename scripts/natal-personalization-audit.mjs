@@ -16,6 +16,7 @@ import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../dist/producti
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
 import { runProductReadingInternals } from '../dist/reading/product-reading-service.js';
+import { deterministicContentHash } from '../dist/interpretation/rule-registry.js';
 import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../dist/llm/prompt-compiler.js';
 import { resolvePreviewSemanticAdmissionV1 } from '../dist/preview/preview-semantic-admission.js';
 
@@ -272,6 +273,8 @@ async function main() {
           projectedToCanonicalUnit: unit !== undefined,
           canonicalRole: unit?.role ?? null,
           hasCanonicalText: unit?.canonicalText !== undefined,
+          canonicalTextFingerprint: unit?.canonicalText === undefined
+            ? null : deterministicContentHash(unit.canonicalText),
           includedInOfficialPlan: unit === undefined ? false : planUnitRefs.has(unit.unitId),
         };
       }).sort((a, b) => a.claimType.localeCompare(b.claimType));
@@ -296,8 +299,15 @@ async function main() {
     const rightClaims = new Set(right.researchThemes.map((theme) => theme.claimType));
     const leftOnly = [...leftClaims].filter((c) => !rightClaims.has(c)).sort();
     const rightOnly = [...rightClaims].filter((c) => !leftClaims.has(c)).sort();
+    const leftOnlyThemes = left.researchThemes.filter((theme) => leftOnly.includes(theme.claimType));
+    const rightOnlyThemes = right.researchThemes.filter((theme) => rightOnly.includes(theme.claimType));
+    const sameClaimOwnedCanonicalCopy = leftOnlyThemes.length === 1 &&
+      rightOnlyThemes.length === 1 &&
+      leftOnlyThemes[0].canonicalTextFingerprint !== null &&
+      leftOnlyThemes[0].canonicalTextFingerprint === rightOnlyThemes[0].canonicalTextFingerprint;
     return {
       left: pair.left, right: pair.right,
+      sameClaimOwnedCanonicalCopy,
       differentResearchThemeClaims: leftOnly.length > 0 || rightOnly.length > 0,
       leftOnlyResearchT8: leftOnly, rightOnlyResearchT8: rightOnly,
       sameConsumerMeaning: left.consumerMeaningFingerprint === right.consumerMeaningFingerprint,
@@ -307,7 +317,8 @@ async function main() {
   });
   if (n8PairTraces.length !== 3 ||
       n8PairTraces.some((pair) =>
-        !pair.differentResearchThemeClaims || !pair.sameConsumerMeaning)) {
+        !pair.differentResearchThemeClaims || !pair.sameConsumerMeaning ||
+        !pair.sameClaimOwnedCanonicalCopy)) {
     throw new Error('N8 three-case collision baseline changed; reassess source and admission.');
   }
   const n8 = {
@@ -321,6 +332,7 @@ async function main() {
     pairs: n8PairTraces,
     limitations: [
       'Research T8 matched claims are not independently admitted Preview semantics.',
+      'The three paired Research T8 claims reach profile, canonical unit and plan but share the same claim-owned canonical copy across distinct channels.',
       'Selected/plan-contained claims do not prove their channel difference has an approved interpretation.',
       'Renderer report hashes may contain identities; same visible consumer meaning is separately measured by N6.',
       'No claim-to-paragraph identity is asserted by this trace.',
