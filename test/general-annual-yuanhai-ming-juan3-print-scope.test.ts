@@ -32,6 +32,7 @@ import {
   YUANHAI_JINTUO_PREQING_ORIGINAL_PRINT_CANDIDATES,
   YUANHAI_JINTUO_20261015_ACCESS_AND_CATALOG_AUDIT,
   YUANHAI_JINTUO_WYG_FOLIO_AND_OCR_CONSISTENCY_AUDIT,
+  YUANHAI_1582_TIANJI_OCR_TEXTUAL_PARALLEL_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -836,6 +837,47 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.preQingJintuoPrintedOriginalCandidates.confirmedMaterialPrintedBirthDateWitnessesAdded).toBe(0);
     expect(scope.authority.historicalYuefeiBirthHourVerified).toBe(false);
     expect(scope.modernInterpretationClaim).toBeNull();
+  });
+
+  test('1582 Tianji C-tier wording and 巳巳 OCR cannot supersede verified 1600/1634 original glyphs', () => {
+    const a = YUANHAI_1582_TIANJI_OCR_TEXTUAL_PARALLEL_AUDIT;
+    expect(a.tianjiTextualCandidate).toMatchObject({
+      shidianBookId: 'NA09025', textChapter: '卷之三',
+      displayedFourPillarTokenWithOcrRisk: '癸未乙卯、甲子、已巳',
+      displayedTargetVariant: '亥卯未合起陽刅',
+      ancestralEditionYearIndicatedByCatalog: 1582,
+      inspected1582TargetPrintedLeaf: false,
+      sourceIndependenceFromYuanhaiUnderlyingTextProved: false,
+      earliestAuthenticatedA_printRedatedTo1582: false,
+      countsAsNewOriginalGlyphWitness: false,
+    });
+    expect(a.bibliographicRoutes).toMatchObject({
+      shanghaiQingKangxiImpressionAlsoCataloged: true,
+      catalogedCarvingYearEqualsPhysicalImpressionYearProved: false,
+      japanNationalArchivesCallNumber: '子059-0011',
+      japanVolumeThreeItemId: 4413954,
+      publicImageViewerOnSiteOnly: true,
+      japaneseJuanThreeTargetLeafDirectlyViewed: false,
+    });
+    expect(a.mingWanliNlcOcrFalseFriends).toMatchObject({
+      misreadPillarSubstring: '癸未乙卯甲子巳巳',
+      misreadHourSubstring: '時上巳巳破印',
+      correctlyPreservedUnTargetInOcr: '亥卯未合起羊刃',
+      separateFollowingContext: '亥卯未木局',
+      samePhysicalScanAsAlreadyAccountedNlc: true,
+      addedIndependentPrintSettingFromOcr: false,
+      actualPrintedSiSiVariantConfirmed: false,
+    });
+    expect(a.sourceDatingPriority).toMatchObject({
+      earliestVerifiedAOriginalYuanhaiPrintYear: 1600,
+      distinctVerifiedChongzhenAOriginalPrintYear: 1634,
+      pre1600IndependentAOriginalGlyphAdded: 0,
+      glyphArchetypeOfWeiMuAdjudicated: false,
+      yuefeiHistoricalBirthHourAuthenticated: false,
+      modernRulesApproved: 0,
+      productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().tianji1582OcrTextualParallelAudit).toEqual(a);
   });
 
   test('WYG folio tags and internally consistent nominal ages never upgrade an uninspected Yuan birth leaf', () => {

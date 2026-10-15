@@ -1840,6 +1840,61 @@ export const YUANHAI_JINTUO_WYG_FOLIO_AND_OCR_CONSISTENCY_AUDIT = Object.freeze(
   productionAuthorized: false as const,
 });
 
+/**
+ * A pre-1600 bibliographic/textual lead in a different work, not direct
+ * collation of its 1582 print leaf and not another YH source-vote.
+ */
+export const YUANHAI_1582_TIANJI_OCR_TEXTUAL_PARALLEL_AUDIT = Object.freeze({
+  tianjiTextualCandidate: Object.freeze({
+    shidianBookId: 'NA09025' as const,
+    textChapter: '卷之三' as const,
+    authorAttributed: '楊淙' as const,
+    title: '新刊京本釐正總括天機星學正傳' as const,
+    displayedFourPillarTokenWithOcrRisk: '癸未乙卯、甲子、已巳' as const,
+    displayedTargetVariant: '亥卯未合起陽刅' as const,
+    observedOcrPotentialConfusion: '時上出已破印' as const,
+    transcriptionTier: 'C_digital_text_not_print_leaf' as const,
+    ancestralEditionYearIndicatedByCatalog: 1582 as const,
+    inspected1582TargetPrintedLeaf: false as const,
+    sourceIndependenceFromYuanhaiUnderlyingTextProved: false as const,
+    earliestAuthenticatedA_printRedatedTo1582: false as const,
+    countsAsNewOriginalGlyphWitness: false as const,
+  }),
+  bibliographicRoutes: Object.freeze({
+    sichuanWanliTenYearRaoJinxiCatalog: true as const,
+    shanghaiWanliTenYearCatalog: true as const,
+    shanghaiQingKangxiImpressionAlsoCataloged: true as const,
+    matchedTheseHoldingsToShidianTargetLeaf: false as const,
+    catalogedCarvingYearEqualsPhysicalImpressionYearProved: false as const,
+    japanNationalArchivesCallNumber: '子059-0011' as const,
+    japanVolumeThreeItemId: 4413954 as const,
+    publicImageViewerOnSiteOnly: true as const,
+    japaneseJuanThreeTargetLeafDirectlyViewed: false as const,
+    japaneseBookThreeContainsJuanThreeProved: false as const,
+  }),
+  mingWanliNlcOcrFalseFriends: Object.freeze({
+    shidianNlcBookId: 'NGJ8922642210287' as const,
+    linkedCatalogPrintBookId: 'NLC892-2642-210288' as const,
+    misreadPillarSubstring: '癸未乙卯甲子巳巳' as const,
+    misreadHourSubstring: '時上巳巳破印' as const,
+    correctlyPreservedUnTargetInOcr: '亥卯未合起羊刃' as const,
+    separateFollowingContext: '亥卯未木局' as const,
+    samePhysicalScanAsAlreadyAccountedNlc: true as const,
+    addedIndependentPrintSettingFromOcr: false as const,
+    actualPrintedSiSiVariantConfirmed: false as const,
+    automaticRepairWithoutOriginalPrintAuthorized: false as const,
+  }),
+  sourceDatingPriority: Object.freeze({
+    earliestVerifiedAOriginalYuanhaiPrintYear: 1600 as const,
+    distinctVerifiedChongzhenAOriginalPrintYear: 1634 as const,
+    pre1600IndependentAOriginalGlyphAdded: 0 as const,
+    glyphArchetypeOfWeiMuAdjudicated: false as const,
+    yuefeiHistoricalBirthHourAuthenticated: false as const,
+    modernRulesApproved: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1976,6 +2031,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     preQingJintuoPrintedOriginalCandidates: YUANHAI_JINTUO_PREQING_ORIGINAL_PRINT_CANDIDATES,
     jintuo20261015AccessAndCatalogAudit: YUANHAI_JINTUO_20261015_ACCESS_AND_CATALOG_AUDIT,
     jintuoWygFolioAndOcrConsistencyAudit: YUANHAI_JINTUO_WYG_FOLIO_AND_OCR_CONSISTENCY_AUDIT,
+    tianji1582OcrTextualParallelAudit: YUANHAI_1582_TIANJI_OCR_TEXTUAL_PARALLEL_AUDIT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
