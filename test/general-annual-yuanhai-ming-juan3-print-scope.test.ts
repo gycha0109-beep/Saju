@@ -895,6 +895,23 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       actualJuanThreeFocalPrintRead: false,
       evidenceTier: 'C_bibliographic_index_text',
     });
+    expect(a.historicalSameTitleCollision).toMatchObject({
+      historicalCatalogName: '星學綱目正傳',
+      historicalCatalogAttributedCompiler: '陸位',
+      historicalCatalogJuan: 20,
+      separateMingHistoryYuanHaiListing: '李欽淵海子平大全六卷',
+      target1582CatalogCompiler: '楊淙',
+      target1582CatalogJuan: 21,
+      sameTitleDoesNotEstablishSameWork: true,
+      historicalCatalogCopyPrintedPageInspected: false,
+      housaAliasLinkedToLuWeiWorkEstablished: false,
+      housaAliasLinkedToYangCongPhysicalEditionEstablished: false,
+      titleCollisionResolved: false,
+      liQinVersusLiQinFuIdentityAdjudicated: false,
+      evidenceTier: 'C_historical_bibliographic_transcriptions',
+      newAuthenticated1582FocalPrintedFolios: 0,
+      productionAuthorized: false,
+    });
     expect(a.japanNationalArchivesExistingRoute).toMatchObject({
       callNumber: '子059-0011', catalogedBooks: 8,
       nagoyaSixBookBindingEqualToThisEightBookBindingProved: false,
@@ -915,6 +932,8 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     });
     expect(a.safeguards).toMatchObject({
       catalogAssertsAlternateTitleNotHistoricalSameSetting: true,
+      historicalSameTitleIsUniqueWorkIdentifier: false,
+      automaticHousaAliasEditionMergeAuthorized: false,
       newlyAuthenticated1582OriginalPrintedTargetFolios: 0,
       newlyAuthenticated1600LiQinZengbuPrintedFolios: 0,
       independentCarvedPrintSettingsAdded: 0,
