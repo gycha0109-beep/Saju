@@ -20,6 +20,7 @@ import { runProductReadingInternals } from '../dist/reading/product-reading-serv
 import { deterministicContentHash } from '../dist/interpretation/rule-registry.js';
 import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../dist/llm/prompt-compiler.js';
 import { resolvePreviewSemanticAdmissionV1 } from '../dist/preview/preview-semantic-admission.js';
+import { renderNatalReaderReviewPacketV1 } from './natal-reader-review-packet.mjs';
 
 const bearer = 'local-natal-quality-audit-not-a-production-secret';
 const dates = [
@@ -143,6 +144,13 @@ async function main() {
 
   const { consumer: report, meaning: meaningReport, quality: meaningQuality } =
     buildNatalMeaningQualityAudit(inputs);
+  // N11: reviewer packet reproduces actual consumer HTTP reading sections.
+  // A generated packet never marks expert assessment complete.
+  const n11Path = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0, -5) + '.n11-review.html'
+    : outputPath + '.n11-review.html');
+  writeFileSync(n11Path, renderNatalReaderReviewPacketV1(inputs), 'utf8');
+  process.stdout.write('Natal N11: 10 actual HTTP Preview cases, 8 delivered and 2 partial; HUMAN REVIEW INCOMPLETE; ' + n11Path + '\n');
   writeFileSync(outputPath, JSON.stringify(report, null, 2) + '\n', 'utf8');
   const meaningOutputPath = resolve(
     outputPath.endsWith('.json')
