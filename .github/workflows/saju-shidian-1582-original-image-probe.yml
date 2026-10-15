@@ -2,11 +2,6 @@
 # Screenshots are candidate facsimile material, not automatically A-grade proof.
 name: "[WT:saju] Shidian 1582 Original Image Probe"
 on:
-  pull_request:
-    branches:
-      - research/saju/annual-yuanhai-three-layer-case-witness
-    paths:
-      - .github/workflows/saju-shidian-1582-original-image-probe.yml
   workflow_dispatch:
 permissions:
   contents: read
