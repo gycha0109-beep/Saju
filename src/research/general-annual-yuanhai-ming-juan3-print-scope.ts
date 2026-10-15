@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v20' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v21' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2104,6 +2104,41 @@ export const YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES = Object.freez
 });
 
 
+/** 1934 Sonkeikaku catalog is a bibliographic holding lead, never a focal original print. */
+export const YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE = Object.freeze({
+  catalogPrint: Object.freeze({
+    catalogTitle: '尊經閣文庫漢籍分類目錄' as const,
+    catalogPublicationYear: 1934 as const,
+    catalogPart: 3 as const,
+    sourcePdfUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/15/NDL1147938_尊經閣文庫漢籍分類目錄_part3.pdf' as const,
+    actualSourcePdfUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/15/NDL1147938_尊經閣文庫漢籍分類目錄_part3.pdf' as const,
+    verifiedPdfBytes: 53742939 as const,
+    verifiedPdfSha256: '513d83d54bed4c178b1cf15a4f596f9c3087f2523d02a3209335906408855732' as const,
+    sourcePdfPageCount: 100 as const,
+    imageOnlyWithoutSearchableText: true as const,
+    catalogTitleIndexCandidate: '新刊京本薈正總括天機諸家秘要星學正傳' as const,
+    catalogDescribesTwentyOneJuan: true as const,
+    catalogDescribesMingWanliEdition: true as const,
+    titleIndexOcrCharacterAccuracyVerifiedFromPrintedEntry: false as const,
+    preciseCatalogPageAndColumnLocated: false as const,
+    indexedMentionIsDirectOriginalWoodblockImage: false as const,
+    sourceTier: 'C_historical_catalog_candidate' as const,
+  }),
+  originalMingWitness: Object.freeze({
+    separateLibraryHoldingCandidate: '尊經閣文庫' as const,
+    samePhysicalHoldingAsHousaOrJapanArchivesProved: false as const,
+    exact1582ImpressionYearConfirmed: false as const,
+    focalJuanThreePhysicalBookNumber: null,
+    focalLeafAndOriginalGlyphDirectlyInspected: false as const,
+    independentWoodblockWitnessAdded: 0 as const,
+    newlyAuthenticatedPre1600WeiOrMuGlyphs: 0 as const,
+    unMuArchetypeEstablished: false as const,
+    historicalYuefeiHourAuthenticated: false as const,
+    modernAnnualRulesApproved: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 /** Modern editorial scholarship documents a Shanghai Ming-print source, not the focal folio. */
 export const YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE = Object.freeze({
   editorialWitness: Object.freeze({
@@ -2276,6 +2311,9 @@ export function buildYuanHaiMingJuan3PrintScope() {
     prior.authority.productionAuthorized ||
     books.length !== 2 ||
     additions.length !== 2 ||
+    YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE.originalMingWitness.newlyAuthenticatedPre1600WeiOrMuGlyphs !== 0 ||
+    YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE.originalMingWitness.focalLeafAndOriginalGlyphDirectlyInspected ||
+    YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE.originalMingWitness.productionAuthorized ||
     YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE.editorialWitness.newlyAuthenticatedTargetWeiMuGlyphs !== 0 ||
     YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE.editorialWitness.actualShanghaiCopyFocalJuanThreeInspected ||
     YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE.safeguards.productionAuthorized ||
@@ -2426,6 +2464,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     sourcePdfChecksumAndAccessGates: YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
     housa1582AndToyoCopyAudit: YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
     shanghai1582ModernEditorialRoute: YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
+    sonkeikaku1582CatalogRoute: YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
     nlc1600DirectFacsimileAccess: YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
