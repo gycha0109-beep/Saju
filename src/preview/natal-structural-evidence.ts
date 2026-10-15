@@ -78,7 +78,7 @@ export function buildNatalStructuralEvidence(
     return {
       slot,
       state: 'resolved',
-      label: fact.value.stem.hanja + fact.value.branch.hanja,
+      label: `${fact.value.stem.value}${fact.value.branch.value} (${fact.value.stem.hanja}${fact.value.branch.hanja})`,
       stem: fact.value.stem.value,
       branch: fact.value.branch.value,
       sourcePath: `pillars.${slot}`,
