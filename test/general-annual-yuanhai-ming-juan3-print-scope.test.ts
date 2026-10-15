@@ -28,6 +28,7 @@ import {
   YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT,
   YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT,
   YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT,
+  YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -745,6 +746,32 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
 
 
 
+
+
+  test('Original Wanli Wei and Chongzhen Mu do not become a modern majority vote', () => {
+    const x = YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD;
+    expect(x.printVariants).toMatchObject([
+      {printedJuan:3,pdfPage:11,pivotGlyph:'未',glyphClass:'地支',originalPrintedText:'亥卯未合起羊刃',grade:'A_direct_focal_print'},
+      {printedJuan:2,pdfPage:19,pivotGlyph:'木',glyphClass:'五行',samePrintedParagraphHasClearWei:'癸未',originalPrintedText:'亥卯木合起羊刃',grade:'A_direct_focal_print_distinct_setting'},
+    ]);
+    expect(x.onlineTranscriptionsNotOriginals.map(q=>q.newPhysicalPrintCredit)).toEqual([0,0,0]);
+    expect(x).toMatchObject({
+      literalMuIsNotAnEarthlyBranch:true,
+      possibleMuAsWoodCombinationShorthand:'hypothesis_unproven',
+      possibleMuFromMiscarvedOrEditedWei:'hypothesis_unproven',
+      directProofOfEditingIntention:false,
+      earliestArchetypeReadingEstablished:false,
+      derivativeTextMajorityVoteAuthorized:false,
+      qingOrModernSemanticsOverridePrintedGlyph:false,
+      threeBranchClashPriorityAuthorized:false,
+      distinctDirectPrintSettings:2,
+      independentCopyOfWanliBlocksEstablished:false,
+      historicallyAuthenticatedYueFeiHour:false,
+      modernAnnualMeaningAuthorized:false,
+      productionAuthorized:false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().yuanhaiWeiMuLexicalGuard).toEqual(x);
+  });
 
   test('Four Treasuries bibliographic chronology does not prove extant Song birth folio', () => {
     const p = YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT;

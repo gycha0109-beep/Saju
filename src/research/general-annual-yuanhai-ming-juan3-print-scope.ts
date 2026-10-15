@@ -1595,6 +1595,53 @@ export const YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT = Object.fr
   productionAuthorized: false as const,
 });
 
+
+/** Ming 1600 未 and 1634 木: distinguish printed characters from interpretive hypotheses. */
+export const YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD = Object.freeze({
+  locus: '淵海子平 論羊刃 又如癸未乙卯甲子己巳 運行辛亥' as const,
+  printVariants: Object.freeze([
+    Object.freeze({
+      edition: '1600 Wanli 刻京臺增補淵海子平大全' as const,
+      printedJuan: 3 as const,
+      nlcFileId: 'NLC892-2642-210288' as const,
+      pdfPage: 11 as const,
+      originalPrintedText: '亥卯未合起羊刃' as const,
+      pivotGlyph: '未' as const,
+      glyphClass: '地支' as const,
+      grade: 'A_direct_focal_print' as const,
+    }),
+    Object.freeze({
+      edition: '1634 Chongzhen 新刊合併官板音義評注淵海子平' as const,
+      printedJuan: 2 as const,
+      nlcFileId: 'NLC892-411999032112-149611' as const,
+      pdfPage: 19 as const,
+      originalPrintedText: '亥卯木合起羊刃' as const,
+      pivotGlyph: '木' as const,
+      glyphClass: '五行' as const,
+      samePrintedParagraphHasClearWei: '癸未' as const,
+      grade: 'A_direct_focal_print_distinct_setting' as const,
+    }),
+  ] as const),
+  onlineTranscriptionsNotOriginals: Object.freeze([
+    Object.freeze({url:'https://www.shidianguji.com/zh/mid-page/7603864294308413466' as const,variant:'木' as const,newPhysicalPrintCredit:0 as const}),
+    Object.freeze({url:'https://www.btko.net/Show-59' as const,variant:'未' as const,newPhysicalPrintCredit:0 as const}),
+    Object.freeze({url:'https://sajumania.com/ebook/to01-06/to01-06-02-14.htm' as const,variant:'未' as const,newPhysicalPrintCredit:0 as const}),
+  ] as const),
+  literalMuIsNotAnEarthlyBranch: true as const,
+  possibleMuAsWoodCombinationShorthand: 'hypothesis_unproven' as const,
+  possibleMuFromMiscarvedOrEditedWei: 'hypothesis_unproven' as const,
+  directProofOfEditingIntention: false as const,
+  earliestArchetypeReadingEstablished: false as const,
+  derivativeTextMajorityVoteAuthorized: false as const,
+  qingOrModernSemanticsOverridePrintedGlyph: false as const,
+  threeBranchClashPriorityAuthorized: false as const,
+  distinctDirectPrintSettings: 2 as const,
+  independentCopyOfWanliBlocksEstablished: false as const,
+  historicallyAuthenticatedYueFeiHour: false as const,
+  modernAnnualMeaningAuthorized: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1727,6 +1774,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     yueFeiFamilyChronicleBirthDateAudit: YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT,
     yueFeiSongshiShiNotSiAudit: YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT,
     JinTuoBirthDateTransmissionAudit: YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT,
+    yuanhaiWeiMuLexicalGuard: YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
