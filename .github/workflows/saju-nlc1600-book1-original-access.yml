@@ -1,13 +1,10 @@
 # Research-only source acquisition. This workflow is non-production and never
 # authenticates glyphs from OCR, checksum, or catalog metadata alone.
 name: "[WT:saju] NLC 1600 Book1 Original Access"
+# Manual opt-in only: routine research/docs commits must never repeatedly
+# download a 14 MB public source or flood GitHub artifacts.
 on:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - research/saju/annual-yuanhai-three-layer-case-witness
-    paths:
-      - .github/workflows/saju-nlc1600-book1-original-access.yml
 permissions:
   contents: read
 jobs:
