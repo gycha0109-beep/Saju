@@ -33,6 +33,7 @@ import {
   YUANHAI_JINTUO_20261015_ACCESS_AND_CATALOG_AUDIT,
   YUANHAI_JINTUO_WYG_FOLIO_AND_OCR_CONSISTENCY_AUDIT,
   YUANHAI_1582_TIANJI_OCR_TEXTUAL_PARALLEL_AUDIT,
+  YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -837,6 +838,34 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.preQingJintuoPrintedOriginalCandidates.confirmedMaterialPrintedBirthDateWitnessesAdded).toBe(0);
     expect(scope.authority.historicalYuefeiBirthHourVerified).toBe(false);
     expect(scope.modernInterpretationClaim).toBeNull();
+  });
+
+  test('1582/1600 aligned C-tier phrases never count as independent A-grade leaves or authority votes', () => {
+    const a = YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT;
+    expect(a.comparisonTier).toBe('C_digital_text_to_C_digital_text');
+    expect(a.texts).toMatchObject({
+      tianjiShidianId: 'NA09025', yuanhaiEditedTextShidianId: 'SDZJ0626',
+      previouslyInspectedYuanhaiNlcOriginalPdfId: 'NLC892-2642-210288',
+      sourcePairIsTwoIndependentOriginalLeafReadings: false, currentYear1582PhysicalTargetLeafRead: false,
+    });
+    expect(a.pairedAnchors).toHaveLength(6);
+    expect(a.pairedAnchors.map(x => x.stage)).toEqual([
+      'prior_case', 'following_quote', 'focal_case', 'focal_wei_un', 'sinyu_interpretation', 'chongqi_and_penalty',
+    ]);
+    expect(a.pairedAnchors.every(x => x.printedVariationProved === false)).toBe(true);
+    expect(a.pairedAnchors[3]).toMatchObject({
+      tianjiText: '亥卯未合起陽刅', yuanhaiText: '亥卯未合起羊刃', printedVariationProved: false,
+    });
+    expect(a).toMatchObject({
+      sharedLongPassageImpliesPossibleRelatedTransmission: true, directCopyDirectionEstablished: false,
+      commonPre1582PrintedArchetypeEstablished: false, printWoodblockIdentityEstablished: false,
+      identicalTitleToSecondaryNamedXingxueGangmuProved: false,
+      japanCatalogBookNumberIsJuanNumber: false, japanTargetLeafPubliclyDownloaded: false,
+      newlyRead1582PrintedTargetLeaves: 0, modernRuleAuthorityIncrease: 0,
+      adjudicatedWeiMuArchetype: null, authenticatedHistoricalYuefeiJiSiHour: false,
+      productPromotionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().tianji1582VsWanli1600TextualAlignment).toEqual(a);
   });
 
   test('1582 Tianji C-tier wording and 巳巳 OCR cannot supersede verified 1600/1634 original glyphs', () => {

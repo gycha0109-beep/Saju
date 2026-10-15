@@ -1895,6 +1895,44 @@ export const YUANHAI_1582_TIANJI_OCR_TEXTUAL_PARALLEL_AUDIT = Object.freeze({
   }),
 });
 
+/**
+ * This is only an inter-book C-to-C clause-order comparison.
+ * Neither a second printed A leaf nor proof of independent transmission.
+ */
+export const YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT = Object.freeze({
+  comparisonTier: 'C_digital_text_to_C_digital_text' as const,
+  texts: Object.freeze({
+    tianjiShidianId: 'NA09025' as const,
+    yuanhaiEditedTextShidianId: 'SDZJ0626' as const,
+    previouslyInspectedYuanhaiNlcOriginalPdfId: 'NLC892-2642-210288' as const,
+    sourcePairIsTwoIndependentOriginalLeafReadings: false as const,
+    currentYear1582PhysicalTargetLeafRead: false as const,
+  }),
+  pairedAnchors: Object.freeze([
+    Object.freeze({ stage: 'prior_case' as const, tianjiText: '庚申、已卯、甲寅' as const, yuanhaiText: '庚申、己卯、甲寅、庚午' as const, printedVariationProved: false as const }),
+    Object.freeze({ stage: 'following_quote' as const, tianjiText: '戊日午月勿作刅' as const, yuanhaiText: '戊日午月勿作刃' as const, printedVariationProved: false as const }),
+    Object.freeze({ stage: 'focal_case' as const, tianjiText: '癸未乙卯、甲子、已巳' as const, yuanhaiText: '癸未乙卯、甲子、己巳' as const, printedVariationProved: false as const }),
+    Object.freeze({ stage: 'focal_wei_un' as const, tianjiText: '亥卯未合起陽刅' as const, yuanhaiText: '亥卯未合起羊刃' as const, printedVariationProved: false as const }),
+    Object.freeze({ stage: 'sinyu_interpretation' as const, tianjiText: '辛酉年辛金又旺於西' as const, yuanhaiText: '辛酉年辛金又旺於酉' as const, printedVariationProved: false as const }),
+    Object.freeze({ stage: 'chongqi_and_penalty' as const, tianjiText: '冲起卯永' as const, yuanhaiText: '冲起卯刃' as const, printedVariationProved: false as const }),
+  ] as const),
+  sharedSequence: Object.freeze(['庚申例', '戊午系例', '辛酉例', '癸未乙卯甲子例', '辛亥運', '辛酉年'] as const),
+  sharedLongPassageImpliesPossibleRelatedTransmission: true as const,
+  directCopyDirectionEstablished: false as const,
+  commonPre1582PrintedArchetypeEstablished: false as const,
+  printWoodblockIdentityEstablished: false as const,
+  identicalTitleToSecondaryNamedXingxueGangmuProved: false as const,
+  japanCallmark: '子059-0011' as const,
+  japanCatalogBookNumberIsJuanNumber: false as const,
+  japanTargetLeafPubliclyDownloaded: false as const,
+  shuge2021OldPdfLinkUsableTodayProved: false as const,
+  newlyRead1582PrintedTargetLeaves: 0 as const,
+  modernRuleAuthorityIncrease: 0 as const,
+  adjudicatedWeiMuArchetype: null,
+  authenticatedHistoricalYuefeiJiSiHour: false as const,
+  productPromotionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -2032,6 +2070,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     jintuo20261015AccessAndCatalogAudit: YUANHAI_JINTUO_20261015_ACCESS_AND_CATALOG_AUDIT,
     jintuoWygFolioAndOcrConsistencyAudit: YUANHAI_JINTUO_WYG_FOLIO_AND_OCR_CONSISTENCY_AUDIT,
     tianji1582OcrTextualParallelAudit: YUANHAI_1582_TIANJI_OCR_TEXTUAL_PARALLEL_AUDIT,
+    tianji1582VsWanli1600TextualAlignment: YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
