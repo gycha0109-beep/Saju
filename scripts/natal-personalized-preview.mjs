@@ -11,6 +11,7 @@ import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../dist/producti
 import { buildNatalStructuralEvidence } from '../dist/preview/natal-structural-evidence.js';
 import { buildNatalSynthesisPreview } from '../dist/preview/natal-synthesis-preview.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
+import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
 
@@ -126,6 +127,27 @@ function renderActivatedThemes(themes) {
   </section>`;
 }
 
+function renderAppliedThemeContext(context) {
+  const items = context.statements.map((statement) => {
+    const positions = statement.positions.map((p) => p.display).join(' · ');
+    return `<section class="interpretation">
+      <h3>${escapeHtml(statement.headline)}</h3>
+      <p>${escapeHtml(statement.contextualReading)}</p>
+      <details><summary>해석과 연결된 실제 근거</summary>
+      <p>${escapeHtml(positions)}</p>
+      <p>${escapeHtml(statement.positions.map((p) => p.evidencePath).join(' · '))}</p>
+      <p>${escapeHtml(statement.sourceRuleIds.join(' · '))}</p></details>
+    </section>`;
+  }).join('');
+  return `<section class="domain">
+    <div class="domain-heading"><h2>내 명식의 구조를 반영한 해석</h2><span>내부 시제품 · 연구 단계</span></div>
+    <p class="limited">${escapeHtml(context.disclosure)}</p>
+    ${context.structuralHourPillar === undefined ? '' :
+      `<p class="limited">계산된 시주: ${escapeHtml(context.structuralHourPillar)}. 시주 정보 자체는 해석 결론이 아닙니다.</p>`}
+    ${items || '<p>검증 가능한 활성 테마가 없어 새 해석을 만들지 않았습니다.</p>'}
+  </section>`;
+}
+
 function renderPillars(summary) {
   if (summary === undefined) return '<p>명식 요약을 사용할 수 없습니다.</p>';
   return `<div class="pillars">${(['year', 'month', 'day', 'hour'])
@@ -137,7 +159,7 @@ function renderPillars(summary) {
     .join('')}</div>`;
 }
 
-function renderPage(date, time, responses, synthesis, themes) {
+function renderPage(date, time, responses, synthesis, themes, applied) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -168,6 +190,7 @@ function renderPage(date, time, responses, synthesis, themes) {
   ${renderPillars(general?.calculationSummary)}
   ${renderSynthesis(synthesis)}
   ${renderActivatedThemes(themes)}
+  ${renderAppliedThemeContext(applied)}
   ${responses.map(({ domain, response }) => renderDomain(domain, response)).join('')}
   <footer>내부 개발·품질 비교 전용 · Official Production 공개/저장/판매 불가. 이 화면의 해석은 전통적 방법론의 제한된 제안을 다루며 현실의 개인 성격·성과·미래 사건을 검증하거나 보증하지 않습니다.
   <p>실제 응답 상태: ${escapeHtml(status.join(' · '))}</p></footer>
@@ -241,7 +264,9 @@ async function main() {
     now: researchNow,
   });
   const themes = buildNatalActivatedThemePreview(interpretation);
-  writeFileSync(output, renderPage(date, time, responses, synthesis, themes), 'utf8');
+  const applied = buildNatalAppliedThemeContext(evidence, themes);
+  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied), 'utf8');
+  process.stdout.write(`N4 chart-bound interpretations: ${applied.statements.length} actual theme positions\\n`);
   process.stdout.write(`N3 actually matched research themes: ${themes.themes.length}\\n`);
   process.stdout.write(`N1/N2 evidence: ${synthesis.statements.length} traced statements, ` +
     `${synthesis.domainCoverage.filter((entry) => entry.hasInterpretation).length}/5 interpreted domains\\n`);
