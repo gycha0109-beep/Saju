@@ -184,11 +184,11 @@ async function main() {
   const n9Path = resolve(outputPath.endsWith('.json')
     ? outputPath.slice(0, -5) + '.n9-repetition.json'
     : outputPath + '.n9-repetition.json');
-  writeFileSync(n9Path, JSON.stringify(n9, null, 2) + '\\n', 'utf8');
+  writeFileSync(n9Path, JSON.stringify(n9, null, 2) + '\n', 'utf8');
   if (n9.exactRepeatItemsAfterCompaction !== 0) {
     throw new Error('N9 General Natal Preview still repeats exact consumer insight text.');
   }
-  process.stdout.write(`Natal N9: 0 exact duplicate consumer insights across ${n9.cases} cases, ${n9.repeatedMeaningPairsAfterCompaction} meaning-only repeated pairs (not disguised by duplication); ${n9Path}\\n`);
+  process.stdout.write(`Natal N9: 0 exact duplicate consumer insights across ${n9.cases} cases, ${n9.repeatedMeaningPairsAfterCompaction} meaning-only repeated pairs (not disguised by duplication); ${n9Path}\n`);
 
   const roleTextByCaseId = new Map(inputs.map((input) => [
     input.caseId,
