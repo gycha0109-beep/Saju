@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v17' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v18' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2180,6 +2180,35 @@ export const YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW = Object.freeze({
   productionAuthorized: false as const,
 });
 
+/** Verified Commons original PDF access; original author line is NOT certified. */
+export const YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS = Object.freeze({
+  fileId: 'NLC892-2642-210287' as const,
+  verifiedBytes: 14387365 as const,
+  verifiedSha1: '4092ec5b420ebd84eee3959d2ac00a73580e6b4e' as const,
+  computedRunnerSha256: '17eb28b3a65d0b28908c4646017ebd409ef875366f48945071bb68675f737c82' as const,
+  originalSourceDownloadedByGithubRunner: true as const,
+  originalBytesAndSha1Verified: true as const,
+  totalPdfPages: 48 as const,
+  rasterizedOriginalPages: 48 as const,
+  originalPdfBytesInArtifact: false as const,
+  githubActionRunId: 38705480087 as const,
+  verifiedRasterArtifactId: 11958810428 as const,
+  directlyInspectedPdfPage: 21 as const,
+  directlyInspectedPrintedJuan: 2 as const,
+  directlyReadPrintedTitle: '刻京臺增補淵海子平大全卷之二' as const,
+  titleEvidenceTier: 'A_direct_original_print_image' as const,
+  titleZengbuDoesNotProveLiQinEditorRole: true as const,
+  originalPrintedLiQinZengbuLineVerified: false as const,
+  totalAbsenceOfNameLineProved: false as const,
+  exact1600PrintYearOnTitleLeafAuthenticated: false as const,
+  newWeiMuTargetFoliosAuthenticated: 0 as const,
+  earlier1582OriginalTargetFolioRead: false as const,
+  historicalYuefeiHourAuthenticated: false as const,
+  modernAnnualRulesApproved: 0 as const,
+  productionAuthorized: false as const,
+});
+
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -2191,6 +2220,10 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS.originalPrintedLiQinZengbuLineVerified ||
+    YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS.totalAbsenceOfNameLineProved ||
+    YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS.newWeiMuTargetFoliosAuthenticated !== 0 ||
+    YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS.productionAuthorized ||
     YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT.historicalSameTitleCollision.titleCollisionResolved ||
     YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT.historicalSameTitleCollision.newAuthenticated1582FocalPrintedFolios !== 0 ||
     YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT.historicalSameTitleCollision.productionAuthorized ||
@@ -2327,6 +2360,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     sourcePdfChecksumAndAccessGates: YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
     housa1582AndToyoCopyAudit: YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
+    nlc1600DirectFacsimileAccess: YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
