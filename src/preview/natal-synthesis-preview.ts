@@ -45,8 +45,7 @@ function firstParagraph(block: ProductReadingResponseBlock): string | undefined 
 function interpretationExcerpt(response: ProductReadingResponse): string | undefined {
   if (response.state !== 'delivered' && response.state !== 'delivered_with_fallback') return undefined;
   for (const section of response.reading?.sections ?? []) {
-    if (section.title === '해석 범위' || section.title === '프리뷰 안내' ||
-      section.sectionType === 'structure') continue;
+    if (section.title === '해석 범위' || section.title === '프리뷰 안내') continue;
     for (const block of section.blocks) {
       const excerpt = firstParagraph(block);
       if (excerpt !== undefined) return excerpt;
