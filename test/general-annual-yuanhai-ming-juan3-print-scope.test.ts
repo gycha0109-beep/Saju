@@ -36,6 +36,7 @@ import {
   YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT,
   YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT,
   YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL,
+  YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -840,6 +841,43 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.preQingJintuoPrintedOriginalCandidates.confirmedMaterialPrintedBirthDateWitnessesAdded).toBe(0);
     expect(scope.authority.historicalYuefeiBirthHourVerified).toBe(false);
     expect(scope.modernInterpretationClaim).toBeNull();
+  });
+
+  test('public NLC SHA-1 metadata and restricted 1582 images do not become locally verified A-grade printed leaves', () => {
+    const a = YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES;
+    expect(a.nlcWanliBookOne).toMatchObject({
+      fileId: 'NLC892-2642-210287', catalogPdfPages: 48,
+      commonsPublishedSizeBytes: 14387365,
+      publishedChecksumIsOnlyCatalogMetadata: true,
+      locallyDownloaded: false, locallyValidatedSizeAndSha1: false,
+      locallyComputedSha256: null, targetBookOneTitleFolioPage: null,
+      liQinZengbuOriginalGlyphsRead: false,
+      remoteWebReaderTooLarge: true, localNetworkDnsAvailable: false,
+    });
+    expect(a.nlcWanliBookOne.commonsPublishedSha1).toBe('4092ec5b420ebd84eee3959d2ac00a73580e6b4e');
+    expect(a.nlcWanliBookOne.commonsPublishedSha1).toMatch(/^[0-9a-f]{40}$/);
+    expect(a.nationalPalaceMuseumRoute).toMatchObject({
+      catalogCallmarkRange: '平圖020000–020003',
+      visitorAccountNeededForOnlineImagesPerOfficialNotice: false,
+      targetOriginalTitleFolioReached: false,
+      originalPrintedTitleGlyphsInspected: false,
+      sameHistoricalWoodblockAsNlcProved: false,
+    });
+    expect(a.tianjiWanliTenYearRoute).toMatchObject({
+      japaneseReferenceCode: '子059-0011', bookOrder: 3,
+      bookOrderThreeEstablishedAsPrintedJuanThree: false,
+      japaneseImageViewerOnSiteOnly: true,
+      sichuanCatalogOffersTargetFacsimile: false,
+      printedTargetFolioRead: false, newAuthenticated1582WeiGlyph: false,
+    });
+    expect(a.authority).toMatchObject({
+      catalogChecksumIsOriginalScanVisualEvidence: false,
+      addedDirectPrintedTargetFolios: 0,
+      yuefeiActualJiSiBirthHourAuthenticated: false,
+      weiMuArchetypeDecided: false,
+      annualRulesApproved: 0, productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().sourcePdfChecksumAndAccessGates).toEqual(a);
   });
 
   test('edited Li Qin zengbu and OCR ji/si discrepancies remain uninspected C/B, not A-grade print', () => {

@@ -2034,6 +2034,49 @@ export const YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL = Object.freeze
   }),
 });
 
+
+/** A published PDF checksum never substitutes for local byte verification or printed glyphs. */
+export const YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES = Object.freeze({
+  nlcWanliBookOne: Object.freeze({
+    fileId: 'NLC892-2642-210287' as const,
+    catalogPdfPages: 48 as const,
+    commonsPublishedSizeBytes: 14387365 as const,
+    commonsPublishedSha1: '4092ec5b420ebd84eee3959d2ac00a73580e6b4e' as const,
+    publishedChecksumIsOnlyCatalogMetadata: true as const,
+    locallyDownloaded: false as const,
+    locallyValidatedSizeAndSha1: false as const,
+    locallyComputedSha256: null,
+    targetBookOneTitleFolioPage: null,
+    liQinZengbuOriginalGlyphsRead: false as const,
+    remoteWebReaderTooLarge: true as const,
+    localNetworkDnsAvailable: false as const,
+  }),
+  nationalPalaceMuseumRoute: Object.freeze({
+    catalogCallmarkRange: '平圖020000–020003' as const,
+    visitorAccountNeededForOnlineImagesPerOfficialNotice: false as const,
+    targetOriginalTitleFolioReached: false as const,
+    originalPrintedTitleGlyphsInspected: false as const,
+    sameHistoricalWoodblockAsNlcProved: false as const,
+  }),
+  tianjiWanliTenYearRoute: Object.freeze({
+    japaneseReferenceCode: '子059-0011' as const,
+    bookOrder: 3 as const,
+    bookOrderThreeEstablishedAsPrintedJuanThree: false as const,
+    japaneseImageViewerOnSiteOnly: true as const,
+    sichuanCatalogOffersTargetFacsimile: false as const,
+    printedTargetFolioRead: false as const,
+    newAuthenticated1582WeiGlyph: false as const,
+  }),
+  authority: Object.freeze({
+    catalogChecksumIsOriginalScanVisualEvidence: false as const,
+    addedDirectPrintedTargetFolios: 0 as const,
+    yuefeiActualJiSiBirthHourAuthenticated: false as const,
+    weiMuArchetypeDecided: false as const,
+    annualRulesApproved: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -2174,6 +2217,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     tianji1582VsWanli1600TextualAlignment: YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT,
     liqinLiqinfu1600AuthorityCollisionAudit: YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT,
     liqinEditorRoleAndJisiOcrControl: YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL,
+    sourcePdfChecksumAndAccessGates: YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
