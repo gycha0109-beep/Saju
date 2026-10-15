@@ -135,9 +135,57 @@ async function main() {
 
   const report = buildNatalPersonalizationBaselineReport(inputs);
   writeFileSync(outputPath, JSON.stringify(report, null, 2) + '\n', 'utf8');
-  const n3 = buildNatalRuleDifferentiationReport(report, researchRuleEvidence);
-  const repeatedPairs = report.contrasts.filter((pair) =>
+
+  // Read-only before/after control: remove ONLY the new factual grounding paragraph.
+  // This is a reconstructed legacy text baseline, not an old HTTP engine rerun.
+  const legacyInputs = inputs.map((input) => ({
+    ...input,
+    response: input.response.reading === undefined ? input.response : {
+      ...input.response,
+      reading: {
+        ...input.response.reading,
+        sections: input.response.reading.sections.map((section) => ({
+          ...section,
+          blocks: section.blocks.filter((block) =>
+            block.type !== 'paragraph' ||
+            !block.text.startsWith('이 사주풀이가 실제로 참조한 명식은 ')),
+        })),
+      },
+    },
+  }));
+  const legacyReport = buildNatalPersonalizationBaselineReport(legacyInputs);
+  const oldCollisions = legacyReport.contrasts.filter((pair) =>
     pair.kind === 'different_facts_same_interpretation');
+  const currentCollisions = report.contrasts.filter((pair) =>
+    pair.kind === 'different_facts_same_interpretation');
+  const consumer = {
+    version: 'saju-natal-n5-consumer-prose-comparison-v1',
+    lifecycle: 'internal_quality_audit',
+    mayPublish: false,
+    maySell: false,
+    caseCount: inputs.length,
+    reconstructedLegacyRepeatedPairs: oldCollisions.length,
+    actualConsumerRepeatedPairs: currentCollisions.length,
+    resolvedPriorCopyCollisions: oldCollisions.filter((old) =>
+      !currentCollisions.some((current) =>
+        current.left === old.left && current.right === old.right)).length,
+    limitations: [
+      'The legacy baseline is reconstructed by removing only the new factual context paragraph, not by re-running an older engine.',
+      'Factual chart differences in prose do not establish deeply different interpretive conclusions or empirical validity.',
+      'New contexts are permitted bounded Preview calculation facts, not independently authorized Production meanings.',
+    ],
+  };
+  const consumerOutputPath = resolve(
+    outputPath.endsWith('.json')
+      ? outputPath.slice(0, -5) + '.consumer.json'
+      : outputPath + '.consumer.json',
+  );
+  writeFileSync(consumerOutputPath, JSON.stringify(consumer, null, 2) + '\n', 'utf8');
+  process.stdout.write(
+    `Natal N5 consumer prose: ${consumer.resolvedPriorCopyCollisions}/${consumer.reconstructedLegacyRepeatedPairs} prior repeated-copy pairs now show chart-specific calculated facts; ${consumerOutputPath}\n`,
+  );
+  const n3 = buildNatalRuleDifferentiationReport(report, researchRuleEvidence);
+  const repeatedPairs = oldCollisions;
   const n4 = {
     version: 'saju-natal-n4-applied-context-regression-v1',
     lifecycle: 'internal_quality_audit',
