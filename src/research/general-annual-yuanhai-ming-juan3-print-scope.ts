@@ -2077,6 +2077,61 @@ export const YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES = Object.freez
   }),
 });
 
+
+/** Catalog-name and photo-facsimile leads never become a directly read 1582 print leaf. */
+export const YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT = Object.freeze({
+  nagoyaHousaCatalog: Object.freeze({
+    sourcePdf: 'https://housa.city.nagoya.jp/archive/deta/zosyo02.pdf' as const,
+    searchedTitle: '新刊京本釐正總括天機星學正傳' as const,
+    catalogClaimsAlternateTitle: '即星學綱目正傳' as const,
+    reportedPhysicalBooks: 6 as const,
+    displayedEditorialRole: '舒守清校閱' as const,
+    displayedPreface: '萬曆十年清江楊氏序' as const,
+    catalogTextFromSearchIndexOnly: true as const,
+    entireCatalogPdfVisuallyChecked: false as const,
+    authorYangVariantOriginalGlyphChecked: false as const,
+    sameEditionAndWoodblocksAsJapanEightBookSetProved: false as const,
+    actualJuanThreeFocalPrintRead: false as const,
+    evidenceTier: 'C_bibliographic_index_text' as const,
+  }),
+  japanNationalArchivesExistingRoute: Object.freeze({
+    callNumber: '子059-0011' as const,
+    catalogedBooks: 8 as const,
+    nagoyaSixBookBindingEqualToThisEightBookBindingProved: false as const,
+  }),
+  toyoBunkoPhotographicReprint: Object.freeze({
+    callNumber: 'III-7-A-21' as const,
+    describedCreatorRole: '元李欽夫增補' as const,
+    copyNote: '用北平圖書館舊藏萬暦二十八年閩建喬山堂劉龍田刊本景照' as const,
+    catalogLegacyNumber: 'LCNo.2206' as const,
+    nlcCatalogNumber: 'CBM2206' as const,
+    legacyNumbersFullyVerifiedEquivalent: false as const,
+    recordDescribesPhotographicFacsimileNotIndependentCarvedSetting: true as const,
+    independentlyCarvedWanliWoodblocksAdded: 0 as const,
+    printedEditorAttributionDirectlyRechecked: false as const,
+    evidenceTier: 'C_bibliographic_record' as const,
+  }),
+  npmPreview: Object.freeze({
+    catalogUrl: 'https://catalog.digitalarchives.tw/item/00/12/8c/7a.html' as const,
+    hasDifferentPagePhysicalPhoto: true as const,
+    photoShowsTargetLiQinZengbuColophon: false as const,
+    photoShows1582WeiUnSentence: false as const,
+    focalGlyphPrintVisuallyChecked: false as const,
+  }),
+  safeguards: Object.freeze({
+    catalogAssertsAlternateTitleNotHistoricalSameSetting: true as const,
+    newlyAuthenticated1582OriginalPrintedTargetFolios: 0 as const,
+    newlyAuthenticated1600LiQinZengbuPrintedFolios: 0 as const,
+    independentCarvedPrintSettingsAdded: 0 as const,
+    verifiedWanli1600WeiGlyphStillUn: true as const,
+    verifiedChongzhen1634GlyphStillMu: true as const,
+    unMuArchetypeAdjudicated: false as const,
+    yuefeiJiSiHistoricalHourAuthenticated: false as const,
+    approvedAnnualRules: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -2218,6 +2273,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     liqinLiqinfu1600AuthorityCollisionAudit: YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT,
     liqinEditorRoleAndJisiOcrControl: YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL,
     sourcePdfChecksumAndAccessGates: YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
+    housa1582AndToyoCopyAudit: YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({

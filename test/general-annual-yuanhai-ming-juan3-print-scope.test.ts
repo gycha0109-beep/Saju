@@ -37,6 +37,7 @@ import {
   YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT,
   YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL,
   YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
+  YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -841,6 +842,51 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.preQingJintuoPrintedOriginalCandidates.confirmedMaterialPrintedBirthDateWitnessesAdded).toBe(0);
     expect(scope.authority.historicalYuefeiBirthHourVerified).toBe(false);
     expect(scope.modernInterpretationClaim).toBeNull();
+  });
+
+  test('Nagoya 1582 title alias and Toyo 1600 photographic reprint cannot become independent original leaves', () => {
+    const a = YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT;
+    expect(a.nagoyaHousaCatalog).toMatchObject({
+      catalogClaimsAlternateTitle: '即星學綱目正傳',
+      reportedPhysicalBooks: 6,
+      displayedEditorialRole: '舒守清校閱',
+      displayedPreface: '萬曆十年清江楊氏序',
+      catalogTextFromSearchIndexOnly: true,
+      entireCatalogPdfVisuallyChecked: false,
+      sameEditionAndWoodblocksAsJapanEightBookSetProved: false,
+      actualJuanThreeFocalPrintRead: false,
+      evidenceTier: 'C_bibliographic_index_text',
+    });
+    expect(a.japanNationalArchivesExistingRoute).toMatchObject({
+      callNumber: '子059-0011', catalogedBooks: 8,
+      nagoyaSixBookBindingEqualToThisEightBookBindingProved: false,
+    });
+    expect(a.toyoBunkoPhotographicReprint).toMatchObject({
+      callNumber: 'III-7-A-21', describedCreatorRole: '元李欽夫增補',
+      catalogLegacyNumber: 'LCNo.2206', nlcCatalogNumber: 'CBM2206',
+      legacyNumbersFullyVerifiedEquivalent: false,
+      recordDescribesPhotographicFacsimileNotIndependentCarvedSetting: true,
+      independentlyCarvedWanliWoodblocksAdded: 0,
+      printedEditorAttributionDirectlyRechecked: false,
+    });
+    expect(a.npmPreview).toMatchObject({
+      hasDifferentPagePhysicalPhoto: true,
+      photoShowsTargetLiQinZengbuColophon: false,
+      photoShows1582WeiUnSentence: false,
+      focalGlyphPrintVisuallyChecked: false,
+    });
+    expect(a.safeguards).toMatchObject({
+      catalogAssertsAlternateTitleNotHistoricalSameSetting: true,
+      newlyAuthenticated1582OriginalPrintedTargetFolios: 0,
+      newlyAuthenticated1600LiQinZengbuPrintedFolios: 0,
+      independentCarvedPrintSettingsAdded: 0,
+      verifiedWanli1600WeiGlyphStillUn: true,
+      verifiedChongzhen1634GlyphStillMu: true,
+      unMuArchetypeAdjudicated: false,
+      yuefeiJiSiHistoricalHourAuthenticated: false,
+      approvedAnnualRules: 0, productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().housa1582AndToyoCopyAudit).toEqual(a);
   });
 
   test('public NLC SHA-1 metadata and restricted 1582 images do not become locally verified A-grade printed leaves', () => {
