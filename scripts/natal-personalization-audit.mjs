@@ -15,6 +15,7 @@ import { GENERAL_NATAL_ROLE_OBSERVATION_PREFIX } from '../dist/preview/general-n
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../dist/production/production-calculation-runtime.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
+import { buildNatalCollisionTriageReport } from '../dist/preview/natal-collision-triage.js';
 import { runProductReadingInternals } from '../dist/reading/product-reading-service.js';
 import { deterministicContentHash } from '../dist/interpretation/rule-registry.js';
 import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../dist/llm/prompt-compiler.js';
@@ -253,6 +254,18 @@ async function main() {
     `Natal N5 consumer prose: ${consumer.resolvedPriorCopyCollisions}/${consumer.reconstructedLegacyRepeatedPairs} prior repeated-copy pairs now show chart-specific calculated facts; ${consumerOutputPath}\n`,
   );
   const n3 = buildNatalRuleDifferentiationReport(meaningReport, researchRuleEvidence);
+  // N10: a repeated control input is a different test case, not a new chart.
+  // Preserve both case-pair and deduplicated displayed-chart-pair evidence.
+  const n10 = buildNatalCollisionTriageReport(meaningReport, n3);
+  const n10Path = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0, -5) + '.n10-triage.json'
+    : outputPath + '.n10-triage.json');
+  writeFileSync(n10Path, JSON.stringify(n10, null, 2) + '\n', 'utf8');
+  process.stdout.write(
+    `Natal N10: ${n10.casePairCount} test-case pair collisions, ` +
+    `${n10.uniqueDisplayedChartPairCount} distinct displayed-chart pair collisions; ${n10Path}\n`,
+  );
+
 
   // N8: reproduce three actual meaning collisions through every existing
   // internal stage. This is quality evidence, not another consumer renderer.
