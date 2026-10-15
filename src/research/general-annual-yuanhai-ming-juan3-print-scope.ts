@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v19' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v20' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2104,6 +2104,37 @@ export const YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES = Object.freez
 });
 
 
+/** Modern editorial scholarship documents a Shanghai Ming-print source, not the focal folio. */
+export const YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE = Object.freeze({
+  editorialWitness: Object.freeze({
+    sourceUrl: 'https://xinyi.hk/goods-7493.html' as const,
+    editorPrefaceYear: 2016 as const,
+    editedPublicationTitle: '兩家註解玉井奧訣' as const,
+    editorSignature: '莊圓' as const,
+    sourceHoldingClaim: '上海圖書館收藏之明本《星學綱目正傳》' as const,
+    yangCongSourceAttribution: '萬曆十年楊淙撰《星學綱目正傳》' as const,
+    editedExcerptLocation: '卷首《唐李虛中註解玉井奧訣》' as const,
+    furtherAcademicExcerptSourceUrl: 'https://hr.xinyi.hk/goods-8567.html' as const,
+    furtherExcerptName: '子平格解內外格' as const,
+    furtherExcerptPrintedJuan: Object.freeze([9, 10] as const),
+    modernEditorExplicitlyClaimsMingSourceInspection: true as const,
+    editorPrefaceNotOriginalWoodblockFacsimile: true as const,
+    actualShanghaiSourceCopyDownloaded: false as const,
+    actualShanghaiCopyFocalJuanThreeInspected: false as const,
+    samePhysicalCopyAsHousaOrJapanArchivesProved: false as const,
+    luWeiTwentyJuanSameHistoricalWorkAsYangCongTwentyOneJuanProved: false as const,
+    newlyAuthenticatedTargetWeiMuGlyphs: 0 as const,
+    evidenceTier: 'C_modern_editorial_source_description' as const,
+  }),
+  safeguards: Object.freeze({
+    modernDescriptionDoesNotElevateAnOriginalPrintLocusToA: true as const,
+    unMuArchetypeEstablished: false as const,
+    historicalYuefeiHourAuthenticated: false as const,
+    modernAnnualRulesApproved: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 /** Catalog-name and photo-facsimile leads never become a directly read 1582 print leaf. */
 export const YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT = Object.freeze({
   nagoyaHousaCatalog: Object.freeze({
@@ -2245,6 +2276,9 @@ export function buildYuanHaiMingJuan3PrintScope() {
     prior.authority.productionAuthorized ||
     books.length !== 2 ||
     additions.length !== 2 ||
+    YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE.editorialWitness.newlyAuthenticatedTargetWeiMuGlyphs !== 0 ||
+    YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE.editorialWitness.actualShanghaiCopyFocalJuanThreeInspected ||
+    YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE.safeguards.productionAuthorized ||
     YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT.originalPrintedRoleVerbZengBuRead ||
     YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT.provesSameLiQinAsCatalogLiQinFu ||
     YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT.newlyRead1582FocalPrints !== 0 ||
@@ -2391,6 +2425,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     nlc1600BookOneEditorialNamePrintAudit: YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT,
     sourcePdfChecksumAndAccessGates: YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
     housa1582AndToyoCopyAudit: YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
+    shanghai1582ModernEditorialRoute: YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
     nlc1600DirectFacsimileAccess: YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
