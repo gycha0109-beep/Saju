@@ -24,6 +24,7 @@ import {
   YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT,
   YUANHAI_SANMING_QING_YUEWUMU_COLUMN_SAFE_COLLATION,
   YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT,
+  YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -738,6 +739,65 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(YUANHAI_YUEFEI_CROSS_GENRE_EVIDENCE_AUDIT.allNewFocalPrintedWitnessesAdded).toBe(2);
   });
 
+
+
+  test('Southern Song Yue family chronicle dates birth but does not authenticate Jisi hour', () => {
+    const a = YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT;
+    expect(a).toMatchObject({
+      historicalPerson: '岳飛',
+      familyChronicler: '岳珂',
+      sourceTitle: '金佗稡編',
+      sourceSection: '卷四 行實編年一 崇寧二年',
+      manuscriptOrPrintedWitnessDirectlyInspected: false,
+      receivedSikuFamilyText: {
+        firstChronicleYearHeading: '崇寜二年癸未歲',
+        birthDateExactPhrase: '二月十五日先臣生名飛字鵬舉',
+        birthYearSexagenary: '癸未',
+        birthLunarMonthOrdinal: 2,
+        birthLunarDayOrdinal: 15,
+        explicitBirthDayRecorded: true,
+        explicitBirthHourHeavenlyStemOrEarthlyBranchInThisLocus: false,
+        twoDerivativeWebTextCopiesCountAsIndependentPrintedWitnesses: 0,
+        evidenceTier: 'C_transmitted_late_source_text_not_verified_original_leaf',
+      },
+      descriptiveNightMotif: {
+        literalNightOfBirthNarrativePresent: true,
+        birdNarrativeIsBirthClockRecord: false,
+        birthAtNightEstablishedFromClause: false,
+        birthDuringMorningSiHourContradictedAsProvenFact: false,
+      },
+      newlyLocatedOriginalPrintLeads: [
+        {
+          catalogFileId: 'ZJLib-631aa105504e722bfaf23b1c-2',
+          originalBookOrder: 2,
+          printedJuanIncluded: [3, 4],
+          actualBirthFolioOriginalImageRead: false,
+          additionalDirectWitnessCredit: 0,
+        },
+        {
+          catalogFileId: 'NLC892-0405-207140',
+          originalBookOrder: 2,
+          originalBookTwoContainsBirthLocusIndependentlyConfirmed: false,
+          actualBirthFolioOriginalImageRead: false,
+          additionalDirectWitnessCredit: 0,
+        },
+      ],
+      distinctClaims: {
+        familySourceYearAndLunarDayReported: true,
+        horoscopicWitnessDirectlyHistoricalBirthTime: false,
+        birthHourSiShiInFamilySource: false,
+        familyChronicleProvesYueFeiHistoricalJiSiHour: false,
+        historicalBirthHourKnownFromCollatedOriginals: false,
+      },
+      newDirectOriginalLeafWitnesses: 0,
+      newIndependentWoodblockSets: 0,
+      printedMingSanmingPhysicalCopyCountUnchanged: 2,
+      mingWanliWeiVsChongzhenWoodArchetypeSelected: false,
+      annualReadingGlobalSemanticsAuthorized: false,
+      productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().yueFeiFamilyChronicleBirthDateAudit).toEqual(a);
+  });
 
   test('four matched NLC/NCL Ming print openings preserve two material copies but prove no block lineage', () => {
     const q = YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT;

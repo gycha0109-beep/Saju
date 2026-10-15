@@ -1428,6 +1428,80 @@ export const YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT = Object.fre
   productionAuthorized: false as const,
 });
 
+
+/**
+ * Yue Fei's grandson 岳珂 (Southern Song) supplies a named birth date in
+ * 金佗稡編 卷四, a different genre from Ming/Qing horoscopic examples.
+ *
+ * The actually read content comes from derivative transcription of 四庫全書
+ * (C). Original printed leaf candidates exist but the focal folios have NOT
+ * been downloaded/inspected, and are never counted as A evidence.
+ */
+export const YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT = Object.freeze({
+  historicalPerson: '岳飛' as const,
+  familyChronicler: '岳珂' as const,
+  sourceTitle: '金佗稡編' as const,
+  sourceSection: '卷四 行實編年一 崇寧二年' as const,
+  manuscriptOrPrintedWitnessDirectlyInspected: false as const,
+  sourceTimeOfComposition: 'Southern Song, later than 岳飛; exact historical autograph uninspected' as const,
+  receivedSikuFamilyText: Object.freeze({
+    Wikisource: 'https://zh.wikisource.org/zh/%E9%87%91%E4%BD%97%E7%A8%A1%E7%B7%A8_%28%E5%9B%9B%E5%BA%AB%E5%85%A8%E6%9B%B8%E6%9C%AC%29/%E5%8D%B704' as const,
+    Wenlinshe: 'https://www.wenlinshe.com/chapter/skqs_shibu/jin-tuo-zui-bian/juan-04.html' as const,
+    firstChronicleYearHeading: '崇寜二年癸未歲' as const,
+    birthDateExactPhrase: '二月十五日先臣生名飛字鵬舉' as const,
+    birthYearSexagenary: '癸未' as const,
+    birthLunarMonthOrdinal: 2 as const,
+    birthLunarDayOrdinal: 15 as const,
+    explicitBirthDayRecorded: true as const,
+    explicitBirthHourHeavenlyStemOrEarthlyBranchInThisLocus: false as const,
+    twoDerivativeWebTextCopiesCountAsIndependentPrintedWitnesses: 0 as const,
+    evidenceTier: 'C_transmitted_late_source_text_not_verified_original_leaf' as const,
+  }),
+  descriptiveNightMotif: Object.freeze({
+    observedExactClause: '及生先臣之夕有大禽若鵠自東南來飛鳴于寢室之上' as const,
+    literalNightOfBirthNarrativePresent: true as const,
+    birdNarrativeIsBirthClockRecord: false as const,
+    birthAtNightEstablishedFromClause: false as const,
+    birthDuringMorningSiHourContradictedAsProvenFact: false as const,
+    provenanceCaveat: 'Auspicious-bird narrative; event timing cannot be mechanically equated with delivery shichen' as const,
+  }),
+  newlyLocatedOriginalPrintLeads: Object.freeze([
+    Object.freeze({
+      repository: 'Zhejiang Library, ZJLib' as const,
+      catalogFileId: 'ZJLib-631aa105504e722bfaf23b1c-2' as const,
+      originalBookOrder: 2 as const,
+      printedJuanIncluded: Object.freeze([3,4] as const),
+      commonsIndex: 'https://commons.wikimedia.org/wiki/Commons:Library_back_up_project/file_list/ZJLib/03' as const,
+      actualBirthFolioOriginalImageRead: false as const,
+      physicalPrintingYearIndependentlyAuthenticated: false as const,
+      additionalDirectWitnessCredit: 0 as const,
+    }),
+    Object.freeze({
+      repository: 'National Library of China' as const,
+      catalogFileId: 'NLC892-0405-207140' as const,
+      originalBookOrder: 2 as const,
+      commonsIndex: 'https://commons.wikimedia.org/wiki/Commons:Library_back_up_project/file_list/NLC/%E6%95%B8%E5%AD%97%E5%8F%A4%E7%B1%8D/01' as const,
+      originalBookTwoContainsBirthLocusIndependentlyConfirmed: false as const,
+      actualBirthFolioOriginalImageRead: false as const,
+      additionalDirectWitnessCredit: 0 as const,
+    }),
+  ] as const),
+  distinctClaims: Object.freeze({
+    familySourceYearAndLunarDayReported: true as const,
+    divinationMingPrintNamedFourPillarsRecorded: true as const,
+    horoscopicWitnessDirectlyHistoricalBirthTime: false as const,
+    birthHourSiShiInFamilySource: false as const,
+    familyChronicleProvesYueFeiHistoricalJiSiHour: false as const,
+    historicalBirthHourKnownFromCollatedOriginals: false as const,
+  }),
+  newDirectOriginalLeafWitnesses: 0 as const,
+  newIndependentWoodblockSets: 0 as const,
+  printedMingSanmingPhysicalCopyCountUnchanged: 2 as const,
+  mingWanliWeiVsChongzhenWoodArchetypeSelected: false as const,
+  annualReadingGlobalSemanticsAuthorized: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1557,6 +1631,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     qingTwoCopyNamedCase: YUANHAI_SANMING_QING_YUEWUMU_TWO_COPY_PRINT_AUDIT,
     qingNamedColumnSafeCollation: YUANHAI_SANMING_QING_YUEWUMU_COLUMN_SAFE_COLLATION,
     mingNlcNclFourOpeningsBlockAudit: YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT,
+    yueFeiFamilyChronicleBirthDateAudit: YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
