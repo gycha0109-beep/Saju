@@ -29,19 +29,23 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --quiet PyMuPDF
-          python tools/research/verify_nlc1600_book1_pdf.py \
-            --input "$RUNNER_TEMP/nlc/book1.pdf" \
-            --output "$RUNNER_TEMP/nlc/evidence.json" \
-            --preview-pages 1,2,3,4,5,6,7,8 \
-            --preview-dir "$RUNNER_TEMP/nlc/previews"
-          cat "$RUNNER_TEMP/nlc/evidence.json"
-      - name: Archive verified first eight printed-page candidates
+          for start in 1 9 17 25 33 41; do
+            end=$((start + 7))
+            pages=$(seq -s, "$start" "$end")
+            python tools/research/verify_nlc1600_book1_pdf.py \
+              --input "$RUNNER_TEMP/nlc/book1.pdf" \
+              --output "$RUNNER_TEMP/nlc/evidence-${start}-${end}.json" \
+              --preview-pages "$pages" \
+              --preview-dir "$RUNNER_TEMP/nlc/previews"
+            cat "$RUNNER_TEMP/nlc/evidence-${start}-${end}.json"
+          done
+      - name: Archive verified forty-eight printed-page candidates
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: saju-nlc1600-book1-original-verified-previews
+          name: saju-nlc1600-book1-complete-48-verified-previews
           path: |
-            ${{ runner.temp }}/nlc/evidence.json
+            ${{ runner.temp }}/nlc/evidence-*.json
             ${{ runner.temp }}/nlc/previews/
           retention-days: 10
           if-no-files-found: error
