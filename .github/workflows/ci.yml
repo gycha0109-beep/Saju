@@ -86,7 +86,7 @@ jobs:
 
       - name: Natal internal personalization and five-domain HTML smoke
         run: |
-          node --test scripts/natal-reader-review-packet.test.mjs
+          node --test scripts/natal-reader-review-packet.check.mjs
           node scripts/natal-personalization-audit.mjs "$RUNNER_TEMP/natal-baseline.json"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const r=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.roles.json','utf8')); assert.equal(r.cases,35); assert.equal(r.meaningIdenticalPairs,20); assert.equal(r.rolePositionDifferences,20); assert.equal(r.remainIdenticalMeaningPairs,r.meaningIdenticalPairs); assert.equal(r.mayPublish,false); assert.equal(r.maySell,false);"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const m=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.meaning.json','utf8')); assert.equal(m.realConsumerCaseCount,35); assert.equal(m.consumerTextUnique,32); assert.equal(m.meaningTextUnique,18); assert.equal(m.actualRepeatedConsumerPairs,0); assert.equal(m.repeatedMeaningPairs,20); assert.equal(m.pairsSeparatedOnlyByCalculatedFacts,20); assert.equal(m.semanticCompletionGranted,false); assert.equal(m.mayPublish,false);"
