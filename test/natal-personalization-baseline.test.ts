@@ -92,6 +92,8 @@ describe('N0 natal personalization baseline on actual Preview HTTP consumer path
       numberOfCases: 4,
     });
     expect(report.uniqueFactFingerprints).toBeGreaterThanOrEqual(2);
+    expect(report.uniqueInterpretationFingerprints).toBeGreaterThan(0);
+    expect(report.cases.filter((entry) => entry.interpretationParagraphs.length > 0).length).toBeGreaterThan(0);
     const [first, duplicate, different, unknown] = report.cases;
     expect(first?.pillarValues).toHaveLength(4);
     expect(first?.pillarValues).toEqual(duplicate?.pillarValues);
