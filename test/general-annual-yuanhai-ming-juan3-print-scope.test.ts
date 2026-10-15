@@ -36,6 +36,7 @@ import {
   YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT,
   YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT,
   YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL,
+  YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT,
   YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
   YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
@@ -48,7 +49,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v18');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v19');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -1007,6 +1008,33 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       annualRulesApproved: 0, productionAuthorized: false,
     });
     expect(buildYuanHaiMingJuan3PrintScope().sourcePdfChecksumAndAccessGates).toEqual(a);
+  });
+
+  test('original NLC p.4 authenticates printed office and 李欽 but not obscured 增補', () => {
+    const a = YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT;
+    expect(a).toMatchObject({
+      sourceOriginalBookId: 'NLC892-2642-210287',
+      bibliographicEditionYear: 1600,
+      imprintYearOnThisPageIndependentlyVerified: false,
+      targetPdfPageOneBased: 4,
+      sourceByteCount: 14387365,
+      sourceSha1Verified: '4092ec5b420ebd84eee3959d2ac00a73580e6b4e',
+      sourceSha256Verified: '17eb28b3a65d0b28908c4646017ebd409ef875366f48945071bb68675f737c82',
+      highResolutionRasterDpi: 400,
+      originalPrintedOfficeAndNameRead: '欽天監承德郎李欽',
+      originalPrintedOfficeAndNameTier: 'A_direct_original_print_image',
+      originalPrintedRoleVerbZengBuRead: false,
+      inscriptionBelowNamePartiallyObscuredByDarkMark: true,
+      noReadIsNotProofOfAbsence: true,
+      originalPrintedLiQinFuRead: false,
+      provesSameLiQinAsCatalogLiQinFu: false,
+      additionalIndependentWoodblockSettingCredit: 0,
+      newlyRead1582FocalPrints: 0,
+      newlyReadYuanHaiWeiMuFocalPrints: 0,
+      yuefeiHistoricalJiSiHourAuthenticated: false,
+      modernAnnualRulesApproved: 0, productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().nlc1600BookOneEditorialNamePrintAudit).toEqual(a);
   });
 
   test('edited Li Qin zengbu and OCR ji/si discrepancies remain uninspected C/B, not A-grade print', () => {
