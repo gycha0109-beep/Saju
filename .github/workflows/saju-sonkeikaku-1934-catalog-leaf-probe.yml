@@ -28,7 +28,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --quiet PyMuPDF
+          python -m pip install --quiet PyMuPDF Pillow
           python - <<'PY'
           import os,json,hashlib
           from pathlib import Path
@@ -47,9 +47,29 @@ jobs:
           for idx in render_pages:
             pg=doc[idx-1]
             pg.get_pixmap(dpi=180,colorspace=fitz.csRGB,alpha=False).save(p/f'catalog-page-{idx:03}.png')
+          # This 1934 facsimile is image-only; create indexed contact sheets
+          # for manual visual inspection rather than misreporting zero OCR hits.
+          from PIL import Image, ImageDraw
+          contact_names=[]
+          for start in range(0,len(doc),16):
+            sheet=Image.new('RGB',(1920,2480),'white')
+            draw=ImageDraw.Draw(sheet)
+            for j in range(min(16,len(doc)-start)):
+              n=start+j
+              pix=doc[n].get_pixmap(dpi=47,colorspace=fitz.csRGB,alpha=False)
+              thumb=Image.frombytes('RGB',[pix.width,pix.height],pix.samples)
+              thumb.thumbnail((452,574))
+              x=(j%4)*480+14
+              y=(j//4)*620+28
+              sheet.paste(thumb,(x,y))
+              draw.text((x,y-19),f'PDF {n+1:03}',fill='black')
+            fname=f'catalog-contact-{start+1:03}-{min(start+16,len(doc)):03}.jpg'
+            sheet.save(p/fname,quality=80)
+            contact_names.append(fname)
           manifest={'type':'1934_catalog_facsimile_not_1582_source','file_bytes':source.stat().st_size,'pdf_sha256':sha,
              'pdf_pages':len(doc),'matching_indexed_pages':matches[:12],
-             'rendered_pages':render_pages,
+             'rendered_pages':render_pages,'image_only_pdf':len(matches)==0,
+             'contact_sheet_files':contact_names,
              'ming_original_focal_print_examined':False,'evidence_tier':'C_historical_catalog',
              'first_person_wei_mu_glyph_verified':False}
           (p/'catalog-probe.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf8')
@@ -63,5 +83,6 @@ jobs:
           path: |
             ${{ runner.temp }}/sonkeikaku/catalog-probe.json
             ${{ runner.temp }}/sonkeikaku/catalog-page-*.png
+            ${{ runner.temp }}/sonkeikaku/catalog-contact-*.jpg
           retention-days: 7
           if-no-files-found: warn
