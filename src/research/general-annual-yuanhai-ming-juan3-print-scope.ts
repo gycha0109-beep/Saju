@@ -1721,6 +1721,65 @@ export const YUANHAI_JINTUO_PREQING_ORIGINAL_PRINT_CANDIDATES = Object.freeze({
   productionAuthorized: false as const,
 });
 
+/**
+ * 2026-10-15: source-limited access and bibliographic/OCR cross-check.
+ * These are catalog and digital-display records, not newly inspected leaves.
+ * Distinct catalog numbers, scan files, print settings, and historical
+ * woodblock identities have different denominators.
+ */
+export const YUANHAI_JINTUO_20261015_ACCESS_AND_CATALOG_AUDIT = Object.freeze({
+  ncl02714: Object.freeze({
+    catalogCallmark: '205.24 02714' as const,
+    registeredYuanEditionYear: 1363 as const,
+    catalogedPdfPages: 972 as const,
+    pdfBytesObtainedThisPass: false as const,
+    birthFolioVisuallyReadThisPass: false as const,
+    sha256: null,
+  }),
+  ncl02720: Object.freeze({
+    catalogCallmark: '205.24 02720' as const,
+    registeredMingEditionYear: 1542 as const,
+    registeredMingRepairYear: 1558 as const,
+    catalogedPdfPages: 612 as const,
+    pdfBytesObtainedThisPass: false as const,
+    birthFolioVisuallyReadThisPass: false as const,
+    sha256: null,
+  }),
+  additionalHoldingRecords: Object.freeze({
+    ncl02719: Object.freeze({
+      catalogCallmark: '205.24 02719' as const,
+      officialCatalogEdition: '明嘉靖壬寅(1542)兩浙鹽運使洪富刊鈔補本' as const,
+      differentCatalogRecordFromNcl02720: true as const,
+      actualBirthFolioRead: false as const,
+      independentlyPrintedBirthFolioProved: false as const,
+    }),
+    nlc0405: Object.freeze({
+      commonsListingBookTwoId: 'NLC892-0405-207140' as const,
+      physicalBookNumberOnListing: 2 as const,
+      volumeFourInThisPhysicalBookProved: false as const,
+      actualBirthFolioRead: false as const,
+      separatePrintSettingEstablished: false as const,
+    }),
+  }),
+  additionalOcrDisplay: Object.freeze({
+    shidianBookId: 'NGJ892412004000566116120' as const,
+    displayedPortalChapterTitle: '卷六' as const,
+    displayedBodyJuanHeading: '鄂國金佗稡編卷第四' as const,
+    displayedYear: '崇寧二年癸未歲' as const,
+    displayedBirthDateText: '二月十五日，先臣生，名飛，字鵬舉' as const,
+    physicallyLinkedSourceFascicleIdentified: false as const,
+    originalGlyphVisuallyVerified: false as const,
+    digitalTextIsIndependentWoodblockProof: false as const,
+  }),
+  directNewFamilyBirthFolioEvidenceTierACount: 0 as const,
+  accessFailureDoesNotProvePassageAbsent: true as const,
+  printedEditionDateDoesNotAuthenticateBirthHour: true as const,
+  historicalSiBirthHourAuthenticated: false as const,
+  yuanhaiWeiMuArchetypeAdjudicated: false as const,
+  annualSemanticRulePromotionAuthorized: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1855,6 +1914,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     JinTuoBirthDateTransmissionAudit: YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT,
     yuanhaiWeiMuLexicalGuard: YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD,
     preQingJintuoPrintedOriginalCandidates: YUANHAI_JINTUO_PREQING_ORIGINAL_PRINT_CANDIDATES,
+    jintuo20261015AccessAndCatalogAudit: YUANHAI_JINTUO_20261015_ACCESS_AND_CATALOG_AUDIT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({

@@ -30,6 +30,7 @@ import {
   YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT,
   YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD,
   YUANHAI_JINTUO_PREQING_ORIGINAL_PRINT_CANDIDATES,
+  YUANHAI_JINTUO_20261015_ACCESS_AND_CATALOG_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -802,6 +803,38 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     });
     expect(buildYuanHaiMingJuan3PrintScope().preQingJintuoPrintedOriginalCandidates).toEqual(q);
     expect(YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT.manuscriptOrPrintedWitnessDirectlyInspected).toBe(false);
+  });
+
+  test('new Jintuo catalog/OCR identifiers never count as directly collated Yuan or Ming birth leaves', () => {
+    const a = YUANHAI_JINTUO_20261015_ACCESS_AND_CATALOG_AUDIT;
+    expect(a).toMatchObject({
+      ncl02714: { registeredYuanEditionYear: 1363, catalogedPdfPages: 972, pdfBytesObtainedThisPass: false, birthFolioVisuallyReadThisPass: false, sha256: null },
+      ncl02720: { registeredMingEditionYear: 1542, registeredMingRepairYear: 1558, catalogedPdfPages: 612, pdfBytesObtainedThisPass: false, birthFolioVisuallyReadThisPass: false, sha256: null },
+      additionalHoldingRecords: {
+        ncl02719: { catalogCallmark: '205.24 02719', differentCatalogRecordFromNcl02720: true, independentlyPrintedBirthFolioProved: false },
+        nlc0405: { commonsListingBookTwoId: 'NLC892-0405-207140', volumeFourInThisPhysicalBookProved: false, separatePrintSettingEstablished: false },
+      },
+      additionalOcrDisplay: {
+        shidianBookId: 'NGJ892412004000566116120',
+        displayedPortalChapterTitle: '卷六',
+        displayedBodyJuanHeading: '鄂國金佗稡編卷第四',
+        physicallyLinkedSourceFascicleIdentified: false,
+        originalGlyphVisuallyVerified: false,
+        digitalTextIsIndependentWoodblockProof: false,
+      },
+      directNewFamilyBirthFolioEvidenceTierACount: 0,
+      accessFailureDoesNotProvePassageAbsent: true,
+      printedEditionDateDoesNotAuthenticateBirthHour: true,
+      historicalSiBirthHourAuthenticated: false,
+      yuanhaiWeiMuArchetypeAdjudicated: false,
+      annualSemanticRulePromotionAuthorized: false,
+      productionAuthorized: false,
+    });
+    const scope = buildYuanHaiMingJuan3PrintScope();
+    expect(scope.jintuo20261015AccessAndCatalogAudit).toEqual(a);
+    expect(scope.preQingJintuoPrintedOriginalCandidates.confirmedMaterialPrintedBirthDateWitnessesAdded).toBe(0);
+    expect(scope.authority.historicalYuefeiBirthHourVerified).toBe(false);
+    expect(scope.modernInterpretationClaim).toBeNull();
   });
 
   test('Original Wanli Wei and Chongzhen Mu do not become a modern majority vote', () => {
