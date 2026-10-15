@@ -6,6 +6,9 @@ import type {
 export const GENERAL_NATAL_CONSUMER_FACT_CONTEXT_VERSION =
   'saju-general-natal-consumer-fact-context-n5-v1' as const;
 
+export const GENERAL_NATAL_CALCULATED_CONTEXT_PREFIX =
+  '이 사주풀이가 실제로 참조한 명식은 ' as const;
+
 function resolvedPillar(fact: ProductReadingResponseDisplayFact): string | undefined {
   return fact.status === 'resolved' && fact.value?.trim()
     ? fact.value.trim()
@@ -50,7 +53,7 @@ export function attachGeneralNatalCalculatedContext(
     ...(hour === undefined ? [] : [`시주 ${hour}`]),
   ].join(' · ');
   const text =
-    `이 사주풀이가 실제로 참조한 명식은 ${pillarContext}입니다. ` +
+    `${GENERAL_NATAL_CALCULATED_CONTEXT_PREFIX}${pillarContext}입니다. ` +
     (reading.subject.birthInputDisplay.timeKnown
       ? '같은 생일이라도 출생시각에 따라 시주와 그에 연관된 관측 구조가 달라질 수 있습니다. '
       : '출생시각을 알 수 없어 시주를 확정하지 않았습니다. ') +
