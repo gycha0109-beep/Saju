@@ -2,11 +2,6 @@
 # The screenshot is not a machine-authenticated glyph reading.
 name: "[WT:saju] NLC 1600 Editorial Folio Closeup"
 on:
-  pull_request:
-    branches:
-      - research/saju/annual-yuanhai-three-layer-case-witness
-    paths:
-      - .github/workflows/saju-nlc1600-book1-editorial-folio-closeup.yml
   workflow_dispatch:
 permissions:
   contents: read
