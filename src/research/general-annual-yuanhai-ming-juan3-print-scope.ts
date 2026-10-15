@@ -1548,6 +1548,53 @@ export const YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT = Object.freeze({
   productionAuthorized: false as const,
 });
 
+
+/**
+ * 四庫館臣提要 is a bibliographic transmitted testimony of gaps and
+ * reimpressions, NOT access to Song 1218 or Yuan 1363 original woodblocks.
+ * No automatic assumption that a current 四庫 transcription preserves every
+ * birth-locus detail from an earlier lost autograph.
+ */
+export const YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT = Object.freeze({
+  work: '金佗稡編' as const,
+  originalCompiler: '岳珂' as const,
+  receivedBibliographicalWitness: Object.freeze({
+    title: '欽定四庫全書 史部七 傳記類二 金佗稡編提要' as const,
+    onlineText: 'https://zh.wikisource.org/zh/%E9%87%91%E4%BD%97%E7%A8%A1%E7%B7%A8_%28%E5%9B%9B%E5%BA%AB%E5%85%A8%E6%9B%B8%E6%9C%AC%29' as const,
+    alternativeText: 'https://www.shidianguji.com/zh/book/SK0885/chapter/1lllkts9w2yor' as const,
+    prefaceExamYear: 1781 as const,
+    witnessType: 'Qianlong editorial bibliographic report in a received late text' as const,
+    evidenceTier: 'C_critical_bibliographical_transcription' as const,
+    originalPrefacePrintedLeafInspected: false as const,
+  }),
+  reportedSequence: Object.freeze([
+    Object.freeze({ era: 'Southern Song' as const, year: 1218 as const, report: '稡編成於嘉定戊寅' as const, actualEarlyPrintedBirthFolioCollated: false as const }),
+    Object.freeze({ era: 'Yuan' as const, year: 1363 as const, report: '元至正二十三年重刻於浙江行省' as const, actualEarlyPrintedBirthFolioCollated: false as const }),
+    Object.freeze({ era: 'Ming Jiajing' as const, year: null, report: '明嘉靖中刻本並仍其舊' as const, actualEarlyPrintedBirthFolioCollated: false as const }),
+    Object.freeze({ era: 'Qing Qianlong' as const, year: 1781 as const, report: '乾隆四十六年九月恭校上' as const, actualEarlyPrintedBirthFolioCollated: false as const }),
+  ] as const),
+  editionLossReport: Object.freeze({
+    sourceExcerpt: '舊本佚缺，徧求四方，得其殘編斷簡，參互考訂' as const,
+    continuingEditorialConcern: '書中脱簡闕文，時時而有' as const,
+    reportsOlderCopyIncomplete: true as const,
+    particularYueFeiBirthPhraseChangedByGapEstablished: false as const,
+    earliestBirthChapterAutographSurvivedAndRead: false as const,
+    sonlySong1218CompositionProvesAllCurrentWordsAutograph: false as const,
+  }),
+  sourceCriticalConclusions: Object.freeze({
+    QianlongReceivedTextHasFamilyBirthDate: true as const,
+    medievalToLateTransmittedChainRecordedButUncollated: true as const,
+    birthLunarDateHistoricalOriginalAProved: false as const,
+    originalBirthHourJisiAuthenticated: false as const,
+    independentOriginalPrintedFocalWitnessesAdded: 0 as const,
+    userInstitutionalRequestRequiredToContinueOtherResearch: false as const,
+  }),
+  printedMingSanmingWitnessCountRemains: 2 as const,
+  WanliWeiOrChongzhenWoodArchetypeChosen: false as const,
+  annualRuleSemanticsApproved: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1679,6 +1726,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     mingNlcNclFourOpeningsBlockAudit: YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT,
     yueFeiFamilyChronicleBirthDateAudit: YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT,
     yueFeiSongshiShiNotSiAudit: YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT,
+    JinTuoBirthDateTransmissionAudit: YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({

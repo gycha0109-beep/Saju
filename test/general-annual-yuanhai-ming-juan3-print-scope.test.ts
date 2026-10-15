@@ -27,6 +27,7 @@ import {
   YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT,
   YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT,
   YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT,
+  YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -743,6 +744,43 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
 
 
 
+
+
+  test('Four Treasuries bibliographic chronology does not prove extant Song birth folio', () => {
+    const p = YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT;
+    expect(p).toMatchObject({
+      work: '金佗稡編',
+      originalCompiler: '岳珂',
+      receivedBibliographicalWitness: {
+        prefaceExamYear: 1781,
+        evidenceTier: 'C_critical_bibliographical_transcription',
+        originalPrefacePrintedLeafInspected: false,
+      },
+      editionLossReport: {
+        sourceExcerpt: '舊本佚缺，徧求四方，得其殘編斷簡，參互考訂',
+        continuingEditorialConcern: '書中脱簡闕文，時時而有',
+        reportsOlderCopyIncomplete: true,
+        particularYueFeiBirthPhraseChangedByGapEstablished: false,
+        earliestBirthChapterAutographSurvivedAndRead: false,
+        sonlySong1218CompositionProvesAllCurrentWordsAutograph: false,
+      },
+      sourceCriticalConclusions: {
+        QianlongReceivedTextHasFamilyBirthDate: true,
+        medievalToLateTransmittedChainRecordedButUncollated: true,
+        birthLunarDateHistoricalOriginalAProved: false,
+        originalBirthHourJisiAuthenticated: false,
+        independentOriginalPrintedFocalWitnessesAdded: 0,
+        userInstitutionalRequestRequiredToContinueOtherResearch: false,
+      },
+      printedMingSanmingWitnessCountRemains: 2,
+      WanliWeiOrChongzhenWoodArchetypeChosen: false,
+      annualRuleSemanticsApproved: false,
+      productionAuthorized: false,
+    });
+    expect(p.reportedSequence.map(x => x.year)).toEqual([1218, 1363, null, 1781]);
+    expect(p.reportedSequence.every(x => !x.actualEarlyPrintedBirthFolioCollated)).toBe(true);
+    expect(buildYuanHaiMingJuan3PrintScope().JinTuoBirthDateTransmissionAudit).toEqual(p);
+  });
 
   test('Songshi birth 時 is grammatical when, not sexagenary Si-hour 巳', () => {
     const a = YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT;
