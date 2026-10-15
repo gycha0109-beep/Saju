@@ -14,3 +14,4 @@ export * from './general-annual-exploration-report.js';
 export * from './natal-personalization-baseline.js';
 export * from './natal-structural-evidence.js';
 export * from './natal-synthesis-preview.js';
+export * from './natal-rule-differentiation.js';
