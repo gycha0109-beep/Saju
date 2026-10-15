@@ -40,6 +40,7 @@ import {
   YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
   YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
   YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
+  YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
   YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
@@ -50,7 +51,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v20');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v21');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -908,6 +909,38 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     });
     expect(a.computedRunnerSha256).toBe('17eb28b3a65d0b28908c4646017ebd409ef875366f48945071bb68675f737c82');
     expect(buildYuanHaiMingJuan3PrintScope().nlc1600DirectFacsimileAccess).toEqual(a);
+  });
+
+  test('1934 Sonkeikaku catalog image-only lead never promotes an original Wei or Mu glyph', () => {
+    const a = YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE;
+    expect(a.catalogPrint).toMatchObject({
+      catalogPublicationYear: 1934,
+      catalogPart: 3,
+      verifiedPdfBytes: 53742939,
+      verifiedPdfSha256: '513d83d54bed4c178b1cf15a4f596f9c3087f2523d02a3209335906408855732',
+      sourcePdfPageCount: 100,
+      imageOnlyWithoutSearchableText: true,
+      catalogTitleIndexCandidate: '新刊京本薈正總括天機諸家秘要星學正傳',
+      catalogDescribesTwentyOneJuan: true,
+      catalogDescribesMingWanliEdition: true,
+      titleIndexOcrCharacterAccuracyVerifiedFromPrintedEntry: false,
+      preciseCatalogPageAndColumnLocated: false,
+      indexedMentionIsDirectOriginalWoodblockImage: false,
+      sourceTier: 'C_historical_catalog_candidate',
+    });
+    expect(a.originalMingWitness).toMatchObject({
+      separateLibraryHoldingCandidate: '尊經閣文庫',
+      samePhysicalHoldingAsHousaOrJapanArchivesProved: false,
+      exact1582ImpressionYearConfirmed: false,
+      focalJuanThreePhysicalBookNumber: null,
+      focalLeafAndOriginalGlyphDirectlyInspected: false,
+      independentWoodblockWitnessAdded: 0,
+      newlyAuthenticatedPre1600WeiOrMuGlyphs: 0,
+      unMuArchetypeEstablished: false,
+      historicalYuefeiHourAuthenticated: false,
+      modernAnnualRulesApproved: 0, productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().sonkeikaku1582CatalogRoute).toEqual(a);
   });
 
   test('Shanghai Ming-print editorial source citation is C-grade and not a 1582 focal-page collation', () => {
