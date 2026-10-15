@@ -1780,6 +1780,66 @@ export const YUANHAI_JINTUO_20261015_ACCESS_AND_CATALOG_AUDIT = Object.freeze({
   productionAuthorized: false as const,
 });
 
+/**
+ * WYG page-break tags, transmitted nominal ages and portal OCR are research
+ * controls, never direct evidence of Yuan/Ming printed birth folios.
+ */
+export const YUANHAI_JINTUO_WYG_FOLIO_AND_OCR_CONSISTENCY_AUDIT = Object.freeze({
+  yuanNcl02714: Object.freeze({
+    catalogEditionYear: 1363 as const,
+    lineCountPerHalfFolio: 9 as const,
+    charactersPerLine: 17 as const,
+    commonsSplitFileSuffixesListed: Object.freeze([1, 2, 3] as const),
+    numberedCommonsFilesAreIndependentHoldings: false as const,
+    birthFolioPrintDirectlyRead: false as const,
+  }),
+  mingNcl02720: Object.freeze({
+    catalogEditionYear: 1542 as const,
+    catalogRepairYear: 1558 as const,
+    lineCountPerHalfFolio: 9 as const,
+    charactersPerLine: 17 as const,
+    sameWoodblocksAs1363ProvedByLayout: false as const,
+    birthFolioPrintDirectlyRead: false as const,
+  }),
+  transmittedWygText: Object.freeze({
+    editionProperty: 'WYG' as const,
+    sourceJuanFourFile: 'KR2g0010_004.txt' as const,
+    birthDatePageTag: 'KR2g0010_WYG_004-1a' as const,
+    birthDatePhrase: '二月十五日先臣生名飛字鵬舉' as const,
+    birdAnecdotePageTag: 'KR2g0010_WYG_004-2a' as const,
+    birdAnecdotePhrase: '及生先臣之夕有大禽若鵠' as const,
+    pageTagIsYuanNclPdfPage: false as const,
+    directYuanOrMingPrintGlyphEvidence: false as const,
+  }),
+  internalNominalAgeCrossCheck: Object.freeze({
+    reportedBirthYear: 1103 as const,
+    method: 'reported_seui_nominal_age_minus_birth_year_plus_one' as const,
+    entries: Object.freeze([
+      Object.freeze({ sourceJuan: 4 as const, reignYear: '宣和四年壬寅' as const, ceYear: 1122 as const, recordedAge: 20 as const, mechanicallyExpectedNominalAge: 20 as const }),
+      Object.freeze({ sourceJuan: 4 as const, reignYear: '建炎二年戊申' as const, ceYear: 1128 as const, recordedAge: 26 as const, mechanicallyExpectedNominalAge: 26 as const }),
+      Object.freeze({ sourceJuan: 8 as const, reignYear: '紹興十年庚申' as const, ceYear: 1140 as const, recordedAge: 38 as const, mechanicallyExpectedNominalAge: 38 as const }),
+    ] as const),
+    evidenceTier: 'D_internal_arithmetic_of_one_C_transmission' as const,
+    independentHistoricalBirthWitnessAdded: 0 as const,
+    historicalBirthMonthDayProvedByAge: false as const,
+  }),
+  otherNlcLinkedOcr: Object.freeze({
+    shidianBookId: 'NGJ892411999028945160849' as const,
+    displayedJuanHeading: '鄂国金佗稡编卷第四' as const,
+    samePortalPageCorrectReignHeader: '崇宁二年' as const,
+    samePortalPageWrongReignInBody: '七宁二年癸未岁' as const,
+    displayedBirthDatePhrase: '二月十五日，先臣生，名飞，字鹏举' as const,
+    sevenNingIsPrintedVariantProved: false as const,
+    independentPrintWitnessEstablished: false as const,
+    glyphOriginalDirectlyInspected: false as const,
+  }),
+  addedYuanOrMingPrintedBirthFolios: 0 as const,
+  actualYuefeiJiSiHourHistoricallyAuthenticated: false as const,
+  yangrenWeiMuArchetypeAuthorized: false as const,
+  modernAnnualRulePromotionAuthorized: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1915,6 +1975,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     yuanhaiWeiMuLexicalGuard: YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD,
     preQingJintuoPrintedOriginalCandidates: YUANHAI_JINTUO_PREQING_ORIGINAL_PRINT_CANDIDATES,
     jintuo20261015AccessAndCatalogAudit: YUANHAI_JINTUO_20261015_ACCESS_AND_CATALOG_AUDIT,
+    jintuoWygFolioAndOcrConsistencyAudit: YUANHAI_JINTUO_WYG_FOLIO_AND_OCR_CONSISTENCY_AUDIT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({

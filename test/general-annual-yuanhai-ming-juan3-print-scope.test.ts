@@ -31,6 +31,7 @@ import {
   YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD,
   YUANHAI_JINTUO_PREQING_ORIGINAL_PRINT_CANDIDATES,
   YUANHAI_JINTUO_20261015_ACCESS_AND_CATALOG_AUDIT,
+  YUANHAI_JINTUO_WYG_FOLIO_AND_OCR_CONSISTENCY_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -835,6 +836,22 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.preQingJintuoPrintedOriginalCandidates.confirmedMaterialPrintedBirthDateWitnessesAdded).toBe(0);
     expect(scope.authority.historicalYuefeiBirthHourVerified).toBe(false);
     expect(scope.modernInterpretationClaim).toBeNull();
+  });
+
+  test('WYG folio tags and internally consistent nominal ages never upgrade an uninspected Yuan birth leaf', () => {
+    const a = YUANHAI_JINTUO_WYG_FOLIO_AND_OCR_CONSISTENCY_AUDIT;
+    expect(a.yuanNcl02714).toMatchObject({ catalogEditionYear: 1363, commonsSplitFileSuffixesListed: [1,2,3], numberedCommonsFilesAreIndependentHoldings: false, birthFolioPrintDirectlyRead: false });
+    expect(a.mingNcl02720).toMatchObject({ lineCountPerHalfFolio: 9, charactersPerLine: 17, sameWoodblocksAs1363ProvedByLayout: false });
+    expect(a.transmittedWygText).toMatchObject({ birthDatePageTag: 'KR2g0010_WYG_004-1a', birdAnecdotePageTag: 'KR2g0010_WYG_004-2a', directYuanOrMingPrintGlyphEvidence: false, pageTagIsYuanNclPdfPage: false });
+    expect(a.internalNominalAgeCrossCheck.entries).toHaveLength(3);
+    for (const entry of a.internalNominalAgeCrossCheck.entries) {
+      expect(entry.ceYear - a.internalNominalAgeCrossCheck.reportedBirthYear + 1).toBe(entry.recordedAge);
+      expect(entry.recordedAge).toBe(entry.mechanicallyExpectedNominalAge);
+    }
+    expect(a.internalNominalAgeCrossCheck).toMatchObject({ evidenceTier: 'D_internal_arithmetic_of_one_C_transmission', independentHistoricalBirthWitnessAdded: 0, historicalBirthMonthDayProvedByAge: false });
+    expect(a.otherNlcLinkedOcr).toMatchObject({ displayedJuanHeading: '鄂国金佗稡编卷第四', samePortalPageCorrectReignHeader: '崇宁二年', samePortalPageWrongReignInBody: '七宁二年癸未岁', sevenNingIsPrintedVariantProved: false, independentPrintWitnessEstablished: false, glyphOriginalDirectlyInspected: false });
+    expect(a).toMatchObject({ addedYuanOrMingPrintedBirthFolios: 0, actualYuefeiJiSiHourHistoricallyAuthenticated: false, yangrenWeiMuArchetypeAuthorized: false, modernAnnualRulePromotionAuthorized: false, productionAuthorized: false });
+    expect(buildYuanHaiMingJuan3PrintScope().jintuoWygFolioAndOcrConsistencyAudit).toEqual(a);
   });
 
   test('Original Wanli Wei and Chongzhen Mu do not become a modern majority vote', () => {
