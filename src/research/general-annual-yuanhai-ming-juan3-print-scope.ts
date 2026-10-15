@@ -1642,6 +1642,85 @@ export const YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD = Object.freeze({
   productionAuthorized: false as const,
 });
 
+
+/**
+ * The Ming (1542/1558) and Yuan (1363) Jintuo printed collections are now
+ * located in downloadable Wikimedia Commons catalog/file listings.
+ * The target 卷四 leaf has NOT been visually collated; no source upgrade to A.
+ * File presence != access verification != original folio read.
+ */
+export const YUANHAI_JINTUO_PREQING_ORIGINAL_PRINT_CANDIDATES = Object.freeze({
+  objective: 'Find earliest material leaf for 岳珂 金佗稡編 卷四 崇寧二年 二月十五日 岳飛 birth date' as const,
+  actualTargetLeafImageRead: false as const,
+  originalPdfByteHashesRecorded: false as const,
+  confirmedMaterialPrintedBirthDateWitnessesAdded: 0 as const,
+  candidates: Object.freeze([
+    Object.freeze({
+      holdingInstitution: 'National Central Library, Taiwan' as const,
+      catalogCallmark: '205.24 02714' as const,
+      commonsFilename: 'NCL-02714 1 鄂國金陀稡編.pdf' as const,
+      filePage: 'https://commons.wikimedia.org/wiki/File:NCL-02714_1_%E9%84%82%E5%9C%8B%E9%87%91%E9%99%80%E7%A8%A1%E7%B7%A8.pdf' as const,
+      catalogImprint: '元至正二十三年(1363)西湖書院刊本' as const,
+      pdfPagesOnFileRecord: 972 as const,
+      pdfSizeMbApprox: 125.59 as const,
+      person: '岳珂' as const,
+      exactBirthJuanFourLeafWithinThisSpecificPdfEstablished: false as const,
+      exactPdfPageOfBirthRecorded: null,
+      physicalLeafDateCharactersRead: false as const,
+      physicalLeafBirthHourCharactersRead: false as const,
+      catalogIsMetadataNotPhysicalGlyph: true as const,
+    }),
+    Object.freeze({
+      holdingInstitution: 'National Central Library, Taiwan' as const,
+      catalogCallmark: '205.24 02720' as const,
+      commonsFilename: 'NCL-02720 鄂國金佗稡編.pdf' as const,
+      filePage: 'https://commons.wikimedia.org/wiki/File:NCL-02720_%E9%84%82%E5%9C%8B%E9%87%91%E4%BD%97%E7%A8%A1%E7%B7%A8.pdf' as const,
+      catalogImprint: '明嘉靖21年(1542)洪富刊, 嘉靖37年(1558)黃日敬修補本' as const,
+      pdfPagesOnFileRecord: 612 as const,
+      pdfSizeMbApprox: 210.74 as const,
+      person: '岳珂' as const,
+      exactBirthJuanFourLeafWithinThisSpecificPdfEstablished: false as const,
+      exactPdfPageOfBirthRecorded: null,
+      physicalLeafDateCharactersRead: false as const,
+      physicalLeafBirthHourCharactersRead: false as const,
+      catalogIsMetadataNotPhysicalGlyph: true as const,
+    }),
+    Object.freeze({
+      holdingInstitution: 'Zhejiang Library, China' as const,
+      catalogCallmark: 'ZJLib-631aa105504e722bfaf23b1c-2' as const,
+      commonsFilename: 'ZJLib-631aa105504e722bfaf23b1c-2 鄂國金佗稡編二十八卷續編三十卷 第2冊.pdf' as const,
+      catalogListingUrl: 'https://commons.wikimedia.org/wiki/Commons:Library_back_up_project/file_list/ZJLib/03' as const,
+      catalogImprint: '明嘉靖21年(1542)刊, 嘉靖37年(1558)重修本' as const,
+      bookNumber: 2 as const,
+      printedJuanNumbersListed: Object.freeze([3, 4] as const),
+      exactBirthJuanFourLeafWithinThisSpecificPdfEstablished: false as const,
+      exactPdfPageOfBirthRecorded: null,
+      physicalLeafDateCharactersRead: false as const,
+      physicalLeafBirthHourCharactersRead: false as const,
+      samePhysicalScanAsTaiwanNCL02720Established: false as const,
+      identicalWoodblocksAsTaiwanNCL02720Established: false as const,
+      catalogIsMetadataNotPhysicalGlyph: true as const,
+    }),
+  ] as const),
+  datingScope: Object.freeze({
+    SongCompilationReportedYear: 1218 as const,
+    YuanCatalogPrintedYear: 1363 as const,
+    MingCatalogInitialEditionYear: 1542 as const,
+    MingCatalogRepairYear: 1558 as const,
+    printedWitnessFromSongCompilationYearActuallyRead: false as const,
+    catalogPublicationDateNotAProofOfLiteralBirthDateText: true as const,
+    versionAgreementCannotBeAssertedUntilFocalLeavesCompared: true as const,
+    YuanToMingCopyLineageIndependent: false as const,
+  }),
+  directlyReadReceivedSikuChapterFourStillTier: 'C_transmitted_online_text' as const,
+  distinctMingSanmingPrintsAlreadyRead: 2 as const,
+  historicalSiBirthHourAuthenticated: false as const,
+  earlierYuanWitnessPresenceProvesAuthenticityOfBirthClock: false as const,
+  yuanhaiWeiMuArchetypeSolved: false as const,
+  modernAnnualSemanticsAuthorized: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1775,6 +1854,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     yueFeiSongshiShiNotSiAudit: YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT,
     JinTuoBirthDateTransmissionAudit: YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT,
     yuanhaiWeiMuLexicalGuard: YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD,
+    preQingJintuoPrintedOriginalCandidates: YUANHAI_JINTUO_PREQING_ORIGINAL_PRINT_CANDIDATES,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({

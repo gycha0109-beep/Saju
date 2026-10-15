@@ -29,6 +29,7 @@ import {
   YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT,
   YUANHAI_JINTUO_HISTORICAL_TRANSMISSION_PROVENANCE_AUDIT,
   YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD,
+  YUANHAI_JINTUO_PREQING_ORIGINAL_PRINT_CANDIDATES,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -747,6 +748,61 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
 
 
 
+
+
+  test('New 1363 and 1542 Jintuo PDF catalogs are actionable but NOT directly collated birth leaves', () => {
+    const q = YUANHAI_JINTUO_PREQING_ORIGINAL_PRINT_CANDIDATES;
+    expect(q).toMatchObject({
+      actualTargetLeafImageRead: false,
+      originalPdfByteHashesRecorded: false,
+      confirmedMaterialPrintedBirthDateWitnessesAdded: 0,
+      candidates: [
+        {
+          holdingInstitution: 'National Central Library, Taiwan',
+          catalogCallmark: '205.24 02714',
+          pdfPagesOnFileRecord: 972,
+          exactPdfPageOfBirthRecorded: null,
+          physicalLeafDateCharactersRead: false,
+          catalogIsMetadataNotPhysicalGlyph: true,
+        },
+        {
+          holdingInstitution: 'National Central Library, Taiwan',
+          catalogCallmark: '205.24 02720',
+          pdfPagesOnFileRecord: 612,
+          exactPdfPageOfBirthRecorded: null,
+          physicalLeafBirthHourCharactersRead: false,
+          catalogIsMetadataNotPhysicalGlyph: true,
+        },
+        {
+          holdingInstitution: 'Zhejiang Library, China',
+          catalogCallmark: 'ZJLib-631aa105504e722bfaf23b1c-2',
+          printedJuanNumbersListed: [3,4],
+          exactPdfPageOfBirthRecorded: null,
+          samePhysicalScanAsTaiwanNCL02720Established: false,
+          identicalWoodblocksAsTaiwanNCL02720Established: false,
+        },
+      ],
+      datingScope: {
+        SongCompilationReportedYear: 1218,
+        YuanCatalogPrintedYear: 1363,
+        MingCatalogInitialEditionYear: 1542,
+        MingCatalogRepairYear: 1558,
+        printedWitnessFromSongCompilationYearActuallyRead: false,
+        catalogPublicationDateNotAProofOfLiteralBirthDateText: true,
+        versionAgreementCannotBeAssertedUntilFocalLeavesCompared: true,
+        YuanToMingCopyLineageIndependent: false,
+      },
+      directlyReadReceivedSikuChapterFourStillTier: 'C_transmitted_online_text',
+      distinctMingSanmingPrintsAlreadyRead: 2,
+      historicalSiBirthHourAuthenticated: false,
+      earlierYuanWitnessPresenceProvesAuthenticityOfBirthClock: false,
+      yuanhaiWeiMuArchetypeSolved: false,
+      modernAnnualSemanticsAuthorized: false,
+      productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().preQingJintuoPrintedOriginalCandidates).toEqual(q);
+    expect(YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT.manuscriptOrPrintedWitnessDirectlyInspected).toBe(false);
+  });
 
   test('Original Wanli Wei and Chongzhen Mu do not become a modern majority vote', () => {
     const x = YUANHAI_YANGREN_WEI_MU_LEXICAL_GUARD;
