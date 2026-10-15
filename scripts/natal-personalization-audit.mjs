@@ -11,6 +11,7 @@ import { buildNatalRuleDifferentiationReport } from '../dist/preview/natal-rule-
 import { buildNatalStructuralEvidence } from '../dist/preview/natal-structural-evidence.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
+import { GENERAL_NATAL_ROLE_OBSERVATION_PREFIX } from '../dist/preview/general-natal-consumer-role-observation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../dist/production/production-calculation-runtime.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
@@ -146,6 +147,38 @@ async function main() {
     `Natal N6: ${meaningQuality.repeatedMeaningPairs} repeated-meaning pairs, ` +
       `${meaningQuality.pairsSeparatedOnlyByCalculatedFacts} differ only by factual prose, ` +
       `${meaningQuality.actualRepeatedConsumerPairs} repeated full consumer pairs; ${meaningOutputPath}\n`,
+  );
+  const roleTextByCaseId = new Map(inputs.map((input) => [
+    input.caseId,
+    input.response.reading?.sections.flatMap((section) => section.blocks.flatMap((block) =>
+      block.type === 'paragraph' && block.text.startsWith(GENERAL_NATAL_ROLE_OBSERVATION_PREFIX)
+        ? [block.text] : [])) ?? [],
+  ]));
+  const contextualizedPairs = meaningQuality.factOnlySeparatedCasePairs.filter((pair) => {
+    const left = roleTextByCaseId.get(pair.left) ?? [];
+    const right = roleTextByCaseId.get(pair.right) ?? [];
+    return left.length === 1 && right.length === 1 && left[0] !== right[0];
+  });
+  const roleObservation = {
+    version: 'saju-natal-n7-role-observation-evidence-v1',
+    lifecycle: 'internal_quality_audit',
+    mayPublish: false,
+    maySell: false,
+    cases: inputs.length,
+    meaningIdenticalPairs: meaningQuality.factOnlySeparatedCasePairs.length,
+    rolePositionDifferences: contextualizedPairs.length,
+    remainIdenticalMeaningPairs: meaningQuality.repeatedMeaningPairs,
+    differentiatedCases: contextualizedPairs,
+    limitation: 'Role labels are calculated facts, NOT new semantic interpretation or approval of Research claims.',
+  };
+  const rolePath = resolve(
+    outputPath.endsWith('.json')
+      ? outputPath.slice(0, -5) + '.roles.json'
+      : outputPath + '.roles.json',
+  );
+  writeFileSync(rolePath, JSON.stringify(roleObservation, null, 2) + '\n', 'utf8');
+  process.stdout.write(
+    `Natal N7: ${roleObservation.rolePositionDifferences}/${roleObservation.meaningIdenticalPairs} matching-meaning pairs have different true Ten-God placement observations; ${rolePath}\n`,
   );
   const oldCollisions = meaningReport.contrasts.filter((pair) =>
     pair.kind === 'different_facts_same_interpretation');
