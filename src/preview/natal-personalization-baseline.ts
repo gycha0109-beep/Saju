@@ -67,7 +67,7 @@ function meaningfulBlockText(block: ProductReadingResponseBlock): readonly strin
 
 function isInterpretiveSection(section: ProductReadingResponseSection): boolean {
   // Chart tables and scope disclosures must not count as individualized interpretation.
-  return section.sectionType !== 'structure' && section.title !== '해석 범위';
+  return section.title !== '해석 범위' && section.title !== '프리뷰 안내';
 }
 
 export function inspectNatalPersonalizationBaselineCase(
