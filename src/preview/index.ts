@@ -16,3 +16,4 @@ export * from './natal-structural-evidence.js';
 export * from './natal-synthesis-preview.js';
 export * from './natal-rule-differentiation.js';
 export * from './natal-activated-theme-preview.js';
+export * from './natal-applied-theme-context.js';
