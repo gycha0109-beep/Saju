@@ -1,6 +1,7 @@
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { attachGeneralNatalCalculatedRoleObservation } from '../preview/general-natal-consumer-role-observation.js';
+import { compactGeneralNatalConsumerRepeatedInsights } from '../preview/general-natal-consumer-repeat-compaction.js';
 import { attachGeneralNatalCalculatedContext } from '../preview/general-natal-consumer-fact-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../interpretation/general-natal-integrated-reading-registry.js';
 import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../llm/prompt-compiler.js';
@@ -72,9 +73,10 @@ export function createGeneralNatalIntegratedPreviewProductHost(
       });
       const response = await host.requestReading(body);
       const grounded = attachGeneralNatalCalculatedContext(response);
-      return observedSnapshot === undefined
+      const withRoles = observedSnapshot === undefined
         ? grounded
         : attachGeneralNatalCalculatedRoleObservation(grounded, observedSnapshot);
+      return compactGeneralNatalConsumerRepeatedInsights(withRoles);
     },
   };
 }
