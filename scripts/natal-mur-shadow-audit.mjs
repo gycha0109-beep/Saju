@@ -1,4 +1,5 @@
 import { writeFileSync } from 'node:fs';
+import process from 'node:process';
 import { resolve } from 'node:path';
 import {
   createMyeonghwaProductionPreviewOnlyCalculationProcessV1,
@@ -39,7 +40,7 @@ async function main() {
   const output = [];
   try {
     for (const item of cases) {
-      const response = await fetch('http://127.0.0.1:' + address.port + PRODUCT_PREVIEW_READING_HTTP_PATH,{
+      const response = await globalThis.fetch('http://127.0.0.1:' + address.port + PRODUCT_PREVIEW_READING_HTTP_PATH,{
         method:'POST',
         headers:{authorization:'Bearer '+bearer,'content-type':'application/json'},
         body:JSON.stringify({birth:{calendarType:'solar',date:item.date,time:item.time,sex:'unspecified'},
