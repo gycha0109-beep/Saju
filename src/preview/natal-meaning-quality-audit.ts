@@ -9,6 +9,7 @@ import {
 import {
   GENERAL_NATAL_CALCULATED_CONTEXT_PREFIX,
 } from './general-natal-consumer-fact-context.js';
+import { GENERAL_NATAL_ROLE_OBSERVATION_PREFIX } from './general-natal-consumer-role-observation.js';
 
 export const NATAL_MEANING_QUALITY_AUDIT_VERSION =
   'saju-natal-n6-meaning-versus-fact-audit-v1' as const;
@@ -36,11 +37,19 @@ function stripCalculatedParagraph(response: ProductReadingResponse): ProductRead
   if (reading === undefined) return response;
 
   let count = 0;
+  let roleCount = 0;
   const sections = reading.sections.map((section) => ({
     ...section,
     blocks: section.blocks.filter((block) => {
-      if (block.type !== 'paragraph' ||
-          !block.text.startsWith(GENERAL_NATAL_CALCULATED_CONTEXT_PREFIX)) {
+      if (block.type !== 'paragraph') return true;
+      if (block.text.startsWith(GENERAL_NATAL_ROLE_OBSERVATION_PREFIX)) {
+        if (!block.text.endsWith('이는 실제 원국에서 계산된 십신의 위치 기록이며, 이 정보만으로 성격·진로·재물·관계의 결과나 강약을 판단하지 않습니다.')) {
+          throw new TypeError('Calculated Ten God observation has unexpected semantic text.');
+        }
+        roleCount += 1;
+        return false;
+      }
+      if (!block.text.startsWith(GENERAL_NATAL_CALCULATED_CONTEXT_PREFIX)) {
         return true;
       }
       // A marker alone cannot hide arbitrary interpretive content.
@@ -52,7 +61,8 @@ function stripCalculatedParagraph(response: ProductReadingResponse): ProductRead
     }),
   }));
   if (count > 1) throw new TypeError('Natal factual context appears more than once.');
-  if (count === 0) return response;
+  if (roleCount > 1) throw new TypeError('Natal calculated Ten God context appears more than once.');
+  if (count === 0 && roleCount === 0) return response;
   return { ...response, reading: { ...reading, sections } };
 }
 
@@ -100,7 +110,7 @@ export function buildNatalMeaningQualityAudit(
     semanticCompletionGranted: false,
     limitations: [
       'Calculated four-pillar labels are real factual personalization, not semantic interpretation differentiation.',
-      'The meaning baseline removes ONLY the exact N5 calculated-context paragraph; other original interpretation text remains unchanged.',
+      'The meaning baseline removes ONLY exact recognized N5/N7 calculated fact passages; original admitted interpretation text remains unchanged.',
       'Same text may be appropriate for different charts; collisions require human expert review rather than forced variation.',
       'Research rule matches remain separate evidence and never authorize Production interpretation, commerce or publication.',
     ],

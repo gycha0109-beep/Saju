@@ -87,6 +87,7 @@ jobs:
       - name: Natal internal personalization and five-domain HTML smoke
         run: |
           node scripts/natal-personalization-audit.mjs "$RUNNER_TEMP/natal-baseline.json"
+          node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const r=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.roles.json','utf8')); assert.equal(r.cases,35); assert.equal(r.meaningIdenticalPairs,6); assert.equal(r.rolePositionDifferences,6); assert.equal(r.remainIdenticalMeaningPairs,6); assert.equal(r.mayPublish,false); assert.equal(r.maySell,false);"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const m=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.meaning.json','utf8')); assert.equal(m.realConsumerCaseCount,35); assert.equal(m.consumerTextUnique,32); assert.equal(m.meaningTextUnique,27); assert.equal(m.actualRepeatedConsumerPairs,0); assert.equal(m.repeatedMeaningPairs,6); assert.equal(m.pairsSeparatedOnlyByCalculatedFacts,6); assert.equal(m.semanticCompletionGranted,false); assert.equal(m.mayPublish,false);"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const x=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.consumer.json','utf8')); assert.equal(x.caseCount,35); assert.equal(x.reconstructedLegacyRepeatedPairs,6); assert.equal(x.actualConsumerRepeatedPairs,0); assert.equal(x.resolvedPriorCopyCollisions,6); assert.equal(x.mayPublish,false);"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const c=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.context.json','utf8')); assert.equal(c.caseCount,35); assert.equal(c.mayPublish,false); assert.equal(c.maySell,false); assert.equal(c.previousRepeatedPairs,6); assert.ok(c.contextualizedPairs>0); assert.ok(c.contextualizedPairs<=c.previousRepeatedPairs);"
@@ -104,6 +105,7 @@ jobs:
             ${{ runner.temp }}/natal-baseline.context.json
             ${{ runner.temp }}/natal-baseline.consumer.json
             ${{ runner.temp }}/natal-baseline.meaning.json
+            ${{ runner.temp }}/natal-baseline.roles.json
             ${{ runner.temp }}/natal-preview.html
           if-no-files-found: error
           retention-days: 7
