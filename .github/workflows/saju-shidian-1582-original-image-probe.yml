@@ -32,7 +32,7 @@ jobs:
           from pathlib import Path
           from playwright.async_api import async_playwright
           base=Path(os.environ['RUNNER_TEMP'])/'shidian'
-          target='https://www.shidianguji.com/book/NA09025/chapter/1m83vbm6ivwh6'
+          target='https://www.shidianguji.com/zh/book/NA09025/chapter/1m83vbm6ivwh6'
           record={'source_url':target, 'source_print_verified':False,
                   'direct_glyph_reading':None, 'authenticated_1582_imprint':False,
                   'status':'not_yet_checked', 'errors':[]}
@@ -40,9 +40,12 @@ jobs:
             async with async_playwright() as p:
               browser=await p.chromium.launch(headless=True, args=['--no-sandbox'])
               ctx=await browser.new_context(viewport={'width':1600,'height':1000},
-                  device_scale_factor=1)
+                  device_scale_factor=1, locale='zh-CN', timezone_id='Asia/Shanghai', extra_http_headers={'Accept-Language':'zh-CN,zh;q=0.9'})
               page=await ctx.new_page()
               image_responses=[]
+              network_errors=[]
+              page.on('requestfailed',lambda req: network_errors.append({'host':req.url.split('/')[2], 'path':req.url.split('/')[3][:110] if len(req.url.split('/'))>3 else '', 'failure':req.failure}) if len(network_errors)<45 else None)
+              page.on('response',lambda r: network_errors.append({'host':r.url.split('/')[2], 'status':r.status,'path':r.url.split('/')[3][:110] if len(r.url.split('/'))>3 else ''}) if r.status>=400 and len(network_errors)<45 else None)
               page.on('response',lambda r: image_responses.append({
                   'url':r.url, 'status':r.status, 'content_type':r.headers.get('content-type','')
                   }) if re.search(r'image/|\\.(png|jpg|jpeg|webp|avif)(\\?|$)',r.headers.get('content-type','')+' '+r.url,re.I) and len(image_responses)<80 else None)
@@ -53,6 +56,7 @@ jobs:
                 record['page_url']=page.url
                 record['page_title']=await page.title()
                 record['target_phrase_visible_in_dom']='亥卯未' in (await page.locator('body').inner_text(timeout=10000))
+                record['page_visible_text_excerpt']=(await page.locator('body').inner_text(timeout=10000))[:650]
                 controls=await page.evaluate("""() => Array.from(document.querySelectorAll('button,a,[role=button],[title],[aria-label]')).map(e=>({tag:e.tagName, text:(e.innerText||'').trim().slice(0,80),title:e.title||'',aria:e.getAttribute('aria-label')||''})).filter(e=>/原图|原書|原书|影印|影像|对照|對照|扫描|掃描|图文|圖文|底本|原版/.test(e.text+' '+e.title+' '+e.aria)).slice(0,50)""")
                 record['public_fascimile_controls']=controls
                 await page.screenshot(path=str(base/'chapter-before.png'),full_page=False)
@@ -74,10 +78,12 @@ jobs:
                 record['visible_images']=await page.evaluate("""() => Array.from(document.images).filter(e=>e.getBoundingClientRect().width>30&&e.getBoundingClientRect().height>30).map(e=>({src:e.currentSrc||e.src, naturalWidth:e.naturalWidth,naturalHeight:e.naturalHeight,rect:[Math.round(e.getBoundingClientRect().width),Math.round(e.getBoundingClientRect().height)]})).slice(0,40)""")
                 await page.screenshot(path=str(base/'chapter-after.png'),full_page=False)
                 record['image_http_responses']=image_responses
+                record['network_errors']=network_errors
                 record['status']='public_page_inspected'
               except Exception as ex:
                 record['errors'].append('page_inspection:'+str(ex)[:700])
                 record['status']='page_inspection_failed'
+                record['network_errors']=network_errors
               finally:
                 (base/'inspection.json').write_text(json.dumps(record,indent=2,ensure_ascii=False),encoding='utf8')
                 await browser.close()
