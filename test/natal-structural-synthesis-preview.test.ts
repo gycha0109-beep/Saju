@@ -8,6 +8,9 @@ const NOW = new Date('2026-10-15T00:00:00.000Z');
 
 function actualSnapshot(date: string, time?: { hour: number; minute: number }) {
   const [year, month, day] = date.split('-').map(Number);
+  if (year === undefined || month === undefined || day === undefined) {
+    throw new TypeError('Invalid test fixture date.');
+  }
   return calculateAuthorizedMyeonghwaProductionSnapshot(
     {
       calendarType: 'solar',
