@@ -65,6 +65,12 @@ export function attachGeneralNatalCalculatedContext(
   );
   if (targetIndex < 0) return response;
 
+  if (reading.sections.some((section) =>
+    section.blocks.some((block) => block.type === 'paragraph' && block.text === text)
+  )) {
+    return response;
+  }
+
   const sections = reading.sections.map((section, index) =>
     index !== targetIndex
       ? section
