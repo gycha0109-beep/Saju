@@ -6,7 +6,7 @@ import {
   PRODUCTION_CALCULATION_PROCESS_ENV_V1,
 } from '../dist/production-calculation-process.js';
 import { PRODUCT_PREVIEW_READING_HTTP_PATH } from '../dist/production-calculation-host.js';
-import { buildNatalPersonalizationBaselineReport } from '../dist/preview/natal-personalization-baseline.js';
+import { buildNatalMeaningQualityAudit } from '../dist/preview/natal-meaning-quality-audit.js';
 import { buildNatalRuleDifferentiationReport } from '../dist/preview/natal-rule-differentiation.js';
 import { buildNatalStructuralEvidence } from '../dist/preview/natal-structural-evidence.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
@@ -133,28 +133,21 @@ async function main() {
     await close(runtime.server);
   }
 
-  const report = buildNatalPersonalizationBaselineReport(inputs);
+  const { consumer: report, meaning: meaningReport, quality: meaningQuality } =
+    buildNatalMeaningQualityAudit(inputs);
   writeFileSync(outputPath, JSON.stringify(report, null, 2) + '\n', 'utf8');
-
-  // Read-only before/after control: remove ONLY the new factual grounding paragraph.
-  // This is a reconstructed legacy text baseline, not an old HTTP engine rerun.
-  const legacyInputs = inputs.map((input) => ({
-    ...input,
-    response: input.response.reading === undefined ? input.response : {
-      ...input.response,
-      reading: {
-        ...input.response.reading,
-        sections: input.response.reading.sections.map((section) => ({
-          ...section,
-          blocks: section.blocks.filter((block) =>
-            block.type !== 'paragraph' ||
-            !block.text.startsWith('이 사주풀이가 실제로 참조한 명식은 ')),
-        })),
-      },
-    },
-  }));
-  const legacyReport = buildNatalPersonalizationBaselineReport(legacyInputs);
-  const oldCollisions = legacyReport.contrasts.filter((pair) =>
+  const meaningOutputPath = resolve(
+    outputPath.endsWith('.json')
+      ? outputPath.slice(0, -5) + '.meaning.json'
+      : outputPath + '.meaning.json',
+  );
+  writeFileSync(meaningOutputPath, JSON.stringify(meaningQuality, null, 2) + '\n', 'utf8');
+  process.stdout.write(
+    `Natal N6: ${meaningQuality.repeatedMeaningPairs} repeated-meaning pairs, ` +
+      `${meaningQuality.pairsSeparatedOnlyByCalculatedFacts} differ only by factual prose, ` +
+      `${meaningQuality.actualRepeatedConsumerPairs} repeated full consumer pairs; ${meaningOutputPath}\n`,
+  );
+  const oldCollisions = meaningReport.contrasts.filter((pair) =>
     pair.kind === 'different_facts_same_interpretation');
   const currentCollisions = report.contrasts.filter((pair) =>
     pair.kind === 'different_facts_same_interpretation');
@@ -184,7 +177,7 @@ async function main() {
   process.stdout.write(
     `Natal N5 consumer prose: ${consumer.resolvedPriorCopyCollisions}/${consumer.reconstructedLegacyRepeatedPairs} prior repeated-copy pairs now show chart-specific calculated facts; ${consumerOutputPath}\n`,
   );
-  const n3 = buildNatalRuleDifferentiationReport(report, researchRuleEvidence);
+  const n3 = buildNatalRuleDifferentiationReport(meaningReport, researchRuleEvidence);
   const repeatedPairs = oldCollisions;
   const n4 = {
     version: 'saju-natal-n4-applied-context-regression-v1',
