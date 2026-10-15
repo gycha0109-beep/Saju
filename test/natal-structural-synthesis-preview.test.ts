@@ -104,7 +104,7 @@ describe('P0-NATAL N1/N2 governed structural synthesis', () => {
           pillars: Object.fromEntries(evidence.pillars.map((p) => [
             p.slot,
             { label: p.slot, value: p.label, status: p.state },
-          ])) as ProductReadingResponse['reading'] extends infer T ? NonNullable<T>['calculationSummary']['pillars'] : never,
+          ])) as NonNullable<ProductReadingResponse['reading']>['calculationSummary']['pillars'],
         },
       },
     } as ProductReadingResponse;
