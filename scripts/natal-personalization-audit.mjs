@@ -164,7 +164,7 @@ async function main() {
     (outputPath.endsWith('.json')
       ? outputPath.slice(0, -5) + '.context.json'
       : outputPath + '.context.json'));
-  writeFileSync(n4OutputPath, JSON.stringify(n4, null, 2) + '\\n', 'utf8');
+  writeFileSync(n4OutputPath, JSON.stringify(n4, null, 2) + String.fromCharCode(10), 'utf8');
   process.stdout.write(`Natal N4: ${n4.contextualizedPairs}/${n4.previousRepeatedPairs} formerly identical copy pairs have different source-bound theme positions; ${n4OutputPath}\\n`);
   const n3OutputPath = resolve(process.argv[3] ??
     (outputPath.endsWith('.json')
