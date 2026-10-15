@@ -1,0 +1,67 @@
+# Research only: inspect public 1934 bibliographic catalog, NOT the underlying Ming woodblock.
+# No source-glyph promotion. Manual after first PR creation.
+name: "[WT:saju] Sonkeikaku Catalog Leaf Probe"
+on:
+  pull_request:
+    branches:
+      - research/saju/annual-yuanhai-three-layer-case-witness
+    paths:
+      - .github/workflows/saju-sonkeikaku-1934-catalog-leaf-probe.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  identify-source-catalog-page:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Commons bibliographic scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/sonkeikaku"
+          url='https://upload.wikimedia.org/wikipedia/commons/1/15/NDL1147938_%E5%B0%8A%E7%B5%8C%E9%96%A3%E6%96%87%E5%BA%AB%E6%BC%A2%E7%B1%8D%E5%88%86%E9%A1%9E%E7%9B%AE%E9%8C%B2_part3.pdf'
+          curl --fail --location --silent --show-error --max-time 135 --retry 2 --retry-delay 2 --output "$RUNNER_TEMP/sonkeikaku/catalog.pdf" "$url"
+          echo "Downloaded catalog bytes (not Ming original): $(wc -c < "$RUNNER_TEMP/sonkeikaku/catalog.pdf")"
+      - name: Search bibliographic print for matching 21-juan title and render pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet PyMuPDF
+          python - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          import fitz
+          p=Path(os.environ['RUNNER_TEMP'])/'sonkeikaku'
+          source=p/'catalog.pdf'
+          sha=hashlib.sha256(source.read_bytes()).hexdigest()
+          doc=fitz.open(source)
+          matches=[]
+          candidates=['星學正傳','星学正伝','星學','星学','新刊京本','天機諸家','天機']
+          for i,page in enumerate(doc):
+            s=page.get_text()
+            matched=[t for t in candidates if t in s]
+            if matched:matches.append({'pdf_page_one_based':i+1,'hit_terms':matched,'text_excerpt':s[:1500]})
+          render_pages=sorted(set(x['pdf_page_one_based'] for x in matches))[:6]
+          for idx in render_pages:
+            pg=doc[idx-1]
+            pg.get_pixmap(dpi=180,colorspace=fitz.csRGB,alpha=False).save(p/f'catalog-page-{idx:03}.png')
+          manifest={'type':'1934_catalog_facsimile_not_1582_source','file_bytes':source.stat().st_size,'pdf_sha256':sha,
+             'pdf_pages':len(doc),'matching_indexed_pages':matches[:12],
+             'rendered_pages':render_pages,
+             'ming_original_focal_print_examined':False,'evidence_tier':'C_historical_catalog',
+             'first_person_wei_mu_glyph_verified':False}
+          (p/'catalog-probe.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf8')
+          print(json.dumps(manifest,ensure_ascii=False)[:12000])
+          PY
+      - name: Preserve original catalog-page evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-sonkeikaku-1934-catalog-page-audit
+          path: |
+            ${{ runner.temp }}/sonkeikaku/catalog-probe.json
+            ${{ runner.temp }}/sonkeikaku/catalog-page-*.png
+          retention-days: 7
+          if-no-files-found: warn
