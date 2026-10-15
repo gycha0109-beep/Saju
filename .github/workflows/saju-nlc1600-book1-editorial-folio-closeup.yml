@@ -1,0 +1,63 @@
+# Research-only: inspect exact NLC book-one original print strokes.
+# The screenshot is not a machine-authenticated glyph reading.
+name: "[WT:saju] NLC 1600 Editorial Folio Closeup"
+on:
+  pull_request:
+    branches:
+      - research/saju/annual-yuanhai-three-layer-case-witness
+    paths:
+      - .github/workflows/saju-nlc1600-book1-editorial-folio-closeup.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve public PDF and verify immutable file identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/nlc4"
+          url='https://upload.wikimedia.org/wikipedia/commons/2/24/NLC892-2642-210287_%E5%88%BB%E4%BA%AC%E8%87%BA%E5%A2%9E%E8%A3%9C%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E5%A4%A7%E5%85%A8_%E7%AC%AC1%E5%86%8A.pdf'
+          curl --fail --location --silent --show-error --retry 2 --retry-delay 2 --max-time 130 --output "$RUNNER_TEMP/nlc4/book1.pdf" "$url"
+          python tools/research/verify_nlc1600_book1_pdf.py --input "$RUNNER_TEMP/nlc4/book1.pdf" --output "$RUNNER_TEMP/nlc4/identity.json"
+      - name: Render exact PDF page 4 / right-hand folio at 400 dpi
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet PyMuPDF Pillow
+          python - <<'PY'
+          import fitz
+          from pathlib import Path
+          import os,json,hashlib
+          root=Path(os.environ['RUNNER_TEMP'])/'nlc4'
+          evidence=json.loads((root/'identity.json').read_text())
+          assert evidence['identity_verified'] is True
+          assert evidence['observed']['sha256']=='17eb28b3a65d0b28908c4646017ebd409ef875366f48945071bb68675f737c82'
+          pdf=fitz.open(root/'book1.pdf')
+          assert len(pdf)==48
+          page=pdf[3] # one-based PDF page 4
+          pix=page.get_pixmap(dpi=400,colorspace=fitz.csRGB,alpha=False)
+          pix.save(root/'nlc-book1-page004-full-400dpi.png')
+          from PIL import Image
+          im=Image.open(root/'nlc-book1-page004-full-400dpi.png')
+          w,h=im.size
+          # Right half with title, compiler line and bottom colophon.
+          im.crop((int(w*.48),int(h*.10),w,int(h*.99))).save(root/'nlc-book1-page004-rightfolio-400dpi.png')
+          im.crop((int(w*.72),int(h*.10),w,int(h*.99))).save(root/'nlc-book1-page004-editorialcols-400dpi.png')
+          print(json.dumps({'status':'verified_pdf_highres_render_only','pdf_page':4,'size_px':[w,h],
+            'glyphs_auto_authenticated':False,'original_bytes_sha256':evidence['observed']['sha256']}))
+          PY
+      - name: Archive verified original high resolution page
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-nlc1600-book1-p4-editorial-original-closeup
+          path: |
+            ${{ runner.temp }}/nlc4/identity.json
+            ${{ runner.temp }}/nlc4/nlc-book1-page004-*.png
+          if-no-files-found: error
+          retention-days: 10
