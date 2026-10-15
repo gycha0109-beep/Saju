@@ -7,6 +7,10 @@ import {
 } from '../dist/production-calculation-process.js';
 import { PRODUCT_PREVIEW_READING_HTTP_PATH } from '../dist/production-calculation-host.js';
 import { buildNatalPersonalizationBaselineReport } from '../dist/preview/natal-personalization-baseline.js';
+import { buildNatalRuleDifferentiationReport } from '../dist/preview/natal-rule-differentiation.js';
+import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../dist/production/production-calculation-runtime.js';
+import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
+import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
 
 const bearer = 'local-natal-quality-audit-not-a-production-secret';
 const dates = [
@@ -70,6 +74,9 @@ async function main() {
     [PRODUCTION_CALCULATION_PROCESS_ENV_V1.port]: '3000',
   });
   const inputs = [];
+  const researchRuleEvidence = [];
+  const auditNow = new Date('2026-10-15T00:00:00.000Z');
+  const registry = createGeneralNatalIntegratedReadingRegistry(auditNow.toISOString());
   const origin = await listenEphemeral(runtime.server);
   try {
     for (const fixture of fixtures) {
@@ -84,6 +91,28 @@ async function main() {
       if (!response.ok) {
         throw new Error(`Preview HTTP ${response.status} for ${fixture.caseId}`);
       }
+      const [year, month, day] = fixture.birth.date.split('-').map(Number);
+      if (year === undefined || month === undefined || day === undefined) {
+        throw new TypeError(`Invalid audit fixture date: ${fixture.caseId}`);
+      }
+      const hour = fixture.birth.time === null ? undefined : Number(fixture.birth.time.slice(0, 2));
+      const minute = fixture.birth.time === null ? undefined : Number(fixture.birth.time.slice(3, 5));
+      const snapshot = calculateAuthorizedMyeonghwaProductionSnapshot({
+        calendarType: 'solar',
+        date: { year, month, day },
+        time: hour === undefined || minute === undefined
+          ? { known: false }
+          : { known: true, hour, minute },
+        sexForTraditionalCalculation: 'unspecified',
+      }, { now: auditNow }).snapshot;
+      researchRuleEvidence.push({
+        caseId: fixture.caseId,
+        snapshotId: snapshot.snapshotId,
+        interpretation: runInterpretation(snapshot, registry, {
+          requestId: `n3-quality-audit-${fixture.caseId}`,
+          now: auditNow,
+        }),
+      });
       inputs.push({
         caseId: fixture.caseId,
         birthLabel: `${fixture.birth.date} ${fixture.birth.time ?? 'unknown-time'}`,
@@ -96,6 +125,15 @@ async function main() {
 
   const report = buildNatalPersonalizationBaselineReport(inputs);
   writeFileSync(outputPath, JSON.stringify(report, null, 2) + '\n', 'utf8');
+  const n3 = buildNatalRuleDifferentiationReport(report, researchRuleEvidence);
+  const n3OutputPath = resolve(process.argv[3] ??
+    outputPath.replace(/\\.json$/u, '') + '.rules.json');
+  writeFileSync(n3OutputPath, JSON.stringify(n3, null, 2) + '\n', 'utf8');
+  process.stdout.write(
+    `Natal N3 rule/content audit: ${n3.pairsWithSameCopyDifferentFacts.length} copy collisions ` +
+      `across distinct charts, ${n3.warningCounts.sameCopyDifferentRules} with different matched rules, ` +
+      `${n3.warningCounts.sameCopySameRulesDifferentChart} with identical matched rules; JSON: ${n3OutputPath}\\n`,
+  );
   process.stdout.write(
     `Natal N0 preview audit: ${report.numberOfCases} cases, ` +
       `${report.uniqueFactFingerprints} distinct displayed fact sets, ` +
