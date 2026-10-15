@@ -330,8 +330,8 @@ async function main() {
   const n8Path = resolve(outputPath.endsWith('.json')
     ? outputPath.slice(0, -5) + '.n8-trace.json'
     : outputPath + '.n8-trace.json');
-  writeFileSync(n8Path, JSON.stringify(n8, null, 2) + '\\n', 'utf8');
-  process.stdout.write(`Natal N8: ${n8.pairs.length} distinct-Research-claim / identical-meaning pairs traced without semantic promotion; ${n8Path}\\n`);
+  writeFileSync(n8Path, JSON.stringify(n8, null, 2) + '\n', 'utf8');
+  process.stdout.write(`Natal N8: ${n8.pairs.length} distinct-Research-claim / identical-meaning pairs traced without semantic promotion; ${n8Path}\n`);
 
   const repeatedPairs = oldCollisions;
   const n4 = {
