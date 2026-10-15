@@ -6,6 +6,9 @@ import {
 } from '../src/production-calculation-process.js';
 import { PRODUCT_PREVIEW_READING_HTTP_PATH } from '../src/production-calculation-host.js';
 import type { ProductReadingResponse } from '../src/reading/product-reading-response.js';
+import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/production/production-calculation-runtime.js';
+import { buildNatalStructuralEvidence } from '../src/preview/natal-structural-evidence.js';
+import { buildNatalSynthesisPreview } from '../src/preview/natal-synthesis-preview.js';
 import {
   buildNatalPersonalizationBaselineReport,
   type NatalPersonalizationBaselineInput,
@@ -104,6 +107,23 @@ describe('N0 natal personalization baseline on actual Preview HTTP consumer path
     }
     expect(report.responseStates).toHaveProperty('delivered');
     expect(report.cases).toHaveLength(4);
+    const governed = calculateAuthorizedMyeonghwaProductionSnapshot({
+      calendarType: 'solar',
+      date: { year: 2024, month: 3, day: 10 },
+      time: { known: true, hour: 12, minute: 0 },
+      sexForTraditionalCalculation: 'unspecified',
+    });
+    const evidence = buildNatalStructuralEvidence(governed.snapshot);
+    const synthesis = buildNatalSynthesisPreview(evidence, [
+      { domain: 'general', response: inputs[0]!.response },
+    ]);
+    expect(synthesis.statements.some((statement) =>
+      statement.kind === 'existing_preview_interpretation'
+    )).toBe(true);
+    expect(synthesis.domainCoverage.find((row) => row.domain === 'general')?.hasInterpretation)
+      .toBe(true);
+    expect(synthesis.mayGenerateClaims).toBe(false);
+
     // Do not assert interpreted prose is different merely because pillars differ.
     // The contrast matrix makes sameness visible for manual N0/N4 assessment.
     expect(report.contrasts.every((entry) => entry.left !== entry.right)).toBe(true);
