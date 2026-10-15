@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createGeneralNatalIntegratedPreviewProductHost } from '../src/host/general-natal-integrated-preview-host.js';
-import type { ProductReadingResponse } from '../src/reading/product-reading-response.js';
+import type { ProductReadingResponse, ProductReadingResponseBlock } from '../src/reading/product-reading-response.js';
 import {
   buildNatalMeaningQualityAudit,
 } from '../src/preview/natal-meaning-quality-audit.js';
@@ -72,7 +72,7 @@ describe('N6 semantic differentiation separate from calculated fact fingerprints
       block.type === 'paragraph' &&
       block.text.startsWith(GENERAL_NATAL_CALCULATED_CONTEXT_PREFIX));
     expect(actual).toBeDefined();
-    const mutate = (extra: readonly typeof section.blocks[number][]) => ({
+    const mutate = (extra: readonly ProductReadingResponseBlock[]) => ({
       ...reading,
       reading: {
         ...reading.reading!,
