@@ -61,8 +61,7 @@ function categoryFor(pair: NatalRuleDifferentiationPair, left: readonly string[]
 }
 
 function counts(pairs: readonly NatalCollisionTriagePair[]): Record<NatalCollisionCategory, number> {
-  const result = Object.fromEntries(CATEGORIES.map((category) => [category, 0]))
-    as Record<NatalCollisionCategory, number>;
+  const result = Object.fromEntries(CATEGORIES.map((category) => [category, 0])) as Record<NatalCollisionCategory, number>;
   for (const pair of pairs) result[pair.category] = (result[pair.category] ?? 0) + 1;
   return result;
 }
