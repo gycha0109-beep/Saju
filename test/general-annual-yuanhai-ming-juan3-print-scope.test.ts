@@ -39,6 +39,7 @@ import {
   YUANHAI_NLC1600_BOOK1_EDITORIAL_NAME_PRINT_AUDIT,
   YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
   YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
+  YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
   YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
@@ -49,7 +50,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v19');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v20');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -907,6 +908,35 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     });
     expect(a.computedRunnerSha256).toBe('17eb28b3a65d0b28908c4646017ebd409ef875366f48945071bb68675f737c82');
     expect(buildYuanHaiMingJuan3PrintScope().nlc1600DirectFacsimileAccess).toEqual(a);
+  });
+
+  test('Shanghai Ming-print editorial source citation is C-grade and not a 1582 focal-page collation', () => {
+    const a = YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE;
+    expect(a.editorialWitness).toMatchObject({
+      editorPrefaceYear: 2016,
+      editedPublicationTitle: '兩家註解玉井奧訣',
+      sourceHoldingClaim: '上海圖書館收藏之明本《星學綱目正傳》',
+      yangCongSourceAttribution: '萬曆十年楊淙撰《星學綱目正傳》',
+      editedExcerptLocation: '卷首《唐李虛中註解玉井奧訣》',
+      furtherExcerptName: '子平格解內外格',
+      furtherExcerptPrintedJuan: [9, 10],
+      modernEditorExplicitlyClaimsMingSourceInspection: true,
+      editorPrefaceNotOriginalWoodblockFacsimile: true,
+      actualShanghaiSourceCopyDownloaded: false,
+      actualShanghaiCopyFocalJuanThreeInspected: false,
+      samePhysicalCopyAsHousaOrJapanArchivesProved: false,
+      luWeiTwentyJuanSameHistoricalWorkAsYangCongTwentyOneJuanProved: false,
+      newlyAuthenticatedTargetWeiMuGlyphs: 0,
+      evidenceTier: 'C_modern_editorial_source_description',
+    });
+    expect(a.safeguards).toEqual({
+      modernDescriptionDoesNotElevateAnOriginalPrintLocusToA: true,
+      unMuArchetypeEstablished: false,
+      historicalYuefeiHourAuthenticated: false,
+      modernAnnualRulesApproved: 0,
+      productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().shanghai1582ModernEditorialRoute).toEqual(a);
   });
 
   test('Nagoya 1582 title alias and Toyo 1600 photographic reprint cannot become independent original leaves', () => {
