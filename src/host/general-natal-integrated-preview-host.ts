@@ -1,4 +1,5 @@
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
+import { attachGeneralNatalCalculatedContext } from '../preview/general-natal-consumer-fact-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../interpretation/general-natal-integrated-reading-registry.js';
 import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../llm/prompt-compiler.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
@@ -28,7 +29,7 @@ export interface GeneralNatalIntegratedPreviewHostOptions {
 export function createGeneralNatalIntegratedPreviewProductHost(
   options: GeneralNatalIntegratedPreviewHostOptions = {},
 ): MyeonghwaProductHost {
-  return createMyeonghwaProductHost({
+  const host = createMyeonghwaProductHost({
     calculate(input, context) {
       return calculateAuthorizedMyeonghwaProductionSnapshot(input, {
         now: new Date(context.requestedAt),
@@ -60,4 +61,10 @@ export function createGeneralNatalIntegratedPreviewProductHost(
       ? {}
       : { requestNowFactory: options.requestNowFactory }),
   });
+  return {
+    async requestReading(body: unknown) {
+      const response = await host.requestReading(body);
+      return attachGeneralNatalCalculatedContext(response);
+    },
+  };
 }
