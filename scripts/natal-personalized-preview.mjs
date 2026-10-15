@@ -7,6 +7,10 @@ import {
 } from '../dist/production-calculation-process.js';
 import { PRODUCT_PREVIEW_READING_HTTP_PATH } from '../dist/production-calculation-host.js';
 
+import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../dist/production/production-calculation-runtime.js';
+import { buildNatalStructuralEvidence } from '../dist/preview/natal-structural-evidence.js';
+import { buildNatalSynthesisPreview } from '../dist/preview/natal-synthesis-preview.js';
+
 const bearer = 'local-natal-preview-non-production-token';
 const domains = [
   { text: '사주', title: '전체 사주' },
@@ -83,6 +87,27 @@ function renderDomain(domain, response) {
   </section>`;
 }
 
+function renderSynthesis(synthesis) {
+  const statements = synthesis.statements.map((statement) => {
+    const name = statement.kind === 'existing_preview_interpretation'
+      ? '기존 Preview 해석' : '명식 계산에서 관측된 사실';
+    const sources = statement.sourcePaths.length > 0
+      ? `<details><summary>계산 근거 경로</summary><p>${escapeHtml(statement.sourcePaths.join(' · '))}</p></details>`
+      : statement.readingSource
+        ? `<p class="limited">기존 ${escapeHtml(statement.readingSource.domain)} Reading 응답에서 인용</p>`
+        : '';
+    return `<section class="interpretation"><h3>${escapeHtml(statement.title)}</h3>
+      <p class="limited">${escapeHtml(name)}</p><p>${escapeHtml(statement.text)}</p>${sources}</section>`;
+  }).join('');
+  return `<section class="domain">
+    <div class="domain-heading"><h2>명식을 종합해서 읽는 출발점</h2><span>N1·N2 내부 시제품</span></div>
+    <p class="limited">실제 계산 구조와 기존 해석을 연결했습니다. 근거가 없는 성격·강약·용신·격국 판단은 생성하지 않습니다.</p>
+    ${statements}
+    <details><summary>남은 해석 한계</summary>
+    ${synthesis.limits.map((limit) => `<p>${escapeHtml(limit)}</p>`).join('')}</details>
+  </section>`;
+}
+
 function renderPillars(summary) {
   if (summary === undefined) return '<p>명식 요약을 사용할 수 없습니다.</p>';
   return `<div class="pillars">${(['year', 'month', 'day', 'hour'])
@@ -94,7 +119,7 @@ function renderPillars(summary) {
     .join('')}</div>`;
 }
 
-function renderPage(date, time, responses) {
+function renderPage(date, time, responses, synthesis) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -123,6 +148,7 @@ function renderPage(date, time, responses) {
   <p>${escapeHtml(date)} · ${escapeHtml(time ?? '출생시간 미상')} 입력으로 현재 명하 엔진의 실제 Preview 해석을 조합한 내부 시제품입니다. 해석을 새로 생성하거나 근거 없는 빈칸을 채우지 않습니다.</p>
   </header>
   ${renderPillars(general?.calculationSummary)}
+  ${renderSynthesis(synthesis)}
   ${responses.map(({ domain, response }) => renderDomain(domain, response)).join('')}
   <footer>내부 개발·품질 비교 전용 · Official Production 공개/저장/판매 불가. 이 화면의 해석은 전통적 방법론의 제한된 제안을 다루며 현실의 개인 성격·성과·미래 사건을 검증하거나 보증하지 않습니다.
   <p>실제 응답 상태: ${escapeHtml(status.join(' · '))}</p></footer>
@@ -175,7 +201,23 @@ async function main() {
   } finally {
     await close(runtime.server);
   }
-  writeFileSync(output, renderPage(date, time, responses), 'utf8');
+  const [year, month, day] = date.split('-').map(Number);
+  const [hour, minute] = time === null ? [] : time.split(':').map(Number);
+  const calculated = calculateAuthorizedMyeonghwaProductionSnapshot({
+    calendarType: 'solar',
+    date: { year, month, day },
+    time: time === null ? { known: false } : { known: true, hour, minute },
+    sexForTraditionalCalculation: 'unspecified',
+  });
+  const evidence = buildNatalStructuralEvidence(calculated.snapshot);
+  const domainKeys = ['general', 'career', 'wealth', 'business', 'relationship'];
+  const synthesis = buildNatalSynthesisPreview(
+    evidence,
+    responses.map((item, i) => ({ domain: domainKeys[i], response: item.response })),
+  );
+  writeFileSync(output, renderPage(date, time, responses, synthesis), 'utf8');
+  process.stdout.write(`N1/N2 evidence: ${synthesis.statements.length} traced statements, ` +
+    `${synthesis.domainCoverage.filter((entry) => entry.hasInterpretation).length}/5 interpreted domains\\n`);
   process.stdout.write(`Rendered real natal Preview responses to ${output}\n`);
   process.stdout.write(`${responses.map((r) => `${r.domain.title}: ${r.response.state}`).join(' | ')}\n`);
 }
