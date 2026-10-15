@@ -1,12 +1,8 @@
 # Research only: inspect public 1934 bibliographic catalog, NOT the underlying Ming woodblock.
 # No source-glyph promotion. Manual after first PR creation.
 name: "[WT:saju] Sonkeikaku Catalog Leaf Probe"
+# Large public catalog download is manually initiated; not rerun per PR update.
 on:
-  pull_request:
-    branches:
-      - research/saju/annual-yuanhai-three-layer-case-witness
-    paths:
-      - .github/workflows/saju-sonkeikaku-1934-catalog-leaf-probe.yml
   workflow_dispatch:
 permissions:
   contents: read
