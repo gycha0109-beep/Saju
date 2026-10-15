@@ -127,12 +127,14 @@ async function main() {
   writeFileSync(outputPath, JSON.stringify(report, null, 2) + '\n', 'utf8');
   const n3 = buildNatalRuleDifferentiationReport(report, researchRuleEvidence);
   const n3OutputPath = resolve(process.argv[3] ??
-    outputPath.replace(/\\.json$/u, '') + '.rules.json');
+    (outputPath.endsWith('.json')
+      ? outputPath.slice(0, -5) + '.rules.json'
+      : outputPath + '.rules.json'));
   writeFileSync(n3OutputPath, JSON.stringify(n3, null, 2) + '\n', 'utf8');
   process.stdout.write(
     `Natal N3 rule/content audit: ${n3.pairsWithSameCopyDifferentFacts.length} copy collisions ` +
       `across distinct charts, ${n3.warningCounts.sameCopyDifferentRules} with different matched rules, ` +
-      `${n3.warningCounts.sameCopySameRulesDifferentChart} with identical matched rules; JSON: ${n3OutputPath}\\n`,
+      `${n3.warningCounts.sameCopySameRulesDifferentChart} with identical matched rules; JSON: ${n3OutputPath}\n`,
   );
   process.stdout.write(
     `Natal N0 preview audit: ${report.numberOfCases} cases, ` +
