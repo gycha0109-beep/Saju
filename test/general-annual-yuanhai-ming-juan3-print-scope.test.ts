@@ -35,6 +35,7 @@ import {
   YUANHAI_1582_TIANJI_OCR_TEXTUAL_PARALLEL_AUDIT,
   YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT,
   YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT,
+  YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -839,6 +840,53 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.preQingJintuoPrintedOriginalCandidates.confirmedMaterialPrintedBirthDateWitnessesAdded).toBe(0);
     expect(scope.authority.historicalYuefeiBirthHourVerified).toBe(false);
     expect(scope.modernInterpretationClaim).toBeNull();
+  });
+
+  test('edited Li Qin zengbu and OCR ji/si discrepancies remain uninspected C/B, not A-grade print', () => {
+    const a = YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL;
+    expect(a.normalizedDigitalEdition).toMatchObject({
+      shidianBookId: 'SDZJ0626',
+      portalAttribution: '[元] 李欽 增補',
+      bookOneHeader: '欽天監承德郎李欽增補',
+      bookOneYearRule: '甲己起丙寅',
+      bookOneHourRule: '甲己起甲子',
+      sameEditionSourceAsNlcPrintEstablished: false,
+      printedEditorVerbPhysicallyAuthenticated: false,
+      evidenceTier: 'C_edited_digital_text',
+    });
+    expect(a.nlcLinkedPrintOcr).toMatchObject({
+      shidianBookId: 'NGJ8922642210287',
+      headingReadingOne: '欽天監曰承德郎李欽',
+      headingReadingTwo: '欽天監丨承德郎李欽',
+      bookOneYearRule: '甲巳起丙寅',
+      bookOneHourRule: '甲巳起甲子',
+      alternateYearToken: '如甲年或已年',
+      printedEditorVerbAbsentFromOcrMeansAbsentFromPrint: false,
+      yearStemVariantsPhysicallyVerified: false,
+      evidenceTier: 'B_candidate_print_linked_OCR',
+    });
+    expect(a.taiwanNclHolding).toMatchObject({
+      commonsFile: 'NCL-06593',
+      catalogAuthor: '（明）李欽撰',
+      catalogPdfPages: 160,
+      inspectedTitleFolio: false,
+      independentWoodblockSettingEstablished: false,
+    });
+    expect(a.crossWitnessSafeguards).toMatchObject({
+      catalogNlcAuthor: '〔元〕李欽夫撰',
+      normalizedEditionYuanAttribution: '[元] 李欽 增補',
+      taiwanNpmAuthor: '明 李欽 撰',
+      sameHistoricalPersonProved: false,
+      distinctHistoricalPeopleProved: false,
+      bookOneEditorRoleDirectlyInspected: false,
+      updatedYuanhaiFocalPrintAReadings: 0,
+      addedOriginalPre1600TargetPrints: 0,
+      adjudicatedWeiMuArchetype: null,
+      authenticatedYuefeiBirthJiSiHour: false,
+      modernAnnualRulesApproved: 0,
+      productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().liqinEditorRoleAndJisiOcrControl).toEqual(a);
   });
 
   test('1600 Li Qin/Qinfu catalog authority collision is not direct original-glyph or person identity evidence', () => {

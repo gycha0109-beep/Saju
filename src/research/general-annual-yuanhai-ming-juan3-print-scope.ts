@@ -1981,6 +1981,59 @@ export const YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT = Object.freez
   }),
 });
 
+/**
+ * Edited transcription role wording is C, print-linked OCR is B-candidate
+ * and catalog author attributions are C. No A-grade title leaf was inspected.
+ */
+export const YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL = Object.freeze({
+  normalizedDigitalEdition: Object.freeze({
+    shidianBookId: 'SDZJ0626' as const,
+    portalAttribution: '[元] 李欽 增補' as const,
+    bookOneHeader: '欽天監承德郎李欽增補' as const,
+    printerHeader: '閩書𣇰喬山堂劉大易繡梓' as const,
+    bookOneYearRule: '甲己起丙寅' as const,
+    bookOneHourRule: '甲己起甲子' as const,
+    sameEditionSourceAsNlcPrintEstablished: false as const,
+    printedEditorVerbPhysicallyAuthenticated: false as const,
+    evidenceTier: 'C_edited_digital_text' as const,
+  }),
+  nlcLinkedPrintOcr: Object.freeze({
+    shidianBookId: 'NGJ8922642210287' as const,
+    headingReadingOne: '欽天監曰承德郎李欽' as const,
+    headingReadingTwo: '欽天監丨承德郎李欽' as const,
+    bookOneYearRule: '甲巳起丙寅' as const,
+    bookOneHourRule: '甲巳起甲子' as const,
+    alternateYearToken: '如甲年或已年' as const,
+    printedEditorVerbAbsentFromOcrMeansAbsentFromPrint: false as const,
+    yearStemVariantsPhysicallyVerified: false as const,
+    evidenceTier: 'B_candidate_print_linked_OCR' as const,
+  }),
+  taiwanNclHolding: Object.freeze({
+    commonsFile: 'NCL-06593' as const,
+    catalogAuthor: '（明）李欽撰' as const,
+    catalogEditionYear: 1600 as const,
+    physicalBookCount: 4 as const,
+    catalogPdfPages: 160 as const,
+    inspectedTitleFolio: false as const,
+    independentWoodblockSettingEstablished: false as const,
+    evidenceTier: 'C_catalog' as const,
+  }),
+  crossWitnessSafeguards: Object.freeze({
+    catalogNlcAuthor: '〔元〕李欽夫撰' as const,
+    normalizedEditionYuanAttribution: '[元] 李欽 增補' as const,
+    taiwanNpmAuthor: '明 李欽 撰' as const,
+    sameHistoricalPersonProved: false as const,
+    distinctHistoricalPeopleProved: false as const,
+    bookOneEditorRoleDirectlyInspected: false as const,
+    updatedYuanhaiFocalPrintAReadings: 0 as const,
+    addedOriginalPre1600TargetPrints: 0 as const,
+    adjudicatedWeiMuArchetype: null,
+    authenticatedYuefeiBirthJiSiHour: false as const,
+    modernAnnualRulesApproved: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -2120,6 +2173,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     tianji1582OcrTextualParallelAudit: YUANHAI_1582_TIANJI_OCR_TEXTUAL_PARALLEL_AUDIT,
     tianji1582VsWanli1600TextualAlignment: YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT,
     liqinLiqinfu1600AuthorityCollisionAudit: YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT,
+    liqinEditorRoleAndJisiOcrControl: YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
