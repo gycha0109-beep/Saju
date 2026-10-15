@@ -18,3 +18,4 @@ export * from './natal-rule-differentiation.js';
 export * from './natal-activated-theme-preview.js';
 export * from './natal-applied-theme-context.js';
 export * from './natal-meaning-quality-audit.js';
+export * from './general-natal-consumer-role-observation.js';
