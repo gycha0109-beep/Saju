@@ -38,6 +38,7 @@ import {
   YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL,
   YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
   YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
+  YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -842,6 +843,43 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.preQingJintuoPrintedOriginalCandidates.confirmedMaterialPrintedBirthDateWitnessesAdded).toBe(0);
     expect(scope.authority.historicalYuefeiBirthHourVerified).toBe(false);
     expect(scope.modernInterpretationClaim).toBeNull();
+  });
+
+  test('NLC 1600 PDF verification CLI fails closed and leaves printed glyph authority unpromoted', () => {
+    const a = YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW;
+    expect(a).toMatchObject({
+      scriptPath: 'tools/research/verify_nlc1600_book1_pdf.py',
+      isolatedTestPath: 'tools/research/test_verify_nlc1600_book1_pdf.py',
+      trackedSourceId: 'NLC892-2642-210287',
+      expectedBytes: 14387365,
+      hashAlgorithm: 'SHA-1',
+      noEvidenceOrPreviewFromMismatchedFile: true,
+      sha256LocallyComputedOnlyAfterInputRead: true,
+      optionalPreviewPyMuPdfRequired: true,
+      expectedPdfPageCountForPreview: 48,
+      explicitOneBasedPreviewPagesRequired: true,
+      scriptEverGuessesTargetOriginalLeafPage: false,
+      verifiedIdentityAutomaticallyPromotesToA: false,
+      unitTestsLocallyPassedWithSyntheticData: 3,
+      actualNlcOriginalPdfDownloadedInThisPass: false,
+      actualNlcTitleGlyphsReadInThisPass: false,
+      housaSixPhysicalVolumesCataloged: true,
+      housaVolumeContainingJuanThreeVerified: false,
+      housaIndividualVolumeFolioAccessVerified: false,
+      extraPrintedGlyphWitnesses: 0,
+      modernAnnualRulesApproved: 0,
+      productionAuthorized: false,
+    });
+    expect(a.expectedSha1).toMatch(/^[0-9a-f]{40}$/);
+    const script = readFileSync('tools/research/verify_nlc1600_book1_pdf.py', 'utf8');
+    expect(script).toContain('14_387_365');
+    expect(script).toContain('4092ec5b420ebd84eee3959d2ac00a73580e6b4e');
+    expect(script).toContain('rejected_source_mismatch');
+    expect(script).toContain('original_printed_li_qin_zengbu_glyph_verified');
+    expect(script).toContain('if not result["identity_verified"]');
+    expect(script).toContain('catalog_page_count');
+    expect(readFileSync('tools/research/test_verify_nlc1600_book1_pdf.py', 'utf8')).toContain('test_wrong_size_or_hash_fails_and_no_manifest_written');
+    expect(buildYuanHaiMingJuan3PrintScope().nlc1600SourceFingerprintWorkflow).toEqual(a);
   });
 
   test('Nagoya 1582 title alias and Toyo 1600 photographic reprint cannot become independent original leaves', () => {

@@ -2132,6 +2132,33 @@ export const YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT = Object.fre
   }),
 });
 
+
+/** Fail-closed source fingerprinting can verify file identity, never original glyphs. */
+export const YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW = Object.freeze({
+  scriptPath: 'tools/research/verify_nlc1600_book1_pdf.py' as const,
+  isolatedTestPath: 'tools/research/test_verify_nlc1600_book1_pdf.py' as const,
+  trackedSourceId: 'NLC892-2642-210287' as const,
+  expectedBytes: 14387365 as const,
+  expectedSha1: '4092ec5b420ebd84eee3959d2ac00a73580e6b4e' as const,
+  hashAlgorithm: 'SHA-1' as const,
+  noEvidenceOrPreviewFromMismatchedFile: true as const,
+  sha256LocallyComputedOnlyAfterInputRead: true as const,
+  optionalPreviewPyMuPdfRequired: true as const,
+  expectedPdfPageCountForPreview: 48 as const,
+  explicitOneBasedPreviewPagesRequired: true as const,
+  scriptEverGuessesTargetOriginalLeafPage: false as const,
+  verifiedIdentityAutomaticallyPromotesToA: false as const,
+  unitTestsLocallyPassedWithSyntheticData: 3 as const,
+  actualNlcOriginalPdfDownloadedInThisPass: false as const,
+  actualNlcTitleGlyphsReadInThisPass: false as const,
+  housaSixPhysicalVolumesCataloged: true as const,
+  housaVolumeContainingJuanThreeVerified: false as const,
+  housaIndividualVolumeFolioAccessVerified: false as const,
+  extraPrintedGlyphWitnesses: 0 as const,
+  modernAnnualRulesApproved: 0 as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -2274,6 +2301,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     liqinEditorRoleAndJisiOcrControl: YUANHAI_1600_LIQIN_EDITOR_ROLE_AND_JISI_OCR_CONTROL,
     sourcePdfChecksumAndAccessGates: YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES,
     housa1582AndToyoCopyAudit: YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
+    nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
