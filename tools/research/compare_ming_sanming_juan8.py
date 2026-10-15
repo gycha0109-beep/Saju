@@ -2,7 +2,7 @@
 """Reproduce bounded Ming 三命通會 卷八 scan alignment, not historical block identity.
 
 Requirements: pip install pymupdf opencv-python-headless numpy
-Usage: python compare_ming_sanming_juan8.py --nlc NLC.pdf --ncl NCL.pdf --output metrics.json
+Usage: python compare_ming_sanming_juan8.py --nlc NLC.pdf --ncl NCL.pdf --output metrics.json\nThe script refuses inputs whose PDF SHA-256 differs from the recorded source bytes.
 """
 import argparse
 import hashlib
@@ -12,6 +12,18 @@ from pathlib import Path
 import cv2
 import fitz
 import numpy as np
+
+EXPECTED_SHA256 = {
+    "nlc": "009396f2dfd848194d7fa73c6e02ea51c010d3a9f0d5f3eb83be35d6b6a2e777",
+    "ncl": "3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd",
+}
+
+def file_sha256(path):
+    sha = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            sha.update(chunk)
+    return sha.hexdigest()
 
 CROPS = {
     "NLC": ((.031, .20, .427, .865), (.445, .195, .863, .865)),
@@ -36,13 +48,21 @@ def main():
     p.add_argument("--ncl", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     args = p.parse_args()
+    # Reject unrelated derivative PDFs before any costly image rendering.
+    verified = {"nlc": file_sha256(args.nlc), "ncl": file_sha256(args.ncl)}
+    for source in ("nlc", "ncl"):
+        if verified[source] != EXPECTED_SHA256[source]:
+            p.error(
+                f"{source.upper()} PDF SHA-256 mismatch: expected "
+                f"{EXPECTED_SHA256[source]}, observed {verified[source]}"
+            )
     cv2.setNumThreads(1)
     cv2.setRNGSeed(20261014)
     detector = cv2.SIFT_create(nfeatures=1200, contrastThreshold=.018, edgeThreshold=15)
     bf = cv2.BFMatcher(cv2.NORM_L2)
     cache = {}
     with fitz.open(args.nlc) as nlc, fitz.open(args.ncl) as ncl:
-        if len(nlc) < 16 or len(ncl) < 657:
+        if len(nlc) != 57 or len(ncl) != 1000:
             raise ValueError("Insufficient PDF pages")
         for name, book, pages in (("NLC", nlc, range(13, 17)), ("NCL", ncl, range(652, 658))):
             for page in pages:
@@ -72,8 +92,8 @@ def main():
     matching = [r for r in observations if r["correct_pair"]]
     controls = [r for r in observations if not r["correct_pair"]]
     result = {
-        "nlc_sha256": hashlib.sha256(args.nlc.read_bytes()).hexdigest(),
-        "ncl_sha256": hashlib.sha256(args.ncl.read_bytes()).hexdigest(),
+        "nlc_sha256": verified["nlc"],
+        "ncl_sha256": verified["ncl"],
         "method": "PyMuPDF1.75x/CLAHE2.0/SIFT1200/BF-L2-Lowe0.70/RANSAC3px",
         "positive_half_pages": len(matching),
         "positive_candidates": sum(r["candidate_matches"] for r in matching),

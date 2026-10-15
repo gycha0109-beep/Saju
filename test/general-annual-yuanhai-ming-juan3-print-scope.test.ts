@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { deterministicContentHash } from '../src/interpretation/rule-registry.js';
 import {
   YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION,
@@ -838,6 +839,23 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       productionAuthorized: false,
     });
     expect(buildYuanHaiMingJuan3PrintScope().yueFeiFamilyChronicleBirthDateAudit).toEqual(a);
+  });
+
+
+  test('Ming original PDF repro script fails closed on incorrect source hashes', () => {
+    const text = readFileSync(new URL('../tools/research/compare_ming_sanming_juan8.py', import.meta.url), 'utf8');
+    expect(text).toContain('009396f2dfd848194d7fa73c6e02ea51c010d3a9f0d5f3eb83be35d6b6a2e777');
+    expect(text).toContain('3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd');
+    expect(text).toContain('if verified[source] != EXPECTED_SHA256[source]:');
+    expect(text).toContain('p.error(');
+    expect(text).toContain('if len(nlc) != 57 or len(ncl) != 1000:');
+    expect(text).not.toContain('hashlib.sha256(args.nlc.read_bytes())');
+    expect(YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT.reproducibleDeterministicBfAudit).toMatchObject({
+      matchCandidates: 1071,
+      geometricInliers: 888,
+      wrongPageMaxInliers: 15,
+      deterministicRerunConfirmed: true,
+    });
   });
 
   test('four matched NLC/NCL Ming print openings preserve two material copies but prove no block lineage', () => {
