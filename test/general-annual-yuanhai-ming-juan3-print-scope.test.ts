@@ -25,6 +25,7 @@ import {
   YUANHAI_SANMING_QING_YUEWUMU_COLUMN_SAFE_COLLATION,
   YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT,
   YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT,
+  YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -740,6 +741,46 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
   });
 
 
+
+
+  test('Songshi birth 時 is grammatical when, not sexagenary Si-hour 巳', () => {
+    const a = YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT;
+    expect(a).toMatchObject({
+      sourceWork: '宋史',
+      sourceChapter: '卷三百六十五 列傳第一百二十四 岳飛',
+      originalPrintedBirthFolioInspected: false,
+      excerpt: {
+        birthBirdPhrase: '飛生時，有大禽若鵠，飛鳴室上，因以為名',
+        writtenGenericTimeCharacter: '時',
+        earthBranchCharacterNotPresent: '巳',
+        meaningOfShengShi: 'when Yue Fei was born',
+        matchesAstronomicalShichenSi: false,
+        explicitJisiHourInBirthPassage: false,
+        explicitLunarBirthdayInOpeningPassage: false,
+        evidenceTier: 'C_received_digital_source_transcription',
+      },
+      familyChronicleParallel: {
+        workAndLocus: '金佗稡編 卷四 行實編年一',
+        birdAtEveningProvesBirthTimeAtNight: false,
+        preciselySameManuscriptLineageDemonstrated: false,
+      },
+      sourceCriticalOutcome: {
+        overlappingBirdMotif: true,
+        directTextualDependenceProved: false,
+        independentHistoricalBirthHourWitnessesCounted: 0,
+        notASecondIndependentAttestationOfJiSiBirthHour: true,
+        familyLunarDateStillKnownOnlyFromTransmittedText: true,
+        actualHistoricalShichenAuthenticated: false,
+      },
+      newlyInspectedPrintedHistoricalBirthFolios: 0,
+      preexistingMingDivinationJiSiExampleIntact: true,
+      yuanhaiWeiVsWoodArchetypeChosen: false,
+      annualReadingRulesAuthorized: false,
+      productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().yueFeiSongshiShiNotSiAudit).toEqual(a);
+    expect(YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT.distinctClaims.familyChronicleProvesYueFeiHistoricalJiSiHour).toBe(false);
+  });
 
   test('Southern Song Yue family chronicle dates birth but does not authenticate Jisi hour', () => {
     const a = YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT;

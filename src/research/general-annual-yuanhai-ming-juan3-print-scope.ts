@@ -1502,6 +1502,52 @@ export const YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT = Object.freeze({
   productionAuthorized: false as const,
 });
 
+
+/**
+ * In 元修 宋史 卷365, 飛生時 means "when Fei was born", NOT 巳時,
+ * and a shared miraculous bird narrative is not an independent natal clock.
+ * Read texts are 四庫-transmitted electronic transcriptions (C); no printed
+ * birth folio was opened in this step.
+ */
+export const YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT = Object.freeze({
+  sourceWork: '宋史' as const,
+  sourceChapter: '卷三百六十五 列傳第一百二十四 岳飛' as const,
+  transmittedTextReference: 'https://wk.100ke.info/wiki/%E5%AE%8B%E5%8F%B2/%E5%8D%B7365' as const,
+  compiledEra: 'Yuan dynasty historical compilation' as const,
+  originalPrintedBirthFolioInspected: false as const,
+  excerpt: Object.freeze({
+    firstPhrase: '岳飛字鵬舉，相州湯陰人' as const,
+    birthBirdPhrase: '飛生時，有大禽若鵠，飛鳴室上，因以為名' as const,
+    writtenGenericTimeCharacter: '時' as const,
+    earthBranchCharacterNotPresent: '巳' as const,
+    meaningOfShengShi: 'when Yue Fei was born' as const,
+    matchesAstronomicalShichenSi: false as const,
+    explicitJisiHourInBirthPassage: false as const,
+    explicitLunarBirthdayInOpeningPassage: false as const,
+    evidenceTier: 'C_received_digital_source_transcription' as const,
+  }),
+  familyChronicleParallel: Object.freeze({
+    workAndLocus: '金佗稡編 卷四 行實編年一' as const,
+    datedBirth: '崇寜二年癸未歲; 二月十五日先臣生' as const,
+    birdMotif: '及生先臣之夕有大禽若鵠自東南來飛鳴于寢室之上' as const,
+    birdAtEveningProvesBirthTimeAtNight: false as const,
+    preciselySameManuscriptLineageDemonstrated: false as const,
+  }),
+  sourceCriticalOutcome: Object.freeze({
+    overlappingBirdMotif: true as const,
+    directTextualDependenceProved: false as const,
+    independentHistoricalBirthHourWitnessesCounted: 0 as const,
+    notASecondIndependentAttestationOfJiSiBirthHour: true as const,
+    familyLunarDateStillKnownOnlyFromTransmittedText: true as const,
+    actualHistoricalShichenAuthenticated: false as const,
+  }),
+  newlyInspectedPrintedHistoricalBirthFolios: 0 as const,
+  preexistingMingDivinationJiSiExampleIntact: true as const,
+  yuanhaiWeiVsWoodArchetypeChosen: false as const,
+  annualReadingRulesAuthorized: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -1632,6 +1678,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     qingNamedColumnSafeCollation: YUANHAI_SANMING_QING_YUEWUMU_COLUMN_SAFE_COLLATION,
     mingNlcNclFourOpeningsBlockAudit: YUANHAI_SANMING_MING_NLC_NCL_FOUR_OPENINGS_BLOCK_AUDIT,
     yueFeiFamilyChronicleBirthDateAudit: YUANHAI_YUEFEI_FAMILY_BIRTHDATE_SOURCE_AUDIT,
+    yueFeiSongshiShiNotSiAudit: YUANHAI_YUEFEI_SONGSHI_BIRTH_SHI_NOT_SI_AUDIT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
