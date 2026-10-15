@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v16' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v17' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2094,6 +2094,25 @@ export const YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT = Object.fre
     actualJuanThreeFocalPrintRead: false as const,
     evidenceTier: 'C_bibliographic_index_text' as const,
   }),
+  historicalSameTitleCollision: Object.freeze({
+    mingHistoryUrl: 'https://www.xn--5rtnx620bw5s.tw/a/a24/098.html' as const,
+    qianQingTangUrl: 'https://www.shidianguji.com/zh/book/NGJ89241199901898971493/chapter/1lvfdhakt6ryn' as const,
+    historicalCatalogName: '星學綱目正傳' as const,
+    historicalCatalogAttributedCompiler: '陸位' as const,
+    historicalCatalogJuan: 20 as const,
+    separateMingHistoryYuanHaiListing: '李欽淵海子平大全六卷' as const,
+    target1582CatalogCompiler: '楊淙' as const,
+    target1582CatalogJuan: 21 as const,
+    sameTitleDoesNotEstablishSameWork: true as const,
+    historicalCatalogCopyPrintedPageInspected: false as const,
+    housaAliasLinkedToLuWeiWorkEstablished: false as const,
+    housaAliasLinkedToYangCongPhysicalEditionEstablished: false as const,
+    titleCollisionResolved: false as const,
+    liQinVersusLiQinFuIdentityAdjudicated: false as const,
+    evidenceTier: 'C_historical_bibliographic_transcriptions' as const,
+    newAuthenticated1582FocalPrintedFolios: 0 as const,
+    productionAuthorized: false as const,
+  }),
   japanNationalArchivesExistingRoute: Object.freeze({
     callNumber: '子059-0011' as const,
     catalogedBooks: 8 as const,
@@ -2120,6 +2139,8 @@ export const YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT = Object.fre
   }),
   safeguards: Object.freeze({
     catalogAssertsAlternateTitleNotHistoricalSameSetting: true as const,
+    historicalSameTitleIsUniqueWorkIdentifier: false as const,
+    automaticHousaAliasEditionMergeAuthorized: false as const,
     newlyAuthenticated1582OriginalPrintedTargetFolios: 0 as const,
     newlyAuthenticated1600LiQinZengbuPrintedFolios: 0 as const,
     independentCarvedPrintSettingsAdded: 0 as const,
@@ -2170,6 +2191,10 @@ export function buildYuanHaiMingJuan3PrintScope() {
     books.length !== 2 ||
     additions.length !== 2 ||
     YUANHAI_NCL_TAIWAN_PRINT_SCAN.independentWitnessCredit !== 0 ||
+    YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT.historicalSameTitleCollision.titleCollisionResolved ||
+    YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT.historicalSameTitleCollision.newAuthenticated1582FocalPrintedFolios !== 0 ||
+    YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT.historicalSameTitleCollision.productionAuthorized ||
+    YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT.safeguards.automaticHousaAliasEditionMergeAuthorized ||
     YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.receivedXiJiParallelLocus.wanliPrintedContentsJuanNumber !== 2 ||
     YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.receivedXiJiParallelLocus.chongzhenPrintedJuanForThisParallelCase !== null ||
     YUANHAI_PARALLEL_YUEFEI_NATAL_LOCUS_AUDIT.receivedXiJiParallelLocus.chongzhenPhysicalBookForThisParallelCase !== null ||
