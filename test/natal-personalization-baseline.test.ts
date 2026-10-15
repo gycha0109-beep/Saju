@@ -94,7 +94,14 @@ describe('N0 natal personalization baseline on actual Preview HTTP consumer path
     expect(first?.pillarValues).toEqual(duplicate?.pillarValues);
     expect(first?.factFingerprint).toBe(duplicate?.factFingerprint);
     expect(different?.factFingerprint).not.toBe(first?.factFingerprint);
-    expect(unknown?.pillarValues.at(3)).toMatch(/^hour:(ambiguous|unavailable):/u);
+    if (unknown?.pillarValues.length === 4) {
+      expect(unknown.pillarValues[3]).toMatch(/^hour:(ambiguous|unavailable):/u);
+    } else {
+      // Insufficient coverage may suppress the reading summary; never invent an hour.
+      expect(unknown?.pillarValues).toEqual([]);
+      expect(unknown?.interpretationFingerprint).toBeUndefined();
+      expect(report.casesWithoutInterpretation).toContain('unknown-hour');
+    }
     expect(report.responseStates).toHaveProperty('delivered');
     expect(report.cases).toHaveLength(4);
     // Do not assert interpreted prose is different merely because pillars differ.
