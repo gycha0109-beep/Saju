@@ -15,6 +15,10 @@ import { GENERAL_NATAL_ROLE_OBSERVATION_PREFIX } from '../dist/preview/general-n
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../dist/production/production-calculation-runtime.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
+import { runProductReadingInternals } from '../dist/reading/product-reading-service.js';
+import { deterministicContentHash } from '../dist/interpretation/rule-registry.js';
+import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../dist/llm/prompt-compiler.js';
+import { resolvePreviewSemanticAdmissionV1 } from '../dist/preview/preview-semantic-admission.js';
 
 const bearer = 'local-natal-quality-audit-not-a-production-secret';
 const dates = [
@@ -80,6 +84,7 @@ async function main() {
   const inputs = [];
   const researchRuleEvidence = [];
   const appliedByCaseId = new Map();
+  const interpretedByCaseId = new Map();
   const auditNow = new Date('2026-10-15T00:00:00.000Z');
   const registry = createGeneralNatalIntegratedReadingRegistry(auditNow.toISOString());
   const origin = await listenEphemeral(runtime.server);
@@ -114,6 +119,7 @@ async function main() {
         requestId: `n3-quality-audit-${fixture.caseId}`,
         now: auditNow,
       });
+      interpretedByCaseId.set(fixture.caseId, { snapshot, interpretation });
       researchRuleEvidence.push({
         caseId: fixture.caseId,
         snapshotId: snapshot.snapshotId,
@@ -211,6 +217,134 @@ async function main() {
     `Natal N5 consumer prose: ${consumer.resolvedPriorCopyCollisions}/${consumer.reconstructedLegacyRepeatedPairs} prior repeated-copy pairs now show chart-specific calculated facts; ${consumerOutputPath}\n`,
   );
   const n3 = buildNatalRuleDifferentiationReport(meaningReport, researchRuleEvidence);
+
+  // N8: reproduce three actual meaning collisions through every existing
+  // internal stage. This is quality evidence, not another consumer renderer.
+  const n8Pairs = n3.pairsWithSameCopyDifferentFacts.filter((pair) =>
+    pair.disposition === 'SAME_COPY_DIFFERENT_RULES');
+  const n8CaseIds = [...new Set(n8Pairs.flatMap((pair) => [pair.left, pair.right]))].sort();
+  const admission = resolvePreviewSemanticAdmissionV1(
+    'GENERAL_NATAL_USEFUL_READING_CANDIDATE', 'general:natal',
+  );
+  // This exact Research family has no explicitly pinned Preview semantic
+  // admission. Until it has one, never present observed Research differences
+  // as source-approved Official meaning.
+  if (admission !== undefined) {
+    throw new Error('N8 trace requires readmission review after General Natal theme admission changes.');
+  }
+  const semanticCaseById = new Map(meaningReport.cases.map((item) => [item.caseId, item]));
+  const n8Traces = [];
+  for (const caseId of n8CaseIds) {
+    const run = interpretedByCaseId.get(caseId);
+    if (run === undefined) throw new Error(`Missing canonical N8 run: ${caseId}`);
+    const internal = await runProductReadingInternals(
+      run.snapshot, run.interpretation, registry,
+      { requestId: `n8-audit-${caseId}`, text: '사주', referenceDateTime: auditNow.toISOString() },
+      {
+        outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
+        readingVersion: 'myeonghwa-general-natal-integrated-preview-host-v1',
+        artifactGeneratedAt: auditNow,
+      },
+    );
+    const exec = internal.execution;
+    if (exec.state !== 'completed' || exec.modelCalls !== 0 ||
+        exec.canonicalSemantics === undefined ||
+        exec.officialReadingPlan === undefined ||
+        exec.officialReadingReport === undefined ||
+        internal.response.state !== 'delivered') {
+      throw new Error(`Incomplete N8 Internal Official Reading stage: ${caseId}`);
+    }
+    const targetIds = new Set(exec.preparation.composition?.selection.targetClaimIds ?? []);
+    const semantics = new Map(exec.canonicalSemantics.units.map((unit) => [unit.claimId, unit]));
+    const planUnitRefs = new Set(exec.officialReadingPlan.sections.flatMap(
+      (section) => [...section.primaryUnitRefs, ...section.supportingUnitRefs]));
+    const researchThemes = run.interpretation.claims
+      .filter((claim) => claim.state === 'active' &&
+        /^GENERAL_NATAL_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u.test(claim.claimType))
+      .map((claim) => {
+        const unit = semantics.get(claim.claimId);
+        return {
+          claimType: claim.claimType,
+          predicate: claim.predicate,
+          methodology: `${claim.methodologyRef.id}@${claim.methodologyRef.version}`,
+          ruleIds: claim.ruleRefs.map((ref) => ref.ruleId).sort(),
+          sourceRefs: [...claim.sourceRefs].sort(),
+          targetedByProfile: targetIds.has(claim.claimId),
+          projectedToCanonicalUnit: unit !== undefined,
+          canonicalRole: unit?.role ?? null,
+          hasCanonicalText: unit?.canonicalText !== undefined,
+          canonicalTextFingerprint: unit?.canonicalText === undefined
+            ? null : deterministicContentHash(unit.canonicalText),
+          includedInOfficialPlan: unit === undefined ? false : planUnitRefs.has(unit.unitId),
+        };
+      }).sort((a, b) => a.claimType.localeCompare(b.claimType));
+    n8Traces.push({
+      caseId,
+      snapshotId: run.snapshot.snapshotId,
+      rulePackLifecycle: registry.pack.status,
+      coverageState: exec.preparation.composition?.selection.coverageState ?? null,
+      semanticHash: exec.canonicalSemantics.semanticHash,
+      planHash: exec.officialReadingPlan.planHash,
+      rendererReportHash: exec.officialReadingReport.reportHash,
+      consumerMeaningFingerprint: semanticCaseById.get(caseId)?.interpretationFingerprint ?? null,
+      researchThemes,
+    });
+  }
+  const n8ById = new Map(n8Traces.map((item) => [item.caseId, item]));
+  const n8PairTraces = n8Pairs.map((pair) => {
+    const left = n8ById.get(pair.left);
+    const right = n8ById.get(pair.right);
+    if (left === undefined || right === undefined) throw new Error('Incomplete N8 pair trace');
+    const leftClaims = new Set(left.researchThemes.map((theme) => theme.claimType));
+    const rightClaims = new Set(right.researchThemes.map((theme) => theme.claimType));
+    const leftOnly = [...leftClaims].filter((c) => !rightClaims.has(c)).sort();
+    const rightOnly = [...rightClaims].filter((c) => !leftClaims.has(c)).sort();
+    const leftOnlyThemes = left.researchThemes.filter((theme) => leftOnly.includes(theme.claimType));
+    const rightOnlyThemes = right.researchThemes.filter((theme) => rightOnly.includes(theme.claimType));
+    const sameClaimOwnedCanonicalCopy = leftOnlyThemes.length === 1 &&
+      rightOnlyThemes.length === 1 &&
+      leftOnlyThemes[0].canonicalTextFingerprint !== null &&
+      leftOnlyThemes[0].canonicalTextFingerprint === rightOnlyThemes[0].canonicalTextFingerprint;
+    return {
+      left: pair.left, right: pair.right,
+      sameClaimOwnedCanonicalCopy,
+      differentResearchThemeClaims: leftOnly.length > 0 || rightOnly.length > 0,
+      leftOnlyResearchT8: leftOnly, rightOnlyResearchT8: rightOnly,
+      sameConsumerMeaning: left.consumerMeaningFingerprint === right.consumerMeaningFingerprint,
+      sourceToParagraphMappingProven: false,
+      disposition: 'RESEARCH_MEANING_HOLD_PENDING_SOURCE_AND_PREVIEW_ADMISSION',
+    };
+  });
+  if (n8PairTraces.length !== 3 ||
+      n8PairTraces.some((pair) =>
+        !pair.differentResearchThemeClaims || !pair.sameConsumerMeaning ||
+        !pair.sameClaimOwnedCanonicalCopy)) {
+    throw new Error('N8 three-case collision baseline changed; reassess source and admission.');
+  }
+  const n8 = {
+    version: 'saju-natal-n8-claim-semantic-plan-render-audit-v1',
+    lifecycle: 'internal_quality_audit',
+    mayPublish: false, maySell: false,
+    mayPromoteResearchMeaning: false,
+    explicitThemePreviewAdmission: 'none',
+    sourceToParagraphMappingProven: false,
+    cases: n8Traces,
+    pairs: n8PairTraces,
+    limitations: [
+      'Research T8 matched claims are not independently admitted Preview semantics.',
+      'The three paired Research T8 claims reach profile, canonical unit and plan but share the same claim-owned canonical copy across distinct channels.',
+      'Selected/plan-contained claims do not prove their channel difference has an approved interpretation.',
+      'Renderer report hashes may contain identities; same visible consumer meaning is separately measured by N6.',
+      'No claim-to-paragraph identity is asserted by this trace.',
+      'No strengthening, fortune, prediction, or Production interpretation is inferred.',
+    ],
+  };
+  const n8Path = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0, -5) + '.n8-trace.json'
+    : outputPath + '.n8-trace.json');
+  writeFileSync(n8Path, JSON.stringify(n8, null, 2) + '\n', 'utf8');
+  process.stdout.write(`Natal N8: ${n8.pairs.length} distinct-Research-claim / identical-meaning pairs traced without semantic promotion; ${n8Path}\n`);
+
   const repeatedPairs = oldCollisions;
   const n4 = {
     version: 'saju-natal-n4-applied-context-regression-v1',
