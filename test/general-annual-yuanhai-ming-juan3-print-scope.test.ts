@@ -34,6 +34,7 @@ import {
   YUANHAI_JINTUO_WYG_FOLIO_AND_OCR_CONSISTENCY_AUDIT,
   YUANHAI_1582_TIANJI_OCR_TEXTUAL_PARALLEL_AUDIT,
   YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT,
+  YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
   YUANHAI_JUAN3_TEXTUAL_DISAGREEMENTS,
   YUANHAI_JUAN3_PRINT_SCOPE_UNRESOLVED,
@@ -838,6 +839,40 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     expect(scope.preQingJintuoPrintedOriginalCandidates.confirmedMaterialPrintedBirthDateWitnessesAdded).toBe(0);
     expect(scope.authority.historicalYuefeiBirthHourVerified).toBe(false);
     expect(scope.modernInterpretationClaim).toBeNull();
+  });
+
+  test('1600 Li Qin/Qinfu catalog authority collision is not direct original-glyph or person identity evidence', () => {
+    const a = YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT;
+    expect(a.nlcCatalog).toMatchObject({
+      bookId: 'NLC892-2642-210287', displayedAuthor: '〔元〕李欽夫撰',
+      evidenceTier: 'C_catalog_attribution', printedTitleGlyphsDirectlyCheckedThisPass: false,
+    });
+    expect(a.linkedOcr).toMatchObject({
+      bookId: 'NGJ8922642210287', metadataAuthor: '[元] 李欽夫 撰',
+      authorityNameObservedInTranscription: '李欽',
+      internalInscriptionOne: '欽天監曰承德郎李欽',
+      internalInscriptionTwo: '欽天監丨承德郎李欽',
+      claimedPrintedOfficePrefixAuthenticated: false,
+      duplicateOcrLinesIndependentPhysicalWitnesses: false,
+      originalInscriptionVisuallyReadThisPass: false,
+    });
+    expect(a.taiwanMuseumCatalog).toMatchObject({
+      archiveRange: '平圖020000–020003',
+      authorAttribution: '明 李欽 撰', books: 4,
+      nlcAndNpmSameSettingProved: false,
+    });
+    expect(a.resolution).toMatchObject({
+      liQinfuAndLiQinSameHistoricalPersonProved: false,
+      liQinfuAndLiQinDifferentHistoricalPersonsProved: false,
+      catalogedAuthorAndInscribedEditorSameRoleProved: false,
+      directlyCollatedNlcBookOneOrNpmTitleLeaf: false,
+      addedIndependentPrintedFocalGlyphs: 0,
+      pre1600PrintedFocalGlyphsAuthenticated: 0,
+      earlyTextArchetypeAdjudicated: false,
+      yuefeiHistoricalBirthHourAuthenticated: false,
+      modernAnnualRulesApproved: 0, productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().liqinLiqinfu1600AuthorityCollisionAudit).toEqual(a);
   });
 
   test('1582/1600 aligned C-tier phrases never count as independent A-grade leaves or authority votes', () => {

@@ -1933,6 +1933,54 @@ export const YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT = Object.freeze
   productPromotionAuthorized: false as const,
 });
 
+
+/**
+ * Catalog attribution != OCR inscription != verified historical person.
+ * Authority collisions must not promote printed glyphs or source age.
+ */
+export const YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT = Object.freeze({
+  work: '刻京臺增補淵海子平大全' as const,
+  nlcCatalog: Object.freeze({
+    bookId: 'NLC892-2642-210287' as const,
+    displayedAuthor: '〔元〕李欽夫撰' as const,
+    evidenceTier: 'C_catalog_attribution' as const,
+    printedTitleGlyphsDirectlyCheckedThisPass: false as const,
+  }),
+  linkedOcr: Object.freeze({
+    bookId: 'NGJ8922642210287' as const,
+    metadataAuthor: '[元] 李欽夫 撰' as const,
+    internalInscriptionOne: '欽天監曰承德郎李欽' as const,
+    internalInscriptionTwo: '欽天監丨承德郎李欽' as const,
+    printerOne: '閩𦊱林喬山堂劉大易繡梓' as const,
+    printerTwo: '閩書林喬山堂劉大易繡梓' as const,
+    authorityNameObservedInTranscription: '李欽' as const,
+    claimedPrintedOfficePrefixAuthenticated: false as const,
+    duplicateOcrLinesIndependentPhysicalWitnesses: false as const,
+    originalInscriptionVisuallyReadThisPass: false as const,
+    evidenceTier: 'B_candidate_print_linked_OCR' as const,
+  }),
+  taiwanMuseumCatalog: Object.freeze({
+    archiveRange: '平圖020000–020003' as const,
+    authorAttribution: '明 李欽 撰' as const,
+    edition: '明萬曆庚子(1600)閩書林劉龍田喬山堂刊本' as const,
+    books: 4 as const,
+    evidenceTier: 'C_catalog_attribution' as const,
+    nlcAndNpmSameSettingProved: false as const,
+  }),
+  resolution: Object.freeze({
+    liQinfuAndLiQinSameHistoricalPersonProved: false as const,
+    liQinfuAndLiQinDifferentHistoricalPersonsProved: false as const,
+    catalogedAuthorAndInscribedEditorSameRoleProved: false as const,
+    directlyCollatedNlcBookOneOrNpmTitleLeaf: false as const,
+    addedIndependentPrintedFocalGlyphs: 0 as const,
+    pre1600PrintedFocalGlyphsAuthenticated: 0 as const,
+    earlyTextArchetypeAdjudicated: false as const,
+    yuefeiHistoricalBirthHourAuthenticated: false as const,
+    modernAnnualRulesApproved: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -2071,6 +2119,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     jintuoWygFolioAndOcrConsistencyAudit: YUANHAI_JINTUO_WYG_FOLIO_AND_OCR_CONSISTENCY_AUDIT,
     tianji1582OcrTextualParallelAudit: YUANHAI_1582_TIANJI_OCR_TEXTUAL_PARALLEL_AUDIT,
     tianji1582VsWanli1600TextualAlignment: YUANHAI_TIANJI_1582_VS_WANLI_1600_TEXTUAL_ALIGNMENT,
+    liqinLiqinfu1600AuthorityCollisionAudit: YUANHAI_LIQIN_LIQINFU_1600_AUTHORITY_COLLISION_AUDIT,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
     sourceCriticalAudit: Object.freeze({ original1578TargetLeafPhysicallyInspected: true as const, directPrintedCopiesCompared: 2 as const, independentSettingCountVerified: 0 as const, thirdRehostDuplicateNotCounted: true as const, biographicalHourAuthenticated: false as const, productionAuthorized: false as const }),
     verifiedLocalNlcPrint: Object.freeze({
