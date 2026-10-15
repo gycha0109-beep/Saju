@@ -8,6 +8,9 @@ import {
 import { PRODUCT_PREVIEW_READING_HTTP_PATH } from '../dist/production-calculation-host.js';
 import { buildNatalPersonalizationBaselineReport } from '../dist/preview/natal-personalization-baseline.js';
 import { buildNatalRuleDifferentiationReport } from '../dist/preview/natal-rule-differentiation.js';
+import { buildNatalStructuralEvidence } from '../dist/preview/natal-structural-evidence.js';
+import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
+import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../dist/production/production-calculation-runtime.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
@@ -75,6 +78,7 @@ async function main() {
   });
   const inputs = [];
   const researchRuleEvidence = [];
+  const appliedByCaseId = new Map();
   const auditNow = new Date('2026-10-15T00:00:00.000Z');
   const registry = createGeneralNatalIntegratedReadingRegistry(auditNow.toISOString());
   const origin = await listenEphemeral(runtime.server);
@@ -105,14 +109,20 @@ async function main() {
           : { known: true, hour, minute },
         sexForTraditionalCalculation: 'unspecified',
       }, { now: auditNow }).snapshot;
+      const interpretation = runInterpretation(snapshot, registry, {
+        requestId: `n3-quality-audit-${fixture.caseId}`,
+        now: auditNow,
+      });
       researchRuleEvidence.push({
         caseId: fixture.caseId,
         snapshotId: snapshot.snapshotId,
-        interpretation: runInterpretation(snapshot, registry, {
-          requestId: `n3-quality-audit-${fixture.caseId}`,
-          now: auditNow,
-        }),
+        interpretation,
       });
+      const applied = buildNatalAppliedThemeContext(
+        buildNatalStructuralEvidence(snapshot),
+        buildNatalActivatedThemePreview(interpretation),
+      );
+      appliedByCaseId.set(fixture.caseId, applied);
       inputs.push({
         caseId: fixture.caseId,
         birthLabel: `${fixture.birth.date} ${fixture.birth.time ?? 'unknown-time'}`,
@@ -126,6 +136,36 @@ async function main() {
   const report = buildNatalPersonalizationBaselineReport(inputs);
   writeFileSync(outputPath, JSON.stringify(report, null, 2) + '\n', 'utf8');
   const n3 = buildNatalRuleDifferentiationReport(report, researchRuleEvidence);
+  const repeatedPairs = report.contrasts.filter((pair) =>
+    pair.kind === 'different_facts_same_interpretation');
+  const n4 = {
+    version: 'saju-natal-n4-applied-context-regression-v1',
+    lifecycle: 'internal_quality_audit',
+    mayPublish: false,
+    maySell: false,
+    caseCount: inputs.length,
+    previousRepeatedPairs: repeatedPairs.length,
+    contextualizedPairs: repeatedPairs.filter((pair) =>
+      appliedByCaseId.get(pair.left)?.chartSpecificThemeFingerprint !==
+      appliedByCaseId.get(pair.right)?.chartSpecificThemeFingerprint).length,
+    cases: [...appliedByCaseId.entries()].map(([caseId, value]) => ({
+      caseId,
+      chartSpecificThemeFingerprint: value.chartSpecificThemeFingerprint,
+      structuralHourPillar: value.structuralHourPillar ?? null,
+      themes: value.statements.map((statement) => ({
+        headline: statement.headline,
+        channel: statement.channel,
+        actualPositions: statement.positions.map((position) => position.display),
+        claimSources: statement.sourceRuleIds,
+      })),
+    })),
+  };
+  const n4OutputPath = resolve(process.argv[4] ??
+    (outputPath.endsWith('.json')
+      ? outputPath.slice(0, -5) + '.context.json'
+      : outputPath + '.context.json'));
+  writeFileSync(n4OutputPath, JSON.stringify(n4, null, 2) + '\\n', 'utf8');
+  process.stdout.write(`Natal N4: ${n4.contextualizedPairs}/${n4.previousRepeatedPairs} formerly identical copy pairs have different source-bound theme positions; ${n4OutputPath}\\n`);
   const n3OutputPath = resolve(process.argv[3] ??
     (outputPath.endsWith('.json')
       ? outputPath.slice(0, -5) + '.rules.json'
