@@ -1,12 +1,8 @@
 # Public, unauthenticated, bounded original-image discovery only.
 # This probe never promotes catalog records or thumbnails to A-grade source evidence.
 name: "[WT:saju] Shanghai Ming Original Image Probe"
+# Manual opt-in: avoid rerunning a blocked institution website on future research commits.
 on:
-  pull_request:
-    branches:
-      - research/saju/annual-yuanhai-three-layer-case-witness
-    paths:
-      - .github/workflows/saju-shanghai-ming-original-image-probe.yml
   workflow_dispatch:
 permissions:
   contents: read
