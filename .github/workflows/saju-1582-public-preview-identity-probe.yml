@@ -58,12 +58,17 @@ jobs:
               else: info["access_limited_or_unavailable"]=True
             except Exception as e:info["error"]=str(e)[:400]
             report["checks"].append(info)
-          possible=[exact]
+          # Prefer actual article facsimile preview files over logos and related products.
+          gallery=[]
           for row in report["checks"]:
-            if "same_domain_images" not in row:continue
-            for item in row["same_domain_images"][:7]:
-              if item["url"] not in possible:possible.append(item["url"])
-          for idx,url in enumerate(possible[:14]):
+            if "same_domain_images" not in row: continue
+            for item in row["same_domain_images"]:
+              u=item["url"]
+              if "gujicangshuge.com/wp-content/uploads/2025/08/20250821" in u and u not in gallery:
+                gallery.append(u)
+          possible=[exact]+gallery[:12]
+          report["gallery_candidate_count"]=len(gallery)
+          for idx,url in enumerate(possible[:13]):
             info={"kind":"preview_image","url":url}
             try:
               hdr={"Referer":f"https://{urlsplit(url).netloc}/"}
