@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v26' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-shoryobu-holding-v27' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2148,6 +2148,46 @@ export const YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT = Object.freeze({
   }),
 });
 
+/** Official Kunaicho holding record: metadata only, no 1582 focal print inspected. */
+export const YUANHAI_KUNAICHO_SHORYOBU_1582_CATALOG_HOLDING_AUDIT = Object.freeze({
+  source: Object.freeze({
+    institution: '宮内庁書陵部 図書寮文庫' as const,
+    recordUrl: 'https://shoryobu.kunaicho.go.jp/Toshoryo/Detail/1000150900000?archive=Toshoryo&hasdetail=True&index=45845&searchtype=Category&sort=Title' as const,
+    shelfNumber: '217・35' as const,
+    branchNumber: '0000' as const,
+    catalogTitle: '星学綱目正伝（２１巻・首２巻・総括図３巻）' as const,
+    attributedCompiler: '明 楊宗' as const,
+    editionNote: '明版, 明 万暦１０年, 金陵饒氏' as const,
+    provenance: '徳山毛利本' as const,
+    mainJuan: 21 as const,
+    frontJuan: 2 as const,
+    generalDiagramJuan: 3 as const,
+    countValue: 12 as const,
+    countUnit: '点数' as const,
+    publicImageField: '-' as const,
+    reproductionField: '-' as const,
+    readingApplicationPresent: true as const,
+    catalogRecordDirectlyRead: true as const,
+    sourceTier: 'C_official_holding_catalog_not_ming_print' as const,
+  }),
+  unresolved: Object.freeze({
+    shanghaiSecondaryFrontJuanCount: 1 as const,
+    shanghaiSecondaryCountTier: 'C_derivative_catalog' as const,
+    wangWenyuan22Juan12BooksCompared: true as const,
+    shoryobu12ItemsEqualsWang12BooksProved: false as const,
+    yangZongEqualsYangCongProved: false as const,
+    jinlingRaoEqualsRaoJinxiSettingProved: false as const,
+    exactOriginalJuanThreePhysicalBookIdentified: false as const,
+    volumeCountDiscrepancyExplained: false as const,
+    original1582JuanThreePrintInspected: false as const,
+    publiclyAvailableFocalOriginalScanVerified: false as const,
+    newWeiWoodGlyphsRead: 0 as const,
+    newIndependentPrintSettingCount: 0 as const,
+    modernAnnualMeaningRulesApproved: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 /** The directly inspected printed Wang Wenyuan / Ye Dehui catalog page proves only its 22-juan description. */
 export const YUANHAI_XIAOCITANG_22_JUAN_PRINTED_CATALOG_AUDIT = Object.freeze({
   source: Object.freeze({
@@ -2641,6 +2681,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     moyouzhiRenwuPrintedBibliography: YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO,
     chineseRareBook1994PrintedCatalogAudit: YUANHAI_1994_CHINESE_RARE_BOOK_CATALOG_PRINT_AUDIT,
     wangWenyuanXiaocitang22JuanPrintedCatalogAudit: YUANHAI_XIAOCITANG_22_JUAN_PRINTED_CATALOG_AUDIT,
+    kunaichoShoryobu1582CatalogHoldingAudit: YUANHAI_KUNAICHO_SHORYOBU_1582_CATALOG_HOLDING_AUDIT,
     naj2021ScheduledReproductionInventory: YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
     yangcongTitleLeafReproductionAudit: YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,

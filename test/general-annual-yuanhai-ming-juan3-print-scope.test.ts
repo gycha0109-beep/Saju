@@ -44,6 +44,7 @@ import {
   YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO,
   YUANHAI_1994_CHINESE_RARE_BOOK_CATALOG_PRINT_AUDIT,
   YUANHAI_XIAOCITANG_22_JUAN_PRINTED_CATALOG_AUDIT,
+  YUANHAI_KUNAICHO_SHORYOBU_1582_CATALOG_HOLDING_AUDIT,
   YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
   YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
@@ -1882,6 +1883,51 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       printedOriginalHourStemVerified: false,
       newPrintedWitnessCredit: 0,
     });
+  });
+
+  test('Kunaicho Shoryobu 21+2+3 catalog metadata does not solve 22-juan or 1582 woodblock', () => {
+    const q = YUANHAI_KUNAICHO_SHORYOBU_1582_CATALOG_HOLDING_AUDIT;
+    expect(q.source).toMatchObject({
+      institution: '宮内庁書陵部 図書寮文庫',
+      shelfNumber: '217・35',
+      branchNumber: '0000',
+      mainJuan: 21,
+      frontJuan: 2,
+      generalDiagramJuan: 3,
+      countValue: 12,
+      countUnit: '点数',
+      attributedCompiler: '明 楊宗',
+      provenance: '徳山毛利本',
+      publicImageField: '-',
+      reproductionField: '-',
+      readingApplicationPresent: true,
+      catalogRecordDirectlyRead: true,
+      sourceTier: 'C_official_holding_catalog_not_ming_print',
+    });
+    expect(q.source.recordUrl).toContain('Detail/1000150900000');
+    expect(q.unresolved).toMatchObject({
+      shanghaiSecondaryFrontJuanCount: 1,
+      shanghaiSecondaryCountTier: 'C_derivative_catalog',
+      wangWenyuan22Juan12BooksCompared: true,
+      shoryobu12ItemsEqualsWang12BooksProved: false,
+      yangZongEqualsYangCongProved: false,
+      jinlingRaoEqualsRaoJinxiSettingProved: false,
+      exactOriginalJuanThreePhysicalBookIdentified: false,
+      volumeCountDiscrepancyExplained: false,
+      original1582JuanThreePrintInspected: false,
+      publiclyAvailableFocalOriginalScanVerified: false,
+      newWeiWoodGlyphsRead: 0,
+      newIndependentPrintSettingCount: 0,
+      modernAnnualMeaningRulesApproved: 0,
+      productionAuthorized: false,
+    });
+    const scope = buildYuanHaiMingJuan3PrintScope();
+    expect(scope.kunaichoShoryobu1582CatalogHoldingAudit).toBe(q);
+    expect(scope.independentlyCollatedPrintedWitnessCount).toBe(2);
+    expect(scope.directlyInspectedScanDocumentsCount).toBe(3);
+    expect(scope.authority.preWanliOriginalGlyphVerified).toBe(false);
+    expect(scope.adjudicatedPrintedGlyph).toBeNull();
+    expect(scope.modernInterpretationClaim).toBeNull();
   });
 
   test('Wang Wenyuan printed catalog 22 juan is genuine bibliographic variance but not a new Ming woodblock', () => {
