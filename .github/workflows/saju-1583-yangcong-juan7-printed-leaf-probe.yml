@@ -1,11 +1,7 @@
 # Public historical illustration retrieval only; neither dating nor origin is auto-certified.
 name: "[WT:saju] 1583 Yangcong Juan7 Printed Leaf Probe"
+# One-shot probe succeeded; repeat only by explicit manual dispatch.
 on:
-  pull_request:
-    branches:
-      - research/saju/annual-yuanhai-three-layer-case-witness
-    paths:
-      - .github/workflows/saju-1583-yangcong-juan7-printed-leaf-probe.yml
   workflow_dispatch:
 permissions:
   contents: read
