@@ -63,7 +63,7 @@ describe('N14 source-bounded two-edge T8 research co-observation',()=>{
      expect(witness.positions.length).toBeGreaterThan(0);
      for (const position of witness.positions) {
        expect(p.observedPositionFacts).toContain(position.factPath+':'+position.tenGod);
-       expect(position.factPath).toMatch(/^derivedFacts\\.tenGods\\.(?:year|month|day|hour)\\.(?:stem|branch)$/u);
+       expect(position.factPath).toMatch(/^derivedFacts\.tenGods\.(?:year|month|day|hour)\.(?:stem|branch)$/u);
        expect(p.text).toContain(position.display);
      }
    }
