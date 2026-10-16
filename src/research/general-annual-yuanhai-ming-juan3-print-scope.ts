@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v21' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v22' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2104,6 +2104,50 @@ export const YUANHAI_PRINT_20261015_SOURCE_BYTES_AND_ACCESS_GATES = Object.freez
 });
 
 
+/** 2017 printed title-leaf reproduction, not authenticated Ming original or target Juan3. */
+export const YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT = Object.freeze({
+  sourceArticle: Object.freeze({
+    url: 'https://kknews.cc/culture/k8z36op.html' as const,
+    publicationDate: '2017-02-24' as const,
+    sourceCaptionDescribes: '楊淙星學綱目正傳萬曆十一年卷七五行元理消息賦' as const,
+    originalPhotoUrl: 'https://i1.kknews.cc/BbxVdn5I97qj9KJCg8V2AC7G1eJiQJrRoc_vgYE/0.jpg' as const,
+    imageHttpVerified: 200 as const,
+    downloadedJpegBytes: 68118 as const,
+    downloadedJpegSha256: '1efbf61429ff8f661fef4e24f3c99a4d1ebf791fabed9287749066e9f8ab0f70' as const,
+    dimensions: Object.freeze([640, 854] as const),
+  }),
+  directlyVisibleTitleLeaf: Object.freeze({
+    printedBookTitle: '星學綱目正傳' as const,
+    printedCommissionOrCompiler: '清江楊竹亭先生纂訂' as const,
+    printedWorkshopInscription: '聚奎齋梓' as const,
+    sourceType: 'reproduced_printed_title_leaf_in_2017_secondary_article' as const,
+    titleLeafImageIsOriginalJuanSevenBodyPage: false as const,
+    titleLeafImageIsTargetJuanThreeLeaf: false as const,
+    originalPhysicalHoldingVerified: false as const,
+    originalPrintedImpressionYearRead: false as const,
+    printingWoodblockIdentificationVerified: false as const,
+    matchesShanghaiCatalogWorkshopTextCandidateOnly: true as const,
+    evidenceTier: 'B_photo_of_print_provenance_unverified' as const,
+  }),
+  datingCollision: Object.freeze({
+    historicalCatalogWanliYear: 10 as const,
+    historicalCatalogGregorianYear: 1582 as const,
+    modernArticleWanliYear: 11 as const,
+    modernArticleWanliElevenGregorianYear: 1583 as const,
+    anotherModernEditorialPhrase: '萬曆十一年西元一五八二年' as const,
+    contradictoryDatesAreTwoEstablishedPrintedEditions: false as const,
+    catalog1600AndLaterImpressionsDateComparedFromThisPhoto: false as const,
+  }),
+  safeguards: Object.freeze({
+    independent1582OriginalFocalLeafAdded: 0 as const,
+    newlyCollatedUnOrMuOriginalGlyphs: 0 as const,
+    printedWeiMuArchetypeIdentified: false as const,
+    historicalYuefeiJiSiHourAuthenticated: false as const,
+    modernAnnualRulesApproved: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 /** 1934 Sonkeikaku catalog is a bibliographic holding lead, never a focal original print. */
 export const YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE = Object.freeze({
   catalogPrint: Object.freeze({
@@ -2310,6 +2354,9 @@ export function buildYuanHaiMingJuan3PrintScope() {
     prior.authority.productionAuthorized ||
     books.length !== 2 ||
     additions.length !== 2 ||
+    YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT.safeguards.newlyCollatedUnOrMuOriginalGlyphs !== 0 ||
+    YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT.safeguards.independent1582OriginalFocalLeafAdded !== 0 ||
+    YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT.safeguards.productionAuthorized ||
     YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE.originalMingWitness.newlyAuthenticatedPre1600WeiOrMuGlyphs !== 0 ||
     YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE.originalMingWitness.focalLeafAndOriginalGlyphDirectlyInspected ||
     YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE.originalMingWitness.productionAuthorized ||
@@ -2464,6 +2511,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     housa1582AndToyoCopyAudit: YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
     shanghai1582ModernEditorialRoute: YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
     sonkeikaku1582CatalogRoute: YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE,
+    yangcongTitleLeafReproductionAudit: YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
     nlc1600DirectFacsimileAccess: YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,
     original1578CriticalEditorialRoute: YUANHAI_SANMING_1578_CRITICAL_EDITORIAL_ROUTE,
