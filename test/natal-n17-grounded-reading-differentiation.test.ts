@@ -4,6 +4,9 @@ import type { ProductReadingResponse } from '../src/reading/product-reading-resp
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/production/production-calculation-runtime.js';
 import { buildNatalStructuralEvidence } from '../src/preview/natal-structural-evidence.js';
 import { buildNatalN17DifferentiationAudit } from '../src/preview/natal-grounded-reading-differentiation.js';
+import { buildNatalN16GroundedReaderBrief } from '../src/preview/natal-grounded-reader-brief.js';
+import { attachGeneralNatalCalculatedContext } from '../src/preview/general-natal-consumer-fact-context.js';
+import { attachGeneralNatalCalculatedRoleObservation } from '../src/preview/general-natal-consumer-role-observation.js';
 
 const now = new Date('2026-10-16T00:00:00.000Z');
 function snapshot(day: number, known = true): CanonicalSajuSnapshot {
@@ -99,6 +102,61 @@ describe('N17 real chart structure vs bounded Preview text', () => {
     expect(audit.comparisonsWithMissingReading).toBe(4);
     expect(audit.pairs).toHaveLength(10);
     expect(buildNatalN17DifferentiationAudit([...entries].reverse())).toEqual(audit);
+  });
+
+  it('does not mistake real N5/N7 chart-specific factual paragraphs for different interpretations', () => {
+    const a = snapshot(10);
+    const b = snapshot(11);
+    const withFacts = (snap: CanonicalSajuSnapshot, id: string) =>
+      attachGeneralNatalCalculatedRoleObservation(
+        attachGeneralNatalCalculatedContext(reading(snap, id, '같은 범위 제한 풀이 본문')),
+        snap,
+      );
+    const first = withFacts(a, 'a-facts');
+    const second = withFacts(b, 'b-facts');
+    const brief = buildNatalN16GroundedReaderBrief(a, [
+      { domain: 'general', response: first },
+    ]);
+    expect(brief.interpretationTextUnitCount).toBe(1);
+    expect(brief.calculatedContextTextUnitCount).toBe(2);
+    expect(brief.readingUnits.filter((u) => u.kind === 'calculated_chart_context'))
+      .toHaveLength(2);
+    expect(brief.readingUnits.find((u) =>
+      u.kind === 'existing_preview_interpretation')?.text).toBe('같은 범위 제한 풀이 본문');
+    const audit = buildNatalN17DifferentiationAudit([
+      { caseId: 'a', snapshot: a, sources: [{ domain: 'general', response: first }] },
+      { caseId: 'b', snapshot: b, sources: [{ domain: 'general', response: second }] },
+    ]);
+    expect(audit.cases.map((entry) => entry.readingUnitCount)).toEqual([1, 1]);
+    expect(audit.cases.map((entry) => entry.calculatedContextUnitCount)).toEqual([2, 2]);
+    expect(audit.pairs[0]).toMatchObject({
+      disposition: 'DIFFERENT_STRUCTURE_SAME_TEXT_COLLISION',
+      identicalReadingText: true,
+      substantiveMeaningDifferenceEstablished: false,
+    });
+  });
+
+  it('marks absent interpretive text as missing evidence, not a same-text collision', () => {
+    const a = snapshot(10, false);
+    const b = snapshot(11, false);
+    const audit = buildNatalN17DifferentiationAudit([
+      { caseId: 'a', snapshot: a, sources: [{ domain: 'general', response: partial }] },
+      { caseId: 'b', snapshot: b, sources: [{ domain: 'general', response: partial }] },
+    ]);
+    expect(audit.comparisonsWithMissingReading).toBe(1);
+    expect(audit.differentStructureSameTextPairs).toBe(0);
+    expect(audit.pairs[0]).toMatchObject({
+      disposition: 'MISSING_INTERPRETATION_EVIDENCE',
+      substantiveMeaningDifferenceEstablished: false,
+    });
+  });
+
+  it('rejects a spoofed calculated-only marker instead of silently concealing interpretation', () => {
+    const a = snapshot(10);
+    const malformed = reading(a, 'spoof', '이 사주풀이가 실제로 참조한 명식은 개인의 직업 성공을 보증합니다.');
+    expect(() => buildNatalN16GroundedReaderBrief(a, [
+      { domain: 'general', response: malformed },
+    ])).toThrow(/unrecognized N5/u);
   });
 
   it('fails closed for repeated case identity or reading belonging to another person', () => {

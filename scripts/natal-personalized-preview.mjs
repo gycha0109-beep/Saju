@@ -151,13 +151,15 @@ function renderAppliedThemeContext(context) {
 
 function renderGroundedReaderBrief(brief) {
   const byId = new Map(brief.readingUnits.map((u) => [u.unitId, u]));
+  const meaningUnitIds = new Set(brief.readingUnits.filter((u) =>
+    u.kind === 'existing_preview_interpretation').map((u) => u.unitId));
   const shown = new Set();
   const contexts = brief.context.map((item) =>
     '<section class="interpretation"><h3>' + escapeHtml(item.title) + '</h3>' +
     '<p>' + escapeHtml(item.text) + '</p><details><summary>계산 근거</summary><p>' +
     escapeHtml(item.factPaths.join(' · ')) + '</p></details></section>').join('');
   const domainsHtml = brief.domains.map((domain) => {
-    const units = domain.unitIds.map((id) => {
+    const units = domain.unitIds.filter((id) => meaningUnitIds.has(id)).map((id) => {
       const unit = byId.get(id);
       if (!unit) throw new TypeError('N16 missing referenced reading text unit: ' + id);
       if (shown.has(id)) {
@@ -170,20 +172,29 @@ function renderGroundedReaderBrief(brief) {
       return '<li>' + escapeHtml(unit.text) +
         '<details><summary>실제 응답 출처</summary><p>' + escapeHtml(refs) + '</p></details></li>';
     }).join('');
+    const calculated = domain.unitIds.filter((id) => !meaningUnitIds.has(id)).map((id) => {
+      const unit = byId.get(id);
+      if (!unit) throw new TypeError('N18 missing calculated text provenance: ' + id);
+      return '<li>' + escapeHtml(unit.text) + '</li>';
+    }).join('');
     return '<section class="interpretation"><h3>' + escapeHtml(domain.title) +
       ' <small>' + escapeHtml(domain.responseState) + '</small></h3>' +
       (units.length ? '<ul>' + units + '</ul>' :
         '<p class="limited">현재 전달된 풀이 본문이 없습니다. 근거가 없는 내용을 채우지 않습니다.</p>') +
+      (calculated ? '<details><summary>계산 사실만 설명한 기존 문장 (풀이 내용으로 세지 않음)</summary><ul>' +
+        calculated + '</ul></details>' : '') +
       (domain.disclosures.length ? '<details><summary>해석 범위 안내</summary>' +
         domain.disclosures.map(x => '<p>' + escapeHtml(x) + '</p>').join('') + '</details>' : '') +
       '</section>';
   }).join('');
   return '<section class="domain"><div class="domain-heading"><h2>내 사주를 한 장으로 읽기</h2>' +
     '<span>N16 내부 Preview 정리</span></div>' +
-    '<p class="limited">기존 다섯 분야의 실제 답변을 그대로 묶었습니다. 중복 문장은 한 번만 표시하며 새 해석은 만들지 않습니다.</p>' +
+    '<p class="limited">기존 다섯 분야의 실제 답변을 그대로 묶었습니다. 명식 계산 사실과 실제 풀이 본문을 구별하며 새 해석은 만들지 않습니다.</p>' +
     contexts +
     '<p class="limited">원문 설명 ' + brief.totalOriginalTextUnitCount + '개 · 서로 다른 설명 ' +
-    brief.uniqueTextUnitCount + '개 · 중복 출현 ' + brief.exactRepeatedTextCount + '회</p>' +
+    brief.uniqueTextUnitCount + '개 · 풀이 본문 ' + brief.interpretationTextUnitCount +
+    '개 · 계산 설명 ' + brief.calculatedContextTextUnitCount +
+    '개 · 중복 출현 ' + brief.exactRepeatedTextCount + '회</p>' +
     domainsHtml +
     '<details><summary>한계와 사용 범위</summary>' +
     brief.limitations.map(x => '<p>' + escapeHtml(x) + '</p>').join('') + '</details></section>';

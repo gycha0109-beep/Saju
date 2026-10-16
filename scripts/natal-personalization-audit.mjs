@@ -164,8 +164,9 @@ async function main() {
   process.stdout.write(
     'Natal N17: ' + n17.cases.length + ' actual HTTP cases, ' +
     n17.differentStructureSameTextPairs + ' different-chart same-text pairs, ' +
-    n17.differentStructureDifferentTextPairs + ' different-chart different-text pairs ' +
-    '(meaning UNVERIFIED); ' + n17Path + '\n',
+    n17.differentStructureDifferentTextPairs + ' different-chart different-meaning-text pairs ' +
+    '(meaning UNVERIFIED), ' + n17.comparisonsWithMissingReading +
+    ' pairs missing interpretation; calculation-only context excluded; ' + n17Path + '\n',
   );
 
   const { consumer: report, meaning: meaningReport, quality: meaningQuality } =

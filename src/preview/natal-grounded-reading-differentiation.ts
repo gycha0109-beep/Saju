@@ -21,6 +21,7 @@ export interface NatalN17Case {
   readingTextFingerprint: string;
   birthTimeKnown: boolean;
   readingUnitCount: number;
+  calculatedContextUnitCount: number;
   availableDomains: readonly string[];
   textUnitIds: readonly string[];
 }
@@ -29,7 +30,8 @@ export type NatalN17PairDisposition =
   | 'SAME_STRUCTURE_SAME_TEXT'
   | 'SAME_STRUCTURE_DIFFERENT_TEXT_REVIEW'
   | 'DIFFERENT_STRUCTURE_SAME_TEXT_COLLISION'
-  | 'DIFFERENT_STRUCTURE_DIFFERENT_TEXT_UNVERIFIED';
+  | 'DIFFERENT_STRUCTURE_DIFFERENT_TEXT_UNVERIFIED'
+  | 'MISSING_INTERPRETATION_EVIDENCE';
 
 export interface NatalN17CasePair {
   left: string;
@@ -90,7 +92,10 @@ export function buildNatalN17DifferentiationAudit(
       birthTimeKnown: evidence.birthTimeKnown,
       calculationPolicyId: evidence.calculationPolicyId,
     });
-    const textUnitIds = brief.readingUnits.map((unit) => unit.unitId).sort();
+    const interpretiveUnits = brief.readingUnits.filter((unit) =>
+      unit.kind === 'existing_preview_interpretation');
+    const textUnitIds = interpretiveUnits.map((unit) => unit.unitId).sort();
+    const interpretationIds = new Set(textUnitIds);
     return {
       caseId,
       snapshotId: snapshot.snapshotId,
@@ -98,8 +103,10 @@ export function buildNatalN17DifferentiationAudit(
       structuralFingerprint,
       readingTextFingerprint: deterministicContentHash(textUnitIds),
       birthTimeKnown: brief.birthTimeKnown,
-      readingUnitCount: brief.uniqueTextUnitCount,
-      availableDomains: brief.domains.filter((d) => d.readingAvailable).map((d) => d.domain),
+      readingUnitCount: interpretiveUnits.length,
+      calculatedContextUnitCount: brief.calculatedContextTextUnitCount,
+      availableDomains: brief.domains.filter((d) =>
+        d.unitIds.some((id) => interpretationIds.has(id))).map((d) => d.domain),
       textUnitIds,
     };
   }).sort((a, b) => a.caseId.localeCompare(b.caseId));
@@ -114,10 +121,12 @@ export function buildNatalN17DifferentiationAudit(
       const a = new Set(left.textUnitIds);
       const b = new Set(right.textUnitIds);
       const commonReadingUnitCount = left.textUnitIds.filter((id) => b.has(id)).length;
-      const disposition: NatalN17PairDisposition = identicalStructure
-        ? identicalReadingText ? 'SAME_STRUCTURE_SAME_TEXT' : 'SAME_STRUCTURE_DIFFERENT_TEXT_REVIEW'
-        : identicalReadingText ? 'DIFFERENT_STRUCTURE_SAME_TEXT_COLLISION'
-          : 'DIFFERENT_STRUCTURE_DIFFERENT_TEXT_UNVERIFIED';
+      const disposition: NatalN17PairDisposition = left.readingUnitCount === 0 || right.readingUnitCount === 0
+        ? 'MISSING_INTERPRETATION_EVIDENCE'
+        : identicalStructure
+          ? identicalReadingText ? 'SAME_STRUCTURE_SAME_TEXT' : 'SAME_STRUCTURE_DIFFERENT_TEXT_REVIEW'
+          : identicalReadingText ? 'DIFFERENT_STRUCTURE_SAME_TEXT_COLLISION'
+            : 'DIFFERENT_STRUCTURE_DIFFERENT_TEXT_UNVERIFIED';
       pairs.push({
         left: left.caseId,
         right: right.caseId,
@@ -147,15 +156,14 @@ export function buildNatalN17DifferentiationAudit(
       p.disposition === 'DIFFERENT_STRUCTURE_DIFFERENT_TEXT_UNVERIFIED').length,
     sameStructureDifferentTextPairs: pairs.filter((p) =>
       p.disposition === 'SAME_STRUCTURE_DIFFERENT_TEXT_REVIEW').length,
-    comparisonsWithMissingReading: pairs.filter((p) => {
-      const a = cases.find((c) => c.caseId === p.left)!;
-      const b = cases.find((c) => c.caseId === p.right)!;
-      return a.readingUnitCount === 0 || b.readingUnitCount === 0;
-    }).length,
+    comparisonsWithMissingReading: pairs.filter((p) =>
+      p.disposition === 'MISSING_INTERPRETATION_EVIDENCE').length,
     reviewRequired: true,
     limitations: [
-      '명식 구조 차이와 문장 차이를 각각 측정합니다. 문장만 달라져도 실질적인 명리 해석 차이가 입증되는 것은 아닙니다.',
+      '명식 구조 차이와 문장 차이를 각각 측정합니다. N5/N7 계산 설명은 해석 비교에서 빼고 별도 건수로 기록합니다.',
+      '문장만 달라져도 실질적인 명리 해석 차이가 입증되는 것은 아닙니다.',
       '서로 다른 명식에서 동일한 풀이가 반복되면 검토 대상으로 남깁니다. 같은 구조의 풀이 일치는 실패로 간주하지 않습니다.',
+      '해석 본문이 없는 명식 쌍은 충돌/차별성으로 세지 않고 MISSING_INTERPRETATION_EVIDENCE로 분리합니다.',
       '응답이 없는 명식은 빈 본문 그대로 계산합니다. 출생시간 미상·근거 부족을 임의의 해석으로 채우지 않습니다.',
       'T5/T6/T8의 주장별 승인·원전 근거·독립 심사 및 실제 사람 리뷰는 별도이며, 이 감사가 그 절차를 대체하지 않습니다.',
     ],
