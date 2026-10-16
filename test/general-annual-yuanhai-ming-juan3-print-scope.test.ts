@@ -42,6 +42,7 @@ import {
   YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
   YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE,
   YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO,
+  YUANHAI_1994_CHINESE_RARE_BOOK_CATALOG_PRINT_AUDIT,
   YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
   YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
@@ -54,7 +55,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v24');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v25');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -1880,6 +1881,44 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       printedOriginalHourStemVerified: false,
       newPrintedWitnessCredit: 0,
     });
+  });
+
+  test('1994 Chinese catalog print proves its bibliographic wording, not Ming original glyphs', () => {
+    const q = YUANHAI_1994_CHINESE_RARE_BOOK_CATALOG_PRINT_AUDIT;
+    expect(q.source).toMatchObject({
+      catalogPublicationYear: 1994,
+      scanPdfPageCount: 160,
+      originalDownloadedBytes: 18807757,
+      pdfPageOneBased: 42,
+      printedLocus: 'rightmost vertical entry',
+      printedTitleDirectlyInspected: '新刊京本釐正總括天機星學正傳二十一卷',
+      printedCompilerDirectlyInspected: '明楊淙輯',
+      printedEditionNoteDirectlyInspected: '明萬曆十年饒錦溪刻本',
+      catalogPhysicalPrintDirectlyInspected: true,
+      sourceTier: 'A_later_1994_bibliography_words_only',
+      PDFTextLayerSearchable: false,
+    });
+    expect(q.source.verifiedOriginalPdfSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(q.authorityBoundary).toMatchObject({
+      catalogAttributesOriginalEditionTo1582: true,
+      mingImprintOriginalLeafAuthenticated: false,
+      holdingLibraryNamedInThisPrintedEntry: false,
+      sichuanHoldingConnectedToThisPrintedEntryByPhysicalCallmark: false,
+      sichuan1582FacsimilePubliclyAccessibleConfirmed: false,
+      ming1582JuanThreeOriginalLeavesInspected: 0,
+      newlyInspectedMingFocalGlyphs: 0,
+      independentMingPrintedWitnessCredit: 0,
+      historicalYuefeiBirthHourAuthenticated: false,
+      modernAnnualMeaningRulesApproved: 0,
+      productionAuthorized: false,
+    });
+    const scope = buildYuanHaiMingJuan3PrintScope();
+    expect(scope.chineseRareBook1994PrintedCatalogAudit).toBe(q);
+    expect(scope.independentlyCollatedPrintedWitnessCount).toBe(2);
+    expect(scope.directlyInspectedScanDocumentsCount).toBe(3);
+    expect(scope.authority.preWanliOriginalGlyphVerified).toBe(false);
+    expect(scope.adjudicatedPrintedGlyph).toBeNull();
+    expect(scope.modernInterpretationClaim).toBeNull();
   });
 
   test('official Japanese 2021 inventory numbers remain unverified print candidates', () => {

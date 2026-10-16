@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v24' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v25' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2148,6 +2148,39 @@ export const YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT = Object.freeze({
   }),
 });
 
+/** A-grade is limited to the physical 1994 printed catalog ENTRY, not the 1582 woodblock. */
+export const YUANHAI_1994_CHINESE_RARE_BOOK_CATALOG_PRINT_AUDIT = Object.freeze({
+  source: Object.freeze({
+    title: '中國古籍善本書目 子部 第3冊' as const,
+    catalogPublicationYear: 1994 as const,
+    publicScanUrl: 'https://commons.wikimedia.org/wiki/File:SSID-13990657_中國古籍善本書目_子部_3.pdf' as const,
+    scanPdfPageCount: 160 as const,
+    originalDownloadedBytes: 18807757 as const,
+    verifiedOriginalPdfSha256: 'e562a7af9c9aac5daf641172110133f8f203cebeb1ebcd1bad4fd515979cf2ab' as const,
+    pdfPageOneBased: 42 as const,
+    printedLocus: 'rightmost vertical entry' as const,
+    printedTitleDirectlyInspected: '新刊京本釐正總括天機星學正傳二十一卷' as const,
+    printedCompilerDirectlyInspected: '明楊淙輯' as const,
+    printedEditionNoteDirectlyInspected: '明萬曆十年饒錦溪刻本' as const,
+    catalogPhysicalPrintDirectlyInspected: true as const,
+    sourceTier: 'A_later_1994_bibliography_words_only' as const,
+    PDFTextLayerSearchable: false as const,
+  }),
+  authorityBoundary: Object.freeze({
+    catalogAttributesOriginalEditionTo1582: true as const,
+    mingImprintOriginalLeafAuthenticated: false as const,
+    holdingLibraryNamedInThisPrintedEntry: false as const,
+    sichuanHoldingConnectedToThisPrintedEntryByPhysicalCallmark: false as const,
+    sichuan1582FacsimilePubliclyAccessibleConfirmed: false as const,
+    ming1582JuanThreeOriginalLeavesInspected: 0 as const,
+    newlyInspectedMingFocalGlyphs: 0 as const,
+    independentMingPrintedWitnessCredit: 0 as const,
+    historicalYuefeiBirthHourAuthenticated: false as const,
+    modernAnnualMeaningRulesApproved: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 /** Actual scan of a later printed bibliography: A for its own words, C for Ming-edition attribution. */
 export const YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO = Object.freeze({
   source: Object.freeze({
@@ -2571,6 +2604,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     shanghai1582ModernEditorialRoute: YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
     sonkeikaku1582CatalogRoute: YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE,
     moyouzhiRenwuPrintedBibliography: YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO,
+    chineseRareBook1994PrintedCatalogAudit: YUANHAI_1994_CHINESE_RARE_BOOK_CATALOG_PRINT_AUDIT,
     naj2021ScheduledReproductionInventory: YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
     yangcongTitleLeafReproductionAudit: YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
