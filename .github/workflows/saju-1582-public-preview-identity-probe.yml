@@ -1,0 +1,92 @@
+# One-time public preview identity probe; no paywall/login/restricted access.
+# Preview images never authenticate Ming woodblock glyphs automatically.
+name: "[WT:saju] 1582 Public Preview Identity Probe"
+on:
+  pull_request:
+    branches:
+      - research/saju/annual-yuanhai-three-layer-case-witness
+    paths:
+      - .github/workflows/saju-1582-public-preview-identity-probe.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-public-samples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check public seller samples, content types and image dimensions
+        env:
+          OUTPUT_DIR: ${{ runner.temp }}/saju-preview
+        run: |
+          python -m pip install --quiet requests pillow beautifulsoup4
+          mkdir -p "$OUTPUT_DIR"
+          python - <<'PY'
+          from pathlib import Path
+          from urllib.parse import urljoin,urlsplit
+          from io import BytesIO
+          import requests,os,json,hashlib
+          from PIL import Image
+          from bs4 import BeautifulSoup
+          out=Path(os.environ["OUTPUT_DIR"])
+          pages=[
+            "https://www.lushanvip.com/productinfo-628.html",
+            "https://www.gujiwu.cn/yixue/60534.html",
+            "https://gujicangshuge.com/yixuange/41053.html",
+          ]
+          exact="https://www.lushanvip.com/media/20230629/20230629193001P7.jpg"
+          sess=requests.Session()
+          sess.headers.update({"User-Agent":"Mozilla/5.0 (compatible; PublicHistoricalBibliographyResearch/1.0)", "Accept-Language":"zh-CN,zh;q=0.9"})
+          report={"purpose":"public preview seller identity, not direct 1582 original authentication","checks":[],"printed_target_juan3_verified":False,"new_A_grade_glyphs":0}
+          for idx,url in enumerate(pages):
+            info={"kind":"page","url":url}
+            try:
+              r=sess.get(url,timeout=25)
+              info.update({"status":r.status_code,"final_url":r.url,"bytes":len(r.content),"type":r.headers.get("Content-Type","")})
+              if r.status_code==200 and "html" in r.headers.get("Content-Type","").lower():
+                soup=BeautifulSoup(r.text,"html.parser")
+                info["title"]=soup.title.get_text(" ",strip=True)[:180] if soup.title else ""
+                imgs=[]
+                for img in soup.find_all("img"):
+                  candidate=img.get("data-src") or img.get("src") or ""
+                  if candidate:
+                    u=urljoin(r.url,candidate)
+                    if urlsplit(u).netloc==urlsplit(r.url).netloc:
+                      imgs.append({"url":u,"alt":img.get("alt","")[:150]})
+                info["same_domain_images"]=imgs[:20]
+              else: info["access_limited_or_unavailable"]=True
+            except Exception as e:info["error"]=str(e)[:400]
+            report["checks"].append(info)
+          possible=[exact]
+          for row in report["checks"]:
+            if "same_domain_images" not in row:continue
+            for item in row["same_domain_images"][:7]:
+              if item["url"] not in possible:possible.append(item["url"])
+          for idx,url in enumerate(possible[:14]):
+            info={"kind":"preview_image","url":url}
+            try:
+              hdr={"Referer":f"https://{urlsplit(url).netloc}/"}
+              r=sess.get(url,headers=hdr,timeout=24)
+              info.update({"status":r.status_code,"bytes":len(r.content),"mime":r.headers.get("Content-Type",""),"sha256":hashlib.sha256(r.content).hexdigest()})
+              if r.ok and len(r.content)<18000000:
+                try:
+                  im=Image.open(BytesIO(r.content));im.load()
+                  info["pixels"]=[im.width,im.height]
+                  info["format"]=im.format
+                  im.convert("RGB").save(out/f"public-preview-{idx:02}.jpg",quality=90)
+                  info["saved_preview"]=f"public-preview-{idx:02}.jpg"
+                except Exception as e:info["not_decodable_as_image"]=str(e)[:120]
+            except Exception as e: info["error"]=str(e)[:450]
+            report["checks"].append(info)
+          (out/"inspection.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
+          print(json.dumps(report,ensure_ascii=False)[:16000])
+          PY
+      - name: Preserve public preview images and audit only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-1582-public-preview-identity-audit
+          path: ${{ runner.temp }}/saju-preview/
+          if-no-files-found: warn
+          retention-days: 7
