@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v23' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v24' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2380,6 +2380,25 @@ export const YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS = Object.freeze({
 });
 
 
+/** Official NAJ 2021 scheduled reproduction items, not Ming-folio witnesses. */
+export const YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT = Object.freeze({
+  sourceUrl: 'https://www.archives.go.jp/news/pdf/20210719.pdf' as const,
+  sourceTitle: '2021-07 複製物の作成作業時期について / 内閣文庫（漢籍）' as const,
+  pdfPageOneBased: 61 as const,
+  title: '新刊京本釐正総括天機星学正伝' as const,
+  officialInventoryNumbers: Object.freeze(['305-0266', '305-0267'] as const),
+  existingDigitalCatalogNumber: '子059-0011' as const,
+  twoScheduledInventoryRowsVerified: true as const,
+  manuscriptOrPrintRelationEstablished: false as const,
+  oldAndNewIdentifierConcordanceVerified: false as const,
+  reproductionCompletedVerified: false as const,
+  digitalFolioPublicAccessVerified: false as const,
+  target1582PrintedJuanThreeInspected: false as const,
+  addedIndependentPrintWitnessCount: 0 as const,
+  modernAnnualMeaningApproved: false as const,
+  productionAuthorized: false as const,
+});
+
 export function buildYuanHaiMingJuan3PrintScope() {
   const prior = buildYuanHaiSixPillarDigitalCase();
   const books = YUANHAI_NLC_PHYSICAL_BOOKS;
@@ -2552,6 +2571,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     shanghai1582ModernEditorialRoute: YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
     sonkeikaku1582CatalogRoute: YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE,
     moyouzhiRenwuPrintedBibliography: YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO,
+    naj2021ScheduledReproductionInventory: YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
     yangcongTitleLeafReproductionAudit: YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
     nlc1600DirectFacsimileAccess: YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,

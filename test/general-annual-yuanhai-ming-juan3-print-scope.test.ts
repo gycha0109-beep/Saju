@@ -42,6 +42,7 @@ import {
   YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
   YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE,
   YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO,
+  YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
   YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
   YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,
@@ -53,7 +54,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v23');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v24');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -1879,6 +1880,32 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       printedOriginalHourStemVerified: false,
       newPrintedWitnessCredit: 0,
     });
+  });
+
+  test('official Japanese 2021 inventory numbers remain unverified print candidates', () => {
+    const q = YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT;
+    expect(q).toMatchObject({
+      pdfPageOneBased: 61,
+      title: '新刊京本釐正総括天機星学正伝',
+      officialInventoryNumbers: ['305-0266', '305-0267'],
+      existingDigitalCatalogNumber: '子059-0011',
+      twoScheduledInventoryRowsVerified: true,
+      manuscriptOrPrintRelationEstablished: false,
+      oldAndNewIdentifierConcordanceVerified: false,
+      reproductionCompletedVerified: false,
+      digitalFolioPublicAccessVerified: false,
+      target1582PrintedJuanThreeInspected: false,
+      addedIndependentPrintWitnessCount: 0,
+      modernAnnualMeaningApproved: false,
+      productionAuthorized: false,
+    });
+    const scope = buildYuanHaiMingJuan3PrintScope();
+    expect(scope.naj2021ScheduledReproductionInventory).toBe(q);
+    expect(scope.independentlyCollatedPrintedWitnessCount).toBe(2);
+    expect(scope.directlyInspectedScanDocumentsCount).toBe(3);
+    expect(scope.authority.preWanliOriginalGlyphVerified).toBe(false);
+    expect(scope.adjudicatedPrintedGlyph).toBeNull();
+    expect(scope.modernInterpretationClaim).toBeNull();
   });
 
   test('two distinct printed settings from three scans prove variant, never authorize semantics', () => {
