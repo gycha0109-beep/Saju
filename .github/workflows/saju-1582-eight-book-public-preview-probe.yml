@@ -1,0 +1,106 @@
+# Public previews only; no login, paywall, downloading protected PDFs or API guesses.
+name: "[WT:saju] 1582 Eight-Book Public Preview Probe"
+on:
+  pull_request:
+    branches:
+      - research/saju/annual-yuanhai-three-layer-case-witness
+    paths:
+      - .github/workflows/saju-1582-eight-book-public-preview-probe.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect public eight-book listing and on-page previews
+        env:
+          REPORT_DIR: ${{ runner.temp }}/eightbooks
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet requests beautifulsoup4 Pillow
+          mkdir -p "$REPORT_DIR"
+          python - <<'PY'
+          import json,os,re,hashlib
+          from urllib.parse import urljoin,urlparse
+          from io import BytesIO
+          from pathlib import Path
+          import requests
+          from bs4 import BeautifulSoup
+          from PIL import Image
+          root=Path(os.environ['REPORT_DIR'])
+          session=requests.Session()
+          session.headers.update({'User-Agent':'Mozilla/5.0 (compatible; HistoricalSourcePublicPreviewAudit/1.0)','Accept-Language':'zh-CN,zh;q=0.9'})
+          listing='https://m.5shubook.com/tag/xingmingzongkuo.html'
+          report={'target':'明萬曆十年 楊淙 星學正傳','listing_url':listing,
+              'public_original_print_authenticated':False,'target_juan_three_glyph_authenticated':False,
+              'access_not_evidence':True,'book_items':[], 'errors':[]}
+          try:
+            resp=session.get(listing,timeout=25)
+            report['listing_http_status']=resp.status_code
+            if resp.status_code==200:
+              soup=BeautifulSoup(resp.content,'html.parser')
+              for a in soup.select('a[href]'):
+                title=a.get_text(' ',strip=True)
+                match=re.search(r'新刊京本厘正总括天机星学正传([1-8])\.pdf',title)
+                if match:
+                  report['book_items'].append({'physical_file_number':int(match.group(1)),'name':title,'page_url':urljoin(resp.url,a['href'])})
+          except Exception as e:report['errors'].append('listing:'+str(e)[:250])
+          if not report['book_items']:
+            report['book_items']=[{'physical_file_number':3,'name':'新刊京本厘正总括天机星学正传3.pdf','page_url':'https://m.5shubook.com/p-76773.html'}]
+          # Inspect file numbers 1, 2, 3, as those could potentially cover printed juan 3.
+          for book in sorted(report['book_items'],key=lambda x:x['physical_file_number']):
+            if book['physical_file_number'] not in (1,2,3):continue
+            book['public_preview_images']=[]
+            for host in ['m.5shubook.com','www.5shubook.com']:
+              url=urlparse(book['page_url'])._replace(netloc=host).geturl()
+              view={'url':url}
+              try:
+                r=session.get(url,timeout=25,allow_redirects=True)
+                view['status']=r.status_code
+                view['final_url']=r.url
+                view['length']=len(r.content)
+                view['content_type']=r.headers.get('Content-Type','')
+                if r.status_code==200 and 'html' in view['content_type']:
+                  html=BeautifulSoup(r.content,'html.parser')
+                  view['title']=html.title.get_text(' ',strip=True)[:200] if html.title else ''
+                  body=html.get_text(' ',strip=True)
+                  view['body_excerpt']=body[:1600]
+                  previews=[]
+                  for img in html.select('img'):
+                    u=img.get('data-original') or img.get('data-src') or img.get('src') or ''
+                    if u:
+                      u=urljoin(r.url,u)
+                      if urlparse(u).scheme=='https' and '5shubook.com' in urlparse(u).netloc:
+                        previews.append({'url':u,'alt':img.get('alt','')[:100]})
+                  view['image_urls']=previews[:25]
+                  for i,im in enumerate(previews[:6]):
+                    if any(x.get('url')==im['url'] for x in book['public_preview_images']):continue
+                    try:
+                      response=session.get(im['url'],timeout=18,headers={'Referer':r.url})
+                      item={'url':im['url'],'http_status':response.status_code,'bytes':len(response.content),'content_type':response.headers.get('Content-Type','')}
+                      if response.ok and len(response.content)<6000000:
+                        obj=Image.open(BytesIO(response.content));obj.load()
+                        item['dimensions']=[obj.width,obj.height]
+                        item['sha256']=hashlib.sha256(response.content).hexdigest()
+                        if obj.width>320 and obj.height>320:
+                          fn=f"book{book['physical_file_number']}-preview{i:02}.jpg"
+                          obj.convert('RGB').save(root/fn,quality=90)
+                          item['file']=fn
+                      book['public_preview_images'].append(item)
+                    except Exception as ex:book['public_preview_images'].append({'url':im['url'],'error':str(ex)[:150]})
+              except Exception as e: view['error']=str(e)[:260]
+              book.setdefault('site_responses',[]).append(view)
+          (root/'audit.json').write_text(json.dumps(report,indent=2,ensure_ascii=False),encoding='utf8')
+          print(json.dumps(report,ensure_ascii=False)[:24000])
+          PY
+      - name: Preserve limited public metadata and sample images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-1582-eight-book-public-preview-audit
+          path: ${{ runner.temp }}/eightbooks/
+          retention-days: 7
+          if-no-files-found: warn
