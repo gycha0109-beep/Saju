@@ -6,7 +6,7 @@ import {PRODUCTION_DEFAULT_CALCULATION_POLICY} from '../src/production/productio
 import {runInterpretation} from '../src/interpretation/interpretation-engine.js';
 import {createGeneralNatalSourceBoundedRegistry} from '../src/research/general-natal-conclusion-source-bounded-candidate.js';
 import {createGeneralNatalIntegratedReadingRegistry} from '../src/interpretation/general-natal-integrated-reading-registry.js';
-import {buildNatalN14LinkedT8ResearchReport} from '../src/research/general-natal-t8-linked-structure-draft.js';
+import {buildNatalN14LinkedT8ResearchReport, GENERAL_NATAL_N19_POSITION_WITNESS_VERSION} from '../src/research/general-natal-t8-linked-structure-draft.js';
 
 const now=new Date('2026-10-16T00:00:00.000Z');
 const registry=createGeneralNatalSourceBoundedRegistry(now.toISOString());
@@ -42,6 +42,7 @@ describe('N14 source-bounded two-edge T8 research co-observation',()=>{
    status:'research_only',mayExposeAsConsumerInterpretation:false,
    mayApproveNewResearchRule:false,mayPromoteProduction:false,
    linkedPairCount:2,
+   positionProjectionVersion: GENERAL_NATAL_N19_POSITION_WITNESS_VERSION,
   });
   expect(report.linkedPairs.map(p=>p.firstRelationId+'+'+p.secondRelationId)).toEqual([
     'OUTPUT-TO-WEALTH+WEALTH-TO-OFFICER',
@@ -56,12 +57,44 @@ describe('N14 source-bounded two-edge T8 research co-observation',()=>{
    expect(p.sourceLocators).toHaveLength(2);
    expect(p.factRefs.length).toBeGreaterThan(0);
    expect(p.observedPositionFacts.length).toBeGreaterThan(0);
+   expect(p.positionWitnesses).toHaveLength(3);
+   expect(new Set(p.positionWitnesses.map(w=>w.family)).size).toBe(3);
+   for (const witness of p.positionWitnesses) {
+     expect(witness.positions.length).toBeGreaterThan(0);
+     for (const position of witness.positions) {
+       expect(p.observedPositionFacts).toContain(position.factPath+':'+position.tenGod);
+       expect(position.factPath).toMatch(/^derivedFacts\.tenGods\.(?:year|month|day|hour)\.(?:stem|branch)$/u);
+       expect(p.text).toContain(position.display);
+     }
+   }
+   expect(p.positionEvidenceFingerprint.length).toBeGreaterThan(0);
+   expect(report.linkedPositionSignature.length).toBeGreaterThan(0);
+   expect(p.text).toContain('십신 위치');
+   expect(p.text).toContain('인과 흐름');
    expect(p.transitiveCausalInferenceAuthorized).toBe(false);
    expect(p.modernConsumerInferenceAuthorized).toBe(false);
    expect(p.publicationAuthorized).toBe(false);
    expect(p.text).toContain('인과 흐름');
    expect(p.text).toContain('확정하지 않습니다');
   }
+ });
+
+ it('differentiates concrete T0 locations without inventing any different T8 meaning',()=>{
+  const redistributed: TenGodChartFact = {
+    ...fiveFamilies,
+    year: {stem:resolved('편재'),branch:resolved('정인')},
+    month: {stem:resolved('겁재'),branch:resolved('정재')},
+  };
+  const first=result(fiveFamilies).report;
+  const second=result(redistributed).report;
+  expect(first.linkedPairCount).toBe(2);
+  expect(second.linkedPairCount).toBe(2);
+  // Same actual rule-level T8 patterns; moving a fact never grants a novel meaning.
+  expect(first.linkedSemanticSignature).toBe(second.linkedSemanticSignature);
+  expect(first.linkedPositionSignature).not.toBe(second.linkedPositionSignature);
+  expect(first.linkedPairs[0]?.text).not.toBe(second.linkedPairs[0]?.text);
+  expect(second.linkedPairs.every(x=>x.publicationAuthorized===false &&
+    !x.modernConsumerInferenceAuthorized && !x.transitiveCausalInferenceAuthorized)).toBe(true);
  });
 
  it('does not fabricate chains where the common middle family is missing',()=>{

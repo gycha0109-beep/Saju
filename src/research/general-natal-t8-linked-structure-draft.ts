@@ -7,6 +7,8 @@ import {
 
 export const GENERAL_NATAL_N14_LINKED_T8_RESEARCH_VERSION =
   'saju-n14-linked-t8-research-composition-v1' as const;
+export const GENERAL_NATAL_N19_POSITION_WITNESS_VERSION =
+  'saju-n19-position-anchored-t8-research-observation-v1' as const;
 
 type ChainFamily = 'output' | 'wealth' | 'officer' | 'resource';
 type SupportedEdge = {
@@ -22,6 +24,19 @@ const SUPPORTED_GENERATING_EDGES: readonly SupportedEdge[] = [
 const FAMILY_LABEL: Readonly<Record<ChainFamily,string>> = {
   output:'식상',wealth:'재성',officer:'관성',resource:'인성',
 };
+const SLOT_LABEL = {year:'연주',month:'월주',day:'일주',hour:'시주'} as const;
+
+export interface NatalN19PositionWitness {
+  family: ChainFamily;
+  familyLabel: string;
+  positions: readonly {
+    slot: string;
+    component: string;
+    tenGod: string;
+    factPath: string;
+    display: string;
+  }[];
+}
 const BY_RELATION = new Map(SUPPORTED_GENERATING_EDGES.map((e) => [e.relationId,e]));
 
 export interface NatalN14LinkedStructureDraft {
@@ -36,6 +51,8 @@ export interface NatalN14LinkedStructureDraft {
   factRefs: readonly string[];
   sourceLocators: readonly {sourceId:string;title:string;locator:string}[];
   observedPositionFacts: readonly string[];
+  positionWitnesses: readonly NatalN19PositionWitness[];
+  positionEvidenceFingerprint: string;
   text: string;
   scenarioRef: string | null;
   transitiveCausalInferenceAuthorized: false;
@@ -45,6 +62,7 @@ export interface NatalN14LinkedStructureDraft {
 
 export interface NatalN14LinkedStructureResearchReport {
   version: typeof GENERAL_NATAL_N14_LINKED_T8_RESEARCH_VERSION;
+  positionProjectionVersion: typeof GENERAL_NATAL_N19_POSITION_WITNESS_VERSION;
   status:'research_only';
   mayExposeAsConsumerInterpretation:false;
   mayApproveNewResearchRule:false;
@@ -54,6 +72,7 @@ export interface NatalN14LinkedStructureResearchReport {
   individualRelationCount:number;
   linkedPairCount:number;
   linkedSemanticSignature:string;
+  linkedPositionSignature:string;
   linkedPairs:readonly NatalN14LinkedStructureDraft[];
   limitations:readonly string[];
 }
@@ -94,6 +113,36 @@ export function buildNatalN14LinkedT8ResearchReport(
         ...left.observedPositions.map((p) => p.factPath+':'+p.tenGod),
         ...right.observedPositions.map((p) => p.factPath+':'+p.tenGod),
       ])].sort();
+      // Exactly three already-validated T5 families. The positions are
+      // projections of N13's real resolved T0 witnesses, not new relations.
+      const positionWitnesses: NatalN19PositionWitness[] = [a.from,a.to,b.to].map((family) => {
+        const found = new Map([...left.observedPositions,...right.observedPositions]
+          .filter((p) => p.family === family)
+          .map((p) => [p.factPath + ':' + p.tenGod, p]));
+        const positions = [...found.values()].sort((x,y) =>
+          x.factPath.localeCompare(y.factPath) || x.tenGod.localeCompare(y.tenGod))
+          .map((p) => ({
+            slot:p.slot,
+            component:p.component,
+            tenGod:p.tenGod,
+            factPath:p.factPath,
+            display:SLOT_LABEL[p.slot as keyof typeof SLOT_LABEL] +
+              (p.component === 'stem' ? ' 천간 ' : ' 지지 대표 ') + p.tenGod,
+          }));
+        if (positions.length === 0) {
+          throw new TypeError('N19 linked T8 family has no resolved source-bound position');
+        }
+        return { family, familyLabel:FAMILY_LABEL[family], positions };
+      });
+      const positionEvidenceFingerprint = deterministicContentHash(
+        positionWitnesses.map((group) => ({
+          family:group.family,
+          locations:group.positions.map((p) => [p.factPath,p.tenGod]),
+        })),
+      );
+      const chartPositions = positionWitnesses.map((group) =>
+        group.familyLabel + ': ' + group.positions.map((p) => p.display).join(' · '))
+        .join(' / ');
       const pairIdentity = {
         first:left.relationId,second:right.relationId,
         bridge:a.to,scenario:left.scenarioRef,
@@ -111,9 +160,13 @@ export function buildNatalN14LinkedT8ResearchReport(
         factRefs:[...new Set([...left.factRefs,...right.factRefs])].sort(),
         sourceLocators:sources,
         observedPositionFacts,
+        positionWitnesses,
+        positionEvidenceFingerprint,
         text:FAMILY_LABEL[a.from]+'→'+FAMILY_LABEL[a.to]+' 관계 후보와 ' +
           FAMILY_LABEL[b.from]+'→'+FAMILY_LABEL[b.to]+' 관계 후보가 같은 명식에서 각각 관측됩니다. ' +
           '두 후보는 '+FAMILY_LABEL[a.to]+' 계열의 관측을 공유합니다. ' +
+          '이 명식에서 실제 계산된 십신 위치는 '+chartPositions+'입니다. ' +
+          '이는 관측 위치를 그대로 적은 것이지 세 계열 간 효과의 크기나 우세를 평가하지 않습니다. ' +
           '이것은 두 관계가 공존한다는 연구용 구조 기록일 뿐, ' +
           FAMILY_LABEL[a.from]+'에서 '+FAMILY_LABEL[b.to]+'으로 이어지는 인과 흐름이나 ' +
           '성격·직업·재물·사건·길흉을 확정하지 않습니다.',
@@ -131,6 +184,7 @@ export function buildNatalN14LinkedT8ResearchReport(
   }
   return {
     version:GENERAL_NATAL_N14_LINKED_T8_RESEARCH_VERSION,
+    positionProjectionVersion:GENERAL_NATAL_N19_POSITION_WITNESS_VERSION,
     status:'research_only',
     mayExposeAsConsumerInterpretation:false,
     mayApproveNewResearchRule:false,
@@ -140,9 +194,11 @@ export function buildNatalN14LinkedT8ResearchReport(
     individualRelationCount:n13.relationCount,
     linkedPairCount:links.length,
     linkedSemanticSignature:deterministicContentHash(links.map((x) => x.researchFingerprint).sort()),
+    linkedPositionSignature:deterministicContentHash(links.map((x) => x.positionEvidenceFingerprint).sort()),
     linkedPairs:links,
     limitations:[
       'Only two independently emitted existing T8 generating relations with the same T5 middle-family Claim may be co-presented.',
+      'N19 position details are exact observed Ten-God labels and paths, not chart strength, predicted outcomes or new causal meaning.',
       'The two-edge graph observation is not transitive closure and does not authorize a new T8 consumer conclusion.',
       'Provenance, independent reviewer trust, Preview semantic bridge, Production authorization and sale remain HOLD.',
     ],
