@@ -2162,7 +2162,7 @@ export const YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT = Object.free
     attributionGrade: 'C_catalog_metadata' as const,
     actual1582ImpressionProvenByPrintedColophon: false as const,
   }),
-  digitalPrintedJuanThreeTitle: '新刊總括天機諸家秘要星學正傳卷之三' as const,
+  digitalPrintedJuanThreeTitle: '新刊總括天機諸家秘要星字正傳卷之三' as const,
   targetChapterHeading: '陽刅' as const,
   observedDigitalTargetGlyph: '未' as const,
   observedTraditionalDigitalClause: '運行辛亥，亥卯未合起陽刅' as const,
