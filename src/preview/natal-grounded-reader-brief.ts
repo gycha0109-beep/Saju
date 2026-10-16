@@ -66,7 +66,8 @@ export interface NatalN16GroundedReaderBrief {
   domains: readonly NatalN16ReadingDomain[];
   readingUnits: readonly NatalN16ReadingUnit[];
   totalOriginalTextUnitCount: number;
-  exactCrossDomainDuplicateCount: number;
+  exactRepeatedTextCount: number;
+  crossDomainRepeatedUnitCount: number;
   uniqueTextUnitCount: number;
   limitations: readonly string[];
 }
@@ -202,7 +203,8 @@ export function buildNatalN16GroundedReaderBrief(
     mayPublish:false,maySell:false,mayGenerateInterpretation:false,mayPromoteResearch:false,
     context,domains,readingUnits,
     totalOriginalTextUnitCount:originalTextUnitCount,
-    exactCrossDomainDuplicateCount:originalTextUnitCount-readingUnits.length,
+    exactRepeatedTextCount:originalTextUnitCount-readingUnits.length,
+    crossDomainRepeatedUnitCount:readingUnits.filter((u)=>u.crossDomainRepeated).length,
     uniqueTextUnitCount:readingUnits.length,
     limitations:[
       '이 자료는 이미 전달된 Preview 해석만 원문 그대로 정리한 내부 읽기 자료입니다.',
