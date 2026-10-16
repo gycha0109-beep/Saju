@@ -21,6 +21,7 @@ import { deterministicContentHash } from '../dist/interpretation/rule-registry.j
 import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../dist/llm/prompt-compiler.js';
 import { resolvePreviewSemanticAdmissionV1 } from '../dist/preview/preview-semantic-admission.js';
 import { renderNatalReaderReviewPacketV1 } from './natal-reader-review-packet.mjs';
+import { buildNatalN17DifferentiationAudit } from '../dist/preview/natal-grounded-reading-differentiation.js';
 
 const bearer = 'local-natal-quality-audit-not-a-production-secret';
 const dates = [
@@ -141,6 +142,31 @@ async function main() {
   } finally {
     await close(runtime.server);
   }
+
+  // N17: actual HTTP Preview text, separated from canonical chart facts.
+  // The audit explicitly does NOT certify a substantive T8 difference.
+  const n17 = buildNatalN17DifferentiationAudit(inputs.map((input) => {
+    const computed = interpretedByCaseId.get(input.caseId);
+    if (computed === undefined) throw new Error('Missing canonical N17 case: ' + input.caseId);
+    return {
+      caseId: input.caseId,
+      snapshot: computed.snapshot,
+      sources: [{ domain: 'general', response: input.response }],
+    };
+  }));
+  const n17Path = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0, -5) + '.n17-differentiation.json'
+    : outputPath + '.n17-differentiation.json');
+  writeFileSync(n17Path, JSON.stringify(n17, null, 2) + '\n', 'utf8');
+  if (n17.cases.length !== fixtures.length || n17.substantiveMeaningValidated !== false) {
+    throw new Error('N17 audit must cover all actual input cases without claiming semantic approval');
+  }
+  process.stdout.write(
+    'Natal N17: ' + n17.cases.length + ' actual HTTP cases, ' +
+    n17.differentStructureSameTextPairs + ' different-chart same-text pairs, ' +
+    n17.differentStructureDifferentTextPairs + ' different-chart different-text pairs ' +
+    '(meaning UNVERIFIED); ' + n17Path + '\n',
+  );
 
   const { consumer: report, meaning: meaningReport, quality: meaningQuality } =
     buildNatalMeaningQualityAudit(inputs);
