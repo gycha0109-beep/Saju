@@ -98,5 +98,6 @@ jobs:
           path: |
             ${{ runner.temp }}/moyouzhi/scan-report.json
             ${{ runner.temp }}/moyouzhi/contact-*.jpg
+            ${{ runner.temp }}/moyouzhi/moyouzhi-catalog.pdf
           if-no-files-found: warn
           retention-days: 7
