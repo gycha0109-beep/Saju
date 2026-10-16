@@ -15,6 +15,8 @@ import { buildNatalN21ReaderFirstStory } from '../dist/preview/natal-reader-firs
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
+import { createGeneralNatalSourceBoundedRegistry } from '../dist/research/general-natal-conclusion-source-bounded-candidate.js';
+import { buildNatalN22ChartRelationGuide } from '../dist/research/general-natal-chart-relation-guide.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
 
 const bearer = 'local-natal-preview-non-production-token';
@@ -201,6 +203,42 @@ function renderReaderFirstStory(story) {
     '</details></section>';
 }
 
+function renderActualChartRelations(guide) {
+  if (guide.mayPublish || guide.maySell || guide.mayAddProductInterpretation) {
+    throw new TypeError('N22 research must never be presented as official consumer authority');
+  }
+  const renderUnit = (unit) => {
+    const refs = unit.sourceLocators.map((source) =>
+      source.title + ' · ' + source.locator + ' [' + source.sourceId + ']'
+    ).join(' / ');
+    return '<article class="reader-paragraph"><p>' + escapeHtml(unit.text) + '</p>' +
+      '<details><summary>실제 계산·연구 출처</summary>' +
+      '<p>원본 주장: ' + escapeHtml(unit.claimIds.join(' · ')) + '</p>' +
+      '<p>실제 관측 위치: ' + escapeHtml(unit.calculatedFactPaths.join(' · ')) + '</p>' +
+      '<p>고전 원문 위치: ' + escapeHtml(refs) + '</p></details></article>';
+  };
+  const sections = [
+    {title:'서로 이어져 관측된 관계',items:guide.linkedRelations},
+    {title:'서로 다른 방향으로 함께 관측된 관계',items:guide.mixedRelations},
+    {title:'명식에 개별적으로 관측된 관계',items:guide.individualRelations},
+  ];
+  const body = guide.state === 'birth_time_unknown'
+    ? '<p class="limited">출생시간을 모르므로 시주 관련 구조 관계의 계산을 확정하지 않았습니다.</p>'
+    : sections.map((section) => '<div class="research-relationship-group"><h3>' +
+        escapeHtml(section.title) + '</h3>' +
+        (section.items.length
+          ? section.items.map(renderUnit).join('')
+          : '<p class="limited">이 명식에서 현재 연구 규칙으로 확인된 후보가 없습니다.</p>') +
+        '</div>').join('');
+  return '<section class="domain research-scope"><div class="domain-heading">' +
+    '<h2>내 명식에서 확인된 십신 관계</h2><span>연구용 관측 · 공식 해석 아님</span></div>' +
+    '<p class="limited">현재 명식에서 실제 실행된 연구 규칙에 해당하는 관계만 보여줍니다. ' +
+    '성공·실패, 돈·직업 결과, 특정 사건이나 관계의 우열을 예측하는 해석이 아닙니다.</p>' +
+    body + '<details><summary>연구 해석의 정확한 한계</summary>' +
+    guide.limits.map((x) => '<p>' + escapeHtml(x) + '</p>').join('') +
+    '</details></section>';
+}
+
 function renderGroundedReaderBrief(brief) {
   const byId = new Map(brief.readingUnits.map((u) => [u.unitId, u]));
   const meaningUnitIds = new Set(brief.readingUnits.filter((u) =>
@@ -263,7 +301,7 @@ function renderPillars(summary) {
     .join('')}</div>`;
 }
 
-function renderPage(date, time, responses, synthesis, themes, applied, brief, story) {
+function renderPage(date, time, responses, synthesis, themes, applied, brief, story, relations) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -285,6 +323,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
     dt{color:#a6b1c3;font-size:13px}dd{margin:0}.interpretation{border-top:1px solid #2e3542;padding-top:6px}
     .domain-heading span,.limited,summary{color:#a2aabc;font-size:12px}details{border-top:1px solid #374052;margin-top:18px;padding-top:14px}
     .reader-first{border-color:#716888;background:#21243a}
+    .research-scope{border-color:#55536b}.research-relationship-group{padding:10px 0}
     .basis-grid{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 22px}
     .basis-chip{display:block;border:1px solid #565b78;border-radius:10px;padding:10px 12px;font-size:12px;color:#d1d6e6;line-height:1.7;max-width:100%}
     .basis-chip details{margin-top:6px;padding-top:6px}
@@ -307,6 +346,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
   </header>
   ${renderPillars(general?.calculationSummary)}
   ${renderReaderFirstStory(story)}
+  ${renderActualChartRelations(relations)}
   <details class="full-data"><summary>전체 원문·명식 계산 근거·연구용 부가 해설 펼쳐보기</summary>
   ${renderGroundedReaderBrief(brief)}
   ${renderSynthesis(synthesis)}
@@ -387,7 +427,18 @@ async function main() {
   });
   const themes = buildNatalActivatedThemePreview(interpretation);
   const applied = buildNatalAppliedThemeContext(evidence, themes);
-  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story), 'utf8');
+  const researchRegistry = createGeneralNatalSourceBoundedRegistry(researchNow.toISOString());
+  const researchExecution = runInterpretation(calculated.snapshot, researchRegistry, {
+    requestId: 'n22-real-chart-research-relations-internal-only', now: researchNow,
+  });
+  const relations = buildNatalN22ChartRelationGuide(
+    calculated.snapshot, researchExecution, researchRegistry,
+  );
+  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, relations), 'utf8');
+  process.stdout.write('N22 real source-bound chart relations: ' +
+    relations.individualRelations.length + ' individual, ' +
+    relations.linkedRelations.length + ' linked, ' +
+    relations.mixedRelations.length + ' mixed; Research/HOLD\n');
   process.stdout.write('N21 reader-first story: ' + story.displayedOriginalInterpretationCount +
     ' real bounded paragraphs across ' + story.sections.filter(x => x.hasInterpretation).length +
     '/5 domains; ' + story.calculationFactsExcludedFromInterpretation +
