@@ -1,12 +1,8 @@
 # Strictly public/no-login historical link availability probe. No bypass of on-site restrictions.
 # The 2021 URL was published by a third party; availability never proves a glyph reading.
 name: "[WT:saju] NAJDA Legacy Original URL Availability"
+# Historical link returned 404 in the first public access audit; rerun only manually.
 on:
-  pull_request:
-    branches:
-      - research/saju/annual-yuanhai-three-layer-case-witness
-    paths:
-      - .github/workflows/saju-najda-legacy-original-url-availability.yml
   workflow_dispatch:
 permissions:
   contents: read
