@@ -78,8 +78,10 @@ describe('N13 first executable source-bounded T5→T8 research interpretation', 
   });
 
   it('does not substitute Bijeon for Gyeopjae or invent wealth presence', () => {
-    const peerOnly = buildNatalN13StructuralResearchReading(...Object.values(execute(withoutExactGyeopjae)) as [ReturnType<typeof fixture>, ReturnType<typeof runInterpretation>],registry);
-    const noWealth = buildNatalN13StructuralResearchReading(...Object.values(execute(withoutWealth)) as [ReturnType<typeof fixture>, ReturnType<typeof runInterpretation>],registry);
+    const peer = execute(withoutExactGyeopjae);
+    const noMoney = execute(withoutWealth);
+    const peerOnly = buildNatalN13StructuralResearchReading(peer.snapshot,peer.execution,registry);
+    const noWealth = buildNatalN13StructuralResearchReading(noMoney.snapshot,noMoney.execution,registry);
     expect(peerOnly.relationCount).toBe(4);
     expect(peerOnly.sentences.some((s) => s.relationId==='PEER-TO-WEALTH-ADVERSE')).toBe(false);
     expect(noWealth.sentences.every((s)=>!s.relationId.includes('WEALTH'))).toBe(true);
