@@ -50,7 +50,7 @@ const cases = INPUTS.map(([caseId,date,time]) => {
     sexForTraditionalCalculation:'unspecified',
   },PRODUCTION_DEFAULT_CALCULATION_POLICY,{now:NOW});
   const execution = runInterpretation(snapshot,registry,{now:NOW,requestId:caseId});
-  const draft = buildNatalN13StructuralResearchReading(execution,registry);
+  const draft = buildNatalN13StructuralResearchReading(snapshot,execution,registry);
   return {caseId,date,time,...draft};
 });
 const result = {
