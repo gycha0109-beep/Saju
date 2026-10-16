@@ -1,4 +1,6 @@
 import type { InterpretationClaim } from '../contracts/interpretation.js';
+import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import { buildNatalStructuralEvidence } from '../preview/natal-structural-evidence.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import { deterministicContentHash, type ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import {
@@ -50,6 +52,9 @@ export interface NatalN13ResearchSentence {
   relationId: string;
   sourcePattern: string;
   text: string;
+  /** Exact resolved T0 position/subtype observations, not an interpretation. */
+  observedPositions: readonly {family:string;slot:string;component:string;tenGod:string;factPath:string}[];
+  positionalFactFingerprint: string;
   upstreamClaimRefs: readonly [string,string];
   factRefs: readonly string[];
   sourceLocators: readonly {sourceId:string;title:string;locator:string}[];
@@ -66,6 +71,7 @@ export interface NatalN13ResearchReading {
   mayApproveSemantics: false;
   mayPromoteProduction: false;
   snapshotId: string;
+  calculationHash: string;
   relationCount: number;
   meaningSignature: string;
   sentences: readonly NatalN13ResearchSentence[];
@@ -101,10 +107,16 @@ function endpoint(
   return candidate;
 }
 
+const FAMILY_MEMBERS: Readonly<Record<GeneralNatalSourceBoundedFamily,readonly string[]>> = {
+  peer:['비견','겁재'], resource:['편인','정인'],output:['식신','상관'],
+  wealth:['편재','정재'],officer:['편관','정관'],
+};
+const POSITION_LABELS = {year:'연주',month:'월주',day:'일주',hour:'시주'} as const;
 function renderRelation(
   claim: InterpretationClaim,
   active: ReadonlyMap<string,InterpretationClaim>,
   registry: ResolvedRuleRegistrySnapshot,
+  positions: ReturnType<typeof buildNatalStructuralEvidence>['tenGods'],
 ): NatalN13ResearchSentence {
   const value = asRecord(claim.value,'T8');
   const pattern = BY_ID.get(String(value.relationId));
@@ -141,6 +153,24 @@ function renderRelation(
       claim.sourceRefs.some((id) => !expectedSources.has(id))) {
     throw new TypeError('N13 T8 source identity mismatch');
   }
+  const observedPositions = positions.filter((p) =>
+    p.state === 'resolved' && p.value !== undefined &&
+    (FAMILY_MEMBERS[pattern.from].includes(p.value) ||
+      FAMILY_MEMBERS[pattern.to].includes(p.value)))
+    .map((p) => ({
+      family:FAMILY_MEMBERS[pattern.from].includes(p.value ?? '') ? pattern.from : pattern.to,
+      slot:p.slot,component:p.component,tenGod:String(p.value),factPath:p.sourcePath,
+    }));
+  if (!observedPositions.some((p) => p.family === pattern.from) ||
+      !observedPositions.some((p) => p.family === pattern.to) ||
+      (pattern.constraint !== null && !observedPositions.some((p) =>
+        p.family === pattern.from && p.tenGod === pattern.constraint))) {
+    throw new TypeError('N13 actual chart positions do not support claimed T5 endpoints');
+  }
+  const positionLabels = observedPositions.map((p) =>
+    POSITION_LABELS[p.slot as keyof typeof POSITION_LABELS] +
+    ' ' + (p.component === 'stem' ? '천간' : '지지 대표') +
+    ' ' + p.tenGod);
   const sources = new Map(registry.sources.map((s) => [s.sourceId,s]));
   const locators = [...expectedSources].sort().map((id) => {
     const s = sources.get(id);
@@ -156,8 +186,10 @@ function renderRelation(
     researchClaimId:claim.claimId,
     relationId:pattern.id,
     sourcePattern:pattern.pattern,
-    text:pattern.reading +
-      ' 이는 연구용 구조 관측이며 성격·행동·직업·재물 결과·실제 사건·미래의 길흉을 단정하지 않습니다.',
+    text:pattern.reading + ' 실제 계산 위치 관측: ' + positionLabels.join(' · ') +
+      '. 이 위치 기록은 별도의 의미 승인이 아니며 성격·행동·직업·재물 결과·실제 사건·미래의 길흉을 단정하지 않습니다.',
+    observedPositions,
+    positionalFactFingerprint:deterministicContentHash(observedPositions),
     upstreamClaimRefs:[from.claimId,to.claimId],
     factRefs:[...new Set([...claim.factRefs,...from.factRefs,...to.factRefs])].sort(),
     sourceLocators:locators,
@@ -174,6 +206,7 @@ function renderRelation(
  * Research outputs cannot be projected into Preview/Production.
  */
 export function buildNatalN13StructuralResearchReading(
+  snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
   registry: ResolvedRuleRegistrySnapshot,
 ): NatalN13ResearchReading {
@@ -181,12 +214,17 @@ export function buildNatalN13StructuralResearchReading(
       !registry.rules.some((r) => r.ruleSetId === 'general-natal-source-bounded-structural-relation')) {
     throw new TypeError('N13 requires a valid source-bounded research execution');
   }
+  const facts = buildNatalStructuralEvidence(snapshot);
+  if (execution.run.snapshotId !== snapshot.snapshotId || facts.snapshotId !== snapshot.snapshotId ||
+      !facts.birthTimeKnown || facts.mayPublish !== false) {
+    throw new TypeError('N13 T8 interpretation and exact canonical chart are not bound');
+  }
   const active = execution.claims.filter((c) => c.state === 'active');
   const byId = new Map(active.map((c) => [c.claimId,c]));
   if (byId.size !== active.length) throw new TypeError('N13 duplicate active Claim IDs');
   const relations = active.filter((c) => c.taxonomy.tier === 'T8' &&
     c.taxonomy.category === 'general' && c.taxonomy.subcategory === 'source_bounded_relation');
-  const sentences = relations.map((c) => renderRelation(c,byId,registry))
+  const sentences = relations.map((c) => renderRelation(c,byId,registry,facts.tenGods))
     .sort((a,b) => a.relationId.localeCompare(b.relationId) ||
       (a.scenarioRef ?? '').localeCompare(b.scenarioRef ?? ''));
   return {
@@ -196,6 +234,7 @@ export function buildNatalN13StructuralResearchReading(
     mayApproveSemantics:false,
     mayPromoteProduction:false,
     snapshotId:execution.run.snapshotId,
+    calculationHash:snapshot.calculationHash,
     relationCount:sentences.length,
     meaningSignature:deterministicContentHash(sentences.map((s) => s.meaningFingerprint).sort()),
     sentences,
