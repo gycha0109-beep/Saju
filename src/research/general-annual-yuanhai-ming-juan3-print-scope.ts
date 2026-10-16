@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v22' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v23' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2148,6 +2148,42 @@ export const YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT = Object.freeze({
   }),
 });
 
+/** Actual scan of a later printed bibliography: A for its own words, C for Ming-edition attribution. */
+export const YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO = Object.freeze({
+  source: Object.freeze({
+    catalogTitle: '郘亭知見傳本書目' as const,
+    attributedBibliographer: '莫友芝' as const,
+    reproductionSeries: 'NLC892-001931309-315546' as const,
+    originalCatalogPdf: 'https://commons.wikimedia.org/wiki/File:NLC892-001931309-315546_郘亭知見傳本書目_十六卷_第5冊.pdf' as const,
+    bookNumberOneBased: 5 as const,
+    printedCatalogJuan: 9 as const,
+    pdfPageOneBased: 8 as const,
+    catalogPdfPages: 52 as const,
+    actualDownloadedFileBytes: 23599742 as const,
+    verifiedSha256: '6e604b1f708271467ba47915d888c4fab1bb07b761b1e09ec578ede83e1e1eab' as const,
+    printedCatalogHeadingDirectlySeen: '星學正傳二十一卷首總括圖三卷又玉井奧訣一卷玉照神經一卷末圖說二卷' as const,
+    printedAttributionDirectlySeen: '明楊淙纂' as const,
+    printedDatingNoteDirectlySeen: '萬曆壬午自序刊' as const,
+    originalCatalogPrintDirectlyInspected: true as const,
+    directCatalogGlyphTier: 'A_later_printed_bibliography_only' as const,
+  }),
+  editionAttributionSafeguards: Object.freeze({
+    wanliRenwuGregorianYear: 1582 as const,
+    dateIsReportedByLaterBibliography: true as const,
+    assertedDateAuthenticatedIn1582PhysicalPrint: false as const,
+    sourceSelfPrefaceOriginalLeafInspected: false as const,
+    catalogEntryProves1582ActualImpressionDate: false as const,
+    catalogEntryProvesSameSettingAs1600Or1634: false as const,
+    evidenceTierFor1582Edition: 'C_historical_bibliographic_attribution' as const,
+    modern1583EleventhWanliYearIs1582: false as const,
+    newlyInspected1582JuanThreeOriginalLeaves: 0 as const,
+    newUnMuOriginalGlyphReadings: 0 as const,
+    historicalYuefeiBirthHourAuthenticated: false as const,
+    modernAnnualRulesApproved: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 /** 1934 Sonkeikaku catalog is a bibliographic holding lead, never a focal original print. */
 export const YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE = Object.freeze({
   catalogPrint: Object.freeze({
@@ -2357,6 +2393,10 @@ export function buildYuanHaiMingJuan3PrintScope() {
     YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT.safeguards.newlyCollatedUnOrMuOriginalGlyphs !== 0 ||
     YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT.safeguards.independent1582OriginalFocalLeafAdded !== 0 ||
     YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT.safeguards.productionAuthorized ||
+    YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO.editionAttributionSafeguards.assertedDateAuthenticatedIn1582PhysicalPrint ||
+    YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO.editionAttributionSafeguards.newlyInspected1582JuanThreeOriginalLeaves !== 0 ||
+    YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO.editionAttributionSafeguards.newUnMuOriginalGlyphReadings !== 0 ||
+    YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO.editionAttributionSafeguards.productionAuthorized ||
     YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE.originalMingWitness.newlyAuthenticatedPre1600WeiOrMuGlyphs !== 0 ||
     YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE.originalMingWitness.focalLeafAndOriginalGlyphDirectlyInspected ||
     YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE.originalMingWitness.productionAuthorized ||
@@ -2511,6 +2551,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     housa1582AndToyoCopyAudit: YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
     shanghai1582ModernEditorialRoute: YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
     sonkeikaku1582CatalogRoute: YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE,
+    moyouzhiRenwuPrintedBibliography: YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO,
     yangcongTitleLeafReproductionAudit: YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
     nlc1600DirectFacsimileAccess: YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,
