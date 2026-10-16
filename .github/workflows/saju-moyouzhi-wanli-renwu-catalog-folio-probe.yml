@@ -1,11 +1,7 @@
 # Research-only: inspect a Qing bibliographer's dated-edition notice, not the 1582 print.
 name: "[WT:saju] Mo Youzhi Wanli Renwu Catalog Folio"
+# Verified the p.8 original bibliographic record; rerun only on explicit request.
 on:
-  pull_request:
-    branches:
-      - research/saju/annual-yuanhai-three-layer-case-witness
-    paths:
-      - .github/workflows/saju-moyouzhi-wanli-renwu-catalog-folio-probe.yml
   workflow_dispatch:
 permissions:
   contents: read
