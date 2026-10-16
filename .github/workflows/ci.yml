@@ -88,6 +88,7 @@ jobs:
         run: |
           node --test scripts/natal-reader-review-packet.check.mjs
           node scripts/natal-personalization-audit.mjs "$RUNNER_TEMP/natal-baseline.json"
+          node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const n=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.n21-reader-first.json','utf8')); assert.equal(n.caseCount,35); assert.equal(n.cases.length,35); assert.equal(n.sourceMeaningDifferenceProven,false); assert.equal(n.mayPublish,false); assert.equal(n.maySell,false); assert.ok(n.casesWithoutActualReading>=2); assert.ok(n.cases.every(c=>!c.meaningDifferentiationProven && !c.createsNewInterpretation && !c.mayPublish && !c.maySell && (!c.birthTimeKnown ? c.displayedActualInterpretationCount===0 : true)));"
           node scripts/natal-mur-shadow-audit.mjs "$RUNNER_TEMP/natal-mur-shadow.json"
           node scripts/natal-n13-structural-research-packet.mjs "$RUNNER_TEMP/natal-n13-research.json" "$RUNNER_TEMP/natal-n13-research.html"
           node scripts/natal-n14-linked-t8-research-packet.mjs "$RUNNER_TEMP/natal-n14-linked.json" "$RUNNER_TEMP/natal-n14-linked.html"
@@ -117,6 +118,7 @@ jobs:
           name: natal-n3-audit-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/natal-baseline.json
+            ${{ runner.temp }}/natal-baseline.n21-reader-first.json
             ${{ runner.temp }}/natal-baseline.rules.json
             ${{ runner.temp }}/natal-baseline.context.json
             ${{ runner.temp }}/natal-baseline.consumer.json
