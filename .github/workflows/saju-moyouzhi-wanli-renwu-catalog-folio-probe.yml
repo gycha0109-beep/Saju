@@ -28,13 +28,13 @@ jobs:
           import fitz
           from PIL import Image,ImageDraw
           root=Path(os.environ['RUNNER_TEMP'])/'moyouzhi'
-          filename='NLC892-001931309-315544 郘亭知見傳本書目 十六卷 第4冊.pdf'
+          filename='NLC892-001931309-315546 郘亭知見傳本書目 十六卷 第5冊.pdf'
           title='File:'+filename
           s=requests.Session()
           s.headers.update({'User-Agent':'Saju-Scholarly-Original-Catalog-Audit/1.0 (+https://github.com/gycha0109-beep/Saju)'})
           report={'catalog':'郘亭知見傳本書目','bibliographer':'莫友芝',
                   'claim_only_in_digital_transcription':'明楊淙撰。萬歷壬午自序刊。',
-                  'candidate_book_four_for_juan_eight':True,'tianyige_scan_excluded':'first page visibly printed 卷十四',
+                  'candidate_book_five_for_juan_nine':True,'excluded_prior_scans':'Tianyige PDF printed 卷十四; NLC fourth book contains 卷七/八',
                   'original_1582_woodblock_obtained':False,'target_juan_three_original_obtained':False,
                   'folio_reading_auto_authenticated':False,'errors':[]}
           try:
@@ -57,7 +57,7 @@ jobs:
                 for piece in resp.iter_content(chunk_size=131072):
                   if not piece:continue
                   size+=len(piece)
-                  if size>24000000:raise ValueError('Bounded fetch exceeded 24MB')
+                  if size>29000000:raise ValueError('Bounded fetch exceeded 29MB')
                   h.update(piece);out.write(piece)
             report['pdf_file_bytes']=size
             report['sha256']=h.hexdigest()
