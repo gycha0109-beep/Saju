@@ -40,15 +40,16 @@ function fixture(gods: TenGodChartFact) {
   return {...base,derivedFacts:{...base.derivedFacts,tenGods:resolved(gods)}};
 }
 function execute(gods: TenGodChartFact) {
-  const execution = runInterpretation(fixture(gods),registry,{now:NOW});
+  const snapshot = fixture(gods);
+  const execution = runInterpretation(snapshot,registry,{now:NOW});
   expect(execution.integrity.valid).toBe(true);
-  return execution;
+  return {snapshot,execution};
 }
 
 describe('N13 first executable source-bounded T5→T8 research interpretation', () => {
   it('renders all five existing multi-input T8 structural claims as traceable research-only prose', () => {
     const exec = execute(full);
-    const draft = buildNatalN13StructuralResearchReading(exec,registry);
+    const draft = buildNatalN13StructuralResearchReading(exec.snapshot,exec.execution,registry);
     expect(draft).toMatchObject({
       status:'research_only',mayPublishToConsumer:false,
       mayApproveSemantics:false,mayPromoteProduction:false,relationCount:5,
@@ -67,16 +68,18 @@ describe('N13 first executable source-bounded T5→T8 research interpretation', 
       expect(s.text).toContain('구조');
       expect(s.text).toContain('단정하지 않습니다');
       expect(s.meaningFingerprint).toMatch(/^[0-9a-f]{64}$/u);
+      expect(s.observedPositions.length).toBeGreaterThanOrEqual(2);
+      expect(s.text).toContain('실제 계산 위치 관측');
     }
     expect(draft.sentences.find((s)=>s.relationId==='PEER-TO-WEALTH-ADVERSE')
       ?.text).toContain('겁재');
-    expect(buildNatalN13StructuralResearchReading(exec,registry))
+    expect(buildNatalN13StructuralResearchReading(exec.snapshot,exec.execution,registry))
       .toEqual(draft);
   });
 
   it('does not substitute Bijeon for Gyeopjae or invent wealth presence', () => {
-    const peerOnly = buildNatalN13StructuralResearchReading(execute(withoutExactGyeopjae),registry);
-    const noWealth = buildNatalN13StructuralResearchReading(execute(withoutWealth),registry);
+    const peerOnly = buildNatalN13StructuralResearchReading(...Object.values(execute(withoutExactGyeopjae)) as [ReturnType<typeof fixture>, ReturnType<typeof runInterpretation>],registry);
+    const noWealth = buildNatalN13StructuralResearchReading(...Object.values(execute(withoutWealth)) as [ReturnType<typeof fixture>, ReturnType<typeof runInterpretation>],registry);
     expect(peerOnly.relationCount).toBe(4);
     expect(peerOnly.sentences.some((s) => s.relationId==='PEER-TO-WEALTH-ADVERSE')).toBe(false);
     expect(noWealth.sentences.every((s)=>!s.relationId.includes('WEALTH'))).toBe(true);
@@ -85,19 +88,19 @@ describe('N13 first executable source-bounded T5→T8 research interpretation', 
 
   it('fails closed on missing upstream Claim, tampered T8 scope, and Preview registry', () => {
     const original = execute(full);
-    const target = original.claims.find((c) => c.taxonomy.subcategory==='source_bounded_relation');
+    const target = original.execution.claims.find((c) => c.taxonomy.subcategory==='source_bounded_relation');
     if (!target) throw new Error('Expected actual source-bounded T8 claim');
-    const missing = {...original,
-      claims:original.claims.filter((c)=>c.claimId!==target.upstreamClaimRefs[0])};
-    expect(()=>buildNatalN13StructuralResearchReading(missing,registry))
+    const missing = {...original.execution,
+      claims:original.execution.claims.filter((c)=>c.claimId!==target.upstreamClaimRefs[0])};
+    expect(()=>buildNatalN13StructuralResearchReading(original.snapshot,missing,registry))
       .toThrow(/missing upstream/u);
-    const tampered = {...original,
-      claims:original.claims.map((c) => c.claimId===target.claimId
+    const tampered = {...original.execution,
+      claims:original.execution.claims.map((c) => c.claimId===target.claimId
         ? {...c,value:{...(c.value as Record<string,unknown>),consumerProjectionAuthorized:true}} : c)};
-    expect(()=>buildNatalN13StructuralResearchReading(tampered,registry))
+    expect(()=>buildNatalN13StructuralResearchReading(original.snapshot,tampered,registry))
       .toThrow(/unrecognized or unapproved/u);
     const preview = createGeneralNatalIntegratedReadingRegistry(NOW.toISOString());
-    expect(()=>buildNatalN13StructuralResearchReading(original,preview))
+    expect(()=>buildNatalN13StructuralResearchReading(original.snapshot,original.execution,preview))
       .toThrow(/source-bounded research execution/u);
   });
 
@@ -107,7 +110,7 @@ describe('N13 first executable source-bounded T5→T8 research interpretation', 
       time:{known:true,hour:5,minute:30},sexForTraditionalCalculation:'male',
     },PRODUCTION_DEFAULT_CALCULATION_POLICY,{now:NOW});
     const interpreted = runInterpretation(snap,registry,{now:NOW});
-    const result = buildNatalN13StructuralResearchReading(interpreted,registry);
+    const result = buildNatalN13StructuralResearchReading(snap,interpreted,registry);
     expect(result.relationCount).toBeGreaterThan(0);
     expect(result.sentences.every((s) => s.researchOnly && !s.consumerProjectionAuthorized)).toBe(true);
   });
