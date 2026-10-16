@@ -3,7 +3,6 @@ import type { InterpretationExecutionResult } from '../interpretation/interpreta
 import { deterministicContentHash, type ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import {
   buildNatalN13StructuralResearchReading,
-  type NatalN13ResearchSentence,
 } from './general-natal-t8-structural-reading-draft.js';
 
 export const GENERAL_NATAL_N14_LINKED_T8_RESEARCH_VERSION =
