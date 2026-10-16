@@ -1,0 +1,101 @@
+# Research-only: inspect a Qing bibliographer's dated-edition notice, not the 1582 print.
+name: "[WT:saju] Mo Youzhi Wanli Renwu Catalog Folio"
+on:
+  pull_request:
+    branches:
+      - research/saju/annual-yuanhai-three-layer-case-witness
+    paths:
+      - .github/workflows/saju-moyouzhi-wanli-renwu-catalog-folio-probe.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtain historical bibliographic original scan and visually index pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet requests PyMuPDF Pillow
+          mkdir -p "$RUNNER_TEMP/moyouzhi"
+          python - <<'PY'
+          import requests, json, os, hashlib
+          from pathlib import Path
+          from urllib.parse import quote
+          import fitz
+          from PIL import Image,ImageDraw
+          root=Path(os.environ['RUNNER_TEMP'])/'moyouzhi'
+          filename='Tianyige-330000-1705-0018439 郘亭知見傳本書目十六卷 清莫友芝撰 民國鉛印本.pdf'
+          title='File:'+filename
+          s=requests.Session()
+          s.headers.update({'User-Agent':'Saju-Scholarly-Original-Catalog-Audit/1.0 (+https://github.com/gycha0109-beep/Saju)'})
+          report={'catalog':'郘亭知見傳本書目','bibliographer':'莫友芝',
+                  'claim_only_in_digital_transcription':'明楊淙撰。萬歷壬午自序刊。',
+                  'original_1582_woodblock_obtained':False,'target_juan_three_original_obtained':False,
+                  'folio_reading_auto_authenticated':False,'errors':[]}
+          try:
+            api='https://commons.wikimedia.org/w/api.php'
+            r=s.get(api,params={'action':'query','format':'json','prop':'imageinfo','iiprop':'url','titles':title},timeout=25)
+            report['commons_api_status']=r.status_code
+            r.raise_for_status()
+            pages=r.json().get('query',{}).get('pages',{})
+            info=next(iter(pages.values())).get('imageinfo',[])
+            if not info: raise RuntimeError('No Commons imageinfo for target')
+            target=info[0]['url']
+            report['resolved_commons_original_url']=target
+            f=root/'moyouzhi-catalog.pdf'
+            with s.get(target,stream=True,timeout=(15,130)) as resp:
+              report['file_http_status']=resp.status_code
+              resp.raise_for_status()
+              size=0
+              h=hashlib.sha256()
+              with f.open('wb') as out:
+                for piece in resp.iter_content(chunk_size=131072):
+                  if not piece:continue
+                  size+=len(piece)
+                  if size>19000000:raise ValueError('Bounded fetch exceeded 19MB')
+                  h.update(piece);out.write(piece)
+            report['pdf_file_bytes']=size
+            report['sha256']=h.hexdigest()
+            with fitz.open(f) as pdf:
+              report['pdf_pages']=len(pdf)
+              if len(pdf)>85:raise RuntimeError('Unexpected PDF page count')
+              report['page_sample_text_present']=any(len(pg.get_text().strip())>80 for pg in list(pdf)[:5])
+              contact=[]
+              for st in range(0,len(pdf),8):
+                sheet=Image.new('RGB',(2400,1950),'white')
+                draw=ImageDraw.Draw(sheet)
+                for j in range(min(8,len(pdf)-st)):
+                  no=st+j
+                  pix=pdf[no].get_pixmap(dpi=85,colorspace=fitz.csRGB,alpha=False)
+                  im=Image.frombytes('RGB',(pix.width,pix.height),pix.samples)
+                  im.thumbnail((555,870))
+                  xx=(j%4)*600+20
+                  yy=(j//4)*940+50
+                  sheet.paste(im,(xx,yy))
+                  draw.text((xx,yy-25),f'PDF page {no+1}',fill='black')
+                name=f'contact-{st+1:03}-{min(st+8,len(pdf)):03}.jpg'
+                sheet.save(root/name,quality=85)
+                contact.append(name)
+              report['contacts']=contact
+            report['status']='downloaded_and_indexed_bibliographic_scan'
+          except Exception as ex:
+            report['status']='public_download_or_index_failed'
+            report['errors'].append(type(ex).__name__+': '+str(ex)[:700])
+          finally:
+            (root/'scan-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+            print(json.dumps(report,ensure_ascii=False)[:13000])
+          PY
+      - name: Preserve only page contact sheets and evidence metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-moyouzhi-renwu-catalog-contact-audit
+          path: |
+            ${{ runner.temp }}/moyouzhi/scan-report.json
+            ${{ runner.temp }}/moyouzhi/contact-*.jpg
+          if-no-files-found: warn
+          retention-days: 7
