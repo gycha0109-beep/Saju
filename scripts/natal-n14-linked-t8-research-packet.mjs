@@ -36,6 +36,7 @@ const result={
  totalLinkedPairs:cases.reduce((sum,c)=>sum+c.linkedPairCount,0),
  casesWithLinks:cases.filter(c=>c.linkedPairCount>0).length,
  uniqueSignatures:new Set(cases.map(c=>c.linkedSemanticSignature)).size,
+ uniquePositionSignatures:new Set(cases.map(c=>c.linkedPositionSignature)).size,
  cases,
 };
 if(result.caseCount!==8 || result.casesWithLinks<1 ||
@@ -43,6 +44,8 @@ if(result.caseCount!==8 || result.casesWithLinks<1 ||
    c.linkedPairs.every(p=>!p.transitiveCausalInferenceAuthorized &&
       !p.publicationAuthorized && !p.modernConsumerInferenceAuthorized &&
       p.independentUpstreamT5ClaimRefs.length===3 &&
+      p.positionWitnesses.length===3 &&
+      p.positionWitnesses.every(w=>w.positions.length>0) &&
       p.firstT8ClaimId!==p.secondT8ClaimId))) {
  throw new TypeError('N14 linked T8 study violated fail-closed authority or actual evidence');
 }
@@ -64,4 +67,5 @@ writeFileSync(path,JSON.stringify(result,null,2)+'\n','utf8');
 writeFileSync(htmlPath,html,'utf8');
 process.stdout.write('N14 linked T8 research: '+result.casesWithLinks+'/'+result.caseCount+
  ' real charts with '+result.totalLinkedPairs+' linked co-observations; '+result.uniqueSignatures+
- ' signatures; all consumer authority HOLD\n');
+ ' rule-level signatures vs '+result.uniquePositionSignatures+
+ ' actual position signatures; all consumer authority HOLD\n');
