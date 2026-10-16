@@ -1,11 +1,7 @@
 # Public previews only; no login, paywall, downloading protected PDFs or API guesses.
 name: "[WT:saju] 1582 Eight-Book Public Preview Probe"
+# Manual-only: public host timed out during first probe; no repeated requests per PR edit.
 on:
-  pull_request:
-    branches:
-      - research/saju/annual-yuanhai-three-layer-case-witness
-    paths:
-      - .github/workflows/saju-1582-eight-book-public-preview-probe.yml
   workflow_dispatch:
 permissions:
   contents: read
