@@ -111,7 +111,7 @@ describe('N15 overly broad Ten-God consumer conclusion research reduction',()=>{
   const preview=createGeneralNatalIntegratedReadingRegistry(now.toISOString());
   expect(()=>buildGeneralNatalN15FilteredResearchReading(
     a.snapshot,a.original,originalRegistry,a.bounded,preview,
-  )).toThrow(/source-bounded research/u);
+  )).toThrow(/research-bound canonical executions/u);
   expect(()=>buildGeneralNatalN15FilteredResearchReading(
     {...a.snapshot,snapshotId:'other'},a.original,originalRegistry,a.bounded,boundedRegistry,
   )).toThrow(/identical valid research-bound/u);
