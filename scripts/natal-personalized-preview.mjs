@@ -10,6 +10,7 @@ import { PRODUCT_PREVIEW_READING_HTTP_PATH } from '../dist/production-calculatio
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../dist/production/production-calculation-runtime.js';
 import { buildNatalStructuralEvidence } from '../dist/preview/natal-structural-evidence.js';
 import { buildNatalSynthesisPreview } from '../dist/preview/natal-synthesis-preview.js';
+import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
@@ -148,6 +149,46 @@ function renderAppliedThemeContext(context) {
   </section>`;
 }
 
+function renderGroundedReaderBrief(brief) {
+  const byId = new Map(brief.readingUnits.map((u) => [u.unitId, u]));
+  const shown = new Set();
+  const contexts = brief.context.map((item) =>
+    '<section class="interpretation"><h3>' + escapeHtml(item.title) + '</h3>' +
+    '<p>' + escapeHtml(item.text) + '</p><details><summary>계산 근거</summary><p>' +
+    escapeHtml(item.factPaths.join(' · ')) + '</p></details></section>').join('');
+  const domainsHtml = brief.domains.map((domain) => {
+    const units = domain.unitIds.map((id) => {
+      const unit = byId.get(id);
+      if (!unit) throw new TypeError('N16 missing referenced reading text unit: ' + id);
+      if (shown.has(id)) {
+        return '<li class="limited">이미 앞의 분야에서 표시한 동일 문장 (' +
+          escapeHtml(unit.appearingInDomains.join(' · ')) + ')</li>';
+      }
+      shown.add(id);
+      const refs = unit.sources.map((s) => s.domain + ' / ' + s.sectionTitle +
+        ' / response ' + s.responseId + ' / reading ' + s.readingId).join(' | ');
+      return '<li>' + escapeHtml(unit.text) +
+        '<details><summary>실제 응답 출처</summary><p>' + escapeHtml(refs) + '</p></details></li>';
+    }).join('');
+    return '<section class="interpretation"><h3>' + escapeHtml(domain.title) +
+      ' <small>' + escapeHtml(domain.responseState) + '</small></h3>' +
+      (units.length ? '<ul>' + units + '</ul>' :
+        '<p class="limited">현재 전달된 풀이 본문이 없습니다. 근거가 없는 내용을 채우지 않습니다.</p>') +
+      (domain.disclosures.length ? '<details><summary>해석 범위 안내</summary>' +
+        domain.disclosures.map(x => '<p>' + escapeHtml(x) + '</p>').join('') + '</details>' : '') +
+      '</section>';
+  }).join('');
+  return '<section class="domain"><div class="domain-heading"><h2>내 사주를 한 장으로 읽기</h2>' +
+    '<span>N16 내부 Preview 정리</span></div>' +
+    '<p class="limited">기존 다섯 분야의 실제 답변을 그대로 묶었습니다. 중복 문장은 한 번만 표시하며 새 해석은 만들지 않습니다.</p>' +
+    contexts +
+    '<p class="limited">원문 설명 ' + brief.totalOriginalTextUnitCount + '개 · 서로 다른 설명 ' +
+    brief.uniqueTextUnitCount + '개 · 중복 출현 ' + brief.exactRepeatedTextCount + '회</p>' +
+    domainsHtml +
+    '<details><summary>한계와 사용 범위</summary>' +
+    brief.limitations.map(x => '<p>' + escapeHtml(x) + '</p>').join('') + '</details></section>';
+}
+
 function renderPillars(summary) {
   if (summary === undefined) return '<p>명식 요약을 사용할 수 없습니다.</p>';
   return `<div class="pillars">${(['year', 'month', 'day', 'hour'])
@@ -159,7 +200,7 @@ function renderPillars(summary) {
     .join('')}</div>`;
 }
 
-function renderPage(date, time, responses, synthesis, themes, applied) {
+function renderPage(date, time, responses, synthesis, themes, applied, brief) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -188,6 +229,7 @@ function renderPage(date, time, responses, synthesis, themes, applied) {
   <p>${escapeHtml(date)} · ${escapeHtml(time ?? '출생시간 미상')} 입력으로 현재 명하 엔진의 실제 Preview 해석을 조합한 내부 시제품입니다. 해석을 새로 생성하거나 근거 없는 빈칸을 채우지 않습니다.</p>
   </header>
   ${renderPillars(general?.calculationSummary)}
+  ${renderGroundedReaderBrief(brief)}
   ${renderSynthesis(synthesis)}
   ${renderActivatedThemes(themes)}
   ${renderAppliedThemeContext(applied)}
@@ -253,10 +295,9 @@ async function main() {
   });
   const evidence = buildNatalStructuralEvidence(calculated.snapshot);
   const domainKeys = ['general', 'career', 'wealth', 'business', 'relationship'];
-  const synthesis = buildNatalSynthesisPreview(
-    evidence,
-    responses.map((item, i) => ({ domain: domainKeys[i], response: item.response })),
-  );
+  const realSources = responses.map((item, i) => ({ domain: domainKeys[i], response: item.response }));
+  const synthesis = buildNatalSynthesisPreview(evidence, realSources);
+  const brief = buildNatalN16GroundedReaderBrief(calculated.snapshot, realSources);
   const researchNow = new Date('2026-10-15T00:00:00.000Z');
   const registry = createGeneralNatalIntegratedReadingRegistry(researchNow.toISOString());
   const interpretation = runInterpretation(calculated.snapshot, registry, {
@@ -265,7 +306,8 @@ async function main() {
   });
   const themes = buildNatalActivatedThemePreview(interpretation);
   const applied = buildNatalAppliedThemeContext(evidence, themes);
-  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied), 'utf8');
+  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief), 'utf8');
+  process.stdout.write(`N16 grounded brief: ${brief.totalOriginalTextUnitCount} real original text units, ${brief.uniqueTextUnitCount} distinct units, ${brief.exactRepeatedTextCount} repeated occurrences; internal only\n`);
   process.stdout.write(`N4 chart-bound interpretations: ${applied.statements.length} actual theme positions\\n`);
   process.stdout.write(`N3 actually matched research themes: ${themes.themes.length}\\n`);
   process.stdout.write(`N1/N2 evidence: ${synthesis.statements.length} traced statements, ` +
