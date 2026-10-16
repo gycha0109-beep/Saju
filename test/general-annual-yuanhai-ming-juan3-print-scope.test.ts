@@ -41,6 +41,7 @@ import {
   YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
   YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
   YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE,
+  YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO,
   YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
   YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,
@@ -52,7 +53,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v22');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v23');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -951,6 +952,41 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       productionAuthorized: false,
     });
     expect(buildYuanHaiMingJuan3PrintScope().yangcongTitleLeafReproductionAudit).toEqual(a);
+  });
+
+  test('later printed Mo Youzhi bibliography reports 1582 renwu without proving the original Ming leaf', () => {
+    const a = YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO;
+    expect(a.source).toMatchObject({
+      catalogTitle: '郘亭知見傳本書目',
+      attributedBibliographer: '莫友芝',
+      reproductionSeries: 'NLC892-001931309-315546',
+      bookNumberOneBased: 5,
+      printedCatalogJuan: 9,
+      pdfPageOneBased: 8,
+      catalogPdfPages: 52,
+      actualDownloadedFileBytes: 23599742,
+      verifiedSha256: '6e604b1f708271467ba47915d888c4fab1bb07b761b1e09ec578ede83e1e1eab',
+      printedCatalogHeadingDirectlySeen: '星學正傳二十一卷首總括圖三卷又玉井奧訣一卷玉照神經一卷末圖說二卷',
+      printedAttributionDirectlySeen: '明楊淙纂',
+      printedDatingNoteDirectlySeen: '萬曆壬午自序刊',
+      originalCatalogPrintDirectlyInspected: true,
+      directCatalogGlyphTier: 'A_later_printed_bibliography_only',
+    });
+    expect(a.editionAttributionSafeguards).toMatchObject({
+      wanliRenwuGregorianYear: 1582,
+      dateIsReportedByLaterBibliography: true,
+      assertedDateAuthenticatedIn1582PhysicalPrint: false,
+      sourceSelfPrefaceOriginalLeafInspected: false,
+      catalogEntryProves1582ActualImpressionDate: false,
+      catalogEntryProvesSameSettingAs1600Or1634: false,
+      evidenceTierFor1582Edition: 'C_historical_bibliographic_attribution',
+      modern1583EleventhWanliYearIs1582: false,
+      newlyInspected1582JuanThreeOriginalLeaves: 0,
+      newUnMuOriginalGlyphReadings: 0,
+      historicalYuefeiBirthHourAuthenticated: false,
+      modernAnnualRulesApproved: 0, productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().moyouzhiRenwuPrintedBibliography).toEqual(a);
   });
 
   test('1934 Sonkeikaku catalog image-only lead never promotes an original Wei or Mu glyph', () => {
