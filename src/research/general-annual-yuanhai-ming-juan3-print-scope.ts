@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v25' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-number-corrected-v26' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2148,6 +2148,41 @@ export const YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT = Object.freeze({
   }),
 });
 
+/** The directly inspected printed Wang Wenyuan / Ye Dehui catalog page proves only its 22-juan description. */
+export const YUANHAI_XIAOCITANG_22_JUAN_PRINTED_CATALOG_AUDIT = Object.freeze({
+  source: Object.freeze({
+    catalogTitle: '孝慈堂書目' as const,
+    compiler: '王聞遠' as const,
+    seriesEditor: '葉德輝' as const,
+    printedSeries: '觀古堂書目叢刻 第15冊' as const,
+    catalogPublicationYearFromCiNii: 1921 as const,
+    publiclyInspectedFacsimileUrl: 'https://commons.wikimedia.org/wiki/File:NLC892-001929162-317370_□古堂書目叢刻_十五種_第15冊.pdf' as const,
+    originalPdfPages: 69 as const,
+    originalPdfBytes: 42834275 as const,
+    originalPdfSha256: '1519be1f7ad434e0dd51958443a6b7d7a4395f12b4c427adeeec740cd20e8ed6' as const,
+    pdfPageOneBased: 4 as const,
+    printedSectionDirectlyInspected: '星命' as const,
+    printedTitleDirectlyInspected: '星學正傳' as const,
+    printedAttributionDirectlyInspected: '楊淙' as const,
+    printedJuanCountDirectlyInspected: 22 as const,
+    printedPhysicalBookCountDirectlyInspected: 12 as const,
+    physicalPrintedCatalogPageInspected: true as const,
+    sourceTier: 'A_later_1921_bibliography_print_only' as const,
+  }),
+  unresolvedEditionRelation: Object.freeze({
+    printedCatalogDiffersFromMoYouzhi21Juan: true as const,
+    printedCatalogDiffersFrom1994Booklist21Juan: true as const,
+    boundVolumeCountingRuleEstablished: false as const,
+    distinctMingWoodblockImpressionsProved: false as const,
+    original1582JuanCountProved: false as const,
+    mingOriginalFocalJuanThreeInspected: false as const,
+    newlyInspectedWeiWoodOriginalGlyphs: 0 as const,
+    independentPrintedWitnessCredit: 0 as const,
+    modernAnnualRulesApproved: 0 as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 /** A-grade is limited to the physical 1994 printed catalog ENTRY, not the 1582 woodblock. */
 export const YUANHAI_1994_CHINESE_RARE_BOOK_CATALOG_PRINT_AUDIT = Object.freeze({
   source: Object.freeze({
@@ -2605,6 +2640,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     sonkeikaku1582CatalogRoute: YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE,
     moyouzhiRenwuPrintedBibliography: YUANHAI_MOYOUZHI_RENWU_BIBLIOGRAPHIC_FOLIO,
     chineseRareBook1994PrintedCatalogAudit: YUANHAI_1994_CHINESE_RARE_BOOK_CATALOG_PRINT_AUDIT,
+    wangWenyuanXiaocitang22JuanPrintedCatalogAudit: YUANHAI_XIAOCITANG_22_JUAN_PRINTED_CATALOG_AUDIT,
     naj2021ScheduledReproductionInventory: YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
     yangcongTitleLeafReproductionAudit: YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
