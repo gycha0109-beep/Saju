@@ -14,6 +14,7 @@
 - 관계별 허용된 고전 패턴/대상 family/정확한 십신 조건을 기존 규칙과 비교하여 일치한 경우만 **결정론적인 구조 관측 문장**을 만든다. 원 규칙의 `headline/summary`를 그대로 복사하지 않는다.
 - **실제 T5 두 개의 서로 다른 Claim ID**, 동일 snapshot/scenario, 올바른 rule/method/version, 연구 전용 false 정책, 두 개의 출처·locator가 모두 있어야 한다. 일치하지 않으면 throw.
 - 각 문장에 `semanticKey`, `meaningFingerprint`, T8 Claim ID, T5 claim refs, fact refs, source locators, 정확한 연구 방법론 소유 rule을 보관한다.
+- N13 추가 보강: 같은 **실제 canonical snapshot**에서 T5 양 끝 계열의 **정확한 십신 subtype×연월일시×천간/지지 대표**를 추출해 문장 옆에 붙인다. `positionalFactFingerprint`와 `meaningFingerprint`를 분리해, *단순 위치/사실이 바뀐 것*을 **새로운 합성 의미가 승인된 것처럼 세지 않는다.**
 - `scripts/natal-n13-structural-research-packet.mjs`가 **실제 계산 명식 8건**을 연구 registry로 실행해서 JSON+HTML을 생성한다. 하나의 사람에 대해 완성된 상담이 아닌 좁은 구조 조합임을 명시하고 QA artifact로 남긴다.
 - `test/general-natal-n13-source-bounded-t8-reading.test.ts`는 5개 구조 출력, 정확한 겁재/비견 반례, 재성 미관측 반례, ID 삭제·값 조작 시 fail-closed, 실제 1984-06-14 명식, Preview registry로 호출 차단을 검증한다.
 
