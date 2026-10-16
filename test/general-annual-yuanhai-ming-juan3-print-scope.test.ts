@@ -41,6 +41,7 @@ import {
   YUANHAI_1582_HOUSA_ALTERNATE_TITLE_AND_TOYO_COPY_AUDIT,
   YUANHAI_1582_SHANGHAI_MING_COPY_EDITORIAL_ROUTE,
   YUANHAI_1582_SONKEIKAKU_CATALOG_ROUTE,
+  YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
   YUANHAI_NLC1600_BOOK1_DIRECT_FACSIMILE_ACCESS,
   YUANHAI_JUAN3_ADDITIONAL_DIGITAL_WITNESSES,
@@ -51,7 +52,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v21');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v22');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -909,6 +910,47 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
     });
     expect(a.computedRunnerSha256).toBe('17eb28b3a65d0b28908c4646017ebd409ef875366f48945071bb68675f737c82');
     expect(buildYuanHaiMingJuan3PrintScope().nlc1600DirectFacsimileAccess).toEqual(a);
+  });
+
+  test('printed Yang Cong title leaf reproduction verifies visible letters but not dating or target Juan3', () => {
+    const a = YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT;
+    expect(a.sourceArticle).toMatchObject({
+      publicationDate: '2017-02-24',
+      imageHttpVerified: 200,
+      downloadedJpegBytes: 68118,
+      downloadedJpegSha256: '1efbf61429ff8f661fef4e24f3c99a4d1ebf791fabed9287749066e9f8ab0f70',
+      dimensions: [640, 854],
+    });
+    expect(a.directlyVisibleTitleLeaf).toMatchObject({
+      printedBookTitle: '星學綱目正傳',
+      printedCommissionOrCompiler: '清江楊竹亭先生纂訂',
+      printedWorkshopInscription: '聚奎齋梓',
+      titleLeafImageIsOriginalJuanSevenBodyPage: false,
+      titleLeafImageIsTargetJuanThreeLeaf: false,
+      originalPhysicalHoldingVerified: false,
+      originalPrintedImpressionYearRead: false,
+      printingWoodblockIdentificationVerified: false,
+      matchesShanghaiCatalogWorkshopTextCandidateOnly: true,
+      evidenceTier: 'B_photo_of_print_provenance_unverified',
+    });
+    expect(a.datingCollision).toMatchObject({
+      historicalCatalogWanliYear: 10,
+      historicalCatalogGregorianYear: 1582,
+      modernArticleWanliYear: 11,
+      modernArticleWanliElevenGregorianYear: 1583,
+      anotherModernEditorialPhrase: '萬曆十一年西元一五八二年',
+      contradictoryDatesAreTwoEstablishedPrintedEditions: false,
+      catalog1600AndLaterImpressionsDateComparedFromThisPhoto: false,
+    });
+    expect(a.safeguards).toMatchObject({
+      independent1582OriginalFocalLeafAdded: 0,
+      newlyCollatedUnOrMuOriginalGlyphs: 0,
+      printedWeiMuArchetypeIdentified: false,
+      historicalYuefeiJiSiHourAuthenticated: false,
+      modernAnnualRulesApproved: 0,
+      productionAuthorized: false,
+    });
+    expect(buildYuanHaiMingJuan3PrintScope().yangcongTitleLeafReproductionAudit).toEqual(a);
   });
 
   test('1934 Sonkeikaku catalog image-only lead never promotes an original Wei or Mu glyph', () => {
