@@ -209,10 +209,10 @@ async function main() {
   const n21Path = resolve(outputPath.endsWith('.json')
     ? outputPath.slice(0,-5) + '.n21-reader-first.json'
     : outputPath + '.n21-reader-first.json');
-  writeFileSync(n21Path, JSON.stringify(n21,null,2) + '\\n', 'utf8');
+  writeFileSync(n21Path, JSON.stringify(n21,null,2) + '\n', 'utf8');
   process.stdout.write('Natal N21: ' + n21.caseCount + ' real HTTP cases, ' +
     n21.casesWithActualReading + ' existing bounded readers, ' +
-    n21.casesWithoutActualReading + ' with no bounded reading; ' + n21Path + '\\n');
+    n21.casesWithoutActualReading + ' with no bounded reading; ' + n21Path + '\n');
 
   const { consumer: report, meaning: meaningReport, quality: meaningQuality } =
     buildNatalMeaningQualityAudit(inputs);
