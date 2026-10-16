@@ -7,6 +7,8 @@ import {
 
 export const GENERAL_NATAL_N14_LINKED_T8_RESEARCH_VERSION =
   'saju-n14-linked-t8-research-composition-v1' as const;
+export const GENERAL_NATAL_N19_POSITION_WITNESS_VERSION =
+  'saju-n19-position-anchored-t8-research-observation-v1' as const;
 
 type ChainFamily = 'output' | 'wealth' | 'officer' | 'resource';
 type SupportedEdge = {
@@ -60,6 +62,7 @@ export interface NatalN14LinkedStructureDraft {
 
 export interface NatalN14LinkedStructureResearchReport {
   version: typeof GENERAL_NATAL_N14_LINKED_T8_RESEARCH_VERSION;
+  positionProjectionVersion: typeof GENERAL_NATAL_N19_POSITION_WITNESS_VERSION;
   status:'research_only';
   mayExposeAsConsumerInterpretation:false;
   mayApproveNewResearchRule:false;
@@ -181,6 +184,7 @@ export function buildNatalN14LinkedT8ResearchReport(
   }
   return {
     version:GENERAL_NATAL_N14_LINKED_T8_RESEARCH_VERSION,
+    positionProjectionVersion:GENERAL_NATAL_N19_POSITION_WITNESS_VERSION,
     status:'research_only',
     mayExposeAsConsumerInterpretation:false,
     mayApproveNewResearchRule:false,
