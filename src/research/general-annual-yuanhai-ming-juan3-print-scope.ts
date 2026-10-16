@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-copy-route-provenance-v28' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-shidian-1582-target-ocr-v29' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2148,6 +2148,47 @@ export const YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT = Object.freeze({
   }),
 });
 
+/** Shidian NA09025 printed-juan-3 OCR is a new C-level target locus, not a 1582 printed folio. */
+export const YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT = Object.freeze({
+  platform: '識典古籍' as const,
+  bookId: 'NA09025' as const,
+  chapterId: '1m83vbm6ivwh6' as const,
+  traditionalUrl: 'https://www.shidianguji.com/zh/book/NA09025/chapter/1m83vbm6ivwh6' as const,
+  simplifiedUrl: 'https://www.shidianguji.com/book/NA09025/chapter/1m83vbm6ivwh6' as const,
+  traditionalAndSimplifiedAreOneDigitalWitness: true as const,
+  catalogAttribution: Object.freeze({
+    compiler: '楊淙' as const,
+    claimedEdition: '萬曆10年刊本' as const,
+    attributionGrade: 'C_catalog_metadata' as const,
+    actual1582ImpressionProvenByPrintedColophon: false as const,
+  }),
+  digitalPrintedJuanThreeTitle: '新刊總括天機諸家秘要星學正傳卷之三' as const,
+  targetChapterHeading: '陽刅' as const,
+  observedDigitalTargetGlyph: '未' as const,
+  observedTraditionalDigitalClause: '運行辛亥，亥卯未合起陽刅' as const,
+  corroboratingTextualLoci: Object.freeze({
+    nlcWanli1600BookId: 'SDZJ0626' as const,
+    nlcWanli1600DigitalGlyph: '未' as const,
+    chongzhen1634DigitalGlyph: '木' as const,
+    chongzhen1634TargetUrl: 'https://www.shidianguji.com/zh/mid-page/7603864294308413466' as const,
+    independentPrintSettingAddedFromOcr: 0 as const,
+  }),
+  originalImageAndAuthorityBoundary: Object.freeze({
+    inspectedOriginal1582JuanThreePrintedLeaf: false as const,
+    originalPrintImageUrlVerified: false as const,
+    originalPhysicalBookNumberVerified: false as const,
+    physicalHoldingInstitutionVerified: false as const,
+    ocrEditorialInterventionRuledOut: false as const,
+    glyphFrom1582ActualPrintedWoodblockVerified: false as const,
+    newlyAdjudicatedPrintedGlyphs: 0 as const,
+    newIndependentWoodblockSettings: 0 as const,
+    archetypeGlyphAdjudicated: null,
+    modernAnnualMeaningRulesApproved: 0 as const,
+    globalTripleClashPriorityAuthorized: false as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 /** Official 2026 Japanese institution-specific access rules: catalog access is not original folio access. */
 export const YUANHAI_JAPAN_TWO_INSTITUTION_REPRODUCTION_ACCESS_AUDIT = Object.freeze({
   kunaicho: Object.freeze({
@@ -2733,6 +2774,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     wangWenyuanXiaocitang22JuanPrintedCatalogAudit: YUANHAI_XIAOCITANG_22_JUAN_PRINTED_CATALOG_AUDIT,
     kunaichoShoryobu1582CatalogHoldingAudit: YUANHAI_KUNAICHO_SHORYOBU_1582_CATALOG_HOLDING_AUDIT,
     japanTwoInstitutionReproductionAccessAudit: YUANHAI_JAPAN_TWO_INSTITUTION_REPRODUCTION_ACCESS_AUDIT,
+    shidian1582JuanThreeTextualWitnessAudit: YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT,
     naj2021ScheduledReproductionInventory: YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
     yangcongTitleLeafReproductionAudit: YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,

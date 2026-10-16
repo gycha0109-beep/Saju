@@ -46,6 +46,7 @@ import {
   YUANHAI_XIAOCITANG_22_JUAN_PRINTED_CATALOG_AUDIT,
   YUANHAI_KUNAICHO_SHORYOBU_1582_CATALOG_HOLDING_AUDIT,
   YUANHAI_JAPAN_TWO_INSTITUTION_REPRODUCTION_ACCESS_AUDIT,
+  YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT,
   YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
   YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
@@ -58,7 +59,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v28');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v29');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -1884,6 +1885,51 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       printedOriginalHourStemVerified: false,
       newPrintedWitnessCredit: 0,
     });
+  });
+
+  test('Shidian 1582-attributed digital Juan3 未 is one C-level transcription, not printed glyph adjudication', () => {
+    const q = YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT;
+    expect(q).toMatchObject({
+      platform: '識典古籍',
+      bookId: 'NA09025',
+      chapterId: '1m83vbm6ivwh6',
+      traditionalAndSimplifiedAreOneDigitalWitness: true,
+      digitalPrintedJuanThreeTitle: '新刊總括天機諸家秘要星學正傳卷之三',
+      targetChapterHeading: '陽刅',
+      observedDigitalTargetGlyph: '未',
+      observedTraditionalDigitalClause: '運行辛亥，亥卯未合起陽刅',
+    });
+    expect(q.catalogAttribution).toMatchObject({
+      compiler: '楊淙',
+      claimedEdition: '萬曆10年刊本',
+      attributionGrade: 'C_catalog_metadata',
+      actual1582ImpressionProvenByPrintedColophon: false,
+    });
+    expect(q.corroboratingTextualLoci).toMatchObject({
+      nlcWanli1600BookId: 'SDZJ0626',
+      nlcWanli1600DigitalGlyph: '未',
+      chongzhen1634DigitalGlyph: '木',
+      independentPrintSettingAddedFromOcr: 0,
+    });
+    expect(q.originalImageAndAuthorityBoundary).toMatchObject({
+      inspectedOriginal1582JuanThreePrintedLeaf: false,
+      originalPrintImageUrlVerified: false,
+      originalPhysicalBookNumberVerified: false,
+      physicalHoldingInstitutionVerified: false,
+      ocrEditorialInterventionRuledOut: false,
+      glyphFrom1582ActualPrintedWoodblockVerified: false,
+      newlyAdjudicatedPrintedGlyphs: 0,
+      newIndependentWoodblockSettings: 0,
+      archetypeGlyphAdjudicated: null,
+      modernAnnualMeaningRulesApproved: 0,
+      globalTripleClashPriorityAuthorized: false,
+      productionAuthorized: false,
+    });
+    const scope = buildYuanHaiMingJuan3PrintScope();
+    expect(scope.shidian1582JuanThreeTextualWitnessAudit).toBe(q);
+    expect(scope.adjudicatedPrintedGlyph).toBeNull();
+    expect(scope.adjudicatedHistoricalWinner).toBeNull();
+    expect(scope.modernInterpretationClaim).toBeNull();
   });
 
   test('two Japan institution-specific reproduction routes remain C-grade and require exact printed-juan physical book', () => {
