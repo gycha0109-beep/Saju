@@ -109,8 +109,9 @@ describe('N20 opposed-relation kinds, source-bounded T5/T8 and exact T0 location
     expect(first.relationPatternSignature).toBe(second.relationPatternSignature);
     expect(first.locationSignature).not.toBe(second.locationSignature);
     expect(first.mixedPairs.map((p) => p.text)).not.toEqual(second.mixedPairs.map((p) => p.text));
-    expect(buildNatalN20MixedRelationResearchReport(run(full).snapshot, run(full).execution, registry)
-      .mayPublish).toBe(false);
+    const repeated = run(full);
+    expect(buildNatalN20MixedRelationResearchReport(repeated.snapshot, repeated.execution, registry))
+      .toEqual(repeated.report);
   });
 
   it('rejects a different snapshot or unrelated Preview registry', () => {
