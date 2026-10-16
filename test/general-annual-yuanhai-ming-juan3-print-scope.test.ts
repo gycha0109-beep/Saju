@@ -45,6 +45,7 @@ import {
   YUANHAI_1994_CHINESE_RARE_BOOK_CATALOG_PRINT_AUDIT,
   YUANHAI_XIAOCITANG_22_JUAN_PRINTED_CATALOG_AUDIT,
   YUANHAI_KUNAICHO_SHORYOBU_1582_CATALOG_HOLDING_AUDIT,
+  YUANHAI_JAPAN_TWO_INSTITUTION_REPRODUCTION_ACCESS_AUDIT,
   YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
   YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
@@ -57,7 +58,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v27');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v28');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -1883,6 +1884,58 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       printedOriginalHourStemVerified: false,
       newPrintedWitnessCredit: 0,
     });
+  });
+
+  test('two Japan institution-specific reproduction routes remain C-grade and require exact printed-juan physical book', () => {
+    const q = YUANHAI_JAPAN_TWO_INSTITUTION_REPRODUCTION_ACCESS_AUDIT;
+    expect(q.kunaicho).toMatchObject({
+      institution: '宮内庁書陵部 図書寮文庫',
+      shelfNumber: '217・35',
+      catalogImageField: '-',
+      catalogReproductionField: '-',
+      advanceReadingApplicationDays: 10,
+      originalPersonalPhotographyAuthorized: false,
+      officialPhotoOrDigitalCopyApplicationDocumented: true,
+      copyRequiresLocusAndShelfNumber: true,
+      copyPreparationApproxOneMonthOrLonger: true,
+      phoneRepresentative: '03-3213-1111',
+      extension: '3440',
+      emailApplicationRequiresPriorTelephoneInquiry: true,
+      targetJuanThreePhysicalBookLocated: false,
+      approvedCopyOfFocalLeafObtained: false,
+    });
+    expect(q.nationalArchives).toMatchObject({
+      parentCallNumber: '子059-0011',
+      subItemThreeBookOrder: '0003',
+      subItemThreeIsPrintedJuanThreeProved: false,
+      catalogItemUseRestriction: 'Open',
+      focalViewerAvailability: 'On-site Access Only',
+      remotePaidCopyOrSpecialReproductionRouteDocumented: true,
+      publishedOpenClassTypicalFulfillment: 'approximately_one_month',
+      reproductionRequiresSpecificPhysicalLocus: true,
+      previousInventoryNumbers: ['305-0266', '305-0267'],
+      inventoryNumberConcordanceVerified: false,
+      approvedCopyOfFocalLeafObtained: false,
+    });
+    expect(q.authorityBoundary).toMatchObject({
+      evidenceTier: 'C_official_access_rules_and_item_catalog_only',
+      userIdentifyingApplicationSubmitted: false,
+      purchaseOrReproductionFeeAuthorized: false,
+      ming1582JuanThreeOriginalLeavesInspected: 0,
+      newWeiWoodGlyphsAdjudicated: 0,
+      independentPrintSettingAdded: 0,
+      archetypeGlyph: null,
+      modernAnnualMeaningRulesApproved: 0,
+      globalTripleClashPriorityAuthorized: false,
+      productionAuthorized: false,
+    });
+    const scope = buildYuanHaiMingJuan3PrintScope();
+    expect(scope.japanTwoInstitutionReproductionAccessAudit).toBe(q);
+    expect(scope.independentlyCollatedPrintedWitnessCount).toBe(2);
+    expect(scope.directlyInspectedScanDocumentsCount).toBe(3);
+    expect(scope.authority.preWanliOriginalGlyphVerified).toBe(false);
+    expect(scope.adjudicatedPrintedGlyph).toBeNull();
+    expect(scope.modernInterpretationClaim).toBeNull();
   });
 
   test('Kunaicho Shoryobu 21+2+3 catalog metadata does not solve 22-juan or 1582 woodblock', () => {

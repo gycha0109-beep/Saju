@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-number-shoryobu-holding-v27' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-copy-route-provenance-v28' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2148,6 +2148,56 @@ export const YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT = Object.freeze({
   }),
 });
 
+/** Official 2026 Japanese institution-specific access rules: catalog access is not original folio access. */
+export const YUANHAI_JAPAN_TWO_INSTITUTION_REPRODUCTION_ACCESS_AUDIT = Object.freeze({
+  kunaicho: Object.freeze({
+    institution: '宮内庁書陵部 図書寮文庫' as const,
+    shelfNumber: '217・35' as const,
+    officialUseGuide: 'https://www.kunaicho.go.jp/kunaicho/shinsei/toshoryo.html' as const,
+    catalogImageField: '-' as const,
+    catalogReproductionField: '-' as const,
+    advanceReadingApplicationDays: 10 as const,
+    originalPersonalPhotographyAuthorized: false as const,
+    officialPhotoOrDigitalCopyApplicationDocumented: true as const,
+    copyRequiresLocusAndShelfNumber: true as const,
+    copyPreparationApproxOneMonthOrLonger: true as const,
+    phoneRepresentative: '03-3213-1111' as const,
+    extension: '3440' as const,
+    emailApplicationRequiresPriorTelephoneInquiry: true as const,
+    targetJuanThreePhysicalBookLocated: false as const,
+    approvedCopyOfFocalLeafObtained: false as const,
+  }),
+  nationalArchives: Object.freeze({
+    institution: '日本国立公文書館' as const,
+    parentCallNumber: '子059-0011' as const,
+    subItemThreeUrl: 'https://www.digital.archives.go.jp/item/en/4413954' as const,
+    subItemThreeBookOrder: '0003' as const,
+    subItemThreeIsPrintedJuanThreeProved: false as const,
+    catalogItemUseRestriction: 'Open' as const,
+    focalViewerUrl: 'https://www.digital.archives.go.jp/img/en/1079276' as const,
+    focalViewerAvailability: 'On-site Access Only' as const,
+    officialRemoteCopyGuide: 'https://www.archives.go.jp/guide/copy.html' as const,
+    remotePaidCopyOrSpecialReproductionRouteDocumented: true as const,
+    publishedOpenClassTypicalFulfillment: 'approximately_one_month' as const,
+    reproductionRequiresSpecificPhysicalLocus: true as const,
+    previousInventoryNumbers: Object.freeze(['305-0266', '305-0267'] as const),
+    inventoryNumberConcordanceVerified: false as const,
+    approvedCopyOfFocalLeafObtained: false as const,
+  }),
+  authorityBoundary: Object.freeze({
+    evidenceTier: 'C_official_access_rules_and_item_catalog_only' as const,
+    userIdentifyingApplicationSubmitted: false as const,
+    purchaseOrReproductionFeeAuthorized: false as const,
+    ming1582JuanThreeOriginalLeavesInspected: 0 as const,
+    newWeiWoodGlyphsAdjudicated: 0 as const,
+    independentPrintSettingAdded: 0 as const,
+    archetypeGlyph: null,
+    modernAnnualMeaningRulesApproved: 0 as const,
+    globalTripleClashPriorityAuthorized: false as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 /** Official Kunaicho holding record: metadata only, no 1582 focal print inspected. */
 export const YUANHAI_KUNAICHO_SHORYOBU_1582_CATALOG_HOLDING_AUDIT = Object.freeze({
   source: Object.freeze({
@@ -2682,6 +2732,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     chineseRareBook1994PrintedCatalogAudit: YUANHAI_1994_CHINESE_RARE_BOOK_CATALOG_PRINT_AUDIT,
     wangWenyuanXiaocitang22JuanPrintedCatalogAudit: YUANHAI_XIAOCITANG_22_JUAN_PRINTED_CATALOG_AUDIT,
     kunaichoShoryobu1582CatalogHoldingAudit: YUANHAI_KUNAICHO_SHORYOBU_1582_CATALOG_HOLDING_AUDIT,
+    japanTwoInstitutionReproductionAccessAudit: YUANHAI_JAPAN_TWO_INSTITUTION_REPRODUCTION_ACCESS_AUDIT,
     naj2021ScheduledReproductionInventory: YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
     yangcongTitleLeafReproductionAudit: YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
