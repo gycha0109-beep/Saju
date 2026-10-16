@@ -11,6 +11,7 @@ import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../dist/producti
 import { buildNatalStructuralEvidence } from '../dist/preview/natal-structural-evidence.js';
 import { buildNatalSynthesisPreview } from '../dist/preview/natal-synthesis-preview.js';
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
+import { buildNatalN21ReaderFirstStory } from '../dist/preview/natal-reader-first-story.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
@@ -149,6 +150,57 @@ function renderAppliedThemeContext(context) {
   </section>`;
 }
 
+/** The first screen is only original source-owned reading text, not template-generated predictions. */
+function renderReaderFirstStory(story) {
+  const basis = story.factualBasis.map((fact) =>
+    '<span class="basis-chip">' + escapeHtml(fact.text) +
+    '<details><summary>계산 사실의 위치</summary><p>' +
+    escapeHtml(fact.factPaths.join(' · ')) + '</p></details></span>'
+  ).join('');
+  const domainCards = story.sections.map((section, index) => {
+    const original = section.excerpts.map((excerpt, i) => {
+      const references = excerpt.provenance.map((p) => p.domain + ' · ' +
+        p.sectionTitle + ' · ' + p.responseId + ' · ' + p.readingId).join(' / ');
+      return '<div class="reader-paragraph' + (index === 0 && i === 0 ? ' reader-lead' : '') + '">' +
+        '<p>' + escapeHtml(excerpt.text) + '</p>' +
+        '<details><summary>이 문장의 실제 Preview 출처</summary><p>' +
+        escapeHtml(references) + '</p></details></div>';
+    }).join('');
+    const notes = [];
+    if (section.sharedEarlier.length) {
+      notes.push('이미 앞 분야에 있는 동일 설명 ' + section.sharedEarlier.length + '개');
+    }
+    if (section.remainingOriginalInterpretationCount) {
+      notes.push('상세 원문에 추가 풀이 ' + section.remainingOriginalInterpretationCount + '개');
+    }
+    if (section.calculatedExplanationCount) {
+      notes.push('풀이로 세지 않은 계산 설명 ' + section.calculatedExplanationCount + '개');
+    }
+    return '<article class="reader-domain">' +
+      '<div class="reader-domain-head"><h3>' + escapeHtml(section.title) + '</h3>' +
+      '<small>' + escapeHtml(section.responseState) + '</small></div>' +
+      (original || '<p class="limited">현재 이 분야에서 전달된 별도 풀이 본문이 없습니다. ' +
+        '부족한 내용을 임의로 채우지 않았습니다.</p>') +
+      (notes.length ? '<p class="reader-note">' + escapeHtml(notes.join(' · ')) + '</p>' : '') +
+      (section.limitations.length ? '<details><summary>이 분야의 해석 범위</summary>' +
+        section.limitations.map(text => '<p>' + escapeHtml(text) + '</p>').join('') +
+        '</details>' : '') + '</article>';
+  }).join('');
+  return '<section class="domain reader-first"><div class="domain-heading">' +
+    '<h2>내 사주풀이, 핵심부터 읽기</h2><span>N21 · 실제 Preview 답변</span></div>' +
+    '<p class="limited">내 명식의 계산 사실을 먼저 확인하고, 이미 제공된 다섯 분야의 ' +
+    '해석 문장을 중복 없이 이어 읽습니다. 새로운 운세 결론을 만들지는 않습니다.</p>' +
+    '<div class="basis-grid">' + basis + '</div>' +
+    '<div class="reader-domains">' + domainCards + '</div>' +
+    '<p class="reader-note">실제 풀이 ' + story.displayedOriginalInterpretationCount +
+    '개 우선 표시 · 같은 문장 반복 ' + story.hiddenDuplicateCount +
+    '개 제외 · 계산 사실만 설명한 문장 ' +
+    story.calculationFactsExcludedFromInterpretation + '개 별도</p>' +
+    '<details><summary>이 한 장 풀이의 정확한 범위</summary>' +
+    story.limitations.map(x => '<p>' + escapeHtml(x) + '</p>').join('') +
+    '</details></section>';
+}
+
 function renderGroundedReaderBrief(brief) {
   const byId = new Map(brief.readingUnits.map((u) => [u.unitId, u]));
   const meaningUnitIds = new Set(brief.readingUnits.filter((u) =>
@@ -211,7 +263,7 @@ function renderPillars(summary) {
     .join('')}</div>`;
 }
 
-function renderPage(date, time, responses, synthesis, themes, applied, brief) {
+function renderPage(date, time, responses, synthesis, themes, applied, brief, story) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -232,6 +284,20 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief) {
     li{margin:4px 0}dl{display:grid;grid-template-columns:125px 1fr;gap:8px}
     dt{color:#a6b1c3;font-size:13px}dd{margin:0}.interpretation{border-top:1px solid #2e3542;padding-top:6px}
     .domain-heading span,.limited,summary{color:#a2aabc;font-size:12px}details{border-top:1px solid #374052;margin-top:18px;padding-top:14px}
+    .reader-first{border-color:#716888;background:#21243a}
+    .basis-grid{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 22px}
+    .basis-chip{display:block;border:1px solid #565b78;border-radius:10px;padding:10px 12px;font-size:12px;color:#d1d6e6;line-height:1.7;max-width:100%}
+    .basis-chip details{margin-top:6px;padding-top:6px}
+    .reader-domains{display:grid;gap:14px}
+    .reader-domain{background:#1a1e2d;border:1px solid #3f435a;border-radius:12px;padding:16px}
+    .reader-domain-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+    .reader-domain-head h3{margin:0 0 8px}.reader-domain-head small{color:#a8aec0}
+    .reader-paragraph{border-top:1px solid #313648;padding-top:8px}
+    .reader-paragraph:first-of-type{border-top:0}
+    .reader-lead p{font-size:18px;color:#f0eafa;font-weight:550;line-height:1.85}
+    .reader-note{font-size:12px;color:#a7b1c9;margin:10px 0}
+    .full-data{border:1px solid #313849;border-radius:15px;padding:16px;margin-top:24px}
+    .full-data>summary{font-size:17px;color:#d6d5e8;cursor:pointer}
     footer{margin-top:36px;color:#adb6c9;font-size:12px;line-height:1.9}
     @media(max-width:540px){main{padding:30px 14px 50px}.pillars{gap:6px}.pillar{padding:13px 5px}.pillar strong{font-size:17px}.domain{padding:16px}dl{grid-template-columns:100px 1fr}}
   </style></head><body><main>
@@ -240,11 +306,14 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief) {
   <p>${escapeHtml(date)} · ${escapeHtml(time ?? '출생시간 미상')} 입력으로 현재 명하 엔진의 실제 Preview 해석을 조합한 내부 시제품입니다. 해석을 새로 생성하거나 근거 없는 빈칸을 채우지 않습니다.</p>
   </header>
   ${renderPillars(general?.calculationSummary)}
+  ${renderReaderFirstStory(story)}
+  <details class="full-data"><summary>전체 원문·명식 계산 근거·연구용 부가 해설 펼쳐보기</summary>
   ${renderGroundedReaderBrief(brief)}
   ${renderSynthesis(synthesis)}
   ${renderActivatedThemes(themes)}
   ${renderAppliedThemeContext(applied)}
   ${responses.map(({ domain, response }) => renderDomain(domain, response)).join('')}
+  </details>
   <footer>내부 개발·품질 비교 전용 · Official Production 공개/저장/판매 불가. 이 화면의 해석은 전통적 방법론의 제한된 제안을 다루며 현실의 개인 성격·성과·미래 사건을 검증하거나 보증하지 않습니다.
   <p>실제 응답 상태: ${escapeHtml(status.join(' · '))}</p></footer>
   </main></body></html>`;
@@ -309,6 +378,7 @@ async function main() {
   const realSources = responses.map((item, i) => ({ domain: domainKeys[i], response: item.response }));
   const synthesis = buildNatalSynthesisPreview(evidence, realSources);
   const brief = buildNatalN16GroundedReaderBrief(calculated.snapshot, realSources);
+  const story = buildNatalN21ReaderFirstStory(calculated.snapshot, realSources);
   const researchNow = new Date('2026-10-15T00:00:00.000Z');
   const registry = createGeneralNatalIntegratedReadingRegistry(researchNow.toISOString());
   const interpretation = runInterpretation(calculated.snapshot, registry, {
@@ -317,7 +387,11 @@ async function main() {
   });
   const themes = buildNatalActivatedThemePreview(interpretation);
   const applied = buildNatalAppliedThemeContext(evidence, themes);
-  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief), 'utf8');
+  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story), 'utf8');
+  process.stdout.write('N21 reader-first story: ' + story.displayedOriginalInterpretationCount +
+    ' real bounded paragraphs across ' + story.sections.filter(x => x.hasInterpretation).length +
+    '/5 domains; ' + story.calculationFactsExcludedFromInterpretation +
+    ' calculation-only units excluded, no invented meanings\n');
   process.stdout.write(`N16 grounded brief: ${brief.totalOriginalTextUnitCount} real original text units, ${brief.uniqueTextUnitCount} distinct units, ${brief.exactRepeatedTextCount} repeated occurrences; internal only\n`);
   process.stdout.write(`N4 chart-bound interpretations: ${applied.statements.length} actual theme positions\\n`);
   process.stdout.write(`N3 actually matched research themes: ${themes.themes.length}\\n`);

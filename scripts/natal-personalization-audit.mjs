@@ -22,6 +22,7 @@ import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../dist/llm/prompt-compiler.j
 import { resolvePreviewSemanticAdmissionV1 } from '../dist/preview/preview-semantic-admission.js';
 import { renderNatalReaderReviewPacketV1 } from './natal-reader-review-packet.mjs';
 import { buildNatalN17DifferentiationAudit } from '../dist/preview/natal-grounded-reading-differentiation.js';
+import { buildNatalN21ReaderFirstStory } from '../dist/preview/natal-reader-first-story.js';
 
 const bearer = 'local-natal-quality-audit-not-a-production-secret';
 const dates = [
@@ -168,6 +169,50 @@ async function main() {
     '(meaning UNVERIFIED), ' + n17.comparisonsWithMissingReading +
     ' pairs missing interpretation; calculation-only context excluded; ' + n17Path + '\n',
   );
+
+  // N21: the same 35 actual HTTP responses, without making unseen domain
+  // responses or fake interpretation variants. Empty/unknown-time stays empty.
+  const n21Cases = inputs.map((input) => {
+    const computed = interpretedByCaseId.get(input.caseId);
+    if (computed === undefined) throw new Error('Missing N21 canonical chart: ' + input.caseId);
+    const story = buildNatalN21ReaderFirstStory(computed.snapshot, [
+      { domain: 'general', response: input.response },
+    ]);
+    return {
+      caseId: input.caseId, snapshotId: story.snapshotId,
+      readingState: story.readingState,
+      birthTimeKnown: story.birthTimeKnown,
+      displayedActualInterpretationCount: story.displayedOriginalInterpretationCount,
+      calculationFactsExcludedFromInterpretation: story.calculationFactsExcludedFromInterpretation,
+      previewMeaningFingerprint: story.previewMeaningFingerprint,
+      meaningDifferentiationProven: story.meaningDifferentiationProven,
+      createsNewInterpretation: story.createsNewInterpretation,
+      mayPublish: story.mayPublish, maySell: story.maySell,
+    };
+  });
+  const n21 = {
+    version: 'saju-n21-35-real-http-reader-first-audit-v1',
+    caseCount: n21Cases.length,
+    casesWithActualReading: n21Cases.filter((x) => x.displayedActualInterpretationCount > 0).length,
+    casesWithoutActualReading: n21Cases.filter((x) => x.displayedActualInterpretationCount === 0).length,
+    consumerClaimNewlyApproved: false,
+    sourceMeaningDifferenceProven: false,
+    mayPublish: false, maySell: false,
+    cases: n21Cases,
+  };
+  if (n21.caseCount !== fixtures.length ||
+      n21Cases.some((x) => x.createsNewInterpretation || x.meaningDifferentiationProven ||
+        x.mayPublish || x.maySell) ||
+      n21Cases.some((x) => !x.birthTimeKnown && x.displayedActualInterpretationCount > 0)) {
+    throw new Error('N21 reader-first story fabricated evidence or unsupported authority');
+  }
+  const n21Path = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0,-5) + '.n21-reader-first.json'
+    : outputPath + '.n21-reader-first.json');
+  writeFileSync(n21Path, JSON.stringify(n21,null,2) + '\n', 'utf8');
+  process.stdout.write('Natal N21: ' + n21.caseCount + ' real HTTP cases, ' +
+    n21.casesWithActualReading + ' existing bounded readers, ' +
+    n21.casesWithoutActualReading + ' with no bounded reading; ' + n21Path + '\n');
 
   const { consumer: report, meaning: meaningReport, quality: meaningQuality } =
     buildNatalMeaningQualityAudit(inputs);
