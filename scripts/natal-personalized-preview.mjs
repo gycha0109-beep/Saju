@@ -391,7 +391,7 @@ async function main() {
   process.stdout.write('N21 reader-first story: ' + story.displayedOriginalInterpretationCount +
     ' real bounded paragraphs across ' + story.sections.filter(x => x.hasInterpretation).length +
     '/5 domains; ' + story.calculationFactsExcludedFromInterpretation +
-    ' calculation-only units excluded, no invented meanings\\n');
+    ' calculation-only units excluded, no invented meanings\n');
   process.stdout.write(`N16 grounded brief: ${brief.totalOriginalTextUnitCount} real original text units, ${brief.uniqueTextUnitCount} distinct units, ${brief.exactRepeatedTextCount} repeated occurrences; internal only\n`);
   process.stdout.write(`N4 chart-bound interpretations: ${applied.statements.length} actual theme positions\\n`);
   process.stdout.write(`N3 actually matched research themes: ${themes.themes.length}\\n`);
