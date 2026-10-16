@@ -90,6 +90,8 @@ jobs:
           node scripts/natal-personalization-audit.mjs "$RUNNER_TEMP/natal-baseline.json"
           node scripts/natal-mur-shadow-audit.mjs "$RUNNER_TEMP/natal-mur-shadow.json"
           node scripts/natal-n13-structural-research-packet.mjs "$RUNNER_TEMP/natal-n13-research.json" "$RUNNER_TEMP/natal-n13-research.html"
+          node scripts/natal-n14-linked-t8-research-packet.mjs "$RUNNER_TEMP/natal-n14-linked.json" "$RUNNER_TEMP/natal-n14-linked.html"
+          node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const q=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-n14-linked.json','utf8')); assert.equal(q.caseCount,8); assert.ok(q.casesWithLinks>0); assert.ok(q.totalLinkedPairs>=q.casesWithLinks); assert.equal(q.consumerAuthorized,false); assert.equal(q.productionAuthorized,false); assert.ok(q.cases.every(c=>c.status==='research_only' && c.mayExposeAsConsumerInterpretation===false && c.linkedPairs.every(p=>!p.transitiveCausalInferenceAuthorized && !p.modernConsumerInferenceAuthorized && !p.publicationAuthorized && p.independentUpstreamT5ClaimRefs.length===3))); const h=readFileSync(process.env.RUNNER_TEMP+'/natal-n14-linked.html','utf8'); assert.match(h,/연구 검토 전용/u);"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const p=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-n13-research.json','utf8')); assert.equal(p.caseCount,8); assert.ok(p.matchedCaseCount>0); assert.equal(p.researchOnly,true); assert.equal(p.consumerPreviewAuthorized,false); assert.equal(p.productionAuthorized,false); assert.ok(p.cases.some(c=>c.relationCount>0)); assert.ok(p.cases.every(c=>c.sentences.every(s=>s.researchOnly && !s.consumerProjectionAuthorized && s.sourceLocators.length===2 && s.upstreamClaimRefs.length===2))); const h=readFileSync(process.env.RUNNER_TEMP+'/natal-n13-research.html','utf8'); assert.match(h,/내부 연구 검토 전용/u);"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const s=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-mur-shadow.json','utf8')); assert.equal(s.caseCount,35); assert.equal(s.technicalDeliveredCount,33); assert.equal(s.usefulCompleteCount,0); assert.equal(s.cases.length,35); assert.ok(s.cases.every(c=>c.lifecycle==='internal_quality_shadow' && c.mayChangeProductDelivery===false && c.mayApproveResearchSemantics===false && c.usefulComplete===false));"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const r=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.roles.json','utf8')); assert.equal(r.cases,35); assert.equal(r.meaningIdenticalPairs,20); assert.equal(r.rolePositionDifferences,20); assert.equal(r.remainIdenticalMeaningPairs,r.meaningIdenticalPairs); assert.equal(r.mayPublish,false); assert.equal(r.maySell,false);"
@@ -122,6 +124,8 @@ jobs:
             ${{ runner.temp }}/natal-mur-shadow.json
             ${{ runner.temp }}/natal-n13-research.json
             ${{ runner.temp }}/natal-n13-research.html
+            ${{ runner.temp }}/natal-n14-linked.json
+            ${{ runner.temp }}/natal-n14-linked.html
             ${{ runner.temp }}/natal-preview.html
           if-no-files-found: error
           retention-days: 7
