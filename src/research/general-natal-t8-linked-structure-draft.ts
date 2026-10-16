@@ -115,7 +115,7 @@ export function buildNatalN14LinkedT8ResearchReport(
           FAMILY_LABEL[b.from]+'→'+FAMILY_LABEL[b.to]+' 관계 후보가 같은 명식에서 각각 관측됩니다. ' +
           '두 후보는 '+FAMILY_LABEL[a.to]+' 계열의 관측을 공유합니다. ' +
           '이것은 두 관계가 공존한다는 연구용 구조 기록일 뿐, ' +
-          FAMILY_LABEL[a.from]+'에서 '+FAMILY_LABEL[b.to]+'로 이어지는 인과 흐름이나 ' +
+          FAMILY_LABEL[a.from]+'에서 '+FAMILY_LABEL[b.to]+'으로 이어지는 인과 흐름이나 ' +
           '성격·직업·재물·사건·길흉을 확정하지 않습니다.',
         scenarioRef:left.scenarioRef,
         transitiveCausalInferenceAuthorized:false,
