@@ -1,0 +1,94 @@
+# Strictly public/no-login historical link availability probe. No bypass of on-site restrictions.
+# The 2021 URL was published by a third party; availability never proves a glyph reading.
+name: "[WT:saju] NAJDA Legacy Original URL Availability"
+on:
+  pull_request:
+    branches:
+      - research/saju/annual-yuanhai-three-layer-case-witness
+    paths:
+      - .github/workflows/saju-najda-legacy-original-url-availability.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  historical-public-link:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the exact 2021 public URL once
+        env:
+          OUT: ${{ runner.temp }}/naj-legacy
+        run: |
+          set -euo pipefail
+          mkdir -p "$OUT"
+          python - <<'PY'
+          import requests,os,json,hashlib,io
+          from pathlib import Path
+          from urllib.parse import urlsplit
+          out=Path(os.environ['OUT'])
+          target='https://www.digital.archives.go.jp/DAS/meta/listPhoto'
+          params={
+              'BID':'F1000000000000101427',
+              'ID':'M2020061710571659370',
+              'DL_TYPE':'pdf',
+          }
+          report={
+              'access_class':'historical_public_URL_only_no_access_control_bypass',
+              'original_1582_target_folio_read':False,
+              'same_source_as_historical_na_japan_catalog_proved':False,
+              'target_glyph_directly_collated':False,
+              'attempts':[],
+          }
+          session=requests.Session()
+          session.headers.update({'User-Agent':'Mozilla/5.0 (compatible; HistoricalDocumentOpenPublicAccessCheck/1.0)'})
+          url=requests.Request('GET',target,params=params).prepare().url
+          row={'requested_url':url}
+          try:
+            with session.get(target,params=params,stream=True,timeout=(12,45),allow_redirects=True) as r:
+              row.update({'status_code':r.status_code,'final_url':r.url,
+                 'redirects':[{'status':h.status_code,'url':h.url} for h in r.history],
+                 'content_type':r.headers.get('content-type',''),
+                 'content_length_header':r.headers.get('content-length','')})
+              if r.ok:
+                total=0
+                h=hashlib.sha256()
+                prefix=b''
+                f=out/'public-response.bin'
+                with f.open('wb') as dest:
+                  for chunk in r.iter_content(chunk_size=1<<16):
+                    if not chunk:continue
+                    total+=len(chunk)
+                    if total>85000000:
+                      row['bounded_fetch_exceeded_max_bytes']=True
+                      break
+                    if len(prefix)<12:prefix+=chunk[:12-len(prefix)]
+                    h.update(chunk)
+                    dest.write(chunk)
+                row.update({'downloaded_bytes':min(total,85000000),'prefix_hex':prefix.hex(),
+                    'sha256_of_saved_bytes':h.hexdigest(),'looks_like_pdf':prefix.startswith(b'%PDF-')})
+                if not prefix.startswith(b'%PDF-'):
+                  f.unlink(missing_ok=True)
+                  row['not_public_pdf']=True
+                elif row.get('bounded_fetch_exceeded_max_bytes'):
+                  f.unlink(missing_ok=True)
+                  row['not_a_complete_pdf']=True
+                else:
+                  row['complete_public_pdf_captured']=True
+                  report['candidate_public_pdf_file']='public-response.bin'
+              else:
+                row['no_file_claimed']=True
+          except Exception as ex:
+            row['error']=type(ex).__name__+': '+str(ex)[:480]
+          report['attempts'].append(row)
+          (out/'access-report.json').write_text(json.dumps(report,indent=2,ensure_ascii=False),encoding='utf-8')
+          print(json.dumps(report,ensure_ascii=False)[:9000])
+          PY
+      - name: Archive bounded results; never auto-infer historical print glyphs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-najda-2021-public-link-audit
+          path: ${{ runner.temp }}/naj-legacy/
+          retention-days: 7
+          if-no-files-found: warn
