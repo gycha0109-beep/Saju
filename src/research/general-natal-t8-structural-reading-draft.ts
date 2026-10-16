@@ -130,8 +130,12 @@ function renderRelation(
   if (ids.length !== 2 || new Set(ids).size !== 2 || !ids[0] || !ids[1]) {
     throw new TypeError('N13 relation must have exactly two independent T5 endpoints');
   }
-  const from = endpoint(active.get(ids[0]),claim,pattern.from);
-  const to = endpoint(active.get(ids[1]),claim,pattern.to);
+  const from = endpoint(ids.map((id) => active.get(id)).find((c) =>
+    c?.claimType === 'GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_' + pattern.from.toUpperCase() + '_PRESENT'),
+    claim,pattern.from);
+  const to = endpoint(ids.map((id) => active.get(id)).find((c) =>
+    c?.claimType === 'GENERAL_NATAL_SOURCE_BOUNDED_FAMILY_' + pattern.to.toUpperCase() + '_PRESENT'),
+    claim,pattern.to);
   const expectedSources = new Set(rule.sourceRefs.map((s) => s.sourceId));
   if (expectedSources.size !== 2 || claim.sourceRefs.length !== 2 ||
       claim.sourceRefs.some((id) => !expectedSources.has(id))) {
@@ -154,7 +158,7 @@ function renderRelation(
     sourcePattern:pattern.pattern,
     text:pattern.reading +
       ' 이는 연구용 구조 관측이며 성격·행동·직업·재물 결과·실제 사건·미래의 길흉을 단정하지 않습니다.',
-    upstreamClaimRefs:[ids[0],ids[1]],
+    upstreamClaimRefs:[from.claimId,to.claimId],
     factRefs:[...new Set([...claim.factRefs,...from.factRefs,...to.factRefs])].sort(),
     sourceLocators:locators,
     scenarioRef:claim.scenarioRef ?? null,
