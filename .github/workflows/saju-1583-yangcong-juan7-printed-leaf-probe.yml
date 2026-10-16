@@ -1,0 +1,69 @@
+# Public historical illustration retrieval only; neither dating nor origin is auto-certified.
+name: "[WT:saju] 1583 Yangcong Juan7 Printed Leaf Probe"
+on:
+  pull_request:
+    branches:
+      - research/saju/annual-yuanhai-three-layer-case-witness
+    paths:
+      - .github/workflows/saju-1583-yangcong-juan7-printed-leaf-probe.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-citation-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtain only images publicly linked by 2017 textual-collation article
+        env:
+          OUT: ${{ runner.temp }}/yangcong-juan7
+        run: |
+          mkdir -p "$OUT"
+          python -m pip install --quiet requests pillow beautifulsoup4
+          python - <<'PY'
+          import requests, os, json, hashlib, io
+          from pathlib import Path
+          from PIL import Image
+          from bs4 import BeautifulSoup
+          out=Path(os.environ['OUT'])
+          article='https://kknews.cc/culture/k8z36op.html'
+          hints={
+           'sanming_1578_article_17':'https://i2.kknews.cc/QJzwJmEQ1XYEOOt6dCIAvTCwjuKw7I-7otusiIY/0.jpg',
+           'yangcong_1583_juan7_article_18':'https://i1.kknews.cc/BbxVdn5I97qj9KJCg8V2AC7G1eJiQJrRoc_vgYE/0.jpg',
+           'yuanhai_1600_article_21':'https://i2.kknews.cc/aZ9Yue85WeyCNODKXnOb5XfyUBIsjxSba9Ro5T8/0.jpg',
+          }
+          s=requests.Session()
+          s.headers.update({'User-Agent':'Mozilla/5.0','Referer':article,'Accept':'image/avif,image/webp,image/png,image/jpeg,image/*;q=0.8,*/*;q=0.5'})
+          report={'article':article,'source_claim':'Yang Cong 星學綱目正傳 萬曆十一年 卷七 五行元理消息賦',
+                  'new_printed_juan3_target_leaf_verified':False,'source_imprint_year_certified':False,
+                  'observed_article_images':[]}
+          for name,url in hints.items():
+            item={'slot':name,'url':url}
+            try:
+              r=s.get(url,timeout=(10,22),allow_redirects=True)
+              item.update({'http_status':r.status_code,'final_url':r.url,'mime':r.headers.get('content-type',''),'bytes':len(r.content)})
+              if r.ok and len(r.content)<12000000:
+                item['sha256']=hashlib.sha256(r.content).hexdigest()
+                try:
+                  img=Image.open(io.BytesIO(r.content));img.load()
+                  item['dimensions']=[img.width,img.height]
+                  item['format']=img.format
+                  if img.width>250 and img.height>250:
+                    fn=f'{name}.png'
+                    img.convert('RGB').save(out/fn)
+                    item['saved_image']=fn
+                except Exception as ex:item['image_decode_error']=str(ex)[:120]
+            except Exception as ex:item['error']=type(ex).__name__+': '+str(ex)[:240]
+            report['observed_article_images'].append(item)
+          (out/'access-audit.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8')
+          print(json.dumps(report,ensure_ascii=False)[:13000])
+          PY
+      - name: Archive any publicly displayed scholarly comparisons
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-yangcong-1583-juan7-article-original-sample
+          path: ${{ runner.temp }}/yangcong-juan7/
+          retention-days: 7
+          if-no-files-found: warn
