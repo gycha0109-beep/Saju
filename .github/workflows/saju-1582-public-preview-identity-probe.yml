@@ -1,12 +1,8 @@
 # One-time public preview identity probe; no paywall/login/restricted access.
 # Preview images never authenticate Ming woodblock glyphs automatically.
 name: "[WT:saju] 1582 Public Preview Identity Probe"
+# Manual opt-in only; public seller previews need not be fetched on every research edit.
 on:
-  pull_request:
-    branches:
-      - research/saju/annual-yuanhai-three-layer-case-witness
-    paths:
-      - .github/workflows/saju-1582-public-preview-identity-probe.yml
   workflow_dispatch:
 permissions:
   contents: read
