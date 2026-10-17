@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('4d50b66cd0e30122e4a7b782d2249d46f4f76b0b');
+    expect(review.researchHeadReviewed).toBe('e5fef4035db236eee2d4d2fed5cdff61ca495930');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -63,6 +63,17 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
       'CADAL06056481', 'CADAL06066041',
     ]);
     expect(review.printedTargetFoliosDirectlyInspected).toBe(false);
+    expect(review.distinctCataloguedPrintLeadGroups).toEqual([
+      'HARVARD_1735_CATALOGUE',
+      'NLC_411999029701_ENGRAVED_EDITION',
+    ]);
+    expect(review.additionalPrintSourceIds).toEqual([
+      'HARVARD_DRS_53262215_VOL_5',
+      'NLC_411999029701_VOL_5_UPPER',
+      'NLC_411999029701_VOL_5_LOWER',
+    ]);
+    expect(review.printLeadGroupCountIsNotAuthenticatedWitnessCount).toBe(true);
+    expect(review.authenticatedPrintReadingsOfTargetPassage).toBe(0);
     expect(review.unresolvedSiKuPrintGlyphVariant).toEqual({
       siKuWikisourceFive: '戊巳',
       shiDianGuJiFive: '戊己',
