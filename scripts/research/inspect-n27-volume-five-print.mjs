@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 /** N27 print-image finder. Renders only: NEVER authenticates a glyph or a Claim. */
 import assert from 'node:assert/strict';
+import { Buffer } from 'node:buffer';
+import console from 'node:console';
+import process from 'node:process';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createReadStream, existsSync, mkdirSync, openSync, readSync, closeSync, writeFileSync } from 'node:fs';
