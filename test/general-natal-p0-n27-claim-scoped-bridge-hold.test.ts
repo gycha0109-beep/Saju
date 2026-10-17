@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('bb91adf29541fe1b26234c6202cb139ad99c552f');
+    expect(review.researchHeadReviewed).toBe('7e28dd036d2e9da0bc033dc1318fa4b8ba44babf');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v1',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v2',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -159,6 +159,23 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
       admitsNewClaim: false,
     });
     expect(review.n27WuJiRecurrenceScopeSensitivity.counterfactualScopeKeys).toHaveLength(4);
+    expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
+      additionalActualCanonicalControlDates: [
+        '2010-02-13T19:30', '2010-05-04T19:30', '2010-02-04T19:30',
+      ],
+      distinctCountingUnits: [
+        'OCCURRENCE_PER_CHANNEL_GLYPH', 'DISTINCT_OTHER_PILLAR',
+        'DISTINCT_WU_JI_GLYPH', 'YEAR_MONTH_ONLY_VS_DAY_INCLUDED',
+        'BOTH_CHANNELS_SAME_PILLAR', 'HOUR_REFERENCE_EXCLUDED',
+      ],
+      samePillarTwoChannelsAreNotProvenTwoClassicalWei: true,
+      dayPillarWithinBieGongNotSourceAdjudicated: true,
+      noHiddenStemGeneralizationAuthorized: true,
+      recurrenceCountingScopeMethodApproved: false,
+      classicalWeiCountingMethodApproved: false,
+      interpretationsInferred: false,
+      admitsNewClaim: false,
+    });
     expect(review.finalWangShuaiAndQiangRuoVerdictAuthorized).toBe(false);
     expect(review.classicalSingleWealthLocationProven).toBe(false);
     expect(review.generalCopyVolumeSixHasDiscrepantEditorialWarning).toBe(true);
