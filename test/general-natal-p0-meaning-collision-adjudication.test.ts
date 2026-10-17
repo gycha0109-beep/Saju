@@ -72,6 +72,25 @@ describe('P0-NATAL actual N10 19-pair research semantic return (no new authority
       bijeonGenerallyExcludedFromWealthRelationsBySources: false,
       physicalSiKuPrintedFolioForTheseClausesInspected: false,
     });
+    expect(a.samyeongVolumeSix).toMatchObject({
+      sections: ['論正財', '論偏財', '時上偏財'],
+      zhengCaiConditionedPeerCaution: '財生身旺兩相停，不喜再見比肩',
+      zhengCaiWeakMasterLuckCounterdirection: '財多如何不發財，只因身弱少培栽，運到比肩身旺地',
+      pianCaiIncludesBothPeerSubtypes: '最怕劫敗比肩',
+      hourWealthExplicitExample: '時上偏財，怕逢兄弟，如甲日見戊辰或甲戌時之例',
+      hourWealthMultiplicityQualifier: '只要一位，不宜多逢',
+      hourWealthNoAdditionalWuJiQualifier: '柱中不宜再見戊己',
+      case2010NineteenThirtyHourJiaXuLiteralMatch: true,
+      case2010NineteenThirtyHasAdditionalYearJi: true,
+      case2010NineteenThirtyEntireHourWealthPatternValidated: false,
+      weakMasterLuckExampleApplicableToTheseNatalSnapshots: false,
+      classicalBijeonWealthRelationUniversallyAbsent: false,
+      classicalBijeonWealthRelationUniversallyAdverse: false,
+      independentPhysicalWitnessesEstablished: false,
+      originalPrintedFolioChecked: false,
+      separateBijeonT8RuleAuthorized: false,
+      bridgeDisposition: 'hold',
+    });
     expect(a.pairedRuntimeFinding).toMatchObject({
       checkedExactHead: '75ae1f869bb1f19cb12cb0dd6d31324b4d2e5d01',
       ciRun: 39017251624,
