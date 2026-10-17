@@ -125,7 +125,7 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
     version: GENERAL_NATAL_N27_CLAIM_BRIDGE_HOLD_VERSION,
     issue: 2557 as const,
     researchPr: 2553 as const,
-    researchHeadReviewed: 'e65374b0d6abf8f63e74b977be9b3e2c9262d07b' as const,
+    researchHeadReviewed: 'b04ddea0a93463fe5463b0a9393ad7797c886221' as const,
     researchPrMergedAtReview: false as const,
     researchScope: 'RESEARCH_ONLY_2010_ACTUAL_N13_T8_1_VS_0' as const,
     parentBridgeReviewId: existingBridge.reviewId,
@@ -258,7 +258,7 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
       newInterpretationClaimAuthorized: false as const,
     }),
     n27WuJiRecurrenceScopeSensitivity: Object.freeze({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v2' as const,
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v3' as const,
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts' as const,
       sameReal2010WuChenAndJiaXuNonHourPillars: true as const,
       testedTimeCases: Object.freeze(['07:30', '19:30', '05:30', 'UNKNOWN'] as const),
@@ -287,6 +287,27 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
         distinctFromHourWealth: true as const,
         quotedOtherPillars: '年月日重見' as const,
         directAuthorizationToApplyToHourWealth: false as const,
+      }),
+
+      palaceAndChannelCounterfactualKeys: Object.freeze([
+        'YEAR_MONTH_VISIBLE', 'YEAR_MONTH_DAY_VISIBLE',
+        'YEAR_MONTH_VISIBLE_HIDDEN', 'YEAR_MONTH_DAY_VISIBLE_HIDDEN',
+      ] as const),
+      actual2010JiaXuScopeLatticeExpectedRawOccurrences: Object.freeze([
+        1, 1, 3, 4,
+      ] as const),
+      actual2010JiaXuScopeLatticeExpectedDistinctPillarGlyphs: Object.freeze([
+        1, 1, 2, 3,
+      ] as const),
+      yearPillarVisibleAndHiddenJiAreSamePillarGlyph: true as const,
+      countsAreCounterfactualAndNotClassicalWei: true as const,
+      otherDayPillarBieGongSemanticsEstablished: false as const,
+      sameVolumeZhengGuanAnalogy: Object.freeze({
+        chapter: '三命通會 卷五 論正官' as const,
+        hiddenBranchRecurrencePhrase: '甲生丑月內有辛金又值酉時' as const,
+        additionalVisibleStemPhrase: '若天干復透辛多' as const,
+        evidenceChannel: 'DIGITAL_TRANSCRIPTION_ONLY' as const,
+        qualifiedForHourWealthRuleTransfer: false as const,
       }),
       actualYearVisibleJiRegularWealthOnJiaDay: true as const,
       recurrenceCountingScopeMethodApproved: false as const,
