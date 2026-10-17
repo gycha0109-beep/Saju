@@ -61,7 +61,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v31');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v32');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -1887,6 +1887,33 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       printedOriginalHourStemVerified: false,
       newPrintedWitnessCredit: 0,
     });
+  });
+
+  test('1582-attributed OCR local break is not proof a printed 辛酉年 paragraph or 岳飛 name was omitted', () => {
+    const q = YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT.followingClauseDigitalContinuityAudit;
+    expect(q).toMatchObject({
+      sourceComparisonTier: 'C_digital_text_continuity_only',
+      ming1582LocalObservedFocalPhrase: '亥卯未合起陽刅',
+      ming1582LocalObservedNextSubject: '且如甲則鎮於寅位陽木之垣',
+      ming1582LocalDisplayedImmediateXinyouYearContinuation: false,
+      ming1582OcrFourPillarRisk: '癸未乙卯、甲子、已巳',
+      ming1582OcrHourStemRisk: '時上出已破印',
+      wanli1600DigitalNextClause: '辛酉年辛金又旺於酉',
+      chongzhen1634DigitalNextClause: '辛酉年辛金又旺於酉',
+      original1582PrintedContinuationOmittedProven: false,
+      original1582PrintedNameYuefeiAbsentProven: false,
+      physicalLeafOrPageBreakLocated: false,
+      originalImageOf1582FocalAndNextLeafRead: false,
+      shidianPhotoTextComparisonUiPubliclyDocumented: true,
+      shidianActualFocalPhotoOpened: false,
+      independentWoodblockSettingsAdded: 0,
+      modernAnnualRulesApproved: 0,
+      productionAuthorized: false,
+    });
+    const scope=buildYuanHaiMingJuan3PrintScope();
+    expect(scope.shidian1582JuanThreeTextualWitnessAudit.followingClauseDigitalContinuityAudit).toBe(q);
+    expect(scope.adjudicatedPrintedGlyph).toBeNull();
+    expect(scope.modernInterpretationClaim).toBeNull();
   });
 
   test('separate NLC Chuanshilou catalog digitization groups cannot become six books of Xingxue Zhengzhuan', () => {

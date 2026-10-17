@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-chuanshilou-separate-digital-groups-v31' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-shidian-case-continuity-guard-v32' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2261,6 +2261,25 @@ export const YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT = Object.free
     chongzhen1634DigitalGlyph: '木' as const,
     chongzhen1634TargetUrl: 'https://www.shidianguji.com/zh/mid-page/7603864294308413466' as const,
     independentPrintSettingAddedFromOcr: 0 as const,
+  }),
+  followingClauseDigitalContinuityAudit: Object.freeze({
+    sourceComparisonTier: 'C_digital_text_continuity_only' as const,
+    ming1582LocalObservedFocalPhrase: '亥卯未合起陽刅' as const,
+    ming1582LocalObservedNextSubject: '且如甲則鎮於寅位陽木之垣' as const,
+    ming1582LocalDisplayedImmediateXinyouYearContinuation: false as const,
+    ming1582OcrFourPillarRisk: '癸未乙卯、甲子、已巳' as const,
+    ming1582OcrHourStemRisk: '時上出已破印' as const,
+    wanli1600DigitalNextClause: '辛酉年辛金又旺於酉' as const,
+    chongzhen1634DigitalNextClause: '辛酉年辛金又旺於酉' as const,
+    original1582PrintedContinuationOmittedProven: false as const,
+    original1582PrintedNameYuefeiAbsentProven: false as const,
+    physicalLeafOrPageBreakLocated: false as const,
+    originalImageOf1582FocalAndNextLeafRead: false as const,
+    shidianPhotoTextComparisonUiPubliclyDocumented: true as const,
+    shidianActualFocalPhotoOpened: false as const,
+    independentWoodblockSettingsAdded: 0 as const,
+    modernAnnualRulesApproved: 0 as const,
+    productionAuthorized: false as const,
   }),
   originalImageAndAuthorityBoundary: Object.freeze({
     inspectedOriginal1582JuanThreePrintedLeaf: false as const,
