@@ -81,7 +81,7 @@ export function attachNatalN27SelfServiceEvidenceReading(
     units.push({
       key: claim.claimType,
       order: highest.order,
-      text: `${where}가 이 명식에서 확인됩니다. 전통적 주제는 ‘${profile.standardText.headline}’입니다. ${profile.standardText.summary} 위치와 주제의 연결은 참고용이며, 이것만으로 개인의 성격이나 사건의 결과를 단정하지 않습니다.`,
+      text: `이 명식에서 확인된 십신 위치는 ${where}입니다. 전통적 주제는 ‘${profile.standardText.headline}’입니다. ${profile.standardText.summary} 각 십신 위치와 이 주제의 연결은 참고용이며, 이것만으로 개인의 성격이나 사건의 결과를 단정하지 않습니다.`,
     });
     seen.add(claim.claimType);
   }
