@@ -152,3 +152,14 @@ Research Draft #2553 **정확한 HEAD `eff8a1225893811c428c28e2dcc456d60f2006e2`
 ### v3 회귀 타입 오류 정정
 
 최초 v3 Research HEAD `b04ddea0a93463fe5463b0a9393ad7797c886221`에서 CI TypeScript 타입 검사 3건이 실패하여 테스트 배열 접근 표현만 교정했다. 현재 Bridge가 참조하는 Research 정확 HEAD는 `eff8a1225893811c428c28e2dcc456d60f2006e2`이다. 실패했던 CI를 성공으로 기록하지 않으며, 교정 이후 정확 HEAD의 전체 CI를 별도로 확인한다. 이 수정은 해석 권한에 영향을 주지 않는다.
+
+
+## 2026-10-18 후속: 同卷 論正官 보각본/각본 인쇄면 직접 대조, N27 v4 동기화
+
+**Research #2553의 현재 정확한 SHA `a43f7bb46e884e4227a578757c373a597434c25f`**, scope-audit v4에 Bridge 증거를 고정했다. 이전 v3의 4가지 `戊/戊己 × visible/hidden` 가설, 4가지 `年月/年月日 × visible/hidden` 범위 민감도, 실 명식 Canonical 검증은 유지한다.
+
+**이번에 물리 인쇄 판독으로 보강된 것은 `三命通會 卷五 論正官` 구절이다.** 사전에 Actions 아티팩트에 저장된 PDF 렌더 이미지를 실제 읽었으며, **하버드 PDF 6~7면**, **NLC PDF 5~6면**에서 `支藏干透餘位不宜再見`, `甲生丑月內有辛金又值酉時`, `若天干復透辛多`의 문맥을 각각 확인했다. 하버드 원본 해시 `ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831`, NLC 원본 해시 `0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1`. 렌더 면별 해시와 Actions 아티팩트 번호는 Research 문서 `23 참조. 기존 온라인 전사 채널만을 근거로 했던 論正官의 **해당 용례에 한해서** 인쇄 직접 증거로 승격했다.
+
+**인증하지 않은 것:** 두 소장본의 텍스트 계통적 독립성 / 寫本 정본 / 애매한 `...是重犯` 직전 글자의 `已·己·巳` 교감 / `時上偏財`의 古文 `別宮`에 日柱 포함 여부 / `再見`에 藏干 전부 포함 여부 / `一位`의 역사적 셈 단위. 「時上偏財」 문구 `此與時上偏官格相似`의 명시 유추 대상은 **時上偏官이지 正官이 아니다**. 다른 조항의 正官 重犯 사례를 時上偏財의 추론 엔진 규칙으로 이전하는 것은 금지.
+
+**CI 상태 기록:** Research v3 `eff8a1225893811c428c28e2dcc456d60f2006e2`의 [39065376894](https://github.com/gycha0109-beep/Saju/actions/runs/39065376894), Bridge v3 `eded2aef60ad89cc3e2a5c480ee0d94a5be7f6fe`의 [39065418689](https://github.com/gycha0109-beep/Saju/actions/runs/39065418689)는 **18/18 success**. **v4는 새 HEAD이므로 최신 CI 결과를 독립 확인해야 한다.** 다섯 Claim `HOLD`, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 **1 vs 0**, TrustGrant/Preview/Official/Production 의미 승인 없음. Research 및 Bridge는 Draft, merge 불가.
