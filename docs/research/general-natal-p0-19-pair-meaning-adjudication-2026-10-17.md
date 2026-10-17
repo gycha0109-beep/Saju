@@ -126,3 +126,9 @@
 **다음 Research 검증:** 四庫卷五 조항의 해당 물리 스캔·folios·底本/revision과 일반 卷六의 편집 경고 범위/계보; 甲/乙 敗財·劫財 명칭 분기; 卯藏乙 vs visible 甲 구별; `甲戌時`의 정확한 偏財 슬롯·`己`/판독형 `巳`·복수 財 조건; 계산된 월령과 별도의 governed 強弱 방법론, 大運 적용 여부; 양·음·적용 불가 chart 반례.
 
 **판정 유지:** #17 `METHODOLOGY_CONFLICT`, 19쌍 `JUSTIFIED_SAME_MEANING=3 / MISSING_CONTEXT=15 / METHODOLOGY_CONFLICT=1 / JUSTIFIED_DIFFERENT_MEANING=0`; 기존 N13 연구 한정 Rule 및 Bridge/Preview/Official/Production HOLD. 물리 검증과 의미 승인 없이 소비자 문장 변형·新比肩→財 Rule을 금한다.
+
+## 11. 리뷰 대기와 독립한 실제 명식 source-condition Research shadow
+
+`src/research/general-natal-p0-n27-bijeon-wealth-shadow.ts`는 **실제 Canonical snapshot만** 입력으로 읽고 『四庫全書本』 卷五 「時上偏財」의 `甲日+甲戌時` **문자상 일치** 여부를 판정한다. 2010-02-03 19:30의 `甲日/甲戌時`와 年干 `己`, 月支 `丑`, 해당 표준 십신 `비견`·`財`를 개별 관측으로 남긴다. 05:30은 해당 시간 구절과 **불일치**, 미상 시각은 `HOUR_UNRESOLVED`로 구분한다. 강약·재성 유일성·`戊巳` 글자 판독·원 인쇄면·실제 금전 결과는 **여전히 미판정**이다.
+
+`test/general-natal-p0-n27-bijeon-wealth-shadow.test.ts`에서 승인된 T0 계산 경로의 두 실제 명식과 미상 시각을 재실행해 `MATCHED_LEXICAL_FRAGMENT_ONLY`와 미승인/미출력, 불일치/미상 시각 방어를 검사한다. 연구 텍스트 수집과 계산 사실 대조는 reviewer 승인 없이 계속할 수 있으나 **T8 연구 룰의 확장·사용자 해석 발행은 이 shadow가 하지 않는다**. Bridge #2557 HOLD와 19쌍의 3/15/1 판정은 유지한다.
