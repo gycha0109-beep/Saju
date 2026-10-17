@@ -23,6 +23,8 @@ import { resolvePreviewSemanticAdmissionV1 } from '../dist/preview/preview-seman
 import { renderNatalReaderReviewPacketV1 } from './natal-reader-review-packet.mjs';
 import { buildNatalN17DifferentiationAudit } from '../dist/preview/natal-grounded-reading-differentiation.js';
 import { buildNatalN21ReaderFirstStory } from '../dist/preview/natal-reader-first-story.js';
+import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
+import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expanded-source-reading.js';
 
 const bearer = 'local-natal-quality-audit-not-a-production-secret';
 const dates = [
@@ -222,6 +224,61 @@ async function main() {
   process.stdout.write('Natal N21: ' + n21.caseCount + ' real HTTP cases, ' +
     n21.casesWithActualReading + ' existing bounded readers, ' +
     n21.casesWithoutActualReading + ' with no bounded reading; ' + n21Path + '\n');
+
+  // N24: evaluate the *same 35 real HTTP* outputs against their exact,
+  // unmodified bounded Preview source paragraphs, not fabricated fixture text.
+  const n24Cases = inputs.map((input) => {
+    const computed = interpretedByCaseId.get(input.caseId);
+    if (computed === undefined) throw new Error('Missing N24 canonical chart: ' + input.caseId);
+    const sources = [{ domain: 'general', response: input.response }];
+    const brief = buildNatalN16GroundedReaderBrief(computed.snapshot, sources);
+    const first = buildNatalN21ReaderFirstStory(computed.snapshot, sources);
+    const expanded = buildNatalN24ExpandedSourceReading(brief, first);
+    if (expanded.firstScreenOriginalCount + expanded.additionalOriginalCount !==
+        expanded.totalDistinctOriginalCount ||
+        expanded.totalDistinctOriginalCount !== brief.interpretationTextUnitCount ||
+        expanded.originalLeftUnreadCount !== 0 ||
+        expanded.previewMeaningFingerprint !== first.previewMeaningFingerprint ||
+        expanded.createsNewInterpretation || expanded.meaningDifferentiationProven ||
+        expanded.mayPublish || expanded.maySell) {
+      throw new Error('N24 lost, invented, or changed original source reading');
+    }
+    return {
+      caseId: input.caseId,
+      snapshotId: expanded.snapshotId,
+      birthTimeKnown: first.birthTimeKnown,
+      firstScreenOriginalCount: expanded.firstScreenOriginalCount,
+      additionalOriginalCount: expanded.additionalOriginalCount,
+      completeOriginalCount: expanded.totalDistinctOriginalCount,
+      originalLeftUnreadCount: expanded.originalLeftUnreadCount,
+      excludedCalculatedTextUnits: expanded.excludedCalculatedTextUnits,
+      previewMeaningFingerprint: expanded.previewMeaningFingerprint,
+    };
+  });
+  const n24 = {
+    version: 'saju-n24-35-real-http-complete-source-reading-audit-v1',
+    lifecycle: 'internal_quality_audit',
+    caseCount: n24Cases.length,
+    fullyDeliveredOriginalCount: n24Cases.reduce((sum, c) => sum + c.completeOriginalCount, 0),
+    additionalOriginalCount: n24Cases.reduce((sum, c) => sum + c.additionalOriginalCount, 0),
+    originalLeftUnreadCount: n24Cases.reduce((sum, c) => sum + c.originalLeftUnreadCount, 0),
+    createsNewInterpretation: false,
+    meaningDifferentiationProven: false,
+    mayPublish: false, maySell: false,
+    cases: n24Cases,
+  };
+  if (n24.caseCount !== fixtures.length ||
+      n24.caseCount < 30 || n24.originalLeftUnreadCount !== 0) {
+    throw new Error('N24 requires all 35 real cases with no undisplayed source meaning');
+  }
+  const n24Path = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0, -5) + '.n24-expanded-source.json'
+    : outputPath + '.n24-expanded-source.json');
+  writeFileSync(n24Path, JSON.stringify(n24, null, 2) + '\n', 'utf8');
+  process.stdout.write('Natal N24: ' + n24.caseCount + ' real HTTP cases, ' +
+    n24.fullyDeliveredOriginalCount + ' distinct authentic source units, ' +
+    n24.additionalOriginalCount + ' newly accessible in domain detail, 0 hidden; ' +
+    n24Path + '\n');
 
   const { consumer: report, meaning: meaningReport, quality: meaningQuality } =
     buildNatalMeaningQualityAudit(inputs);
