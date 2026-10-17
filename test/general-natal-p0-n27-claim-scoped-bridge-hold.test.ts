@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('7e28dd036d2e9da0bc033dc1318fa4b8ba44babf');
+    expect(review.researchHeadReviewed).toBe('e65374b0d6abf8f63e74b977be9b3e2c9262d07b');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -171,6 +171,12 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
       samePillarTwoChannelsAreNotProvenTwoClassicalWei: true,
       dayPillarWithinBieGongNotSourceAdjudicated: true,
       noHiddenStemGeneralizationAuthorized: true,
+      sameVolumeOfficerAnalogy: {
+        chapter: '三命通會 卷五 時上一位貴',
+        distinctFromHourWealth: true,
+        quotedOtherPillars: '年月日重見',
+        directAuthorizationToApplyToHourWealth: false,
+      },
       recurrenceCountingScopeMethodApproved: false,
       classicalWeiCountingMethodApproved: false,
       interpretationsInferred: false,
