@@ -1,0 +1,48 @@
+# Research-only source acquisition. This workflow is non-production and never
+# authenticates glyphs from OCR, checksum, or catalog metadata alone.
+name: "[WT:saju] NLC 1600 Book1 Original Access"
+# Manual opt-in only: routine research/docs commits must never repeatedly
+# download a 14 MB public source or flood GitHub artifacts.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fetch-public-facsimile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download publicly hosted original (no source identity claims yet)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/nlc"
+          url='https://upload.wikimedia.org/wikipedia/commons/2/24/NLC892-2642-210287_%E5%88%BB%E4%BA%AC%E8%87%BA%E5%A2%9E%E8%A3%9C%E6%B7%B5%E6%B5%B7%E5%AD%90%E5%B9%B3%E5%A4%A7%E5%85%A8_%E7%AC%AC1%E5%86%8A.pdf'
+          curl --fail --location --silent --show-error --retry 2 --retry-delay 2 --max-time 105 --user-agent 'MyeongHa scholarly facsimile verification (+https://github.com/gycha0109-beep/Saju)' --output "$RUNNER_TEMP/nlc/book1.pdf" "$url"
+          echo "Downloaded byte count (not print evidence): $(wc -c < "$RUNNER_TEMP/nlc/book1.pdf")"
+      - name: Verify exact Commons PDF identity before creating previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet PyMuPDF
+          for start in 1 9 17 25 33 41; do
+            end=$((start + 7))
+            pages=$(seq -s, "$start" "$end")
+            python tools/research/verify_nlc1600_book1_pdf.py \
+              --input "$RUNNER_TEMP/nlc/book1.pdf" \
+              --output "$RUNNER_TEMP/nlc/evidence-${start}-${end}.json" \
+              --preview-pages "$pages" \
+              --preview-dir "$RUNNER_TEMP/nlc/previews"
+            cat "$RUNNER_TEMP/nlc/evidence-${start}-${end}.json"
+          done
+      - name: Archive verified forty-eight printed-page candidates
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-nlc1600-book1-complete-48-verified-previews
+          path: |
+            ${{ runner.temp }}/nlc/evidence-*.json
+            ${{ runner.temp }}/nlc/previews/
+          retention-days: 10
+          if-no-files-found: error

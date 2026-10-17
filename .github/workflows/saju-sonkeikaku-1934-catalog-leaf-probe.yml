@@ -1,0 +1,84 @@
+# Research only: inspect public 1934 bibliographic catalog, NOT the underlying Ming woodblock.
+# No source-glyph promotion. Manual after first PR creation.
+name: "[WT:saju] Sonkeikaku Catalog Leaf Probe"
+# Large public catalog download is manually initiated; not rerun per PR update.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  identify-source-catalog-page:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Commons bibliographic scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/sonkeikaku"
+          url='https://upload.wikimedia.org/wikipedia/commons/1/15/NDL1147938_%E5%B0%8A%E7%B5%8C%E9%96%A3%E6%96%87%E5%BA%AB%E6%BC%A2%E7%B1%8D%E5%88%86%E9%A1%9E%E7%9B%AE%E9%8C%B2_part3.pdf'
+          curl --fail --location --silent --show-error --max-time 135 --retry 2 --retry-delay 2 --output "$RUNNER_TEMP/sonkeikaku/catalog.pdf" "$url"
+          echo "Downloaded catalog bytes (not Ming original): $(wc -c < "$RUNNER_TEMP/sonkeikaku/catalog.pdf")"
+      - name: Search bibliographic print for matching 21-juan title and render pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet PyMuPDF Pillow
+          python - <<'PY'
+          import os,json,hashlib
+          from pathlib import Path
+          import fitz
+          p=Path(os.environ['RUNNER_TEMP'])/'sonkeikaku'
+          source=p/'catalog.pdf'
+          sha=hashlib.sha256(source.read_bytes()).hexdigest()
+          doc=fitz.open(source)
+          matches=[]
+          candidates=['星學正傳','星学正伝','星學','星学','新刊京本','天機諸家','天機']
+          for i,page in enumerate(doc):
+            s=page.get_text()
+            matched=[t for t in candidates if t in s]
+            if matched:matches.append({'pdf_page_one_based':i+1,'hit_terms':matched,'text_excerpt':s[:1500]})
+          render_pages=sorted(set(x['pdf_page_one_based'] for x in matches))[:6]
+          for idx in render_pages:
+            pg=doc[idx-1]
+            pg.get_pixmap(dpi=180,colorspace=fitz.csRGB,alpha=False).save(p/f'catalog-page-{idx:03}.png')
+          # This 1934 facsimile is image-only; create indexed contact sheets
+          # for manual visual inspection rather than misreporting zero OCR hits.
+          from PIL import Image, ImageDraw
+          contact_names=[]
+          for start in range(0,len(doc),16):
+            sheet=Image.new('RGB',(1920,2480),'white')
+            draw=ImageDraw.Draw(sheet)
+            for j in range(min(16,len(doc)-start)):
+              n=start+j
+              pix=doc[n].get_pixmap(dpi=47,colorspace=fitz.csRGB,alpha=False)
+              thumb=Image.frombytes('RGB',[pix.width,pix.height],pix.samples)
+              thumb.thumbnail((452,574))
+              x=(j%4)*480+14
+              y=(j//4)*620+28
+              sheet.paste(thumb,(x,y))
+              draw.text((x,y-19),f'PDF {n+1:03}',fill='black')
+            fname=f'catalog-contact-{start+1:03}-{min(start+16,len(doc)):03}.jpg'
+            sheet.save(p/fname,quality=80)
+            contact_names.append(fname)
+          manifest={'type':'1934_catalog_facsimile_not_1582_source','file_bytes':source.stat().st_size,'pdf_sha256':sha,
+             'pdf_pages':len(doc),'matching_indexed_pages':matches[:12],
+             'rendered_pages':render_pages,'image_only_pdf':len(matches)==0,
+             'contact_sheet_files':contact_names,
+             'ming_original_focal_print_examined':False,'evidence_tier':'C_historical_catalog',
+             'first_person_wei_mu_glyph_verified':False}
+          (p/'catalog-probe.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf8')
+          print(json.dumps(manifest,ensure_ascii=False)[:12000])
+          PY
+      - name: Preserve original catalog-page evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-sonkeikaku-1934-catalog-page-audit
+          path: |
+            ${{ runner.temp }}/sonkeikaku/catalog-probe.json
+            ${{ runner.temp }}/sonkeikaku/catalog-page-*.png
+            ${{ runner.temp }}/sonkeikaku/catalog-contact-*.jpg
+          retention-days: 7
+          if-no-files-found: warn
