@@ -39,7 +39,7 @@ describe('P0-NATAL actual N10 19-pair research semantic return (no new authority
     expect(p.filter((x) => x.n10Category === 'changed_family_or_mixture')).toHaveLength(8);
     expect(p.filter((x) => x.n10Category === 'added_or_missing_research_theme')).toHaveLength(5);
     expect(p.filter((x) => x.adjudication === 'JUSTIFIED_SAME_MEANING')).toHaveLength(3);
-    expect(p.filter((x) => x.adjudication === 'JUSTIFIED_DIFFERENT_MEANING')).toHaveLength(0);
+    expect(p.map((x) => x.adjudication)).not.toContain('JUSTIFIED_DIFFERENT_MEANING');
     expect(p.filter((x) => x.adjudication === 'METHODOLOGY_CONFLICT')).toHaveLength(1);
     expect(p.filter((x) => x.adjudication === 'MISSING_CONTEXT')).toHaveLength(15);
     expect(p[16]).toMatchObject({
