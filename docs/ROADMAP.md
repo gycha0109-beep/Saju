@@ -58,6 +58,38 @@
 
 **P0-NATAL 종료 조건:** (1) 고정되지 않은 실제 입력 다수에서 일반 원국 종합풀이가 출생정보·snapshot에 충실하게 출력되고, (2) 근거 차이가 읽히는 차이로 확인되며, (3) 부분 근거/미상·모순을 안전하게 다루고, (4) 내부 UX·회귀·사람 리뷰 근거가 남아야 한다. 위 조건을 달성하지 못하면 **미완료**다. 새 연구가 필요한 일부 명제를 억지 채우지 말고 Research handoff를 발행한다.
 
+### P0-NATAL 개인화 의미 손실 개선 실행 계획 — 2026-10-17 (N25–N30)
+
+**진단 사실과 우선순위:** 실제 General Natal 35건(33건 delivered, 2건 partial evidence), N6 의미-only 반복 사례 조합 20쌍 중 동일 표시 명식 fixture 제거 후 19개 고유 표시 명식 쌍. N8의 3쌍은 **서로 다른 Research T8 Claim이 선택·Canonical·Plan에 도달하지만 claim-owned canonical 문구 자체는 같음**이 확인됐다. N10 나머지 분류의 개별 의미 상실 지점은 미확정이다. `same text`는 반드시 오해석을 뜻하지 않으며 자연스러운 의미 공유와 결손을 구분해야 한다. N12 실질 다중 근거 `usefulComplete:false`를 그대로 유지한다.
+
+**제품 실패 기준:** 기존의 해석 문구 총량, 중복 문자열 감소, 계산 위치 출력 추가, 엔진 통과율, 연구 파일 수 증가, CI 통과만으로 P0-NATAL 완료 판단하지 않는다. N21–N24는 *기존 source-owned Preview 읽기의 노출/접근성 개선*이며 새로운 개인별 합성 의미 증거가 아니다. N24 PR [#2552](https://github.com/gycha0109-beep/Saju/pull/2552)의 결과와 병합 여부는 PR 및 정확한 SHA의 CI를 기준으로 별도 확인한다.
+
+**책임과 의존성:** Saju Engine이 기존 Canonical → Rule Registry → T5/T6/T8 → Canonical Semantics → Official Plan/Renderer → 실제 Product/HTTP 경로의 실행·연결·품질을 소유한다. Research는 명식 차이가 정당화하는 해석 의미·반례·문헌 조건을 소유한다. Bridge는 source/method/version/claim 범위의 의미 사용 권한을 소유한다. **Research/Bridge 부재는 새 해석 주장만 HOLD하고, 기존 허용 의미의 손실 수정과 내부 품질 분석을 차단하지 않는다.**
+
+- [ ] **N25 — Claim → 실제 소비자 문장 추적 / 최초 의미 손실 위치 구분 (ACTIVE; 연구 대기 없음):**
+  - 기존 `canonicalSemantics.units`·`officialReadingPlan`·`officialReadingReport.explainability`·`delivery.artifact`·`ProductReadingResponse`를 **같은 snapshot/semantic/plan/report/reading identity**로 결합한다. 실제 사용자 문장과의 대응은 타입별 원문 일치와 유일성 조건이 충족될 때만 `exact_unique_consumer_match`로 기록한다.
+  - 반복 문구·복수 Claim 시나리오·redaction 또는 소비자 projection 불일치는 `ambiguous`/`unproven`으로 남긴다. identity 없이 텍스트 지문만 같다는 이유로 연결을 증명하지 않는다. Product API에 내부 Claim ID를 추가하지 않는다.
+  - N8 3쌍/고유 5건부터 실물 내부 execution과 기존 35건 HTTP 샘플을 연결하고, 이후 19개 고유 쌍 전체의 `rule divergence / claim-owned semantic divergence / plan-to-render / consumer meaning` 경계별 분류를 확장한다. 중복 대조 fixture는 고유 명식 쌍에서 제외한다.
+  - **완료:** 원인 확정 사례와 미확정 사례가 구분된 실제 실행 audit, 각 atom의 Claim/fact/source lineage, 유일성·redaction·tamper·unknown-hour 회귀. 신규 의미·Publication·Commerce 승격 금지.
+- [ ] **N26 — 이미 허용된 의미의 실제 전달 손실 수정 (ACTIVE AFTER N25):**
+  - N25에서 검증된 **실제 결손**만 최소 변경. Claim upstream 차이가 있다는 사실 자체로 최종 문구의 차이를 강제하지 않는다. 정당한 의미 공유는 유지한다.
+  - canonical text / qualifier / scenario / contradiction / domain selection 중 누락 위치를 분리하고 기존 Registry/renderer/Host만 수리한다. `FAMILY_MEANING`를 임의 분화하거나 Research-only candidate를 consumer admission으로 둔갑시키지 않는다.
+  - **완료:** 선정된 문제 사례에서 source-bound *허용 의미*가 HTTP까지 보존되고, 재현성/다른 의미 공유 사례/기존 bounded Production 권한이 회귀 통과.
+- [ ] **N27 — 다중 독립 근거 T8 개인화 종합해석 (BLOCKED ONLY WHERE RESEARCH/BRIDGE MEANING NEEDED):**
+  - N13–N20의 Research T5→T8 위치·연결·대조 관계를 우선 재사용한다. 정확한 Rule·ClaimType·methodology·source locator·반례·scenario 및 **claim-scoped admission**이 확보된 패턴만 실행/소비자 전환한다.
+  - 계열 단순 공존을 개인 행동/직업/재물/관계 성과로 확대하지 않는다. Research-only 구조 관측은 계속 internal/HOLD.
+  - **완료:** 최소 2개 실제 대조 명식의 허용 의미/반례가 작동하고, 가짜 새로운 결론/권한 우회 0건.
+- [ ] **N28 — 승인된 종합 의미를 실제 General Natal 보고서에 연결:**
+  - Canonical Bundle → Plan → Renderer → Artifact → Product response의 현행 경로 사용. 조합 Claim의 유일한 source lineage, 조건부 주장·모순·미상시각 의미를 손실 없이 보존한다.
+  - **완료:** claim별 보고서/HTTP 실제 노출과 근거/한계가 사용자의 읽기 단위에서 입증됨. N12 shadow는 실제 조건이 충족되기 전까지 usefulComplete false.
+- [ ] **N29 — 제품 차별화/안전성 실제 품질 게이트:**
+  - 고정 35개 명식·19개 고유 의미 반복 쌍을 회귀, 최소 10개 대표 사례 사람 읽기 리뷰. 각 쌍을 정상 의미 공유/정당한 해석 차이/규칙 결손/authority HOLD/미확정으로 분류하고 **의미** 기준 pass/fail을 유지한다.
+  - 불필요한 개별 표현 변형·근거 없는 추론·unknown-hour 오판 0건. 근거 없는 claim 0건.
+- [ ] **N30 — 영역별 일반/직업/재물/사업/관계 종합 읽기 확장:**
+  - General에서 검증한 기존 claim-to-output 연결을 다섯 도메인에 재사용. 도메인별 semantic authority를 섞지 않으며 사용자가 묻는 영역과 관찰 근거 간 의미 일관성/중복을 검증한다.
+
+**지속 통합 계약:** 작은 PR마다 `Watchtower-Track: saju`를 고정하고, 일반 CI Quality + full 16 shards + CI Verify, PIE, Production Container → exact-HEAD SHA-pinned CI Integration 20/20 → `expected_head_sha` squash merge → 병합 후 정확한 `main` CI/Container의 순서를 보존한다. 증거 없이 성공·병합을 선언하지 않는다. 의미 권한·public·판매 승격은 별도 계약으로 남긴다.
+
 ### P1-NATAL-QUALITY — 개인화 품질 심화 및 도메인 확장 (P0-NATAL 수직 슬라이스 이후)
 
 - [ ] 독립 도메인 문장들의 충돌/반복/추론 범위를 줄이고, 같은 핵심 사실이 직업·재물·관계에서 어떻게 다른 해석으로 투영되는지 확인한다.
