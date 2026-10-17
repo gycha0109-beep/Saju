@@ -144,7 +144,7 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
     targetClaims: reviewed,
     candidateBijeonWealthRuleExistsInThisReview: false as const,
     sourceLocatorCaveat:
-      '三命通會（四庫全書本）卷五 online transcription directly locates 論正財/論偏財/時上偏財; general 卷六 version has （以下內容與書不合） warning and nonidentical editorial characters. Physical scan/folio and lineage unverified; no independent manuscript or reviewer authority.',
+      '三命通會（四庫全書本）卷五 online transcription locates 論正財/論偏財/時上偏財; Harvard-Yenching 卷之五 PDF page 45 printed 時上偏財 reads 戊己, while SiKu online reads 戊巳. General 卷六 warns （以下內容與書不合）. Harvard one printed folio inspected; SiKu original printed folio, NLC, independent textual lineage and reviewer authority remain unverified.',
     verifiedOnlineSiKuVolumeFiveLocator: true as const,
     siKuVolumeFiveDigitalSource:
       'https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05' as const,
