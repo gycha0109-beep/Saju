@@ -68,7 +68,7 @@ export function buildNatalN28bCanonicalCalculatedFactProjection(
     const stem=match[2]==='VISIBLE_STEMS';
     const positions=SLOTS.flatMap(slot=>{
       const fact=facts[slot][stem?'stem':'branch'];
-      return fact.status==='resolved'&&family.includes(fact.value)
+      return fact?.status==='resolved'&&family.includes(fact.value as TenGod)
         ? [`${LABELS[slot]} ${stem?'천간':'지지 대표 십신'} ${fact.value}`]
         : [];
     });
