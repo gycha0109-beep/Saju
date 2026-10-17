@@ -28,6 +28,7 @@ import { buildNatalN25BAllPairForensics } from '../dist/preview/natal-n25b-all-p
 import { auditNatalN26HttpMeaningTransport } from '../dist/preview/natal-n26-http-meaning-transport.js';
 import { attachNatalN27SelfServiceEvidenceReading } from '../dist/preview/natal-n27-self-service-evidence-reading.js';
 import { auditNatalN27bClaimReceipts } from '../dist/preview/natal-n27b-claim-receipt-audit.js';
+import { composeNatalN28VerifiedReaderReport, NATAL_N28_REPORT_TITLE } from '../dist/preview/natal-n28-verified-reader-report.js';
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expanded-source-reading.js';
 
@@ -866,6 +867,100 @@ async function main() {
   process.stdout.write('Natal N27b verified '+n27b.checkedReceipts+
     ' exact source-bound Claim receipts over '+n27b.sourcedKnownTime+
     ' known-time cases; same-birth stable; '+n27bPath+'\\n');
+
+  // N28: actual opt-in Product-facing report composition based only on N27b
+  // independently verified canonical Claim/position/Official source receipts.
+  // Uses the existing 35 real HTTP samples; no additional user data or LLM calls.
+  const n28Cases=inputs.map(input=>{
+    const run=interpretedByCaseId.get(input.caseId);
+    if(!run) throw new Error('N28 original canonical execution missing '+input.caseId);
+    const overlay=attachNatalN27SelfServiceEvidenceReading(
+      input.response,run.snapshot,run.interpretation);
+    const report=composeNatalN28VerifiedReaderReport(
+      input.response,overlay,run.snapshot,run.interpretation);
+    const base=input.response.reading, reading=report.reading;
+    const reportSections=reading?.sections.filter(s=>s.title===NATAL_N28_REPORT_TITLE)??[];
+    if(reportSections.length>1) throw new Error('N28 duplicate report section '+input.caseId);
+    const eligible=input.response.state==='delivered' ||
+      input.response.state==='delivered_with_fallback';
+    const included=reportSections.length===1;
+    if(eligible && run.snapshot.completeness.birthTimeKnown && !included){
+      throw new Error('N28 missing eligible report '+input.caseId);
+    }
+    if((!eligible||!run.snapshot.completeness.birthTimeKnown)&&included){
+      throw new Error('N28 fabricated unknown birth-hour report '+input.caseId);
+    }
+    const sectionsWithoutReport=reading?.sections.filter(s=>s.title!==NATAL_N28_REPORT_TITLE);
+    if(JSON.stringify(sectionsWithoutReport)!==JSON.stringify(base?.sections) ||
+      report.responseId!==input.response.responseId ||
+      reading?.readingId!==base?.readingId ||
+      JSON.stringify(reading?.calculationSummary)!==
+        JSON.stringify(base?.calculationSummary)){
+      throw new Error('N28 changed original Official report '+input.caseId);
+    }
+    const originalTitleIndex=reading?.sections.findIndex(s=>s.title==='주요 해석')??-1;
+    const reportIndex=reading?.sections.findIndex(s=>s.title===NATAL_N28_REPORT_TITLE)??-1;
+    if(included && !(reportIndex>=0 && originalTitleIndex>reportIndex)){
+      throw new Error('N28 failed reader-first insertion '+input.caseId);
+    }
+    const paragraphs=reportSections[0]?.blocks.filter(b=>b.type==='paragraph')
+      .map(b=>b.text)??[];
+    const rows=reportSections[0]?.blocks.find(b=>b.type==='fact_table')?.rows??[];
+    return {
+      caseId:input.caseId,delivered:eligible,
+      timeKnown:run.snapshot.completeness.birthTimeKnown,
+      stableHttpReadingId:reading?.readingId===base?.readingId,
+      preservedOfficialSections:JSON.stringify(sectionsWithoutReport)===
+        JSON.stringify(base?.sections),
+      reportBeforeMain:included?reportIndex<originalTitleIndex:true,
+      composed:included,
+      verifiedThemeCount:rows.length,
+      factRows:rows,
+      actualPreviewParagraphs:paragraphs,
+      reportTextHash:included?deterministicContentHash({paragraphs,rows}):null,
+      neverApprovalOfHumanOutcome:true,
+    };
+  });
+  const n28ById=new Map(n28Cases.map(x=>[x.caseId,x]));
+  const n28Pairs=n10.pairs.map(pair=>{
+    const a=n28ById.get(pair.left),b=n28ById.get(pair.right);
+    if(!a?.reportTextHash||!b?.reportTextHash){
+      throw new Error('N28 missing source-verifiable duplicate-meaning pair');
+    }
+    return {left:pair.left,right:pair.right,
+      hasDifferentChartGroundedReport:a.reportTextHash!==b.reportTextHash};
+  });
+  const n28={
+    version:'saju-natal-n28-reader-first-official-product-presentation-preview-v1',
+    lifecycle:'internal_quality_audit',
+    existingOfficialClaimSemanticsPreserved:true,
+    mayAuthorizeNewOutcomeClaims:false,
+    mayPublish:false,maySell:false,
+    needsExternalHumanReviewer:false,
+    actualHttpCaseCount:inputs.length,
+    verifiedKnownTimeReports:n28Cases.filter(x=>x.composed).length,
+    unknownTimeReportCount:n28Cases.filter(x=>!x.timeKnown && x.composed).length,
+    originalOfficialSectionsPreserved:n28Cases.every(x=>x.preservedOfficialSections),
+    originalReadingIdentityPreserved:n28Cases.every(x=>x.stableHttpReadingId),
+    readerFirst:n28Cases.every(x=>x.reportBeforeMain),
+    repeatedPairCount:n28Pairs.length,
+    chartGroundedDifferentiatedPairs:n28Pairs.filter(x=>
+      x.hasDifferentChartGroundedReport).length,
+    cases:n28Cases,pairs:n28Pairs,
+  };
+  if(n28.actualHttpCaseCount!==35||n28.verifiedKnownTimeReports!==33||
+    n28.unknownTimeReportCount!==0||!n28.originalOfficialSectionsPreserved||
+    !n28.originalReadingIdentityPreserved||!n28.readerFirst||
+    n28.repeatedPairCount!==20||n28.chartGroundedDifferentiatedPairs!==20){
+    throw new Error('N28 actual HTTP reader report acceptance failed');
+  }
+  const n28Path=resolve(outputPath.endsWith('.json')?
+    outputPath.slice(0,-5)+'.n28-verified-reader-report.json':
+    outputPath+'.n28-verified-reader-report.json');
+  writeFileSync(n28Path,JSON.stringify(n28,null,2)+'\n','utf8');
+  process.stdout.write('Natal N28: '+n28.verifiedKnownTimeReports+
+    '/35 reader-first source-verified reports; '+n28.chartGroundedDifferentiatedPairs+
+    '/20 distinct original-copy pairs; '+n28Path+'\n');
 
   const repeatedPairs = oldCollisions;
   const n4 = {
