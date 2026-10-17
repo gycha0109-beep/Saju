@@ -76,8 +76,8 @@ export function evaluateNatalN29AutonomousQuality({baseline, n10, n26, n27, n27b
         'HTTP source meaning not independently preserved: ' + caseId);
       requireEvidence(b.checkedClaims > 0 &&
         b.claimReceipts.length === b.checkedClaims &&
-        a.selectedParagraphCount === b.checkedClaims &&
-        a.selectedParagraphs.length === b.checkedClaims &&
+        a.selectedParagraphCount === b.checkedClaims + 1 &&
+        a.selectedParagraphs.length === b.checkedClaims + 1 &&
         c.composed === true && c.verifiedThemeCount === b.checkedClaims &&
         c.factRows.length === b.checkedClaims &&
         c.actualPreviewParagraphs.length === b.checkedClaims + 1,
@@ -86,8 +86,8 @@ export function evaluateNatalN29AutonomousQuality({baseline, n10, n26, n27, n27b
         const proof = b.claimReceipts[i];
         requireEvidence(proof.claimType && proof.position &&
           proof.sourceIds.length > 0 && proof.ruleIds.length > 0 &&
-          a.selectedParagraphs[i].includes(proof.position) &&
-          c.actualPreviewParagraphs[i+1] === a.selectedParagraphs[i] &&
+          a.selectedParagraphs[i+1].includes(proof.position) &&
+          c.actualPreviewParagraphs[i+1] === a.selectedParagraphs[i+1] &&
           c.factRows[i].value === proof.position,
           'Claim placement/source not preserved in consumer explanation: ' + caseId);
       }
