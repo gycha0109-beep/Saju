@@ -53,7 +53,8 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.adjudication2010).toBe('METHODOLOGY_CONFLICT');
     expect(review.distinctConsumerMeaningApproved).toBe(0);
     expect(review.sourceLocatorCaveat).toContain('以下內容與書不合');
-    expect(review.sourceLocatorCaveat).toContain('四庫全書本）卷五');
+    expect(review.sourceLocatorCaveat).toContain('CADAL06056481 image page 104');
+    expect(review.sourceLocatorCaveat).toContain('SiKu Wikisource editable volume five reads 戊巳');
     expect(review.verifiedOnlineSiKuVolumeFiveLocator).toBe(true);
     expect(review.siKuVolumeFiveDirectlyLocatedSections).toEqual([
       '論正財', '論偏財', '時上偏財',
