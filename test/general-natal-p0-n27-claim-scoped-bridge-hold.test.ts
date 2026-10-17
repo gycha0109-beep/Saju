@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('be11f985cd9666eb5a22357ecd01478cc007d0df');
+    expect(review.researchHeadReviewed).toBe('cc330e25630896908a5bb985d77b6b10d3dbfb29');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -59,6 +59,13 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
       '論正財', '論偏財', '時上偏財',
     ]);
     expect(review.twoIndependentPhysicalWitnessesVerified).toBe(false);
+    expect(review.availableOriginalScanCandidates).toEqual([
+      'CADAL06056481', 'CADAL06066041',
+    ]);
+    expect(review.printedTargetFoliosDirectlyInspected).toBe(false);
+    expect(review.twoScansDemonstratedToBeIndependentEditions).toBe(false);
+    expect(review.finalWangShuaiAndQiangRuoVerdictAuthorized).toBe(false);
+    expect(review.classicalSingleWealthLocationProven).toBe(false);
     expect(review.generalCopyVolumeSixHasDiscrepantEditorialWarning).toBe(true);
   });
 
