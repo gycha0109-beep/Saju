@@ -218,6 +218,11 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
     expect(x.provenance.sameVolumeAnalogyIsDigitallyTranscribedNotNewPrintAttestation)
       .toBe(true);
     expect(x.provenance.classicalBieGongDayInclusionNotDerivedFromAnalogy).toBe(true);
+    expect(x.provenance.sameVolumeZhengGuanPhrase).toContain('丑月內有辛金');
+    expect(x.provenance.sameVolumeZhengGuanLaterVisiblePhrase).toContain('天干復透辛多');
+    expect(x.provenance.sameVolumeZhengGuanHiddenBranchRepetitionDescribed).toBe(true);
+    expect(x.provenance.sameVolumeZhengGuanSourceChannel).toBe('DIGITAL_TRANSCRIPTION_ONLY');
+    expect(x.provenance.zhengGuanRecurrenceRuleApplicableToHourWealth).toBe(false);
   });
 
   it('v3 date controls change scope sensitivity but never authorize classical conclusion', () => {
