@@ -41,6 +41,13 @@ jobs:
           node scripts/research/inspect-n27-volume-five-print.mjs --pdf "$RUNNER_TEMP/n27-capture/harvard-volume-five.pdf" --source-id HARVARD_DRS_53262215_VOL_5 --out "$RUNNER_TEMP/n27-capture/packet" --pages all --scale 900
           test -s "$RUNNER_TEMP/n27-capture/packet/manifest.json"
           test -s "$RUNNER_TEMP/n27-capture/packet/reading-template.json"
+      - name: Re-render verified target page 45 at original-scale fidelity
+        shell: bash
+        run: |
+          set -euo pipefail
+          pdftoppm -f 45 -l 45 -singlefile -scale-to 3200 -png "$RUNNER_TEMP/n27-capture/harvard-volume-five.pdf" "$RUNNER_TEMP/n27-capture/packet/pages/page-0045-highres"
+          sha256sum "$RUNNER_TEMP/n27-capture/packet/pages/page-0045-highres.png" > "$RUNNER_TEMP/n27-capture/packet/page-0045-highres.sha256"
+          test -s "$RUNNER_TEMP/n27-capture/packet/pages/page-0045-highres.png"
       - name: Upload Research-only page evidence
         uses: actions/upload-artifact@v4
         with:
