@@ -25,3 +25,10 @@
 - Bridge: claim scoped source-quality/semantic-admission decision = **HOLD, 별도 담당**.
 - Engine: exact N13 research replay 2010 paired snapshots + trace + regression = **미실행 후속 작업**.
 - Business/Official Reading/LLM/Production = **HOLD**; 실제 서비스 해석 품질 해결을 완료했다고 주장하지 않는다.
+
+
+## P0-NATAL N13 실제 2010 명식 재실행 계약 (추가, 2026-10-17)
+
+- [실제 두 명식 회귀 테스트](../../test/general-natal-p0-n13-real-pair-replay.test.ts)가 **N10과 동일한 출생일/시간/성별 처리·계산 시점**으로 승인 정책의 원국을 재계산하고 기존 T8 Registry를 연구 shadow로 실행한다. 실제 `runInterpretation` Claim의 정확한 수, `upstreamClaimRefs` 2개, 서로 다른 T5 family ID, 동일 snapshot/scenario, N13 source locator, false publish/promote 가드를 검증한다.
+- **Engine 이관 시 재사용**: 이 테스트를 소비자 Preview로 옮기는 대신 05/19 두 원국의 `PEER-TO-WEALTH-ADVERSE` T8 발행 여부를 CI 회귀 계약으로 유지한다. 새 컴포지션 작업은 이 **실제 Claim provenance**를 읽되 허가되지 않은 text를 소비자에게 전송하지 않는다.
+- **Bridge 판단 기준 강화**: 정확한 겁재 조건을 만족해도 `secondary_only/unreviewed`의 전사 출처와 N15 필터가 해제되는 것은 아니다. Claim-scoped `hold` 유지가 기본이고 출처·reviewer·semantic scope 승인 없이는 observation도 제품으로 승격하지 않는다.
