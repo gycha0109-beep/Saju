@@ -11,7 +11,7 @@ import {
 } from './general-natal-wang-shuai-qiang-ruo-semantic-axis-authority.js';
 
 export const GENERAL_NATAL_N27_BIJEON_SHADOW_VERSION =
-  'saju-n27-bijeon-wealth-source-condition-shadow-v2' as const;
+  'saju-n27-bijeon-wealth-source-condition-shadow-v3' as const;
 
 export function buildGeneralNatalN27BijeonWealthShadow(
   snapshot: CanonicalSajuSnapshot,
@@ -71,6 +71,58 @@ export function buildGeneralNatalN27BijeonWealthShadow(
       stems: Object.freeze([...p.stems]),
       factPath: p.sourcePath,
     })),
+  );
+  // Source-surface collation is character-level transcription comparison, NOT
+  // physically inspected print. Preserve the conflicting 巳 and 己 glyphs.
+  const textWitnessVariants = Object.freeze([
+    Object.freeze({
+      witnessKey: 'WIKISOURCE_SIKU_VOLUME_FIVE' as const,
+      page: 'https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05' as const,
+      transcribedClause: '柱中不宜再見戊巳' as const,
+      terminalCharacter: '巳' as const,
+      printPageInspected: false as const,
+      authenticatedIndependentEdition: false as const,
+    }),
+    Object.freeze({
+      witnessKey: 'SHIDIAN_GUJI_VOLUME_FIVE' as const,
+      page: 'https://www.shidianguji.com/zh/book/HY1521/chapter/1knwennx4qwp8' as const,
+      transcribedClause: '柱中不宜再見戊己' as const,
+      terminalCharacter: '己' as const,
+      printPageInspected: false as const,
+      authenticatedIndependentEdition: false as const,
+    }),
+    Object.freeze({
+      witnessKey: 'WIKISOURCE_GENERAL_VOLUME_SIX' as const,
+      page: 'https://zh.wikisource.org/zh-hant/三命通會/卷六' as const,
+      transcribedClause: '柱中不宜再見戊己' as const,
+      terminalCharacter: '己' as const,
+      editorialWarningBeforeChapter: '（以下內容與書不合）' as const,
+      printPageInspected: false as const,
+      authenticatedIndependentEdition: false as const,
+    }),
+  ]);
+  const conflictingDigitalCharactersObserved =
+    new Set(textWitnessVariants.map((w) => w.terminalCharacter)).size > 1;
+  const otherPillarWuJiVisibleStems = Object.freeze(
+    [year, month, day].filter((p) =>
+      p?.state === 'resolved' && (p.stem === '무' || p.stem === '기')
+    ).map((p) => Object.freeze({
+      slot: p!.slot, stem: p!.stem!,
+      sourcePath: p!.sourcePath,
+    })),
+  );
+  const otherPillarHiddenWuJi = Object.freeze(
+    hiddenStemObservations.filter((p) => p.slot !== 'hour').flatMap((p) =>
+      p.stems.filter((stem) => stem === '무' || stem === '기').map((stem) =>
+        Object.freeze({
+          slot: p.slot, stem,
+          sourcePath: p.factPath,
+        }),
+      ),
+    ),
+  );
+  const hourHiddenWu = hiddenStemObservations.some((p) =>
+    p.slot === 'hour' && p.stems.includes('무')
   );
   const strengthAxis = GENERAL_NATAL_WANG_SHUAI_QIANG_RUO_SEMANTIC_AXIS_AUTHORITY;
   const researchStrengthBoundary = Object.freeze({
@@ -140,8 +192,22 @@ export function buildGeneralNatalN27BijeonWealthShadow(
       hiddenStemObservations,
       hiddenStemsFullyObserved: hiddenStemObservations.length === 4,
       peerPositions,
+      otherPillarWuJiVisibleStems,
+      otherPillarHiddenWuJi,
+      otherPillarWuJiObserved:
+        otherPillarWuJiVisibleStems.length > 0 || otherPillarHiddenWuJi.length > 0,
+      hourHiddenWu,
     }),
     scanCandidates,
+    digitalCollation: Object.freeze({
+      textWitnessVariants,
+      conflictingDigitalCharactersObserved,
+      terminalCharacters: Object.freeze(['巳', '己'] as const),
+      correctOriginalPrintGlyph: 'UNRESOLVED' as const,
+      originalTargetFolioInspected: false as const,
+      independentPrintWitnessesEstablished: 0 as const,
+      applyingJiProhibitionToThisChartAuthorized: false as const,
+    }),
     researchStrengthBoundary,
     classicalHourWealthSingletonEvidence: Object.freeze({
       status: 'NOT_ADJUDICATED' as const,
@@ -151,6 +217,9 @@ export function buildGeneralNatalN27BijeonWealthShadow(
       countIsNotClassicalOccurrenceCount: true as const,
       hiddenStemRootAndMultiplicityRulesEstablished: false as const,
       correctWuSiVsWuJiPrintCharacterEstablished: false as const,
+      otherPillarWuJiVisibleFactsPresent: otherPillarWuJiVisibleStems.length > 0,
+      otherPillarWuJiHiddenFactsPresent: otherPillarHiddenWuJi.length > 0,
+      sourceScopeStillNotExecutablePredicate: true as const,
       conditionSatisfied: false as const,
     }),
     literalPassageMatch: !hourKnown

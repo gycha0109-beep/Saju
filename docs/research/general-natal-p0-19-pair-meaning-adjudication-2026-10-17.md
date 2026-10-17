@@ -147,3 +147,19 @@
 **강약 판정 권한 고정:** `GENERAL_NATAL_WANG_SHUAI_QIANG_RUO_SEMANTIC_AXIS_AUTHORITY`에 따르면 `旺衰`와 `強弱`의 구별은 출처상 관찰로 인정하지만 원국 전체 `chartLevelWangShuaiClassifierAuthorized=false`, `chartLevelQiangRuoClassifierAuthorized=false`. 실제 `丁丑月`을 계산해도 `甲木`이 최종 신강/신약이라고 결론지을 수 없다. v2 Shadow는 `UNCLASSIFIED`를 반환하고 원국별 강약·시상편재 격 부여를 계속 금지한다.
 
 **이탈 방지:** 실제 05:30/19:30/미상시각 fixture 재실행을 기존 테스트에서 강화. 원본 스캔 후보 발견=source integrity 통과/독립 reviewer approval, 재성 복수=고전 유일조건 불충족 확정, 월지 丑=강약 최종 분류로 점프하는 **세 가지 과잉 결론을 모두 거부**한다. #17 `METHODOLOGY_CONFLICT`, 19쌍 3/15/1, N13 기존 T8 1 vs 0, Bridge #2557 다섯 Claim HOLD는 변경하지 않는다.
+
+## 13. 실제 전사 구절의 다자 문자교감: 『四庫全書本』 巳 ↔ 『識典古籍』 己
+
+**이번에 직접 확인한 읽기 위치와 문자(원본 인쇄면이 아님):**
+
+| 온라인 전사 | 편명/볼륨 | 「時上偏財」 관련 절 | 끝 글자 | 증거 상태 |
+|---|---|---|---|---|
+| [維基文庫 『三命通會（四庫全書本）/卷05』](https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05) | 卷五 | `柱中不宜再見戊巳` | **巳** (지지 뱀 사) | 온라인 C 등급 |
+| [識典古籍 『三命通會卷之五』](https://www.shidianguji.com/zh/book/HY1521/chapter/1knwennx4qwp8) | 卷之五 | `柱中不宜再見戊己` | **己** (천간 기) | 온라인 C 등급 |
+| [維基文庫 일반 『三命通會/卷六』](https://zh.wikisource.org/zh-hant/三命通會/卷六) | 卷六 (편집 경고 `以下內容與書不合`) | `柱中不宜再見戊己` | **己** | 경고 뒤 전사, 저본 불명 |
+
+**직접 인쇄면 판독 시도 및 미완료 사유:** 공개 Wikimedia Commons/CADAL 卷五 DjVu 원본 파일은 메타데이터와 2개 후보 ID는 확인되었으나, 현 실행 환경에서 원 이미지 바이너리를 내려받아 대상 면을 추출하는 데 실패했다. 따라서 ‘인쇄본에 己가 맞다’와 ‘巳는 오식이다’를 주장하지 않는다. 두 사이트 이상이 己라고 적었다는 **투표로 교감 확정 금지**. 실제 이미지면의 folio, 원본 서지계통, OCR이 아닌 눈으로 읽은 인쇄 字形, 판독 검증을 남겨야 한다.
+
+**실제 원국 조건 분리 v3:** 두 Canonical 2010 T0 명식에서 `甲` 일간의 `戊/己`로 기록되는 실제 천간과 4지지 지장간 관측을 별도 필드로 추적한다. 19:30 명식의 年干 `己`, 日支 `申`에 숨은 `戊`, 時支 `戌`에 숨은 `戊`는 데이터 레벨 구조적 사실이다. 그러나 세 항목이 「時上偏財」의 원문 `柱中不宜再見戊己`나 `只要一位`에 **어떤 규칙과 가중치로 해당되는지는 아직 고전 판면·방법론 모두 불명**이다. 지장간 존재 → 별도 편재격 성립/불성립, 복수 위치 → 강약/운세로 확대 금지.
+
+검증 구현: `src/research/general-natal-p0-n27-bijeon-wealth-shadow.ts` v3 및 동일한 실제 T0 snapshot 회귀 테스트. `digitalCollation.correctOriginalPrintGlyph=UNRESOLVED`, `applyingJiProhibitionToThisChartAuthorized=false`, `researchStrengthBoundary.result=UNCLASSIFIED`, `classicalHourWealthSingletonEvidence.status=NOT_ADJUDICATED`. 기존 N13 T8 1 대 0, #17 `METHODOLOGY_CONFLICT`, Bridge HOLD 및 Product/Official/Production 의미 승인 0 유지.
