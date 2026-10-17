@@ -135,14 +135,14 @@ export function traceNatalN25ConsumerMeaningAtoms(input: {
       if (block.type === 'insights') {
         for (const item of block.items) candidates.push({
           sectionId: section.sectionId, sectionTitle: section.title,
-          explainabilityRef: item.explainabilityRef,
+          explainabilityRef: item.explainabilityRef ?? '',
           fragments: fragmentsForInsight(item, block.items.length),
           individuallyAttributable: true,
         });
       } else if (block.type === 'comparison') {
         for (const p of block.perspectives) candidates.push({
           sectionId: section.sectionId, sectionTitle: section.title,
-          explainabilityRef: p.explainabilityRef,
+          explainabilityRef: p.explainabilityRef ?? '',
           fragments: [{ type: 'comparison', text: p.text }],
           individuallyAttributable: true,
         });
@@ -161,10 +161,10 @@ export function traceNatalN25ConsumerMeaningAtoms(input: {
 
   const atoms: NatalN25TraceAtom[] = candidates.map((candidate) => {
     const binding = explain.get(candidate.explainabilityRef);
-    if (binding === undefined || binding.primaryUnitRefs.length !== 1) {
+    if (binding === undefined || binding.primaryUnitRefs?.length !== 1) {
       throw new TypeError('N25 visible atom must have exactly one canonical primary evidence binding.');
     }
-    const primaryUnitIds = [...binding.primaryUnitRefs];
+    const primaryUnitIds = [...binding.primaryUnitRefs!];
     const primary = primaryUnitIds.map((id) => {
       const unit = units.get(id);
       if (unit === undefined || !planPrimaryRefs.has(id) || !binding.claimIds.includes(unit.claimId)) {
