@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('e65374b0d6abf8f63e74b977be9b3e2c9262d07b');
+    expect(review.researchHeadReviewed).toBe('b04ddea0a93463fe5463b0a9393ad7797c886221');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v2',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v3',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -171,6 +171,22 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
       samePillarTwoChannelsAreNotProvenTwoClassicalWei: true,
       dayPillarWithinBieGongNotSourceAdjudicated: true,
       noHiddenStemGeneralizationAuthorized: true,
+      palaceAndChannelCounterfactualKeys: [
+        'YEAR_MONTH_VISIBLE', 'YEAR_MONTH_DAY_VISIBLE',
+        'YEAR_MONTH_VISIBLE_HIDDEN', 'YEAR_MONTH_DAY_VISIBLE_HIDDEN',
+      ],
+      actual2010JiaXuScopeLatticeExpectedRawOccurrences: [1, 1, 3, 4],
+      actual2010JiaXuScopeLatticeExpectedDistinctPillarGlyphs: [1, 1, 2, 3],
+      yearPillarVisibleAndHiddenJiAreSamePillarGlyph: true,
+      countsAreCounterfactualAndNotClassicalWei: true,
+      otherDayPillarBieGongSemanticsEstablished: false,
+      sameVolumeZhengGuanAnalogy: {
+        chapter: '三命通會 卷五 論正官',
+        hiddenBranchRecurrencePhrase: '甲生丑月內有辛金又值酉時',
+        additionalVisibleStemPhrase: '若天干復透辛多',
+        evidenceChannel: 'DIGITAL_TRANSCRIPTION_ONLY',
+        qualifiedForHourWealthRuleTransfer: false,
+      },
       sameVolumeOfficerAnalogy: {
         chapter: '三命通會 卷五 時上一位貴',
         distinctFromHourWealth: true,
