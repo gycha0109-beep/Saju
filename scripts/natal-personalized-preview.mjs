@@ -11,8 +11,6 @@ import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../dist/producti
 import { buildNatalStructuralEvidence } from '../dist/preview/natal-structural-evidence.js';
 import { buildNatalSynthesisPreview } from '../dist/preview/natal-synthesis-preview.js';
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
-import { buildNatalN21ReaderFirstStory } from '../dist/preview/natal-reader-first-story.js';
-import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expanded-source-reading.js';
 import { buildNatalN30bFiveDomainVerifiedReader } from '../dist/preview/natal-n30b-five-domain-verified-reader.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
