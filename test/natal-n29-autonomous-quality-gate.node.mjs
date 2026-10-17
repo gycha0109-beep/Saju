@@ -78,6 +78,19 @@ describe('N29 bounded autonomous 35-case and 19-pair quality gate',()=>{
     assert.equal(outcome.usefulComplete,false);
     assert.equal(outcome.maySell,false);
   });
+  it('permits the same sourced meaning for different charts when consumed evidence matches',()=>{
+    const f=fixture();
+    const original=f.n27.cases[0],next=f.n27.cases[1];
+    next.selectedParagraphs=[...original.selectedParagraphs];
+    next.selfServiceTextFingerprint=original.selfServiceTextFingerprint;
+    f.n27b.cases[1].claimReceipts=JSON.parse(JSON.stringify(f.n27b.cases[0].claimReceipts));
+    f.n28.cases[1].factRows=JSON.parse(JSON.stringify(f.n28.cases[0].factRows));
+    f.n28.cases[1].actualPreviewParagraphs=[...f.n28.cases[0].actualPreviewParagraphs];
+    f.n28.cases[1].reportTextHash=f.n28.cases[0].reportTextHash;
+    const result=evaluateNatalN29AutonomousQuality(f);
+    assert.equal(result.legitimatelyEqualSourceComparisons,2);
+    assert.equal(result.evidenceExplainedDifferenceComparisons,18);
+  });
   it('blocks spurious variation for exactly the same birth input',()=>{
     const f=fixture();
     f.n28.cases.find(c=>c.caseId.startsWith('same-birth-control')).reportTextHash='unproven-variation';
