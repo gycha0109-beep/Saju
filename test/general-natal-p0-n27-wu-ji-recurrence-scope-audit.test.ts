@@ -239,9 +239,10 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
     expect(visibleWu.actualObservationChannels.otherPillarVisibleJi).toBe(0);
     expect(hiddenOnly.actualObservationChannels.otherPillarVisibleWu).toBe(0);
     expect(hiddenOnly.actualObservationChannels.otherPillarVisibleJi).toBe(0);
-    const [visibleHiddenFromWu, visibleHiddenFromHiddenOnly] = [
-      visibleWu, hiddenOnly,
-    ].map((audit) => audit.otherPillarUnitAudit.palaceAndChannelCounterfactuals);
+    const visibleHiddenFromWu =
+      visibleWu.otherPillarUnitAudit.palaceAndChannelCounterfactuals;
+    const visibleHiddenFromHiddenOnly =
+      hiddenOnly.otherPillarUnitAudit.palaceAndChannelCounterfactuals;
     expect(visibleHiddenFromWu[0]?.observedOccurrenceCount).toBeGreaterThan(0);
     expect(visibleHiddenFromHiddenOnly[0]?.observedOccurrenceCount).toBe(0);
     expect(visibleHiddenFromHiddenOnly[3]?.observedOccurrenceCount).toBeGreaterThan(0);
