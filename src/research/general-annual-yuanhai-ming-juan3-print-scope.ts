@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-shidian-1582-target-ocr-v29' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-early-catalog-counts-v30' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2148,6 +2148,56 @@ export const YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT = Object.freeze({
   }),
 });
 
+/** Multiple historical catalog transcriptions disagree on 21/22 juan and 6/12 physical books; not multiple verified woodblocks. */
+export const YUANHAI_EARLY_CATALOG_21_22_FASCICLE_WITNESSES_AUDIT = Object.freeze({
+  xuQianxueChuanshilou: Object.freeze({
+    catalog: '傳是樓書目' as const,
+    attributedCompiler: '徐乾學' as const,
+    shidianBookId: 'NCL04996A' as const,
+    digitalCatalogUrl: 'https://www.shidianguji.com/zh/book/NCL04996A/chapter/1lz8esf0jbeau' as const,
+    observedDigitalCatalogTitle: '星學正傳' as const,
+    describedPrintedJuanCount: 22 as const,
+    describedPhysicalBookCount: 6 as const,
+    catalogReadingAuthority: 'C_digitized_catalog_transcription' as const,
+    catalogTargetLeafOriginalHandwritingInspected: false as const,
+    historicalCopySameAsWangWenyuanCatalogVerified: false as const,
+    ncl04996PartCountInPublicCommonsInventory: 12 as const,
+    publicMicrofilmInventoryUrl: 'https://commons.wikimedia.org/wiki/Commons:Library_back_up_project/file_list/Rare_Books_%26_Special_Collections%2C_National_Central_Library/%E5%9C%8B%E5%9C%96%E4%BB%A3%E7%AE%A1%E5%8E%9F%E5%B9%B3%E5%9C%96%E5%8F%A4%E7%B1%8D%E5%BE%AE%E7%89%87' as const,
+    ncl04995CatalogPdfPageCount: 370 as const,
+    nlc8921094207944CatalogPdfPageCount: 94 as const,
+    catalogFilesArePhysicalBooksOfReferenced1582Work: false as const,
+    manyManuscriptLinesAnd1915FirstEditionWarned: true as const,
+    bibliographicCopyingErrorsPossible: true as const,
+  }),
+  nakamuraRyoClassifiedImportedBookCatalog: Object.freeze({
+    catalog: '分類舶載書目通覽' as const,
+    editor: '中村亮' as const,
+    nationalTradition: 'Japanese_Edo' as const,
+    scholarlyAttestedCompilationYear: 1810 as const,
+    shidianBookId: 'NGWK02180137' as const,
+    digitalCatalogUrl: 'https://www.shidianguji.com/zh/book/NGWK02180137/chapter/1mf5xnwgdaznt' as const,
+    observedDigitalCatalogTitle: '星學正傳' as const,
+    describedPrintedJuanCount: 21 as const,
+    catalogReadingAuthority: 'C_digitized_catalog_transcription' as const,
+    originalCatalogManuscriptGlyphInspected: false as const,
+    original1582PhysicalCopyLocatedFromImportedBookListing: false as const,
+    dateResearchReference: 'https://www.jstage.jst.go.jp/article/jkg/73/5/73_178/_pdf' as const,
+    shidianDynasticAuthorTagIndependentlyAuthenticated: false as const,
+  }),
+  unresolved: Object.freeze({
+    xuSixBooksProvenSameHoldingAsWangTwelveBooks: false as const,
+    printedJuanCountDifferenceExplained: false as const,
+    countTwentyTwoProvesTwentyOnePlusPrefaceOne: false as const,
+    independent1582WoodblockSettingsAdded: 0 as const,
+    newlyInspected1582JuanThreePrintedLeafCount: 0 as const,
+    newWeiOrMuPrintedGlyphCount: 0 as const,
+    archetypeGlyphAdjudicated: null,
+    modernAnnualRulesApproved: 0 as const,
+    globalTripleClashPriorityAuthorized: false as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 /** Shidian NA09025 printed-juan-3 OCR is a new C-level target locus, not a 1582 printed folio. */
 export const YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT = Object.freeze({
   platform: '識典古籍' as const,
@@ -2775,6 +2825,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     kunaichoShoryobu1582CatalogHoldingAudit: YUANHAI_KUNAICHO_SHORYOBU_1582_CATALOG_HOLDING_AUDIT,
     japanTwoInstitutionReproductionAccessAudit: YUANHAI_JAPAN_TWO_INSTITUTION_REPRODUCTION_ACCESS_AUDIT,
     shidian1582JuanThreeTextualWitnessAudit: YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT,
+    earlyCatalog21vs22FascicleWitnessesAudit: YUANHAI_EARLY_CATALOG_21_22_FASCICLE_WITNESSES_AUDIT,
     naj2021ScheduledReproductionInventory: YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
     yangcongTitleLeafReproductionAudit: YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,

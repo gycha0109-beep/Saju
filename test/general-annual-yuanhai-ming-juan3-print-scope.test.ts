@@ -47,6 +47,7 @@ import {
   YUANHAI_KUNAICHO_SHORYOBU_1582_CATALOG_HOLDING_AUDIT,
   YUANHAI_JAPAN_TWO_INSTITUTION_REPRODUCTION_ACCESS_AUDIT,
   YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT,
+  YUANHAI_EARLY_CATALOG_21_22_FASCICLE_WITNESSES_AUDIT,
   YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
   YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
@@ -59,7 +60,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v29');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v30');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -1885,6 +1886,52 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       printedOriginalHourStemVerified: false,
       newPrintedWitnessCredit: 0,
     });
+  });
+
+  test('historical book catalogs record 22 juan in six books versus 21 juan without proving original print variants', () => {
+    const q = YUANHAI_EARLY_CATALOG_21_22_FASCICLE_WITNESSES_AUDIT;
+    expect(q.xuQianxueChuanshilou).toMatchObject({
+      catalog: '傳是樓書目',
+      attributedCompiler: '徐乾學',
+      shidianBookId: 'NCL04996A',
+      observedDigitalCatalogTitle: '星學正傳',
+      describedPrintedJuanCount: 22,
+      describedPhysicalBookCount: 6,
+      catalogReadingAuthority: 'C_digitized_catalog_transcription',
+      catalogTargetLeafOriginalHandwritingInspected: false,
+      historicalCopySameAsWangWenyuanCatalogVerified: false,
+      ncl04996PartCountInPublicCommonsInventory: 12,
+      catalogFilesArePhysicalBooksOfReferenced1582Work: false,
+      manyManuscriptLinesAnd1915FirstEditionWarned: true,
+      bibliographicCopyingErrorsPossible: true,
+    });
+    expect(q.nakamuraRyoClassifiedImportedBookCatalog).toMatchObject({
+      editor: '中村亮',
+      nationalTradition: 'Japanese_Edo',
+      scholarlyAttestedCompilationYear: 1810,
+      shidianBookId: 'NGWK02180137',
+      describedPrintedJuanCount: 21,
+      catalogReadingAuthority: 'C_digitized_catalog_transcription',
+      originalCatalogManuscriptGlyphInspected: false,
+      original1582PhysicalCopyLocatedFromImportedBookListing: false,
+      shidianDynasticAuthorTagIndependentlyAuthenticated: false,
+    });
+    expect(q.unresolved).toMatchObject({
+      xuSixBooksProvenSameHoldingAsWangTwelveBooks: false,
+      printedJuanCountDifferenceExplained: false,
+      countTwentyTwoProvesTwentyOnePlusPrefaceOne: false,
+      independent1582WoodblockSettingsAdded: 0,
+      newlyInspected1582JuanThreePrintedLeafCount: 0,
+      newWeiOrMuPrintedGlyphCount: 0,
+      archetypeGlyphAdjudicated: null,
+      modernAnnualRulesApproved: 0,
+      globalTripleClashPriorityAuthorized: false,
+      productionAuthorized: false,
+    });
+    const scope = buildYuanHaiMingJuan3PrintScope();
+    expect(scope.earlyCatalog21vs22FascicleWitnessesAudit).toBe(q);
+    expect(scope.adjudicatedPrintedGlyph).toBeNull();
+    expect(scope.modernInterpretationClaim).toBeNull();
   });
 
   test('Shidian 1582-attributed digital Juan3 未 is one C-level transcription, not printed glyph adjudication', () => {
