@@ -1,7 +1,7 @@
 # Saju Engine — 실행 로드맵
 
 > 범위: 이 저장소의 **사주 계산 → 명식 → 해석 → Official Reading → 제품 실행**. 관상/캐릭터/결제 트랙의 자체 로드맵을 대체하지 않는다.  
-> 기준 스냅샷: 2026-10-14 KST, `main` = `745b3a15bd1f4da2edfa5a56f9d1beb540cdaf4c`. #2525까지 병합; #2525의 사전 CI/PIE/Container 및 SHA-pinned Integration 20/20 PASS. 병합 후 `main` CI/Container 결과는 별도 확인한다.  
+> 기준 스냅샷: 2026-10-17 KST, `main` = `96a826fb16ce6d05bf6cdf30ea11bedf63956bbb`. N24 #2552, N25 #2554, N25b #2555, N26 #2556까지 각각 exact-HEAD SHA-pinned Integration 20/20 뒤 병합 완료; **N26 병합 후 main** CI Quality/16 shards/CI Verify 및 Production Container PASS (run #39020638955 / #39020639008). 이는 소비자 개인별 종합해석 품질 승인과 다르다.  
 > 상태: **작업 우선순위 문서**. 새로운 명리 의미·Production·공개·저장·판매 권한을 발행하지 않는다.  
 > 담당 트랙: `saju`; 의미 판정/독립 review는 기존 Research / Bridge의 소유권을 존중한다.
 
@@ -60,35 +60,30 @@
 
 ### P0-NATAL 개인화 의미 손실 개선 실행 계획 — 2026-10-17 (N25–N30)
 
-**진단 사실과 우선순위:** 실제 General Natal 35건(33건 delivered, 2건 partial evidence), N6 의미-only 반복 사례 조합 20쌍 중 동일 표시 명식 fixture 제거 후 19개 고유 표시 명식 쌍. N8의 3쌍은 **서로 다른 Research T8 Claim이 선택·Canonical·Plan에 도달하지만 claim-owned canonical 문구 자체는 같음**이 확인됐다. N10 나머지 분류의 개별 의미 상실 지점은 미확정이다. `same text`는 반드시 오해석을 뜻하지 않으며 자연스러운 의미 공유와 결손을 구분해야 한다. N12 실질 다중 근거 `usefulComplete:false`를 그대로 유지한다.
+**실제 품질 한계:** General Natal 실제 HTTP 35건 중 33건 delivered, 2건 partial evidence. 20개 중복 해석 사례조합은 동일 표시 명식 대조군 1개를 제거하면 고유 표시 명식 쌍 **19개**다. 새 승인된 개인별 다중 근거 종합 T8 Claim = **0개**; N12 `usefulComplete:false`, P0-NATAL은 **미완료**다. 문장 수·계산 사실 표시·검사 통과는 품질 달성 지표가 아니다.
 
-**제품 실패 기준:** 기존의 해석 문구 총량, 중복 문자열 감소, 계산 위치 출력 추가, 엔진 통과율, 연구 파일 수 증가, CI 통과만으로 P0-NATAL 완료 판단하지 않는다. N21–N24는 *기존 source-owned Preview 읽기의 노출/접근성 개선*이며 새로운 개인별 합성 의미 증거가 아니다. N24 PR [#2552](https://github.com/gycha0109-beep/Saju/pull/2552)의 결과와 병합 여부는 PR 및 정확한 SHA의 CI를 기준으로 별도 확인한다.
+**운영 권한:** Engine은 기존 Canonical → Registry/T5/T6/T8 → Canonical Semantics → Official Plan/Renderer → Product/HTTP 실행·근거 보존 책임이다. Research는 차이가 정당화되는 의미·출처·반례, Bridge는 source/method/version/Claim 범위의 admission을 독립 심사한다. 연구의 완료 또는 CI 통과만으로 Preview·Official·Production·Commerce 의미를 승인하지 않는다.
 
-**책임과 의존성:** Saju Engine이 기존 Canonical → Rule Registry → T5/T6/T8 → Canonical Semantics → Official Plan/Renderer → 실제 Product/HTTP 경로의 실행·연결·품질을 소유한다. Research는 명식 차이가 정당화하는 해석 의미·반례·문헌 조건을 소유한다. Bridge는 source/method/version/claim 범위의 의미 사용 권한을 소유한다. **Research/Bridge 부재는 새 해석 주장만 HOLD하고, 기존 허용 의미의 손실 수정과 내부 품질 분석을 차단하지 않는다.**
+- [x] **N25/N25b — 전체 반복 사례의 Claim/Consumer 원인 분류 및 추적 (감사 구현 완료, 의미 해소 아님):**
+  - [N25 #2554](https://github.com/gycha0109-beep/Saju/pull/2554): 실제 내부 Service 5개 입력 → Official Explainability → Product 원문 35 atom(25 unique, 10 ambiguous, 0 unproven). 반복 원문에 가짜 단일 Claim 정체성을 부여하지 않는다.
+  - [N25b #2555](https://github.com/gycha0109-beep/Saju/pull/2555): 고유 19쌍에 해당하는 **25개 실제 내부 서비스 실행 / 187 atom** 확인; 19쌍의 Consumer 원문 추적 불가 atom이 포함된 쌍은 0. 차이 원인 후보는 `동일 matched 규칙 3 / 상이한 Research Claim의 같은 원문 6 / 서로 다른 Claim 원문인데 HTTP 의미 동일 5 / 한쪽에만 테마 차분 5`.
+  - **중요 분류 제한:** 위 Research 테마의 차분은 *전체 원국의 십신 family 부재*가 아니다. 19/19쌍의 전체 5-family 존재 집합은 동일. 각 타입·채널 차이의 인간적 의미를 새로 승인한 것 아님.
+- [x] **N26 — 실제 HTTP 의미 전달 보존 검증 완료 (승인 의미 누락 버그 재현 없음):**
+  - [N26 #2556](https://github.com/gycha0109-beep/Saju/pull/2556): 별개 요청의 reading ID 동일성은 주장하지 않고, **동일 출생·표시 명식 기준** 내부 Product와 live HTTP Preview를 대조. N5/N7 규격의 계산 사실 제거 및 정확한 N9 same-block 중복 압축(33건에서 49개 literal key-point copy 제거)만 허용했을 때 **33/33 의미 본문 exact parity**, 미확인/변형 0. 2개 partial evidence 사례는 동일 해석 성공으로 세지 않았다.
+  - 이 결과는 *허용된 본문 전달 무결성*의 증거다. 의미 자체가 얕고 범용적이라는 제품 문제는 미해결. 신규 의미 문구, Admission, Product 계약, Production 권한은 변경하지 않는다.
+- [ ] **N27 — 독립 근거 T8 종합해석 (실제 의미 승인 선행 조건만 HOLD):**
+  - 연구 [PR #2553](https://github.com/gycha0109-beep/Saju/pull/2553)은 **DRAFT / Research-only**, 19쌍 판정 `JUSTIFIED_SAME_MEANING=3 / MISSING_CONTEXT=15 / METHODOLOGY_CONFLICT=1 / JUSTIFIED_DIFFERENT_MEANING=0`. 독립 인간적 해석 의미 새 승인 0.
+  - [Bridge 심사 이슈 #2557](https://github.com/gycha0109-beep/Saju/issues/2557)에 기존 Governance/Re-entry(#1447/#1482) 재사용을 요청. 정확한 `GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE@0.2.0-research`의 `claim/observation/qualifier/hold`를 source/methodology/version/claim 범위에서 판단할 것. 최신 상태는 **HOLD**. 신뢰할 만한 직접 문헌 대조·독립 Reviewer/TrustGrant 등이 미완이면 `RETURN_TO_RESEARCH`가 정상 결론이다.
+  - 기존 2010-02-03 05:30 `卯(겁재)+財` vs 19:30 `甲(비견)+財`는 **연구 T8 1 vs 0** 구조 predicate 차이는 재현됨. 이는 역사적 `敗財/劫財` 분류·`比肩分奪`의 조건 충돌과 별도다. 소비자 금전 손실/직업/인격 결론 불가. 1984-01-07 관성 channel 비교 역시 **편관/정관 subtype**이 같이 바뀌므로 channel만으로 개인 행동 추론 금지.
+  - Bridge가 claim별 결정·근거 신뢰 등급·버전·반례·소비 허용 범위를 고정해 반환했을 때만 **기존** Registry/Claim → Canonical → Official 경로로 해당 최소 의미를 구현한다. 전부 HOLD면 소비자 의미 변경 **0건**과 N12 incomplete을 유지한다. 새 Registry/Mapper/LLM 의미 권한 생성 금지.
+- [ ] **N28 — 승인된 종합 의미의 실제 General Natal 소비자 보고서 연결:**
+  - N27에서 허용한 *exact Claim*만 existing Canonical Bundle → Plan → Renderer → Artifact → Product response에 연결. claim별 provenance/조건부·모순·미상시각 의미를 보존한다. 연구 구조 설명만으로 `usefulComplete`를 true 처리하지 않는다.
+- [ ] **N29 — 개인화 품질·안전성 실제 판단:**
+  - 실제 35개 명식, 19개 고유 의미 반복 쌍, 최소 10개 사람이 읽는 사례 검토. 정당한 동일 의미 / 정당한 차이 / 누락 근거 / Authority HOLD를 분리. 문자 지문 다양성을 품질 성공이라 부르지 않는다.
+- [ ] **N30 — 5개 Natal 영역 개인화 종합 확장:**
+  - General에서 검증된 원국 근거·분야별 의미 사용 범위만 일반/직업/재물/사업/관계로 확장. 도메인 의미 권한과 temporal scope를 혼합하지 않는다.
 
-- [ ] **N25 — Claim → 실제 소비자 문장 추적 / 최초 의미 손실 위치 구분 (ACTIVE; 연구 대기 없음):**
-  - 기존 `canonicalSemantics.units`·`officialReadingPlan`·`officialReadingReport.explainability`·`delivery.artifact`·`ProductReadingResponse`를 **같은 snapshot/semantic/plan/report/reading identity**로 결합한다. 실제 사용자 문장과의 대응은 타입별 원문 일치와 유일성 조건이 충족될 때만 `exact_unique_consumer_match`로 기록한다.
-  - 반복 문구·복수 Claim 시나리오·redaction 또는 소비자 projection 불일치는 `ambiguous`/`unproven`으로 남긴다. identity 없이 텍스트 지문만 같다는 이유로 연결을 증명하지 않는다. Product API에 내부 Claim ID를 추가하지 않는다.
-  - N8 3쌍/고유 5건부터 실물 내부 execution과 기존 35건 HTTP 샘플을 연결하고, 이후 19개 고유 쌍 전체의 `rule divergence / claim-owned semantic divergence / plan-to-render / consumer meaning` 경계별 분류를 확장한다. 중복 대조 fixture는 고유 명식 쌍에서 제외한다.
-  - **완료:** 원인 확정 사례와 미확정 사례가 구분된 실제 실행 audit, 각 atom의 Claim/fact/source lineage, 유일성·redaction·tamper·unknown-hour 회귀. 신규 의미·Publication·Commerce 승격 금지.
-- [ ] **N26 — 이미 허용된 의미의 실제 전달 손실 수정 (ACTIVE AFTER N25):**
-  - N25에서 검증된 **실제 결손**만 최소 변경. Claim upstream 차이가 있다는 사실 자체로 최종 문구의 차이를 강제하지 않는다. 정당한 의미 공유는 유지한다.
-  - canonical text / qualifier / scenario / contradiction / domain selection 중 누락 위치를 분리하고 기존 Registry/renderer/Host만 수리한다. `FAMILY_MEANING`를 임의 분화하거나 Research-only candidate를 consumer admission으로 둔갑시키지 않는다.
-  - **완료:** 선정된 문제 사례에서 source-bound *허용 의미*가 HTTP까지 보존되고, 재현성/다른 의미 공유 사례/기존 bounded Production 권한이 회귀 통과.
-- [ ] **N27 — 다중 독립 근거 T8 개인화 종합해석 (BLOCKED ONLY WHERE RESEARCH/BRIDGE MEANING NEEDED):**
-  - N13–N20의 Research T5→T8 위치·연결·대조 관계를 우선 재사용한다. 정확한 Rule·ClaimType·methodology·source locator·반례·scenario 및 **claim-scoped admission**이 확보된 패턴만 실행/소비자 전환한다.
-  - 계열 단순 공존을 개인 행동/직업/재물/관계 성과로 확대하지 않는다. Research-only 구조 관측은 계속 internal/HOLD.
-  - **완료:** 최소 2개 실제 대조 명식의 허용 의미/반례가 작동하고, 가짜 새로운 결론/권한 우회 0건.
-- [ ] **N28 — 승인된 종합 의미를 실제 General Natal 보고서에 연결:**
-  - Canonical Bundle → Plan → Renderer → Artifact → Product response의 현행 경로 사용. 조합 Claim의 유일한 source lineage, 조건부 주장·모순·미상시각 의미를 손실 없이 보존한다.
-  - **완료:** claim별 보고서/HTTP 실제 노출과 근거/한계가 사용자의 읽기 단위에서 입증됨. N12 shadow는 실제 조건이 충족되기 전까지 usefulComplete false.
-- [ ] **N29 — 제품 차별화/안전성 실제 품질 게이트:**
-  - 고정 35개 명식·19개 고유 의미 반복 쌍을 회귀, 최소 10개 대표 사례 사람 읽기 리뷰. 각 쌍을 정상 의미 공유/정당한 해석 차이/규칙 결손/authority HOLD/미확정으로 분류하고 **의미** 기준 pass/fail을 유지한다.
-  - 불필요한 개별 표현 변형·근거 없는 추론·unknown-hour 오판 0건. 근거 없는 claim 0건.
-- [ ] **N30 — 영역별 일반/직업/재물/사업/관계 종합 읽기 확장:**
-  - General에서 검증한 기존 claim-to-output 연결을 다섯 도메인에 재사용. 도메인별 semantic authority를 섞지 않으며 사용자가 묻는 영역과 관찰 근거 간 의미 일관성/중복을 검증한다.
-
-**지속 통합 계약:** 작은 PR마다 `Watchtower-Track: saju`를 고정하고, 일반 CI Quality + full 16 shards + CI Verify, PIE, Production Container → exact-HEAD SHA-pinned CI Integration 20/20 → `expected_head_sha` squash merge → 병합 후 정확한 `main` CI/Container의 순서를 보존한다. 증거 없이 성공·병합을 선언하지 않는다. 의미 권한·public·판매 승격은 별도 계약으로 남긴다.
+**지속 통합 계약:** PR별 `Watchtower-Track: saju` → CI Quality + 16개 샤드 + CI Verify, PIE, Production Container → **정확한 HEAD SHA 고정** Integration 20/20 → `expected_head_sha` squash merge → 새 `main` CI/Container 검증. Bridge의 별도 결정 없이 의미 승격 금지.
 
 ### P1-NATAL-QUALITY — 개인화 품질 심화 및 도메인 확장 (P0-NATAL 수직 슬라이스 이후)
 
