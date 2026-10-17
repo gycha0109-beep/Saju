@@ -11,7 +11,7 @@ import {
 } from './general-natal-wang-shuai-qiang-ruo-semantic-axis-authority.js';
 
 export const GENERAL_NATAL_N27_BIJEON_SHADOW_VERSION =
-  'saju-n27-bijeon-wealth-source-condition-shadow-v4' as const;
+  'saju-n27-bijeon-wealth-source-condition-shadow-v5' as const;
 
 export function buildGeneralNatalN27BijeonWealthShadow(
   snapshot: CanonicalSajuSnapshot,
@@ -167,9 +167,18 @@ export function buildGeneralNatalN27BijeonWealthShadow(
       images: 99 as const,
       url: 'https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf' as const,
       candidatePrintingGroup: 'HARVARD_1735_CATALOGUE' as const,
-      targetPageIdentified: false as const,
-      originalPrintedClauseRead: false as const,
-      exactPrintedCharacterVerified: false as const,
+      targetPageIdentified: true as const,
+      targetPdfPageOneBased: 45 as const,
+      originalPrintedClauseRead: true as const,
+      exactPrintedCharacterVerified: true as const,
+      printedCharacter: '己' as const,
+      passageRead: '柱中不宜再見戊己' as const,
+      originalPdfSha256: 'ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831' as const,
+      rasterizedTargetPageSha256: 'b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12' as const,
+      passageCropSha256: 'fc3063d2608720b13cfca0f7e43e89f3a898aca38d3810de290b835f600e5582' as const,
+      acquisitionRunId: 39037912192 as const,
+      acquisitionArtifactId: 12103320492 as const,
+      printEditionLineageIndependentlyAuthenticated: false as const,
     }),
     Object.freeze({
       sourceId: 'NLC_411999029701_VOL_5_UPPER' as const,
@@ -248,7 +257,28 @@ export function buildGeneralNatalN27BijeonWealthShadow(
     scanCandidates,
     rareBookCollationCandidates,
     physicalPrintingGroups,
-    physicallyInspectedTargetPrintings: 0 as const,
+    physicallyInspectedTargetPrintings: 1 as const,
+    physicallyInspectedTargetSourceIds: Object.freeze([
+      'HARVARD_DRS_53262215_VOL_5',
+    ] as const),
+    harvardPrintedClauseVerification: Object.freeze({
+      status: 'ONE_PRINTED_WITNESS_DIRECTLY_READ' as const,
+      pdfPageOneBased: 45 as const,
+      printedClause: '柱中不宜再見戊己' as const,
+      printedDisputedGlyph: '己' as const,
+      sourcePdfSha256:
+        'ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831' as const,
+      pageRasterHighResSha256:
+        'b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12' as const,
+      researchCropSha256:
+        'fc3063d2608720b13cfca0f7e43e89f3a898aca38d3810de290b835f600e5582' as const,
+      exactSourceVolume: '三命通會 卷之五' as const,
+      printedFolioMarkRead: false as const,
+      sourceOriginalLineageFullyVerified: false as const,
+      provesSikuWikisourceIsATypo: false as const,
+      independentSecondPrintedEditionCorroborated: false as const,
+      admissionAuthorityCreated: false as const,
+    }),
     sourceIdentityCaveat:
       'Different catalogue editions/layouts are only candidate independent printings; clause-level independence cannot be asserted without reading exact folios.' as const,
     digitalCollation: Object.freeze({
@@ -256,7 +286,10 @@ export function buildGeneralNatalN27BijeonWealthShadow(
       conflictingDigitalCharactersObserved,
       terminalCharacters: Object.freeze(['巳', '己'] as const),
       correctOriginalPrintGlyph: 'UNRESOLVED' as const,
-      originalTargetFolioInspected: false as const,
+      harvardPrintedWitnessReads: '己' as const,
+      harvardPrintedWitnessImagePageInspected: true as const,
+      siKuOriginalPrintedGlyphDirectlyInspected: false as const,
+      originalTargetFolioInspected: true as const,
       independentPrintWitnessesEstablished: 0 as const,
       applyingJiProhibitionToThisChartAuthorized: false as const,
     }),

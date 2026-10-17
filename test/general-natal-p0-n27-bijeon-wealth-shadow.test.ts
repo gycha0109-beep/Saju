@@ -58,7 +58,10 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
       conflictingDigitalCharactersObserved: true,
       terminalCharacters: ['巳', '己'],
       correctOriginalPrintGlyph: 'UNRESOLVED',
-      originalTargetFolioInspected: false,
+      originalTargetFolioInspected: true,
+      harvardPrintedWitnessReads: '己',
+      harvardPrintedWitnessImagePageInspected: true,
+      siKuOriginalPrintedGlyphDirectlyInspected: false,
       independentPrintWitnessesEstablished: 0,
       applyingJiProhibitionToThisChartAuthorized: false,
     });
@@ -88,11 +91,39 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
       'HARVARD_1735_CATALOGUE',
       'NLC_411999029701_ENGRAVED_EDITION',
     ]);
-    expect(shadow.rareBookCollationCandidates.every((c) =>
+    expect(shadow.rareBookCollationCandidates[0]).toMatchObject({
+      targetPageIdentified: true,
+      targetPdfPageOneBased: 45,
+      originalPrintedClauseRead: true,
+      exactPrintedCharacterVerified: true,
+      printedCharacter: '己',
+      passageRead: '柱中不宜再見戊己',
+      acquisitionRunId: 39037912192,
+      acquisitionArtifactId: 12103320492,
+      printEditionLineageIndependentlyAuthenticated: false,
+    });
+    expect(shadow.rareBookCollationCandidates.slice(1).every((c) =>
       !c.targetPageIdentified && !c.originalPrintedClauseRead &&
       !c.exactPrintedCharacterVerified
     )).toBe(true);
-    expect(shadow.physicallyInspectedTargetPrintings).toBe(0);
+    expect(shadow.physicallyInspectedTargetPrintings).toBe(1);
+    expect(shadow.physicallyInspectedTargetSourceIds).toEqual([
+      'HARVARD_DRS_53262215_VOL_5',
+    ]);
+    expect(shadow.harvardPrintedClauseVerification).toMatchObject({
+      status: 'ONE_PRINTED_WITNESS_DIRECTLY_READ',
+      pdfPageOneBased: 45,
+      printedClause: '柱中不宜再見戊己',
+      printedDisputedGlyph: '己',
+      sourcePdfSha256: 'ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831',
+      pageRasterHighResSha256: 'b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12',
+      researchCropSha256: 'fc3063d2608720b13cfca0f7e43e89f3a898aca38d3810de290b835f600e5582',
+      printedFolioMarkRead: false,
+      sourceOriginalLineageFullyVerified: false,
+      provesSikuWikisourceIsATypo: false,
+      independentSecondPrintedEditionCorroborated: false,
+      admissionAuthorityCreated: false,
+    });
     expect(shadow.rareBookCollationCandidates[0]?.physicalLayout).toBe('十行二〇字');
     expect(shadow.rareBookCollationCandidates[1]?.physicalLayout).toBe(
       '十行二二字; 白口; 四周雙邊',
@@ -147,7 +178,7 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
     expect(a.evidenceHash).toBe(b.evidenceHash);
     expect(a.evidenceHash).toMatch(/^[a-f0-9]{64}$/);
     expect(a.status).toBe('RESEARCH_SHADOW_ONLY');
-    expect(a.version).toBe('saju-n27-bijeon-wealth-source-condition-shadow-v4');
+    expect(a.version).toBe('saju-n27-bijeon-wealth-source-condition-shadow-v5');
     expect(a.sourceConditionsNotResolved).toHaveLength(6);
   });
 });

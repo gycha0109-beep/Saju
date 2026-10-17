@@ -201,3 +201,25 @@ node scripts/research/inspect-n27-volume-five-print.mjs \
 - PDF 파일이 존재하지 않거나 `source-id`가 미등록이면 즉시 거부. `node scripts/research/inspect-n27-volume-five-print.mjs --self-test`는 외부 다운로드 없이 동작하고 실제 로컬 PDF로 한 번 더 수동 실행해야 이미지 확보가 증명된다.
 
 **검증 경계:** 이 스크립트와 테스트의 CI PASS는 이미지-입수/면번호/인쇄글자 검증 완료를 뜻하지 않는다. #17 `METHODOLOGY_CONFLICT`, 다섯 Claim HOLD, 2010 N13 실측 1-vs-0, 강약 `UNCLASSIFIED`, `只要一位` `NOT_ADJUDICATED` 유지.
+
+## 16. 직접 인쇄면 검증 완료 — Harvard 『三命通會』 권五 45면의 `戊己` (2026-10-17)
+
+**이전 §12–15의 '원본 스캔 접근 불가'는 당시 상태의 기록**이며, **본 섹션이 그 후속 검증 결과를 대체**한다. GitHub Actions read-only 워크플로를 통해 Harvard-Yenching 원본 권五 PDF를 다운로드하고 99 PDF 면을 Poppler로 이미지 변환했다. 특히 PDF **1-based 45면 오른쪽 인쇄면**에서 「**時上偏財**」 제목과 문장 `柱中不宜再見戊己若身太旺`의 실물 글자를 고해상도로 직접 읽었다. 끝 글자는 **천간 己**, 지지 巳가 아니다. 이 판독은 **Harvard 소장 補刊本 후보 한 판본에 한정**된다.
+
+**재현 가능한 체인:**
+
+| 식별/검사 | 결과 |
+|---|---|
+| 원본 소장 | Harvard-Yenching Library, [Harvard_drs_53262215_三命通會_v.5卷之五.pdf](https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf), 卷之五, 99 PDF 이미지면 |
+| 파일 다운로드 및 렌더 | [GitHub Actions run #39037912192](https://github.com/gycha0109-beep/Saju/actions/runs/39037912192), SUCCESS; 아티팩트 `12103320492`, `n27-harvard-volume-five-printed-folio-candidates` |
+| 원본 PDF SHA-256 | `ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831` |
+| 조사한 스캔 | PDF **45면** (1부터 셈), **오른쪽 인쇄면**, 「時上偏財」. 책에 실제 적힌 별도 **folio 번호는 아직 판독하지 못함** |
+| PDF 45면 3200px 렌더 SHA-256 | `b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12` |
+| 해당 문장 확대 PNG SHA-256 | `fc3063d2608720b13cfca0f7e43e89f3a898aca38d3810de290b835f600e5582` |
+| 원본 판독 | `柱中不宜再見戊己` (**己**) |
+| 온라인 이문 | 四庫全書本 卷05 위키문헌 `戊巳`, 識典古籍 卷五/일반 위키문헌 卷六 `戊己`; **Harvard 인쇄면이 후자의 표기와 일치** |
+| 미검증 범위 | 四庫全書本 *그 판본*의 해당 인쇄면, NLC 별개 刻本, 판본 계통 독립성과 원 판면 교정史, 지장간/다른 주에서의 규칙 적용 |
+
+**증거 판정:** `physicallyInspectedTargetPrintings=1` (Harvard 한 본), `harvardPrintedClauseVerification.status=ONE_PRINTED_WITNESS_DIRECTLY_READ`, `printedDisputedGlyph=己`. 일반적인 `correctOriginalPrintGlyph=UNRESOLVED`은 유지한다. 이는 새 Harvard 원전 이미지 한 건에 대한 실제 문자 대조를 뜻하며, **특정 四庫 소장본의 글자를 읽었거나 위키문헌의 巳를 확정된 오자라고 입증한 것은 아니다.** 서로 다른 두 물리 판본을 직접 대조했다거나 원전의 내용 의미가 승인된 것도 아니다.
+
+2010년 계산 관측 `年干己` / `申藏戊` / `戌藏戊`와 역사적 `柱中不宜再見戊己` 사이에는 적용한 위치·유일성·월령·강약 규칙의 비약 문제가 여전히 남아 있다. `只要一位=NOT_ADJUDICATED`, `強弱=UNCLASSIFIED`, `#17 METHODOLOGY_CONFLICT`, 기존 N13 정확한 겁재 1-vs-0 유지. Bridge #2557 다섯 Claim HOLD, no new semantic admission / Production unchanged.
