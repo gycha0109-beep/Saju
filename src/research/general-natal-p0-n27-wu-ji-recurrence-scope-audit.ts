@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v1' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v2' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -31,6 +31,53 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   const visibleJi = o.otherVisibleStemJiCount;
   const hiddenWu = o.otherHiddenWuCount;
   const hiddenJi = o.otherHiddenJiCount;
+  // Count three different units independently. No unit is licensed as the
+  // classical 位: a hidden and a visible stem may belong to ONE pillar.
+  const otherPillarPositions = Object.freeze([
+    ...o.otherPillarVisibleWu.map((p) => Object.freeze({
+      slot: p.slot, channel: 'visible_stem' as const, glyph: '戊' as const,
+    })),
+    ...o.otherPillarVisibleJi.map((p) => Object.freeze({
+      slot: p.slot, channel: 'visible_stem' as const, glyph: '己' as const,
+    })),
+    ...o.otherPillarHiddenWu.map((p) => Object.freeze({
+      slot: p.slot, channel: 'hidden_stem' as const, glyph: '戊' as const,
+    })),
+    ...o.otherPillarHiddenJi.map((p) => Object.freeze({
+      slot: p.slot, channel: 'hidden_stem' as const, glyph: '己' as const,
+    })),
+  ]);
+  const otherPillarUnitAudit = Object.freeze({
+    // These are observed channels, not prohibitions or approved 宮 definitions.
+    positions: otherPillarPositions,
+    occurrenceUnitCount: otherPillarPositions.length,
+    distinctPillarUnitCount: new Set(otherPillarPositions.map((p) => p.slot)).size,
+    distinctGlyphUnitCount: new Set(otherPillarPositions.map((p) => p.glyph)).size,
+    yearMonthOnlyOccurrenceCount: otherPillarPositions.filter(
+      (p) => p.slot === 'year' || p.slot === 'month',
+    ).length,
+    dayPillarOccurrenceCount: otherPillarPositions.filter(
+      (p) => p.slot === 'day',
+    ).length,
+    yearMonthDayOccurrenceCount: otherPillarPositions.length,
+    pillarsWithBothVisibleAndHiddenCount: new Set(
+      otherPillarPositions.filter((p) =>
+        otherPillarPositions.some((q) => q.slot === p.slot && q.channel !== p.channel)
+      ).map((p) => p.slot),
+    ).size,
+    // An observed hour branch 戊 is the reference hour, not "another pillar".
+    hourReference: Object.freeze({
+      hourStem: o.hourStem,
+      hourBranch: o.hourBranch,
+      hourVisibleWu: o.indirectWealthWuVisibleInHourStem,
+      hourHiddenWu: o.indirectWealthWuHiddenInHourBranch,
+      includedInOtherPillarOccurrenceCount: false as const,
+    }),
+    otherPillarsMeanYearMonthDayByConstruction: true as const,
+    whetherClassicalBieGongIncludesDayPillar: 'UNADJUDICATED' as const,
+    whetherTwoChannelsInOnePillarAreTwoWei: 'UNADJUDICATED' as const,
+    whetherHistoricalWeiMeansStemGlyphOrPillarOrLocation: 'UNADJUDICATED' as const,
+  });
   const totalVisible = visibleWu + visibleJi;
   const totalWu = visibleWu + hiddenWu;
   const totalAll = totalVisible + hiddenWu + hiddenJi;
@@ -90,6 +137,7 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
       knownOriginalHourlyWealthChannel: o.hourWealthObservationChannel,
     }),
     scopeHypotheses,
+    otherPillarUnitAudit,
     quantitativeModelSensitivity: Object.freeze({
       totalVisible,
       totalWu,
