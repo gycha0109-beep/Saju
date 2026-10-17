@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from 'node:fs';
+import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
 export const N29_READER_PAIR_VERSION = 'saju-natal-n29-real-http-five-pair-review-v1';
