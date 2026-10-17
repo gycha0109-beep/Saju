@@ -188,4 +188,84 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
     expect(nonJia.productionAuthorized).toBe(false);
   });
 
+  it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
+    const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
+    const units = x.otherPillarUnitAudit;
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v3');
+    // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
+    // of the *same* glyph in the *same* pillar, not two pillars.
+    expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
+      slot: 'year', glyph: '己',
+    });
+    expect(units.samePillarGlyphAcrossChannelsCanInflateOccurrenceCount).toBe(true);
+    const models = units.palaceAndChannelCounterfactuals;
+    expect(models.map((p) => p.key)).toEqual([
+      'YEAR_MONTH_VISIBLE', 'YEAR_MONTH_DAY_VISIBLE',
+      'YEAR_MONTH_VISIBLE_HIDDEN', 'YEAR_MONTH_DAY_VISIBLE_HIDDEN',
+    ]);
+    expect(models.map((p) => p.observedOccurrenceCount)).toEqual([1, 1, 3, 4]);
+    expect(models.map((p) => p.distinctPillarGlyphPairCount)).toEqual([1, 1, 2, 3]);
+    expect(models.map((p) => p.samePillarSameGlyphTwoChannelExcess)).toEqual([0, 0, 1, 1]);
+    expect(models.map((p) => p.distinctPillarCount)).toEqual([1, 1, 2, 3]);
+    expect(models.every((p) =>
+      p.namedWuJiCovered &&
+      p.classicalBieGongVerdict === 'UNADJUDICATED' &&
+      p.classicalZaiJianVerdict === 'UNADJUDICATED' &&
+      !p.classicalWeiCountAuthorized
+    )).toBe(true);
+    expect(x.yearMonthVsDayAndVisibleVsHiddenScopeAdjudicated).toBe(false);
+    expect(x.provenance.sameVolumeAnalogySecondVerse).toBe('時上一位貴藏在支中');
+    expect(x.provenance.sameVolumeAnalogyIsDigitallyTranscribedNotNewPrintAttestation)
+      .toBe(true);
+    expect(x.provenance.classicalBieGongDayInclusionNotDerivedFromAnalogy).toBe(true);
+  });
+
+  it('v3 date controls change scope sensitivity but never authorize classical conclusion', () => {
+    const make = (month: number, day: number) => buildGeneralNatalN27WuJiRecurrenceScopeAudit(
+      calculateAuthorizedMyeonghwaProductionSnapshot({
+        calendarType: 'solar', date: { year: 2010, month, day },
+        time: { known: true, hour: 19, minute: 30 },
+        sexForTraditionalCalculation: 'unspecified',
+      }, { now: NOW }).snapshot,
+    );
+    const visibleWu = make(2, 13);
+    const hiddenOnly = make(5, 4);
+    expect(visibleWu.actualObservationChannels.otherPillarVisibleWu).toBe(1);
+    expect(visibleWu.actualObservationChannels.otherPillarVisibleJi).toBe(0);
+    expect(hiddenOnly.actualObservationChannels.otherPillarVisibleWu).toBe(0);
+    expect(hiddenOnly.actualObservationChannels.otherPillarVisibleJi).toBe(0);
+    const [visibleHiddenFromWu, visibleHiddenFromHiddenOnly] = [
+      visibleWu, hiddenOnly,
+    ].map((audit) => audit.otherPillarUnitAudit.palaceAndChannelCounterfactuals);
+    expect(visibleHiddenFromWu[0]?.observedOccurrenceCount).toBeGreaterThan(0);
+    expect(visibleHiddenFromHiddenOnly[0]?.observedOccurrenceCount).toBe(0);
+    expect(visibleHiddenFromHiddenOnly[3]?.observedOccurrenceCount).toBeGreaterThan(0);
+    for (const audit of [visibleWu, hiddenOnly]) {
+      expect(audit.otherPillarUnitAudit.palaceAndChannelCounterfactuals.every(
+        (m) => m.classicalWeiCountAuthorized === false
+      )).toBe(true);
+      expect(audit.sourceQualifiedRecurrenceVerdict).toBe('UNADJUDICATED');
+      expect(audit.sourceQualifiedSingletonVerdict).toBe('UNADJUDICATED');
+      expect(audit.consumerClaimEligible).toBe(false);
+      expect(audit.productionAuthorized).toBe(false);
+    }
+  });
+
+  it('v3 same other pillars on 07:30/19:30 imply identical lattice, not identical hour reference', () => {
+    const a = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(7));
+    const b = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
+    expect(a.otherPillarUnitAudit.palaceAndChannelCounterfactuals).toEqual(
+      b.otherPillarUnitAudit.palaceAndChannelCounterfactuals,
+    );
+    expect(a.otherPillarUnitAudit.crossChannelDuplicatePillarGlyphs).toEqual(
+      b.otherPillarUnitAudit.crossChannelDuplicatePillarGlyphs,
+    );
+    expect(a.otherPillarUnitAudit.hourReference.hourVisibleWu).toBe(true);
+    expect(b.otherPillarUnitAudit.hourReference.hourVisibleWu).toBe(false);
+    expect(a.otherPillarUnitAudit.hourReference.includedInOtherPillarOccurrenceCount)
+      .toBe(false);
+    expect(b.otherPillarUnitAudit.hourReference.includedInOtherPillarOccurrenceCount)
+      .toBe(false);
+  });
+
 });
