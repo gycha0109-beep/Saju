@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('eff8a1225893811c428c28e2dcc456d60f2006e2');
+    expect(review.researchHeadReviewed).toBe('a43f7bb46e884e4227a578757c373a597434c25f');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v3',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v4',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -171,6 +171,24 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
       samePillarTwoChannelsAreNotProvenTwoClassicalWei: true,
       dayPillarWithinBieGongNotSourceAdjudicated: true,
       noHiddenStemGeneralizationAuthorized: true,
+      sameVolumeZhengGuanPrintedCrosscheck: {
+        status: 'TWO_PRINT_SCAN_WITNESSES_PASSAGE_DIRECTLY_READ',
+        exactSourceChapter: '三命通會 卷五 論正官',
+        sourceHoldingIds: [
+          'HARVARD_DRS_53262215_VOL_5',
+          'NLC_411999029701_VOL_5_UPPER',
+        ],
+        harvardPdfPages: [6, 7],
+        nlcPdfPages: [5, 6],
+        mainPrintedPhrase: '支藏干透餘位不宜再見',
+        printedBranchExample: '甲生丑月內有辛金又值酉時',
+        additionalStemPhrase: '若天干復透辛多',
+        printLineageIndependenceCertified: false,
+        hourWealthExplicitAnalogyTarget: '時上偏官',
+        zhengGuanCanAuthorizeHourWealthCounting: false,
+        disputedYiJiSiNearZhongFanCertified: false,
+        classicalBieGongZaiJianYiWeiAdjudicated: false,
+      },
       palaceAndChannelCounterfactualKeys: [
         'YEAR_MONTH_VISIBLE', 'YEAR_MONTH_DAY_VISIBLE',
         'YEAR_MONTH_VISIBLE_HIDDEN', 'YEAR_MONTH_DAY_VISIBLE_HIDDEN',
