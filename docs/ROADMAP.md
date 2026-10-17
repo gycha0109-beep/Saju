@@ -62,7 +62,7 @@
 
 **실제 품질 한계:** General Natal 실제 HTTP 35건 중 33건 delivered, 2건 partial evidence. 20개 중복 해석 사례조합은 동일 표시 명식 대조군 1개를 제거하면 고유 표시 명식 쌍 **19개**다. 새 승인된 개인별 다중 근거 종합 T8 Claim = **0개**; N12 `usefulComplete:false`, P0-NATAL은 **미완료**다. 문장 수·계산 사실 표시·검사 통과는 품질 달성 지표가 아니다.
 
-**운영 권한:** Engine은 기존 Canonical → Registry/T5/T6/T8 → Canonical Semantics → Official Plan/Renderer → Product/HTTP 실행·근거 보존 책임이다. Research는 차이가 정당화되는 의미·출처·반례, Bridge는 source/method/version/Claim 범위의 admission을 독립 심사한다. 연구의 완료 또는 CI 통과만으로 Preview·Official·Production·Commerce 의미를 승인하지 않는다.
+**운영 권한:** Engine은 기존 Canonical → Registry/T5/T6/T8 → Canonical Semantics → Official Plan/Renderer → Product/HTTP 실행·근거 보존 책임이다. Research는 명식·Claim·출처·반례 기반 의미 재료를 제공한다. **외부 전문가·TrustGrant 필수 승인 정책은 P0-NATAL 일반 독해에서 폐지한다.** 기존 허용 의미의 결정론적 재배열 및 계산 위치 연결은 자율 CI 검증 경로로 진행하고, 경합·불충분 주장만 범위별 HOLD 처리한다. 일반 Preview 실험 권한과 Production·Commerce 배포 권한은 구분한다.
 
 - [x] **N25/N25b — 전체 반복 사례의 Claim/Consumer 원인 분류 및 추적 (감사 구현 완료, 의미 해소 아님):**
   - [N25 #2554](https://github.com/gycha0109-beep/Saju/pull/2554): 실제 내부 Service 5개 입력 → Official Explainability → Product 원문 35 atom(25 unique, 10 ambiguous, 0 unproven). 반복 원문에 가짜 단일 Claim 정체성을 부여하지 않는다.
@@ -71,19 +71,22 @@
 - [x] **N26 — 실제 HTTP 의미 전달 보존 검증 완료 (승인 의미 누락 버그 재현 없음):**
   - [N26 #2556](https://github.com/gycha0109-beep/Saju/pull/2556): 별개 요청의 reading ID 동일성은 주장하지 않고, **동일 출생·표시 명식 기준** 내부 Product와 live HTTP Preview를 대조. N5/N7 규격의 계산 사실 제거 및 정확한 N9 same-block 중복 압축(33건에서 49개 literal key-point copy 제거)만 허용했을 때 **33/33 의미 본문 exact parity**, 미확인/변형 0. 2개 partial evidence 사례는 동일 해석 성공으로 세지 않았다.
   - 이 결과는 *허용된 본문 전달 무결성*의 증거다. 의미 자체가 얕고 범용적이라는 제품 문제는 미해결. 신규 의미 문구, Admission, Product 계약, Production 권한은 변경하지 않는다.
-- [ ] **N27 — 독립 근거 T8 종합해석 (실제 의미 승인 선행 조건만 HOLD):**
-  - 연구 [PR #2553](https://github.com/gycha0109-beep/Saju/pull/2553)은 **DRAFT / Research-only**, 19쌍 판정 `JUSTIFIED_SAME_MEANING=3 / MISSING_CONTEXT=15 / METHODOLOGY_CONFLICT=1 / JUSTIFIED_DIFFERENT_MEANING=0`. 독립 인간적 해석 의미 새 승인 0.
-  - [Bridge 심사 이슈 #2557](https://github.com/gycha0109-beep/Saju/issues/2557)에 기존 Governance/Re-entry(#1447/#1482) 재사용을 요청. 정확한 `GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE@0.2.0-research`의 `claim/observation/qualifier/hold`를 source/methodology/version/claim 범위에서 판단할 것. 최신 상태는 **HOLD**. 신뢰할 만한 직접 문헌 대조·독립 Reviewer/TrustGrant 등이 미완이면 `RETURN_TO_RESEARCH`가 정상 결론이다.
-  - 기존 2010-02-03 05:30 `卯(겁재)+財` vs 19:30 `甲(비견)+財`는 **연구 T8 1 vs 0** 구조 predicate 차이는 재현됨. 이는 역사적 `敗財/劫財` 분류·`比肩分奪`의 조건 충돌과 별도다. 소비자 금전 손실/직업/인격 결론 불가. 1984-01-07 관성 channel 비교 역시 **편관/정관 subtype**이 같이 바뀌므로 channel만으로 개인 행동 추론 금지.
-  - Bridge가 claim별 결정·근거 신뢰 등급·버전·반례·소비 허용 범위를 고정해 반환했을 때만 **기존** Registry/Claim → Canonical → Official 경로로 해당 최소 의미를 구현한다. 전부 HOLD면 소비자 의미 변경 **0건**과 N12 incomplete을 유지한다. 새 Registry/Mapper/LLM 의미 권한 생성 금지.
-- [ ] **N28 — 승인된 종합 의미의 실제 General Natal 소비자 보고서 연결:**
-  - N27에서 허용한 *exact Claim*만 existing Canonical Bundle → Plan → Renderer → Artifact → Product response에 연결. claim별 provenance/조건부·모순·미상시각 의미를 보존한다. 연구 구조 설명만으로 `usefulComplete`를 true 처리하지 않는다.
-- [ ] **N29 — 개인화 품질·안전성 실제 판단:**
-  - 실제 35개 명식, 19개 고유 의미 반복 쌍, 최소 10개 사람이 읽는 사례 검토. 정당한 동일 의미 / 정당한 차이 / 누락 근거 / Authority HOLD를 분리. 문자 지문 다양성을 품질 성공이라 부르지 않는다.
+- [ ] **N27 — 전문가 없는 자동 증거 기반 명식별 독해(신규 경로 채택, 단계별 구현):**
+  - **운영 결정: 외부 명리 전문가, ReviewerTrustGrant, 사람 검수 10건을 P0-NATAL 완료의 필수 선행조건에서 제거한다.** 대신 계산 정확성, 각 실제 Claim/rule/source version/hash, 반례, 명식별 재현성, 미상시각 fail-closed, 자동 CI 및 과잉 추론 금지를 코드로 강제한다. 사람이 실제로 검토하지 않았는데 리뷰를 완료했다고 기재하지 않는다.
+  - **N27a 구현:** `src/preview/natal-n27-self-service-evidence-reading.ts` / `createGeneralNatalIntegratedPreviewProductHost({enableAutonomousEvidenceReading:true})`. 정확히 동일한 Canonical 명식에서 발행된 기존 T8 테마 Claim + 계산된 십신 정/편/천간·지지 대표 위치 + **기존 Official Detailed Source Profile 문장**을 선택·결합한 전통적 주제 연결을 Preview 실험 화면에서 제공한다. 외부 검수자 없이 작동하고 기존 Preview 응답 기본값은 회귀를 위해 유지한다. 부의 규모·운세 사건·강약·격국 등 신규 원인/결과 주장을 추가하지 않는다.
+  - [ ] **N27b 자율 검증 확대:** 실제 35개 HTTP 명식 / 19개 고유 동일 원문 쌍에 대해 기존 Claim 증거와 실행된 실험 독해의 출생시간·십신 위치 차이를 재현하고, **문장의 다양성이 아니라 실제 위치·subtype 근거가 설명되는지** 자동 채점한다. 서로 다른 정/편관, 겁재/비견의 차이는 *구조*로 설명할 수 있으나 신분·돈·성격 결과를 추정하지 않는다.
+  - **경합 중인 고전 결론 별도 격리:** Research [PR #2553](https://github.com/gycha0109-beep/Saju/pull/2553)의 `GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE@0.2.0-research`는 劫財/敗財·比肩分奪 해석·출처 무결성 충돌 중이다. 이 특정 관계의 결과 해석을 자동 채택하지 않는다. [#2557](https://github.com/gycha0109-beep/Saju/issues/2557)과 [#2560](https://github.com/gycha0109-beep/Saju/pull/2560)은 **선택적 고위험/경합 Claim 재검토 기록**, General Natal 전체 개발의 전역 차단기가 아니다. 전문가 없는 사실 기반 기본 독해의 출시 가능성을 심사 완료와 연결하지 않는다.
+  - **자율 릴리스 원칙:** 검증된 구조·기존 허용 주제·보수적 전통적 해석 표현은 코드 리뷰/CI/소스 버전 고정으로 운영한다. 새 인과관계·결과 예측은 출처 및 독립 반례 검증을 추가로 통과해야 하며, 통과 불가 시 해당 *문장만 제외*한다. 사용자 Preview/Production/Commerce 배포 권한은 별도 기존 배포 계약을 따른다.
+- [ ] **N28 — 실제 General Natal 종합 보고서 연결:**
+  - N27a에서 조합한 정확한 계산 위치 및 기존 Claim 원문을 Preview opt-in으로 먼저 검증한다. N27b 반례·증거 게이트를 충족하는 범위부터 기존 Canonical Bundle → Official Plan → Renderer → Artifact → Product response로 편입한다. 소스 판본 충돌이 있는 관계만 보류하고 전체 Reader를 미완료로 만들지 않는다. `usefulComplete`는 실제 다중 근거 의미와 실제 소비자 독해 조건 충족 전까지 false이다.
+- [ ] **N29 — 사용자 가치 자동 품질 판정 (외부 전문가 의존 제거):**
+  - [x] N29 검수 자료 PR [#2559](https://github.com/gycha0109-beep/Saju/pull/2559) 병합 / main 검증 완료: 35개 HTTP 명식, 19개 반복 쌍, 실제 5쌍/10명식 비교 패킷.
+  - [ ] N27의 실행 가능한 두 출생시각 이상 대조 실험으로 **근거 누락, 잘못된 구조 구분, 근거 없는 개인적 행동/금전 단정, 같은 chart의 불안정 문구, 미상시각 과신** 여부를 CI에서 판정한다. 제품 적합성은 실제 회귀 지표와 UX 기준으로 판단한다.
+  - 독립 사람 검수는 원하면 추가할 수 있는 **선택적 사용자 조사**이고 출시 또는 의미 실험의 필수 승인이 아니다. 과거 [#2562](https://github.com/gycha0109-beep/Saju/issues/2562)는 종전 필수 승인 계획을 보관하는 기록으로 취급한다.
 - [ ] **N30 — 5개 Natal 영역 개인화 종합 확장:**
   - General에서 검증된 원국 근거·분야별 의미 사용 범위만 일반/직업/재물/사업/관계로 확장. 도메인 의미 권한과 temporal scope를 혼합하지 않는다.
 
-**지속 통합 계약:** PR별 `Watchtower-Track: saju` → CI Quality + 16개 샤드 + CI Verify, PIE, Production Container → **정확한 HEAD SHA 고정** Integration 20/20 → `expected_head_sha` squash merge → 새 `main` CI/Container 검증. Bridge의 별도 결정 없이 의미 승격 금지.
+**지속 통합 계약:** PR별 `Watchtower-Track: saju` → CI Quality + 16개 샤드 + CI Verify, PIE, Production Container → **정확한 HEAD SHA 고정** Integration 20/20 → `expected_head_sha` squash merge → 새 `main` CI/Container 검증. 이 실험은 외부 전문가 승인을 요구하지 않는다. 다만 불확실·충돌 관계의 결과 예측, 부정확한 출처·계산, 별도 Production/Commerce 권한 우회는 허용하지 않는다.
 
 ### P1-NATAL-QUALITY — 개인화 품질 심화 및 도메인 확장 (P0-NATAL 수직 슬라이스 이후)
 
