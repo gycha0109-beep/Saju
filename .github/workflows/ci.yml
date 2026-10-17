@@ -88,6 +88,9 @@ jobs:
         run: |
           node --test scripts/natal-reader-review-packet.check.mjs
           node scripts/natal-personalization-audit.mjs "$RUNNER_TEMP/natal-baseline.json"
+          node --test test/natal-n29-paired-reader-review.node.mjs
+          node scripts/natal-n29-paired-reader-review.mjs "$RUNNER_TEMP/natal-baseline.json" "$RUNNER_TEMP/natal-baseline.n25b-all-pairs.json" "$RUNNER_TEMP/natal-baseline.n26-http-transport.json" "$RUNNER_TEMP/natal-baseline.n29-paired-review.json"
+          node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const p=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.n29-paired-review.json','utf8')); const md=readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.n29-paired-review.md','utf8'); assert.equal(p.originalHttpCaseCount,35); assert.equal(p.deliveredDistinctCaseCount,10); assert.equal(p.pairedContrasts,5); assert.equal(p.exactSameMeaningContrasts,5); assert.equal(p.independentHumanReviewsCompleted,0); assert.equal(p.reviewerAttestationRecorded,false); assert.equal(p.productReady,false); assert.equal(p.mayPublish,false); assert.equal(p.maySell,false); assert.equal(p.mayApproveResearchMeaning,false); assert.ok(p.pairs.every(x=>x.humanReviewStatus==='NOT_REVIEWED' && x.approval==='HOLD' && x.exactConsumerMeaningCopy)); assert.match(md,/실제 HTTP 풀이 5쌍/u); assert.match(md,/사람 검수 미완료/u);"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const n=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.n24-expanded-source.json','utf8')); assert.equal(n.caseCount,35); assert.equal(n.cases.length,35); assert.equal(n.originalLeftUnreadCount,0); assert.ok(n.cases.every(c=>c.originalLeftUnreadCount===0 && c.firstScreenOriginalCount+c.additionalOriginalCount===c.completeOriginalCount && (!c.birthTimeKnown ? c.completeOriginalCount===0 : true))); assert.equal(n.createsNewInterpretation,false); assert.equal(n.meaningDifferentiationProven,false); assert.equal(n.mayPublish,false); assert.equal(n.maySell,false);"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const n=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.n21-reader-first.json','utf8')); assert.equal(n.caseCount,35); assert.equal(n.cases.length,35); assert.ok(n.cases.every(c=>c.displayedDomainDistinctiveCount+c.displayedCrossDomainSharedCount===c.displayedActualInterpretationCount)); assert.equal(n.displayedCrossDomainSharedCount,0); assert.equal(n.sourceMeaningDifferenceProven,false); assert.equal(n.mayPublish,false); assert.equal(n.maySell,false); assert.ok(n.casesWithoutActualReading>=2); assert.ok(n.cases.every(c=>!c.meaningDifferentiationProven && !c.createsNewInterpretation && !c.mayPublish && !c.maySell && (!c.birthTimeKnown ? c.displayedActualInterpretationCount===0 : true)));"
           node scripts/natal-mur-shadow-audit.mjs "$RUNNER_TEMP/natal-mur-shadow.json"
@@ -134,6 +137,8 @@ jobs:
             ${{ runner.temp }}/natal-baseline.n25-trace.json
             ${{ runner.temp }}/natal-baseline.n25b-all-pairs.json
             ${{ runner.temp }}/natal-baseline.n26-http-transport.json
+            ${{ runner.temp }}/natal-baseline.n29-paired-review.json
+            ${{ runner.temp }}/natal-baseline.n29-paired-review.md
             ${{ runner.temp }}/natal-baseline.n9-repetition.json
             ${{ runner.temp }}/natal-baseline.n10-triage.json
             ${{ runner.temp }}/natal-baseline.n11-review.html
