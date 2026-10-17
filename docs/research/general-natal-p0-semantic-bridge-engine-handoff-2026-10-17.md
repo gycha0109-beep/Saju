@@ -44,6 +44,6 @@
 
 ## 卷六 추가 판정 — Bridge #2557 / Engine 분리 인계 (2026-10-17)
 
-- **Research source-only:** 『三命通會』 四庫全書本 卷六 「論正財」「論偏財」「時上偏財」의 디지털 전사를 추가 확인. 同一 저작/전사 복제물을 별도 독립 증거로 계산하지 않음. 인쇄 판면·底本·交勘·reviewer 검증은 여전히 HOLD. 근거·조건은 19-pair 보고서 §10 및 `GENERAL_NATAL_N10_PEER_WEALTH_SEMANTIC_SCOPE_AUDIT.samyeongVolumeSix`에 고정.
+- **Research source-only / 출처 정정:** 해당 「論正財」「論偏財」「時上偏財」 구절은 일반 『三命通會/卷六』 온라인 전사에서 확인됨. 『四庫全書本/卷06』에는 같은 조항을 현재 직접 대응하지 못하므로 **기존 같은 페이지·同一 전사로 간주한 출처 식별은 철회**. 독립 witness 2개 증명 없음. 일반 전사의 인쇄 판면·底本·版次·revision, 두 페이지의 조항 구성 차이, 교감·reviewer 검증은 HOLD. 근거·조건은 19-pair 보고서 §10 및 `GENERAL_NATAL_N10_PEER_WEALTH_SEMANTIC_SCOPE_AUDIT.samyeongVolumeSix`에 고정.
 - **Bridge:** `比肩`이 재성 관계에서 무조건 제외된다는 부정 결론도, `比肩+財`가 무조건 분재한다는 긍정 결론도 금지. `甲申日/甲戌時`의 일부 문자 일치를 「時上偏財」 격 성립으로 오인하지 말 것: 동일 문맥의 `柱中不宜再見戊己`, `只要一位`, 日主강약·月令·官印·冲破 조건 검증이 필요. `claim/observation/qualifier/hold` 모두 현행 **hold** 권고 유지. 관련 결정을 기존 #2557에서 claim-scoped로 기록.
 - **Engine:** 기존 `겁재` 정확 조건과 N13 1-vs-0 회귀를 변경하지 않는다. `比肩→財` 새 Registry/가중치/문구 생성 불가. 향후 별도 Research shadow 후보를 열더라도 `正財/偏財`, `本命/行運`, 재성 중복, 강약, 출처 위치, 반례를 독립 게이트로 모두 명시.

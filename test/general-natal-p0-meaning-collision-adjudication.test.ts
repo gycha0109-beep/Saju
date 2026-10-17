@@ -73,6 +73,10 @@ describe('P0-NATAL actual N10 19-pair research semantic return (no new authority
       physicalSiKuPrintedFolioForTheseClausesInspected: false,
     });
     expect(a.samyeongVolumeSix).toMatchObject({
+      work: '三命通會/卷六（維基文庫一般編輯轉寫）',
+      digitalTranscriptionUrl: 'https://zh.wikisource.org/zh-hant/三命通會/卷六',
+      crossEditionPassageParityVerified: false,
+      previousSiKuAttributionRetracted: true,
       sections: ['論正財', '論偏財', '時上偏財'],
       zhengCaiConditionedPeerCaution: '財生身旺兩相停，不喜再見比肩',
       zhengCaiWeakMasterLuckCounterdirection: '財多如何不發財，只因身弱少培栽，運到比肩身旺地',
