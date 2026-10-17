@@ -22,7 +22,7 @@ import {
 
  */
 export const YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION =
-  'sa7d-yuanhai-parallel-xiji-juan-early-catalog-counts-v30' as const;
+  'sa7d-yuanhai-parallel-xiji-juan-chuanshilou-separate-digital-groups-v31' as const;
 
 export const YUANHAI_NLC_PHYSICAL_BOOKS = Object.freeze([
   Object.freeze({
@@ -2148,6 +2148,45 @@ export const YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT = Object.freeze({
   }),
 });
 
+/** Two separately indexed NLC digitization groups of the CATALOG 傳是樓書目: not the six books listed FOR 星學正傳. */
+export const YUANHAI_CHUANSHILOU_DISTINCT_DIGITAL_CATALOG_COPIES_AUDIT = Object.freeze({
+  sourceIndex: 'https://commons.wikimedia.org/wiki/Commons:Library_back_up_project/file_list/NLC/數字古籍/01' as const,
+  firstDigitalCatalogGroup: Object.freeze({
+    nlcGroupId: 'NLC892-1094' as const,
+    commonsListEntryIndex: 886 as const,
+    catalogTitle: '傳是樓書目' as const,
+    enumeratedPdfCount: 6 as const,
+    originalDigitalFileIds: Object.freeze(['207903','207944','207945','207946','207947','207391'] as const),
+    bookTwoOriginalFileUrl: 'https://commons.wikimedia.org/wiki/File:NLC892-1094-207944_傳是樓書目_第2冊.pdf' as const,
+    bookTwoCatalogDescription: '抄本' as const,
+    bookTwoPdfPageCount: 94 as const,
+    bookTwoFileMegabytes: 28.15 as const,
+  }),
+  secondDigitalCatalogGroup: Object.freeze({
+    nlcGroupId: 'NLC892-1095' as const,
+    commonsListEntryIndex: 887 as const,
+    catalogTitle: '傳是樓書目' as const,
+    enumeratedPdfCount: 3 as const,
+    originalDigitalFileIds: Object.freeze(['204819','204827','204828'] as const),
+  }),
+  authorityBoundary: Object.freeze({
+    tier: 'C_separately_indexed_catalog_source_groups_only' as const,
+    fileCountsReferToChuanshilouCatalogNotXingxueZhengzhuan: true as const,
+    originalHandwrittenCatalogFocalEntryLeafInspected: false as const,
+    originalCatalogFocalPageNumberIdentified: false as const,
+    originalGroupsIndependentScribalExemplarsProved: false as const,
+    shidianNCL04996ATranscriptionLinkedToEitherNLCCopy: false as const,
+    newlyAdjudicatedTwentyTwoJuanCatalogHandwritings: 0 as const,
+    independent1582OriginalPrintSettingsAdded: 0 as const,
+    ming1582OriginalTargetLeafInspected: false as const,
+    newlyAdjudicatedWeiOrMuPrintedGlyphs: 0 as const,
+    archetypeGlyphAdjudicated: null,
+    modernAnnualRulesApproved: 0 as const,
+    globalTripleClashPriorityAuthorized: false as const,
+    productionAuthorized: false as const,
+  }),
+});
+
 /** Multiple historical catalog transcriptions disagree on 21/22 juan and 6/12 physical books; not multiple verified woodblocks. */
 export const YUANHAI_EARLY_CATALOG_21_22_FASCICLE_WITNESSES_AUDIT = Object.freeze({
   xuQianxueChuanshilou: Object.freeze({
@@ -2826,6 +2865,7 @@ export function buildYuanHaiMingJuan3PrintScope() {
     japanTwoInstitutionReproductionAccessAudit: YUANHAI_JAPAN_TWO_INSTITUTION_REPRODUCTION_ACCESS_AUDIT,
     shidian1582JuanThreeTextualWitnessAudit: YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT,
     earlyCatalog21vs22FascicleWitnessesAudit: YUANHAI_EARLY_CATALOG_21_22_FASCICLE_WITNESSES_AUDIT,
+    chuanshilouDistinctDigitalCatalogCopiesAudit: YUANHAI_CHUANSHILOU_DISTINCT_DIGITAL_CATALOG_COPIES_AUDIT,
     naj2021ScheduledReproductionInventory: YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
     yangcongTitleLeafReproductionAudit: YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
     nlc1600SourceFingerprintWorkflow: YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,

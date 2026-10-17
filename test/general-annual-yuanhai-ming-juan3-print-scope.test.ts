@@ -48,6 +48,7 @@ import {
   YUANHAI_JAPAN_TWO_INSTITUTION_REPRODUCTION_ACCESS_AUDIT,
   YUANHAI_SHIDIAN_1582_JUAN_THREE_TEXTUAL_WITNESS_AUDIT,
   YUANHAI_EARLY_CATALOG_21_22_FASCICLE_WITNESSES_AUDIT,
+  YUANHAI_CHUANSHILOU_DISTINCT_DIGITAL_CATALOG_COPIES_AUDIT,
   YUANHAI_NAJ_2021_DUPLICATE_LISTING_AUDIT,
   YUANHAI_YANGCONG_TITLE_LEAF_REPRODUCTION_AUDIT,
   YUANHAI_NLC1600_PDF_VERIFIER_WORKFLOW,
@@ -60,7 +61,7 @@ import {
 
 describe('Yuanhai Ming printed-juan versus physically bound volume correction', () => {
   test('physical volume one covers printed juan 1/2, not the target chapter in juan 3', () => {
-    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v30');
+    expect(YUANHAI_MING_JUAN3_BIBLIOGRAPHIC_VERSION).toContain('v31');
     expect(YUANHAI_NLC_PHYSICAL_BOOKS).toHaveLength(2);
     expect(YUANHAI_NLC_PHYSICAL_BOOKS[0]).toMatchObject({
       id: 'NLC892-2642-210287',
@@ -1886,6 +1887,47 @@ describe('Yuanhai Ming printed-juan versus physically bound volume correction', 
       printedOriginalHourStemVerified: false,
       newPrintedWitnessCredit: 0,
     });
+  });
+
+  test('separate NLC Chuanshilou catalog digitization groups cannot become six books of Xingxue Zhengzhuan', () => {
+    const q = YUANHAI_CHUANSHILOU_DISTINCT_DIGITAL_CATALOG_COPIES_AUDIT;
+    expect(q.firstDigitalCatalogGroup).toMatchObject({
+      nlcGroupId: 'NLC892-1094',
+      commonsListEntryIndex: 886,
+      catalogTitle: '傳是樓書目',
+      enumeratedPdfCount: 6,
+      originalDigitalFileIds: ['207903','207944','207945','207946','207947','207391'],
+      bookTwoCatalogDescription: '抄本',
+      bookTwoPdfPageCount: 94,
+      bookTwoFileMegabytes: 28.15,
+    });
+    expect(q.secondDigitalCatalogGroup).toMatchObject({
+      nlcGroupId: 'NLC892-1095',
+      commonsListEntryIndex: 887,
+      catalogTitle: '傳是樓書目',
+      enumeratedPdfCount: 3,
+      originalDigitalFileIds: ['204819','204827','204828'],
+    });
+    expect(q.authorityBoundary).toMatchObject({
+      tier: 'C_separately_indexed_catalog_source_groups_only',
+      fileCountsReferToChuanshilouCatalogNotXingxueZhengzhuan: true,
+      originalHandwrittenCatalogFocalEntryLeafInspected: false,
+      originalCatalogFocalPageNumberIdentified: false,
+      originalGroupsIndependentScribalExemplarsProved: false,
+      shidianNCL04996ATranscriptionLinkedToEitherNLCCopy: false,
+      newlyAdjudicatedTwentyTwoJuanCatalogHandwritings: 0,
+      independent1582OriginalPrintSettingsAdded: 0,
+      ming1582OriginalTargetLeafInspected: false,
+      newlyAdjudicatedWeiOrMuPrintedGlyphs: 0,
+      archetypeGlyphAdjudicated: null,
+      modernAnnualRulesApproved: 0,
+      globalTripleClashPriorityAuthorized: false,
+      productionAuthorized: false,
+    });
+    const scope=buildYuanHaiMingJuan3PrintScope();
+    expect(scope.chuanshilouDistinctDigitalCatalogCopiesAudit).toBe(q);
+    expect(scope.adjudicatedPrintedGlyph).toBeNull();
+    expect(scope.modernInterpretationClaim).toBeNull();
   });
 
   test('historical book catalogs record 22 juan in six books versus 21 juan without proving original print variants', () => {
