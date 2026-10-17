@@ -32,3 +32,12 @@
 - [실제 두 명식 회귀 테스트](../../test/general-natal-p0-n13-real-pair-replay.test.ts)가 **N10과 동일한 출생일/시간/성별 처리·계산 시점**으로 승인 정책의 원국을 재계산하고 기존 T8 Registry를 연구 shadow로 실행한다. 실제 `runInterpretation` Claim의 정확한 수, `upstreamClaimRefs` 2개, 서로 다른 T5 family ID, 동일 snapshot/scenario, N13 source locator, false publish/promote 가드를 검증한다.
 - **Engine 이관 시 재사용**: 이 테스트를 소비자 Preview로 옮기는 대신 05/19 두 원국의 `PEER-TO-WEALTH-ADVERSE` T8 발행 여부를 CI 회귀 계약으로 유지한다. 새 컴포지션 작업은 이 **실제 Claim provenance**를 읽되 허가되지 않은 text를 소비자에게 전송하지 않는다.
 - **Bridge 판단 기준 강화**: 정확한 겁재 조건을 만족해도 `secondary_only/unreviewed`의 전사 출처와 N15 필터가 해제되는 것은 아니다. Claim-scoped `hold` 유지가 기본이고 출처·reviewer·semantic scope 승인 없이는 observation도 제품으로 승격하지 않는다.
+
+## Source terminology review required before Bridge admission (2026-10-17)
+
+기존 2010 두 원국의 N13 runtime 차이(05:30 T8 1, 19:30 T8 0)는 [CI #39017251624](https://github.com/gycha0109-beep/Saju/actions/runs/39017251624)에서 확인됐다. 그러나 이 **런타임 차이를 곧바로 역사 해석 차이로 인정했던 N10 #17 주 분류는 `METHODOLOGY_CONFLICT`로 보정**한다.
+
+- 『淵海子平』 전사의 「基礎」 `甲見乙=劫財、敗財`와 「論劫財」의 `五陽見五陰=敗財` 구별을 해당 판본에서 검증. 2010년 갑일간+卯의 **乙 장간**을 현대 `겁재`로 분류해도 `劫財→財`가 개인 의미의 독립 인과라는 뜻은 아니다.
+- 『三命通會』 卷七 「兄弟引例章」의 `刼財比肩` 전체 peer 분류, 「妻妾引例章」의 **조건부 `比肩分奪`** 반례(甲申/甲戌日, 甲寅/乙夘月, 日主大旺)를 함께 심사. 2010년 19:30은 **丑月이므로 이 고전 예시 완전 매칭이 아님**. “비견은 재성 견제와 무관하다”라는 배타적 진술 금지.
+- 출처 판면·교정 저본, 월령/왕쇠, 실제 T0 卯藏乙·지장간 처리, 다른 기둥 財 관측 사이 관계, N15 과잉 결론 차단을 Reviewer가 기록하기 전에는 **Bridge claim/observation/qualifier 모두 `hold`**. 코드의 exact `겁재` 조건은 기존 연구용 T8 안전 축소이므로 유지하며, **실행 결과를 수정하지 않는다**.
+- 고정 연구 감사 객체: `GENERAL_NATAL_N10_PEER_WEALTH_SEMANTIC_SCOPE_AUDIT` in `src/research/general-natal-p0-meaning-collision-adjudication.ts`; `test/general-natal-p0-meaning-collision-adjudication.test.ts`에서 source clauses, 19분류, 무권한 차단을 검증. **결정은 Research HOLD이며 새 production 권한이 아님**.

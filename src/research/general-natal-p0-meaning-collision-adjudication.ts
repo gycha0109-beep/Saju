@@ -3,7 +3,7 @@
  * Snapshot of exact 2026-10-15 N10 CI output; this code does not execute/publish claims.
  * Differences here are differences OF DELTA CLAIMS, never whole-chart family absence.
  */
-export const GENERAL_NATAL_N10_SEMANTIC_RETURN_VERSION = 'saju-research-natal-19-pair-semantic-return-v1' as const;
+export const GENERAL_NATAL_N10_SEMANTIC_RETURN_VERSION = 'saju-research-natal-19-pair-semantic-return-v2' as const;
 
 export type NatalMeaningAdjudication =
   | 'JUSTIFIED_SAME_MEANING'
@@ -36,8 +36,9 @@ export const GENERAL_NATAL_N10_ARTIFACT_PROVENANCE = Object.freeze({
  *
  * JUSTIFIED_SAME_MEANING ONLY certifies reuse of the abstract existing family
  * theme/claim meaning, not equality of an individual's comprehensive reading.
- * JUSTIFIED_DIFFERENT_MEANING on #17 is ONLY the gated Research T8 predicate
- * eligibility; no N10 runtime T8 emission or consumer approval is claimed.
+ * #17 has a proven different emitted Research T8 predicate, but its
+ * historical names/scope disagree across transcriptions, hence
+ * METHODOLOGY_CONFLICT for individual semantic admission (not a runtime bug).
  */
 export const GENERAL_NATAL_N10_UNIQUE_COLLISION_PAIRS = Object.freeze([
   Object.freeze({ index: 1 as const, left: 'solar-1984-01-07-00:30' as const, right: 'solar-1984-01-07-12:30' as const, n10Category: 'same_family_different_channel' as const, leftOnlyResearchThemeDelta: 'OFFICER_ST' as const, rightOnlyResearchThemeDelta: 'OFFICER_BR' as const, adjudication: 'MISSING_CONTEXT' as const, wholeChartFiveFamilyPresenceUnchanged: true as const }),
@@ -56,7 +57,7 @@ export const GENERAL_NATAL_N10_UNIQUE_COLLISION_PAIRS = Object.freeze([
   Object.freeze({ index: 14 as const, left: 'solar-1996-01-09-12:30' as const, right: 'solar-1996-01-09-19:30' as const, n10Category: 'changed_family_or_mixture' as const, leftOnlyResearchThemeDelta: 'RESOURCE_ST' as const, rightOnlyResearchThemeDelta: 'OUTPUT_ST' as const, adjudication: 'MISSING_CONTEXT' as const, wholeChartFiveFamilyPresenceUnchanged: true as const }),
   Object.freeze({ index: 15 as const, left: 'solar-2001-06-21-00:30' as const, right: 'solar-2001-06-21-12:30' as const, n10Category: 'changed_family_or_mixture' as const, leftOnlyResearchThemeDelta: 'OUTPUT_ST,RESOURCE_BR' as const, rightOnlyResearchThemeDelta: 'RESOURCE_ST' as const, adjudication: 'MISSING_CONTEXT' as const, wholeChartFiveFamilyPresenceUnchanged: true as const }),
   Object.freeze({ index: 16 as const, left: 'solar-2001-06-21-05:30' as const, right: 'solar-2001-06-21-19:30' as const, n10Category: 'changed_family_or_mixture' as const, leftOnlyResearchThemeDelta: 'WEALTH_ST' as const, rightOnlyResearchThemeDelta: 'OUTPUT_ST,WEALTH_BR' as const, adjudication: 'MISSING_CONTEXT' as const, wholeChartFiveFamilyPresenceUnchanged: true as const }),
-  Object.freeze({ index: 17 as const, left: 'solar-2010-02-03-05:30' as const, right: 'solar-2010-02-03-19:30' as const, n10Category: 'same_family_different_channel' as const, leftOnlyResearchThemeDelta: 'PEER_BR' as const, rightOnlyResearchThemeDelta: 'PEER_ST' as const, adjudication: 'JUSTIFIED_DIFFERENT_MEANING' as const, wholeChartFiveFamilyPresenceUnchanged: true as const }),
+  Object.freeze({ index: 17 as const, left: 'solar-2010-02-03-05:30' as const, right: 'solar-2010-02-03-19:30' as const, n10Category: 'same_family_different_channel' as const, leftOnlyResearchThemeDelta: 'PEER_BR' as const, rightOnlyResearchThemeDelta: 'PEER_ST' as const, adjudication: 'METHODOLOGY_CONFLICT' as const, wholeChartFiveFamilyPresenceUnchanged: true as const }),
   Object.freeze({ index: 18 as const, left: 'solar-2024-03-10-00:30' as const, right: 'solar-2024-03-10-19:30' as const, n10Category: 'added_or_missing_research_theme' as const, leftOnlyResearchThemeDelta: 'PEER_BR' as const, rightOnlyResearchThemeDelta: '—' as const, adjudication: 'MISSING_CONTEXT' as const, wholeChartFiveFamilyPresenceUnchanged: true as const }),
   Object.freeze({ index: 19 as const, left: 'solar-2024-03-10-05:30' as const, right: 'solar-2024-03-10-12:30' as const, n10Category: 'added_or_missing_research_theme' as const, leftOnlyResearchThemeDelta: '—' as const, rightOnlyResearchThemeDelta: 'OFFICER_ST,WEALTH_BR' as const, adjudication: 'MISSING_CONTEXT' as const, wholeChartFiveFamilyPresenceUnchanged: true as const }),
 ] as const);
@@ -65,6 +66,65 @@ export const GENERAL_NATAL_N10_UNIQUE_COLLISION_PAIRS = Object.freeze([
  * Reuse existing T5/T8 and registry, not a new parallel interpretation engine.
  * Both examples are paired, actual canonical N10 audits, not hypothetical births.
  */
+/**
+ * Source-internal terminological granularity and method transfer audit.
+ * THESE ARE DIGITAL TRANSCRIPTION OBSERVATIONS, NOT VERIFIED WOODBLOCK READINGS.
+ * Existing research T8 runtime continues to be tested; no authority is added.
+ */
+export const GENERAL_NATAL_N10_PEER_WEALTH_SEMANTIC_SCOPE_AUDIT = Object.freeze({
+  readingGrade: 'C_unverified_digital_transcription' as const,
+  yuanhai: Object.freeze({
+    work: '淵海子平' as const,
+    page: 'https://zh.wikisource.org/zh-hant/淵海子平' as const,
+    sections: Object.freeze(['基礎', '論劫財', '又地支藏遁歌'] as const),
+    introductoryYangJiaMeetingYi: '見乙：為劫財、敗財' as const,
+    narrowerYangMeetingYinName: '五陽見五陰為敗財' as const,
+    narrowerYinMeetingYangName: '五陰見五陽為劫財' as const,
+    branchMaoHiddenStem: '卯宮乙木獨相逢' as const,
+    observed2010YangJiaAndMaoYi: true as const,
+    broadAndNarrowNamesReconciledAcrossPrintedEditions: false as const,
+    printedFolioInspectedForTheseClauses: false as const,
+  }),
+  samyeong: Object.freeze({
+    work: '三命通會（四庫全書本）' as const,
+    volumeFiveUrl: 'https://zh.wikisource.org/zh-hant/三命通會/卷五' as const,
+    volumeFiveSection: '論古人立印食官財名義' as const,
+    volumeFiveBroadRelation: '財怕劫，被劫則分' as const,
+    volumeSevenUrl: 'https://zh.wikisource.org/wiki/三命通會_(四庫全書本)/卷07' as const,
+    volumeSevenPeerSection: '兄弟引例章' as const,
+    volumeSevenPeerTaxonomy: '兄弟者即刼財比肩甲見乙乙見甲之類' as const,
+    volumeSevenBijeonCounterexampleSection: '妻妾引例章' as const,
+    volumeSevenBijeonCounterexample: '甲申甲戌日生甲寅乙夘月日主大旺雖有妻以比肩分奪' as const,
+    exampleRequiresSpringYinMaoMonthAndStrongMaster: true as const,
+    case2010BirthMonthIsChouNotSpringYinMao: true as const,
+    bijeonGenerallyExcludedFromWealthRelationsBySources: false as const,
+    physicalSiKuPrintedFolioForTheseClausesInspected: false as const,
+  }),
+  pairedRuntimeFinding: Object.freeze({
+    checkedExactHead: '75ae1f869bb1f19cb12cb0dd6d31324b4d2e5d01' as const,
+    ciRun: 39017251624 as const,
+    fiveThirtyT8Emitted: true as const,
+    nineteenThirtyT8NotEmitted: true as const,
+    resultIsExistingRuleEligibilityNotUniqueHistoricalRelation: true as const,
+    noT8IsProofNoClassicalBijeonWealthRelation: false as const,
+    sourcePassageProvesMaterialInteractionOfCrossPillarFacts: false as const,
+    original2010DistinctHumanMeaningProven: false as const,
+    priorityAdjudication: 'METHODOLOGY_CONFLICT' as const,
+    bridgeRecommendedDisposition: 'hold' as const,
+    newResearchRuleEnabled: false as const,
+    consumerClaimAdmitted: false as const,
+    productionAuthorized: false as const,
+  }),
+  necessaryBeforeResumingAdmission: Object.freeze([
+    'edition-and-revision-pinned physical-text or source-transcription reliability review',
+    'explicit 甲見乙 敗財 versus generic 劫財 taxonomy and alias policy',
+    'scope of 卯 hidden 乙 representative versus 乙 visible stem and relative 月令',
+    'explicit evidence for interaction rather than whole-chart co-presence',
+    'case-specific strengths/conditioning and Bijeon counterexample analysis',
+    'independent reviewer plus source/method/version/claim scoped Bridge decision',
+  ] as const),
+});
+
 export const GENERAL_NATAL_N10_PRIORITY_RESEARCH_CANDIDATES = Object.freeze({
   observationChannel: Object.freeze({
     existingMethodology: 'M-TEN-GOD-CONSUMER-THEME-YUANHAI' as const,

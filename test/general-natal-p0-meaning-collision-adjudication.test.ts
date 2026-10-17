@@ -4,6 +4,7 @@ import {
   GENERAL_NATAL_N10_PRIORITY_RESEARCH_CANDIDATES,
   GENERAL_NATAL_N10_UNIQUE_COLLISION_PAIRS,
   GENERAL_NATAL_N10_SEMANTIC_RETURN_VERSION,
+  GENERAL_NATAL_N10_PEER_WEALTH_SEMANTIC_SCOPE_AUDIT,
 } from '../src/research/general-natal-p0-meaning-collision-adjudication.js';
 import {
   GENERAL_NATAL_SOURCE_BOUNDED_RELATION_RULES,
@@ -38,7 +39,8 @@ describe('P0-NATAL actual N10 19-pair research semantic return (no new authority
     expect(p.filter((x) => x.n10Category === 'changed_family_or_mixture')).toHaveLength(8);
     expect(p.filter((x) => x.n10Category === 'added_or_missing_research_theme')).toHaveLength(5);
     expect(p.filter((x) => x.adjudication === 'JUSTIFIED_SAME_MEANING')).toHaveLength(3);
-    expect(p.filter((x) => x.adjudication === 'JUSTIFIED_DIFFERENT_MEANING')).toHaveLength(1);
+    expect(p.filter((x) => x.adjudication === 'JUSTIFIED_DIFFERENT_MEANING')).toHaveLength(0);
+    expect(p.filter((x) => x.adjudication === 'METHODOLOGY_CONFLICT')).toHaveLength(1);
     expect(p.filter((x) => x.adjudication === 'MISSING_CONTEXT')).toHaveLength(15);
     expect(p[16]).toMatchObject({
       left: 'solar-2010-02-03-05:30',
@@ -46,9 +48,48 @@ describe('P0-NATAL actual N10 19-pair research semantic return (no new authority
       n10Category: 'same_family_different_channel',
       leftOnlyResearchThemeDelta: 'PEER_BR',
       rightOnlyResearchThemeDelta: 'PEER_ST',
-      adjudication: 'JUSTIFIED_DIFFERENT_MEANING',
+      adjudication: 'METHODOLOGY_CONFLICT',
     });
   });
+  test('Yuanhai 甲→乙 historical naming and Samyeong contextual 比肩 counterexample require Bridge HOLD', () => {
+    const a = GENERAL_NATAL_N10_PEER_WEALTH_SEMANTIC_SCOPE_AUDIT;
+    expect(a.readingGrade).toBe('C_unverified_digital_transcription');
+    expect(a.yuanhai).toMatchObject({
+      introductoryYangJiaMeetingYi: '見乙：為劫財、敗財',
+      narrowerYangMeetingYinName: '五陽見五陰為敗財',
+      narrowerYinMeetingYangName: '五陰見五陽為劫財',
+      branchMaoHiddenStem: '卯宮乙木獨相逢',
+      observed2010YangJiaAndMaoYi: true,
+      broadAndNarrowNamesReconciledAcrossPrintedEditions: false,
+      printedFolioInspectedForTheseClauses: false,
+    });
+    expect(a.samyeong).toMatchObject({
+      volumeFiveBroadRelation: '財怕劫，被劫則分',
+      volumeSevenPeerTaxonomy: '兄弟者即刼財比肩甲見乙乙見甲之類',
+      volumeSevenBijeonCounterexampleSection: '妻妾引例章',
+      exampleRequiresSpringYinMaoMonthAndStrongMaster: true,
+      case2010BirthMonthIsChouNotSpringYinMao: true,
+      bijeonGenerallyExcludedFromWealthRelationsBySources: false,
+      physicalSiKuPrintedFolioForTheseClausesInspected: false,
+    });
+    expect(a.pairedRuntimeFinding).toMatchObject({
+      checkedExactHead: '75ae1f869bb1f19cb12cb0dd6d31324b4d2e5d01',
+      ciRun: 39017251624,
+      fiveThirtyT8Emitted: true,
+      nineteenThirtyT8NotEmitted: true,
+      resultIsExistingRuleEligibilityNotUniqueHistoricalRelation: true,
+      noT8IsProofNoClassicalBijeonWealthRelation: false,
+      sourcePassageProvesMaterialInteractionOfCrossPillarFacts: false,
+      original2010DistinctHumanMeaningProven: false,
+      priorityAdjudication: 'METHODOLOGY_CONFLICT',
+      bridgeRecommendedDisposition: 'hold',
+      newResearchRuleEnabled: false,
+      consumerClaimAdmitted: false,
+      productionAuthorized: false,
+    });
+    expect(a.necessaryBeforeResumingAdmission.length).toBeGreaterThanOrEqual(5);
+  });
+
   test('1984 officer channel swap ALSO changes 正/偏 subtype, not licensed personality meaning', () => {
     const p = GENERAL_NATAL_N10_PRIORITY_RESEARCH_CANDIDATES.observationChannel;
     expect(p).toMatchObject({
