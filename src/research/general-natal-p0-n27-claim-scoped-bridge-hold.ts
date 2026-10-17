@@ -125,7 +125,7 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
     version: GENERAL_NATAL_N27_CLAIM_BRIDGE_HOLD_VERSION,
     issue: 2557 as const,
     researchPr: 2553 as const,
-    researchHeadReviewed: 'f13bb0289b1d3ddb3918d222f156886884cf3524' as const,
+    researchHeadReviewed: 'fba6103859a638bdaee8150e9b6d6deaa319ed0a' as const,
     researchPrMergedAtReview: false as const,
     researchScope: 'RESEARCH_ONLY_2010_ACTUAL_N13_T8_1_VS_0' as const,
     parentBridgeReviewId: existingBridge.reviewId,
@@ -144,7 +144,7 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
     targetClaims: reviewed,
     candidateBijeonWealthRuleExistsInThisReview: false as const,
     sourceLocatorCaveat:
-      'Volume-six matching passages belong to general 三命通會/卷六 online transcription; same-passage match in 四庫全書本/卷06 is unestablished.',
+      'Volume-six matching passages belong to general 三命通會/卷六 online transcription; same-passage match in 四庫全書本/卷06 is unestablished; 一般卷六 page warns （以下內容與書不合） before these sections, so historical attribution is unverified.',
     independentPrintReviewCompleted: false as const,
     reviewerAttestationCreated: false as const,
     reviewerTrustGrantCreated: false as const,
