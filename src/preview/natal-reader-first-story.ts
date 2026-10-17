@@ -12,12 +12,15 @@ export const NATAL_N21_READER_FIRST_VERSION =
 
 /** The first three *real* substantive text units of a domain, not generated filler. */
 const MAX_UNITS_PER_DOMAIN = 3;
+export const NATAL_N23_DOMAIN_DISTINCTIVE_SELECTION_VERSION =
+  'saju-n23-domain-distinctive-source-reading-selection-v1' as const;
 
 export interface NatalN21ReadingExcerpt {
   unitId: string;
   text: string;
   provenance: readonly NatalN16TextProvenance[];
   repeatedInOtherDomains: readonly NatalSynthesisDomain[];
+  selectionBasis: 'domain_distinctive' | 'cross_domain_shared';
   interpretationNewlyInferred: false;
 }
 
@@ -27,6 +30,8 @@ export interface NatalN21StorySection {
   responseState: string;
   hasInterpretation: boolean;
   excerpts: readonly NatalN21ReadingExcerpt[];
+  displayedDomainDistinctiveCount: number;
+  displayedCrossDomainSharedCount: number;
   sharedEarlier: readonly { unitId: string; alreadyShownIn: NatalSynthesisDomain }[];
   /** Other existing bounded text remains accessible in the full source reading. */
   remainingOriginalInterpretationCount: number;
@@ -36,6 +41,7 @@ export interface NatalN21StorySection {
 
 export interface NatalN21ReaderFirstStory {
   version: typeof NATAL_N21_READER_FIRST_VERSION;
+  excerptSelectionVersion: typeof NATAL_N23_DOMAIN_DISTINCTIVE_SELECTION_VERSION;
   lifecycle: 'internal_preview_only';
   snapshotId: string;
   calculationHash: string;
@@ -45,6 +51,8 @@ export interface NatalN21ReaderFirstStory {
   factualBasis: NatalN16GroundedReaderBrief['context'];
   sections: readonly NatalN21StorySection[];
   displayedOriginalInterpretationCount: number;
+  displayedDomainDistinctiveCount: number;
+  displayedCrossDomainSharedCount: number;
   hiddenDuplicateCount: number;
   calculationFactsExcludedFromInterpretation: number;
   previewMeaningFingerprint: string;
@@ -77,34 +85,49 @@ export function buildNatalN21ReaderFirstStory(
     const sharedEarlier: NatalN21StorySection['sharedEarlier'][number][] = [];
     let remainingOriginalInterpretationCount = 0;
     let calculatedExplanationCount = 0;
-    for (const unitId of domain.unitIds) {
+    const originalMeaning = domain.unitIds.flatMap((unitId) => {
       const unit = units.get(unitId);
-      if (!unit) throw new TypeError('N21 missing source-owned text: ' + unitId);
+      if (!unit) throw new TypeError('N23 missing source-owned text: ' + unitId);
       if (unit.kind === 'calculated_chart_context') {
         calculatedExplanationCount++;
-        continue;
+        return [];
       }
       if (unit.kind !== 'existing_preview_interpretation') {
-        throw new TypeError('N21 unknown original-text classification');
+        throw new TypeError('N23 unrecognized original-text classification');
       }
-      const owner = alreadyShown.get(unitId);
+      if (!unit.sources.some((source) => source.domain === domain.domain)) {
+        throw new TypeError('N23 missing domain-specific source for original text');
+      }
+      return [unit];
+    });
+    // Domain-exclusive text is not a new claim: it is an exact paragraph
+    // already delivered only by this domain. Show it before general shared
+    // paragraphs, which otherwise crowd the limited first-screen summary.
+    const preferred = [
+      ...originalMeaning.filter((unit) => unit.appearingInDomains.length === 1),
+      ...originalMeaning.filter((unit) => unit.appearingInDomains.length > 1),
+    ];
+    for (const unit of preferred) {
+      const owner = alreadyShown.get(unit.unitId);
       if (owner !== undefined) {
-        sharedEarlier.push({ unitId, alreadyShownIn: owner });
+        sharedEarlier.push({ unitId: unit.unitId, alreadyShownIn: owner });
         hiddenDuplicateCount++;
-      } else if (excerpts.length < MAX_UNITS_PER_DOMAIN) {
-        if (!unit.sources.some((p) => p.domain === domain.domain)) {
-          throw new TypeError('N21 displayed text lacks domain-specific source');
-        }
-        excerpts.push({
-          unitId, text: unit.text,
-          provenance: unit.sources.filter((p) => p.domain === domain.domain),
-          repeatedInOtherDomains: unit.appearingInDomains.filter((d) => d !== domain.domain),
-          interpretationNewlyInferred: false,
-        });
-        alreadyShown.set(unitId, domain.domain);
-      } else {
-        remainingOriginalInterpretationCount++;
+        continue;
       }
+      if (excerpts.length >= MAX_UNITS_PER_DOMAIN) {
+        remainingOriginalInterpretationCount++;
+        continue;
+      }
+      excerpts.push({
+        unitId: unit.unitId,
+        text: unit.text,
+        provenance: unit.sources.filter((source) => source.domain === domain.domain),
+        repeatedInOtherDomains: unit.appearingInDomains.filter((entry) => entry !== domain.domain),
+        selectionBasis: unit.appearingInDomains.length === 1
+          ? 'domain_distinctive' : 'cross_domain_shared',
+        interpretationNewlyInferred: false,
+      });
+      alreadyShown.set(unit.unitId, domain.domain);
     }
     return {
       domain: domain.domain,
@@ -112,7 +135,10 @@ export function buildNatalN21ReaderFirstStory(
       responseState: domain.responseState,
       hasInterpretation: domain.unitIds.some((id) =>
         units.get(id)?.kind === 'existing_preview_interpretation'),
-      excerpts, sharedEarlier,
+      excerpts,
+      displayedDomainDistinctiveCount: excerpts.filter((x) => x.selectionBasis === 'domain_distinctive').length,
+      displayedCrossDomainSharedCount: excerpts.filter((x) => x.selectionBasis === 'cross_domain_shared').length,
+      sharedEarlier,
       remainingOriginalInterpretationCount,
       calculatedExplanationCount,
       limitations: domain.disclosures,
@@ -121,6 +147,7 @@ export function buildNatalN21ReaderFirstStory(
   const available = sections.filter((section) => section.hasInterpretation).length;
   return {
     version: NATAL_N21_READER_FIRST_VERSION,
+    excerptSelectionVersion: NATAL_N23_DOMAIN_DISTINCTIVE_SELECTION_VERSION,
     lifecycle: 'internal_preview_only',
     snapshotId: brief.snapshotId,
     calculationHash: brief.calculationHash,
@@ -130,6 +157,8 @@ export function buildNatalN21ReaderFirstStory(
     factualBasis: brief.context,
     sections,
     displayedOriginalInterpretationCount: sections.reduce((n, section) => n + section.excerpts.length, 0),
+    displayedDomainDistinctiveCount: sections.reduce((n, section) => n + section.displayedDomainDistinctiveCount, 0),
+    displayedCrossDomainSharedCount: sections.reduce((n, section) => n + section.displayedCrossDomainSharedCount, 0),
     hiddenDuplicateCount,
     calculationFactsExcludedFromInterpretation: brief.calculatedContextTextUnitCount,
     // Fingerprint the *original* substantive text, NOT factual chart difference
@@ -145,7 +174,8 @@ export function buildNatalN21ReaderFirstStory(
     maySell: false,
     limitations: [
       '이 화면에는 기존 Preview에서 실제 전달된 문장만 표시하며, 생년월일에 맞춘 별도 인생 결론을 새로 생성하지 않습니다.',
-      '읽기 편하게 앞부분에 3개까지 요약 배치한 문장 외 나머지 원본 내용은 아래 상세 보기에서 확인할 수 있습니다.',
+      '분야마다 원래 전달된 문장 중 그 분야에만 나온 것을 먼저 최대 3개 보여주고, 남은 자리에 여러 분야의 공통 설명을 보여줍니다. 이는 내용의 중요도·효과를 판정한 것이 아닙니다.',
+      '앞 화면에 나오지 않은 나머지 원본 내용은 아래 상세 보기에서 확인할 수 있습니다.',
       '명식 계산 근거와 기존 풀이 문장을 분리했습니다. 계산 사실만 달라도 의미가 달라졌다고 판단하지 않습니다.',
       '동일 문장의 여러 분야 출현은 하나의 해석으로 셉니다. 분야 간 새로운 인과 관계를 추론하지 않습니다.',
       '출생시각 미상·부분 근거는 해당 본문을 채워 넣지 않고 원래 응답 상태를 유지합니다.',

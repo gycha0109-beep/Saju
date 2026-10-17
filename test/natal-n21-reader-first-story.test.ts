@@ -76,20 +76,20 @@ describe('N21 readable source-owned natal storyline',()=>{
       lifecycle:'internal_preview_only',readingState:'has_bounded_reading',
       snapshotId:snapshot.snapshotId,mayPublish:false,maySell:false,
       meaningDifferentiationProven:false,createsNewInterpretation:false,
-      hiddenDuplicateCount:1,displayedOriginalInterpretationCount:7,
+      hiddenDuplicateCount:0,displayedOriginalInterpretationCount:8,
+      displayedDomainDistinctiveCount:7,displayedCrossDomainSharedCount:1,
     });
     expect(result.sections.map(s=>s.domain)).toEqual([
       'general','career','wealth','business','relationship',
     ]);
     expect(result.sections[0]?.excerpts.map(x=>x.text)).toEqual([
-      same,'원래 전체 풀이','추가 전체 풀이',
+      '원래 전체 풀이','추가 전체 풀이','긴 전체 설명',
     ]);
     expect(result.sections[0]?.remainingOriginalInterpretationCount).toBe(1);
-    expect(result.sections[1]?.excerpts.map(x=>x.text)).toEqual(['직업 분야 본문']);
-    expect(result.sections[1]?.sharedEarlier).toEqual([{
-      unitId:result.sections[0]?.excerpts[0]?.unitId,
-      alreadyShownIn:'general',
-    }]);
+    expect(result.sections[1]?.excerpts.map(x=>x.text)).toEqual(['직업 분야 본문',same]);
+    expect(result.sections[1]?.excerpts.map(x=>x.selectionBasis))
+      .toEqual(['domain_distinctive','cross_domain_shared']);
+    expect(result.sections[1]?.sharedEarlier).toEqual([]);
     expect(result.sections.every(s=>s.excerpts.every(x=>
       x.interpretationNewlyInferred===false &&
       x.provenance.length>0 &&
@@ -97,6 +97,57 @@ describe('N21 readable source-owned natal storyline',()=>{
     ))).toBe(true);
     expect(result.sections.flatMap(s=>s.excerpts).map(x=>x.text)).not.toContain('미래를 단정하지 않습니다.');
     expect(buildNatalN21ReaderFirstStory(snapshot,[...sources].reverse())).toEqual(result);
+  });
+
+  it('prioritizes the actual unique career reading even if common copy fills the first slots',()=>{
+    const snap=chart(10);
+    const shared='여러 분야에서 공유한 원래 풀이';
+    const sources=[
+      {domain:'general' as const,response:boundedResponse(snap,'g',[
+        shared,'일반만의 원래 풀이','일반 추가 해석',
+      ])},
+      {domain:'career' as const,response:boundedResponse(snap,'c',[
+        shared,'직업만의 첫 번째 해석','직업만의 두 번째 해석','직업만의 세 번째 해석',
+      ])},
+      {domain:'wealth' as const,response:boundedResponse(snap,'w',[
+        shared,'재물만의 실제 해석',
+      ])},
+    ];
+    const first=buildNatalN21ReaderFirstStory(snap,sources);
+    expect(first.sections[0]?.excerpts.map((x)=>x.text))
+      .toEqual(['일반만의 원래 풀이','일반 추가 해석',shared]);
+    expect(first.sections[1]?.excerpts.map((x)=>x.text)).toEqual([
+      '직업만의 첫 번째 해석','직업만의 두 번째 해석','직업만의 세 번째 해석',
+    ]);
+    expect(first.sections[1]?.sharedEarlier).toEqual([{
+      unitId:first.sections[0]?.excerpts[2]?.unitId,alreadyShownIn:'general',
+    }]);
+    expect(first.sections[1]?.displayedDomainDistinctiveCount).toBe(3);
+    expect(first.sections[1]?.displayedCrossDomainSharedCount).toBe(0);
+    expect(first.sections[2]?.excerpts.map(x=>x.text)).toEqual(['재물만의 실제 해석']);
+    expect(first.hiddenDuplicateCount).toBe(2);
+    expect(first.displayedDomainDistinctiveCount).toBe(6);
+    expect(first.displayedCrossDomainSharedCount).toBe(1);
+    expect(first.createsNewInterpretation).toBe(false);
+    expect(first.meaningDifferentiationProven).toBe(false);
+    expect(buildNatalN21ReaderFirstStory(snap,[...sources].reverse())).toEqual(first);
+  });
+
+  it('does not call an exclusive paragraph more important or generate missing meaning',()=>{
+    const snap=chart(10);
+    const source={domain:'general' as const,response:boundedResponse(snap,'g',[
+      '기존 첫 번째 해석','기존 두 번째 해석','기존 세 번째 해석','기존 네 번째 해석',
+    ])};
+    const result=buildNatalN21ReaderFirstStory(snap,[source]);
+    expect(result.sections[0]?.excerpts.map(x=>x.text)).toEqual([
+      '기존 첫 번째 해석','기존 두 번째 해석','기존 세 번째 해석',
+    ]);
+    expect(result.sections[0]?.remainingOriginalInterpretationCount).toBe(1);
+    expect(result.sections[0]?.excerpts.every(x=>x.selectionBasis==='domain_distinctive')).toBe(true);
+    expect(result.sections[1]?.hasInterpretation).toBe(false);
+    expect(result.displayedDomainDistinctiveCount).toBe(3);
+    expect(result.displayedCrossDomainSharedCount).toBe(0);
+    expect(result.previewMeaningFingerprint).toBe(buildNatalN21ReaderFirstStory(snap,[source]).previewMeaningFingerprint);
   });
 
   it('separates actual N5/N7 calculated facts from the only interpretive text',()=>{
