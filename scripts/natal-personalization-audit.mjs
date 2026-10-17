@@ -24,6 +24,7 @@ import { renderNatalReaderReviewPacketV1 } from './natal-reader-review-packet.mj
 import { buildNatalN17DifferentiationAudit } from '../dist/preview/natal-grounded-reading-differentiation.js';
 import { buildNatalN21ReaderFirstStory } from '../dist/preview/natal-reader-first-story.js';
 import { traceNatalN25ConsumerMeaningAtoms } from '../dist/preview/natal-n25-consumer-meaning-atom-trace.js';
+import { buildNatalN25BAllPairForensics } from '../dist/preview/natal-n25b-all-pair-source-copy-forensics.js';
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expanded-source-reading.js';
 
@@ -604,6 +605,85 @@ async function main() {
     n25.atomCount + ' consumer atoms, ' + n25.exactUniqueMatches +
     ' unique matches, ' + n25.ambiguousMatches + ' ambiguous, ' +
     n25.unprovenMatches + ' unproven; ' + n25Path + '\n');
+
+  // N25b: complete the N10 19-unique-chart-pair map using real official
+  // service executions; retain and reuse N8's existing five audited traces.
+  const n25Known = new Map(n25Traces.map((trace) => [trace.caseId, trace]));
+  const n8Known = new Map(n8Traces.map((trace) => [trace.caseId, trace]));
+  const ruleSignatures = new Map(n3.ruleSignatures.map((x) =>
+    [x.caseId, x.matchedRuleSignature]));
+  const uniquePairCaseIds = [...new Set(n10.pairs.flatMap((p) =>
+    [p.left, p.right]))].sort();
+  const n25bCases = [];
+  for (const caseId of uniquePairCaseIds) {
+    const run = interpretedByCaseId.get(caseId);
+    const matchedRuleSignature = ruleSignatures.get(caseId);
+    if (!run || !matchedRuleSignature) {
+      throw new Error('N25b missing actual canonical execution or matched rule evidence: ' + caseId);
+    }
+    let trace = n25Known.get(caseId);
+    let themes = n8Known.get(caseId)?.researchThemes;
+    if (!trace || !themes) {
+      const internal = await runProductReadingInternals(
+        run.snapshot, run.interpretation, registry,
+        { requestId: 'n25b-audit-' + caseId, text: '사주',
+          referenceDateTime: auditNow.toISOString() },
+        {
+          outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
+          readingVersion: 'myeonghwa-general-natal-integrated-preview-host-v1',
+          artifactGeneratedAt: auditNow,
+        },
+      );
+      const exec = internal.execution;
+      if (exec.state !== 'completed' || exec.modelCalls !== 0 ||
+          !exec.canonicalSemantics || !exec.officialReadingPlan ||
+          !exec.officialReadingReport || !internal.delivery.artifact ||
+          internal.response.state !== 'delivered') {
+        throw new Error('N25b incomplete real service execution: ' + caseId);
+      }
+      const audit = traceNatalN25ConsumerMeaningAtoms({
+        semantics: exec.canonicalSemantics, plan: exec.officialReadingPlan,
+        report: exec.officialReadingReport,
+        artifact: internal.delivery.artifact, response: internal.response,
+      });
+      trace = {
+        caseId, snapshotId: audit.snapshotId, reportHash: audit.officialReadingReportHash,
+        readingId: audit.readingId, uniqueConsumerAtoms: audit.exactUniqueMatches,
+        repeatedOrSharedConsumerAtoms: audit.ambiguousMatches,
+        unprovenConsumerAtoms: audit.unprovenMatches, atoms: audit.atoms,
+      };
+      const canonical = new Map(exec.canonicalSemantics.units.map((u) =>
+        [u.claimId, u]));
+      themes = run.interpretation.claims.filter((claim) =>
+        claim.state === 'active' &&
+        /^GENERAL_NATAL_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u
+          .test(claim.claimType)).map((claim) => ({
+        claimType: claim.claimType,
+        canonicalTextFingerprint: canonical.get(claim.claimId)?.canonicalText === undefined
+          ? null : deterministicContentHash(canonical.get(claim.claimId).canonicalText),
+      }));
+    }
+    n25bCases.push({
+      caseId, matchedRuleSignature,
+      sourceThemes: themes.map((t) => ({
+        claimType: t.claimType,
+        canonicalTextFingerprint: t.canonicalTextFingerprint,
+      })),
+      consumerAtomCount: trace.atoms.length,
+      exactConsumerAtomCount: trace.uniqueConsumerAtoms,
+      ambiguousConsumerAtomCount: trace.repeatedOrSharedConsumerAtoms,
+      unprovenConsumerAtomCount: trace.unprovenConsumerAtoms,
+    });
+  }
+  const n25b = buildNatalN25BAllPairForensics(n10, n25bCases);
+  const n25bPath = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0, -5) + '.n25b-all-pairs.json'
+    : outputPath + '.n25b-all-pairs.json');
+  writeFileSync(n25bPath, JSON.stringify(n25b, null, 2) + '\n', 'utf8');
+  process.stdout.write('Natal N25b: ' + n25b.rawCasePairCount +
+    ' sample pairs / ' + n25b.uniqueChartPairCount +
+    ' unique chart pairs / ' + n25b.executedDistinctCaseCount +
+    ' actual internal executions; ' + n25bPath + '\n');
 
   const repeatedPairs = oldCollisions;
   const n4 = {
