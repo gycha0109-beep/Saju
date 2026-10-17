@@ -18,12 +18,52 @@ function condition(
   return matrix.sourceClauseAudit.find((p) => p.key === key);
 }
 describe('N27 時上偏財 source clause -> real chart condition audit (Research only)', () => {
+  it('07:30 actual 甲日 戊辰 exposes 戊 in the hour stem while matching the source example', () => {
+    const x = buildGeneralNatalN27HourWealthConditionMatrix(actual2010(7));
+    expect(x.observations).toMatchObject({
+      dayStemIsJia: true,
+      hourStem: '무',
+      hourBranch: '진',
+      printedExampleKind: 'JIA_WU_CHEN_VISIBLE_WU',
+      literalExampleStatus: 'MATCHED_LEXICAL_EXAMPLE_ONLY',
+      indirectWealthWuVisibleInHourStem: true,
+      hourWealthObservationChannel: 'HOUR_STEM_WU_VISIBLE',
+      yearJiVisible: true,
+      additionalJiIsRegularWealthForJia: true,
+    });
+    expect(x.observations.otherPillarVisibleJi).toContainEqual(
+      expect.objectContaining({ slot: 'year', stem: '기' }),
+    );
+    expect(x.sourceQualifiedHourWealthPatternEstablished).toBe(false);
+    expect(x.productionAuthorized).toBe(false);
+  });
+  it('real 07:30 vs 19:30 isolate hour exposed/hidden 戊 with unchanged other pillars', () => {
+    const visible = buildGeneralNatalN27HourWealthConditionMatrix(actual2010(7));
+    const concealed = buildGeneralNatalN27HourWealthConditionMatrix(actual2010(19));
+    expect(visible.observations.printedExampleKind).toBe('JIA_WU_CHEN_VISIBLE_WU');
+    expect(concealed.observations.printedExampleKind).toBe('JIA_JIA_XU_HIDDEN_WU');
+    expect(visible.observations.indirectWealthWuVisibleInHourStem).toBe(true);
+    expect(concealed.observations.indirectWealthWuVisibleInHourStem).toBe(false);
+    expect(concealed.observations.indirectWealthWuHiddenInHourBranch).toBe(true);
+    expect(visible.observations.otherPillarVisibleWu).toEqual(concealed.observations.otherPillarVisibleWu);
+    expect(visible.observations.otherPillarVisibleJi).toEqual(concealed.observations.otherPillarVisibleJi);
+    expect(visible.observations.otherPillarHiddenWu).toEqual(concealed.observations.otherPillarHiddenWu);
+    expect(visible.observations.otherPillarHiddenJi).toEqual(concealed.observations.otherPillarHiddenJi);
+    expect(visible.counterexampleBoundary).toMatchObject({
+      exposedStemOnlyRuleWouldDiscardOnePrintedExample: true,
+      comparisonIsOfRealAuthorizedCanonicalSnapshots: true,
+      interpretationClassified: false,
+    });
+    expect(visible.sourceQualifiedHourWealthPatternEstablished).toBe(false);
+    expect(concealed.sourceQualifiedHourWealthPatternEstablished).toBe(false);
+  });
   it('19:30: distinguishes 時支 hidden 戊 from 時干 exposed 戊, and 年干 正財己', () => {
     const x = buildGeneralNatalN27HourWealthConditionMatrix(actual2010(19));
     expect(x.observations).toMatchObject({
       dayStemIsJia: true,
       hourKnown: true,
       literalExampleStatus: 'MATCHED_LEXICAL_EXAMPLE_ONLY',
+      printedExampleKind: 'JIA_JIA_XU_HIDDEN_WU',
       hourStem: '갑',
       hourBranch: '술',
       indirectWealthWuVisibleInHourStem: false,
@@ -48,6 +88,8 @@ describe('N27 時上偏財 source clause -> real chart condition audit (Research
       expect.objectContaining({ slot: 'month', stem: '기' }),
     );
     expect(condition(x, 'OTHER_PALACE_EXCLUSION')).toMatchObject({
+      verseOnOtherExposure: '別無透出方為貴',
+      otherVisibleJiCount: 1,
       whichPalacesAndHiddenStemsCount: 'UNADJUDICATED',
     });
     expect(condition(x, 'NO_ADDITIONAL_WU_JI')).toMatchObject({
@@ -63,6 +105,8 @@ describe('N27 時上偏財 source clause -> real chart condition audit (Research
     });
     expect(condition(x, 'VISIBLE_VS_HIDDEN_PRIORITY')).toMatchObject({
       hourVisibilityChannel: 'HOUR_BRANCH_WU_HIDDEN_ONLY',
+      broadParallelInLunPianCai: '偏財好出亦不懼藏',
+      crossChapterDoesNotOverrideTheHourClause: true,
       sourceQualifiedPatternVerdict: 'UNADJUDICATED',
     });
     expect(x.provenance).toMatchObject({
@@ -93,6 +137,7 @@ describe('N27 時上偏財 source clause -> real chart condition audit (Research
   it('unknown birth hour cannot infer hour source predicates', () => {
     const x = buildGeneralNatalN27HourWealthConditionMatrix(actual2010(null));
     expect(x.observations.literalExampleStatus).toBe('HOUR_UNRESOLVED');
+    expect(x.observations.printedExampleKind).toBe('HOUR_UNRESOLVED');
     expect(x.observations.hourWealthObservationChannel).toBe('HOUR_UNRESOLVED');
     expect(x.sourceQualifiedHourWealthPatternEstablished).toBe(false);
     expect(x.previewAdmissionGranted).toBe(false);
@@ -112,6 +157,7 @@ describe('N27 時上偏財 source clause -> real chart condition audit (Research
     ]);
     expect(a.chartLevelStrengthApproved).toBe(false);
     expect(a.classicalOnlyOneWealthPredicateAdjudicated).toBe(false);
+    expect(a.counterexampleBoundary.requiredSeparateAxes).toHaveLength(4);
     expect(a.status).toBe('RESEARCH_CONDITION_AUDIT_ONLY');
   });
 });

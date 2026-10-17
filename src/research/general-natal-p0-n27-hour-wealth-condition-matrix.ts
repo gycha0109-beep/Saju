@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27BijeonWealthShadow } from './general-natal-p0-n27-bijeon-wealth-shadow.js';
 
 export const GENERAL_NATAL_N27_HOUR_WEALTH_CONDITION_VERSION =
-  'saju-n27-hour-wealth-source-condition-matrix-v1' as const;
+  'saju-n27-hour-wealth-source-condition-matrix-v2' as const;
 
 export function buildGeneralNatalN27HourWealthConditionMatrix(
   snapshot: CanonicalSajuSnapshot,
@@ -19,6 +19,19 @@ export function buildGeneralNatalN27HourWealthConditionMatrix(
   const dayIsJia = shadow.facts.dayStem === '갑';
   const hourKnown = shadow.facts.hourKnown;
   const jiaXuExample = shadow.facts.literalJiaXuMatched;
+  // The printed source has two different 甲日 examples: 戊辰 and 甲戌.
+  // An hour-stem-only 戊 filter would discard the explicit 甲戌 example.
+  const jiaWuChenExample = dayIsJia && shadow.facts.hourKnown &&
+    shadow.facts.hourStem === '무' && shadow.facts.hourBranch === '진';
+  const printedExampleKind = !hourKnown
+    ? 'HOUR_UNRESOLVED' as const
+    : !dayIsJia
+      ? 'DIFFERENT_DAY_STEM' as const
+      : jiaWuChenExample
+        ? 'JIA_WU_CHEN_VISIBLE_WU' as const
+        : jiaXuExample
+          ? 'JIA_JIA_XU_HIDDEN_WU' as const
+          : 'NO_EXAMPLE_MATCH' as const;
   // For a 甲 day, 戊 = 偏財 and 己 = 正財. Record the distinction in
   // observations. The classical prohibition names *both* 戊 and 己.
   const yearJi = shadow.facts.otherPillarWuJiVisibleStems.some(
@@ -42,7 +55,7 @@ export function buildGeneralNatalN27HourWealthConditionMatrix(
     ? 'HOUR_UNRESOLVED' as const
     : !dayIsJia
       ? 'DIFFERENT_DAY_STEM' as const
-      : jiaXuExample
+      : (jiaXuExample || jiaWuChenExample)
         ? 'MATCHED_LEXICAL_EXAMPLE_ONLY' as const
         : 'NOT_MATCHED' as const;
 
@@ -52,6 +65,9 @@ export function buildGeneralNatalN27HourWealthConditionMatrix(
     dayStemIsJia: dayIsJia,
     hourKnown,
     literalExampleStatus,
+    printedExampleKind,
+    samePrintedClauseAllowsBothVisibleAndHiddenHourWu:
+      jiaWuChenExample || jiaXuExample,
     hourStem: shadow.facts.hourStem,
     hourBranch: shadow.facts.hourBranch,
     // `天元透出為妙，支內所藏次之` supplies an exposure distinction,
@@ -71,6 +87,11 @@ export function buildGeneralNatalN27HourWealthConditionMatrix(
     otherPillarHiddenJi: Object.freeze(otherPillarHiddenJi),
     yearJiVisible: yearJi,
     additionalJiIsRegularWealthForJia: dayIsJia && yearJi,
+    otherVisibleStemWuCount: otherPillarVisibleWu.length,
+    otherVisibleStemJiCount: otherPillarVisibleJi.length,
+    otherHiddenWuCount: otherPillarHiddenWu.length,
+    otherHiddenJiCount: otherPillarHiddenJi.length,
+    otherStemOnlyCountCannotStandInForAllHiddenOccurrences: true as const,
     otherPillarVisibleWuOrJi:
       shadow.facts.otherPillarWuJiVisibleStems.length > 0,
     otherPillarHiddenWuOrJi:
@@ -88,6 +109,8 @@ export function buildGeneralNatalN27HourWealthConditionMatrix(
       key: 'JIA_XU_HOUR_EXAMPLE' as const,
       clause: '甲日見戊辰或甲戌時' as const,
       observationStatus: literalExampleStatus,
+      actualPrintedExampleKind: printedExampleKind,
+      visibleWuInHourIsNotRequiredForThePrintedJiaXuExample: true as const,
       predicateApplicability: 'LEXICAL_EXAMPLE_NOT_PATTERN_ADMISSION' as const,
     }),
     Object.freeze({
@@ -95,6 +118,11 @@ export function buildGeneralNatalN27HourWealthConditionMatrix(
       clause: '時上偏財别宮忌見' as const,
       otherPillarWuJiVisibleObserved: observations.otherPillarVisibleWuOrJi,
       otherPillarWuJiHiddenObserved: observations.otherPillarHiddenWuOrJi,
+      verseOnOtherExposure: '別無透出方為貴' as const,
+      otherVisibleWuCount: observations.otherVisibleStemWuCount,
+      otherVisibleJiCount: observations.otherVisibleStemJiCount,
+      otherHiddenWuCount: observations.otherHiddenWuCount,
+      otherHiddenJiCount: observations.otherHiddenJiCount,
       whichPalacesAndHiddenStemsCount: 'UNADJUDICATED' as const,
     }),
     Object.freeze({
@@ -120,6 +148,8 @@ export function buildGeneralNatalN27HourWealthConditionMatrix(
       clause: '天元透出為妙支內所藏次之' as const,
       hourVisibilityChannel: observations.hourWealthObservationChannel,
       hourBranchHiddenIsNotHourStemVisible: true as const,
+      broadParallelInLunPianCai: '偏財好出亦不懼藏' as const,
+      crossChapterDoesNotOverrideTheHourClause: true as const,
       sourceQualifiedPatternVerdict: 'UNADJUDICATED' as const,
     }),
     Object.freeze({
@@ -133,6 +163,8 @@ export function buildGeneralNatalN27HourWealthConditionMatrix(
       clause: '時上偏財怕逢兄弟' as const,
       observedBijeon: observations.bijeonObserved,
       observedExactGyeopJae: observations.exactGyeopJaeObserved,
+      parallelPoem: '比肩刼財還無遇' as const,
+      parallelPoemDistinguishesTwoPeerCategories: true as const,
       classicalXiongDiDoesNotAuthorizeExactT8Replacement: true as const,
     }),
   ]);
@@ -150,6 +182,21 @@ export function buildGeneralNatalN27HourWealthConditionMatrix(
       wikiSiKuEditableDisagreement: '柱中不宜再見戊巳' as const,
       historicalWitnessLineageIndependenceEstablished: false as const,
       governingClassicalPredicateMethodApproved: false as const,
+    }),
+    counterexampleBoundary: Object.freeze({
+      exposedStemOnlyRuleWouldDiscardOnePrintedExample: true as const,
+      pairedRealChartTimeCases: Object.freeze([
+        '2010-02-03T07:30_JIA_WU_CHEN' as const,
+        '2010-02-03T19:30_JIA_JIA_XU' as const,
+      ]),
+      comparisonIsOfRealAuthorizedCanonicalSnapshots: true as const,
+      requiredSeparateAxes: Object.freeze([
+        'HOUR_VISIBLE_VS_HIDDEN_WU' as const,
+        'OTHER_PILLAR_VISIBLE_WU_JI' as const,
+        'OTHER_PILLAR_HIDDEN_WU_JI' as const,
+        'CLASSICAL_SINGLETON_AND_PALACE_SCOPE_UNAPPROVED' as const,
+      ]),
+      interpretationClassified: false as const,
     }),
     sourceQualifiedHourWealthPatternEstablished: false as const,
     classicalOnlyOneWealthPredicateAdjudicated: false as const,

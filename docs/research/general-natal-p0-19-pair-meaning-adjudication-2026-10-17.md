@@ -258,3 +258,14 @@ node scripts/research/inspect-n27-volume-five-print.mjs \
 이 문구는 일반적인 과학적 미래 예측이나 사용자별 재정 결과 근거가 아니다. 역사 문헌의 방법론 검증에 한정한다. 새 `N27HourWealthConditionMatrix`가 `OTHER_PALACE_EXCLUSION`, `NO_ADDITIONAL_WU_JI`, `ONLY_ONE_POSITION`, `VISIBLE_VS_HIDDEN_PRIORITY`, `STRENGTH_OFFICER_SEAL_AND_BREAK` 등 **7개 source scope**를 분리하여 원본의 조건을 손실 없이 추적한다.
 
 **판정:** 기존 문헌 검증의 *문자 계보 문제*를 분리했고, 즉시 확인할 수 있는 계산상의 hour hidden/visible 및 다른 기둥 `己` 사실을 검증한다. 그러나 **格 판정, 只要一位, 日主旺衰, 官印/衝破, 역사적 兄弟 의미의 Claim 적용**은 여전히 `UNADJUDICATED` 또는 `UNCLASSIFIED`이다. 다른 출처·체계의 가정을 몰래 끼워 넣지 않는다. 연구 Draft/Bridge Draft만 반영하고 5 Claim HOLD, #17 `METHODOLOGY_CONFLICT`, 기존 N13 실제 겁재 T8 1 vs 0, 의미 승인 0을 유지.
+
+
+## 19. 再見戊己/只要一位 실제 출생시각 반례 (2026-10-18)
+
+2010-02-03 동일한 甲일에 Authorized Canonical Calculation으로 07:30 戊辰時 및 19:30 甲戌時를 각각 생성하고 三命通會 卷五의 원문 사례 甲日見戊辰或甲戌時와 일치하는지 테스트한다. 시천간 戊 투출만을 時上偏財 고전 예시의 필수 전제라고 구현하면 문헌이 직접 나열한 甲戌 예시를 누락하므로 그 단순 규칙은 부적절하다. 두 시각은 같은 날이므로 년·월·일의 구조 데이터가 동일하고 시주의 노출/숨김 채널만 달라진다.
+
+07:30은 甲日 戊辰時로 時干戊 노출 + 辰藏戊, 19:30은 甲日 甲戌時로 時干甲(戊 아님) + 戌藏戊. 다른 기둥의 年干己 正財 및 각 지지 지장간 戊/己 관측은 동일하다. 양 명식 모두 원문의 예시와 글자상 일치하지만 모두 格 성립 판정 미승인이며 운세 예측을 생산하지 않는다.
+
+同卷 論偏財의 偏財好出亦不懼藏은 일반 偏財에서 투출/장간 두 채널을 언급하는 문장일 뿐 時上 편재 전문 규칙의 직접 승인에 해당하지 않는다. 時上偏財의 別無透出方為貴라는 시구와 柱中不宜再見戊己, 支干須要用搜羅를 동시에 고려해야 하므로 別宮/再見의 정확한 counting scope는 UNADJUDICATED다. 同章 比肩刼財還無遇 역시 양 십신을 명시적으로 거론하지만 기존 N13 특정 겁재 Rule을 비견으로 일반화하는 근거는 아니다.
+
+Research condition matrix v2는 printedExampleKind, visible/hidden other-pillar 戊己 건수, source-context citations, 시간별 판독 결과 및 명시적 금지선을 구분한다. 07:30 대 19:30의 실제 계산 pair 회귀 테스트를 추가했고 기타 05:30/시간 미상의 회귀를 유지한다. 모든 결과는 RESEARCH_CONDITION_AUDIT_ONLY, 다섯 Claim HOLD, 只要一位 미판정, chart 강약 미분류, Preview/Official/Production 변경 0건이다.
