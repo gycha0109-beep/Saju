@@ -735,10 +735,10 @@ async function main() {
   const n26Path = resolve(outputPath.endsWith('.json')
     ? outputPath.slice(0,-5)+'.n26-http-transport.json'
     : outputPath+'.n26-http-transport.json');
-  writeFileSync(n26Path,JSON.stringify(n26Report,null,2)+'\\n','utf8');
+  writeFileSync(n26Path,JSON.stringify(n26Report,null,2)+'\n','utf8');
   process.stdout.write('Natal N26: '+n26Report.exactPreservedCases+'/'+
     n26Report.eligibleDeliveredCaseCount+' delivered meaning copies preserved after N9; '+
-    n26Path+'\\n');
+    n26Path+'\n');
 
   const repeatedPairs = oldCollisions;
   const n4 = {
