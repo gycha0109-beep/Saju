@@ -25,8 +25,8 @@ function fixture() {
       caseId:id,responseState:known?'delivered':'partial_evidence',
       actualChartHash:known?'chart-'+index:'chart-unknown-'+id,
       birthTimeKnown:known,unchangedReadingId:true,
-      selectedParagraphCount:known?1:0,
-      selectedParagraphs:known?[paragraph]:[],
+      selectedParagraphCount:known?2:0,
+      selectedParagraphs:known?['N27 source introduction',paragraph]:[],
       selfServiceTextFingerprint:known?'reader-'+index:null,
     });
     n27b.push({
