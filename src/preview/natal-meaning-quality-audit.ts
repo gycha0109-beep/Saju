@@ -32,7 +32,7 @@ export interface NatalMeaningQualityAudit {
   limitations: readonly string[];
 }
 
-function stripCalculatedParagraph(response: ProductReadingResponse): ProductReadingResponse {
+export function stripCalculatedParagraph(response: ProductReadingResponse): ProductReadingResponse {
   const reading = response.reading;
   if (reading === undefined) return response;
 

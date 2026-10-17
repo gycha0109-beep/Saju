@@ -25,6 +25,7 @@ import { buildNatalN17DifferentiationAudit } from '../dist/preview/natal-grounde
 import { buildNatalN21ReaderFirstStory } from '../dist/preview/natal-reader-first-story.js';
 import { traceNatalN25ConsumerMeaningAtoms } from '../dist/preview/natal-n25-consumer-meaning-atom-trace.js';
 import { buildNatalN25BAllPairForensics } from '../dist/preview/natal-n25b-all-pair-source-copy-forensics.js';
+import { auditNatalN26HttpMeaningTransport } from '../dist/preview/natal-n26-http-meaning-transport.js';
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expanded-source-reading.js';
 
@@ -684,6 +685,60 @@ async function main() {
     ' sample pairs / ' + n25b.uniqueChartPairCount +
     ' unique chart pairs / ' + n25b.executedDistinctCaseCount +
     ' actual internal executions; ' + n25bPath + '\n');
+
+  // N26: independently reproduce the HTTP meaning body through the existing
+  // Product service and compare after the HOST's exact N9 compaction, while
+  // stripping only source-validated N5/N7 bounded *calculation facts*.
+  const n26 = [];
+  const httpByCaseId = new Map(inputs.map(input => [input.caseId, input.response]));
+  for (const fixture of fixtures) {
+    const realHttpProduct = httpByCaseId.get(fixture.caseId);
+    if (!realHttpProduct) throw new Error('N26 missing real HTTP case ' + fixture.caseId);
+    if (realHttpProduct.state !== 'delivered' &&
+        realHttpProduct.state !== 'delivered_with_fallback') continue;
+    const run = interpretedByCaseId.get(fixture.caseId);
+    if (!run) throw new Error('N26 missing same-input canonical execution ' + fixture.caseId);
+    const internal = await runProductReadingInternals(
+      run.snapshot, run.interpretation, registry,
+      { requestId:'n26-http-parity-' + fixture.caseId,
+        text:'사주', referenceDateTime:auditNow.toISOString() },
+      { outputSchemaVersion:SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
+        readingVersion:'myeonghwa-general-natal-integrated-preview-host-v1',
+        artifactGeneratedAt:auditNow },
+    );
+    if (internal.execution.state !== 'completed' || internal.execution.modelCalls !== 0 ||
+        internal.response.state !== 'delivered') {
+      throw new Error('N26 missing deterministic internal Product reading: ' + fixture.caseId);
+    }
+    n26.push(auditNatalN26HttpMeaningTransport({
+      caseId:fixture.caseId,
+      internalProduct:internal.response,
+      realHttpProduct,
+    }));
+  }
+  const n26Report = {
+    version:'saju-natal-n26-internal-to-live-http-source-meaning-preservation-v1',
+    lifecycle:'internal_quality_audit',
+    mayPublish:false,maySell:false,mayApproveResearchMeaning:false,
+    originalHttpCaseCount:inputs.length,
+    eligibleDeliveredCaseCount:n26.length,
+    exactPreservedCases:n26.filter(x=>x.exactAfterPermittedN9Compaction).length,
+    mismatchCases:n26.filter(x=>!x.exactAfterPermittedN9Compaction).map(x=>x.caseId),
+    exactRepeatedKeyPointsRemoved:n26.reduce((n,x)=>n+x.compactedLiteralDuplicateCount,0),
+    cases:n26,
+    limitations:[
+      'The two independently executed requests have distinct reading identity.',
+      'Only guarded N5/N7 factual observations are excluded from meaning parity; N9 is exact same-block compaction.',
+      'A passing report proves preservation of the same source-owned copy, never individual interpretive usefulness.',
+    ],
+  };
+  const n26Path = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0,-5)+'.n26-http-transport.json'
+    : outputPath+'.n26-http-transport.json');
+  writeFileSync(n26Path,JSON.stringify(n26Report,null,2)+'\\n','utf8');
+  process.stdout.write('Natal N26: '+n26Report.exactPreservedCases+'/'+
+    n26Report.eligibleDeliveredCaseCount+' delivered meaning copies preserved after N9; '+
+    n26Path+'\\n');
 
   const repeatedPairs = oldCollisions;
   const n4 = {
