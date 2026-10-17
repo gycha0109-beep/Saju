@@ -8,6 +8,7 @@ import { compactGeneralNatalConsumerRepeatedInsights } from '../preview/general-
 import { attachGeneralNatalCalculatedContext } from '../preview/general-natal-consumer-fact-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../interpretation/general-natal-integrated-reading-registry.js';
 import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../llm/prompt-compiler.js';
+import type { OfficialReadingSemanticProjectionInputV1 } from '../reading/official-reading-semantic-projection.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import {
   createMyeonghwaProductHost,
@@ -75,7 +76,7 @@ export function createGeneralNatalIntegratedPreviewProductHost(
         artifactGeneratedAt: new Date(context.requestedAt),
         ...(options.enableAutonomousCanonicalFactQualifiers === true
           ? {
-              officialReadingSemanticProjectionResolver: (input) => {
+              officialReadingSemanticProjectionResolver: (input: OfficialReadingSemanticProjectionInputV1) => {
                 if (observedSnapshot === undefined) {
                   throw new TypeError('N28b Canonical qualifier lacks request-local snapshot.');
                 }
