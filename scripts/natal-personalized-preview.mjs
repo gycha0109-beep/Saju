@@ -12,6 +12,8 @@ import { buildNatalStructuralEvidence } from '../dist/preview/natal-structural-e
 import { buildNatalSynthesisPreview } from '../dist/preview/natal-synthesis-preview.js';
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN30bFiveDomainVerifiedReader } from '../dist/preview/natal-n30b-five-domain-verified-reader.js';
+import { buildNatalN31FourDomainClaimReadings } from '../dist/preview/natal-n31-four-domain-claim-readings.js';
+import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
@@ -344,6 +346,39 @@ function renderN30bVerifiedGeneral(result) {
     receipts + '</ul></details></section>';
 }
 
+function renderN31FourDomainResearch(result) {
+  if (result.mayPublish || result.maySell || result.newSemanticRulesAdded) {
+    throw new TypeError('N31 cannot promote research claims to consumer authority');
+  }
+  const titles={career:'직업·일',wealth:'재물·자원',business:'사업·실행',relationship:'관계'};
+  const cards=result.sections.map(section=>{
+    const excerpts=section.visibleClaims.map(claim=>
+      '<article class="reader-paragraph"><h3>'+escapeHtml(claim.headline)+'</h3>' +
+      '<p>'+escapeHtml(claim.summary)+'</p>' +
+      '<p class="reader-note">이 명식에서 관측한 십신: '+
+      escapeHtml(claim.calculatedPositions.join(' · '))+'</p>' +
+      '<details><summary>기존 연구 Claim · Rule · Source</summary><p>'+
+      escapeHtml(claim.claimType)+' · '+escapeHtml(claim.claimRuleId)+
+      ' · '+escapeHtml(claim.methodologyId)+' · '+
+      escapeHtml(claim.sourceIds.join(' / '))+'</p></details></article>').join('');
+    return '<div class="reader-domain"><div class="reader-domain-head"><h3>'+
+      escapeHtml(titles[section.domain])+'</h3><small>기존 T8 연구 · '+
+      escapeHtml(section.state)+'</small></div>'+
+      (excerpts||'<p class="limited">현재 검증 가능한 연구 문장이 없습니다. 빈칸을 임의로 채우지 않습니다.</p>')+
+      (section.hiddenByLimitCount||section.heldConflictingClaimCount
+        ? '<p class="reader-note">화면 범위 밖 원문 '+
+          section.hiddenByLimitCount+'개 · 충돌 보류 '+
+          section.heldConflictingClaimCount+'개</p>':'')+'</div>';
+  }).join('');
+  return '<section class="domain research-scope"><div class="domain-heading">'+
+    '<h2>네 분야의 명식별 기존 연구 해석</h2><span>N31 · 출처 확인 · 연구 전용</span></div>'+
+    '<p class="limited">실제 원국과 기존 T8 연구 규칙에서 발행된 직업·재물·사업·관계의 개별 해석만 보여줍니다. '+
+    '이는 아래 실제 HTTP 제품 응답에 새로 승인된 문장이 아니며, 분야별 성과나 미래를 확정하지 않습니다.</p>'+
+    '<div class="reader-domains">'+cards+'</div>'+
+    '<details><summary>연구 범위 및 권한 제한</summary>'+
+    result.limitations.map(x=>'<p>'+escapeHtml(x)+'</p>').join('')+'</details></section>';
+}
+
 function renderPillars(summary) {
   if (summary === undefined) return '<p>명식 요약을 사용할 수 없습니다.</p>';
   return `<div class="pillars">${(['year', 'month', 'day', 'hour'])
@@ -355,7 +390,7 @@ function renderPillars(summary) {
     .join('')}</div>`;
 }
 
-function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains) {
+function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -401,6 +436,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
   </header>
   ${renderPillars(general?.calculationSummary)}
   ${renderN30bVerifiedGeneral(verifiedFiveDomains)}
+  ${renderN31FourDomainResearch(domainResearch)}
   ${renderReaderFirstStory(story, expanded)}
   ${renderActualChartRelations(relations)}
   <details class="full-data"><summary>전체 원문·명식 계산 근거·연구용 부가 해설 펼쳐보기</summary>
@@ -484,6 +520,13 @@ async function main() {
   );
   const brief = buildNatalN16GroundedReaderBrief(calculated.snapshot, realSources);
   const {story, full:expanded} = verifiedFiveDomains;
+  const n31Registry = createBusinessNatalReadingCandidateRegistry(researchNow.toISOString());
+  const n31Execution = runInterpretation(calculated.snapshot, n31Registry, {
+    requestId:'n31-domain-semantic-research-internal-only', now:researchNow,
+  });
+  const domainResearch = buildNatalN31FourDomainClaimReadings(
+    calculated.snapshot,n31Execution,n31Registry,
+  );
   const themes = buildNatalActivatedThemePreview(interpretation);
   const applied = buildNatalAppliedThemeContext(evidence, themes);
   const researchRegistry = createGeneralNatalSourceBoundedRegistry(researchNow.toISOString());
@@ -493,7 +536,10 @@ async function main() {
   const relations = buildNatalN22ChartRelationGuide(
     calculated.snapshot, researchExecution, researchRegistry,
   );
-  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains), 'utf8');
+  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch), 'utf8');
+  process.stdout.write('N31 specialist source-backed Research only: ' +
+    domainResearch.sections.map(s=>s.domain+':'+s.visibleClaims.length).join(', ') +
+    '; existing T8 meaning only; Production/Commerce HOLD\\n');
   process.stdout.write('N30b five-domain General verification: ' +
     (verifiedFiveDomains.generalSourceOverview?.verifiedReceipts.length ?? 0) +
     ' source-verified claims in reader-first General; other four domain meanings unchanged; no authority promotion\n');
