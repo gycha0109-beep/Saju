@@ -125,7 +125,7 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
     version: GENERAL_NATAL_N27_CLAIM_BRIDGE_HOLD_VERSION,
     issue: 2557 as const,
     researchPr: 2553 as const,
-    researchHeadReviewed: '53b65f336ae276f92fa81aa6b0050760dbd6b3c9' as const,
+    researchHeadReviewed: '29a14e348e5c5136aa2c97394d332a081c5af3d5' as const,
     researchPrMergedAtReview: false as const,
     researchScope: 'RESEARCH_ONLY_2010_ACTUAL_N13_T8_1_VS_0' as const,
     parentBridgeReviewId: existingBridge.reviewId,
