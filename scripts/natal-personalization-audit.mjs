@@ -862,7 +862,7 @@ async function main() {
   const n27bPath=resolve(outputPath.endsWith('.json')?
     outputPath.slice(0,-5)+'.n27b-claim-receipts.json':
     outputPath+'.n27b-claim-receipts.json');
-  writeFileSync(n27bPath,JSON.stringify(n27b,null,2)+'\\n','utf8');
+  writeFileSync(n27bPath,JSON.stringify(n27b,null,2)+'\n','utf8');
   process.stdout.write('Natal N27b verified '+n27b.checkedReceipts+
     ' exact source-bound Claim receipts over '+n27b.sourcedKnownTime+
     ' known-time cases; same-birth stable; '+n27bPath+'\\n');
