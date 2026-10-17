@@ -129,7 +129,7 @@ Bridge: `recurrenceCountingScopeMethodApproved=false`, `classicalWeiCountingMeth
 
 ## 2026-10-18 N27 v3 — 범위와 셈 단위의 독립 민감도 / Claim HOLD
 
-Research Draft #2553 **정확한 HEAD `b04ddea0a93463fe5463b0a9393ad7797c886221`**, `saju-n27-wu-ji-recurrence-scope-sensitivity-v3`에 증거를 재바인딩. 기존 4가지 戊/戊己 × 투간/藏干 가설을 유지하고, `別宮`의 日柱 포함 여부 × `再見`의 藏干 포함 여부로 **다른 4개 계산 대조 가설**을 추가했다. 이는 정식 判格 Rule이 아니라 실제 Canonical 명식 관측의 위치·기둥·글자 조합을 검수하기 위한 read-only 도구다.
+Research Draft #2553 **정확한 HEAD `eff8a1225893811c428c28e2dcc456d60f2006e2`**, `saju-n27-wu-ji-recurrence-scope-sensitivity-v3`에 증거를 재바인딩. 기존 4가지 戊/戊己 × 투간/藏干 가설을 유지하고, `別宮`의 日柱 포함 여부 × `再見`의 藏干 포함 여부로 **다른 4개 계산 대조 가설**을 추가했다. 이는 정식 判格 Rule이 아니라 실제 Canonical 명식 관측의 위치·기둥·글자 조합을 검수하기 위한 read-only 도구다.
 
 2010-02-03 19:30 甲戌時에 대해 신규 회귀 테스트의 expected counts:
 
@@ -147,3 +147,8 @@ Research Draft #2553 **정확한 HEAD `b04ddea0a93463fe5463b0a9393ad7797c886221`
 - 同卷 「論正官」의 `甲生丑月，內有辛金，又值酉時` 및 `若天干復透辛多`는 **정관** 문맥에서 지지 내부의 글자와 추가 투간을 별도 중복 논의에 포함하는 사례. [識典古籍](https://www.shidianguji.com/zh/book/SK1610/chapter/1mecpymm3qw4r) / [國學3000](https://guoxue3000.com/tw/books/330/chapters/77).
 
 두 source 비교는 *온라인 전사 용례*이며 새로운 인쇄본 직접 검증 또는 時上偏財 조건 이전 승인으로 취급하지 않는다. 따라서 Day pillar within `別宮` = 미확정; 藏干 포함한 `再見`의 성립 위반 판정 = 미확정; `只要一位`의 位 단위 = 미확정. 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, 기존 N13 정확 겁재 T8 **1 vs 0**, reviewer attestation/TrustGrant/Preview/Official/Production/Consumer 의미 승격 0, PR Draft/미병합 유지.
+
+
+### v3 회귀 타입 오류 정정
+
+최초 v3 Research HEAD `b04ddea0a93463fe5463b0a9393ad7797c886221`에서 CI TypeScript 타입 검사 3건이 실패하여 테스트 배열 접근 표현만 교정했다. 현재 Bridge가 참조하는 Research 정확 HEAD는 `eff8a1225893811c428c28e2dcc456d60f2006e2`이다. 실패했던 CI를 성공으로 기록하지 않으며, 교정 이후 정확 HEAD의 전체 CI를 별도로 확인한다. 이 수정은 해석 권한에 영향을 주지 않는다.
