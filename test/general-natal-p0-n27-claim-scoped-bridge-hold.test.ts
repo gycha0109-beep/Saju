@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('fba6103859a638bdaee8150e9b6d6deaa319ed0a');
+    expect(review.researchHeadReviewed).toBe('ee7012926ec873c748ee9592b2a4c9835052e114');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -53,6 +53,13 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.adjudication2010).toBe('METHODOLOGY_CONFLICT');
     expect(review.distinctConsumerMeaningApproved).toBe(0);
     expect(review.sourceLocatorCaveat).toContain('以下內容與書不合');
+    expect(review.sourceLocatorCaveat).toContain('四庫全書本）卷五');
+    expect(review.verifiedOnlineSiKuVolumeFiveLocator).toBe(true);
+    expect(review.siKuVolumeFiveDirectlyLocatedSections).toEqual([
+      '論正財', '論偏財', '時上偏財',
+    ]);
+    expect(review.twoIndependentPhysicalWitnessesVerified).toBe(false);
+    expect(review.generalCopyVolumeSixHasDiscrepantEditorialWarning).toBe(true);
   });
 
   it('keeps each claim/observation/qualifier blocked and existing Preview authorization unchanged', () => {

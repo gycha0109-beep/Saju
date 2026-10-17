@@ -125,7 +125,7 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
     version: GENERAL_NATAL_N27_CLAIM_BRIDGE_HOLD_VERSION,
     issue: 2557 as const,
     researchPr: 2553 as const,
-    researchHeadReviewed: 'fba6103859a638bdaee8150e9b6d6deaa319ed0a' as const,
+    researchHeadReviewed: 'ee7012926ec873c748ee9592b2a4c9835052e114' as const,
     researchPrMergedAtReview: false as const,
     researchScope: 'RESEARCH_ONLY_2010_ACTUAL_N13_T8_1_VS_0' as const,
     parentBridgeReviewId: existingBridge.reviewId,
@@ -144,7 +144,15 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
     targetClaims: reviewed,
     candidateBijeonWealthRuleExistsInThisReview: false as const,
     sourceLocatorCaveat:
-      'Volume-six matching passages belong to general 三命通會/卷六 online transcription; same-passage match in 四庫全書本/卷06 is unestablished; 一般卷六 page warns （以下內容與書不合） before these sections, so historical attribution is unverified.',
+      '三命通會（四庫全書本）卷五 online transcription directly locates 論正財/論偏財/時上偏財; general 卷六 version has （以下內容與書不合） warning and nonidentical editorial characters. Physical scan/folio and lineage unverified; no independent manuscript or reviewer authority.',
+    verifiedOnlineSiKuVolumeFiveLocator: true as const,
+    siKuVolumeFiveDigitalSource:
+      'https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05' as const,
+    siKuVolumeFiveDirectlyLocatedSections: Object.freeze(
+      ['論正財', '論偏財', '時上偏財'] as const,
+    ),
+    generalCopyVolumeSixHasDiscrepantEditorialWarning: true as const,
+    twoIndependentPhysicalWitnessesVerified: false as const,
     independentPrintReviewCompleted: false as const,
     reviewerAttestationCreated: false as const,
     reviewerTrustGrantCreated: false as const,
