@@ -42,8 +42,9 @@
 - 출처 판면·교정 저본, 월령/왕쇠, 실제 T0 卯藏乙·지장간 처리, 다른 기둥 財 관측 사이 관계, N15 과잉 결론 차단을 Reviewer가 기록하기 전에는 **Bridge claim/observation/qualifier 모두 `hold`**. 코드의 exact `겁재` 조건은 기존 연구용 T8 안전 축소이므로 유지하며, **실행 결과를 수정하지 않는다**.
 - 고정 연구 감사 객체: `GENERAL_NATAL_N10_PEER_WEALTH_SEMANTIC_SCOPE_AUDIT` in `src/research/general-natal-p0-meaning-collision-adjudication.ts`; `test/general-natal-p0-meaning-collision-adjudication.test.ts`에서 source clauses, 19분류, 무권한 차단을 검증. **결정은 Research HOLD이며 새 production 권한이 아님**.
 
-## 卷六 추가 판정 — Bridge #2557 / Engine 분리 인계 (2026-10-17)
+## 권차 정정 완료: 四庫全書本 卷五 × 일반 전사 卷六 — Bridge #2557 / Engine 인계 (2026-10-17)
 
-- **Research source-only / 출처 정정:** 해당 「論正財」「論偏財」「時上偏財」 구절은 일반 『三命通會/卷六』 온라인 전사에서 확인됨. 『四庫全書本/卷06』에는 같은 조항을 현재 직접 대응하지 못하므로 **기존 같은 페이지·同一 전사로 간주한 출처 식별은 철회**. 독립 witness 2개 증명 없음. 특히 일반 전사 페이지의 이 조항 직전 `（以下內容與書不合）` 편집 경고 때문에 세 조항의 정본 귀속은 확인되지 않았다. 인쇄 판면·底本·版次·revision, 편집 경고의 영향 범위, 두 페이지의 조항 구성 차이, 교감·reviewer 검증은 HOLD. 관련 구절은 **신규 고전 증거가 아니라 미확인 검색 단서**다. 근거·조건은 19-pair 보고서 §10 및 `GENERAL_NATAL_N10_PEER_WEALTH_SEMANTIC_SCOPE_AUDIT.samyeongVolumeSix`에 고정.
-- **Bridge:** `比肩`이 재성 관계에서 무조건 제외된다는 부정 결론도, `比肩+財`가 무조건 분재한다는 긍정 결론도 금지. `甲申日/甲戌時`의 일부 문자 일치를 「時上偏財」 격 성립으로 오인하지 말 것: 동일 문맥의 `柱中不宜再見戊己`, `只要一位`, 日主강약·月令·官印·冲破 조건 검증이 필요. `claim/observation/qualifier/hold` 모두 현행 **hold** 권고 유지. 관련 결정을 기존 #2557에서 claim-scoped로 기록.
-- **Engine:** 기존 `겁재` 정확 조건과 N13 1-vs-0 회귀를 변경하지 않는다. `比肩→財` 새 Registry/가중치/문구 생성 불가. 향후 별도 Research shadow 후보를 열더라도 `正財/偏財`, `本命/行運`, 재성 중복, 강약, 출처 위치, 반례를 독립 게이트로 모두 명시.
+- **Research 증거 회수:** `論正財`·`論偏財`·`時上偏財` 세 조항을 [四庫全書本/卷05](https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05)에서 직접 찾음. 기존 일반판 [卷六](https://zh.wikisource.org/zh-hant/三命通會/卷六)의 `（以下內容與書不合）` 경고는 여전히 유효; **권차/전사 계보 차이**로 기록. 이전 `四庫全書本/卷06` 귀속 오류는 수정. 온라인 전사는 인쇄 scan/folio 인증이나 독립 증거 두 건이 아니며 기존 SourceQuality/reviewer/lifecycle은 불변. 세 조항의 `刼/劫`, `巳/己` 등 글자 차이를 판본 교감 없이 동일시하지 않음.
+- **원문 조건:** 四庫卷五 `身弱財多喜兄弟羊刃為助`와 `財生身旺兩相停不喜再見比肩` 등 방향이 갈리는 문장을 한 문맥에서 확인. `時上偏財`의 `甲日見...甲戌時`는 2010 19:30과 표면상 맞지만 `柱中不宜再見戊巳`, `只要一位`, 정·편재 구별, 월령/강약/官印/刑衝을 만족했다고 볼 수 없어 독립 의미 판단 보류.
+- **Bridge:** 기존 정확한 Claim 다섯 개 `hold`, `RETURN_TO_RESEARCH` 유지. 새로운 문헌 locator는 기계적 데이터 품질 개선이지 reviewer/trust/semantic admission 대체 불가. 이전 source-integrity 미결 중 '章節卷次 온라인 위치' 부분만 **위치 식별 완료**로 갱신한다.
+- **Engine:** 2010 N13 실제 T8 1-vs-0, N15 overclaim, N12 `usefulComplete:false`, 1984 官의 channel + subtype 동시 변화 회귀 유지. `比肩→財` 신규 Rule과 Preview/Official/Production/Commerce projection 불허.
