@@ -239,3 +239,22 @@ node scripts/research/inspect-n27-volume-five-print.mjs \
 각 원본 **판면을 실제 읽은 수**는 Harvard, CADAL, NLC 각 1건 = **3건**. 확인한 세 인쇄 스캔의 해당 구절은 **`戊己`로 일치**한다. 반면 [維基文庫 『四庫全書本/卷05』 편집 전사](https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05)는 `戊巳`로 되어 있으므로, **이 CADAL 인쇄 개체를 기준으로 보았을 때의 전사 오류 가능성이 높다**. 이는 사이트 원문을 임의 수정하거나 모든 사본에 같은 표기가 있음을 증명하는 것은 아니다.
 
 **상태 경계:** 물리 소장/서지 집단 3종류에서 읽었지만 교감학적 판본 계통 genealogy·독립 텍스트 lineage·실제 각 책의 별도 folio 표기는 아직 인증하지 않았다. `crossPrintCollation.status=THREE_PRINTED_SCAN_CLAUSE_READINGS_AGREE`와 동시에 `correctOriginalPrintGlyph=UNRESOLVED`(원저자 원고 정본 불명)을 유지한다. **최종 강약/時上偏財 格/只要一位 적용 결론이나 새 비견-재 관계를 이 증거 하나로 만들지 않는다.** Bridge #2557 다섯 Claim HOLD, N13 정확 겁재 T8 1-vs-0 및 Production 의미 승인 0은 계속 유지.
+
+
+## 18. 「時上偏財」 원문 구절 → 2010 실제 명식의 항목별 증거행렬 (2026-10-18)
+
+**독립 연구단위:** `src/research/general-natal-p0-n27-hour-wealth-condition-matrix.ts`는 원문을 한 문장짜리 운세 판정으로 환원하지 않고, *계산 사실 / 古文 조건 표지 / 방법론 미승인*을 구별한다. 실제 생산 계산기 `calculateAuthorizedMyeonghwaProductionSnapshot`의 2010-02-03 19:30/05:30/미상시각 명식으로 테스트한다. 정확한 원문 위치는 위 3개 인쇄본의 Harvard PDF 45면 / CADAL 卷五 DjVu 104면 / NLC 卷五上 PDF 43면. 교감 원문을 인용한 온라인 텍스트 [識典古籍 卷五](https://www.shidianguji.com/zh/book/HY1521/chapter/1knwennx4qwp8), [維基文庫 四庫卷五](https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05)를 보조 대상으로 사용하되 역사 판본의 독립성은 새로 승인하지 않는다.
+
+| 문구·관련 조건 | 실제 19:30 명식의 구조 사실 | 판정 가능 범위 / 금지할 과잉 |
+|---|---|---|
+| `甲日見戊辰或甲戌時` | `甲申日/甲戌時` → **甲戌 사례에 글자 그대로 일치** | `MATCHED_LEXICAL_EXAMPLE_ONLY` — 格 성립 아님 |
+| `時上偏財别宮忌見` | 년간 `己`, 일지藏 `戊` 등이 다른 기둥에 존재 | **다른 기둥의 위치 관측**까지만. `別宮`이 천간·지장간을 어떻게 포함하는지 미승인 |
+| `柱中不宜再見戊己` | 연간 `己`는 甲일간 기준 **正財**, 일지 `申`藏 `戊`는 **偏財**, 시지 `戌`藏 `戊`는 시간측 偏財 | 세 인쇄본의 글자는 `己`이지만 `再見` 규칙이 正財/偏財·透干/藏干 각각을 동일하게 거부하는 실행가능한 predicate는 아직 없음 |
+| `只要一位，不宜多逢` | T0 대표 슬롯 복수, 지장간 재성 분포 관측 | **계산상 슬롯수 ≠ 고전의 位 개수**. `UNADJUDICATED` |
+| `天元透出為妙，支內所藏次之` | 時干 `甲` ≠ `戊`, 時支 `戌`藏 `戊` | 시지 지장간 관측은 **hour branch hidden**, 시주 천간 투출 아님. 순위/格 판단은 미승인 |
+| `柱有官印相助，日主健旺，大怕年月衝破` | 월지 `丑` 등의 T0 사실 | 官印 관계/年月衝破 판정은 방법론 게이트, 원국 旺衰·強弱 `UNCLASSIFIED` |
+| `時上偏財怕逢兄弟` | 19:30은 比肩 관측 / 정확 `겁재` 미관측. 05:30은 기존 정확 `겁재` T8 관측 | 古文 `兄弟`로 비견·겁재를 무차별 대치하거나 기존 특정 `겁재` Rule을 확대하면 안 됨 |
+
+이 문구는 일반적인 과학적 미래 예측이나 사용자별 재정 결과 근거가 아니다. 역사 문헌의 방법론 검증에 한정한다. 새 `N27HourWealthConditionMatrix`가 `OTHER_PALACE_EXCLUSION`, `NO_ADDITIONAL_WU_JI`, `ONLY_ONE_POSITION`, `VISIBLE_VS_HIDDEN_PRIORITY`, `STRENGTH_OFFICER_SEAL_AND_BREAK` 등 **7개 source scope**를 분리하여 원본의 조건을 손실 없이 추적한다.
+
+**판정:** 기존 문헌 검증의 *문자 계보 문제*를 분리했고, 즉시 확인할 수 있는 계산상의 hour hidden/visible 및 다른 기둥 `己` 사실을 검증한다. 그러나 **格 판정, 只要一位, 日主旺衰, 官印/衝破, 역사적 兄弟 의미의 Claim 적용**은 여전히 `UNADJUDICATED` 또는 `UNCLASSIFIED`이다. 다른 출처·체계의 가정을 몰래 끼워 넣지 않는다. 연구 Draft/Bridge Draft만 반영하고 5 Claim HOLD, #17 `METHODOLOGY_CONFLICT`, 기존 N13 실제 겁재 T8 1 vs 0, 의미 승인 0을 유지.
