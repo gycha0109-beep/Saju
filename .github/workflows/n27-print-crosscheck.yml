@@ -1,0 +1,74 @@
+name: "[WT:saju] N27 Independent Print Crosscheck (Research)"
+on:
+  push:
+    branches:
+      - research/saju/natal-19-pair-semantic-return-20261017
+    paths:
+      - .github/workflows/n27-print-crosscheck.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  print-crosscheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - source: NLC_411999029701_VOL_5_UPPER
+            uri: "https://upload.wikimedia.org/wikipedia/commons/8/8f/NLC892-411999029701-67240_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_%E7%AC%AC9%E5%86%8A.pdf"
+            kind: pdf
+          - source: NLC_411999029701_VOL_5_LOWER
+            uri: "https://upload.wikimedia.org/wikipedia/commons/d/d7/NLC892-411999029701-67241_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_%E7%AC%AC10%E5%86%8A.pdf"
+            kind: pdf
+          - source: CADAL06056481
+            uri: "https://upload.wikimedia.org/wikipedia/commons/d/d6/CADAL06056481_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83%C2%B7%E5%8D%B7%E4%BA%94.djvu"
+            kind: djvu
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install read-only raster tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils djvulibre-bin
+      - name: Download candidate original scan
+        env:
+          SOURCE_URI: ${{ matrix.uri }}
+          SOURCE_ID: ${{ matrix.source }}
+          SOURCE_KIND: ${{ matrix.kind }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/n27-crosscheck"
+          curl --fail --location --silent --show-error --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 220 \
+            --user-agent 'MyeongHaAcademicSourceAudit/1.0 (noncommercial research)' \
+            "$SOURCE_URI" --output "$RUNNER_TEMP/n27-crosscheck/original.$SOURCE_KIND"
+          test -s "$RUNNER_TEMP/n27-crosscheck/original.$SOURCE_KIND"
+          sha256sum "$RUNNER_TEMP/n27-crosscheck/original.$SOURCE_KIND" | tee "$RUNNER_TEMP/n27-crosscheck/source-file.sha256"
+          if [[ "$SOURCE_KIND" == "djvu" ]]; then
+            djvudump "$RUNNER_TEMP/n27-crosscheck/original.djvu" | head -c 500 || true
+            ddjvu -format=pdf "$RUNNER_TEMP/n27-crosscheck/original.djvu" "$RUNNER_TEMP/n27-crosscheck/reading.pdf"
+          else
+            cp "$RUNNER_TEMP/n27-crosscheck/original.pdf" "$RUNNER_TEMP/n27-crosscheck/reading.pdf"
+          fi
+          test "$(head -c 5 "$RUNNER_TEMP/n27-crosscheck/reading.pdf")" = '%PDF-'
+          pdfinfo "$RUNNER_TEMP/n27-crosscheck/reading.pdf" | grep -E 'Pages:|File size:'
+      - name: Render complete source volume for manual page identification
+        env:
+          SOURCE_ID: ${{ matrix.source }}
+        run: |
+          set -euo pipefail
+          node scripts/research/inspect-n27-volume-five-print.mjs \
+            --pdf "$RUNNER_TEMP/n27-crosscheck/reading.pdf" \
+            --source-id "$SOURCE_ID" \
+            --out "$RUNNER_TEMP/n27-crosscheck/packet" \
+            --pages all --scale 850
+          cp "$RUNNER_TEMP/n27-crosscheck/source-file.sha256" "$RUNNER_TEMP/n27-crosscheck/packet/source-file.sha256"
+          test -s "$RUNNER_TEMP/n27-crosscheck/packet/manifest.json"
+      - name: Upload unadjudicated source images
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-print-crosscheck-${{ matrix.source }}
+          path: ${{ runner.temp }}/n27-crosscheck/packet/
+          if-no-files-found: error
+          retention-days: 7

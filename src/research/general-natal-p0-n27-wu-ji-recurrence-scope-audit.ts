@@ -1,0 +1,273 @@
+/**
+ * N27 alternative recurrence-scope audit for 三命通會 卷五 時上偏財.
+ *
+ * Models of what an *observer might count* are counterfactual hypotheses,
+ * NOT historical evidence that any one of them governs 再見 or 只要一位.
+ * Inputs are calculated canonical facts, never candidate fortune predictions.
+ */
+import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
+
+export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v4' as const;
+
+export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
+  snapshot: CanonicalSajuSnapshot,
+) {
+  const matrix = buildGeneralNatalN27HourWealthConditionMatrix(snapshot);
+  const o = matrix.observations;
+  const hourExampleStatus = o.literalExampleStatus;
+  const contextStatus = !o.hourKnown
+    ? 'HOUR_UNRESOLVED' as const
+    : !o.dayStemIsJia
+      ? 'DIFFERENT_DAY_STEM' as const
+      : hourExampleStatus !== 'MATCHED_LEXICAL_EXAMPLE_ONLY'
+        ? 'NOT_THE_PRINTED_EXAMPLE' as const
+        : 'SOURCE_EXAMPLE_ONLY' as const;
+  // Explicitly distinguish named source glyphs, ten-god subtypes,
+  // visible stems and hidden stems, and other pillars vs the hour itself.
+  const visibleWu = o.otherVisibleStemWuCount;
+  const visibleJi = o.otherVisibleStemJiCount;
+  const hiddenWu = o.otherHiddenWuCount;
+  const hiddenJi = o.otherHiddenJiCount;
+  // Count three different units independently. No unit is licensed as the
+  // classical 位: a hidden and a visible stem may belong to ONE pillar.
+  const otherPillarPositions = Object.freeze([
+    ...o.otherPillarVisibleWu.map((p) => Object.freeze({
+      slot: p.slot, channel: 'visible_stem' as const, glyph: '戊' as const,
+    })),
+    ...o.otherPillarVisibleJi.map((p) => Object.freeze({
+      slot: p.slot, channel: 'visible_stem' as const, glyph: '己' as const,
+    })),
+    ...o.otherPillarHiddenWu.map((p) => Object.freeze({
+      slot: p.slot, channel: 'hidden_stem' as const, glyph: '戊' as const,
+    })),
+    ...o.otherPillarHiddenJi.map((p) => Object.freeze({
+      slot: p.slot, channel: 'hidden_stem' as const, glyph: '己' as const,
+    })),
+  ]);
+  // Count the same physical glyph-at-pillar once when it appears through both
+  // an exposed stem and a hidden stem. This is a counterfactual accounting
+  // unit, NOT proof that the classical 位 is a stem+pillar pair.
+  const crossChannelDuplicatePillarGlyphs = Object.freeze(
+    otherPillarPositions.filter((p) => p.channel === 'visible_stem' &&
+      otherPillarPositions.some((q) =>
+        q.slot === p.slot && q.glyph === p.glyph && q.channel === 'hidden_stem'
+      )).map((p) => Object.freeze({ slot: p.slot, glyph: p.glyph })),
+  );
+  // Separate two unrelated open questions:
+  //  (a) does 別宮 reach 日柱, and
+  //  (b) do hidden stem occurrences count as 再見?
+  // A third dimension is purely about how to deduplicate repeated channel
+  // observations inside the same pillar, not a historical "位" decision.
+  const palaceAndChannelCounterfactuals = Object.freeze([
+    { key: 'YEAR_MONTH_VISIBLE' as const, includeDayPillar: false, includeHiddenStems: false },
+    { key: 'YEAR_MONTH_DAY_VISIBLE' as const, includeDayPillar: true, includeHiddenStems: false },
+    { key: 'YEAR_MONTH_VISIBLE_HIDDEN' as const, includeDayPillar: false, includeHiddenStems: true },
+    { key: 'YEAR_MONTH_DAY_VISIBLE_HIDDEN' as const, includeDayPillar: true, includeHiddenStems: true },
+  ].map((policy) => {
+    const observed = otherPillarPositions.filter((p) =>
+      (policy.includeDayPillar || p.slot !== 'day') &&
+      (policy.includeHiddenStems || p.channel === 'visible_stem')
+    );
+    const pillarGlyphPairs = new Set(observed.map((p) => `${p.slot}:${p.glyph}`));
+    return Object.freeze({
+      ...policy,
+      observedOccurrenceCount: observed.length,
+      distinctPillarGlyphPairCount: pillarGlyphPairs.size,
+      distinctPillarCount: new Set(observed.map((p) => p.slot)).size,
+      samePillarSameGlyphTwoChannelExcess: observed.length - pillarGlyphPairs.size,
+      namedWuJiCovered: true as const,
+      classicalBieGongVerdict: 'UNADJUDICATED' as const,
+      classicalZaiJianVerdict: 'UNADJUDICATED' as const,
+      classicalWeiCountAuthorized: false as const,
+    });
+  }));
+  const otherPillarUnitAudit = Object.freeze({
+    // These are observed channels, not prohibitions or approved 宮 definitions.
+    positions: otherPillarPositions,
+    crossChannelDuplicatePillarGlyphs,
+    samePillarGlyphAcrossChannelsCanInflateOccurrenceCount:
+      crossChannelDuplicatePillarGlyphs.length > 0,
+    palaceAndChannelCounterfactuals,
+    occurrenceUnitCount: otherPillarPositions.length,
+    distinctPillarUnitCount: new Set(otherPillarPositions.map((p) => p.slot)).size,
+    distinctGlyphUnitCount: new Set(otherPillarPositions.map((p) => p.glyph)).size,
+    yearMonthOnlyOccurrenceCount: otherPillarPositions.filter(
+      (p) => p.slot === 'year' || p.slot === 'month',
+    ).length,
+    dayPillarOccurrenceCount: otherPillarPositions.filter(
+      (p) => p.slot === 'day',
+    ).length,
+    yearMonthDayOccurrenceCount: otherPillarPositions.length,
+    pillarsWithBothVisibleAndHiddenCount: new Set(
+      otherPillarPositions.filter((p) =>
+        otherPillarPositions.some((q) => q.slot === p.slot && q.channel !== p.channel)
+      ).map((p) => p.slot),
+    ).size,
+    // An observed hour branch 戊 is the reference hour, not "another pillar".
+    hourReference: Object.freeze({
+      hourStem: o.hourStem,
+      hourBranch: o.hourBranch,
+      hourVisibleWu: o.indirectWealthWuVisibleInHourStem,
+      hourHiddenWu: o.indirectWealthWuHiddenInHourBranch,
+      includedInOtherPillarOccurrenceCount: false as const,
+    }),
+    otherPillarsMeanYearMonthDayByConstruction: true as const,
+    whetherClassicalBieGongIncludesDayPillar: 'UNADJUDICATED' as const,
+    whetherTwoChannelsInOnePillarAreTwoWei: 'UNADJUDICATED' as const,
+    whetherHistoricalWeiMeansStemGlyphOrPillarOrLocation: 'UNADJUDICATED' as const,
+  });
+  const totalVisible = visibleWu + visibleJi;
+  const totalWu = visibleWu + hiddenWu;
+  const totalAll = totalVisible + hiddenWu + hiddenJi;
+  const scopeHypotheses = Object.freeze([
+    Object.freeze({
+      key: 'VISIBLE_WU_ONLY' as const,
+      otherPillarOccurrenceCount: visibleWu,
+      includesHiddenStems: false as const,
+      includesVisibleRegularWealthJi: false as const,
+      literalClauseAdequacy: 'OMITS_EXPLICIT_JI_IN_WU_JI_CLAUSE' as const,
+    }),
+    Object.freeze({
+      key: 'VISIBLE_WU_AND_JI' as const,
+      otherPillarOccurrenceCount: totalVisible,
+      includesHiddenStems: false as const,
+      includesVisibleRegularWealthJi: true as const,
+      literalClauseAdequacy: 'NAMES_BOTH_STEMS_BUT_HIDDEN_SCOPE_OPEN' as const,
+    }),
+    Object.freeze({
+      key: 'VISIBLE_AND_HIDDEN_WU_ONLY' as const,
+      otherPillarOccurrenceCount: totalWu,
+      includesHiddenStems: true as const,
+      includesVisibleRegularWealthJi: false as const,
+      literalClauseAdequacy: 'OMITS_EXPLICIT_JI_IN_WU_JI_CLAUSE' as const,
+    }),
+    Object.freeze({
+      key: 'VISIBLE_AND_HIDDEN_WU_AND_JI' as const,
+      otherPillarOccurrenceCount: totalAll,
+      includesHiddenStems: true as const,
+      includesVisibleRegularWealthJi: true as const,
+      literalClauseAdequacy: 'HIDDEN_SCOPE_NOT_SOURCE_ADJUDICATED' as const,
+    }),
+  ].map((h) => Object.freeze({
+    ...h,
+    // A count is an observable counterfactual, not the verdict for the text.
+    observerWouldCountAnOtherPillarOccurrence:
+      contextStatus === 'SOURCE_EXAMPLE_ONLY' &&
+      h.otherPillarOccurrenceCount > 0,
+    classicalProhibitionVerdict: 'UNADJUDICATED' as const,
+    classicalOnePositionVerdict: 'UNADJUDICATED' as const,
+  })));
+  const material = Object.freeze({
+    version: GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION,
+    matrixVersion: matrix.version,
+    calculationHash: o.sourceCalculationHash,
+    contextStatus,
+    printedExampleKind: o.printedExampleKind,
+    actualObservationChannels: Object.freeze({
+      otherPillarVisibleWu: visibleWu,
+      otherPillarVisibleJi: visibleJi,
+      otherPillarHiddenWu: hiddenWu,
+      otherPillarHiddenJi: hiddenJi,
+      // For 甲日, 戊 is 偏財 and 己 is 正財, not synonyms.
+      jiaDayWuTenGod: '偏財' as const,
+      jiaDayJiTenGod: '正財' as const,
+      sourceClauseNamesBothWuAndJi: true as const,
+      knownOriginalHourlyWealthChannel: o.hourWealthObservationChannel,
+    }),
+    scopeHypotheses,
+    otherPillarUnitAudit,
+    // Scope-lattice v3 adds no new classical gate or accepted interpretation.
+    yearMonthVsDayAndVisibleVsHiddenScopeAdjudicated: false as const,
+    quantitativeModelSensitivity: Object.freeze({
+      totalVisible,
+      totalWu,
+      totalAll,
+      wouldDropVisibleJiIfWuOnly: visibleJi > 0,
+      hiddenCountingChangesOccurrenceCount: totalAll > totalVisible,
+      competingHypothesesHaveDifferentOccurrenceCounts:
+        new Set(scopeHypotheses.map((x) => x.otherPillarOccurrenceCount)).size > 1,
+      // No quantitative interpretation is suitable for a consumer Claim.
+      candidateOccurrenceCountsAreNotClassicalWeiCounts: true as const,
+    }),
+    provenance: Object.freeze({
+      workAndChapter: '三命通會 卷五 時上偏財' as const,
+      explicitlyNamedClause: '柱中不宜再見戊己' as const,
+      printedHarvardPdfPage: 45 as const,
+      printedSiKuCadalImagePage: 104 as const,
+      printedNlcPdfPage: 43 as const,
+      nearbyVerse: '別無透出方為貴' as const,
+      competingVisibilityText: '天元透出為妙支內所藏次之' as const,
+      sameVolumeAnalogyChapter: '三命通會 卷五 時上一位貴' as const,
+      sameVolumeAnalogyQuote: '時上偏官要幹上透出只一位為妙年月日重見' as const,
+      sameVolumeAnalogySecondVerse: '時上一位貴藏在支中' as const,
+      sameVolumeZhengGuanChapter: '三命通會 卷五 論正官' as const,
+      sameVolumeZhengGuanPhrase: '甲生丑月內有辛金又值酉時' as const,
+      sameVolumeZhengGuanLaterVisiblePhrase: '若天干復透辛多' as const,
+      sameVolumeZhengGuanHiddenBranchRepetitionDescribed: true as const,
+      sameVolumeZhengGuanSourceChannel: 'DIGITAL_TRANSCRIPTION_ONLY' as const,
+      zhengGuanRecurrenceRuleApplicableToHourWealth: false as const,
+      // Independent directly inspected scanned pages; not a printed
+      // adjudication of the DIFFERENT 時上偏財 counting predicate.
+      sameVolumeZhengGuanPrintCrosscheck: Object.freeze({
+        status: 'TWO_PRINT_SCAN_WITNESSES_PASSAGE_DIRECTLY_READ' as const,
+        printWitnesses: Object.freeze([
+          Object.freeze({
+            sourceId: 'HARVARD_DRS_53262215_VOL_5' as const,
+            originalPdfSha256: 'ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831' as const,
+            ordinalPdfPages: Object.freeze([6, 7] as const),
+            page6RasterSha256: 'e17407b04cd2a11e402fb2105defa44e912d88e728c75496f5ac2ea8d31e9292' as const,
+            page7RasterSha256: '9c7a13cbd444e49487de86747b59fa52bd84ef6b16ecc60b20ffc1a3cb9a42bc' as const,
+            priorActionsRun: 39037912192 as const,
+            priorArtifactId: 12103320492 as const,
+          }),
+          Object.freeze({
+            sourceId: 'NLC_411999029701_VOL_5_UPPER' as const,
+            originalPdfSha256: '0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1' as const,
+            ordinalPdfPages: Object.freeze([5, 6] as const),
+            page5RasterSha256: '4c7e7a191389421f46fef36af412277fd2e8fd6c3bdb9d2a221b8cf3efa7bfb2' as const,
+            page6RasterSha256: '9ec272128d7e3e313b7ce9b190cfb8ba75e997bf51c7b09912b97aeaea51fb93' as const,
+            priorActionsRun: 39041195684 as const,
+            priorArtifactId: 12103659191 as const,
+          }),
+        ]),
+        printedZhengGuanOnlyPhrase: '支藏干透餘位不宜再見' as const,
+        printedHiddenThenBranchExample: '甲生丑月內有辛金又值酉時' as const,
+        printedAdditionalVisibleStemExample: '若天干復透辛多' as const,
+        debatedYiJiSiGlyphBeforeShiZhongFanResolved: false as const,
+        newSourceScanDownloadedInThisAudit: false as const,
+        priorOriginalRenderedArtifactsReopenedAndRead: true as const,
+        twoDistinctHoldingPrintScansRead: true as const,
+        printLineageIndependenceCertified: false as const,
+        directlyCertifiedHourWealthBieGongIncludesDay: false as const,
+        directlyCertifiedHourWealthZaiJianIncludesHidden: false as const,
+        directlyCertifiedClassicalYiWeiCountingUnit: false as const,
+        crossGenreRuleTransferAuthorized: false as const,
+      }),
+      // "此與時上偏官格相似" refers to 偏官, NOT this 正官 chapter.
+      hourWealthExplicitAnalogyTarget: '時上偏官' as const,
+      zhengGuanIsNotHourWealthExplicitAnalogyTarget: true as const,
+      sameVolumeAnalogyIsDigitallyTranscribedNotNewPrintAttestation: true as const,
+      classicalBieGongDayInclusionNotDerivedFromAnalogy: true as const,
+      sameVolumeAnalogyExplicitlyMentionsYearMonthDay: true as const,
+      sameVolumeAnalogyIsAboutHourOfficerNotHourWealth: true as const,
+      transferringOfficerCountingRuleToHourWealthAuthorized: false as const,
+      historicalScopeOfZaiJianCertified: false as const,
+      historicalMeaningOfYiWeiCertified: false as const,
+    }),
+    // This audit is a witness that different assumptions give different
+    // counts, not a rule that picks which assumption is correct.
+    sourceQualifiedRecurrenceVerdict: 'UNADJUDICATED' as const,
+    sourceQualifiedSingletonVerdict: 'UNADJUDICATED' as const,
+    chartStrengthVerdict: 'UNCLASSIFIED' as const,
+    licensedHistoricalInterpretation: false as const,
+    consumerClaimEligible: false as const,
+    previewAdmissionGranted: false as const,
+    officialAdmissionGranted: false as const,
+    productionAuthorized: false as const,
+    status: 'HYPOTHESIS_SENSITIVITY_RESEARCH_ONLY' as const,
+  });
+  return Object.freeze({ ...material, evidenceHash: deterministicContentHash(material) });
+}
