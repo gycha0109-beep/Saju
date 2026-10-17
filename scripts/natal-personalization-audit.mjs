@@ -274,11 +274,11 @@ async function main() {
   const n24Path = resolve(outputPath.endsWith('.json')
     ? outputPath.slice(0, -5) + '.n24-expanded-source.json'
     : outputPath + '.n24-expanded-source.json');
-  writeFileSync(n24Path, JSON.stringify(n24, null, 2) + '\\n', 'utf8');
+  writeFileSync(n24Path, JSON.stringify(n24, null, 2) + '\n', 'utf8');
   process.stdout.write('Natal N24: ' + n24.caseCount + ' real HTTP cases, ' +
     n24.fullyDeliveredOriginalCount + ' distinct authentic source units, ' +
     n24.additionalOriginalCount + ' newly accessible in domain detail, 0 hidden; ' +
-    n24Path + '\\n');
+    n24Path + '\n');
 
   const { consumer: report, meaning: meaningReport, quality: meaningQuality } =
     buildNatalMeaningQualityAudit(inputs);
