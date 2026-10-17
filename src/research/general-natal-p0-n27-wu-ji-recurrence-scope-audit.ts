@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v3' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v4' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -209,6 +209,46 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
       sameVolumeZhengGuanHiddenBranchRepetitionDescribed: true as const,
       sameVolumeZhengGuanSourceChannel: 'DIGITAL_TRANSCRIPTION_ONLY' as const,
       zhengGuanRecurrenceRuleApplicableToHourWealth: false as const,
+      // Independent directly inspected scanned pages; not a printed
+      // adjudication of the DIFFERENT 時上偏財 counting predicate.
+      sameVolumeZhengGuanPrintCrosscheck: Object.freeze({
+        status: 'TWO_PRINT_SCAN_WITNESSES_PASSAGE_DIRECTLY_READ' as const,
+        printWitnesses: Object.freeze([
+          Object.freeze({
+            sourceId: 'HARVARD_DRS_53262215_VOL_5' as const,
+            originalPdfSha256: 'ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831' as const,
+            ordinalPdfPages: Object.freeze([6, 7] as const),
+            page6RasterSha256: 'e17407b04cd2a11e402fb2105defa44e912d88e728c75496f5ac2ea8d31e9292' as const,
+            page7RasterSha256: '9c7a13cbd444e49487de86747b59fa52bd84ef6b16ecc60b20ffc1a3cb9a42bc' as const,
+            priorActionsRun: 39037912192 as const,
+            priorArtifactId: 12103320492 as const,
+          }),
+          Object.freeze({
+            sourceId: 'NLC_411999029701_VOL_5_UPPER' as const,
+            originalPdfSha256: '0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1' as const,
+            ordinalPdfPages: Object.freeze([5, 6] as const),
+            page5RasterSha256: '4c7e7a191389421f46fef36af412277fd2e8fd6c3bdb9d2a221b8cf3efa7bfb2' as const,
+            page6RasterSha256: '9ec272128d7e3e313b7ce9b190cfb8ba75e997bf51c7b09912b97aeaea51fb93' as const,
+            priorActionsRun: 39041195684 as const,
+            priorArtifactId: 12103659191 as const,
+          }),
+        ]),
+        printedZhengGuanOnlyPhrase: '支藏干透餘位不宜再見' as const,
+        printedHiddenThenBranchExample: '甲生丑月內有辛金又值酉時' as const,
+        printedAdditionalVisibleStemExample: '若天干復透辛多' as const,
+        debatedYiJiSiGlyphBeforeShiZhongFanResolved: false as const,
+        newSourceScanDownloadedInThisAudit: false as const,
+        priorOriginalRenderedArtifactsReopenedAndRead: true as const,
+        twoDistinctHoldingPrintScansRead: true as const,
+        printLineageIndependenceCertified: false as const,
+        directlyCertifiedHourWealthBieGongIncludesDay: false as const,
+        directlyCertifiedHourWealthZaiJianIncludesHidden: false as const,
+        directlyCertifiedClassicalYiWeiCountingUnit: false as const,
+        crossGenreRuleTransferAuthorized: false as const,
+      }),
+      // "此與時上偏官格相似" refers to 偏官, NOT this 正官 chapter.
+      hourWealthExplicitAnalogyTarget: '時上偏官' as const,
+      zhengGuanIsNotHourWealthExplicitAnalogyTarget: true as const,
       sameVolumeAnalogyIsDigitallyTranscribedNotNewPrintAttestation: true as const,
       classicalBieGongDayInclusionNotDerivedFromAnalogy: true as const,
       sameVolumeAnalogyExplicitlyMentionsYearMonthDay: true as const,
