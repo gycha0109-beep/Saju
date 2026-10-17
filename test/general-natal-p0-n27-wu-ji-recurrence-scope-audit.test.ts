@@ -232,10 +232,14 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
     expect(printed.printWitnesses.map((p) => p.ordinalPdfPages)).toEqual([
       [6, 7], [5, 6],
     ]);
-    expect(printed.printWitnesses[0]?.page7RasterSha256)
-      .toBe('9c7a13cbd444e49487de86747b59fa52bd84ef6b16ecc60b20ffc1a3cb9a42bc');
-    expect(printed.printWitnesses[1]?.page6RasterSha256)
-      .toBe('9ec272128d7e3e313b7ce9b190cfb8ba75e997bf51c7b09912b97aeaea51fb93');
+    expect(printed.printWitnesses[0]).toMatchObject({
+      sourceId: 'HARVARD_DRS_53262215_VOL_5',
+      page7RasterSha256: '9c7a13cbd444e49487de86747b59fa52bd84ef6b16ecc60b20ffc1a3cb9a42bc',
+    });
+    expect(printed.printWitnesses[1]).toMatchObject({
+      sourceId: 'NLC_411999029701_VOL_5_UPPER',
+      page6RasterSha256: '9ec272128d7e3e313b7ce9b190cfb8ba75e997bf51c7b09912b97aeaea51fb93',
+    });
     expect(printed.printedZhengGuanOnlyPhrase).toBe('支藏干透餘位不宜再見');
     expect(printed.printedHiddenThenBranchExample).toBe('甲生丑月內有辛金又值酉時');
     expect(printed.printedAdditionalVisibleStemExample).toBe('若天干復透辛多');
