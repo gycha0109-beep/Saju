@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v3');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v4');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -223,6 +223,32 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
     expect(x.provenance.sameVolumeZhengGuanHiddenBranchRepetitionDescribed).toBe(true);
     expect(x.provenance.sameVolumeZhengGuanSourceChannel).toBe('DIGITAL_TRANSCRIPTION_ONLY');
     expect(x.provenance.zhengGuanRecurrenceRuleApplicableToHourWealth).toBe(false);
+    const printed = x.provenance.sameVolumeZhengGuanPrintCrosscheck;
+    expect(printed.status).toBe('TWO_PRINT_SCAN_WITNESSES_PASSAGE_DIRECTLY_READ');
+    expect(printed.printWitnesses).toHaveLength(2);
+    expect(printed.printWitnesses.map((p) => p.sourceId)).toEqual([
+      'HARVARD_DRS_53262215_VOL_5', 'NLC_411999029701_VOL_5_UPPER',
+    ]);
+    expect(printed.printWitnesses.map((p) => p.ordinalPdfPages)).toEqual([
+      [6, 7], [5, 6],
+    ]);
+    expect(printed.printWitnesses[0]?.page7RasterSha256)
+      .toBe('9c7a13cbd444e49487de86747b59fa52bd84ef6b16ecc60b20ffc1a3cb9a42bc');
+    expect(printed.printWitnesses[1]?.page6RasterSha256)
+      .toBe('9ec272128d7e3e313b7ce9b190cfb8ba75e997bf51c7b09912b97aeaea51fb93');
+    expect(printed.printedZhengGuanOnlyPhrase).toBe('支藏干透餘位不宜再見');
+    expect(printed.printedHiddenThenBranchExample).toBe('甲生丑月內有辛金又值酉時');
+    expect(printed.printedAdditionalVisibleStemExample).toBe('若天干復透辛多');
+    expect(printed.debatedYiJiSiGlyphBeforeShiZhongFanResolved).toBe(false);
+    expect(printed.priorOriginalRenderedArtifactsReopenedAndRead).toBe(true);
+    expect(printed.twoDistinctHoldingPrintScansRead).toBe(true);
+    expect(printed.printLineageIndependenceCertified).toBe(false);
+    expect(printed.directlyCertifiedHourWealthBieGongIncludesDay).toBe(false);
+    expect(printed.directlyCertifiedHourWealthZaiJianIncludesHidden).toBe(false);
+    expect(printed.directlyCertifiedClassicalYiWeiCountingUnit).toBe(false);
+    expect(printed.crossGenreRuleTransferAuthorized).toBe(false);
+    expect(x.provenance.hourWealthExplicitAnalogyTarget).toBe('時上偏官');
+    expect(x.provenance.zhengGuanIsNotHourWealthExplicitAnalogyTarget).toBe(true);
   });
 
   it('v3 date controls change scope sensitivity but never authorize classical conclusion', () => {
