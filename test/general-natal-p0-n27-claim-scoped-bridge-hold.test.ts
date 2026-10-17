@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('e5fef4035db236eee2d4d2fed5cdff61ca495930');
+    expect(review.researchHeadReviewed).toBe('53b65f336ae276f92fa81aa6b0050760dbd6b3c9');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -63,6 +63,12 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
       'CADAL06056481', 'CADAL06066041',
     ]);
     expect(review.printedTargetFoliosDirectlyInspected).toBe(false);
+    expect(review.reproducibleManualPrintInspectionScript).toBe(
+      'scripts/research/inspect-n27-volume-five-print.mjs',
+    );
+    expect(review.originalPdfSha256ComputedInCurrentRun).toBe(false);
+    expect(review.targetPageImagesRenderedFromAuthenticSourceInCurrentRun).toBe(false);
+    expect(review.scriptSelfTestDoesNotAuthenticateOriginalReading).toBe(true);
     expect(review.distinctCataloguedPrintLeadGroups).toEqual([
       'HARVARD_1735_CATALOGUE',
       'NLC_411999029701_ENGRAVED_EDITION',
