@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('905c5f7ac4bfb6721d5d563a888b01ab2c725705');
+    expect(review.researchHeadReviewed).toBe('bb91adf29541fe1b26234c6202cb139ad99c552f');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -146,6 +146,19 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
       newInterpretationClaimAuthorized: false,
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
+    expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v1',
+      path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
+      sameReal2010WuChenAndJiaXuNonHourPillars: true,
+      testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
+      visibleWuOnlyWouldMissPrintedJi: true,
+      actualYearVisibleJiRegularWealthOnJiaDay: true,
+      recurrenceCountingScopeMethodApproved: false,
+      classicalWeiCountingMethodApproved: false,
+      interpretationsInferred: false,
+      admitsNewClaim: false,
+    });
+    expect(review.n27WuJiRecurrenceScopeSensitivity.counterfactualScopeKeys).toHaveLength(4);
     expect(review.finalWangShuaiAndQiangRuoVerdictAuthorized).toBe(false);
     expect(review.classicalSingleWealthLocationProven).toBe(false);
     expect(review.generalCopyVolumeSixHasDiscrepantEditorialWarning).toBe(true);
