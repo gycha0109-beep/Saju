@@ -27,6 +27,7 @@ import { traceNatalN25ConsumerMeaningAtoms } from '../dist/preview/natal-n25-con
 import { buildNatalN25BAllPairForensics } from '../dist/preview/natal-n25b-all-pair-source-copy-forensics.js';
 import { auditNatalN26HttpMeaningTransport } from '../dist/preview/natal-n26-http-meaning-transport.js';
 import { attachNatalN27SelfServiceEvidenceReading } from '../dist/preview/natal-n27-self-service-evidence-reading.js';
+import { auditNatalN27bClaimReceipts } from '../dist/preview/natal-n27b-claim-receipt-audit.js';
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expanded-source-reading.js';
 
@@ -816,6 +817,55 @@ async function main() {
     '/35 actual HTTP cases; '+n27.differentChartPairsWithDifferentBoundedReading+
     '/'+n27.rawRepeatPairCount+' different-chart bounded reading contrasts; '+
     n27Path+'\\n');
+
+  // N27b independently verifies each self-service paragraph against the
+  // existing source-locked T8 profile, exact resolved Ten-God subtype/slot,
+  // the original HTTP response and deterministic source Rule refs.
+  const n27bCases = inputs.map(input=>{
+    const run=interpretedByCaseId.get(input.caseId);
+    if (!run) throw new Error('N27b missing original chart');
+    const overlay=attachNatalN27SelfServiceEvidenceReading(
+      input.response,run.snapshot,run.interpretation);
+    const receipt=auditNatalN27bClaimReceipts({
+      snapshot:run.snapshot,interpretation:run.interpretation,
+      originalHttpResponse:input.response,optInPreviewResponse:overlay,
+    });
+    return {caseId:input.caseId,originalHttpState:input.response.state,
+      snapshotHash:run.snapshot.calculationHash,
+      ...receipt};
+  });
+  const control=n27bCases.find(x=>x.caseId==='same-birth-control-2024-03-10-12:30');
+  const exact=n27bCases.find(x=>x.caseId==='solar-2024-03-10-12:30');
+  if (!control || !exact || control.receiptHash!==exact.receiptHash ||
+    control.snapshotHash!==exact.snapshotHash) {
+    throw new Error('N27b identical input must have deterministic same source-bound reading');
+  }
+  const n27b={
+    version:'saju-natal-n27b-exact-claim-receipt-real-http-v1',
+    lifecycle:'internal_quality_audit',
+    mayApproveNewHumanOutcomes:false,requiresExternalExpertApproval:false,
+    count:n27bCases.length,
+    sourcedKnownTime:n27bCases.filter(x=>x.checkedClaims>0).length,
+    checkedReceipts:n27bCases.reduce((n,x)=>n+x.checkedClaims,0),
+    unknownTimeWithoutFabrication:n27bCases.filter(x=>x.originalHttpState==='partial_evidence'&&
+      x.checkedClaims===0).length,
+    chartAndSourceVerified:n27bCases.every(x=>x.chartBoundSourceIntegrity&&
+      x.originalCopyPreserved&&x.noUnqualifiedRendering),
+    sameBirthControlMatches:true,
+    cases:n27bCases,
+  };
+  if(n27b.count!==35||n27b.sourcedKnownTime!==33 ||
+    n27b.unknownTimeWithoutFabrication!==2||n27b.checkedReceipts<33 ||
+    !n27b.chartAndSourceVerified){
+    throw new Error('N27b current real HTTP source evidence coverage regression');
+  }
+  const n27bPath=resolve(outputPath.endsWith('.json')?
+    outputPath.slice(0,-5)+'.n27b-claim-receipts.json':
+    outputPath+'.n27b-claim-receipts.json');
+  writeFileSync(n27bPath,JSON.stringify(n27b,null,2)+'\\n','utf8');
+  process.stdout.write('Natal N27b verified '+n27b.checkedReceipts+
+    ' exact source-bound Claim receipts over '+n27b.sourcedKnownTime+
+    ' known-time cases; same-birth stable; '+n27bPath+'\\n');
 
   const repeatedPairs = oldCollisions;
   const n4 = {
