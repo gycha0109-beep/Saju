@@ -163,3 +163,19 @@
 **실제 원국 조건 분리 v3:** 두 Canonical 2010 T0 명식에서 `甲` 일간의 `戊/己`로 기록되는 실제 천간과 4지지 지장간 관측을 별도 필드로 추적한다. 19:30 명식의 年干 `己`, 日支 `申`에 숨은 `戊`, 時支 `戌`에 숨은 `戊`는 데이터 레벨 구조적 사실이다. 그러나 세 항목이 「時上偏財」의 원문 `柱中不宜再見戊己`나 `只要一位`에 **어떤 규칙과 가중치로 해당되는지는 아직 고전 판면·방법론 모두 불명**이다. 지장간 존재 → 별도 편재격 성립/불성립, 복수 위치 → 강약/운세로 확대 금지.
 
 검증 구현: `src/research/general-natal-p0-n27-bijeon-wealth-shadow.ts` v3 및 동일한 실제 T0 snapshot 회귀 테스트. `digitalCollation.correctOriginalPrintGlyph=UNRESOLVED`, `applyingJiProhibitionToThisChartAuthorized=false`, `researchStrengthBoundary.result=UNCLASSIFIED`, `classicalHourWealthSingletonEvidence.status=NOT_ADJUDICATED`. 기존 N13 T8 1 대 0, #17 `METHODOLOGY_CONFLICT`, Bridge HOLD 및 Product/Official/Production 의미 승인 0 유지.
+
+## 14. 신규 판본 소장처 추적 — Harvard 보각본·NLC 刻本 원본 스캔 (2026-10-17)
+
+**새 후보 인쇄판의 소장 서지 확인:** 기존 CADAL `06056481/06066041` 四庫全書卷五 파일에만 의존하지 않고, 서로 다른 물리 서지 형식을 가진 권五 자료를 추가 검색했다.
+
+| 서지 후보 | 스캔 파일 | 직접 확인한 catalog metadata | 대상 「時上偏財」 실물면 판독 |
+|---|---|---|---|
+| 하버드 옌칭도서관 | [Harvard drs:53262215 / 卷之五](https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf) | 청 雍正13년(1735?) **補刊本**, 十行二〇字, **99 PDF 이미지면**, 출판 연대 추정에 물음표 유지 | **아니오** |
+| 중국국가도서관 | [NLC 第9冊 / 卷之五上](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf) | **刻本**, 十行二二字·白口·四周雙邊, 45 이미지면 | **아니오** |
+| 중국국가도서관 | [NLC 第10冊 / 卷之五下](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67241_三命通會_第10冊.pdf) | **위와 같은 NLC 책의 하권** 49 이미지면, 상·하권 **2개의 독립 판본이 아니다** | **아니오** |
+
+**실제 신뢰 단계 구분:** ① 두 가지 서로 다른 **소장처/판식 후보**는 확인. ② 동일 《三命通會》 구절이 각 파일의 **어느 면에 찍혔는지 특정 못함**. ③ `巳`/ `己`의 원판문자를 판독하지 못함. ④ 따라서 각 후보에서 구절이 존재하는지, 후대 교정·이체자 차이가 있는지, 원문 레퍼런스가 텍스트 계통상 독립적인지 **아직 증명되지 않음**. 이 셋을 뒤섞지 않는다.
+
+**다운로드 제약:** 본 실행의 원본 URL 직접 가져오기는 웹/실행 환경 측 바이너리 응답 제한으로 실패했으며 PDF/DjVu 이미지 자체를 성공적으로 열고 판독한 증거를 생성하지 못했다. PDF 및 DjVu의 **이미지면 존재를 확인하는 것과 원문을 실제 읽은 것은 다르다**. 다음 대조 단위는 후보 페이지 내 「時上偏財」 *제목*과 `柱中不宜再見戊{巳|己}`의 좌우 인접 칸을 포함하는 이미지면·pageIndex, 실제 찍힌 글자, 판본/소장 ID, 전사 변경 사유, 이미지 또는 파일 checksum이다.
+
+코드 계약: `buildGeneralNatalN27BijeonWealthShadow` v4에서 3개 소장 파일을 2개 *가능성 있는* printing group으로 구분하고 각 `originalPrintedClauseRead=false`, `physicallyInspectedTargetPrintings=0`를 고정한다. **Printing group 2개 ≠ 원문 독립확인 2건**. 기존 CI의 연구 조건 검사, 강약 미승인, N13 겁재 조건 및 Bridge 5 HOLD 불변.

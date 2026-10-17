@@ -11,7 +11,7 @@ import {
 } from './general-natal-wang-shuai-qiang-ruo-semantic-axis-authority.js';
 
 export const GENERAL_NATAL_N27_BIJEON_SHADOW_VERSION =
-  'saju-n27-bijeon-wealth-source-condition-shadow-v3' as const;
+  'saju-n27-bijeon-wealth-source-condition-shadow-v4' as const;
 
 export function buildGeneralNatalN27BijeonWealthShadow(
   snapshot: CanonicalSajuSnapshot,
@@ -154,6 +154,53 @@ export function buildGeneralNatalN27BijeonWealthShadow(
       directPrintCharacterVerification: false as const,
     }),
   ]);
+  // Candidate image *holdings*: neither source ID nor volume count means
+  // verified independent text witnesses for the disputed printed character.
+  // NLC upper/lower are parts of ONE catalogued 刻本, not two attestations.
+  const rareBookCollationCandidates = Object.freeze([
+    Object.freeze({
+      sourceId: 'HARVARD_DRS_53262215_VOL_5' as const,
+      repository: 'Harvard-Yenching Library' as const,
+      cataloguedEdition: '補刊本; Qing Yongzheng 13? (1735?)' as const,
+      physicalLayout: '十行二〇字' as const,
+      scope: '卷之五' as const,
+      images: 99 as const,
+      url: 'https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf' as const,
+      candidatePrintingGroup: 'HARVARD_1735_CATALOGUE' as const,
+      targetPageIdentified: false as const,
+      originalPrintedClauseRead: false as const,
+      exactPrintedCharacterVerified: false as const,
+    }),
+    Object.freeze({
+      sourceId: 'NLC_411999029701_VOL_5_UPPER' as const,
+      repository: 'National Library of China' as const,
+      cataloguedEdition: '刻本' as const,
+      physicalLayout: '十行二二字; 白口; 四周雙邊' as const,
+      scope: '卷之五上' as const,
+      images: 45 as const,
+      url: 'https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf' as const,
+      candidatePrintingGroup: 'NLC_411999029701_ENGRAVED_EDITION' as const,
+      targetPageIdentified: false as const,
+      originalPrintedClauseRead: false as const,
+      exactPrintedCharacterVerified: false as const,
+    }),
+    Object.freeze({
+      sourceId: 'NLC_411999029701_VOL_5_LOWER' as const,
+      repository: 'National Library of China' as const,
+      cataloguedEdition: '刻本' as const,
+      physicalLayout: '十行二二字; 白口; 四周雙邊' as const,
+      scope: '卷之五下' as const,
+      images: 49 as const,
+      url: 'https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67241_三命通會_第10冊.pdf' as const,
+      candidatePrintingGroup: 'NLC_411999029701_ENGRAVED_EDITION' as const,
+      targetPageIdentified: false as const,
+      originalPrintedClauseRead: false as const,
+      exactPrintedCharacterVerified: false as const,
+    }),
+  ]);
+  const physicalPrintingGroups = Object.freeze(
+    [...new Set(rareBookCollationCandidates.map((c) => c.candidatePrintingGroup))],
+  );
   const material = Object.freeze({
     version: GENERAL_NATAL_N27_BIJEON_SHADOW_VERSION,
     snapshotId: snapshot.snapshotId,
@@ -199,6 +246,11 @@ export function buildGeneralNatalN27BijeonWealthShadow(
       hourHiddenWu,
     }),
     scanCandidates,
+    rareBookCollationCandidates,
+    physicalPrintingGroups,
+    physicallyInspectedTargetPrintings: 0 as const,
+    sourceIdentityCaveat:
+      'Different catalogue editions/layouts are only candidate independent printings; clause-level independence cannot be asserted without reading exact folios.' as const,
     digitalCollation: Object.freeze({
       textWitnessVariants,
       conflictingDigitalCharactersObserved,

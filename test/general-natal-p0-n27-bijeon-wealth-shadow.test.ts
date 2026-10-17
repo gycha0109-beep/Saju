@@ -79,6 +79,24 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
       chartLevelQiangRuoClassifierAuthorized: false,
       result: 'UNCLASSIFIED',
     });
+    expect(shadow.rareBookCollationCandidates.map((c) => c.sourceId)).toEqual([
+      'HARVARD_DRS_53262215_VOL_5',
+      'NLC_411999029701_VOL_5_UPPER',
+      'NLC_411999029701_VOL_5_LOWER',
+    ]);
+    expect(shadow.physicalPrintingGroups).toEqual([
+      'HARVARD_1735_CATALOGUE',
+      'NLC_411999029701_ENGRAVED_EDITION',
+    ]);
+    expect(shadow.rareBookCollationCandidates.every((c) =>
+      !c.targetPageIdentified && !c.originalPrintedClauseRead &&
+      !c.exactPrintedCharacterVerified
+    )).toBe(true);
+    expect(shadow.physicallyInspectedTargetPrintings).toBe(0);
+    expect(shadow.rareBookCollationCandidates[0]?.physicalLayout).toBe('十行二〇字');
+    expect(shadow.rareBookCollationCandidates[1]?.physicalLayout).toBe(
+      '十行二二字; 白口; 四周雙邊',
+    );
     expect(shadow.scanCandidates.map((x) => x.identifier)).toEqual([
       'CADAL06056481', 'CADAL06066041',
     ]);
@@ -129,7 +147,7 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
     expect(a.evidenceHash).toBe(b.evidenceHash);
     expect(a.evidenceHash).toMatch(/^[a-f0-9]{64}$/);
     expect(a.status).toBe('RESEARCH_SHADOW_ONLY');
-    expect(a.version).toBe('saju-n27-bijeon-wealth-source-condition-shadow-v3');
+    expect(a.version).toBe('saju-n27-bijeon-wealth-source-condition-shadow-v4');
     expect(a.sourceConditionsNotResolved).toHaveLength(6);
   });
 });
