@@ -269,3 +269,21 @@ node scripts/research/inspect-n27-volume-five-print.mjs \
 同卷 論偏財의 偏財好出亦不懼藏은 일반 偏財에서 투출/장간 두 채널을 언급하는 문장일 뿐 時上 편재 전문 규칙의 직접 승인에 해당하지 않는다. 時上偏財의 別無透出方為貴라는 시구와 柱中不宜再見戊己, 支干須要用搜羅를 동시에 고려해야 하므로 別宮/再見의 정확한 counting scope는 UNADJUDICATED다. 同章 比肩刼財還無遇 역시 양 십신을 명시적으로 거론하지만 기존 N13 특정 겁재 Rule을 비견으로 일반화하는 근거는 아니다.
 
 Research condition matrix v2는 printedExampleKind, visible/hidden other-pillar 戊己 건수, source-context citations, 시간별 판독 결과 및 명시적 금지선을 구분한다. 07:30 대 19:30의 실제 계산 pair 회귀 테스트를 추가했고 기타 05:30/시간 미상의 회귀를 유지한다. 모든 결과는 RESEARCH_CONDITION_AUDIT_ONLY, 다섯 Claim HOLD, 只要一位 미판정, chart 강약 미분류, Preview/Official/Production 변경 0건이다.
+
+
+## 20. 再見戊己의 counting scope 가설별 민감도 분석 (2026-10-18)
+
+**소스 경계:** 실제 권五 인쇄본 3개에서 확인된 `柱中不宜再見戊己`는 **戊·己 두 천간을 모두 언급**한다. 그러나 같은 「時上偏財」의 `別無透出方為貴`, `天元透出為妙支內所藏次之`로부터 **지장간 재출현까지 `再見`의 위반으로 계산하는가**는 출처 검증만으로 결정할 수 없다. [四庫全書본 전사 「時上偏財」](https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05) (문자 `戊巳` 이문은 인쇄본과 구별) 및 세 판면의 음영·해시 근거는 §16–19 참조.
+
+**새 코드:** `src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts`, `test/general-natal-p0-n27-wu-ji-recurrence-scope-audit.test.ts`. 기존 실제 생산 계산기를 연구 호출하여 같은 2010년 2월 3일의 07:30 戊辰時/19:30 甲戌時/05:30 비문면 사례/시간 미상 입력을 비교한다. 각 결과는 `HYPOTHESIS_SENSITIVITY_RESEARCH_ONLY`이며 어느 것도 전통적 규칙의 승인 판단이 아니다.
+
+| **가정으로만 쓰는 counting model** | 무엇을 세는가 | 2010년 다른 기둥에서 보이는 차이 | 문헌 승인 |
+|---|---|---|---|
+| VISIBLE_WU_ONLY | 다른 기둥 노출 戊만 | 노출 戊=0 → **己를 누락** | 원문에 **己 명시**되어 있어 字面 scope로 부적합 |
+| VISIBLE_WU_AND_JI | 다른 기둥 노출 戊/己 | 年干 **己 1건**으로 출현 감지 | 천간만 계산하는 방법론 인증 **없음** |
+| VISIBLE_AND_HIDDEN_WU_ONLY | 戊의 투간+藏干 | 日支申藏戊 등 포함, 노출 己 누락 | 원문에 己 포함. 별도 조합 필요 |
+| VISIBLE_AND_HIDDEN_WU_AND_JI | 戊/己의 모든 노출·藏干 | 노출 己 + 비시주 戊/己 장간으로 복수 관측 | 장간을 모두 `再見`·`只要一位`의 位로 세는 방법론 인증 **없음** |
+
+**이 분석이 보여주는 것:** 동일한 실제 원국을 두고 채택한 counting scope에 따라 **관측 횟수 자체가 달라진다**. 단, 2010년 명식의 노출된 年干己 존재 자체와 甲日 기준 그 십신이 正財라는 사실은 가설에 무관하다. 07:30·19:30의 다른 기둥 데이터가 같은 것도 회귀 테스트로 고정한다. `只要一位`의 `位`는 위 관측 횟수와 **동치라고 가정할 수 없다**. 時辰 예시에 일치하지 않는 05:30과 시각 미상 입력은 어떤 가설에서도 적격한 출처 사례로 승격하지 않는다.
+
+**남는 실체적 blocker:** (a) `別宮` 및 `再見`의 실제 palace 범위, (b) 透干·藏干·정재 己와 편재 戊의 반복 포함 우선순위, (c) `只要一位`와 古文 `偏正二財` 중복 사례 관계, (d) 독립 권위가 검증된 적용 방법 및 원국 월령/강약 조건. 전 항목 source-qualified `UNADJUDICATED` / `UNCLASSIFIED`. 상용·독자 해석 의미 사용 0, 5 Claim HOLD 유지.
