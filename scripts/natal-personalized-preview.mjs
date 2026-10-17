@@ -163,8 +163,10 @@ function renderReaderFirstStory(story) {
     const original = section.excerpts.map((excerpt, i) => {
       const references = excerpt.provenance.map((p) => p.domain + ' · ' +
         p.sectionTitle + ' · ' + p.responseId + ' · ' + p.readingId).join(' / ');
+      const kind = excerpt.selectionBasis === 'domain_distinctive'
+        ? '이 분야에만 전달된 풀이' : '여러 분야에서 공유된 풀이';
       return '<div class="reader-paragraph' + (index === 0 && i === 0 ? ' reader-lead' : '') + '">' +
-        '<p>' + escapeHtml(excerpt.text) + '</p>' +
+        '<small class="reader-kind">' + kind + '</small><p>' + escapeHtml(excerpt.text) + '</p>' +
         '<details><summary>이 문장의 실제 Preview 출처</summary><p>' +
         escapeHtml(references) + '</p></details></div>';
     }).join('');
@@ -191,11 +193,13 @@ function renderReaderFirstStory(story) {
   return '<section class="domain reader-first"><div class="domain-heading">' +
     '<h2>내 사주풀이, 핵심부터 읽기</h2><span>N21 · 실제 Preview 답변</span></div>' +
     '<p class="limited">내 명식의 계산 사실을 먼저 확인하고, 이미 제공된 다섯 분야의 ' +
-    '해석 문장을 중복 없이 이어 읽습니다. 새로운 운세 결론을 만들지는 않습니다.</p>' +
+    '해석 문장을 중복 없이 이어 읽습니다. 분야별 고유 원문을 먼저 배치하지만 그만큼 더 중요하다는 의미는 아닙니다.</p>' +
     '<div class="basis-grid">' + basis + '</div>' +
     '<div class="reader-domains">' + domainCards + '</div>' +
     '<p class="reader-note">실제 풀이 ' + story.displayedOriginalInterpretationCount +
-    '개 우선 표시 · 같은 문장 반복 ' + story.hiddenDuplicateCount +
+    '개 우선 표시 · 분야별 고유 풀이 ' + story.displayedDomainDistinctiveCount +
+    '개 · 여러 분야 공통 풀이 ' + story.displayedCrossDomainSharedCount +
+    '개 · 같은 문장 반복 ' + story.hiddenDuplicateCount +
     '개 제외 · 계산 사실만 설명한 문장 ' +
     story.calculationFactsExcludedFromInterpretation + '개 별도</p>' +
     '<details><summary>이 한 장 풀이의 정확한 범위</summary>' +
@@ -335,6 +339,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
     .reader-paragraph:first-of-type{border-top:0}
     .reader-lead p{font-size:18px;color:#f0eafa;font-weight:550;line-height:1.85}
     .reader-note{font-size:12px;color:#a7b1c9;margin:10px 0}
+    .reader-kind{font-size:11px;color:#c0a9e5;letter-spacing:.02em}
     .full-data{border:1px solid #313849;border-radius:15px;padding:16px;margin-top:24px}
     .full-data>summary{font-size:17px;color:#d6d5e8;cursor:pointer}
     footer{margin-top:36px;color:#adb6c9;font-size:12px;line-height:1.9}
@@ -439,6 +444,9 @@ async function main() {
     relations.individualRelations.length + ' individual, ' +
     relations.linkedRelations.length + ' linked, ' +
     relations.mixedRelations.length + ' mixed; Research/HOLD\n');
+  process.stdout.write('N23 distinct-first reading: ' +
+    story.displayedDomainDistinctiveCount + ' domain-specific and ' +
+    story.displayedCrossDomainSharedCount + ' shared original excerpts; unchanged meaning authority\n');
   process.stdout.write('N21 reader-first story: ' + story.displayedOriginalInterpretationCount +
     ' real bounded paragraphs across ' + story.sections.filter(x => x.hasInterpretation).length +
     '/5 domains; ' + story.calculationFactsExcludedFromInterpretation +
