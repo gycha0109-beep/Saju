@@ -1,6 +1,7 @@
-import { runInterpretation } from '../interpretation/interpretation-engine.js';
+import { runInterpretation, type InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { attachGeneralNatalCalculatedRoleObservation } from '../preview/general-natal-consumer-role-observation.js';
+import { attachNatalN27SelfServiceEvidenceReading } from '../preview/natal-n27-self-service-evidence-reading.js';
 import { compactGeneralNatalConsumerRepeatedInsights } from '../preview/general-natal-consumer-repeat-compaction.js';
 import { attachGeneralNatalCalculatedContext } from '../preview/general-natal-consumer-fact-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../interpretation/general-natal-integrated-reading-registry.js';
@@ -18,6 +19,8 @@ export const GENERAL_NATAL_INTEGRATED_PREVIEW_HOST_VERSION =
 export interface GeneralNatalIntegratedPreviewHostOptions {
   requestIdFactory?: MyeonghwaProductHostDependencies['requestIdFactory'];
   requestNowFactory?: MyeonghwaProductHostDependencies['requestNowFactory'];
+  /** Explicit, opt-in autonomous evidence-based Preview explanation; never Production admission. */
+  enableAutonomousEvidenceReading?: boolean;
 }
 
 /**
@@ -37,6 +40,7 @@ export function createGeneralNatalIntegratedPreviewProductHost(
       // A request-local snapshot binding prevents cross-user context leakage
       // when concurrent consumer reads share the same exported host instance.
       let observedSnapshot: CanonicalSajuSnapshot | undefined;
+      let observedInterpretation: InterpretationExecutionResult | undefined;
       const host = createMyeonghwaProductHost({
         calculate(input, context) {
           const snapshot = calculateAuthorizedMyeonghwaProductionSnapshot(input, {
@@ -51,6 +55,7 @@ export function createGeneralNatalIntegratedPreviewProductHost(
         requestId: context.requestId,
         now: new Date(context.requestedAt),
       });
+      observedInterpretation = interpretation;
       return { registry, interpretation };
     },
     readingOptions: {
@@ -76,7 +81,11 @@ export function createGeneralNatalIntegratedPreviewProductHost(
       const withRoles = observedSnapshot === undefined
         ? grounded
         : attachGeneralNatalCalculatedRoleObservation(grounded, observedSnapshot);
-      return compactGeneralNatalConsumerRepeatedInsights(withRoles);
+      const compacted = compactGeneralNatalConsumerRepeatedInsights(withRoles);
+      return options.enableAutonomousEvidenceReading === true &&
+        observedSnapshot !== undefined && observedInterpretation !== undefined
+        ? attachNatalN27SelfServiceEvidenceReading(compacted, observedSnapshot, observedInterpretation)
+        : compacted;
     },
   };
 }
