@@ -25,7 +25,7 @@ function host(optIn:boolean){
 function sources(time:string|null){
   const body=request(time);
   const snapshot=calculateAuthorizedMyeonghwaProductionSnapshot(
-    parseProductHostCalculationRequest(body),{now:NOW}).snapshot;
+    parseProductHostCalculationRequest({birth:body.birth}),{now:NOW}).snapshot;
   const registry=createGeneralNatalIntegratedReadingRegistry(NOW.toISOString());
   const interpretation=runInterpretation(snapshot,registry,{requestId:'n27b-test',now:NOW});
   return {snapshot,interpretation};
