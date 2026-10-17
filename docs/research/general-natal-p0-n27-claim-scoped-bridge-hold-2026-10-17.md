@@ -121,3 +121,7 @@ Research PR #2553 exact HEAD `7e28dd036d2e9da0bc033dc1318fa4b8ba44babf`의 `saju
 새 count 분리: 천간·藏干의 출현 위치 건수, 다른 기둥 고유 수, 戊·己 종류 수, 年月만 vs 日柱 포함, 같은 기둥의 두 관측 채널, 시주 참조 위치 제외. `柱中不宜再見戊己`는 두 글자를 명시하므로 戊-only 관찰 모델은 원문 전체 글자 집합을 표현하지 못하지만, 이것만으로 시주 외 지장간 포함/不宜 발동 여부·別宮의 日柱 포함·`只要一位`의 의미를 확정할 수 없다. 같은 기둥의 천간과 장간이 동시 관측되는 것을 고전 두 位라고 승인한 기록은 없다.
 
 Bridge: `recurrenceCountingScopeMethodApproved=false`, `classicalWeiCountingMethodApproved=false`, `interpretationsInferred=false`, `admitsNewClaim=false`, 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, 기존 N13 실제 정확 겁재 T8 1:0. Review attestation/TrustGrant 없음, Preview/Official/Production 의미 변화 없음. source-qualified scope는 UNADJUDICATED.
+
+### `再見` 추가 同卷 유추 근거와 최종 Research SHA
+
+위 첫 번째 바인딩 기록의 `7e28dd...`은 작업 중간 SHA다. 이번 Bridge 구조체에서 최종 Research HEAD를 `e65374b0d6abf8f63e74b977be9b3e2c9262d07b`로 갱신했다. 『三命通會』 卷五 「時上一位貴」의 편집 전사 [해당 문맥](https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05)에 `時上偏官要幹上透出只一位為妙年月日重見`가 나온다. 같은 卷 「時上偏財」의 `此與時上偏官格相似`와 대조할 때 **年·月·日 명시 범위**를 가진 유사 문맥이 새 근거로 확인됐다. 하지만 **偏官 七煞의 규칙이지 偏財 적용 승인 자체가 아니므로** `directAuthorizationToApplyToHourWealth=false`, `classicalWeiCountingMethodApproved=false`. 추가 인용은 온라인 전사 대조이지 새 인쇄본 직접 판독이 아니다. 다섯 Claim과 Production 의미 승격 상태 변경 없음.
