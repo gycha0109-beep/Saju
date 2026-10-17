@@ -35,6 +35,8 @@ describe('N27 expert-free opt-in actual chart-grounded preview', () => {
     expect(x).not.toBe(y);
     expect(x).toMatch(/천간|지지 대표 십신/u);
     expect(x).toContain('전통적 주제는'); // existing source-owned theme, not new causal meaning
+    expect(x).toContain('이 명식에서 확인된 십신 위치는');
+    expect(x).not.toMatch(/편관가|정관가|상관가/u);
     expect(x).not.toMatch(/반드시 부자|실제 금전 손실|취업 확정/u);
     expect(NATAL_N27_SELF_SERVICE_EVIDENCE_READING_VERSION).toContain('self-service');
   });
