@@ -179,3 +179,25 @@
 **다운로드 제약:** 본 실행의 원본 URL 직접 가져오기는 웹/실행 환경 측 바이너리 응답 제한으로 실패했으며 PDF/DjVu 이미지 자체를 성공적으로 열고 판독한 증거를 생성하지 못했다. PDF 및 DjVu의 **이미지면 존재를 확인하는 것과 원문을 실제 읽은 것은 다르다**. 다음 대조 단위는 후보 페이지 내 「時上偏財」 *제목*과 `柱中不宜再見戊{巳|己}`의 좌우 인접 칸을 포함하는 이미지면·pageIndex, 실제 찍힌 글자, 판본/소장 ID, 전사 변경 사유, 이미지 또는 파일 checksum이다.
 
 코드 계약: `buildGeneralNatalN27BijeonWealthShadow` v4에서 3개 소장 파일을 2개 *가능성 있는* printing group으로 구분하고 각 `originalPrintedClauseRead=false`, `physicallyInspectedTargetPrintings=0`를 고정한다. **Printing group 2개 ≠ 원문 독립확인 2건**. 기존 CI의 연구 조건 검사, 강약 미승인, N13 겁재 조건 및 Bridge 5 HOLD 불변.
+
+
+## 15. 직접 인쇄면 판독을 위한 반복 실행 가능한 PDF 조사 도구 (N27 Research-only)
+
+**실제 원본 판독 상태:** 실행 환경에서는 하버드 PDF `Harvard_drs_53262215_三命通會_v.5卷之五.pdf` 91.33 MB에 대한 외부 다운로드가 제한되어, 대상 원본 이미지면과 `巳/己` 글자를 **직접 판독하지 못했다**. 검증된 음성 결과를 억지로 성공으로 바꾸지 않는다. [출처 서지](https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf).
+
+**대안 — 실제 판독을 위한 실행 코드:** `scripts/research/inspect-n27-volume-five-print.mjs`를 추가했다. 원본 PDF 파일을 로컬에 받은 뒤 Poppler `pdfinfo`/`pdftoppm`이 있는 환경에서 아래처럼 수행한다. 이 도구는 OCR 기반으로 원문을 상상하거나 자동 보정하지 않고, 모든 스캔면을 실제 이미지로 렌더링한다.
+
+```bash
+node scripts/research/inspect-n27-volume-five-print.mjs \
+  --pdf "./Harvard_drs_53262215_三命通會_v.5卷之五.pdf" \
+  --source-id HARVARD_DRS_53262215_VOL_5 \
+  --out "./evidence/n27-harvard-volume-five" --pages all
+```
+
+- 생성 결과: `index.html` (면별 열람 갤러리), `pages/page-0001.png` 등 실 이미지, `manifest.json` (원본 PDF 및 면별 렌더 SHA256), `reading-template.json` (`UNREVIEWED`).
+- `--pages 1-25,40-60`처럼 **연속 범위 재추출** 가능. NLC 상·하권은 개별 파일이지만 같은 `candidatePrintingGroup`에 속한다.
+- 원본 판독을 선언하려면 최소 **파일 해시 / PDF 면 번호 / 책 원문 folio 표기 / 제목 「時上偏財」와 양옆 문맥 / 실물 인쇄 字形의 巳·己 판독 / 해당 면 이미지 SHA256**를 채운다. 별개의 편집 전사·OCR 결과를 원본 판독 증거로 사용하지 않는다.
+- 현재 기본 출력은 `originalFolioLocated=false`, `originalPrintGlyphVerified=false`, `independentHistoricalWitnessCertified=false`, `interpretationAdmitted=false`, `productionAuthorized=false`; 출력 파일만 생성되어도 이 상태가 **자동으로 true로 바뀌지 않는다**.
+- PDF 파일이 존재하지 않거나 `source-id`가 미등록이면 즉시 거부. `node scripts/research/inspect-n27-volume-five-print.mjs --self-test`는 외부 다운로드 없이 동작하고 실제 로컬 PDF로 한 번 더 수동 실행해야 이미지 확보가 증명된다.
+
+**검증 경계:** 이 스크립트와 테스트의 CI PASS는 이미지-입수/면번호/인쇄글자 검증 완료를 뜻하지 않는다. #17 `METHODOLOGY_CONFLICT`, 다섯 Claim HOLD, 2010 N13 실측 1-vs-0, 강약 `UNCLASSIFIED`, `只要一位` `NOT_ADJUDICATED` 유지.
