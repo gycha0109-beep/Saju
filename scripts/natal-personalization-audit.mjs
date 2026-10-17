@@ -23,6 +23,7 @@ import { resolvePreviewSemanticAdmissionV1 } from '../dist/preview/preview-seman
 import { renderNatalReaderReviewPacketV1 } from './natal-reader-review-packet.mjs';
 import { buildNatalN17DifferentiationAudit } from '../dist/preview/natal-grounded-reading-differentiation.js';
 import { buildNatalN21ReaderFirstStory } from '../dist/preview/natal-reader-first-story.js';
+import { traceNatalN25ConsumerMeaningAtoms } from '../dist/preview/natal-n25-consumer-meaning-atom-trace.js';
 
 const bearer = 'local-natal-quality-audit-not-a-production-secret';
 const dates = [
@@ -380,6 +381,7 @@ async function main() {
   }
   const semanticCaseById = new Map(meaningReport.cases.map((item) => [item.caseId, item]));
   const n8Traces = [];
+  const n25Traces = [];
   for (const caseId of n8CaseIds) {
     const run = interpretedByCaseId.get(caseId);
     if (run === undefined) throw new Error(`Missing canonical N8 run: ${caseId}`);
@@ -400,6 +402,29 @@ async function main() {
         internal.response.state !== 'delivered') {
       throw new Error(`Incomplete N8 Internal Official Reading stage: ${caseId}`);
     }
+    // N25: bind the same real service execution to its Official artifact,
+    // canonical Claim, plan, renderer atom, and Product compatibility prose.
+    // The separately observed HTTP case remains N6's consumer meaning sample.
+    if (internal.delivery.artifact === undefined) {
+      throw new Error('N25 requires the actual internally assembled Official artifact: ' + caseId);
+    }
+    const n25 = traceNatalN25ConsumerMeaningAtoms({
+      semantics: exec.canonicalSemantics,
+      plan: exec.officialReadingPlan,
+      report: exec.officialReadingReport,
+      artifact: internal.delivery.artifact,
+      response: internal.response,
+    });
+    n25Traces.push({
+      caseId,
+      snapshotId: n25.snapshotId,
+      reportHash: n25.officialReadingReportHash,
+      readingId: n25.readingId,
+      uniqueConsumerAtoms: n25.exactUniqueMatches,
+      repeatedOrSharedConsumerAtoms: n25.ambiguousMatches,
+      unprovenConsumerAtoms: n25.unprovenMatches,
+      atoms: n25.atoms,
+    });
     const targetIds = new Set(exec.preparation.composition?.selection.targetClaimIds ?? []);
     const semantics = new Map(exec.canonicalSemantics.units.map((unit) => [unit.claimId, unit]));
     const planUnitRefs = new Set(exec.officialReadingPlan.sections.flatMap(
@@ -490,6 +515,38 @@ async function main() {
     : outputPath + '.n8-trace.json');
   writeFileSync(n8Path, JSON.stringify(n8, null, 2) + '\n', 'utf8');
   process.stdout.write(`Natal N8: ${n8.pairs.length} distinct-Research-claim / identical-meaning pairs traced without semantic promotion; ${n8Path}\n`);
+
+  // N25 is a narrower executable atomic trace of the actual five N8
+  // interpretation executions. It makes no claim that a matched repeated
+  // Research copy should have a different consumer meaning.
+  if (n25Traces.length !== 5 || new Set(n25Traces.map((x) => x.caseId)).size !== 5) {
+    throw new Error('N25 expected the five actual canonical N8 interpretations.');
+  }
+  const n25 = {
+    version: 'saju-natal-n25-claim-to-real-consumer-atom-trace-v1',
+    lifecycle: 'internal_quality_audit',
+    mayPublish: false, maySell: false, mayApproveResearchMeaning: false,
+    caseCount: n25Traces.length,
+    atomCount: n25Traces.reduce((n, t) => n + t.atoms.length, 0),
+    exactUniqueMatches: n25Traces.reduce((n, t) => n + t.uniqueConsumerAtoms, 0),
+    ambiguousMatches: n25Traces.reduce((n, t) => n + t.repeatedOrSharedConsumerAtoms, 0),
+    unprovenMatches: n25Traces.reduce((n, t) => n + t.unprovenConsumerAtoms, 0),
+    cases: n25Traces,
+    limitations: [
+      'Same exact Product prose across different charts is not independently proven to be a semantic defect.',
+      'Only three existing collision pairs / five canonical executions are traced at atom granularity in this initial slice.',
+      'Real HTTP meaning-only differences remain independently measured by N6; internal reading identity cannot be assigned to a separate HTTP response.',
+      'All Research semantics and further Preview admission remain HOLD.',
+    ],
+  };
+  const n25Path = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0, -5) + '.n25-trace.json'
+    : outputPath + '.n25-trace.json');
+  writeFileSync(n25Path, JSON.stringify(n25, null, 2) + '\\n', 'utf8');
+  process.stdout.write('Natal N25: ' + n25.caseCount + ' real service executions, ' +
+    n25.atomCount + ' consumer atoms, ' + n25.exactUniqueMatches +
+    ' unique matches, ' + n25.ambiguousMatches + ' ambiguous, ' +
+    n25.unprovenMatches + ' unproven; ' + n25Path + '\\n');
 
   const repeatedPairs = oldCollisions;
   const n4 = {
