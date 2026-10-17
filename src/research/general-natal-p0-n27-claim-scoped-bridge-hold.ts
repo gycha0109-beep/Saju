@@ -125,7 +125,7 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
     version: GENERAL_NATAL_N27_CLAIM_BRIDGE_HOLD_VERSION,
     issue: 2557 as const,
     researchPr: 2553 as const,
-    researchHeadReviewed: '845f95522337cf183fa2cc8a149f77475f7ca546' as const,
+    researchHeadReviewed: 'dd64e2dffe9e8da1236e89eba6b5dcfee78f165b' as const,
     researchPrMergedAtReview: false as const,
     researchScope: 'RESEARCH_ONLY_2010_ACTUAL_N13_T8_1_VS_0' as const,
     parentBridgeReviewId: existingBridge.reviewId,
@@ -144,7 +144,7 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
     targetClaims: reviewed,
     candidateBijeonWealthRuleExistsInThisReview: false as const,
     sourceLocatorCaveat:
-      '三命通會（四庫全書本）卷五 online transcription locates 論正財/論偏財/時上偏財; Harvard-Yenching 卷之五 PDF page 45 printed 時上偏財 reads 戊己, while SiKu online reads 戊巳. General 卷六 warns （以下內容與書不合）. Harvard one printed folio inspected; SiKu original printed folio, NLC, independent textual lineage and reviewer authority remain unverified.',
+      '三命通會 卷五 printed original scans directly locate 時上偏財 in Harvard page 45, SiKu CADAL06056481 image page 104, NLC engraved upper volume page 43; all three read 戊己. SiKu Wikisource editable volume five reads 戊巳 and conflicts with the inspected SiKu image. General 卷六 warns （以下內容與書不合）. Print stemma independence, original folio numbering, classical singleton/strength inference and reviewer authority remain unverified.',
     verifiedOnlineSiKuVolumeFiveLocator: true as const,
     siKuVolumeFiveDigitalSource:
       'https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05' as const,
@@ -177,6 +177,37 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
     printLeadGroupCountIsNotAuthenticatedWitnessCount: true as const,
     authenticatedPrintReadingsOfTargetPassage: 0 as const,
     visuallyInspectedHarvardPrintedWitnessCount: 1 as const,
+    totalDirectPrintedSourceReadings: 3 as const,
+    nlcUpperPrintedSource: Object.freeze({
+      sourceId: 'NLC_411999029701_VOL_5_UPPER' as const,
+      pdfPageOneBased: 43 as const,
+      printedClause: '柱中不宜再見戊己' as const,
+      printedCharacter: '己' as const,
+      originalPdfSha256:
+        '0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1' as const,
+      pageImageSha256:
+        '7f9b25f6c420044e5edc3d55f12dbb66b779a552b8181adfbc0deae8dfe5f005' as const,
+      acquisitionRunId: 39041195684 as const,
+      artifactId: 12103659191 as const,
+      historicalEditionIndependenceQualified: false as const,
+    }),
+    siKuPrintedSource: Object.freeze({
+      sourceId: 'CADAL06056481' as const,
+      djvuPageOneBased: 104 as const,
+      printedClause: '柱中不宜再見戊己' as const,
+      printedCharacter: '己' as const,
+      scannedDjvuSha256:
+        '4f273322b3fd4339789e1408e0bbb4ea15a7956e5e508c6f99fced264e0b53ee' as const,
+      page104ImageSha256:
+        'e20a1ce67daac2fc30eb914e8288d85f41cf2ab0ec14ba3156e630c2d5a91ac4' as const,
+      knownJiSiPrintCalibrationPage: 106 as const,
+      acquisitionRunId: 39041195684 as const,
+      artifactId: 12103971835 as const,
+      historicalEditionIndependenceQualified: false as const,
+    }),
+    printedGlyphAgreementFromThreeSources: '戊己' as const,
+    siKuWikisourceDigitalTranscriptionConflictAtThisLocus: true as const,
+    printedSourcesNotYetTextuallyIndependentQualified: true as const,
     harvardPrintedWitness: Object.freeze({
       sourceId: 'HARVARD_DRS_53262215_VOL_5' as const,
       directPageImageRead: true as const,
@@ -199,8 +230,9 @@ export function buildGeneralNatalN27ClaimScopedBridgeHold() {
     targetPageImagesRenderedFromAuthenticSourceInCurrentRun: false as const,
     scriptSelfTestDoesNotAuthenticateOriginalReading: true as const,
     printedTargetFoliosDirectlyInspected: true as const,
-    targetPrintingsInspected: 1 as const,
-    siKuPhysicalPrintedTargetFolioInspected: false as const,
+    targetPrintingsInspected: 3 as const,
+    siKuPhysicalPrintedTargetFolioInspected: true as const,
+    actualPrintedFolioMarksRead: false as const,
     twoScansDemonstratedToBeIndependentEditions: false as const,
     finalWangShuaiAndQiangRuoVerdictAuthorized: false as const,
     classicalSingleWealthLocationProven: false as const,

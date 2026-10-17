@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('845f95522337cf183fa2cc8a149f77475f7ca546');
+    expect(review.researchHeadReviewed).toBe('dd64e2dffe9e8da1236e89eba6b5dcfee78f165b');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -63,8 +63,30 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
       'CADAL06056481', 'CADAL06066041',
     ]);
     expect(review.printedTargetFoliosDirectlyInspected).toBe(true);
-    expect(review.targetPrintingsInspected).toBe(1);
-    expect(review.siKuPhysicalPrintedTargetFolioInspected).toBe(false);
+    expect(review.targetPrintingsInspected).toBe(3);
+    expect(review.siKuPhysicalPrintedTargetFolioInspected).toBe(true);
+    expect(review.actualPrintedFolioMarksRead).toBe(false);
+    expect(review.totalDirectPrintedSourceReadings).toBe(3);
+    expect(review.printedGlyphAgreementFromThreeSources).toBe('戊己');
+    expect(review.siKuWikisourceDigitalTranscriptionConflictAtThisLocus).toBe(true);
+    expect(review.printedSourcesNotYetTextuallyIndependentQualified).toBe(true);
+    expect(review.nlcUpperPrintedSource).toMatchObject({
+      pdfPageOneBased: 43,
+      printedClause: '柱中不宜再見戊己',
+      printedCharacter: '己',
+      originalPdfSha256: '0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1',
+      artifactId: 12103659191,
+      historicalEditionIndependenceQualified: false,
+    });
+    expect(review.siKuPrintedSource).toMatchObject({
+      djvuPageOneBased: 104,
+      printedClause: '柱中不宜再見戊己',
+      printedCharacter: '己',
+      scannedDjvuSha256: '4f273322b3fd4339789e1408e0bbb4ea15a7956e5e508c6f99fced264e0b53ee',
+      knownJiSiPrintCalibrationPage: 106,
+      artifactId: 12103971835,
+      historicalEditionIndependenceQualified: false,
+    });
     expect(review.visuallyInspectedHarvardPrintedWitnessCount).toBe(1);
     expect(review.sourceIntegrityOverallQualified).toBe(false);
     expect(review.harvardPrintedWitness).toMatchObject({
