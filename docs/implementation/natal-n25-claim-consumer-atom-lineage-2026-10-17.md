@@ -23,12 +23,13 @@
 ## 무엇을 해결했고 무엇은 남았는가
 
 - 해결된 첫 결손: 단순히 'Claim이 Plan에 들어 있다'는 관찰보다 한 단계 더 내려가, 출처가 고정된 공식 report의 각 의미 atom이 실제 Product 응답에서 같은 문구로 살아남았는지 검증 가능.
-- 여전히 미완: N8 3쌍/고유 5건 및 N10 19개 명식 충돌 쌍의 *실행 audit 자동 연결*, Claims 간 정당한 의미 차이 판정, 소비자용 새로운 합성 의미. N25 도구만으로 `N12 usefulComplete`를 변경하거나 의미 반복을 해결했다고 주장할 수 없다.
+- N8 실행 연결: 기존 `scripts/natal-personalization-audit.mjs`가 보유한 정확한 3개 충돌 쌍 / 실제 canonical 실행 5건에 N25 추적기를 호출하여 `.n25-trace.json`을 출력한다. 같은 내부 서비스 실행의 Artifact와 Product 읽기를 비교하며, 별도의 HTTP 응답에 동일 readingId를 주장하지 않는다. CI는 5건·atom 수·fail-closed 상태 및 lifecycle을 자동 확인하고 artifact로 보관한다.
+- 여전히 미완: N10의 19개 고유 명식 충돌 쌍 **전부**의 claim-to-consumer atom 추적, 각 쌍의 정당한 의미 차이 판정, 소비자용 새로운 합성 의미. N25 도구만으로 `N12 usefulComplete`를 변경하거나 의미 반복을 해결했다고 주장할 수 없다.
 - N26 수정은 N25 실제 증거가 있는 결함에 한정. Research-only T8의 `FAMILY_MEANING` 공유 문구를 무근거로 바꿔서는 안 된다.
 
 ## 검증 계획
 
-`test/natal-n25-consumer-meaning-atom-trace.test.ts`에서 소비자 호환 투영과 Claim 근거 원문 일치, 중복 복사 모호성, 변조·틀린 reading/snapshot/report/plan 차단을 검증한다. 실제 35 case 및 N8 provenance 연결은 N25 후속 단계의 필수 완료 조건이며, 합격하기 전에는 N25를 완료 체크하지 않는다.
+`test/natal-n25-consumer-meaning-atom-trace.test.ts`에서 소비자 호환 투영과 Claim 근거 원문 일치, 중복 복사 모호성, 변조·틀린 reading/snapshot/report/plan 차단을 검증한다. 실제 35 case 전체의 atom 인계 및 N10 19쌍의 원인 분류는 N25 후속 단계의 필수 완료 조건이며, 합격하기 전에는 N25를 완료 체크하지 않는다.
 
 CI Quality, 16-shard, PIE, Production Container, SHA-pinned Integration, 병합 후 main 검증 결과는 PR에 별도 고정한다.
 
