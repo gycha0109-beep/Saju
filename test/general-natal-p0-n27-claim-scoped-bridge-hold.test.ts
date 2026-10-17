@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('1890964d0734e43bed4a3303810b1e8879880dda');
+    expect(review.researchHeadReviewed).toBe('905c5f7ac4bfb6721d5d563a888b01ab2c725705');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -129,10 +129,16 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.real2010ChartOtherPillarJiAndHiddenWuAreStructuralObservationsOnly).toBe(true);
     expect(review.twoScansDemonstratedToBeIndependentEditions).toBe(false);
     expect(review.n27SourceClauseConditionMatrix).toMatchObject({
-      version: 'saju-n27-hour-wealth-source-condition-matrix-v1',
+      version: 'saju-n27-hour-wealth-source-condition-matrix-v2',
       sourcePath: 'src/research/general-natal-p0-n27-hour-wealth-condition-matrix.ts',
       evaluatedAgainstActualCanonical2010: true,
       testedHourCases: ['05:30', '19:30', 'UNKNOWN'],
+      bothHourExamplesCheckedAgainstRealCanonicalSnapshots: true,
+      jiaWuChen07HourVisibleWu: true,
+      jiaJiaXu19HourHiddenWu: true,
+      sameOtherThreePillarsInBothCases: true,
+      exposedStemOnlyFilterWouldDropThePrintedJiaXuExample: true,
+      otherPalaceVisibleAndHiddenScopeStillUnadjudicated: true,
       hour19HiddenWuNotVisibleWu: true,
       yearVisibleJiIsJiaRegularWealth: true,
       classicalPalaceAndSingletonInterpretationAdjudicated: false,
