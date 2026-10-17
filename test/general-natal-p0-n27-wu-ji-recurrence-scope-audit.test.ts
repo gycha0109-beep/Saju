@@ -111,4 +111,78 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
     expect(a.officialAdmissionGranted).toBe(false);
     expect(a.licensedHistoricalInterpretation).toBe(false);
   });
+  it('actual 甲戌 charts isolate other-pillar visible 己, visible 戊, and hidden-only exposure', () => {
+    // Real calculated charts, NOT edited fixture stems. All dates are 甲 days
+    // ten-day multiples after 2010-02-03, each evaluated at 19:30.
+    const jiOnly = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
+    const snapshotWu = calculateAuthorizedMyeonghwaProductionSnapshot({
+      calendarType: 'solar', date: { year: 2010, month: 2, day: 13 },
+      time: { known: true, hour: 19, minute: 30 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, { now: NOW }).snapshot;
+    const snapshotHidden = calculateAuthorizedMyeonghwaProductionSnapshot({
+      calendarType: 'solar', date: { year: 2010, month: 5, day: 4 },
+      time: { known: true, hour: 19, minute: 30 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, { now: NOW }).snapshot;
+    const wuOnly = buildGeneralNatalN27WuJiRecurrenceScopeAudit(snapshotWu);
+    const hiddenOnly = buildGeneralNatalN27WuJiRecurrenceScopeAudit(snapshotHidden);
+    for (const audit of [jiOnly, wuOnly, hiddenOnly]) {
+      expect(audit.contextStatus).toBe('SOURCE_EXAMPLE_ONLY');
+      expect(audit.printedExampleKind).toBe('JIA_JIA_XU_HIDDEN_WU');
+      expect(audit.sourceQualifiedRecurrenceVerdict).toBe('UNADJUDICATED');
+      expect(audit.sourceQualifiedSingletonVerdict).toBe('UNADJUDICATED');
+      expect(audit.productionAuthorized).toBe(false);
+    }
+    expect([jiOnly.actualObservationChannels.otherPillarVisibleWu,
+      jiOnly.actualObservationChannels.otherPillarVisibleJi]).toEqual([0, 1]);
+    expect([wuOnly.actualObservationChannels.otherPillarVisibleWu,
+      wuOnly.actualObservationChannels.otherPillarVisibleJi]).toEqual([1, 0]);
+    expect([hiddenOnly.actualObservationChannels.otherPillarVisibleWu,
+      hiddenOnly.actualObservationChannels.otherPillarVisibleJi]).toEqual([0, 0]);
+    expect(hiddenOnly.actualObservationChannels.otherPillarHiddenWu).toBeGreaterThan(0);
+    expect(byKey(wuOnly, 'VISIBLE_WU_ONLY')?.otherPillarOccurrenceCount).toBe(1);
+    expect(byKey(hiddenOnly, 'VISIBLE_WU_AND_JI')?.otherPillarOccurrenceCount).toBe(0);
+    expect(byKey(hiddenOnly, 'VISIBLE_AND_HIDDEN_WU_AND_JI')?.otherPillarOccurrenceCount)
+      .toBeGreaterThan(0);
+  });
+
+  it('does not equate separate stem/hidden occurrences with pillars or a classical 位', () => {
+    const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
+    const unit = x.otherPillarUnitAudit;
+    expect(unit.occurrenceUnitCount).toBe(
+      x.actualObservationChannels.otherPillarVisibleWu +
+      x.actualObservationChannels.otherPillarVisibleJi +
+      x.actualObservationChannels.otherPillarHiddenWu +
+      x.actualObservationChannels.otherPillarHiddenJi,
+    );
+    expect(unit.occurrenceUnitCount).toBeGreaterThan(unit.distinctPillarUnitCount);
+    expect(unit.pillarsWithBothVisibleAndHiddenCount).toBeGreaterThan(0);
+    expect(unit.yearMonthOnlyOccurrenceCount + unit.dayPillarOccurrenceCount)
+      .toBe(unit.yearMonthDayOccurrenceCount);
+    expect(unit.dayPillarOccurrenceCount).toBeGreaterThan(0);
+    expect(unit.hourReference).toMatchObject({
+      hourStem: '갑', hourBranch: '술', hourVisibleWu: false, hourHiddenWu: true,
+      includedInOtherPillarOccurrenceCount: false,
+    });
+    expect(unit.whetherClassicalBieGongIncludesDayPillar).toBe('UNADJUDICATED');
+    expect(unit.whetherTwoChannelsInOnePillarAreTwoWei).toBe('UNADJUDICATED');
+    expect(unit.whetherHistoricalWeiMeansStemGlyphOrPillarOrLocation).toBe('UNADJUDICATED');
+  });
+
+  it('non-甲 day is a negative control even when another-pillar stems can be observed', () => {
+    const snapshot = calculateAuthorizedMyeonghwaProductionSnapshot({
+      calendarType: 'solar', date: { year: 2010, month: 2, day: 4 },
+      time: { known: true, hour: 19, minute: 30 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, { now: NOW }).snapshot;
+    const nonJia = buildGeneralNatalN27WuJiRecurrenceScopeAudit(snapshot);
+    expect(nonJia.contextStatus).toBe('DIFFERENT_DAY_STEM');
+    expect(nonJia.scopeHypotheses.every((h) =>
+      h.observerWouldCountAnOtherPillarOccurrence === false &&
+      h.classicalProhibitionVerdict === 'UNADJUDICATED'
+    )).toBe(true);
+    expect(nonJia.productionAuthorized).toBe(false);
+  });
+
 });
