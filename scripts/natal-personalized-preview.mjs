@@ -13,6 +13,7 @@ import { buildNatalSynthesisPreview } from '../dist/preview/natal-synthesis-prev
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN21ReaderFirstStory } from '../dist/preview/natal-reader-first-story.js';
 import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expanded-source-reading.js';
+import { buildNatalN30bFiveDomainVerifiedReader } from '../dist/preview/natal-n30b-five-domain-verified-reader.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
@@ -322,6 +323,29 @@ function renderGroundedReaderBrief(brief) {
     brief.limitations.map(x => '<p>' + escapeHtml(x) + '</p>').join('') + '</details></section>';
 }
 
+function renderN30bVerifiedGeneral(result) {
+  const overview = result.generalSourceOverview;
+  if (overview === null) {
+    return '<section class="domain"><div class="domain-heading"><h2>명식별 검증된 핵심 구조</h2>' +
+      '<span>N30b · 현재 제공 가능한 근거 없음</span></div>' +
+      '<p class="limited">충분한 확정 근거가 없어서 이 영역을 새로 만들어 채우지 않았습니다.</p></section>';
+  }
+  const receipts = overview.verifiedReceipts.map((entry) =>
+    '<li>실제 관측 위치: ' + escapeHtml(entry.position) +
+    '<details><summary>Claim / Rule / Source 출처</summary><p>' +
+    escapeHtml(entry.claimType) + ' · ' +
+    escapeHtml(entry.ruleIds.join(' · ')) + ' · ' +
+    escapeHtml(entry.sourceIds.join(' · ')) + '</p></details></li>'
+  ).join('');
+  return '<section class="domain reader-first"><div class="domain-heading"><h2>' +
+    escapeHtml(overview.title) + '</h2><span>N30b · General 출처 검증</span></div>' +
+    '<p class="limited">원국에서 실제 확인된 십신 위치와 기존 출처 문장을 앞에 표시합니다. ' +
+    '이를 직업·재물·사업·관계의 결과로 자동 해석하지 않습니다.</p>' +
+    overview.blocks.map(renderBlock).join('') +
+    '<details><summary>해석별 실제 Claim / Rule / Source</summary><ul>' +
+    receipts + '</ul></details></section>';
+}
+
 function renderPillars(summary) {
   if (summary === undefined) return '<p>명식 요약을 사용할 수 없습니다.</p>';
   return `<div class="pillars">${(['year', 'month', 'day', 'hour'])
@@ -333,7 +357,7 @@ function renderPillars(summary) {
     .join('')}</div>`;
 }
 
-function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations) {
+function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -378,6 +402,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
   <p>${escapeHtml(date)} · ${escapeHtml(time ?? '출생시간 미상')} 입력으로 현재 명하 엔진의 실제 Preview 해석을 조합한 내부 시제품입니다. 해석을 새로 생성하거나 근거 없는 빈칸을 채우지 않습니다.</p>
   </header>
   ${renderPillars(general?.calculationSummary)}
+  ${renderN30bVerifiedGeneral(verifiedFiveDomains)}
   ${renderReaderFirstStory(story, expanded)}
   ${renderActualChartRelations(relations)}
   <details class="full-data"><summary>전체 원문·명식 계산 근거·연구용 부가 해설 펼쳐보기</summary>
@@ -450,15 +475,17 @@ async function main() {
   const domainKeys = ['general', 'career', 'wealth', 'business', 'relationship'];
   const realSources = responses.map((item, i) => ({ domain: domainKeys[i], response: item.response }));
   const synthesis = buildNatalSynthesisPreview(evidence, realSources);
-  const brief = buildNatalN16GroundedReaderBrief(calculated.snapshot, realSources);
-  const story = buildNatalN21ReaderFirstStory(calculated.snapshot, realSources);
-  const expanded = buildNatalN24ExpandedSourceReading(brief, story);
   const researchNow = new Date('2026-10-15T00:00:00.000Z');
   const registry = createGeneralNatalIntegratedReadingRegistry(researchNow.toISOString());
   const interpretation = runInterpretation(calculated.snapshot, registry, {
     requestId: 'n3-theme-preview-internal-only',
     now: researchNow,
   });
+  const verifiedFiveDomains = buildNatalN30bFiveDomainVerifiedReader(
+    calculated.snapshot, interpretation, realSources,
+  );
+  const brief = buildNatalN16GroundedReaderBrief(calculated.snapshot, realSources);
+  const {story, full:expanded} = verifiedFiveDomains;
   const themes = buildNatalActivatedThemePreview(interpretation);
   const applied = buildNatalAppliedThemeContext(evidence, themes);
   const researchRegistry = createGeneralNatalSourceBoundedRegistry(researchNow.toISOString());
@@ -468,7 +495,10 @@ async function main() {
   const relations = buildNatalN22ChartRelationGuide(
     calculated.snapshot, researchExecution, researchRegistry,
   );
-  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations), 'utf8');
+  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains), 'utf8');
+  process.stdout.write('N30b five-domain General verification: ' +
+    (verifiedFiveDomains.generalSourceOverview?.verifiedReceipts.length ?? 0) +
+    ' source-verified claims in reader-first General; other four domain meanings unchanged; no authority promotion\n');
   process.stdout.write('N22 real source-bound chart relations: ' +
     relations.individualRelations.length + ' individual, ' +
     relations.linkedRelations.length + ' linked, ' +
