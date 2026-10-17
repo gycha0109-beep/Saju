@@ -200,14 +200,15 @@ describe('N21 readable source-owned natal storyline',()=>{
     const concealed=structuredClone(original);
     if (!concealed.reading) throw new Error('missing original');
     concealed.reading.calculationSummary.pillars.month={
-      ...concealed.reading.calculationSummary.pillars.month,
-      status:'unavailable',value:undefined,
+      label:concealed.reading.calculationSummary.pillars.month.label,
+      status:'unavailable',
     };
     expect(()=>buildNatalN21ReaderFirstStory(snapshot,[{
       domain:'career',response:concealed,
     }])).toThrow(/N30 resolved canonical pillar hidden or changed: month/u);
 
-    const noReading={...original,reading:undefined};
+    const noReading=structuredClone(original);
+    delete noReading.reading;
     expect(()=>buildNatalN21ReaderFirstStory(snapshot,[{
       domain:'career',response:noReading,
     }])).toThrow(/N30 delivered domain has no Product reading/u);
