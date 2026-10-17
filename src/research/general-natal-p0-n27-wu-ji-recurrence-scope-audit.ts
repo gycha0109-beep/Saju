@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v2' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v3' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -47,9 +47,50 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
       slot: p.slot, channel: 'hidden_stem' as const, glyph: '己' as const,
     })),
   ]);
+  // Count the same physical glyph-at-pillar once when it appears through both
+  // an exposed stem and a hidden stem. This is a counterfactual accounting
+  // unit, NOT proof that the classical 位 is a stem+pillar pair.
+  const crossChannelDuplicatePillarGlyphs = Object.freeze(
+    otherPillarPositions.filter((p) => p.channel === 'visible_stem' &&
+      otherPillarPositions.some((q) =>
+        q.slot === p.slot && q.glyph === p.glyph && q.channel === 'hidden_stem'
+      )).map((p) => Object.freeze({ slot: p.slot, glyph: p.glyph })),
+  );
+  // Separate two unrelated open questions:
+  //  (a) does 別宮 reach 日柱, and
+  //  (b) do hidden stem occurrences count as 再見?
+  // A third dimension is purely about how to deduplicate repeated channel
+  // observations inside the same pillar, not a historical "位" decision.
+  const palaceAndChannelCounterfactuals = Object.freeze([
+    { key: 'YEAR_MONTH_VISIBLE' as const, includeDayPillar: false, includeHiddenStems: false },
+    { key: 'YEAR_MONTH_DAY_VISIBLE' as const, includeDayPillar: true, includeHiddenStems: false },
+    { key: 'YEAR_MONTH_VISIBLE_HIDDEN' as const, includeDayPillar: false, includeHiddenStems: true },
+    { key: 'YEAR_MONTH_DAY_VISIBLE_HIDDEN' as const, includeDayPillar: true, includeHiddenStems: true },
+  ].map((policy) => {
+    const observed = otherPillarPositions.filter((p) =>
+      (policy.includeDayPillar || p.slot !== 'day') &&
+      (policy.includeHiddenStems || p.channel === 'visible_stem')
+    );
+    const pillarGlyphPairs = new Set(observed.map((p) => `${p.slot}:${p.glyph}`));
+    return Object.freeze({
+      ...policy,
+      observedOccurrenceCount: observed.length,
+      distinctPillarGlyphPairCount: pillarGlyphPairs.size,
+      distinctPillarCount: new Set(observed.map((p) => p.slot)).size,
+      samePillarSameGlyphTwoChannelExcess: observed.length - pillarGlyphPairs.size,
+      namedWuJiCovered: true as const,
+      classicalBieGongVerdict: 'UNADJUDICATED' as const,
+      classicalZaiJianVerdict: 'UNADJUDICATED' as const,
+      classicalWeiCountAuthorized: false as const,
+    });
+  }));
   const otherPillarUnitAudit = Object.freeze({
     // These are observed channels, not prohibitions or approved 宮 definitions.
     positions: otherPillarPositions,
+    crossChannelDuplicatePillarGlyphs,
+    samePillarGlyphAcrossChannelsCanInflateOccurrenceCount:
+      crossChannelDuplicatePillarGlyphs.length > 0,
+    palaceAndChannelCounterfactuals,
     occurrenceUnitCount: otherPillarPositions.length,
     distinctPillarUnitCount: new Set(otherPillarPositions.map((p) => p.slot)).size,
     distinctGlyphUnitCount: new Set(otherPillarPositions.map((p) => p.glyph)).size,
@@ -138,6 +179,8 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
     }),
     scopeHypotheses,
     otherPillarUnitAudit,
+    // Scope-lattice v3 adds no new classical gate or accepted interpretation.
+    yearMonthVsDayAndVisibleVsHiddenScopeAdjudicated: false as const,
     quantitativeModelSensitivity: Object.freeze({
       totalVisible,
       totalWu,
@@ -159,6 +202,9 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
       competingVisibilityText: '天元透出為妙支內所藏次之' as const,
       sameVolumeAnalogyChapter: '三命通會 卷五 時上一位貴' as const,
       sameVolumeAnalogyQuote: '時上偏官要幹上透出只一位為妙年月日重見' as const,
+      sameVolumeAnalogySecondVerse: '時上一位貴藏在支中' as const,
+      sameVolumeAnalogyIsDigitallyTranscribedNotNewPrintAttestation: true as const,
+      classicalBieGongDayInclusionNotDerivedFromAnalogy: true as const,
       sameVolumeAnalogyExplicitlyMentionsYearMonthDay: true as const,
       sameVolumeAnalogyIsAboutHourOfficerNotHourWealth: true as const,
       transferringOfficerCountingRuleToHourWealthAuthorized: false as const,
