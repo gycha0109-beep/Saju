@@ -36,7 +36,7 @@ describe('P0 N10 two real canonical natal cases replayed against existing N13 T8
     expect(a.snapshot.completeness.birthTimeKnown).toBe(true);
     expect(a.execution.integrity.valid).toBe(true);
     expect(a.facts.pillars.find((p) => p.slot === 'hour')).toMatchObject({
-      stem: '丁', branch: '卯',
+      stem: '정', branch: '묘',
     });
     expect(a.facts.tenGods).toContainEqual(expect.objectContaining({
       slot: 'hour', component: 'branch', state: 'resolved', value: '겁재',
@@ -81,7 +81,7 @@ describe('P0 N10 two real canonical natal cases replayed against existing N13 T8
     expect(b.snapshot.completeness.birthTimeKnown).toBe(true);
     expect(b.execution.integrity.valid).toBe(true);
     expect(b.facts.pillars.find((p) => p.slot === 'hour')).toMatchObject({
-      stem: '甲', branch: '戌',
+      stem: '갑', branch: '술',
     });
     expect(b.facts.tenGods).toContainEqual(expect.objectContaining({
       slot: 'hour', component: 'stem', state: 'resolved', value: '비견',
