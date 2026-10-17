@@ -183,6 +183,9 @@ async function main() {
       readingState: story.readingState,
       birthTimeKnown: story.birthTimeKnown,
       displayedActualInterpretationCount: story.displayedOriginalInterpretationCount,
+      displayedDomainDistinctiveCount: story.displayedDomainDistinctiveCount,
+      displayedCrossDomainSharedCount: story.displayedCrossDomainSharedCount,
+      excerptSelectionVersion: story.excerptSelectionVersion,
       calculationFactsExcludedFromInterpretation: story.calculationFactsExcludedFromInterpretation,
       previewMeaningFingerprint: story.previewMeaningFingerprint,
       meaningDifferentiationProven: story.meaningDifferentiationProven,
@@ -194,6 +197,8 @@ async function main() {
     version: 'saju-n21-35-real-http-reader-first-audit-v1',
     caseCount: n21Cases.length,
     casesWithActualReading: n21Cases.filter((x) => x.displayedActualInterpretationCount > 0).length,
+    displayedDomainDistinctiveCount: n21Cases.reduce((n,x) => n + x.displayedDomainDistinctiveCount, 0),
+    displayedCrossDomainSharedCount: n21Cases.reduce((n,x) => n + x.displayedCrossDomainSharedCount, 0),
     casesWithoutActualReading: n21Cases.filter((x) => x.displayedActualInterpretationCount === 0).length,
     consumerClaimNewlyApproved: false,
     sourceMeaningDifferenceProven: false,
@@ -202,7 +207,8 @@ async function main() {
   };
   if (n21.caseCount !== fixtures.length ||
       n21Cases.some((x) => x.createsNewInterpretation || x.meaningDifferentiationProven ||
-        x.mayPublish || x.maySell) ||
+        x.mayPublish || x.maySell ||
+        x.displayedDomainDistinctiveCount + x.displayedCrossDomainSharedCount !== x.displayedActualInterpretationCount) ||
       n21Cases.some((x) => !x.birthTimeKnown && x.displayedActualInterpretationCount > 0)) {
     throw new Error('N21 reader-first story fabricated evidence or unsupported authority');
   }
@@ -210,6 +216,9 @@ async function main() {
     ? outputPath.slice(0,-5) + '.n21-reader-first.json'
     : outputPath + '.n21-reader-first.json');
   writeFileSync(n21Path, JSON.stringify(n21,null,2) + '\n', 'utf8');
+  process.stdout.write('Natal N23: ' + n21.displayedDomainDistinctiveCount +
+    ' domain-exclusive source paragraphs, ' + n21.displayedCrossDomainSharedCount +
+    ' cross-domain shared excerpts (single-domain HTTP sample); no new meaning\n');
   process.stdout.write('Natal N21: ' + n21.caseCount + ' real HTTP cases, ' +
     n21.casesWithActualReading + ' existing bounded readers, ' +
     n21.casesWithoutActualReading + ' with no bounded reading; ' + n21Path + '\n');
