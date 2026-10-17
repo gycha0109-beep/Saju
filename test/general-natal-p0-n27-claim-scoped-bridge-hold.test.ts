@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('29a14e348e5c5136aa2c97394d332a081c5af3d5');
+    expect(review.researchHeadReviewed).toBe('845f95522337cf183fa2cc8a149f77475f7ca546');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -62,7 +62,23 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.availableOriginalScanCandidates).toEqual([
       'CADAL06056481', 'CADAL06066041',
     ]);
-    expect(review.printedTargetFoliosDirectlyInspected).toBe(false);
+    expect(review.printedTargetFoliosDirectlyInspected).toBe(true);
+    expect(review.targetPrintingsInspected).toBe(1);
+    expect(review.siKuPhysicalPrintedTargetFolioInspected).toBe(false);
+    expect(review.visuallyInspectedHarvardPrintedWitnessCount).toBe(1);
+    expect(review.sourceIntegrityOverallQualified).toBe(false);
+    expect(review.harvardPrintedWitness).toMatchObject({
+      sourceId: 'HARVARD_DRS_53262215_VOL_5',
+      directPageImageRead: true,
+      pdfPageOneBased: 45,
+      clause: '柱中不宜再見戊己',
+      printedGlyph: '己',
+      originalPdfSha256: 'ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831',
+      fullPageHighResSha256: 'b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12',
+      cropSha256: 'fc3063d2608720b13cfca0f7e43e89f3a898aca38d3810de290b835f600e5582',
+      printedFolioMarkUnread: true,
+      independentSiKuPhysicalOriginalRead: false,
+    });
     expect(review.reproducibleManualPrintInspectionScript).toBe(
       'scripts/research/inspect-n27-volume-five-print.mjs',
     );
