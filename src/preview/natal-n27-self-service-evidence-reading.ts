@@ -38,8 +38,9 @@ export function attachNatalN27SelfServiceEvidenceReading(
   const reading = response.reading;
   if (!reading || !reading.subject.birthInputDisplay.timeKnown ||
       !snapshot.completeness.birthTimeKnown ||
-      snapshot.snapshotId !== interpretation.run.snapshotId ||
-      snapshot.derivedFacts.tenGods.status !== 'resolved') return response;
+      snapshot.snapshotId !== interpretation.run.snapshotId) return response;
+  const resolvedTenGods = snapshot.derivedFacts.tenGods;
+  if (resolvedTenGods.status !== 'resolved') return response;
   if (reading.sections.some(section => section.title === TITLE)) return response;
 
   for (const slot of ['year','month','day','hour'] as const) {
@@ -67,7 +68,7 @@ export function attachNatalN27SelfServiceEvidenceReading(
         !profile.standardText.summary || !profile.standardText.headline) continue;
     const component = match[2] === 'VISIBLE_STEMS' ? 'stem' : 'branch';
     const positions = SLOTS.flatMap((slot,i) => {
-      const fact = snapshot.derivedFacts.tenGods.value[slot][component];
+      const fact = resolvedTenGods.value[slot][component];
       if (fact?.status !== 'resolved' || !family.includes(fact.value as TenGod)) return [];
       return [{ slot, order:i, tenGod:fact.value as TenGod }];
     });
