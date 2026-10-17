@@ -223,3 +223,19 @@ node scripts/research/inspect-n27-volume-five-print.mjs \
 **증거 판정:** `physicallyInspectedTargetPrintings=1` (Harvard 한 본), `harvardPrintedClauseVerification.status=ONE_PRINTED_WITNESS_DIRECTLY_READ`, `printedDisputedGlyph=己`. 일반적인 `correctOriginalPrintGlyph=UNRESOLVED`은 유지한다. 이는 새 Harvard 원전 이미지 한 건에 대한 실제 문자 대조를 뜻하며, **특정 四庫 소장본의 글자를 읽었거나 위키문헌의 巳를 확정된 오자라고 입증한 것은 아니다.** 서로 다른 두 물리 판본을 직접 대조했다거나 원전의 내용 의미가 승인된 것도 아니다.
 
 2010년 계산 관측 `年干己` / `申藏戊` / `戌藏戊`와 역사적 `柱中不宜再見戊己` 사이에는 적용한 위치·유일성·월령·강약 규칙의 비약 문제가 여전히 남아 있다. `只要一位=NOT_ADJUDICATED`, `強弱=UNCLASSIFIED`, `#17 METHODOLOGY_CONFLICT`, 기존 N13 정확한 겁재 1-vs-0 유지. Bridge #2557 다섯 Claim HOLD, no new semantic admission / Production unchanged.
+
+## 17. 권五 원본 3개 소장 계통 인쇄면 대조 (2026-10-17) — 戊己로 일치, Wikisource 전사 불일치
+
+하버드 PDF 45면 인쇄 `柱中不宜再見戊己` 확인 뒤, 이와 별개의 [GitHub Actions #39041195684](https://github.com/gycha0109-beep/Saju/actions/runs/39041195684)에서 Commons에 공개된 CADAL 四庫全書本 권五 DjVu, NLC 刻本 권五 上·下 원본 파일을 **다운로드하고 모든 이미지면을 렌더링**했다. NLC 하권은 구절이 없는 다음 부분까지 읽기 위한 후보이며 이 locus의 독립 문장 증거로 세지 않는다.
+
+| 원본 인쇄 이미지 | 실제 구절 PDF/DjVu 이미지 면(1부터) | 직접 판독된 원문(該所) | 소스 파일 SHA-256 | 인쇄면 렌더 PNG SHA-256 |
+|---|---|---|---|---|
+| Harvard-Yenching `HARVARD_DRS_53262215_VOL_5` | [PDF 45면](https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf) | `柱中不宜再見戊己` | `ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831` | 고해상도 `b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12` |
+| CADAL 四庫全書本 `06056481` | [DjVu 104면](https://commons.wikimedia.org/wiki/File:CADAL06056481_三命通會·卷五.djvu) | `柱中不宜再見戊己` | **원본 DjVu** `4f273322b3fd4339789e1408e0bbb4ea15a7956e5e508c6f99fced264e0b53ee` | `e20a1ce67daac2fc30eb914e8288d85f41cf2ab0ec14ba3156e630c2d5a91ac4` |
+| NLC 刻本 `411999029701` 第9冊 五上 | [PDF 43면](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf) | `柱中不宜再見戊己` | `0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1` | `7f9b25f6c420044e5edc3d55f12dbb66b779a552b8181adfbc0deae8dfe5f005` |
+
+**실제 글자 판독 보강:** CADAL DjVu 104면의 `戊` 뒤 글자 형태만 보았을 때 `巳`로 보일 여지가 있어 재검토했다. **같은 CADAL 권五 인쇄본 106면**의 명시적 예시 `甲日見己巳時`에서 **서로 다른 `己`와 `巳`의 인쇄 字形을 현장에서 직접 비교**했다. 이 인쇄본의 `己`는 마지막 가로획이 오른쪽 위로 말리고, `巳`는 오른쪽에서 거의 평평하게 끝난다. 104면 문제 글자는 106면의 `己` 쪽 형태와 일치한다. 106면 PNG SHA256 `b66c1478e4bcc31faae58fc2d3e882a79de64da697c10cc3fb64e2c4b0b6de41`. NLC 43면 인쇄 글자 역시 같은 `己` 형태로 판독했다.
+
+각 원본 **판면을 실제 읽은 수**는 Harvard, CADAL, NLC 각 1건 = **3건**. 확인한 세 인쇄 스캔의 해당 구절은 **`戊己`로 일치**한다. 반면 [維基文庫 『四庫全書本/卷05』 편집 전사](https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05)는 `戊巳`로 되어 있으므로, **이 CADAL 인쇄 개체를 기준으로 보았을 때의 전사 오류 가능성이 높다**. 이는 사이트 원문을 임의 수정하거나 모든 사본에 같은 표기가 있음을 증명하는 것은 아니다.
+
+**상태 경계:** 물리 소장/서지 집단 3종류에서 읽었지만 교감학적 판본 계통 genealogy·독립 텍스트 lineage·실제 각 책의 별도 folio 표기는 아직 인증하지 않았다. `crossPrintCollation.status=THREE_PRINTED_SCAN_CLAUSE_READINGS_AGREE`와 동시에 `correctOriginalPrintGlyph=UNRESOLVED`(원저자 원고 정본 불명)을 유지한다. **최종 강약/時上偏財 格/只要一位 적용 결론이나 새 비견-재 관계를 이 증거 하나로 만들지 않는다.** Bridge #2557 다섯 Claim HOLD, N13 정확 겁재 T8 1-vs-0 및 Production 의미 승인 0은 계속 유지.

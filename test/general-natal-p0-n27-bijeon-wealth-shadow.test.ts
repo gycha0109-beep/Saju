@@ -61,7 +61,10 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
       originalTargetFolioInspected: true,
       harvardPrintedWitnessReads: '己',
       harvardPrintedWitnessImagePageInspected: true,
-      siKuOriginalPrintedGlyphDirectlyInspected: false,
+      siKuOriginalPrintedGlyphDirectlyInspected: true,
+      inspectedSiKuSourceId: 'CADAL06056481',
+      printedSourceGlyphAgreement: '己',
+      siKuSpecificEditableTranscriptionDiffersFromScannedPrint: true,
       independentPrintWitnessesEstablished: 0,
       applyingJiProhibitionToThisChartAuthorized: false,
     });
@@ -102,14 +105,37 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
       acquisitionArtifactId: 12103320492,
       printEditionLineageIndependentlyAuthenticated: false,
     });
-    expect(shadow.rareBookCollationCandidates.slice(1).every((c) =>
-      !c.targetPageIdentified && !c.originalPrintedClauseRead &&
-      !c.exactPrintedCharacterVerified
-    )).toBe(true);
-    expect(shadow.physicallyInspectedTargetPrintings).toBe(1);
+    expect(shadow.rareBookCollationCandidates[1]).toMatchObject({
+      targetPageIdentified: true,
+      targetPdfPageOneBased: 43,
+      originalPrintedClauseRead: true,
+      exactPrintedCharacterVerified: true,
+      printedCharacter: '己',
+      passageRead: '柱中不宜再見戊己',
+      sourcePdfSha256: '0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1',
+      page43RasterSha256: '7f9b25f6c420044e5edc3d55f12dbb66b779a552b8181adfbc0deae8dfe5f005',
+    });
+    expect(shadow.rareBookCollationCandidates[2]).toMatchObject({
+      targetPageIdentified: false,
+      originalPrintedClauseRead: false,
+      exactPrintedCharacterVerified: false,
+    });
+    expect(shadow.physicallyInspectedTargetPrintings).toBe(3);
     expect(shadow.physicallyInspectedTargetSourceIds).toEqual([
       'HARVARD_DRS_53262215_VOL_5',
+      'CADAL06056481',
+      'NLC_411999029701_VOL_5_UPPER',
     ]);
+    expect(shadow.crossPrintCollation).toMatchObject({
+      status: 'THREE_PRINTED_SCAN_CLAUSE_READINGS_AGREE',
+      observedGlyphInAllThree: '己',
+      primaryEditionPrintedTargetImagesDirectlyRead: 3,
+      digitalSiKuWikisourceDiffersFromInspectedCadal: true,
+      digitalTranscriptionErrorLikelyAtThisLocus: true,
+      twoIndependentHistoricalTextLineagesProven: false,
+      readerClaimAuthorityChanged: false,
+      productionAuthorized: false,
+    });
     expect(shadow.harvardPrintedClauseVerification).toMatchObject({
       status: 'ONE_PRINTED_WITNESS_DIRECTLY_READ',
       pdfPageOneBased: 45,
@@ -131,15 +157,27 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
     expect(shadow.scanCandidates.map((x) => x.identifier)).toEqual([
       'CADAL06056481', 'CADAL06066041',
     ]);
-    expect(shadow.scanCandidates.every((x) =>
-      x.candidateScanLocated &&
-      !x.targetPageOrFolioIdentified &&
-      !x.directPrintCharacterVerification
-    )).toBe(true);
+    expect(shadow.scanCandidates[0]).toMatchObject({
+      targetPageOrFolioIdentified: true,
+      targetImagePageOneBased: 104,
+      directPrintCharacterVerification: true,
+      observedPrintedGlyph: '己',
+      observedPrintedClause: '柱中不宜再見戊己',
+      scannedDjvuSha256: '4f273322b3fd4339789e1408e0bbb4ea15a7956e5e508c6f99fced264e0b53ee',
+      page104RasterSha256: 'e20a1ce67daac2fc30eb914e8288d85f41cf2ab0ec14ba3156e630c2d5a91ac4',
+      sameEditionJiSiReferencePage: 106,
+      verifiedComparedToSameEditionKnownJiSiPair: true,
+      SiKuPrintedEditionLineageFullyAuthenticated: false,
+    });
+    expect(shadow.scanCandidates[1]).toMatchObject({
+      targetPageOrFolioIdentified: false,
+      directPrintCharacterVerification: false,
+    });
     expect(shadow.literalPassageMatch).toBe('MATCHED_LEXICAL_FRAGMENT_ONLY');
     expect(shadow.candidateTraditionalHourWealthPatternEstablished).toBe(false);
     expect(shadow.sourceConditionsNotResolved).toContain('NO_GOVERNED_WANGSHUAI_STRENGTH_VERDICT');
-    expect(shadow.sourceConditionsNotResolved).toContain('NO_VERIFIED_SIKU_WU_SI_VS_WU_JI_CHARACTER_COLLATION');
+    expect(shadow.sourceConditionsNotResolved).toContain('NO_CRITICAL_EDITION_GENEALOGY_FOR_SIKU_WIKISOURCE_EDIT');
+    expect(shadow.sourceConditionsNotResolved).toContain('NO_INDEPENDENT_HISTORICAL_WITNESS_LINEAGE_OR_PRINTED_FOLIO_MARK');
     expect(shadow.producesNewInterpretationClaim).toBe(false);
     expect(shadow.readerMeaningEligible).toBe(false);
     expect(shadow.productionAuthorized).toBe(false);
@@ -178,7 +216,7 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
     expect(a.evidenceHash).toBe(b.evidenceHash);
     expect(a.evidenceHash).toMatch(/^[a-f0-9]{64}$/);
     expect(a.status).toBe('RESEARCH_SHADOW_ONLY');
-    expect(a.version).toBe('saju-n27-bijeon-wealth-source-condition-shadow-v5');
+    expect(a.version).toBe('saju-n27-bijeon-wealth-source-condition-shadow-v6');
     expect(a.sourceConditionsNotResolved).toHaveLength(6);
   });
 });
