@@ -26,6 +26,7 @@ import { buildNatalN21ReaderFirstStory } from '../dist/preview/natal-reader-firs
 import { traceNatalN25ConsumerMeaningAtoms } from '../dist/preview/natal-n25-consumer-meaning-atom-trace.js';
 import { buildNatalN25BAllPairForensics } from '../dist/preview/natal-n25b-all-pair-source-copy-forensics.js';
 import { auditNatalN26HttpMeaningTransport } from '../dist/preview/natal-n26-http-meaning-transport.js';
+import { attachNatalN27SelfServiceEvidenceReading } from '../dist/preview/natal-n27-self-service-evidence-reading.js';
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expanded-source-reading.js';
 
@@ -739,6 +740,82 @@ async function main() {
   process.stdout.write('Natal N26: '+n26Report.exactPreservedCases+'/'+
     n26Report.eligibleDeliveredCaseCount+' delivered meaning copies preserved after N9; '+
     n26Path+'\n');
+
+  // N27a: reuse exactly the same actual 35 independently observed HTTP
+  // responses, with opt-in evidence-only reading. No additional HTTP requests
+  // or external human reviewer. Default consumer transport stays untouched.
+  const selfServiceTitle = '명식별 십신 주제 연결 · 자동 실험 풀이';
+  const selfService = inputs.map(input => {
+    const run = interpretedByCaseId.get(input.caseId);
+    if (!run) throw new Error('N27a missing bound canonical execution: ' + input.caseId);
+    const generated = attachNatalN27SelfServiceEvidenceReading(
+      input.response, run.snapshot, run.interpretation);
+    const section = generated.reading?.sections.find(s => s.title === selfServiceTitle);
+    const paragraphs = section?.blocks
+      .filter(b => b.type === 'paragraph').map(b => b.text) ?? [];
+    const delivered = input.response.state === 'delivered' ||
+      input.response.state === 'delivered_with_fallback';
+    if ((!delivered || !run.snapshot.completeness.birthTimeKnown) && section) {
+      throw new Error('N27a revealed unverified case or unknown-hour content: ' + input.caseId);
+    }
+    if (delivered && run.snapshot.completeness.birthTimeKnown && paragraphs.length === 0) {
+      throw new Error('N27a expected bounded Claim+TenGod preview text: ' + input.caseId);
+    }
+    return {
+      caseId: input.caseId, responseState:input.response.state,
+      birthTimeKnown:run.snapshot.completeness.birthTimeKnown,
+      actualChartHash:run.snapshot.calculationHash,
+      optedIn: true, originalHttpReadingId: input.response.reading?.readingId ?? null,
+      unchangedReadingId: generated.reading?.readingId === input.response.reading?.readingId,
+      selectedParagraphCount:paragraphs.length,
+      selfServiceTextFingerprint: paragraphs.length
+        ? deterministicContentHash(paragraphs) : null,
+      selectedParagraphs:paragraphs,
+      generatedBySoftwareNotHumanExpert: true,
+      newPersonalOutcomeClaimAuthorized: false,
+    };
+  });
+  const n27ById = new Map(selfService.map(x => [x.caseId,x]));
+  const pairContrasts = n10.pairs.map(pair => {
+    const left=n27ById.get(pair.left),right=n27ById.get(pair.right);
+    if(!left || !right || !left.selfServiceTextFingerprint ||
+      !right.selfServiceTextFingerprint) {
+      throw new Error('N27a missing pair evidence ' + pair.left+'/'+pair.right);
+    }
+    return {
+      left:pair.left,right:pair.right,
+      differentDisplayedChart:left.actualChartHash !== right.actualChartHash,
+      boundedTextDifferent:left.selfServiceTextFingerprint !== right.selfServiceTextFingerprint,
+      independentPersonalMeaningProven:false,
+    };
+  });
+  const n27 = {
+    version:'saju-natal-n27a-opt-in-self-service-real-http-chart-theme-preview-v1',
+    lifecycle:'internal_quality_audit',mayPublish:false,maySell:false,
+    mayApproveNewOutcomeClaims:false,needsExternalExpertForBoundedPreview:false,
+    actualHttpCaseCount:inputs.length,
+    generatedKnownTimeCases:selfService.filter(x => x.selectedParagraphCount>0).length,
+    missingTimeCasesWithGeneratedReading:selfService.filter(x =>
+      !x.birthTimeKnown && x.selectedParagraphCount>0).length,
+    rawRepeatPairCount:pairContrasts.length,
+    differentChartPairsWithDifferentBoundedReading:pairContrasts.filter(x=>
+      x.boundedTextDifferent).length,
+    sameChartNoFalseVariation: selfService.every(x=>x.unchangedReadingId),
+    cases:selfService,pairs:pairContrasts,
+    limitations:[
+      'Text difference includes exact resolved Ten-God position and existing traditional themes; never proves distinct fortunes.',
+      'This is an opt-in Preview overlay, not an Official/new T8 Claim or a Production authorization.',
+      'Contradicted classical source relations remain excluded instead of requiring an external reviewer for everything.',
+    ],
+  };
+  const n27Path=resolve(outputPath.endsWith('.json')?
+    outputPath.slice(0,-5)+'.n27a-autonomous-reading.json':
+    outputPath+'.n27a-autonomous-reading.json');
+  writeFileSync(n27Path,JSON.stringify(n27,null,2)+'\n','utf8');
+  process.stdout.write('Natal N27a self-service: '+n27.generatedKnownTimeCases+
+    '/35 actual HTTP cases; '+n27.differentChartPairsWithDifferentBoundedReading+
+    '/'+n27.rawRepeatPairCount+' different-chart bounded reading contrasts; '+
+    n27Path+'\\n');
 
   const repeatedPairs = oldCollisions;
   const n4 = {

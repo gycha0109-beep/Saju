@@ -111,7 +111,7 @@ export function buildNatalMeaningQualityAudit(
     limitations: [
       'Calculated four-pillar labels are real factual personalization, not semantic interpretation differentiation.',
       'The meaning baseline removes ONLY exact recognized N5/N7 calculated fact passages; original admitted interpretation text remains unchanged.',
-      'Same text may be appropriate for different charts; collisions require human expert review rather than forced variation.',
+      'Same text may be appropriate for different charts; collisions require independently reproducible chart-specific facts, source-scoped counterexamples and regression review, not forced variation or mandatory external expert sign-off.',
       'Research rule matches remain separate evidence and never authorize Production interpretation, commerce or publication.',
     ],
   };
