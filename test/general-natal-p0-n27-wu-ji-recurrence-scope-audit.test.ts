@@ -104,6 +104,9 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       'VISIBLE_WU_ONLY', 'VISIBLE_WU_AND_JI',
       'VISIBLE_AND_HIDDEN_WU_ONLY', 'VISIBLE_AND_HIDDEN_WU_AND_JI',
     ]);
+    expect(a.provenance.sameVolumeAnalogyQuote).toContain('年月日重見');
+    expect(a.provenance.sameVolumeAnalogyIsAboutHourOfficerNotHourWealth).toBe(true);
+    expect(a.provenance.transferringOfficerCountingRuleToHourWealthAuthorized).toBe(false);
     expect(a.provenance.historicalScopeOfZaiJianCertified).toBe(false);
     expect(a.provenance.historicalMeaningOfYiWeiCertified).toBe(false);
     expect(a.status).toBe('HYPOTHESIS_SENSITIVITY_RESEARCH_ONLY');
