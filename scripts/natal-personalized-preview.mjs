@@ -12,6 +12,7 @@ import { buildNatalStructuralEvidence } from '../dist/preview/natal-structural-e
 import { buildNatalSynthesisPreview } from '../dist/preview/natal-synthesis-preview.js';
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN21ReaderFirstStory } from '../dist/preview/natal-reader-first-story.js';
+import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expanded-source-reading.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
@@ -153,13 +154,38 @@ function renderAppliedThemeContext(context) {
 }
 
 /** The first screen is only original source-owned reading text, not template-generated predictions. */
-function renderReaderFirstStory(story) {
+function renderReaderFirstStory(story, expanded) {
+  if (story.snapshotId !== expanded.snapshotId ||
+      story.previewMeaningFingerprint !== expanded.previewMeaningFingerprint ||
+      expanded.sections.length !== story.sections.length ||
+      expanded.mayPublish || expanded.maySell ||
+      expanded.createsNewInterpretation || expanded.originalLeftUnreadCount !== 0) {
+    throw new TypeError('N24 expanded original source reading mismatch');
+  }
   const basis = story.factualBasis.map((fact) =>
     '<span class="basis-chip">' + escapeHtml(fact.text) +
     '<details><summary>계산 사실의 위치</summary><p>' +
     escapeHtml(fact.factPaths.join(' · ')) + '</p></details></span>'
   ).join('');
   const domainCards = story.sections.map((section, index) => {
+    const more = expanded.sections[index];
+    if (!more || more.domain !== section.domain || more.responseState !== section.responseState) {
+      throw new TypeError('N24 expanded source domain mismatch');
+    }
+    const authenticMore = more.additionalOriginalExcerpts.map((excerpt) => {
+      const refs = excerpt.provenance.map((p) =>
+        p.domain + ' · ' + p.sectionTitle + ' · ' + p.responseId + ' · ' + p.readingId).join(' / ');
+      const title = excerpt.selectionBasis === 'domain_distinctive'
+        ? '이 분야에만 전달된 실제 풀이' : '여러 분야에서 공유된 실제 풀이';
+      return '<div class="reader-paragraph"><small class="reader-kind">' +
+        title + '</small><p>' + escapeHtml(excerpt.text) + '</p>' +
+        '<details><summary>원래 Preview 출처</summary><p>' +
+        escapeHtml(refs) + '</p></details></div>';
+    }).join('');
+    const expandedDetail = authenticMore
+      ? '<details class="reader-deep"><summary>이 분야의 실제 추가 풀이 ' +
+        more.additionalOriginalExcerpts.length + '개 읽기</summary>' +
+        authenticMore + '</details>' : '';
     const original = section.excerpts.map((excerpt, i) => {
       const references = excerpt.provenance.map((p) => p.domain + ' · ' +
         p.sectionTitle + ' · ' + p.responseId + ' · ' + p.readingId).join(' / ');
@@ -175,7 +201,7 @@ function renderReaderFirstStory(story) {
       notes.push('이미 앞 분야에 있는 동일 설명 ' + section.sharedEarlier.length + '개');
     }
     if (section.remainingOriginalInterpretationCount) {
-      notes.push('상세 원문에 추가 풀이 ' + section.remainingOriginalInterpretationCount + '개');
+      notes.push('이 분야 원문 중 아직 앞 화면에 나오지 않은 풀이를 아래에서 볼 수 있습니다.');
     }
     if (section.calculatedExplanationCount) {
       notes.push('풀이로 세지 않은 계산 설명 ' + section.calculatedExplanationCount + '개');
@@ -185,6 +211,7 @@ function renderReaderFirstStory(story) {
       '<small>' + escapeHtml(section.responseState) + '</small></div>' +
       (original || '<p class="limited">현재 이 분야에서 전달된 별도 풀이 본문이 없습니다. ' +
         '부족한 내용을 임의로 채우지 않았습니다.</p>') +
+      expandedDetail +
       (notes.length ? '<p class="reader-note">' + escapeHtml(notes.join(' · ')) + '</p>' : '') +
       (section.limitations.length ? '<details><summary>이 분야의 해석 범위</summary>' +
         section.limitations.map(text => '<p>' + escapeHtml(text) + '</p>').join('') +
@@ -199,6 +226,7 @@ function renderReaderFirstStory(story) {
     '<p class="reader-note">실제 풀이 ' + story.displayedOriginalInterpretationCount +
     '개 우선 표시 · 분야별 고유 풀이 ' + story.displayedDomainDistinctiveCount +
     '개 · 여러 분야 공통 풀이 ' + story.displayedCrossDomainSharedCount +
+    '개 · 분야별 상세 실제 원문 ' + expanded.additionalOriginalCount +
     '개 · 같은 문장 반복 ' + story.hiddenDuplicateCount +
     '개 제외 · 계산 사실만 설명한 문장 ' +
     story.calculationFactsExcludedFromInterpretation + '개 별도</p>' +
@@ -305,7 +333,7 @@ function renderPillars(summary) {
     .join('')}</div>`;
 }
 
-function renderPage(date, time, responses, synthesis, themes, applied, brief, story, relations) {
+function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -350,7 +378,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
   <p>${escapeHtml(date)} · ${escapeHtml(time ?? '출생시간 미상')} 입력으로 현재 명하 엔진의 실제 Preview 해석을 조합한 내부 시제품입니다. 해석을 새로 생성하거나 근거 없는 빈칸을 채우지 않습니다.</p>
   </header>
   ${renderPillars(general?.calculationSummary)}
-  ${renderReaderFirstStory(story)}
+  ${renderReaderFirstStory(story, expanded)}
   ${renderActualChartRelations(relations)}
   <details class="full-data"><summary>전체 원문·명식 계산 근거·연구용 부가 해설 펼쳐보기</summary>
   ${renderGroundedReaderBrief(brief)}
@@ -424,6 +452,7 @@ async function main() {
   const synthesis = buildNatalSynthesisPreview(evidence, realSources);
   const brief = buildNatalN16GroundedReaderBrief(calculated.snapshot, realSources);
   const story = buildNatalN21ReaderFirstStory(calculated.snapshot, realSources);
+  const expanded = buildNatalN24ExpandedSourceReading(brief, story);
   const researchNow = new Date('2026-10-15T00:00:00.000Z');
   const registry = createGeneralNatalIntegratedReadingRegistry(researchNow.toISOString());
   const interpretation = runInterpretation(calculated.snapshot, registry, {
@@ -439,11 +468,15 @@ async function main() {
   const relations = buildNatalN22ChartRelationGuide(
     calculated.snapshot, researchExecution, researchRegistry,
   );
-  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, relations), 'utf8');
+  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations), 'utf8');
   process.stdout.write('N22 real source-bound chart relations: ' +
     relations.individualRelations.length + ' individual, ' +
     relations.linkedRelations.length + ' linked, ' +
     relations.mixedRelations.length + ' mixed; Research/HOLD\n');
+  process.stdout.write('N24 full original reading: ' +
+    expanded.firstScreenOriginalCount + ' initial + ' + expanded.additionalOriginalCount +
+    ' domain details = ' + expanded.totalDistinctOriginalCount +
+    ' genuine source units, 0 unshown; no new meaning\\n');
   process.stdout.write('N23 distinct-first reading: ' +
     story.displayedDomainDistinctiveCount + ' domain-specific and ' +
     story.displayedCrossDomainSharedCount + ' shared original excerpts; unchanged meaning authority\n');

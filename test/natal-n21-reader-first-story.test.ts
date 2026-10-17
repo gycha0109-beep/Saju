@@ -4,6 +4,8 @@ import type { ProductReadingResponse } from '../src/reading/product-reading-resp
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/production/production-calculation-runtime.js';
 import { buildNatalStructuralEvidence } from '../src/preview/natal-structural-evidence.js';
 import { buildNatalN21ReaderFirstStory } from '../src/preview/natal-reader-first-story.js';
+import { buildNatalN16GroundedReaderBrief } from '../src/preview/natal-grounded-reader-brief.js';
+import { buildNatalN24ExpandedSourceReading } from '../src/preview/natal-expanded-source-reading.js';
 import { attachGeneralNatalCalculatedContext } from '../src/preview/general-natal-consumer-fact-context.js';
 import { attachGeneralNatalCalculatedRoleObservation } from '../src/preview/general-natal-consumer-role-observation.js';
 import type { NatalSynthesisDomain } from '../src/preview/natal-synthesis-preview.js';
@@ -202,5 +204,109 @@ describe('N21 readable source-owned natal storyline',()=>{
         '이 사주풀이가 실제로 참조한 명식은 성공을 보장합니다.',
       ]),
     }])).toThrow(/unrecognized N5/u);
+  });
+});
+
+describe('N24 complete source-owned domain reading', () => {
+  it('keeps every actual bounded paragraph readable once, preserves source and N23 meaning fingerprint', () => {
+    const snapshot = chart(10);
+    const common = '명식에서 실제 전달된 공통 문구';
+    const sources = [
+      {domain:'general' as const,response:boundedResponse(snapshot,'general-deep',[
+        common,'전체 사주 원문 1','전체 사주 원문 2','전체 사주 원문 3','전체 사주 원문 4',
+      ])},
+      {domain:'career' as const,response:boundedResponse(snapshot,'career-deep',[
+        common,'직업 원문 1','직업 원문 2','직업 원문 3','직업 원문 4',
+      ])},
+      {domain:'wealth' as const,response:boundedResponse(snapshot,'wealth-deep',[
+        common,'재물 원문 1','재물 원문 2',
+      ])},
+      {domain:'business' as const,response:boundedResponse(snapshot,'business-deep',['사업 원문'])},
+      {domain:'relationship' as const,response:boundedResponse(snapshot,'relationship-deep',['관계 원문'])},
+    ];
+    const brief = buildNatalN16GroundedReaderBrief(snapshot,sources);
+    const first = buildNatalN21ReaderFirstStory(snapshot,sources);
+    const actual = buildNatalN24ExpandedSourceReading(brief,first);
+    const combined = [
+      ...first.sections.flatMap((d) => d.excerpts),
+      ...actual.sections.flatMap((d) => d.additionalOriginalExcerpts),
+    ];
+    expect(combined.length).toBe(brief.interpretationTextUnitCount);
+    expect(new Set(combined.map((p) => p.unitId)).size).toBe(combined.length);
+    expect(new Set(combined.map((p) => p.text))).toEqual(new Set([
+      common,'전체 사주 원문 1','전체 사주 원문 2','전체 사주 원문 3','전체 사주 원문 4',
+      '직업 원문 1','직업 원문 2','직업 원문 3','직업 원문 4',
+      '재물 원문 1','재물 원문 2','사업 원문','관계 원문',
+    ]));
+    expect(actual.additionalOriginalCount).toBeGreaterThan(0);
+    expect(actual.originalLeftUnreadCount).toBe(0);
+    expect(actual.previewMeaningFingerprint).toBe(first.previewMeaningFingerprint);
+    expect(actual.sections.find((d) => d.domain === 'career')?.additionalOriginalExcerpts
+      .some((p) => p.text === '직업 원문 4')).toBe(true);
+    expect(combined.every((p) => p.provenance.length > 0 &&
+      !p.interpretationNewlyInferred &&
+      brief.readingUnits.some((u) => u.unitId === p.unitId &&
+        u.text === p.text && u.kind === 'existing_preview_interpretation'))).toBe(true);
+    expect(actual).toMatchObject({
+      lifecycle:'internal_preview_only',createsNewInterpretation:false,
+      meaningDifferentiationProven:false,mayPublish:false,maySell:false,
+    });
+    expect(buildNatalN24ExpandedSourceReading(
+      buildNatalN16GroundedReaderBrief(snapshot,[...sources].reverse()),
+      buildNatalN21ReaderFirstStory(snapshot,[...sources].reverse()),
+    )).toEqual(actual);
+  });
+
+  it('does not count calculated N5/N7 prose or forge an interpretation for unknown-time readings', () => {
+    const snapshot = chart(10);
+    const source = {
+      domain:'general' as const,
+      response:attachGeneralNatalCalculatedRoleObservation(
+        attachGeneralNatalCalculatedContext(
+          boundedResponse(snapshot,'calculated-plus-original',[
+            '실제로 허용된 기존 원문 1','실제로 허용된 기존 원문 2',
+            '실제로 허용된 기존 원문 3','실제로 허용된 기존 원문 4',
+          ])),
+        snapshot),
+    };
+    const brief=buildNatalN16GroundedReaderBrief(snapshot,[source]);
+    const first=buildNatalN21ReaderFirstStory(snapshot,[source]);
+    const expanded=buildNatalN24ExpandedSourceReading(brief,first);
+    expect(expanded.excludedCalculatedTextUnits).toBe(2);
+    expect(expanded.firstScreenOriginalCount).toBe(3);
+    expect(expanded.additionalOriginalCount).toBe(1);
+    expect(expanded.sections[0]?.additionalOriginalExcerpts[0]?.text)
+      .toBe('실제로 허용된 기존 원문 4');
+
+    const unknown = chart(10,false);
+    const partial: ProductReadingResponse={
+      responseId:'missing-hour',responseVersion:'test-only',state:'partial_evidence',
+      messageCode:'READING_EVIDENCE_PARTIAL',requiredAction:'provide_required_context',
+      coverage:{state:'partial',hasAvailableEvidence:true,missingRequirementCount:1},
+    };
+    const unknownSources=[{domain:'general' as const,response:partial}];
+    const result=buildNatalN24ExpandedSourceReading(
+      buildNatalN16GroundedReaderBrief(unknown,unknownSources),
+      buildNatalN21ReaderFirstStory(unknown,unknownSources),
+    );
+    expect(result.totalDistinctOriginalCount).toBe(0);
+    expect(result.additionalOriginalCount).toBe(0);
+    expect(result.originalLeftUnreadCount).toBe(0);
+  });
+
+  it('rejects mismatched source identity or tampered first-screen original text', () => {
+    const snapshot=chart(10);
+    const sources=[{domain:'general' as const,
+      response:boundedResponse(snapshot,'auth',['원문 1','원문 2','원문 3','원문 4'])}];
+    const brief=buildNatalN16GroundedReaderBrief(snapshot,sources);
+    const story=buildNatalN21ReaderFirstStory(snapshot,sources);
+    const badStory={...story,sections:story.sections.map((section,i)=>i===0
+      ? {...section,excerpts:section.excerpts.map((x,j)=>j===0
+        ? {...x,text:'변조된 문구'} : x)}
+      : section)};
+    expect(()=>buildNatalN24ExpandedSourceReading(brief,badStory)).toThrow(/unproven|repeated/u);
+    const another=chart(11);
+    expect(()=>buildNatalN24ExpandedSourceReading(
+      buildNatalN16GroundedReaderBrief(another,[]),story)).toThrow(/exact internal canonical/u);
   });
 });
