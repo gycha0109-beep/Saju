@@ -3,10 +3,12 @@ import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { attachGeneralNatalCalculatedRoleObservation } from '../preview/general-natal-consumer-role-observation.js';
 import { attachNatalN27SelfServiceEvidenceReading } from '../preview/natal-n27-self-service-evidence-reading.js';
 import { composeNatalN28VerifiedReaderReport } from '../preview/natal-n28-verified-reader-report.js';
+import { buildNatalN28bCanonicalCalculatedFactProjection } from '../preview/natal-n28b-canonical-fact-projection.js';
 import { compactGeneralNatalConsumerRepeatedInsights } from '../preview/general-natal-consumer-repeat-compaction.js';
 import { attachGeneralNatalCalculatedContext } from '../preview/general-natal-consumer-fact-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../interpretation/general-natal-integrated-reading-registry.js';
 import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../llm/prompt-compiler.js';
+import type { OfficialReadingSemanticProjectionInputV1 } from '../reading/official-reading-semantic-projection.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import {
   createMyeonghwaProductHost,
@@ -24,6 +26,8 @@ export interface GeneralNatalIntegratedPreviewHostOptions {
   enableAutonomousEvidenceReading?: boolean;
   /** Opt-in report-first N28 composition of independently verified N27a/N27b evidence. */
   enableAutonomousReportComposition?: boolean;
+  /** Opt-in Canonical→Official observation qualifier from source-locked calculated facts. */
+  enableAutonomousCanonicalFactQualifiers?: boolean;
 }
 
 /**
@@ -70,6 +74,16 @@ export function createGeneralNatalIntegratedPreviewProductHost(
         outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
         readingVersion: GENERAL_NATAL_INTEGRATED_PREVIEW_HOST_VERSION,
         artifactGeneratedAt: new Date(context.requestedAt),
+        ...(options.enableAutonomousCanonicalFactQualifiers === true
+          ? {
+              officialReadingSemanticProjectionResolver: (input: OfficialReadingSemanticProjectionInputV1) => {
+                if (observedSnapshot === undefined) {
+                  throw new TypeError('N28b Canonical qualifier lacks request-local snapshot.');
+                }
+                return buildNatalN28bCanonicalCalculatedFactProjection(input, observedSnapshot);
+              },
+            }
+          : {}),
       };
     },
     ...(options.requestIdFactory === undefined
