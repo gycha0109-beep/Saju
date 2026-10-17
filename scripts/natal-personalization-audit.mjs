@@ -542,11 +542,11 @@ async function main() {
   const n25Path = resolve(outputPath.endsWith('.json')
     ? outputPath.slice(0, -5) + '.n25-trace.json'
     : outputPath + '.n25-trace.json');
-  writeFileSync(n25Path, JSON.stringify(n25, null, 2) + '\\n', 'utf8');
+  writeFileSync(n25Path, JSON.stringify(n25, null, 2) + '\n', 'utf8');
   process.stdout.write('Natal N25: ' + n25.caseCount + ' real service executions, ' +
     n25.atomCount + ' consumer atoms, ' + n25.exactUniqueMatches +
     ' unique matches, ' + n25.ambiguousMatches + ' ambiguous, ' +
-    n25.unprovenMatches + ' unproven; ' + n25Path + '\\n');
+    n25.unprovenMatches + ' unproven; ' + n25Path + '\n');
 
   const repeatedPairs = oldCollisions;
   const n4 = {
