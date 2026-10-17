@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('cc330e25630896908a5bb985d77b6b10d3dbfb29');
+    expect(review.researchHeadReviewed).toBe('4d50b66cd0e30122e4a7b782d2249d46f4f76b0b');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -63,6 +63,14 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
       'CADAL06056481', 'CADAL06066041',
     ]);
     expect(review.printedTargetFoliosDirectlyInspected).toBe(false);
+    expect(review.unresolvedSiKuPrintGlyphVariant).toEqual({
+      siKuWikisourceFive: '戊巳',
+      shiDianGuJiFive: '戊己',
+      generalWikisourceSix: '戊己',
+      printGlyphResolved: false,
+      independentAuthenticatedWitnessCount: 0,
+    });
+    expect(review.real2010ChartOtherPillarJiAndHiddenWuAreStructuralObservationsOnly).toBe(true);
     expect(review.twoScansDemonstratedToBeIndependentEditions).toBe(false);
     expect(review.finalWangShuaiAndQiangRuoVerdictAuthorized).toBe(false);
     expect(review.classicalSingleWealthLocationProven).toBe(false);
