@@ -112,3 +112,12 @@ Nearby text 偏財好出亦不懼藏 (general 論偏財), 別無透出方為貴 
 Research Draft [#2553](https://github.com/gycha0109-beep/Saju/pull/2553) HEAD `bb91adf29541fe1b26234c6202cb139ad99c552f`의 `src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts`를 Read-only 근거로 바인딩했다. 2010-02-03 07:30 戊辰時와 19:30 甲戌時를 실제 Authorized Canonical 계산으로 재계산하면 다른 세 기둥은 같고 `年干己`는 甲일간의 정재로 노출된다. `VISIBLE_WU_ONLY`는 재출현 0건이지만 원문이 명시한 `己`를 누락한다. `VISIBLE_WU_AND_JI`에서는 다른 기둥 年干 `己` 때문에 1건, 숨은 戊/己까지 포함하는 임시 scope에서는 더 많은 관측 위치가 생긴다. **어떤 가설에도 역사적 판정 authority를 부여하지 않는다.**
 
 다른 기둥의 지장간 戊(편재)와 己(정재), 시주의 투출과 藏干, `別宮`, `再見`, `只要一位`의 `位`는 별개 식별해야 한다. 이 숫자는 고전적 격의 成敗, 부귀/재물 미래결과, 사용자 리딩을 계산하지 않는다. 05:30 원문 비사례와 시각 미상은 source-case 필터 차단. `HYPOTHESIS_SENSITIVITY_RESEARCH_ONLY`, five Claim HOLD, `UNADJUDICATED`, `UNCLASSIFIED`, Preview/Official/Production 0 변경.
+
+
+## 2026-10-18 새 실명식 대조와 복수 counting unit 재바인딩
+
+Research PR #2553 exact HEAD `7e28dd036d2e9da0bc033dc1318fa4b8ba44babf`의 `saju-n27-wu-ji-recurrence-scope-sensitivity-v2`를 Bridge 정적 증거 객체에 연결한다. 기존 네 가지 투간/지장간 × 戊/戊己 가설을 유지하면서 실제 Canonical 출생 입력 2010-02-13 19:30(투간 戊 대조), 2010-05-04 19:30(투간 없는 장간 대조), 2010-02-04 19:30(非甲 일간 대조)을 추가하는 연구 변경이다. 위 값은 코드·테스트의 명시적 기대치이며, **Research 정확 HEAD CI 성공을 확인하기 전에는 실제 통과 증거로 보지 않는다**.
+
+새 count 분리: 천간·藏干의 출현 위치 건수, 다른 기둥 고유 수, 戊·己 종류 수, 年月만 vs 日柱 포함, 같은 기둥의 두 관측 채널, 시주 참조 위치 제외. `柱中不宜再見戊己`는 두 글자를 명시하므로 戊-only 관찰 모델은 원문 전체 글자 집합을 표현하지 못하지만, 이것만으로 시주 외 지장간 포함/不宜 발동 여부·別宮의 日柱 포함·`只要一位`의 의미를 확정할 수 없다. 같은 기둥의 천간과 장간이 동시 관측되는 것을 고전 두 位라고 승인한 기록은 없다.
+
+Bridge: `recurrenceCountingScopeMethodApproved=false`, `classicalWeiCountingMethodApproved=false`, `interpretationsInferred=false`, `admitsNewClaim=false`, 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, 기존 N13 실제 정확 겁재 T8 1:0. Review attestation/TrustGrant 없음, Preview/Official/Production 의미 변화 없음. source-qualified scope는 UNADJUDICATED.
