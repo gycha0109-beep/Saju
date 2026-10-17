@@ -132,3 +132,18 @@
 `src/research/general-natal-p0-n27-bijeon-wealth-shadow.ts`는 **실제 Canonical snapshot만** 입력으로 읽고 『四庫全書本』 卷五 「時上偏財」의 `甲日+甲戌時` **문자상 일치** 여부를 판정한다. 2010-02-03 19:30의 `甲日/甲戌時`와 年干 `己`, 月支 `丑`, 해당 표준 십신 `비견`·`財`를 개별 관측으로 남긴다. 05:30은 해당 시간 구절과 **불일치**, 미상 시각은 `HOUR_UNRESOLVED`로 구분한다. 강약·재성 유일성·`戊巳` 글자 판독·원 인쇄면·실제 금전 결과는 **여전히 미판정**이다.
 
 `test/general-natal-p0-n27-bijeon-wealth-shadow.test.ts`에서 승인된 T0 계산 경로의 두 실제 명식과 미상 시각을 재실행해 `MATCHED_LEXICAL_FRAGMENT_ONLY`와 미승인/미출력, 불일치/미상 시각 방어를 검사한다. 연구 텍스트 수집과 계산 사실 대조는 reviewer 승인 없이 계속할 수 있으나 **T8 연구 룰의 확장·사용자 해석 발행은 이 shadow가 하지 않는다**. Bridge #2557 HOLD와 19쌍의 3/15/1 판정은 유지한다.
+
+## 12. 권5 인쇄본 후보 식별과 실제 명식 재성·강약 게이트 분해
+
+**인쇄본 탐색 진전 / 직접 판독 미완료:** Wikimedia Commons에서 四庫全書·術數類 권五의 스캔 파일 두 건을 식별했다.
+- [CADAL06056481, 230 이미지면](https://commons.wikimedia.org/wiki/File:CADAL06056481_三命通會·卷五.djvu) — CADAL 고유 파일 후보.
+- [CADAL06066041, 226 이미지면](https://commons.wikimedia.org/wiki/File:CADAL06066041_三命通會·卷五.djvu) — 다른 CADAL 파일 후보, 현 단계에서 두 인쇄 바탕 판본이 독립인지 알 수 없음.
+- [中國哲學書電子化計劃 欽定四庫全書 12권 스캔 도서관](https://ctext.org/library.pl?if=gb&res=6109) — 浙江大學圖書館 원본/CADAL 스캔 출처 설명. [같은 플랫폼의 卷五 OCR](https://ctext.org/wiki.pl?chapter=864968&if=gb)은 자동 인식된 파생 텍스트이므로 인쇄면 직접 판독의 대체물이 **아니다**.
+
+아직 PDF/DjVu 중 어느 소스에서도 *「論正財」「論偏財」「時上偏財」의 구절이 찍힌 실제 이미지면의 번호·folio·字形을 직접 확인하지 못했다*. 따라서 `printedFolioOrScanVerified=false`를 유지하고, 원 이미지 자료의 단순 존재를 원문 integrity 증거로 승격하지 않았다. 論正財의 `比肩`과 時上偏財의 `戊巳/戊己` 중 인쇄 字形의 교감은 미해결이다.
+
+**실제 두 2010 Canonical 명식의 계산-사실 정밀화:** 기존 `buildGeneralNatalN27BijeonWealthShadow(snapshot)` v2는 원래 T0 정책을 유지하면서 (1) `정재`와 `편재` 별 관측 슬롯 수, (2) 노출 천간과 지지 **대표** 슬롯 수, (3) 4지지 지장간 배열의 *실제 계산 결과*, (4) `시상편재`의 고전 `只要一位` 성립 여부를 별도 상태로 보관한다. **복수 재성 대표 슬롯 관측은 사실이나, 고전의 財 한 자리/時上格 유일 조건과 동일한 측정값이 아니므로** `NOT_ADJUDICATED`다.
+
+**강약 판정 권한 고정:** `GENERAL_NATAL_WANG_SHUAI_QIANG_RUO_SEMANTIC_AXIS_AUTHORITY`에 따르면 `旺衰`와 `強弱`의 구별은 출처상 관찰로 인정하지만 원국 전체 `chartLevelWangShuaiClassifierAuthorized=false`, `chartLevelQiangRuoClassifierAuthorized=false`. 실제 `丁丑月`을 계산해도 `甲木`이 최종 신강/신약이라고 결론지을 수 없다. v2 Shadow는 `UNCLASSIFIED`를 반환하고 원국별 강약·시상편재 격 부여를 계속 금지한다.
+
+**이탈 방지:** 실제 05:30/19:30/미상시각 fixture 재실행을 기존 테스트에서 강화. 원본 스캔 후보 발견=source integrity 통과/독립 reviewer approval, 재성 복수=고전 유일조건 불충족 확정, 월지 丑=강약 최종 분류로 점프하는 **세 가지 과잉 결론을 모두 거부**한다. #17 `METHODOLOGY_CONFLICT`, 19쌍 3/15/1, N13 기존 T8 1 vs 0, Bridge #2557 다섯 Claim HOLD는 변경하지 않는다.

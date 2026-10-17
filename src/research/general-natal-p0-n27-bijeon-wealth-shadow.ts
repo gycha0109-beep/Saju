@@ -6,9 +6,12 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildNatalStructuralEvidence } from '../preview/natal-structural-evidence.js';
+import {
+  GENERAL_NATAL_WANG_SHUAI_QIANG_RUO_SEMANTIC_AXIS_AUTHORITY,
+} from './general-natal-wang-shuai-qiang-ruo-semantic-axis-authority.js';
 
 export const GENERAL_NATAL_N27_BIJEON_SHADOW_VERSION =
-  'saju-n27-bijeon-wealth-source-condition-shadow-v1' as const;
+  'saju-n27-bijeon-wealth-source-condition-shadow-v2' as const;
 
 export function buildGeneralNatalN27BijeonWealthShadow(
   snapshot: CanonicalSajuSnapshot,
@@ -52,6 +55,53 @@ export function buildGeneralNatalN27BijeonWealthShadow(
     tenGod: p.value,
     factPath: p.sourcePath,
   })));
+  // Counts of existing representative Ten-God observations are only T0-style
+  // chart facts. They do not resolve the classical '只要一位' predicate.
+  const wealthBySubtype = Object.freeze({
+    regular: wealthPositions.filter((p) => p.tenGod === '정재').length,
+    indirect: wealthPositions.filter((p) => p.tenGod === '편재').length,
+  });
+  const wealthByChannel = Object.freeze({
+    visibleStem: wealthPositions.filter((p) => p.component === 'stem').length,
+    representativeBranch: wealthPositions.filter((p) => p.component === 'branch').length,
+  });
+  const hiddenStemObservations = Object.freeze(
+    facts.hiddenStemObservations.map((p) => Object.freeze({
+      slot: p.slot,
+      stems: Object.freeze([...p.stems]),
+      factPath: p.sourcePath,
+    })),
+  );
+  const strengthAxis = GENERAL_NATAL_WANG_SHUAI_QIANG_RUO_SEMANTIC_AXIS_AUTHORITY;
+  const researchStrengthBoundary = Object.freeze({
+    sourceObservationOnly: strengthAxis.semanticAxisRegistryAuthorizedObservationOnly,
+    chartLevelWangShuaiClassifierAuthorized: strengthAxis.chartLevelWangShuaiClassifierAuthorized,
+    chartLevelQiangRuoClassifierAuthorized: strengthAxis.chartLevelQiangRuoClassifierAuthorized,
+    result: 'UNCLASSIFIED' as const,
+    note: '月令丑 is a chart observation, not a final 旺衰/強弱 scalar or 時上偏財 admission',
+  });
+  const scanCandidates = Object.freeze([
+    Object.freeze({
+      identifier: 'CADAL06056481' as const,
+      volume: 5 as const,
+      format: 'image/vnd.djvu' as const,
+      pages: 230 as const,
+      url: 'https://commons.wikimedia.org/wiki/File:CADAL06056481_三命通會·卷五.djvu' as const,
+      candidateScanLocated: true as const,
+      targetPageOrFolioIdentified: false as const,
+      directPrintCharacterVerification: false as const,
+    }),
+    Object.freeze({
+      identifier: 'CADAL06066041' as const,
+      volume: 5 as const,
+      format: 'image/vnd.djvu' as const,
+      pages: 226 as const,
+      url: 'https://commons.wikimedia.org/wiki/File:CADAL06066041_三命通會·卷五.djvu' as const,
+      candidateScanLocated: true as const,
+      targetPageOrFolioIdentified: false as const,
+      directPrintCharacterVerification: false as const,
+    }),
+  ]);
   const material = Object.freeze({
     version: GENERAL_NATAL_N27_BIJEON_SHADOW_VERSION,
     snapshotId: snapshot.snapshotId,
@@ -80,7 +130,28 @@ export function buildGeneralNatalN27BijeonWealthShadow(
       exactGyeopJaeObserved,
       bijeonObserved,
       wealthPositions,
+      wealthRepresentativeSlotCount: wealthPositions.length,
+      wealthBySubtype,
+      wealthByChannel,
+      multipleRepresentativeWealthSlotsObserved: wealthPositions.length > 1,
+      visibleWealthStemPositions: Object.freeze(wealthPositions.filter(
+        (p) => p.component === 'stem',
+      )),
+      hiddenStemObservations,
+      hiddenStemsFullyObserved: hiddenStemObservations.length === 4,
       peerPositions,
+    }),
+    scanCandidates,
+    researchStrengthBoundary,
+    classicalHourWealthSingletonEvidence: Object.freeze({
+      status: 'NOT_ADJUDICATED' as const,
+      // Several *calculated representative* 財 observations neither satisfy nor
+      // formally disprove a single-location classical 時上偏財 格 predicate.
+      representativeSlotMultiplicityObserved: wealthPositions.length > 1,
+      countIsNotClassicalOccurrenceCount: true as const,
+      hiddenStemRootAndMultiplicityRulesEstablished: false as const,
+      correctWuSiVsWuJiPrintCharacterEstablished: false as const,
+      conditionSatisfied: false as const,
     }),
     literalPassageMatch: !hourKnown
       ? 'HOUR_UNRESOLVED'

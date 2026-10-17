@@ -35,7 +35,36 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
       exactGyeopJaeObserved: false,
       bijeonObserved: true,
     });
-    expect(shadow.facts.wealthPositions.length).toBeGreaterThan(0);
+    expect(shadow.facts.wealthPositions.length).toBeGreaterThan(1);
+    expect(shadow.facts.wealthRepresentativeSlotCount).toBe(
+      shadow.facts.wealthPositions.length,
+    );
+    expect(shadow.facts.multipleRepresentativeWealthSlotsObserved).toBe(true);
+    expect(shadow.facts.wealthBySubtype.regular).toBeGreaterThan(0);
+    expect(shadow.facts.wealthByChannel.visibleStem).toBeGreaterThan(0);
+    expect(shadow.facts.wealthByChannel.representativeBranch).toBeGreaterThan(0);
+    expect(shadow.facts.hiddenStemsFullyObserved).toBe(true);
+    expect(shadow.facts.hiddenStemObservations).toHaveLength(4);
+    expect(shadow.classicalHourWealthSingletonEvidence).toMatchObject({
+      status: 'NOT_ADJUDICATED',
+      representativeSlotMultiplicityObserved: true,
+      countIsNotClassicalOccurrenceCount: true,
+      conditionSatisfied: false,
+    });
+    expect(shadow.researchStrengthBoundary).toMatchObject({
+      sourceObservationOnly: true,
+      chartLevelWangShuaiClassifierAuthorized: false,
+      chartLevelQiangRuoClassifierAuthorized: false,
+      result: 'UNCLASSIFIED',
+    });
+    expect(shadow.scanCandidates.map((x) => x.identifier)).toEqual([
+      'CADAL06056481', 'CADAL06066041',
+    ]);
+    expect(shadow.scanCandidates.every((x) =>
+      x.candidateScanLocated &&
+      !x.targetPageOrFolioIdentified &&
+      !x.directPrintCharacterVerification
+    )).toBe(true);
     expect(shadow.literalPassageMatch).toBe('MATCHED_LEXICAL_FRAGMENT_ONLY');
     expect(shadow.candidateTraditionalHourWealthPatternEstablished).toBe(false);
     expect(shadow.sourceConditionsNotResolved).toContain('NO_GOVERNED_WANGSHUAI_STRENGTH_VERDICT');
@@ -52,6 +81,8 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
     expect(shadow.facts.exactGyeopJaeObserved).toBe(true);
     expect(shadow.facts.literalJiaXuMatched).toBe(false);
     expect(shadow.literalPassageMatch).toBe('NO_LITERAL_MATCH');
+    expect(shadow.facts.wealthRepresentativeSlotCount).toBeGreaterThan(0);
+    expect(shadow.researchStrengthBoundary.result).toBe('UNCLASSIFIED');
     expect(shadow.candidateTraditionalHourWealthPatternEstablished).toBe(false);
     expect(shadow.readerMeaningEligible).toBe(false);
   });
@@ -63,6 +94,7 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
     expect(shadow.facts.literalJiaXuMatched).toBe(false);
     expect(shadow.readerMeaningEligible).toBe(false);
     expect(shadow.previewAdmissionGranted).toBe(false);
+    expect(shadow.classicalHourWealthSingletonEvidence.status).toBe('NOT_ADJUDICATED');
   });
 
   it('is deterministic for same actual canonical snapshot and has no self-promoting output', () => {
@@ -72,6 +104,7 @@ describe('N27 authentic 2010 snapshots: BiJian wealth literal text shadow', () =
     expect(a.evidenceHash).toBe(b.evidenceHash);
     expect(a.evidenceHash).toMatch(/^[a-f0-9]{64}$/);
     expect(a.status).toBe('RESEARCH_SHADOW_ONLY');
+    expect(a.version).toBe('saju-n27-bijeon-wealth-source-condition-shadow-v2');
     expect(a.sourceConditionsNotResolved).toHaveLength(6);
   });
 });
