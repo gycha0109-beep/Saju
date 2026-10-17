@@ -116,7 +116,12 @@ function classifyReadingText(text: string): NatalN16ReadingUnit['kind'] {
 }
 
 function assertSubjectMatches(snapshot: CanonicalSajuSnapshot, response: ProductReadingResponse): void {
-  if (!response.reading) return;
+  if (!response.reading) {
+    if (response.state === 'delivered' || response.state === 'delivered_with_fallback') {
+      throw new TypeError('N30 delivered domain has no Product reading');
+    }
+    return;
+  }
   const subject = response.reading.subject.birthInputDisplay;
   const input = snapshot.input;
   const date = [input.date.year, String(input.date.month).padStart(2, '0'),
@@ -130,6 +135,26 @@ function assertSubjectMatches(snapshot: CanonicalSajuSnapshot, response: Product
       (input.calendarType === 'lunar' &&
         subject.leapMonth !== (input.isLeapMonth ?? false))) {
     throw new TypeError('N16 reading subject differs from canonical birth input');
+  }
+  // N30a: same recorded birth hour and ALL displayed pillars must agree with
+  // the exact calculation. A resolved canonical pillar cannot disappear into
+  // 'ambiguous'/'unavailable' while five domains are being combined.
+  if (!input.time.known && subject.time !== undefined) {
+    throw new TypeError('N30 unknown birth hour unexpectedly displayed as a time');
+  }
+  for (const slot of ['year', 'month', 'day', 'hour'] as const) {
+    const actual = snapshot.pillars[slot];
+    const shown = response.reading.calculationSummary.pillars[slot];
+    if (actual.status !== 'resolved') {
+      if (shown.status === 'resolved') {
+        throw new TypeError('N30 unresolved canonical pillar displayed as resolved: ' + slot);
+      }
+      continue;
+    }
+    const expected = `${actual.value.stem.value}${actual.value.branch.value} (${actual.value.stem.hanja}${actual.value.branch.hanja})`;
+    if (shown.status !== 'resolved' || shown.value !== expected) {
+      throw new TypeError('N30 resolved canonical pillar hidden or changed: ' + slot);
+    }
   }
 }
 

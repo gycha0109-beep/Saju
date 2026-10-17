@@ -82,11 +82,12 @@
   - [x] **N28b — Canonical Semantic Bundle → Official Plan/Renderer/Artifact의 계산 사실 Qualifier 연결 ([#2566](https://github.com/gycha0109-beep/Saju/pull/2566) 병합·HEAD 고정 Integration 20/20 PASS):** N28a는 **Official 렌더링 후 Preview Product 표시 구성 단계**이지 새 Canonical Primary Unit을 허가하거나 Official Artifact에 의미를 추가한 상태가 아니다. 실제 단위 결박을 통해 원본 계획/설명가능성 체계 내부에 출처를 노출하려면 별도 내부 모델 편입 및 전 구간 회귀가 필요하다.
   - 소스 판본 충돌이 있는 개별 관계만 보류하고 다른 유효 구조 풀이의 개발을 막지 않는다. `usefulComplete`는 실제 다중 근거 의미와 소비자 독해 조건 충족 전까지 false이다. 실험 Preview와 Production/Commerce의 배포 승인은 구별한다.
 - [ ] **N29 — 사용자 가치 자동 품질 판정 (외부 전문가 의존 제거):**
-  - [ ] N29a [#2567](https://github.com/gycha0109-beep/Saju/pull/2567) 실제 35건 HTTP·고유 19쌍의 Claim/원국/보고서 간 자동 교차 검증: 현재 Draft/검증 진행 중. 동일 구조의 무리한 차별화와 출처 없는 문장, 미상시각 과잉 해석, 원본 HTTP 의미 손실을 자동 음성 테스트로 차단한다. 검증 통과 전 완료로 표시하지 않는다.
+  - [x] N29a [#2567](https://github.com/gycha0109-beep/Saju/pull/2567) 실제 35건 HTTP·고유 19쌍의 Claim/원국/보고서 간 자동 교차 검증: 정확한 HEAD `4f8744e7a1aa2949ad76a933a993602c022c8931`의 [통합 20/20](https://github.com/gycha0109-beep/Saju/actions/runs/39045628181) PASS 뒤 squash merge `81091389b2db95f49bd1a210d0e806c0b94376fe` 완료. 명식/출처/소비자 전달 결박을 검증했으나 실제 개인화 의미의 충분성은 아직 미입증.
   - [x] N29 검수 자료 PR [#2559](https://github.com/gycha0109-beep/Saju/pull/2559) 병합 / main 검증 완료: 35개 HTTP 명식, 19개 반복 쌍, 실제 5쌍/10명식 비교 패킷.
   - [ ] N27의 실행 가능한 두 출생시각 이상 대조 실험으로 **근거 누락, 잘못된 구조 구분, 근거 없는 개인적 행동/금전 단정, 같은 chart의 불안정 문구, 미상시각 과신** 여부를 CI에서 판정한다. 제품 적합성은 실제 회귀 지표와 UX 기준으로 판단한다.
   - 독립 사람 검수는 원하면 추가할 수 있는 **선택적 사용자 조사**이고 출시 또는 의미 실험의 필수 승인이 아니다. 과거 [#2562](https://github.com/gycha0109-beep/Saju/issues/2562)는 종전 필수 승인 계획을 보관하는 기록으로 취급한다.
 - [ ] **N30 — 5개 Natal 영역 개인화 종합 확장:**
+  - [ ] **N30a — 도메인 종합 독해의 동일 원국 표시 무결성:** N16/N21 5영역 소비자 자료에서 Canonical의 모든 확정 기둥이 Product 각 영역에 그대로 표시되는지 확인한다. 확정 기둥의 누락/미확정 강등, 출생시각 미상에서 가짜 시각, delivered이면서 본문 없는 응답은 fail-closed. 기존 Claim/도메인 의미/Production 범위는 변경하지 않는다. 검증·병합 전 완료 처리 금지.
   - General에서 검증된 원국 근거·분야별 의미 사용 범위만 일반/직업/재물/사업/관계로 확장. 도메인 의미 권한과 temporal scope를 혼합하지 않는다.
 
 **지속 통합 계약:** PR별 `Watchtower-Track: saju` → CI Quality + 16개 샤드 + CI Verify, PIE, Production Container → **정확한 HEAD SHA 고정** Integration 20/20 → `expected_head_sha` squash merge → 새 `main` CI/Container 검증. 이 실험은 외부 전문가 승인을 요구하지 않는다. 다만 불확실·충돌 관계의 결과 예측, 부정확한 출처·계산, 별도 Production/Commerce 권한 우회는 허용하지 않는다.

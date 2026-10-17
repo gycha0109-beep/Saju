@@ -194,6 +194,38 @@ describe('N21 readable source-owned natal storyline',()=>{
     expect(result.factualBasis.map(x=>x.text).join(' ')).not.toContain('시주 ');
   });
 
+  it('N30a rejects a hidden canonical pillar or a delivered domain missing its reading',()=>{
+    const snapshot=chart(10);
+    const original=boundedResponse(snapshot,'career-parity',['실제 직업 영역 풀이']);
+    const concealed=structuredClone(original);
+    if (!concealed.reading) throw new Error('missing original');
+    concealed.reading.calculationSummary.pillars.month={
+      ...concealed.reading.calculationSummary.pillars.month,
+      status:'unavailable',value:undefined,
+    };
+    expect(()=>buildNatalN21ReaderFirstStory(snapshot,[{
+      domain:'career',response:concealed,
+    }])).toThrow(/N30 resolved canonical pillar hidden or changed: month/u);
+
+    const noReading={...original,reading:undefined};
+    expect(()=>buildNatalN21ReaderFirstStory(snapshot,[{
+      domain:'career',response:noReading,
+    }])).toThrow(/N30 delivered domain has no Product reading/u);
+    expect(buildNatalN21ReaderFirstStory(snapshot,[{
+      domain:'career',response:original,
+    }]).sections[1]?.excerpts.map(x=>x.text)).toEqual(['실제 직업 영역 풀이']);
+  });
+
+  it('N30a rejects forged birth time on an unknown-hour reading',()=>{
+    const snapshot=chart(10,false);
+    const forged=boundedResponse(snapshot,'unknown-hour',['기존 제한 풀이']);
+    if (!forged.reading) throw new Error('missing original');
+    forged.reading.subject.birthInputDisplay.timeKnown=false;
+    expect(()=>buildNatalN21ReaderFirstStory(snapshot,[{
+      domain:'general',response:forged,
+    }])).toThrow(/N30 unknown birth hour unexpectedly displayed/u);
+  });
+
   it('fails closed for a mismatched chart and a forged N5 calculated passage',()=>{
     const snapshot=chart(10),other=chart(11);
     expect(()=>buildNatalN21ReaderFirstStory(other,[{
