@@ -1,0 +1,42 @@
+name: "[WT:saju] N27 Original Folio Acquisition (Research)"
+on:
+  push:
+    branches:
+      - research/saju/natal-19-pair-semantic-return-20261017
+    paths:
+      - .github/workflows/n27-original-folio-acquisition.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  print-source-acquisition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Acquire exact Harvard fifth-volume PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/n27-capture"
+          curl --fail --location --silent --show-error --retry 2 --retry-delay 2 --connect-timeout 20 --max-time 210 --user-agent "MyeongHaAcademicSourceAudit/1.0 (noncommercial research)" "https://upload.wikimedia.org/wikipedia/commons/4/4e/Harvard_drs_53262215_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_v.5%E5%8D%B7%E4%B9%8B%E4%BA%94.pdf" --output "$RUNNER_TEMP/n27-capture/harvard-volume-five.pdf"
+          test -s "$RUNNER_TEMP/n27-capture/harvard-volume-five.pdf"
+          head -c 5 "$RUNNER_TEMP/n27-capture/harvard-volume-five.pdf" | grep -q '%PDF-'
+          sha256sum "$RUNNER_TEMP/n27-capture/harvard-volume-five.pdf"
+          pdfinfo "$RUNNER_TEMP/n27-capture/harvard-volume-five.pdf" | grep -E 'Pages:|File size:'
+      - name: Build manual image-inspection packet
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v pdfinfo
+          command -v pdftoppm
+          node scripts/research/inspect-n27-volume-five-print.mjs --pdf "$RUNNER_TEMP/n27-capture/harvard-volume-five.pdf" --source-id HARVARD_DRS_53262215_VOL_5 --out "$RUNNER_TEMP/n27-capture/packet" --pages all --scale 900
+          test -s "$RUNNER_TEMP/n27-capture/packet/manifest.json"
+          test -s "$RUNNER_TEMP/n27-capture/packet/reading-template.json"
+      - name: Upload Research-only page evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-harvard-volume-five-printed-folio-candidates
+          path: ${{ runner.temp }}/n27-capture/packet/
+          if-no-files-found: error
+          retention-days: 5
