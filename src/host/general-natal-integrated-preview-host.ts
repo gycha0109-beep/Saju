@@ -2,6 +2,7 @@ import { runInterpretation, type InterpretationExecutionResult } from '../interp
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { attachGeneralNatalCalculatedRoleObservation } from '../preview/general-natal-consumer-role-observation.js';
 import { attachNatalN27SelfServiceEvidenceReading } from '../preview/natal-n27-self-service-evidence-reading.js';
+import { composeNatalN28VerifiedReaderReport } from '../preview/natal-n28-verified-reader-report.js';
 import { compactGeneralNatalConsumerRepeatedInsights } from '../preview/general-natal-consumer-repeat-compaction.js';
 import { attachGeneralNatalCalculatedContext } from '../preview/general-natal-consumer-fact-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../interpretation/general-natal-integrated-reading-registry.js';
@@ -21,6 +22,8 @@ export interface GeneralNatalIntegratedPreviewHostOptions {
   requestNowFactory?: MyeonghwaProductHostDependencies['requestNowFactory'];
   /** Explicit, opt-in autonomous evidence-based Preview explanation; never Production admission. */
   enableAutonomousEvidenceReading?: boolean;
+  /** Opt-in report-first N28 composition of independently verified N27a/N27b evidence. */
+  enableAutonomousReportComposition?: boolean;
 }
 
 /**
@@ -82,9 +85,21 @@ export function createGeneralNatalIntegratedPreviewProductHost(
         ? grounded
         : attachGeneralNatalCalculatedRoleObservation(grounded, observedSnapshot);
       const compacted = compactGeneralNatalConsumerRepeatedInsights(withRoles);
-      return options.enableAutonomousEvidenceReading === true &&
-        observedSnapshot !== undefined && observedInterpretation !== undefined
-        ? attachNatalN27SelfServiceEvidenceReading(compacted, observedSnapshot, observedInterpretation)
+      if (observedSnapshot === undefined || observedInterpretation === undefined) {
+        return compacted;
+      }
+      if (options.enableAutonomousReportComposition === true) {
+        const optIn = attachNatalN27SelfServiceEvidenceReading(
+          compacted, observedSnapshot, observedInterpretation,
+        );
+        return composeNatalN28VerifiedReaderReport(
+          compacted, optIn, observedSnapshot, observedInterpretation,
+        );
+      }
+      return options.enableAutonomousEvidenceReading === true
+        ? attachNatalN27SelfServiceEvidenceReading(
+            compacted, observedSnapshot, observedInterpretation,
+          )
         : compacted;
     },
   };
