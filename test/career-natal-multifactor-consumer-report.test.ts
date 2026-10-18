@@ -110,6 +110,55 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(report.missing).toContain('출생시각 미상');
   });
 
+
+  it('rejects a changed T8 pattern and swapped upstream T5 family instead of mislabeling Career meaning', () => {
+    let original: ReturnType<typeof run> | undefined;
+    for (const month of [2, 3, 4, 5, 6, 7]) {
+      for (const day of [3, 7, 11, 17, 23]) {
+        const candidate = run(month, day);
+        if (candidate.report.sections.length > 0) {
+          original = candidate;
+          break;
+        }
+      }
+      if (original) break;
+    }
+    expect(original).toBeDefined();
+    if (!original) return;
+    const target = original.execution.claims.find(c =>
+      c.claimType === original!.report.sections[0]!.claimType);
+    expect(target).toBeDefined();
+    if (!target) return;
+    const forgedMeaning = {
+      ...original.execution,
+      claims: original.execution.claims.map(c => c.claimId === target.claimId
+        ? { ...c, value: { ...(c.value as Record<string, unknown>),
+          pattern: 'UNRELATED_CAREER_PATTERN' } }
+        : c),
+    };
+    expect(() => buildCareerMultifactorResearchReport(
+      original!.chart, forgedMeaning, registry,
+    )).toThrow();
+
+    // A substituted upstream claim may still be a genuine, active T5 from
+    // the same canonical chart. It does NOT satisfy a different rule input.
+    const firstUpstream = target.upstreamClaimRefs[0];
+    const substituted = {
+      ...original.execution,
+      claims: original.execution.claims.map(c => c.claimId === firstUpstream
+        ? { ...c, claimType: 'TEN_GOD_UNKNOWN_' +
+          String((target.value as Record<string, unknown>).channel).toUpperCase() + '_THEME' }
+        : c),
+    };
+    expect(() => buildCareerMultifactorResearchReport(
+      original!.chart, substituted, registry,
+    )).toThrow();
+
+    expect(original.report.sections[0]!.paragraph).toContain(
+      original.report.sections[0]!.calculatedPositions[0]!,
+    );
+  }, 30000);
+
   it('refuses unrelated registry and cross-person outputs', () => {
     const first = run(3, 10);
     const next = sample(4, 15);
