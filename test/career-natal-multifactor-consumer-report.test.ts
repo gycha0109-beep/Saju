@@ -45,7 +45,7 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     for (const month of [2, 3, 4, 5, 6, 7]) {
       for (const day of [3, 7, 11, 17, 23]) {
         const x = run(month, day);
-        const signature = x.report.sections.map(s => s.claimType).sort().join('|');
+        const signature = x.report.sections.map(s => s.pattern).sort().join('|');
         if (x.report.sections.length > 0) observed.push({ ...x, signature });
       }
     }
@@ -54,6 +54,7 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(a).toBeDefined();
     expect(b).toBeDefined();
     if (!a || !b) return;
+    expect(a.report.sections.map(s => s.pattern)).not.toEqual(b.report.sections.map(s => s.pattern));
     expect(a.report.sections.map(s => s.headline)).not.toEqual(b.report.sections.map(s => s.headline));
     for (const x of [a, b]) {
       const claims = x.execution.claims.filter(c =>
