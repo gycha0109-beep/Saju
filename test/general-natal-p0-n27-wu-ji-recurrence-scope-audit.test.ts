@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v10');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v11');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -444,6 +444,70 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
     ]);
     expect(chipAudit.previouslyConfirmedSiftGlobalInliers)
       .toBe(registration.mainlandP43Taiwan1578P376.homographyInliers);
+    const xiji = printed.yuanhaiXijiHourWealthCommentaryCases;
+    expect(xiji).toMatchObject({
+      status: 'TRANSCRIBED_CLASSICAL_COMMENTARY_WITH_EXPLICIT_NON_VISIBLE_CASE',
+      passage: '時上偏財別宮忌見',
+      firstSourceAttributedTitle: '淵海子平 卷二 喜忌篇',
+      secondSourceAttributedTitle: '神峰通考 喜忌篇',
+      firstSourceBookAndChapterNumberingUniversallyStable: false,
+      exactIndependentOldPrintSourcesCompared: false,
+      twoIndependentlyTransmittedHistoricalAccountsProven: false,
+      otherBranchesOrCombinationsCanBeMaterial: true,
+      allHiddenStemsAutomaticallyCountAsRecurrenceCertified: false,
+      dayBranchIndependentlyIsolatedByExample: false,
+      favorableExampleCommanderNameSource1: '都統制',
+      favorableExampleCommanderNameSource2: '邵統制',
+      nameDiscrepancyVisibleAcrossTranscriptions: true,
+      nameDiscrepancyProvesAncientPrintVariant: false,
+      narrowEvidenceAgainstStrictVisibleOnlyElsewhere: true,
+      automaticAnyHiddenCountRuleAuthorized: false,
+      zhengCaiAndPianCaiPoolingAuthorized: false,
+      ruleForSeparateDayPalaceAuthorized: false,
+      productionOrTrustGrantFromCommentary: false,
+      noFreshPrintedWitnessCountIncrement: true,
+      remainingBieGongDayPillarScope: 'UNADJUDICATED',
+      remainingZaiJianHiddenStemCountingScope: 'UNADJUDICATED',
+      remainingYiWeiCountingUnit: 'UNADJUDICATED',
+    });
+    expect(xiji.primaryTranscriptionSource).toContain('sajumania.com');
+    expect(xiji.comparativeTranscriptionSource).toContain('wikisource.org');
+    expect(xiji.twoContrastedExamples).toEqual([
+      {
+        label: 'COMMENTARY_FAVORABLE_HOUR_WEALTH',
+        yearPillar: '丁酉',
+        monthPillar: '己酉',
+        dayPillar: '戊子',
+        hourPillar: '壬子',
+        dayMaster: '戊',
+        hourVisibleIndirectWealthStem: '壬',
+        nonHourVisibleIndirectWealthStems: [],
+        otherPillarBranchWithHiddenDirectWealth: '日支子藏癸',
+        allOtherPillarWealthOfEitherPolarityMustBeAbsent: false,
+        commentaryClassification: 'FAVORABLE_EXAMPLE',
+        classificationIsNotVerifiedBiographicalOutcome: true,
+      },
+      {
+        label: 'COMMENTARY_OTHER_PALACE_ILLUSTRATION',
+        yearPillar: '丁丑',
+        monthPillar: '己酉',
+        dayPillar: '丁丑',
+        hourPillar: '辛亥',
+        dayMaster: '丁',
+        hourVisibleIndirectWealthStem: '辛',
+        nonHourVisibleIndirectWealthStems: [],
+        yearBranchHiddenIndirectWealth: '丑藏辛',
+        monthBranchHiddenIndirectWealth: '酉藏辛',
+        dayBranchHiddenIndirectWealth: '丑藏辛',
+        explicitCommentaryTrigger: '月支又酉丑會局，所謂別宮忌見也',
+        monthAndChouCombinationClaimInTranscription: true,
+        fullThreeBranchMetalCombinationProvedPresent: false,
+        individualHiddenStemVersusCombinedBranchCauseSeparable: false,
+        dayBranchNecessaryCauseIsolated: false,
+        commentaryClassification: 'OTHER_PALACE_CONFLICT_EXAMPLE',
+        classificationIsNotVerifiedBiographicalOutcome: true,
+      },
+    ]);
     expect(printed.harvardVolumeOneOriginalPrefaceRead).toMatchObject({
       sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE',
       sameHarvardDrsAsPreviouslyReadVolumeFive: true,
