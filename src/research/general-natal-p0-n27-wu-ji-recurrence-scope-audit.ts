@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v5' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v6' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -278,6 +278,60 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
           agreementsAreTwoTextuallyIndependentVotes: false as const,
           externalMing1578LibraryCatalogIsThisNlcCopy: false as const,
           bibliographicMetadataCannotAuthorizeClassicalCounting: true as const,
+        }),
+
+        // The Ming 1578 print is a THIRD distinct institutional holding
+        // for the Zhengguan parallel, with its own directly checked images.
+        taiwanWanli1578ZhengGuanPrintedLocus: Object.freeze({
+          sourceId: 'TAIWAN_NCL_06589_1578' as const,
+          originalPdfSha256: '3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd' as const,
+          catalogedExactPublicationYear: 1578 as const,
+          catalogHolder: 'TAIWAN_NATIONAL_CENTRAL_LIBRARY' as const,
+          originalPdfPages: Object.freeze([337, 340, 341] as const),
+          volumeFiveOpensOnPage337: true as const,
+          originalZhengGuanHeadingOnPage340: true as const,
+          directPrintedBranchExampleOnPage341: '甲生丑月內有辛金又值酉時' as const,
+          page340RasterSha256: 'eb1b041c5dadb699e3ec7baa3728594263eee6502b485af544ffedec03ead219' as const,
+          page341RasterSha256: '7259ed422d7fef314e3703631a09c8e3f3c19657f74f57cc79b2ac4d3f2923fd' as const,
+          independentTextualLineageCertified: false as const,
+          automaticallyApplyToHourWealth: false as const,
+        }),
+        taiwanWanli1578HourWealthPrintedLocus: Object.freeze({
+          sourceId: 'TAIWAN_NCL_06589_1578' as const,
+          originalPdfSha256: '3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd' as const,
+          pageHourWealthHeading: 375 as const,
+          pageDirectPrintedWuJiClause: 376 as const,
+          printedDisputedGlyph: '己' as const,
+          originalPrintedClause: '柱中不宜再見戊己' as const,
+          page375RasterSha256: '6807b6ab78cc0d2cd4bbe12d9b059dac977296134976be402ea53f6d54472afe' as const,
+          page376RasterSha256: 'f43b34d006ba75a50179fc04bdcd377301bc9b25caf7cc4adc0146c8a82121e8' as const,
+          renderedPage376DetailSha256: '782d797bb8424eeb32df77b0b517897c38dbe58ff6a5f1120329cec15d74f45f' as const,
+          existingHarvardCadalNlcThreeScansAlsoReadWuJi: true as const,
+          directlyReadPrintedHoldingGroupsNowFour: 4 as const,
+          fourPrintingsAreGenealogicallyIndependent: false as const,
+          originalAuthorialManuscriptGlyphCertified: false as const,
+          printedGlyphDoesNotDefineZaiJianCountingScope: true as const,
+        }),
+        harvardVolumeOneOriginalPrefaceRead: Object.freeze({
+          sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE' as const,
+          sameHarvardDrsAsPreviouslyReadVolumeFive: true as const,
+          originalPdfSha256: 'af48a02807222915574a7b03f2bcda1dea2810f69fe7112ee8c40967bc8de2d5' as const,
+          titlePage: 2 as const,
+          recoveredLiFamilyBlocksAndSupplementPassagePage: 4 as const,
+          datedPrefaceSignaturePage: 6 as const,
+          prefaceTitle: '補刻三命通會敘' as const,
+          recoveredWoodblocksStoredInLiFamily: true as const,
+          reportedMissingDamagedSections: true as const,
+          describesCorrectionAndSupplementation: true as const,
+          prefatoryDate: '雍正乙卯花朝' as const,
+          prefatorySigner: '蔣國祥' as const,
+          page2RasterSha256: '0fa370c44688714df45fabfa54c89f92adbb6bac2765517a9cada457c77884ab' as const,
+          page4RasterSha256: '1688ee1e45b94b9afbeb91d35dfe39416c53768e7ed9a3606e2b7a517751f17b' as const,
+          page6RasterSha256: 'b673ab1811624b18b1ce0d8ac61f4a8b5facf2ab720871bc8dc3c9bc5ecfbae5' as const,
+          publicationYearNotProvenByPrefaceAlone: true as const,
+          historicalLiBlockIsExactTaiwan1578Block: 'UNADJUDICATED' as const,
+          harvardVolumeFiveSharesExactSameCarvedBlockAsVolumeOne: 'UNADJUDICATED' as const,
+          restoredBlocksRequireTreatingWitnessesAsPotentiallyDependent: true as const,
         }),
         printLineageIndependenceCertified: false as const,
         directlyCertifiedHourWealthBieGongIncludesDay: false as const,
