@@ -14,6 +14,8 @@ import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded
 import { buildNatalN30bFiveDomainVerifiedReader } from '../dist/preview/natal-n30b-five-domain-verified-reader.js';
 import { buildNatalN32ExpandedDomainResearchReading } from '../dist/preview/natal-n32-expanded-domain-research-reading.js';
 import { buildNatalN36CommonEvidenceIndex } from '../dist/preview/natal-n36-common-evidence-index.js';
+import { createCareerMultifactorResearchRegistry } from '../dist/research/career-natal-multifactor-candidate.js';
+import { buildCareerMultifactorResearchReport } from '../dist/preview/career-natal-multifactor-report.js';
 import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
@@ -429,7 +431,35 @@ function renderPillars(summary) {
     .join('')}</div>`;
 }
 
-function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence) {
+function renderCareerMultifactorInMainReport(report) {
+  if (!report.researchOnly || report.mayPublish || report.maySell || report.usefulComplete) {
+    throw new TypeError('Research Career cannot be presented as official completed product interpretation');
+  }
+  const sections = report.sections.map(section =>
+    '<article class="reader-paragraph"><h3>' + escapeHtml(section.headline) + '</h3>' +
+    '<p>' + escapeHtml(section.paragraph) + '</p>' +
+    '<details><summary>실제 명식 근거 및 Claim·Rule·Source</summary><p>' +
+    escapeHtml(section.calculatedPositions.join(' · ')) + '</p><p>' +
+    escapeHtml(section.calculatedFactPaths.join(' · ')) + '</p><p>' +
+    escapeHtml(section.upstreamClaimIds.join(' · ')) + '</p><p>' +
+    escapeHtml(section.ruleId) + '</p><p>' +
+    escapeHtml(section.sourceIds.join(' · ')) + '</p></details></article>'
+  ).join('');
+  return '<section class="domain research-scope"><div class="domain-heading">' +
+    '<h2>나의 직업·일: 두 근거를 연결한 구조 해석</h2>' +
+    '<span>새 Career T8 연구 실험 · 공식 풀이 아님</span></div>' +
+    '<p>' + escapeHtml(report.introduction) + '</p>' +
+    '<p class="reader-note">최소 유효 해석: ' + escapeHtml(report.state) +
+    ' · 내부 연구 시제품이며 제품 전체 완성과 무관합니다.</p>' +
+    (sections || '<p class="limited">이 명식에서 현재 확보한 근거만으로는 복합 Career 해석을 구성할 수 없습니다.</p>') +
+    (report.missing.length ? '<p class="limited">부족한 근거: ' +
+      escapeHtml(report.missing.join(' · ')) + '</p>' : '') +
+    '<details><summary>해석의 한계와 권한</summary>' +
+    report.limitations.map(text => '<p>' + escapeHtml(text) + '</p>').join('') +
+    '</details></section>';
+}
+
+function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence, careerResearch) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -475,6 +505,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
   </header>
   ${renderPillars(general?.calculationSummary)}
   ${renderN30bVerifiedGeneral(verifiedFiveDomains)}
+  ${renderCareerMultifactorInMainReport(careerResearch)}
   ${renderN36CommonChartEvidence(commonEvidence)}
   ${renderN31FourDomainResearch(domainResearch)}
   ${renderReaderFirstStory(story, expanded)}
@@ -569,6 +600,13 @@ async function main() {
   );
   const domainResearch = expandedDomainResearch.firstScreen;
   const commonEvidence = buildNatalN36CommonEvidenceIndex(expandedDomainResearch);
+  const careerRegistry = createCareerMultifactorResearchRegistry(researchNow.toISOString());
+  const careerExecution = runInterpretation(calculated.snapshot, careerRegistry, {
+    requestId: 'career-two-t5-natal-research-internal-only', now: researchNow,
+  });
+  const careerResearch = buildCareerMultifactorResearchReport(
+    calculated.snapshot, careerExecution, careerRegistry,
+  );
   const themes = buildNatalActivatedThemePreview(interpretation);
   const applied = buildNatalAppliedThemeContext(evidence, themes);
   const researchRegistry = createGeneralNatalSourceBoundedRegistry(researchNow.toISOString());
@@ -578,7 +616,10 @@ async function main() {
   const relations = buildNatalN22ChartRelationGuide(
     calculated.snapshot, researchExecution, researchRegistry,
   );
-  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence), 'utf8');
+  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence, careerResearch), 'utf8');
+  process.stdout.write('Career multifactor research on SAME birth chart: MUR=' + careerResearch.state +
+    ', source-bound composite claims shown=' + careerResearch.sections.length +
+    ', publish=false, sell=false, usefulComplete=false\\n');
   process.stdout.write('N36 shared chart facts across independent domain Claims: ' +
     commonEvidence.sharedFactCount + '; research-only structural links, no new semantic authority\n');
   process.stdout.write('N32 original four-domain research: ' +
