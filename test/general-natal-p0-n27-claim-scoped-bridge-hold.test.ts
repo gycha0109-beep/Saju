@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('aa2bbcf5d820ce6d88bf9d24e2124c77b9a1f55d');
+    expect(review.researchHeadReviewed).toBe('9ec52ad8f154cf40c6ee079ec3856d93de97a511');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v12',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v13',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -335,6 +335,22 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           houCaseHasAdditionalDayBranchHiddenPianCai: true,
           houCaseGlossMentionsRepetitionsButNotUnqualifiedSuccess: true,
           liCaseHasHiddenYearPianCaiButNoIsolatedCausalComparison: true,
+          shenfengXiwenClusterComparand: {
+            sourceStatus: 'TEXT_ONLY_NO_PRINT_FOLIO',
+            pillars: ['己酉','丙子','壬寅','乙巳'],
+            visibleMonthPianCaiAndHiddenDayHourPianCai: true,
+            hourStemIsNotPianCai: true,
+            separatelyLabeledHourMonthClusterNotPureHourOnly: true,
+            sourceWordingExpressesPartialFavorability: true,
+            anyExtraCaiAutomaticallyViolatesAllPatterns: false,
+            hiddenDayAsIndependentViolationOrExemptionAdjudicated: false,
+          },
+          locEarlyPrintedCandidate: {
+            dateRangeAsCataloged: '1638–1661',
+            actualTargetImageRead: false,
+            printTraditionIndependent: 'UNADJUDICATED',
+            directPrintedEvidenceIncrement: 0,
+          },
           commons1926PdfSourceLocatedButExactPageNotRead: true,
           originalPrintedWitnessIncrement: 0,
           dayBranchSeparateRecurrenceRuleAllowed: false,
