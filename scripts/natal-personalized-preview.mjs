@@ -13,6 +13,7 @@ import { buildNatalSynthesisPreview } from '../dist/preview/natal-synthesis-prev
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN30bFiveDomainVerifiedReader } from '../dist/preview/natal-n30b-five-domain-verified-reader.js';
 import { buildNatalN32ExpandedDomainResearchReading } from '../dist/preview/natal-n32-expanded-domain-research-reading.js';
+import { buildNatalN36CommonEvidenceIndex } from '../dist/preview/natal-n36-common-evidence-index.js';
 import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
@@ -389,6 +390,34 @@ function renderN31FourDomainResearch(result) {
     result.limitations.map(x=>'<p>'+escapeHtml(x)+'</p>').join('')+'</details></section>';
 }
 
+function renderN36CommonChartEvidence(index) {
+  if (!index.researchOnly || index.mayPublish || index.maySell ||
+      index.createsNewInterpretation || index.independentDomainMeaningProven) {
+    throw new TypeError('N36 cannot promote shared calculation facts to a new meaning');
+  }
+  const titles = {career:'직업·일',wealth:'재물·자원',business:'사업·실행',relationship:'관계'};
+  const facts = index.sharedFacts.map(fact => {
+    const references = fact.domains.map(item =>
+      '<li><strong>'+escapeHtml(titles[item.domain])+'</strong> · 기존 Claim '+
+      item.claims.length+'개<details><summary>원래 분야별 출처 보기</summary>'+
+      item.claims.map(claim => '<p>'+escapeHtml(claim.claimType)+' · '+
+        escapeHtml(claim.ruleId)+'@'+escapeHtml(claim.ruleVersion)+' · '+
+        escapeHtml(claim.sourceIds.join(' / '))+'</p>').join('')+
+      '</details></li>').join('');
+    return '<article class="reader-paragraph"><h3>'+escapeHtml(fact.calculatedPosition)+'</h3>'+
+      '<p class="limited">서로 독립적으로 실행된 기존 연구 분야 '+
+      fact.domains.length+'곳에서 이 정확한 계산 사실을 참조합니다.</p>'+
+      '<ul>'+references+'</ul><details><summary>Canonical 계산 사실 경로</summary><p>'+
+      escapeHtml(fact.factPath)+'</p></details></article>';
+  }).join('');
+  return '<section class="domain research-scope"><div class="domain-heading">'+
+    '<h2>여러 분야가 함께 참조한 내 명식의 계산 근거</h2>'+
+    '<span>N36 · 내부 연구용 사실 연결</span></div>'+
+    '<p class="limited">'+escapeHtml(index.limitation)+'</p>'+
+    (facts||'<p class="limited">서로 다른 분야에서 공통 참조한 확정 계산 근거가 없습니다. 연관성을 임의로 만들지 않습니다.</p>')+
+    '</section>';
+}
+
 function renderPillars(summary) {
   if (summary === undefined) return '<p>명식 요약을 사용할 수 없습니다.</p>';
   return `<div class="pillars">${(['year', 'month', 'day', 'hour'])
@@ -400,7 +429,7 @@ function renderPillars(summary) {
     .join('')}</div>`;
 }
 
-function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch) {
+function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -446,6 +475,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
   </header>
   ${renderPillars(general?.calculationSummary)}
   ${renderN30bVerifiedGeneral(verifiedFiveDomains)}
+  ${renderN36CommonChartEvidence(commonEvidence)}
   ${renderN31FourDomainResearch(domainResearch)}
   ${renderReaderFirstStory(story, expanded)}
   ${renderActualChartRelations(relations)}
@@ -538,6 +568,7 @@ async function main() {
     calculated.snapshot,n31Execution,n31Registry,
   );
   const domainResearch = expandedDomainResearch.firstScreen;
+  const commonEvidence = buildNatalN36CommonEvidenceIndex(expandedDomainResearch);
   const themes = buildNatalActivatedThemePreview(interpretation);
   const applied = buildNatalAppliedThemeContext(evidence, themes);
   const researchRegistry = createGeneralNatalSourceBoundedRegistry(researchNow.toISOString());
@@ -547,7 +578,9 @@ async function main() {
   const relations = buildNatalN22ChartRelationGuide(
     calculated.snapshot, researchExecution, researchRegistry,
   );
-  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch), 'utf8');
+  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence), 'utf8');
+  process.stdout.write('N36 shared chart facts across independent domain Claims: ' +
+    commonEvidence.sharedFactCount + '; research-only structural links, no new semantic authority\n');
   process.stdout.write('N32 original four-domain research: ' +
     expandedDomainResearch.initialClaimCount+' visible + '+
     expandedDomainResearch.expandedOriginalClaimCount+' additional = '+
