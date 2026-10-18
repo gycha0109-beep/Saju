@@ -181,3 +181,16 @@ v4 최초 Research 실행 [39066472718](https://github.com/gycha0109-beep/Saju/a
 [대만 國家圖書館 목록의 明萬曆六年(1578)刊本](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2)이나 [美普林斯頓 소장 1735 修補金陵李氏刊本](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=2c9735937bff4bbba1095711109793f2fDEyNDM3OQ2.3YmwactxuROfMn60_6V8G0sYql1LtZILVpJsbSmsxyc_&page=)은 별개 소장 자료의 참고 서지일 뿐이다. 해당 목록의 정확한 인쇄 연대·판각 계보를 지금 대조한 NLC/Harvard 원본의 성질로 자동 합치지 않는다. 원문 `時上偏財`의 `別宮·再見·一位` 계산 범위를 해결하는 근거도 아니다.
 
 **Bridge 상태:** 신규 `bibliographicRelation.classification=DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES`; `independenceOfTextualTransmissionCertified=false`; `agreementAsTwoIndependentVotesAuthorized=false`; `sameVolumeZhengGuanAnalogy.evidenceChannel=DIGITAL_TRANSCRIPTION_WITH_TWO_PRINT_SCAN_LOCI`로 신·구 증거 채널 불일치를 정정했다. 서지 검증 및 원전 판독은 **별도 reviewer TrustGrant·Production 의미권한이 아님**. 다섯 Claim HOLD, N17 METHODOLOGY_CONFLICT, N13 정확 겁재 T8 **1 vs 0** 유지. 양쪽 Draft/미병합, v5 정확 HEAD CI는 새로 확인해야 한다.
+
+
+## 2026-10-18 N27 v6 — 하버드 권1 보각 서문 + 1578년 명대 刊本 직접 대조
+
+**Research 정확 HEAD `7b9b7b5a46cfb2d968fa17669124c7826ddd4e85`**, `saju-n27-wu-ji-recurrence-scope-sensitivity-v6`, Research 문서 `25에 Bridge를 정확하게 재바인딩한다.
+
+새 물리 인쇄 확인:
+- Harvard-Yenching `drs:53262215` 권一의 원본 PDF 2면 「補刻三命通會敘」, 4면 滄州 李氏 목판 잔실·遺帙 校正·補刻, 6면 `雍正乙卯花朝` / `蔣國祥` 서명을 **직접 읽음**. 권五 원본과 동일한 Harvard drs ID이므로 이전 디지털 전사 기반 '다른 서문일 수도 있다'는 유보는 해당 하버드 **소장본 자체의 서문 존재**에 대해 해소되었다. 그러나 **실제 卷五의 개별 인쇄 연도**나 1578년 대만 印本과 동일 판목 여부는 해소되지 않았다. [원본 수집 실행 39110932522](https://github.com/gycha0109-beep/Saju/actions/runs/39110932522).
+- [대만 국가도서관 06589 공식 서지](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=69577a07b3444caf9b20e35e84a103e0fDcyODE10.578_oDtdzxby6wX5_W8cCvt1j5rqk4Hzy3GeKFoIIHA_&page=2&sourceWhereString=&whereString=IChEYXRlX0NyZWF0ZWQgbGlrZSAnJTE1NzglJyBvciBEb2N1bWVudF9ZZWFyIGxpa2UgJyUxNTc4JScgKSA1.IuMldaBSQarjxhBn_BeTs0yAImbyvOSAYg5y7FFSAGw_)가 `1578` 간본으로 확인한 [원본 1000면 PDF](https://commons.wikimedia.org/wiki/File:NCL-06589_1_三命通會.pdf)를 직접 확보·렌더·판독. 337면 卷五 시작, 340–341면 「論正官」 및 `甲生丑月內有辛金又值酉時`, 375면 「時上偏財」 제목, **376면 `柱中不宜再見戊己`와 己 자형 직접 판독**. 원본 PDF SHA256 `3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd`, 전체 이미지 해시는 Research `25 참조. [수집 39110932522](https://github.com/gycha0109-beep/Saju/actions/runs/39110932522) / [원본 보관 39111407535](https://github.com/gycha0109-beep/Saju/actions/runs/39111407535).
+
+**정확한 연구 결론:** Harvard, CADAL 四庫, 中國 NLC, 대만1578 **네 곳의 실제 인쇄된 `戊己` 글자**는 일치한다. 그러나 **네 독립 텍스트 lineage 표가 아니다**. 하버드 보각 서문은 기존 목판 전승·補修를 직접 뒷받침하지만 그 목판이 대만1578의 물리 판목이라고 입증하지 않는다. 기존 「論正官」의 다른 위치 戊/己·正官 藏干 사례와 「時上偏財」 조건을 하나의 실행 규칙으로 합치지 않는다.
+
+**권위 경계:** `sourceQualifiedRecurrenceVerdict=UNADJUDICATED`, `sourceQualifiedSingletonVerdict=UNADJUDICATED`, `別宮` 日柱 포함, `再見` 藏干 범위, `一位` 계수 단위 미확정. 다섯 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, TrustGrant/Preview/Official/Production 신규 승인 **0**. Research·Bridge Draft/미병합 유지. **v6 새 HEAD의 CI 결과는 별도 확인**한다.
