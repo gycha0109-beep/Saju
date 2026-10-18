@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v6');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v7');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -266,6 +266,49 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       originalAuthorialManuscriptGlyphCertified: false,
       printedGlyphDoesNotDefineZaiJianCountingScope: true,
     });
+    const leaf = printed.hourWealthLocalLeafCollation;
+    expect(leaf).toMatchObject({
+      version: 'n27-harvard-taiwan-local-leaf-collation-v1',
+      auditStatus: 'SAMPLED_PHRASE_AGREEMENT_ONLY',
+      harvardHoldingId: 'HARVARD_DRS_53262215_VOL_5',
+      harvardHourWealthPdfPage: 45,
+      harvardHighResPage45Sha256:
+        'b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12',
+      taiwanHoldingId: 'TAIWAN_NCL_06589_1578',
+      taiwanHourWealthPdfPages: [375, 376],
+      sampledAgreementsArePunctuationNormalized: true,
+      entireChapterVerbatimCollationCompleted: false,
+      localSampleShowsSubstantiveVariant: false,
+      noVariantAnywhereInVolumeCertified: false,
+      catalogHarvardCharactersPerLine: 20,
+      catalogTaiwanCharactersPerLine: 22,
+      matchingPhysicalSettingFromSameCarvedWoodblockSupported: false,
+      nonidenticalPrintedSettingSupported: true,
+      taiwanCatalogPlateHeartTitle: '三命會通',
+      taiwanCatalogSingleFishtail: true,
+      taiwanCatalogListsEngraverNames: true,
+      namedEngraverAtExactComparedLeafRead: false,
+      engravedNameAtExactLeaf: 'UNREADABLE',
+      actualLeafRecarvingOrReplacementProven: false,
+      actualLeafLossProven: false,
+      commonTextualAncestor: 'UNADJUDICATED',
+      independentTextualWitnesses: 'UNADJUDICATED',
+      sampleAgreementCanAuthorizeBieGongDayScope: false,
+      sampleAgreementCanAuthorizeZaiJianHiddenCount: false,
+      sampleAgreementCanAuthorizeYiWeiUnit: false,
+      sourceOnlyNoConsumerPromotion: true,
+    });
+    expect(leaf.sampledPrintedPhraseAgreements).toEqual([
+      { text: '時上偏財別宮忌見', harvardPage: 45, taiwanPage: 375 },
+      { text: '柱中不宜再見戊己', harvardPage: 45, taiwanPage: 376 },
+      { text: '只要一位不宜多逢', harvardPage: 45, taiwanPage: 376 },
+      { text: '天元透出為妙支內所藏次之', harvardPage: 45, taiwanPage: 376 },
+      { text: '時上偏財不用多', harvardPage: 45, taiwanPage: 376 },
+    ]);
+    expect(leaf.harvardOriginalPdfSha256)
+      .toBe(printed.printWitnesses[0]?.originalPdfSha256);
+    expect(leaf.taiwanOriginalPdfSha256)
+      .toBe(printed.taiwanWanli1578HourWealthPrintedLocus.originalPdfSha256);
     expect(printed.harvardVolumeOneOriginalPrefaceRead).toMatchObject({
       sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE',
       sameHarvardDrsAsPreviouslyReadVolumeFive: true,
