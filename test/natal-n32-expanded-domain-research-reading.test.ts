@@ -52,6 +52,10 @@ describe('N32 complete already-source-qualified four-domain research-only readin
           expect(original?.taxonomy.category).toBe(section.domain);
           expect(c.sourceIds.length).toBeGreaterThan(0);
           expect(c.calculatedPositions.length).toBeGreaterThan(0);
+          expect(c.calculatedFactPaths).toHaveLength(c.calculatedPositions.length);
+          expect(c.claimRuleVersion).toBeTruthy();
+          expect(c.methodologyVersion).toBeTruthy();
+          expect(c.profileVersion).toBeTruthy();
           expect(c.predictsOutcome).toBe(false);
         }
       }
@@ -111,4 +115,25 @@ describe('N32 complete already-source-qualified four-domain research-only readin
     }
     expect(inspected).toBeGreaterThan(0);
   });
+  it('repeats the same chart deterministically but preserves meaningful source/position contrasts across different charts',()=>{
+    const results=DATES.map(date=>{
+      const {snapshot,registry,interpretation}=fixture(date);
+      return buildNatalN32ExpandedDomainResearchReading(snapshot,interpretation,registry);
+    });
+    const repeat=fixture(DATES[0]);
+    const repeated=buildNatalN32ExpandedDomainResearchReading(
+      repeat.snapshot,repeat.interpretation,repeat.registry);
+    expect(results[0]?.originalResearchFingerprint).toBe(repeated.originalResearchFingerprint);
+    const signatures=results.map(result=>result.sections.map(section=>{
+      const first=result.firstScreen.sections.find(s=>s.domain===section.domain);
+      return [section.domain,...[
+        ...(first?.visibleClaims??[]),...section.additionalVerifiedClaims,
+      ].map(c=>c.claimType+'|'+c.calculatedPositions.join('/')+'|'+
+        c.claimRuleId+'@'+c.claimRuleVersion)];
+    }));
+    expect(new Set(signatures.map(x=>JSON.stringify(x))).size).toBeGreaterThan(1);
+    expect(results.every(result=>result.mayPublish===false &&
+      result.usefulComplete===false)).toBe(true);
+  });
+
 });

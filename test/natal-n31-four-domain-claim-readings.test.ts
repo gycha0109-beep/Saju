@@ -67,4 +67,41 @@ describe('N31 existing-domain meaning and exact Canonical position receipt',()=>
     expect(()=>buildNatalN31FourDomainClaimReadings(snapshot,manipulated,registry))
       .toThrow(/byte-equivalent/u);
   });
+  it('rejects cross-chart Claims, stale registries and unmatched evaluations instead of borrowing plausible Korean copy',()=>{
+    const {snapshot,registry,interpretation}=fixture({year:2024,month:3,day:10});
+    const result=buildNatalN31FourDomainClaimReadings(snapshot,interpretation,registry);
+    const displayed=result.sections.flatMap(section=>[
+      ...section.visibleClaims,...section.additionalVerifiedClaims,
+    ]);
+    expect(displayed.length).toBeGreaterThan(0);
+    for(const item of displayed){
+      expect(item.calculatedFactPaths).toHaveLength(item.calculatedPositions.length);
+      expect(item.calculatedFactPaths.length).toBeGreaterThan(0);
+      expect(item.calculatedFactPaths.every(path=>
+        /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u
+          .test(path))).toBe(true);
+      expect(item.claimRuleVersion).toBeTruthy();
+      expect(item.methodologyVersion).toBeTruthy();
+      expect(item.profileVersion).toBeTruthy();
+    }
+    const source=interpretation.claims.find(c=>displayed.some(d=>d.claimId===c.claimId));
+    expect(source).toBeDefined();
+    if(!source)return;
+    const corruptClaim={...interpretation,claims:interpretation.claims.map(c=>
+      c.claimId===source.claimId?{...c,snapshotId:'different-chart'}:c)};
+    expect(()=>buildNatalN31FourDomainClaimReadings(
+      snapshot,corruptClaim,registry)).toThrow(/cross-chart/u);
+    const unmatched={...interpretation,evaluations:interpretation.evaluations.map(e=>
+      e.evaluationId===source.ruleRefs[0]?.evaluationId?
+        {...e,status:'not_matched' as const,emittedClaimIds:[]}:e)};
+    expect(()=>buildNatalN31FourDomainClaimReadings(
+      snapshot,unmatched,registry)).toThrow(/matching rule evaluation/u);
+    expect(()=>buildNatalN31FourDomainClaimReadings(snapshot,{
+      ...interpretation,run:{...interpretation.run,snapshotHash:'another-calculation'},
+    },registry)).toThrow(/same-chart and registry/u);
+    expect(()=>buildNatalN31FourDomainClaimReadings(snapshot,{
+      ...interpretation,run:{...interpretation.run,registrySnapshotId:'stale-registry'},
+    },registry)).toThrow(/same-chart and registry/u);
+  });
+
 });

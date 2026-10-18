@@ -57,6 +57,12 @@ export function buildNatalN32ExpandedDomainResearchReading(
         claim.claimType.toLowerCase().startsWith(section.domain+'_natal_') &&
         claim.sourceIds.length>0&&claim.claimRuleId.length>0&&
         claim.calculatedPositions.length>0&&
+        claim.calculatedFactPaths.length===claim.calculatedPositions.length&&
+        claim.calculatedFactPaths.every(path=>
+          /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path))&&
+        claim.claimRuleVersion.trim().length>0&&
+        claim.methodologyVersion.trim().length>0&&
+        claim.profileVersion.trim().length>0&&
         claim.headline.trim().length>0&&claim.summary.trim().length>0&&
         claim.researchOnly===true&&claim.predictsOutcome===false,
         'repeated, unsupported or cross-domain original research claim');
@@ -87,7 +93,9 @@ export function buildNatalN32ExpandedDomainResearchReading(
         ...firstScreen.sections.find(x=>x.domain===s.domain)!.visibleClaims,
         ...s.additionalVerifiedClaims,
       ].map(c=>({claimType:c.claimType,text:c.summary,positions:c.calculatedPositions,
-        rule:c.claimRuleId,source:c.sourceIds})),
+        rule:c.claimRuleId,ruleVersion:c.claimRuleVersion,
+        methodologyVersion:c.methodologyVersion,profileVersion:c.profileVersion,
+        factPaths:c.calculatedFactPaths,source:c.sourceIds})),
     }))),
     researchOnly:true as const,createsNewMeaning:false as const,
     mayPublish:false as const,maySell:false as const,usefulComplete:false as const,
