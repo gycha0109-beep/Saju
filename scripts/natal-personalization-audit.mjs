@@ -34,6 +34,7 @@ import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expand
 import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
 import { buildNatalN32ExpandedDomainResearchReading } from '../dist/preview/natal-n32-expanded-domain-research-reading.js';
 import { auditNatalN34FourDomainCopyContrasts } from '../dist/preview/natal-n34-four-domain-copy-contrast.js';
+import { renderNatalN35FourDomainPairReader } from '../dist/preview/natal-n35-four-domain-pair-reader.js';
 
 const bearer = 'local-natal-quality-audit-not-a-production-secret';
 const dates = [
@@ -464,6 +465,25 @@ async function main() {
     ' raw different-chart contrasts / '+n34.uniqueDifferentChartPairCount+
     ' unique pairs / 1 same-input control; '+JSON.stringify(n34.counts)+
     '; research-only, not independent personal meaning approval; '+n34Path+'\\n');
+
+  // N35: expose the EXACT Korean research copy and its calculated source
+  // receipts for every N34 pair in a human-readable, internal-only review file.
+  const n35Html=renderNatalN35FourDomainPairReader(n34Cases,n34Pairs,n34);
+  if((n35Html.match(/class="pair"/gu)??[]).length!==21 ||
+    (n35Html.match(/class="domain"/gu)??[]).length!==84 ||
+    !n35Html.includes('한국어 원문 대조') ||
+    !n35Html.includes('Product/Official/Production/Commerce 승격') ||
+    !n35Html.includes('같은') && !n35Html.includes('동일 입력 대조')) {
+    throw new Error('N35 original Korean reader must display every classified chart pair');
+  }
+  const n35Path=resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0,-5)+'.n35-four-domain-original-copy-pairs.html'
+    : outputPath+'.n35-four-domain-original-copy-pairs.html');
+  writeFileSync(n35Path,n35Html,'utf8');
+  process.stdout.write('Natal N35 source-locked pair review: '+
+    n34.pairCount+' pairs / '+(n34.pairCount*4)+
+    ' domain contrasts displayed from existing Korean research; '+
+    'HOLD and no new semantics; '+n35Path+'\\n');
 
   // N8: reproduce three actual meaning collisions through every existing
   // internal stage. This is quality evidence, not another consumer renderer.
