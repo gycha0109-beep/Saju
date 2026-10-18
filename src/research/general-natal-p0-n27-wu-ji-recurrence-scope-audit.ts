@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v10' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v11' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -494,6 +494,73 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
           noOffsiteInstitutionalContact: true as const,
           noHistoricalCountingRuleChanged: true as const,
           noConsumerPreviewOfficialProductionAdmission: true as const,
+        }),
+        // Distinguish a transmitted classical EXPLANATION with worked charts
+        // from the already scanned physical printing of 三命通會. This is
+        // source-scoped interpretive evidence, not independent woodblock proof.
+        yuanhaiXijiHourWealthCommentaryCases: Object.freeze({
+          status: 'TRANSCRIBED_CLASSICAL_COMMENTARY_WITH_EXPLICIT_NON_VISIBLE_CASE' as const,
+          passage: '時上偏財別宮忌見' as const,
+          primaryTranscriptionSource: 'https://sajumania.com/ebook/to01-06/to01-06-02-01.htm' as const,
+          comparativeTranscriptionSource: 'https://zh.wikisource.org/zh-hant/神峰通考' as const,
+          firstSourceAttributedTitle: '淵海子平 卷二 喜忌篇' as const,
+          secondSourceAttributedTitle: '神峰通考 喜忌篇' as const,
+          firstSourceBookAndChapterNumberingUniversallyStable: false as const,
+          exactIndependentOldPrintSourcesCompared: false as const,
+          twoIndependentlyTransmittedHistoricalAccountsProven: false as const,
+          firstTextualExplanation: '用時上天元及支內人元，只要時上一位有之，始爲貴，若別位有之，便多了' as const,
+          otherBranchesOrCombinationsCanBeMaterial: true as const,
+          allHiddenStemsAutomaticallyCountAsRecurrenceCertified: false as const,
+          dayBranchIndependentlyIsolatedByExample: false as const,
+          twoContrastedExamples: Object.freeze([
+            Object.freeze({
+              label: 'COMMENTARY_FAVORABLE_HOUR_WEALTH' as const,
+              yearPillar: '丁酉' as const,
+              monthPillar: '己酉' as const,
+              dayPillar: '戊子' as const,
+              hourPillar: '壬子' as const,
+              dayMaster: '戊' as const,
+              hourVisibleIndirectWealthStem: '壬' as const,
+              nonHourVisibleIndirectWealthStems: Object.freeze([] as const),
+              otherPillarBranchWithHiddenDirectWealth: '日支子藏癸' as const,
+              allOtherPillarWealthOfEitherPolarityMustBeAbsent: false as const,
+              commentaryClassification: 'FAVORABLE_EXAMPLE' as const,
+              classificationIsNotVerifiedBiographicalOutcome: true as const,
+            }),
+            Object.freeze({
+              label: 'COMMENTARY_OTHER_PALACE_ILLUSTRATION' as const,
+              yearPillar: '丁丑' as const,
+              monthPillar: '己酉' as const,
+              dayPillar: '丁丑' as const,
+              hourPillar: '辛亥' as const,
+              dayMaster: '丁' as const,
+              hourVisibleIndirectWealthStem: '辛' as const,
+              nonHourVisibleIndirectWealthStems: Object.freeze([] as const),
+              yearBranchHiddenIndirectWealth: '丑藏辛' as const,
+              monthBranchHiddenIndirectWealth: '酉藏辛' as const,
+              dayBranchHiddenIndirectWealth: '丑藏辛' as const,
+              explicitCommentaryTrigger: '月支又酉丑會局，所謂別宮忌見也' as const,
+              monthAndChouCombinationClaimInTranscription: true as const,
+              fullThreeBranchMetalCombinationProvedPresent: false as const,
+              individualHiddenStemVersusCombinedBranchCauseSeparable: false as const,
+              dayBranchNecessaryCauseIsolated: false as const,
+              commentaryClassification: 'OTHER_PALACE_CONFLICT_EXAMPLE' as const,
+              classificationIsNotVerifiedBiographicalOutcome: true as const,
+            }),
+          ]),
+          favorableExampleCommanderNameSource1: '都統制' as const,
+          favorableExampleCommanderNameSource2: '邵統制' as const,
+          nameDiscrepancyVisibleAcrossTranscriptions: true as const,
+          nameDiscrepancyProvesAncientPrintVariant: false as const,
+          narrowEvidenceAgainstStrictVisibleOnlyElsewhere: true as const,
+          automaticAnyHiddenCountRuleAuthorized: false as const,
+          zhengCaiAndPianCaiPoolingAuthorized: false as const,
+          ruleForSeparateDayPalaceAuthorized: false as const,
+          productionOrTrustGrantFromCommentary: false as const,
+          noFreshPrintedWitnessCountIncrement: true as const,
+          remainingBieGongDayPillarScope: 'UNADJUDICATED' as const,
+          remainingZaiJianHiddenStemCountingScope: 'UNADJUDICATED' as const,
+          remainingYiWeiCountingUnit: 'UNADJUDICATED' as const,
         }),
         harvardVolumeOneOriginalPrefaceRead: Object.freeze({
           sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE' as const,
