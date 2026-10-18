@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v9');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v10');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -402,6 +402,48 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       .toBe(printed.printWitnesses[1]?.originalPdfSha256);
     expect(registration.taiwanOriginalPdfSha256)
       .toBe(printed.taiwanWanli1578HourWealthPrintedLocus.originalPdfSha256);
+    const chipAudit = printed.publicPrintedGlyphMicrodefectAudit;
+    expect(chipAudit).toMatchObject({
+      version: 'n27-public-printed-glyph-microdefect-inspection-v1',
+      status: 'NO_CERTIFIED_SHARED_UNIQUE_CHIP_WITH_AVAILABLE_PUBLIC_RASTERS',
+      mainlandNlcPage: 43,
+      taiwan06589Page: 376,
+      mainlandFullPageRasterPixels: [850, 726],
+      taiwanFullPageRasterPixels: [2600, 1850],
+      pairedPrintRoiPixels: {
+        mainland: [380, 534],
+        taiwan: [932, 1309],
+      },
+      previouslyConfirmedSiftGlobalInliers: 245,
+      inlierCoverageYQuartilesTopToBottom: [68, 26, 95, 56],
+      inlierCoverageXQuartilesLeftToRight: [14, 45, 82, 104],
+      allFourVerticalAndHorizontalQuartilesHaveInliers: true,
+      visualInspectionMethod: 'SOURCE_ROI_HOMOGRAPHY_ALIGNED_STRIPS_AND_THREE_BY_THREE_CELLS',
+      pairedCellsReviewed: 9,
+      highResolutionOriginalTaiwanInkAndMainlandLowResolutionInkClearlyDiffer: true,
+      twSourceContainsAdditionalCircleAnnotations: true,
+      tinyChipMayBeLostByMainlandRasterSampling: true,
+      independentSameGlyphSharedChipOrCrackCertified: false,
+      candidateDamageFeaturesCannotBeSeparatedFromScanOrInkingEffects: true,
+      heldoutRefitMayReflectPageWarpOrRepeatedGlyphAmbiguity: true,
+      splitInstabilityCannotProveSeparateBlocks: true,
+      global245InliersCannotProveIdenticalPhysicalBlock: true,
+      exactEngraverOrUniqueCarvedDefect: 'UNADJUDICATED',
+      samePhysicalCarvedBlock: 'UNADJUDICATED',
+      sourceImageDescentIndependent: 'UNADJUDICATED',
+      newTextualWitnessCountIncrement: 0,
+      noOffsiteInstitutionalContact: true,
+      noHistoricalCountingRuleChanged: true,
+      noConsumerPreviewOfficialProductionAdmission: true,
+    });
+    expect(chipAudit.heldoutHomographyFitsFromSeparateSpatialHalves).toEqual([
+      { split: 'UPPER_TO_LOWER', ratioAcceptedTraining: 208, trainingInliers: 138, heldoutCandidates: 198, heldoutWithin3Point5Px: 0 },
+      { split: 'LOWER_TO_UPPER', ratioAcceptedTraining: 198, trainingInliers: 172, heldoutCandidates: 208, heldoutWithin3Point5Px: 29 },
+      { split: 'LEFT_TO_RIGHT', ratioAcceptedTraining: 141, trainingInliers: 84, heldoutCandidates: 265, heldoutWithin3Point5Px: 113 },
+      { split: 'RIGHT_TO_LEFT', ratioAcceptedTraining: 265, trainingInliers: 168, heldoutCandidates: 141, heldoutWithin3Point5Px: 32 },
+    ]);
+    expect(chipAudit.previouslyConfirmedSiftGlobalInliers)
+      .toBe(registration.mainlandP43Taiwan1578P376.homographyInliers);
     expect(printed.harvardVolumeOneOriginalPrefaceRead).toMatchObject({
       sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE',
       sameHarvardDrsAsPreviouslyReadVolumeFive: true,
