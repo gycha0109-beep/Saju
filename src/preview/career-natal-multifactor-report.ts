@@ -207,10 +207,17 @@ export function buildCareerMultifactorResearchReport(
       (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
   const visible = units.filter(unit => unit.channel === 'visible_stems');
   const primary = visible[0];
-  const supporting = units.filter(unit => unit.claimType !== primary?.claimType &&
-    unit.pattern !== primary?.pattern)
-    .filter((unit, i, all) => all.findIndex(x => x.pattern === unit.pattern) === i)
-    .slice(0, 2);
+  // MUR needs genuinely distinct interpretation axes, not merely three
+  // rules that restate the same responsibility or tension perspective.
+  const supporting: typeof units = [];
+  const usedAxes = new Set<Axis>(primary === undefined ? [] : [primary.axis]);
+  for (const unit of units) {
+    if (primary === undefined || unit.claimType === primary.claimType ||
+      usedAxes.has(unit.axis)) continue;
+    supporting.push(unit);
+    usedAxes.add(unit.axis);
+    if (supporting.length === 2) break;
+  }
   const shown = primary ? [primary, ...supporting] : [];
   const enough = primary !== undefined && supporting.length >= 2;
   const state: Status = enough ? 'complete' : units.length > 0 ? 'partial' : 'insufficient';

@@ -30,14 +30,36 @@ function run(month: number, day: number, hour = 12) {
 describe('source-bounded Career two-T5 → T8 → consumer Korean research vertical', () => {
   it('keeps legacy single-Ten-God Career T8 out of the new pack and never enables commerce', () => {
     expect(CAREER_MULTIFACTOR_PACK.status).toBe('research');
-    expect(CAREER_MULTIFACTOR_RULES).toHaveLength(6);
-    expect(registry.rules.filter(x => x.taxonomy.tier === 'T8')).toHaveLength(6);
+    expect(CAREER_MULTIFACTOR_RULES).toHaveLength(10);
+    expect(registry.rules.filter(x => x.taxonomy.tier === 'T8')).toHaveLength(10);
     expect(registry.rules.filter(x => x.taxonomy.tier === 'T5')).toHaveLength(10);
     expect(CAREER_MULTIFACTOR_RULES.every(r => r.inputs.length === 2 &&
       r.inputs.every(i => i.source === 'interpretation_claim' && i.cardinality === 'exactly_one') &&
       r.sourceRefs.length === 2 && r.status === 'research')).toBe(true);
     expect(CAREER_MULTIFACTOR_RULES.some(r =>
       r.output.claimType.startsWith('CAREER_NATAL_TEN_GOD_'))).toBe(false);
+  });
+
+  it('adds source-bounded wealth/officer responsibility and wealth/resource tension as actual two-input Career meanings', () => {
+    for (const [pattern, families, axis] of [
+      ['WEALTH_OFFICER', ['wealth', 'officer'], 'responsibility'],
+      ['WEALTH_RESOURCE', ['wealth', 'resource'], 'tension'],
+    ] as const) {
+      const matching = CAREER_MULTIFACTOR_RULES.filter(r =>
+        r.output.claimType.includes(`_${pattern}_`));
+      expect(matching).toHaveLength(2);
+      for (const rule of matching) {
+        const channel = rule.output.claimType.endsWith('_VISIBLE_STEMS')
+          ? 'VISIBLE_STEMS' : 'BRANCHES';
+        expect(rule.inputs.map(i => i.pathOrClaimType)).toEqual(families.map(
+          family => `TEN_GOD_${family.toUpperCase()}_${channel}_THEME`,
+        ));
+        expect((rule.output.value as {axis:string}).axis).toBe(axis);
+        expect(rule.sourceRefs).toHaveLength(2);
+        expect(rule.output.predicate).toBe('career_multifactor_structure');
+        expect(rule.status).toBe('research');
+      }
+    }
   });
 
   it('makes meaning-specific differences on REAL birth-calculated charts, not shuffled fixture labels', () => {
@@ -85,6 +107,31 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(again.report).toEqual(once.report);
   }, 30000);
 
+  it('closes the missing source-backed axis in the real five-domain demo birth chart, without claiming product authorization', () => {
+    const x = run(3, 10, 12);
+    // The original report had only PEER_OFFICER (stems) and OUTPUT_WEALTH
+    // (branches), and correctly returned partial. The source-backed
+    // WEALTH_OFFICER and WEALTH_RESOURCE relationships add new evidence,
+    // not merely alternative Korean copy.
+    const patterns = new Set(x.report.sections.map(s => s.pattern));
+    expect(patterns.has('WEALTH_OFFICER')).toBe(true);
+    expect(patterns.has('OUTPUT_WEALTH')).toBe(true);
+    // The third selected pattern is chosen by narrative policy from matched
+    // source claims; do not hardcode a particular supporting relation.
+    expect(patterns.size).toBe(3);
+    expect(x.report.state).toBe('complete');
+    expect(x.report.sections).toHaveLength(3);
+    expect(new Set(x.report.sections.map(s => s.pattern)).size).toBe(3);
+    expect(new Set(x.report.sections.map(s => s.axis)).size).toBe(3);
+    expect(x.report.sections[0]!.channel).toBe('visible_stems');
+    expect(x.report.sections.every(s => s.upstreamClaimIds.length === 2 &&
+      s.calculatedFactPaths.length >= 2 && s.paragraph.includes('실제 명식에서 확인한 근거는')))
+      .toBe(true);
+    expect(x.report.usefulComplete).toBe(false);
+    expect(x.report.mayPublish).toBe(false);
+    expect(x.report.maySell).toBe(false);
+  }, 15000);
+
   it('never mistakes a single composite Claim for a full minimum useful reading', () => {
     for (const [month, day] of [[3, 10], [4, 11], [5, 7]] as const) {
       const x = run(month, day);
@@ -94,6 +141,7 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
         expect(primary?.channel).toBe('visible_stems');
         expect(supplement).toHaveLength(2);
         expect(new Set(x.report.sections.map(c => c.pattern)).size).toBe(3);
+        expect(new Set(x.report.sections.map(c => c.axis)).size).toBe(3);
       } else {
         expect(x.report.state).toMatch(/partial|insufficient/);
         expect(x.report.missing.length).toBeGreaterThan(0);
@@ -109,7 +157,6 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(report.sections).toHaveLength(0);
     expect(report.missing).toContain('출생시각 미상');
   });
-
 
   it('rejects a changed T8 pattern and swapped upstream T5 family instead of mislabeling Career meaning', () => {
     let original: ReturnType<typeof run> | undefined;
