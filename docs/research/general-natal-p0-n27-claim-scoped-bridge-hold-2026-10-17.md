@@ -205,3 +205,14 @@ v4 최초 Research 실행 [39066472718](https://github.com/gycha0109-beep/Saju/a
 **진전/한계**: 두 판식의 **10행20자 vs 10행22자**는 동일한 판면 행격을 공유한다는 주장을 반박하지만, 한 판본이 다른 판본의 텍스트를 전사했거나 공통 조상을 가졌는지 판정하지 않는다. 台灣 NCL 공식 서지는 版心에 `三命會通`/白口/單魚尾·刻공 기재를 설명하지만, **대상 375–376면의 각공 실명을 확정 판독하지 못했다**. Harvard의 동일 대상 면도 마찬가지다. 권1 보각 서문은 목판 보수 과정을 기술하나 卷五 대상 葉의 **결락·재각·보각 여부가 인증된 것은 아니다**. **다섯 표본의 비이문**은 전권/전장에 이문이 없다는 뜻이 아니며 독립 전승의 다수결 증거가 아니다.
 
 Bridge `hourWealthLocalLeafCollation`은 `SAMPLED_PHRASE_AGREEMENT_ONLY`, `samePhysicalPrintedSettingSupported=false`, `independentTransmissionCertified=false`, `exactLeafRecarvingCertified=false`, `noOtherVariantsInChapterCertified=false`로 유지한다. 고전 `別宮`에 日柱 포함, `再見`의 藏干 카운트, `一位`의 古文 counting unit은 모두 `UNADJUDICATED`. 다섯 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, 정확한 N13 劫財 T8 **1 vs 0**, TrustGrant/consumer/Preview/Official/Production 해석 승인 없음, 두 PR Draft/미병합. **v7 최신 정확 HEAD의 CI는 따로 검증**한다.
+
+
+## 2026-10-18 N27 v8 — 대만 06590 별도 서지 확인 / 비공개 실물 판독 HOLD
+
+**Research v8 정확한 HEAD `74393dbd6fce8949d67b70b6af69047f06e07420`**, `saju-n27-wu-ji-recurrence-scope-sensitivity-v8`에 Bridge를 고정한다.
+
+[대만 國家圖書館 공식 書號06590 목록](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2) 및 [학술 디지털 아카이브](https://catalog.digitalarchives.tw/item/00/19/3c/14.html)는 06590을 기존 직접 판독된 06589와 **別個 서지번호**의 1578 明萬曆刊 十二冊, 10行22字로 기술한다. 그러나 이번 접근 가능한 공식 06590 상세 페이지에는 06589에 표시되는 `進入影像瀏覽`과 달리 `到館調閱古籍`/`申請數位授權`이 보였고, 공개 PDF 원본을 발견하지 못했다. **06590의 원본 이미지는 이 연구에서 보지 않았다**. `printedImagesOf06590Reviewed=false` / `printWitnessCountIncrement=0` / `sameBlockAs06589=UNADJUDICATED`. 진짜 06590 版心·刻工·같은 글자의 획 결손을 읽기 전에는 기존의 인쇄본 판독 집계나 독립 계통 집계를 증가시키지 않는다. 필요하면 적법한 관내 열람/이미지 이용 신청을 진행해야 한다.
+
+**이미 판독된 이미지 간 비교:** [중국 NLC 卷五上 PDF 43면](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf)과 [대만 06589 PDF 376면](https://commons.wikimedia.org/wiki/File:NCL-06589_1_三命通會.pdf)을 실제 그림에서 병렬 대조했다. 동일 항목의 `如甲日見戊辰或甲戌時之例` 전후의 글자 열 시작·계속되는 구문 배열은 **육안으로 유사**했고 둘 다 서지상 10行22字이다. 그러나 획의 미세한 공통 결손, 본면 刻工명이 같음, 두 원판의 판심·魚尾 상세가 동일함을 확정하지 못했다. 촬영/먹 농도 및 圈點 차이는 판목 일치 증거로 분류하지 않는다. `sameBlock=UNADJUDICATED`, `genealogicalIndependence=UNADJUDICATED`.
+
+이는 `06590` 원본 접근 실패를 허위 연구 성공으로 보고하지 않고, **다른 2개 이미 확보된 원본의 국소 정렬**을 별도 가치 있는 관찰로 남기는 방법론 차단이다. 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, `別宮/再見/一位=UNADJUDICATED`, TrustGrant/Preview/Official/Production/consumer 신규 해석 권한 부여 없음. 두 PR Draft/미병합. 최신 v8 Research/Bridge SHA의 CI 성공 여부는 별도로 확인해야 한다.
