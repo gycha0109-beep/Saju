@@ -1,4 +1,4 @@
-import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
@@ -22,6 +22,8 @@ export interface CareerMultifactorReportSection {
   upstreamClaimIds: readonly string[];
   sourceIds: readonly string[];
   ruleId: string;
+  calculatedPositions: readonly string[];
+  calculatedFactPaths: readonly string[];
 }
 export interface CareerMultifactorReport {
   version: typeof CAREER_MULTIFACTOR_REPORT_VERSION;
@@ -55,7 +57,43 @@ function profileText(claimType: string, key: 'headline' | 'summary') {
   guard(matches.length === 1 && matches[0]!.text.length > 0, 'missing Korean narrative template');
   return matches[0]!.text;
 }
-function entry(claim: InterpretationClaim, execution: InterpretationExecutionResult,
+const SLOT_LABELS: Readonly<Record<PillarSlot, string>> = {
+  year: '연주', month: '월주', day: '일주', hour: '시주',
+};
+const TEN_GOD_FAMILIES: Readonly<Record<string, readonly string[]>> = {
+  peer: ['비견', '겁재'], resource: ['편인', '정인'],
+  output: ['식신', '상관'], wealth: ['편재', '정재'],
+  officer: ['편관', '정관'],
+};
+function findObservedPositions(
+  snapshot: CanonicalSajuSnapshot,
+  channel: 'visible_stems' | 'branches',
+  families: readonly string[],
+): readonly { display: string; factPath: string }[] {
+  const facts = snapshot.derivedFacts.tenGods;
+  guard(facts.status === 'resolved', 'Ten-God facts must be resolved for structural interpretation');
+  const component = channel === 'visible_stems' ? 'stem' : 'branch';
+  const slots: readonly PillarSlot[] =
+    channel === 'visible_stems' ? ['year','month','hour'] : ['year','month','day','hour'];
+  guard(families.length === 2 && new Set(families).size === 2 &&
+    families.every(f => TEN_GOD_FAMILIES[f] !== undefined),
+    'T8 must use two distinct recognized Ten-God families');
+  const positions = slots.flatMap(slot => {
+    const fact = facts.value[slot][component];
+    if (fact?.status !== 'resolved' ||
+      !families.some(family => TEN_GOD_FAMILIES[family]!.includes(fact.value))) return [];
+    return [{
+      display: `${SLOT_LABELS[slot]} ${component === 'stem' ? '천간' : '지지 대표 십신'} ${fact.value}`,
+      factPath: `derivedFacts.tenGods.value.${slot}.${component}.value`,
+      observedFamily: families.find(f => TEN_GOD_FAMILIES[f]!.includes(fact.value))!,
+    }];
+  });
+  guard(families.every(f => positions.some(x => x.observedFamily === f)),
+    'claimed two-family channel relation is not present in this exact Canonical chart');
+  return positions;
+}
+function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
+               execution: InterpretationExecutionResult,
                registry: ResolvedRuleRegistrySnapshot): CareerMultifactorReportSection {
   const value = claim.value as Record<string, unknown>;
   guard(value && typeof value === 'object' &&
@@ -87,16 +125,21 @@ function entry(claim: InterpretationClaim, execution: InterpretationExecutionRes
   guard(rule.sourceRefs.every(link => claim.sourceRefs.includes(link.sourceId)) &&
     claim.sourceRefs.every(id => registry.sources.some(s => s.sourceId === id)),
     'unverified source attribution');
+  const locations = findObservedPositions(snapshot,
+    value.channel as 'visible_stems' | 'branches', value.families as string[]);
+  const locationText = locations.map(x => x.display).join(' · ');
   return {
     claimType: claim.claimType,
     pattern: value.pattern,
     axis: value.axis as Axis,
     channel: value.channel as 'visible_stems' | 'branches',
     headline: profileText(claim.claimType, 'headline'),
-    paragraph: profileText(claim.claimType, 'summary'),
+    paragraph: `실제 명식에서 확인한 근거는 ${locationText}입니다. ${profileText(claim.claimType, 'summary')}`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
+    calculatedPositions: locations.map(x => x.display),
+    calculatedFactPaths: locations.map(x => x.factPath),
   };
 }
 
@@ -130,7 +173,7 @@ export function buildCareerMultifactorResearchReport(
     'some matched Career claims were not selected by the original EvidenceSelector');
   // Reader ordering is explicit narrative policy; never registry/ClaimId/hash order.
   const AXES: readonly Axis[] = ['execution', 'responsibility', 'tension'];
-  const units = active.map(claim => entry(claim, execution, registry))
+  const units = active.map(claim => entry(claim, snapshot, execution, registry))
     .sort((a, b) => AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
       (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
   const visible = units.filter(unit => unit.channel === 'visible_stems');
@@ -185,6 +228,6 @@ function escapeHtml(s: string): string {
 /** Real reader-facing preview; never bypasses an existing Product/Official authority boundary. */
 export function renderCareerMultifactorResearchHtml(report: CareerMultifactorReport): string {
   const e = escapeHtml;
-  const rows = report.sections.map(s => `<section><h2>${e(s.headline)}</h2><p>${e(s.paragraph)}</p><details><summary>근거와 출처</summary><p>${e(s.upstreamClaimIds.join(' · '))}</p><p>${e(s.sourceIds.join(' · '))}</p><p>${e(s.ruleId)}</p></details></section>`).join('\n');
+  const rows = report.sections.map(s => `<section><h2>${e(s.headline)}</h2><p>${e(s.paragraph)}</p><details><summary>근거와 출처</summary><p>${e(s.calculatedPositions.join(' · '))}</p><p>${e(s.calculatedFactPaths.join(' · '))}</p><p>${e(s.upstreamClaimIds.join(' · '))}</p><p>${e(s.sourceIds.join(' · '))}</p><p>${e(s.ruleId)}</p></details></section>`).join('\n');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>최소 유효 풀이: ${e(report.state)}</strong></p></header>${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
 }
