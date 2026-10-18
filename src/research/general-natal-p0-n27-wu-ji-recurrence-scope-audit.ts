@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v9' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v10' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -453,6 +453,47 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
           originalPrintWitnessCountIncrement: 0 as const,
           noInstitutionalOutreachRequired: true as const,
           nextAllowedEvidencePath: 'PUBLIC_SCAN_GLYPH_DAMAGE_FINGERPRINT_ONLY' as const,
+        }),
+        // Independent follow-up on v9: positive *damage* evidence requires
+        // a repeatable same physical stroke chip, not feature registration.
+        publicPrintedGlyphMicrodefectAudit: Object.freeze({
+          version: 'n27-public-printed-glyph-microdefect-inspection-v1' as const,
+          status: 'NO_CERTIFIED_SHARED_UNIQUE_CHIP_WITH_AVAILABLE_PUBLIC_RASTERS' as const,
+          mainlandNlcPage: 43 as const,
+          taiwan06589Page: 376 as const,
+          mainlandFullPageRasterPixels: Object.freeze([850, 726] as const),
+          taiwanFullPageRasterPixels: Object.freeze([2600, 1850] as const),
+          pairedPrintRoiPixels: Object.freeze({
+            mainland: Object.freeze([380, 534] as const),
+            taiwan: Object.freeze([932, 1309] as const),
+          }),
+          previouslyConfirmedSiftGlobalInliers: 245 as const,
+          inlierCoverageYQuartilesTopToBottom: Object.freeze([68, 26, 95, 56] as const),
+          inlierCoverageXQuartilesLeftToRight: Object.freeze([14, 45, 82, 104] as const),
+          allFourVerticalAndHorizontalQuartilesHaveInliers: true as const,
+          visualInspectionMethod: 'SOURCE_ROI_HOMOGRAPHY_ALIGNED_STRIPS_AND_THREE_BY_THREE_CELLS' as const,
+          pairedCellsReviewed: 9 as const,
+          highResolutionOriginalTaiwanInkAndMainlandLowResolutionInkClearlyDiffer: true as const,
+          twSourceContainsAdditionalCircleAnnotations: true as const,
+          tinyChipMayBeLostByMainlandRasterSampling: true as const,
+          independentSameGlyphSharedChipOrCrackCertified: false as const,
+          candidateDamageFeaturesCannotBeSeparatedFromScanOrInkingEffects: true as const,
+          heldoutHomographyFitsFromSeparateSpatialHalves: Object.freeze([
+            Object.freeze({ split: 'UPPER_TO_LOWER' as const, ratioAcceptedTraining: 208 as const, trainingInliers: 138 as const, heldoutCandidates: 198 as const, heldoutWithin3Point5Px: 0 as const }),
+            Object.freeze({ split: 'LOWER_TO_UPPER' as const, ratioAcceptedTraining: 198 as const, trainingInliers: 172 as const, heldoutCandidates: 208 as const, heldoutWithin3Point5Px: 29 as const }),
+            Object.freeze({ split: 'LEFT_TO_RIGHT' as const, ratioAcceptedTraining: 141 as const, trainingInliers: 84 as const, heldoutCandidates: 265 as const, heldoutWithin3Point5Px: 113 as const }),
+            Object.freeze({ split: 'RIGHT_TO_LEFT' as const, ratioAcceptedTraining: 265 as const, trainingInliers: 168 as const, heldoutCandidates: 141 as const, heldoutWithin3Point5Px: 32 as const }),
+          ]),
+          heldoutRefitMayReflectPageWarpOrRepeatedGlyphAmbiguity: true as const,
+          splitInstabilityCannotProveSeparateBlocks: true as const,
+          global245InliersCannotProveIdenticalPhysicalBlock: true as const,
+          exactEngraverOrUniqueCarvedDefect: 'UNADJUDICATED' as const,
+          samePhysicalCarvedBlock: 'UNADJUDICATED' as const,
+          sourceImageDescentIndependent: 'UNADJUDICATED' as const,
+          newTextualWitnessCountIncrement: 0 as const,
+          noOffsiteInstitutionalContact: true as const,
+          noHistoricalCountingRuleChanged: true as const,
+          noConsumerPreviewOfficialProductionAdmission: true as const,
         }),
         harvardVolumeOneOriginalPrefaceRead: Object.freeze({
           sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE' as const,
