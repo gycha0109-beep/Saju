@@ -36,8 +36,13 @@ export interface NatalN31DomainClaim {
   summary:string;
   /** Exact observed Ten-God subtype/position; observation, not causal proof. */
   calculatedPositions:readonly string[];
+  /** Exact derived-fact paths corresponding one-to-one with displayed positions. */
+  calculatedFactPaths:readonly string[];
   claimRuleId:string;
+  claimRuleVersion:string;
   methodologyId:string;
+  methodologyVersion:string;
+  profileVersion:string;
   sourceIds:readonly string[];
   researchOnly:true;
   predictsOutcome:false;
@@ -64,7 +69,7 @@ function textOf(profile:ClaimNarrativeProfile,key:'headline'|'summary'):string {
     'original narrative copy missing or ambiguous: '+profile.claimType);
   return matching[0]!.text;
 }
-function findPositions(snapshot:CanonicalSajuSnapshot,value:Record<string,unknown>,rule:RuleDefinition):readonly string[] {
+function findPositions(snapshot:CanonicalSajuSnapshot,value:Record<string,unknown>,rule:RuleDefinition):readonly {display:string;factPath:string}[] {
   const resolved=snapshot.derivedFacts.tenGods;
   guard(resolved.status==='resolved','canonical Ten-God evidence unavailable');
   const tenGod=value.tenGod;
@@ -74,7 +79,8 @@ function findPositions(snapshot:CanonicalSajuSnapshot,value:Record<string,unknow
       if(slot==='day'&&channel==='visible_stems')return [];
       const fact=resolved.value[slot][channel==='visible_stems'?'stem':'branch'];
       return fact?.status==='resolved'&&fact.value===tenGod
-        ? [LABEL[slot]+' '+(channel==='visible_stems'?'천간 ':'지지 대표 십신 ')+tenGod]
+        ? [{display:LABEL[slot]+' '+(channel==='visible_stems'?'천간 ':'지지 대표 십신 ')+tenGod,
+          factPath:'derivedFacts.tenGods.'+slot+'.'+(channel==='visible_stems'?'stem':'branch')+'.value'}]
         : [];
     });
   }
@@ -104,15 +110,32 @@ function findPositions(snapshot:CanonicalSajuSnapshot,value:Record<string,unknow
       (FAMILY[f as string]??[]).includes(p.god)))),
     'no exact participating-family witnesses for qualified rule');
   return SLOT_ORDER.flatMap(slot=>eligibleChannels.flatMap(w=>
-    w.matched.filter(p=>p.slot===slot).map(p=>
-      LABEL[slot]+' '+(w.component==='stem'?'천간 ':'지지 대표 십신 ')+p.god)));
+    w.matched.filter(p=>p.slot===slot).map(p=>({
+      display:LABEL[slot]+' '+(w.component==='stem'?'천간 ':'지지 대표 십신 ')+p.god,
+      factPath:'derivedFacts.tenGods.'+slot+'.'+w.component+'.value',
+    }))));
 }
 function exactClaim(
   snapshot:CanonicalSajuSnapshot,
   claim:InterpretationClaim,
   rule:RuleDefinition,
   registry:ResolvedRuleRegistrySnapshot,
+  interpretation:InterpretationExecutionResult,
 ):NatalN31DomainClaim {
+  guard(claim.snapshotId===snapshot.snapshotId && claim.scenarioRef===undefined,
+    'cross-chart or scenario-specific Claim cannot be consumed as resolved natal evidence');
+  const evaluation=interpretation.evaluations.find(e=>
+    e.evaluationId===claim.ruleRefs[0]?.evaluationId);
+  guard(evaluation!==undefined && evaluation.snapshotId===snapshot.snapshotId &&
+    evaluation.scenarioRef===undefined && evaluation.status==='matched' &&
+    evaluation.ruleRef.id===rule.ruleId && evaluation.ruleRef.version===rule.version &&
+    evaluation.interpretationPackRef.id===registry.pack.packId &&
+    evaluation.interpretationPackRef.version===registry.pack.version &&
+    evaluation.emittedClaimIds.includes(claim.claimId),
+    'Claim has no matching rule evaluation in this exact chart and registry');
+  guard(registry.methodologies.some(m=>m.methodologyId===rule.methodologyRef.id &&
+    m.version===rule.methodologyRef.version && m.status==='research'),
+    'Claim methodology version missing from research registry');
   guard(claim.ruleRefs.length===1 && claim.ruleRefs[0]?.ruleId===rule.ruleId &&
     claim.ruleRefs[0]?.version===rule.version &&
     claim.methodologyRef.id===rule.methodologyRef.id &&
@@ -130,7 +153,8 @@ function exactClaim(
     'missing, unregistered, or silently promoted source authority');
   const profile=PROFILE_MAP.get(claim.claimType);
   guard(profile!==undefined && profile.allowedEpistemicTypes.includes('interpretation') &&
-    profile.requiredMethodAttribution && profile.profileId.length>0,
+    profile.requiredMethodAttribution && profile.profileId.length>0 &&
+    profile.version.trim().length>0 && profile.claimType===claim.claimType,
     'missing exact source-owned Korean narrative profile');
   const value=claim.value;
   guard(value!==null&&typeof value==='object'&&!Array.isArray(value),
@@ -140,8 +164,12 @@ function exactClaim(
   return {
     claimId:claim.claimId,claimType:claim.claimType,
     headline:textOf(profile,'headline'),summary:textOf(profile,'summary'),
-    calculatedPositions:positions,claimRuleId:rule.ruleId,
+    calculatedPositions:positions.map(p=>p.display),
+    calculatedFactPaths:positions.map(p=>p.factPath),
+    claimRuleId:rule.ruleId,claimRuleVersion:rule.version,
     methodologyId:claim.methodologyRef.id,
+    methodologyVersion:claim.methodologyRef.version,
+    profileVersion:profile.version,
     sourceIds:[...new Set(sourceIds)].sort(),
     researchOnly:true,predictsOutcome:false,
   };
@@ -158,8 +186,12 @@ export function buildNatalN31FourDomainClaimReadings(
   registry:ResolvedRuleRegistrySnapshot,
 ) {
   guard(interpretation.run.snapshotId===snapshot.snapshotId &&
+    interpretation.run.snapshotHash===snapshot.calculationHash &&
+    interpretation.run.registrySnapshotId===registry.snapshot.registrySnapshotId &&
+    interpretation.run.packRef.id===registry.pack.packId &&
+    interpretation.run.packRef.version===registry.pack.version &&
     interpretation.integrity.valid && interpretation.run.status!=='failed' &&
-    registry.pack.status==='research','not a valid same-chart research execution');
+    registry.pack.status==='research','not a valid same-chart and registry research execution');
   const eligible=snapshot.completeness.birthTimeKnown &&
     snapshot.derivedFacts.tenGods.status==='resolved';
   const conflictIds=new Set(
@@ -185,7 +217,7 @@ export function buildNatalN31FourDomainClaimReadings(
       guard(rule!==undefined && rule.taxonomy.category===domain &&
         rule.ruleSetId.startsWith(domain+'-natal-'),
         'domain research claim not backed by exact specialist rule');
-      return [exactClaim(snapshot,claim,rule,registry)];
+      return [exactClaim(snapshot,claim,rule,registry,interpretation)];
     });
     // Direct career visible-stem claims first; 2-family claims first in
     // other domains. Neither order is a ranking of strength or real outcomes.
