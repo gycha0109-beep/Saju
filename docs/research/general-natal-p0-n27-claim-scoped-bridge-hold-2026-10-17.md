@@ -168,3 +168,16 @@ Research Draft #2553 **정확한 HEAD `eff8a1225893811c428c28e2dcc456d60f2006e2`
 ### v4 최신 SHA 정정 및 CI 확인 중
 
 v4 최초 Research 실행 [39066472718](https://github.com/gycha0109-beep/Saju/actions/runs/39066472718)은 서로 다른 판본 이미지 증거 필드에 대한 TypeScript 테스트 접근 오류 1건으로 **실패**. 실제 인쇄 판독이나 원문 해석이 변경된 것은 아니며 테스트를 바로잡은 Research HEAD `78d9e038706084faab643213d10409a4fd0dcf47`으로 Bridge를 다시 고정. 해당 새 SHA의 CI 완료 전 성공을 선언하지 않는다.
+
+
+## 2026-10-18 N27 v5 — CI 18/18 완료 확인 및 판본 '서지상 분리'의 범위
+
+**직전 v4 정확 SHA 최종 검증:**
+- Research `78d9e038706084faab643213d10409a4fd0dcf47`, [CI run 39066616336](https://github.com/gycha0109-beep/Saju/actions/runs/39066616336) **18/18 success**; PIE run 39066616765, 계산 컨테이너 run 39066616613도 success.
+- Bridge `06e8dff7e37ef2a00c7751e60aadf23e064d8b69`, [CI run 39066647166](https://github.com/gycha0109-beep/Saju/actions/runs/39066647166) **18/18 success**; PIE run 39066647419, 계산 컨테이너 run 39066647196도 success.
+
+**새 서지 대조 → Research v5:** Research 최신 SHA `9b2784396d70dfdd3c4b824486186be556e202c2`에 현재 Bridge를 정확히 고정했다. 이미 직접 판독한 卷五 「論正官」의 Harvard 原 PDF 6~7면 및 NLC 原 PDF 5~6면은 서로 다른 소장처/원본 해시를 가진다. [Harvard 서지](https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf)는 `清雍正13年? (1735?) 補刋本`에 **十行二〇字**, [NLC 서지](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf)는 `明萬曆[1573–1620] 刻本`에 **10行22字**라 적는다. 이 **인쇄 행격 차이(20 대 22자)**는 서로 다른 책의 동일 스캔 재인용을 피하도록 유용하게 구분한다. 그러나 **더 이른 NLC 판이 후대 Harvard 보각본의 직접 모본인가, 다른 출처를 공유하는가, 독립 전승인가**를 입증하지 않는다. 따라서 일치 자구를 **독립 본문 전승의 두 표로 계량하면 안 된다**.
+
+[대만 國家圖書館 목록의 明萬曆六年(1578)刊本](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2)이나 [美普林斯頓 소장 1735 修補金陵李氏刊本](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=2c9735937bff4bbba1095711109793f2fDEyNDM3OQ2.3YmwactxuROfMn60_6V8G0sYql1LtZILVpJsbSmsxyc_&page=)은 별개 소장 자료의 참고 서지일 뿐이다. 해당 목록의 정확한 인쇄 연대·판각 계보를 지금 대조한 NLC/Harvard 원본의 성질로 자동 합치지 않는다. 원문 `時上偏財`의 `別宮·再見·一位` 계산 범위를 해결하는 근거도 아니다.
+
+**Bridge 상태:** 신규 `bibliographicRelation.classification=DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES`; `independenceOfTextualTransmissionCertified=false`; `agreementAsTwoIndependentVotesAuthorized=false`; `sameVolumeZhengGuanAnalogy.evidenceChannel=DIGITAL_TRANSCRIPTION_WITH_TWO_PRINT_SCAN_LOCI`로 신·구 증거 채널 불일치를 정정했다. 서지 검증 및 원전 판독은 **별도 reviewer TrustGrant·Production 의미권한이 아님**. 다섯 Claim HOLD, N17 METHODOLOGY_CONFLICT, N13 정확 겁재 T8 **1 vs 0** 유지. 양쪽 Draft/미병합, v5 정확 HEAD CI는 새로 확인해야 한다.
