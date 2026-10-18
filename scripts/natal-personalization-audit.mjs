@@ -440,10 +440,18 @@ async function main() {
     }
     return {caseId:input.caseId,reading};
   });
-  const n34 = auditNatalN34FourDomainCopyContrasts(n34Cases,n10.pairs.map(
-    pair=>({left:pair.left,right:pair.right})));
-  if(n34.actualCaseCount!==35 || n34.pairCount!==20 ||
-    n34.distinctChartPairCount!==19 || n34.sameChartControlPairCount!==1 ||
+  // N10 contains 20 DIFFERENT-chart comparisons, with 19 unique chart
+  // pairs. The identical birth input is a separate independent control.
+  const n34Pairs=[
+    ...n10.pairs.map(pair=>({left:pair.left,right:pair.right})),
+    {left:'solar-2024-03-10-12:30',
+      right:'same-birth-control-2024-03-10-12:30'},
+  ];
+  const n34 = auditNatalN34FourDomainCopyContrasts(n34Cases,n34Pairs);
+  if(n34.actualCaseCount!==35 || n34.pairCount!==21 ||
+    n34.distinctChartPairCount!==20 ||
+    n34.uniqueDifferentChartPairCount!==19 ||
+    n34.sameChartControlPairCount!==1 ||
     n34.mayPublish || n34.maySell || n34.usefulComplete) {
     throw new Error('N34 exact real HTTP pair quality evidence mismatch');
   }
@@ -453,7 +461,8 @@ async function main() {
   writeFileSync(n34Path,JSON.stringify(n34,null,2)+'\\n','utf8');
   process.stdout.write('Natal N34 four-domain source-copy evidence: '+
     n34.actualCaseCount+' HTTP-linked cases, '+n34.distinctChartPairCount+
-    ' independent different-chart pairs; '+JSON.stringify(n34.counts)+
+    ' raw different-chart contrasts / '+n34.uniqueDifferentChartPairCount+
+    ' unique pairs / 1 same-input control; '+JSON.stringify(n34.counts)+
     '; research-only, not independent personal meaning approval; '+n34Path+'\\n');
 
   // N8: reproduce three actual meaning collisions through every existing
