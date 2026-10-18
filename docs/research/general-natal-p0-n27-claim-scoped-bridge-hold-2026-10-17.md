@@ -216,3 +216,14 @@ Bridge `hourWealthLocalLeafCollation`은 `SAMPLED_PHRASE_AGREEMENT_ONLY`, `sameP
 **이미 판독된 이미지 간 비교:** [중국 NLC 卷五上 PDF 43면](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf)과 [대만 06589 PDF 376면](https://commons.wikimedia.org/wiki/File:NCL-06589_1_三命通會.pdf)을 실제 그림에서 병렬 대조했다. 동일 항목의 `如甲日見戊辰或甲戌時之例` 전후의 글자 열 시작·계속되는 구문 배열은 **육안으로 유사**했고 둘 다 서지상 10行22字이다. 그러나 획의 미세한 공통 결손, 본면 刻工명이 같음, 두 원판의 판심·魚尾 상세가 동일함을 확정하지 못했다. 촬영/먹 농도 및 圈點 차이는 판목 일치 증거로 분류하지 않는다. `sameBlock=UNADJUDICATED`, `genealogicalIndependence=UNADJUDICATED`.
 
 이는 `06590` 원본 접근 실패를 허위 연구 성공으로 보고하지 않고, **다른 2개 이미 확보된 원본의 국소 정렬**을 별도 가치 있는 관찰로 남기는 방법론 차단이다. 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, `別宮/再見/一位=UNADJUDICATED`, TrustGrant/Preview/Official/Production/consumer 신규 해석 권한 부여 없음. 두 PR Draft/미병합. 최신 v8 Research/Bridge SHA의 CI 성공 여부는 별도로 확인해야 한다.
+
+
+## 2026-10-18 N27 v9 — 공개 스캔만으로 NLC ↔ 대만 1578 판면 SIFT 교차 검증
+
+Research #2553 정확 HEAD `f106da36055a5141ecde4c53fbbcae12662524c3` / `saju-n27-wu-ji-recurrence-scope-sensitivity-v9`를 참조한다. Research `28에 명시한 중국 NLC 권五上 PDF 43면 850×726 렌더와 대만 國家圖書館 06589 1578 PDF 376면 2600×1850 렌더를 **같은 時上偏財 葉의 인쇄 영역**으로 크롭·특징점 정합했다. 두 인쇄물 모두 原본 공개 PDF는 별개 보관 원본이고 원본 SHA/크롭 좌표는 Research에 있다. 기관 문의, 메일, 유료 허가, 06590 원본 접근 **불필요**.
+
+동일한 SIFT 설정 및 RANSAC 재투영 3.5px 기준으로 **406개 Lowe ratio 통과 중 245개 기하학적 inlier**(60.34%)가 확인되었다. 비교 방법·같은 ROI를 적용한 음성 대조군 NLC 인접 다른 본문 42·44면은 각 8개, Harvard 10×20 補刊本 p45는 5개이다. 이는 v8의 육안 판면 열 유사성보다 강한 **해당 locus의 동일한 글자 조판과 붓획 형태의 기하학적 정합**을 보여 주는 수치다.
+
+**인정하지 않은 판정:** 동일 물리적 목판 재사용은 `UNADJUDICATED`; 같은 글자의 특정 **획 결손·목판 갈라짐이 두 원본에서 독립적으로 관찰·동정된 상태가 아니다**. 형상 매칭 245개를 목판 결손 245개의 증거로 세지 않는다. 독립적인 이미지 수집 계통과 목판 계보는 자동으로 보증되지 않는다. 동일 인쇄 형식의 중복 전승을 2개의 텍스트 독립 표로 가산하지 않으며, 06590은 이미지를 읽지 않았으므로 직접 증거 수 증가 0이다. 동일 원판 확정에도 `別宮/再見/一位` 계산 규칙은 자동 해결되지 않는다.
+
+Bridge `mainlandNlcTaiwan06589FeatureRegistrationHold`은 수치와 미인증 gate를 별도로 고정한다. 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, TrustGrant/Preview/Official/Production/consumer 승인 금지, 두 PR Draft/미병합. v9 최신 SHA의 CI는 별도 확인한다. 다음 연구는 **공개 인쇄본 획 결손 positive marker의 동정·복수 면 재검**만 허용하며 기관 문의를 다시 권하지 않는다.
