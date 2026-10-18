@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('f106da36055a5141ecde4c53fbbcae12662524c3');
+    expect(review.researchHeadReviewed).toBe('02ac088eba01b93c9b6287974000916d21ce461a');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v9',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v10',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -281,6 +281,24 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           originalPrintWitnessCountIncrement: 0,
           anyConsumerOrClassicalRulePromotion: false,
           noInstitutionalMailOrPermissionDependency: true,
+        },
+        publicPrintedGlyphMicrodefectHold: {
+          researchVersion: 'n27-public-printed-glyph-microdefect-inspection-v1',
+          status: 'NO_CERTIFIED_SHARED_UNIQUE_CHIP_WITH_AVAILABLE_PUBLIC_RASTERS',
+          inspectedPublicPrintCellPairs: 9,
+          previouslyConfirmedGlobalSiftInliers: 245,
+          yQuartileInlierCoverage: [68, 26, 95, 56],
+          xQuartileInlierCoverage: [14, 45, 82, 104],
+          spatialRefitHeldoutInliers: [0, 29, 113, 32],
+          originalNlcPageRasterPixels: [850, 726],
+          originalTaiwanPageRasterPixels: [2600, 1850],
+          sourceStrokeLossIndependentlyVerified: false,
+          sameCarvedPhysicalBlock: 'UNADJUDICATED',
+          independentTextualLineage: 'UNADJUDICATED',
+          newPrintedWitnesses: 0,
+          noInstitutionContact: true,
+          noRulePromotion: true,
+          noTrustGrantPreviewOfficialProduction: true,
         },
         bibliographicRelation: {
           classification: 'DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES',
