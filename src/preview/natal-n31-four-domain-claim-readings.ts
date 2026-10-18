@@ -46,6 +46,8 @@ export interface NatalN31DomainSection {
   domain:NatalN31Domain;
   state:'bounded_research_claims'|'no_qualified_research_claims'|'birth_time_unknown';
   visibleClaims:readonly NatalN31DomainClaim[];
+  /** All remaining original source-qualified Claim copy, for N32 details only. */
+  additionalVerifiedClaims:readonly NatalN31DomainClaim[];
   eligibleClaimCount:number;
   heldConflictingClaimCount:number;
   hiddenByLimitCount:number;
@@ -62,7 +64,7 @@ function textOf(profile:ClaimNarrativeProfile,key:'headline'|'summary'):string {
     'original narrative copy missing or ambiguous: '+profile.claimType);
   return matching[0]!.text;
 }
-function findPositions(snapshot:CanonicalSajuSnapshot,value:Record<string,unknown>):readonly string[] {
+function findPositions(snapshot:CanonicalSajuSnapshot,value:Record<string,unknown>,rule:RuleDefinition):readonly string[] {
   const resolved=snapshot.derivedFacts.tenGods;
   guard(resolved.status==='resolved','canonical Ten-God evidence unavailable');
   const tenGod=value.tenGod;
@@ -80,16 +82,30 @@ function findPositions(snapshot:CanonicalSajuSnapshot,value:Record<string,unknow
   guard(Array.isArray(families) && families.length>0 &&
     families.every(f=>typeof f==='string'&&FAMILY[f]!==undefined),
     'domain Claim missing registered family operands');
-  const positions= SLOT_ORDER.flatMap(slot=>
-    (['stem','branch'] as const).flatMap(component=>{
+  const witnessed=(['stem','branch'] as const).map(component=>{
+    const observed=SLOT_ORDER.flatMap(slot=>{
       if(slot==='day'&&component==='stem')return [];
       const fact=resolved.value[slot][component];
       if(fact?.status!=='resolved')return [];
-      return families.some(f=>(FAMILY[f as string]??[]).includes(fact.value as TenGod))
-        ? [LABEL[slot]+' '+(component==='stem'?'천간 ':'지지 대표 십신 ')+fact.value] : [];
-    }),
-  );
-  return positions;
+      return [{slot,god:fact.value as TenGod}];
+    });
+    const matched=observed.filter(p=>
+      families.some(f=>(FAMILY[f as string]??[]).includes(p.god)));
+    return {component,matched,complete:families.every(f=>
+      matched.some(p=>(FAMILY[f as string]??[]).includes(p.god)))};
+  });
+  // N31 previously displayed positions from ANY channel even when a
+  // Business specialist rule explicitly required the participating families
+  // to coexist within ONE channel. Only show that rule's valid witnesses.
+  const channelSensitive=rule.ruleSetId.endsWith('-channel-sensitive');
+  const eligibleChannels=witnessed.filter(w=>!channelSensitive||w.complete);
+  guard(eligibleChannels.length>0&&
+    families.every(f=>eligibleChannels.some(w=>w.matched.some(p=>
+      (FAMILY[f as string]??[]).includes(p.god)))),
+    'no exact participating-family witnesses for qualified rule');
+  return SLOT_ORDER.flatMap(slot=>eligibleChannels.flatMap(w=>
+    w.matched.filter(p=>p.slot===slot).map(p=>
+      LABEL[slot]+' '+(w.component==='stem'?'천간 ':'지지 대표 십신 ')+p.god)));
 }
 function exactClaim(
   snapshot:CanonicalSajuSnapshot,
@@ -119,7 +135,7 @@ function exactClaim(
   const value=claim.value;
   guard(value!==null&&typeof value==='object'&&!Array.isArray(value),
     'unrecognized existing conclusion value');
-  const positions=findPositions(snapshot,value as Record<string,unknown>);
+  const positions=findPositions(snapshot,value as Record<string,unknown>,rule);
   guard(positions.length>0,'matched domain interpretation has no calculated operands');
   return {
     claimId:claim.claimId,claimType:claim.claimType,
@@ -152,7 +168,7 @@ export function buildNatalN31FourDomainClaimReadings(
   );
   const sections:NatalN31DomainSection[]=DOMAINS.map(domain=>{
     if(!eligible)return {
-      domain,state:'birth_time_unknown',visibleClaims:[],eligibleClaimCount:0,
+      domain,state:'birth_time_unknown',visibleClaims:[],additionalVerifiedClaims:[],eligibleClaimCount:0,
       heldConflictingClaimCount:0,hiddenByLimitCount:0,
     };
     const candidates=interpretation.claims.filter(c=>c.state==='active' &&
@@ -179,9 +195,10 @@ export function buildNatalN31FourDomainClaimReadings(
       return bDirect-aDirect || a.claimType.localeCompare(b.claimType);
     });
     const bounded=qualified.slice(0,3);
+    const additional=qualified.slice(3);
     return {domain,state:bounded.length>0?'bounded_research_claims':'no_qualified_research_claims',
-      visibleClaims:bounded,eligibleClaimCount:qualified.length,
-      heldConflictingClaimCount,hiddenByLimitCount:qualified.length-bounded.length};
+      visibleClaims:bounded,additionalVerifiedClaims:additional,eligibleClaimCount:qualified.length,
+      heldConflictingClaimCount,hiddenByLimitCount:additional.length};
   });
   return {
     version:NATAL_N31_DOMAIN_CLAIM_READING_VERSION,

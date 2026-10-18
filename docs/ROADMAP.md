@@ -89,7 +89,8 @@
 - [ ] **N30 — 5개 Natal 영역 개인화 종합 확장:**
   - [x] **N30a — 도메인 종합 독해의 동일 원국 표시 무결성 ([#2568](https://github.com/gycha0109-beep/Saju/pull/2568) 병합):** HEAD `0a38fb9b47677bf01ed8368309887bb4818de88c`의 SHA 고정 Integration 20/20 PASS 뒤 squash merge `b9264e66f596ac3fb720cc6a26b4c30e381fe00b`. 확정 기둥 누락/미확정 강등, 미상시각의 허위 시각, delivered 본문 누락을 fail-closed. 새 의미/Production 권한 없음.
   - [x] **N30b — General의 출처 검증 핵심 구조를 5분야 Preview에 연결 ([#2569](https://github.com/gycha0109-beep/Saju/pull/2569) 병합):** HEAD `476c7822ad16375f52e44d63267b5cf4da202737` 통합 20/20 통과 → squash main `5fea3ab3d7120bd8957996e70de141c53f6b594e`, 새 main CI 18/18 및 Container PASS. 새 도메인 의미/Production 승인 아님.
-  - [ ] **N31 — 실제 4분야 T8 Claim 원문·명식 위치의 독립 소비자 품질 연구:** 기존 Career exact subtype/channel, Wealth/Business/Relationship 원래 연구 T8 Claim과 Korean ClaimNarrativeProfile을 각각 Rule/Source/Canonical 십신 자리와 결박해 내부 5분야 HTML에서 보여준다. 근거 부족/충돌/미상시간은 HOLD; 기존 Product 5분야 원문과 의미 집계는 그대로 둔다. CI/PIE/Container/Integration과 사후 main 검증 후에만 완료한다.
+  - [x] **N31 — 4분야 기존 T8 해석·명식 자리 출처 결박 ([#2570](https://github.com/gycha0109-beep/Saju/pull/2570) 병합):** 내부 HTML 상단에 Career/Wealth/Business/Relationship 기존 연구 Claim 복사문과 Rule/Source/Canonical 자리를 표시. `main` SHA `25e46d65f342ec8fa0401f96b2c7074517e9d7a4`의 CI·Container PASS. 소비자 승인 아님.
+  - [ ] **N32 — 실제 기존 4분야 연구 풀이의 나머지 내용과 채널 근거 정밀화:** N31 첫 화면 3개 제한으로 숨겼던 원본 T8 연구 Claim을 각 분야 펼쳐보기로 모두 확인 가능하게 제공한다. 복합 Business T8이 동일 채널에서 요구한 십신 족의 실제 witness 자리만 표시하도록 증빙을 강화한다. 미상시각/충돌/신규 해석/Production 승인은 HOLD. CI/PIE/Container/고정 SHA Integration/사후 main 확인 전 완료 처리 금지.
   - General에서 검증된 원국 근거·분야별 의미 사용 범위만 일반/직업/재물/사업/관계로 확장. 도메인 의미 권한과 temporal scope를 혼합하지 않는다.
 
 **지속 통합 계약:** PR별 `Watchtower-Track: saju` → CI Quality + 16개 샤드 + CI Verify, PIE, Production Container → **정확한 HEAD SHA 고정** Integration 20/20 → `expected_head_sha` squash merge → 새 `main` CI/Container 검증. 이 실험은 외부 전문가 승인을 요구하지 않는다. 다만 불확실·충돌 관계의 결과 예측, 부정확한 출처·계산, 별도 Production/Commerce 권한 우회는 허용하지 않는다.

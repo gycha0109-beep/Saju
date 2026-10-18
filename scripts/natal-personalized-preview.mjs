@@ -12,7 +12,7 @@ import { buildNatalStructuralEvidence } from '../dist/preview/natal-structural-e
 import { buildNatalSynthesisPreview } from '../dist/preview/natal-synthesis-preview.js';
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN30bFiveDomainVerifiedReader } from '../dist/preview/natal-n30b-five-domain-verified-reader.js';
-import { buildNatalN31FourDomainClaimReadings } from '../dist/preview/natal-n31-four-domain-claim-readings.js';
+import { buildNatalN32ExpandedDomainResearchReading } from '../dist/preview/natal-n32-expanded-domain-research-reading.js';
 import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
@@ -352,7 +352,7 @@ function renderN31FourDomainResearch(result) {
   }
   const titles={career:'직업·일',wealth:'재물·자원',business:'사업·실행',relationship:'관계'};
   const cards=result.sections.map(section=>{
-    const excerpts=section.visibleClaims.map(claim=>
+    const renderClaim=(claim)=>
       '<article class="reader-paragraph"><h3>'+escapeHtml(claim.headline)+'</h3>' +
       '<p>'+escapeHtml(claim.summary)+'</p>' +
       '<p class="reader-note">이 명식에서 관측한 십신: '+
@@ -360,13 +360,19 @@ function renderN31FourDomainResearch(result) {
       '<details><summary>기존 연구 Claim · Rule · Source</summary><p>'+
       escapeHtml(claim.claimType)+' · '+escapeHtml(claim.claimRuleId)+
       ' · '+escapeHtml(claim.methodologyId)+' · '+
-      escapeHtml(claim.sourceIds.join(' / '))+'</p></details></article>').join('');
+      escapeHtml(claim.sourceIds.join(' / '))+'</p></details></article>';
+    const excerpts=section.visibleClaims.map(renderClaim).join('');
+    const additional=section.additionalVerifiedClaims.map(renderClaim).join('');
+    const more=additional
+      ? '<details class="reader-deep"><summary>N32 · 이 분야의 출처 검증 추가 해석 '+
+        section.additionalVerifiedClaims.length+'개 읽기</summary>'+additional+'</details>' : '';
     return '<div class="reader-domain"><div class="reader-domain-head"><h3>'+
       escapeHtml(titles[section.domain])+'</h3><small>기존 T8 연구 · '+
       escapeHtml(section.state)+'</small></div>'+
       (excerpts||'<p class="limited">현재 검증 가능한 연구 문장이 없습니다. 빈칸을 임의로 채우지 않습니다.</p>')+
+      more+
       (section.hiddenByLimitCount||section.heldConflictingClaimCount
-        ? '<p class="reader-note">화면 범위 밖 원문 '+
+        ? '<p class="reader-note">추가 펼쳐 읽기 '+
           section.hiddenByLimitCount+'개 · 충돌 보류 '+
           section.heldConflictingClaimCount+'개</p>':'')+'</div>';
   }).join('');
@@ -524,9 +530,10 @@ async function main() {
   const n31Execution = runInterpretation(calculated.snapshot, n31Registry, {
     requestId:'n31-domain-semantic-research-internal-only', now:researchNow,
   });
-  const domainResearch = buildNatalN31FourDomainClaimReadings(
+  const expandedDomainResearch = buildNatalN32ExpandedDomainResearchReading(
     calculated.snapshot,n31Execution,n31Registry,
   );
+  const domainResearch = expandedDomainResearch.firstScreen;
   const themes = buildNatalActivatedThemePreview(interpretation);
   const applied = buildNatalAppliedThemeContext(evidence, themes);
   const researchRegistry = createGeneralNatalSourceBoundedRegistry(researchNow.toISOString());
@@ -537,6 +544,11 @@ async function main() {
     calculated.snapshot, researchExecution, researchRegistry,
   );
   writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch), 'utf8');
+  process.stdout.write('N32 original four-domain research: ' +
+    expandedDomainResearch.initialClaimCount+' visible + '+
+    expandedDomainResearch.expandedOriginalClaimCount+' additional = '+
+    expandedDomainResearch.allQualifiedOriginalClaimCount+
+    ' original, 0 unread; research/HOLD only\\n');
   process.stdout.write('N31 specialist source-backed Research only: ' +
     domainResearch.sections.map(s=>s.domain+':'+s.visibleClaims.length).join(', ') +
     '; existing T8 meaning only; Production/Commerce HOLD\\n');
