@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('7b9b7b5a46cfb2d968fa17669124c7826ddd4e85');
+    expect(review.researchHeadReviewed).toBe('af65faf958eb8af9f0e3f28e29c50636b87696c4');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v6',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v7',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -219,6 +219,25 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           historicalBieGongScopeAdjudicated: false,
           historicalYiWeiCountAdjudicated: false,
           anyClaimPromotionAuthorized: false,
+        },
+        hourWealthLocalLeafCollation: {
+          researchVersion: 'n27-harvard-taiwan-local-leaf-collation-v1',
+          status: 'SAMPLED_PHRASE_AGREEMENT_ONLY',
+          harvardPdfPage: 45,
+          taiwanPdfPages: [375, 376],
+          matchedPhraseCount: 5,
+          matchRequiresNoFullTextOrIndependentLineageAssumption: true,
+          harvardCharactersPerLine: 20,
+          taiwanCharactersPerLine: 22,
+          samePhysicalPrintedSettingSupported: false,
+          exactLocusEngraverRead: false,
+          exactLeafRecarvingCertified: false,
+          independentTransmissionCertified: false,
+          noOtherVariantsInChapterCertified: false,
+          dayPillarBieGongRuleAdjudicated: false,
+          hiddenStemZaiJianRuleAdjudicated: false,
+          historicYiWeiCountingUnitAdjudicated: false,
+          consumerOrProductionAdmission: false,
         },
         bibliographicRelation: {
           classification: 'DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES',
