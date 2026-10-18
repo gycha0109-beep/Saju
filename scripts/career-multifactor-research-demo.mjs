@@ -25,7 +25,7 @@ for (const month of [2, 3, 4, 5, 6, 7]) {
     const interpretation = runInterpretation(snapshot, registry, { now });
     const report = buildCareerMultifactorResearchReport(snapshot, interpretation, registry);
     if (report.sections.length > 0) {
-      observed.push({ input, report, signature: report.sections.map(x => x.claimType).join('|') });
+      observed.push({ input, report, signature: report.sections.map(x => x.pattern).sort().join('|') });
     }
   }
 }
