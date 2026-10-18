@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v7');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v8');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -309,6 +309,53 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       .toBe(printed.printWitnesses[0]?.originalPdfSha256);
     expect(leaf.taiwanOriginalPdfSha256)
       .toBe(printed.taiwanWanli1578HourWealthPrintedLocus.originalPdfSha256);
+    expect(printed.taiwanWanliCopy06590AccessibilityAudit).toMatchObject({
+      status: 'CATALOG_CONFIRMED_ORIGINAL_SCAN_NOT_ACCESSED',
+      accessionNumber: '06590',
+      comparedAccessibleCopyAccessionNumber: '06589',
+      twoSeparateCatalogRecordsVerified: true,
+      editionAsCataloged: '明萬曆戊寅六年1578刊本',
+      sameCatalogedYear1578: true,
+      volumes: 12,
+      catalogedLinesPerHalfLeaf: 10,
+      catalogedCharactersPerLine: 22,
+      catalogedPlateHeartTitle: '三命會通',
+      catalogIndicatesPermissionApplication: true,
+      accessibleOriginalPdfLocatedInReviewedPublicSources: false,
+      printedImagesOf06590Reviewed: false,
+      hourWealthPdfPageNumberFor06590Known: false,
+      exactHourWealthLeafInscriptionReviewed: false,
+      characterStrokeLossComparedBetween06589And06590: false,
+      specificEngraverSameInTwoCopies: 'UNADJUDICATED',
+      exactSamePrintingBlock: 'UNADJUDICATED',
+      textualIndependentTraditions: 'UNADJUDICATED',
+      independentNewPrintWitnessCountIncrement: 0,
+      candidateOnlyNeverClassicalAuthorization: true,
+    });
+    expect(printed.taiwanWanliCopy06590AccessibilityAudit.catalogSource)
+      .toContain('rbook.ncl.edu.tw');
+    expect(printed.taiwanWanliCopy06590AccessibilityAudit.secondaryCatalogSource)
+      .toContain('catalog.digitalarchives.tw');
+    expect(printed.mainlandNlcVsTaiwan06589SameLocusPrintComparison).toMatchObject({
+      status: 'SIDE_BY_SIDE_COLUMN_ALIGNMENT_OBSERVED_NO_WOODBLOCK_VERDICT',
+      mainlandOriginalHolding: 'NLC_411999029701_VOL_5_UPPER',
+      mainlandPdfPage: 43,
+      taiwanOriginalHolding: 'TAIWAN_NCL_06589_1578',
+      taiwanPdfPage: 376,
+      bothCatalogedTenLinesTwentyTwoCharacters: true,
+      visiblySimilarColumnBeginningsAtHourWealthLocus: true,
+      visuallyComparedRepeatedText: '如甲日見戊辰或甲戌時之例',
+      physicalStrokeChipOrSharedDefectEstablished: false,
+      sameEngraverMarkAtBothLeavesRead: false,
+      imageScalesAndInkingDiffer: true,
+      supplementaryReadingMarksNotTreatedAsOriginalTextVariants: true,
+      plateHeartFishtailOnBothExactLeavesFullyRead: false,
+      candidateSameSettingRequiresPositiveMicrodefectEvidence: true,
+      commonPrintingBlocks: 'UNADJUDICATED',
+      manuscriptFamilyOrTextualGenealogy: 'UNADJUDICATED',
+      independentVotesFromTextAgreementAuthorized: false,
+      cannotUseToDecideBieGongZaiJianOrYiWei: true,
+    });
     expect(printed.harvardVolumeOneOriginalPrefaceRead).toMatchObject({
       sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE',
       sameHarvardDrsAsPreviouslyReadVolumeFive: true,
