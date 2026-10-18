@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v11' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v12' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -561,6 +561,62 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
           remainingBieGongDayPillarScope: 'UNADJUDICATED' as const,
           remainingZaiJianHiddenStemCountingScope: 'UNADJUDICATED' as const,
           remainingYiWeiCountingUnit: 'UNADJUDICATED' as const,
+        }),
+        // A second, differently located passage explicitly calls other
+        // pillars 三處. Its text-only provenance is not a 1926 print reading.
+        threeNonHourPillarsCommentaryScopeAudit: Object.freeze({
+          status: 'TEXTUAL_THREE_OTHER_PILLARS_SUPPORTED_COUNTING_UNIT_UNDECIDED' as const,
+          yuanhaiSourceTitle: '淵海子平 內十八格 時上偏財格' as const,
+          yuanhaiPublicTranscription: 'https://sajumania.com/ebook/to01-06/to01-06-02-27.htm' as const,
+          yuanhaiTranscribedRule: '只要時上一位，不要多。而三處不要再見財' as const,
+          shenfengSourceTitle: '神峰通考 時上偏財格 附月偏財格' as const,
+          shenfengPublicTranscription: 'https://sajumania.com/ebook/to01-08/to01-08-02-02.htm' as const,
+          shenfengTranscribedRule: '只要一位貴，不要多，而三處不要再見財' as const,
+          sameShenfengSeparateHourNobleGloss: '若年月日又有，收為辛苦勞碌之命也' as const,
+          separateHourNobleGlossIsSevenKillingNotHourWealth: true as const,
+          sameWordsInSeparateRuleNotAutomaticCrossRuleAuthority: true as const,
+          shenfengStemVsBranchHourExamples: Object.freeze([
+            '庚日見甲干或寅支' as const,
+            '辛日見乙干或卯支' as const,
+          ]),
+          threePlacesCanReferToYearMonthDayPillars: true as const,
+          yearMonthDayAreDistinctFromHourPillar: true as const,
+          explicitlySpecifiesStemAndHiddenStemOccurrenceCounting: false as const,
+          explicitlyDecidesDayBranchAsOneIndependentHiddenRepeat: false as const,
+          internalYuanhaiCaseWithVisibleElsewherePianCai: Object.freeze({
+            reportedTitle: '侯知府命' as const,
+            pillars: Object.freeze(['乙酉','乙卯','辛卯','辛卯'] as const),
+            dayMaster: '辛' as const,
+            hourPillarBranchHidesPianCai: '時支卯藏乙' as const,
+            yearVisiblePianCaiStem: '乙' as const,
+            monthVisiblePianCaiStem: '乙' as const,
+            dayBranchAlsoHidesPianCai: '日支卯藏乙' as const,
+            passageCommentsOnRepeatedStemsAndBranches: true as const,
+            gloss: '侯知府命中干支重見，兄弟分奪，只是財多財旺，原干辛弱不堪任之，所以分去卻得中和' as const,
+            listedAsChartNotAutomaticFavorableHourWealth: true as const,
+            exactPrintedReadingVerified: false as const,
+            limitsAnyUniversalAbsoluteNoOtherCaiRule: true as const,
+          }),
+          separateYuanhaiListedCaseWithHiddenYearPianCai: Object.freeze({
+            reportedTitle: '李參政命' as const,
+            pillars: Object.freeze(['庚寅','乙酉','甲子','戊辰'] as const),
+            dayMaster: '甲' as const,
+            hourVisiblePianCai: '戊' as const,
+            yearBranchHiddenPianCai: '寅藏戊' as const,
+            sourceExplicitlyTestsHiddenYearAsRuleException: false as const,
+          }),
+          commons1926ScanCatalogue: 'https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf' as const,
+          commons1926FileDeclaredPages: 167 as const,
+          commons1926CatalogPrintedYear: 1926 as const,
+          commons1926PrintPdfRetrievedSuccessfully: false as const,
+          commons1926TargetFolioImageDirectlyRead: false as const,
+          independentAncientWoodblockTextVerified: false as const,
+          exactDayPillarScopeHistoricalVerdict: 'UNADJUDICATED' as const,
+          exactHiddenStemCountingHistoricalVerdict: 'UNADJUDICATED' as const,
+          exactYiWeiUnitHistoricalVerdict: 'UNADJUDICATED' as const,
+          printedWitnessIncrement: 0 as const,
+          ruleEngineOrConsumerAdmission: false as const,
+          requiresNoInstitutionalContact: true as const,
         }),
         harvardVolumeOneOriginalPrefaceRead: Object.freeze({
           sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE' as const,
