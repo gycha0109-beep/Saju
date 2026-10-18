@@ -34,6 +34,7 @@ import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expand
 import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
 import { buildNatalN32ExpandedDomainResearchReading } from '../dist/preview/natal-n32-expanded-domain-research-reading.js';
 import { auditNatalN34FourDomainCopyContrasts } from '../dist/preview/natal-n34-four-domain-copy-contrast.js';
+import { renderNatalN34ResearchCopyComparisonHtml } from '../dist/preview/natal-n34-contrast-reader.js';
 
 const bearer = 'local-natal-quality-audit-not-a-production-secret';
 const dates = [
@@ -459,6 +460,14 @@ async function main() {
     ? outputPath.slice(0,-5)+'.n34-four-domain-copy-contrast.json'
     : outputPath+'.n34-four-domain-copy-contrast.json');
   writeFileSync(n34Path,JSON.stringify(n34,null,2)+'\\n','utf8');
+  // N34b: let a human compare actual existing original source copy and
+  // calculated positions side by side. Research-only; no Product admission.
+  const n34ReaderPath = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0,-5)+'.n34-research-copy-comparison.html'
+    : outputPath+'.n34-research-copy-comparison.html');
+  writeFileSync(n34ReaderPath,
+    renderNatalN34ResearchCopyComparisonHtml(n34Cases,n34),'utf8');
+  process.stdout.write('Natal N34 side-by-side research report: '+n34ReaderPath+'\n');
   process.stdout.write('Natal N34 four-domain source-copy evidence: '+
     n34.actualCaseCount+' HTTP-linked cases, '+n34.distinctChartPairCount+
     ' raw different-chart contrasts / '+n34.uniqueDifferentChartPairCount+
