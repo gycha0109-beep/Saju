@@ -149,6 +149,12 @@ export function auditNatalN34FourDomainCopyContrasts(
     });
     return {left:pair.left,right:pair.right,sameChart,domains};
   });
+  const uniqueDifferentChartPairCount=new Set(compared.filter(pair=>!pair.sameChart)
+    .map(pair=>{
+      const left=index.get(pair.left)!;
+      const right=index.get(pair.right)!;
+      return [left.chartHash,right.chartHash].sort().join('|');
+    })).size;
   const all=compared.flatMap(x=>x.domains.map(d=>d.difference));
   const counts=Object.fromEntries(([
     'insufficient_research_evidence','coverage_changed','original_korean_copy_changed',
@@ -162,6 +168,7 @@ export function auditNatalN34FourDomainCopyContrasts(
     usefulComplete:false as const,independentHumanMeaningValidated:false as const,
     actualCaseCount:cases.length,pairCount:compared.length,
     distinctChartPairCount:compared.filter(p=>!p.sameChart).length,
+    uniqueDifferentChartPairCount,
     sameChartControlPairCount:compared.filter(p=>p.sameChart).length,
     counts, pairs:compared,
     limitations:[
