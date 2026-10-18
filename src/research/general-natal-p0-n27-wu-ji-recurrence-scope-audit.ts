@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v8' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v9' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -405,6 +405,54 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
           manuscriptFamilyOrTextualGenealogy: 'UNADJUDICATED' as const,
           independentVotesFromTextAgreementAuthorized: false as const,
           cannotUseToDecideBieGongZaiJianOrYiWei: true as const,
+        }),
+        // Reproducible quantitative scan-registration observation only:
+        // feature homography is not a proof of the identical carved block.
+        mainlandNlcTaiwan06589SiftRegistrationAudit: Object.freeze({
+          status: 'STRONG_SPATIAL_REGISTRATION_NO_POSITIVE_SHARED_BLOCK_DEFECT' as const,
+          measuredAt: '2026-10-18' as const,
+          mainlandHoldingId: 'NLC_411999029701_VOL_5_UPPER' as const,
+          mainlandPdfPage: 43 as const,
+          taiwanHoldingId: 'TAIWAN_NCL_06589_1578' as const,
+          taiwanPdfPage: 376 as const,
+          mainlandOriginalPdfSha256: '0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1' as const,
+          taiwanOriginalPdfSha256: '3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd' as const,
+          mainlandAnalyzedRasterSha256: '7f9b25f6c420044e5edc3d55f12dbb66b779a552b8181adfbc0deae8dfe5f005' as const,
+          taiwanAnalyzedRasterSha256: '163ea1e3eebcd719b397672e99ff2112f3c47927f2452d2f1e87d63f06abe7cf' as const,
+          originalRoiPixelBounds: Object.freeze({
+            mainland: Object.freeze([426, 155, 806, 689] as const),
+            taiwan: Object.freeze([1083, 356, 2015, 1665] as const),
+          }),
+          algorithm: 'OpenCV_SIFT_BF_KNN_RANSAC_HOMOGRAPHY' as const,
+          detectorMaxFeatures: 8500 as const,
+          detectorContrastThreshold: 0.012 as const,
+          detectorEdgeThreshold: 15 as const,
+          knnRatioThreshold: 0.74 as const,
+          ransacDestinationThresholdPixels: 3.5 as const,
+          mainlandP43Taiwan1578P376: Object.freeze({
+            siftRatioAccepted: 406 as const,
+            homographyInliers: 245 as const,
+            inlierFraction: 0.6034 as const,
+            medianInlierReprojectionPixelsInTaiwanRaster: 1.925 as const,
+            inliersDistributedAcrossMostOfComparedPrintedLeaf: true as const,
+          }),
+          negativeControls: Object.freeze([
+            Object.freeze({ comparedWith: 'MAINLAND_NLC_P42' as const, siftRatioAccepted: 57 as const, homographyInliers: 8 as const }),
+            Object.freeze({ comparedWith: 'MAINLAND_NLC_P44' as const, siftRatioAccepted: 86 as const, homographyInliers: 8 as const }),
+            Object.freeze({ comparedWith: 'HARVARD_REPRINT_P45' as const, siftRatioAccepted: 22 as const, homographyInliers: 5 as const }),
+          ]),
+          automatedMatchingStrengthVersusControls: 'SUBSTANTIALLY_HIGHER' as const,
+          metricSensitiveToRoiRenderingAlgorithmAndThresholds: true as const,
+          identicalSourcePdfOrScanReuseCertifiedExcluded: false as const,
+          sharedUniqueGlyphChipDefectLocatedAndVisuallyCertified: false as const,
+          exactEngraverSameAtLeaf: 'UNADJUDICATED' as const,
+          identicalCarvedPhysicalWoodblock: 'UNADJUDICATED' as const,
+          lineageIndependence: 'UNADJUDICATED' as const,
+          physicalPrintingIdentityPromoted: false as const,
+          interpretationCountingRuleChanged: false as const,
+          originalPrintWitnessCountIncrement: 0 as const,
+          noInstitutionalOutreachRequired: true as const,
+          nextAllowedEvidencePath: 'PUBLIC_SCAN_GLYPH_DAMAGE_FINGERPRINT_ONLY' as const,
         }),
         harvardVolumeOneOriginalPrefaceRead: Object.freeze({
           sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE' as const,
