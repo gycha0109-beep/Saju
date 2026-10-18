@@ -80,7 +80,7 @@ function findPositions(snapshot:CanonicalSajuSnapshot,value:Record<string,unknow
       const fact=resolved.value[slot][channel==='visible_stems'?'stem':'branch'];
       return fact?.status==='resolved'&&fact.value===tenGod
         ? [{display:LABEL[slot]+' '+(channel==='visible_stems'?'천간 ':'지지 대표 십신 ')+tenGod,
-          factPath:'derivedFacts.tenGods.'+slot+'.'+(channel==='visible_stems'?'stem':'branch')+'.value'}]
+          factPath:'derivedFacts.tenGods.value.'+slot+'.'+(channel==='visible_stems'?'stem':'branch')+'.value'}]
         : [];
     });
   }
@@ -112,7 +112,7 @@ function findPositions(snapshot:CanonicalSajuSnapshot,value:Record<string,unknow
   return SLOT_ORDER.flatMap(slot=>eligibleChannels.flatMap(w=>
     w.matched.filter(p=>p.slot===slot).map(p=>({
       display:LABEL[slot]+' '+(w.component==='stem'?'천간 ':'지지 대표 십신 ')+p.god,
-      factPath:'derivedFacts.tenGods.'+slot+'.'+w.component+'.value',
+      factPath:'derivedFacts.tenGods.value.'+slot+'.'+w.component+'.value',
     }))));
 }
 function exactClaim(
