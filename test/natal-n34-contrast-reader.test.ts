@@ -44,7 +44,7 @@ describe('N34 research-only source-copy side-by-side reader', () => {
     expect(html).toContain('동일 명식 대조군');
     expect(html).toContain('계산에서 확인된 위치');
     expect(html).toContain('원문·근거·계산 위치 모두 같음');
-    expect(html).toContain('Official/Production');
+    expect(html).toContain('공식 풀이·Production·판매에 추가되지 않습니다.');
     expect(html).toContain('직업·일');
     expect(html).toContain('재물·자원');
     expect(html).toContain('사업·실행');
