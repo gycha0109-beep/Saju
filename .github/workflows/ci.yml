@@ -150,6 +150,8 @@ jobs:
             ${{ runner.temp }}/natal-baseline.n28-verified-reader-report.json
             ${{ runner.temp }}/natal-baseline.n29-paired-review.json
             ${{ runner.temp }}/natal-baseline.n29-paired-review.md
+            ${{ runner.temp }}/natal-baseline.n34-four-domain-copy-contrast.json
+            ${{ runner.temp }}/natal-baseline.n35-four-domain-original-copy-pairs.html
             ${{ runner.temp }}/natal-baseline.n9-repetition.json
             ${{ runner.temp }}/natal-baseline.n10-triage.json
             ${{ runner.temp }}/natal-baseline.n11-review.html
