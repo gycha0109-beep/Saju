@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v4');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v5');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -247,6 +247,38 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
     expect(printed.priorOriginalRenderedArtifactsReopenedAndRead).toBe(true);
     expect(printed.twoDistinctHoldingPrintScansRead).toBe(true);
     expect(printed.printLineageIndependenceCertified).toBe(false);
+    const bibliography = printed.bibliographicWitnessRelation;
+    expect(bibliography.status)
+      .toBe('DIFFERENT_PRINT_FORMATS_SUPPORTED_TEXTUAL_LINEAGE_UNRESOLVED');
+    expect(bibliography.harvard).toMatchObject({
+      holding: 'HARVARD_YENCHING',
+      publicationYearApproximate: 1735,
+      publicationYearIsQuestionMarked: true,
+      printedLinesPerHalfLeaf: 10,
+      printedCharactersPerLine: 20,
+      catalogSaysSupplementedWoodblockEdition: true,
+    });
+    expect(bibliography.nlc).toMatchObject({
+      holding: 'NATIONAL_LIBRARY_OF_CHINA',
+      dateRangeStart: 1573,
+      dateRangeEnd: 1620,
+      exactImprintYearWithinRangeKnown: false,
+      printedLinesPerHalfLeaf: 10,
+      printedCharactersPerLine: 22,
+      goodBookNumber: '17605',
+    });
+    expect(bibliography.harvard.catalogUri).toContain('Harvard_drs_53262215');
+    expect(bibliography.nlc.catalogUri).toContain('NLC892-411999029701-67240');
+    expect(bibliography.differentHoldingInstitutions).toBe(true);
+    expect(bibliography.differentSourcePdfHashes).toBe(true);
+    expect(bibliography.catalogedCharacterCountsDiffer).toBe(true);
+    expect(bibliography.distinctPrintedLayoutsSupportedByCatalog).toBe(true);
+    expect(bibliography.woodblockTextualDescentAnalyzed).toBe(false);
+    expect(bibliography.copiesAreIndependentTextualTraditions).toBe('UNADJUDICATED');
+    expect(bibliography.laterHarvardEditionCopiedEarlierNlcEdition).toBe('UNADJUDICATED');
+    expect(bibliography.agreementsAreTwoTextuallyIndependentVotes).toBe(false);
+    expect(bibliography.externalMing1578LibraryCatalogIsThisNlcCopy).toBe(false);
+    expect(bibliography.bibliographicMetadataCannotAuthorizeClassicalCounting).toBe(true);
     expect(printed.directlyCertifiedHourWealthBieGongIncludesDay).toBe(false);
     expect(printed.directlyCertifiedHourWealthZaiJianIncludesHidden).toBe(false);
     expect(printed.directlyCertifiedClassicalYiWeiCountingUnit).toBe(false);
