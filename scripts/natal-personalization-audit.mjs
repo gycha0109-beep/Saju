@@ -473,7 +473,7 @@ async function main() {
     (n35Html.match(/class="domain"/gu)??[]).length!==84 ||
     !n35Html.includes('한국어 원문 대조') ||
     !n35Html.includes('Product/Official/Production/Commerce 승격') ||
-    !n35Html.includes('같은') && !n35Html.includes('동일 입력 대조')) {
+    !n35Html.includes('동일 입력 대조')) {
     throw new Error('N35 original Korean reader must display every classified chart pair');
   }
   const n35Path=resolve(outputPath.endsWith('.json')
