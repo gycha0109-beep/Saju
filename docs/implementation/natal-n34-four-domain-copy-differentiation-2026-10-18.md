@@ -21,3 +21,17 @@ N34가 통과하더라도 기존 연구 해석의 사회적·예측적 진실, �
 ## 검증 기록
 
 일반 CI / PIE / Container / 고정 SHA Integration / 병합 후 새 main 검증은 PR 생성 후 실제 결과로 기록한다. 진행 중인 검증을 PASS로 기록하지 않는다.
+
+## N34 후속 — 실제 문구 나란히 열람
+
+기존 `npm run preview:natal:audit`를 실행하면 원본 품질 감사 JSON과 함께
+`*.n34-research-copy-comparison.html` 내부 검토 화면을 생성한다.
+
+이 화면은 35건의 실제 로컬 HTTP 명식, 20개 서로 다른 명식 대조(고유 19쌍),
+동일 입력 대조군 1쌍의 기존 Career/Wealth/Business/Relationship 연구 Claim
+원문을 왼쪽·오른쪽에서 실제 계산 위치, Rule, 출처와 함께 펼쳐 읽게 한다.
+코드가 기존 원문을 재작성하지 않으며 N34의 원문·Claim 근거·위치 변화 분류도
+그대로 보여준다. 연구 출처의 진실성·새 해석·실제 유저 만족을 인증하지 않는다.
+
+파일은 내부 결과물일 뿐 Public UI나 Official Reading이 아니다.
+신규 비용, API, DB, 배포 또는 Commerce 권한 변경 없음.
