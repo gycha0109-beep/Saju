@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v5');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v6');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -247,6 +247,48 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
     expect(printed.priorOriginalRenderedArtifactsReopenedAndRead).toBe(true);
     expect(printed.twoDistinctHoldingPrintScansRead).toBe(true);
     expect(printed.printLineageIndependenceCertified).toBe(false);
+    expect(printed.taiwanWanli1578ZhengGuanPrintedLocus).toMatchObject({
+      sourceId: 'TAIWAN_NCL_06589_1578',
+      catalogedExactPublicationYear: 1578,
+      originalPdfPages: [337, 340, 341],
+      originalZhengGuanHeadingOnPage340: true,
+      directPrintedBranchExampleOnPage341: '甲生丑月內有辛金又值酉時',
+      independentTextualLineageCertified: false,
+      automaticallyApplyToHourWealth: false,
+    });
+    expect(printed.taiwanWanli1578HourWealthPrintedLocus).toMatchObject({
+      pageHourWealthHeading: 375,
+      pageDirectPrintedWuJiClause: 376,
+      printedDisputedGlyph: '己',
+      originalPrintedClause: '柱中不宜再見戊己',
+      directlyReadPrintedHoldingGroupsNowFour: 4,
+      fourPrintingsAreGenealogicallyIndependent: false,
+      originalAuthorialManuscriptGlyphCertified: false,
+      printedGlyphDoesNotDefineZaiJianCountingScope: true,
+    });
+    expect(printed.harvardVolumeOneOriginalPrefaceRead).toMatchObject({
+      sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE',
+      sameHarvardDrsAsPreviouslyReadVolumeFive: true,
+      titlePage: 2,
+      recoveredLiFamilyBlocksAndSupplementPassagePage: 4,
+      datedPrefaceSignaturePage: 6,
+      prefaceTitle: '補刻三命通會敘',
+      recoveredWoodblocksStoredInLiFamily: true,
+      reportedMissingDamagedSections: true,
+      describesCorrectionAndSupplementation: true,
+      prefatoryDate: '雍正乙卯花朝',
+      prefatorySigner: '蔣國祥',
+      publicationYearNotProvenByPrefaceAlone: true,
+      historicalLiBlockIsExactTaiwan1578Block: 'UNADJUDICATED',
+      harvardVolumeFiveSharesExactSameCarvedBlockAsVolumeOne: 'UNADJUDICATED',
+      restoredBlocksRequireTreatingWitnessesAsPotentiallyDependent: true,
+    });
+    expect(printed.harvardVolumeOneOriginalPrefaceRead.page4RasterSha256)
+      .toBe('1688ee1e45b94b9afbeb91d35dfe39416c53768e7ed9a3606e2b7a517751f17b');
+    expect(printed.taiwanWanli1578HourWealthPrintedLocus.page376RasterSha256)
+      .toBe('f43b34d006ba75a50179fc04bdcd377301bc9b25caf7cc4adc0146c8a82121e8');
+    expect(printed.taiwanWanli1578HourWealthPrintedLocus.originalPdfSha256)
+      .toBe(printed.taiwanWanli1578ZhengGuanPrintedLocus.originalPdfSha256);
     const bibliography = printed.bibliographicWitnessRelation;
     expect(bibliography.status)
       .toBe('DIFFERENT_PRINT_FORMATS_SUPPORTED_TEXTUAL_LINEAGE_UNRESOLVED');
