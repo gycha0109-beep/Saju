@@ -5,8 +5,7 @@ import type { buildNatalN32ExpandedDomainResearchReading } from './natal-n32-exp
 export const NATAL_N34_FOUR_DOMAIN_COPY_CONTRAST_VERSION =
   'saju-n34-four-domain-original-copy-vs-basis-vs-position-contrast-v1' as const;
 
-const DOMAINS = ['career', 'wealth', 'business', 'relationship'] as const
-  satisfies readonly NatalN31Domain[];
+const DOMAINS = ['career', 'wealth', 'business', 'relationship'] as const satisfies readonly NatalN31Domain[];
 
 type VerifiedResearchReading = ReturnType<typeof buildNatalN32ExpandedDomainResearchReading>;
 export interface NatalN34Case {
