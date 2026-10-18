@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('b7d64f58d0f84f9f1e8d1393ca4dac31bc6e4b2a');
+    expect(review.researchHeadReviewed).toBe('aa2bbcf5d820ce6d88bf9d24e2124c77b9a1f55d');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v11',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v12',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -321,6 +321,26 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           newAncientTextualWitnesses: 0,
           semanticEngineAdmission: false,
           allExistingClaimsStayHold: true,
+        },
+        threeNonHourPillarsTextWitnessHold: {
+          evidenceClass: 'PUBLIC_TRANSCRIPTIONS_NOT_VERIFIED_1926_PRINT_FOLIO',
+          yuanhaiInternalEighteen: '只要時上一位，不要多。而三處不要再見財',
+          shenfengHourWealthGloss: '只要一位貴，不要多，而三處不要再見財',
+          comparandOtherThreePillarsYearMonthDaySupported: true,
+          separateHourNobleGlossYearMonthDayNotTransferrable: true,
+          yearMonthDayPillarWordNotOneHiddenStemCountEach: true,
+          hourStemOrBranchExampleBothAttestedInTranscription: true,
+          internalCaseHouZhifu: ['乙酉','乙卯','辛卯','辛卯'],
+          houCaseHasAdditionalYearAndMonthVisiblePianCai: true,
+          houCaseHasAdditionalDayBranchHiddenPianCai: true,
+          houCaseGlossMentionsRepetitionsButNotUnqualifiedSuccess: true,
+          liCaseHasHiddenYearPianCaiButNoIsolatedCausalComparison: true,
+          commons1926PdfSourceLocatedButExactPageNotRead: true,
+          originalPrintedWitnessIncrement: 0,
+          dayBranchSeparateRecurrenceRuleAllowed: false,
+          allHiddenStemsAutomaticRuleAllowed: false,
+          consumerOrTrustGrantPromotionAllowed: false,
+          institutionalMailOrContactAllowedForThisResearch: false,
         },
         bibliographicRelation: {
           classification: 'DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES',
