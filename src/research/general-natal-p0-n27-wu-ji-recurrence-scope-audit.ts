@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v7' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v8' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -355,6 +355,56 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
           sampleAgreementCanAuthorizeZaiJianHiddenCount: false as const,
           sampleAgreementCanAuthorizeYiWeiUnit: false as const,
           sourceOnlyNoConsumerPromotion: true as const,
+        }),
+        // Catalogue-only companion copy: NO raster from 06590 was examined.
+        // Two accession numbers are not two independent printing lineages.
+        taiwanWanliCopy06590AccessibilityAudit: Object.freeze({
+          status: 'CATALOG_CONFIRMED_ORIGINAL_SCAN_NOT_ACCESSED' as const,
+          holdingInstitution: 'TAIWAN_NATIONAL_CENTRAL_LIBRARY' as const,
+          accessionNumber: '06590' as const,
+          comparedAccessibleCopyAccessionNumber: '06589' as const,
+          twoSeparateCatalogRecordsVerified: true as const,
+          editionAsCataloged: '明萬曆戊寅六年1578刊本' as const,
+          sameCatalogedYear1578: true as const,
+          volumes: 12 as const,
+          catalogedLinesPerHalfLeaf: 10 as const,
+          catalogedCharactersPerLine: 22 as const,
+          catalogedPlateHeartTitle: '三命會通' as const,
+          sharedPlateHeartTitleIsCatalogOnly: true as const,
+          catalogSource: 'https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2' as const,
+          secondaryCatalogSource: 'https://catalog.digitalarchives.tw/item/00/19/3c/14.html' as const,
+          catalogIndicatesPermissionApplication: true as const,
+          accessibleOriginalPdfLocatedInReviewedPublicSources: false as const,
+          printedImagesOf06590Reviewed: false as const,
+          hourWealthPdfPageNumberFor06590Known: false as const,
+          exactHourWealthLeafInscriptionReviewed: false as const,
+          characterStrokeLossComparedBetween06589And06590: false as const,
+          specificEngraverSameInTwoCopies: 'UNADJUDICATED' as const,
+          exactSamePrintingBlock: 'UNADJUDICATED' as const,
+          textualIndependentTraditions: 'UNADJUDICATED' as const,
+          independentNewPrintWitnessCountIncrement: 0 as const,
+          permissionsOrReadingRoomRequiredToContinue: true as const,
+          candidateOnlyNeverClassicalAuthorization: true as const,
+        }),
+        mainlandNlcVsTaiwan06589SameLocusPrintComparison: Object.freeze({
+          status: 'SIDE_BY_SIDE_COLUMN_ALIGNMENT_OBSERVED_NO_WOODBLOCK_VERDICT' as const,
+          mainlandOriginalHolding: 'NLC_411999029701_VOL_5_UPPER' as const,
+          mainlandPdfPage: 43 as const,
+          taiwanOriginalHolding: 'TAIWAN_NCL_06589_1578' as const,
+          taiwanPdfPage: 376 as const,
+          bothCatalogedTenLinesTwentyTwoCharacters: true as const,
+          visiblySimilarColumnBeginningsAtHourWealthLocus: true as const,
+          visuallyComparedRepeatedText: '如甲日見戊辰或甲戌時之例' as const,
+          physicalStrokeChipOrSharedDefectEstablished: false as const,
+          sameEngraverMarkAtBothLeavesRead: false as const,
+          imageScalesAndInkingDiffer: true as const,
+          supplementaryReadingMarksNotTreatedAsOriginalTextVariants: true as const,
+          plateHeartFishtailOnBothExactLeavesFullyRead: false as const,
+          candidateSameSettingRequiresPositiveMicrodefectEvidence: true as const,
+          commonPrintingBlocks: 'UNADJUDICATED' as const,
+          manuscriptFamilyOrTextualGenealogy: 'UNADJUDICATED' as const,
+          independentVotesFromTextAgreementAuthorized: false as const,
+          cannotUseToDecideBieGongZaiJianOrYiWei: true as const,
         }),
         harvardVolumeOneOriginalPrefaceRead: Object.freeze({
           sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE' as const,
