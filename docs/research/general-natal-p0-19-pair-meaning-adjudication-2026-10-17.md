@@ -435,3 +435,28 @@ Research condition matrix v2는 printedExampleKind, visible/hidden other-pillar 
 4. 다섯 구절 모두 **지정된 표본 위치의 글자만** 대조했다. `整篇全文逐字` 또는 `全卷無異文` 검증이 아니며, 표본 내 실질적인 이문이 관측되지 않았다는 사실만 말할 수 있다. 漢字 이체·누락, 판심 版刻, 복수 葉의 별도 대조가 끝나지 않았으므로 **본문 전승 독립성은 미인증**이다.
 
 **판정 범주:** `hourWealthLocalLeafCollation.auditStatus=SAMPLED_PHRASE_AGREEMENT_ONLY`; `localSampleShowsSubstantiveVariant=false`은 검증한 표본에서 발견하지 못했다는 뜻이지 이문 부재의 보편 증명은 아니다. `matchingPhysicalSettingFromSameCarvedWoodblockSupported=false`, `independentTextualWitnesses=UNADJUDICATED`. 실제 명식 계산과 N27 4+4 가설, 다섯 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**, Preview/Official/Production admission 없음 모두 불변. **v7 정확 HEAD CI는 별도 확인**한다.
+
+
+## 27. 대만 06590 공개 원본 접근 실패와 중국 NLC ↔ 대만 06589 국소 판면 정렬 검토 (2026-10-18, N27 v8)
+
+**목표:** 앞서 `26에서 확인한 Harvard(10×20) ↔ 대만 06589(10×22) 비교와 구별하여, 대만 동시기 별도 소장번호 **06590**을 새로운 실물 대조 자료로 삼을 수 있는지 확인하고, 이미 이미지가 확보된 **중국 NLC 卷五上 PDF 43면** ↔ **대만 06589 PDF 376면**을 시상편재의 *같은 위치*에서 재대조하였다.
+
+### A. 06590은 실제 별도 서지 레코드이지만 원본 이미지는 미확보
+
+[대만 國家圖書館 06590 공식 상세 기록](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2) 및 [학술 디지털 아카이브 독립 메타데이터](https://catalog.digitalarchives.tw/item/00/19/3c/14.html)를 확인했다. 서명 三命通會/三命會通, **書號 06590**, **萬曆六年(1578)刊本**, **十二冊**, 10行22字, 白口單魚尾, 版心上方 三命會通, 刻工 이름 목록을 명시한다. 기존 직접 판독된 06589는 **서로 다른 書號의 별도 목록 개체**이며 서지의 版式과 출판 연도는 동일하게 기술되어 있다.
+
+**접근 근거와 차단:** 06589의 공식 상세 페이지에는 `進入影像瀏覽`이 표시되고 [Wikimedia의 06589 PDF](https://commons.wikimedia.org/wiki/File:NCL-06589_1_三命通會.pdf)를 이미 직접 읽었다. 그러나 이번 06590 공개 상세 페이지에는 동일 이미지 버튼 대신 `到館調閱古籍`와 `申請數位授權` 링크가 표시되며, 탐색한 공개 검색 결과에서도 **06590의 원본 PDF·해당 면을 확인하지 못했다**. 따라서 이는 단순 **서지 후보**이며 본 조사에서 **06590의 이미지·PDF 면 번호·刻工·목판 결손 획·戊己 자형을 직접 읽지 않았다**. 이미 인쇄면을 읽은 네 소장 스캔 수에 **06590을 새 1건으로 추가하지 않는다**. 정식 열람/디지털 권한 확인 전까지 별도 판독·증거 강도 상향은 금지한다. 별개 06590 서지 ID가 독립 인쇄 계열을 증명하지도 않는다.
+
+### B. 기존 원본 중 「時上偏財」 NLC 43면 ↔ 대만 06589 376면
+
+기존 두 원본의 같은 항목 시작부분(`如甲日見戊辰或甲戌時之例` 포함)을 병렬 표시·판독하였다.
+- [중국 NLC 刻本](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf) **PDF 43면**, 原 PDF SHA256 `0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1`.
+- [대만 06589 萬曆1578 刊本](https://commons.wikimedia.org/wiki/File:NCL-06589_1_三命通會.pdf) **PDF 376면**, 原 PDF SHA256 `3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd`.
+
+두 판면 모두 10行22字의 서지 편성에 부합하고, 지정한 시상편재 문장의 **열 시작·연속 문장 배열이 육안으로 매우 유사하다**. 대만 촬영은 여러 원문 글자 옆에 圈點 표시가 추가로 보이고 두 디지털 이미지의 색감·확대 비율도 달라, **圈點을 고유 본문 이문이나 동일 인쇄 블록의 결손 증거로 분류하지 않는다**.
+
+특히 本문자 획의 **동일한 결손 패턴(同版의 positive micro-defect)**, 같은 葉에 실재하는 刻工 이름, 동일 版心 실물 세부, 판목 치수·판각 흔적의 직접 일치, 기존 블록의 손상/복각 여부는 **확인하지 못했다**. 따라서 `printComparison.status=SIDE_BY_SIDE_COLUMN_ALIGNMENT_OBSERVED_NO_WOODBLOCK_VERDICT`이며 **동일 판목으로 확정할 수 없음**. 동일한 문장 배열은 공통 판식 관례나 이전 텍스트 복제만으로도 생길 수 있다. 원본 간 전승 계보, 06589↔06590 관계 모두 `UNADJUDICATED`다.
+
+**재현과 증거 강도의 한계:** 관찰은 원본 PDF의 이미지와 보조 대조 컷의 육안 판독이며, 픽셀 특징점 매칭/이미지 중첩 정량 분석이나 현장 서지학적 조사 결과로 위장하지 않는다. 06590 원본 이미지 확보 여부가 다음 외부 의존성이다. 이번 v8 코드는 **서지 확인·열람 미확보·동일 판목 미증명**을 각각 다른 필드와 테스트로 고정했을 뿐이다.
+
+**권한 상태 불변:** `別宮` 日柱 포함, `再見` 藏干 포함, `一位`의 역사적 位 계산 단위 = `UNADJUDICATED`. 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 **1 vs 0**, 신규 Claim/Preview/Official/Production/TrustGrant 승인 없음. 두 PR Draft/미병합; v8 최신 정확 SHA CI를 확인해야 한다.
