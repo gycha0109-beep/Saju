@@ -1,7 +1,7 @@
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
-import type { ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
+import { deterministicContentHash, type ResolvedRuleRegistrySnapshot } from '../interpretation/rule-registry.js';
 import { buildReadingCompositionEvidence } from '../reading/reading-intent-composition.js';
 import {
   CAREER_MULTIFACTOR_NARRATIVE_PROFILES,
@@ -103,7 +103,8 @@ function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
     value.causalOutcomeAuthorized === false && value.occupationAuthorized === false &&
     value.careerSuccessAuthorized === false,
     'invalid structured meaning or invented outcome authority');
-  guard(claim.methodologyRef.id === 'M-CAREER-NATAL-SOURCE-BOUNDED-PAIR-SYNTHESIS-V1' &&
+  guard(claim.scenarioRef === undefined &&
+    claim.methodologyRef.id === 'M-CAREER-NATAL-SOURCE-BOUNDED-PAIR-SYNTHESIS-V1' &&
     claim.upstreamClaimRefs.length === 2 &&
     new Set(claim.upstreamClaimRefs).size === 2 &&
     claim.sourceRefs.length === 2,
@@ -111,7 +112,7 @@ function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
   const upstream = claim.upstreamClaimRefs.map(id => execution.claims.find(c => c.claimId === id));
   guard(upstream.every(c => c !== undefined &&
     c.taxonomy.tier === 'T5' && c.state === 'active' &&
-    c.snapshotId === claim.snapshotId &&
+    c.snapshotId === claim.snapshotId && c.scenarioRef === undefined &&
     c.claimType.endsWith('_' + String(value.channel).toUpperCase() + '_THEME')),
     'cross-chart, cross-channel or absent T5 input');
   const ruleRef = claim.ruleRefs[0];
@@ -119,10 +120,33 @@ function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
   const evaluated = execution.evaluations.find(e => e.evaluationId === ruleRef?.evaluationId);
   guard(claim.ruleRefs.length === 1 && rule !== undefined && rule.output.claimType === claim.claimType &&
     rule.status === 'research' && rule.taxonomy.tier === 'T8' &&
+    rule.taxonomy.category === 'career' && rule.taxonomy.subcategory === 'multifactor_structure' &&
+    rule.output.predicate === claim.predicate &&
+    rule.methodologyRef.id === claim.methodologyRef.id &&
+    rule.methodologyRef.version === claim.methodologyRef.version &&
+    deterministicContentHash(rule.output.value) === deterministicContentHash(claim.value) &&
     evaluated?.status === 'matched' && evaluated.snapshotId === claim.snapshotId &&
+    evaluated.scenarioRef === undefined &&
+    evaluated.ruleRef.id === rule.ruleId && evaluated.ruleRef.version === rule.version &&
+    evaluated.interpretationPackRef.id === registry.pack.packId &&
+    evaluated.interpretationPackRef.version === registry.pack.version &&
     evaluated.emittedClaimIds.includes(claim.claimId),
-    'Claim cannot be traced to a matched exact registry rule');
-  guard(rule.sourceRefs.every(link => claim.sourceRefs.includes(link.sourceId)) &&
+    'Claim meaning differs from matched exact registry T8 rule');
+  // Being two T5 Claims in the same channel is NOT sufficient: each upstream
+  // family must be the exact claim type demanded by this particular T8 rule.
+  // Otherwise a different pair can be relabeled with a plausible Korean Profile.
+  const expectedInputs = rule.inputs.map(input => {
+    guard(input.source === 'interpretation_claim' && input.required &&
+      input.cardinality === 'exactly_one',
+      'T8 rule is not an exact required two-Claim composition');
+    return input.pathOrClaimType;
+  }).sort();
+  const actualInputs = upstream.map(input => input!.claimType).sort();
+  guard(expectedInputs.length === 2 &&
+    JSON.stringify(actualInputs) === JSON.stringify(expectedInputs),
+    'T8 has a different T5 family/channel than its original rule inputs');
+  guard(claim.sourceRefs.length === rule.sourceRefs.length &&
+    rule.sourceRefs.every(link => claim.sourceRefs.includes(link.sourceId)) &&
     claim.sourceRefs.every(id => registry.sources.some(s => s.sourceId === id)),
     'unverified source attribution');
   const locations = findObservedPositions(snapshot,
@@ -154,6 +178,11 @@ export function buildCareerMultifactorResearchReport(
   registry: ResolvedRuleRegistrySnapshot,
 ): CareerMultifactorReport {
   guard(execution.run.snapshotId === snapshot.snapshotId &&
+    execution.run.snapshotHash === snapshot.calculationHash &&
+    execution.run.registrySnapshotId === registry.snapshot.registrySnapshotId &&
+    execution.run.packRef.id === registry.pack.packId &&
+    execution.run.packRef.version === registry.pack.version &&
+    execution.integrity.valid && execution.run.status !== 'failed' &&
     registry.pack.packId === CAREER_MULTIFACTOR_PACK.packId &&
     registry.pack.version === CAREER_MULTIFACTOR_PACK.version &&
     registry.pack.status === 'research',
