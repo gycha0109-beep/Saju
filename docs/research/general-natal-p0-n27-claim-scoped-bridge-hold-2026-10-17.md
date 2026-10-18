@@ -227,3 +227,14 @@ Research #2553 정확 HEAD `f106da36055a5141ecde4c53fbbcae12662524c3` / `saju-n2
 **인정하지 않은 판정:** 동일 물리적 목판 재사용은 `UNADJUDICATED`; 같은 글자의 특정 **획 결손·목판 갈라짐이 두 원본에서 독립적으로 관찰·동정된 상태가 아니다**. 형상 매칭 245개를 목판 결손 245개의 증거로 세지 않는다. 독립적인 이미지 수집 계통과 목판 계보는 자동으로 보증되지 않는다. 동일 인쇄 형식의 중복 전승을 2개의 텍스트 독립 표로 가산하지 않으며, 06590은 이미지를 읽지 않았으므로 직접 증거 수 증가 0이다. 동일 원판 확정에도 `別宮/再見/一位` 계산 규칙은 자동 해결되지 않는다.
 
 Bridge `mainlandNlcTaiwan06589FeatureRegistrationHold`은 수치와 미인증 gate를 별도로 고정한다. 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, TrustGrant/Preview/Official/Production/consumer 승인 금지, 두 PR Draft/미병합. v9 최신 SHA의 CI는 별도 확인한다. 다음 연구는 **공개 인쇄본 획 결손 positive marker의 동정·복수 면 재검**만 허용하며 기관 문의를 다시 권하지 않는다.
+
+
+## 2026-10-18 N27 v10 — 공개 두 원본의 고유 획 결손 미인증 및 분할 영상 변환 불안정
+
+Research #2553 `saju-n27-wu-ji-recurrence-scope-sensitivity-v10`, 정확 HEAD `02ac088eba01b93c9b6287974000916d21ce461a`를 Bridge에 고정한다. Research `29에는 중국 NLC 卷五上 p43(전체 스캔 850×726px) ↔ 台灣 06589 明1578 p376(2600×1850px) **실제 동일 locus의 3×3 원본 대응 창 9쌍**, 대조 띠 4구역, 고정 입력 SHA와 분할 정합을 기록한다. **외부 이메일·권한 요청 없음**.
+
+`245` 글로벌 SIFT+RANSAC 대응점은 원문 위에서만 아니라 x/Y 양축 네 사분위에 존재했다(위→아래 `68/26/95/56`, 좌→우 `14/45/82/104`). 그러나 서로 다른 공간 절반에만 학습한 새 homography를 남은 절반의 후보점에 검증할 때 허용오차 3.5px 이하 대응점은 각각 `0/29/113/32`(위→아래, 아래→위, 왼쪽→오른쪽, 오른쪽→왼쪽)로 **일관되지 않았다**. 같은 글자 모양이 다수 보이는 것과 반복된 특정 글자의 **같은 목판 소실 획/갈라짐의 독립 원본 대조**는 별개의 증거이다. NLC 원본의 상대적으로 낮은 해상도, 찍힌 먹 농도 차이와 대만 원본의 圈點 때문에 후자는 **인증하지 못했다**. 불안정의 원인이 곧 별개의 목판이라는 뜻도 아니다.
+
+Bridge `publicPrintedGlyphMicrodefectHold`은 `NO_CERTIFIED_SHARED_UNIQUE_CHIP_WITH_AVAILABLE_PUBLIC_RASTERS`로 별도 등록한다. 245개 SIFT 대응점을 245개의 결손 증거로 주장하지 않는다. **동일 판목=UNADJUDICATED**, **독립 서지/원본 전승=UNADJUDICATED**, 독립 증거물 소장 수 증가 0, 06590은 서지 후보에 머문다. 서지 이용허가 신청·기관 연락은 해결 경로로 사용하지 않는다. 다음 선택지는 공개된 고해상 제3 판본/새 스캔의 **실제 존재가 입증되는 경우에 한하여** 이용하는 것이다.
+
+사주 계산·소비자 해석 권한은 여전히 **다섯 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 **1 vs 0**, `別宮/再見/一位` 계산 단위 미확정, TrustGrant/Preview/Official/Production 신규 승인 없음. 두 PR Draft·미병합. v10 CI는 최신 정확 SHA에서 검증해야 한다.
