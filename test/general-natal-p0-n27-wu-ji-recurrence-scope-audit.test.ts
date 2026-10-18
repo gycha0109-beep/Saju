@@ -399,7 +399,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       { comparedWith: 'HARVARD_REPRINT_P45', siftRatioAccepted: 22, homographyInliers: 5 },
     ]);
     expect(registration.mainlandOriginalPdfSha256)
-      .toBe(printed.printWitnesses[2]?.originalPdfSha256);
+      .toBe(printed.printWitnesses[1]?.originalPdfSha256);
     expect(registration.taiwanOriginalPdfSha256)
       .toBe(printed.taiwanWanli1578HourWealthPrintedLocus.originalPdfSha256);
     expect(printed.harvardVolumeOneOriginalPrefaceRead).toMatchObject({
