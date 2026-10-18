@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('78d9e038706084faab643213d10409a4fd0dcf47');
+    expect(review.researchHeadReviewed).toBe('9b2784396d70dfdd3c4b824486186be556e202c2');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v4',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v5',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -184,6 +184,22 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
         printedBranchExample: '甲生丑月內有辛金又值酉時',
         additionalStemPhrase: '若天干復透辛多',
         printLineageIndependenceCertified: false,
+        bibliographicRelation: {
+          classification: 'DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES',
+          harvardPrintedLines: 10,
+          harvardPrintedCharactersPerLine: 20,
+          harvardQingYongzheng1735DateIsUncertain: true,
+          nlcPrintedLines: 10,
+          nlcPrintedCharactersPerLine: 22,
+          nlcMingWanliDateRange: [1573, 1620],
+          nlcExactPrintingYearEstablished: false,
+          separateHoldingAndPrintedSettingSupported: true,
+          sharedSourceFamilyAdjudicated: false,
+          independenceOfTextualTransmissionCertified: false,
+          agreementAsTwoIndependentVotesAuthorized: false,
+          Taiwan1578CatalogIsSameNlcCopyVerified: false,
+          bibliographicDetailsPromoteAnyClaim: false,
+        },
         hourWealthExplicitAnalogyTarget: '時上偏官',
         zhengGuanCanAuthorizeHourWealthCounting: false,
         disputedYiJiSiNearZhongFanCertified: false,
@@ -202,7 +218,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
         chapter: '三命通會 卷五 論正官',
         hiddenBranchRecurrencePhrase: '甲生丑月內有辛金又值酉時',
         additionalVisibleStemPhrase: '若天干復透辛多',
-        evidenceChannel: 'DIGITAL_TRANSCRIPTION_ONLY',
+        evidenceChannel: 'DIGITAL_TRANSCRIPTION_WITH_TWO_PRINT_SCAN_LOCI',
         qualifiedForHourWealthRuleTransfer: false,
       },
       sameVolumeOfficerAnalogy: {
