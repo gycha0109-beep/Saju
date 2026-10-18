@@ -251,3 +251,14 @@ Bridge `publicPrintedGlyphMicrodefectHold`은 `NO_CERTIFIED_SHARED_UNIQUE_CHIP_W
 **(2) 부정 사례** `丁丑 / 己酉 / 丁丑 / 辛亥`: 丁日에 時干 辛이 偏財. 年/月/日의 **다른 천간에는 辛이 없다**. 반면 年支丑/月支酉/日支丑에 藏辛이 있고, 원문 주석은 `月支又酉丑會局，所謂別宮忌見也`라고 지시한다. 오직 다른 위치의 노출된 偏財 천간만 보고 지지·組合을 무시하는 규칙과 **주석 사례가 충돌**한다. 다만 年支丑과 日支丑이 겹치므로 日支 단독 효과를 분리할 수 없고, 酉丑會局은 藏干 1개 추가만으로 언제나 위반임을 뜻하지 않는다. 사용자가 별도 승인하지 않은 완전 巳酉丑三合 금지 구현도 없다.
 
 **Bridge 심사결론:** `yuanhaiXijiCaseHypothesisHold`의 **부정·긍정 반례 근거는 source-scoped 설명에 한정**. `別宮` 日柱 포함, `再見` 모든 藏干의 셈법, `一位`의 역사적 unit은 `UNADJUDICATED`. **다섯 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, 새 TrustGrant/Preview/Official/Production/consumer 승인 없음. `06590`이나 기관 응답은 진행 의존성이 아니다. 두 PR Draft/미병합, 최신 v11 CI 검증 별도.
+
+
+## 2026-10-19 N27 v12 — 「三處不要再見財」 연월일 비교 단서, 동일 장의 반례, 印本 미판독 HOLD
+
+Research #2553 정확 HEAD `aa2bbcf5d820ce6d88bf9d24e2124c77b9a1f55d`, 감사 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v12`를 Bridge에 고정한다. 기존 연구 `31과 `threeNonHourPillarsCommentaryScopeAudit`를 참조한다.
+
+[淵海子平 內十八格 時上偏財格 공개 전사](https://sajumania.com/ebook/to01-06/to01-06-02-27.htm)에는 `而三處不要再見財`, [神峰通考 時上偏財格 주석](https://sajumania.com/ebook/to01-08/to01-08-02-02.htm)에는 `只要一位貴，不要多，而三處不要再見財`가 나타난다. 時 외 **年/月/日柱라는 세 자리**를 비교 범위로 다룰 근거다. 神峰의 별도 **時上一位貴格(偏官/七殺)** 주석은 `若年月日又有`라고 세 기둥을 구체적으로 적지만 다른 格의 셈법을 그대로 偏財로 이식할 수는 없다. 時上 偏財의 지지 식별 예문에는 庚日/寅支와 辛日/卯支의 경로도 실려 있어 **時에서 드러나는 천간만 분석해야 한다**는 주장은 제한된다.
+
+같은 [淵海 장의 侯知府 예](https://sajumania.com/ebook/to01-06/to01-06-02-27.htm)는 `乙酉/乙卯/辛卯/辛卯`로 時支卯藏乙 偏財 외 年干乙/月干乙 및 日支卯藏乙도 존재하며 반복과 財旺, 日干 약세의 균형에 관한 부연을 포함한다. 예시로 실렸다는 사실이 곧 언제나 吉格이라는 증명은 아니며, 기계적 추가 1개=무조건 위반이라는 보편 식을 허락하지 않는다. 李參政 `庚寅/乙酉/甲子/戊辰` 사례에서는 年支寅藏戊(甲日 偏財)가 있지만 해당 변수 하나를 분리하지 않았으므로 단독 허용 판정을 하지 않는다.
+
+[1926 文明書局 NLC 神峰通考 PDF 167면 서지](https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf)는 확인했으나 **원본 PDF 다운로드 및 면별 스크린샷 실패로 해당 인쇄면은 미판독**. 두 전사의 계통 독립·1926 본문의 字形/異文도 미확인이다. `三處`의 문맥상 年月日 비교를 뒷받침하는 **전사 기반 연구 단서**만 추가했으며 직접 판독 인쇄 원본 수 +0, `別宮` 日支 藏干 개별 포함 / `再見` 모든 藏干 자동 셈법 / `一位` 정확한 발생 단위는 `UNADJUDICATED`. 새 TrustGrant/consumer/Preview/Official/Production 승인 없음, N27 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0** 유지. 양 PR Draft·미병합. 기관 문의·메일 의존성 없음.
