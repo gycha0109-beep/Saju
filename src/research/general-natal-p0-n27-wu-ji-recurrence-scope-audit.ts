@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v6' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v7' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -311,6 +311,50 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
           fourPrintingsAreGenealogicallyIndependent: false as const,
           originalAuthorialManuscriptGlyphCertified: false as const,
           printedGlyphDoesNotDefineZaiJianCountingScope: true as const,
+        }),
+        // Direct side-by-side reading of TWO specified leaf locations.
+        // Agreement across a small set of phrases is not full-text collation.
+        // Distinct printed settings do not certify independent transmission.
+        hourWealthLocalLeafCollation: Object.freeze({
+          version: 'n27-harvard-taiwan-local-leaf-collation-v1' as const,
+          auditStatus: 'SAMPLED_PHRASE_AGREEMENT_ONLY' as const,
+          harvardHoldingId: 'HARVARD_DRS_53262215_VOL_5' as const,
+          harvardOriginalPdfSha256: 'ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831' as const,
+          harvardHourWealthPdfPage: 45 as const,
+          harvardHighResPage45Sha256: 'b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12' as const,
+          taiwanHoldingId: 'TAIWAN_NCL_06589_1578' as const,
+          taiwanOriginalPdfSha256: '3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd' as const,
+          taiwanHourWealthPdfPages: Object.freeze([375, 376] as const),
+          taiwanPdfPage375PreviousRasterSha256: '6807b6ab78cc0d2cd4bbe12d9b059dac977296134976be402ea53f6d54472afe' as const,
+          taiwanPdfPage376PreviousRasterSha256: 'f43b34d006ba75a50179fc04bdcd377301bc9b25caf7cc4adc0146c8a82121e8' as const,
+          sampledPrintedPhraseAgreements: Object.freeze([
+            Object.freeze({ text: '時上偏財別宮忌見' as const, harvardPage: 45 as const, taiwanPage: 375 as const }),
+            Object.freeze({ text: '柱中不宜再見戊己' as const, harvardPage: 45 as const, taiwanPage: 376 as const }),
+            Object.freeze({ text: '只要一位不宜多逢' as const, harvardPage: 45 as const, taiwanPage: 376 as const }),
+            Object.freeze({ text: '天元透出為妙支內所藏次之' as const, harvardPage: 45 as const, taiwanPage: 376 as const }),
+            Object.freeze({ text: '時上偏財不用多' as const, harvardPage: 45 as const, taiwanPage: 376 as const }),
+          ]),
+          sampledAgreementsArePunctuationNormalized: true as const,
+          entireChapterVerbatimCollationCompleted: false as const,
+          localSampleShowsSubstantiveVariant: false as const,
+          noVariantAnywhereInVolumeCertified: false as const,
+          catalogHarvardCharactersPerLine: 20 as const,
+          catalogTaiwanCharactersPerLine: 22 as const,
+          matchingPhysicalSettingFromSameCarvedWoodblockSupported: false as const,
+          nonidenticalPrintedSettingSupported: true as const,
+          taiwanCatalogPlateHeartTitle: '三命會通' as const,
+          taiwanCatalogSingleFishtail: true as const,
+          taiwanCatalogListsEngraverNames: true as const,
+          namedEngraverAtExactComparedLeafRead: false as const,
+          engravedNameAtExactLeaf: 'UNREADABLE' as const,
+          actualLeafRecarvingOrReplacementProven: false as const,
+          actualLeafLossProven: false as const,
+          commonTextualAncestor: 'UNADJUDICATED' as const,
+          independentTextualWitnesses: 'UNADJUDICATED' as const,
+          sampleAgreementCanAuthorizeBieGongDayScope: false as const,
+          sampleAgreementCanAuthorizeZaiJianHiddenCount: false as const,
+          sampleAgreementCanAuthorizeYiWeiUnit: false as const,
+          sourceOnlyNoConsumerPromotion: true as const,
         }),
         harvardVolumeOneOriginalPrefaceRead: Object.freeze({
           sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE' as const,
