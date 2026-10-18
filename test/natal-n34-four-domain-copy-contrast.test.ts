@@ -58,6 +58,7 @@ describe('N34 original Korean research copy vs changed source vs changed chart p
     expect(result.pairCount).toBe(4);
     expect(result.sameChartControlPairCount).toBe(1);
     expect(result.distinctChartPairCount).toBe(3);
+    expect(result.uniqueDifferentChartPairCount).toBe(3);
     expect(result.pairs[0]?.domains.every(d=>d.difference==='unchanged' ||
       d.difference==='insufficient_research_evidence')).toBe(true);
     const distinct=result.pairs.slice(1,3).flatMap(p=>p.domains);
