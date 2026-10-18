@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v12' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v13' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -604,6 +604,43 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             hourVisiblePianCai: '戊' as const,
             yearBranchHiddenPianCai: '寅藏戊' as const,
             sourceExplicitlyTestsHiddenYearAsRuleException: false as const,
+          }),
+          // Later material in the SAME 時上偏財 section describes a different
+          // 時月偏財類聚 configuration; not an unqualified 時上偏財 verdict.
+          shenfengXiwenHourMonthClusterCase: Object.freeze({
+            evidenceChannel: 'PUBLIC_TRANSCRIPTION_ONLY' as const,
+            primaryTranscription: 'https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx' as const,
+            comparisonTranscription: 'https://zh.wikisource.org/zh-hant/神峰通考' as const,
+            heading: '希文自造時月偏財類聚之格' as const,
+            chart: Object.freeze(['己酉', '丙子', '壬寅', '乙巳'] as const),
+            dayMaster: '壬' as const,
+            monthStemVisiblePianCai: '丙' as const,
+            dayBranchHiddenPianCai: '寅藏丙' as const,
+            hourBranchHiddenPianCai: '巳藏丙' as const,
+            hourStemIsNotPianCai: true as const,
+            sourceSectionHasFavorableClusterWording: true as const,
+            observedWording: '喜時日偏財，類聚親切' as const,
+            samePrintedWordingInTwoPhysicalEditionsCertified: false as const,
+            wikiTranscriptionHasPianCaiTypo: '騙財' as const,
+            variantCertifiedAsHistoricalPrinting: false as const,
+            caseIsSeparatelyLabeledHourMonthCluster: true as const,
+            doesNotProveUniversalExtraWealthTolerance: true as const,
+            doesNotIsolateDayHiddenStemIndependentEffect: true as const,
+            classicalCountUnitApproved: false as const,
+            issuerIdentityBeyondHeadingVerified: false as const,
+          }),
+          // Earlier physical bibliographic candidate, NOT a read locus.
+          locShenfengEarlyPrintedCandidate: Object.freeze({
+            source: 'https://www.loc.gov/item/2014514308/' as const,
+            catalogTitle: '新鐫神峰張先生通考闢謬命理正宗大全' as const,
+            estimatedPrintDate: '清順治間[1638–1661]' as const,
+            printLineageIndependence: 'UNADJUDICATED' as const,
+            editionSummaryLinesPerPage: 11 as const,
+            editionSummaryCharactersPerLine: 22 as const,
+            juanTwoDigitalImagesCataloged: true as const,
+            exactHourWealthFolioInspected: false as const,
+            manuscriptOrHistoricalTextVerified: false as const,
+            incrementOfDirectReadPrintedWitnesses: 0 as const,
           }),
           commons1926ScanCatalogue: 'https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf' as const,
           commons1926FileDeclaredPages: 167 as const,
