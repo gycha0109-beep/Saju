@@ -1,4 +1,8 @@
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import { CAREER_NATAL_CLAIM_NARRATIVE_PROFILES } from '../research/career-natal-narrative-profiles.js';
+import { WEALTH_NATAL_CLAIM_NARRATIVE_PROFILES } from '../research/wealth-natal-narrative-profiles.js';
+import { BUSINESS_NATAL_CLAIM_NARRATIVE_PROFILES } from '../research/business-natal-narrative-profiles.js';
+import { RELATIONSHIP_NATAL_CLAIM_NARRATIVE_PROFILES } from '../research/relationship-natal-narrative-profiles.js';
 import type { NatalN31Domain, NatalN31DomainClaim } from './natal-n31-four-domain-claim-readings.js';
 import {
   auditNatalN34FourDomainCopyContrasts,
@@ -17,12 +21,31 @@ const DOMAINS = [
 function guard(condition:unknown,reason:string):asserts condition {
   if(!condition)throw new TypeError('N35 original-copy comparison: '+reason);
 }
+const ORIGINAL_PROFILES=new Map([
+  ...CAREER_NATAL_CLAIM_NARRATIVE_PROFILES,
+  ...WEALTH_NATAL_CLAIM_NARRATIVE_PROFILES,
+  ...BUSINESS_NATAL_CLAIM_NARRATIVE_PROFILES,
+  ...RELATIONSHIP_NATAL_CLAIM_NARRATIVE_PROFILES,
+].map(p=>[p.claimType,p]));
 function escapeHtml(value:string):string {
-  return value.replace(/[&<>"']/gu,char=>({
+  const entities:Record<string,string>={
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;',
-  })[char]!);
+  };
+  return value.replace(/[&<>"']/gu,char=>entities[char]!);
+}
+function checkOriginalKoreanClaim(claim:NatalN31DomainClaim):void {
+  const profile=ORIGINAL_PROFILES.get(claim.claimType);
+  guard(profile!==undefined && profile.version===claim.profileVersion &&
+    profile.requiredMethodAttribution && profile.allowedEpistemicTypes.includes('interpretation'),
+    'research narrative profile version or interpretation authority changed');
+  for(const key of ['headline','summary'] as const){
+    const original=profile.templates?.filter(t=>t.language==='ko'&&t.templateKey===key)??[];
+    guard(original.length===1&&original[0]?.text===claim[key],
+      'original Korean '+key+' was modified or does not match exact research profile');
+  }
 }
 function claimHtml(claim:NatalN31DomainClaim):string {
+  checkOriginalKoreanClaim(claim);
   return '<article class="claim"><h5>'+escapeHtml(claim.headline)+'</h5>'+
     '<p>'+escapeHtml(claim.summary)+'</p>'+
     '<p class="fact">계산으로 확인된 위치: '+
@@ -87,7 +110,7 @@ export function renderNatalN35FourDomainPairReader(
         '<div class="columns">'+readerSide(left,domain)+readerSide(right,domain)+
         '</div></section>';
     }).join('');
-    return '<details class="pair"><summary>'+String(i+1)+'/21 · '+
+    return '<details class="pair"><summary>'+String(i+1)+'/'+String(recalculated.pairCount)+' · '+
       escapeHtml(pair.left)+' ↔ '+escapeHtml(pair.right)+
       (pair.sameChart?' · 동일 입력 대조':' · 서로 다른 계산 명식')+
       '</summary>'+panels+'</details>';
