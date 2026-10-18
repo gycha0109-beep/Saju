@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v8');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v9');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -356,6 +356,52 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       independentVotesFromTextAgreementAuthorized: false,
       cannotUseToDecideBieGongZaiJianOrYiWei: true,
     });
+    const registration = printed.mainlandNlcTaiwan06589SiftRegistrationAudit;
+    expect(registration).toMatchObject({
+      status: 'STRONG_SPATIAL_REGISTRATION_NO_POSITIVE_SHARED_BLOCK_DEFECT',
+      mainlandPdfPage: 43,
+      taiwanPdfPage: 376,
+      mainlandHoldingId: 'NLC_411999029701_VOL_5_UPPER',
+      taiwanHoldingId: 'TAIWAN_NCL_06589_1578',
+      algorithm: 'OpenCV_SIFT_BF_KNN_RANSAC_HOMOGRAPHY',
+      detectorMaxFeatures: 8500,
+      detectorContrastThreshold: 0.012,
+      detectorEdgeThreshold: 15,
+      knnRatioThreshold: 0.74,
+      ransacDestinationThresholdPixels: 3.5,
+      originalRoiPixelBounds: {
+        mainland: [426, 155, 806, 689],
+        taiwan: [1083, 356, 2015, 1665],
+      },
+      mainlandP43Taiwan1578P376: {
+        siftRatioAccepted: 406,
+        homographyInliers: 245,
+        inlierFraction: 0.6034,
+        medianInlierReprojectionPixelsInTaiwanRaster: 1.925,
+        inliersDistributedAcrossMostOfComparedPrintedLeaf: true,
+      },
+      automatedMatchingStrengthVersusControls: 'SUBSTANTIALLY_HIGHER',
+      metricSensitiveToRoiRenderingAlgorithmAndThresholds: true,
+      identicalSourcePdfOrScanReuseCertifiedExcluded: false,
+      sharedUniqueGlyphChipDefectLocatedAndVisuallyCertified: false,
+      exactEngraverSameAtLeaf: 'UNADJUDICATED',
+      identicalCarvedPhysicalWoodblock: 'UNADJUDICATED',
+      lineageIndependence: 'UNADJUDICATED',
+      physicalPrintingIdentityPromoted: false,
+      interpretationCountingRuleChanged: false,
+      originalPrintWitnessCountIncrement: 0,
+      noInstitutionalOutreachRequired: true,
+      nextAllowedEvidencePath: 'PUBLIC_SCAN_GLYPH_DAMAGE_FINGERPRINT_ONLY',
+    });
+    expect(registration.negativeControls).toEqual([
+      { comparedWith: 'MAINLAND_NLC_P42', siftRatioAccepted: 57, homographyInliers: 8 },
+      { comparedWith: 'MAINLAND_NLC_P44', siftRatioAccepted: 86, homographyInliers: 8 },
+      { comparedWith: 'HARVARD_REPRINT_P45', siftRatioAccepted: 22, homographyInliers: 5 },
+    ]);
+    expect(registration.mainlandOriginalPdfSha256)
+      .toBe(printed.printWitnesses[2]?.originalPdfSha256);
+    expect(registration.taiwanOriginalPdfSha256)
+      .toBe(printed.taiwanWanli1578HourWealthPrintedLocus.originalPdfSha256);
     expect(printed.harvardVolumeOneOriginalPrefaceRead).toMatchObject({
       sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE',
       sameHarvardDrsAsPreviouslyReadVolumeFive: true,
