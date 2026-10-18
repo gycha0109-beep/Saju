@@ -31,6 +31,10 @@ import { auditNatalN27bClaimReceipts } from '../dist/preview/natal-n27b-claim-re
 import { composeNatalN28VerifiedReaderReport, NATAL_N28_REPORT_TITLE } from '../dist/preview/natal-n28-verified-reader-report.js';
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expanded-source-reading.js';
+import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
+import { runInterpretation as runSpecialistInterpretation } from '../dist/interpretation/interpretation-engine.js';
+import { buildNatalN32ExpandedDomainResearchReading } from '../dist/preview/natal-n32-expanded-domain-research-reading.js';
+import { auditNatalN34FourDomainCopyContrasts } from '../dist/preview/natal-n34-four-domain-copy-contrast.js';
 
 const bearer = 'local-natal-quality-audit-not-a-production-secret';
 const dates = [
@@ -418,6 +422,40 @@ async function main() {
     `${n10.uniqueDisplayedChartPairCount} distinct displayed-chart pair collisions; ${n10Path}\n`,
   );
 
+
+  // N34: independent four-domain source-copy comparison for the SAME 35
+  // real General HTTP requests and N10's 20 actual case pairs (19 unique
+  // differing charts, one same-input control). No extra Product semantics.
+  const n34Registry = createBusinessNatalReadingCandidateRegistry(auditNow.toISOString());
+  const n34Cases = inputs.map(input => {
+    const original = interpretedByCaseId.get(input.caseId);
+    if (!original) throw new Error('N34 missing exact HTTP-linked Canonical chart');
+    const specialist = runSpecialistInterpretation(original.snapshot, n34Registry, {
+      requestId:'n34-four-domain-'+input.caseId,now:auditNow,
+    });
+    const reading = buildNatalN32ExpandedDomainResearchReading(
+      original.snapshot, specialist, n34Registry,
+    );
+    if (!input.response || reading.calculationHash!==original.snapshot.calculationHash) {
+      throw new Error('N34 exact HTTP-linked research execution failed');
+    }
+    return {caseId:input.caseId,reading};
+  });
+  const n34 = auditNatalN34FourDomainCopyContrasts(n34Cases,n10.pairs.map(
+    pair=>({left:pair.left,right:pair.right})));
+  if(n34.actualCaseCount!==35 || n34.pairCount!==20 ||
+    n34.distinctChartPairCount!==19 || n34.sameChartControlPairCount!==1 ||
+    n34.mayPublish || n34.maySell || n34.usefulComplete) {
+    throw new Error('N34 exact real HTTP pair quality evidence mismatch');
+  }
+  const n34Path = resolve(outputPath.endsWith('.json')
+    ? outputPath.slice(0,-5)+'.n34-four-domain-copy-contrast.json'
+    : outputPath+'.n34-four-domain-copy-contrast.json');
+  writeFileSync(n34Path,JSON.stringify(n34,null,2)+'\\n','utf8');
+  process.stdout.write('Natal N34 four-domain source-copy evidence: '+
+    n34.actualCaseCount+' HTTP-linked cases, '+n34.distinctChartPairCount+
+    ' independent different-chart pairs; '+JSON.stringify(n34.counts)+
+    '; research-only, not independent personal meaning approval; '+n34Path+'\\n');
 
   // N8: reproduce three actual meaning collisions through every existing
   // internal stage. This is quality evidence, not another consumer renderer.
