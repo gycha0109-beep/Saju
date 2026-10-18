@@ -238,3 +238,16 @@ Research #2553 `saju-n27-wu-ji-recurrence-scope-sensitivity-v10`, 정확 HEAD `0
 Bridge `publicPrintedGlyphMicrodefectHold`은 `NO_CERTIFIED_SHARED_UNIQUE_CHIP_WITH_AVAILABLE_PUBLIC_RASTERS`로 별도 등록한다. 245개 SIFT 대응점을 245개의 결손 증거로 주장하지 않는다. **동일 판목=UNADJUDICATED**, **독립 서지/원본 전승=UNADJUDICATED**, 독립 증거물 소장 수 증가 0, 06590은 서지 후보에 머문다. 서지 이용허가 신청·기관 연락은 해결 경로로 사용하지 않는다. 다음 선택지는 공개된 고해상 제3 판본/새 스캔의 **실제 존재가 입증되는 경우에 한하여** 이용하는 것이다.
 
 사주 계산·소비자 해석 권한은 여전히 **다섯 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 **1 vs 0**, `別宮/再見/一位` 계산 단위 미확정, TrustGrant/Preview/Official/Production 신규 승인 없음. 두 PR Draft·미병합. v10 CI는 최신 정확 SHA에서 검증해야 한다.
+
+
+## 2026-10-18 N27 v11 — 「喜忌篇」 時上偏財 주석의 실제 두 명식 반례, 그러나 자동 규칙 불승인
+
+**정확 Research #2553 HEAD `b7d64f58d0f84f9f1e8d1393ca4dac31bc6e4b2a`**, 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v11`을 Bridge 소스와 테스트에 고정했다. Research 문서 `30 및 `yuanhaiXijiHourWealthCommentaryCases`를 참조한다.
+
+**직접 읽은 공개 전사:** [『淵海子平』 喜忌篇](https://sajumania.com/ebook/to01-06/to01-06-02-01.htm)과 [『神峰通考』 喜忌篇](https://zh.wikisource.org/zh-hant/神峰通考)는 `時上偏財別宮忌見`의 해설에서 `用時上天元及支內人元，只要時上一位有之，始爲貴，若別位有之，便多了`를 실으며, 두 명식을 대조한다. **두 디지털 전사를 독립적인 原刻의 판면 증거로 계산하지 않았다.** 실제로 첫 긍정 명식 대상의 관직 표기는 각 사이트에서 `都統制`와 `邵統制`로 불일치한다. 이것을 古刻의 독립적인 이문으로 승인하지 않는다.
+
+**(1) 긍정 사례** `丁酉 / 己酉 / 戊子 / 壬子`: 戊日에 時干 壬이 偏財. 日支 子藏癸는 戊日의 **正財**지만 주석은 긍정 사례로 든다. 따라서 正財/偏財 구별 없이 모든 지지 藏干 재성을 합쳐 하나의 금지 출현으로 세는 가설에 반례가 된다. 藏干 偏財도 항상 무시된다는 결론은 아니다.
+
+**(2) 부정 사례** `丁丑 / 己酉 / 丁丑 / 辛亥`: 丁日에 時干 辛이 偏財. 年/月/日의 **다른 천간에는 辛이 없다**. 반면 年支丑/月支酉/日支丑에 藏辛이 있고, 원문 주석은 `月支又酉丑會局，所謂別宮忌見也`라고 지시한다. 오직 다른 위치의 노출된 偏財 천간만 보고 지지·組合을 무시하는 규칙과 **주석 사례가 충돌**한다. 다만 年支丑과 日支丑이 겹치므로 日支 단독 효과를 분리할 수 없고, 酉丑會局은 藏干 1개 추가만으로 언제나 위반임을 뜻하지 않는다. 사용자가 별도 승인하지 않은 완전 巳酉丑三合 금지 구현도 없다.
+
+**Bridge 심사결론:** `yuanhaiXijiCaseHypothesisHold`의 **부정·긍정 반례 근거는 source-scoped 설명에 한정**. `別宮` 日柱 포함, `再見` 모든 藏干의 셈법, `一位`의 역사적 unit은 `UNADJUDICATED`. **다섯 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, 새 TrustGrant/Preview/Official/Production/consumer 승인 없음. `06590`이나 기관 응답은 진행 의존성이 아니다. 두 PR Draft/미병합, 최신 v11 CI 검증 별도.
