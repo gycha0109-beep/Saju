@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('9b2784396d70dfdd3c4b824486186be556e202c2');
+    expect(review.researchHeadReviewed).toBe('7b9b7b5a46cfb2d968fa17669124c7826ddd4e85');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v5',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v6',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -184,6 +184,42 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
         printedBranchExample: '甲生丑月內有辛金又值酉時',
         additionalStemPhrase: '若天干復透辛多',
         printLineageIndependenceCertified: false,
+        harvardVolumeOnePrefaceDirectEvidence: {
+          originalHolding: 'HARVARD_DRS_53262215_VOL_1_PREFACE',
+          sameDrsAsHourWealthVolumeFive: true,
+          originalPdfPages: [2, 4, 6],
+          originalPrefaceDate: '雍正乙卯花朝',
+          signer: '蔣國祥',
+          printedWoodblockRecoveryAndRepairDescribed: true,
+          harvardSameHoldingPrefaceConfirmed: true,
+          linkToExactTaiwan1578WoodblocksProven: false,
+          prefaceFixesVolumeFivePrintYear: false,
+        },
+        taiwanWanli1578ThirdZhengGuanPrintEvidence: {
+          sourceId: 'TAIWAN_NCL_06589_1578',
+          catalogedYear: 1578,
+          volumeFiveStartsPdfPage: 337,
+          zhengGuanHeadingPdfPage: 340,
+          hiddenXinThenYouHourExamplePdfPage: 341,
+          branchExample: '甲生丑月內有辛金又值酉時',
+          textualLineageIndependentFromMainlandNlc: false,
+          countingTransferToHourWealthAuthorized: false,
+        },
+        taiwanWanli1578PrintedHourWealthClause: {
+          sourceId: 'TAIWAN_NCL_06589_1578',
+          originalPdfSha256: '3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd',
+          hourWealthHeadingPdfPage: 375,
+          exactGlyphPdfPage: 376,
+          directlyPrintedClause: '柱中不宜再見戊己',
+          printedGlyph: '己',
+          previouslyReadHarvardCadalMainlandNlcConcur: true,
+          totalDirectPrintedHoldingGroups: 4,
+          fourIndependentStemmaticVotesLicensed: false,
+          historicalZaiJianScopeAdjudicated: false,
+          historicalBieGongScopeAdjudicated: false,
+          historicalYiWeiCountAdjudicated: false,
+          anyClaimPromotionAuthorized: false,
+        },
         bibliographicRelation: {
           classification: 'DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES',
           harvardPrintedLines: 10,
