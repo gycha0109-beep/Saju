@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v11');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v12');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -508,6 +508,58 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
         classificationIsNotVerifiedBiographicalOutcome: true,
       },
     ]);
+    const three = printed.threeNonHourPillarsCommentaryScopeAudit;
+    expect(three).toMatchObject({
+      status: 'TEXTUAL_THREE_OTHER_PILLARS_SUPPORTED_COUNTING_UNIT_UNDECIDED',
+      yuanhaiSourceTitle: '淵海子平 內十八格 時上偏財格',
+      yuanhaiTranscribedRule: '只要時上一位，不要多。而三處不要再見財',
+      shenfengSourceTitle: '神峰通考 時上偏財格 附月偏財格',
+      shenfengTranscribedRule: '只要一位貴，不要多，而三處不要再見財',
+      sameShenfengSeparateHourNobleGloss: '若年月日又有，收為辛苦勞碌之命也',
+      separateHourNobleGlossIsSevenKillingNotHourWealth: true,
+      sameWordsInSeparateRuleNotAutomaticCrossRuleAuthority: true,
+      threePlacesCanReferToYearMonthDayPillars: true,
+      yearMonthDayAreDistinctFromHourPillar: true,
+      explicitlySpecifiesStemAndHiddenStemOccurrenceCounting: false,
+      explicitlyDecidesDayBranchAsOneIndependentHiddenRepeat: false,
+      commons1926FileDeclaredPages: 167,
+      commons1926CatalogPrintedYear: 1926,
+      commons1926PrintPdfRetrievedSuccessfully: false,
+      commons1926TargetFolioImageDirectlyRead: false,
+      independentAncientWoodblockTextVerified: false,
+      exactDayPillarScopeHistoricalVerdict: 'UNADJUDICATED',
+      exactHiddenStemCountingHistoricalVerdict: 'UNADJUDICATED',
+      exactYiWeiUnitHistoricalVerdict: 'UNADJUDICATED',
+      printedWitnessIncrement: 0,
+      ruleEngineOrConsumerAdmission: false,
+      requiresNoInstitutionalContact: true,
+    });
+    expect(three.shenfengStemVsBranchHourExamples).toEqual([
+      '庚日見甲干或寅支',
+      '辛日見乙干或卯支',
+    ]);
+    expect(three.internalYuanhaiCaseWithVisibleElsewherePianCai).toMatchObject({
+      pillars: ['乙酉','乙卯','辛卯','辛卯'],
+      dayMaster: '辛',
+      hourPillarBranchHidesPianCai: '時支卯藏乙',
+      yearVisiblePianCaiStem: '乙',
+      monthVisiblePianCaiStem: '乙',
+      dayBranchAlsoHidesPianCai: '日支卯藏乙',
+      passageCommentsOnRepeatedStemsAndBranches: true,
+      listedAsChartNotAutomaticFavorableHourWealth: true,
+      exactPrintedReadingVerified: false,
+      limitsAnyUniversalAbsoluteNoOtherCaiRule: true,
+    });
+    expect(three.separateYuanhaiListedCaseWithHiddenYearPianCai).toMatchObject({
+      pillars: ['庚寅','乙酉','甲子','戊辰'],
+      dayMaster: '甲',
+      hourVisiblePianCai: '戊',
+      yearBranchHiddenPianCai: '寅藏戊',
+      sourceExplicitlyTestsHiddenYearAsRuleException: false,
+    });
+    expect(three.yuanhaiPublicTranscription).toContain('sajumania.com');
+    expect(three.shenfengPublicTranscription).toContain('sajumania.com');
+    expect(three.commons1926ScanCatalogue).toContain('commons.wikimedia.org');
     expect(printed.harvardVolumeOneOriginalPrefaceRead).toMatchObject({
       sourceId: 'HARVARD_DRS_53262215_VOL_1_PREFACE',
       sameHarvardDrsAsPreviouslyReadVolumeFive: true,
