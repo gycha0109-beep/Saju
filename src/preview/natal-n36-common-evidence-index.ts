@@ -83,7 +83,7 @@ export function buildNatalN36CommonEvidenceIndex(reading: OriginalReading) {
         const existing = index.get(path);
         requireValid(existing === undefined || existing.value === value,
           'one Canonical fact path mapped to conflicting displayed evidence');
-        const record = existing ?? { value, domains: new Map() };
+        const record = existing ?? { value, domains: new Map<NatalN31Domain, ClaimReference[]>() };
         if (existing === undefined) index.set(path, record);
         const domainClaims = record.domains.get(domain) ?? [];
         if (!domainClaims.some(c => c.claimId === claim.claimId)) domainClaims.push(reference);
