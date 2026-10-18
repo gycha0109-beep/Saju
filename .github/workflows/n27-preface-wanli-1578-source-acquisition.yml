@@ -1,0 +1,91 @@
+name: "[WT:saju] N27 Preface and Wanli 1578 Scan Acquisition (Research)"
+on:
+  push:
+    branches:
+      - research/saju/natal-19-pair-semantic-return-20261017
+    paths:
+      - .github/workflows/n27-preface-wanli-1578-source-acquisition.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-scan-candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - source: HARVARD_DRS_53262215_VOL_1_PREFACE
+            uri: "https://upload.wikimedia.org/wikipedia/commons/7/77/Harvard_drs_53262215_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_v.1%E5%BA%8F%E3%80%81%E5%8D%B7%E4%B9%8B%E4%B8%80%E3%80%81%E7%B8%BD%E7%9B%AE.pdf"
+            pages: "1-32"
+          - source: TAIWAN_NCL_06589_1578_1000P
+            uri: "https://upload.wikimedia.org/wikipedia/commons/f/f4/NCL-06589_1_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83.pdf"
+            pages: "1,35,70,110,150,190,230,270,310,350,390,430,470,510,550,590,630,670,710,750,790,830,870,910,950,990"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install print-image viewer dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils
+      - name: Acquire public original without text recognition
+        shell: bash
+        env:
+          SOURCE_URI: ${{ matrix.uri }}
+          SOURCE_ID: ${{ matrix.source }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/n27-preface-wanli/packet/pages"
+          curl --fail --location --silent --show-error --retry 3 --retry-delay 3 \
+            --connect-timeout 25 --max-time 260 \
+            --user-agent "MyeongHaAcademicSourceAudit/1.0 (noncommercial research)" \
+            "$SOURCE_URI" --output "$RUNNER_TEMP/n27-preface-wanli/original.pdf"
+          head -c 5 "$RUNNER_TEMP/n27-preface-wanli/original.pdf" | grep -q '%PDF-'
+          sha256sum "$RUNNER_TEMP/n27-preface-wanli/original.pdf" | tee "$RUNNER_TEMP/n27-preface-wanli/packet/original.sha256"
+          pdfinfo "$RUNNER_TEMP/n27-preface-wanli/original.pdf" | grep -E 'Pages:|File size:' | tee "$RUNNER_TEMP/n27-preface-wanli/packet/pdfinfo.txt"
+          printf 'source_id=%s\nuri=%s\nsource_kind=ORIGINAL_PUBLIC_PDF\nstatus=UNREVIEWED\n' \
+            "$SOURCE_ID" "$SOURCE_URI" > "$RUNNER_TEMP/n27-preface-wanli/packet/source.txt"
+      - name: Render selected numbered originals for direct human review
+        shell: bash
+        env:
+          PAGE_SPEC: ${{ matrix.pages }}
+        run: |
+          set -euo pipefail
+          PDF="$RUNNER_TEMP/n27-preface-wanli/original.pdf"
+          OUT="$RUNNER_TEMP/n27-preface-wanli/packet"
+          PAGE_COUNT="$(pdfinfo "$PDF" | awk '/^Pages:/ {print $2}')"
+          PAGES="$(PAGE_SPEC="$PAGE_SPEC" PAGE_COUNT="$PAGE_COUNT" python3 - <<'PY'
+import os
+limit=int(os.environ["PAGE_COUNT"])
+spec=os.environ["PAGE_SPEC"]
+nums=set()
+for item in spec.split(","):
+    pair=item.split("-")
+    if len(pair)==1:
+        low=high=int(pair[0])
+    elif len(pair)==2:
+        low,high=map(int,pair)
+    else:
+        raise ValueError("invalid range")
+    if low < 1 or high > limit or low > high: raise ValueError("page out of bounds")
+    nums.update(range(low,high+1))
+print(" ".join(map(str,sorted(nums))))
+PY
+          )"
+          for n in $PAGES; do
+            page="$(printf '%04d' "$n")"
+            pdftoppm -f "$n" -l "$n" -singlefile -scale-to 1100 -png \
+              "$PDF" "$OUT/pages/page-$page"
+            sha256sum "$OUT/pages/page-$page.png" >> "$OUT/page-raster.sha256"
+          done
+          test -s "$OUT/page-raster.sha256"
+          printf 'UNREVIEWED: rendering is not paleographic authentication. Do not infer text genealogy or authorize a Claim.\n' > "$OUT/REVIEW_STATUS.txt"
+      - name: Upload unadjudicated original page images
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-lineage-original-pages-${{ matrix.source }}
+          path: ${{ runner.temp }}/n27-preface-wanli/packet/
+          retention-days: 7
+          if-no-files-found: error
