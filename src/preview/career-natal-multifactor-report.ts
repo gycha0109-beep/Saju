@@ -128,7 +128,11 @@ export function buildCareerMultifactorResearchReport(
     claim.state === 'active' && claim.snapshotId === snapshot.snapshotId);
   guard(active.every(c => selected.has(c.claimId)),
     'some matched Career claims were not selected by the original EvidenceSelector');
-  const units = active.map(claim => entry(claim, execution, registry));
+  // Reader ordering is explicit narrative policy; never registry/ClaimId/hash order.
+  const AXES: readonly Axis[] = ['execution', 'responsibility', 'tension'];
+  const units = active.map(claim => entry(claim, execution, registry))
+    .sort((a, b) => AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
+      (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
   const visible = units.filter(unit => unit.channel === 'visible_stems');
   const primary = visible[0];
   const supporting = units.filter(unit => unit.claimType !== primary?.claimType &&
