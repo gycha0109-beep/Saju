@@ -355,3 +355,29 @@ Research condition matrix v2는 printedExampleKind, visible/hidden other-pillar 
 3. 대조되는 「時上偏財」 원문은 `此與時上偏官格相似`, `只要一位不宜多逢`, `柱中不宜再見戊己`, `時上偏財別宮忌見`이다. **직접 유사하다고 언급하는 것은 時上偏官이지 正官이 아니다.** 서로 다른 正官 구절이 日柱 범위나 藏干 셈법을 時上偏財에도 승인했다는 명시 문장은 확인하지 않았다.
 
 **판정:** `zhengGuanPrintCrosscheck.status=TWO_PRINT_SCAN_WITNESSES_PASSAGE_DIRECTLY_READ`. 이전의 `DIGITAL_TRANSCRIPTION_ONLY` 참고자료가 물리 이미지 2건으로 **해당 正官 용례에 한해서** 보강되었다. 하지만 하버드/국가도서관 각본의 **텍스트 계통적 독립성은 인증하지 않았다**. `時上偏財`에 대한 `別宮`의 日柱 포함, `再見`의 지장간 포함, `一位`의 단위 문제는 모두 여전히 **UNADJUDICATED**이며, 정관→시상편재의 규칙 이전도 **금지**. 모델 v4는 출처 추적·검증 강화만 하며 발생 횟수 모델, 실제 Canonical 계산, 다섯 Claim HOLD, N17 METHODOLOGY_CONFLICT, N13 정확 겁재 T8 1 대 0, Preview/Official/Production 차단을 변경하지 않는다.
+
+
+## 24. Harvard 補刊本 ↔ NLC 萬曆刻本 서지·본문 계통 분리 (2026-10-18, N27 v5)
+
+**판정의 단위를 분리한다.** 전차 `23에서는 Harvard PDF 6–7면과 NLC PDF 5–6면의 「論正官」 동일 본문을 실제 인쇄 스캔으로 읽었다. 이것이 입증하는 것은 **서로 다른 소장처에 있는 별도의 물리적 인쇄 자료 두 건이 해당 구절을 지닌다**는 사실이다. 이번에는 서지의 행격(行格)과 판본 연대 표기를 추가 대조했지만 **전승 계보의 독립성**까지 입증한 것이 아니다.
+
+| 서지 축 | Harvard-Yenching `drs:53262215`, 卷五 | 中國國家圖書館 `411999029701`, 第9冊 卷五上 |
+|---|---|---|
+| 원 서지 참조 | [Harvard-Yenching 원본의 Commons 서지](https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf) · [Harvard 도서관 링크](https://id.lib.harvard.edu/alma/990079334100203941/catalog) | [NLC 원본의 Commons 서지](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf) |
+| 소장 / 디지털화 | Harvard-Yenching Library, drs 53262215 | National Library of China, 原件 17605 / 中華古籍資源庫 |
+| 자료가 제시한 형식 | `補刋本`, **十行二〇字** | `刻本`, **10行22字, 白口, 四周雙邊** |
+| 연대 표기 | **清雍正13年? (1735?)**, 서문에 근거한 추정 연대; 물음표 제거 금지 | **明萬曆[1573–1620]** 범위. 이 개체의 정확한 1578년 인쇄라고 인증하지 않음 |
+| 이번 사례 인쇄 스캔 | PDF 6–7면; 3구절 확인, `23의 각 PNG 해시 | PDF 5–6면; 3구절 확인, `23의 각 PNG 해시 |
+
+**근거 구분:** 두 소장처의 파일 SHA가 다르고 매 행 글자 수 **20 대 22**인 서지 기록으로 **같은 물리적 인쇄 블록/동일 촬영 PDF를 두 번 인용한 사례가 아니라 서로 다른 인쇄 편성이라는 강한 근거**를 얻었다. 그러나 이 사실을 **서로 독립적으로 전해진 문장 두 표**로 세면 안 된다. 1735? 補刊本이 더 이른 萬曆版의 문장을 참고·복각·전사했는지, 어느 계열의 다른 판을 중간에 거쳤는지, 공통 오각(誤刻)이나 개각 흔적이 있는지 확인하지 않았다.
+
+**별개 명판 후보를 혼동하지 말 것:** [대만 國家圖書館 고적목록의 明萬曆六年(1578)刊本](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2)은 **다른 소장처·다른 목록 개체**다. 그 목록의 `1578`과 10행22자 제원을 중국 NLC 제9冊의 **확정 인쇄 연대**로 빌려 쓸 수 없다. [中文古籍聯合目錄의 普林斯頓 소장 雍正十三年 蔣氏修補金陵李氏刊本](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=2c9735937bff4bbba1095711109793f2fDEyNDM3OQ2.3YmwactxuROfMn60_6V8G0sYql1LtZILVpJsbSmsxyc_&page=)도 **Harvard의 판각 계통을 인증하는 동일 소장본이 아니다**. 공통 연대·서명만으로 직접 모본 관계를 확정하지 않는다.
+
+**증거 단계(혼동 금지):**
+1. 서로 다른 **소장/원본 PDF/촬영 자료**: 확인.
+2. 서지상 **판각 행격(10×20 대 10×22)**과 雍正補刊 vs 萬曆刻본 시대 표기의 차이: 확인(하버드 서지의 연대 불확실성 포함).
+3. 「論正官」 해당 locus **인쇄 자구의 일치**: `23에서 직접 읽음.
+4. **동일 저본에 기대지 않은 계통적 독립성**, 1735?본의 모본, 상호 이문 계열 / 『四庫』와의 선후 및 공통 오류: **미검증**.
+5. **時上偏財** `別宮` 범위 / `再見` 藏干 범위 / `只要一位` 셈 단위, 특히 日柱 산입: **UNADJUDICATED**.
+
+이를 `sameVolumeZhengGuanPrintCrosscheck.bibliographicWitnessRelation`에 사실·서지 설명·추정 불가 사항으로 추가하고 회귀 테스트로 고정한다. v5의 변화는 **출처별 서지 판단 경계**뿐으로, 실제 Canonical 계산, 4+4 가설, 기존 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 **1 vs 0**, 모든 Preview/Official/Production 입장은 불변이다. **v5 최신 SHA CI는 별도 확인**해야 한다.
