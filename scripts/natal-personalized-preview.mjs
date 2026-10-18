@@ -359,8 +359,12 @@ function renderN31FourDomainResearch(result) {
       escapeHtml(claim.calculatedPositions.join(' · '))+'</p>' +
       '<details><summary>기존 연구 Claim · Rule · Source</summary><p>'+
       escapeHtml(claim.claimType)+' · '+escapeHtml(claim.claimRuleId)+
-      ' · '+escapeHtml(claim.methodologyId)+' · '+
-      escapeHtml(claim.sourceIds.join(' / '))+'</p></details></article>';
+      '@'+escapeHtml(claim.claimRuleVersion)+' · '+
+      escapeHtml(claim.methodologyId)+'@'+escapeHtml(claim.methodologyVersion)+
+      ' · Narrative Profile@'+escapeHtml(claim.profileVersion)+' · '+
+      escapeHtml(claim.sourceIds.join(' / '))+'</p>'+
+      '<p>계산 사실 경로: '+escapeHtml(claim.calculatedFactPaths.join(' · '))+
+      '</p></details></article>';
     const excerpts=section.visibleClaims.map(renderClaim).join('');
     const additional=section.additionalVerifiedClaims.map(renderClaim).join('');
     const more=additional
