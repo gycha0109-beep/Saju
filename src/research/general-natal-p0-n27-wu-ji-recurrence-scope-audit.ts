@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v4' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v5' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -240,6 +240,45 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
         newSourceScanDownloadedInThisAudit: false as const,
         priorOriginalRenderedArtifactsReopenedAndRead: true as const,
         twoDistinctHoldingPrintScansRead: true as const,
+        // Source-level book history is NOT equivalent to stemmatic
+        // independence. Holdings, imprint/dating, printed layout, shared
+        // readings and genealogical dependence are all different claims.
+        bibliographicWitnessRelation: Object.freeze({
+          status: 'DIFFERENT_PRINT_FORMATS_SUPPORTED_TEXTUAL_LINEAGE_UNRESOLVED' as const,
+          sourceClass: 'PUBLIC_CATALOG_METADATA_AND_PRINT_SCAN_LOCUS' as const,
+          harvard: Object.freeze({
+            catalogUri: 'https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf' as const,
+            holding: 'HARVARD_YENCHING' as const,
+            editionAsCataloged: '清雍正十三年補刊本' as const,
+            publicationYearApproximate: 1735 as const,
+            publicationYearIsQuestionMarked: true as const,
+            printedLinesPerHalfLeaf: 10 as const,
+            printedCharactersPerLine: 20 as const,
+            catalogSaysSupplementedWoodblockEdition: true as const,
+          }),
+          nlc: Object.freeze({
+            catalogUri: 'https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf' as const,
+            holding: 'NATIONAL_LIBRARY_OF_CHINA' as const,
+            editionAsCataloged: '明萬曆刻本' as const,
+            dateRangeStart: 1573 as const,
+            dateRangeEnd: 1620 as const,
+            exactImprintYearWithinRangeKnown: false as const,
+            printedLinesPerHalfLeaf: 10 as const,
+            printedCharactersPerLine: 22 as const,
+            goodBookNumber: '17605' as const,
+          }),
+          differentHoldingInstitutions: true as const,
+          differentSourcePdfHashes: true as const,
+          catalogedCharacterCountsDiffer: true as const,
+          samePrintingBlocksCannotBeInferred: true as const,
+          distinctPrintedLayoutsSupportedByCatalog: true as const,
+          woodblockTextualDescentAnalyzed: false as const,
+          copiesAreIndependentTextualTraditions: 'UNADJUDICATED' as const,
+          laterHarvardEditionCopiedEarlierNlcEdition: 'UNADJUDICATED' as const,
+          agreementsAreTwoTextuallyIndependentVotes: false as const,
+          externalMing1578LibraryCatalogIsThisNlcCopy: false as const,
+          bibliographicMetadataCannotAuthorizeClassicalCounting: true as const,
+        }),
         printLineageIndependenceCertified: false as const,
         directlyCertifiedHourWealthBieGongIncludesDay: false as const,
         directlyCertifiedHourWealthZaiJianIncludesHidden: false as const,
