@@ -72,7 +72,7 @@ describe('N35 actual four-domain research original side-by-side reader',()=>{
       }),
     }}};
     expect(()=>renderNatalN35FourDomainPairReader([manipulated,b],pairs,audit))
-      .toThrow(/fingerprint changed/u);
+      .toThrow(/original Korean headline/u);
     expect(()=>renderNatalN35FourDomainPairReader(inputs,
       [{left:'a',right:'missing'}],audit)).toThrow(/without original chart/u);
     expect(audit.mayPublish).toBe(false);
