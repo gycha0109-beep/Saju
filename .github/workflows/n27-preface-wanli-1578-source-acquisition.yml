@@ -57,22 +57,22 @@ jobs:
           OUT="$RUNNER_TEMP/n27-preface-wanli/packet"
           PAGE_COUNT="$(pdfinfo "$PDF" | awk '/^Pages:/ {print $2}')"
           PAGES="$(PAGE_SPEC="$PAGE_SPEC" PAGE_COUNT="$PAGE_COUNT" python3 - <<'PY'
-import os
-limit=int(os.environ["PAGE_COUNT"])
-spec=os.environ["PAGE_SPEC"]
-nums=set()
-for item in spec.split(","):
-    pair=item.split("-")
-    if len(pair)==1:
-        low=high=int(pair[0])
-    elif len(pair)==2:
-        low,high=map(int,pair)
-    else:
-        raise ValueError("invalid range")
-    if low < 1 or high > limit or low > high: raise ValueError("page out of bounds")
-    nums.update(range(low,high+1))
-print(" ".join(map(str,sorted(nums))))
-PY
+          import os
+          limit=int(os.environ["PAGE_COUNT"])
+          spec=os.environ["PAGE_SPEC"]
+          nums=set()
+          for item in spec.split(","):
+              pair=item.split("-")
+              if len(pair)==1:
+                  low=high=int(pair[0])
+              elif len(pair)==2:
+                  low,high=map(int,pair)
+              else:
+                  raise ValueError("invalid range")
+              if low < 1 or high > limit or low > high: raise ValueError("page out of bounds")
+              nums.update(range(low,high+1))
+          print(" ".join(map(str,sorted(nums))))
+          PY
           )"
           for n in $PAGES; do
             page="$(printf '%04d' "$n")"
