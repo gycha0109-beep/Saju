@@ -410,3 +410,28 @@ Research condition matrix v2는 printedExampleKind, visible/hidden other-pillar 
 **확정 가능한 한계:** 원본 이미지에서 읽은 Harvard 1735? 보각본, CADAL 四庫, 中國 NLC 萬曆 범위 각본, **대만 1578 刊本** 총 네 소장 스캔에서 해당 문장 `戊己`의 字形이 일치한다. 하지만 이를 **4개의 본문 계통 독립 투표**로 세지 않는다. 특히 1578 대만본과 중국 NLC 萬曆본은 행격이 10行22字인 서지상 유사 계열이므로 판목·版心·刻工·공통 오류 대조 없이 서로 독립이라고 단정할 수 없다. Harvard 권1 보각 서문도 바로 그 1578 대만 인쇄판을 모본으로 썼다는 증거는 아니다.
 
 **권위 경계 불변:** `再見戊己`의 정확한 문자는 강화되었지만 `再見`에 藏干 포함 여부, `別宮` 日柱 포함 여부, `一位`의 古文 counting unit은 모두 `UNADJUDICATED`. 「論正官」의 반복 계산을 「時上偏財」에 직접 이전하지 않는다. 새 consumer/Preview/Official/Production 승인 없음, 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0** 유지. v6의 전체 CI는 최신 정확 SHA에서 별도 확인해야 한다.
+
+
+## 26. 卷五 「時上偏財」 동일 locus의 1578 萬曆본 ↔ Harvard 補刊본 면 단위 대조 (2026-10-18, N27 v7)
+
+**이번 대조는 새 원본 수집이 아니라 v6에서 확보·인증한 원본 PDF 렌더의 면별 병렬 재판독**이다. [대만 國家圖書館 06589 官方 목록](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=69577a07b3444caf9b20e35e84a103e0fDcyODE10.578_oDtdzxby6wX5_W8cCvt1j5rqk4Hzy3GeKFoIIHA_&page=2&sourceWhereString=&whereString=IChEYXRlX0NyZWF0ZWQgbGlrZSAnJTE1NzglJyBvciBEb2N1bWVudF9ZZWFyIGxpa2UgJyUxNTc4JScgKSA1.IuMldaBSQarjxhBn_BeTs0yAImbyvOSAYg5y7FFSAGw_)은 1578 刊本의 **10行22字 / 雙欄 / 版心白口單魚尾 / 版心上方「三命會通」 / 하단 刻工명**을 기록한다. [Harvard-Yenching drs:53262215 卷五](https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf)는 **10行20字**의 補刊본(1735? 추정)으로 서지된다. 이 정보의 확실성은 원문 격국 판정과 구분한다.
+
+**동일 문장 검증에 실제 사용한 이미지 식별자:**
+- Harvard PDF **45면**, high-resolution original raster SHA256 `b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12`. 원본 PDF SHA256 `ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831`.
+- 台灣 1578 PDF **375·376면**: 연구 v6의 원본 해시 `3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd`, 기존 375면 raster `6807b6ab78cc0d2cd4bbe12d9b059dac977296134976be402ea53f6d54472afe` / 376면 raster `f43b34d006ba75a50179fc04bdcd377301bc9b25caf7cc4adc0146c8a82121e8`.
+
+| 원문 표본 구절 (印文字形; 현대 구두점은 비교 밖) | Harvard PDF | 대만 萬曆본 PDF | 해당 범위의 판정 |
+|---|---:|---:|---|
+| `時上偏財別宮忌見` | 45면 | 375면 | 표본 글자 일치 |
+| `柱中不宜再見戊己` | 45면 | 376면 | 표본 글자 일치, **戊己** 유지 |
+| `只要一位不宜多逢` | 45면 | 376면 | 표본 글자 일치 |
+| `天元透出為妙支內所藏次之` | 45면 | 376면 | 표본 글자 일치 |
+| `時上偏財不用多` | 45면 | 376면 | 표본 글자 일치 |
+
+**판식 및 版心의 증거 한계:**
+1. 비교 locus의 **행당 20자(하버드) vs 22자(1578)** 편성은 일치하지 않는다. 같은 **글자 배열을 가진 동일 판목의 직접 인쇄**라는 주장과 양립하지 않지만, 한 판본이 다른 판본의 **텍스트를 전사**했거나 공통 조상을 가졌을 가능성을 배제하지 못한다.
+2. 대만본의 版心 상단「三命會通」, 白口·單魚尾, 刻工명 등은 **공식 서지 전체에 대한 기술**이다. 해당 **PDF 375–376면의 각공 실명은 이 촬영/렌더에서 판독하여 특정하지 못했으므로** 공식 목록의 刻工 명단에서 임의로 한 명을 배당하지 않는다. Harvard 같은 면의 刻工 실명도 확인하지 못했다.
+3. 현재 선택된 이미지의 말단 글자 흐림·접힘을 가지고 **특정 면이 결락·재각·보각되었다고 진술할 수 없다**. Harvard 권1 `補刻三命通會敘`는 보수의 **역사적 배경**이지 제5권의 이 면들이 교체됐다는 증거가 아니다.
+4. 다섯 구절 모두 **지정된 표본 위치의 글자만** 대조했다. `整篇全文逐字` 또는 `全卷無異文` 검증이 아니며, 표본 내 실질적인 이문이 관측되지 않았다는 사실만 말할 수 있다. 漢字 이체·누락, 판심 版刻, 복수 葉의 별도 대조가 끝나지 않았으므로 **본문 전승 독립성은 미인증**이다.
+
+**판정 범주:** `hourWealthLocalLeafCollation.auditStatus=SAMPLED_PHRASE_AGREEMENT_ONLY`; `localSampleShowsSubstantiveVariant=false`은 검증한 표본에서 발견하지 못했다는 뜻이지 이문 부재의 보편 증명은 아니다. `matchingPhysicalSettingFromSameCarvedWoodblockSupported=false`, `independentTextualWitnesses=UNADJUDICATED`. 실제 명식 계산과 N27 4+4 가설, 다섯 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**, Preview/Official/Production admission 없음 모두 불변. **v7 정확 HEAD CI는 별도 확인**한다.
