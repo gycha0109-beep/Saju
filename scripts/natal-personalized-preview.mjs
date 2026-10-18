@@ -501,7 +501,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
   </style></head><body><main>
   <header><div class="eyebrow">MYEONGHA · INTERNAL NATAL EXPLORATION</div>
   <h1>나의 사주, 한 장의 흐름</h1>
-  <p>${escapeHtml(date)} · ${escapeHtml(time ?? '출생시간 미상')} 입력으로 현재 명하 엔진의 실제 Preview 해석을 조합한 내부 시제품입니다. 해석을 새로 생성하거나 근거 없는 빈칸을 채우지 않습니다.</p>
+  <p>${escapeHtml(date)} · ${escapeHtml(time ?? '출생시간 미상')} 입력으로 현재 명하 엔진의 실제 Preview 해석을 조합한 내부 시제품입니다. 기존 공식 Preview 본문은 보존하고, 새 Career 다중 근거 해석은 별도의 미승인 연구 카드로 구분합니다. 근거 없는 빈칸은 채우지 않습니다.</p>
   </header>
   ${renderPillars(general?.calculationSummary)}
   ${renderN30bVerifiedGeneral(verifiedFiveDomains)}
@@ -619,7 +619,7 @@ async function main() {
   writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence, careerResearch), 'utf8');
   process.stdout.write('Career multifactor research on SAME birth chart: MUR=' + careerResearch.state +
     ', source-bound composite claims shown=' + careerResearch.sections.length +
-    ', publish=false, sell=false, usefulComplete=false\\n');
+    ', publish=false, sell=false, usefulComplete=false\n');
   process.stdout.write('N36 shared chart facts across independent domain Claims: ' +
     commonEvidence.sharedFactCount + '; research-only structural links, no new semantic authority\n');
   process.stdout.write('N32 original four-domain research: ' +
