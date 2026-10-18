@@ -78,7 +78,7 @@ describe('N31 existing-domain meaning and exact Canonical position receipt',()=>
       expect(item.calculatedFactPaths).toHaveLength(item.calculatedPositions.length);
       expect(item.calculatedFactPaths.length).toBeGreaterThan(0);
       expect(item.calculatedFactPaths.every(path=>
-        /^derivedFacts\\.tenGods\\.value\\.(year|month|day|hour)\\.(stem|branch)\\.value$/u
+        /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u
           .test(path))).toBe(true);
       expect(item.claimRuleVersion).toBeTruthy();
       expect(item.methodologyVersion).toBeTruthy();
