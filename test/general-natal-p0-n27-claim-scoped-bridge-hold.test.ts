@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('74393dbd6fce8949d67b70b6af69047f06e07420');
+    expect(review.researchHeadReviewed).toBe('f106da36055a5141ecde4c53fbbcae12662524c3');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v8',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v9',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -265,6 +265,22 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           sameBlock: 'UNADJUDICATED',
           genealogicalIndependence: 'UNADJUDICATED',
           noChangeToRecurrenceRules: true,
+        },
+        mainlandNlcTaiwan06589FeatureRegistrationHold: {
+          status: 'STRONG_SPATIAL_REGISTRATION_NO_POSITIVE_SHARED_BLOCK_DEFECT',
+          mainlandPdfPage: 43,
+          taiwanPdfPage: 376,
+          method: 'OpenCV_SIFT_BF_KNN_RANSAC_HOMOGRAPHY',
+          comparedPageSiftRatioMatches: 406,
+          comparedPageHomographyInliers: 245,
+          controlInliers: [8, 8, 5],
+          positiveUniqueWoodblockChipMatchRead: false,
+          scannedImageDerivationIndependentCertified: false,
+          physicalSameWoodblock: 'UNADJUDICATED',
+          twoIndependentTextualVotes: false,
+          originalPrintWitnessCountIncrement: 0,
+          anyConsumerOrClassicalRulePromotion: false,
+          noInstitutionalMailOrPermissionDependency: true,
         },
         bibliographicRelation: {
           classification: 'DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES',
