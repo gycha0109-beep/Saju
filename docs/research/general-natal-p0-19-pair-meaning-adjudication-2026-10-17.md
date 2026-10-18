@@ -381,3 +381,32 @@ Research condition matrix v2는 printedExampleKind, visible/hidden other-pillar 
 5. **時上偏財** `別宮` 범위 / `再見` 藏干 범위 / `只要一位` 셈 단위, 특히 日柱 산입: **UNADJUDICATED**.
 
 이를 `sameVolumeZhengGuanPrintCrosscheck.bibliographicWitnessRelation`에 사실·서지 설명·추정 불가 사항으로 추가하고 회귀 테스트로 고정한다. v5의 변화는 **출처별 서지 판단 경계**뿐으로, 실제 Canonical 계산, 4+4 가설, 기존 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 **1 vs 0**, 모든 Preview/Official/Production 입장은 불변이다. **v5 최신 SHA CI는 별도 확인**해야 한다.
+
+
+## 25. 하버드 권1 보각 서문 및 1578 明萬曆본 卷五 직접 대조 (2026-10-18, N27 v6)
+
+이 절은 이전 `24의 미검증 내용을 **새 직접 이미지 판독으로 부분 정정**한다. 새로운 교감 결과와 여전히 미검증인 판본 계통을 엄격히 분리한다.
+
+### A. Harvard-Yenching drs:53262215 卷一 인쇄 서문 직접 판독
+
+[하버드 동일 drs의 권1 원본](https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.1序、卷之一、總目.pdf), [실제 원본 다운로드·인쇄면 렌더 GitHub Actions 39110932522](https://github.com/gycha0109-beep/Saju/actions/runs/39110932522), 이미지 artifact **12130326830**. 원본 PDF SHA256: `af48a02807222915574a7b03f2bcda1dea2810f69fe7112ee8c40967bc8de2d5`.
+
+- **PDF 2면**: `補刻三命通會敘` 제목 직접 판독; PNG SHA `0fa370c44688714df45fabfa54c89f92adbb6bac2765517a9cada457c77884ab`.
+- **PDF 4면**: `知雕板尚藏滄州李氏家，顧已殘失百十篇` 및 `遂求其遺帙校正，付剞劂補全之` 내용 직접 판독; PNG SHA `1688ee1e45b94b9afbeb91d35dfe39416c53768e7ed9a3606e2b7a517751f17b`.
+- **PDF 6면**: 서문 말미 `雍正乙卯花朝`와 `蔣國祥` 명시 직접 판독; PNG SHA `b673ab1811624b18b1ce0d8ac61f4a8b5facf2ab720871bc8dc3c9bc5ecfbae5`.
+
+이는 다른 온라인 판본에서 추정한 서문이 아니라 **하버드 권五 원본과 같은 drs:53262215의 권一 실물 스캔**에서 읽은 것이다. 기존 목판의 보관·결락·교정·보각 과정이 이 소장본 서문에서 직접 확인된다. 그러나 서문 연대가 **각 권의 실제 인쇄 일자**임을 확정하거나 滄州 李氏 목판과 현재 대만 1578년본의 정확한 모본 관계를 확정하지 않는다.
+
+### B. 대만 國家圖書館 06589 — 明萬曆六年(1578) 인쇄 卷五
+
+[공식 서지](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=69577a07b3444caf9b20e35e84a103e0fDcyODE10.578_oDtdzxby6wX5_W8cCvt1j5rqk4Hzy3GeKFoIIHA_&page=2&sourceWhereString=&whereString=IChEYXRlX0NyZWF0ZWQgbGlrZSAnJTE1NzglJyBvciBEb2N1bWVudF9ZZWFyIGxpa2UgJyUxNTc4JScgKSA1.IuMldaBSQarjxhBn_BeTs0yAImbyvOSAYg5y7FFSAGw_)에 明萬曆戊寅(六年,1578)刊本, 10行22字, 版心 三命會通으로 기록. [Commons 직접 공개 스캔](https://commons.wikimedia.org/wiki/File:NCL-06589_1_三命通會.pdf) 1,000면을 확인. [원본 판독 이미지 추출 run 39110932522](https://github.com/gycha0109-beep/Saju/actions/runs/39110932522) artifact **12130845583**, [전체 원본 PDF 보관 run 39111407535](https://github.com/gycha0109-beep/Saju/actions/runs/39111407535) artifact **12130192745**. 원본 SHA256 **`3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd`**.
+
+- **PDF 337면**: `三命通會卷之五` 및 `論古人立印食官財名義` 시작 직접 확인.
+- **PDF 340면**: `論正官` 조항, PNG SHA `eb1b041c5dadb699e3ec7baa3728594263eee6502b485af544ffedec03ead219`.
+- **PDF 341면**: `甲生丑月內有辛金又值酉時` 용례, PNG SHA `7259ed422d7fef314e3703631a09c8e3f3c19657f74f57cc79b2ac4d3f2923fd`.
+- **PDF 375면**: `時上偏財` 조항 제목 직접 확인, PNG SHA `6807b6ab78cc0d2cd4bbe12d9b059dac977296134976be402ea53f6d54472afe`.
+- **PDF 376면**: `如甲日見戊辰或甲戌時之例` 및 `柱中不宜再見戊己`를 직접 읽음. 問題 글자는 **戊己**의 天干 **己**(지지 巳가 아님). 인쇄 전체 PNG SHA `f43b34d006ba75a50179fc04bdcd377301bc9b25caf7cc4adc0146c8a82121e8`, 확대 판독 크롭 SHA `782d797bb8424eeb32df77b0b517897c38dbe58ff6a5f1120329cec15d74f45f`.
+
+**확정 가능한 한계:** 원본 이미지에서 읽은 Harvard 1735? 보각본, CADAL 四庫, 中國 NLC 萬曆 범위 각본, **대만 1578 刊本** 총 네 소장 스캔에서 해당 문장 `戊己`의 字形이 일치한다. 하지만 이를 **4개의 본문 계통 독립 투표**로 세지 않는다. 특히 1578 대만본과 중국 NLC 萬曆본은 행격이 10行22字인 서지상 유사 계열이므로 판목·版心·刻工·공통 오류 대조 없이 서로 독립이라고 단정할 수 없다. Harvard 권1 보각 서문도 바로 그 1578 대만 인쇄판을 모본으로 썼다는 증거는 아니다.
+
+**권위 경계 불변:** `再見戊己`의 정확한 문자는 강화되었지만 `再見`에 藏干 포함 여부, `別宮` 日柱 포함 여부, `一位`의 古文 counting unit은 모두 `UNADJUDICATED`. 「論正官」의 반복 계산을 「時上偏財」에 직접 이전하지 않는다. 새 consumer/Preview/Official/Production 승인 없음, 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0** 유지. v6의 전체 CI는 최신 정확 SHA에서 별도 확인해야 한다.
