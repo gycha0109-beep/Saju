@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('af65faf958eb8af9f0e3f28e29c50636b87696c4');
+    expect(review.researchHeadReviewed).toBe('74393dbd6fce8949d67b70b6af69047f06e07420');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v7',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v8',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -238,6 +238,33 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           hiddenStemZaiJianRuleAdjudicated: false,
           historicYiWeiCountingUnitAdjudicated: false,
           consumerOrProductionAdmission: false,
+        },
+        taiwanCopy06590AccessHold: {
+          status: 'CATALOG_CONFIRMED_ORIGINAL_SCAN_NOT_ACCESSED',
+          accessionNumber: '06590',
+          existingPrintedWitness: '06589',
+          catalogsAreSeparate: true,
+          catalogedMing1578TenLinesTwentyTwoCharacters: true,
+          originalImagesReviewed: false,
+          plateEngraverOrStrokeDamageCompared: false,
+          printWitnessCountIncrement: 0,
+          sameBlockAs06589: 'UNADJUDICATED',
+          independentTextualDescent: 'UNADJUDICATED',
+          libraryPermissionOrOnsiteInspectionNeeded: true,
+          claimOrProductionPromotionAllowed: false,
+        },
+        mainlandNlcTaiwan06589LeafAlignmentHold: {
+          status: 'SIDE_BY_SIDE_COLUMN_ALIGNMENT_OBSERVED_NO_WOODBLOCK_VERDICT',
+          mainlandPdfPage: 43,
+          taiwanPdfPage: 376,
+          sameCataloged10x22: true,
+          visuallySimilarFirstColumns: true,
+          exactSharedWoodblockMicrodefectsConfirmed: false,
+          leafEngraverNameAtBothLociRead: false,
+          circlesOrAnnotationsNotCertifiedAsOriginalTextVariants: true,
+          sameBlock: 'UNADJUDICATED',
+          genealogicalIndependence: 'UNADJUDICATED',
+          noChangeToRecurrenceRules: true,
         },
         bibliographicRelation: {
           classification: 'DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES',
