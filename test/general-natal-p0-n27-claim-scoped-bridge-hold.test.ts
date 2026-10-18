@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('02ac088eba01b93c9b6287974000916d21ce461a');
+    expect(review.researchHeadReviewed).toBe('b7d64f58d0f84f9f1e8d1393ca4dac31bc6e4b2a');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v10',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v11',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -299,6 +299,28 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           noInstitutionContact: true,
           noRulePromotion: true,
           noTrustGrantPreviewOfficialProduction: true,
+        },
+        yuanhaiXijiCaseHypothesisHold: {
+          evidenceClass: 'SECONDARY_PUBLIC_TRANSCRIPTION_OF_CLASSICAL_COMMENTARY',
+          primaryTextSource: 'https://sajumania.com/ebook/to01-06/to01-06-02-01.htm',
+          comparativeTextSource: 'https://zh.wikisource.org/zh-hant/神峰通考',
+          twoIndependentPhysicalPrintedSourcesRead: false,
+          favorableCase: ['丁酉', '己酉', '戊子', '壬子'],
+          negativeOtherPalaceCase: ['丁丑', '己酉', '丁丑', '辛亥'],
+          favorableDayBranchHidesZhengCai: true,
+          negativeHasNoExtraVisiblePianCaiStem: true,
+          negativeYearMonthDayBranchesContainHiddenPianCai: true,
+          negativeExplicitYouChouAssociation: true,
+          evidenceAgainstStrictExtraVisibleStemOnly: true,
+          evidenceAgainstPoolingAllWealthStemsAndHidden: true,
+          independentDayBranchCausalityEstablished: false,
+          anyHiddenStemRecurrenceIsAutomaticViolationEstablished: false,
+          exactYiWeiCountUnitEstablished: false,
+          crossTranscriptionCommanderNameDisagreement: true,
+          commanderNameDisagreementCertifiedPrintVariant: false,
+          newAncientTextualWitnesses: 0,
+          semanticEngineAdmission: false,
+          allExistingClaimsStayHold: true,
         },
         bibliographicRelation: {
           classification: 'DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES',
