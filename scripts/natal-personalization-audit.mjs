@@ -32,7 +32,6 @@ import { composeNatalN28VerifiedReaderReport, NATAL_N28_REPORT_TITLE } from '../
 import { buildNatalN16GroundedReaderBrief } from '../dist/preview/natal-grounded-reader-brief.js';
 import { buildNatalN24ExpandedSourceReading } from '../dist/preview/natal-expanded-source-reading.js';
 import { createBusinessNatalReadingCandidateRegistry } from '../dist/research/business-natal-reading-candidate.js';
-import { runInterpretation as runSpecialistInterpretation } from '../dist/interpretation/interpretation-engine.js';
 import { buildNatalN32ExpandedDomainResearchReading } from '../dist/preview/natal-n32-expanded-domain-research-reading.js';
 import { auditNatalN34FourDomainCopyContrasts } from '../dist/preview/natal-n34-four-domain-copy-contrast.js';
 
@@ -430,7 +429,7 @@ async function main() {
   const n34Cases = inputs.map(input => {
     const original = interpretedByCaseId.get(input.caseId);
     if (!original) throw new Error('N34 missing exact HTTP-linked Canonical chart');
-    const specialist = runSpecialistInterpretation(original.snapshot, n34Registry, {
+    const specialist = runInterpretation(original.snapshot, n34Registry, {
       requestId:'n34-four-domain-'+input.caseId,now:auditNow,
     });
     const reading = buildNatalN32ExpandedDomainResearchReading(
