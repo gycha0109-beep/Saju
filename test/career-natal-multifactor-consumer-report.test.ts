@@ -65,6 +65,16 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
       expect(x.report.mayPublish).toBe(false);
       expect(x.report.maySell).toBe(false);
       expect(x.report.usefulComplete).toBe(false);
+      for (const section of x.report.sections) {
+        expect(section.calculatedPositions.length).toBeGreaterThanOrEqual(2);
+        expect(section.calculatedPositions).toHaveLength(section.calculatedFactPaths.length);
+        expect(section.calculatedFactPaths.every(path =>
+          /^derivedFacts\\.tenGods\\.value\\.(year|month|day|hour)\\.(stem|branch)\\.value$/u.test(path),
+        )).toBe(true);
+        expect(section.paragraph).toContain('실제 명식에서 확인한 근거는');
+        expect(section.calculatedPositions.every(position =>
+          section.paragraph.includes(position))).toBe(true);
+      }
       const html = renderCareerMultifactorResearchHtml(x.report);
       expect(html).toContain('<html lang="ko">');
       expect(html).toContain('근거와 출처');
