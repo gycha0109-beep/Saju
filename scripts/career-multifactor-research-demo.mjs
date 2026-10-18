@@ -1,4 +1,5 @@
 import { writeFileSync } from 'node:fs';
+import process from 'node:process';
 import { resolve } from 'node:path';
 import { calculateCanonicalSajuSnapshot } from '../dist/calculation/calculation-engine.js';
 import { runInterpretation } from '../dist/interpretation/interpretation-engine.js';
