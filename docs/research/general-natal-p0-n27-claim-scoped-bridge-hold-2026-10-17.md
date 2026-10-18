@@ -194,3 +194,14 @@ v4 최초 Research 실행 [39066472718](https://github.com/gycha0109-beep/Saju/a
 **정확한 연구 결론:** Harvard, CADAL 四庫, 中國 NLC, 대만1578 **네 곳의 실제 인쇄된 `戊己` 글자**는 일치한다. 그러나 **네 독립 텍스트 lineage 표가 아니다**. 하버드 보각 서문은 기존 목판 전승·補修를 직접 뒷받침하지만 그 목판이 대만1578의 물리 판목이라고 입증하지 않는다. 기존 「論正官」의 다른 위치 戊/己·正官 藏干 사례와 「時上偏財」 조건을 하나의 실행 규칙으로 합치지 않는다.
 
 **권위 경계:** `sourceQualifiedRecurrenceVerdict=UNADJUDICATED`, `sourceQualifiedSingletonVerdict=UNADJUDICATED`, `別宮` 日柱 포함, `再見` 藏干 범위, `一位` 계수 단위 미확정. 다섯 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, TrustGrant/Preview/Official/Production 신규 승인 **0**. Research·Bridge Draft/미병합 유지. **v6 새 HEAD의 CI 결과는 별도 확인**한다.
+
+
+## 2026-10-18 N27 v7: Harvard 45면 ↔ 台灣 1578본 375–376면의 時上偏財 국소 교감 / 출처 계통 HOLD
+
+**Research #2553 정확 HEAD `af65faf958eb8af9f0e3f28e29c50636b87696c4`**, 연구 `saju-n27-wu-ji-recurrence-scope-sensitivity-v7` / `n27-harvard-taiwan-local-leaf-collation-v1`을 Bridge에 고정한다.
+
+인쇄 원본에 근거해 하버드 **卷五 PDF 45면**과 대만 國家圖書館 1578년 **卷五 PDF 375–376면**을 병렬 확인했으며, 아래 **표본 다섯 구절의 한자 문장 일치**를 Research `26에 기록했다: `時上偏財別宮忌見`, `柱中不宜再見戊己`, `只要一位不宜多逢`, `天元透出為妙支內所藏次之`, `時上偏財不用多`. 하버드 원본 PDF hash `ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831`, 관련 45면 highres hash `b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12`; 대만본 PDF hash `3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd`. 원본 이미지 및 증거 주소는 Research `25–26 참조.
+
+**진전/한계**: 두 판식의 **10행20자 vs 10행22자**는 동일한 판면 행격을 공유한다는 주장을 반박하지만, 한 판본이 다른 판본의 텍스트를 전사했거나 공통 조상을 가졌는지 판정하지 않는다. 台灣 NCL 공식 서지는 版心에 `三命會通`/白口/單魚尾·刻공 기재를 설명하지만, **대상 375–376면의 각공 실명을 확정 판독하지 못했다**. Harvard의 동일 대상 면도 마찬가지다. 권1 보각 서문은 목판 보수 과정을 기술하나 卷五 대상 葉의 **결락·재각·보각 여부가 인증된 것은 아니다**. **다섯 표본의 비이문**은 전권/전장에 이문이 없다는 뜻이 아니며 독립 전승의 다수결 증거가 아니다.
+
+Bridge `hourWealthLocalLeafCollation`은 `SAMPLED_PHRASE_AGREEMENT_ONLY`, `samePhysicalPrintedSettingSupported=false`, `independentTransmissionCertified=false`, `exactLeafRecarvingCertified=false`, `noOtherVariantsInChapterCertified=false`로 유지한다. 고전 `別宮`에 日柱 포함, `再見`의 藏干 카운트, `一位`의 古文 counting unit은 모두 `UNADJUDICATED`. 다섯 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, 정확한 N13 劫財 T8 **1 vs 0**, TrustGrant/consumer/Preview/Official/Production 해석 승인 없음, 두 PR Draft/미병합. **v7 최신 정확 HEAD의 CI는 따로 검증**한다.
