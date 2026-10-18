@@ -1,0 +1,1 @@
+# N31a 4분야 독립 출처 영수증\n\nCareer/Wealth/Business/Relationship 연구 T8 Claim을 자체 규칙·방법론·출처·계산 근거 및 기존 한국어 프로필과 각각 결박합니다. 누락/불일치·시나리오 불확실성은 개별 HOLD합니다. General의 해석을 타 분야 결과로 전환하지 않습니다. Preview/Official/Production 의미 권한은 부여하지 않습니다. N31 전체 완료 아님.\n
