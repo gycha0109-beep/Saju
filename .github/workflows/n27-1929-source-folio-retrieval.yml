@@ -34,6 +34,17 @@ jobs:
           print('N27_PDF_PAGES',len(doc))
           assert len(doc)==170
           PYDOC
+          curl -fSL --retry 3 --retry-delay 4 --connect-timeout 15 --max-time 150 \
+            --user-agent 'MyeongHa-N27-Source-Critical-Audit/1.0' \
+            -o n27-1929/compare-1926.pdf \
+            'https://upload.wikimedia.org/wikipedia/commons/4/4c/NLC416-13jh001619-43305_%E7%A5%9E%E5%B3%B0%E9%80%9A%E8%80%83.pdf'
+          sha256sum n27-1929/compare-1926.pdf
+          python3 - <<'PY1926'
+          import fitz
+          d=fitz.open('n27-1929/compare-1926.pdf')
+          print('N27_1926_PDF_PAGES',len(d))
+          assert len(d)==169
+          PY1926
       - name: Render complete page-grid index for human visual examination
         shell: bash
         run: |
@@ -47,6 +58,14 @@ jobs:
           total=len(doc)
           assert total == 170, total
           cols=6; rows=5; cellw=330; cellh=510
+          for era,source in [('1926',base/'compare-1926.pdf'),('1929',base/'upper.pdf')]:
+              book=fitz.open(source)
+              for page in [65,66,67,68,69]:
+                  pg=book[page-1]
+                  pix=pg.get_pixmap(matrix=fitz.Matrix(2.6,2.6),alpha=False)
+                  dest=base/'sheets'/f'{era}-pdfpage-{page:03d}-full.png'
+                  pix.save(dest)
+                  print('N27_FOLIO',era,page,round(dest.stat().st_size/1024),'KiB')
           for start in range(0,total,cols*rows):
               idx=start//(cols*rows)
               sheet=Image.new('RGB',(cols*cellw,rows*cellh),(245,245,245))
@@ -73,5 +92,7 @@ jobs:
           name: n27-1929-upper-unmodified-pdf-and-contact-sheets
           path: |
             n27-1929/upper.pdf
+            n27-1929/compare-1926.pdf
             n27-1929/sheets/*.jpg
+            n27-1929/sheets/*.png
           retention-days: 14
