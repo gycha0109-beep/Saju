@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('effde7c8145790a1886af013cad1e3ccf114be63');
+    expect(review.researchHeadReviewed).toBe('8f9c6ca84197a2b94a59ee58d2f07c491bc23abe');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v16',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v17',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -354,10 +354,28 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             headingAndChartInOne1926PrintDirectlyRead: true,
             hiddenDayAsIndependentViolationOrExemptionAdjudicated: false,
           },
+          earlierSeventeenthCenturyImprintLead: {
+            catalogedJapanesePrintYear: 1647,
+            catalogedJapanesePublisher: '沢村寛',
+            catalogedJapanesePlace: '江戸',
+            catalogedVolumes: 6,
+            sourceCatalogSaysNoAvailableImages: true,
+            locImprintWords: '文光堂甲午重鐫',
+            locProposedJiaWuYear1654OnlyConditional: true,
+            actualEditorialSupplementPresenceIn1647: 'UNADJUDICATED',
+            anyEarlierOriginalFolioActuallyRead: false,
+            earlierHistoricalWitnessesNewlyAuthenticated: 0,
+            cannotSupportAnyClaimPromotion: true,
+          },
           republican1929TwoPhysicalVolumes: {
             publicationDate: '1929-11',
             editor: '秦慎安',
             upperPageCount: 170,
+            guideMapsUpperToOriginalJuanOneThroughThree: true,
+            hourWealthTextInOriginalJuanTwo: true,
+            prioritizeUpperOnlyForPreciseSupplementLeaf: true,
+            mirrorReusesNlcFilesNotNewIndependentPrint: true,
+            targetExactPdfPageStillUnknown: true,
             lowerPageCount: 168,
             volumesBelongToOneEdition: true,
             volumesMustNotCountAsIndependentWitnesses: true,
