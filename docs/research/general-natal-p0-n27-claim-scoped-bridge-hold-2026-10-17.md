@@ -255,7 +255,7 @@ Bridge `publicPrintedGlyphMicrodefectHold`은 `NO_CERTIFIED_SHARED_UNIQUE_CHIP_W
 
 ## 2026-10-19 N27 v12 — 「三處不要再見財」 연월일 비교 단서, 동일 장의 반례, 印本 미판독 HOLD
 
-Research #2553 정확 HEAD `9ec52ad8f154cf40c6ee079ec3856d93de97a511`, 감사 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v12`를 Bridge에 고정한다. 기존 연구 `31과 `threeNonHourPillarsCommentaryScopeAudit`를 참조한다.
+Research #2553 정확 HEAD `e7a0c9741fb4d9df4f41de058223cc2ef859dc2b`, 감사 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v12`를 Bridge에 고정한다. 기존 연구 `31과 `threeNonHourPillarsCommentaryScopeAudit`를 참조한다.
 
 [淵海子平 內十八格 時上偏財格 공개 전사](https://sajumania.com/ebook/to01-06/to01-06-02-27.htm)에는 `而三處不要再見財`, [神峰通考 時上偏財格 주석](https://sajumania.com/ebook/to01-08/to01-08-02-02.htm)에는 `只要一位貴，不要多，而三處不要再見財`가 나타난다. 時 외 **年/月/日柱라는 세 자리**를 비교 범위로 다룰 근거다. 神峰의 별도 **時上一位貴格(偏官/七殺)** 주석은 `若年月日又有`라고 세 기둥을 구체적으로 적지만 다른 格의 셈법을 그대로 偏財로 이식할 수는 없다. 時上 偏財의 지지 식별 예문에는 庚日/寅支와 辛日/卯支의 경로도 실려 있어 **時에서 드러나는 천간만 분석해야 한다**는 주장은 제한된다.
 
@@ -265,8 +265,18 @@ Research #2553 정확 HEAD `9ec52ad8f154cf40c6ee079ec3856d93de97a511`, 감사 �
 
 ## 2026-10-19 N27 v13 — 希文「時月偏財類聚」 추가 사례 / 이른 刊本 후보, 전사 근거에 한정
 
-Research #2553 HEAD `9ec52ad8f154cf40c6ee079ec3856d93de97a511`의 v13을 정확히 참조한다. [「時上偏財格 附月偏財格」 공개 전사](https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx)에서 `己酉/丙子/壬寅/乙巳`, `希文自造時月偏財類聚之格`를 확인했다. 壬日 기준 月干丙 偏財, 日支寅藏丙·時支巳藏丙 偏財이지만 時干乙은 偏財가 아니며 전사는 `喜時日偏財，類聚親切`로 부분적으로 긍정한다. 이는 순수 時上一位格과 분명히 구별되는 **時月類聚 명식**이며, 언제나 반복 偏財 1회만으로 모든 格을 일률 배제하는 모델에 경계 사례다. [Wikisource 전사](https://zh.wikisource.org/zh-hant/神峰通考)의 `騙財` 표기는 새 원각 異文으로 인증되지 않았다.
+Research #2553 HEAD `e7a0c9741fb4d9df4f41de058223cc2ef859dc2b`의 v13을 정확히 참조한다. [「時上偏財格 附月偏財格」 공개 전사](https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx)에서 `己酉/丙子/壬寅/乙巳`, `希文自造時月偏財類聚之格`를 확인했다. 壬日 기준 月干丙 偏財, 日支寅藏丙·時支巳藏丙 偏財이지만 時干乙은 偏財가 아니며 전사는 `喜時日偏財，類聚親切`로 부분적으로 긍정한다. 이는 순수 時上一位格과 분명히 구별되는 **時月類聚 명식**이며, 언제나 반복 偏財 1회만으로 모든 格을 일률 배제하는 모델에 경계 사례다. [Wikisource 전사](https://zh.wikisource.org/zh-hant/神峰通考)의 `騙財` 표기는 새 원각 異文으로 인증되지 않았다.
 
 [미 의회도서관 清順治間(1638–1661) 刊本 목록](https://www.loc.gov/item/2014514308/)은 11行22字, 卷二 디지털 영상 존재를 확인해 **새로운 독립 소장 고본 후보**로 등록했으나 정확한 `補曰` 인쇄면은 미판독이며 원본 판독 건수 +0. 1926 文明書局 NLC 정확한 면도 미판독이다.
 
 **Bridge 결론**: `別宮`의 日支 독립 영향, `再見` 藏干 기준, `一位` 계산 단위는 계속 `UNADJUDICATED`. 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**, TrustGrant/consumer/Preview/Official/Production 신규 권한 없음. 두 PR OPEN/DRAFT/UNMERGED, 기관 문의·이메일 없음. 정확한 커밋 CI/PIE/Production Calculation Container 별도 확인 대상.
+
+## 2026-10-19 N27 v14 — 希文 자해설의 편찬자 계통 확인 / 독립 명식 반례로 승격 금지
+
+Research #2553 `e7a0c9741fb4d9df4f41de058223cc2ef859dc2b`의 `saju-n27-wu-ji-recurrence-scope-sensitivity-v14`를 정확히 참조한다.
+
+[『神峰通考』 「時上偏財格 附月偏財格」 공개 전사](https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx)에서 `希文自造時月偏財類聚之格`와 같은 명식에 속한 1인칭 `予命正合書云`·`為繼家君之志，而編此書`·`予據先人成說，更稽先人遺訓`을 확인했다. [미국 의회도서관 清順治間 추정 刊本 서지](https://www.loc.gov/item/2014514308/)는 張楠의 ‘不肖男’ 중 `希文`을 編纂 명단에 기록한다. 서지와 본문 문맥은 希文의 **편찬 참여자 자기 명식 해설**이라는 해석을 강하게 지지하며, 적어도 이를 **독립적인 제3자 결과 반례**로 간주해서는 안 된다. 앞의 `楠曰`는 뒤의 `予`와 화자가 다를 수 있으므로 둘을 역사적 판정 두 건으로 합산하지 않는다.
+
+월간 偏財·일지/시지 藏偏財의 동시 존재와 `喜時日偏財類聚`라는 전사 문구는 보존하지만, 순수 `時上偏財一位`의 규칙 예외나 일지 藏干 자동 가산·면제로 승인하지 않는다. [1929 NLC 170면 공개 판본 목록](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf)도 대체 수집 후보일 뿐 **해당 인쇄면은 미판독**, 1926본·17세기 LOC본의 해당 구절 역시 이번에 직접 판독하지 못했다. 새 印本 시각 판독 건수 0, 전승 독립성 미확정.
+
+**권한 불변**: `別宮` 日柱 포함 효과 / `再見` 藏干 카운트 / `一位` 계산 단위는 `UNADJUDICATED`. 5 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 **1 vs 0**, TrustGrant/consumer/Preview/Official/Production 없음. 두 PR Draft/미병합, 기관 문의·메일 없음. 새 커밋 CI는 별도로 확인.
