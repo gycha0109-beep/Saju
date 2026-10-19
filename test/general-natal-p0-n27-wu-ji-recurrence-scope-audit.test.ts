@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v21');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v22');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -696,6 +696,37 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       independenceFrom1926And1929: 'UNADJUDICATED',
       independentlyCollatedOriginalPassages: 0,
       permitsPromotingAnyClaim: false,
+    });
+    expect(three.yulgokNationalAcademyTwoSeparateHoldingsLead).toMatchObject({
+      sourceInstitution: '율곡연구원 한국학 아카이브',
+      provenanceNotSameAsNationalAssemblyPdfVerified: true,
+      firstHolding: {
+        catalogueId: 'B005_01_B00330_001',
+        printedBibliographyId: 'YG015-01-481',
+        reportedVolumes: 4,
+        volumeMarkers: '1~4',
+        physicalFormat: '석인본',
+        physicalDimensionCm: '14.9×8.9',
+        namedPublisherPresent: false,
+        printingYearRecorded: false,
+        actualPrintingYear: 'UNADJUDICATED',
+      },
+      secondHolding: {
+        catalogueId: 'B005_01_B00442_001',
+        printedBibliographyId: 'YG015-01-490',
+        reportedVolumes: 1,
+        contentsLabel: '卷1,2',
+        publisherAsCataloged: '上海 千頃堂書局',
+        physicalFormat: '석인본',
+        physicalDimensionCm: '14.9×9.0',
+        printingYearRecorded: false,
+        actualPrintingYear: 'UNADJUDICATED',
+      },
+      bothCatalogueUnitsDistinct: true,
+      catalogueEditionIdenticalTo1906ShanghaiShuju: 'UNADJUDICATED',
+      directImageOfBieGongZaiJianYiWeiSectionRetrieved: false,
+      independentStemmaticWitnessIncrement: 0,
+      newN27SemanticAuthorization: false,
     });
     expect(three.republican1929TwoVolumeBindingAudit).toMatchObject({
       printDate: '1929-11',
