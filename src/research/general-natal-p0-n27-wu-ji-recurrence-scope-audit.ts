@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v18' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v19' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -647,7 +647,7 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             caseMaySynthesizeEditorsInterpretiveView: true as const,
             issuerIdentityBeyondHeadingVerified: false as const,
           }),
-          // Earlier physical bibliographic candidate, NOT a read locus.
+          // Seventeenth-century LOC original print now directly inspected at Juan 2 image 8.
           locShenfengEarlyPrintedCandidate: Object.freeze({
             source: 'https://www.loc.gov/item/2014514308/' as const,
             catalogTitle: '新鐫神峰張先生通考闢謬命理正宗大全' as const,
@@ -656,12 +656,14 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             editionSummaryLinesPerPage: 11 as const,
             editionSummaryCharactersPerLine: 22 as const,
             juanTwoDigitalImagesCataloged: true as const,
-            exactHourWealthFolioInspected: false as const,
-            manuscriptOrHistoricalTextVerified: false as const,
-            incrementOfDirectReadPrintedWitnesses: 0 as const,
+            exactHourWealthFolioInspected: true as const,
+            manuscriptOrHistoricalTextVerified: true as const,
+            incrementOfDirectReadPrintedWitnesses: 1 as const,
+            specificPrintingDateEstablishedByImage: false as const,
+            supplementAuthorIdentifiedByImage: false as const,
           }),
-          // A separate, actually catalogued Japanese print predates the
-          // probable 1654 LOC recut. Neither target leaf was visually read.
+          // The separate 1647 Japanese print remains unread; LOC Juan 2 image 8
+          // now visually establishes its own 補曰 clause, not block genealogy.
           seventeenthCenturyBibliographicPriorPrintAudit: Object.freeze({
             tohokuLibraryCatalog: 'https://touda.tohoku.ac.jp/collection/database/library/10010000025889' as const,
             tohokuCatalogTitle: '新鐫神峯張先生通考闢謬命理正宗大全' as const,
@@ -677,9 +679,9 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             locQingShunzhiDateEstimated: true as const,
             locJiaWu1654ConsistentWithinShunzhiInferenceOnly: true as const,
             locJiaWuActualGregorianYearPrintCertified: false as const,
-            directFolioAgreementWith1926: 'UNADJUDICATED' as const,
+            directFolioAgreementWith1926: 'CORE_PHRASE_GLYPHS_MATCH_LOC_JUAN2_IMAGE_8' as const,
             editorialSupplementPresentIn1647: 'UNADJUDICATED' as const,
-            printedLocusCountAdded: 0 as const,
+            printedLocusCountAdded: 1 as const,
             historicalStemCountingAllowed: false as const,
           }),
           // This 1929 issue is in TWO physical upper/lower volumes.
@@ -719,9 +721,19 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             successfullyRetrievedImages: 25 as const,
             imagesNotRetrieved: 34 as const,
             serviceRateLimitEncountered: true as const,
-            targetHourWealthSupplementFolioCertified: false as const,
-            targetSupplementPhraseVisuallyRead: false as const,
+            targetHourWealthSupplementFolioCertified: true as const,
+            targetSupplementPhraseVisuallyRead: true as const,
             targetSupplementHistoricallyAttributed: false as const,
+            targetImageOneBased: 8 as const,
+            targetImageOfficialIiifUri: 'https://tile.loc.gov/image-services/iiif/service:asian:lcnclscd:2014514308:1A002:07b08a/full/pct:25/0/default.jpg' as const,
+            targetImageBytes: 132360 as const,
+            targetImageSha256: 'e4b6771c98c8f9547ab9e3ac531ff8e34bd67eb6e380810843fc4a186e371c08' as const,
+            labelOnPrintedPage: '補曰' as const,
+            printedUnpunctuatedCoreGlyphs: '只要一位貴不要多而三處不要再見財' as const,
+            matches1926And1929AtExactCoreGlyphSequence: true as const,
+            physicallyReadPreviewOfEarlierWoodblockPrint: true as const,
+            imageNumberIsNotOriginalPrintedFolioNumber: true as const,
+            entireJuanOrEditorialGenealogyCollated: false as const,
             independentAncientTextualWitnessIncrement: 0 as const,
           }),
           republican1929TwoVolumeBindingAudit: Object.freeze({
