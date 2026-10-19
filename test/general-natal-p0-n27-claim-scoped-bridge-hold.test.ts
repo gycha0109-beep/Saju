@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('9ec52ad8f154cf40c6ee079ec3856d93de97a511');
+    expect(review.researchHeadReviewed).toBe('e7a0c9741fb4d9df4f41de058223cc2ef859dc2b');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v13',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v14',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -343,7 +343,21 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             separatelyLabeledHourMonthClusterNotPureHourOnly: true,
             sourceWordingExpressesPartialFavorability: true,
             anyExtraCaiAutomaticallyViolatesAllPatterns: false,
+            transcribedSelfAttribution: '予命正合書云',
+            transcribedFilialEditorialStatement: '為繼家君之志，而編此書',
+            transcribedRelianceOnFather: '予據先人成說，更稽先人遺訓',
+            locCatalogListsXiwenAsSonCompiler: true,
+            authorialAutobiographicalCharacterSupportedByText: true,
+            independentThirdPartyCounterexampleEstablished: false,
+            selfDescriptiveTextCannotGrantClassicalRuleException: true,
+            historicalPrintedPassageDirectlyRead: false,
             hiddenDayAsIndependentViolationOrExemptionAdjudicated: false,
+          },
+          republican1929Alternative: {
+            dated: 1929,
+            printedTargetFolioRead: false,
+            sourceIndependentFrom1926: 'UNADJUDICATED',
+            newlyVerifiedTargetFolioCount: 0,
           },
           locEarlyPrintedCandidate: {
             dateRangeAsCataloged: '1638–1661',
