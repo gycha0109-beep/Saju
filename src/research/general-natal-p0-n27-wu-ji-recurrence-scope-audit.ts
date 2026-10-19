@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v14' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v15' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -565,7 +565,7 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
         // A second, differently located passage explicitly calls other
         // pillars 三處. Its text-only provenance is not a 1926 print reading.
         threeNonHourPillarsCommentaryScopeAudit: Object.freeze({
-          status: 'TEXTUAL_THREE_OTHER_PILLARS_SUPPORTED_COUNTING_UNIT_UNDECIDED' as const,
+          status: 'ONE_1926_PRINT_WITNESS_CONFIRMS_THREE_PLACES_COUNTING_UNIT_UNDECIDED' as const,
           yuanhaiSourceTitle: '淵海子平 內十八格 時上偏財格' as const,
           yuanhaiPublicTranscription: 'https://sajumania.com/ebook/to01-06/to01-06-02-27.htm' as const,
           yuanhaiTranscribedRule: '只要時上一位，不要多。而三處不要再見財' as const,
@@ -608,7 +608,7 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
           // Later material in the SAME 時上偏財 section describes a different
           // 時月偏財類聚 configuration; not an unqualified 時上偏財 verdict.
           shenfengXiwenHourMonthClusterCase: Object.freeze({
-            evidenceChannel: 'PUBLIC_TRANSCRIPTION_ONLY' as const,
+            evidenceChannel: 'TRANSCRIPTION_PLUS_1926_PRINTED_HEADING_AND_CHART' as const,
             primaryTranscription: 'https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx' as const,
             comparisonTranscription: 'https://zh.wikisource.org/zh-hant/神峰通考' as const,
             heading: '希文自造時月偏財類聚之格' as const,
@@ -621,6 +621,7 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             sourceSectionHasFavorableClusterWording: true as const,
             observedWording: '喜時日偏財，類聚親切' as const,
             samePrintedWordingInTwoPhysicalEditionsCertified: false as const,
+            single1926PrintHeadingAndChartRead: true as const,
             wikiTranscriptionHasPianCaiTypo: '騙財' as const,
             variantCertifiedAsHistoricalPrinting: false as const,
             caseIsSeparatelyLabeledHourMonthCluster: true as const,
@@ -668,6 +669,37 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             directImageRead: false as const,
             independentTextualDescentQualified: false as const,
           }),
+          // The earlier 167-page 1926 candidate was a DIFFERENT Commons
+          // file. This second 169-page file has the actual 卷二 locus.
+          shenfeng1926SecondFileDirectPrintedLocus: Object.freeze({
+            sourceFile: 'https://commons.wikimedia.org/wiki/File:NLC416-13jh001619-43305_神峰通考.pdf' as const,
+            sourcePdfUri: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/NLC416-13jh001619-43305_%E7%A5%9E%E5%B3%B0%E9%80%9A%E8%80%83.pdf' as const,
+            publisherAsCataloged: '上海文明書局' as const,
+            publicationYearAsCataloged: 1926 as const,
+            scanPdfTotalPages: 169 as const,
+            earlierDifferentFileHadPages: 167 as const,
+            chapterTitlePdfPage: 66 as const,
+            supplementAndThreePlacesPdfPage: 67 as const,
+            xiwenHeadingAndChartPdfPage: 68 as const,
+            originalPrintedFolioNumbers: Object.freeze([6, 7, 8] as const),
+            sourceIsPhysicalPrintedScanNotDigitalTranscription: true as const,
+            targetPageDirectlyReadViaPublicPdfRendering: true as const,
+            targetPageViewStatus: 'WEB_PDF_PAGE_SCREENSHOT_DIRECT_VISUAL_READING' as const,
+            originalPdfBytesDownloadedLocally: false as const,
+            originalFileSha256Calculated: false as const,
+            printedLocusHasExplicitSupplementHeading: true as const,
+            actualPrintedRuleWithoutModernPunctuation: '只要一位貴不要多而三處不要再見財' as const,
+            xiwenHeadingAndChartPrinted: true as const,
+            matchingDigitalTranscriptionAtCorePhrase: true as const,
+            yearMonthDayThreePositionsAsPlausibleComparand: true as const,
+            threePlacesIsExplicitCountOfHiddenStemOccurrences: false as const,
+            dayBranchAloneIndependentlyIsolated: false as const,
+            supplementComposerIdentityCertified: false as const,
+            directReadPrintedWitnessIncrement: 1 as const,
+            independentHistoricalTextualLineageCountIncrement: 0 as const,
+            preMingOriginalPrintedPageVerified: false as const,
+            sourceStillCannotAuthorizeRecurrenceRule: true as const,
+          }),
           commons1926ScanCatalogue: 'https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf' as const,
           commons1926FileDeclaredPages: 167 as const,
           commons1926CatalogPrintedYear: 1926 as const,
@@ -677,7 +709,7 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
           exactDayPillarScopeHistoricalVerdict: 'UNADJUDICATED' as const,
           exactHiddenStemCountingHistoricalVerdict: 'UNADJUDICATED' as const,
           exactYiWeiUnitHistoricalVerdict: 'UNADJUDICATED' as const,
-          printedWitnessIncrement: 0 as const,
+          printedWitnessIncrement: 1 as const,
           ruleEngineOrConsumerAdmission: false as const,
           requiresNoInstitutionalContact: true as const,
         }),
