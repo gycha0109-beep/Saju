@@ -8,7 +8,7 @@ import {
   BUSINESS_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/business-natal-multifactor-candidate.js';
 
-export const BUSINESS_NATAL_MULTIFACTOR_REPORT_VERSION = '0.1.0-research-preview' as const;
+export const BUSINESS_NATAL_MULTIFACTOR_REPORT_VERSION = '0.2.0-research-preview' as const;
 type Axis = 'core' | 'execution' | 'governance' | 'preparation' | 'coordination';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
