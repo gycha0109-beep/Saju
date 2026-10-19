@@ -508,7 +508,7 @@ function renderWealthMultifactorInMainReport(report) {
     '<p>'+escapeHtml(item.sourceIds.join(' · '))+'</p></details></article>'
   ).join('');
   return '<section class="domain research-scope"><div class="domain-heading">'+
-    '<h2>나의 사업·실행: 서로 다른 명식 근거를 연결한 구조 풀이</h2>'+
+    '<h2>나의 재물·자원: 서로 다른 명식 근거를 연결한 구조 풀이</h2>'+
     '<span>새 Wealth T8 연구 실험 · 공식 풀이 아님</span></div>'+
     '<p>'+escapeHtml(report.introduction)+'</p>'+
     '<p class="reader-note">최소 유효 풀이: '+escapeHtml(report.state)+
@@ -535,7 +535,7 @@ function renderRelationshipMultifactorInMainReport(report) {
     '<p>'+escapeHtml(item.sourceIds.join(' · '))+'</p></details></article>'
   ).join('');
   return '<section class="domain research-scope"><div class="domain-heading">'+
-    '<h2>나의 사업·실행: 서로 다른 명식 근거를 연결한 구조 풀이</h2>'+
+    '<h2>나의 관계·소통: 서로 다른 명식 근거를 연결한 구조 풀이</h2>'+
     '<span>새 Relationship T8 연구 실험 · 공식 풀이 아님</span></div>'+
     '<p>'+escapeHtml(report.introduction)+'</p>'+
     '<p class="reader-note">최소 유효 풀이: '+escapeHtml(report.state)+
@@ -562,7 +562,7 @@ function renderBusinessMultifactorInMainReport(report) {
     '<p>'+escapeHtml(item.sourceIds.join(' · '))+'</p></details></article>'
   ).join('');
   return '<section class="domain research-scope"><div class="domain-heading">'+
-    '<h2>나의 재물운: 서로 다른 명식 근거를 연결한 구조 풀이</h2>'+
+    '<h2>나의 사업·실행: 서로 다른 명식 근거를 연결한 구조 풀이</h2>'+
     '<span>새 Business T8 연구 실험 · 공식 풀이 아님</span></div>'+
     '<p>'+escapeHtml(report.introduction)+'</p>'+
     '<p class="reader-note">최소 유효 풀이: '+escapeHtml(report.state)+
@@ -617,7 +617,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
   </style></head><body><main>
   <header><div class="eyebrow">MYEONGHA · INTERNAL NATAL EXPLORATION</div>
   <h1>나의 사주, 한 장의 흐름</h1>
-  <p>${escapeHtml(date)} · ${escapeHtml(time ?? '출생시간 미상')} 입력으로 현재 명하 엔진의 실제 Preview 해석을 조합한 내부 시제품입니다. 기존 공식 Preview 본문은 보존하고, 새 Career 다중 근거 해석은 별도의 미승인 연구 카드로 구분합니다. 근거 없는 빈칸은 채우지 않습니다.</p>
+  <p>${escapeHtml(date)} · ${escapeHtml(time ?? '출생시간 미상')} 입력으로 현재 명하 엔진의 실제 Preview 해석을 조합한 내부 시제품입니다. 기존 공식 Preview 본문은 보존하고, 5개 분야의 다중 근거 해석은 각각 별도의 미승인 연구 카드로 구분합니다. 근거 없는 빈칸은 채우지 않습니다.</p>
   </header>
   ${renderPillars(general?.calculationSummary)}
   ${renderN30bVerifiedGeneral(verifiedFiveDomains)}
