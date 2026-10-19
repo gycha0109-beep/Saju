@@ -342,3 +342,11 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 - 東北大学 狩野文庫 [레코드 10010000025889](https://touda.tohoku.ac.jp/collection/database/library/10010000025889)는 江戸·沢村寛의 `正保4 [1647]`을, 같은 대학의 [레코드 10010000025881](https://touda.tohoku.ac.jp/portal/item/10010000025881)은 같은 제목·출판자·장소·6冊에 `嘉永3 [1850]`을 기재한다. 두 레코드의 청구기호 `2/3802/6`, 부서 관리번호 `TT22201642`가 같고 **공개 이미지가 없다**. 두 개의 확정 물리본, 확정 1647 출판연도 또는 LOC본 이전의 독립 증인이라고 산정할 수 없다. 1850 표기가 역사적 재판인지 메타데이터 충돌인지도 미확정이다.
 - LOC 卷二 이미지 8의 직접 확인된 `補曰`과 `只要一位貴不要多而三處不要再見財`는 그대로 **인쇄면 직접 확인 사실**이다. 1926·1929 본과의 국소 글자 일치는 유지하되 LOC의 1654년 확정 연대, 고전 편찬자 귀속, 판목 독립 계통, `別宮` 日支 효과, `再見` 藏干 범위, `一位` 계산 단위로 확장하지 않는다.
 - 5개 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, Consumer/Preview/Official/Production/TrustGrant 신규 승인 **0**. 두 PR Draft·미병합, 기관 접촉 없음.
+
+## 2026-10-19 N27 v21 — LOC 卷二 59/59면 복구, 심사 보류 유지
+
+- **Research Draft #2553 검토 HEAD** `2d39056bf4dd7cabda4b8df873054ad82bd096e2` / `saju-n27-wu-ji-recurrence-scope-sensitivity-v21`. Bridge의 `researchHeadReviewed`와 회귀 테스트를 이 정확 HEAD에 고정했다.
+- [LOC 마지막 번호 59 복구 실행 #39217454989](https://github.com/gycha0109-beep/Saju/actions/runs/39217454989)의 공식 [59번 메타데이터](https://www.loc.gov/resource/lcnclscd.2014514308.1A002/?sp=59&fo=json)는 `cover2`라는 **비연번 IIIF 식별자**를 돌려준다. [이미지 원본](https://tile.loc.gov/image-services/iiif/service:asian:lcnclscd:2014514308:1A002:cover2/full/pct:25/0/default.jpg)을 **53,722바이트**, SHA-256 **`c6ee8531aeece3634c181dbf4254fdc9ba28901a6ad9551fc2bc4f892f8e7dc8`**로 보존했고 직접 열람했다. `神峰通考二卷` 필기가 보이는 표지로서 새로운 `補曰` 본문 판면은 아니다.
+- LOC **공식 디지털 이미지 59/59개 확보 완료**. 초기 25개 취득·34개 미취득과 후속 58/59는 각 이력의 상태이며 삭제하지 않는다. 다만 이것이 본문 전체 문자 교감 또는 인쇄본 계통 판정 **완료를 의미하지 않는다**.
+- 추가 공개 [한국 공유마당 출처 국회도서관·1906년 등록](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005), [1906 上海書局石印本·紹興圖書館의 별도 서지](https://www.guoxuedashi.com/shumu/gj-1240984pp.html)는 **원본 미판독 후보**로만 연결했다. 두 서지가 동일 실물인지 별도의 전승인지는 `UNADJUDICATED`.
+- 17세기 추정 LOC 인쇄이미지 8번의 `補曰` 국소 문구와 1926·1929 이미지의 핵심 글자 일치만 유지한다. `別宮` 日支 독립 효과, `再見` 藏干 산입, `一位` 역사적 셈법 **UNADJUDICATED**. N27 **5 Claim HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 劫財 T8 **1 vs 0**. 신규 TrustGrant/consumer/Preview/Official/Production 승인 없음. Draft/미병합 및 기관 연락 금지 유지.
