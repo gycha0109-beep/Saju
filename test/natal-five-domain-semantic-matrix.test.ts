@@ -98,6 +98,11 @@ describe('five-domain actual-chart semantic differentiation / S6 research matrix
     for(const domain of DOMAINS) {
       expect(differentiatedPairs[domain]).toBeGreaterThanOrEqual(10);
     }
+    // Baseline on 2026-10-19 merged five-domain matrix was Business 4/30 and
+    // Relationship 7/30. A new claim counts only if the real chart meets MUR
+    // with three distinct, source-backed interpretation axes.
+    expect(completeCounts.business).toBeGreaterThan(4);
+    expect(completeCounts.relationship).toBeGreaterThan(7);
     // CI-readable evidence: counted T8 pattern+axis differences, not mere pillar labels or wording.
     console.info('S6 semantic 30-chart matrix',JSON.stringify({
       cases:samples.length, differentiatedPairs,completeCounts,

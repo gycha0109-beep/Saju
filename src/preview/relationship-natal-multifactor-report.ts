@@ -8,7 +8,7 @@ import {
   RELATIONSHIP_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/relationship-natal-multifactor-candidate.js';
 
-export const RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION = '0.1.0-research-preview' as const;
+export const RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION = '0.2.0-research-preview' as const;
 type Axis = 'core' | 'expression' | 'boundaries' | 'reception' | 'coordination';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';

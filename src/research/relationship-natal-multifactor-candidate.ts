@@ -9,7 +9,7 @@ import {
 import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
 
 /** Canonical T5 -> source-qualified relationship-general T8; no parallel product interpretation. */
-export const RELATIONSHIP_NATAL_MULTIFACTOR_VERSION = '0.1.0-research' as const;
+export const RELATIONSHIP_NATAL_MULTIFACTOR_VERSION = '0.2.0-research' as const;
 const METHOD_ID = 'M-RELATIONSHIP-NATAL-MULTIFACTOR-BOUNDARY-DIALOGUE-V1';
 const RULE_SET = 'relationship-natal-source-bounded-multifactor';
 type Family = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
@@ -52,6 +52,21 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     id: 'PEER_RESOURCE_OFFICER', families: ['peer','resource','officer'],
     axis: 'coordination', headline: '자기 관점·수용·책임의 세 기준이 교차',
     summary: '비겁의 자기 관점, 인성의 수용, 관성의 역할 기준이 같은 채널에 관측됩니다. 다양한 관계에서 입장과 경계를 어떻게 구분해 볼지 설명하는 연구 후보일 뿐 실제 배우자·결혼·연애 결과를 뜻하지 않습니다.',
+  },
+  {
+    id: 'RESOURCE_OUTPUT_OFFICER', families: ['resource','output','officer'],
+    axis: 'core', headline: '받아들이기·표현하기·역할 기준의 세 관점',
+    summary: '인성의 수용·학습, 식상의 표현·산출, 관성의 역할·규범이 같은 관측 채널에서 함께 나타납니다. 관계 일반에서는 받아들인 것을 어떻게 표현하고 어떤 역할 기준과 구별할지 함께 검토하는 전통적 구조로만 읽습니다. 실제 성격이나 의사소통의 우열, 관계 성패를 판정하지 않습니다.',
+  },
+  {
+    id: 'OUTPUT_OFFICER', families: ['output','officer'],
+    axis: 'boundaries', headline: '표현하는 일과 역할 기준을 나누어 보는 구조',
+    summary: '식상의 표현·발산과 관성의 역할·규범이 함께 관측됩니다. 관계 일반에서 표현의 관점과 책임·경계의 관점을 구별해 질문할 수 있으나, 실제 대인 갈등이나 연애·결혼 결과를 예견하지 않습니다.',
+  },
+  {
+    id: 'RESOURCE_OFFICER', families: ['resource','officer'],
+    axis: 'coordination', headline: '받아들이는 관점과 책임 기준의 교차',
+    summary: '인성의 수용·학습과 관성의 역할·규범 관점이 같은 채널에 놓입니다. 관계에서 이해하려는 관점과 서로에게 적용하는 기준을 비교해 보는 제한된 전통 독해일 뿐, 가족의 지원이나 배우자의 속성·관계 만족도를 알 수 있다는 뜻은 아닙니다.',
   },
 ]);
 const CHANNELS: readonly Channel[] = ['visible_stems', 'branches'];
