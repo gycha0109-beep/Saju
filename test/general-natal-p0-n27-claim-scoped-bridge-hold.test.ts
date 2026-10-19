@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('1ac29524b990bd0d080f52fdfe938843c69fd67f');
+    expect(review.researchHeadReviewed).toBe('cf65e521693155f0d660411ee6b316a7dfc193a1');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v19',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v20',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -356,6 +356,13 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           },
           earlierSeventeenthCenturyImprintLead: {
             catalogedJapanesePrintYear: 1647,
+            conflictingTohokuCatalog: 'https://touda.tohoku.ac.jp/portal/item/10010000025881',
+            conflictingTohokuYear: 1850,
+            twoTohokuRecordIds: ['10010000025889','10010000025881'],
+            bothListSameDepartmentId: 'TT22201642',
+            bothListSameShelfMark: '2/3802/6',
+            distinctHistoricalPrintsEstablished: false,
+            actualPrintYearOfJapaneseHolding: 'UNADJUDICATED',
             catalogedJapanesePublisher: '沢村寛',
             catalogedJapanesePlace: '江戸',
             catalogedVolumes: 6,
