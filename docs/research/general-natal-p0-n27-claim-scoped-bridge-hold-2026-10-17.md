@@ -327,3 +327,11 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 - `researchHeadReviewed`는 **이미 검토한 Research 증거의 고정 커밋 식별자**다. 자동으로 최신 HEAD를 추종하거나 GitHub PR이 새 커밋을 받을 때마다 신뢰를 승격하는 플래그가 아니다. Research에 새 커밋이 추가되면 해당 근거를 재검토하고 소스/테스트/문서의 pin을 함께 수정해야 한다. CI 통과 자체가 이 교차 PR 고정 참조를 인증하지 않는다.
 - 이 변경은 기존 `saju-n27-wu-ji-recurrence-scope-sensitivity-v18` 증거에 대한 **참조 오류 수정만** 하므로 Research 버전 또는 Bridge 감사 버전을 올리지 않는다. 결정 해시가 pin 변경에 따라 달라질 수 있으나 승인 상태는 그대로다.
 - `別宮`의 日支 효과, `再見`의 支藏干 반복 집계, `一位`의 고전적 계산 단위는 `UNADJUDICATED`. N27 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**. 새로운 TrustGrant·Preview·Official·Production·consumer 해석 권한 없음. 두 PR은 Draft/미병합 상태 유지.
+
+## 2026-10-19 N27 v19 — 17세기 추정 LOC 인쇄본 「補曰」 직접 확인·Bridge HOLD 유지
+
+- Research #2553 정확 검토 커밋: `1ac29524b990bd0d080f52fdfe938843c69fd67f`, 연구 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v19`. 이 값은 Bridge 소스 `researchHeadReviewed`, 회귀 테스트, 문서에서 동일하게 고정했다. 이전 v18 `9019a0...` 및 더 오래된 `8f9c6c...`는 각 시점의 역사적 기준일 뿐 **현재 검토 기준이 아니다**.
+- [LOC 『神峰通考』 卷二 공식 IIIF **8번 인쇄 이미지**](https://tile.loc.gov/image-services/iiif/service:asian:lcnclscd:2014514308:1A002:07b08a/full/pct:25/0/default.jpg)를 기존 [25면 수집 artifact](https://github.com/gycha0109-beep/Saju/actions/runs/39190030567)에서 다시 실제 판독했다. 미리보기 JPEG **132,360 bytes**, SHA-256 **`e4b6771c98c8f9547ab9e3ac531ff8e34bd67eb6e380810843fc4a186e371c08`**. 우측 인쇄면 `補曰` 아래의 연속 글자 **`只要一位貴不要多而三處不要再見財`**가 1926년 169면본 PDF 67면, 1929년 170면 상책 PDF 67면과 **지정 구절에서 일치**한다.
+- 기존에 확인 못 한 **17세기 추정 고본의 지정 구절 존재 여부**는 LOC 인쇄 이미지 하나에서 확인됐다. 그러나 LOC 소장품의 1638–1661 연대는 **소장기관 추정**이고 봉면 `甲午重鐫`에서 1654년 확정 인쇄를 증명하지 않는다. `補曰`의 최초 작성자·편집 시점, 1647년 일본 印本 수록 여부, 판본 간 독립 계통, 장 전체 이문은 **미판정**이다.
+- 추가 공개본 접근: [우선 수집](https://github.com/gycha0109-beep/Saju/actions/runs/39194424103)에서 누락 34면 중 32면 확보했고, [LOC 메타데이터 재확인](https://github.com/gycha0109-beep/Saju/actions/runs/39195117566)으로 58번(공식 이미지 ID `57b000`)을 확보했다. 권2 총 **59면 중 58면 확보**, 59번은 공식 메타데이터 요청이 시간초과됐다. 이미지 미확보는 글자 부재의 증명이 아니다.
+- Bridge의 다섯 Claim **모두 HOLD**. `別宮` 日支 독립 효과, `再見` 藏干 가산, `一位` 역사적 집계는 **UNADJUDICATED**. N17 **METHODOLOGY_CONFLICT**, N13 정확 劫財 T8 **1 vs 0**. 인쇄본 글자 확인을 계산 의미 확정이나 ReviewAttestation·TrustGrant·Preview·Official·Production·consumer 승인으로 바꾸지 않았다. 현재 `researchHeadReviewed`는 자동 최신 HEAD 추종값이 아니라 실제 검토를 마친 정확한 Research 커밋의 고정 참조다.
