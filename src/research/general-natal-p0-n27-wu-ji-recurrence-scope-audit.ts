@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v15' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v16' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -659,6 +659,24 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             exactHourWealthFolioInspected: false as const,
             manuscriptOrHistoricalTextVerified: false as const,
             incrementOfDirectReadPrintedWitnesses: 0 as const,
+          }),
+          // This 1929 issue is in TWO physical upper/lower volumes.
+          // These are NOT two independent historical readings.
+          republican1929TwoVolumeBindingAudit: Object.freeze({
+            publisher: '中華書局 文明書局' as const,
+            printDate: '1929-11' as const,
+            collator: '秦慎安' as const,
+            upperFile: 'https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf' as const,
+            lowerFile: 'https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10361_神峰通考_第2卷.pdf' as const,
+            upperPdfPages: 170 as const,
+            lowerPdfPages: 168 as const,
+            sameTwoVolumePublication: true as const,
+            volumesNotIndependentTextualVotes: true as const,
+            exactSupplementLeafLocatedInEitherVolume: false as const,
+            originalPdfScreenshotFetchFailed: true as const,
+            claimedNewVisualPrintWitnesses: 0 as const,
+            independentlyCertifiedVariantReadings: 0 as const,
+            yearMonthDayAndHiddenStemSemanticsStillUndecided: true as const,
           }),
           alternativeRepublicanPrintCatalogue: Object.freeze({
             sourceUrl: 'https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf' as const,
