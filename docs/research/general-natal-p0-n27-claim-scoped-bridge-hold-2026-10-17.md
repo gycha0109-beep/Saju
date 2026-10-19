@@ -364,3 +364,11 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 - [중국 다롄도서관의 또 다른 1906년 석인본 공식 서지](https://www.dl-library.net.cn/book/519/-shenfengtongkao---minglizhengzongdaquan-518296.html)는 **6冊一帙**로 기재되어 [紹興圖書館 서지의 1906년 `2冊`](https://www.guoxuedashi.com/shumu/gj-1240984pp.html) 및 국내 `4冊/卷1,2`과 물량이 다르다. 복수 판본 존재를 추정하는 출발점이지 **서지 연도, 동일성, 서로 다른 원전 계통을 확정하는 증거가 아니다**.
 - 새 원문 「時上偏財格」·「補曰」 판면 직독 0. 국내 두 소장본은 연도 미상·직접 영인 이미지 미확보이며 1906 국회도서관 출처 공유마당 PDF는 단일 URL **HTTP 400**. 따라서 **고전 문언 비교 추가 0, 독립 텍스트 계통 추가 0, 의미 승인 추가 0**이다. LOC 卷二 59/59 공식 디지털 이미지 확보와 기존 8번 핵심 글자 실제 판독은 유지.
 - **N27 Claim 5개 HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 정확 劫財 T8 **1 vs 0**, `別宮`·`再見`·`一位` 실제 계산 의미 **UNADJUDICATED**. TrustGrant/consumer/Preview/Official/Production 변경 없음. 두 PR Draft·미병합, 기관 문의·이메일 없음.
+
+## N27 v23 — 율곡연구원 두 판본의 공개 인쇄이미지 11장 직접 확보·상표 대조 (2026-10-19)
+
+- Research Draft #2553 검토 HEAD **`e56532119d7f1d45c292e2e11fc43ff2e02afb06`**, 연구 버전 **`saju-n27-wu-ji-recurrence-scope-sensitivity-v23`**로 고정했다. Bridge 소스와 회귀 테스트에 동일 `researchHeadReviewed` SHA가 반영됐다.
+- [국내 율곡연구원 원전 이미지 취득 Actions #39224144799](https://github.com/gycha0109-beep/Saju/actions/runs/39224144799)에서 공식 뷰어가 실제 노출한 **`B005_01_B00330_001` 소장본 6/6장 + `B005_01_B00442_001` 소장본 5/5장 = JPEG 11/11장**을 취득하고 바이트 SHA-256을 확인했다. 두 소장본 각각 실제 첫 인쇄면에 **`千頃堂書局商標`**를 육안 판독했다. 첫 소장본은 목록의 출판사 칸이 공백이나 실물 인쇄 화상에는 이 상표가 있음.
+- 대응하는 卷一 서문·초반 본문 두 인쇄면의 편집 배치 및 상징 도안이 상당 부분 동일함을 **직접 국소 비교**했다. 다만 원본 촬영·연대·인쇄 회차·계통 독립성은 별개다. 비슷한 인쇄면을 두 독립 고전 증인으로 계산하지 않는다.
+- **11장 모두 「時上偏財格」·「補曰」 표적 권二 판면이 아니다.** 따라서 신규 `只要一位貴不要多而三處不要再見財` 인쇄 글자 판독은 **0건**. [1925 大成書局 소장 공식 HTML](https://www.dl-library.net.cn/book/520/-xin-shenfeng-xianshengtongkao---minglizhengzongdaquan-519143.html)은 서지 단독이며 해당 공개 HTML에 책 본문 스캔·PDF·뷰어 링크가 없음을 코드와 별도로 기록. 1925 실물 표적 인쇄 화상은 미확보.
+- N27 Claim **5개 HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 정확 劫財 T8 **1 vs 0**, `別宮` 日支·`再見` 藏干·`一位` 집계 단위 **UNADJUDICATED**. LOC 이미지 59/59와 기존 8번 「補曰」 판독 유지. 신규 TrustGrant/Preview/Official/Production/consumer 의미 승인 0; 제품 해석 로직 변경 0; 두 PR Draft·미병합, 기관 연락 없음.
