@@ -23,6 +23,8 @@ import { createWealthNatalMultifactorRegistry } from '../dist/research/wealth-na
 import { buildWealthNatalMultifactorReport } from '../dist/preview/wealth-natal-multifactor-report.js';
 import { createBusinessNatalMultifactorRegistry } from '../dist/research/business-natal-multifactor-candidate.js';
 import { buildBusinessNatalMultifactorReport } from '../dist/preview/business-natal-multifactor-report.js';
+import { createRelationshipNatalMultifactorRegistry } from '../dist/research/relationship-natal-multifactor-candidate.js';
+import { buildRelationshipNatalMultifactorReport } from '../dist/preview/relationship-natal-multifactor-report.js';
 import { buildNatalActivatedThemePreview } from '../dist/preview/natal-activated-theme-preview.js';
 import { buildNatalAppliedThemeContext } from '../dist/preview/natal-applied-theme-context.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../dist/interpretation/general-natal-integrated-reading-registry.js';
@@ -519,6 +521,33 @@ function renderWealthMultifactorInMainReport(report) {
     '</details></section>';
 }
 
+function renderRelationshipMultifactorInMainReport(report) {
+  if (!report.researchOnly || report.mayPublish || report.maySell || report.usefulComplete) {
+    throw new TypeError('Relationship multifactor research must not be promoted to official interpretation');
+  }
+  const cases = report.sections.map(item =>
+    '<article class="reader-paragraph"><h3>'+escapeHtml(item.headline)+'</h3>'+
+    '<p>'+escapeHtml(item.paragraph)+'</p><details><summary>실제 명식 근거 및 Claim·Rule·Source</summary>'+
+    '<p>'+escapeHtml(item.observedPositions.join(' · '))+'</p>'+
+    '<p>'+escapeHtml(item.observedFactPaths.join(' · '))+'</p>'+
+    '<p>'+escapeHtml(item.upstreamClaimIds.join(' · '))+'</p>'+
+    '<p>'+escapeHtml(item.ruleId)+'</p>'+
+    '<p>'+escapeHtml(item.sourceIds.join(' · '))+'</p></details></article>'
+  ).join('');
+  return '<section class="domain research-scope"><div class="domain-heading">'+
+    '<h2>나의 사업·실행: 서로 다른 명식 근거를 연결한 구조 풀이</h2>'+
+    '<span>새 Relationship T8 연구 실험 · 공식 풀이 아님</span></div>'+
+    '<p>'+escapeHtml(report.introduction)+'</p>'+
+    '<p class="reader-note">최소 유효 풀이: '+escapeHtml(report.state)+
+    ' · 전체 제품 완성 판정과 별개인 연구 후보</p>'+
+    (cases || '<p class="limited">현재 근거에서 충분한 원국 복합 해석을 구성할 수 없습니다.</p>')+
+    (report.missing.length ? '<p class="limited">부족한 근거: '+
+      escapeHtml(report.missing.join(' · '))+'</p>' : '')+
+    '<details><summary>명식별 해석의 한계 및 권한</summary>'+
+    report.limitations.map(x=>'<p>'+escapeHtml(x)+'</p>').join('')+
+    '</details></section>';
+}
+
 function renderBusinessMultifactorInMainReport(report) {
   if (!report.researchOnly || report.mayPublish || report.maySell || report.usefulComplete) {
     throw new TypeError('Business multifactor research must not be promoted to official interpretation');
@@ -546,7 +575,7 @@ function renderBusinessMultifactorInMainReport(report) {
     '</details></section>';
 }
 
-function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence, careerResearch, generalResearch, wealthResearch, businessResearch) {
+function renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence, careerResearch, generalResearch, wealthResearch, businessResearch, relationshipResearch) {
   const general = responses[0]?.response.reading;
   const status = responses.map(({ domain, response }) => `${domain.title}:${response.state}`);
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"/>
@@ -596,6 +625,7 @@ function renderPage(date, time, responses, synthesis, themes, applied, brief, st
   ${renderCareerMultifactorInMainReport(careerResearch)}
   ${renderWealthMultifactorInMainReport(wealthResearch)}
   ${renderBusinessMultifactorInMainReport(businessResearch)}
+  ${renderRelationshipMultifactorInMainReport(relationshipResearch)}
   ${renderN36CommonChartEvidence(commonEvidence)}
   ${renderN31FourDomainResearch(domainResearch)}
   ${renderReaderFirstStory(story, expanded)}
@@ -718,6 +748,13 @@ async function main() {
   const businessResearch = buildBusinessNatalMultifactorReport(
     calculated.snapshot, businessExecution, businessRegistry,
   );
+  const relationshipRegistry = createRelationshipNatalMultifactorRegistry(researchNow.toISOString());
+  const relationshipExecution = runInterpretation(calculated.snapshot, relationshipRegistry, {
+    requestId: 'relationship-general-source-bound-multifactor-research-internal-only', now: researchNow,
+  });
+  const relationshipResearch = buildRelationshipNatalMultifactorReport(
+    calculated.snapshot, relationshipExecution, relationshipRegistry,
+  );
   const themes = buildNatalActivatedThemePreview(interpretation);
   const applied = buildNatalAppliedThemeContext(evidence, themes);
   const researchRegistry = createGeneralNatalSourceBoundedRegistry(researchNow.toISOString());
@@ -727,10 +764,13 @@ async function main() {
   const relations = buildNatalN22ChartRelationGuide(
     calculated.snapshot, researchExecution, researchRegistry,
   );
-  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence, careerResearch, generalResearch, wealthResearch, businessResearch), 'utf8');
+  writeFileSync(output, renderPage(date, time, responses, synthesis, themes, applied, brief, story, expanded, relations, verifiedFiveDomains, domainResearch, commonEvidence, careerResearch, generalResearch, wealthResearch, businessResearch, relationshipResearch), 'utf8');
   process.stdout.write('General multifactor research on SAME birth chart: MUR=' + generalResearch.state +
     ', source-bound composite claims shown=' + generalResearch.sections.length +
     ', publish=false, sell=false, usefulComplete=false\\n');
+  process.stdout.write('Relationship-general multifactor research on SAME birth chart: MUR=' + relationshipResearch.state +
+    ', source-bound composite claims shown=' + relationshipResearch.sections.length +
+    ', publish=false, sell=false, usefulComplete=false\n');
   process.stdout.write('Business multifactor research on SAME birth chart: MUR=' + businessResearch.state +
     ', source-bound composite claims shown=' + businessResearch.sections.length +
     ', publish=false, sell=false, usefulComplete=false\n');
