@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v16' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v17' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -660,6 +660,28 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             manuscriptOrHistoricalTextVerified: false as const,
             incrementOfDirectReadPrintedWitnesses: 0 as const,
           }),
+          // A separate, actually catalogued Japanese print predates the
+          // probable 1654 LOC recut. Neither target leaf was visually read.
+          seventeenthCenturyBibliographicPriorPrintAudit: Object.freeze({
+            tohokuLibraryCatalog: 'https://touda.tohoku.ac.jp/collection/database/library/10010000025889' as const,
+            tohokuCatalogTitle: '新鐫神峯張先生通考闢謬命理正宗大全' as const,
+            tohokuCatalogPlace: '江戸' as const,
+            tohokuCatalogPublisher: '沢村寛' as const,
+            tohokuCatalogYear: 1647 as const,
+            tohokuOriginalVolumes: 6 as const,
+            tohokuHolding: '東北大学 狩野文庫' as const,
+            tohokuImagesAvailable: false as const,
+            tohokuChapterTwoLocusDirectlyRead: false as const,
+            locSourceCatalog: 'https://www.loc.gov/item/2014514308/' as const,
+            locImprintPhrase: '文光堂甲午重鐫' as const,
+            locQingShunzhiDateEstimated: true as const,
+            locJiaWu1654ConsistentWithinShunzhiInferenceOnly: true as const,
+            locJiaWuActualGregorianYearPrintCertified: false as const,
+            directFolioAgreementWith1926: 'UNADJUDICATED' as const,
+            editorialSupplementPresentIn1647: 'UNADJUDICATED' as const,
+            printedLocusCountAdded: 0 as const,
+            historicalStemCountingAllowed: false as const,
+          }),
           // This 1929 issue is in TWO physical upper/lower volumes.
           // These are NOT two independent historical readings.
           republican1929TwoVolumeBindingAudit: Object.freeze({
@@ -669,6 +691,13 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             upperFile: 'https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf' as const,
             lowerFile: 'https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10361_神峰通考_第2卷.pdf' as const,
             upperPdfPages: 170 as const,
+            upperContainsOriginalJuanOneToThreeAccordingToSecondaryFacsimileGuide: true as const,
+            locationOfHourWealthChapterInOriginalText: '卷二' as const,
+            upperVolumeOnlyIsFirstTargetForFindingSupplement: true as const,
+            secondaryFacsimileMirror: 'https://changxianyi.com/guji/shenfeng/' as const,
+            secondaryMirrorClaims338FacsimilePages: true as const,
+            secondaryMirrorSameCatalogCopiesNotThirdHistoricalEdition: true as const,
+            actualUpperPageContainingSupplementVerified: false as const,
             lowerPdfPages: 168 as const,
             sameTwoVolumePublication: true as const,
             volumesNotIndependentTextualVotes: true as const,
