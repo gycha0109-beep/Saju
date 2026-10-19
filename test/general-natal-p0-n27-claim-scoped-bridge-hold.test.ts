@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('6661c73eb3491c22e839effd119f89a8301066b9');
+    expect(review.researchHeadReviewed).toBe('e56532119d7f1d45c292e2e11fc43ff2e02afb06');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v22',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v23',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -456,6 +456,28 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             printedHourWealthSupplementDirectlyRead: false,
             independentAncientWitnessIncrement: 0,
             permitsClaimPromotion: false,
+          },
+          yulgokPublicViewerPrintedEvidenceNonAuthorizing: {
+            firstHoldingId: 'B005_01_B00330_001',
+            firstHoldingCatalogPublisherRecorded: false,
+            firstHoldingPublicImagesRetrieved: 6,
+            firstHoldingPublisherMarkImageSha256: 'd950e179f55d73339521ede027b1272bcfb3b7018b224407e03ca07a5ac7045b',
+            secondHoldingId: 'B005_01_B00442_001',
+            secondHoldingCatalogPublisherRecorded: true,
+            secondHoldingPublicImagesRetrieved: 5,
+            secondHoldingPublisherMarkImageSha256: '8590df09077da80acbe5170270a290c502b6f4a63ecc32aed584c2aa39b68677',
+            visuallyPrintedCommonPublisherMark: '千頃堂書局商標',
+            sameFirstJuanLeafHasMatchingLocalLayout: true,
+            previewsAvailableInBothHoldingsTotal: 11,
+            allElevenPreviewImagesPhysicallyDownloadedAndHashed: true,
+            hourWealthSupplementPrintedFolioIncludedAmongEleven: false,
+            originalSupplementPhraseNewlyRead: false,
+            similarityCannotCertifyIdenticalPrinting: true,
+            lithographEditionIndependentWitnessCountAdded: 0,
+            dalian1925PublicCatalogueHtmlDoesNotLinkOriginalPages: true,
+            dalian1925ActualOriginalPageRetrieved: false,
+            ancientMeaningAuthorizationsAdded: 0,
+            allFiveN27ClaimsRemainHold: true,
           },
           republican1929TwoPhysicalVolumes: {
             publicationDate: '1929-11',
