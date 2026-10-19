@@ -1,0 +1,72 @@
+name: N27 1929 source folio retrieval (research-only)
+
+on:
+  push:
+    branches:
+      - research/saju/natal-19-pair-semantic-return-20261017
+    paths:
+      - .github/workflows/n27-1929-source-folio-retrieval.yml
+
+permissions:
+  contents: read
+
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Acquire uncropped 1929 upper volume by immutable Commons file path
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-1929/pages n27-1929/sheets
+          curl -fSL --retry 3 --retry-delay 4 --connect-timeout 15 --max-time 150 \
+            --user-agent 'MyeongHa-N27-Source-Critical-Audit/1.0' \
+            -o n27-1929/upper.pdf \
+            'https://upload.wikimedia.org/wikipedia/commons/6/67/NLC511-027032013020556-10360_%E7%A5%9E%E5%B3%B0%E9%80%9A%E8%80%83_%E7%AC%AC1%E5%8D%B7.pdf'
+          test "$(stat -c %s n27-1929/upper.pdf)" -gt 1000000
+          file n27-1929/upper.pdf
+          sha256sum n27-1929/upper.pdf
+          pdfinfo n27-1929/upper.pdf | grep -E 'Pages:|Page size:|File size:'
+          test "$(pdfinfo n27-1929/upper.pdf | awk '/^Pages:/ {print $2}')" = '170'
+      - name: Render complete page-grid index for human visual examination
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet Pillow
+          pdftoppm -jpeg -r 70 -scale-to 480 -jpegopt quality=65 \
+            n27-1929/upper.pdf n27-1929/pages/p > /dev/null 2>&1
+          python3 - <<'PY'
+          import pathlib, base64
+          from PIL import Image, ImageDraw
+          base = pathlib.Path('n27-1929')
+          files = sorted((base/'pages').glob('p-*.jpg'))
+          assert len(files)==170, f'Rendered page count {len(files)}'
+          cols=6; rows=5; cellw=330; cellh=510
+          for start in range(0,len(files),cols*rows):
+              idx=start//(cols*rows)
+              sheet=Image.new('RGB',(cols*cellw,rows*cellh),(245,245,245))
+              draw=ImageDraw.Draw(sheet)
+              for pos,fn in enumerate(files[start:start+cols*rows]):
+                  im=Image.open(fn).convert('RGB')
+                  im.thumbnail((cellw-8,cellh-30))
+                  left=(pos%cols)*cellw+(cellw-im.width)//2
+                  top=(pos//cols)*cellh+25
+                  sheet.paste(im,(left,top))
+                  draw.text(((pos%cols)*cellw+7,(pos//cols)*cellh+5),f'PDF {start+pos+1:03d}',fill=(0,0,0))
+              dest=base/'sheets'/f'contact-{idx+1:02d}-pages-{start+1:03d}-{min(start+cols*rows,len(files)):03d}.jpg'
+              sheet.save(dest,quality=65,optimize=True)
+              print('N27_SHEET_META',dest,round(dest.stat().st_size/1024),'KiB')
+              dat=base64.b64encode(dest.read_bytes()).decode('ascii')
+              print(f'N27_SHEET_BASE64_BEGIN {idx+1}')
+              for offset in range(0,len(dat),400): print(dat[offset:offset+400])
+              print(f'N27_SHEET_BASE64_END {idx+1}')
+          PY
+      - name: Store source PDF and page index as non-production evidence artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-1929-upper-unmodified-pdf-and-contact-sheets
+          path: |
+            n27-1929/upper.pdf
+            n27-1929/sheets/*.jpg
+          retention-days: 14
