@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v15');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v16');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -590,6 +590,19 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       caseProvesPureHourOnePositionException: false,
       caseMaySynthesizeEditorsInterpretiveView: true,
       issuerIdentityBeyondHeadingVerified: false,
+    });
+    expect(three.republican1929TwoVolumeBindingAudit).toMatchObject({
+      printDate: '1929-11',
+      collator: '秦慎安',
+      upperPdfPages: 170,
+      lowerPdfPages: 168,
+      sameTwoVolumePublication: true,
+      volumesNotIndependentTextualVotes: true,
+      exactSupplementLeafLocatedInEitherVolume: false,
+      originalPdfScreenshotFetchFailed: true,
+      claimedNewVisualPrintWitnesses: 0,
+      independentlyCertifiedVariantReadings: 0,
+      yearMonthDayAndHiddenStemSemanticsStillUndecided: true,
     });
     expect(three.alternativeRepublicanPrintCatalogue).toMatchObject({
       catalogedPrintYear: 1929,
