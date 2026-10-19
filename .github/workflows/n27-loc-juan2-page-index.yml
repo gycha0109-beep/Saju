@@ -1,4 +1,4 @@
-name: N27 LOC Juan 2 targeted missing primary images
+name: N27 LOC Juan 2 final two page metadata lookup
 
 on:
   push:
@@ -9,72 +9,58 @@ permissions:
   contents: read
 
 jobs:
-  missing-pages:
+  tail-page-lookup:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     steps:
-      - name: Retrieve only 34 previously missing official IIIF preview images with rate-limit stop
+      - name: Resolve official LOC image paths for remaining 58 and 59 only
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m pip install --quiet Pillow
-          mkdir -p loc-juan2-missing/pages loc-juan2-missing/sheets
+          mkdir -p loc-juan2-tail/pages
           python3 - <<'PY'
-          import hashlib, io, json, pathlib, time, urllib.error, urllib.request
-          from PIL import Image, ImageDraw
-          root=pathlib.Path('loc-juan2-missing')
-          targets=[13, *range(27,60)]
-          base='https://tile.loc.gov/image-services/iiif/service:asian:lcnclscd:2014514308:1A002:'
-          headers={'User-Agent':'MyeongHa-N27 scholarly primary-text inspection (public IIIF, paced single request)'}
-          results=[]
+          import hashlib,json,pathlib,time,urllib.request,urllib.error
+          root=pathlib.Path('loc-juan2-tail')
+          base='https://www.loc.gov/resource/lcnclscd.2014514308.1A002/'
+          headers={'User-Agent':'MyeongHa-N27 scholarly archival inspection; two paced official metadata lookups'}
+          out=[]
           blocked=False
-          for i in targets:
-              # Verified path template from previously acquired official LOC page-index.
-              image_id=f'{i-1:02d}b{i:02d}a'
-              url=base+image_id+'/full/pct:25/0/default.jpg'
+          def get(url):
+              req=urllib.request.Request(url,headers=headers)
+              with urllib.request.urlopen(req,timeout=40) as f:return f.read()
+          for i in (58,59):
               if blocked:
-                  results.append({'page':i,'status':'NOT_REQUESTED_AFTER_LIMIT','url':url})
+                  out.append({'page':i,'status':'NOT_REQUESTED_AFTER_LIMIT'})
                   continue
-              time.sleep(4.0)
+              time.sleep(5)
+              rec={'page':i,'metadata_url':base+'?fo=json&sp='+str(i)}
               try:
-                  req=urllib.request.Request(url,headers=headers)
-                  with urllib.request.urlopen(req,timeout=45) as response:
-                      payload=response.read()
-                  image=Image.open(io.BytesIO(payload));image.verify()
-                  dst=root/'pages'/f'loc-juan2-{i:02d}.jpg'
-                  dst.write_bytes(payload)
-                  results.append({'page':i,'status':'FETCHED','url':url,
-                                  'bytes':len(payload),'sha256':hashlib.sha256(payload).hexdigest()})
-                  print('N27_LOC_MISSING_FETCHED',i,len(payload),flush=True)
+                  meta=json.loads(get(rec['metadata_url']))
+                  candidates=meta.get('segments',[{}])[0].get('image_url',[])
+                  rec['candidate_image_urls']=candidates
+                  matching=[s for s in candidates if '/pct:25/' in s]
+                  if not matching:
+                      rec['status']='NO_PCT25_IMAGE_URL'
+                  else:
+                      url=matching[0].split('#')[0]
+                      rec['url']=url
+                      time.sleep(5)
+                      blob=get(url)
+                      (root/'pages'/f'loc-juan2-{i:02d}.jpg').write_bytes(blob)
+                      rec.update(status='FETCHED',bytes=len(blob),sha256=hashlib.sha256(blob).hexdigest())
               except urllib.error.HTTPError as e:
-                  results.append({'page':i,'status':'HTTP_'+str(e.code),'url':url})
-                  print('N27_LOC_MISSING_HTTP',i,e.code,flush=True)
-                  if e.code in (429,403): blocked=True
+                  rec['status']='HTTP_'+str(e.code)
+                  if e.code in (403,429):blocked=True
               except Exception as e:
-                  results.append({'page':i,'status':'ERROR','url':url,'error':repr(e)[:200]})
-                  print('N27_LOC_MISSING_ERROR',i,repr(e)[:120],flush=True)
-          (root/'missing-page-index.json').write_text(json.dumps(results,ensure_ascii=False,indent=2))
-          successes=[x for x in results if x['status']=='FETCHED']
-          print('N27_LOC_MISSING_OK',len(successes),'OF',len(targets),flush=True)
-          for start in range(0,len(targets),12):
-              items=targets[start:start+12]
-              sheet=Image.new('RGB',(3*460,4*570),'white')
-              draw=ImageDraw.Draw(sheet)
-              for j,i in enumerate(items):
-                  x=(j%3)*460; y=(j//3)*570
-                  draw.text((x+6,y+4),f'LOC Juan 2 image {i:02d}',fill='black')
-                  p=root/'pages'/f'loc-juan2-{i:02d}.jpg'
-                  if p.exists():
-                      with Image.open(p) as src:
-                          im=src.convert('RGB')
-                          im.thumbnail((446,533))
-                          sheet.paste(im,(x+(460-im.width)//2,y+25))
-              sheet.save(root/'sheets'/f'loc-juan2-missing-{start+1:02d}-{start+len(items):02d}.jpg',quality=80)
+                  rec['status']='ERROR';rec['error']=repr(e)[:200]
+              out.append(rec)
+              print('N27_LOC_TAIL_RESULT',i,rec['status'],flush=True)
+          (root/'tail-index.json').write_text(json.dumps(out,ensure_ascii=False,indent=2))
           PY
-      - name: Upload targeted acquisition record and print contact sheets
+      - name: Preserve exact endpoint results and successful image bytes
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: n27-loc-juan2-only-missing-34
-          path: loc-juan2-missing
+          name: n27-loc-juan2-tail-58-59
+          path: loc-juan2-tail
           retention-days: 14
