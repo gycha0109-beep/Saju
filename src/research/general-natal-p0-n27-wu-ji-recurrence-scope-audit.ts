@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v22' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v23' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -832,6 +832,56 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             directImageOfBieGongZaiJianYiWeiSectionRetrieved: false as const,
             independentStemmaticWitnessIncrement: 0 as const,
             newN27SemanticAuthorization: false as const,
+          }),
+          yulgokPublicViewerDirectPrintedPageAudit: Object.freeze({
+            retrievalRun: 'https://github.com/gycha0109-beep/Saju/actions/runs/39224144799' as const,
+            preliminaryEndpointRun: 'https://github.com/gycha0109-beep/Saju/actions/runs/39223683125' as const,
+            officialYulgokViewerGeneratedPreviewRoute: '/data/image/B/{holdingId}/preview/{imageId}.jpg' as const,
+            firstHolding: Object.freeze({
+              id: 'B005_01_B00330_001' as const,
+              viewer: 'https://db.yulgok.or.kr/viewer/view?dataId=B005_01_B00330_001' as const,
+              actualPreviewFramesDownloaded: 6 as const,
+              viewerDeclaredImageFrameCount: 6 as const,
+              coverImageOneSha256: '5afd704272da43b47a5ca1cbb789e96ab8e135ce999a0655e6c29720c3d6507d' as const,
+              publisherEmblemOnFrame4Sha256: 'd950e179f55d73339521ede027b1272bcfb3b7018b224407e03ca07a5ac7045b' as const,
+              matchingOpeningTextOnFrame5Sha256: 'f2281c68ab8d6d60662e8d282b2aaa6487e2af66ae03eb78b70253cca3cde46d' as const,
+              publisherNamedInCatalogue: false as const,
+              publisherEmblemVisuallyPrintedInFrame4: true as const,
+            }),
+            secondHolding: Object.freeze({
+              id: 'B005_01_B00442_001' as const,
+              viewer: 'https://db.yulgok.or.kr/viewer/view?dataId=B005_01_B00442_001' as const,
+              actualPreviewFramesDownloaded: 5 as const,
+              viewerDeclaredImageFrameCount: 5 as const,
+              coverImageOneSha256: 'e0709b7509fafbec21ec6b939ff9a8a12b9d2b7c807ed800aa6ccfd3361f0b7b' as const,
+              publisherEmblemOnFrame3Sha256: '8590df09077da80acbe5170270a290c502b6f4a63ecc32aed584c2aa39b68677' as const,
+              matchingOpeningTextOnFrame4Sha256: '945fdb7e191ed2bc36befb58c6274e9f9bb2a1087f11fbd3eaabef90370c3d4e' as const,
+              publisherNamedInCatalogue: true as const,
+              publisherEmblemVisuallyPrintedInFrame3: true as const,
+            }),
+            exactPrintedEmblemReadRightToLeft: '千頃堂書局商標' as const,
+            visibleCommonOpeningText: '神峰張先生命理正宗敘' as const,
+            sameLogoAndOpeningLeafPrintedLineArrangementDirectlyCompared: true as const,
+            imagesAreDistinctPhotographsWithDifferentHandAnnotations: true as const,
+            totalOfficialPreviewFramesDownloaded: 11 as const,
+            allPreviewImagesHttp200AndHashed: true as const,
+            previewFramesAreSelectiveNotCompleteBook: true as const,
+            hourPianCaiSupplementFolioAmong11Frames: false as const,
+            targetCoreGlyphsVisuallyComparedToLoc1926And1929: false as const,
+            samePrintingSettingHistoricallyCertified: false as const,
+            independentTextualWitnessesAdded: 0 as const,
+            yulgokLithographActualPublicationYears: 'UNADJUDICATED' as const,
+            permittedClaimPromotions: 0 as const,
+            dalian1925Listing: Object.freeze({
+              page: 'https://www.dl-library.net.cn/book/520/-xin-shenfeng-xianshengtongkao---minglizhengzongdaquan-519143.html' as const,
+              publisher: '上海 大成書局' as const,
+              publicationYearListed: 1925 as const,
+              pageHtmlBytesDownloaded: 20375 as const,
+              pageHtmlSha256: '1095f560df148abfa7dcbfd40e7c2aa638f81d5dd242010c134a92b7b8daa447' as const,
+              pdfOrBookScanLinkPresentInCatalogueHtml: false as const,
+              originalPrintedImageRetrieved: false as const,
+              editionIndependentFromYulgok: 'UNADJUDICATED' as const,
+            }),
           }),
           republican1929TwoVolumeBindingAudit: Object.freeze({
             publisher: '中華書局 文明書局' as const,
