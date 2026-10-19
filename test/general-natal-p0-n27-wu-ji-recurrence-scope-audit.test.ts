@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v22');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v23');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -727,6 +727,47 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       directImageOfBieGongZaiJianYiWeiSectionRetrieved: false,
       independentStemmaticWitnessIncrement: 0,
       newN27SemanticAuthorization: false,
+    });
+    expect(three.yulgokPublicViewerDirectPrintedPageAudit).toMatchObject({
+      firstHolding: {
+        id: 'B005_01_B00330_001',
+        actualPreviewFramesDownloaded: 6,
+        viewerDeclaredImageFrameCount: 6,
+        publisherEmblemOnFrame4Sha256: 'd950e179f55d73339521ede027b1272bcfb3b7018b224407e03ca07a5ac7045b',
+        matchingOpeningTextOnFrame5Sha256: 'f2281c68ab8d6d60662e8d282b2aaa6487e2af66ae03eb78b70253cca3cde46d',
+        publisherNamedInCatalogue: false,
+        publisherEmblemVisuallyPrintedInFrame4: true,
+      },
+      secondHolding: {
+        id: 'B005_01_B00442_001',
+        actualPreviewFramesDownloaded: 5,
+        viewerDeclaredImageFrameCount: 5,
+        publisherEmblemOnFrame3Sha256: '8590df09077da80acbe5170270a290c502b6f4a63ecc32aed584c2aa39b68677',
+        matchingOpeningTextOnFrame4Sha256: '945fdb7e191ed2bc36befb58c6274e9f9bb2a1087f11fbd3eaabef90370c3d4e',
+        publisherNamedInCatalogue: true,
+        publisherEmblemVisuallyPrintedInFrame3: true,
+      },
+      exactPrintedEmblemReadRightToLeft: '千頃堂書局商標',
+      sameLogoAndOpeningLeafPrintedLineArrangementDirectlyCompared: true,
+      imagesAreDistinctPhotographsWithDifferentHandAnnotations: true,
+      totalOfficialPreviewFramesDownloaded: 11,
+      allPreviewImagesHttp200AndHashed: true,
+      previewFramesAreSelectiveNotCompleteBook: true,
+      hourPianCaiSupplementFolioAmong11Frames: false,
+      targetCoreGlyphsVisuallyComparedToLoc1926And1929: false,
+      samePrintingSettingHistoricallyCertified: false,
+      independentTextualWitnessesAdded: 0,
+      yulgokLithographActualPublicationYears: 'UNADJUDICATED',
+      permittedClaimPromotions: 0,
+      dalian1925Listing: {
+        publisher: '上海 大成書局',
+        publicationYearListed: 1925,
+        pageHtmlBytesDownloaded: 20375,
+        pageHtmlSha256: '1095f560df148abfa7dcbfd40e7c2aa638f81d5dd242010c134a92b7b8daa447',
+        pdfOrBookScanLinkPresentInCatalogueHtml: false,
+        originalPrintedImageRetrieved: false,
+        editionIndependentFromYulgok: 'UNADJUDICATED',
+      },
     });
     expect(three.republican1929TwoVolumeBindingAudit).toMatchObject({
       printDate: '1929-11',
