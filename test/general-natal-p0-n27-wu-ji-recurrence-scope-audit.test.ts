@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v17');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v18');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -608,6 +608,36 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       printedLocusCountAdded: 0,
       historicalStemCountingAllowed: false,
     });
+    expect(three.shenfeng1929UpperVolumeDirectLocus).toMatchObject({
+      originalFileSha256: '2e19b8a05fdc4ad204eb4822c3b1ffbb2487dafac707e283c1358845f873c12c',
+      originalFileBytes: 7012009,
+      originalFilePages: 170,
+      acquiredOriginalPdfViaRunner: true,
+      verifiedHashAgainstLocalOriginalBytes: true,
+      renderedPageNumbers: [66,67,68],
+      printedFolioNumbers: [6,7,8],
+      page66Section: '時上偏財格 附月偏財格',
+      page67AttributionLabel: '補曰',
+      page67PrintWithoutAddedPunctuation: '只要一位貴不要多而三處不要再見財',
+      page67ExamplesForHourPianCai: ['庚日見甲干或寅支','辛日見乙干或卯支'],
+      page68SelfChart: ['己酉','丙子','壬寅','乙巳'],
+      printedPage67CorePhraseMatchesRead1926PrintedPage67: true,
+      twoHistoricalTextualLineagesIndependentlyCertified: false,
+      shenfengSupplementAuthorOrEditionOfOriginIdentified: false,
+      provesGeneralHiddenStemCountingMethod: false,
+      historicallyAdjudicatesSeparateDayBranchOccurrence: false,
+      newlyDirectlyReadPrintedLoci: 1,
+      allowsSemanticClaimPromotion: false,
+    });
+    expect(three.locEarlyPrintJuanTwoPartialAcquisition).toMatchObject({
+      collectionImageCount: 59,
+      successfullyRetrievedImages: 25,
+      imagesNotRetrieved: 34,
+      serviceRateLimitEncountered: true,
+      targetHourWealthSupplementFolioCertified: false,
+      targetSupplementPhraseVisuallyRead: false,
+      independentAncientTextualWitnessIncrement: 0,
+    });
     expect(three.republican1929TwoVolumeBindingAudit).toMatchObject({
       printDate: '1929-11',
       collator: '秦慎安',
@@ -617,13 +647,13 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       upperVolumeOnlyIsFirstTargetForFindingSupplement: true,
       secondaryMirrorClaims338FacsimilePages: true,
       secondaryMirrorSameCatalogCopiesNotThirdHistoricalEdition: true,
-      actualUpperPageContainingSupplementVerified: false,
+      actualUpperPageContainingSupplementVerified: true,
       lowerPdfPages: 168,
       sameTwoVolumePublication: true,
       volumesNotIndependentTextualVotes: true,
-      exactSupplementLeafLocatedInEitherVolume: false,
+      exactSupplementLeafLocatedInEitherVolume: true,
       originalPdfScreenshotFetchFailed: true,
-      claimedNewVisualPrintWitnesses: 0,
+      claimedNewVisualPrintWitnesses: 1,
       independentlyCertifiedVariantReadings: 0,
       yearMonthDayAndHiddenStemSemanticsStillUndecided: true,
     });
