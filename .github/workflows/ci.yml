@@ -20,9 +20,16 @@ on:
 permissions:
   contents: read
 
+# Keep main validation durable. Direct PR CI may cancel stale runs after a
+# new commit, while pinned Integration full-regression runs are never cancelled.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: >-
+    ${{ github.event_name == 'push'
+      && 'ci-main'
+      || inputs.candidate_pr != ''
+      && format('ci-integration-full-pr-{0}', inputs.candidate_pr)
+      || format('ci-pr-{0}', github.event.pull_request.number) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' && inputs.candidate_pr == '' }}
 
 jobs:
   quality:
