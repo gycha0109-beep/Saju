@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v17' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v18' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -684,6 +684,46 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
           }),
           // This 1929 issue is in TWO physical upper/lower volumes.
           // These are NOT two independent historical readings.
+          // One additional physically printed witness was actually read
+          // with its original bytes and SHA-256: 1929 upper volume, 卷二.
+          shenfeng1929UpperVolumeDirectLocus: Object.freeze({
+            source: 'https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf' as const,
+            originalFileSha256: '2e19b8a05fdc4ad204eb4822c3b1ffbb2487dafac707e283c1358845f873c12c' as const,
+            originalFileBytes: 7012009 as const,
+            originalFilePages: 170 as const,
+            scanAcquisitionWorkflow: 'https://github.com/gycha0109-beep/Saju/actions/runs/39188880179' as const,
+            acquiredOriginalPdfViaRunner: true as const,
+            verifiedHashAgainstLocalOriginalBytes: true as const,
+            renderedPageNumbers: Object.freeze([66,67,68] as const),
+            printedFolioNumbers: Object.freeze([6,7,8] as const),
+            page66Section: '時上偏財格 附月偏財格' as const,
+            page67AttributionLabel: '補曰' as const,
+            page67PrintWithoutAddedPunctuation: '只要一位貴不要多而三處不要再見財' as const,
+            page67ExamplesForHourPianCai: Object.freeze(['庚日見甲干或寅支','辛日見乙干或卯支'] as const),
+            page68SelfChartHeading: '希文自造時月偏財類聚之格' as const,
+            page68SelfChart: Object.freeze(['己酉','丙子','壬寅','乙巳'] as const),
+            printedPage67CorePhraseMatchesRead1926PrintedPage67: true as const,
+            comparisonCoverage: 'MATCH_OF_EXPLICIT_CORE_PHRASE_NOT_COMPLETE_PAGE_COLLATION' as const,
+            distinctDatedPrintedSettingFrom1926: true as const,
+            twoHistoricalTextualLineagesIndependentlyCertified: false as const,
+            shenfengSupplementAuthorOrEditionOfOriginIdentified: false as const,
+            provesGeneralHiddenStemCountingMethod: false as const,
+            historicallyAdjudicatesSeparateDayBranchOccurrence: false as const,
+            newlyDirectlyReadPrintedLoci: 1 as const,
+            allowsSemanticClaimPromotion: false as const,
+          }),
+          locEarlyPrintJuanTwoPartialAcquisition: Object.freeze({
+            catalogItem: 'https://www.loc.gov/item/2014514308/' as const,
+            retrievalRun: 'https://github.com/gycha0109-beep/Saju/actions/runs/39190030567' as const,
+            collectionImageCount: 59 as const,
+            successfullyRetrievedImages: 25 as const,
+            imagesNotRetrieved: 34 as const,
+            serviceRateLimitEncountered: true as const,
+            targetHourWealthSupplementFolioCertified: false as const,
+            targetSupplementPhraseVisuallyRead: false as const,
+            targetSupplementHistoricallyAttributed: false as const,
+            independentAncientTextualWitnessIncrement: 0 as const,
+          }),
           republican1929TwoVolumeBindingAudit: Object.freeze({
             publisher: '中華書局 文明書局' as const,
             printDate: '1929-11' as const,
@@ -697,13 +737,13 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             secondaryFacsimileMirror: 'https://changxianyi.com/guji/shenfeng/' as const,
             secondaryMirrorClaims338FacsimilePages: true as const,
             secondaryMirrorSameCatalogCopiesNotThirdHistoricalEdition: true as const,
-            actualUpperPageContainingSupplementVerified: false as const,
+            actualUpperPageContainingSupplementVerified: true as const,
             lowerPdfPages: 168 as const,
             sameTwoVolumePublication: true as const,
             volumesNotIndependentTextualVotes: true as const,
-            exactSupplementLeafLocatedInEitherVolume: false as const,
+            exactSupplementLeafLocatedInEitherVolume: true as const,
             originalPdfScreenshotFetchFailed: true as const,
-            claimedNewVisualPrintWitnesses: 0 as const,
+            claimedNewVisualPrintWitnesses: 1 as const,
             independentlyCertifiedVariantReadings: 0 as const,
             yearMonthDayAndHiddenStemSemanticsStillUndecided: true as const,
           }),
