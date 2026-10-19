@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v18');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v19');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -603,9 +603,9 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       locQingShunzhiDateEstimated: true,
       locJiaWu1654ConsistentWithinShunzhiInferenceOnly: true,
       locJiaWuActualGregorianYearPrintCertified: false,
-      directFolioAgreementWith1926: 'UNADJUDICATED',
+      directFolioAgreementWith1926: 'CORE_PHRASE_GLYPHS_MATCH_LOC_JUAN2_IMAGE_8',
       editorialSupplementPresentIn1647: 'UNADJUDICATED',
-      printedLocusCountAdded: 0,
+      printedLocusCountAdded: 1,
       historicalStemCountingAllowed: false,
     });
     expect(three.shenfeng1929UpperVolumeDirectLocus).toMatchObject({
@@ -634,8 +634,17 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       successfullyRetrievedImages: 25,
       imagesNotRetrieved: 34,
       serviceRateLimitEncountered: true,
-      targetHourWealthSupplementFolioCertified: false,
-      targetSupplementPhraseVisuallyRead: false,
+      targetHourWealthSupplementFolioCertified: true,
+      targetSupplementPhraseVisuallyRead: true,
+      targetImageOneBased: 8,
+      targetImageBytes: 132360,
+      targetImageSha256: 'e4b6771c98c8f9547ab9e3ac531ff8e34bd67eb6e380810843fc4a186e371c08',
+      labelOnPrintedPage: '補曰',
+      printedUnpunctuatedCoreGlyphs: '只要一位貴不要多而三處不要再見財',
+      matches1926And1929AtExactCoreGlyphSequence: true,
+      physicallyReadPreviewOfEarlierWoodblockPrint: true,
+      imageNumberIsNotOriginalPrintedFolioNumber: true,
+      entireJuanOrEditorialGenealogyCollated: false,
       independentAncientTextualWitnessIncrement: 0,
     });
     expect(three.republican1929TwoVolumeBindingAudit).toMatchObject({
@@ -670,9 +679,12 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       editionSummaryLinesPerPage: 11,
       editionSummaryCharactersPerLine: 22,
       juanTwoDigitalImagesCataloged: true,
-      exactHourWealthFolioInspected: false,
+      exactHourWealthFolioInspected: true,
+      manuscriptOrHistoricalTextVerified: true,
       printLineageIndependence: 'UNADJUDICATED',
-      incrementOfDirectReadPrintedWitnesses: 0,
+      incrementOfDirectReadPrintedWitnesses: 1,
+      specificPrintingDateEstablishedByImage: false,
+      supplementAuthorIdentifiedByImage: false,
     });
     expect(three.shenfengStemVsBranchHourExamples).toEqual([
       '庚日見甲干或寅支',
