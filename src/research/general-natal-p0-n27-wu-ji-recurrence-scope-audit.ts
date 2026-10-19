@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v19' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v20' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -670,6 +670,19 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             tohokuCatalogPlace: '江戸' as const,
             tohokuCatalogPublisher: '沢村寛' as const,
             tohokuCatalogYear: 1647 as const,
+            // A second Tohoku public catalogue record has the same title,
+            // publisher, location, shelf mark and department ID but says 1850.
+            // Neither catalogue supplies an inspectable print image; do not
+            // certify two distinct editions or use 1647 as an absolute date.
+            tohokuContradictingCatalog: 'https://touda.tohoku.ac.jp/portal/item/10010000025881' as const,
+            tohokuContradictingCatalogYear: 1850 as const,
+            tohoku1647CatalogRecordId: '10010000025889' as const,
+            tohoku1850CatalogRecordId: '10010000025881' as const,
+            sharedDepartmentIdInTwoCatalogs: 'TT22201642' as const,
+            sharedShelfMarkInTwoCatalogs: '2/3802/6' as const,
+            catalogsReferToTwoDistinctPhysicalCopies: 'UNADJUDICATED' as const,
+            historicallyCertain1647PrintYear: false as const,
+            tohokuPrintYearResolution: 'CONFLICTING_CATALOG_DATES_NO_PRINT_IMAGE' as const,
             tohokuOriginalVolumes: 6 as const,
             tohokuHolding: '東北大学 狩野文庫' as const,
             tohokuImagesAvailable: false as const,
