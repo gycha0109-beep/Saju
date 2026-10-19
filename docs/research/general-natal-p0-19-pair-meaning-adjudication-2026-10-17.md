@@ -751,3 +751,10 @@ N27 Claim 5건 HOLD, N17 `METHODOLOGY_CONFLICT`, N13 겁재 T8 `1 vs 0` 불변. 
 - 해당 추가 1906년 후보를 실제 대응 위치에서 읽기 전에는 1926·1929와의 글자 합치·이문, 편집 표지의 기원, 계통 독립성 등에 관한 긍정판정 **0**.
 
 **보호 조건 불변:** LOC에서 **59/59 확보**는 서지 이미지 취득 완료 상태다. `別宮` 日支 분리·`再見` 藏干·`一位` 고전 계산 단위 **세 가지 모두 UNADJUDICATED**, 다섯 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, TrustGrant/Preview/Official/Production/consumer 신규 승인 **0**. 두 PR Draft·미병합. 기관 문의·이메일 없음.
+
+## 41. 공유마당 1906년 후보의 공개 PDF 실제 취득 시도 — HTTP 400 (2026-10-19, N27 v21 후속)
+
+- [GitHub Actions #39218770108](https://github.com/gycha0109-beep/Saju/actions/runs/39218770108)에서 [한국저작권위원회 공유마당 `G905-9086005`](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005) 공개 등록물의 일반적인 다운로드 경로 `https://gongu.copyright.or.kr/gongu/wrt/cmmn/wrtFileDownload.do?wrtSn=9086005&fileSn=1&wrtFileTy=01`를 **1회 한정** 요청했다. 실행 자체는 성공하여 실패 응답까지 JSON artifact `n27-korean-1906-public-source/outcome.json`에 보존했다.
+- 실제 파일 응답은 **HTTP 400**. **PDF 다운로드 0바이트, 원본 페이지 육안 판독 0면, 글자 이문 판정 0건**. `wrtFileTy=01`이 이 고문헌 파일의 정확한 공개 다운로드 유형인지, 사이트의 세션·약관 동의·요청 형식이 필요한지 등은 **미판정**. 400을 원문 파일 부재, 다운로드 영구 불가, 또는 소장본의 실물 부재 증거로 취급하지 않는다.
+- 공개 PDF에 인증·세션·약관 확인 등의 절차가 있다면 우회하지 않는다. 외부 기관 문의·로그인 시도·반복 다운로드·승인 요청 없음. 해당 서지의 1906은 **메타데이터 표기**로만 유지하며 한국 공개 등록과 紹興圖書館의 별도 1906 上海書局 석인본이 동일 인쇄 개체인지도 **UNADJUDICATED**.
+- LOC의 공식 59개 이미지 **59/59 취득 완료**와 이미지 8번 `補曰` 국소 판독은 이미 완료된 원전 작업이며 이번 HTTP 400에 영향받지 않는다. 전권 문자 교감, 독립 계통 판단, `別宮`·`再見`·`一位` 계산 단위는 미완료. N27 5 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, TrustGrant 및 consumer/Preview/Official/Production 신규 허가 0.
