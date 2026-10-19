@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v20');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v21');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -660,14 +660,42 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
         laterPage58PreviewSha256: '1c8644f44fdb7ceca722651bda6cb851c24fed9442a7e125e6ddccc40c9f1408',
         totalRecoveredOfPreviouslyMissing: 33,
         totalDownloadedPreviewImagesAcrossRuns: 58,
-        remainingUnacquiredPage: 59,
-        page59OfficialMetadataTimedOut: true,
+        remainingUnacquiredPageAfterSecondRun: 59,
+        page59OfficialMetadataTimedOutInSecondRun: true,
         page59AbsenceOfPrintProven: false,
         targetPhraseWasAlreadyInInitialPage8: true,
+        finalOfficialMetadataRecovery: {
+          metadataRequestStatus: 'HTTP_200',
+          lastOrdinal: 59,
+          actualImageId: 'cover2',
+          previewBytes: 53722,
+          previewSha256: 'c6ee8531aeece3634c181dbf4254fdc9ba28901a6ad9551fc2bc4f892f8e7dc8',
+          verifiedJpegDimensions: [764, 736],
+          actualImageContent: 'BACK_COVER_WITH_HANDWRITTEN_SHENFENG_TONGKAO_JUAN_2_AND_CONTENT_LABELS',
+          recoveredMissingOrdinal: true,
+          totalRetrievedOfCatalogued: 59,
+          stillUnacquiredCount: 0,
+          completeJuanCharacterByCharacterCollation: false,
+          newlyReadSupplementLociFromPage59: 0,
+          newlyIndependentPrintWitnesses: 0,
+        },
       },
       imageNumberIsNotOriginalPrintedFolioNumber: true,
       entireJuanOrEditorialGenealogyCollated: false,
       independentAncientTextualWitnessIncrement: 0,
+    });
+    expect(three.additional1906KoreanCatalogueLead).toMatchObject({
+      publicWorkId: 'G905-9086005',
+      sourceLibraryNamed: '국회도서관',
+      creationYearListed: 1906,
+      pdfFileListed: '新鐫神峰張先生通攷闢謬命理正宗大全.pdf',
+      shaoxingCatalogDescribes: '1906 上海書局石印本 2冊',
+      koreanPdfOriginalBytesAcquired: false,
+      printedSupplementLocusDirectlyRead: false,
+      samePhysicalEditionAsShaoxingCatalog: 'UNADJUDICATED',
+      independenceFrom1926And1929: 'UNADJUDICATED',
+      independentlyCollatedOriginalPassages: 0,
+      permitsPromotingAnyClaim: false,
     });
     expect(three.republican1929TwoVolumeBindingAudit).toMatchObject({
       printDate: '1929-11',
