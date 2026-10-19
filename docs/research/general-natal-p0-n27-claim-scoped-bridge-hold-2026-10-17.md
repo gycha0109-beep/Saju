@@ -255,7 +255,7 @@ Bridge `publicPrintedGlyphMicrodefectHold`은 `NO_CERTIFIED_SHARED_UNIQUE_CHIP_W
 
 ## 2026-10-19 N27 v12 — 「三處不要再見財」 연월일 비교 단서, 동일 장의 반례, 印本 미판독 HOLD
 
-Research #2553 정확 HEAD `effde7c8145790a1886af013cad1e3ccf114be63`, 감사 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v12`를 Bridge에 고정한다. 기존 연구 `31과 `threeNonHourPillarsCommentaryScopeAudit`를 참조한다.
+Research #2553 정확 HEAD `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe`, 감사 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v12`를 Bridge에 고정한다. 기존 연구 `31과 `threeNonHourPillarsCommentaryScopeAudit`를 참조한다.
 
 [淵海子平 內十八格 時上偏財格 공개 전사](https://sajumania.com/ebook/to01-06/to01-06-02-27.htm)에는 `而三處不要再見財`, [神峰通考 時上偏財格 주석](https://sajumania.com/ebook/to01-08/to01-08-02-02.htm)에는 `只要一位貴，不要多，而三處不要再見財`가 나타난다. 時 외 **年/月/日柱라는 세 자리**를 비교 범위로 다룰 근거다. 神峰의 별도 **時上一位貴格(偏官/七殺)** 주석은 `若年月日又有`라고 세 기둥을 구체적으로 적지만 다른 格의 셈법을 그대로 偏財로 이식할 수는 없다. 時上 偏財의 지지 식별 예문에는 庚日/寅支와 辛日/卯支의 경로도 실려 있어 **時에서 드러나는 천간만 분석해야 한다**는 주장은 제한된다.
 
@@ -265,7 +265,7 @@ Research #2553 정확 HEAD `effde7c8145790a1886af013cad1e3ccf114be63`, 감사 �
 
 ## 2026-10-19 N27 v13 — 希文「時月偏財類聚」 추가 사례 / 이른 刊本 후보, 전사 근거에 한정
 
-Research #2553 HEAD `effde7c8145790a1886af013cad1e3ccf114be63`의 v13을 정확히 참조한다. [「時上偏財格 附月偏財格」 공개 전사](https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx)에서 `己酉/丙子/壬寅/乙巳`, `希文自造時月偏財類聚之格`를 확인했다. 壬日 기준 月干丙 偏財, 日支寅藏丙·時支巳藏丙 偏財이지만 時干乙은 偏財가 아니며 전사는 `喜時日偏財，類聚親切`로 부분적으로 긍정한다. 이는 순수 時上一位格과 분명히 구별되는 **時月類聚 명식**이며, 언제나 반복 偏財 1회만으로 모든 格을 일률 배제하는 모델에 경계 사례다. [Wikisource 전사](https://zh.wikisource.org/zh-hant/神峰通考)의 `騙財` 표기는 새 원각 異文으로 인증되지 않았다.
+Research #2553 HEAD `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe`의 v13을 정확히 참조한다. [「時上偏財格 附月偏財格」 공개 전사](https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx)에서 `己酉/丙子/壬寅/乙巳`, `希文自造時月偏財類聚之格`를 확인했다. 壬日 기준 月干丙 偏財, 日支寅藏丙·時支巳藏丙 偏財이지만 時干乙은 偏財가 아니며 전사는 `喜時日偏財，類聚親切`로 부분적으로 긍정한다. 이는 순수 時上一位格과 분명히 구별되는 **時月類聚 명식**이며, 언제나 반복 偏財 1회만으로 모든 格을 일률 배제하는 모델에 경계 사례다. [Wikisource 전사](https://zh.wikisource.org/zh-hant/神峰通考)의 `騙財` 표기는 새 원각 異文으로 인증되지 않았다.
 
 [미 의회도서관 清順治間(1638–1661) 刊本 목록](https://www.loc.gov/item/2014514308/)은 11行22字, 卷二 디지털 영상 존재를 확인해 **새로운 독립 소장 고본 후보**로 등록했으나 정확한 `補曰` 인쇄면은 미판독이며 원본 판독 건수 +0. 1926 文明書局 NLC 정확한 면도 미판독이다.
 
@@ -273,7 +273,7 @@ Research #2553 HEAD `effde7c8145790a1886af013cad1e3ccf114be63`의 v13을 정확�
 
 ## 2026-10-19 N27 v14 — 希文 자해설의 편찬자 계통 확인 / 독립 명식 반례로 승격 금지
 
-Research #2553 `effde7c8145790a1886af013cad1e3ccf114be63`의 `saju-n27-wu-ji-recurrence-scope-sensitivity-v14`를 정확히 참조한다.
+Research #2553 `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe`의 `saju-n27-wu-ji-recurrence-scope-sensitivity-v14`를 정확히 참조한다.
 
 [『神峰通考』 「時上偏財格 附月偏財格」 공개 전사](https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx)에서 `希文自造時月偏財類聚之格`와 같은 명식에 속한 1인칭 `予命正合書云`·`為繼家君之志，而編此書`·`予據先人成說，更稽先人遺訓`을 확인했다. [미국 의회도서관 清順治間 추정 刊本 서지](https://www.loc.gov/item/2014514308/)는 張楠의 ‘不肖男’ 중 `希文`을 編纂 명단에 기록한다. 서지와 본문 문맥은 希文의 **편찬 참여자 자기 명식 해설**이라는 해석을 강하게 지지하며, 적어도 이를 **독립적인 제3자 결과 반례**로 간주해서는 안 된다. 앞의 `楠曰`는 뒤의 `予`와 화자가 다를 수 있으므로 둘을 역사적 판정 두 건으로 합산하지 않는다.
 
@@ -283,7 +283,7 @@ Research #2553 `effde7c8145790a1886af013cad1e3ccf114be63`의 `saju-n27-wu-ji-rec
 
 ## 2026-10-19 N27 v15 — 1926 文明書局 원문 인쇄면의 「補曰」 문언 직접 확인
 
-Research #2553 정확 HEAD `effde7c8145790a1886af013cad1e3ccf114be63` / `saju-n27-wu-ji-recurrence-scope-sensitivity-v15`에 Bridge를 고정한다.
+Research #2553 정확 HEAD `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe` / `saju-n27-wu-ji-recurrence-scope-sensitivity-v15`에 Bridge를 고정한다.
 
 [중국 國家圖書館 1926 『神峰通考』 **별도 169면 PDF**](https://commons.wikimedia.org/wiki/File:NLC416-13jh001619-43305_神峰通考.pdf)의 인쇄 이미지에서 직접 **PDF 66면(표제, 인쇄 六)**, **67면(`補曰`, 인쇄 七)**, **68면(`希文自造時月偏財類聚之格` 및 명식, 인쇄 八)**을 확인했다. 특히 PDF 67면에 **`只要一位貴不要多而三處不要再見財`**가 실제 인쇄되어 있다. 이전에 실패했던 **별도 167면 [NLC416-12jh004266-48929](https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf)**과 서로 다른 파일이므로 전사와 PDF의 동일성을 잘못 추정하지 않는다.
 
@@ -293,8 +293,18 @@ Research #2553 정확 HEAD `effde7c8145790a1886af013cad1e3ccf114be63` / `saju-n2
 
 ## 2026-10-19 v16 — 1929년 상하 2책의 독립 증거 오인 방지
 
-Bridge `researchHeadReviewed` → 정확 Research `effde7c8145790a1886af013cad1e3ccf114be63` / 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v16`.
+Bridge `researchHeadReviewed` → 정확 Research `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe` / 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v16`.
 
 [1929.11 秦慎安 校勘 상책 170 PDF면](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf)과 [동일 간행본 하책 168 PDF면](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10361_神峰通考_第2卷.pdf)을 구분해 추적한다. 동일 간행본 2분책은 **독립적인 판본 또는 역사적 텍스트 일치 표 2개가 아님**. 두 권 중 「補曰」의 정확한 이미지 위치·이문을 이번 조사에서는 직접 판독하지 못했다. [LOC 17세기 추정본](https://www.loc.gov/item/2014514308/)의 본문 이미지 접근도 실패했고, [1936 星命學社 인쇄본](https://commons.wikimedia.org/wiki/File:NLC511-027032013013877-17378_銅版精印神峰通考命理正宗.pdf)은 후대 서지 후보만 확보했다. **새 원문 이미지 판독 0건**, 계통 독립 입증 0건.
 
 1926년본 67 PDF면에서 실제 판독된 `只要一位貴不要多而三處不要再見財`는 v15 그대로. `別宮` 日支 효과·`再見` 藏干 반복·`一位`의 역사적 계산 단위 `UNADJUDICATED`; 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 겁재 T8 `1 vs 0`. 새 의미 승인/TrustGrant/consumer/Preview/Official/Production 없음. Draft 미병합, 기관 문의 없음.
+
+## 2026-10-19 N27 v17 — 1929년 卷二의 상책 배치 및 1647년 일본 인쇄 소장 자료
+
+Research #2553 **정확 HEAD `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe`**, `saju-n27-wu-ji-recurrence-scope-sensitivity-v17`.
+
+[1929 NLC 동일 이미지의 별도 뷰어 설명](https://changxianyi.com/guji/shenfeng/)은 **상책 卷一~三 / 하책 卷四~六**로 구분하며 별도의 1929 인쇄본이 아니라 **같은 NLC 디지털 스캔**을 사용한다고 적는다. 기존 대상 「時上偏財格 附月偏財格」은 원서 **卷二**이므로 **상책 170 PDF면을 먼저 조사**, 하책 168면을 반복 수색할 근거가 없다. 그러나 상책의 정확한 PDF 면 번호는 아직 **미확정**, 대상면 이미지 스크린샷은 Cache miss로 **접근 실패**, 증거 0.
+
+[東北大学 狩野文庫 목록](https://touda.tohoku.ac.jp/collection/database/library/10010000025889): **正保4[1647]년 江戸 沢村寛 판 6冊**, `画像有無/色 無`. [미국 의회도서관 17세기 추정 文光堂본](https://www.loc.gov/item/2014514308/)은 `文光堂甲午重鐫`을 봉면에 기록한다. 順治기간의 甲午는 **1654년과 부합하는 추론**일 뿐 원각의 구절·해당 판본 출판년·중각 계통 독립의 증명이 아니다. 1647년 판본이 `補曰`을 포함하는지조차 **미판독**.
+
+v15에서 직접 육안 판독한 1926년본 `只要一位貴不要多而三處不要再見財` 1건 외 **추가 원문 印刷面 판독 0건**, **이문 교감 0건**, **독립 고전 계통 인정 0건**. `別宮` 日柱·`再見` 藏干·`一位`의 역사적 집계는 UNADJUDICATED, 5개 Claim HOLD, N17 METHODOLOGY_CONFLICT, N13 정확 劫財 T8 **1 vs 0**, 신규 TrustGrant/Preview/Official/Production 의미 허가 0. 두 PR Draft·미병합 및 기관 연락 없음.
