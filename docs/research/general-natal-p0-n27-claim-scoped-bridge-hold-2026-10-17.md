@@ -320,3 +320,10 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 [미 LOC 17세기 추정본 卷二](https://www.loc.gov/item/2014514308/) 공개 이미지 총 59개 중 25개만 [실제 취득](https://github.com/gycha0109-beep/Saju/actions/runs/39190030567), 나머지 34개는 HTTP 429·시간초과 등으로 실패해 해당 `補曰` 존재/내용 여부를 결론 내리지 못함. **확인 실패는 원문 부재 증거가 아님**.
 
 **권한 동결 유지:** `別宮` 日柱 기여, `再見` 藏干 카운트, `一位` 역사적 셈법 UNADJUDICATED. N27 5 Claim HOLD, N17 METHODOLOGY_CONFLICT, N13 겁재 T8 정확 1 vs 0, 신규 TrustGrant/Preview/Official/Production/consumer 승인 없음. Draft 미병합·기관 연락 없음.
+
+## 2026-10-19 N27 v18 — Bridge 소스의 Research 커밋 참조 정합성 교정 (새 원전 판독 아님)
+
+- 실제 Research #2553 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`과 Bridge #2561의 소스 `researchHeadReviewed` 값을 비교한 결과, 문서의 직전 v18 단락은 정확한 Research SHA를 가리켰지만 소스/회귀 테스트가 v14~v17에 사용된 `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe`를 유지하고 있었다. 앞의 역사 기록은 수정하지 않고, 소스/테스트의 현재 검토 기준을 v18 Research HEAD로 교정했다.
+- `researchHeadReviewed`는 **이미 검토한 Research 증거의 고정 커밋 식별자**다. 자동으로 최신 HEAD를 추종하거나 GitHub PR이 새 커밋을 받을 때마다 신뢰를 승격하는 플래그가 아니다. Research에 새 커밋이 추가되면 해당 근거를 재검토하고 소스/테스트/문서의 pin을 함께 수정해야 한다. CI 통과 자체가 이 교차 PR 고정 참조를 인증하지 않는다.
+- 이 변경은 기존 `saju-n27-wu-ji-recurrence-scope-sensitivity-v18` 증거에 대한 **참조 오류 수정만** 하므로 Research 버전 또는 Bridge 감사 버전을 올리지 않는다. 결정 해시가 pin 변경에 따라 달라질 수 있으나 승인 상태는 그대로다.
+- `別宮`의 日支 효과, `再見`의 支藏干 반복 집계, `一位`의 고전적 계산 단위는 `UNADJUDICATED`. N27 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**. 새로운 TrustGrant·Preview·Official·Production·consumer 해석 권한 없음. 두 PR은 Draft/미병합 상태 유지.
