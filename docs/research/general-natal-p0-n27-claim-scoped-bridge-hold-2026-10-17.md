@@ -255,7 +255,7 @@ Bridge `publicPrintedGlyphMicrodefectHold`은 `NO_CERTIFIED_SHARED_UNIQUE_CHIP_W
 
 ## 2026-10-19 N27 v12 — 「三處不要再見財」 연월일 비교 단서, 동일 장의 반례, 印本 미판독 HOLD
 
-Research #2553 정확 HEAD `e7a0c9741fb4d9df4f41de058223cc2ef859dc2b`, 감사 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v12`를 Bridge에 고정한다. 기존 연구 `31과 `threeNonHourPillarsCommentaryScopeAudit`를 참조한다.
+Research #2553 정확 HEAD `539d62957357cff41e7210d85c3b7dce49a3343a`, 감사 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v12`를 Bridge에 고정한다. 기존 연구 `31과 `threeNonHourPillarsCommentaryScopeAudit`를 참조한다.
 
 [淵海子平 內十八格 時上偏財格 공개 전사](https://sajumania.com/ebook/to01-06/to01-06-02-27.htm)에는 `而三處不要再見財`, [神峰通考 時上偏財格 주석](https://sajumania.com/ebook/to01-08/to01-08-02-02.htm)에는 `只要一位貴，不要多，而三處不要再見財`가 나타난다. 時 외 **年/月/日柱라는 세 자리**를 비교 범위로 다룰 근거다. 神峰의 별도 **時上一位貴格(偏官/七殺)** 주석은 `若年月日又有`라고 세 기둥을 구체적으로 적지만 다른 格의 셈법을 그대로 偏財로 이식할 수는 없다. 時上 偏財의 지지 식별 예문에는 庚日/寅支와 辛日/卯支의 경로도 실려 있어 **時에서 드러나는 천간만 분석해야 한다**는 주장은 제한된다.
 
@@ -265,7 +265,7 @@ Research #2553 정확 HEAD `e7a0c9741fb4d9df4f41de058223cc2ef859dc2b`, 감사 �
 
 ## 2026-10-19 N27 v13 — 希文「時月偏財類聚」 추가 사례 / 이른 刊本 후보, 전사 근거에 한정
 
-Research #2553 HEAD `e7a0c9741fb4d9df4f41de058223cc2ef859dc2b`의 v13을 정확히 참조한다. [「時上偏財格 附月偏財格」 공개 전사](https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx)에서 `己酉/丙子/壬寅/乙巳`, `希文自造時月偏財類聚之格`를 확인했다. 壬日 기준 月干丙 偏財, 日支寅藏丙·時支巳藏丙 偏財이지만 時干乙은 偏財가 아니며 전사는 `喜時日偏財，類聚親切`로 부분적으로 긍정한다. 이는 순수 時上一位格과 분명히 구별되는 **時月類聚 명식**이며, 언제나 반복 偏財 1회만으로 모든 格을 일률 배제하는 모델에 경계 사례다. [Wikisource 전사](https://zh.wikisource.org/zh-hant/神峰通考)의 `騙財` 표기는 새 원각 異文으로 인증되지 않았다.
+Research #2553 HEAD `539d62957357cff41e7210d85c3b7dce49a3343a`의 v13을 정확히 참조한다. [「時上偏財格 附月偏財格」 공개 전사](https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx)에서 `己酉/丙子/壬寅/乙巳`, `希文自造時月偏財類聚之格`를 확인했다. 壬日 기준 月干丙 偏財, 日支寅藏丙·時支巳藏丙 偏財이지만 時干乙은 偏財가 아니며 전사는 `喜時日偏財，類聚親切`로 부분적으로 긍정한다. 이는 순수 時上一位格과 분명히 구별되는 **時月類聚 명식**이며, 언제나 반복 偏財 1회만으로 모든 格을 일률 배제하는 모델에 경계 사례다. [Wikisource 전사](https://zh.wikisource.org/zh-hant/神峰通考)의 `騙財` 표기는 새 원각 異文으로 인증되지 않았다.
 
 [미 의회도서관 清順治間(1638–1661) 刊本 목록](https://www.loc.gov/item/2014514308/)은 11行22字, 卷二 디지털 영상 존재를 확인해 **새로운 독립 소장 고본 후보**로 등록했으나 정확한 `補曰` 인쇄면은 미판독이며 원본 판독 건수 +0. 1926 文明書局 NLC 정확한 면도 미판독이다.
 
@@ -273,10 +273,20 @@ Research #2553 HEAD `e7a0c9741fb4d9df4f41de058223cc2ef859dc2b`의 v13을 정확�
 
 ## 2026-10-19 N27 v14 — 希文 자해설의 편찬자 계통 확인 / 독립 명식 반례로 승격 금지
 
-Research #2553 `e7a0c9741fb4d9df4f41de058223cc2ef859dc2b`의 `saju-n27-wu-ji-recurrence-scope-sensitivity-v14`를 정확히 참조한다.
+Research #2553 `539d62957357cff41e7210d85c3b7dce49a3343a`의 `saju-n27-wu-ji-recurrence-scope-sensitivity-v14`를 정확히 참조한다.
 
 [『神峰通考』 「時上偏財格 附月偏財格」 공개 전사](https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx)에서 `希文自造時月偏財類聚之格`와 같은 명식에 속한 1인칭 `予命正合書云`·`為繼家君之志，而編此書`·`予據先人成說，更稽先人遺訓`을 확인했다. [미국 의회도서관 清順治間 추정 刊本 서지](https://www.loc.gov/item/2014514308/)는 張楠의 ‘不肖男’ 중 `希文`을 編纂 명단에 기록한다. 서지와 본문 문맥은 希文의 **편찬 참여자 자기 명식 해설**이라는 해석을 강하게 지지하며, 적어도 이를 **독립적인 제3자 결과 반례**로 간주해서는 안 된다. 앞의 `楠曰`는 뒤의 `予`와 화자가 다를 수 있으므로 둘을 역사적 판정 두 건으로 합산하지 않는다.
 
 월간 偏財·일지/시지 藏偏財의 동시 존재와 `喜時日偏財類聚`라는 전사 문구는 보존하지만, 순수 `時上偏財一位`의 규칙 예외나 일지 藏干 자동 가산·면제로 승인하지 않는다. [1929 NLC 170면 공개 판본 목록](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf)도 대체 수집 후보일 뿐 **해당 인쇄면은 미판독**, 1926본·17세기 LOC본의 해당 구절 역시 이번에 직접 판독하지 못했다. 새 印本 시각 판독 건수 0, 전승 독립성 미확정.
 
 **권한 불변**: `別宮` 日柱 포함 효과 / `再見` 藏干 카운트 / `一位` 계산 단위는 `UNADJUDICATED`. 5 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 **1 vs 0**, TrustGrant/consumer/Preview/Official/Production 없음. 두 PR Draft/미병합, 기관 문의·메일 없음. 새 커밋 CI는 별도로 확인.
+
+## 2026-10-19 N27 v15 — 1926 文明書局 원문 인쇄면의 「補曰」 문언 직접 확인
+
+Research #2553 정확 HEAD `539d62957357cff41e7210d85c3b7dce49a3343a` / `saju-n27-wu-ji-recurrence-scope-sensitivity-v15`에 Bridge를 고정한다.
+
+[중국 國家圖書館 1926 『神峰通考』 **별도 169면 PDF**](https://commons.wikimedia.org/wiki/File:NLC416-13jh001619-43305_神峰通考.pdf)의 인쇄 이미지에서 직접 **PDF 66면(표제, 인쇄 六)**, **67면(`補曰`, 인쇄 七)**, **68면(`希文自造時月偏財類聚之格` 및 명식, 인쇄 八)**을 확인했다. 특히 PDF 67면에 **`只要一位貴不要多而三處不要再見財`**가 실제 인쇄되어 있다. 이전에 실패했던 **별도 167면 [NLC416-12jh004266-48929](https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf)**과 서로 다른 파일이므로 전사와 PDF의 동일성을 잘못 추정하지 않는다.
+
+**가중치 변화:** 新 발견 1926년 印本文字 직접 판독 1건, 그러나 **독립적인 명대/청대 고본 계통 증명 0건**이다. 웹 PDF 해당 면의 렌더 이미지는 직접 읽었지만 네트워크 제약으로 PDF 전체 원본 바이트 다운로드/해시는 하지 못했다. 인쇄된 `三處`가 年月日 비교 축을 뒷받침해도 모든 支藏干 자동 가산, 日支 단독 판정, `一位`의 발생 단위는 그대로 `UNADJUDICATED`. `楠曰`·`方歌`·`補曰`는 문단 단위의 차이만 보여 주며 `補曰` 작성자의 저자 귀속/시대를 이 판면만으로 확정하지 않는다. Xiwen 명식은 여전히 편찬자 자기해석이고 독립 제3자 결과반례로 승격하지 않는다.
+
+**Bridge verdict 불변:** 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 `1 vs 0`, 새 TrustGrant/Preview/Official/Production/consumer 권한 없음. 두 Draft PR 미병합. 이 커밋의 CI/PIE/계산 컨테이너는 정확한 SHA에서 별도로 확인한다.
