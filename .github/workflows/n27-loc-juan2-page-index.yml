@@ -1,0 +1,89 @@
+name: N27 LOC seventeenth-century Juan 2 primary image index
+
+on:
+  push:
+    branches: [research/saju/natal-19-pair-semantic-return-20261017]
+    paths: ['.github/workflows/n27-loc-juan2-page-index.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Fetch official Library of Congress page list and read-only preview scans
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet Pillow
+          mkdir -p loc-juan2/pages loc-juan2/sheets
+          python3 - <<'PY'
+          import concurrent.futures, io, json, pathlib, time, urllib.request
+          from PIL import Image, ImageDraw
+          root=pathlib.Path('loc-juan2'); docs=root/'pages';docs.mkdir(exist_ok=True)
+          base='https://www.loc.gov/resource/lcnclscd.2014514308.1A002/'
+          headers={'User-Agent':'Mozilla/5.0 (N27 academic print-locus check)'}
+          def get(url):
+              req=urllib.request.Request(url,headers=headers)
+              with urllib.request.urlopen(req,timeout=35) as f: return f.read()
+          try:
+              man=json.loads(get(base+'manifest.json'))
+              (root/'iiif-manifest.json').write_text(json.dumps(man,ensure_ascii=False))
+              canvases=man.get('sequences',[{}])[0].get('canvases',[])
+              urls=[]
+              for can in canvases:
+                  v=can.get('images',[{}])[0].get('resource',{})
+                  service=v.get('service',{})
+                  if isinstance(service,list):service=service[0]
+                  if isinstance(service,dict): service=service.get('@id') or service.get('id')
+                  if not service: service=v.get('@id','').rsplit('/full/',1)[0]
+                  urls.append(str(service).rstrip('/')+'/full/pct:25/0/default.jpg')
+              print('N27_LOC_MANIFEST_COUNT',len(urls))
+              if len(urls)!=59: raise ValueError('manifest page length')
+          except Exception as ex:
+              print('N27_LOC_MANIFEST_FALLBACK',repr(ex))
+              urls=[None]*59
+          def grab(entry):
+              i,url=entry
+              err=None
+              try:
+                  if url is None:
+                      j=json.loads(get(base+'?fo=json&sp='+str(i)))
+                      im=j['segments'][0]['image_url']
+                      url=next(x for x in im if '/pct:25/' in x).split('#')[0]
+                  payload=get(url)
+                  im=Image.open(io.BytesIO(payload)).convert('RGB')
+                  out=docs/f'loc-juan2-{i:02d}.jpg'
+                  out.write_bytes(payload)
+                  return i,im,out,len(payload),url,None
+              except Exception as e:
+                  return i,None,None,0,url,repr(e)
+          with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
+              res=sorted(pool.map(grab,enumerate(urls,1)))
+          summary=[{'page':i,'bytes':size,'url':url,'error':err} for i,im,out,size,url,err in res]
+          (root/'page-index.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2))
+          print('N27_LOC_PAGES_OK',sum(1 for x in summary if not x['error']),'OF',len(summary))
+          for i,im,out,size,url,err in res:
+              if err:print('N27_LOC_PAGE_ERROR',i,err[:100])
+          for start in range(0,len(res),15):
+              sheet=Image.new('RGB',(3*480,5*600),'white')
+              draw=ImageDraw.Draw(sheet)
+              for pos,(i,im,out,size,url,err) in enumerate(res[start:start+15]):
+                  xx=(pos%3)*480;yy=(pos//3)*600
+                  draw.text((xx+8,yy+8),f'LOC Juan 2 image {i:02d}',fill='black')
+                  if im:
+                      im.thumbnail((465,565))
+                      sheet.paste(im,(xx+(480-im.width)//2,yy+30))
+              path=root/'sheets'/f'loc-juan2-{start+1:02d}-{min(start+15,len(res)):02d}.jpg'
+              sheet.save(path,quality=70,optimize=True)
+              print('N27_LOC_SHEET',path)
+          if sum(1 for x in summary if not x['error'])<25:raise SystemExit('Insufficient source images for reliable indexing')
+          PY
+      - name: Upload LOC source-page contact sheets as transient research-only artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-loc-juan2-open-primary-images
+          path: loc-juan2
+          retention-days: 14
