@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v20' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v21' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -756,14 +756,48 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
               laterPage58PreviewBytes: 87682 as const,
               totalRecoveredOfPreviouslyMissing: 33 as const,
               totalDownloadedPreviewImagesAcrossRuns: 58 as const,
-              remainingUnacquiredPage: 59 as const,
-              page59OfficialMetadataTimedOut: true as const,
+              remainingUnacquiredPageAfterSecondRun: 59 as const,
+              page59OfficialMetadataTimedOutInSecondRun: true as const,
               page59AbsenceOfPrintProven: false as const,
               targetPhraseWasAlreadyInInitialPage8: true as const,
+              finalOfficialMetadataRecovery: Object.freeze({
+                run: 'https://github.com/gycha0109-beep/Saju/actions/runs/39217454989' as const,
+                metadataUrl: 'https://www.loc.gov/resource/lcnclscd.2014514308.1A002/?sp=59&fo=json' as const,
+                metadataRequestStatus: 'HTTP_200' as const,
+                lastOrdinal: 59 as const,
+                actualImageId: 'cover2' as const,
+                officialImageUrl: 'https://tile.loc.gov/image-services/iiif/service:asian:lcnclscd:2014514308:1A002:cover2/full/pct:25/0/default.jpg' as const,
+                previewBytes: 53722 as const,
+                previewSha256: 'c6ee8531aeece3634c181dbf4254fdc9ba28901a6ad9551fc2bc4f892f8e7dc8' as const,
+                verifiedJpegDimensions: Object.freeze([764, 736] as const),
+                actualImageContent: 'BACK_COVER_WITH_HANDWRITTEN_SHENFENG_TONGKAO_JUAN_2_AND_CONTENT_LABELS' as const,
+                recoveredMissingOrdinal: true as const,
+                totalRetrievedOfCatalogued: 59 as const,
+                stillUnacquiredCount: 0 as const,
+                completeJuanCharacterByCharacterCollation: false as const,
+                newlyReadSupplementLociFromPage59: 0 as const,
+                newlyIndependentPrintWitnesses: 0 as const,
+              }),
             }),
             imageNumberIsNotOriginalPrintedFolioNumber: true as const,
             entireJuanOrEditorialGenealogyCollated: false as const,
             independentAncientTextualWitnessIncrement: 0 as const,
+          }),
+          additional1906KoreanCatalogueLead: Object.freeze({
+            koreanPublicDomainPortal: 'https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005' as const,
+            publicWorkId: 'G905-9086005' as const,
+            sourceLibraryNamed: '국회도서관' as const,
+            title: '新鐫神峰張先生通攷闢謬命理正宗大全' as const,
+            creationYearListed: 1906 as const,
+            pdfFileListed: '新鐫神峰張先生通攷闢謬命理正宗大全.pdf' as const,
+            separateShaoxingCatalog: 'https://www.guoxuedashi.com/shumu/gj-1240984pp.html' as const,
+            shaoxingCatalogDescribes: '1906 上海書局石印本 2冊' as const,
+            koreanPdfOriginalBytesAcquired: false as const,
+            printedSupplementLocusDirectlyRead: false as const,
+            samePhysicalEditionAsShaoxingCatalog: 'UNADJUDICATED' as const,
+            independenceFrom1926And1929: 'UNADJUDICATED' as const,
+            independentlyCollatedOriginalPassages: 0 as const,
+            permitsPromotingAnyClaim: false as const,
           }),
           republican1929TwoVolumeBindingAudit: Object.freeze({
             publisher: '中華書局 文明書局' as const,
