@@ -19,7 +19,7 @@ import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synt
  * Coexistence supports a traditional interpretive axis, NOT a personal fact,
  * career aptitude, success, occupation, prediction or a ranked dominance.
  */
-export const CAREER_MULTIFACTOR_VERSION = '0.1.0-research' as const;
+export const CAREER_MULTIFACTOR_VERSION = '0.2.0-research' as const;
 const METHOD_ID = 'M-CAREER-NATAL-SOURCE-BOUNDED-PAIR-SYNTHESIS-V1';
 const RULE_SET = 'career-natal-source-bounded-multifactor';
 const CHANNELS = ['visible_stems', 'branches'] as const;
@@ -56,6 +56,20 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     title: '자기 기준과 역할·규칙을 함께 살피는 일의 구조',
     description: '비겁(자기 기준·동료)과 관성(규칙·책임)이 함께 관측됩니다. 전통적 견제 관계를 일의 자율성과 역할 경계에 관한 해석 축으로 제한합니다. 실제 갈등이나 직장 사건을 예측하지 않습니다.',
   },
+  {
+    id: 'WEALTH_OFFICER',
+    families: ['wealth', 'officer'],
+    axis: 'responsibility',
+    title: '성과의 활용과 책임 경계를 연결하는 일의 구조',
+    description: '재성(결과·자원)과 관성(역할·규칙)이 같은 관측 채널에 나타납니다. 三命通會 卷五에 연결된 재성→관성의 제한된 구조 관계를 참고해 일의 결과를 어떤 기준과 책임 아래 관리하는지 생각해 볼 수 있습니다. 실제 지위나 승진·재정 결과를 예측하지 않습니다.',
+  },
+  {
+    id: 'WEALTH_RESOURCE',
+    families: ['wealth', 'resource'],
+    axis: 'tension',
+    title: '지금 실행할 일과 더 준비할 일 사이의 구조',
+    description: '재성(현실 결과·자원)과 인성(학습·준비)이 같은 관측 채널에 나타납니다. 기존 연구의 재성↔인성 견제 관계를 일의 실행과 준비 사이의 조율이라는 제한된 관점으로 읽습니다. 실제 비용·능력·성공을 판단하거나 사람의 행동을 단정하지 않습니다.',
+  },
 ]);
 
 const QUALITY: RuleDefinition['quality'] = Object.freeze({
@@ -81,6 +95,7 @@ export const CAREER_MULTIFACTOR_METHODOLOGY: MethodologyDefinition = Object.free
     'A matched pair is a structural interpretation candidate, not the user\'s observed behavior.',
     'Visible stems may form an interpretive headline; branch channel is supporting context.',
     'A shared whole-chart family count does not establish the channel-specific pair.',
+    'The wealth→officer and wealth↔resource patterns use only the bounded, contested relationship categories already listed in the General natal conclusion research source. They never infer outcomes.',
     'No numeric dominance, aptitude, salary, named profession, promotion, fortune, future timing, or causal life event is authorized.',
     'Source/interpretation remains contested and research-only; this is not Production/Commerce admission.',
   ],
