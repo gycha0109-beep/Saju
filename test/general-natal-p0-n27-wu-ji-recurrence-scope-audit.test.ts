@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v14');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v15');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -510,7 +510,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
     ]);
     const three = printed.threeNonHourPillarsCommentaryScopeAudit;
     expect(three).toMatchObject({
-      status: 'TEXTUAL_THREE_OTHER_PILLARS_SUPPORTED_COUNTING_UNIT_UNDECIDED',
+      status: 'ONE_1926_PRINT_WITNESS_CONFIRMS_THREE_PLACES_COUNTING_UNIT_UNDECIDED',
       yuanhaiSourceTitle: '淵海子平 內十八格 時上偏財格',
       yuanhaiTranscribedRule: '只要時上一位，不要多。而三處不要再見財',
       shenfengSourceTitle: '神峰通考 時上偏財格 附月偏財格',
@@ -530,12 +530,37 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       exactDayPillarScopeHistoricalVerdict: 'UNADJUDICATED',
       exactHiddenStemCountingHistoricalVerdict: 'UNADJUDICATED',
       exactYiWeiUnitHistoricalVerdict: 'UNADJUDICATED',
-      printedWitnessIncrement: 0,
+      printedWitnessIncrement: 1,
       ruleEngineOrConsumerAdmission: false,
       requiresNoInstitutionalContact: true,
     });
+    expect(three.shenfeng1926SecondFileDirectPrintedLocus).toMatchObject({
+      sourceFile: 'https://commons.wikimedia.org/wiki/File:NLC416-13jh001619-43305_神峰通考.pdf',
+      publisherAsCataloged: '上海文明書局',
+      publicationYearAsCataloged: 1926,
+      scanPdfTotalPages: 169,
+      earlierDifferentFileHadPages: 167,
+      chapterTitlePdfPage: 66,
+      supplementAndThreePlacesPdfPage: 67,
+      xiwenHeadingAndChartPdfPage: 68,
+      originalPrintedFolioNumbers: [6, 7, 8],
+      sourceIsPhysicalPrintedScanNotDigitalTranscription: true,
+      targetPageDirectlyReadViaPublicPdfRendering: true,
+      targetPageViewStatus: 'WEB_PDF_PAGE_SCREENSHOT_DIRECT_VISUAL_READING',
+      originalPdfBytesDownloadedLocally: false,
+      originalFileSha256Calculated: false,
+      printedLocusHasExplicitSupplementHeading: true,
+      actualPrintedRuleWithoutModernPunctuation: '只要一位貴不要多而三處不要再見財',
+      xiwenHeadingAndChartPrinted: true,
+      threePlacesIsExplicitCountOfHiddenStemOccurrences: false,
+      dayBranchAloneIndependentlyIsolated: false,
+      supplementComposerIdentityCertified: false,
+      directReadPrintedWitnessIncrement: 1,
+      independentHistoricalTextualLineageCountIncrement: 0,
+      sourceStillCannotAuthorizeRecurrenceRule: true,
+    });
     expect(three.shenfengXiwenHourMonthClusterCase).toMatchObject({
-      evidenceChannel: 'PUBLIC_TRANSCRIPTION_ONLY',
+      evidenceChannel: 'TRANSCRIPTION_PLUS_1926_PRINTED_HEADING_AND_CHART',
       heading: '希文自造時月偏財類聚之格',
       chart: ['己酉', '丙子', '壬寅', '乙巳'],
       dayMaster: '壬',
@@ -544,6 +569,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       hourBranchHiddenPianCai: '巳藏丙',
       hourStemIsNotPianCai: true,
       sourceSectionHasFavorableClusterWording: true,
+      single1926PrintHeadingAndChartRead: true,
       wikiTranscriptionHasPianCaiTypo: '騙財',
       variantCertifiedAsHistoricalPrinting: false,
       caseIsSeparatelyLabeledHourMonthCluster: true,
