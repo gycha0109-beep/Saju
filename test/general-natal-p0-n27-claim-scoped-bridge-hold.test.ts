@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('9019a0a35e883cb29ead869c5f93b40817');
+    expect(review.researchHeadReviewed).toBe('1ac29524b990bd0d080f52fdfe938843c69fd67f');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v18',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v19',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -363,8 +363,10 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             locImprintWords: '文光堂甲午重鐫',
             locProposedJiaWuYear1654OnlyConditional: true,
             actualEditorialSupplementPresenceIn1647: 'UNADJUDICATED',
-            anyEarlierOriginalFolioActuallyRead: false,
+            anyEarlierOriginalFolioActuallyRead: true,
             earlierHistoricalWitnessesNewlyAuthenticated: 0,
+            locJuan2SupplementPrintedImageRead: true,
+            japanese1647TargetImageRead: false,
             cannotSupportAnyClaimPromotion: true,
           },
           print1929DirectGlyphVerification: {
@@ -390,7 +392,14 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             runnerImageTotal: 59,
             actuallyDownloadedPreviewImages: 25,
             missingPreviewImages: 34,
-            hourWealthSupplementGlyphsFromLocVerified: false,
+            hourWealthSupplementGlyphsFromLocVerified: true,
+            exactPrintedPageIndexOneBased: 8,
+            exactPrintedPreviewSha256: 'e4b6771c98c8f9547ab9e3ac531ff8e34bd67eb6e380810843fc4a186e371c08',
+            exactPrintedCorePhrase: '只要一位貴不要多而三處不要再見財',
+            targetPhraseInSeventeenthCenturyLocImageMatches1926And1929: true,
+            retrievedImageCountAfterPacedRecovery: 58,
+            remainingUnacquiredImageIndex: 59,
+            finalMetadataRequestTimedOut: true,
             absenceOfSupplementInAncientPrintProven: false,
             noGrantedClassicalSemantics: true,
           },
@@ -410,7 +419,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             printTextualLineageIndependentFrom1926: 'UNADJUDICATED',
             newlyAddedPrintedTextualLoci: 1,
             candidate1936PrintingRead: false,
-            oldLocEditionImageRead: false,
+            oldLocEditionImageRead: true,
             allClaimsStayHold: true,
           },
           republican1929Alternative: {
@@ -421,9 +430,13 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           },
           locEarlyPrintedCandidate: {
             dateRangeAsCataloged: '1638–1661',
-            actualTargetImageRead: false,
+            actualTargetImageRead: true,
+            sourceImageOneBased: 8,
+            sourceImageSha256: 'e4b6771c98c8f9547ab9e3ac531ff8e34bd67eb6e380810843fc4a186e371c08',
+            attributionLabelPrinted: '補曰',
+            textAgreementNotStemmaticIndependence: true,
             printTraditionIndependent: 'UNADJUDICATED',
-            directPrintedEvidenceIncrement: 0,
+            directPrintedEvidenceIncrement: 1,
           },
           printed1926SecondFile: {
             sourceUri: 'https://commons.wikimedia.org/wiki/File:NLC416-13jh001619-43305_神峰通考.pdf',
