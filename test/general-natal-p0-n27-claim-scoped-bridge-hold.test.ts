@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('e7a0c9741fb4d9df4f41de058223cc2ef859dc2b');
+    expect(review.researchHeadReviewed).toBe('539d62957357cff41e7210d85c3b7dce49a3343a');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v14',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v15',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -323,7 +323,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           allExistingClaimsStayHold: true,
         },
         threeNonHourPillarsTextWitnessHold: {
-          evidenceClass: 'PUBLIC_TRANSCRIPTIONS_NOT_VERIFIED_1926_PRINT_FOLIO',
+          evidenceClass: 'TRANSCRIPTION_WITH_ONE_DIRECTLY_READ_1926_PRINT_FOLIO',
           yuanhaiInternalEighteen: '只要時上一位，不要多。而三處不要再見財',
           shenfengHourWealthGloss: '只要一位貴，不要多，而三處不要再見財',
           comparandOtherThreePillarsYearMonthDaySupported: true,
@@ -336,7 +336,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           houCaseGlossMentionsRepetitionsButNotUnqualifiedSuccess: true,
           liCaseHasHiddenYearPianCaiButNoIsolatedCausalComparison: true,
           shenfengXiwenClusterComparand: {
-            sourceStatus: 'TEXT_ONLY_NO_PRINT_FOLIO',
+            sourceStatus: '1926_PRINT_HEADING_CHART_READ_OTHER_GLOSS_LIMITED',
             pillars: ['己酉','丙子','壬寅','乙巳'],
             visibleMonthPianCaiAndHiddenDayHourPianCai: true,
             hourStemIsNotPianCai: true,
@@ -351,6 +351,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             independentThirdPartyCounterexampleEstablished: false,
             selfDescriptiveTextCannotGrantClassicalRuleException: true,
             historicalPrintedPassageDirectlyRead: false,
+            headingAndChartInOne1926PrintDirectlyRead: true,
             hiddenDayAsIndependentViolationOrExemptionAdjudicated: false,
           },
           republican1929Alternative: {
@@ -365,8 +366,21 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             printTraditionIndependent: 'UNADJUDICATED',
             directPrintedEvidenceIncrement: 0,
           },
+          printed1926SecondFile: {
+            sourceUri: 'https://commons.wikimedia.org/wiki/File:NLC416-13jh001619-43305_神峰通考.pdf',
+            exactPageWithSupplement: 67,
+            adjacentHeadingAndChartPage: 68,
+            originalPrintedPageHeading: 7,
+            exactGlyphString: '只要一位貴不要多而三處不要再見財',
+            readFromRenderedPublicPdfPage: true,
+            localPdfDownloadAndHashConfirmed: false,
+            originalPrintWitnessIncrement: 1,
+            editorialLineageIndependent: false,
+            noAutomaticHiddenStemCountRule: true,
+            fiveClaimsRemainHold: true,
+          },
           commons1926PdfSourceLocatedButExactPageNotRead: true,
-          originalPrintedWitnessIncrement: 0,
+          originalPrintedWitnessIncrement: 1,
           dayBranchSeparateRecurrenceRuleAllowed: false,
           allHiddenStemsAutomaticRuleAllowed: false,
           consumerOrTrustGrantPromotionAllowed: false,
