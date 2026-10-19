@@ -350,3 +350,9 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 - LOC **공식 디지털 이미지 59/59개 확보 완료**. 초기 25개 취득·34개 미취득과 후속 58/59는 각 이력의 상태이며 삭제하지 않는다. 다만 이것이 본문 전체 문자 교감 또는 인쇄본 계통 판정 **완료를 의미하지 않는다**.
 - 추가 공개 [한국 공유마당 출처 국회도서관·1906년 등록](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005), [1906 上海書局石印本·紹興圖書館의 별도 서지](https://www.guoxuedashi.com/shumu/gj-1240984pp.html)는 **원본 미판독 후보**로만 연결했다. 두 서지가 동일 실물인지 별도의 전승인지는 `UNADJUDICATED`.
 - 17세기 추정 LOC 인쇄이미지 8번의 `補曰` 국소 문구와 1926·1929 이미지의 핵심 글자 일치만 유지한다. `別宮` 日支 독립 효과, `再見` 藏干 산입, `一位` 역사적 셈법 **UNADJUDICATED**. N27 **5 Claim HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 劫財 T8 **1 vs 0**. 신규 TrustGrant/consumer/Preview/Official/Production 승인 없음. Draft/미병합 및 기관 연락 금지 유지.
+
+### N27 v21 후속: 1906 공개 PDF HTTP 400에 따른 Research 심사 SHA 최신화 (2026-10-19)
+
+- Research #2553 최신 검토 SHA `7bfa89b1fb54db47c9b17a9b4a64eda79cc7ed3d`를 Bridge `researchHeadReviewed`와 테스트에 반영했다. 기존 `v21` 심사 대상은 동일하며, 추가 커밋은 **취득 시도 기록에 한정**.
+- [공개 원문 PDF 한정 취득 Actions #39218770108](https://github.com/gycha0109-beep/Saju/actions/runs/39218770108): `G905-9086005`의 공개 다운로드 URL 요청이 **HTTP 400**이므로 실제 PDF 바이트, 1906년본 `補曰` 인쇄 문자, 독립 계통 증거 **0**. 파일 부재를 인증한 것은 아니며 사이트의 인증·이용 조건을 우회하지 않는다.
+- LOC `cover2`까지 공식 **59/59 이미지 취득**은 그대로. 원문 전권 교감은 별도 미완료, 5 Claim **HOLD**, 세 계산 의미 **UNADJUDICATED**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**. 신규 Preview/Official/Production/TrustGrant/consumer 승인 0, 기관 문의 0. Draft 유지.
