@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v21' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v22' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -798,6 +798,40 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             independenceFrom1926And1929: 'UNADJUDICATED' as const,
             independentlyCollatedOriginalPassages: 0 as const,
             permitsPromotingAnyClaim: false as const,
+          }),
+          yulgokNationalAcademyTwoSeparateHoldingsLead: Object.freeze({
+            sourceInstitution: '율곡연구원 한국학 아카이브' as const,
+            provenanceNotSameAsNationalAssemblyPdfVerified: true as const,
+            firstHolding: Object.freeze({
+              catalogue: 'https://db.yulgok.or.kr/poss/view?dataId=B005_01_B00330_001' as const,
+              catalogueId: 'B005_01_B00330_001' as const,
+              printedBibliographyId: 'YG015-01-481' as const,
+              reportedVolumes: 4 as const,
+              volumeMarkers: '1~4' as const,
+              bibliographicalTitle: '新鐫神峰張先生通考闢謬命理正宗大全' as const,
+              physicalFormat: '석인본' as const,
+              physicalDimensionCm: '14.9×8.9' as const,
+              namedPublisherPresent: false as const,
+              printingYearRecorded: false as const,
+              actualPrintingYear: 'UNADJUDICATED' as const,
+            }),
+            secondHolding: Object.freeze({
+              catalogue: 'https://db.yulgok.or.kr/poss/view?cate=cateSubj&dataId=B005_01_B00442_001&itemId=B' as const,
+              catalogueId: 'B005_01_B00442_001' as const,
+              printedBibliographyId: 'YG015-01-490' as const,
+              reportedVolumes: 1 as const,
+              contentsLabel: '卷1,2' as const,
+              publisherAsCataloged: '上海 千頃堂書局' as const,
+              physicalFormat: '석인본' as const,
+              physicalDimensionCm: '14.9×9.0' as const,
+              printingYearRecorded: false as const,
+              actualPrintingYear: 'UNADJUDICATED' as const,
+            }),
+            bothCatalogueUnitsDistinct: true as const,
+            catalogueEditionIdenticalTo1906ShanghaiShuju: 'UNADJUDICATED' as const,
+            directImageOfBieGongZaiJianYiWeiSectionRetrieved: false as const,
+            independentStemmaticWitnessIncrement: 0 as const,
+            newN27SemanticAuthorization: false as const,
           }),
           republican1929TwoVolumeBindingAudit: Object.freeze({
             publisher: '中華書局 文明書局' as const,
