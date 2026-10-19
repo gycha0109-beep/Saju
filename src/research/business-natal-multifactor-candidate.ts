@@ -9,7 +9,7 @@ import {
 import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synthesis-candidate.js';
 
 /** Canonical T5 -> source-qualified Business T8; no parallel product interpretation. */
-export const BUSINESS_NATAL_MULTIFACTOR_VERSION = '0.1.0-research' as const;
+export const BUSINESS_NATAL_MULTIFACTOR_VERSION = '0.2.0-research' as const;
 const METHOD_ID = 'M-BUSINESS-NATAL-MULTIFACTOR-EXECUTION-GOVERNANCE-V1';
 const RULE_SET = 'business-natal-source-bounded-multifactor';
 type Family = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
@@ -52,6 +52,21 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     id: 'PEER_RESOURCE_OFFICER', families: ['peer','resource','officer'],
     axis: 'coordination', headline: '주도권·준비·책임 세 기준의 교차',
     summary: '비겁의 자기 기준, 인성의 준비, 관성의 역할·규범이 하나의 관측 채널에서 겹칩니다. 사업에 필요한 준비와 운영 책임을 둘러싼 관점을 비교하는 제한적 독해이며 실제 협업 갈등이나 성패를 예견하지 않습니다.',
+  },
+  {
+    id: 'WEALTH_OFFICER', families: ['wealth','officer'],
+    axis: 'governance', headline: '운영 자원과 책임 기준을 함께 놓는 구조',
+    summary: '재성이 나타내는 현실 자원·교환의 관점과 관성이 나타내는 규범·책임의 관점이 같은 관측 채널에 있습니다. 사업 주제에서 자원을 다루는 선택과 그 선택에 적용할 기준을 구별해 살피는 연구용 독해이며, 실제 재무 관리 능력이나 경영 성과를 추정하지 않습니다.',
+  },
+  {
+    id: 'WEALTH_RESOURCE', families: ['wealth','resource'],
+    axis: 'preparation', headline: '자원 운용과 학습·준비를 함께 보는 구조',
+    summary: '재성의 자원·교환과 인성의 수용·학습이 같은 관측 채널에 놓입니다. 사업을 준비하는 과정에서 이용할 자원과 사전에 검토할 내용을 나누어 살피는 전통적 관점일 뿐, 투자 적합성이나 창업 시점·수익을 판단하지 않습니다.',
+  },
+  {
+    id: 'RESOURCE_OFFICER', families: ['resource','officer'],
+    axis: 'coordination', headline: '준비 과정과 운영 기준을 맞춰 보는 구조',
+    summary: '인성이 가리키는 받아들임·학습과 관성이 가리키는 역할·규범이 함께 확인됩니다. 사업이라는 주제에서는 준비할 내용과 지켜야 할 기준 사이의 관계를 질문할 수 있으나, 실제 허가 취득이나 계약 결과·업무 수행 능력을 예측하지 않습니다.',
   },
 ]);
 const CHANNELS: readonly Channel[] = ['visible_stems', 'branches'];
