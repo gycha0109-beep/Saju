@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('cf65e521693155f0d660411ee6b316a7dfc193a1');
+    expect(review.researchHeadReviewed).toBe('2d39056bf4dd7cabda4b8df873054ad82bd096e2');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v20',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v21',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -405,10 +405,30 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             exactPrintedCorePhrase: '只要一位貴不要多而三處不要再見財',
             targetPhraseInSeventeenthCenturyLocImageMatches1926And1929: true,
             retrievedImageCountAfterPacedRecovery: 58,
-            remainingUnacquiredImageIndex: 59,
-            finalMetadataRequestTimedOut: true,
+            remainingAfterSecondRun: 59,
+            secondRunPage59MetadataTimedOut: true,
+            finalOfficialImageRecovery: {
+              lastOrdinal: 59,
+              officialImageId: 'cover2',
+              recoveredPreviewBytes: 53722,
+              recoveredPreviewSha256: 'c6ee8531aeece3634c181dbf4254fdc9ba28901a6ad9551fc2bc4f892f8e7dc8',
+              totalImagesRetrieved: 59,
+              remainingImageCount: 0,
+              imageIsBackCoverNotNewPrintedClaimLocus: true,
+              fullGlyphCollationFinished: false,
+              noNewAuthoritativeSemanticClaim: true,
+            },
             absenceOfSupplementInAncientPrintProven: false,
             noGrantedClassicalSemantics: true,
+          },
+          additionalKorean1906Lead: {
+            catalogueYear: 1906,
+            governmentSourceLibrary: '국회도서관',
+            reportedPdfName: '新鐫神峰張先生通攷闢謬命理正宗大全.pdf',
+            separateCatalogueYear: 1906,
+            eitherPrintLocusDirectlyRead: false,
+            sameEditionOrIndependentWitness: 'UNADJUDICATED',
+            semanticPromotionAllowed: false,
           },
           republican1929TwoPhysicalVolumes: {
             publicationDate: '1929-11',
