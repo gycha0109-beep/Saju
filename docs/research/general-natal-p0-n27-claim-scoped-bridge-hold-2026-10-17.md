@@ -335,3 +335,10 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 - 기존에 확인 못 한 **17세기 추정 고본의 지정 구절 존재 여부**는 LOC 인쇄 이미지 하나에서 확인됐다. 그러나 LOC 소장품의 1638–1661 연대는 **소장기관 추정**이고 봉면 `甲午重鐫`에서 1654년 확정 인쇄를 증명하지 않는다. `補曰`의 최초 작성자·편집 시점, 1647년 일본 印本 수록 여부, 판본 간 독립 계통, 장 전체 이문은 **미판정**이다.
 - 추가 공개본 접근: [우선 수집](https://github.com/gycha0109-beep/Saju/actions/runs/39194424103)에서 누락 34면 중 32면 확보했고, [LOC 메타데이터 재확인](https://github.com/gycha0109-beep/Saju/actions/runs/39195117566)으로 58번(공식 이미지 ID `57b000`)을 확보했다. 권2 총 **59면 중 58면 확보**, 59번은 공식 메타데이터 요청이 시간초과됐다. 이미지 미확보는 글자 부재의 증명이 아니다.
 - Bridge의 다섯 Claim **모두 HOLD**. `別宮` 日支 독립 효과, `再見` 藏干 가산, `一位` 역사적 집계는 **UNADJUDICATED**. N17 **METHODOLOGY_CONFLICT**, N13 정확 劫財 T8 **1 vs 0**. 인쇄본 글자 확인을 계산 의미 확정이나 ReviewAttestation·TrustGrant·Preview·Official·Production·consumer 승인으로 바꾸지 않았다. 현재 `researchHeadReviewed`는 자동 최신 HEAD 추종값이 아니라 실제 검토를 마친 정확한 Research 커밋의 고정 참조다.
+
+## 2026-10-19 N27 v20 — 일본 1647·1850년 목록 충돌의 Bridge 심사 보류
+
+- **Research #2553 정확 검토 HEAD** `cf65e521693155f0d660411ee6b316a7dfc193a1` / `saju-n27-wu-ji-recurrence-scope-sensitivity-v20`; Bridge `researchHeadReviewed`·테스트·본 문서는 같은 Research commit을 가리킨다. 새 원문 화상 판독으로 v20을 올린 것이 아니라 **대조 판본 후보 서지 신뢰도의 새 모순**을 추가했다.
+- 東北大学 狩野文庫 [레코드 10010000025889](https://touda.tohoku.ac.jp/collection/database/library/10010000025889)는 江戸·沢村寛의 `正保4 [1647]`을, 같은 대학의 [레코드 10010000025881](https://touda.tohoku.ac.jp/portal/item/10010000025881)은 같은 제목·출판자·장소·6冊에 `嘉永3 [1850]`을 기재한다. 두 레코드의 청구기호 `2/3802/6`, 부서 관리번호 `TT22201642`가 같고 **공개 이미지가 없다**. 두 개의 확정 물리본, 확정 1647 출판연도 또는 LOC본 이전의 독립 증인이라고 산정할 수 없다. 1850 표기가 역사적 재판인지 메타데이터 충돌인지도 미확정이다.
+- LOC 卷二 이미지 8의 직접 확인된 `補曰`과 `只要一位貴不要多而三處不要再見財`는 그대로 **인쇄면 직접 확인 사실**이다. 1926·1929 본과의 국소 글자 일치는 유지하되 LOC의 1654년 확정 연대, 고전 편찬자 귀속, 판목 독립 계통, `別宮` 日支 효과, `再見` 藏干 범위, `一位` 계산 단위로 확장하지 않는다.
+- 5개 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, Consumer/Preview/Official/Production/TrustGrant 신규 승인 **0**. 두 PR Draft·미병합, 기관 접촉 없음.
