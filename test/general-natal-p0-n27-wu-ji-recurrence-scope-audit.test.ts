@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v19');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v20');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -595,6 +595,15 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       tohokuCatalogPlace: '江戸',
       tohokuCatalogPublisher: '沢村寛',
       tohokuCatalogYear: 1647,
+      tohokuContradictingCatalog: 'https://touda.tohoku.ac.jp/portal/item/10010000025881',
+      tohokuContradictingCatalogYear: 1850,
+      tohoku1647CatalogRecordId: '10010000025889',
+      tohoku1850CatalogRecordId: '10010000025881',
+      sharedDepartmentIdInTwoCatalogs: 'TT22201642',
+      sharedShelfMarkInTwoCatalogs: '2/3802/6',
+      catalogsReferToTwoDistinctPhysicalCopies: 'UNADJUDICATED',
+      historicallyCertain1647PrintYear: false,
+      tohokuPrintYearResolution: 'CONFLICTING_CATALOG_DATES_NO_PRINT_IMAGE',
       tohokuOriginalVolumes: 6,
       tohokuHolding: '東北大学 狩野文庫',
       tohokuImagesAvailable: false,
