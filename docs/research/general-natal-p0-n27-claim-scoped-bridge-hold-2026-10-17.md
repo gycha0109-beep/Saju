@@ -356,3 +356,11 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 - Research #2553 최신 검토 SHA `7bfa89b1fb54db47c9b17a9b4a64eda79cc7ed3d`를 Bridge `researchHeadReviewed`와 테스트에 반영했다. 기존 `v21` 심사 대상은 동일하며, 추가 커밋은 **취득 시도 기록에 한정**.
 - [공개 원문 PDF 한정 취득 Actions #39218770108](https://github.com/gycha0109-beep/Saju/actions/runs/39218770108): `G905-9086005`의 공개 다운로드 URL 요청이 **HTTP 400**이므로 실제 PDF 바이트, 1906년본 `補曰` 인쇄 문자, 독립 계통 증거 **0**. 파일 부재를 인증한 것은 아니며 사이트의 인증·이용 조건을 우회하지 않는다.
 - LOC `cover2`까지 공식 **59/59 이미지 취득**은 그대로. 원문 전권 교감은 별도 미완료, 5 Claim **HOLD**, 세 계산 의미 **UNADJUDICATED**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**. 신규 Preview/Official/Production/TrustGrant/consumer 승인 0, 기관 문의 0. Draft 유지.
+
+## N27 v22 — 율곡연구원 국내 석인본 두 소장 단위 분리 (2026-10-19)
+
+- Research Draft #2553 심사 대상 **`6661c73eb3491c22e839effd119f89a8301066b9`**, 연구 버전 **`saju-n27-wu-ji-recurrence-scope-sensitivity-v22`**. Bridge `researchHeadReviewed` 및 회귀 테스트에 같은 exact SHA를 적용했다.
+- [율곡연구원 한국학 아카이브 4책 자료 `B005_01_B00330_001`](https://db.yulgok.or.kr/poss/view?dataId=B005_01_B00330_001) 및 [별도 `卷1,2` 1책 자료 `B005_01_B00442_001`](https://db.yulgok.or.kr/poss/view?cate=cateSubj&dataId=B005_01_B00442_001&itemId=B) 공식 목록 확인. 공개 자료총서 목록 ID는 각각 **`YG015-01-481`(4책)**, **`YG015-01-490`(1책)**이다. 모두 석인본이지만 후자에만 **`上海 千頃堂書局`** 서국명이 명시돼 있으며 둘 다 간행연도는 비어 있다.
+- [중국 다롄도서관의 또 다른 1906년 석인본 공식 서지](https://www.dl-library.net.cn/book/519/-shenfengtongkao---minglizhengzongdaquan-518296.html)는 **6冊一帙**로 기재되어 [紹興圖書館 서지의 1906년 `2冊`](https://www.guoxuedashi.com/shumu/gj-1240984pp.html) 및 국내 `4冊/卷1,2`과 물량이 다르다. 복수 판본 존재를 추정하는 출발점이지 **서지 연도, 동일성, 서로 다른 원전 계통을 확정하는 증거가 아니다**.
+- 새 원문 「時上偏財格」·「補曰」 판면 직독 0. 국내 두 소장본은 연도 미상·직접 영인 이미지 미확보이며 1906 국회도서관 출처 공유마당 PDF는 단일 URL **HTTP 400**. 따라서 **고전 문언 비교 추가 0, 독립 텍스트 계통 추가 0, 의미 승인 추가 0**이다. LOC 卷二 59/59 공식 디지털 이미지 확보와 기존 8번 핵심 글자 실제 판독은 유지.
+- **N27 Claim 5개 HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 정확 劫財 T8 **1 vs 0**, `別宮`·`再見`·`一位` 실제 계산 의미 **UNADJUDICATED**. TrustGrant/consumer/Preview/Official/Production 변경 없음. 두 PR Draft·미병합, 기관 문의·이메일 없음.
