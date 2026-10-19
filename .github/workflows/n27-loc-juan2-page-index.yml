@@ -1,4 +1,4 @@
-name: N27 LOC Juan 2 final two page metadata lookup
+name: N27 LOC Juan 2 terminal image provenance check
 
 on:
   push:
@@ -11,56 +11,73 @@ permissions:
 jobs:
   tail-page-lookup:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 6
     steps:
-      - name: Resolve official LOC image paths for remaining 58 and 59 only
+      - name: Inspect LOC official segment 59 then one inferred IIIF candidate
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p loc-juan2-tail/pages
+          mkdir -p n27-loc-terminal/pages
           python3 - <<'PY'
-          import hashlib,json,pathlib,time,urllib.request,urllib.error
-          root=pathlib.Path('loc-juan2-tail')
-          base='https://www.loc.gov/resource/lcnclscd.2014514308.1A002/'
-          headers={'User-Agent':'MyeongHa-N27 scholarly archival inspection; two paced official metadata lookups'}
-          out=[]
-          blocked=False
-          def get(url):
-              req=urllib.request.Request(url,headers=headers)
-              with urllib.request.urlopen(req,timeout=40) as f:return f.read()
-          for i in (58,59):
-              if blocked:
-                  out.append({'page':i,'status':'NOT_REQUESTED_AFTER_LIMIT'})
-                  continue
-              time.sleep(5)
-              rec={'page':i,'metadata_url':base+'?fo=json&sp='+str(i)}
+          import hashlib, json, pathlib, time, urllib.request, urllib.error
+          root=pathlib.Path('n27-loc-terminal')
+          url='https://www.loc.gov/resource/lcnclscd.2014514308.1A002/?sp=59&fo=json'
+          known58='https://tile.loc.gov/image-services/iiif/service:asian:lcnclscd:2014514308:1A002:57b000/full/pct:25/0/default.jpg'
+          inferred59=known58.replace(':57b000/', ':58b000/')
+          report={'ordinal':59,'known_58_iiif':known58,
+                  'attempts':[],'result':'NOT_FETCHED',
+                  'inference_is_an_unverified_candidate':True}
+          headers={'User-Agent':'MyeongHa-N27-public-source-research/1.0 (paced, single-image)'}
+          def get(u, timeout=18):
+              req=urllib.request.Request(u,headers=headers)
+              with urllib.request.urlopen(req,timeout=timeout) as f:
+                  return f.read(),f.headers.get('Content-Type','')
+          def record(u,kind):
+              attempt={'kind':kind,'url':u}
+              report['attempts'].append(attempt)
               try:
-                  meta=json.loads(get(rec['metadata_url']))
-                  candidates=meta.get('segments',[{}])[0].get('image_url',[])
-                  rec['candidate_image_urls']=candidates
-                  matching=[s for s in candidates if '/pct:25/' in s]
-                  if not matching:
-                      rec['status']='NO_PCT25_IMAGE_URL'
-                  else:
-                      url=matching[0].split('#')[0]
-                      rec['url']=url
-                      time.sleep(5)
-                      blob=get(url)
-                      (root/'pages'/f'loc-juan2-{i:02d}.jpg').write_bytes(blob)
-                      rec.update(status='FETCHED',bytes=len(blob),sha256=hashlib.sha256(blob).hexdigest())
+                  data,mime=get(u)
+                  attempt['status']='HTTP_200'
+                  attempt['content_type']=mime
+                  attempt['bytes']=len(data)
+                  return data
               except urllib.error.HTTPError as e:
-                  rec['status']='HTTP_'+str(e.code)
-                  if e.code in (403,429):blocked=True
+                  attempt['status']='HTTP_'+str(e.code)
               except Exception as e:
-                  rec['status']='ERROR';rec['error']=repr(e)[:200]
-              out.append(rec)
-              print('N27_LOC_TAIL_RESULT',i,rec['status'],flush=True)
-          (root/'tail-index.json').write_text(json.dumps(out,ensure_ascii=False,indent=2))
+                  attempt['status']='ERROR';attempt['error']=repr(e)[:180]
+              return None
+          metadata=record(url,'official_ordinal_59_json')
+          candidate=None
+          if metadata:
+              try:
+                  meta=json.loads(metadata)
+                  images=meta.get('segments',[{}])[0].get('image_url',[])
+                  c=[x.split('#')[0] for x in images if '/pct:25/' in x]
+                  report['official_image_url_candidates']=c[:3]
+                  if c: candidate=c[0]
+              except Exception as e:
+                  report['metadata_parse_error']=repr(e)[:180]
+          time.sleep(6)
+          if candidate:
+              payload=record(candidate,'official_iiif_image')
+          else:
+              payload=record(inferred59,'single_inferred_iiif_image')
+          if payload and payload.startswith(b'\xff\xd8\xff'):
+              p=root/'pages'/'loc-juan2-59.jpg'
+              p.write_bytes(payload)
+              report.update(result='FETCHED',
+                            identification='OFFICIAL_METADATA' if candidate else 'IIIF_PATTERN_INFERRED_NEEDS_CATALOG_CONFIRMATION',
+                            bytes=len(payload),sha256=hashlib.sha256(payload).hexdigest())
+          elif payload:
+              report['result']='HTTP_200_NON_JPEG'
+          (root/'terminal-image-result.json').write_text(json.dumps(report,indent=2,ensure_ascii=False))
+          print('LOC_59_RESULT', report['result'],flush=True)
+          print('LOC_59_ATTEMPTS',[(x['kind'],x.get('status')) for x in report['attempts']],flush=True)
           PY
-      - name: Preserve exact endpoint results and successful image bytes
+      - name: Preserve only official request evidence and verified image bytes
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: n27-loc-juan2-tail-58-59
-          path: loc-juan2-tail
+          name: n27-loc-juan2-terminal-image-check
+          path: n27-loc-terminal
           retention-days: 14
