@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v13');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v14');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -550,7 +550,28 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       doesNotProveUniversalExtraWealthTolerance: true,
       doesNotIsolateDayHiddenStemIndependentEffect: true,
       classicalCountUnitApproved: false,
+      transcribedAutobiographicalPassage: '予修淨土人也，亦不事此術，為繼家君之志，而編此書',
+      transcribedFinalAttribution: '予據先人成說，更稽先人遺訓',
+      sourceNarratorSaysOwnChart: '予命正合書云',
+      firstPersonClaimsToCompileFathersWork: true,
+      firstPersonAppearsInSameSectionAfterXiwenHeading: true,
+      distinctFromFatherIntroducedNanYue: true,
+      locCatalogRecordsCompilerSonNamedXiwen: true,
+      bibliographicNameAndSelfNarrationConsistent: true,
+      namedXiwenBiographicalIdentityIndependentlyAuthenticated: false,
+      inferredSonCompilerAttributionIsNotPrintLocusAuthentication: true,
+      caseIsIndependentThirdPartyOutcomeEvidence: false,
+      caseProvesPureHourOnePositionException: false,
+      caseMaySynthesizeEditorsInterpretiveView: true,
       issuerIdentityBeyondHeadingVerified: false,
+    });
+    expect(three.alternativeRepublicanPrintCatalogue).toMatchObject({
+      catalogedPrintYear: 1929,
+      catalogedVol: '第1卷',
+      pdfPages: 170,
+      exactHourWealthSectionPresentInImageConfirmed: false,
+      directImageRead: false,
+      independentTextualDescentQualified: false,
     });
     expect(three.locShenfengEarlyPrintedCandidate).toMatchObject({
       estimatedPrintDate: '清順治間[1638–1661]',
