@@ -308,3 +308,15 @@ Research #2553 **정확 HEAD `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe`**, `saju
 [東北大学 狩野文庫 목록](https://touda.tohoku.ac.jp/collection/database/library/10010000025889): **正保4[1647]년 江戸 沢村寛 판 6冊**, `画像有無/色 無`. [미국 의회도서관 17세기 추정 文光堂본](https://www.loc.gov/item/2014514308/)은 `文光堂甲午重鐫`을 봉면에 기록한다. 順治기간의 甲午는 **1654년과 부합하는 추론**일 뿐 원각의 구절·해당 판본 출판년·중각 계통 독립의 증명이 아니다. 1647년 판본이 `補曰`을 포함하는지조차 **미판독**.
 
 v15에서 직접 육안 판독한 1926년본 `只要一位貴不要多而三處不要再見財` 1건 외 **추가 원문 印刷面 판독 0건**, **이문 교감 0건**, **독립 고전 계통 인정 0건**. `別宮` 日柱·`再見` 藏干·`一位`의 역사적 집계는 UNADJUDICATED, 5개 Claim HOLD, N17 METHODOLOGY_CONFLICT, N13 정확 劫財 T8 **1 vs 0**, 신규 TrustGrant/Preview/Official/Production 의미 허가 0. 두 PR Draft·미병합 및 기관 연락 없음.
+
+## 2026-10-19 N27 v18 — 1929년 직접 판독본 「補曰」과 1926년 문구 일치 확인
+
+Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27-wu-ji-recurrence-scope-sensitivity-v18`의 정확한 커밋에 Bridge `researchHeadReviewed`를 고정한다.
+
+**실제 원본 파일로부터 읽은 新 증거:** [NLC 1929 상책 PDF](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf) 7,012,009 바이트 / SHA-256 **`2e19b8a05fdc4ad204eb4822c3b1ffbb2487dafac707e283c1358845f873c12c`**. [소스 수집 및 전체 면 목록 Actions](https://github.com/gycha0109-beep/Saju/actions/runs/39188880179)의 artifact를 작업 환경으로 받아 **원본 PDF 바이트 SHA를 재검증**했고, PDF 66/67/68면 이미지를 직접 판독했다. **PDF 66면 六:** `時上偏財格 附月偏財格` 본문 시작, **PDF 67면 七:** 실제 `補曰` 및 `只要一位貴不要多而三處不要再見財`, **PDF 68면 八:** `希文自造時月偏財類聚之格`과 `己酉/丙子/壬寅/乙巳`.
+
+1926년 별도 NLC 스캔 PDF 67면에서 육안 판독한 **동일 핵심 글자**와 비교할 때 지정 어구의 글자 이문은 발견하지 못했다. **장 전체 교감, 두 간행본의 독립 저본 인정, 이 구절의 명대/청대 확정**은 여전히 미실행/미확정. 1929년 직접 판독 인쇄본 1종 추가, 역사적으로 독립한 고전 원전 계통 인정 **0**.
+
+[미 LOC 17세기 추정본 卷二](https://www.loc.gov/item/2014514308/) 공개 이미지 총 59개 중 25개만 [실제 취득](https://github.com/gycha0109-beep/Saju/actions/runs/39190030567), 나머지 34개는 HTTP 429·시간초과 등으로 실패해 해당 `補曰` 존재/내용 여부를 결론 내리지 못함. **확인 실패는 원문 부재 증거가 아님**.
+
+**권한 동결 유지:** `別宮` 日柱 기여, `再見` 藏干 카운트, `一位` 역사적 셈법 UNADJUDICATED. N27 5 Claim HOLD, N17 METHODOLOGY_CONFLICT, N13 겁재 T8 정확 1 vs 0, 신규 TrustGrant/Preview/Official/Production/consumer 승인 없음. Draft 미병합·기관 연락 없음.
