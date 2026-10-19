@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('539d62957357cff41e7210d85c3b7dce49a3343a');
+    expect(review.researchHeadReviewed).toBe('effde7c8145790a1886af013cad1e3ccf114be63');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v15',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v16',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -353,6 +353,20 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             historicalPrintedPassageDirectlyRead: false,
             headingAndChartInOne1926PrintDirectlyRead: true,
             hiddenDayAsIndependentViolationOrExemptionAdjudicated: false,
+          },
+          republican1929TwoPhysicalVolumes: {
+            publicationDate: '1929-11',
+            editor: '秦慎安',
+            upperPageCount: 170,
+            lowerPageCount: 168,
+            volumesBelongToOneEdition: true,
+            volumesMustNotCountAsIndependentWitnesses: true,
+            preciseSupplementPageDirectlyRead: false,
+            printTextualLineageIndependentFrom1926: 'UNADJUDICATED',
+            newlyAddedPrintedTextualLoci: 0,
+            candidate1936PrintingRead: false,
+            oldLocEditionImageRead: false,
+            allClaimsStayHold: true,
           },
           republican1929Alternative: {
             dated: 1929,
