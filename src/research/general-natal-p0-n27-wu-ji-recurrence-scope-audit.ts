@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v13' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v14' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -627,6 +627,23 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             doesNotProveUniversalExtraWealthTolerance: true as const,
             doesNotIsolateDayHiddenStemIndependentEffect: true as const,
             classicalCountUnitApproved: false as const,
+            // Source-critical correction: this is first-person editorial
+            // self-exposition, not a third-party test outcome.
+            transcribedAutobiographicalPassage: '予修淨土人也，亦不事此術，為繼家君之志，而編此書' as const,
+            transcribedFinalAttribution: '予據先人成說，更稽先人遺訓' as const,
+            sourceNarratorSaysOwnChart: '予命正合書云' as const,
+            firstPersonClaimsToCompileFathersWork: true as const,
+            firstPersonAppearsInSameSectionAfterXiwenHeading: true as const,
+            distinctFromFatherIntroducedNanYue: true as const,
+            locEditionCatalogUrl: 'https://www.loc.gov/item/2014514308/' as const,
+            locCatalogRecordsCompilerSonNamedXiwen: true as const,
+            locCatalogCompilerPhrase: '不肖男希禹、希魯、希伋、希文、希臯、希尹彙編' as const,
+            bibliographicNameAndSelfNarrationConsistent: true as const,
+            namedXiwenBiographicalIdentityIndependentlyAuthenticated: false as const,
+            inferredSonCompilerAttributionIsNotPrintLocusAuthentication: true as const,
+            caseIsIndependentThirdPartyOutcomeEvidence: false as const,
+            caseProvesPureHourOnePositionException: false as const,
+            caseMaySynthesizeEditorsInterpretiveView: true as const,
             issuerIdentityBeyondHeadingVerified: false as const,
           }),
           // Earlier physical bibliographic candidate, NOT a read locus.
@@ -641,6 +658,15 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             exactHourWealthFolioInspected: false as const,
             manuscriptOrHistoricalTextVerified: false as const,
             incrementOfDirectReadPrintedWitnesses: 0 as const,
+          }),
+          alternativeRepublicanPrintCatalogue: Object.freeze({
+            sourceUrl: 'https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf' as const,
+            catalogedPrintYear: 1929 as const,
+            catalogedVol: '第1卷' as const,
+            pdfPages: 170 as const,
+            exactHourWealthSectionPresentInImageConfirmed: false as const,
+            directImageRead: false as const,
+            independentTextualDescentQualified: false as const,
           }),
           commons1926ScanCatalogue: 'https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf' as const,
           commons1926FileDeclaredPages: 167 as const,
