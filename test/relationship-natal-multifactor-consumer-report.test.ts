@@ -107,6 +107,37 @@ describe('actual-source Relationship natal T5→T8→Korean five-domain report',
       general.sections.map(section => section.headline));
   });
 
+  it('explains which observed family and pillar supports the Korean conclusion and why a partial reading stops', () => {
+    let explainedSections = 0;
+    let explainedPartials = 0;
+    for(const month of [2,3,4,5,6,7]) for(const day of [3,7,11,17,23]) {
+      const { report } = run(month,day);
+      for(const section of report.sections) {
+        explainedSections++;
+        expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
+        expect(section.paragraph).toContain('십신 계열이 함께 확인되므로');
+        expect(section.paragraph).toContain('구조적 관점으로 연결해 읽습니다');
+        expect(section.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
+        for(const position of section.observedPositions) {
+          expect(section.paragraph).toContain(position);
+        }
+        expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
+        expect(section.sourceIds.length).toBeGreaterThan(0);
+      }
+      if(report.state !== 'complete') {
+        explainedPartials++;
+        expect(report.missing.join(' ')).toMatch(/추가 해석 축 [1-3]개/u);
+        expect(report.missing.join(' ')).toContain('이 명식에서 확인된 해석 축');
+      }
+      expect(report.researchOnly).toBe(true);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+      expect(report.usefulComplete).toBe(false);
+    }
+    expect(explainedSections).toBeGreaterThan(0);
+    expect(explainedPartials).toBeGreaterThan(0);
+  }, 60000);
+
   it('does not infer full-chart meaning with unknown birth hour', () => {
     const x = run(3,10,false);
     expect(x.report.state).toBe('insufficient');
