@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('7bfa89b1fb54db47c9b17a9b4a64eda79cc7ed3d');
+    expect(review.researchHeadReviewed).toBe('6661c73eb3491c22e839effd119f89a8301066b9');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v21',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v22',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -429,6 +429,33 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             eitherPrintLocusDirectlyRead: false,
             sameEditionOrIndependentWitness: 'UNADJUDICATED',
             semanticPromotionAllowed: false,
+          },
+          yulgokKoreanLithographHoldingsUnverifiedWitness: {
+            researchCatalogueProvenance: '율곡연구원 한국학 아카이브',
+            firstHolding: {
+              catalogueId: 'B005_01_B00330_001',
+              printedBibliographyId: 'YG015-01-481',
+              setBookCount: 4,
+              printingMethod: '석인본',
+              publisherKnown: false,
+              printDateKnown: false,
+            },
+            secondHolding: {
+              catalogueId: 'B005_01_B00442_001',
+              printedBibliographyId: 'YG015-01-490',
+              reportedBookCount: 1,
+              labelledContent: '卷1,2',
+              publisher: '上海 千頃堂書局',
+              printDateKnown: false,
+            },
+            dalianOther1906Catalogue: {
+              date: 1906,
+              books: 6,
+            },
+            physicalIdentityWith1906ShanghaiShuju: 'UNADJUDICATED',
+            printedHourWealthSupplementDirectlyRead: false,
+            independentAncientWitnessIncrement: 0,
+            permitsClaimPromotion: false,
           },
           republican1929TwoPhysicalVolumes: {
             publicationDate: '1929-11',
