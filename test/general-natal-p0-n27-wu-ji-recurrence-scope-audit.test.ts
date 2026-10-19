@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v16');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v17');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -591,10 +591,33 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       caseMaySynthesizeEditorsInterpretiveView: true,
       issuerIdentityBeyondHeadingVerified: false,
     });
+    expect(three.seventeenthCenturyBibliographicPriorPrintAudit).toMatchObject({
+      tohokuCatalogPlace: '江戸',
+      tohokuCatalogPublisher: '沢村寛',
+      tohokuCatalogYear: 1647,
+      tohokuOriginalVolumes: 6,
+      tohokuHolding: '東北大学 狩野文庫',
+      tohokuImagesAvailable: false,
+      tohokuChapterTwoLocusDirectlyRead: false,
+      locImprintPhrase: '文光堂甲午重鐫',
+      locQingShunzhiDateEstimated: true,
+      locJiaWu1654ConsistentWithinShunzhiInferenceOnly: true,
+      locJiaWuActualGregorianYearPrintCertified: false,
+      directFolioAgreementWith1926: 'UNADJUDICATED',
+      editorialSupplementPresentIn1647: 'UNADJUDICATED',
+      printedLocusCountAdded: 0,
+      historicalStemCountingAllowed: false,
+    });
     expect(three.republican1929TwoVolumeBindingAudit).toMatchObject({
       printDate: '1929-11',
       collator: '秦慎安',
       upperPdfPages: 170,
+      upperContainsOriginalJuanOneToThreeAccordingToSecondaryFacsimileGuide: true,
+      locationOfHourWealthChapterInOriginalText: '卷二',
+      upperVolumeOnlyIsFirstTargetForFindingSupplement: true,
+      secondaryMirrorClaims338FacsimilePages: true,
+      secondaryMirrorSameCatalogCopiesNotThirdHistoricalEdition: true,
+      actualUpperPageContainingSupplementVerified: false,
       lowerPdfPages: 168,
       sameTwoVolumePublication: true,
       volumesNotIndependentTextualVotes: true,
