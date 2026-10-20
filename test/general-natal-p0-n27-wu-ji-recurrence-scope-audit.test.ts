@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v25');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v26');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -768,6 +768,49 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
         originalPrintedImageRetrieved: false,
         editionIndependentFromYulgok: 'UNADJUDICATED',
       },
+    });
+    expect(three.nationalLibraryChina1936CopperplateDirectSupplementCollation).toMatchObject({
+      sourceInstitutionAsCatalogued: '中国国家图书馆',
+      publicationDateAsCatalogued: '1936-03',
+      editorPublisherAsCatalogued: '星命學社重校 / 星命學社',
+      artifactId: 12233639543,
+      originalPdfHttp200Acquired: true,
+      originalPdfFileBytes: 11739726,
+      originalPdfSha256: '2b4eabf3c1732f5bcb7adf964ed8fe0bc9191523fdc3e5c92f5c1aa4057eced7',
+      originalPdfPageCount: 220,
+      printedSupplementPrecisePdfPageOneBased: 43,
+      printedSupplementOriginalJuan: 2,
+      originalPrintedPageNumber: 37,
+      printedSupplementLocusHeading: '補曰',
+      printedTargetLeadIn: '時上偏財者如庚日見甲干或寅支辛日見乙干或卯支之類',
+      exactCoreOriginalGlyphsDirectlyRead: '只要一位貴不要多而三處不要再見財',
+      coreGlyphsMatchLocEarlyAnd1926And1929: true,
+      directNewPrintedTargetLocusReadIncrement: 1,
+      printingPlatesIndependentFromEarlierEditions: 'UNADJUDICATED',
+      independentStemmaticWitnessIncrement: 0,
+      printingYearFromThisPhysicalColophonDirectlyRead: false,
+      full1936VolumeTextCharacterByCharacterCollated: false,
+      permitsHistoricalCountingSemanticsAdjudication: false,
+      permitsAnyN27ClaimPromotion: false,
+    });
+    expect(three.commercial1906PublicPreviewKoreanLibraryProvenanceLead).toMatchObject({
+      acquisitionArtifactId: 12234568000,
+      publiclyLinkedJpegPreviewCount: 11,
+      successfullyFetchedPublicPreviewJpegCount: 11,
+      allElevenJpegSha256Recorded: true,
+      exampleCoverSha256: '701b096014e30c0d74164f020671ce52113dd20c1464186a017c3589476750d5',
+      koreanNationalAssemblyLibraryProvenanceMarkVisibleOnCover: true,
+      visibleAcquisitionNumber: '130903',
+      visibleStampDate: '1970-05-06',
+      stampDateNotHistoricalPrintPublicationYear: true,
+      cataloguedKoreanGonguSourceAlsoNamesNationalAssemblyLibrary: true,
+      sellerPreviewPhysicalCopySameAsGongu1906File: 'UNADJUDICATED',
+      sellerClaimsGuangxuBingwu1906WithoutDirectColophonRead: true,
+      allAvailableSamplesVisuallyInspectedForTargetSupplement: true,
+      originalHourWealthSupplementAmongPublicPreviews: false,
+      restrictedFullPdfPurchasedOrRetrieved: false,
+      independentlyReadOriginal1906PrintedTargetLoci: 0,
+      permitsAdditionalAncientStemmaticVote: false,
     });
     expect(three.korean1906OfficialViewerPublicAcquisitionAudit).toMatchObject({
       catalogueWorkId: 'G905-9086005',
