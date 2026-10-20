@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v27');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v28');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -637,6 +637,30 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       historicallyAdjudicatesSeparateDayBranchOccurrence: false,
       newlyDirectlyReadPrintedLoci: 1,
       allowsSemanticClaimPromotion: false,
+    });
+    expect(three.shenfeng1929LowerVolumePrintedColophon).toMatchObject({
+      acquisitionArtifactId: 12242733882,
+      originalPdfBytes: 6708084,
+      originalPdfSha256: 'ccb21cf1215a1e487fe79497839f9343534af42a2e3af6c1e7dd04f3faea9289',
+      originalPdfPageCount: 168,
+      firstPrintedJuanPdfPageOneBased: 3,
+      firstPrintedJuan: 4,
+      exactPrintedJuanHeading: '神峰通考卷四',
+      printedColophonPdfPageOneBased: 167,
+      printedInitialEditionText: '中華民國十五年一月初版',
+      printedReprintText: '中華民國十八年十二月再版',
+      initialEditionYearMonth: '1926-01',
+      reprintYearMonth: '1929-12',
+      commonsMetadataPublicationYearMonth: '1929-11',
+      metadataYearMonthConflictsWithPrintedReprintMonth: true,
+      publisherAcknowledges1926FirstAnd1929Reprint: true,
+      samePlatesAcross1926And1929Proven: false,
+      newHourWealthSupplementPrintedPagesRead: 0,
+      newIndependentTextualLineageCount: 0,
+      nineteenTwentySixSingle167PagePdfAcquired: false,
+      nineteenTwentySixSingle167PageLatestHttpStatus: 429,
+      nineteenTwentySixSingle167PageOriginalJuan: 'UNADJUDICATED',
+      anyClaimPromotionAuthorized: false,
     });
     expect(three.locEarlyPrintJuanTwoPartialAcquisition).toMatchObject({
       collectionImageCount: 59,
