@@ -107,6 +107,37 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
       general.sections.map(section => section.headline));
   });
 
+  it('shows actual tension-only source evidence as a partial Korean reading instead of an empty body', () => {
+    let found: ReturnType<typeof run> | undefined;
+    for (const month of [2,3,4,5,6,7,8,9,10,11,12]) {
+      for (const day of [3,7,11,17,23]) {
+        const candidate = run(month, day);
+        const meanings = candidate.execution.claims.filter(c =>
+          c.taxonomy.tier === 'T8' && c.taxonomy.category === 'wealth' &&
+          c.predicate === 'wealth_multifactor_structure' && c.state === 'active');
+        if (meanings.length > 0 && meanings.every(c =>
+          (c.value as {axis?:string}).axis === 'tension')) {
+          found = candidate;
+          break;
+        }
+      }
+      if (found) break;
+    }
+    expect(found).toBeDefined();
+    if (!found) return;
+    expect(found.report.state).toBe('partial');
+    expect(found.report.sections.length).toBeGreaterThan(0);
+    expect(found.report.sections.every(s => s.axis === 'tension')).toBe(true);
+    expect(found.report.sections.every(s => s.paragraph.includes('이 원국에서 확인된 근거는'))).toBe(true);
+    expect(found.report.sections.every(s => s.observedPositions.every(p => s.paragraph.includes(p)))).toBe(true);
+    expect(found.report.sections.every(s => s.upstreamClaimIds.length >= 2 && s.sourceIds.length > 0)).toBe(true);
+    expect(found.report.missing.join(' ')).toContain('보조 구조만 부분적으로');
+    expect(found.report.researchOnly).toBe(true);
+    expect(found.report.mayPublish).toBe(false);
+    expect(found.report.maySell).toBe(false);
+    expect(found.report.usefulComplete).toBe(false);
+  }, 60000);
+
   it('does not infer full-chart meaning with unknown birth hour', () => {
     const x = run(3,10,false);
     expect(x.report.state).toBe('insufficient');

@@ -8,7 +8,7 @@ import {
   GENERAL_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/general-natal-multifactor-candidate.js';
 
-export const GENERAL_NATAL_MULTIFACTOR_REPORT_VERSION = '0.1.0-research-preview' as const;
+export const GENERAL_NATAL_MULTIFACTOR_REPORT_VERSION = '0.2.0-research-preview' as const;
 type Axis = 'core' | 'expression' | 'response' | 'responsibility' | 'tension';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
@@ -192,7 +192,11 @@ export function buildGeneralNatalMultifactorReport(
     result.find(s => s.axis === 'expression') ??
     result.find(s => s.axis === 'response') ??
     result.find(s => s.axis === 'responsibility');
-  const chosen: GeneralNatalMultifactorSection[] = core ? [core] : [];
+  // When only a source-qualified tension axis is available, do not present an
+  // empty partial reading. Keep this observation separate from an MUR core.
+  const chosen: GeneralNatalMultifactorSection[] = core ? [core] :
+    result.filter((unit, index, all) =>
+      all.findIndex(other => other.axis === unit.axis) === index).slice(0, 2);
   const axes = new Set<Axis>(core ? [core.axis] : []);
   for(const unit of result) {
     if (!core || axes.has(unit.axis)) continue;
@@ -202,8 +206,9 @@ export function buildGeneralNatalMultifactorReport(
   }
   const missing: string[] = [];
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
+  if(!core && chosen.length > 0) missing.push('중심 해석의 근거는 부족하지만, 실제 확인된 보조 구조만 부분적으로 보여줍니다.');
   if(chosen.length < 3) missing.push('중심 결론과 구별되는 두 개의 서로 다른 추가 구조 축');
-  let state: Status = chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
+  let state: Status = core !== undefined && chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
   let sections: readonly GeneralNatalMultifactorSection[] = chosen;
   if(!snapshot.completeness.birthTimeKnown) {
     sections = [];
