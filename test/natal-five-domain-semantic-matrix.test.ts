@@ -75,6 +75,11 @@ describe('five-domain actual-chart semantic differentiation / S6 research matrix
         } else {
           expect(report.missing.length).toBeGreaterThan(0);
         }
+        if((domain === 'general' || domain === 'wealth') && report.sections.length < 3) {
+          const missingSupportingAxes = 2 - Math.max(0, report.sections.length - 1);
+          expect(report.missing).toContain(
+            `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
+        }
         for(const section of report.sections) {
           expect(section.paragraph.length).toBeGreaterThan(40);
           expect(section.headline.length).toBeGreaterThan(3);

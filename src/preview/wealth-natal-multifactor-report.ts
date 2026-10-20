@@ -201,7 +201,9 @@ export function buildWealthNatalMultifactorReport(
   }
   const missing: string[] = [];
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
-  if(chosen.length < 3) missing.push('중심 결론과 구별되는 두 개의 서로 다른 추가 구조 축');
+  const missingSupportingAxes = 2 - Math.max(0, chosen.length - 1);
+  if(missingSupportingAxes > 0) missing.push(
+    `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
   let state: Status = chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
   let sections: readonly WealthNatalMultifactorSection[] = chosen;
   if(!snapshot.completeness.birthTimeKnown) {
