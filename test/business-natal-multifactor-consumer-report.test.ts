@@ -31,9 +31,9 @@ function run(month: number, day: number, known = true) {
 describe('actual-source Business natal T5→T8→Korean five-domain report', () => {
   it('is Business-only, research-only, and every T8 has 2/3 exact T5 inputs', () => {
     expect(registry.pack.packId).toBe(BUSINESS_NATAL_MULTIFACTOR_PACK.packId);
-    expect(BUSINESS_NATAL_MULTIFACTOR_RULES).toHaveLength(18);
+    expect(BUSINESS_NATAL_MULTIFACTOR_RULES).toHaveLength(20);
     expect(registry.rules.filter(r => r.taxonomy.tier === 'T5')).toHaveLength(10);
-    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(18);
+    expect(registry.rules.filter(r => r.taxonomy.tier === 'T8')).toHaveLength(20);
     expect(registry.rules.filter(r => r.taxonomy.subcategory === 'self_baseline')).toHaveLength(0);
     for(const rule of BUSINESS_NATAL_MULTIFACTOR_RULES) {
       expect(rule.taxonomy.category).toBe('business');
@@ -161,10 +161,10 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(()=>buildBusinessNatalMultifactorReport(x.snapshot,forged,registry)).toThrow();
   });
   it('exposes additional source-bound business themes in real calculated Korean reports', () => {
-    const added = new Set(["WEALTH_OFFICER","WEALTH_RESOURCE","RESOURCE_OFFICER"]);
+    const added = new Set(["WEALTH_OFFICER","WEALTH_RESOURCE","RESOURCE_OFFICER","PEER_WEALTH"]);
     const emitted = new Set<string>();
     const delivered = new Set<string>();
-    for (const month of [2,3,4,5,6,7]) for (const day of [3,7,11,17,23]) {
+    for (const month of [1,2,3,4,5,6,7,8,9,10,11,12]) for (const day of [3,7,11,17,23]) {
       const result = run(month,day);
       for (const claim of result.execution.claims.filter(c => c.taxonomy.tier === 'T8' &&
         c.taxonomy.category === 'business' && c.state === 'active')) {

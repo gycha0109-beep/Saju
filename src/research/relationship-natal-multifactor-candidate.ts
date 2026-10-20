@@ -68,6 +68,11 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     axis: 'coordination', headline: '받아들이는 관점과 책임 기준의 교차',
     summary: '인성의 수용·학습과 관성의 역할·규범 관점이 같은 채널에 놓입니다. 관계에서 이해하려는 관점과 서로에게 적용하는 기준을 비교해 보는 제한된 전통 독해일 뿐, 가족의 지원이나 배우자의 속성·관계 만족도를 알 수 있다는 뜻은 아닙니다.',
   },
+  {
+    id: 'OUTPUT_WEALTH', families: ['output','wealth'],
+    axis: 'expression', headline: '표현과 교환의 구조적 관계',
+    summary: '식상의 표현·산출 관점과 재성의 교환·자원 관점이 같은 채널에 나타납니다. 관계 일반에서 표현과 주고받음이라는 서로 다른 상징을 비교해 볼 수 있으나 성별 역할, 연애·결혼 결과, 경제적 관계 또는 실제 호혜성을 단정하지 않습니다.',
+  },
 ]);
 const CHANNELS: readonly Channel[] = ['visible_stems', 'branches'];
 const SOURCE_REFS: RuleDefinition['sourceRefs'] = [
