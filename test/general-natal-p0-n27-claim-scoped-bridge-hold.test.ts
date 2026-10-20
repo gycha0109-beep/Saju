@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('0f3cbadadf330203a9a6e3b99715b4708a4228a9');
+    expect(review.researchHeadReviewed).toBe('28f072896451eebb5aa22ec0267b48d12877173c');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v26',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v27',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -477,6 +477,31 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             dalian1925PublicCatalogueHtmlDoesNotLinkOriginalPages: true,
             dalian1925ActualOriginalPageRetrieved: false,
             ancientMeaningAuthorizationsAdded: 0,
+            allFiveN27ClaimsRemainHold: true,
+          },
+          yulgokFourVolumeFullPublicSampleAuditNonGrant: {
+            auditOriginalSourceArtifactId: 12236515723,
+            fourPhysicalBooksVerifiedAsSeparateOfficialCatalogueIds: [
+              'B005_01_B00330_001',
+              'B005_01_B00330_002',
+              'B005_01_B00330_003',
+              'B005_01_B00330_004',
+            ],
+            eachBookOpenSamplePageCount: [6, 5, 5, 6],
+            correspondingOpeningPrintedJuanHeadings: ['卷之一', '卷之二', '卷之三', '卷之四'],
+            volumeTwoImage3PrintedJuanHeadingSha256: '2e9980305b437be5ec33d0d451fa98d77eea528cef80460c493433f5fbf593d6',
+            volumeThreeImage3PrintedJuanHeadingSha256: 'f9356e7b87d1dc77a5b5f6817d3b72e915212cbc981359e00cd94a026b3d88be',
+            volumeFourImage4PrintedJuanHeadingSha256: 'a996377e1debd30d58e5018eca1ee2df7f9a428936d6a347144d3df58831d24f',
+            totalFourBookSelectedPublicScansDownloaded: 22,
+            genuinelyNewScansFromVolumesTwoThreeFour: 16,
+            otherYulgokQianqingtangSingleBookScansPreviouslyRetrieved: 5,
+            totalAvailableOpenYulgokScansAcrossTwoHoldings: 27,
+            allPublicScansWereDownloadedFromOfficialViewer: true,
+            numberOfAdditionalJuanBeyondFirstFourPhysicallyExcluded: false,
+            bookEditionPublicationYearIndependentlyVerified: false,
+            targetHourWealthSupplementFolioAmongAddedScans: false,
+            newlyReadSupplementLocusCount: 0,
+            independentAncientTextualWitnessCountAdded: 0,
             allFiveN27ClaimsRemainHold: true,
           },
           nationalLibraryChina1936DirectHourWealthSupplementNonGrant: {
