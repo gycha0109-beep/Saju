@@ -138,6 +138,36 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(explainedPartials).toBeGreaterThan(0);
   }, 60000);
 
+  it('shows actual coordination-only T8 evidence as a partial report, never a fabricated overall core', () => {
+    let found = false;
+    for(const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
+      for(const day of [3,7,11,17,23]) {
+        const { execution, report } = run(month, day);
+        const active = execution.claims.filter(c => c.taxonomy.tier === 'T8' &&
+          c.taxonomy.category === 'business' &&
+          c.predicate === 'business_multifactor_structure' && c.state === 'active');
+        const observed = active.map(c => (c.value as {axis?:string}).axis);
+        if(observed.length === 0 || observed.some(axis => ['core','execution','governance','preparation'].includes(axis ?? '')) ||
+          !observed.includes('coordination')) continue;
+        found = true;
+        expect(report.state).toBe('partial');
+        expect(report.sections).toHaveLength(1);
+        expect(report.sections[0]?.axis).toBe('coordination');
+        expect(report.sections[0]?.observedPositions.length).toBeGreaterThanOrEqual(2);
+        expect(report.sections[0]?.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
+        expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
+        expect(report.missing.join(' ')).toContain('중심 해석 근거가 없어');
+        expect(report.researchOnly).toBe(true);
+        expect(report.usefulComplete).toBe(false);
+        expect(report.mayPublish).toBe(false);
+        expect(report.maySell).toBe(false);
+        break;
+      }
+      if(found) break;
+    }
+    expect(found).toBe(true);
+  }, 60000);
+
   it('does not infer full-chart meaning with unknown birth hour', () => {
     const x = run(3,10,false);
     expect(x.report.state).toBe('insufficient');
