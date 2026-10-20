@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v27' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v28' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -726,6 +726,34 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             historicallyAdjudicatesSeparateDayBranchOccurrence: false as const,
             newlyDirectlyReadPrintedLoci: 1 as const,
             allowsSemanticClaimPromotion: false as const,
+          }),
+          shenfeng1929LowerVolumePrintedColophon: Object.freeze({
+            publicSource: 'https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10361_神峰通考_第2卷.pdf' as const,
+            acquisitionRun: 'https://github.com/gycha0109-beep/Saju/actions/runs/39376434967' as const,
+            acquisitionArtifactId: 12242733882 as const,
+            originalPdfBytes: 6708084 as const,
+            originalPdfSha256: 'ccb21cf1215a1e487fe79497839f9343534af42a2e3af6c1e7dd04f3faea9289' as const,
+            originalPdfPageCount: 168 as const,
+            firstPrintedJuanPdfPageOneBased: 3 as const,
+            firstPrintedJuan: 4 as const,
+            exactPrintedJuanHeading: '神峰通考卷四' as const,
+            printedColophonPdfPageOneBased: 167 as const,
+            printedInitialEditionText: '中華民國十五年一月初版' as const,
+            printedReprintText: '中華民國十八年十二月再版' as const,
+            initialEditionYearMonth: '1926-01' as const,
+            reprintYearMonth: '1929-12' as const,
+            commonsMetadataPublicationYearMonth: '1929-11' as const,
+            metadataYearMonthConflictsWithPrintedReprintMonth: true as const,
+            publisherAcknowledges1926FirstAnd1929Reprint: true as const,
+            samePlatesAcross1926And1929Proven: false as const,
+            entireVolumeGlyphsCollatedAcross1926And1929: false as const,
+            newHourWealthSupplementPrintedPagesRead: 0 as const,
+            newIndependentTextualLineageCount: 0 as const,
+            nineteenTwentySixSingle167PagePdfAcquired: false as const,
+            nineteenTwentySixSingle167PageLatestHttpStatus: 429 as const,
+            nineteenTwentySixSingle167PageOriginalJuan: 'UNADJUDICATED' as const,
+            classicalCountingSemanticsAdjudicated: false as const,
+            anyClaimPromotionAuthorized: false as const,
           }),
           locEarlyPrintJuanTwoPartialAcquisition: Object.freeze({
             catalogItem: 'https://www.loc.gov/item/2014514308/' as const,
