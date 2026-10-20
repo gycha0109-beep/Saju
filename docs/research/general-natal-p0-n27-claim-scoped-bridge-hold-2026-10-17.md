@@ -372,3 +372,12 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 - 대응하는 卷一 서문·초반 본문 두 인쇄면의 편집 배치 및 상징 도안이 상당 부분 동일함을 **직접 국소 비교**했다. 다만 원본 촬영·연대·인쇄 회차·계통 독립성은 별개다. 비슷한 인쇄면을 두 독립 고전 증인으로 계산하지 않는다.
 - **11장 모두 「時上偏財格」·「補曰」 표적 권二 판면이 아니다.** 따라서 신규 `只要一位貴不要多而三處不要再見財` 인쇄 글자 판독은 **0건**. [1925 大成書局 소장 공식 HTML](https://www.dl-library.net.cn/book/520/-xin-shenfeng-xianshengtongkao---minglizhengzongdaquan-519143.html)은 서지 단독이며 해당 공개 HTML에 책 본문 스캔·PDF·뷰어 링크가 없음을 코드와 별도로 기록. 1925 실물 표적 인쇄 화상은 미확보.
 - N27 Claim **5개 HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 정확 劫財 T8 **1 vs 0**, `別宮` 日支·`再見` 藏干·`一位` 집계 단위 **UNADJUDICATED**. LOC 이미지 59/59와 기존 8번 「補曰」 판독 유지. 신규 TrustGrant/Preview/Official/Production/consumer 의미 승인 0; 제품 해석 로직 변경 0; 두 PR Draft·미병합, 기관 연락 없음.
+
+## N27 v24 — 1924년 千頃堂書局 학술 서지·1920년 공식 목록·1906 유료 영인 후보 (2026-10-20)
+
+- Research #2553 **`bc962c5e28c61798c40d5c704da0131c86532d23`** (`saju-n27-wu-ji-recurrence-scope-sensitivity-v24`)로 `researchHeadReviewed`를 정확하게 갱신했다. Bridge의 수용 범위·회귀 테스트도 동일 Research HEAD를 검토 대상으로 가리킨다.
+- 김만태, 「명리원전 『命理正宗』에 함축된 病藥사상 고찰」, [단국대 『東洋學』 제67집(2017) **173쪽 각주 20**](https://www-t.dankook.ac.kr/web/-oriental/-74?_Bbs_WAR_bbsportlet_extFileId=99955&p_p_cacheability=cacheLevelPage&p_p_col_count=1&p_p_col_id=column-2&p_p_mode=view&p_p_state=normal)에는 **`神峰闢謬命理正宗`(上海: 千頃堂書局, 1924, 4권)**이라는 후대 서지 항목이 직접 기재돼 있다. 율곡원 공개 원본 이미지의 `千頃堂書局商標`와 출판사 이름이 연결되지만, 율곡원 **4책은 물리 책수**이고 학술 각주의 **4권은 문헌 권차**, 둘의 동일 인쇄 회차나 율곡 실물의 1924 간행 연도는 아직 **UNADJUDICATED**. 논문은 해당 `補曰` 원본 판면을 제공하지 않는다.
+- [다롄시 도서관의 1920년 上海 校經山房본](https://www.dl-library.net.cn/book/519/-shenfeng---minglizhengzong-518782.html)은 **석인본 4卷·4冊**으로 별도 공식 관리되며, 기존 1925 上海 大成書局 6卷·4冊과 문헌 권수와 발행자·연대 메타데이터가 다른 공식 소장 후보일 뿐 본문의 이문이나 독립 인쇄 계통 인증이 아니다.
+- [1906 上海書局 石印版을 주장하는 제3자 상업 전자 파일 목록](https://hongyeshan.com/post/47178.html)은 파일 **316페이지·143MB**를 기재하지만 **구매 후 망판 링크**를 제공하는 유료 자료다. 공유마당 1906 국회도서관 유래 PDF와 동일성도 확인되지 않았다. 구매·연락·우회 접근 없이 파일과 `補曰` 판면 **미확보**로 기록했다.
+- 기존 율곡원 **실물 미리보기 6+5=11장**, `千頃堂書局商標` 2곳 직접 판독, LOC 권2 **59/59** 확보 및 해당 8번 `補曰` 기존 판독은 유지. **v24 신규 `補曰` 원문 이미지 0, 독립 고전 텍스트 계통 0, 실제 원본에서 간행년도 인증 0**.
+- 보호 상태는 계속 **N27 Claim 5개 HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**, `別宮` 日支·`再見` 藏干·`一位` 집계 범위 **UNADJUDICATED**. TrustGrant/Preview/Official/Production/consumer 의미 부여 0, 제품 해석 규칙 변경 0, 기관 연락·이메일 0, 두 PR Draft·미병합.
