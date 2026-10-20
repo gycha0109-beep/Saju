@@ -217,13 +217,22 @@ export function buildGeneralNatalMultifactorReport(
     axes.add(unit.axis);
     if(chosen.length === 3) break;
   }
+  // Tension-only source-qualified T8 is useful partial evidence, but never
+  // a substitute for the independently grounded whole-chart core.
+  // Only one representative of the same tension axis is displayed. More
+  // patterns on that axis cannot count as independent MUR supporting axes.
+  const partialTension = core ? [] : result.filter(unit =>
+    unit.axis === 'tension').slice(0, 1);
   const missing: string[] = [];
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
+  if(partialTension.length > 0) missing.push(
+    `확인된 보조 해석: ${partialTension.map(s =>
+      `${s.headline}(${s.channel === 'visible_stems' ? '천간' : '지지 대표 십신'})`).join(' · ')}. 이 근거만으로 원국 전체의 중심 결론을 세울 수 없어 부분 풀이로만 보여드립니다.`);
   const missingSupportingAxes = 2 - Math.max(0, chosen.length - 1);
   if(missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
   let state: Status = chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
-  let sections: readonly GeneralNatalMultifactorSection[] = chosen;
+  let sections: readonly GeneralNatalMultifactorSection[] = core ? chosen : partialTension;
   if(!snapshot.completeness.birthTimeKnown) {
     sections = [];
     state = 'insufficient';
