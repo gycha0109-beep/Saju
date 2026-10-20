@@ -8,7 +8,7 @@ import {
   RELATIONSHIP_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/relationship-natal-multifactor-candidate.js';
 
-export const RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION = '0.2.0-research-preview' as const;
+export const RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
 type Axis = 'core' | 'expression' | 'boundaries' | 'reception' | 'coordination';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
@@ -47,6 +47,20 @@ const SLOT_NAMES: Readonly<Record<PillarSlot, string>> = {
 const FAMILIES: Readonly<Record<string, readonly string[]>> = {
   peer: ['비견','겁재'], resource: ['정인','편인'], output: ['식신','상관'],
   wealth: ['정재','편재'], officer: ['정관','편관'],
+};
+const EVIDENCE_ROLES: Readonly<Record<string, string>> = {
+  'peer': '비겁(자기 관점·동료)',
+  'resource': '인성(수용·이해)',
+  'output': '식상(표현·발산)',
+  'wealth': '재성(현실 자원·교환)',
+  'officer': '관성(역할·경계 기준)'
+};
+const AXIS_NAMES: Readonly<Record<Axis, string>> = {
+  'core': '전체 구조',
+  'expression': '표현',
+  'boundaries': '경계',
+  'reception': '수용',
+  'coordination': '조율'
 };
 const LIMITATIONS = [
   '전통 문헌의 제한된 구조 관계를 이용한 미검토 연구 풀이입니다. 실제 삶의 성격·사건을 판정하지 않습니다.',
@@ -139,13 +153,23 @@ function toSection(
     claim.sourceRefs.every(id => registry.sources.some(x => x.sourceId === id)),
     'not exactly source-bound to Relationship T5 family and method inputs');
   const locations = positions(snapshot, value.channel as Channel, value.families as string[]);
+  // Explain which *observed canonical fact* supports each upstream T5 family.
+  // The existing T8 rule owns the conclusion; presentation may not infer a new one.
+  const evidenceByFamily = (value.families as string[]).map(family => {
+    const found = locations.filter(location => location.family === family);
+    guard(found.length > 0 && EVIDENCE_ROLES[family] !== undefined,
+      'missing actually observed Ten-God family for narrative');
+    return `${EVIDENCE_ROLES[family]}: ${found.map(location => location.display).join(' · ')}`;
+  });
+  const channelName = value.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
+  const headline = textFor(claim.claimType,'headline');
   return {
     claimType: claim.claimType,
     pattern: value.pattern,
     axis: value.axis as Axis,
     channel: value.channel as Channel,
     headline: textFor(claim.claimType,'headline'),
-    paragraph: `이 원국에서 확인된 근거는 ${locations.map(x => x.display).join(' · ')}입니다. ${textFor(claim.claimType,'summary')}`,
+    paragraph: `이 원국에서 확인된 근거는 ${evidenceByFamily.join(' / ')}입니다. 같은 ${channelName}에서 ${evidenceByFamily.length}개 십신 계열이 함께 확인되므로 '${headline}'이라는 구조적 관점으로 연결해 읽습니다. ${textFor(claim.claimType,'summary')}`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
@@ -201,7 +225,10 @@ export function buildRelationshipNatalMultifactorReport(
   }
   const missing: string[] = [];
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
-  if(chosen.length < 3) missing.push('중심 결론과 구별되는 두 개의 서로 다른 추가 구조 축');
+  if(chosen.length < 3) {
+    const observed = chosen.map(s => `${AXIS_NAMES[s.axis]}(${s.channel === 'visible_stems' ? '천간' : '지지'})`);
+    missing.push(`이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}. 최소 유효 풀이에는 독립된 근거의 추가 해석 축 ${3 - chosen.length}개가 더 필요합니다.`);
+  }
   let state: Status = chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
   let sections: readonly RelationshipNatalMultifactorSection[] = chosen;
   if(!snapshot.completeness.birthTimeKnown) {
