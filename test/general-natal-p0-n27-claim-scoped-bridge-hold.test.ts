@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('e56532119d7f1d45c292e2e11fc43ff2e02afb06');
+    expect(review.researchHeadReviewed).toBe('bc962c5e28c61798c40d5c704da0131c86532d23');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v23',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v24',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -478,6 +478,38 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             dalian1925ActualOriginalPageRetrieved: false,
             ancientMeaningAuthorizationsAdded: 0,
             allFiveN27ClaimsRemainHold: true,
+          },
+          qianqingtang1924AndOtherChronologicalLeadsNonAuthorizing: {
+            scholarBibliographicCitation: {
+              citationYear: 2017,
+              printedPage: 173,
+              footnote: 20,
+              historicallyReportedPublisher: '上海 千頃堂書局',
+              historicalEditionYearReported: 1924,
+              reportedTextualJuanCount: 4,
+              yulgokFirstHoldingPhysicalBookCount: 4,
+              textualJuanFourNotProofOfPhysicalBookIdentity: true,
+              yulgokPhysicalHoldingEditionYearDetermined: false,
+              original1924PrintedSupplementRead: false,
+            },
+            dalian1920Catalogue: {
+              press: '上海 校經山房',
+              printedYearAsCatalogue: 1920,
+              textualJuanCount: 4,
+              physicalBookCount: 4,
+              originalPrintedTargetLeafAcquired: false,
+            },
+            paid1906DigitalFacsimileListing: {
+              commercialFileClaimsPages: 316,
+              sellerRequiresPayment: true,
+              sixJuanFileDirectlyRead: false,
+              sameCopyAs1906KoreanGovernmentListing: 'UNADJUDICATED',
+              purchaseOrInstitutionContactPerformed: false,
+            },
+            newlyPrintedOriginalSupplementLoci: 0,
+            independentAncientTextualWitnessIncrement: 0,
+            classicalSemanticsAuthorized: false,
+            allN27ClaimsRemainHold: true,
           },
           republican1929TwoPhysicalVolumes: {
             publicationDate: '1929-11',
