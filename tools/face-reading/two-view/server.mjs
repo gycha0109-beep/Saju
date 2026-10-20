@@ -8,6 +8,7 @@ import { randomUUID, randomBytes, createHash } from 'node:crypto';
 import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
 import {
   PARSING_VERSION,
+  PARSING_LEGACY_VERSION,
   PARSING_PIN,
   PARSING_GROUPS,
   validateParsingSummary,
@@ -191,7 +192,9 @@ export async function createLocalReviewServer({
   let parsingModel = null,
     parsingSaved = [],
     parsingRunId,
-    parsingSaving = false;
+    parsingSaving = false,
+    parsingPrevious = [],
+    previousRunId;
   let parsingRestoreFailed = false;
   // A previous complete base batch can be shown while new captures are pending.
   // Arbitrary partial, duplicate or unknown stored batches remain invalid.
@@ -223,17 +226,46 @@ export async function createLocalReviewServer({
     const saved = JSON.parse(
       await readFile(resolve(parsingRoot, active.runId, 'summary.json'), 'utf8'),
     );
-    if (saved.methodVersion !== PARSING_VERSION || !Array.isArray(saved.records))
+    if (
+      ![PARSING_VERSION, PARSING_LEGACY_VERSION].includes(saved.methodVersion) ||
+      !Array.isArray(saved.records)
+    )
       throw Error('PARSING_RUN_INVALID');
     restoredIds(saved);
+    if (saved.records.some((r) => r.parsing?.methodVersion !== saved.methodVersion))
+      throw Error('PARSING_RUN_INVALID');
     parsingSaved = saved.records.map((r) => ({
       captureRef: r.captureRef,
-      parsing: validateParsingSummary(r.parsing),
+      parsing: validateParsingSummary(r.parsing, { allowLegacy: true }),
     }));
     parsingRunId = active.runId;
+    if (saved.methodVersion === PARSING_LEGACY_VERSION) {
+      parsingPrevious = parsingSaved;
+      previousRunId = active.runId;
+    }
   } catch (error) {
     if (error.code !== 'ENOENT') parsingRestoreFailed = true;
   }
+  let comparisonRestoreFailed = false;
+  if (!previousRunId)
+    try {
+      const previous = JSON.parse(await readFile(resolve(parsingRoot, 'previous.json'), 'utf8'));
+      if (!/^[a-f0-9-]{36}$/.test(previous.runId)) throw Error('PARSING_RUN_INVALID');
+      const saved = JSON.parse(
+        await readFile(resolve(parsingRoot, previous.runId, 'summary.json'), 'utf8'),
+      );
+      if (saved.methodVersion !== PARSING_LEGACY_VERSION) throw Error('PARSING_RUN_INVALID');
+      restoredIds(saved);
+      if (saved.records.some((r) => r.parsing?.methodVersion !== PARSING_LEGACY_VERSION))
+        throw Error('PARSING_RUN_INVALID');
+      parsingPrevious = saved.records.map((r) => ({
+        captureRef: r.captureRef,
+        parsing: validateParsingSummary(r.parsing, { allowLegacy: true }),
+      }));
+      previousRunId = previous.runId;
+    } catch (error) {
+      if (error.code !== 'ENOENT') comparisonRestoreFailed = true;
+    }
   let savedRecords = [],
     saving = false;
   try {
@@ -253,6 +285,7 @@ export async function createLocalReviewServer({
       'landmarks-worker.mjs',
       'parsing-contract.mjs',
       'parsing-worker.mjs',
+      'parsing-frame.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const name of [
@@ -372,6 +405,19 @@ export async function createLocalReviewServer({
         savedRecords,
         parsingAvailable: Boolean(parsingModel),
         parsingRestoreFailed,
+        comparisonRestoreFailed,
+        parsingPrevious: parsingPrevious.map((r) => ({
+          ...r,
+          layers:
+            r.parsing.status === 'completed'
+              ? Object.fromEntries(
+                  PARSING_GROUPS.map((g) => [
+                    g.id,
+                    `/parsing-artifact/${r.captureRef}/${g.id}.png?run=${previousRunId}`,
+                  ]),
+                )
+              : {},
+        })),
         parsingSaved: parsingSaved.map((r) => ({
           ...r,
           layers:
@@ -395,8 +441,16 @@ export async function createLocalReviewServer({
         !match ||
         !ids.includes(match[1]) ||
         !PARSING_GROUPS.some((g) => g.id === match[2]) ||
-        runId !== parsingRunId ||
-        !parsingSaved.some((r) => r.captureRef === match[1] && r.parsing.status === 'completed')
+        !(
+          (runId === parsingRunId &&
+            parsingSaved.some(
+              (r) => r.captureRef === match[1] && r.parsing.status === 'completed',
+            )) ||
+          (runId === previousRunId &&
+            parsingPrevious.some(
+              (r) => r.captureRef === match[1] && r.parsing.status === 'completed',
+            ))
+        )
       )
         return json(res, 404, { error: 'NOT_FOUND' });
       return file(res, resolve(parsingRoot, runId, match[1], match[2] + '.png'), 'image/png');
@@ -509,6 +563,13 @@ export async function createLocalReviewServer({
           { flag: 'wx' },
         );
         const pendingPointer = resolve(parsingRoot, 'active-' + runId + '.tmp');
+        if (previousRunId) {
+          const previousPointer = resolve(parsingRoot, 'previous-' + runId + '.tmp');
+          await writeFile(previousPointer, JSON.stringify({ runId: previousRunId }), {
+            flag: 'wx',
+          });
+          await rename(previousPointer, resolve(parsingRoot, 'previous.json'));
+        }
         await writeFile(pendingPointer, JSON.stringify({ runId }), { flag: 'wx' });
         await rename(pendingPointer, resolve(parsingRoot, 'active.json'));
         parsingSaved = summary;

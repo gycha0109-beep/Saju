@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer';
 import { deflateSync, crc32 } from 'node:zlib';
 import {
   PARSING_VERSION,
+  PARSING_LEGACY_VERSION,
   PARSING_LABELS,
   PARSING_GROUPS,
   rgbTensor,
@@ -19,6 +20,7 @@ const summary = () => ({
   status: 'completed' as const,
   counts: [n, ...Array<number>(18).fill(0)],
   interfacePixels: 0,
+  checks: { singleFace: true as const, eyesAligned: true as const, lipsAligned: true as const },
 });
 function chunk(kind: string, bytes: Buffer) {
   const output = Buffer.alloc(bytes.length + 12);
@@ -44,6 +46,59 @@ function png(pixel?: number[]) {
   ]).toString('base64');
 }
 describe('pinned local parsing candidate contract', () => {
+  it('rejects absent or disagreeing checks and keeps legacy comparison read-only', () => {
+    expect(() => validateParsingSummary({ ...summary(), checks: undefined })).toThrow();
+    expect(() =>
+      validateParsingSummary({
+        ...summary(),
+        checks: { singleFace: true, eyesAligned: false, lipsAligned: true },
+      }),
+    ).toThrow();
+    const legacy = { ...summary(), methodVersion: PARSING_LEGACY_VERSION, checks: undefined };
+    expect(() => validateParsingSummary(legacy)).toThrow();
+    expect(validateParsingSummary(legacy, { allowLegacy: true }).methodVersion).toBe(
+      PARSING_LEGACY_VERSION,
+    );
+    expect(
+      validateParsingSummary(
+        {
+          methodVersion: PARSING_LEGACY_VERSION,
+          candidateOnly: true,
+          status: 'failed',
+          reason: 'PARSING_FAILED',
+        },
+        { allowLegacy: true },
+      ).methodVersion,
+    ).toBe(PARSING_LEGACY_VERSION);
+    const unavailable = {
+      methodVersion: PARSING_VERSION,
+      candidateOnly: true,
+      status: 'unavailable',
+      reason: 'MULTIPLE_FACES',
+    };
+    expect(validateParsingSummary(unavailable)).toMatchObject({
+      status: 'unavailable',
+      reason: 'MULTIPLE_FACES',
+    });
+    expect(() =>
+      validateParsingBatch(
+        {
+          methodVersion: PARSING_VERSION,
+          records: [{ captureRef: 'a', parsing: unavailable, layers: { hair: png() } }],
+        },
+        ['a'],
+      ),
+    ).toThrow();
+    expect(
+      validateParsingBatch(
+        {
+          methodVersion: PARSING_VERSION,
+          records: [{ captureRef: 'a', parsing: unavailable, layers: {} }],
+        },
+        ['a'],
+      )[0]!.layers,
+    ).toEqual({});
+  });
   it('restores wide/tall image aspect inside the content viewport without square-mask padding', () => {
     expect(containSize(1200, 600, 400, 600)).toEqual({ width: 400, height: 200 });
     expect(containSize(600, 1200, 400, 600)).toEqual({ width: 300, height: 600 });

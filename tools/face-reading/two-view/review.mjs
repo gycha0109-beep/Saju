@@ -118,16 +118,28 @@ function render() {
     : $('old-overlay').checked && record.oldOverlay
       ? record.oldOverlay
       : result?.overlayUrl || record.image;
-  const parsing = result?.parsing;
+  const previous = $('previous-parsing').checked && Boolean(result?.previousParsing);
+  const parsing = previous ? result?.previousParsing : result?.parsing;
+  $('previous-parsing-label').hidden = !result?.previousParsing;
   $('parsing-controls').hidden = parsing?.status !== 'completed';
   $('parsing-status').textContent =
     parsing?.status === 'completed'
-      ? `영역 분할 완료 · 귀 후보 ${parsing.counts[7] + parsing.counts[8] > 0 ? '표시됨' : '미검출'} · 머리–피부 접경 ${parsing.interfacePixels > 0 ? '표시됨' : '미검출'}`
-      : parsing?.status === 'failed'
-        ? '영역 분할을 완료하지 못했습니다. 다른 측정 결과는 유지합니다.'
-        : '';
+      ? parsing.methodVersion !== PARSING_VERSION
+        ? '수정 전 전체 사진 분할 · 위치·누락 검사 없음'
+        : `분할 후보 · 귀 ${parsing.counts[7] + parsing.counts[8] > 0 ? '후보 있음 · 범위 확인 필요' : '근거 부족'}`
+      : parsing?.status === 'unavailable'
+        ? {
+            MULTIPLE_FACES:
+              '여러 얼굴이 감지되어 분할을 중단했습니다. 한 사람의 사진이 필요합니다.',
+            NO_SINGLE_FACE: '얼굴 위치를 확인하지 못해 부위 표시를 중단했습니다.',
+            ANCHOR_DISAGREEMENT: '눈·입 위치가 맞지 않아 분할 결과를 표시하지 않습니다.',
+            FACE_FRAME_INVALID: '얼굴 영역을 안전하게 잡지 못해 부위 표시를 중단했습니다.',
+          }[parsing.reason]
+        : parsing?.status === 'failed'
+          ? '영역 분할을 완료하지 못했습니다. 다른 측정 결과는 유지합니다.'
+          : '';
   for (const [name, layer] of layerNodes) {
-    const src = result?.layerUrls?.[name];
+    const src = (previous ? result?.previousLayerUrls : result?.layerUrls)?.[name];
     layer.hidden = original || !src || !enabledLayers.get(name);
     if (src && layer.getAttribute('src') !== src) layer.src = src;
   }
@@ -263,8 +275,7 @@ async function inferParsing(task, { signal, generation }) {
     bitmap.close();
     throw Error('TASK_CANCELLED');
   }
-  if (!parsingWorker)
-    parsingWorker = new Worker('/two-view/parsing-worker.mjs', { type: 'module' });
+  if (!parsingWorker) parsingWorker = new Worker('/two-view/parsing-worker.mjs');
   const owner = parsingWorker;
   return new Promise((resolve, reject) => {
     const clean = () => {
@@ -321,8 +332,18 @@ async function boundedProvider(fn, task, context, timeoutMs) {
   }
 }
 async function infer(task, context) {
+  const previous = results.get(task.captureRef);
+  const reuseNumerics =
+    mode === 'existing' &&
+    Array.isArray(previous?.metrics) &&
+    (task.viewRole === 'profile'
+      ? previous.metrics.length === 0
+      : previous.metrics.length === METRIC_DEFINITIONS.length &&
+        previous.metrics.every((m) => m.methodVersion === METHOD_VERSION));
   const [frontal, parsing] = await Promise.allSettled([
-    boundedProvider(inferFrontal, task, context, 30000),
+    reuseNumerics
+      ? Promise.resolve({ metrics: previous.metrics })
+      : boundedProvider(inferFrontal, task, context, 30000),
     boundedProvider(inferParsing, task, context, 60000),
   ]);
   if (context.signal.aborted) throw Error('TASK_CANCELLED');
@@ -346,6 +367,8 @@ async function infer(task, context) {
             ? 'PARSING_MODEL_UNAVAILABLE'
             : 'PARSING_FAILED',
     };
+  result.previousParsing = previous?.previousParsing;
+  result.previousLayerUrls = previous?.previousLayerUrls;
   return result;
 }
 function base64(blob) {
@@ -457,7 +480,7 @@ async function start(tasks, save) {
       if (localGeneration !== runGeneration) return;
       if (!parsingResponse.ok) throw Error('PARSING_SAVE_FAILED');
       $('status').textContent =
-        `전체 ${state.records.length}장의 수치와 영역 표시를 로컬에 저장했습니다.`;
+        `전체 ${state.records.length}장의 사진별 결과를 로컬에 저장했습니다.`;
     } catch {
       if (localGeneration !== runGeneration) return;
       $('status').textContent =
@@ -497,7 +520,12 @@ $('analyze').onclick = () => start([...files.values()], false);
 function pendingRecords() {
   return state.records.filter((r) => {
     const saved = results.get(r.captureRef);
-    return !saved || !Array.isArray(saved.metrics) || saved.parsing?.status !== 'completed';
+    return (
+      !saved ||
+      !Array.isArray(saved.metrics) ||
+      !['completed', 'unavailable'].includes(saved.parsing?.status) ||
+      saved.parsing?.methodVersion !== PARSING_VERSION
+    );
   });
 }
 function updateBatchLabel() {
@@ -523,6 +551,7 @@ $('old-overlay').onchange = () => {
   original = false;
   render();
 };
+$('previous-parsing').onchange = render;
 $('image').onerror = () => {
   const record = records[selected];
   if (record && $('image').getAttribute('src') !== record.image) {
@@ -545,6 +574,12 @@ try {
       parsing: saved.parsing,
       layerUrls: saved.layers,
     });
+  for (const saved of state.parsingPrevious || [])
+    results.set(saved.captureRef, {
+      ...results.get(saved.captureRef),
+      previousParsing: saved.parsing,
+      previousLayerUrls: saved.layers,
+    });
   setRecords(state.records, 'existing');
   const photo = Number(new URL(location.href).searchParams.get('photo'));
   if (Number.isInteger(photo) && photo >= 1 && photo <= records.length) {
@@ -560,6 +595,8 @@ try {
   if (state.parsingRestoreFailed)
     $('status').textContent =
       '저장된 영역 표시를 읽지 못했습니다. 원본과 수치는 유지하며, 전체 분석으로 다시 저장할 수 있습니다.';
+  if (state.comparisonRestoreFailed)
+    $('status').textContent += ' 수정 전 비교 결과를 읽지 못했습니다.';
   document.body.dataset.ready = 'true';
   if (location.search.includes('run=existing')) await start(state.records, true);
 } catch {

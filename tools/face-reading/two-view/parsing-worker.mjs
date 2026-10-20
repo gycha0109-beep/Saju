@@ -1,18 +1,33 @@
 /* global self, OffscreenCanvas, ImageData */
-import {
-  PARSING_VERSION,
-  PARSING_PIN,
-  PARSING_GROUPS,
-  rgbTensor,
-  classifyLogits,
-  contactPixels,
-} from './parsing-contract.mjs';
-import * as ort from '/local-assets/ort/ort.wasm.bundle.min.mjs';
-ort.env.wasm.numThreads = 1;
-ort.env.wasm.proxy = false;
-ort.env.wasm.wasmPaths = '/local-assets/ort/';
-let session;
+// Classic worker: the pinned MediaPipe loader uses importScripts. All source
+// coordinates and crop transforms remain here, never in HTTP or UI summaries.
+const contractReady = import('./parsing-contract.mjs');
+const frameReady = import('./parsing-frame.mjs');
+let session, localizer, FaceLandmarker, ort;
+async function localizationModel() {
+  if (!localizer) {
+    const vision = await import('/local-assets/vision_bundle.mjs');
+    FaceLandmarker = vision.FaceLandmarker;
+    localizer = await FaceLandmarker.createFromOptions(
+      await vision.FilesetResolver.forVisionTasks('/local-assets/wasm'),
+      {
+        baseOptions: { modelAssetPath: '/local-assets/face_landmarker.task', delegate: 'CPU' },
+        runningMode: 'IMAGE',
+        numFaces: 2,
+        outputFaceBlendshapes: false,
+        outputFacialTransformationMatrixes: false,
+      },
+    );
+  }
+  return localizer;
+}
 async function model() {
+  if (!ort) {
+    ort = await import('/local-assets/ort/ort.wasm.bundle.min.mjs');
+    ort.env.wasm.numThreads = 1;
+    ort.env.wasm.proxy = false;
+    ort.env.wasm.wasmPaths = '/local-assets/ort/';
+  }
   if (!session)
     session = await ort.InferenceSession.create('/local-assets/parsing-resnet18.onnx', {
       executionProviders: ['wasm'],
@@ -30,12 +45,53 @@ async function model() {
 self.onmessage = async ({ data }) => {
   const { bitmap, generation, captureRef } = data;
   try {
+    const {
+      PARSING_VERSION,
+      PARSING_PIN,
+      PARSING_GROUPS,
+      rgbTensor,
+      classifyLogits,
+      contactPixels,
+    } = await contractReady;
+    const { faceFrame, supportedAnchors, removeEarFragments, projectMask } = await frameReady;
+    const unavailable = (reason) =>
+      self.postMessage({
+        generation,
+        captureRef,
+        parsing: {
+          methodVersion: PARSING_VERSION,
+          candidateOnly: true,
+          status: 'unavailable',
+          reason,
+        },
+      });
+    const detected = (await localizationModel()).detect(bitmap);
+    if (detected.faceLandmarks.length !== 1) {
+      unavailable(detected.faceLandmarks.length ? 'MULTIPLE_FACES' : 'NO_SINGLE_FACE');
+      return;
+    }
+    const points = detected.faceLandmarks[0];
+    let frame;
+    try {
+      frame = faceFrame(points, bitmap.width, bitmap.height);
+    } catch {
+      unavailable('FACE_FRAME_INVALID');
+      return;
+    }
     const engine = await model(),
       size = PARSING_PIN.size;
     const canvas = new OffscreenCanvas(size, size),
       ctx = canvas.getContext('2d', { willReadFrequently: true });
-    // Author's full-image stretch transform; invert only for display, never crop/warp the source.
-    ctx.drawImage(bitmap, 0, 0, size, size);
+    ctx.fillStyle = 'rgb(128,128,128)';
+    ctx.fillRect(0, 0, size, size);
+    const scale = size / frame.side;
+    ctx.drawImage(
+      bitmap,
+      -frame.left * scale,
+      -frame.top * scale,
+      bitmap.width * scale,
+      bitmap.height * scale,
+    );
     const pixels = ctx.getImageData(0, 0, size, size);
     const tensor = new ort.Tensor('float32', rgbTensor(pixels.data, size, size), [
       1,
@@ -44,8 +100,41 @@ self.onmessage = async ({ data }) => {
       size,
     ]);
     const output = await engine.run({ [engine.inputNames[0]]: tensor });
-    const first = output[engine.outputNames[0]],
-      { mask, counts } = classifyLogits(first.data, first.dims);
+    const first = output[engine.outputNames[0]];
+    const crop = classifyLogits(first.data, first.dims).mask;
+    const eyesAligned = supportedAnchors(
+      crop,
+      size,
+      points,
+      [...FaceLandmarker.FACE_LANDMARKS_LEFT_EYE, ...FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE],
+      [4, 5],
+      frame,
+      bitmap.width,
+      bitmap.height,
+    );
+    const lipsAligned = supportedAnchors(
+      crop,
+      size,
+      points,
+      FaceLandmarker.FACE_LANDMARKS_LIPS,
+      [12, 13],
+      frame,
+      bitmap.width,
+      bitmap.height,
+    );
+    tensor.dispose();
+    for (const value of Object.values(output)) value.dispose();
+    if (!eyesAligned || !lipsAligned) {
+      unavailable('ANCHOR_DISAGREEMENT');
+      return;
+    }
+    const { mask, counts } = projectMask(
+      removeEarFragments(crop, size),
+      size,
+      frame,
+      bitmap.width,
+      bitmap.height,
+    );
     const contact = contactPixels(mask, size, size),
       layers = {};
     for (const group of PARSING_GROUPS) {
@@ -59,8 +148,6 @@ self.onmessage = async ({ data }) => {
       ctx.putImageData(new ImageData(rgba, size, size), 0, 0);
       layers[group.id] = await canvas.convertToBlob({ type: 'image/png' });
     }
-    tensor.dispose();
-    for (const value of Object.values(output)) value.dispose();
     self.postMessage({
       generation,
       captureRef,
@@ -71,6 +158,7 @@ self.onmessage = async ({ data }) => {
         status: 'completed',
         counts,
         interfacePixels: contact.reduce((a, b) => a + b, 0),
+        checks: { singleFace: true, eyesAligned: true, lipsAligned: true },
       },
     });
   } catch {

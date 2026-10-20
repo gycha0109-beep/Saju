@@ -1,6 +1,6 @@
 # Local two-view job and frontal metric preview
 
-Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures). Watchtower-Track: face-observation-engine.
+Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local parsing and rejection). Watchtower-Track: face-observation-engine.
 
 This implements P0/P1 and the P2 parsing comparison of the two-view design. Users can select a frontal and a
 profile image, execute the supported jobs together, cancel work, and inspect
@@ -121,13 +121,48 @@ No automatic model download is performed. An unavailable/mismatched asset disabl
 only the parser; frontal numerical measurement remains usable.
 
 ONNX Runtime Web is locked at `1.23.2`, served from the local installed dependency,
-with CPU WASM, one thread and a dedicated module worker. The author's preprocessing
+with CPU WASM, one thread and a dedicated owned classic worker. Dynamic ESM
+imports allow this worker to share the pinned MediaPipe localization loader's
+`importScripts` requirement. The author's baseline preprocessing
 is RGB, full-image 512×512 bilinear stretch, channel-major float32 and ImageNet
 mean `[0.485, 0.456, 0.406]` / std `[0.229, 0.224, 0.225]`. The first of three model
 outputs must have shape `[1,19,512,512]`; non-finite logits or shape drift fail.
 The exact provider label order is in `parsing-contract.mjs`. Ear labels 7/8 are
 combined for display, while jewellery/accessory label 9 is excluded. Provider
 l/r labels are not anatomical left/right authority.
+
+Method `engineering.face-parsing.yakhyo-resnet18@0.2.0` changes the engineering
+input frame without changing weights or class meanings. Inside the worker, the
+pinned Face Landmarker must find exactly one face. Missing or multiple detections
+return unavailable with no masks. This is a localization prerequisite, not proof
+that a visible face is absent or that profile pose has been admitted. A model
+miss on a profile image is explicitly unavailable rather than painted as success.
+
+The input is a square centred on the decoded-pixel model-point envelope, with
+side `1.6 * max(envelope width, envelope height)`. Padding outside the original is
+neutral RGB 128; it is never rendered as observed source geometry. Eye and lip
+topology anchors independently require matching class pixels within radius 12 in
+the 512 crop for at least 25% of each combined anchor set. Otherwise the result is
+unavailable. Connected ear-label components smaller than 64 crop pixels are
+removed; jewellery label 9 never counts as an ear. These fixed engineering
+screening heuristics are not calibrated accuracy, anatomical visibility, whole-ear
+coverage, canonical admission thresholds, or changes to frozen hairline 0.4.0.
+No parameter search was performed on the reported photos.
+
+Categorical nearest sampling projects only the observed part of the crop into a
+512 square representing the full original image frame, with background outside
+the crop. Counts describe this projected mask. The UI then restores the original
+aspect. Source coordinates, transforms and landmarks stay inside the worker;
+only classification masks, bounded counts, boolean agreement checks or an
+unavailable reason leave it. No source file is cropped, copied or modified.
+
+The previous full-image method `@0.1.0` is read-only comparison evidence. Its
+summary is not relabelled as the new method, and writers reject legacy summaries.
+The first new run preserves the validated legacy pointer in `previous.json`;
+only validated current/previous run IDs can serve masks. The comparison control
+is labelled as the earlier unchecked full-image result. New unavailable results
+show no masks by default. Existing numerical rows are reused when their metric
+method matches; rerunning the parser does not retune or recompute those metrics.
 
 The inverse display transform stretches the square mask back to the decoded
 original aspect within the same object-fit viewport. This is a mask display
@@ -150,7 +185,8 @@ engineering comparison only. Code license is not treated as independent evidence
 of commercial clearance for weights/training data; Product/Production adoption is
 not granted here. No training dataset or upstream user-face image is downloaded.
 
-Both supported frontal and profile input roles are parsed. Frontal and parser
+Both supported frontal and profile input roles attempt parsing under the same
+single-face and agreement prerequisites. Frontal and parser
 jobs have separate 30/60-second deadlines and failure states, so a parser failure
 preserves frontal metrics, and a frontal failure preserves parser candidates.
 The per-capture scheduler has a 95-second outer deadline. Failed parser workers
@@ -165,7 +201,7 @@ zero-colour transparent background. It rejects source-colour pixels, unknown
 layers and text/metadata chunks. Source file metadata is rechecked before save;
 old mask directories and original assets are not overwritten. Masks contain only
 classification colours, not original RGB, landmarks or reconstructed geometry.
-Only the latest active run's allowlisted masks can be fetched. Numeric runs and
+Only the validated current and read-only previous run's allowlisted masks can be fetched. Numeric runs and
 canonical/old review receipts remain separate. Uploaded-image candidates stay
 in this page and are not persisted by the existing engineering batch route.
 The active mask pointer is replaced atomically only after all masks and summaries
@@ -184,6 +220,7 @@ old rendered artifacts. Logs contain only bounded startup/error codes.
 ```powershell
 npx vitest run test/face-two-view-preview.test.ts
 npx vitest run test/face-parsing-preview.test.ts
+npx vitest run test/face-parsing-frame.test.ts
 npx eslint tools/face-reading/two-view test/face-two-view-preview.test.ts
 npx prettier --check tools/face-reading/two-view test/face-two-view-preview.test.ts
 ```
@@ -204,6 +241,15 @@ region toggle, reload, profile parser, cancellation, parser failure with retaine
 frontal metrics and retry. Aggregate evidence is recorded in the PR; no user
 photos/masks are test fixtures or Actions artifacts.
 
+Face-local revision tests additionally cover square decoded-pixel frames,
+categorical inverse projection/clipping, anchor-class disagreement, connected ear
+fragment rejection, unavailable results with no masks, strict new-method checks
+and explicit legacy-reader isolation. Private verification covers all 23 current
+engineering captures, old/new comparison, preserved numerical rows and old mask
+bytes, fresh-process restoration, failed-worker/cancellation retry, and unavailable
+mask suppression. Execution and screening success still require actual human
+review for anatomical accuracy; a larger ear mask is not by itself acceptance.
+
 ## Architecture Check
 
 - Docs updated: yes, local engine entry point and coordinate/authority contracts.
@@ -217,3 +263,7 @@ photos/masks are test fixtures or Actions artifacts.
   independent ignored mask store and explicit restore/failure state. These are
   local engineering routes; Product contracts and Production dependencies are
   unchanged. Segmentation labels are not alias-normalized into canonical inputs.
+  Revision 0.2 explicitly introduces an internal face-local input transform and
+  unavailable reasons, with a labelled read-only legacy comparison path. The
+  original-image display frame remains the storage frame. No source transform,
+  anatomical normalization or legacy authority fallback is implied.

@@ -1,4 +1,5 @@
-export const PARSING_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.1.0';
+export const PARSING_LEGACY_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.1.0';
+export const PARSING_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.2.0';
 export const PARSING_PIN = Object.freeze({
   repository: 'yakhyo/face-parsing',
   sourceRevision: '8a4729d95118d0e97c44185f9bdef3d6bfeaaf99',
@@ -107,15 +108,35 @@ export function contactPixels(mask, width, height) {
     }
   return contact;
 }
-export function validateParsingSummary(input) {
-  if (!input || input.methodVersion !== PARSING_VERSION || input.candidateOnly !== true)
+export function validateParsingSummary(input, { allowLegacy = false } = {}) {
+  const legacy = allowLegacy && input?.methodVersion === PARSING_LEGACY_VERSION;
+  if (
+    !input ||
+    (!legacy && input.methodVersion !== PARSING_VERSION) ||
+    input.candidateOnly !== true
+  )
     throw Error('PARSING_SUMMARY_INVALID');
+  if (
+    !legacy &&
+    input.status === 'unavailable' &&
+    ['NO_SINGLE_FACE', 'MULTIPLE_FACES', 'ANCHOR_DISAGREEMENT', 'FACE_FRAME_INVALID'].includes(
+      input.reason,
+    )
+  )
+    return {
+      methodVersion: PARSING_VERSION,
+      candidateOnly: true,
+      status: 'unavailable',
+      reason: input.reason,
+      accuracyValidated: false,
+      canonicalReceiptIssued: false,
+    };
   if (
     input.status === 'failed' &&
     ['PARSING_FAILED', 'PARSING_TIMEOUT', 'PARSING_MODEL_UNAVAILABLE'].includes(input.reason)
   )
     return {
-      methodVersion: PARSING_VERSION,
+      methodVersion: input.methodVersion,
       candidateOnly: true,
       status: 'failed',
       reason: input.reason,
@@ -131,12 +152,20 @@ export function validateParsingSummary(input) {
     input.interfacePixels > input.counts[1]
   )
     throw Error('PARSING_SUMMARY_INVALID');
+  if (
+    !legacy &&
+    (input.checks?.singleFace !== true ||
+      input.checks?.eyesAligned !== true ||
+      input.checks?.lipsAligned !== true)
+  )
+    throw Error('PARSING_SUMMARY_INVALID');
   return {
-    methodVersion: PARSING_VERSION,
+    methodVersion: input.methodVersion,
     candidateOnly: true,
     status: 'completed',
     counts: [...input.counts],
     interfacePixels: input.interfacePixels,
+    ...(!legacy ? { checks: { singleFace: true, eyesAligned: true, lipsAligned: true } } : {}),
     accuracyValidated: false,
     canonicalReceiptIssued: false,
   };

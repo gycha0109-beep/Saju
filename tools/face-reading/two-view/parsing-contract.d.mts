@@ -1,4 +1,5 @@
 export const PARSING_VERSION: string;
+export const PARSING_LEGACY_VERSION: string;
 export const PARSING_PIN: {
   repository: string;
   sourceRevision: string;
@@ -22,10 +23,16 @@ export type ParsingSummary =
       status: 'completed';
       counts: number[];
       interfacePixels: number;
+      checks?: { singleFace: true; eyesAligned: true; lipsAligned: true };
       accuracyValidated?: false;
       canonicalReceiptIssued?: false;
     }
-  | { methodVersion: string; candidateOnly: true; status: 'failed'; reason: string };
+  | {
+      methodVersion: string;
+      candidateOnly: true;
+      status: 'failed' | 'unavailable';
+      reason: string;
+    };
 export function rgbTensor(rgba: ArrayLike<number>, width: number, height: number): Float32Array;
 export function containSize(
   imageWidth: number,
@@ -38,4 +45,7 @@ export function classifyLogits(
   dims: number[],
 ): { mask: Uint8Array; counts: number[] };
 export function contactPixels(mask: Uint8Array, width: number, height: number): Uint8Array;
-export function validateParsingSummary(input: unknown): ParsingSummary;
+export function validateParsingSummary(
+  input: unknown,
+  options?: { allowLegacy?: boolean },
+): ParsingSummary;
