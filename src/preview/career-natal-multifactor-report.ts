@@ -10,6 +10,11 @@ import {
 
 export const CAREER_MULTIFACTOR_REPORT_VERSION = '0.2.0-research-preview' as const;
 type Axis = 'execution' | 'responsibility' | 'tension';
+const AXIS_LABELS: Readonly<Record<Axis, string>> = {
+  execution: '실행·산출',
+  responsibility: '역할·책임',
+  tension: '서로 다른 기준의 조율',
+};
 type Status = 'complete' | 'partial' | 'insufficient';
 
 export interface CareerMultifactorReportSection {
@@ -243,10 +248,15 @@ export function buildCareerMultifactorResearchReport(
   if (!primary) {
     missing.push(MUR[0]!);
     if (branchOnly.length > 0) {
-      missing.push(`이 명식에서는 지지 대표 십신의 ${branchOnly.map(s => s.axis).join('·')} 근거만 확인됩니다. 천간 중심 구조가 없어 전체 직업 종합으로 표시하지 않습니다.`);
+      missing.push(`이 명식에서는 지지 대표 십신을 통해 ${branchOnly.map(s => AXIS_LABELS[s.axis]).join('·')}에 관한 보조 근거를 확인했습니다. 그러나 천간 중심의 독립된 종합 근거가 없어 전체 직업운으로 판단하지 않고 부분 풀이만 보여드립니다.`);
     }
   }
-  if (supporting.length < 2) missing.push(MUR[1]!);
+  if (supporting.length < 2) {
+    const observed = (primary ? [primary, ...supporting] : branchOnly)
+      .map(section => AXIS_LABELS[section.axis]);
+    const label = observed.length > 0 ? observed.join('·') : '없음';
+    missing.push(`현재 확인된 해석 관점: ${label}. 완전한 직업 종합풀이에는 천간 중심 해석에 더해 서로 구별되는 보조 근거 축 ${2 - supporting.length}개가 필요합니다.`);
+  }
   if (!snapshot.completeness.birthTimeKnown) {
     // Never convert an unknown-hour chart into a four-pillar comprehensive claim.
     return {

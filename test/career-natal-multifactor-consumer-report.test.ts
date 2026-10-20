@@ -172,7 +172,11 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(found.report.sections.length).toBeGreaterThan(0);
     expect(found.report.sections.every(s => s.channel === 'branches')).toBe(true);
     expect(new Set(found.report.sections.map(s => s.axis)).size).toBe(found.report.sections.length);
-    expect(found.report.missing.join(' ')).toContain('천간 중심 구조가 없어');
+    expect(found.report.missing.join(' ')).toContain('천간 중심의 독립된 종합 근거가 없어');
+    expect(found.report.missing.join(' ')).toContain('완전한 직업 종합풀이');
+    const explanation = found.report.missing.join(' ');
+    expect(explanation).toMatch(/실행·산출|역할·책임|서로 다른 기준의 조율/u);
+    expect(explanation).not.toMatch(/(?:^|[\s·])(?:execution|responsibility|tension)(?:[\s·]|$)/u);
     for(const section of found.report.sections) {
       expect(section.calculatedPositions.every(position => section.paragraph.includes(position))).toBe(true);
       expect(section.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
