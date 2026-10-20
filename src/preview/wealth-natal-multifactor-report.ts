@@ -8,7 +8,7 @@ import {
   WEALTH_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/wealth-natal-multifactor-candidate.js';
 
-export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.1.0-research-preview' as const;
+export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.2.0-research-preview' as const;
 type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
@@ -47,6 +47,15 @@ const SLOT_NAMES: Readonly<Record<PillarSlot, string>> = {
 const FAMILIES: Readonly<Record<string, readonly string[]>> = {
   peer: ['비견','겁재'], resource: ['정인','편인'], output: ['식신','상관'],
   wealth: ['정재','편재'], officer: ['정관','편관'],
+};
+// Reader-facing meanings are limited labels for the actually observed T5 families.
+// They do not infer dominance, personal conduct, future events or financial outcomes.
+const EVIDENCE_ROLES: Readonly<Record<string, string>> = {
+  peer: '비겁(자기 기준·공유 관점)',
+  resource: '인성(준비·수용)',
+  output: '식상(산출·표현)',
+  wealth: '재성(현실 자원·교환)',
+  officer: '관성(관리·책임 기준)',
 };
 const LIMITATIONS = [
   '전통 문헌의 제한된 구조 관계를 이용한 미검토 연구 풀이입니다. 실제 삶의 성격·사건을 판정하지 않습니다.',
@@ -139,13 +148,21 @@ function toSection(
     claim.sourceRefs.every(id => registry.sources.some(x => x.sourceId === id)),
     'not exactly source-bound to Wealth T5 family and method inputs');
   const locations = positions(snapshot, value.channel as Channel, value.families as string[]);
+  const observedByFamily = (value.families as string[]).map(family => {
+    const actual = locations.filter(location => location.family === family);
+    guard(actual.length > 0 && EVIDENCE_ROLES[family] !== undefined,
+      'unobserved or unsupported Ten-God family in consumer explanation');
+    return `${EVIDENCE_ROLES[family]}: ${actual.map(x => x.display).join(' · ')}`;
+  });
+  const observedChannel = value.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
+  const headline = textFor(claim.claimType, 'headline');
   return {
     claimType: claim.claimType,
     pattern: value.pattern,
     axis: value.axis as Axis,
     channel: value.channel as Channel,
     headline: textFor(claim.claimType,'headline'),
-    paragraph: `이 원국에서 확인된 근거는 ${locations.map(x => x.display).join(' · ')}입니다. ${textFor(claim.claimType,'summary')}`,
+    paragraph: `이 원국에서 확인된 근거는 ${observedByFamily.join(' / ')}입니다. 같은 ${observedChannel}에서 관측된 서로 다른 십신 계열을 '${headline}'이라는 구조적 관점에서 함께 읽습니다. ${textFor(claim.claimType,'summary')}`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,

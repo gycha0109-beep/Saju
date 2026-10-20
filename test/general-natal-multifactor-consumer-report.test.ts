@@ -66,6 +66,9 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
         expect(s.observedPositions.length).toBeGreaterThanOrEqual(2);
         expect(s.observedPositions).toHaveLength(s.observedFactPaths.length);
         expect(s.paragraph).toContain('이 원국에서 확인된 근거는');
+        expect(s.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
+        expect(s.paragraph).toMatch(/같은 (천간|지지 대표 십신)에서 관측된/u);
+        expect(s.paragraph).toContain(s.headline);
         expect(s.observedPositions.every(p=>s.paragraph.includes(p))).toBe(true);
         expect(s.observedFactPaths.every(path =>
           /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path)))
