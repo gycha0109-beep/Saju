@@ -14,16 +14,16 @@ import { buildGeneralNatalMultifactorReport } from '../src/preview/general-natal
 
 const registry = createWealthNatalMultifactorRegistry();
 const NOW = new Date('2026-10-19T00:00:00.000Z');
-function sample(month: number, day: number, known = true) {
+function sample(month: number, day: number, known = true, hour = 12) {
   return calculateCanonicalSajuSnapshot({
     calendarType: 'solar',
     date: { year: 2024, month, day },
-    time: known ? { known: true, hour: 12, minute: 0 } as const : { known: false } as const,
+    time: known ? { known: true, hour, minute: 0 } as const : { known: false } as const,
     sexForTraditionalCalculation: 'unspecified',
   }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
 }
-function run(month: number, day: number, known = true) {
-  const snapshot = sample(month, day, known);
+function run(month: number, day: number, known = true, hour = 12) {
+  const snapshot = sample(month, day, known, hour);
   const execution = runInterpretation(snapshot, registry, { now: NOW });
   return { snapshot, execution,
     report: buildWealthNatalMultifactorReport(snapshot, execution, registry) };
@@ -109,6 +109,41 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(wealth.report.sections.map(section => section.headline)).not.toEqual(
       general.sections.map(section => section.headline));
   });
+
+
+  it('shows actual tension-only T8 evidence as partial Korean interpretation without inventing a core', () => {
+    let found = false;
+    // A fixed noon birth hour misses rare combinations. Sweep four actual
+    // birth times while keeping each generated chart fully canonical.
+    outer: for(const hour of [0,6,12,18]) {
+      for(const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
+        for(const day of [3,7,11,17,23]) {
+          const { execution, report } = run(month, day, true, hour);
+        const active = execution.claims.filter(c => c.taxonomy.tier === 'T8' &&
+          c.taxonomy.category === 'wealth' &&
+          c.predicate === 'wealth_multifactor_structure' && c.state === 'active');
+        const axes = active.map(c => (c.value as {axis?:string}).axis);
+        if(axes.length === 0 || axes.some(axis => ['core','creation','management','planning'].includes(axis ?? '')) ||
+          !axes.includes('tension')) continue;
+        found = true;
+        expect(report.state).toBe('partial');
+        expect(report.sections).toHaveLength(1);
+        expect(report.sections[0]?.axis).toBe('tension');
+        expect(report.sections[0]?.observedPositions.length).toBeGreaterThanOrEqual(2);
+        expect(report.sections[0]?.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
+        expect(report.sections[0]?.sourceIds.length).toBeGreaterThan(0);
+        expect(report.missing.join(' ')).toContain('중심 종합 근거 없이');
+        expect(report.missing).toContain('중심 결론과 구별되는 추가 구조 축 1개 부족');
+        expect(report.researchOnly).toBe(true);
+        expect(report.usefulComplete).toBe(false);
+        expect(report.mayPublish).toBe(false);
+        expect(report.maySell).toBe(false);
+          break outer;
+        }
+      }
+    }
+    expect(found).toBe(true);
+  }, 60000);
 
   it('does not infer full-chart meaning with unknown birth hour', () => {
     const x = run(3,10,false);

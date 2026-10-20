@@ -208,7 +208,10 @@ export function buildWealthNatalMultifactorReport(
     result.find(s => s.axis === 'creation') ??
     result.find(s => s.axis === 'management') ??
     result.find(s => s.axis === 'planning');
-  const chosen: WealthNatalMultifactorSection[] = core ? [core] : [];
+  // Show a real source-qualified tension-only observation as a bounded partial,
+  // without treating it as the missing overall MUR core.
+  const chosen: WealthNatalMultifactorSection[] = core ? [core] :
+    result.filter(section => section.axis === 'tension').slice(0, 1);
   const axes = new Set<Axis>(core ? [core.axis] : []);
   for(const unit of result) {
     if (!core || axes.has(unit.axis)) continue;
@@ -218,10 +221,11 @@ export function buildWealthNatalMultifactorReport(
   }
   const missing: string[] = [];
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
-  const missingSupportingAxes = 2 - Math.max(0, chosen.length - 1);
+  if(!core && chosen.length > 0) missing.push('중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.');
+  const missingSupportingAxes = 2 - (core ? chosen.length - 1 : chosen.length);
   if(missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
-  let state: Status = chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
+  let state: Status = core !== undefined && chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
   let sections: readonly WealthNatalMultifactorSection[] = chosen;
   if(!snapshot.completeness.birthTimeKnown) {
     sections = [];
