@@ -381,3 +381,10 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 - [1906 上海書局 石印版을 주장하는 제3자 상업 전자 파일 목록](https://hongyeshan.com/post/47178.html)은 파일 **316페이지·143MB**를 기재하지만 **구매 후 망판 링크**를 제공하는 유료 자료다. 공유마당 1906 국회도서관 유래 PDF와 동일성도 확인되지 않았다. 구매·연락·우회 접근 없이 파일과 `補曰` 판면 **미확보**로 기록했다.
 - 기존 율곡원 **실물 미리보기 6+5=11장**, `千頃堂書局商標` 2곳 직접 판독, LOC 권2 **59/59** 확보 및 해당 8번 `補曰` 기존 판독은 유지. **v24 신규 `補曰` 원문 이미지 0, 독립 고전 텍스트 계통 0, 실제 원본에서 간행년도 인증 0**.
 - 보호 상태는 계속 **N27 Claim 5개 HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**, `別宮` 日支·`再見` 藏干·`一位` 집계 범위 **UNADJUDICATED**. TrustGrant/Preview/Official/Production/consumer 의미 부여 0, 제품 해석 규칙 변경 0, 기관 연락·이메일 0, 두 PR Draft·미병합.
+
+## N27 v25 — 1906 공유마당 공식 문서뷰어 HTTP 차단 증거·비승격 (2026-10-20)
+
+- Research #2553 검토 기준 HEAD **`aee0b388c9316282f5d58a9a0605f5d99919ca9e`**, 연구 버전 **`saju-n27-wu-ji-recurrence-scope-sensitivity-v25`**로 Bridge `researchHeadReviewed`를 정확히 고정하고 테스트에서도 해당 SHA를 검증한다.
+- 한국저작권위원회 공유마당 [`G905-9086005` 자료 등록](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005)은 국회도서관을 출처로 표기하며 PDF 원문파일명을 제시한다. 등록 페이지가 **공식적으로 게시한** [문서뷰어 링크](https://gongu.copyright.or.kr/gongu/cmmn/docViewer/viewerIframe.do?fileSn=1&wrtSn=9086005)를 포함하여 [GitHub Actions #39351979910](https://github.com/gycha0109-beep/Saju/actions/runs/39351979910)에서 **공식 목록 / 명시 뷰어 / 사이트 일반 뷰어 경로 총 3곳을 비인증 HTTPS 요청**했다. 세 요청 **모두 HTTP 400, HTML 응답 제목 `Request Blocked`**였고 원문 PDF·뷰어 HTML·卷二 「補曰」 원전 텍스트 **0건**. 세 번째 경로는 해당 고서에 직접 연결된 URL이라고 단정하지 않으며 다른 작품에서 확인된 사이트 일반 경로임.
+- **접속 거절은 원문 PDF 부재나 표적 본문 미수록의 증거가 아니다.** 공유마당 창작년도 `1906` 자체를 원본 판권에 직접 적힌 인쇄년도로 승격하지 않는다. 이번 시도에서 계통 관계·「補曰」 인쇄면 이문·독립 텍스트 증인·계산 해석에 대한 추가 승인 **0건**. 우회접속·구매·문의·외부 연락은 수행하지 않았다.
+- 기존 LOC 卷二 **59/59** 공식 이미지 확보 및 8번 「補曰」 실제 인쇄면 판독, 율곡원 석인본 **6+5=11** 공식 공개 이미지와 `千頃堂書局商標` 두 곳 직독은 그대로 유지. N27 **Claim 5개 HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 劫財 T8 **1 vs 0**, `別宮` 日支·`再見` 藏干·`一位` 집계 단위 **UNADJUDICATED**. TrustGrant/Preview/Official/Production/consumer 추가 승인 0, 해석 엔진 변경 0, Research·Bridge Draft·미병합.
