@@ -886,6 +886,9 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
           nationalLibraryChina1936CopperplateDirectSupplementCollation: Object.freeze({
             commonsOriginalFile: 'https://commons.wikimedia.org/wiki/File:NLC511-027032013013877-17378_銅版精印神峰通考命理正宗.pdf' as const,
             sourceInstitutionAsCatalogued: '中国国家图书馆' as const,
+            physicalOwnershipMarkPrintedOnScannedPage2: '上海圖書館藏書' as const,
+            physicalOwnershipMarkAlsoOnScannedPage3: true as const,
+            cataloguedSourceVsScannedCopyMarkRelationship: 'UNADJUDICATED' as const,
             publicationDateAsCatalogued: '1936-03' as const,
             editionTitle: '銅版精印神峰通考命理正宗' as const,
             editorPublisherAsCatalogued: '星命學社重校 / 星命學社' as const,
