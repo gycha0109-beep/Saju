@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v23');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v24');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -768,6 +768,47 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
         originalPrintedImageRetrieved: false,
         editionIndependentFromYulgok: 'UNADJUDICATED',
       },
+    });
+    expect(three.qianqingtang1924ScholarshipAndOtherLithographCatalogues).toMatchObject({
+      koreanScholarlyPaper: {
+        author: '김만태',
+        journal: '東洋學 第67輯',
+        publishedYear: 2017,
+        citedPrintedPage: 173,
+        footnoteNumber: 20,
+        reportedEditionTitle: '神峰闢謬命理正宗',
+        reportedPublisher: '上海 千頃堂書局',
+        bibliographicPrintYearAsReported: 1924,
+        reportedJuanCount: 4,
+        paperQuotesPublisherYearFromBibliographicListNotOriginalColophon: true,
+        original1924ColophonDirectlyRead: false,
+        yulgokFirstHoldingFourPhysicalBooksMustNotEqualFourTextualJuanByDefault: true,
+        yulgokPhysicalCopyPrinted1924: 'UNADJUDICATED',
+      },
+      dalianPublicCatalogue1920: {
+        title: '(神峰闢謬)命理正宗',
+        publisher: '上海 校經山房',
+        dateAsCataloged: 1920,
+        printingMethod: '石印本',
+        textualJuanCount: 4,
+        physicalBookCount: 4,
+        actualPrintedTargetLocusAcquired: false,
+        historicallyIndependentEditionFrom1924Qianqingtang: 'UNADJUDICATED',
+      },
+      guangxuBingwu1906CommercialDigitalFacsimileLead: {
+        listedScanPageCount: 316,
+        listedFileSizeMegabytes: 143,
+        siteListsPaidResourceOnly: true,
+        originalSixJuanPdfDownloaded: false,
+        supplementalFolioTextRead: false,
+        sameMaterialObjectAsKorean1906PublicRecord: 'UNADJUDICATED',
+        evidenceLimitedToCommercialSellerListing: true,
+        noPurchaseOrInstitutionContactMade: true,
+      },
+      sourceCountWithDirectlyNewPrintedSupplementLocus: 0,
+      physicalEditionDatesNewlyCertifiedFromColophons: 0,
+      independentOriginalTextualWitnessesNewlyCertified: 0,
+      letsAnyN27ClaimLeaveHold: false,
     });
     expect(three.republican1929TwoVolumeBindingAudit).toMatchObject({
       printDate: '1929-11',
