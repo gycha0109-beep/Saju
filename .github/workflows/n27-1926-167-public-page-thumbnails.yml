@@ -20,7 +20,7 @@ jobs:
           out=pathlib.Path("n27-1926-167-public-frames")
           title="File:NLC416-12jh004266-48929_神峰通考.pdf"
           filename=title[5:]
-          base="https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/"+urllib.parse.quote(filename,safe="")
+          base="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/50/"+urllib.parse.quote(filename,safe="")
           root="https://commons.wikimedia.org"
           ua="MyeongHa-N27-PublicBookResearch/1.0 (public Commons thumbnail sampling; no authentication)"
           data={"title":title,"mediaPage":root+"/wiki/"+urllib.parse.quote(title,safe=":"),"requestedPdfPages":[1,2,3,4,165,166,167],"records":[],"noBypass":True}
@@ -38,7 +38,7 @@ jobs:
             item={"page":page,"status":"UNREAD"}
             routes=[
               ("commons_file_page",root+"/w/index.php?"+urllib.parse.urlencode({"title":title,"page":page})),
-              ("official_pdf_thumbnail",base+f"/page{page}-770px-"+urllib.parse.quote(filename,safe="")+".jpg"),
+              ("official_pdf_thumbnail",base+f"/page{page}-500px-"+urllib.parse.quote(filename,safe="")+".jpg"),
             ]
             for kind,url in routes:
               host=urllib.parse.urlparse(url).netloc
