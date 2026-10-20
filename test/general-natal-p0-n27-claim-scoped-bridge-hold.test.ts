@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('36135068acf6f97cc3464f0ffc2a67a2a64ef22c');
+    expect(review.researchHeadReviewed).toBe('0f3cbadadf330203a9a6e3b99715b4708a4228a9');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -481,6 +481,10 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
           },
           nationalLibraryChina1936DirectHourWealthSupplementNonGrant: {
             printPublicationYearAsCatalogue: 1936,
+            originalColophonPdfPageOneBased: 219,
+            originalColophonDateDirectlyRead: '民國二十五年三月',
+            originalColophonPublisherDirectlyRead: '星命學社',
+            colophonDateCorroborates1936MarchCatalogue: true,
             sourceCatalogueNamesNationalLibraryOfChina: true,
             scannedPhysicalPageOwnershipMarksShanghaiLibrary: true,
             institutionalCopyHistory: 'UNADJUDICATED',
