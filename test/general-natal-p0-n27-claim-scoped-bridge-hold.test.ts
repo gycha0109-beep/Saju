@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('88a55e8b0e16505301132357241e80ddc6e37b35');
+    expect(review.researchHeadReviewed).toBe('6b7eaca9180a65b0399483d81b8bdcba90e1900d');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v29',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v30',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -394,6 +394,22 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             printedWitnessIncrement: 1,
             historicalIndependentStemCountProof: false,
             fiveClaimsStayHold: true,
+          },
+          print1924DatedQiangingtangEmblemDoesNotGrantSemantics: {
+            sourceArtifactId: 12248510151,
+            actuallyRetrievedPublicJpegCount: 4,
+            sellerYearClaim: 1924,
+            fourthPhotoSourceSha256: 'c6a4c8418dea4fbec22c88ead3d48c1ba8d9bfafb1b4470554479cef13ac8e96',
+            originalPrintedPublicationMarkDirectlyRead: '中華民國十三年重刊',
+            originalPrintedPublisherTrademarkRead: '千頃堂書局商標',
+            yulgokFirstBookOfficialPhotoAlsoHasTrademark: true,
+            yulgokFirstBookOfficialPhotoLacksDatedArc: true,
+            copyingOrPlateRelationCertified: false,
+            yulgokPrintYear1924Proven: false,
+            newHourWealthSupplementPrintedLocusRead: false,
+            independentlyProvenAncientTextualDescentAdded: 0,
+            allN27ClaimsStillHold: true,
+            interpretationPromotionApproved: false,
           },
           print1926DirectPrintedVolumeBoundaryNonGrant: {
             former167PreviewArtifactId: 12245160822,
