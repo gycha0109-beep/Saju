@@ -215,7 +215,10 @@ export function buildRelationshipNatalMultifactorReport(
     result.find(s => s.axis === 'expression') ??
     result.find(s => s.axis === 'boundaries') ??
     result.find(s => s.axis === 'reception');
-  const chosen: RelationshipNatalMultifactorSection[] = core ? [core] : [];
+  // A genuine source-bound coordination-only observation is visible as a PARTIAL
+  // reading, never promoted to a MUR core or a consumer product completion.
+  const chosen: RelationshipNatalMultifactorSection[] = core ? [core] :
+    result.filter(section => section.axis === 'coordination').slice(0, 1);
   const axes = new Set<Axis>(core ? [core.axis] : []);
   for(const unit of result) {
     if (!core || axes.has(unit.axis)) continue;
@@ -225,11 +228,12 @@ export function buildRelationshipNatalMultifactorReport(
   }
   const missing: string[] = [];
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
+  if(!core && chosen.length > 0) missing.push('중심 해석 근거가 없어 실제 확인된 조율 관점만 부분적으로 보여줍니다. 전체 관계운 종합이나 상대의 행동을 추론하지 않습니다.');
   if(chosen.length < 3) {
     const observed = chosen.map(s => `${AXIS_NAMES[s.axis]}(${s.channel === 'visible_stems' ? '천간' : '지지'})`);
     missing.push(`이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}. 최소 유효 풀이에는 독립된 근거의 추가 해석 축 ${3 - chosen.length}개가 더 필요합니다.`);
   }
-  let state: Status = chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
+  let state: Status = core !== undefined && chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
   let sections: readonly RelationshipNatalMultifactorSection[] = chosen;
   if(!snapshot.completeness.birthTimeKnown) {
     sections = [];
