@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('aee0b388c9316282f5d58a9a0605f5d99919ca9e');
+    expect(review.researchHeadReviewed).toBe('36135068acf6f97cc3464f0ffc2a67a2a64ef22c');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v25',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v26',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -478,6 +478,38 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             dalian1925ActualOriginalPageRetrieved: false,
             ancientMeaningAuthorizationsAdded: 0,
             allFiveN27ClaimsRemainHold: true,
+          },
+          nationalLibraryChina1936DirectHourWealthSupplementNonGrant: {
+            printPublicationYearAsCatalogue: 1936,
+            sourceCatalogueNamesNationalLibraryOfChina: true,
+            scannedPhysicalPageOwnershipMarksShanghaiLibrary: true,
+            institutionalCopyHistory: 'UNADJUDICATED',
+            originalPdfSha256: '2b4eabf3c1732f5bcb7adf964ed8fe0bc9191523fdc3e5c92f5c1aa4057eced7',
+            originalPdfPageCount: 220,
+            targetPdfPageOneBased: 43,
+            targetPrintedJuan: 2,
+            targetPrintedPage: 37,
+            exactTargetCoreGlyphsDirectlyRead: '只要一位貴不要多而三處不要再見財',
+            matchesLoc1926And1929CoreGlyphs: true,
+            newlyDirectReadPrintedSupplementPages: 1,
+            independentStemmaticWitnessIncrement: 0,
+            printLineageRelativeTo1926And1929: 'UNADJUDICATED',
+            countingSemanticsAdjudicated: false,
+            allN27ClaimsStillHold: true,
+          },
+          commercial1906KoreanNationalAssemblyMarkedPreviewsNonGrant: {
+            sellerOpenPreviewImagesDownloaded: 11,
+            sourceCoverSha256: '701b096014e30c0d74164f020671ce52113dd20c1464186a017c3589476750d5',
+            physicalBookCoverAppearsMarkedKoreanNationalAssemblyLibrary: true,
+            physicalCopyRegistrationMark: '130903',
+            physicalCopyDateStamp: '1970-05-06',
+            dateStampNotThePublicationDate: true,
+            koreanGovernment1906CatalogueNamesSameLibrary: true,
+            sellerScansSamePdfAsKoreanGovernmentCatalogue: 'UNADJUDICATED',
+            sellerPreviewOriginalSupplementDirectlyRead: false,
+            paidOriginalPdfPurchasedOrDownloaded: false,
+            independentAncientOriginalWitnessIncrement: 0,
+            permitsClaimPromotion: false,
           },
           korean1906OfficialViewerBlockedNonAuthorizing: {
             sourceWorkId: 'G905-9086005',
