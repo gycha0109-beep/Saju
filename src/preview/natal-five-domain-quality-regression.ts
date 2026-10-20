@@ -27,7 +27,6 @@ const NOW = new Date('2026-10-19T00:00:00.000Z');
 const YEARS = [1984, 1999, 2010, 2024] as const;
 const MONTHS = [1, 2, 3, 4, 7, 8, 9, 10] as const;
 const DOMAIN_KEYS = ['general', 'career', 'wealth', 'business', 'relationship'] as const;
-type DomainKey = typeof DOMAIN_KEYS[number];
 
 export interface NatalS6BirthCase {
   caseId: string;
