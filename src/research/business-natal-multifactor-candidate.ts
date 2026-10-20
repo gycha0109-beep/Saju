@@ -68,6 +68,11 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
     axis: 'coordination', headline: '준비 과정과 운영 기준을 맞춰 보는 구조',
     summary: '인성이 가리키는 받아들임·학습과 관성이 가리키는 역할·규범이 함께 확인됩니다. 사업이라는 주제에서는 준비할 내용과 지켜야 할 기준 사이의 관계를 질문할 수 있으나, 실제 허가 취득이나 계약 결과·업무 수행 능력을 예측하지 않습니다.',
   },
+  {
+    id: 'PEER_WEALTH', families: ['peer','wealth'],
+    axis: 'coordination', headline: '주도권과 자원 교환을 함께 보는 구조',
+    summary: '비겁의 자기 기준·동료 관점과 재성의 교환·자원 관점이 함께 관측됩니다. 운영상 선택의 주체와 자원에 관한 관점을 구별해 보는 제한된 독해이며 투자 성향, 수익, 동업 성공이나 실제 금전관계를 예측하지 않습니다.',
+  },
 ]);
 const CHANNELS: readonly Channel[] = ['visible_stems', 'branches'];
 const SOURCE_REFS: RuleDefinition['sourceRefs'] = [
