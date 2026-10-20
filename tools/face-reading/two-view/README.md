@@ -1,6 +1,6 @@
 # Local two-view job and frontal metric preview
 
-Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local parsing and rejection). Watchtower-Track: face-observation-engine.
+Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local experiment), #2606 (full-frame preservation). Watchtower-Track: face-observation-engine.
 
 This implements P0/P1 and the P2 parsing comparison of the two-view design. Users can select a frontal and a
 profile image, execute the supported jobs together, cancel work, and inspect
@@ -131,37 +131,49 @@ The exact provider label order is in `parsing-contract.mjs`. Ear labels 7/8 are
 combined for display, while jewellery/accessory label 9 is excluded. Provider
 l/r labels are not anatomical left/right authority.
 
-Method `engineering.face-parsing.yakhyo-resnet18@0.2.0` changes the engineering
-input frame without changing weights or class meanings. Inside the worker, the
-pinned Face Landmarker must find exactly one face. Missing or multiple detections
-return unavailable with no masks. This is a localization prerequisite, not proof
-that a visible face is absent or that profile pose has been admitted. A model
-miss on a profile image is explicitly unavailable rather than painted as success.
+Method `engineering.face-parsing.yakhyo-resnet18@0.3.0` always executes the full-image
+baseline. Hair, skin, brows, lips, nose and hair-skin contact use only that full
+frame. A second face-local pass can replace only the ear display layer. Its
+localization/frame/agreement failures leave all baseline layers available; they
+do not suppress a photo or turn unseen areas into background in non-ear layers.
+These are still model candidates, not accepted accuracy or whole-ear visibility.
 
-The input is a square centred on the decoded-pixel model-point envelope, with
+Revision `@0.2.0` is rejected historical experiment evidence. It replaced every
+layer with a small face crop and suppressed whole captures on localization
+failure. Actual user review exposed rectangular hair truncation and lost results;
+registration/execution tests had not caught that regression. Revision 0.3 restores
+the original full-frame source of truth, without tuning the crop parameters.
+
+Only the optional ear-refinement input is a square centred on the decoded-pixel model-point envelope, with
 side `1.6 * max(envelope width, envelope height)`. Padding outside the original is
 neutral RGB 128; it is never rendered as observed source geometry. Eye and lip
 topology anchors independently require matching class pixels within radius 12 in
 the 512 crop for at least 25% of each combined anchor set. Otherwise the result is
-unavailable. Connected ear-label components smaller than 64 crop pixels are
+unavailable for refinement. Connected ear-label components smaller than 64 crop pixels are
 removed; jewellery label 9 never counts as an ear. These fixed engineering
 screening heuristics are not calibrated accuracy, anatomical visibility, whole-ear
 coverage, canonical admission thresholds, or changes to frozen hairline 0.4.0.
 No parameter search was performed on the reported photos.
 
-Categorical nearest sampling projects only the observed part of the crop into a
-512 square representing the full original image frame, with background outside
-the crop. Counts describe this projected mask. The UI then restores the original
-aspect. Source coordinates, transforms and landmarks stay inside the worker;
-only classification masks, bounded counts, boolean agreement checks or an
-unavailable reason leave it. No source file is cropped, copied or modified.
+Categorical nearest sampling projects the refined ears into the original-image
+display frame. The full-frame `counts` and `interfacePixels` retain their original
+baseline meaning and match revision 0.1; they are not totals from the refined ear
+layer. A separate `earRefinement` records applied/unavailable, the projected ear
+pixel count, and either agreement checks or a bounded reason. An applied ear
+layer may overlap another baseline class, so it must never be interpreted as a
+new mutually exclusive 19-class anatomical segmentation. The UI makes refinement
+availability explicit and never calls a few baseline ear pixels recognition.
+Source coordinates, transforms and landmarks stay inside the worker. No source
+file is cropped, copied or modified.
 
-The previous full-image method `@0.1.0` is read-only comparison evidence. Its
+The previous full-image method `@0.1.0` is read-only comparison evidence. Both
+0.1 and rejected 0.2 remain readable without relabelling their methods. The 0.1
 summary is not relabelled as the new method, and writers reject legacy summaries.
 The first new run preserves the validated legacy pointer in `previous.json`;
 only validated current/previous run IDs can serve masks. The comparison control
-is labelled as the earlier unchecked full-image result. New unavailable results
-show no masks by default. Existing numerical rows are reused when their metric
+is labelled as the earlier full-image result. Refinement-unavailable captures
+keep baseline masks; the failed refinement is not silently presented as applied.
+Existing numerical rows are reused when their metric
 method matches; rerunning the parser does not retune or recompute those metrics.
 
 The inverse display transform stretches the square mask back to the decoded
@@ -185,8 +197,8 @@ engineering comparison only. Code license is not treated as independent evidence
 of commercial clearance for weights/training data; Product/Production adoption is
 not granted here. No training dataset or upstream user-face image is downloaded.
 
-Both supported frontal and profile input roles attempt parsing under the same
-single-face and agreement prerequisites. Frontal and parser
+Both supported frontal and profile roles receive full-frame parsing. Only the
+optional ear pass requires single-face localization and agreement. Frontal and parser
 jobs have separate 30/60-second deadlines and failure states, so a parser failure
 preserves frontal metrics, and a frontal failure preserves parser candidates.
 The per-capture scheduler has a 95-second outer deadline. Failed parser workers
@@ -241,14 +253,14 @@ region toggle, reload, profile parser, cancellation, parser failure with retaine
 frontal metrics and retry. Aggregate evidence is recorded in the PR; no user
 photos/masks are test fixtures or Actions artifacts.
 
-Face-local revision tests additionally cover square decoded-pixel frames,
-categorical inverse projection/clipping, anchor-class disagreement, connected ear
-fragment rejection, unavailable results with no masks, strict new-method checks
-and explicit legacy-reader isolation. Private verification covers all 23 current
-engineering captures, old/new comparison, preserved numerical rows and old mask
-bytes, fresh-process restoration, failed-worker/cancellation retry, and unavailable
-mask suppression. Execution and screening success still require actual human
-review for anatomical accuracy; a larger ear mask is not by itself acceptance.
+Refinement tests cover square decoded-pixel frames, categorical inverse projection,
+anchor disagreement, connected ear fragments, strict method-specific summaries and
+legacy isolation. Regression acceptance additionally compares all six non-ear mask
+layers and full-frame class counts to the preserved revision 0.1 output for every
+one of the 23 captures. This catches the actual truncation/whole-capture regression
+instead of only testing registration or execution. Anatomical accuracy still needs
+actual human review; a larger ear mask is not by itself acceptance. The previously
+unlocalized profile's inaccurate baseline is unresolved, not a recovered detection.
 
 ## Architecture Check
 
@@ -263,7 +275,7 @@ review for anatomical accuracy; a larger ear mask is not by itself acceptance.
   independent ignored mask store and explicit restore/failure state. These are
   local engineering routes; Product contracts and Production dependencies are
   unchanged. Segmentation labels are not alias-normalized into canonical inputs.
-  Revision 0.2 explicitly introduces an internal face-local input transform and
-  unavailable reasons, with a labelled read-only legacy comparison path. The
+  Revision 0.3 explicitly separates the primary full-frame pass from optional
+  ear-only refinement and its availability. Historical 0.2 is read-only. The
   original-image display frame remains the storage frame. No source transform,
   anatomical normalization or legacy authority fallback is implied.

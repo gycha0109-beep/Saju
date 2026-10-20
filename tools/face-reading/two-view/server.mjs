@@ -9,6 +9,7 @@ import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
 import {
   PARSING_VERSION,
   PARSING_LEGACY_VERSION,
+  PARSING_CROP_VERSION,
   PARSING_PIN,
   PARSING_GROUPS,
   validateParsingSummary,
@@ -227,7 +228,9 @@ export async function createLocalReviewServer({
       await readFile(resolve(parsingRoot, active.runId, 'summary.json'), 'utf8'),
     );
     if (
-      ![PARSING_VERSION, PARSING_LEGACY_VERSION].includes(saved.methodVersion) ||
+      ![PARSING_VERSION, PARSING_LEGACY_VERSION, PARSING_CROP_VERSION].includes(
+        saved.methodVersion,
+      ) ||
       !Array.isArray(saved.records)
     )
       throw Error('PARSING_RUN_INVALID');

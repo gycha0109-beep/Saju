@@ -1,5 +1,6 @@
 export const PARSING_LEGACY_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.1.0';
-export const PARSING_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.2.0';
+export const PARSING_CROP_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.2.0';
+export const PARSING_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.3.0';
 export const PARSING_PIN = Object.freeze({
   repository: 'yakhyo/face-parsing',
   sourceRevision: '8a4729d95118d0e97c44185f9bdef3d6bfeaaf99',
@@ -109,7 +110,9 @@ export function contactPixels(mask, width, height) {
   return contact;
 }
 export function validateParsingSummary(input, { allowLegacy = false } = {}) {
-  const legacy = allowLegacy && input?.methodVersion === PARSING_LEGACY_VERSION;
+  const crop = input?.methodVersion === PARSING_CROP_VERSION;
+  const legacy =
+    allowLegacy && [PARSING_LEGACY_VERSION, PARSING_CROP_VERSION].includes(input?.methodVersion);
   if (
     !input ||
     (!legacy && input.methodVersion !== PARSING_VERSION) ||
@@ -117,14 +120,15 @@ export function validateParsingSummary(input, { allowLegacy = false } = {}) {
   )
     throw Error('PARSING_SUMMARY_INVALID');
   if (
-    !legacy &&
+    legacy &&
+    crop &&
     input.status === 'unavailable' &&
     ['NO_SINGLE_FACE', 'MULTIPLE_FACES', 'ANCHOR_DISAGREEMENT', 'FACE_FRAME_INVALID'].includes(
       input.reason,
     )
   )
     return {
-      methodVersion: PARSING_VERSION,
+      methodVersion: input.methodVersion,
       candidateOnly: true,
       status: 'unavailable',
       reason: input.reason,
@@ -153,19 +157,52 @@ export function validateParsingSummary(input, { allowLegacy = false } = {}) {
   )
     throw Error('PARSING_SUMMARY_INVALID');
   if (
-    !legacy &&
+    crop &&
     (input.checks?.singleFace !== true ||
       input.checks?.eyesAligned !== true ||
       input.checks?.lipsAligned !== true)
   )
     throw Error('PARSING_SUMMARY_INVALID');
+  let earRefinement;
+  if (!legacy) {
+    const ear = input.earRefinement;
+    if (
+      ear?.status === 'applied' &&
+      Number.isInteger(ear.pixels) &&
+      ear.pixels > 0 &&
+      ear.pixels <= 512 * 512 &&
+      ear.checks?.singleFace === true &&
+      ear.checks?.eyesAligned === true &&
+      ear.checks?.lipsAligned === true
+    )
+      earRefinement = {
+        status: 'applied',
+        pixels: ear.pixels,
+        checks: { singleFace: true, eyesAligned: true, lipsAligned: true },
+      };
+    else if (
+      ear?.status === 'unavailable' &&
+      ear.pixels === 0 &&
+      [
+        'NO_SINGLE_FACE',
+        'MULTIPLE_FACES',
+        'FACE_FRAME_INVALID',
+        'ANCHOR_DISAGREEMENT',
+        'EAR_FRAGMENT_ONLY',
+        'REFINEMENT_FAILED',
+      ].includes(ear.reason)
+    )
+      earRefinement = { status: 'unavailable', reason: ear.reason, pixels: 0 };
+    else throw Error('PARSING_SUMMARY_INVALID');
+  }
   return {
     methodVersion: input.methodVersion,
     candidateOnly: true,
     status: 'completed',
     counts: [...input.counts],
     interfacePixels: input.interfacePixels,
-    ...(!legacy ? { checks: { singleFace: true, eyesAligned: true, lipsAligned: true } } : {}),
+    ...(crop ? { checks: { singleFace: true, eyesAligned: true, lipsAligned: true } } : {}),
+    ...(!legacy ? { earRefinement } : {}),
     accuracyValidated: false,
     canonicalReceiptIssued: false,
   };

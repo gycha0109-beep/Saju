@@ -125,8 +125,10 @@ function render() {
   $('parsing-status').textContent =
     parsing?.status === 'completed'
       ? parsing.methodVersion !== PARSING_VERSION
-        ? '수정 전 전체 사진 분할 · 위치·누락 검사 없음'
-        : `분할 후보 · 귀 ${parsing.counts[7] + parsing.counts[8] > 0 ? '후보 있음 · 범위 확인 필요' : '근거 부족'}`
+        ? '기존 전체 사진 분할 후보'
+        : parsing.earRefinement?.status === 'applied'
+          ? '전체 사진 분할 · 귀 확대 후보 적용'
+          : `전체 사진 분할 · 귀 확대 미적용${{ NO_SINGLE_FACE: ' · 얼굴 위치 미확인', MULTIPLE_FACES: ' · 여러 얼굴', FACE_FRAME_INVALID: ' · 확대 영역 미확인', ANCHOR_DISAGREEMENT: ' · 부위 위치 불일치', EAR_FRAGMENT_ONLY: ' · 귀 근거 부족', REFINEMENT_FAILED: ' · 확대 처리 실패' }[parsing.earRefinement?.reason] || ''}`
       : parsing?.status === 'unavailable'
         ? {
             MULTIPLE_FACES:

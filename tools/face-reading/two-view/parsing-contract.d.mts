@@ -1,5 +1,6 @@
 export const PARSING_VERSION: string;
 export const PARSING_LEGACY_VERSION: string;
+export const PARSING_CROP_VERSION: string;
 export const PARSING_PIN: {
   repository: string;
   sourceRevision: string;
@@ -24,6 +25,13 @@ export type ParsingSummary =
       counts: number[];
       interfacePixels: number;
       checks?: { singleFace: true; eyesAligned: true; lipsAligned: true };
+      earRefinement?:
+        | {
+            status: 'applied';
+            pixels: number;
+            checks: { singleFace: true; eyesAligned: true; lipsAligned: true };
+          }
+        | { status: 'unavailable'; reason: string; pixels: 0 };
       accuracyValidated?: false;
       canonicalReceiptIssued?: false;
     }

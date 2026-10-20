@@ -4,6 +4,7 @@ import { deflateSync, crc32 } from 'node:zlib';
 import {
   PARSING_VERSION,
   PARSING_LEGACY_VERSION,
+  PARSING_CROP_VERSION,
   PARSING_LABELS,
   PARSING_GROUPS,
   rgbTensor,
@@ -20,7 +21,7 @@ const summary = () => ({
   status: 'completed' as const,
   counts: [n, ...Array<number>(18).fill(0)],
   interfacePixels: 0,
-  checks: { singleFace: true as const, eyesAligned: true as const, lipsAligned: true as const },
+  earRefinement: { status: 'unavailable' as const, reason: 'NO_SINGLE_FACE', pixels: 0 as const },
 });
 function chunk(kind: string, bytes: Buffer) {
   const output = Buffer.alloc(bytes.length + 12);
@@ -47,11 +48,15 @@ function png(pixel?: number[]) {
 }
 describe('pinned local parsing candidate contract', () => {
   it('rejects absent or disagreeing checks and keeps legacy comparison read-only', () => {
-    expect(() => validateParsingSummary({ ...summary(), checks: undefined })).toThrow();
+    expect(() => validateParsingSummary({ ...summary(), earRefinement: undefined })).toThrow();
     expect(() =>
       validateParsingSummary({
         ...summary(),
-        checks: { singleFace: true, eyesAligned: false, lipsAligned: true },
+        earRefinement: {
+          status: 'applied',
+          pixels: 100,
+          checks: { singleFace: true, eyesAligned: false, lipsAligned: true },
+        },
       }),
     ).toThrow();
     const legacy = { ...summary(), methodVersion: PARSING_LEGACY_VERSION, checks: undefined };
@@ -71,12 +76,12 @@ describe('pinned local parsing candidate contract', () => {
       ).methodVersion,
     ).toBe(PARSING_LEGACY_VERSION);
     const unavailable = {
-      methodVersion: PARSING_VERSION,
+      methodVersion: PARSING_CROP_VERSION,
       candidateOnly: true,
       status: 'unavailable',
       reason: 'MULTIPLE_FACES',
     };
-    expect(validateParsingSummary(unavailable)).toMatchObject({
+    expect(validateParsingSummary(unavailable, { allowLegacy: true })).toMatchObject({
       status: 'unavailable',
       reason: 'MULTIPLE_FACES',
     });
@@ -89,15 +94,29 @@ describe('pinned local parsing candidate contract', () => {
         ['a'],
       ),
     ).toThrow();
-    expect(
+    expect(() =>
       validateParsingBatch(
         {
           methodVersion: PARSING_VERSION,
           records: [{ captureRef: 'a', parsing: unavailable, layers: {} }],
         },
         ['a'],
-      )[0]!.layers,
-    ).toEqual({});
+      ),
+    ).toThrow();
+    expect(validateParsingSummary(summary())).toMatchObject({
+      status: 'completed',
+      earRefinement: { status: 'unavailable', reason: 'NO_SINGLE_FACE' },
+    });
+    expect(
+      validateParsingSummary({
+        ...summary(),
+        earRefinement: {
+          status: 'applied',
+          pixels: 100,
+          checks: { singleFace: true, eyesAligned: true, lipsAligned: true },
+        },
+      }),
+    ).toMatchObject({ earRefinement: { status: 'applied', pixels: 100 } });
   });
   it('restores wide/tall image aspect inside the content viewport without square-mask padding', () => {
     expect(containSize(1200, 600, 400, 600)).toEqual({ width: 400, height: 200 });
