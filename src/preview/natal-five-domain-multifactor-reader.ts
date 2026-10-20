@@ -76,6 +76,10 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     (report.state !== 'complete' || report.sections.length >= 3) &&
     (report.state !== 'insufficient' || report.sections.length === 0) &&
     (report.state !== 'partial' || report.missing.length > 0) &&
+    // Same-chart evidence is not interchangeable across domain claims.
+    report.sections.every(section =>
+      section.claimType.startsWith(domain.toUpperCase() + '_NATAL_MULTIFACTOR_') &&
+      section.ruleId === 'RULE-' + section.claimType) &&
     (birthTimeKnown || report.state === 'insufficient' && report.sections.length === 0),
     'a domain is not a bounded source-qualified research reading');
   const originalText = report.sections.map(renderSection).join('') ||

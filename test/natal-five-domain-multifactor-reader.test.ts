@@ -124,6 +124,13 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
       ...ra, general: { ...ra.general, state: 'complete', sections: [] },
     })).toThrow(/bounded source-qualified/);
+    expect(ra.general.sections.length).toBeGreaterThan(0);
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
+      ...ra, wealth: {
+        ...ra.wealth,
+        sections: ra.general.sections,
+      },
+    } as unknown as NatalFiveDomainMultifactorReports)).toThrow(/bounded source-qualified/);
     const unknown = sample(3, 10, null);
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(unknown, ra)).toThrow();
   });
