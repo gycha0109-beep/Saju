@@ -126,9 +126,13 @@ function render() {
     parsing?.status === 'completed'
       ? parsing.methodVersion !== PARSING_VERSION
         ? '기존 전체 사진 분할 후보'
-        : parsing.earRefinement?.status === 'applied'
-          ? '전체 사진 분할 · 귀 확대 후보 적용'
-          : `전체 사진 분할 · 귀 확대 미적용${{ NO_SINGLE_FACE: ' · 얼굴 위치 미확인', MULTIPLE_FACES: ' · 여러 얼굴', FACE_FRAME_INVALID: ' · 확대 영역 미확인', ANCHOR_DISAGREEMENT: ' · 부위 위치 불일치', EAR_FRAGMENT_ONLY: ' · 귀 근거 부족', REFINEMENT_FAILED: ' · 확대 처리 실패' }[parsing.earRefinement?.reason] || ''}`
+        : parsing.instanceRefinement?.status === 'applied'
+          ? `얼굴별 분할 · ${parsing.instanceRefinement.faces}명${parsing.instanceRefinement.lipChecksPassed < parsing.instanceRefinement.faces ? ' · 입술 위치 확인 필요' : ''}`
+          : parsing.instanceRefinement?.status === 'unavailable'
+            ? '얼굴별 분할 미적용 · 기존 전체 분할 표시'
+            : parsing.earRefinement?.status === 'applied'
+              ? '전체 사진 분할 · 귀 확대 후보 적용'
+              : `전체 사진 분할 · 귀 확대 미적용${{ NO_SINGLE_FACE: ' · 얼굴 위치 미확인', MULTIPLE_FACES: ' · 여러 얼굴', FACE_FRAME_INVALID: ' · 확대 영역 미확인', ANCHOR_DISAGREEMENT: ' · 부위 위치 불일치', EAR_FRAGMENT_ONLY: ' · 귀 근거 부족', REFINEMENT_FAILED: ' · 확대 처리 실패' }[parsing.earRefinement?.reason] || ''}`
       : parsing?.status === 'unavailable'
         ? {
             MULTIPLE_FACES:

@@ -1,6 +1,7 @@
 export const PARSING_VERSION: string;
 export const PARSING_LEGACY_VERSION: string;
 export const PARSING_CROP_VERSION: string;
+export const PARSING_EAR_VERSION: string;
 export const PARSING_PIN: {
   repository: string;
   sourceRevision: string;
@@ -24,6 +25,16 @@ export type ParsingSummary =
       status: 'completed';
       counts: number[];
       interfacePixels: number;
+      instanceRefinement?:
+        | { status: 'not_requested' }
+        | { status: 'unavailable'; reason: string }
+        | {
+            status: 'applied';
+            faces: number;
+            lipChecksPassed: number;
+            counts: number[];
+            interfacePixels: number;
+          };
       checks?: { singleFace: true; eyesAligned: true; lipsAligned: true };
       earRefinement?:
         | {

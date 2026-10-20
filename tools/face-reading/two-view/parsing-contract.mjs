@@ -1,6 +1,7 @@
 export const PARSING_LEGACY_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.1.0';
 export const PARSING_CROP_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.2.0';
-export const PARSING_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.3.0';
+export const PARSING_EAR_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.3.0';
+export const PARSING_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.4.0';
 export const PARSING_PIN = Object.freeze({
   repository: 'yakhyo/face-parsing',
   sourceRevision: '8a4729d95118d0e97c44185f9bdef3d6bfeaaf99',
@@ -112,7 +113,12 @@ export function contactPixels(mask, width, height) {
 export function validateParsingSummary(input, { allowLegacy = false } = {}) {
   const crop = input?.methodVersion === PARSING_CROP_VERSION;
   const legacy =
-    allowLegacy && [PARSING_LEGACY_VERSION, PARSING_CROP_VERSION].includes(input?.methodVersion);
+    allowLegacy &&
+    [PARSING_LEGACY_VERSION, PARSING_CROP_VERSION, PARSING_EAR_VERSION].includes(
+      input?.methodVersion,
+    );
+  const hasEars =
+    input?.methodVersion === PARSING_EAR_VERSION || input?.methodVersion === PARSING_VERSION;
   if (
     !input ||
     (!legacy && input.methodVersion !== PARSING_VERSION) ||
@@ -164,7 +170,7 @@ export function validateParsingSummary(input, { allowLegacy = false } = {}) {
   )
     throw Error('PARSING_SUMMARY_INVALID');
   let earRefinement;
-  if (!legacy) {
+  if (hasEars) {
     const ear = input.earRefinement;
     if (
       ear?.status === 'applied' &&
@@ -195,6 +201,56 @@ export function validateParsingSummary(input, { allowLegacy = false } = {}) {
       earRefinement = { status: 'unavailable', reason: ear.reason, pixels: 0 };
     else throw Error('PARSING_SUMMARY_INVALID');
   }
+  let instanceRefinement;
+  if (!legacy) {
+    const value = input.instanceRefinement;
+    if (value?.status === 'not_requested') instanceRefinement = { status: 'not_requested' };
+    else if (
+      value?.status === 'unavailable' &&
+      [
+        'MODEL_UNAVAILABLE',
+        'DETECTION_FAILED',
+        'NO_FACES',
+        'TOO_MANY_FACES',
+        'ANCHOR_DISAGREEMENT',
+      ].includes(value.reason)
+    )
+      instanceRefinement = { status: 'unavailable', reason: value.reason };
+    else if (
+      value?.status === 'applied' &&
+      Number.isInteger(value.faces) &&
+      value.faces >= 1 &&
+      value.faces <= 4 &&
+      Number.isInteger(value.lipChecksPassed) &&
+      value.lipChecksPassed >= 0 &&
+      value.lipChecksPassed <= value.faces &&
+      Array.isArray(value.counts) &&
+      value.counts.length === 19 &&
+      value.counts.every((n) => Number.isInteger(n) && n >= 0) &&
+      value.counts.reduce((a, b) => a + b, 0) === 512 * 512 &&
+      Number.isInteger(value.interfacePixels) &&
+      value.interfacePixels >= 0 &&
+      value.interfacePixels <= value.counts[1]
+    )
+      instanceRefinement = {
+        status: 'applied',
+        faces: value.faces,
+        lipChecksPassed: value.lipChecksPassed,
+        counts: [...value.counts],
+        interfacePixels: value.interfacePixels,
+      };
+    else throw Error('PARSING_SUMMARY_INVALID');
+    if (
+      instanceRefinement.status !== 'not_requested' &&
+      !['MULTIPLE_FACES', 'NO_SINGLE_FACE'].includes(earRefinement?.reason)
+    )
+      throw Error('PARSING_SUMMARY_INVALID');
+    if (
+      instanceRefinement.status === 'not_requested' &&
+      ['MULTIPLE_FACES', 'NO_SINGLE_FACE'].includes(earRefinement?.reason)
+    )
+      throw Error('PARSING_SUMMARY_INVALID');
+  }
   return {
     methodVersion: input.methodVersion,
     candidateOnly: true,
@@ -202,7 +258,8 @@ export function validateParsingSummary(input, { allowLegacy = false } = {}) {
     counts: [...input.counts],
     interfacePixels: input.interfacePixels,
     ...(crop ? { checks: { singleFace: true, eyesAligned: true, lipsAligned: true } } : {}),
-    ...(!legacy ? { earRefinement } : {}),
+    ...(hasEars ? { earRefinement } : {}),
+    ...(!legacy ? { instanceRefinement } : {}),
     accuracyValidated: false,
     canonicalReceiptIssued: false,
   };

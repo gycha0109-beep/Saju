@@ -1,6 +1,6 @@
 # Local two-view job and frontal metric preview
 
-Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local experiment), #2606 (full-frame preservation). Watchtower-Track: face-observation-engine.
+Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local experiment), #2606 (full-frame preservation), #2607 (instance routing). Watchtower-Track: face-observation-engine.
 
 This implements P0/P1 and the P2 parsing comparison of the two-view design. Users can select a frontal and a
 profile image, execute the supported jobs together, cancel work, and inspect
@@ -131,7 +131,7 @@ The exact provider label order is in `parsing-contract.mjs`. Ear labels 7/8 are
 combined for display, while jewellery/accessory label 9 is excluded. Provider
 l/r labels are not anatomical left/right authority.
 
-Method `engineering.face-parsing.yakhyo-resnet18@0.3.0` always executes the full-image
+Revision `engineering.face-parsing.yakhyo-resnet18@0.3.0` always executes the full-image
 baseline. Hair, skin, brows, lips, nose and hair-skin contact use only that full
 frame. A second face-local pass can replace only the ear display layer. Its
 localization/frame/agreement failures leave all baseline layers available; they
@@ -197,7 +197,7 @@ engineering comparison only. Code license is not treated as independent evidence
 of commercial clearance for weights/training data; Product/Production adoption is
 not granted here. No training dataset or upstream user-face image is downloaded.
 
-Both supported frontal and profile roles receive full-frame parsing. Only the
+Both supported frontal and profile roles receive full-frame parsing. The
 optional ear pass requires single-face localization and agreement. Frontal and parser
 jobs have separate 30/60-second deadlines and failure states, so a parser failure
 preserves frontal metrics, and a frontal failure preserves parser candidates.
@@ -233,6 +233,7 @@ old rendered artifacts. Logs contain only bounded startup/error codes.
 npx vitest run test/face-two-view-preview.test.ts
 npx vitest run test/face-parsing-preview.test.ts
 npx vitest run test/face-parsing-frame.test.ts
+npx vitest run test/face-parsing-instance.test.ts
 npx eslint tools/face-reading/two-view test/face-two-view-preview.test.ts
 npx prettier --check tools/face-reading/two-view test/face-two-view-preview.test.ts
 ```
@@ -260,7 +261,64 @@ layers and full-frame class counts to the preserved revision 0.1 output for ever
 one of the 23 captures. This catches the actual truncation/whole-capture regression
 instead of only testing registration or execution. Anatomical accuracy still needs
 actual human review; a larger ear mask is not by itself acceptance. The previously
-unlocalized profile's inaccurate baseline is unresolved, not a recovered detection.
+unlocalized profile's inaccurate baseline was unresolved in revision 0.3.
+
+## Revision 0.4: bounded instance candidates
+
+Current writer method is `engineering.face-parsing.yakhyo-resnet18@0.4.0`.
+The baseline and optional ear pass stay unchanged. Only `MULTIPLE_FACES` or
+`NO_SINGLE_FACE` from that pass enable a further detector. All other captures
+must retain byte-identical seven-layer output from 0.3. Historical 0.1/0.2/0.3
+summaries remain readable under their original versions; current writers reject
+them. Baseline `counts` and `interfacePixels` still describe the full-image pass.
+
+The optional [OpenCV Zoo YuNet model](https://github.com/opencv/opencv_zoo/tree/f12e12798e8314f7c074a6656816c048dcc95b7a/models/face_detection_yunet)
+is pinned to commit `f12e12798e8314f7c074a6656816c048dcc95b7a`, asset
+`face_detection_yunet_2023mar.onnx`, SHA-256
+`8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4`.
+Place it at the existing ignored intake's `assets/yunet-2023mar.onnx`; a missing
+or mismatched optional asset leaves all baseline layers available. Its
+[MIT license](https://github.com/opencv/opencv_zoo/blob/f12e12798e8314f7c074a6656816c048dcc95b7a/models/face_detection_yunet/LICENSE)
+applies to the upstream model. No new dependency, recognition/identity model,
+automatic download, training dataset or source-image copy is introduced.
+
+The exact ONNX input is `[1,3,640,640]`, raw BGR 0–255 with aspect-preserving
+resize and bottom/right black padding. Decode strides 8/16/32 and five points;
+score is the square root of clamped class/object confidence product. The pinned
+Python wrapper's default score 0.6, NMS 0.3 and top-5000 candidates are fixed.
+NMS uses float-box IoU, so no byte-equivalence to OpenCV integer-box NMS is claimed.
+Padding-centred boxes are discarded; a fifth retained face stops refinement.
+The initial diagnostic used the CLI's 0.9 default and missed the profile; changing
+to the wrapper's 0.6 is recorded diagnostic history, not a calibrated accuracy claim.
+
+Each instance uses the SAME ResNet18 parser in a square context of twice its box's
+maximum extent. Its eye-midpoint to mouth-midpoint direction defines an upright
+input rotation, not anatomical pose correction. Source-exterior padding is RGB128.
+Nose-class support near the detector nose (radius 24/512) is required to route
+that instance. Lip-class support near the mouth midpoint is screened separately.
+An unsupported lip label cannot replace baseline labels; the UI reports partial
+lip checks. This replaced the initial all-or-nothing NEW-stage policy after the
+profile's isolated lip disagreement. Existing 0.3 ear checks are not weakened.
+Neither check validates hair, skin, ears, hidden contours or anatomical accuracy.
+
+Class labels are inversely projected into source space with nearest sampling.
+Within overlapping contexts, nearest normalized box-centre distance owns each
+pixel; this is transient routing, not persistent person identity. Only positive
+labels supplement/replace baseline labels, so crop background cannot truncate
+full-frame hair. The result may retain incorrect baseline pixels where a crop
+has no positive label; this is not a fully corrected segmentation guarantee.
+`instanceRefinement` stores only not-requested/unavailable/applied, bounded reason,
+face count, passed lip-check count and separate merged class/contact counts.
+Boxes, points, crop transforms and source RGB remain inside the worker. Multiple
+people do not receive merged scalar measurements; profiles still have no frontal
+scalar rows. Frozen hairline revision 0.4.0 and canonical receipts are unchanged.
+
+Private diagnostics also evaluated the author's ResNet34 alternative once; its
+browser crashed and it is not integrated. No per-image threshold search is used.
+Verification covers strict outputs/padding, duplicate NMS/dense sentinel,
+inverse rotation, independent feature checks, background preservation, lip-label
+suppression, method-specific persistence, real runtime failure/retry and unchanged
+non-triggered layers. Operational checks do not establish human visual acceptance.
 
 ## Architecture Check
 

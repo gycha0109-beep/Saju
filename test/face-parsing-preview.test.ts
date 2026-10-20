@@ -22,6 +22,7 @@ const summary = () => ({
   counts: [n, ...Array<number>(18).fill(0)],
   interfacePixels: 0,
   earRefinement: { status: 'unavailable' as const, reason: 'NO_SINGLE_FACE', pixels: 0 as const },
+  instanceRefinement: { status: 'unavailable' as const, reason: 'NO_FACES' },
 });
 function chunk(kind: string, bytes: Buffer) {
   const output = Buffer.alloc(bytes.length + 12);
@@ -115,6 +116,7 @@ describe('pinned local parsing candidate contract', () => {
           pixels: 100,
           checks: { singleFace: true, eyesAligned: true, lipsAligned: true },
         },
+        instanceRefinement: { status: 'not_requested' },
       }),
     ).toMatchObject({ earRefinement: { status: 'applied', pixels: 100 } });
   });

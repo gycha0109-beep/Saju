@@ -70,7 +70,7 @@ self.onmessage = async ({ data }) => {
         if (output) for (const value of Object.values(output)) value.dispose();
       }
     }
-    // This exact full-image input remains authoritative for every non-ear layer.
+    // Preserve the exact full-image pass; optional instance routing is isolated below.
     ctx.drawImage(bitmap, 0, 0, size, size);
     const { mask: base, counts } = await parseCanvas();
     let earMask = null,
@@ -148,11 +148,32 @@ self.onmessage = async ({ data }) => {
     } catch {
       skipped('REFINEMENT_FAILED');
     }
-    const contact = contactPixels(base, size, size),
+    let display = base,
+      instanceRefinement = { status: 'not_requested' };
+    if (['MULTIPLE_FACES', 'NO_SINGLE_FACE'].includes(earRefinement.reason)) {
+      try {
+        const { refineInstances, mergeInstances } = await import('./instance-parsing.mjs');
+        const refined = await refineInstances(bitmap, ort, size, ctx, parseCanvas);
+        instanceRefinement = refined.summary;
+        if (refined.instances) {
+          const merged = mergeInstances(base, size, refined.instances, bitmap.width, bitmap.height);
+          display = merged.mask;
+          instanceRefinement = {
+            ...instanceRefinement,
+            counts: merged.counts,
+            interfacePixels: contactPixels(display, size, size).reduce((a, b) => a + b, 0),
+          };
+        }
+      } catch {
+        display = base;
+        instanceRefinement = { status: 'unavailable', reason: 'DETECTION_FAILED' };
+      }
+    }
+    const contact = contactPixels(display, size, size),
       layers = {};
     for (const group of PARSING_GROUPS) {
       // Never leak the cropped input's rectangular boundary into full-frame layers.
-      const mask = group.id === 'ears' && earMask ? earMask : base,
+      const mask = group.id === 'ears' && earMask ? earMask : display,
         rgba = new Uint8ClampedArray(size * size * 4);
       for (let p = 0; p < mask.length; p++)
         if (group.id === 'interface' ? contact[p] : group.classes.includes(mask[p])) {
@@ -171,8 +192,9 @@ self.onmessage = async ({ data }) => {
         candidateOnly: true,
         status: 'completed',
         counts,
-        interfacePixels: contact.reduce((a, b) => a + b, 0),
+        interfacePixels: contactPixels(base, size, size).reduce((a, b) => a + b, 0),
         earRefinement,
+        instanceRefinement,
       },
     });
   } catch {

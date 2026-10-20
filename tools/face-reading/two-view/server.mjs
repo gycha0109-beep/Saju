@@ -10,11 +10,13 @@ import {
   PARSING_VERSION,
   PARSING_LEGACY_VERSION,
   PARSING_CROP_VERSION,
+  PARSING_EAR_VERSION,
   PARSING_PIN,
   PARSING_GROUPS,
   validateParsingSummary,
 } from './parsing-contract.mjs';
 import { validateParsingBatch } from './parsing-storage.mjs';
+import { INSTANCE_PIN } from './instance-frame.mjs';
 
 const sourceDir = dirname(fileURLToPath(import.meta.url));
 const repository = resolve(sourceDir, '../../..');
@@ -191,6 +193,7 @@ export async function createLocalReviewServer({
   const runRoot = resolve(intake, 'two-view-runs');
   const parsingRoot = resolve(intake, 'parsing-runs');
   let parsingModel = null,
+    instanceModel = null,
     parsingSaved = [],
     parsingRunId,
     parsingSaving = false,
@@ -222,15 +225,25 @@ export async function createLocalReviewServer({
     /* Missing optional parser cannot break the existing review path. */
   }
   try {
+    const bytes = await readFile(resolve(intake, 'assets/yunet-2023mar.onnx'));
+    if (createHash('sha256').update(bytes).digest('hex') === INSTANCE_PIN.sha256)
+      instanceModel = bytes;
+  } catch {
+    /* Optional instance detection never disables the baseline parser. */
+  }
+  try {
     const active = JSON.parse(await readFile(resolve(parsingRoot, 'active.json'), 'utf8'));
     if (!/^[a-f0-9-]{36}$/.test(active.runId)) throw Error('PARSING_RUN_INVALID');
     const saved = JSON.parse(
       await readFile(resolve(parsingRoot, active.runId, 'summary.json'), 'utf8'),
     );
     if (
-      ![PARSING_VERSION, PARSING_LEGACY_VERSION, PARSING_CROP_VERSION].includes(
-        saved.methodVersion,
-      ) ||
+      ![
+        PARSING_VERSION,
+        PARSING_LEGACY_VERSION,
+        PARSING_CROP_VERSION,
+        PARSING_EAR_VERSION,
+      ].includes(saved.methodVersion) ||
       !Array.isArray(saved.records)
     )
       throw Error('PARSING_RUN_INVALID');
@@ -289,6 +302,8 @@ export async function createLocalReviewServer({
       'parsing-contract.mjs',
       'parsing-worker.mjs',
       'parsing-frame.mjs',
+      'instance-frame.mjs',
+      'instance-parsing.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const name of [
@@ -389,6 +404,11 @@ export async function createLocalReviewServer({
     if (req.headers.host !== '127.0.0.1:' + port)
       return json(res, 403, { error: 'LOCAL_HOST_REQUIRED' });
     const url = new URL(req.url, origin);
+    if (req.method === 'GET' && url.pathname === '/local-assets/instance-yunet.onnx') {
+      if (!instanceModel) return json(res, 503, { error: 'INSTANCE_MODEL_UNAVAILABLE' });
+      res.writeHead(200, { ...staticHeaders, 'Content-Type': 'application/octet-stream' });
+      return res.end(instanceModel);
+    }
     if (req.method === 'GET' && url.pathname === '/local-assets/parsing-resnet18.onnx') {
       if (!parsingModel) return json(res, 503, { error: 'PARSING_MODEL_UNAVAILABLE' });
       res.writeHead(200, { ...staticHeaders, 'Content-Type': 'application/octet-stream' });
