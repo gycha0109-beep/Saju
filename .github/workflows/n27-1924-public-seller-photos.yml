@@ -1,0 +1,53 @@
+name: N27 1924 four-book listing public photograph audit
+on:
+  push:
+    branches: [research/saju/n27-external-folio-acquisition-20261020]
+    paths: ['.github/workflows/n27-1924-public-seller-photos.yml']
+permissions:
+  contents: read
+jobs:
+  obtain-photos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Save publicly displayed seller images only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-1924-public-photos
+          python3 - <<'PY'
+          import pathlib,json,hashlib,urllib.request,urllib.error,time
+          root=pathlib.Path("n27-1924-public-photos")
+          base="https://www.yetnal.co.kr/data/item/1727930540/"
+          names=["thumb-IMG_8382_900x1350.jpg","thumb-IMG_8383_900x600.jpg","thumb-IMG_8384_900x600.jpg","thumb-IMG_8385_900x600.jpg"]
+          result={"productPage":"https://www.yetnal.co.kr/shop/item.php?it_id=1727930540","advertisedDescription":"1924 Shanghai 4 juan 4 physical books; 9x15cm; not confirmed to be Yulgok holding","publicImages":[],"targetSupplementPrintedLocusNotPresumed":True,"restrictedResourceBypassed":False}
+          for name in names:
+            url=base+name
+            row={"publicPhotoUrl":url,"status":"NOT_ACQUIRED"}
+            try:
+              headers={"User-Agent":"Mozilla/5.0 (public historical facsimile image inspection)","Referer":"https://www.yetnal.co.kr/shop/item.php?it_id=1727930540"}
+              req=urllib.request.Request(url,headers=headers)
+              with urllib.request.urlopen(req,timeout=27) as r:
+                data=r.read(12*1024*1024+1);row["statusCode"]=r.status;row["type"]=r.headers.get("Content-Type","")
+              if len(data)>12*1024*1024:raise ValueError("SIZE_CAP")
+              if not data.startswith(b"\xff\xd8\xff"):raise ValueError("NOT_JPEG")
+              (root/name).write_bytes(data)
+              row.update(status="PUBLIC_JPEG_ACQUIRED",bytes=len(data),sha256=hashlib.sha256(data).hexdigest())
+            except urllib.error.HTTPError as e:
+              row.update(status="HTTP_ERROR",statusCode=e.code)
+              if e.code in (401,403,429):
+                result["publicImages"].append(row)
+                break
+            except Exception as e:row.update(status="ERROR",reason=repr(e)[:160])
+            result["publicImages"].append(row)
+            print("N27_1924",name,row["status"],row.get("bytes"),flush=True)
+            time.sleep(.5)
+          (root/"audit.json").write_text(json.dumps(result,ensure_ascii=False,indent=2))
+          PY
+      - name: Keep only publicly linked JPEG and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-1924-four-book-public-photos
+          path: n27-1924-public-photos
+          retention-days: 14
