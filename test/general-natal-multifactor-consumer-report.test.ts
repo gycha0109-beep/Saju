@@ -93,6 +93,62 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
     }
   });
 
+  it('shows actual tension-only General T8 as grounded Korean partial reading, not an empty report', () => {
+    let found: ReturnType<typeof run> | undefined;
+    let foundInput: readonly [number, number] | undefined;
+    outer: for(const month of [2,3,4,5,6,7,8,9,10,11,12,1]) {
+      for(const day of [3,7,11,17,23,27]) {
+        const candidate = run(month, day);
+        const activeT8 = candidate.execution.claims.filter(c =>
+          c.taxonomy.tier === 'T8' &&
+          c.taxonomy.category === 'general' &&
+          c.predicate === 'general_multifactor_structure' &&
+          c.state === 'active');
+        if(activeT8.length > 0 && activeT8.every(c =>
+          (c.value as {axis?: string}).axis === 'tension')) {
+          found = candidate;
+          foundInput = [month, day];
+          break outer;
+        }
+      }
+    }
+    expect(found, 'a real chart with only source-qualified General tension evidence').toBeDefined();
+    if(!found) return;
+    expect(found.report.state).toBe('partial');
+    expect(found.report.sections.length).toBeGreaterThan(0);
+    expect(found.report.sections.every(s => s.axis === 'tension')).toBe(true);
+    expect(new Set(found.report.sections.map(s => s.pattern)).size).toBe(found.report.sections.length);
+    expect(found.report.missing.join(' ')).toContain('중심 결론을 세울 수 없어');
+    for(const section of found.report.sections) {
+      expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
+      expect(section.observedPositions.every(p => section.paragraph.includes(p))).toBe(true);
+      expect(section.sourceIds.length).toBeGreaterThan(0);
+      expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
+      expect(section.ruleId.length).toBeGreaterThan(0);
+    }
+    expect(found.report.researchOnly).toBe(true);
+    expect(found.report.usefulComplete).toBe(false);
+    expect(found.report.mayPublish).toBe(false);
+    expect(found.report.maySell).toBe(false);
+    expect(foundInput).toBeDefined();
+    if(foundInput) expect(run(...foundInput).report).toEqual(found.report);
+    console.info('General actual-chart tension-only Korean partial', JSON.stringify({
+      input: foundInput,
+      chartHash: found.report.calculationHash,
+      state: found.report.state,
+      sections: found.report.sections.map(s => ({
+        headline: s.headline, paragraph: s.paragraph, ruleId: s.ruleId,
+        sourceIds: s.sourceIds, upstreamClaimIds: s.upstreamClaimIds,
+        factPaths: s.observedFactPaths,
+      })),
+      missing: found.report.missing,
+      researchOnly: found.report.researchOnly,
+      mayPublish: found.report.mayPublish,
+      maySell: found.report.maySell,
+      usefulComplete: found.report.usefulComplete,
+    }));
+  }, 60000);
+
   it('does not infer full-chart meaning with unknown birth hour', () => {
     const x = run(3,10,false);
     expect(x.report.state).toBe('insufficient');
