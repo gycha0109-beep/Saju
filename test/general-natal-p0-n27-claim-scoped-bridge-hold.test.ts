@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('28f072896451eebb5aa22ec0267b48d12877173c');
+    expect(review.researchHeadReviewed).toBe('392a7bea518f14c4b9071322d5595924f1746a24');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v27',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v28',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -394,6 +394,22 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             printedWitnessIncrement: 1,
             historicalIndependentStemCountProof: false,
             fiveClaimsStayHold: true,
+          },
+          print1929PublisherColophonDoesNotGrantSemantics: {
+            artifactId: 12242733882,
+            originalLowerPdfSha256: 'ccb21cf1215a1e487fe79497839f9343534af42a2e3af6c1e7dd04f3faea9289',
+            originalLowerPdfBytes: 6708084,
+            originalLowerPdfPages: 168,
+            page3PrintedJuan: 4,
+            page167PrintedFirstEdition: '中華民國十五年一月初版',
+            page167PrintedReprint: '中華民國十八年十二月再版',
+            commonsCatalogue1929NovemberVsPrintedDecemberConflict: true,
+            publisher1926To1929ReprintClaimDirectlyRead: true,
+            platesAndFullTextIdenticalBetweenEditions: 'UNADJUDICATED',
+            addedPrintedHourWealthSupplementLoci: 0,
+            independentClassicalTextLineageCountAdded: 0,
+            historicalHiddenStemOrYiWeiCountingAdjudicated: false,
+            exactFiveClaimsHoldUnchanged: true,
           },
           locSeventeenthCenturyPageAcquisitionLimit: {
             runnerImageTotal: 59,
