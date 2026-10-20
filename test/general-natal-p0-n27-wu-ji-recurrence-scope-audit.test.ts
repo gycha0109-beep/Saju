@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v28');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v29');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -638,6 +638,30 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       newlyDirectlyReadPrintedLoci: 1,
       allowsSemanticClaimPromotion: false,
     });
+    expect(three.shenfeng1926ComplementaryPrintedVolumeBoundary).toMatchObject({
+      former167PagePreviewArtifactId: 12245160822,
+      former167PageOfficialPreviewImagesAcquired: 7,
+      former167PagePdfOriginalBytesAcquired: false,
+      former167PagePhysicalPrintedJuanStartsOnPdfPage2: 4,
+      former167PagePdfPage2PreviewSha256: '60302a1758d5c368a89c786d1af121f3d8c759627d32a2d8bbcb2a9879a03dbb',
+      former167PagePdfPage166PrintedColophonFirstDate: '中華民國十五年一月出版',
+      former167PagePdfPage166PrintedColophonReleaseDate: '中華民國十五年一月發行',
+      former167PagePdfPage166PreviewSha256: 'aa1f155e8d8ec9fe7128c20fa7187a32e887b4577912b34ad99948d22db3627f',
+      prior169PagePreviewArtifactId: 12245355973,
+      prior169PageOfficialPreviewImagesAcquired: 8,
+      prior169PagePdfPage166EndOfPrintedJuan: 3,
+      prior169PagePdfPage166PreviewSha256: '1d6b683036d2635e520002b6203eb981ecea09c7c483c34b9d2784e710809aac',
+      adjacentPrintedJuanBoundaryPhysicallyRead: true,
+      scansFromDistinctNlcCatalogueIdentifiers: true,
+      samePhysicalTwoBookSetCertified: false,
+      sharedPublisherAndComplementaryTextualContentsSupported: true,
+      corresponding1926And1929Juan4OpeningLayoutLocallySimilar: true,
+      completePlateIdentityProven: false,
+      newSupplementTargetPrintedLociFromThesePageFrames: 0,
+      newIndependentClassicalTextualLineages: 0,
+      allFiveClaimDisposition: 'HOLD',
+      productionMeaningAdmissionAllowed: false,
+    });
     expect(three.shenfeng1929LowerVolumePrintedColophon).toMatchObject({
       acquisitionArtifactId: 12242733882,
       originalPdfBytes: 6708084,
@@ -659,7 +683,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       newIndependentTextualLineageCount: 0,
       nineteenTwentySixSingle167PagePdfAcquired: false,
       nineteenTwentySixSingle167PageLatestHttpStatus: 429,
-      nineteenTwentySixSingle167PageOriginalJuan: 'UNADJUDICATED',
+      nineteenTwentySixSingle167PageOriginalJuan: 4,
       anyClaimPromotionAuthorized: false,
     });
     expect(three.locEarlyPrintJuanTwoPartialAcquisition).toMatchObject({
