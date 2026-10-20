@@ -1,0 +1,81 @@
+name: N27 1926 public Wikimedia pre-rendered folios
+on:
+  push:
+    branches: [research/saju/n27-external-folio-acquisition-20261020]
+    paths: ['.github/workflows/n27-1926-167-public-page-thumbnails.yml']
+permissions:
+  contents: read
+jobs:
+  read-public-thumbnail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Resolve publicly exposed Commons PDF page JPG previews; halt host on HTTP 429
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-1926-167-public-frames
+          python3 - <<'PY'
+          import urllib.request,urllib.error,urllib.parse,json,hashlib,time,re,html,pathlib
+          out=pathlib.Path("n27-1926-167-public-frames")
+          title="File:NLC416-12jh004266-48929_神峰通考.pdf"
+          filename=title[5:]
+          base="https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/"+urllib.parse.quote(filename,safe="")
+          root="https://commons.wikimedia.org"
+          ua="MyeongHa-N27-PublicBookResearch/1.0 (public Commons thumbnail sampling; no authentication)"
+          data={"title":title,"mediaPage":root+"/wiki/"+urllib.parse.quote(title,safe=":"),"requestedPdfPages":[1,2,3,4,165,166,167],"records":[],"noBypass":True}
+          def get(url,limit=3*1024*1024):
+            req=urllib.request.Request(url,headers={"User-Agent":ua,"Accept":"image/jpeg,text/html;q=0.8,application/json;q=0.7,*/*;q=0.5"})
+            with urllib.request.urlopen(req,timeout=28) as resp:
+              ct=resp.headers.get("content-type","")
+              body=resp.read(limit+1)
+              if len(body)>limit:raise ValueError("SIZE_CAP")
+              return body,resp.status,ct,resp.url
+          # Two official Wikimedia host routes: Commons file-page HTML and the site's own generated PDF-thumbnail URL.
+          # No login, no vendor mirrors, no custom IP or proxy, no rate-limit circumvention.
+          blockedHosts=set()
+          for page in data["requestedPdfPages"]:
+            item={"page":page,"status":"UNREAD"}
+            routes=[
+              ("commons_file_page",root+"/w/index.php?"+urllib.parse.urlencode({"title":title,"page":page})),
+              ("official_pdf_thumbnail",base+f"/page{page}-770px-"+urllib.parse.quote(filename,safe="")+".jpg"),
+            ]
+            for kind,url in routes:
+              host=urllib.parse.urlparse(url).netloc
+              if host in blockedHosts:
+                item.setdefault("skippedHosts",[]).append(host);continue
+              attempt={"kind":kind,"url":url}
+              try:
+                b,status,ctype,final=get(url)
+                attempt.update(http=status,bytes=len(b),contentType=ctype,finalUrl=final)
+                if b.startswith(b"\xff\xd8\xff"):
+                  name=f"p{page:03d}-{kind}.jpg"
+                  (out/name).write_bytes(b)
+                  attempt.update(status="JPEG_ACQUIRED",sha256=hashlib.sha256(b).hexdigest(),saved=name)
+                  item["status"]="PREVIEW_IMAGE_ACQUIRED"
+                elif "html" in ctype and kind=="commons_file_page":
+                  markup=b.decode("utf-8","replace")
+                  candidates=re.findall(r'https?:[^" <]+?page'+str(page)+r'[^" <]+?\.jpg',markup,re.I)
+                  attempt.update(status="HTML_ONLY",suggestedImageUrls=[html.unescape(x) for x in candidates[:2]],length=len(markup))
+                else:
+                  attempt.update(status="NOT_JPEG",prefix=repr(b[:80]))
+              except urllib.error.HTTPError as e:
+                attempt.update(status="HTTP_ERROR",http=e.code)
+                if e.code==429:blockedHosts.add(host)
+              except Exception as e: attempt.update(status="ERROR",error=repr(e)[:200])
+              item.setdefault("attempts",[]).append(attempt)
+              if item["status"]=="PREVIEW_IMAGE_ACQUIRED":break
+              time.sleep(1.1)
+            data["records"].append(item)
+            print("N27_1926_PUBLIC_PAGE",page,item["status"],item.get("attempts",[])[-1] if item.get("attempts") else "",flush=True)
+          data["blockedHosts"]=sorted(blockedHosts)
+          (out/"manifest.json").write_text(json.dumps(data,indent=2,ensure_ascii=False))
+          print("N27_PAGE_IMAGES_SAVED",len(list(out.glob("*.jpg"))),flush=True)
+          PY
+      - name: Archive only publicly retrievable image bytes and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-1926-167-official-page-preview-attempt
+          path: n27-1926-167-public-frames/
+          retention-days: 14
