@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('392a7bea518f14c4b9071322d5595924f1746a24');
+    expect(review.researchHeadReviewed).toBe('88a55e8b0e16505301132357241e80ddc6e37b35');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v28',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v29',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -394,6 +394,26 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             printedWitnessIncrement: 1,
             historicalIndependentStemCountProof: false,
             fiveClaimsStayHold: true,
+          },
+          print1926DirectPrintedVolumeBoundaryNonGrant: {
+            former167PreviewArtifactId: 12245160822,
+            former167PreviewPagesActuallyObtained: 7,
+            former167PdfPage2IsOriginalJuan4: true,
+            former167PdfPage166FirstPublicationPrinted: '中華民國十五年一月出版',
+            former167PdfPage166ReleasePrinted: '中華民國十五年一月發行',
+            former167PdfPage166JpegSha256: 'aa1f155e8d8ec9fe7128c20fa7187a32e887b4577912b34ad99948d22db3627f',
+            original167PdfBytesStillNotAcquired: true,
+            prior169PreviewArtifactId: 12245355973,
+            prior169PreviewPagesActuallyObtained: 8,
+            prior169PdfPage166IsFinalOriginalJuan3Text: true,
+            consecutiveJuan3ToJuan4ContentBoundaryPhysicallyRead: true,
+            twoCataloguedCopiesSamePhysicalBoundSetCertified: false,
+            juan4OpeningLocallyMatches1929Reprint: true,
+            exactHistoricalPlateIdentityCertified: false,
+            newTargetHourWealthSupplementRead: false,
+            newIndependentHistoricalTextualLineage: false,
+            hiddenStemCountingApproved: false,
+            everyN27ClaimStaysHold: true,
           },
           print1929PublisherColophonDoesNotGrantSemantics: {
             artifactId: 12242733882,
