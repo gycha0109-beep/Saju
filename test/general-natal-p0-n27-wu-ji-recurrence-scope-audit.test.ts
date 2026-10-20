@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v26');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v27');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -768,6 +768,48 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
         originalPrintedImageRetrieved: false,
         editionIndependentFromYulgok: 'UNADJUDICATED',
       },
+    });
+    expect(three.yulgokFourBookAllPublicSampleFramesDirectAudit).toMatchObject({
+      originalJpegAndProvenanceArtifactId: 12236515723,
+      physicalVolumesOfficiallyCatalogued: 4,
+      volumeOne: {
+        catalogueId: 'B005_01_B00330_001',
+        publicImagesRetrieved: 6,
+        openingPrintedJuanHeading: '卷之一',
+      },
+      volumeTwo: {
+        catalogueId: 'B005_01_B00330_002',
+        publicImagesRetrieved: 5,
+        headingEvidenceSha256: '2e9980305b437be5ec33d0d451fa98d77eea528cef80460c493433f5fbf593d6',
+        originalPrintedJuanHeading: '卷之二',
+      },
+      volumeThree: {
+        catalogueId: 'B005_01_B00330_003',
+        publicImagesRetrieved: 5,
+        headingEvidenceSha256: 'f9356e7b87d1dc77a5b5f6817d3b72e915212cbc981359e00cd94a026b3d88be',
+        originalPrintedJuanHeading: '卷之三',
+      },
+      volumeFour: {
+        catalogueId: 'B005_01_B00330_004',
+        publicImagesRetrieved: 6,
+        headingEvidenceSha256: 'a996377e1debd30d58e5018eca1ee2df7f9a428936d6a347144d3df58831d24f',
+        originalPrintedJuanHeading: '卷之四',
+      },
+      openPreviewImagesForFourPhysicalBooksTotal: 22,
+      newlyDownloadedOfficialPublicPreviewFramesBeyondEarlierVolumeOne: 16,
+      separatelyCataloguedAnotherYulgokQianqingtangVolume1And2SampleFrames: 5,
+      allKnownYulgokPublicSampleFramesAcrossTwoHoldings: 27,
+      publicPreviewFrameLinksComeFromActualOfficialHtmlImgItems: true,
+      originalsForAllFourVolumesPhysicallyCompared: true,
+      laterUnshownContentsOfFourPhysicalBooksCanContainOtherJuan: 'UNADJUDICATED',
+      entireFourBookEditionIsFourTextualJuan: 'UNADJUDICATED',
+      actualPrintedPublisherMarkObservedOnFirstVolume: '千頃堂書局商標',
+      physicalPrintingYearForThisFourBookCopy: 'UNADJUDICATED',
+      exactHourWealthSupplementInAnyNewPublicPreview: false,
+      newSupplementDirectPrintedGlyphLociFromTheseSixteenFrames: 0,
+      newIndependentlyProvenStemmaticWitnessCount: 0,
+      explicitAncientCalculationSemanticAuthorizations: 0,
+      allN27ClaimsMustStayHold: true,
     });
     expect(three.nationalLibraryChina1936CopperplateDirectSupplementCollation).toMatchObject({
       sourceInstitutionAsCatalogued: '中国国家图书馆',
