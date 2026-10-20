@@ -1,0 +1,84 @@
+name: N27 Ming Sanmingtang four-juan publicly linked photograph audit
+on:
+  push:
+    branches: [research/saju/n27-external-folio-acquisition-20261020]
+    paths: ['.github/workflows/n27-ming-sanmingtang-public-photographs.yml']
+permissions:
+  contents: read
+jobs:
+  collect-samples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Acquire page-linked public image samples and SHA, no gated content
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-sanmingtang-public
+          python3 - <<'PY'
+          import urllib.request,urllib.error,urllib.parse,re,hashlib,json,pathlib,time,html
+          from html.parser import HTMLParser
+          root=pathlib.Path("n27-sanmingtang-public")
+          page="https://www.gujicanglan.com/3389.html"
+          report={"sourcePage":page,"status":"NOT_ACQUIRED","images":[],"originalPrintingAuthenticated":False,"originalTargetFolioRead":False}
+          headers={"User-Agent":"Mozilla/5.0 (public-domain historical-book preview research)","Accept":"text/html,image/jpeg;q=0.9,*/*;q=0.5"}
+          def get(url,cap=10*1024*1024):
+            with urllib.request.urlopen(urllib.request.Request(url,headers=headers),timeout=34) as resp:
+              b=resp.read(cap+1)
+              if len(b)>cap:raise ValueError("SAFE_SIZE_CAP")
+              return b,resp.status,resp.headers.get("Content-Type","")
+          class LinkCollector(HTMLParser):
+            def __init__(self):super().__init__();self.urls=[]
+            def handle_starttag(self,tag,attrs):
+              d=dict(attrs)
+              if tag in ("img","a","source"):
+                for k in ("src","href","data-src","srcset"):
+                  v=d.get(k)
+                  if v:self.urls.append(v.split(" ")[0])
+          try:
+            b,status,mime=get(page,4*1024*1024)
+            report.update(status="PUBLIC_SOURCE_HTML_RETRIEVED",sourceHttp=status,htmlSha256=hashlib.sha256(b).hexdigest())
+            (root/"public-page.html").write_bytes(b)
+            t=b.decode("utf-8","replace")
+            coll=LinkCollector();coll.feed(t)
+            candidates=[]
+            for raw in coll.urls:
+              u=urllib.parse.urljoin(page,html.unescape(raw))
+              parsed=urllib.parse.urlparse(u)
+              if parsed.hostname not in ("www.gujicanglan.com","gujicanglan.com"):continue
+              if not re.search(r"/wp-content/uploads/2025/01/.*\.(?:jpe?g|png|webp)$",parsed.path,re.I):continue
+              if u not in candidates:candidates.append(u)
+            report["publicLinkedImageCount"]=len(candidates)
+            for i,u in enumerate(candidates[:22]):
+              o={"url":u,"status":"NOT_ACQUIRED"}
+              try:
+                data,sc,ctype=get(u)
+                o.update(http=sc,type=ctype,bytes=len(data))
+                if data.startswith(b"\xff\xd8\xff"):ext="jpg"
+                elif data.startswith(b"\x89PNG\r\n\x1a\n"):ext="png"
+                elif data[:4]==b"RIFF" and data[8:12]==b"WEBP":ext="webp"
+                else:raise ValueError("NOT_IMAGE")
+                fname=f"public-img-{i+1:02d}.{ext}"
+                (root/fname).write_bytes(data)
+                o.update(status="PUBLIC_IMAGE_ACQUIRED",filename=fname,sha256=hashlib.sha256(data).hexdigest())
+              except urllib.error.HTTPError as e:
+                o.update(status="HTTP_ERROR",http=e.code)
+                report["images"].append(o)
+                if e.code in (401,403,429):break
+                continue
+              except Exception as e:o.update(status="ERROR",error=repr(e)[:240])
+              report["images"].append(o)
+              print("N27_SANMINGTANG_IMAGE",i+1,o["status"],o.get("bytes"),flush=True)
+              time.sleep(0.3)
+          except Exception as e:report.update(status="SOURCE_READ_ERROR",error=repr(e)[:240])
+          report["imagesAcquired"]=len([r for r in report["images"] if r["status"]=="PUBLIC_IMAGE_ACQUIRED"])
+          (root/"manifest.json").write_text(json.dumps(report,ensure_ascii=False,indent=2))
+          print("N27_SANMINGTANG_FINAL",report["status"],report.get("publicLinkedImageCount"),report["imagesAcquired"],flush=True)
+          PY
+      - name: Preserve only visible source photos and page provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-ming-sanmingtang-public-original-photographs
+          path: n27-sanmingtang-public/
+          retention-days: 14
