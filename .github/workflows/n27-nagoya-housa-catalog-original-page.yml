@@ -1,0 +1,68 @@
+name: N27 Nagoya Housa official Hanseki catalog first-hand page check
+on:
+  push:
+    branches: [research/saju/n27-external-folio-acquisition-20261020]
+    paths: ['.github/workflows/n27-nagoya-housa-catalog-original-page.yml']
+permissions:
+  contents: read
+jobs:
+  public-official-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Fetch catalog public original, find 4-juan entry, render only hit folios
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-nagoya-official-catalog
+          python3 -m pip install --quiet 'pymupdf>=1.24,<2'
+          python3 - <<'PY'
+          import urllib.request,urllib.error,json,hashlib,pathlib,re
+          import fitz
+          root=pathlib.Path("n27-nagoya-official-catalog")
+          url="https://housa.city.nagoya.jp/archive/deta/zosyo02.pdf"
+          rec={"officialSource":url,"status":"NOT_ACQUIRED","retrievedPdfOriginal":False,"targetPrintPageDirectlyRead":False,"candidateEntryPages":[]}
+          try:
+            req=urllib.request.Request(url,headers={"User-Agent":"Mozilla/5.0 (public Japanese municipal library historical bibliography study)","Accept":"application/pdf"})
+            with urllib.request.urlopen(req,timeout=80) as resp:
+              buf=bytearray()
+              while True:
+                b=resp.read(1024*1024)
+                if not b:break
+                if len(buf)+len(b)>48*1024*1024:raise ValueError("SAFE_CAP_48MB")
+                buf.extend(b)
+              rec["http"]=resp.status
+              rec["type"]=resp.headers.get("Content-Type")
+            data=bytes(buf)
+            if not data.startswith(b"%PDF-"):raise ValueError("NOT_PDF")
+            rec.update(status="PDF_RETRIEVED",retrievedPdfOriginal=True,bytes=len(data),sha256=hashlib.sha256(data).hexdigest())
+            # Save only provenance and limited rendered pages instead of rehosting a 30 MB municipal catalog.
+            doc=fitz.open(stream=data,filetype="pdf");rec["pages"]=len(doc)
+            terms=["命理正宗","神峰","神峯","高應芳","高应芳","宗文堂","文林閣"]
+            matches=[]
+            for ix in range(len(doc)):
+              t=doc[ix].get_text("text")
+              search=re.sub(r"\s+","",t)
+              hits=[v for v in terms if v in search]
+              if hits:matches.append({"pdfPage":ix+1,"terms":hits,"excerpt":t[:3000]})
+            rec["textSearchHitCount"]=len(matches)
+            rec["candidateEntryPages"]=matches[:20]
+            pages=sorted(set([m["pdfPage"] for m in matches if any(t in m["terms"] for t in ["命理正宗","高應芳","高应芳","宗文堂"])]))
+            if not pages and matches:pages=[matches[0]["pdfPage"]]
+            for pg in pages[:8]:
+              out=root/f"catalog-page-{pg:03d}.png"
+              doc[pg-1].get_pixmap(matrix=fitz.Matrix(2,2),alpha=False).save(out)
+              rec.setdefault("renderedOriginalPdfPageNumbers",[]).append(pg)
+            rec["status"]="PUBLIC_CATALOG_PAGE_RENDERED" if pages else "ORIGINAL_PDF_DOWNLOADED_TEXT_SEARCH_NO_HIT"
+            print("N27_NAGOYA_OFFICIAL",rec["status"],rec.get("bytes"),rec.get("pages"),len(matches),pages[:8],flush=True)
+          except urllib.error.HTTPError as e:rec.update(status="HTTP_ERROR",http=e.code)
+          except Exception as e:rec.update(status="ERROR",reason=repr(e)[:300])
+          (root/"manifest.json").write_text(json.dumps(rec,ensure_ascii=False,indent=2))
+          PY
+      - name: Preserve public catalog page PNG and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-nagoya-four-juan-official-catalog-folios
+          path: n27-nagoya-official-catalog/
+          retention-days: 14
