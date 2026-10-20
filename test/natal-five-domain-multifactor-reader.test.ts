@@ -1,3 +1,4 @@
+import { describeQuotedReadingAxis } from '../src/preview/korean-reading-headline.js';
 import { describe, expect, it } from 'vitest';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
@@ -54,6 +55,27 @@ function reports(snapshot: ReturnType<typeof sample>): NatalFiveDomainMultifacto
 }
 
 describe('same-chart five-domain multifactor Korean research reading', () => {
+  it('uses correct Korean quoted-heading particles in actual domain paragraphs', () => {
+    expect(describeQuotedReadingAxis('표현과 결과가 연결되는 구조')).toBe(
+      "'표현과 결과가 연결되는 구조'라는");
+    expect(describeQuotedReadingAxis('준비와 산출의 연결')).toBe(
+      "'준비와 산출의 연결'이라는");
+    expect(describeQuotedReadingAxis('자원 배분의 조율')).toBe(
+      "'자원 배분의 조율'이라는");
+    expect(describeQuotedReadingAxis('표현과 교환의 관계')).toBe(
+      "'표현과 교환의 관계'라는");
+    expect(() => describeQuotedReadingAxis('')).toThrow(/Hangul syllable/u);
+
+    for (const [month, day] of [[3, 10], [4, 12], [8, 12]] as const) {
+      const readings = reports(sample(month, day));
+      for (const domain of ['general', 'wealth', 'business', 'relationship'] as const) {
+        for (const section of readings[domain].sections) {
+          expect(section.paragraph).toContain(describeQuotedReadingAxis(section.headline));
+        }
+      }
+    }
+  });
+
   it('renders five source-owned Korean meanings and evidence scopes on one real canonical chart', () => {
     const chart = sample(3, 10);
     const sections = reports(chart);
