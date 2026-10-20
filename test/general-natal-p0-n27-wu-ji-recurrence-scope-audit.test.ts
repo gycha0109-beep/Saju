@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v24');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v25');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -768,6 +768,25 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
         originalPrintedImageRetrieved: false,
         editionIndependentFromYulgok: 'UNADJUDICATED',
       },
+    });
+    expect(three.korean1906OfficialViewerPublicAcquisitionAudit).toMatchObject({
+      catalogueWorkId: 'G905-9086005',
+      sourceAccessArtifactId: 12232929247,
+      publicAcquisitionStatus: 'HTTP_400_REQUEST_BLOCKED_ALL_3',
+      requests: [
+        { target: 'official-catalogue', httpStatus: 400, bodyTitle: 'Request Blocked' },
+        { target: 'official-viewer-iframe', httpStatus: 400, bodyTitle: 'Request Blocked' },
+        { target: 'official-generic-viewer', httpStatus: 400, bodyTitle: 'Request Blocked' },
+      ],
+      publicPdfBytesRetrieved: false,
+      htmlContentOfTargetViewerRead: false,
+      independentOfficialPrintedImageRead: false,
+      requestWasUnauthenticatedAndRespectedAccessControls: true,
+      denialMustNotBeInterpretedAsNoPdfOrNoSupplementInBook: true,
+      sameEditionAs1906ShaoxingAndDalian: 'UNADJUDICATED',
+      original1906SupplementFoliosCollated: 0,
+      newAncientTextualWitnessCount: 0,
+      semanticRulePromotions: 0,
     });
     expect(three.qianqingtang1924ScholarshipAndOtherLithographCatalogues).toMatchObject({
       koreanScholarlyPaper: {
