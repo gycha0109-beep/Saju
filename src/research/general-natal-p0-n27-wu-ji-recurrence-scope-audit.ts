@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v29' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v30' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -726,6 +726,39 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             historicallyAdjudicatesSeparateDayBranchOccurrence: false as const,
             newlyDirectlyReadPrintedLoci: 1 as const,
             allowsSemanticClaimPromotion: false as const,
+          }),
+          shenfeng1924QiangingtangSellerDatedImprintNonGrant: Object.freeze({
+            publishedPhotographsPage: 'https://www.yetnal.co.kr/shop/item.php?it_id=1727930540' as const,
+            retrievalRun: 'https://github.com/gycha0109-beep/Saju/actions/runs/39387647015' as const,
+            retrievalArtifactId: 12248510151 as const,
+            publicJpegCountAcquired: 4 as const,
+            allFourPublicJpegResponseCode: 200 as const,
+            sellerClaimsEditionYear: 1924 as const,
+            sellerClaimsPhysicalBookCount: 4 as const,
+            sellerPhysicalSizeCentimeters: '9x15' as const,
+            firstPhotoSha256: '23f63b45dfc6c99564e487e2dfa1b9993fce6b7e65f05236704c76276fa17cbe' as const,
+            secondPhotoSha256: '07af7251ee3ad41959dc0eb655d4270b546339e89222a81fc3e024db1ebedc30' as const,
+            thirdPhotoSha256: '956e80093526576accf1b4f6197d6dbdbfd0335a91a56b1555a722e7845aaad2' as const,
+            fourthPhotoSha256: 'c6a4c8418dea4fbec22c88ead3d48c1ba8d9bfafb1b4470554479cef13ac8e96' as const,
+            fourthPhotoOriginalPrintedReprintDate: '中華民國十三年重刊' as const,
+            year1924DirectlyReadOnPhotographedImprint: true as const,
+            originalTrademarkOnFourthPhoto: '千頃堂書局商標' as const,
+            sourcePhotoFourthContainsPrefaceAndTradeEmblem: true as const,
+            yulgokHoldingCompared: 'YG015-01-481_B005_01_B00330_001' as const,
+            yulgokOfficialPreviewAcquisitionArtifactId: 12236515723 as const,
+            yulgokFirstBookPublicTrademarkPhoto: 'B005_01_B00330_001_004.jpg' as const,
+            yulgokOfficialPhotoShowsSameTradeEmblemDesign: true as const,
+            yulgokOfficialPhotoSameVisiblePrefaceOpening: true as const,
+            dated1924ArcVisibleOnYulgokTrademarkPage: false as const,
+            yulgokPhysicalCopyPrintedIn1924Certified: false as const,
+            twoPhotographedPhysicalCopiesTextualDescentCertified: false as const,
+            sameCarvedOrLithographicPrintingPlateCertified: false as const,
+            sourcePublicSellerPhotoIsNotFullBookFacsimile: true as const,
+            newHourWealthSupplementTargetFolioRead: false as const,
+            independentHistoricalTextualLineageCountAdded: 0 as const,
+            exactBieGongZaiJianYiWeiMeaning: 'UNADJUDICATED' as const,
+            researchClaimsHold: true as const,
+            productionSemanticGrant: false as const,
           }),
           shenfeng1926ComplementaryPrintedVolumeBoundary: Object.freeze({
             formerUnaccessed167PagePdfSource: 'https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf' as const,
