@@ -2,9 +2,10 @@
 import { PreviewJobs } from './jobs.mjs';
 import { METRIC_DEFINITIONS, METHOD_VERSION } from './frontal-metrics.mjs';
 import { PARSING_GROUPS, PARSING_VERSION, containSize } from './parsing-contract.mjs';
+import { PROFILE_DEFINITIONS } from './profile-metrics.mjs';
 const $ = (id) => document.getElementById(id);
 const reasons = {
-  profile_method_not_implemented: '측면 옆선 측정은 다음 단계입니다',
+  profile_method_not_implemented: '정면용 수치는 측면 사진에 적용하지 않습니다',
   provider_shape_invalid: '얼굴 점을 확인하지 못했습니다',
   face_not_detected: '얼굴을 찾지 못했습니다',
   ambiguous_multiple_faces: '얼굴이 여러 개입니다',
@@ -120,6 +121,19 @@ function render() {
       : result?.overlayUrl || record.image;
   const previous = $('previous-parsing').checked && Boolean(result?.previousParsing);
   const parsing = previous ? result?.previousParsing : result?.parsing;
+  const quality = parsing?.regionScreening?.regions;
+  const regionNames = { skin: '피부', nose: '코', lips: '입술', brows: '눈썹', ears: '귀 후보' };
+  const checked = quality
+    ? Object.keys(quality)
+        .filter((id) => quality[id].status !== 'unchecked')
+        .map((id) => regionNames[id])
+        .join('·')
+    : '';
+  $('quality-status').textContent = quality
+    ? checked
+      ? `${checked} 위치·연결 검사${Object.values(quality).some((q) => q.status === 'suppressed') ? ' · 위치가 맞지 않는 부위 표시 보류' : ''}`
+      : '부위 위치 검사 근거 부족 · 기존 표시 유지'
+    : '';
   $('previous-parsing-label').hidden = !result?.previousParsing;
   $('parsing-controls').hidden = parsing?.status !== 'completed';
   $('parsing-status').textContent =
@@ -161,10 +175,38 @@ function render() {
         (record.viewRole === 'profile' ? 'profile_method_not_implemented' : 'not_executed'),
     }));
   if (record.viewRole === 'profile') {
-    const p = document.createElement('p');
-    p.className = 'note';
-    p.textContent = reasons.profile_method_not_implemented;
-    $('metrics').append(p);
+    const observed = parsing?.profile;
+    if (observed?.status === 'completed')
+      for (const definition of PROFILE_DEFINITIONS) {
+        const metric = observed.metrics.find((m) => m.id === definition.id),
+          card = document.createElement('div'),
+          label = document.createElement('div'),
+          value = document.createElement('strong'),
+          note = document.createElement('small');
+        card.className = 'metric';
+        label.textContent = definition.label;
+        value.textContent = metric.status === 'available' ? metric.value.toFixed(3) : '—';
+        note.textContent =
+          metric.status === 'available'
+            ? '측면 · 보이는 분할 영역 비율'
+            : {
+                NO_SINGLE_FACE: '한 얼굴의 위치를 확인하지 못했습니다',
+                FRAME_UNAVAILABLE: '분석 영역을 확인하지 못했습니다',
+                REFERENCE_UNAVAILABLE: '피부 윤곽 기준이 부족합니다',
+                FACE_CLIPPED: '피부 윤곽이 사진 또는 분석 경계에 닿았습니다',
+                PART_MISSING: '해당 부위가 분할되지 않았습니다',
+                PART_CLIPPED: '해당 부위 경계가 잘렸습니다',
+                ANCHOR_DISAGREEMENT: '부위 위치가 맞지 않습니다',
+              }[metric.reason];
+        card.append(label, value, note);
+        $('metrics').append(card);
+      }
+    else {
+      const p = document.createElement('p');
+      p.className = 'note';
+      p.textContent = '측면 수치는 새 분석 후 표시됩니다';
+      $('metrics').append(p);
+    }
   } else
     for (const metric of metrics) {
       const card = document.createElement('div');
@@ -313,7 +355,10 @@ async function inferParsing(task, { signal, generation }) {
     owner.addEventListener('message', message);
     owner.addEventListener('error', error);
     signal.addEventListener('abort', abort, { once: true });
-    owner.postMessage({ generation, captureRef: task.captureRef, bitmap }, [bitmap]);
+    owner.postMessage(
+      { generation, captureRef: task.captureRef, viewRole: task.viewRole, bitmap },
+      [bitmap],
+    );
   });
 }
 async function boundedProvider(fn, task, context, timeoutMs) {

@@ -2,6 +2,7 @@ export const PARSING_VERSION: string;
 export const PARSING_LEGACY_VERSION: string;
 export const PARSING_CROP_VERSION: string;
 export const PARSING_EAR_VERSION: string;
+export const PARSING_INSTANCE_VERSION: string;
 export const PARSING_PIN: {
   repository: string;
   sourceRevision: string;
@@ -25,6 +26,14 @@ export type ParsingSummary =
       status: 'completed';
       counts: number[];
       interfacePixels: number;
+      regionScreening?: {
+        backgroundRemoved: number;
+        regions: Record<
+          string,
+          { status: 'screened' | 'unchecked' | 'suppressed'; removedPixels: number }
+        >;
+      };
+      profile?: import('./profile-metrics.mjs').ProfileSummary;
       instanceRefinement?:
         | { status: 'not_requested' }
         | { status: 'unavailable'; reason: string }
@@ -66,5 +75,5 @@ export function classifyLogits(
 export function contactPixels(mask: Uint8Array, width: number, height: number): Uint8Array;
 export function validateParsingSummary(
   input: unknown,
-  options?: { allowLegacy?: boolean },
+  options?: { allowLegacy?: boolean; viewRole?: 'frontal' | 'profile' },
 ): ParsingSummary;

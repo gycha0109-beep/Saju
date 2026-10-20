@@ -9,6 +9,7 @@ export const INSTANCE_PIN: {
   maxFaces: number;
   context: number;
   anchorRadius: number;
+  witnessContext: number;
 };
 export type Point = { x: number; y: number };
 export type InstanceBox = Point & { w: number; h: number; score: number; points: Point[] };
@@ -18,6 +19,7 @@ export type Instance = {
   frame: InstanceFrame;
   mask: Uint8Array;
   lipsAligned: boolean;
+  background?: Uint8Array;
 };
 export function bgrTensor(rgba: ArrayLike<number>, size: number): Float32Array;
 export function decodeFaces(
@@ -46,4 +48,14 @@ export function mergeInstances(
   instances: Instance[],
   width: number,
   height: number,
-): { mask: Uint8Array; counts: number[] };
+): { mask: Uint8Array; counts: number[]; backgroundRemoved: number };
+export function backgroundWitness(
+  primary: Uint8Array,
+  witness: Uint8Array,
+  size: number,
+  frame: InstanceFrame,
+  witnessFrame: InstanceFrame,
+  box: InstanceBox,
+  width: number,
+  height: number,
+): Uint8Array;

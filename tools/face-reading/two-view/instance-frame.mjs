@@ -10,6 +10,7 @@ export const INSTANCE_PIN = Object.freeze({
   maxFaces: 4,
   context: 2,
   anchorRadius: 24,
+  witnessContext: 3,
 });
 export function bgrTensor(rgba, size) {
   if (rgba.length !== size * size * 4 || !Number.isInteger(size) || size <= 0)
@@ -161,6 +162,7 @@ export function instanceChecks(mask, size, box, frame) {
 }
 export function mergeInstances(base, size, instances, width, height) {
   const merged = new Uint8Array(base);
+  let backgroundRemoved = 0;
   for (let y = 0; y < size; y++)
     for (let x = 0; x < size; x++) {
       const px = ((x + 0.5) * width) / size,
@@ -178,10 +180,43 @@ export function mergeInstances(base, size, instances, width, height) {
         }
       }
       const label = owner?.mask[y * size + x];
-      if (label > 0 && (![12, 13].includes(label) || owner.lipsAligned))
+      if (
+        owner?.background?.[y * size + x] &&
+        [1, 2, 3, 4, 5, 7, 8, 10, 11, 12, 13].includes(merged[y * size + x])
+      ) {
+        merged[y * size + x] = 0;
+        backgroundRemoved++;
+      } else if (label > 0 && (![12, 13].includes(label) || owner.lipsAligned))
         merged[y * size + x] = label;
     }
   const counts = Array(19).fill(0);
   for (const label of merged) counts[label]++;
-  return { mask: merged, counts };
+  return { mask: merged, counts, backgroundRemoved };
+}
+export function backgroundWitness(primary, witness, size, frame, witnessFrame, box, width, height) {
+  const out = new Uint8Array(size * size);
+  for (let y = 0; y < size; y++)
+    for (let x = 0; x < size; x++) {
+      const source = { x: ((x + 0.5) * width) / size, y: ((y + 0.5) * height) / size };
+      if (
+        source.x < 1 ||
+        source.y < 1 ||
+        source.x >= width - 1 ||
+        source.y >= height - 1 ||
+        source.x < box.x ||
+        source.y < box.y ||
+        source.x >= box.x + box.w ||
+        source.y >= box.y + box.h
+      )
+        continue;
+      const a = instancePoint(source, size, frame),
+        b = instancePoint(source, size, witnessFrame);
+      if ([a, b].some((p) => p.x < 1 || p.y < 1 || p.x >= size - 1 || p.y >= size - 1)) continue;
+      if (
+        primary[Math.floor(a.y) * size + Math.floor(a.x)] === 0 &&
+        witness[Math.floor(b.y) * size + Math.floor(b.x)] === 0
+      )
+        out[y * size + x] = 1;
+    }
+  return out;
 }

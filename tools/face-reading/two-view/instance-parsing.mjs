@@ -8,9 +8,20 @@ import {
   instanceChecks,
   projectInstance,
   mergeInstances,
+  instancePoint,
+  backgroundWitness,
 } from './instance-frame.mjs';
+import { screenRegions } from './region-quality.mjs';
+import { measureProfile, sourceFaceClipped } from './profile-metrics.mjs';
 let detector;
-export async function refineInstances(bitmap, ort, size, ctx, parseCanvas) {
+export async function refineInstances(
+  bitmap,
+  ort,
+  size,
+  ctx,
+  parseCanvas,
+  profileRequested = false,
+) {
   const unavailable = (reason) => ({ summary: { status: 'unavailable', reason } });
   try {
     if (!detector)
@@ -50,25 +61,89 @@ export async function refineInstances(bitmap, ort, size, ctx, parseCanvas) {
     if (boxes.length > INSTANCE_PIN.maxFaces) return unavailable('TOO_MANY_FACES');
     const instances = [];
     for (const box of boxes) {
-      const frame = instanceFrame(box),
-        scale = size / frame.side;
-      ctx.resetTransform();
-      ctx.fillStyle = 'rgb(128,128,128)';
-      ctx.fillRect(0, 0, size, size);
-      ctx.translate(size / 2, size / 2);
-      ctx.rotate(frame.angle);
-      ctx.scale(scale, scale);
-      ctx.translate(-frame.left - frame.side / 2, -frame.top - frame.side / 2);
-      ctx.drawImage(bitmap, 0, 0);
-      ctx.resetTransform();
+      const frame = instanceFrame(box);
+      function renderFrame(frame) {
+        const scale = size / frame.side;
+        ctx.resetTransform();
+        ctx.fillStyle = 'rgb(128,128,128)';
+        ctx.fillRect(0, 0, size, size);
+        ctx.translate(size / 2, size / 2);
+        ctx.rotate(frame.angle);
+        ctx.scale(scale, scale);
+        ctx.translate(-frame.left - frame.side / 2, -frame.top - frame.side / 2);
+        ctx.drawImage(bitmap, 0, 0);
+        ctx.resetTransform();
+      }
+      renderFrame(frame);
       const { mask } = await parseCanvas(),
         checks = instanceChecks(mask, size, box, frame);
       if (!checks.noseAligned) return unavailable('ANCHOR_DISAGREEMENT');
+      const mouth = {
+        x: (box.points[3].x + box.points[4].x) / 2,
+        y: (box.points[3].y + box.points[4].y) / 2,
+      };
+      const rawAnchors = {
+        nose: [box.points[2]],
+        lips: checks.lipsAligned ? [mouth] : [],
+        brows: box.points.slice(0, 2),
+      };
+      const anchors = Object.fromEntries(
+        Object.entries(rawAnchors).map(([id, ps]) => [
+          id,
+          ps.map((p) => instancePoint(p, size, frame)),
+        ]),
+      );
+      const screened = screenRegions(mask, size, anchors, INSTANCE_PIN.anchorRadius);
+      const side = (frame.side * INSTANCE_PIN.witnessContext) / INSTANCE_PIN.context;
+      const witnessFrame = {
+        ...frame,
+        left: frame.left + (frame.side - side) / 2,
+        top: frame.top + (frame.side - side) / 2,
+        side,
+      };
+      renderFrame(witnessFrame);
+      const witness = (await parseCanvas()).mask;
       instances.push({
         box,
         frame,
         lipsAligned: checks.lipsAligned,
-        mask: projectInstance(mask, size, frame, bitmap.width, bitmap.height),
+        mask: projectInstance(screened.mask, size, frame, bitmap.width, bitmap.height),
+        background: backgroundWitness(
+          mask,
+          witness,
+          size,
+          frame,
+          witnessFrame,
+          box,
+          bitmap.width,
+          bitmap.height,
+        ),
+        anchors: Object.fromEntries(
+          Object.entries(rawAnchors).map(([id, ps]) => [
+            id,
+            ps.map((p) => ({
+              x: (p.x * size) / bitmap.width,
+              y: (p.y * size) / bitmap.height,
+              radiusX: (INSTANCE_PIN.anchorRadius * frame.side) / bitmap.width,
+              radiusY: (INSTANCE_PIN.anchorRadius * frame.side) / bitmap.height,
+            })),
+          ]),
+        ),
+        ...(profileRequested
+          ? {
+              profile: measureProfile(screened.mask, size, {
+                referenceSupported: checks.noseAligned,
+                lipsAligned: checks.lipsAligned,
+                sourceClipped: sourceFaceClipped(
+                  screened.mask,
+                  size,
+                  frame,
+                  bitmap.width,
+                  bitmap.height,
+                ),
+              }),
+            }
+          : {}),
       });
     }
     // Source-aligned labels only; crop background never erases the full-frame pass.

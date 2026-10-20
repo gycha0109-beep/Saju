@@ -122,6 +122,16 @@ describe('bounded local instance routing', () => {
     const current = {
       ...baseline,
       methodVersion: PARSING_VERSION,
+      regionScreening: {
+        backgroundRemoved: 0,
+        regions: Object.fromEntries(
+          ['skin', 'nose', 'lips', 'brows', 'ears'].map((id) => [
+            id,
+            { status: 'unchecked', removedPixels: 0 },
+          ]),
+        ),
+      },
+      profile: { status: 'not_requested' },
       instanceRefinement: {
         status: 'applied',
         faces: 1,

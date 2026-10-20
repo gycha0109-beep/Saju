@@ -2,6 +2,8 @@
 // Source coordinates and crop transforms stay inside this owned classic worker.
 const contractReady = import('./parsing-contract.mjs');
 const frameReady = import('./parsing-frame.mjs');
+const qualityReady = import('./region-quality.mjs');
+const profileReady = import('./profile-metrics.mjs');
 let session, localizer, FaceLandmarker, ort;
 async function localizationModel() {
   if (!localizer) {
@@ -42,7 +44,7 @@ async function model() {
   return value;
 }
 self.onmessage = async ({ data }) => {
-  const { bitmap, generation, captureRef } = data;
+  const { bitmap, generation, captureRef, viewRole } = data;
   try {
     const {
       PARSING_VERSION,
@@ -53,6 +55,8 @@ self.onmessage = async ({ data }) => {
       contactPixels,
     } = await contractReady;
     const { faceFrame, supportedAnchors, removeEarFragments, projectMask } = await frameReady;
+    const { screenRegions, screenEarOverlay } = await qualityReady;
+    const { measureProfile, unavailableProfile, sourceFaceClipped } = await profileReady;
     const engine = await model(),
       size = PARSING_PIN.size;
     const canvas = new OffscreenCanvas(size, size),
@@ -75,6 +79,10 @@ self.onmessage = async ({ data }) => {
     const { mask: base, counts } = await parseCanvas();
     let earMask = null,
       earRefinement = { status: 'unavailable', reason: 'REFINEMENT_FAILED', pixels: 0 };
+    let anchors = null,
+      backgroundRemoved = 0;
+    let profile =
+      viewRole === 'profile' ? unavailableProfile('NO_SINGLE_FACE') : { status: 'not_requested' };
     const skipped = (reason) => {
       earRefinement = { status: 'unavailable', reason, pixels: 0 };
     };
@@ -83,6 +91,7 @@ self.onmessage = async ({ data }) => {
       if (detected.faceLandmarks.length !== 1)
         skipped(detected.faceLandmarks.length ? 'MULTIPLE_FACES' : 'NO_SINGLE_FACE');
       else {
+        if (viewRole === 'profile') profile = unavailableProfile('FRAME_UNAVAILABLE');
         const points = detected.faceLandmarks[0];
         let frame;
         try {
@@ -123,6 +132,50 @@ self.onmessage = async ({ data }) => {
             bitmap.width,
             bitmap.height,
           );
+          const topologyPoints = (edges) =>
+            [...new Set(edges.flatMap((e) => [e.start, e.end]))].map((i) => points[i]);
+          const sourceSets = {
+            brows: topologyPoints([
+              ...FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW,
+              ...FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW,
+            ]),
+            lips: topologyPoints(FaceLandmarker.FACE_LANDMARKS_LIPS),
+            face: topologyPoints([
+              ...FaceLandmarker.FACE_LANDMARKS_LEFT_EYE,
+              ...FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE,
+              ...FaceLandmarker.FACE_LANDMARKS_LIPS,
+            ]),
+          };
+          anchors = Object.fromEntries(
+            Object.entries(sourceSets).map(([id, ps]) => [
+              id,
+              ps.map((p) => ({
+                x: p.x * size,
+                y: p.y * size,
+                radiusX: (12 * frame.side) / bitmap.width,
+                radiusY: (12 * frame.side) / bitmap.height,
+              })),
+            ]),
+          );
+          if (!lipsAligned) anchors.lips = [];
+          if (viewRole === 'profile') {
+            const cropAnchors = Object.fromEntries(
+              Object.entries(sourceSets).map(([id, ps]) => [
+                id,
+                ps.map((p) => ({
+                  x: ((p.x * bitmap.width - frame.left) * size) / frame.side,
+                  y: ((p.y * bitmap.height - frame.top) * size) / frame.side,
+                })),
+              ]),
+            );
+            if (!lipsAligned) cropAnchors.lips = [];
+            const cleanCrop = screenRegions(crop, size, cropAnchors, 12).mask;
+            profile = measureProfile(cleanCrop, size, {
+              referenceSupported: eyesAligned && lipsAligned,
+              lipsAligned,
+              sourceClipped: sourceFaceClipped(cleanCrop, size, frame, bitmap.width, bitmap.height),
+            });
+          }
           if (!eyesAligned || !lipsAligned) skipped('ANCHOR_DISAGREEMENT');
           else {
             const projected = projectMask(
@@ -153,11 +206,30 @@ self.onmessage = async ({ data }) => {
     if (['MULTIPLE_FACES', 'NO_SINGLE_FACE'].includes(earRefinement.reason)) {
       try {
         const { refineInstances, mergeInstances } = await import('./instance-parsing.mjs');
-        const refined = await refineInstances(bitmap, ort, size, ctx, parseCanvas);
+        const refined = await refineInstances(
+          bitmap,
+          ort,
+          size,
+          ctx,
+          parseCanvas,
+          viewRole === 'profile',
+        );
         instanceRefinement = refined.summary;
         if (refined.instances) {
           const merged = mergeInstances(base, size, refined.instances, bitmap.width, bitmap.height);
           display = merged.mask;
+          backgroundRemoved = merged.backgroundRemoved;
+          anchors = Object.fromEntries(
+            ['nose', 'lips', 'brows'].map((id) => [
+              id,
+              refined.instances.flatMap((i) => i.anchors[id]),
+            ]),
+          );
+          if (viewRole === 'profile')
+            profile =
+              refined.instances.length === 1
+                ? refined.instances[0].profile
+                : unavailableProfile('NO_SINGLE_FACE');
           instanceRefinement = {
             ...instanceRefinement,
             counts: merged.counts,
@@ -168,6 +240,13 @@ self.onmessage = async ({ data }) => {
         display = base;
         instanceRefinement = { status: 'unavailable', reason: 'DETECTION_FAILED' };
       }
+    }
+    const screened = screenRegions(display, size, anchors, 12);
+    display = screened.mask;
+    if (earMask) {
+      const screenedEar = screenEarOverlay(display, earMask, size, anchors, 12);
+      earMask = screenedEar.mask;
+      screened.quality.ears = screenedEar.quality;
     }
     const contact = contactPixels(display, size, size),
       layers = {};
@@ -195,6 +274,8 @@ self.onmessage = async ({ data }) => {
         interfacePixels: contactPixels(base, size, size).reduce((a, b) => a + b, 0),
         earRefinement,
         instanceRefinement,
+        regionScreening: { backgroundRemoved, regions: screened.quality },
+        profile,
       },
     });
   } catch {

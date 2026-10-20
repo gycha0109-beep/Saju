@@ -23,6 +23,16 @@ const summary = () => ({
   interfacePixels: 0,
   earRefinement: { status: 'unavailable' as const, reason: 'NO_SINGLE_FACE', pixels: 0 as const },
   instanceRefinement: { status: 'unavailable' as const, reason: 'NO_FACES' },
+  regionScreening: {
+    backgroundRemoved: 0,
+    regions: Object.fromEntries(
+      ['skin', 'nose', 'lips', 'brows', 'ears'].map((id) => [
+        id,
+        { status: 'unchecked', removedPixels: 0 },
+      ]),
+    ),
+  },
+  profile: { status: 'not_requested' },
 });
 function chunk(kind: string, bytes: Buffer) {
   const output = Buffer.alloc(bytes.length + 12);

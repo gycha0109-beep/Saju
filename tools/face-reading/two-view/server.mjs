@@ -11,6 +11,7 @@ import {
   PARSING_LEGACY_VERSION,
   PARSING_CROP_VERSION,
   PARSING_EAR_VERSION,
+  PARSING_INSTANCE_VERSION,
   PARSING_PIN,
   PARSING_GROUPS,
   validateParsingSummary,
@@ -167,10 +168,13 @@ export async function createLocalReviewServer({
   const ids = [...baseIds, ...additionalInventory.map((r) => r.recordId)];
   if (ids.length !== inventory.length || new Set(ids).size !== inventory.length)
     throw Error('INVENTORY_INVALID');
-  const roles = new Map(additionalInventory.map((r) => [r.recordId, r.viewRole]));
+  const roles = new Map([
+    ...baseIds.map((id) => [id, 'frontal']),
+    ...additionalInventory.map((r) => [r.recordId, r.viewRole]),
+  ]);
   const records = ids.map((captureRef) => ({
     captureRef,
-    viewRole: roles.get(captureRef) || 'frontal',
+    viewRole: roles.get(captureRef),
     image: '/image/' + captureRef,
     ...(manifest.recordIds.includes(captureRef)
       ? { oldOverlay: '/review-artifact/' + captureRef + '/full.png' }
@@ -243,6 +247,7 @@ export async function createLocalReviewServer({
         PARSING_LEGACY_VERSION,
         PARSING_CROP_VERSION,
         PARSING_EAR_VERSION,
+        PARSING_INSTANCE_VERSION,
       ].includes(saved.methodVersion) ||
       !Array.isArray(saved.records)
     )
@@ -252,7 +257,10 @@ export async function createLocalReviewServer({
       throw Error('PARSING_RUN_INVALID');
     parsingSaved = saved.records.map((r) => ({
       captureRef: r.captureRef,
-      parsing: validateParsingSummary(r.parsing, { allowLegacy: true }),
+      parsing: validateParsingSummary(r.parsing, {
+        allowLegacy: true,
+        viewRole: roles.get(r.captureRef),
+      }),
     }));
     parsingRunId = active.runId;
     if (saved.methodVersion === PARSING_LEGACY_VERSION) {
@@ -304,6 +312,8 @@ export async function createLocalReviewServer({
       'parsing-frame.mjs',
       'instance-frame.mjs',
       'instance-parsing.mjs',
+      'region-quality.mjs',
+      'profile-metrics.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const name of [
@@ -553,7 +563,7 @@ export async function createLocalReviewServer({
       const input = await requestJson(req, 12000000);
       if (input.token !== token) return json(res, 403, { error: 'LOCAL_TOKEN_REQUIRED' });
       if (parsingSaving) return json(res, 409, { error: 'SAVE_IN_PROGRESS' });
-      const next = validateParsingBatch(input, ids);
+      const next = validateParsingBatch(input, ids, roles);
       parsingSaving = true;
       try {
         for (const previous of sourceFileStates) {

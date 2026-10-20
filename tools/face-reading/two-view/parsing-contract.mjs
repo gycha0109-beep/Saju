@@ -1,7 +1,9 @@
 export const PARSING_LEGACY_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.1.0';
 export const PARSING_CROP_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.2.0';
 export const PARSING_EAR_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.3.0';
-export const PARSING_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.4.0';
+import { validateProfile } from './profile-metrics.mjs';
+export const PARSING_INSTANCE_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.4.0';
+export const PARSING_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.5.0';
 export const PARSING_PIN = Object.freeze({
   repository: 'yakhyo/face-parsing',
   sourceRevision: '8a4729d95118d0e97c44185f9bdef3d6bfeaaf99',
@@ -110,15 +112,20 @@ export function contactPixels(mask, width, height) {
     }
   return contact;
 }
-export function validateParsingSummary(input, { allowLegacy = false } = {}) {
+export function validateParsingSummary(input, { allowLegacy = false, viewRole } = {}) {
   const crop = input?.methodVersion === PARSING_CROP_VERSION;
   const legacy =
     allowLegacy &&
-    [PARSING_LEGACY_VERSION, PARSING_CROP_VERSION, PARSING_EAR_VERSION].includes(
-      input?.methodVersion,
-    );
-  const hasEars =
-    input?.methodVersion === PARSING_EAR_VERSION || input?.methodVersion === PARSING_VERSION;
+    [
+      PARSING_LEGACY_VERSION,
+      PARSING_CROP_VERSION,
+      PARSING_EAR_VERSION,
+      PARSING_INSTANCE_VERSION,
+    ].includes(input?.methodVersion);
+  const hasEars = [PARSING_EAR_VERSION, PARSING_INSTANCE_VERSION, PARSING_VERSION].includes(
+    input?.methodVersion,
+  );
+  const hasInstances = [PARSING_INSTANCE_VERSION, PARSING_VERSION].includes(input?.methodVersion);
   if (
     !input ||
     (!legacy && input.methodVersion !== PARSING_VERSION) ||
@@ -202,7 +209,7 @@ export function validateParsingSummary(input, { allowLegacy = false } = {}) {
     else throw Error('PARSING_SUMMARY_INVALID');
   }
   let instanceRefinement;
-  if (!legacy) {
+  if (hasInstances) {
     const value = input.instanceRefinement;
     if (value?.status === 'not_requested') instanceRefinement = { status: 'not_requested' };
     else if (
@@ -251,6 +258,42 @@ export function validateParsingSummary(input, { allowLegacy = false } = {}) {
     )
       throw Error('PARSING_SUMMARY_INVALID');
   }
+  let regionScreening, profile;
+  if (!legacy) {
+    const q = input.regionScreening;
+    if (
+      !q ||
+      !Number.isInteger(q.backgroundRemoved) ||
+      q.backgroundRemoved < 0 ||
+      q.backgroundRemoved > 512 * 512 ||
+      !q.regions ||
+      Object.keys(q.regions).length !== 5
+    )
+      throw Error('PARSING_SUMMARY_INVALID');
+    const regions = Object.fromEntries(
+      ['skin', 'nose', 'lips', 'brows', 'ears'].map((id) => {
+        const r = q.regions[id];
+        if (
+          !r ||
+          !['screened', 'unchecked', 'suppressed'].includes(r.status) ||
+          !Number.isInteger(r.removedPixels) ||
+          r.removedPixels < 0 ||
+          r.removedPixels > 512 * 512 ||
+          (r.status === 'unchecked' && r.removedPixels !== 0)
+        )
+          throw Error('PARSING_SUMMARY_INVALID');
+        return [id, { status: r.status, removedPixels: r.removedPixels }];
+      }),
+    );
+    regionScreening = { backgroundRemoved: q.backgroundRemoved, regions };
+    profile = validateProfile(input.profile);
+    if (
+      viewRole !== undefined &&
+      (!['frontal', 'profile'].includes(viewRole) ||
+        (viewRole === 'profile') !== (profile.status === 'completed'))
+    )
+      throw Error('PARSING_SUMMARY_INVALID');
+  }
   return {
     methodVersion: input.methodVersion,
     candidateOnly: true,
@@ -259,7 +302,8 @@ export function validateParsingSummary(input, { allowLegacy = false } = {}) {
     interfacePixels: input.interfacePixels,
     ...(crop ? { checks: { singleFace: true, eyesAligned: true, lipsAligned: true } } : {}),
     ...(hasEars ? { earRefinement } : {}),
-    ...(!legacy ? { instanceRefinement } : {}),
+    ...(hasInstances ? { instanceRefinement } : {}),
+    ...(!legacy ? { regionScreening, profile } : {}),
     accuracyValidated: false,
     canonicalReceiptIssued: false,
   };

@@ -67,7 +67,7 @@ function validateMaskPixels(png, group) {
     previous = row;
   }
 }
-export function validateParsingBatch(input, ids) {
+export function validateParsingBatch(input, ids, roles) {
   if (
     !input ||
     input.methodVersion !== PARSING_VERSION ||
@@ -78,7 +78,7 @@ export function validateParsingBatch(input, ids) {
     throw Error('PARSING_BATCH_INVALID');
   return input.records.map((r) => {
     if (!ids.includes(r.captureRef)) throw Error('PARSING_BATCH_INVALID');
-    const parsing = validateParsingSummary(r.parsing),
+    const parsing = validateParsingSummary(r.parsing, { viewRole: roles?.get(r.captureRef) }),
       layers = {};
     if (parsing.status === 'completed') {
       if (!r.layers || Object.keys(r.layers).length !== names.length)

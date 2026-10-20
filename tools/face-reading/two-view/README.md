@@ -1,11 +1,11 @@
-# Local two-view job and frontal metric preview
+# Local two-view job and visible metric preview
 
-Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local experiment), #2606 (full-frame preservation), #2607 (instance routing). Watchtower-Track: face-observation-engine.
+Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local experiment), #2606 (full-frame preservation), #2607 (instance routing), #2608 (region screening/profile ratios). Watchtower-Track: face-observation-engine.
 
 This implements P0/P1 and the P2 parsing comparison of the two-view design. Users can select a frontal and a
 profile image, execute the supported jobs together, cancel work, and inspect
 every existing local engineering capture in one batch. The profile slot is
-managed and parsed, but profile metric measurement is explicitly unavailable in this stage.
+managed and parsed, with separate engineering visible-class ratios for profile slots.
 
 ## Run
 
@@ -105,7 +105,7 @@ The existing overlays are available through a clearly labelled comparison
 control. A browser-local fresh inference overlay is shown during a numeric run;
 numeric results survive reopening through separate private run directories.
 Reopening retains the original and prior overlay comparison, without saving raw
-landmarks or reconstructing them from PNGs. Profile contour, validated forehead,
+landmarks or reconstructing them from PNGs. Anatomical profile contour, validated forehead,
 ear, nose semantic measurements and official admission are later stages. P2
 parsing masks are separate candidates, not those validated semantic measurements.
 
@@ -265,7 +265,7 @@ unlocalized profile's inaccurate baseline was unresolved in revision 0.3.
 
 ## Revision 0.4: bounded instance candidates
 
-Current writer method is `engineering.face-parsing.yakhyo-resnet18@0.4.0`.
+Historical instance-only method is `engineering.face-parsing.yakhyo-resnet18@0.4.0`.
 The baseline and optional ear pass stay unchanged. Only `MULTIPLE_FACES` or
 `NO_SINGLE_FACE` from that pass enable a further detector. All other captures
 must retain byte-identical seven-layer output from 0.3. Historical 0.1/0.2/0.3
@@ -320,6 +320,93 @@ inverse rotation, independent feature checks, background preservation, lip-label
 suppression, method-specific persistence, real runtime failure/retry and unchanged
 non-triggered layers. Operational checks do not establish human visual acceptance.
 
+## Revision 0.5: region screening and visible profile ratios
+
+Current writer method is `engineering.face-parsing.yakhyo-resnet18@0.5.0`.
+Versions 0.1–0.4 remain readable under their original schemas. This request
+intentionally changes screened face-part masks, while baseline counts, frontal
+scalar rows, previous mask directories and the frozen hairline candidate remain
+unchanged. Hair is never removed by background/component screening. Pixelwise
+regression checks require all prior hair foreground to remain; changed groups
+are reported explicitly rather than calling a changed mask unchanged.
+
+For instance routing, the existing twice-box context receives one fixed
+three-times-box context witness with the same upright rotation. Only where BOTH
+raw parses classify background, inside the detector box and inside original
+image support away from crop/source borders, may a baseline face-part label be
+cleared. Hair/hat/clothing/neck/accessory labels are excluded from this deletion.
+The two scales use the same model and are not independent accuracy evidence.
+This extra pass is not enabled on otherwise non-triggered captures. In the current
+private 23-capture run it removed zero pixels; synthetic fixtures establish its
+bounded behavior, not demonstrated correction of a real background error.
+
+`region-quality.mjs` screens connected nose/lip/brow components against available
+anchors. Single-face MediaPipe uses its named lip/brow topology and eye/lip face
+seeds, with the existing radius 12 in its crop. The pinned JS provider exports no
+named nose topology; no nose landmark index is invented, so its nose remains
+unchecked. YuNet uses explicit nose, mouth midpoint and eye-adjacent brow anchors,
+radius 24 in its crop. Source projection retains that circular support as an
+ellipse in the stretched full-frame mask. These uncalibrated rules may also
+reject a true but poorly aligned feature; screened never means accepted accuracy.
+
+Skin components must connect to a face component supported by those face seeds.
+When no face component reaches a seed, skin remains unchecked and is retained.
+Ear adjacency uses 12 four-neighbour full-mask steps to the retained face. Distant
+ear fragments are removed only when another adjacent ear component survives;
+otherwise the whole candidate remains unchecked. The refined ear overlay owns
+its ear pixels: baseline ear pixels cannot be reintroduced or manufacture a
+corroborating component. The first private screen erased a previously usable
+ear and was rejected; that run remains preserved as diagnostic history.
+This adjacency test does not establish whole-ear visibility, distinguish every
+earring, or verify anatomy. Missing anchors leave a group unchecked. A
+failed group is withheld independently, never by suppressing an entire photo.
+Crop-screened instances are projected before merging; a final full-frame screen
+also removes unsupported old fragments. The optional ear overlay is screened
+against the current face before display. Original `earRefinement` counts/checks
+remain pre-screen pass evidence, not a claim that every ear pixel is displayed.
+
+Current completed summaries require allowlisted `regionScreening` statuses and
+removed-pixel counts (five groups plus bounded background removals) and `profile`.
+Region counts describe final full-frame screening and the separate ear-overlay
+screen, not every intermediate crop rejection. Existing `counts`/`interfacePixels`
+still describe the original full-image pass; `instanceRefinement` counts describe
+the merge before final screening. Raw coordinates, context frames, source RGB and
+reconstructed contour arrays are not stored. Profile output is bound to the
+server inventory's view role on both save and restore, independently of browser
+role strings. The inventory role map explicitly includes the original frontal
+captures and all declared additions; there is no implicit absent-role bypass.
+An injected wrong-role save exposed that omission during verification; the test
+run is preserved separately, the known valid active run was restored, and both
+directions of role mismatch now reject without changing the active pointer.
+Historical method readers do not receive new profile values.
+
+`engineering.profile.visible-class-extents@0.1.0` computes four engineering ratios
+on uniform-scale square crops after component screening:
+
+| Candidate            | Formula                                          |
+| -------------------- | ------------------------------------------------ |
+| Visible face aspect  | Face-class union Y span / X span                 |
+| Nose region width    | Nose-class X span / face-class union Y span      |
+| Lip region width     | Lip-class X span / face-class union Y span       |
+| Ear candidate height | Ear-class union Y span / face-class union Y span |
+
+Spans include occupied pixels (`max-min+1`). Face classes are skin, brows, eyes,
+nose, mouth and lips; hair, ears, glasses, neck and clothing are excluded from
+that reference. A MediaPipe reference requires existing eye/lip agreement; a
+YuNet reference requires nose agreement. Lip availability is independent of
+other ratios. Missing/degenerate parts, absent reference and crop/source clipping
+withhold values instead of inventing a contour. Multiple detected people cannot
+produce a combined profile ratio. Explicit frontal slots receive `not_requested`.
+The UI labels class extents and renders unavailable reasons per card.
+
+These are not physical nose protrusion, measured chin/forehead slope, bone shape,
+3D, pose admission, or whole-ear length. Those measurements remain unimplemented;
+this revision adds the bounded visible-profile measurement foundation. No new
+model, dependency, authority receipt or source-image copy/upload is introduced.
+Direct verification covers background corroboration/hair protection, detached
+regions, multiple anchored components, partial measurements, source clipping,
+role binding, historical isolation and safe scalar-only persistence.
+
 ## Architecture Check
 
 - Docs updated: yes, local engine entry point and coordinate/authority contracts.
@@ -337,3 +424,7 @@ non-triggered layers. Operational checks do not establish human visual acceptanc
   ear-only refinement and its availability. Historical 0.2 is read-only. The
   original-image display frame remains the storage frame. No source transform,
   anatomical normalization or legacy authority fallback is implied.
+  Revision 0.5 adds explicit region screening, a same-model multi-scale background
+  witness and a separate visible-profile scalar namespace in the private parser
+  summary. Inventory role checks govern save/restore. Historical versions remain
+  read-only, frontal rows stay unchanged, and no canonical normalization is added.
