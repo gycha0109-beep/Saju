@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v26' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v27' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -882,6 +882,55 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
               originalPrintedImageRetrieved: false as const,
               editionIndependentFromYulgok: 'UNADJUDICATED' as const,
             }),
+          }),
+          yulgokFourBookAllPublicSampleFramesDirectAudit: Object.freeze({
+            officialLibrary: '율곡연구원 한국학 아카이브' as const,
+            publishedLibraryCollectionBibliography: 'https://db.yulgok.or.kr/data/media/EB000008_svc.pdf' as const,
+            publicViewerAuditRun: 'https://github.com/gycha0109-beep/Saju/actions/runs/39358244228' as const,
+            originalJpegAndProvenanceArtifactId: 12236515723 as const,
+            physicalVolumesOfficiallyCatalogued: 4 as const,
+            volumeOne: Object.freeze({
+              catalogueId: 'B005_01_B00330_001' as const,
+              publicImagesRetrieved: 6 as const,
+              openingPrintedJuanHeading: '卷之一' as const,
+            }),
+            volumeTwo: Object.freeze({
+              catalogueId: 'B005_01_B00330_002' as const,
+              publicImagesRetrieved: 5 as const,
+              headingEvidenceImageId: 'B005_01_B00330_002_003' as const,
+              headingEvidenceSha256: '2e9980305b437be5ec33d0d451fa98d77eea528cef80460c493433f5fbf593d6' as const,
+              originalPrintedJuanHeading: '卷之二' as const,
+              inspectedNextDoubleLeafSha256: 'edb64b63740bff5d9120bef1d96b480c85edac9feefc4ebf0690dbbc78dda81e' as const,
+            }),
+            volumeThree: Object.freeze({
+              catalogueId: 'B005_01_B00330_003' as const,
+              publicImagesRetrieved: 5 as const,
+              headingEvidenceImageId: 'B005_01_B00330_003_003' as const,
+              headingEvidenceSha256: 'f9356e7b87d1dc77a5b5f6817d3b72e915212cbc981359e00cd94a026b3d88be' as const,
+              originalPrintedJuanHeading: '卷之三' as const,
+            }),
+            volumeFour: Object.freeze({
+              catalogueId: 'B005_01_B00330_004' as const,
+              publicImagesRetrieved: 6 as const,
+              headingEvidenceImageId: 'B005_01_B00330_004_004' as const,
+              headingEvidenceSha256: 'a996377e1debd30d58e5018eca1ee2df7f9a428936d6a347144d3df58831d24f' as const,
+              originalPrintedJuanHeading: '卷之四' as const,
+            }),
+            openPreviewImagesForFourPhysicalBooksTotal: 22 as const,
+            newlyDownloadedOfficialPublicPreviewFramesBeyondEarlierVolumeOne: 16 as const,
+            separatelyCataloguedAnotherYulgokQianqingtangVolume1And2SampleFrames: 5 as const,
+            allKnownYulgokPublicSampleFramesAcrossTwoHoldings: 27 as const,
+            publicPreviewFrameLinksComeFromActualOfficialHtmlImgItems: true as const,
+            originalsForAllFourVolumesPhysicallyCompared: true as const,
+            laterUnshownContentsOfFourPhysicalBooksCanContainOtherJuan: 'UNADJUDICATED' as const,
+            entireFourBookEditionIsFourTextualJuan: 'UNADJUDICATED' as const,
+            actualPrintedPublisherMarkObservedOnFirstVolume: '千頃堂書局商標' as const,
+            physicalPrintingYearForThisFourBookCopy: 'UNADJUDICATED' as const,
+            exactHourWealthSupplementInAnyNewPublicPreview: false as const,
+            newSupplementDirectPrintedGlyphLociFromTheseSixteenFrames: 0 as const,
+            newIndependentlyProvenStemmaticWitnessCount: 0 as const,
+            explicitAncientCalculationSemanticAuthorizations: 0 as const,
+            allN27ClaimsMustStayHold: true as const,
           }),
           nationalLibraryChina1936CopperplateDirectSupplementCollation: Object.freeze({
             commonsOriginalFile: 'https://commons.wikimedia.org/wiki/File:NLC511-027032013013877-17378_銅版精印神峰通考命理正宗.pdf' as const,
