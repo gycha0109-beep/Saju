@@ -813,3 +813,17 @@ N27 Claim 5건 HOLD, N17 `METHODOLOGY_CONFLICT`, N13 겁재 T8 `1 vs 0` 불변. 
 ### 판정 경계
 - 검증된 실물 이미지: 기존 LOC 권2 **59/59**(핵심 8번 직접 판독), 율곡 두 공식 공개 뷰어 **6+5=11/11**(출판상표·卷一 서문 인쇄 대응 직접 판독). **새로운 卷二 「補曰」 판면 확보 0**. 원문 공통 핵심 글자 **`只要一位貴不要多而三處不要再見財`**의 독립 계통 증가 0.
 - **N27 다섯 Claim HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 劫財 T8 **1 vs 0**. `別宮` 日支 단독 효력 / `再見` 藏干 재현 / `一位` 계산 단위 **UNADJUDICATED**. 신규 TrustGrant/Preview/Official/Production/consumer 승인 0, 해석 엔진 변경 0, 기관 연락·이메일 0. Research·Bridge Draft 및 미병합 유지.
+
+## 45. 1906년 한국 공유마당의 공식 문서뷰어 직접 접근 결과 (2026-10-20, N27 v25)
+
+### 확인된 공식 URL과 재현 가능한 실제 요청 결과
+- [한국저작권위원회 공유마당 원자료 등록 G905-9086005](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005)은 `新鐫神峰張先生通攷闢謬命理正宗大全`, 저자 `張楠`, 출처 **국회도서관**, *창작년도* **1906**, 원문파일명 `新鐫神峰張先生通攷闢謬命理正宗大全.pdf`로 기재한다. **창작년도 표기 = 해당 실물 판권에 1906이 실제 인쇄돼 있다고 확인한 증거가 아님**. 사이트의 공개 페이지에는 [공식 문서뷰어 `viewerIframe.do?fileSn=1&wrtSn=9086005`](https://gongu.copyright.or.kr/gongu/cmmn/docViewer/viewerIframe.do?fileSn=1&wrtSn=9086005) 링크가 노출돼 있다.
+- [GitHub Actions 직접 공개 경로 취득 실행 #39351979910](https://github.com/gycha0109-beep/Saju/actions/runs/39351979910) / artifact `n27-korean-1906-public-official-viewer-audit` (ID **12232929247**)에서 별도 **비인증 HTTPS 접속 세 가지**를 시도했다. 브라우저 User-Agent 및 출처 Referer를 사용했으나 로그인·결제·접근통제 우회·서비스 차단 회피 기술은 사용하지 않았다:
+  1. 공개 자료 **catalogue** `/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005`: **HTTP 400**, 서버 응답 본문 **`Request Blocked`**.
+  2. 자료 등록 페이지가 실제로 지정한 **official viewerIframe** `/gongu/cmmn/docViewer/viewerIframe.do?fileSn=1&wrtSn=9086005`: **HTTP 400**, **`Request Blocked`**.
+  3. 공개 사이트 다른 자료에서 검색 색인이 확인된 **generic viewer.do** `/gongu/cmmn/docViewer/viewer.do?fileSn=1&wrtSn=9086005`: **HTTP 400**, **`Request Blocked`**. 이 세 번째 주소는 **해당 작품 등록 페이지의 확정 링크가 아니라 동 사이트의 일반 뷰어 경로를 적용한 비교 시도**라는 차이를 기록한다.
+- 세 결과와 응답 앞부분을 JSON에 각각 저장했다. **PDF 원본 바이트 0, 뷰어 HTML 본문 0, 신규 원전 영인 이미지 0, 「補曰」 본문 판독 0**. 과거 추정 `wrtFileDownload.do` HTTP 400과 달리 이번에는 **실제 자료 페이지가 명시한 공식 뷰어 경로**도 거절됐으므로, 제약은 단일 PDF URL 변수만의 문제가 아닐 수 있다. **요청자 환경·서버 정책의 제한**으로만 취급하고, **사이트 자체의 PDF 부재·원전 텍스트의 문구 부재를 판정하지 않는다**.
+- [국회도서관 전자도서관](https://dl.nanet.go.kr/)을 포함해 동일 서명의 별도 공개 목록 검색도 시도했으나, 이번 확인에서 **직접 열 수 있는 원전 스캔 URL·동일 고서의 검증된 제어번호를 새로 확보하지 못했다**. 검색 결과 부재는 그 기관에서 소장하지 않는다는 사실판정이 아니다. 이전의 1906 紹興圖書館 2冊·다롄 6冊 목록 및 공유마당 1906년 항목의 **물리판·파일 동일성 UNADJUDICATED** 유지.
+- 이 접근 제한은 실물/서지 전승 결론을 갱신할 근거가 아니다. 기존 LOC 卷二 공식 이미지 **59/59**, 기존 8번 「補曰」 실물 판독, 율곡원 공개 미리보기 **11/11장(6+5)** 및 千頃堂書局商標 두 곳은 변경 없음. 1920·1924·1925·1906 후보 간 비교를 위한 **새 「補曰」 원문 이미지 없음**, 새 독립 텍스트 증인 **0**.
+
+**권한 경계:** N27 Claim 5개 **HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**. `別宮` 日支·`再見` 藏干·`一位` 세는 범위 **UNADJUDICATED**. 신규 TrustGrant·Preview·Official·Production·consumer 변경 0, 상품 해석 로직 변경 0, 기관 문의·이메일 0, Research·Bridge **Draft·미병합**.
