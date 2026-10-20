@@ -414,3 +414,12 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 - **Bridge 판단:** 동일 발행자가 초판·재판 관계를 판권면에 명시했다는 점은 인정. 그러나 다시 찍었다는 문구로 모든 각인·판목·전승 계통이 동일하거나 서로 독립적이라고 결론내지 않는다. 1929 하책의 `卷四` 시작을 **새 `卷二 時上偏財格 補曰` 인쇄증인으로 세지 않음**. 신규 표적 문장 대조 0건, N27 Claim 승격 0건.
 - 함께 수집을 시도한 1926년 **167쪽 다른 NLC 자료**는 HTTP 429로 PDF를 받지 못했다. 권두·권말·기존 169쪽본과의 책 관계는 **UNADJUDICATED**. 기존 동일 336쪽 합산에 의한 상하책 추정은 철회 유지.
 - **불변:** N27 Claim 5개 **HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 劫財 T8 **1 vs 0**. `別宮`/`再見`/`一位`는 **UNADJUDICATED**. 신규 TrustGrant·Preview·Official·Production·Consumer 권한 0, 해석 엔진 코드 변경 0, PR 두 개 모두 Draft·미병합.
+
+## N27 v29 — 1926 文明書局본 卷三·卷四 직접 판면 비교, Claim HOLD 유지 (2026-10-20)
+
+- Research [#2553](https://github.com/gycha0109-beep/Saju/pull/2553) 검토 HEAD 정확히 **`88a55e8b0e16505301132357241e80ddc6e37b35`**, `saju-n27-wu-ji-recurrence-scope-sensitivity-v29`를 Bridge `researchHeadReviewed`에 고정.
+- [1926년 167쪽 자료](https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf) 공개 공식 미리보기 [실제 7장 #39379574714](https://github.com/gycha0109-beep/Saju/actions/runs/39379574714), artifact **#12245160822**: **PDF 2면 `神峰通考卷四`**, **PDF 166면 `中華民國十五年一月出版/發行`**을 원 인쇄 JPEG로 직접 판독. 판권면 JPEG SHA-256 **`aa1f155e8d8ec9fe7128c20fa7187a32e887b4577912b34ad99948d22db3627f`**.
+- [1926년 기존 169쪽 자료](https://commons.wikimedia.org/wiki/File:NLC416-13jh001619-43305_神峰通考.pdf) 공식 미리보기 [8장 #39379965935](https://github.com/gycha0109-beep/Saju/actions/runs/39379965935), artifact **#12245355973**: **PDF 166면에서 원 인쇄 卷三 말미**를 직접 확인. **169쪽본 권三 → 167쪽본 권四**의 연속 인쇄 구성은 직접 판독 사실.
+- [1929년 하책 원본](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10361_神峰通考_第2卷.pdf)의 **PDF 3면 卷四 시작** 및 **PDF 167면 `民國十五年一月初版`·`民國十八年十二月再版`** 판권과 대조: 내용상 같은 출판 계열·卷四 시작 조판의 국소 대응 근거 강화. 그러나 **1926 169·167 두 자료는 서로 다른 NLC 등록 ID 및 Commons 개별 업로드이고, 동일 물리 제본 2책으로 확정 불가**. 1926·1929 본문 전체의 동일 판목/독립적 문자 계통도 **UNADJUDICATED**.
+- **제한:** 167쪽 원본 PDF 파일 전체 바이트/해시 확보는 여전히 실패. SHA는 사이트에서 실제 노출된 **각 JPEG 미리보기 바이트의 SHA**다. 이번 신규 `時上偏財格`/`補曰` 직접 판면은 **0건**, 독립 텍스트 계통 증가 **0건**; 편재 관련 `別宮`·`再見`·`一位`의 역사적 계산법 승인 없음.
+- **Bridge 최종 처분 유지:** N27 **5 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**. TrustGrant·Preview·Official·Production·Consumer·엔진 변경 없음; 두 PR 모두 Draft·미병합.
