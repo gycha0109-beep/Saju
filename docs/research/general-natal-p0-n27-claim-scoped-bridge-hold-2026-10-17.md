@@ -423,3 +423,11 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 - [1929년 하책 원본](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10361_神峰通考_第2卷.pdf)의 **PDF 3면 卷四 시작** 및 **PDF 167면 `民國十五年一月初版`·`民國十八年十二月再版`** 판권과 대조: 내용상 같은 출판 계열·卷四 시작 조판의 국소 대응 근거 강화. 그러나 **1926 169·167 두 자료는 서로 다른 NLC 등록 ID 및 Commons 개별 업로드이고, 동일 물리 제본 2책으로 확정 불가**. 1926·1929 본문 전체의 동일 판목/독립적 문자 계통도 **UNADJUDICATED**.
 - **제한:** 167쪽 원본 PDF 파일 전체 바이트/해시 확보는 여전히 실패. SHA는 사이트에서 실제 노출된 **각 JPEG 미리보기 바이트의 SHA**다. 이번 신규 `時上偏財格`/`補曰` 직접 판면은 **0건**, 독립 텍스트 계통 증가 **0건**; 편재 관련 `別宮`·`再見`·`一位`의 역사적 계산법 승인 없음.
 - **Bridge 최종 처분 유지:** N27 **5 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**. TrustGrant·Preview·Official·Production·Consumer·엔진 변경 없음; 두 PR 모두 Draft·미병합.
+
+## N27 v30 — 1924 千頃堂 「民國十三年重刊」 판권성 상표 직접 판독, Yulgok 연도 귀속 HOLD (2026-10-20)
+
+- Research 검토 HEAD **`6b7eaca9180a65b0399483d81b8bdcba90e1900d`**, 연구 버전 **`saju-n27-wu-ji-recurrence-scope-sensitivity-v30`**, Bridge `researchHeadReviewed` 정확 SHA pin.
+- 국내 [옛날물건 1924년 4권 4책 공개 상품](https://www.yetnal.co.kr/shop/item.php?it_id=1727930540)의 공개 JPEG **4/4**를 [격리 수집 Actions #39387647015](https://github.com/gycha0109-beep/Saju/actions/runs/39387647015), artifact **#12248510151**에서 바이트·개별 SHA와 함께 확보. 4번째 JPEG SHA-256 **`c6a4c8418dea4fbec22c88ead3d48c1ba8d9bfafb1b4470554479cef13ac8e96`**에서 **`中華民國十三年重刊`(1924년 재간)**과 **`千頃堂書局商標`**를 실제 인쇄면으로 직접 판독.
+- 동일한 [율곡연구원 첫째 책 `B005_01_B00330_001_004.jpg`](https://db.yulgok.or.kr/viewer/view?dataId=B005_01_B00330_001)에는 **유사한 서문 첫 인쇄면과 동일 출판사 상표 디자인은 보이지만**, 판매본 상표 위의 **`中華民國十三年重刊` 문구는 보이지 않음**. 그러므로 **판매본의 1924 재간 표시는 사실로 확인하되 율곡원 두 소장본의 인쇄년도·동일 판목·같은 인쇄회차라는 주장은 HOLD**.
+- 판매본의 4사진은 **표지·4책 배면·내제 및 명식 필기·序 및 상표**로 한정. 원서 권1 뒤의 `時上偏財格`·`補曰` 판면 없음. 신규 핵심 원문 직접 판독 0건, 독립 전승 인증 0건, 규칙 계산범위 의미 승인 0건. 판매자 물리책 정보와 실제 판면 글자를 별도 근거로 분리.
+- **불변:** N27 **5 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**, `別宮`·`再見`·`一位` **UNADJUDICATED**, TrustGrant/Preview/Official/Production/Consumer 승인 0. 두 PR Draft·미병합 및 기관 연락·유료 구매 없음.
