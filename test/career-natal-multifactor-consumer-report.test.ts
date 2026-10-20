@@ -149,6 +149,42 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     }
   }, 15000);
 
+  it('shows only genuinely observed branch Career evidence when a visible-stem core is missing, without calling it complete', () => {
+    let found: ReturnType<typeof run> | undefined;
+    for (const month of [2,3,4,5,6,7,8,9,10,11,12]) {
+      for (const day of [3,7,11,17,23]) {
+        for (const hour of [0,6,12,18]) {
+          const x = run(month,day,hour);
+          const claims = x.execution.claims.filter(c => c.taxonomy.tier === 'T8' &&
+            c.taxonomy.category === 'career' && c.state === 'active');
+          if (claims.some(c => (c.value as {channel?: string}).channel === 'visible_stems') ||
+            !claims.some(c => (c.value as {channel?: string}).channel === 'branches')) continue;
+          found = x;
+          break;
+        }
+        if(found) break;
+      }
+      if(found) break;
+    }
+    expect(found).toBeDefined();
+    if(!found) return;
+    expect(found.report.state).toBe('partial');
+    expect(found.report.sections.length).toBeGreaterThan(0);
+    expect(found.report.sections.every(s => s.channel === 'branches')).toBe(true);
+    expect(new Set(found.report.sections.map(s => s.axis)).size).toBe(found.report.sections.length);
+    expect(found.report.missing.join(' ')).toContain('천간 중심 구조가 없어');
+    for(const section of found.report.sections) {
+      expect(section.calculatedPositions.every(position => section.paragraph.includes(position))).toBe(true);
+      expect(section.paragraph).toMatch(/비겁\(|인성\(|식상\(|재성\(|관성\(/u);
+      expect(section.sourceIds.length).toBeGreaterThan(0);
+      expect(section.upstreamClaimIds).toHaveLength(2);
+    }
+    expect(found.report.researchOnly).toBe(true);
+    expect(found.report.usefulComplete).toBe(false);
+    expect(found.report.mayPublish).toBe(false);
+    expect(found.report.maySell).toBe(false);
+  }, 120000);
+
   it('fails closed when birth hour is unknown rather than inventing four-pillar synthesis', () => {
     const chart = sample(3, 10, null);
     const execution = runInterpretation(chart, registry, { now: NOW });
