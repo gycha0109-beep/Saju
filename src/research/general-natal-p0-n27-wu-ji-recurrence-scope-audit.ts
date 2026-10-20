@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v28' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v29' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -727,6 +727,38 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             newlyDirectlyReadPrintedLoci: 1 as const,
             allowsSemanticClaimPromotion: false as const,
           }),
+          shenfeng1926ComplementaryPrintedVolumeBoundary: Object.freeze({
+            formerUnaccessed167PagePdfSource: 'https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf' as const,
+            former167PagePreviewAcquisitionRun: 'https://github.com/gycha0109-beep/Saju/actions/runs/39379574714' as const,
+            former167PagePreviewArtifactId: 12245160822 as const,
+            former167PageOfficialPreviewImagesAcquired: 7 as const,
+            former167PagePdfOriginalBytesAcquired: false as const,
+            former167PagePhysicalPrintedJuanStartsOnPdfPage2: 4 as const,
+            former167PagePdfPage2PreviewSha256: '60302a1758d5c368a89c786d1af121f3d8c759627d32a2d8bbcb2a9879a03dbb' as const,
+            former167PagePdfPage166PrintedColophonFirstDate: '中華民國十五年一月出版' as const,
+            former167PagePdfPage166PrintedColophonReleaseDate: '中華民國十五年一月發行' as const,
+            former167PagePdfPage166PreviewSha256: 'aa1f155e8d8ec9fe7128c20fa7187a32e887b4577912b34ad99948d22db3627f' as const,
+            former167PagePrintedEditor: '江蕙秦慎安' as const,
+            prior169PagePdfSource: 'https://commons.wikimedia.org/wiki/File:NLC416-13jh001619-43305_神峰通考.pdf' as const,
+            prior169PagePreviewAcquisitionRun: 'https://github.com/gycha0109-beep/Saju/actions/runs/39379965935' as const,
+            prior169PagePreviewArtifactId: 12245355973 as const,
+            prior169PageOfficialPreviewImagesAcquired: 8 as const,
+            prior169PagePdfPage166EndOfPrintedJuan: 3 as const,
+            prior169PagePdfPage166PreviewSha256: '1d6b683036d2635e520002b6203eb981ecea09c7c483c34b9d2784e710809aac' as const,
+            adjacentPrintedJuanBoundaryPhysicallyRead: true as const,
+            scansFromDistinctNlcCatalogueIdentifiers: true as const,
+            samePhysicalTwoBookSetCertified: false as const,
+            sharedPublisherAndComplementaryTextualContentsSupported: true as const,
+            compare1929LowerPdfPage3StartOfJuan4: true as const,
+            compare1929LowerPdfPage167ReprintColophon: true as const,
+            corresponding1926And1929Juan4OpeningLayoutLocallySimilar: true as const,
+            completePlateIdentityProven: false as const,
+            newSupplementTargetPrintedLociFromThesePageFrames: 0 as const,
+            newIndependentClassicalTextualLineages: 0 as const,
+            dayBranchOrHiddenStemHistoricalCalculationVerdict: 'UNADJUDICATED' as const,
+            allFiveClaimDisposition: 'HOLD' as const,
+            productionMeaningAdmissionAllowed: false as const,
+          }),
           shenfeng1929LowerVolumePrintedColophon: Object.freeze({
             publicSource: 'https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10361_神峰通考_第2卷.pdf' as const,
             acquisitionRun: 'https://github.com/gycha0109-beep/Saju/actions/runs/39376434967' as const,
@@ -751,7 +783,7 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
             newIndependentTextualLineageCount: 0 as const,
             nineteenTwentySixSingle167PagePdfAcquired: false as const,
             nineteenTwentySixSingle167PageLatestHttpStatus: 429 as const,
-            nineteenTwentySixSingle167PageOriginalJuan: 'UNADJUDICATED' as const,
+            nineteenTwentySixSingle167PageOriginalJuan: 4 as const,
             classicalCountingSemanticsAdjudicated: false as const,
             anyClaimPromotionAuthorized: false as const,
           }),
