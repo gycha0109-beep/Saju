@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v23' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v24' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -882,6 +882,52 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
               originalPrintedImageRetrieved: false as const,
               editionIndependentFromYulgok: 'UNADJUDICATED' as const,
             }),
+          }),
+          qianqingtang1924ScholarshipAndOtherLithographCatalogues: Object.freeze({
+            koreanScholarlyPaper: Object.freeze({
+              url: 'https://www-t.dankook.ac.kr/web/-oriental/-74?_Bbs_WAR_bbsportlet_extFileId=99955&p_p_cacheability=cacheLevelPage&p_p_col_count=1&p_p_col_id=column-2&p_p_lifecycle=2&p_p_mode=view&p_p_state=normal' as const,
+              author: '김만태' as const,
+              journal: '東洋學 第67輯' as const,
+              publishedYear: 2017 as const,
+              citedPrintedPage: 173 as const,
+              footnoteNumber: 20 as const,
+              title: '명리원전 命理正宗에 함축된 病藥사상 고찰' as const,
+              reportedEditionTitle: '神峰闢謬命理正宗' as const,
+              reportedPublisher: '上海 千頃堂書局' as const,
+              bibliographicPrintYearAsReported: 1924 as const,
+              reportedJuanCount: 4 as const,
+              paperQuotesPublisherYearFromBibliographicListNotOriginalColophon: true as const,
+              original1924ColophonDirectlyRead: false as const,
+              yulgokFirstHoldingFourPhysicalBooksMustNotEqualFourTextualJuanByDefault: true as const,
+              yulgokPhysicalCopyPrinted1924: 'UNADJUDICATED' as const,
+            }),
+            dalianPublicCatalogue1920: Object.freeze({
+              catalogue: 'https://www.dl-library.net.cn/book/519/-shenfeng---minglizhengzong-518782.html' as const,
+              title: '(神峰闢謬)命理正宗' as const,
+              publisher: '上海 校經山房' as const,
+              dateAsCataloged: 1920 as const,
+              printingMethod: '石印本' as const,
+              textualJuanCount: 4 as const,
+              physicalBookCount: 4 as const,
+              actualPrintedTargetLocusAcquired: false as const,
+              historicallyIndependentEditionFrom1924Qianqingtang: 'UNADJUDICATED' as const,
+            }),
+            guangxuBingwu1906CommercialDigitalFacsimileLead: Object.freeze({
+              landingPage: 'https://hongyeshan.com/post/47178.html' as const,
+              listingTitleAsClaimed: '新镌神峰张先生通考辟谬命理正宗大全-光绪丙午仲春-上海书局石印-六卷全' as const,
+              listedScanPageCount: 316 as const,
+              listedFileSizeMegabytes: 143 as const,
+              siteListsPaidResourceOnly: true as const,
+              originalSixJuanPdfDownloaded: false as const,
+              supplementalFolioTextRead: false as const,
+              sameMaterialObjectAsKorean1906PublicRecord: 'UNADJUDICATED' as const,
+              evidenceLimitedToCommercialSellerListing: true as const,
+              noPurchaseOrInstitutionContactMade: true as const,
+            }),
+            sourceCountWithDirectlyNewPrintedSupplementLocus: 0 as const,
+            physicalEditionDatesNewlyCertifiedFromColophons: 0 as const,
+            independentOriginalTextualWitnessesNewlyCertified: 0 as const,
+            letsAnyN27ClaimLeaveHold: false as const,
           }),
           republican1929TwoVolumeBindingAudit: Object.freeze({
             publisher: '中華書局 文明書局' as const,
