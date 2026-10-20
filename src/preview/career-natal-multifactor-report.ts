@@ -8,7 +8,7 @@ import {
   CAREER_MULTIFACTOR_PACK,
 } from '../research/career-natal-multifactor-candidate.js';
 
-export const CAREER_MULTIFACTOR_REPORT_VERSION = '0.1.0-research-preview' as const;
+export const CAREER_MULTIFACTOR_REPORT_VERSION = '0.2.0-research-preview' as const;
 type Axis = 'execution' | 'responsibility' | 'tension';
 type Status = 'complete' | 'partial' | 'insufficient';
 
@@ -65,11 +65,18 @@ const TEN_GOD_FAMILIES: Readonly<Record<string, readonly string[]>> = {
   output: ['식신', '상관'], wealth: ['편재', '정재'],
   officer: ['편관', '정관'],
 };
+const EVIDENCE_ROLES: Readonly<Record<string, string>> = {
+  peer: '비겁(자기 기준·동료 관점)',
+  resource: '인성(학습·수용)',
+  output: '식상(표현·산출)',
+  wealth: '재성(현실 자원·교환)',
+  officer: '관성(역할·책임 기준)',
+};
 function findObservedPositions(
   snapshot: CanonicalSajuSnapshot,
   channel: 'visible_stems' | 'branches',
   families: readonly string[],
-): readonly { display: string; factPath: string }[] {
+): readonly { display: string; factPath: string; observedFamily: string }[] {
   const facts = snapshot.derivedFacts.tenGods;
   guard(facts.status === 'resolved', 'Ten-God facts must be resolved for structural interpretation');
   const component = channel === 'visible_stems' ? 'stem' : 'branch';
@@ -151,7 +158,12 @@ function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
     'unverified source attribution');
   const locations = findObservedPositions(snapshot,
     value.channel as 'visible_stems' | 'branches', value.families as string[]);
-  const locationText = locations.map(x => x.display).join(' · ');
+  const locationText = (value.families as string[]).map(family => {
+    const positions = locations.filter(x => x.observedFamily === family);
+    guard(positions.length > 0 && EVIDENCE_ROLES[family] !== undefined,
+      'source-backed Ten-God family is not actually observed');
+    return `${EVIDENCE_ROLES[family]}: ${positions.map(x => x.display).join(' · ')}`;
+  }).join(' / ');
   return {
     claimType: claim.claimType,
     pattern: value.pattern,
@@ -218,11 +230,22 @@ export function buildCareerMultifactorResearchReport(
     usedAxes.add(unit.axis);
     if (supporting.length === 2) break;
   }
-  const shown = primary ? [primary, ...supporting] : [];
+  // A branch-channel T8 is still genuine research evidence even when no
+  // visible-stem core is eligible. Show it as a PARTIAL reading, never as MUR.
+  const branchOnly = primary === undefined
+    ? units.filter((unit, index, all) => unit.channel === 'branches' &&
+      all.findIndex(other => other.axis === unit.axis) === index).slice(0, 2)
+    : [];
+  const shown = primary ? [primary, ...supporting] : branchOnly;
   const enough = primary !== undefined && supporting.length >= 2;
   const state: Status = enough ? 'complete' : units.length > 0 ? 'partial' : 'insufficient';
   const missing: string[] = [];
-  if (!primary) missing.push(MUR[0]!);
+  if (!primary) {
+    missing.push(MUR[0]!);
+    if (branchOnly.length > 0) {
+      missing.push(`이 명식에서는 지지 대표 십신의 ${branchOnly.map(s => s.axis).join('·')} 근거만 확인됩니다. 천간 중심 구조가 없어 전체 직업 종합으로 표시하지 않습니다.`);
+    }
+  }
   if (supporting.length < 2) missing.push(MUR[1]!);
   if (!snapshot.completeness.birthTimeKnown) {
     // Never convert an unknown-hour chart into a four-pillar comprehensive claim.
