@@ -10,7 +10,7 @@ import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import { buildGeneralNatalN27HourWealthConditionMatrix } from './general-natal-p0-n27-hour-wealth-condition-matrix.js';
 
 export const GENERAL_NATAL_N27_RECURRENCE_SCOPE_AUDIT_VERSION =
-  'saju-n27-wu-ji-recurrence-scope-sensitivity-v24' as const;
+  'saju-n27-wu-ji-recurrence-scope-sensitivity-v25' as const;
 
 export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
   snapshot: CanonicalSajuSnapshot,
@@ -882,6 +882,29 @@ export function buildGeneralNatalN27WuJiRecurrenceScopeAudit(
               originalPrintedImageRetrieved: false as const,
               editionIndependentFromYulgok: 'UNADJUDICATED' as const,
             }),
+          }),
+          korean1906OfficialViewerPublicAcquisitionAudit: Object.freeze({
+            officialPublicCatalogue: 'https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005' as const,
+            catalogueWorkId: 'G905-9086005' as const,
+            officialDocumentViewerLinkAsPublished: 'https://gongu.copyright.or.kr/gongu/cmmn/docViewer/viewerIframe.do?fileSn=1&wrtSn=9086005' as const,
+            knownSameSiteGenericViewerRoute: 'https://gongu.copyright.or.kr/gongu/cmmn/docViewer/viewer.do?fileSn=1&wrtSn=9086005' as const,
+            sourceAccessRun: 'https://github.com/gycha0109-beep/Saju/actions/runs/39351979910' as const,
+            sourceAccessArtifactId: 12232929247 as const,
+            publicAcquisitionStatus: 'HTTP_400_REQUEST_BLOCKED_ALL_3' as const,
+            requests: Object.freeze([
+              Object.freeze({target: 'official-catalogue' as const, httpStatus: 400 as const, bodyTitle: 'Request Blocked' as const}),
+              Object.freeze({target: 'official-viewer-iframe' as const, httpStatus: 400 as const, bodyTitle: 'Request Blocked' as const}),
+              Object.freeze({target: 'official-generic-viewer' as const, httpStatus: 400 as const, bodyTitle: 'Request Blocked' as const}),
+            ]),
+            publicPdfBytesRetrieved: false as const,
+            htmlContentOfTargetViewerRead: false as const,
+            independentOfficialPrintedImageRead: false as const,
+            requestWasUnauthenticatedAndRespectedAccessControls: true as const,
+            denialMustNotBeInterpretedAsNoPdfOrNoSupplementInBook: true as const,
+            sameEditionAs1906ShaoxingAndDalian: 'UNADJUDICATED' as const,
+            original1906SupplementFoliosCollated: 0 as const,
+            newAncientTextualWitnessCount: 0 as const,
+            semanticRulePromotions: 0 as const,
           }),
           qianqingtang1924ScholarshipAndOtherLithographCatalogues: Object.freeze({
             koreanScholarlyPaper: Object.freeze({
