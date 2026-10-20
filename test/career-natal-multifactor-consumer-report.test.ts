@@ -189,6 +189,50 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(found.report.maySell).toBe(false);
   }, 120000);
 
+  it('actually renders personalized partial reasons and unknown-hour hold in readable Korean HTML', () => {
+    let partial: ReturnType<typeof run> | undefined;
+    for(const month of [2,3,4,5,6,7,8,9]) {
+      for(const day of [3,7,11,17,23]) {
+        const candidate = run(month, day);
+        if(candidate.report.state === 'partial' && candidate.report.missing.length > 0) {
+          partial = candidate;
+          break;
+        }
+      }
+      if(partial) break;
+    }
+    expect(partial, 'a real birth-calculated Career partial report').toBeDefined();
+    if(!partial) return;
+    const html = renderCareerMultifactorResearchHtml(partial.report);
+    expect(html).toContain('해석 상태: 부분 풀이 · 원국 종합 근거 부족');
+    expect(html).toContain('<h2>아직 설명할 수 없는 부분</h2>');
+    for(const reason of partial.report.missing) expect(html).toContain(reason);
+    expect(html).not.toContain('최소 유효 풀이: partial');
+    expect(html).toContain('연구용 내부 미리보기 · 출판 및 판매 불가');
+
+    const unknownChart = sample(3, 10, null);
+    const unknownExecution = runInterpretation(unknownChart, registry, { now: NOW });
+    const unknownReport = buildCareerMultifactorResearchReport(unknownChart, unknownExecution, registry);
+    const unknownHtml = renderCareerMultifactorResearchHtml(unknownReport);
+    expect(unknownHtml).toContain('해석 상태: 풀이 보류 · 출생정보 또는 근거 부족');
+    expect(unknownHtml).toContain('출생시각 미상');
+    expect(unknownHtml).toContain('아직 설명할 수 없는 부분');
+    expect(unknownHtml).not.toContain('<section><h2>');
+
+    const complete = run(3, 10).report;
+    expect(complete.state).toBe('complete');
+    const completeHtml = renderCareerMultifactorResearchHtml(complete);
+    expect(completeHtml).toContain('연구 풀이 최소 근거 충족 · 제품 품질 검증 전');
+    expect(completeHtml).not.toContain('아직 설명할 수 없는 부분');
+    expect(completeHtml).toContain('출판 및 판매 불가');
+
+    const escaped = renderCareerMultifactorResearchHtml({
+      ...partial.report, missing: ['<script>alert(1)</script>'],
+    });
+    expect(escaped).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(escaped).not.toContain('<script>');
+  }, 60000);
+
   it('fails closed when birth hour is unknown rather than inventing four-pillar synthesis', () => {
     const chart = sample(3, 10, null);
     const execution = runInterpretation(chart, registry, { now: NOW });
