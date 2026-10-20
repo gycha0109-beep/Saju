@@ -20,7 +20,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     expect(review.issue).toBe(2557);
     expect(review.bindingFresh).toBe(true);
     expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
-    expect(review.researchHeadReviewed).toBe('bc962c5e28c61798c40d5c704da0131c86532d23');
+    expect(review.researchHeadReviewed).toBe('aee0b388c9316282f5d58a9a0605f5d99919ca9e');
     expect(review.targetClaims.map((x) => x.claimType)).toEqual([
       'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
       'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
@@ -147,7 +147,7 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
     });
     expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
     expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
-      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v24',
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v25',
       path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
       sameReal2010WuChenAndJiaXuNonHourPillars: true,
       testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
@@ -478,6 +478,21 @@ describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
             dalian1925ActualOriginalPageRetrieved: false,
             ancientMeaningAuthorizationsAdded: 0,
             allFiveN27ClaimsRemainHold: true,
+          },
+          korean1906OfficialViewerBlockedNonAuthorizing: {
+            sourceWorkId: 'G905-9086005',
+            sourceNamesNationalAssemblyLibrary: true,
+            publiclyListedPdfFilename: '新鐫神峰張先生通攷闢謬命理正宗大全.pdf',
+            verifiedHttp400RequestBlockedEndpoints: 3,
+            originalPdfBytesAcquired: false,
+            officialViewerBodyRead: false,
+            failedAcquisitionDoesNotProveMissingPdfOrMissingSupplement: true,
+            printingYearOnPhysical1906CopyDirectlyRead: false,
+            morePrintedOriginalSupplementLociRead: 0,
+            samePrintedSettingAsDalian1906: 'UNADJUDICATED',
+            independentOriginalTextualVotesNew: 0,
+            authorizesAnyHistoricalCalculationRule: false,
+            allFiveN27ClaimsStayOnHold: true,
           },
           qianqingtang1924AndOtherChronologicalLeadsNonAuthorizing: {
             scholarBibliographicCitation: {
