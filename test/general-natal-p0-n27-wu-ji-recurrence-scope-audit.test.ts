@@ -191,7 +191,7 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
   it('v3 actual Jia-Xu hour: year 己 counted twice by channel is ONE pillar+glyph', () => {
     const x = buildGeneralNatalN27WuJiRecurrenceScopeAudit(actual2010(19));
     const units = x.otherPillarUnitAudit;
-    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v29');
+    expect(x.version).toBe('saju-n27-wu-ji-recurrence-scope-sensitivity-v30');
     // 2010-02-03: 年干己 and 年支丑藏己 represent two observations
     // of the *same* glyph in the *same* pillar, not two pillars.
     expect(units.crossChannelDuplicatePillarGlyphs).toContainEqual({
@@ -637,6 +637,30 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
       historicallyAdjudicatesSeparateDayBranchOccurrence: false,
       newlyDirectlyReadPrintedLoci: 1,
       allowsSemanticClaimPromotion: false,
+    });
+    expect(three.shenfeng1924QiangingtangSellerDatedImprintNonGrant).toMatchObject({
+      retrievalArtifactId: 12248510151,
+      publicJpegCountAcquired: 4,
+      allFourPublicJpegResponseCode: 200,
+      sellerClaimsEditionYear: 1924,
+      sellerClaimsPhysicalBookCount: 4,
+      firstPhotoSha256: '23f63b45dfc6c99564e487e2dfa1b9993fce6b7e65f05236704c76276fa17cbe',
+      fourthPhotoSha256: 'c6a4c8418dea4fbec22c88ead3d48c1ba8d9bfafb1b4470554479cef13ac8e96',
+      fourthPhotoOriginalPrintedReprintDate: '中華民國十三年重刊',
+      year1924DirectlyReadOnPhotographedImprint: true,
+      originalTrademarkOnFourthPhoto: '千頃堂書局商標',
+      yulgokOfficialPreviewAcquisitionArtifactId: 12236515723,
+      yulgokOfficialPhotoShowsSameTradeEmblemDesign: true,
+      yulgokOfficialPhotoSameVisiblePrefaceOpening: true,
+      dated1924ArcVisibleOnYulgokTrademarkPage: false,
+      yulgokPhysicalCopyPrintedIn1924Certified: false,
+      twoPhotographedPhysicalCopiesTextualDescentCertified: false,
+      sameCarvedOrLithographicPrintingPlateCertified: false,
+      newHourWealthSupplementTargetFolioRead: false,
+      independentHistoricalTextualLineageCountAdded: 0,
+      exactBieGongZaiJianYiWeiMeaning: 'UNADJUDICATED',
+      researchClaimsHold: true,
+      productionSemanticGrant: false,
     });
     expect(three.shenfeng1926ComplementaryPrintedVolumeBoundary).toMatchObject({
       former167PagePreviewArtifactId: 12245160822,
