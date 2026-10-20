@@ -771,6 +771,9 @@ describe('N27 再見戊己 research sensitivity: scope is NOT a source-qualified
     });
     expect(three.nationalLibraryChina1936CopperplateDirectSupplementCollation).toMatchObject({
       sourceInstitutionAsCatalogued: '中国国家图书馆',
+      physicalOwnershipMarkPrintedOnScannedPage2: '上海圖書館藏書',
+      physicalOwnershipMarkAlsoOnScannedPage3: true,
+      cataloguedSourceVsScannedCopyMarkRelationship: 'UNADJUDICATED',
       publicationDateAsCatalogued: '1936-03',
       editorPublisherAsCatalogued: '星命學社重校 / 星命學社',
       artifactId: 12233639543,
