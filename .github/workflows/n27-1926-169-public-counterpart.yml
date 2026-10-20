@@ -1,0 +1,53 @@
+name: N27 1926 169-page counterpart publicly rendered covers
+on:
+  push:
+    branches: [research/saju/n27-external-folio-acquisition-20261020]
+    paths: ['.github/workflows/n27-1926-169-public-counterpart.yml']
+permissions:
+  contents: read
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Fetch 169-page counterpart from official Commons page-preview links
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-1926-169-public
+          python3 - <<'PY'
+          import urllib.request,urllib.error,urllib.parse,hashlib,json,pathlib,time
+          root=pathlib.Path("n27-1926-169-public")
+          file="NLC416-13jh001619-43305_神峰通考.pdf"
+          host="https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4c/"
+          source="https://commons.wikimedia.org/wiki/File:"+urllib.parse.quote(file)
+          records=[];cap=2*1024*1024
+          for n in [1,2,3,4,166,167,168,169]:
+            url=host+urllib.parse.quote(file)+f"/page{n}-500px-"+urllib.parse.quote(file)+".jpg"
+            item={"page":n,"url":url,"status":"NOT_ACQUIRED"}
+            try:
+              request=urllib.request.Request(url,headers={"User-Agent":"MyeongHa-N27-OpenHistoricalFolioResearch/1.0","Accept":"image/jpeg"})
+              with urllib.request.urlopen(request,timeout=25) as r: data=r.read(cap+1);item["http"]=r.status
+              if len(data)>cap:raise ValueError("SIZE_CAP")
+              if not data.startswith(b"\xff\xd8\xff"):raise ValueError("NOT_JPEG")
+              dest=root/f"p{n:03d}.jpg";dest.write_bytes(data)
+              item.update(status="PREVIEW_JPEG_ACQUIRED",bytes=len(data),sha256=hashlib.sha256(data).hexdigest())
+            except urllib.error.HTTPError as e:
+              item.update(status="HTTP_ERROR",http=e.code)
+              records.append(item)
+              print("N27_THUMB",n,item["status"],e.code,flush=True)
+              if e.code==429:break
+              continue
+            except Exception as e:item.update(status="ERROR",error=repr(e)[:180])
+            records.append(item)
+            print("N27_THUMB",n,item["status"],item.get("sha256",""),flush=True)
+            time.sleep(0.8)
+          (root/"manifest.json").write_text(json.dumps({"source":source,"sourceFileNlcId":"nlc:data_416,13jh001619,43305","newHistoricalWitness":False,"pages":records},indent=2,ensure_ascii=False))
+          PY
+      - name: Preserve public sample image bytes and hashes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-1926-169-original-page-samples
+          path: n27-1926-169-public/
+          retention-days: 14
