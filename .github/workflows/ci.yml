@@ -129,6 +129,17 @@ jobs:
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const h=readFileSync(process.env.RUNNER_TEMP+'/natal-preview.html','utf8'); assert.match(h,/내 사주를 한 장으로 읽기/u); assert.match(h,/N16 내부 Preview 정리/u); assert.match(h,/실제 응답 출처/u); assert.match(h,/새 해석은 만들지 않습니다/u);"
           node --input-type=module -e "import {readFileSync} from 'node:fs'; import assert from 'node:assert/strict'; const report=JSON.parse(readFileSync(process.env.RUNNER_TEMP+'/natal-baseline.json','utf8')); assert.equal(report.numberOfCases,35); assert.equal(report.mayPublish,false); assert.equal(report.maySell,false); const html=readFileSync(process.env.RUNNER_TEMP+'/natal-preview.html','utf8'); assert.match(html,/명식을 종합해서 읽는 출발점/u); assert.match(html,/내 명식의 구조를 반영한 해석/u); assert.match(html,/MYEONGHA/u)"
 
+      - name: Natal S6 real-chart semantic contrasts and Korean corpus
+        run: node scripts/natal-five-domain-quality-regression.mjs "$RUNNER_TEMP/natal-s6-quality"
+
+      - name: Upload natal S6 Korean quality corpus
+        uses: actions/upload-artifact@v4
+        with:
+          name: natal-s6-quality-${{ github.run_id }}
+          path: ${{ runner.temp }}/natal-s6-quality/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Upload internal natal N3 evidence
         uses: actions/upload-artifact@v4
         with:
