@@ -89,6 +89,19 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         for (const missing of section.missing) expect(html).toContain(missing);
       }
     }
+    const overview = html.split('</nav>')[0]!;
+    expect(overview).toContain('이 명식에서 먼저 확인할 다섯 관점');
+    expect(html.match(/<a href="#domain-/gu)).toHaveLength(5);
+    let previousLink = -1;
+    for (const [index, domain] of domains.entries()) {
+      const link = '<a href="#domain-' + domain + '">' + labels[index] + '</a>';
+      expect(overview.indexOf(link)).toBeGreaterThan(previousLink);
+      previousLink = overview.indexOf(link);
+      const report = sections[domain];
+      expect(overview).toContain(report.sections[0]?.headline ??
+        report.missing[0] ?? '현재 확인된 해석 문단이 없습니다.');
+    }
+    expect(html).toContain('다섯 분야의 근거 기반 요약');
     expect(html.match(/<article aria-labelledby=/gu)).toHaveLength(5);
     expect(html).not.toContain('최소 유효 풀이: partial');
     expect(html).not.toContain('<script>');
@@ -103,7 +116,11 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
       expect(sections[domain].sections).toHaveLength(0);
       expect(sections[domain].missing.join(' ')).toContain('출생시각 미상');
     }
-    expect(html.match(/풀이 보류 · 근거 부족/gu)).toHaveLength(5);
+    const overview = html.split('</nav>')[0]!;
+    expect(overview.match(/출생시각 미상/gu)).toHaveLength(5);
+    expect(overview).not.toContain('class="meaning"');
+    // The new overview also labels five held domains; count body cards only.
+    expect(html.split('</nav>')[1]?.match(/풀이 보류 · 근거 부족/gu)).toHaveLength(5);
     expect(html.match(/현재 이 명식에서 근거가 확인된 해석 문단은 없습니다/gu)).toHaveLength(5);
     expect(html).not.toContain('class="meaning"');
   });
