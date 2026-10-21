@@ -73,6 +73,11 @@ function officialEvidenceDelivered(internals: ProductReadingInternals, section: 
     execution.state === 'completed' &&
     internals.response.state === 'delivered' &&
     execution.artifact !== undefined &&
+    internals.response.reading !== undefined &&
+    internals.response.reading.sections.some(section =>
+      section.state === 'complete' && section.blocks.length > 0) &&
+    execution.preparation.normalization.request !== undefined &&
+    readingSectionForIntentV1(execution.preparation.normalization.request.intent) === section &&
     execution.officialReadingPlan !== undefined &&
     execution.officialReadingReport !== undefined &&
     authority?.authority === 'official_reading' &&
@@ -131,13 +136,17 @@ export function buildTwelveMenuEngineReadiness(
   executions: readonly MenuReadingExecution[],
 ): readonly TwelveMenuEngineReadiness[] {
   const bySection = new Map<string, ProductReadingInternals>();
+  const unresolvedByMenu = new Map<TwelveMenuId, ProductReadingInternals>();
   for (const { menuId, internals } of executions) {
     const menu = MENU_DEFINITIONS.find(candidate => candidate.menuId === menuId);
     if (menu === undefined) throw new TypeError('Unknown menu cannot grant reading availability.');
     const request = internals.execution.preparation.normalization.request;
     if (request === undefined) {
-      // An unresolved input must be associated with the requested menu only.
-      // Never turn a no-intent result into a competing section's evidence.
+      // Missing input is specific to its menu, not evidence for another intent.
+      if (unresolvedByMenu.has(menuId)) {
+        throw new TypeError('Ambiguous duplicate unresolved menu request: ' + menuId);
+      }
+      unresolvedByMenu.set(menuId, internals);
       continue;
     }
     const section = readingSectionForIntentV1(request.intent);
@@ -150,7 +159,8 @@ export function buildTwelveMenuEngineReadiness(
     bySection.set(section, internals);
   }
   return MENU_DEFINITIONS.map(menu => {
-    const sections = menu.sections.map(section => sectionReadiness(section, bySection.get(section)));
+    const sections = menu.sections.map(section =>
+      sectionReadiness(section, bySection.get(section) ?? unresolvedByMenu.get(menu.menuId)));
     const allAvailable = sections.every(section => section.state === 'available');
     const anyEvidence = sections.some(section => section.state !== 'unavailable');
     const state: EngineMenuReadiness = allAvailable
