@@ -61,6 +61,21 @@ type TargetPeriodResolution =
         | 'REFERENCE_DATETIME_INVALID';
     };
 
+// Exact product-card titles are navigation, not new interpretation authority.
+// Family requires parents/children and the question card requires actual text.
+const MENU_CARD_INTENTS: Readonly<Record<string, ReadingIntent>> = Object.freeze({
+  '전체 사주': { domain: 'general', temporalScope: 'natal' },
+  '직업·커리어': { domain: 'career', temporalScope: 'natal' },
+  '재물': { domain: 'wealth', temporalScope: 'natal' },
+  '연애·관계': { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'general' },
+  '사업': { domain: 'business', temporalScope: 'natal' },
+  '삶의 단계': { domain: 'life_stage', temporalScope: 'life_stage' },
+  '올해': { domain: 'general', temporalScope: 'annual' },
+  '이번 달': { domain: 'general', temporalScope: 'monthly' },
+  '배우자·관계': { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'spouse' },
+  '궁합': { domain: 'compatibility', temporalScope: 'natal' },
+});
+
 const SEMANTIC_ALIASES: readonly SemanticAlias[] = [
   { aliases: ['사주', '일반 사주', '전체 사주', '종합 사주'], domain: 'general' },
   { aliases: ['부모운', '부모 운'], domain: 'family', relationshipScope: 'parents' },
@@ -421,6 +436,30 @@ export function normalizeConsumerReadingRequest(
       return validatedResolvedResult(input, normalizedText, existingTopicIntent);
     }
     return validatedResolvedResult(input, normalizedText, intent, question);
+  }
+
+  if (normalizedText === '가족') {
+    const parents: ReadingIntent = {
+      domain: 'family', temporalScope: 'natal', relationshipScope: 'parents',
+    };
+    const children: ReadingIntent = {
+      domain: 'family', temporalScope: 'natal', relationshipScope: 'children',
+    };
+    return makeResult(
+      input, normalizedText, 'ambiguous',
+      ['FAMILY_RELATIONSHIP_SCOPE_REQUIRED'], [parents, children],
+    );
+  }
+  if (normalizedText === '지금 고민으로 보기') {
+    return makeResult(
+      input, normalizedText, 'invalid', ['QUESTION_TEXT_REQUIRED'],
+      [{ domain: 'question_specific', temporalScope: 'natal' }],
+    );
+  }
+  const selectedMenu = MENU_CARD_INTENTS[normalizedText];
+  if (selectedMenu !== undefined) {
+    // A matching authorized ReadingIntent is NOT a completed semantic reading.
+    return validatedResolvedResult(input, normalizedText, selectedMenu);
   }
 
   const annualDetected = containsAny(normalizedText, ANNUAL_MARKERS);
