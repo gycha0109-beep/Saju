@@ -43,6 +43,8 @@ export interface ProductReadingResponseCoverage {
   state: 'partial' | 'insufficient' | 'unsupported';
   hasAvailableEvidence: boolean;
   missingRequirementCount: number;
+  /** Controlled Korean scope explanation, never internal rule identifiers. */
+  explanation?: string;
 }
 
 export interface ProductReadingResponseClarificationOption {
@@ -451,6 +453,9 @@ export function buildProductReadingResponse(
           state: delivery.coverage.state,
           hasAvailableEvidence: delivery.coverage.hasAvailableEvidence,
           missingRequirementCount: delivery.coverage.missingRequirementCount,
+          ...(delivery.coverage.explanation === undefined
+            ? {}
+            : { explanation: delivery.coverage.explanation }),
         };
   const consumerDiagnostics =
     delivery.consumerDiagnostics === undefined ? undefined : [...delivery.consumerDiagnostics];

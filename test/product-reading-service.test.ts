@@ -278,6 +278,8 @@ describe('Product Reading Service Facade', () => {
     );
 
     expect(result.state).toBe('partial_evidence');
+    expect(result.coverage?.explanation).toContain('부족');
+    expect(result.coverage?.explanation).not.toMatch(/_CLAIM_REQUIRED|RULE-|SRC-/u);
     expect(result.coverage?.state).toBe('partial');
     expect(adapter.calls).toHaveLength(0);
     expect(result.reading).toBeUndefined();
