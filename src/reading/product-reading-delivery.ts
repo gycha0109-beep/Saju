@@ -37,6 +37,8 @@ export interface ProductReadingCoverageSummary {
   state: 'partial' | 'insufficient' | 'unsupported';
   hasAvailableEvidence: boolean;
   missingRequirementCount: number;
+  /** Public, controlled Korean explanation; never an internal requirement code. */
+  explanation?: string;
 }
 
 export interface ProductReadingClarification {
@@ -126,15 +128,60 @@ function clarificationFor(
   return { kind: 'request' };
 }
 
+function consumerMissingEvidenceLabel(requirement: string): string {
+  // Whitelist classifications only; raw rule/Claim/requirement codes
+  // must never reach a customer response.
+  if (requirement === 'NATAL_GENERAL_FOUNDATION_CLAIM_REQUIRED') {
+    return '원국의 기본 구조에 대한 풀이 근거';
+  }
+  if (requirement === 'NATAL_GENERAL_SYNTHESIS_CLAIM_REQUIRED') {
+    return '명식의 여러 특징을 종합할 해석 근거';
+  }
+  if (requirement === 'COMPATIBILITY_CLAIM_REQUIRED') {
+    return '두 사람의 명식을 함께 해석할 근거';
+  }
+  if (requirement === 'QUESTION_SPECIFIC_CLAIM_REQUIRED') {
+    return '질문에 직접 대응하는 풀이 근거';
+  }
+  if (requirement === 'LIFE_STAGE_PERIOD_CLAIM_REQUIRED') {
+    return '삶의 시기별 변화를 해석할 근거';
+  }
+  if (/^ANNUAL_[A-Z_]+_PERIOD_CLAIM_REQUIRED$/u.test(requirement)) {
+    return '해당 연도의 흐름을 해석할 근거';
+  }
+  if (/^MONTHLY_[A-Z_]+_PERIOD_CLAIM_REQUIRED$/u.test(requirement)) {
+    return '해당 월의 흐름을 해석할 근거';
+  }
+  if (/^NATAL_[A-Z_]+_DOMAIN_CLAIM_REQUIRED$/u.test(requirement) ||
+      /^RELATIONSHIP_[A-Z_]+_DOMAIN_CLAIM_REQUIRED$/u.test(requirement)) {
+    return '이 주제의 원국 해석 근거';
+  }
+  return '이 주제를 해석하는 데 필요한 일부 근거';
+}
+
 function coverageSummary(
   execution: GovernedReadingExecutionResult,
   state: ProductReadingCoverageSummary['state'],
 ): ProductReadingCoverageSummary {
   const selection = execution.preparation.composition?.selection;
+  const missing = [...new Set(
+    (selection?.missingRequirements ?? []).map(consumerMissingEvidenceLabel),
+  )];
+  const explanation = state === 'unsupported'
+    ? '이 주제는 현재 제공 가능한 풀이 범위에 포함되지 않습니다.'
+    : missing.length > 0
+      ? (state === 'partial'
+          ? '일부 풀이 근거가 확인됐지만, 아직 부족한 내용: '
+          : '현재 명식에서 필요한 풀이 근거가 충분하지 않습니다. 부족한 내용: ') +
+        missing.slice(0, 2).join(' · ') + (missing.length > 2 ? ' 등' : '')
+      : state === 'partial'
+        ? '일부 풀이 근거만 확인돼 전체 내용을 제공하기 어렵습니다.'
+        : '현재 명식에서 이 주제에 대한 풀이 근거가 확인되지 않았습니다.';
   return {
     state,
     hasAvailableEvidence: (selection?.selectedClaimIds.length ?? 0) > 0,
     missingRequirementCount: selection?.missingRequirements.length ?? 0,
+    explanation,
   };
 }
 

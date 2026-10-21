@@ -345,6 +345,14 @@ function assertCoverage(value: unknown, field: string): void {
   ) {
     throw new RangeError(`${field}.missingRequirementCount must be a non-negative integer.`);
   }
+  if (value.explanation !== undefined) {
+    assertNonEmptyString(value.explanation, `${field}.explanation`);
+    if ((value.explanation as string).length > 250 ||
+        Array.from(value.explanation as string).some(character =>
+          character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) {
+      throw new TypeError(`${field}.explanation must be short single-line text.`);
+    }
+  }
 }
 
 function assertConsumerDiagnostics(value: unknown, field: string): void {
