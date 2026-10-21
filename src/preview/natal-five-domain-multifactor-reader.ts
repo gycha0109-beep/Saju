@@ -1,4 +1,5 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import { findSharedNatalFactLinks } from './natal-five-domain-shared-evidence.js';
 import type { GeneralNatalMultifactorReport, GeneralNatalMultifactorSection } from './general-natal-multifactor-report.js';
 import type { CareerMultifactorReport, CareerMultifactorReportSection } from './career-natal-multifactor-report.js';
 import type { WealthNatalMultifactorReport, WealthNatalMultifactorSection } from './wealth-natal-multifactor-report.js';
@@ -124,6 +125,42 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
 }
 
 /**
+ * Show how an exactly identical calculated fact is used by two independently
+ * source-owned domain interpretations. This is an explanatory link, NOT a new T8.
+ */
+function renderSharedEvidence(reports: NatalFiveDomainMultifactorReports, birthTimeKnown: boolean): string {
+  if (!birthTimeKnown) return '';
+  const domains = DOMAIN_ORDER.map(({ key, label }) => ({
+    domain: key,
+    label,
+    sections: reports[key].sections.map(section => ({
+      headline: section.headline,
+      positions: 'calculatedPositions' in section
+        ? section.calculatedPositions : section.observedPositions,
+      factPaths: 'calculatedFactPaths' in section
+        ? section.calculatedFactPaths : section.observedFactPaths,
+      sourceIds: section.sourceIds,
+    })),
+  }));
+  const shared = findSharedNatalFactLinks(domains);
+  if (!shared.length) return '';
+  const links = shared.map(link =>
+    '<li><p>공통 계산 근거: <strong>' + escapeHtml(link.position) + '</strong>.</p>' +
+    '<p><a href="#domain-' + escapeHtml(link.left.domain) + '">' +
+      escapeHtml(link.left.label) + '</a>에서는 ‘' + escapeHtml(link.left.headline) +
+      '’, <a href="#domain-' + escapeHtml(link.right.domain) + '">' +
+      escapeHtml(link.right.label) + '</a>에서는 ‘' + escapeHtml(link.right.headline) +
+      '’라는 기존 해석에 각각 사용됩니다.</p></li>',
+  ).join('');
+  return '<section class="shared-evidence" aria-label="같은 명식 근거의 분야별 해석">' +
+    '<h2>같은 명식 근거, 서로 다른 분야의 관점</h2>' +
+    '<p>아래는 실제 명식의 동일 계산 근거가 여러 분야의 출처 있는 풀이에서 ' +
+    '어떻게 다시 쓰이는지 보여줍니다. 새로운 해석 결론이 아니며, ' +
+    '한 분야의 실제 결과가 다른 분야의 결과를 뜻하지 않습니다.</p>' +
+    '<ol>' + links + '</ol></section>';
+}
+
+/**
  * One canonical birth chart, five existing T5-to-T8 research reports, one
  * readable Korean page. This is presentation of ORIGINAL source-owned text,
  * never another Product Mapper, interpretation engine, T8 meaning, or Official
@@ -157,6 +194,7 @@ export function renderNatalFiveDomainMultifactorResearchHtml(
     '부분 풀이와 풀이 보류는 종합풀이로 취급하지 않습니다.</p>' +
     '<p><strong>내부 연구용 미리보기 · 검토되지 않은 해석 · 출판 및 판매 불가</strong></p>' +
     '</header>' + renderOverview(reports) +
+    renderSharedEvidence(reports, snapshot.completeness.birthTimeKnown) +
     '<main>' + domains + '</main><footer><p>분야별 문단은 출처가 있는 기존 해석을 ' +
     '그대로 표시한 것이며, 직업·금전·사업·관계의 실제 결과를 판단하지 않습니다.</p>' +
     '<small>보고서 버전: ' + escapeHtml(NATAL_FIVE_DOMAIN_MULTIFACTOR_READER_VERSION) +

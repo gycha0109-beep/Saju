@@ -91,7 +91,7 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     }
     const overview = html.split('</nav>')[0]!;
     expect(overview).toContain('이 명식에서 먼저 확인할 다섯 관점');
-    expect(html.match(/<a href="#domain-/gu)).toHaveLength(5);
+    expect(overview.match(/<a href="#domain-/gu)).toHaveLength(5);
     let previousLink = -1;
     for (const [index, domain] of domains.entries()) {
       const link = '<a href="#domain-' + domain + '">' + labels[index] + '</a>';
