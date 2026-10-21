@@ -37,7 +37,7 @@ describe('life stage bounded Canonical Dayun fact reader', () => {
       startsAt: segment?.startLocalDateTime,
       endsAtExclusive: segment?.endExclusiveLocalDateTime,
     });
-    expect(report.periods[0]?.text).toContain('실제');
+    expect(report.periods[0]?.text).toContain('명식');
     expect(report.periods[0]?.text).toContain('계산');
     expect(report.periods.some(p => p.kind === 'next')).toBe(true);
     const html = renderLifeStageDayunResearchHtml(report);
