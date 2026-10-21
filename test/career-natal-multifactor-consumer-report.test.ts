@@ -107,6 +107,50 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(again.report).toEqual(once.report);
   }, 30000);
 
+  it('explains the two exact source-bound T5 family positions in real Career Korean paragraphs', () => {
+    const familyGods: Readonly<Record<string, readonly string[]>> = {
+      peer: ['비견', '겁재'], resource: ['편인', '정인'],
+      output: ['식신', '상관'], wealth: ['편재', '정재'],
+      officer: ['편관', '정관'],
+    };
+    const sourceRoles: Readonly<Record<string, string>> = {
+      peer: '비겁(자기 기준·동료 관점)',
+      resource: '인성(학습·수용)',
+      output: '식상(표현·산출)',
+      wealth: '재성(현실 자원·교환)',
+      officer: '관성(역할·책임 기준)',
+    };
+    const observedPatterns = new Set<string>();
+    for (const [month, day] of [[3, 10], [4, 11]] as const) {
+      const { report } = run(month, day);
+      for (const section of report.sections) {
+        const rule = CAREER_MULTIFACTOR_RULES.find(r => r.ruleId === section.ruleId);
+        expect(rule, 'exact registered T8 source pattern').toBeDefined();
+        if (!rule) continue;
+        const families = (rule.output.value as { families: readonly string[] }).families;
+        expect(families).toHaveLength(2);
+        expect(section.sourceIds).toHaveLength(2);
+        expect(section.upstreamClaimIds).toHaveLength(2);
+        for (const family of families) {
+          const first = section.calculatedPositions.find(position =>
+            familyGods[family]?.some(god => position.endsWith(' ' + god)));
+          expect(first, family + ' must be observed on the actual chart').toBeDefined();
+          expect(section.paragraph).toContain(`${first}의 ${sourceRoles[family]}`);
+        }
+        expect(section.paragraph).toContain(
+          `같은 ${section.channel === 'visible_stems' ? '천간' : '지지 대표 십신'} 관찰 범위`,
+        );
+        expect(section.paragraph).toContain(`‘${section.headline}’`);
+        observedPatterns.add(section.pattern);
+      }
+      expect(report.researchOnly).toBe(true);
+      expect(report.usefulComplete).toBe(false);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+    expect(observedPatterns.size).toBeGreaterThan(1);
+  }, 30000);
+
   it('closes the missing source-backed axis in the real five-domain demo birth chart, without claiming product authorization', () => {
     const x = run(3, 10, 12);
     // The original report had only PEER_OFFICER (stems) and OUTPUT_WEALTH
