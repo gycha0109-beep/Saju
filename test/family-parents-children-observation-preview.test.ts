@@ -7,10 +7,10 @@ import {
 } from '../src/preview/family-parents-children-observation-preview.js';
 
 const NOW = new Date('2026-09-03T13:00:00.000Z');
-function natal(year = 1990, hour: number | undefined = 14) {
+function natal(year = 1990, hour: number | null = 14) {
   return calculateCanonicalSajuSnapshot({
     calendarType: 'solar', date: { year, month: 5, day: 15 },
-    time: hour === undefined
+    time: hour === null
       ? { known: false as const }
       : { known: true as const, hour, minute: 30 },
     sexForTraditionalCalculation: 'unspecified',
@@ -82,7 +82,7 @@ describe('bounded parent/child family observation consumer preview', () => {
   });
 
   it('does not invent a child birth-hour fact when the original birth hour is missing', () => {
-    const chart = natal(1990, undefined);
+    const chart = natal(1990, null);
     const child = buildFamilyCanonicalObservationPreview(chart, 'children');
     expect(child.observationCoverage).toBe('insufficient_input');
     expect(child.observations[0]?.observedPillar).toBeUndefined();
