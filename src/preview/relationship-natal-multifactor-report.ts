@@ -10,7 +10,7 @@ import {
   RELATIONSHIP_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/relationship-natal-multifactor-candidate.js';
 
-export const RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
+export const RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION = '0.4.0-research-preview' as const;
 type Axis = 'core' | 'expression' | 'boundaries' | 'reception' | 'coordination';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
@@ -208,9 +208,15 @@ export function buildRelationshipNatalMultifactorReport(
     claims.every(c => selected.has(c.claimId)) &&
     (claims.length === 0 || selection.evidence !== undefined),
     'Relationship meaning not selected by existing ReadingIntent/EvidenceSelector');
-  const result = claims.map(c => toSection(c, snapshot, execution, registry))
+  const sourceBound = claims.map(c => toSection(c, snapshot, execution, registry))
     .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
       (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
+  // Use T8 claims backed by known year/month/day facts; never borrow a
+  // missing birth-hour input. These narrower sections cannot complete MUR.
+  const result = snapshot.completeness.birthTimeKnown
+    ? sourceBound
+    : sourceBound.filter(section => section.observedFactPaths.every(path =>
+        !path.includes('.hour.')));
   // Prefer the 3-input core. When not observed, a narrower two-input core can
   // still be rendered, but completion needs two OTHER independently grounded axes.
   const core = result.find(s => s.axis === 'core') ??
@@ -233,12 +239,14 @@ export function buildRelationshipNatalMultifactorReport(
     const observed = chosen.map(s => `${AXIS_NAMES[s.axis]}(${s.channel === 'visible_stems' ? '천간' : '지지'})`);
     missing.push(`이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}. 최소 유효 풀이에는 독립된 근거의 추가 해석 축 ${3 - chosen.length}개가 더 필요합니다.`);
   }
-  let state: Status = core !== undefined && chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
-  let sections: readonly RelationshipNatalMultifactorSection[] = chosen;
+  const state: Status = snapshot.completeness.birthTimeKnown &&
+    core !== undefined && chosen.length === 3
+    ? 'complete' : result.length ? 'partial' : 'insufficient';
+  const sections: readonly RelationshipNatalMultifactorSection[] = chosen;
   if(!snapshot.completeness.birthTimeKnown) {
-    sections = [];
-    state = 'insufficient';
-    missing.unshift('출생시각 미상: 시주를 포함하는 전체 원국 종합은 보류');
+    missing.unshift(result.length > 0
+      ? '출생시각 미상: 시주와 관계없는 실제 연·월·일 근거로만 부분 풀이를 제공합니다. 전체 원국 종합은 보류합니다.'
+      : '출생시각 미상: 시주를 포함하는 전체 원국 종합은 보류하며 현재 관측 가능한 복합 근거도 부족합니다.');
   }
   return {
     snapshotId: snapshot.snapshotId,
