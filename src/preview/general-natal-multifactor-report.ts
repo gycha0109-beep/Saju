@@ -10,7 +10,7 @@ import {
   GENERAL_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/general-natal-multifactor-candidate.js';
 
-export const GENERAL_NATAL_MULTIFACTOR_REPORT_VERSION = '0.2.0-research-preview' as const;
+export const GENERAL_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
 type Axis = 'core' | 'expression' | 'response' | 'responsibility' | 'tension';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
@@ -202,9 +202,15 @@ export function buildGeneralNatalMultifactorReport(
     claims.every(c => selected.has(c.claimId)) &&
     (claims.length === 0 || selection.evidence !== undefined),
     'General meaning not selected by existing ReadingIntent/EvidenceSelector');
-  const result = claims.map(c => toSection(c, snapshot, execution, registry))
+  const sourceBound = claims.map(c => toSection(c, snapshot, execution, registry))
     .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
       (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
+  // Use T8 claims backed by known year/month/day facts; never borrow a
+  // missing birth-hour input. These narrower sections cannot complete MUR.
+  const result = snapshot.completeness.birthTimeKnown
+    ? sourceBound
+    : sourceBound.filter(section => section.observedFactPaths.every(path =>
+        !path.includes('.hour.')));
   // Prefer the 3-input core. When not observed, a narrower two-input core can
   // still be rendered, but completion needs two OTHER independently grounded axes.
   const core = result.find(s => s.axis === 'core') ??
@@ -231,12 +237,13 @@ export function buildGeneralNatalMultifactorReport(
   const missingSupportingAxes = 2 - Math.max(0, chosen.length - 1);
   if(missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
-  let state: Status = chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
-  let sections: readonly GeneralNatalMultifactorSection[] = core ? chosen : partialTension;
+  const state: Status = snapshot.completeness.birthTimeKnown && chosen.length === 3
+    ? 'complete' : result.length ? 'partial' : 'insufficient';
+  const sections: readonly GeneralNatalMultifactorSection[] = core ? chosen : partialTension;
   if(!snapshot.completeness.birthTimeKnown) {
-    sections = [];
-    state = 'insufficient';
-    missing.unshift('출생시각 미상: 시주를 포함하는 전체 원국 종합은 보류');
+    missing.unshift(result.length > 0
+      ? '출생시각 미상: 시주와 관계없는 실제 연·월·일 근거로만 부분 풀이를 제공합니다. 전체 원국 종합은 보류합니다.'
+      : '출생시각 미상: 시주를 포함하는 전체 원국 종합은 보류하며 현재 관측 가능한 복합 근거도 부족합니다.');
   }
   return {
     snapshotId: snapshot.snapshotId,
