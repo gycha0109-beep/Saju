@@ -77,11 +77,18 @@ function renderOverview(reports: NatalFiveDomainMultifactorReports): string {
   const items = DOMAIN_ORDER.map(({ key, label }) => {
     const report = reports[key];
     const firstSourceHeadline = report.sections[0]?.headline;
+    const missingReason = report.missing[0];
     const visibleSubject = firstSourceHeadline ??
-      report.missing[0] ?? '현재 확인된 해석 문단이 없습니다.';
+      missingReason ?? '현재 확인된 해석 문단이 없습니다.';
+    const gap = report.state === 'partial' && missingReason !== undefined
+      ? '<p class="overview-gap"><strong>아직 설명하지 못하는 부분:</strong> ' +
+        escapeHtml(missingReason) + '</p>'
+      : '';
     return '<li><a href="#domain-' + key + '">' + escapeHtml(label) + '</a>' +
       '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
-      '<p>' + escapeHtml(visibleSubject) + '</p></li>';
+      '<p>' + (report.state === 'partial' && firstSourceHeadline !== undefined
+        ? '확인된 부분 해석: ' : '') + escapeHtml(visibleSubject) + '</p>' +
+      gap + '</li>';
   }).join('');
   return '<nav class="overview" aria-label="다섯 분야의 근거 기반 요약">' +
     '<h2>이 명식에서 먼저 확인할 다섯 관점</h2>' +
