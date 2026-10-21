@@ -193,6 +193,38 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     }
   }, 15000);
 
+  it('counts only independently observed canonical facts for each real-chart Career supporting axis', () => {
+    for (const [month, day] of [[3,10],[4,11],[5,7],[6,3],[7,17]] as const) {
+      const { report } = run(month, day);
+      const primary = report.sections[0];
+      if (!primary || primary.channel !== 'visible_stems' || primary.axis === 'tension') {
+        expect(report.state).not.toBe('complete');
+        continue;
+      }
+      const used = new Set(primary.calculatedFactPaths);
+      for (const support of report.sections.slice(1)) {
+        expect(support.axis).not.toBe(primary.axis);
+        const independent = support.calculatedFactPaths.filter(path => !used.has(path));
+        expect(independent.length, support.claimType + ' must add a real T0 observation').toBeGreaterThan(0);
+        expect(independent.every(path =>
+          /^derivedFacts\\.tenGods\\.value\\.(year|month|day|hour)\\.(stem|branch)\\.value$/u.test(path),
+        )).toBe(true);
+        support.calculatedFactPaths.forEach(path => used.add(path));
+      }
+      if (report.state === 'complete') {
+        expect(report.sections).toHaveLength(3);
+        expect(new Set(report.sections.map(s => s.axis)).size).toBe(3);
+      } else {
+        expect(report.state).toBe('partial');
+        expect(report.missing.length).toBeGreaterThan(0);
+      }
+      expect(report.researchOnly).toBe(true);
+      expect(report.usefulComplete).toBe(false);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+  }, 30000);
+
   it('keeps a visible-stem tension without an execution or responsibility core as an honest partial reading', () => {
     let found: ReturnType<typeof run> | undefined;
     outer: for (const month of [2,3,4,5,6,7,8,9,10,11,12]) {
