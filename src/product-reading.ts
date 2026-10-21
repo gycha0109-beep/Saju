@@ -4,6 +4,16 @@ export {
   type ProductReadingServiceOptions,
 } from './reading/product-reading-service.js';
 
+export {
+  NATAL_FIVE_DOMAIN_PRODUCT_BUNDLE_VERSION,
+  NATAL_FIVE_DOMAIN_PRODUCT_ORDER,
+  requestNatalFiveDomainReadings,
+  type NatalFiveDomainKey,
+  type NatalFiveDomainProductBundle,
+  type NatalFiveDomainProductEntry,
+  type NatalFiveDomainProductRequest,
+} from './reading/natal-five-domain-product-service.js';
+
 export type { CanonicalSajuSnapshot } from './contracts/calculation.js';
 export type { NarrativePolicy } from './contracts/narrative.js';
 export type { InterpretationExecutionResult } from './interpretation/interpretation-engine.js';
