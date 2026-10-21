@@ -10,6 +10,7 @@ export {
 } from '../host/general-natal-integrated-preview-host.js';
 
 export * from './general-annual-exploration-report.js';
+export * from './general-monthly-exploration-report.js';
 
 export * from './natal-personalization-baseline.js';
 export * from './natal-structural-evidence.js';
