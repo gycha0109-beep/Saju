@@ -456,7 +456,7 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
         expect(report.missing).toContain('출생시각 미상');
         expect(report.missing.join(' ')).toContain('실제 연·월·일 계산 근거');
         for (const section of report.sections) {
-          expect(section.paragraph).toContain('이 원국');
+          expect(section.paragraph).toContain('실제 명식에서 확인한 근거는');
           expect(section.sourceIds.length).toBeGreaterThan(0);
           expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
           expect(section.calculatedFactPaths).toHaveLength(section.calculatedPositions.length);
