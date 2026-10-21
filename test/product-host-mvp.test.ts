@@ -470,6 +470,15 @@ describe('Myeonghwa Product Host MVP', () => {
       expect(app).toContain("bundle.mode === 'single_preview_chart'");
       expect(app).not.toContain('Authorization: Bearer');
       expect(app).toContain('payload.coverage.explanation');
+      expect(app).toContain("renderFactList('오행의 계산 정보', summary.fiveElements");
+      expect(app).toContain("renderFactList('십신의 계산 정보', summary.tenGods");
+      expect(app).toContain("renderFactList('대운 계산 정보', summary.luckPillars");
+      expect(app).toContain("renderFactList('달력 및 절기', summary.calendar");
+      expect(app).toContain('아직 확정할 수 없는 정보');
+      expect(app).toContain("fact.status === 'ambiguous'");
+      expect(app).toContain('나의 원국 계산 정보');
+      expect(app).toContain("bundle.mode !== 'single_preview_chart'");
+      expect(app).toContain("renderReading(reading, target, showCalculationSummary = true)");
       expect(html).not.toContain('research');
     } finally {
       await server.close();

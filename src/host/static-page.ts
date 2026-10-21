@@ -28,6 +28,11 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
     .pillar { background: #f6f5f1; border-radius: 10px; padding: 10px; text-align: center; }
     .pillar strong, .pillar span { display: block; }
     .pillar span { margin-top: 4px; font-size: 13px; color: #666; }
+    .facts { background: #faf9f6; padding: 12px 16px; border-radius: 12px; margin-top: 16px; }
+    .facts h3 { font-size: 16px; margin: 0 0 10px; }
+    .facts ul { margin: 0; padding-left: 18px; }
+    .facts li { margin: 6px 0; }
+    .uncertain-fact { color: #6b5d39; }
     section + section { border-top: 1px solid #ece9e1; margin-top: 20px; padding-top: 20px; }
     section h2 { margin: 0 0 10px; font-size: 20px; }
     ul { padding-left: 20px; }
@@ -222,8 +227,50 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     { domain: 'relationship', title: '연애·관계', requestText: '연애운' }
   ];
 
-  function renderReading(reading, target) {
-    if (reading.calculationSummary && reading.calculationSummary.pillars) {
+  function renderFactList(title, facts, target) {
+    if (!Array.isArray(facts) || facts.length === 0) return;
+    const panel = el('div', undefined, 'facts');
+    panel.appendChild(el('h3', title));
+    const items = el('ul');
+    facts.forEach((fact) => {
+      if (!fact || typeof fact.label !== 'string') return;
+      const value = fact.status === 'resolved' && typeof fact.value === 'string'
+        ? fact.value
+        : fact.status === 'ambiguous'
+          ? '확정되지 않음'
+          : '확인할 수 없음';
+      const item = el('li', fact.label + ': ' + value);
+      if (fact.status !== 'resolved') item.className = 'uncertain-fact';
+      items.appendChild(item);
+    });
+    if (!items.children.length) return;
+    panel.appendChild(items);
+    target.appendChild(panel);
+  }
+
+  function renderCalculationSummary(reading, target) {
+    const summary = reading.calculationSummary;
+    if (!summary) return;
+    renderFactList('달력 및 절기', summary.calendar, target);
+    renderFactList('오행의 계산 정보', summary.fiveElements, target);
+    renderFactList('십신의 계산 정보', summary.tenGods, target);
+    renderFactList('대운 계산 정보', summary.luckPillars, target);
+    if (Array.isArray(summary.ambiguity) && summary.ambiguity.length) {
+      const panel = el('section', undefined, 'facts');
+      panel.appendChild(el('h3', '아직 확정할 수 없는 정보'));
+      summary.ambiguity.forEach((item) => {
+        if (typeof item?.title !== 'string' || typeof item?.summary !== 'string') return;
+        const entry = el('p');
+        entry.appendChild(el('strong', item.title + ': '));
+        entry.appendChild(document.createTextNode(item.summary));
+        panel.appendChild(entry);
+      });
+      target.appendChild(panel);
+    }
+  }
+
+  function renderReading(reading, target, showCalculationSummary = true) {
+    if (showCalculationSummary && reading.calculationSummary && reading.calculationSummary.pillars) {
       const pillars = el('div', undefined, 'pillars');
       ['year', 'month', 'day', 'hour'].forEach((key) => {
         const fact = reading.calculationSummary.pillars[key];
@@ -234,6 +281,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       });
       target.appendChild(pillars);
     }
+    if (showCalculationSummary) renderCalculationSummary(reading, target);
     (reading.sections || []).forEach((section) => {
       const node = el('section');
       node.appendChild(el('h2', section.title));
@@ -245,11 +293,11 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     });
   }
 
-  function renderResponse(payload, target = result) {
+  function renderResponse(payload, target = result, showCalculationSummary = true) {
     target.replaceChildren();
     target.classList.remove('hidden');
     target.appendChild(el('div', messages[payload.messageCode] || payload.messageCode || payload.state, 'state'));
-    if (payload.reading) renderReading(payload.reading, target);
+    if (payload.reading) renderReading(payload.reading, target, showCalculationSummary);
     if (payload.coverage) {
       const explanation = payload.coverage.explanation;
       const label = typeof explanation === 'string' && explanation.trim()
@@ -358,13 +406,30 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
         ? '동일한 명식 계산을 바탕으로 다섯 분야를 각각 해석한 미리보기입니다.'
         : '동일한 출생정보로 다섯 분야를 각각 요청한 결과입니다. 종합 결론이 확정된 것은 아닙니다.',
       'bundle-caption'));
+    // A single Preview chart needs one common calculation heading.
+    // Independent /api/readings fallbacks are NOT asserted to share a snapshot.
+    if (bundle.mode === 'single_preview_chart') {
+      const chartSource = bundle.results.find(outcome =>
+        outcome.status === 'fulfilled' && outcome.value?.reading?.calculationSummary
+      );
+      if (chartSource) {
+        const chart = el('section', undefined, 'facts');
+        chart.appendChild(el('h2', '나의 원국 계산 정보'));
+        renderReading({
+          calculationSummary: chartSource.value.reading.calculationSummary,
+          sections: [],
+          disclosures: []
+        }, chart);
+        result.appendChild(chart);
+      }
+    }
     fiveTopics.forEach((topic, index) => {
       const card = el('section', undefined, 'domain-card');
       card.appendChild(el('h2', topic.title));
       const content = el('div');
       const outcome = bundle.results[index];
       if (outcome.status === 'fulfilled') {
-        renderResponse(outcome.value, content);
+        renderResponse(outcome.value, content, bundle.mode !== 'single_preview_chart');
       } else {
         content.appendChild(el('div',
           '이 분야의 풀이를 불러오지 못했습니다. 잠시 후 다시 요청해 주세요.',
