@@ -169,13 +169,26 @@ function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
       'source-backed Ten-God family is not actually observed');
     return `${EVIDENCE_ROLES[family]}: ${positions.map(x => x.display).join(' · ')}`;
   }).join(' / ');
+  // Name the two exact, source-owned upstream families in their observed
+  // canonical positions, not as a free-floating thematic keyword list.
+  // First observed slot is a deterministic display example, never rank/weight.
+  const pairBasis = (value.families as string[]).map(family => {
+    const first = locations.find(x => x.observedFamily === family);
+    guard(first !== undefined && EVIDENCE_ROLES[family] !== undefined,
+      'source-owned pair is absent from the exact canonical observation channel');
+    return `${first.display}의 ${EVIDENCE_ROLES[family]}`;
+  });
+  guard(pairBasis.length === 2 && pairBasis.every(Boolean),
+    'a Career synthesis must explain exactly two upstream families');
+  const channelName = value.channel === 'visible_stems' ? '천간' : '지지 대표 십신';
+  const headline = profileText(claim.claimType, 'headline');
   return {
     claimType: claim.claimType,
     pattern: value.pattern,
     axis: value.axis as Axis,
     channel: value.channel as 'visible_stems' | 'branches',
-    headline: profileText(claim.claimType, 'headline'),
-    paragraph: `실제 명식에서 확인한 근거는 ${locationText}입니다. ${profileText(claim.claimType, 'summary')}`,
+    headline,
+    paragraph: `실제 명식에서 확인한 근거는 ${locationText}입니다. ${pairBasis[0]}와 ${pairBasis[1]}가 같은 ${channelName} 관찰 범위에서 확인되므로, 기존 출처에 연결된 ‘${headline}’이라는 구조적 해석 후보를 함께 살핍니다. ${profileText(claim.claimType, 'summary')}`,
     upstreamClaimIds: [...claim.upstreamClaimRefs],
     sourceIds: [...claim.sourceRefs],
     ruleId: rule.ruleId,
