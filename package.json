@@ -91,7 +91,8 @@
     "face:verify:hairline-multisignal-review-packet": "npm run face:build && node scripts/run-multisignal-hairline-review-packet.mjs --self-check",
     "start:source-proof-staging": "node dist/source-reading-proof-server.js",
     "preview:annual:demo": "npm run build && node scripts/annual-exploration-demo.mjs",
-    "preview:monthly:demo": "npm run build && node scripts/monthly-exploration-demo.mjs"
+    "preview:monthly:demo": "npm run build && node scripts/monthly-exploration-demo.mjs",
+    "preview:annual-monthly:demo": "npm run build && node scripts/annual-monthly-exploration-demo.mjs"
   },
   "dependencies": {
     "manseryeok": "2.0.0"
