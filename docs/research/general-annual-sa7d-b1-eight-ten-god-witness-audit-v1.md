@@ -60,3 +60,199 @@ Research 파일: `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`.
 - **C. Bridge/Engine/Official Reading/Production 승인:** 허가하지 않음. `bridgeReentryReady=false`, `Production=HOLD`, Annual→Monthly 불허.
 
 기존 #2386의 Closed 상태, #2425 병합 상태를 신규 전통 의미의 승인으로 해석하지 않는다.
+
+## 6. 2026-10-09 원본 재취득 실행 및 차단 증거 (L0 유지)
+
+- 실행 브랜치: `research/saju-research/sa7d-b1-volume5-scan`
+- 실행 커밋: `975a2e1d32530975a23884bf5821a8f6f32926a0`
+- 실제 실행: [GitHub Actions #37801081281](https://github.com/gycha0109-beep/Saju/actions/runs/37801081281) (실패 종료)
+- 실행 증거 아티팩트: `sa7d-b1-volume5-original-proof`, ID `11561235665`. 실패 manifest만 생성됨. **PDF/판면 이미지 아티팩트 아님.**
+- 취득 대상: `NLC892-411999029701-67240 三命通會 第9冊.pdf`; Wikimedia Commons 원본 URL의 `/wikipedia/commons/8/8f/` 경로는 공개 검색과 일치함.
+- 차단: GitHub runner의 원본 GET 두 번 모두 HTTP `429 Too Many Requests`; 최종 `DOWNLOAD_FAILED`, `SCAN_FAILED`, exit 1. 소요 약 25초. HTTP 429를 원본 부재나 판본 불일치로 해석하지 않음.
+- 외부 PDF 서지: [Commons 파일 목록](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_%E4%B8%89%E5%91%BD%E9%80%9A%E6%9C%83_%E7%AC%AC9%E5%86%8A.pdf)의 **45쪽 / 13.38MB / 卷之五上** 정보만 다시 확인. 실제 다운로드 바이트, 파일 SHA-1/256, 목표 절 PDF index는 미확보.
+- 별도 위치 단서: [중국 국가도서관 계열 전사](https://www.shidianguji.com/zh/book/NGJ89241199902970167139/chapter/1lvorfakpmlnt)에 `論古人立印食、官財名義`, `論正官`, `論倒食` 등의 텍스트가 검색됨. `甲見辛`은 정관, `甲食丙`은 식신 관련, `甲見壬`은 도식/편인 관련 **L0 검색 단서**에 한정함. 전사/OCR의 오자 가능성과 PDF 상·하권 위치 불명은 별도로 검증해야 함.
+- 검증되지 않은 대안 판본은 별도 witness로 기록해야 하며 Commons 제9책과 동일 바이트 객체라고 가정하지 않음.
+
+**재개 조건:** 단순히 동일 URL을 즉시 반복 호출하지 말고, 429 제한이 해소됐다는 근거가 있거나 같은 원본 스캔 객체의 공개 배포 경로를 확정할 때만 일회성 취득을 재개한다. 실제 바이너리 확보 → Commons SHA-1/크기 대조 → SHA-256 및 45쪽 구조 검증 → 원문 판면과 두 방향 천간 문맥 직접 대조 → 독립 Annual 범위 검증 순서를 준수한다. 증거 확보 전 기존 연구 코드·테스트·14종 A3/A4 판정·8종 `INSUFFICIENT`는 변경하지 않는다. `bridgeReentryReady=false`, `Production=HOLD`를 유지한다.
+
+## 7. 보충 판면 증거 입증 상태 (2026-10-09)
+
+같은 독립 원전의 2개 판본 스캔 식별자만으로 그 판본의 **실제 인쇄 판면**을 Commons 공식 PDF 파생 이미지로 34쪽(제9책 6쪽 + 제10책 28쪽) 취득·대조하였다. 원본 PDF 바이너리를 로컬에서 다운로드하여 SHA를 검증한 것은 아니므로 "원본 PDF 원본 해시 검증 완료"라고 보고하지 않는다.
+
+- 제9책(卷之五上): `general-annual-sa7d-b1-ming-volume5-page-preview-witness-v1.md`에서 `甲→辛 正官` L1 확인.
+- 제10책(卷之五下): `general-annual-sa7d-b1-ming-volume5-lower-four-l1-witness-audit-v1.md`에서 `甲→丙 食神`, `甲→丁 傷官`, `甲→壬 偏印` L1 확인.
+- **직접 인쇄본 일간-십신 명칭 L1: 4/8**; 나머지 比肩, 劫財, 正財, 正印은 인쇄본 짝별 명칭 미확보.
+- **유년 천간 직접 증거 L2: 0/8.** Annual `sourceSupportGrade=INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`.
+- 기존 TypeScript `general-annual-sa7d-b1-ten-god-witness-audit.ts`는 **이 보충 판면 증거 취득 이전의 B1 v1 감사 스냅샷**이다. 그 문서 내 `primaryScanPageVerified: false` 같은 기존 스냅샷 속성은 보충 문서의 새 L1 판독 결과와 별도로 취급한다. 이 기록은 엔진 승인, 현대 테마, Annual 의미론 승격을 의미하지 않는다.
+- 임시 PDF 취득/페이지 미리보기 스크립트·일회성 GitHub Actions workflow는 연구 브랜치에서만 사용하고, 본 보충 문서의 정리 PR에는 포함하지 않는다.
+
+**종료:** A=4종 L1 검증 일부 PASS / B=전체 PDF 바이트, 4종 미확보, Annual L2 미확보 HOLD / C=권한 경계 보호 PASS.
+  
+## 8. 2026-10-09 제9책·제14책 추가 인쇄본 L1 (직전 4/8 스냅샷 뒤의 최신 상태)
+
+- 원전 직접 판면: 第9冊 卷五上 PDF 32쪽 `論正財`: `正財者乃甲見己乙見戊之例`. **甲→己 正財**를 직접 확인.
+- 원전 직접 판면: 第14冊 卷七下 PDF 46쪽 `論六親`: `六甲生人以癸水爲母癸爲正印如遇己土正財`. **甲→癸 正印** 직접 확인; 정재 짝 독립 교차 확인.
+- 정확한 PDF 인덱스, 원본 식별자, JPEG SHA-256, 실행·아티팩트, 판독 한계 및 `甲→乙 劫財/敗財` 사조 간 용어 차이는 `general-annual-sa7d-b1-ming-six-l1-and-school-label-audit-v1.md` 참고.
+- 최신 합산: Ming 직접 인쇄본 개별 **L1 6/8**, 비견·겁재 **L1 미확보**, 유년 직접 **L2 0/8**, Annual `INSUFFICIENT` **8/8**, `bridgeReentryReady=false`, `Production=HOLD`.
+- `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`는 이전 증거 시점의 v1 snapshot. 이번 추가 인쇄본은 연구용 감사 보충자료이며 의미론 승격이나 v1의 임의 변경 근거가 아니다.
+
+## 9. 2026-10-09 刻京臺增補淵海子平大全 별도 명대 판본: 비견 7/8, 劫財/敗財 분리
+
+- 명대 직접 인쇄 원전 `NLC892-2642-210288` 第2冊 卷三 **PDF 17쪽** `論兄弟姊妹`: `比肩者兄弟也且如甲見甲爲兄`. `甲→甲 比肩` 일간 L1 추가 확인.
+- 같은 고전 인쇄본 **PDF 10쪽** `論劫財`는 `五陽見五陰爲敗財`, `五陰見五陽爲劫財`를 구분. `甲→乙 劫財`를 확정하는 쌍별 문장은 미확인. `敗財`를 `劫財`로 조용히 치환 금지.
+- 원본 PDF 실제 바이트 취득과 전체 SHA-1/SHA-256 검증 미완료; 공식 PDF 파생 판면 JPEG 개별 SHA-256 확인. 판본·원문·쪽수·해시·실행 artifact·용어 충돌의 분리 증거는 `general-annual-sa7d-b1-yuanhai-ming-printed-bijian-and-term-split-v1.md` 참고.
+- **최신 L1 직접 원전 7/8, 현대 타깃 `甲→乙 劫財` 1/8 미충족.** 원전 Annual 적용 L2 **0/8**, 8개 Annual `sourceSupportGrade=INSUFFICIENT`, `bridgeReentryReady=false`, `Production=HOLD`. 기존 A2의 2개 독립 직접 증거에는 영향 없음.
+
+## 10. 2026-10-09 歲運 일반 방법의 명대 판면 대조 (개별 연운 신분과 분리)
+
+- 『刻京臺增補淵海子平大全』 명대 제2책 PDF **15·16쪽** `六親總篇`에서 일간을 기준으로 육친 관계를 설명하고 `此必以歲運見何字則剋何人`으로 판정 대상 시기를 연결하는 **일반 歲運 방법 문맥을 직접 대조**했다.
+- 구체적인 직접 JPEG·PDF 인덱스·SHA-256·Commons 서지와 재현 URL·기존 `劫財/敗財` 충돌의 개별 분리는 `general-annual-sa7d-b1-ming-yuanhai-suiyun-method-witness-v1.md` 참고.
+- `歲運`은 대운·유년을 혼합하는 일반 범위이므로, 명칭 L1 7/8 + 일반 歲運 문장만으로 8종의 개별 `日干×流年天干→十神` L2를 조합·자동 승격해서는 안 된다.
+- 결과 **L1 7/8, 신규 대상의 L2 0/8, Annual `INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`**. 2건의 기존 A2 개별 연운 직접 명칭은 보존.
+- 전사문 `基礎`의 `甲見乙：劫財、敗財`는 직접 명대 제본 판면과 아직 결속되지 않은 L0 단서; 같은 인쇄본 `論劫財`의 방향별 구분을 덮어쓰지 않는다.
+
+## 11. 2026-10-09 명대 직접 판면: 流歲 천간 입력 + 甲乙 복합 용어 검증
+
+- 『三命通會』 명 만력 간본 **제19책 권10상 PDF 2쪽 `看命口訣`**에서 `流歲取天干`, `日取天干`, `年取天干`, `大運取支神`, `年為本日為主`를 직접 확인. **특정 유년 천간을 살피는 원전 방법 범위 확인**이지만, 8개 십신의 각 개별 연운 명칭을 확정하는 직접 증거는 아님.
+- 별개 『刻京臺增補淵海子平大全』 명대 **제1책 PDF 10쪽 `天干五陽通變`**에서 `甲` 기준 `乙`에 `爲劫財敗財`의 **복합 명칭 원전 판면**을 직접 확인. 같은 인쇄 서명 제2책 PDF 10쪽 `論劫財`의 `五陽見五陰爲敗財` / `五陰見五陽爲劫財` 세부 규칙과 구분하여 기록.
+- 원본 서지 ID, PDF zero/one 인덱스, 파생 JPEG SHA-256, 14쪽의 실제 수신·검사 로그, 실행 ID 및 엄격한 Level/권한 판정은 `general-annual-sa7d-b1-ming-printed-annual-stem-and-jiecai-baicai-composite-witness-v1.md`에서 추적.
+- 새 사실: `METHOD_SCOPE_L1_PRINT_VERIFIED` 및 `L1_GROUPED_HISTORICAL_TERMINOLOGY=VERIFIED`. **불변:** 독립적 `甲→乙 劫財` 명칭 미해결, 대상의 정확한 개별 `甲日×流年天干→十神` L2 **0/8**, Annual `INSUFFICIENT` **8/8**, `bridgeReentryReady=false`, `Production=HOLD`.
+
+## 12. 2026-10-09 1935년 『千里命稿』 전사·실제 소장본 동일성 확인 보류
+
+- 『千里命稿』 `比劫祿刃篇` 온라인 전사에서 `甲日遇乙…故乙為甲之劫財` 단일 현대 명칭 **텍스트 단서 L0**를 확인. 명대 『淵海子平』의 `劫財敗財` 복합 명칭 및 `敗財` 방향 규칙과 **판본·시대가 다른 자료**이므로 자동 병합 금지.
+- NLC `NLC416-01jh000372-10197` **民國24[1935]** 서명 `千里命稿` 직접 파생 인쇄 JPEG **22쪽**(전반 6, 중간 8, 후반 8) 시각 감사 및 **22/22 SHA-256 PASS**. 확인한 표제 `千里命稿 第一集`, 서문·명례·권말 안내와 전사 `比劫祿刃篇` 사이의 **동일 인쇄판 본문 결속은 미성립**.
+- 표본 22/123으로 책 전체의 구절 부재는 주장하지 않음. 원본 PDF 전체 다운로드/검증도 미수행.
+- PDF 정확한 쪽·실물 서지·직접 이미지 실행/아티팩트·허용된 사실·불허 사실은 `general-annual-sa7d-b1-qianli-1935-edition-binding-audit-v1.md`에 별도 기록.
+- **불변:** 명대 일간 십신 독립 인쇄 L1 **7/8**, 甲乙 단독 劫財 L1 **未BOUND**, 개별 연운 L2 **0/8**, Annual `INSUFFICIENT` **8/8**, `bridgeReentryReady=false`, `Production=HOLD`.
+
+## 13. 2026-10-09 1935년 직접 연운 개별 정관 사례 — 이 문서 이후 최신 L2 1/8
+
+- 별도 소장 『千里命稿 第一集』(1935) `NLC416-17jh002565-109431` (124 PDF쪽)의 **PDF 67쪽 / 인쇄 64쪽**: `夫甲木日元`, `干透辛金正官`, `四十七歲辛亥年又屬正官之鄉`이 같은 실물 인쇄 페이지에 나타남.
+- 이 자료는 표본 22쪽만 조사했던 **다른 소장본** `NLC416-01jh000372-10197` (123쪽)과 별도 PDF 원본 객체. 새 소장본의 직접 인쇄 페이지를 이전 소장본의 특정 페이지로 잘못 인용하면 안 된다.
+- 정확한 원본 ID·PDF 인덱스·직접 JPEG SHA-256·실행 아티팩트·문맥 결합과 사용 범위: `general-annual-sa7d-b1-1935-george-v-exact-annual-zhengguan-l2-v1.md`.
+- **신규 연구 근거의 증분:** 명대 일간 십신 독립 이름 `L1=7/8` **유지**. 신규 후보 중 **`甲日×辛亥流年→正官`의 인쇄 직접 용례 `L2=1/8`** 확보. 위쪽 보충문서의 0/8은 *기존 조사 당시의 기록*임을 명시.
+- **제품 의미론과 별개:** 특정 명례의 `正官之鄉`을 `ANNUAL_OFFICER_ROLE_RESPONSIBILITY` 현대 테마, 사건 예측, 모든 辛년의 보편 규칙으로 치환 금지. 8종의 Annual `sourceSupportGrade=INSUFFICIENT`, `bridgeReentryReady=false`, `Production=HOLD`. 기존 A2의 2개 별도 `甲日×庚/戊年` 직접 사례 유지.
+
+## 14. 2026-10-09 유년 직접 적용법의 **별도 일간 사례**와 古本 `甲見己` 복합 대응 단서
+
+- 1937년 袁樹珊 『命理探源』 (NLC `NLC416-07jh011647-5318`, PDF 321쪽)의 `推流年法` 전사에는 `庚日 × 乙卯年 → 正財`가 **유년 간지·일간·십신 이름을 같은 문장에 명시한 별도 일간 사례**로 등장. 그러나 **甲日 8종 직접 증거가 아니므로 B1 8종의 새 L2 건수에 포함하지 않음**.
+- 해당 1937년 명확한 원본의 **PDF 79쪽(인쇄 48쪽) `推流年法` 및 PDF 80쪽(인쇄 49쪽)**에 `凡推流年即以所值本流年干支爲主`, `假如庚金日主於乙卯年推`, `乙木爲我剋者陽見陰爲正財`를 **같은 원전에서 직접 시각검증 완료**. 2회 CI 18/18 PDF-derived JPEG SHA-256 PASS. **庚日 개별 Annual 사용례가 직접 입증되어도 요청 대상 甲日 8종과 신분이 다르므로 甲日 B1 신규 Annual L2는 1/8 유지**.
+- 1935년 『精選命理約言』(NLC `NLC416-17jh002578-109774`) 직접 인쇄본 **PDF 88쪽(인쇄 「五」) 「流年賦」 시작과 89쪽 후속**에서 `先觀歲與日干`, `犯必日之財官`, `合必日之正配，非官即財`를 직접 확인. JPEG 2회 16/16 SHA-256 검증 PASS. 전사문의 `太歲合日干者 如甲見己 乙見庚之類 非正財即正官` 상세 소자(小字)와 두 이름의 개별 방향까지 정확 판면 결속은 불충분하므로 **甲日×己流年 正財의 독립 개별 L2 직접 승인 없음**.
+- 서지·1937/1935 인쇄본 직접 확인 쪽수·각 이미지 SHA-256·초안의 세부 전사 단서 및 제한 조건은 `general-annual-sa7d-b1-alternate-annual-method-print-locator-v1.md` 참고. PDF 원본 전체 바이너리 해시는 확보하지 않음.
+- **실제 승인 건수 불변:** 甲 기준 십신 단독 고전 명칭 L1=7/8; 역사적 개별 연운 명칭 L2=1/8 (`甲日×辛亥年 正官`); Annual 제품 `INSUFFICIENT` 8/8; `bridgeReentryReady=false`; `Production=HOLD`.
+
+## 15. B1-R2(2026-10-09) 최신 원장 및 판정 계약 — 본문 위 단계의 스냅샷 보존
+
+이 절 이전의 4/8·6/8·7/8, 0/8·1/8은 **증거 수집 순서에 따른 당시의 기록**이다. 과거 항목을 소급 수정하지 않는다. **다음 네 문서가 최신 R2 진입점이며 신규 증거를 억지로 생성하지 않는다.**
+
+1. `sa7d-b1-witness-ledger-v2.md` — 최신 甲日 독립 원전 명칭 L1=7/8, 직접 유년 사례 L2-C=1/8, 8종별 미해결 상태·출처 ID·기존 A2 제외.
+2. `sa7d-b1-jiecai-baicai-terminology-contract-v1.md` — 명대 `劫財敗財` 복합명, `敗財/劫財` 방향별 분리, 근현대 전사 단독명칭의 판본/증거 레벨 구분.
+3. `sa7d-b1-zhengcai-annual-directness-audit-v1.md` — `甲見己正財` 명식 L1 및 `流年賦` 방법은 PASS, 특정 `甲日×己流年→正財` 역사적 직접 문맥 L2-C는 미확인.
+4. `sa7d-b1-annual-rule-applicability-audit-v1.md` — 유년 일반 방법 L2-M/타 일간 사례/갑일간 직접 역사적 L2-C/출처 결합 추론 L2-D의 독립 판정, 반례 감사 R01–R10.
+5. `sa7d-b1-p2-p3-candidate-triage-v1.md` — 甲日 식신·상관·편인·정인·비견 5종의 **1차 역사적 유년 후보 검색 기각 이유**(출생 年柱/現代文獻/전사문 OCR 충돌), 정확 원전 쪽 후보가 특정되지 않아 신규 직접 L2-C 추가 0건.
+
+**현재 R2 결과:** L1 7/8 · 甲日 직접 역사적 연운 L2-C 1/8 · 제품 의미 승인 0/8. 연구용 L2-M·L2-C·L2-D는 **제안된 문서 레벨**이며 현행 소스 코드의 enum/authority를 바꾸지 않는다. `sourceSupportGrade=INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`.
+
+P1 감사의 문서 완료는 **직접 인쇄 L2-C 7종 신규 확보**와 동의어가 아니다. 역사적 미충족 상태를 유지하면서 P2/P3 전사 위치·출판본 확인 후 다음 후보로 이동한다.
+
+## 16. 2026-10-09 R4 증거 충분성 — 계산 규칙과 직접 사례를 분리
+
+- `sa7d-b1-r4-annual-case-reverse-index-v1.md`: 대상 4저술의 유년/태세 실례를 **甲일간 직접 십신 용례·다른 일간·출생 年柱/時干/大運·십신 이름 없는 年干 사용례**로 구분하는 연구 색인.
+- `sa7d-b1-r4-general-annual-rule-closure-v1.md`: 명대 `流歲取天干`, 四庫全書本 전사 `看流年歲君只用天元`, 민국 `庚日乙卯年 正財`의 **방법 근거 층위**. 명대 인쇄본의 확인 문구와 四庫別本 **전사**의 추가 문구를 동일 인쇄 페이지라고 하지 않는다.
+- `sa7d-b1-r4-evidence-sufficiency-and-handoff-v1.md`: **십신명의 조건부 계산·역사적 개별 연운 직접 인쇄 증명·현대 제품 사건 예측** 각각의 증거 충분성 기준과 권한 차단 명시.
+- **R4 추가된 甲일간 독립 L2-C = 0건**. 직전 누적 L1 단독 명칭 7/8·L2-C 직접 역사 사례 1/8·Product 0/8 **그대로 유지**. 조건부 연구 도출 L2-D를 L2-C로 세거나 Annual 제품 `SUFFICIENT`로 승격하지 않는다.
+- `sourceSupportGrade=INSUFFICIENT` 8/8, `bridgeReentryReady=false`, `Production=HOLD`, 연구 문서 외 소스/CI 변경 없음.
+
+## 17. 2026-10-09 R5 계산 계약·명칭 정책·Bridge 진입 조건 심사
+
+- `sa7d-b1-r5-computation-and-historical-naming-compatibility-audit-v1.md` — 현대 十神 열 이름·甲의 열천간 분류 후보는 코드계약/관행에 대한 **문서상 연구 제안**. B1의 대상 8개와 기존 A2의 戊·庚을 혼동하지 않고 역사적 이름 L1 직접 7/8, `甲乙 劫財敗財` 그룹과 단독 `劫財` 미충족을 구분.
+- `sa7d-b1-r5-annual-input-provenance-and-authority-gate-v1.md` — `natal dayMaster`, 요청 civil `targetYear`, `annualPillar` time boundary, `annualStemTenGod`·연운 의미의 **단계별 분리**. 모호·결측 입력과 별도 판본/명칭 정책은 실패폐쇄 처리 요구.
+- `sa7d-b1-r5-independent-admission-readiness-and-handoff-v1.md` — 기존 Bridge Review의 `RETURN_TO_RESEARCH`, Engine Authority Intake의 `HOLD_RESEARCH/HOLD_AUTHORITY`에 맞춘 연구 반환. 실제 승인·타입 변경 없음.
+- **R5 직접 인쇄 신규 L2-C=0건**, 누적 명대 개별 십신 이름 L1=7/8, 개별 역사 연운 L2-C=1/8, Product 해석 승인 0/8, `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. L2-D 현대 계산 추론을 고전 직접 인쇄 사례·정식 코드 테스트 PASS로 기록하지 않음.
+
+## 18. 2026-10-09 R6 별도 Natal 어휘 증거·year-only 실제 연운 기간 심사
+
+- `sa7d-b1-r6-jia-yi-historical-label-cross-track-reconciliation-v1.md` — `general-natal-jia-yi-jiecai-exact-relation-authority.ts`에서 후대 『子平真詮/評註』 전사 `甲逢乙為劫財`의 Natal bounded **research-only** 관찰 사실을 확인. 이는 명대 『淵海子平』의 직접 甲乙 그룹 `劫財敗財`/방향 `敗財`와 **다른 시대·텍스트 모달리티**로 취급. 직접 明刻 독립 甲乙 劫財 L1 승격 **없음**.
+- `sa7d-b1-r6-civil-year-vs-solar-term-annual-period-owner-audit-v1.md` — consumer adapter가 Seoul civil `targetYear` 선택, `annualSexagenaryPillar(year)`는 1984 기준 **정수 연도만으로 年柱** 산출(節入 시각 인자 없음), `deriveAnnualStemTenGod()`는 年干의 현대 십신 분류. 연운 유효기간을 入春基準으로 쓰려면 **별도 기간 정책·코드 owner의 명시적 결정과 테스트** 필요. 기존 코드를 틀렸다고 단정하지 않음.
+- `sa7d-b1-r6-cross-track-admission-trigger-and-stop-review-v1.md` — Natal label observation, annual calculation/period facts, Annual `ANNUAL_*` 의미, Bridge/Engine/Production Authority를 독립 소유권으로 분리.
+- **총계 불변:** 명대 십신 단독 이름 L1 7/8 · 역사적 甲日×특정 年干의 연운 직접 용례 L2-C 1/8 · 현대 의미 승인 0/8. R6 신규 직접 인쇄 판면 **0**, CI 실행 **0**, `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`.
+
+## 19. 2026-10-09 R7 後印 『子平真詮』 甲逢乙為劫財 직접 판면 및 기간 Owner 결정안
+
+- `sa7d-b1-r7-ziping-zhenquan-later-printed-jia-yi-jiecai-direct-l1-v1.md` — NLC `NLC416-11jh010455-35296` **PDF p18(1-based)/printed p9** 인쇄 문맥 `甲逢乙為劫財` 시각 직접 검증. 出版 `世界圖書館`, 정확한 연도 `[19--?]`; **明刻 본문과 분리**. PDF 원본 바이너리 해시 불검증을 명시.
+- `sa7d-b1-r7-modern-label-convention-and-annual-period-decision-packet-v1.md` — 현대 canonical `겁재` 표기와 역사 raw `劫財敗財/敗財/劫財`를 판본별 보존하는 **명칭 owner 제안**; consumer civil targetYear와 실제 立春 절입 年柱 유효기간 선택/구분의 **temporal owner 제안**, 미실행 11개 경계 테스트.
+- **명대 단독 인쇄 L1=7/8 그대로**, 대신 시대·판본 교차 인쇄 **단독명칭 존재 = 8/8**를 별도 연구 지표로 신설. **실제 甲日×特定 流年 직접 L2-C=1/8**, Annual 제품 의미 승인은 0/8. `L1=8/8`만 단독으로 적어 동일 명대 전승에서 모두 확인됐다고 오독하지 말 것.
+- `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`. Product/Engine/Bridge/Reader/Official/Monthly·CI 변경 0건.
+
+## 20. 2026-10-09 R8 인쇄본 PDF 재대조와 공식 절기 경계 후보
+
+- `sa7d-b1-r8-ziping-printed-witness-binary-integrity-audit-v1.md` — R7 인쇄본 『子平真詮』의 `甲逢乙為劫財`을 PDF **p18**에서 다시 읽음. 원본 PDF 전체 바이너리 다운로드/해시 확인은 못 했으므로 **integrity=UNVERIFIED**.
+- `sa7d-b1-r8-official-2026-lichun-annual-pillar-divergence-evidence-v1.md` — 한국천문연구원 공식 [2026년 월력요항](https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026) **입춘 2/4 05:02 KST 분 단위**와 현행 year-only 干支 도출 반례. `2026-01-15`의 甲日 유년은 정책에 따라 `丙午/식신`과 (입춘 효력정책 가정) `乙巳/겁재`가 달라짐; source-minute vs exact-second 차이와 D2 정책 미승인 유지.
+- 이번 R8 **연운 역사 직접 L2-C 신규 0건**; 명대 단독 십신 이름 `7/8`, 시대·출판본 간 명칭 존재 `8/8`, 개별 甲일간 실제 유년 직접 예 `1/8`, 제품 Annual 의미 승인 `0/8`.
+- `sourceSupportGrade=INSUFFICIENT` Annual 8/8, `bridgeReentryReady=false`, `Production=HOLD`; R8 CI/시스템 코드/Bridge/Engine/Monthly/Official/Reader 변경 없음.
+
+
+## 21. 2026-10-09 R9 KASI 달력자료의 공식성 재평가 및 연운 기간 비상속 독립 감사
+
+- [R9 감사 문서](sa7d-b1-r9-kasi-source-authority-and-annual-boundary-independent-audit-v1.md) 추가. R8 인쇄본 287p PDF p18(인쇄 九)의 `甲逢乙為劫財`는 **직접 인쇄 증거**로 유지한다. 원본 PDF 전체 SHA/정확한 출판연대는 **미검증**.
+- **R8 출처 지위 한정:** [KASI 2026 달력자료](https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026)는 `立春 02-04 05:02` (KST, 분 단위)를 제시하지만, 동시에 **공식 발표 자료가 아니며 공식 자료는 월력요항을 확인하라**고 명시한다. [공식 월력요항 진입점](https://astro.kasi.re.kr/kor/life/post/almanac?search_year=2026)에서는 2026년 월력요항과 대한민국 전자관보 안내 확인. **전자관보 발표문 원문 대조는 이번 R9에서 미완료**. 과거 R8 기록의 `공식` 표기는 이 감사 결과가 우선하는 출처 상태 **NOT_OFFICIAL_CALENDAR_DATA / OFFICIAL_GAZETTE_DIRECT_READ=HOLD**로 해석한다.
+- 코드 경로 재열람: 서울 civil 연도, `annualSexagenaryPillar(year)`, `deriveAnnualStemTenGod()`; `buildTemporalReadingContext`의 Annual/Monthly 공용 年柱 도출. 입춘 효력분기와 timeZone/UTC 동일 순간, 날짜 바뀜, 日干 불확실성에 대한 R9-01~R9-09는 **시험 설계**이며 자동 실행 **0건**.
+- 지표 변화 **없음**: 명대 단독 7/8, 시대·판본 교차 단독 8/8, 甲日 특정 流年 직접 L2-C 1/8, 현대 Annual 의미 0/8. `L1 + L2-M ≠ L2-C`, `L2-C ≠ L3`.
+- D1 현대 canonical `겁재`와 판본 raw `劫財敗財/敗財/劫財`를 분리하는 정책은 **소유자 승인 전 제안**. D2 연도 표시/入春효력·정확 관보 출처·시각 유효구간/Annual·Monthly 권한 비상속·테스트 역시 **소유자 정책 HOLD**. `sourceSupportGrade='INSUFFICIENT'` 8/8, `bridgeReentryReady=false`, `Production=HOLD`; docs-only, CI/Engine/Reader/Official/Bridge/Monthly 변경 없음.
+
+
+## 22. 2026-10-09 R10 우주항공청 공식 발표 계보와 관보 원문 시각 미결 감사
+
+- 신규 연구 기록 [R10 월력요항 발표·관보 경계 감사](sa7d-b1-r10-official-2026-almanac-publication-and-gazette-boundary-audit-v1.md). 우주항공청이 **2025-06-30** 「2026년 월력요항」 공식 **발표**를 게시한 사실은 정부 원 게시물에서 직접 확인([우주항공청 원 게시](https://www.kasa.go.kr/prog/bbsArticle/BBSMSTR_000000000010/view.do?bbsId=BBSMSTR_000000000010&nttId=B000000001860Pe2zT3)). 발표문은 그날부터 전자관보 등에서 월력요항을 조회하라고 안내하지만, **입춘 실제 시각은 발표문 본문에 나타나지 않는다**.
+- [KASI 2026 달력자료](https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026)는 `2026-02-04 05:02 KST`(분 단위)를 제시하나 **비공식이라고 자체 고지**. KASI 관보 이동 링크와 전자관보 초기 열람 화면만 확인; **2025-06-30 전자관보 해당 호/판면/PDF에서 입춘 시간 문구 직접 판독 미완료**. `OFFICIAL_PUBLICATION_ANNOUNCED=YES`, `GAZETTE_LICHUN_TIME_MATCH=UNVERIFIED`. 공식 발표 존재와 관보 **수치 대조를 혼동하지 않는다**.
+- 2026-02-02 제정·시행으로 재게시된 「월력요항 작성에 관한 규정」은 **2025-06-30에 소급 적용하지 않고**, 법령 원문·별표 1차 출처 대조도 이 R10 범위에서는 **HOLD**. 24기 공표와 명리 Annual 유효기간 채택은 **별도 소유권**.
+- D1 현대 `겁재`/역사 `劫財敗財·敗財·劫財` 병행 제안, D2 `DISPLAY_YEAR`와 `EFFECTIVE_ANNUAL_PILLAR` 정책 선택, D3 현대 Annual 의미 근거는 모두 **정식 채택·승인 없음**. R9 9종 경계 fixture는 **미실행**, KASI 시·분 미만 절입 순간 기대값은 **보류**.
+- **역사 카운트·권한 불변:** 명대 단독 L1 **7/8**, 시대·판본 혼합 단독 L1 **8/8**, 甲日×특정 流年 직접 L2-C **1/8**, 현대 제품 의미 승인 **0/8**, Annual 8종 `sourceSupportGrade='INSUFFICIENT'`, `bridgeReentryReady=false`, `Production=HOLD`. PDF 원본 전체 SHA·관보 판면 모두 HOLD. 변경은 `docs/research/` 한정, Engine/Reader/Official/Bridge/Monthly/CI workflow/TS 코드/제품 무변경. 기존 Actions 자동 시작 가능, CI 전체 통과 주장 금지.
+
+
+## 23. 2026-10-09 R11 공식 관보 원문 추적 및 2026 입춘 출처 선후관계 감사
+
+- 새 연구 문서 [R11 관보 1차 증거 추적·KASI 사전 달력자료 계보 감사](sa7d-b1-r11-official-gazette-primary-witness-retrieval-and-lichun-source-chain-audit-v1.md) 추가. 우주항공청 2026 월력요항 **2025-06-30 발표**와 한국천문연구원 2026년 **비공식 사전 달력자료 V1.0a 생성일 2024-07-25 16:57**를 각각 직접 대조. 立春 값 **2026-02-04 05:02 KST(시·분)**는 **사전 기관 게시 자료**이며 **관보 원문 수치 직접 대조 결과가 아니다**.
+- 대한민국 전자관보 [일자별 진입 화면](https://gwanbo.go.kr/user/search/searchDaily.do)은 확인했으나 **2025-06-30 해당 관보 호수·본문 원본·입춘 판면·PDF 원본 SHA를 확보하지 못함**. 공식 관보의 해당 분값 존재·일치 여부 `UNVERIFIED`. 초기 화면에 표시된 기본 날짜·0건을 해당 대상 관보의 부존재로 오인하지 않음. 다른 연도 2027 월력요항 PDF 게시 사례도 2026 문헌의 직접 증거가 아님.
+- 우주항공청 [2025-12-12 월력요항 작성에 관한 규정 제정안 행정예고](https://www.kasa.go.kr/prog/bbsArticle/BBSMSTR_000000000170/view.do?bbsId=BBSMSTR_000000000170&nttId=B000000002580Wk5aX2) 공식 게시까지는 확인. 이 후속 규정 제정절차와 2026-02-02 최종 훈령 재게시 정황을 **2025-06-30에 소급 적용하거나** 명리의 入春 年柱 정책과 혼동하지 않음.
+- **R11 신규 인쇄 L1/직접 L2-C=0건; 수치 불변**: 명대 PRINT L1 **7/8**, 인쇄 교차판본 L1 **8/8**, 甲日×실제 流年 직접 L2-C **1/8**, 현대 Annual 제품 의미 **0/8**. D1 modern `겁재`/historical raw label 정책은 제안 상태, D2 표시연도 vs 연간효력 경계(특히 `05:02±1초`) HOLD, D3 의미 별도. `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`.
+- **A=부분 확인/관보 원문 HOLD, B=명칭·기간·의미 정책 HOLD, C=docs/research-only 무결성 PASS**. Engine/Official/Reader/Bridge/Monthly/계산/TS schema/CI workflow 변경·실제 자동 경계테스트·수동 CI dispatch 없음. 문서 push에 따른 기존 Actions 자동 실행은 별도로 가능하며 CI 전체 PASS를 주장하지 않음. PR Draft/Open/미병합 유지.
+
+
+## 24. 2026-10-09 R12 D1 명칭·D2 연운 기간·D3 제품 의미 별도 소유자 결정 패킷
+
+- 신규 연구 [R12 D1/D2/D3 소유자 결정 패킷](sa7d-b1-r12-naming-and-annual-temporal-owner-decision-packet-v1.md) 추가. **최신 `main` 정적 코드 재대조**: `consumer-reading-request-adapter.ts`는 서울 달력연도와 월 추출, relative 연·월운 referenceDateTime 결측/invalid 시 정해진 invalid reason; `temporal-reading-context.ts:annualSexagenaryPillar(year)`은 1984년 기점 year-only 干支 계산, `buildTemporalReadingContext`는 Annual/Monthly 동일 helper 공유; `annual-interpretation-facts.ts`는 日干 resolved일 때만 연간 현대 십신 계산. **절입 유효시각/공식 sourceRef는 이 year-only 계산에 입력되지 않음**.
+- **D1** 현대 `겁재` canonical와 원전 서지별 `劫財敗財`/방향 `敗財`/후대 인쇄 `劫財` raw exact를 병행 보존하는 **`MODERN_CANONICAL_WITH_SOURCE_EXACT_QUOTE` 채택 심사 제안**만 유지. D1-B/C 비교와 scope/owner/서명 artifact 항목 작성, **정식 채택 0건**.
+- **D2** 세 가지 선택지·DEFER: `CIVIL_YEAR_ONLY` 현행 범위를 정확히 표시, `DISPLAY_CIVIL_YEAR__EFFECTIVE_SOLAR_TERM_PILLAR`(**공식 관보 원문·기간 owner 확정 후 조건부 검토**), `ANNUAL_PERIOD_UNRESOLVED_FAIL_CLOSED`. 같은 instant UTC/KST·서울 연말/연초·입춘 `05:01/05:03`·초단위 HOLD·invalid referenceDateTime·unresolved 日主·월운 비상속 등 **13개 회귀/음성 사례를 설계만 했고 실행하지 않음**.
+- **D3** `general-annual-authority-bridge-review.ts` 실제 `RETURN_TO_RESEARCH` / `production='HOLD'` 재열람; 원문 십신명·입춘 시각 확인·연간 계산은 현대 Annual 해석의 **semantic authority가 아님**. Reader/Official/Bridge/Engine/Monthly/TS schema/CI workflows/제품 코드 미변경.
+- **역사 수치 불변:** 명대 단독 L1 **7/8**, 시대·저본 교차 L1 **8/8**, 甲日×특정 流年 L2-C **1/8**, Product Annual L3 **0/8**. `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`. R11 관보 `GAZETTE_LICHUN_TIME_MATCH=UNVERIFIED`, 전체 SHA와 절입 초 단위 HOLD.
+- **A:** 증거 분류 PASS / 관보 원문 HOLD. **B:** 정책 선택 패킷·회귀 설계 PASS / D1/D2/D3 채택·자동 테스트 HOLD. **C:** `docs/research/`·기존 PR 설명 범위만 / Draft·Open·미병합 유지, 수동 workflow 실행 0건. 문서 push는 기존 CI 자동실행 유발 가능, 전체 PASS 주장 금지.
+
+
+## 25. 2026-10-09 R13 L2-C 증거 충분성·제한 외부 후보 역추적 (T-COMP/T-HIST 분리)
+
+- 신규 [R13 직접 유년 십신 증거 충분성·근접 후보 감사](sa7d-b1-r13-annual-direct-witness-evidence-sufficiency-and-bounded-search-v1.md). **R4 T-COMP의 십신 일반 분류계산 심사에는 B1의 역사적 구체 유년 사례 8/8이 논리적 필수조건이 아님**을 재확인. 단 **해당 고전이 특정 甲日×특정 流年×十神 이름을 직접 인쇄했다는 T-HIST 주장**에는 각 사례의 직접 L2-C가 계속 요구된다. D1 역사 명칭 가교·D2 입춘 기간/공식 관보 검증·D3 현대 Annual semantic authority는 서로 다른 소유권이며 아직 미승인.
+- **제한적 외부 전사 탐색(모두 L0):** 『淵海子平』 甲辰日 명식의 **六十五歲逢壬辰年**은 확인되지만 壬辰 유년의 직접 명칭 **偏印 미확인**(`ANNUAL_CASE_WITHOUT_TARGET_LABEL`, 좁은 후속 리드); 『千里命稿』 `甲木日干遇丁 … 傷官`은 **일반 분류**로 특정 丁流年 아님; 『三命通會』 `歲帶正馬`의 甲日午年己/巳 전사 차이는 **출생 연주/글자 불확실**; 『命理探源』 庚日×乙卯年 正財는 **다른 일간**; 『千里命稿』 英王 甲日×辛亥年 正官은 **기인정 동일 사례의 전사 중복**. 어떤 전사도 이번에 인쇄 판면 신규 L2-C로 승격하지 않음.
+- 『千里命稿』 웹 `推年以立春為標準`은 출생 당시 **Natal 年柱 교체** 설명의 L0 후보로 확인했을 뿐, **미래 타깃 Annual 有效期間 정책 D2 승인/2026 공식 관보 입춘 분초 검증으로 소급 금지**. 새 원본 PDF 전체 SHA·절입 초 단위·전자관보 판면 검증 없음.
+- **최신 증거 수치 불변:** 명대 단독 L1 **7/8**, 다른 시대·인쇄 저본 교차 단독 L1 **8/8**, 甲日 특정 실제 流年 직접 L2-C **1/8**, 현대 Annual 제품 의미 **0/8**. `sourceSupportGrade='INSUFFICIENT'` Annual 8/8, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`.
+- **A:** 증거 필요성·근접사례 역할 분리 PASS / 7개 역사 직접 L2-C HOLD. **B:** 무차별 8/8 스캔 대신 직접 리드 P0~P3·소유자 반환 기준 PASS / D1/D2/D3 정책 선택·R12 13개 자동 테스트 HOLD. **C:** `docs/research/` 범위/기존 PR 설명만 변경, Engine/Reader/Official/Bridge/Monthly/TS/CI workflow/제품 수정 없음. 신규 수동 CI dispatch 없음; 문서 커밋에 따른 기존 Actions 자동실행은 별도 확인, CI 전체 PASS 미선언. PR Draft/Open/미병합 유지.
+
+
+## 26. 2026-10-09 R14 『淵海子平』 甲辰日×壬辰年의 年干 설명과 偏印 직접 명명 분리
+
+- 신규 [R14 壬辰年 연간 사용과 偏印 L2-C 직접 명명 감사](sa7d-b1-r14-yuanhai-jiachen-renchen-annual-stem-vs-pianyin-direct-name-audit-v1.md) 추가. 『淵海子平』 [論正財 전사](https://www.chinese-classics.org/read/shushu/mingli/yuan-hai-zi-ping/001)의 `戊子·丁巳·甲辰·丙寅`은 **甲辰日 명식**, `六十五歲逢壬辰年`은 그 인물의 **특정 壬辰 流年**, `壬辰透出壬水`는 **해당 年干 壬水를 설명하는 논변**이다. 세 요소의 존재는 웹 L0 문맥 확인이나, 그 유년을 **`偏印`으로 직접 명명한 글자**는 해당 사례에서 미확인.
+- 같은 웹 편집본 머리의 일반 `見壬：為倒食、偏印、梟神`은 **분리된 현대 전사 일반 十神 대응표**이며, 특정 `壬辰年`의 직접 인쇄 이름을 뜻하지 않는다. `癸亥`의 `印綬`도 **大運** 맥락이어서 `壬辰流年=偏印` L2-C로 이동 불가. L0 명례+一般名 L0 조합은 조건부 L2-D일 뿐 L2-C가 아니다.
+- 복수 온라인 전사에서 동일한 명식·壬辰·壬水 해설이 반복되나 **독립 인쇄 증인이 아님**. `忌火沖水` / `忌水沖火` 등의 전사 차이로 판본별 정확 글자 검증 필요. Commons의 명대 刻本 [NLC892-2642-210287 第1冊](https://commons.wikimedia.org/wiki/File:NLC892-2642-210287_刻京臺增補淵海子平大全_第1冊.pdf) **48쪽 서지 객체**가 확인됐지만, 해당 `論正財` 명례가 실제 이 판본의 몇 쪽에 어떻게 찍혔는지 **PDF 판면 직접 재열람·전체 원본 SHA 검증은 미완료**. Commons 등록 SHA와 스스로 계산한 binary 해시 혼동 금지.
+- **R14 신규 L1/L2-C=0건**. 기존 **Ming 단독 L1 7/8**, 시대 교차 인쇄 단독 L1 **8/8**, 甲日 특정 流年 직접 명칭 L2-C **1/8**, 현대 Annual 제품 의미 **0/8** 불변. Annual 8종 `sourceSupportGrade='INSUFFICIENT'`, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`.
+- **A:** 연간 사용 문맥 L0 추가 검토 PASS / 판면·偏印 직접명칭 HOLD. **B:** P1 해당 전사 반복 검색 종료·인쇄 직접 이름 리드 시에만 재진입 / D1/D2/D3·R12 자동테스트 HOLD. **C:** `docs/research/` 문서/PR 설명만 변경, Engine/Reader/Official/Bridge/Monthly/TS/CI workflow/제품 권한 무변경, PR Draft/Open/미병합. 수동 CI dispatch 없음, 자동 Actions 전체 PASS는 확인 전 주장 금지.
+
+
+## 27. 2026-10-09 R15 계산 계약(T-COMP) 준비도, 구 연구 스냅샷과 정책 권한 구분
+
+- 신규 [R15 十神 계산 계약/정책 소유자 반환 준비도 감사](sa7d-b1-r15-ten-god-calculation-contract-readiness-and-authority-gap-audit-v1.md). **최신 `main`의 실제** `consumer-reading-request-adapter.ts`, `temporal-reading-context.ts`, `annual-interpretation-facts.ts`, `general-annual-authority-bridge-review.ts`, `general-annual-sa7d-b1-ten-god-witness-audit.ts`를 정적 열람했고, 관련 기존 `test/temporal-reading-context.test.ts`, `test/consumer-reading-request-adapter.test.ts`, `test/general-annual-sa7d-b1-ten-god-witness-audit.test.ts`, `test/general-annual-authority-bridge-review.test.ts` 테스트 **소스 존재**를 확인. **이 R15에서 Vitest/npm 실행 0건; 기존 CI 전체 PASS 주장 금지**.
+- `deriveAnnualStemTenGod()`는 `甲` 양목 일간의 10천간을 현대 관행 분류 `甲比肩/乙劫財/丙食神/丁傷官/戊偏財/己正財/庚偏官/辛正官/壬偏印/癸正印`으로 **정적 도출할 코드**를 포함. 기존 A2 `戊·庚`와 B1 **8개**는 독립 모집단. 이 명칭 예상표는 인쇄 역사 원문 10개 직접 사례나 테스트 실행 PASS가 아님.
+- `annualSexagenaryPillar(year)`는 1984 기점 양의 정수 `year`만 받으며 절입 timestamp·sourceRef 미입력. `buildTemporalReadingContext`는 Annual/Monthly 공용 연주를 호출. `buildAnnualInterpretationFacts`는 日干 `resolved`만 허용. 기존 작성된 테스트에는 1984·2026·2027 年柱 예시, Seoul UTC 연말경계, 일부 invalid 참조시각, B1 v1 스냅샷 및 Bridge `RETURN_TO_RESEARCH` 차단이 있지만, R12 13개 입춘 분기/Monthly 비상속 전용 회귀는 여전히 **미작성·미실행**.
+- **중요한 두 숫자 시점 분리:** `src/research/general-annual-sa7d-b1-ten-god-witness-audit.ts`의 초기 v1 `exactPrimaryPagesVerifiedForEight=0`·`directlyAnnualQualifiedAmongEight=0`은 **당시 전사기반 스냅샷의 동결 감사 결과**이고, R7~R14 문서로 누적 확인한 명대 인쇄 L1 7/8 및 현대 제품 Annual 직접 L2-C 1/8과 다른 시점·다른 증거 층위. 과거 audit TS와 해당 테스트를 현재 연구 숫자에 맞춘다며 변경하지 않음.
+- **T-COMP 제한적 소유자 심사 패킷은 준비, 승인 아님.** 미충족: D1 명대 `劫財敗財/敗財`와 후대 `劫財`의 역사 원문·현대 canonical 병행 규약, D2 공식 관보 원문/입춘 초정밀도·달력표시연도·절입 YearPillar 기간, Annual/Monthly 함수 파급 회귀, 10간·타 日干 실제 deterministic fixture, D3 Annual 의미 독립 source/reviewer/Bridge gate. 5개 owner O1~O5에 정책 반환 권고.
+- **불변:** `MING_PRINT_L1_EXACT=7/8`, `CROSS_EDITION_PRINT_L1_EXACT=8/8`, `ANNUAL_PRINT_L2_C=1/8`, `PRODUCT_ANNUAL_L3=0/8`; Annual 8종 `sourceSupportGrade='INSUFFICIENT'`, `bridgeReentryReady=false`, `RETURN_TO_RESEARCH`, `Production=HOLD`. **A:** 정적 계산 계약 소스·테스트 존재 감사 PASS / 실행 검증 HOLD. **B:** 소유자 결정 패킷 PASS / D1/D2/D3 채택 HOLD. **C:** `docs/research/` 전용, 계산/Official/Reader/Bridge/Monthly/CI workflow 변경 없음, Draft/Open/미병합 유지. 기존 Actions 자동 시작은 가능, manual dispatch 0건.
