@@ -122,6 +122,27 @@ describe('twelve-menu visibility is not evidence-backed reading availability', (
     ]);
   });
 
+  it('shows missing user input for the family card without implying either family reading exists', () => {
+    const unresolved = {
+      response: { state: 'clarification_required' },
+      execution: {
+        state: 'input_ambiguous',
+        preparation: {
+          normalization: { state: 'ambiguous' },
+        },
+      },
+    } as unknown as ProductReadingInternals;
+    const cards = buildTwelveMenuEngineReadiness([read('family', unresolved)]);
+    expect(cards[5]?.state).toBe('unavailable');
+    expect(cards[5]?.sections.map(x => x.reason)).toEqual([
+      'input_required', 'input_required',
+    ]);
+    const fakeOfficial = buildTwelveMenuEngineReadiness([
+      read('general', result(GENERAL, { official: true, haveReading: false })),
+    ]);
+    expect(fakeOfficial[0]?.state).toBe('unavailable');
+  });
+
   it('rejects cross-menu evidence and duplicate section responses', () => {
     expect(() => buildTwelveMenuEngineReadiness([
       read('career', result(GENERAL, { official: true })),
