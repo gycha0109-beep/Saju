@@ -1,0 +1,126 @@
+name: N27 1929 source folio retrieval (research-only)
+
+on:
+  push:
+    branches:
+      - research/saju/natal-19-pair-semantic-return-20261017
+    paths:
+      - .github/workflows/n27-1929-source-folio-retrieval.yml
+
+permissions:
+  contents: read
+
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Acquire uncropped 1929 upper volume by immutable Commons file path
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-1929/pages n27-1929/sheets
+          curl -fSL --retry 3 --retry-delay 4 --connect-timeout 15 --max-time 150 \
+            --user-agent 'MyeongHa-N27-Source-Critical-Audit/1.0' \
+            -o n27-1929/upper.pdf \
+            'https://upload.wikimedia.org/wikipedia/commons/6/67/NLC511-027032013020556-10360_%E7%A5%9E%E5%B3%B0%E9%80%9A%E8%80%83_%E7%AC%AC1%E5%8D%B7.pdf'
+          test "$(stat -c %s n27-1929/upper.pdf)" -gt 1000000
+          file n27-1929/upper.pdf
+          sha256sum n27-1929/upper.pdf
+          python3 -m pip install --quiet pymupdf Pillow
+          python3 - <<'PYDOC'
+          import fitz
+          doc=fitz.open('n27-1929/upper.pdf')
+          print('N27_PDF_PAGES',len(doc))
+          assert len(doc)==170
+          PYDOC
+          curl -fSL --retry 3 --retry-delay 4 --connect-timeout 15 --max-time 150 \
+            --user-agent 'MyeongHa-N27-Source-Critical-Audit/1.0' \
+            -o n27-1929/compare-1926.pdf \
+            'https://upload.wikimedia.org/wikipedia/commons/4/4c/NLC416-13jh001619-43305_%E7%A5%9E%E5%B3%B0%E9%80%9A%E8%80%83.pdf'
+          sha256sum n27-1929/compare-1926.pdf
+          python3 - <<'PY1926'
+          import fitz
+          d=fitz.open('n27-1929/compare-1926.pdf')
+          print('N27_1926_PDF_PAGES',len(d))
+          assert len(d)==169
+          PY1926
+      - name: Render complete page-grid index for human visual examination
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'Render PDF pages to contact sheets in Python with pymupdf'
+          python3 - <<'PY'
+          import pathlib, base64, fitz
+          from PIL import Image, ImageDraw
+          base = pathlib.Path('n27-1929')
+          doc = fitz.open(base/'upper.pdf')
+          total=len(doc)
+          assert total == 170, total
+          cols=6; rows=5; cellw=330; cellh=510
+          for era,source in [('1926',base/'compare-1926.pdf'),('1929',base/'upper.pdf')]:
+              book=fitz.open(source)
+              for page in [65,66,67,68,69]:
+                  pg=book[page-1]
+                  pix=pg.get_pixmap(matrix=fitz.Matrix(2.6,2.6),alpha=False)
+                  dest=base/'sheets'/f'{era}-pdfpage-{page:03d}-full.png'
+                  pix.save(dest)
+                  print('N27_FOLIO',era,page,round(dest.stat().st_size/1024),'KiB')
+          for start in range(0,total,cols*rows):
+              idx=start//(cols*rows)
+              sheet=Image.new('RGB',(cols*cellw,rows*cellh),(245,245,245))
+              draw=ImageDraw.Draw(sheet)
+              for pos,pg in enumerate(range(start,min(start+cols*rows,total))):
+                  pix=doc[pg].get_pixmap(matrix=fitz.Matrix(.75,.75),alpha=False)
+                  im=Image.frombytes('RGB',(pix.width,pix.height),pix.samples)
+                  im.thumbnail((cellw-8,cellh-30))
+                  left=(pos%cols)*cellw+(cellw-im.width)//2
+                  top=(pos//cols)*cellh+25
+                  sheet.paste(im,(left,top))
+                  draw.text(((pos%cols)*cellw+7,(pos//cols)*cellh+5),f'PDF {start+pos+1:03d}',fill=(0,0,0))
+              dest=base/'sheets'/f'contact-{idx+1:02d}-pages-{start+1:03d}-{min(start+cols*rows,total):03d}.jpg'
+              sheet.save(dest,quality=65,optimize=True)
+              print('N27_SHEET_META',dest,round(dest.stat().st_size/1024),'KiB')
+              dat=base64.b64encode(dest.read_bytes()).decode('ascii')
+              print(f'N27_SHEET_BASE64_BEGIN {idx+1}')
+              for offset in range(0,len(dat),400): print(dat[offset:offset+400])
+              print(f'N27_SHEET_BASE64_END {idx+1}')
+          PY
+      - name: Probe LOC seventeenth-century volume-two IIIF accessibility (no inferred collation)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-1929/loc-probe
+          python3 - <<'PYLOC'
+          import pathlib, urllib.request, urllib.error, json
+          base=pathlib.Path('n27-1929/loc-probe')
+          tests={
+            'manifest':'https://www.loc.gov/item/2014514308/manifest.json',
+            'juan2-json':'https://www.loc.gov/resource/lcnclscd.2014514308.1A002/?fo=json',
+            'juan2-iiif-guess-not-verified':'https://tile.loc.gov/image-services/iiif/service%3Aasian%3Alcnclscd%3A2014514308%3A1A002%3A00001a/full/pct%3A20/0/default.jpg'
+          }
+          for k,url in tests.items():
+            try:
+              req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 N27-SourceAudit'})
+              with urllib.request.urlopen(req,timeout=20) as f:
+                body=f.read(350000)
+                ctype=f.headers.get('Content-Type','')
+                (base/(k+'.bin')).write_bytes(body)
+                print('N27_LOC_HTTP',k,f.status,ctype,len(body),f.url)
+                if 'json' in ctype:
+                  data=json.loads(body)
+                  print('N27_LOC_JSON_FIELDS',k,list(data)[:16])
+                  print('N27_LOC_JSON_PREVIEW',k,str(data)[:900])
+            except Exception as e: print('N27_LOC_ERROR',k,type(e).__name__,str(e)[:180])
+          PYLOC
+      - name: Store source PDF and page index as non-production evidence artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-1929-upper-unmodified-pdf-and-contact-sheets
+          path: |
+            n27-1929/upper.pdf
+            n27-1929/compare-1926.pdf
+            n27-1929/sheets/*.jpg
+            n27-1929/sheets/*.png
+            n27-1929/loc-probe/*
+          retention-days: 14

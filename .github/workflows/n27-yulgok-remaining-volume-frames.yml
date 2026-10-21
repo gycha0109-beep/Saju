@@ -1,0 +1,86 @@
+name: N27 Yulgok remaining three lithograph volumes public preview audit
+on:
+  push:
+    branches: [research/saju/natal-19-pair-semantic-return-20261017]
+    paths: ['.github/workflows/n27-yulgok-remaining-volume-frames.yml']
+permissions:
+  contents: read
+jobs:
+  first-hand-official-catalogue-and-public-frames:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Inspect catalogues and fetch only publisher exposed public JPEG viewer frames
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-yulgok-remaining/frames n27-yulgok-remaining/catalogue
+          python3 - <<'PY'
+          import urllib.request,urllib.error,urllib.parse,hashlib,json,re,pathlib,time
+          from html.parser import HTMLParser
+          root=pathlib.Path('n27-yulgok-remaining')
+          host='https://db.yulgok.or.kr'
+          candidates=['B005_01_B00330_001','B005_01_B00330_002','B005_01_B00330_003','B005_01_B00330_004']
+          report={'sourceLibrary':'율곡연구원 한국학 아카이브','firstKnownHolding':'B005_01_B00330_001','expectedPhysicalFourBooksFromPublishedCatalog':4,'sourcePublishedCatalog':'https://db.yulgok.or.kr/data/media/EB000008_svc.pdf','results':[],'linkedVolumePreviewFramesRetrieved':0,'hourWealthSupplementOriginalFolioDirectlyRead':False}
+          def get(u,limit=8*1024*1024):
+           req=urllib.request.Request(u,headers={'User-Agent':'Mozilla/5.0 (public academic book catalogue research)'})
+           with urllib.request.urlopen(req,timeout=24) as r:
+            b=r.read(limit+1)
+            if len(b)>limit:raise ValueError('BYTE_CAP')
+            return b,r.status,r.headers.get('Content-Type','')
+          for id in candidates:
+           rec={'id':id,'officialDetail':host+'/poss/view?dataId='+id,'viewerUrl':host+'/viewer/view?dataId='+id,'previewItems':[]}
+           try:
+            d,st,mime=get(rec['officialDetail']);dt=d.decode('utf-8','replace')
+            rec.update(detailHttp=st,detailBytes=len(d),detailSha256=hashlib.sha256(d).hexdigest())
+            rec['detailTitleContext']=next((re.sub(r'<[^>]+>','',a).strip()[:180] for a in re.findall(r'<title[^>]*>(.*?)</title>',dt,re.S|re.I)),'')
+            rec['detailMentionsExactId']=id in dt
+            rec['detailMentionsRarebookTitle']=('神峰' in dt or '神峯' in dt or '신봉장선생' in dt)
+            rec['htmlExcerptAroundId']=dt[max(0,dt.find(id)-100):dt.find(id)+130] if id in dt else ''
+            (root/'catalogue'/(id+'.html')).write_bytes(d)
+            # A matching 4-volume record must be identifiable before its public viewer is treated as this historical copy.
+            if not (rec['detailMentionsExactId'] and rec['detailMentionsRarebookTitle']):
+             rec['status']='NOT_CONFIRMED_AS_THE_SAME_RARE_BOOK';report['results'].append(rec);continue
+            vd,vst,vmime=get(rec['viewerUrl'])
+            vt=vd.decode('utf-8','replace')
+            rec.update(viewerHttp=vst,viewerBytes=len(vd),viewerSha256=hashlib.sha256(vd).hexdigest())
+            (root/'catalogue'/(id+'-viewer.html')).write_bytes(vd)
+            m=re.search(r'imgItems:\s*(\[[^;]+?\])\s*,',vt)
+            if not m:rec['status']='VIEWER_NO_EXPLICIT_IMAGE_ITEMS';report['results'].append(rec);continue
+            items=json.loads(m.group(1))
+            rec['declaredPreviewItems']=len(items)
+            if len(items)>15:raise ValueError('MAX_15_FRAMES_PER_HOLDING')
+            for item in items:
+             imageid=item.get('imgId')
+             frame={'imgId':imageid}
+             if not imageid or not re.fullmatch(re.escape(id)+r'_\d{3}',imageid):
+              frame['status']='INVALID_VIEWER_IMAGE_ID';rec['previewItems'].append(frame);continue
+             url=host+'/data/image/B/'+id+'/preview/'+imageid+'.jpg'
+             frame['sourceUrl']=url
+             try:
+              data,c,typ=get(url,12*1024*1024)
+              frame.update(http=c,bytes=len(data),contentType=typ)
+              if data.startswith(b'\xff\xd8\xff'):
+               (root/'frames'/(imageid+'.jpg')).write_bytes(data)
+               frame.update(status='PUBLIC_JPEG_ACQUIRED',sha256=hashlib.sha256(data).hexdigest())
+               report['linkedVolumePreviewFramesRetrieved']+=1
+              else:frame['status']='NOT_JPEG'
+             except urllib.error.HTTPError as e:frame.update(status='HTTP_ERROR',http=e.code)
+             except Exception as e:frame.update(status='REQUEST_ERROR',error=repr(e)[:200])
+             rec['previewItems'].append(frame)
+             print('N27_YULGOK_REMAINING_FRAME',imageid,frame['status'],frame.get('bytes'),flush=True)
+             time.sleep(.4)
+            rec['status']='PUBLIC_VIEWER_FRAMES_AUDITED'
+           except urllib.error.HTTPError as e:rec.update(status='HTTP_ERROR',http=e.code)
+           except Exception as e:rec.update(status='ERROR',error=repr(e)[:240])
+           report['results'].append(rec)
+           print('N27_YULGOK_REMAINING_VOLUME',id,rec['status'],rec.get('declaredPreviewItems'),flush=True)
+          (root/'catalogue-and-preview-audit.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+          PY
+      - name: Preserve official source urls, response hashes and openly provided previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-yulgok-remaining-volumes-original-previews
+          path: n27-yulgok-remaining
+          retention-days: 14

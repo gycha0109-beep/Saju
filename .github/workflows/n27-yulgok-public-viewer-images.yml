@@ -1,0 +1,78 @@
+name: N27 Yulgok public viewer page image acquisition
+
+on:
+  push:
+    branches: [research/saju/natal-19-pair-semantic-return-20261017]
+    paths: ['.github/workflows/n27-yulgok-public-viewer-images.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-official-public-preview-frames:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - name: Extract explicit Yulgok viewer imageIds and fetch public preview frames
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-yulgok-viewer/images
+          python3 - <<'PY'
+          import hashlib,json,pathlib,re,time,urllib.request,urllib.error
+          root=pathlib.Path('n27-yulgok-viewer')
+          base='https://db.yulgok.or.kr'
+          holdings=['B005_01_B00330_001','B005_01_B00442_001']
+          report=[]
+          def retrieve(url,timeout=25):
+              req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (public scholarship image review)'})
+              with urllib.request.urlopen(req,timeout=timeout) as r:
+                  return r.read(20*1024*1024+1),r.status,r.headers.get('Content-Type','')
+          for holding in holdings:
+              r={'catalogueId':holding,'viewerUrl':base+'/viewer/view?dataId='+holding,'items':[]}
+              try:
+                  html,code,mime=retrieve(r['viewerUrl'])
+                  r['viewerHttp']=code
+                  text=html.decode('utf-8','replace')
+                  m=re.search(r'imgItems:\s*(\[[^;]+?\])\s*,',text)
+                  if not m:
+                      r['status']='NO_EXPLICIT_IMAGE_IDS_IN_VIEWER';report.append(r);continue
+                  img_items=json.loads(m.group(1))
+                  r['declaredImageCount']=len(img_items)
+                  if len(img_items)>12:raise ValueError('VIEWER_COUNT_CAP_12')
+                  for item in img_items:
+                      img_id=item['imgId']
+                      if not re.fullmatch(re.escape(holding)+r'_\d{3}',img_id):raise ValueError('UNEXPECTED_IMAGE_ID')
+                      url=base+'/data/image/B/'+holding+'/preview/'+img_id+'.jpg'
+                      rec={'imgId':img_id,'officialViewerPreviewPath':url}
+                      try:
+                          blob,status,im_mime=retrieve(url)
+                          rec.update(http=status,contentType=im_mime,bytes=len(blob))
+                          if len(blob)>20*1024*1024:
+                              rec['result']='OVERSIZED';r['items'].append(rec);continue
+                          if blob.startswith(b'\xff\xd8\xff'):
+                              path=root/'images'/(img_id+'.jpg')
+                              path.write_bytes(blob)
+                              rec.update(result='FETCHED_JPEG',sha256=hashlib.sha256(blob).hexdigest())
+                          else:
+                              rec.update(result='NOT_A_JPEG',contentPrefix=repr(blob[:70]))
+                      except urllib.error.HTTPError as e:
+                          rec.update(result='HTTP_ERROR',http=e.code)
+                      except Exception as e:
+                          rec.update(result='ERROR',error=repr(e)[:180])
+                      r['items'].append(rec)
+                      print('N27_YULGOK_IMAGE',img_id,rec['result'],rec.get('bytes'),flush=True)
+                      time.sleep(1)
+                  r['status']='VIEWER_IMAGE_IDS_INSPECTED'
+              except Exception as e:r.update(status='VIEWER_ERROR',error=repr(e)[:250])
+              report.append(r)
+          (root/'viewer-image-audit.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+          print('N27_YULGOK_TOTAL',[(x['catalogueId'],x.get('declaredImageCount'),sum(i.get('result')=='FETCHED_JPEG' for i in x['items'])) for x in report],flush=True)
+          PY
+      - name: Preserve only explicit public viewer image frames and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-yulgok-viewer-explicit-public-jpeg-frames
+          path: n27-yulgok-viewer
+          retention-days: 14

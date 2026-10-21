@@ -1,0 +1,74 @@
+name: N27 Yulgok and Dalian public facsimile endpoint audit
+on:
+  push:
+    branches: [research/saju/natal-19-pair-semantic-return-20261017]
+    paths: ['.github/workflows/n27-public-rarebook-image-endpoints.yml']
+permissions:
+  contents: read
+jobs:
+  public-facsimile-endpoints:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check fixed public site URLs and catalog-linked image bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-public-facsimiles/files
+          python3 - <<'PY'
+          import urllib.request,urllib.error,hashlib,json,pathlib,re,time
+          from html.parser import HTMLParser
+          root=pathlib.Path('n27-public-facsimiles')
+          items=[
+           ('yulgok_4book_detail','https://db.yulgok.or.kr/poss/view?dataId=B005_01_B00330_001'),
+           ('yulgok_2juan_detail','https://db.yulgok.or.kr/poss/view?cate=cateSubj&dataId=B005_01_B00442_001&itemId=B'),
+           ('yulgok_4book_viewer','https://db.yulgok.or.kr/viewer/view?dataId=B005_01_B00330_001'),
+           ('yulgok_2juan_viewer','https://db.yulgok.or.kr/viewer/view?dataId=B005_01_B00442_001'),
+           ('yulgok_4book_thumbnail','https://db.yulgok.or.kr/data/image/B/B005_01_B00330_001/thum/B005_01_B00330_001_001.jpg'),
+           ('yulgok_2juan_thumbnail_inferred','https://db.yulgok.or.kr/data/image/B/B005_01_B00442_001/thum/B005_01_B00442_001_001.jpg'),
+           ('dalian_1925_detail','https://www.dl-library.net.cn/book/520/-xin-shenfeng-xianshengtongkao---minglizhengzongdaquan-519143.html')]
+          class Links(HTMLParser):
+           def __init__(self):super().__init__();self.refs=[]
+           def handle_starttag(self,tag,attrs):
+            if tag in ('img','a','iframe','script','source'):
+             for key,value in attrs:
+              if key in ('src','href','data-src','data-original') and value:
+               self.refs.append({'tag':tag,'url':value})
+          results=[]
+          for key,url in items:
+           row={'key':key,'url':url}
+           try:
+            req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (public bibliographic research)'})
+            with urllib.request.urlopen(req,timeout=24) as rsp:
+             data=rsp.read(2*1024*1024+1)
+             row['http']=rsp.status;row['mime']=rsp.headers.get('Content-Type')
+             row['final_url']=rsp.url
+            if len(data)>2*1024*1024:row['status']='CAP_2M';results.append(row);continue
+            row['bytes']=len(data);row['sha256']=hashlib.sha256(data).hexdigest()
+            if data.startswith(b'\xff\xd8\xff') or data.startswith(b'\x89PNG'):
+             row['status']='PUBLIC_IMAGE_BYTES'
+             target=root/'files'/(key+'.jpg' if data.startswith(b'\xff\xd8\xff') else key+'.png')
+             target.write_bytes(data);row['artifact_name']=target.name
+            else:
+             row['status']='HTML_OR_OTHER'
+             content=data.decode('utf-8','replace')
+             html=Links();html.feed(content)
+             row['source_links']=html.refs[:80]
+             row['book_image_asset_hits']=[x for x in html.refs if any(p in x['url'].lower() for p in ('image/b/','imageviewer','bookimg','viewer/view','book/520/'))][:45]
+             row['viewer_mentions']={w:content.lower().count(w.lower()) for w in ('original', '원문', '원문/국역', 'noData', 'viewer', 'imgCnt', 'pageCount', 'download', 'thum')}
+             row['explicit_indication_original_page_files']=any(('/orig/' in x['url'] or '/original/' in x['url']) for x in html.refs)
+             (root/'files'/(key+'.html')).write_bytes(data)
+           except urllib.error.HTTPError as e:row.update(status='HTTP_ERROR',http=e.code)
+           except Exception as e:row.update(status='REQUEST_ERROR',error=repr(e)[:240])
+           results.append(row)
+           print('N27_PUBLIC_ENDPOINT',key,row['status'],row.get('http'),row.get('bytes'),flush=True)
+           time.sleep(1.5)
+          (root/'endpoint-audit.json').write_text(json.dumps(results,ensure_ascii=False,indent=2))
+          PY
+      - name: Preserve source URLs, status and public source bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-public-rarebook-image-endpoint-audit
+          path: n27-public-facsimiles
+          retention-days: 14

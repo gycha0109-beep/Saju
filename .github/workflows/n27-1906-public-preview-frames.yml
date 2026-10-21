@@ -1,0 +1,49 @@
+name: N27 1906 claimed Shanghai lithograph public previews audit
+on:
+  push:
+    branches: [research/saju/natal-19-pair-semantic-return-20261017]
+    paths: ['.github/workflows/n27-1906-public-preview-frames.yml']
+permissions:
+  contents: read
+jobs:
+  public-free-preview-frames:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Download only eleven explicitly linked publicly visible seller preview JPEGs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p n27-1906-preview-audit/frames
+          python3 - <<'PY'
+          import hashlib,json,pathlib,time,urllib.request,urllib.error
+          root=pathlib.Path('n27-1906-preview-audit')
+          base='https://cdn.hongyeshan.com/wp-content/uploads/2023/06/0_Screenshot_20230624_'
+          listed=['233131','233140','233145','233150','233155','233211','233221','233248','233200','233232','233136']
+          records=[]
+          for stamp in listed:
+           url=base+stamp+'.jpg'
+           row={'source':'https://hongyeshan.com/post/47178.html','publicPreviewImageUrl':url,'imgId':stamp,'sellerClaimedYear':1906,'actualHistoricalPublicationYear':'UNADJUDICATED','printedSupplementLocusRead':False}
+           try:
+            req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0 (public scholarly bibliographic sampling)','Referer':'https://hongyeshan.com/post/47178.html'})
+            with urllib.request.urlopen(req,timeout=20) as resp:
+             row['statusCode']=resp.status;row['contentType']=resp.headers.get('Content-Type')
+             data=resp.read(12*1024*1024+1)
+             row['finalUrl']=resp.url
+            if len(data)>12*1024*1024:row['result']='IMAGE_SIZE_CAP'
+            elif data.startswith(b'\xff\xd8\xff'):
+             p=root/'frames'/('preview-'+stamp+'.jpg');p.write_bytes(data)
+             row.update(result='PUBLIC_PREVIEW_JPEG_ACQUIRED',bytes=len(data),sha256=hashlib.sha256(data).hexdigest())
+            else:row.update(result='NOT_JPEG',bytes=len(data),prefix=repr(data[:80]))
+           except urllib.error.HTTPError as e:row.update(result='HTTP_ERROR',statusCode=e.code)
+           except Exception as e:row.update(result='OTHER_ERROR',error=repr(e)[:240])
+           records.append(row);print('N27_SELLER_PUBLIC_IMAGE',stamp,row['result'],row.get('bytes'),flush=True);time.sleep(.7)
+          (root/'audit.json').write_text(json.dumps({'source':'https://hongyeshan.com/post/47178.html','publicLinkedImageCount':len(listed),'acquiredCount':sum(x['result']=='PUBLIC_PREVIEW_JPEG_ACQUIRED' for x in records),'fullPdfAcquired':False,'sellerAccessBypassed':False,'items':records},ensure_ascii=False,indent=2))
+          PY
+      - name: Preserve preview-only provenance and images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: n27-1906-public-listed-preview-only
+          path: n27-1906-preview-audit
+          retention-days: 14
