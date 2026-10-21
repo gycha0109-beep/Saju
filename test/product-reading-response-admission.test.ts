@@ -290,6 +290,21 @@ describe('ProductReadingResponse admission', () => {
     ).toThrow(TypeError);
   });
 
+  it('accepts controlled Korean coverage explanation and rejects multiline or oversized exposure', () => {
+    const response = coverageResponse('insufficient_evidence');
+    const good = {
+      ...response,
+      coverage: { ...response.coverage, explanation: '원국의 종합해석에 필요한 근거가 아직 부족합니다.' },
+    };
+    expect(() => assertProductReadingResponse(good)).not.toThrow();
+    expect(() => assertProductReadingResponse({
+      ...good, coverage: { ...good.coverage, explanation: '내부\n다음줄' },
+    })).toThrow('explanation');
+    expect(() => assertProductReadingResponse({
+      ...good, coverage: { ...good.coverage, explanation: '가'.repeat(251) },
+    })).toThrow('explanation');
+  });
+
   it('rejects a blocking state with its required coverage removed', () => {
     const malformed = { ...coverageResponse('partial_evidence') } as Record<string, unknown>;
     delete malformed.coverage;

@@ -7,6 +7,71 @@ import {
 const SEOUL_YEAR_BOUNDARY_REFERENCE = '2026-12-31T15:30:00.000Z';
 
 describe('consumer reading request adapter', () => {
+  it('routes all twelve exact UI menu titles without inventing missing reading authority', () => {
+    const cases = [
+      ['전체 사주', { domain: 'general', temporalScope: 'natal' }],
+      ['직업·커리어', { domain: 'career', temporalScope: 'natal' }],
+      ['재물', { domain: 'wealth', temporalScope: 'natal' }],
+      ['연애·관계', { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'general' }],
+      ['사업', { domain: 'business', temporalScope: 'natal' }],
+      ['삶의 단계', { domain: 'life_stage', temporalScope: 'life_stage' }],
+      ['올해', { domain: 'general', temporalScope: 'annual' }],
+      ['이번 달', { domain: 'general', temporalScope: 'monthly' }],
+      ['배우자·관계', { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'spouse' }],
+      ['궁합', { domain: 'compatibility', temporalScope: 'natal' }],
+    ] as const;
+    for (const [title, intent] of cases) {
+      const result = normalizeConsumerReadingRequest({
+        requestId: 'menu-' + title,
+        text: title,
+        referenceDateTime: SEOUL_YEAR_BOUNDARY_REFERENCE,
+        ...(title === '궁합' ? { targetPersonRef: 'another-person-ref' } : {}),
+      });
+      expect(result.state, title).toBe('resolved');
+      expect(result.request?.intent, title).toEqual(intent);
+      expect(result.profileAuthorizationRef, title).toBeDefined();
+      if (title === '올해' || title === '이번 달') {
+        expect(result.request?.targetPeriod?.year, title).toBe(2027);
+        expect(result.request?.targetPeriod?.scope, title).toBe(intent.temporalScope);
+      }
+    }
+    const family = normalizeConsumerReadingRequest({
+      requestId: 'menu-family', text: '가족',
+    });
+    expect(family.state).toBe('ambiguous');
+    expect(family.reasonCodes).toEqual(['FAMILY_RELATIONSHIP_SCOPE_REQUIRED']);
+    expect(family.candidateIntents.map(intent => intent.relationshipScope).sort())
+      .toEqual(['children', 'parents']);
+    expect(family.request).toBeUndefined();
+    const question = normalizeConsumerReadingRequest({
+      requestId: 'menu-question', text: '지금 고민으로 보기',
+    });
+    expect(question.state).toBe('invalid');
+    expect(question.reasonCodes).toEqual(['QUESTION_TEXT_REQUIRED']);
+    expect(question.request).toBeUndefined();
+  });
+
+  it('requires missing menu input and preserves question text rather than granting free-form interpretation', () => {
+    const annual = normalizeConsumerReadingRequest({
+      requestId: 'menu-annual-no-date', text: '올해',
+    });
+    expect(annual.state).toBe('invalid');
+    expect(annual.reasonCodes).toEqual(['REFERENCE_DATETIME_REQUIRED_FOR_RELATIVE_PERIOD']);
+    const spouse = normalizeConsumerReadingRequest({
+      requestId: 'menu-compat-no-other', text: '궁합',
+    });
+    expect(spouse.state).toBe('invalid');
+    expect(spouse.reasonCodes).toEqual(['TARGET_PERSON_REFERENCE_REQUIRED_FOR_COMPATIBILITY_INTENT']);
+    const question = normalizeConsumerReadingRequest({
+      requestId: 'menu-question-text', text: '질문: 직업을 바꾸는 게 맞을까요?',
+    });
+    expect(question.request?.intent).toEqual({
+      domain: 'question_specific', temporalScope: 'natal',
+    });
+    expect(question.request?.question).toBe('직업을 바꾸는 게 맞을까요');
+    expect(question.constraints.mayGenerateInterpretationClaims).toBe(false);
+  });
+
   it('normalizes general natal requests through the authorized profile boundary', () => {
     const result = normalizeConsumerReadingRequest({
       requestId: 'general-1',
