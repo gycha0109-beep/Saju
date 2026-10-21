@@ -262,12 +262,12 @@ export function buildCareerMultifactorResearchReport(
     for (const path of unit.calculatedFactPaths) usedFactPaths.add(path);
     if (supporting.length === 2) break;
   }
-  // When no independent visible-stem core exists, preserve genuine partial
-  // evidence, including a visible-stem tension. It cannot establish MUR.
+  // Without a visible-stem core preserve each DISTINCT grounded supporting
+  // axis, even though three supports cannot establish a complete Career MUR.
   const partialEvidence = primary === undefined
     ? [...visible, ...units.filter(unit => unit.channel === 'branches')]
       .filter((unit, index, all) =>
-        all.findIndex(other => other.axis === unit.axis) === index).slice(0, 2)
+        all.findIndex(other => other.axis === unit.axis) === index).slice(0, AXES.length)
     : [];
   const shown = primary ? [primary, ...supporting] : partialEvidence;
   const enough = primary !== undefined && supporting.length >= 2;
@@ -280,14 +280,22 @@ export function buildCareerMultifactorResearchReport(
         `${s.channel === 'visible_stems' ? '천간' : '지지 대표 십신'}의 ${AXIS_LABELS[s.axis]}`).join('·')}에 관한 보조 근거를 확인했습니다. 그러나 천간 중심의 독립된 종합 근거가 없어 전체 직업운으로 판단하지 않고 부분 풀이만 보여드립니다.`);
     }
   }
-  if (supporting.length < 2) {
-    const observed = shown
-      .map(section => AXIS_LABELS[section.axis]);
+  if (primary && supporting.length < 2) {
+    const observed = shown.map(section => AXIS_LABELS[section.axis]);
     const label = observed.length > 0 ? observed.join('·') : '없음';
     missing.push(`현재 확인된 해석 관점: ${label}. 완전한 직업 종합풀이에는 천간 중심 해석에 더해 서로 구별되는 보조 근거 축 ${2 - supporting.length}개가 필요합니다.`);
     if (overlappingOnlyCount > 0) {
       missing.push('서로 다른 해석 제목이 있어도 앞선 해석에 사용한 계산 위치만 반복하면 독립적인 보조 근거로 세지 않습니다.');
     }
+  }
+  if (!primary) {
+    // The missing core, not a fabricated shortage of two supports, is what
+    // prevents a complete Career MUR when real partial evidence exists.
+    const unexplainedAxes = AXES.filter(axis =>
+      !partialEvidence.some(section => section.axis === axis));
+    missing.push(`완전한 직업 종합풀이에는 천간 중심의 독립된 핵심 해석이 먼저 필요합니다.${unexplainedAxes.length > 0
+      ? ` 현재 명식에서 등록된 다중 근거 규칙으로 설명하지 못한 관점: ${unexplainedAxes.map(axis => AXIS_LABELS[axis]).join('·')}.`
+      : ' 서로 다른 보조 관점 세 가지가 관측되어도 핵심 근거 부재를 대신할 수 없습니다.'}`);
   }
   if (!snapshot.completeness.birthTimeKnown) {
     // Never convert an unknown-hour chart into a four-pillar comprehensive claim.
