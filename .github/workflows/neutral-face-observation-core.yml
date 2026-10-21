@@ -1,0 +1,31 @@
+name: Neutral Face Observation Core - Research Package
+run-name: "[WT:face-research] Neutral Face Observation Core"
+on:
+  pull_request:
+    paths:
+      - "packages/neutral-face-observation/**"
+      - ".github/workflows/neutral-face-observation-core.yml"
+  workflow_dispatch:
+    inputs:
+      watchtower_track:
+        description: "Watchtower Track Key"
+        required: false
+        type: string
+permissions:
+  contents: read
+jobs:
+  validate-research-package:
+    name: Validate standalone research package
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify source syntax
+        run: node --check packages/neutral-face-observation/index.js
+      - name: Run synthetic contract tests
+        run: npm test --prefix packages/neutral-face-observation
+      - name: Verify packable package contents without publishing
+        run: cd packages/neutral-face-observation && npm pack --dry-run --ignore-scripts
