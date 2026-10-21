@@ -223,7 +223,9 @@ export function buildCareerMultifactorResearchReport(
     .sort((a, b) => AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
       (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
   const visible = units.filter(unit => unit.channel === 'visible_stems');
-  const primary = visible[0];
+  // A tension-only visible-stem finding is meaningful supporting evidence,
+  // but cannot stand in for the independent central Career interpretation.
+  const primary = visible.find(unit => unit.axis !== 'tension');
   // MUR needs genuinely distinct interpretation axes, not merely three
   // rules that restate the same responsibility or tension perspective.
   const supporting: typeof units = [];
@@ -235,24 +237,26 @@ export function buildCareerMultifactorResearchReport(
     usedAxes.add(unit.axis);
     if (supporting.length === 2) break;
   }
-  // A branch-channel T8 is still genuine research evidence even when no
-  // visible-stem core is eligible. Show it as a PARTIAL reading, never as MUR.
-  const branchOnly = primary === undefined
-    ? units.filter((unit, index, all) => unit.channel === 'branches' &&
-      all.findIndex(other => other.axis === unit.axis) === index).slice(0, 2)
+  // When no independent visible-stem core exists, preserve genuine partial
+  // evidence, including a visible-stem tension. It cannot establish MUR.
+  const partialEvidence = primary === undefined
+    ? [...visible, ...units.filter(unit => unit.channel === 'branches')]
+      .filter((unit, index, all) =>
+        all.findIndex(other => other.axis === unit.axis) === index).slice(0, 2)
     : [];
-  const shown = primary ? [primary, ...supporting] : branchOnly;
+  const shown = primary ? [primary, ...supporting] : partialEvidence;
   const enough = primary !== undefined && supporting.length >= 2;
   const state: Status = enough ? 'complete' : units.length > 0 ? 'partial' : 'insufficient';
   const missing: string[] = [];
   if (!primary) {
     missing.push(MUR[0]!);
-    if (branchOnly.length > 0) {
-      missing.push(`이 명식에서는 지지 대표 십신을 통해 ${branchOnly.map(s => AXIS_LABELS[s.axis]).join('·')}에 관한 보조 근거를 확인했습니다. 그러나 천간 중심의 독립된 종합 근거가 없어 전체 직업운으로 판단하지 않고 부분 풀이만 보여드립니다.`);
+    if (partialEvidence.length > 0) {
+      missing.push(`이 명식에서는 ${partialEvidence.map(s =>
+        `${s.channel === 'visible_stems' ? '천간' : '지지 대표 십신'}의 ${AXIS_LABELS[s.axis]}`).join('·')}에 관한 보조 근거를 확인했습니다. 그러나 천간 중심의 독립된 종합 근거가 없어 전체 직업운으로 판단하지 않고 부분 풀이만 보여드립니다.`);
     }
   }
   if (supporting.length < 2) {
-    const observed = (primary ? [primary, ...supporting] : branchOnly)
+    const observed = shown
       .map(section => AXIS_LABELS[section.axis]);
     const label = observed.length > 0 ? observed.join('·') : '없음';
     missing.push(`현재 확인된 해석 관점: ${label}. 완전한 직업 종합풀이에는 천간 중심 해석에 더해 서로 구별되는 보조 근거 축 ${2 - supporting.length}개가 필요합니다.`);

@@ -149,6 +149,41 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     }
   }, 15000);
 
+  it('keeps a visible-stem tension without an execution or responsibility core as an honest partial reading', () => {
+    let found: ReturnType<typeof run> | undefined;
+    outer: for (const month of [2,3,4,5,6,7,8,9,10,11,12]) {
+      for (const day of [3,7,11,17,23]) {
+        for (const hour of [0,6,12,18]) {
+          const candidate = run(month, day, hour);
+          const visible = candidate.execution.claims.filter(claim =>
+            claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'career' &&
+            claim.state === 'active' &&
+            (claim.value as { channel?: string }).channel === 'visible_stems');
+          if (visible.length === 0 || !visible.every(claim =>
+            (claim.value as { axis?: string }).axis === 'tension')) continue;
+          found = candidate;
+          break outer;
+        }
+      }
+    }
+    expect(found, 'a real chart with visible Career tension but no independent visible-stem core').toBeDefined();
+    if (!found) return;
+    expect(found.report.state).toBe('partial');
+    expect(found.report.sections.some(section =>
+      section.channel === 'visible_stems' && section.axis === 'tension')).toBe(true);
+    expect(found.report.missing.join(' ')).toContain('천간 중심의 독립된 종합 근거가 없어');
+    expect(found.report.missing.join(' ')).toContain('부분 풀이만 보여드립니다');
+    for (const section of found.report.sections) {
+      expect(section.sourceIds.length).toBeGreaterThan(0);
+      expect(section.upstreamClaimIds).toHaveLength(2);
+      expect(section.calculatedPositions.every(p => section.paragraph.includes(p))).toBe(true);
+    }
+    expect(found.report.researchOnly).toBe(true);
+    expect(found.report.usefulComplete).toBe(false);
+    expect(found.report.mayPublish).toBe(false);
+    expect(found.report.maySell).toBe(false);
+  }, 120000);
+
   it('shows only genuinely observed branch Career evidence when a visible-stem core is missing, without calling it complete', () => {
     let found: ReturnType<typeof run> | undefined;
     for (const month of [2,3,4,5,6,7,8,9,10,11,12]) {
