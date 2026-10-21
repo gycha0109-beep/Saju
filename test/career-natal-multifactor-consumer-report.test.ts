@@ -207,7 +207,7 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
         const independent = support.calculatedFactPaths.filter(path => !used.has(path));
         expect(independent.length, support.claimType + ' must add a real T0 observation').toBeGreaterThan(0);
         expect(independent.every(path =>
-          /^derivedFacts\\.tenGods\\.value\\.(year|month|day|hour)\\.(stem|branch)\\.value$/u.test(path),
+          /^derivedFacts\.tenGods\.value\.(year|month|day|hour)\.(stem|branch)\.value$/u.test(path),
         )).toBe(true);
         support.calculatedFactPaths.forEach(path => used.add(path));
       }
