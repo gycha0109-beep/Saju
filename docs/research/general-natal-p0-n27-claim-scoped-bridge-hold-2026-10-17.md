@@ -431,3 +431,33 @@ Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27
 - 동일한 [율곡연구원 첫째 책 `B005_01_B00330_001_004.jpg`](https://db.yulgok.or.kr/viewer/view?dataId=B005_01_B00330_001)에는 **유사한 서문 첫 인쇄면과 동일 출판사 상표 디자인은 보이지만**, 판매본 상표 위의 **`中華民國十三年重刊` 문구는 보이지 않음**. 그러므로 **판매본의 1924 재간 표시는 사실로 확인하되 율곡원 두 소장본의 인쇄년도·동일 판목·같은 인쇄회차라는 주장은 HOLD**.
 - 판매본의 4사진은 **표지·4책 배면·내제 및 명식 필기·序 및 상표**로 한정. 원서 권1 뒤의 `時上偏財格`·`補曰` 판면 없음. 신규 핵심 원문 직접 판독 0건, 독립 전승 인증 0건, 규칙 계산범위 의미 승인 0건. 판매자 물리책 정보와 실제 판면 글자를 별도 근거로 분리.
 - **불변:** N27 **5 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**, `別宮`·`再見`·`一位` **UNADJUDICATED**, TrustGrant/Preview/Official/Production/Consumer 승인 0. 두 PR Draft·미병합 및 기관 연락·유료 구매 없음.
+## 2026-10-21 후속 — 『淵海子平』 論劫財 인쇄면 확인에 따른 역사명칭 / Canonical 십신 경계 (Claim-scoped, 비승인)
+
+### 새 1차 사료와 적용 가능한 범위
+
+- **역사 사진:** 사용자 제공 중국 국가도서관 계열 [『淵海子平·子平真詮』 上海文明書局본](https://commons.wikimedia.org/wiki/File:NLC416-15jh007754-99036_淵海子平_子平真詮.pdf) **책면 32**의 「論劫財」 원문에 \`如乙見甲為劫財\`, \`五陽見五陰為敗財\`, \`五陰見五陽為劫財\`가 인쇄돼 있다. [원문·이미지 구분·업로드 캡처 해시 기록](https://github.com/gycha0109-beep/Saju/issues/2557#issuecomment-6310215362). **甲(陽)→乙(陰)이 敗財 명칭의 범위에 들어간다는 것은 이 구절의 조건을 실제 甲乙에 적용한 독해**이며, 모든 판본이 같은 이름을 채택했다는 증명이 아니다. 작은 眉批와 큰 본문은 **서로 다른 텍스트 층위**로 보존한다. 이 스캔의 출판년 메타데이터는 \`[192-?]\`이므로 정확히 1926년으로 단정하지 않는다.
+- **더 넓은 고전 용례:** 기존에 연구가 실면 대조한 明萬曆 『刻京臺增補淵海子平大全』 卷一 「論五行相生相尅訣」의 \`比肩者爲刼財敗財\`는 포괄적 분류 표기다. 후기본 「論劫財」의 좁은 양/음 명칭과 **동일 편찬 층위·동일 판본·동일 범위의 규칙으로 통합하지 않는다**.
+- **격국 문맥:** 한국 국립중앙도서관 \`CNTS-00047779026\`/하버드 원소장 『正宗各格解(正宗抄略)』 필사본 책면 52에서 \`惟忌比肩劫財分奪\`와 \`只要一位貴不可兩三之多又不可再見財\`를 확인했다. [실면 판독 기록](https://github.com/gycha0109-beep/Saju/issues/2557#issuecomment-6307273496). 여기에는 「時上偏財格·附月偏財格」의 **특수 격국 맥락**이 있으므로 일반 비견·겁재 관계의 무조건적 개인 손실 규칙으로 이전하지 않는다.
+- 『淵海子平』 같은 공개 國圖 인쇄본 **책면 43**의 \`只要時上一位不要多而三處不要再見財\`는 실면 직접 판독됐으나 [별도 표제·단락](https://github.com/gycha0109-beep/Saju/issues/2557#issuecomment-6309341138)이며, \`三處\`/藏干/\`別宮\`의 구현 의미를 인증하는 근거가 아니다. 세 고문헌의 글자 비교는 **증거 추가**이지 역사적 계통 독립성·명식 성패 판정 승인 아님.
+
+### 레이어 경계: 심사 기준(비승인)과 후보 구분
+
+| 층위 | 지금 근거가 허용하는 사실·문서화 | 금지할 자동 대응 |
+|---|---|---|
+| T0/Canonical 현대 십신 | 실제 2010-02-03 05:30 甲일간·卯(乙) 대표의 **현대 \`겁재\` 관측**; 19:30 甲戌時의 **현대 \`비견\` 관측**. 계산 정책과 이름은 기존 것 유지 | 고전에서 \`敗財\`라 부른다는 이유만으로 Canonical의 정확 \`겁재\` 라벨·출생 입력·시주 값을 고쳐 쓰기 |
+| 시대·판본별 문헌 용어 | 책면 32에서는 \`五陽見五陰為敗財\`·\`五陰見五陽為劫財\`; 卷一 broad peer 용례 및 격국 문맥은 별도 source/locator/context 저장 | 본문/眉批/異本의 \`劫財\` 글자를 현대 정확 \`겁재\` subtype에 **무조건 동치**시키거나 모든 문헌이 동일한 용어법을 갖는다고 말하기 |
+| N13 Research T8 발행 | \`RULE-GENERAL-NATAL-SOURCE-BOUNDED-PEER-TO-WEALTH-ADVERSE@0.2.0-research\`는 **정확 현대 \`겁재\`+각각 다른 Peer/Wealth T5**가 있을 때만 구조 Claim 발행; 실제 05:30 1건/19:30 0건은 코드 실행 사실 | 위 두 값으로 역사적인 모든 비견→재성 관계의 불가능성, 확정 재물손실/부귀, 필사본의 1位 위반 등을 선언 |
+| Bridge/제품 의미 | 이 증거는 **N17 용어·방법론 충돌을 분리해 설명**하는 Research 보조자료. source-integrity, method/version과 별도 domain review 없이 **새 claim/observation/qualifier 승인 0** | 출처 이미지 확보 또는 계산 회귀 통과만으로 TrustGrant·Preview·Official·Production/Consumer 승인 |
+
+### 현행 5 Claim별 disposition — 독립 권위 없는 근거 추가만 반영
+
+1. \`GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE\`: **HOLD (claim, observation, qualifier 모두)**. 새 실제 인쇄면은 이름표 층위의 \`甲→乙=敗財\`라는 좁은 적용 예를 지원하므로 **현대 exact \`겁재\` T8과 고전 \`劫財\`를 곧장 동일시하는 source-based 허가를 부정**한다. 기존 N13 research 1/0 발행 및 두 T5 provenance는 변경 없음. 비견→재성 새 일반 T8 금지.
+2. \`TEN_GOD_OFFICER_VISIBLE_STEMS_THEME\`: **HOLD**. 새 원문은 천간 편관의 독자적 성격/직업/운세 의미를 심사하지 않는다.
+3. \`TEN_GOD_OFFICER_BRANCHES_THEME\`: **HOLD**. 지지 정관의 독자적 성격/직업/운세 의미를 심사하지 않는다.
+4. \`GENERAL_NATAL_OFFICER_VISIBLE_STEMS_THEME\`: **HOLD**. 일반 관성 테마에서 channel 자체를 개인적 외향성/강약으로 전환할 출처 증거 없음.
+5. \`GENERAL_NATAL_OFFICER_BRANCHES_THEME\`: **HOLD**. 일반 관성 테마에서 branch를 내면 성격으로 전환할 출처 증거 없음.
+
+**정확한 재심사 요건:** (a) 원본 본문과 眉批 및 판본 출처/주석 층위를 구별한 claim-bound textual locator, (b) 고전 용어 ↔ 현대 subtype의 방향성/적용범위/방법론 버전 제안과 실명식 05:30·19:30 반례, (c) 현재 고정 전사 witness와 실물 사이의 exact 문자열 동일성·source integrity 및 내용 해시, (d) 별도 독립 도메인 ReviewAttestation·TrustGrant와 governance의 per-claim 결정, (e) 강약/월령·時上偏財格과 비겁-재성 일반 관계를 혼합하지 않는 적용 조건. **(a) 일부 인쇄 본문 직접 판독만 이번에 진전**; (b) 방법론 승인, (c) 고정 witness 동일성, (d) 독립 도메인 권한, (e) 격국 적용 범위 모두 미확정. 이를 최종 방법론 승인으로 표시하지 않는다.
+
+**운영 상태:** Research #2553 exact \`6b7eaca9180a65b0399483d81b8bdcba90e1900d\` (Draft/unmerged), 본 Bridge #2561은 작성 시 exact \`6dcdef2035137b79087e52b11fae6bba56b4e8b6\` (Draft/unmerged), existing \`RETURN_TO_RESEARCH\`, N17 \`METHODOLOGY_CONFLICT\`, N27 **5 Claim HOLD**, N13 T8 **1 vs 0**, 기존 candidate \`secondary_only/unreviewed/contested\` 및 source/method hash unchanged. **이 부록은 회신하는 연구·심사 근거 문서만 갱신한다.** 새로운 권한/Rule Registry/Canonical/Preview/Official/Production/Consumer 변경 없음. CI·실행 결과는 커밋 이후 별도 확인해야 하며, 통합 CI가 기동되면 해당 트랙은 중지한다.
+
