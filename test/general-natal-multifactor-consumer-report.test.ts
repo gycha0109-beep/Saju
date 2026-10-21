@@ -149,12 +149,51 @@ describe('actual-source General natal T5→T8→Korean five-domain report', () =
     }));
   }, 60000);
 
-  it('does not infer full-chart meaning with unknown birth hour', () => {
+  it('does not infer full-chart outcomes when birth hour is unknown but keeps source-backed evidence', () => {
     const x = run(3,10,false);
-    expect(x.report.state).toBe('insufficient');
-    expect(x.report.sections).toHaveLength(0);
+    expect(x.report.state).not.toBe('complete');
+    expect(x.report.sections.every(section =>
+      section.observedFactPaths.every(path => !path.includes('.hour.')))).toBe(true);
     expect(x.report.missing.join(' ')).toContain('출생시각 미상');
+    expect(x.report.usefulComplete).toBe(false);
+    expect(x.report.mayPublish).toBe(false);
+    expect(x.report.maySell).toBe(false);
   });
+
+  it('reads actual chart-specific non-hour T8 evidence as Korean partial paragraphs', () => {
+    const signatures = new Set<string>();
+    let found = 0;
+    outer: for (const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
+      for (const day of [3,7,11,17,23]) {
+        const x = run(month, day, false);
+        if (!x.report.sections.length) continue;
+        found++;
+        expect(x.report.state).toBe('partial');
+        expect(x.report.missing.join(' ')).toContain('실제 연·월·일 근거');
+        for (const section of x.report.sections) {
+          expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
+          expect(section.sourceIds.length).toBeGreaterThan(0);
+          expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
+          expect(section.observedFactPaths.length).toBe(section.observedPositions.length);
+          expect(section.observedFactPaths.length).toBeGreaterThanOrEqual(2);
+          expect(section.observedFactPaths.every(path =>
+            /^derivedFacts\.tenGods\.value\.(year|month|day)\.(stem|branch)\.value$/u.test(path)))
+            .toBe(true);
+          expect(section.observedPositions.every(position =>
+            section.paragraph.includes(position))).toBe(true);
+        }
+        expect(x.report.researchOnly).toBe(true);
+        expect(x.report.usefulComplete).toBe(false);
+        expect(x.report.mayPublish).toBe(false);
+        expect(x.report.maySell).toBe(false);
+        signatures.add(x.report.sections.map(section =>
+          section.pattern + ':' + section.channel).join('|'));
+        if (signatures.size > 1) break outer;
+      }
+    }
+    expect(found).toBeGreaterThan(0);
+    expect(signatures.size).toBeGreaterThan(1);
+  }, 120000);
 
   it('rejects cross-chart and tampered General claim meaning', () => {
     const x = run(3,10);
