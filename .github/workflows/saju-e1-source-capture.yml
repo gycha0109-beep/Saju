@@ -1,0 +1,158 @@
+name: E1 Source Capture (evidence only)
+run-name: "[WT:saju] E1 PDF Source Capture"
+
+# Manually dispatched research capture only; not run for PR sync or routine CI.
+# Once the workflow exists on the default branch, run it when a new evidence snapshot is required.
+# NEVER changes E1 authorization, even when all source bytes match.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Source bytes and digests only
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Install PDF page text reader on ephemeral runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends poppler-utils
+          pdftotext -v
+      - name: Fetch fixed government astronomy sources and calculate raw SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import html
+          import shutil
+          import subprocess
+          import tempfile
+          import json
+          import os
+          import pathlib
+          import re
+          import sys
+          from datetime import datetime, timezone
+          from urllib.error import HTTPError, URLError
+          from urllib.parse import urlparse
+          from urllib.request import Request, urlopen
+
+          sources = [
+              (2026, "naoj", "https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2026.pdf", 12_000_000),
+              (2027, "naoj", "https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2027.pdf", 12_000_000),
+              (2026, "kasi", "https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026", 8_000_000),
+              (2027, "kasi", "https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2027", 8_000_000),
+          ]
+
+          report = {
+              "schemaVersion": "saju-e1-original-source-byte-capture-v1",
+              "capturedAtUtc": datetime.now(timezone.utc).isoformat(),
+              "authority": "RESEARCH_EVIDENCE_ONLY",
+              "mayRegisterE1": False,
+              "mayRegisterKoreanGazetteE2": False,
+              "productionAuthorized": False,
+              "records": [],
+          }
+
+          def capture(year, kind, source_url, limit):
+              record = {"year": year, "source": kind, "requestedUrl": source_url,
+                        "state": "UNAVAILABLE", "sourceOwnerReviewed": False,
+                        "productionAuthorized": False}
+              try:
+                  request = Request(source_url, headers={"User-Agent": "MyeongHa-SourceAudit/1.0 (research; no rehosting)", "Accept": "application/pdf,text/html"})
+                  with urlopen(request, timeout=18) as response:
+                      final_url = response.geturl()
+                      host = urlparse(final_url)
+                      expected_host = "eco.mtk.nao.ac.jp" if kind == "naoj" else "astro.kasi.re.kr"
+                      if host.scheme != "https" or host.hostname != expected_host or host.port is not None:
+                          raise ValueError("unexpected redirect target (official HTTPS hostname required)")
+                      body = response.read(limit + 1)
+                      if not 100 < len(body) <= limit:
+                          raise ValueError("download size out of bounds")
+                      ctype = response.headers.get("Content-Type", "")
+                  expected_hour, expected_minute = (5, 2) if year == 2026 else (10, 46)
+                  if kind == "naoj":
+                      if not body.startswith(b"%PDF-") or b"%%EOF" not in body[-2048:]:
+                          raise ValueError("PDF signature or trailer missing")
+                      if "pdf" not in ctype.lower() and "octet-stream" not in ctype.lower():
+                          raise ValueError("server MIME is not recognized as PDF")
+                      record["state"] = "PDF_BYTES_CAPTURED_ROW_UNVERIFIED"
+                      record["page2PrintedLichunMinuteMatches"] = False
+                      pdftotext = shutil.which("pdftotext")
+                      if pdftotext is None:
+                          record["page2VerificationError"] = "poppler pdftotext not installed"
+                      else:
+                          with tempfile.NamedTemporaryFile(suffix=".pdf") as pdf:
+                              pdf.write(body)
+                              pdf.flush()
+                              cmd = subprocess.run(
+                                  [pdftotext, "-f", "2", "-l", "2", "-layout", pdf.name, "-"],
+                                  capture_output=True, timeout=15, check=False,
+                              )
+                          if cmd.returncode != 0:
+                              record["page2VerificationError"] = cmd.stderr.decode("utf-8", "replace")[:220]
+                          else:
+                              page_text = re.sub(r"\s+", " ", cmd.stdout.decode("utf-8", "replace"))
+                              pattern = rf"315\s+2\s+4\s+{expected_hour}\s+{expected_minute}(?!\d)"
+                              record["page2PrintedLichunMinuteMatches"] = re.search(pattern, page_text) is not None
+                              if not record["page2PrintedLichunMinuteMatches"]:
+                                  marker = page_text.find("315")
+                                  record["page2DiagnosticAroundLongitude315"] = page_text[max(marker - 35, 0):marker + 140] if marker >= 0 else page_text[:180]
+                              record["state"] = ("PDF_BYTES_CAPTURED_ROW_MATCHED" if record["page2PrintedLichunMinuteMatches"]
+                                                 else "PDF_BYTES_CAPTURED_ROW_UNMATCHED")
+                  else:
+                      if "html" not in ctype.lower():
+                          raise ValueError("KASI page is not HTML")
+                      page = body.decode("utf-8", "replace")
+                      clean = re.sub(r"<[^>]+>", " ", page)
+                      clean = re.sub(r"\s+", " ", html.unescape(clean))
+                      record["containsLichunTerm"] = "입춘" in clean
+                      record["containsTargetYear"] = str(year) in clean
+                      record["officialPublicationDisclaimerPresent"] = "공식 발표 자료가 아닙니다" in clean
+                      record["capturedHtmlPrintedLichunMinuteMatches"] = (
+                          re.search(rf"입춘\s+2\s+4\s+{expected_hour}\s+{expected_minute}(?!\d)", clean) is not None
+                      )
+                      record["state"] = (
+                          "KASI_HTML_BYTES_CAPTURED_ROW_MATCHED" if record["capturedHtmlPrintedLichunMinuteMatches"]
+                          else "KASI_HTML_BYTES_CAPTURED_ROW_UNMATCHED"
+                      )
+                  record["resolvedUrl"] = final_url
+                  record["contentType"] = ctype
+                  record["byteLength"] = len(body)
+                  record["sha256"] = hashlib.sha256(body).hexdigest()
+              except (HTTPError, URLError, TimeoutError, OSError, ValueError) as error:
+                  record["error"] = str(error)[:350]
+              return record
+
+          for args in sources:
+              record = capture(*args)
+              report["records"].append(record)
+              print(json.dumps(record, ensure_ascii=False, sort_keys=True), flush=True)
+
+          report_file = pathlib.Path(os.environ["RUNNER_TEMP"]) / "saju-e1-source-byte-capture.json"
+          report_file.write_text(json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2), encoding="utf-8")
+          print("Source digest report:", report_file)
+          all_fetched = all("sha256" in item for item in report["records"])
+          all_rows_matched = all(
+              item.get("page2PrintedLichunMinuteMatches", item.get("capturedHtmlPrintedLichunMinuteMatches", False))
+              for item in report["records"]
+          )
+          if not all_fetched or not all_rows_matched:
+              print("PARTIAL: missing source bytes or extracted LiChun minute mismatch. E1/E2 approval denied.", file=sys.stderr)
+              sys.exit(1)
+          print("CAPTURED_AND_ROW_MATCHED: 4 source digests and rows agree; source owner review still REQUIRED.")
+
+      - name: Upload digest metadata only (never the copyrighted source files)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saju-e1-source-byte-digests
+          path: ${{ runner.temp }}/saju-e1-source-byte-capture.json
+          if-no-files-found: ignore
+          retention-days: 7

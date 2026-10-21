@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "saju-e1-source-capture-review-manifest-v1",
+  "evidenceId": "SAJU-E1-LICHUN-2026-2027-NAOJ-KASI-20261010",
+  "captureRun": {
+    "url": "https://github.com/gycha0109-beep/Saju/actions/runs/38042070143",
+    "runId": 38042070143,
+    "artifactId": 11666102465,
+    "artifactUrl": "https://github.com/gycha0109-beep/Saju/actions/runs/38042070143/artifacts/11666102465",
+    "retentionDays": 7,
+    "runDateUtc": "2026-10-10"
+  },
+  "collectedFrom": "Official government astronomy websites via GitHub-hosted runner; hashes of bytes actually received on the run.",
+  "evidenceTier": "E1_INDEPENDENT_ASTRONOMY_CANDIDATE",
+  "status": "CAPTURED_AND_MINUTE_ROWS_MATCHED_REVIEW_PENDING",
+  "provenanceCautions": [
+    "NAOJ publisher PDFs verified by hashing original response bytes, checking PDF signature, extracting PDF page 2 numerical longitude 315 and Feb 4 published hour/minute; Japanese solar-term glyph separately reviewed via published PDF.",
+    "KASI page full-HTML SHA-256 is snapshot-specific and may change between requests. This manifest records hashes for run #5 only; it is not a content-addressed permanent official announcement.",
+    "KASI calendarData page explicitly states it is not the official announced almanac.",
+    "Displayed minute is not an exact second. Conservative +/-60 second boundary uncertainty remains.",
+    "GitHub artifact expires; durable summary metadata does not retain or redistribute original PDF or HTML.",
+    "Neither a source-owner decision nor Korean gazette E2 authentication is supplied by automated checks."
+  ],
+  "rowEvidence": [
+    {
+      "year": 2026,
+      "institution": "NAOJ",
+      "kind": "PUBLISHED_PDF",
+      "uri": "https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2026.pdf",
+      "byteLength": 31018,
+      "sha256": "ee5f0a743c0e7e577fa4115a07eef7fa752cee9d6ce1022e06305a09f33f3d6d",
+      "pdfPage": 2,
+      "extractedRowTest": "solarLongitude315_Feb4_05_02",
+      "publishedMinuteLocal": "2026-02-04T05:02",
+      "timezone": "Asia/Tokyo",
+      "minuteAnchorUtc": "2026-02-03T20:02:00.000Z",
+      "machineRowMatched": true
+    },
+    {
+      "year": 2026,
+      "institution": "KASI",
+      "kind": "DYNAMIC_HTML_SNAPSHOT",
+      "uri": "https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2026",
+      "byteLength": 81731,
+      "sha256": "716b1801d129dbcdef24fb6150a0ceec9dd9f0e4b53339a9eda8e14fea5ab056",
+      "pdfPage": null,
+      "extractedRowTest": "입춘_Feb4_05_02",
+      "publishedMinuteLocal": "2026-02-04T05:02",
+      "timezone": "Asia/Seoul",
+      "minuteAnchorUtc": "2026-02-03T20:02:00.000Z",
+      "machineRowMatched": true,
+      "nonOfficialDisclaimerObserved": true
+    },
+    {
+      "year": 2027,
+      "institution": "NAOJ",
+      "kind": "PUBLISHED_PDF",
+      "uri": "https://eco.mtk.nao.ac.jp/koyomi/yoko/pdf/yoko2027.pdf",
+      "byteLength": 22902,
+      "sha256": "f7998e5730bc7a5de5f122a692ca96626f3e0c8c035b30a1c71d6eb7718272e3",
+      "pdfPage": 2,
+      "extractedRowTest": "solarLongitude315_Feb4_10_46",
+      "publishedMinuteLocal": "2027-02-04T10:46",
+      "timezone": "Asia/Tokyo",
+      "minuteAnchorUtc": "2027-02-04T01:46:00.000Z",
+      "machineRowMatched": true
+    },
+    {
+      "year": 2027,
+      "institution": "KASI",
+      "kind": "DYNAMIC_HTML_SNAPSHOT",
+      "uri": "https://astro.kasi.re.kr/kor/life/post/calendarData?search_year=2027",
+      "byteLength": 84794,
+      "sha256": "7ead0a04d367a1efa1bf1d27a50d2d639ed8a098208dd66f6ffef272990bab9a",
+      "pdfPage": null,
+      "extractedRowTest": "입춘_Feb4_10_46",
+      "publishedMinuteLocal": "2027-02-04T10:46",
+      "timezone": "Asia/Seoul",
+      "minuteAnchorUtc": "2027-02-04T01:46:00.000Z",
+      "machineRowMatched": true,
+      "nonOfficialDisclaimerObserved": true
+    }
+  ],
+  "review": {
+    "sourceOwnerIdentity": null,
+    "sourceOwnerDecisionRef": null,
+    "sourceOwnerReviewedAtUtc": null,
+    "reviewedCaptureArtifacts": false,
+    "approvedForResearchCalculation": false,
+    "koreanGazetteE2Authenticated": false,
+    "exactSecondEstablished": false,
+    "mayGenerateAnnualInterpretation": false,
+    "productionAuthorized": false
+  }
+}
