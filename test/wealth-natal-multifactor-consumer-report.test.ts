@@ -145,12 +145,62 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(found).toBe(true);
   }, 60000);
 
-  it('does not infer full-chart meaning with unknown birth hour', () => {
+  it('does not infer full-chart meaning with unknown birth hour but retains only real non-hour evidence', () => {
     const x = run(3,10,false);
-    expect(x.report.state).toBe('insufficient');
-    expect(x.report.sections).toHaveLength(0);
+    expect(x.report.state).not.toBe('complete');
+    expect(x.report.sections.every(section =>
+      section.observedFactPaths.every(path => !path.includes('.hour.')))).toBe(true);
     expect(x.report.missing.join(' ')).toContain('출생시각 미상');
+    expect(x.report.usefulComplete).toBe(false);
+    expect(x.report.mayPublish).toBe(false);
+    expect(x.report.maySell).toBe(false);
   });
+
+  it('delivers personalized Korean Wealth paragraphs with genuinely observed year/month/day evidence despite unknown hour', () => {
+    const found = [];
+    for (const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
+      for (const day of [3,7,11,17,23]) {
+        const x = run(month, day, false);
+        if (x.report.sections.length === 0) continue;
+        found.push(x);
+        const knownHour = run(month, day, true, 12);
+        expect(x.report.state).toBe('partial');
+        expect(x.report.sections.length).toBeGreaterThan(0);
+        expect(x.report.sections.every(section =>
+          section.observedPositions.length >= 2 &&
+          section.upstreamClaimIds.length >= 2 &&
+          section.sourceIds.length >= 1 &&
+          section.observedFactPaths.length === section.observedPositions.length &&
+          section.observedFactPaths.every(path =>
+            !path.includes('.hour.') &&
+            /^derivedFacts\.tenGods\.value\.(year|month|day)\.(stem|branch)\.value$/u.test(path)) &&
+          section.observedPositions.every(position => section.paragraph.includes(position))
+        )).toBe(true);
+        expect(x.report.sections.every(section => knownHour.report.sections.some(candidate =>
+          candidate.claimType === section.claimType &&
+          candidate.channel === section.channel
+        ))).toBe(true);
+        expect(x.report.missing.join(' ')).toContain('시주 없이 실제로 확인된');
+        expect(x.report.usefulComplete).toBe(false);
+        expect(x.report.researchOnly).toBe(true);
+        expect(x.report.mayPublish).toBe(false);
+        expect(x.report.maySell).toBe(false);
+        if (found.length >= 2 &&
+          found.some(y => y.report.sections.map(section => section.pattern).join('|') !==
+            x.report.sections.map(section => section.pattern).join('|'))) break;
+      }
+      if (found.length >= 2 &&
+        new Set(found.map(x => x.report.sections.map(section => section.pattern).join('|'))).size > 1) break;
+    }
+    expect(found.length, 'birth-hour unknown must not erase all supported natal T8 claims').toBeGreaterThan(0);
+    expect(new Set(found.map(x =>
+      x.report.sections.map(section => section.pattern).join('|'))).size,
+      'real non-hour evidence should yield chart-specific Wealth patterns').toBeGreaterThan(1);
+    const first = found[0];
+    expect(first).toBeDefined();
+    if (first) expect(run(first.snapshot.input.date.month, first.snapshot.input.date.day, false).report)
+      .toEqual(first.report);
+  }, 120000);
 
   it('rejects cross-chart and tampered Wealth claim meaning', () => {
     const x = run(3,10);
