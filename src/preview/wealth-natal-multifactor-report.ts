@@ -10,7 +10,7 @@ import {
   WEALTH_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/wealth-natal-multifactor-candidate.js';
 
-export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.2.0-research-preview' as const;
+export const WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
 type Axis = 'core' | 'creation' | 'management' | 'planning' | 'tension';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
@@ -201,9 +201,16 @@ export function buildWealthNatalMultifactorReport(
     claims.every(c => selected.has(c.claimId)) &&
     (claims.length === 0 || selection.evidence !== undefined),
     'Wealth meaning not selected by existing ReadingIntent/EvidenceSelector');
-  const result = claims.map(c => toSection(c, snapshot, execution, registry))
+  const sourceBound = claims.map(c => toSection(c, snapshot, execution, registry))
     .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
       (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
+  // An unknown birth hour does not erase year/month/day observations that have
+  // exact source-bound upstream T5 and T8 provenance. Never include an hour
+  // fact from an unresolved or guessed scenario, and never certify full MUR.
+  const result = snapshot.completeness.birthTimeKnown
+    ? sourceBound
+    : sourceBound.filter(section => section.observedFactPaths.every(path =>
+        !path.includes('.hour.')));
   // Prefer the 3-input core. When not observed, a narrower two-input core can
   // still be rendered, but completion needs two OTHER independently grounded axes.
   const core = result.find(s => s.axis === 'core') ??
@@ -225,12 +232,14 @@ export function buildWealthNatalMultifactorReport(
   const missingSupportingAxes = 2 - (core ? chosen.length - 1 : chosen.length);
   if(missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
-  let state: Status = core !== undefined && chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
-  let sections: readonly WealthNatalMultifactorSection[] = chosen;
+  let state: Status = snapshot.completeness.birthTimeKnown &&
+    core !== undefined && chosen.length === 3
+    ? 'complete' : result.length ? 'partial' : 'insufficient';
+  const sections: readonly WealthNatalMultifactorSection[] = chosen;
   if(!snapshot.completeness.birthTimeKnown) {
-    sections = [];
-    state = 'insufficient';
-    missing.unshift('출생시각 미상: 시주를 포함하는 전체 원국 종합은 보류');
+    missing.unshift(result.length > 0
+      ? '출생시각 미상: 시주 없이 실제로 확인된 연·월·일 계산 근거로만 부분 풀이를 제공합니다. 시주를 포함한 전체 원국 종합은 보류합니다.'
+      : '출생시각 미상: 시주를 포함하는 전체 원국 종합은 보류하며 연·월·일에서도 현재 선택 가능한 복합 근거가 부족합니다.');
   }
   return {
     snapshotId: snapshot.snapshotId,
