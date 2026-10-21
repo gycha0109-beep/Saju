@@ -348,7 +348,8 @@ function assertCoverage(value: unknown, field: string): void {
   if (value.explanation !== undefined) {
     assertNonEmptyString(value.explanation, `${field}.explanation`);
     if ((value.explanation as string).length > 250 ||
-        [...value.explanation as string].some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127).test(value.explanation as string)) {
+        Array.from(value.explanation as string).some(character =>
+          character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) {
       throw new TypeError(`${field}.explanation must be short single-line text.`);
     }
   }
