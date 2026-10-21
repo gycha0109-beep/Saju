@@ -243,11 +243,23 @@ export function buildCareerMultifactorResearchReport(
   // rules that restate the same responsibility or tension perspective.
   const supporting: typeof units = [];
   const usedAxes = new Set<Axis>(primary === undefined ? [] : [primary.axis]);
+  const usedFactPaths = new Set(primary?.calculatedFactPaths ?? []);
+  let overlappingOnlyCount = 0;
   for (const unit of units) {
     if (primary === undefined || unit.claimType === primary.claimType ||
       usedAxes.has(unit.axis)) continue;
+    // Distinct narrative axes alone do not make independent evidence.
+    // The next support must add an ACTUAL canonical T0 observation path
+    // beyond those already consumed by the core and preceding supports.
+    // Never turn repeated labels for the same facts into a complete MUR.
+    const newFactPaths = unit.calculatedFactPaths.filter(path => !usedFactPaths.has(path));
+    if (newFactPaths.length === 0) {
+      overlappingOnlyCount++;
+      continue;
+    }
     supporting.push(unit);
     usedAxes.add(unit.axis);
+    for (const path of unit.calculatedFactPaths) usedFactPaths.add(path);
     if (supporting.length === 2) break;
   }
   // When no independent visible-stem core exists, preserve genuine partial
@@ -273,6 +285,9 @@ export function buildCareerMultifactorResearchReport(
       .map(section => AXIS_LABELS[section.axis]);
     const label = observed.length > 0 ? observed.join('·') : '없음';
     missing.push(`현재 확인된 해석 관점: ${label}. 완전한 직업 종합풀이에는 천간 중심 해석에 더해 서로 구별되는 보조 근거 축 ${2 - supporting.length}개가 필요합니다.`);
+    if (overlappingOnlyCount > 0) {
+      missing.push('서로 다른 해석 제목이 있어도 앞선 해석에 사용한 계산 위치만 반복하면 독립적인 보조 근거로 세지 않습니다.');
+    }
   }
   if (!snapshot.completeness.birthTimeKnown) {
     // Never convert an unknown-hour chart into a four-pillar comprehensive claim.
