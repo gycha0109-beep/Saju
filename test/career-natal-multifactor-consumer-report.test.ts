@@ -429,56 +429,50 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(escaped).not.toContain('<script>');
   }, 60000);
 
-  it('keeps birth-hour-unknown Career readings bounded to actual non-hour evidence', () => {
+  it('does not fabricate Career T8 when birth hour and canonical Ten-God input are unavailable', () => {
     const chart = sample(3, 10, null);
     const execution = runInterpretation(chart, registry, { now: NOW });
     const report = buildCareerMultifactorResearchReport(chart, execution, registry);
-    expect(report.state).toMatch(/partial|insufficient/u);
-    expect(report.sections.every(section =>
-      section.calculatedFactPaths.every(path => !path.includes('.hour.')))).toBe(true);
+    expect(chart.derivedFacts.tenGods.status).toBe('unavailable');
+    expect(report.state).toBe('insufficient');
+    expect(report.sections).toHaveLength(0);
     expect(report.missing).toContain('출생시각 미상');
+    expect(report.missing.join(' ')).toContain('십신(T5) 전체가 미확정');
+    expect(report.introduction).toContain('출생시각이 없어도 확인 가능한');
+    for (const [slot, label] of [
+      ['year', '연주'], ['month', '월주'], ['day', '일주'],
+    ] as const) {
+      const fact = chart.pillars[slot];
+      expect(report.introduction).toContain(label + ' ' +
+        (fact.status === 'resolved'
+          ? fact.value.stem.value + fact.value.branch.value
+          : '미확정'));
+    }
+    const html = renderCareerMultifactorResearchHtml(report);
+    expect(html).toContain('해석 상태: 풀이 보류 · 출생정보 또는 근거 부족');
+    expect(html).toContain(report.introduction);
+    expect(html).not.toContain('<section><h2>');
     expect(report.usefulComplete).toBe(false);
+    expect(report.researchOnly).toBe(true);
     expect(report.mayPublish).toBe(false);
     expect(report.maySell).toBe(false);
   });
 
-  it('shows personalized Korean Career T8 sections from known non-hour chart facts', () => {
-    const signatures = new Set<string>();
-    let found = 0;
-    outer: for(const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
-      for(const day of [3,7,11,17,23]) {
-        const chart = sample(month, day, null);
-        const execution = runInterpretation(chart, registry, { now: NOW });
-        const report = buildCareerMultifactorResearchReport(chart, execution, registry);
-        if (report.sections.length === 0) continue;
-        found++;
-        expect(report.state).toBe('partial');
-        expect(report.missing).toContain('출생시각 미상');
-        expect(report.missing.join(' ')).toContain('실제 연·월·일 계산 근거');
-        for (const section of report.sections) {
-          expect(section.paragraph).toContain('실제 명식에서 확인한 근거는');
-          expect(section.sourceIds.length).toBeGreaterThan(0);
-          expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
-          expect(section.calculatedFactPaths).toHaveLength(section.calculatedPositions.length);
-          expect(section.calculatedFactPaths.length).toBeGreaterThanOrEqual(2);
-          expect(section.calculatedFactPaths.every(path =>
-            /^derivedFacts\.tenGods\.value\.(year|month|day)\.(stem|branch)\.value$/u.test(path)))
-            .toBe(true);
-          expect(section.calculatedPositions.every(position =>
-            section.paragraph.includes(position))).toBe(true);
-        }
-        expect(report.researchOnly).toBe(true);
-        expect(report.usefulComplete).toBe(false);
-        expect(report.mayPublish).toBe(false);
-        expect(report.maySell).toBe(false);
-        signatures.add(report.sections.map(section =>
-          section.pattern + ':' + section.channel).join('|'));
-        if (signatures.size > 1) break outer;
-      }
-    }
-    expect(found).toBeGreaterThan(0);
-    expect(signatures.size).toBeGreaterThan(1);
-  }, 120000);
+  it('changes Career unknown-hour factual context with the canonical birth chart', () => {
+    const create = (month: number, day: number) => {
+      const chart = sample(month, day, null);
+      const execution = runInterpretation(chart, registry, { now: NOW });
+      return buildCareerMultifactorResearchReport(chart, execution, registry);
+    };
+    const first = create(3, 10);
+    expect(create(3, 10)).toEqual(first);
+    const another = create(4, 12);
+    expect(first.introduction).not.toEqual(another.introduction);
+    expect(first.sections).toHaveLength(0);
+    expect(another.sections).toHaveLength(0);
+    expect(first.missing).toEqual(another.missing);
+    expect(run(3, 10).report.sections.length).toBeGreaterThan(0);
+  });
 
   it('rejects a changed T8 pattern and swapped upstream T5 family instead of mislabeling Career meaning', () => {
     let original: ReturnType<typeof run> | undefined;
