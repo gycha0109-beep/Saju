@@ -1,0 +1,789 @@
+import { describe, expect, it } from 'vitest';
+import {
+  buildGeneralNatalN27ClaimScopedBridgeHold,
+} from '../src/research/general-natal-p0-n27-claim-scoped-bridge-hold.js';
+import {
+  GENERAL_NATAL_SOURCE_BOUNDED_RELATION_RULES,
+} from '../src/research/general-natal-conclusion-source-bounded-candidate.js';
+import {
+  buildGeneralNatalBridgeReentryReadiness,
+  collectGeneralNatalBridgeReentryEvidence,
+  evaluateGeneralNatalBridgeReentryReadiness,
+} from '../src/research/general-natal-source-bounded-bridge-reentry-readiness.js';
+import {
+  requirePreviewSemanticAdmissionV1,
+} from '../src/preview/preview-semantic-admission.js';
+
+describe('P0-NATAL N27 Claim-scoped Bridge hold (read-only)', () => {
+  it('binds existing content-addressed source-bounded review and 5 claim decisions', () => {
+    const review = buildGeneralNatalN27ClaimScopedBridgeHold();
+    expect(review.issue).toBe(2557);
+    expect(review.bindingFresh).toBe(true);
+    expect(review.candidateDisposition).toBe('RETURN_TO_RESEARCH');
+    expect(review.researchHeadReviewed).toBe('6b7eaca9180a65b0399483d81b8bdcba90e1900d');
+    expect(review.targetClaims.map((x) => x.claimType)).toEqual([
+      'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE',
+      'TEN_GOD_OFFICER_VISIBLE_STEMS_THEME',
+      'TEN_GOD_OFFICER_BRANCHES_THEME',
+      'GENERAL_NATAL_OFFICER_VISIBLE_STEMS_THEME',
+      'GENERAL_NATAL_OFFICER_BRANCHES_THEME',
+    ]);
+    expect(review.targetClaims.every((x) =>
+      x.sourceRuleId !== null &&
+      x.observedStatus === 'research' &&
+      x.observedProvenance === 'secondary_only' &&
+      x.observedReviewerStatus === 'unreviewed' &&
+      x.sourceIds.length > 0
+    )).toBe(true);
+    expect(review.decisionHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(buildGeneralNatalN27ClaimScopedBridgeHold().decisionHash).toBe(review.decisionHash);
+  });
+
+  it('preserves exact 겁재 restriction; does not create a rival 比肩 relationship', () => {
+    const rule = GENERAL_NATAL_SOURCE_BOUNDED_RELATION_RULES.find((x) =>
+      x.output.claimType === 'GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE'
+    );
+    expect(rule?.output.value).toMatchObject({
+      exactTenGodConstraint: '겁재',
+      consumerProjectionAuthorized: false,
+    });
+    expect(rule?.status).toBe('research');
+    const review = buildGeneralNatalN27ClaimScopedBridgeHold();
+    expect(review.candidateBijeonWealthRuleExistsInThisReview).toBe(false);
+    expect(review.adjudication2010).toBe('METHODOLOGY_CONFLICT');
+    expect(review.distinctConsumerMeaningApproved).toBe(0);
+    expect(review.sourceLocatorCaveat).toContain('以下內容與書不合');
+    expect(review.sourceLocatorCaveat).toContain('CADAL06056481 image page 104');
+    expect(review.sourceLocatorCaveat).toContain('SiKu Wikisource editable volume five reads 戊巳');
+    expect(review.verifiedOnlineSiKuVolumeFiveLocator).toBe(true);
+    expect(review.siKuVolumeFiveDirectlyLocatedSections).toEqual([
+      '論正財', '論偏財', '時上偏財',
+    ]);
+    expect(review.twoIndependentPhysicalWitnessesVerified).toBe(false);
+    expect(review.availableOriginalScanCandidates).toEqual([
+      'CADAL06056481', 'CADAL06066041',
+    ]);
+    expect(review.printedTargetFoliosDirectlyInspected).toBe(true);
+    expect(review.targetPrintingsInspected).toBe(3);
+    expect(review.siKuPhysicalPrintedTargetFolioInspected).toBe(true);
+    expect(review.actualPrintedFolioMarksRead).toBe(false);
+    expect(review.totalDirectPrintedSourceReadings).toBe(3);
+    expect(review.printedGlyphAgreementFromThreeSources).toBe('戊己');
+    expect(review.siKuWikisourceDigitalTranscriptionConflictAtThisLocus).toBe(true);
+    expect(review.printedSourcesNotYetTextuallyIndependentQualified).toBe(true);
+    expect(review.nlcUpperPrintedSource).toMatchObject({
+      pdfPageOneBased: 43,
+      printedClause: '柱中不宜再見戊己',
+      printedCharacter: '己',
+      originalPdfSha256: '0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1',
+      artifactId: 12103659191,
+      historicalEditionIndependenceQualified: false,
+    });
+    expect(review.siKuPrintedSource).toMatchObject({
+      djvuPageOneBased: 104,
+      printedClause: '柱中不宜再見戊己',
+      printedCharacter: '己',
+      scannedDjvuSha256: '4f273322b3fd4339789e1408e0bbb4ea15a7956e5e508c6f99fced264e0b53ee',
+      knownJiSiPrintCalibrationPage: 106,
+      artifactId: 12103971835,
+      historicalEditionIndependenceQualified: false,
+    });
+    expect(review.visuallyInspectedHarvardPrintedWitnessCount).toBe(1);
+    expect(review.sourceIntegrityOverallQualified).toBe(false);
+    expect(review.harvardPrintedWitness).toMatchObject({
+      sourceId: 'HARVARD_DRS_53262215_VOL_5',
+      directPageImageRead: true,
+      pdfPageOneBased: 45,
+      clause: '柱中不宜再見戊己',
+      printedGlyph: '己',
+      originalPdfSha256: 'ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831',
+      fullPageHighResSha256: 'b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12',
+      cropSha256: 'fc3063d2608720b13cfca0f7e43e89f3a898aca38d3810de290b835f600e5582',
+      printedFolioMarkUnread: true,
+      independentSiKuPhysicalOriginalRead: false,
+    });
+    expect(review.reproducibleManualPrintInspectionScript).toBe(
+      'scripts/research/inspect-n27-volume-five-print.mjs',
+    );
+    expect(review.originalPdfSha256ComputedInCurrentRun).toBe(false);
+    expect(review.targetPageImagesRenderedFromAuthenticSourceInCurrentRun).toBe(false);
+    expect(review.scriptSelfTestDoesNotAuthenticateOriginalReading).toBe(true);
+    expect(review.distinctCataloguedPrintLeadGroups).toEqual([
+      'HARVARD_1735_CATALOGUE',
+      'NLC_411999029701_ENGRAVED_EDITION',
+    ]);
+    expect(review.additionalPrintSourceIds).toEqual([
+      'HARVARD_DRS_53262215_VOL_5',
+      'NLC_411999029701_VOL_5_UPPER',
+      'NLC_411999029701_VOL_5_LOWER',
+    ]);
+    expect(review.printLeadGroupCountIsNotAuthenticatedWitnessCount).toBe(true);
+    expect(review.authenticatedPrintReadingsOfTargetPassage).toBe(0);
+    expect(review.unresolvedSiKuPrintGlyphVariant).toEqual({
+      siKuWikisourceFive: '戊巳',
+      shiDianGuJiFive: '戊己',
+      generalWikisourceSix: '戊己',
+      printGlyphResolved: false,
+      independentAuthenticatedWitnessCount: 0,
+    });
+    expect(review.real2010ChartOtherPillarJiAndHiddenWuAreStructuralObservationsOnly).toBe(true);
+    expect(review.twoScansDemonstratedToBeIndependentEditions).toBe(false);
+    expect(review.n27SourceClauseConditionMatrix).toMatchObject({
+      version: 'saju-n27-hour-wealth-source-condition-matrix-v2',
+      sourcePath: 'src/research/general-natal-p0-n27-hour-wealth-condition-matrix.ts',
+      evaluatedAgainstActualCanonical2010: true,
+      testedHourCases: ['05:30', '19:30', 'UNKNOWN'],
+      bothHourExamplesCheckedAgainstRealCanonicalSnapshots: true,
+      jiaWuChen07HourVisibleWu: true,
+      jiaJiaXu19HourHiddenWu: true,
+      sameOtherThreePillarsInBothCases: true,
+      exposedStemOnlyFilterWouldDropThePrintedJiaXuExample: true,
+      otherPalaceVisibleAndHiddenScopeStillUnadjudicated: true,
+      hour19HiddenWuNotVisibleWu: true,
+      yearVisibleJiIsJiaRegularWealth: true,
+      classicalPalaceAndSingletonInterpretationAdjudicated: false,
+      chartStrengthAuthorized: false,
+      newInterpretationClaimAuthorized: false,
+    });
+    expect(review.n27SourceClauseConditionMatrix.independentClauseScopes).toHaveLength(7);
+    expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
+      version: 'saju-n27-wu-ji-recurrence-scope-sensitivity-v30',
+      path: 'src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts',
+      sameReal2010WuChenAndJiaXuNonHourPillars: true,
+      testedTimeCases: ['07:30', '19:30', '05:30', 'UNKNOWN'],
+      visibleWuOnlyWouldMissPrintedJi: true,
+      actualYearVisibleJiRegularWealthOnJiaDay: true,
+      recurrenceCountingScopeMethodApproved: false,
+      classicalWeiCountingMethodApproved: false,
+      interpretationsInferred: false,
+      admitsNewClaim: false,
+    });
+    expect(review.n27WuJiRecurrenceScopeSensitivity.counterfactualScopeKeys).toHaveLength(4);
+    expect(review.n27WuJiRecurrenceScopeSensitivity).toMatchObject({
+      additionalActualCanonicalControlDates: [
+        '2010-02-13T19:30', '2010-05-04T19:30', '2010-02-04T19:30',
+      ],
+      distinctCountingUnits: [
+        'OCCURRENCE_PER_CHANNEL_GLYPH', 'DISTINCT_OTHER_PILLAR',
+        'DISTINCT_WU_JI_GLYPH', 'YEAR_MONTH_ONLY_VS_DAY_INCLUDED',
+        'BOTH_CHANNELS_SAME_PILLAR', 'HOUR_REFERENCE_EXCLUDED',
+      ],
+      samePillarTwoChannelsAreNotProvenTwoClassicalWei: true,
+      dayPillarWithinBieGongNotSourceAdjudicated: true,
+      noHiddenStemGeneralizationAuthorized: true,
+      sameVolumeZhengGuanPrintedCrosscheck: {
+        status: 'TWO_PRINT_SCAN_WITNESSES_PASSAGE_DIRECTLY_READ',
+        exactSourceChapter: '三命通會 卷五 論正官',
+        sourceHoldingIds: [
+          'HARVARD_DRS_53262215_VOL_5',
+          'NLC_411999029701_VOL_5_UPPER',
+        ],
+        harvardPdfPages: [6, 7],
+        nlcPdfPages: [5, 6],
+        mainPrintedPhrase: '支藏干透餘位不宜再見',
+        printedBranchExample: '甲生丑月內有辛金又值酉時',
+        additionalStemPhrase: '若天干復透辛多',
+        printLineageIndependenceCertified: false,
+        harvardVolumeOnePrefaceDirectEvidence: {
+          originalHolding: 'HARVARD_DRS_53262215_VOL_1_PREFACE',
+          sameDrsAsHourWealthVolumeFive: true,
+          originalPdfPages: [2, 4, 6],
+          originalPrefaceDate: '雍正乙卯花朝',
+          signer: '蔣國祥',
+          printedWoodblockRecoveryAndRepairDescribed: true,
+          harvardSameHoldingPrefaceConfirmed: true,
+          linkToExactTaiwan1578WoodblocksProven: false,
+          prefaceFixesVolumeFivePrintYear: false,
+        },
+        taiwanWanli1578ThirdZhengGuanPrintEvidence: {
+          sourceId: 'TAIWAN_NCL_06589_1578',
+          catalogedYear: 1578,
+          volumeFiveStartsPdfPage: 337,
+          zhengGuanHeadingPdfPage: 340,
+          hiddenXinThenYouHourExamplePdfPage: 341,
+          branchExample: '甲生丑月內有辛金又值酉時',
+          textualLineageIndependentFromMainlandNlc: false,
+          countingTransferToHourWealthAuthorized: false,
+        },
+        taiwanWanli1578PrintedHourWealthClause: {
+          sourceId: 'TAIWAN_NCL_06589_1578',
+          originalPdfSha256: '3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd',
+          hourWealthHeadingPdfPage: 375,
+          exactGlyphPdfPage: 376,
+          directlyPrintedClause: '柱中不宜再見戊己',
+          printedGlyph: '己',
+          previouslyReadHarvardCadalMainlandNlcConcur: true,
+          totalDirectPrintedHoldingGroups: 4,
+          fourIndependentStemmaticVotesLicensed: false,
+          historicalZaiJianScopeAdjudicated: false,
+          historicalBieGongScopeAdjudicated: false,
+          historicalYiWeiCountAdjudicated: false,
+          anyClaimPromotionAuthorized: false,
+        },
+        hourWealthLocalLeafCollation: {
+          researchVersion: 'n27-harvard-taiwan-local-leaf-collation-v1',
+          status: 'SAMPLED_PHRASE_AGREEMENT_ONLY',
+          harvardPdfPage: 45,
+          taiwanPdfPages: [375, 376],
+          matchedPhraseCount: 5,
+          matchRequiresNoFullTextOrIndependentLineageAssumption: true,
+          harvardCharactersPerLine: 20,
+          taiwanCharactersPerLine: 22,
+          samePhysicalPrintedSettingSupported: false,
+          exactLocusEngraverRead: false,
+          exactLeafRecarvingCertified: false,
+          independentTransmissionCertified: false,
+          noOtherVariantsInChapterCertified: false,
+          dayPillarBieGongRuleAdjudicated: false,
+          hiddenStemZaiJianRuleAdjudicated: false,
+          historicYiWeiCountingUnitAdjudicated: false,
+          consumerOrProductionAdmission: false,
+        },
+        taiwanCopy06590AccessHold: {
+          status: 'CATALOG_CONFIRMED_ORIGINAL_SCAN_NOT_ACCESSED',
+          accessionNumber: '06590',
+          existingPrintedWitness: '06589',
+          catalogsAreSeparate: true,
+          catalogedMing1578TenLinesTwentyTwoCharacters: true,
+          originalImagesReviewed: false,
+          plateEngraverOrStrokeDamageCompared: false,
+          printWitnessCountIncrement: 0,
+          sameBlockAs06589: 'UNADJUDICATED',
+          independentTextualDescent: 'UNADJUDICATED',
+          libraryPermissionOrOnsiteInspectionNeeded: true,
+          claimOrProductionPromotionAllowed: false,
+        },
+        mainlandNlcTaiwan06589LeafAlignmentHold: {
+          status: 'SIDE_BY_SIDE_COLUMN_ALIGNMENT_OBSERVED_NO_WOODBLOCK_VERDICT',
+          mainlandPdfPage: 43,
+          taiwanPdfPage: 376,
+          sameCataloged10x22: true,
+          visuallySimilarFirstColumns: true,
+          exactSharedWoodblockMicrodefectsConfirmed: false,
+          leafEngraverNameAtBothLociRead: false,
+          circlesOrAnnotationsNotCertifiedAsOriginalTextVariants: true,
+          sameBlock: 'UNADJUDICATED',
+          genealogicalIndependence: 'UNADJUDICATED',
+          noChangeToRecurrenceRules: true,
+        },
+        mainlandNlcTaiwan06589FeatureRegistrationHold: {
+          status: 'STRONG_SPATIAL_REGISTRATION_NO_POSITIVE_SHARED_BLOCK_DEFECT',
+          mainlandPdfPage: 43,
+          taiwanPdfPage: 376,
+          method: 'OpenCV_SIFT_BF_KNN_RANSAC_HOMOGRAPHY',
+          comparedPageSiftRatioMatches: 406,
+          comparedPageHomographyInliers: 245,
+          controlInliers: [8, 8, 5],
+          positiveUniqueWoodblockChipMatchRead: false,
+          scannedImageDerivationIndependentCertified: false,
+          physicalSameWoodblock: 'UNADJUDICATED',
+          twoIndependentTextualVotes: false,
+          originalPrintWitnessCountIncrement: 0,
+          anyConsumerOrClassicalRulePromotion: false,
+          noInstitutionalMailOrPermissionDependency: true,
+        },
+        publicPrintedGlyphMicrodefectHold: {
+          researchVersion: 'n27-public-printed-glyph-microdefect-inspection-v1',
+          status: 'NO_CERTIFIED_SHARED_UNIQUE_CHIP_WITH_AVAILABLE_PUBLIC_RASTERS',
+          inspectedPublicPrintCellPairs: 9,
+          previouslyConfirmedGlobalSiftInliers: 245,
+          yQuartileInlierCoverage: [68, 26, 95, 56],
+          xQuartileInlierCoverage: [14, 45, 82, 104],
+          spatialRefitHeldoutInliers: [0, 29, 113, 32],
+          originalNlcPageRasterPixels: [850, 726],
+          originalTaiwanPageRasterPixels: [2600, 1850],
+          sourceStrokeLossIndependentlyVerified: false,
+          sameCarvedPhysicalBlock: 'UNADJUDICATED',
+          independentTextualLineage: 'UNADJUDICATED',
+          newPrintedWitnesses: 0,
+          noInstitutionContact: true,
+          noRulePromotion: true,
+          noTrustGrantPreviewOfficialProduction: true,
+        },
+        yuanhaiXijiCaseHypothesisHold: {
+          evidenceClass: 'SECONDARY_PUBLIC_TRANSCRIPTION_OF_CLASSICAL_COMMENTARY',
+          primaryTextSource: 'https://sajumania.com/ebook/to01-06/to01-06-02-01.htm',
+          comparativeTextSource: 'https://zh.wikisource.org/zh-hant/神峰通考',
+          twoIndependentPhysicalPrintedSourcesRead: false,
+          favorableCase: ['丁酉', '己酉', '戊子', '壬子'],
+          negativeOtherPalaceCase: ['丁丑', '己酉', '丁丑', '辛亥'],
+          favorableDayBranchHidesZhengCai: true,
+          negativeHasNoExtraVisiblePianCaiStem: true,
+          negativeYearMonthDayBranchesContainHiddenPianCai: true,
+          negativeExplicitYouChouAssociation: true,
+          evidenceAgainstStrictExtraVisibleStemOnly: true,
+          evidenceAgainstPoolingAllWealthStemsAndHidden: true,
+          independentDayBranchCausalityEstablished: false,
+          anyHiddenStemRecurrenceIsAutomaticViolationEstablished: false,
+          exactYiWeiCountUnitEstablished: false,
+          crossTranscriptionCommanderNameDisagreement: true,
+          commanderNameDisagreementCertifiedPrintVariant: false,
+          newAncientTextualWitnesses: 0,
+          semanticEngineAdmission: false,
+          allExistingClaimsStayHold: true,
+        },
+        threeNonHourPillarsTextWitnessHold: {
+          evidenceClass: 'TRANSCRIPTION_WITH_ONE_DIRECTLY_READ_1926_PRINT_FOLIO',
+          yuanhaiInternalEighteen: '只要時上一位，不要多。而三處不要再見財',
+          shenfengHourWealthGloss: '只要一位貴，不要多，而三處不要再見財',
+          comparandOtherThreePillarsYearMonthDaySupported: true,
+          separateHourNobleGlossYearMonthDayNotTransferrable: true,
+          yearMonthDayPillarWordNotOneHiddenStemCountEach: true,
+          hourStemOrBranchExampleBothAttestedInTranscription: true,
+          internalCaseHouZhifu: ['乙酉','乙卯','辛卯','辛卯'],
+          houCaseHasAdditionalYearAndMonthVisiblePianCai: true,
+          houCaseHasAdditionalDayBranchHiddenPianCai: true,
+          houCaseGlossMentionsRepetitionsButNotUnqualifiedSuccess: true,
+          liCaseHasHiddenYearPianCaiButNoIsolatedCausalComparison: true,
+          shenfengXiwenClusterComparand: {
+            sourceStatus: '1926_PRINT_HEADING_CHART_READ_OTHER_GLOSS_LIMITED',
+            pillars: ['己酉','丙子','壬寅','乙巳'],
+            visibleMonthPianCaiAndHiddenDayHourPianCai: true,
+            hourStemIsNotPianCai: true,
+            separatelyLabeledHourMonthClusterNotPureHourOnly: true,
+            sourceWordingExpressesPartialFavorability: true,
+            anyExtraCaiAutomaticallyViolatesAllPatterns: false,
+            transcribedSelfAttribution: '予命正合書云',
+            transcribedFilialEditorialStatement: '為繼家君之志，而編此書',
+            transcribedRelianceOnFather: '予據先人成說，更稽先人遺訓',
+            locCatalogListsXiwenAsSonCompiler: true,
+            authorialAutobiographicalCharacterSupportedByText: true,
+            independentThirdPartyCounterexampleEstablished: false,
+            selfDescriptiveTextCannotGrantClassicalRuleException: true,
+            historicalPrintedPassageDirectlyRead: false,
+            headingAndChartInOne1926PrintDirectlyRead: true,
+            hiddenDayAsIndependentViolationOrExemptionAdjudicated: false,
+          },
+          earlierSeventeenthCenturyImprintLead: {
+            catalogedJapanesePrintYear: 1647,
+            conflictingTohokuCatalog: 'https://touda.tohoku.ac.jp/portal/item/10010000025881',
+            conflictingTohokuYear: 1850,
+            twoTohokuRecordIds: ['10010000025889','10010000025881'],
+            bothListSameDepartmentId: 'TT22201642',
+            bothListSameShelfMark: '2/3802/6',
+            distinctHistoricalPrintsEstablished: false,
+            actualPrintYearOfJapaneseHolding: 'UNADJUDICATED',
+            catalogedJapanesePublisher: '沢村寛',
+            catalogedJapanesePlace: '江戸',
+            catalogedVolumes: 6,
+            sourceCatalogSaysNoAvailableImages: true,
+            locImprintWords: '文光堂甲午重鐫',
+            locProposedJiaWuYear1654OnlyConditional: true,
+            actualEditorialSupplementPresenceIn1647: 'UNADJUDICATED',
+            anyEarlierOriginalFolioActuallyRead: true,
+            earlierHistoricalWitnessesNewlyAuthenticated: 0,
+            locJuan2SupplementPrintedImageRead: true,
+            japanese1647TargetImageRead: false,
+            cannotSupportAnyClaimPromotion: true,
+          },
+          print1929DirectGlyphVerification: {
+            originalPdfSha256: '2e19b8a05fdc4ad204eb4822c3b1ffbb2487dafac707e283c1358845f873c12c',
+            originalPdfBytes: 7012009,
+            upperPdfPageCount: 170,
+            printedPageNumbers: [66,67,68],
+            originalFolioNumbers: [6,7,8],
+            supplementPage: 67,
+            attribution: '補曰',
+            exactlyMatchedPhraseWith1926: '只要一位貴不要多而三處不要再見財',
+            printedXiwenChartOnPage68: ['己酉','丙子','壬寅','乙巳'],
+            physicallyRead1929PrintImage: true,
+            originalPdfHashVerified: true,
+            printedGlyphsInCorePhraseAgreeWith1926: true,
+            completeChapterCollationConducted: false,
+            seventeenthCenturyLineageAgreementVerified: false,
+            printedWitnessIncrement: 1,
+            historicalIndependentStemCountProof: false,
+            fiveClaimsStayHold: true,
+          },
+          print1924DatedQiangingtangEmblemDoesNotGrantSemantics: {
+            sourceArtifactId: 12248510151,
+            actuallyRetrievedPublicJpegCount: 4,
+            sellerYearClaim: 1924,
+            fourthPhotoSourceSha256: 'c6a4c8418dea4fbec22c88ead3d48c1ba8d9bfafb1b4470554479cef13ac8e96',
+            originalPrintedPublicationMarkDirectlyRead: '中華民國十三年重刊',
+            originalPrintedPublisherTrademarkRead: '千頃堂書局商標',
+            yulgokFirstBookOfficialPhotoAlsoHasTrademark: true,
+            yulgokFirstBookOfficialPhotoLacksDatedArc: true,
+            copyingOrPlateRelationCertified: false,
+            yulgokPrintYear1924Proven: false,
+            newHourWealthSupplementPrintedLocusRead: false,
+            independentlyProvenAncientTextualDescentAdded: 0,
+            allN27ClaimsStillHold: true,
+            interpretationPromotionApproved: false,
+          },
+          print1926DirectPrintedVolumeBoundaryNonGrant: {
+            former167PreviewArtifactId: 12245160822,
+            former167PreviewPagesActuallyObtained: 7,
+            former167PdfPage2IsOriginalJuan4: true,
+            former167PdfPage166FirstPublicationPrinted: '中華民國十五年一月出版',
+            former167PdfPage166ReleasePrinted: '中華民國十五年一月發行',
+            former167PdfPage166JpegSha256: 'aa1f155e8d8ec9fe7128c20fa7187a32e887b4577912b34ad99948d22db3627f',
+            original167PdfBytesStillNotAcquired: true,
+            prior169PreviewArtifactId: 12245355973,
+            prior169PreviewPagesActuallyObtained: 8,
+            prior169PdfPage166IsFinalOriginalJuan3Text: true,
+            consecutiveJuan3ToJuan4ContentBoundaryPhysicallyRead: true,
+            twoCataloguedCopiesSamePhysicalBoundSetCertified: false,
+            juan4OpeningLocallyMatches1929Reprint: true,
+            exactHistoricalPlateIdentityCertified: false,
+            newTargetHourWealthSupplementRead: false,
+            newIndependentHistoricalTextualLineage: false,
+            hiddenStemCountingApproved: false,
+            everyN27ClaimStaysHold: true,
+          },
+          print1929PublisherColophonDoesNotGrantSemantics: {
+            artifactId: 12242733882,
+            originalLowerPdfSha256: 'ccb21cf1215a1e487fe79497839f9343534af42a2e3af6c1e7dd04f3faea9289',
+            originalLowerPdfBytes: 6708084,
+            originalLowerPdfPages: 168,
+            page3PrintedJuan: 4,
+            page167PrintedFirstEdition: '中華民國十五年一月初版',
+            page167PrintedReprint: '中華民國十八年十二月再版',
+            commonsCatalogue1929NovemberVsPrintedDecemberConflict: true,
+            publisher1926To1929ReprintClaimDirectlyRead: true,
+            platesAndFullTextIdenticalBetweenEditions: 'UNADJUDICATED',
+            addedPrintedHourWealthSupplementLoci: 0,
+            independentClassicalTextLineageCountAdded: 0,
+            historicalHiddenStemOrYiWeiCountingAdjudicated: false,
+            exactFiveClaimsHoldUnchanged: true,
+          },
+          locSeventeenthCenturyPageAcquisitionLimit: {
+            runnerImageTotal: 59,
+            actuallyDownloadedPreviewImages: 25,
+            missingPreviewImages: 34,
+            hourWealthSupplementGlyphsFromLocVerified: true,
+            exactPrintedPageIndexOneBased: 8,
+            exactPrintedPreviewSha256: 'e4b6771c98c8f9547ab9e3ac531ff8e34bd67eb6e380810843fc4a186e371c08',
+            exactPrintedCorePhrase: '只要一位貴不要多而三處不要再見財',
+            targetPhraseInSeventeenthCenturyLocImageMatches1926And1929: true,
+            retrievedImageCountAfterPacedRecovery: 58,
+            remainingAfterSecondRun: 59,
+            secondRunPage59MetadataTimedOut: true,
+            finalOfficialImageRecovery: {
+              lastOrdinal: 59,
+              officialImageId: 'cover2',
+              recoveredPreviewBytes: 53722,
+              recoveredPreviewSha256: 'c6ee8531aeece3634c181dbf4254fdc9ba28901a6ad9551fc2bc4f892f8e7dc8',
+              totalImagesRetrieved: 59,
+              remainingImageCount: 0,
+              imageIsBackCoverNotNewPrintedClaimLocus: true,
+              fullGlyphCollationFinished: false,
+              noNewAuthoritativeSemanticClaim: true,
+            },
+            absenceOfSupplementInAncientPrintProven: false,
+            noGrantedClassicalSemantics: true,
+          },
+          additionalKorean1906Lead: {
+            catalogueYear: 1906,
+            governmentSourceLibrary: '국회도서관',
+            reportedPdfName: '新鐫神峰張先生通攷闢謬命理正宗大全.pdf',
+            separateCatalogueYear: 1906,
+            eitherPrintLocusDirectlyRead: false,
+            sameEditionOrIndependentWitness: 'UNADJUDICATED',
+            semanticPromotionAllowed: false,
+          },
+          yulgokKoreanLithographHoldingsUnverifiedWitness: {
+            researchCatalogueProvenance: '율곡연구원 한국학 아카이브',
+            firstHolding: {
+              catalogueId: 'B005_01_B00330_001',
+              printedBibliographyId: 'YG015-01-481',
+              setBookCount: 4,
+              printingMethod: '석인본',
+              publisherKnown: false,
+              printDateKnown: false,
+            },
+            secondHolding: {
+              catalogueId: 'B005_01_B00442_001',
+              printedBibliographyId: 'YG015-01-490',
+              reportedBookCount: 1,
+              labelledContent: '卷1,2',
+              publisher: '上海 千頃堂書局',
+              printDateKnown: false,
+            },
+            dalianOther1906Catalogue: {
+              date: 1906,
+              books: 6,
+            },
+            physicalIdentityWith1906ShanghaiShuju: 'UNADJUDICATED',
+            printedHourWealthSupplementDirectlyRead: false,
+            independentAncientWitnessIncrement: 0,
+            permitsClaimPromotion: false,
+          },
+          yulgokPublicViewerPrintedEvidenceNonAuthorizing: {
+            firstHoldingId: 'B005_01_B00330_001',
+            firstHoldingCatalogPublisherRecorded: false,
+            firstHoldingPublicImagesRetrieved: 6,
+            firstHoldingPublisherMarkImageSha256: 'd950e179f55d73339521ede027b1272bcfb3b7018b224407e03ca07a5ac7045b',
+            secondHoldingId: 'B005_01_B00442_001',
+            secondHoldingCatalogPublisherRecorded: true,
+            secondHoldingPublicImagesRetrieved: 5,
+            secondHoldingPublisherMarkImageSha256: '8590df09077da80acbe5170270a290c502b6f4a63ecc32aed584c2aa39b68677',
+            visuallyPrintedCommonPublisherMark: '千頃堂書局商標',
+            sameFirstJuanLeafHasMatchingLocalLayout: true,
+            previewsAvailableInBothHoldingsTotal: 11,
+            allElevenPreviewImagesPhysicallyDownloadedAndHashed: true,
+            hourWealthSupplementPrintedFolioIncludedAmongEleven: false,
+            originalSupplementPhraseNewlyRead: false,
+            similarityCannotCertifyIdenticalPrinting: true,
+            lithographEditionIndependentWitnessCountAdded: 0,
+            dalian1925PublicCatalogueHtmlDoesNotLinkOriginalPages: true,
+            dalian1925ActualOriginalPageRetrieved: false,
+            ancientMeaningAuthorizationsAdded: 0,
+            allFiveN27ClaimsRemainHold: true,
+          },
+          yulgokFourVolumeFullPublicSampleAuditNonGrant: {
+            auditOriginalSourceArtifactId: 12236515723,
+            fourPhysicalBooksVerifiedAsSeparateOfficialCatalogueIds: [
+              'B005_01_B00330_001',
+              'B005_01_B00330_002',
+              'B005_01_B00330_003',
+              'B005_01_B00330_004',
+            ],
+            eachBookOpenSamplePageCount: [6, 5, 5, 6],
+            correspondingOpeningPrintedJuanHeadings: ['卷之一', '卷之二', '卷之三', '卷之四'],
+            volumeTwoImage3PrintedJuanHeadingSha256: '2e9980305b437be5ec33d0d451fa98d77eea528cef80460c493433f5fbf593d6',
+            volumeThreeImage3PrintedJuanHeadingSha256: 'f9356e7b87d1dc77a5b5f6817d3b72e915212cbc981359e00cd94a026b3d88be',
+            volumeFourImage4PrintedJuanHeadingSha256: 'a996377e1debd30d58e5018eca1ee2df7f9a428936d6a347144d3df58831d24f',
+            totalFourBookSelectedPublicScansDownloaded: 22,
+            genuinelyNewScansFromVolumesTwoThreeFour: 16,
+            otherYulgokQianqingtangSingleBookScansPreviouslyRetrieved: 5,
+            totalAvailableOpenYulgokScansAcrossTwoHoldings: 27,
+            allPublicScansWereDownloadedFromOfficialViewer: true,
+            numberOfAdditionalJuanBeyondFirstFourPhysicallyExcluded: false,
+            bookEditionPublicationYearIndependentlyVerified: false,
+            targetHourWealthSupplementFolioAmongAddedScans: false,
+            newlyReadSupplementLocusCount: 0,
+            independentAncientTextualWitnessCountAdded: 0,
+            allFiveN27ClaimsRemainHold: true,
+          },
+          nationalLibraryChina1936DirectHourWealthSupplementNonGrant: {
+            printPublicationYearAsCatalogue: 1936,
+            originalColophonPdfPageOneBased: 219,
+            originalColophonDateDirectlyRead: '民國二十五年三月',
+            originalColophonPublisherDirectlyRead: '星命學社',
+            colophonDateCorroborates1936MarchCatalogue: true,
+            sourceCatalogueNamesNationalLibraryOfChina: true,
+            scannedPhysicalPageOwnershipMarksShanghaiLibrary: true,
+            institutionalCopyHistory: 'UNADJUDICATED',
+            originalPdfSha256: '2b4eabf3c1732f5bcb7adf964ed8fe0bc9191523fdc3e5c92f5c1aa4057eced7',
+            originalPdfPageCount: 220,
+            targetPdfPageOneBased: 43,
+            targetPrintedJuan: 2,
+            targetPrintedPage: 37,
+            exactTargetCoreGlyphsDirectlyRead: '只要一位貴不要多而三處不要再見財',
+            matchesLoc1926And1929CoreGlyphs: true,
+            newlyDirectReadPrintedSupplementPages: 1,
+            independentStemmaticWitnessIncrement: 0,
+            printLineageRelativeTo1926And1929: 'UNADJUDICATED',
+            countingSemanticsAdjudicated: false,
+            allN27ClaimsStillHold: true,
+          },
+          commercial1906KoreanNationalAssemblyMarkedPreviewsNonGrant: {
+            sellerOpenPreviewImagesDownloaded: 11,
+            sourceCoverSha256: '701b096014e30c0d74164f020671ce52113dd20c1464186a017c3589476750d5',
+            physicalBookCoverAppearsMarkedKoreanNationalAssemblyLibrary: true,
+            physicalCopyRegistrationMark: '130903',
+            physicalCopyDateStamp: '1970-05-06',
+            dateStampNotThePublicationDate: true,
+            koreanGovernment1906CatalogueNamesSameLibrary: true,
+            sellerScansSamePdfAsKoreanGovernmentCatalogue: 'UNADJUDICATED',
+            sellerPreviewOriginalSupplementDirectlyRead: false,
+            paidOriginalPdfPurchasedOrDownloaded: false,
+            independentAncientOriginalWitnessIncrement: 0,
+            permitsClaimPromotion: false,
+          },
+          korean1906OfficialViewerBlockedNonAuthorizing: {
+            sourceWorkId: 'G905-9086005',
+            sourceNamesNationalAssemblyLibrary: true,
+            publiclyListedPdfFilename: '新鐫神峰張先生通攷闢謬命理正宗大全.pdf',
+            verifiedHttp400RequestBlockedEndpoints: 3,
+            originalPdfBytesAcquired: false,
+            officialViewerBodyRead: false,
+            failedAcquisitionDoesNotProveMissingPdfOrMissingSupplement: true,
+            printingYearOnPhysical1906CopyDirectlyRead: false,
+            morePrintedOriginalSupplementLociRead: 0,
+            samePrintedSettingAsDalian1906: 'UNADJUDICATED',
+            independentOriginalTextualVotesNew: 0,
+            authorizesAnyHistoricalCalculationRule: false,
+            allFiveN27ClaimsStayOnHold: true,
+          },
+          qianqingtang1924AndOtherChronologicalLeadsNonAuthorizing: {
+            scholarBibliographicCitation: {
+              citationYear: 2017,
+              printedPage: 173,
+              footnote: 20,
+              historicallyReportedPublisher: '上海 千頃堂書局',
+              historicalEditionYearReported: 1924,
+              reportedTextualJuanCount: 4,
+              yulgokFirstHoldingPhysicalBookCount: 4,
+              textualJuanFourNotProofOfPhysicalBookIdentity: true,
+              yulgokPhysicalHoldingEditionYearDetermined: false,
+              original1924PrintedSupplementRead: false,
+            },
+            dalian1920Catalogue: {
+              press: '上海 校經山房',
+              printedYearAsCatalogue: 1920,
+              textualJuanCount: 4,
+              physicalBookCount: 4,
+              originalPrintedTargetLeafAcquired: false,
+            },
+            paid1906DigitalFacsimileListing: {
+              commercialFileClaimsPages: 316,
+              sellerRequiresPayment: true,
+              sixJuanFileDirectlyRead: false,
+              sameCopyAs1906KoreanGovernmentListing: 'UNADJUDICATED',
+              purchaseOrInstitutionContactPerformed: false,
+            },
+            newlyPrintedOriginalSupplementLoci: 0,
+            independentAncientTextualWitnessIncrement: 0,
+            classicalSemanticsAuthorized: false,
+            allN27ClaimsRemainHold: true,
+          },
+          republican1929TwoPhysicalVolumes: {
+            publicationDate: '1929-11',
+            editor: '秦慎安',
+            upperPageCount: 170,
+            guideMapsUpperToOriginalJuanOneThroughThree: true,
+            hourWealthTextInOriginalJuanTwo: true,
+            prioritizeUpperOnlyForPreciseSupplementLeaf: true,
+            mirrorReusesNlcFilesNotNewIndependentPrint: true,
+            targetExactPdfPageStillUnknown: false,
+            lowerPageCount: 168,
+            volumesBelongToOneEdition: true,
+            volumesMustNotCountAsIndependentWitnesses: true,
+            preciseSupplementPageDirectlyRead: true,
+            printTextualLineageIndependentFrom1926: 'UNADJUDICATED',
+            newlyAddedPrintedTextualLoci: 1,
+            candidate1936PrintingRead: false,
+            oldLocEditionImageRead: true,
+            allClaimsStayHold: true,
+          },
+          republican1929Alternative: {
+            dated: 1929,
+            printedTargetFolioRead: false,
+            sourceIndependentFrom1926: 'UNADJUDICATED',
+            newlyVerifiedTargetFolioCount: 0,
+          },
+          locEarlyPrintedCandidate: {
+            dateRangeAsCataloged: '1638–1661',
+            actualTargetImageRead: true,
+            sourceImageOneBased: 8,
+            sourceImageSha256: 'e4b6771c98c8f9547ab9e3ac531ff8e34bd67eb6e380810843fc4a186e371c08',
+            attributionLabelPrinted: '補曰',
+            textAgreementNotStemmaticIndependence: true,
+            printTraditionIndependent: 'UNADJUDICATED',
+            directPrintedEvidenceIncrement: 1,
+          },
+          printed1926SecondFile: {
+            sourceUri: 'https://commons.wikimedia.org/wiki/File:NLC416-13jh001619-43305_神峰通考.pdf',
+            exactPageWithSupplement: 67,
+            adjacentHeadingAndChartPage: 68,
+            originalPrintedPageHeading: 7,
+            exactGlyphString: '只要一位貴不要多而三處不要再見財',
+            readFromRenderedPublicPdfPage: true,
+            localPdfDownloadAndHashConfirmed: false,
+            originalPrintWitnessIncrement: 1,
+            editorialLineageIndependent: false,
+            noAutomaticHiddenStemCountRule: true,
+            fiveClaimsRemainHold: true,
+          },
+          commons1926PdfSourceLocatedButExactPageNotRead: true,
+          originalPrintedWitnessIncrement: 1,
+          dayBranchSeparateRecurrenceRuleAllowed: false,
+          allHiddenStemsAutomaticRuleAllowed: false,
+          consumerOrTrustGrantPromotionAllowed: false,
+          institutionalMailOrContactAllowedForThisResearch: false,
+        },
+        bibliographicRelation: {
+          classification: 'DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES',
+          harvardPrintedLines: 10,
+          harvardPrintedCharactersPerLine: 20,
+          harvardQingYongzheng1735DateIsUncertain: true,
+          nlcPrintedLines: 10,
+          nlcPrintedCharactersPerLine: 22,
+          nlcMingWanliDateRange: [1573, 1620],
+          nlcExactPrintingYearEstablished: false,
+          separateHoldingAndPrintedSettingSupported: true,
+          sharedSourceFamilyAdjudicated: false,
+          independenceOfTextualTransmissionCertified: false,
+          agreementAsTwoIndependentVotesAuthorized: false,
+          Taiwan1578CatalogIsSameNlcCopyVerified: false,
+          bibliographicDetailsPromoteAnyClaim: false,
+        },
+        hourWealthExplicitAnalogyTarget: '時上偏官',
+        zhengGuanCanAuthorizeHourWealthCounting: false,
+        disputedYiJiSiNearZhongFanCertified: false,
+        classicalBieGongZaiJianYiWeiAdjudicated: false,
+      },
+      palaceAndChannelCounterfactualKeys: [
+        'YEAR_MONTH_VISIBLE', 'YEAR_MONTH_DAY_VISIBLE',
+        'YEAR_MONTH_VISIBLE_HIDDEN', 'YEAR_MONTH_DAY_VISIBLE_HIDDEN',
+      ],
+      actual2010JiaXuScopeLatticeExpectedRawOccurrences: [1, 1, 3, 4],
+      actual2010JiaXuScopeLatticeExpectedDistinctPillarGlyphs: [1, 1, 2, 3],
+      yearPillarVisibleAndHiddenJiAreSamePillarGlyph: true,
+      countsAreCounterfactualAndNotClassicalWei: true,
+      otherDayPillarBieGongSemanticsEstablished: false,
+      sameVolumeZhengGuanAnalogy: {
+        chapter: '三命通會 卷五 論正官',
+        hiddenBranchRecurrencePhrase: '甲生丑月內有辛金又值酉時',
+        additionalVisibleStemPhrase: '若天干復透辛多',
+        evidenceChannel: 'DIGITAL_TRANSCRIPTION_WITH_TWO_PRINT_SCAN_LOCI',
+        qualifiedForHourWealthRuleTransfer: false,
+      },
+      sameVolumeOfficerAnalogy: {
+        chapter: '三命通會 卷五 時上一位貴',
+        distinctFromHourWealth: true,
+        quotedOtherPillars: '年月日重見',
+        directAuthorizationToApplyToHourWealth: false,
+      },
+      recurrenceCountingScopeMethodApproved: false,
+      classicalWeiCountingMethodApproved: false,
+      interpretationsInferred: false,
+      admitsNewClaim: false,
+    });
+    expect(review.finalWangShuaiAndQiangRuoVerdictAuthorized).toBe(false);
+    expect(review.classicalSingleWealthLocationProven).toBe(false);
+    expect(review.generalCopyVolumeSixHasDiscrepantEditorialWarning).toBe(true);
+  });
+
+  it('keeps each claim/observation/qualifier blocked and existing Preview authorization unchanged', () => {
+    const review = buildGeneralNatalN27ClaimScopedBridgeHold();
+    expect(review.explicitPreviewAdmissionPresent).toBe(false);
+    expect(review.targetClaims.every((x) =>
+      x.disposition === 'hold' &&
+      !x.mayCreateClaim &&
+      !x.mayExposeObservation &&
+      !x.mayExposeQualifier &&
+      !x.mayAffectProduction
+    )).toBe(true);
+    expect(() => requirePreviewSemanticAdmissionV1(
+      'GENERAL_NATAL_SOURCE_BOUNDED_METHODOLOGY', 'general:natal'
+    )).toThrow(/not admitted/);
+    expect(review.reviewerAttestationCreated).toBe(false);
+    expect(review.reviewerTrustGrantCreated).toBe(false);
+    expect(review.previewAuthorityExpanded).toBe(false);
+    expect(review.officialReadingAuthorityExpanded).toBe(false);
+    expect(review.engineAuthorityPromoted).toBe(false);
+    expect(review.productionAuthorized).toBe(false);
+    expect(review.researchFreezePreserved).toBe(true);
+  });
+
+  it('requires existing governed reentry after exact candidate hash drift', () => {
+    const base = collectGeneralNatalBridgeReentryEvidence();
+    const changed = {
+      ...base,
+      candidateSurface: {
+        ...base.candidateSurface,
+        rules: base.candidateSurface.rules.map((r, i) =>
+          i === 0 ? { ...r, contentHash: 'f'.repeat(64) } : r
+        ),
+      },
+    };
+    expect(buildGeneralNatalBridgeReentryReadiness().nextDisposition).toBe('RETURN_TO_RESEARCH');
+    const reevaluated = evaluateGeneralNatalBridgeReentryReadiness(changed);
+    expect(reevaluated.candidateBindingFresh).toBe(false);
+    expect(reevaluated.nextDisposition).toBe('FRESH_REVIEW_SURFACE_REQUIRED');
+    expect(reevaluated.authorityBoundary.productionAdmissionAuthority).toBe(false);
+  });
+});

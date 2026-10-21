@@ -1,0 +1,463 @@
+# P0-NATAL N27 — Claim-scoped Bridge Research return / no consumer admission
+
+Issue [#2557](https://github.com/gycha0109-beep/Saju/issues/2557) · 2026-10-17 · Watchtower-Track: saju-bridge
+
+**Decision: RETURN_TO_RESEARCH / all five claim types HOLD.** This is a deterministic review snapshot under the existing #1447/#1482 governance, not a new review authority, Rule Registry, semantic approval or reviewer attestation.
+
+## Pinned inputs
+- Base `main` SHA: `fbee167b690f08c2e58e72211f196e58e7c04708` at review authoring. Existing source-bounded registry source code blob `9919f4c2e55a4119726a2505cc8bdbf585c27d13`, methodology `M-GENERAL-NATAL-CONCLUSION-SOURCE-BOUNDED-V1@0.2.0-research`, rule subject hash `0fd69bb361ddcf9babd78b3238f9fe51dcda9dcbc1ee34f58654d8002aef2238`, candidate surface hash `420cb351c1288af54ef50fc85972bd080a92a851147d5b71062e8c30b0534cb9`.
+- Research [PR #2553](https://github.com/gycha0109-beep/Saju/pull/2553) exact `bb91adf29541fe1b26234c6202cb139ad99c552f`, **Draft/unmerged**. Source-grade research evidence only. The Research PR's 2010 05:30 vs 19:30 1-vs-0 existing N13 `劫財→財` T8 is an **emission fact**, never a universal classical rule of exclusion or differentiated personal fortune.
+- Existing Authority Bridge [#1447](https://github.com/gycha0109-beep/Saju/issues/1447), [#1449](https://github.com/gycha0109-beep/Saju/pull/1449), re-entry [#1482](https://github.com/gycha0109-beep/Saju/issues/1482), manifest of **11 content-addressed subjects**. Existing source qualification incomplete, reviewer domain attestation and trust grant absent, provenance `secondary_only`, stability `contested`.
+- Current Preview [`src/preview/preview-semantic-admission.ts`](../../src/preview/preview-semantic-admission.ts): admission entries are **research ID and target-section scoped**, not mere matching Claim Type strings. Existing registry does **not** explicitly admit this source-bounded methodology or the current officer family theme methodology. No entries added.
+- Witness boundary (source location corrected): 『淵海子平』 `基礎/論劫財` (甲/乙 劫財/敗財) and 四庫全書本 卷七 `兄弟引例章/妻妾引例章` remain unqualified online transcriptions. The **three additional chapters are directly located under [『三命通會（四庫全書本）/卷05』](https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05)**: `論正財/論偏財/時上偏財`. The [general online 卷六](https://zh.wikisource.org/zh-hant/三命通會/卷六) retains `（以下內容與書不合）` before those chapters; it is not the same bibliographic volume locator as 四庫卷06. Different characters include 四庫 `刼` vs general `劫`, and `巳` vs modern normalized `己` (needs full collation). Online chapter location is now **verified**, but printed folio/scan and independent physical witness verification are still absent. No source-integrity promotion or consumer approval.
+
+## Separate exact claim decisions
+
+| Claim type | Registered method/rule | Max observed research-only proposition | Decision |
+|---|---|---|---|
+| `GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE` (T8) | `M-GENERAL-NATAL-CONCLUSION-SOURCE-BOUNDED-V1@0.2.0-research`; exact `겁재` + separate Peer/Wealth T5 + same snapshot/scenario | 05:30 T8 emitted 1; 19:30 0; not proof 比肩 has no relationship to 財 | **HOLD** claim/observation/qualifier |
+| `TEN_GOD_OFFICER_VISIBLE_STEMS_THEME` (T5) | `M-TEN-GOD-CONSUMER-THEME-YUANHAI@0.1.0-research` | 1984 00:30 hour stem 丙(편관) | **HOLD** |
+| `TEN_GOD_OFFICER_BRANCHES_THEME` (T5) | Same research method | 1984 12:30 hour branch 午(정관) | **HOLD** |
+| `GENERAL_NATAL_OFFICER_VISIBLE_STEMS_THEME` (T8) | `M-GENERAL-NATAL-USEFUL-SYNTHESIS-YUANHAI@0.1.0-research` | Broad officer-family research theme; no chart-level behavioral meaning | **HOLD** |
+| `GENERAL_NATAL_OFFICER_BRANCHES_THEME` (T8) | Same research method | Broad officer-family research theme; no chart-level behavioral meaning | **HOLD** |
+
+**Target section**: `general:natal`. This disposition neither revokes unrelated existing Preview admissions nor grants any new ones. An **observation/qualifier** could only become consumer-visible via a later *explicit* reviewed claim-scoped decision; raw calculated chart facts remain governed by their existing separate calculation contracts.
+
+## Alternative disposition evaluation
+- `claim`: NO. Physical source/statement reliability and independent domain-reviewed meaning unsupported.
+- `observation`: NO **new bridge admission**. Exact T0 facts are already observable but no authorization to package unreviewed T5/T8 semantics as a new Preview proposition.
+- `qualifier`: NO. Channel and 正/偏 change together in 1984 case; cannot infer public/private, stronger/weaker, career/personality effects. In 2010 source semantic context is disputed.
+- `hold`: **YES, exact all five**. `RETURN_TO_RESEARCH` does not reject research rule execution and does not convert non-emission into negative classical evidence.
+
+## Minimal re-review prerequisites and owners
+**Research:** Collate general editable `卷六` against the now-located 四庫全書本 **卷05** chapters (not 卷06), verify original scan/folio/revision/edition lineage and `以下內容與書不合` note scope; clarify 甲見乙's 敗財/劫財 nomenclature, 卯藏乙 channel and proper-vs-hidden evidence, 正財 versus 偏財, original chart versus 大運, `甲戌` example's one-location multiplicity and 年干己 restriction, month/旺衰 premises and counterexamples. Source lineage/independence must be established; other composite claim bases must not be inferred from peer+wealth co-presence.
+
+**Bridge / independent domain governance:** Re-run existing #1447/#1482 with new content-addressed snapshots; then real independent reviewer/domain attestation on the exact method/rule/claim/source locator and trust grant; provenance-quality promotion and lifecycle promotion remain distinct decisions. Even fully verified sources do not automatically authorize `claim`, `observation` or `qualifier`.
+
+**Engine:** Retain real 2010 N13 1-vs-0 emission and upstream T5 provenance as internal Research regression; keep N15 overclaim and unknown-hour guard, N12 `usefulComplete:false`. No new 比肩→財 engine rule, generic stem/exterior branch/interior template, forced consumer lexical diversification, official/preview/production/LLM/commerce projection without explicit bridge approval.
+
+## Machine-verifiable negative boundary
+`src/research/general-natal-p0-n27-claim-scoped-bridge-hold.ts` is a **read-only deterministic audit packet** consuming existing authority. Its `decisionHash` includes observed reviewer/quality status, reference hashes, per-claim HOLD decisions and source locator caveat; it cannot mutate the existing admission registry. Test validates all five decisions, exact `겁재` input, missing explicit admission, no new production authority, and existing candidate-drift fail-closed. If the Research PR HEAD, candidate subjects, or source corpus change, re-review rather than silently reuse this opinion.
+
+**Research Freeze unchanged, Bridge admission HOLD, Draft until separately merged, zero consumer distinct meanings authorized.**
+
+## Reviewed Research-only shadow, not reviewer authorization
+
+Research PR #2553 also adds `src/research/general-natal-p0-n27-bijeon-wealth-shadow.ts` and its real-canonical-snapshot regression. Exact `甲日/甲戌時` fragment matches the 2010 19:30 chart, but carries **no** verified 旺衰, unique 財, `戊巳` scan-character collation or personal-outcome condition. The 05:30 counterpart is an actual non-match and unknown hour remains unavailable. This packet runs without any fabricated human ReviewAttestation and is **not** an admissible InterpretationClaim or source-integrity proof. Five Claim-level HOLD decisions unchanged.
+
+## Additional reviewer-independent source/strength/multiplicity audit (no admission)
+
+Research PR #2553 at exact `bb91adf29541fe1b26234c6202cb139ad99c552f` extends the existing real-canonical `N27BijeonWealthShadow` v2: 正/偏財 representative observation-slot counts, visible-stem vs branch-representative split, four-branch hidden-stem facts, and a **separate unresolved classical `只要一位` condition**. Multiple observed 財 slots are *not* a source-qualified single-location 格 determination. R020’s governed 旺衰/強弱 semantic-axis authority explicitly forbids any chart-level strength classifier, so `丁丑月` does not imply a final strength verdict.
+
+Original scan file leads, not inspected pages: [CADAL06056481](https://commons.wikimedia.org/wiki/File:CADAL06056481_三命通會·卷五.djvu) (230 pages), [CADAL06066041](https://commons.wikimedia.org/wiki/File:CADAL06066041_三命通會·卷五.djvu) (226 pages). Their exact printed clause folios, independence, character collation and hashes are **not verified**. Two scan *catalog hits* are not two independently authenticated witnesses. The five N27 Claim decisions remain HOLD. No human attestation fabricated, no Production meaning expansion.
+
+## Direct online character collation, not physical scan admission
+
+Exact Research HEAD `bb91adf29541fe1b26234c6202cb139ad99c552f` adds actual-source digital witnesses for the 「時上偏財」 terminal glyph: [維基文庫四庫卷五](https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05) **`柱中不宜再見戊巳`**, [識典古籍卷五](https://www.shidianguji.com/zh/book/HY1521/chapter/1knwennx4qwp8) **`柱中不宜再見戊己`**, [維基文庫一般卷六](https://zh.wikisource.org/zh-hant/三命通會/卷六) **`柱中不宜再見戊己`** with `（以下內容與書不合）` warning. Distinct rendered digital text is not proof of independent historical editions. Original printed glyph **UNRESOLVED**; scan target folio **NOT READ**; source-integrity **HOLD**.
+
+Real 2010 19:30 `年干己` and hidden `戊` at `申` and `戌` are only calculated structural facts; classical applicability remains `NOT_ADJUDICATED` and 旺衰/強弱 `UNCLASSIFIED`. No newly authorized Claim or consumer inference.
+
+## Original-print independent candidate discovery (2026-10-17)
+
+Research PR [#2553](https://github.com/gycha0109-beep/Saju/pull/2553), HEAD `bb91adf29541fe1b26234c6202cb139ad99c552f` maps **different catalogued printing formats** for a later direct folio check:
+- [Harvard-Yenching, 卷之五, drs 53262215](https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf): conjectural 1735 清雍正13 **補刊本**, 十行二〇字, 99 image leaves/pages.
+- [NLC carved edition 卷之五上, 第9冊](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf) (45 pages) and [卷之五下, 第10冊](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67241_三命通會_第10冊.pdf) (49 pages): **刻本**, 十行二二字, 白口四周雙邊. These are ONE printing group across two volumes, not two independent witnesses.
+
+**Two candidate printing groups are NOT two authenticated passage witnesses:** neither target printed leaf nor the exact 巳/己 character was inspected in Harvard/NLC or the older CADAL scans. Collation and source-integrity gates remain HOLD, no per-Claim authority promotion. Lack of exact target page is a Research task, not a user/consumer permission.
+
+## Exact PDF file -> printable page identity acquisition workflow
+
+Research [#2553](https://github.com/gycha0109-beep/Saju/pull/2553) now at `bb91adf29541fe1b26234c6202cb139ad99c552f` adds a **real executable** Poppler-based manual PDF image inspection tool, `scripts/research/inspect-n27-volume-five-print.mjs`. It generates an HTML image gallery, per-image SHA256, original PDF SHA256, and an `UNREVIEWED` reading template for each catalogue source. CI tests its self-test and fails on absent input PDFs.
+
+**What has not happened:** direct reading of a Harvard/NLC/CADAL original-page image, any authenticated original glyph judgement, source-integrity witness-hash check or independence assessment. A generated grid and self-test never confer any of these. Until an operator or environment actually obtains the original PDF and produces page/raster hashes, `originalPdfSha256ComputedInCurrentRun=false`, `targetPageImagesRenderedFromAuthenticSourceInCurrentRun=false`, `printedTargetFoliosDirectlyInspected=false`. Five Claim HOLD unchanged. Source-validated consumer interpretation/Production remains 0.
+
+## 2026-10-17 직접 원본 인쇄면 최초 확인 — Harvard 1 본, HOLD 보존
+
+Research PR #2553 exact HEAD `bb91adf29541fe1b26234c6202cb139ad99c552f`에서 **Harvard-Yenching 『三命通會 卷之五』의 실제 인쇄된 「時上偏財」 구절을 확인했다.**
+- [별도 read-only 원본 PDF 획득 및 3200px 재렌더 실행 #39037912192](https://github.com/gycha0109-beep/Saju/actions/runs/39037912192), [artifact #12103320492](https://github.com/gycha0109-beep/Saju/actions/runs/39037912192/artifacts/12103320492), PDF one-based page **45 오른쪽 인쇄면**.
+- 고해상도 판독 `柱中不宜再見戊己` (**己**) ; source-PDF `ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831`, 고해상도 면-image `b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12`, 해당 구절 crop `fc3063d2608720b13cfca0f7e43e89f3a898aca38d3810de290b835f600e5582`.
+- **판정 상승 범위 = 하버드 소장 1 인쇄본에서 글자 己 실제 확인.** 『四庫全書本』이 쓰는 원본 해당 면이나 NLC 별개 刻本 원판은 여전히 확인되지 않았다. 서로 다른 두 인쇄 계통의 독립 대조, 필기·인쇄본 판본 genealogy, 일반 소스 integrity 전부 자동 승인 아님. 따라서 `authenticatedPrintReadingsOfTargetPassage=0`(독립 source qualification), `visuallyInspectedHarvardPrintedWitnessCount=1`; 5 Claim HOLD.
+- Research의 `甲戌時`, `年干己`, `申藏戊`, `戌藏戊` 계산 사실을 고전 `只要一位` 충족/위반으로 자동 변환하지 않는다. `旺衰/強弱` chart-level 판정도 금지. RuleRegistry·Admission·Consumer·Official·Production 경로 변화 없음.
+
+**이전 이 문서의 '원본 이미지면 0건' 표현은 작성 당시 스냅샷**이며, 이번 Harvard 1건 직접 판독이 그 상태를 갱신한다. `RETURN_TO_RESEARCH` / 다섯 Claim-level HOLD는 유지하고, 다음 실체적 연구는 **四庫 원판 원본면과 NLC 刻本의 같은 문장 직접 이미지 판독**으로 좁힌다.
+
+## 2026-10-17 원본 3개 소장 인쇄면 비교 — 디지털 『四庫全書本』 전사의 巳와 인쇄 己 충돌
+
+Research PR [#2553](https://github.com/gycha0109-beep/Saju/pull/2553) HEAD `bb91adf29541fe1b26234c6202cb139ad99c552f`은 **실제 다운로드·렌더한 인쇄 자료 3건**을 직접 읽었다: (1) Harvard `卷之五` PDF 45면 `戊己`, (2) CADAL 四庫全書本 `06056481` DjVu 104면 `戊己`, (3) NLC 第9冊 `卷之五上` PDF 43면 `戊己`. 후자의 [수집 Actions #39041195684](https://github.com/gycha0109-beep/Saju/actions/runs/39041195684)에는 [CADAL 이미지 아티팩트 #12103971835](https://github.com/gycha0109-beep/Saju/actions/runs/39041195684/artifacts/12103971835), [NLC 이미지 아티팩트 #12103659191](https://github.com/gycha0109-beep/Saju/actions/runs/39041195684/artifacts/12103659191)이 남았다.
+
+CADAL 104면의 `己`를 같은 印本 106면 `甲日見己巳時` 내 **구분 가능한 `己`와 `巳` 두 字形에 대조**해 판독을 보강했다. CADAL 104면 렌더 SHA256 `e20a1ce67daac2fc30eb914e8288d85f41cf2ab0ec14ba3156e630c2d5a91ac4`, 원본 DjVu SHA256 `4f273322b3fd4339789e1408e0bbb4ea15a7956e5e508c6f99fced264e0b53ee`; NLC 43면 SHA256 `7f9b25f6c420044e5edc3d55f12dbb66b779a552b8181adfbc0deae8dfe5f005`, PDF SHA256 `0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1`.
+
+세 인쇄본은 **관측된 문장 戊己로 일치**한다. 다만 [維基文庫 四庫全書本 卷05의 편집 전사](https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05)는 `戊巳`이다. 이 CADAL 실물면을 기준으로는 **온라인 전사 차이/오자 가능성**이 확인되나, 이 사이트를 직접 수정하거나 다른 판면을 개별 확인하지 않은 상태에서 `戊巳`가 모든 물리 판본에 없다고 단정하지 않는다. 인쇄면 3건 ≠ 계통 독립 인증 3건. `authenticatedPrintReadingsOfTargetPassage=0`은 여전히 *governed independent source-integrity gate* 의미이며, 관측된 3건을 부정하는 뜻이 아니다.
+
+문헌 숫자/글자 교감 일부가 진전됐지만 `只要一位`와 `旺衰/強弱` 적용 방법론은 독립적으로 승인되지 않았다. 다섯 Claim HOLD와 `RETURN_TO_RESEARCH` 유지, 2010 N13 T8 exact `겁재` 1-vs-0 유지, Preview/Official/Production 의미 승격 0.
+
+## 2026-10-18 조건-단위 Research 결과 재바인딩 (Review 승인 없이 Code Audit만 진행)
+
+Research Draft [#2553](https://github.com/gycha0109-beep/Saju/pull/2553) HEAD `bb91adf29541fe1b26234c6202cb139ad99c552f`에 실체적 신규 연구 `src/research/general-natal-p0-n27-hour-wealth-condition-matrix.ts`와 실명식 회귀 테스트를 추가했다. 독립 일곱 条件: `甲日見戊辰或甲戌時`, `時上偏財別宮忌見`, `柱中不宜再見戊己`, `只要一位不宜多逢`, `天元透出為妙支內所藏次之`, `柱有官印相助日主健旺大怕年月衝破`, `時上偏財怕逢兄弟`. 각 문구의 T0 계산 관측과 *해석 가능 여부*를 분리한다.
+
+실제 2010-02-03 19:30 甲申日/甲戌時: 문면상 예시 일치, 時干甲 ≠ 戊 투출, 時支戌藏戊, 年干己는 甲日 정재, 日支申藏戊. **천간이 아닌 지장간, 정재·편재 종류, 다른 기둥의 출현, 재성의 고전 「位」 판정 기준은 각각 다른 규칙임.** 05:30은 甲戌 예시에 불일치하며 기존 exact 겁재 T8 있음, 시간 미상은 시주 조건 판정 불가. `別宮`의 범위, `再見`의 적용(正財 포함/藏干 포함 등), `只要一位`의 counting semantics, 旺衰, 官印/衝破 관련 체계 자체를 인정할 source-qualified 실행 predicate가 없어 **해석 승인 0**.
+
+Bridge 의도: 위 일곱 부분을 검증 가능한 자료 구조로 기록하고, 리뷰 기준 충족과 무관하게 개발은 진행하지만 임의의 格·부·직업/연애 운세를 사용자에게 방출하지 않는다. 출처 인쇄면 3건 대조 결과 및 五個 Claim-level HOLD/RETURN_TO_RESEARCH 유지. 새 독립 reviewer attestation, preview/official/production 승격 없음.
+
+## 2026-10-18 printed example countercheck: Jia-day WuChen vs JiaXu from one real date
+
+Bound Research PR #2553 HEAD bb91adf29541fe1b26234c6202cb139ad99c552f, version saju-n27-hour-wealth-source-condition-matrix-v2.
+
+Actual 2010-02-03 07:30 (甲日 戊辰時) and 19:30 (甲日 甲戌時) are **both explicitly included** under the historical example clause 甲日見戊辰或甲戌時. The 07:30 hour stem 戊 is visible 偏財; the 19:30 hour stem 甲 is **not** 戊, while branch 戌 hides 戊. All non-hour pillars, including visible year 正財 己 and non-hour hidden 戊己 distribution, are identical. Consequently an hour-visible-戊-only rule would reject one of the original's own positive lexical examples and cannot be promoted as a requirement. This does not certify either 格 for an actual chart.
+
+Nearby text 偏財好出亦不懼藏 (general 論偏財), 別無透出方為貴 and 時上偏財不用多支干須要用搜羅 (same 時上偏財 section) supplies additional constraints yet no governed scope for counting repeated 正財/偏財 when visible vs hidden, or applying 別宮/只要一位. Historical conditional applicability remains UNADJUDICATED; the seven clauses and five consumer Claims retain HOLD, user-facing/new semantic admission 0. No reviewer identity, production grant, strength ranking, personal destiny or wealth prediction fabricated.
+
+## 2026-10-18 「再見戊己」 관측 범위 가설 4개 — 방법론 HOLD 유지
+
+Research Draft [#2553](https://github.com/gycha0109-beep/Saju/pull/2553) HEAD `bb91adf29541fe1b26234c6202cb139ad99c552f`의 `src/research/general-natal-p0-n27-wu-ji-recurrence-scope-audit.ts`를 Read-only 근거로 바인딩했다. 2010-02-03 07:30 戊辰時와 19:30 甲戌時를 실제 Authorized Canonical 계산으로 재계산하면 다른 세 기둥은 같고 `年干己`는 甲일간의 정재로 노출된다. `VISIBLE_WU_ONLY`는 재출현 0건이지만 원문이 명시한 `己`를 누락한다. `VISIBLE_WU_AND_JI`에서는 다른 기둥 年干 `己` 때문에 1건, 숨은 戊/己까지 포함하는 임시 scope에서는 더 많은 관측 위치가 생긴다. **어떤 가설에도 역사적 판정 authority를 부여하지 않는다.**
+
+다른 기둥의 지장간 戊(편재)와 己(정재), 시주의 투출과 藏干, `別宮`, `再見`, `只要一位`의 `位`는 별개 식별해야 한다. 이 숫자는 고전적 격의 成敗, 부귀/재물 미래결과, 사용자 리딩을 계산하지 않는다. 05:30 원문 비사례와 시각 미상은 source-case 필터 차단. `HYPOTHESIS_SENSITIVITY_RESEARCH_ONLY`, five Claim HOLD, `UNADJUDICATED`, `UNCLASSIFIED`, Preview/Official/Production 0 변경.
+
+
+## 2026-10-18 새 실명식 대조와 복수 counting unit 재바인딩
+
+Research PR #2553 exact HEAD `7e28dd036d2e9da0bc033dc1318fa4b8ba44babf`의 `saju-n27-wu-ji-recurrence-scope-sensitivity-v2`를 Bridge 정적 증거 객체에 연결한다. 기존 네 가지 투간/지장간 × 戊/戊己 가설을 유지하면서 실제 Canonical 출생 입력 2010-02-13 19:30(투간 戊 대조), 2010-05-04 19:30(투간 없는 장간 대조), 2010-02-04 19:30(非甲 일간 대조)을 추가하는 연구 변경이다. 위 값은 코드·테스트의 명시적 기대치이며, **Research 정확 HEAD CI 성공을 확인하기 전에는 실제 통과 증거로 보지 않는다**.
+
+새 count 분리: 천간·藏干의 출현 위치 건수, 다른 기둥 고유 수, 戊·己 종류 수, 年月만 vs 日柱 포함, 같은 기둥의 두 관측 채널, 시주 참조 위치 제외. `柱中不宜再見戊己`는 두 글자를 명시하므로 戊-only 관찰 모델은 원문 전체 글자 집합을 표현하지 못하지만, 이것만으로 시주 외 지장간 포함/不宜 발동 여부·別宮의 日柱 포함·`只要一位`의 의미를 확정할 수 없다. 같은 기둥의 천간과 장간이 동시 관측되는 것을 고전 두 位라고 승인한 기록은 없다.
+
+Bridge: `recurrenceCountingScopeMethodApproved=false`, `classicalWeiCountingMethodApproved=false`, `interpretationsInferred=false`, `admitsNewClaim=false`, 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, 기존 N13 실제 정확 겁재 T8 1:0. Review attestation/TrustGrant 없음, Preview/Official/Production 의미 변화 없음. source-qualified scope는 UNADJUDICATED.
+
+### `再見` 추가 同卷 유추 근거와 최종 Research SHA
+
+위 첫 번째 바인딩 기록의 `7e28dd...`은 작업 중간 SHA다. 이번 Bridge 구조체에서 최종 Research HEAD를 `e65374b0d6abf8f63e74b977be9b3e2c9262d07b`로 갱신했다. 『三命通會』 卷五 「時上一位貴」의 편집 전사 [해당 문맥](https://zh.wikisource.org/zh-hant/三命通會_(四庫全書本)/卷05)에 `時上偏官要幹上透出只一位為妙年月日重見`가 나온다. 같은 卷 「時上偏財」의 `此與時上偏官格相似`와 대조할 때 **年·月·日 명시 범위**를 가진 유사 문맥이 새 근거로 확인됐다. 하지만 **偏官 七煞의 규칙이지 偏財 적용 승인 자체가 아니므로** `directAuthorizationToApplyToHourWealth=false`, `classicalWeiCountingMethodApproved=false`. 추가 인용은 온라인 전사 대조이지 새 인쇄본 직접 판독이 아니다. 다섯 Claim과 Production 의미 승격 상태 변경 없음.
+
+
+## 2026-10-18 N27 v3 — 범위와 셈 단위의 독립 민감도 / Claim HOLD
+
+Research Draft #2553 **정확한 HEAD `eff8a1225893811c428c28e2dcc456d60f2006e2`**, `saju-n27-wu-ji-recurrence-scope-sensitivity-v3`에 증거를 재바인딩. 기존 4가지 戊/戊己 × 투간/藏干 가설을 유지하고, `別宮`의 日柱 포함 여부 × `再見`의 藏干 포함 여부로 **다른 4개 계산 대조 가설**을 추가했다. 이는 정식 判格 Rule이 아니라 실제 Canonical 명식 관측의 위치·기둥·글자 조합을 검수하기 위한 read-only 도구다.
+
+2010-02-03 19:30 甲戌時에 대해 신규 회귀 테스트의 expected counts:
+
+| 비교 범위 | 모든 raw channel 건수 | 기둥/글자별 중복 제거 건수 |
+|---|---:|---:|
+| 年月, 투간 | 1 | 1 |
+| 年月日, 투간 | 1 | 1 |
+| 年月, 투간+藏干 | 3 | 2 |
+| 年月日, 투간+藏干 | 4 | 3 |
+
+실제 年干己와 年支丑藏己는 **한 기둥에서 같은 글자의 다른 관측 채널**이다. 따라서 '위치 횟수', '기둥+글자 쌍', '기둥 자체 수'는 다르다. **어느 것도 승인된 고전 一位의 단위가 아니다.** 해당 숫자는 새 v3 코드·테스트의 기대치로 기록되며 **새 커밋 CI 결과가 나오기 전에는 성공 검증 완료라고 주장하지 않는다.**
+
+신규 同卷 자료:
+- 『三命通會』 卷五 「時上一位貴」의 `年月日重見`은 **시상편관**의 다른 기둥 명시 용례.
+- 同卷 「論正官」의 `甲生丑月，內有辛金，又值酉時` 및 `若天干復透辛多`는 **정관** 문맥에서 지지 내부의 글자와 추가 투간을 별도 중복 논의에 포함하는 사례. [識典古籍](https://www.shidianguji.com/zh/book/SK1610/chapter/1mecpymm3qw4r) / [國學3000](https://guoxue3000.com/tw/books/330/chapters/77).
+
+두 source 비교는 *온라인 전사 용례*이며 새로운 인쇄본 직접 검증 또는 時上偏財 조건 이전 승인으로 취급하지 않는다. 따라서 Day pillar within `別宮` = 미확정; 藏干 포함한 `再見`의 성립 위반 판정 = 미확정; `只要一位`의 位 단위 = 미확정. 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, 기존 N13 정확 겁재 T8 **1 vs 0**, reviewer attestation/TrustGrant/Preview/Official/Production/Consumer 의미 승격 0, PR Draft/미병합 유지.
+
+
+### v3 회귀 타입 오류 정정
+
+최초 v3 Research HEAD `b04ddea0a93463fe5463b0a9393ad7797c886221`에서 CI TypeScript 타입 검사 3건이 실패하여 테스트 배열 접근 표현만 교정했다. 현재 Bridge가 참조하는 Research 정확 HEAD는 `eff8a1225893811c428c28e2dcc456d60f2006e2`이다. 실패했던 CI를 성공으로 기록하지 않으며, 교정 이후 정확 HEAD의 전체 CI를 별도로 확인한다. 이 수정은 해석 권한에 영향을 주지 않는다.
+
+
+## 2026-10-18 후속: 同卷 論正官 보각본/각본 인쇄면 직접 대조, N27 v4 동기화
+
+**Research #2553의 현재 정확한 SHA `78d9e038706084faab643213d10409a4fd0dcf47`**, scope-audit v4에 Bridge 증거를 고정했다. 이전 v3의 4가지 `戊/戊己 × visible/hidden` 가설, 4가지 `年月/年月日 × visible/hidden` 범위 민감도, 실 명식 Canonical 검증은 유지한다.
+
+**이번에 물리 인쇄 판독으로 보강된 것은 `三命通會 卷五 論正官` 구절이다.** 사전에 Actions 아티팩트에 저장된 PDF 렌더 이미지를 실제 읽었으며, **하버드 PDF 6~7면**, **NLC PDF 5~6면**에서 `支藏干透餘位不宜再見`, `甲生丑月內有辛金又值酉時`, `若天干復透辛多`의 문맥을 각각 확인했다. 하버드 원본 해시 `ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831`, NLC 원본 해시 `0e67d177f4fe346988f67df33fe82df9df1bdecbd21d359f07716b6b95eda5d1`. 렌더 면별 해시와 Actions 아티팩트 번호는 Research 문서 `23 참조. 기존 온라인 전사 채널만을 근거로 했던 論正官의 **해당 용례에 한해서** 인쇄 직접 증거로 승격했다.
+
+**인증하지 않은 것:** 두 소장본의 텍스트 계통적 독립성 / 寫本 정본 / 애매한 `...是重犯` 직전 글자의 `已·己·巳` 교감 / `時上偏財`의 古文 `別宮`에 日柱 포함 여부 / `再見`에 藏干 전부 포함 여부 / `一位`의 역사적 셈 단위. 「時上偏財」 문구 `此與時上偏官格相似`의 명시 유추 대상은 **時上偏官이지 正官이 아니다**. 다른 조항의 正官 重犯 사례를 時上偏財의 추론 엔진 규칙으로 이전하는 것은 금지.
+
+**CI 상태 기록:** Research v3 `eff8a1225893811c428c28e2dcc456d60f2006e2`의 [39065376894](https://github.com/gycha0109-beep/Saju/actions/runs/39065376894), Bridge v3 `eded2aef60ad89cc3e2a5c480ee0d94a5be7f6fe`의 [39065418689](https://github.com/gycha0109-beep/Saju/actions/runs/39065418689)는 **18/18 success**. **v4는 새 HEAD이므로 최신 CI 결과를 독립 확인해야 한다.** 다섯 Claim `HOLD`, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 **1 vs 0**, TrustGrant/Preview/Official/Production 의미 승인 없음. Research 및 Bridge는 Draft, merge 불가.
+
+
+### v4 최신 SHA 정정 및 CI 확인 중
+
+v4 최초 Research 실행 [39066472718](https://github.com/gycha0109-beep/Saju/actions/runs/39066472718)은 서로 다른 판본 이미지 증거 필드에 대한 TypeScript 테스트 접근 오류 1건으로 **실패**. 실제 인쇄 판독이나 원문 해석이 변경된 것은 아니며 테스트를 바로잡은 Research HEAD `78d9e038706084faab643213d10409a4fd0dcf47`으로 Bridge를 다시 고정. 해당 새 SHA의 CI 완료 전 성공을 선언하지 않는다.
+
+
+## 2026-10-18 N27 v5 — CI 18/18 완료 확인 및 판본 '서지상 분리'의 범위
+
+**직전 v4 정확 SHA 최종 검증:**
+- Research `78d9e038706084faab643213d10409a4fd0dcf47`, [CI run 39066616336](https://github.com/gycha0109-beep/Saju/actions/runs/39066616336) **18/18 success**; PIE run 39066616765, 계산 컨테이너 run 39066616613도 success.
+- Bridge `06e8dff7e37ef2a00c7751e60aadf23e064d8b69`, [CI run 39066647166](https://github.com/gycha0109-beep/Saju/actions/runs/39066647166) **18/18 success**; PIE run 39066647419, 계산 컨테이너 run 39066647196도 success.
+
+**새 서지 대조 → Research v5:** Research 최신 SHA `9b2784396d70dfdd3c4b824486186be556e202c2`에 현재 Bridge를 정확히 고정했다. 이미 직접 판독한 卷五 「論正官」의 Harvard 原 PDF 6~7면 및 NLC 原 PDF 5~6면은 서로 다른 소장처/원본 해시를 가진다. [Harvard 서지](https://commons.wikimedia.org/wiki/File:Harvard_drs_53262215_三命通會_v.5卷之五.pdf)는 `清雍正13年? (1735?) 補刋本`에 **十行二〇字**, [NLC 서지](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf)는 `明萬曆[1573–1620] 刻本`에 **10行22字**라 적는다. 이 **인쇄 행격 차이(20 대 22자)**는 서로 다른 책의 동일 스캔 재인용을 피하도록 유용하게 구분한다. 그러나 **더 이른 NLC 판이 후대 Harvard 보각본의 직접 모본인가, 다른 출처를 공유하는가, 독립 전승인가**를 입증하지 않는다. 따라서 일치 자구를 **독립 본문 전승의 두 표로 계량하면 안 된다**.
+
+[대만 國家圖書館 목록의 明萬曆六年(1578)刊本](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2)이나 [美普林斯頓 소장 1735 修補金陵李氏刊本](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=2c9735937bff4bbba1095711109793f2fDEyNDM3OQ2.3YmwactxuROfMn60_6V8G0sYql1LtZILVpJsbSmsxyc_&page=)은 별개 소장 자료의 참고 서지일 뿐이다. 해당 목록의 정확한 인쇄 연대·판각 계보를 지금 대조한 NLC/Harvard 원본의 성질로 자동 합치지 않는다. 원문 `時上偏財`의 `別宮·再見·一位` 계산 범위를 해결하는 근거도 아니다.
+
+**Bridge 상태:** 신규 `bibliographicRelation.classification=DISTINCT_CATALOGED_PRINT_LAYOUTS_NOT_INDEPENDENT_TEXTUAL_VOTES`; `independenceOfTextualTransmissionCertified=false`; `agreementAsTwoIndependentVotesAuthorized=false`; `sameVolumeZhengGuanAnalogy.evidenceChannel=DIGITAL_TRANSCRIPTION_WITH_TWO_PRINT_SCAN_LOCI`로 신·구 증거 채널 불일치를 정정했다. 서지 검증 및 원전 판독은 **별도 reviewer TrustGrant·Production 의미권한이 아님**. 다섯 Claim HOLD, N17 METHODOLOGY_CONFLICT, N13 정확 겁재 T8 **1 vs 0** 유지. 양쪽 Draft/미병합, v5 정확 HEAD CI는 새로 확인해야 한다.
+
+
+## 2026-10-18 N27 v6 — 하버드 권1 보각 서문 + 1578년 명대 刊本 직접 대조
+
+**Research 정확 HEAD `7b9b7b5a46cfb2d968fa17669124c7826ddd4e85`**, `saju-n27-wu-ji-recurrence-scope-sensitivity-v6`, Research 문서 `25에 Bridge를 정확하게 재바인딩한다.
+
+새 물리 인쇄 확인:
+- Harvard-Yenching `drs:53262215` 권一의 원본 PDF 2면 「補刻三命通會敘」, 4면 滄州 李氏 목판 잔실·遺帙 校正·補刻, 6면 `雍正乙卯花朝` / `蔣國祥` 서명을 **직접 읽음**. 권五 원본과 동일한 Harvard drs ID이므로 이전 디지털 전사 기반 '다른 서문일 수도 있다'는 유보는 해당 하버드 **소장본 자체의 서문 존재**에 대해 해소되었다. 그러나 **실제 卷五의 개별 인쇄 연도**나 1578년 대만 印本과 동일 판목 여부는 해소되지 않았다. [원본 수집 실행 39110932522](https://github.com/gycha0109-beep/Saju/actions/runs/39110932522).
+- [대만 국가도서관 06589 공식 서지](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=69577a07b3444caf9b20e35e84a103e0fDcyODE10.578_oDtdzxby6wX5_W8cCvt1j5rqk4Hzy3GeKFoIIHA_&page=2&sourceWhereString=&whereString=IChEYXRlX0NyZWF0ZWQgbGlrZSAnJTE1NzglJyBvciBEb2N1bWVudF9ZZWFyIGxpa2UgJyUxNTc4JScgKSA1.IuMldaBSQarjxhBn_BeTs0yAImbyvOSAYg5y7FFSAGw_)가 `1578` 간본으로 확인한 [원본 1000면 PDF](https://commons.wikimedia.org/wiki/File:NCL-06589_1_三命通會.pdf)를 직접 확보·렌더·판독. 337면 卷五 시작, 340–341면 「論正官」 및 `甲生丑月內有辛金又值酉時`, 375면 「時上偏財」 제목, **376면 `柱中不宜再見戊己`와 己 자형 직접 판독**. 원본 PDF SHA256 `3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd`, 전체 이미지 해시는 Research `25 참조. [수집 39110932522](https://github.com/gycha0109-beep/Saju/actions/runs/39110932522) / [원본 보관 39111407535](https://github.com/gycha0109-beep/Saju/actions/runs/39111407535).
+
+**정확한 연구 결론:** Harvard, CADAL 四庫, 中國 NLC, 대만1578 **네 곳의 실제 인쇄된 `戊己` 글자**는 일치한다. 그러나 **네 독립 텍스트 lineage 표가 아니다**. 하버드 보각 서문은 기존 목판 전승·補修를 직접 뒷받침하지만 그 목판이 대만1578의 물리 판목이라고 입증하지 않는다. 기존 「論正官」의 다른 위치 戊/己·正官 藏干 사례와 「時上偏財」 조건을 하나의 실행 규칙으로 합치지 않는다.
+
+**권위 경계:** `sourceQualifiedRecurrenceVerdict=UNADJUDICATED`, `sourceQualifiedSingletonVerdict=UNADJUDICATED`, `別宮` 日柱 포함, `再見` 藏干 범위, `一位` 계수 단위 미확정. 다섯 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, TrustGrant/Preview/Official/Production 신규 승인 **0**. Research·Bridge Draft/미병합 유지. **v6 새 HEAD의 CI 결과는 별도 확인**한다.
+
+
+## 2026-10-18 N27 v7: Harvard 45면 ↔ 台灣 1578본 375–376면의 時上偏財 국소 교감 / 출처 계통 HOLD
+
+**Research #2553 정확 HEAD `af65faf958eb8af9f0e3f28e29c50636b87696c4`**, 연구 `saju-n27-wu-ji-recurrence-scope-sensitivity-v7` / `n27-harvard-taiwan-local-leaf-collation-v1`을 Bridge에 고정한다.
+
+인쇄 원본에 근거해 하버드 **卷五 PDF 45면**과 대만 國家圖書館 1578년 **卷五 PDF 375–376면**을 병렬 확인했으며, 아래 **표본 다섯 구절의 한자 문장 일치**를 Research `26에 기록했다: `時上偏財別宮忌見`, `柱中不宜再見戊己`, `只要一位不宜多逢`, `天元透出為妙支內所藏次之`, `時上偏財不用多`. 하버드 원본 PDF hash `ecf33909cf47822f144f315935e377fd1bc8475533db7497230a2a819b191831`, 관련 45면 highres hash `b32beb586688fd219d751ad22072d911a507008541863e3d47ad057fabc81f12`; 대만본 PDF hash `3de5c45efb1919965afae00a3c97121054aaabd0f38f9fd5ab8f0a28bb8e36dd`. 원본 이미지 및 증거 주소는 Research `25–26 참조.
+
+**진전/한계**: 두 판식의 **10행20자 vs 10행22자**는 동일한 판면 행격을 공유한다는 주장을 반박하지만, 한 판본이 다른 판본의 텍스트를 전사했거나 공통 조상을 가졌는지 판정하지 않는다. 台灣 NCL 공식 서지는 版心에 `三命會通`/白口/單魚尾·刻공 기재를 설명하지만, **대상 375–376면의 각공 실명을 확정 판독하지 못했다**. Harvard의 동일 대상 면도 마찬가지다. 권1 보각 서문은 목판 보수 과정을 기술하나 卷五 대상 葉의 **결락·재각·보각 여부가 인증된 것은 아니다**. **다섯 표본의 비이문**은 전권/전장에 이문이 없다는 뜻이 아니며 독립 전승의 다수결 증거가 아니다.
+
+Bridge `hourWealthLocalLeafCollation`은 `SAMPLED_PHRASE_AGREEMENT_ONLY`, `samePhysicalPrintedSettingSupported=false`, `independentTransmissionCertified=false`, `exactLeafRecarvingCertified=false`, `noOtherVariantsInChapterCertified=false`로 유지한다. 고전 `別宮`에 日柱 포함, `再見`의 藏干 카운트, `一位`의 古文 counting unit은 모두 `UNADJUDICATED`. 다섯 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, 정확한 N13 劫財 T8 **1 vs 0**, TrustGrant/consumer/Preview/Official/Production 해석 승인 없음, 두 PR Draft/미병합. **v7 최신 정확 HEAD의 CI는 따로 검증**한다.
+
+
+## 2026-10-18 N27 v8 — 대만 06590 별도 서지 확인 / 비공개 실물 판독 HOLD
+
+**Research v8 정확한 HEAD `74393dbd6fce8949d67b70b6af69047f06e07420`**, `saju-n27-wu-ji-recurrence-scope-sensitivity-v8`에 Bridge를 고정한다.
+
+[대만 國家圖書館 공식 書號06590 목록](https://rbook.ncl.edu.tw/NCLSearch/Search/SearchDetail?HasImage=&SourceID=1&item=a8776bf009664f7a8de67d697186e322fDcyODE20.HwkhFZvyoK_b_gt8uDb5Xa7Nh9LYxzj5HEj4uWEtX6g_&page=2) 및 [학술 디지털 아카이브](https://catalog.digitalarchives.tw/item/00/19/3c/14.html)는 06590을 기존 직접 판독된 06589와 **別個 서지번호**의 1578 明萬曆刊 十二冊, 10行22字로 기술한다. 그러나 이번 접근 가능한 공식 06590 상세 페이지에는 06589에 표시되는 `進入影像瀏覽`과 달리 `到館調閱古籍`/`申請數位授權`이 보였고, 공개 PDF 원본을 발견하지 못했다. **06590의 원본 이미지는 이 연구에서 보지 않았다**. `printedImagesOf06590Reviewed=false` / `printWitnessCountIncrement=0` / `sameBlockAs06589=UNADJUDICATED`. 진짜 06590 版心·刻工·같은 글자의 획 결손을 읽기 전에는 기존의 인쇄본 판독 집계나 독립 계통 집계를 증가시키지 않는다. 필요하면 적법한 관내 열람/이미지 이용 신청을 진행해야 한다.
+
+**이미 판독된 이미지 간 비교:** [중국 NLC 卷五上 PDF 43면](https://commons.wikimedia.org/wiki/File:NLC892-411999029701-67240_三命通會_第9冊.pdf)과 [대만 06589 PDF 376면](https://commons.wikimedia.org/wiki/File:NCL-06589_1_三命通會.pdf)을 실제 그림에서 병렬 대조했다. 동일 항목의 `如甲日見戊辰或甲戌時之例` 전후의 글자 열 시작·계속되는 구문 배열은 **육안으로 유사**했고 둘 다 서지상 10行22字이다. 그러나 획의 미세한 공통 결손, 본면 刻工명이 같음, 두 원판의 판심·魚尾 상세가 동일함을 확정하지 못했다. 촬영/먹 농도 및 圈點 차이는 판목 일치 증거로 분류하지 않는다. `sameBlock=UNADJUDICATED`, `genealogicalIndependence=UNADJUDICATED`.
+
+이는 `06590` 원본 접근 실패를 허위 연구 성공으로 보고하지 않고, **다른 2개 이미 확보된 원본의 국소 정렬**을 별도 가치 있는 관찰로 남기는 방법론 차단이다. 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, `別宮/再見/一位=UNADJUDICATED`, TrustGrant/Preview/Official/Production/consumer 신규 해석 권한 부여 없음. 두 PR Draft/미병합. 최신 v8 Research/Bridge SHA의 CI 성공 여부는 별도로 확인해야 한다.
+
+
+## 2026-10-18 N27 v9 — 공개 스캔만으로 NLC ↔ 대만 1578 판면 SIFT 교차 검증
+
+Research #2553 정확 HEAD `f106da36055a5141ecde4c53fbbcae12662524c3` / `saju-n27-wu-ji-recurrence-scope-sensitivity-v9`를 참조한다. Research `28에 명시한 중국 NLC 권五上 PDF 43면 850×726 렌더와 대만 國家圖書館 06589 1578 PDF 376면 2600×1850 렌더를 **같은 時上偏財 葉의 인쇄 영역**으로 크롭·특징점 정합했다. 두 인쇄물 모두 原본 공개 PDF는 별개 보관 원본이고 원본 SHA/크롭 좌표는 Research에 있다. 기관 문의, 메일, 유료 허가, 06590 원본 접근 **불필요**.
+
+동일한 SIFT 설정 및 RANSAC 재투영 3.5px 기준으로 **406개 Lowe ratio 통과 중 245개 기하학적 inlier**(60.34%)가 확인되었다. 비교 방법·같은 ROI를 적용한 음성 대조군 NLC 인접 다른 본문 42·44면은 각 8개, Harvard 10×20 補刊本 p45는 5개이다. 이는 v8의 육안 판면 열 유사성보다 강한 **해당 locus의 동일한 글자 조판과 붓획 형태의 기하학적 정합**을 보여 주는 수치다.
+
+**인정하지 않은 판정:** 동일 물리적 목판 재사용은 `UNADJUDICATED`; 같은 글자의 특정 **획 결손·목판 갈라짐이 두 원본에서 독립적으로 관찰·동정된 상태가 아니다**. 형상 매칭 245개를 목판 결손 245개의 증거로 세지 않는다. 독립적인 이미지 수집 계통과 목판 계보는 자동으로 보증되지 않는다. 동일 인쇄 형식의 중복 전승을 2개의 텍스트 독립 표로 가산하지 않으며, 06590은 이미지를 읽지 않았으므로 직접 증거 수 증가 0이다. 동일 원판 확정에도 `別宮/再見/一位` 계산 규칙은 자동 해결되지 않는다.
+
+Bridge `mainlandNlcTaiwan06589FeatureRegistrationHold`은 수치와 미인증 gate를 별도로 고정한다. 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, TrustGrant/Preview/Official/Production/consumer 승인 금지, 두 PR Draft/미병합. v9 최신 SHA의 CI는 별도 확인한다. 다음 연구는 **공개 인쇄본 획 결손 positive marker의 동정·복수 면 재검**만 허용하며 기관 문의를 다시 권하지 않는다.
+
+
+## 2026-10-18 N27 v10 — 공개 두 원본의 고유 획 결손 미인증 및 분할 영상 변환 불안정
+
+Research #2553 `saju-n27-wu-ji-recurrence-scope-sensitivity-v10`, 정확 HEAD `02ac088eba01b93c9b6287974000916d21ce461a`를 Bridge에 고정한다. Research `29에는 중국 NLC 卷五上 p43(전체 스캔 850×726px) ↔ 台灣 06589 明1578 p376(2600×1850px) **실제 동일 locus의 3×3 원본 대응 창 9쌍**, 대조 띠 4구역, 고정 입력 SHA와 분할 정합을 기록한다. **외부 이메일·권한 요청 없음**.
+
+`245` 글로벌 SIFT+RANSAC 대응점은 원문 위에서만 아니라 x/Y 양축 네 사분위에 존재했다(위→아래 `68/26/95/56`, 좌→우 `14/45/82/104`). 그러나 서로 다른 공간 절반에만 학습한 새 homography를 남은 절반의 후보점에 검증할 때 허용오차 3.5px 이하 대응점은 각각 `0/29/113/32`(위→아래, 아래→위, 왼쪽→오른쪽, 오른쪽→왼쪽)로 **일관되지 않았다**. 같은 글자 모양이 다수 보이는 것과 반복된 특정 글자의 **같은 목판 소실 획/갈라짐의 독립 원본 대조**는 별개의 증거이다. NLC 원본의 상대적으로 낮은 해상도, 찍힌 먹 농도 차이와 대만 원본의 圈點 때문에 후자는 **인증하지 못했다**. 불안정의 원인이 곧 별개의 목판이라는 뜻도 아니다.
+
+Bridge `publicPrintedGlyphMicrodefectHold`은 `NO_CERTIFIED_SHARED_UNIQUE_CHIP_WITH_AVAILABLE_PUBLIC_RASTERS`로 별도 등록한다. 245개 SIFT 대응점을 245개의 결손 증거로 주장하지 않는다. **동일 판목=UNADJUDICATED**, **독립 서지/원본 전승=UNADJUDICATED**, 독립 증거물 소장 수 증가 0, 06590은 서지 후보에 머문다. 서지 이용허가 신청·기관 연락은 해결 경로로 사용하지 않는다. 다음 선택지는 공개된 고해상 제3 판본/새 스캔의 **실제 존재가 입증되는 경우에 한하여** 이용하는 것이다.
+
+사주 계산·소비자 해석 권한은 여전히 **다섯 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 **1 vs 0**, `別宮/再見/一位` 계산 단위 미확정, TrustGrant/Preview/Official/Production 신규 승인 없음. 두 PR Draft·미병합. v10 CI는 최신 정확 SHA에서 검증해야 한다.
+
+
+## 2026-10-18 N27 v11 — 「喜忌篇」 時上偏財 주석의 실제 두 명식 반례, 그러나 자동 규칙 불승인
+
+**정확 Research #2553 HEAD `b7d64f58d0f84f9f1e8d1393ca4dac31bc6e4b2a`**, 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v11`을 Bridge 소스와 테스트에 고정했다. Research 문서 `30 및 `yuanhaiXijiHourWealthCommentaryCases`를 참조한다.
+
+**직접 읽은 공개 전사:** [『淵海子平』 喜忌篇](https://sajumania.com/ebook/to01-06/to01-06-02-01.htm)과 [『神峰通考』 喜忌篇](https://zh.wikisource.org/zh-hant/神峰通考)는 `時上偏財別宮忌見`의 해설에서 `用時上天元及支內人元，只要時上一位有之，始爲貴，若別位有之，便多了`를 실으며, 두 명식을 대조한다. **두 디지털 전사를 독립적인 原刻의 판면 증거로 계산하지 않았다.** 실제로 첫 긍정 명식 대상의 관직 표기는 각 사이트에서 `都統制`와 `邵統制`로 불일치한다. 이것을 古刻의 독립적인 이문으로 승인하지 않는다.
+
+**(1) 긍정 사례** `丁酉 / 己酉 / 戊子 / 壬子`: 戊日에 時干 壬이 偏財. 日支 子藏癸는 戊日의 **正財**지만 주석은 긍정 사례로 든다. 따라서 正財/偏財 구별 없이 모든 지지 藏干 재성을 합쳐 하나의 금지 출현으로 세는 가설에 반례가 된다. 藏干 偏財도 항상 무시된다는 결론은 아니다.
+
+**(2) 부정 사례** `丁丑 / 己酉 / 丁丑 / 辛亥`: 丁日에 時干 辛이 偏財. 年/月/日의 **다른 천간에는 辛이 없다**. 반면 年支丑/月支酉/日支丑에 藏辛이 있고, 원문 주석은 `月支又酉丑會局，所謂別宮忌見也`라고 지시한다. 오직 다른 위치의 노출된 偏財 천간만 보고 지지·組合을 무시하는 규칙과 **주석 사례가 충돌**한다. 다만 年支丑과 日支丑이 겹치므로 日支 단독 효과를 분리할 수 없고, 酉丑會局은 藏干 1개 추가만으로 언제나 위반임을 뜻하지 않는다. 사용자가 별도 승인하지 않은 완전 巳酉丑三合 금지 구현도 없다.
+
+**Bridge 심사결론:** `yuanhaiXijiCaseHypothesisHold`의 **부정·긍정 반례 근거는 source-scoped 설명에 한정**. `別宮` 日柱 포함, `再見` 모든 藏干의 셈법, `一位`의 역사적 unit은 `UNADJUDICATED`. **다섯 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, 새 TrustGrant/Preview/Official/Production/consumer 승인 없음. `06590`이나 기관 응답은 진행 의존성이 아니다. 두 PR Draft/미병합, 최신 v11 CI 검증 별도.
+
+
+## 2026-10-19 N27 v12 — 「三處不要再見財」 연월일 비교 단서, 동일 장의 반례, 印本 미판독 HOLD
+
+Research #2553 정확 HEAD `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe`, 감사 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v12`를 Bridge에 고정한다. 기존 연구 `31과 `threeNonHourPillarsCommentaryScopeAudit`를 참조한다.
+
+[淵海子平 內十八格 時上偏財格 공개 전사](https://sajumania.com/ebook/to01-06/to01-06-02-27.htm)에는 `而三處不要再見財`, [神峰通考 時上偏財格 주석](https://sajumania.com/ebook/to01-08/to01-08-02-02.htm)에는 `只要一位貴，不要多，而三處不要再見財`가 나타난다. 時 외 **年/月/日柱라는 세 자리**를 비교 범위로 다룰 근거다. 神峰의 별도 **時上一位貴格(偏官/七殺)** 주석은 `若年月日又有`라고 세 기둥을 구체적으로 적지만 다른 格의 셈법을 그대로 偏財로 이식할 수는 없다. 時上 偏財의 지지 식별 예문에는 庚日/寅支와 辛日/卯支의 경로도 실려 있어 **時에서 드러나는 천간만 분석해야 한다**는 주장은 제한된다.
+
+같은 [淵海 장의 侯知府 예](https://sajumania.com/ebook/to01-06/to01-06-02-27.htm)는 `乙酉/乙卯/辛卯/辛卯`로 時支卯藏乙 偏財 외 年干乙/月干乙 및 日支卯藏乙도 존재하며 반복과 財旺, 日干 약세의 균형에 관한 부연을 포함한다. 예시로 실렸다는 사실이 곧 언제나 吉格이라는 증명은 아니며, 기계적 추가 1개=무조건 위반이라는 보편 식을 허락하지 않는다. 李參政 `庚寅/乙酉/甲子/戊辰` 사례에서는 年支寅藏戊(甲日 偏財)가 있지만 해당 변수 하나를 분리하지 않았으므로 단독 허용 판정을 하지 않는다.
+
+[1926 文明書局 NLC 神峰通考 PDF 167면 서지](https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf)는 확인했으나 **원본 PDF 다운로드 및 면별 스크린샷 실패로 해당 인쇄면은 미판독**. 두 전사의 계통 독립·1926 본문의 字形/異文도 미확인이다. `三處`의 문맥상 年月日 비교를 뒷받침하는 **전사 기반 연구 단서**만 추가했으며 직접 판독 인쇄 원본 수 +0, `別宮` 日支 藏干 개별 포함 / `再見` 모든 藏干 자동 셈법 / `一位` 정확한 발생 단위는 `UNADJUDICATED`. 새 TrustGrant/consumer/Preview/Official/Production 승인 없음, N27 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0** 유지. 양 PR Draft·미병합. 기관 문의·메일 의존성 없음.
+
+## 2026-10-19 N27 v13 — 希文「時月偏財類聚」 추가 사례 / 이른 刊本 후보, 전사 근거에 한정
+
+Research #2553 HEAD `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe`의 v13을 정확히 참조한다. [「時上偏財格 附月偏財格」 공개 전사](https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx)에서 `己酉/丙子/壬寅/乙巳`, `希文自造時月偏財類聚之格`를 확인했다. 壬日 기준 月干丙 偏財, 日支寅藏丙·時支巳藏丙 偏財이지만 時干乙은 偏財가 아니며 전사는 `喜時日偏財，類聚親切`로 부분적으로 긍정한다. 이는 순수 時上一位格과 분명히 구별되는 **時月類聚 명식**이며, 언제나 반복 偏財 1회만으로 모든 格을 일률 배제하는 모델에 경계 사례다. [Wikisource 전사](https://zh.wikisource.org/zh-hant/神峰通考)의 `騙財` 표기는 새 원각 異文으로 인증되지 않았다.
+
+[미 의회도서관 清順治間(1638–1661) 刊本 목록](https://www.loc.gov/item/2014514308/)은 11行22字, 卷二 디지털 영상 존재를 확인해 **새로운 독립 소장 고본 후보**로 등록했으나 정확한 `補曰` 인쇄면은 미판독이며 원본 판독 건수 +0. 1926 文明書局 NLC 정확한 면도 미판독이다.
+
+**Bridge 결론**: `別宮`의 日支 독립 영향, `再見` 藏干 기준, `一位` 계산 단위는 계속 `UNADJUDICATED`. 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**, TrustGrant/consumer/Preview/Official/Production 신규 권한 없음. 두 PR OPEN/DRAFT/UNMERGED, 기관 문의·이메일 없음. 정확한 커밋 CI/PIE/Production Calculation Container 별도 확인 대상.
+
+## 2026-10-19 N27 v14 — 希文 자해설의 편찬자 계통 확인 / 독립 명식 반례로 승격 금지
+
+Research #2553 `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe`의 `saju-n27-wu-ji-recurrence-scope-sensitivity-v14`를 정확히 참조한다.
+
+[『神峰通考』 「時上偏財格 附月偏財格」 공개 전사](https://m.gushiwen.cn/guwen/bookv_cfdef89fb0f5.aspx)에서 `希文自造時月偏財類聚之格`와 같은 명식에 속한 1인칭 `予命正合書云`·`為繼家君之志，而編此書`·`予據先人成說，更稽先人遺訓`을 확인했다. [미국 의회도서관 清順治間 추정 刊本 서지](https://www.loc.gov/item/2014514308/)는 張楠의 ‘不肖男’ 중 `希文`을 編纂 명단에 기록한다. 서지와 본문 문맥은 希文의 **편찬 참여자 자기 명식 해설**이라는 해석을 강하게 지지하며, 적어도 이를 **독립적인 제3자 결과 반례**로 간주해서는 안 된다. 앞의 `楠曰`는 뒤의 `予`와 화자가 다를 수 있으므로 둘을 역사적 판정 두 건으로 합산하지 않는다.
+
+월간 偏財·일지/시지 藏偏財의 동시 존재와 `喜時日偏財類聚`라는 전사 문구는 보존하지만, 순수 `時上偏財一位`의 규칙 예외나 일지 藏干 자동 가산·면제로 승인하지 않는다. [1929 NLC 170면 공개 판본 목록](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf)도 대체 수집 후보일 뿐 **해당 인쇄면은 미판독**, 1926본·17세기 LOC본의 해당 구절 역시 이번에 직접 판독하지 못했다. 새 印本 시각 판독 건수 0, 전승 독립성 미확정.
+
+**권한 불변**: `別宮` 日柱 포함 효과 / `再見` 藏干 카운트 / `一位` 계산 단위는 `UNADJUDICATED`. 5 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 **1 vs 0**, TrustGrant/consumer/Preview/Official/Production 없음. 두 PR Draft/미병합, 기관 문의·메일 없음. 새 커밋 CI는 별도로 확인.
+
+## 2026-10-19 N27 v15 — 1926 文明書局 원문 인쇄면의 「補曰」 문언 직접 확인
+
+Research #2553 정확 HEAD `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe` / `saju-n27-wu-ji-recurrence-scope-sensitivity-v15`에 Bridge를 고정한다.
+
+[중국 國家圖書館 1926 『神峰通考』 **별도 169면 PDF**](https://commons.wikimedia.org/wiki/File:NLC416-13jh001619-43305_神峰通考.pdf)의 인쇄 이미지에서 직접 **PDF 66면(표제, 인쇄 六)**, **67면(`補曰`, 인쇄 七)**, **68면(`希文自造時月偏財類聚之格` 및 명식, 인쇄 八)**을 확인했다. 특히 PDF 67면에 **`只要一位貴不要多而三處不要再見財`**가 실제 인쇄되어 있다. 이전에 실패했던 **별도 167면 [NLC416-12jh004266-48929](https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf)**과 서로 다른 파일이므로 전사와 PDF의 동일성을 잘못 추정하지 않는다.
+
+**가중치 변화:** 新 발견 1926년 印本文字 직접 판독 1건, 그러나 **독립적인 명대/청대 고본 계통 증명 0건**이다. 웹 PDF 해당 면의 렌더 이미지는 직접 읽었지만 네트워크 제약으로 PDF 전체 원본 바이트 다운로드/해시는 하지 못했다. 인쇄된 `三處`가 年月日 비교 축을 뒷받침해도 모든 支藏干 자동 가산, 日支 단독 판정, `一位`의 발생 단위는 그대로 `UNADJUDICATED`. `楠曰`·`方歌`·`補曰`는 문단 단위의 차이만 보여 주며 `補曰` 작성자의 저자 귀속/시대를 이 판면만으로 확정하지 않는다. Xiwen 명식은 여전히 편찬자 자기해석이고 독립 제3자 결과반례로 승격하지 않는다.
+
+**Bridge verdict 불변:** 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 겁재 T8 `1 vs 0`, 새 TrustGrant/Preview/Official/Production/consumer 권한 없음. 두 Draft PR 미병합. 이 커밋의 CI/PIE/계산 컨테이너는 정확한 SHA에서 별도로 확인한다.
+
+## 2026-10-19 v16 — 1929년 상하 2책의 독립 증거 오인 방지
+
+Bridge `researchHeadReviewed` → 정확 Research `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe` / 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v16`.
+
+[1929.11 秦慎安 校勘 상책 170 PDF면](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf)과 [동일 간행본 하책 168 PDF면](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10361_神峰通考_第2卷.pdf)을 구분해 추적한다. 동일 간행본 2분책은 **독립적인 판본 또는 역사적 텍스트 일치 표 2개가 아님**. 두 권 중 「補曰」의 정확한 이미지 위치·이문을 이번 조사에서는 직접 판독하지 못했다. [LOC 17세기 추정본](https://www.loc.gov/item/2014514308/)의 본문 이미지 접근도 실패했고, [1936 星命學社 인쇄본](https://commons.wikimedia.org/wiki/File:NLC511-027032013013877-17378_銅版精印神峰通考命理正宗.pdf)은 후대 서지 후보만 확보했다. **새 원문 이미지 판독 0건**, 계통 독립 입증 0건.
+
+1926년본 67 PDF면에서 실제 판독된 `只要一位貴不要多而三處不要再見財`는 v15 그대로. `別宮` 日支 효과·`再見` 藏干 반복·`一位`의 역사적 계산 단위 `UNADJUDICATED`; 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 겁재 T8 `1 vs 0`. 새 의미 승인/TrustGrant/consumer/Preview/Official/Production 없음. Draft 미병합, 기관 문의 없음.
+
+## 2026-10-19 N27 v17 — 1929년 卷二의 상책 배치 및 1647년 일본 인쇄 소장 자료
+
+Research #2553 **정확 HEAD `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe`**, `saju-n27-wu-ji-recurrence-scope-sensitivity-v17`.
+
+[1929 NLC 동일 이미지의 별도 뷰어 설명](https://changxianyi.com/guji/shenfeng/)은 **상책 卷一~三 / 하책 卷四~六**로 구분하며 별도의 1929 인쇄본이 아니라 **같은 NLC 디지털 스캔**을 사용한다고 적는다. 기존 대상 「時上偏財格 附月偏財格」은 원서 **卷二**이므로 **상책 170 PDF면을 먼저 조사**, 하책 168면을 반복 수색할 근거가 없다. 그러나 상책의 정확한 PDF 면 번호는 아직 **미확정**, 대상면 이미지 스크린샷은 Cache miss로 **접근 실패**, 증거 0.
+
+[東北大学 狩野文庫 목록](https://touda.tohoku.ac.jp/collection/database/library/10010000025889): **正保4[1647]년 江戸 沢村寛 판 6冊**, `画像有無/色 無`. [미국 의회도서관 17세기 추정 文光堂본](https://www.loc.gov/item/2014514308/)은 `文光堂甲午重鐫`을 봉면에 기록한다. 順治기간의 甲午는 **1654년과 부합하는 추론**일 뿐 원각의 구절·해당 판본 출판년·중각 계통 독립의 증명이 아니다. 1647년 판본이 `補曰`을 포함하는지조차 **미판독**.
+
+v15에서 직접 육안 판독한 1926년본 `只要一位貴不要多而三處不要再見財` 1건 외 **추가 원문 印刷面 판독 0건**, **이문 교감 0건**, **독립 고전 계통 인정 0건**. `別宮` 日柱·`再見` 藏干·`一位`의 역사적 집계는 UNADJUDICATED, 5개 Claim HOLD, N17 METHODOLOGY_CONFLICT, N13 정확 劫財 T8 **1 vs 0**, 신규 TrustGrant/Preview/Official/Production 의미 허가 0. 두 PR Draft·미병합 및 기관 연락 없음.
+
+## 2026-10-19 N27 v18 — 1929년 직접 판독본 「補曰」과 1926년 문구 일치 확인
+
+Research #2553 최신 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`; `saju-n27-wu-ji-recurrence-scope-sensitivity-v18`의 정확한 커밋에 Bridge `researchHeadReviewed`를 고정한다.
+
+**실제 원본 파일로부터 읽은 新 증거:** [NLC 1929 상책 PDF](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10360_神峰通考_第1卷.pdf) 7,012,009 바이트 / SHA-256 **`2e19b8a05fdc4ad204eb4822c3b1ffbb2487dafac707e283c1358845f873c12c`**. [소스 수집 및 전체 면 목록 Actions](https://github.com/gycha0109-beep/Saju/actions/runs/39188880179)의 artifact를 작업 환경으로 받아 **원본 PDF 바이트 SHA를 재검증**했고, PDF 66/67/68면 이미지를 직접 판독했다. **PDF 66면 六:** `時上偏財格 附月偏財格` 본문 시작, **PDF 67면 七:** 실제 `補曰` 및 `只要一位貴不要多而三處不要再見財`, **PDF 68면 八:** `希文自造時月偏財類聚之格`과 `己酉/丙子/壬寅/乙巳`.
+
+1926년 별도 NLC 스캔 PDF 67면에서 육안 판독한 **동일 핵심 글자**와 비교할 때 지정 어구의 글자 이문은 발견하지 못했다. **장 전체 교감, 두 간행본의 독립 저본 인정, 이 구절의 명대/청대 확정**은 여전히 미실행/미확정. 1929년 직접 판독 인쇄본 1종 추가, 역사적으로 독립한 고전 원전 계통 인정 **0**.
+
+[미 LOC 17세기 추정본 卷二](https://www.loc.gov/item/2014514308/) 공개 이미지 총 59개 중 25개만 [실제 취득](https://github.com/gycha0109-beep/Saju/actions/runs/39190030567), 나머지 34개는 HTTP 429·시간초과 등으로 실패해 해당 `補曰` 존재/내용 여부를 결론 내리지 못함. **확인 실패는 원문 부재 증거가 아님**.
+
+**권한 동결 유지:** `別宮` 日柱 기여, `再見` 藏干 카운트, `一位` 역사적 셈법 UNADJUDICATED. N27 5 Claim HOLD, N17 METHODOLOGY_CONFLICT, N13 겁재 T8 정확 1 vs 0, 신규 TrustGrant/Preview/Official/Production/consumer 승인 없음. Draft 미병합·기관 연락 없음.
+
+## 2026-10-19 N27 v18 — Bridge 소스의 Research 커밋 참조 정합성 교정 (새 원전 판독 아님)
+
+- 실제 Research #2553 HEAD `9019a0a35e883cb29ead869c5da7085f93b40817`과 Bridge #2561의 소스 `researchHeadReviewed` 값을 비교한 결과, 문서의 직전 v18 단락은 정확한 Research SHA를 가리켰지만 소스/회귀 테스트가 v14~v17에 사용된 `8f9c6ca84197a2b94a59ee58d2f07c491bc23abe`를 유지하고 있었다. 앞의 역사 기록은 수정하지 않고, 소스/테스트의 현재 검토 기준을 v18 Research HEAD로 교정했다.
+- `researchHeadReviewed`는 **이미 검토한 Research 증거의 고정 커밋 식별자**다. 자동으로 최신 HEAD를 추종하거나 GitHub PR이 새 커밋을 받을 때마다 신뢰를 승격하는 플래그가 아니다. Research에 새 커밋이 추가되면 해당 근거를 재검토하고 소스/테스트/문서의 pin을 함께 수정해야 한다. CI 통과 자체가 이 교차 PR 고정 참조를 인증하지 않는다.
+- 이 변경은 기존 `saju-n27-wu-ji-recurrence-scope-sensitivity-v18` 증거에 대한 **참조 오류 수정만** 하므로 Research 버전 또는 Bridge 감사 버전을 올리지 않는다. 결정 해시가 pin 변경에 따라 달라질 수 있으나 승인 상태는 그대로다.
+- `別宮`의 日支 효과, `再見`의 支藏干 반복 집계, `一位`의 고전적 계산 단위는 `UNADJUDICATED`. N27 다섯 Claim HOLD, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**. 새로운 TrustGrant·Preview·Official·Production·consumer 해석 권한 없음. 두 PR은 Draft/미병합 상태 유지.
+
+## 2026-10-19 N27 v19 — 17세기 추정 LOC 인쇄본 「補曰」 직접 확인·Bridge HOLD 유지
+
+- Research #2553 정확 검토 커밋: `1ac29524b990bd0d080f52fdfe938843c69fd67f`, 연구 버전 `saju-n27-wu-ji-recurrence-scope-sensitivity-v19`. 이 값은 Bridge 소스 `researchHeadReviewed`, 회귀 테스트, 문서에서 동일하게 고정했다. 이전 v18 `9019a0...` 및 더 오래된 `8f9c6c...`는 각 시점의 역사적 기준일 뿐 **현재 검토 기준이 아니다**.
+- [LOC 『神峰通考』 卷二 공식 IIIF **8번 인쇄 이미지**](https://tile.loc.gov/image-services/iiif/service:asian:lcnclscd:2014514308:1A002:07b08a/full/pct:25/0/default.jpg)를 기존 [25면 수집 artifact](https://github.com/gycha0109-beep/Saju/actions/runs/39190030567)에서 다시 실제 판독했다. 미리보기 JPEG **132,360 bytes**, SHA-256 **`e4b6771c98c8f9547ab9e3ac531ff8e34bd67eb6e380810843fc4a186e371c08`**. 우측 인쇄면 `補曰` 아래의 연속 글자 **`只要一位貴不要多而三處不要再見財`**가 1926년 169면본 PDF 67면, 1929년 170면 상책 PDF 67면과 **지정 구절에서 일치**한다.
+- 기존에 확인 못 한 **17세기 추정 고본의 지정 구절 존재 여부**는 LOC 인쇄 이미지 하나에서 확인됐다. 그러나 LOC 소장품의 1638–1661 연대는 **소장기관 추정**이고 봉면 `甲午重鐫`에서 1654년 확정 인쇄를 증명하지 않는다. `補曰`의 최초 작성자·편집 시점, 1647년 일본 印本 수록 여부, 판본 간 독립 계통, 장 전체 이문은 **미판정**이다.
+- 추가 공개본 접근: [우선 수집](https://github.com/gycha0109-beep/Saju/actions/runs/39194424103)에서 누락 34면 중 32면 확보했고, [LOC 메타데이터 재확인](https://github.com/gycha0109-beep/Saju/actions/runs/39195117566)으로 58번(공식 이미지 ID `57b000`)을 확보했다. 권2 총 **59면 중 58면 확보**, 59번은 공식 메타데이터 요청이 시간초과됐다. 이미지 미확보는 글자 부재의 증명이 아니다.
+- Bridge의 다섯 Claim **모두 HOLD**. `別宮` 日支 독립 효과, `再見` 藏干 가산, `一位` 역사적 집계는 **UNADJUDICATED**. N17 **METHODOLOGY_CONFLICT**, N13 정확 劫財 T8 **1 vs 0**. 인쇄본 글자 확인을 계산 의미 확정이나 ReviewAttestation·TrustGrant·Preview·Official·Production·consumer 승인으로 바꾸지 않았다. 현재 `researchHeadReviewed`는 자동 최신 HEAD 추종값이 아니라 실제 검토를 마친 정확한 Research 커밋의 고정 참조다.
+
+## 2026-10-19 N27 v20 — 일본 1647·1850년 목록 충돌의 Bridge 심사 보류
+
+- **Research #2553 정확 검토 HEAD** `cf65e521693155f0d660411ee6b316a7dfc193a1` / `saju-n27-wu-ji-recurrence-scope-sensitivity-v20`; Bridge `researchHeadReviewed`·테스트·본 문서는 같은 Research commit을 가리킨다. 새 원문 화상 판독으로 v20을 올린 것이 아니라 **대조 판본 후보 서지 신뢰도의 새 모순**을 추가했다.
+- 東北大学 狩野文庫 [레코드 10010000025889](https://touda.tohoku.ac.jp/collection/database/library/10010000025889)는 江戸·沢村寛의 `正保4 [1647]`을, 같은 대학의 [레코드 10010000025881](https://touda.tohoku.ac.jp/portal/item/10010000025881)은 같은 제목·출판자·장소·6冊에 `嘉永3 [1850]`을 기재한다. 두 레코드의 청구기호 `2/3802/6`, 부서 관리번호 `TT22201642`가 같고 **공개 이미지가 없다**. 두 개의 확정 물리본, 확정 1647 출판연도 또는 LOC본 이전의 독립 증인이라고 산정할 수 없다. 1850 표기가 역사적 재판인지 메타데이터 충돌인지도 미확정이다.
+- LOC 卷二 이미지 8의 직접 확인된 `補曰`과 `只要一位貴不要多而三處不要再見財`는 그대로 **인쇄면 직접 확인 사실**이다. 1926·1929 본과의 국소 글자 일치는 유지하되 LOC의 1654년 확정 연대, 고전 편찬자 귀속, 판목 독립 계통, `別宮` 日支 효과, `再見` 藏干 범위, `一位` 계산 단위로 확장하지 않는다.
+- 5개 Claim **HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, Consumer/Preview/Official/Production/TrustGrant 신규 승인 **0**. 두 PR Draft·미병합, 기관 접촉 없음.
+
+## 2026-10-19 N27 v21 — LOC 卷二 59/59면 복구, 심사 보류 유지
+
+- **Research Draft #2553 검토 HEAD** `2d39056bf4dd7cabda4b8df873054ad82bd096e2` / `saju-n27-wu-ji-recurrence-scope-sensitivity-v21`. Bridge의 `researchHeadReviewed`와 회귀 테스트를 이 정확 HEAD에 고정했다.
+- [LOC 마지막 번호 59 복구 실행 #39217454989](https://github.com/gycha0109-beep/Saju/actions/runs/39217454989)의 공식 [59번 메타데이터](https://www.loc.gov/resource/lcnclscd.2014514308.1A002/?sp=59&fo=json)는 `cover2`라는 **비연번 IIIF 식별자**를 돌려준다. [이미지 원본](https://tile.loc.gov/image-services/iiif/service:asian:lcnclscd:2014514308:1A002:cover2/full/pct:25/0/default.jpg)을 **53,722바이트**, SHA-256 **`c6ee8531aeece3634c181dbf4254fdc9ba28901a6ad9551fc2bc4f892f8e7dc8`**로 보존했고 직접 열람했다. `神峰通考二卷` 필기가 보이는 표지로서 새로운 `補曰` 본문 판면은 아니다.
+- LOC **공식 디지털 이미지 59/59개 확보 완료**. 초기 25개 취득·34개 미취득과 후속 58/59는 각 이력의 상태이며 삭제하지 않는다. 다만 이것이 본문 전체 문자 교감 또는 인쇄본 계통 판정 **완료를 의미하지 않는다**.
+- 추가 공개 [한국 공유마당 출처 국회도서관·1906년 등록](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005), [1906 上海書局石印本·紹興圖書館의 별도 서지](https://www.guoxuedashi.com/shumu/gj-1240984pp.html)는 **원본 미판독 후보**로만 연결했다. 두 서지가 동일 실물인지 별도의 전승인지는 `UNADJUDICATED`.
+- 17세기 추정 LOC 인쇄이미지 8번의 `補曰` 국소 문구와 1926·1929 이미지의 핵심 글자 일치만 유지한다. `別宮` 日支 독립 효과, `再見` 藏干 산입, `一位` 역사적 셈법 **UNADJUDICATED**. N27 **5 Claim HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 劫財 T8 **1 vs 0**. 신규 TrustGrant/consumer/Preview/Official/Production 승인 없음. Draft/미병합 및 기관 연락 금지 유지.
+
+### N27 v21 후속: 1906 공개 PDF HTTP 400에 따른 Research 심사 SHA 최신화 (2026-10-19)
+
+- Research #2553 최신 검토 SHA `7bfa89b1fb54db47c9b17a9b4a64eda79cc7ed3d`를 Bridge `researchHeadReviewed`와 테스트에 반영했다. 기존 `v21` 심사 대상은 동일하며, 추가 커밋은 **취득 시도 기록에 한정**.
+- [공개 원문 PDF 한정 취득 Actions #39218770108](https://github.com/gycha0109-beep/Saju/actions/runs/39218770108): `G905-9086005`의 공개 다운로드 URL 요청이 **HTTP 400**이므로 실제 PDF 바이트, 1906년본 `補曰` 인쇄 문자, 독립 계통 증거 **0**. 파일 부재를 인증한 것은 아니며 사이트의 인증·이용 조건을 우회하지 않는다.
+- LOC `cover2`까지 공식 **59/59 이미지 취득**은 그대로. 원문 전권 교감은 별도 미완료, 5 Claim **HOLD**, 세 계산 의미 **UNADJUDICATED**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**. 신규 Preview/Official/Production/TrustGrant/consumer 승인 0, 기관 문의 0. Draft 유지.
+
+## N27 v22 — 율곡연구원 국내 석인본 두 소장 단위 분리 (2026-10-19)
+
+- Research Draft #2553 심사 대상 **`6661c73eb3491c22e839effd119f89a8301066b9`**, 연구 버전 **`saju-n27-wu-ji-recurrence-scope-sensitivity-v22`**. Bridge `researchHeadReviewed` 및 회귀 테스트에 같은 exact SHA를 적용했다.
+- [율곡연구원 한국학 아카이브 4책 자료 `B005_01_B00330_001`](https://db.yulgok.or.kr/poss/view?dataId=B005_01_B00330_001) 및 [별도 `卷1,2` 1책 자료 `B005_01_B00442_001`](https://db.yulgok.or.kr/poss/view?cate=cateSubj&dataId=B005_01_B00442_001&itemId=B) 공식 목록 확인. 공개 자료총서 목록 ID는 각각 **`YG015-01-481`(4책)**, **`YG015-01-490`(1책)**이다. 모두 석인본이지만 후자에만 **`上海 千頃堂書局`** 서국명이 명시돼 있으며 둘 다 간행연도는 비어 있다.
+- [중국 다롄도서관의 또 다른 1906년 석인본 공식 서지](https://www.dl-library.net.cn/book/519/-shenfengtongkao---minglizhengzongdaquan-518296.html)는 **6冊一帙**로 기재되어 [紹興圖書館 서지의 1906년 `2冊`](https://www.guoxuedashi.com/shumu/gj-1240984pp.html) 및 국내 `4冊/卷1,2`과 물량이 다르다. 복수 판본 존재를 추정하는 출발점이지 **서지 연도, 동일성, 서로 다른 원전 계통을 확정하는 증거가 아니다**.
+- 새 원문 「時上偏財格」·「補曰」 판면 직독 0. 국내 두 소장본은 연도 미상·직접 영인 이미지 미확보이며 1906 국회도서관 출처 공유마당 PDF는 단일 URL **HTTP 400**. 따라서 **고전 문언 비교 추가 0, 독립 텍스트 계통 추가 0, 의미 승인 추가 0**이다. LOC 卷二 59/59 공식 디지털 이미지 확보와 기존 8번 핵심 글자 실제 판독은 유지.
+- **N27 Claim 5개 HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 정확 劫財 T8 **1 vs 0**, `別宮`·`再見`·`一位` 실제 계산 의미 **UNADJUDICATED**. TrustGrant/consumer/Preview/Official/Production 변경 없음. 두 PR Draft·미병합, 기관 문의·이메일 없음.
+
+## N27 v23 — 율곡연구원 두 판본의 공개 인쇄이미지 11장 직접 확보·상표 대조 (2026-10-19)
+
+- Research Draft #2553 검토 HEAD **`e56532119d7f1d45c292e2e11fc43ff2e02afb06`**, 연구 버전 **`saju-n27-wu-ji-recurrence-scope-sensitivity-v23`**로 고정했다. Bridge 소스와 회귀 테스트에 동일 `researchHeadReviewed` SHA가 반영됐다.
+- [국내 율곡연구원 원전 이미지 취득 Actions #39224144799](https://github.com/gycha0109-beep/Saju/actions/runs/39224144799)에서 공식 뷰어가 실제 노출한 **`B005_01_B00330_001` 소장본 6/6장 + `B005_01_B00442_001` 소장본 5/5장 = JPEG 11/11장**을 취득하고 바이트 SHA-256을 확인했다. 두 소장본 각각 실제 첫 인쇄면에 **`千頃堂書局商標`**를 육안 판독했다. 첫 소장본은 목록의 출판사 칸이 공백이나 실물 인쇄 화상에는 이 상표가 있음.
+- 대응하는 卷一 서문·초반 본문 두 인쇄면의 편집 배치 및 상징 도안이 상당 부분 동일함을 **직접 국소 비교**했다. 다만 원본 촬영·연대·인쇄 회차·계통 독립성은 별개다. 비슷한 인쇄면을 두 독립 고전 증인으로 계산하지 않는다.
+- **11장 모두 「時上偏財格」·「補曰」 표적 권二 판면이 아니다.** 따라서 신규 `只要一位貴不要多而三處不要再見財` 인쇄 글자 판독은 **0건**. [1925 大成書局 소장 공식 HTML](https://www.dl-library.net.cn/book/520/-xin-shenfeng-xianshengtongkao---minglizhengzongdaquan-519143.html)은 서지 단독이며 해당 공개 HTML에 책 본문 스캔·PDF·뷰어 링크가 없음을 코드와 별도로 기록. 1925 실물 표적 인쇄 화상은 미확보.
+- N27 Claim **5개 HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 정확 劫財 T8 **1 vs 0**, `別宮` 日支·`再見` 藏干·`一位` 집계 단위 **UNADJUDICATED**. LOC 이미지 59/59와 기존 8번 「補曰」 판독 유지. 신규 TrustGrant/Preview/Official/Production/consumer 의미 승인 0; 제품 해석 로직 변경 0; 두 PR Draft·미병합, 기관 연락 없음.
+
+## N27 v24 — 1924년 千頃堂書局 학술 서지·1920년 공식 목록·1906 유료 영인 후보 (2026-10-20)
+
+- Research #2553 **`bc962c5e28c61798c40d5c704da0131c86532d23`** (`saju-n27-wu-ji-recurrence-scope-sensitivity-v24`)로 `researchHeadReviewed`를 정확하게 갱신했다. Bridge의 수용 범위·회귀 테스트도 동일 Research HEAD를 검토 대상으로 가리킨다.
+- 김만태, 「명리원전 『命理正宗』에 함축된 病藥사상 고찰」, [단국대 『東洋學』 제67집(2017) **173쪽 각주 20**](https://www-t.dankook.ac.kr/web/-oriental/-74?_Bbs_WAR_bbsportlet_extFileId=99955&p_p_cacheability=cacheLevelPage&p_p_col_count=1&p_p_col_id=column-2&p_p_mode=view&p_p_state=normal)에는 **`神峰闢謬命理正宗`(上海: 千頃堂書局, 1924, 4권)**이라는 후대 서지 항목이 직접 기재돼 있다. 율곡원 공개 원본 이미지의 `千頃堂書局商標`와 출판사 이름이 연결되지만, 율곡원 **4책은 물리 책수**이고 학술 각주의 **4권은 문헌 권차**, 둘의 동일 인쇄 회차나 율곡 실물의 1924 간행 연도는 아직 **UNADJUDICATED**. 논문은 해당 `補曰` 원본 판면을 제공하지 않는다.
+- [다롄시 도서관의 1920년 上海 校經山房본](https://www.dl-library.net.cn/book/519/-shenfeng---minglizhengzong-518782.html)은 **석인본 4卷·4冊**으로 별도 공식 관리되며, 기존 1925 上海 大成書局 6卷·4冊과 문헌 권수와 발행자·연대 메타데이터가 다른 공식 소장 후보일 뿐 본문의 이문이나 독립 인쇄 계통 인증이 아니다.
+- [1906 上海書局 石印版을 주장하는 제3자 상업 전자 파일 목록](https://hongyeshan.com/post/47178.html)은 파일 **316페이지·143MB**를 기재하지만 **구매 후 망판 링크**를 제공하는 유료 자료다. 공유마당 1906 국회도서관 유래 PDF와 동일성도 확인되지 않았다. 구매·연락·우회 접근 없이 파일과 `補曰` 판면 **미확보**로 기록했다.
+- 기존 율곡원 **실물 미리보기 6+5=11장**, `千頃堂書局商標` 2곳 직접 판독, LOC 권2 **59/59** 확보 및 해당 8번 `補曰` 기존 판독은 유지. **v24 신규 `補曰` 원문 이미지 0, 독립 고전 텍스트 계통 0, 실제 원본에서 간행년도 인증 0**.
+- 보호 상태는 계속 **N27 Claim 5개 HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**, `別宮` 日支·`再見` 藏干·`一位` 집계 범위 **UNADJUDICATED**. TrustGrant/Preview/Official/Production/consumer 의미 부여 0, 제품 해석 규칙 변경 0, 기관 연락·이메일 0, 두 PR Draft·미병합.
+
+## N27 v25 — 1906 공유마당 공식 문서뷰어 HTTP 차단 증거·비승격 (2026-10-20)
+
+- Research #2553 검토 기준 HEAD **`aee0b388c9316282f5d58a9a0605f5d99919ca9e`**, 연구 버전 **`saju-n27-wu-ji-recurrence-scope-sensitivity-v25`**로 Bridge `researchHeadReviewed`를 정확히 고정하고 테스트에서도 해당 SHA를 검증한다.
+- 한국저작권위원회 공유마당 [`G905-9086005` 자료 등록](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005)은 국회도서관을 출처로 표기하며 PDF 원문파일명을 제시한다. 등록 페이지가 **공식적으로 게시한** [문서뷰어 링크](https://gongu.copyright.or.kr/gongu/cmmn/docViewer/viewerIframe.do?fileSn=1&wrtSn=9086005)를 포함하여 [GitHub Actions #39351979910](https://github.com/gycha0109-beep/Saju/actions/runs/39351979910)에서 **공식 목록 / 명시 뷰어 / 사이트 일반 뷰어 경로 총 3곳을 비인증 HTTPS 요청**했다. 세 요청 **모두 HTTP 400, HTML 응답 제목 `Request Blocked`**였고 원문 PDF·뷰어 HTML·卷二 「補曰」 원전 텍스트 **0건**. 세 번째 경로는 해당 고서에 직접 연결된 URL이라고 단정하지 않으며 다른 작품에서 확인된 사이트 일반 경로임.
+- **접속 거절은 원문 PDF 부재나 표적 본문 미수록의 증거가 아니다.** 공유마당 창작년도 `1906` 자체를 원본 판권에 직접 적힌 인쇄년도로 승격하지 않는다. 이번 시도에서 계통 관계·「補曰」 인쇄면 이문·독립 텍스트 증인·계산 해석에 대한 추가 승인 **0건**. 우회접속·구매·문의·외부 연락은 수행하지 않았다.
+- 기존 LOC 卷二 **59/59** 공식 이미지 확보 및 8번 「補曰」 실제 인쇄면 판독, 율곡원 석인본 **6+5=11** 공식 공개 이미지와 `千頃堂書局商標` 두 곳 직독은 그대로 유지. N27 **Claim 5개 HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 劫財 T8 **1 vs 0**, `別宮` 日支·`再見` 藏干·`一位` 집계 단위 **UNADJUDICATED**. TrustGrant/Preview/Official/Production/consumer 추가 승인 0, 해석 엔진 변경 0, Research·Bridge Draft·미병합.
+
+## N27 v26 — 1936년 『銅版精印神峰通考命理正宗』 권二 「補曰」 직접 인쇄면 확인 및 1906 국회도서관 표지 소장인 단서 (2026-10-20)
+
+- Research Draft #2553 검토 HEAD **`0f3cbadadf330203a9a6e3b99715b4708a4228a9`**, 연구 버전 **`saju-n27-wu-ji-recurrence-scope-sensitivity-v26`**로 `researchHeadReviewed`를 정확하게 pin하고 회귀 테스트에 동일 SHA·문구를 반영했다.
+- [중국 국가도서관 원본자료로 표시된 Wikimedia Commons 1936년 영인 PDF](https://commons.wikimedia.org/wiki/File:NLC511-027032013013877-17378_銅版精印神峰通考命理正宗.pdf)를 [Actions #39354547740](https://github.com/gycha0109-beep/Saju/actions/runs/39354547740)에서 **11,739,726 bytes, SHA-256 `2b4eabf3c1732f5bcb7adf964ed8fe0bc9191523fdc3e5c92f5c1aa4057eced7`, 220쪽**으로 직접 확보. **PDF 43쪽 = 원 인쇄 37쪽, 卷二 「時上偏財格」 `補曰`** 고해상도 직접 육안 대조로 `只要一位貴不要多而三處不要再見財` 실제 인쇄글자 확인. 기존 LOC 초기본·1926·1929년 국소 연속문구와 일치. **신규 표적 원전 인쇄면 직접 판독 +1**, 편집·판목의 독립 전승 인증 **0**이므로 해석 승격은 0.
+- Commons 출처 서지에는 중국 국가도서관이 적혀 있지만, PDF 실제 **2·3쪽에는 `上海圖書館藏書` 소장 표기**가 보인다. 원본 소장의 관리·복제 이력은 **UNADJUDICATED**, 새 일치 판독을 독립 문헌증인의 별도 표결권으로 계산하지 않는다. **PDF 219쪽의 원 인쇄 판권면**에서 `民國二十五年三月`, `重校者 星命學社`, `出版者 星命學社`을 직접 육안 판독해 **1936년 3월 간행년도·발행자 표기를 원전 판권면으로도 확인했다**. 다만 1926·1929년 인쇄 계통과의 관계는 여전히 미판정이다.
+- [1906 上海書局본이라 소개된 판매처의 공개 이미지 11장](https://hongyeshan.com/post/47178.html)을 [Actions #39354173377](https://github.com/gycha0109-beep/Saju/actions/runs/39354173377)에서 직접 HTTP 200 취득·SHA 보존하고 육안 열람했다. 공개 표지에는 **국회도서관 계열 소장인**, **등록번호 `130903`**, **`1970.5.6` 날짜형 사후 관리 인장**이 보인다. [공유마당 G905-9086005](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?menuNo=200019&wrtSn=9086005)의 출처 역시 국회도서관이지만, 해당 공유마당 PDF가 **HTTP 400 Request Blocked**로 미확보이므로 **동일 실물·동일 전자파일은 UNADJUDICATED**. 도장 날짜를 `1906` 실제 출판년도로 해석하지 않음.
+- 판매처 **공개 이미지 11장에는 卷二 「補曰」 판면 0**. 유료 전체 PDF 구매·다운로드 없음. **새 1906년 판본 표적 글자 직접 판독 0**.
+- 위 증거를 모두 **비승격**으로 분리: LOC 卷二 59/59 이미지, 율곡원 공식 인쇄미리보기 11장, 1926·1929 직접 국소 대조는 보존. N27 Claim **5 HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 劫財 T8 정확 **1 vs 0**, `別宮` 日支·`再見` 藏干·`一位` 역사적 계산 의미 **UNADJUDICATED**. 신규 TrustGrant/consumer/Preview/Official/Production 승인 **0**, 해석 엔진 변경 **0**, 외부 기관 연락·구매 **0**; Research·Bridge **Draft·미병합** 유지.
+
+## N27 v27 — 율곡연구원 같은 4책 소장본의 제2·3·4책 실제 인쇄면 16장 추가 취득 (2026-10-20)
+
+- Research Draft #2553 최신 검토 HEAD **`28f072896451eebb5aa22ec0267b48d12877173c`**, 버전 **`saju-n27-wu-ji-recurrence-scope-sensitivity-v27`**로 `researchHeadReviewed` 정확 SHA 고정 및 Bridge 회귀 테스트 갱신.
+- [공식 율곡연구원 도서목록 YG015-01-481](https://db.yulgok.or.kr/data/media/EB000008_svc.pdf)의 **4(1~4)책**을 낱책 데이터ID **`B005_01_B00330_001`~`_004`**로 실제 상세페이지 HTTP 200 확인. [GitHub Actions #39358244228](https://github.com/gycha0109-beep/Saju/actions/runs/39358244228), artifact **#12236515723**에 각 공식 뷰어가 직접 공개한 6/5/5/6장, **합계 22장 JPEG**의 실제 바이트·해시 보존. 기존 제1책 6장은 재확인이고 이번 **제2~4책의 새 이미지 총 16장**이다. 별도 소장 기록 `B005_01_B00442_001`의 5장 포함 율곡 소장 두 단위에서 이용 가능한 공개 샘플 총 **27장(22+5)**.
+- 각 책의 표제와 권두 인쇄면을 눈으로 직접 읽어 **`卷之一`~`卷之四` 시작** 확인. 공식 목록의 물리책 4권과 첫 인쇄면 권차 1~4가 대응하지만 **4책에 卷五·六 미수록**을 확정한 것이 아님. **1924 千頃堂書局 4卷 학술 서지와 동일한 인쇄본·연도라고 단정하지 않는다**. 첫 책 `千頃堂書局商標` 및 다른 단책의 동일 상표 증거는 그대로다.
+- 새로 공개 취득한 16장 중 **`時上偏財格`의 `補曰` 표적 판면 없음**. 따라서 신규 해당 연속 핵심 글자 직접 대조 **0건**, 독립 고대 문언 전승 계통 **0건**. 이는 해당 원서 전체에서 그 문구가 빠졌다는 증거가 아니다.
+- 기존 LOC 권二 59/59 및 8번 「補曰」, 1926·1929 원 인쇄, 1936 星命學社 PDF 43쪽 「補曰」과 219쪽 판권의 `民國二十五年三月` 직접 대조는 유지. **N27 Claim 5 HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 정확 劫財 T8 **1 vs 0**, `別宮` 日支·`再見` 藏干·`一位` 古法 계산 의미 **UNADJUDICATED**. 신규 TrustGrant/Preview/Official/Production/consumer 승인 0, 해석 엔진 변경 0, 기관 연락·결제 0, 두 PR Draft·미병합.
+
+## N27 v28 — 1929 文明書局 인쇄 판권면 직접 검증 및 출판계통 관련 Bridge HOLD (2026-10-20)
+
+- Research #2553 **HEAD `392a7bea518f14c4b9071322d5595924f1746a24`**, 연구 버전 **`saju-n27-wu-ji-recurrence-scope-sensitivity-v28`**를 `researchHeadReviewed`에 정확한 SHA로 고정. 변경된 항목은 고서 **인쇄 판권면/권차 출처 증거**이며 N27의 계산방법·해석방법 승인 근거가 아니다.
+- [1929년 하책 Commons 원본 PDF](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10361_神峰通考_第2卷.pdf)를 [N27 별도 조사 수집 #39376434967](https://github.com/gycha0109-beep/Saju/actions/runs/39376434967), artifact **#12242733882**로 받아 **168쪽·6,708,084바이트, SHA-256 `ccb21cf1215a1e487fe79497839f9343534af42a2e3af6c1e7dd04f3faea9289`** 직접 확보. 이 SHA는 원본 파일 바이트의 재계산과 일치.
+- 실제 **PDF 3쪽** 인쇄 제목 **`神峰通考 卷四`**, 실제 **PDF 167쪽** 판권면에 **`中華民國十五年一月初版`**(1926년 1월), **`中華民國十八年十二月再版`**(1929년 12월)을 육안 판독. 종전 1929년 12월 OCR 후보는 실물 판권으로 인증됐으나 Commons 서지의 **1929년 11월과 판권 인쇄월 차이**는 별도로 보존.
+- **Bridge 판단:** 동일 발행자가 초판·재판 관계를 판권면에 명시했다는 점은 인정. 그러나 다시 찍었다는 문구로 모든 각인·판목·전승 계통이 동일하거나 서로 독립적이라고 결론내지 않는다. 1929 하책의 `卷四` 시작을 **새 `卷二 時上偏財格 補曰` 인쇄증인으로 세지 않음**. 신규 표적 문장 대조 0건, N27 Claim 승격 0건.
+- 함께 수집을 시도한 1926년 **167쪽 다른 NLC 자료**는 HTTP 429로 PDF를 받지 못했다. 권두·권말·기존 169쪽본과의 책 관계는 **UNADJUDICATED**. 기존 동일 336쪽 합산에 의한 상하책 추정은 철회 유지.
+- **불변:** N27 Claim 5개 **HOLD**, N17 **METHODOLOGY_CONFLICT**, N13 劫財 T8 **1 vs 0**. `別宮`/`再見`/`一位`는 **UNADJUDICATED**. 신규 TrustGrant·Preview·Official·Production·Consumer 권한 0, 해석 엔진 코드 변경 0, PR 두 개 모두 Draft·미병합.
+
+## N27 v29 — 1926 文明書局본 卷三·卷四 직접 판면 비교, Claim HOLD 유지 (2026-10-20)
+
+- Research [#2553](https://github.com/gycha0109-beep/Saju/pull/2553) 검토 HEAD 정확히 **`88a55e8b0e16505301132357241e80ddc6e37b35`**, `saju-n27-wu-ji-recurrence-scope-sensitivity-v29`를 Bridge `researchHeadReviewed`에 고정.
+- [1926년 167쪽 자료](https://commons.wikimedia.org/wiki/File:NLC416-12jh004266-48929_神峰通考.pdf) 공개 공식 미리보기 [실제 7장 #39379574714](https://github.com/gycha0109-beep/Saju/actions/runs/39379574714), artifact **#12245160822**: **PDF 2면 `神峰通考卷四`**, **PDF 166면 `中華民國十五年一月出版/發行`**을 원 인쇄 JPEG로 직접 판독. 판권면 JPEG SHA-256 **`aa1f155e8d8ec9fe7128c20fa7187a32e887b4577912b34ad99948d22db3627f`**.
+- [1926년 기존 169쪽 자료](https://commons.wikimedia.org/wiki/File:NLC416-13jh001619-43305_神峰通考.pdf) 공식 미리보기 [8장 #39379965935](https://github.com/gycha0109-beep/Saju/actions/runs/39379965935), artifact **#12245355973**: **PDF 166면에서 원 인쇄 卷三 말미**를 직접 확인. **169쪽본 권三 → 167쪽본 권四**의 연속 인쇄 구성은 직접 판독 사실.
+- [1929년 하책 원본](https://commons.wikimedia.org/wiki/File:NLC511-027032013020556-10361_神峰通考_第2卷.pdf)의 **PDF 3면 卷四 시작** 및 **PDF 167면 `民國十五年一月初版`·`民國十八年十二月再版`** 판권과 대조: 내용상 같은 출판 계열·卷四 시작 조판의 국소 대응 근거 강화. 그러나 **1926 169·167 두 자료는 서로 다른 NLC 등록 ID 및 Commons 개별 업로드이고, 동일 물리 제본 2책으로 확정 불가**. 1926·1929 본문 전체의 동일 판목/독립적 문자 계통도 **UNADJUDICATED**.
+- **제한:** 167쪽 원본 PDF 파일 전체 바이트/해시 확보는 여전히 실패. SHA는 사이트에서 실제 노출된 **각 JPEG 미리보기 바이트의 SHA**다. 이번 신규 `時上偏財格`/`補曰` 직접 판면은 **0건**, 독립 텍스트 계통 증가 **0건**; 편재 관련 `別宮`·`再見`·`一位`의 역사적 계산법 승인 없음.
+- **Bridge 최종 처분 유지:** N27 **5 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**. TrustGrant·Preview·Official·Production·Consumer·엔진 변경 없음; 두 PR 모두 Draft·미병합.
+
+## N27 v30 — 1924 千頃堂 「民國十三年重刊」 판권성 상표 직접 판독, Yulgok 연도 귀속 HOLD (2026-10-20)
+
+- Research 검토 HEAD **`6b7eaca9180a65b0399483d81b8bdcba90e1900d`**, 연구 버전 **`saju-n27-wu-ji-recurrence-scope-sensitivity-v30`**, Bridge `researchHeadReviewed` 정확 SHA pin.
+- 국내 [옛날물건 1924년 4권 4책 공개 상품](https://www.yetnal.co.kr/shop/item.php?it_id=1727930540)의 공개 JPEG **4/4**를 [격리 수집 Actions #39387647015](https://github.com/gycha0109-beep/Saju/actions/runs/39387647015), artifact **#12248510151**에서 바이트·개별 SHA와 함께 확보. 4번째 JPEG SHA-256 **`c6a4c8418dea4fbec22c88ead3d48c1ba8d9bfafb1b4470554479cef13ac8e96`**에서 **`中華民國十三年重刊`(1924년 재간)**과 **`千頃堂書局商標`**를 실제 인쇄면으로 직접 판독.
+- 동일한 [율곡연구원 첫째 책 `B005_01_B00330_001_004.jpg`](https://db.yulgok.or.kr/viewer/view?dataId=B005_01_B00330_001)에는 **유사한 서문 첫 인쇄면과 동일 출판사 상표 디자인은 보이지만**, 판매본 상표 위의 **`中華民國十三年重刊` 문구는 보이지 않음**. 그러므로 **판매본의 1924 재간 표시는 사실로 확인하되 율곡원 두 소장본의 인쇄년도·동일 판목·같은 인쇄회차라는 주장은 HOLD**.
+- 판매본의 4사진은 **표지·4책 배면·내제 및 명식 필기·序 및 상표**로 한정. 원서 권1 뒤의 `時上偏財格`·`補曰` 판면 없음. 신규 핵심 원문 직접 판독 0건, 독립 전승 인증 0건, 규칙 계산범위 의미 승인 0건. 판매자 물리책 정보와 실제 판면 글자를 별도 근거로 분리.
+- **불변:** N27 **5 Claim HOLD**, N17 `METHODOLOGY_CONFLICT`, N13 劫財 T8 **1 vs 0**, `別宮`·`再見`·`一位` **UNADJUDICATED**, TrustGrant/Preview/Official/Production/Consumer 승인 0. 두 PR Draft·미병합 및 기관 연락·유료 구매 없음.
+## 2026-10-21 후속 — 『淵海子平』 論劫財 인쇄면 확인에 따른 역사명칭 / Canonical 십신 경계 (Claim-scoped, 비승인)
+
+### 새 1차 사료와 적용 가능한 범위
+
+- **역사 사진:** 사용자 제공 중국 국가도서관 계열 [『淵海子平·子平真詮』 上海文明書局본](https://commons.wikimedia.org/wiki/File:NLC416-15jh007754-99036_淵海子平_子平真詮.pdf) **책면 32**의 「論劫財」 원문에 \`如乙見甲為劫財\`, \`五陽見五陰為敗財\`, \`五陰見五陽為劫財\`가 인쇄돼 있다. [원문·이미지 구분·업로드 캡처 해시 기록](https://github.com/gycha0109-beep/Saju/issues/2557#issuecomment-6310215362). **甲(陽)→乙(陰)이 敗財 명칭의 범위에 들어간다는 것은 이 구절의 조건을 실제 甲乙에 적용한 독해**이며, 모든 판본이 같은 이름을 채택했다는 증명이 아니다. 작은 眉批와 큰 본문은 **서로 다른 텍스트 층위**로 보존한다. 이 스캔의 출판년 메타데이터는 \`[192-?]\`이므로 정확히 1926년으로 단정하지 않는다.
+- **더 넓은 고전 용례:** 기존에 연구가 실면 대조한 明萬曆 『刻京臺增補淵海子平大全』 卷一 「論五行相生相尅訣」의 \`比肩者爲刼財敗財\`는 포괄적 분류 표기다. 후기본 「論劫財」의 좁은 양/음 명칭과 **동일 편찬 층위·동일 판본·동일 범위의 규칙으로 통합하지 않는다**.
+- **격국 문맥:** 한국 국립중앙도서관 \`CNTS-00047779026\`/하버드 원소장 『正宗各格解(正宗抄略)』 필사본 책면 52에서 \`惟忌比肩劫財分奪\`와 \`只要一位貴不可兩三之多又不可再見財\`를 확인했다. [실면 판독 기록](https://github.com/gycha0109-beep/Saju/issues/2557#issuecomment-6307273496). 여기에는 「時上偏財格·附月偏財格」의 **특수 격국 맥락**이 있으므로 일반 비견·겁재 관계의 무조건적 개인 손실 규칙으로 이전하지 않는다.
+- 『淵海子平』 같은 공개 國圖 인쇄본 **책면 43**의 \`只要時上一位不要多而三處不要再見財\`는 실면 직접 판독됐으나 [별도 표제·단락](https://github.com/gycha0109-beep/Saju/issues/2557#issuecomment-6309341138)이며, \`三處\`/藏干/\`別宮\`의 구현 의미를 인증하는 근거가 아니다. 세 고문헌의 글자 비교는 **증거 추가**이지 역사적 계통 독립성·명식 성패 판정 승인 아님.
+
+### 레이어 경계: 심사 기준(비승인)과 후보 구분
+
+| 층위 | 지금 근거가 허용하는 사실·문서화 | 금지할 자동 대응 |
+|---|---|---|
+| T0/Canonical 현대 십신 | 실제 2010-02-03 05:30 甲일간·卯(乙) 대표의 **현대 \`겁재\` 관측**; 19:30 甲戌時의 **현대 \`비견\` 관측**. 계산 정책과 이름은 기존 것 유지 | 고전에서 \`敗財\`라 부른다는 이유만으로 Canonical의 정확 \`겁재\` 라벨·출생 입력·시주 값을 고쳐 쓰기 |
+| 시대·판본별 문헌 용어 | 책면 32에서는 \`五陽見五陰為敗財\`·\`五陰見五陽為劫財\`; 卷一 broad peer 용례 및 격국 문맥은 별도 source/locator/context 저장 | 본문/眉批/異本의 \`劫財\` 글자를 현대 정확 \`겁재\` subtype에 **무조건 동치**시키거나 모든 문헌이 동일한 용어법을 갖는다고 말하기 |
+| N13 Research T8 발행 | \`RULE-GENERAL-NATAL-SOURCE-BOUNDED-PEER-TO-WEALTH-ADVERSE@0.2.0-research\`는 **정확 현대 \`겁재\`+각각 다른 Peer/Wealth T5**가 있을 때만 구조 Claim 발행; 실제 05:30 1건/19:30 0건은 코드 실행 사실 | 위 두 값으로 역사적인 모든 비견→재성 관계의 불가능성, 확정 재물손실/부귀, 필사본의 1位 위반 등을 선언 |
+| Bridge/제품 의미 | 이 증거는 **N17 용어·방법론 충돌을 분리해 설명**하는 Research 보조자료. source-integrity, method/version과 별도 domain review 없이 **새 claim/observation/qualifier 승인 0** | 출처 이미지 확보 또는 계산 회귀 통과만으로 TrustGrant·Preview·Official·Production/Consumer 승인 |
+
+### 현행 5 Claim별 disposition — 독립 권위 없는 근거 추가만 반영
+
+1. \`GENERAL_NATAL_SOURCE_BOUNDED_PEER_TO_WEALTH_ADVERSE\`: **HOLD (claim, observation, qualifier 모두)**. 새 실제 인쇄면은 이름표 층위의 \`甲→乙=敗財\`라는 좁은 적용 예를 지원하므로 **현대 exact \`겁재\` T8과 고전 \`劫財\`를 곧장 동일시하는 source-based 허가를 부정**한다. 기존 N13 research 1/0 발행 및 두 T5 provenance는 변경 없음. 비견→재성 새 일반 T8 금지.
+2. \`TEN_GOD_OFFICER_VISIBLE_STEMS_THEME\`: **HOLD**. 새 원문은 천간 편관의 독자적 성격/직업/운세 의미를 심사하지 않는다.
+3. \`TEN_GOD_OFFICER_BRANCHES_THEME\`: **HOLD**. 지지 정관의 독자적 성격/직업/운세 의미를 심사하지 않는다.
+4. \`GENERAL_NATAL_OFFICER_VISIBLE_STEMS_THEME\`: **HOLD**. 일반 관성 테마에서 channel 자체를 개인적 외향성/강약으로 전환할 출처 증거 없음.
+5. \`GENERAL_NATAL_OFFICER_BRANCHES_THEME\`: **HOLD**. 일반 관성 테마에서 branch를 내면 성격으로 전환할 출처 증거 없음.
+
+**정확한 재심사 요건:** (a) 원본 본문과 眉批 및 판본 출처/주석 층위를 구별한 claim-bound textual locator, (b) 고전 용어 ↔ 현대 subtype의 방향성/적용범위/방법론 버전 제안과 실명식 05:30·19:30 반례, (c) 현재 고정 전사 witness와 실물 사이의 exact 문자열 동일성·source integrity 및 내용 해시, (d) 별도 독립 도메인 ReviewAttestation·TrustGrant와 governance의 per-claim 결정, (e) 강약/월령·時上偏財格과 비겁-재성 일반 관계를 혼합하지 않는 적용 조건. **(a) 일부 인쇄 본문 직접 판독만 이번에 진전**; (b) 방법론 승인, (c) 고정 witness 동일성, (d) 독립 도메인 권한, (e) 격국 적용 범위 모두 미확정. 이를 최종 방법론 승인으로 표시하지 않는다.
+
+**운영 상태:** Research #2553 exact \`6b7eaca9180a65b0399483d81b8bdcba90e1900d\` (Draft/unmerged), 본 Bridge #2561은 작성 시 exact \`6dcdef2035137b79087e52b11fae6bba56b4e8b6\` (Draft/unmerged), existing \`RETURN_TO_RESEARCH\`, N17 \`METHODOLOGY_CONFLICT\`, N27 **5 Claim HOLD**, N13 T8 **1 vs 0**, 기존 candidate \`secondary_only/unreviewed/contested\` 및 source/method hash unchanged. **이 부록은 회신하는 연구·심사 근거 문서만 갱신한다.** 새로운 권한/Rule Registry/Canonical/Preview/Official/Production/Consumer 변경 없음. CI·실행 결과는 커밋 이후 별도 확인해야 하며, 통합 CI가 기동되면 해당 트랙은 중지한다.
+
