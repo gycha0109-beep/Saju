@@ -76,7 +76,7 @@ describe('five-domain actual-chart semantic differentiation / S6 research matrix
           // requiring old, potentially inflated complete-count growth.
           const paths = report.sections.map(section =>
             'observedFactPaths' in section ? section.observedFactPaths : section.calculatedFactPaths);
-          const previouslyUsed = new Set(paths[0]);
+          const previouslyUsed = new Set(paths[0] ?? []);
           for (const supportPaths of paths.slice(1)) {
             const newlyObserved = supportPaths.filter(path => !previouslyUsed.has(path));
             expect(newlyObserved.length, domain + ': repeated chart fact is not independent')
