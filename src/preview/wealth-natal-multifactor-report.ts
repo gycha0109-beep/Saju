@@ -232,7 +232,7 @@ export function buildWealthNatalMultifactorReport(
   const missingSupportingAxes = 2 - (core ? chosen.length - 1 : chosen.length);
   if(missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
-  let state: Status = snapshot.completeness.birthTimeKnown &&
+  const state: Status = snapshot.completeness.birthTimeKnown &&
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly WealthNatalMultifactorSection[] = chosen;
