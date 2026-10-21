@@ -19,13 +19,13 @@ import { GENERAL_NATAL_CONCLUSION_SOURCE } from './general-natal-conclusion-synt
  * Coexistence supports a traditional interpretive axis, NOT a personal fact,
  * career aptitude, success, occupation, prediction or a ranked dominance.
  */
-export const CAREER_MULTIFACTOR_VERSION = '0.2.0-research' as const;
+export const CAREER_MULTIFACTOR_VERSION = '0.3.0-research' as const;
 const METHOD_ID = 'M-CAREER-NATAL-SOURCE-BOUNDED-PAIR-SYNTHESIS-V1';
 const RULE_SET = 'career-natal-source-bounded-multifactor';
 const CHANNELS = ['visible_stems', 'branches'] as const;
 type Channel = typeof CHANNELS[number];
 type Family = 'peer' | 'resource' | 'output' | 'wealth' | 'officer';
-type Axis = 'execution' | 'responsibility' | 'tension';
+type Axis = 'execution' | 'preparation' | 'responsibility' | 'tension';
 
 interface Pattern {
   id: string;
@@ -45,7 +45,9 @@ const PATTERNS: readonly Pattern[] = Object.freeze([
   {
     id: 'OFFICER_RESOURCE',
     families: ['officer', 'resource'],
-    axis: 'responsibility',
+    // The original source pattern is demands → learning/preparation, not
+    // the wealth → officer accountability theme. Do not merge those axes.
+    axis: 'preparation',
     title: '요구와 학습·준비를 연결하는 일의 구조',
     description: '관성(규칙·요구)과 인성(학습·준비)이 함께 관측됩니다. 전통적 관성→인성 관계에 근거하여 일의 요구와 체계적 준비를 연결해 읽는 한 축입니다. 실제 승진이나 업무 능력을 확정하지 않습니다.',
   },
@@ -94,6 +96,7 @@ export const CAREER_MULTIFACTOR_METHODOLOGY: MethodologyDefinition = Object.free
   assumptions: [
     'A matched pair is a structural interpretation candidate, not the user\'s observed behavior.',
     'Visible stems may form an interpretive headline; branch channel is supporting context.',
+    'Officer-to-resource describes demand-to-preparation; wealth-to-officer describes responsibility. These are different source-owned reading axes, and a tension axis is optional, never mandatory.',
     'A shared whole-chart family count does not establish the channel-specific pair.',
     'The wealth→officer and wealth↔resource patterns use only the bounded, contested relationship categories already listed in the General natal conclusion research source. They never infer outcomes.',
     'No numeric dominance, aptitude, salary, named profession, promotion, fortune, future timing, or causal life event is authorized.',
