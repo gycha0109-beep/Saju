@@ -69,6 +69,22 @@ const LIMITATIONS = [
   '사업 성공·실패, 매출, 창업 역량, 수익, 조직 갈등이나 미래 사업 사건을 예측하지 않습니다.',
   '공식 게시·저장·판매에 사용할 수 없는 내부 실험입니다.',
 ] as const;
+
+function unknownHourCalculatedContext(snapshot: CanonicalSajuSnapshot): string {
+  const slots = [
+    ['year', '연주'], ['month', '월주'], ['day', '일주'],
+  ] as const;
+  const observed = slots.map(([slot, label]) => {
+    const fact = snapshot.pillars[slot];
+    return label + ' ' + (fact.status === 'resolved'
+      ? fact.value.stem.value + fact.value.branch.value
+      : '미확정');
+  });
+  return '출생시각이 없어도 확인 가능한 본인 명식의 계산 사실은 ' +
+    observed.join(' · ') + '입니다. 이는 실제 명식의 간지 관찰일 뿐 ' +
+    '사업에 관한 개인별 다중 근거 T8 해석을 뜻하지 않습니다.';
+}
+
 function guard(v: unknown, message: string): asserts v {
   if (!v) throw new TypeError('Business multifactor: ' + message);
 }
@@ -208,15 +224,13 @@ export function buildBusinessNatalMultifactorReport(
     claims.every(c => selected.has(c.claimId)) &&
     (claims.length === 0 || selection.evidence !== undefined),
     'Business meaning not selected by existing ReadingIntent/EvidenceSelector');
-  const sourceBound = claims.map(c => toSection(c, snapshot, execution, registry))
-    .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
-      (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
-  // Use T8 claims backed by known year/month/day facts; never borrow a
-  // missing birth-hour input. These narrower sections cannot complete MUR.
+  // Canonical tenGods is unavailable with unknown birth time. Do not
+  // promote a scenario-based Claim into a complete person-level reading.
   const result = snapshot.completeness.birthTimeKnown
-    ? sourceBound
-    : sourceBound.filter(section => section.observedFactPaths.every(path =>
-        !path.includes('.hour.')));
+    ? claims.map(c => toSection(c, snapshot, execution, registry))
+        .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
+          (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
+    : [];
   // Prefer the 3-input core. When not observed, a narrower two-input core can
   // still be rendered, but completion needs two OTHER independently grounded axes.
   const core = result.find(s => s.axis === 'core') ??
@@ -244,9 +258,7 @@ export function buildBusinessNatalMultifactorReport(
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly BusinessNatalMultifactorSection[] = chosen;
   if(!snapshot.completeness.birthTimeKnown) {
-    missing.unshift(result.length > 0
-      ? '출생시각 미상: 시주와 관계없는 실제 연·월·일 근거로만 부분 풀이를 제공합니다. 전체 원국 종합은 보류합니다.'
-      : '출생시각 미상: 시주를 포함하는 전체 원국 종합은 보류하며 현재 관측 가능한 복합 근거도 부족합니다.');
+    missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 사업의 다중 근거 T8 해석은 보류합니다.');
   }
   return {
     snapshotId: snapshot.snapshotId,
@@ -254,7 +266,8 @@ export function buildBusinessNatalMultifactorReport(
     version: BUSINESS_NATAL_MULTIFACTOR_REPORT_VERSION,
     state,
     title: '나의 사업·실행 주제를 읽는 구조적 출발점',
-    introduction: '실제 명식의 십신 관계를 바탕으로 산출과 실행, 운영 기준, 준비와 협업의 관계를 함께 살펴봅니다. 창업 적성이나 사업 성과를 예측하는 판정이 아닌 전통 명리 연구 후보입니다.',
+    introduction: '실제 명식의 십신 관계를 바탕으로 산출과 실행, 운영 기준, 준비와 협업의 관계를 함께 살펴봅니다. 창업 적성이나 사업 성과를 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
+      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
