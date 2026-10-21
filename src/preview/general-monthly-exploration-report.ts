@@ -71,7 +71,7 @@ function claimValue(claim: InterpretationClaim): {
   requireEvidence(value !== null && typeof value === 'object' &&
     (value.segmentId === 'before_jeol' || value.segmentId === 'after_jeol') &&
     typeof value.semanticKey === 'string', 'claim must contain a registered segment and semantic key');
-  return value as ReturnType<typeof claimValue>;
+  return value as { segmentId: MonthlySegmentId; semanticKey: string; tenGod?: string; natalPillar?: PillarSlot };
 }
 
 function researchCopy(claim: InterpretationClaim): { title: string; text: string } {
@@ -166,9 +166,11 @@ export function buildGeneralMonthlyExplorationReport(
     const value = claimValue(claim);
     const segment = facts.segmentsById[value.segmentId];
     const slot = value.natalPillar;
-    requireEvidence(slot !== undefined && SLOTS.includes(slot) &&
-      segment.monthlyBranchRelations[slot].status === 'resolved' &&
-      segment.monthlyBranchRelations[slot].value.relation === 'clash' &&
+    requireEvidence(slot !== undefined && SLOTS.includes(slot),
+      'monthly tension must refer to an actual natal pillar');
+    const relation = segment.monthlyBranchRelations[slot];
+    requireEvidence(relation.status === 'resolved' &&
+      relation.value.relation === 'clash' &&
       claim.factRefs.includes(`temporal.segmentsById.${value.segmentId}.monthlyBranchRelations.${slot}.relation`) &&
       claim.sourceRefs.length > 0, 'unresolved or foreign monthly tension');
     const copy = researchCopy(claim);
