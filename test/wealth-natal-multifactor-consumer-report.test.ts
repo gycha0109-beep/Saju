@@ -176,9 +176,9 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
             /^derivedFacts\.tenGods\.value\.(year|month|day)\.(stem|branch)\.value$/u.test(path)) &&
           section.observedPositions.every(position => section.paragraph.includes(position))
         )).toBe(true);
-        expect(x.report.sections.every(section => knownHour.report.sections.some(candidate =>
+        expect(x.report.sections.every(section => knownHour.execution.claims.some(candidate =>
           candidate.claimType === section.claimType &&
-          candidate.channel === section.channel
+          candidate.state === 'active'
         ))).toBe(true);
         expect(x.report.missing.join(' ')).toContain('시주 없이 실제로 확인된');
         expect(x.report.usefulComplete).toBe(false);
