@@ -25,7 +25,7 @@ describe('consumer reading request adapter', () => {
         requestId: 'menu-' + title,
         text: title,
         referenceDateTime: SEOUL_YEAR_BOUNDARY_REFERENCE,
-        targetPersonRef: title === '궁합' ? 'another-person-ref' : undefined,
+        ...(title === '궁합' ? { targetPersonRef: 'another-person-ref' } : {}),
       });
       expect(result.state, title).toBe('resolved');
       expect(result.request?.intent, title).toEqual(intent);
