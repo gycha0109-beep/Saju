@@ -224,7 +224,11 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     result.appendChild(el('div', messages[payload.messageCode] || payload.messageCode || payload.state, 'state'));
     if (payload.reading) renderReading(payload.reading);
     if (payload.coverage) {
-      result.appendChild(el('div', '추가로 필요한 근거 항목: ' + payload.coverage.missingRequirementCount, 'notice'));
+      const explanation = payload.coverage.explanation;
+      const label = typeof explanation === 'string' && explanation.trim()
+        ? explanation
+        : '추가로 필요한 풀이 근거가 있습니다. (' + payload.coverage.missingRequirementCount + '개)';
+      result.appendChild(el('div', label, 'notice'));
     }
     if (payload.clarification) {
       const text = payload.clarification.kind === 'temporal_scope'
