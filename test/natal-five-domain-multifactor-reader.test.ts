@@ -107,6 +107,31 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(html).not.toContain('<script>');
   });
 
+  it('makes partial evidence and its unresolved gap visible together in the five-domain overview', () => {
+    const chart = sample(3, 10);
+    const original = reports(chart);
+    expect(original.career.sections.length).toBeGreaterThan(0);
+    const first = original.career.sections[0]!;
+    const gap = '다른 직업 해석 축을 뒷받침할 근거가 아직 부족합니다.';
+    const partial: NatalFiveDomainMultifactorReports = {
+      ...original,
+      career: {
+        ...original.career,
+        state: 'partial',
+        sections: [first],
+        missing: [gap],
+      },
+    };
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, partial);
+    const overview = html.split('</nav>')[0]!;
+    expect(overview).toContain('부분 풀이 · 추가 근거 필요');
+    expect(overview).toContain('확인된 부분 해석: ' + first.headline);
+    expect(overview).toContain('아직 설명하지 못하는 부분:</strong> ' + gap);
+    expect(html).toContain(first.paragraph);
+    expect(html).toContain(first.ruleId);
+    expect(html).toContain('출판 및 판매 불가');
+  });
+
   it('does not fabricate five-domain interpretation when birth hour is unknown', () => {
     const chart = sample(3, 10, null);
     const sections = reports(chart);
