@@ -28,4 +28,4 @@ jobs:
       - name: Run synthetic contract tests
         run: npm test --prefix packages/neutral-face-observation
       - name: Verify packable package contents without publishing
-        run: npm pack --dry-run --prefix packages/neutral-face-observation
+        run: cd packages/neutral-face-observation && npm pack --dry-run --ignore-scripts
