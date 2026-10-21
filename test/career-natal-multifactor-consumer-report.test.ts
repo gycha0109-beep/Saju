@@ -249,6 +249,14 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
       section.channel === 'visible_stems' && section.axis === 'tension')).toBe(true);
     expect(found.report.missing.join(' ')).toContain('천간 중심의 독립된 종합 근거가 없어');
     expect(found.report.missing.join(' ')).toContain('부분 풀이만 보여드립니다');
+    const actualAxes = new Set(found.execution.claims.filter(claim =>
+      claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'career' &&
+      claim.state === 'active').map(claim =>
+      (claim.value as { axis: 'execution' | 'responsibility' | 'tension' }).axis));
+    expect(new Set(found.report.sections.map(section => section.axis))).toEqual(actualAxes);
+    expect(found.report.missing.join(' ')).toContain('독립된 핵심 해석이 먼저 필요합니다.');
+    const partialHtml = renderCareerMultifactorResearchHtml(found.report);
+    for (const section of found.report.sections) expect(partialHtml).toContain(section.paragraph);
     for (const section of found.report.sections) {
       expect(section.sourceIds.length).toBeGreaterThan(0);
       expect(section.upstreamClaimIds).toHaveLength(2);
@@ -282,10 +290,23 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(found.report.state).toBe('partial');
     expect(found.report.sections.length).toBeGreaterThan(0);
     expect(found.report.sections.every(s => s.channel === 'branches')).toBe(true);
-    expect(new Set(found.report.sections.map(s => s.axis)).size).toBe(found.report.sections.length);
+    const observedAxes = new Set(found.execution.claims.filter(claim =>
+      claim.taxonomy.tier === 'T8' && claim.taxonomy.category === 'career' &&
+      claim.state === 'active').map(claim =>
+      (claim.value as { axis: 'execution' | 'responsibility' | 'tension' }).axis));
+    // Every distinct observed two-T5 partial interpretation stays visible;
+    // even all three supporting axes cannot manufacture an absent core.
+    expect(new Set(found.report.sections.map(s => s.axis))).toEqual(observedAxes);
+    expect(found.report.sections).toHaveLength(observedAxes.size);
+    expect(found.report.state).toBe('partial');
     expect(found.report.missing.join(' ')).toContain('천간 중심의 독립된 종합 근거가 없어');
     expect(found.report.missing.join(' ')).toContain('완전한 직업 종합풀이');
     const explanation = found.report.missing.join(' ');
+    expect(explanation).toContain('천간 중심의 독립된 핵심 해석이 먼저 필요합니다.');
+    expect(explanation).not.toContain('보조 근거 축 2개가 필요합니다.');
+    if (observedAxes.size === 3) {
+      expect(explanation).toContain('서로 다른 보조 관점 세 가지가 관측되어도');
+    }
     expect(explanation).toMatch(/실행·산출|역할·책임|서로 다른 기준의 조율/u);
     expect(explanation).not.toMatch(/(?:^|[\s·])(?:execution|responsibility|tension)(?:[\s·]|$)/u);
     for(const section of found.report.sections) {
