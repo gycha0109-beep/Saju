@@ -42,7 +42,7 @@ test("fail closed on any bad coordinate and wrong topology",()=>{
   assert.equal(run({coordinateSpace:"mirrored_preview"}).reason,"image_orientation_unknown");
   assert.equal(run({faceCount:2}).reason,"single_face_landmarks_unavailable");
   assert.equal(run({faceLandmarks:landmarks.slice(0,469)}).reason,"unsupported_provider_topology");
-  const bad=structuredClone(landmarks);bad[110].z=NaN;
+  const bad=JSON.parse(JSON.stringify(landmarks));bad[110].z=NaN;
   assert.equal(run({faceLandmarks:bad}).reason,"neutral_landmarks_invalid");
   assert.equal(run({onFrame:undefined}).reason,"neutral_consumer_required");
   assert.equal(run({}).reason,"neutral_consumer_failed");
