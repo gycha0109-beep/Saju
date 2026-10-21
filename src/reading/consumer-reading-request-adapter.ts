@@ -66,20 +66,20 @@ const SEMANTIC_ALIASES: readonly SemanticAlias[] = [
   { aliases: ['부모운', '부모 운'], domain: 'family', relationshipScope: 'parents' },
   { aliases: ['자녀운', '자녀 운'], domain: 'family', relationshipScope: 'children' },
   {
-    aliases: ['연애운', '연애 운', '관계운', '관계 운'],
+    aliases: ['연애·관계', '연애운', '연애 운', '관계운', '관계 운'],
     domain: 'relationship',
     relationshipScope: 'general',
   },
   {
-    aliases: ['배우자운', '배우자 운'],
+    aliases: ['배우자·관계', '배우자운', '배우자 운'],
     domain: 'relationship',
     relationshipScope: 'spouse',
   },
   { aliases: ['궁합'], domain: 'compatibility' },
-  { aliases: ['직업운', '직업 운'], domain: 'career' },
-  { aliases: ['사업운', '사업 운'], domain: 'business' },
-  { aliases: ['재물운', '재물 운'], domain: 'wealth' },
-  { aliases: ['평생 흐름', '인생 흐름'], domain: 'life_stage' },
+  { aliases: ['직업·커리어', '직업운', '직업 운'], domain: 'career' },
+  { aliases: ['사업', '사업운', '사업 운'], domain: 'business' },
+  { aliases: ['재물', '재물운', '재물 운'], domain: 'wealth' },
+  { aliases: ['삶의 단계', '평생 흐름', '인생 흐름'], domain: 'life_stage' },
 ];
 
 const ANNUAL_MARKERS = ['올해', '금년', '연운'] as const;
@@ -102,6 +102,9 @@ const POLITE_SUFFIXES = [
 ] as const;
 
 const DIRECT_GENERAL_PERIOD_ALIASES: Readonly<Record<string, ReadingIntent>> = {
+  올해: { domain: 'general', temporalScope: 'annual' },
+  '이번 달': { domain: 'general', temporalScope: 'monthly' },
+  '이번달': { domain: 'general', temporalScope: 'monthly' },
   연운: { domain: 'general', temporalScope: 'annual' },
   '올해 운': { domain: 'general', temporalScope: 'annual' },
   '올해 운세': { domain: 'general', temporalScope: 'annual' },
@@ -398,6 +401,21 @@ export function normalizeConsumerReadingRequest(
   }
   if (normalizedText.length === 0) {
     return makeResult(input, normalizedText, 'invalid', ['READING_REQUEST_TEXT_REQUIRED'], []);
+  }
+
+  // A screen card is a navigation selection, not an invented interpretation.
+  // Family needs a precise relationship subject; the question card needs text.
+  if (normalizedText === '가족') {
+    return makeResult(input, normalizedText, 'ambiguous',
+      ['MULTIPLE_READING_DOMAINS_DETECTED'], [
+        { domain: 'family', temporalScope: 'natal', relationshipScope: 'parents' },
+        { domain: 'family', temporalScope: 'natal', relationshipScope: 'children' },
+      ]);
+  }
+  if (normalizedText === '지금 고민으로 보기') {
+    return makeResult(input, normalizedText, 'invalid',
+      ['QUESTION_TEXT_REQUIRED'],
+      [{ domain: 'question_specific', temporalScope: 'natal' }]);
   }
 
   if (normalizedText.startsWith('질문:')) {

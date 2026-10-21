@@ -22,6 +22,70 @@ describe('consumer reading request adapter', () => {
     expect(result.profileAuthorizationRef).toBeDefined();
   });
 
+  it('resolves exact visible product menu labels to existing selected reading profiles', () => {
+    const cases = [
+      ['전체 사주', { domain: 'general', temporalScope: 'natal' }],
+      ['직업·커리어', { domain: 'career', temporalScope: 'natal' }],
+      ['재물', { domain: 'wealth', temporalScope: 'natal' }],
+      ['연애·관계', { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'general' }],
+      ['사업', { domain: 'business', temporalScope: 'natal' }],
+      ['배우자·관계', { domain: 'relationship', temporalScope: 'natal', relationshipScope: 'spouse' }],
+      ['삶의 단계', { domain: 'life_stage', temporalScope: 'life_stage' }],
+    ] as const;
+    for (const [text, intent] of cases) {
+      const normalized = normalizeConsumerReadingRequest({ requestId: 'menu-' + text, text });
+      expect(normalized.state, text).toBe('resolved');
+      expect(normalized.request?.intent, text).toEqual(intent);
+      expect(normalized.profileAuthorizationRef, text).toBeDefined();
+    }
+  });
+
+  it('routes the exact year and month screen cards with existing Seoul time requirements', () => {
+    const examples = [
+      ['올해', { scope: 'annual', year: 2027 }],
+      ['이번 달', { scope: 'monthly', year: 2027, month: 1 }],
+    ] as const;
+    for (const [text, period] of examples) {
+      const normalized = normalizeConsumerReadingRequest({
+        requestId: 'menu-' + text, text,
+        referenceDateTime: SEOUL_YEAR_BOUNDARY_REFERENCE,
+      });
+      expect(normalized.state, text).toBe('resolved');
+      expect(normalized.request?.intent.domain, text).toBe('general');
+      expect(normalized.request?.targetPeriod, text).toMatchObject(period);
+      const absent = normalizeConsumerReadingRequest({
+        requestId: 'menu-missing-time-' + text, text,
+      });
+      expect(absent.state, text).toBe('invalid');
+      expect(absent.reasonCodes).toEqual(['REFERENCE_DATETIME_REQUIRED_FOR_RELATIVE_PERIOD']);
+    }
+  });
+
+  it('asks for parent/child scope or an actual question instead of inventing family or question meaning', () => {
+    const family = normalizeConsumerReadingRequest({ requestId: 'menu-family', text: '가족' });
+    expect(family.state).toBe('ambiguous');
+    expect(family.candidateIntents).toEqual([
+      { domain: 'family', temporalScope: 'natal', relationshipScope: 'children' },
+      { domain: 'family', temporalScope: 'natal', relationshipScope: 'parents' },
+    ]);
+    expect(family.request).toBeUndefined();
+
+    const question = normalizeConsumerReadingRequest({
+      requestId: 'menu-question', text: '지금 고민으로 보기',
+    });
+    expect(question.state).toBe('invalid');
+    expect(question.reasonCodes).toEqual(['QUESTION_TEXT_REQUIRED']);
+    expect(question.request).toBeUndefined();
+
+    const match = normalizeConsumerReadingRequest({
+      requestId: 'menu-compatibility', text: '궁합',
+    });
+    expect(match.state).toBe('invalid');
+    expect(match.reasonCodes).toEqual([
+      'TARGET_PERSON_REFERENCE_REQUIRED_FOR_COMPATIBILITY_INTENT',
+    ]);
+  });
+
   it('normalizes explicit parent, child, relationship and spouse consumer semantics without pillar heuristics', () => {
     const cases = [
       ['부모운', { domain: 'family', temporalScope: 'natal', relationshipScope: 'parents' }],
