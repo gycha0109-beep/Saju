@@ -64,6 +64,22 @@ const LIMITATIONS = [
   '소득, 자산 규모, 투자 수익, 소비 습관이나 미래 재물 사건을 예측하지 않습니다.',
   '공식 게시·저장·판매에 사용할 수 없는 내부 실험입니다.',
 ] as const;
+
+function unknownHourCalculatedContext(snapshot: CanonicalSajuSnapshot): string {
+  const slots = [
+    ['year', '연주'], ['month', '월주'], ['day', '일주'],
+  ] as const;
+  const observed = slots.map(([slot, label]) => {
+    const fact = snapshot.pillars[slot];
+    return label + ' ' + (fact.status === 'resolved'
+      ? fact.value.stem.value + fact.value.branch.value
+      : '미확정');
+  });
+  return '출생시각이 없어도 확인 가능한 본인 명식의 계산 사실은 ' +
+    observed.join(' · ') + '입니다. 이는 실제 명식의 간지 관찰일 뿐 ' +
+    '재물의 많고 적음이나 다중 근거 T8 풀이를 뜻하지 않습니다.';
+}
+
 function guard(v: unknown, message: string): asserts v {
   if (!v) throw new TypeError('Wealth multifactor: ' + message);
 }
@@ -201,16 +217,14 @@ export function buildWealthNatalMultifactorReport(
     claims.every(c => selected.has(c.claimId)) &&
     (claims.length === 0 || selection.evidence !== undefined),
     'Wealth meaning not selected by existing ReadingIntent/EvidenceSelector');
-  const sourceBound = claims.map(c => toSection(c, snapshot, execution, registry))
-    .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
-      (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
-  // An unknown birth hour does not erase year/month/day observations that have
-  // exact source-bound upstream T5 and T8 provenance. Never include an hour
-  // fact from an unresolved or guessed scenario, and never certify full MUR.
+  // Unknown birth hour makes the canonical Ten-God chart unavailable. The
+  // existing T5/T8 engine cannot authorize a non-scenario composite Claim.
+  // Do not project hypothetical partial meanings out of pillar observations.
   const result = snapshot.completeness.birthTimeKnown
-    ? sourceBound
-    : sourceBound.filter(section => section.observedFactPaths.every(path =>
-        !path.includes('.hour.')));
+    ? claims.map(c => toSection(c, snapshot, execution, registry))
+        .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
+          (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
+    : [];
   // Prefer the 3-input core. When not observed, a narrower two-input core can
   // still be rendered, but completion needs two OTHER independently grounded axes.
   const core = result.find(s => s.axis === 'core') ??
@@ -237,9 +251,7 @@ export function buildWealthNatalMultifactorReport(
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly WealthNatalMultifactorSection[] = chosen;
   if(!snapshot.completeness.birthTimeKnown) {
-    missing.unshift(result.length > 0
-      ? '출생시각 미상: 시주 없이 실제로 확인된 연·월·일 계산 근거로만 부분 풀이를 제공합니다. 시주를 포함한 전체 원국 종합은 보류합니다.'
-      : '출생시각 미상: 시주를 포함하는 전체 원국 종합은 보류하며 연·월·일에서도 현재 선택 가능한 복합 근거가 부족합니다.');
+    missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 재물의 다중 근거 T8 해석은 보류합니다.');
   }
   return {
     snapshotId: snapshot.snapshotId,
@@ -247,7 +259,8 @@ export function buildWealthNatalMultifactorReport(
     version: WEALTH_NATAL_MULTIFACTOR_REPORT_VERSION,
     state,
     title: '나의 자원과 재물 주제를 읽는 구조적 출발점',
-    introduction: '실제 명식의 십신 관계를 바탕으로 가치를 만들어 내는 과정, 자원을 다루는 기준, 준비와 배분 사이의 구조를 함께 살펴봅니다. 수입이나 재산을 예측하는 판정이 아닌 전통 명리 연구 후보입니다.',
+    introduction: '실제 명식의 십신 관계를 바탕으로 가치를 만들어 내는 과정, 자원을 다루는 기준, 준비와 배분 사이의 구조를 함께 살펴봅니다. 수입이나 재산을 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
+      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
