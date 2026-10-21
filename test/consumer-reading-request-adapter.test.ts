@@ -240,6 +240,77 @@ describe('consumer reading request adapter', () => {
     ]);
   });
 
+  it('makes an exact question-menu topic reach the existing governed natal reading without inventing T11 meaning', () => {
+    for (const topic of ['직업운', '재물운', '사업운', '연애운', '일반 사주']) {
+      const direct = normalizeConsumerReadingRequest({ requestId: 'same-topic', text: topic });
+      const fromQuestion = normalizeConsumerReadingRequest({
+        requestId: 'same-topic',
+        text: `질문: ${topic} 알려주세요?`,
+      });
+      expect(fromQuestion.state, topic).toBe('resolved');
+      expect(fromQuestion.request?.intent, topic).toEqual(direct.request?.intent);
+      expect(fromQuestion.profileRef, topic).toEqual(direct.profileRef);
+      expect(fromQuestion.profileAuthorizationRef, topic).toEqual(direct.profileAuthorizationRef);
+      expect(fromQuestion.request?.question, topic).toBeUndefined();
+      expect(fromQuestion.constraints.mayGenerateInterpretationClaims).toBe(false);
+    }
+  });
+
+  it('reuses governed annual/monthly period guards when an exact topic comes from the question menu', () => {
+    const annual = normalizeConsumerReadingRequest({
+      requestId: 'question-annual',
+      text: '질문: 올해 사업운',
+      referenceDateTime: SEOUL_YEAR_BOUNDARY_REFERENCE,
+    });
+    expect(annual.state).toBe('resolved');
+    expect(annual.request?.intent).toEqual({ domain: 'business', temporalScope: 'annual' });
+    expect(annual.request?.targetPeriod).toMatchObject({
+      scope: 'annual', year: 2027, timeZone: 'Asia/Seoul',
+    });
+    const monthly = normalizeConsumerReadingRequest({
+      requestId: 'question-monthly',
+      text: '질문: 이번 달 재물운',
+      referenceDateTime: SEOUL_YEAR_BOUNDARY_REFERENCE,
+    });
+    expect(monthly.state).toBe('resolved');
+    expect(monthly.request?.intent).toEqual({ domain: 'wealth', temporalScope: 'monthly' });
+    expect(monthly.request?.targetPeriod).toMatchObject({ scope: 'monthly', year: 2027, month: 1 });
+    const noReference = normalizeConsumerReadingRequest({
+      requestId: 'question-annual-without-reference',
+      text: '질문: 올해 사업운',
+    });
+    expect(noReference.state).toBe('invalid');
+    expect(noReference.reasonCodes).toEqual(['REFERENCE_DATETIME_REQUIRED_FOR_RELATIVE_PERIOD']);
+  });
+
+  it('keeps free questions, conflicting topic phrases and compatibility guards outside automatic domain routing', () => {
+    const openQuestion = normalizeConsumerReadingRequest({
+      requestId: 'open-question',
+      text: '질문: 지금 이직해야 할까요?',
+    });
+    expect(openQuestion.state).toBe('resolved');
+    expect(openQuestion.request?.intent).toEqual({
+      domain: 'question_specific', temporalScope: 'natal',
+    });
+    expect(openQuestion.request?.question).toBe('지금 이직해야 할까요');
+
+    const multiDomain = normalizeConsumerReadingRequest({
+      requestId: 'two-domain-question',
+      text: '질문: 직업운 재물운',
+    });
+    expect(multiDomain.request?.intent.domain).toBe('question_specific');
+    expect(multiDomain.request?.question).toBe('직업운 재물운');
+
+    const noPartner = normalizeConsumerReadingRequest({
+      requestId: 'question-compatibility-missing',
+      text: '질문: 궁합',
+    });
+    expect(noPartner.state).toBe('invalid');
+    expect(noPartner.reasonCodes).toEqual([
+      'TARGET_PERSON_REFERENCE_REQUIRED_FOR_COMPATIBILITY_INTENT',
+    ]);
+  });
+
   it('requires explicit question mode and never promotes unknown free text to question-specific intent', () => {
     const question = normalizeConsumerReadingRequest({
       requestId: 'question-1',

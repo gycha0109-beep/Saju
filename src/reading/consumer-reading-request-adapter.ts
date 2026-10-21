@@ -406,6 +406,20 @@ export function normalizeConsumerReadingRequest(
     if (question.length === 0) {
       return makeResult(input, normalizedText, 'invalid', ['QUESTION_TEXT_REQUIRED'], [intent]);
     }
+
+    // An exact, already-governed menu topic is a request for that existing
+    // reading, NOT a newly inferred T11 answer. Reuse the identical profile,
+    // explicit period and second-person guards as its non-question entrypoint.
+    // Open-ended questions must stay in the original question-specific route.
+    const existingTopicIntent =
+      containsAny(question, ANNUAL_MARKERS) && containsAny(question, MONTHLY_MARKERS)
+        ? undefined
+        : DIRECT_GENERAL_PERIOD_ALIASES[question] ??
+          directNatalIntent(question) ??
+          parseTemporalPrefix(question);
+    if (existingTopicIntent !== undefined) {
+      return validatedResolvedResult(input, normalizedText, existingTopicIntent);
+    }
     return validatedResolvedResult(input, normalizedText, intent, question);
   }
 

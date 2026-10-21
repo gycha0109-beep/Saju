@@ -61,6 +61,15 @@ function question(text: string) {
 }
 
 describe('question menu: link only preexisting real-chart natal evidence', () => {
+  it('keeps exact existing menu questions with the original authorized product reader', () => {
+    const result = normalizeConsumerReadingRequest({
+      requestId: 'question-existing-menu', text: '질문: 재물운',
+    });
+    expect(result.state).toBe('resolved');
+    expect(result.request?.intent).toEqual({ domain: 'wealth', temporalScope: 'natal' });
+    expect(result.request?.question).toBeUndefined();
+  });
+
   it('shows selected wealth research Korean paragraphs, provenance, and limitations without inventing T11 answer', () => {
     const { snapshot, reports } = run();
     const selected = buildQuestionRelatedNatalReading(
@@ -119,11 +128,11 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
   it('rejects all mixed-chart reports, foreign-domain requests, and escapes question HTML', () => {
     const { snapshot, reports } = run();
     const other = run(true, 11);
-    expect(() => buildQuestionRelatedNatalReading(snapshot, question('재물운'), {
+    expect(() => buildQuestionRelatedNatalReading(snapshot, question('재물운을 알려주세요'), {
       ...reports, wealth: other.reports.wealth,
     })).toThrow();
     expect(() => buildQuestionRelatedNatalReading(snapshot, {
-      ...question('재물운'), intent: { domain: 'wealth', temporalScope: 'natal' },
+      ...question('재물운을 알려주세요'), intent: { domain: 'wealth', temporalScope: 'natal' },
     }, reports)).toThrow();
     const html = renderQuestionRelatedNatalReadingHtml(
       buildQuestionRelatedNatalReading(snapshot,

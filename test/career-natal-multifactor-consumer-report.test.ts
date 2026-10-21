@@ -40,8 +40,9 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
       r.output.claimType.startsWith('CAREER_NATAL_TEN_GOD_'))).toBe(false);
   });
 
-  it('adds source-bounded wealth/officer responsibility and wealth/resource tension as actual two-input Career meanings', () => {
+  it('keeps officer/resource preparation, wealth/officer responsibility, and wealth/resource tension as distinct source-owned two-input Career meanings', () => {
     for (const [pattern, families, axis] of [
+      ['OFFICER_RESOURCE', ['officer', 'resource'], 'preparation'],
       ['WEALTH_OFFICER', ['wealth', 'officer'], 'responsibility'],
       ['WEALTH_RESOURCE', ['wealth', 'resource'], 'tension'],
     ] as const) {
@@ -61,6 +62,62 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
       }
     }
   });
+
+  it('uses source-owned preparation as a genuine non-tension axis on real birth charts', () => {
+    const patterns = CAREER_MULTIFACTOR_RULES.filter(rule =>
+      (rule.output.value as {axis:string}).axis !== 'tension');
+    expect(new Set(patterns.map(rule =>
+      (rule.output.value as {axis:string}).axis))).toEqual(
+      new Set(['execution', 'preparation', 'responsibility']),
+    );
+    const preparation = CAREER_MULTIFACTOR_RULES.filter(rule =>
+      (rule.output.value as {pattern:string}).pattern === 'OFFICER_RESOURCE');
+    expect(preparation).toHaveLength(2);
+    expect(preparation.every(rule =>
+      (rule.output.value as {axis:string}).axis === 'preparation' &&
+      rule.quality.provenanceQuality === 'secondary_only' &&
+      rule.quality.reviewerStatus === 'unreviewed' &&
+      rule.status === 'research')).toBe(true);
+
+    let realPreparation: ReturnType<typeof run> | undefined;
+    let realNonTensionComplete: ReturnType<typeof run> | undefined;
+    outer: for (const month of [2,3,4,5,6,7,8,9,10,11]) {
+      for (const day of [3,7,11,17,23]) {
+        for (const hour of [0,12]) {
+          const actual = run(month, day, hour);
+          const observed = actual.report.sections.find(section =>
+            section.pattern === 'OFFICER_RESOURCE' && section.axis === 'preparation');
+          if (observed && !realPreparation) realPreparation = actual;
+          if (actual.report.state === 'complete' &&
+            actual.report.sections.length === 3 &&
+            actual.report.sections.every(section => section.axis !== 'tension') &&
+            new Set(actual.report.sections.map(section => section.axis)).size === 3) {
+            realNonTensionComplete = actual;
+          }
+          if (realPreparation && realNonTensionComplete) break outer;
+        }
+      }
+    }
+    expect(realPreparation, 'real calculated natal chart with officer/resource preparation text')
+      .toBeDefined();
+    expect(realNonTensionComplete,
+      'a real chart must be able to meet the research MUR without mandatory tension')
+      .toBeDefined();
+    if (!realPreparation || !realNonTensionComplete) return;
+    const observed = realPreparation.report.sections.find(section =>
+      section.pattern === 'OFFICER_RESOURCE' && section.axis === 'preparation');
+    expect(observed?.paragraph).toContain('같은 ');
+    expect(observed?.paragraph).toContain('학습·준비');
+    expect(observed?.sourceIds).toHaveLength(2);
+    expect(observed?.upstreamClaimIds).toHaveLength(2);
+    expect(observed?.calculatedFactPaths.length).toBeGreaterThanOrEqual(2);
+    expect(realNonTensionComplete.report.sections.map(section => section.axis).sort())
+      .toEqual(['execution', 'preparation', 'responsibility']);
+    expect(realNonTensionComplete.report.researchOnly).toBe(true);
+    expect(realNonTensionComplete.report.usefulComplete).toBe(false);
+    expect(realNonTensionComplete.report.mayPublish).toBe(false);
+    expect(realNonTensionComplete.report.maySell).toBe(false);
+  }, 120000);
 
   it('makes meaning-specific differences on REAL birth-calculated charts, not shuffled fixture labels', () => {
     const observed = [];
