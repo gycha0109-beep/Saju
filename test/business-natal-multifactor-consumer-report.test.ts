@@ -168,51 +168,39 @@ describe('actual-source Business natal T5→T8→Korean five-domain report', () 
     expect(found).toBe(true);
   }, 60000);
 
-  it('does not infer full-chart outcomes when birth hour is unknown but keeps source-backed evidence', () => {
-    const x = run(3,10,false);
-    expect(x.report.state).not.toBe('complete');
-    expect(x.report.sections.every(section =>
-      section.observedFactPaths.every(path => !path.includes('.hour.')))).toBe(true);
-    expect(x.report.missing.join(' ')).toContain('출생시각 미상');
+  it('shows actual resolved natal pillars, not fabricated T8 meaning, with unknown birth hour', () => {
+    const x = run(3, 10, false);
+    expect(x.snapshot.derivedFacts.tenGods.status).toBe('unavailable');
+    expect(x.report.state).toBe('insufficient');
+    expect(x.report.sections).toHaveLength(0);
+    expect(x.report.missing.join(' ')).toContain('십신(T5) 전체가 미확정');
+    expect(x.report.introduction).toContain('출생시각이 없어도 확인 가능한');
+    expect(x.report.introduction).toContain('다중 근거 T8 해석을 뜻하지 않습니다');
+    for (const [slot, label] of [
+      ['year', '연주'], ['month', '월주'], ['day', '일주'],
+    ] as const) {
+      const fact = x.snapshot.pillars[slot];
+      const observed = fact.status === 'resolved'
+        ? fact.value.stem.value + fact.value.branch.value
+        : '미확정';
+      expect(x.report.introduction).toContain(label + ' ' + observed);
+    }
     expect(x.report.usefulComplete).toBe(false);
+    expect(x.report.researchOnly).toBe(true);
     expect(x.report.mayPublish).toBe(false);
     expect(x.report.maySell).toBe(false);
   });
 
-  it('reads actual chart-specific non-hour T8 evidence as Korean partial paragraphs', () => {
-    const signatures = new Set<string>();
-    let found = 0;
-    outer: for (const month of [1,2,3,4,5,6,7,8,9,10,11,12]) {
-      for (const day of [3,7,11,17,23]) {
-        const x = run(month, day, false);
-        if (!x.report.sections.length) continue;
-        found++;
-        expect(x.report.state).toBe('partial');
-        expect(x.report.missing.join(' ')).toContain('실제 연·월·일 근거');
-        for (const section of x.report.sections) {
-          expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
-          expect(section.sourceIds.length).toBeGreaterThan(0);
-          expect(section.upstreamClaimIds.length).toBeGreaterThanOrEqual(2);
-          expect(section.observedFactPaths.length).toBe(section.observedPositions.length);
-          expect(section.observedFactPaths.length).toBeGreaterThanOrEqual(2);
-          expect(section.observedFactPaths.every(path =>
-            /^derivedFacts\.tenGods\.value\.(year|month|day)\.(stem|branch)\.value$/u.test(path)))
-            .toBe(true);
-          expect(section.observedPositions.every(position =>
-            section.paragraph.includes(position))).toBe(true);
-        }
-        expect(x.report.researchOnly).toBe(true);
-        expect(x.report.usefulComplete).toBe(false);
-        expect(x.report.mayPublish).toBe(false);
-        expect(x.report.maySell).toBe(false);
-        signatures.add(x.report.sections.map(section =>
-          section.pattern + ':' + section.channel).join('|'));
-        if (signatures.size > 1) break outer;
-      }
-    }
-    expect(found).toBeGreaterThan(0);
-    expect(signatures.size).toBeGreaterThan(1);
-  }, 120000);
+  it('keeps the same unknown-hour factual context on replay but changes with a real chart', () => {
+    const first = run(3, 10, false);
+    const replay = run(3, 10, false);
+    const second = run(4, 12, false);
+    expect(replay.report).toEqual(first.report);
+    expect(second.report.introduction).not.toEqual(first.report.introduction);
+    expect(first.report.sections).toHaveLength(0);
+    expect(second.report.sections).toHaveLength(0);
+    expect(first.report.missing).toEqual(second.report.missing);
+  });
 
   it('rejects cross-chart and tampered Business claim meaning', () => {
     const x = run(3,10);
