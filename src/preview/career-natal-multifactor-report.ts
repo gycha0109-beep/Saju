@@ -8,7 +8,7 @@ import {
   CAREER_MULTIFACTOR_PACK,
 } from '../research/career-natal-multifactor-candidate.js';
 
-export const CAREER_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
+export const CAREER_MULTIFACTOR_REPORT_VERSION = '0.4.0-research-preview' as const;
 type Axis = 'execution' | 'preparation' | 'responsibility' | 'tension';
 const AXIS_LABELS: Readonly<Record<Axis, string>> = {
   execution: '실행·산출',
@@ -237,9 +237,16 @@ export function buildCareerMultifactorResearchReport(
   // (preparation) and wealth→officer (responsibility). Do not require
   // tension when three other chart-grounded, non-overlapping axes exist.
   const AXES: readonly Axis[] = ['execution', 'preparation', 'responsibility', 'tension'];
-  const units = active.map(claim => entry(claim, snapshot, execution, registry))
+  const sourceBound = active.map(claim => entry(claim, snapshot, execution, registry))
     .sort((a, b) => AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
       (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
+  // A missing hour cannot invalidate exact chart-derived year/month/day T8
+  // evidence. Filter hour-dependent readings before core/support MUR selection.
+  // Never treat this narrower chart as a four-pillar complete Career report.
+  const units = snapshot.completeness.birthTimeKnown
+    ? sourceBound
+    : sourceBound.filter(section => section.calculatedFactPaths.every(path =>
+        !path.includes('.hour.')));
   const visible = units.filter(unit => unit.channel === 'visible_stems');
   // A tension-only visible-stem finding is meaningful supporting evidence,
   // but cannot stand in for the independent central Career interpretation.
@@ -276,7 +283,8 @@ export function buildCareerMultifactorResearchReport(
     : [];
   const shown = primary ? [primary, ...supporting] : partialEvidence;
   const enough = primary !== undefined && supporting.length >= 2;
-  const state: Status = enough ? 'complete' : units.length > 0 ? 'partial' : 'insufficient';
+  const state: Status = snapshot.completeness.birthTimeKnown && enough
+    ? 'complete' : units.length > 0 ? 'partial' : 'insufficient';
   const missing: string[] = [];
   if (!primary) {
     missing.push(MUR[0]!);
@@ -303,17 +311,10 @@ export function buildCareerMultifactorResearchReport(
       : ' 서로 다른 보조 관점 세 가지가 관측되어도 핵심 근거 부재를 대신할 수 없습니다.'}`);
   }
   if (!snapshot.completeness.birthTimeKnown) {
-    // Never convert an unknown-hour chart into a four-pillar comprehensive claim.
-    return {
-      version: CAREER_MULTIFACTOR_REPORT_VERSION,
-      snapshotId: snapshot.snapshotId,
-      calculationHash: snapshot.calculationHash,
-      state: 'insufficient', title: '직업 해석 — 출생시간 미상',
-      introduction: '시주가 확정되지 않아 4기둥 전체를 전제하는 종합 결론을 보류합니다.',
-      sections: [], limitations: ['관측된 일부 십신은 전체 명식의 결론으로 확장하지 않습니다.'],
-      missing: ['출생시각 미상', ...MUR],
-      researchOnly: true, mayPublish: false, maySell: false, usefulComplete: false,
-    };
+    missing.unshift('출생시각 미상');
+    missing.push(units.length > 0
+      ? '시주를 사용하지 않고 실제 연·월·일 계산 근거에 연결된 직업 해석만 부분적으로 제공합니다. 네 기둥 전체의 종합풀이는 보류합니다.'
+      : '시주가 확정되지 않았으며 현재 연·월·일에서도 선택할 수 있는 독립적인 직업 해석 근거가 부족합니다.');
   }
   return {
     version: CAREER_MULTIFACTOR_REPORT_VERSION,
