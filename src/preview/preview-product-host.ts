@@ -8,6 +8,7 @@ import type {
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import {
   createMyeonghwaProductHost,
+  createMyeonghwaPreviewNatalFiveDomainHost,
   parseProductHostReadingRequest,
   type MyeonghwaProductHost,
   type MyeonghwaProductHostDependencies,
@@ -665,6 +666,9 @@ export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
 
   const now = new Date();
   const defaultHost = createDefaultPreviewProductHost(now);
+  const fiveDomainPreviewHost = createMyeonghwaPreviewNatalFiveDomainHost(
+    createApprovedSourceProofPreviewDependenciesV1(now),
+  );
   // General's integrated bounded T8 registry excludes the research-only
   // cross-family consumer synthesis bundled by the specialist registry.
   const generalHost = createGeneralNatalIntegratedPreviewProductHost();
@@ -682,5 +686,6 @@ export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
       if (lane === 'spouse_position_only') return (await spouseHost()).requestReading(body);
       return defaultHost.requestReading(body);
     },
+    requestNatalFiveDomains: fiveDomainPreviewHost.requestNatalFiveDomains,
   };
 }

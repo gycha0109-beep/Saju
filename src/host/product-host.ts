@@ -1,4 +1,10 @@
 import { randomUUID } from 'node:crypto';
+import {
+  NATAL_FIVE_DOMAIN_PRODUCT_ORDER,
+  assembleNatalFiveDomainProductResponses,
+  type NatalFiveDomainProductBundle,
+} from '../reading/natal-five-domain-product-service.js';
+
 import type {
   BirthInput,
   CalendarType,
@@ -115,6 +121,11 @@ export interface MyeonghwaProductHostDependencies {
 
 export interface MyeonghwaProductHost {
   requestReading(body: unknown): Promise<ProductReadingResponse>;
+  /**
+   * Preview-only batch. The production reading route never admits this method.
+   * Optional for external/mocked hosts implementing the older interface.
+   */
+  requestNatalFiveDomains?(body: unknown): Promise<NatalFiveDomainProductBundle>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -329,6 +340,23 @@ export function parseProductHostReadingRequest(body: unknown): ProductHostReadin
   };
 }
 
+/** Strict preview batch request: one birth input, no untrusted reading selector. */
+function parseNatalFiveDomainRequest(body: unknown): {
+  birth: BirthInput;
+  outputPreferences?: ProductHostReadingOutputPreferences;
+} {
+  if (!isRecord(body)) {
+    throw new ProductHostRequestError('INVALID_REQUEST_BODY', 'Request body must be an object.');
+  }
+  assertOnlyKeys(body, ['birth', 'outputPreferences'], 'INVALID_REQUEST_BODY');
+  const birth = parseBirth(body.birth);
+  const outputPreferences = parseReadingOutputPreferences(body.outputPreferences);
+  return {
+    birth,
+    ...(outputPreferences === undefined ? {} : { outputPreferences }),
+  };
+}
+
 function toBirthInput(parsed: ProductHostBirthRequest): BirthInput {
   const calendarType = parseCalendarType(parsed.calendarType);
   return {
@@ -455,6 +483,58 @@ export function createMyeonghwaProductHost(
   return {
     async requestReading(body: unknown): Promise<ProductReadingResponse> {
       return (await runProductHostReadingInternals(dependencies, body)).response;
+    },
+  };
+}
+
+/** Dedicated Preview-only batch host. Does not widen the frozen public ProductHost facade. */
+export function createMyeonghwaPreviewNatalFiveDomainHost(
+  dependencies: MyeonghwaProductHostDependencies,
+): Required<Pick<MyeonghwaProductHost, 'requestNatalFiveDomains'>> {
+  assertDependencies(dependencies);
+  return {
+    async requestNatalFiveDomains(body: unknown): Promise<NatalFiveDomainProductBundle> {
+      const parsed = parseNatalFiveDomainRequest(body);
+      const context: ProductHostExecutionContext = {
+        requestId: nextRequestId(dependencies.requestIdFactory),
+        requestedAt: nextRequestedAt(dependencies.requestNowFactory),
+      };
+      // One birth calculation; each domain independently re-enters governed
+      // interpretation, preventing one domain-specific rule-set from being
+      // accidentally reused as authority for another.
+      const snapshot = await dependencies.calculate(parsed.birth, context);
+      const responses: ProductReadingResponse[] = [];
+      for (const topic of NATAL_FIVE_DOMAIN_PRODUCT_ORDER) {
+        const domainContext: ProductHostExecutionContext = {
+          ...context,
+          requestId: context.requestId + ':' + topic.domain,
+        };
+        const input: ConsumerReadingRequestInput = {
+          requestId: domainContext.requestId,
+          text: topic.requestText,
+          referenceDateTime: context.requestedAt,
+          ...(parsed.outputPreferences === undefined
+            ? {}
+            : { outputPreferences: parsed.outputPreferences }),
+        };
+        const normalization = normalizeConsumerReadingRequest(input);
+        if (normalization.state !== 'resolved' || normalization.request === undefined) {
+          throw new TypeError('Governed natal domain profile is unavailable: ' + topic.domain);
+        }
+        const { interpretation, registry } = await dependencies.interpret(
+          snapshot, domainContext, undefined, normalization.request,
+        );
+        const result = await runProductReadingInternals(
+          snapshot,
+          interpretation,
+          registry,
+          input,
+          dependencies.readingOptionsForRequest?.(domainContext) ?? dependencies.readingOptions,
+          dependencies.legacyNarrativeRuntime,
+        );
+        responses.push(result.response);
+      }
+      return assembleNatalFiveDomainProductResponses(snapshot, responses);
     },
   };
 }

@@ -38,6 +38,8 @@ export const PRODUCT_READING_LIFECYCLE_HEADER =
   'x-myeonghwa-reading-lifecycle' as const;
 export const PRODUCT_PREVIEW_READING_HTTP_PATH =
   '/api/preview/readings' as const;
+export const PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH =
+  '/api/preview/natal-five-domains' as const;
 export const PRODUCT_READING_PREVIEW_LIFECYCLE = 'preview' as const;
 
 export interface MyeonghwaProductHostServerOptions {
@@ -362,6 +364,50 @@ function createMyeonghwaHttpServer(
         sendJson(response, 200, grounding, {
           [CHARACTER_GROUNDING_ADMISSION_HEADER]:
             CHARACTER_GROUNDING_ADMISSION_VERSION,
+        });
+      } catch (error) {
+        if (!handleKnownError(response, error)) sendReadingOperationalError(response);
+      }
+      return;
+    }
+    // A Preview-only transport; not available on production /api/readings
+    // unless a distinct Preview host was explicitly supplied.
+    if (path === PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH) {
+      const previewHost = readingRoute.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE
+        ? readingHost
+        : secondaryReadingRoute?.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE
+          ? secondaryReadingHost
+          : undefined;
+      if (previewHost?.requestNatalFiveDomains === undefined) {
+        sendJson(response, 404, {
+          error: { code: 'HOST_ROUTE_NOT_FOUND', message: 'Route not found.' },
+        });
+        return;
+      }
+      if (method !== 'POST') {
+        response.setHeader('allow', 'POST');
+        sendJson(response, 405, {
+          error: { code: 'HOST_METHOD_NOT_ALLOWED', message: 'POST is required.' },
+        });
+        return;
+      }
+      if (authorizeReadingRequest !== undefined && !authorizeReadingRequest(request)) {
+        sendAuthRequired(response);
+        return;
+      }
+      try {
+        const body = await readJsonBody(request, bodyLimit);
+        const bundle = await previewHost.requestNatalFiveDomains(body);
+        // Preserve each independently admitted domain response. The batch
+        // does not authorize new combined meanings or Official delivery.
+        const admitted = {
+          ...bundle,
+          domains: bundle.domains.map(item => ({
+            ...item, response: admitProductReadingResponse(item.response),
+          })),
+        };
+        sendJson(response, 200, admitted, {
+          [PRODUCT_READING_LIFECYCLE_HEADER]: PRODUCT_READING_PREVIEW_LIFECYCLE,
         });
       } catch (error) {
         if (!handleKnownError(response, error)) sendReadingOperationalError(response);

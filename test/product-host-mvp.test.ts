@@ -21,10 +21,16 @@ import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-sup
 import { createGeneralNatalUsefulReadingCandidateRegistry } from '../src/research/general-natal-useful-reading-candidate.js';
 import {
   createMyeonghwaProductHost,
+  createMyeonghwaPreviewNatalFiveDomainHost,
   parseProductHostReadingRequest,
   type MyeonghwaProductHostDependencies,
 } from '../src/host/product-host.js';
-import { createMyeonghwaProductHostServer } from '../src/host/http-server.js';
+import {
+  createMyeonghwaProductHostServer,
+  createMyeonghwaProductionPreviewHostServer,
+  createMyeonghwaProductionProductHostServer,
+  PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH,
+} from '../src/host/http-server.js';
 
 const TEST_ONLY_CALCULATION_POLICY: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/product-host-test-only',
@@ -448,6 +454,120 @@ describe('Myeonghwa Product Host MVP', () => {
     expect(result.state).toBe('temporarily_unavailable');
     expect(result.reading).toBeUndefined();
     expect(adapter.calls).toHaveLength(0);
+  });
+
+  it('calculates one natal chart but interprets five governed domains separately in the preview batch', async () => {
+    const base = dependencies((snapshot) => [wealthOfficialClaim(snapshot)]);
+    let calculationCalls = 0;
+    const observedIntents: string[] = [];
+    const host = createMyeonghwaPreviewNatalFiveDomainHost({
+      ...base,
+      async calculate(input, context) {
+        calculationCalls += 1;
+        return base.calculate(input, context);
+      },
+      async interpret(snapshot, context, temporal, readingRequest) {
+        expect(temporal).toBeUndefined();
+        observedIntents.push(readingRequest?.intent.domain ?? '<none>');
+        // Domain-specific interpretation is evaluated independently even
+        // though all domains share a single calculated chart.
+        const result = await base.interpret(snapshot, context, temporal, readingRequest);
+        return {
+          ...result,
+          interpretation: {
+            ...result.interpretation,
+            claims: readingRequest?.intent.domain === 'wealth'
+              ? [wealthOfficialClaim(snapshot)] : [],
+          },
+        };
+      },
+    });
+    const bundle = await host.requestNatalFiveDomains!({
+      birth: validBody.birth,
+      outputPreferences: { preferredDetail: 'standard' },
+    });
+    expect(calculationCalls).toBe(1);
+    expect(observedIntents).toEqual([
+      'general','career','wealth','business','relationship',
+    ]);
+    expect(bundle.domains.map(item => item.domain)).toEqual(observedIntents);
+    expect(bundle.domains.find(item => item.domain === 'wealth')?.state).toBe('delivered');
+    expect(bundle.deliveryState).toBe('some_delivered');
+    expect(bundle.deliveredDomainCount).toBe(1);
+    expect(bundle.domains.every(item =>
+      !('audit' in item.response) && !('artifact' in item.response)
+    )).toBe(true);
+    expect(JSON.stringify(bundle)).not.toContain('claim-product-host-wealth-official');
+    await expect(host.requestNatalFiveDomains!({ birth: validBody.birth, extra: true }))
+      .rejects.toMatchObject({ code: 'INVALID_REQUEST_BODY' });
+  });
+
+  it('serves the five-domain bundle only on authenticated Preview HTTP, not production reading', async () => {
+    const deps = dependencies((snapshot) => [wealthOfficialClaim(snapshot)]);
+    const host = {
+      ...createMyeonghwaProductHost(deps),
+      ...createMyeonghwaPreviewNatalFiveDomainHost(deps),
+    };
+    const preview = createMyeonghwaProductionPreviewHostServer(host, {
+      serviceBearer: 'bundle-preview-test-bearer',
+    });
+    await new Promise<void>(resolve => preview.listen(0, '127.0.0.1', resolve));
+    const previewAddr = preview.address() as AddressInfo;
+    const previewUrl = 'http://127.0.0.1:' + previewAddr.port +
+      PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH;
+    try {
+      const unauthed = await fetch(previewUrl, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ birth: validBody.birth }),
+      });
+      expect(unauthed.status).toBe(401);
+      const wrongMethod = await fetch(previewUrl, {
+        headers: { authorization: 'Bearer bundle-preview-test-bearer' },
+      });
+      expect(wrongMethod.status).toBe(405);
+      const response = await fetch(previewUrl, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: 'Bearer bundle-preview-test-bearer',
+        },
+        body: JSON.stringify({ birth: validBody.birth }),
+      });
+      expect(response.status).toBe(200);
+      expect(response.headers.get('x-myeonghwa-reading-lifecycle')).toBe('preview');
+      const result = await response.json() as {
+        version: string; domains: Array<{ domain: string; response: { state: string } }>;
+      };
+      expect(result.domains.map(item => item.domain)).toEqual([
+        'general','career','wealth','business','relationship',
+      ]);
+      expect(result.domains.find(item => item.domain === 'wealth')?.response.state).toBe('delivered');
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        preview.close(error => error ? reject(error) : resolve())
+      );
+    }
+
+    const production = createMyeonghwaProductionProductHostServer(host, {
+      serviceBearer: 'bundle-production-test-bearer',
+    });
+    await new Promise<void>(resolve => production.listen(0, '127.0.0.1', resolve));
+    const productionAddr = production.address() as AddressInfo;
+    try {
+      const response = await fetch(
+        'http://127.0.0.1:' + productionAddr.port +
+        PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH,
+        { method: 'POST', headers: {
+          'content-type': 'application/json',
+          authorization: 'Bearer bundle-production-test-bearer',
+        }, body: JSON.stringify({ birth: validBody.birth }) },
+      );
+      expect(response.status).toBe(404);
+    } finally {
+      await new Promise<void>((resolve, reject) =>
+        production.close(error => error ? reject(error) : resolve())
+      );
+    }
   });
 
   it('serves the static product page with a restrictive script policy', async () => {

@@ -74,7 +74,7 @@ export async function requestNatalFiveDomainReadings(
     throw new TypeError('Natal bundle requires the same canonical snapshot as interpretation.');
   }
 
-  const domains: NatalFiveDomainProductEntry[] = [];
+  const responses: ProductReadingResponse[] = [];
   for (const topic of NATAL_FIVE_DOMAIN_PRODUCT_ORDER) {
     const response = await requestProductReading(
       snapshot,
@@ -90,14 +90,31 @@ export async function requestNatalFiveDomainReadings(
       options,
       legacyNarrativeRuntime,
     );
-    domains.push({
-      domain: topic.domain,
-      title: topic.title,
-      state: response.state,
-      response,
-    });
+    responses.push(response);
   }
+  return assembleNatalFiveDomainProductResponses(snapshot, responses);
+}
 
+export function assembleNatalFiveDomainProductResponses(
+  snapshot: CanonicalSajuSnapshot,
+  responses: readonly ProductReadingResponse[],
+): NatalFiveDomainProductBundle {
+  if (responses.length !== NATAL_FIVE_DOMAIN_PRODUCT_ORDER.length) {
+    throw new TypeError('Natal bundle requires exactly five governed domain responses.');
+  }
+  const domains: NatalFiveDomainProductEntry[] =
+    NATAL_FIVE_DOMAIN_PRODUCT_ORDER.map((topic, index) => {
+      const response = responses[index]!;
+      if (!response || response.responseVersion.length === 0) {
+        throw new TypeError('Natal bundle requires a governed response for each domain.');
+      }
+      return {
+        domain: topic.domain,
+        title: topic.title,
+        state: response.state,
+        response,
+      };
+    });
   const deliveredDomainCount = domains.filter(domain =>
     domain.state === 'delivered' || domain.state === 'delivered_with_fallback',
   ).length;
