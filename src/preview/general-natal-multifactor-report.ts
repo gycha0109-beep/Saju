@@ -1,4 +1,5 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
+import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -210,14 +211,9 @@ export function buildGeneralNatalMultifactorReport(
     result.find(s => s.axis === 'expression') ??
     result.find(s => s.axis === 'response') ??
     result.find(s => s.axis === 'responsibility');
-  const chosen: GeneralNatalMultifactorSection[] = core ? [core] : [];
-  const axes = new Set<Axis>(core ? [core.axis] : []);
-  for(const unit of result) {
-    if (!core || axes.has(unit.axis)) continue;
-    chosen.push(unit);
-    axes.add(unit.axis);
-    if(chosen.length === 3) break;
-  }
+  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
+  const chosen: GeneralNatalMultifactorSection[] = core
+    ? [core, ...(supportSelection?.supporting ?? [])] : [];
   // Tension-only source-qualified T8 is useful partial evidence, but never
   // a substitute for the independently grounded whole-chart core.
   // Only one representative of the same tension axis is displayed. More
@@ -229,6 +225,9 @@ export function buildGeneralNatalMultifactorReport(
   if(partialTension.length > 0) missing.push(
     `확인된 보조 해석: ${partialTension.map(s =>
       `${s.headline}(${s.channel === 'visible_stems' ? '천간' : '지지 대표 십신'})`).join(' · ')}. 이 근거만으로 원국 전체의 중심 결론을 세울 수 없어 부분 풀이로만 보여드립니다.`);
+  if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
+    missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
+  }
   const missingSupportingAxes = 2 - Math.max(0, chosen.length - 1);
   if(missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
