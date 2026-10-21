@@ -1,4 +1,5 @@
 import { describeQuotedReadingAxis } from './korean-reading-headline.js';
+import { selectIndependentNatalSupportingAxes } from './natal-independent-supporting-axes.js';
 import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
 import type { InterpretationClaim } from '../contracts/interpretation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
@@ -211,18 +212,16 @@ export function buildWealthNatalMultifactorReport(
     result.find(s => s.axis === 'planning');
   // Show a real source-qualified tension-only observation as a bounded partial,
   // without treating it as the missing overall MUR core.
-  const chosen: WealthNatalMultifactorSection[] = core ? [core] :
-    result.filter(section => section.axis === 'tension').slice(0, 1);
-  const axes = new Set<Axis>(core ? [core.axis] : []);
-  for(const unit of result) {
-    if (!core || axes.has(unit.axis)) continue;
-    chosen.push(unit);
-    axes.add(unit.axis);
-    if(chosen.length === 3) break;
-  }
+  const supportSelection = core ? selectIndependentNatalSupportingAxes(core, result) : undefined;
+  const chosen: WealthNatalMultifactorSection[] = core
+    ? [core, ...(supportSelection?.supporting ?? [])]
+    : result.filter(section => section.axis === 'tension').slice(0, 1);
   const missing: string[] = [];
   if(!core) missing.push('출처 있는 원국 중심 복합 해석 축');
   if(!core && chosen.length > 0) missing.push('중심 종합 근거 없이 실제 확인된 긴장 관점만 부분적으로 보여줍니다. 실제 소득·재산·투자 결과로 확장하지 않습니다.');
+  if (supportSelection && supportSelection.overlapOnlyCount > 0 && chosen.length < 3) {
+    missing.push('서로 다른 해석 축이어도 기존 해석과 같은 계산 위치만 반복하면 독립적인 보조 근거로 인정하지 않습니다.');
+  }
   const missingSupportingAxes = 2 - (core ? chosen.length - 1 : chosen.length);
   if(missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
