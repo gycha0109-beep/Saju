@@ -8,10 +8,11 @@ import {
   CAREER_MULTIFACTOR_PACK,
 } from '../research/career-natal-multifactor-candidate.js';
 
-export const CAREER_MULTIFACTOR_REPORT_VERSION = '0.2.0-research-preview' as const;
-type Axis = 'execution' | 'responsibility' | 'tension';
+export const CAREER_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
+type Axis = 'execution' | 'preparation' | 'responsibility' | 'tension';
 const AXIS_LABELS: Readonly<Record<Axis, string>> = {
   execution: '실행·산출',
+  preparation: '요구에 따른 학습·준비',
   responsibility: '역할·책임',
   tension: '서로 다른 기준의 조율',
 };
@@ -110,7 +111,8 @@ function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
   const value = claim.value as Record<string, unknown>;
   guard(value && typeof value === 'object' &&
     typeof value.pattern === 'string' &&
-    (value.axis === 'execution' || value.axis === 'responsibility' || value.axis === 'tension') &&
+    (value.axis === 'execution' || value.axis === 'preparation' ||
+     value.axis === 'responsibility' || value.axis === 'tension') &&
     (value.channel === 'visible_stems' || value.channel === 'branches') &&
     value.causalOutcomeAuthorized === false && value.occupationAuthorized === false &&
     value.careerSuccessAuthorized === false,
@@ -231,7 +233,10 @@ export function buildCareerMultifactorResearchReport(
   guard(active.every(c => selected.has(c.claimId)),
     'some matched Career claims were not selected by the original EvidenceSelector');
   // Reader ordering is explicit narrative policy; never registry/ClaimId/hash order.
-  const AXES: readonly Axis[] = ['execution', 'responsibility', 'tension'];
+  // The two classical source-owned relations are distinct: officer→resource
+  // (preparation) and wealth→officer (responsibility). Do not require
+  // tension when three other chart-grounded, non-overlapping axes exist.
+  const AXES: readonly Axis[] = ['execution', 'preparation', 'responsibility', 'tension'];
   const units = active.map(claim => entry(claim, snapshot, execution, registry))
     .sort((a, b) => AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
       (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
