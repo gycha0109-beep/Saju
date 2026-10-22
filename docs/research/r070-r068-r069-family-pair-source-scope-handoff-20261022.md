@@ -161,6 +161,18 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 양력 1990-05-15 기준 남성·여성·성별 미지정 명식에서 부모/자녀 메뉴별 각 원전 미지원 사유 수·방법 쌍 수·성별 제외 목록·실제 경로를 대조한다. 여성 1997-05-15 출생시각 미상에서는 부모 월주 방법을 남겨 두고 자녀의 `時為子息` 필수 시주 경로만 `R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED`로 보고한다. 역사 남성 명식의 `胎為母`에는 별개 `R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE`을 표시한다. **연구용 미지원 설명은 가족운 출력이나 메뉴 지원 활성화로 변환하지 않는다.**
 
+### R070 메뉴 미지원 사유의 계산 입력 누락 경로 — 원문별 중복 제거 인계
+
+`menuSupportHandoff.unresolvedCanonicalInputs[]`는 이미 반환하는 `interpretationBlockers.sourceConditionHolds[]` 가운데 **요청 메뉴의 역사적 적용 범위 안에 있는 원문만** 사용하여 미해결 Canonical 계산 사실을 경로별로 묶는다. 중복된 `unresolvedFactPaths`는 문자열 경로당 한 번만 기록하고, `affectedOriginalSources[]`에 실제 해당 경로를 요구하는 원문별 `sourceLayerId`·`sourceSurface`를 보존한다. 여러 부모/자녀 문구가 동일한 미상 시주를 가리켜도 그것은 **계산 경로 하나를 여러 곳에서 참조한 것**이지 별도의 가족 Claim 여러 건이 아니다.
+
+- `canonicalInputKind=pillar`: `pillars.{slot}`에서 확정되지 않은 기둥. 예: 시각 미상의 `pillars.hour`.
+- `canonicalInputKind=visible_t5`: `derivedFacts.tenGods.{slot}.{stem|branch}`의 미해결 현대 T5 조회값.
+- `canonicalInputKind=hidden_stem_membership`: `derivedFacts.hiddenStems.{slot}`의 미해결 지장간 **소속 목록**. 분류된 지장간 십신 사실이라는 뜻이 아니다.
+
+`HISTORICAL_SEX_SCOPE_NOT_APPLICABLE`로 제외된 원문은 이 목록의 `affectedOriginalSources`에 포함하지 않는다. `胎為母`처럼 현재 Canonical에 **계산 개념 자체가 없는** 경우에는 존재하지 않는 `pillars.fetus` 등의 허구 경로를 만들지 않고 기존 `R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE` 사유에만 남긴다. `substituteAnotherPillarAuthorized=false`, `familyMeaningAuthorized=false`로 고정하며, 누락 입력 경로만 따로 수집했다고 해서 보류된 방법론·역사적 역할 배속·가족운 효과가 승인되는 일은 없다.
+
+**회귀 범위:** 남성·여성·성별 미지정 부모/자녀 명식에서 각 경로와 그 원문 참조 목록을 직접 원래의 `sourceConditionHolds.unresolvedFactPaths`에 대조한다. 출생시각 미상 여성 자녀 명식에서는 `pillars.hour`을 `時為子息`에, 시주 지장간/십신 미해결 경로를 `子嗣者即官星也`·`我生者為子`에 각각 결속하되 성별 범위 밖 `時為子孫`은 제외한다. 선택적 `hiddenStems` 자체가 없는 명식에서는 연·월·일·시 소속 목록의 네 경로를 각자 한 번만 반환한다. 이 인계는 **엔진 연구용 미지원 설명**이지 엔진 계산의 대체 입력이나 메뉴 활성화 신호가 아니다.
+
 ### R070 부모·자녀의 실제 해석 차단 사유 — 원문 조건과 방법 선택의 분리
 
 기존 `evaluateFamilySourceScopeV1(snapshot, 'parents'|'children')`는 이미 원전의 정확한 문구·성별 범위·계산 기둥·현대 T5 탐색·지장간 소속·지지충 구조적 후보 및 3중 위치 관찰을 구분한다. 하지만 이 계산 사실만으로 가족 T8의 역할 배속·결과·우선순위를 인정할 근거는 없다. 이번 변경은 **기존 R070 코퍼스와 이미 작성된 methodCandidates/methodCoexistences/crossLayerMethodComparisons/unassignedConfigurationInputs를 재사용**하여 `interpretationBlockers`를 반환한다. 새로운 원전, 의미 Claim, 판정 방법론, 승인 플래그는 만들지 않는다.
