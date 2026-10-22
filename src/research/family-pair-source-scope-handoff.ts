@@ -170,6 +170,48 @@ export function evaluateFamilySourceScopeV1(
   };
 }
 
+export interface PairwiseCanonicalObservation {
+  pillarSlot: PillarSlot;
+  subjectFactPath: string;
+  targetFactPath: string;
+  status: 'both_resolved' | 'incomplete';
+  subjectPillar?: string;
+  targetPillar?: string;
+  exactPillarIdentity?: 'same' | 'different';
+  /** Value equality is never a relationship, affinity or T10 claim. */
+  pairwiseMeaningAuthorized: false;
+}
+
+const PILLAR_SLOTS: readonly PillarSlot[] = ['year', 'month', 'day', 'hour'];
+
+function observePair(
+  subject: CanonicalSajuSnapshot,
+  target: CanonicalSajuSnapshot,
+): readonly PairwiseCanonicalObservation[] {
+  return PILLAR_SLOTS.map(pillarSlot => {
+    const left = subject.pillars[pillarSlot];
+    const right = target.pillars[pillarSlot];
+    const base = {
+      pillarSlot,
+      subjectFactPath: 'subject.pillars.' + pillarSlot,
+      targetFactPath: 'target.pillars.' + pillarSlot,
+      pairwiseMeaningAuthorized: false as const,
+    };
+    if (left.status !== 'resolved' || right.status !== 'resolved') {
+      return { ...base, status: 'incomplete' as const };
+    }
+    const subjectPillar = left.value.stem.value + left.value.branch.value;
+    const targetPillar = right.value.stem.value + right.value.branch.value;
+    return {
+      ...base,
+      status: 'both_resolved' as const,
+      subjectPillar, targetPillar,
+      exactPillarIdentity: subjectPillar === targetPillar
+        ? 'same' as const : 'different' as const,
+    };
+  });
+}
+
 export interface PairwiseSourceScopeHandoff {
   version: typeof FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION;
   owner: 'R068_R069';
@@ -179,6 +221,7 @@ export interface PairwiseSourceScopeHandoff {
   ];
   subject: { personRef: string; snapshotId: string; calculationHash: string; birthTimeKnown: boolean };
   target: { personRef: string; snapshotId: string; calculationHash: string; birthTimeKnown: boolean };
+  factualPairObservations: readonly PairwiseCanonicalObservation[];
   comparedSourceSurfaces: readonly {
     corpusId: 'R068' | 'R069';
     sourceSurface: string;
@@ -246,6 +289,7 @@ export function evaluatePairwiseSourceScopeV1(
       calculationHash: target.snapshot.calculationHash,
       birthTimeKnown: target.snapshot.completeness.birthTimeKnown,
     },
+    factualPairObservations: observePair(subject.snapshot, target.snapshot),
     comparedSourceSurfaces,
     missingPrerequisites: [
       ...R068_EXECUTION_GAPS, ...R069_EXECUTION_GAPS,
