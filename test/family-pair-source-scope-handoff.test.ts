@@ -242,6 +242,12 @@ describe('R068/R069 pairwise source boundary on two real Canonical charts', () =
     expect(report.subject.snapshotId).toBe(subject.snapshotId);
     expect(report.target.snapshotId).toBe(target.snapshotId);
     expect(report.subject.calculationHash).not.toBe(report.target.calculationHash);
+    expect(report.subject.originalScenarioIds)
+      .toEqual(subject.scenarios.map(scenario => scenario.scenarioId));
+    expect(report.target.originalScenarioIds)
+      .toEqual(target.scenarios.map(scenario => scenario.scenarioId));
+    expect(report.subject.ambiguousFactPaths).toEqual(subject.completeness.ambiguousPaths);
+    expect(report.target.unavailableFactPaths).toEqual(target.completeness.unavailablePaths);
     expect(report.factualPairObservations.map(item => item.pillarSlot))
       .toEqual(['year', 'month', 'day', 'hour']);
     expect(report.factualPairObservations.every(item =>
@@ -302,6 +308,12 @@ describe('R068/R069 pairwise source boundary on two real Canonical charts', () =
       { personRef: 'other', snapshot: target },
     );
     expect(report.target.birthTimeKnown).toBe(false);
+    expect(report.subject.originalScenarioIds)
+      .toEqual(subject.scenarios.map(scenario => scenario.scenarioId));
+    expect(report.target.originalScenarioIds)
+      .toEqual(target.scenarios.map(scenario => scenario.scenarioId));
+    expect(report.target.ambiguousFactPaths).toEqual(target.completeness.ambiguousPaths);
+    expect(report.target.unavailableFactPaths).toEqual(target.completeness.unavailablePaths);
     expect(report.factualPairObservations[3]?.status).toBe('incomplete');
     expect(report.factualPairObservations[3]?.exactPillarIdentity).toBeUndefined();
     expect(report.missingPrerequisites).toContain('TARGET_HOUR_INPUT_UNRESOLVED');
@@ -336,6 +348,9 @@ describe('R068/R069 pairwise source boundary on two real Canonical charts', () =
       expect(forward.factualPairObservations[i]?.targetPillar)
         .toEqual(backward.factualPairObservations[i]?.subjectPillar);
     }
+    expect(forward.subject.originalScenarioIds).toEqual(backward.target.originalScenarioIds);
+    expect(forward.target.originalScenarioIds).toEqual(backward.subject.originalScenarioIds);
+    expect(forward.subject.ambiguousFactPaths).toEqual(backward.target.ambiguousFactPaths);
     expect(forward.pairwiseT10Admitted).toBe(false);
     expect(backward.pairwiseT10Admitted).toBe(false);
     expect(forward.comparedSourceSurfaces.every(x => x.eligiblePairwiseClaim === false))
