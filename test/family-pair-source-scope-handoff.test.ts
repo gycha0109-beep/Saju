@@ -684,10 +684,10 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
       item.methodPairKind)).toEqual(['FEMALE_CHILD_STAR_RELATION_ALTERNATIVES']);
     expect(children.interpretationBlockers.methodSelectionHolds[0]?.observedFactPaths)
       .toEqual([...new Set([
-        ...familyCandidate(children, '子嗣者即官星也')
-          .tenGodObservation?.observedPositions.map(item => item.path) ?? [],
-        ...familyCandidate(children, '我生者為子')
-          .tenGodObservation?.observedPositions.map(item => item.path) ?? [],
+        ...(familyCandidate(children, '子嗣者即官星也')
+          .tenGodObservation?.observedPositions.map(item => item.path) ?? []),
+        ...(familyCandidate(children, '我生者為子')
+          .tenGodObservation?.observedPositions.map(item => item.path) ?? []),
       ])]);
     for (const surface of ['子嗣者即官星也', '我生者為子']) {
       const candidate = children.interpretationBlockers.sourceConditionHolds.find(item =>
