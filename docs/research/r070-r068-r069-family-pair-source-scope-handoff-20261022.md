@@ -78,6 +78,14 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 `SOCIAL-FRIENDLINESS-SANHE-LIUHE`는 사회적 교류에 관한 문구이며 두 사람의 연애 궁합으로 승격되지 않습니다. `COMBINATION-CONTEXT-VARIANCE`에는 오행 생극·길흉 맥락이 필요하지만 기존 개별 명식의 합 구조 후보만으로 그 효과가 확정되지 않습니다. `KIN-FRIEND-BOND-HARM-CONFIGURATION`에는 별도의 `羊刃`·`傷官`·`七煞` 및 친족/친구 해석 조건이 필요하므로 임의의 `singleChartCombinationObservations`를 결속하지 않습니다. 모든 관찰은 `socialOutcomeAuthorized=false`, `pairwiseMeaningAuthorized=false`입니다.
 
+### R068: 羊刃逢傷官七煞 조건의 부분 관찰과 명확한 중단점
+
+`KIN-FRIEND-BOND-HARM-CONFIGURATION`의 기존 정확한 문구는 `羊刃逢傷官七煞，骨肉親友傷情`이다. 이것은 **羊刃·傷官·七煞 세 용어와 서로의 조건부 배치 및 친족·친구라는 역사 문맥**을 요구한다. 현재 Canonical에는 이 문구의 양인(羊刃) 검출을 승인한 계산 사실이나 세 조건의 결합 방법론이 없다. **상관·편관 계산값이 단독 또는 동시에 관측돼도 원문의 조건 충족, 친족 관계 손상, 인간관계 결과를 단정하지 않는다.**
+
+이번 연구는 `singleChartKinConditionObservations`에 각 인물의 **자기 명식 내부** `derivedFacts.tenGods`만 두 원문 탐색어별로 보존한다. `傷官`은 현재 계산상 `상관`, `七煞`은 `편관`의 **현대 T5 조회용 레이블**로 연결하되, 이것만으로 고전 용어의 역사적 적용 조건이나 원래 판단 방법의 등가성을 승인하지 않는다. 관측된 천간·지지 대표 십신 경로와 미상 경로를 기록하고, 다른 방법·지장간 및 세부 맥락은 여전히 미확정으로 남긴다. `yangrenInput=not_defined_by_canonical`, `conjunctionOfTermsEstablished=false`, `historicalKinFriendContextEstablished=false`, `natalKinOutcomeAuthorized=false`, `pairwiseMeaningAuthorized=false`를 고정한다.
+
+부족 조건: `YANGREN_CANONICAL_INPUT_NOT_DEFINED`·`R068_THREE_TERM_CONJUNCTION_METHOD_NOT_SELECTED`·`KIN_FRIEND_CONTEXT_AND_POLARITY_NOT_SETTLED`·`SOCIAL_VS_KIN_SCOPE` 및 시각 미상 등의 `R068_TEN_GOD_OBSERVATIONS_PARTIAL`. 한 사람 안에서의 상관·편관 관찰은 다른 사람과의 친밀감·갈등·궁합 해석으로 복사하지 않는다.
+
 ### R069: 실제 두 인물의 역사적 성별을 개별 원문 조건에 적용
 
 기존 R069은 남성 명식의 `日為己身妻妾`·`四柱內有我克者為妻`, 여성 명식의 `克我者為夫`, 그리고 남성 명식의 `日坐財 / 財旺` 계열에 속하는 **한 사람 명식**의 원문이다. 이를 두 인물에게 적용할 때 어느 사람의 명식에서 원문상 범위가 맞는지 구분하기 위해 `comparedSourceSurfaces[].oneChartScopeObservations`에 **subject와 target을 따로** 기록한다.
