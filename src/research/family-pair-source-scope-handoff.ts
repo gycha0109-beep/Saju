@@ -196,6 +196,55 @@ export interface FamilyMethodCoexistence {
  * This preserves literal source identity, observed pillar, searched T5
  * category, incompleteness and the method bridge that is still missing.
  */
+export interface R070ExcludedSiblingSource {
+  sourceLayerId: 'PILLAR-DOMAIN-MALE-ALTERNATE' | 'TEN-GOD-FAMILY-RELATIONS';
+  sourceSurface: '月為兄弟' | '兄弟者即劫財比肩';
+  originalSexScope: string;
+  originalRelationScope: 'siblings';
+  requestedScope: FamilyResearchScope;
+  disposition: 'NARROW_OR_REPLACE';
+  admittedAsParentsOrChildrenSource: false;
+  missingPrerequisites: readonly ['SIBLING_DOMAIN_IS_NOT_PARENTS_OR_CHILDREN'];
+}
+
+/**
+ * R070 includes separate sibling clauses. They are exact original sources,
+ * but neither the parents nor the children menu may silently claim them.
+ */
+function excludedSiblingSources(
+  requestedScope: FamilyResearchScope,
+): readonly R070ExcludedSiblingSource[] {
+  const originals = [
+    {
+      sourceLayerId: 'PILLAR-DOMAIN-MALE-ALTERNATE' as const,
+      sourceSurface: '月為兄弟' as const,
+    },
+    {
+      sourceLayerId: 'TEN-GOD-FAMILY-RELATIONS' as const,
+      sourceSurface: '兄弟者即劫財比肩' as const,
+    },
+  ];
+  return originals.map(original => {
+    const layer = R070_CLAIM_LAYERS.find(item =>
+      item.id === original.sourceLayerId &&
+      (item.sourceSurfaces as readonly string[]).includes(original.sourceSurface),
+    );
+    if (layer === undefined || layer.executable !== false) {
+      throw new TypeError('R070 sibling exclusion must match the existing corpus.');
+    }
+    return {
+      sourceLayerId: original.sourceLayerId,
+      sourceSurface: original.sourceSurface,
+      originalSexScope: layer.sexScope,
+      originalRelationScope: 'siblings' as const,
+      requestedScope,
+      disposition: 'NARROW_OR_REPLACE' as const,
+      admittedAsParentsOrChildrenSource: false as const,
+      missingPrerequisites: ['SIBLING_DOMAIN_IS_NOT_PARENTS_OR_CHILDREN'] as const,
+    };
+  });
+}
+
 export interface FamilyCrossLayerMethodComparison {
   sourceSurfaces: readonly [string, string];
   sourceLayerIds: readonly [string, string];
@@ -223,6 +272,8 @@ export interface FamilySourceScopeHandoff {
   methodCoexistences: readonly FamilyMethodCoexistence[];
   /** Cross-layer literal source comparison, not an approved family T8. */
   crossLayerMethodComparisons: readonly FamilyCrossLayerMethodComparison[];
+  /** Sibling-only original clauses cannot be reused as parent/child meanings. */
+  excludedSiblingSourceSurfaces: readonly R070ExcludedSiblingSource[];
   /** Unassigned R070 configuration source phrases, never selected family T8. */
   unassignedConfigurationInputs: readonly R070UnassignedConfigurationInput[];
   missingPrerequisites: readonly string[];
@@ -480,6 +531,7 @@ export function evaluateFamilySourceScopeV1(
     scope, snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     historicalSex: snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
     methodCandidates, methodCoexistences, crossLayerMethodComparisons,
+    excludedSiblingSourceSurfaces: excludedSiblingSources(scope),
     unassignedConfigurationInputs: r070UnassignedConfigurationInputs(snapshot),
     missingPrerequisites,
     interpretationDisposition: 'INCONCLUSIVE',
