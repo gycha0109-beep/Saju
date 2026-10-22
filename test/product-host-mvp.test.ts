@@ -579,7 +579,17 @@ describe('Myeonghwa Product Host MVP', () => {
       expect(response.headers.get('content-security-policy')).toContain("script-src 'self'");
       expect(html).toContain('명화');
       expect(html).toContain('id="reading-form"');
+      expect(html).toContain('id="five-domain-submit"');
+      expect(html).toContain('id="reading-detail"');
       expect(html).toContain('src="/app.js"');
+      const app = await (await fetch(`${server.baseUrl}/app.js`)).text();
+      expect(app).toContain("fetch('/api/preview/natal-five-domains'");
+      expect(app).toContain("fetch('/api/readings'");
+      expect(app).toContain('Promise.allSettled');
+      expect(app).toContain('bundle.domains[index].domain !== topic.domain');
+      expect(app).toContain("bundle.mode === 'single_preview_chart'");
+      expect(app).not.toContain('Authorization: Bearer');
+      expect(app).toContain('payload.coverage.explanation');
       expect(html).not.toContain('research');
     } finally {
       await server.close();

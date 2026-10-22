@@ -33,6 +33,13 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
     ul { padding-left: 20px; }
     .disclosure, .notice { margin-top: 12px; padding: 12px; border-radius: 10px; background: #f6f5f1; color: #555; font-size: 14px; }
     .error { color: #9a251f; }
+    .reading-actions { display: grid; gap: 10px; margin-top: 20px; }
+    .reading-actions button { margin-top: 0; }
+    .reading-actions button.secondary { background: #ece9e1; color: #171717; }
+    .domain-card { padding: 18px 0; border-bottom: 1px solid #ece9e1; }
+    .domain-card:last-child { border-bottom: 0; }
+    .domain-card h2 { margin: 0 0 12px; font-size: 20px; }
+    .bundle-caption { margin: 12px 0; color: #606060; font-size: 13px; line-height: 1.6; }
     @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } .pillars { grid-template-columns: repeat(2,1fr); } .full { grid-column: auto; } }
   </style>
 </head>
@@ -85,8 +92,18 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
           <option value="이번 달 재물운">이번 달 재물운</option>
         </select>
       </label>
+      <label class="full">풀이 상세 수준
+        <select id="reading-detail" name="preferredDetail">
+          <option value="standard">기본</option>
+          <option value="concise">간단히</option>
+          <option value="detailed">자세히</option>
+        </select>
+      </label>
     </div>
-    <button id="submit" type="submit">풀이 보기</button>
+    <div class="reading-actions">
+      <button id="submit" type="submit">선택한 분야 풀이 보기</button>
+      <button id="five-domain-submit" class="secondary" type="button">5분야 한눈에 보기</button>
+    </div>
   </form>
   <div id="result" class="panel hidden" aria-live="polite"></div>
 </main>
@@ -98,6 +115,8 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
   const form = document.getElementById('reading-form');
   const result = document.getElementById('result');
   const submit = document.getElementById('submit');
+  const fiveDomainSubmit = document.getElementById('five-domain-submit');
+  const readingDetail = document.getElementById('reading-detail');
   const calendar = document.getElementById('calendar');
   const birthDate = document.getElementById('birth-date');
   const birthTime = document.getElementById('birth-time');
@@ -195,7 +214,15 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     if (typeof block.summary === 'string') container.appendChild(el('p', block.summary));
   }
 
-  function renderReading(reading) {
+  const fiveTopics = [
+    { domain: 'general', title: '전체 사주', requestText: '사주' },
+    { domain: 'career', title: '직업·커리어', requestText: '직업운' },
+    { domain: 'wealth', title: '재물', requestText: '재물운' },
+    { domain: 'business', title: '사업', requestText: '사업운' },
+    { domain: 'relationship', title: '연애·관계', requestText: '연애운' }
+  ];
+
+  function renderReading(reading, target) {
     if (reading.calculationSummary && reading.calculationSummary.pillars) {
       const pillars = el('div', undefined, 'pillars');
       ['year', 'month', 'day', 'hour'].forEach((key) => {
@@ -205,30 +232,30 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
         item.appendChild(el('span', fact.label));
         pillars.appendChild(item);
       });
-      result.appendChild(pillars);
+      target.appendChild(pillars);
     }
     (reading.sections || []).forEach((section) => {
       const node = el('section');
       node.appendChild(el('h2', section.title));
       (section.blocks || []).forEach((block) => appendBlock(node, block));
-      result.appendChild(node);
+      target.appendChild(node);
     });
     (reading.disclosures || []).forEach((disclosure) => {
-      result.appendChild(el('div', disclosure.text || disclosure.summary || String(disclosure.type), 'disclosure'));
+      target.appendChild(el('div', disclosure.text || disclosure.summary || String(disclosure.type), 'disclosure'));
     });
   }
 
-  function renderResponse(payload) {
-    result.replaceChildren();
-    result.classList.remove('hidden');
-    result.appendChild(el('div', messages[payload.messageCode] || payload.messageCode || payload.state, 'state'));
-    if (payload.reading) renderReading(payload.reading);
+  function renderResponse(payload, target = result) {
+    target.replaceChildren();
+    target.classList.remove('hidden');
+    target.appendChild(el('div', messages[payload.messageCode] || payload.messageCode || payload.state, 'state'));
+    if (payload.reading) renderReading(payload.reading, target);
     if (payload.coverage) {
       const explanation = payload.coverage.explanation;
       const label = typeof explanation === 'string' && explanation.trim()
         ? explanation
         : '추가로 필요한 풀이 근거가 있습니다. (' + payload.coverage.missingRequirementCount + '개)';
-      result.appendChild(el('div', label, 'notice'));
+      target.appendChild(el('div', label, 'notice'));
     }
     if (payload.clarification) {
       const text = payload.clarification.kind === 'temporal_scope'
@@ -236,7 +263,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
         : payload.clarification.kind === 'domain'
           ? '풀이 항목을 하나만 선택해 주세요.'
           : '질문을 조금 더 구체적으로 작성해 주세요.';
-      result.appendChild(el('div', text, 'notice'));
+      target.appendChild(el('div', text, 'notice'));
     }
   }
 
@@ -261,6 +288,118 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     birthTime.disabled = timeUnknown.checked;
   });
 
+  function currentBirth() {
+    return {
+      calendarType: calendar.value,
+      date: birthDate.value,
+      time: timeUnknown.checked ? null : birthTime.value,
+      sex: sex.value,
+      ...(calendar.value === 'lunar' ? { isLeapMonth: leapMonth.checked } : {})
+    };
+  }
+
+  async function fetchIndividualDomain(birth, topic) {
+    const response = await fetch('/api/readings', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        birth,
+        reading: {
+          text: topic.requestText,
+          outputPreferences: { preferredDetail: readingDetail.value }
+        }
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error('READING_REQUEST_FAILED');
+    return payload;
+  }
+
+  async function fetchFiveDomains(birth) {
+    const response = await fetch('/api/preview/natal-five-domains', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        birth, outputPreferences: { preferredDetail: readingDetail.value }
+      })
+    });
+    if (response.ok) {
+      const bundle = await response.json();
+      if (!Array.isArray(bundle.domains) || bundle.domains.length !== fiveTopics.length ||
+        fiveTopics.some((topic, index) =>
+          bundle.domains[index].domain !== topic.domain ||
+          typeof bundle.domains[index].response?.state !== 'string')) {
+        throw new Error('READING_BUNDLE_INVALID');
+      }
+      return {
+        mode: 'single_preview_chart',
+        results: bundle.domains.map((entry) => ({
+          status: 'fulfilled', value: entry.response
+        }))
+      };
+    }
+    // The service-bearer Preview endpoint is intentionally unavailable to
+    // ordinary browsers in production. Never request or embed its credentials.
+    if (response.status !== 404 && response.status !== 401) {
+      throw new Error('READING_BUNDLE_REQUEST_FAILED');
+    }
+    const results = await Promise.allSettled(
+      fiveTopics.map((topic) => fetchIndividualDomain(birth, topic))
+    );
+    return { mode: 'independent_readings', results };
+  }
+
+  function showFiveDomainResults(bundle) {
+    result.replaceChildren();
+    result.classList.remove('hidden');
+    result.appendChild(el('h2', '나의 사주 — 다섯 관점'));
+    result.appendChild(el('p',
+      bundle.mode === 'single_preview_chart'
+        ? '동일한 명식 계산을 바탕으로 다섯 분야를 각각 해석한 미리보기입니다.'
+        : '동일한 출생정보로 다섯 분야를 각각 요청한 결과입니다. 종합 결론이 확정된 것은 아닙니다.',
+      'bundle-caption'));
+    fiveTopics.forEach((topic, index) => {
+      const card = el('section', undefined, 'domain-card');
+      card.appendChild(el('h2', topic.title));
+      const content = el('div');
+      const outcome = bundle.results[index];
+      if (outcome.status === 'fulfilled') {
+        renderResponse(outcome.value, content);
+      } else {
+        content.appendChild(el('div',
+          '이 분야의 풀이를 불러오지 못했습니다. 잠시 후 다시 요청해 주세요.',
+          'notice error'));
+      }
+      card.appendChild(content);
+      result.appendChild(card);
+    });
+  }
+
+  fiveDomainSubmit.addEventListener('click', async () => {
+    const dateError = syncBirthDateValidity();
+    if (dateError || !birthTime.disabled && !birthTime.value) {
+      result.classList.remove('hidden');
+      result.replaceChildren(el('div',
+        dateError || '출생시간을 확인하거나 출생시간을 모른다고 선택해 주세요.', 'state error'));
+      birthDate.reportValidity();
+      return;
+    }
+    submit.disabled = true;
+    fiveDomainSubmit.disabled = true;
+    result.classList.remove('hidden');
+    result.replaceChildren(el('div', '다섯 분야의 풀이를 준비하고 있습니다.', 'state'));
+    try {
+      const bundle = await fetchFiveDomains(currentBirth());
+      showFiveDomainResults(bundle);
+    } catch {
+      result.replaceChildren(el('div',
+        '다섯 분야를 불러오지 못했습니다. 잠시 후 다시 요청해 주세요.', 'state error'));
+    } finally {
+      submit.disabled = false;
+      fiveDomainSubmit.disabled = false;
+    }
+  });
+
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const dateError = syncBirthDateValidity();
@@ -273,18 +412,16 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     }
 
     submit.disabled = true;
+    fiveDomainSubmit.disabled = true;
     result.classList.remove('hidden');
     result.replaceChildren(el('div', '풀이를 준비하고 있습니다.', 'state'));
     try {
       const body = {
-        birth: {
-          calendarType: calendar.value,
-          date: birthDate.value,
-          time: timeUnknown.checked ? null : birthTime.value,
-          sex: sex.value,
-          ...(calendar.value === 'lunar' ? { isLeapMonth: leapMonth.checked } : {})
-        },
-        reading: { text: readingText.value }
+        birth: currentBirth(),
+        reading: {
+          text: readingText.value,
+          outputPreferences: { preferredDetail: readingDetail.value }
+        }
       };
       const response = await fetch('/api/readings', {
         method: 'POST',
@@ -300,6 +437,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       result.replaceChildren(el('div', '요청을 처리하지 못했습니다. 입력값을 확인하거나 잠시 후 다시 시도해 주세요.', 'state error'));
     } finally {
       submit.disabled = false;
+      fiveDomainSubmit.disabled = false;
     }
   });
 })();`;
