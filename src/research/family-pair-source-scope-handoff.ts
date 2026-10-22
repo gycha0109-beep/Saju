@@ -40,6 +40,33 @@ export interface FamilyTenGodSourceObservation {
   historicalRelativeRoleAuthorized: false;
 }
 
+/** Original family-star wording bound separately to visible T5 and raw hidden membership. */
+export interface R070FamilyRelativeStarHiddenStemBoundary {
+  sourceLayerId: 'TEN-GOD-FAMILY-RELATIONS' | 'FEMALE-CHILD-RELATION';
+  sourceSurface: '父以偏財論' | '母以印綬論' | '子嗣者即官星也' | '我生者為子';
+  requestedScope: FamilyResearchScope;
+  originalSexScope: string;
+  historicalSex: 'male' | 'female' | 'unspecified';
+  visibleT5FactPath: 'derivedFacts.tenGods';
+  hiddenStemFactPath: 'derivedFacts.hiddenStems';
+  observedModernT5Group: FamilyTenGodSourceObservation['observedGroup'];
+  visibleT5ObservationStatus: FamilyTenGodSourceObservation['status'];
+  hiddenStemMembershipCoverage: R070HiddenStemMembershipContrast['coverage'];
+  pillarObservations: readonly (R070HiddenStemMembershipPillarObservation & {
+    /** Only the already-observed representative-branch / visible-stem T5 values. */
+    visibleT5Positions: FamilyTenGodSourceObservation['observedPositions'];
+    unresolvedVisibleT5FactPaths: readonly string[];
+  })[];
+  unresolvedHiddenStemMembershipFactPaths: readonly string[];
+  missingPrerequisites: readonly string[];
+  /** Membership is not an already-computed hidden TenGod fact. */
+  hiddenStemTenGodClassificationAuthorized: false;
+  visibleAndHiddenStarMethodReconciled: false;
+  historicalRelativeRoleAuthorized: false;
+  independentlyAdmittedFamilyClaims: 0;
+  familyT8Admitted: false;
+}
+
 export interface FamilySourceScopeCandidate {
   sourceLayerId: string;
   sourceSurface: string;
@@ -49,6 +76,8 @@ export interface FamilySourceScopeCandidate {
   observedFactPath?: string;
   observedPillar?: string;
   tenGodObservation?: FamilyTenGodSourceObservation;
+  /** Present only when the original star clause survives historical sex filtering. */
+  relativeStarHiddenStemBoundary?: R070FamilyRelativeStarHiddenStemBoundary;
   missingPrerequisites: readonly string[];
   /** This is source-wording applicability only, NEVER a personal T8 claim. */
   familyMeaningAuthorized: false;
@@ -662,6 +691,8 @@ const R070_TEN_GOD_OBSERVATION_GROUPS = Object.freeze({
 
 const TEN_GOD_OBSERVATION_SLOTS: readonly PillarSlot[] =
   ['year', 'month', 'day', 'hour'];
+const R070_FAMILY_STAR_SURFACES: readonly (keyof typeof R070_TEN_GOD_OBSERVATION_GROUPS)[] =
+  ['父以偏財論', '母以印綬論', '子嗣者即官星也', '我生者為子'];
 
 function tenGodSourceObservation(
   snapshot: CanonicalSajuSnapshot,
@@ -693,6 +724,68 @@ function tenGodSourceObservation(
     observedPositions,
     unresolvedFactPaths,
     historicalRelativeRoleAuthorized: false,
+  };
+}
+
+/**
+ * An exact R070 family-star source owns its visible T5 lookup group, while
+ * Canonical hiddenStems owns only branch-to-stem membership. Keep the two
+ * fact surfaces separate; neither co-location nor identical stem spelling
+ * can select a relative-role method or classify a hidden TenGod.
+ */
+function r070FamilyRelativeStarHiddenStemBoundary(
+  snapshot: CanonicalSajuSnapshot,
+  scope: FamilyResearchScope,
+  definition: FamilySurfaceDefinition,
+  originalSexScope: string,
+  observation: FamilyTenGodSourceObservation,
+): R070FamilyRelativeStarHiddenStemBoundary {
+  if (definition.tenGodGroupSurface === undefined ||
+      !R070_FAMILY_STAR_SURFACES.includes(definition.tenGodGroupSurface)) {
+    throw new TypeError('R070 family hidden-stem bridge requires an existing star source.');
+  }
+  const sourceSurface = definition.tenGodGroupSurface;
+  const layerId = definition.layerId;
+  if (layerId !== 'TEN-GOD-FAMILY-RELATIONS' && layerId !== 'FEMALE-CHILD-RELATION') {
+    throw new TypeError('R070 hidden-stem comparison cannot change family source ownership.');
+  }
+  const hidden = r070HiddenStemMembershipContrast(snapshot);
+  const pillarObservations = hidden.pillarObservations.map(pillar => ({
+    ...pillar,
+    visibleT5Positions: observation.observedPositions.filter(
+      position => position.slot === pillar.pillarSlot),
+    unresolvedVisibleT5FactPaths: observation.unresolvedFactPaths.filter(path =>
+      path.startsWith('derivedFacts.tenGods.' + pillar.pillarSlot + '.')),
+  }));
+  return {
+    sourceLayerId: layerId,
+    sourceSurface,
+    requestedScope: scope,
+    originalSexScope,
+    historicalSex: snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
+    visibleT5FactPath: 'derivedFacts.tenGods',
+    hiddenStemFactPath: 'derivedFacts.hiddenStems',
+    observedModernT5Group: observation.observedGroup,
+    visibleT5ObservationStatus: observation.status,
+    hiddenStemMembershipCoverage: hidden.coverage,
+    pillarObservations,
+    unresolvedHiddenStemMembershipFactPaths: hidden.unresolvedMembershipFactPaths,
+    missingPrerequisites: [
+      'SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED',
+      'HIDDEN_VS_VISIBLE_STAR_HANDLING',
+      'R070_FAMILY_STAR_HIDDEN_STEM_T5_CLASSIFICATION_NOT_ESTABLISHED',
+      'R070_FAMILY_STAR_HIDDEN_STEM_RELATIVE_ROLE_METHOD_NOT_SOURCED',
+      'HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED',
+      ...(observation.status === 'incomplete_input'
+        ? ['TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED'] : []),
+      ...(hidden.unresolvedMembershipFactPaths.length > 0
+        ? ['CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE'] : []),
+    ],
+    hiddenStemTenGodClassificationAuthorized: false,
+    visibleAndHiddenStarMethodReconciled: false,
+    historicalRelativeRoleAuthorized: false,
+    independentlyAdmittedFamilyClaims: 0,
+    familyT8Admitted: false,
   };
 }
 
@@ -760,15 +853,19 @@ function evaluateFamilySurface(
     // but this cannot select a historical parent/child classification method.
     const tenGodObservation = definition.tenGodGroupSurface === undefined
       ? undefined : tenGodSourceObservation(snapshot, definition.tenGodGroupSurface);
+    const relativeStarHiddenStemBoundary = tenGodObservation === undefined
+      ? undefined : r070FamilyRelativeStarHiddenStemBoundary(
+        snapshot, definition.scope, definition, layer.sexScope, tenGodObservation,
+      );
     return {
       ...base, disposition: 'INCONCLUSIVE',
       ...(tenGodObservation === undefined ? {} : { tenGodObservation }),
-      missingPrerequisites: [
+      ...(relativeStarHiddenStemBoundary === undefined
+        ? {} : { relativeStarHiddenStemBoundary }),
+      missingPrerequisites: relativeStarHiddenStemBoundary?.missingPrerequisites ?? [
         'SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED',
         'HIDDEN_VS_VISIBLE_STAR_HANDLING',
         'HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED',
-        ...(tenGodObservation?.status === 'incomplete_input'
-          ? ['TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED'] : []),
       ],
     };
   }
