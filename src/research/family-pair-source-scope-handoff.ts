@@ -32,6 +32,17 @@ export interface FamilySourceScopeCandidate {
   familyMeaningAuthorized: false;
 }
 
+export interface FamilyMethodCoexistence {
+  sourceSurfaces: readonly [string, string];
+  calculatedFactPaths: readonly string[];
+  state: 'COEXISTING_NOT_RECONCILED';
+  methodSelectionAuthorized: false;
+  missingPrerequisites: readonly [
+    'FAMILY_METHOD_SELECTION',
+    'PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION',
+  ];
+}
+
 export interface FamilySourceScopeHandoff {
   version: typeof FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION;
   owner: 'R070';
@@ -41,6 +52,7 @@ export interface FamilySourceScopeHandoff {
   calculationHash: string;
   historicalSex: 'male' | 'female' | 'unspecified';
   methodCandidates: readonly FamilySourceScopeCandidate[];
+  methodCoexistences: readonly FamilyMethodCoexistence[];
   missingPrerequisites: readonly string[];
   interpretationDisposition: 'INCONCLUSIVE';
   familyT8Admitted: false;
@@ -155,6 +167,30 @@ export function evaluateFamilySourceScopeV1(
   const methodCandidates = FAMILY_SURFACES
     .filter(definition => definition.scope === scope)
     .map(definition => evaluateFamilySurface(snapshot, definition));
+  const simultaneousMethods: readonly [string, string][] = scope === 'parents'
+    ? [['月為父母兄弟門戶', '年為父']]
+    : [['時為子息', '時為子孫']];
+  const methodCoexistences: FamilyMethodCoexistence[] =
+    simultaneousMethods.flatMap(sourceSurfaces => {
+      const pair = sourceSurfaces.map(surface => methodCandidates.find(candidate =>
+        candidate.sourceSurface === surface,
+      ));
+      if (pair.length !== 2 || pair.some(candidate =>
+        candidate?.disposition !== 'APPLICABLE_BOUNDED')) return [];
+      return [{
+        sourceSurfaces,
+        calculatedFactPaths: [...new Set(pair.flatMap(candidate =>
+          candidate?.observedFactPath === undefined
+            ? [] : [candidate.observedFactPath],
+        ))],
+        state: 'COEXISTING_NOT_RECONCILED' as const,
+        methodSelectionAuthorized: false as const,
+        missingPrerequisites: [
+          'FAMILY_METHOD_SELECTION' as const,
+          'PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION' as const,
+        ],
+      }];
+    });
   const missingPrerequisites = [
     ...R070_EXECUTION_GAPS,
     ...new Set(methodCandidates.flatMap(candidate => candidate.missingPrerequisites)),
@@ -164,7 +200,7 @@ export function evaluateFamilySourceScopeV1(
     owner: 'R070', corpusVersion: R070_FAMILY_DOMAIN_CLAIM_CORPUS_VERSION,
     scope, snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     historicalSex: snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
-    methodCandidates, missingPrerequisites,
+    methodCandidates, methodCoexistences, missingPrerequisites,
     interpretationDisposition: 'INCONCLUSIVE',
     familyT8Admitted: false, researchOnly: true, mayPublish: false, maySell: false,
   };
