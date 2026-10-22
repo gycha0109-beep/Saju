@@ -43,6 +43,19 @@ export interface RelationshipThreeMenuResearchPageInput {
   compatibility?: CompatibilityTwoChartIntakePreview;
 }
 
+function matchesActualFamilyFact(
+  snapshot: CanonicalSajuSnapshot,
+  item: FamilyPillarObservation,
+): boolean {
+  const fact = snapshot.pillars[item.pillarSlot];
+  const expectedState = fact.status === 'resolved'
+    ? 'resolved' : fact.status === 'ambiguous' ? 'ambiguous' : 'unavailable';
+  if (item.state !== expectedState) return false;
+  if (expectedState !== 'resolved') return item.observedPillar === undefined;
+  if (fact.status !== 'resolved') return false;
+  return item.observedPillar === fact.value.stem.value + fact.value.branch.value;
+}
+
 function assertBoundedFamily(
   snapshot: CanonicalSajuSnapshot,
   report: FamilyCanonicalObservationPreview,
@@ -60,13 +73,7 @@ function assertBoundedFamily(
         item.factPath !== 'pillars.' + item.pillarSlot ||
         !((scope === 'parents' && (item.pillarSlot === 'year' || item.pillarSlot === 'month')) ||
           (scope === 'children' && item.pillarSlot === 'hour')) ||
-        item.state !== snapshot.pillars[item.pillarSlot].status ||
-        (item.state === 'resolved' &&
-          item.observedPillar !==
-            (snapshot.pillars[item.pillarSlot].status === 'resolved'
-              ? snapshot.pillars[item.pillarSlot].value.stem.value +
-                snapshot.pillars[item.pillarSlot].value.branch.value
-              : undefined)))) {
+        !matchesActualFamilyFact(snapshot, item))) {
     throw new TypeError('Relationship page refuses mismatched or promoted family chart observations.');
   }
   const expectedSlots = scope === 'parents' ? ['year', 'month'] : ['hour'];
@@ -142,7 +149,7 @@ export function buildRelationshipThreeMenuResearchPage(
       spouseSource[0].prohibitedExtensions.length === 0) {
     throw new TypeError('Relationship page only supports the exact bounded spouse position profile.');
   }
-  const profile = spouseSource[0];
+  const profile = spouseSource[0]!;
   const day = snapshot.pillars.day;
   const dayResolved = day.status === 'resolved';
   const resolvedFamily = [...parents.observations, ...children.observations]
@@ -151,6 +158,10 @@ export function buildRelationshipThreeMenuResearchPage(
     ? '계산 관찰 가능' : '계산 근거 부족';
   const childState = children.observations.some(item => item.state === 'resolved')
     ? '계산 관찰 가능' : '출생시각 또는 계산 근거 부족';
+
+  const compatibilityHasFacts = compatibility !== undefined &&
+    compatibility.subject.pillars.some(item => item.status === 'resolved') &&
+    compatibility.target.pillars.some(item => item.status === 'resolved');
 
   const cards: RelationshipResearchCard[] = [
     {
@@ -172,11 +183,8 @@ export function buildRelationshipThreeMenuResearchPage(
     },
     {
       menuId: 'compatibility', label: '궁합',
-      state: compatibility === undefined ? 'unavailable' :
-        compatibility.subject.pillars.some(item => item.status === 'resolved') &&
-        compatibility.target.pillars.some(item => item.status === 'resolved')
-          ? 'partial' : 'unavailable',
-      meaning: compatibility === undefined ? 'none' : 'calculation_facts_only',
+      state: compatibilityHasFacts ? 'partial' : 'unavailable',
+      meaning: compatibilityHasFacts ? 'calculation_facts_only' : 'none',
       summary: compatibility === undefined
         ? '상대방의 허용된 출생정보가 입력되면 두 명식 계산값을 나란히 확인할 수 있습니다.'
         : '두 명식의 독립된 계산 사실만 표시합니다. 상호관계의 원인이나 점수는 해석하지 않습니다.',
