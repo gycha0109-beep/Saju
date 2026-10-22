@@ -52,6 +52,9 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
       option.value = item[0];
       select.appendChild(option);
     });
+    // Explicit initial scope: browser and test DOM must agree, and an
+    // unselected parent/child menu must not silently send empty text.
+    if (options.length) select.value = options[0][0];
     holder.appendChild(select);
     return { holder, select };
   }
