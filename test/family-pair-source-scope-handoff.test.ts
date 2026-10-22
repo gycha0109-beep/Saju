@@ -621,9 +621,7 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
           ...(source.disposition === 'APPLICABLE_BOUNDED'
             ? ['R070_PILLAR_LOCATION_IS_NOT_FAMILY_OUTCOME_RULE'] : []),
         ]);
-        expect(blockers.missingPrerequisites).toEqual(expect.arrayContaining(
-          condition.missingPrerequisites,
-        ));
+        expect(blockers.missingPrerequisites).toEqual(expect.arrayContaining([...condition.missingPrerequisites]));
       }
       for (const [i, condition] of blockers.methodSelectionHolds.entries()) {
         expect(condition.coPresenceIsVerifiedContradiction).toBe(false);
@@ -636,9 +634,7 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
           expect(source?.sourceLayerId).toBe(condition.sourceLayerIds[sourceIndex]);
           expect(source?.disposition).not.toBe('NARROW_OR_REPLACE');
         }
-        expect(blockers.missingPrerequisites).toEqual(expect.arrayContaining(
-          condition.missingPrerequisites,
-        ));
+        expect(blockers.missingPrerequisites).toEqual(expect.arrayContaining([...condition.missingPrerequisites]));
         if (condition.methodPairKind === 'FEMALE_CHILD_STAR_RELATION_ALTERNATIVES') {
           expect(condition.sourceSurfaces).toEqual(['子嗣者即官星也', '我生者為子']);
           expect(condition.missingPrerequisites).toContain(
@@ -660,9 +656,7 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
       expect(blockers.interpretationMethodSelected).toBe(false);
       expect(blockers.independentlyAdmittedFamilyClaims).toBe(0);
       expect(blockers.familyT8Admitted).toBe(false);
-      expect(report.missingPrerequisites).toEqual(expect.arrayContaining(
-        blockers.missingPrerequisites,
-      ));
+      expect(report.missingPrerequisites).toEqual(expect.arrayContaining([...blockers.missingPrerequisites]));
       expect(report.familyT8Admitted).toBe(false);
       expect(report.mayMarkMenuAvailable).toBe(false);
       expect(report.mayPublish).toBe(false);
