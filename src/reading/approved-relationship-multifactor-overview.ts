@@ -54,50 +54,38 @@ function confirmedTenGodPositions(
   bundle: CanonicalReadingSemanticBundleV1,
   types: readonly string[],
 ): readonly string[] | undefined {
-  const exactFacts = bundle.canonicalFacts.filter(fact =>
-    fact.path === 'derivedFacts.tenGods' &&
-    fact.scenarioRef === undefined && fact.fact.status === 'resolved',
+  const matches = bundle.canonicalFacts.filter(fact =>
+    fact.path === 'derivedFacts.tenGods' && fact.scenarioRef === undefined,
   );
-  if (exactFacts.length !== 1) return undefined;
-  const value: unknown = exactFacts[0]!.fact.status === 'resolved'
-    ? exactFacts[0]!.fact.value : undefined;
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+  if (matches.length !== 1) return undefined;
+  const fact = matches[0]!.fact;
+  if (fact.status !== 'resolved' || fact.value === null ||
+      typeof fact.value !== 'object' || Array.isArray(fact.value)) {
     return undefined;
   }
-  const chart = value as TenGodChartFact;
-  return types.map(type => {
+  const chart = fact.value as TenGodChartFact;
+  const observed: string[] = [];
+  for (const type of types) {
     const allowed = GODS_BY_FAMILY[type];
     const label = FAMILY_FACT_LABELS[type];
-    if (allowed === undefined || label === undefined) return '';
+    if (allowed === undefined || label === undefined) return undefined;
     const positions: string[] = [];
     for (const slot of FACT_SLOTS) {
       const pillar = chart[slot];
       for (const channel of ['stem', 'branch'] as const) {
-        const fact = pillar?.[channel];
-        if (fact?.status !== 'resolved' || !allowed.includes(fact.value)) continue;
         if (channel === 'stem' && slot === 'day') continue;
-        positions.push(PILLAR_LABELS[slot] + ' ' +
-          (channel === 'stem' ? '천간 ' : '지지 대표 십신 ') + fact.value);
+        const tenGod = pillar?.[channel];
+        if (tenGod?.status !== 'resolved' || !allowed.includes(tenGod.value)) continue;
+        positions.push(
+          PILLAR_LABELS[slot] + ' ' +
+          (channel === 'stem' ? '천간 ' : '지지 대표 십신 ') + tenGod.value,
+        );
       }
     }
-    return positions.length ? label + ': ' + positions.join(' · ') : '';
-  }).every(Boolean)
-    ? types.map(type => {
-      const allowed = GODS_BY_FAMILY[type]!;
-      const positions = FACT_SLOTS.flatMap(slot => {
-        const pillar = chart[slot];
-        return (['stem', 'branch'] as const).flatMap(channel => {
-          const fact = pillar?.[channel];
-          if (channel === 'stem' && slot === 'day') return [];
-          return fact?.status === 'resolved' && allowed.includes(fact.value)
-            ? [PILLAR_LABELS[slot] + ' ' +
-                (channel === 'stem' ? '천간 ' : '지지 대표 십신 ') + fact.value]
-            : [];
-        });
-      });
-      return FAMILY_FACT_LABELS[type] + ': ' + positions.join(' · ');
-    })
-    : undefined;
+    if (positions.length === 0) return undefined;
+    observed.push(label + ': ' + positions.join(' · '));
+  }
+  return observed;
 }
 
 function relationshipAxis(unit: CanonicalReadingSemanticUnitV1): RelationshipAxis | undefined {
