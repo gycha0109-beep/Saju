@@ -170,6 +170,13 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     }
   });
 
+  function formatBirthDigits(value) {
+    const digits = String(value).replace(/\D/gu, '').slice(0, 8);
+    if (digits.length <= 4) return digits;
+    if (digits.length <= 6) return digits.slice(0, 4) + '-' + digits.slice(4);
+    return digits.slice(0, 4) + '-' + digits.slice(4, 6) + '-' + digits.slice(6);
+  }
+
   function dateValid(value, lunar) {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(value);
     if (!match) return false;
@@ -367,11 +374,25 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
       unknown: unknown.input, sex: sex.select,
       leap: leap.input, consent: consent.input
     };
+    function syncPartnerScope() {
+      const lunar = cal.select.value === 'lunar';
+      leap.input.disabled = !lunar;
+      if (!lunar) leap.input.checked = false;
+      time.input.disabled = unknown.input.checked;
+    }
     wrap.querySelectorAll('input,select').forEach(function(node) {
-      node.addEventListener('change', function() { invalidate(view); });
+      node.addEventListener('change', function() {
+        syncPartnerScope();
+        invalidate(view);
+      });
     });
-    date.input.addEventListener('input', function() { invalidate(view); });
+    date.input.addEventListener('input', function() {
+      const formatted = formatBirthDigits(date.input.value);
+      if (date.input.value !== formatted) date.input.value = formatted;
+      invalidate(view);
+    });
     time.input.value = '12:00';
+    syncPartnerScope();
     note(view.container, '두 번째 명식은 내부 연구용 계산만 지원합니다. ' +
       '궁합 점수·결혼 결과를 생성하거나 입력을 보관하지 않습니다.', 'field-hint');
   }
