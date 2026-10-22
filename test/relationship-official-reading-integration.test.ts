@@ -14,6 +14,7 @@ import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
 import { buildApprovedRelationshipMultifactorOverviewV1 } from '../src/reading/approved-relationship-multifactor-overview.js';
+import { buildApprovedOfficialReadingDetailedRealizationV1 } from '../src/reading/official-reading-detailed-realization.js';
 import { buildOfficialReadingCharacterGroundingV1 } from '../src/reading/official-reading-reader-parity.js';
 import {
   PRODUCT_READING_RESPONSE_VERSION,
@@ -225,34 +226,55 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       standardReport.sections.map(x => x.title),
     );
 
-    const tamperedUnit = semantics.units.find(unit =>
-      unit.role === 'primary' &&
-      unit.claimType.startsWith('RELATIONSHIP_NATAL_CONCLUSION_') &&
-      unit.upstreamClaimRefs.length >= 2,
+    const approvedDetailedMaterial =
+      buildApprovedOfficialReadingDetailedRealizationV1(semantics, plan);
+    expect(approvedDetailedMaterial).toBeDefined();
+    const focusEntry = detailedReport.explainability.entries.find(entry =>
+      entry.explainabilityRef === overviewBlock.perspectives[0]?.explainabilityRef,
     );
-    expect(tamperedUnit).toBeDefined();
-    if (tamperedUnit !== undefined) {
+    const targetUnitId = focusEntry?.primaryUnitRefs[0];
+    const focusedUnit = semantics.units.find(unit => unit.unitId === targetUnitId);
+    expect(focusedUnit).toBeDefined();
+    if (targetUnitId !== undefined && focusedUnit !== undefined) {
+      const originalHeadline = focusedUnit.canonicalText?.headline;
       const manipulated = {
         ...semantics,
-        units: semantics.units.map(unit => unit.unitId === tamperedUnit.unitId
-          ? { ...unit, canonicalText: { headline: '미승인 관계 해석', summary: '가짜 근거' } }
+        units: semantics.units.map(unit => unit.unitId === targetUnitId
+          ? { ...unit, canonicalText: {
+            headline: '승인되지 않은 관계 결론', summary: '검증 없는 부당한 주장',
+          } }
           : unit),
       };
-      const originalText = tamperedUnit.canonicalText?.headline;
-      const filtered = buildApprovedRelationshipMultifactorOverviewV1(
-        manipulated,
-        plan,
-        {
-          policyVersion: 'myeonghwa-official-reading-detailed-realization-v1',
-          units: [],
-        },
+      const rejected = buildApprovedRelationshipMultifactorOverviewV1(
+        manipulated, plan, approvedDetailedMaterial, detailedReport.explainability.entries,
+      );
+      expect(JSON.stringify(rejected)).not.toContain('승인되지 않은 관계 결론');
+      expect(JSON.stringify(rejected)).not.toContain(originalHeadline);
+
+      const brokenBinding = {
+        ...plan,
+        sections: plan.sections.map(section => ({
+          ...section,
+          primaryEvidenceBindings: section.primaryEvidenceBindings.map(binding =>
+            binding.primaryUnitRef === targetUnitId
+              ? { ...binding, supportingUnitRefs: binding.supportingUnitRefs.slice(1) }
+              : binding,
+          ),
+        })),
+      };
+      const missingSource = buildApprovedRelationshipMultifactorOverviewV1(
+        semantics, brokenBinding, approvedDetailedMaterial,
         detailedReport.explainability.entries,
       );
-      // A forged or incomplete detailed-role binding must never yield an
-      // aggregate claim or reproduce the modified unapproved text.
-      expect(filtered).toBeUndefined();
-      expect(String(filtered)).not.toContain(originalText);
+      expect(JSON.stringify(missingSource)).not.toContain(originalHeadline);
     }
+    const spouseScope = buildApprovedRelationshipMultifactorOverviewV1(
+      { ...semantics, intent: {
+        domain: 'relationship', temporalScope: 'natal', relationshipScope: 'spouse',
+      } },
+      plan, approvedDetailedMaterial, detailedReport.explainability.entries,
+    );
+    expect(spouseScope).toBeUndefined();
 
     const reader = buildOfficialReadingCharacterGroundingV1({
       response: response(),
