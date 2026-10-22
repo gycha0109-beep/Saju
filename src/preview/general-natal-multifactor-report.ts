@@ -240,7 +240,7 @@ function generalSourceBoundReadingGuide(
     'the whole-chart reading requires an actual selected source-bound T8 core');
 
   const used = new Set(core.observedFactPaths);
-  const axes = new Set([core.axis]);
+  const axes = new Set<Axis>([core.axis]);
   const support = selected.slice(1).map(section => {
     guard(section.axis !== core.axis && !axes.has(section.axis) &&
       section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
