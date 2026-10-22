@@ -2,12 +2,13 @@
 
 > 범위: 이 저장소의 **사주 계산 → 명식 → 해석 → Official Reading → 제품 실행**. 관상/캐릭터/결제 트랙의 자체 로드맵을 대체하지 않는다.  
 > 개정 기준: **2026-10-21 KST**, 편집 출발점 `main` = `09fac242524699b45f4d242fb22be0d0ababbb0e`. 본 문서는 12개 메뉴를 한 제품 목표로 묶고 **동시 실행 순서와 scope별 선행조건**을 정한다. 최신 `main`은 매 작업 시작 시 재확인하며, 과거 PR/CI 이력은 보존한다. **문서 개정은 구현·해석 품질·가용성의 완료가 아니다.**  
-> 상태: **작업 우선순위 문서**. 새로운 명리 의미·Production·공개·저장·판매 권한을 발행하지 않는다.  
+> 상태: **작업 우선순위 문서**. 새로운 명리 의미·Production·공개·저장·판매 권한을 발행하지 않는다.
+> 다국어 출력 설계 보완(2026-10-22): A/B/C/D의 12메뉴 병렬 개발을 유지하며 **공통 E 언어 중립 해석/On-Demand Renderer** 계약을 병행한다. 상세 계약: [다국어 Reading 설계 v1](./implementation/saju-multilingual-reading-on-demand-design-v1.md). 언어 식별자 등록은 해당 언어 풀이 제공·판매 승인과 별개다.  
 > 담당 트랙: `saju`; 의미 판정/독립 review는 기존 Research / Bridge의 소유권을 존중한다.
 
 ## 최상위 제품 목표 — 2026-10-21 12메뉴 통합 제품 목표
 
-**사용자는 생년월일·출생시각 등 허용된 입력으로 계산된 동일 Canonical 명식 기반에서, 화면의 12개 주제(원국 5개·가족·삶의 단계·올해·이번 달·배우자·궁합·질문형)에 접근하며, 메뉴마다 실제 근거가 허용하는 범위 안에서 읽을 만한 서로 다른 한국어 풀이 또는 구체적인 미지원/부분 지원 사유를 받는다. 궁합은 두 사람의 독립 명식, 흐름·삶의 단계는 정확한 시간 정책, 질문형은 질문별 scope를 추가로 요구한다.**
+**사용자는 생년월일·출생시각 등 허용된 입력으로 계산된 동일 Canonical 명식 기반에서, 화면의 12개 주제(원국 5개·가족·삶의 단계·올해·이번 달·배우자·궁합·질문형)에 접근하며, 메뉴마다 실제 근거가 허용하는 범위 안에서 읽을 만한 서로 다른 풀이 또는 구체적인 미지원/부분 지원 사유를 받는다. **현행 소비자 결과의 기준 언어는 한국어**이며, 이후 사용자가 요청한 한 로케일로 같은 해석 의미를 표현한다. 궁합은 두 사람의 독립 명식, 흐름·삶의 단계는 정확한 시간 정책, 질문형은 질문별 scope를 추가로 요구한다.**
 
 - 핵심 성공 기준은 **사용자에게 전달된 개인별 해석의 실제 내용·차별성·근거·일관성**이다. CI 통과, 계산 분류 수, 연구 규칙 수, PR 병합 수, 승인 문서 수는 필요할 수 있으나 목표 달성의 대체 지표가 아니다.
 - 현재 진실: **입력/Canonical 명식 계산 = 구현**, **범위가 제한된 General/Career/Wealth/Business/Relationship Natal Preview/Official Reading 경로 = 구현**, **다양한 명식에서 깊이 있고 다층적인 원국 종합해석의 품질·일관성 = 미완료**. 단일 통합 샘플의 `delivered` 성공만으로 완성을 주장하지 않는다.
@@ -40,6 +41,9 @@
 
 ### 12개 메뉴의 공통 완료 정의
 
+> **의미 품질과 언어별 표현 품질은 별도 완료 축이다.** 아래 한국어 본문 조건은 현재 작동하는 기준 언어의 수락 조건으로 유지하되, 12개 메뉴의 Claim·Evidence·MUR·권한과 향후 특정 로케일의 Renderer/용어/표현 품질을 혼동하지 않는다. 모든 언어 동시 생성·전 언어 출시를 12메뉴 엔진 구현의 전역 선행조건으로 만들지 않는다.
+
+
 1. **메뉴 노출과 엔진 완성은 구분**한다. 화면 카드·ReadingIntent·DomainReadingProfile·HTML·`delivered`·PR/CI PASS만으로 해당 메뉴 완료가 아니다. 각 메뉴에 실제 입력→Canonical/관련 시나리오→source-bound Claim/Methodology/Rule→Evidence→사용자에게 읽히는 **서로 다른 한국어 결론**의 작동 경로가 있어야 한다.
 2. 메뉴마다 **최소 유효 풀이(MUR)**를 별도로 정의·검증한다. Career의 core 1 + 독립 보조 2개 기준을 가족·연운·궁합 등 다른 도메인에 근거 없이 복사하지 않는다. `complete / partial / insufficient / unsupported`는 실제 결손 이유와 함께 반환한다.
 3. 공통 출생 사실은 동일 계산 version/scenario의 Canonical snapshot/hash로 공유한다. 연운·월운에는 정확한 시간 범위와 정책, 궁합에는 **서로 다른 두 대상의 출생정보 및 각자의 snapshot**, 질문형에는 읽기 범위와 해당 대상의 근거 연결을 별도로 관리한다.
@@ -57,6 +61,20 @@
 | **B. 시간 해석** | 올해 / 이번 달 / 삶의 단계 (3) | 기존 Annual Preview와 Temporal Facts·프로필 재사용. **올해→월별 UX 연결, 월별 부분 해석의 근거 상태, 현재/이후 시간 맥락**을 내부 읽기에서 동시에 구현. 입춘/기간·대운 scope 미확립 해석만 HOLD | **아니오**. Annual Official/Monthly Official의 정확한 승격은 **해당 범위의 source gate**를 따름 |
 | **C. 사람·관계** | 배우자·관계 / 가족 / 궁합 (3) | 기존 배우자궁 position-only, 가족 프로필, 궁합 의도/T10 계약 기반 **배우자 한정 읽기·부모/자녀 구분·두 명식 입력/상호 근거**를 병렬 구현. 서로를 단순 원국 문구로 대체하지 않음 | **아니오**. 해당 의미 미승인 시 그 주장만 partial/HOLD |
 | **D. 질문/메뉴 연결** | 지금 고민으로 보기 (1) 및 전 메뉴 공통 진입 | 실제 지원되는 도메인으로 질문 라우팅→기존 Claim 근거 선택→근거 안에서 답/보류. MyeongHa UX의 **Topic visibility ≠ Reading availability** 규칙으로 12개 카드의 `available/partial/unavailable`를 연결. 질문형은 없는 T11 결과를 지어내지 않음 | **아니오**. 개별 메뉴가 준비된 순서대로 연결하고 미지원은 표시 |
+
+### E. 공통 다국어 해석 표현 기반 — A/B/C/D 병렬 지원 (2026-10-22 추가)
+
+> **E는 다섯 번째 해석 주제나 A/B/C/D의 전역 선행 게이트가 아니다.** 사주 해석의 실제 Claim·Evidence·Rule·MUR·scope authorization을 언어 중립적으로 고정하고, 사용자 요청 언어 **하나**에서만 문장을 생성하기 위한 공통 인프라다. 한국어도 여러 표시 로케일 중 하나이며, 한국어 원문을 다른 모든 언어의 의미 원본으로 삼지 않는다. 실제 상세 계약은 [다국어 Reading On-Demand 설계 v1](./implementation/saju-multilingual-reading-on-demand-design-v1.md).
+
+- [x] **E-1 기존 IR 재사용 계약 첫 구현:** `CanonicalReadingSemanticBundleV1`을 독립 중간 의미 모델로 재사용한다. 별도 병렬 사주 엔진을 만들지 않고 `src/reading/reading-localization.ts`에서 source-owned Claim/Qualifier/prohibitedExtensions/semanticHash 무결성을 확인한다. *기존 사용자 한국어 경로 통합은 후속 작업*이다.
+- [x] **E-2 로케일/요청별 On-Demand 계약 첫 구현:** `readingLocale > accountLocale > uiLocale > ko-KR` 우선순위로 하나를 선택하고, 선택된 renderer만 호출한다. 미등록 renderer/알 수 없는 로케일의 자동 대체 출력 금지. `ko-KR/en-US/ja-JP/zh-CN/zh-TW/vi-VN/ms-MY/id-ID`는 **설계상 로케일 카탈로그**이지 이미 출시된 언어 목록이 아니다.
+- [x] **E-2a 버전/캐시·구조적 의미 경계:** `semanticHash`·snapshot/interpretation/registry·권한 범위 `requestScopeKey`·로케일·Renderer/용어집 버전으로 scoped 캐시 키를 만든다. 신규 Claim, 필수 qualifier 누락, 응답 텍스트 누락을 거절한다. 내부용 계약이며 저장·언어 출력 제공·새 명리 authority는 없음.
+- [ ] **E-3 한국어 Renderer 호환 연결:** 기존 한국어 Official/Preview/ProductReadingResponse의 실제 문단·근거·내부 ID 레닥션·부분/미지원 처리 보존. 현재 경로를 무단 변경하지 않는다.
+- [ ] **E-4 언어별 용어/메시지 리소스:** 명리 용어집, 로케일별 UI·오류·미지원 사유, 간체/번체·말레이어/인도네시아어 독립 정책. UI 언어/풀이 언어/지역/출생 시간대/계산 정책은 각각 분리한다.
+- [ ] **E-5 첫 외국어 Renderer 및 품질 기준:** 영어 등 한 언어부터 개인별 실제 결과와 원본 의미·Qualifier·HOLD 보존을 확인해 단계적으로 확대한다. 한국어만 가능한 의미를 자동 번역으로 채우지 않는다.
+- [ ] **E-6 LLM 표현/사용권한·운영 통합:** LLM은 기존 승인 범위의 문장 표현에만 사용하며 새 명리 판단 금지. 문장 수준 의미 동등성은 기계적 claim-id 검사의 대체물이 아니며 별도 로케일 품질 심사 필요. Saju는 의미/출력 계약, 명하 UX·Reader·저장·Commerce는 화면/권한/보관/삭제/상품화를 담당한다.
+
+**공통 수락 기준:** 동일한 Canonical 의미 결과를 언어별로 재해석하지 않음; 한 요청에 한 Renderer 호출; 불명 로케일은 거절; Claim·Qualifier·HOLD·source 범위를 누락/승격하지 않음; 캐시 키에 locale/renderer/glossary와 사용자·요청 범위 포함. **현재 완료 표시된 E-1/E-2는 내부 계약 구현만 의미하며 한국어 이외 언어의 실제 풀이·공개는 미완료다.**
 
 **동시 착수/의존성 규칙**
 
@@ -403,7 +421,7 @@ PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현�
 
 1. **현황:** `main` SHA, 열린 PR, 정확한 files/contracts, test/GitHub Actions 상태를 읽는다. 과거 채팅이나 README 상태 숫자만으로 완료 판단 금지.
 2. **범위:** A(원국 5메뉴), B(올해/월/삶의 단계), C(가족/배우자/궁합), D(질문형·전 메뉴 연결)의 **병렬 실행 중 사용자의 실제 풀이 차별성과 품질을 진전시키는 수직 기능 하나**를 선정한다. P0-NATAL은 A의 핵심 우선순위지만 B/C/D의 전역 착수 게이트가 아니다. 단순 권한 문서·CI 증거 갱신만으로 제품 진척을 선언하지 않는다. Research/Bridge/Production admission과 내부 제품 UX는 분리한다.
-3. **구현:** 코드+경량 focused regression+필요한 문서. fixture와 실제 source provenance는 구분. 스냅샷/Rule/Plan 식별자 불변성 확인.
+3. **구현:** 코드+경량 focused regression+필요한 문서. fixture와 실제 source provenance는 구분. 스냅샷/Rule/Plan 식별자 불변성 확인. 다국어 관련 변경은 E의 언어 중립 IR/단일 로케일/Claim·Qualifier/HOLD/캐시 경계를 따르며 **번역 문구만 추가한 PR을 명리 해석 품질 완료로 세지 않는다**.
 4. **일반 검증:** lockfile install, lint, typecheck, build, full regression 16/16, CI Verify, Production Container, PIE. 이름만 비슷한 다른 run은 혼동 금지.
 5. **통합 검증:** SHA 고정 admission → full Quality → full regression 16/16 → full Verify → CI Integration Verify. 모두 성공해야 HEAD SHA를 지정하여 squash merge.
 6. **병합 후 검증:** 해당 `main` SHA에서 CI Quality, full regression 16/16, CI Verify, Production Container 확인.
@@ -418,4 +436,4 @@ PR #2517이 이미 병합/대체/폐기됐다면 위 체크리스트를 그 현�
 2. **A 원국**은 기존 Career T8/MUR 연구 경로의 사용자 한국어 결과를 개선하되, General/Wealth/Business/Relationship 4개 수직 도메인도 **Career 최종 완료까지 대기하지 말고** 각각 확보된 source-owned Claim로 구현한다. 의미 없는 Claim 수·일반 문장 증가를 진척으로 세지 않는다.
 3. **B 시간**은 기존 Annual 내부 미리보기→이번 달 연결 및 Life-stage 분리 결과, **C 관계**는 Spouse bounded 기능→Family/Compatibility 입력·근거 부분 읽기, **D 질문**은 허용 근거 기반 주제 라우팅·가용성 표시를 **A와 병행**한다. 연운/월운 Official의 승인 미달 부분만 개별 HOLD한다. 존재하지 않는 의미·권한을 만들어내지 않는다.
 4. 각 작업선은 **실제 사용자용 한글 본문/명식별 차이/근거 경로/MUR/미상 입력 대응**을 해당 변경 PR에서 제시하고, 12개 화면 카드의 사용 가능/부분/준비 중 상태 및 MyeongHa UX 책임과 연결한다. 단순 감사표 추가만으로 종료하지 않는다.
-5. **사주 제품 완료는 12개 메뉴 전체의 실제 기능 결과**로 판단한다. P0-NATAL 5분야 또는 CI 20/20 통과만으로 종합 제품 완료를 선언하지 않는다. 기존 SHA 고정 CI·통합 CI·병합 후 main 검증, Research/Bridge/HOLD, Production/Public/Commerce 분리는 유지한다.
+5. **사주 제품 완료는 12개 메뉴 전체의 실제 기능 결과**로 판단한다. E 공통 다국어 계약과 언어별 표현 품질의 완료를 별도로 관리하며, E-1/E-2 구현을 해외 로케일 서비스 준비 완료로 선언하지 않는다. P0-NATAL 5분야 또는 CI 20/20 통과만으로 종합 제품 완료를 선언하지 않는다. 기존 SHA 고정 CI·통합 CI·병합 후 main 검증, Research/Bridge/HOLD, Production/Public/Commerce 분리는 유지한다.

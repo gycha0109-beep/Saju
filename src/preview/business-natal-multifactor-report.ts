@@ -27,6 +27,16 @@ export interface BusinessNatalMultifactorSection {
   observedPositions: readonly string[];
   observedFactPaths: readonly string[];
 }
+export interface BusinessNatalReadingGuide {
+  title: string;
+  paragraph: string;
+  coreClaimType: string;
+  supporting: readonly {
+    claimType: string;
+    distinctObservedFactPaths: readonly string[];
+    distinctObservedPositions: readonly string[];
+  }[];
+}
 export interface BusinessNatalMultifactorReport {
   snapshotId: string;
   calculationHash: string;
@@ -35,6 +45,7 @@ export interface BusinessNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly BusinessNatalMultifactorSection[];
+  readingGuide?: BusinessNatalReadingGuide;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -195,6 +206,59 @@ function toSection(
     observedFactPaths: locations.map(x => x.factPath),
   };
 }
+/**
+ * Product-readable arrangement of EXISTING selected, research-only Business
+ * T8 headings and observed Canonical positions. It cannot predict startup
+ * success, revenues, management skill or future business events.
+ */
+function buildBusinessNatalReadingGuide(
+  core: BusinessNatalMultifactorSection | undefined,
+  supports: readonly BusinessNatalMultifactorSection[],
+  state: Status,
+): BusinessNatalReadingGuide | undefined {
+  if (core === undefined || core.axis === 'coordination') return undefined;
+  guard(core.sourceIds.length > 0 && core.upstreamClaimIds.length >= 2 &&
+    core.observedFactPaths.length >= 2 &&
+    core.observedFactPaths.length === core.observedPositions.length,
+    'Business reading guide requires exact qualified source evidence');
+
+  const usedPaths = new Set(core.observedFactPaths);
+  const supporting = supports.map(section => {
+    guard(section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
+      section.observedFactPaths.length === section.observedPositions.length,
+      'Business supporting interpretation has no exact source evidence');
+    const newFacts = section.observedFactPaths.flatMap((path, index) => {
+      if (usedPaths.has(path)) return [];
+      const position = section.observedPositions[index];
+      guard(position !== undefined && position.trim().length > 0,
+        'Business supporting observation has no position');
+      usedPaths.add(path);
+      return [{ path, position }];
+    });
+    guard(newFacts.length > 0, 'Business support cannot repeat the same calculated facts');
+    return {
+      claimType: section.claimType,
+      distinctObservedFactPaths: newFacts.map(value => value.path),
+      distinctObservedPositions: newFacts.map(value => value.position),
+    };
+  });
+
+  const paragraphs = [
+    `사업이라는 주제에서 이 명식의 중심 구조적 관점은 ‘${core.headline}’입니다. 이 표현은 ${core.observedPositions.join(' · ')}에서 실제 관측된 기존 십신 근거에 연결된 연구 후보입니다.`,
+    ...supports.map((section, index) =>
+      `또 다른 관점인 ‘${section.headline}’은 기존 관찰과 다른 ${supporting[index]!.distinctObservedPositions.join(' · ')}의 계산 사실을 추가해 구별합니다.`),
+    ...(state === 'complete'
+      ? ['서로 다른 구조적 관점 세 가지를 확인했지만, 이것은 창업 적성·매출·사업 성공이나 실패를 판정하지 않습니다.']
+      : [`이 명식에서 독립적으로 설명할 수 있는 보조 관점은 ${supporting.length}개뿐이어서, 사업운 전체 종합 설명은 보류합니다.`]),
+  ];
+  return {
+    title: '이 명식의 사업·실행 중심과 보조 관점',
+    paragraph: paragraphs.join(' '),
+    coreClaimType: core.claimType,
+    supporting,
+  };
+}
+
 export function buildBusinessNatalMultifactorReport(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
@@ -257,6 +321,9 @@ export function buildBusinessNatalMultifactorReport(
     core !== undefined && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly BusinessNatalMultifactorSection[] = chosen;
+  const readingGuide = buildBusinessNatalReadingGuide(
+    core, core === undefined ? [] : chosen.slice(1), state,
+  );
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 사업의 다중 근거 T8 해석은 보류합니다.');
   }
@@ -269,6 +336,7 @@ export function buildBusinessNatalMultifactorReport(
     introduction: '실제 명식의 십신 관계를 바탕으로 산출과 실행, 운영 기준, 준비와 협업의 관계를 함께 살펴봅니다. 창업 적성이나 사업 성과를 예측하는 판정이 아닌 전통 명리 연구 후보입니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
+    ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],

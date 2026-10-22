@@ -165,7 +165,15 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   const annual = report.annual.sections.map(section =>
     '<article class="reading-card"><small>' +
     (section.kind === 'core' ? '올해의 중심 관점' : '연운의 조건부 충 관계') +
-    '</small><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p></article>',
+    '</small><h3>' + e(section.title) + '</h3><p>' + e(section.text) + '</p>' +
+    '<details><summary>올해 문구의 계산 근거와 연구 출처</summary>' +
+    '<p>해석 범위: 내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)</p>' +
+    '<p>문구 프로필: ' + e(section.researchProfileId) + '</p>' +
+    '<p>후보 Claim 유형: ' + e(section.candidateClaimType) + '</p>' +
+    '<p>계산 경로: ' + e(section.calculationFactPaths.join(' · ')) + '</p>' +
+    '<p>연구 방법론: ' + e(section.methodologyId) + '</p>' +
+    '<p>출처: ' + e(section.policySourceId) + ' (명하 내부 연구 정책, 독립 고전 근거 아님)</p>' +
+    '</details></article>',
   ).join('\n');
   const monthly = SEGMENTS.map(id => {
     const sections = report.monthly.sections.filter(section => section.segmentId === id);
