@@ -47,3 +47,12 @@
 ## 4. 기존 Authority/HOLD 유지
 
 A 원국, B 시간, C 관계, D 질문의 source-qualified T5/T6/T8/T9/T10/T11 및 MUR 기준은 변경하지 않는다. 특히 연구용 의미, 대운/연운/월운, 궁합, 배우자 등 scope 미승인 결과는 외국어로 표현해도 여전히 HOLD이다. `internal_preview_only` 출력은 Official/Production/Public/저장/판매 권한을 추가하지 않는다.
+
+## 6. E-7 기존 Host/화면 로케일 분리 (2026-10-22)
+
+- 기존 `src/host/product-host.ts` 요청에 UI용 `uiLocale`과 풀이용 `reading.readingLocale`를 분리한다. `uiLocale`만 변경되어도 Canonical 계산 규칙은 달라지지 않는다.
+- 개인별 풀이 요청의 로케일 우선순위는 현재 `readingLocale > uiLocale > ko-KR`; 기존 호출자는 두 필드가 없어도 종전 한국어 결과를 받는다. 계정 기본 언어는 아직 Saju Host에 연결하지 않으며 MyeongHa의 인증된 프로필에서 공급해야 한다.
+- 현재 기존 한국어 서비스만 실제 문단 Renderer가 있으므로, 외국어 `readingLocale` 요청은 **계산/해석 전에** `INVALID_READING_REQUEST`로 거절한다. `uiLocale=en-US`, `readingLocale=ko-KR`처럼 UI 언어 메타데이터와 풀이 언어가 다를 수 있다. 단, 기존 브라우저 자체는 한국어 UI만 제공한다.
+- Preview 5분야 요청에도 `uiLocale`과 `readingLocale`를 최상위 필드로 전달하며, 동일한 한국어-only admission을 적용한다. 한국어 원문을 외국어 요청에 숨겨서 재사용하거나 브라우저에 서비스 인증 토큰을 노출하지 않는다.
+- `src/host/static-page.ts`의 UI/풀이 언어 선택은 한국어만 활성화하고 나머지 로케일은 `준비 중`으로 표시한다. 사용자에게 외국어 서비스가 가능한 것처럼 표시하지 않는다.
+- 제품 트랙의 UI 전체 i18n, 출생·시간대 정책, 계정 언어 선호, locale별 실제 Renderer, 캐시 저장/조회 및 삭제는 미완료이다.
