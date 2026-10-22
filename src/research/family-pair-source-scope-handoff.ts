@@ -613,10 +613,10 @@ function observeR068KinConditional(
   personRole: 'subject' | 'target',
 ): R068KinConditionalObservation {
   const t5 = snapshot.derivedFacts.tenGods;
-  const terms = ([
-    { exactHistoricalTerm: '傷官', canonicalSearchCategory: '상관' },
-    { exactHistoricalTerm: '七煞', canonicalSearchCategory: '편관' },
-  ] as const).map(term => {
+  const observeTerm = (
+    exactHistoricalTerm: R068KinTermObservation['exactHistoricalTerm'],
+    canonicalSearchCategory: R068KinTermObservation['canonicalSearchCategory'],
+  ): R068KinTermObservation => {
     const observedPositions: R068KinTermObservation['observedPositions'][number][] = [];
     const unresolvedFactPaths: string[] = [];
     for (const slot of TEN_GOD_OBSERVATION_SLOTS) {
@@ -627,20 +627,23 @@ function observeR068KinConditional(
         const fact = t5.status === 'resolved' ? t5.value[slot][channel] : undefined;
         if (fact?.status !== 'resolved') {
           unresolvedFactPaths.push(path);
-        } else if (fact.value === term.canonicalSearchCategory) {
-          observedPositions.push({
-            path, slot, channel, value: fact.value,
-          });
+        } else if (fact.value === canonicalSearchCategory) {
+          observedPositions.push({ path, slot, channel, value: fact.value });
         }
       }
     }
     return {
-      ...term,
+      exactHistoricalTerm,
+      canonicalSearchCategory,
       observedPositions,
       unresolvedFactPaths,
-      observationCoverage: 'visible_stems_and_representative_branch_only' as const,
+      observationCoverage: 'visible_stems_and_representative_branch_only',
     };
-  }) as [R068KinTermObservation, R068KinTermObservation];
+  };
+  const terms: readonly [R068KinTermObservation, R068KinTermObservation] = [
+    observeTerm('傷官', '상관'),
+    observeTerm('七煞', '편관'),
+  ];
   return {
     personRole,
     originalClaimId: 'KIN-FRIEND-BOND-HARM-CONFIGURATION',
