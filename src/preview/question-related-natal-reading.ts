@@ -10,10 +10,10 @@ type DomainReport = NatalFiveDomainMultifactorReports[Topic];
 
 const TOPICS: readonly { key: Topic; title: string; words: readonly string[] }[] = [
   { key: 'general', title: '전체 사주', words: ['전체 사주', '종합 사주', '사주 전반'] },
-  { key: 'career', title: '직업·진로', words: ['직업운', '진로', '직업', '커리어', '취업'] },
-  { key: 'wealth', title: '재물', words: ['재물운', '재물', '금전운', '돈'] },
+  { key: 'career', title: '직업·진로', words: ['직업운', '진로', '직업', '커리어', '취업', '직장', '이직', '퇴사', '적성'] },
+  { key: 'wealth', title: '재물', words: ['재물운', '재물', '금전운', '돈', '저축', '지출', '자금', '자산'] },
   { key: 'business', title: '사업', words: ['사업운', '사업', '창업'] },
-  { key: 'relationship', title: '연애·관계', words: ['연애운', '연애', '관계운', '대인관계', '소통'] },
+  { key: 'relationship', title: '연애·관계', words: ['연애운', '연애', '관계운', '대인관계', '소통', '썸'] },
 ] as const;
 
 // Not an interpretation algorithm: any future-event/third-party topic needs
@@ -23,6 +23,35 @@ const OUT_OF_SCOPE = [
   '몇 살', '몇 년', '시기', '미래', '확률', '정확히', '얼마',
   '궁합', '배우자', '결혼', '이혼', '부모', '자녀', '가족', '건강', '수명',
 ] as const;
+
+/** Input guidance only; it never upgrades held T9/T10/T11 semantics. */
+function unsupportedQuestionRequirements(forbidden: readonly string[]): string[] {
+  const has = (...terms: string[]) => terms.some(term => forbidden.includes(term));
+  const required: string[] = [];
+  if (has('올해', '내년', '내후년', '이번 달', '이번달', '다음 달', '다음달',
+    '언제', '몇 살', '몇 년', '시기', '미래')) {
+    required.push('시기 질문은 조회 연도·월 또는 삶의 단계 범위와 그 기간에 독립적으로 허용된 해석 근거가 필요합니다. 현재 원국 근거만으로 사건의 시점이나 결과를 정할 수 없습니다.');
+  }
+  if (has('궁합')) {
+    required.push('궁합은 서로 다른 두 사람의 출생정보와 당사자 동의, 각 명식 및 실제 관계 근거가 필요합니다. 현재 질문형 원국 근거만으로 두 사람의 결과를 판단하지 않습니다.');
+  }
+  if (has('부모', '자녀', '가족')) {
+    required.push('가족 질문은 부모·자녀 중 관계 대상의 범위를 정하고 그 대상에 허용된 가족 해석 근거를 따로 확인해야 합니다. 본인 연애운을 가족 해석으로 바꾸지 않습니다.');
+  }
+  if (has('배우자')) {
+    required.push('배우자 질문은 현재 허용된 일지 배우자궁의 위치 관찰과 미승인 관계 결론을 구분해야 합니다. 상대의 성격이나 결혼 결과는 확정하지 않습니다.');
+  }
+  if (has('결혼', '이혼')) {
+    required.push('결혼·이혼의 실제 발생이나 결과를 확정할 수 있는 승인된 근거가 없습니다.');
+  }
+  if (has('얼마', '확률', '정확히')) {
+    required.push('금액·확률·확정적인 결과를 계산하는 근거가 없어 수치나 결과를 만들어 내지 않습니다.');
+  }
+  if (has('건강', '수명')) {
+    required.push('건강 상태 또는 수명을 판단하는 사주 해석을 제공하지 않습니다.');
+  }
+  return required;
+}
 
 export interface QuestionRelatedNatalSection {
   title: string;
@@ -120,7 +149,8 @@ export function buildQuestionRelatedNatalReading(
   const forbidden = OUT_OF_SCOPE.filter(term => question.includes(term));
   if (forbidden.length > 0) {
     return base(snapshot, question, 'unsupported', '이 질문에 직접 답할 근거가 아직 없습니다.',
-      [`현재 연구용 원국 풀이로 답할 수 없는 대상·시기·결과 표현: ${forbidden.join(', ')}. 지원하는 원국 분야만 선택해 주세요.`]);
+      [`현재 연구용 원국 풀이로 답할 수 없는 대상·시기·결과 표현: ${forbidden.join(', ')}.`,
+        ...unsupportedQuestionRequirements(forbidden)]);
   }
   const candidates = TOPICS.filter(item => item.words.some(word => question.includes(word)));
   if (candidates.length > 1) {
