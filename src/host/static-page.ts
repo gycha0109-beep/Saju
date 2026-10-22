@@ -119,6 +119,7 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
     <div class="reading-actions">
       <button id="submit" type="submit">선택한 분야 풀이 보기</button>
       <button id="five-domain-submit" class="secondary" type="button">5분야 한눈에 보기</button>
+      <button id="period-submit" class="secondary" type="button">올해·이번 달 함께 보기</button>
     </div>
   </form>
   <div id="result" class="panel hidden" aria-live="polite"></div>
@@ -132,6 +133,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
   const result = document.getElementById('result');
   const submit = document.getElementById('submit');
   const fiveDomainSubmit = document.getElementById('five-domain-submit');
+  const periodSubmit = document.getElementById('period-submit');
   const readingDetail = document.getElementById('reading-detail');
   const calendar = document.getElementById('calendar');
   const birthDate = document.getElementById('birth-date');
@@ -248,6 +250,11 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
           ? item.label + ': ' + item.value : '');
     }
   }
+
+  const periodTopics = [
+    { title: '올해의 흐름', requestText: '올해 운세' },
+    { title: '이번 달의 흐름', requestText: '이번 달 운세' }
+  ];
 
   const fiveTopics = [
     { domain: 'general', title: '전체 사주', requestText: '사주' },
@@ -489,6 +496,57 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     });
   }
 
+  function showPeriodResults(outcomes) {
+    result.replaceChildren();
+    result.classList.remove('hidden');
+    result.appendChild(el('h2', '올해와 이번 달의 흐름'));
+    result.appendChild(el('p',
+      '서로 다른 기간의 사주풀이를 각각 요청한 결과입니다. 계산 정보와 근거가 충분한 항목만 해석하며, 한쪽의 결과를 다른 기간으로 확장하지 않습니다.',
+      'bundle-caption'));
+    periodTopics.forEach((topic, index) => {
+      const section = el('section', undefined, 'domain-card');
+      section.appendChild(el('h2', topic.title));
+      const content = el('div');
+      const outcome = outcomes[index];
+      if (outcome.status === 'fulfilled') {
+        renderResponse(outcome.value, content);
+      } else {
+        content.appendChild(el('div',
+          '이 기간의 풀이를 불러오지 못했습니다. 잠시 후 다시 요청해 주세요.',
+          'notice error'));
+      }
+      section.appendChild(content);
+      result.appendChild(section);
+    });
+  }
+
+  periodSubmit.addEventListener('click', async () => {
+    const dateError = syncBirthDateValidity();
+    if (dateError || !birthTime.disabled && !birthTime.value) {
+      result.classList.remove('hidden');
+      result.replaceChildren(el('div',
+        dateError || '출생시간을 확인하거나 출생시간을 모른다고 선택해 주세요.', 'state error'));
+      birthDate.reportValidity();
+      return;
+    }
+    submit.disabled = true;
+    fiveDomainSubmit.disabled = true;
+    periodSubmit.disabled = true;
+    result.classList.remove('hidden');
+    result.replaceChildren(el('div', '기간별 풀이를 준비하고 있습니다.', 'state'));
+    try {
+      const birth = currentBirth();
+      const outcomes = await Promise.allSettled(
+        periodTopics.map((topic) => fetchIndividualDomain(birth, topic))
+      );
+      showPeriodResults(outcomes);
+    } finally {
+      submit.disabled = false;
+      fiveDomainSubmit.disabled = false;
+      periodSubmit.disabled = false;
+    }
+  });
+
   fiveDomainSubmit.addEventListener('click', async () => {
     const dateError = syncBirthDateValidity();
     if (dateError || !birthTime.disabled && !birthTime.value) {
@@ -500,6 +558,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     }
     submit.disabled = true;
     fiveDomainSubmit.disabled = true;
+    periodSubmit.disabled = true;
     result.classList.remove('hidden');
     result.replaceChildren(el('div', '다섯 분야의 풀이를 준비하고 있습니다.', 'state'));
     try {
@@ -511,6 +570,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     } finally {
       submit.disabled = false;
       fiveDomainSubmit.disabled = false;
+      periodSubmit.disabled = false;
     }
   });
 
@@ -534,6 +594,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
 
     submit.disabled = true;
     fiveDomainSubmit.disabled = true;
+    periodSubmit.disabled = true;
     result.classList.remove('hidden');
     result.replaceChildren(el('div', '풀이를 준비하고 있습니다.', 'state'));
     try {
@@ -561,6 +622,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     } finally {
       submit.disabled = false;
       fiveDomainSubmit.disabled = false;
+      periodSubmit.disabled = false;
     }
   });
 })();`;
