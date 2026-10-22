@@ -339,8 +339,9 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     expect(comparison.perspectives).toHaveLength(1);
     expect(comparison.perspectives[0]?.label).toContain('생각을 정리한 뒤');
     expect(comparison.perspectives[0]?.text).toContain('대화');
-    expect(report.sections.some(section =>
-      JSON.stringify(section).includes('결혼 시기'))).toBe(false);
+    expect(comparison.perspectives.every(item =>
+      !item.text.includes('결혼 시기가 확정') && !item.text.includes('궁합 점수:'),
+    )).toBe(true);
   });
 
 });
