@@ -74,6 +74,25 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 각 교차 항목의 `sourceLayerIds`·`sourceSurfaces`·`pillarObservation`·`starObservation`은 기존 R070 코퍼스 및 Canonical fact-path를 그대로 가리킨다. `independentlyAdmittedFamilyClaims=0`, `methodSelectionAuthorized=false`, `familyMeaningAuthorized=false`, `state=PILLAR_AND_STAR_METHODS_NOT_RECONCILED`이며, 계속 필요한 최소 조건은 `FAMILY_METHOD_SELECTION`, `PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION`, `HIDDEN_VS_VISIBLE_STAR_HANDLING`, `HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED`이다. 별이 보이는 경로에서 관찰되지 않는 경우는 가족 구성원 부재의 증거가 아니다.
 
+### R070 같은 가족 대상의 기둥·십신 **위치 일치 여부** — 계산 가능한 반례를 인계
+
+기존 R070 원문 **그대로** `PILLAR-DOMAIN-GENERAL`(`月為父母兄弟門戶` / `時為子息`), `PILLAR-DOMAIN-MALE-ALTERNATE`(`年為父` / `時為子孫`), `TEN-GOD-FAMILY-RELATIONS`(`父以偏財論` / `母以印綬論` / `子嗣者即官星也`), `FEMALE-CHILD-RELATION`(`我生者為子`)을 사용한다. **기존 Source Layer ID는 새 source가 아니고**, 이들 원문에는 '가족 기둥 내부에 해당 십신이 있으면 가족 T8 의미가 성립한다'거나 '기둥 외부면 성립하지 않는다'는 위치 결합·선택·상충 해소 규칙이 등록되어 있지 않다. 따라서 직접 가족 Claim을 만드는 대신 **계산 위치 대조와 방법론 결핍을 분리**한다.
+
+`crossLayerMethodComparisons[].starPillarPositionContrast`는 원래 비교의 `pillarObservation.factPath`가 `pillars.year|month|hour` 중 어느 것인지 확인한 후, 같은 명식의 기존 `starObservation.observedPositions`를 그 기둥 안(`inReferencedPillar`)과 다른 기둥(`outsideReferencedPillar`)으로 **값을 바꾸지 않고 분할**한다. `unresolvedReferencedPillarPaths`는 동일한 기둥의 `derivedFacts.tenGods.{slot}.stem|branch` 경로 중 미확정 값이다. 각 위치의 정확한 별 이름·채널·기둥과 `calculationHash`는 원래 결과를 유지한다.
+
+| 계산 대조 상태 | 엔진에 전달하는 사실 | 아직 발행할 수 없는 주장 |
+| --- | --- | --- |
+| `STAR_OBSERVED_IN_REFERENCED_PILLAR` | 그 기둥의 **천간·지지 대표** T5 조회 범위에 해당 현대 십신이 실제 존재 | 같은 위치라는 이유로 R070 기둥 배속과 친족 별 배속을 합성한 가족 T8 |
+| `STAR_OBSERVED_ONLY_OUTSIDE_REFERENCED_PILLAR` | 해당 기둥에는 관측되지 않고 **다른 기둥의 확정 위치**에 관찰 | 기둥 바깥 십신만 있다는 이유로 부모·자녀의 부재·불화 등 음성 판정 |
+| `REFERENCED_PILLAR_T5_UNRESOLVED` | 해당 기둥의 T5 채널 미해결, 해석용 위치 대조 자체가 불완전 | 누락 경로를 임의 보충하거나 다른 기둥의 관찰로 대체 |
+| `STAR_NOT_OBSERVED_IN_RESOLVED_T5_SURFACE` | 확인한 현행 T5 조회 표면에는 해당 계열 미관찰 | **지장간 포함 부재 판정**, 가족 구성원·관계의 부재 주장 |
+
+이 네 상태는 **R070 원전이 정한 의미 등급이 아니라 현재 계산 사실의 위치 상태**다. 현재 T5 조회는 **visible stems + representative branch**에만 해당하므로 `locationBasedFamilyInferenceAuthorized=false`다. 같은 기둥의 관찰값이 있어도 `R070_PILLAR_STAR_LOCATION_SYNTHESIS_RULE_NOT_SOURCED`가 반드시 남고, 기둥 외부에서만 보이면 `R070_OUTSIDE_PILLAR_T5_IS_NOT_NEGATIVE_FAMILY_EVIDENCE`, 전혀 관찰되지 않으면 `R070_UNOBSERVED_T5_IS_NOT_RELATIVE_ABSENCE`, 참조 기둥 T5가 미확정이면 `R070_REFERENCED_PILLAR_T5_POSITION_UNRESOLVED`를 추가한다. 각 결핍은 원래 개별 교차 비교와 최상위 `missingPrerequisites`에 제공되며, **기존** `FAMILY_METHOD_SELECTION`, `SEX_SCOPE_SELECTION`, `PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION`, `HIDDEN_VS_VISIBLE_STAR_HANDLING`, `CONFIGURATION_OUTCOME_SETTLEMENT`, `HISTORICAL_TO_MODERN_FAMILY_TRANSLATION`의 권한을 해소하지 않는다.
+
+**실제 명식 반례:** 기존 계산 엔진의 양력 1990-05-15 남성, 1997-05-08 여성, 2001-05-24 미지정, 1988-05-11 여성 명식(14:30, 현재 테스트 정책)에서 R070의 부모·자녀 비교별로 참조 기둥 안/밖에 실제 십신 계산값이 위치하는 경우를 각각 검사한다. 역사적 남성 `年為父`와 일반 `月為父母兄弟門戶`는 **서로 다른 연·월주**이므로 동일한 별 관찰도 각각 별개로 대조한다. 여성 `我生者為子`는 여성 범위에서만 시주와 대조한다. 1997-05-15 여성 명식의 **시각 미상** 반례에서는 `時為子息` 시주 미확정이므로 자녀 교차 비교는 생성하지 않지만 부모의 **월주 대조는 유지**하며, 전체 T5 미완전 원인인 `derivedFacts.tenGods.hour.stem|branch`도 삭제하지 않는다.
+
+**엔진 연결:** `evaluateFamilySourceScopeV1(snapshot, 'parents'|'children')`의 기존 `methodCandidates → crossLayerMethodComparisons` 결과 아래 위치 대조를 그대로 read-only 소비할 수 있다. `sourceLayerIds`·`sourceSurfaces`·`snapshotId`·`calculationHash`·원본 T5 fact path로 기존 Registry/ClaimGraph/EvidenceSelector에 **추후 승인된 규칙의 입력 자료**만 인계한다. 현재 **결론**은 `state=PILLAR_AND_STAR_METHODS_NOT_RECONCILED`, `independentlyAdmittedFamilyClaims=0`, `familyT8Admitted=false`, `researchOnly=true`, Official/메뉴 available/저장/공개/판매 모두 `false`이며, 새 원전/MethodologyDefinition/RuleDefinition/Production 권한을 발행하지 않는다.
+
 ### 형제 관련 원문은 부모·자녀 방법으로 변환하지 않음
 
 기존 R070의 `月為兄弟`는 `PILLAR-DOMAIN-MALE-ALTERNATE`에, `兄弟者即劫財比肩`는 `TEN-GOD-FAMILY-RELATIONS`에 있는 **형제 관련 원문**이다. 이 둘은 같은 R070 안에 있더라도 현재 사용자 메뉴의 `family:parents` 또는 `family:children` 의미 근거로 사용하지 않는다. 연구 반환 `excludedSiblingSourceSurfaces`는 두 원문·레이어 ID·원본 성별 범위와 `admittedAsParentsOrChildrenSource=false`를 명시한다.
