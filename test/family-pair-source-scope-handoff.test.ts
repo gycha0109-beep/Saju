@@ -340,6 +340,47 @@ describe('R068/R069 pairwise source boundary on two real Canonical charts', () =
     )).toEqual(report);
   });
 
+  it('keeps R068 六合/三合 structural candidates within each natal chart, not between people', () => {
+    const subject = chart({ year: 1985, day: 18 });
+    const target = chart({ year: 2001, day: 22 });
+    const handoff = evaluatePairwiseSourceScopeV1(
+      { personRef: 'self', snapshot: subject },
+      { personRef: 'other', snapshot: target },
+    );
+    const social = handoff.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'SOCIAL-FRIENDLINESS-SANHE-LIUHE');
+    const conditional = handoff.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'COMBINATION-CONTEXT-VARIANCE');
+    const kin = handoff.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'KIN-FRIEND-BOND-HARM-CONFIGURATION');
+    expect(kin?.singleChartCombinationObservations).toBeUndefined();
+    expect(social?.singleChartCombinationObservations).toEqual(
+      conditional?.singleChartCombinationObservations,
+    );
+    const observations = social?.singleChartCombinationObservations;
+    expect(observations?.map(item => item.personRole)).toEqual(['subject', 'target']);
+    for (const [index, original] of [subject, target].entries()) {
+      const observation = observations?.[index];
+      const fact = original.derivedFacts.structuralRelations;
+      expect(observation?.sourceFactPath).toBe('derivedFacts.structuralRelations');
+      expect(observation?.calculationState).toBe(fact?.status === 'resolved'
+        ? 'resolved' : 'incomplete');
+      const expected = fact?.status === 'resolved'
+        ? fact.value.filter(item =>
+          item.kind === 'branch_six_combination' ||
+          item.kind === 'branch_three_combination',
+        ).map(item => ({
+          relationId: item.relationId, kind: item.kind, sourceIds: item.sourceIds,
+        }))
+        : [];
+      expect(observation?.observedCombinationCandidates).toEqual(expected);
+      expect(observation?.pairwiseMeaningAuthorized).toBe(false);
+      expect(observation?.socialOutcomeAuthorized).toBe(false);
+    }
+    expect(handoff.pairwiseT10Admitted).toBe(false);
+    expect(social?.eligiblePairwiseClaim).toBe(false);
+  });
+
   it('keeps R069 historical spouse input scope distinct for each person without ever granting pairwise authority', () => {
     const male = chart({ year: 1988, sex: 'male' });
     const female = chart({ year: 1996, sex: 'female' });
