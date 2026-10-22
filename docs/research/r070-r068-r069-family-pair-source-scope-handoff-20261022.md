@@ -161,6 +161,24 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 양력 1990-05-15 기준 남성·여성·성별 미지정 명식에서 부모/자녀 메뉴별 각 원전 미지원 사유 수·방법 쌍 수·성별 제외 목록·실제 경로를 대조한다. 여성 1997-05-15 출생시각 미상에서는 부모 월주 방법을 남겨 두고 자녀의 `時為子息` 필수 시주 경로만 `R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED`로 보고한다. 역사 남성 명식의 `胎為母`에는 별개 `R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE`을 표시한다. **연구용 미지원 설명은 가족운 출력이나 메뉴 지원 활성화로 변환하지 않는다.**
 
+### R070 엔진 전달 경계 — 계산 입력 부족과 해석 권한 부족을 혼합하지 않음
+
+`evaluateFamilySourceScopeV1(...).engineTransferBoundary`는 이미 존재하는 `menuSupportHandoff`의 연구용 반환값을 **수신 엔진이 오해 없이 구분해서 읽도록** 분류한 인계 표면이다. 새로운 T8 규칙 계산기, 서비스 메뉴 제공 계약 또는 실행 가능한 가족 ClaimGraph 입력이 아니며 `route=R070_RESEARCH_ONLY_NOT_EXECUTABLE`로 고정한다. `sourceSnapshotId`와 `sourceCalculationHash`는 정확히 기존 계산 명식의 `snapshotId`·`calculationHash`를 보존하고, `requestedScope`는 부모·자녀 중 실제 요청한 범위로 남긴다.
+
+| 반환 키 | 기존 정보 출처 | 엔진 전달 시 의미와 금지선 |
+| --- | --- | --- |
+| `unresolvedCanonicalInputs` | `menuSupportHandoff.unresolvedCanonicalInputs` | 실제로 존재하는 `pillars.*`, `derivedFacts.tenGods.*`, `derivedFacts.hiddenStems.*`의 미해결 경로를 원문별로 중복 제거한 인계. **다른 기둥으로 대체하거나 미상 값을 생성하지 않음** |
+| `canonicalInputAndConceptHolds` | `unsupportedReasons` 중 `category=CANONICAL_INPUT` | 미상 시주와 `胎為母`의 태(胎) 계산 개념 미정의를 함께 포착하되 서로 동일한 결핍으로 취급하지 않음. 존재하지 않는 태 계산 경로를 발명하지 않음 |
+| `sourceAndMethodHolds` | `SOURCE_APPLICABILITY`, `SOURCE_CONTEXT`, `METHOD_SELECTION` 범주 | 실제 기둥 관측만 허용된 원문, 별 배속 문맥 미확정, 복수 역사적 방법의 선택 미완료. **T5 조회 성공이나 기둥 위치 존재는 가족운 판단으로 승격되지 않음** |
+| `officialAuthorityHold` | `R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED` | 부모·자녀 메뉴에 공통으로 반드시 존재하는 **단일 공식 T8 허가 부재 사유**. 다른 입력이 충족되어도 제거하거나 통과로 해석하지 않음 |
+| `excludedHistoricalSources` | `menuSupportHandoff.excludedHistoricalSources` | 현재 명식의 역사적 성별에 적용할 수 없는 원문을 보존. **다른 원문의 필수 계산 입력 부족/메뉴 미지원 근거로 전용하지 않음** |
+| `unassignedConfigurationSources` | `menuSupportHandoff.unassignedConfigurationSources` | `旺衰`·`生旺死絕`·`刑沖破害`·`官煞混雜`·`財印`의 가족 해석 미배속 상태. 특정 부모·자녀 의미로 결속하지 않음 |
+| `prerequisiteTrace` | `menuSupportHandoff.prerequisiteTrace` | 동일 미충족 코드가 등장한 원문·방법론·계산 경로의 기존 추적 색인. **다수 등장 횟수를 독립 EvidenceSelector 근거로 가산하지 않음** |
+
+이 자료에서 `researchEvidenceMayBecomeFamilyClaim=false`, `canSelectHistoricalMethod=false`, `canGrantFamilyT8Authority=false`, `canEnableMenu=false`, `canPublishOrSell=false`는 모두 **고정된 차단 상태**다. `FamilySourceScopeHandoff` 전체의 `researchOnly=true`, `familyT8Admitted=false`, `mayGrantOfficialAuthority=false`, `mayMarkMenuAvailable=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`도 유지한다. 연구 자료의 수신·표시는 Production/Commerce/UX·Reader의 메뉴 개방 승인과 무관하다.
+
+**회귀 범위:** 1988·1990·1993년 시각 제공 명식의 부모·자녀 및 1997년 여성 시각 미상 명식에서 각 분류 배열이 원본 `menuSupportHandoff`의 해당 항목과 정확히 일치해야 한다. 역사 남성 명식에서 태(胎) 계산 개념이 없는 경우 `CANONICAL_INPUT` 부족 사유에는 남지만 가짜 `pillars.fetus` 경로는 만들지 않는다. 여성 자녀 시각 미상일 때 `pillars.hour`와 T5/지장간의 각 미확정 경로를 별개 기록하고, 여성 명식에서 적용할 수 없는 `時為子孫`은 제외 목록에만 남긴다. `hiddenStems` 필드 전체가 누락된 경우 연월일시 네 소속 경로를 유지하되 방법론 차단과 합쳐 하나의 승격 판단을 내리지 않는다.
+
 ### R070 메뉴 미충족 조건의 원문·방법론 출처 역추적 — 중복 조건은 하나의 코드
 
 `menuSupportHandoff.prerequisiteTrace[]`는 기존 `unsupportedReasons[].missingPrerequisites`의 **실제 코드**를 한 번씩만 반환하고, `origins[]`에 그 코드를 반환한 원래 보류 사유의 `reasonCode`, `category`, `sourceLayerIds`, `sourceSurfaces`, 확정 계산 경로와 미해결 계산 경로를 함께 보존한다. 원문을 새로 채택하거나 미해결 연구 조건에 공식 우선순위를 부여하지 않는다. 동일한 원전 문구나 원국 계산 입력이 여러 방법 대조에 등장해도 `repetitionIsIndependentEvidence=false`이며 `familyMeaningAuthorized=false`다.
