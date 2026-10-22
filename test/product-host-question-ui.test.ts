@@ -73,6 +73,8 @@ function openProductScreen(reply: Record<string, unknown>, failedReadingText?: s
     'reading-detail', 'calendar', 'birth-date', 'birth-time',
     'time-unknown', 'leap-field', 'leap-month', 'sex',
     'reading-text', 'question-field', 'question-text',
+    'partner-fields', 'partner-calendar', 'partner-date', 'partner-time',
+    'partner-sex', 'partner-time-unknown', 'partner-leap', 'partner-leap-field',
   ]) {
     elements.set(id, new ScreenElement());
   }
@@ -84,6 +86,11 @@ function openProductScreen(reply: Record<string, unknown>, failedReadingText?: s
   get('result').className = 'panel hidden';
   get('question-field').className = 'full hidden';
   get('leap-field').className = 'full hidden';
+  get('partner-fields').className = 'grid full hidden';
+  get('partner-leap-field').className = 'full hidden';
+  get('partner-calendar').value = 'solar';
+  get('partner-time').value = '12:00';
+  get('partner-sex').value = 'unspecified';
   get('calendar').value = 'solar';
   get('birth-date').value = '1998-05-21';
   get('birth-time').value = '13:45';
@@ -227,6 +234,59 @@ describe('actual customer question form', () => {
     expect(rendered).toContain('이 기간의 풀이를 불러오지 못했습니다.');
     expect(screen.get('period-submit').disabled).toBe(false);
     expect(screen.get('submit').disabled).toBe(false);
+  });
+
+  it('requires real second-person birth data before calling the separate preview route', async () => {
+    const screen = openProductScreen({ state: 'insufficient_evidence' });
+    expect(PRODUCT_HOST_PAGE).toContain('<option value="궁합">');
+    screen.get('reading-text').value = '궁합';
+    await screen.get('reading-text').emit('change');
+    expect(screen.get('partner-fields').classList.contains('hidden')).toBe(false);
+    expect(screen.get('partner-date').disabled).toBe(false);
+    expect(screen.get('submit').textContent).toBe('두 사람 명식 비교 보기');
+    await screen.get('reading-form').emit('submit');
+    expect(screen.requests).toHaveLength(0);
+    expect(screen.get('result').textContent).toContain('생년월일');
+    expect(screen.get('partner-date').focused).toBe(true);
+  });
+
+  it('posts both independent births, handles unknown hour and preserves honest insufficient evidence', async () => {
+    const screen = openProductScreen({
+      state: 'insufficient_evidence',
+      explanation: '두 사람의 상호작용을 판정할 근거가 부족합니다.',
+      limitations: ['궁합 점수와 미래 사건을 예측하지 않습니다.'],
+      subjects: [
+        { birthTimeKnown: true, pillars: { year: { status: 'resolved', value: '甲子', hanja: '甲子' } } },
+        { birthTimeKnown: false, pillars: { year: { status: 'resolved', value: '乙丑', hanja: '乙丑' },
+          hour: { status: 'unavailable' } } },
+      ],
+    });
+    screen.get('reading-text').value = '궁합';
+    await screen.get('reading-text').emit('change');
+    screen.get('partner-date').value = '2000-02-03';
+    screen.get('partner-calendar').value = 'lunar';
+    await screen.get('partner-calendar').emit('change');
+    screen.get('partner-leap').checked = true;
+    screen.get('partner-time-unknown').checked = true;
+    await screen.get('partner-time-unknown').emit('change');
+    await screen.get('reading-form').emit('submit');
+    expect(screen.requests).toHaveLength(1);
+    expect(screen.requests[0]?.url).toBe('/api/preview/compatibility-charts');
+    expect(screen.requests[0]?.body).toEqual({
+      birth: { calendarType: 'solar', date: '1998-05-21', time: '13:45', sex: 'female' },
+      partnerBirth: { calendarType: 'lunar', date: '2000-02-03', time: null,
+        sex: 'unspecified', isLeapMonth: true },
+    });
+    const content = screen.get('result').textContent;
+    expect(content).toContain('나의 명식');
+    expect(content).toContain('상대방의 명식');
+    expect(content).toContain('출생시각 미상');
+    expect(content).toContain('두 사람의 상호작용을 판정할 근거가 부족합니다.');
+    expect(content).toContain('궁합 점수와 미래 사건을 예측하지 않습니다.');
+    screen.get('reading-text').value = '부모운';
+    await screen.get('reading-text').emit('change');
+    expect(screen.get('partner-fields').classList.contains('hidden')).toBe(true);
+    expect(screen.get('partner-date').disabled).toBe(true);
   });
 
 });
