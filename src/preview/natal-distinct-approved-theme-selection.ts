@@ -4,6 +4,9 @@
  * Prefer a distinct governed family before displaying the second channel of
  * that family; never manufacture a Claim, ranking, or cross-family conclusion.
  */
+export const NATAL_APPROVED_THEME_READING_INTRO =
+  '같은 명식에서 발행된 기존 전통 주제와 계산된 십신 위치를 연결한 내부 실험 풀이입니다. 각 위치만으로 개인의 성격·재물·직업·관계 결과나 미래 사건을 단정하지 않습니다. 출처가 허용한 주제의 범위를 넘어 새 인과관계를 만들지 않습니다.' as const;
+
 const FAMILY = /^GENERAL_NATAL_(PEER|RESOURCE|OUTPUT|WEALTH|OFFICER)_(VISIBLE_STEMS|BRANCHES)_THEME$/u;
 
 export interface NatalApprovedThemeCandidate {
