@@ -611,6 +611,70 @@ describe('Myeonghwa Product Host MVP', () => {
     }
   });
 
+  it('keeps two customer charts and the approved relationship/spouse intent scopes independent over HTTP', async () => {
+    const base = dependencies();
+    const calculatedBirthYears: number[] = [];
+    const observed: { domain: string; relationshipScope?: string }[] = [];
+    const server = await listen({
+      ...base,
+      calculate(input, context) {
+        calculatedBirthYears.push(input.date.year);
+        return base.calculate(input, context);
+      },
+      interpret(snapshot, context, requestContext, resolvedReadingRequest) {
+        const request = resolvedReadingRequest ?? requestContext?.readingRequest;
+        if (request !== undefined) {
+          observed.push({
+            domain: request.intent.domain,
+            ...(request.intent.relationshipScope === undefined
+              ? {} : { relationshipScope: request.intent.relationshipScope }),
+          });
+        }
+        return base.interpret(snapshot, context, requestContext, resolvedReadingRequest);
+      },
+    });
+    try {
+      const post = async (year: number, text: string) => {
+        const response = await fetch(server.baseUrl + '/api/readings', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            birth: {
+              calendarType: 'solar', date: year + '-03-10',
+              time: '12:00', sex: 'unspecified',
+            },
+            reading: {
+              text,
+              outputPreferences: { preferredDetail: 'detailed' },
+            },
+          }),
+        });
+        expect(response.status).toBe(200);
+        return response.json() as Promise<{ state: string; reading?: unknown }>;
+      };
+      const own = await post(1990, '연애운');
+      const partner = await post(1998, '연애운');
+      const palace = await post(1990, '배우자운');
+      expect(calculatedBirthYears).toEqual([1990, 1998, 1990]);
+      expect(observed).toEqual([
+        { domain: 'relationship', relationshipScope: 'general' },
+        { domain: 'relationship', relationshipScope: 'general' },
+        { domain: 'relationship', relationshipScope: 'spouse' },
+      ]);
+      // No claim-free response becomes a compatibility result or an
+      // invented interpretation. Actual T8 content is emitted only if
+      // source-qualified claims exist for that person's own snapshot.
+      expect([own.state, partner.state, palace.state]).toEqual([
+        'insufficient_evidence', 'insufficient_evidence', 'insufficient_evidence',
+      ]);
+      expect(own.reading).toBeUndefined();
+      expect(partner.reading).toBeUndefined();
+      expect(palace.reading).toBeUndefined();
+    } finally {
+      await server.close();
+    }
+  });
+
   it('routes exact and open customer questions through the existing HTTP reading path', async () => {
     const base = dependencies((snapshot) => [wealthOfficialClaim(snapshot)]);
     const observed: { domain: string; question?: string }[] = [];
