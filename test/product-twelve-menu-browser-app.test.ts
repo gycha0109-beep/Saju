@@ -282,6 +282,44 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(output).toContain('해석하기 어렵습니다');
   });
 
+  it('rejects invalid civil leap dates and 24-hour clock values before contacting the host', async () => {
+    const app = mountBrowser();
+    for (const badDate of ['1900-02-29', '2023-02-29', '1990-04-31']) {
+      app.get('birth-date').value = badDate;
+      await app.get('twelve-open-general').dispatch('click');
+      expect(app.get('twelve-state-general').dataset.state).toBe('unavailable');
+    }
+    app.get('birth-date').value = '2000-02-29';
+    app.get('birth-time').value = '24:00';
+    await app.get('twelve-open-general').dispatch('click');
+    expect(app.calls).toHaveLength(0);
+    app.get('birth-time').value = '12:60';
+    await app.get('twelve-open-general').dispatch('click');
+    expect(app.calls).toHaveLength(0);
+    app.get('birth-time').value = '14:30';
+    await app.get('twelve-open-general').dispatch('click');
+    expect(app.calls[0]?.body.birth.date).toBe('2000-02-29');
+    expect(app.get('twelve-state-general').dataset.state).toBe('partial');
+  });
+
+  it('rejects malformed second-person dates and clocks without inferring a partner birth time', async () => {
+    const app = mountBrowser();
+    const date = app.get('menu-partner-date');
+    const time = app.get('menu-partner-time');
+    app.get('menu-partner-consent').checked = true;
+    date.value = '1999-02-29';
+    await app.get('twelve-open-compatibility').dispatch('click');
+    expect(app.calls).toHaveLength(0);
+    date.value = '2000-02-29';
+    time.value = '25:00';
+    await app.get('twelve-open-compatibility').dispatch('click');
+    expect(app.calls).toHaveLength(0);
+    time.value = '12:30';
+    await app.get('twelve-open-compatibility').dispatch('click');
+    expect(app.calls).toHaveLength(1);
+    expect(app.calls[0]?.body.partnerBirth?.date).toBe('2000-02-29');
+  });
+
   it('routes parents and children as two distinct requested scopes and resets old results when changed', async () => {
     const app = mountBrowser();
     await app.get('twelve-open-family').dispatch('click');
