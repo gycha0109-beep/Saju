@@ -251,7 +251,7 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       // A forged or incomplete detailed-role binding must never yield an
       // aggregate claim or reproduce the modified unapproved text.
       expect(filtered).toBeUndefined();
-      expect(JSON.stringify(filtered)).not.toContain(originalText);
+      expect(String(filtered)).not.toContain(originalText);
     }
 
     const reader = buildOfficialReadingCharacterGroundingV1({
