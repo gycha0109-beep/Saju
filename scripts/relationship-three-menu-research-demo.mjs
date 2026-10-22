@@ -44,10 +44,12 @@ const subject = calculateAuthorizedMyeonghwaProductionSnapshot(
 const parents = buildFamilyCanonicalObservationPreview(subject, 'parents');
 const children = buildFamilyCanonicalObservationPreview(subject, 'children');
 let compatibility;
+let targetSnapshot;
 if (secondDate !== 'none') {
   const target = calculateAuthorizedMyeonghwaProductionSnapshot(
     parseBirth(secondDate, secondTime), { now },
   ).snapshot;
+  targetSnapshot = target;
   compatibility = buildCompatibilityTwoChartIntakePreview(
     {
       requestId: 'three-relationship-menu-demo',
@@ -60,7 +62,7 @@ if (secondDate !== 'none') {
 }
 const result = buildRelationshipThreeMenuResearchPage({
   subjectSnapshot: subject, parents, children,
-  ...(compatibility === undefined ? {} : { compatibility }),
+  ...(compatibility === undefined ? {} : { compatibility, targetSnapshot }),
 });
 const file = resolve(htmlPath);
 writeFileSync(file, result.html, 'utf8');
