@@ -381,6 +381,88 @@ describe('R068/R069 pairwise source boundary on two real Canonical charts', () =
     expect(social?.eligiblePairwiseClaim).toBe(false);
   });
 
+  it('tracks the literal R068 傷官/七煞 natal terms while holding missing 羊刃 and kinship context', () => {
+    const first = chart({ year: 1987, day: 13 });
+    const second = chart({ year: 1992, day: 26 });
+    const report = evaluatePairwiseSourceScopeV1(
+      { personRef: 'source', snapshot: first },
+      { personRef: 'target', snapshot: second },
+    );
+    const clause = report.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'KIN-FRIEND-BOND-HARM-CONFIGURATION');
+    expect(clause?.sourceSurface).toBe('羊刃逢傷官七煞，骨肉親友傷情');
+    expect(clause?.eligiblePairwiseClaim).toBe(false);
+    expect(clause?.singleChartCombinationObservations).toBeUndefined();
+    const observations = clause?.singleChartKinConditionObservations;
+    expect(observations?.map(item => item.personRole)).toEqual(['subject', 'target']);
+    for (const [index, snapshot] of [first, second].entries()) {
+      const observation = observations?.[index];
+      expect(observation?.sourceFactPath).toBe('derivedFacts.tenGods');
+      expect(observation?.terms.map(term => term.exactHistoricalTerm))
+        .toEqual(['傷官', '七煞']);
+      expect(observation?.terms.map(term => term.canonicalSearchCategory))
+        .toEqual(['상관', '편관']);
+      const canonical = snapshot.derivedFacts.tenGods;
+      for (const term of observation?.terms ?? []) {
+        expect(term.observationCoverage)
+          .toBe('visible_stems_and_representative_branch_only');
+        for (const position of term.observedPositions) {
+          expect(position.path).toBe(
+            'derivedFacts.tenGods.' + position.slot + '.' + position.channel,
+          );
+          expect(position.value).toBe(term.canonicalSearchCategory);
+          if (canonical.status !== 'resolved') throw new TypeError('Canonical T5 missing');
+          const raw = canonical.value[position.slot][position.channel];
+          expect(raw?.status).toBe('resolved');
+          if (raw?.status === 'resolved') expect(raw.value).toBe(position.value);
+        }
+      }
+      expect(observation?.yangrenInput).toBe('not_defined_by_canonical');
+      expect(observation?.conjunctionOfTermsEstablished).toBe(false);
+      expect(observation?.historicalKinFriendContextEstablished).toBe(false);
+      expect(observation?.natalKinOutcomeAuthorized).toBe(false);
+      expect(observation?.pairwiseMeaningAuthorized).toBe(false);
+      expect(observation?.missingPrerequisites)
+        .toContain('YANGREN_CANONICAL_INPUT_NOT_DEFINED');
+      expect(observation?.missingPrerequisites)
+        .toContain('R068_THREE_TERM_CONJUNCTION_METHOD_NOT_SELECTED');
+    }
+    expect(report.pairwiseT10Admitted).toBe(false);
+  });
+
+  it('preserves separate unresolved hour positions and person-swap ownership for R068 kin research', () => {
+    const known = chart({ year: 1991 });
+    const unknownTime = chart({ year: 1994, timeKnown: false });
+    const forward = evaluatePairwiseSourceScopeV1(
+      { personRef: 'complete', snapshot: known },
+      { personRef: 'unknown', snapshot: unknownTime },
+    );
+    const reverse = evaluatePairwiseSourceScopeV1(
+      { personRef: 'unknown', snapshot: unknownTime },
+      { personRef: 'complete', snapshot: known },
+    );
+    const getKin = (report: typeof forward) =>
+      report.comparedSourceSurfaces.find(item =>
+        item.originalClaimId === 'KIN-FRIEND-BOND-HARM-CONFIGURATION'
+      )?.singleChartKinConditionObservations;
+    const terms = getKin(forward)?.[1]?.terms;
+    expect(terms).toBeDefined();
+    for (const term of terms ?? []) {
+      expect(term.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+      expect(term.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.branch');
+    }
+    expect(getKin(forward)?.[0]).toEqual({
+      ...getKin(reverse)?.[1], personRole: 'subject',
+    });
+    expect(getKin(forward)?.[1]).toEqual({
+      ...getKin(reverse)?.[0], personRole: 'target',
+    });
+    expect(getKin(forward)?.[1]?.missingPrerequisites)
+      .toContain('R068_TEN_GOD_OBSERVATIONS_PARTIAL');
+    expect(forward.pairwiseT10Admitted).toBe(false);
+    expect(reverse.pairwiseT10Admitted).toBe(false);
+  });
+
   it('keeps R069 historical spouse input scope distinct for each person without ever granting pairwise authority', () => {
     const male = chart({ year: 1988, sex: 'male' });
     const female = chart({ year: 1996, sex: 'female' });
