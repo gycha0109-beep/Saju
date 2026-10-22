@@ -39,7 +39,7 @@ const PROHIBITED_EXTENSIONS = Object.freeze([
   'numericScoringAuthorized',
 ] as const);
 
-function snapshot(): CanonicalSajuSnapshot {
+function snapshot(tenGods: TenGodChartFact = FIVE_FAMILY_TEN_GODS): CanonicalSajuSnapshot {
   const base = calculateCanonicalSajuSnapshot(
     {
       calendarType: 'solar',
@@ -54,7 +54,7 @@ function snapshot(): CanonicalSajuSnapshot {
     ...base,
     derivedFacts: {
       ...base.derivedFacts,
-      tenGods: resolved(FIVE_FAMILY_TEN_GODS),
+      tenGods: resolved(tenGods),
     },
   };
 }
@@ -292,4 +292,55 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     }
     expect(reader.parity.semanticHash).toBe(report.sourceSemanticHash);
   });
+  it('changes the approved multifactor summary when the real chart has only resource/output families', () => {
+    const limitedTenGods: TenGodChartFact = {
+      year: { stem: resolved('정인'), branch: resolved('비견') },
+      month: { stem: resolved('식신'), branch: resolved('편인') },
+      day: { stem: resolved('일간'), branch: resolved('상관') },
+      hour: { stem: resolved('비견'), branch: resolved('정인') },
+    };
+    const limitedSnapshot = snapshot(limitedTenGods);
+    const registry = createRelationshipNatalReadingCandidateRegistry(
+      '2026-09-23T05:00:00.000Z',
+    );
+    const result = runInterpretation(limitedSnapshot, registry, {
+      requestId: 'relationship-resource-output-limited-actual-chart',
+      now: new Date('2026-09-23T05:00:00.000Z'),
+    });
+    const request = {
+      requestId: 'relationship-resource-output-reading',
+      intent: {
+        domain: 'relationship' as const,
+        temporalScope: 'natal' as const,
+        relationshipScope: 'general' as const,
+      },
+    };
+    const evidence = buildReadingCompositionEvidence(
+      limitedSnapshot, result, registry, request,
+    );
+    expect(evidence.evidence).toBeDefined();
+    if (!evidence.evidence) return;
+    const semantics = buildCanonicalReadingSemanticBundleV1({
+      intent: request.intent,
+      evidence: evidence.evidence.bundle,
+      targetClaimIds: evidence.selection.targetClaimIds,
+    });
+    const plan = buildOfficialReadingPlanV1(semantics);
+    const report = renderOfficialReadingV1(semantics, plan, {
+      preferredDetail: 'detailed',
+    });
+    const focus = report.sections.find(section =>
+      section.title === '내 명식에서 함께 확인된 관계 주제',
+    );
+    expect(focus).toBeDefined();
+    const comparison = focus?.blocks.find(block => block.type === 'comparison');
+    expect(comparison?.type).toBe('comparison');
+    if (comparison?.type !== 'comparison') return;
+    expect(comparison.perspectives).toHaveLength(1);
+    expect(comparison.perspectives[0]?.label).toContain('생각을 정리한 뒤');
+    expect(comparison.perspectives[0]?.text).toContain('대화');
+    expect(report.sections.some(section =>
+      JSON.stringify(section).includes('결혼 시기'))).toBe(false);
+  });
+
 });
