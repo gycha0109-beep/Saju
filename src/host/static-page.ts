@@ -13,8 +13,9 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
     form, .panel { background: white; border: 1px solid #dedbd3; border-radius: 16px; padding: 20px; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
     label { display: grid; gap: 7px; font-size: 14px; font-weight: 650; }
-    input, select, button { box-sizing: border-box; width: 100%; font: inherit; }
-    input, select { min-height: 44px; border: 1px solid #c8c5bd; border-radius: 10px; padding: 10px 12px; background: white; }
+    input, select, textarea, button { box-sizing: border-box; width: 100%; font: inherit; }
+    input, select, textarea { min-height: 44px; border: 1px solid #c8c5bd; border-radius: 10px; padding: 10px 12px; background: white; }
+    textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
     .field-hint { font-size: 12px; line-height: 1.35; color: #777; font-weight: 400; }
     .check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
     .check input { width: auto; min-height: 0; }
@@ -83,7 +84,12 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
           <option value="이번 달 직업운">이번 달 직업운</option>
           <option value="이번 달 사업운">이번 달 사업운</option>
           <option value="이번 달 재물운">이번 달 재물운</option>
+          <option value="__custom_question__">지금 고민으로 보기 · 직접 질문</option>
         </select>
+      </label>
+      <label id="custom-question-field" class="full hidden">지금 궁금한 점
+        <textarea id="custom-question" maxlength="190" placeholder="예: 제 재물운이 궁금해요" aria-describedby="custom-question-hint"></textarea>
+        <span id="custom-question-hint" class="field-hint">한 가지 주제를 190자 이내로 입력해 주세요. 근거가 없는 미래 사건이나 결과는 예측하지 않습니다.</span>
       </label>
     </div>
     <button id="submit" type="submit">풀이 보기</button>
@@ -106,6 +112,8 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
   const leapMonth = document.getElementById('leap-month');
   const sex = document.getElementById('sex');
   const readingText = document.getElementById('reading-text');
+  const customQuestionField = document.getElementById('custom-question-field');
+  const customQuestion = document.getElementById('custom-question');
 
   const messages = {
     READING_DELIVERED: '풀이가 준비되었습니다.',
@@ -261,6 +269,17 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     birthTime.disabled = timeUnknown.checked;
   });
 
+  function syncCustomQuestion() {
+    const active = readingText.value === '__custom_question__';
+    customQuestionField.classList.toggle('hidden', !active);
+    customQuestion.required = active;
+    customQuestion.disabled = !active;
+    if (!active) customQuestion.setCustomValidity('');
+  }
+
+  readingText.addEventListener('change', syncCustomQuestion);
+  syncCustomQuestion();
+
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const dateError = syncBirthDateValidity();
@@ -269,6 +288,16 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       result.replaceChildren(el('div', dateError, 'state error'));
       birthDate.focus();
       birthDate.reportValidity();
+      return;
+    }
+
+    const custom = readingText.value === '__custom_question__';
+    const question = custom ? customQuestion.value.trim() : '';
+    if (custom && (question.length === 0 || question.length > 190)) {
+      const message = '질문을 1자 이상 190자 이내로 입력해 주세요.';
+      result.classList.remove('hidden');
+      result.replaceChildren(el('div', message, 'state error'));
+      customQuestion.focus();
       return;
     }
 
@@ -284,7 +313,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
           sex: sex.value,
           ...(calendar.value === 'lunar' ? { isLeapMonth: leapMonth.checked } : {})
         },
-        reading: { text: readingText.value }
+        reading: { text: custom ? '질문: ' + question : readingText.value }
       };
       const response = await fetch('/api/readings', {
         method: 'POST',

@@ -580,7 +580,17 @@ describe('Myeonghwa Product Host MVP', () => {
       expect(html).toContain('명화');
       expect(html).toContain('id="reading-form"');
       expect(html).toContain('src="/app.js"');
+      expect(html).toContain('value="__custom_question__"');
+      expect(html).toContain('id="custom-question" maxlength="190"');
+      expect(html).toContain('지금 고민으로 보기');
       expect(html).not.toContain('research');
+      const app = await fetch(`${server.baseUrl}/app.js`);
+      expect(app.status).toBe(200);
+      const script = await app.text();
+      expect(script).toContain("customQuestion.value.trim()");
+      expect(script).toContain("'질문: ' + question");
+      expect(script).toContain("readingText.addEventListener('change', syncCustomQuestion)");
+      expect(script).toContain('customQuestion.disabled = !active');
     } finally {
       await server.close();
     }
