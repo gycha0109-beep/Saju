@@ -1,3 +1,4 @@
+import { assessFamilyMenuMur, type RelationshipAdjacentMenuMur } from './relationship-adjacent-menu-mur.js';
 import type { BirthInput } from '../contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
@@ -26,6 +27,7 @@ export interface FamilyBirthResearchReading {
   lifecycle: 'internal_research_only';
   scope: FamilyObservationScope;
   availability: 'partial' | 'unavailable';
+  mur: RelationshipAdjacentMenuMur;
   meaning: 'calculation_facts_only' | 'none';
   mayClaimFamilyOutcome: false;
   mayGrantOfficialAuthority: false;
@@ -82,6 +84,7 @@ export function buildFamilyBirthResearchReading(
     lifecycle: 'internal_research_only',
     scope: request.scope,
     availability: hasFacts ? 'partial' : 'unavailable',
+    mur: assessFamilyMenuMur(report),
     meaning: hasFacts ? 'calculation_facts_only' : 'none',
     mayClaimFamilyOutcome: false,
     mayGrantOfficialAuthority: false,

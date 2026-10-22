@@ -1,3 +1,4 @@
+import { assessSpousePositionMenuMur, type RelationshipAdjacentMenuMur } from './relationship-adjacent-menu-mur.js';
 import type { BirthInput } from '../contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import { RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from '../reading/official-reading-detailed-presentation-spouse.js';
@@ -39,6 +40,7 @@ export interface SpousePositionBirthResearchReport {
 export interface SpousePositionBirthResearchReading {
   availability: 'partial' | 'unavailable';
   report: SpousePositionBirthResearchReport;
+  mur: RelationshipAdjacentMenuMur;
   html: string;
 }
 
@@ -142,5 +144,5 @@ export function buildSpousePositionBirthResearchReading(
     e(report.provenance.methodologyId) + '</p><p>' +
     e(report.provenance.sourceRefs.join(' · ')) +
     '</p></details><p>공식 풀이·공개·저장·판매 권한을 부여하지 않습니다.</p></aside></main></body></html>';
-  return { availability: resolved ? 'partial' : 'unavailable', report, html };
+  return { availability: resolved ? 'partial' : 'unavailable', report, mur: assessSpousePositionMenuMur(report), html };
 }
