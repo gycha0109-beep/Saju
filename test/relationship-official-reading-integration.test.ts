@@ -219,6 +219,8 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       expect(item.explainabilityRef).toBeDefined();
       expect(proofRefs.has(item.explainabilityRef!)).toBe(true);
       expect(item.text).toContain('실제 명식에서 함께 확인된 십신 계열:');
+      expect(item.text).toContain('관찰된 명식 위치:');
+      expect(item.text).toMatch(/연주|월주|일주|시주/u);
       expect(item.text).not.toContain('TEN_GOD_FAMILY_');
       expect(item.text).not.toContain('궁합 점수:');
     }
@@ -349,6 +351,9 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     expect(comparison.perspectives[0]?.text).toContain('식상');
     expect(comparison.perspectives[0]?.text).not.toContain('관성');
     expect(comparison.perspectives[0]?.text).not.toContain('재성');
+    expect(comparison.perspectives[0]?.text).toContain('연주 천간 정인');
+    expect(comparison.perspectives[0]?.text).toContain('월주 천간 식신');
+    expect(comparison.perspectives[0]?.text).not.toContain('월주 천간 편재');
     expect(comparison.perspectives.every(item =>
       !item.text.includes('결혼 시기가 확정') && !item.text.includes('궁합 점수:'),
     )).toBe(true);
