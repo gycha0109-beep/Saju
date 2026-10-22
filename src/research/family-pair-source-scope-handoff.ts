@@ -1,4 +1,6 @@
-import type { CanonicalSajuSnapshot, PillarSlot, TenGod } from '../contracts/calculation.js';
+import type {
+  CanonicalSajuSnapshot, PillarSlot, StructuralRelationCandidate, TenGod,
+} from '../contracts/calculation.js';
 import {
   R068_AUTHORITY, R068_DIRECT_CLAIMS, R068_EXECUTION_GAPS,
   R068_RELATIONSHIP_CLAIM_CORPUS_VERSION, R068_REJECTED_ROMANCE_MAPPINGS,
@@ -308,6 +310,134 @@ export interface FamilyCrossLayerMethodComparison {
   missingPrerequisites: readonly string[];
 }
 
+export interface R070FamilyBranchClashPillarObservation {
+  /** Exact R070 phrases; no configuration outcome is assigned to this menu. */
+  sourceLayerId: 'CONFIGURATION-OUTCOME';
+  sourceSurface: '刑沖破害';
+  pillarSourceLayerId: string;
+  pillarSourceSurface: string;
+  originalSexScope: string;
+  requestedScope: FamilyResearchScope;
+  referencePillarSlot: PillarSlot;
+  referencePillarFactPath: string;
+  referenceBranchFactPath: string;
+  observedReferenceBranch?: string;
+  state:
+    | 'REFERENCED_PILLAR_UNRESOLVED'
+    | 'STRUCTURAL_CLASH_CANDIDATES_UNRESOLVED'
+    | 'REFERENCED_PILLAR_PARTICIPATES_IN_CLASH'
+    | 'CLASH_ONLY_OUTSIDE_REFERENCED_PILLAR'
+    | 'NO_CLASH_CANDIDATE_IN_RESOLVED_CHART';
+  /** These are the engine's exact existing branch_clash candidates, not effects. */
+  participatingClashes: readonly R070BranchClashFactReference[];
+  outsideClashes: readonly R070BranchClashFactReference[];
+  missingPrerequisites: readonly string[];
+  independentlyAdmittedFamilyClaims: 0;
+  configurationOutcomeAuthorized: false;
+  familyT8Admitted: false;
+}
+
+export interface R070BranchClashFactReference {
+  factPath: 'derivedFacts.structuralRelations';
+  relationId: string;
+  kind: 'branch_clash';
+  participants: StructuralRelationCandidate['participants'];
+  sourceIds: StructuralRelationCandidate['sourceIds'];
+  structuralMatchOnly: true;
+  transformationEstablished: false;
+}
+
+/**
+ * "刑沖破害" is not a family-specific rule. Observe only whether a real
+ * Canonical branch_clash candidate includes the exact R070 pillar named by
+ * an already in-scope historical pillar clause. Keep outside candidates and
+ * unknown-hour omissions visible, without manufacturing 形/破/害 or outcomes.
+ */
+function r070FamilyBranchClashPillarObservations(
+  snapshot: CanonicalSajuSnapshot,
+  scope: FamilyResearchScope,
+  methodCandidates: readonly FamilySourceScopeCandidate[],
+): readonly R070FamilyBranchClashPillarObservation[] {
+  const layer = R070_CLAIM_LAYERS.find(item =>
+    item.id === 'CONFIGURATION-OUTCOME' &&
+    (item.sourceSurfaces as readonly string[]).includes('刑沖破害'));
+  if (layer === undefined || layer.executable !== false) {
+    throw new TypeError('R070 configuration source cannot become an executable family rule.');
+  }
+  const structural = snapshot.derivedFacts.structuralRelations;
+  const structuralResolved = structural?.status === 'resolved';
+  const clashes: R070BranchClashFactReference[] = structuralResolved
+    ? structural.value.filter(item => item.kind === 'branch_clash').map(item => ({
+        factPath: 'derivedFacts.structuralRelations' as const,
+        relationId: item.relationId,
+        kind: 'branch_clash' as const,
+        participants: item.participants,
+        sourceIds: item.sourceIds,
+        structuralMatchOnly: item.semantics.structuralMatchOnly,
+        transformationEstablished: item.semantics.transformationEstablished,
+      })) : [];
+
+  return FAMILY_SURFACES.filter(definition =>
+    definition.scope === scope && definition.pillar !== undefined).flatMap(definition => {
+    const method = methodCandidates.find(candidate =>
+      candidate.sourceLayerId === definition.layerId &&
+      candidate.sourceSurface === definition.surface);
+    if (method === undefined || method.disposition === 'NARROW_OR_REPLACE' ||
+        definition.pillar === undefined) return [];
+    const pillarSlot = definition.pillar;
+    const pillar = snapshot.pillars[pillarSlot];
+    const referencePillarResolved = pillar.status === 'resolved';
+    const participatingClashes = clashes.filter(clash =>
+      clash.participants.some(participant =>
+        participant.component === 'branch' && participant.pillar === pillarSlot));
+    const outsideClashes = clashes.filter(clash =>
+      !clash.participants.some(participant =>
+        participant.component === 'branch' && participant.pillar === pillarSlot));
+    const state = !referencePillarResolved
+      ? 'REFERENCED_PILLAR_UNRESOLVED' as const
+      : !structuralResolved
+        ? 'STRUCTURAL_CLASH_CANDIDATES_UNRESOLVED' as const
+        : participatingClashes.length > 0
+          ? 'REFERENCED_PILLAR_PARTICIPATES_IN_CLASH' as const
+          : outsideClashes.length > 0
+            ? 'CLASH_ONLY_OUTSIDE_REFERENCED_PILLAR' as const
+            : 'NO_CLASH_CANDIDATE_IN_RESOLVED_CHART' as const;
+    return [{
+      sourceLayerId: 'CONFIGURATION-OUTCOME' as const,
+      sourceSurface: '刑沖破害' as const,
+      pillarSourceLayerId: method.sourceLayerId,
+      pillarSourceSurface: method.sourceSurface,
+      originalSexScope: method.originalSexScope,
+      requestedScope: scope,
+      referencePillarSlot: pillarSlot,
+      referencePillarFactPath: 'pillars.' + pillarSlot,
+      referenceBranchFactPath: 'pillars.' + pillarSlot + '.branch',
+      ...(referencePillarResolved
+        ? { observedReferenceBranch: pillar.value.branch.value } : {}),
+      state,
+      participatingClashes,
+      outsideClashes,
+      missingPrerequisites: [
+        'CONFIGURATION_OUTCOME_SETTLEMENT',
+        'FAMILY_CONFIGURATION_TO_RELATIVE_METHOD_SELECTION_NOT_ESTABLISHED',
+        'XING_PO_HAI_AND_CONFIGURATION_INTERACTION_NOT_SETTLED',
+        'R070_BRANCH_CLASH_PILLAR_TO_FAMILY_EFFECT_NOT_SOURCED',
+        ...(!referencePillarResolved
+          ? ['CANONICAL_' + pillarSlot.toUpperCase() + '_PILLAR_UNRESOLVED'] : []),
+        ...(!structuralResolved
+          ? ['CANONICAL_BRANCH_CLASH_CONTEXT_NOT_FULLY_RESOLVED'] : []),
+        ...(state === 'CLASH_ONLY_OUTSIDE_REFERENCED_PILLAR'
+          ? ['R070_OUTSIDE_PILLAR_CLASH_IS_NOT_FAMILY_EFFECT_EVIDENCE'] : []),
+        ...(state === 'NO_CLASH_CANDIDATE_IN_RESOLVED_CHART'
+          ? ['R070_NO_CLASH_CANDIDATE_IS_NOT_FAMILY_OUTCOME_ABSENCE'] : []),
+      ],
+      independentlyAdmittedFamilyClaims: 0 as const,
+      configurationOutcomeAuthorized: false as const,
+      familyT8Admitted: false as const,
+    }];
+  });
+}
+
 export interface FamilySourceScopeHandoff {
   version: typeof FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION;
   owner: 'R070';
@@ -324,6 +454,8 @@ export interface FamilySourceScopeHandoff {
   excludedSiblingSourceSurfaces: readonly R070ExcludedSiblingSource[];
   /** Unassigned R070 configuration source phrases, never selected family T8. */
   unassignedConfigurationInputs: readonly R070UnassignedConfigurationInput[];
+  /** Existing branch_clash participants vs exact R070 parent/child pillar positions. */
+  branchClashPillarObservations: readonly R070FamilyBranchClashPillarObservation[];
   missingPrerequisites: readonly string[];
   interpretationDisposition: 'INCONCLUSIVE';
   familyT8Admitted: false;
@@ -578,11 +710,14 @@ export function evaluateFamilySourceScopeV1(
         ],
       }];
     });
+  const branchClashPillarObservations =
+    r070FamilyBranchClashPillarObservations(snapshot, scope, methodCandidates);
   const missingPrerequisites = [
     ...R070_EXECUTION_GAPS,
     ...new Set([
       ...methodCandidates.flatMap(candidate => candidate.missingPrerequisites),
       ...crossLayerMethodComparisons.flatMap(comparison => comparison.missingPrerequisites),
+      ...branchClashPillarObservations.flatMap(item => item.missingPrerequisites),
     ]),
   ];
   return {
@@ -593,7 +728,7 @@ export function evaluateFamilySourceScopeV1(
     methodCandidates, methodCoexistences, crossLayerMethodComparisons,
     excludedSiblingSourceSurfaces: excludedSiblingSources(scope),
     unassignedConfigurationInputs: r070UnassignedConfigurationInputs(snapshot),
-    missingPrerequisites,
+    branchClashPillarObservations, missingPrerequisites,
     interpretationDisposition: 'INCONCLUSIVE',
     familyT8Admitted: false, researchOnly: true,
     mayGrantOfficialAuthority: false, mayMarkMenuAvailable: false,
