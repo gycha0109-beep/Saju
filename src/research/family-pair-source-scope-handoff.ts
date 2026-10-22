@@ -331,8 +331,20 @@ export interface PairwiseSourceScopeHandoff {
     typeof R068_RELATIONSHIP_CLAIM_CORPUS_VERSION,
     typeof R069_SPOUSE_CLAIM_CORPUS_VERSION,
   ];
-  subject: { personRef: string; snapshotId: string; calculationHash: string; birthTimeKnown: boolean };
-  target: { personRef: string; snapshotId: string; calculationHash: string; birthTimeKnown: boolean };
+  subject: {
+    personRef: string; snapshotId: string; calculationHash: string;
+    birthTimeKnown: boolean;
+    originalScenarioIds: readonly string[];
+    ambiguousFactPaths: readonly string[];
+    unavailableFactPaths: readonly string[];
+  };
+  target: {
+    personRef: string; snapshotId: string; calculationHash: string;
+    birthTimeKnown: boolean;
+    originalScenarioIds: readonly string[];
+    ambiguousFactPaths: readonly string[];
+    unavailableFactPaths: readonly string[];
+  };
   factualPairObservations: readonly PairwiseCanonicalObservation[];
   comparedSourceSurfaces: readonly {
     corpusId: 'R068' | 'R069';
@@ -423,11 +435,17 @@ export function evaluatePairwiseSourceScopeV1(
       personRef: subjectRef, snapshotId: subject.snapshot.snapshotId,
       calculationHash: subject.snapshot.calculationHash,
       birthTimeKnown: subject.snapshot.completeness.birthTimeKnown,
+      originalScenarioIds: subject.snapshot.scenarios.map(scenario => scenario.scenarioId),
+      ambiguousFactPaths: subject.snapshot.completeness.ambiguousPaths,
+      unavailableFactPaths: subject.snapshot.completeness.unavailablePaths,
     },
     target: {
       personRef: targetRef, snapshotId: target.snapshot.snapshotId,
       calculationHash: target.snapshot.calculationHash,
       birthTimeKnown: target.snapshot.completeness.birthTimeKnown,
+      originalScenarioIds: target.snapshot.scenarios.map(scenario => scenario.scenarioId),
+      ambiguousFactPaths: target.snapshot.completeness.ambiguousPaths,
+      unavailableFactPaths: target.snapshot.completeness.unavailablePaths,
     },
     factualPairObservations: observePair(subject.snapshot, target.snapshot),
     comparedSourceSurfaces,
