@@ -161,6 +161,16 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 양력 1990-05-15 기준 남성·여성·성별 미지정 명식에서 부모/자녀 메뉴별 각 원전 미지원 사유 수·방법 쌍 수·성별 제외 목록·실제 경로를 대조한다. 여성 1997-05-15 출생시각 미상에서는 부모 월주 방법을 남겨 두고 자녀의 `時為子息` 필수 시주 경로만 `R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED`로 보고한다. 역사 남성 명식의 `胎為母`에는 별개 `R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE`을 표시한다. **연구용 미지원 설명은 가족운 출력이나 메뉴 지원 활성화로 변환하지 않는다.**
 
+### R070 메뉴 미충족 조건의 원문·방법론 출처 역추적 — 중복 조건은 하나의 코드
+
+`menuSupportHandoff.prerequisiteTrace[]`는 기존 `unsupportedReasons[].missingPrerequisites`의 **실제 코드**를 한 번씩만 반환하고, `origins[]`에 그 코드를 반환한 원래 보류 사유의 `reasonCode`, `category`, `sourceLayerIds`, `sourceSurfaces`, 확정 계산 경로와 미해결 계산 경로를 함께 보존한다. 원문을 새로 채택하거나 미해결 연구 조건에 공식 우선순위를 부여하지 않는다. 동일한 원전 문구나 원국 계산 입력이 여러 방법 대조에 등장해도 `repetitionIsIndependentEvidence=false`이며 `familyMeaningAuthorized=false`다.
+
+이 인덱스는 **실제로 메뉴 요청 범위에 들어온 Source/Methodology/Official 보류 사유**로만 구성한다. 역사적 성별 조건이 맞지 않는 문구는 기존 `excludedHistoricalSources[]`에 남고, 해당 제외 사유는 메뉴를 차단하는 필수 조건으로 간주되지 않는다. `旺衰`·`生旺死絕`·`刑沖破害`·`官煞混雜`·`財印`의 가족 배속 미완료 사항은 기존 `unassignedConfigurationSources[]`로 구분하여 유지하며, 부모/자녀 메뉴 인덱스에 개별 가족 원문처럼 새로 배속하지 않는다.
+
+`R070_FAMILY_T8_OFFICIAL_METHOD_NOT_ADMITTED`은 정확히 하나의 `OFFICIAL_AUTHORITY` 출처를 가져 명식 입력이 완전해도 메뉴가 공식적으로 지원되지 않음을 보존한다. `SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED`는 부모 원문의 부친/모친 또는 여성 자녀 원문 두 개가 공통으로 사용하는 **미선정 규칙**이지만 원문별 `origins[]`가 그대로 남는다. `CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE`은 여성 자녀 시각 미상일 때 각각의 별 원문이 미상 지장간 경로를 참고했다는 것까지만 기록하며, 누락된 지장간을 복구하거나 그 십신을 산출한 것으로 표시하지 않는다.
+
+**회귀:** 1990년 남성·여성·성별 미지정 부모/자녀 명식 및 1997년 여성 시각 미상 명식에서 각 코드의 유일성, 실제 원문·방법 쌍과 확정/미상 경로의 일치, 제외된 원문의 미혼입, 공식 보류의 단일 출처를 대조한다. `prerequisiteTrace`는 `unresolvedCanonicalInputs` 및 `interpretationBlockers`를 대체하지 않는 **검색용 출처 색인**이다. 가족 T8 Claim, Reader 결과, 메뉴 활성화, 저장·공개·판매 권한은 변하지 않는다.
+
 ### R070 메뉴 미지원 사유의 계산 입력 누락 경로 — 원문별 중복 제거 인계
 
 `menuSupportHandoff.unresolvedCanonicalInputs[]`는 이미 반환하는 `interpretationBlockers.sourceConditionHolds[]` 가운데 **요청 메뉴의 역사적 적용 범위 안에 있는 원문만** 사용하여 미해결 Canonical 계산 사실을 경로별로 묶는다. 중복된 `unresolvedFactPaths`는 문자열 경로당 한 번만 기록하고, `affectedOriginalSources[]`에 실제 해당 경로를 요구하는 원문별 `sourceLayerId`·`sourceSurface`를 보존한다. 여러 부모/자녀 문구가 동일한 미상 시주를 가리켜도 그것은 **계산 경로 하나를 여러 곳에서 참조한 것**이지 별도의 가족 Claim 여러 건이 아니다.
