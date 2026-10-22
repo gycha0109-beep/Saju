@@ -64,7 +64,7 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 `comparedSourceSurfaces`는 기존 R068/R069의 **원래 `claim.id`**, 정확한 원문, 원래 도메인, R069의 역사적 성별 범위, 조항별로 필요한 기존 연구 공백 코드를 보존합니다. R068 사회·친구/친족 문구에는 `SOCIAL_VS_KIN_SCOPE`, `ROMANCE_TRANSFER_EVIDENCE`가 부족하며, 구성 효과의 조건부 문구에는 추가로 `CONTEXT_EFFECT_SETTLEMENT`, `MULTI_RELATION_CONFLICT`가 빠져 있습니다. R069은 한 명식에 관한 `HISTORICAL_GENDER_SCOPE`, `MODERN_PARTNER_TRANSLATION`, `PAIRWISE_COMPATIBILITY_BRIDGE`가 충족되지 않으며 구성 판정에 `SPOUSE_STAR_CONTEXT_SETTLEMENT`이 추가됩니다.
 
-이 코드들은 **R068/R069에 이미 있는 실행 공백**이며, 독자적 두 사람 궁합 규칙을 만들었다는 뜻이 아닙니다. 임의 점수·혼인·이혼·좋고 나쁨으로 변환하지 않습니다. 두 사람 입력 순서를 바꾼 회귀에서도 비교의 T0 동일성만 유지하고 T10은 양방향 모두 `INCONCLUSIVE`입니다.
+이 코드들은 **R068/R069에 이미 있는 실행 공백**이며, 독자적 두 사람 궁합 규칙을 만들었다는 뜻이 아닙니다. 임의 점수·혼인·이혼·좋고 나쁨으로 변환하지 않습니다. 두 사람 입력 순서를 바꾼 회귀에서도 비교의 T0 동일성만 유지하고 T10은 양방향 모두 `INCONCLUSIVE`입니다. 두 사람의 원본 `snapshot.scenarios[].scenarioId`, `completeness.ambiguousPaths`, `completeness.unavailablePaths`는 각각 `subject`와 `target` 아래 별개 배열로 넘깁니다. 대상 순서가 바뀌면 각자의 배열 소속만 바뀌며, 그 시나리오들의 교차 조합을 자동 생성하거나 하나의 확정 궁합 판정으로 합치지 않습니다.
 
 ## 실제 명식 회귀·책임 범위
 
