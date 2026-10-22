@@ -529,6 +529,179 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(states.has('CLASH_ONLY_OUTSIDE_REFERENCED_PILLAR')).toBe(true);
   });
 
+  it('itemizes R070 historical source applicability and method selection separately for parents/children', () => {
+    const cases = [
+      { sex: 'male' as const, scope: 'parents' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'CALCULATED_PILLAR_POSITION_ONLY',
+          'CANONICAL_CONCEPT_NOT_AVAILABLE', 'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+        ],
+        methodKinds: [
+          'ALTERNATIVE_PILLAR_DOMAIN_WORDINGS', 'PILLAR_DOMAIN_VS_STAR_RELATION',
+          'PILLAR_DOMAIN_VS_STAR_RELATION', 'PILLAR_DOMAIN_VS_STAR_RELATION',
+        ] },
+      { sex: 'female' as const, scope: 'parents' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+          'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE', 'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+        ],
+        methodKinds: ['PILLAR_DOMAIN_VS_STAR_RELATION', 'PILLAR_DOMAIN_VS_STAR_RELATION'] },
+      { sex: 'unspecified' as const, scope: 'parents' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+          'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE', 'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+        ],
+        methodKinds: ['PILLAR_DOMAIN_VS_STAR_RELATION', 'PILLAR_DOMAIN_VS_STAR_RELATION'] },
+      { sex: 'male' as const, scope: 'children' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'CALCULATED_PILLAR_POSITION_ONLY',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+        ],
+        methodKinds: [
+          'ALTERNATIVE_PILLAR_DOMAIN_WORDINGS', 'PILLAR_DOMAIN_VS_STAR_RELATION',
+          'PILLAR_DOMAIN_VS_STAR_RELATION',
+        ] },
+      { sex: 'female' as const, scope: 'children' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED', 'SOURCE_CONTEXT_METHOD_NOT_SELECTED',
+        ],
+        methodKinds: [
+          'PILLAR_DOMAIN_VS_STAR_RELATION', 'PILLAR_DOMAIN_VS_STAR_RELATION',
+          'FEMALE_CHILD_STAR_RELATION_ALTERNATIVES',
+        ] },
+      { sex: 'unspecified' as const, scope: 'children' as const,
+        sourceKinds: [
+          'CALCULATED_PILLAR_POSITION_ONLY', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+          'SOURCE_CONTEXT_METHOD_NOT_SELECTED', 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE',
+        ],
+        methodKinds: ['PILLAR_DOMAIN_VS_STAR_RELATION'] },
+    ];
+    for (const input of cases) {
+      const snapshot = chart({ year: 1990, day: 15, sex: input.sex });
+      const report = evaluateFamilySourceScopeV1(snapshot, input.scope);
+      const blockers = report.interpretationBlockers;
+      expect(blockers.requestedScope).toBe(input.scope);
+      expect(blockers.historicalSex).toBe(input.sex);
+      expect(blockers.sourceConditionHolds.map(item => item.blockerKind)).toEqual(
+        input.sourceKinds,
+      );
+      expect(blockers.methodSelectionHolds.map(item => item.methodPairKind)).toEqual(
+        input.methodKinds,
+      );
+      expect(blockers.configurationHolds.map(item => item.sourceSurface)).toEqual(
+        ['旺衰', '生旺死絕', '刑沖破害', '官煞混雜', '財印'],
+      );
+      for (const [i, condition] of blockers.sourceConditionHolds.entries()) {
+        const source = report.methodCandidates[i];
+        if (source === undefined) throw new Error('Source candidate has no blocker record.');
+        expect(condition.sourceLayerId).toBe(source.sourceLayerId);
+        expect(condition.sourceSurface).toBe(source.sourceSurface);
+        expect(condition.originalSexScope).toBe(source.originalSexScope);
+        expect(condition.disposition).toBe(source.disposition);
+        expect(condition.familyMeaningAuthorized).toBe(false);
+        expect(condition.observedFactPaths).toEqual([...new Set([
+          ...(source.observedFactPath === undefined ? [] : [source.observedFactPath]),
+          ...(source.tenGodObservation?.observedPositions.map(item => item.path) ?? []),
+          ...(source.relativeStarHiddenStemBoundary?.pillarObservations.flatMap(item =>
+            item.status === 'resolved' ? [item.membershipFactPath] : []) ?? []),
+        ])]);
+        expect(condition.unresolvedFactPaths).toEqual([...new Set([
+          ...(source.observedFactPath !== undefined && source.disposition === 'INCONCLUSIVE' &&
+            source.tenGodObservation === undefined ? [source.observedFactPath] : []),
+          ...(source.tenGodObservation?.unresolvedFactPaths ?? []),
+          ...(source.relativeStarHiddenStemBoundary
+            ?.unresolvedHiddenStemMembershipFactPaths ?? []),
+        ])]);
+        expect(condition.missingPrerequisites).toEqual([
+          ...source.missingPrerequisites,
+          ...(source.disposition === 'APPLICABLE_BOUNDED'
+            ? ['R070_PILLAR_LOCATION_IS_NOT_FAMILY_OUTCOME_RULE'] : []),
+        ]);
+        expect(blockers.missingPrerequisites).toEqual(expect.arrayContaining(
+          condition.missingPrerequisites,
+        ));
+      }
+      for (const [i, condition] of blockers.methodSelectionHolds.entries()) {
+        expect(condition.coPresenceIsVerifiedContradiction).toBe(false);
+        expect(condition.methodSelectionAuthorized).toBe(false);
+        expect(condition.independentlyAdmittedFamilyClaims).toBe(0);
+        expect(condition.sourceSurfaces).toHaveLength(2);
+        expect(condition.sourceLayerIds).toHaveLength(2);
+        for (const [sourceIndex, surface] of condition.sourceSurfaces.entries()) {
+          const source = report.methodCandidates.find(item => item.sourceSurface === surface);
+          expect(source?.sourceLayerId).toBe(condition.sourceLayerIds[sourceIndex]);
+          expect(source?.disposition).not.toBe('NARROW_OR_REPLACE');
+        }
+        expect(blockers.missingPrerequisites).toEqual(expect.arrayContaining(
+          condition.missingPrerequisites,
+        ));
+        if (condition.methodPairKind === 'FEMALE_CHILD_STAR_RELATION_ALTERNATIVES') {
+          expect(condition.sourceSurfaces).toEqual(['子嗣者即官星也', '我生者為子']);
+          expect(condition.missingPrerequisites).toContain(
+            'R070_CHILD_STAR_RELATION_ALTERNATIVES_NOT_RECONCILED',
+          );
+        }
+        expect(i).toBeLessThan(5);
+      }
+      for (const [i, item] of blockers.configurationHolds.entries()) {
+        const source = report.unassignedConfigurationInputs[i];
+        if (source === undefined) throw new Error('R070 configuration source missing.');
+        expect(item.sourceLayerId).toBe(source.sourceLayerId);
+        expect(item.canonicalObservationCoverage).toBe(source.canonicalObservationCoverage);
+        expect(item.missingPrerequisites).toEqual(source.missingPrerequisites);
+        expect(item.familyScopeResolved).toBe(false);
+        expect(item.familyOutcomeAuthorized).toBe(false);
+      }
+      expect(blockers.originalTextContradictionEstablished).toBe(false);
+      expect(blockers.interpretationMethodSelected).toBe(false);
+      expect(blockers.independentlyAdmittedFamilyClaims).toBe(0);
+      expect(blockers.familyT8Admitted).toBe(false);
+      expect(report.missingPrerequisites).toEqual(expect.arrayContaining(
+        blockers.missingPrerequisites,
+      ));
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.mayMarkMenuAvailable).toBe(false);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+  });
+
+  it('retains unknown-hour family blockers rather than synthesizing an alternative child method', () => {
+    const snapshot = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const parents = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+    expect(parents.interpretationBlockers.sourceConditionHolds[0]?.blockerKind)
+      .toBe('CALCULATED_PILLAR_POSITION_ONLY');
+    expect(children.interpretationBlockers.sourceConditionHolds[0]?.blockerKind)
+      .toBe('REFERENCE_PILLAR_INPUT_UNRESOLVED');
+    expect(children.interpretationBlockers.sourceConditionHolds[0]?.unresolvedFactPaths)
+      .toContain('pillars.hour');
+    expect(children.interpretationBlockers.methodSelectionHolds.map(item =>
+      item.methodPairKind)).toEqual(['FEMALE_CHILD_STAR_RELATION_ALTERNATIVES']);
+    expect(children.interpretationBlockers.methodSelectionHolds[0]?.observedFactPaths)
+      .toEqual([...new Set([
+        ...familyCandidate(children, '子嗣者即官星也')
+          .tenGodObservation?.observedPositions.map(item => item.path) ?? [],
+        ...familyCandidate(children, '我生者為子')
+          .tenGodObservation?.observedPositions.map(item => item.path) ?? [],
+      ])]);
+    for (const surface of ['子嗣者即官星也', '我生者為子']) {
+      const candidate = children.interpretationBlockers.sourceConditionHolds.find(item =>
+        item.sourceSurface === surface);
+      expect(candidate?.blockerKind).toBe('SOURCE_CONTEXT_METHOD_NOT_SELECTED');
+      expect(candidate?.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+      expect(candidate?.unresolvedFactPaths).toContain('derivedFacts.hiddenStems.hour');
+    }
+    expect(children.interpretationBlockers.interpretationMethodSelected).toBe(false);
+    expect(children.interpretationBlockers.originalTextContradictionEstablished).toBe(false);
+    expect(children.familyT8Admitted).toBe(false);
+    expect(children.mayPersist).toBe(false);
+  });
+
   it('links existing R070 pillar, star and branch-clash fact references without multiplying evidence', () => {
     const cases = [
       { year: 1988, day: 5, sex: 'male' as const },
