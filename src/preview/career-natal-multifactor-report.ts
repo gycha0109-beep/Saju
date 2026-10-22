@@ -31,6 +31,18 @@ export interface CareerMultifactorReportSection {
   calculatedPositions: readonly string[];
   calculatedFactPaths: readonly string[];
 }
+export interface CareerMultifactorReadingGuide {
+  title: string;
+  /** Existing source-owned observations arranged into a readable order; no new T8. */
+  paragraph: string;
+  coreClaimType: string;
+  supporting: readonly {
+    claimType: string;
+    /** New actually observed paths beyond the core and preceding supports. */
+    distinctCalculatedFactPaths: readonly string[];
+    distinctCalculatedPositions: readonly string[];
+  }[];
+}
 export interface CareerMultifactorReport {
   version: typeof CAREER_MULTIFACTOR_REPORT_VERSION;
   snapshotId: string;
@@ -39,6 +51,7 @@ export interface CareerMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly CareerMultifactorReportSection[];
+  readingGuide?: CareerMultifactorReadingGuide;
   limitations: readonly string[];
   missing: readonly string[];
   researchOnly: true;
@@ -219,6 +232,51 @@ function unknownHourCalculatedContext(snapshot: CanonicalSajuSnapshot): string {
     observed.join(' · ') + '입니다. 직업 적성이나 다중 근거 T8 해석을 뜻하지 않습니다.';
 }
 
+/**
+ * Build the reader's first-screen explanation from the SAME selected,
+ * source-bound T8 section copies. This is presentation composition, not
+ * an additional Claim or a causal relation between different Career axes.
+ */
+function buildCareerMultifactorReadingGuide(
+  core: CareerMultifactorReportSection | undefined,
+  supporting: readonly CareerMultifactorReportSection[],
+  state: Status,
+): CareerMultifactorReadingGuide | undefined {
+  if (core === undefined || core.channel !== 'visible_stems' || core.axis === 'tension') {
+    return undefined;
+  }
+  const usedPaths = new Set(core.calculatedFactPaths);
+  const distinctSupporting = supporting.map(section => {
+    const newPositions = section.calculatedFactPaths.flatMap((path, index) => {
+      if (usedPaths.has(path)) return [];
+      const position = section.calculatedPositions[index];
+      guard(position !== undefined, 'supporting calculated position is missing');
+      usedPaths.add(path);
+      return [{ path, position }];
+    });
+    guard(newPositions.length > 0, 'supporting axis must add a distinct calculated fact');
+    return {
+      claimType: section.claimType,
+      distinctCalculatedFactPaths: newPositions.map(item => item.path),
+      distinctCalculatedPositions: newPositions.map(item => item.position),
+    };
+  });
+  const paragraphs = [
+    `이 명식에서 직업운의 중심으로 살펴볼 구조적 관점은 ‘${core.headline}’입니다. ${core.calculatedPositions.join(' · ')}에서 관측된 근거에 연결된 연구용 해석 후보입니다.`,
+    ...supporting.map((section, index) =>
+      `별도 관점인 ‘${section.headline}’은 ${AXIS_LABELS[section.axis]}에 관한 기존 연구 문구입니다. 중심 관찰과 앞선 보조 관찰에서 사용하지 않은 ${distinctSupporting[index]!.distinctCalculatedPositions.join(' · ')}를 추가 근거로 확인했습니다.`),
+    ...(state === 'complete'
+      ? ['중심 관점 하나와 서로 다른 계산 근거를 더하는 보조 관점 두 가지를 구분해 읽을 수 있습니다. 이는 연구용 풀이 구성 기준이지 직업 적성·성공 여부의 검증이 아닙니다.']
+      : [`현재 독립적인 보조 관점은 ${distinctSupporting.length}개만 확인되어, 필요한 두 가지 보조 관점을 모두 설명할 수 없습니다. 직업운 종합 결론은 보류합니다.`]),
+  ];
+  return {
+    title: '이 명식에서 확인된 일의 중심과 보조 관점',
+    paragraph: paragraphs.join(' '),
+    coreClaimType: core.claimType,
+    supporting: distinctSupporting,
+  };
+}
+
 export function buildCareerMultifactorResearchReport(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
@@ -326,6 +384,7 @@ export function buildCareerMultifactorResearchReport(
     missing.unshift('출생시각 미상');
     missing.push('이 계산 정책에서 십신(T5) 전체가 미확정이므로 직업의 다중 근거 T8 해석을 보류합니다. 확정된 간지만 계산 사실로 표시합니다.');
   }
+  const readingGuide = buildCareerMultifactorReadingGuide(primary, supporting, state);
   return {
     version: CAREER_MULTIFACTOR_REPORT_VERSION,
     snapshotId: snapshot.snapshotId,
@@ -335,6 +394,7 @@ export function buildCareerMultifactorResearchReport(
     introduction: '실제 명식에서 관측된 서로 다른 십신 근거를 연결하여, 전통 명리에서 일을 읽는 구조적 관점을 정리했습니다. 심리 검사나 개인의 직업 운명을 확정하는 결과가 아닙니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections: shown,
+    ...(readingGuide === undefined ? {} : { readingGuide }),
     limitations: [
       '사용한 해석은 고전 관계를 제한적으로 참고한 미검토 연구 후보입니다. Production 또는 유료 보고서에 사용할 수 없습니다.',
       '명식에 관측된 관계만 설명하며 직업 적성·연봉·성공·미래 사건·신강신약·용신을 단정하지 않습니다.',
@@ -355,6 +415,9 @@ function escapeHtml(s: string): string {
 export function renderCareerMultifactorResearchHtml(report: CareerMultifactorReport): string {
   const e = escapeHtml;
   const rows = report.sections.map(s => `<section><h2>${e(s.headline)}</h2><p>${e(s.paragraph)}</p><details><summary>근거와 출처</summary><p>${e(s.calculatedPositions.join(' · '))}</p><p>${e(s.calculatedFactPaths.join(' · '))}</p><p>${e(s.upstreamClaimIds.join(' · '))}</p><p>${e(s.sourceIds.join(' · '))}</p><p>${e(s.ruleId)}</p></details></section>`).join('\n');
+  const readingGuideMarkup = report.readingGuide === undefined
+    ? ''
+    : `<section aria-label="직업운 읽기 요약"><h2>${e(report.readingGuide.title)}</h2><p>${e(report.readingGuide.paragraph)}</p></section>`;
   // A partial research result must explain the missing MUR evidence in the HTML,
   // not merely in the report object that downstream readers may never inspect.
   const stateLabel: Readonly<Record<Status, string>> = {
@@ -365,5 +428,5 @@ export function renderCareerMultifactorResearchHtml(report: CareerMultifactorRep
   const missingMarkup = report.missing.length > 0
     ? `<section aria-label="아직 설명할 수 없는 부분"><h2>아직 설명할 수 없는 부분</h2><ul>${report.missing.map(reason => `<li>${e(reason)}</li>`).join('')}</ul></section>`
     : '';
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header>${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header>${readingGuideMarkup}${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
 }
