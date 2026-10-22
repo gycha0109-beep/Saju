@@ -106,7 +106,7 @@ function mountBrowser(fetcher?: (url: string, call: FakeHttpCall) => Promise<unk
   oldResult.id = 'result';
   root.appendChild(oldResult);
   const calls: FakeHttpCall[] = [];
-  const defaultFetch = async (url: string) => ({
+  const defaultFetch = async () => ({
     ok: true, status: 200,
     json: async () => ({
       version: 'myeongha-product-reading-response-v2',
@@ -125,7 +125,7 @@ function mountBrowser(fetcher?: (url: string, call: FakeHttpCall) => Promise<unk
   const fakeFetch = async (url: string, args: { method: string; body: string }) => {
     const call: FakeHttpCall = { url, method: args.method, body: JSON.parse(args.body) as FakeHttpCall['body'] };
     calls.push(call);
-    return fetcher ? fetcher(url, call) : defaultFetch(url);
+    return fetcher ? fetcher(url, call) : defaultFetch();
   };
   runInNewContext(PRODUCT_TWELVE_MENU_BROWSER_SCRIPT, {
     document: {
