@@ -702,6 +702,168 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     }
   });
 
+  it('preserves R070 hidden-stem membership exactly without promoting raw stems into T5 groups', () => {
+    const births = [
+      { year: 1988, day: 5, sex: 'female' as const },
+      { year: 1990, day: 15, sex: 'male' as const },
+      { year: 1997, day: 8, sex: 'unspecified' as const },
+    ];
+    const slots = ['year', 'month', 'day', 'hour'] as const;
+    for (const birth of births) {
+      const snapshot = chart(birth);
+      const hiddenStems = snapshot.derivedFacts.hiddenStems;
+      if (hiddenStems === undefined) {
+        throw new Error('Production Canonical must expose hidden-stem membership.');
+      }
+      const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
+      const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+      for (const sourceSurface of ['官煞混雜', '財印']) {
+        const parentItem = parent.unassignedConfigurationInputs.find(
+          item => item.sourceSurface === sourceSurface,
+        );
+        const childItem = children.unassignedConfigurationInputs.find(
+          item => item.sourceSurface === sourceSurface,
+        );
+        const contrast = parentItem?.tenGodGroupContrast;
+        const hidden = contrast?.hiddenStemMembershipContrast;
+        if (contrast === undefined || hidden === undefined) {
+          throw new Error('R070 configuration contrast and separate membership must exist.');
+        }
+        expect(childItem).toEqual(parentItem);
+        expect(hidden.sourceFactPath).toBe('derivedFacts.hiddenStems');
+        expect(hidden.visibleT5FactPath).toBe('derivedFacts.tenGods');
+        expect(hidden.coverage).toBe('RESOLVED_MEMBERSHIP_ONLY');
+        expect(hidden.unresolvedMembershipFactPaths).toEqual([]);
+        expect(hidden.pillarObservations.map(item => item.pillarSlot)).toEqual(slots);
+        for (const observation of hidden.pillarObservations) {
+          const canonical = hiddenStems[observation.pillarSlot];
+          const pillar = snapshot.pillars[observation.pillarSlot];
+          expect(observation.membershipFactPath)
+            .toBe('derivedFacts.hiddenStems.' + observation.pillarSlot);
+          expect(observation.branchFactPath)
+            .toBe('pillars.' + observation.pillarSlot + '.branch');
+          expect(observation.status).toBe(canonical.status);
+          expect(canonical.status).toBe('resolved');
+          if (canonical.status !== 'resolved' || pillar.status !== 'resolved') {
+            throw new Error('Known-time Canonical hidden membership must be resolved.');
+          }
+          expect(observation.observedBranch).toBe(pillar.value.branch.value);
+          expect(observation.rawMembershipPositions).toEqual(
+            canonical.value.map((stem, storageIndex) => ({ stem, storageIndex })),
+          );
+          expect(observation.hiddenStemT5ClassificationAuthorized).toBe(false);
+        }
+        expect(hidden.hiddenStemContributionToObservedT5GroupCount).toBe(0);
+        expect(hidden.canonicalStorageOrderIsStrengthPriority).toBe(false);
+        expect(hidden.historicalConfigurationConditionEstablished).toBe(false);
+        expect(hidden.hiddenStemRelativeRoleAuthorized).toBe(false);
+        expect(parentItem?.missingPrerequisites).toContain(
+          'R070_HIDDEN_STEM_MEMBERSHIP_IS_NOT_HIDDEN_T5_CLASSIFICATION',
+        );
+        expect(parentItem?.missingPrerequisites).toContain(
+          'R070_HIDDEN_STEM_STRENGTH_AND_PRIORITY_NOT_SETTLED',
+        );
+        expect(parentItem?.missingPrerequisites).toContain(
+          'R070_HIDDEN_STEM_CONFIGURATION_METHOD_NOT_SOURCED',
+        );
+        const originalT5GroupCount = parentItem?.tenGodSearchTerms?.filter(
+          group => group.observedPositions.length > 0,
+        ).length;
+        expect(contrast.observedGroupCount).toBe(originalT5GroupCount);
+        expect(contrast.originalConfigurationConditionEstablished).toBe(false);
+        expect(parent.familyT8Admitted).toBe(false);
+        expect(children.familyT8Admitted).toBe(false);
+      }
+    }
+  });
+
+  it('retains unknown-hour and unavailable membership separately from visible T5', () => {
+    const snapshot = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const report = evaluateFamilySourceScopeV1(snapshot, 'children');
+    const canonicalHidden = snapshot.derivedFacts.hiddenStems;
+    if (canonicalHidden === undefined) {
+      throw new Error('Known Canonical enriches hidden-stem membership.');
+    }
+    for (const sourceSurface of ['官煞混雜', '財印']) {
+      const input = report.unassignedConfigurationInputs.find(
+        item => item.sourceSurface === sourceSurface,
+      );
+      const contrast = input?.tenGodGroupContrast;
+      const hidden = contrast?.hiddenStemMembershipContrast;
+      if (contrast === undefined || hidden === undefined) {
+        throw new Error('Unknown birth hour must retain separate Canonical evidence.');
+      }
+      expect(hidden.coverage).toBe('PARTIAL_MEMBERSHIP');
+      expect(hidden.unresolvedMembershipFactPaths).toEqual(
+        ['derivedFacts.hiddenStems.hour'],
+      );
+      for (const observation of hidden.pillarObservations) {
+        const canonical = canonicalHidden[observation.pillarSlot];
+        expect(observation.status).toBe(canonical.status);
+        if (canonical.status === 'resolved') {
+          expect(observation.rawMembershipPositions).toEqual(
+            canonical.value.map((stem, storageIndex) => ({ stem, storageIndex })),
+          );
+        } else {
+          expect(observation.rawMembershipPositions).toEqual([]);
+        }
+      }
+      const hour = hidden.pillarObservations.find(item => item.pillarSlot === 'hour');
+      if (hour === undefined) throw new Error('Hourly hidden membership missing.');
+      expect(hour.status).toBe('unavailable');
+      expect(hour.observedBranch).toBeUndefined();
+      expect(hour.hiddenStemT5ClassificationAuthorized).toBe(false);
+      expect(contrast.inputCoverage).toBe('PARTIAL_VISIBLE_T5');
+      expect(contrast.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+      expect(input?.missingPrerequisites).toContain(
+        'CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE',
+      );
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.mayPublish).toBe(false);
+    }
+  });
+
+  it('fails closed when the optional Canonical hidden-stem fact is not provided', () => {
+    const original = chart({ year: 1990, day: 15, sex: 'male' });
+    const snapshot = {
+      ...original,
+      derivedFacts: { ...original.derivedFacts, hiddenStems: undefined },
+    };
+    const report = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    for (const sourceSurface of ['官煞混雜', '財印']) {
+      const input = report.unassignedConfigurationInputs.find(
+        item => item.sourceSurface === sourceSurface,
+      );
+      const contrast = input?.tenGodGroupContrast;
+      const hidden = contrast?.hiddenStemMembershipContrast;
+      if (contrast === undefined || hidden === undefined) {
+        throw new Error('Missing optional hidden-stem input must be explicit.');
+      }
+      expect(hidden.coverage).toBe('MEMBERSHIP_FACTS_NOT_PROVIDED');
+      expect(hidden.unresolvedMembershipFactPaths).toEqual([
+        'derivedFacts.hiddenStems.year',
+        'derivedFacts.hiddenStems.month',
+        'derivedFacts.hiddenStems.day',
+        'derivedFacts.hiddenStems.hour',
+      ]);
+      expect(hidden.pillarObservations.every(item =>
+        item.status === 'not_provided' &&
+        item.rawMembershipPositions.length === 0 &&
+        item.hiddenStemT5ClassificationAuthorized === false)).toBe(true);
+      expect(input?.missingPrerequisites).toContain(
+        'CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE',
+      );
+      expect(contrast.observedGroupCount).toBe(
+        input?.tenGodSearchTerms?.filter(group => group.observedPositions.length > 0).length,
+      );
+      expect(contrast.hiddenStemMembershipContrast.hiddenStemContributionToObservedT5GroupCount)
+        .toBe(0);
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.researchOnly).toBe(true);
+      expect(report.mayMarkMenuAvailable).toBe(false);
+    }
+  });
+
   it('keeps unassigned R070 官煞混雜 and 財印 as partially observed T5 search terms with unknown hour', () => {
     const report = evaluateFamilySourceScopeV1(
       chart({ timeKnown: false, sex: 'female' }), 'children',
