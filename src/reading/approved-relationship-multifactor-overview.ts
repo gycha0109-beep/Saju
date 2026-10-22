@@ -22,6 +22,13 @@ type RelationshipAxis = 'closeness' | 'expression' | 'values' | 'boundary' | 'fr
 const AXES: readonly RelationshipAxis[] = [
   'closeness', 'expression', 'values', 'boundary', 'friction',
 ];
+const FAMILY_FACT_LABELS: Readonly<Record<string, string>> = Object.freeze({
+  TEN_GOD_FAMILY_PEER_PRESENT: '비겁',
+  TEN_GOD_FAMILY_RESOURCE_PRESENT: '인성',
+  TEN_GOD_FAMILY_OUTPUT_PRESENT: '식상',
+  TEN_GOD_FAMILY_WEALTH_PRESENT: '재성',
+  TEN_GOD_FAMILY_OFFICER_PRESENT: '관성',
+});
 
 function sameSet(left: readonly string[], right: readonly string[]): boolean {
   if (left.length !== right.length) return false;
@@ -40,6 +47,7 @@ function relationshipAxis(unit: CanonicalReadingSemanticUnitV1): RelationshipAxi
 
 interface ApprovedComposite {
   claimType: string;
+  confirmedFamilies: readonly string[];
   unitId: string;
   axis: RelationshipAxis;
   headline: string;
@@ -114,7 +122,10 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
         unitsById.get(ref)?.claimType,
       );
       if (supportTypes.some(type => type === undefined) ||
-          !sameSet(supportTypes as string[], profile.supportingClaimTypes)) continue;
+          !sameSet(supportTypes as string[], profile.supportingClaimTypes) ||
+          supportTypes.some(type => type === undefined || FAMILY_FACT_LABELS[type] === undefined)) {
+        continue;
+      }
 
       const detail = detailByUnitId.get(unit.unitId);
       const clarification = profile.approvedTextByRole.clarification;
@@ -139,6 +150,7 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
       if (axis === undefined) continue;
       candidates.push({
         claimType: unit.claimType,
+        confirmedFamilies: profile.supportingClaimTypes.map(type => FAMILY_FACT_LABELS[type]!),
         unitId: unit.unitId,
         axis,
         headline: profile.standardText.headline!,
@@ -191,7 +203,8 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
         title: '서로 다른 관점으로 읽는 기존 승인된 해석',
         perspectives: selected.map(x => ({
           label: x.headline,
-          text: x.explanation,
+          text: x.explanation + '\n\n실제 명식에서 함께 확인된 십신 계열: ' +
+            x.confirmedFamilies.join(' · '),
           explainabilityRef: x.explainabilityRef,
         })),
       },
