@@ -17,7 +17,9 @@ function report(month: number, day: number, hour: number | null = 12) {
   const snapshot = calculateCanonicalSajuSnapshot({
     calendarType: 'solar',
     date: { year: 2024, month, day },
-    time: hour === null ? { known: false } : { known: true, hour, minute: 0 },
+    time: hour === null
+      ? { known: false } as const
+      : { known: true, hour, minute: 0 } as const,
     sexForTraditionalCalculation: 'unspecified',
   }, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now: NOW });
   const execution = runInterpretation(snapshot, registry, { now: NOW });
