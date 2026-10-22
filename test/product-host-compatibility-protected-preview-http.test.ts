@@ -20,7 +20,7 @@ const partnerBirth = {
 };
 type Person = {
   role: string;
-  pillars: Record<string, { status: string; value?: string }>;
+  pillars: Record<'year' | 'month' | 'day' | 'hour', { status: string; value?: string }>;
 };
 type Result = {
   lifecycle: string;
