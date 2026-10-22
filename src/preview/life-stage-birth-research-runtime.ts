@@ -1,3 +1,4 @@
+import { assessLifeStageMenuMur, type RelationshipAdjacentMenuMur } from './relationship-adjacent-menu-mur.js';
 import type { BirthInput } from '../contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
@@ -24,6 +25,7 @@ export interface LifeStageBirthResearchReading {
   mayGrantOfficialAuthority: false;
   report: LifeStageDayunResearchReport;
   natalContext: LifeStageNatalStructureContext;
+  mur: RelationshipAdjacentMenuMur;
   html: string;
 }
 
@@ -92,6 +94,7 @@ export function buildLifeStageBirthResearchReading(
     mayGrantOfficialAuthority: false,
     report,
     natalContext,
+    mur: assessLifeStageMenuMur(report, natalContext),
     html: renderLifeStageDayunResearchHtml(report, natalContext),
   };
 }
