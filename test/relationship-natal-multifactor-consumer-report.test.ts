@@ -80,6 +80,45 @@ describe('actual-source Relationship natal T5→T8→Korean five-domain report',
     expect(run(3,10).report).toEqual(run(3,10).report);
   }, 30000);
 
+  it('introduces only selected relationship T8 core and independent positions in Korean', () => {
+    const candidates = [
+      run(3, 10), run(4, 12), run(5, 17), run(6, 23),
+    ];
+    const first = candidates.find(item => item.report.readingGuide !== undefined);
+    expect(first).toBeDefined();
+    if (!first) return;
+    const { report } = first;
+    const guide = report.readingGuide!;
+    expect(report.sections[0]?.claimType).toBe(guide.coreClaimType);
+    expect(guide.paragraph).toContain(report.sections[0]!.headline);
+    for (const position of report.sections[0]!.observedPositions) {
+      expect(guide.paragraph).toContain(position);
+    }
+    const seen = new Set(report.sections[0]!.observedFactPaths);
+    for (const [index, support] of guide.supporting.entries()) {
+      const selected = report.sections[index + 1]!;
+      expect(support.claimType).toBe(selected.claimType);
+      expect(guide.paragraph).toContain(selected.headline);
+      expect(support.distinctObservedFactPaths.length).toBeGreaterThan(0);
+      for (const [positionIndex, path] of support.distinctObservedFactPaths.entries()) {
+        expect(seen.has(path)).toBe(false);
+        seen.add(path);
+        expect(guide.paragraph).toContain(support.distinctObservedPositions[positionIndex]);
+      }
+    }
+    expect(guide.supporting.length).toBe(report.sections.length - 1);
+    if (report.state === 'partial') {
+      expect(guide.paragraph).toContain('전체 관계운 종합 판단은 보류합니다');
+    } else {
+      expect(guide.supporting).toHaveLength(2);
+    }
+    expect(guide.paragraph).toContain('출처 있는 중심 관점');
+    expect(report.researchOnly).toBe(true);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+    expect(run(3,10).report).toEqual(run(3,10).report);
+  });
+
   it('requires distinct actual Relationship interpretation axes for MUR complete', () => {
     const x = run(3,10);
     if(x.report.state === 'complete') {
