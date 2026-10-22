@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import * as productReadingPublic from '../src/product-reading.js';
+import { runProductReadingInternals } from '../src/reading/product-reading-service.js';
 import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
 import type {
   CalculationPolicySnapshot,
@@ -206,6 +207,56 @@ describe('Product Reading Service Facade', () => {
 
     expect(result.state).toBe('delivered');
     expect(result.reading).toBeDefined();
+  });
+
+  it('provides the same Official semantic unit source internally for a short Reader summary and full Records report', async () => {
+    const currentSnapshot = snapshot();
+    const registry = createI7SeasonalSupportRegistry();
+    const wealthBase = claim(
+      currentSnapshot.snapshotId,
+      'claim-wealth-semantic-handoff',
+      'T8',
+      'wealth',
+      'friction',
+    );
+    const wealth: InterpretationClaim = {
+      ...wealthBase,
+      predicate: 'wealth_conclusion',
+      value: {
+        wealthKind: 'friction',
+        headline: '준비와 결과 사이의 긴장',
+        summary: '준비와 성과를 함께 살펴보는 기존 근거의 범위입니다.',
+        futureMoneyTimingAuthorized: false,
+        numericScoringAuthorized: false,
+      },
+    };
+    const internals = await runProductReadingInternals(
+      currentSnapshot,
+      interpretationWithClaims(currentSnapshot, registry, [wealth]),
+      registry,
+      { requestId: 'official-source-handoff', text: '재물운' },
+      serviceOptions,
+    );
+    expect(internals.response.state).toBe('delivered');
+    expect(internals.execution.canonicalSemantics).toBeDefined();
+    expect(internals.execution.officialReadingReport).toBeDefined();
+    const handoff = internals.officialSemanticSourceHandoff;
+    expect(handoff).toBeDefined();
+    expect(handoff?.officialReportHash)
+      .toBe(internals.execution.officialReadingReport?.reportHash);
+    expect(handoff?.semanticHash)
+      .toBe(internals.execution.canonicalSemantics?.semanticHash);
+    expect(handoff?.postPurchaseSummary.referenceReportId)
+      .toBe(handoff?.longFormRecord.referenceReportId);
+    expect(handoff?.postPurchaseSummary.eligiblePrimaryUnitRefs.length)
+      .toBeGreaterThan(0);
+    expect(handoff?.constraints.mayGrantReaderAccess).toBe(false);
+    expect(handoff?.constraints.mayGrantRecordStorage).toBe(false);
+    expect(handoff?.constraints.mayGrantCommerce).toBe(false);
+    expect(internals.response).not.toHaveProperty('officialSemanticSourceHandoff');
+    expect(JSON.stringify(internals.response)).not.toContain(
+      handoff?.officialReportHash,
+    );
   });
 
   it('returns temporarily_unavailable for a Legacy request when no Legacy runtime is supplied', async () => {
