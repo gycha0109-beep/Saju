@@ -100,6 +100,35 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
       .toEqual(selected);
   });
 
+  it('links everyday career, money-management and relationship wording only to source-owned natal evidence', () => {
+    const { snapshot, reports } = run();
+    const cases = [
+      { text: '이직을 고민하는데 제 성향은 어떤가요?', topic: 'career' },
+      { text: '퇴사를 고민하는 제 성향이 궁금해요', topic: 'career' },
+      { text: '저축할 때 제 자원 관리 성향이 궁금해요', topic: 'wealth' },
+      { text: '썸에서 제 소통 성향은 어떤가요?', topic: 'relationship' },
+    ] as const;
+    for (const { text, topic } of cases) {
+      const selected = buildQuestionRelatedNatalReading(snapshot, question(text), reports);
+      expect(selected.topic, text).toBe(topic);
+      expect(selected.status, text).toBe('related_evidence');
+      expect(selected.sections.map(section => section.paragraph)).toEqual(
+        reports[topic].sections.map(section => section.paragraph),
+      );
+      expect(selected.caveats.join(' ')).toContain('T11 풀이가 아닙니다');
+      expect(selected.mayPublish).toBe(false);
+      expect(selected.maySell).toBe(false);
+    }
+    const mixed = buildQuestionRelatedNatalReading(
+      snapshot, question('직장과 저축의 차이가 궁금해요'), reports);
+    expect(mixed.status).toBe('ambiguous');
+    expect(mixed.sections).toHaveLength(0);
+    const timed = buildQuestionRelatedNatalReading(
+      snapshot, question('이직은 언제 하는 게 좋나요?'), reports);
+    expect(timed.status).toBe('unsupported');
+    expect(timed.sections).toHaveLength(0);
+  });
+
   it('preserves ambiguity and refuses unsupported future timing or third-party predictions', () => {
     const { snapshot, reports } = run();
     for (const [text, state] of [
