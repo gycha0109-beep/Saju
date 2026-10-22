@@ -53,6 +53,7 @@ A 원국, B 시간, C 관계, D 질문의 source-qualified T5/T6/T8/T9/T10/T11 �
 - 기존 `src/host/product-host.ts` 요청에 UI용 `uiLocale`과 풀이용 `reading.readingLocale`를 분리한다. `uiLocale`만 변경되어도 Canonical 계산 규칙은 달라지지 않는다.
 - 개인별 풀이 요청의 로케일 우선순위는 현재 `readingLocale > uiLocale > ko-KR`; 기존 호출자는 두 필드가 없어도 종전 한국어 결과를 받는다. 계정 기본 언어는 아직 Saju Host에 연결하지 않으며 MyeongHa의 인증된 프로필에서 공급해야 한다.
 - 현재 기존 한국어 서비스만 실제 문단 Renderer가 있으므로, 외국어 `readingLocale` 요청은 **계산/해석 전에** `INVALID_READING_REQUEST`로 거절한다. `uiLocale=en-US`, `readingLocale=ko-KR`처럼 UI 언어 메타데이터와 풀이 언어가 다를 수 있다. 단, 기존 브라우저 자체는 한국어 UI만 제공한다.
+- 선택한 `readingLocale`는 `ConsumerReadingRequestInput`과 normalized `ReadingRequest`로 전달한다. 직접 서비스 파사드를 호출하면서 `en-US` 등 아직 구현되지 않은 읽기 로케일을 주면 normalizer에서 `READING_LOCALE_NOT_AVAILABLE`을 반환하며 한국어 내용으로 대체하지 않는다. 필드 생략 시 기존 요청의 해시·권한·한글 결과를 유지한다.
 - Preview 5분야 요청에도 `uiLocale`과 `readingLocale`를 최상위 필드로 전달하며, 동일한 한국어-only admission을 적용한다. 한국어 원문을 외국어 요청에 숨겨서 재사용하거나 브라우저에 서비스 인증 토큰을 노출하지 않는다.
 - `src/host/static-page.ts`의 UI/풀이 언어 선택은 한국어만 활성화하고 나머지 로케일은 `준비 중`으로 표시한다. 사용자에게 외국어 서비스가 가능한 것처럼 표시하지 않는다.
 - 제품 트랙의 UI 전체 i18n, 출생·시간대 정책, 계정 언어 선호, locale별 실제 Renderer, 캐시 저장/조회 및 삭제는 미완료이다.
