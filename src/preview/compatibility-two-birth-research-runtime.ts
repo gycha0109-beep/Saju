@@ -1,3 +1,4 @@
+import { assessCompatibilityMenuMur, type RelationshipAdjacentMenuMur } from './relationship-adjacent-menu-mur.js';
 import type { BirthInput } from '../contracts/calculation.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
@@ -40,6 +41,7 @@ export interface CompatibilityTwoBirthResearchReading {
   maySell: false;
   report: CompatibilityTwoChartIntakePreview;
   personalRelationship: CompatibilityPersonalRelationshipContext;
+  mur: RelationshipAdjacentMenuMur;
   html: string;
 }
 
@@ -166,6 +168,7 @@ export function buildCompatibilityTwoBirthResearchReading(
     maySell: false,
     report,
     personalRelationship,
+    mur: assessCompatibilityMenuMur(report, personalRelationship),
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
 }
