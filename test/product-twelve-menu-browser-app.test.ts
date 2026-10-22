@@ -305,6 +305,28 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(app.get('twelve-state-question').dataset.state).toBe('partial');
   });
 
+  it('uses existing supported reading intents for suggested personal questions while retaining free text', async () => {
+    const app = mountBrowser();
+    const form = app.get('menu-question-text');
+    expect(app.get('twelve-card-question').collectText())
+      .toContain('자유롭게 작성한 고민도 제출할 수 있지만 근거가 없으면 보류');
+    const suggest = app.get('twelve-card-question')
+      .querySelectorAll('button')
+      .find(item => item.textContent === '올해 직업운');
+    expect(suggest).toBeDefined();
+    await suggest!.dispatch('click');
+    expect(form.value).toBe('올해 직업운');
+    await app.get('twelve-open-question').dispatch('click');
+    expect(app.calls).toHaveLength(1);
+    expect(app.calls[0]?.body.reading?.text).toBe('질문: 올해 직업운');
+    form.value = '자유 질문: 지금 고민을 정리하고 싶습니다';
+    await form.dispatch('input');
+    expect(app.get('twelve-state-question').dataset.state).toBe('unavailable');
+    await app.get('twelve-open-question').dispatch('click');
+    expect(app.calls[1]?.body.reading?.text)
+      .toBe('질문: 자유 질문: 지금 고민을 정리하고 싶습니다');
+  });
+
   it('does not turn only selected facts, empty paragraphs, missing claims or transport success into available reading', async () => {
     const app = mountBrowser(async () => ({
       ok: true, status: 200,
