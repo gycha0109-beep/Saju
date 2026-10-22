@@ -258,6 +258,48 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(unknown, ra)).toThrow();
   });
 
+  it('shows sourced relationship core before evidence and rejects forged supporting paths', () => {
+    const cases = [[3, 10], [4, 12], [5, 17], [6, 23]] as const;
+    const selected = cases.map(([month, day]) => {
+      const chart = sample(month, day);
+      return { chart, readings: reports(chart) };
+    }).find(item => item.readings.relationship.readingGuide !== undefined);
+    expect(selected).toBeDefined();
+    if (!selected) return;
+    const guide = selected.readings.relationship.readingGuide!;
+    const html = renderNatalFiveDomainMultifactorResearchHtml(
+      selected.chart, selected.readings);
+    expect(html).toContain('aria-label="관계운 읽기 요약"');
+    expect(html).toContain(guide.paragraph);
+    const relationCard = html.split('<h2 id="domain-relationship">')[1]!;
+    expect(relationCard.indexOf(guide.title))
+      .toBeLessThan(relationCard.indexOf('명식 근거와 출처 확인'));
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(selected.chart, {
+      ...selected.readings,
+      relationship: {
+        ...selected.readings.relationship,
+        readingGuide: { ...guide, coreClaimType: 'FORGED_RELATIONSHIP_T8' },
+      },
+    })).toThrow(/Relationship guide must follow/u);
+    if (guide.supporting.length > 0) {
+      expect(() => renderNatalFiveDomainMultifactorResearchHtml(selected.chart, {
+        ...selected.readings,
+        relationship: {
+          ...selected.readings.relationship,
+          readingGuide: {
+            ...guide,
+            supporting: [{ ...guide.supporting[0]!,
+              distinctObservedFactPaths: ['derivedFacts.tenGods.value.year.stem.value'],
+              distinctObservedPositions: ['허위 관계 증거'],
+            }, ...guide.supporting.slice(1)],
+          },
+        },
+      })).toThrow();
+    }
+    const unknown = sample(3, 10, null);
+    expect(reports(unknown).relationship.readingGuide).toBeUndefined();
+  });
+
   it('escapes untrusted source text, evidence paths and labels in the reader HTML', () => {
     const chart = sample(3, 10);
     const base = reports(chart);
