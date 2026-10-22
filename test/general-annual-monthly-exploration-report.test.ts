@@ -55,6 +55,16 @@ describe('one-person annual to monthly source-bound research reading', () => {
     const themes = report.monthly.sections.filter(x => x.kind === 'theme');
     expect(themes.map(x => x.segmentId)).toEqual(['before_jeol', 'after_jeol']);
     const html = renderGeneralAnnualMonthlyExplorationHtml(report);
+    const displayKst = (instant: string) =>
+      new Date(new Date(instant).getTime() + 9 * 60 * 60 * 1000)
+        .toISOString().slice(0, 16).replace('T', ' ') + ' KST';
+    for (const phase of themes) {
+      expect(html).toContain(
+        '실제 계산 적용 기간: ' + displayKst(phase.calculatedInterval.startsAt) +
+        '부터 ' + displayKst(phase.calculatedInterval.endsAt) + ' 전까지',
+      );
+    }
+    expect(html.match(/실제 계산 적용 기간:/gu)).toHaveLength(2);
     expect(html).toContain('id="year-reading"');
     expect(html).toContain('id="monthly-reading"');
     expect(html).toContain('href="#monthly-reading"');
