@@ -190,6 +190,27 @@ export interface FamilyMethodCoexistence {
   ];
 }
 
+/**
+ * Two different R070 source layers may refer to the same person's family
+ * question, but neither is a corroborating T8 claim for the other.
+ * This preserves literal source identity, observed pillar, searched T5
+ * category, incompleteness and the method bridge that is still missing.
+ */
+export interface FamilyCrossLayerMethodComparison {
+  sourceSurfaces: readonly [string, string];
+  sourceLayerIds: readonly [string, string];
+  pillarObservation: {
+    factPath: string;
+    observedPillar: string;
+  };
+  starObservation: FamilyTenGodSourceObservation;
+  state: 'PILLAR_AND_STAR_METHODS_NOT_RECONCILED';
+  independentlyAdmittedFamilyClaims: 0;
+  methodSelectionAuthorized: false;
+  familyMeaningAuthorized: false;
+  missingPrerequisites: readonly string[];
+}
+
 export interface FamilySourceScopeHandoff {
   version: typeof FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION;
   owner: 'R070';
@@ -200,6 +221,8 @@ export interface FamilySourceScopeHandoff {
   historicalSex: 'male' | 'female' | 'unspecified';
   methodCandidates: readonly FamilySourceScopeCandidate[];
   methodCoexistences: readonly FamilyMethodCoexistence[];
+  /** Cross-layer literal source comparison, not an approved family T8. */
+  crossLayerMethodComparisons: readonly FamilyCrossLayerMethodComparison[];
   /** Unassigned R070 configuration source phrases, never selected family T8. */
   unassignedConfigurationInputs: readonly R070UnassignedConfigurationInput[];
   missingPrerequisites: readonly string[];
@@ -395,6 +418,58 @@ export function evaluateFamilySourceScopeV1(
         ] as const,
       }];
     });
+  // Compare existing source layers only if both original methods are in
+  // scope and the Canonical pillar was actually resolved. A modern T5
+  // search hit is never independent corroboration of a parent/child outcome.
+  const crossLayerSourcePairs: readonly (readonly [string, string])[] =
+    scope === 'parents'
+      ? [
+          ['月為父母兄弟門戶', '父以偏財論'],
+          ['月為父母兄弟門戶', '母以印綬論'],
+          ['年為父', '父以偏財論'],
+        ]
+      : [
+          ['時為子息', '子嗣者即官星也'],
+          ['時為子息', '我生者為子'],
+          ['時為子孫', '子嗣者即官星也'],
+        ];
+  const crossLayerMethodComparisons: FamilyCrossLayerMethodComparison[] =
+    crossLayerSourcePairs.flatMap(sourceSurfaces => {
+      const pillar = methodCandidates.find(candidate =>
+        candidate.sourceSurface === sourceSurfaces[0]);
+      const star = methodCandidates.find(candidate =>
+        candidate.sourceSurface === sourceSurfaces[1]);
+      if (pillar?.disposition !== 'APPLICABLE_BOUNDED' ||
+          pillar.observedFactPath === undefined ||
+          pillar.observedPillar === undefined ||
+          star?.disposition !== 'INCONCLUSIVE' ||
+          star.tenGodObservation === undefined) return [];
+      const observation = star.tenGodObservation;
+      return [{
+        sourceSurfaces: [sourceSurfaces[0], sourceSurfaces[1]] as const,
+        sourceLayerIds: [pillar.sourceLayerId, star.sourceLayerId] as const,
+        pillarObservation: {
+          factPath: pillar.observedFactPath,
+          observedPillar: pillar.observedPillar,
+        },
+        starObservation: observation,
+        state: 'PILLAR_AND_STAR_METHODS_NOT_RECONCILED' as const,
+        independentlyAdmittedFamilyClaims: 0 as const,
+        methodSelectionAuthorized: false as const,
+        familyMeaningAuthorized: false as const,
+        missingPrerequisites: [
+          'FAMILY_METHOD_SELECTION',
+          'PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION',
+          'SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED',
+          'HIDDEN_VS_VISIBLE_STAR_HANDLING',
+          'HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED',
+          ...(observation.status === 'incomplete_input'
+            ? ['TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED'] : []),
+          ...(observation.status === 'not_observed_in_resolved_positions'
+            ? ['T5_STAR_NOT_OBSERVED_IN_VISIBLE_FACTS_IS_NOT_RELATIVE_ABSENCE'] : []),
+        ],
+      }];
+    });
   const missingPrerequisites = [
     ...R070_EXECUTION_GAPS,
     ...new Set(methodCandidates.flatMap(candidate => candidate.missingPrerequisites)),
@@ -404,7 +479,7 @@ export function evaluateFamilySourceScopeV1(
     owner: 'R070', corpusVersion: R070_FAMILY_DOMAIN_CLAIM_CORPUS_VERSION,
     scope, snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     historicalSex: snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
-    methodCandidates, methodCoexistences,
+    methodCandidates, methodCoexistences, crossLayerMethodComparisons,
     unassignedConfigurationInputs: r070UnassignedConfigurationInputs(snapshot),
     missingPrerequisites,
     interpretationDisposition: 'INCONCLUSIVE',
