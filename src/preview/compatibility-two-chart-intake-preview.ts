@@ -30,6 +30,18 @@ export interface CompatibilitySubjectObservation {
   pillars: readonly CompatibilityPillarObservation[];
 }
 
+/** Literal comparison of two Canonical pillar observations; never a T10 relation. */
+export interface CompatibilityPillarFactComparison {
+  slot: PillarSlot;
+  label: string;
+  subjectFactPath: string;
+  targetFactPath: string;
+  subjectObserved?: string;
+  targetObserved?: string;
+  observation: 'same_calculated_pillar' | 'different_calculated_pillar' | 'insufficient_input';
+  explanation: string;
+}
+
 export interface CompatibilityTwoChartIntakePreview {
   version: typeof COMPATIBILITY_TWO_CHART_PREVIEW_VERSION;
   mode: 'two_person_calculation_only';
@@ -41,6 +53,7 @@ export interface CompatibilityTwoChartIntakePreview {
   requestId: string;
   subject: CompatibilitySubjectObservation;
   target: CompatibilitySubjectObservation;
+  comparisons: readonly CompatibilityPillarFactComparison[];
   missing: readonly string[];
   limitations: readonly string[];
 }
@@ -76,6 +89,45 @@ function observe(input: CompatibilitySubjectInput): CompatibilitySubjectObservat
   };
 }
 
+function comparePillars(
+  subject: CompatibilitySubjectObservation,
+  target: CompatibilitySubjectObservation,
+): readonly CompatibilityPillarFactComparison[] {
+  return SLOTS.map((slot, index) => {
+    const left = subject.pillars[index];
+    const right = target.pillars[index];
+    guard(left?.slot === slot && right?.slot === slot,
+      'both persons must have separate complete canonical pillar slots');
+    const shared = {
+      slot, label: SLOT_KO[slot],
+      subjectFactPath: left.factPath,
+      targetFactPath: right.factPath,
+    };
+    if (left.status !== 'resolved' || right.status !== 'resolved') {
+      return {
+        ...shared, observation: 'insufficient_input' as const,
+        explanation: SLOT_KO[slot] +
+          '는 두 사람 중 한 명 이상에서 계산 정보가 확정되지 않아 비교하지 않습니다.',
+      };
+    }
+    guard(left.stemHanja !== undefined && left.branchHanja !== undefined &&
+      right.stemHanja !== undefined && right.branchHanja !== undefined,
+      'resolved two-chart pillar must contain exact stem and branch');
+    const subjectObserved = left.stemHanja + left.branchHanja;
+    const targetObserved = right.stemHanja + right.branchHanja;
+    const equal = subjectObserved === targetObserved;
+    return {
+      ...shared, subjectObserved, targetObserved,
+      observation: equal ? 'same_calculated_pillar' as const :
+        'different_calculated_pillar' as const,
+      explanation: '계산 사실만 비교하면 ' + SLOT_KO[slot] + '는 첫 번째 명식 ' +
+        subjectObserved + ', 두 번째 명식 ' + targetObserved +
+        (equal ? '으로 동일합니다.' : '으로 서로 다릅니다.') +
+        ' 일치·차이는 궁합의 좋고 나쁨을 뜻하지 않습니다.',
+    };
+  });
+}
+
 /**
  * Reuse TWO existing Canonical calculations without pretending individual
  * pillar observations are source-qualified T10 interpersonal interactions.
@@ -104,6 +156,7 @@ export function buildCompatibilityTwoChartIntakePreview(
   'both Canonical snapshot identities are required');
   const first = observe({ ...subject, personRef });
   const second = observe({ ...target, personRef: targetRef });
+  const comparisons = comparePillars(first, second);
   const missing: string[] = [
     '두 명식 사이의 상호작용을 설명하는 source-qualified T10 Claim·Methodology가 아직 승인되지 않았습니다. 궁합 결과나 점수를 만들지 않습니다.',
   ];
@@ -117,6 +170,7 @@ export function buildCompatibilityTwoChartIntakePreview(
     requestId: request.requestId,
     subject: first,
     target: second,
+    comparisons,
     missing,
     limitations: [
       '두 사람 각각의 기존 명식 계산 사실만 제시합니다. 나란히 표시한 것이 궁합 관계의 해석 근거는 아닙니다.',
@@ -143,6 +197,31 @@ function personHtml(person: CompatibilitySubjectObservation, label: string): str
     rows + '</tbody></table></section>';
 }
 
+function comparisonHtml(report: CompatibilityTwoChartIntakePreview): string {
+  guard(report.comparisons.length === SLOTS.length &&
+    report.comparisons.every((item, index) => {
+      const slot = SLOTS[index]!;
+      const left = report.subject.pillars[index];
+      const right = report.target.pillars[index];
+      if (item.slot !== slot || left?.slot !== slot || right?.slot !== slot ||
+          item.subjectFactPath !== left.factPath ||
+          item.targetFactPath !== right.factPath) return false;
+      if (left.status !== 'resolved' || right.status !== 'resolved') {
+        return item.observation === 'insufficient_input' &&
+          item.subjectObserved === undefined && item.targetObserved === undefined;
+      }
+      const a = left.stemHanja! + left.branchHanja!;
+      const b = right.stemHanja! + right.branchHanja!;
+      return item.subjectObserved === a && item.targetObserved === b &&
+        item.observation === (a === b ? 'same_calculated_pillar' : 'different_calculated_pillar');
+    }),
+  'comparison must repeat exact two-person source observations only');
+  return '<section aria-label="두 명식의 실제 계산 차이"><h2>두 명식에서 계산된 차이</h2>' +
+    '<p>아래 일치·차이는 양쪽 명식의 간지만 대조한 사실이며 궁합 점수·관계 결과는 아닙니다.</p><ul>' +
+    report.comparisons.map(item => '<li>' + escapeHtml(item.explanation) +
+      '</li>').join('') + '</ul></section>';
+}
+
 /** Calculation-only side-by-side UI, not a compatibility result. */
 export function renderCompatibilityTwoChartIntakeHtml(report: CompatibilityTwoChartIntakePreview): string {
   guard(report.mode === 'two_person_calculation_only' &&
@@ -163,6 +242,7 @@ export function renderCompatibilityTwoChartIntakeHtml(report: CompatibilityTwoCh
     '<strong>내부 연구용 · 궁합 점수·상호 관계 판정 없음</strong></header>' +
     '<main>' + personHtml(report.subject, '첫 번째 명식') +
     personHtml(report.target, '두 번째 명식') +
+    comparisonHtml(report) +
     '</main><aside><h2>부족한 근거와 제한</h2><ul>' + limits +
     '</ul></aside></body></html>';
 }
