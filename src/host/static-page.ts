@@ -13,8 +13,9 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
     form, .panel { background: white; border: 1px solid #dedbd3; border-radius: 16px; padding: 20px; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
     label { display: grid; gap: 7px; font-size: 14px; font-weight: 650; }
-    input, select, button { box-sizing: border-box; width: 100%; font: inherit; }
-    input, select { min-height: 44px; border: 1px solid #c8c5bd; border-radius: 10px; padding: 10px 12px; background: white; }
+    input, select, textarea, button { box-sizing: border-box; width: 100%; font: inherit; }
+    input, select, textarea { min-height: 44px; border: 1px solid #c8c5bd; border-radius: 10px; padding: 10px 12px; background: white; }
+    textarea { min-height: 100px; resize: vertical; line-height: 1.55; }
     .field-hint { font-size: 12px; line-height: 1.35; color: #777; font-weight: 400; }
     .check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
     .check input { width: auto; min-height: 0; }
@@ -100,7 +101,13 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
           <option value="이번 달 직업운">이번 달 직업운</option>
           <option value="이번 달 사업운">이번 달 사업운</option>
           <option value="이번 달 재물운">이번 달 재물운</option>
+          <option value="__question__">지금 고민으로 보기 — 직접 질문</option>
         </select>
+      </label>
+      <label id="question-field" class="full hidden">궁금한 점 직접 입력
+        <textarea id="question-text" name="questionText" maxlength="180" rows="3"
+          placeholder="예: 올해 재물운, 직업운, 이직해야 할까요?"></textarea>
+        <span class="field-hint">지원하는 풀이 주제는 기존 근거로 안내하며, 자유 질문은 근거가 부족하면 답변을 제공하지 않습니다. 최대 180자.</span>
       </label>
       <label class="full">풀이 상세 수준
         <select id="reading-detail" name="preferredDetail">
@@ -135,6 +142,8 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
   const leapMonth = document.getElementById('leap-month');
   const sex = document.getElementById('sex');
   const readingText = document.getElementById('reading-text');
+  const questionField = document.getElementById('question-field');
+  const questionText = document.getElementById('question-text');
 
   const messages = {
     READING_DELIVERED: '풀이가 준비되었습니다.',
@@ -367,6 +376,25 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     birthTime.disabled = timeUnknown.checked;
   });
 
+  function syncQuestionField() {
+    const isQuestion = readingText.value === '__question__';
+    questionField.classList.toggle('hidden', !isQuestion);
+    questionText.disabled = !isQuestion;
+    questionText.setCustomValidity('');
+  }
+
+  readingText.addEventListener('change', () => {
+    syncQuestionField();
+    if (readingText.value === '__question__') questionText.focus();
+  });
+  syncQuestionField();
+
+  function selectedReadingText() {
+    if (readingText.value !== '__question__') return readingText.value;
+    const question = questionText.value.trim();
+    return question ? '질문: ' + question : '';
+  }
+
   function currentBirth() {
     return {
       calendarType: calendar.value,
@@ -506,6 +534,17 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       birthDate.reportValidity();
       return;
     }
+    const requestedText = selectedReadingText();
+    if (!requestedText) {
+      const message = '궁금한 점을 입력해 주세요.';
+      result.classList.remove('hidden');
+      result.replaceChildren(el('div', message, 'state error'));
+      questionText.setCustomValidity(message);
+      questionText.focus();
+      questionText.reportValidity();
+      return;
+    }
+    questionText.setCustomValidity('');
 
     submit.disabled = true;
     fiveDomainSubmit.disabled = true;
@@ -515,7 +554,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       const body = {
         birth: currentBirth(),
         reading: {
-          text: readingText.value,
+          text: requestedText,
           outputPreferences: { preferredDetail: readingDetail.value }
         }
       };
