@@ -1046,6 +1046,11 @@ export interface R070FamilyMenuSupportHandoff {
   prerequisiteTrace: readonly R070FamilyMenuPrerequisiteTrace[];
   /** Unassigned CONFIGURATION-OUTCOME stays supplemental, never a family menu rule. */
   unassignedConfigurationSources: readonly R070FamilyConfigurationHold[];
+  /** Actual menu holds: never includes a code solely from unassigned configuration. */
+  menuBlockingPrerequisites: readonly string[];
+  /** A separate provenance lane; not extra prerequisites to activate this menu. */
+  unassignedConfigurationPrerequisites: readonly string[];
+  /** Legacy aggregate for research consumers, not a list of menu activation gates. */
   missingPrerequisites: readonly string[];
   admittedFamilyClaimCount: 0;
   familyT8Admitted: false;
@@ -1163,6 +1168,10 @@ function r070FamilyMenuSupportHandoff(
         repetitionIsIndependentEvidence: false as const,
         familyMeaningAuthorized: false as const,
       }));
+  const menuBlockingPrerequisites =
+    [...new Set(unsupportedReasons.flatMap(item => item.missingPrerequisites))];
+  const unassignedConfigurationPrerequisites =
+    [...new Set(blockers.configurationHolds.flatMap(item => item.missingPrerequisites))];
   return {
     requestedScope: blockers.requestedScope,
     historicalSex: blockers.historicalSex,
@@ -1172,9 +1181,11 @@ function r070FamilyMenuSupportHandoff(
     unresolvedCanonicalInputs,
     prerequisiteTrace,
     unassignedConfigurationSources: blockers.configurationHolds,
+    menuBlockingPrerequisites,
+    unassignedConfigurationPrerequisites,
     missingPrerequisites: [...new Set([
-      ...unsupportedReasons.flatMap(item => item.missingPrerequisites),
-      ...blockers.configurationHolds.flatMap(item => item.missingPrerequisites),
+      ...menuBlockingPrerequisites,
+      ...unassignedConfigurationPrerequisites,
     ])],
     admittedFamilyClaimCount: 0,
     familyT8Admitted: false,
@@ -1210,6 +1221,10 @@ export interface R070FamilyEngineTransferBoundary {
   unassignedConfigurationSources: readonly R070FamilyConfigurationHold[];
   /** Research provenance is never an EvidenceSelector weight. */
   prerequisiteTrace: readonly R070FamilyMenuPrerequisiteTrace[];
+  /** These are only current menu barriers, with official authority still held. */
+  menuBlockingPrerequisites: readonly string[];
+  /** Unassigned configuration remains a different, non-menu research lane. */
+  unassignedConfigurationPrerequisites: readonly string[];
   researchEvidenceMayBecomeFamilyClaim: false;
   canSelectHistoricalMethod: false;
   canGrantFamilyT8Authority: false;
@@ -1247,6 +1262,8 @@ function r070FamilyEngineTransferBoundary(
     excludedHistoricalSources: menu.excludedHistoricalSources,
     unassignedConfigurationSources: menu.unassignedConfigurationSources,
     prerequisiteTrace: menu.prerequisiteTrace,
+    menuBlockingPrerequisites: menu.menuBlockingPrerequisites,
+    unassignedConfigurationPrerequisites: menu.unassignedConfigurationPrerequisites,
     researchEvidenceMayBecomeFamilyClaim: false,
     canSelectHistoricalMethod: false,
     canGrantFamilyT8Authority: false,
