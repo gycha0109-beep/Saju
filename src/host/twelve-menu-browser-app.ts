@@ -141,6 +141,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
   }
   function invalidate(view) {
     view.sequence++;
+    view.button.disabled = false;
     view.output.replaceChildren();
     setState(view, 'unavailable', '입력이 바뀌었습니다. 이 메뉴를 다시 요청해 주세요.');
   }
