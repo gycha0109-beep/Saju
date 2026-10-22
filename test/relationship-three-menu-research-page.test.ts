@@ -144,6 +144,24 @@ describe('real source-owned three relationship menu page', () => {
         sample.parents.observations[1]!,
       ] },
     })).toThrow('mismatched');
+    expect(() => buildRelationshipThreeMenuResearchPage({
+      ...sample,
+      parents: {
+        ...sample.parents,
+        observations: [
+          { ...sample.parents.observations[0]!,
+            text: '부모의 성격과 미래를 임의로 창작한 문장' },
+          sample.parents.observations[1]!,
+        ],
+      },
+    })).toThrow('altered family');
+    expect(() => buildRelationshipThreeMenuResearchPage({
+      ...sample,
+      compatibility: {
+        ...sample.compatibility!,
+        missing: ['두 사람은 반드시 결혼한다.'],
+      },
+    })).toThrow('altered compatibility');
     const other = inputs({ ...FIRST, date: { year: 2000, month: 5, day: 15 } });
     expect(() => buildRelationshipThreeMenuResearchPage({
       ...sample,
