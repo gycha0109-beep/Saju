@@ -4,6 +4,12 @@ import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/productio
 import { buildFamilyCanonicalObservationPreview } from '../src/preview/family-parents-children-observation-preview.js';
 import { buildFamilyBirthResearchReading, buildFamilyMemberBirthResearchReading } from '../src/preview/family-birth-research-runtime.js';
 
+function escapedHtmlText(value: string): string {
+  return value.replace(/[&<>"']/gu, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char]!);
+}
+
 const REFERENCE = '2026-09-03T13:00:00.000Z';
 const BIRTH: BirthInput = {
   calendarType: 'solar',
@@ -135,7 +141,7 @@ describe('two separate family members with already sourced personal natal T8', (
       expect(section.sourceIds.length).toBeGreaterThanOrEqual(2);
       expect(section.factPaths.length).toBeGreaterThanOrEqual(2);
       expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
-      expect(output.html).toContain(section.paragraph);
+      expect(output.html).toContain(escapedHtmlText(section.paragraph));
     }
     expect(output.familyMeaningStatus).toBe('family_t8_source_authority_not_established');
     expect(output.mayInferFamilyDynamics).toBe(false);
