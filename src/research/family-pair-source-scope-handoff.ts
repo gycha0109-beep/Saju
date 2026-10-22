@@ -1,0 +1,262 @@
+import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
+import {
+  R068_AUTHORITY, R068_DIRECT_CLAIMS, R068_EXECUTION_GAPS,
+  R068_RELATIONSHIP_CLAIM_CORPUS_VERSION, R068_REJECTED_ROMANCE_MAPPINGS,
+} from './general-natal-relationship-claim-corpus.js';
+import {
+  R069_AUTHORITY, R069_DIRECT_CLAIMS, R069_EXECUTION_GAPS,
+  R069_SPOUSE_CLAIM_CORPUS_VERSION, R069_REJECTED_SHORTCUTS,
+} from './general-natal-spouse-claim-corpus.js';
+import {
+  R070_AUTHORITY, R070_CLAIM_LAYERS, R070_EXECUTION_GAPS,
+  R070_FAMILY_DOMAIN_CLAIM_CORPUS_VERSION, R070_REJECTED_SHORTCUTS,
+} from './general-natal-family-domain-claim-corpus.js';
+
+export const FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION =
+  'saju-research-r068-r069-r070-source-scope-handoff-v1' as const;
+
+export type ResearchScopeDisposition =
+  | 'APPLICABLE_BOUNDED' | 'NARROW_OR_REPLACE' | 'INCONCLUSIVE' | 'REJECTED';
+export type FamilyResearchScope = 'parents' | 'children';
+
+export interface FamilySourceScopeCandidate {
+  sourceLayerId: string;
+  sourceSurface: string;
+  sourceLayer: string;
+  originalSexScope: string;
+  disposition: Exclude<ResearchScopeDisposition, 'REJECTED'>;
+  observedFactPath?: string;
+  observedPillar?: string;
+  missingPrerequisites: readonly string[];
+  /** This is source-wording applicability only, NEVER a personal T8 claim. */
+  familyMeaningAuthorized: false;
+}
+
+export interface FamilySourceScopeHandoff {
+  version: typeof FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION;
+  owner: 'R070';
+  corpusVersion: typeof R070_FAMILY_DOMAIN_CLAIM_CORPUS_VERSION;
+  scope: FamilyResearchScope;
+  snapshotId: string;
+  calculationHash: string;
+  historicalSex: 'male' | 'female' | 'unspecified';
+  methodCandidates: readonly FamilySourceScopeCandidate[];
+  missingPrerequisites: readonly string[];
+  interpretationDisposition: 'INCONCLUSIVE';
+  familyT8Admitted: false;
+  researchOnly: true;
+  mayPublish: false;
+  maySell: false;
+}
+
+interface FamilySurfaceDefinition {
+  layerId: string;
+  surface: string;
+  scope: FamilyResearchScope;
+  pillar?: PillarSlot;
+  historicalSex?: 'male' | 'female';
+  sourceContextRequired?: true;
+  missingCanonicalConcept?: string;
+}
+
+const FAMILY_SURFACES: readonly FamilySurfaceDefinition[] = Object.freeze([
+  { layerId: 'PILLAR-DOMAIN-GENERAL', surface: '月為父母兄弟門戶', scope: 'parents', pillar: 'month' },
+  { layerId: 'PILLAR-DOMAIN-MALE-ALTERNATE', surface: '年為父', scope: 'parents', pillar: 'year', historicalSex: 'male' },
+  { layerId: 'PILLAR-DOMAIN-MALE-ALTERNATE', surface: '胎為母', scope: 'parents', historicalSex: 'male', missingCanonicalConcept: 'FETAL_PILLAR_NOT_DEFINED_BY_CANONICAL_SNAPSHOT' },
+  { layerId: 'TEN-GOD-FAMILY-RELATIONS', surface: '父以偏財論', scope: 'parents', sourceContextRequired: true },
+  { layerId: 'TEN-GOD-FAMILY-RELATIONS', surface: '母以印綬論', scope: 'parents', sourceContextRequired: true },
+  { layerId: 'PILLAR-DOMAIN-GENERAL', surface: '時為子息', scope: 'children', pillar: 'hour' },
+  { layerId: 'PILLAR-DOMAIN-MALE-ALTERNATE', surface: '時為子孫', scope: 'children', pillar: 'hour', historicalSex: 'male' },
+  { layerId: 'TEN-GOD-FAMILY-RELATIONS', surface: '子嗣者即官星也', scope: 'children', sourceContextRequired: true },
+  { layerId: 'FEMALE-CHILD-RELATION', surface: '我生者為子', scope: 'children', historicalSex: 'female', sourceContextRequired: true },
+]);
+
+function sourceLayer(definition: FamilySurfaceDefinition) {
+  const layer = R070_CLAIM_LAYERS.find(record =>
+    record.id === definition.layerId &&
+    (record.sourceSurfaces as readonly string[]).includes(definition.surface),
+  );
+  if (layer === undefined || layer.executable !== false) {
+    throw new TypeError('R070 source corpus no longer supports the exact bounded historical surface.');
+  }
+  return layer;
+}
+
+function evaluateFamilySurface(
+  snapshot: CanonicalSajuSnapshot,
+  definition: FamilySurfaceDefinition,
+): FamilySourceScopeCandidate {
+  const layer = sourceLayer(definition);
+  const sex = snapshot.input.sexForTraditionalCalculation ?? 'unspecified';
+  const base = {
+    sourceLayerId: layer.id,
+    sourceSurface: definition.surface,
+    sourceLayer: layer.layer,
+    originalSexScope: layer.sexScope,
+    familyMeaningAuthorized: false as const,
+  };
+  if (definition.historicalSex !== undefined && definition.historicalSex !== sex) {
+    return {
+      ...base, disposition: 'NARROW_OR_REPLACE',
+      missingPrerequisites: ['HISTORICAL_SEX_SCOPE_NOT_MATCHED_OR_NOT_SPECIFIED'],
+    };
+  }
+  if (definition.missingCanonicalConcept !== undefined) {
+    return {
+      ...base, disposition: 'INCONCLUSIVE',
+      missingPrerequisites: [definition.missingCanonicalConcept],
+    };
+  }
+  if (definition.sourceContextRequired) {
+    return {
+      ...base, disposition: 'INCONCLUSIVE',
+      missingPrerequisites: [
+        'SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED',
+        'HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED',
+      ],
+    };
+  }
+  if (definition.pillar === undefined) {
+    throw new TypeError('R070 research surface lacks a bounded canonical observation.');
+  }
+  const fact = snapshot.pillars[definition.pillar];
+  const observedFactPath = 'pillars.' + definition.pillar;
+  if (fact.status !== 'resolved') {
+    return {
+      ...base, observedFactPath, disposition: 'INCONCLUSIVE',
+      missingPrerequisites: ['CANONICAL_' + definition.pillar.toUpperCase() + '_PILLAR_UNRESOLVED'],
+    };
+  }
+  return {
+    ...base, observedFactPath, disposition: 'APPLICABLE_BOUNDED',
+    observedPillar: fact.value.stem.value + fact.value.branch.value,
+    missingPrerequisites: [],
+  };
+}
+
+/**
+ * Research-only selection of EXACT existing R070 historical wording against
+ * a real individual's chart. Even APPLICABLE_BOUNDED licenses *only the
+ * factual placement/quotation*, never a selected family T8 method.
+ * The competing male-conditional and section-specific methods remain visible.
+ */
+export function evaluateFamilySourceScopeV1(
+  snapshot: CanonicalSajuSnapshot,
+  scope: FamilyResearchScope,
+): FamilySourceScopeHandoff {
+  if (scope !== 'parents' && scope !== 'children') {
+    throw new TypeError('R070 source handoff requires the exact parents/children scope.');
+  }
+  if (R070_AUTHORITY.executableFamilyClassifierAuthorized !== false ||
+      R070_AUTHORITY.productionAuthorityPromoted !== false ||
+      !R070_REJECTED_SHORTCUTS.includes('FAMILY_STAR_PRESENCE_IMPLIES_FIXED_RELATIVE_OUTCOME')) {
+    throw new TypeError('R070 source authority cannot be upgraded to a family outcome.');
+  }
+  const methodCandidates = FAMILY_SURFACES
+    .filter(definition => definition.scope === scope)
+    .map(definition => evaluateFamilySurface(snapshot, definition));
+  const missingPrerequisites = [
+    ...R070_EXECUTION_GAPS,
+    ...new Set(methodCandidates.flatMap(candidate => candidate.missingPrerequisites)),
+  ];
+  return {
+    version: FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION,
+    owner: 'R070', corpusVersion: R070_FAMILY_DOMAIN_CLAIM_CORPUS_VERSION,
+    scope, snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
+    historicalSex: snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
+    methodCandidates, missingPrerequisites,
+    interpretationDisposition: 'INCONCLUSIVE',
+    familyT8Admitted: false, researchOnly: true, mayPublish: false, maySell: false,
+  };
+}
+
+export interface PairwiseSourceScopeHandoff {
+  version: typeof FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION;
+  owner: 'R068_R069';
+  sourceVersions: readonly [
+    typeof R068_RELATIONSHIP_CLAIM_CORPUS_VERSION,
+    typeof R069_SPOUSE_CLAIM_CORPUS_VERSION,
+  ];
+  subject: { personRef: string; snapshotId: string; calculationHash: string; birthTimeKnown: boolean };
+  target: { personRef: string; snapshotId: string; calculationHash: string; birthTimeKnown: boolean };
+  comparedSourceSurfaces: readonly {
+    corpusId: 'R068' | 'R069';
+    sourceSurface: string;
+    originalDomain: string;
+    disposition: 'NARROW_OR_REPLACE' | 'REJECTED';
+    eligiblePairwiseClaim: false;
+  }[];
+  missingPrerequisites: readonly string[];
+  pairwiseT10Admitted: false;
+  pairwiseDisposition: 'INCONCLUSIVE';
+  researchOnly: true;
+  mayPublish: false;
+  maySell: false;
+}
+
+/**
+ * An actual two-chart input is useful for pinpointing which T10 prerequisites
+ * are absent, but NEVER turns social/kin R068 or historical one-chart spouse
+ * R069 surfaces into a cross-person meaning or an Official compatibility rule.
+ */
+export function evaluatePairwiseSourceScopeV1(
+  subject: { personRef: string; snapshot: CanonicalSajuSnapshot },
+  target: { personRef: string; snapshot: CanonicalSajuSnapshot },
+): PairwiseSourceScopeHandoff {
+  const subjectRef = subject.personRef.trim();
+  const targetRef = target.personRef.trim();
+  if (!subjectRef || !targetRef || subjectRef === targetRef) {
+    throw new TypeError('T10 research requires two different nonblank person references.');
+  }
+  if (subject.snapshot.policy.policyId !== target.snapshot.policy.policyId ||
+      subject.snapshot.policy.policyVersion !== target.snapshot.policy.policyVersion ||
+      !subject.snapshot.snapshotId || !target.snapshot.snapshotId ||
+      !subject.snapshot.calculationHash || !target.snapshot.calculationHash) {
+    throw new TypeError('T10 research requires comparable governed Canonical calculations.');
+  }
+  if (R068_AUTHORITY.romanceCompatibilityMappingAuthorized !== false ||
+      R069_AUTHORITY.universalModernPartnerOntologyAuthorized !== false ||
+      !R068_REJECTED_ROMANCE_MAPPINGS.includes('ONE_RELATION_EQUALS_COMPATIBILITY_SCORE') ||
+      !R069_REJECTED_SHORTCUTS.includes('NATAL_SPOUSE_CLAIM_IMPLIES_PAIRWISE_COMPATIBILITY')) {
+    throw new TypeError('R068/R069 historical source authority must not become T10.');
+  }
+  const comparedSourceSurfaces = [
+    ...R068_DIRECT_CLAIMS.map(claim => ({
+      corpusId: 'R068' as const, sourceSurface: claim.sourceSurface,
+      originalDomain: claim.domain, disposition: 'NARROW_OR_REPLACE' as const,
+      eligiblePairwiseClaim: false as const,
+    })),
+    ...R069_DIRECT_CLAIMS.map(claim => ({
+      corpusId: 'R069' as const, sourceSurface: claim.sourceSurface,
+      originalDomain: claim.claimType, disposition: 'REJECTED' as const,
+      eligiblePairwiseClaim: false as const,
+    })),
+  ];
+  return {
+    version: FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION,
+    owner: 'R068_R069',
+    sourceVersions: [R068_RELATIONSHIP_CLAIM_CORPUS_VERSION, R069_SPOUSE_CLAIM_CORPUS_VERSION],
+    subject: {
+      personRef: subjectRef, snapshotId: subject.snapshot.snapshotId,
+      calculationHash: subject.snapshot.calculationHash,
+      birthTimeKnown: subject.snapshot.completeness.birthTimeKnown,
+    },
+    target: {
+      personRef: targetRef, snapshotId: target.snapshot.snapshotId,
+      calculationHash: target.snapshot.calculationHash,
+      birthTimeKnown: target.snapshot.completeness.birthTimeKnown,
+    },
+    comparedSourceSurfaces,
+    missingPrerequisites: [
+      ...R068_EXECUTION_GAPS, ...R069_EXECUTION_GAPS,
+      'EXACT_CROSS_CHART_T10_RULE_WITH_DIRECT_PAIRWISE_SOURCE_NOT_ESTABLISHED',
+      'TWO_PERSON_METHOD_CONTEXT_AND_CONFLICT_SETTLEMENT_NOT_ESTABLISHED',
+      ...(!subject.snapshot.completeness.birthTimeKnown
+        ? ['SUBJECT_HOUR_INPUT_UNRESOLVED'] : []),
+      ...(!target.snapshot.completeness.birthTimeKnown
+        ? ['TARGET_HOUR_INPUT_UNRESOLVED'] : []),
+    ],
+    pairwiseDisposition: 'INCONCLUSIVE', pairwiseT10Admitted: false,
+    researchOnly: true, mayPublish: false, maySell: false,
+  };
+}
