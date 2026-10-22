@@ -14,6 +14,7 @@ import {
   type MyeonghwaProductHostDependencies,
 } from './product-host.js';
 import { serializeAuthorizedProductionCalculationHttpResponseV1 } from './production-calculation-http-contract.js';
+import { buildCompatibilityTwoBirthResearchReading } from '../preview/compatibility-two-birth-research-runtime.js';
 import { createMyeonghwaProductionServiceBearerAuthorizer } from './production-service-bearer-auth.js';
 import {
   CHARACTER_GROUNDING_ADMISSION_HEADER,
@@ -40,6 +41,8 @@ export const PRODUCT_PREVIEW_READING_HTTP_PATH =
   '/api/preview/readings' as const;
 export const PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH =
   '/api/preview/natal-five-domains' as const;
+export const PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH =
+  '/api/preview/compatibility-charts' as const;
 export const PRODUCT_READING_PREVIEW_LIFECYCLE = 'preview' as const;
 
 export interface MyeonghwaProductHostServerOptions {
@@ -365,6 +368,79 @@ function createMyeonghwaHttpServer(
           [CHARACTER_GROUNDING_ADMISSION_HEADER]:
             CHARACTER_GROUNDING_ADMISSION_VERSION,
         });
+      } catch (error) {
+        if (!handleKnownError(response, error)) sendReadingOperationalError(response);
+      }
+      return;
+    }
+    // Existing 12-menu browser path, served only by an authenticated Preview host.
+    // The body is deliberately limited to birth facts. It does NOT accept
+    // or infer any interpersonal T10 interpretation or client-supplied score.
+    if (path === PRODUCT_PREVIEW_COMPATIBILITY_CHARTS_HTTP_PATH) {
+      const previewAvailable =
+        readingRoute.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE ||
+        secondaryReadingRoute?.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE;
+      if (!previewAvailable || readingHost === undefined ||
+          authorizeReadingRequest === undefined) {
+        sendJson(response, 404, {
+          error: { code: 'HOST_ROUTE_NOT_FOUND', message: 'Route not found.' },
+        });
+        return;
+      }
+      if (method !== 'POST') {
+        response.setHeader('allow', 'POST');
+        sendJson(response, 405, {
+          error: { code: 'HOST_METHOD_NOT_ALLOWED', message: 'POST is required.' },
+        });
+        return;
+      }
+      if (!authorizeReadingRequest(request)) {
+        sendAuthRequired(response);
+        return;
+      }
+      try {
+        const data = await readJsonBody(request, bodyLimit);
+        if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+          throw new HostHttpError(400, 'HOST_INVALID_PREVIEW_REQUEST', 'Two birth inputs are required.');
+        }
+        const body = data as Record<string, unknown>;
+        if (Object.keys(body).length !== 2 ||
+            !Object.hasOwn(body, 'birth') || !Object.hasOwn(body, 'partnerBirth')) {
+          throw new HostHttpError(400, 'HOST_INVALID_PREVIEW_REQUEST', 'Two birth inputs are required.');
+        }
+        // The existing strict host parser forbids unknown calculation fields.
+        const subjectBirth = parseProductHostCalculationRequest({ birth: body.birth });
+        const targetBirth = parseProductHostCalculationRequest({ birth: body.partnerBirth });
+        const result = buildCompatibilityTwoBirthResearchReading(
+          subjectBirth, targetBirth, {
+            requestId: 'internal-two-person-chart-preview',
+            subjectPersonRef: 'self',
+            targetPersonRef: 'partner',
+            referenceDateTime: new Date().toISOString(),
+          },
+        );
+        const pillars = (person: typeof result.report.subject) =>
+          Object.fromEntries(person.pillars.map(pillar => [pillar.slot, {
+            status: pillar.status === 'resolved' ? 'resolved' : 'unavailable',
+            ...(pillar.status !== 'resolved'
+              ? {}
+              : { value: pillar.stemHanja! + pillar.branchHanja! }),
+          }]));
+        sendJson(response, 200, {
+          lifecycle: 'internal_preview_only',
+          coverage: 'calculation_facts_only',
+          generatedInterpretationClaims: false,
+          mayPublish: false,
+          mayPersist: false,
+          maySell: false,
+          subjects: [
+            { role: 'self', pillars: pillars(result.report.subject) },
+            { role: 'partner', pillars: pillars(result.report.target) },
+          ],
+          explanation: '두 명식은 각각 실제 출생정보로 계산했습니다. ' +
+            '두 사람 사이의 T10 궁합 해석과 결혼·갈등·점수 판단은 승인되지 않았습니다.',
+          limitations: result.report.limitations,
+        }, { [PRODUCT_READING_LIFECYCLE_HEADER]: PRODUCT_READING_PREVIEW_LIFECYCLE });
       } catch (error) {
         if (!handleKnownError(response, error)) sendReadingOperationalError(response);
       }
