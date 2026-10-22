@@ -334,6 +334,96 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(app.get('twelve-state-family').dataset.state).toBe('partial');
   });
 
+  it('shows separately sourced parents and children from the exact same birth in one family panel', async () => {
+    const app = mountBrowser(async (url, call) => {
+      expect(url).toBe('/api/readings');
+      const scope = call.body.reading?.text;
+      return {
+        ok: true, status: 200,
+        json: async () => ({
+          state: 'delivered', messageCode: 'READING_DELIVERED',
+          reading: {
+            subject: subjectFor(call.body.birth),
+            sections: [{
+              state: 'complete', title: scope + ' · 원국 관계',
+              blocks: [{
+                type: 'paragraph',
+                text: scope === '부모운'
+                  ? '부모 주제의 별도 근거 기반 개인 원국 풀이'
+                  : '자녀 주제의 별도 근거 기반 개인 원국 풀이',
+              }],
+            }],
+            disclosures: [],
+          },
+        }),
+      };
+    });
+    await app.get('twelve-family-both-readings').dispatch('click');
+    expect(app.calls.map(call => call.url)).toEqual(['/api/readings','/api/readings']);
+    expect(app.calls.map(call => call.body.reading?.text)).toEqual(['부모운','자녀운']);
+    expect(app.calls[0]?.body.birth).toEqual(app.calls[1]?.body.birth);
+    expect(app.calls[0]?.body.birth.date).toBe('1990-05-15');
+    const rendered = app.get('twelve-reading-family').collectText();
+    expect(rendered).toContain('부모 주제의 별도 근거 기반 개인 원국 풀이');
+    expect(rendered).toContain('자녀 주제의 별도 근거 기반 개인 원국 풀이');
+    expect(rendered).toContain('부모·자녀 당사자의 성격·존재·미래를 판정하지 않습니다');
+    expect(app.get('twelve-state-family').dataset.state).toBe('partial');
+    expect(app.get('twelve-state-family').textContent).toContain('가족 전체 결론은 미지원');
+    expect(app.get('twelve-family-both-readings').disabled).toBe(false);
+  });
+
+  it('keeps parent scope visible when child request fails or returned chart belongs to another birth', async () => {
+    const app = mountBrowser(async (_url, call) => {
+      if (call.body.reading?.text === '자녀운') return {
+        ok: true, status: 200,
+        json: async () => ({
+          state: 'delivered',
+          reading: {
+            subject: subjectFor({date:'1995-06-01'}),
+            sections: [{
+              state: 'complete', title: '위조된 다른 사람',
+              blocks: [{type:'paragraph', text:'보여주면 안 되는 다른 사람의 자녀 풀이'}],
+            }],
+          },
+        }),
+      };
+      return {
+        ok: true, status: 200,
+        json: async () => ({
+          state:'delivered',
+          reading: {
+            subject: subjectFor(call.body.birth),
+            sections: [{
+              state:'complete', title:'부모만 승인된 범위',
+              blocks:[{type:'paragraph',text:'부모 범위의 승인된 한국어 풀이'}],
+            }],
+            disclosures:[],
+          },
+        }),
+      };
+    });
+    await app.get('twelve-family-both-readings').dispatch('click');
+    const shown = app.get('twelve-reading-family').collectText();
+    expect(shown).toContain('부모 범위의 승인된 한국어 풀이');
+    expect(shown).toContain('이 출생정보와 다른 명식의 결과는 표시할 수 없습니다');
+    expect(shown).not.toContain('보여주면 안 되는 다른 사람의 자녀 풀이');
+    expect(app.get('twelve-state-family').dataset.state).toBe('partial');
+    expect(app.calls).toHaveLength(2);
+    app.get('birth-date').value = '1999-09-09';
+    await app.get('birth-date').dispatch('input');
+    expect(app.get('twelve-reading-family').children).toHaveLength(0);
+    expect(app.get('twelve-state-family').dataset.state).toBe('unavailable');
+  });
+
+  it('does not request parent or child data with invalid primary birth input', async () => {
+    const app = mountBrowser();
+    app.get('birth-date').value = '2024-02-30';
+    await app.get('twelve-family-both-readings').dispatch('click');
+    expect(app.calls).toHaveLength(0);
+    expect(app.get('twelve-state-family').dataset.state).toBe('unavailable');
+    expect(app.get('twelve-state-family').textContent).toContain('생년월일');
+  });
+
   it('requires an actual specific user question and never assumes question meaning', async () => {
     const app = mountBrowser();
     await app.get('twelve-open-question').dispatch('click');
