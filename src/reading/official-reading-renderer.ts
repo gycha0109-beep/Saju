@@ -978,7 +978,23 @@ function renderOfficialReadingInternalV1(
     explainabilityEntries,
   );
   if (relationshipOverview !== undefined) {
-    sections.unshift(relationshipOverview);
+    // Detailed wording may expand an admitted section, but must not modify
+    // the frozen Official section identities, semantic lanes, or audit index.
+    const index = sections.findIndex(section => section.sectionType === 'relationship');
+    const existing = index === -1 ? undefined : sections[index];
+    if (existing !== undefined) {
+      sections[index] = {
+        ...existing,
+        blocks: [
+          ...relationshipOverview.blocks.map((block, blockIndex) =>
+            blockIndex === 0 && block.type === 'paragraph'
+              ? { ...block, text: relationshipOverview.title + '\n\n' + block.text }
+              : block,
+          ),
+          ...existing.blocks,
+        ],
+      };
+    }
   }
 
   if (options.annualTemporalStructure !== undefined) {
