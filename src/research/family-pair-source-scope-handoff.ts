@@ -51,6 +51,62 @@ export interface FamilySourceScopeCandidate {
   familyMeaningAuthorized: false;
 }
 
+export interface R070UnassignedConfigurationInput {
+  sourceLayerId: 'CONFIGURATION-OUTCOME';
+  sourceSurface: string;
+  familyScopeResolved: false;
+  disposition: 'INCONCLUSIVE';
+  canonicalObservationCoverage: 'branch_clash_only' | 'none';
+  canonicalFactPath?: 'derivedFacts.structuralRelations';
+  observedBranchClashIds: readonly string[];
+  missingPrerequisites: readonly string[];
+  familyOutcomeAuthorized: false;
+}
+
+/**
+ * R070's configuration layer has no approved mapping to one particular
+ * parent/child claim. The only existing structural fact bound here is the
+ * exact branch-clash candidate, not the complete 刑/沖/破/害 classifier.
+ */
+function r070UnassignedConfigurationInputs(
+  snapshot: CanonicalSajuSnapshot,
+): readonly R070UnassignedConfigurationInput[] {
+  const layer = R070_CLAIM_LAYERS.find(item => item.id === 'CONFIGURATION-OUTCOME');
+  if (layer === undefined || layer.executable !== false ||
+      layer.sourceSurfaces.length !== 5) {
+    throw new TypeError('R070 unresolved configuration source layer has changed.');
+  }
+  return layer.sourceSurfaces.map(sourceSurface => {
+    const isStructural = sourceSurface === '刑沖破害';
+    const structural = snapshot.derivedFacts.structuralRelations;
+    const structuralKnown = isStructural && structural?.status === 'resolved';
+    const observedBranchClashIds = structuralKnown
+      ? structural.value.filter(candidate => candidate.kind === 'branch_clash')
+        .map(candidate => candidate.relationId)
+      : [];
+    return {
+      sourceLayerId: 'CONFIGURATION-OUTCOME' as const,
+      sourceSurface,
+      familyScopeResolved: false as const,
+      disposition: 'INCONCLUSIVE' as const,
+      canonicalObservationCoverage: structuralKnown
+        ? 'branch_clash_only' as const : 'none' as const,
+      ...(structuralKnown
+        ? { canonicalFactPath: 'derivedFacts.structuralRelations' as const } : {}),
+      observedBranchClashIds,
+      missingPrerequisites: [
+        'CONFIGURATION_OUTCOME_SETTLEMENT',
+        'FAMILY_CONFIGURATION_TO_RELATIVE_METHOD_SELECTION_NOT_ESTABLISHED',
+        ...(isStructural
+          ? ['XING_PO_HAI_AND_CONFIGURATION_INTERACTION_NOT_SETTLED'] : []),
+        ...(!structuralKnown && isStructural
+          ? ['CANONICAL_BRANCH_CLASH_CONTEXT_NOT_FULLY_RESOLVED'] : []),
+      ],
+      familyOutcomeAuthorized: false as const,
+    };
+  });
+}
+
 export interface FamilyMethodCoexistence {
   sourceSurfaces: readonly [string, string];
   calculatedFactPaths: readonly string[];
@@ -72,6 +128,8 @@ export interface FamilySourceScopeHandoff {
   historicalSex: 'male' | 'female' | 'unspecified';
   methodCandidates: readonly FamilySourceScopeCandidate[];
   methodCoexistences: readonly FamilyMethodCoexistence[];
+  /** Unassigned R070 configuration source phrases, never selected family T8. */
+  unassignedConfigurationInputs: readonly R070UnassignedConfigurationInput[];
   missingPrerequisites: readonly string[];
   interpretationDisposition: 'INCONCLUSIVE';
   familyT8Admitted: false;
@@ -274,7 +332,9 @@ export function evaluateFamilySourceScopeV1(
     owner: 'R070', corpusVersion: R070_FAMILY_DOMAIN_CLAIM_CORPUS_VERSION,
     scope, snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
     historicalSex: snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
-    methodCandidates, methodCoexistences, missingPrerequisites,
+    methodCandidates, methodCoexistences,
+    unassignedConfigurationInputs: r070UnassignedConfigurationInputs(snapshot),
+    missingPrerequisites,
     interpretationDisposition: 'INCONCLUSIVE',
     familyT8Admitted: false, researchOnly: true,
     mayGrantOfficialAuthority: false, mayMarkMenuAvailable: false,
