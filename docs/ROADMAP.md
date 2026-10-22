@@ -6,6 +6,33 @@
 > 다국어 출력 설계 보완(2026-10-22): A/B/C/D의 12메뉴 병렬 개발을 유지하며 **공통 E 언어 중립 해석/On-Demand Renderer** 계약을 병행한다. 상세 계약: [다국어 Reading 설계 v1](./implementation/saju-multilingual-reading-on-demand-design-v1.md). 언어 식별자 등록은 해당 언어 풀이 제공·판매 승인과 별개다.  
 > 담당 트랙: `saju`; 의미 판정/독립 review는 기존 Research / Bridge의 소유권을 존중한다.
 
+## 2026-10-22 — 명하 14개 GPT 개발트랙 인계 및 로드맵 현행화
+
+> 본 절은 기존 **12메뉴 A/B/C/D + 공통 E 다국어** 개발 로드맵의 상위 상태·계획을 변경하지 않고, MyeongHa의 Reader/보고서/기록 제품과의 인수 경계를 명확히 한다. 명하 [GPT 트랙 총괄 진행표](https://github.com/gycha0109-beep/MyeongHa/blob/docs/master-track-roadmap-gpt14-20261022/docs/roadmaps/MYEONGHA_GPT_TRACK_MASTER_ROADMAP_20261022.md)는 **비권위 교차 트랙 진행표**이며, 이 문서 또는 Saju source/review/Production authority보다 우선하지 않는다.
+
+### 사용자 결과로 인수할 것
+
+- **원국 해석 본문:** 기존 5개 natal (general/career/wealth/business/relationship)은 동일 Canonical 명식에 근거한 서로 다른 실질적 내용을 제공한다. 실제 별도 근거/다중 구조 종합/조건/개인별 차이는 Saju 엔진과 기존 Research/Interpretation Authority가 만든다. 명하 Reader가 부족한 의미를 새로 해석해 채우지 않는다.
+- **상세 보고서:** 기존 SA-6X의 5 natal `detailed` 표현 capability는 유지. 상세 `clarification/condition/boundary` 범위보다 새로운 rationale/구조 근거/시기 결론이 필요하면 Saju-owned 신규 근거·프로필 승인 범위에서만 추가한다. **detailed 지원**과 **Production semantic / Commerce 판매**를 혼동하지 않는다.
+- **구매 직후 핵심 요약:** 별도의 새로운 사주 결론이 아니라 기존 Official Reading의 승인된 Unit/조건/요약 가능한 범위를 MyeongHa가 받아 Reader가 전달한다.
+- **후속 Reader 대화:** 공식 sourceUnit/조건/기간/uncertainty/일관된 응답 구조를 Saju가 소유하고, 범위 선택/RAG/대화 의도/감정·상담/기억/화법·권한은 MyeongHa Reader/DB/Security가 소유한다. 새로운 일반상담 Chat 또는 추가 LLM 분류 서비스는 Saju 범위가 아니다.
+- **기록:** 공식 원본 의미·Source provenance은 불변. DB 보관, Reader별 접근, 환불·권한 회수는 명하 소유다.
+- **12메뉴 목표:** 5 natal만으로 엔진 트랙 완료 선언 금지. B 시기/삶의 단계, C 가족·배우자·궁합, D 질문형도 각각 실제 명식·시간·대상·근거 기반의 유효한 사용자 풀이를 제공해야 한다. 미승인 영역은 부분 결과/구체적 부재를 나타낸다.
+
+### 2026-10-22 실제 병렬 구현 작업 상태 (PR OPEN은 미완료)
+
+- 원국 사용자용 내용을 강화하는 독립 변경: Career [#2674](https://github.com/gycha0109-beep/Saju/pull/2674), Wealth [#2676](https://github.com/gycha0109-beep/Saju/pull/2676)·[#2677](https://github.com/gycha0109-beep/Saju/pull/2677), Business [#2678](https://github.com/gycha0109-beep/Saju/pull/2678), Relationship [#2675](https://github.com/gycha0109-beep/Saju/pull/2675). **PR 제출/CI 성공 여부와 본선 병합·실제 해석 품질은 별도**다.
+- 12개 메뉴/두 사람/가족/시간/입력 연결의 미병합 변경이 병렬 존재: [#2673](https://github.com/gycha0109-beep/Saju/pull/2673), [#2668](https://github.com/gycha0109-beep/Saju/pull/2668), [#2669](https://github.com/gycha0109-beep/Saju/pull/2669), [#2671](https://github.com/gycha0109-beep/Saju/pull/2671), [#2672](https://github.com/gycha0109-beep/Saju/pull/2672). 각 PR의 actual head/main 반영 및 독립 source gate를 확인하되 다른 메뉴 전체 완료까지 대기하지 않는다.
+- 다국어 공통 E는 [#2664](https://github.com/gycha0109-beep/Saju/pull/2664), [#2667](https://github.com/gycha0109-beep/Saju/pull/2667), [#2670](https://github.com/gycha0109-beep/Saju/pull/2670)의 계약/표현 작업을 현재 실행 기준으로 삼는다. 언어 등록은 번역의 품질·운영 공개 승인이 아니다.
+- Saju Production Interpretation 권한은 [현재 감사](./product/22-production-interpretation-authority-audit.md)에 기록된 BLOCKED 원칙을 존중한다. Source/reviewer/attestation의 실질 조건 충족 없이 활성화를 소급 선언하지 않는다.
+
+### 기존 두 연구 GPT 대화방 인계 원칙
+
+화면의 '사주 연구 22'와 '사주 연구 23'은 **독립 대화방 이름**일 뿐, 두 개의 서로 다른 Saju source truth를 뜻하지 않는다. 두 세션은 각자 실제 담당하는 Research 이슈/PR과 필요한 Engine handoff를 최신 시점에 명시해야 하며, 이 문서에서 임의로 연구 범위나 semantic winner를 배정하지 않는다. '사주 해석 분석'은 사용자 결과 품질 감사·영역별 결핍 식별·Engine/Research 인계 기능이고 **새 공식 해석 엔진 소유권은 없다**.
+
+운영·CI: 각 실제 PR에 귀속된 작업을 따라가고 Auto-merge 사용. 다른 트랙이나 공용 main CI를 본 작업 세션 중단 이유로 삼지 않는다. 새로운 외부 인프라/추가 과금/직접 외부기관 문의는 현재 실행 대상이 아니다.
+
+
 ## 최상위 제품 목표 — 2026-10-21 12메뉴 통합 제품 목표
 
 **사용자는 생년월일·출생시각 등 허용된 입력으로 계산된 동일 Canonical 명식 기반에서, 화면의 12개 주제(원국 5개·가족·삶의 단계·올해·이번 달·배우자·궁합·질문형)에 접근하며, 메뉴마다 실제 근거가 허용하는 범위 안에서 읽을 만한 서로 다른 풀이 또는 구체적인 미지원/부분 지원 사유를 받는다. **현행 소비자 결과의 기준 언어는 한국어**이며, 이후 사용자가 요청한 한 로케일로 같은 해석 의미를 표현한다. 궁합은 두 사람의 독립 명식, 흐름·삶의 단계는 정확한 시간 정책, 질문형은 질문별 scope를 추가로 요구한다.**
