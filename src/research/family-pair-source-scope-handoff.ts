@@ -602,7 +602,7 @@ export function evaluatePairwiseSourceScopeV1(
       oneChartScopeObservations: [
         observeR069SingleChartScope(subject.snapshot, 'subject', claim),
         observeR069SingleChartScope(target.snapshot, 'target', claim),
-      ],
+      ] as const,
       missingPrerequisites: [
         'HISTORICAL_GENDER_SCOPE',
         'MODERN_PARTNER_TRANSLATION',
