@@ -384,6 +384,7 @@ export function buildCareerMultifactorResearchReport(
     missing.unshift('출생시각 미상');
     missing.push('이 계산 정책에서 십신(T5) 전체가 미확정이므로 직업의 다중 근거 T8 해석을 보류합니다. 확정된 간지만 계산 사실로 표시합니다.');
   }
+  const readingGuide = buildCareerMultifactorReadingGuide(primary, supporting, state);
   return {
     version: CAREER_MULTIFACTOR_REPORT_VERSION,
     snapshotId: snapshot.snapshotId,
@@ -393,9 +394,7 @@ export function buildCareerMultifactorResearchReport(
     introduction: '실제 명식에서 관측된 서로 다른 십신 근거를 연결하여, 전통 명리에서 일을 읽는 구조적 관점을 정리했습니다. 심리 검사나 개인의 직업 운명을 확정하는 결과가 아닙니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections: shown,
-    ...(primary === undefined ? {} : {
-      readingGuide: buildCareerMultifactorReadingGuide(primary, supporting, state),
-    }),
+    ...(readingGuide === undefined ? {} : { readingGuide }),
     limitations: [
       '사용한 해석은 고전 관계를 제한적으로 참고한 미검토 연구 후보입니다. Production 또는 유료 보고서에 사용할 수 없습니다.',
       '명식에 관측된 관계만 설명하며 직업 적성·연봉·성공·미래 사건·신강신약·용신을 단정하지 않습니다.',
