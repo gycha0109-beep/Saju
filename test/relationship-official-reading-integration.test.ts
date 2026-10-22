@@ -202,9 +202,12 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       preferredDetail: 'detailed',
     });
     expect(detailedReport.detailPreferenceResolution?.resolvedDetail).toBe('detailed');
-    const focus = detailedReport.sections[0];
-    expect(focus?.title).toBe('내 명식에서 함께 확인된 관계 주제');
-    expect(focus?.sectionType).toBe('overview');
+    const focus = detailedReport.sections.find(section =>
+      section.blocks.some(block => block.type === 'paragraph' &&
+        block.text.includes('내 명식에서 함께 확인된 관계 주제')),
+    );
+    expect(focus).toBeDefined();
+    expect(focus?.sectionType).toBe('relationship');
     expect(focus?.state).toBe('complete');
     expect(JSON.stringify(focus?.blocks)).toContain('최소 유효 해석 완료 판정과는 별개');
     const overviewBlock = focus?.blocks.find(block => block.type === 'comparison');
@@ -228,9 +231,10 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     expect(standardReport.sections[0]?.title).not.toBe('내 명식에서 함께 확인된 관계 주제');
     expect(detailedReport.sourceSemanticHash).toBe(standardReport.sourceSemanticHash);
     expect(detailedReport.sourcePlanHash).toBe(standardReport.sourcePlanHash);
-    expect(detailedReport.sections.slice(1).map(x => x.title)).toEqual(
-      standardReport.sections.map(x => x.title),
+    expect(detailedReport.sections.map(x => x.sectionId)).toEqual(
+      standardReport.sections.map(x => x.sectionId),
     );
+    expect(detailedReport.explainability).toEqual(standardReport.explainability);
 
     const approvedDetailedMaterial =
       buildApprovedOfficialReadingDetailedRealizationV1(semantics, plan);
@@ -344,14 +348,15 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       preferredDetail: 'detailed',
     });
     const focus = report.sections.find(section =>
-      section.title === '내 명식에서 함께 확인된 관계 주제',
+      section.blocks.some(block => block.type === 'paragraph' &&
+        block.text.includes('내 명식에서 함께 확인된 관계 주제')),
     );
     expect(focus).toBeDefined();
     const comparison = focus?.blocks.find(block => block.type === 'comparison');
     expect(comparison?.type).toBe('comparison');
     if (comparison?.type !== 'comparison') return;
     expect(comparison.perspectives).toHaveLength(1);
-    expect(focus?.state).toBe('partial');
+    expect(focus?.state).toBe('complete');
     expect(JSON.stringify(focus?.blocks)).toContain('관계 종합풀이의 완성을 뜻하지 않습니다.');
     expect(comparison.perspectives[0]?.label).toContain('생각을 정리한 뒤');
     expect(comparison.perspectives[0]?.text).toContain('대화');
