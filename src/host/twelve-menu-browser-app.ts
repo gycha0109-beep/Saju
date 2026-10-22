@@ -254,6 +254,33 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     view.output.appendChild(displayed);
   }
 
+  function renderRequiredAction(view, payload) {
+    const actions = {
+      clarify_request: '다시 요청하기 전에 풀이 범위 또는 기간을 한 가지로 정해 주세요.',
+      revise_request: '질문의 표현과 입력값을 수정해 다시 요청해 주세요.',
+      provide_required_context: '이 풀이에 필요한 사람·기간·질문 정보를 먼저 입력해 주세요.',
+      try_again_later: '일시적으로 제공할 수 없습니다. 이후 다시 요청해 주세요.'
+    };
+    const diagnostics = {
+      target_person_required: '궁합을 보려면 상대방의 별도 출생정보가 필요합니다.',
+      request_text_required: '보고 싶은 주제나 질문을 입력해 주세요.',
+      question_text_required: '지금 고민하는 실제 질문을 입력해 주세요.',
+      request_not_recognized: '지원하는 메뉴 중 하나를 선택하거나 질문을 구체화해 주세요.'
+    };
+    const messages = [];
+    if (payload.requiredAction && actions[payload.requiredAction]) {
+      messages.push(actions[payload.requiredAction]);
+    }
+    if (Array.isArray(payload.consumerDiagnostics)) {
+      payload.consumerDiagnostics.forEach(function(code) {
+        if (diagnostics[code] && !messages.includes(diagnostics[code])) {
+          messages.push(diagnostics[code]);
+        }
+      });
+    }
+    messages.forEach(function(message) { note(view.output, message, 'notice'); });
+  }
+
   function renderPayload(view, payload) {
     const sections = payload.reading && Array.isArray(payload.reading.sections)
       ? payload.reading.sections.filter(function(section) {
@@ -285,6 +312,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     if (payload.coverage && payload.coverage.explanation) {
       note(view.output, payload.coverage.explanation, 'disclosure');
     }
+    renderRequiredAction(view, payload);
     if (payload.clarification) {
       const reason = payload.clarification.kind === 'domain'
         ? '풀이할 분야를 하나로 선택해 주세요.'
