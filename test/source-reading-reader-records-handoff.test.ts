@@ -125,6 +125,21 @@ describe('Saju private source fingerprint handoff to Reader / Records', () => {
     expect(match).toEqual({
       state: 'matched', canDisclose: false, canPersist: false,
     });
+    const tamperedInventory = {
+      ...handoff,
+      inventory: {
+        ...handoff.inventory,
+        segments: handoff.inventory.segments.map((unit, index) => index === 0
+          ? { ...unit, contentHash: 'sha256:v1:' + '0'.repeat(64) }
+          : unit),
+      },
+    };
+    expect(sameSajuReadingForReaderAndRecordsV1({
+      handoff: tamperedInventory,
+      reader: handoff.source,
+      records: handoff.source,
+    })).toMatchObject({ state: 'blocked', canDisclose: false });
+
     for (const altered of [
       { readingId: 'another-reading' },
       { responseId: 'another-response' },
