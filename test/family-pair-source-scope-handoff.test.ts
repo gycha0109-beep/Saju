@@ -600,6 +600,27 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
         expect(reason.missingPrerequisites).toEqual(method.missingPrerequisites);
         expect(reason.category).toBe('METHOD_SELECTION');
       }
+      const expectedUnresolvedPaths = [...new Set(
+        otherConditions.flatMap(item => item.unresolvedFactPaths),
+      )];
+      expect(menu.unresolvedCanonicalInputs.map(item => item.factPath))
+        .toEqual(expectedUnresolvedPaths);
+      for (const item of menu.unresolvedCanonicalInputs) {
+        expect(item.canonicalInputKind).toBe(
+          item.factPath.startsWith('pillars.')
+            ? 'pillar'
+            : item.factPath.startsWith('derivedFacts.tenGods.')
+              ? 'visible_t5' : 'hidden_stem_membership',
+        );
+        expect(item.affectedOriginalSources).toEqual(otherConditions
+          .filter(source => source.unresolvedFactPaths.includes(item.factPath))
+          .map(source => ({
+            sourceLayerId: source.sourceLayerId,
+            sourceSurface: source.sourceSurface,
+          })));
+        expect(item.substituteAnotherPillarAuthorized).toBe(false);
+        expect(item.familyMeaningAuthorized).toBe(false);
+      }
       expect(menu.unassignedConfigurationSources).toEqual(blockers.configurationHolds);
       expect(menu.unassignedConfigurationSources.map(item => item.sourceSurface))
         .toEqual(['旺衰', '生旺死絕', '刑沖破害', '官煞混雜', '財印']);
@@ -634,6 +655,24 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
       reason.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED' &&
       reason.sourceSurfaces.includes('時為子息'));
     expect(childHour?.unresolvedFactPaths).toContain('pillars.hour');
+    const missingHour = childMenu.unresolvedCanonicalInputs.find(item =>
+      item.factPath === 'pillars.hour');
+    expect(missingHour?.canonicalInputKind).toBe('pillar');
+    expect(missingHour?.affectedOriginalSources.map(item => item.sourceSurface))
+      .toEqual(['時為子息']);
+    const hiddenHour = childMenu.unresolvedCanonicalInputs.find(item =>
+      item.factPath === 'derivedFacts.hiddenStems.hour');
+    expect(hiddenHour?.canonicalInputKind).toBe('hidden_stem_membership');
+    expect(hiddenHour?.affectedOriginalSources.map(item => item.sourceSurface))
+      .toEqual(['子嗣者即官星也', '我生者為子']);
+    const t5Hour = childMenu.unresolvedCanonicalInputs.find(item =>
+      item.factPath === 'derivedFacts.tenGods.hour.stem');
+    expect(t5Hour?.canonicalInputKind).toBe('visible_t5');
+    expect(t5Hour?.affectedOriginalSources.map(item => item.sourceSurface))
+      .toEqual(['子嗣者即官星也', '我生者為子']);
+    expect(childMenu.unresolvedCanonicalInputs.every(item =>
+      item.affectedOriginalSources.every(source =>
+        source.sourceSurface !== '時為子孫'))).toBe(true);
     expect(childMenu.unsupportedReasons.some(reason =>
       reason.reasonCode === 'R070_MENU_HISTORICAL_METHODS_NOT_RECONCILED' &&
       reason.sourceSurfaces.includes('我生者為子'))).toBe(true);
@@ -1495,6 +1534,23 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
         'CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE',
       );
       expect(candidate.tenGodObservation?.sourceFactPath).toBe('derivedFacts.tenGods');
+      const expectedMissingPaths = [
+        'derivedFacts.hiddenStems.year',
+        'derivedFacts.hiddenStems.month',
+        'derivedFacts.hiddenStems.day',
+        'derivedFacts.hiddenStems.hour',
+      ];
+      const gaps = report.menuSupportHandoff.unresolvedCanonicalInputs;
+      for (const path of expectedMissingPaths) {
+        const gap = gaps.find(item => item.factPath === path);
+        expect(gap?.canonicalInputKind).toBe('hidden_stem_membership');
+        expect(gap?.affectedOriginalSources.map(item => item.sourceSurface))
+          .toEqual(['子嗣者即官星也', '我生者為子']);
+        expect(gap?.substituteAnotherPillarAuthorized).toBe(false);
+        expect(gap?.familyMeaningAuthorized).toBe(false);
+      }
+      expect(gaps.filter(item =>
+        item.canonicalInputKind === 'hidden_stem_membership')).toHaveLength(4);
       expect(report.familyT8Admitted).toBe(false);
       expect(report.maySell).toBe(false);
     }
