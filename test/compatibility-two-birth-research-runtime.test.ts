@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { BirthInput } from '../src/contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/production/production-calculation-runtime.js';
 import { buildCompatibilityTwoBirthResearchReading } from '../src/preview/compatibility-two-birth-research-runtime.js';
+import { renderCompatibilityTwoChartIntakeHtml } from '../src/preview/compatibility-two-chart-intake-preview.js';
+
+function escapedHtmlText(value: string): string {
+  return value.replace(/[&<>"']/gu, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char]!);
+}
 
 const REFERENCE = '2026-09-03T13:00:00.000Z';
 const FIRST: BirthInput = {
@@ -62,6 +69,66 @@ describe('real two-birth compatibility intake remains facts only', () => {
     expect(result.html).toContain('첫 번째 명식');
     expect(result.html).toContain('두 번째 명식');
     expect(result.html).toContain('source-qualified T10 Claim');
+  });
+
+  it('includes existing chart-specific T8 Korean narratives separately for each person', () => {
+    const first: BirthInput = {
+      ...FIRST, date: { year: 2024, month: 3, day: 10 },
+      time: { known: true, hour: 12, minute: 0 },
+    };
+    const second: BirthInput = {
+      ...FIRST, date: { year: 2024, month: 4, day: 12 },
+      time: { known: true, hour: 12, minute: 0 },
+    };
+    const result = read(first, second);
+    const self = result.personalRelationship.subject;
+    const partner = result.personalRelationship.target;
+    expect(self.personRef).toBe(QUERY.subjectPersonRef);
+    expect(partner.personRef).toBe(QUERY.targetPersonRef);
+    expect(self.snapshotId).toBe(result.report.subject.snapshotId);
+    expect(partner.snapshotId).toBe(result.report.target.snapshotId);
+    expect(self.calculationHash).toBe(result.report.subject.calculationHash);
+    expect(partner.calculationHash).toBe(result.report.target.calculationHash);
+    expect(self.coverage).toBe('bounded_natal_t8_research');
+    expect(self.sections.length).toBeGreaterThan(0);
+    expect(result.html).toContain('두 사람 각각의 관계 풀이 · 내부 연구');
+    expect(result.html).toContain('궁합·갈등·결혼 결과를 나타내지는 않습니다');
+    for (const section of self.sections) {
+      expect(section.sourceIds.length).toBeGreaterThanOrEqual(2);
+      expect(section.observedFactPaths.length).toBeGreaterThanOrEqual(2);
+      expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
+      expect(result.html).toContain(escapedHtmlText(section.paragraph));
+    }
+    for (const section of partner.sections) {
+      expect(section.sourceIds.length).toBeGreaterThanOrEqual(2);
+      expect(section.observedFactPaths.length).toBeGreaterThanOrEqual(2);
+      expect(result.html).toContain(escapedHtmlText(section.paragraph));
+    }
+    expect(result.meaning).toBe('two_person_calculation_only');
+    expect(result.mayClaimInterpersonalMeaning).toBe(false);
+    expect(result.maySell).toBe(false);
+    expect(result.mayPublish).toBe(false);
+    expect(read(first, second)).toEqual(result);
+    expect(() => renderCompatibilityTwoChartIntakeHtml(result.report, {
+      subject: result.personalRelationship.target,
+      target: result.personalRelationship.subject,
+    })).toThrow('each personal T8 interpretation must retain');
+  });
+
+  it('keeps each research T8 coverage independent with an unknown partner birth hour', () => {
+    const known: BirthInput = {
+      ...FIRST, date: { year: 2024, month: 3, day: 10 },
+      time: { known: true, hour: 12, minute: 0 },
+    };
+    const unknown = read(known, { ...SECOND, time: { known: false } });
+    expect(unknown.personalRelationship.subject.coverage)
+      .toBe('bounded_natal_t8_research');
+    expect(unknown.personalRelationship.target.coverage).toBe('insufficient_evidence');
+    expect(unknown.personalRelationship.target.sections).toHaveLength(0);
+    expect(unknown.html).toContain('이 사람의 명식에서는 출처를 갖춘 원국 관계 풀이가 부족합니다');
+    expect(unknown.html).toContain(escapedHtmlText(unknown.personalRelationship.subject.sections[0]!.paragraph));
+    expect(unknown.report.target.pillars[3]?.status).toBe('unavailable');
+    expect(unknown.mayClaimInterpersonalMeaning).toBe(false);
   });
 
   it('preserves missing hour independently without inventing interpersonal meaning', () => {
