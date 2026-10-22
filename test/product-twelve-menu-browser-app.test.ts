@@ -331,6 +331,28 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(app.get('twelve-state-business').dataset.state).toBe('unavailable');
   });
 
+  it('turns engine-required missing person, question and period input into actionable Korean messages', async () => {
+    const app = mountBrowser(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        state: 'invalid_request',
+        messageCode: 'READING_REQUEST_INVALID',
+        requiredAction: 'provide_required_context',
+        consumerDiagnostics: ['target_person_required', 'question_text_required'],
+        clarification: { kind: 'temporal_scope' },
+      }),
+    }));
+    await app.get('twelve-open-spouse').dispatch('click');
+    expect(app.get('twelve-state-spouse').dataset.state).toBe('unavailable');
+    const details = app.get('twelve-reading-spouse').collectText();
+    expect(details).toContain('사람·기간·질문 정보를 먼저 입력');
+    expect(details).toContain('상대방의 별도 출생정보가 필요');
+    expect(details).toContain('지금 고민하는 실제 질문');
+    expect(details).toContain('올해와 이번 달 중 하나의 기간');
+    expect(details).not.toContain('target_person_required');
+    expect(details).not.toContain('provide_required_context');
+  });
+
   it('requires partner birth permission and uses only the separate preview chart transport', async () => {
     const app = mountBrowser(async (_url, call) => {
       if (call.url !== '/api/preview/compatibility-charts') throw new Error('Wrong route');
