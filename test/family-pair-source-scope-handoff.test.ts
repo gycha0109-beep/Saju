@@ -560,6 +560,148 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(femaleChildren.maySell).toBe(false);
   });
 
+  it('separates observed 官煞混雜 and 財印 T5 group placement from unapproved configuration meaning', () => {
+    const cases = [
+      { year: 1988, day: 5, sex: 'female' as const },
+      { year: 1990, day: 15, sex: 'male' as const },
+      { year: 1993, day: 25, sex: 'unspecified' as const },
+      { year: 1997, day: 8, sex: 'female' as const },
+      { year: 2001, day: 24, sex: 'male' as const },
+      { year: 2005, day: 15, sex: 'female' as const },
+    ];
+    for (const birth of cases) {
+      const snapshot = chart(birth);
+      const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
+      const child = evaluateFamilySourceScopeV1(snapshot, 'children');
+      for (const sourceSurface of ['官煞混雜', '財印'] as const) {
+        const firstReport = parent.unassignedConfigurationInputs.find(
+          item => item.sourceSurface === sourceSurface,
+        );
+        const secondReport = child.unassignedConfigurationInputs.find(
+          item => item.sourceSurface === sourceSurface,
+        );
+        if (firstReport === undefined || secondReport === undefined ||
+            firstReport.tenGodGroupContrast === undefined ||
+            firstReport.tenGodSearchTerms === undefined) {
+          throw new Error('Existing R070 configuration source and T5 contrast must be retained.');
+        }
+        expect(secondReport).toEqual(firstReport);
+        const contrast = firstReport.tenGodGroupContrast;
+        const [first, second] = firstReport.tenGodSearchTerms;
+        if (first === undefined || second === undefined) {
+          throw new Error('Both original R070 configuration lookup groups must be retained.');
+        }
+        expect(contrast.sourceLayerId).toBe('CONFIGURATION-OUTCOME');
+        expect(contrast.sourceSurface).toBe(sourceSurface);
+        expect(contrast.sourceTerms).toEqual(
+          sourceSurface === '官煞混雜' ? ['官', '煞'] : ['財', '印'],
+        );
+        expect(contrast.sourceTerms).toEqual([first.sourceTerm, second.sourceTerm]);
+        expect(firstReport.disposition).toBe('INCONCLUSIVE');
+        expect(firstReport.canonicalObservationCoverage).toBe(
+          snapshot.derivedFacts.tenGods.status === 'resolved'
+            ? 'visible_t5_search_categories_only' : 'none',
+        );
+        const chartTenGods = snapshot.derivedFacts.tenGods;
+        for (const term of [first, second]) {
+          for (const position of term.observedPositions) {
+            expect(position.path).toBe(
+              'derivedFacts.tenGods.' + position.slot + '.' + position.channel,
+            );
+            if (chartTenGods.status !== 'resolved') {
+              throw new Error('T5 position cannot be observed without Canonical T5.');
+            }
+            const fact = chartTenGods.value[position.slot][position.channel];
+            expect(fact?.status).toBe('resolved');
+            if (fact?.status === 'resolved') expect(position.value).toBe(fact.value);
+            expect(term.canonicalSearchCategories).toContain(position.value);
+          }
+          expect(term.configurationMeaningAuthorized).toBe(false);
+        }
+        const slots = ['year', 'month', 'day', 'hour'] as const;
+        const firstSlots = slots.filter(slot =>
+          first.observedPositions.some(position => position.slot === slot));
+        const secondSlots = slots.filter(slot =>
+          second.observedPositions.some(position => position.slot === slot));
+        const shared = firstSlots.filter(slot => secondSlots.includes(slot));
+        const firstOnly = firstSlots.filter(slot => !secondSlots.includes(slot));
+        const secondOnly = secondSlots.filter(slot => !firstSlots.includes(slot));
+        const count = Number(first.observedPositions.length > 0) +
+          Number(second.observedPositions.length > 0);
+        expect(contrast.observedGroupCount).toBe(count);
+        expect(contrast.sharedPillarSlots).toEqual(shared);
+        expect(contrast.firstGroupOnlyPillarSlots).toEqual(firstOnly);
+        expect(contrast.secondGroupOnlyPillarSlots).toEqual(secondOnly);
+        expect(contrast.observationState).toBe(
+          count === 2
+            ? shared.length > 0
+              ? 'BOTH_GROUPS_OBSERVED_IN_AT_LEAST_ONE_SHARED_PILLAR'
+              : 'BOTH_GROUPS_OBSERVED_ONLY_IN_DISTINCT_PILLARS'
+            : count === 1
+              ? 'ONLY_ONE_GROUP_OBSERVED_IN_VISIBLE_T5'
+              : 'NEITHER_GROUP_OBSERVED_IN_VISIBLE_T5',
+        );
+        expect(contrast.unresolvedFactPaths).toEqual([...new Set([
+          ...first.unresolvedFactPaths, ...second.unresolvedFactPaths,
+        ])]);
+        expect(contrast.inputCoverage).toBe(
+          contrast.unresolvedFactPaths.length > 0
+            ? 'PARTIAL_VISIBLE_T5' : 'RESOLVED_VISIBLE_T5',
+        );
+        expect(contrast.originalConfigurationConditionEstablished).toBe(false);
+        expect(contrast.configurationInteractionOrPriorityEstablished).toBe(false);
+        expect(contrast.familyRelativeEffectAuthorized).toBe(false);
+        expect(contrast.familyT8Admitted).toBe(false);
+        expect(firstReport.familyScopeResolved).toBe(false);
+        expect(firstReport.familyOutcomeAuthorized).toBe(false);
+        expect(firstReport.missingPrerequisites).toContain(
+          'R070_VISIBLE_T5_COOBSERVATION_IS_NOT_CLASSICAL_CONFIGURATION',
+        );
+        expect(firstReport.missingPrerequisites).toContain(
+          'R070_CONFIGURATION_TO_FAMILY_EFFECT_NOT_SOURCED',
+        );
+        expect(parent.familyT8Admitted).toBe(false);
+        expect(child.familyT8Admitted).toBe(false);
+        expect(parent.mayGrantOfficialAuthority).toBe(false);
+        expect(child.maySell).toBe(false);
+      }
+    }
+  });
+
+  it('does not treat missing hour and unobserved T5 groups as classical configuration absence', () => {
+    const snapshot = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    const child = evaluateFamilySourceScopeV1(snapshot, 'children');
+    for (const report of [parent, child]) {
+      for (const sourceSurface of ['官煞混雜', '財印']) {
+        const item = report.unassignedConfigurationInputs.find(
+          candidate => candidate.sourceSurface === sourceSurface,
+        );
+        const contrast = item?.tenGodGroupContrast;
+        if (contrast === undefined || item?.tenGodSearchTerms === undefined) {
+          throw new Error('R070 T5 partial coverage must be exposed even for unknown hour.');
+        }
+        expect(contrast.inputCoverage).toBe('PARTIAL_VISIBLE_T5');
+        expect(contrast.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+        expect(contrast.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.branch');
+        expect(contrast.originalConfigurationConditionEstablished).toBe(false);
+        expect(contrast.familyRelativeEffectAuthorized).toBe(false);
+        expect(contrast.familyT8Admitted).toBe(false);
+        expect(item.familyOutcomeAuthorized).toBe(false);
+        expect(item.missingPrerequisites).toContain('CANONICAL_T5_CONFIGURATION_GROUPS_PARTIAL');
+        if (contrast.observedGroupCount < 2) {
+          expect(item.missingPrerequisites).toContain(
+            'R070_UNOBSERVED_VISIBLE_T5_GROUP_IS_NOT_NEGATIVE_CONFIGURATION_EVIDENCE',
+          );
+        }
+      }
+      expect(report.interpretationDisposition).toBe('INCONCLUSIVE');
+      expect(report.mayMarkMenuAvailable).toBe(false);
+      expect(report.mayPublish).toBe(false);
+      expect(report.mayPersist).toBe(false);
+    }
+  });
+
   it('keeps unassigned R070 官煞混雜 and 財印 as partially observed T5 search terms with unknown hour', () => {
     const report = evaluateFamilySourceScopeV1(
       chart({ timeKnown: false, sex: 'female' }), 'children',
