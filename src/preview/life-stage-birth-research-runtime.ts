@@ -1,9 +1,15 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
+import { runInterpretation } from '../interpretation/interpretation-engine.js';
+import { createGeneralNatalMultifactorRegistry } from
+  '../research/general-natal-multifactor-candidate.js';
+import { buildGeneralNatalMultifactorReport } from './general-natal-multifactor-report.js';
+
 import {
   buildLifeStageDayunResearchReport,
   renderLifeStageDayunResearchHtml,
   type LifeStageDayunResearchReport,
+  type LifeStageNatalStructureContext,
 } from './life-stage-dayun-research-report.js';
 
 export const LIFE_STAGE_BIRTH_RESEARCH_RUNTIME_VERSION =
@@ -17,6 +23,7 @@ export interface LifeStageBirthResearchReading {
   maySell: false;
   mayGrantOfficialAuthority: false;
   report: LifeStageDayunResearchReport;
+  natalContext: LifeStageNatalStructureContext;
   html: string;
 }
 
@@ -44,6 +51,33 @@ export function buildLifeStageBirthResearchReading(
   }
   const { snapshot } = calculateAuthorizedMyeonghwaProductionSnapshot(birth, { now });
   const report = buildLifeStageDayunResearchReport(snapshot, referenceDateTime);
+  const registry = createGeneralNatalMultifactorRegistry();
+  const execution = runInterpretation(snapshot, registry, { now });
+  const natal = buildGeneralNatalMultifactorReport(snapshot, execution, registry);
+  if (natal.snapshotId !== snapshot.snapshotId ||
+      natal.calculationHash !== snapshot.calculationHash ||
+      !natal.researchOnly || natal.usefulComplete ||
+      natal.mayPublish || natal.maySell ||
+      natal.sections.some(section => section.upstreamClaimIds.length < 2 ||
+        section.sourceIds.length < 2 ||
+        section.observedFactPaths.length < 2)) {
+    throw new TypeError('Life-stage natal context must retain original chart-specific T8 research sources.');
+  }
+  const natalSections = natal.sections.map(section => ({
+    title: section.headline,
+    paragraph: section.paragraph,
+    sourceIds: [...section.sourceIds],
+    factPaths: [...section.observedFactPaths],
+  }));
+  const natalContext: LifeStageNatalStructureContext = {
+    snapshotId: snapshot.snapshotId,
+    calculationHash: snapshot.calculationHash,
+    availability: natalSections.length === 0
+      ? 'insufficient_evidence' : 'bounded_natal_t8_research',
+    introduction: natal.readingGuide?.paragraph ?? natal.introduction,
+    sections: natalSections,
+  };
+
   if (report.interpretationStatus !== 'source_authority_not_established' ||
       !report.researchOnly || report.usefulComplete ||
       report.mayPublish || report.maySell) {
@@ -57,6 +91,7 @@ export function buildLifeStageBirthResearchReading(
     maySell: false,
     mayGrantOfficialAuthority: false,
     report,
-    html: renderLifeStageDayunResearchHtml(report),
+    natalContext,
+    html: renderLifeStageDayunResearchHtml(report, natalContext),
   };
 }
