@@ -348,6 +348,7 @@ export interface R069SingleChartScopeObservation {
   historicalScopeMatch: 'matched' | 'mismatched' | 'unspecified';
   disposition: 'BOUNDED_FACT_OBSERVED' | 'INCONCLUSIVE' | 'NARROW_OR_REPLACE';
   observedFactPaths: readonly string[];
+  observedDayPillar?: string;
   observedTenGodPositions: readonly {
     path: string;
     slot: PillarSlot;
@@ -407,6 +408,7 @@ function observeR069SingleChartScope(
       ? {
           ...base, disposition: 'BOUNDED_FACT_OBSERVED',
           observedFactPaths: ['pillars.day'],
+          observedDayPillar: pillar.value.stem.value + pillar.value.branch.value,
           observedTenGodPositions: [],
           missingPrerequisites: contextLimitations,
         }
