@@ -51,14 +51,30 @@ export interface FamilySourceScopeCandidate {
   familyMeaningAuthorized: false;
 }
 
+export interface R070ConfigurationTenGodSearchTerm {
+  sourceTerm: '官' | '煞' | '財' | '印';
+  /** Modern T5 search vocabulary, not an admitted source-era equivalence. */
+  canonicalSearchCategories: readonly TenGod[];
+  observedPositions: readonly {
+    path: string;
+    slot: PillarSlot;
+    channel: 'stem' | 'branch';
+    value: TenGod;
+  }[];
+  unresolvedFactPaths: readonly string[];
+  configurationMeaningAuthorized: false;
+}
+
 export interface R070UnassignedConfigurationInput {
   sourceLayerId: 'CONFIGURATION-OUTCOME';
   sourceSurface: string;
   familyScopeResolved: false;
   disposition: 'INCONCLUSIVE';
-  canonicalObservationCoverage: 'branch_clash_only' | 'none';
-  canonicalFactPath?: 'derivedFacts.structuralRelations';
+  canonicalObservationCoverage:
+    'branch_clash_only' | 'visible_t5_search_categories_only' | 'none';
+  canonicalFactPath?: 'derivedFacts.structuralRelations' | 'derivedFacts.tenGods';
   observedBranchClashIds: readonly string[];
+  tenGodSearchTerms?: readonly R070ConfigurationTenGodSearchTerm[];
   missingPrerequisites: readonly string[];
   familyOutcomeAuthorized: false;
 }
@@ -68,6 +84,50 @@ export interface R070UnassignedConfigurationInput {
  * parent/child claim. The only existing structural fact bound here is the
  * exact branch-clash candidate, not the complete 刑/沖/破/害 classifier.
  */
+function r070ConfigurationTenGodSearchTerms(
+  snapshot: CanonicalSajuSnapshot,
+  sourceSurface: string,
+): readonly R070ConfigurationTenGodSearchTerm[] {
+  const terms: readonly {
+    sourceTerm: R070ConfigurationTenGodSearchTerm['sourceTerm'];
+    categories: readonly TenGod[];
+  }[] = sourceSurface === '官煞混雜'
+    ? [
+        { sourceTerm: '官', categories: ['정관'] },
+        { sourceTerm: '煞', categories: ['편관'] },
+      ]
+    : sourceSurface === '財印'
+      ? [
+          { sourceTerm: '財', categories: ['편재', '정재'] },
+          { sourceTerm: '印', categories: ['편인', '정인'] },
+        ]
+      : [];
+  const t5 = snapshot.derivedFacts.tenGods;
+  return terms.map(term => {
+    const observedPositions: R070ConfigurationTenGodSearchTerm['observedPositions'][number][] = [];
+    const unresolvedFactPaths: string[] = [];
+    for (const slot of TEN_GOD_OBSERVATION_SLOTS) {
+      for (const channel of ['stem', 'branch'] as const) {
+        if (slot === 'day' && channel === 'stem') continue;
+        const path = 'derivedFacts.tenGods.' + slot + '.' + channel;
+        const fact = t5.status === 'resolved' ? t5.value[slot][channel] : undefined;
+        if (fact?.status !== 'resolved') {
+          unresolvedFactPaths.push(path);
+        } else if (term.categories.includes(fact.value as TenGod)) {
+          observedPositions.push({ path, slot, channel, value: fact.value as TenGod });
+        }
+      }
+    }
+    return {
+      sourceTerm: term.sourceTerm,
+      canonicalSearchCategories: term.categories,
+      observedPositions,
+      unresolvedFactPaths,
+      configurationMeaningAuthorized: false,
+    };
+  });
+}
+
 function r070UnassignedConfigurationInputs(
   snapshot: CanonicalSajuSnapshot,
 ): readonly R070UnassignedConfigurationInput[] {
@@ -78,8 +138,12 @@ function r070UnassignedConfigurationInputs(
   }
   return layer.sourceSurfaces.map(sourceSurface => {
     const isStructural = sourceSurface === '刑沖破害';
+    const isTenGodSearch = sourceSurface === '官煞混雜' || sourceSurface === '財印';
     const structural = snapshot.derivedFacts.structuralRelations;
     const structuralKnown = isStructural && structural?.status === 'resolved';
+    const tenGodSearchTerms = isTenGodSearch
+      ? r070ConfigurationTenGodSearchTerms(snapshot, sourceSurface) : [];
+    const tenGodKnown = isTenGodSearch && snapshot.derivedFacts.tenGods.status === 'resolved';
     const observedBranchClashIds = structuralKnown
       ? structural.value.filter(candidate => candidate.kind === 'branch_clash')
         .map(candidate => candidate.relationId)
@@ -90,10 +154,13 @@ function r070UnassignedConfigurationInputs(
       familyScopeResolved: false as const,
       disposition: 'INCONCLUSIVE' as const,
       canonicalObservationCoverage: structuralKnown
-        ? 'branch_clash_only' as const : 'none' as const,
+        ? 'branch_clash_only' as const
+        : tenGodKnown ? 'visible_t5_search_categories_only' as const : 'none' as const,
       ...(structuralKnown
-        ? { canonicalFactPath: 'derivedFacts.structuralRelations' as const } : {}),
+        ? { canonicalFactPath: 'derivedFacts.structuralRelations' as const }
+        : tenGodKnown ? { canonicalFactPath: 'derivedFacts.tenGods' as const } : {}),
       observedBranchClashIds,
+      ...(isTenGodSearch ? { tenGodSearchTerms } : {}),
       missingPrerequisites: [
         'CONFIGURATION_OUTCOME_SETTLEMENT',
         'FAMILY_CONFIGURATION_TO_RELATIVE_METHOD_SELECTION_NOT_ESTABLISHED',
@@ -101,6 +168,11 @@ function r070UnassignedConfigurationInputs(
           ? ['XING_PO_HAI_AND_CONFIGURATION_INTERACTION_NOT_SETTLED'] : []),
         ...(!structuralKnown && isStructural
           ? ['CANONICAL_BRANCH_CLASH_CONTEXT_NOT_FULLY_RESOLVED'] : []),
+        ...(isTenGodSearch
+          ? ['R070_TEN_GOD_COEXISTENCE_METHOD_NOT_ESTABLISHED',
+              'HIDDEN_VS_VISIBLE_STAR_HANDLING'] : []),
+        ...(tenGodSearchTerms.some(term => term.unresolvedFactPaths.length > 0)
+          ? ['CANONICAL_T5_CONFIGURATION_GROUPS_PARTIAL'] : []),
       ],
       familyOutcomeAuthorized: false as const,
     };
