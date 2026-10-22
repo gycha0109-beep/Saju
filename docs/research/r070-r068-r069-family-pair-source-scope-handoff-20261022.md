@@ -140,6 +140,27 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 1997-05-08 남·여·성별 미지정 명식의 부모·자녀 원문별 관측값과 각 계산 경로를 비교하고, 1997-05-15 여성 명식의 시각 미상 상황에서 부모·자녀 각각 시주 T5/지장간 부족을 유지한다. 지장간 자료 필드를 제거한 명식에서도 기존 십신 조회값을 바꾸거나 빈 배열을 가족 구성원 부재로 간주하지 않는다. `hiddenStemTenGodClassificationAuthorized=false`, `visibleAndHiddenStarMethodReconciled=false`, `historicalRelativeRoleAuthorized=false`, `independentlyAdmittedFamilyClaims=0`, `familyT8Admitted=false`다. 기존 `researchOnly=true`, `mayGrantOfficialAuthority=false`, `mayMarkMenuAvailable=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`도 유지한다.
 
+### R070 부모·자녀 메뉴의 구체적 미지원 사유 — 연구용 반환 계약, 메뉴 활성화 아님
+
+기존 `interpretationBlockers`에서 이미 구분한 원문 적용·계산 입력·방법론 선택·구성 미승인을 부모(`parents`) 또는 자녀(`children`)라는 **정확한 요청 메뉴의 미지원 사유**로 인계한다. `evaluateFamilySourceScopeV1(...).menuSupportHandoff`를 추가했으나 이는 R070 연구 보고 내부의 **불가 사유 계약**이며 서비스 메뉴 상태를 갱신하거나 `Official`·`Reader`·`Product`에서 호출하도록 승인하는 기능이 아니다. `supportState=UNAVAILABLE_RESEARCH_ONLY`는 상수이며 `mayEnableMenu=false`, `mayDisplayFamilyInterpretation=false`, `familyT8Admitted=false`이다.
+
+`unsupportedReasons[]`에는 기존 `interpretationBlockers.sourceConditionHolds`의 **실제로 범위 안에 있는 원문**과 `methodSelectionHolds`만 들어간다. 각 원인의 원래 `sourceLayerIds[]`, `sourceSurfaces[]`, `observedFactPaths[]`, `unresolvedFactPaths[]`, `missingPrerequisites[]`를 **그대로 보존**하여 최종 미지원 상태가 어떤 계산 사실 또는 방법론 결핍 때문에 발생했는지 식별한다. 첫 항목 `R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED`은 두 메뉴 공통의 공식 가족 T8 불허 경계를 명시한다. 이 식별자들은 원전 문구가 아닌 **연구용 보류 사유 코드**다.
+
+| 반환 `reasonCode` | 실제 범위 및 관측 | 인계해야 하는 미지원 사유 |
+| --- | --- | --- |
+| `R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED` | 부모·자녀 전체 | 가족 T8에 공식적으로 승인된 실행 방법론·결과 권한이 없음 |
+| `R070_MENU_PILLAR_POSITION_NOT_FAMILY_INTERPRETATION` | 실제 월주·연주·시주 위치가 확정된 원문 | 가족 대상 기둥 위치만으로 친족 사건·상태·관계를 해석할 방법이 없음 |
+| `R070_MENU_SOURCE_CONTEXT_METHOD_NOT_SELECTED` | 원래 부모의 `父以偏財論`·`母以印綬論`, 자녀의 `子嗣者即官星也`·역사 여성 명식의 `我生者為子` | 현재 현대 T5/지장간 소속값은 원전의 친족 역할 배속 방법·효과와 동등하게 승인되지 않음 |
+| `R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED` | 역사적 기둥 원문의 필수 위치가 미확정(예: 자녀 시주 출생시각 미상) | 해당 기둥 계산 근거가 없어서 위치 적용 자체를 확정할 수 없음 |
+| `R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE` | 역사 남성 명식 `胎為母` | Canonical에 독립 태주 계산 사실 자체가 없음 |
+| `R070_MENU_HISTORICAL_METHODS_NOT_RECONCILED` | **실제로 현재 범위에 공존하는** 연주/월주 배속, 기둥/별 배속, 역사 여성 자녀 별 배속 두 원문 | 어떤 방식을 선택/조정할지 기존 원전에 따른 규칙이 부족함. 동시 등장 = 원전의 실제 모순 판정이 아님 |
+
+`excludedHistoricalSources[]`는 별도로 반환한다. 예컨대 여성·성별 미지정 부모 명식에 남성 전용 `年為父`·`胎為母`를 적용하지 않으며, 남성 자녀 명식의 `我生者為子`는 **본래 여성 명식 한정**으로 제외한다. 각 제외는 `exclusionIsMenuUnavailabilityReason=false`이다. **범위에서 제외된 원문 자체가 해당 메뉴 전체의 미지원 근거로 재활용되거나 방법론 대조에 추가되지 않는다.** 성별 미지정도 남성/여성 범위를 임의로 만족시켰다고 보지 않는다.
+
+`unassignedConfigurationSources[]`에는 여전히 가족 대상에 연결할 규칙이 없는 `CONFIGURATION-OUTCOME`의 다섯 원문 `旺衰`·`生旺死絕`·`刑沖破害`·`官煞混雜`·`財印`를 원형 그대로 둔다. 이들은 역사적 가족 메뉴의 추가 허가를 위한 개별 필수 규칙으로 가정하지 않으며, **미배속 구성 연구 자료**로만 전달한다. `missingPrerequisites[]`는 범위 안 미지원 사유와 미배속 구성 조건의 코드들을 중복 제거해 모은다. `admittedFamilyClaimCount=0`이고 저장/공개/판매 권한도 모두 `false`이다.
+
+**실계산 회귀:** 양력 1990-05-15 기준 남성·여성·성별 미지정 명식에서 부모/자녀 메뉴별 각 원전 미지원 사유 수·방법 쌍 수·성별 제외 목록·실제 경로를 대조한다. 여성 1997-05-15 출생시각 미상에서는 부모 월주 방법을 남겨 두고 자녀의 `時為子息` 필수 시주 경로만 `R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED`로 보고한다. 역사 남성 명식의 `胎為母`에는 별개 `R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE`을 표시한다. **연구용 미지원 설명은 가족운 출력이나 메뉴 지원 활성화로 변환하지 않는다.**
+
 ### R070 부모·자녀의 실제 해석 차단 사유 — 원문 조건과 방법 선택의 분리
 
 기존 `evaluateFamilySourceScopeV1(snapshot, 'parents'|'children')`는 이미 원전의 정확한 문구·성별 범위·계산 기둥·현대 T5 탐색·지장간 소속·지지충 구조적 후보 및 3중 위치 관찰을 구분한다. 하지만 이 계산 사실만으로 가족 T8의 역할 배속·결과·우선순위를 인정할 근거는 없다. 이번 변경은 **기존 R070 코퍼스와 이미 작성된 methodCandidates/methodCoexistences/crossLayerMethodComparisons/unassignedConfigurationInputs를 재사용**하여 `interpretationBlockers`를 반환한다. 새로운 원전, 의미 Claim, 판정 방법론, 승인 플래그는 만들지 않는다.
