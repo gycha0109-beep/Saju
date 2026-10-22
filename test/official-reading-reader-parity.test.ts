@@ -206,8 +206,9 @@ describe('one Official meaning source for post-purchase summary and Records', ()
       ...report,
       explainability: { entries: [] },
     };
-    const actualHash = deterministicContentHash((({ reportId: _id, reportHash: _hash, ...material }) =>
-      material)(altered));
+    const actualHash = deterministicContentHash(Object.fromEntries(
+      Object.entries(altered).filter(([key]) => key !== 'reportId' && key !== 'reportHash'),
+    ));
     const forged = {
       ...altered,
       reportHash: actualHash,
