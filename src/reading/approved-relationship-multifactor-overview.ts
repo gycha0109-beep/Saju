@@ -1,4 +1,5 @@
 import type { ReadingSectionView, ExplainabilityIndex } from '../contracts/reading.js';
+import type { TenGodChartFact, PillarSlot } from '../contracts/calculation.js';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
 import type {
   CanonicalReadingSemanticBundleV1,
@@ -22,6 +23,18 @@ type RelationshipAxis = 'closeness' | 'expression' | 'values' | 'boundary' | 'fr
 const AXES: readonly RelationshipAxis[] = [
   'closeness', 'expression', 'values', 'boundary', 'friction',
 ];
+const GODS_BY_FAMILY: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  TEN_GOD_FAMILY_PEER_PRESENT: ['비견', '겁재'],
+  TEN_GOD_FAMILY_RESOURCE_PRESENT: ['편인', '정인'],
+  TEN_GOD_FAMILY_OUTPUT_PRESENT: ['식신', '상관'],
+  TEN_GOD_FAMILY_WEALTH_PRESENT: ['편재', '정재'],
+  TEN_GOD_FAMILY_OFFICER_PRESENT: ['편관', '정관'],
+});
+const PILLAR_LABELS: Readonly<Record<PillarSlot, string>> = Object.freeze({
+  year: '연주', month: '월주', day: '일주', hour: '시주',
+});
+const FACT_SLOTS: readonly PillarSlot[] = ['year', 'month', 'day', 'hour'];
+
 const FAMILY_FACT_LABELS: Readonly<Record<string, string>> = Object.freeze({
   TEN_GOD_FAMILY_PEER_PRESENT: '비겁',
   TEN_GOD_FAMILY_RESOURCE_PRESENT: '인성',
@@ -37,6 +50,56 @@ function sameSet(left: readonly string[], right: readonly string[]): boolean {
   return sortedLeft.every((value, index) => value === sortedRight[index]);
 }
 
+function confirmedTenGodPositions(
+  bundle: CanonicalReadingSemanticBundleV1,
+  types: readonly string[],
+): readonly string[] | undefined {
+  const exactFacts = bundle.canonicalFacts.filter(fact =>
+    fact.path === 'derivedFacts.tenGods' &&
+    fact.scenarioRef === undefined && fact.fact.status === 'resolved',
+  );
+  if (exactFacts.length !== 1) return undefined;
+  const value: unknown = exactFacts[0]!.fact.status === 'resolved'
+    ? exactFacts[0]!.fact.value : undefined;
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+  const chart = value as TenGodChartFact;
+  return types.map(type => {
+    const allowed = GODS_BY_FAMILY[type];
+    const label = FAMILY_FACT_LABELS[type];
+    if (allowed === undefined || label === undefined) return '';
+    const positions: string[] = [];
+    for (const slot of FACT_SLOTS) {
+      const pillar = chart[slot];
+      for (const channel of ['stem', 'branch'] as const) {
+        const fact = pillar?.[channel];
+        if (fact?.status !== 'resolved' || !allowed.includes(fact.value)) continue;
+        if (channel === 'stem' && slot === 'day') continue;
+        positions.push(PILLAR_LABELS[slot] + ' ' +
+          (channel === 'stem' ? '천간 ' : '지지 대표 십신 ') + fact.value);
+      }
+    }
+    return positions.length ? label + ': ' + positions.join(' · ') : '';
+  }).every(Boolean)
+    ? types.map(type => {
+      const allowed = GODS_BY_FAMILY[type]!;
+      const positions = FACT_SLOTS.flatMap(slot => {
+        const pillar = chart[slot];
+        return (['stem', 'branch'] as const).flatMap(channel => {
+          const fact = pillar?.[channel];
+          if (channel === 'stem' && slot === 'day') return [];
+          return fact?.status === 'resolved' && allowed.includes(fact.value)
+            ? [PILLAR_LABELS[slot] + ' ' +
+                (channel === 'stem' ? '천간 ' : '지지 대표 십신 ') + fact.value]
+            : [];
+        });
+      });
+      return FAMILY_FACT_LABELS[type] + ': ' + positions.join(' · ');
+    })
+    : undefined;
+}
+
 function relationshipAxis(unit: CanonicalReadingSemanticUnitV1): RelationshipAxis | undefined {
   const value = unit.semanticPayload;
   if (value === null || typeof value !== 'object' || Array.isArray(value) ||
@@ -48,6 +111,7 @@ function relationshipAxis(unit: CanonicalReadingSemanticUnitV1): RelationshipAxi
 interface ApprovedComposite {
   claimType: string;
   confirmedFamilies: readonly string[];
+  observedPositions: readonly string[];
   unitId: string;
   axis: RelationshipAxis;
   headline: string;
@@ -127,6 +191,11 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
         continue;
       }
 
+      const observedPositions = confirmedTenGodPositions(
+        bundle, profile.supportingClaimTypes,
+      );
+      if (observedPositions === undefined) continue;
+
       const detail = detailByUnitId.get(unit.unitId);
       const clarification = profile.approvedTextByRole.clarification;
       const concise = conciseByClaimType.get(unit.claimType);
@@ -151,6 +220,7 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
       candidates.push({
         claimType: unit.claimType,
         confirmedFamilies: profile.supportingClaimTypes.map(type => FAMILY_FACT_LABELS[type]!),
+        observedPositions,
         unitId: unit.unitId,
         axis,
         headline: profile.standardText.headline!,
@@ -208,7 +278,8 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
         perspectives: selected.map(x => ({
           label: x.headline,
           text: x.explanation + '\n\n실제 명식에서 함께 확인된 십신 계열: ' +
-            x.confirmedFamilies.join(' · '),
+            x.confirmedFamilies.join(' · ') +
+            '\n관찰된 명식 위치: ' + x.observedPositions.join(' / '),
           explainabilityRef: x.explainabilityRef,
         })),
       },
