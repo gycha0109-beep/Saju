@@ -366,7 +366,7 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(app.calls.map(x => x.url)).toEqual([
       '/api/readings', '/api/preview/family-observations',
     ]);
-    expect((app.calls[1]!.body as typeof app.calls[1]['body'] & {scope:string}).scope)
+    expect((app.calls[1]!.body as unknown as {scope:string}).scope)
       .toBe('parents');
     expect(app.get('twelve-reading-family').collectText()).toContain('연주 실제 계산 간지');
     expect(app.get('twelve-reading-family').collectText()).toContain('가족 관계 결과 해석 근거 미승인');
