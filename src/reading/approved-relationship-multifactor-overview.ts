@@ -1,0 +1,179 @@
+import type { ReadingSectionView, ExplainabilityIndex } from '../contracts/reading.js';
+import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import type {
+  CanonicalReadingSemanticBundleV1,
+  CanonicalReadingSemanticUnitV1,
+} from './canonical-reading-semantics.js';
+import type { OfficialReadingPlanV1 } from './official-reading-plan.js';
+import type { OfficialReadingDetailedRealizationV1 } from './official-reading-detailed-realization.js';
+import {
+  RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
+} from './official-reading-detailed-presentation-relationship.js';
+
+export const APPROVED_RELATIONSHIP_MULTIFACTOR_OVERVIEW_POLICY_VERSION =
+  'myeonghwa-approved-relationship-multifactor-overview-v1' as const;
+
+type ExplainabilityEntry = ExplainabilityIndex['entries'][number];
+type RelationshipAxis = 'closeness' | 'expression' | 'values' | 'boundary' | 'friction';
+
+const AXES: readonly RelationshipAxis[] = [
+  'closeness', 'expression', 'values', 'boundary', 'friction',
+];
+
+function sameSet(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length &&
+    [...left].sort().every((value, index) => value === [...right].sort()[index]);
+}
+
+function relationshipAxis(unit: CanonicalReadingSemanticUnitV1): RelationshipAxis | undefined {
+  const value = unit.semanticPayload;
+  if (value === null || typeof value !== 'object' || Array.isArray(value) ||
+      !('relationshipKind' in value)) return undefined;
+  const kind = value.relationshipKind;
+  return AXES.find((axis) => axis === kind);
+}
+
+interface ApprovedComposite {
+  claimType: string;
+  unitId: string;
+  axis: RelationshipAxis;
+  headline: string;
+  explanation: string;
+  explainabilityRef: string;
+  distinctFamilies: number;
+}
+
+/**
+ * Presentation of already materialized, source-approved two-family T8
+ * conclusions. A missing claim, missing upstream T5 family, scenario, or
+ * inconsistent approved material cannot be summarized or substituted.
+ * No new cross-family interpretation is generated here.
+ */
+export function buildApprovedRelationshipMultifactorOverviewV1(
+  bundle: CanonicalReadingSemanticBundleV1,
+  plan: OfficialReadingPlanV1,
+  detailed: OfficialReadingDetailedRealizationV1 | undefined,
+  explainabilityEntries: readonly ExplainabilityEntry[],
+): ReadingSectionView | undefined {
+  if (bundle.intent.domain !== 'relationship' ||
+      bundle.intent.temporalScope !== 'natal' ||
+      bundle.intent.relationshipScope !== 'general' ||
+      detailed === undefined) return undefined;
+
+  const unitsById = new Map(bundle.units.map(unit => [unit.unitId, unit]));
+  const entriesByUnitId = new Map(
+    explainabilityEntries.flatMap(entry =>
+      entry.primaryUnitRefs.length === 1
+        ? [[entry.primaryUnitRefs[0]!, entry] as const]
+        : []),
+  );
+  const detailByUnitId = new Map(detailed.units.map(unit => [unit.unitId, unit]));
+  const profilesByClaimType = new Map(
+    RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.map(profile =>
+      [profile.claimType, profile] as const),
+  );
+
+  const candidates: ApprovedComposite[] = [];
+  for (const section of plan.sections) {
+    if (section.semanticGroup !== 'relationship') continue;
+    for (const binding of section.primaryEvidenceBindings) {
+      const unit = unitsById.get(binding.primaryUnitRef);
+      if (unit === undefined || unit.role !== 'primary' ||
+          unit.taxonomy.tier !== 'T8' ||
+          unit.taxonomy.category !== 'relationship' ||
+          unit.taxonomy.subcategory !== 'general' ||
+          unit.predicate !== 'relationship_conclusion' ||
+          unit.scenarioRef !== undefined) continue;
+
+      const profile = profilesByClaimType.get(unit.claimType);
+      if (profile === undefined || profile.supportingClaimTypes.length < 2 ||
+          profile.scenarioPolicy !== 'none' ||
+          profile.contradictionPolicy !== 'none' ||
+          unit.canonicalText?.headline !== profile.standardText.headline ||
+          unit.canonicalText?.summary !== profile.standardText.summary ||
+          unit.methodologyRef.id !== profile.methodologyRef.id ||
+          unit.methodologyRef.version !== profile.methodologyRef.version ||
+          !sameSet(unit.prohibitedExtensions, profile.prohibitedExtensions) ||
+          profile.provenance.sourceRefs.some(source => !unit.sourceRefs.includes(source)) ||
+          bundle.claimRelations.some(relation => relation.relation === 'contradicts' &&
+            (relation.fromClaimId === unit.claimId ||
+              relation.toClaimId === unit.claimId))) continue;
+
+      const supportTypes = binding.supportingUnitRefs.map(ref =>
+        unitsById.get(ref)?.claimType,
+      );
+      if (supportTypes.some(type => type === undefined) ||
+          !sameSet(supportTypes as string[], profile.supportingClaimTypes)) continue;
+
+      const detail = detailByUnitId.get(unit.unitId);
+      const clarification = profile.approvedTextByRole.clarification;
+      if (clarification === undefined ||
+          detail?.roleTexts.find(role => role.role === 'clarification')?.text !== clarification) {
+        continue;
+      }
+      const entry = entriesByUnitId.get(unit.unitId);
+      if (entry === undefined ||
+          !sameSet(entry.supportingUnitRefs, binding.supportingUnitRefs) ||
+          entry.primaryUnitRefs[0] !== unit.unitId) continue;
+
+      const axis = relationshipAxis(unit);
+      if (axis === undefined) continue;
+      candidates.push({
+        claimType: unit.claimType,
+        unitId: unit.unitId,
+        axis,
+        headline: profile.standardText.headline!,
+        explanation: clarification,
+        explainabilityRef: entry.explainabilityRef,
+        distinctFamilies: profile.supportingClaimTypes.length,
+      });
+    }
+  }
+  if (candidates.length === 0) return undefined;
+
+  // Prefer independent interpretive axes; within an axis favor the larger
+  // already-approved supporting family set, never an inferred score or rank.
+  candidates.sort((left, right) =>
+    right.distinctFamilies - left.distinctFamilies ||
+    left.claimType.localeCompare(right.claimType) ||
+    left.unitId.localeCompare(right.unitId),
+  );
+  const selected: ApprovedComposite[] = [];
+  const axes = new Set<RelationshipAxis>();
+  for (const candidate of candidates) {
+    if (axes.has(candidate.axis)) continue;
+    axes.add(candidate.axis);
+    selected.push(candidate);
+    if (selected.length === 3) break;
+  }
+  const explainabilityRefs = selected.map(x => x.explainabilityRef);
+  const idHash = deterministicContentHash({
+    policy: APPROVED_RELATIONSHIP_MULTIFACTOR_OVERVIEW_POLICY_VERSION,
+    semanticHash: bundle.semanticHash,
+    primaryUnitIds: selected.map(x => x.unitId),
+    explainabilityRefs,
+  });
+
+  return {
+    sectionId: 'official_relationship_composite_' + idHash.slice(0, 20),
+    sectionType: 'overview',
+    title: '내 명식에서 함께 확인된 관계 주제',
+    state: 'complete',
+    explainabilityRefs,
+    blocks: [
+      {
+        type: 'paragraph',
+        text: '아래 항목은 실제 명식에서 각각 두 개 이상의 십신 계열 근거가 확인되고, 기존 승인된 관계풀이의 문장과 출처가 일치하는 경우만 모았습니다. 특정 상대의 성격, 궁합, 결혼이나 관계 결과를 판정하지 않습니다.',
+      },
+      {
+        type: 'comparison',
+        title: '서로 다른 관점으로 읽는 기존 승인된 해석',
+        perspectives: selected.map(x => ({
+          label: x.headline,
+          text: x.explanation,
+          explainabilityRef: x.explainabilityRef,
+        })),
+      },
+    ],
+  };
+}
