@@ -603,9 +603,10 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
       expect(menu.unassignedConfigurationSources).toEqual(blockers.configurationHolds);
       expect(menu.unassignedConfigurationSources.map(item => item.sourceSurface))
         .toEqual(['旺衰', '生旺死絕', '刑沖破害', '官煞混雜', '財印']);
+      const excludedSurfaces = new Set<string>(input.excluded);
       expect(menu.unsupportedReasons.every(reason =>
         reason.officialMenuCanBeEnabledFromThisReason === false &&
-        !reason.sourceSurfaces.some(surface => input.excluded.includes(surface)))).toBe(true);
+        !reason.sourceSurfaces.some(surface => excludedSurfaces.has(surface)))).toBe(true);
       expect(menu.missingPrerequisites).toEqual([...new Set([
         ...menu.unsupportedReasons.flatMap(item => item.missingPrerequisites),
         ...menu.unassignedConfigurationSources.flatMap(item => item.missingPrerequisites),
