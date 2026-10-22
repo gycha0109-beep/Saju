@@ -101,6 +101,24 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **기존 엔진 인계:** `tenGodGroupContrast`는 `unassignedConfigurationInputs` 아래 있는 계산 입력 증거일 뿐 새 `MethodologyDefinition`·`RuleDefinition`·Claim 또는 Official/Production/Reader 권한이 아니다. 계속 `familyScopeResolved=false`, `disposition=INCONCLUSIVE`, `familyOutcomeAuthorized=false`, `familyT8Admitted=false`, `researchOnly=true`, `mayGrantOfficialAuthority=false`, `mayMarkMenuAvailable=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`를 유지한다.
 
+### R070 지장간 소속 입력 vs 현재 T5 십신 조회 — 서로 다른 계산 사실을 혼합하지 않음
+
+이전 `官煞混雜`·`財印`의 두 그룹 비교는 **`derivedFacts.tenGods`의 천간·지지 대표 십신 계산값**에서만 이루어졌다. 그와 별도로 Canonical에는 이미 `derivedFacts.hiddenStems.{year|month|day|hour}`의 기둥 지지별 **지장간 천간 소속 목록**이 있다. 이 자료는 `src/calculation/hidden-stems.ts`의 등록된 `淵海子平 — 又地支藏遁歌` 자료에 기초한 **소속 집합**일 뿐이다. 현재의 정렬 순서는 저장 형식이며 본기·중기·여기, 월령 시간 비율, 세력·가중치·우선순위가 아니다. R070의 `CONFIGURATION-OUTCOME` 구성 판단과 혼합할 승인 규칙도 없다.
+
+이번 변경은 두 구성 원문의 기존 `unassignedConfigurationInputs[].tenGodGroupContrast` 아래에만 `hiddenStemMembershipContrast`를 추가한다. `sourceFactPath=derivedFacts.hiddenStems`, `visibleT5FactPath=derivedFacts.tenGods`를 **각기 보존**한다. `pillarObservations[]`의 각 항목은 원본 `pillarSlot`, `membershipFactPath`, `branchFactPath`, 원본 지지가 확정된 경우의 `observedBranch`, `status`, 그리고 **소속이 확정된 경우에만** `rawMembershipPositions`(`stem`, `storageIndex`)를 반환한다. `storageIndex`는 저장 순서의 번호일 뿐 강약이나 역할 서열이 아니다.
+
+| 소속 자료 상태 | 처리 | 허용하지 않는 추론 |
+| --- | --- | --- |
+| `RESOLVED_MEMBERSHIP_ONLY` | 네 기둥의 **지장간 소속 천간**을 원본 그대로 관찰 | 소속만으로 `정관/편관/재성/인성` T5 지장간 값을 생성하거나 구성 성립 판정 |
+| `PARTIAL_MEMBERSHIP` | `unavailable`·`ambiguous` 기둥의 `membershipFactPath`를 `unresolvedMembershipFactPaths`에 유지하고 **후보를 하나로 합치지 않음** | 모호한 시간·기둥의 지장간을 단일 확정값으로 보충 |
+| `MEMBERSHIP_FACTS_NOT_PROVIDED` | 선택적 `derivedFacts.hiddenStems` 필드 자체가 없다면 네 기둥 모두 `not_provided`로 기록 | 지지 이름만 보고 데이터 필드를 임의로 생성했다고 보고 |
+
+지장간에는 여기서 계산된 독립 `TenGod` 분류 필드가 없고, 원문이 요구할 수 있는 혼잡·재인 상호작용/강약·지장간 역할 선택법도 미승인이다. `hiddenStemT5ClassificationAuthorized=false`, `hiddenStemContributionToObservedT5GroupCount=0`, `canonicalStorageOrderIsStrengthPriority=false`, `historicalConfigurationConditionEstablished=false`, `hiddenStemRelativeRoleAuthorized=false`를 항상 고정한다. **지장간의 천간 글자가 이미 보이는 천간 글자와 같더라도**, 이를 추가 십신 관찰, `observedGroupCount` 증가 또는 별도 독립 가족 근거로 승격하지 않는다. `day` 기둥의 지장간 소속은 그대로 관찰하지만, 기존 십신 조회에서 제외한 `day.stem`(일간)을 숨은 십신으로 재해석하지 않는다.
+
+**미충족 조건:** `R070_HIDDEN_STEM_MEMBERSHIP_IS_NOT_HIDDEN_T5_CLASSIFICATION`, `R070_HIDDEN_STEM_STRENGTH_AND_PRIORITY_NOT_SETTLED`, `R070_HIDDEN_STEM_CONFIGURATION_METHOD_NOT_SOURCED`가 두 구성 항목에 항상 남고, 기둥 자료가 미확정/미제공이면 `CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE`을 추가한다. 기존 `HIDDEN_VS_VISIBLE_STAR_HANDLING`, `R070_TEN_GOD_COEXISTENCE_METHOD_NOT_ESTABLISHED`, `CONFIGURATION_OUTCOME_SETTLEMENT`도 해결되지 않는다. 이러한 항목의 `missingPrerequisites`는 최상위 가족 인계에도 합산하되 연구/공식 결과 권한을 높이지 않는다.
+
+**실계산 회귀:** 출생시각을 제공한 1988·1990·1997년 명식에서 각 지장간 소속 목록이 Canonical과 위치·저장 순서까지 정확히 일치하는지 확인한다. 1997-05-15 여성의 **시각 미상** 사례에서는 `derivedFacts.hiddenStems.hour`가 `unavailable`이고, 나머지 확정 기둥의 소속만 읽으며 기존 `derivedFacts.tenGods.hour.stem|branch`의 미해결도 별도로 남긴다. 선택적 `hiddenStems` 자체가 없는 입력은 네 기둥을 `not_provided`로 명시하고 T5 조회 결과를 바꾸지 않는다. 모든 경우 기존 부모·자녀 `familyT8Admitted=false`, `researchOnly=true`, Official/공개/저장/판매 `false`는 그대로다.
+
 ### R070 기둥 배속과 십신 배속의 교차 적용 범위 — 근거 이중계산 금지
 
 `crossLayerMethodComparisons`는 **이미 연구용으로 등록된 원문 2개를 실제 자기 명식의 서로 다른 계산 입력에 연결**하지만, 두 방법이 같은 가족 주장을 지지하거나 서로 충돌한다는 새로운 고전적 결론을 만들지 않는다. 대상별 정확한 원문쌍은 다음과 같다.
