@@ -69,7 +69,7 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
   const unitsById = new Map(bundle.units.map(unit => [unit.unitId, unit]));
   const entriesByUnitId = new Map(
     explainabilityEntries.flatMap(entry =>
-      entry.primaryUnitRefs.length === 1
+      entry.primaryUnitRefs?.length === 1
         ? [[entry.primaryUnitRefs[0]!, entry] as const]
         : []),
   );
@@ -130,7 +130,8 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
         continue;
       }
       const entry = entriesByUnitId.get(unit.unitId);
-      if (entry === undefined ||
+      if (entry === undefined || entry.primaryUnitRefs?.length !== 1 ||
+          entry.supportingUnitRefs === undefined ||
           !sameSet(entry.supportingUnitRefs, binding.supportingUnitRefs) ||
           entry.primaryUnitRefs[0] !== unit.unitId) continue;
 
