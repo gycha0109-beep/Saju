@@ -130,6 +130,38 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(male.familyT8Admitted).toBe(false);
   });
 
+  it('keeps R070 brother clauses outside both parent and child research scopes', () => {
+    for (const scope of ['parents', 'children'] as const) {
+      const report = evaluateFamilySourceScopeV1(
+        chart({ sex: 'male' }), scope,
+      );
+      expect(report.excludedSiblingSourceSurfaces.map(item => item.sourceSurface))
+        .toEqual(['月為兄弟', '兄弟者即劫財比肩']);
+      for (const item of report.excludedSiblingSourceSurfaces) {
+        expect(item.requestedScope).toBe(scope);
+        expect(item.originalRelationScope).toBe('siblings');
+        expect(item.disposition).toBe('NARROW_OR_REPLACE');
+        expect(item.admittedAsParentsOrChildrenSource).toBe(false);
+        expect(item.missingPrerequisites).toEqual([
+          'SIBLING_DOMAIN_IS_NOT_PARENTS_OR_CHILDREN',
+        ]);
+        expect(R070_CLAIM_LAYERS.some(layer =>
+          layer.id === item.sourceLayerId &&
+          layer.sexScope === item.originalSexScope &&
+          (layer.sourceSurfaces as readonly string[]).includes(item.sourceSurface),
+        )).toBe(true);
+        expect(report.methodCandidates.every(candidate =>
+          candidate.sourceSurface !== item.sourceSurface)).toBe(true);
+      }
+      expect(report.familyT8Admitted).toBe(false);
+    }
+    const male = evaluateFamilySourceScopeV1(chart({ sex: 'male' }), 'parents');
+    const female = evaluateFamilySourceScopeV1(chart({ sex: 'female' }), 'parents');
+    expect(male.excludedSiblingSourceSurfaces).toEqual(female.excludedSiblingSourceSurfaces);
+    expect(male.methodCandidates.find(candidate =>
+      candidate.sourceSurface === '月為父母兄弟門戶')?.familyMeaningAuthorized).toBe(false);
+  });
+
   it('compares exact R070 parent pillar sources against father/mother star methods without combining family meanings', () => {
     const cases = [
       {
