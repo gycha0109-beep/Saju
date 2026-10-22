@@ -611,6 +611,56 @@ describe('Myeonghwa Product Host MVP', () => {
     }
   });
 
+  it('routes exact and open customer questions through the existing HTTP reading path', async () => {
+    const base = dependencies((snapshot) => [wealthOfficialClaim(snapshot)]);
+    const observed: { domain: string; question?: string }[] = [];
+    const server = await listen({
+      ...base,
+      interpret(snapshot, context, requestContext, resolvedReadingRequest) {
+        const request = resolvedReadingRequest ?? requestContext?.readingRequest;
+        if (request) {
+          observed.push({
+            domain: request.intent.domain,
+            ...(request.question === undefined ? {} : { question: request.question }),
+          });
+        }
+        return base.interpret(snapshot, context, requestContext, resolvedReadingRequest);
+      },
+    });
+    try {
+      const post = async (text: string) => {
+        const response = await fetch(`${server.baseUrl}/api/readings`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            birth: validBody.birth,
+            reading: {
+              text,
+              outputPreferences: { preferredDetail: 'detailed' },
+            },
+          }),
+        });
+        expect(response.status).toBe(200);
+        return response.json() as Promise<{ state: string; reading?: unknown }>;
+      };
+
+      const direct = await post('재물운');
+      const exactQuestion = await post('질문: 재물운');
+      const openQuestion = await post('질문: 이직을 해도 괜찮을까요?');
+
+      expect(exactQuestion.state).toBe(direct.state);
+      expect(observed).toEqual([
+        { domain: 'wealth' },
+        { domain: 'wealth' },
+        { domain: 'question_specific', question: '이직을 해도 괜찮을까요' },
+      ]);
+      expect(openQuestion.state).not.toBe('delivered');
+      expect(openQuestion.reading).toBeUndefined();
+    } finally {
+      await server.close();
+    }
+  });
+
   it('accepts POST /api/readings and returns only the consumer transport response', async () => {
     const server = await listen(dependencies((snapshot) => [parentsClaim(snapshot)]));
     try {
