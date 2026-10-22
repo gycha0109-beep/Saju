@@ -39,6 +39,7 @@ export interface LifeStageDayunResearchReport {
   policyHash: typeof DAYUN_TEMPORAL_CONTEXT_POLICY_CONTENT_HASH;
   headline: string;
   periods: readonly LifeStageDayunFactPeriod[];
+  transitionSummary?: string;
   missing: readonly string[];
   caveats: readonly string[];
 }
@@ -87,6 +88,28 @@ function period(kind: 'current' | 'next', segment: DayunTemporalSegment): LifeSt
   };
 }
 
+/** Relates two consecutive computed segments without claiming a future event. */
+function summarizeDayunTransition(
+  periods: readonly LifeStageDayunFactPeriod[],
+): string | undefined {
+  const current = periods.find(item => item.kind === 'current');
+  if (current === undefined) return undefined;
+  const next = periods.find(item => item.kind === 'next');
+  if (next === undefined) {
+    return '현재 확인 가능한 대운은 ' + current.pillar + '이며 ' +
+      current.endsAtExclusive + ' 이전까지가 계산 범위입니다. ' +
+      '그 이후의 대운 간지·시작 구간은 아직 확인되지 않아 전환을 설명하지 않습니다.';
+  }
+  if (next.cycleIndex !== current.cycleIndex + 1 ||
+      next.startsAt !== current.endsAtExclusive) {
+    throw new TypeError('Life-stage transition must use adjacent canonical Dayun periods.');
+  }
+  return '이 명식에서 ' + current.pillar + ' 대운은 ' +
+    current.endsAtExclusive + ' 직전까지, 이어지는 ' +
+    next.pillar + ' 대운은 같은 시각부터 계산됩니다. ' +
+    '이는 서로 맞닿는 대운 기간을 보여주는 계산 사실이며 삶의 변화·길흉·사건 발생을 뜻하지 않습니다.';
+}
+
 /**
  * Life-stage internal research read: a consumer-visible presentation of
  * already-computed canonical Daeyun boundaries, NOT a T8 interpretation.
@@ -127,6 +150,7 @@ export function buildLifeStageDayunResearchReport(
       else missing.push('다음 대운의 시작 시각 및 간지는 계산 자료에서 확정할 수 없습니다.');
     }
   }
+  const transitionSummary = summarizeDayunTransition(periods);
   return {
     version: LIFE_STAGE_DAYUN_RESEARCH_REPORT_VERSION,
     mode: 'internal_exploration', status: 'not_official_reading',
@@ -139,7 +163,9 @@ export function buildLifeStageDayunResearchReport(
     policyId: DAYUN_TEMPORAL_CONTEXT_POLICY.policyId,
     policyHash: DAYUN_TEMPORAL_CONTEXT_POLICY_CONTENT_HASH,
     headline: '지금과 다음 삶의 단계 — 계산상 대운 구간',
-    periods, missing,
+    periods,
+    ...(transitionSummary === undefined ? {} : { transitionSummary }),
+    missing,
     caveats: [
       '대운 간지와 적용 구간은 Canonical 계산 사실이며, 각 구간의 좋고 나쁨이나 미래 사건을 뜻하지 않습니다.',
       '대운과 원국의 합·충 또는 강약을 연결하는 개인별 해석 근거는 아직 허가되지 않았습니다.',
@@ -172,7 +198,10 @@ export function renderLifeStageDayunResearchHtml(report: LifeStageDayunResearchR
     'details{font-size:12px;overflow-wrap:anywhere}aside{background:#eee8de;padding:20px;border-radius:12px}</style>' +
     '</head><body><main><small>MYEONGHA · INTERNAL RESEARCH ONLY</small>' +
     '<h1>' + e(report.headline) + '</h1><p>조회 기준: ' +
-    e(report.referenceLocalDateTime) + ' KST</p>' + periods +
+    e(report.referenceLocalDateTime) + ' KST</p>' +
+    (report.transitionSummary === undefined ? '' :
+      '<section aria-label="현재와 다음 대운의 계산 전환"><h2>지금과 다음 대운의 경계</h2><p>' +
+      e(report.transitionSummary) + '</p></section>') + periods +
     '<aside><strong>아직 알 수 없는 부분</strong><ul>' +
     [...report.missing, ...report.caveats].map(s => '<li>' + e(s) + '</li>').join('') +
     '</ul></aside></main></body></html>';
