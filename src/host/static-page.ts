@@ -13,8 +13,9 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
     form, .panel { background: white; border: 1px solid #dedbd3; border-radius: 16px; padding: 20px; }
     .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
     label { display: grid; gap: 7px; font-size: 14px; font-weight: 650; }
-    input, select, button { box-sizing: border-box; width: 100%; font: inherit; }
-    input, select { min-height: 44px; border: 1px solid #c8c5bd; border-radius: 10px; padding: 10px 12px; background: white; }
+    input, textarea, select, button { box-sizing: border-box; width: 100%; font: inherit; }
+    input, textarea, select { min-height: 44px; border: 1px solid #c8c5bd; border-radius: 10px; padding: 10px 12px; background: white; }
+    textarea { min-height: 112px; resize: vertical; line-height: 1.5; }
     .field-hint { font-size: 12px; line-height: 1.35; color: #777; font-weight: 400; }
     .check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
     .check input { width: auto; min-height: 0; }
@@ -100,7 +101,12 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
           <option value="이번 달 직업운">이번 달 직업운</option>
           <option value="이번 달 사업운">이번 달 사업운</option>
           <option value="이번 달 재물운">이번 달 재물운</option>
+          <option value="지금 고민으로 보기">지금 고민으로 보기</option>
         </select>
+      </label>
+      <label id="question-field" class="full hidden">어떤 고민이 있으신가요?
+        <textarea id="question-text" name="questionText" maxlength="190" aria-describedby="question-hint" placeholder="예: 재물운 또는 이직을 고민하고 있는데 어떤 점을 살펴야 할까요?" disabled></textarea>
+        <span id="question-hint" class="field-hint">재물운처럼 지원하는 주제는 기존 풀이를 보여드립니다. 구체적인 고민은 확인된 사주 근거 안에서만 답하며, 근거가 부족한 경우 그 이유를 안내합니다.</span>
       </label>
       <label class="full">풀이 상세 수준
         <select id="reading-detail" name="preferredDetail">
@@ -135,6 +141,8 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
   const leapMonth = document.getElementById('leap-month');
   const sex = document.getElementById('sex');
   const readingText = document.getElementById('reading-text');
+  const questionField = document.getElementById('question-field');
+  const questionText = document.getElementById('question-text');
 
   const messages = {
     READING_DELIVERED: '풀이가 준비되었습니다.',
@@ -346,6 +354,16 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     }
   }
 
+  function syncQuestionField() {
+    const isQuestion = readingText.value === '지금 고민으로 보기';
+    questionField.classList.toggle('hidden', !isQuestion);
+    questionText.disabled = !isQuestion;
+    submit.textContent = isQuestion ? '내 고민 풀이 보기' : '선택한 분야 풀이 보기';
+  }
+
+  readingText.addEventListener('change', syncQuestionField);
+  syncQuestionField();
+
   birthDate.addEventListener('input', () => {
     const formatted = formatBirthDateInput(birthDate.value);
     if (birthDate.value !== formatted) birthDate.value = formatted;
@@ -507,6 +525,13 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       return;
     }
 
+    if (readingText.value === '지금 고민으로 보기' && !questionText.value.trim()) {
+      result.classList.remove('hidden');
+      result.replaceChildren(el('div', '고민 내용을 입력해 주세요.', 'state error'));
+      questionText.focus();
+      return;
+    }
+
     submit.disabled = true;
     fiveDomainSubmit.disabled = true;
     result.classList.remove('hidden');
@@ -515,7 +540,9 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       const body = {
         birth: currentBirth(),
         reading: {
-          text: readingText.value,
+          text: readingText.value === '지금 고민으로 보기'
+            ? '질문: ' + questionText.value.trim()
+            : readingText.value,
           outputPreferences: { preferredDetail: readingDetail.value }
         }
       };
