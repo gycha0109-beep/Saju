@@ -205,6 +205,8 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     const focus = detailedReport.sections[0];
     expect(focus?.title).toBe('내 명식에서 함께 확인된 관계 주제');
     expect(focus?.sectionType).toBe('overview');
+    expect(focus?.state).toBe('complete');
+    expect(JSON.stringify(focus?.blocks)).toContain('최소 유효 해석 완료 판정과는 별개');
     const overviewBlock = focus?.blocks.find(block => block.type === 'comparison');
     expect(overviewBlock?.type).toBe('comparison');
     if (overviewBlock?.type !== 'comparison' || focus === undefined) {
@@ -339,6 +341,8 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     expect(comparison?.type).toBe('comparison');
     if (comparison?.type !== 'comparison') return;
     expect(comparison.perspectives).toHaveLength(1);
+    expect(focus?.state).toBe('partial');
+    expect(JSON.stringify(focus?.blocks)).toContain('관계 종합풀이의 완성을 뜻하지 않습니다.');
     expect(comparison.perspectives[0]?.label).toContain('생각을 정리한 뒤');
     expect(comparison.perspectives[0]?.text).toContain('대화');
     expect(comparison.perspectives[0]?.text).toContain('인성');
