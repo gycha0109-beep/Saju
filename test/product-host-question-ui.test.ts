@@ -66,7 +66,7 @@ class ScreenElement {
   }
 }
 
-function openProductScreen(reply: Record<string, unknown>, failedReadingText?: string, familyPreview?: Record<string, unknown>, unavailablePreviewPath?: string, failedBirthDate?: string) {
+function openProductScreen(reply: Record<string, unknown>, failedReadingText?: string, familyPreview?: Record<string, unknown>, unavailablePreviewPath?: string, failedBirthDate?: string, readingReply?: Record<string, unknown>) {
   const elements = new Map<string, ScreenElement>();
   for (const id of [
     'reading-form', 'result', 'submit', 'five-domain-submit', 'period-submit',
@@ -123,7 +123,7 @@ function openProductScreen(reply: Record<string, unknown>, failedReadingText?: s
         birth?.date === failedBirthDate);
       return url === '/api/preview/family-observations'
         ? { ok: familyPreview !== undefined, json: async () => familyPreview }
-        : { ok: !readingFailed, json: async () => reply };
+        : { ok: !readingFailed, json: async () => url === '/api/readings' && readingReply !== undefined ? readingReply : reply };
     },
   });
   return { get, requests };
@@ -341,8 +341,19 @@ describe('actual customer question form', () => {
     screen.get('time-unknown').checked = true;
     await screen.get('time-unknown').emit('change');
     await screen.get('reading-form').emit('submit');
-    expect(screen.requests).toHaveLength(1);
+    expect(screen.requests).toHaveLength(2);
     expect(screen.requests[0]).toEqual({
+      url: '/api/readings',
+      body: {
+        birth: {
+          calendarType: 'solar', date: '1998-05-21', time: null, sex: 'female',
+        },
+        reading: {
+          text: '평생 흐름', outputPreferences: { preferredDetail: 'detailed' },
+        },
+      },
+    });
+    expect(screen.requests[1]).toEqual({
       url: '/api/preview/life-stage',
       body: { birth: {
         calendarType: 'solar', date: '1998-05-21', time: null, sex: 'female',
@@ -412,8 +423,9 @@ describe('actual customer question form', () => {
       undefined, '/api/preview/life-stage');
     life.get('reading-text').value = '평생 흐름';
     await life.get('reading-form').emit('submit');
-    expect(life.requests).toHaveLength(1);
+    expect(life.requests.map(x => x.url)).toEqual(['/api/readings', '/api/preview/life-stage']);
     expect(life.get('result').textContent).toContain('접근 권한이 없어 대운 구간을 표시할 수 없습니다.');
+    expect(life.get('result').textContent).toContain('나의 삶의 단계 원국풀이');
 
     const compatibility = openProductScreen({ state: 'partial_evidence' }, undefined,
       undefined, '/api/preview/compatibility-charts');
@@ -535,6 +547,58 @@ describe('actual customer question form', () => {
     expect(result).toContain('이 사람의 관계 풀이를 불러오지 못했습니다.');
     expect(result).toContain('관계 적합도');
     expect(result).not.toContain('궁합 점수:');
+  });
+
+  it('keeps a real governed life-stage reading available when protected Dayun Preview is blocked', async () => {
+    const screen = openProductScreen(
+      { state: 'partial_evidence' },
+      undefined, undefined, '/api/preview/life-stage',
+      undefined,
+      { state: 'delivered', messageCode: 'READING_DELIVERED',
+        reading: { sections: [{
+          title: '삶의 단계 승인 해석',
+          blocks: [{ type: 'paragraph', text: '실제 승인된 삶의 단계 결론입니다.' }],
+        }] } },
+    );
+    screen.get('reading-text').value = '평생 흐름';
+    await screen.get('reading-form').emit('submit');
+    expect(screen.requests.map(r => r.url)).toEqual([
+      '/api/readings', '/api/preview/life-stage',
+    ]);
+    const text = screen.get('result').textContent;
+    expect(text).toContain('삶의 단계 · 기존 풀이와 계산된 대운');
+    expect(text).toContain('나의 삶의 단계 원국풀이');
+    expect(text).toContain('실제 승인된 삶의 단계 결론입니다.');
+    expect(text).toContain('접근 권한이 없어 대운 구간을 표시할 수 없습니다.');
+    expect(text).not.toContain('평생 흐름이 확정됐습니다');
+    expect(screen.get('submit').disabled).toBe(false);
+  });
+
+  it('preserves original calculated Dayun periods if the governed life-stage reading request fails', async () => {
+    const screen = openProductScreen({
+      state: 'partial_evidence',
+      explanation: '시기별 인과 해석 근거는 아직 부족합니다.',
+      report: {
+        referenceLocalDateTime: '2026-10-22T10:30',
+        periods: [{ kind: 'current',
+          text: '명식으로 계산된 현재 대운 구간입니다.',
+          startsAt: '2020-01-01T00:00',
+          endsAtExclusive: '2030-01-01T00:00',
+        }],
+        missing: ['다음 대운 계산 시점이 불분명합니다.'],
+        caveats: ['구간은 특정 사건을 뜻하지 않습니다.'],
+      },
+    }, '평생 흐름');
+    screen.get('reading-text').value = '평생 흐름';
+    await screen.get('reading-form').emit('submit');
+    expect(screen.requests.map(r => r.url)).toEqual([
+      '/api/readings', '/api/preview/life-stage',
+    ]);
+    const text = screen.get('result').textContent;
+    expect(text).toContain('기존 삶의 단계 풀이를 불러오지 못했습니다.');
+    expect(text).toContain('명식으로 계산된 현재 대운 구간입니다.');
+    expect(text).toContain('다음 대운 계산 시점이 불분명합니다.');
+    expect(text).toContain('구간은 특정 사건을 뜻하지 않습니다.');
   });
 
 });
