@@ -122,7 +122,9 @@ describe('governed twelve-menu Korean HTML projection', () => {
       ...card,
       constraints: { ...card.constraints, maySell: true as const },
     });
-    expect(() => renderTwelveMenuReaderHtml(unsafe)).toThrow('public');
+    expect(() => renderTwelveMenuReaderHtml(
+      unsafe as unknown as readonly TwelveMenuReaderCard[],
+    )).toThrow('public');
     const hidden = cards.map(card => card.menuId !== 'general' ? card : {
       ...card,
       sections: card.sections.map(section => ({
