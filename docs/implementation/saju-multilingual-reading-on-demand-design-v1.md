@@ -47,3 +47,10 @@
 ## 4. 기존 Authority/HOLD 유지
 
 A 원국, B 시간, C 관계, D 질문의 source-qualified T5/T6/T8/T9/T10/T11 및 MUR 기준은 변경하지 않는다. 특히 연구용 의미, 대운/연운/월운, 궁합, 배우자 등 scope 미승인 결과는 외국어로 표현해도 여전히 HOLD이다. `internal_preview_only` 출력은 Official/Production/Public/저장/판매 권한을 추가하지 않는다.
+
+## 5. E-3 한국어 경로 초기 호환 연결 (2026-10-22)
+
+- `src/reading/korean-reading-localization.ts`: `createKoreanSourceBoundRendererV1`이 기존 Claim의 `canonicalText`/Qualifier만 변형 없이 출력한다. source-owned 텍스트 또는 필수 한계 문구가 없으면 결과를 만들지 않는다. 외국어 변환·새로운 해석 의미·호환되지 않는 문구 자동 보완을 하지 않는다.
+- `runExistingKoreanReadingLocalizedV1`은 기존 `runProductReadingInternals`를 그대로 실행하며, `preserveExistingKoreanReadingResponseV1`이 사용자용 `ProductReadingResponse`의 전달/부분/미지원 상태와 레닥션이 바뀌지 않았음을 확인한다. 한국어 이외 로케일은 계산/리딩 전에 거절한다. Claim/semanticHash는 내부 trace에만 남고 소비자 payload에는 포함되지 않는다.
+- **중요:** source-bound Korean unit rendering과 기존 한국어 소비자 응답의 패스스루는 현재 서로 다른 내부 경로다. 후자를 전자로 치환하지 않으므로 기존 Official·Preview 한국어 해석 내용이 변하지 않는다. Host에서 본 기능을 공개 전환하거나 E-3을 전역 완료로 선언하지 않는다.
+- 후속: 기존 Host/Reader에서 `readingLocale` 선택 값을 안전하게 전달하고 사용자용 public payload contract를 버전 관리한다. 출생정보·요청·권한/보관 정책은 명하 제품 소유 트랙이 관리하며, 추가 언어에서는 별도의 Renderer·용어집·문장 의미 보존 기준을 충족한 경우에만 활성화한다.
