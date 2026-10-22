@@ -8,7 +8,7 @@
 
 ## 2026-10-22 — 명하 14개 GPT 개발트랙 인계 및 로드맵 현행화
 
-> 본 절은 기존 **12메뉴 A/B/C/D + 공통 E 다국어** 개발 로드맵의 상위 상태·계획을 변경하지 않고, MyeongHa의 Reader/보고서/기록 제품과의 인수 경계를 명확히 한다. 명하 [GPT 트랙 총괄 진행표](https://github.com/gycha0109-beep/MyeongHa/blob/docs/master-track-roadmap-gpt14-20261022/docs/roadmaps/MYEONGHA_GPT_TRACK_MASTER_ROADMAP_20261022.md)는 **비권위 교차 트랙 진행표**이며, 이 문서 또는 Saju source/review/Production authority보다 우선하지 않는다.
+> 본 절은 기존 **12메뉴 A/B/C/D + 공통 E 다국어** 개발 로드맵의 상위 상태·계획을 변경하지 않고, MyeongHa의 Reader/보고서/기록 제품과의 인수 경계를 명확히 한다. 명하 [GPT 트랙 총괄 진행표](https://github.com/gycha0109-beep/MyeongHa/blob/main/docs/roadmaps/MYEONGHA_GPT_TRACK_MASTER_ROADMAP_20261022.md)는 **비권위 교차 트랙 진행표**이며, 이 문서 또는 Saju source/review/Production authority보다 우선하지 않는다.
 
 ### 사용자 결과로 인수할 것
 
