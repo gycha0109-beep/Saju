@@ -1186,6 +1186,75 @@ function r070FamilyMenuSupportHandoff(
   };
 }
 
+/**
+ * A transfer boundary for the R070 research engine, not an executable family
+ * interpretation or a Product/Reader menu availability contract.
+ * Every array is an unmodified reference to the existing menu handoff facts.
+ */
+export interface R070FamilyEngineTransferBoundary {
+  route: 'R070_RESEARCH_ONLY_NOT_EXECUTABLE';
+  requestedScope: FamilyResearchScope;
+  sourceSnapshotId: string;
+  sourceCalculationHash: string;
+  /** Missing Canonical paths: never substitute a different pillar or relative. */
+  unresolvedCanonicalInputs: readonly R070FamilyMenuUnresolvedCanonicalInput[];
+  /** Includes missing calculation concepts with no invented Canonical fact path. */
+  canonicalInputAndConceptHolds: readonly R070FamilyMenuUnsupportedReason[];
+  /** Observed source applicability and historical method choices are not outcomes. */
+  sourceAndMethodHolds: readonly R070FamilyMenuUnsupportedReason[];
+  /** A separate non-source claim authority barrier, always present. */
+  officialAuthorityHold: R070FamilyMenuUnsupportedReason;
+  /** Nonmatching original sex scopes are exclusions, not menu-blocking claims. */
+  excludedHistoricalSources: readonly R070FamilyMenuScopeExclusion[];
+  /** Existing R070 configuration input is still unassigned to either menu. */
+  unassignedConfigurationSources: readonly R070FamilyConfigurationHold[];
+  /** Research provenance is never an EvidenceSelector weight. */
+  prerequisiteTrace: readonly R070FamilyMenuPrerequisiteTrace[];
+  researchEvidenceMayBecomeFamilyClaim: false;
+  canSelectHistoricalMethod: false;
+  canGrantFamilyT8Authority: false;
+  canEnableMenu: false;
+  canPublishOrSell: false;
+}
+
+function r070FamilyEngineTransferBoundary(
+  snapshot: CanonicalSajuSnapshot,
+  menu: R070FamilyMenuSupportHandoff,
+): R070FamilyEngineTransferBoundary {
+  const authorityHolds = menu.unsupportedReasons.filter(reason =>
+    reason.category === 'OFFICIAL_AUTHORITY' &&
+    reason.reasonCode === 'R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED');
+  if (authorityHolds.length !== 1 || menu.supportState !== 'UNAVAILABLE_RESEARCH_ONLY') {
+    throw new TypeError('R070 research engine handoff requires its single official T8 hold.');
+  }
+  const officialAuthorityHold = authorityHolds[0];
+  if (officialAuthorityHold === undefined) {
+    throw new TypeError('R070 research engine handoff lost the official authority hold.');
+  }
+  return {
+    route: 'R070_RESEARCH_ONLY_NOT_EXECUTABLE',
+    requestedScope: menu.requestedScope,
+    sourceSnapshotId: snapshot.snapshotId,
+    sourceCalculationHash: snapshot.calculationHash,
+    unresolvedCanonicalInputs: menu.unresolvedCanonicalInputs,
+    canonicalInputAndConceptHolds: menu.unsupportedReasons.filter(reason =>
+      reason.category === 'CANONICAL_INPUT'),
+    sourceAndMethodHolds: menu.unsupportedReasons.filter(reason =>
+      reason.category === 'SOURCE_APPLICABILITY' ||
+      reason.category === 'SOURCE_CONTEXT' ||
+      reason.category === 'METHOD_SELECTION'),
+    officialAuthorityHold,
+    excludedHistoricalSources: menu.excludedHistoricalSources,
+    unassignedConfigurationSources: menu.unassignedConfigurationSources,
+    prerequisiteTrace: menu.prerequisiteTrace,
+    researchEvidenceMayBecomeFamilyClaim: false,
+    canSelectHistoricalMethod: false,
+    canGrantFamilyT8Authority: false,
+    canEnableMenu: false,
+    canPublishOrSell: false,
+  };
+}
+
 export interface FamilySourceScopeHandoff {
   version: typeof FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION;
   owner: 'R070';
@@ -1212,6 +1281,8 @@ export interface FamilySourceScopeHandoff {
   interpretationBlockers: R070FamilyInterpretationBlockerHandoff;
   /** Research-only, menu-specific unavailable reasons, not product availability. */
   menuSupportHandoff: R070FamilyMenuSupportHandoff;
+  /** R070-only transfer: Canonical gaps and non-executable method holds separated. */
+  engineTransferBoundary: R070FamilyEngineTransferBoundary;
   missingPrerequisites: readonly string[];
   interpretationDisposition: 'INCONCLUSIVE';
   familyT8Admitted: false;
@@ -1547,6 +1618,7 @@ export function evaluateFamilySourceScopeV1(
     crossLayerMethodComparisons, unassignedConfigurationInputs,
   );
   const menuSupportHandoff = r070FamilyMenuSupportHandoff(interpretationBlockers);
+  const engineTransferBoundary = r070FamilyEngineTransferBoundary(snapshot, menuSupportHandoff);
   const missingPrerequisites = [
     ...R070_EXECUTION_GAPS,
     ...new Set([
@@ -1569,7 +1641,7 @@ export function evaluateFamilySourceScopeV1(
     unassignedConfigurationInputs,
     branchClashPillarObservations, pillarStarClashOverlaps,
     tripleLayerFactReuse, interpretationBlockers, menuSupportHandoff,
-    missingPrerequisites,
+    engineTransferBoundary, missingPrerequisites,
     interpretationDisposition: 'INCONCLUSIVE',
     familyT8Admitted: false, researchOnly: true,
     mayGrantOfficialAuthority: false, mayMarkMenuAvailable: false,
