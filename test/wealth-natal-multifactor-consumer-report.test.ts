@@ -145,11 +145,40 @@ describe('actual-source Wealth natal T5→T8→Korean five-domain report', () =>
     expect(found).toBe(true);
   }, 60000);
 
-  it('does not infer full-chart meaning with unknown birth hour', () => {
-    const x = run(3,10,false);
-    expect(x.report.state).toBe('insufficient');
-    expect(x.report.sections).toHaveLength(0);
-    expect(x.report.missing.join(' ')).toContain('출생시각 미상');
+  it('keeps T8 meaning blocked with unknown birth hour but displays only verified chart facts', () => {
+    const result = run(3, 10, false);
+    const report = result.report;
+    expect(result.snapshot.derivedFacts.tenGods.status).toBe('unavailable');
+    expect(report.state).toBe('insufficient');
+    expect(report.sections).toHaveLength(0);
+    expect(report.missing.join(' ')).toContain('십신(T5) 전체가 미확정');
+    expect(report.introduction).toContain('출생시각이 없어도 확인 가능한');
+    expect(report.introduction).toContain('재물의 많고 적음이나 다중 근거 T8 풀이를 뜻하지 않습니다');
+    for (const [slot, label] of [
+      ['year', '연주'], ['month', '월주'], ['day', '일주'],
+    ] as const) {
+      const fact = result.snapshot.pillars[slot];
+      const expected = fact.status === 'resolved'
+        ? fact.value.stem.value + fact.value.branch.value
+        : '미확정';
+      expect(report.introduction).toContain(label + ' ' + expected);
+    }
+    expect(report.usefulComplete).toBe(false);
+    expect(report.researchOnly).toBe(true);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+  });
+
+  it('changes only real Canonical unknown-hour observations for another birth date', () => {
+    const first = run(3, 10, false);
+    const second = run(4, 12, false);
+    const repeat = run(3, 10, false);
+    expect(repeat.report).toEqual(first.report);
+    expect(first.report.introduction).not.toBe(second.report.introduction);
+    expect(first.report.sections).toHaveLength(0);
+    expect(second.report.sections).toHaveLength(0);
+    expect(first.report.missing).toEqual(second.report.missing);
+    expect(run(3, 10, true).report.sections.length).toBeGreaterThan(0);
   });
 
   it('rejects cross-chart and tampered Wealth claim meaning', () => {
