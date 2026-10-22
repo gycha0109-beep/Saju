@@ -93,7 +93,7 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 | `ONLY_ONE_GROUP_OBSERVED_IN_VISIBLE_T5` | 현재 확인된 조회 표면에서 둘 중 하나만 관찰 | 다른 그룹의 원국·지장간·구성상 **부재 판정** |
 | `NEITHER_GROUP_OBSERVED_IN_VISIBLE_T5` | 현재 조회 표면에서 두 그룹 모두 미관찰 | 두 고전 구성이나 해당 가족 관계 자체가 없다는 판정 |
 
-`observedGroupCount`는 계산 그룹 **0/1/2개 관측 여부**만 세며 Claim 수나 의미 점수가 아니다. `inputCoverage=PARTIAL_VISIBLE_T5`이면 미상 경로를 `unresolvedFactPaths`에 모아 `CANONICAL_T5_CONFIGURATION_GROUPS_PARTIAL`을 표시하고, 동시에 일부 십신이 확인되더라도 원국 전체 확정으로 승격하지 않는다. `RESOLVED_VISIBLE_T5`여도 지장간·고전 조합조건·강약·우선순위까지 해소된 것은 아니다. `observedGroupCount<escape><</escape>2`이면 `R070_UNOBSERVED_VISIBLE_T5_GROUP_IS_NOT_NEGATIVE_CONFIGURATION_EVIDENCE`를 반환한다.
+`observedGroupCount`는 계산 그룹 **0/1/2개 관측 여부**만 세며 Claim 수나 의미 점수가 아니다. `inputCoverage=PARTIAL_VISIBLE_T5`이면 미상 경로를 `unresolvedFactPaths`에 모아 `CANONICAL_T5_CONFIGURATION_GROUPS_PARTIAL`을 표시하고, 동시에 일부 십신이 확인되더라도 원국 전체 확정으로 승격하지 않는다. `RESOLVED_VISIBLE_T5`여도 지장간·고전 조합조건·강약·우선순위까지 해소된 것은 아니다. `observedGroupCount < 2`이면 `R070_UNOBSERVED_VISIBLE_T5_GROUP_IS_NOT_NEGATIVE_CONFIGURATION_EVIDENCE`를 반환한다.
 
 **필수 보류 조건:** `R070_TEN_GOD_COEXISTENCE_METHOD_NOT_ESTABLISHED`, `R070_VISIBLE_T5_COOBSERVATION_IS_NOT_CLASSICAL_CONFIGURATION`, `R070_CONFIGURATION_INTERACTION_AND_PRIORITY_NOT_SOURCED`, `R070_CONFIGURATION_TO_FAMILY_EFFECT_NOT_SOURCED`, `HIDDEN_VS_VISIBLE_STAR_HANDLING`을 두 원문 모두에 남긴다. 이 중 하나라도 빠진 조건을 **별 관측만으로 충족했다고 처리하지 않는다.** `originalConfigurationConditionEstablished=false`, `configurationInteractionOrPriorityEstablished=false`, `familyRelativeEffectAuthorized=false`, `familyT8Admitted=false`이다.
 
