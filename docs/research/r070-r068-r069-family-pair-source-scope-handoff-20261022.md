@@ -74,6 +74,12 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 각 교차 항목의 `sourceLayerIds`·`sourceSurfaces`·`pillarObservation`·`starObservation`은 기존 R070 코퍼스 및 Canonical fact-path를 그대로 가리킨다. `independentlyAdmittedFamilyClaims=0`, `methodSelectionAuthorized=false`, `familyMeaningAuthorized=false`, `state=PILLAR_AND_STAR_METHODS_NOT_RECONCILED`이며, 계속 필요한 최소 조건은 `FAMILY_METHOD_SELECTION`, `PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION`, `HIDDEN_VS_VISIBLE_STAR_HANDLING`, `HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED`이다. 별이 보이는 경로에서 관찰되지 않는 경우는 가족 구성원 부재의 증거가 아니다.
 
+### 형제 관련 원문은 부모·자녀 방법으로 변환하지 않음
+
+기존 R070의 `月為兄弟`는 `PILLAR-DOMAIN-MALE-ALTERNATE`에, `兄弟者即劫財比肩`는 `TEN-GOD-FAMILY-RELATIONS`에 있는 **형제 관련 원문**이다. 이 둘은 같은 R070 안에 있더라도 현재 사용자 메뉴의 `family:parents` 또는 `family:children` 의미 근거로 사용하지 않는다. 연구 반환 `excludedSiblingSourceSurfaces`는 두 원문·레이어 ID·원본 성별 범위와 `admittedAsParentsOrChildrenSource=false`를 명시한다.
+
+월주 원문 `月為父母兄弟門戶`에 `兄弟`가 함께 들어 있다는 사실도 부모 관계의 형제 운세를 승인하지 않는다. 형제라는 별도 대상의 독립 ReadingIntent/출처·방법론·입력이 없는 상태에서 이를 부모·자녀 결과 문장으로 확장하거나 가족 구성원의 특성으로 단정하지 않는다.
+
 ### 부모·자녀 T8 엔진 인계
 
 **엔진에서 사용할 수 있는 것:** 요청 범위별 위의 조건부 원문 대응, 정확한 원국 사실 경로, 시각 미상·남성/여성/미지정 스코프별 부적합 사유. 계산 위치와 원문을 소비자에게 설명하더라도 **연구용 배속 관찰**이라는 경계만 유지한다.
