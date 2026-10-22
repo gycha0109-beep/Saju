@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ProductReadingInternals } from '../src/reading/product-reading-service.js';
+import type { ProductReadingResponseBlock } from '../src/reading/product-reading-response.js';
 import type { ReadingIntent } from '../src/contracts/reading.js';
 import {
   buildTwelveMenuEngineReadiness,
@@ -18,6 +19,8 @@ function result(
     official?: boolean;
     grounded?: boolean;
     haveReading?: boolean;
+    blocks?: readonly ProductReadingResponseBlock[];
+    sectionState?: 'complete' | 'partial' | 'unavailable';
   } = {},
 ): ProductReadingInternals {
   const state = opts.response ?? 'delivered';
@@ -26,7 +29,7 @@ function result(
   return {
     response: {
       state,
-      ...(opts.haveReading === false ? {} : { reading: { sections: [{ state: 'complete', blocks: [{ type: 'paragraph', text: '기존 근거를 따른 개인별 풀이입니다.' }] }] } }),
+      ...(opts.haveReading === false ? {} : { reading: { sections: [{ state: opts.sectionState ?? 'complete', blocks: opts.blocks ?? [{ type: 'paragraph', text: '기존 근거를 따른 개인별 풀이입니다.' }] }] } }),
     },
     execution: {
       state: 'completed',
@@ -141,6 +144,64 @@ describe('twelve-menu visibility is not evidence-backed reading availability', (
       read('general', result(GENERAL, { official: true, haveReading: false })),
     ]);
     expect(fakeOfficial[0]?.state).toBe('unavailable');
+  });
+
+  it('never advertises a ready or partial menu for an empty, blank or source-only rendered response', () => {
+    const cases: readonly (readonly ProductReadingResponseBlock[])[] = [
+      [],
+      [{ type: 'paragraph', text: '  ' }],
+      [{ type: 'key_points', items: ['', ' '] }],
+      [{ type: 'fact_table', rows: [{ label: '연주', value: '계묘' }] }],
+      [{ type: 'source_hint', text: 'SRC-ONLY' }],
+      [{ type: 'comparison', title: '관점', perspectives: [] }],
+      [{ type: 'timeline', entries: [] }],
+    ];
+    for (const blocks of cases) {
+      for (const official of [false, true]) {
+        const cards = buildTwelveMenuEngineReadiness([
+          read('general', result(GENERAL, { official, blocks })),
+        ]);
+        expect(cards[0]?.state, JSON.stringify(blocks)).toBe('unavailable');
+        expect(cards[0]?.sections[0]?.reason).toBe('evidence_insufficient');
+      }
+    }
+  });
+
+  it('requires actually rendered Korean content, not only a selected but unrendered T8 Claim', () => {
+    const noResponse = buildTwelveMenuEngineReadiness([
+      read('general', result(GENERAL, {
+        response: 'partial_evidence', haveReading: false, grounded: true,
+      })),
+    ]);
+    expect(noResponse[0]?.state).toBe('unavailable');
+    expect(noResponse[0]?.sections[0]?.reason).toBe('evidence_insufficient');
+
+    const blockedSection = buildTwelveMenuEngineReadiness([
+      read('career', result({ domain: 'career', temporalScope: 'natal' }, {
+        official: true,
+        sectionState: 'unavailable',
+        blocks: [{ type: 'paragraph', text: '숨겨야 하는 해석' }],
+      })),
+    ]);
+    expect(blockedSection[1]?.state).toBe('unavailable');
+  });
+
+  it('admits genuine partial Korean content but never grants it official completeness', () => {
+    const cards = buildTwelveMenuEngineReadiness([
+      read('general', result(GENERAL, {
+        official: true,
+        sectionState: 'partial',
+        blocks: [{ type: 'paragraph', text: '현재 확인 가능한 일부 근거입니다.' }],
+      })),
+      read('career', result({ domain: 'career', temporalScope: 'natal' }, {
+        official: false,
+        blocks: [{ type: 'key_points', items: ['실제 출처 근거로만 관찰합니다.'] }],
+      })),
+    ]);
+    expect(cards[0]?.state).toBe('partial');
+    expect(cards[1]?.state).toBe('partial');
+    expect(cards[0]?.sections[0]?.reason).toBe('limited_reading');
+    expect(cards[0]?.constraints.mayAuthorizeSelling).toBe(false);
   });
 
   it('rejects cross-menu evidence and duplicate section responses', () => {
