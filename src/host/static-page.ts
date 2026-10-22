@@ -729,7 +729,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     });
   }
 
-  async function showCompatibilityIndividualReadings(outcomes) {
+  function showCompatibilityIndividualReadings(outcomes) {
     // Two independent natal T8 readings are not a dyadic T10 compatibility
     // interpretation. Preserve each response and its own coverage limits.
     const heading = el('section', undefined, 'domain-card');
@@ -945,7 +945,7 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
           fetchIndividualDomain(subjectBirth, { requestText: '연애운' }),
           fetchIndividualDomain(targetBirth, { requestText: '연애운' })
         ]);
-        await showCompatibilityIndividualReadings(outcomes);
+        showCompatibilityIndividualReadings(outcomes);
         return;
       }
       const body = {
