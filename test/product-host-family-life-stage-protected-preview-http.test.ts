@@ -36,7 +36,7 @@ async function withServer(
       server.close(error => error ? reject(error) : resolve()));
   }
 }
-function post(path: string, data: unknown, authenticated = true) {
+function post(_path: string, data: unknown, authenticated = true) {
   return {
     method: 'POST',
     headers: authenticated ? headers : { 'content-type': 'application/json' },
