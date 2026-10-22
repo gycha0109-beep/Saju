@@ -186,9 +186,9 @@ export function evaluateFamilySourceScopeV1(
         state: 'COEXISTING_NOT_RECONCILED' as const,
         methodSelectionAuthorized: false as const,
         missingPrerequisites: [
-          'FAMILY_METHOD_SELECTION' as const,
-          'PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION' as const,
-        ],
+          'FAMILY_METHOD_SELECTION',
+          'PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION',
+        ] as const,
       }];
     });
   const missingPrerequisites = [
