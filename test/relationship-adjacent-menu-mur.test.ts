@@ -58,9 +58,9 @@ describe('scope-specific research MUR never grants Official family/Dayun/spouse/
     expect(parents.mur.state).toBe('unsupported');
     expect(children.mur.state).toBe('unsupported');
     expect(parents.mur.observedFactPaths).toEqual([
-      'pillars.month.value', 'pillars.year.value',
+      'pillars.month', 'pillars.year',
     ]);
-    expect(children.mur.observedFactPaths).toEqual(['pillars.hour.value']);
+    expect(children.mur.observedFactPaths).toEqual(['pillars.hour']);
     expect(parents.mur.sourceIds).toEqual([]);
     expect(parents.mur.missingRequirements.join(' ')).toContain('T8');
     noSemanticUpgrade(parents.mur);
