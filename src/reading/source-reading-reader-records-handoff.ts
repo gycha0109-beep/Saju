@@ -312,7 +312,15 @@ export function sameSajuReadingForReaderAndRecordsV1(input: Readonly<{
     const expected = handoff.source;
     const matches = (value: SajuReaderRecordsSourceReferenceV1): boolean =>
       deterministicContentHash(value) === deterministicContentHash(expected);
+    const currentInventoryHash = deterministicContentHash({
+      version: SAJU_READER_RECORDS_SOURCE_HANDOFF_VERSION_V1,
+      readingId: expected.readingId,
+      responseId: expected.responseId,
+      responseBodyHash: expected.responseBodyHash,
+      inventory: handoff.inventory,
+    });
     const valid = handoff.version === SAJU_READER_RECORDS_SOURCE_HANDOFF_VERSION_V1
+      && expected.inventoryHash === currentInventoryHash
       && handoff.state === 'held'
       && handoff.lifecycle === 'preview'
       && handoff.canDisclose === false
