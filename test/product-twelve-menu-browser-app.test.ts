@@ -82,6 +82,21 @@ interface FakeHttpCall {
   body: { birth: Record<string, unknown>; partnerBirth?: Record<string, unknown>; reading?: { text: string; outputPreferences: { preferredDetail: string } } };
 }
 
+function subjectFor(overrides: Record<string, unknown> = {}) {
+  const birth: Record<string, unknown> = {
+    calendarType: 'solar', date: '1990-05-15', time: '14:30', ...overrides,
+  };
+  return {
+    birthInputDisplay: {
+      calendarType: birth.calendarType,
+      date: birth.date,
+      timeKnown: birth.time !== null,
+      ...(birth.time === null ? {} : { time: birth.time }),
+      ...(birth.calendarType === 'lunar' ? { leapMonth: birth.isLeapMonth } : {}),
+    },
+  };
+}
+
 function mountBrowser(fetcher?: (url: string, call: FakeHttpCall) => Promise<unknown>) {
   const root = new FakeNode('main');
   const form = new FakeNode('form');
@@ -106,13 +121,14 @@ function mountBrowser(fetcher?: (url: string, call: FakeHttpCall) => Promise<unk
   oldResult.id = 'result';
   root.appendChild(oldResult);
   const calls: FakeHttpCall[] = [];
-  const defaultFetch = async () => ({
+  const defaultFetch = async (call: FakeHttpCall) => ({
     ok: true, status: 200,
     json: async () => ({
       version: 'myeongha-product-reading-response-v2',
       state: 'delivered',
       messageCode: 'READING_DELIVERED',
       reading: {
+        subject: subjectFor(call.body.birth),
         sections: [{
           title: '실제 한국어 풀이',
           state: 'complete',
@@ -125,7 +141,7 @@ function mountBrowser(fetcher?: (url: string, call: FakeHttpCall) => Promise<unk
   const fakeFetch = async (url: string, args: { method: string; body: string }) => {
     const call: FakeHttpCall = { url, method: args.method, body: JSON.parse(args.body) as FakeHttpCall['body'] };
     calls.push(call);
-    return fetcher ? fetcher(url, call) : defaultFetch();
+    return fetcher ? fetcher(url, call) : defaultFetch(call);
   };
   runInNewContext(PRODUCT_TWELVE_MENU_BROWSER_SCRIPT, {
     document: {
@@ -188,6 +204,7 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
       json: async () => ({
         state: 'delivered', messageCode: 'READING_DELIVERED',
         reading: {
+        subject: subjectFor({ time: null }),
           calculationSummary: {
             pillars: {
               year: { label: '연주', status: 'resolved', value: '갑자' },
@@ -238,6 +255,7 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
         state: 'insufficient_evidence',
         messageCode: 'READING_EVIDENCE_INSUFFICIENT',
         reading: {
+        subject: subjectFor(),
           calculationSummary: {
             pillars: {
               year: { status: 'resolved', value: '정유' },
@@ -293,6 +311,7 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
       json: async () => ({
         state: 'delivered',
         reading: {
+        subject: subjectFor(),
           sections: [{
             title: '계산 확인',
             state: 'complete',
@@ -434,6 +453,7 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
       json: async () => ({
         state: 'delivered',
         reading: {
+        subject: subjectFor(),
           sections: [{
             title: '<script>evil()</script>',
             state: 'complete',
