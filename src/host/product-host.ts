@@ -453,6 +453,9 @@ function consumerInput(
     ...(parsed.reading.outputPreferences === undefined
       ? {}
       : { outputPreferences: parsed.reading.outputPreferences }),
+    ...(parsed.reading.readingLocale === undefined
+      ? {}
+      : { readingLocale: parsed.reading.readingLocale }),
   };
 }
 
