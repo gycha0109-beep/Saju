@@ -140,6 +140,28 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 1997-05-08 남·여·성별 미지정 명식의 부모·자녀 원문별 관측값과 각 계산 경로를 비교하고, 1997-05-15 여성 명식의 시각 미상 상황에서 부모·자녀 각각 시주 T5/지장간 부족을 유지한다. 지장간 자료 필드를 제거한 명식에서도 기존 십신 조회값을 바꾸거나 빈 배열을 가족 구성원 부재로 간주하지 않는다. `hiddenStemTenGodClassificationAuthorized=false`, `visibleAndHiddenStarMethodReconciled=false`, `historicalRelativeRoleAuthorized=false`, `independentlyAdmittedFamilyClaims=0`, `familyT8Admitted=false`다. 기존 `researchOnly=true`, `mayGrantOfficialAuthority=false`, `mayMarkMenuAvailable=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`도 유지한다.
 
+### R070 부모·자녀의 실제 해석 차단 사유 — 원문 조건과 방법 선택의 분리
+
+기존 `evaluateFamilySourceScopeV1(snapshot, 'parents'|'children')`는 이미 원전의 정확한 문구·성별 범위·계산 기둥·현대 T5 탐색·지장간 소속·지지충 구조적 후보 및 3중 위치 관찰을 구분한다. 하지만 이 계산 사실만으로 가족 T8의 역할 배속·결과·우선순위를 인정할 근거는 없다. 이번 변경은 **기존 R070 코퍼스와 이미 작성된 methodCandidates/methodCoexistences/crossLayerMethodComparisons/unassignedConfigurationInputs를 재사용**하여 `interpretationBlockers`를 반환한다. 새로운 원전, 의미 Claim, 판정 방법론, 승인 플래그는 만들지 않는다.
+
+`sourceConditionHolds`는 부모의 `月為父母兄弟門戶`, `年為父`, `胎為母`, `父以偏財論`, `母以印綬論` 및 자녀의 `時為子息`, `時為子孫`, `子嗣者即官星也`, `我生者為子` 각각에 대해 **원래 sourceLayerId/sourceSurface/originalSexScope/disposition**을 보존하고 아래 부족 유형을 하나씩 명시한다. 별 관찰을 한 문구는 원래의 T5 확정 경로와 미상 경로를, 지장간 인계가 있는 경우에는 **별도 계산된 지장간 소속 경로**를 기록한다. 미상 시주 등의 기둥 입력도 별개 부족 경로에 포함한다. 경로들이 한 문구에 등장하더라도 가족 의미 근거 수가 늘지는 않는다.
+
+| `blockerKind` | 적용되는 기존 경계 | 이 상태에서 금지되는 승격 |
+| --- | --- | --- |
+| `HISTORICAL_SEX_SCOPE_NOT_APPLICABLE` | 해당 원문의 남성/여성 역사적 성별 범위가 현재 명식과 불일치·미지정되어 `NARROW_OR_REPLACE` | 별 계산으로 성별 조건을 우회 |
+| `CANONICAL_CONCEPT_NOT_AVAILABLE` | 역사적 남성 명식 `胎為母`의 독립 태(胎) 계산 사실이 현재 Canonical에 없음 | 연주·월주로 태를 대체 |
+| `REFERENCE_PILLAR_INPUT_UNRESOLVED` | 원문은 기둥을 요구하지만 시각 미상 등으로 그 기둥을 확정하지 못함 | 다른 기둥이나 별 관측으로 해당 기둥 확정 |
+| `SOURCE_CONTEXT_METHOD_NOT_SELECTED` | `父以偏財論`·`母以印綬論`·`子嗣者即官星也`·역사 여성 명식의 `我生者為子` 등 실제 T5가 있더라도 특정 장·문맥의 별 배속 방법이 미선정 | 원문 역할 배속·친족 존재/상태/미래 예측 |
+| `CALCULATED_PILLAR_POSITION_ONLY` | `月為父母兄弟門戶`·`年為父`·`時為子息`·`時為子孫`의 기둥 계산 위치는 확정 | 기둥 위치를 곧 가족 결과 규칙으로 승인 |
+
+`methodSelectionHolds`는 **관찰 사실의 중복 여부와 별개로 해결되지 않은 원문 방법 선택**을 기록한다. `ALTERNATIVE_PILLAR_DOMAIN_WORDINGS`는 기존 남성 명식의 부모 연주/월주 병용과 자녀 시주 문구 병용을 기존 `methodCoexistences`에서 가져온다. `PILLAR_DOMAIN_VS_STAR_RELATION`은 기존 동일 대상 기둥 배속·별 배속의 교차 방법을 `crossLayerMethodComparisons`에서 가져온다. `FEMALE_CHILD_STAR_RELATION_ALTERNATIVES`는 **역사 여성 명식에서만** `子嗣者即官星也`와 `我生者為子` 둘이 현재 원문 검토 범위에 있을 때 발생한다. 이것은 두 방식의 승패·역사적 모순이 검증되었다는 뜻이 아니라, 현재 원전 문맥에서 **선택/조정 근거가 아직 연결되지 않았다**는 뜻이다. 남성·성별 미지정 명식에 여성 전용 문구를 적용하지 않으며, 시간 미상으로 시주 교차가 불가능한 경우 기둥-별 교차가 없는 상태를 유지한다. 서로 다른 원문을 통해 같은 계산 경로가 여러 번 등장해도 독립 근거를 가산하지 않는다.
+
+`configurationHolds`는 기존 구성 레이어의 정확한 다섯 원문 `旺衰`·`生旺死絕`·`刑沖破害`·`官煞混雜`·`財印`를 **가족 관계 미배속 상태 그대로** 보존한다. 이미 구분한 지지충 구조 후보, 두 T5 조회 그룹의 위치 대조, 지장간 소속 목록을 구성의 고전적 성립·효과로 승격하지 않으며 `familyScopeResolved=false`와 `familyOutcomeAuthorized=false`를 유지한다.
+
+모든 인계 항목은 원래 `missingPrerequisites`를 포함한다. 기존 기둥 사실만 관측된 항목에는 `R070_PILLAR_LOCATION_IS_NOT_FAMILY_OUTCOME_RULE`을, 여성 자녀의 별 배속 복수 원문이 함께 검토되는 항목에는 `R070_CHILD_STAR_RELATION_ALTERNATIVES_NOT_RECONCILED`을 **승인 불가 사유**로 덧붙인다. 이 추가 코드는 원전 문구가 아니라 보류 상태를 설명하는 내부 식별자다. `interpretationBlockers.missingPrerequisites`를 최상위 가족 보고의 부족 조건에 전파한다. `originalTextContradictionEstablished=false`, `interpretationMethodSelected=false`, `independentlyAdmittedFamilyClaims=0`, `familyT8Admitted=false`이다.
+
+**실계산 회귀:** 출생시각을 제공한 남성·여성·성별 미지정 명식의 부모/자녀 메뉴에서 원문 5개 또는 4개와 기존 교차 방법의 갯수 및 범위를 대조한다. 1997-05-15 여성 명식의 출생시각 미상에서는 부모의 월주 위치가 남아 있는 반면 자녀 시주는 확정되지 않고, 자녀의 두 별 배속 원문은 방법 선택이 미해결인 상태로 남는다. 출생시각 미상임에도 자녀의 원문을 승인하거나 상대 가족 구성원의 속성을 새로 생성하는 경로는 없다. 이 자료는 **T8 Official, Reader, Product availability, 저장·공개·판매 허가가 아닌 연구용 인계**다.
+
 ### R070 기둥·십신·지지충의 동일 기둥 참조 — 중복 근거 0으로 고정
 
 기존 원문 범위를 유지하면서 `crossLayerMethodComparisons[]`의 **기둥-십신** 두 원문 대조 결과를 `branchClashPillarObservations[]` 중 **같은 기둥 원문·동일 Source Layer ID·같은 기둥 위치**를 가진 실제 `刑沖破害`의 `branch_clash` 입력에 결속한다. `pillarStarClashOverlaps[]`의 각 항목은 다음 **기존 세 원문**을 한 명식의 계산 경로에서 읽는 연구용 자료다. 이 원문들이 동일한 가족 결과를 주장하거나 서로 독립적으로 확증한다는 뜻은 아니다.
