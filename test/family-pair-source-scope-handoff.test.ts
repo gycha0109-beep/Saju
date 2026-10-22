@@ -300,6 +300,86 @@ describe('R068/R069 pairwise source boundary on two real Canonical charts', () =
     )).toEqual(report);
   });
 
+  it('keeps R069 historical spouse input scope distinct for each person without ever granting pairwise authority', () => {
+    const male = chart({ year: 1988, sex: 'male' });
+    const female = chart({ year: 1996, sex: 'female' });
+    const report = evaluatePairwiseSourceScopeV1(
+      { personRef: 'man', snapshot: male },
+      { personRef: 'woman', snapshot: female },
+    );
+    const source = (id: string) => {
+      const item = report.comparedSourceSurfaces.find(value =>
+        value.corpusId === 'R069' && value.originalClaimId === id,
+      );
+      if (!item?.oneChartScopeObservations) {
+        throw new TypeError('R069 clause missing separated natal input observations: ' + id);
+      }
+      return item.oneChartScopeObservations;
+    };
+
+    const day = source('MALE-DAY-SELF-WIFE');
+    expect(day[0].personRole).toBe('subject');
+    expect(day[1].personRole).toBe('target');
+    expect(day[0].historicalScopeMatch).toBe('matched');
+    expect(day[0].disposition).toBe('BOUNDED_FACT_OBSERVED');
+    expect(day[0].observedFactPaths).toEqual(['pillars.day']);
+    expect(day[1].historicalScopeMatch).toBe('mismatched');
+    expect(day[1].disposition).toBe('NARROW_OR_REPLACE');
+    expect(day[1].observedFactPaths).toEqual([]);
+
+    const wealth = source('MALE-I-CONTROL-WIFE');
+    expect(wealth[0].historicalScopeMatch).toBe('matched');
+    expect(wealth[1].historicalScopeMatch).toBe('mismatched');
+    expect(wealth[0].observedTenGodPositions.every(position =>
+      ['편재', '정재'].includes(position.value))).toBe(true);
+    expect(wealth[0].observedFactPaths).toEqual(
+      wealth[0].observedTenGodPositions.map(position => position.path),
+    );
+    const officials = source('FEMALE-CONTROLS-ME-HUSBAND');
+    expect(officials[0].historicalScopeMatch).toBe('mismatched');
+    expect(officials[1].historicalScopeMatch).toBe('matched');
+    expect(officials[1].observedTenGodPositions.every(position =>
+      ['편관', '정관'].includes(position.value))).toBe(true);
+    const configuration = source('DAY-WEALTH-CONFIGURATION-WIFE-CLAIMS');
+    expect(configuration[0].disposition).toBe('INCONCLUSIVE');
+    expect(configuration[0].missingPrerequisites)
+      .toContain('R069_CONFIGURATION_METHOD_NOT_ESTABLISHED');
+    expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R069')
+      .every(item => item.eligiblePairwiseClaim === false &&
+        item.oneChartScopeObservations?.every(one =>
+          one.oneChartSpouseMeaningAuthorized === false &&
+          one.pairwiseMeaningAuthorized === false))).toBe(true);
+
+    const swapped = evaluatePairwiseSourceScopeV1(
+      { personRef: 'woman', snapshot: female },
+      { personRef: 'man', snapshot: male },
+    );
+    const swappedMale = swapped.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'MALE-DAY-SELF-WIFE')?.oneChartScopeObservations;
+    expect(swappedMale?.[0].historicalScopeMatch).toBe('mismatched');
+    expect(swappedMale?.[1].historicalScopeMatch).toBe('matched');
+    expect(swapped.pairwiseT10Admitted).toBe(false);
+  });
+
+  it('keeps unspecified historical sex and unknown star positions as nonadmitted R069 research', () => {
+    const unspecified = chart({ sex: 'unspecified' });
+    const malePartial = chart({ sex: 'male', timeKnown: false });
+    const report = evaluatePairwiseSourceScopeV1(
+      { personRef: 'unmarked', snapshot: unspecified },
+      { personRef: 'unknown-time', snapshot: malePartial },
+    );
+    const claim = report.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'MALE-I-CONTROL-WIFE');
+    expect(claim?.oneChartScopeObservations?.[0].historicalScopeMatch).toBe('unspecified');
+    expect(claim?.oneChartScopeObservations?.[0].disposition).toBe('NARROW_OR_REPLACE');
+    const partial = claim?.oneChartScopeObservations?.[1];
+    expect(partial?.historicalScopeMatch).toBe('matched');
+    expect(partial?.disposition).toBe('INCONCLUSIVE');
+    expect(partial?.missingPrerequisites).toContain('R069_TEN_GOD_INPUT_PARTIAL');
+    expect(partial?.oneChartSpouseMeaningAuthorized).toBe(false);
+    expect(report.pairwiseT10Admitted).toBe(false);
+  });
+
   it('keeps a missing target birth hour and identical charts as facts, not an affinity score', () => {
     const subject = chart({ year: 1990 });
     const target = chart({ year: 1990, timeKnown: false });
