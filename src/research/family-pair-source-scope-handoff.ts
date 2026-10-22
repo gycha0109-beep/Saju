@@ -67,6 +67,34 @@ export interface R070ConfigurationTenGodSearchTerm {
   configurationMeaningAuthorized: false;
 }
 
+export interface R070ConfigurationTenGodGroupContrast {
+  sourceLayerId: 'CONFIGURATION-OUTCOME';
+  sourceSurface: '官煞混雜' | '財印';
+  /** Original words as search terms, not approved historic-to-T5 equivalences. */
+  sourceTerms: readonly [
+    R070ConfigurationTenGodSearchTerm['sourceTerm'],
+    R070ConfigurationTenGodSearchTerm['sourceTerm'],
+  ];
+  /** Counts observed modern T5 lookup groups only, not classical conditions. */
+  observedGroupCount: 0 | 1 | 2;
+  observationState:
+    | 'BOTH_GROUPS_OBSERVED_IN_AT_LEAST_ONE_SHARED_PILLAR'
+    | 'BOTH_GROUPS_OBSERVED_ONLY_IN_DISTINCT_PILLARS'
+    | 'ONLY_ONE_GROUP_OBSERVED_IN_VISIBLE_T5'
+    | 'NEITHER_GROUP_OBSERVED_IN_VISIBLE_T5';
+  inputCoverage: 'RESOLVED_VISIBLE_T5' | 'PARTIAL_VISIBLE_T5';
+  sharedPillarSlots: readonly PillarSlot[];
+  firstGroupOnlyPillarSlots: readonly PillarSlot[];
+  secondGroupOnlyPillarSlots: readonly PillarSlot[];
+  unresolvedFactPaths: readonly string[];
+  /** Co-occurrence is not the classic 混雜/財印 configuration or its effect. */
+  originalConfigurationConditionEstablished: false;
+  configurationInteractionOrPriorityEstablished: false;
+  familyRelativeEffectAuthorized: false;
+  familyT8Admitted: false;
+  missingPrerequisites: readonly string[];
+}
+
 export interface R070UnassignedConfigurationInput {
   sourceLayerId: 'CONFIGURATION-OUTCOME';
   sourceSurface: string;
@@ -77,6 +105,8 @@ export interface R070UnassignedConfigurationInput {
   canonicalFactPath?: 'derivedFacts.structuralRelations' | 'derivedFacts.tenGods';
   observedBranchClashIds: readonly string[];
   tenGodSearchTerms?: readonly R070ConfigurationTenGodSearchTerm[];
+  /** Pairwise T5 position contrast within one person's chart; no R070 effect. */
+  tenGodGroupContrast?: R070ConfigurationTenGodGroupContrast;
   missingPrerequisites: readonly string[];
   familyOutcomeAuthorized: false;
 }
@@ -130,6 +160,72 @@ function r070ConfigurationTenGodSearchTerms(
   });
 }
 
+/**
+ * The original R070 surface mentions two configuration terms, but supplies
+ * no admitted rule for their co-location, interaction or parent/child effect.
+ * This compares only the T5 facts already collected for each source term.
+ */
+function r070ConfigurationTenGodGroupContrast(
+  sourceSurface: '官煞混雜' | '財印',
+  terms: readonly R070ConfigurationTenGodSearchTerm[],
+): R070ConfigurationTenGodGroupContrast {
+  const [first, second] = terms;
+  const expected: readonly [string, string] = sourceSurface === '官煞混雜'
+    ? ['官', '煞'] : ['財', '印'];
+  if (first === undefined || second === undefined || terms.length !== 2 ||
+      first.sourceTerm !== expected[0] || second.sourceTerm !== expected[1]) {
+    throw new TypeError('R070 configuration T5 lookup terms must match the original layer.');
+  }
+  const firstSlots = TEN_GOD_OBSERVATION_SLOTS.filter(slot =>
+    first.observedPositions.some(position => position.slot === slot));
+  const secondSlots = TEN_GOD_OBSERVATION_SLOTS.filter(slot =>
+    second.observedPositions.some(position => position.slot === slot));
+  const sharedPillarSlots = firstSlots.filter(slot => secondSlots.includes(slot));
+  const firstGroupOnlyPillarSlots = firstSlots.filter(slot => !secondSlots.includes(slot));
+  const secondGroupOnlyPillarSlots = secondSlots.filter(slot => !firstSlots.includes(slot));
+  const observedGroupCount = (Number(first.observedPositions.length > 0) +
+    Number(second.observedPositions.length > 0)) as 0 | 1 | 2;
+  const observationState = observedGroupCount === 2
+    ? sharedPillarSlots.length > 0
+      ? 'BOTH_GROUPS_OBSERVED_IN_AT_LEAST_ONE_SHARED_PILLAR' as const
+      : 'BOTH_GROUPS_OBSERVED_ONLY_IN_DISTINCT_PILLARS' as const
+    : observedGroupCount === 1
+      ? 'ONLY_ONE_GROUP_OBSERVED_IN_VISIBLE_T5' as const
+      : 'NEITHER_GROUP_OBSERVED_IN_VISIBLE_T5' as const;
+  const unresolvedFactPaths = [...new Set([
+    ...first.unresolvedFactPaths,
+    ...second.unresolvedFactPaths,
+  ])];
+  return {
+    sourceLayerId: 'CONFIGURATION-OUTCOME',
+    sourceSurface,
+    sourceTerms: [first.sourceTerm, second.sourceTerm],
+    observedGroupCount,
+    observationState,
+    inputCoverage: unresolvedFactPaths.length > 0
+      ? 'PARTIAL_VISIBLE_T5' : 'RESOLVED_VISIBLE_T5',
+    sharedPillarSlots,
+    firstGroupOnlyPillarSlots,
+    secondGroupOnlyPillarSlots,
+    unresolvedFactPaths,
+    originalConfigurationConditionEstablished: false,
+    configurationInteractionOrPriorityEstablished: false,
+    familyRelativeEffectAuthorized: false,
+    familyT8Admitted: false,
+    missingPrerequisites: [
+      'R070_TEN_GOD_COEXISTENCE_METHOD_NOT_ESTABLISHED',
+      'R070_VISIBLE_T5_COOBSERVATION_IS_NOT_CLASSICAL_CONFIGURATION',
+      'R070_CONFIGURATION_INTERACTION_AND_PRIORITY_NOT_SOURCED',
+      'R070_CONFIGURATION_TO_FAMILY_EFFECT_NOT_SOURCED',
+      'HIDDEN_VS_VISIBLE_STAR_HANDLING',
+      ...(unresolvedFactPaths.length > 0
+        ? ['CANONICAL_T5_CONFIGURATION_GROUPS_PARTIAL'] : []),
+      ...(observedGroupCount !== 2
+        ? ['R070_UNOBSERVED_VISIBLE_T5_GROUP_IS_NOT_NEGATIVE_CONFIGURATION_EVIDENCE'] : []),
+    ],
+  };
+}
+
 function r070UnassignedConfigurationInputs(
   snapshot: CanonicalSajuSnapshot,
 ): readonly R070UnassignedConfigurationInput[] {
@@ -145,6 +241,10 @@ function r070UnassignedConfigurationInputs(
     const structuralKnown = isStructural && structural?.status === 'resolved';
     const tenGodSearchTerms = isTenGodSearch
       ? r070ConfigurationTenGodSearchTerms(snapshot, sourceSurface) : [];
+    const tenGodGroupContrast =
+      sourceSurface === '官煞混雜' || sourceSurface === '財印'
+        ? r070ConfigurationTenGodGroupContrast(sourceSurface, tenGodSearchTerms)
+        : undefined;
     const tenGodKnown = isTenGodSearch && snapshot.derivedFacts.tenGods.status === 'resolved';
     const observedBranchClashIds = structuralKnown
       ? structural.value.filter(candidate => candidate.kind === 'branch_clash')
@@ -163,6 +263,7 @@ function r070UnassignedConfigurationInputs(
         : tenGodKnown ? { canonicalFactPath: 'derivedFacts.tenGods' as const } : {}),
       observedBranchClashIds,
       ...(isTenGodSearch ? { tenGodSearchTerms } : {}),
+      ...(tenGodGroupContrast === undefined ? {} : { tenGodGroupContrast }),
       missingPrerequisites: [
         'CONFIGURATION_OUTCOME_SETTLEMENT',
         'FAMILY_CONFIGURATION_TO_RELATIVE_METHOD_SELECTION_NOT_ESTABLISHED',
@@ -173,8 +274,7 @@ function r070UnassignedConfigurationInputs(
         ...(isTenGodSearch
           ? ['R070_TEN_GOD_COEXISTENCE_METHOD_NOT_ESTABLISHED',
               'HIDDEN_VS_VISIBLE_STAR_HANDLING'] : []),
-        ...(tenGodSearchTerms.some(term => term.unresolvedFactPaths.length > 0)
-          ? ['CANONICAL_T5_CONFIGURATION_GROUPS_PARTIAL'] : []),
+        ...(tenGodGroupContrast?.missingPrerequisites ?? []),
       ],
       familyOutcomeAuthorized: false as const,
     };
