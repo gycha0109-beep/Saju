@@ -125,7 +125,8 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(original.career.sections.length).toBeGreaterThan(0);
     const first = original.career.sections[0]!;
     const gap = '다른 직업 해석 축을 뒷받침할 근거가 아직 부족합니다.';
-    const { readingGuide: _originalGuide, ...careerWithoutGuide } = original.career;
+    const careerWithoutGuide = { ...original.career };
+    delete careerWithoutGuide.readingGuide;
     const partial: NatalFiveDomainMultifactorReports = {
       ...original,
       career: {
