@@ -281,6 +281,20 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     messages.forEach(function(message) { note(view.output, message, 'notice'); });
   }
 
+  function matchesRequestedBirth(payload, birth) {
+    if (!payload.reading) return true;
+    const observed = payload.reading.subject && payload.reading.subject.birthInputDisplay;
+    if (!observed || typeof observed !== 'object') return false;
+    if (observed.calendarType !== birth.calendarType || observed.date !== birth.date) return false;
+    const expectedKnown = birth.time !== null;
+    if (observed.timeKnown !== expectedKnown) return false;
+    if (expectedKnown && observed.time !== birth.time) return false;
+    if (!expectedKnown && observed.time !== undefined) return false;
+    if (birth.calendarType === 'lunar' &&
+        observed.leapMonth !== birth.isLeapMonth) return false;
+    return true;
+  }
+
   function renderPayload(view, payload) {
     const sections = payload.reading && Array.isArray(payload.reading.sections)
       ? payload.reading.sections.filter(function(section) {
@@ -499,8 +513,14 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
         if (!response.ok) throw new Error('현재 이 범위의 풀이를 제공할 수 없습니다.');
         const payload = await response.json();
         if (epoch !== currentEpoch || sequence !== view.sequence) return;
-        if (spec.id === 'compatibility') renderCompatibility(view, payload);
-        else renderPayload(view, payload);
+        if (spec.id === 'compatibility') {
+          renderCompatibility(view, payload);
+        } else {
+          if (!matchesRequestedBirth(payload, requestBirth)) {
+            throw new Error('현재 입력한 생년월일·출생시각과 다른 명식의 풀이가 반환되어 표시하지 않았습니다.');
+          }
+          renderPayload(view, payload);
+        }
       } catch (error) {
         if (epoch !== currentEpoch || sequence !== view.sequence) return;
         view.output.replaceChildren();
