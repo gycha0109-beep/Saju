@@ -140,6 +140,32 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 1997-05-08 남·여·성별 미지정 명식의 부모·자녀 원문별 관측값과 각 계산 경로를 비교하고, 1997-05-15 여성 명식의 시각 미상 상황에서 부모·자녀 각각 시주 T5/지장간 부족을 유지한다. 지장간 자료 필드를 제거한 명식에서도 기존 십신 조회값을 바꾸거나 빈 배열을 가족 구성원 부재로 간주하지 않는다. `hiddenStemTenGodClassificationAuthorized=false`, `visibleAndHiddenStarMethodReconciled=false`, `historicalRelativeRoleAuthorized=false`, `independentlyAdmittedFamilyClaims=0`, `familyT8Admitted=false`다. 기존 `researchOnly=true`, `mayGrantOfficialAuthority=false`, `mayMarkMenuAvailable=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`도 유지한다.
 
+### R070 기둥·십신·지지충의 동일 기둥 참조 — 중복 근거 0으로 고정
+
+기존 원문 범위를 유지하면서 `crossLayerMethodComparisons[]`의 **기둥-십신** 두 원문 대조 결과를 `branchClashPillarObservations[]` 중 **같은 기둥 원문·동일 Source Layer ID·같은 기둥 위치**를 가진 실제 `刑沖破害`의 `branch_clash` 입력에 결속한다. `pillarStarClashOverlaps[]`의 각 항목은 다음 **기존 세 원문**을 한 명식의 계산 경로에서 읽는 연구용 자료다. 이 원문들이 동일한 가족 결과를 주장하거나 서로 독립적으로 확증한다는 뜻은 아니다.
+
+- 기둥 원문: 부모의 `月為父母兄弟門戶`(월주), 역사 남성 명식의 `年為父`(연주); 자녀의 `時為子息`(시주), 역사 남성 명식의 `時為子孫`(같은 시주).
+- 별 배속 원문: 부모의 `父以偏財論` / `母以印綬論`, 자녀의 `子嗣者即官星也` / 역사 여성 명식의 `我生者為子`. 현대 T5 조회 용어와 원문 적용 규칙의 등가성을 주장하지 않는다.
+- 구조 원문: `CONFIGURATION-OUTCOME`의 정확한 `刑沖破害` 중 Canonical에 이미 있는 `kind=branch_clash` 후보만 본다. `刑`·`破`·`害` 또는 충의 영향·강도·해소는 계산한 것으로 표시하지 않는다.
+
+각 항목은 `sourceLayerIds`·`sourceSurfaces` **3개**와 `pillarSlot`·`pillarFactPath`, `visibleT5FactPath=derivedFacts.tenGods`, `structuralFactPath=derivedFacts.structuralRelations`를 갖는다. `observedT5PositionsInPillar`는 원래 `starPillarPositionContrast.inReferencedPillar`의 **실제 확정값/경로**만, `unresolvedT5FactPathsInPillar`는 원래 미확정 경로만 전달한다. `participatingClashes`는 해당 기둥 지지가 직접 참여한 원래 `branch_clash` 후보의 ID·참여자·출처·`semantics.structuralMatchOnly=true`를 유지한다. `outsideClashRelationIds`는 같은 원국에서 다른 기둥에만 걸린 충 후보의 원래 ID를 보존한다. 따라서 기둥 바깥의 지지충은 해당 부모·자녀 문구에 자동 배속하지 않는다.
+
+| `factOverlapState` | 계산 사실의 한정 관찰 | 금지되는 판단 |
+| --- | --- | --- |
+| `VISIBLE_T5_AND_BRANCH_CLASH_COLOCATED` | 확정된 해당 기둥의 현대 T5 별 그룹과 지지충 후보 참여가 함께 관찰 | 같은 위치니까 부모·자녀 사건·관계/갈등이 발생한다는 가족 T8 |
+| `VISIBLE_T5_WITHOUT_REFERENCE_BRANCH_CLASH` | 그 기둥에는 별 조회값이 있으나 충 참여 후보는 미관찰 | 좋은 가족운/충이 없다는 전면 단정 |
+| `REFERENCE_BRANCH_CLASH_WITHOUT_VISIBLE_T5` | 그 기둥 지지는 충 후보에 참여하나 해당 현대 별 조회는 미관찰 | 친족 별·친족 관계의 부재/악화 |
+| `NO_VISIBLE_T5_OR_REFERENCE_BRANCH_CLASH` | 현재 확정된 조회 표면에는 둘 다 미관찰 | 모든 형충파해·지장간·가족 사건이 없다는 결론 |
+| `INCOMPLETE_FACT_INPUTS` | T5 해당 기둥의 값 또는 구조 관계 후보가 미확정 | 부족한 값을 다른 기둥으로 대체해 확정 판정 |
+
+원래 교차 대조가 만들어진 경우에만 3중 관찰을 생성한다. 즉, 시주가 미상인 자녀 명식에서는 시주 기둥의 역사 원문+T5 교차 자체가 성립하지 않아 해당 자녀 3중 관찰은 **빈 배열**이다. 시주 미상으로 T5가 전체 미해결이더라도 월주가 확정된 부모 방법의 기둥-별 대조는 미해결 경로를 유지하며 `INCOMPLETE_FACT_INPUTS`로 남는다. 역사적 성별 범위를 벗어난 원문은 새로운 3중 관찰로 추가하지 않는다.
+
+`tripleLayerFactReuse`는 계산 사실을 `uniqueVisibleT5FactPaths`와 `uniqueBranchClashRelationIds`로 **원래 경로·ID 기준 중복 제거**한다. 같은 값이 서로 다른 역사 원문쌍에 중복 등장하면 `repeatedVisibleT5FactPaths`와 `repeatedBranchClashRelationIds`에 별도 기록한다. 동일한 시주를 `時為子息`과 `時為子孫`이 함께 조회하거나, 연월 지지충을 여러 부모 원문이 관찰하더라도 **서로 다른 독립 근거 2건이 되지 않는다.** 목록의 `unique`는 계산 참조 중복 제거일 뿐 의미 Claim 승인이나 T8 EvidenceSelector 가중치가 아니다.
+
+모든 3중 항목의 `crossLayerMethodReconciled=false`, `configurationEffectAuthorized=false`, `independentFamilyEvidenceWeightAssigned=false`, `independentlyAdmittedFamilyClaims=0`, `familyT8Admitted=false`이며, 중복 요약도 `distinctHistoricalSourceCountIsEvidenceWeight=false`, `independentlyAdmittedFamilyClaims=0`이다. 결핍은 `R070_PILLAR_STAR_CLASH_TRIPLE_SYNTHESIS_NOT_SOURCED`, `R070_SHARED_CALCULATION_FACT_IS_NOT_MULTIPLE_FAMILY_CLAIMS`, `FAMILY_METHOD_SELECTION`, `CONFIGURATION_OUTCOME_SETTLEMENT`을 포함한다. 입력 일부가 미해결이면 `R070_TRIPLE_LAYER_CANONICAL_INPUTS_PARTIAL`을 추가하고 원래 기둥-십신/지지충 개별 미충족 코드도 남긴다.
+
+**실계산 회귀:** 1988·1990·1993·1997·2001년 5월의 실제 계산 명식에서 각 3중 항목의 세 원문, 원본 T5 위치·지지충 참여자/ID, 중복 제거된 경로·ID가 원래 두 관찰과 정확히 일치하는지 검사한다. 1997-05-15 여성 시각 미상 명식은 부모의 월주 부분 관찰과 자녀 시주의 교차 미생성을 대조한다. **원전에서 승인된 삼중 합성 규칙은 없음**을 명시하며, 모든 경우 `interpretationDisposition=INCONCLUSIVE`, `researchOnly=true`, Official/메뉴 제공/보관/공개/판매 `false`를 보존한다.
+
 ### R070 기둥 배속과 십신 배속의 교차 적용 범위 — 근거 이중계산 금지
 
 `crossLayerMethodComparisons`는 **이미 연구용으로 등록된 원문 2개를 실제 자기 명식의 서로 다른 계산 입력에 연결**하지만, 두 방법이 같은 가족 주장을 지지하거나 서로 충돌한다는 새로운 고전적 결론을 만들지 않는다. 대상별 정확한 원문쌍은 다음과 같다.
