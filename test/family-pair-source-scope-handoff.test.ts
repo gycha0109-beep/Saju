@@ -892,6 +892,177 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(report.familyT8Admitted).toBe(false);
   });
 
+  it('exposes exact R070 parent and child star-source hidden membership separately from visible T5', () => {
+    const cases = [
+      { sex: 'male' as const, scope: 'parents' as const,
+        sources: ['父以偏財論', '母以印綬論'] },
+      { sex: 'female' as const, scope: 'parents' as const,
+        sources: ['父以偏財論', '母以印綬論'] },
+      { sex: 'unspecified' as const, scope: 'parents' as const,
+        sources: ['父以偏財論', '母以印綬論'] },
+      { sex: 'male' as const, scope: 'children' as const,
+        sources: ['子嗣者即官星也'] },
+      { sex: 'female' as const, scope: 'children' as const,
+        sources: ['子嗣者即官星也', '我生者為子'] },
+      { sex: 'unspecified' as const, scope: 'children' as const,
+        sources: ['子嗣者即官星也'] },
+    ];
+    for (const input of cases) {
+      const snapshot = chart({ year: 1997, day: 8, sex: input.sex });
+      const hiddenStems = snapshot.derivedFacts.hiddenStems;
+      if (hiddenStems === undefined) {
+        throw new Error('Production Canonical hidden membership is required for this test.');
+      }
+      const report = evaluateFamilySourceScopeV1(snapshot, input.scope);
+      const starCandidates = report.methodCandidates.filter(candidate =>
+        ['父以偏財論', '母以印綬論', '子嗣者即官星也', '我生者為子']
+          .includes(candidate.sourceSurface),
+      );
+      expect(starCandidates.map(candidate =>
+        candidate.relativeStarHiddenStemBoundary === undefined
+          ? undefined : candidate.sourceSurface).filter(Boolean)).toEqual(input.sources);
+      for (const candidate of starCandidates) {
+        if (candidate.disposition === 'NARROW_OR_REPLACE') {
+          expect(candidate.relativeStarHiddenStemBoundary).toBeUndefined();
+          expect(candidate.tenGodObservation).toBeUndefined();
+          continue;
+        }
+        const visible = candidate.tenGodObservation;
+        const boundary = candidate.relativeStarHiddenStemBoundary;
+        if (visible === undefined || boundary === undefined) {
+          throw new Error('In-scope R070 family-star source must preserve both fact surfaces.');
+        }
+        expect(boundary.sourceSurface).toBe(candidate.sourceSurface);
+        expect(boundary.sourceLayerId).toBe(candidate.sourceLayerId);
+        expect(boundary.originalSexScope).toBe(candidate.originalSexScope);
+        expect(boundary.requestedScope).toBe(input.scope);
+        expect(boundary.historicalSex).toBe(input.sex);
+        expect(boundary.visibleT5FactPath).toBe('derivedFacts.tenGods');
+        expect(boundary.hiddenStemFactPath).toBe('derivedFacts.hiddenStems');
+        expect(boundary.observedModernT5Group).toBe(visible.observedGroup);
+        expect(boundary.visibleT5ObservationStatus).toBe(visible.status);
+        expect(boundary.hiddenStemMembershipCoverage).toBe('RESOLVED_MEMBERSHIP_ONLY');
+        expect(boundary.unresolvedHiddenStemMembershipFactPaths).toEqual([]);
+        expect(boundary.pillarObservations.map(item => item.pillarSlot))
+          .toEqual(['year', 'month', 'day', 'hour']);
+        expect(boundary.pillarObservations.flatMap(item => item.visibleT5Positions))
+          .toEqual(visible.observedPositions);
+        expect(boundary.pillarObservations.flatMap(item =>
+          item.unresolvedVisibleT5FactPaths)).toEqual(visible.unresolvedFactPaths);
+        for (const pillar of boundary.pillarObservations) {
+          const canonical = hiddenStems[pillar.pillarSlot];
+          expect(pillar.membershipFactPath)
+            .toBe('derivedFacts.hiddenStems.' + pillar.pillarSlot);
+          expect(pillar.branchFactPath).toBe('pillars.' + pillar.pillarSlot + '.branch');
+          expect(pillar.status).toBe(canonical.status);
+          if (canonical.status !== 'resolved') {
+            throw new Error('Known-time original chart must resolve all hidden memberships.');
+          }
+          expect(pillar.rawMembershipPositions).toEqual(
+            canonical.value.map((stem, storageIndex) => ({ storageIndex, stem })),
+          );
+          expect(pillar.visibleT5Positions.every(item =>
+            item.slot === pillar.pillarSlot)).toBe(true);
+          expect(pillar.hiddenStemT5ClassificationAuthorized).toBe(false);
+        }
+        expect(boundary.hiddenStemTenGodClassificationAuthorized).toBe(false);
+        expect(boundary.visibleAndHiddenStarMethodReconciled).toBe(false);
+        expect(boundary.historicalRelativeRoleAuthorized).toBe(false);
+        expect(boundary.independentlyAdmittedFamilyClaims).toBe(0);
+        expect(boundary.familyT8Admitted).toBe(false);
+        expect(boundary.missingPrerequisites).toContain(
+          'R070_FAMILY_STAR_HIDDEN_STEM_T5_CLASSIFICATION_NOT_ESTABLISHED',
+        );
+        expect(boundary.missingPrerequisites).toContain(
+          'R070_FAMILY_STAR_HIDDEN_STEM_RELATIVE_ROLE_METHOD_NOT_SOURCED',
+        );
+        expect(candidate.missingPrerequisites).toContain(
+          'R070_FAMILY_STAR_HIDDEN_STEM_RELATIVE_ROLE_METHOD_NOT_SOURCED',
+        );
+        expect(report.missingPrerequisites).toContain(
+          'R070_FAMILY_STAR_HIDDEN_STEM_RELATIVE_ROLE_METHOD_NOT_SOURCED',
+        );
+      }
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.researchOnly).toBe(true);
+      expect(report.mayGrantOfficialAuthority).toBe(false);
+      expect(report.mayMarkMenuAvailable).toBe(false);
+      expect(report.mayPersist).toBe(false);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+  });
+
+  it('does not fill unknown-hour family-star evidence using raw hidden stems', () => {
+    const snapshot = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    for (const scope of ['parents', 'children'] as const) {
+      const report = evaluateFamilySourceScopeV1(snapshot, scope);
+      const surfaceNames = scope === 'parents'
+        ? ['父以偏財論', '母以印綬論']
+        : ['子嗣者即官星也', '我生者為子'];
+      for (const sourceSurface of surfaceNames) {
+        const candidate = familyCandidate(report, sourceSurface);
+        const boundary = candidate.relativeStarHiddenStemBoundary;
+        const visible = candidate.tenGodObservation;
+        if (boundary === undefined || visible === undefined) {
+          throw new Error('Unknown hour must preserve source-bound incomplete observations.');
+        }
+        expect(boundary.hiddenStemMembershipCoverage).toBe('PARTIAL_MEMBERSHIP');
+        expect(boundary.unresolvedHiddenStemMembershipFactPaths)
+          .toContain('derivedFacts.hiddenStems.hour');
+        const hour = boundary.pillarObservations.find(item => item.pillarSlot === 'hour');
+        if (hour === undefined) throw new Error('Hour slot missing.');
+        expect(hour.status).toBe('unavailable');
+        expect(hour.rawMembershipPositions).toEqual([]);
+        expect(hour.visibleT5Positions).toEqual([]);
+        expect(hour.unresolvedVisibleT5FactPaths).toEqual([
+          'derivedFacts.tenGods.hour.stem',
+          'derivedFacts.tenGods.hour.branch',
+        ]);
+        expect(boundary.visibleT5ObservationStatus).toBe('incomplete_input');
+        expect(boundary.missingPrerequisites).toContain(
+          'CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE',
+        );
+        expect(boundary.missingPrerequisites).toContain(
+          'TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED',
+        );
+        expect(boundary.hiddenStemTenGodClassificationAuthorized).toBe(false);
+        expect(boundary.historicalRelativeRoleAuthorized).toBe(false);
+      }
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.mayPublish).toBe(false);
+    }
+  });
+
+  it('keeps original family-star source scope even when hiddenStems is omitted', () => {
+    const original = chart({ year: 1990, day: 15, sex: 'female' });
+    const derivedFacts = { ...original.derivedFacts };
+    delete derivedFacts.hiddenStems;
+    const report = evaluateFamilySourceScopeV1({ ...original, derivedFacts }, 'children');
+    for (const sourceSurface of ['子嗣者即官星也', '我生者為子']) {
+      const candidate = familyCandidate(report, sourceSurface);
+      const boundary = candidate.relativeStarHiddenStemBoundary;
+      if (boundary === undefined) throw new Error('Boundary must retain missing evidence.');
+      expect(boundary.hiddenStemMembershipCoverage).toBe('MEMBERSHIP_FACTS_NOT_PROVIDED');
+      expect(boundary.unresolvedHiddenStemMembershipFactPaths).toEqual([
+        'derivedFacts.hiddenStems.year',
+        'derivedFacts.hiddenStems.month',
+        'derivedFacts.hiddenStems.day',
+        'derivedFacts.hiddenStems.hour',
+      ]);
+      expect(boundary.pillarObservations.every(item =>
+        item.status === 'not_provided' &&
+        item.rawMembershipPositions.length === 0 &&
+        item.hiddenStemT5ClassificationAuthorized === false)).toBe(true);
+      expect(boundary.missingPrerequisites).toContain(
+        'CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE',
+      );
+      expect(candidate.tenGodObservation?.sourceFactPath).toBe('derivedFacts.tenGods');
+      expect(report.familyT8Admitted).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+  });
+
   it('records literal parent and child T5 occurrences with paths, without turning them into family outcomes', () => {
     const maleSnapshot = chart({ sex: 'male' });
     const femaleSnapshot = chart({ sex: 'female' });
