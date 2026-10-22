@@ -97,6 +97,42 @@ function renderOverview(reports: NatalFiveDomainMultifactorReports): string {
     '<ol class="overview">' + items + '</ol></nav>';
 }
 
+function renderCareerReadingGuide(report: CareerMultifactorReport): string {
+  const guide = report.readingGuide;
+  if (guide === undefined) return '';
+  const core = report.sections[0];
+  guard(core !== undefined && core.claimType === guide.coreClaimType &&
+    core.channel === 'visible_stems' && core.axis !== 'tension' &&
+    guide.paragraph.includes(core.headline) &&
+    core.calculatedPositions.every(position => guide.paragraph.includes(position)) &&
+    guide.supporting.length === report.sections.length - 1,
+    'Career reading guide must be derived from the actually selected core Claim');
+  const used = new Set(core.calculatedFactPaths);
+  guide.supporting.forEach((support, index) => {
+    const source = report.sections[index + 1];
+    guard(source !== undefined && support.claimType === source.claimType &&
+      support.distinctCalculatedFactPaths.length === support.distinctCalculatedPositions.length &&
+      support.distinctCalculatedFactPaths.length > 0 &&
+      guide.paragraph.includes(source.headline),
+      'Career supporting guide is not bound to the displayed Claim');
+    const newlyObserved: string[] = [];
+    source.calculatedFactPaths.forEach((path, i) => {
+      if (used.has(path)) return;
+      const position = source.calculatedPositions[i];
+      guard(position !== undefined, 'Career observed fact path has no display position');
+      newlyObserved.push(path);
+      used.add(path);
+    });
+    guard(JSON.stringify(newlyObserved) ===
+      JSON.stringify(support.distinctCalculatedFactPaths) &&
+      support.distinctCalculatedPositions.every(position => guide.paragraph.includes(position)),
+      'Career supporting guide is not bound to independent observed evidence');
+  });
+  return '<section class="reading-guide" aria-label="직업운 읽기 요약"><h3>' +
+    escapeHtml(guide.title) + '</h3><p>' + escapeHtml(guide.paragraph) +
+    '</p></section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -116,10 +152,12 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
   const missing = report.missing.length > 0
     ? '<section class="missing"><h3>아직 설명하지 못하는 부분</h3>' + renderList(report.missing) + '</section>'
     : '';
+  const readingGuide = domain === 'career'
+    ? renderCareerReadingGuide(report as CareerMultifactorReport) : '';
   return '<article aria-labelledby="domain-' + domain + '" class="domain">' +
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
-    '<p>' + escapeHtml(report.introduction) + '</p>' + originalText + missing +
+    '<p>' + escapeHtml(report.introduction) + '</p>' + readingGuide + originalText + missing +
     '<section class="limitations"><h3>해석 범위와 한계</h3>' +
     renderList(report.limitations) + '</section></article>';
 }
