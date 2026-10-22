@@ -57,6 +57,9 @@ export interface FamilySourceScopeHandoff {
   interpretationDisposition: 'INCONCLUSIVE';
   familyT8Admitted: false;
   researchOnly: true;
+  mayGrantOfficialAuthority: false;
+  mayMarkMenuAvailable: false;
+  mayPersist: false;
   mayPublish: false;
   maySell: false;
 }
@@ -202,7 +205,9 @@ export function evaluateFamilySourceScopeV1(
     historicalSex: snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
     methodCandidates, methodCoexistences, missingPrerequisites,
     interpretationDisposition: 'INCONCLUSIVE',
-    familyT8Admitted: false, researchOnly: true, mayPublish: false, maySell: false,
+    familyT8Admitted: false, researchOnly: true,
+    mayGrantOfficialAuthority: false, mayMarkMenuAvailable: false,
+    mayPersist: false, mayPublish: false, maySell: false,
   };
 }
 
@@ -269,6 +274,9 @@ export interface PairwiseSourceScopeHandoff {
   pairwiseT10Admitted: false;
   pairwiseDisposition: 'INCONCLUSIVE';
   researchOnly: true;
+  mayGrantOfficialAuthority: false;
+  mayMarkMenuAvailable: false;
+  mayPersist: false;
   mayPublish: false;
   maySell: false;
 }
@@ -294,6 +302,10 @@ export function evaluatePairwiseSourceScopeV1(
     throw new TypeError('T10 research requires comparable governed Canonical calculations.');
   }
   if (R068_AUTHORITY.romanceCompatibilityMappingAuthorized !== false ||
+      R068_AUTHORITY.productionAuthorityPromoted !== false ||
+      R069_AUTHORITY.productionAuthorityPromoted !== false ||
+      R068_DIRECT_CLAIMS.some(claim => claim.executable !== false) ||
+      R069_DIRECT_CLAIMS.some(claim => claim.executable !== false) ||
       R069_AUTHORITY.universalModernPartnerOntologyAuthorized !== false ||
       !R068_REJECTED_ROMANCE_MAPPINGS.includes('ONE_RELATION_EQUALS_COMPATIBILITY_SCORE') ||
       !R069_REJECTED_SHORTCUTS.includes('NATAL_SPOUSE_CLAIM_IMPLIES_PAIRWISE_COMPATIBILITY')) {
@@ -337,6 +349,8 @@ export function evaluatePairwiseSourceScopeV1(
         ? ['TARGET_HOUR_INPUT_UNRESOLVED'] : []),
     ],
     pairwiseDisposition: 'INCONCLUSIVE', pairwiseT10Admitted: false,
-    researchOnly: true, mayPublish: false, maySell: false,
+    researchOnly: true, mayGrantOfficialAuthority: false,
+    mayMarkMenuAvailable: false, mayPersist: false,
+    mayPublish: false, maySell: false,
   };
 }
