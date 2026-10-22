@@ -10,7 +10,7 @@
 - `evaluateFamilySourceScopeV1(CanonicalSajuSnapshot, 'parents'|'children')`: **현행 R070의 원문 표면만** 실제 성별 계산 입력 및 확정된 원국 기둥에 결속한다. `sourceLayerId`, `sourceSurface`, `originalSexScope`, `observedFactPath`, `observedPillar`, `missingPrerequisites`를 반환한다.
 - `evaluatePairwiseSourceScopeV1({personRef,snapshot}, {personRef,snapshot})`: **두 명식의 독립 snapshotId/hash/정책/시각미상 여부**를 유지하고 동일 기둥 위치에서 실제 관측한 값의 `same/different/incomplete`만 제공한다. `R068` 사회·친족 문구와 `R069` 역사적 성별·배우자 문구의 **T10 직접 적용 불가 이유**를 각 원문별로 반환한다.
 - `APPLICABLE_BOUNDED`: 해당 역사적 **문구의 원국 위치 관찰**에 한해서만 적용 가능한 조건이다. `INCONCLUSIVE`: 실제 관측값/방법론 선택/원전 적용조건이 부족하다. `NARROW_OR_REPLACE`: 현재 요청 범위나 역사 성별과 맞지 않아 별도 범위 한정이 필요하다. `REJECTED`: 해당 문구를 T10 상호관계 주장으로 변환할 수 없다.
-- 반환 결과는 항상 `familyT8Admitted=false` 또는 `pairwiseT10Admitted=false`, `researchOnly=true`, `mayPublish=false`, `maySell=false`. Source Authority 또는 Production/Commerce 허가가 아니다.
+- 반환 결과는 항상 `familyT8Admitted=false` 또는 `pairwiseT10Admitted=false`, `researchOnly=true`, `mayGrantOfficialAuthority=false`, `mayMarkMenuAvailable=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`. Source Authority 또는 Production/Commerce 허가가 아니다.
 
 ## 부모와 자녀의 차이: 정확한 기존 R070 원문
 
