@@ -32,7 +32,8 @@ function inputs(
   const snapshot = chart(birth);
   const parents = buildFamilyCanonicalObservationPreview(snapshot, 'parents');
   const children = buildFamilyCanonicalObservationPreview(snapshot, 'children');
-  const compatibility = comparison === null ? undefined :
+  const targetSnapshot = comparison === null ? undefined : chart(comparison);
+  const compatibility = targetSnapshot === undefined ? undefined :
     buildCompatibilityTwoChartIntakePreview(
       {
         requestId: 'relationship-pair-sample',
@@ -40,11 +41,11 @@ function inputs(
         targetPersonRef: targetRef,
       },
       { personRef: 'first-person', snapshot },
-      { personRef: targetRef, snapshot: chart(comparison) },
+      { personRef: targetRef, snapshot: targetSnapshot },
     );
   return {
     subjectSnapshot: snapshot, parents, children,
-    ...(compatibility === undefined ? {} : { compatibility }),
+    ...(compatibility === undefined ? {} : { compatibility, targetSnapshot }),
   };
 }
 
@@ -169,6 +170,32 @@ describe('real source-owned three relationship menu page', () => {
     expect(() => buildRelationshipThreeMenuResearchPage({
       ...sample,
       compatibility: other.compatibility,
+    })).toThrow('mixed-person');
+    expect(() => buildRelationshipThreeMenuResearchPage({
+      ...sample,
+      targetSnapshot: undefined,
+    } as unknown as typeof sample)).toThrow('mixed-person');
+    expect(() => buildRelationshipThreeMenuResearchPage({
+      ...sample,
+      targetSnapshot: chart({ ...SECOND, date: { year: 1997, month: 1, day: 9 } }),
+    })).toThrow('mixed-person');
+    expect(() => buildRelationshipThreeMenuResearchPage({
+      ...sample,
+      compatibility: {
+        ...sample.compatibility!,
+        target: {
+          ...sample.compatibility!.target,
+          pillars: sample.compatibility!.target.pillars.map((item, index) =>
+            index === 0 ? { ...item, branchHanja: '甲' } : item),
+        },
+      },
+    })).toThrow('mixed-person');
+    expect(() => buildRelationshipThreeMenuResearchPage({
+      ...sample,
+      compatibility: {
+        ...sample.compatibility!,
+        target: { ...sample.compatibility!.target, birthTimeKnown: false },
+      },
     })).toThrow('mixed-person');
     expect(() => buildRelationshipThreeMenuResearchPage({
       ...sample,
