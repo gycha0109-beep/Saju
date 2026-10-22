@@ -33,6 +33,11 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
     .facts ul { margin: 0; padding-left: 18px; }
     .facts li { margin: 6px 0; }
     .uncertain-fact { color: #6b5d39; }
+    .reading-points li { white-space: pre-line; padding: 2px 0; }
+    .reading-condition { font-weight: 550; color: #51452b; }
+    .reading-section-state { font-size: 13px; padding: 8px 10px; background: #f6f5f1; border-radius: 8px; margin: 4px 0 10px; }
+    .reading-partial { color: #765b22; }
+    .reading-unavailable { color: #8b3430; }
     section + section { border-top: 1px solid #ece9e1; margin-top: 20px; padding-top: 20px; }
     section h2 { margin: 0 0 10px; font-size: 20px; }
     ul { padding-left: 20px; }
@@ -180,43 +185,60 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     return message;
   }
 
+  function renderTextList(container, items, mapItem) {
+    const list = el('ul', undefined, 'reading-points');
+    items.forEach((item) => {
+      const text = mapItem(item);
+      if (typeof text === 'string' && text.trim()) {
+        list.appendChild(el('li', text));
+      }
+    });
+    if (list.children.length) container.appendChild(list);
+  }
+
   function appendBlock(container, block) {
-    if (typeof block.text === 'string') {
-      container.appendChild(el('p', block.text));
+    if (!block || typeof block.type !== 'string') return;
+    if (block.type === 'paragraph' || block.type === 'source_hint') {
+      if (typeof block.text === 'string' && block.text.trim()) {
+        container.appendChild(el('p', block.text));
+      }
       return;
     }
-    if (Array.isArray(block.items)) {
-      const list = el('ul');
-      block.items.forEach((item) => list.appendChild(el('li', String(item))));
-      container.appendChild(list);
+    if (block.type === 'key_points' && Array.isArray(block.items)) {
+      renderTextList(container, block.items, (item) => typeof item === 'string' ? item : '');
       return;
     }
-    if (Array.isArray(block.perspectives)) {
-      if (block.title) container.appendChild(el('strong', String(block.title)));
-      const list = el('ul');
-      block.perspectives.forEach((item) => list.appendChild(el('li', item.label + ': ' + item.text)));
-      container.appendChild(list);
+    if (block.type === 'comparison' && Array.isArray(block.perspectives)) {
+      if (typeof block.title === 'string') container.appendChild(el('strong', block.title));
+      renderTextList(container, block.perspectives, (item) =>
+        typeof item?.label === 'string' && typeof item?.text === 'string'
+          ? item.label + ': ' + item.text : '');
       return;
     }
-    if (Array.isArray(block.scenarios)) {
-      const list = el('ul');
-      block.scenarios.forEach((item) => list.appendChild(el('li', item.label + ': ' + item.text)));
-      container.appendChild(list);
+    if (block.type === 'ambiguity') {
+      // The qualification is part of the actual reading, not an optional
+      // decoration. Never show conditional scenarios without their scope.
+      if (typeof block.summary === 'string' && block.summary.trim()) {
+        container.appendChild(el('p', block.summary, 'reading-condition'));
+      }
+      if (Array.isArray(block.scenarios)) {
+        renderTextList(container, block.scenarios, (item) =>
+          typeof item?.label === 'string' && typeof item?.text === 'string'
+            ? item.label + ': ' + item.text : '');
+      }
       return;
     }
-    if (Array.isArray(block.entries)) {
-      const list = el('ul');
-      block.entries.forEach((item) => list.appendChild(el('li', item.label + ': ' + item.text)));
-      container.appendChild(list);
+    if (block.type === 'timeline' && Array.isArray(block.entries)) {
+      renderTextList(container, block.entries, (item) =>
+        typeof item?.label === 'string' && typeof item?.text === 'string'
+          ? item.label + ': ' + item.text : '');
       return;
     }
-    if (Array.isArray(block.rows)) {
-      const list = el('ul');
-      block.rows.forEach((item) => list.appendChild(el('li', item.label + ': ' + item.value)));
-      container.appendChild(list);
-      return;
+    if (block.type === 'fact_table' && Array.isArray(block.rows)) {
+      renderTextList(container, block.rows, (item) =>
+        typeof item?.label === 'string' && typeof item?.value === 'string'
+          ? item.label + ': ' + item.value : '');
     }
-    if (typeof block.summary === 'string') container.appendChild(el('p', block.summary));
   }
 
   const fiveTopics = [
@@ -285,6 +307,15 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     (reading.sections || []).forEach((section) => {
       const node = el('section');
       node.appendChild(el('h2', section.title));
+      if (section.state === 'partial') {
+        node.appendChild(el('p',
+          '이 항목은 확인된 근거 범위에서만 일부 제공됩니다.',
+          'reading-section-state reading-partial'));
+      } else if (section.state === 'unavailable') {
+        node.appendChild(el('p',
+          '이 항목은 현재 충분한 풀이 근거가 없어 제공하지 않습니다.',
+          'reading-section-state reading-unavailable'));
+      }
       (section.blocks || []).forEach((block) => appendBlock(node, block));
       target.appendChild(node);
     });
