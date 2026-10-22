@@ -42,7 +42,10 @@ function inputs(
       { personRef: 'first-person', snapshot },
       { personRef: targetRef, snapshot: chart(comparison) },
     );
-  return { subjectSnapshot: snapshot, parents, children, compatibility };
+  return {
+    subjectSnapshot: snapshot, parents, children,
+    ...(compatibility === undefined ? {} : { compatibility }),
+  };
 }
 
 describe('real source-owned three relationship menu page', () => {
