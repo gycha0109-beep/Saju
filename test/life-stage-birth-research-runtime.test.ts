@@ -5,6 +5,12 @@ import { buildLifeStageDayunResearchReport } from '../src/preview/life-stage-day
 import { renderLifeStageDayunResearchHtml } from '../src/preview/life-stage-dayun-research-report.js';
 import { buildLifeStageBirthResearchReading } from '../src/preview/life-stage-birth-research-runtime.js';
 
+function escapedHtmlText(value: string): string {
+  return value.replace(/[&<>"']/gu, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char]!);
+}
+
 const REFERENCE = '2030-06-01T03:00:00.000Z';
 const BIRTH: BirthInput = {
   calendarType: 'solar',
@@ -53,7 +59,7 @@ describe('actual birth → exact current/next Dayun timeline without unsupported
       expect(section.sourceIds.length).toBeGreaterThanOrEqual(2);
       expect(section.factPaths.length).toBeGreaterThanOrEqual(2);
       expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
-      expect(read.html).toContain(section.paragraph);
+      expect(read.html).toContain(escapedHtmlText(section.paragraph));
     }
     expect(read.interpretationStatus).toBe('source_authority_not_established');
     expect(read.mayGrantOfficialAuthority).toBe(false);
