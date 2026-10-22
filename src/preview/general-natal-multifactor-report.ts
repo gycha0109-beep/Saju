@@ -10,7 +10,7 @@ import {
   GENERAL_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/general-natal-multifactor-candidate.js';
 
-export const GENERAL_NATAL_MULTIFACTOR_REPORT_VERSION = '0.2.0-research-preview' as const;
+export const GENERAL_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
 type Axis = 'core' | 'expression' | 'response' | 'responsibility' | 'tension';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
@@ -64,6 +64,22 @@ const LIMITATIONS = [
   '재물·직업·건강·관계 결과와 특정 미래 시기를 예측하거나 오행 강약·용신·격국을 단정하지 않습니다.',
   '공식 게시·저장·판매에 사용할 수 없는 내부 실험입니다.',
 ] as const;
+
+function unknownHourCalculatedContext(snapshot: CanonicalSajuSnapshot): string {
+  const slots = [
+    ['year', '연주'], ['month', '월주'], ['day', '일주'],
+  ] as const;
+  const observed = slots.map(([slot, label]) => {
+    const fact = snapshot.pillars[slot];
+    return label + ' ' + (fact.status === 'resolved'
+      ? fact.value.stem.value + fact.value.branch.value
+      : '미확정');
+  });
+  return '출생시각이 없어도 확인 가능한 본인 명식의 계산 사실은 ' +
+    observed.join(' · ') + '입니다. 이는 실제 명식의 간지 관찰일 뿐 ' +
+    '원국 전체에 관한 개인별 다중 근거 T8 해석을 뜻하지 않습니다.';
+}
+
 function guard(v: unknown, message: string): asserts v {
   if (!v) throw new TypeError('General multifactor: ' + message);
 }
@@ -202,9 +218,13 @@ export function buildGeneralNatalMultifactorReport(
     claims.every(c => selected.has(c.claimId)) &&
     (claims.length === 0 || selection.evidence !== undefined),
     'General meaning not selected by existing ReadingIntent/EvidenceSelector');
-  const result = claims.map(c => toSection(c, snapshot, execution, registry))
-    .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
-      (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
+  // Canonical tenGods is unavailable with unknown birth time. Do not
+  // promote a scenario-based Claim into a complete person-level reading.
+  const result = snapshot.completeness.birthTimeKnown
+    ? claims.map(c => toSection(c, snapshot, execution, registry))
+        .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
+          (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
+    : [];
   // Prefer the 3-input core. When not observed, a narrower two-input core can
   // still be rendered, but completion needs two OTHER independently grounded axes.
   const core = result.find(s => s.axis === 'core') ??
@@ -231,12 +251,11 @@ export function buildGeneralNatalMultifactorReport(
   const missingSupportingAxes = 2 - Math.max(0, chosen.length - 1);
   if(missingSupportingAxes > 0) missing.push(
     `중심 결론과 구별되는 추가 구조 축 ${missingSupportingAxes}개 부족`);
-  let state: Status = chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
-  let sections: readonly GeneralNatalMultifactorSection[] = core ? chosen : partialTension;
+  const state: Status = snapshot.completeness.birthTimeKnown && chosen.length === 3
+    ? 'complete' : result.length ? 'partial' : 'insufficient';
+  const sections: readonly GeneralNatalMultifactorSection[] = core ? chosen : partialTension;
   if(!snapshot.completeness.birthTimeKnown) {
-    sections = [];
-    state = 'insufficient';
-    missing.unshift('출생시각 미상: 시주를 포함하는 전체 원국 종합은 보류');
+    missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 원국 전체의 다중 근거 T8 해석은 보류합니다.');
   }
   return {
     snapshotId: snapshot.snapshotId,
@@ -244,7 +263,8 @@ export function buildGeneralNatalMultifactorReport(
     version: GENERAL_NATAL_MULTIFACTOR_REPORT_VERSION,
     state,
     title: '나의 원국 전체를 읽는 구조적 출발점',
-    introduction: '서로 다른 십신 관계가 같은 실제 명식에서 어떤 구조적 주제를 만드는지 연결했습니다. 전통적인 읽기의 연구 후보로, 실제 삶의 특징이나 운세 결과를 판단한 것은 아닙니다.',
+    introduction: '서로 다른 십신 관계가 같은 실제 명식에서 어떤 구조적 주제를 만드는지 연결했습니다. 전통적인 읽기의 연구 후보로, 실제 삶의 특징이나 운세 결과를 판단한 것은 아닙니다.' +
+      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :

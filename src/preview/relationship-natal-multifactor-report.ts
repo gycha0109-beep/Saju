@@ -10,7 +10,7 @@ import {
   RELATIONSHIP_NATAL_MULTIFACTOR_NARRATIVES,
 } from '../research/relationship-natal-multifactor-candidate.js';
 
-export const RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
+export const RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION = '0.4.0-research-preview' as const;
 type Axis = 'core' | 'expression' | 'boundaries' | 'reception' | 'coordination';
 type Status = 'complete' | 'partial' | 'insufficient';
 type Channel = 'visible_stems' | 'branches';
@@ -69,6 +69,22 @@ const LIMITATIONS = [
   '배우자 성격, 결혼 여부, 궁합, 연애 성패, 갈등이나 미래 관계 사건을 판정하지 않습니다.',
   '공식 게시·저장·판매에 사용할 수 없는 내부 실험입니다.',
 ] as const;
+
+function unknownHourCalculatedContext(snapshot: CanonicalSajuSnapshot): string {
+  const slots = [
+    ['year', '연주'], ['month', '월주'], ['day', '일주'],
+  ] as const;
+  const observed = slots.map(([slot, label]) => {
+    const fact = snapshot.pillars[slot];
+    return label + ' ' + (fact.status === 'resolved'
+      ? fact.value.stem.value + fact.value.branch.value
+      : '미확정');
+  });
+  return '출생시각이 없어도 확인 가능한 본인 명식의 계산 사실은 ' +
+    observed.join(' · ') + '입니다. 이는 실제 명식의 간지 관찰일 뿐 ' +
+    '관계에 관한 개인별 다중 근거 T8 해석을 뜻하지 않습니다.';
+}
+
 function guard(v: unknown, message: string): asserts v {
   if (!v) throw new TypeError('Relationship multifactor: ' + message);
 }
@@ -208,9 +224,13 @@ export function buildRelationshipNatalMultifactorReport(
     claims.every(c => selected.has(c.claimId)) &&
     (claims.length === 0 || selection.evidence !== undefined),
     'Relationship meaning not selected by existing ReadingIntent/EvidenceSelector');
-  const result = claims.map(c => toSection(c, snapshot, execution, registry))
-    .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
-      (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
+  // Canonical tenGods is unavailable with unknown birth time. Do not
+  // promote a scenario-based Claim into a complete person-level reading.
+  const result = snapshot.completeness.birthTimeKnown
+    ? claims.map(c => toSection(c, snapshot, execution, registry))
+        .sort((a,b) => AXES.indexOf(a.axis)-AXES.indexOf(b.axis) ||
+          (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
+    : [];
   // Prefer the 3-input core. When not observed, a narrower two-input core can
   // still be rendered, but completion needs two OTHER independently grounded axes.
   const core = result.find(s => s.axis === 'core') ??
@@ -233,12 +253,12 @@ export function buildRelationshipNatalMultifactorReport(
     const observed = chosen.map(s => `${AXIS_NAMES[s.axis]}(${s.channel === 'visible_stems' ? '천간' : '지지'})`);
     missing.push(`이 명식에서 확인된 해석 축: ${observed.length ? observed.join(' · ') : '없음'}. 최소 유효 풀이에는 독립된 근거의 추가 해석 축 ${3 - chosen.length}개가 더 필요합니다.`);
   }
-  let state: Status = core !== undefined && chosen.length === 3 ? 'complete' : result.length ? 'partial' : 'insufficient';
-  let sections: readonly RelationshipNatalMultifactorSection[] = chosen;
+  const state: Status = snapshot.completeness.birthTimeKnown &&
+    core !== undefined && chosen.length === 3
+    ? 'complete' : result.length ? 'partial' : 'insufficient';
+  const sections: readonly RelationshipNatalMultifactorSection[] = chosen;
   if(!snapshot.completeness.birthTimeKnown) {
-    sections = [];
-    state = 'insufficient';
-    missing.unshift('출생시각 미상: 시주를 포함하는 전체 원국 종합은 보류');
+    missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 관계의 다중 근거 T8 해석은 보류합니다.');
   }
   return {
     snapshotId: snapshot.snapshotId,
@@ -246,7 +266,8 @@ export function buildRelationshipNatalMultifactorReport(
     version: RELATIONSHIP_NATAL_MULTIFACTOR_REPORT_VERSION,
     state,
     title: '나의 관계·소통 주제를 읽는 구조적 출발점',
-    introduction: '실제 명식의 십신 관계를 바탕으로 자기 관점과 표현, 서로의 역할, 받아들이는 태도의 구조적 관점을 함께 살펴봅니다. 실제 관계의 질이나 결혼 결과를 추론하지 않는 전통 명리 연구 후보입니다.',
+    introduction: '실제 명식의 십신 관계를 바탕으로 자기 관점과 표현, 서로의 역할, 받아들이는 태도의 구조적 관점을 함께 살펴봅니다. 실제 관계의 질이나 결혼 결과를 추론하지 않는 전통 명리 연구 후보입니다.' +
+      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections,
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
