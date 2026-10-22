@@ -112,6 +112,18 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
       }));
     }
   }
+  const readingMessages = {
+    READING_DELIVERED: '해석 문단이 생성됐습니다.',
+    READING_DELIVERED_WITH_GROUNDED_FALLBACK: '허용된 근거 안에서 기본 풀이를 표시합니다.',
+    READING_REQUEST_CLARIFICATION_REQUIRED: '질문의 주제와 범위를 더 구체적으로 지정해 주세요.',
+    READING_REQUEST_NOT_SUPPORTED: '이 주제의 해석은 현재 지원하지 않습니다.',
+    READING_REQUEST_INVALID: '질문에 필요한 정보가 아직 입력되지 않았습니다.',
+    READING_EVIDENCE_PARTIAL: '일부 근거만 확인되어 전체 해석을 완료하지 않았습니다.',
+    READING_EVIDENCE_INSUFFICIENT: '현재 허용된 근거로 해석하기 어렵습니다.',
+    READING_INTENT_NOT_AVAILABLE: '이 주제에 해당하는 풀이가 아직 준비되지 않았습니다.',
+    READING_TEMPORARILY_UNAVAILABLE: '현재 해당 풀이를 요청할 수 없습니다.'
+  };
+
   const panel = element('section', undefined, 'panel');
   panel.id = 'twelve-menu-browser';
   panel.style.marginTop = '20px';
@@ -202,7 +214,8 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     setState(view, state, state === 'partial'
       ? '현재 허용된 해석 문단만 표시합니다. 종합풀이나 공개 승인은 별도입니다.'
       : '사용 가능한 해석 문단이 없거나 추가 정보가 필요합니다.');
-    if (payload.messageCode) note(view.output, payload.messageCode, 'field-hint');
+    if (payload.messageCode) note(view.output,
+      readingMessages[payload.messageCode] || '이 주제의 결과를 확인할 수 없습니다.', 'field-hint');
     if (state === 'partial') {
       sections.forEach(function(section) {
         const card = element('section');
@@ -215,7 +228,12 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
       note(view.output, payload.coverage.explanation, 'disclosure');
     }
     if (payload.clarification) {
-      note(view.output, '질문의 분야·기간·필요 정보를 한 가지로 정해 다시 요청해 주세요.', 'notice');
+      const reason = payload.clarification.kind === 'domain'
+        ? '풀이할 분야를 하나로 선택해 주세요.'
+        : payload.clarification.kind === 'temporal_scope'
+          ? '올해와 이번 달 중 하나의 기간을 정해 주세요.'
+          : '질문하거나 분석할 범위를 구체적으로 입력해 주세요.';
+      note(view.output, reason, 'notice');
     }
     if (payload.reading && Array.isArray(payload.reading.disclosures)) {
       payload.reading.disclosures.forEach(function(item) {
