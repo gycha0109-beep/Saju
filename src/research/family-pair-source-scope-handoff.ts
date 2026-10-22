@@ -503,6 +503,93 @@ function observeR068NatalStructure(
   };
 }
 
+export interface R068KinTermObservation {
+  exactHistoricalTerm: '傷官' | '七煞';
+  /** Search label in modern T5, not approval of historical method equivalence. */
+  canonicalSearchCategory: '상관' | '편관';
+  observedPositions: readonly {
+    path: string;
+    slot: PillarSlot;
+    channel: 'stem' | 'branch';
+    value: TenGod;
+  }[];
+  unresolvedFactPaths: readonly string[];
+  observationCoverage: 'visible_stems_and_representative_branch_only';
+}
+
+export interface R068KinConditionalObservation {
+  personRole: 'subject' | 'target';
+  originalClaimId: 'KIN-FRIEND-BOND-HARM-CONFIGURATION';
+  sourceFactPath: 'derivedFacts.tenGods';
+  terms: readonly [R068KinTermObservation, R068KinTermObservation];
+  /** 羊刃 is not available as a governed executable Canonical fact. */
+  yangrenInput: 'not_defined_by_canonical';
+  conjunctionOfTermsEstablished: false;
+  historicalKinFriendContextEstablished: false;
+  natalKinOutcomeAuthorized: false;
+  pairwiseMeaningAuthorized: false;
+  missingPrerequisites: readonly string[];
+}
+
+/**
+ * R068 supplies a three-part historical condition.  Only the existing modern
+ * chart's 상관/편관 search categories can be inspected. 羊刃 and its
+ * contextual conjunction cannot be computed or inferred from their presence.
+ */
+function observeR068KinConditional(
+  snapshot: CanonicalSajuSnapshot,
+  personRole: 'subject' | 'target',
+): R068KinConditionalObservation {
+  const t5 = snapshot.derivedFacts.tenGods;
+  const terms = ([
+    { exactHistoricalTerm: '傷官', canonicalSearchCategory: '상관' },
+    { exactHistoricalTerm: '七煞', canonicalSearchCategory: '편관' },
+  ] as const).map(term => {
+    const observedPositions: R068KinTermObservation['observedPositions'][number][] = [];
+    const unresolvedFactPaths: string[] = [];
+    for (const slot of TEN_GOD_OBSERVATION_SLOTS) {
+      for (const channel of ['stem', 'branch'] as const) {
+        // Day stem is the day master, never an ordinary Ten-God category.
+        if (slot === 'day' && channel === 'stem') continue;
+        const path = 'derivedFacts.tenGods.' + slot + '.' + channel;
+        const fact = t5.status === 'resolved' ? t5.value[slot][channel] : undefined;
+        if (fact?.status !== 'resolved') {
+          unresolvedFactPaths.push(path);
+        } else if (fact.value === term.canonicalSearchCategory) {
+          observedPositions.push({
+            path, slot, channel, value: fact.value,
+          });
+        }
+      }
+    }
+    return {
+      ...term,
+      observedPositions,
+      unresolvedFactPaths,
+      observationCoverage: 'visible_stems_and_representative_branch_only' as const,
+    };
+  }) as [R068KinTermObservation, R068KinTermObservation];
+  return {
+    personRole,
+    originalClaimId: 'KIN-FRIEND-BOND-HARM-CONFIGURATION',
+    sourceFactPath: 'derivedFacts.tenGods',
+    terms,
+    yangrenInput: 'not_defined_by_canonical',
+    conjunctionOfTermsEstablished: false,
+    historicalKinFriendContextEstablished: false,
+    natalKinOutcomeAuthorized: false,
+    pairwiseMeaningAuthorized: false,
+    missingPrerequisites: [
+      'YANGREN_CANONICAL_INPUT_NOT_DEFINED',
+      'R068_THREE_TERM_CONJUNCTION_METHOD_NOT_SELECTED',
+      'KIN_FRIEND_CONTEXT_AND_POLARITY_NOT_SETTLED',
+      'SOCIAL_VS_KIN_SCOPE',
+      ...(terms.some(term => term.unresolvedFactPaths.length > 0)
+        ? ['R068_TEN_GOD_OBSERVATIONS_PARTIAL'] : []),
+    ],
+  };
+}
+
 export interface PairwiseCanonicalObservation {
   pillarSlot: PillarSlot;
   subjectFactPath: string;
@@ -577,6 +664,10 @@ export interface PairwiseSourceScopeHandoff {
     singleChartCombinationObservations?: readonly [
       R068NatalStructureObservation, R068NatalStructureObservation,
     ];
+    /** R068 three-term kin/friend clause; modern natal T5 observations only. */
+    singleChartKinConditionObservations?: readonly [
+      R068KinConditionalObservation, R068KinConditionalObservation,
+    ];
     oneChartScopeObservations?: readonly [
       R069SingleChartScopeObservation, R069SingleChartScopeObservation,
     ];
@@ -637,6 +728,13 @@ export function evaluatePairwiseSourceScopeV1(
             singleChartCombinationObservations: [
               observeR068NatalStructure(subject.snapshot, 'subject'),
               observeR068NatalStructure(target.snapshot, 'target'),
+            ] as const,
+          } : {}),
+      ...(claim.id === 'KIN-FRIEND-BOND-HARM-CONFIGURATION'
+        ? {
+            singleChartKinConditionObservations: [
+              observeR068KinConditional(subject.snapshot, 'subject'),
+              observeR068KinConditional(target.snapshot, 'target'),
             ] as const,
           } : {}),
       missingPrerequisites: [
