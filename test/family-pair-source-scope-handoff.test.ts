@@ -130,6 +130,46 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(male.familyT8Admitted).toBe(false);
   });
 
+  it('preserves R070 configuration phrases as method-unassigned and distinguishes branch-clash facts from outcome interpretation', () => {
+    const snapshot = chart({ year: 1997, sex: 'male' });
+    const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+    const registered = R070_CLAIM_LAYERS.find(layer =>
+      layer.id === 'CONFIGURATION-OUTCOME');
+    expect(registered).toBeDefined();
+    expect(parent.unassignedConfigurationInputs.map(item => item.sourceSurface))
+      .toEqual(registered?.sourceSurfaces);
+    expect(children.unassignedConfigurationInputs.map(item => item.sourceSurface))
+      .toEqual(registered?.sourceSurfaces);
+    expect(parent.unassignedConfigurationInputs).toEqual(children.unassignedConfigurationInputs);
+    expect(parent.unassignedConfigurationInputs.every(item =>
+      item.sourceLayerId === 'CONFIGURATION-OUTCOME' &&
+      item.familyScopeResolved === false &&
+      item.disposition === 'INCONCLUSIVE' &&
+      item.familyOutcomeAuthorized === false &&
+      item.missingPrerequisites.includes('CONFIGURATION_OUTCOME_SETTLEMENT'),
+    )).toBe(true);
+    for (const item of parent.unassignedConfigurationInputs) {
+      if (item.sourceSurface === '刑沖破害') {
+        const raw = snapshot.derivedFacts.structuralRelations;
+        const expected = raw?.status === 'resolved'
+          ? raw.value.filter(relation => relation.kind === 'branch_clash')
+            .map(relation => relation.relationId) : [];
+        expect(item.observedBranchClashIds).toEqual(expected);
+        expect(item.canonicalObservationCoverage).toBe(raw?.status === 'resolved'
+          ? 'branch_clash_only' : 'none');
+        expect(item.missingPrerequisites)
+          .toContain('XING_PO_HAI_AND_CONFIGURATION_INTERACTION_NOT_SETTLED');
+      } else {
+        expect(item.canonicalObservationCoverage).toBe('none');
+        expect(item.observedBranchClashIds).toEqual([]);
+        expect(item.canonicalFactPath).toBeUndefined();
+      }
+    }
+    expect(parent.familyT8Admitted).toBe(false);
+    expect(children.familyT8Admitted).toBe(false);
+  });
+
   it('records literal parent and child T5 occurrences with paths, without turning them into family outcomes', () => {
     const maleSnapshot = chart({ sex: 'male' });
     const femaleSnapshot = chart({ sex: 'female' });
