@@ -460,7 +460,8 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
       .toBe('parents');
     expect(app.get('twelve-reading-family').collectText()).toContain('연주 실제 계산 간지');
     expect(app.get('twelve-reading-family').collectText()).toContain('가족 관계 결과 해석 근거 미승인');
-    expect(app.get('twelve-state-family').textContent).toContain('내부 연구용 계산');
+    expect(app.get('twelve-state-family').dataset.state).toBe('unavailable');
+    expect(app.get('twelve-state-family').textContent).toContain('의미 해석은 아직 미지원');
   });
 
   it('connects separately sourced individual natal text and actual calculated Dayun intervals without predictions', async () => {
@@ -503,7 +504,7 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(shown).toContain('다음 대운 정해진 시작 및 종료 시각');
     expect(shown).toContain('개인 원국 계산에 근거한 문장');
     expect(shown).toContain('미래 사건이나 운의 좋고 나쁨을 예측하지 않습니다');
-    expect(app.get('twelve-state-life_stage').dataset.state).toBe('partial');
+    expect(app.get('twelve-state-life_stage').dataset.state).toBe('unavailable');
   });
 
   it('preserves governed insufficiency when the internal Preview is inaccessible or mixes another chart', async () => {
