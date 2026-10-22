@@ -46,6 +46,7 @@ import {
   buildOfficialReadingAnnualTemporalSectionV1,
 } from './official-reading-annual-temporal-presentation.js';
 import type { ReadingAnnualTemporalStructureV1 } from './annual-temporal-structure-projection.js';
+import { buildApprovedRelationshipMultifactorOverviewV1 } from './approved-relationship-multifactor-overview.js';
 
 export const OFFICIAL_READING_RENDERER_VERSION =
   'myeonghwa-official-reading-renderer-v1' as const;
@@ -968,6 +969,16 @@ function renderOfficialReadingInternalV1(
       state: 'complete',
       explainabilityRefs: sectionExplainabilityRefs,
     });
+  }
+
+  const relationshipOverview = buildApprovedRelationshipMultifactorOverviewV1(
+    bundle,
+    plan,
+    effectiveDetailedRealization,
+    explainabilityEntries,
+  );
+  if (relationshipOverview !== undefined) {
+    sections.unshift(relationshipOverview);
   }
 
   if (options.annualTemporalStructure !== undefined) {
