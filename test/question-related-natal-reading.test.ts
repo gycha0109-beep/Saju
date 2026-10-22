@@ -146,6 +146,27 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
     }
   });
 
+  it('names missing period, two-person, family and spouse evidence without inventing a result', () => {
+    const { snapshot, reports } = run();
+    for (const { text, requirement } of [
+      { text: '올해 재물운은 언제 좋아지나요', requirement: '조회 연도·월' },
+      { text: '두 사람 궁합을 알고 싶어요', requirement: '서로 다른 두 사람의 출생정보' },
+      { text: '부모 성격을 알려주세요', requirement: '부모·자녀 중 관계 대상' },
+      { text: '배우자 관계는 언제 좋아지나요', requirement: '일지 배우자궁의 위치 관찰' },
+      { text: '결혼할 수 있을까요', requirement: '결혼·이혼의 실제 발생' },
+      { text: '돈은 얼마 벌까요', requirement: '금액·확률·확정적인 결과' },
+      { text: '건강 상태가 궁금해요', requirement: '건강 상태 또는 수명' },
+    ]) {
+      const result = buildQuestionRelatedNatalReading(snapshot, question(text), reports);
+      expect(result.status, text).toBe('unsupported');
+      expect(result.sections, text).toHaveLength(0);
+      expect(result.missing.join(' '), text).toContain(requirement);
+      expect(result.mayPublish).toBe(false);
+      expect(result.maySell).toBe(false);
+      expect(renderQuestionRelatedNatalReadingHtml(result)).toContain(requirement);
+    }
+  });
+
   it('never supplies a missing-hour response by borrowing other chart facts', () => {
     const { snapshot, reports } = run(false);
     const x = buildQuestionRelatedNatalReading(snapshot, question('재물운을 알려주세요'), reports);
