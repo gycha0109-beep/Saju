@@ -1,4 +1,15 @@
-import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
+import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
+import {
+  deterministicContentHash,
+  type ResolvedRuleRegistrySnapshot,
+} from '../interpretation/rule-registry.js';
+import type { ConsumerReadingRequestInput } from './consumer-reading-request-adapter.js';
+import type { LegacyNarrativeRuntimeV1 } from './governed-reading-execution.js';
+import {
+  runProductReadingInternals,
+  type ProductReadingServiceOptions,
+} from './product-reading-service.js';
 import {
   assertCanonicalReadingSemanticBundleV1,
   type CanonicalReadingSemanticBundleV1,
@@ -164,4 +175,41 @@ export function preserveExistingKoreanReadingResponseV1(
     consumerResponse: input.response,
     constraints: COMPATIBILITY_CONSTRAINTS,
   };
+}
+
+/**
+ * Execute the existing governed Korean path verbatim behind the locale-aware
+ * interface. The consumer response is produced by the existing redacting
+ * adapter, not by rendering a second inferred interpretation.
+ *
+ * This is opt-in, server-internal integration: the current public host
+ * remains unchanged and non-Korean requests fail before calculation/reading.
+ */
+export async function runExistingKoreanReadingLocalizedV1(
+  snapshot: CanonicalSajuSnapshot,
+  interpretation: InterpretationExecutionResult,
+  registry: ResolvedRuleRegistrySnapshot,
+  input: ConsumerReadingRequestInput,
+  options: ProductReadingServiceOptions,
+  preferences: ReadingLocalePreferencesV1,
+  legacyRuntime?: LegacyNarrativeRuntimeV1,
+): Promise<KoreanExistingTransportCompatibilityResultV1> {
+  if (resolveReadingLocaleV1(preferences) !== 'ko-KR') {
+    throw new RangeError('Existing Korean path cannot execute a different reading locale.');
+  }
+  const internals = await runProductReadingInternals(
+    snapshot,
+    interpretation,
+    registry,
+    input,
+    options,
+    legacyRuntime,
+  );
+  return preserveExistingKoreanReadingResponseV1({
+    delivery: internals.delivery,
+    response: internals.response,
+    ...(internals.execution.canonicalSemantics === undefined
+      ? {}
+      : { canonicalSemantics: internals.execution.canonicalSemantics }),
+  }, preferences);
 }
