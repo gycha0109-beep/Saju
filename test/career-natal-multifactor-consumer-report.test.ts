@@ -403,10 +403,17 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     const unknownExecution = runInterpretation(unknownChart, registry, { now: NOW });
     const unknownReport = buildCareerMultifactorResearchReport(unknownChart, unknownExecution, registry);
     const unknownHtml = renderCareerMultifactorResearchHtml(unknownReport);
-    expect(unknownHtml).toContain('해석 상태: 풀이 보류 · 출생정보 또는 근거 부족');
+    expect(unknownHtml).toContain(unknownReport.sections.length > 0
+      ? '해석 상태: 부분 풀이 · 원국 종합 근거 부족'
+      : '해석 상태: 풀이 보류 · 출생정보 또는 근거 부족');
     expect(unknownHtml).toContain('출생시각 미상');
     expect(unknownHtml).toContain('아직 설명할 수 없는 부분');
-    expect(unknownHtml).not.toContain('<section><h2>');
+    if (unknownReport.sections.length > 0) {
+      expect(unknownHtml).toContain('<section><h2>');
+      expect(unknownHtml).toContain(unknownReport.sections[0]!.paragraph);
+    } else {
+      expect(unknownHtml).not.toContain('<section><h2>');
+    }
 
     const complete = run(3, 10).report;
     expect(complete.state).toBe('complete');
@@ -422,13 +429,49 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(escaped).not.toContain('<script>');
   }, 60000);
 
-  it('fails closed when birth hour is unknown rather than inventing four-pillar synthesis', () => {
+  it('does not fabricate Career T8 when birth hour and canonical Ten-God input are unavailable', () => {
     const chart = sample(3, 10, null);
     const execution = runInterpretation(chart, registry, { now: NOW });
     const report = buildCareerMultifactorResearchReport(chart, execution, registry);
+    expect(chart.derivedFacts.tenGods.status).toBe('unavailable');
     expect(report.state).toBe('insufficient');
     expect(report.sections).toHaveLength(0);
     expect(report.missing).toContain('출생시각 미상');
+    expect(report.missing.join(' ')).toContain('십신(T5) 전체가 미확정');
+    expect(report.introduction).toContain('출생시각이 없어도 확인 가능한');
+    for (const [slot, label] of [
+      ['year', '연주'], ['month', '월주'], ['day', '일주'],
+    ] as const) {
+      const fact = chart.pillars[slot];
+      expect(report.introduction).toContain(label + ' ' +
+        (fact.status === 'resolved'
+          ? fact.value.stem.value + fact.value.branch.value
+          : '미확정'));
+    }
+    const html = renderCareerMultifactorResearchHtml(report);
+    expect(html).toContain('해석 상태: 풀이 보류 · 출생정보 또는 근거 부족');
+    expect(html).toContain(report.introduction);
+    expect(html).not.toContain('<section><h2>');
+    expect(report.usefulComplete).toBe(false);
+    expect(report.researchOnly).toBe(true);
+    expect(report.mayPublish).toBe(false);
+    expect(report.maySell).toBe(false);
+  });
+
+  it('changes Career unknown-hour factual context with the canonical birth chart', () => {
+    const create = (month: number, day: number) => {
+      const chart = sample(month, day, null);
+      const execution = runInterpretation(chart, registry, { now: NOW });
+      return buildCareerMultifactorResearchReport(chart, execution, registry);
+    };
+    const first = create(3, 10);
+    expect(create(3, 10)).toEqual(first);
+    const another = create(4, 12);
+    expect(first.introduction).not.toEqual(another.introduction);
+    expect(first.sections).toHaveLength(0);
+    expect(another.sections).toHaveLength(0);
+    expect(first.missing).toEqual(another.missing);
+    expect(run(3, 10).report.sections.length).toBeGreaterThan(0);
   });
 
   it('rejects a changed T8 pattern and swapped upstream T5 family instead of mislabeling Career meaning', () => {

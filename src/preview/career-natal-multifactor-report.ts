@@ -8,7 +8,7 @@ import {
   CAREER_MULTIFACTOR_PACK,
 } from '../research/career-natal-multifactor-candidate.js';
 
-export const CAREER_MULTIFACTOR_REPORT_VERSION = '0.3.0-research-preview' as const;
+export const CAREER_MULTIFACTOR_REPORT_VERSION = '0.4.0-research-preview' as const;
 type Axis = 'execution' | 'preparation' | 'responsibility' | 'tension';
 const AXIS_LABELS: Readonly<Record<Axis, string>> = {
   execution: '실행·산출',
@@ -204,6 +204,21 @@ function entry(claim: InterpretationClaim, snapshot: CanonicalSajuSnapshot,
  * boundary; the extra MUR state is deliberately stricter than generic T8
  * selector's 'complete'. Do not back-fill missing research with generic copy.
  */
+
+function unknownHourCalculatedContext(snapshot: CanonicalSajuSnapshot): string {
+  const slots = [
+    ['year', '연주'], ['month', '월주'], ['day', '일주'],
+  ] as const;
+  const observed = slots.map(([slot, label]) => {
+    const fact = snapshot.pillars[slot];
+    return label + ' ' + (fact.status === 'resolved'
+      ? fact.value.stem.value + fact.value.branch.value
+      : '미확정');
+  });
+  return '출생시각이 없어도 확인 가능한 본인 명식의 계산 사실은 ' +
+    observed.join(' · ') + '입니다. 직업 적성이나 다중 근거 T8 해석을 뜻하지 않습니다.';
+}
+
 export function buildCareerMultifactorResearchReport(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
@@ -237,9 +252,13 @@ export function buildCareerMultifactorResearchReport(
   // (preparation) and wealth→officer (responsibility). Do not require
   // tension when three other chart-grounded, non-overlapping axes exist.
   const AXES: readonly Axis[] = ['execution', 'preparation', 'responsibility', 'tension'];
-  const units = active.map(claim => entry(claim, snapshot, execution, registry))
-    .sort((a, b) => AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
-      (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1));
+  // Canonical tenGods is unavailable without a known birth clock time.
+  // Scenario-sensitive claims cannot be promoted to one non-scenario T8.
+  const units = snapshot.completeness.birthTimeKnown
+    ? active.map(claim => entry(claim, snapshot, execution, registry))
+        .sort((a, b) => AXES.indexOf(a.axis) - AXES.indexOf(b.axis) ||
+          (a.channel === b.channel ? 0 : a.channel === 'visible_stems' ? -1 : 1))
+    : [];
   const visible = units.filter(unit => unit.channel === 'visible_stems');
   // A tension-only visible-stem finding is meaningful supporting evidence,
   // but cannot stand in for the independent central Career interpretation.
@@ -276,7 +295,8 @@ export function buildCareerMultifactorResearchReport(
     : [];
   const shown = primary ? [primary, ...supporting] : partialEvidence;
   const enough = primary !== undefined && supporting.length >= 2;
-  const state: Status = enough ? 'complete' : units.length > 0 ? 'partial' : 'insufficient';
+  const state: Status = snapshot.completeness.birthTimeKnown && enough
+    ? 'complete' : units.length > 0 ? 'partial' : 'insufficient';
   const missing: string[] = [];
   if (!primary) {
     missing.push(MUR[0]!);
@@ -303,17 +323,8 @@ export function buildCareerMultifactorResearchReport(
       : ' 서로 다른 보조 관점 세 가지가 관측되어도 핵심 근거 부재를 대신할 수 없습니다.'}`);
   }
   if (!snapshot.completeness.birthTimeKnown) {
-    // Never convert an unknown-hour chart into a four-pillar comprehensive claim.
-    return {
-      version: CAREER_MULTIFACTOR_REPORT_VERSION,
-      snapshotId: snapshot.snapshotId,
-      calculationHash: snapshot.calculationHash,
-      state: 'insufficient', title: '직업 해석 — 출생시간 미상',
-      introduction: '시주가 확정되지 않아 4기둥 전체를 전제하는 종합 결론을 보류합니다.',
-      sections: [], limitations: ['관측된 일부 십신은 전체 명식의 결론으로 확장하지 않습니다.'],
-      missing: ['출생시각 미상', ...MUR],
-      researchOnly: true, mayPublish: false, maySell: false, usefulComplete: false,
-    };
+    missing.unshift('출생시각 미상');
+    missing.push('이 계산 정책에서 십신(T5) 전체가 미확정이므로 직업의 다중 근거 T8 해석을 보류합니다. 확정된 간지만 계산 사실로 표시합니다.');
   }
   return {
     version: CAREER_MULTIFACTOR_REPORT_VERSION,
@@ -321,7 +332,8 @@ export function buildCareerMultifactorResearchReport(
     calculationHash: snapshot.calculationHash,
     state,
     title: '나의 일과 역할 — 명식 구조 기반 해석',
-    introduction: '실제 명식에서 관측된 서로 다른 십신 근거를 연결하여, 전통 명리에서 일을 읽는 구조적 관점을 정리했습니다. 심리 검사나 개인의 직업 운명을 확정하는 결과가 아닙니다.',
+    introduction: '실제 명식에서 관측된 서로 다른 십신 근거를 연결하여, 전통 명리에서 일을 읽는 구조적 관점을 정리했습니다. 심리 검사나 개인의 직업 운명을 확정하는 결과가 아닙니다.' +
+      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections: shown,
     limitations: [
       '사용한 해석은 고전 관계를 제한적으로 참고한 미검토 연구 후보입니다. Production 또는 유료 보고서에 사용할 수 없습니다.',
