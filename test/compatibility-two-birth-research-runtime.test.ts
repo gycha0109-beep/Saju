@@ -1,0 +1,126 @@
+import { describe, expect, it } from 'vitest';
+import type { BirthInput } from '../src/contracts/calculation.js';
+import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/production/production-calculation-runtime.js';
+import { buildCompatibilityTwoBirthResearchReading } from '../src/preview/compatibility-two-birth-research-runtime.js';
+
+const REFERENCE = '2026-09-03T13:00:00.000Z';
+const FIRST: BirthInput = {
+  calendarType: 'solar',
+  date: { year: 1990, month: 5, day: 15 },
+  time: { known: true, hour: 14, minute: 30 },
+  sexForTraditionalCalculation: 'unspecified',
+};
+const SECOND: BirthInput = {
+  calendarType: 'solar',
+  date: { year: 1996, month: 1, day: 9 },
+  time: { known: true, hour: 9, minute: 30 },
+  sexForTraditionalCalculation: 'unspecified',
+};
+const QUERY = {
+  requestId: 'real-pair-chart-preview',
+  subjectPersonRef: 'person-self',
+  targetPersonRef: 'person-other',
+  referenceDateTime: REFERENCE,
+};
+const read = (
+  first: BirthInput = FIRST,
+  second: BirthInput = SECOND,
+) => buildCompatibilityTwoBirthResearchReading(first, second, QUERY);
+
+describe('real two-birth compatibility intake remains facts only', () => {
+  it('binds two independently calculated Canonical snapshots to their exact person refs', () => {
+    const result = read();
+    const first = calculateAuthorizedMyeonghwaProductionSnapshot(
+      FIRST, { now: new Date(REFERENCE) },
+    ).snapshot;
+    const second = calculateAuthorizedMyeonghwaProductionSnapshot(
+      SECOND, { now: new Date(REFERENCE) },
+    ).snapshot;
+    expect(result.report.subject.personRef).toBe(QUERY.subjectPersonRef);
+    expect(result.report.target.personRef).toBe(QUERY.targetPersonRef);
+    expect(result.report.subject.snapshotId).toBe(first.snapshotId);
+    expect(result.report.target.snapshotId).toBe(second.snapshotId);
+    expect(result.report.subject.calculationHash).toBe(first.calculationHash);
+    expect(result.report.target.calculationHash).toBe(second.calculationHash);
+    expect(result.report.subject.snapshotId).not.toBe(result.report.target.snapshotId);
+    expect(result.report.subject.pillars.map(x => x.factPath)).toEqual([
+      'pillars.year.value', 'pillars.month.value',
+      'pillars.day.value', 'pillars.hour.value',
+    ]);
+    expect(result.availability).toBe('partial');
+    expect(result.meaning).toBe('two_person_calculation_only');
+    expect(result.lifecycle).toBe('internal_research_only');
+    expect(result.mayClaimInterpersonalMeaning).toBe(false);
+    expect(result.mayGrantOfficialAuthority).toBe(false);
+    expect(result.mayMarkMenuAvailable).toBe(false);
+    expect(result.mayPublish).toBe(false);
+    expect(result.mayPersist).toBe(false);
+    expect(result.maySell).toBe(false);
+    expect(result.report.readingStatus).toBe('insufficient_interpersonal_meaning_authority');
+    expect(result.html).toContain('두 사람의 명식 확인');
+    expect(result.html).toContain('궁합 해석은 아직 제공할 수 없습니다');
+    expect(result.html).toContain('첫 번째 명식');
+    expect(result.html).toContain('두 번째 명식');
+    expect(result.html).toContain('source-qualified T10 Claim');
+  });
+
+  it('preserves missing hour independently without inventing interpersonal meaning', () => {
+    const unknown: BirthInput = { ...SECOND, time: { known: false } };
+    const result = read(FIRST, unknown);
+    expect(result.report.subject.birthTimeKnown).toBe(true);
+    expect(result.report.target.birthTimeKnown).toBe(false);
+    expect(result.report.subject.pillars[3]?.status).toBe('resolved');
+    expect(result.report.target.pillars[3]?.status).toBe('unavailable');
+    expect(result.report.missing.join(' ')).toContain('두 번째 사람의 출생시각 미상');
+    expect(result.availability).toBe('partial');
+    expect(result.mayClaimInterpersonalMeaning).toBe(false);
+    expect(result.html).toContain('확인 불가');
+  });
+
+  it('accepts equal Canonical hashes for two distinct people with coincident birth inputs', () => {
+    const result = read(FIRST, FIRST);
+    expect(result.report.subject.snapshotId).toBe(result.report.target.snapshotId);
+    expect(result.report.subject.calculationHash).toBe(result.report.target.calculationHash);
+    expect(result.report.subject.personRef).not.toBe(result.report.target.personRef);
+    expect(result.meaning).toBe('two_person_calculation_only');
+    expect(result.report.usefulComplete).toBe(false);
+    expect(result.report.maySell).toBe(false);
+  });
+
+  it('is replayable and changes only the specified person's chart when birth input changes', () => {
+    const initial = read();
+    expect(read()).toEqual(initial);
+    const adjusted = read(FIRST, {
+      ...SECOND,
+      date: { year: 1997, month: 1, day: 9 },
+    });
+    expect(adjusted.report.subject).toEqual(initial.report.subject);
+    expect(adjusted.report.target.snapshotId).not.toBe(initial.report.target.snapshotId);
+    expect(adjusted.report.target.pillars[0]?.branchHanja)
+      .not.toBe(initial.report.target.pillars[0]?.branchHanja);
+    expect(adjusted.mayPublish).toBe(false);
+    expect(adjusted.maySell).toBe(false);
+  });
+
+  it('rejects missing references, identical person IDs and ambiguous time without guessing scope', () => {
+    for (const overrides of [
+      { requestId: '' },
+      { subjectPersonRef: '' },
+      { targetPersonRef: 'person-self' },
+      { targetPersonRef: ' ' },
+    ]) {
+      expect(() => buildCompatibilityTwoBirthResearchReading(
+        FIRST, SECOND, { ...QUERY, ...overrides },
+      )).toThrow();
+    }
+    for (const invalid of [
+      '2026-09-03', '2026-09-03T13:00:00',
+      '2026-09-03T22:00:00+09:00',
+      '2026-02-30T13:00:00.000Z', '',
+    ]) {
+      expect(() => buildCompatibilityTwoBirthResearchReading(
+        FIRST, SECOND, { ...QUERY, referenceDateTime: invalid },
+      )).toThrow();
+    }
+  });
+});
