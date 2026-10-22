@@ -216,7 +216,9 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     for (const item of overviewBlock.perspectives) {
       expect(item.explainabilityRef).toBeDefined();
       expect(proofRefs.has(item.explainabilityRef!)).toBe(true);
-      expect(item.text).not.toContain('궁합 점수');
+      expect(item.text).toContain('실제 명식에서 함께 확인된 십신 계열:');
+      expect(item.text).not.toContain('TEN_GOD_FAMILY_');
+      expect(item.text).not.toContain('궁합 점수:');
     }
     const standardReport = report;
     expect(standardReport.sections[0]?.title).not.toBe('내 명식에서 함께 확인된 관계 주제');
@@ -339,6 +341,10 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     expect(comparison.perspectives).toHaveLength(1);
     expect(comparison.perspectives[0]?.label).toContain('생각을 정리한 뒤');
     expect(comparison.perspectives[0]?.text).toContain('대화');
+    expect(comparison.perspectives[0]?.text).toContain('인성');
+    expect(comparison.perspectives[0]?.text).toContain('식상');
+    expect(comparison.perspectives[0]?.text).not.toContain('관성');
+    expect(comparison.perspectives[0]?.text).not.toContain('재성');
     expect(comparison.perspectives.every(item =>
       !item.text.includes('결혼 시기가 확정') && !item.text.includes('궁합 점수:'),
     )).toBe(true);
