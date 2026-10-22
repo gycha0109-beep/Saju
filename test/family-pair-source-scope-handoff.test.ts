@@ -646,6 +646,90 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     }
   });
 
+  it('traces each R070 menu prerequisite back to eligible source and method reasons without evidence weighting', () => {
+    const samples = [
+      { year: 1990, day: 15, sex: 'male' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'female' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'unspecified' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'female' as const, timeKnown: false },
+    ];
+    for (const sample of samples) {
+      const snapshot = chart(sample);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const menu = report.menuSupportHandoff;
+        const expectedCodes = [...new Set(menu.unsupportedReasons.flatMap(reason =>
+          reason.missingPrerequisites))];
+        expect(menu.prerequisiteTrace.map(entry => entry.prerequisiteCode))
+          .toEqual(expectedCodes);
+        const excluded = new Set(menu.excludedHistoricalSources.map(
+          source => source.sourceSurface));
+        for (const entry of menu.prerequisiteTrace) {
+          const expectedOrigins = menu.unsupportedReasons
+            .filter(reason => reason.missingPrerequisites.includes(entry.prerequisiteCode));
+          expect(entry.origins).toEqual(expectedOrigins.map(reason => ({
+            reasonCode: reason.reasonCode,
+            category: reason.category,
+            sourceLayerIds: reason.sourceLayerIds,
+            sourceSurfaces: reason.sourceSurfaces,
+            observedFactPaths: reason.observedFactPaths,
+            unresolvedFactPaths: reason.unresolvedFactPaths,
+          })));
+          expect(entry.origins.length).toBeGreaterThan(0);
+          expect(entry.origins.every(origin =>
+            origin.sourceSurfaces.every(surface => !excluded.has(surface)))).toBe(true);
+          expect(entry.repetitionIsIndependentEvidence).toBe(false);
+          expect(entry.familyMeaningAuthorized).toBe(false);
+          expect(menu.missingPrerequisites).toContain(entry.prerequisiteCode);
+        }
+        const authority = menu.prerequisiteTrace.find(entry =>
+          entry.prerequisiteCode === 'R070_FAMILY_T8_OFFICIAL_METHOD_NOT_ADMITTED');
+        expect(authority?.origins).toEqual([{
+          reasonCode: 'R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED',
+          category: 'OFFICIAL_AUTHORITY',
+          sourceLayerIds: [],
+          sourceSurfaces: [],
+          observedFactPaths: [],
+          unresolvedFactPaths: [],
+        }]);
+        expect(menu.prerequisiteTrace.some(entry =>
+          entry.prerequisiteCode === 'HISTORICAL_SEX_SCOPE_NOT_MATCHED_OR_NOT_SPECIFIED'))
+          .toBe(false);
+        expect(menu.admittedFamilyClaimCount).toBe(0);
+        expect(report.familyT8Admitted).toBe(false);
+        expect(menu.mayEnableMenu).toBe(false);
+        expect(menu.mayDisplayFamilyInterpretation).toBe(false);
+        expect(menu.mayPublish).toBe(false);
+        expect(menu.maySell).toBe(false);
+      }
+    }
+  });
+
+  it('keeps repeated star-source method gaps separate from raw hidden membership omissions', () => {
+    const sample = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const report = evaluateFamilySourceScopeV1(sample, 'children');
+    const menu = report.menuSupportHandoff;
+    const historicalStarMethod = menu.prerequisiteTrace.find(entry =>
+      entry.prerequisiteCode === 'SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED');
+    expect(historicalStarMethod?.origins.some(origin =>
+      origin.sourceSurfaces.includes('子嗣者即官星也'))).toBe(true);
+    expect(historicalStarMethod?.origins.some(origin =>
+      origin.sourceSurfaces.includes('我生者為子'))).toBe(true);
+    const missingMembership = menu.prerequisiteTrace.find(entry =>
+      entry.prerequisiteCode === 'CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE');
+    expect(missingMembership?.origins.filter(origin =>
+      origin.category === 'SOURCE_CONTEXT').map(origin => origin.sourceSurfaces[0]))
+      .toEqual(['子嗣者即官星也', '我生者為子']);
+    expect(missingMembership?.origins.every(origin =>
+      origin.unresolvedFactPaths.includes('derivedFacts.hiddenStems.hour'))).toBe(true);
+    expect(menu.unresolvedCanonicalInputs.filter(item =>
+      item.factPath === 'derivedFacts.hiddenStems.hour')).toHaveLength(1);
+    expect(historicalStarMethod?.repetitionIsIndependentEvidence).toBe(false);
+    expect(missingMembership?.repetitionIsIndependentEvidence).toBe(false);
+    expect(menu.admittedFamilyClaimCount).toBe(0);
+    expect(menu.mayEnableMenu).toBe(false);
+  });
+
   it('reports missing-hour and missing-fetal-pillar menu reasons without inventing family claims', () => {
     const unknownHour = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
     const child = evaluateFamilySourceScopeV1(unknownHour, 'children');
