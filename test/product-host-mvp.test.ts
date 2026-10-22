@@ -479,6 +479,12 @@ describe('Myeonghwa Product Host MVP', () => {
       expect(app).toContain('나의 원국 계산 정보');
       expect(app).toContain("bundle.mode !== 'single_preview_chart'");
       expect(app).toContain("renderReading(reading, target, showCalculationSummary = true)");
+      expect(app).toContain("if (block.type === 'ambiguity')");
+      expect(app).toContain("container.appendChild(el('p', block.summary, 'reading-condition'))");
+      expect(app).toContain("if (section.state === 'partial')");
+      expect(app).toContain("section.state === 'unavailable'");
+      expect(app).toContain("white-space: pre-line");
+      expect(app).not.toContain("String(item)");
       expect(html).not.toContain('research');
     } finally {
       await server.close();
