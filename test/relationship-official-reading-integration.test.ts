@@ -232,7 +232,7 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     const focusEntry = detailedReport.explainability.entries.find(entry =>
       entry.explainabilityRef === overviewBlock.perspectives[0]?.explainabilityRef,
     );
-    const targetUnitId = focusEntry?.primaryUnitRefs[0];
+    const targetUnitId = focusEntry?.primaryUnitRefs?.[0];
     const focusedUnit = semantics.units.find(unit => unit.unitId === targetUnitId);
     expect(focusedUnit).toBeDefined();
     if (targetUnitId !== undefined && focusedUnit !== undefined) {
