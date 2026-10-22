@@ -707,8 +707,8 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
       }
     }
     view.output.appendChild(section);
-    setState(view, 'partial',
-      '내부 연구용 계산 미리보기만 표시합니다. 공식 해석·판매 승인이 아닙니다.');
+    setState(view, 'unavailable',
+      '해당 주제의 의미 해석은 아직 미지원입니다. 내부 연구용 계산 사실만 별도 표시합니다.');
   }
 
   async function showSeparatedSpouseScopeReadings(view) {
