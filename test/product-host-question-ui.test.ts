@@ -66,7 +66,7 @@ class ScreenElement {
   }
 }
 
-function openProductScreen(reply: Record<string, unknown>, failedReadingText?: string, familyPreview?: Record<string, unknown>, unavailablePreviewPath?: string) {
+function openProductScreen(reply: Record<string, unknown>, failedReadingText?: string, familyPreview?: Record<string, unknown>, unavailablePreviewPath?: string, failedBirthDate?: string) {
   const elements = new Map<string, ScreenElement>();
   for (const id of [
     'reading-form', 'result', 'submit', 'five-domain-submit', 'period-submit',
@@ -116,9 +116,14 @@ function openProductScreen(reply: Record<string, unknown>, failedReadingText?: s
       if (url === unavailablePreviewPath) {
         return { ok: false, status: 401, json: async () => ({}) };
       }
+      const birth = body.birth as { date?: string } | undefined;
+      const readingFailed = (failedReadingText !== undefined &&
+        reading?.text === failedReadingText) ||
+        (failedBirthDate !== undefined && url === '/api/readings' &&
+        birth?.date === failedBirthDate);
       return url === '/api/preview/family-observations'
         ? { ok: familyPreview !== undefined, json: async () => familyPreview }
-        : { ok: failedReadingText === undefined || reading?.text !== failedReadingText, json: async () => reply };
+        : { ok: !readingFailed, json: async () => reply };
     },
   });
   return { get, requests };
@@ -275,14 +280,31 @@ describe('actual customer question form', () => {
     screen.get('partner-time-unknown').checked = true;
     await screen.get('partner-time-unknown').emit('change');
     await screen.get('reading-form').emit('submit');
-    expect(screen.requests).toHaveLength(1);
+    expect(screen.requests).toHaveLength(3);
+    expect(screen.requests.map(r => r.url)).toEqual([
+      '/api/preview/compatibility-charts', '/api/readings', '/api/readings',
+    ]);
     expect(screen.requests[0]?.url).toBe('/api/preview/compatibility-charts');
     expect(screen.requests[0]?.body).toEqual({
       birth: { calendarType: 'solar', date: '1998-05-21', time: '13:45', sex: 'female' },
       partnerBirth: { calendarType: 'lunar', date: '2000-02-03', time: null,
         sex: 'unspecified', isLeapMonth: true },
     });
+    expect(screen.requests.slice(1).map(r => r.body)).toEqual([
+      {
+        birth: { calendarType: 'solar', date: '1998-05-21',
+          time: '13:45', sex: 'female' },
+        reading: { text: '연애운', outputPreferences: { preferredDetail: 'detailed' } },
+      },
+      {
+        birth: { calendarType: 'lunar', date: '2000-02-03',
+          time: null, sex: 'unspecified', isLeapMonth: true },
+        reading: { text: '연애운', outputPreferences: { preferredDetail: 'detailed' } },
+      },
+    ]);
     const content = screen.get('result').textContent;
+    expect(content).toContain('두 사람 각자의 연애·관계 풀이');
+    expect(content).toContain('서로의 관계 적합도'); 
     expect(content).toContain('나의 명식');
     expect(content).toContain('상대방의 명식');
     expect(content).toContain('출생시각 미상');
@@ -399,8 +421,12 @@ describe('actual customer question form', () => {
     await compatibility.get('reading-text').emit('change');
     compatibility.get('partner-date').value = '2000-02-04';
     await compatibility.get('reading-form').emit('submit');
-    expect(compatibility.requests).toHaveLength(1);
+    expect(compatibility.requests).toHaveLength(3);
+    expect(compatibility.requests.map(x => x.url)).toEqual([
+      '/api/preview/compatibility-charts', '/api/readings', '/api/readings',
+    ]);
     expect(compatibility.get('result').textContent).toContain('보호된 미리보기 접근 권한이 없어');
+    expect(compatibility.get('result').textContent).toContain('두 사람 각자의 연애·관계 풀이');
     expect(compatibility.get('result').textContent).not.toContain('확정하지 않음');
   });
 
@@ -455,6 +481,60 @@ describe('actual customer question form', () => {
     expect(text).toContain('자녀와의 관계');
     expect(text).toContain('현재 부모·자녀에 대한 개별 의미 근거가 확인되지 않았습니다.');
     expect(text).not.toContain('가족운 확정');
+  });
+
+  it('shows the separately governed natal relationship and spouse palace readings in one menu', async () => {
+    const screen = openProductScreen({
+      state: 'delivered', messageCode: 'READING_DELIVERED',
+      reading: {
+        sections: [{ title: '승인된 원국 주제',
+          blocks: [{ type: 'paragraph', text: '실제 소유자의 승인된 해석만 사용합니다.' }] }],
+      },
+    }, '배우자운');
+    expect(PRODUCT_HOST_PAGE).toContain('<option value="배우자·관계">');
+    screen.get('reading-text').value = '배우자·관계';
+    await screen.get('reading-form').emit('submit');
+    expect(screen.requests).toHaveLength(2);
+    expect(screen.requests.map(r => r.url)).toEqual(['/api/readings','/api/readings']);
+    expect(screen.requests.map(r => r.body.reading)).toEqual([
+      { text: '연애운', outputPreferences: { preferredDetail: 'detailed' } },
+      { text: '배우자운', outputPreferences: { preferredDetail: 'detailed' } },
+    ]);
+    expect(screen.requests[0]?.body.birth).toEqual(screen.requests[1]?.body.birth);
+    const result = screen.get('result').textContent;
+    expect(result).toContain('배우자·관계 · 두 관점');
+    expect(result).toContain('나의 연애·관계 방식');
+    expect(result).toContain('배우자궁에 관한 승인된 설명');
+    expect(result).toContain('실제 소유자의 승인된 해석만 사용합니다.');
+    expect(result).toContain('다른 항목은 계속 표시합니다.');
+    expect(result).toContain('배우자 개인의 성격');
+    expect(screen.get('submit').disabled).toBe(false);
+  });
+
+  it('keeps one person’s real natal relationship result even when the partner request fails', async () => {
+    const screen = openProductScreen({
+      state: 'delivered', messageCode: 'READING_DELIVERED',
+      reading: {
+        sections: [{ title: '개인별 관계 해석',
+          blocks: [{ type: 'paragraph', text: '고유 명식에서 확인된 관계 해석입니다.' }] }],
+      },
+    }, undefined, undefined, '/api/preview/compatibility-charts', '2000-02-04');
+    screen.get('reading-text').value = '궁합';
+    await screen.get('reading-text').emit('change');
+    screen.get('partner-date').value = '2000-02-04';
+    await screen.get('reading-form').emit('submit');
+    expect(screen.requests.map(r => r.url)).toEqual([
+      '/api/preview/compatibility-charts', '/api/readings', '/api/readings',
+    ]);
+    expect(screen.requests.slice(1).map(r => (r.body.birth as { date: string }).date))
+      .toEqual(['1998-05-21', '2000-02-04']);
+    const result = screen.get('result').textContent;
+    expect(result).toContain('보호된 미리보기 접근 권한이 없어');
+    expect(result).toContain('두 사람 각자의 연애·관계 풀이');
+    expect(result).toContain('고유 명식에서 확인된 관계 해석입니다.');
+    expect(result).toContain('이 사람의 관계 풀이를 불러오지 못했습니다.');
+    expect(result).toContain('관계 적합도');
+    expect(result).not.toContain('궁합 점수:');
   });
 
 });
