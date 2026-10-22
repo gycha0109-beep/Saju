@@ -1,6 +1,7 @@
 export * from './reading-assembler.js';
 export * from './reading-artifact-shell.js';
 export * from './canonical-reading-semantics.js';
+export * from './reading-localization.js';
 export * from './governed-reading-evidence.js';
 export * from './official-reading-plan.js';
 export * from './official-reading-renderer.js';
@@ -48,3 +49,4 @@ export * from './official-reading-detailed-presentation-relationship.js';
 export * from './official-reading-detailed-presentation-business.js';
 export * from './twelve-menu-engine-readiness.js';
 export * from './twelve-menu-reader-cards.js';
+export * from './reading-locale-lexicon.js';
