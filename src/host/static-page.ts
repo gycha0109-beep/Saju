@@ -89,6 +89,7 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
           <option value="사업운">사업운</option>
           <option value="재물운">재물운</option>
           <option value="연애운">연애운</option>
+          <option value="가족">가족 · 부모와 자녀 함께 보기</option>
           <option value="부모운">부모운</option>
           <option value="자녀운">자녀운</option>
           <option value="배우자운">배우자운</option>
@@ -284,6 +285,11 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     }
   }
 
+  const familyTopics = [
+    { title: '부모와의 관계', requestText: '부모운', scope: 'parents' },
+    { title: '자녀와의 관계', requestText: '자녀운', scope: 'children' }
+  ];
+
   const periodTopics = [
     { title: '올해의 흐름', requestText: '올해 운세' },
     { title: '이번 달의 흐름', requestText: '이번 달 운세' }
@@ -474,6 +480,10 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     result.replaceChildren();
     result.classList.remove('hidden');
     result.appendChild(el('h2', '삶의 단계 · 지금과 다음 구간'));
+    if (payload?.state === 'preview_unavailable') {
+      result.appendChild(el('p', payload.explanation, 'notice'));
+      return;
+    }
     const report = payload?.report;
     if (!report || !Array.isArray(report.periods) ||
         !Array.isArray(report.missing) || !Array.isArray(report.caveats)) {
@@ -498,12 +508,47 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     report.caveats.forEach(text => result.appendChild(el('p', text, 'disclosure')));
   }
 
+  async function appendFamilyObservationPreview(scope, target = result, birth = currentBirth()) {
+    // The original governed reading remains visible. This additional source-
+    // restricted context only appears when the protected Preview is available.
+    const response = await fetch('/api/preview/family-observations', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ birth, scope })
+    });
+    if (!response.ok) return;
+    const payload = await response.json();
+    const report = payload?.report;
+    if (!report || report.scope !== scope || report.researchOnly !== true ||
+        report.mayPublish !== false || !Array.isArray(report.observations) ||
+        !Array.isArray(report.missing)) return;
+    const section = el('section', undefined, 'domain-card');
+    section.appendChild(el('h2', report.headline + ' · 계산 근거 미리보기'));
+    section.appendChild(el('p', report.introduction));
+    report.observations.forEach(item => {
+      const observation = el('div', undefined, 'facts');
+      observation.appendChild(el('h3', item.pillarLabel));
+      observation.appendChild(el('p', item.text));
+      section.appendChild(observation);
+    });
+    report.missing.forEach(text => section.appendChild(el('p', text, 'notice')));
+    section.appendChild(el('p',
+      '이는 개인별 가족운 결과가 아닌 내부 연구용 계산 관찰입니다.', 'disclosure'));
+    target.appendChild(section);
+  }
+
   async function fetchLifeStagePreview() {
     const response = await fetch('/api/preview/life-stage', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ birth: currentBirth() })
     });
+    if (response.status === 401 || response.status === 404) {
+      return {
+        state: 'preview_unavailable',
+        explanation: '삶의 단계 상세는 아직 내부 연구용 미리보기입니다. 현재 이용 중인 서비스에서는 이 미리보기의 접근 권한이 없어 대운 구간을 표시할 수 없습니다. 정식 운세가 제공되는 것으로 안내하지 않습니다.'
+      };
+    }
     if (!response.ok) throw new Error('LIFE_STAGE_PREVIEW_NOT_AVAILABLE');
     return response.json();
   }
@@ -512,6 +557,10 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     result.replaceChildren();
     result.classList.remove('hidden');
     result.appendChild(el('h2', '두 사람의 명식 · 궁합 사전 확인'));
+    if (payload?.state === 'preview_unavailable') {
+      result.appendChild(el('p', payload.explanation, 'notice'));
+      return;
+    }
     if (!payload || payload.state !== 'insufficient_evidence' ||
         !Array.isArray(payload.subjects) || payload.subjects.length !== 2) {
       result.appendChild(el('p', '명식 비교 결과를 확인할 수 없습니다.', 'notice error'));
@@ -546,6 +595,12 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ birth: currentBirth(), partnerBirth: currentPartnerBirth() })
     });
+    if (response.status === 401 || response.status === 404) {
+      return {
+        state: 'preview_unavailable',
+        explanation: '궁합의 두 사람 명식 계산은 아직 내부 연구용 미리보기입니다. 현재 서비스에서는 보호된 미리보기 접근 권한이 없어 결과를 표시할 수 없습니다. 궁합 점수나 결과를 임의로 제공하지 않습니다.'
+      };
+    }
     if (!response.ok) throw new Error('COMPATIBILITY_PREVIEW_NOT_AVAILABLE');
     return response.json();
   }
@@ -642,6 +697,40 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       card.appendChild(content);
       result.appendChild(card);
     });
+  }
+
+  async function showFamilyCombinedResults(outcomes, birth) {
+    result.replaceChildren();
+    result.classList.remove('hidden');
+    result.appendChild(el('h2', '가족 · 부모와 자녀'));
+    result.appendChild(el('p',
+      '부모와 자녀의 근거를 각각 확인합니다. 서로 다른 가족 관계의 해석을 섞거나 다른 사람의 운명을 추측하지 않습니다.',
+      'bundle-caption'));
+    for (let index = 0; index < familyTopics.length; index++) {
+      const topic = familyTopics[index];
+      const outcome = outcomes[index];
+      const section = el('section', undefined, 'domain-card');
+      section.appendChild(el('h2', topic.title));
+      const content = el('div');
+      if (outcome.status === 'fulfilled') {
+        renderResponse(outcome.value, content);
+        if (outcome.value.state !== 'delivered' &&
+            outcome.value.state !== 'delivered_with_fallback') {
+          try {
+            await appendFamilyObservationPreview(topic.scope, content, birth);
+          } catch {
+            // Source-bounded Preview might be authenticated separately; the
+            // independently governed reading and its missing reason remain.
+          }
+        }
+      } else {
+        content.appendChild(el('p',
+          '이 가족 항목의 풀이를 불러오지 못했습니다. 다른 항목 결과는 유지합니다.',
+          'notice error'));
+      }
+      section.appendChild(content);
+      result.appendChild(section);
+    }
   }
 
   function showPeriodResults(outcomes) {
@@ -760,6 +849,14 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     result.classList.remove('hidden');
     result.replaceChildren(el('div', '풀이를 준비하고 있습니다.', 'state'));
     try {
+      if (readingText.value === '가족') {
+        const birth = currentBirth();
+        const outcomes = await Promise.allSettled(
+          familyTopics.map(topic => fetchIndividualDomain(birth, topic))
+        );
+        await showFamilyCombinedResults(outcomes, birth);
+        return;
+      }
       if (readingText.value === '평생 흐름') {
         const preview = await fetchLifeStagePreview();
         renderLifeStagePreview(preview);
@@ -789,6 +886,17 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
         throw new Error(payload && payload.error && payload.error.code ? payload.error.code : 'REQUEST_FAILED');
       }
       renderResponse(payload);
+      if ((readingText.value === '부모운' || readingText.value === '자녀운') &&
+          payload.state !== 'delivered' &&
+          payload.state !== 'delivered_with_fallback') {
+        const scope = readingText.value === '부모운' ? 'parents' : 'children';
+        try {
+          await appendFamilyObservationPreview(scope);
+        } catch {
+          // The separately authenticated Preview may be unavailable to this
+          // browser; preserve the original governed reading/missing reason.
+        }
+      }
     } catch (error) {
       result.replaceChildren(el('div', '요청을 처리하지 못했습니다. 입력값을 확인하거나 잠시 후 다시 시도해 주세요.', 'state error'));
     } finally {

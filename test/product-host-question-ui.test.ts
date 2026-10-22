@@ -66,7 +66,7 @@ class ScreenElement {
   }
 }
 
-function openProductScreen(reply: Record<string, unknown>, failedReadingText?: string) {
+function openProductScreen(reply: Record<string, unknown>, failedReadingText?: string, familyPreview?: Record<string, unknown>, unavailablePreviewPath?: string) {
   const elements = new Map<string, ScreenElement>();
   for (const id of [
     'reading-form', 'result', 'submit', 'five-domain-submit', 'period-submit',
@@ -113,7 +113,12 @@ function openProductScreen(reply: Record<string, unknown>, failedReadingText?: s
       const body = JSON.parse(init.body) as Record<string, unknown>;
       requests.push({ url, body });
       const reading = body.reading as { text?: string } | undefined;
-      return { ok: failedReadingText === undefined || reading?.text !== failedReadingText, json: async () => reply };
+      if (url === unavailablePreviewPath) {
+        return { ok: false, status: 401, json: async () => ({}) };
+      }
+      return url === '/api/preview/family-observations'
+        ? { ok: familyPreview !== undefined, json: async () => familyPreview }
+        : { ok: failedReadingText === undefined || reading?.text !== failedReadingText, json: async () => reply };
     },
   });
   return { get, requests };
@@ -328,6 +333,128 @@ describe('actual customer question form', () => {
     expect(content).toContain('현재 명식의 계산된 대운은 갑자 구간입니다.');
     expect(content).toContain('시각이 확인되지 않으면');
     expect(content).toContain('미래 사건의 결과를 의미하지 않습니다.');
+  });
+
+  it('shows different existing Korean parent/child source observations only when a governed reading is unavailable', async () => {
+    const screen = openProductScreen({
+      state: 'insufficient_evidence',
+      messageCode: 'READING_EVIDENCE_INSUFFICIENT',
+      coverage: { explanation: '가족 관계에 대한 T8 해석 근거가 부족합니다.' },
+    }, undefined, {
+      report: {
+        researchOnly: true, mayPublish: false, scope: 'parents',
+        headline: '부모와 관련된 명식 관찰',
+        introduction: '부모에 관한 서로 다른 고전 배속 중 하나를 확정하지 않았습니다.',
+        observations: [
+          { pillarLabel: '연주', text: '연주에 실제로 계산된 간지는 갑자입니다.' },
+          { pillarLabel: '월주', text: '월주에 실제로 계산된 간지는 을축입니다.' },
+        ],
+        missing: ['부모의 성격을 추측할 근거는 아직 승인되지 않았습니다.'],
+      },
+    });
+    screen.get('reading-text').value = '부모운';
+    await screen.get('reading-form').emit('submit');
+    expect(screen.requests.map(r => r.url)).toEqual([
+      '/api/readings', '/api/preview/family-observations',
+    ]);
+    expect(screen.requests[1]?.body).toEqual({
+      birth: { calendarType: 'solar', date: '1998-05-21',
+        time: '13:45', sex: 'female' },
+      scope: 'parents',
+    });
+    const content = screen.get('result').textContent;
+    expect(content).toContain('가족 관계에 대한 T8 해석 근거가 부족합니다.');
+    expect(content).toContain('부모와 관련된 명식 관찰');
+    expect(content).toContain('연주에 실제로 계산된 간지는 갑자입니다.');
+    expect(content).toContain('부모의 성격을 추측할 근거는 아직 승인되지 않았습니다.');
+  });
+
+  it('does not overwrite a delivered child reading with parent-only research facts', async () => {
+    const screen = openProductScreen({
+      state: 'delivered',
+      messageCode: 'READING_DELIVERED',
+      reading: {
+        sections: [{ title: '자녀 관련 공식 읽기',
+          blocks: [{ type: 'paragraph', text: '허가된 기존 자녀 해석 본문입니다.' }] }],
+      },
+    });
+    screen.get('reading-text').value = '자녀운';
+    await screen.get('reading-form').emit('submit');
+    expect(screen.requests).toHaveLength(1);
+    expect(screen.get('result').textContent).toContain('허가된 기존 자녀 해석 본문입니다.');
+    expect(screen.get('result').textContent).not.toContain('계산 근거 미리보기');
+  });
+
+  it('explains protected life-stage and compatibility previews without claiming a result', async () => {
+    const life = openProductScreen({ state: 'partial_evidence' }, undefined,
+      undefined, '/api/preview/life-stage');
+    life.get('reading-text').value = '평생 흐름';
+    await life.get('reading-form').emit('submit');
+    expect(life.requests).toHaveLength(1);
+    expect(life.get('result').textContent).toContain('접근 권한이 없어 대운 구간을 표시할 수 없습니다.');
+
+    const compatibility = openProductScreen({ state: 'partial_evidence' }, undefined,
+      undefined, '/api/preview/compatibility-charts');
+    compatibility.get('reading-text').value = '궁합';
+    await compatibility.get('reading-text').emit('change');
+    compatibility.get('partner-date').value = '2000-02-04';
+    await compatibility.get('reading-form').emit('submit');
+    expect(compatibility.requests).toHaveLength(1);
+    expect(compatibility.get('result').textContent).toContain('보호된 미리보기 접근 권한이 없어');
+    expect(compatibility.get('result').textContent).not.toContain('확정하지 않음');
+  });
+
+  it('maps one family menu to separate governed parent and child requests without losing the available reading', async () => {
+    const screen = openProductScreen({
+      state: 'delivered',
+      messageCode: 'READING_DELIVERED',
+      reading: {
+        sections: [{
+          title: '가족 관련 기존 풀이',
+          blocks: [{ type: 'paragraph', text: '승인된 원국 Claim의 한국어 풀이입니다.' }],
+        }],
+      },
+    }, '자녀운');
+    expect(PRODUCT_HOST_PAGE).toContain('<option value="가족">');
+    screen.get('reading-text').value = '가족';
+    await screen.get('reading-form').emit('submit');
+    expect(screen.requests).toHaveLength(2);
+    expect(screen.requests.map(r => r.url)).toEqual(['/api/readings', '/api/readings']);
+    expect(screen.requests.map(r => r.body.reading)).toEqual([
+      { text: '부모운', outputPreferences: { preferredDetail: 'detailed' } },
+      { text: '자녀운', outputPreferences: { preferredDetail: 'detailed' } },
+    ]);
+    const result = screen.get('result').textContent;
+    expect(result).toContain('가족 · 부모와 자녀');
+    expect(result).toContain('부모와의 관계');
+    expect(result).toContain('자녀와의 관계');
+    expect(result).toContain('승인된 원국 Claim의 한국어 풀이입니다.');
+    expect(result).toContain('다른 항목 결과는 유지합니다.');
+    expect(result).not.toContain('계산 근거 미리보기');
+    expect(screen.get('submit').disabled).toBe(false);
+  });
+
+  it('keeps separate family insufficiency details when the protected source preview is unavailable', async () => {
+    const screen = openProductScreen({
+      state: 'insufficient_evidence',
+      messageCode: 'READING_EVIDENCE_INSUFFICIENT',
+      coverage: {
+        missingRequirementCount: 1,
+        explanation: '현재 부모·자녀에 대한 개별 의미 근거가 확인되지 않았습니다.',
+      },
+    });
+    screen.get('reading-text').value = '가족';
+    await screen.get('reading-form').emit('submit');
+    expect(screen.requests.map(r => r.url)).toEqual([
+      '/api/readings', '/api/readings',
+      '/api/preview/family-observations', '/api/preview/family-observations',
+    ]);
+    expect(screen.requests.slice(2).map(r => r.body.scope)).toEqual(['parents', 'children']);
+    const text = screen.get('result').textContent;
+    expect(text).toContain('부모와의 관계');
+    expect(text).toContain('자녀와의 관계');
+    expect(text).toContain('현재 부모·자녀에 대한 개별 의미 근거가 확인되지 않았습니다.');
+    expect(text).not.toContain('가족운 확정');
   });
 
 });
