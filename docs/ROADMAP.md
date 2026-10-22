@@ -69,7 +69,7 @@
 - [x] **E-1 기존 IR 재사용 계약 첫 구현:** `CanonicalReadingSemanticBundleV1`을 독립 중간 의미 모델로 재사용한다. 별도 병렬 사주 엔진을 만들지 않고 `src/reading/reading-localization.ts`에서 source-owned Claim/Qualifier/prohibitedExtensions/semanticHash 무결성을 확인한다. *기존 사용자 한국어 경로 통합은 후속 작업*이다.
 - [x] **E-2 로케일/요청별 On-Demand 계약 첫 구현:** `readingLocale > accountLocale > uiLocale > ko-KR` 우선순위로 하나를 선택하고, 선택된 renderer만 호출한다. 미등록 renderer/알 수 없는 로케일의 자동 대체 출력 금지. `ko-KR/en-US/ja-JP/zh-CN/zh-TW/vi-VN/ms-MY/id-ID`는 **설계상 로케일 카탈로그**이지 이미 출시된 언어 목록이 아니다.
 - [x] **E-2a 버전/캐시·구조적 의미 경계:** `semanticHash`·snapshot/interpretation/registry·권한 범위 `requestScopeKey`·로케일·Renderer/용어집 버전으로 scoped 캐시 키를 만든다. 신규 Claim, 필수 qualifier 누락, 응답 텍스트 누락을 거절한다. 내부용 계약이며 저장·언어 출력 제공·새 명리 authority는 없음.
-- [ ] **E-3 한국어 Renderer 호환 연결:** 기존 한국어 Official/Preview/ProductReadingResponse의 실제 문단·근거·내부 ID 레닥션·부분/미지원 처리 보존. 현재 경로를 무단 변경하지 않는다.
+- [ ] **E-3 한국어 Renderer 호환 연결:** **내부 1차 연결 구현:** `korean-reading-localization.ts`에서 기존 source-owned 한국어 Claim/Qualifier를 문장 변조 없이 요청 시 한 번만 출력하며, 기존 `runProductReadingInternals`→`ProductReadingResponse`의 본문·근거 레닥션·부분/미지원 상태를 그대로 재사용하는 opt-in 한국어 서비스 경로를 연결했다. **남은 범위:** 외부 Host/Reader의 `readingLocale` 연동, 전체 12메뉴 및 다양한 실제 명식 품질과 언어별 transport 계약 수락. 기존 고객용 경로는 임의로 변경하지 않는다.
 - [ ] **E-4 언어별 용어/메시지 리소스:** 명리 용어집, 로케일별 UI·오류·미지원 사유, 간체/번체·말레이어/인도네시아어 독립 정책. UI 언어/풀이 언어/지역/출생 시간대/계산 정책은 각각 분리한다.
 - [ ] **E-5 첫 외국어 Renderer 및 품질 기준:** 영어 등 한 언어부터 개인별 실제 결과와 원본 의미·Qualifier·HOLD 보존을 확인해 단계적으로 확대한다. 한국어만 가능한 의미를 자동 번역으로 채우지 않는다.
 - [ ] **E-6 LLM 표현/사용권한·운영 통합:** LLM은 기존 승인 범위의 문장 표현에만 사용하며 새 명리 판단 금지. 문장 수준 의미 동등성은 기계적 claim-id 검사의 대체물이 아니며 별도 로케일 품질 심사 필요. Saju는 의미/출력 계약, 명하 UX·Reader·저장·Commerce는 화면/권한/보관/삭제/상품화를 담당한다.
