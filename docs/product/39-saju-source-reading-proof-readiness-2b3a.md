@@ -77,3 +77,8 @@ canSell = false
 A. 내부 증빙 원천을 사용하는 audit 계약과 부정 테스트: **본 PR 대상**.  
 B. signed / authenticated server-only Source Proof transport: **2B-3B**.  
 C. 복합 Product Production 출시 허가: **별도 source authority와 상업 게이트 승인 전 HOLD**.
+
+## 2026-10-22 S3→S5→S7 비공개 동일 원본 인수 확장
+
+- [40 — Saju Reader/Records Source Handoff](./40-saju-reader-records-source-handoff-s3-s5-s7.md)는 이 문서의 `SourceReadingProofReadinessV1` 위에서 기존 Response v2 실제 원문 Unit 경로/해시와 원본·버전 동일성 참조를 구축한다.
+- 확장은 **Preview/held 내부 인수**만 수행하며 2B-3B의 Saju Owner Production 출처 증명·MyeongHa DB/Privacy 승인 또는 S5 원자 유료 원문 저장·S7 전달 권한을 구현/완료한 것이 아니다.
