@@ -72,6 +72,12 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 이 코드들은 **R068/R069에 이미 있는 실행 공백**이며, 독자적 두 사람 궁합 규칙을 만들었다는 뜻이 아닙니다. 임의 점수·혼인·이혼·좋고 나쁨으로 변환하지 않습니다. 두 사람 입력 순서를 바꾼 회귀에서도 비교의 T0 동일성만 유지하고 T10은 양방향 모두 `INCONCLUSIVE`입니다. 두 사람의 원본 `snapshot.scenarios[].scenarioId`, `completeness.ambiguousPaths`, `completeness.unavailablePaths`는 각각 `subject`와 `target` 아래 별개 배열로 넘깁니다. 대상 순서가 바뀌면 각자의 배열 소속만 바뀌며, 그 시나리오들의 교차 조합을 자동 생성하거나 하나의 확정 궁합 판정으로 합치지 않습니다.
 
+### R068: 기존 三合六合 구조가 있어도 두 명식 사이의 합은 아니다
+
+기존 R068의 `SOCIAL-FRIENDLINESS-SANHE-LIUHE`와 `COMBINATION-CONTEXT-VARIANCE` 원문에 한하여 `singleChartCombinationObservations`를 추가했습니다. 각 인물의 `derivedFacts.structuralRelations`가 `resolved`일 때 그 인물 **자신의 원국 내부에서 계산된** `branch_six_combination`·`branch_three_combination` 후보 ID, kind 및 기존 sourceIds를 그대로 반환합니다. 이 배열은 항상 `subject`와 `target`을 나눈 고정 길이 두 개로 구성되며, 서로 다른 명식의 지지 사이에 임의 합 관계를 계산하거나 사실로 주장하지 않습니다.
+
+`SOCIAL-FRIENDLINESS-SANHE-LIUHE`는 사회적 교류에 관한 문구이며 두 사람의 연애 궁합으로 승격되지 않습니다. `COMBINATION-CONTEXT-VARIANCE`에는 오행 생극·길흉 맥락이 필요하지만 기존 개별 명식의 합 구조 후보만으로 그 효과가 확정되지 않습니다. `KIN-FRIEND-BOND-HARM-CONFIGURATION`에는 별도의 `羊刃`·`傷官`·`七煞` 및 친족/친구 해석 조건이 필요하므로 임의의 `singleChartCombinationObservations`를 결속하지 않습니다. 모든 관찰은 `socialOutcomeAuthorized=false`, `pairwiseMeaningAuthorized=false`입니다.
+
 ### R069: 실제 두 인물의 역사적 성별을 개별 원문 조건에 적용
 
 기존 R069은 남성 명식의 `日為己身妻妾`·`四柱內有我克者為妻`, 여성 명식의 `克我者為夫`, 그리고 남성 명식의 `日坐財 / 財旺` 계열에 속하는 **한 사람 명식**의 원문이다. 이를 두 인물에게 적용할 때 어느 사람의 명식에서 원문상 범위가 맞는지 구분하기 위해 `comparedSourceSurfaces[].oneChartScopeObservations`에 **subject와 target을 따로** 기록한다.
