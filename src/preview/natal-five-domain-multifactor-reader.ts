@@ -133,6 +133,49 @@ function renderCareerReadingGuide(report: CareerMultifactorReport): string {
     '</p></section>';
 }
 
+function renderWealthReadingGuide(report: WealthNatalMultifactorReport): string {
+  const guide = report.readingGuide;
+  if (guide === undefined) return '';
+  const core = report.sections[0];
+  guard(core !== undefined && core.claimType === guide.coreClaimType &&
+    core.axis !== 'tension' && core.sourceIds.length > 0 &&
+    guide.paragraph.includes(core.headline) &&
+    core.observedPositions.every(position => guide.paragraph.includes(position)) &&
+    guide.supporting.length === report.sections.length - 1,
+    'Wealth reading guide must follow the selected source-bound core');
+
+  const usedPaths = new Set(core.observedFactPaths);
+  guide.supporting.forEach((support, index) => {
+    const section = report.sections[index + 1];
+    guard(section !== undefined && section.claimType === support.claimType &&
+      section.sourceIds.length > 0 &&
+      support.distinctObservedFactPaths.length > 0 &&
+      support.distinctObservedFactPaths.length === support.distinctObservedPositions.length &&
+      guide.paragraph.includes(section.headline),
+      'Wealth reading guide references a missing or unqualified support');
+    const newlyObserved = section.observedFactPaths.flatMap((path, positionIndex) => {
+      if (usedPaths.has(path)) return [];
+      const position = section.observedPositions[positionIndex];
+      guard(position !== undefined, 'Wealth evidence is missing its position');
+      usedPaths.add(path);
+      return [{ path, position }];
+    });
+    guard(JSON.stringify(newlyObserved.map(item => item.path)) ===
+      JSON.stringify(support.distinctObservedFactPaths) &&
+      JSON.stringify(newlyObserved.map(item => item.position)) ===
+      JSON.stringify(support.distinctObservedPositions) &&
+      support.distinctObservedPositions.every(position => guide.paragraph.includes(position)),
+      'Wealth guide reuses or invents its supporting facts');
+  });
+
+  guard(report.state === 'complete' && guide.supporting.length === 2 ||
+    report.state === 'partial' && guide.supporting.length < 2,
+    'Wealth guide cannot misrepresent minimum useful reading status');
+  return '<section class="reading-guide" aria-label="재물운 읽기 요약"><h3>' +
+    escapeHtml(guide.title) + '</h3><p>' + escapeHtml(guide.paragraph) +
+    '</p></section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -153,7 +196,9 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     ? '<section class="missing"><h3>아직 설명하지 못하는 부분</h3>' + renderList(report.missing) + '</section>'
     : '';
   const readingGuide = domain === 'career'
-    ? renderCareerReadingGuide(report as CareerMultifactorReport) : '';
+    ? renderCareerReadingGuide(report as CareerMultifactorReport)
+    : domain === 'wealth'
+      ? renderWealthReadingGuide(report as WealthNatalMultifactorReport) : '';
   return '<article aria-labelledby="domain-' + domain + '" class="domain">' +
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
