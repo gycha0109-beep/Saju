@@ -831,10 +831,9 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
 
   it('fails closed when the optional Canonical hidden-stem fact is not provided', () => {
     const original = chart({ year: 1990, day: 15, sex: 'male' });
-    const snapshot = {
-      ...original,
-      derivedFacts: { ...original.derivedFacts, hiddenStems: undefined },
-    };
+    const derivedFacts = { ...original.derivedFacts };
+    delete derivedFacts.hiddenStems;
+    const snapshot = { ...original, derivedFacts };
     const report = evaluateFamilySourceScopeV1(snapshot, 'parents');
     for (const sourceSurface of ['官煞混雜', '財印']) {
       const input = report.unassignedConfigurationInputs.find(
