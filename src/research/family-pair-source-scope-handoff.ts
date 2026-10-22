@@ -1,4 +1,4 @@
-import type { CanonicalSajuSnapshot, PillarSlot } from '../contracts/calculation.js';
+import type { CanonicalSajuSnapshot, PillarSlot, TenGod } from '../contracts/calculation.js';
 import {
   R068_AUTHORITY, R068_DIRECT_CLAIMS, R068_EXECUTION_GAPS,
   R068_RELATIONSHIP_CLAIM_CORPUS_VERSION, R068_REJECTED_ROMANCE_MAPPINGS,
@@ -19,6 +19,24 @@ export type ResearchScopeDisposition =
   | 'APPLICABLE_BOUNDED' | 'NARROW_OR_REPLACE' | 'INCONCLUSIVE' | 'REJECTED';
 export type FamilyResearchScope = 'parents' | 'children';
 
+export interface FamilyTenGodSourceObservation {
+  /** This is a literal-family observation, not a father/mother/child rule. */
+  sourceFactPath: 'derivedFacts.tenGods';
+  sourceSurface: string;
+  observedGroup: '편재' | '인성 계열' | '관성 계열' | '식상 계열';
+  coverage: 'visible_stems_and_representative_branch_only';
+  status: 'observed' | 'not_observed_in_resolved_positions' | 'incomplete_input';
+  observedPositions: readonly {
+    path: string;
+    slot: PillarSlot;
+    channel: 'stem' | 'branch';
+    value: TenGod;
+  }[];
+  unresolvedFactPaths: readonly string[];
+  /** Exact observed T5 values never make a historical relative-role prediction. */
+  historicalRelativeRoleAuthorized: false;
+}
+
 export interface FamilySourceScopeCandidate {
   sourceLayerId: string;
   sourceSurface: string;
@@ -27,6 +45,7 @@ export interface FamilySourceScopeCandidate {
   disposition: Exclude<ResearchScopeDisposition, 'REJECTED'>;
   observedFactPath?: string;
   observedPillar?: string;
+  tenGodObservation?: FamilyTenGodSourceObservation;
   missingPrerequisites: readonly string[];
   /** This is source-wording applicability only, NEVER a personal T8 claim. */
   familyMeaningAuthorized: false;
@@ -64,6 +83,49 @@ export interface FamilySourceScopeHandoff {
   maySell: false;
 }
 
+const R070_TEN_GOD_OBSERVATION_GROUPS = Object.freeze({
+  '父以偏財論': { label: '편재', values: ['편재'] },
+  '母以印綬論': { label: '인성 계열', values: ['편인', '정인'] },
+  '子嗣者即官星也': { label: '관성 계열', values: ['편관', '정관'] },
+  '我生者為子': { label: '식상 계열', values: ['식신', '상관'] },
+} as const);
+
+const TEN_GOD_OBSERVATION_SLOTS: readonly PillarSlot[] =
+  ['year', 'month', 'day', 'hour'];
+
+function tenGodSourceObservation(
+  snapshot: CanonicalSajuSnapshot,
+  sourceSurface: keyof typeof R070_TEN_GOD_OBSERVATION_GROUPS,
+): FamilyTenGodSourceObservation {
+  const group = R070_TEN_GOD_OBSERVATION_GROUPS[sourceSurface];
+  const t5 = snapshot.derivedFacts.tenGods;
+  const observedPositions: FamilyTenGodSourceObservation['observedPositions'][number][] = [];
+  const unresolvedFactPaths: string[] = [];
+  for (const slot of TEN_GOD_OBSERVATION_SLOTS) {
+    for (const channel of ['stem', 'branch'] as const) {
+      if (slot === 'day' && channel === 'stem') continue; // day master, not T5
+      const path = 'derivedFacts.tenGods.' + slot + '.' + channel;
+      const fact = t5.status === 'resolved' ? t5.value[slot][channel] : undefined;
+      if (fact?.status !== 'resolved') {
+        unresolvedFactPaths.push(path);
+      } else if ((group.values as readonly string[]).includes(fact.value)) {
+        observedPositions.push({ path, slot, channel, value: fact.value as TenGod });
+      }
+    }
+  }
+  return {
+    sourceFactPath: 'derivedFacts.tenGods',
+    sourceSurface,
+    observedGroup: group.label,
+    coverage: 'visible_stems_and_representative_branch_only',
+    status: unresolvedFactPaths.length > 0 ? 'incomplete_input'
+      : observedPositions.length > 0 ? 'observed' : 'not_observed_in_resolved_positions',
+    observedPositions,
+    unresolvedFactPaths,
+    historicalRelativeRoleAuthorized: false,
+  };
+}
+
 interface FamilySurfaceDefinition {
   layerId: string;
   surface: string;
@@ -71,6 +133,7 @@ interface FamilySurfaceDefinition {
   pillar?: PillarSlot;
   historicalSex?: 'male' | 'female';
   sourceContextRequired?: true;
+  tenGodGroupSurface?: keyof typeof R070_TEN_GOD_OBSERVATION_GROUPS;
   missingCanonicalConcept?: string;
 }
 
@@ -78,12 +141,12 @@ const FAMILY_SURFACES: readonly FamilySurfaceDefinition[] = Object.freeze([
   { layerId: 'PILLAR-DOMAIN-GENERAL', surface: '月為父母兄弟門戶', scope: 'parents', pillar: 'month' },
   { layerId: 'PILLAR-DOMAIN-MALE-ALTERNATE', surface: '年為父', scope: 'parents', pillar: 'year', historicalSex: 'male' },
   { layerId: 'PILLAR-DOMAIN-MALE-ALTERNATE', surface: '胎為母', scope: 'parents', historicalSex: 'male', missingCanonicalConcept: 'FETAL_PILLAR_NOT_DEFINED_BY_CANONICAL_SNAPSHOT' },
-  { layerId: 'TEN-GOD-FAMILY-RELATIONS', surface: '父以偏財論', scope: 'parents', sourceContextRequired: true },
-  { layerId: 'TEN-GOD-FAMILY-RELATIONS', surface: '母以印綬論', scope: 'parents', sourceContextRequired: true },
+  { layerId: 'TEN-GOD-FAMILY-RELATIONS', surface: '父以偏財論', scope: 'parents', sourceContextRequired: true, tenGodGroupSurface: '父以偏財論' },
+  { layerId: 'TEN-GOD-FAMILY-RELATIONS', surface: '母以印綬論', scope: 'parents', sourceContextRequired: true, tenGodGroupSurface: '母以印綬論' },
   { layerId: 'PILLAR-DOMAIN-GENERAL', surface: '時為子息', scope: 'children', pillar: 'hour' },
   { layerId: 'PILLAR-DOMAIN-MALE-ALTERNATE', surface: '時為子孫', scope: 'children', pillar: 'hour', historicalSex: 'male' },
-  { layerId: 'TEN-GOD-FAMILY-RELATIONS', surface: '子嗣者即官星也', scope: 'children', sourceContextRequired: true },
-  { layerId: 'FEMALE-CHILD-RELATION', surface: '我生者為子', scope: 'children', historicalSex: 'female', sourceContextRequired: true },
+  { layerId: 'TEN-GOD-FAMILY-RELATIONS', surface: '子嗣者即官星也', scope: 'children', sourceContextRequired: true, tenGodGroupSurface: '子嗣者即官星也' },
+  { layerId: 'FEMALE-CHILD-RELATION', surface: '我生者為子', scope: 'children', historicalSex: 'female', sourceContextRequired: true, tenGodGroupSurface: '我生者為子' },
 ]);
 
 function sourceLayer(definition: FamilySurfaceDefinition) {
@@ -123,11 +186,19 @@ function evaluateFamilySurface(
     };
   }
   if (definition.sourceContextRequired) {
+    // R070's observed T5 family may help determine what is factually present,
+    // but this cannot select a historical parent/child classification method.
+    const tenGodObservation = definition.tenGodGroupSurface === undefined
+      ? undefined : tenGodSourceObservation(snapshot, definition.tenGodGroupSurface);
     return {
       ...base, disposition: 'INCONCLUSIVE',
+      ...(tenGodObservation === undefined ? {} : { tenGodObservation }),
       missingPrerequisites: [
         'SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED',
+        'HIDDEN_VS_VISIBLE_STAR_HANDLING',
         'HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED',
+        ...(tenGodObservation?.status === 'incomplete_input'
+          ? ['TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED'] : []),
       ],
     };
   }
