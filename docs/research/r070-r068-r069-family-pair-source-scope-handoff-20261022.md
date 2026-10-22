@@ -52,6 +52,28 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 현재 Canonical `derivedFacts.structuralRelations`가 확정된 경우에만 `刑沖破害` 원문 아래 **`branch_clash` 구조 후보의 기존 ID**를 부분 관찰로 보존할 수 있습니다. 이는 `沖`에 해당하는 구조적 후보 1종일 뿐, `刑`·`破`·`害` 및 조합 우선순위·형충 효과는 계산 완료나 의미 승인으로 표시하지 않습니다. `旺衰`·`生旺死絕`은 승인된 강약/12운성 판단을 만들지 않으며, `官煞混雜`·`財印`도 단순 십신 존재를 부모/자녀 운명 결과로 변환하지 않습니다. 반환 상태는 다섯 원문 모두 `INCONCLUSIVE`, `familyScopeResolved=false`, `familyOutcomeAuthorized=false`입니다.
 
+### R070 刑沖破害 — 부모·자녀 기둥의 실제 지지충 참여/비참여 입력 인계
+
+이번 구현은 **기존 R070 Source Layer `CONFIGURATION-OUTCOME`의 정확한 원문 `刑沖破害`**와 기존 기둥 배속 출처를 계산 위치에 한정해 다시 연결한다. 새 전통이나 가족 결과는 도입하지 않는다. `刑沖破害` 중 현재 Canonical에서 추적할 수 있는 것은 `derivedFacts.structuralRelations`의 **`kind=branch_clash`** 후보뿐이다. 이 후보는 해당 명식 안의 두 지지 충에 관한 구조적 일치일 뿐이다. `刑`·`破`·`害`의 전체 규칙이나 `沖`의 실제 작동 결과, 상대 가족의 상황을 나타내지 않는다.
+
+`evaluateFamilySourceScopeV1(snapshot, 'parents'|'children').branchClashPillarObservations`는 **기존 `methodCandidates` 중 요청 범위·원래 성별 조건에 해당하는 기둥 방법**만 개별적으로 대조한다. 부모는 `月為父母兄弟門戶` / `pillars.month.branch`, 역사적 남성 명식일 때만 추가 `年為父` / `pillars.year.branch`다. 자녀는 `時為子息` / `pillars.hour.branch`, 역사적 남성 명식일 때만 `時為子孫` / `pillars.hour.branch`를 각각 유지한다. `胎為母`처럼 정확한 현재 기둥 입력이 없는 방법 및 해당 성별이 아닌 `年為父`·`時為子孫`은 이 배열에 추가하지 않는다.
+
+| 반환 상태 | 기존 계산 사실에 대한 정확한 뜻 | 금지하는 새 가족 의미 |
+| --- | --- | --- |
+| `REFERENCED_PILLAR_PARTICIPATES_IN_CLASH` | 확정된 R070 참조 기둥의 지지가 하나 이상의 실제 `branch_clash` 후보 참여자 | 충이 해당 부모·자녀의 문제/갈등/사건을 발생시킨다는 인과 |
+| `CLASH_ONLY_OUTSIDE_REFERENCED_PILLAR` | 확정 후보가 있으나 참조 기둥의 지지는 참여하지 않음 | 다른 지지의 충을 부모·자녀 결과에 전용 |
+| `NO_CLASH_CANDIDATE_IN_RESOLVED_CHART` | 현재 계산 완료된 관계 후보 안에 `branch_clash`가 관찰되지 않음 | 형·파·해 또는 가족 영향이 아예 없다는 단정 |
+| `STRUCTURAL_CLASH_CANDIDATES_UNRESOLVED` | 참조 기둥은 확인 가능하지만 구조 관계 계산은 미완전 | 미상 후보를 임의 충으로 확정 |
+| `REFERENCED_PILLAR_UNRESOLVED` | 출생시각 미상 등으로 요청 대상의 기준 기둥 자체가 확정되지 않음 | 다른 기둥으로 시주를 대체하거나 결과를 생성 |
+
+각 후보의 원래 `relationId`·`participants`·`sourceIds`·`semantics.structuralMatchOnly=true` 및 `transformationEstablished=false`를 `participatingClashes` / `outsideClashes`에 변경 없이 전달한다. `relationId`를 부모·자녀 방법 간 중복 관찰했다고 **서로 독립적인 두 가족 Claim으로 세지 않는다**(`independentlyAdmittedFamilyClaims=0`). 부모의 연·월주가 각기 다른 기둥이므로 같은 충도 한쪽 방법에서는 참여/다른 쪽에서는 외부 후보가 될 수 있다. 남성 자녀 원문의 두 시주 방법은 **동일한 계산 시주를 재사용할 뿐** 독립 근거를 두 배 생성하지 않는다.
+
+**기존 소스에서 해결되지 않는 부분:** `CONFIGURATION_OUTCOME_SETTLEMENT`, `FAMILY_CONFIGURATION_TO_RELATIVE_METHOD_SELECTION_NOT_ESTABLISHED`, `XING_PO_HAI_AND_CONFIGURATION_INTERACTION_NOT_SETTLED`, `R070_BRANCH_CLASH_PILLAR_TO_FAMILY_EFFECT_NOT_SOURCED`가 모든 항목에 남는다. 위치 외 후보만 있는 경우 `R070_OUTSIDE_PILLAR_CLASH_IS_NOT_FAMILY_EFFECT_EVIDENCE`, 구조 후보가 없는 경우 `R070_NO_CLASH_CANDIDATE_IS_NOT_FAMILY_OUTCOME_ABSENCE`, 참조 기둥이나 계산 자체가 미확정이면 각 Canonical 부족 사유를 더한다. 새로운 의미 우선순위·충의 강도·부모/자녀 결과는 발행하지 않는다.
+
+**실제 계산 회귀:** 양력 1987~2005년 중 11개 연도, 각 월 5·15·25일 14:30 남성 명식을 기존 계산 정책으로 얻어 **실제 충 후보 참여 기둥과 그 외 기둥의 차이**를 확인한다. 각 사실의 참여자·출처 ID와 `derivedFacts.structuralRelations` 원본을 일치시키며, 남성 부모의 월/연주 및 남성 자녀의 두 시주 배속이 별개 근거로 증폭되지 않는지 확인한다. 1997-05-15 여성 명식의 시각 미상 반례에서는 **자녀 시주 불확정, 부모 월주 방법 존속, 남성 전용 방법 배제**를 각기 처리한다.
+
+**엔진 인계와 금지:** `branchClashPillarObservations`는 `methodCandidates`와 `unassignedConfigurationInputs` 아래에서 출처 경계와 동일 계산 근거를 제공하는 **연구용 입력 계약**이다. `unassignedConfigurationInputs[].familyScopeResolved=false`를 바꾸지 않는다. 연구자는 T6 구조적 후보를 가족 T8 방법론으로 확정하지 않으며 `familyT8Admitted=false`, `configurationOutcomeAuthorized=false`, `mayGrantOfficialAuthority=false`, `mayMarkMenuAvailable=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`를 유지한다. 원전의 실제 가족 구성 조건, 충돌 선택·결과 규칙, 승인된 현대 가족 해석이 등록되기 전에는 **부모·자녀 의미 해석 둘 다 `INCONCLUSIVE/HOLD`**다.
+
 ### R070 官煞混雜·財印의 T5 조회용 관찰 (효과·방법 미승인)
 
 `官煞混雜`은 원문에 있는 `官`·`煞`의 각각에 대해 현행 Canonical T5의 **정관·편관 계산값을 찾아본 경로**만 기록한다. 두 관성이 관찰되더라도 그것을 고전적 `混雜`의 성립, 길흉, 부모·자녀의 상태로 확정하지 않는다. 이 원문이 요구할 수 있는 지장간·강약·구조·충돌 기준과 방법론 선택은 미확정이다.
