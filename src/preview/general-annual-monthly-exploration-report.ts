@@ -177,7 +177,13 @@ export function renderGeneralAnnualMonthlyExplorationHtml(
   ).join('\n');
   const monthly = SEGMENTS.map(id => {
     const sections = report.monthly.sections.filter(section => section.segmentId === id);
+    const interval = sections[0]?.calculatedInterval;
+    const visiblePeriod = interval === undefined ? '' :
+      '<p class="muted">실제 계산 적용 기간: ' +
+      escapeHtml(kst(interval.startsAt)) + '부터 ' +
+      escapeHtml(kst(interval.endsAt)) + ' 전까지</p>';
     return '<section class="phase"><h3>' + SEGMENT_LABEL[id] + '</h3>' +
+      visiblePeriod +
       (sections.length === 0
         ? '<p>이 구간의 해석 근거가 충분하지 않습니다.</p>'
         : sections.map(monthlyCard).join('\n')) + '</section>';
