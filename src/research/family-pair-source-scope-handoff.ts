@@ -784,6 +784,194 @@ function r070FamilyPillarStarClashOverlaps(
   });
 }
 
+export interface R070FamilySourceConditionHold {
+  sourceLayerId: string;
+  sourceSurface: string;
+  originalSexScope: string;
+  disposition: FamilySourceScopeCandidate['disposition'];
+  blockerKind:
+    | 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE'
+    | 'CANONICAL_CONCEPT_NOT_AVAILABLE'
+    | 'REFERENCE_PILLAR_INPUT_UNRESOLVED'
+    | 'SOURCE_CONTEXT_METHOD_NOT_SELECTED'
+    | 'CALCULATED_PILLAR_POSITION_ONLY';
+  observedFactPaths: readonly string[];
+  unresolvedFactPaths: readonly string[];
+  missingPrerequisites: readonly string[];
+  familyMeaningAuthorized: false;
+}
+
+export interface R070FamilyMethodSelectionHold {
+  methodPairKind:
+    | 'ALTERNATIVE_PILLAR_DOMAIN_WORDINGS'
+    | 'PILLAR_DOMAIN_VS_STAR_RELATION'
+    | 'FEMALE_CHILD_STAR_RELATION_ALTERNATIVES';
+  sourceLayerIds: readonly [string, string];
+  sourceSurfaces: readonly [string, string];
+  observedFactPaths: readonly string[];
+  missingPrerequisites: readonly string[];
+  coPresenceIsVerifiedContradiction: false;
+  methodSelectionAuthorized: false;
+  independentlyAdmittedFamilyClaims: 0;
+}
+
+export interface R070FamilyConfigurationHold {
+  sourceLayerId: 'CONFIGURATION-OUTCOME';
+  sourceSurface: string;
+  canonicalObservationCoverage: R070UnassignedConfigurationInput['canonicalObservationCoverage'];
+  missingPrerequisites: readonly string[];
+  familyScopeResolved: false;
+  familyOutcomeAuthorized: false;
+}
+
+export interface R070FamilyInterpretationBlockerHandoff {
+  requestedScope: FamilyResearchScope;
+  historicalSex: 'male' | 'female' | 'unspecified';
+  sourceConditionHolds: readonly R070FamilySourceConditionHold[];
+  methodSelectionHolds: readonly R070FamilyMethodSelectionHold[];
+  configurationHolds: readonly R070FamilyConfigurationHold[];
+  missingPrerequisites: readonly string[];
+  originalTextContradictionEstablished: false;
+  interpretationMethodSelected: false;
+  independentlyAdmittedFamilyClaims: 0;
+  familyT8Admitted: false;
+}
+
+/** An original source being in scope never settles its interpretation method. */
+function r070FamilyInterpretationBlockerHandoff(
+  scope: FamilyResearchScope,
+  historicalSex: 'male' | 'female' | 'unspecified',
+  candidates: readonly FamilySourceScopeCandidate[],
+  coexisting: readonly FamilyMethodCoexistence[],
+  crossLayer: readonly FamilyCrossLayerMethodComparison[],
+  configurations: readonly R070UnassignedConfigurationInput[],
+): R070FamilyInterpretationBlockerHandoff {
+  const sourceConditionHolds: R070FamilySourceConditionHold[] = candidates.map(candidate => {
+    const hidden = candidate.relativeStarHiddenStemBoundary;
+    const visible = candidate.tenGodObservation;
+    const observedFactPaths = [
+      ...(candidate.observedFactPath === undefined ? [] : [candidate.observedFactPath]),
+      ...(visible?.observedPositions.map(position => position.path) ?? []),
+      ...(hidden?.pillarObservations.flatMap(pillar =>
+        pillar.status === 'resolved' ? [pillar.membershipFactPath] : []) ?? []),
+    ];
+    const unresolvedFactPaths = [
+      ...(candidate.observedFactPath !== undefined &&
+        candidate.disposition === 'INCONCLUSIVE' && visible === undefined
+        ? [candidate.observedFactPath] : []),
+      ...(visible?.unresolvedFactPaths ?? []),
+      ...(hidden?.unresolvedHiddenStemMembershipFactPaths ?? []),
+    ];
+    const blockerKind = candidate.disposition === 'NARROW_OR_REPLACE'
+      ? 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE' as const
+      : candidate.disposition === 'APPLICABLE_BOUNDED'
+        ? 'CALCULATED_PILLAR_POSITION_ONLY' as const
+        : candidate.observedFactPath !== undefined
+          ? 'REFERENCE_PILLAR_INPUT_UNRESOLVED' as const
+          : visible !== undefined
+            ? 'SOURCE_CONTEXT_METHOD_NOT_SELECTED' as const
+            : 'CANONICAL_CONCEPT_NOT_AVAILABLE' as const;
+    return {
+      sourceLayerId: candidate.sourceLayerId,
+      sourceSurface: candidate.sourceSurface,
+      originalSexScope: candidate.originalSexScope,
+      disposition: candidate.disposition,
+      blockerKind,
+      observedFactPaths: [...new Set(observedFactPaths)],
+      unresolvedFactPaths: [...new Set(unresolvedFactPaths)],
+      missingPrerequisites: [...candidate.missingPrerequisites,
+        ...(candidate.disposition === 'APPLICABLE_BOUNDED'
+          ? ['R070_PILLAR_LOCATION_IS_NOT_FAMILY_OUTCOME_RULE'] : [])],
+      familyMeaningAuthorized: false,
+    };
+  });
+  const methodSelectionHolds: R070FamilyMethodSelectionHold[] = [
+    ...coexisting.map(pair => ({
+      methodPairKind: 'ALTERNATIVE_PILLAR_DOMAIN_WORDINGS' as const,
+      sourceLayerIds: pair.sourceSurfaces.map(surface => {
+        const source = candidates.find(candidate => candidate.sourceSurface === surface);
+        if (source === undefined) throw new TypeError('R070 coexisting method source missing.');
+        return source.sourceLayerId;
+      }) as [string, string],
+      sourceSurfaces: pair.sourceSurfaces,
+      observedFactPaths: pair.calculatedFactPaths,
+      missingPrerequisites: pair.missingPrerequisites,
+      coPresenceIsVerifiedContradiction: false as const,
+      methodSelectionAuthorized: false as const,
+      independentlyAdmittedFamilyClaims: 0 as const,
+    })),
+    ...crossLayer.map(pair => ({
+      methodPairKind: 'PILLAR_DOMAIN_VS_STAR_RELATION' as const,
+      sourceLayerIds: pair.sourceLayerIds,
+      sourceSurfaces: pair.sourceSurfaces,
+      observedFactPaths: [...new Set([
+        pair.pillarObservation.factPath,
+        ...pair.starObservation.observedPositions.map(position => position.path),
+      ])],
+      missingPrerequisites: pair.missingPrerequisites,
+      coPresenceIsVerifiedContradiction: false as const,
+      methodSelectionAuthorized: false as const,
+      independentlyAdmittedFamilyClaims: 0 as const,
+    })),
+  ];
+  if (scope === 'children') {
+    const sourceSurfaces = ['子嗣者即官星也', '我生者為子'] as const;
+    const stars = sourceSurfaces.map(surface => candidates.find(candidate =>
+      candidate.sourceSurface === surface));
+    if (stars.length === 2 && stars.every(candidate =>
+      candidate?.disposition === 'INCONCLUSIVE' &&
+      candidate.tenGodObservation !== undefined)) {
+      const first = stars[0];
+      const second = stars[1];
+      if (first === undefined || second === undefined ||
+          first.tenGodObservation === undefined || second.tenGodObservation === undefined) {
+        throw new TypeError('R070 child-star pair lost an original source.');
+      }
+      methodSelectionHolds.push({
+        methodPairKind: 'FEMALE_CHILD_STAR_RELATION_ALTERNATIVES',
+        sourceLayerIds: [first.sourceLayerId, second.sourceLayerId],
+        sourceSurfaces,
+        observedFactPaths: [...new Set([
+          ...first.tenGodObservation.observedPositions.map(position => position.path),
+          ...second.tenGodObservation.observedPositions.map(position => position.path),
+        ])],
+        missingPrerequisites: [
+          'SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED',
+          'R070_CHILD_STAR_RELATION_ALTERNATIVES_NOT_RECONCILED',
+          'HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED',
+        ],
+        coPresenceIsVerifiedContradiction: false,
+        methodSelectionAuthorized: false,
+        independentlyAdmittedFamilyClaims: 0,
+      });
+    }
+  }
+  const configurationHolds: R070FamilyConfigurationHold[] = configurations.map(source => ({
+    sourceLayerId: source.sourceLayerId,
+    sourceSurface: source.sourceSurface,
+    canonicalObservationCoverage: source.canonicalObservationCoverage,
+    missingPrerequisites: source.missingPrerequisites,
+    familyScopeResolved: false,
+    familyOutcomeAuthorized: false,
+  }));
+  return {
+    requestedScope: scope,
+    historicalSex,
+    sourceConditionHolds,
+    methodSelectionHolds,
+    configurationHolds,
+    missingPrerequisites: [...new Set([
+      ...sourceConditionHolds.flatMap(item => item.missingPrerequisites),
+      ...methodSelectionHolds.flatMap(item => item.missingPrerequisites),
+      ...configurationHolds.flatMap(item => item.missingPrerequisites),
+    ])],
+    originalTextContradictionEstablished: false,
+    interpretationMethodSelected: false,
+    independentlyAdmittedFamilyClaims: 0,
+    familyT8Admitted: false,
+  };
+}
+
 export interface FamilySourceScopeHandoff {
   version: typeof FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION;
   owner: 'R070';
@@ -806,6 +994,8 @@ export interface FamilySourceScopeHandoff {
   pillarStarClashOverlaps: readonly R070FamilyPillarStarClashOverlap[];
   /** Distinct calculation facts cannot be multiplied by repeated source wording. */
   tripleLayerFactReuse: R070FamilyTripleLayerFactReuse;
+  /** Original source boundaries and unresolved method/configuration selection. */
+  interpretationBlockers: R070FamilyInterpretationBlockerHandoff;
   missingPrerequisites: readonly string[];
   interpretationDisposition: 'INCONCLUSIVE';
   familyT8Admitted: false;
@@ -1135,6 +1325,11 @@ export function evaluateFamilySourceScopeV1(
   );
   const tripleLayerFactReuse = r070FamilyTripleLayerFactReuse(pillarStarClashOverlaps);
   const unassignedConfigurationInputs = r070UnassignedConfigurationInputs(snapshot);
+  const historicalSex = snapshot.input.sexForTraditionalCalculation ?? 'unspecified';
+  const interpretationBlockers = r070FamilyInterpretationBlockerHandoff(
+    scope, historicalSex, methodCandidates, methodCoexistences,
+    crossLayerMethodComparisons, unassignedConfigurationInputs,
+  );
   const missingPrerequisites = [
     ...R070_EXECUTION_GAPS,
     ...new Set([
@@ -1143,18 +1338,19 @@ export function evaluateFamilySourceScopeV1(
       ...branchClashPillarObservations.flatMap(item => item.missingPrerequisites),
       ...pillarStarClashOverlaps.flatMap(item => item.missingPrerequisites),
       ...unassignedConfigurationInputs.flatMap(item => item.missingPrerequisites),
+      ...interpretationBlockers.missingPrerequisites,
     ]),
   ];
   return {
     version: FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION,
     owner: 'R070', corpusVersion: R070_FAMILY_DOMAIN_CLAIM_CORPUS_VERSION,
     scope, snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
-    historicalSex: snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
+    historicalSex,
     methodCandidates, methodCoexistences, crossLayerMethodComparisons,
     excludedSiblingSourceSurfaces: excludedSiblingSources(scope),
     unassignedConfigurationInputs,
     branchClashPillarObservations, pillarStarClashOverlaps,
-    tripleLayerFactReuse, missingPrerequisites,
+    tripleLayerFactReuse, interpretationBlockers, missingPrerequisites,
     interpretationDisposition: 'INCONCLUSIVE',
     familyT8Admitted: false, researchOnly: true,
     mayGrantOfficialAuthority: false, mayMarkMenuAvailable: false,
