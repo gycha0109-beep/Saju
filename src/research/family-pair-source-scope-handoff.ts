@@ -311,6 +311,12 @@ function observeR069SingleChartScope(
   claim: typeof R069_DIRECT_CLAIMS[number],
 ): R069SingleChartScopeObservation {
   const actualSex = snapshot.input.sexForTraditionalCalculation ?? 'unspecified';
+  // New or unrecognized original gender/claim conventions cannot silently
+  // inherit the female rule from this historic R069 candidate set.
+  if (claim.historicalSexScope !== 'MALE_CHART' &&
+      claim.historicalSexScope !== 'FEMALE_CHART') {
+    throw new TypeError('R069 historical gender surface is not an admitted scope.');
+  }
   const expectedSex = claim.historicalSexScope === 'MALE_CHART'
     ? 'male' : 'female';
   const historicalScopeMatch = actualSex === 'unspecified'
@@ -360,6 +366,10 @@ function observeR069SingleChartScope(
         ...contextLimitations,
       ],
     };
+  }
+  if (claim.id !== 'MALE-I-CONTROL-WIFE' &&
+      claim.id !== 'FEMALE-CONTROLS-ME-HUSBAND') {
+    throw new TypeError('R069 spouse-star input method has not been established for this source.');
   }
   const allowed: readonly TenGod[] = claim.id === 'MALE-I-CONTROL-WIFE'
     ? ['편재', '정재'] : ['편관', '정관'];
