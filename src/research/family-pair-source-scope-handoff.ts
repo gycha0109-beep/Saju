@@ -1,5 +1,6 @@
 import type {
-  CanonicalSajuSnapshot, PillarSlot, StructuralRelationCandidate, TenGod,
+  CanonicalSajuSnapshot, EarthlyBranch, HeavenlyStem, PillarSlot,
+  StructuralRelationCandidate, TenGod,
 } from '../contracts/calculation.js';
 import {
   R068_AUTHORITY, R068_DIRECT_CLAIMS, R068_EXECUTION_GAPS,
@@ -67,6 +68,38 @@ export interface R070ConfigurationTenGodSearchTerm {
   configurationMeaningAuthorized: false;
 }
 
+export interface R070HiddenStemMembershipPillarObservation {
+  pillarSlot: PillarSlot;
+  membershipFactPath: string;
+  branchFactPath: string;
+  status: 'resolved' | 'ambiguous' | 'unavailable' | 'not_provided';
+  observedBranch?: EarthlyBranch;
+  /** Exact canonical array order only: index has no main/secondary/strength meaning. */
+  rawMembershipPositions: readonly {
+    storageIndex: number;
+    stem: HeavenlyStem;
+  }[];
+  /** No hidden-stem TenGod fact exists in this Canonical surface. */
+  hiddenStemT5ClassificationAuthorized: false;
+}
+
+export interface R070HiddenStemMembershipContrast {
+  sourceFactPath: 'derivedFacts.hiddenStems';
+  visibleT5FactPath: 'derivedFacts.tenGods';
+  coverage:
+    | 'RESOLVED_MEMBERSHIP_ONLY'
+    | 'PARTIAL_MEMBERSHIP'
+    | 'MEMBERSHIP_FACTS_NOT_PROVIDED';
+  pillarObservations: readonly R070HiddenStemMembershipPillarObservation[];
+  unresolvedMembershipFactPaths: readonly string[];
+  /** Raw stem membership never contributes to observed modern T5 groups. */
+  hiddenStemContributionToObservedT5GroupCount: 0;
+  canonicalStorageOrderIsStrengthPriority: false;
+  historicalConfigurationConditionEstablished: false;
+  hiddenStemRelativeRoleAuthorized: false;
+  missingPrerequisites: readonly string[];
+}
+
 export interface R070ConfigurationTenGodGroupContrast {
   sourceLayerId: 'CONFIGURATION-OUTCOME';
   sourceSurface: '官煞混雜' | '財印';
@@ -83,6 +116,8 @@ export interface R070ConfigurationTenGodGroupContrast {
     | 'ONLY_ONE_GROUP_OBSERVED_IN_VISIBLE_T5'
     | 'NEITHER_GROUP_OBSERVED_IN_VISIBLE_T5';
   inputCoverage: 'RESOLVED_VISIBLE_T5' | 'PARTIAL_VISIBLE_T5';
+  /** Separate Canonical stem membership; not an inferred hidden T5 value. */
+  hiddenStemMembershipContrast: R070HiddenStemMembershipContrast;
   sharedPillarSlots: readonly PillarSlot[];
   firstGroupOnlyPillarSlots: readonly PillarSlot[];
   secondGroupOnlyPillarSlots: readonly PillarSlot[];
@@ -165,7 +200,55 @@ function r070ConfigurationTenGodSearchTerms(
  * no admitted rule for their co-location, interaction or parent/child effect.
  * This compares only the T5 facts already collected for each source term.
  */
+function r070HiddenStemMembershipContrast(
+  snapshot: CanonicalSajuSnapshot,
+): R070HiddenStemMembershipContrast {
+  const hiddenStems = snapshot.derivedFacts.hiddenStems;
+  const pillarObservations: R070HiddenStemMembershipPillarObservation[] =
+    TEN_GOD_OBSERVATION_SLOTS.map(slot => {
+      const hidden = hiddenStems?.[slot];
+      const pillar = snapshot.pillars[slot];
+      return {
+        pillarSlot: slot,
+        membershipFactPath: 'derivedFacts.hiddenStems.' + slot,
+        branchFactPath: 'pillars.' + slot + '.branch',
+        status: hidden?.status ?? 'not_provided',
+        ...(pillar.status === 'resolved'
+          ? { observedBranch: pillar.value.branch.value } : {}),
+        rawMembershipPositions: hidden?.status === 'resolved'
+          ? hidden.value.map((stem, storageIndex) => ({ storageIndex, stem }))
+          : [],
+        hiddenStemT5ClassificationAuthorized: false as const,
+      };
+    });
+  const unresolvedMembershipFactPaths = pillarObservations
+    .filter(observation => observation.status !== 'resolved')
+    .map(observation => observation.membershipFactPath);
+  return {
+    sourceFactPath: 'derivedFacts.hiddenStems',
+    visibleT5FactPath: 'derivedFacts.tenGods',
+    coverage: hiddenStems === undefined
+      ? 'MEMBERSHIP_FACTS_NOT_PROVIDED'
+      : unresolvedMembershipFactPaths.length > 0
+        ? 'PARTIAL_MEMBERSHIP' : 'RESOLVED_MEMBERSHIP_ONLY',
+    pillarObservations,
+    unresolvedMembershipFactPaths,
+    hiddenStemContributionToObservedT5GroupCount: 0,
+    canonicalStorageOrderIsStrengthPriority: false,
+    historicalConfigurationConditionEstablished: false,
+    hiddenStemRelativeRoleAuthorized: false,
+    missingPrerequisites: [
+      'R070_HIDDEN_STEM_MEMBERSHIP_IS_NOT_HIDDEN_T5_CLASSIFICATION',
+      'R070_HIDDEN_STEM_STRENGTH_AND_PRIORITY_NOT_SETTLED',
+      'R070_HIDDEN_STEM_CONFIGURATION_METHOD_NOT_SOURCED',
+      ...(unresolvedMembershipFactPaths.length > 0
+        ? ['CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE'] : []),
+    ],
+  };
+}
+
 function r070ConfigurationTenGodGroupContrast(
+  snapshot: CanonicalSajuSnapshot,
   sourceSurface: '官煞混雜' | '財印',
   terms: readonly R070ConfigurationTenGodSearchTerm[],
 ): R070ConfigurationTenGodGroupContrast {
@@ -196,6 +279,7 @@ function r070ConfigurationTenGodGroupContrast(
     ...first.unresolvedFactPaths,
     ...second.unresolvedFactPaths,
   ])];
+  const hiddenStemMembershipContrast = r070HiddenStemMembershipContrast(snapshot);
   return {
     sourceLayerId: 'CONFIGURATION-OUTCOME',
     sourceSurface,
@@ -204,6 +288,7 @@ function r070ConfigurationTenGodGroupContrast(
     observationState,
     inputCoverage: unresolvedFactPaths.length > 0
       ? 'PARTIAL_VISIBLE_T5' : 'RESOLVED_VISIBLE_T5',
+    hiddenStemMembershipContrast,
     sharedPillarSlots,
     firstGroupOnlyPillarSlots,
     secondGroupOnlyPillarSlots,
@@ -218,6 +303,7 @@ function r070ConfigurationTenGodGroupContrast(
       'R070_CONFIGURATION_INTERACTION_AND_PRIORITY_NOT_SOURCED',
       'R070_CONFIGURATION_TO_FAMILY_EFFECT_NOT_SOURCED',
       'HIDDEN_VS_VISIBLE_STAR_HANDLING',
+      ...hiddenStemMembershipContrast.missingPrerequisites,
       ...(unresolvedFactPaths.length > 0
         ? ['CANONICAL_T5_CONFIGURATION_GROUPS_PARTIAL'] : []),
       ...(observedGroupCount !== 2
@@ -243,7 +329,7 @@ function r070UnassignedConfigurationInputs(
       ? r070ConfigurationTenGodSearchTerms(snapshot, sourceSurface) : [];
     const tenGodGroupContrast =
       sourceSurface === '官煞混雜' || sourceSurface === '財印'
-        ? r070ConfigurationTenGodGroupContrast(sourceSurface, tenGodSearchTerms)
+        ? r070ConfigurationTenGodGroupContrast(snapshot, sourceSurface, tenGodSearchTerms)
         : undefined;
     const tenGodKnown = isTenGodSearch && snapshot.derivedFacts.tenGods.status === 'resolved';
     const observedBranchClashIds = structuralKnown
