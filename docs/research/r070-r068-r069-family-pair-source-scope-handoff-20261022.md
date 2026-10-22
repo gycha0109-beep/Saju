@@ -80,6 +80,27 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 `財印`도 현행 T5의 편재·정재(財), 편인·정인(印)에 대한 **관찰값·불명확 경로**만 `tenGodSearchTerms`에 기록한다. 계산된 두 계열이 동시에 있음을 `財印` 구성의 작동 효과로 판단하거나 재성=부친·인성=모친으로 전용하지 않는다. 두 문구 모두 `canonicalObservationCoverage=visible_t5_search_categories_only`일 때도 `configurationMeaningAuthorized=false`, `familyOutcomeAuthorized=false`, `familyScopeResolved=false`, `disposition=INCONCLUSIVE`를 고정한다. `旺衰`와 `生旺死絕`는 현재 해석 가능 계산 입력이 없어 `none`으로 유지한다.
 
+### R070 官煞混雜·財印 — 두 T5 조회 그룹의 실제 위치 대조와 구성 미성립 경계
+
+기존 `CONFIGURATION-OUTCOME` 레이어의 **원래 문구** `官煞混雜`와 `財印`만을 사용하며, 별도 전통·원문이나 실행 가능한 원전 규칙을 창작하지 않는다. 반환 `unassignedConfigurationInputs[]`의 해당 두 항목에만 `tenGodGroupContrast`를 추가했다. 각각 기존 `tenGodSearchTerms`의 **두 항목**을 재사용한다. `官`→현행 `정관`, `煞`→현행 `편관`; `財`→현행 `편재/정재`, `印`→현행 `편인/정인`은 **T5 탐색 어휘**이며 이 대응만으로 고전의 정확한 적용 범위나 의미 동등성을 승인하지 않는다.
+
+각 그룹의 원래 `derivedFacts.tenGods.{year|month|day|hour}.{stem|branch}` 관찰 위치를 동일하게 유지한다. `day.stem`은 기준 일간이라 원래 관찰에서 제외한다. `sharedPillarSlots`는 두 서로 다른 그룹의 관찰값이 **동일한 기둥**의 (별도) 천간 또는 지지 대표 채널에 보일 때만 기록한다. `firstGroupOnlyPillarSlots` / `secondGroupOnlyPillarSlots`는 다른 그룹 관찰이 **없는 기둥 위치**만 표시한다. 이는 위치 비교이지 길흉·경쟁·왕쇠·상극 효과가 아니다.
+
+| `observationState` | 계산 T5에서만 말할 수 있는 것 | 원전상 아직 말할 수 없는 것 |
+| --- | --- | --- |
+| `BOTH_GROUPS_OBSERVED_IN_AT_LEAST_ONE_SHARED_PILLAR` | 두 현대 십신 탐색 그룹이 하나 이상의 동일 기둥에서 관찰 | `官煞混雜`의 **혼잡 성립** 또는 `財印`의 충돌·효과 확정 |
+| `BOTH_GROUPS_OBSERVED_ONLY_IN_DISTINCT_PILLARS` | 두 그룹이 관찰되나 같은 기둥에는 함께 나타나지 않음 | 기둥 사이의 허용·불허·우선순위 추정 |
+| `ONLY_ONE_GROUP_OBSERVED_IN_VISIBLE_T5` | 현재 확인된 조회 표면에서 둘 중 하나만 관찰 | 다른 그룹의 원국·지장간·구성상 **부재 판정** |
+| `NEITHER_GROUP_OBSERVED_IN_VISIBLE_T5` | 현재 조회 표면에서 두 그룹 모두 미관찰 | 두 고전 구성이나 해당 가족 관계 자체가 없다는 판정 |
+
+`observedGroupCount`는 계산 그룹 **0/1/2개 관측 여부**만 세며 Claim 수나 의미 점수가 아니다. `inputCoverage=PARTIAL_VISIBLE_T5`이면 미상 경로를 `unresolvedFactPaths`에 모아 `CANONICAL_T5_CONFIGURATION_GROUPS_PARTIAL`을 표시하고, 동시에 일부 십신이 확인되더라도 원국 전체 확정으로 승격하지 않는다. `RESOLVED_VISIBLE_T5`여도 지장간·고전 조합조건·강약·우선순위까지 해소된 것은 아니다. `observedGroupCount<escape><</escape>2`이면 `R070_UNOBSERVED_VISIBLE_T5_GROUP_IS_NOT_NEGATIVE_CONFIGURATION_EVIDENCE`를 반환한다.
+
+**필수 보류 조건:** `R070_TEN_GOD_COEXISTENCE_METHOD_NOT_ESTABLISHED`, `R070_VISIBLE_T5_COOBSERVATION_IS_NOT_CLASSICAL_CONFIGURATION`, `R070_CONFIGURATION_INTERACTION_AND_PRIORITY_NOT_SOURCED`, `R070_CONFIGURATION_TO_FAMILY_EFFECT_NOT_SOURCED`, `HIDDEN_VS_VISIBLE_STAR_HANDLING`을 두 원문 모두에 남긴다. 이 중 하나라도 빠진 조건을 **별 관측만으로 충족했다고 처리하지 않는다.** `originalConfigurationConditionEstablished=false`, `configurationInteractionOrPriorityEstablished=false`, `familyRelativeEffectAuthorized=false`, `familyT8Admitted=false`이다.
+
+실계산 회귀는 양력 1988·1990·1993·1997·2001·2005년 5월의 특정 6개 출생 입력을 사용해 모든 그룹의 관측 경로/실제 현대 십신/기둥 중복·단독/미결 경로를 원본 Canonical과 대조한다. 여성 1997-05-15 시각 미상에서는 `derivedFacts.tenGods.hour.stem|branch`를 미상으로 보존하고 부모·자녀 반환 모두 해석을 보류한다. 부모/자녀 두 메뉴에서 동일 구성 관찰을 **독립적인 두 가족 결과로 중복 채택하지 않는다.**
+
+**기존 엔진 인계:** `tenGodGroupContrast`는 `unassignedConfigurationInputs` 아래 있는 계산 입력 증거일 뿐 새 `MethodologyDefinition`·`RuleDefinition`·Claim 또는 Official/Production/Reader 권한이 아니다. 계속 `familyScopeResolved=false`, `disposition=INCONCLUSIVE`, `familyOutcomeAuthorized=false`, `familyT8Admitted=false`, `researchOnly=true`, `mayGrantOfficialAuthority=false`, `mayMarkMenuAvailable=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`를 유지한다.
+
 ### R070 기둥 배속과 십신 배속의 교차 적용 범위 — 근거 이중계산 금지
 
 `crossLayerMethodComparisons`는 **이미 연구용으로 등록된 원문 2개를 실제 자기 명식의 서로 다른 계산 입력에 연결**하지만, 두 방법이 같은 가족 주장을 지지하거나 서로 충돌한다는 새로운 고전적 결론을 만들지 않는다. 대상별 정확한 원문쌍은 다음과 같다.
