@@ -464,6 +464,45 @@ function observeR069SingleChartScope(
   };
 }
 
+export interface R068NatalStructureObservation {
+  personRole: 'subject' | 'target';
+  sourceFactPath: 'derivedFacts.structuralRelations';
+  calculationState: 'resolved' | 'incomplete';
+  observedCombinationCandidates: readonly {
+    relationId: string;
+    kind: 'branch_six_combination' | 'branch_three_combination';
+    sourceIds: readonly string[];
+  }[];
+  /** Within-chart relation IDs cannot imply a cross-person relationship. */
+  socialOutcomeAuthorized: false;
+  pairwiseMeaningAuthorized: false;
+}
+
+function observeR068NatalStructure(
+  snapshot: CanonicalSajuSnapshot,
+  personRole: 'subject' | 'target',
+): R068NatalStructureObservation {
+  const structural = snapshot.derivedFacts.structuralRelations;
+  const candidates = structural?.status === 'resolved'
+    ? structural.value.filter(candidate =>
+      candidate.kind === 'branch_six_combination' ||
+      candidate.kind === 'branch_three_combination',
+    ).map(candidate => ({
+      relationId: candidate.relationId,
+      kind: candidate.kind as 'branch_six_combination' | 'branch_three_combination',
+      sourceIds: candidate.sourceIds,
+    }))
+    : [];
+  return {
+    personRole,
+    sourceFactPath: 'derivedFacts.structuralRelations',
+    calculationState: structural?.status === 'resolved' ? 'resolved' : 'incomplete',
+    observedCombinationCandidates: candidates,
+    socialOutcomeAuthorized: false,
+    pairwiseMeaningAuthorized: false,
+  };
+}
+
 export interface PairwiseCanonicalObservation {
   pillarSlot: PillarSlot;
   subjectFactPath: string;
@@ -534,6 +573,10 @@ export interface PairwiseSourceScopeHandoff {
     sourceSurface: string;
     originalDomain: string;
     historicalSexScope?: string;
+    /** Existing internal combination candidates per person, not cross-chart. */
+    singleChartCombinationObservations?: readonly [
+      R068NatalStructureObservation, R068NatalStructureObservation,
+    ];
     oneChartScopeObservations?: readonly [
       R069SingleChartScopeObservation, R069SingleChartScopeObservation,
     ];
@@ -588,6 +631,14 @@ export function evaluatePairwiseSourceScopeV1(
       corpusId: 'R068' as const, originalClaimId: claim.id,
       sourceSurface: claim.sourceSurface,
       originalDomain: claim.domain, disposition: 'NARROW_OR_REPLACE' as const,
+      ...(claim.id === 'SOCIAL-FRIENDLINESS-SANHE-LIUHE' ||
+          claim.id === 'COMBINATION-CONTEXT-VARIANCE'
+        ? {
+            singleChartCombinationObservations: [
+              observeR068NatalStructure(subject.snapshot, 'subject'),
+              observeR068NatalStructure(target.snapshot, 'target'),
+            ] as const,
+          } : {}),
       missingPrerequisites: [
         'SOCIAL_VS_KIN_SCOPE',
         'ROMANCE_TRANSFER_EVIDENCE',
