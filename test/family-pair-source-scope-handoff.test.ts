@@ -250,6 +250,104 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     }
   });
 
+  it('distinguishes R070 pillar-local and outside-only T5 facts across real calculated family charts', () => {
+    const inputCases = [
+      { year: 1990, day: 15, sex: 'male' as const },
+      { year: 1997, day: 8, sex: 'female' as const },
+      { year: 2001, day: 24, sex: 'unspecified' as const },
+      { year: 1988, day: 11, sex: 'female' as const },
+    ];
+    const seenStates = new Set<string>();
+    for (const birth of inputCases) {
+      const snapshot = chart(birth);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        for (const comparison of report.crossLayerMethodComparisons) {
+          const contrast = comparison.starPillarPositionContrast;
+          seenStates.add(contrast.state);
+          expect(contrast.pillarFactPath).toBe(comparison.pillarObservation.factPath);
+          expect(contrast.pillarFactPath).toBe('pillars.' + contrast.pillarSlot);
+          expect(contrast.locationBasedFamilyInferenceAuthorized).toBe(false);
+          expect(contrast.inReferencedPillar.every(position =>
+            position.slot === contrast.pillarSlot)).toBe(true);
+          expect(contrast.outsideReferencedPillar.every(position =>
+            position.slot !== contrast.pillarSlot)).toBe(true);
+          expect(contrast.unresolvedReferencedPillarPaths.every(path =>
+            path.startsWith('derivedFacts.tenGods.' + contrast.pillarSlot + '.'))).toBe(true);
+          expect([
+            ...contrast.inReferencedPillar, ...contrast.outsideReferencedPillar,
+          ].map(position => position.path).sort()).toEqual(
+            comparison.starObservation.observedPositions.map(position => position.path).sort(),
+          );
+          expect(contrast.unresolvedReferencedPillarPaths).toEqual(
+            comparison.starObservation.unresolvedFactPaths.filter(path =>
+              path.startsWith('derivedFacts.tenGods.' + contrast.pillarSlot + '.')),
+          );
+          if (contrast.state === 'STAR_OBSERVED_IN_REFERENCED_PILLAR') {
+            expect(contrast.inReferencedPillar.length).toBeGreaterThan(0);
+          } else if (contrast.state === 'REFERENCED_PILLAR_T5_UNRESOLVED') {
+            expect(contrast.inReferencedPillar).toHaveLength(0);
+            expect(contrast.unresolvedReferencedPillarPaths.length).toBeGreaterThan(0);
+            expect(comparison.missingPrerequisites).toContain(
+              'R070_REFERENCED_PILLAR_T5_POSITION_UNRESOLVED',
+            );
+          } else if (contrast.state === 'STAR_OBSERVED_ONLY_OUTSIDE_REFERENCED_PILLAR') {
+            expect(contrast.inReferencedPillar).toHaveLength(0);
+            expect(contrast.outsideReferencedPillar.length).toBeGreaterThan(0);
+            expect(contrast.unresolvedReferencedPillarPaths).toHaveLength(0);
+            expect(comparison.missingPrerequisites).toContain(
+              'R070_OUTSIDE_PILLAR_T5_IS_NOT_NEGATIVE_FAMILY_EVIDENCE',
+            );
+          } else {
+            expect(contrast.state).toBe('STAR_NOT_OBSERVED_IN_RESOLVED_T5_SURFACE');
+            expect(contrast.inReferencedPillar).toHaveLength(0);
+            expect(contrast.outsideReferencedPillar).toHaveLength(0);
+            expect(contrast.unresolvedReferencedPillarPaths).toHaveLength(0);
+            expect(comparison.missingPrerequisites).toContain(
+              'R070_UNOBSERVED_T5_IS_NOT_RELATIVE_ABSENCE',
+            );
+          }
+          expect(comparison.missingPrerequisites).toContain(
+            'R070_PILLAR_STAR_LOCATION_SYNTHESIS_RULE_NOT_SOURCED',
+          );
+          expect(report.missingPrerequisites).toContain(
+            'R070_PILLAR_STAR_LOCATION_SYNTHESIS_RULE_NOT_SOURCED',
+          );
+          expect(comparison.methodSelectionAuthorized).toBe(false);
+          expect(comparison.independentlyAdmittedFamilyClaims).toBe(0);
+          expect(report.familyT8Admitted).toBe(false);
+        }
+      }
+    }
+    expect(seenStates.has('STAR_OBSERVED_IN_REFERENCED_PILLAR')).toBe(true);
+    expect(seenStates.has('STAR_OBSERVED_ONLY_OUTSIDE_REFERENCED_PILLAR')).toBe(true);
+  });
+
+  it('keeps the known parent pillar location independent from unresolved hour T5 and refuses the child bridge', () => {
+    const snapshot = chart({ year: 1997, sex: 'female', timeKnown: false });
+    const parents = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+    expect(children.crossLayerMethodComparisons).toEqual([]);
+    expect(parents.crossLayerMethodComparisons).toHaveLength(2);
+    for (const comparison of parents.crossLayerMethodComparisons) {
+      const contrast = comparison.starPillarPositionContrast;
+      expect(contrast.pillarSlot).toBe('month');
+      expect(contrast.unresolvedReferencedPillarPaths).toEqual([]);
+      expect(comparison.starObservation.unresolvedFactPaths).toContain(
+        'derivedFacts.tenGods.hour.stem',
+      );
+      expect(comparison.starObservation.unresolvedFactPaths).toContain(
+        'derivedFacts.tenGods.hour.branch',
+      );
+      expect(comparison.missingPrerequisites).toContain(
+        'TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED',
+      );
+      expect(contrast.locationBasedFamilyInferenceAuthorized).toBe(false);
+    }
+    expect(parents.familyT8Admitted).toBe(false);
+    expect(children.familyT8Admitted).toBe(false);
+  });
+
   it('does not manufacture a child pillar/star bridge if the Canonical birth hour is missing', () => {
     const input = chart({ sex: 'female', timeKnown: false });
     const child = evaluateFamilySourceScopeV1(input, 'children');
