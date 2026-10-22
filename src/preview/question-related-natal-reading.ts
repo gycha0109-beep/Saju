@@ -10,10 +10,10 @@ type DomainReport = NatalFiveDomainMultifactorReports[Topic];
 
 const TOPICS: readonly { key: Topic; title: string; words: readonly string[] }[] = [
   { key: 'general', title: '전체 사주', words: ['전체 사주', '종합 사주', '사주 전반'] },
-  { key: 'career', title: '직업·진로', words: ['직업운', '진로', '직업', '커리어', '취업'] },
-  { key: 'wealth', title: '재물', words: ['재물운', '재물', '금전운', '돈'] },
+  { key: 'career', title: '직업·진로', words: ['직업운', '진로', '직업', '커리어', '취업', '직장', '이직', '퇴사', '적성'] },
+  { key: 'wealth', title: '재물', words: ['재물운', '재물', '금전운', '돈', '저축', '지출', '자금', '자산'] },
   { key: 'business', title: '사업', words: ['사업운', '사업', '창업'] },
-  { key: 'relationship', title: '연애·관계', words: ['연애운', '연애', '관계운', '대인관계', '소통'] },
+  { key: 'relationship', title: '연애·관계', words: ['연애운', '연애', '관계운', '대인관계', '소통', '썸'] },
 ] as const;
 
 // Not an interpretation algorithm: any future-event/third-party topic needs
