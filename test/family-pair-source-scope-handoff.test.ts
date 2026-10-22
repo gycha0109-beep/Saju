@@ -130,6 +130,113 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(male.familyT8Admitted).toBe(false);
   });
 
+  it('compares exact R070 parent pillar sources against father/mother star methods without combining family meanings', () => {
+    const cases = [
+      {
+        snapshot: chart({ sex: 'unspecified' }),
+        expectedPairs: [
+          ['月為父母兄弟門戶', '父以偏財論'],
+          ['月為父母兄弟門戶', '母以印綬論'],
+        ],
+      },
+      {
+        snapshot: chart({ sex: 'male' }),
+        expectedPairs: [
+          ['月為父母兄弟門戶', '父以偏財論'],
+          ['月為父母兄弟門戶', '母以印綬論'],
+          ['年為父', '父以偏財論'],
+        ],
+      },
+    ] as const;
+    for (const input of cases) {
+      const result = evaluateFamilySourceScopeV1(input.snapshot, 'parents');
+      expect(result.crossLayerMethodComparisons.map(c => c.sourceSurfaces))
+        .toEqual(input.expectedPairs);
+      for (const comparison of result.crossLayerMethodComparisons) {
+        const pillar = familyCandidate(result, comparison.sourceSurfaces[0]);
+        const star = familyCandidate(result, comparison.sourceSurfaces[1]);
+        expect(pillar.disposition).toBe('APPLICABLE_BOUNDED');
+        expect(star.disposition).toBe('INCONCLUSIVE');
+        expect(comparison.sourceLayerIds)
+          .toEqual([pillar.sourceLayerId, star.sourceLayerId]);
+        expect(comparison.pillarObservation).toEqual({
+          factPath: pillar.observedFactPath,
+          observedPillar: pillar.observedPillar,
+        });
+        expect(comparison.starObservation).toEqual(star.tenGodObservation);
+        expect(comparison.independentlyAdmittedFamilyClaims).toBe(0);
+        expect(comparison.methodSelectionAuthorized).toBe(false);
+        expect(comparison.familyMeaningAuthorized).toBe(false);
+        expect(comparison.state).toBe('PILLAR_AND_STAR_METHODS_NOT_RECONCILED');
+        expect(comparison.missingPrerequisites)
+          .toContain('PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION');
+        expect(comparison.missingPrerequisites)
+          .toContain('HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED');
+      }
+      expect(result.familyT8Admitted).toBe(false);
+      expect(result.mayPublish).toBe(false);
+    }
+  });
+
+  it('compares child pillar and historical star methods only within their admitted source-sex contexts', () => {
+    const cases = [
+      {
+        sex: 'male' as const,
+        pairs: [
+          ['時為子息', '子嗣者即官星也'],
+          ['時為子孫', '子嗣者即官星也'],
+        ],
+      },
+      {
+        sex: 'female' as const,
+        pairs: [
+          ['時為子息', '子嗣者即官星也'],
+          ['時為子息', '我生者為子'],
+        ],
+      },
+      {
+        sex: 'unspecified' as const,
+        pairs: [['時為子息', '子嗣者即官星也']],
+      },
+    ] as const;
+    for (const input of cases) {
+      const result = evaluateFamilySourceScopeV1(
+        chart({ sex: input.sex }), 'children',
+      );
+      expect(result.crossLayerMethodComparisons.map(c => c.sourceSurfaces))
+        .toEqual(input.pairs);
+      for (const comparison of result.crossLayerMethodComparisons) {
+        expect(comparison.pillarObservation.factPath).toBe('pillars.hour');
+        expect(comparison.starObservation.sourceFactPath).toBe('derivedFacts.tenGods');
+        expect(comparison.starObservation.historicalRelativeRoleAuthorized).toBe(false);
+        expect(comparison.independentlyAdmittedFamilyClaims).toBe(0);
+        expect(comparison.methodSelectionAuthorized).toBe(false);
+        expect(comparison.familyMeaningAuthorized).toBe(false);
+        expect(comparison.missingPrerequisites).toContain('FAMILY_METHOD_SELECTION');
+      }
+      expect(result.familyT8Admitted).toBe(false);
+    }
+  });
+
+  it('does not manufacture a child pillar/star bridge if the Canonical birth hour is missing', () => {
+    const input = chart({ sex: 'female', timeKnown: false });
+    const child = evaluateFamilySourceScopeV1(input, 'children');
+    const parents = evaluateFamilySourceScopeV1(input, 'parents');
+    expect(child.crossLayerMethodComparisons).toEqual([]);
+    expect(child.methodCandidates.find(x => x.sourceSurface === '時為子息')
+      ?.disposition).toBe('INCONCLUSIVE');
+    expect(child.methodCandidates.find(x => x.sourceSurface === '我生者為子')
+      ?.tenGodObservation?.status).toBe('incomplete_input');
+    expect(parents.crossLayerMethodComparisons).toHaveLength(2);
+    for (const comparison of parents.crossLayerMethodComparisons) {
+      expect(comparison.starObservation.status).toBe('incomplete_input');
+      expect(comparison.missingPrerequisites)
+        .toContain('TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED');
+    }
+    expect(child.familyT8Admitted).toBe(false);
+    expect(parents.familyT8Admitted).toBe(false);
+  });
+
   it('preserves R070 configuration phrases as method-unassigned and distinguishes branch-clash facts from outcome interpretation', () => {
     const snapshot = chart({ year: 1997, sex: 'male' });
     const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
