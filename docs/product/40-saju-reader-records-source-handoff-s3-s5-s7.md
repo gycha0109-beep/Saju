@@ -15,6 +15,18 @@
 - `sameSajuReadingForReaderAndRecordsV1`는 Reader/Records 참조가 **동일 Saju Reading과 완전 동일한 콘텐츠·원본 버전·인벤토리**를 가리키는지 비교한다. 결과 `matched`는 **동일 참조 검사만 통과**했다는 뜻이며 반환은 항상 `canDisclose=false, canPersist=false`. 앱이 이 구조체를 브라우저에 보내거나 구매권 대용으로 사용해서는 안 된다.
 - `state=held`, `lifecycle=preview`, `sourceAuthority/productionInterpretationAuthority/releaseAuthorization=NOT_EVALUATED`, `mayIssueS3OfficialCoverageCandidate=false`, `subjectBinding/s5AtomicStorage/s7Delivery=DB_OWNER_REQUIRED`를 고정한다. Reviewer의 화면 텍스트·DB Owner 소유 Ref를 Saju가 생산했다고 주장하지 않는다.
 
+## #2410의 기존 2B-3C-4 Source Unit 검증 연결
+
+서버 전용 `verifyHeldSajuSourceUnitClosureV1`은 기존 Preview HMAC 검증에 성공한 **정확한 ProductReadingResponse v2**에서만 기존 `projectSajuReaderRecordsSourceInventoryV1`로 SourceUnit ref/hash, disclosure, ambiguity 및 inventoryHash를 재생성한다. caller 제공 인벤토리나 출처 판정은 신뢰하지 않는다.
+
+HMAC으로 묶인 Saju material: `snapshotId`, `interpretationRunId`, `registrySnapshotId`, `executionId`, `preparationId`, `selectionId`, `profileRef{id,version,contentHash}`, `evidenceBundleHash`, `readingId`, `responseId`, `responseBodyHash`. 원문 SourceUnit 지문은 기존 `sha256:v1` UTF-8 규칙과 #2683 inventoryHash 산식으로 계산한다.
+
+검증 조건: 예상 request body/nonce/issuer/audience/keyId는 명하 인증 서버가 독립적으로 공급하고, replay claim은 전 replica에서 원자적인 공유 저장소로 수행한다. 검증 뒤 원문은 반환하지 않고 ref/hash만 내부 계약으로 전달한다. 합성 fixture가 아닌 동일 실행 parity 테스트를 포함한다.
+
+모든 결과는 **Preview HELD**이다. `sourceAuthority`, `semanticOutputAuthority`, `selectedCoPresentDisclosuresAuthority`, `productionInterpretationAuthority`, `releaseAuthorization`는 `NOT_EVALUATED`; `canExecute/canPersist/canDisclose/canPublish/canSell=false`.
+
+브릿지의 실제 운영 인수에는 2B-3C-3의 명하 측 신원·Birth Revision 재확인, 운영 shared nonce ledger, native Saju reading ID와 DB Official UUID 상관관계, S3 selected/co-present/disclosure/ambiguity 및 Semantic/Output Guard 검증, **Saju Source Owner의 별도 Production lifecycle 의미·출처 승인**이 남는다. 이 단계만으로 #2410을 닫을 수 없다.
+
 ## 정확한 소비 경로와 아직 비어 있는 연결
 
 | 단계 | 기존 소유 코드 / 현재 연결 | 확인할 동일성·남은 일 |
