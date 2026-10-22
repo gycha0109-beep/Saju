@@ -4,6 +4,8 @@ import { GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES } from '../research/general-ann
 import {
   GENERAL_ANNUAL_TENSION_CLAIM_TYPE,
   GENERAL_ANNUAL_THEME_CLAIM_TYPE,
+  GENERAL_ANNUAL_POLICY_SOURCE,
+  GENERAL_ANNUAL_READING_METHODOLOGY,
 } from '../research/general-annual-reading-candidate.js';
 
 export const GENERAL_ANNUAL_EXPLORATION_VERSION = 'myeongha-annual-exploration-v1' as const;
@@ -36,6 +38,12 @@ export interface GeneralAnnualExplorationSection {
   title: string;
   text: string;
   interpretationStatus: 'internal_research';
+  evidenceStatus: 'research_profile_projection_not_an_executed_official_claim';
+  researchProfileId: string;
+  candidateClaimType: string;
+  calculationFactPaths: readonly string[];
+  policySourceId: typeof GENERAL_ANNUAL_POLICY_SOURCE.sourceId;
+  methodologyId: typeof GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId;
   relatedPillar?: PillarSlot;
 }
 
@@ -62,7 +70,7 @@ export interface GeneralAnnualExplorationReport {
   };
 }
 
-function profileCopy(claimType: string, key: string): { headline: string; summary: string } {
+function profileCopy(claimType: string, key: string): { headline: string; summary: string; profileId: string } {
   const profiles = GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.filter(
     (profile) => profile.claimType === claimType && profile.semanticKeys?.includes(key) === true,
   );
@@ -75,7 +83,7 @@ function profileCopy(claimType: string, key: string): { headline: string; summar
   if (!headline || !summary) {
     throw new Error(`Annual narrative profile ${key} is missing consumer copy.`);
   }
-  return { headline, summary };
+  return { headline, summary, profileId: profiles[0]!.profileId };
 }
 
 /**
@@ -101,6 +109,14 @@ export function buildGeneralAnnualExplorationReport(
       title: core.headline,
       text: core.summary,
       interpretationStatus: 'internal_research',
+      evidenceStatus: 'research_profile_projection_not_an_executed_official_claim',
+      researchProfileId: core.profileId,
+      candidateClaimType: GENERAL_ANNUAL_THEME_CLAIM_TYPE.claimType,
+      calculationFactPaths: [
+        'temporal.targetYear', 'temporal.annualPillar', 'temporal.annualStemTenGod',
+      ],
+      policySourceId: GENERAL_ANNUAL_POLICY_SOURCE.sourceId,
+      methodologyId: GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId,
     },
   ];
   const unavailablePillars: PillarSlot[] = [];
@@ -123,6 +139,15 @@ export function buildGeneralAnnualExplorationReport(
       title: copy.headline,
       text: copy.summary,
       interpretationStatus: 'internal_research',
+      evidenceStatus: 'research_profile_projection_not_an_executed_official_claim',
+      researchProfileId: copy.profileId,
+      candidateClaimType: GENERAL_ANNUAL_TENSION_CLAIM_TYPE.claimType,
+      calculationFactPaths: [
+        'temporal.targetYear', 'temporal.annualPillar',
+        'temporal.annualBranchRelations.' + slot,
+      ],
+      policySourceId: GENERAL_ANNUAL_POLICY_SOURCE.sourceId,
+      methodologyId: GENERAL_ANNUAL_READING_METHODOLOGY.methodologyId,
       relatedPillar: slot,
     });
   }
