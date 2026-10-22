@@ -244,11 +244,11 @@ describe('Saju private source fingerprint handoff to Reader / Records', () => {
   it('does not expose an inventory or apparently usable Reading on unsupported/partial responses', async () => {
     const sourceInput = await source();
     const response: ProductReadingResponse = {
-      ...sourceInput.response,
+      responseId: sourceInput.response.responseId,
+      responseVersion: sourceInput.response.responseVersion,
       state: 'insufficient_evidence',
       messageCode: 'READING_EVIDENCE_INSUFFICIENT',
       requiredAction: 'none',
-      reading: undefined,
       coverage: { state: 'insufficient', hasAvailableEvidence: false, missingRequirementCount: 1 },
     };
     expect(() => projectSajuReaderRecordsSourceInventoryV1(response)).toThrow();
