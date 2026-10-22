@@ -289,4 +289,45 @@ describe('actual customer question form', () => {
     expect(screen.get('partner-date').disabled).toBe(true);
   });
 
+  it('shows actual computed current/next life-stage text and carries unknown-time absence explicitly', async () => {
+    const screen = openProductScreen({
+      state: 'partial_evidence',
+      explanation: '현재와 다음 계산 구간까지만 제공하며 각 단계의 결과를 예측하지 않습니다.',
+      report: {
+        referenceLocalDateTime: '2026-10-22T10:30',
+        periods: [{
+          kind: 'current',
+          text: '현재 명식의 계산된 대운은 갑자 구간입니다.',
+          startsAt: '2020-01-01T00:00',
+          endsAtExclusive: '2030-01-01T00:00',
+        }, {
+          kind: 'next',
+          text: '다음 계산상 대운은 을축 구간입니다.',
+          startsAt: '2030-01-01T00:00',
+          endsAtExclusive: '2040-01-01T00:00',
+        }],
+        missing: ['시각이 확인되지 않으면 추가 계산을 확정하지 않습니다.'],
+        caveats: ['이 구간은 미래 사건의 결과를 의미하지 않습니다.'],
+      },
+    });
+    screen.get('reading-text').value = '평생 흐름';
+    screen.get('time-unknown').checked = true;
+    await screen.get('time-unknown').emit('change');
+    await screen.get('reading-form').emit('submit');
+    expect(screen.requests).toHaveLength(1);
+    expect(screen.requests[0]).toEqual({
+      url: '/api/preview/life-stage',
+      body: { birth: {
+        calendarType: 'solar', date: '1998-05-21', time: null, sex: 'female',
+      } },
+    });
+    const content = screen.get('result').textContent;
+    expect(content).toContain('현재 계산상 대운 구간');
+    expect(content).toContain('다음 계산상 대운 구간');
+    expect(content).toContain('2026-10-22T10:30');
+    expect(content).toContain('현재 명식의 계산된 대운은 갑자 구간입니다.');
+    expect(content).toContain('시각이 확인되지 않으면');
+    expect(content).toContain('미래 사건의 결과를 의미하지 않습니다.');
+  });
+
 });

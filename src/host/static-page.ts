@@ -470,6 +470,44 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     };
   }
 
+  function renderLifeStagePreview(payload) {
+    result.replaceChildren();
+    result.classList.remove('hidden');
+    result.appendChild(el('h2', '삶의 단계 · 지금과 다음 구간'));
+    const report = payload?.report;
+    if (!report || !Array.isArray(report.periods) ||
+        !Array.isArray(report.missing) || !Array.isArray(report.caveats)) {
+      result.appendChild(el('p', '삶의 단계 계산 정보를 확인할 수 없습니다.', 'notice error'));
+      return;
+    }
+    result.appendChild(el('p', payload.explanation, 'notice'));
+    result.appendChild(el('p',
+      '계산 기준: ' + report.referenceLocalDateTime + ' (Asia/Seoul)',
+      'bundle-caption'));
+    report.periods.forEach(period => {
+      const section = el('section');
+      section.appendChild(el('h2', period.kind === 'current'
+        ? '현재 계산상 대운 구간' : '다음 계산상 대운 구간'));
+      section.appendChild(el('p', period.text));
+      section.appendChild(el('p',
+        '적용 시작: ' + period.startsAt + ' / 종료 시각(미포함): ' +
+        period.endsAtExclusive, 'bundle-caption'));
+      result.appendChild(section);
+    });
+    report.missing.forEach(text => result.appendChild(el('div', text, 'notice')));
+    report.caveats.forEach(text => result.appendChild(el('p', text, 'disclosure')));
+  }
+
+  async function fetchLifeStagePreview() {
+    const response = await fetch('/api/preview/life-stage', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ birth: currentBirth() })
+    });
+    if (!response.ok) throw new Error('LIFE_STAGE_PREVIEW_NOT_AVAILABLE');
+    return response.json();
+  }
+
   function renderCompatibilityPreview(payload) {
     result.replaceChildren();
     result.classList.remove('hidden');
@@ -722,6 +760,11 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     result.classList.remove('hidden');
     result.replaceChildren(el('div', '풀이를 준비하고 있습니다.', 'state'));
     try {
+      if (readingText.value === '평생 흐름') {
+        const preview = await fetchLifeStagePreview();
+        renderLifeStagePreview(preview);
+        return;
+      }
       if (readingText.value === '궁합') {
         const preview = await fetchCompatibilityPreview();
         renderCompatibilityPreview(preview);
