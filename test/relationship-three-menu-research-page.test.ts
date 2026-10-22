@@ -4,7 +4,7 @@ import type { BirthInput } from '../src/contracts/calculation.js';
 import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/production-calculation-policy.js';
 import { buildFamilyCanonicalObservationPreview } from '../src/preview/family-parents-children-observation-preview.js';
 import { buildCompatibilityTwoChartIntakePreview } from '../src/preview/compatibility-two-chart-intake-preview.js';
-import { buildRelationshipThreeMenuResearchPage } from '../src/preview/relationship-three-menu-research-page.js';
+import { buildRelationshipThreeMenuResearchPage, type RelationshipThreeMenuResearchPageInput } from '../src/preview/relationship-three-menu-research-page.js';
 import { RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from '../src/reading/official-reading-detailed-presentation-spouse.js';
 
 const NOW = new Date('2026-09-03T13:00:00.000Z');
@@ -28,7 +28,7 @@ function inputs(
   birth: BirthInput = FIRST,
   comparison: BirthInput | null = SECOND,
   targetRef = 'second-person',
-) {
+): RelationshipThreeMenuResearchPageInput {
   const snapshot = chart(birth);
   const parents = buildFamilyCanonicalObservationPreview(snapshot, 'parents');
   const children = buildFamilyCanonicalObservationPreview(snapshot, 'children');
@@ -43,10 +43,10 @@ function inputs(
       { personRef: 'first-person', snapshot },
       { personRef: targetRef, snapshot: targetSnapshot },
     );
-  return {
-    subjectSnapshot: snapshot, parents, children,
-    ...(compatibility === undefined ? {} : { compatibility, targetSnapshot }),
-  };
+  if (compatibility === undefined || targetSnapshot === undefined) {
+    return { subjectSnapshot: snapshot, parents, children };
+  }
+  return { subjectSnapshot: snapshot, parents, children, compatibility, targetSnapshot };
 }
 
 describe('real source-owned three relationship menu page', () => {
@@ -169,7 +169,7 @@ describe('real source-owned three relationship menu page', () => {
     const other = inputs({ ...FIRST, date: { year: 2000, month: 5, day: 15 } });
     expect(() => buildRelationshipThreeMenuResearchPage({
       ...sample,
-      compatibility: other.compatibility,
+      compatibility: other.compatibility!,
     })).toThrow('mixed-person');
     expect(() => buildRelationshipThreeMenuResearchPage({
       ...sample,
