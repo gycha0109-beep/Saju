@@ -529,6 +529,145 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(states.has('CLASH_ONLY_OUTSIDE_REFERENCED_PILLAR')).toBe(true);
   });
 
+  it('links existing R070 pillar, star and branch-clash fact references without multiplying evidence', () => {
+    const cases = [
+      { year: 1988, day: 5, sex: 'male' as const },
+      { year: 1990, day: 15, sex: 'female' as const },
+      { year: 1993, day: 25, sex: 'unspecified' as const },
+      { year: 1997, day: 8, sex: 'male' as const },
+      { year: 2001, day: 24, sex: 'female' as const },
+    ];
+    for (const birth of cases) {
+      const snapshot = chart(birth);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        expect(report.pillarStarClashOverlaps).toHaveLength(
+          report.crossLayerMethodComparisons.length,
+        );
+        const rawObservedT5: string[] = [];
+        const rawClashIds: string[] = [];
+        for (let i = 0; i < report.pillarStarClashOverlaps.length; i++) {
+          const comparison = report.crossLayerMethodComparisons[i];
+          const triple = report.pillarStarClashOverlaps[i];
+          if (comparison === undefined || triple === undefined) {
+            throw new Error('Each original pillar-star pair must have one triple-layer input.');
+          }
+          const clash = report.branchClashPillarObservations.find(item =>
+            item.pillarSourceLayerId === comparison.sourceLayerIds[0] &&
+            item.pillarSourceSurface === comparison.sourceSurfaces[0]);
+          if (clash === undefined) {
+            throw new Error('Original R070 pillar must share the exact clash reference.');
+          }
+          expect(triple.requestedScope).toBe(scope);
+          expect(triple.sourceLayerIds).toEqual([
+            ...comparison.sourceLayerIds, 'CONFIGURATION-OUTCOME',
+          ]);
+          expect(triple.sourceSurfaces).toEqual([
+            ...comparison.sourceSurfaces, '刑沖破害',
+          ]);
+          expect(triple.pillarSlot).toBe(comparison.starPillarPositionContrast.pillarSlot);
+          expect(triple.pillarFactPath).toBe(comparison.pillarObservation.factPath);
+          expect(triple.visibleT5FactPath).toBe('derivedFacts.tenGods');
+          expect(triple.structuralFactPath).toBe('derivedFacts.structuralRelations');
+          expect(triple.observedT5PositionsInPillar)
+            .toEqual(comparison.starPillarPositionContrast.inReferencedPillar);
+          expect(triple.unresolvedT5FactPathsInPillar)
+            .toEqual(comparison.starPillarPositionContrast.unresolvedReferencedPillarPaths);
+          expect(triple.participatingClashes).toEqual(clash.participatingClashes);
+          expect(triple.outsideClashRelationIds)
+            .toEqual(clash.outsideClashes.map(item => item.relationId));
+          expect(triple.clashObservationState).toBe(clash.state);
+          const incomplete = triple.unresolvedT5FactPathsInPillar.length > 0 ||
+            clash.state === 'REFERENCED_PILLAR_UNRESOLVED' ||
+            clash.state === 'STRUCTURAL_CLASH_CANDIDATES_UNRESOLVED';
+          const starSeen = triple.observedT5PositionsInPillar.length > 0;
+          const clashSeen = triple.participatingClashes.length > 0;
+          expect(triple.factOverlapState).toBe(
+            incomplete ? 'INCOMPLETE_FACT_INPUTS'
+              : starSeen && clashSeen ? 'VISIBLE_T5_AND_BRANCH_CLASH_COLOCATED'
+                : starSeen ? 'VISIBLE_T5_WITHOUT_REFERENCE_BRANCH_CLASH'
+                  : clashSeen ? 'REFERENCE_BRANCH_CLASH_WITHOUT_VISIBLE_T5'
+                    : 'NO_VISIBLE_T5_OR_REFERENCE_BRANCH_CLASH',
+          );
+          rawObservedT5.push(...triple.observedT5PositionsInPillar.map(item => item.path));
+          rawClashIds.push(...triple.participatingClashes.map(item => item.relationId));
+          for (const candidate of triple.participatingClashes) {
+            expect(candidate.participants.some(participant =>
+              participant.pillar === triple.pillarSlot &&
+              participant.component === 'branch')).toBe(true);
+            expect(candidate.structuralMatchOnly).toBe(true);
+            expect(candidate.transformationEstablished).toBe(false);
+          }
+          expect(triple.missingPrerequisites).toContain(
+            'R070_PILLAR_STAR_CLASH_TRIPLE_SYNTHESIS_NOT_SOURCED',
+          );
+          expect(triple.missingPrerequisites).toContain(
+            'R070_SHARED_CALCULATION_FACT_IS_NOT_MULTIPLE_FAMILY_CLAIMS',
+          );
+          expect(triple.crossLayerMethodReconciled).toBe(false);
+          expect(triple.configurationEffectAuthorized).toBe(false);
+          expect(triple.independentFamilyEvidenceWeightAssigned).toBe(false);
+          expect(triple.independentlyAdmittedFamilyClaims).toBe(0);
+          expect(triple.familyT8Admitted).toBe(false);
+        }
+        const reuse = report.tripleLayerFactReuse;
+        const uniqueT5 = [...new Set(rawObservedT5)];
+        const uniqueClashIds = [...new Set(rawClashIds)];
+        expect(reuse.uniqueVisibleT5FactPaths).toEqual(uniqueT5);
+        expect(reuse.uniqueBranchClashRelationIds).toEqual(uniqueClashIds);
+        expect(reuse.repeatedVisibleT5FactPaths).toEqual(uniqueT5.filter(path =>
+          rawObservedT5.filter(item => item === path).length > 1));
+        expect(reuse.repeatedBranchClashRelationIds).toEqual(uniqueClashIds.filter(id =>
+          rawClashIds.filter(item => item === id).length > 1));
+        expect(reuse.distinctHistoricalSourceCountIsEvidenceWeight).toBe(false);
+        expect(reuse.independentlyAdmittedFamilyClaims).toBe(0);
+        if (report.pillarStarClashOverlaps.length > 0) {
+          expect(report.missingPrerequisites).toContain(
+            'R070_SHARED_CALCULATION_FACT_IS_NOT_MULTIPLE_FAMILY_CLAIMS',
+          );
+        }
+        expect(report.familyT8Admitted).toBe(false);
+        expect(report.researchOnly).toBe(true);
+        expect(report.mayGrantOfficialAuthority).toBe(false);
+        expect(report.mayMarkMenuAvailable).toBe(false);
+        expect(report.mayPersist).toBe(false);
+        expect(report.mayPublish).toBe(false);
+        expect(report.maySell).toBe(false);
+      }
+    }
+  });
+
+  it('retains parent partial inputs while omitting unsourced child triples for unknown birth hour', () => {
+    const snapshot = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const parents = evaluateFamilySourceScopeV1(snapshot, 'parents');
+    const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+    expect(parents.pillarStarClashOverlaps).toHaveLength(2);
+    expect(children.pillarStarClashOverlaps).toEqual([]);
+    expect(children.tripleLayerFactReuse).toEqual({
+      uniqueVisibleT5FactPaths: [],
+      repeatedVisibleT5FactPaths: [],
+      uniqueBranchClashRelationIds: [],
+      repeatedBranchClashRelationIds: [],
+      distinctHistoricalSourceCountIsEvidenceWeight: false,
+      independentlyAdmittedFamilyClaims: 0,
+    });
+    for (const triple of parents.pillarStarClashOverlaps) {
+      expect(triple.pillarSlot).toBe('month');
+      expect(triple.factOverlapState).toBe('INCOMPLETE_FACT_INPUTS');
+      expect(triple.unresolvedT5FactPathsInPillar).toEqual([
+        'derivedFacts.tenGods.month.stem',
+        'derivedFacts.tenGods.month.branch',
+      ]);
+      expect(triple.missingPrerequisites).toContain(
+        'R070_TRIPLE_LAYER_CANONICAL_INPUTS_PARTIAL',
+      );
+      expect(triple.independentlyAdmittedFamilyClaims).toBe(0);
+    }
+    expect(parents.familyT8Admitted).toBe(false);
+    expect(children.familyT8Admitted).toBe(false);
+    expect(children.mayPublish).toBe(false);
+  });
+
   it('preserves historical sex exclusion and unknown-hour clash omissions without allocating family outcomes', () => {
     const femaleSnapshot = chart({ year: 1997, sex: 'female', timeKnown: false });
     const unspecifiedSnapshot = chart({ year: 1997, sex: 'unspecified' });
