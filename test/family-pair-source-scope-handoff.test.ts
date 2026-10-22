@@ -72,6 +72,9 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(report.interpretationDisposition).toBe('INCONCLUSIVE');
     expect(report.familyT8Admitted).toBe(false);
     expect(report.researchOnly).toBe(true);
+    expect(report.mayGrantOfficialAuthority).toBe(false);
+    expect(report.mayMarkMenuAvailable).toBe(false);
+    expect(report.mayPersist).toBe(false);
     expect(report.mayPublish).toBe(false);
     expect(report.maySell).toBe(false);
     expect(evaluateFamilySourceScopeV1(snapshot, 'parents')).toEqual(report);
@@ -179,6 +182,9 @@ describe('R068/R069 pairwise source boundary on two real Canonical charts', () =
     expect(report.pairwiseT10Admitted).toBe(false);
     expect(report.pairwiseDisposition).toBe('INCONCLUSIVE');
     expect(report.researchOnly).toBe(true);
+    expect(report.mayGrantOfficialAuthority).toBe(false);
+    expect(report.mayMarkMenuAvailable).toBe(false);
+    expect(report.mayPersist).toBe(false);
     expect(report.mayPublish).toBe(false);
     expect(report.maySell).toBe(false);
     expect(evaluatePairwiseSourceScopeV1(
@@ -208,6 +214,31 @@ describe('R068/R069 pairwise source boundary on two real Canonical charts', () =
     expect(same.factualPairObservations.every(item =>
       item.status === 'both_resolved' && item.exactPillarIdentity === 'same')).toBe(true);
     expect(same.pairwiseT10Admitted).toBe(false);
+  });
+
+  it('swaps observed facts but never authorizes directional or symmetric interpersonal meaning', () => {
+    const first = chart({ year: 1985, day: 18 });
+    const second = chart({ year: 2001, day: 22 });
+    const forward = evaluatePairwiseSourceScopeV1(
+      { personRef: 'person-one', snapshot: first },
+      { personRef: 'person-two', snapshot: second },
+    );
+    const backward = evaluatePairwiseSourceScopeV1(
+      { personRef: 'person-two', snapshot: second },
+      { personRef: 'person-one', snapshot: first },
+    );
+    expect(forward.factualPairObservations.map(item => item.exactPillarIdentity))
+      .toEqual(backward.factualPairObservations.map(item => item.exactPillarIdentity));
+    for (let i = 0; i < forward.factualPairObservations.length; i++) {
+      expect(forward.factualPairObservations[i]?.subjectPillar)
+        .toEqual(backward.factualPairObservations[i]?.targetPillar);
+      expect(forward.factualPairObservations[i]?.targetPillar)
+        .toEqual(backward.factualPairObservations[i]?.subjectPillar);
+    }
+    expect(forward.pairwiseT10Admitted).toBe(false);
+    expect(backward.pairwiseT10Admitted).toBe(false);
+    expect(forward.comparedSourceSurfaces.every(x => x.eligiblePairwiseClaim === false))
+      .toBe(true);
   });
 
   it('rejects self pairing and non-comparable policy without issuing a T10 conclusion', () => {
