@@ -45,6 +45,8 @@ export interface ReadingRequest {
   targetPeriod?: ReadingTargetPeriod;
   targetPersonRef?: string;
   question?: string;
+  /** Optional selected reading output locale; current hosted Korean route admits ko-KR only. */
+  readingLocale?: string;
   outputPreferences?: {
     preferredDetail?: 'concise' | 'standard' | 'detailed';
     includeSourceSummaries?: boolean;

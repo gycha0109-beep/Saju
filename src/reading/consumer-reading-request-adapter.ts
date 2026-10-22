@@ -24,6 +24,7 @@ export interface ConsumerReadingRequestInput {
   text: string;
   referenceDateTime?: string;
   targetPersonRef?: string;
+  readingLocale?: ReadingRequest['readingLocale'];
   outputPreferences?: ReadingRequest['outputPreferences'];
 }
 
@@ -389,6 +390,7 @@ function validatedResolvedResult(
       ? {}
       : { targetPersonRef }),
     ...(question === undefined ? {} : { question }),
+    ...(input.readingLocale === undefined ? {} : { readingLocale: input.readingLocale }),
     ...(input.outputPreferences === undefined ? {} : { outputPreferences: input.outputPreferences }),
   };
   return makeResult(
@@ -410,6 +412,12 @@ export function normalizeConsumerReadingRequest(
   const normalizedText = stripPoliteSuffix(normalizeSurface(input.text));
   if (requestId.length === 0) {
     return makeResult(input, normalizedText, 'invalid', ['REQUEST_ID_REQUIRED'], []);
+  }
+  // All governed reading entrypoints still produce Korean copy. A foreign
+  // readingLocale must never receive Korean content through a service path
+  // that bypasses the browser/product-host request parser.
+  if (input.readingLocale !== undefined && input.readingLocale !== 'ko-KR') {
+    return makeResult(input, normalizedText, 'invalid', ['READING_LOCALE_NOT_AVAILABLE'], []);
   }
   if (normalizedText.length === 0) {
     return makeResult(input, normalizedText, 'invalid', ['READING_REQUEST_TEXT_REQUIRED'], []);

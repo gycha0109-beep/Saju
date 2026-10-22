@@ -49,6 +49,31 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
   <p class="lead">생년월일을 입력하고 보고 싶은 항목을 선택해 주세요.</p>
   <form id="reading-form">
     <div class="grid">
+      <label>화면 언어
+        <select id="ui-locale" name="uiLocale">
+          <option value="ko-KR">한국어</option>
+          <option value="en-US" disabled>English · 준비 중</option>
+          <option value="ja-JP" disabled>日本語 · 준비 중</option>
+          <option value="zh-CN" disabled>简体中文 · 준비 중</option>
+          <option value="zh-TW" disabled>繁體中文 · 준비 중</option>
+          <option value="vi-VN" disabled>Tiếng Việt · 준비 중</option>
+          <option value="ms-MY" disabled>Bahasa Melayu · 준비 중</option>
+          <option value="id-ID" disabled>Bahasa Indonesia · 준비 중</option>
+        </select>
+      </label>
+      <label>풀이 언어
+        <select id="reading-locale" name="readingLocale">
+          <option value="ko-KR">한국어</option>
+          <option value="en-US" disabled>English · 준비 중</option>
+          <option value="ja-JP" disabled>日本語 · 준비 중</option>
+          <option value="zh-CN" disabled>简体中文 · 준비 중</option>
+          <option value="zh-TW" disabled>繁體中文 · 준비 중</option>
+          <option value="vi-VN" disabled>Tiếng Việt · 준비 중</option>
+          <option value="ms-MY" disabled>Bahasa Melayu · 준비 중</option>
+          <option value="id-ID" disabled>Bahasa Indonesia · 준비 중</option>
+        </select>
+      </label>
+      <p class="full field-hint">화면 언어와 풀이 언어는 별도로 선택합니다. 다른 언어는 해당 언어의 화면·풀이가 준비된 후 사용할 수 있습니다.</p>
       <label>달력
         <select id="calendar" name="calendarType">
           <option value="solar">양력</option>
@@ -125,6 +150,8 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
   const leapMonth = document.getElementById('leap-month');
   const sex = document.getElementById('sex');
   const readingText = document.getElementById('reading-text');
+  const uiLocale = document.getElementById('ui-locale');
+  const readingLocale = document.getElementById('reading-locale');
 
   const messages = {
     READING_DELIVERED: '풀이가 준비되었습니다.',
@@ -288,6 +315,10 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     birthTime.disabled = timeUnknown.checked;
   });
 
+  function currentLocales() {
+    return { uiLocale: uiLocale.value, readingLocale: readingLocale.value };
+  }
+
   function currentBirth() {
     return {
       calendarType: calendar.value,
@@ -304,8 +335,10 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         birth,
+        uiLocale: currentLocales().uiLocale,
         reading: {
           text: topic.requestText,
+          readingLocale: currentLocales().readingLocale,
           outputPreferences: { preferredDetail: readingDetail.value }
         }
       })
@@ -320,7 +353,9 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        birth, outputPreferences: { preferredDetail: readingDetail.value }
+        birth,
+        ...currentLocales(),
+        outputPreferences: { preferredDetail: readingDetail.value }
       })
     });
     if (response.ok) {
@@ -418,8 +453,10 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     try {
       const body = {
         birth: currentBirth(),
+        uiLocale: currentLocales().uiLocale,
         reading: {
           text: readingText.value,
+          readingLocale: currentLocales().readingLocale,
           outputPreferences: { preferredDetail: readingDetail.value }
         }
       };
