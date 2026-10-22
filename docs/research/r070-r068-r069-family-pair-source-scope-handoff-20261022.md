@@ -58,6 +58,22 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 `財印`도 현행 T5의 편재·정재(財), 편인·정인(印)에 대한 **관찰값·불명확 경로**만 `tenGodSearchTerms`에 기록한다. 계산된 두 계열이 동시에 있음을 `財印` 구성의 작동 효과로 판단하거나 재성=부친·인성=모친으로 전용하지 않는다. 두 문구 모두 `canonicalObservationCoverage=visible_t5_search_categories_only`일 때도 `configurationMeaningAuthorized=false`, `familyOutcomeAuthorized=false`, `familyScopeResolved=false`, `disposition=INCONCLUSIVE`를 고정한다. `旺衰`와 `生旺死絕`는 현재 해석 가능 계산 입력이 없어 `none`으로 유지한다.
 
+### R070 기둥 배속과 십신 배속의 교차 적용 범위 — 근거 이중계산 금지
+
+`crossLayerMethodComparisons`는 **이미 연구용으로 등록된 원문 2개를 실제 자기 명식의 서로 다른 계산 입력에 연결**하지만, 두 방법이 같은 가족 주장을 지지하거나 서로 충돌한다는 새로운 고전적 결론을 만들지 않는다. 대상별 정확한 원문쌍은 다음과 같다.
+
+| 가족 대상 | 기둥 원문 / 확인 경로 | 별 배속 원문 / 현대 T5 조회 경로 | 비교 자체의 경계 |
+| --- | --- | --- | --- |
+| 부모 | `月為父母兄弟門戶` / `pillars.month` | `父以偏財論`, `母以印綬論` / `derivedFacts.tenGods` | 어느 특정 부·모의 성격·관계·존재도 결론 내리지 않음 |
+| 부모, 역사적 남성 명식만 | `年為父` / `pillars.year` | `父以偏財論` / `derivedFacts.tenGods` | 연주와 편재를 같은 부친 판단의 상호 확증으로 계산하지 않음 |
+| 자녀 | `時為子息` / `pillars.hour` | `子嗣者即官星也` / `derivedFacts.tenGods` | 자녀 수·성별·미래 결과로 추론하지 않음 |
+| 자녀, 역사적 여성 명식만 | `時為子息` / `pillars.hour` | `我生者為子` / `derivedFacts.tenGods` | 관성 방법과 식상 방법 사이 승자나 우선순위를 가정하지 않음 |
+| 자녀, 역사적 남성 명식만 | `時為子孫` / `pillars.hour` | `子嗣者即官星也` / `derivedFacts.tenGods` | 같은 시주 사실 및 별 배속 원문을 여러 가족 Claim으로 중복 계산하지 않음 |
+
+비교는 **기둥 입력이 확정되고, 별 배속 원문이 해당 역사적 성별 맥락에서 배제되지 않았을 때만** 만들어진다. 십신 계산이 미완전하더라도 기존 확인된 별 사실과 `unresolvedFactPaths`는 보존하고, `TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED`를 반환한다. 미상 시각으로 시주가 확정되지 않으면 자녀 교차 비교는 생성하지 않고 원래 각 방법의 입력 부족 사유를 유지한다.
+
+각 교차 항목의 `sourceLayerIds`·`sourceSurfaces`·`pillarObservation`·`starObservation`은 기존 R070 코퍼스 및 Canonical fact-path를 그대로 가리킨다. `independentlyAdmittedFamilyClaims=0`, `methodSelectionAuthorized=false`, `familyMeaningAuthorized=false`, `state=PILLAR_AND_STAR_METHODS_NOT_RECONCILED`이며, 계속 필요한 최소 조건은 `FAMILY_METHOD_SELECTION`, `PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION`, `HIDDEN_VS_VISIBLE_STAR_HANDLING`, `HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED`이다. 별이 보이는 경로에서 관찰되지 않는 경우는 가족 구성원 부재의 증거가 아니다.
+
 ### 부모·자녀 T8 엔진 인계
 
 **엔진에서 사용할 수 있는 것:** 요청 범위별 위의 조건부 원문 대응, 정확한 원국 사실 경로, 시각 미상·남성/여성/미지정 스코프별 부적합 사유. 계산 위치와 원문을 소비자에게 설명하더라도 **연구용 배속 관찰**이라는 경계만 유지한다.
