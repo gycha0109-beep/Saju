@@ -203,29 +203,29 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     });
     expect(detailedReport.detailPreferenceResolution?.resolvedDetail).toBe('detailed');
     const focus = detailedReport.sections.find(section =>
-      section.blocks.some(block => block.type === 'paragraph' &&
-        block.text.includes('내 명식에서 함께 확인된 관계 주제')),
+      section.blocks.some(block => block.type === 'insights' &&
+        block.items.some(item =>
+          item.summary?.includes('내 명식에서 함께 확인된 관계 주제'))),
     );
     expect(focus).toBeDefined();
     expect(focus?.sectionType).toBe('relationship');
     expect(focus?.state).toBe('complete');
     expect(JSON.stringify(focus?.blocks)).toContain('최소 유효 해석 완료 판정과는 별개');
-    const overviewBlock = focus?.blocks.find(block => block.type === 'comparison');
-    expect(overviewBlock?.type).toBe('comparison');
-    if (overviewBlock?.type !== 'comparison' || focus === undefined) {
-      throw new Error('Expected a source-owned multifactor relationship focus.');
-    }
-    expect(overviewBlock.perspectives.length).toBeGreaterThanOrEqual(2);
-    expect(overviewBlock.perspectives.length).toBeLessThanOrEqual(3);
+    const focusedItems = focus?.blocks
+      .filter(block => block.type === 'insights')
+      .flatMap(block => block.items)
+      .filter(item => item.summary?.includes('실제 명식에서 함께 확인된 십신 계열:')) ?? [];
+    expect(focusedItems.length).toBeGreaterThanOrEqual(2);
+    expect(focusedItems.length).toBeLessThanOrEqual(3);
     const proofRefs = new Set(detailedReport.explainability.entries.map(x => x.explainabilityRef));
-    for (const item of overviewBlock.perspectives) {
+    for (const item of focusedItems) {
       expect(item.explainabilityRef).toBeDefined();
       expect(proofRefs.has(item.explainabilityRef!)).toBe(true);
-      expect(item.text).toContain('실제 명식에서 함께 확인된 십신 계열:');
-      expect(item.text).toContain('관찰된 명식 위치:');
-      expect(item.text).toMatch(/연주|월주|일주|시주/u);
-      expect(item.text).not.toContain('TEN_GOD_FAMILY_');
-      expect(item.text).not.toContain('궁합 점수:');
+      expect(item.summary).toContain('실제 명식에서 함께 확인된 십신 계열:');
+      expect(item.summary).toContain('관찰된 명식 위치:');
+      expect(item.summary).toMatch(/연주|월주|일주|시주/u);
+      expect(item.summary).not.toContain('TEN_GOD_FAMILY_');
+      expect(item.summary).not.toContain('궁합 점수:');
     }
     const standardReport = report;
     expect(standardReport.sections[0]?.title).not.toBe('내 명식에서 함께 확인된 관계 주제');
@@ -240,7 +240,7 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       buildApprovedOfficialReadingDetailedRealizationV1(semantics, plan);
     expect(approvedDetailedMaterial).toBeDefined();
     const focusEntry = detailedReport.explainability.entries.find(entry =>
-      entry.explainabilityRef === overviewBlock.perspectives[0]?.explainabilityRef,
+      entry.explainabilityRef === focusedItems[0]?.explainabilityRef,
     );
     const targetUnitId = focusEntry?.primaryUnitRefs?.[0];
     const focusedUnit = semantics.units.find(unit => unit.unitId === targetUnitId);
@@ -348,27 +348,30 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       preferredDetail: 'detailed',
     });
     const focus = report.sections.find(section =>
-      section.blocks.some(block => block.type === 'paragraph' &&
-        block.text.includes('내 명식에서 함께 확인된 관계 주제')),
+      section.blocks.some(block => block.type === 'insights' &&
+        block.items.some(item =>
+          item.summary?.includes('내 명식에서 함께 확인된 관계 주제'))),
     );
     expect(focus).toBeDefined();
-    const comparison = focus?.blocks.find(block => block.type === 'comparison');
-    expect(comparison?.type).toBe('comparison');
-    if (comparison?.type !== 'comparison') return;
-    expect(comparison.perspectives).toHaveLength(1);
+    const focusedItems = focus?.blocks
+      .filter(block => block.type === 'insights')
+      .flatMap(block => block.items)
+      .filter(item => item.summary?.includes('실제 명식에서 함께 확인된 십신 계열:')) ?? [];
+    expect(focusedItems).toHaveLength(1);
     expect(focus?.state).toBe('complete');
     expect(JSON.stringify(focus?.blocks)).toContain('관계 종합풀이의 완성을 뜻하지 않습니다.');
-    expect(comparison.perspectives[0]?.label).toContain('생각을 정리한 뒤');
-    expect(comparison.perspectives[0]?.text).toContain('대화');
-    expect(comparison.perspectives[0]?.text).toContain('인성');
-    expect(comparison.perspectives[0]?.text).toContain('식상');
-    expect(comparison.perspectives[0]?.text).not.toContain('관성');
-    expect(comparison.perspectives[0]?.text).not.toContain('재성');
-    expect(comparison.perspectives[0]?.text).toContain('연주 천간 정인');
-    expect(comparison.perspectives[0]?.text).toContain('월주 천간 식신');
-    expect(comparison.perspectives[0]?.text).not.toContain('월주 천간 편재');
-    expect(comparison.perspectives.every(item =>
-      !item.text.includes('결혼 시기가 확정') && !item.text.includes('궁합 점수:'),
+    expect(focusedItems[0]?.summary).toContain('생각을 정리한 뒤');
+    expect(focusedItems[0]?.summary).toContain('대화');
+    expect(focusedItems[0]?.summary).toContain('인성');
+    expect(focusedItems[0]?.summary).toContain('식상');
+    expect(focusedItems[0]?.summary).not.toContain('관성');
+    expect(focusedItems[0]?.summary).not.toContain('재성');
+    expect(focusedItems[0]?.summary).toContain('연주 천간 정인');
+    expect(focusedItems[0]?.summary).toContain('월주 천간 식신');
+    expect(focusedItems[0]?.summary).not.toContain('월주 천간 편재');
+    expect(focusedItems.every(item =>
+      !item.summary?.includes('결혼 시기가 확정') &&
+      !item.summary?.includes('궁합 점수:'),
     )).toBe(true);
   });
 
