@@ -653,6 +653,137 @@ function r070FamilyBranchClashPillarObservations(
   });
 }
 
+/**
+ * A three-layer fact comparison. Shared coordinates do not make a sourced
+ * family outcome, and reuse of one calculation is not new corroboration.
+ */
+export interface R070FamilyPillarStarClashOverlap {
+  requestedScope: FamilyResearchScope;
+  sourceLayerIds: readonly [string, string, 'CONFIGURATION-OUTCOME'];
+  sourceSurfaces: readonly [string, string, '刑沖破害'];
+  pillarSlot: PillarSlot;
+  pillarFactPath: string;
+  visibleT5FactPath: 'derivedFacts.tenGods';
+  structuralFactPath: 'derivedFacts.structuralRelations';
+  observedT5PositionsInPillar: FamilyTenGodSourceObservation['observedPositions'];
+  unresolvedT5FactPathsInPillar: readonly string[];
+  participatingClashes: readonly R070BranchClashFactReference[];
+  outsideClashRelationIds: readonly string[];
+  clashObservationState: R070FamilyBranchClashPillarObservation['state'];
+  factOverlapState:
+    | 'VISIBLE_T5_AND_BRANCH_CLASH_COLOCATED'
+    | 'VISIBLE_T5_WITHOUT_REFERENCE_BRANCH_CLASH'
+    | 'REFERENCE_BRANCH_CLASH_WITHOUT_VISIBLE_T5'
+    | 'NO_VISIBLE_T5_OR_REFERENCE_BRANCH_CLASH'
+    | 'INCOMPLETE_FACT_INPUTS';
+  missingPrerequisites: readonly string[];
+  crossLayerMethodReconciled: false;
+  configurationEffectAuthorized: false;
+  independentFamilyEvidenceWeightAssigned: false;
+  independentlyAdmittedFamilyClaims: 0;
+  familyT8Admitted: false;
+}
+
+/** One exact Canonical fact may be referenced by several historical phrases. */
+export interface R070FamilyTripleLayerFactReuse {
+  uniqueVisibleT5FactPaths: readonly string[];
+  repeatedVisibleT5FactPaths: readonly string[];
+  uniqueBranchClashRelationIds: readonly string[];
+  repeatedBranchClashRelationIds: readonly string[];
+  distinctHistoricalSourceCountIsEvidenceWeight: false;
+  independentlyAdmittedFamilyClaims: 0;
+}
+
+function r070FamilyTripleLayerFactReuse(
+  comparisons: readonly R070FamilyPillarStarClashOverlap[],
+): R070FamilyTripleLayerFactReuse {
+  const t5References = comparisons.flatMap(comparison =>
+    comparison.observedT5PositionsInPillar.map(position => position.path));
+  const clashReferences = comparisons.flatMap(comparison =>
+    comparison.participatingClashes.map(clash => clash.relationId));
+  const uniqueVisibleT5FactPaths = [...new Set(t5References)];
+  const uniqueBranchClashRelationIds = [...new Set(clashReferences)];
+  return {
+    uniqueVisibleT5FactPaths,
+    repeatedVisibleT5FactPaths: uniqueVisibleT5FactPaths.filter(path =>
+      t5References.filter(reference => reference === path).length > 1),
+    uniqueBranchClashRelationIds,
+    repeatedBranchClashRelationIds: uniqueBranchClashRelationIds.filter(id =>
+      clashReferences.filter(reference => reference === id).length > 1),
+    distinctHistoricalSourceCountIsEvidenceWeight: false,
+    independentlyAdmittedFamilyClaims: 0,
+  };
+}
+
+function r070FamilyPillarStarClashOverlaps(
+  scope: FamilyResearchScope,
+  crossLayerComparisons: readonly FamilyCrossLayerMethodComparison[],
+  pillarClashes: readonly R070FamilyBranchClashPillarObservation[],
+): readonly R070FamilyPillarStarClashOverlap[] {
+  return crossLayerComparisons.map(comparison => {
+    const contrast = comparison.starPillarPositionContrast;
+    const match = pillarClashes.find(candidate =>
+      candidate.pillarSourceLayerId === comparison.sourceLayerIds[0] &&
+      candidate.pillarSourceSurface === comparison.sourceSurfaces[0] &&
+      candidate.referencePillarSlot === contrast.pillarSlot);
+    if (match === undefined) {
+      throw new TypeError('R070 triple-layer input must match its exact pillar source.');
+    }
+    const incomplete = contrast.unresolvedReferencedPillarPaths.length > 0 ||
+      match.state === 'REFERENCED_PILLAR_UNRESOLVED' ||
+      match.state === 'STRUCTURAL_CLASH_CANDIDATES_UNRESOLVED';
+    const hasT5 = contrast.inReferencedPillar.length > 0;
+    const hasClash = match.participatingClashes.length > 0;
+    const factOverlapState = incomplete
+      ? 'INCOMPLETE_FACT_INPUTS' as const
+      : hasT5 && hasClash
+        ? 'VISIBLE_T5_AND_BRANCH_CLASH_COLOCATED' as const
+        : hasT5
+          ? 'VISIBLE_T5_WITHOUT_REFERENCE_BRANCH_CLASH' as const
+          : hasClash
+            ? 'REFERENCE_BRANCH_CLASH_WITHOUT_VISIBLE_T5' as const
+            : 'NO_VISIBLE_T5_OR_REFERENCE_BRANCH_CLASH' as const;
+    return {
+      requestedScope: scope,
+      sourceLayerIds: [
+        comparison.sourceLayerIds[0],
+        comparison.sourceLayerIds[1],
+        match.sourceLayerId,
+      ] as const,
+      sourceSurfaces: [
+        comparison.sourceSurfaces[0],
+        comparison.sourceSurfaces[1],
+        match.sourceSurface,
+      ] as const,
+      pillarSlot: contrast.pillarSlot,
+      pillarFactPath: comparison.pillarObservation.factPath,
+      visibleT5FactPath: 'derivedFacts.tenGods' as const,
+      structuralFactPath: 'derivedFacts.structuralRelations' as const,
+      observedT5PositionsInPillar: contrast.inReferencedPillar,
+      unresolvedT5FactPathsInPillar: contrast.unresolvedReferencedPillarPaths,
+      participatingClashes: match.participatingClashes,
+      outsideClashRelationIds: match.outsideClashes.map(item => item.relationId),
+      clashObservationState: match.state,
+      factOverlapState,
+      missingPrerequisites: [
+        'FAMILY_METHOD_SELECTION',
+        'PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION',
+        'CONFIGURATION_OUTCOME_SETTLEMENT',
+        'R070_PILLAR_STAR_CLASH_TRIPLE_SYNTHESIS_NOT_SOURCED',
+        'R070_SHARED_CALCULATION_FACT_IS_NOT_MULTIPLE_FAMILY_CLAIMS',
+        ...(incomplete ? ['R070_TRIPLE_LAYER_CANONICAL_INPUTS_PARTIAL'] : []),
+        ...comparison.missingPrerequisites,
+        ...match.missingPrerequisites,
+      ],
+      crossLayerMethodReconciled: false as const,
+      configurationEffectAuthorized: false as const,
+      independentFamilyEvidenceWeightAssigned: false as const,
+      independentlyAdmittedFamilyClaims: 0 as const,
+      familyT8Admitted: false as const,
+    };
+  });
+}
+
 export interface FamilySourceScopeHandoff {
   version: typeof FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION;
   owner: 'R070';
@@ -671,6 +802,10 @@ export interface FamilySourceScopeHandoff {
   unassignedConfigurationInputs: readonly R070UnassignedConfigurationInput[];
   /** Existing branch_clash participants vs exact R070 parent/child pillar positions. */
   branchClashPillarObservations: readonly R070FamilyBranchClashPillarObservation[];
+  /** Three original source layers at one Canonical pillar, never a combined T8. */
+  pillarStarClashOverlaps: readonly R070FamilyPillarStarClashOverlap[];
+  /** Distinct calculation facts cannot be multiplied by repeated source wording. */
+  tripleLayerFactReuse: R070FamilyTripleLayerFactReuse;
   missingPrerequisites: readonly string[];
   interpretationDisposition: 'INCONCLUSIVE';
   familyT8Admitted: false;
@@ -995,6 +1130,10 @@ export function evaluateFamilySourceScopeV1(
     });
   const branchClashPillarObservations =
     r070FamilyBranchClashPillarObservations(snapshot, scope, methodCandidates);
+  const pillarStarClashOverlaps = r070FamilyPillarStarClashOverlaps(
+    scope, crossLayerMethodComparisons, branchClashPillarObservations,
+  );
+  const tripleLayerFactReuse = r070FamilyTripleLayerFactReuse(pillarStarClashOverlaps);
   const unassignedConfigurationInputs = r070UnassignedConfigurationInputs(snapshot);
   const missingPrerequisites = [
     ...R070_EXECUTION_GAPS,
@@ -1002,6 +1141,7 @@ export function evaluateFamilySourceScopeV1(
       ...methodCandidates.flatMap(candidate => candidate.missingPrerequisites),
       ...crossLayerMethodComparisons.flatMap(comparison => comparison.missingPrerequisites),
       ...branchClashPillarObservations.flatMap(item => item.missingPrerequisites),
+      ...pillarStarClashOverlaps.flatMap(item => item.missingPrerequisites),
       ...unassignedConfigurationInputs.flatMap(item => item.missingPrerequisites),
     ]),
   ];
@@ -1013,7 +1153,8 @@ export function evaluateFamilySourceScopeV1(
     methodCandidates, methodCoexistences, crossLayerMethodComparisons,
     excludedSiblingSourceSurfaces: excludedSiblingSources(scope),
     unassignedConfigurationInputs,
-    branchClashPillarObservations, missingPrerequisites,
+    branchClashPillarObservations, pillarStarClashOverlaps,
+    tripleLayerFactReuse, missingPrerequisites,
     interpretationDisposition: 'INCONCLUSIVE',
     familyT8Admitted: false, researchOnly: true,
     mayGrantOfficialAuthority: false, mayMarkMenuAvailable: false,
