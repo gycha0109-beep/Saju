@@ -66,10 +66,10 @@ class ScreenElement {
   }
 }
 
-function openProductScreen(reply: Record<string, unknown>) {
+function openProductScreen(reply: Record<string, unknown>, failedReadingText?: string) {
   const elements = new Map<string, ScreenElement>();
   for (const id of [
-    'reading-form', 'result', 'submit', 'five-domain-submit',
+    'reading-form', 'result', 'submit', 'five-domain-submit', 'period-submit',
     'reading-detail', 'calendar', 'birth-date', 'birth-time',
     'time-unknown', 'leap-field', 'leap-month', 'sex',
     'reading-text', 'question-field', 'question-text',
@@ -103,8 +103,10 @@ function openProductScreen(reply: Record<string, unknown>) {
       },
     },
     fetch: async (url: string, init: { body: string }) => {
-      requests.push({ url, body: JSON.parse(init.body) as Record<string, unknown> });
-      return { ok: true, json: async () => reply };
+      const body = JSON.parse(init.body) as Record<string, unknown>;
+      requests.push({ url, body });
+      const reading = body.reading as { text?: string } | undefined;
+      return { ok: reading?.text !== failedReadingText, json: async () => reply };
     },
   });
   return { get, requests };
@@ -189,4 +191,42 @@ describe('actual customer question form', () => {
       text: '재물운', outputPreferences: { preferredDetail: 'detailed' },
     });
   });
+  it('requests annual and monthly separately and keeps a successful period visible when the other fails', async () => {
+    expect(PRODUCT_HOST_PAGE).toContain('id="period-submit"');
+    const screen = openProductScreen({
+      state: 'delivered',
+      messageCode: 'READING_DELIVERED',
+      reading: {
+        sections: [{
+          title: '확인된 기간별 해석',
+          state: 'complete',
+          blocks: [{ type: 'paragraph', text: '허용된 풀이 원문입니다.' }],
+        }],
+      },
+    }, '이번 달 운세');
+
+    screen.get('birth-time').value = '08:30';
+    await screen.get('period-submit').emit('click');
+    expect(screen.requests).toHaveLength(2);
+    expect(screen.requests.map((entry) => entry.url)).toEqual([
+      '/api/readings', '/api/readings',
+    ]);
+    expect(screen.requests.map((entry) => entry.body.reading)).toEqual([
+      { text: '올해 운세', outputPreferences: { preferredDetail: 'detailed' } },
+      { text: '이번 달 운세', outputPreferences: { preferredDetail: 'detailed' } },
+    ]);
+    for (const request of screen.requests) {
+      expect(request.body.birth).toEqual({
+        calendarType: 'solar', date: '1998-05-21', time: '08:30', sex: 'female',
+      });
+    }
+    const rendered = screen.get('result').textContent;
+    expect(rendered).toContain('올해의 흐름');
+    expect(rendered).toContain('이번 달의 흐름');
+    expect(rendered).toContain('허용된 풀이 원문입니다.');
+    expect(rendered).toContain('이 기간의 풀이를 불러오지 못했습니다.');
+    expect(screen.get('period-submit').disabled).toBe(false);
+    expect(screen.get('submit').disabled).toBe(false);
+  });
+
 });
