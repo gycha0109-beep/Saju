@@ -898,12 +898,14 @@ export function evaluateFamilySourceScopeV1(
     });
   const branchClashPillarObservations =
     r070FamilyBranchClashPillarObservations(snapshot, scope, methodCandidates);
+  const unassignedConfigurationInputs = r070UnassignedConfigurationInputs(snapshot);
   const missingPrerequisites = [
     ...R070_EXECUTION_GAPS,
     ...new Set([
       ...methodCandidates.flatMap(candidate => candidate.missingPrerequisites),
       ...crossLayerMethodComparisons.flatMap(comparison => comparison.missingPrerequisites),
       ...branchClashPillarObservations.flatMap(item => item.missingPrerequisites),
+      ...unassignedConfigurationInputs.flatMap(item => item.missingPrerequisites),
     ]),
   ];
   return {
@@ -913,7 +915,7 @@ export function evaluateFamilySourceScopeV1(
     historicalSex: snapshot.input.sexForTraditionalCalculation ?? 'unspecified',
     methodCandidates, methodCoexistences, crossLayerMethodComparisons,
     excludedSiblingSourceSurfaces: excludedSiblingSources(scope),
-    unassignedConfigurationInputs: r070UnassignedConfigurationInputs(snapshot),
+    unassignedConfigurationInputs,
     branchClashPillarObservations, missingPrerequisites,
     interpretationDisposition: 'INCONCLUSIVE',
     familyT8Admitted: false, researchOnly: true,
