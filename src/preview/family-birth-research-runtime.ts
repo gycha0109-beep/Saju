@@ -1,5 +1,10 @@
 import type { BirthInput } from '../contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
+import { runInterpretation } from '../interpretation/interpretation-engine.js';
+import { createGeneralNatalMultifactorRegistry } from
+  '../research/general-natal-multifactor-candidate.js';
+import { buildGeneralNatalMultifactorReport } from './general-natal-multifactor-report.js';
+
 import {
   buildFamilyCanonicalObservationPreview,
   renderFamilyCanonicalObservationHtml,
@@ -85,5 +90,138 @@ export function buildFamilyBirthResearchReading(
     maySell: false,
     report,
     html: renderFamilyCanonicalObservationHtml(report),
+  };
+}
+
+export const FAMILY_MEMBER_NATAL_RESEARCH_VERSION =
+  'myeongha-family-member-independent-natal-research-v1' as const;
+
+/**
+ * Family scope is stated by the caller, not inferred from either person's chart.
+ * Permission must be enforced by the host; this explicit signal never replaces it.
+ */
+export interface FamilyMemberBirthResearchRequest extends FamilyBirthResearchRequest {
+  subjectPersonRef: string;
+  memberPersonRef: string;
+  memberBirthUseAuthorized: true;
+}
+
+export interface FamilyMemberBirthResearchReading {
+  version: typeof FAMILY_MEMBER_NATAL_RESEARCH_VERSION;
+  lifecycle: 'internal_research_only';
+  scope: FamilyObservationScope;
+  subject: FamilyBirthResearchReading;
+  member: {
+    personRef: string;
+    snapshotId: string;
+    calculationHash: string;
+    coverage: 'bounded_natal_t8_research' | 'insufficient_evidence';
+    introduction: string;
+    sections: readonly {
+      headline: string;
+      paragraph: string;
+      sourceIds: readonly string[];
+      factPaths: readonly string[];
+    }[];
+  };
+  familyMeaningStatus: 'family_t8_source_authority_not_established';
+  mayInferFamilyDynamics: false;
+  mayGrantOfficialAuthority: false;
+  mayPublish: false;
+  mayPersist: false;
+  maySell: false;
+  html: string;
+}
+
+function familyEscape(value: string): string {
+  return value.replace(/[&<>"']/gu, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[c]!);
+}
+
+/**
+ * Separate person-bound General natal T8 research and factual family scope.
+ * Neither chart's contents assert how parent and child relate to each other.
+ * This does not grant permission to process a third party's birth data.
+ */
+export function buildFamilyMemberBirthResearchReading(
+  subjectBirth: BirthInput,
+  memberBirth: BirthInput,
+  request: FamilyMemberBirthResearchRequest,
+): FamilyMemberBirthResearchReading {
+  const ownerRef = request.subjectPersonRef;
+  const memberRef = request.memberPersonRef;
+  if (typeof ownerRef !== 'string' || typeof memberRef !== 'string' ||
+      !ownerRef.trim() || !memberRef.trim() ||
+      ownerRef.length > 200 || memberRef.length > 200 ||
+      ownerRef.trim() === memberRef.trim() ||
+      request.memberBirthUseAuthorized !== true) {
+    throw new TypeError('Family-member research requires separate persons and verified-use admission.');
+  }
+  // Reuse the existing precise-clock validation and R070 scope authority.
+  const subject = buildFamilyBirthResearchReading(subjectBirth, request);
+  const now = new Date(request.referenceDateTime);
+  const snapshot = calculateAuthorizedMyeonghwaProductionSnapshot(memberBirth, { now }).snapshot;
+  const registry = createGeneralNatalMultifactorRegistry();
+  const execution = runInterpretation(snapshot, registry, { now });
+  const report = buildGeneralNatalMultifactorReport(snapshot, execution, registry);
+  if (report.snapshotId !== snapshot.snapshotId ||
+      report.calculationHash !== snapshot.calculationHash ||
+      !report.researchOnly || report.usefulComplete ||
+      report.mayPublish || report.maySell ||
+      report.sections.some(section =>
+        section.sourceIds.length < 2 ||
+        section.upstreamClaimIds.length < 2 ||
+        section.observedFactPaths.length < 2)) {
+    throw new TypeError('Family-member original natal T8 evidence is not independently grounded.');
+  }
+  const sections = report.sections.map(section => ({
+    headline: section.headline,
+    paragraph: section.paragraph,
+    sourceIds: [...section.sourceIds],
+    factPaths: [...section.observedFactPaths],
+  }));
+  const member = {
+    personRef: memberRef.trim(),
+    snapshotId: snapshot.snapshotId,
+    calculationHash: snapshot.calculationHash,
+    coverage: sections.length > 0
+      ? 'bounded_natal_t8_research' as const
+      : 'insufficient_evidence' as const,
+    introduction: report.readingGuide?.paragraph ?? report.introduction,
+    sections,
+  };
+  const label = request.scope === 'parents' ? '부모' : '자녀';
+  const sectionHtml = '<section aria-label="별도 가족 구성원 본인의 원국 해석">' +
+    '<h2>입력된 ' + label + ' 본인의 원국 구조 · 내부 연구</h2>' +
+    '<p>다른 사람의 출생정보로 별도로 계산한 일반 원국 T8 연구 문장입니다. ' +
+    '부모·자녀 관계의 원인, 가족 구성원의 실제 성격 또는 미래를 판정하지 않습니다.</p>' +
+    '<p>' + familyEscape(member.introduction) + '</p>' +
+    (member.sections.length === 0
+      ? '<p>이 가족 구성원의 출처 있는 원국 구조 해석은 아직 부족합니다.</p>'
+      : member.sections.map(section =>
+        '<article><h3>' + familyEscape(section.headline) + '</h3><p>' +
+        familyEscape(section.paragraph) + '</p><details><summary>개인별 원국 근거</summary><p>' +
+        familyEscape(section.sourceIds.join(' · ')) + '</p><p>' +
+        familyEscape(section.factPaths.join(' · ')) +
+        '</p></details></article>').join('')) +
+    '</section>';
+  const closing = '</main></body></html>';
+  if (!subject.html.endsWith(closing)) {
+    throw new TypeError('Family research content must remain inside its internal-only page.');
+  }
+  return {
+    version: FAMILY_MEMBER_NATAL_RESEARCH_VERSION,
+    lifecycle: 'internal_research_only',
+    scope: request.scope,
+    subject,
+    member,
+    familyMeaningStatus: 'family_t8_source_authority_not_established',
+    mayInferFamilyDynamics: false,
+    mayGrantOfficialAuthority: false,
+    mayPublish: false,
+    mayPersist: false,
+    maySell: false,
+    html: subject.html.slice(0, -closing.length) + sectionHtml + closing,
   };
 }
