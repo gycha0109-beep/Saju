@@ -482,22 +482,22 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     };
   }
 
-  function renderLifeStagePreview(payload) {
-    result.replaceChildren();
-    result.classList.remove('hidden');
-    result.appendChild(el('h2', '삶의 단계 · 지금과 다음 구간'));
+  function renderLifeStagePreview(payload, target) {
+    target.replaceChildren();
+    target.classList.remove('hidden');
+    target.appendChild(el('h2', '삶의 단계 · 지금과 다음 구간'));
     if (payload?.state === 'preview_unavailable') {
-      result.appendChild(el('p', payload.explanation, 'notice'));
+      target.appendChild(el('p', payload.explanation, 'notice'));
       return;
     }
     const report = payload?.report;
     if (!report || !Array.isArray(report.periods) ||
         !Array.isArray(report.missing) || !Array.isArray(report.caveats)) {
-      result.appendChild(el('p', '삶의 단계 계산 정보를 확인할 수 없습니다.', 'notice error'));
+      target.appendChild(el('p', '삶의 단계 계산 정보를 확인할 수 없습니다.', 'notice error'));
       return;
     }
-    result.appendChild(el('p', payload.explanation, 'notice'));
-    result.appendChild(el('p',
+    target.appendChild(el('p', payload.explanation, 'notice'));
+    target.appendChild(el('p',
       '계산 기준: ' + report.referenceLocalDateTime + ' (Asia/Seoul)',
       'bundle-caption'));
     report.periods.forEach(period => {
@@ -508,10 +508,10 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       section.appendChild(el('p',
         '적용 시작: ' + period.startsAt + ' / 종료 시각(미포함): ' +
         period.endsAtExclusive, 'bundle-caption'));
-      result.appendChild(section);
+      target.appendChild(section);
     });
-    report.missing.forEach(text => result.appendChild(el('div', text, 'notice')));
-    report.caveats.forEach(text => result.appendChild(el('p', text, 'disclosure')));
+    report.missing.forEach(text => target.appendChild(el('div', text, 'notice')));
+    report.caveats.forEach(text => target.appendChild(el('p', text, 'disclosure')));
   }
 
   async function appendFamilyObservationPreview(scope, target = result, birth = currentBirth()) {
@@ -703,6 +703,38 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       card.appendChild(content);
       result.appendChild(card);
     });
+  }
+
+  function showLifeStageResults(official, preview) {
+    result.replaceChildren();
+    result.classList.remove('hidden');
+    result.appendChild(el('h2', '삶의 단계 · 기존 풀이와 계산된 대운'));
+    result.appendChild(el('p',
+      '삶의 시기별 해석은 기존 승인된 풀이 근거를 따르고, 대운 구간은 계산 사실만 따로 설명합니다. 대운의 전환을 미래 사건이나 성패로 해석하지 않습니다.',
+      'bundle-caption'));
+    const officialSection = el('section', undefined, 'domain-card');
+    officialSection.appendChild(el('h2', '나의 삶의 단계 원국풀이'));
+    const officialContent = el('div');
+    if (official.status === 'fulfilled') {
+      renderResponse(official.value, officialContent);
+    } else {
+      officialContent.appendChild(el('p',
+        '기존 삶의 단계 풀이를 불러오지 못했습니다. 미리보기의 계산 결과와 구분하여 안내합니다.',
+        'notice error'));
+    }
+    officialSection.appendChild(officialContent);
+    result.appendChild(officialSection);
+    const previewSection = el('section', undefined, 'domain-card');
+    const previewContent = el('div');
+    if (preview.status === 'fulfilled') {
+      renderLifeStagePreview(preview.value, previewContent);
+    } else {
+      previewContent.appendChild(el('p',
+        '내부 대운 구간 미리보기를 불러오지 못했습니다. 기존 풀이 결과는 유지합니다.',
+        'notice error'));
+    }
+    previewSection.appendChild(previewContent);
+    result.appendChild(previewSection);
   }
 
   function showSpouseRelationshipResults(outcomes) {
@@ -922,8 +954,12 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
         return;
       }
       if (readingText.value === '평생 흐름') {
-        const preview = await fetchLifeStagePreview();
-        renderLifeStagePreview(preview);
+        const birth = currentBirth();
+        const [official, preview] = await Promise.allSettled([
+          fetchIndividualDomain(birth, { requestText: '평생 흐름' }),
+          fetchLifeStagePreview()
+        ]);
+        showLifeStageResults(official, preview);
         return;
       }
       if (readingText.value === '궁합') {
