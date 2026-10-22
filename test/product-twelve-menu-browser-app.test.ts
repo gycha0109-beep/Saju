@@ -212,6 +212,7 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
               day: { label: '일주', status: 'resolved', value: '병인' },
               hour: { label: '시주', status: 'unavailable', value: '시주는 추측하지 않음' },
             },
+            calendar: [{ label: '달력 경계', value: '절입 계산 관찰', status: 'resolved' }],
             fiveElements: [{ label: '목', value: '1', status: 'resolved' }],
             tenGods: [{ label: '시주 십신', status: 'unavailable', value: '거짓 십신' }],
             luckPillars: [{ label: '현재 대운', status: 'ambiguous' }],
@@ -239,6 +240,8 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(output).toContain('시주: 미확정 · 확인할 수 없음');
     expect(output).not.toContain('시주는 추측하지 않음');
     expect(output).not.toContain('거짓 십신');
+    expect(output).toContain('달력·절기 계산 정보');
+    expect(output).toContain('달력 경계: 절입 계산 관찰');
     expect(output).toContain('오행 계산 정보');
     expect(output).toContain('목: 1');
     expect(output).toContain('대운 계산 정보');
