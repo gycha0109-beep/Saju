@@ -128,6 +128,15 @@ describe('Reading locale separation in existing product host', () => {
     });
     expect(implicit.request).not.toHaveProperty('readingLocale');
     expect(implicit.request?.intent).toEqual(normalized.request?.intent);
+
+    const foreign = normalizeConsumerReadingRequest({
+      requestId: 'direct-reading-service-foreign-locale',
+      text: '재물운',
+      readingLocale: 'ja-JP',
+    });
+    expect(foreign.state).toBe('invalid');
+    expect(foreign.request).toBeUndefined();
+    expect(foreign.reasonCodes).toContain('READING_LOCALE_NOT_AVAILABLE');
   });
 
   it('returns an explicit 400 response for unsupported reading language over the existing HTTP route', async () => {
