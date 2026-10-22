@@ -27,6 +27,23 @@ export interface GeneralNatalMultifactorSection {
   observedPositions: readonly string[];
   observedFactPaths: readonly string[];
 }
+export interface GeneralNatalSourceBoundReadingGuide {
+  title: string;
+  /** Concise Korean mainline derived strictly from selected same-chart T8 claims. */
+  paragraph: string;
+  sourceClaimType: string;
+  /** Distinct independently grounded supports, not repeated observations. */
+  supporting: readonly {
+    claimType: string;
+    headline: string;
+    distinctObservedPositions: readonly string[];
+    distinctObservedFactPaths: readonly string[];
+  }[];
+  /** Existing selected research rule/source references, not official T8 authority. */
+  sourceIds: readonly string[];
+  ruleIds: readonly string[];
+}
+
 export interface GeneralNatalMultifactorReport {
   snapshotId: string;
   calculationHash: string;
@@ -35,6 +52,7 @@ export interface GeneralNatalMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly GeneralNatalMultifactorSection[];
+  readingGuide?: GeneralNatalSourceBoundReadingGuide;
   missing: readonly string[];
   limitations: readonly string[];
   researchOnly: true;
@@ -188,6 +206,87 @@ function toSection(
     observedFactPaths: locations.map(x => x.factPath),
   };
 }
+/**
+ * Convert the exact T5→T8 General research observations already selected
+ * into a readable Korean through-line. A new supporting axis only counts when
+ * it brings a genuinely new observed Canonical fact path, and a tension-only
+ * finding is never promoted into a complete whole-chart conclusion.
+ */
+function generalSourceBoundReadingGuide(
+  core: GeneralNatalMultifactorSection | undefined,
+  selected: readonly GeneralNatalMultifactorSection[],
+): GeneralNatalSourceBoundReadingGuide | undefined {
+  if (selected.length === 0) return undefined;
+  if (core === undefined) {
+    const tension = selected[0]!;
+    guard(tension.axis === 'tension' && tension.sourceIds.length > 0 &&
+      tension.upstreamClaimIds.length >= 2,
+      'no eligible source-owned partial tension for General reading');
+    return {
+      title: '전체 사주 · 현재 확인된 부분 관점',
+      paragraph: '이번 명식에서 확인된 부분 근거는 "' + tension.headline +
+        '"입니다. ' + tension.paragraph +
+        ' 다만 이 구조적 긴장은 원국 전체를 대표하는 중심 결론이나 실제 갈등을 판정하는 근거가 아닙니다.',
+      sourceClaimType: tension.claimType,
+      supporting: [],
+      sourceIds: [...tension.sourceIds],
+      ruleIds: [tension.ruleId],
+    };
+  }
+  guard(selected[0] === core && core.axis !== 'tension' &&
+    core.observedFactPaths.length >= 2 &&
+    core.observedFactPaths.length === core.observedPositions.length &&
+    core.sourceIds.length > 0 && core.upstreamClaimIds.length >= 2,
+    'the whole-chart reading requires an actual selected source-bound T8 core');
+
+  const used = new Set(core.observedFactPaths);
+  const axes = new Set([core.axis]);
+  const support = selected.slice(1).map(section => {
+    guard(section.axis !== core.axis && !axes.has(section.axis) &&
+      section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
+      section.observedFactPaths.length === section.observedPositions.length,
+      'General support must come from a distinct selected T8 axis');
+    const distinctObservedFactPaths: string[] = [];
+    const distinctObservedPositions: string[] = [];
+    section.observedFactPaths.forEach((path, index) => {
+      if (used.has(path)) return;
+      distinctObservedFactPaths.push(path);
+      distinctObservedPositions.push(section.observedPositions[index]!);
+      used.add(path);
+    });
+    guard(distinctObservedFactPaths.length > 0,
+      'General supporting T8 must add a genuinely new observed chart fact');
+    axes.add(section.axis);
+    return {
+      claimType: section.claimType,
+      headline: section.headline,
+      distinctObservedPositions,
+      distinctObservedFactPaths,
+    };
+  });
+
+  const additions = support.map((item, index) =>
+    '별도로 확인된 ' + (index + 1) + '번째 관점은 "' +
+    item.headline + '"입니다. 이 관점은 중심 근거와 중복되지 않는 ' +
+    item.distinctObservedPositions.join(' · ') +
+    ' 계산 위치로 보강됩니다.').join(' ');
+  const incomplete = support.length < 2
+    ? ' 아직 중심 근거와 구별되는 보조 구조 ' + (2 - support.length) +
+      '개가 부족하여 전체 원국의 확정된 종합 결론으로 사용하지 않습니다.'
+    : ' 세 축은 서로 다른 계산 위치를 사용하는 연구용 구조적 독해이며 개인의 성격이나 장래 사건을 확정하지 않습니다.';
+  const intro = '이번 명식의 중심 구조는 "' + core.headline +
+    '"입니다. ' + core.paragraph + ' ' +
+    additions + incomplete;
+  return {
+    title: '전체 사주 · 실제 명식의 중심 구조와 독립 보조 관점',
+    paragraph: intro,
+    sourceClaimType: core.claimType,
+    supporting: support,
+    sourceIds: [...new Set(selected.flatMap(section => section.sourceIds))],
+    ruleIds: [...new Set(selected.map(section => section.ruleId))],
+  };
+}
+
 export function buildGeneralNatalMultifactorReport(
   snapshot: CanonicalSajuSnapshot,
   execution: InterpretationExecutionResult,
@@ -254,6 +353,7 @@ export function buildGeneralNatalMultifactorReport(
   const state: Status = snapshot.completeness.birthTimeKnown && chosen.length === 3
     ? 'complete' : result.length ? 'partial' : 'insufficient';
   const sections: readonly GeneralNatalMultifactorSection[] = core ? chosen : partialTension;
+  const readingGuide = generalSourceBoundReadingGuide(core, sections);
   if(!snapshot.completeness.birthTimeKnown) {
     missing.unshift('출생시각 미상: 이 계산 정책에서 십신(T5) 전체가 미확정이므로 원국 전체의 다중 근거 T8 해석은 보류합니다.');
   }
@@ -264,8 +364,10 @@ export function buildGeneralNatalMultifactorReport(
     state,
     title: '나의 원국 전체를 읽는 구조적 출발점',
     introduction: '서로 다른 십신 관계가 같은 실제 명식에서 어떤 구조적 주제를 만드는지 연결했습니다. 전통적인 읽기의 연구 후보로, 실제 삶의 특징이나 운세 결과를 판단한 것은 아닙니다.' +
-      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
+      (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)) +
+      (readingGuide === undefined ? '' : ' ' + readingGuide.paragraph),
     sections,
+    ...(readingGuide === undefined ? {} : { readingGuide }),
     missing,
     limitations: [...LIMITATIONS, ...(state === 'complete' ? [] :
       ['서로 구별되는 근거가 아직 부족하여 전체 해석의 완성으로 표시하지 않습니다.'])],
