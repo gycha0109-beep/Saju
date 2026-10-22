@@ -212,6 +212,20 @@ describe('Product Reading Delivery Contract', () => {
     expect(delivery.constraints.mayRenderCoverageAsFortuneJudgment).toBe(false);
   });
 
+  it('gives different parent and child missing-evidence explanations without predicting relatives', async () => {
+    const parent = await execute('부모운', []);
+    const child = await execute('자녀운', []);
+    expect(parent.state).toBe('insufficient_evidence');
+    expect(child.state).toBe('insufficient_evidence');
+    expect(parent.coverage?.explanation).toContain('부모와의 관계');
+    expect(child.coverage?.explanation).toContain('자녀와의 관계');
+    expect(parent.coverage?.explanation).not.toBe(child.coverage?.explanation);
+    expect(JSON.stringify(parent)).not.toContain('FAMILY_PARENTS_DOMAIN_CLAIM_REQUIRED');
+    expect(JSON.stringify(child)).not.toContain('FAMILY_CHILDREN_DOMAIN_CLAIM_REQUIRED');
+    expect(parent.artifact).toBeUndefined();
+    expect(child.artifact).toBeUndefined();
+  });
+
   it('keeps delivery identity deterministic for the same governed execution result', async () => {
     const currentSnapshot = snapshot();
     const claims = [claim(currentSnapshot.snapshotId, 'family-parents-deterministic', 'T8', 'family', 'parents')];

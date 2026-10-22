@@ -137,6 +137,12 @@ function consumerMissingEvidenceLabel(requirement: string): string {
   if (requirement === 'NATAL_GENERAL_SYNTHESIS_CLAIM_REQUIRED') {
     return '명식의 여러 특징을 종합할 해석 근거';
   }
+  if (requirement === 'FAMILY_PARENTS_DOMAIN_CLAIM_REQUIRED') {
+    return '본인 명식에서 부모와의 관계를 해석할 개별 근거 (부모 본인의 운명 예측과 구분)';
+  }
+  if (requirement === 'FAMILY_CHILDREN_DOMAIN_CLAIM_REQUIRED') {
+    return '본인 명식에서 자녀와의 관계를 해석할 개별 근거 (자녀 본인의 운명 예측과 구분)';
+  }
   if (requirement === 'COMPATIBILITY_CLAIM_REQUIRED') {
     return '두 사람의 명식을 함께 해석할 근거';
   }
