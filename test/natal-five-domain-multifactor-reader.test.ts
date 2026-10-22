@@ -59,6 +59,12 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     const sections = reports(chart);
     const html = renderNatalFiveDomainMultifactorResearchHtml(chart, sections);
     expect(html).toBe(renderNatalFiveDomainMultifactorResearchHtml(chart, sections));
+    expect(sections.career.readingGuide).toBeDefined();
+    expect(html).toContain('aria-label="직업운 읽기 요약"');
+    expect(html).toContain(sections.career.readingGuide!.paragraph);
+    const careerCard = html.split('<h2 id="domain-career">')[1]!;
+    expect(careerCard.indexOf(sections.career.readingGuide!.title))
+      .toBeLessThan(careerCard.indexOf('명식 근거와 출처 확인'));
     expect(html).toContain('<html lang="ko">');
     expect(html).toContain('내부 연구용 미리보기 · 검토되지 않은 해석 · 출판 및 판매 불가');
     let prior = -1;
@@ -113,10 +119,11 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(original.career.sections.length).toBeGreaterThan(0);
     const first = original.career.sections[0]!;
     const gap = '다른 직업 해석 축을 뒷받침할 근거가 아직 부족합니다.';
+    const { readingGuide: _originalGuide, ...careerWithoutGuide } = original.career;
     const partial: NatalFiveDomainMultifactorReports = {
       ...original,
       career: {
-        ...original.career,
+        ...careerWithoutGuide,
         state: 'partial',
         sections: [first],
         missing: [gap],
@@ -173,6 +180,17 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         sections: ra.career.sections,
       },
     } as unknown as NatalFiveDomainMultifactorReports)).toThrow(/bounded source-qualified/);
+    expect(ra.career.readingGuide).toBeDefined();
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
+      ...ra,
+      career: {
+        ...ra.career,
+        readingGuide: {
+          ...ra.career.readingGuide!,
+          coreClaimType: 'FORGED_T8_CLAIM',
+        },
+      },
+    })).toThrow(/reading guide must be derived/u);
     const unknown = sample(3, 10, null);
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(unknown, ra)).toThrow();
   });
