@@ -760,6 +760,12 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
         expect(parentItem?.missingPrerequisites).toContain(
           'R070_HIDDEN_STEM_MEMBERSHIP_IS_NOT_HIDDEN_T5_CLASSIFICATION',
         );
+        expect(parent.missingPrerequisites).toContain(
+          'R070_HIDDEN_STEM_MEMBERSHIP_IS_NOT_HIDDEN_T5_CLASSIFICATION',
+        );
+        expect(children.missingPrerequisites).toContain(
+          'R070_HIDDEN_STEM_CONFIGURATION_METHOD_NOT_SOURCED',
+        );
         expect(parentItem?.missingPrerequisites).toContain(
           'R070_HIDDEN_STEM_STRENGTH_AND_PRIORITY_NOT_SETTLED',
         );
