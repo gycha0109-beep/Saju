@@ -1,4 +1,8 @@
 import type { ProductReadingInternals } from './product-reading-service.js';
+import type {
+  ProductReadingResponseBlock,
+  ProductReadingResponseReading,
+} from './product-reading-response.js';
 import { readingSectionForIntentV1 } from './consumer-reading-authority.js';
 
 export const TWELVE_MENU_ENGINE_READINESS_VERSION =
@@ -65,6 +69,40 @@ const LIMITS = Object.freeze({
   mayAuthorizeSelling: false as const,
 });
 
+/**
+ * Product-card readiness represents something the person can actually read,
+ * rather than a transport object, a disclosure, or a calculated fact table.
+ * Source-bound interpretation authority is still evaluated separately.
+ */
+function hasReadableInterpretiveBlock(block: ProductReadingResponseBlock): boolean {
+  switch (block.type) {
+    case 'paragraph':
+      return block.text.trim().length > 0;
+    case 'key_points':
+      return block.items.some(item => item.trim().length > 0);
+    case 'comparison':
+      return block.perspectives.some(item => item.text.trim().length > 0);
+    case 'ambiguity':
+      return block.summary.trim().length > 0 ||
+        block.scenarios.some(item => item.text.trim().length > 0);
+    case 'timeline':
+      return block.entries.some(item => item.text.trim().length > 0);
+    case 'fact_table':
+    case 'source_hint':
+      return false;
+  }
+}
+
+function hasReadableInterpretation(
+  reading: ProductReadingResponseReading | undefined,
+  requireComplete: boolean,
+): boolean {
+  return reading?.sections.some(section =>
+    section.state !== 'unavailable' &&
+    (!requireComplete || section.state === 'complete') &&
+    section.blocks.some(hasReadableInterpretiveBlock)) === true;
+}
+
 function officialEvidenceDelivered(internals: ProductReadingInternals, section: string): boolean {
   const execution = internals.execution;
   const composition = execution.preparation.composition;
@@ -73,9 +111,7 @@ function officialEvidenceDelivered(internals: ProductReadingInternals, section: 
     execution.state === 'completed' &&
     internals.response.state === 'delivered' &&
     execution.artifact !== undefined &&
-    internals.response.reading !== undefined &&
-    internals.response.reading.sections.some(section =>
-      section.state === 'complete' && section.blocks.length > 0) &&
+    hasReadableInterpretation(internals.response.reading, true) &&
     execution.preparation.normalization.request !== undefined &&
     readingSectionForIntentV1(execution.preparation.normalization.request.intent) === section &&
     execution.officialReadingPlan !== undefined &&
@@ -106,11 +142,11 @@ function sectionReadiness(
   }
   const observedReading =
     (responseState === 'delivered' || responseState === 'delivered_with_fallback') &&
-    internals.response.reading !== undefined;
-  const partialClaimEvidence =
-    responseState === 'partial_evidence' &&
-    (internals.execution.preparation.composition?.selection.selectedClaimIds.length ?? 0) > 0;
-  if (observedReading || partialClaimEvidence) {
+    hasReadableInterpretation(internals.response.reading, false);
+  // A selected Claim with no user-visible Korean section is NOT a delivered
+  // partial reading. The caller may still show the insufficient-evidence
+  // explanation, but must not advertise a readable interpretation.
+  if (observedReading) {
     return {
       readingSection: section, state: 'partial',
       reason: 'limited_reading', ...responseInfo,
