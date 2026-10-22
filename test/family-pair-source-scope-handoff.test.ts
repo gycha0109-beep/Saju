@@ -628,10 +628,24 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
       expect(menu.unsupportedReasons.every(reason =>
         reason.officialMenuCanBeEnabledFromThisReason === false &&
         !reason.sourceSurfaces.some(surface => excludedSurfaces.has(surface)))).toBe(true);
+      expect(menu.menuBlockingPrerequisites).toEqual([...new Set(
+        menu.unsupportedReasons.flatMap(item => item.missingPrerequisites),
+      )]);
+      expect(menu.unassignedConfigurationPrerequisites).toEqual([...new Set(
+        menu.unassignedConfigurationSources.flatMap(item => item.missingPrerequisites),
+      )]);
       expect(menu.missingPrerequisites).toEqual([...new Set([
-        ...menu.unsupportedReasons.flatMap(item => item.missingPrerequisites),
-        ...menu.unassignedConfigurationSources.flatMap(item => item.missingPrerequisites),
+        ...menu.menuBlockingPrerequisites,
+        ...menu.unassignedConfigurationPrerequisites,
       ])]);
+      expect(menu.menuBlockingPrerequisites)
+        .toContain('R070_FAMILY_T8_OFFICIAL_METHOD_NOT_ADMITTED');
+      expect(menu.unassignedConfigurationPrerequisites)
+        .not.toContain('R070_FAMILY_T8_OFFICIAL_METHOD_NOT_ADMITTED');
+      expect(menu.unassignedConfigurationPrerequisites)
+        .toContain('CONFIGURATION_OUTCOME_SETTLEMENT');
+      expect(menu.prerequisiteTrace.map(item => item.prerequisiteCode))
+        .toEqual(menu.menuBlockingPrerequisites);
       expect(report.missingPrerequisites).toEqual(
         expect.arrayContaining([...menu.missingPrerequisites]),
       );
@@ -682,6 +696,15 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
         expect(transfer.unassignedConfigurationSources)
           .toEqual(menu.unassignedConfigurationSources);
         expect(transfer.prerequisiteTrace).toEqual(menu.prerequisiteTrace);
+        expect(transfer.menuBlockingPrerequisites).toEqual(menu.menuBlockingPrerequisites);
+        expect(transfer.unassignedConfigurationPrerequisites)
+          .toEqual(menu.unassignedConfigurationPrerequisites);
+        expect(transfer.menuBlockingPrerequisites).toEqual([...new Set(
+          menu.unsupportedReasons.flatMap(reason => reason.missingPrerequisites),
+        )]);
+        expect(transfer.unassignedConfigurationPrerequisites).toEqual([...new Set(
+          menu.unassignedConfigurationSources.flatMap(reason => reason.missingPrerequisites),
+        )]);
         expect(transfer.canonicalInputAndConceptHolds.every(reason =>
           reason.category === 'CANONICAL_INPUT')).toBe(true);
         expect(transfer.sourceAndMethodHolds.every(reason =>
@@ -775,6 +798,10 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
           reason.missingPrerequisites))];
         expect(menu.prerequisiteTrace.map(entry => entry.prerequisiteCode))
           .toEqual(expectedCodes);
+        expect(menu.menuBlockingPrerequisites).toEqual(expectedCodes);
+        expect(menu.unassignedConfigurationPrerequisites).toEqual([...new Set(
+          menu.unassignedConfigurationSources.flatMap(source => source.missingPrerequisites),
+        )]);
         const excluded = new Set(menu.excludedHistoricalSources.map(
           source => source.sourceSurface));
         for (const entry of menu.prerequisiteTrace) {
