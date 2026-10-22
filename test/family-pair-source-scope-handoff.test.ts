@@ -160,14 +160,65 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
           ? 'branch_clash_only' : 'none');
         expect(item.missingPrerequisites)
           .toContain('XING_PO_HAI_AND_CONFIGURATION_INTERACTION_NOT_SETTLED');
+      } else if (item.sourceSurface === '官煞混雜' || item.sourceSurface === '財印') {
+        const t5 = snapshot.derivedFacts.tenGods;
+        expect(item.canonicalObservationCoverage).toBe(t5.status === 'resolved'
+          ? 'visible_t5_search_categories_only' : 'none');
+        expect(item.canonicalFactPath).toBe(t5.status === 'resolved'
+          ? 'derivedFacts.tenGods' : undefined);
+        expect(item.observedBranchClashIds).toEqual([]);
+        expect(item.tenGodSearchTerms?.map(term => term.sourceTerm))
+          .toEqual(item.sourceSurface === '官煞混雜'
+            ? ['官', '煞'] : ['財', '印']);
+        expect(item.tenGodSearchTerms).toHaveLength(2);
+        for (const term of item.tenGodSearchTerms ?? []) {
+          expect(term.configurationMeaningAuthorized).toBe(false);
+          for (const position of term.observedPositions) {
+            expect(position.path).toBe(
+              'derivedFacts.tenGods.' + position.slot + '.' + position.channel,
+            );
+            expect(term.canonicalSearchCategories).toContain(position.value);
+            if (t5.status !== 'resolved') throw new TypeError('Missing raw chart fact');
+            const raw = t5.value[position.slot][position.channel];
+            expect(raw?.status).toBe('resolved');
+            if (raw?.status === 'resolved') expect(position.value).toBe(raw.value);
+          }
+        }
+        expect(item.missingPrerequisites)
+          .toContain('R070_TEN_GOD_COEXISTENCE_METHOD_NOT_ESTABLISHED');
+        expect(item.missingPrerequisites).toContain('HIDDEN_VS_VISIBLE_STAR_HANDLING');
       } else {
         expect(item.canonicalObservationCoverage).toBe('none');
         expect(item.observedBranchClashIds).toEqual([]);
+        expect(item.tenGodSearchTerms).toBeUndefined();
         expect(item.canonicalFactPath).toBeUndefined();
       }
     }
     expect(parent.familyT8Admitted).toBe(false);
     expect(children.familyT8Admitted).toBe(false);
+  });
+
+  it('keeps unassigned R070 官煞混雜 and 財印 as partially observed T5 search terms with unknown hour', () => {
+    const report = evaluateFamilySourceScopeV1(
+      chart({ timeKnown: false, sex: 'female' }), 'children',
+    );
+    for (const surface of ['官煞混雜', '財印'] as const) {
+      const item = report.unassignedConfigurationInputs.find(
+        candidate => candidate.sourceSurface === surface,
+      );
+      expect(item?.disposition).toBe('INCONCLUSIVE');
+      expect(item?.familyScopeResolved).toBe(false);
+      expect(item?.familyOutcomeAuthorized).toBe(false);
+      expect(item?.tenGodSearchTerms?.map(term => term.sourceTerm)).toEqual(
+        surface === '官煞混雜' ? ['官', '煞'] : ['財', '印'],
+      );
+      for (const term of item?.tenGodSearchTerms ?? []) {
+        expect(term.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+        expect(term.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.branch');
+      }
+      expect(item?.missingPrerequisites).toContain('CANONICAL_T5_CONFIGURATION_GROUPS_PARTIAL');
+    }
+    expect(report.familyT8Admitted).toBe(false);
   });
 
   it('records literal parent and child T5 occurrences with paths, without turning them into family outcomes', () => {
