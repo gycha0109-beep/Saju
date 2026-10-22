@@ -182,6 +182,85 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
       .toContain('공식 판매 승인과는 무관');
   });
 
+  it('shows the actual four-pillar calculation beside Korean text and keeps missing birth hour unresolved', async () => {
+    const app = mountBrowser(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        state: 'delivered', messageCode: 'READING_DELIVERED',
+        reading: {
+          calculationSummary: {
+            pillars: {
+              year: { label: '연주', status: 'resolved', value: '갑자' },
+              month: { label: '월주', status: 'resolved', value: '을축' },
+              day: { label: '일주', status: 'resolved', value: '병인' },
+              hour: { label: '시주', status: 'unavailable', value: '시주는 추측하지 않음' },
+            },
+            fiveElements: [{ label: '목', value: '1', status: 'resolved' }],
+            tenGods: [{ label: '시주 십신', status: 'unavailable', value: '거짓 십신' }],
+            luckPillars: [{ label: '현재 대운', status: 'ambiguous' }],
+            ambiguity: [{ title: '시각 미상', summary: '정확한 시주 계산을 위해 출생시각이 필요합니다.' }],
+          },
+          sections: [{
+            title: '한글 해석',
+            state: 'complete',
+            blocks: [{ type: 'paragraph', text: '확정된 연월일 근거만 표시합니다.' }],
+          }],
+          disclosures: [],
+        },
+      }),
+    }));
+    app.get('time-unknown').checked = true;
+    await app.get('time-unknown').dispatch('change');
+    await app.get('twelve-open-general').dispatch('click');
+    expect(app.calls[0]?.body.birth.time).toBeNull();
+    expect(app.get('twelve-state-general').dataset.state).toBe('partial');
+    const output = app.get('twelve-reading-general').collectText();
+    expect(output).toContain('내 명식의 계산 사실');
+    expect(output).toContain('연주: 갑자 · 계산 확정');
+    expect(output).toContain('월주: 을축 · 계산 확정');
+    expect(output).toContain('일주: 병인 · 계산 확정');
+    expect(output).toContain('시주: 미확정 · 확인할 수 없음');
+    expect(output).not.toContain('시주는 추측하지 않음');
+    expect(output).not.toContain('거짓 십신');
+    expect(output).toContain('오행 계산 정보');
+    expect(output).toContain('목: 1');
+    expect(output).toContain('대운 계산 정보');
+    expect(output).toContain('현재 대운: 미확정');
+    expect(output).toContain('출생시각이 필요합니다');
+    expect(output).toContain('확정된 연월일 근거만 표시합니다');
+    expect(output).toContain('기둥의 존재만으로');
+  });
+
+  it('shows factual chart evidence without mislabeling unsupported content as a completed reading', async () => {
+    const app = mountBrowser(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        state: 'insufficient_evidence',
+        messageCode: 'READING_EVIDENCE_INSUFFICIENT',
+        reading: {
+          calculationSummary: {
+            pillars: {
+              year: { status: 'resolved', value: '정유' },
+              month: { status: 'resolved', value: '기해' },
+              day: { status: 'ambiguous', value: '가짜 일주 확정' },
+              hour: { status: 'unavailable' },
+            },
+          },
+          sections: [],
+          disclosures: [],
+        },
+      }),
+    }));
+    await app.get('twelve-open-relationship').dispatch('click');
+    const output = app.get('twelve-reading-relationship').collectText();
+    expect(app.get('twelve-state-relationship').dataset.state).toBe('unavailable');
+    expect(output).toContain('연주: 정유');
+    expect(output).toContain('월주: 기해');
+    expect(output).toContain('일주: 미확정');
+    expect(output).not.toContain('가짜 일주 확정');
+    expect(output).toContain('해석하기 어렵습니다');
+  });
+
   it('routes parents and children as two distinct requested scopes and resets old results when changed', async () => {
     const app = mountBrowser();
     await app.get('twelve-open-family').dispatch('click');
