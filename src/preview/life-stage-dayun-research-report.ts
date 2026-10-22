@@ -20,6 +20,20 @@ export interface LifeStageDayunFactPeriod {
   text: string;
 }
 
+/** Same-chart natal T8 research context, never a timing or Daeyun Claim. */
+export interface LifeStageNatalStructureContext {
+  snapshotId: string;
+  calculationHash: string;
+  availability: 'bounded_natal_t8_research' | 'insufficient_evidence';
+  introduction: string;
+  sections: readonly {
+    title: string;
+    paragraph: string;
+    sourceIds: readonly string[];
+    factPaths: readonly string[];
+  }[];
+}
+
 export interface LifeStageDayunResearchReport {
   version: typeof LIFE_STAGE_DAYUN_RESEARCH_REPORT_VERSION;
   mode: 'internal_exploration';
@@ -180,8 +194,23 @@ function escapeHtml(value: string): string {
   })[c]!);
 }
 
-export function renderLifeStageDayunResearchHtml(report: LifeStageDayunResearchReport): string {
+export function renderLifeStageDayunResearchHtml(
+  report: LifeStageDayunResearchReport,
+  natalContext?: LifeStageNatalStructureContext,
+): string {
   const e = escapeHtml;
+  if (natalContext !== undefined &&
+      (natalContext.snapshotId !== report.snapshotId ||
+       natalContext.calculationHash !== report.calculationHash ||
+       natalContext.sections.some(section =>
+         section.title.trim().length === 0 ||
+         section.paragraph.trim().length === 0 ||
+         section.sourceIds.length < 2 || section.factPaths.length < 2) ||
+       (natalContext.availability === 'bounded_natal_t8_research'
+         ? natalContext.sections.length === 0
+         : natalContext.sections.length !== 0))) {
+    throw new TypeError('Life-stage natal context must be from the identical canonical chart and T8 sources.');
+  }
   const periods = report.periods.map(p =>
     '<section><h2>' + (p.kind === 'current' ? '지금의 계산 구간' : '다음 계산 구간') +
     '</h2><p>' + e(p.text) + '</p>' +
@@ -190,6 +219,19 @@ export function renderLifeStageDayunResearchHtml(report: LifeStageDayunResearchR
     e(p.startsAt) + ' — ' + e(p.endsAtExclusive) + ' (종료 시각 제외)</p><p>정책: ' +
     e(report.policyId) + ' · ' + e(report.policyHash) + '</p></details></section>',
   ).join('\n');
+  const natalHtml = natalContext === undefined ? '' :
+    '<section aria-label="같은 명식의 원국 구조 해석"><h2>지금의 대운과 별개인 원국 해석</h2>' +
+    '<p>아래 설명은 이 사람의 원국에 대한 기존 T8 연구 풀이입니다. ' +
+    '현재·다음 대운의 길흉이나 특정 시기 결과를 나타내지 않습니다.</p>' +
+    '<p>' + e(natalContext.introduction) + '</p>' +
+    (natalContext.sections.length === 0
+      ? '<p>같은 명식에 연결할 수 있는 출처 있는 원국 구조 해석이 부족합니다.</p>'
+      : natalContext.sections.map(item =>
+        '<article><h3>' + e(item.title) + '</h3><p>' + e(item.paragraph) + '</p>' +
+        '<details><summary>원국 해석 근거</summary><p>' +
+        e(item.sourceIds.join(' · ')) + '</p><p>' +
+        e(item.factPaths.join(' · ')) + '</p></details></article>',
+      ).join('')) + '</section>';
   return '<!doctype html><html lang="ko"><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width, initial-scale=1">' +
     '<title>' + e(report.headline) + ' · 내부 연구</title>' +
@@ -198,7 +240,7 @@ export function renderLifeStageDayunResearchHtml(report: LifeStageDayunResearchR
     'details{font-size:12px;overflow-wrap:anywhere}aside{background:#eee8de;padding:20px;border-radius:12px}</style>' +
     '</head><body><main><small>MYEONGHA · INTERNAL RESEARCH ONLY</small>' +
     '<h1>' + e(report.headline) + '</h1><p>조회 기준: ' +
-    e(report.referenceLocalDateTime) + ' KST</p>' +
+    e(report.referenceLocalDateTime) + ' KST</p>' + natalHtml +
     (report.transitionSummary === undefined ? '' :
       '<section aria-label="현재와 다음 대운의 계산 전환"><h2>지금과 다음 대운의 경계</h2><p>' +
       e(report.transitionSummary) + '</p></section>') + periods +
