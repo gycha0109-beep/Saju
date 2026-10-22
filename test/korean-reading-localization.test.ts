@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { calculateCanonicalSajuSnapshot } from '../src/calculation/calculation-engine.js';
+import type { CalculationPolicySnapshot } from '../src/contracts/calculation.js';
 import type { InterpretationClaim } from '../src/contracts/interpretation.js';
+import { runInterpretation } from '../src/interpretation/interpretation-engine.js';
+import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../src/llm/prompt-compiler.js';
+import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-support-pack.js';
+import { requestProductReading } from '../src/reading/product-reading-service.js';
 import type { ReadingArtifact } from '../src/contracts/reading.js';
 import {
   buildCanonicalReadingSemanticBundleV1,
@@ -13,6 +19,7 @@ import {
   createKoreanSourceBoundRendererV1,
   preserveExistingKoreanReadingResponseV1,
   renderKoreanSourceBoundOnDemandV1,
+  runExistingKoreanReadingLocalizedV1,
 } from '../src/reading/korean-reading-localization.js';
 import type { ProductReadingDeliveryResult } from '../src/reading/product-reading-delivery.js';
 import { buildProductReadingResponse } from '../src/reading/product-reading-response.js';
@@ -267,4 +274,75 @@ describe('Korean localization bridge (internal only)', () => {
       delivery, response,
     }, { readingLocale: 'vi-VN' })).toThrow(RangeError);
   });
+  it('runs the actual existing governed Korean service without changing its consumer response', async () => {
+    const policy: CalculationPolicySnapshot = {
+      policyId: 'myeonghwa/korean-localization-integration-test',
+      policyVersion: '1',
+      dayBoundary: 'midnight',
+      trueSolarTime: {
+        enabled: false,
+        longitudeSource: 'not-applicable',
+        applyEquationOfTime: false,
+        applyHistoricalDst: false,
+      },
+      timeZonePolicy: { source: 'service-default', timeZone: 'Asia/Seoul' },
+      unknownBirthTimePolicy: 'preserve-unknown-and-enumerate-boundaries',
+    };
+    const current = calculateCanonicalSajuSnapshot({
+      calendarType: 'solar',
+      date: { year: 2024, month: 3, day: 10 },
+      time: { known: true, hour: 12, minute: 0 },
+      sexForTraditionalCalculation: 'unspecified',
+    }, policy, { now: new Date('2026-08-24T00:00:00.000Z') });
+    const registry = createI7SeasonalSupportRegistry();
+    const base = runInterpretation(current, registry, {
+      now: new Date('2026-08-24T00:05:00.000Z'),
+    });
+    const boundedWealth: InterpretationClaim = {
+      ...claim(),
+      claimId: 'claim-wealth-existing-korean',
+      snapshotId: current.snapshotId,
+      taxonomy: { tier: 'T8', category: 'wealth', subcategory: 'friction' },
+      claimType: 'WEALTH_NATAL_BOUNDED_TEST',
+      predicate: 'wealth_conclusion',
+      value: {
+        wealthKind: 'friction',
+        headline: '준비와 결과 사이의 긴장',
+        summary: '원국의 관계만 설명합니다.',
+        futureMoneyTimingAuthorized: false,
+        numericScoringAuthorized: false,
+      },
+    };
+    const interpretation = {
+      ...base,
+      claims: [boundedWealth],
+      claimRelations: [],
+      integrity: { valid: true, errors: [] },
+      evidenceIndex: {},
+    };
+    const request = { requestId: 'korean-source-existing-reading', text: '재물운' };
+    const options = {
+      outputSchemaVersion: SUPPORTED_NARRATIVE_OUTPUT_SCHEMA,
+      readingVersion: 'korean-localization-integration-test',
+      artifactGeneratedAt: new Date('2026-10-22T00:00:00.000Z'),
+    };
+    const existing = await requestProductReading(current, interpretation, registry, request, options);
+    const localized = await runExistingKoreanReadingLocalizedV1(
+      current, interpretation, registry, request, options,
+      { readingLocale: 'ko-KR', uiLocale: 'en-US' },
+    );
+    expect(existing.state).toBe('delivered');
+    expect(localized.consumerResponse).toEqual(existing);
+    expect(localized.locale).toBe('ko-KR');
+    expect(localized.consumerResponse.reading?.sections.length).toBeGreaterThan(0);
+    expect(JSON.stringify(localized.consumerResponse)).not.toContain('claim-wealth-existing-korean');
+
+    const noEvidence = await runExistingKoreanReadingLocalizedV1(
+      current, { ...interpretation, claims: [] }, registry, request, options,
+      { readingLocale: 'ko-KR' },
+    );
+    expect(noEvidence.consumerResponse.reading).toBeUndefined();
+    expect(noEvidence.consumerResponse.state).not.toBe('delivered');
+  });
+
 });
