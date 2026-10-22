@@ -9,6 +9,9 @@ import type { OfficialReadingDetailedRealizationV1 } from './official-reading-de
 import {
   RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1,
 } from './official-reading-detailed-presentation-relationship.js';
+import {
+  RELATIONSHIP_NATAL_APPROVED_CONCISE_DEFINITIONS,
+} from './official-reading-concise-presentation-relationship.js';
 
 export const APPROVED_RELATIONSHIP_MULTIFACTOR_OVERVIEW_POLICY_VERSION =
   'myeonghwa-approved-relationship-multifactor-overview-v1' as const;
@@ -76,6 +79,10 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
       [profile.claimType, { profile, approvedOrder }] as const),
   );
 
+  const conciseByClaimType = new Map(
+    RELATIONSHIP_NATAL_APPROVED_CONCISE_DEFINITIONS.map(definition =>
+      [definition.claimType, definition] as const),
+  );
   const candidates: ApprovedComposite[] = [];
   for (const section of plan.sections) {
     if (section.semanticGroup !== 'relationship') continue;
@@ -111,8 +118,15 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
 
       const detail = detailByUnitId.get(unit.unitId);
       const clarification = profile.approvedTextByRole.clarification;
+      const concise = conciseByClaimType.get(unit.claimType);
       if (clarification === undefined ||
-          detail?.roleTexts.find(role => role.role === 'clarification')?.text !== clarification) {
+          detail?.roleTexts.find(role => role.role === 'clarification')?.text !== clarification ||
+          concise === undefined ||
+          concise.methodologyRef.id !== profile.methodologyRef.id ||
+          concise.methodologyRef.version !== profile.methodologyRef.version ||
+          concise.standardText.headline !== profile.standardText.headline ||
+          concise.standardText.summary !== profile.standardText.summary ||
+          concise.conciseText.trim().length === 0) {
         continue;
       }
       const entry = entriesByUnitId.get(unit.unitId);
@@ -127,7 +141,7 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
         unitId: unit.unitId,
         axis,
         headline: profile.standardText.headline!,
-        explanation: clarification,
+        explanation: concise.conciseText,
         explainabilityRef: entry.explainabilityRef,
         distinctFamilies: profile.supportingClaimTypes.length,
         approvedOrder: approval!.approvedOrder,
