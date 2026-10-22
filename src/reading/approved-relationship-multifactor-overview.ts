@@ -191,12 +191,16 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
     sectionId: 'official_relationship_composite_' + idHash.slice(0, 20),
     sectionType: 'overview',
     title: '내 명식에서 함께 확인된 관계 주제',
-    state: 'complete',
+    state: selected.length < 3 ? 'partial' : 'complete',
     explainabilityRefs,
     blocks: [
       {
         type: 'paragraph',
-        text: '아래 항목은 실제 명식에서 각각 두 개 이상의 십신 계열 근거가 확인되고, 기존 승인된 관계풀이의 문장과 출처가 일치하는 경우만 모았습니다. 특정 상대의 성격, 궁합, 결혼이나 관계 결과를 판정하지 않습니다.',
+        text: '아래 항목은 실제 명식에서 각각 두 개 이상의 십신 계열 근거가 확인되고, 기존 승인된 관계풀이의 문장과 출처가 일치하는 경우만 모았습니다. 특정 상대의 성격, 궁합, 결혼이나 관계 결과를 판정하지 않습니다.' +
+          (selected.length < 3
+            ? ' 현재 확인된 서로 다른 관계 관점은 ' + selected.length +
+              '개입니다. 다른 관점의 근거가 없으므로 이 요약만으로 관계 종합풀이의 완성을 뜻하지 않습니다.'
+            : ' 세 관계 관점의 요약은 승인된 개별 풀이를 찾아 읽도록 돕는 것이며, 원국 전체의 최소 유효 해석 완료 판정과는 별개입니다.'),
       },
       {
         type: 'comparison',
