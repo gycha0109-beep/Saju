@@ -66,6 +66,16 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 이 코드들은 **R068/R069에 이미 있는 실행 공백**이며, 독자적 두 사람 궁합 규칙을 만들었다는 뜻이 아닙니다. 임의 점수·혼인·이혼·좋고 나쁨으로 변환하지 않습니다. 두 사람 입력 순서를 바꾼 회귀에서도 비교의 T0 동일성만 유지하고 T10은 양방향 모두 `INCONCLUSIVE`입니다. 두 사람의 원본 `snapshot.scenarios[].scenarioId`, `completeness.ambiguousPaths`, `completeness.unavailablePaths`는 각각 `subject`와 `target` 아래 별개 배열로 넘깁니다. 대상 순서가 바뀌면 각자의 배열 소속만 바뀌며, 그 시나리오들의 교차 조합을 자동 생성하거나 하나의 확정 궁합 판정으로 합치지 않습니다.
 
+### R069: 실제 두 인물의 역사적 성별을 개별 원문 조건에 적용
+
+기존 R069은 남성 명식의 `日為己身妻妾`·`四柱內有我克者為妻`, 여성 명식의 `克我者為夫`, 그리고 남성 명식의 `日坐財 / 財旺` 계열에 속하는 **한 사람 명식**의 원문이다. 이를 두 인물에게 적용할 때 어느 사람의 명식에서 원문상 범위가 맞는지 구분하기 위해 `comparedSourceSurfaces[].oneChartScopeObservations`에 **subject와 target을 따로** 기록한다.
+
+- `historicalScopeMatch`: `matched` / `mismatched` / `unspecified`. 실제 자기 명식의 `input.sexForTraditionalCalculation`와 해당 **R069 원문**의 역사 성별 표지만 비교한다. 두 사람의 연애 성별이나 관계 유형을 추정하지 않는다.
+- `DAY_DOMAIN`은 범위가 맞고 `pillars.day`가 확정된 경우 `BOUNDED_FACT_OBSERVED`와 관측 경로만 반환한다. 이 사실은 `배우자궁의 개인적 의미`가 아니다.
+- 남성 `四柱內有我克者為妻`의 계산용 관찰 그룹은 재성(`편재/정재`), 여성 `克我者為夫`의 관찰 그룹은 관성(`편관/정관`)의 **현재 Canonical T5 분류**를 조회한다. 실제 계산된 `derivedFacts.tenGods.{pillar}.{stem|branch}` 값과 경로만 수집한다. 당사자의 부부 관계나 상대 명식 적합도 판정 근거는 아니다.
+- `CONFIGURATION_LEVEL`은 `旺衰`·일지/재성 구성 방법론이 아직 승인되지 않았으므로 성별이 맞더라도 `INCONCLUSIVE`로만 반환한다. 확정된 시주 입력이 없거나 별의 입력 경로가 하나라도 미상인 경우 `R069_TEN_GOD_INPUT_PARTIAL`을 남긴다. 관찰되지 않은 별은 배우자 부재를 뜻하지 않는다.
+- **모든 원문에서 `oneChartSpouseMeaningAuthorized=false`, `pairwiseMeaningAuthorized=false`이다.** `historicalScopeMatch=matched` 또는 `BOUNDED_FACT_OBSERVED`는 원문 배속·명식 계산이 대응한다는 한정 관찰이지 공식 배우자 운세나 현대 연애·궁합 T10의 승인 신호가 아니다. 남성↔여성 입력 순서를 바꾸면 역사적 범위 결과가 자기 인물에 따라 함께 옮겨질 뿐, 두 사람에게 관계 결론을 적용하는 교차 합성 규칙은 발생하지 않는다.
+
 ## 실제 명식 회귀·책임 범위
 
 `test/family-pair-source-scope-handoff.test.ts`는 실계산 명식에 대해 미지정·남성·여성의 부모/자녀 source surface 차이, 태 계산 부재, 시간 미상으로 시주 판단이 멈추는 조건, 서로 다른 두 출생값과 동일 명식 두 인물 비교, 출처의 T10 변환 거부, 정책/동일 인물 입력 오류 및 반복 실행 재현성을 검증한다.
