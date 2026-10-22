@@ -245,6 +245,52 @@ function excludedSiblingSources(
   });
 }
 
+export interface R070PillarStarPositionContrast {
+  /** R070 does not state that a star must occur inside this domain pillar. */
+  pillarSlot: PillarSlot;
+  pillarFactPath: string;
+  state:
+    | 'STAR_OBSERVED_IN_REFERENCED_PILLAR'
+    | 'STAR_OBSERVED_ONLY_OUTSIDE_REFERENCED_PILLAR'
+    | 'REFERENCED_PILLAR_T5_UNRESOLVED'
+    | 'STAR_NOT_OBSERVED_IN_RESOLVED_T5_SURFACE';
+  inReferencedPillar: FamilyTenGodSourceObservation['observedPositions'];
+  outsideReferencedPillar: FamilyTenGodSourceObservation['observedPositions'];
+  unresolvedReferencedPillarPaths: readonly string[];
+  locationBasedFamilyInferenceAuthorized: false;
+}
+
+function compareR070PillarStarPositions(
+  pillarFactPath: string,
+  observation: FamilyTenGodSourceObservation,
+): R070PillarStarPositionContrast {
+  const pillarSlot = TEN_GOD_OBSERVATION_SLOTS.find(slot =>
+    pillarFactPath === 'pillars.' + slot);
+  if (pillarSlot === undefined) {
+    throw new TypeError('R070 family pillar observation must have an exact Canonical slot.');
+  }
+  const inReferencedPillar = observation.observedPositions.filter(
+    position => position.slot === pillarSlot,
+  );
+  const outsideReferencedPillar = observation.observedPositions.filter(
+    position => position.slot !== pillarSlot,
+  );
+  const unresolvedReferencedPillarPaths = observation.unresolvedFactPaths.filter(
+    path => path.startsWith('derivedFacts.tenGods.' + pillarSlot + '.'),
+  );
+  const state = inReferencedPillar.length > 0
+    ? 'STAR_OBSERVED_IN_REFERENCED_PILLAR' as const
+    : unresolvedReferencedPillarPaths.length > 0
+      ? 'REFERENCED_PILLAR_T5_UNRESOLVED' as const
+      : outsideReferencedPillar.length > 0
+        ? 'STAR_OBSERVED_ONLY_OUTSIDE_REFERENCED_PILLAR' as const
+        : 'STAR_NOT_OBSERVED_IN_RESOLVED_T5_SURFACE' as const;
+  return {
+    pillarSlot, pillarFactPath, state, inReferencedPillar, outsideReferencedPillar,
+    unresolvedReferencedPillarPaths, locationBasedFamilyInferenceAuthorized: false,
+  };
+}
+
 export interface FamilyCrossLayerMethodComparison {
   sourceSurfaces: readonly [string, string];
   sourceLayerIds: readonly [string, string];
@@ -253,6 +299,8 @@ export interface FamilyCrossLayerMethodComparison {
     observedPillar: string;
   };
   starObservation: FamilyTenGodSourceObservation;
+  /** A fact-level location contrast, not an approved family T8 bridge. */
+  starPillarPositionContrast: R070PillarStarPositionContrast;
   state: 'PILLAR_AND_STAR_METHODS_NOT_RECONCILED';
   independentlyAdmittedFamilyClaims: 0;
   methodSelectionAuthorized: false;
@@ -496,6 +544,7 @@ export function evaluateFamilySourceScopeV1(
           star?.disposition !== 'INCONCLUSIVE' ||
           star.tenGodObservation === undefined) return [];
       const observation = star.tenGodObservation;
+      const contrast = compareR070PillarStarPositions(pillar.observedFactPath, observation);
       return [{
         sourceSurfaces: [sourceSurfaces[0], sourceSurfaces[1]] as const,
         sourceLayerIds: [pillar.sourceLayerId, star.sourceLayerId] as const,
@@ -504,6 +553,7 @@ export function evaluateFamilySourceScopeV1(
           observedPillar: pillar.observedPillar,
         },
         starObservation: observation,
+        starPillarPositionContrast: contrast,
         state: 'PILLAR_AND_STAR_METHODS_NOT_RECONCILED' as const,
         independentlyAdmittedFamilyClaims: 0 as const,
         methodSelectionAuthorized: false as const,
@@ -514,6 +564,13 @@ export function evaluateFamilySourceScopeV1(
           'SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED',
           'HIDDEN_VS_VISIBLE_STAR_HANDLING',
           'HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED',
+          'R070_PILLAR_STAR_LOCATION_SYNTHESIS_RULE_NOT_SOURCED',
+          ...(contrast.state === 'STAR_OBSERVED_ONLY_OUTSIDE_REFERENCED_PILLAR'
+            ? ['R070_OUTSIDE_PILLAR_T5_IS_NOT_NEGATIVE_FAMILY_EVIDENCE'] : []),
+          ...(contrast.state === 'STAR_NOT_OBSERVED_IN_RESOLVED_T5_SURFACE'
+            ? ['R070_UNOBSERVED_T5_IS_NOT_RELATIVE_ABSENCE'] : []),
+          ...(contrast.state === 'REFERENCED_PILLAR_T5_UNRESOLVED'
+            ? ['R070_REFERENCED_PILLAR_T5_POSITION_UNRESOLVED'] : []),
           ...(observation.status === 'incomplete_input'
             ? ['TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED'] : []),
           ...(observation.status === 'not_observed_in_resolved_positions'
@@ -523,7 +580,10 @@ export function evaluateFamilySourceScopeV1(
     });
   const missingPrerequisites = [
     ...R070_EXECUTION_GAPS,
-    ...new Set(methodCandidates.flatMap(candidate => candidate.missingPrerequisites)),
+    ...new Set([
+      ...methodCandidates.flatMap(candidate => candidate.missingPrerequisites),
+      ...crossLayerMethodComparisons.flatMap(comparison => comparison.missingPrerequisites),
+    ]),
   ];
   return {
     version: FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION,
