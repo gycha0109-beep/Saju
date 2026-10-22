@@ -518,6 +518,9 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
             item.sourceSurface === '刑沖破害')?.familyScopeResolved).toBe(false);
         }
         const [generalChild, maleChild] = children.branchClashPillarObservations;
+        if (generalChild === undefined || maleChild === undefined) {
+          throw new Error('Both original male child pillar methods must be observed.');
+        }
         expect(generalChild.participatingClashes).toEqual(maleChild.participatingClashes);
         expect(generalChild.outsideClashes).toEqual(maleChild.outsideClashes);
       }
@@ -539,6 +542,10 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(unspecifiedParents.branchClashPillarObservations.map(item => item.pillarSourceSurface))
       .toEqual(['月為父母兄弟門戶']);
     const child = femaleChildren.branchClashPillarObservations[0];
+    const parent = femaleParents.branchClashPillarObservations[0];
+    if (child === undefined || parent === undefined) {
+      throw new Error('Eligible parent/child pillar observation must be retained.');
+    }
     expect(child.state).toBe('REFERENCED_PILLAR_UNRESOLVED');
     expect(child.observedReferenceBranch).toBeUndefined();
     expect(child.referencePillarFactPath).toBe('pillars.hour');
@@ -546,8 +553,7 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(child.missingPrerequisites).toContain(
       'R070_BRANCH_CLASH_PILLAR_TO_FAMILY_EFFECT_NOT_SOURCED',
     );
-    expect(femaleParents.branchClashPillarObservations[0].referencePillarFactPath)
-      .toBe('pillars.month');
+    expect(parent.referencePillarFactPath).toBe('pillars.month');
     expect(femaleParents.familyT8Admitted).toBe(false);
     expect(femaleChildren.familyT8Admitted).toBe(false);
     expect(femaleChildren.mayPublish).toBe(false);
