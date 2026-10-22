@@ -219,6 +219,48 @@ function renderBusinessReadingGuide(report: BusinessNatalMultifactorReport): str
     '</p></section>';
 }
 
+function renderRelationshipReadingGuide(report: RelationshipNatalMultifactorReport): string {
+  const guide = report.readingGuide;
+  if (guide === undefined) return '';
+  const core = report.sections[0];
+  guard(core !== undefined && core.claimType === guide.coreClaimType &&
+    core.axis !== 'coordination' && core.sourceIds.length > 0 &&
+    guide.paragraph.includes(core.headline) &&
+    core.observedPositions.every(position => guide.paragraph.includes(position)) &&
+    guide.supporting.length === report.sections.length - 1,
+    'Relationship guide must follow the selected source-qualified core');
+
+  const seen = new Set(core.observedFactPaths);
+  guide.supporting.forEach((support, index) => {
+    const section = report.sections[index + 1];
+    guard(section !== undefined && section.claimType === support.claimType &&
+      section.sourceIds.length > 0 && section.upstreamClaimIds.length >= 2 &&
+      support.distinctObservedFactPaths.length > 0 &&
+      support.distinctObservedFactPaths.length === support.distinctObservedPositions.length &&
+      guide.paragraph.includes(section.headline),
+      'Relationship guide support is not an actual selected T8');
+    const additional = section.observedFactPaths.flatMap((path, positionIndex) => {
+      if (seen.has(path)) return [];
+      const position = section.observedPositions[positionIndex];
+      guard(position !== undefined, 'Relationship guide missing a source position');
+      seen.add(path);
+      return [{ path, position }];
+    });
+    guard(JSON.stringify(additional.map(item => item.path)) ===
+      JSON.stringify(support.distinctObservedFactPaths) &&
+      JSON.stringify(additional.map(item => item.position)) ===
+      JSON.stringify(support.distinctObservedPositions) &&
+      support.distinctObservedPositions.every(position => guide.paragraph.includes(position)),
+      'Relationship guide duplicates or invents canonical observations');
+  });
+  guard(report.state === 'complete' && guide.supporting.length === 2 ||
+    report.state === 'partial' && guide.supporting.length < 2,
+    'Relationship guide overstates minimum useful reading status');
+  return '<section class="reading-guide" aria-label="관계운 읽기 요약"><h3>' +
+    escapeHtml(guide.title) + '</h3><p>' + escapeHtml(guide.paragraph) +
+    '</p></section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -243,7 +285,9 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
     : domain === 'wealth'
       ? renderWealthReadingGuide(report as WealthNatalMultifactorReport)
       : domain === 'business'
-        ? renderBusinessReadingGuide(report as BusinessNatalMultifactorReport) : '';
+        ? renderBusinessReadingGuide(report as BusinessNatalMultifactorReport)
+        : domain === 'relationship'
+          ? renderRelationshipReadingGuide(report as RelationshipNatalMultifactorReport) : '';
   return '<article aria-labelledby="domain-' + domain + '" class="domain">' +
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +
