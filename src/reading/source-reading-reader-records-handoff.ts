@@ -241,6 +241,11 @@ export function inspectSajuReaderRecordsSourceHandoffV1(
       responseBodyHash: material.responseBodyHash,
       inventory,
     });
+    const provenance = artifact.provenance as typeof artifact.provenance & {
+      canonicalSemanticHash?: string;
+      officialReadingPlanHash?: string;
+      officialReadingReportHash?: string;
+    };
     const source: SajuReaderRecordsSourceReferenceV1 = Object.freeze({
       readingId: material.readingId,
       responseId: material.responseId,
@@ -256,12 +261,12 @@ export function inspectSajuReaderRecordsSourceHandoffV1(
       profileRef: Object.freeze({ ...material.profileRef }),
       evidenceBundleHash: material.evidenceBundleHash,
       readingVersion: artifact.provenance.readingVersion,
-      ...(artifact.provenance.canonicalSemanticHash === undefined ? {} :
-        { canonicalSemanticHash: artifact.provenance.canonicalSemanticHash }),
-      ...(artifact.provenance.officialReadingPlanHash === undefined ? {} :
-        { officialReadingPlanHash: artifact.provenance.officialReadingPlanHash }),
-      ...(artifact.provenance.officialReadingReportHash === undefined ? {} :
-        { officialReadingReportHash: artifact.provenance.officialReadingReportHash }),
+      ...(provenance.canonicalSemanticHash === undefined ? {} :
+        { canonicalSemanticHash: provenance.canonicalSemanticHash }),
+      ...(provenance.officialReadingPlanHash === undefined ? {} :
+        { officialReadingPlanHash: provenance.officialReadingPlanHash }),
+      ...(provenance.officialReadingReportHash === undefined ? {} :
+        { officialReadingReportHash: provenance.officialReadingReportHash }),
     });
     const handoff: SajuReaderRecordsSourceHandoffV1 = Object.freeze({
       version: SAJU_READER_RECORDS_SOURCE_HANDOFF_VERSION_V1,
