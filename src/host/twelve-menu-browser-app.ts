@@ -158,6 +158,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     view.sequence++;
     view.button.disabled = false;
     if (view.individualButton) view.individualButton.disabled = false;
+    if (view.spouseButton) view.spouseButton.disabled = false;
     if (view.familyBothButton) view.familyBothButton.disabled = false;
     view.output.replaceChildren();
     setState(view, 'unavailable', '입력이 바뀌었습니다. 이 메뉴를 다시 요청해 주세요.');
@@ -605,6 +606,187 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     }
   }
 
+  async function appendBoundedTimeFamilyPreview(view, spec, birth, epoch, sequence) {
+    const family = spec.id === 'family';
+    const path = family ? '/api/preview/family-observations' : '/api/preview/life-stage';
+    let response;
+    try {
+      response = await fetch(path, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(family
+          ? { birth: birth, scope: view.scope.value === '부모운' ? 'parents' : 'children' }
+          : { birth: birth })
+      });
+    } catch {
+      // Preview is optional; its failure cannot remove the actual governed reply.
+      return;
+    }
+    if (epoch !== currentEpoch || sequence !== view.sequence) return;
+    if (response.status === 401 || response.status === 403 || response.status === 404) {
+      note(view.output,
+        '상세 계산 미리보기는 인증된 내부 연구 환경에서만 확인할 수 있습니다.',
+        'field-hint');
+      return;
+    }
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (epoch !== currentEpoch || sequence !== view.sequence) return;
+    if (!payload || typeof payload !== 'object' ||
+        payload.lifecycle !== 'internal_research_only' ||
+        payload.researchOnly !== true || payload.usefulComplete !== false ||
+        payload.mayPublish !== false || payload.maySell !== false ||
+        !payload.report || payload.report.researchOnly !== true ||
+        payload.report.usefulComplete !== false ||
+        payload.report.mayPublish !== false || payload.report.maySell !== false) {
+      return;
+    }
+    const report = payload.report;
+    const section = element('section', undefined, 'domain-card');
+    if (family) {
+      const selectedScope = view.scope.value === '부모운' ? 'parents' : 'children';
+      if (payload.scope !== selectedScope || report.scope !== selectedScope ||
+          payload.mayClaimFamilyOutcome !== false ||
+          report.interpretationCoverage !== 'insufficient_evidence' ||
+          !Array.isArray(report.observations) || !Array.isArray(report.missing)) return;
+      section.appendChild(element('h3',
+        selectedScope === 'parents' ? '부모 관련 명식 계산 · 연구' :
+          '자녀 관련 명식 계산 · 연구'));
+      note(section, report.observationSummary);
+      report.observations.forEach(function(observation) {
+        if (observation && typeof observation.text === 'string' &&
+            ['year', 'month', 'hour'].includes(observation.pillarSlot)) {
+          note(section, observation.text);
+        }
+      });
+      list(section, report.missing);
+      note(section, '이 계산 사실은 부모·자녀의 성격이나 가족 관계를 판정하지 않습니다.',
+        'disclosure');
+    } else {
+      if (payload.interpretationStatus !== 'source_authority_not_established' ||
+          payload.mayGrantOfficialAuthority !== false ||
+          report.interpretationStatus !== 'source_authority_not_established' ||
+          !Array.isArray(report.periods) || !Array.isArray(report.missing) ||
+          !payload.natalContext ||
+          payload.natalContext.snapshotId !== report.snapshotId ||
+          payload.natalContext.calculationHash !== report.calculationHash ||
+          !Array.isArray(payload.natalContext.sections)) return;
+      section.appendChild(element('h3', '지금과 다음 대운 · 계산상 구간'));
+      note(section, '대운의 시작·종료 시각과 간지는 계산 사실이며 ' +
+        '미래 사건이나 운의 좋고 나쁨을 예측하지 않습니다.', 'disclosure');
+      if (typeof report.transitionSummary === 'string') {
+        note(section, report.transitionSummary);
+      }
+      report.periods.forEach(function(period) {
+        if (!period || !['current', 'next'].includes(period.kind) ||
+            typeof period.text !== 'string') return;
+        const item = element('section');
+        item.appendChild(element('h3', period.kind === 'current'
+          ? '현재 계산 구간' : '다음 계산 구간'));
+        note(item, period.text);
+        section.appendChild(item);
+      });
+      list(section, report.missing);
+      const natal = payload.natalContext;
+      if (natal.availability === 'bounded_natal_t8_research') {
+        const original = element('section');
+        original.appendChild(element('h3', '같은 명식의 원국 해석 · 시기 해석과 별개'));
+        note(original, '아래는 기존 원국 연구 풀이입니다. 대운 시기별 의미를 뜻하지 않습니다.',
+          'disclosure');
+        natal.sections.forEach(function(item) {
+          if (!item || typeof item.title !== 'string' ||
+              typeof item.paragraph !== 'string' ||
+              !Array.isArray(item.sourceIds) || item.sourceIds.length < 2 ||
+              !Array.isArray(item.factPaths) || item.factPaths.length < 2) return;
+          original.appendChild(element('h4', item.title));
+          note(original, item.paragraph);
+        });
+        section.appendChild(original);
+      } else {
+        note(section, '같은 명식의 원국 해석 근거가 충분하지 않습니다.', 'notice');
+      }
+    }
+    view.output.appendChild(section);
+    setState(view, 'partial',
+      '내부 연구용 계산 미리보기만 표시합니다. 공식 해석·판매 승인이 아닙니다.');
+  }
+
+  async function showSeparatedSpouseScopeReadings(view) {
+    let birth;
+    try {
+      birth = readOwnBirth();
+    } catch (error) {
+      view.output.replaceChildren();
+      setState(view, 'unavailable', error.message || '본인 출생정보를 확인해 주세요.');
+      return;
+    }
+    const epoch = currentEpoch, sequence = ++view.sequence;
+    view.button.disabled = true;
+    view.spouseButton.disabled = true;
+    view.output.replaceChildren();
+    setState(view, 'unavailable', '원국 관계와 배우자궁의 기존 근거를 따로 조회합니다.');
+    const scopes = [
+      { title: '본인의 일반 연애·관계 풀이', text: '연애운' },
+      { title: '본인의 배우자궁·배우자 관련 풀이', text: '배우자운' }
+    ];
+    try {
+      const results = await Promise.allSettled(scopes.map(async function(scope) {
+        const response = await fetch('/api/readings', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            birth: birth,
+            reading: {
+              text: scope.text,
+              outputPreferences: { preferredDetail:
+                document.getElementById('reading-detail').value }
+            }
+          })
+        });
+        if (!response.ok) throw new Error(
+          response.status === 401 || response.status === 403
+            ? '허용된 개인별 풀이 경로의 인증이 필요합니다.'
+            : '이 범위의 풀이를 요청할 수 없습니다.');
+        const payload = await response.json();
+        if (!payload || !matchesRequestedBirth(payload, birth)) {
+          throw new Error('요청한 본인 명식과 다른 풀이를 표시하지 않았습니다.');
+        }
+        return payload;
+      }));
+      if (epoch !== currentEpoch || sequence !== view.sequence) return;
+      note(view.output,
+        '일반 관계 원국 풀이와 배우자궁 위치·근거는 서로 다른 허용 범위입니다. ' +
+        '두 결과를 결합해 배우자의 성격·결혼 시기·결혼 결과를 판단하지 않습니다.',
+        'disclosure');
+      let supported = false;
+      scopes.forEach(function(scope, index) {
+        const card = element('section', undefined, 'domain-card');
+        card.appendChild(element('h3', scope.title));
+        const result = results[index];
+        if (result.status === 'fulfilled') {
+          const inner = { output: card, status: element('p'),
+            button: view.spouseButton, sequence: 0 };
+          renderPayload(inner, result.value);
+          if (inner.status.dataset.state === 'partial') supported = true;
+          note(card, inner.status.textContent, 'field-hint');
+        } else {
+          note(card, result.reason && result.reason.message ||
+            '이 범위는 승인된 결과가 없거나 요청하지 못했습니다.', 'notice');
+        }
+        view.output.appendChild(card);
+      });
+      setState(view, supported ? 'partial' : 'unavailable',
+        supported
+          ? '허용된 원국 관계·배우자궁 풀이만 각각 표시했습니다. 배우자 운명 종합은 미지원입니다.'
+          : '두 범위 모두 추가 입력 또는 승인된 해석 근거가 필요합니다.');
+    } finally {
+      if (sequence === view.sequence) {
+        view.button.disabled = false;
+        view.spouseButton.disabled = false;
+      }
+    }
+  }
+
   menuSpecs.forEach(function(spec) {
     const article = element('article');
     article.id = 'twelve-card-' + spec.id;
@@ -664,6 +846,20 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
         topics.appendChild(suggestion);
       });
       article.appendChild(topics);
+    }
+    if (spec.id === 'spouse') {
+      const separate = element('button', '연애운·배우자궁 풀이 각각 보기');
+      separate.type = 'button';
+      separate.id = 'twelve-spouse-separate-readings';
+      separate.className = 'secondary';
+      view.spouseButton = separate;
+      article.appendChild(separate);
+      separate.addEventListener('click', function() {
+        return showSeparatedSpouseScopeReadings(view);
+      });
+      note(article,
+        '두 범위는 본인 명식에서만 조회합니다. 타인의 운명이나 결혼 결과는 추론하지 않습니다.',
+        'field-hint');
     }
     if (spec.id === 'compatibility') {
       appendPartnerInputs(view);
@@ -746,6 +942,15 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
             throw new Error('현재 입력한 생년월일·출생시각과 다른 명식의 풀이가 반환되어 표시하지 않았습니다.');
           }
           renderPayload(view, payload);
+          if ((spec.id === 'family' || spec.id === 'life_stage') &&
+              payload.state !== 'delivered' &&
+              payload.state !== 'delivered_with_fallback') {
+            try {
+              await appendBoundedTimeFamilyPreview(view, spec, requestBirth, epoch, sequence);
+            } catch {
+              // Invalid or unreachable optional Preview must never hide the governed response.
+            }
+          }
         }
       } catch (error) {
         if (epoch !== currentEpoch || sequence !== view.sequence) return;
