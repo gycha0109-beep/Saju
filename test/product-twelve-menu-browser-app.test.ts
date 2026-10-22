@@ -372,6 +372,34 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(details).not.toContain('provide_required_context');
   });
 
+  it('formats second-person birthday and explicitly handles unknown clock and lunar leap status', async () => {
+    const app = mountBrowser();
+    const date = app.get('menu-partner-date');
+    const calendar = app.get('menu-partner-calendar');
+    const time = app.get('menu-partner-time');
+    const unknown = app.get('menu-partner-unknown');
+    const leap = app.get('menu-partner-leap');
+    expect(leap.disabled).toBe(true);
+    date.value = '19960109';
+    await date.dispatch('input');
+    expect(date.value).toBe('1996-01-09');
+    calendar.value = 'lunar';
+    await calendar.dispatch('change');
+    expect(leap.disabled).toBe(false);
+    leap.checked = true;
+    calendar.value = 'solar';
+    await calendar.dispatch('change');
+    expect(leap.disabled).toBe(true);
+    expect(leap.checked).toBe(false);
+    unknown.checked = true;
+    await unknown.dispatch('change');
+    expect(time.disabled).toBe(true);
+    unknown.checked = false;
+    await unknown.dispatch('change');
+    expect(time.disabled).toBe(false);
+    expect(app.get('twelve-state-compatibility').dataset.state).toBe('unavailable');
+  });
+
   it('requires partner birth permission and uses only the separate preview chart transport', async () => {
     const app = mountBrowser(async (_url, call) => {
       if (call.url !== '/api/preview/compatibility-charts') throw new Error('Wrong route');
