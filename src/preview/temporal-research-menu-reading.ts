@@ -17,6 +17,7 @@ export interface TemporalResearchMenuSection {
   evidenceKind: 'annual_research_profile' | 'monthly_t9_research_claim' | 'canonical_dayun_fact';
   /** Monthly claim ID is only an internal research Claim, not Official authority. */
   claimId?: string;
+  researchProfileKey?: string;
   sourceIds: readonly string[];
   factPaths: readonly string[];
   interval?: {
@@ -125,8 +126,9 @@ export function buildTemporalResearchMenuReadings(
       title: section.title,
       text: section.text,
       evidenceKind: 'annual_research_profile' as const,
-      // Section ID is a research semantic key, not an approved T9 Claim ID.
-      sourceIds: [section.id],
+      // The annual section ID is a research semantic key, not a source ID.
+      researchProfileKey: section.id,
+      sourceIds: [],
       factPaths: section.relatedPillar === undefined
         ? ['temporal.annualStemTenGod']
         : ['temporal.annualBranchRelations.' + section.relatedPillar],
