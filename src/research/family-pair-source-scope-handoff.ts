@@ -336,8 +336,12 @@ export interface PairwiseSourceScopeHandoff {
   factualPairObservations: readonly PairwiseCanonicalObservation[];
   comparedSourceSurfaces: readonly {
     corpusId: 'R068' | 'R069';
+    originalClaimId: string;
     sourceSurface: string;
     originalDomain: string;
+    historicalSexScope?: string;
+    /** Existing corpus prerequisites; not permissions or newly sourced T10 rules. */
+    missingPrerequisites: readonly string[];
     disposition: 'NARROW_OR_REPLACE' | 'REJECTED';
     eligiblePairwiseClaim: false;
   }[];
@@ -384,13 +388,30 @@ export function evaluatePairwiseSourceScopeV1(
   }
   const comparedSourceSurfaces = [
     ...R068_DIRECT_CLAIMS.map(claim => ({
-      corpusId: 'R068' as const, sourceSurface: claim.sourceSurface,
+      corpusId: 'R068' as const, originalClaimId: claim.id,
+      sourceSurface: claim.sourceSurface,
       originalDomain: claim.domain, disposition: 'NARROW_OR_REPLACE' as const,
+      missingPrerequisites: [
+        'SOCIAL_VS_KIN_SCOPE',
+        'ROMANCE_TRANSFER_EVIDENCE',
+        ...(claim.id === 'COMBINATION-CONTEXT-VARIANCE'
+          ? ['CONTEXT_EFFECT_SETTLEMENT', 'MULTI_RELATION_CONFLICT'] : []),
+      ],
       eligiblePairwiseClaim: false as const,
     })),
     ...R069_DIRECT_CLAIMS.map(claim => ({
-      corpusId: 'R069' as const, sourceSurface: claim.sourceSurface,
-      originalDomain: claim.claimType, disposition: 'REJECTED' as const,
+      corpusId: 'R069' as const, originalClaimId: claim.id,
+      sourceSurface: claim.sourceSurface,
+      originalDomain: claim.claimType,
+      historicalSexScope: claim.historicalSexScope,
+      missingPrerequisites: [
+        'HISTORICAL_GENDER_SCOPE',
+        'MODERN_PARTNER_TRANSLATION',
+        'PAIRWISE_COMPATIBILITY_BRIDGE',
+        ...(claim.claimType === 'CONFIGURATION_LEVEL'
+          ? ['SPOUSE_STAR_CONTEXT_SETTLEMENT'] : []),
+      ],
+      disposition: 'REJECTED' as const,
       eligiblePairwiseClaim: false as const,
     })),
   ];
