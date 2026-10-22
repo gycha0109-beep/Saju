@@ -65,6 +65,45 @@ describe('bounded parent/child family observation consumer preview', () => {
     expect(children.maySell).toBe(false);
   });
 
+  it('explains only calculated parent and child scope in separately sourced Korean summaries', () => {
+    const person = natal(1990, 14);
+    const parent = buildFamilyCanonicalObservationPreview(person, 'parents');
+    const child = buildFamilyCanonicalObservationPreview(person, 'children');
+    for (const item of parent.observations) {
+      expect(parent.observationSummary).toContain(item.pillarLabel + ' ' + item.observedPillar);
+    }
+    expect(parent.observationSummary).toContain('서로 다른 고전의 배속 방법이 승인되지 않아');
+    expect(parent.observationSummary).not.toContain('시주');
+    expect(child.observationSummary).toContain(
+      '시주 ' + child.observations[0]!.observedPillar,
+    );
+    expect(child.observationSummary).toContain('자녀 본인의 성향·존재 여부');
+    expect(child.observationSummary).not.toContain('연주');
+    expect(parent.observationSummary).not.toEqual(child.observationSummary);
+    for (const reading of [parent, child]) {
+      const html = renderFamilyCanonicalObservationHtml(reading);
+      expect(html).toContain('선택한 가족 범위의 명식 요약');
+      expect(html).toContain(reading.observationSummary);
+      expect(reading.interpretationCoverage).toBe('insufficient_evidence');
+      expect(reading.mayPublish).toBe(false);
+      expect(reading.maySell).toBe(false);
+    }
+    const different = buildFamilyCanonicalObservationPreview(natal(1991, 14), 'parents');
+    expect(different.observationSummary).not.toEqual(parent.observationSummary);
+    expect(buildFamilyCanonicalObservationPreview(person, 'parents')).toEqual(parent);
+  });
+
+  it('shows a missing child hour as unconfirmed fact without inventing a child reading', () => {
+    const unknown = buildFamilyCanonicalObservationPreview(natal(1990, null), 'children');
+    expect(unknown.observationSummary).toContain('시주 계산값 미확정');
+    expect(unknown.observationSummary).not.toContain('시주 갑');
+    expect(unknown.observationSummary).toContain('관측 자체가 보류');
+    expect(unknown.observations[0]?.state).not.toBe('resolved');
+    expect(unknown.usefulComplete).toBe(false);
+    expect(renderFamilyCanonicalObservationHtml(unknown))
+      .toContain('시주 계산값 미확정');
+  });
+
   it('changes observed facts only where the actual Canonical chart changes and replays identically', () => {
     const originalChart = natal();
     const original = buildFamilyCanonicalObservationPreview(originalChart, 'parents');

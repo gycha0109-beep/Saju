@@ -37,6 +37,7 @@ export interface FamilyCanonicalObservationPreview {
   corpusVersion: typeof R070_FAMILY_DOMAIN_CLAIM_CORPUS_VERSION;
   historicalLayerIds: readonly string[];
   observations: readonly FamilyPillarObservation[];
+  observationSummary: string;
   introduction: string;
   missing: readonly string[];
   limitations: readonly string[];
@@ -112,6 +113,17 @@ export function buildFamilyCanonicalObservationPreview(
   const historicalLayerIds = parents
     ? ['PILLAR-DOMAIN-GENERAL', 'PILLAR-DOMAIN-MALE-ALTERNATE', 'TEN-GOD-FAMILY-RELATIONS']
     : ['PILLAR-DOMAIN-GENERAL', 'TEN-GOD-FAMILY-RELATIONS', 'FEMALE-CHILD-RELATION'];
+  const details = observations.map(item =>
+    item.state === 'resolved'
+      ? item.pillarLabel + ' ' + item.observedPillar
+      : item.pillarLabel + ' 계산값 미확정');
+  const observationSummary = parents
+    ? '본인 명식에서 부모 주제로 확인할 수 있는 기둥은 ' +
+      details.join(' · ') + '입니다. 연주와 월주가 실제 계산된 사실을 나란히 보여주며, ' +
+      '서로 다른 고전의 배속 방법이 승인되지 않아 이 수치로 부모의 성격이나 관계를 판정하지 않습니다.'
+    : '본인 명식에서 자녀 주제로 확인할 수 있는 기둥은 ' +
+      details.join(' · ') + '입니다. 시주가 미확정이면 관측 자체가 보류되고, ' +
+      '확정되어도 자녀 본인의 성향·존재 여부나 가족 관계의 결과를 판정하지 않습니다.';
   const introduction = parents
     ? '부모 관련 고전 배속에는 월주를 보는 설명과 일부 남성 명식의 연주·태를 다루는 설명이 병존합니다. ' +
       '어느 방법을 현재 명식에 적용할지 승인되지 않아, 이 화면은 원국의 연·월주 계산 사실만 보여줍니다.'
@@ -134,7 +146,7 @@ export function buildFamilyCanonicalObservationPreview(
     researchOnly: true, usefulComplete: false, mayPublish: false, maySell: false,
     corpusVersion: R070_FAMILY_DOMAIN_CLAIM_CORPUS_VERSION,
     historicalLayerIds,
-    observations, introduction, missing,
+    observations, observationSummary, introduction, missing,
     limitations: [
       '고전 자료의 다양한 부모·자녀 배속은 연구 분류일 뿐 실행 승인된 가족운 판정 규칙이 아닙니다.',
       '연주·월주·시주나 십신의 유무를 가족의 존재, 성격, 수명, 관계 결과와 자동 연결하지 않습니다.',
@@ -166,7 +178,9 @@ export function renderFamilyCanonicalObservationHtml(
     'section{background:white;padding:20px;border-radius:14px;margin:16px 0}' +
     'aside{background:#eee6dc;padding:20px;border-radius:14px}details{font-size:13px}</style>' +
     '</head><body><main><small>MYEONGHA · INTERNAL RESEARCH ONLY</small><h1>' +
-    e(report.headline) + '</h1><p>' + e(report.introduction) + '</p>' + cards +
+    e(report.headline) + '</h1><p>' + e(report.introduction) + '</p>' +
+    '<section aria-label="선택한 가족 범위의 명식 요약"><h2>이 명식에서 확인되는 계산 사실</h2><p>' +
+    e(report.observationSummary) + '</p></section>' + cards +
     '<aside><strong>아직 해석할 수 없는 부분</strong><ul>' +
     [...report.missing, ...report.limitations].map(x => '<li>' + e(x) + '</li>').join('') +
     '</ul><p>기존 연구 분류: ' + e(report.corpusVersion) +
