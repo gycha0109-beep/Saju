@@ -255,6 +255,23 @@ describe('R068/R069 pairwise source boundary on two real Canonical charts', () =
       .map(item => item.sourceSurface)).toEqual(R068_DIRECT_CLAIMS.map(item => item.sourceSurface));
     expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R069')
       .map(item => item.sourceSurface)).toEqual(R069_DIRECT_CLAIMS.map(item => item.sourceSurface));
+    expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R068')
+      .map(item => item.originalClaimId)).toEqual(R068_DIRECT_CLAIMS.map(item => item.id));
+    expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R069')
+      .map(item => item.originalClaimId)).toEqual(R069_DIRECT_CLAIMS.map(item => item.id));
+    const social = report.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'SOCIAL-FRIENDLINESS-SANHE-LIUHE');
+    const context = report.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'COMBINATION-CONTEXT-VARIANCE');
+    const spouse = report.comparedSourceSurfaces.find(item =>
+      item.originalClaimId === 'FEMALE-CONTROLS-ME-HUSBAND');
+    expect(social?.missingPrerequisites).toContain('ROMANCE_TRANSFER_EVIDENCE');
+    expect(social?.missingPrerequisites).toContain('SOCIAL_VS_KIN_SCOPE');
+    expect(context?.missingPrerequisites).toContain('CONTEXT_EFFECT_SETTLEMENT');
+    expect(context?.missingPrerequisites).toContain('MULTI_RELATION_CONFLICT');
+    expect(spouse?.historicalSexScope).toBe('FEMALE_CHART');
+    expect(spouse?.missingPrerequisites).toContain('PAIRWISE_COMPATIBILITY_BRIDGE');
+    expect(spouse?.disposition).toBe('REJECTED');
     expect(report.comparedSourceSurfaces.every(item => !item.eligiblePairwiseClaim)).toBe(true);
     expect(report.comparedSourceSurfaces.filter(item => item.corpusId === 'R068')
       .every(item => item.disposition === 'NARROW_OR_REPLACE')).toBe(true);
