@@ -119,6 +119,27 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 출생시각을 제공한 1988·1990·1997년 명식에서 각 지장간 소속 목록이 Canonical과 위치·저장 순서까지 정확히 일치하는지 확인한다. 1997-05-15 여성의 **시각 미상** 사례에서는 `derivedFacts.hiddenStems.hour`가 `unavailable`이고, 나머지 확정 기둥의 소속만 읽으며 기존 `derivedFacts.tenGods.hour.stem|branch`의 미해결도 별도로 남긴다. 선택적 `hiddenStems` 자체가 없는 입력은 네 기둥을 `not_provided`로 명시하고 T5 조회 결과를 바꾸지 않는다. 모든 경우 기존 부모·자녀 `familyT8Admitted=false`, `researchOnly=true`, Official/공개/저장/판매 `false`는 그대로다.
 
+### R070 부모·자녀 역사적 십신 배속 원문별 지장간 소속 인계 — 별도 계산 근거 유지
+
+이번 작업은 `CONFIGURATION-OUTCOME`의 `官煞混雜`·`財印`과 구별하여, 이미 있는 **R070 친족 별 배속 원문 네 개 각각**에 `methodCandidates[].relativeStarHiddenStemBoundary`를 붙였다. 이 값은 동일한 `CanonicalSajuSnapshot` 안의 실제 계산을 출처별로 구분해 엔진에 전달하는 **연구용 사실 인계**다. 원문 선택·가족 예측·새 MethodologyDefinition/RuleDefinition이 아니다.
+
+| 가족 메뉴 | 원래 Source Layer / 정확한 문구 | 현재 조회 가능한 T5 | 원문의 역사적 적용 범위 |
+| --- | --- | --- | --- |
+| 부모 | `TEN-GOD-FAMILY-RELATIONS` / `父以偏財論` | `편재` 관찰 | `SECTION_SCOPED` — 장·맥락에 따른 부친 배속 방법론 미선정 |
+| 부모 | `TEN-GOD-FAMILY-RELATIONS` / `母以印綬論` | `편인/정인` 조회 그룹 | `SECTION_SCOPED` — `印綬`와 현대 인성 세부 분류의 역사적 등가·방법론 미선정 |
+| 자녀 | `TEN-GOD-FAMILY-RELATIONS` / `子嗣者即官星也` | `편관/정관` 조회 그룹 | `SECTION_SCOPED` — 고전의 자식/관성 문맥과 성별·구성 선택 미확정 |
+| 자녀 | `FEMALE-CHILD-RELATION` / `我生者為子` | `식신/상관` 조회 그룹 | `FEMALE_CHART` — **역사적 여성 명식에만** 입력 대조, 남성/미지정 명식은 원래 후보를 `NARROW_OR_REPLACE`로 유지 |
+
+`relativeStarHiddenStemBoundary`는 **원래 문구·원래 소스 ID·`originalSexScope`·`historicalSex`·`requestedScope`**를 그대로 보존한다. 참조 입력은 `visibleT5FactPath=derivedFacts.tenGods`와 `hiddenStemFactPath=derivedFacts.hiddenStems`로 분리한다. 원래 `tenGodObservation`의 `observedPositions` 및 `unresolvedFactPaths`를 네 기둥(`year/month/day/hour`)에 한정해 분할할 뿐 실제 십신 값을 다시 분류하지 않는다. `pillarObservations[]`의 `visibleT5Positions`는 원래 확정 T5 경로·천간/대표 지지 채널·십신 값을, `unresolvedVisibleT5FactPaths`는 미확정 T5 경로를 그대로 기록한다.
+
+각 기둥에 동봉하는 `rawMembershipPositions`는 기존 `derivedFacts.hiddenStems.{slot}`의 **천간 글자 소속 목록과 저장 순서**이고 `status`·`membershipFactPath`·`branchFactPath`를 유지한다. 이는 T5 십신 종류, `印綬`·`官星`·`我生`의 역사적 판정, 지장간의 세력·본중여기·유효 순위가 **아니다**. 같은 글자가 보이는 천간에도 있거나 같은 기둥에 놓였다는 이유로 `편재/정인/정관/식상` 등을 지장간의 확정 십신으로 생성하지 않는다. 네 원문의 T5 기존 관찰 개수와 가족 Claim 수는 변하지 않는다.
+
+입력 미확정의 처리: 출생시각 미상일 때 `derivedFacts.hiddenStems.hour`의 소속/지지가 미확정이며, 원래 `derivedFacts.tenGods.hour.stem|branch` 부족 경로도 동시에 유지한다. 지장간이 부분적으로만 확정되면 `hiddenStemMembershipCoverage=PARTIAL_MEMBERSHIP`이고, 선택적 필드 전체가 없으면 `MEMBERSHIP_FACTS_NOT_PROVIDED`로 네 기둥 부족 경로를 반환한다. 어떤 경우에도 알고 있는 다른 기둥의 지장간으로 시주를 대체하지 않는다. 남성 또는 성별 미지정 명식의 `我生者為子` 후보는 경계 자료를 만들지 않으며 성별 미스매치를 T5/지장간 계산 관찰로 덮지 않는다.
+
+각 반환에 `R070_FAMILY_STAR_HIDDEN_STEM_T5_CLASSIFICATION_NOT_ESTABLISHED`, `R070_FAMILY_STAR_HIDDEN_STEM_RELATIVE_ROLE_METHOD_NOT_SOURCED`, `SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED`, `HIDDEN_VS_VISIBLE_STAR_HANDLING`, `HISTORICAL_TO_MODERN_FAMILY_TRANSLATION_NOT_ESTABLISHED`를 남긴다. T5 미완전 시 `TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED`, 지장간 불완전 시 `CANONICAL_HIDDEN_STEM_MEMBERSHIP_PARTIAL_OR_UNAVAILABLE`을 추가한다. 이 코드는 원전이 검증했다는 뜻이 아니라 **승인되지 않은 연결을 막는 미충족 사유**다. 후보의 `missingPrerequisites`와 최상위 가족 연구 보고에도 유지한다.
+
+**실계산 회귀:** 1997-05-08 남·여·성별 미지정 명식의 부모·자녀 원문별 관측값과 각 계산 경로를 비교하고, 1997-05-15 여성 명식의 시각 미상 상황에서 부모·자녀 각각 시주 T5/지장간 부족을 유지한다. 지장간 자료 필드를 제거한 명식에서도 기존 십신 조회값을 바꾸거나 빈 배열을 가족 구성원 부재로 간주하지 않는다. `hiddenStemTenGodClassificationAuthorized=false`, `visibleAndHiddenStarMethodReconciled=false`, `historicalRelativeRoleAuthorized=false`, `independentlyAdmittedFamilyClaims=0`, `familyT8Admitted=false`다. 기존 `researchOnly=true`, `mayGrantOfficialAuthority=false`, `mayMarkMenuAvailable=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`도 유지한다.
+
 ### R070 기둥 배속과 십신 배속의 교차 적용 범위 — 근거 이중계산 금지
 
 `crossLayerMethodComparisons`는 **이미 연구용으로 등록된 원문 2개를 실제 자기 명식의 서로 다른 계산 입력에 연결**하지만, 두 방법이 같은 가족 주장을 지지하거나 서로 충돌한다는 새로운 고전적 결론을 만들지 않는다. 대상별 정확한 원문쌍은 다음과 같다.
