@@ -132,6 +132,64 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(html).toContain('출판 및 판매 불가');
   });
 
+  it('shows four chart-specific Canonical pillar facts ahead of the five interpretation sections', () => {
+    const chart = sample(3, 10);
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reports(chart));
+    const ledger = html.split('<section class="canonical-facts"')[1]?.split('</section>')[0];
+    expect(ledger).toBeDefined();
+    expect(html.indexOf('class="canonical-facts"')).toBeLessThan(html.indexOf('<nav class="overview"'));
+    for (const [slot, label] of [
+      ['year', '연주'], ['month', '월주'], ['day', '일주'], ['hour', '시주'],
+    ] as const) {
+      const fact = chart.pillars[slot];
+      expect(fact.status).toBe('resolved');
+      if (fact.status !== 'resolved') continue;
+      expect(ledger).toContain('<strong>' + label + '</strong> ' +
+        fact.value.stem.value + fact.value.branch.value);
+      expect(ledger).toContain('pillars.' + slot + ' · 상태: resolved');
+    }
+    expect(ledger).toContain('분야별 성격·직업·재물·사업·관계 결론이 아닙니다');
+    expect(ledger).toContain('간지의 존재만으로 결과를 단정하지 않습니다');
+  });
+
+  it('renders unknown hour explicitly but retains only actual invariant year/month/day observations', () => {
+    const chart = sample(3, 10, null);
+    expect(chart.derivedFacts.tenGods.status).toBe('unavailable');
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, reports(chart));
+    const ledger = html.split('<section class="canonical-facts"')[1]?.split('</section>')[0];
+    expect(ledger).toBeDefined();
+    expect(ledger).toContain('<strong>시주</strong> 출생시각 미입력으로 미확정');
+    expect(ledger).toContain('pillars.hour · 상태: unavailable');
+    expect(ledger).toContain('미확정 십신·다중 근거 T8 해석을 확정하지 않습니다');
+    for (const [slot, label] of [
+      ['year', '연주'], ['month', '월주'], ['day', '일주'],
+    ] as const) {
+      const fact = chart.pillars[slot];
+      const display = fact.status === 'resolved'
+        ? fact.value.stem.value + fact.value.branch.value
+        : fact.status === 'ambiguous'
+          ? '계산 후보가 둘 이상이어서 미확정'
+          : '계산값 미확정';
+      expect(ledger).toContain('<strong>' + label + '</strong> ' + display);
+      expect(ledger).toContain('pillars.' + slot + ' · 상태: ' + fact.status);
+    }
+    expect(html).not.toContain('class="meaning"');
+    expect(html).toContain('출판 및 판매 불가');
+  });
+
+  it('changes factual chart observations by birth date while replaying the same unknown-hour chart', () => {
+    const first = sample(3, 10, null);
+    const other = sample(4, 12, null);
+    const firstHtml = renderNatalFiveDomainMultifactorResearchHtml(first, reports(first));
+    const repeated = renderNatalFiveDomainMultifactorResearchHtml(first, reports(first));
+    const otherHtml = renderNatalFiveDomainMultifactorResearchHtml(other, reports(other));
+    const ledger = (s: string) => s.split('<section class="canonical-facts"')[1]?.split('</section>')[0];
+    expect(repeated).toEqual(firstHtml);
+    expect(ledger(otherHtml)).not.toEqual(ledger(firstHtml));
+    expect(ledger(firstHtml)).toContain('시주</strong> 출생시각 미입력으로 미확정');
+    expect(ledger(otherHtml)).toContain('시주</strong> 출생시각 미입력으로 미확정');
+  });
+
   it('does not fabricate five-domain interpretation when birth hour is unknown', () => {
     const chart = sample(3, 10, null);
     const sections = reports(chart);
