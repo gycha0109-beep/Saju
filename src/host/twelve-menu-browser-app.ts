@@ -158,6 +158,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     view.sequence++;
     view.button.disabled = false;
     if (view.individualButton) view.individualButton.disabled = false;
+    if (view.familyBothButton) view.familyBothButton.disabled = false;
     view.output.replaceChildren();
     setState(view, 'unavailable', '입력이 바뀌었습니다. 이 메뉴를 다시 요청해 주세요.');
   }
@@ -526,6 +527,84 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     }
   }
 
+  async function showBothFamilyReadingScopes(view) {
+    let birth;
+    try {
+      birth = readOwnBirth();
+    } catch (error) {
+      view.output.replaceChildren();
+      setState(view, 'unavailable', error.message || '본인 출생정보를 확인해 주세요.');
+      return;
+    }
+    const epoch = currentEpoch;
+    const sequence = ++view.sequence;
+    view.button.disabled = true;
+    view.familyBothButton.disabled = true;
+    view.output.replaceChildren();
+    setState(view, 'unavailable', '부모운과 자녀운을 각각의 근거로 조회하고 있습니다.');
+    const scopes = [
+      { title: '부모 관련 본인 명식 풀이', text: '부모운' },
+      { title: '자녀 관련 본인 명식 풀이', text: '자녀운' }
+    ];
+    try {
+      const outcomes = await Promise.allSettled(scopes.map(async function(scope) {
+        const response = await fetch('/api/readings', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            birth: birth,
+            reading: {
+              text: scope.text,
+              outputPreferences: { preferredDetail:
+                document.getElementById('reading-detail').value }
+            }
+          })
+        });
+        if (!response.ok) throw new Error(
+          response.status === 401 || response.status === 403
+            ? '인증된 해석 경로에 접근할 수 없습니다.'
+            : '이 가족 범위의 풀이를 불러오지 못했습니다.');
+        const payload = await response.json();
+        if (!payload || !matchesRequestedBirth(payload, birth)) {
+          throw new Error('이 출생정보와 다른 명식의 결과는 표시할 수 없습니다.');
+        }
+        return payload;
+      }));
+      if (epoch !== currentEpoch || sequence !== view.sequence) return;
+      note(view.output,
+        '동일한 본인 명식에서 부모 관련 풀이와 자녀 관련 풀이를 각각 요청합니다. ' +
+        '부모·자녀 당사자의 성격·존재·미래를 판정하지 않습니다.', 'disclosure');
+      let supported = false;
+      scopes.forEach(function(scope, index) {
+        const item = element('section', undefined, 'domain-card');
+        item.appendChild(element('h3', scope.title));
+        const outcome = outcomes[index];
+        if (outcome.status === 'fulfilled') {
+          const inner = {
+            output: item, status: element('p'),
+            button: view.familyBothButton, sequence: 0
+          };
+          renderPayload(inner, outcome.value);
+          if (inner.status.dataset.state === 'partial') supported = true;
+          note(item, inner.status.textContent, 'field-hint');
+        } else {
+          note(item, outcome.reason && outcome.reason.message ||
+            '해당 범위의 결과를 표시할 수 없습니다.', 'notice');
+        }
+        view.output.appendChild(item);
+      });
+      setState(view, supported ? 'partial' : 'unavailable',
+        supported
+          ? '부모·자녀별 기존 근거 있는 풀이만 표시했습니다. 가족 전체 결론은 미지원입니다.'
+          : '두 가족 범위 모두 허용된 풀이가 없거나 근거·접근 권한이 부족합니다.');
+    } finally {
+      if (sequence === view.sequence) {
+        view.button.disabled = false;
+        view.familyBothButton.disabled = false;
+      }
+    }
+  }
+
   menuSpecs.forEach(function(spec) {
     const article = element('article');
     article.id = 'twelve-card-' + spec.id;
@@ -551,6 +630,18 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
       article.appendChild(scope.holder);
       view.scope = scope.select;
       scope.select.addEventListener('change', function() { invalidate(view); });
+      const both = element('button', '부모운·자녀운 함께 보기');
+      both.id = 'twelve-family-both-readings';
+      both.type = 'button';
+      both.className = 'secondary';
+      view.familyBothButton = both;
+      article.appendChild(both);
+      both.addEventListener('click', function() {
+        return showBothFamilyReadingScopes(view);
+      });
+      note(article,
+        '부모·자녀 각각의 기존 해석을 별도로 조회합니다. 본인 명식만 사용합니다.',
+        'field-hint');
     }
     if (spec.id === 'question') {
       const q = inputField('지금 고민하는 질문', 'text', 'menu-question-text',
