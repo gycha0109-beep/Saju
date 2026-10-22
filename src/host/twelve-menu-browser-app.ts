@@ -4,7 +4,7 @@
  * reading endpoint, without assuming that card visibility is semantic authority.
  * Each response stays bound to the selected menu and current form input.
  */
-export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw\`
+export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
 (() => {
   'use strict';
 
@@ -406,4 +406,4 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw\`
     });
   });
 })();
-\`;
+`;
