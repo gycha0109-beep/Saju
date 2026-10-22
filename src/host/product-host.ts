@@ -34,6 +34,10 @@ import {
 } from '../reading/source-reading-proof-readiness.js';
 import type { LegacyNarrativeRuntimeV1 } from '../reading/governed-reading-execution.js';
 import type { ProductReadingResponse } from '../reading/product-reading-response.js';
+import {
+  resolveReadingLocaleV1,
+  type ReadingLocaleV1,
+} from '../reading/reading-localization.js';
 
 export const PRODUCT_HOST_VERSION = 'myeonghwa-product-host-v3';
 
@@ -75,11 +79,15 @@ export interface ProductHostReadingRequest {
   text: string;
   targetPersonRef?: string;
   outputPreferences?: ProductHostReadingOutputPreferences;
+  /** Currently admitted reading language. Other catalog languages are not yet renderable. */
+  readingLocale?: 'ko-KR';
 }
 
 export interface ProductHostReadingRequestBody {
   birth: ProductHostBirthRequest;
   reading: ProductHostReadingRequest;
+  /** UI language is independent of the reading output language. */
+  uiLocale?: ReadingLocaleV1;
 }
 
 export interface ProductHostExecutionContext {
@@ -263,13 +271,53 @@ function parseReadingOutputPreferences(
   return { preferredDetail: value.preferredDetail };
 }
 
-function parseReading(value: unknown): ProductHostReadingRequest {
+function parseUiLocale(value: unknown): ReadingLocaleV1 | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string') {
+    throw new ProductHostRequestError('INVALID_REQUEST_BODY', 'uiLocale must be a locale identifier.');
+  }
+  try {
+    return resolveReadingLocaleV1({ uiLocale: value });
+  } catch {
+    throw new ProductHostRequestError('INVALID_REQUEST_BODY', 'uiLocale is not in the supported locale catalog.');
+  }
+}
+
+function admitKoreanReadingLocale(
+  value: unknown,
+  uiLocale: ReadingLocaleV1 | undefined,
+): 'ko-KR' | undefined {
+  if (value !== undefined && typeof value !== 'string') {
+    throw new ProductHostRequestError('INVALID_READING_REQUEST', 'readingLocale must be a locale identifier.');
+  }
+  let requested: ReadingLocaleV1;
+  try {
+    requested = resolveReadingLocaleV1({
+      ...(value === undefined ? {} : { readingLocale: value as string }),
+      ...(uiLocale === undefined ? {} : { uiLocale }),
+    });
+  } catch {
+    throw new ProductHostRequestError('INVALID_READING_REQUEST', 'readingLocale is not in the supported locale catalog.');
+  }
+  if (requested !== 'ko-KR') {
+    throw new ProductHostRequestError(
+      'INVALID_READING_REQUEST',
+      'The requested reading language is not available yet. Explicit ko-KR is required for Korean readings.',
+    );
+  }
+  return value === undefined ? undefined : 'ko-KR';
+}
+
+function parseReading(
+  value: unknown,
+  uiLocale?: ReadingLocaleV1,
+): ProductHostReadingRequest {
   if (!isRecord(value)) {
     throw new ProductHostRequestError('INVALID_READING_REQUEST', 'reading must be an object.');
   }
   assertOnlyKeys(
     value,
-    ['text', 'targetPersonRef', 'outputPreferences'],
+    ['text', 'targetPersonRef', 'outputPreferences', 'readingLocale'],
     'INVALID_READING_REQUEST',
   );
   if (typeof value.text !== 'string') {
@@ -299,12 +347,14 @@ function parseReading(value: unknown): ProductHostReadingRequest {
   const outputPreferences = parseReadingOutputPreferences(
     value.outputPreferences,
   );
+  const readingLocale = admitKoreanReadingLocale(value.readingLocale, uiLocale);
   return {
     text,
     ...(targetPersonRef === undefined || targetPersonRef.length === 0
       ? {}
       : { targetPersonRef }),
     ...(outputPreferences === undefined ? {} : { outputPreferences }),
+    ...(readingLocale === undefined ? {} : { readingLocale }),
   };
 }
 
@@ -320,7 +370,9 @@ export function parseProductHostReadingRequest(body: unknown): ProductHostReadin
   if (!isRecord(body)) {
     throw new ProductHostRequestError('INVALID_REQUEST_BODY', 'Request body must be an object.');
   }
-  assertOnlyKeys(body, ['birth', 'reading'], 'INVALID_REQUEST_BODY');
+  assertOnlyKeys(body, ['birth', 'reading', 'uiLocale'], 'INVALID_REQUEST_BODY');
+  const uiLocale = parseUiLocale(body.uiLocale);
+  const reading = parseReading(body.reading, uiLocale);
   return {
     birth: (() => {
       const parsed = parseBirth(body.birth);
@@ -336,7 +388,8 @@ export function parseProductHostReadingRequest(body: unknown): ProductHostReadin
           : { sex: parsed.sexForTraditionalCalculation }),
       };
     })(),
-    reading: parseReading(body.reading),
+    reading,
+    ...(uiLocale === undefined ? {} : { uiLocale }),
   };
 }
 
@@ -348,7 +401,9 @@ function parseNatalFiveDomainRequest(body: unknown): {
   if (!isRecord(body)) {
     throw new ProductHostRequestError('INVALID_REQUEST_BODY', 'Request body must be an object.');
   }
-  assertOnlyKeys(body, ['birth', 'outputPreferences'], 'INVALID_REQUEST_BODY');
+  assertOnlyKeys(body, ['birth', 'outputPreferences', 'uiLocale', 'readingLocale'], 'INVALID_REQUEST_BODY');
+  const uiLocale = parseUiLocale(body.uiLocale);
+  admitKoreanReadingLocale(body.readingLocale, uiLocale);
   const birth = parseBirth(body.birth);
   const outputPreferences = parseReadingOutputPreferences(body.outputPreferences);
   return {
