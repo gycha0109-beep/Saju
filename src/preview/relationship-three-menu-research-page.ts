@@ -42,6 +42,8 @@ export interface RelationshipThreeMenuResearchPageInput {
   parents: FamilyCanonicalObservationPreview;
   children: FamilyCanonicalObservationPreview;
   compatibility?: CompatibilityTwoChartIntakePreview;
+  /** Required if a compatibility report is supplied: the actual second Canonical chart. */
+  targetSnapshot?: CanonicalSajuSnapshot;
 }
 
 function matchesActualFamilyFact(
@@ -91,35 +93,58 @@ function assertBoundedFamily(
   }
 }
 
+function matchesCompatibilityFacts(
+  chart: CanonicalSajuSnapshot,
+  report: CompatibilityTwoChartIntakePreview['subject'],
+): boolean {
+  const slots = ['year', 'month', 'day', 'hour'] as const;
+  return report.snapshotId === chart.snapshotId &&
+    report.calculationHash === chart.calculationHash &&
+    report.birthTimeKnown === chart.completeness.birthTimeKnown &&
+    report.pillars.length === slots.length &&
+    report.pillars.every((item, index) => {
+      if (item.slot !== slots[index]) return false;
+      const actual = chart.pillars[item.slot];
+      if (actual.status !== 'resolved') {
+        return item.status === 'unavailable' &&
+          item.factPath === 'pillars.' + item.slot &&
+          item.stemHanja === undefined &&
+          item.branchHanja === undefined;
+      }
+      return item.status === 'resolved' &&
+        item.factPath === 'pillars.' + item.slot + '.value' &&
+        item.stemHanja === actual.value.stem.hanja &&
+        item.branchHanja === actual.value.branch.hanja;
+    });
+}
+
 function assertBoundedCompatibility(
   snapshot: CanonicalSajuSnapshot,
+  targetSnapshot: CanonicalSajuSnapshot | undefined,
   report: CompatibilityTwoChartIntakePreview,
 ): void {
-  if (report.mode !== 'two_person_calculation_only' ||
+  if (targetSnapshot === undefined ||
+      report.mode !== 'two_person_calculation_only' ||
       report.readingStatus !== 'insufficient_interpersonal_meaning_authority' ||
-      report.subject.snapshotId !== snapshot.snapshotId ||
-      report.subject.calculationHash !== snapshot.calculationHash ||
+      !matchesCompatibilityFacts(snapshot, report.subject) ||
+      !matchesCompatibilityFacts(targetSnapshot, report.target) ||
       report.subject.personRef.trim().length === 0 ||
       report.target.personRef.trim().length === 0 ||
       report.subject.personRef === report.target.personRef ||
+      !report.requestId.trim() ||
       !report.researchOnly || report.usefulComplete ||
       report.mayPublish || report.maySell) {
     throw new TypeError('Relationship page refuses a mixed-person or promoted compatibility report.');
   }
-  if (report.missing.length < 1 ||
-      report.missing[0] !== '두 명식 사이의 상호작용을 설명하는 source-qualified T10 Claim·Methodology가 아직 승인되지 않았습니다. 궁합 결과나 점수를 만들지 않습니다.' ||
-      report.missing.slice(1).some(item =>
-        item !== '첫 번째 사람의 출생시각 미상: 시주와 관련된 상호 구조 판단을 보류합니다.' &&
-        item !== '두 번째 사람의 출생시각 미상: 시주와 관련된 상호 구조 판단을 보류합니다.')) {
+  const expectedMissing = [
+    '두 명식 사이의 상호작용을 설명하는 source-qualified T10 Claim·Methodology가 아직 승인되지 않았습니다. 궁합 결과나 점수를 만들지 않습니다.',
+    ...(!report.subject.birthTimeKnown
+      ? ['첫 번째 사람의 출생시각 미상: 시주와 관련된 상호 구조 판단을 보류합니다.'] : []),
+    ...(!report.target.birthTimeKnown
+      ? ['두 번째 사람의 출생시각 미상: 시주와 관련된 상호 구조 판단을 보류합니다.'] : []),
+  ];
+  if (JSON.stringify(report.missing) !== JSON.stringify(expectedMissing)) {
     throw new TypeError('Relationship page refuses altered compatibility interpretation text.');
-  }
-  const slots = ['year', 'month', 'day', 'hour'] as const;
-  if (report.subject.pillars.length !== slots.length ||
-      report.target.pillars.length !== slots.length ||
-      !report.subject.pillars.every((item, index) =>
-        item.slot === slots[index] &&
-        item.status === (snapshot.pillars[item.slot].status === 'resolved' ? 'resolved' : 'unavailable'))) {
-    throw new TypeError('Relationship page refuses an incompatible subject fact scope.');
   }
 }
 
@@ -149,10 +174,14 @@ function list(items: readonly string[]): string {
 export function buildRelationshipThreeMenuResearchPage(
   input: RelationshipThreeMenuResearchPageInput,
 ): RelationshipThreeMenuResearchPage {
-  const { subjectSnapshot: snapshot, parents, children, compatibility } = input;
+  const { subjectSnapshot: snapshot, parents, children, compatibility, targetSnapshot } = input;
   assertBoundedFamily(snapshot, parents, 'parents');
   assertBoundedFamily(snapshot, children, 'children');
-  if (compatibility !== undefined) assertBoundedCompatibility(snapshot, compatibility);
+  if (compatibility !== undefined) {
+    assertBoundedCompatibility(snapshot, targetSnapshot, compatibility);
+  } else if (targetSnapshot !== undefined) {
+    throw new TypeError('Relationship page refuses a second person without explicit compatibility scope.');
+  }
 
   const spouseSource = RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1;
   if (spouseSource.length !== 1 ||
