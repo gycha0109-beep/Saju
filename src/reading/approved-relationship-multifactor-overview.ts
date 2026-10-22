@@ -21,8 +21,10 @@ const AXES: readonly RelationshipAxis[] = [
 ];
 
 function sameSet(left: readonly string[], right: readonly string[]): boolean {
-  return left.length === right.length &&
-    [...left].sort().every((value, index) => value === [...right].sort()[index]);
+  if (left.length !== right.length) return false;
+  const sortedLeft = [...left].sort();
+  const sortedRight = [...right].sort();
+  return sortedLeft.every((value, index) => value === sortedRight[index]);
 }
 
 function relationshipAxis(unit: CanonicalReadingSemanticUnitV1): RelationshipAxis | undefined {
@@ -41,6 +43,7 @@ interface ApprovedComposite {
   explanation: string;
   explainabilityRef: string;
   distinctFamilies: number;
+  approvedOrder: number;
 }
 
 /**
@@ -69,8 +72,8 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
   );
   const detailByUnitId = new Map(detailed.units.map(unit => [unit.unitId, unit]));
   const profilesByClaimType = new Map(
-    RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.map(profile =>
-      [profile.claimType, profile] as const),
+    RELATIONSHIP_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1.map((profile, approvedOrder) =>
+      [profile.claimType, { profile, approvedOrder }] as const),
   );
 
   const candidates: ApprovedComposite[] = [];
@@ -85,7 +88,8 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
           unit.predicate !== 'relationship_conclusion' ||
           unit.scenarioRef !== undefined) continue;
 
-      const profile = profilesByClaimType.get(unit.claimType);
+      const approval = profilesByClaimType.get(unit.claimType);
+      const profile = approval?.profile;
       if (profile === undefined || profile.supportingClaimTypes.length < 2 ||
           profile.scenarioPolicy !== 'none' ||
           profile.contradictionPolicy !== 'none' ||
@@ -126,6 +130,7 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
         explanation: clarification,
         explainabilityRef: entry.explainabilityRef,
         distinctFamilies: profile.supportingClaimTypes.length,
+        approvedOrder: approval!.approvedOrder,
       });
     }
   }
@@ -135,6 +140,7 @@ export function buildApprovedRelationshipMultifactorOverviewV1(
   // already-approved supporting family set, never an inferred score or rank.
   candidates.sort((left, right) =>
     right.distinctFamilies - left.distinctFamilies ||
+    left.approvedOrder - right.approvedOrder ||
     left.claimType.localeCompare(right.claimType) ||
     left.unitId.localeCompare(right.unitId),
   );
