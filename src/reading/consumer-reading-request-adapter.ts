@@ -413,6 +413,12 @@ export function normalizeConsumerReadingRequest(
   if (requestId.length === 0) {
     return makeResult(input, normalizedText, 'invalid', ['REQUEST_ID_REQUIRED'], []);
   }
+  // All governed reading entrypoints still produce Korean copy. A foreign
+  // readingLocale must never receive Korean content through a service path
+  // that bypasses the browser/product-host request parser.
+  if (input.readingLocale !== undefined && input.readingLocale !== 'ko-KR') {
+    return makeResult(input, normalizedText, 'invalid', ['READING_LOCALE_NOT_AVAILABLE'], []);
+  }
   if (normalizedText.length === 0) {
     return makeResult(input, normalizedText, 'invalid', ['READING_REQUEST_TEXT_REQUIRED'], []);
   }
