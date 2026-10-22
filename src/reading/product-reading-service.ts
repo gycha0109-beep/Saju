@@ -18,6 +18,10 @@ import {
   buildProductReadingResponse,
   type ProductReadingResponse,
 } from './product-reading-response.js';
+import {
+  buildOfficialReadingSemanticSourceHandoff,
+  type OfficialReadingSemanticSourceHandoff,
+} from './official-reading-semantic-source-handoff.js';
 
 export const PRODUCT_READING_SERVICE_VERSION = 'myeonghwa-product-reading-service-v3';
 
@@ -28,13 +32,32 @@ export interface ProductReadingInternals {
   readonly execution: GovernedReadingExecutionResult;
   readonly delivery: ProductReadingDeliveryResult;
   readonly response: ProductReadingResponse;
+  /** Original Official source reference for the permitted Reader/Records owners, never consumer JSON. */
+  readonly officialSemanticSourceHandoff?: OfficialReadingSemanticSourceHandoff;
 }
 
 function assembleProductReadingInternals(
   execution: GovernedReadingExecutionResult,
 ): ProductReadingInternals {
   const delivery = buildProductReadingDelivery(execution);
-  return { execution, delivery, response: buildProductReadingResponse(delivery) };
+  const officialSemanticSourceHandoff =
+    execution.canonicalSemantics !== undefined &&
+    execution.officialReadingPlan !== undefined &&
+    execution.officialReadingReport !== undefined
+      ? buildOfficialReadingSemanticSourceHandoff(
+          execution.canonicalSemantics,
+          execution.officialReadingPlan,
+          execution.officialReadingReport,
+        )
+      : undefined;
+  return {
+    execution,
+    delivery,
+    response: buildProductReadingResponse(delivery),
+    ...(officialSemanticSourceHandoff === undefined
+      ? {}
+      : { officialSemanticSourceHandoff }),
+  };
 }
 
 /** One governed execution; retained solely for Saju-internal provenance inspection. */
