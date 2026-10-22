@@ -65,7 +65,7 @@ describe('bounded parent/child family observation consumer preview', () => {
     expect(children.maySell).toBe(false);
   });
 
-  it('explains only the user's calculated parent and child scope in separately sourced Korean summaries', () => {
+  it('explains only calculated parent and child scope in separately sourced Korean summaries', () => {
     const person = natal(1990, 14);
     const parent = buildFamilyCanonicalObservationPreview(person, 'parents');
     const child = buildFamilyCanonicalObservationPreview(person, 'children');
