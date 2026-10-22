@@ -49,3 +49,4 @@ export * from './official-reading-detailed-presentation-relationship.js';
 export * from './official-reading-detailed-presentation-business.js';
 export * from './twelve-menu-engine-readiness.js';
 export * from './twelve-menu-reader-cards.js';
+export * from './reading-locale-lexicon.js';
