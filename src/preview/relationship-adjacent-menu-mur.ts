@@ -137,7 +137,7 @@ export function assessLifeStageMenuMur(
   const state = hasFullFacts && hasNatal ? 'partial' :
     current !== undefined || hasNatal ? 'unsupported' : 'insufficient';
   const observedFactPaths = report.periods.length > 0
-    ? ['derivedFacts.luckPillars'] : [];
+    ? ['luckCycle'] : [];
   return output('life-stage:general', state,
     hasFullFacts && hasNatal ? 'calculated_periods_plus_separate_natal' :
       report.periods.length ? 'calculated_facts' : 'none',
