@@ -512,6 +512,77 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(app.get('twelve-reading-compatibility').collectText()).toContain('궁합 점수');
   });
 
+  it('lets two real people read their own separately governed natal relationship meanings without T10', async () => {
+    const app = mountBrowser(async (url, call) => {
+      if (url !== '/api/readings') return {
+        ok: false, status: 401, json: async () => ({}),
+      };
+      const isPartner = call.body.birth.date === '1996-01-09';
+      return {
+        ok: true, status: 200,
+        json: async () => ({
+          state: 'delivered', messageCode: 'READING_DELIVERED',
+          reading: {
+            subject: subjectFor(call.body.birth),
+            sections: [{ state: 'complete', title: '본인의 원국 관계 풀이',
+              blocks: [{ type: 'paragraph',
+                text: isPartner ? '상대방의 실제 승인된 원국 관계 근거' :
+                  '본인의 실제 승인된 원국 관계 근거' }] }],
+            disclosures: [],
+          },
+        }),
+      };
+    });
+    app.get('menu-partner-date').value = '1996-01-09';
+    app.get('menu-partner-unknown').checked = true;
+    await app.get('twelve-compatibility-individual-readings').dispatch('click');
+    expect(app.calls).toHaveLength(0);
+    expect(app.get('twelve-state-compatibility').textContent).toContain('허락');
+    app.get('menu-partner-consent').checked = true;
+    await app.get('twelve-compatibility-individual-readings').dispatch('click');
+    expect(app.calls.map(item => item.url)).toEqual(['/api/readings','/api/readings']);
+    expect(app.calls.map(item => item.body.reading?.text)).toEqual(['연애운','연애운']);
+    expect(app.calls[0]?.body.birth.date).toBe('1990-05-15');
+    expect(app.calls[1]?.body.birth.date).toBe('1996-01-09');
+    expect(app.calls[1]?.body.birth.time).toBeNull();
+    const output = app.get('twelve-reading-compatibility').collectText();
+    expect(output).toContain('본인의 실제 승인된 원국 관계 근거');
+    expect(output).toContain('상대방의 실제 승인된 원국 관계 근거');
+    expect(output).toContain('두 사람 사이의 궁합');
+    expect(app.get('twelve-state-compatibility').dataset.state).toBe('unavailable');
+    expect(app.get('twelve-state-compatibility').textContent).toContain('상호 궁합 해석은 미지원');
+    expect(PRODUCT_TWELVE_MENU_BROWSER_SCRIPT).not.toContain('Bearer ');
+  });
+
+  it('preserves one personal reading when the second person fails and rejects cross-person content', async () => {
+    const app = mountBrowser(async (url, call) => {
+      if (url !== '/api/readings') throw new Error('Unexpected preview call');
+      const other = call.body.birth.date === '1996-01-09';
+      return {
+        ok: true, status: 200,
+        json: async () => ({
+          state: 'delivered', messageCode: 'READING_DELIVERED',
+          reading: {
+            subject: subjectFor(other
+              ? { date: '1997-01-09' } : call.body.birth),
+            sections: [{ state: 'complete', title: '확인된 관계 풀이',
+              blocks: [{ type: 'paragraph', text: '한 명의 개인별 관계 연구 결과' }] }],
+            disclosures: [],
+          },
+        }),
+      };
+    });
+    app.get('menu-partner-date').value = '1996-01-09';
+    app.get('menu-partner-consent').checked = true;
+    await app.get('twelve-compatibility-individual-readings').dispatch('click');
+    const result = app.get('twelve-reading-compatibility').collectText();
+    expect(result).toContain('한 명의 개인별 관계 연구 결과');
+    expect(result).toContain('다른 명식의 결과가 돌아와 표시하지 않았습니다');
+    expect(app.get('twelve-state-compatibility').dataset.state).toBe('unavailable');
+    expect(app.calls).toHaveLength(2);
+    expect(app.get('twelve-compatibility-individual-readings').disabled).toBe(false);
+  });
+
   it('fails closed on a restricted preview route without exposing service bearer credentials', async () => {
     const app = mountBrowser(async () => ({
       ok: false, status: 401,

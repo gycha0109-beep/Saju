@@ -157,6 +157,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
   function invalidate(view) {
     view.sequence++;
     view.button.disabled = false;
+    if (view.individualButton) view.individualButton.disabled = false;
     view.output.replaceChildren();
     setState(view, 'unavailable', '입력이 바뀌었습니다. 이 메뉴를 다시 요청해 주세요.');
   }
@@ -445,6 +446,86 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     setState(view, 'partial', '두 사람의 계산 사실만 확인했습니다. 궁합 해석은 미지원입니다.');
   }
 
+  async function fetchOwnRelationshipReading(birth) {
+    const response = await fetch('/api/readings', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        birth: birth,
+        reading: {
+          text: '연애운',
+          outputPreferences: { preferredDetail:
+            document.getElementById('reading-detail').value }
+        }
+      })
+    });
+    if (!response.ok) {
+      throw new Error(response.status === 401 || response.status === 403
+        ? '개인별 관계 풀이의 접근 권한이 없습니다.'
+        : '해당 인물의 개인별 관계 풀이를 불러오지 못했습니다.');
+    }
+    const payload = await response.json();
+    if (!matchesRequestedBirth(payload, birth)) {
+      throw new Error('요청한 사람과 다른 명식의 결과가 돌아와 표시하지 않았습니다.');
+    }
+    return payload;
+  }
+
+  async function showCompatibilityIndividualReadings(view) {
+    let owner, partner;
+    try {
+      owner = readOwnBirth();
+      partner = readPartner(view);
+    } catch (error) {
+      view.output.replaceChildren();
+      setState(view, 'unavailable', error.message || '두 사람의 입력을 확인해 주세요.');
+      return;
+    }
+    const epoch = currentEpoch;
+    const sequence = ++view.sequence;
+    view.button.disabled = true;
+    view.individualButton.disabled = true;
+    view.output.replaceChildren();
+    setState(view, 'unavailable', '두 사람의 개인별 원국 관계 풀이를 불러오고 있습니다.');
+    try {
+      const outcomes = await Promise.allSettled([
+        fetchOwnRelationshipReading(owner),
+        fetchOwnRelationshipReading(partner)
+      ]);
+      if (epoch !== currentEpoch || sequence !== view.sequence) return;
+      note(view.output,
+        '아래는 각자의 원국에서 출처가 허용한 연애·관계 해석입니다. ' +
+        '두 결과를 함께 보여주더라도 두 사람 사이의 궁합, 결혼 결과, 갈등 또는 점수를 판정하지 않습니다.',
+        'disclosure');
+      ['본인의 관계 풀이', '상대방의 관계 풀이'].forEach(function(title, index) {
+        const item = element('section', undefined, 'domain-card');
+        item.appendChild(element('h3', title));
+        const outcome = outcomes[index];
+        if (outcome.status === 'fulfilled') {
+          const subView = {
+            output: item, status: element('p'),
+            button: view.individualButton, sequence: 0
+          };
+          renderPayload(subView, outcome.value);
+          note(item, subView.status.textContent, 'field-hint');
+        } else {
+          note(item,
+            outcome.reason && outcome.reason.message ||
+              '이 사람의 관계 풀이를 불러오지 못했습니다.',
+            'notice');
+        }
+        view.output.appendChild(item);
+      });
+      setState(view, 'unavailable',
+        '상호 궁합 해석은 미지원입니다. 위 두 결과는 각자의 독립된 원국 풀이입니다.');
+    } finally {
+      if (sequence === view.sequence) {
+        view.button.disabled = false;
+        view.individualButton.disabled = false;
+      }
+    }
+  }
+
   menuSpecs.forEach(function(spec) {
     const article = element('article');
     article.id = 'twelve-card-' + spec.id;
@@ -493,7 +574,21 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
       });
       article.appendChild(topics);
     }
-    if (spec.id === 'compatibility') appendPartnerInputs(view);
+    if (spec.id === 'compatibility') {
+      appendPartnerInputs(view);
+      const individual = element('button', '두 사람 각자의 연애·관계 풀이 보기');
+      individual.type = 'button';
+      individual.id = 'twelve-compatibility-individual-readings';
+      individual.className = 'secondary';
+      view.individualButton = individual;
+      article.appendChild(individual);
+      individual.addEventListener('click', function() {
+        return showCompatibilityIndividualReadings(view);
+      });
+      note(article,
+        '이 버튼은 두 사람의 독립된 원국 풀이만 요청합니다. 궁합 미리보기와 별개입니다.',
+        'field-hint');
+    }
     article.appendChild(button);
     article.appendChild(output);
     cards.appendChild(article);
