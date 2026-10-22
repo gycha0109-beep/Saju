@@ -1,3 +1,5 @@
+import { PRODUCT_TWELVE_MENU_BROWSER_SCRIPT } from './twelve-menu-browser-app.js';
+
 export const PRODUCT_HOST_PAGE = `<!doctype html>
 <html lang="ko">
 <head>
@@ -440,4 +442,4 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       fiveDomainSubmit.disabled = false;
     }
   });
-})();`;
+})();` + PRODUCT_TWELVE_MENU_BROWSER_SCRIPT;

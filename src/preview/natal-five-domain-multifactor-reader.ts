@@ -176,6 +176,49 @@ function renderWealthReadingGuide(report: WealthNatalMultifactorReport): string 
     '</p></section>';
 }
 
+function renderBusinessReadingGuide(report: BusinessNatalMultifactorReport): string {
+  const guide = report.readingGuide;
+  if (guide === undefined) return '';
+  const core = report.sections[0];
+  guard(core !== undefined && core.claimType === guide.coreClaimType &&
+    core.axis !== 'coordination' && core.sourceIds.length > 0 &&
+    guide.paragraph.includes(core.headline) &&
+    core.observedPositions.every(position => guide.paragraph.includes(position)) &&
+    guide.supporting.length === report.sections.length - 1,
+    'Business guide must describe the selected source-owned core');
+
+  const usedPaths = new Set(core.observedFactPaths);
+  guide.supporting.forEach((support, index) => {
+    const section = report.sections[index + 1];
+    guard(section !== undefined && section.claimType === support.claimType &&
+      section.sourceIds.length > 0 &&
+      support.distinctObservedFactPaths.length > 0 &&
+      support.distinctObservedFactPaths.length === support.distinctObservedPositions.length &&
+      guide.paragraph.includes(section.headline),
+      'Business support does not match a qualified selected T8');
+    const newFacts = section.observedFactPaths.flatMap((path, factIndex) => {
+      if (usedPaths.has(path)) return [];
+      const position = section.observedPositions[factIndex];
+      guard(position !== undefined, 'Business chart path has no position');
+      usedPaths.add(path);
+      return [{ path, position }];
+    });
+    guard(JSON.stringify(newFacts.map(fact => fact.path)) ===
+      JSON.stringify(support.distinctObservedFactPaths) &&
+      JSON.stringify(newFacts.map(fact => fact.position)) ===
+      JSON.stringify(support.distinctObservedPositions) &&
+      support.distinctObservedPositions.every(position => guide.paragraph.includes(position)),
+      'Business support reuses or changes its actual observations');
+  });
+  guard(report.state === 'complete' && guide.supporting.length === 2 ||
+    report.state === 'partial' && guide.supporting.length < 2,
+    'Business guide cannot override the actual MUR state');
+
+  return '<section class="reading-guide" aria-label="사업운 읽기 요약"><h3>' +
+    escapeHtml(guide.title) + '</h3><p>' + escapeHtml(guide.paragraph) +
+    '</p></section>';
+}
+
 function renderDomain(domain: string, label: string, report: ResearchReport, birthTimeKnown: boolean): string {
   guard(report.researchOnly === true && report.usefulComplete === false &&
     report.mayPublish === false && report.maySell === false &&
@@ -198,7 +241,9 @@ function renderDomain(domain: string, label: string, report: ResearchReport, bir
   const readingGuide = domain === 'career'
     ? renderCareerReadingGuide(report as CareerMultifactorReport)
     : domain === 'wealth'
-      ? renderWealthReadingGuide(report as WealthNatalMultifactorReport) : '';
+      ? renderWealthReadingGuide(report as WealthNatalMultifactorReport)
+      : domain === 'business'
+        ? renderBusinessReadingGuide(report as BusinessNatalMultifactorReport) : '';
   return '<article aria-labelledby="domain-' + domain + '" class="domain">' +
     '<h2 id="domain-' + domain + '">' + escapeHtml(label) + '</h2>' +
     '<p><strong>' + escapeHtml(STATE_LABELS[report.state]) + '</strong></p>' +

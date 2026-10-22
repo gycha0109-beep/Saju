@@ -59,6 +59,16 @@ describe('one-person annual to monthly source-bound research reading', () => {
     expect(html).toContain('id="monthly-reading"');
     expect(html).toContain('href="#monthly-reading"');
     expect(html).toContain(report.annual.sections[0]!.text);
+    expect(html).toContain('올해 문구의 계산 근거와 연구 출처');
+    expect(html).toContain('내부 연구 프로필 후보(Official Claim 실행 또는 승인 아님)');
+    expect(html).toContain('명하 내부 연구 정책, 독립 고전 근거 아님');
+    for (const section of report.annual.sections) {
+      expect(html).toContain(section.researchProfileId);
+      expect(html).toContain(section.candidateClaimType);
+      expect(html).toContain(section.policySourceId);
+      expect(html).toContain(section.methodologyId);
+      for (const path of section.calculationFactPaths) expect(html).toContain(path);
+    }
     for (const item of themes) {
       expect(html).toContain(item.title);
       expect(html).toContain(item.text);
@@ -83,6 +93,9 @@ describe('one-person annual to monthly source-bound research reading', () => {
   it('keeps genuine monthly phases but suppresses unsupported birth-hour relations', () => {
     const { report } = run(9, 9, false);
     expect(report.annual.unavailablePillars).toContain('hour');
+    expect(report.annual.sections.some(section =>
+      section.calculationFactPaths.includes('temporal.annualBranchRelations.hour')))
+      .toBe(false);
     expect(report.monthly.sections.some(x => x.relatedPillar === 'hour')).toBe(false);
     expect(report.monthly.missing.join(' ')).toContain('시주');
     expect(report.researchOnly).toBe(true);

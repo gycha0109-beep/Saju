@@ -57,6 +57,20 @@ describe('opt-in consumer Annual exploration', () => {
     });
     expect(result.sections[0]?.text.length).toBeGreaterThan(30);
     expect(result.sections.every((section) => section.text.trim().length > 0)).toBe(true);
+    expect(result.sections[0]).toMatchObject({
+      evidenceStatus: 'research_profile_projection_not_an_executed_official_claim',
+      candidateClaimType: 'GENERAL_ANNUAL_THEME_ACTIVATION',
+      calculationFactPaths: [
+        'temporal.targetYear', 'temporal.annualPillar', 'temporal.annualStemTenGod',
+      ],
+      policySourceId: 'SRC-MYEONGHA-ANNUAL-INTERPRETATION-POLICY-V1',
+      methodologyId: 'M-GENERAL-ANNUAL-T9-MYEONGHA-POLICY-V1',
+    });
+    expect(result.sections[0]?.researchProfileId).toBe(
+      GENERAL_ANNUAL_CLAIM_NARRATIVE_PROFILES.find(
+        profile => profile.semanticKeys?.includes(result.sections[0]!.id),
+      )?.profileId,
+    );
   });
 
   it('reuses every existing Ten-God narrative without inventing missing copy', () => {
@@ -112,6 +126,14 @@ describe('opt-in consumer Annual exploration', () => {
     expect(tension?.kind).toBe('tension');
     expect(tension?.title).toContain('일주');
     expect(tension?.text).toContain('특정 사건의 예고로 보지');
+    expect(tension?.candidateClaimType).toBe('GENERAL_ANNUAL_BRANCH_CLASH_TENSION');
+    expect(tension?.calculationFactPaths).toEqual([
+      'temporal.targetYear', 'temporal.annualPillar',
+      'temporal.annualBranchRelations.day',
+    ]);
+    expect(tension?.evidenceStatus).toBe(
+      'research_profile_projection_not_an_executed_official_claim',
+    );
   });
 
   it('rejects contradictory relation payloads and never grants publication or commerce rights', () => {
