@@ -445,6 +445,110 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     setState(view, 'partial', '두 사람의 계산 사실만 확인했습니다. 궁합 해석은 미지원입니다.');
   }
 
+  async function appendBoundedTimeFamilyPreview(view, spec, birth, epoch, sequence) {
+    const family = spec.id === 'family';
+    const path = family ? '/api/preview/family-observations' : '/api/preview/life-stage';
+    let response;
+    try {
+      response = await fetch(path, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(family
+          ? { birth: birth, scope: view.scope.value === '부모운' ? 'parents' : 'children' }
+          : { birth: birth })
+      });
+    } catch {
+      // Preview is optional; its failure cannot remove the actual governed reply.
+      return;
+    }
+    if (epoch !== currentEpoch || sequence !== view.sequence) return;
+    if (response.status === 401 || response.status === 403 || response.status === 404) {
+      note(view.output,
+        '상세 계산 미리보기는 인증된 내부 연구 환경에서만 확인할 수 있습니다.',
+        'field-hint');
+      return;
+    }
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (epoch !== currentEpoch || sequence !== view.sequence) return;
+    if (payload.lifecycle !== 'internal_research_only' ||
+        payload.researchOnly !== true || payload.usefulComplete !== false ||
+        payload.mayPublish !== false || payload.maySell !== false ||
+        !payload.report || payload.report.researchOnly !== true ||
+        payload.report.usefulComplete !== false ||
+        payload.report.mayPublish !== false || payload.report.maySell !== false) {
+      return;
+    }
+    const report = payload.report;
+    const section = element('section', undefined, 'domain-card');
+    if (family) {
+      const selectedScope = view.scope.value === '부모운' ? 'parents' : 'children';
+      if (payload.scope !== selectedScope || report.scope !== selectedScope ||
+          payload.mayClaimFamilyOutcome !== false ||
+          report.interpretationCoverage !== 'insufficient_evidence' ||
+          !Array.isArray(report.observations) || !Array.isArray(report.missing)) return;
+      section.appendChild(element('h3',
+        selectedScope === 'parents' ? '부모 관련 명식 계산 · 연구' :
+          '자녀 관련 명식 계산 · 연구'));
+      note(section, report.observationSummary);
+      report.observations.forEach(function(observation) {
+        if (observation && typeof observation.text === 'string' &&
+            ['year', 'month', 'hour'].includes(observation.pillarSlot)) {
+          note(section, observation.text);
+        }
+      });
+      list(section, report.missing);
+      note(section, '이 계산 사실은 부모·자녀의 성격이나 가족 관계를 판정하지 않습니다.',
+        'disclosure');
+    } else {
+      if (payload.interpretationStatus !== 'source_authority_not_established' ||
+          payload.mayGrantOfficialAuthority !== false ||
+          report.interpretationStatus !== 'source_authority_not_established' ||
+          !Array.isArray(report.periods) || !Array.isArray(report.missing) ||
+          !payload.natalContext ||
+          payload.natalContext.snapshotId !== report.snapshotId ||
+          payload.natalContext.calculationHash !== report.calculationHash ||
+          !Array.isArray(payload.natalContext.sections)) return;
+      section.appendChild(element('h3', '지금과 다음 대운 · 계산상 구간'));
+      note(section, '대운의 시작·종료 시각과 간지는 계산 사실이며 ' +
+        '미래 사건이나 운의 좋고 나쁨을 예측하지 않습니다.', 'disclosure');
+      if (typeof report.transitionSummary === 'string') {
+        note(section, report.transitionSummary);
+      }
+      report.periods.forEach(function(period) {
+        if (!period || !['current', 'next'].includes(period.kind) ||
+            typeof period.text !== 'string') return;
+        const item = element('section');
+        item.appendChild(element('h3', period.kind === 'current'
+          ? '현재 계산 구간' : '다음 계산 구간'));
+        note(item, period.text);
+        section.appendChild(item);
+      });
+      list(section, report.missing);
+      const natal = payload.natalContext;
+      if (natal.availability === 'bounded_natal_t8_research') {
+        const original = element('section');
+        original.appendChild(element('h3', '같은 명식의 원국 해석 · 시기 해석과 별개'));
+        note(original, '아래는 기존 원국 연구 풀이입니다. 대운 시기별 의미를 뜻하지 않습니다.',
+          'disclosure');
+        natal.sections.forEach(function(item) {
+          if (!item || typeof item.title !== 'string' ||
+              typeof item.paragraph !== 'string' ||
+              !Array.isArray(item.sourceIds) || item.sourceIds.length < 2 ||
+              !Array.isArray(item.factPaths) || item.factPaths.length < 2) return;
+          original.appendChild(element('h4', item.title));
+          note(original, item.paragraph);
+        });
+        section.appendChild(original);
+      } else {
+        note(section, '같은 명식의 원국 해석 근거가 충분하지 않습니다.', 'notice');
+      }
+    }
+    view.output.appendChild(section);
+    setState(view, 'partial',
+      '내부 연구용 계산 미리보기만 표시합니다. 공식 해석·판매 승인이 아닙니다.');
+  }
+
   menuSpecs.forEach(function(spec) {
     const article = element('article');
     article.id = 'twelve-card-' + spec.id;
@@ -560,6 +664,11 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
             throw new Error('현재 입력한 생년월일·출생시각과 다른 명식의 풀이가 반환되어 표시하지 않았습니다.');
           }
           renderPayload(view, payload);
+          if ((spec.id === 'family' || spec.id === 'life_stage') &&
+              payload.state !== 'delivered' &&
+              payload.state !== 'delivered_with_fallback') {
+            await appendBoundedTimeFamilyPreview(view, spec, requestBirth, epoch, sequence);
+          }
         }
       } catch (error) {
         if (epoch !== currentEpoch || sequence !== view.sequence) return;
