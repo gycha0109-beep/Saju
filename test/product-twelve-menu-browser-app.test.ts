@@ -463,6 +463,71 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(app.get('twelve-state-compatibility').dataset.state).toBe('unavailable');
   });
 
+  it('reads general relationship and spouse-palace scopes separately for the same owner without T9 promotion', async () => {
+    const app = mountBrowser(async (url, call) => {
+      expect(url).toBe('/api/readings');
+      const spouse = call.body.reading?.text === '배우자운';
+      return { ok: true, status: 200, json: async () => ({
+        state: 'delivered', messageCode: 'READING_DELIVERED',
+        reading: {
+          subject: subjectFor(call.body.birth),
+          sections: [{
+            state: 'complete', title: spouse ? '배우자궁 기존 위치' : '일반 관계 원국',
+            blocks: [{ type: 'paragraph', text: spouse
+              ? '본인 배우자궁의 허가된 위치 설명'
+              : '본인 관계 원국의 허가된 설명' }],
+          }],
+          disclosures: [],
+        },
+      }) };
+    });
+    await app.get('twelve-spouse-separate-readings').dispatch('click');
+    expect(app.calls.map(x => x.url)).toEqual(['/api/readings','/api/readings']);
+    expect(app.calls.map(x => x.body.reading?.text)).toEqual(['연애운','배우자운']);
+    expect(app.calls[0]?.body.birth).toEqual(app.calls[1]?.body.birth);
+    const shown = app.get('twelve-reading-spouse').collectText();
+    expect(shown).toContain('본인 관계 원국의 허가된 설명');
+    expect(shown).toContain('본인 배우자궁의 허가된 위치 설명');
+    expect(shown).toContain('배우자의 성격·결혼 시기·결혼 결과를 판단하지 않습니다');
+    expect(app.get('twelve-state-spouse').dataset.state).toBe('partial');
+    expect(app.get('twelve-state-spouse').textContent).toContain('배우자 운명 종합은 미지원');
+    expect(app.get('twelve-spouse-separate-readings').disabled).toBe(false);
+  });
+
+  it('preserves individual relationship reading when spouse result is unsupported or belongs to another chart', async () => {
+    const app = mountBrowser(async (_url, call) => {
+      if (call.body.reading?.text === '배우자운') {
+        return { ok: true, status: 200, json: async () => ({
+          state: 'delivered',
+          reading: {
+            subject: subjectFor({date: '1997-01-09'}),
+            sections: [{ state: 'complete', title: '다른 사람의 배우자',
+              blocks: [{type:'paragraph',text:'혼입되면 안 되는 운명'}] }],
+          },
+        }) };
+      }
+      return { ok: true, status: 200, json: async () => ({
+        state: 'delivered',
+        reading: {
+          subject: subjectFor(call.body.birth),
+          sections: [{state:'complete',title:'본인의 연애',
+            blocks:[{type:'paragraph',text:'근거가 있는 개인별 관계 문단'}]}],
+          disclosures: [],
+        },
+      }) };
+    });
+    await app.get('twelve-spouse-separate-readings').dispatch('click');
+    const shown = app.get('twelve-reading-spouse').collectText();
+    expect(shown).toContain('근거가 있는 개인별 관계 문단');
+    expect(shown).toContain('요청한 본인 명식과 다른 풀이를 표시하지 않았습니다');
+    expect(shown).not.toContain('혼입되면 안 되는 운명');
+    expect(app.get('twelve-state-spouse').dataset.state).toBe('partial');
+    app.get('birth-date').value = '1999-09-09';
+    await app.get('birth-date').dispatch('input');
+    expect(app.get('twelve-reading-spouse').children).toHaveLength(0);
+    expect(app.get('twelve-state-spouse').dataset.state).toBe('unavailable');
+  });
+
   it('requires partner birth permission and uses only the separate preview chart transport', async () => {
     const app = mountBrowser(async (_url, call) => {
       if (call.url !== '/api/preview/compatibility-charts') throw new Error('Wrong route');
