@@ -1000,6 +1000,19 @@ export interface R070FamilyMenuScopeExclusion {
   exclusionIsMenuUnavailabilityReason: false;
 }
 
+export interface R070FamilyMenuUnresolvedCanonicalInput {
+  factPath: string;
+  canonicalInputKind: 'pillar' | 'visible_t5' | 'hidden_stem_membership';
+  /** Every still-in-scope original clause referring to this exact missing fact. */
+  affectedOriginalSources: readonly {
+    sourceLayerId: string;
+    sourceSurface: string;
+  }[];
+  /** An unknown fact cannot be filled by another source or another pillar. */
+  substituteAnotherPillarAuthorized: false;
+  familyMeaningAuthorized: false;
+}
+
 export interface R070FamilyMenuSupportHandoff {
   requestedScope: FamilyResearchScope;
   historicalSex: 'male' | 'female' | 'unspecified';
@@ -1008,6 +1021,8 @@ export interface R070FamilyMenuSupportHandoff {
   unsupportedReasons: readonly R070FamilyMenuUnsupportedReason[];
   /** Historical sex exclusions are separate from menu-blocking prerequisites. */
   excludedHistoricalSources: readonly R070FamilyMenuScopeExclusion[];
+  /** Exact unfilled Canonical paths deduplicated across applicable source wording. */
+  unresolvedCanonicalInputs: readonly R070FamilyMenuUnresolvedCanonicalInput[];
   /** Unassigned CONFIGURATION-OUTCOME stays supplemental, never a family menu rule. */
   unassignedConfigurationSources: readonly R070FamilyConfigurationHold[];
   missingPrerequisites: readonly string[];
@@ -1037,6 +1052,34 @@ function r070FamilyMenuSupportHandoff(
     },
   ];
   const excludedHistoricalSources: R070FamilyMenuScopeExclusion[] = [];
+  const applicableSourceHolds = blockers.sourceConditionHolds.filter(item =>
+    item.blockerKind !== 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE');
+  const unresolvedCanonicalInputs: R070FamilyMenuUnresolvedCanonicalInput[] =
+    [...new Set(applicableSourceHolds.flatMap(item => item.unresolvedFactPaths))]
+      .map(factPath => {
+        const canonicalInputKind = factPath.startsWith('pillars.')
+          ? 'pillar' as const
+          : factPath.startsWith('derivedFacts.tenGods.')
+            ? 'visible_t5' as const
+            : factPath.startsWith('derivedFacts.hiddenStems.')
+              ? 'hidden_stem_membership' as const
+              : undefined;
+        if (canonicalInputKind === undefined) {
+          throw new TypeError('R070 menu input gap must identify an existing Canonical fact path.');
+        }
+        return {
+          factPath,
+          canonicalInputKind,
+          affectedOriginalSources: applicableSourceHolds
+            .filter(item => item.unresolvedFactPaths.includes(factPath))
+            .map(item => ({
+              sourceLayerId: item.sourceLayerId,
+              sourceSurface: item.sourceSurface,
+            })),
+          substituteAnotherPillarAuthorized: false as const,
+          familyMeaningAuthorized: false as const,
+        };
+      });
   for (const item of blockers.sourceConditionHolds) {
     if (item.blockerKind === 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE') {
       excludedHistoricalSources.push({
@@ -1088,6 +1131,7 @@ function r070FamilyMenuSupportHandoff(
     supportState: 'UNAVAILABLE_RESEARCH_ONLY',
     unsupportedReasons,
     excludedHistoricalSources,
+    unresolvedCanonicalInputs,
     unassignedConfigurationSources: blockers.configurationHolds,
     missingPrerequisites: [...new Set([
       ...unsupportedReasons.flatMap(item => item.missingPrerequisites),
