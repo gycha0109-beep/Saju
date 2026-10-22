@@ -646,6 +646,119 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     }
   });
 
+  it('keeps R070 research engine transfer separated by Canonical input, source-method and authority hold', () => {
+    const cases = [
+      { year: 1988, day: 8, sex: 'male' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'female' as const, timeKnown: true },
+      { year: 1993, day: 15, sex: 'unspecified' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'female' as const, timeKnown: false },
+    ];
+    for (const input of cases) {
+      const snapshot = chart(input);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const transfer = report.engineTransferBoundary;
+        const menu = report.menuSupportHandoff;
+        expect(transfer.route).toBe('R070_RESEARCH_ONLY_NOT_EXECUTABLE');
+        expect(transfer.requestedScope).toBe(scope);
+        expect(transfer.sourceSnapshotId).toBe(snapshot.snapshotId);
+        expect(transfer.sourceCalculationHash).toBe(snapshot.calculationHash);
+        expect(transfer.unresolvedCanonicalInputs).toEqual(menu.unresolvedCanonicalInputs);
+        expect(transfer.canonicalInputAndConceptHolds).toEqual(
+          menu.unsupportedReasons.filter(reason => reason.category === 'CANONICAL_INPUT'),
+        );
+        expect(transfer.sourceAndMethodHolds).toEqual(
+          menu.unsupportedReasons.filter(reason =>
+            reason.category === 'SOURCE_APPLICABILITY' ||
+            reason.category === 'SOURCE_CONTEXT' ||
+            reason.category === 'METHOD_SELECTION'),
+        );
+        expect(transfer.officialAuthorityHold).toEqual(
+          menu.unsupportedReasons.find(reason =>
+            reason.reasonCode === 'R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED'),
+        );
+        expect(transfer.officialAuthorityHold.category).toBe('OFFICIAL_AUTHORITY');
+        expect(transfer.excludedHistoricalSources).toEqual(menu.excludedHistoricalSources);
+        expect(transfer.unassignedConfigurationSources)
+          .toEqual(menu.unassignedConfigurationSources);
+        expect(transfer.prerequisiteTrace).toEqual(menu.prerequisiteTrace);
+        expect(transfer.canonicalInputAndConceptHolds.every(reason =>
+          reason.category === 'CANONICAL_INPUT')).toBe(true);
+        expect(transfer.sourceAndMethodHolds.every(reason =>
+          reason.category !== 'CANONICAL_INPUT' &&
+          reason.category !== 'OFFICIAL_AUTHORITY')).toBe(true);
+        expect(transfer.unresolvedCanonicalInputs.every(fact =>
+          fact.substituteAnotherPillarAuthorized === false &&
+          fact.familyMeaningAuthorized === false)).toBe(true);
+        expect(transfer.prerequisiteTrace.every(trace =>
+          trace.repetitionIsIndependentEvidence === false &&
+          trace.familyMeaningAuthorized === false)).toBe(true);
+        expect(transfer.researchEvidenceMayBecomeFamilyClaim).toBe(false);
+        expect(transfer.canSelectHistoricalMethod).toBe(false);
+        expect(transfer.canGrantFamilyT8Authority).toBe(false);
+        expect(transfer.canEnableMenu).toBe(false);
+        expect(transfer.canPublishOrSell).toBe(false);
+        expect(report.familyT8Admitted).toBe(false);
+        expect(report.mayGrantOfficialAuthority).toBe(false);
+        expect(report.mayMarkMenuAvailable).toBe(false);
+        expect(report.mayPersist).toBe(false);
+        expect(report.mayPublish).toBe(false);
+        expect(report.maySell).toBe(false);
+      }
+    }
+  });
+
+  it('does not equate unimplemented fetal concept, unknown hour, and missing hidden membership', () => {
+    const maleParent = evaluateFamilySourceScopeV1(
+      chart({ year: 1990, day: 15, sex: 'male' }), 'parents');
+    const fetalGap = maleParent.engineTransferBoundary.canonicalInputAndConceptHolds
+      .find(reason => reason.sourceSurfaces.includes('胎為母'));
+    expect(fetalGap?.reasonCode).toBe('R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE');
+    expect(fetalGap?.unresolvedFactPaths).toEqual([]);
+    expect(maleParent.engineTransferBoundary.unresolvedCanonicalInputs
+      .some(item => item.factPath.includes('fetus'))).toBe(false);
+
+    const unknownHour = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const child = evaluateFamilySourceScopeV1(unknownHour, 'children');
+    const transfer = child.engineTransferBoundary;
+    expect(transfer.unresolvedCanonicalInputs.map(item => item.factPath))
+      .toEqual(child.menuSupportHandoff.unresolvedCanonicalInputs.map(item => item.factPath));
+    expect(transfer.unresolvedCanonicalInputs.some(item =>
+      item.factPath === 'pillars.hour' && item.canonicalInputKind === 'pillar')).toBe(true);
+    expect(transfer.unresolvedCanonicalInputs.some(item =>
+      item.factPath === 'derivedFacts.tenGods.hour.branch' &&
+      item.canonicalInputKind === 'visible_t5')).toBe(true);
+    expect(transfer.unresolvedCanonicalInputs.some(item =>
+      item.factPath === 'derivedFacts.hiddenStems.hour' &&
+      item.canonicalInputKind === 'hidden_stem_membership')).toBe(true);
+    expect(transfer.canonicalInputAndConceptHolds.some(reason =>
+      reason.sourceSurfaces.includes('時為子息') &&
+      reason.unresolvedFactPaths.includes('pillars.hour'))).toBe(true);
+    expect(transfer.sourceAndMethodHolds.some(reason =>
+      reason.reasonCode === 'R070_MENU_HISTORICAL_METHODS_NOT_RECONCILED' &&
+      reason.sourceSurfaces.includes('我生者為子'))).toBe(true);
+    expect(transfer.excludedHistoricalSources.map(source => source.sourceSurface))
+      .toEqual(['時為子孫']);
+    const derivedFacts = { ...unknownHour.derivedFacts };
+    delete derivedFacts.hiddenStems;
+    const absent = evaluateFamilySourceScopeV1(
+      { ...unknownHour, derivedFacts }, 'children');
+    const absentTransfer = absent.engineTransferBoundary;
+    expect(absentTransfer.unresolvedCanonicalInputs.filter(item =>
+      item.canonicalInputKind === 'hidden_stem_membership').map(item => item.factPath))
+      .toEqual([
+        'derivedFacts.hiddenStems.year',
+        'derivedFacts.hiddenStems.month',
+        'derivedFacts.hiddenStems.day',
+        'derivedFacts.hiddenStems.hour',
+      ]);
+    expect(absentTransfer.excludedHistoricalSources.map(source => source.sourceSurface))
+      .toEqual(['時為子孫']);
+    expect(absentTransfer.canGrantFamilyT8Authority).toBe(false);
+    expect(absentTransfer.canEnableMenu).toBe(false);
+    expect(absentTransfer.canPublishOrSell).toBe(false);
+  });
+
   it('traces each R070 menu prerequisite back to eligible source and method reasons without evidence weighting', () => {
     const samples = [
       { year: 1990, day: 15, sex: 'male' as const, timeKnown: true },
