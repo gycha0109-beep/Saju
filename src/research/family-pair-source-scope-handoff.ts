@@ -282,6 +282,116 @@ export function evaluateFamilySourceScopeV1(
   };
 }
 
+export interface R069SingleChartScopeObservation {
+  personRole: 'subject' | 'target';
+  originalHistoricalSexScope: string;
+  historicalScopeMatch: 'matched' | 'mismatched' | 'unspecified';
+  disposition: 'BOUNDED_FACT_OBSERVED' | 'INCONCLUSIVE' | 'NARROW_OR_REPLACE';
+  observedFactPaths: readonly string[];
+  observedTenGodPositions: readonly {
+    path: string;
+    slot: PillarSlot;
+    channel: 'stem' | 'branch';
+    value: TenGod;
+  }[];
+  missingPrerequisites: readonly string[];
+  /** Neither a one-person spouse prediction nor a T10 relation is admitted. */
+  oneChartSpouseMeaningAuthorized: false;
+  pairwiseMeaningAuthorized: false;
+}
+
+/**
+ * Match a historical R069 one-chart passage against each person's actual
+ * chart separately. The unapproved spouse-star method is never selected.
+ * The T5 observations are only existing Canonical categories and paths.
+ */
+function observeR069SingleChartScope(
+  snapshot: CanonicalSajuSnapshot,
+  personRole: 'subject' | 'target',
+  claim: typeof R069_DIRECT_CLAIMS[number],
+): R069SingleChartScopeObservation {
+  const actualSex = snapshot.input.sexForTraditionalCalculation ?? 'unspecified';
+  const expectedSex = claim.historicalSexScope === 'MALE_CHART'
+    ? 'male' : 'female';
+  const historicalScopeMatch = actualSex === 'unspecified'
+    ? 'unspecified' as const
+    : actualSex === expectedSex ? 'matched' as const : 'mismatched' as const;
+  const base = {
+    personRole,
+    originalHistoricalSexScope: claim.historicalSexScope,
+    historicalScopeMatch,
+    oneChartSpouseMeaningAuthorized: false as const,
+    pairwiseMeaningAuthorized: false as const,
+  };
+  if (historicalScopeMatch !== 'matched') {
+    return {
+      ...base, disposition: 'NARROW_OR_REPLACE',
+      observedFactPaths: [], observedTenGodPositions: [],
+      missingPrerequisites: ['R069_HISTORICAL_SEX_SCOPE_NOT_MATCHED'],
+    };
+  }
+  const contextLimitations = [
+    'SPOUSE_STAR_CONTEXT_SETTLEMENT',
+    'MODERN_PARTNER_TRANSLATION',
+    'PAIRWISE_COMPATIBILITY_BRIDGE',
+  ];
+  if (claim.claimType === 'DAY_DOMAIN') {
+    const pillar = snapshot.pillars.day;
+    return pillar.status === 'resolved'
+      ? {
+          ...base, disposition: 'BOUNDED_FACT_OBSERVED',
+          observedFactPaths: ['pillars.day'],
+          observedTenGodPositions: [],
+          missingPrerequisites: contextLimitations,
+        }
+      : {
+          ...base, disposition: 'INCONCLUSIVE',
+          observedFactPaths: [], observedTenGodPositions: [],
+          missingPrerequisites: ['R069_DAY_PILLAR_NOT_RESOLVED', ...contextLimitations],
+        };
+  }
+  if (claim.claimType !== 'SPOUSE_STAR_RELATION') {
+    return {
+      ...base, disposition: 'INCONCLUSIVE',
+      observedFactPaths: [], observedTenGodPositions: [],
+      missingPrerequisites: [
+        'R069_CONFIGURATION_METHOD_NOT_ESTABLISHED',
+        'CONFIGURATION_OUTCOME_SETTLEMENT',
+        ...contextLimitations,
+      ],
+    };
+  }
+  const allowed: readonly TenGod[] = claim.id === 'MALE-I-CONTROL-WIFE'
+    ? ['편재', '정재'] : ['편관', '정관'];
+  const chart = snapshot.derivedFacts.tenGods;
+  const observedTenGodPositions: R069SingleChartScopeObservation['observedTenGodPositions'][number][] = [];
+  const unresolved: string[] = [];
+  for (const slot of TEN_GOD_OBSERVATION_SLOTS) {
+    for (const channel of ['stem', 'branch'] as const) {
+      if (slot === 'day' && channel === 'stem') continue;
+      const fact = chart.status === 'resolved' ? chart.value[slot][channel] : undefined;
+      const path = 'derivedFacts.tenGods.' + slot + '.' + channel;
+      if (fact?.status !== 'resolved') {
+        unresolved.push(path);
+      } else if ((allowed as readonly string[]).includes(fact.value)) {
+        observedTenGodPositions.push({ path, slot, channel, value: fact.value as TenGod });
+      }
+    }
+  }
+  return {
+    ...base,
+    disposition: observedTenGodPositions.length > 0 && unresolved.length === 0
+      ? 'BOUNDED_FACT_OBSERVED' : 'INCONCLUSIVE',
+    observedFactPaths: observedTenGodPositions.map(position => position.path),
+    observedTenGodPositions,
+    missingPrerequisites: [
+      ...contextLimitations,
+      ...(unresolved.length ? ['R069_TEN_GOD_INPUT_PARTIAL'] : []),
+      ...(!observedTenGodPositions.length ? ['R069_STAR_NOT_OBSERVED_IN_VISIBLE_FACTS'] : []),
+    ],
+  };
+}
+
 export interface PairwiseCanonicalObservation {
   pillarSlot: PillarSlot;
   subjectFactPath: string;
@@ -352,6 +462,9 @@ export interface PairwiseSourceScopeHandoff {
     sourceSurface: string;
     originalDomain: string;
     historicalSexScope?: string;
+    oneChartScopeObservations?: readonly [
+      R069SingleChartScopeObservation, R069SingleChartScopeObservation,
+    ];
     /** Existing corpus prerequisites; not permissions or newly sourced T10 rules. */
     missingPrerequisites: readonly string[];
     disposition: 'NARROW_OR_REPLACE' | 'REJECTED';
@@ -416,6 +529,10 @@ export function evaluatePairwiseSourceScopeV1(
       sourceSurface: claim.sourceSurface,
       originalDomain: claim.claimType,
       historicalSexScope: claim.historicalSexScope,
+      oneChartScopeObservations: [
+        observeR069SingleChartScope(subject.snapshot, 'subject', claim),
+        observeR069SingleChartScope(target.snapshot, 'target', claim),
+      ],
       missingPrerequisites: [
         'HISTORICAL_GENDER_SCOPE',
         'MODERN_PARTNER_TRANSLATION',
