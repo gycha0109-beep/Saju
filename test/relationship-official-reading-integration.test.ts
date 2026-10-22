@@ -13,6 +13,7 @@ import { buildReadingCompositionEvidence } from '../src/reading/reading-profile-
 import { buildCanonicalReadingSemanticBundleV1 } from '../src/reading/canonical-reading-semantics.js';
 import { buildOfficialReadingPlanV1 } from '../src/reading/official-reading-plan.js';
 import { renderOfficialReadingV1 } from '../src/reading/official-reading-renderer.js';
+import { buildApprovedRelationshipMultifactorOverviewV1 } from '../src/reading/approved-relationship-multifactor-overview.js';
 import { buildOfficialReadingCharacterGroundingV1 } from '../src/reading/official-reading-reader-parity.js';
 import {
   PRODUCT_READING_RESPONSE_VERSION,
@@ -194,6 +195,63 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     }
     for (const internalKey of PROHIBITED_EXTENSIONS) {
       expect(reportJson).not.toContain(internalKey);
+    }
+
+    const detailedReport = renderOfficialReadingV1(semantics, plan, {
+      preferredDetail: 'detailed',
+    });
+    expect(detailedReport.detailPreferenceResolution?.resolvedDetail).toBe('detailed');
+    const focus = detailedReport.sections[0];
+    expect(focus?.title).toBe('내 명식에서 함께 확인된 관계 주제');
+    expect(focus?.sectionType).toBe('overview');
+    const overviewBlock = focus?.blocks.find(block => block.type === 'comparison');
+    expect(overviewBlock?.type).toBe('comparison');
+    if (overviewBlock?.type !== 'comparison' || focus === undefined) {
+      throw new Error('Expected a source-owned multifactor relationship focus.');
+    }
+    expect(overviewBlock.perspectives.length).toBeGreaterThanOrEqual(2);
+    expect(overviewBlock.perspectives.length).toBeLessThanOrEqual(3);
+    const proofRefs = new Set(detailedReport.explainability.entries.map(x => x.explainabilityRef));
+    for (const item of overviewBlock.perspectives) {
+      expect(item.explainabilityRef).toBeDefined();
+      expect(proofRefs.has(item.explainabilityRef!)).toBe(true);
+      expect(item.text).not.toContain('궁합 점수');
+    }
+    const standardReport = report;
+    expect(standardReport.sections[0]?.title).not.toBe('내 명식에서 함께 확인된 관계 주제');
+    expect(detailedReport.sourceSemanticHash).toBe(standardReport.sourceSemanticHash);
+    expect(detailedReport.sourcePlanHash).toBe(standardReport.sourcePlanHash);
+    expect(detailedReport.sections.slice(1).map(x => x.title)).toEqual(
+      standardReport.sections.map(x => x.title),
+    );
+
+    const tamperedUnit = semantics.units.find(unit =>
+      unit.role === 'primary' &&
+      unit.claimType.startsWith('RELATIONSHIP_NATAL_CONCLUSION_') &&
+      unit.upstreamClaimRefs.length >= 2,
+    );
+    expect(tamperedUnit).toBeDefined();
+    if (tamperedUnit !== undefined) {
+      const manipulated = {
+        ...semantics,
+        units: semantics.units.map(unit => unit.unitId === tamperedUnit.unitId
+          ? { ...unit, canonicalText: { headline: '미승인 관계 해석', summary: '가짜 근거' } }
+          : unit),
+      };
+      const originalText = tamperedUnit.canonicalText?.headline;
+      const filtered = buildApprovedRelationshipMultifactorOverviewV1(
+        manipulated,
+        plan,
+        {
+          policyVersion: 'myeonghwa-official-reading-detailed-realization-v1',
+          units: [],
+        },
+        detailedReport.explainability.entries,
+      );
+      // A forged or incomplete detailed-role binding must never yield an
+      // aggregate claim or reproduce the modified unapproved text.
+      expect(filtered).toBeUndefined();
+      expect(JSON.stringify(filtered)).not.toContain(originalText);
     }
 
     const reader = buildOfficialReadingCharacterGroundingV1({
