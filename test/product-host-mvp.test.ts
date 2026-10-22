@@ -590,6 +590,12 @@ describe('Myeonghwa Product Host MVP', () => {
       expect(app).toContain("bundle.mode === 'single_preview_chart'");
       expect(app).not.toContain('Authorization: Bearer');
       expect(app).toContain('payload.coverage.explanation');
+      expect(app).toContain("if (block.type === 'ambiguity')");
+      expect(app).toContain("container.appendChild(el('p', block.summary, 'reading-condition'))");
+      expect(app).toContain("if (section.state === 'partial')");
+      expect(app).toContain("section.state === 'unavailable'");
+      expect(html).toContain('white-space: pre-line');
+      expect(app).not.toContain("String(item)");
       expect(app).toContain("renderFactList('오행의 계산 정보', summary.fiveElements");
       expect(app).toContain("renderFactList('십신의 계산 정보', summary.tenGods");
       expect(app).toContain("renderFactList('대운 계산 정보', summary.luckPillars");
