@@ -211,10 +211,12 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
     expect(focus?.sectionType).toBe('relationship');
     expect(focus?.state).toBe('complete');
     expect(JSON.stringify(focus?.blocks)).toContain('최소 유효 해석 완료 판정과는 별개');
-    const focusedItems = focus?.blocks
+    const focusedItems = detailedReport.sections
+      .filter(section => section.sectionType === 'relationship')
+      .flatMap(section => section.blocks)
       .filter(block => block.type === 'insights')
       .flatMap(block => block.items)
-      .filter(item => item.summary?.includes('실제 명식에서 함께 확인된 십신 계열:')) ?? [];
+      .filter(item => item.summary?.includes('실제 명식에서 함께 확인된 십신 계열:'));
     expect(focusedItems.length).toBeGreaterThanOrEqual(2);
     expect(focusedItems.length).toBeLessThanOrEqual(3);
     const proofRefs = new Set(detailedReport.explainability.entries.map(x => x.explainabilityRef));
