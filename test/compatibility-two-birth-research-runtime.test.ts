@@ -87,7 +87,7 @@ describe('real two-birth compatibility intake remains facts only', () => {
     expect(result.report.maySell).toBe(false);
   });
 
-  it("is replayable and changes only the specified person\'s chart when birth input changes", () => {
+  it("is replayable and changes only the specified person's chart when birth input changes", () => {
     const initial = read();
     expect(read()).toEqual(initial);
     const adjusted = read(FIRST, {
