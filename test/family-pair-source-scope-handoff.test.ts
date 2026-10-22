@@ -59,6 +59,7 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     );
     expect(month.familyMeaningAuthorized).toBe(false);
     expect(familyCandidate(report, '年為父').disposition).toBe('NARROW_OR_REPLACE');
+    expect(report.methodCoexistences).toEqual([]);
     expect(familyCandidate(report, '父以偏財論').disposition).toBe('INCONCLUSIVE');
     expect(familyCandidate(report, '母以印綬論').disposition).toBe('INCONCLUSIVE');
     expect(report.methodCandidates.every(item =>
@@ -87,6 +88,16 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(familyCandidate(report, '月為父母兄弟門戶').disposition).toBe('APPLICABLE_BOUNDED');
     expect(report.missingPrerequisites).toContain('FAMILY_METHOD_SELECTION');
     expect(report.missingPrerequisites).toContain('PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION');
+    expect(report.methodCoexistences).toEqual([{
+      sourceSurfaces: ['月為父母兄弟門戶', '年為父'],
+      calculatedFactPaths: ['pillars.month', 'pillars.year'],
+      state: 'COEXISTING_NOT_RECONCILED',
+      methodSelectionAuthorized: false,
+      missingPrerequisites: [
+        'FAMILY_METHOD_SELECTION',
+        'PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION',
+      ],
+    }]);
     expect(report.familyT8Admitted).toBe(false);
   });
 
@@ -100,6 +111,17 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(familyCandidate(female, '我生者為子').disposition).toBe('INCONCLUSIVE');
     expect(familyCandidate(male, '我生者為子').disposition).toBe('NARROW_OR_REPLACE');
     expect(familyCandidate(female, '子嗣者即官星也').disposition).toBe('INCONCLUSIVE');
+    expect(female.methodCoexistences).toEqual([]);
+    expect(male.methodCoexistences).toEqual([{
+      sourceSurfaces: ['時為子息', '時為子孫'],
+      calculatedFactPaths: ['pillars.hour'],
+      state: 'COEXISTING_NOT_RECONCILED',
+      methodSelectionAuthorized: false,
+      missingPrerequisites: [
+        'FAMILY_METHOD_SELECTION',
+        'PILLAR_DOMAIN_VS_STAR_RELATION_RECONCILIATION',
+      ],
+    }]);
     expect(female.methodCandidates.some(item => item.sourceSurface === '父以偏財論')).toBe(false);
     expect(female.familyT8Admitted).toBe(false);
     expect(male.familyT8Admitted).toBe(false);
