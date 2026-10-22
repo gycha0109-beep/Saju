@@ -50,6 +50,45 @@ function escapeHtml(value: string): string {
 function renderList(items: readonly string[]): string {
   return '<ul>' + items.map(value => '<li>' + escapeHtml(value) + '</li>').join('') + '</ul>';
 }
+
+/**
+ * Distinguish observed natal calculation facts from permitted T8 conclusions.
+ * The unknown-clock engine keeps year/month/day facts where invariant but
+ * does not resolve hour or the aggregate Ten-God chart. No inferred pillar,
+ * fortune outcome, or cross-domain Claim is manufactured here.
+ */
+function renderCanonicalPillarLedger(snapshot: CanonicalSajuSnapshot): string {
+  const slots = [
+    { slot: 'year', label: '연주' },
+    { slot: 'month', label: '월주' },
+    { slot: 'day', label: '일주' },
+    { slot: 'hour', label: '시주' },
+  ] as const;
+  const rows = slots.map(({ slot, label }) => {
+    const fact = snapshot.pillars[slot];
+    const observed = fact.status === 'resolved'
+      ? fact.value.stem.value + fact.value.branch.value
+      : fact.status === 'ambiguous'
+        ? '계산 후보가 둘 이상이어서 미확정'
+        : slot === 'hour' && !snapshot.completeness.birthTimeKnown
+          ? '출생시각 미입력으로 미확정'
+          : '계산값 미확정';
+    return '<li><strong>' + label + '</strong> ' + escapeHtml(observed) +
+      '<small>계산 경로: pillars.' + slot + ' · 상태: ' +
+      fact.status + '</small></li>';
+  }).join('');
+  const uncertainty = snapshot.completeness.birthTimeKnown
+    ? '네 기둥의 표시 사실은 아래 각 분야의 해석 결과와 별개입니다. 간지의 존재만으로 결과를 단정하지 않습니다.'
+    : '출생시각이 입력되지 않았습니다. 확정된 연·월·일 계산값은 보여주되, ' +
+      '시주를 추정하거나 미확정 십신·다중 근거 T8 해석을 확정하지 않습니다. ' +
+      '일부 기둥도 경계 정책에 따라 미확정일 수 있습니다.';
+  return '<section class="canonical-facts" aria-label="실제 명식의 계산 사실과 불확실성">' +
+    '<h2>이번 풀이의 실제 명식 근거</h2>' +
+    '<p>아래는 하나의 Canonical 명식에서 확인된 계산 사실입니다. ' +
+    '분야별 성격·직업·재물·사업·관계 결론이 아닙니다.</p>' +
+    '<ul class="canonical-pillars">' + rows + '</ul>' +
+    '<p class="canonical-disclosure">' + escapeHtml(uncertainty) + '</p></section>';
+}
 function renderSection(section: ResearchSection): string {
   const positions = 'calculatedPositions' in section
     ? section.calculatedPositions : section.observedPositions;
@@ -187,13 +226,18 @@ export function renderNatalFiveDomainMultifactorResearchHtml(
     'h2{font-size:1.35em}h3{font-size:1.1em}li{margin:.2em 0}' +
     'nav.overview{border:1px solid #ccc}ol.overview{padding-left:1.5em}' +
     'ol.overview li{border-bottom:1px solid #ddd;padding:.4em 0}' +
+    'section.canonical-facts{margin:1.2em 0;padding:1em 1.25em;border:1px solid #bbb}' +
+    'ul.canonical-pillars{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:.5em}' +
+    'ul.canonical-pillars li{padding:.5em;background:#f5f5f5}' +
+    'ul.canonical-pillars small{display:block;font-size:.72em}' +
+    '.canonical-disclosure{font-size:.89em}' +
     'ol.overview li:last-child{border-bottom:none}' +
     'ol.overview p{margin:.2em 0}</style></head>' +
     '<body><header><h1>나의 원국을 다섯 관점에서 읽기</h1>' +
     '<p>하나의 실제 명식에서 계산되고, 기존 근거와 연결된 연구용 해석만 분야별로 모았습니다. ' +
     '부분 풀이와 풀이 보류는 종합풀이로 취급하지 않습니다.</p>' +
     '<p><strong>내부 연구용 미리보기 · 검토되지 않은 해석 · 출판 및 판매 불가</strong></p>' +
-    '</header>' + renderOverview(reports) +
+    '</header>' + renderCanonicalPillarLedger(snapshot) + renderOverview(reports) +
     renderSharedEvidence(reports, snapshot.completeness.birthTimeKnown) +
     '<main>' + domains + '</main><footer><p>분야별 문단은 출처가 있는 기존 해석을 ' +
     '그대로 표시한 것이며, 직업·금전·사업·관계의 실제 결과를 판단하지 않습니다.</p>' +
