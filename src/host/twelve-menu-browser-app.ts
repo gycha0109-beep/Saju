@@ -158,6 +158,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     view.sequence++;
     view.button.disabled = false;
     if (view.individualButton) view.individualButton.disabled = false;
+    if (view.spouseButton) view.spouseButton.disabled = false;
     view.output.replaceChildren();
     setState(view, 'unavailable', '입력이 바뀌었습니다. 이 메뉴를 다시 요청해 주세요.');
   }
@@ -526,6 +527,82 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     }
   }
 
+  async function showSeparatedSpouseScopeReadings(view) {
+    let birth;
+    try {
+      birth = readOwnBirth();
+    } catch (error) {
+      view.output.replaceChildren();
+      setState(view, 'unavailable', error.message || '본인 출생정보를 확인해 주세요.');
+      return;
+    }
+    const epoch = currentEpoch, sequence = ++view.sequence;
+    view.button.disabled = true;
+    view.spouseButton.disabled = true;
+    view.output.replaceChildren();
+    setState(view, 'unavailable', '원국 관계와 배우자궁의 기존 근거를 따로 조회합니다.');
+    const scopes = [
+      { title: '본인의 일반 연애·관계 풀이', text: '연애운' },
+      { title: '본인의 배우자궁·배우자 관련 풀이', text: '배우자운' }
+    ];
+    try {
+      const results = await Promise.allSettled(scopes.map(async function(scope) {
+        const response = await fetch('/api/readings', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            birth: birth,
+            reading: {
+              text: scope.text,
+              outputPreferences: { preferredDetail:
+                document.getElementById('reading-detail').value }
+            }
+          })
+        });
+        if (!response.ok) throw new Error(
+          response.status === 401 || response.status === 403
+            ? '허용된 개인별 풀이 경로의 인증이 필요합니다.'
+            : '이 범위의 풀이를 요청할 수 없습니다.');
+        const payload = await response.json();
+        if (!payload || !matchesRequestedBirth(payload, birth)) {
+          throw new Error('요청한 본인 명식과 다른 풀이를 표시하지 않았습니다.');
+        }
+        return payload;
+      }));
+      if (epoch !== currentEpoch || sequence !== view.sequence) return;
+      note(view.output,
+        '일반 관계 원국 풀이와 배우자궁 위치·근거는 서로 다른 허용 범위입니다. ' +
+        '두 결과를 결합해 배우자의 성격·결혼 시기·결혼 결과를 판단하지 않습니다.',
+        'disclosure');
+      let supported = false;
+      scopes.forEach(function(scope, index) {
+        const card = element('section', undefined, 'domain-card');
+        card.appendChild(element('h3', scope.title));
+        const result = results[index];
+        if (result.status === 'fulfilled') {
+          const inner = { output: card, status: element('p'),
+            button: view.spouseButton, sequence: 0 };
+          renderPayload(inner, result.value);
+          if (inner.status.dataset.state === 'partial') supported = true;
+          note(card, inner.status.textContent, 'field-hint');
+        } else {
+          note(card, result.reason && result.reason.message ||
+            '이 범위는 승인된 결과가 없거나 요청하지 못했습니다.', 'notice');
+        }
+        view.output.appendChild(card);
+      });
+      setState(view, supported ? 'partial' : 'unavailable',
+        supported
+          ? '허용된 원국 관계·배우자궁 풀이만 각각 표시했습니다. 배우자 운명 종합은 미지원입니다.'
+          : '두 범위 모두 추가 입력 또는 승인된 해석 근거가 필요합니다.');
+    } finally {
+      if (sequence === view.sequence) {
+        view.button.disabled = false;
+        view.spouseButton.disabled = false;
+      }
+    }
+  }
+
   menuSpecs.forEach(function(spec) {
     const article = element('article');
     article.id = 'twelve-card-' + spec.id;
@@ -573,6 +650,20 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
         topics.appendChild(suggestion);
       });
       article.appendChild(topics);
+    }
+    if (spec.id === 'spouse') {
+      const separate = element('button', '연애운·배우자궁 풀이 각각 보기');
+      separate.type = 'button';
+      separate.id = 'twelve-spouse-separate-readings';
+      separate.className = 'secondary';
+      view.spouseButton = separate;
+      article.appendChild(separate);
+      separate.addEventListener('click', function() {
+        return showSeparatedSpouseScopeReadings(view);
+      });
+      note(article,
+        '두 범위는 본인 명식에서만 조회합니다. 타인의 운명이나 결혼 결과는 추론하지 않습니다.',
+        'field-hint');
     }
     if (spec.id === 'compatibility') {
       appendPartnerInputs(view);
