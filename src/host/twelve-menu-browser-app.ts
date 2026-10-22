@@ -183,15 +183,16 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
     if (year < 1 || year > 2300 || month < 1 || month > 12 || day < 1) return false;
     if (lunar) return day <= 30;
-    const maxDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
-    return day <= maxDay;
+    const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    const lengths = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return day <= lengths[month - 1];
   }
   function readOwnBirth() {
     const calendar = document.getElementById('calendar').value;
     const date = document.getElementById('birth-date').value;
     const unknown = document.getElementById('time-unknown').checked;
     const time = document.getElementById('birth-time').value;
-    if (!dateValid(date, calendar === 'lunar') || (!unknown && !/^\d{2}:\d{2}$/u.test(time))) {
+    if (!dateValid(date, calendar === 'lunar') || (!unknown && !/^(?:[01]\d|2[0-3]):[0-5]\d$/u.test(time))) {
       throw new Error('생년월일과 출생시간을 확인해 주세요.');
     }
     return {
@@ -401,7 +402,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     const p = view.partner;
     if (!p.consent.checked) throw new Error('상대방의 정보 사용 허락을 확인해 주세요.');
     if (!dateValid(p.date.value, p.cal.value === 'lunar') ||
-        (!p.unknown.checked && !/^\d{2}:\d{2}$/u.test(p.time.value))) {
+        (!p.unknown.checked && !/^(?:[01]\d|2[0-3]):[0-5]\d$/u.test(p.time.value))) {
       throw new Error('상대방의 생년월일과 출생시간을 확인해 주세요.');
     }
     return {
