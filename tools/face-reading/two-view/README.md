@@ -1,6 +1,6 @@
 # Local two-view job and visible metric preview
 
-Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local experiment), #2606 (full-frame preservation), #2607 (instance routing), #2608 (region screening/profile ratios). Watchtower-Track: face-observation-engine.
+Issues: #2452 (P0/P1), #2454 (P2), #2457 (additional captures), #2605 (face-local experiment), #2606 (full-frame preservation), #2607 (instance routing), #2608 (region screening/profile ratios), #2698 (source-linked eye observation). Watchtower-Track: face-observation-engine.
 
 This implements P0/P1 and the P2 parsing comparison of the two-view design. Users can select a frontal and a
 profile image, execute the supported jobs together, cancel work, and inspect
@@ -322,7 +322,7 @@ non-triggered layers. Operational checks do not establish human visual acceptanc
 
 ## Revision 0.5: region screening and visible profile ratios
 
-Current writer method is `engineering.face-parsing.yakhyo-resnet18@0.5.0`.
+Historical screened method is `engineering.face-parsing.yakhyo-resnet18@0.5.0`.
 Versions 0.1–0.4 remain readable under their original schemas. This request
 intentionally changes screened face-part masks, while baseline counts, frontal
 scalar rows, previous mask directories and the frozen hairline candidate remain
@@ -408,6 +408,20 @@ regions, multiple anchored components, partial measurements, source clipping,
 role binding, historical isolation and safe scalar-only persistence.
 
 ## Architecture Check
+
+Revision 0.6 adds a source-morphology review card before the raw values. See
+[READING-PLAN.md](./READING-PLAN.md) for the item-first roadmap, source owner,
+formula, endpoint-role gap and actual completion criteria. Current writer method
+is `engineering.face-parsing.yakhyo-resnet18@0.6.0`; 0.1–0.5 remain read-only.
+The eye direction field contains scalar ratios/angles, image-position labels,
+source term identity and status only. Its shared image-pair frame preserves the
+original eight frontal metrics. Existing masks/profile ratios are unchanged.
+Node24 directly imports the existing source morphology term server-side; the UI
+does not maintain a copied traditional meaning catalogue or apply historical
+outcome rules to a supplied person. No source binding or claim flag is promoted.
+The 0.5 revision section above describes that historical schema; current 0.6
+requires its screened/profile fields plus eye direction. A profile input receives
+`PROFILE_VIEW`; multi-face inputs cannot generate a combined eye explanation.
 
 - Docs updated: yes, local engine entry point and coordinate/authority contracts.
 - Ghost-code risk: new CLI → loopback server → UI → worker → calculator has direct

@@ -75,6 +75,34 @@ function unavailable(reason, captureRef, viewRole) {
     methodVersion: METHOD_VERSION,
   }));
 }
+export function modelCycle(edges, landmarks, width, height, allowComponents = false) {
+  return topologyIndices(edges, landmarks.length, allowComponents).map((i) => ({
+    x: landmarks[i].x * width,
+    y: landmarks[i].y * height,
+    clipped:
+      landmarks[i].x <= 0 || landmarks[i].x >= 1 || landmarks[i].y <= 0 || landmarks[i].y >= 1,
+  }));
+}
+export function eyePairFrame(a, b) {
+  const centroid = (points) => ({
+    x: points.reduce((n, p) => n + p.x, 0) / points.length,
+    y: points.reduce((n, p) => n + p.y, 0) / points.length,
+  });
+  const ca = centroid(a),
+    cb = centroid(b),
+    dx = cb.x - ca.x,
+    dy = cb.y - ca.y,
+    length = Math.hypot(dx, dy);
+  if (length === 0) return null;
+  const direction = dx < 0 ? -1 : 1,
+    ux = (direction * dx) / length,
+    uy = (direction * dy) / length;
+  return {
+    centroid,
+    length,
+    project: (p) => ({ x: p.x * ux + p.y * uy, y: -p.x * uy + p.y * ux }),
+  };
+}
 
 export function computeFrontalMetrics({
   landmarks,
@@ -99,29 +127,11 @@ export function computeFrontalMetrics({
     return unavailable('provider_shape_invalid', captureRef, viewRole);
   const groups = {};
   for (const key of ['eyeA', 'eyeB', 'mouth', 'oval']) {
-    const indices = topologyIndices(topology[key], landmarks.length, key === 'mouth');
-    groups[key] = indices.map((i) => ({
-      x: landmarks[i].x * width,
-      y: landmarks[i].y * height,
-      clipped:
-        landmarks[i].x <= 0 || landmarks[i].x >= 1 || landmarks[i].y <= 0 || landmarks[i].y >= 1,
-    }));
+    groups[key] = modelCycle(topology[key], landmarks, width, height, key === 'mouth');
   }
-  const centroid = (points) => ({
-    x: points.reduce((a, p) => a + p.x, 0) / points.length,
-    y: points.reduce((a, p) => a + p.y, 0) / points.length,
-  });
-  const ca = centroid(groups.eyeA),
-    cb = centroid(groups.eyeB);
-  const dx = cb.x - ca.x,
-    dy = cb.y - ca.y,
-    length = Math.hypot(dx, dy);
-  if (length === 0) return unavailable('eye_axis_collapsed', captureRef, viewRole);
-  // A pair-relative image-plane axis, not a camera pose correction or anatomy.
-  const direction = dx < 0 ? -1 : 1;
-  const ux = (direction * dx) / length,
-    uy = (direction * dy) / length;
-  const project = (p) => ({ x: p.x * ux + p.y * uy, y: -p.x * uy + p.y * ux });
+  const frame = eyePairFrame(groups.eyeA, groups.eyeB);
+  if (!frame) return unavailable('eye_axis_collapsed', captureRef, viewRole);
+  const { centroid, length, project } = frame;
   const span = (points) => {
     const values = points.map(project);
     return {

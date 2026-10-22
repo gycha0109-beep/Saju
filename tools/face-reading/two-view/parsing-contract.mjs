@@ -2,8 +2,10 @@ export const PARSING_LEGACY_VERSION = 'engineering.face-parsing.yakhyo-resnet18@
 export const PARSING_CROP_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.2.0';
 export const PARSING_EAR_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.3.0';
 import { validateProfile } from './profile-metrics.mjs';
+import { validateEyeDirection } from './eye-direction.mjs';
 export const PARSING_INSTANCE_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.4.0';
-export const PARSING_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.5.0';
+export const PARSING_SCREENED_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.5.0';
+export const PARSING_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.6.0';
 export const PARSING_PIN = Object.freeze({
   repository: 'yakhyo/face-parsing',
   sourceRevision: '8a4729d95118d0e97c44185f9bdef3d6bfeaaf99',
@@ -121,11 +123,20 @@ export function validateParsingSummary(input, { allowLegacy = false, viewRole } 
       PARSING_CROP_VERSION,
       PARSING_EAR_VERSION,
       PARSING_INSTANCE_VERSION,
+      PARSING_SCREENED_VERSION,
     ].includes(input?.methodVersion);
-  const hasEars = [PARSING_EAR_VERSION, PARSING_INSTANCE_VERSION, PARSING_VERSION].includes(
-    input?.methodVersion,
-  );
-  const hasInstances = [PARSING_INSTANCE_VERSION, PARSING_VERSION].includes(input?.methodVersion);
+  const hasEars = [
+    PARSING_EAR_VERSION,
+    PARSING_INSTANCE_VERSION,
+    PARSING_SCREENED_VERSION,
+    PARSING_VERSION,
+  ].includes(input?.methodVersion);
+  const hasInstances = [
+    PARSING_INSTANCE_VERSION,
+    PARSING_SCREENED_VERSION,
+    PARSING_VERSION,
+  ].includes(input?.methodVersion);
+  const hasScreening = [PARSING_SCREENED_VERSION, PARSING_VERSION].includes(input?.methodVersion);
   if (
     !input ||
     (!legacy && input.methodVersion !== PARSING_VERSION) ||
@@ -258,8 +269,8 @@ export function validateParsingSummary(input, { allowLegacy = false, viewRole } 
     )
       throw Error('PARSING_SUMMARY_INVALID');
   }
-  let regionScreening, profile;
-  if (!legacy) {
+  let regionScreening, profile, eyeDirection;
+  if (hasScreening) {
     const q = input.regionScreening;
     if (
       !q ||
@@ -294,6 +305,7 @@ export function validateParsingSummary(input, { allowLegacy = false, viewRole } 
     )
       throw Error('PARSING_SUMMARY_INVALID');
   }
+  if (!legacy) eyeDirection = validateEyeDirection(input.eyeDirection, { viewRole });
   return {
     methodVersion: input.methodVersion,
     candidateOnly: true,
@@ -303,7 +315,8 @@ export function validateParsingSummary(input, { allowLegacy = false, viewRole } 
     ...(crop ? { checks: { singleFace: true, eyesAligned: true, lipsAligned: true } } : {}),
     ...(hasEars ? { earRefinement } : {}),
     ...(hasInstances ? { instanceRefinement } : {}),
-    ...(!legacy ? { regionScreening, profile } : {}),
+    ...(hasScreening ? { regionScreening, profile } : {}),
+    ...(!legacy ? { eyeDirection } : {}),
     accuracyValidated: false,
     canonicalReceiptIssued: false,
   };

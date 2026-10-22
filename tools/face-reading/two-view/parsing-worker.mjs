@@ -4,6 +4,7 @@ const contractReady = import('./parsing-contract.mjs');
 const frameReady = import('./parsing-frame.mjs');
 const qualityReady = import('./region-quality.mjs');
 const profileReady = import('./profile-metrics.mjs');
+const eyeDirectionReady = import('./eye-direction.mjs');
 let session, localizer, FaceLandmarker, ort;
 async function localizationModel() {
   if (!localizer) {
@@ -57,6 +58,8 @@ self.onmessage = async ({ data }) => {
     const { faceFrame, supportedAnchors, removeEarFragments, projectMask } = await frameReady;
     const { screenRegions, screenEarOverlay } = await qualityReady;
     const { measureProfile, unavailableProfile, sourceFaceClipped } = await profileReady;
+    const { computeEyeDirection, unavailableEyeDirection, eyeClassAgreement } =
+      await eyeDirectionReady;
     const engine = await model(),
       size = PARSING_PIN.size;
     const canvas = new OffscreenCanvas(size, size),
@@ -83,14 +86,23 @@ self.onmessage = async ({ data }) => {
       backgroundRemoved = 0;
     let profile =
       viewRole === 'profile' ? unavailableProfile('NO_SINGLE_FACE') : { status: 'not_requested' };
+    let eyeDirection = unavailableEyeDirection(
+      viewRole === 'profile' ? 'PROFILE_VIEW' : 'NO_SINGLE_FACE',
+    );
     const skipped = (reason) => {
       earRefinement = { status: 'unavailable', reason, pixels: 0 };
     };
     try {
       const detected = (await localizationModel()).detect(bitmap);
-      if (detected.faceLandmarks.length !== 1)
+      if (detected.faceLandmarks.length !== 1) {
         skipped(detected.faceLandmarks.length ? 'MULTIPLE_FACES' : 'NO_SINGLE_FACE');
-      else {
+        if (viewRole === 'frontal')
+          eyeDirection = unavailableEyeDirection(
+            detected.faceLandmarks.length ? 'MULTIPLE_FACES' : 'NO_SINGLE_FACE',
+          );
+      } else {
+        if (viewRole === 'frontal')
+          eyeDirection = unavailableEyeDirection('EYE_CLASS_DISAGREEMENT');
         if (viewRole === 'profile') profile = unavailableProfile('FRAME_UNAVAILABLE');
         const points = detected.faceLandmarks[0];
         let frame;
@@ -132,6 +144,31 @@ self.onmessage = async ({ data }) => {
             bitmap.width,
             bitmap.height,
           );
+          if (
+            viewRole === 'frontal' &&
+            eyeClassAgreement(
+              crop,
+              size,
+              points,
+              {
+                eyeA: FaceLandmarker.FACE_LANDMARKS_LEFT_EYE,
+                eyeB: FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE,
+              },
+              frame,
+              bitmap.width,
+              bitmap.height,
+            )
+          )
+            eyeDirection = computeEyeDirection({
+              landmarks: points,
+              width: bitmap.width,
+              height: bitmap.height,
+              topology: {
+                eyeA: FaceLandmarker.FACE_LANDMARKS_LEFT_EYE,
+                eyeB: FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE,
+              },
+              viewRole,
+            });
           const topologyPoints = (edges) =>
             [...new Set(edges.flatMap((e) => [e.start, e.end]))].map((i) => points[i]);
           const sourceSets = {
@@ -276,6 +313,7 @@ self.onmessage = async ({ data }) => {
         instanceRefinement,
         regionScreening: { backgroundRemoved, regions: screened.quality },
         profile,
+        eyeDirection,
       },
     });
   } catch {

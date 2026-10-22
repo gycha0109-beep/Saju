@@ -12,12 +12,14 @@ import {
   PARSING_CROP_VERSION,
   PARSING_EAR_VERSION,
   PARSING_INSTANCE_VERSION,
+  PARSING_SCREENED_VERSION,
   PARSING_PIN,
   PARSING_GROUPS,
   validateParsingSummary,
 } from './parsing-contract.mjs';
 import { validateParsingBatch } from './parsing-storage.mjs';
 import { INSTANCE_PIN } from './instance-frame.mjs';
+import { readingCatalogue } from './reading-catalogue.mjs';
 
 const sourceDir = dirname(fileURLToPath(import.meta.url));
 const repository = resolve(sourceDir, '../../..');
@@ -180,6 +182,7 @@ export async function createLocalReviewServer({
       ? { oldOverlay: '/review-artifact/' + captureRef + '/full.png' }
       : {}),
   }));
+  const catalogue = readingCatalogue();
   const sourceFileStates = await Promise.all(
     inventory.map(async (record) => {
       const s = await stat(record.sourcePath);
@@ -248,6 +251,7 @@ export async function createLocalReviewServer({
         PARSING_CROP_VERSION,
         PARSING_EAR_VERSION,
         PARSING_INSTANCE_VERSION,
+        PARSING_SCREENED_VERSION,
       ].includes(saved.methodVersion) ||
       !Array.isArray(saved.records)
     )
@@ -314,6 +318,7 @@ export async function createLocalReviewServer({
       'instance-parsing.mjs',
       'region-quality.mjs',
       'profile-metrics.mjs',
+      'eye-direction.mjs',
     ].map((name) => ['/two-view/' + name, [resolve(sourceDir, name), 'text/javascript']]),
   );
   for (const name of [
@@ -436,6 +441,7 @@ export async function createLocalReviewServer({
         token,
         records,
         savedRecords,
+        readingCatalogue: catalogue,
         parsingAvailable: Boolean(parsingModel),
         parsingRestoreFailed,
         comparisonRestoreFailed,

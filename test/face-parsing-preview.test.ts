@@ -14,6 +14,7 @@ import {
   containSize,
 } from '../tools/face-reading/two-view/parsing-contract.mjs';
 import { validateParsingBatch } from '../tools/face-reading/two-view/parsing-storage.mjs';
+import { unavailableEyeDirection } from '../tools/face-reading/two-view/eye-direction.mjs';
 const n = 512 * 512;
 const summary = () => ({
   methodVersion: PARSING_VERSION,
@@ -33,6 +34,7 @@ const summary = () => ({
     ),
   },
   profile: { status: 'not_requested' },
+  eyeDirection: unavailableEyeDirection('NO_SINGLE_FACE'),
 });
 function chunk(kind: string, bytes: Buffer) {
   const output = Buffer.alloc(bytes.length + 12);

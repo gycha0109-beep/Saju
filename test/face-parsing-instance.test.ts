@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { unavailableEyeDirection } from '../tools/face-reading/two-view/eye-direction.mjs';
 import {
   bgrTensor,
   decodeFaces,
@@ -132,6 +133,7 @@ describe('bounded local instance routing', () => {
         ),
       },
       profile: { status: 'not_requested' },
+      eyeDirection: unavailableEyeDirection('NO_SINGLE_FACE'),
       instanceRefinement: {
         status: 'applied',
         faces: 1,
