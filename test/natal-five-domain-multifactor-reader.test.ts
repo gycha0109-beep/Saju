@@ -65,6 +65,12 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(sections.wealth.readingGuide).toBeDefined();
     expect(html).toContain('aria-label="재물운 읽기 요약"');
     expect(html).toContain(sections.wealth.readingGuide!.paragraph);
+    expect(sections.business.readingGuide).toBeDefined();
+    expect(html).toContain('aria-label="사업운 읽기 요약"');
+    expect(html).toContain(sections.business.readingGuide!.paragraph);
+    const businessCard = html.split('<h2 id="domain-business">')[1]!;
+    expect(businessCard.indexOf(sections.business.readingGuide!.title))
+      .toBeLessThan(businessCard.indexOf('명식 근거와 출처 확인'));
     const wealthCard = html.split('<h2 id="domain-wealth">')[1]!;
     expect(wealthCard.indexOf(sections.wealth.readingGuide!.title))
       .toBeLessThan(wealthCard.indexOf('명식 근거와 출처 확인'));
@@ -197,6 +203,31 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         },
       },
     })).toThrow(/reading guide must be derived/u);
+    expect(ra.business.readingGuide).toBeDefined();
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
+      ...ra,
+      business: {
+        ...ra.business,
+        readingGuide: {
+          ...ra.business.readingGuide!,
+          coreClaimType: 'FAKE_BUSINESS_T8',
+        },
+      },
+    })).toThrow(/Business guide must describe the selected/u);
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
+      ...ra,
+      business: {
+        ...ra.business,
+        readingGuide: {
+          ...ra.business.readingGuide!,
+          supporting: [{
+            claimType: 'FAKE_SUPPORT',
+            distinctObservedFactPaths: ['derivedFacts.tenGods.value.hour.stem.value'],
+            distinctObservedPositions: ['허위 명식'],
+          }],
+        },
+      },
+    })).toThrow();
     expect(ra.wealth.readingGuide).toBeDefined();
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
       ...ra,
