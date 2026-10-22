@@ -471,7 +471,8 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     if (!response.ok) return;
     const payload = await response.json();
     if (epoch !== currentEpoch || sequence !== view.sequence) return;
-    if (payload.lifecycle !== 'internal_research_only' ||
+    if (!payload || typeof payload !== 'object' ||
+        payload.lifecycle !== 'internal_research_only' ||
         payload.researchOnly !== true || payload.usefulComplete !== false ||
         payload.mayPublish !== false || payload.maySell !== false ||
         !payload.report || payload.report.researchOnly !== true ||
@@ -667,7 +668,11 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
           if ((spec.id === 'family' || spec.id === 'life_stage') &&
               payload.state !== 'delivered' &&
               payload.state !== 'delivered_with_fallback') {
-            await appendBoundedTimeFamilyPreview(view, spec, requestBirth, epoch, sequence);
+            try {
+              await appendBoundedTimeFamilyPreview(view, spec, requestBirth, epoch, sequence);
+            } catch {
+              // Invalid or unreachable optional Preview must never hide the governed response.
+            }
           }
         }
       } catch (error) {
