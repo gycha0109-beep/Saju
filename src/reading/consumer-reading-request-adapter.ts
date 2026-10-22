@@ -24,6 +24,7 @@ export interface ConsumerReadingRequestInput {
   text: string;
   referenceDateTime?: string;
   targetPersonRef?: string;
+  readingLocale?: ReadingRequest['readingLocale'];
   outputPreferences?: ReadingRequest['outputPreferences'];
 }
 
@@ -389,6 +390,7 @@ function validatedResolvedResult(
       ? {}
       : { targetPersonRef }),
     ...(question === undefined ? {} : { question }),
+    ...(input.readingLocale === undefined ? {} : { readingLocale: input.readingLocale }),
     ...(input.outputPreferences === undefined ? {} : { outputPreferences: input.outputPreferences }),
   };
   return makeResult(
