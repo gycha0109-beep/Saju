@@ -42,6 +42,26 @@ export interface CompatibilityPillarFactComparison {
   explanation: string;
 }
 
+/** Existing same-person natal T8 research, never a two-person T10 result. */
+export interface CompatibilityPersonalRelationshipReading {
+  personRef: string;
+  snapshotId: string;
+  calculationHash: string;
+  coverage: 'bounded_natal_t8_research' | 'insufficient_evidence';
+  introduction: string;
+  sections: readonly {
+    title: string;
+    paragraph: string;
+    sourceIds: readonly string[];
+    observedFactPaths: readonly string[];
+  }[];
+}
+
+export interface CompatibilityPersonalRelationshipContext {
+  subject: CompatibilityPersonalRelationshipReading;
+  target: CompatibilityPersonalRelationshipReading;
+}
+
 export interface CompatibilityTwoChartIntakePreview {
   version: typeof COMPATIBILITY_TWO_CHART_PREVIEW_VERSION;
   mode: 'two_person_calculation_only';
@@ -222,8 +242,51 @@ function comparisonHtml(report: CompatibilityTwoChartIntakePreview): string {
       '</li>').join('') + '</ul></section>';
 }
 
+function personalRelationshipHtml(
+  report: CompatibilityTwoChartIntakePreview,
+  context: CompatibilityPersonalRelationshipContext,
+): string {
+  const people = [
+    { name: '첫 번째 사람의 원국 관계 풀이', facts: report.subject, reading: context.subject },
+    { name: '두 번째 사람의 원국 관계 풀이', facts: report.target, reading: context.target },
+  ];
+  for (const { facts, reading } of people) {
+    guard(reading.personRef === facts.personRef &&
+      reading.snapshotId === facts.snapshotId &&
+      reading.calculationHash === facts.calculationHash &&
+      reading.sections.every(section =>
+        section.title.trim().length > 0 &&
+        section.paragraph.trim().length > 0 &&
+        section.sourceIds.length >= 2 &&
+        section.observedFactPaths.length >= 2) &&
+      (reading.coverage === 'bounded_natal_t8_research' ?
+        reading.sections.length > 0 : reading.sections.length === 0),
+    'each personal T8 interpretation must retain its own calculated snapshot and sources');
+  }
+  return '<section aria-label="두 사람 각각의 근거 있는 원국 관계 풀이">' +
+    '<h2>두 사람 각각의 관계 풀이 · 내부 연구</h2>' +
+    '<p>각각 본인 명식의 기존 T8 관계 해석 근거만 사용합니다. ' +
+    '이 두 풀이가 서로의 궁합·갈등·결혼 결과를 나타내지는 않습니다.</p>' +
+    people.map(({ name, reading }) =>
+      '<article><h3>' + escapeHtml(name) + '</h3>' +
+      '<p>' + escapeHtml(reading.introduction) + '</p>' +
+      (reading.sections.length === 0
+        ? '<p>이 사람의 명식에서는 출처를 갖춘 원국 관계 풀이가 부족합니다.</p>'
+        : reading.sections.map(section =>
+          '<div><h4>' + escapeHtml(section.title) + '</h4><p>' +
+          escapeHtml(section.paragraph) + '</p><details><summary>해석 근거</summary>' +
+          '<p>Source: ' + escapeHtml(section.sourceIds.join(' · ')) +
+          '</p><p>계산 사실 경로: ' +
+          escapeHtml(section.observedFactPaths.join(' · ')) +
+          '</p></details></div>').join('')) + '</article>',
+    ).join('') + '</section>';
+}
+
 /** Calculation-only side-by-side UI, not a compatibility result. */
-export function renderCompatibilityTwoChartIntakeHtml(report: CompatibilityTwoChartIntakePreview): string {
+export function renderCompatibilityTwoChartIntakeHtml(
+  report: CompatibilityTwoChartIntakePreview,
+  personalRelationship?: CompatibilityPersonalRelationshipContext,
+): string {
   guard(report.mode === 'two_person_calculation_only' &&
     report.readingStatus === 'insufficient_interpersonal_meaning_authority' &&
     report.researchOnly === true && report.usefulComplete === false &&
@@ -243,6 +306,8 @@ export function renderCompatibilityTwoChartIntakeHtml(report: CompatibilityTwoCh
     '<main>' + personHtml(report.subject, '첫 번째 명식') +
     personHtml(report.target, '두 번째 명식') +
     comparisonHtml(report) +
+    (personalRelationship === undefined ? '' :
+      personalRelationshipHtml(report, personalRelationship)) +
     '</main><aside><h2>부족한 근거와 제한</h2><ul>' + limits +
     '</ul></aside></body></html>';
 }
