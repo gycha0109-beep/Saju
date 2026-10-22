@@ -1,0 +1,220 @@
+import type { GeneralAnnualMonthlyExplorationReport } from './general-annual-monthly-exploration-report.js';
+import type { LifeStageDayunResearchReport } from './life-stage-dayun-research-report.js';
+
+export const TEMPORAL_RESEARCH_MENU_READING_VERSION =
+  'myeongha-temporal-research-menu-reading-v1' as const;
+
+export type TemporalResearchMenuId = 'annual' | 'monthly' | 'life_stage';
+export type TemporalResearchAvailability = 'partial' | 'unavailable';
+export type TemporalResearchMeaning =
+  | 'bounded_research_interpretation'
+  | 'calculation_facts_only'
+  | 'none';
+
+export interface TemporalResearchMenuSection {
+  title: string;
+  text: string;
+  evidenceKind: 'annual_research_profile' | 'monthly_t9_research_claim' | 'canonical_dayun_fact';
+  /** Monthly claim ID is only an internal research Claim, not Official authority. */
+  claimId?: string;
+  sourceIds: readonly string[];
+  factPaths: readonly string[];
+  interval?: {
+    startsAt: string;
+    endsAtExclusive: string;
+  };
+}
+
+export interface TemporalResearchMenuReading {
+  version: typeof TEMPORAL_RESEARCH_MENU_READING_VERSION;
+  menuId: TemporalResearchMenuId;
+  label: string;
+  availability: TemporalResearchAvailability;
+  meaning: TemporalResearchMeaning;
+  statusMessage: string;
+  sections: readonly TemporalResearchMenuSection[];
+  missing: readonly string[];
+  provenance: {
+    snapshotId?: string;
+    calculationHash?: string;
+    targetYear?: number;
+    targetMonth?: number;
+    timeZone: 'Asia/Seoul';
+  };
+  authority: {
+    researchOnly: true;
+    mayCallOfficial: false;
+    mayPublish: false;
+    mayPersist: false;
+    maySell: false;
+    mayMarkMenuAvailable: false;
+  };
+}
+
+const AUTHORITY = Object.freeze({
+  researchOnly: true as const,
+  mayCallOfficial: false as const,
+  mayPublish: false as const,
+  mayPersist: false as const,
+  maySell: false as const,
+  mayMarkMenuAvailable: false as const,
+});
+
+export interface TemporalResearchMenuReadingInputs {
+  annualMonthly?: GeneralAnnualMonthlyExplorationReport;
+  lifeStage?: LifeStageDayunResearchReport;
+}
+
+/**
+ * B / D roadmap hand-off for three existing time menu slices.
+ *
+ * Reads the actual produced Korean research sentences and their evidence;
+ * never substitutes year research copy for T9 monthly meaning, or a Daeyun
+ * calculation for an authorized life-stage interpretation. Even a full
+ * research/T9 period has only partial menu availability, never GA/Official.
+ * UI admission must remain separate from this research projection.
+ */
+export function buildTemporalResearchMenuReadings(
+  input: TemporalResearchMenuReadingInputs,
+): readonly TemporalResearchMenuReading[] {
+  const joined = input.annualMonthly;
+  const life = input.lifeStage;
+  if (joined !== undefined) {
+    if (!joined.researchOnly || joined.status !== 'not_official_reading' ||
+        joined.usefulComplete || joined.mayPublish || joined.maySell ||
+        joined.annual.mode !== 'internal_exploration' ||
+        joined.annual.status !== 'not_official_reading' ||
+        joined.annual.permissions.mayClaimOfficialAuthority ||
+        joined.annual.permissions.mayPublish ||
+        joined.annual.permissions.maySell ||
+        joined.monthly.status !== 'not_official_reading' ||
+        !joined.monthly.researchOnly ||
+        joined.monthly.usefulComplete ||
+        joined.monthly.mayPublish || joined.monthly.maySell ||
+        joined.monthly.snapshotId !== joined.snapshotId ||
+        joined.monthly.calculationHash !== joined.calculationHash ||
+        joined.annual.targetYear !== joined.targetYear ||
+        joined.monthly.targetYear !== joined.targetYear ||
+        joined.monthly.targetMonth !== joined.targetMonth) {
+      throw new TypeError('Temporal menu bridge rejects an official or mixed-period research report.');
+    }
+  }
+  if (life !== undefined) {
+    if (life.status !== 'not_official_reading' ||
+        !life.researchOnly || life.usefulComplete ||
+        life.mayPublish || life.maySell ||
+        life.interpretationStatus !== 'source_authority_not_established') {
+      throw new TypeError('Life-stage research cannot cross the official meaning boundary.');
+    }
+    if (joined !== undefined &&
+        (life.snapshotId !== joined.snapshotId ||
+         life.calculationHash !== joined.calculationHash)) {
+      throw new TypeError('Different persons or calculation policies cannot share a time menu projection.');
+    }
+  }
+  const defaultProvenance = { timeZone: 'Asia/Seoul' as const };
+  const joinedProvenance = joined === undefined ? defaultProvenance : {
+    snapshotId: joined.snapshotId,
+    calculationHash: joined.calculationHash,
+    targetYear: joined.targetYear,
+    targetMonth: joined.targetMonth,
+    timeZone: 'Asia/Seoul' as const,
+  };
+  const annual = joined?.annual.sections.filter(section =>
+    section.text.trim().length > 0).map(section => ({
+      title: section.title,
+      text: section.text,
+      evidenceKind: 'annual_research_profile' as const,
+      // Section ID is a research semantic key, not an approved T9 Claim ID.
+      sourceIds: [section.id],
+      factPaths: section.relatedPillar === undefined
+        ? ['temporal.annualStemTenGod']
+        : ['temporal.annualBranchRelations.' + section.relatedPillar],
+    })) ?? [];
+  const monthly = joined?.monthly.sections.filter(section =>
+    section.text.trim().length > 0 &&
+    section.sourceIds.length > 0 &&
+    section.factPaths.length > 0).map(section => ({
+      title: (section.segmentId === 'before_jeol' ? '절입 전 · ' : '절입 이후 · ') +
+        section.title,
+      text: section.text,
+      evidenceKind: 'monthly_t9_research_claim' as const,
+      claimId: section.claimId,
+      sourceIds: [...section.sourceIds],
+      factPaths: [...section.factPaths],
+      interval: {
+        startsAt: section.calculatedInterval.startsAt,
+        endsAtExclusive: section.calculatedInterval.endsAt,
+      },
+    })) ?? [];
+  const lifeSections = life?.periods.map(period => ({
+    title: period.kind === 'current' ? '현재 대운 계산 구간' : '다음 대운 계산 구간',
+    text: period.text,
+    evidenceKind: 'canonical_dayun_fact' as const,
+    sourceIds: [life.policyId, life.policyHash],
+    factPaths: ['luckCycle'],
+    interval: {
+      startsAt: period.startsAt,
+      endsAtExclusive: period.endsAtExclusive,
+    },
+  })) ?? [];
+
+  const annualHasMeaning = annual.some(section =>
+    section.evidenceKind === 'annual_research_profile');
+  const monthlyHasMeaning = monthly.some(section =>
+    section.evidenceKind === 'monthly_t9_research_claim');
+  const lifeHasFacts = lifeSections.length > 0;
+  return [
+    {
+      version: TEMPORAL_RESEARCH_MENU_READING_VERSION,
+      menuId: 'annual', label: '올해',
+      availability: annualHasMeaning ? 'partial' : 'unavailable',
+      meaning: annualHasMeaning ? 'bounded_research_interpretation' : 'none',
+      statusMessage: annualHasMeaning
+        ? '개인별 연간 연구 문구만 제공됩니다. 연운 Official 해석은 미승인입니다.'
+        : '올해의 개인별 연구 풀이가 아직 실행되지 않았습니다.',
+      sections: annual,
+      missing: joined === undefined
+        ? ['연도 및 출생정보를 입력하고 연운 연구 풀이를 실행해야 합니다.']
+        : [...joined.annual.caveats],
+      provenance: joinedProvenance,
+      authority: AUTHORITY,
+    },
+    {
+      version: TEMPORAL_RESEARCH_MENU_READING_VERSION,
+      menuId: 'monthly', label: '이번 달',
+      availability: monthlyHasMeaning ? 'partial' : 'unavailable',
+      meaning: monthlyHasMeaning ? 'bounded_research_interpretation' : 'none',
+      statusMessage: monthlyHasMeaning
+        ? '실제 절입 구간별 T9 연구 풀이입니다. 월운 Official 해석은 미승인입니다.'
+        : '해당 월의 출처에 연결된 개인별 풀이 근거가 충분하지 않습니다.',
+      sections: monthly,
+      missing: joined === undefined
+        ? ['연도·월·출생정보를 입력하고 월운 연구 풀이를 실행해야 합니다.']
+        : [...joined.monthly.missing, ...joined.monthly.caveats],
+      provenance: joinedProvenance,
+      authority: AUTHORITY,
+    },
+    {
+      version: TEMPORAL_RESEARCH_MENU_READING_VERSION,
+      menuId: 'life_stage', label: '삶의 단계',
+      availability: lifeHasFacts ? 'partial' : 'unavailable',
+      meaning: lifeHasFacts ? 'calculation_facts_only' : 'none',
+      statusMessage: lifeHasFacts
+        ? '현재·다음 대운의 계산 구간만 확인됐습니다. 삶의 단계에 대한 의미 해석은 미승인입니다.'
+        : '확정된 대운 구간 또는 필요한 출생정보가 없어 표시할 계산 사실이 부족합니다.',
+      sections: lifeSections,
+      missing: life === undefined
+        ? ['삶의 단계 계산에 필요한 출생정보와 조회 시각을 입력해야 합니다.']
+        : [...life.missing, ...life.caveats],
+      provenance: life === undefined
+        ? defaultProvenance
+        : {
+            snapshotId: life.snapshotId,
+            calculationHash: life.calculationHash,
+            timeZone: 'Asia/Seoul',
+          },
+      authority: AUTHORITY,
+    },
+  ];
+}
