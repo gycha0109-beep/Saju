@@ -161,6 +161,17 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 양력 1990-05-15 기준 남성·여성·성별 미지정 명식에서 부모/자녀 메뉴별 각 원전 미지원 사유 수·방법 쌍 수·성별 제외 목록·실제 경로를 대조한다. 여성 1997-05-15 출생시각 미상에서는 부모 월주 방법을 남겨 두고 자녀의 `時為子息` 필수 시주 경로만 `R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED`로 보고한다. 역사 남성 명식의 `胎為母`에는 별개 `R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE`을 표시한다. **연구용 미지원 설명은 가족운 출력이나 메뉴 지원 활성화로 변환하지 않는다.**
 
+### R070 메뉴 직접 차단 조건과 미배속 구성 연구 조건의 분리
+
+기존 `menuSupportHandoff.missingPrerequisites`는 과거 연구 수신 호환성을 위해 **원문·방법론·공식 권한 차단 조건과 가족 대상이 아직 정해지지 않은 구성 연구 조건을 합친 배열**이었다. 수신 측에서 이것을 모두 메뉴 활성화의 직접 선행조건으로 받아들이면 `CONFIGURATION-OUTCOME`의 `旺衰`·`生旺死絕`·`刑沖破害`·`官煞混雜`·`財印` 전체를 특정 부모/자녀 메뉴에 잘못 결속하게 된다. 그 해석을 막기 위해 다음 두 경로를 별도 반환한다.
+
+- `menuBlockingPrerequisites`: **요청 부모·자녀 메뉴에 이미 결속된** `unsupportedReasons[].missingPrerequisites`의 중복 제거 값만. `R070_FAMILY_T8_OFFICIAL_METHOD_NOT_ADMITTED`을 반드시 포함하고, 원문 적용 성별에서 제외된 후보의 부족 조건은 메뉴 차단 조건으로 재사용하지 않는다. `prerequisiteTrace`는 정확히 이 배열만 인덱싱한다.
+- `unassignedConfigurationPrerequisites`: 아직 가족 의미·대상이 선택되지 않은 `unassignedConfigurationSources[].missingPrerequisites`의 중복 제거 값만. 구성 연구에 부족한 조건을 표시할 뿐 특정 부모·자녀 메뉴의 독립적 활성화 요건이라는 뜻은 아니다.
+
+두 배열에 같은 코드가 존재할 가능성은 허용하되 **출처의 귀속 차이**를 유지한다. 기존 `missingPrerequisites`는 이전과 동일하게 두 배열의 순서 있는 집합 합집합으로 남겨 구 연구 소비자에게 호환성을 제공한다. 이 합집합은 **메뉴 승인 체크리스트가 아니다.** `engineTransferBoundary`에도 두 배열을 그대로 전달하며 `route=R070_RESEARCH_ONLY_NOT_EXECUTABLE` 및 모든 `can* = false`를 유지한다.
+
+**회귀:** 부모·자녀, 남성·여성·성별 미지정 및 출생시각 미상 실제 명식에서 두 배열이 각각 원래 `unsupportedReasons`, `unassignedConfigurationSources`의 코드와 정확히 일치하는지, 기존 합집합 및 `prerequisiteTrace`가 보존되는지 확인하는 사례를 추가했다. `CONFIGURATION_OUTCOME_SETTLEMENT` 같은 미배속 연구 조건은 `unassignedConfigurationPrerequisites`에 기록하되 `R070_FAMILY_T8_OFFICIAL_METHOD_NOT_ADMITTED`을 그쪽 조건으로 재분류하지 않는다. 이 변경은 Source Authority, Methodology, T8 가족 해석, 메뉴 제공 및 상거래 허가를 생성하지 않는다.
+
 ### R070 엔진 전달 경계 — 계산 입력 부족과 해석 권한 부족을 혼합하지 않음
 
 `evaluateFamilySourceScopeV1(...).engineTransferBoundary`는 이미 존재하는 `menuSupportHandoff`의 연구용 반환값을 **수신 엔진이 오해 없이 구분해서 읽도록** 분류한 인계 표면이다. 새로운 T8 규칙 계산기, 서비스 메뉴 제공 계약 또는 실행 가능한 가족 ClaimGraph 입력이 아니며 `route=R070_RESEARCH_ONLY_NOT_EXECUTABLE`로 고정한다. `sourceSnapshotId`와 `sourceCalculationHash`는 정확히 기존 계산 명식의 `snapshotId`·`calculationHash`를 보존하고, `requestedScope`는 부모·자녀 중 실제 요청한 범위로 남긴다.
