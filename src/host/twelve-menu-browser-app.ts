@@ -468,11 +468,25 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     }
     if (spec.id === 'question') {
       const q = inputField('지금 고민하는 질문', 'text', 'menu-question-text',
-        '예: 올해 직업 문제를 어떻게 읽을 수 있나요?');
+        '예: 직업운 또는 올해 직업운');
       q.input.maxLength = 190;
       article.appendChild(q.holder);
       view.question = q.input;
       q.input.addEventListener('input', function() { invalidate(view); });
+      note(article, '아래 주제는 기존 근거의 범위에서 풀이를 요청합니다. ' +
+        '자유롭게 작성한 고민도 제출할 수 있지만 근거가 없으면 보류될 수 있습니다.', 'field-hint');
+      const topics = element('div', undefined, 'reading-actions');
+      ['직업운', '재물운', '올해 직업운', '이번 달 재물운'].forEach(function(topic) {
+        const suggestion = element('button', topic, 'secondary');
+        suggestion.type = 'button';
+        suggestion.style.marginTop = '4px';
+        suggestion.addEventListener('click', function() {
+          q.input.value = topic;
+          invalidate(view);
+        });
+        topics.appendChild(suggestion);
+      });
+      article.appendChild(topics);
     }
     if (spec.id === 'compatibility') appendPartnerInputs(view);
     article.appendChild(button);
