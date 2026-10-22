@@ -1,5 +1,7 @@
 import type { AddressInfo } from 'node:net';
 import { describe, expect, it } from 'vitest';
+import type { CanonicalSajuSnapshot } from '../src/contracts/calculation.js';
+import { normalizeConsumerReadingRequest } from '../src/reading/consumer-reading-request-adapter.js';
 import {
   createMyeonghwaPreviewNatalFiveDomainHost,
   createMyeonghwaProductHost,
@@ -92,6 +94,40 @@ describe('Reading locale separation in existing product host', () => {
       birth, uiLocale: 'en-US',
     })).rejects.toMatchObject({ code: 'INVALID_READING_REQUEST' });
     expect(calls.calculate).toBe(0);
+  });
+
+  it('passes the explicitly selected Korean reading locale through normalized ReadingRequest', async () => {
+    const normalized = normalizeConsumerReadingRequest({
+      requestId: 'reading-locale-normalized',
+      text: '재물운',
+      readingLocale: 'ko-KR',
+    });
+    expect(normalized.state).toBe('resolved');
+    expect(normalized.request?.readingLocale).toBe('ko-KR');
+    expect(normalized.request?.intent).toEqual({ domain: 'wealth', temporalScope: 'natal' });
+
+    const observed: string[] = [];
+    const host = createMyeonghwaProductHost({
+      calculate: () => ({} as CanonicalSajuSnapshot),
+      interpret: (_snapshot, _context, _temporal, readingRequest) => {
+        observed.push(readingRequest?.readingLocale ?? 'missing');
+        throw new Error('STOP_AFTER_NORMALIZATION');
+      },
+      readingOptions: { outputSchemaVersion: 'test', readingVersion: 'test' },
+    });
+    await expect(host.requestReading({
+      birth,
+      uiLocale: 'en-US',
+      reading: { text: '재물운', readingLocale: 'ko-KR' },
+    })).rejects.toThrow('STOP_AFTER_NORMALIZATION');
+    expect(observed).toEqual(['ko-KR']);
+
+    const implicit = normalizeConsumerReadingRequest({
+      requestId: 'reading-locale-implicit',
+      text: '재물운',
+    });
+    expect(implicit.request).not.toHaveProperty('readingLocale');
+    expect(implicit.request?.intent).toEqual(normalized.request?.intent);
   });
 
   it('returns an explicit 400 response for unsupported reading language over the existing HTTP route', async () => {
