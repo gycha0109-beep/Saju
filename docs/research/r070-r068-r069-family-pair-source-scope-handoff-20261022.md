@@ -52,6 +52,12 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 현재 Canonical `derivedFacts.structuralRelations`가 확정된 경우에만 `刑沖破害` 원문 아래 **`branch_clash` 구조 후보의 기존 ID**를 부분 관찰로 보존할 수 있습니다. 이는 `沖`에 해당하는 구조적 후보 1종일 뿐, `刑`·`破`·`害` 및 조합 우선순위·형충 효과는 계산 완료나 의미 승인으로 표시하지 않습니다. `旺衰`·`生旺死絕`은 승인된 강약/12운성 판단을 만들지 않으며, `官煞混雜`·`財印`도 단순 십신 존재를 부모/자녀 운명 결과로 변환하지 않습니다. 반환 상태는 다섯 원문 모두 `INCONCLUSIVE`, `familyScopeResolved=false`, `familyOutcomeAuthorized=false`입니다.
 
+### R070 官煞混雜·財印의 T5 조회용 관찰 (효과·방법 미승인)
+
+`官煞混雜`은 원문에 있는 `官`·`煞`의 각각에 대해 현행 Canonical T5의 **정관·편관 계산값을 찾아본 경로**만 기록한다. 두 관성이 관찰되더라도 그것을 고전적 `混雜`의 성립, 길흉, 부모·자녀의 상태로 확정하지 않는다. 이 원문이 요구할 수 있는 지장간·강약·구조·충돌 기준과 방법론 선택은 미확정이다.
+
+`財印`도 현행 T5의 편재·정재(財), 편인·정인(印)에 대한 **관찰값·불명확 경로**만 `tenGodSearchTerms`에 기록한다. 계산된 두 계열이 동시에 있음을 `財印` 구성의 작동 효과로 판단하거나 재성=부친·인성=모친으로 전용하지 않는다. 두 문구 모두 `canonicalObservationCoverage=visible_t5_search_categories_only`일 때도 `configurationMeaningAuthorized=false`, `familyOutcomeAuthorized=false`, `familyScopeResolved=false`, `disposition=INCONCLUSIVE`를 고정한다. `旺衰`와 `生旺死絕`는 현재 해석 가능 계산 입력이 없어 `none`으로 유지한다.
+
 ### 부모·자녀 T8 엔진 인계
 
 **엔진에서 사용할 수 있는 것:** 요청 범위별 위의 조건부 원문 대응, 정확한 원국 사실 경로, 시각 미상·남성/여성/미지정 스코프별 부적합 사유. 계산 위치와 원문을 소비자에게 설명하더라도 **연구용 배속 관찰**이라는 경계만 유지한다.
