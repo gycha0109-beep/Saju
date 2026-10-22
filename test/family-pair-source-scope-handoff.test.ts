@@ -363,9 +363,15 @@ describe('R068/R069 pairwise source boundary on two real Canonical charts', () =
     expect(day[0].historicalScopeMatch).toBe('matched');
     expect(day[0].disposition).toBe('BOUNDED_FACT_OBSERVED');
     expect(day[0].observedFactPaths).toEqual(['pillars.day']);
+    expect(day[0].observedDayPillar).toBe(
+      male.pillars.day.status === 'resolved'
+        ? male.pillars.day.value.stem.value + male.pillars.day.value.branch.value
+        : undefined,
+    );
     expect(day[1].historicalScopeMatch).toBe('mismatched');
     expect(day[1].disposition).toBe('NARROW_OR_REPLACE');
     expect(day[1].observedFactPaths).toEqual([]);
+    expect(day[1].observedDayPillar).toBeUndefined();
 
     const wealth = source('MALE-I-CONTROL-WIFE');
     expect(wealth[0].historicalScopeMatch).toBe('matched');
