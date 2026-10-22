@@ -332,7 +332,11 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     for (const comparison of parents.crossLayerMethodComparisons) {
       const contrast = comparison.starPillarPositionContrast;
       expect(contrast.pillarSlot).toBe('month');
-      expect(contrast.unresolvedReferencedPillarPaths).toEqual([]);
+      expect(contrast.unresolvedReferencedPillarPaths).toEqual([
+        'derivedFacts.tenGods.month.stem',
+        'derivedFacts.tenGods.month.branch',
+      ]);
+      expect(contrast.state).toBe('REFERENCED_PILLAR_T5_UNRESOLVED');
       expect(comparison.starObservation.unresolvedFactPaths).toContain(
         'derivedFacts.tenGods.hour.stem',
       );
@@ -433,6 +437,121 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     }
     expect(parent.familyT8Admitted).toBe(false);
     expect(children.familyT8Admitted).toBe(false);
+  });
+
+  it('ties R070 刑沖破害 only to actual branch-clash participation of eligible parent and child pillars', () => {
+    const states = new Set<string>();
+    for (const year of [1987, 1988, 1990, 1991, 1993, 1995, 1997, 1999, 2001, 2003, 2005]) {
+      for (const day of [5, 15, 25]) {
+        const snapshot = chart({ year, day, sex: 'male' });
+        const parent = evaluateFamilySourceScopeV1(snapshot, 'parents');
+        const children = evaluateFamilySourceScopeV1(snapshot, 'children');
+        const raw = snapshot.derivedFacts.structuralRelations;
+        const actualClashes = raw?.status === 'resolved'
+          ? raw.value.filter(item => item.kind === 'branch_clash') : [];
+        expect(parent.branchClashPillarObservations.map(item => item.pillarSourceSurface))
+          .toEqual(['月為父母兄弟門戶', '年為父']);
+        expect(children.branchClashPillarObservations.map(item => item.pillarSourceSurface))
+          .toEqual(['時為子息', '時為子孫']);
+        for (const report of [parent, children]) {
+          for (const observation of report.branchClashPillarObservations) {
+            states.add(observation.state);
+            expect(observation.sourceLayerId).toBe('CONFIGURATION-OUTCOME');
+            expect(observation.sourceSurface).toBe('刑沖破害');
+            expect(observation.requestedScope).toBe(report.scope);
+            expect(observation.referencePillarFactPath)
+              .toBe('pillars.' + observation.referencePillarSlot);
+            expect(observation.referenceBranchFactPath)
+              .toBe('pillars.' + observation.referencePillarSlot + '.branch');
+            const branch = snapshot.pillars[observation.referencePillarSlot];
+            expect(branch.status).toBe('resolved');
+            if (branch.status === 'resolved') {
+              expect(observation.observedReferenceBranch).toBe(branch.value.branch.value);
+            }
+            expect(observation.missingPrerequisites).toContain(
+              'R070_BRANCH_CLASH_PILLAR_TO_FAMILY_EFFECT_NOT_SOURCED',
+            );
+            expect(observation.missingPrerequisites).toContain('CONFIGURATION_OUTCOME_SETTLEMENT');
+            expect(report.missingPrerequisites).toContain(
+              'R070_BRANCH_CLASH_PILLAR_TO_FAMILY_EFFECT_NOT_SOURCED',
+            );
+            expect(observation.independentlyAdmittedFamilyClaims).toBe(0);
+            expect(observation.configurationOutcomeAuthorized).toBe(false);
+            expect(observation.familyT8Admitted).toBe(false);
+            const joined = [...observation.participatingClashes, ...observation.outsideClashes];
+            expect(joined.map(item => item.relationId).sort())
+              .toEqual(actualClashes.map(item => item.relationId).sort());
+            for (const reference of joined) {
+              const actual = actualClashes.find(item => item.relationId === reference.relationId);
+              expect(actual).toBeDefined();
+              expect(reference.factPath).toBe('derivedFacts.structuralRelations');
+              expect(reference.kind).toBe('branch_clash');
+              expect(reference.participants).toEqual(actual?.participants);
+              expect(reference.sourceIds).toEqual(actual?.sourceIds);
+              expect(reference.structuralMatchOnly).toBe(true);
+              expect(reference.transformationEstablished).toBe(false);
+            }
+            for (const clash of observation.participatingClashes) {
+              expect(clash.participants.some(participant =>
+                participant.component === 'branch' &&
+                participant.pillar === observation.referencePillarSlot)).toBe(true);
+            }
+            for (const clash of observation.outsideClashes) {
+              expect(clash.participants.some(participant =>
+                participant.component === 'branch' &&
+                participant.pillar === observation.referencePillarSlot)).toBe(false);
+            }
+            if (raw?.status === 'resolved') {
+              expect(observation.state).toBe(
+                observation.participatingClashes.length > 0
+                  ? 'REFERENCED_PILLAR_PARTICIPATES_IN_CLASH'
+                  : observation.outsideClashes.length > 0
+                    ? 'CLASH_ONLY_OUTSIDE_REFERENCED_PILLAR'
+                    : 'NO_CLASH_CANDIDATE_IN_RESOLVED_CHART',
+              );
+            } else {
+              expect(observation.state).toBe('STRUCTURAL_CLASH_CANDIDATES_UNRESOLVED');
+            }
+          }
+          expect(report.familyT8Admitted).toBe(false);
+          expect(report.unassignedConfigurationInputs.find(item =>
+            item.sourceSurface === '刑沖破害')?.familyScopeResolved).toBe(false);
+        }
+        const [generalChild, maleChild] = children.branchClashPillarObservations;
+        expect(generalChild.participatingClashes).toEqual(maleChild.participatingClashes);
+        expect(generalChild.outsideClashes).toEqual(maleChild.outsideClashes);
+      }
+    }
+    expect(states.has('REFERENCED_PILLAR_PARTICIPATES_IN_CLASH')).toBe(true);
+    expect(states.has('CLASH_ONLY_OUTSIDE_REFERENCED_PILLAR')).toBe(true);
+  });
+
+  it('preserves historical sex exclusion and unknown-hour clash omissions without allocating family outcomes', () => {
+    const femaleSnapshot = chart({ year: 1997, sex: 'female', timeKnown: false });
+    const unspecifiedSnapshot = chart({ year: 1997, sex: 'unspecified' });
+    const femaleParents = evaluateFamilySourceScopeV1(femaleSnapshot, 'parents');
+    const femaleChildren = evaluateFamilySourceScopeV1(femaleSnapshot, 'children');
+    const unspecifiedParents = evaluateFamilySourceScopeV1(unspecifiedSnapshot, 'parents');
+    expect(femaleParents.branchClashPillarObservations.map(item => item.pillarSourceSurface))
+      .toEqual(['月為父母兄弟門戶']);
+    expect(femaleChildren.branchClashPillarObservations.map(item => item.pillarSourceSurface))
+      .toEqual(['時為子息']);
+    expect(unspecifiedParents.branchClashPillarObservations.map(item => item.pillarSourceSurface))
+      .toEqual(['月為父母兄弟門戶']);
+    const child = femaleChildren.branchClashPillarObservations[0];
+    expect(child.state).toBe('REFERENCED_PILLAR_UNRESOLVED');
+    expect(child.observedReferenceBranch).toBeUndefined();
+    expect(child.referencePillarFactPath).toBe('pillars.hour');
+    expect(child.missingPrerequisites).toContain('CANONICAL_HOUR_PILLAR_UNRESOLVED');
+    expect(child.missingPrerequisites).toContain(
+      'R070_BRANCH_CLASH_PILLAR_TO_FAMILY_EFFECT_NOT_SOURCED',
+    );
+    expect(femaleParents.branchClashPillarObservations[0].referencePillarFactPath)
+      .toBe('pillars.month');
+    expect(femaleParents.familyT8Admitted).toBe(false);
+    expect(femaleChildren.familyT8Admitted).toBe(false);
+    expect(femaleChildren.mayPublish).toBe(false);
+    expect(femaleChildren.maySell).toBe(false);
   });
 
   it('keeps unassigned R070 官煞混雜 and 財印 as partially observed T5 search terms with unknown hour', () => {
