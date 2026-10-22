@@ -231,6 +231,27 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(app.get('twelve-reading-general').collectText()).not.toContain('SRC-RESEARCH');
   });
 
+  it('explains required input and missing source evidence in Korean instead of leaking machine codes', async () => {
+    const app = mountBrowser(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        state: 'partial_evidence',
+        messageCode: 'READING_EVIDENCE_PARTIAL',
+        coverage: {
+          explanation: '현재 자료에서는 개인별 결론에 필요한 보조 근거가 부족합니다.',
+        },
+        clarification: { kind: 'domain' },
+      }),
+    }));
+    await app.get('twelve-open-business').dispatch('click');
+    const shown = app.get('twelve-reading-business').collectText();
+    expect(shown).toContain('일부 근거만 확인되어 전체 해석을 완료하지 않았습니다');
+    expect(shown).toContain('필요한 보조 근거가 부족합니다');
+    expect(shown).toContain('풀이할 분야를 하나로 선택해 주세요');
+    expect(shown).not.toContain('READING_EVIDENCE_PARTIAL');
+    expect(app.get('twelve-state-business').dataset.state).toBe('unavailable');
+  });
+
   it('requires partner birth permission and uses only the separate preview chart transport', async () => {
     const app = mountBrowser(async (_url, call) => {
       if (call.url !== '/api/preview/compatibility-charts') throw new Error('Wrong route');
