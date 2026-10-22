@@ -447,6 +447,56 @@ describe('actual browser twelve-card entrypoint on existing Saju product host', 
     expect(app.calls[1]?.body.birth.date).toBe('1991-05-16');
   });
 
+  it('does not show a returned reading for a different person or an incorrectly known birth clock', async () => {
+    for (const subject of [
+      subjectFor({ date: '1991-05-15' }),
+      subjectFor({ calendarType: 'lunar' }),
+      subjectFor({ time: '13:30' }),
+      subjectFor({ time: null }),
+    ]) {
+      const app = mountBrowser(async () => ({
+        ok: true, status: 200,
+        json: async () => ({
+          state: 'delivered',
+          messageCode: 'READING_DELIVERED',
+          reading: {
+            subject,
+            sections: [{
+              title: '절대 보여주면 안 되는 다른 사람의 풀이',
+              state: 'complete',
+              blocks: [{ type: 'paragraph', text: '타인의 개인별 명식 내용' }],
+            }],
+          },
+        }),
+      }));
+      await app.get('twelve-open-general').dispatch('click');
+      const actual = app.get('twelve-reading-general').collectText();
+      expect(app.get('twelve-state-general').dataset.state).toBe('unavailable');
+      expect(app.get('twelve-state-general').textContent).toContain('다른 명식');
+      expect(actual).not.toContain('타인의 개인별 명식 내용');
+    }
+  });
+
+  it('does not display a transported interpretation without birth owner information', async () => {
+    const app = mountBrowser(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        state: 'delivered',
+        reading: {
+          sections: [{
+            title: '주체 확인이 안 된 문장',
+            state: 'complete',
+            blocks: [{ type: 'paragraph', text: '다른 사람의 내용일 수 있음' }],
+          }],
+        },
+      }),
+    }));
+    await app.get('twelve-open-general').dispatch('click');
+    expect(app.get('twelve-state-general').dataset.state).toBe('unavailable');
+    expect(app.get('twelve-reading-general').collectText())
+      .not.toContain('다른 사람의 내용일 수 있음');
+  });
+
   it('renders all response text as inert textContent, not executable HTML', async () => {
     const app = mountBrowser(async () => ({
       ok: true, status: 200,
