@@ -113,7 +113,7 @@ function openProductScreen(reply: Record<string, unknown>, failedReadingText?: s
       const body = JSON.parse(init.body) as Record<string, unknown>;
       requests.push({ url, body });
       const reading = body.reading as { text?: string } | undefined;
-      return { ok: reading?.text !== failedReadingText, json: async () => reply };
+      return { ok: failedReadingText === undefined || reading?.text !== failedReadingText, json: async () => reply };
     },
   });
   return { get, requests };
