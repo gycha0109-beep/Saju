@@ -197,6 +197,63 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     };
   }
 
+  function renderCalculatedFacts(view, reading) {
+    const facts = reading && reading.calculationSummary;
+    if (!facts || !facts.pillars) return;
+    const displayed = element('section', undefined, 'menu-canonical-facts');
+    displayed.appendChild(element('h3', '내 명식의 계산 사실'));
+    note(displayed, '아래는 입력한 명식에서 실제 계산된 값입니다. ' +
+      '기둥의 존재만으로 성격·관계·미래 결과를 단정하지 않습니다.', 'field-hint');
+    const pillars = element('ul');
+    [
+      ['year', '연주'], ['month', '월주'],
+      ['day', '일주'], ['hour', '시주']
+    ].forEach(function(pair) {
+      const fact = facts.pillars[pair[0]];
+      if (!fact || !['resolved', 'ambiguous', 'unavailable'].includes(fact.status)) return;
+      const value = fact.status === 'resolved' &&
+        typeof fact.value === 'string' && fact.value.trim()
+        ? fact.value : '미확정';
+      const state = fact.status === 'resolved' ? '계산 확정' :
+        fact.status === 'ambiguous' ? '경계 또는 입력에 따라 달라질 수 있음' :
+          '확인할 수 없음';
+      pillars.appendChild(element('li', pair[1] + ': ' + value + ' · ' + state));
+    });
+    if (pillars.childNodes.length) displayed.appendChild(pillars);
+    const optional = [
+      ['fiveElements', '오행 계산 정보'],
+      ['tenGods', '십신 계산 정보'],
+      ['luckPillars', '대운 계산 정보']
+    ];
+    optional.forEach(function(pair) {
+      const rows = facts[pair[0]];
+      if (!Array.isArray(rows) || !rows.length) return;
+      const details = element('details');
+      details.appendChild(element('summary', pair[1] + ' (계산 사실만)'));
+      const values = element('ul');
+      rows.forEach(function(row) {
+        if (!row || typeof row.label !== 'string' ||
+            !['resolved', 'ambiguous', 'unavailable'].includes(row.status)) return;
+        const value = row.status === 'resolved' &&
+          typeof row.value === 'string' && row.value.trim()
+          ? row.value : '미확정';
+        values.appendChild(element('li', row.label + ': ' + value));
+      });
+      if (values.childNodes.length) {
+        details.appendChild(values);
+        displayed.appendChild(details);
+      }
+    });
+    if (Array.isArray(facts.ambiguity)) {
+      facts.ambiguity.forEach(function(item) {
+        if (item && typeof item.summary === 'string' && item.summary.trim()) {
+          note(displayed, item.summary, 'notice');
+        }
+      });
+    }
+    view.output.appendChild(displayed);
+  }
+
   function renderPayload(view, payload) {
     const sections = payload.reading && Array.isArray(payload.reading.sections)
       ? payload.reading.sections.filter(function(section) {
@@ -216,6 +273,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
       : '사용 가능한 해석 문단이 없거나 추가 정보가 필요합니다.');
     if (payload.messageCode) note(view.output,
       readingMessages[payload.messageCode] || '이 주제의 결과를 확인할 수 없습니다.', 'field-hint');
+    renderCalculatedFacts(view, payload.reading);
     if (state === 'partial') {
       sections.forEach(function(section) {
         const card = element('section');
