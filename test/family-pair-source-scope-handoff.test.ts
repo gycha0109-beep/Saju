@@ -130,6 +130,90 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(male.familyT8Admitted).toBe(false);
   });
 
+  it('records literal parent and child T5 occurrences with paths, without turning them into family outcomes', () => {
+    const maleSnapshot = chart({ sex: 'male' });
+    const femaleSnapshot = chart({ sex: 'female' });
+    const maleParents = evaluateFamilySourceScopeV1(maleSnapshot, 'parents');
+    const femaleChildren = evaluateFamilySourceScopeV1(femaleSnapshot, 'children');
+
+    const cases = [
+      {
+        snapshot: maleSnapshot,
+        report: maleParents,
+        surface: '父以偏財論',
+        group: '편재',
+        values: ['편재'],
+      },
+      {
+        snapshot: maleSnapshot,
+        report: maleParents,
+        surface: '母以印綬論',
+        group: '인성 계열',
+        values: ['편인', '정인'],
+      },
+      {
+        snapshot: femaleSnapshot,
+        report: femaleChildren,
+        surface: '子嗣者即官星也',
+        group: '관성 계열',
+        values: ['편관', '정관'],
+      },
+      {
+        snapshot: femaleSnapshot,
+        report: femaleChildren,
+        surface: '我生者為子',
+        group: '식상 계열',
+        values: ['식신', '상관'],
+      },
+    ] as const;
+    for (const candidate of cases) {
+      const source = familyCandidate(candidate.report, candidate.surface);
+      const t5 = source.tenGodObservation;
+      expect(source.disposition).toBe('INCONCLUSIVE');
+      expect(t5?.sourceSurface).toBe(candidate.surface);
+      expect(t5?.sourceFactPath).toBe('derivedFacts.tenGods');
+      expect(t5?.observedGroup).toBe(candidate.group);
+      expect(t5?.coverage).toBe('visible_stems_and_representative_branch_only');
+      expect(t5?.historicalRelativeRoleAuthorized).toBe(false);
+      expect(t5?.observedPositions.every(position =>
+        candidate.values.some(value => value === position.value))).toBe(true);
+      const chartTenGods = candidate.snapshot.derivedFacts.tenGods;
+      for (const observed of t5?.observedPositions ?? []) {
+        expect(observed.path).toBe(
+          'derivedFacts.tenGods.' + observed.slot + '.' + observed.channel,
+        );
+        if (chartTenGods.status !== 'resolved') throw new TypeError('T5 observation without T5');
+        const direct = chartTenGods.value[observed.slot][observed.channel];
+        expect(direct?.status).toBe('resolved');
+        if (direct?.status === 'resolved') expect(observed.value).toBe(direct.value);
+      }
+      expect(source.missingPrerequisites).toContain('HIDDEN_VS_VISIBLE_STAR_HANDLING');
+      expect(source.missingPrerequisites)
+        .toContain('SECTION_SCOPED_STAR_RELATION_METHOD_NOT_SELECTED');
+      expect(candidate.report.familyT8Admitted).toBe(false);
+    }
+    expect(
+      familyCandidate(maleParents, '父以偏財論').tenGodObservation?.sourceSurface,
+    ).not.toEqual(
+      familyCandidate(femaleChildren, '我生者為子').tenGodObservation?.sourceSurface,
+    );
+  });
+
+  it('preserves incomplete T5 source positions on unknown birth hour without inferring absent relatives', () => {
+    const snapshot = chart({ sex: 'female', timeKnown: false });
+    const report = evaluateFamilySourceScopeV1(snapshot, 'children');
+    const relation = familyCandidate(report, '我生者為子');
+    const observation = relation.tenGodObservation;
+    expect(observation).toBeDefined();
+    expect(relation.disposition).toBe('INCONCLUSIVE');
+    expect(observation?.status).toBe('incomplete_input');
+    expect(observation?.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.stem');
+    expect(observation?.unresolvedFactPaths).toContain('derivedFacts.tenGods.hour.branch');
+    expect(relation.missingPrerequisites).toContain('TEN_GOD_CANONICAL_FACTS_NOT_FULLY_RESOLVED');
+    expect(observation?.historicalRelativeRoleAuthorized).toBe(false);
+    expect(report.familyT8Admitted).toBe(false);
+  });
+
   it('does not promote a child interpretation when birth hour is unknown', () => {
     const snapshot = chart({ year: 1993, timeKnown: false });
     const child = evaluateFamilySourceScopeV1(snapshot, 'children');
