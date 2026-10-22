@@ -274,6 +274,14 @@ describe('admitted general Relationship Preview semantics -> Official Reading ->
       );
       expect(JSON.stringify(missingSource)).not.toContain(originalHeadline);
     }
+    // The approved T8 claims alone do not license this positional paragraph.
+    // It must disappear when the actual Canonical T0/T5 source fact is absent.
+    const chartFactMissing = buildApprovedRelationshipMultifactorOverviewV1(
+      { ...semantics, canonicalFacts: [] },
+      plan, approvedDetailedMaterial, detailedReport.explainability.entries,
+    );
+    expect(chartFactMissing).toBeUndefined();
+
     const spouseScope = buildApprovedRelationshipMultifactorOverviewV1(
       { ...semantics, intent: {
         domain: 'relationship', temporalScope: 'natal', relationshipScope: 'spouse',
