@@ -228,6 +228,7 @@ export const PRODUCT_TWELVE_MENU_BROWSER_SCRIPT = String.raw`
     });
     if (pillars.childNodes.length) displayed.appendChild(pillars);
     const optional = [
+      ['calendar', '달력·절기 계산 정보'],
       ['fiveElements', '오행 계산 정보'],
       ['tenGods', '십신 계산 정보'],
       ['luckPillars', '대운 계산 정보']
