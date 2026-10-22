@@ -1013,6 +1013,25 @@ export interface R070FamilyMenuUnresolvedCanonicalInput {
   familyMeaningAuthorized: false;
 }
 
+/**
+ * The exact pre-existing reason references for one missing prerequisite code.
+ * A repeated prerequisite or source phrase never creates another T8 claim.
+ */
+export interface R070FamilyMenuPrerequisiteTrace {
+  prerequisiteCode: string;
+  origins: readonly {
+    reasonCode: R070FamilyMenuUnsupportedReason['reasonCode'];
+    category: R070FamilyMenuUnsupportedReason['category'];
+    sourceLayerIds: readonly string[];
+    sourceSurfaces: readonly string[];
+    observedFactPaths: readonly string[];
+    unresolvedFactPaths: readonly string[];
+  }[];
+  /** This is a provenance index, not a priority or weight. */
+  repetitionIsIndependentEvidence: false;
+  familyMeaningAuthorized: false;
+}
+
 export interface R070FamilyMenuSupportHandoff {
   requestedScope: FamilyResearchScope;
   historicalSex: 'male' | 'female' | 'unspecified';
@@ -1023,6 +1042,8 @@ export interface R070FamilyMenuSupportHandoff {
   excludedHistoricalSources: readonly R070FamilyMenuScopeExclusion[];
   /** Exact unfilled Canonical paths deduplicated across applicable source wording. */
   unresolvedCanonicalInputs: readonly R070FamilyMenuUnresolvedCanonicalInput[];
+  /** Deduplicated source/method/authority blockers with original reason references. */
+  prerequisiteTrace: readonly R070FamilyMenuPrerequisiteTrace[];
   /** Unassigned CONFIGURATION-OUTCOME stays supplemental, never a family menu rule. */
   unassignedConfigurationSources: readonly R070FamilyConfigurationHold[];
   missingPrerequisites: readonly string[];
@@ -1125,6 +1146,23 @@ function r070FamilyMenuSupportHandoff(
       officialMenuCanBeEnabledFromThisReason: false,
     });
   }
+  const prerequisiteTrace: R070FamilyMenuPrerequisiteTrace[] =
+    [...new Set(unsupportedReasons.flatMap(item => item.missingPrerequisites))]
+      .map(prerequisiteCode => ({
+        prerequisiteCode,
+        origins: unsupportedReasons
+          .filter(reason => reason.missingPrerequisites.includes(prerequisiteCode))
+          .map(reason => ({
+            reasonCode: reason.reasonCode,
+            category: reason.category,
+            sourceLayerIds: reason.sourceLayerIds,
+            sourceSurfaces: reason.sourceSurfaces,
+            observedFactPaths: reason.observedFactPaths,
+            unresolvedFactPaths: reason.unresolvedFactPaths,
+          })),
+        repetitionIsIndependentEvidence: false as const,
+        familyMeaningAuthorized: false as const,
+      }));
   return {
     requestedScope: blockers.requestedScope,
     historicalSex: blockers.historicalSex,
@@ -1132,6 +1170,7 @@ function r070FamilyMenuSupportHandoff(
     unsupportedReasons,
     excludedHistoricalSources,
     unresolvedCanonicalInputs,
+    prerequisiteTrace,
     unassignedConfigurationSources: blockers.configurationHolds,
     missingPrerequisites: [...new Set([
       ...unsupportedReasons.flatMap(item => item.missingPrerequisites),
