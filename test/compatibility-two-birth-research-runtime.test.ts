@@ -4,6 +4,12 @@ import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/productio
 import { buildCompatibilityTwoBirthResearchReading } from '../src/preview/compatibility-two-birth-research-runtime.js';
 import { renderCompatibilityTwoChartIntakeHtml } from '../src/preview/compatibility-two-chart-intake-preview.js';
 
+function escapedHtmlText(value: string): string {
+  return value.replace(/[&<>"']/gu, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char]!);
+}
+
 const REFERENCE = '2026-09-03T13:00:00.000Z';
 const FIRST: BirthInput = {
   calendarType: 'solar',
@@ -91,12 +97,12 @@ describe('real two-birth compatibility intake remains facts only', () => {
       expect(section.sourceIds.length).toBeGreaterThanOrEqual(2);
       expect(section.observedFactPaths.length).toBeGreaterThanOrEqual(2);
       expect(section.paragraph).toContain('이 원국에서 확인된 근거는');
-      expect(result.html).toContain(section.paragraph);
+      expect(result.html).toContain(escapedHtmlText(section.paragraph));
     }
     for (const section of partner.sections) {
       expect(section.sourceIds.length).toBeGreaterThanOrEqual(2);
       expect(section.observedFactPaths.length).toBeGreaterThanOrEqual(2);
-      expect(result.html).toContain(section.paragraph);
+      expect(result.html).toContain(escapedHtmlText(section.paragraph));
     }
     expect(result.meaning).toBe('two_person_calculation_only');
     expect(result.mayClaimInterpersonalMeaning).toBe(false);
@@ -120,7 +126,7 @@ describe('real two-birth compatibility intake remains facts only', () => {
     expect(unknown.personalRelationship.target.coverage).toBe('insufficient_evidence');
     expect(unknown.personalRelationship.target.sections).toHaveLength(0);
     expect(unknown.html).toContain('이 사람의 명식에서는 출처를 갖춘 원국 관계 풀이가 부족합니다');
-    expect(unknown.html).toContain(unknown.personalRelationship.subject.sections[0]!.paragraph);
+    expect(unknown.html).toContain(escapedHtmlText(unknown.personalRelationship.subject.sections[0]!.paragraph));
     expect(unknown.report.target.pillars[3]?.status).toBe('unavailable');
     expect(unknown.mayClaimInterpersonalMeaning).toBe(false);
   });
