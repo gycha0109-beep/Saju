@@ -62,6 +62,12 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(sections.career.readingGuide).toBeDefined();
     expect(html).toContain('aria-label="직업운 읽기 요약"');
     expect(html).toContain(sections.career.readingGuide!.paragraph);
+    expect(sections.wealth.readingGuide).toBeDefined();
+    expect(html).toContain('aria-label="재물운 읽기 요약"');
+    expect(html).toContain(sections.wealth.readingGuide!.paragraph);
+    const wealthCard = html.split('<h2 id="domain-wealth">')[1]!;
+    expect(wealthCard.indexOf(sections.wealth.readingGuide!.title))
+      .toBeLessThan(wealthCard.indexOf('명식 근거와 출처 확인'));
     const careerCard = html.split('<h2 id="domain-career">')[1]!;
     expect(careerCard.indexOf(sections.career.readingGuide!.title))
       .toBeLessThan(careerCard.indexOf('명식 근거와 출처 확인'));
@@ -191,6 +197,31 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
         },
       },
     })).toThrow(/reading guide must be derived/u);
+    expect(ra.wealth.readingGuide).toBeDefined();
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
+      ...ra,
+      wealth: {
+        ...ra.wealth,
+        readingGuide: {
+          ...ra.wealth.readingGuide!,
+          coreClaimType: 'FORGED_WEALTH_T8',
+        },
+      },
+    })).toThrow(/Wealth reading guide must follow/u);
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(a, {
+      ...ra,
+      wealth: {
+        ...ra.wealth,
+        readingGuide: {
+          ...ra.wealth.readingGuide!,
+          supporting: [{
+            claimType: 'FORGED_SUPPORT',
+            distinctObservedFactPaths: ['derivedFacts.tenGods.value.hour.stem.value'],
+            distinctObservedPositions: ['시간 조작'],
+          }],
+        },
+      },
+    })).toThrow();
     const unknown = sample(3, 10, null);
     expect(() => renderNatalFiveDomainMultifactorResearchHtml(unknown, ra)).toThrow();
   });
