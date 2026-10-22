@@ -92,6 +92,7 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
           <option value="가족">가족 · 부모와 자녀 함께 보기</option>
           <option value="부모운">부모운</option>
           <option value="자녀운">자녀운</option>
+          <option value="배우자·관계">배우자·관계 함께 보기</option>
           <option value="배우자운">배우자운</option>
           <option value="평생 흐름">평생 흐름</option>
           <option value="궁합">궁합 · 두 사람의 명식 비교(미리보기)</option>
@@ -284,6 +285,11 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
           ? item.label + ': ' + item.value : '');
     }
   }
+
+  const spouseRelationshipTopics = [
+    { title: '나의 연애·관계 방식', requestText: '연애운' },
+    { title: '배우자궁에 관한 승인된 설명', requestText: '배우자운' }
+  ];
 
   const familyTopics = [
     { title: '부모와의 관계', requestText: '부모운', scope: 'parents' },
@@ -699,6 +705,56 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     });
   }
 
+  function showSpouseRelationshipResults(outcomes) {
+    result.replaceChildren();
+    result.classList.remove('hidden');
+    result.appendChild(el('h2', '배우자·관계 · 두 관점'));
+    result.appendChild(el('p',
+      '내 명식의 일반적인 연애·관계 해석과 배우자궁에 관한 승인된 설명은 서로 다른 근거를 사용합니다. 배우자 개인의 성격, 결혼 시점이나 결과를 두 풀이로부터 추정하지 않습니다.',
+      'bundle-caption'));
+    spouseRelationshipTopics.forEach((topic, index) => {
+      const section = el('section', undefined, 'domain-card');
+      section.appendChild(el('h2', topic.title));
+      const content = el('div');
+      const outcome = outcomes[index];
+      if (outcome.status === 'fulfilled') {
+        renderResponse(outcome.value, content);
+      } else {
+        content.appendChild(el('p',
+          '이 항목의 풀이를 불러오지 못했습니다. 다른 항목은 계속 표시합니다.',
+          'notice error'));
+      }
+      section.appendChild(content);
+      result.appendChild(section);
+    });
+  }
+
+  async function showCompatibilityIndividualReadings(outcomes) {
+    // Two independent natal T8 readings are not a dyadic T10 compatibility
+    // interpretation. Preserve each response and its own coverage limits.
+    const heading = el('section', undefined, 'domain-card');
+    heading.appendChild(el('h2', '두 사람 각자의 연애·관계 풀이'));
+    heading.appendChild(el('p',
+      '아래는 각자의 출생정보를 따로 계산하고 기존 승인된 원국 관계 해석을 요청한 결과입니다. 서로의 관계 적합도·갈등·결혼 여부·궁합 점수를 뜻하지 않습니다.',
+      'bundle-caption'));
+    result.appendChild(heading);
+    ['나의 관계 해석', '상대방의 관계 해석'].forEach((title, index) => {
+      const section = el('section', undefined, 'domain-card');
+      section.appendChild(el('h2', title));
+      const content = el('div');
+      const outcome = outcomes[index];
+      if (outcome.status === 'fulfilled') {
+        renderResponse(outcome.value, content);
+      } else {
+        content.appendChild(el('p',
+          '이 사람의 관계 풀이를 불러오지 못했습니다. 다른 사람의 결과는 그대로 유지합니다.',
+          'notice error'));
+      }
+      section.appendChild(content);
+      result.appendChild(section);
+    });
+  }
+
   async function showFamilyCombinedResults(outcomes, birth) {
     result.replaceChildren();
     result.classList.remove('hidden');
@@ -849,6 +905,14 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     result.classList.remove('hidden');
     result.replaceChildren(el('div', '풀이를 준비하고 있습니다.', 'state'));
     try {
+      if (readingText.value === '배우자·관계') {
+        const birth = currentBirth();
+        const outcomes = await Promise.allSettled(
+          spouseRelationshipTopics.map(topic => fetchIndividualDomain(birth, topic))
+        );
+        showSpouseRelationshipResults(outcomes);
+        return;
+      }
       if (readingText.value === '가족') {
         const birth = currentBirth();
         const outcomes = await Promise.allSettled(
@@ -863,8 +927,25 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
         return;
       }
       if (readingText.value === '궁합') {
-        const preview = await fetchCompatibilityPreview();
+        const subjectBirth = currentBirth();
+        const targetBirth = currentPartnerBirth();
+        // The authenticated two-chart view is optional. Each individual's
+        // admitted natal relationship reading uses the existing public route.
+        let preview;
+        try {
+          preview = await fetchCompatibilityPreview();
+        } catch {
+          preview = {
+            state: 'preview_unavailable',
+            explanation: '두 사람의 계산 명식 미리보기를 표시하지 못했습니다. 아래 개인별 원국 관계 풀이와 궁합 결과는 서로 다른 범위입니다.'
+          };
+        }
         renderCompatibilityPreview(preview);
+        const outcomes = await Promise.allSettled([
+          fetchIndividualDomain(subjectBirth, { requestText: '연애운' }),
+          fetchIndividualDomain(targetBirth, { requestText: '연애운' })
+        ]);
+        await showCompatibilityIndividualReadings(outcomes);
         return;
       }
       const body = {
