@@ -529,6 +529,136 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
     expect(states.has('CLASH_ONLY_OUTSIDE_REFERENCED_PILLAR')).toBe(true);
   });
 
+  it('hands off exact menu-specific unsupported reasons separately from excluded sex-scoped sources', () => {
+    const cases = [
+      { sex: 'male' as const, scope: 'parents' as const, excluded: [],
+        expectedMethodPairs: 4 },
+      { sex: 'female' as const, scope: 'parents' as const,
+        excluded: ['年為父', '胎為母'], expectedMethodPairs: 2 },
+      { sex: 'unspecified' as const, scope: 'parents' as const,
+        excluded: ['年為父', '胎為母'], expectedMethodPairs: 2 },
+      { sex: 'male' as const, scope: 'children' as const,
+        excluded: ['我生者為子'], expectedMethodPairs: 3 },
+      { sex: 'female' as const, scope: 'children' as const,
+        excluded: ['時為子孫'], expectedMethodPairs: 3 },
+      { sex: 'unspecified' as const, scope: 'children' as const,
+        excluded: ['時為子孫', '我生者為子'], expectedMethodPairs: 1 },
+    ];
+    for (const input of cases) {
+      const snapshot = chart({ year: 1990, day: 15, sex: input.sex });
+      const report = evaluateFamilySourceScopeV1(snapshot, input.scope);
+      const menu = report.menuSupportHandoff;
+      const blockers = report.interpretationBlockers;
+      expect(menu.requestedScope).toBe(input.scope);
+      expect(menu.historicalSex).toBe(input.sex);
+      expect(menu.supportState).toBe('UNAVAILABLE_RESEARCH_ONLY');
+      expect(menu.excludedHistoricalSources.map(item => item.sourceSurface))
+        .toEqual(input.excluded);
+      expect(menu.excludedHistoricalSources.every(item =>
+        item.historicalSex === input.sex &&
+        item.exclusionIsMenuUnavailabilityReason === false &&
+        item.missingPrerequisites.includes('HISTORICAL_SEX_SCOPE_NOT_MATCHED_OR_NOT_SPECIFIED'),
+      )).toBe(true);
+      const otherConditions = blockers.sourceConditionHolds.filter(item =>
+        item.blockerKind !== 'HISTORICAL_SEX_SCOPE_NOT_APPLICABLE');
+      expect(menu.unsupportedReasons).toHaveLength(
+        1 + otherConditions.length + input.expectedMethodPairs,
+      );
+      const authority = menu.unsupportedReasons[0];
+      expect(authority?.reasonCode).toBe('R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED');
+      expect(authority?.category).toBe('OFFICIAL_AUTHORITY');
+      expect(authority?.missingPrerequisites)
+        .toEqual(['R070_FAMILY_T8_OFFICIAL_METHOD_NOT_ADMITTED']);
+      for (const [index, condition] of otherConditions.entries()) {
+        const reason = menu.unsupportedReasons[index + 1];
+        if (reason === undefined) throw new Error('Source hold must have a menu reason.');
+        expect(reason.reasonCode).toBe(
+          condition.blockerKind === 'CALCULATED_PILLAR_POSITION_ONLY'
+            ? 'R070_MENU_PILLAR_POSITION_NOT_FAMILY_INTERPRETATION'
+            : condition.blockerKind === 'SOURCE_CONTEXT_METHOD_NOT_SELECTED'
+              ? 'R070_MENU_SOURCE_CONTEXT_METHOD_NOT_SELECTED'
+              : condition.blockerKind === 'REFERENCE_PILLAR_INPUT_UNRESOLVED'
+                ? 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED'
+                : 'R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE',
+        );
+        expect(reason.sourceLayerIds).toEqual([condition.sourceLayerId]);
+        expect(reason.sourceSurfaces).toEqual([condition.sourceSurface]);
+        expect(reason.observedFactPaths).toEqual(condition.observedFactPaths);
+        expect(reason.unresolvedFactPaths).toEqual(condition.unresolvedFactPaths);
+        expect(reason.missingPrerequisites).toEqual(condition.missingPrerequisites);
+        expect(reason.officialMenuCanBeEnabledFromThisReason).toBe(false);
+      }
+      const methodReasons = menu.unsupportedReasons.filter(item =>
+        item.reasonCode === 'R070_MENU_HISTORICAL_METHODS_NOT_RECONCILED');
+      expect(methodReasons).toHaveLength(input.expectedMethodPairs);
+      for (const [i, reason] of methodReasons.entries()) {
+        const method = blockers.methodSelectionHolds[i];
+        if (method === undefined) throw new Error('Method-selection hold lost.');
+        expect(reason.sourceSurfaces).toEqual(method.sourceSurfaces);
+        expect(reason.sourceLayerIds).toEqual(method.sourceLayerIds);
+        expect(reason.observedFactPaths).toEqual(method.observedFactPaths);
+        expect(reason.missingPrerequisites).toEqual(method.missingPrerequisites);
+        expect(reason.category).toBe('METHOD_SELECTION');
+      }
+      expect(menu.unassignedConfigurationSources).toEqual(blockers.configurationHolds);
+      expect(menu.unassignedConfigurationSources.map(item => item.sourceSurface))
+        .toEqual(['旺衰', '生旺死絕', '刑沖破害', '官煞混雜', '財印']);
+      expect(menu.unsupportedReasons.every(reason =>
+        reason.officialMenuCanBeEnabledFromThisReason === false &&
+        !reason.sourceSurfaces.some(surface => input.excluded.includes(surface)))).toBe(true);
+      expect(menu.missingPrerequisites).toEqual([...new Set([
+        ...menu.unsupportedReasons.flatMap(item => item.missingPrerequisites),
+        ...menu.unassignedConfigurationSources.flatMap(item => item.missingPrerequisites),
+      ])]);
+      expect(report.missingPrerequisites).toEqual(
+        expect.arrayContaining([...menu.missingPrerequisites]),
+      );
+      expect(menu.admittedFamilyClaimCount).toBe(0);
+      expect(menu.familyT8Admitted).toBe(false);
+      expect(menu.mayEnableMenu).toBe(false);
+      expect(menu.mayDisplayFamilyInterpretation).toBe(false);
+      expect(menu.mayPersist).toBe(false);
+      expect(menu.mayPublish).toBe(false);
+      expect(menu.maySell).toBe(false);
+      expect(report.mayMarkMenuAvailable).toBe(false);
+    }
+  });
+
+  it('reports missing-hour and missing-fetal-pillar menu reasons without inventing family claims', () => {
+    const unknownHour = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const child = evaluateFamilySourceScopeV1(unknownHour, 'children');
+    const parents = evaluateFamilySourceScopeV1(unknownHour, 'parents');
+    const childMenu = child.menuSupportHandoff;
+    const childHour = childMenu.unsupportedReasons.find(reason =>
+      reason.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED' &&
+      reason.sourceSurfaces.includes('時為子息'));
+    expect(childHour?.unresolvedFactPaths).toContain('pillars.hour');
+    expect(childMenu.unsupportedReasons.some(reason =>
+      reason.reasonCode === 'R070_MENU_HISTORICAL_METHODS_NOT_RECONCILED' &&
+      reason.sourceSurfaces.includes('我生者為子'))).toBe(true);
+    expect(childMenu.unsupportedReasons.some(reason =>
+      reason.reasonCode === 'R070_MENU_SOURCE_CONTEXT_METHOD_NOT_SELECTED' &&
+      reason.unresolvedFactPaths.includes('derivedFacts.hiddenStems.hour'))).toBe(true);
+    expect(childMenu.excludedHistoricalSources.map(item => item.sourceSurface))
+      .toEqual(['時為子孫']);
+    expect(parents.menuSupportHandoff.unsupportedReasons.some(reason =>
+      reason.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED')).toBe(false);
+
+    const maleParents = evaluateFamilySourceScopeV1(
+      chart({ year: 1990, day: 15, sex: 'male' }), 'parents');
+    const fetal = maleParents.menuSupportHandoff.unsupportedReasons.find(reason =>
+      reason.reasonCode === 'R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE' &&
+      reason.sourceSurfaces.includes('胎為母'));
+    expect(fetal?.missingPrerequisites)
+      .toContain('FETAL_PILLAR_NOT_DEFINED_BY_CANONICAL_SNAPSHOT');
+    expect(fetal?.observedFactPaths).toEqual([]);
+    expect(fetal?.unresolvedFactPaths).toEqual([]);
+    expect(maleParents.menuSupportHandoff.admittedFamilyClaimCount).toBe(0);
+    expect(childMenu.mayEnableMenu).toBe(false);
+    expect(childMenu.mayPublish).toBe(false);
+    expect(maleParents.menuSupportHandoff.maySell).toBe(false);
+  });
+
   it('itemizes R070 historical source applicability and method selection separately for parents/children', () => {
     const cases = [
       { sex: 'male' as const, scope: 'parents' as const,
