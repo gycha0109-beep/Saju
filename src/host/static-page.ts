@@ -93,6 +93,7 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
           <option value="자녀운">자녀운</option>
           <option value="배우자운">배우자운</option>
           <option value="평생 흐름">평생 흐름</option>
+          <option value="궁합">궁합 · 두 사람의 명식 비교(미리보기)</option>
           <option value="올해 운세">올해 전체 흐름</option>
           <option value="올해 직업운">올해 직업운</option>
           <option value="올해 사업운">올해 사업운</option>
@@ -104,6 +105,30 @@ export const PRODUCT_HOST_PAGE = `<!doctype html>
           <option value="지금 고민으로 보기">지금 고민으로 보기</option>
         </select>
       </label>
+      <div id="partner-fields" class="grid full hidden" role="group" aria-label="궁합 상대방의 출생정보">
+        <label class="full">상대방 출생정보
+          <span class="field-hint">궁합 미리보기에는 두 사람의 출생정보가 필요합니다. 각각의 계산 사실만 비교하며 궁합 결과를 추측하지 않습니다.</span>
+        </label>
+        <label>상대방 달력
+          <select id="partner-calendar" disabled>
+            <option value="solar">양력</option><option value="lunar">음력</option>
+          </select>
+        </label>
+        <label>상대방 생년월일
+          <input id="partner-date" type="text" inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD" disabled>
+        </label>
+        <label>상대방 출생시간
+          <input id="partner-time" type="time" value="12:00" disabled>
+        </label>
+        <label>상대방 성별 (선택)
+          <select id="partner-sex" disabled>
+            <option value="unspecified">선택 안 함</option>
+            <option value="female">여성</option><option value="male">남성</option>
+          </select>
+        </label>
+        <label class="check full"><input id="partner-time-unknown" type="checkbox" disabled> 상대방 출생시간을 모릅니다</label>
+        <label id="partner-leap-field" class="check full hidden"><input id="partner-leap" type="checkbox" disabled> 상대방 생일이 윤달입니다</label>
+      </div>
       <label id="question-field" class="full hidden">어떤 고민이 있으신가요?
         <textarea id="question-text" name="questionText" maxlength="190" aria-describedby="question-hint" placeholder="예: 재물운 또는 이직을 고민하고 있는데 어떤 점을 살펴야 할까요?" disabled></textarea>
         <span id="question-hint" class="field-hint">재물운처럼 지원하는 주제는 기존 풀이를 보여드립니다. 구체적인 고민은 확인된 사주 근거 안에서만 답하며, 근거가 부족한 경우 그 이유를 안내합니다.</span>
@@ -145,6 +170,14 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
   const readingText = document.getElementById('reading-text');
   const questionField = document.getElementById('question-field');
   const questionText = document.getElementById('question-text');
+  const partnerFields = document.getElementById('partner-fields');
+  const partnerCalendar = document.getElementById('partner-calendar');
+  const partnerDate = document.getElementById('partner-date');
+  const partnerTime = document.getElementById('partner-time');
+  const partnerSex = document.getElementById('partner-sex');
+  const partnerTimeUnknown = document.getElementById('partner-time-unknown');
+  const partnerLeap = document.getElementById('partner-leap');
+  const partnerLeapField = document.getElementById('partner-leap-field');
 
   const messages = {
     READING_DELIVERED: '풀이가 준비되었습니다.',
@@ -363,13 +396,38 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
 
   function syncQuestionField() {
     const isQuestion = readingText.value === '지금 고민으로 보기';
+    const isCompatibility = readingText.value === '궁합';
     questionField.classList.toggle('hidden', !isQuestion);
     questionText.disabled = !isQuestion;
-    submit.textContent = isQuestion ? '내 고민 풀이 보기' : '선택한 분야 풀이 보기';
+    partnerFields.classList.toggle('hidden', !isCompatibility);
+    [partnerCalendar, partnerDate, partnerSex, partnerTimeUnknown].forEach(input => {
+      input.disabled = !isCompatibility;
+    });
+    partnerTime.disabled = !isCompatibility || partnerTimeUnknown.checked;
+    partnerLeap.disabled = !isCompatibility || partnerCalendar.value !== 'lunar';
+    partnerLeapField.classList.toggle('hidden', !isCompatibility || partnerCalendar.value !== 'lunar');
+    submit.textContent = isQuestion
+      ? '내 고민 풀이 보기'
+      : isCompatibility ? '두 사람 명식 비교 보기' : '선택한 분야 풀이 보기';
   }
 
   readingText.addEventListener('change', syncQuestionField);
   syncQuestionField();
+
+  partnerDate.addEventListener('input', () => {
+    partnerDate.value = formatBirthDateInput(partnerDate.value);
+    partnerDate.setCustomValidity(birthDateValidationMessage(
+      partnerDate.value, partnerCalendar.value === 'lunar',
+    ));
+  });
+  partnerCalendar.addEventListener('change', () => {
+    if (partnerCalendar.value !== 'lunar') partnerLeap.checked = false;
+    syncQuestionField();
+    partnerDate.setCustomValidity(birthDateValidationMessage(
+      partnerDate.value, partnerCalendar.value === 'lunar',
+    ));
+  });
+  partnerTimeUnknown.addEventListener('change', syncQuestionField);
 
   birthDate.addEventListener('input', () => {
     const formatted = formatBirthDateInput(birthDate.value);
@@ -400,6 +458,58 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       sex: sex.value,
       ...(calendar.value === 'lunar' ? { isLeapMonth: leapMonth.checked } : {})
     };
+  }
+
+  function currentPartnerBirth() {
+    return {
+      calendarType: partnerCalendar.value,
+      date: partnerDate.value,
+      time: partnerTimeUnknown.checked ? null : partnerTime.value,
+      sex: partnerSex.value,
+      ...(partnerCalendar.value === 'lunar' ? { isLeapMonth: partnerLeap.checked } : {})
+    };
+  }
+
+  function renderCompatibilityPreview(payload) {
+    result.replaceChildren();
+    result.classList.remove('hidden');
+    result.appendChild(el('h2', '두 사람의 명식 · 궁합 사전 확인'));
+    if (!payload || payload.state !== 'insufficient_evidence' ||
+        !Array.isArray(payload.subjects) || payload.subjects.length !== 2) {
+      result.appendChild(el('p', '명식 비교 결과를 확인할 수 없습니다.', 'notice error'));
+      return;
+    }
+    payload.subjects.forEach((person, index) => {
+      const section = el('section');
+      section.appendChild(el('h2', index === 0 ? '나의 명식' : '상대방의 명식'));
+      const pillars = el('div', undefined, 'pillars');
+      ['year', 'month', 'day', 'hour'].forEach((slot) => {
+        const fact = person.pillars?.[slot];
+        const label = { year: '연주', month: '월주', day: '일주', hour: '시주' }[slot];
+        const item = el('div', undefined, 'pillar');
+        item.appendChild(el('strong',
+          fact?.status === 'resolved' ? fact.value + ' (' + fact.hanja + ')' : '확정하지 않음'));
+        item.appendChild(el('span', label));
+        pillars.appendChild(item);
+      });
+      section.appendChild(pillars);
+      if (!person.birthTimeKnown) {
+        section.appendChild(el('p', '출생시각 미상: 시주의 세부 사실을 확정하지 않습니다.', 'notice'));
+      }
+      result.appendChild(section);
+    });
+    result.appendChild(el('div', payload.explanation, 'notice'));
+    (payload.limitations || []).forEach(text => result.appendChild(el('p', text, 'disclosure')));
+  }
+
+  async function fetchCompatibilityPreview() {
+    const response = await fetch('/api/preview/compatibility-charts', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ birth: currentBirth(), partnerBirth: currentPartnerBirth() })
+    });
+    if (!response.ok) throw new Error('COMPATIBILITY_PREVIEW_NOT_AVAILABLE');
+    return response.json();
   }
 
   async function fetchIndividualDomain(birth, topic) {
@@ -585,6 +695,20 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
       return;
     }
 
+    if (readingText.value === '궁합') {
+      const partnerDateError = birthDateValidationMessage(
+        partnerDate.value, partnerCalendar.value === 'lunar');
+      partnerDate.setCustomValidity(partnerDateError);
+      if (partnerDateError || (!partnerTimeUnknown.checked && !partnerTime.value)) {
+        result.classList.remove('hidden');
+        result.replaceChildren(el('div',
+          partnerDateError || '상대방 출생시간을 확인하거나 모름을 선택해 주세요.', 'state error'));
+        partnerDate.focus();
+        partnerDate.reportValidity();
+        return;
+      }
+    }
+
     if (readingText.value === '지금 고민으로 보기' && !questionText.value.trim()) {
       result.classList.remove('hidden');
       result.replaceChildren(el('div', '고민 내용을 입력해 주세요.', 'state error'));
@@ -598,6 +722,11 @@ export const PRODUCT_HOST_APP_SCRIPT = String.raw`(() => {
     result.classList.remove('hidden');
     result.replaceChildren(el('div', '풀이를 준비하고 있습니다.', 'state'));
     try {
+      if (readingText.value === '궁합') {
+        const preview = await fetchCompatibilityPreview();
+        renderCompatibilityPreview(preview);
+        return;
+      }
       const body = {
         birth: currentBirth(),
         reading: {

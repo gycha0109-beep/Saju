@@ -29,6 +29,7 @@ import {
   faceGovernedHandoffHttpStatusV1,
 } from './face-governed-handoff-http.js';
 import { PRODUCT_HOST_APP_SCRIPT, PRODUCT_HOST_PAGE } from './static-page.js';
+import { buildTwoPersonCompatibilityCalculationPreview } from './compatibility-calculation-preview.js';
 
 export const DEFAULT_PRODUCT_HOST_MAX_REQUEST_BYTES = 16 * 1024;
 export const DEFAULT_CHARACTER_GROUNDING_MAX_REQUEST_BYTES = 512 * 1024;
@@ -40,6 +41,8 @@ export const PRODUCT_PREVIEW_READING_HTTP_PATH =
   '/api/preview/readings' as const;
 export const PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH =
   '/api/preview/natal-five-domains' as const;
+export const PRODUCT_PREVIEW_COMPATIBILITY_CALCULATION_HTTP_PATH =
+  '/api/preview/compatibility-charts' as const;
 export const PRODUCT_READING_PREVIEW_LIFECYCLE = 'preview' as const;
 
 export interface MyeonghwaProductHostServerOptions {
@@ -407,6 +410,40 @@ function createMyeonghwaHttpServer(
           })),
         };
         sendJson(response, 200, admitted, {
+          [PRODUCT_READING_LIFECYCLE_HEADER]: PRODUCT_READING_PREVIEW_LIFECYCLE,
+        });
+      } catch (error) {
+        if (!handleKnownError(response, error)) sendReadingOperationalError(response);
+      }
+      return;
+    }
+    if (path === PRODUCT_PREVIEW_COMPATIBILITY_CALCULATION_HTTP_PATH) {
+      // Calculated T0 facts only; this Preview route does not authorize
+      // cross-person T10 semantics or modify production /api/readings.
+      const previewConfigured =
+        readingRoute.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE ||
+        secondaryReadingRoute?.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE;
+      if (!previewConfigured) {
+        sendJson(response, 404, {
+          error: { code: 'HOST_ROUTE_NOT_FOUND', message: 'Route not found.' },
+        });
+        return;
+      }
+      if (method !== 'POST') {
+        response.setHeader('allow', 'POST');
+        sendJson(response, 405, {
+          error: { code: 'HOST_METHOD_NOT_ALLOWED', message: 'POST is required.' },
+        });
+        return;
+      }
+      if (authorizeReadingRequest !== undefined && !authorizeReadingRequest(request)) {
+        sendAuthRequired(response);
+        return;
+      }
+      try {
+        const body = await readJsonBody(request, bodyLimit);
+        const preview = buildTwoPersonCompatibilityCalculationPreview(body);
+        sendJson(response, 200, preview, {
           [PRODUCT_READING_LIFECYCLE_HEADER]: PRODUCT_READING_PREVIEW_LIFECYCLE,
         });
       } catch (error) {
