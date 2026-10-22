@@ -1,9 +1,10 @@
 import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import { RELATIONSHIP_SPOUSE_NATAL_APPROVED_DETAILED_SOURCE_PROFILES_V1 } from '../reading/official-reading-detailed-presentation-spouse.js';
 import type { CompatibilityTwoChartIntakePreview } from './compatibility-two-chart-intake-preview.js';
-import type {
-  FamilyCanonicalObservationPreview,
-  FamilyPillarObservation,
+import {
+  buildFamilyCanonicalObservationPreview,
+  type FamilyCanonicalObservationPreview,
+  type FamilyPillarObservation,
 } from './family-parents-children-observation-preview.js';
 
 export const RELATIONSHIP_THREE_MENU_RESEARCH_PAGE_VERSION =
@@ -76,6 +77,12 @@ function assertBoundedFamily(
         !matchesActualFamilyFact(snapshot, item))) {
     throw new TypeError('Relationship page refuses mismatched or promoted family chart observations.');
   }
+  // The report can only display the exact existing bounded R070 text;
+  // a caller may not insert a new family personality or outcome sentence.
+  const expected = buildFamilyCanonicalObservationPreview(snapshot, scope);
+  if (JSON.stringify(report) !== JSON.stringify(expected)) {
+    throw new TypeError('Relationship page rejects altered family research content.');
+  }
   const expectedSlots = scope === 'parents' ? ['year', 'month'] : ['hour'];
   if (report.observations.length !== expectedSlots.length ||
       !report.observations.every((item, index) =>
@@ -98,6 +105,13 @@ function assertBoundedCompatibility(
       !report.researchOnly || report.usefulComplete ||
       report.mayPublish || report.maySell) {
     throw new TypeError('Relationship page refuses a mixed-person or promoted compatibility report.');
+  }
+  if (report.missing.length < 1 ||
+      report.missing[0] !== '두 명식 사이의 상호작용을 설명하는 source-qualified T10 Claim·Methodology가 아직 승인되지 않았습니다. 궁합 결과나 점수를 만들지 않습니다.' ||
+      report.missing.slice(1).some(item =>
+        item !== '첫 번째 사람의 출생시각 미상: 시주와 관련된 상호 구조 판단을 보류합니다.' &&
+        item !== '두 번째 사람의 출생시각 미상: 시주와 관련된 상호 구조 판단을 보류합니다.')) {
+    throw new TypeError('Relationship page refuses altered compatibility interpretation text.');
   }
   const slots = ['year', 'month', 'day', 'hour'] as const;
   if (report.subject.pillars.length !== slots.length ||
