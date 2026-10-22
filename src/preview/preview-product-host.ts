@@ -10,6 +10,7 @@ import {
   createMyeonghwaProductHost,
   createMyeonghwaPreviewNatalFiveDomainHost,
   parseProductHostReadingRequest,
+  parseProductHostCalculationRequest,
   type MyeonghwaProductHost,
   type MyeonghwaProductHostDependencies,
 } from '../host/product-host.js';
@@ -36,6 +37,7 @@ import {
   isPreviewE2eSupportedReadingSection,
 } from './preview-authority.js';
 import { requirePreviewSemanticAdmissionV1 } from './preview-semantic-admission.js';
+import { renderNatalFiveDomainResearchPreviewForBirth } from './natal-five-domain-research-transport.js';
 import { createGeneralNatalIntegratedPreviewProductHost } from '../host/general-natal-integrated-preview-host.js';
 import { createGeneralNatalIntegratedReadingRegistry } from '../interpretation/general-natal-integrated-reading-registry.js';
 
@@ -687,5 +689,8 @@ export function createApprovedPreviewE2eProductHost(): MyeonghwaProductHost {
       return defaultHost.requestReading(body);
     },
     requestNatalFiveDomains: fiveDomainPreviewHost.requestNatalFiveDomains,
+    async requestNatalFiveDomainResearchHtml(body: unknown): Promise<string> {
+      return renderNatalFiveDomainResearchPreviewForBirth(parseProductHostCalculationRequest(body));
+    },
   };
 }

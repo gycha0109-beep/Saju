@@ -40,6 +40,8 @@ export const PRODUCT_PREVIEW_READING_HTTP_PATH =
   '/api/preview/readings' as const;
 export const PRODUCT_PREVIEW_NATAL_FIVE_DOMAIN_HTTP_PATH =
   '/api/preview/natal-five-domains' as const;
+export const PRODUCT_PREVIEW_NATAL_RESEARCH_HTML_HTTP_PATH =
+  '/api/preview/natal-research-html' as const;
 export const PRODUCT_READING_PREVIEW_LIFECYCLE = 'preview' as const;
 
 export interface MyeonghwaProductHostServerOptions {
@@ -364,6 +366,47 @@ function createMyeonghwaHttpServer(
         sendJson(response, 200, grounding, {
           [CHARACTER_GROUNDING_ADMISSION_HEADER]:
             CHARACTER_GROUNDING_ADMISSION_VERSION,
+        });
+      } catch (error) {
+        if (!handleKnownError(response, error)) sendReadingOperationalError(response);
+      }
+      return;
+    }
+    // Internal source-owned research HTML is never a ProductReadingResponse.
+    // The Production-only route must not expose this method even if the
+    // supplied production host implements it accidentally.
+    if (path === PRODUCT_PREVIEW_NATAL_RESEARCH_HTML_HTTP_PATH) {
+      const previewHost = readingRoute.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE
+        ? readingHost
+        : secondaryReadingRoute?.lifecycle === PRODUCT_READING_PREVIEW_LIFECYCLE
+          ? secondaryReadingHost
+          : undefined;
+      if (previewHost?.requestNatalFiveDomainResearchHtml === undefined ||
+          authorizeReadingRequest === undefined) {
+        sendJson(response, 404, {
+          error: { code: 'HOST_ROUTE_NOT_FOUND', message: 'Route not found.' },
+        });
+        return;
+      }
+      if (method !== 'POST') {
+        response.setHeader('allow', 'POST');
+        sendJson(response, 405, {
+          error: { code: 'HOST_METHOD_NOT_ALLOWED', message: 'POST is required.' },
+        });
+        return;
+      }
+      if (!authorizeReadingRequest(request)) {
+        sendAuthRequired(response);
+        return;
+      }
+      try {
+        const body = await readJsonBody(request, bodyLimit);
+        const html = await previewHost.requestNatalFiveDomainResearchHtml(body);
+        sendText(response, 200, 'text/html; charset=utf-8', html, {
+          [PRODUCT_READING_LIFECYCLE_HEADER]: PRODUCT_READING_PREVIEW_LIFECYCLE,
+          'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; sandbox",
+          'referrer-policy': 'no-referrer',
+          'x-frame-options': 'DENY',
         });
       } catch (error) {
         if (!handleKnownError(response, error)) sendReadingOperationalError(response);

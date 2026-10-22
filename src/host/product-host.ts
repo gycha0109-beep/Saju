@@ -126,6 +126,8 @@ export interface MyeonghwaProductHost {
    * Optional for external/mocked hosts implementing the older interface.
    */
   requestNatalFiveDomains?(body: unknown): Promise<NatalFiveDomainProductBundle>;
+  /** Internal source-owned research HTML. HTTP admission must be Preview-only. */
+  requestNatalFiveDomainResearchHtml?(body: unknown): Promise<string>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
