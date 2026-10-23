@@ -125,6 +125,52 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(html).not.toContain('<script>');
   });
 
+  it('puts exact source-bound General Korean interpretation first without granting new meaning', () => {
+    const chart = sample(3, 10);
+    const original = reports(chart);
+    const general = original.general;
+    expect(general.sections.length).toBeGreaterThan(0);
+    expect(general.readingGuide).toBeDefined();
+    const html = renderNatalFiveDomainMultifactorResearchHtml(chart, original);
+    const ownCard = html.split('<h2 id="domain-general">')[1]!.split('</article>')[0]!;
+    const first = ownCard.indexOf('이 명식에서 먼저 읽을 실제 총운 풀이');
+    const details = ownCard.indexOf('<details class="full-claim-evidence">');
+    expect(first).toBeGreaterThanOrEqual(0);
+    expect(details).toBeGreaterThan(first);
+    expect(ownCard).toContain('aria-label="총운 명식별 풀이 본문"');
+    // The introduction may already repeat a sourced paragraph. Verify the
+    // dedicated first-screen segment, not its first occurrence in the card.
+    const firstScreen = ownCard.slice(first, details);
+    for (const section of general.sections) {
+      // Rendered HTML escapes the source-owned Korean paragraph unchanged in meaning.
+      const displayed = section.paragraph.replace(/&/gu, '&amp;')
+        .replace(/</gu, '&lt;').replace(/>/gu, '&gt;')
+        .replace(/"/gu, '&quot;').replace(/'/gu, '&#39;');
+      expect(firstScreen).toContain('<p>' + displayed + '</p>');
+      expect(ownCard).toContain(section.ruleId);
+      expect(ownCard).toContain(section.sourceIds[0]!);
+    }
+    expect(ownCard).toContain(general.state === 'complete'
+      ? '성격·미래 사건을 단정하지 않습니다.'
+      : '종합 결론으로 채우지 않습니다.');
+    expect(general.researchOnly).toBe(true);
+    expect(general.usefulComplete).toBe(false);
+    expect(general.mayPublish).toBe(false);
+    expect(general.maySell).toBe(false);
+    const unknown = sample(3, 10, null);
+    const unknownHtml = renderNatalFiveDomainMultifactorResearchHtml(unknown, reports(unknown));
+    expect(unknownHtml).not.toContain('aria-label="총운 명식별 풀이 본문"');
+    const forged = {
+      ...original,
+      general: {
+        ...general,
+        readingGuide: { ...general.readingGuide!, sourceClaimType: 'FAKE_GENERAL_T8' },
+      },
+    };
+    expect(() => renderNatalFiveDomainMultifactorResearchHtml(chart, forged))
+      .toThrow(/General first-screen reading/);
+  });
+
   it('puts exact Business and Relationship T8 Korean meaning before collapsed attribution', () => {
     const chart = sample(3, 10);
     const original = reports(chart);
