@@ -18,6 +18,7 @@ import { SUPPORTED_NARRATIVE_OUTPUT_SCHEMA } from '../src/llm/prompt-compiler.js
 import { buildDeterministicFallbackDraft } from '../src/narrative/deterministic-fallback.js';
 import { executeProductReading } from '../src/reading/governed-reading-execution.js';
 import { buildProductReadingDelivery } from '../src/reading/product-reading-delivery.js';
+import { buildProductReadingResponse } from '../src/reading/product-reading-response.js';
 import { createI7SeasonalSupportRegistry } from '../src/research/i7-seasonal-support-pack.js';
 
 const FIXED_READING_REFERENCE = '2026-09-03T12:00:00.000Z';
@@ -210,6 +211,40 @@ describe('Product Reading Delivery Contract', () => {
     expect(delivery.coverage?.missingRequirementCount).toBeGreaterThan(0);
     expect(serialized).not.toContain(claimId);
     expect(delivery.constraints.mayRenderCoverageAsFortuneJudgment).toBe(false);
+  });
+
+  it('guides unsupported open T11 questions to existing topic routes without granting evidence', async () => {
+    const delivery = await execute('질문: 지금 이직해야 할까요?', []);
+    const response = buildProductReadingResponse(delivery);
+    const message = response.coverage?.explanation ?? '';
+    expect(delivery.state).toBe('insufficient_evidence');
+    expect(response.state).toBe('insufficient_evidence');
+    expect(response.reading).toBeUndefined();
+    expect(message).toContain('질문에 직접 대응하는 풀이 근거');
+    expect(message).toContain('질문: 직업운');
+    expect(message).toContain('질문: 재물운');
+    expect(message).toContain('실제 해석 근거가 확인된 범위');
+    expect(response.coverage?.hasAvailableEvidence).toBe(false);
+    expect(response.coverage?.missingRequirementCount).toBeGreaterThan(0);
+    expect(response.requiredAction).toBe('none');
+    const json = JSON.stringify(response);
+    expect(json).not.toContain('QUESTION_SPECIFIC_CLAIM_REQUIRED');
+    expect(json).not.toContain('T11');
+    expect(json).not.toContain('READING_PROFILE_SELECTION_NOT_AUTHORIZED');
+    expect(delivery.constraints.maySynthesizeMissingReadingText).toBe(false);
+  });
+
+  it('never shows free-question retry text on a separate exact governed topic', async () => {
+    const direct = await execute('질문: 직업운', []);
+    const natal = await execute('재물운', []);
+    const compat = await execute('궁합', []);
+    expect(direct.state).toBe('insufficient_evidence');
+    expect(direct.coverage?.explanation).not.toContain('질문: 재물운');
+    expect(natal.state).toBe('insufficient_evidence');
+    expect(natal.coverage?.explanation).not.toContain('질문: 직업운');
+    expect(compat.state).toBe('invalid_request');
+    expect(compat.coverage).toBeUndefined();
+    expect(compat.consumerDiagnostics).toEqual(['target_person_required']);
   });
 
   it('keeps delivery identity deterministic for the same governed execution result', async () => {
