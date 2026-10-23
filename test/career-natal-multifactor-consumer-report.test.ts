@@ -233,6 +233,52 @@ describe('source-bounded Career two-T5 → T8 → consumer Korean research verti
     expect(x.report.maySell).toBe(false);
   }, 15000);
 
+  it('keeps further independently observed Career T8 text readable without inflating MUR or authority', () => {
+    let inspected = 0;
+    let withExtra = 0;
+    for (const [month, day, hour] of [
+      [3,10,12], [4,11,12], [5,7,12], [6,3,0], [7,17,12],
+      [8,11,0], [9,23,12], [10,7,0], [11,17,12], [12,3,0],
+    ] as const) {
+      const { chart, execution, report } = run(month, day, hour);
+      inspected++;
+      const main = new Set(report.sections.map(section => section.claimType));
+      const usedFacts = new Set(report.sections.flatMap(section => section.calculatedFactPaths));
+      const seenExtra = new Set<string>();
+      for (const section of report.additionalVerifiedSections) {
+        withExtra++;
+        expect(main.has(section.claimType)).toBe(false);
+        expect(seenExtra.has(section.claimType)).toBe(false);
+        seenExtra.add(section.claimType);
+        expect(section.calculatedFactPaths.some(path => !usedFacts.has(path))).toBe(true);
+        section.calculatedFactPaths.forEach(path => usedFacts.add(path));
+        const claim = execution.claims.find(c => c.claimType === section.claimType);
+        expect(claim?.state).toBe('active');
+        expect(claim?.snapshotId).toBe(chart.snapshotId);
+        expect(claim?.upstreamClaimRefs).toEqual(section.upstreamClaimIds);
+        expect(claim?.sourceRefs).toEqual(section.sourceIds);
+        expect(section.calculatedPositions.every(position => section.paragraph.includes(position)))
+          .toBe(true);
+        expect(section.calculatedFactPaths.length).toBe(section.calculatedPositions.length);
+      }
+      const html = renderCareerMultifactorResearchHtml(report);
+      for (const section of report.additionalVerifiedSections) {
+        expect(html).toContain(section.headline);
+        expect(html).toContain(section.paragraph);
+        expect(html).toContain(section.calculatedFactPaths[0]);
+      }
+      expect(html.includes('추가로 확인된 직업 관련 구조'))
+        .toBe(report.additionalVerifiedSections.length > 0);
+      expect(report.state === 'complete' ? report.sections.length === 3 : true).toBe(true);
+      expect(report.usefulComplete).toBe(false);
+      expect(report.researchOnly).toBe(true);
+      expect(report.mayPublish).toBe(false);
+      expect(report.maySell).toBe(false);
+    }
+    expect(inspected).toBe(10);
+    expect(withExtra).toBeGreaterThan(0);
+  }, 60000);
+
   it('never mistakes a single composite Claim for a full minimum useful reading', () => {
     for (const [month, day] of [[3, 10], [4, 11], [5, 7]] as const) {
       const x = run(month, day);

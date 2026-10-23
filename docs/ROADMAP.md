@@ -158,7 +158,7 @@
 - [ ] **실제 birth input → canonical → Career interpretation → Evidence → HTML/Preview 응답** 한 경로에서 생성된 결과를 열람·대조한다. LLM/Presentation은 T8 의미를 만들어내거나 보강하지 않는다.
 - **완료 산출물:** 실제 명식별 한국어 Career 보고서 최소 두 건 및 MUR complete/partial/insufficient 테스트. '긴 글'이나 '문장 개수' 자체는 합격 조건이 아니다.
 
-#### S5 — 동일 원국 기반 5개 분야의 깊이 있는 종합 확장
+- **S4 실제 소비자 독해 보완 (2026-10-24, 연구용):** 기존 `career-natal-multifactor-report.ts`에서 Core 1개·독립 보조 2개를 고르는 MUR 첫 화면은 그대로 보존하면서, 이미 동일 명식의 Rule/T5/Source/계산 경로를 검증했으나 대표 3개에서 빠졌고 실제 다른 계산 사실 경로를 추가하는 T8 구조 관찰을 `additionalVerifiedSections`로 분리해 내부 HTML에서 열람 가능하게 한다. 이 추가 관찰은 MUR 완성 카운트·새 인과관계·새 직업 적성 의미로 세지 않는다. 완료 증거는 실제 명식 회귀와 별도 HTML 본문이며, `researchOnly/mayPublish=false/maySell=false/usefulComplete=false`는 유지한다. Career S3~S6 전체 품질 완료 아님.\n\n#### S5 — 동일 원국 기반 5개 분야의 깊이 있는 종합 확장
 
 - [ ] Career의 source-qualified T8·MUR·한국어 보고서 계약을 **이미 구현된 범위만** 재사용해 General / Wealth / Business / Relationship (general) 각 분야를 **지금부터 병렬 착수**한다. Career 최종 품질 합격은 4개 분야의 **전체 착수 선행조건이 아니다**. 각 분야는 1개 실제 명식 입력부터 소비자 문장까지 독립 수직 슬라이스를 사용하고, 자체 Claim/source 미확립 주장은 해당 영역에서만 HOLD한다.
 - [ ] 다섯 결과가 정확히 같은 Canonical snapshot/hash를 공유하며, 동일 근거가 어떤 분야에 쓰이는지 설명하되 General 주제를 다른 분야의 새 성격/금전/결혼 결과로 무단 전환하지 않는다. 분야별 얕은 claim, 내용 충돌, 원문 재탕을 표시한다.

@@ -51,6 +51,10 @@ export interface CareerMultifactorReport {
   title: string;
   introduction: string;
   sections: readonly CareerMultifactorReportSection[];
+  /** Additional exact, rule-verified T8 observations omitted from the MUR top-three.
+   * These are not counted as independent MUR axes or proof of completeness.
+   */
+  additionalVerifiedSections: readonly CareerMultifactorReportSection[];
   readingGuide?: CareerMultifactorReadingGuide;
   limitations: readonly string[];
   missing: readonly string[];
@@ -352,6 +356,19 @@ export function buildCareerMultifactorResearchReport(
         all.findIndex(other => other.axis === unit.axis) === index).slice(0, AXES.length)
     : [];
   const shown = primary ? [primary, ...supporting] : partialEvidence;
+  // A first-screen MUR has a three-axis cap, but extra observed and verified
+  // Career structure must remain inspectable in the *research* preview. Do not
+  // count the extras as new MUR evidence, change the chosen core, or infer an
+  // additional relationship from their coexistence.
+  const shownTypes = new Set(shown.map(unit => unit.claimType));
+  const seenFactPaths = new Set(shown.flatMap(unit => unit.calculatedFactPaths));
+  const additionalVerifiedSections: CareerMultifactorReportSection[] = [];
+  for (const unit of units) {
+    if (shownTypes.has(unit.claimType)) continue;
+    if (!unit.calculatedFactPaths.some(path => !seenFactPaths.has(path))) continue;
+    additionalVerifiedSections.push(unit);
+    for (const path of unit.calculatedFactPaths) seenFactPaths.add(path);
+  }
   const enough = primary !== undefined && supporting.length >= 2;
   const state: Status = snapshot.completeness.birthTimeKnown && enough
     ? 'complete' : units.length > 0 ? 'partial' : 'insufficient';
@@ -394,6 +411,7 @@ export function buildCareerMultifactorResearchReport(
     introduction: '실제 명식에서 관측된 서로 다른 십신 근거를 연결하여, 전통 명리에서 일을 읽는 구조적 관점을 정리했습니다. 심리 검사나 개인의 직업 운명을 확정하는 결과가 아닙니다.' +
       (snapshot.completeness.birthTimeKnown ? '' : ' ' + unknownHourCalculatedContext(snapshot)),
     sections: shown,
+    additionalVerifiedSections,
     ...(readingGuide === undefined ? {} : { readingGuide }),
     limitations: [
       '사용한 해석은 고전 관계를 제한적으로 참고한 미검토 연구 후보입니다. Production 또는 유료 보고서에 사용할 수 없습니다.',
@@ -415,6 +433,10 @@ function escapeHtml(s: string): string {
 export function renderCareerMultifactorResearchHtml(report: CareerMultifactorReport): string {
   const e = escapeHtml;
   const rows = report.sections.map(s => `<section><h2>${e(s.headline)}</h2><p>${e(s.paragraph)}</p><details><summary>근거와 출처</summary><p>${e(s.calculatedPositions.join(' · '))}</p><p>${e(s.calculatedFactPaths.join(' · '))}</p><p>${e(s.upstreamClaimIds.join(' · '))}</p><p>${e(s.sourceIds.join(' · '))}</p><p>${e(s.ruleId)}</p></details></section>`).join('\n');
+  const extraRows = report.additionalVerifiedSections.map(s => `<section><h3>${e(s.headline)}</h3><p>${e(s.paragraph)}</p><details><summary>근거와 출처</summary><p>${e(s.calculatedPositions.join(' · '))}</p><p>${e(s.calculatedFactPaths.join(' · '))}</p><p>${e(s.upstreamClaimIds.join(' · '))}</p><p>${e(s.sourceIds.join(' · '))}</p><p>${e(s.ruleId)}</p></details></section>`).join('\n');
+  const additionalMarkup = extraRows.length === 0
+    ? ''
+    : `<aside aria-label="추가로 확인된 직업 관련 구조"><h2>추가로 확인된 직업 관련 구조</h2><p>아래는 실제 명식과 출처가 확인된 연구용 관찰입니다. 위의 최소 유효 풀이 판정에 새로운 해석 축으로 더하지 않으며, 직업 적성이나 성패를 확정하지 않습니다.</p>${extraRows}</aside>`;
   const readingGuideMarkup = report.readingGuide === undefined
     ? ''
     : `<section aria-label="직업운 읽기 요약"><h2>${e(report.readingGuide.title)}</h2><p>${e(report.readingGuide.paragraph)}</p></section>`;
@@ -428,5 +450,5 @@ export function renderCareerMultifactorResearchHtml(report: CareerMultifactorRep
   const missingMarkup = report.missing.length > 0
     ? `<section aria-label="아직 설명할 수 없는 부분"><h2>아직 설명할 수 없는 부분</h2><ul>${report.missing.map(reason => `<li>${e(reason)}</li>`).join('')}</ul></section>`
     : '';
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header>${readingGuideMarkup}${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(report.title)}</title><style>body{max-width:760px;margin:3em auto;padding:0 1.5em;font:17px/1.8 system-ui,sans-serif;color:#222}section{padding:1.2em 0;border-bottom:1px solid #ddd}small,details{color:#666}h2{font-size:1.2em}</style></head><body><header><h1>${e(report.title)}</h1><p>${e(report.introduction)}</p><p><strong>해석 상태: ${e(stateLabel[report.state])}</strong></p></header>${readingGuideMarkup}${rows || '<p>현재 출처로 뒷받침되는 종합 해석을 구성할 수 없습니다.</p>'}${additionalMarkup}${missingMarkup}<h2>해석 한계</h2>${report.limitations.map(t=>`<p><small>${e(t)}</small></p>`).join('')}<p>연구용 내부 미리보기 · 출판 및 판매 불가</p></body></html>`;
 }
