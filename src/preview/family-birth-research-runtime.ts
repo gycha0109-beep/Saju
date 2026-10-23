@@ -1,4 +1,9 @@
 import type { BirthInput } from '../contracts/calculation.js';
+import {
+  evaluateFamilySourceScopeV1,
+  explainR070FamilyResearchUnavailabilityKo,
+  type R070FamilyResearchUnavailableExplanationKo,
+} from '../research/family-pair-source-scope-handoff.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
 import { createGeneralNatalMultifactorRegistry } from
@@ -33,6 +38,8 @@ export interface FamilyBirthResearchReading {
   mayPersist: false;
   maySell: false;
   report: FamilyCanonicalObservationPreview;
+  /** Internal source/method gap facts only; not a product menu availability. */
+  researchUnavailability: R070FamilyResearchUnavailableExplanationKo;
   html: string;
 }
 
@@ -75,6 +82,22 @@ export function buildFamilyBirthResearchReading(
       report.mayPublish || report.maySell) {
     throw new TypeError('Family calculation observations cannot become authorized family outcomes.');
   }
+  // Reuse the exact Canonical result. Do not accept research from another chart.
+  const sourceScope = evaluateFamilySourceScopeV1(snapshot, request.scope);
+  const researchUnavailability = explainR070FamilyResearchUnavailabilityKo(sourceScope, {
+    scope: request.scope,
+    snapshotId: snapshot.snapshotId,
+    calculationHash: snapshot.calculationHash,
+  });
+  if (researchUnavailability.availability !== 'unsupported' ||
+      researchUnavailability.readingMeaningAdmitted !== false ||
+      researchUnavailability.officialReadingAuthorized !== false ||
+      researchUnavailability.productMenuCanBeEnabled !== false ||
+      researchUnavailability.mayPersist !== false ||
+      researchUnavailability.mayPublish !== false ||
+      researchUnavailability.maySell !== false) {
+    throw new TypeError('R070 research cannot grant family interpretation rights.');
+  }
   const hasFacts = report.observations.some(item =>
     item.state === 'resolved' && item.observedPillar !== undefined);
   return {
@@ -89,6 +112,7 @@ export function buildFamilyBirthResearchReading(
     mayPersist: false,
     maySell: false,
     report,
+    researchUnavailability,
     html: renderFamilyCanonicalObservationHtml(report),
   };
 }
