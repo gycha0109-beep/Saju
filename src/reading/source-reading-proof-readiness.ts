@@ -6,6 +6,7 @@ import {
   type ResolvedRuleRegistrySnapshot,
 } from '../interpretation/rule-registry.js';
 import type { GovernedReadingExecutionResult } from './governed-reading-execution.js';
+import { inspectSajuSelectedRuleBundleV1 } from './source-reading-selected-rule-bundle.js';
 import type { ProductReadingDeliveryResult } from './product-reading-delivery.js';
 import { resolveReadingProfileSelectionAuthorization } from './reading-profile-authorization.js';
 import { assertProductReadingResponse } from './product-reading-response-admission.js';
@@ -22,6 +23,7 @@ export type SourceReadingProofReadinessReasonV1 =
   | 'incomplete_execution'
   | 'profile_not_selection_authorized'
   | 'incomplete_claim_coverage'
+  | 'invalid_selected_claim_lineage'
   | 'missing_evidence_bundle'
   | 'artifact_identity_mismatch'
   | 'response_not_admitted'
@@ -152,6 +154,16 @@ export function inspectSourceReadingProofReadinessV1(
   }
   if (!nonEmpty(composition?.evidence?.evidenceBundleHash)) {
     return inspection('blocked', 'missing_evidence_bundle');
+  }
+
+  // Coverage "complete" is necessary but not proof that the selected Claims
+  // still belong to this content-addressed Registry and their matched
+  // Rule/Methodology/Source lineage. Prevent a stale or substituted Claim
+  // selection from ever becoming signed Source Owner material.
+  if (inspectSajuSelectedRuleBundleV1({
+    registry, interpretation, selectedClaimIds: selection.selectedClaimIds,
+  }).state !== 'held') {
+    return inspection('blocked', 'invalid_selected_claim_lineage');
   }
 
   const artifact = execution.artifact;
