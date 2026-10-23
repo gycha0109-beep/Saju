@@ -4,6 +4,7 @@ import { PRODUCTION_DEFAULT_CALCULATION_POLICY } from '../src/production/product
 import {
   evaluateFamilySourceScopeV1, evaluatePairwiseSourceScopeV1,
   selectR070FamilyResearchTransferForContext,
+  explainR070FamilyResearchUnavailabilityKo,
   FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION,
 } from '../src/research/family-pair-source-scope-handoff.js';
 import {
@@ -786,6 +787,110 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
         expect(report.mayMarkMenuAvailable).toBe(false);
       }
     }
+  });
+
+  it('renders distinct Korean R070 unsupported notices without creating parent or child interpretations', () => {
+    const samples = [
+      { year: 1990, day: 15, sex: 'male' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'female' as const, timeKnown: true },
+      { year: 1990, day: 15, sex: 'unspecified' as const, timeKnown: true },
+      { year: 1997, day: 15, sex: 'female' as const, timeKnown: false },
+    ];
+    for (const sample of samples) {
+      const snapshot = chart(sample);
+      for (const scope of ['parents', 'children'] as const) {
+        const report = evaluateFamilySourceScopeV1(snapshot, scope);
+        const expected = {
+          scope,
+          snapshotId: snapshot.snapshotId,
+          calculationHash: snapshot.calculationHash,
+        };
+        const explanation = explainR070FamilyResearchUnavailabilityKo(report, expected);
+        expect(explanation.locale).toBe('ko');
+        expect(explanation.scope).toBe(scope);
+        expect(explanation.snapshotId).toBe(snapshot.snapshotId);
+        expect(explanation.calculationHash).toBe(snapshot.calculationHash);
+        expect(explanation.availability).toBe('unsupported');
+        expect(explanation.heading).toBe(
+          scope === 'parents' ? '부모 풀이를 아직 제공할 수 없습니다.'
+            : '자녀 풀이를 아직 제공할 수 없습니다.',
+        );
+        expect(explanation.explanation).toBe([
+          explanation.heading,
+          ...explanation.inputNotices,
+          explanation.methodNotice,
+          explanation.authorityNotice,
+        ].join(' '));
+        expect(explanation.methodNotice).toContain('선택·조정 근거');
+        expect(explanation.authorityNotice).toContain('공식 가족 T8 해석 권한');
+        expect(explanation.unresolvedCanonicalFactPaths).toEqual(
+          report.engineTransferBoundary.unresolvedCanonicalInputs.map(item => item.factPath),
+        );
+        expect(explanation.missingCanonicalConceptSourceSurfaces).toEqual(
+          [...new Set(report.engineTransferBoundary.canonicalInputAndConceptHolds
+            .filter(item => item.reasonCode === 'R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE')
+            .flatMap(item => item.sourceSurfaces))],
+        );
+        expect(explanation.readingMeaningAdmitted).toBe(false);
+        expect(explanation.officialReadingAuthorized).toBe(false);
+        expect(explanation.productMenuCanBeEnabled).toBe(false);
+        expect(explanation.mayPersist).toBe(false);
+        expect(explanation.mayPublish).toBe(false);
+        expect(explanation.maySell).toBe(false);
+        expect(explainR070FamilyResearchUnavailabilityKo(report, expected))
+          .toEqual(explanation);
+        expect(() => explainR070FamilyResearchUnavailabilityKo(report, {
+          ...expected, scope: scope === 'parents' ? 'children' : 'parents',
+        })).toThrow(TypeError);
+        expect(() => explainR070FamilyResearchUnavailabilityKo(report, {
+          ...expected, snapshotId: snapshot.snapshotId + '-other',
+        })).toThrow(TypeError);
+        expect(() => explainR070FamilyResearchUnavailabilityKo(report, {
+          ...expected, calculationHash: snapshot.calculationHash + '-other',
+        })).toThrow(TypeError);
+      }
+    }
+  });
+
+  it('shows actual unknown-hour gaps separately from irreparable historical-method blockers', () => {
+    const known = chart({ year: 1997, day: 15, sex: 'female', timeKnown: true });
+    const unknown = chart({ year: 1997, day: 15, sex: 'female', timeKnown: false });
+    const knownReport = evaluateFamilySourceScopeV1(known, 'children');
+    const unknownReport = evaluateFamilySourceScopeV1(unknown, 'children');
+    const knownNotice = explainR070FamilyResearchUnavailabilityKo(knownReport, {
+      scope: 'children', snapshotId: known.snapshotId, calculationHash: known.calculationHash,
+    });
+    const unknownNotice = explainR070FamilyResearchUnavailabilityKo(unknownReport, {
+      scope: 'children', snapshotId: unknown.snapshotId, calculationHash: unknown.calculationHash,
+    });
+    expect(unknownNotice.unresolvedCanonicalFactPaths).toContain('pillars.hour');
+    expect(unknownNotice.inputNotices.some(notice =>
+      notice.includes('기둥이 확정되지 않았습니다'))).toBe(true);
+    expect(knownNotice.unresolvedCanonicalFactPaths).not.toContain('pillars.hour');
+    expect(knownNotice.inputNotices.some(notice =>
+      notice.includes('기둥이 확정되지 않았습니다'))).toBe(false);
+    expect(unknownNotice.methodNotice).toBe(knownNotice.methodNotice);
+    expect(unknownNotice.authorityNotice).toBe(knownNotice.authorityNotice);
+    expect(unknownNotice.explanation).not.toBe(knownNotice.explanation);
+    expect(unknownNotice.officialReadingAuthorized).toBe(false);
+    expect(knownNotice.officialReadingAuthorized).toBe(false);
+
+    const male = chart({ year: 1990, day: 15, sex: 'male' });
+    const female = chart({ year: 1990, day: 15, sex: 'female' });
+    const maleReport = evaluateFamilySourceScopeV1(male, 'parents');
+    const femaleReport = evaluateFamilySourceScopeV1(female, 'parents');
+    const maleNotice = explainR070FamilyResearchUnavailabilityKo(maleReport, {
+      scope: 'parents', snapshotId: male.snapshotId, calculationHash: male.calculationHash,
+    });
+    const femaleNotice = explainR070FamilyResearchUnavailabilityKo(femaleReport, {
+      scope: 'parents', snapshotId: female.snapshotId, calculationHash: female.calculationHash,
+    });
+    expect(maleNotice.missingCanonicalConceptSourceSurfaces).toContain('胎為母');
+    expect(maleNotice.explanation).toContain('태주 계산 사실이 정의되지 않았습니다');
+    expect(femaleNotice.missingCanonicalConceptSourceSurfaces).not.toContain('胎為母');
+    expect(femaleNotice.explanation).not.toContain('태주 계산 사실이 정의되지 않았습니다');
+    expect(maleNotice.explanation).not.toContain('가족운 결론을 발행할 수 있습니다');
+    expect(maleNotice.productMenuCanBeEnabled).toBe(false);
   });
 
   it('keeps R070 research engine transfer separated by Canonical input, source-method and authority hold', () => {
