@@ -139,8 +139,12 @@ describe('same-chart five-domain multifactor Korean research reading', () => {
     expect(details).toBeGreaterThan(first);
     expect(ownCard).toContain('aria-label="총운 명식별 풀이 본문"');
     for (const section of general.sections) {
-      expect(ownCard.indexOf(section.paragraph)).toBeGreaterThan(first);
-      expect(ownCard.indexOf(section.paragraph)).toBeLessThan(details);
+      // Rendered HTML escapes the source-owned Korean paragraph unchanged in meaning.
+      const displayed = section.paragraph.replace(/&/gu, '&amp;')
+        .replace(/</gu, '&lt;').replace(/>/gu, '&gt;')
+        .replace(/"/gu, '&quot;').replace(/'/gu, '&#39;');
+      expect(ownCard.indexOf(displayed)).toBeGreaterThan(first);
+      expect(ownCard.indexOf(displayed)).toBeLessThan(details);
       expect(ownCard).toContain(section.ruleId);
       expect(ownCard).toContain(section.sourceIds[0]!);
     }
