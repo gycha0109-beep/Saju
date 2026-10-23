@@ -171,6 +171,16 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 1990년 남성·여성·성별 미지정 및 1997년 여성 시각 미상 명식의 부모/자녀에 대해 구성 원문별 참조와 원래 상태를 대조한다. 메뉴/구성 두 목록 간의 교집합 및 출처 2계층 분리, 허가 플래그의 불변 여부를 확인한다. 이 자료는 수신 엔진의 **연구용 미충족 조건 출처 추적**에만 사용한다.
 
+### R070 엔진 인계 수신: 같은 메뉴·같은 명식·같은 계산 정책 결과만 선택
+
+기존 `engineTransferBoundary`는 원국의 `snapshotId`·`calculationHash`와 `parents|children` 범위를 보존하지만, 다른 메뉴 또는 다른 명식의 연구 결과를 수신자가 실수로 재사용하지 않도록 별도 선택 경로가 필요하다. 이번 구현은 기존 연구용 전달 자료를 다시 계산하거나 새 의미 Claim을 만들지 않고, 공개 함수 `selectR070FamilyResearchTransferForContext(report, expected)`를 추가한다.
+
+`expected`에는 실제 수신 문맥의 `scope`, `snapshotId`, `calculationHash`를 제공한다. 함수는 **외부 요청값과 반환된 R070 원본 보고, 내부 `engineTransferBoundary`의 범위/명식 식별자가 세 곳 모두 일치**할 때에만 동일한 연구용 전달 객체를 반환한다. 다른 인물 명식, 부모 결과의 자녀 메뉴 전용, 동일 명식 ID에 다른 계산 해시 연결은 `TypeError`로 중단한다.
+
+원본 보고가 `researchOnly=true`, `familyT8Admitted=false`, `mayGrantOfficialAuthority=false`, `mayMarkMenuAvailable=false`, `mayPersist=false`, `mayPublish=false`, `maySell=false`인 상태와 내부 전달 객체의 `route=R070_RESEARCH_ONLY_NOT_EXECUTABLE`, `canSelectHistoricalMethod=false`, `canGrantFamilyT8Authority=false`, `canEnableMenu=false`, `canPublishOrSell=false` 경계도 확인한다. 권한 상태가 다르면 **침묵하고 승인 가능한 데이터를 반환하지 않는다**. 반환하는 객체는 기존 `engineTransferBoundary` 그 자체이고 새 source authority, 별도 기둥 선택 정책, T8 규칙 또는 UX 결과가 아니다.
+
+**실계산 회귀:** 남성·여성·성별 미지정, 출생시각 제공·미상 실제 명식에 대해 두 메뉴의 동일 문맥 정상 선택, 메뉴 오연결, 다른 명식 ID, 다른 계산 해시, 외부/내부 권한 플래그 변경의 실패를 다룬다. 선택에 성공해도 `menuBlockingPrerequisites`와 `unassignedConfigurationPrerequisites`의 원래 구분 및 개인별 결핍 경로가 보존된다. 별도의 Production/Official/Reader/Product/Commerce 승인은 발생하지 않는다.
+
 ### R070 메뉴 직접 차단 조건과 미배속 구성 연구 조건의 분리
 
 기존 `menuSupportHandoff.missingPrerequisites`는 과거 연구 수신 호환성을 위해 **원문·방법론·공식 권한 차단 조건과 가족 대상이 아직 정해지지 않은 구성 연구 조건을 합친 배열**이었다. 수신 측에서 이것을 모두 메뉴 활성화의 직접 선행조건으로 받아들이면 `CONFIGURATION-OUTCOME`의 `旺衰`·`生旺死絕`·`刑沖破害`·`官煞混雜`·`財印` 전체를 특정 부모/자녀 메뉴에 잘못 결속하게 된다. 그 해석을 막기 위해 다음 두 경로를 별도 반환한다.
