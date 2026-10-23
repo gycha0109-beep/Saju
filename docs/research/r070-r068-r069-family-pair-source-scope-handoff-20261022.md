@@ -194,6 +194,21 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 남성·여성·성별 미지정, 출생시각 제공·미상 실제 명식에 대해 두 메뉴의 동일 문맥 정상 선택, 메뉴 오연결, 다른 명식 ID, 다른 계산 해시, 외부/내부 권한 플래그 변경의 실패를 다룬다. 선택에 성공해도 `menuBlockingPrerequisites`와 `unassignedConfigurationPrerequisites`의 원래 구분 및 개인별 결핍 경로가 보존된다. 별도의 Production/Official/Reader/Product/Commerce 승인은 발생하지 않는다.
 
+### R070 가족 입력 보완 안내 — 사용자가 확인할 시각과 엔진 사실 부족의 구분
+
+기존 `explainR070FamilyResearchUnavailabilityKo(report, expected)`의 `inputRemediation[]`은 기존 `unresolvedCanonicalInputs[]`가 제공한 **미확정 사실 경로 하나당 정확히 하나**의 보완 설명을 반환한다. `factPath`, `canonicalInputKind`, `sourceSurfaces`, `nextStep`, `koreanNotice`를 기록하며, 새로운 계산 사실이나 원전 적용 방법을 만들어내지 않는다.
+
+| 실제 Canonical 부족 경로 | `nextStep` | 사용자·엔진 역할 경계 |
+| --- | --- | --- |
+| `pillars.hour` (시주 미상) | `CHECK_BIRTH_TIME_AND_RECALCULATE` | **당사자 본인의 출생시각**을 확인해 Canonical 명식을 재계산한 뒤 원래 미상 여부를 다시 검사할 수 있음. 이를 가족 풀이 승인으로 표현하지 않음 |
+| 기타 미해결 `pillars.*` | `REQUIRES_CANONICAL_FACT_RESOLUTION` | 다른 기둥으로 대체하거나 임의 생년월일을 생성하지 않음 |
+| `derivedFacts.tenGods.*` | `REQUIRES_CANONICAL_FACT_RESOLUTION` | 현재 계산에서 미확정된 현대 십신 조회 위치를 엔진이 확인. 가족 구성원 존재·성향 판단 불가 |
+| `derivedFacts.hiddenStems.*` | `REQUIRES_CANONICAL_FACT_RESOLUTION` | 지장간 소속 계산 사실을 엔진이 확인. 지장간을 가족 역할/현대 십신으로 자동 치환하지 않음 |
+
+`胎為母`의 태(胎) 계산 개념 자체 부재는 임의의 Canonical 경로를 만들지 않고 기존 `missingCanonicalConceptSourceSurfaces`에만 남긴다. 본인 출생시각을 추가로 제공하더라도 **역사적 방법 선택·원전 적용 범위·공식 T8 권한은 여전히 보류**다. 모든 보완 항목은 `correctionAloneEnablesFamilyInterpretation=false`, `correctionAloneGrantsOfficialAuthority=false`이다. 해당 함수는 `selectR070FamilyResearchTransferForContext`의 원래 범위·명식 ID·계산 해시 검사를 선행하며, 내부 연구용 미지원 설명이지 Production/Reader/Commerce 안내 허가는 아니다.
+
+**회귀:** 실제 남성·여성·미지정 부모·자녀 명식과 출생시각 미상 여성 자녀 명식에서 원본 fact path 및 원문 소유권의 순서가 보존됨을 검사한다. 시주가 확정된 명식에는 출생시각 재입력 유도를 하지 않고, 미상 시주에는 재계산 안내를 부여하되 다른 십신·지장간 부족을 사용자 수기 수정으로 전환하지 않는다.
+
 ### R070 한국어 미지원 안내 — 기존 함수에 원문별 구체적 사유 연결
 
 기존 `explainR070FamilyResearchUnavailabilityKo(report, expected)`는 부모·자녀별 **계산 입력 미상 / 역사 방법 미선정 / 공식 T8 미승인**을 한국어 문단으로 반환한다. 여기에 `sourceReasons[]`를 추가해 `menuSupportHandoff.unsupportedReasons[]`와 **원본 순서 및 원문 출처**를 그대로 대응한다. 새로운 공개 한국어 안내 함수나 Family T8 의미 판정기는 만들지 않는다.
