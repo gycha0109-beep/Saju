@@ -121,6 +121,8 @@ export interface QuestionRelatedNatalReading {
   /** An axis requested by this question, not an independently issued T11 claim. */
   focusAxis?: string;
   focusLabel?: string;
+  /** Several independently issued axes from ONE requested natal domain, never a T11 synthesis. */
+  focusAxes?: readonly { axis: string; label: string }[];
   reportState?: DomainReport['state'];
   headline: string;
   sections: readonly QuestionRelatedNatalSection[];
@@ -147,6 +149,7 @@ function base(
     topicLabel: string;
     focusAxis?: string;
     focusLabel?: string;
+    focusAxes?: readonly { axis: string; label: string }[];
     reportState: DomainReport['state'];
     sections: readonly QuestionRelatedNatalSection[];
   },
@@ -214,25 +217,26 @@ export function buildQuestionRelatedNatalReading(
   const report = reports[item.key];
   const axes = (FOCUS_BY_TOPIC[item.key] ?? []).filter(axis =>
     axis.words.some(word => question.includes(word)));
-  if (axes.length > 1) {
-    return base(snapshot, question, 'ambiguous', '질문의 한 가지 관점을 선택해 주세요.',
-      ['하나의 분야에서 서로 다른 해석 관점이 감지됐습니다: ' +
-       axes.map(axis => axis.label).join(' · ') + '. 한 번에 한 관점씩 선택해 주세요.']);
-  }
-  const focus = axes[0];
-  const matchingSections = focus === undefined
+  // A question may request several axes of the SAME natal topic. Display each
+  // already-issued bounded T8 section independently, without asserting a new
+  // combined interpretation, preference, conflict winner or T11 meaning.
+  const focus = axes.length === 1 ? axes[0] : undefined;
+  const matchingSections = axes.length === 0
     ? report.sections
-    : report.sections.filter(section => section.axis === focus.axis);
-  const focusDetails = focus === undefined ? {} : {
-    focusAxis: focus.axis, focusLabel: focus.label,
+    : report.sections.filter(section => axes.some(axis => axis.axis === section.axis));
+  const absentAxes = axes.filter(axis =>
+    !matchingSections.some(section => section.axis === axis.axis));
+  const focusDetails = axes.length === 0 ? {} : axes.length === 1 ? {
+    focusAxis: focus!.axis, focusLabel: focus!.label,
+  } : {
+    focusAxes: axes.map(({ axis, label }) => ({ axis, label })),
   };
   if (!snapshot.completeness.birthTimeKnown || matchingSections.length === 0 ||
       report.state === 'insufficient') {
     return base(snapshot, question, 'insufficient', '이 질문과 관련된 해석 근거가 부족합니다.',
       [...report.missing,
-        ...(focus !== undefined && matchingSections.length === 0
-          ? [focus.label + ' 관점의 명식별 해석 근거가 없어 다른 관점으로 답하지 않습니다.']
-          : []),
+        ...absentAxes.map(axis =>
+          axis.label + ' 관점의 명식별 해석 근거가 없어 다른 관점으로 답하지 않습니다.'),
         ...(!snapshot.completeness.birthTimeKnown
           ? ['출생시각이 없어 전체 원국 해석을 생성할 수 없습니다.'] : [])],
       { topic: item.key, topicLabel: item.title, ...focusDetails,
@@ -255,10 +259,12 @@ export function buildQuestionRelatedNatalReading(
     };
   });
   return base(snapshot, question, 'related_evidence',
-    focus === undefined
+    axes.length === 0
       ? `${item.title}에 관해 이 명식에서 확인된 기존 관점`
-      : `${item.title} · ${focus.label}에 관해 이 명식에서 확인된 기존 관점`,
-    report.missing,
+      : `${item.title} · ${axes.map(axis => axis.label).join('·')}에 관해 각각 확인된 기존 관점`,
+    [...report.missing,
+      ...absentAxes.map(axis => axis.label +
+        ' 관점은 해당 명식에서 승인된 연구 근거가 없어 별도 해석을 보류합니다.')],
     { topic: item.key, topicLabel: item.title, ...focusDetails,
       reportState: report.state, sections });
 }
