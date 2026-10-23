@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { URLSearchParams } from 'node:url';
 import { test } from 'node:test';
 import {
   createLocalNatalReaderServer,
@@ -42,18 +43,18 @@ test('browser GET → actual birth input POST → same generated HTML response',
     captured.push({ date, time });
     return '<!doctype html><html lang="ko"><body>실제 명식 기반 풀이</body></html>';
   }, async origin => {
-    const landing = await fetch(origin);
+    const landing = await globalThis.fetch(origin);
     assert.equal(landing.status, 200);
     assert.match(await landing.text(), /내 사주 결과 생성하기/u);
     assert.match(landing.headers.get('cache-control'), /no-store/u);
-    const response = await fetch(origin + '/reading', {
+    const response = await globalThis.fetch(origin + '/reading', {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ date: '2024-03-10', time: '08:45' }),
     });
     assert.equal(response.status, 200);
     assert.match(await response.text(), /실제 명식 기반 풀이/u);
-    const unknown = await fetch(origin + '/reading', {
+    const unknown = await globalThis.fetch(origin + '/reading', {
       method: 'POST',
       body: new URLSearchParams({ date: '2024-03-10', timeUnknown: 'on' }),
     });
@@ -68,7 +69,7 @@ test('browser GET → actual birth input POST → same generated HTML response',
 test('malformed birth input cannot reach calculation and is explained on the form', async () => {
   let calls = 0;
   await serve(async () => { calls++; return ''; }, async origin => {
-    const response = await fetch(origin + '/reading', {
+    const response = await globalThis.fetch(origin + '/reading', {
       method: 'POST',
       body: new URLSearchParams({ date: '2025-02-30', time: '12:00' }),
     });
@@ -80,7 +81,7 @@ test('malformed birth input cannot reach calculation and is explained on the for
 
 test('calculation failure produces safe error rather than exposing server internals', async () => {
   await serve(async () => { throw new Error('internal calculation secret'); }, async origin => {
-    const response = await fetch(origin + '/reading', {
+    const response = await globalThis.fetch(origin + '/reading', {
       method: 'POST',
       body: new URLSearchParams({ date: '2024-03-10', time: '12:00' }),
     });
