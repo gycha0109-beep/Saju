@@ -15,6 +15,38 @@
 - `sameSajuReadingForReaderAndRecordsV1`는 Reader/Records 참조가 **동일 Saju Reading과 완전 동일한 콘텐츠·원본 버전·인벤토리**를 가리키는지 비교한다. 결과 `matched`는 **동일 참조 검사만 통과**했다는 뜻이며 반환은 항상 `canDisclose=false, canPersist=false`. 앱이 이 구조체를 브라우저에 보내거나 구매권 대용으로 사용해서는 안 된다.
 - `state=held`, `lifecycle=preview`, `sourceAuthority/productionInterpretationAuthority/releaseAuthorization=NOT_EVALUATED`, `mayIssueS3OfficialCoverageCandidate=false`, `subjectBinding/s5AtomicStorage/s7Delivery=DB_OWNER_REQUIRED`를 고정한다. Reviewer의 화면 텍스트·DB Owner 소유 Ref를 Saju가 생산했다고 주장하지 않는다.
 
+## 명하 해석 체계 버전 채택 원칙 — 2026-10-23 사용자 승인
+
+**승인된 운영 원칙(해석 내용/Production 출처 권한 자체의 승인이 아님):** 명리학 전체의 객관적 참을 증명하는 대신, 명하가 실제로 채택한 **해석 규칙 묶음과 그 버전**을 공식 기준으로 고정한다. 사람·문장·요청별 수동 승인 대신 **버전별 재사용 가능한 규칙 단위**로 출처/적용 조건/예외/표현 허용 범위를 검증한다. 동일 버전의 승인된 규칙이 개별 Canonical 명식에 맞는지는 엔진이 자동 판단한다. 규칙이 바뀌면 기존 승인을 다른 버전에 자동 상속하지 않는다.
+
+**기존 계약에 매핑:** 기존 Registry Snapshot, Rule/Claim/Methodology/Source의 ID·version·contentHash, 실제 Canonical 입력과 Fact/Claim Graph, Interpretation Run, Evidence Selection, Product Reading Response, 서명된 Source Proof 및 SourceUnit ref/hash를 그대로 이용한다. 새로운 승인 시스템이나 별도 단계를 추가하지 않는다. Source Owner가 실제로 승인한 **특정 scope와 version/hash**만 운영 후보이며, 등록되지 않은 규칙·필요 근거 누락·충돌·불명확한 시각·허용되지 않은 기간/관계/미래 사건 의미는 기존 HOLD/partial/insufficient 경계를 유지한다.
+
+**Reader 표현 원칙:** 근거가 충족된 승인 범위 안에서는 자연스럽고 단호한 상담형 한국어를 허용한다. 다만 확신 있는 **화법**은 새로운 Claim, 미래 사건의 보장, 과장된 적용 범위나 출처 권한을 만들 수 없다. 기록 탭 상세 보고서에서는 짧은 한계 안내를 별도로 표시할 수 있다. 실제 Reader/Records UI 변경은 각 원래 소유 트랙에서 처리하며, 이 문서가 UI 배포를 승인하지 않는다.
+
+**구현된 최소 버전 핀:** `verifyHeldSajuSourceUnitClosureV1`은 검증된 서명 material에서 `registrySnapshotId` 및 `profileRef{id,version,contentHash}`를 `interpretationPolicyVersionPins`로 반환한다. 호출자는 **신뢰할 수 있는 서버 소유 설정/DB 정책에서 독립적으로 얻은** `expectedInterpretationPolicy{registrySnapshotId,profileRef}`를 필수로 제공해야 하며, 오래되거나 다른 Registry/Profile ID·버전·해시인 경우 전역 nonce를 소비하기 전에 차단한다. 기대값을 호출자의 proof/request/response에서 다시 복사하면 이 검증은 의미가 없다. 이는 검증된 실행의 **버전 동일성**일 뿐, 개별 Rule/Methodology/Source의 승인 여부나 명하가 채택한 규칙 묶음의 의미 권한을 검증했다는 뜻이 아니다. 그 판단은 기존 Source Owner scope 심사를 거쳐야 한다.
+
+**실행된 규칙 묶음의 실제 근거 결속:** Saju Source Owner `inspectSajuSelectedRuleBundleV1`은 동일 Interpretation Execution의 `selectedClaimIds`에서 `upstreamClaimRefs`를 추적하여 실행된 Claim → matched Rule Evaluation → 활성화된 Registry Rule → Methodology → Source의 정확한 ID/version/contentHash를 추출하고, 결정적 `inventoryHash`를 만든다. `verifyResolvedRegistryContentIntegrity`로 Registry 전체의 규칙·방법론·출처·Pack의 실제 내용과 Snapshot 해시를 재대조한다. `inspectSourceReadingProofReadinessV1`에서는 불일치·누락·비활성 규칙·위조 선택 Claim을 차단하여 잘못된 선택에 대해 Source Proof가 발급되지 않도록 한다.
+
+**Reader·기록 탭 동일 근거 묶음 결속:** `inspectSajuReaderRecordsSourceHandoffV1`은 같은 Saju 실행에서 수집한 `selectedClaimIds`에 `inspectSajuSelectedRuleBundleV1`을 적용한다. HELD Source Reference의 `ruleBundleInventoryHash`와 내부 `ruleBundleInventory`를 함께 전달하며, `sameSajuReadingForReaderAndRecordsV1`은 Reader/Records의 Source Reference 동일성 검사 전에 규칙 목록의 결정적 해시를 재확인한다. Rule/Methodology/Source 중 하나라도 다른 내용 해시로 교체되거나 `ruleBundleInventoryHash`가 틀리면 BLOCKED. **이 인메모리 Handoff 해시는 독립 서명/MAC가 아니며, 현재 HMAC v1 wire payload에 들어가지 않는다.** 임의 호스트 입력, DB 검증, Production 출처 발행·기록 저장 또는 판매 허가로 간주하지 않는다.
+
+**권한 한계:** 이 내부 규칙 목록은 명하가 채택할 해석 체계의 특정 버전을 검토할 때 쓰는 **실제 사용 근거 목록**이다. 규칙의 의미가 승인된 것은 아니며, `inventoryHash` 자체를 기존 Source Proof의 MAC payload에 임의로 추가하지 않는다. 타 서버에 전달할 때는 현재의 별도 서명·검증 계약과 Source Owner Production 발급 조건을 충족해야 한다. 이 변경은 Preview HELD·미공개·미판매 범위 안에서만 동작한다.
+
+**nonce replay 계약 및 배포 차이:** Saju 검증기는 `saju-proof-v2:` + `deterministicContentHash([issuer,audience,keyId,nonce])` 키를 사용한다. MyeongHa [#2301 Draft](https://github.com/gycha0109-beep/MyeongHa/pull/2301)의 서버 검증기에도 같은 방식이 있으나, **2026-10-23 확인한 MyeongHa `main`의 검증기는 아직 기존 `issuer:audience:nonce` 방식**이어서 공식 통합 완료/배포 일치를 주장하지 않는다. 실제 명하 런타임에서 새 서버 버전, 공유 원자 replay ledger, 신뢰 키·발급자 배포를 맞추기 전 Production은 HOLD다. 콜론을 허용하는 ID 경계 충돌과 keyId 교체를 분리하며, 저장소 장애 시 차단을 유지한다.
+
+**Production 권한 분리:** 이 사용자 승인은 **정책 원칙**에 한정된다. 구체적인 규칙 묶음, 해석 Claim, Source Owner Production lifecycle 발급, 검증키, MyeongHa Subject/Birth Revision·DB correlation, selected/co-present/disclosure 및 Privacy/Release/Commerce는 아직 별도 확인·승인이 필요하다. 따라서 #2410은 이 결정만으로 해제하지 않는다.
+
+## #2410의 기존 2B-3C-4 Source Unit 검증 연결
+
+서버 전용 `verifyHeldSajuSourceUnitClosureV1`은 기존 Preview HMAC 검증에 성공한 **정확한 ProductReadingResponse v2**에서만 기존 `projectSajuReaderRecordsSourceInventoryV1`로 SourceUnit ref/hash, disclosure, ambiguity 및 inventoryHash를 재생성한다. caller 제공 인벤토리나 출처 판정은 신뢰하지 않는다.
+
+HMAC으로 묶인 Saju material: `snapshotId`, `interpretationRunId`, `registrySnapshotId`, `executionId`, `preparationId`, `selectionId`, `profileRef{id,version,contentHash}`, `evidenceBundleHash`, `readingId`, `responseId`, `responseBodyHash`. 원문 SourceUnit 지문은 기존 `sha256:v1` UTF-8 규칙과 #2683 inventoryHash 산식으로 계산한다.
+
+검증 조건: 예상 request body/nonce/issuer/audience/keyId는 명하 인증 서버가 독립적으로 공급하고, replay claim은 전 replica에서 원자적인 공유 저장소로 수행한다. 검증 뒤 원문은 반환하지 않고 ref/hash만 내부 계약으로 전달한다. 합성 fixture가 아닌 동일 실행 parity 테스트를 포함한다.
+
+모든 결과는 **Preview HELD**이다. `sourceAuthority`, `semanticOutputAuthority`, `selectedCoPresentDisclosuresAuthority`, `productionInterpretationAuthority`, `releaseAuthorization`는 `NOT_EVALUATED`; `canExecute/canPersist/canDisclose/canPublish/canSell=false`.
+
+브릿지의 실제 운영 인수에는 2B-3C-3의 명하 측 신원·Birth Revision 재확인, 운영 shared nonce ledger, native Saju reading ID와 DB Official UUID 상관관계, S3 selected/co-present/disclosure/ambiguity 및 Semantic/Output Guard 검증, **Saju Source Owner의 별도 Production lifecycle 의미·출처 승인**이 남는다. 이 단계만으로 #2410을 닫을 수 없다.
+
 ## 정확한 소비 경로와 아직 비어 있는 연결
 
 | 단계 | 기존 소유 코드 / 현재 연결 | 확인할 동일성·남은 일 |

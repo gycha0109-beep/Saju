@@ -1,5 +1,9 @@
 import { createHash } from 'node:crypto';
 import { deterministicContentHash } from '../interpretation/rule-registry.js';
+import {
+  inspectSajuSelectedRuleBundleV1,
+  type HeldSajuSelectedRuleBundleInventoryV1,
+} from './source-reading-selected-rule-bundle.js';
 import { assertProductReadingResponse } from './product-reading-response-admission.js';
 import {
   PRODUCT_READING_RESPONSE_VERSION,
@@ -38,6 +42,8 @@ export interface SajuReaderRecordsSourceReferenceV1 {
   readonly responseVersion: typeof PRODUCT_READING_RESPONSE_VERSION;
   readonly responseBodyHash: string;
   readonly inventoryHash: string;
+  /** Same-execution Rule/Methodology/Source inventory (in-process only). */
+  readonly ruleBundleInventoryHash: string;
   readonly snapshotId: string;
   readonly interpretationRunId: string;
   readonly registrySnapshotId: string;
@@ -68,6 +74,8 @@ export interface SajuReaderRecordsSourceHandoffV1 {
   readonly canSell: false;
   readonly source: SajuReaderRecordsSourceReferenceV1;
   readonly inventory: SajuReaderRecordsSourceInventoryV1;
+  /** Auditable rule-pack provenance, not transport-signed or Production-approved. */
+  readonly ruleBundleInventory: HeldSajuSelectedRuleBundleInventoryV1;
   /**
    * S3 selected/co-present classification, semantic/output guard attestations
    * and Production issuer signature are intentionally ABSENT.
@@ -233,6 +241,19 @@ export function inspectSajuReaderRecordsSourceHandoffV1(
       || material.responseBodyHash !== deterministicContentHash(response)) {
       return blocked('source_not_admitted');
     }
+    const selectedClaimIds =
+      input.execution.preparation.composition?.selection.selectedClaimIds ?? [];
+    const ruleBundleInventory = inspectSajuSelectedRuleBundleV1({
+      registry: input.registry,
+      interpretation: input.interpretation,
+      selectedClaimIds,
+    });
+    if (ruleBundleInventory.state !== 'held'
+      || ruleBundleInventory.registrySnapshotId !== material.registrySnapshotId
+      || ruleBundleInventory.packRef.id !== input.registry.pack.packId
+      || ruleBundleInventory.packRef.version !== input.registry.pack.version) {
+      return blocked('source_not_admitted');
+    }
     const inventory = projectSajuReaderRecordsSourceInventoryV1(response);
     const inventoryHash = deterministicContentHash({
       version: SAJU_READER_RECORDS_SOURCE_HANDOFF_VERSION_V1,
@@ -252,6 +273,7 @@ export function inspectSajuReaderRecordsSourceHandoffV1(
       responseVersion: PRODUCT_READING_RESPONSE_VERSION,
       responseBodyHash: material.responseBodyHash,
       inventoryHash,
+      ruleBundleInventoryHash: ruleBundleInventory.inventoryHash,
       snapshotId: material.snapshotId,
       interpretationRunId: material.interpretationRunId,
       registrySnapshotId: material.registrySnapshotId,
@@ -284,6 +306,7 @@ export function inspectSajuReaderRecordsSourceHandoffV1(
       canSell: false,
       source,
       inventory,
+      ruleBundleInventory,
       mayIssueS3OfficialCoverageCandidate: false,
     });
     return Object.freeze({
@@ -324,8 +347,27 @@ export function sameSajuReadingForReaderAndRecordsV1(input: Readonly<{
       responseBodyHash: expected.responseBodyHash,
       inventory: handoff.inventory,
     });
+    const ruleBundle = handoff.ruleBundleInventory;
+    const ruleBundleMaterial = ruleBundle === undefined ? undefined : {
+      version: ruleBundle.version,
+      registrySnapshotId: ruleBundle.registrySnapshotId,
+      packRef: ruleBundle.packRef,
+      selectedClaimIds: ruleBundle.selectedClaimIds,
+      supportingClaimIds: ruleBundle.supportingClaimIds,
+      ruleRefs: ruleBundle.ruleRefs,
+      methodologyRefs: ruleBundle.methodologyRefs,
+      sourceRefs: ruleBundle.sourceRefs,
+    };
     const valid = handoff.version === SAJU_READER_RECORDS_SOURCE_HANDOFF_VERSION_V1
       && expected.inventoryHash === currentInventoryHash
+      && ruleBundle?.state === 'held'
+      && ruleBundle.registrySnapshotId === expected.registrySnapshotId
+      && ruleBundle.inventoryHash === expected.ruleBundleInventoryHash
+      && deterministicContentHash(ruleBundleMaterial) === ruleBundle.inventoryHash
+      && ruleBundle.sourceAuthority === 'NOT_EVALUATED'
+      && ruleBundle.semanticOutputAuthority === 'NOT_EVALUATED'
+      && ruleBundle.canDisclose === false
+      && ruleBundle.canSell === false
       && handoff.state === 'held'
       && handoff.lifecycle === 'preview'
       && handoff.canDisclose === false

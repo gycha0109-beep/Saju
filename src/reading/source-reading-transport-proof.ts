@@ -199,7 +199,13 @@ export async function verifyHeldSourceReadingTransportProofV1(
     const computed = Buffer.from(mac(payload,keyBytes),'hex');
     const submitted = Buffer.from(proof.signatureHex,'hex');
     if (computed.length !== submitted.length || !timingSafeEqual(computed,submitted)) return verdict(false);
-    const replayKey = trustedIssuer + ':' + expectedAudience + ':' + expectedNonce;
+    // Identity fields permit ':' so plain delimiter concatenation aliases distinct
+    // issuer/audience pairs in a shared replay store. Match MyeongHa's
+    // verifier: an unambiguous versioned canonical tuple, including keyId,
+    // prevents cross-principal collisions and isolates key rotation.
+    const replayKey = 'saju-proof-v2:' + deterministicContentHash([
+      trustedIssuer, expectedAudience, trustedKeyId, expectedNonce,
+    ]);
     if (!(await claimNonceOnce(replayKey,payload.expiresAtMs))) return verdict(false);
     return verdict(true);
   } catch {

@@ -98,6 +98,18 @@ describe('Saju private source fingerprint handoff to Reader / Records', () => {
       readingVersion: material.execution.artifact?.provenance.readingVersion,
     });
     expect(handoff.source.inventoryHash).toMatch(/^[0-9a-f]{64}$/u);
+    expect(handoff.source.ruleBundleInventoryHash).toMatch(/^[0-9a-f]{64}$/u);
+    expect(handoff.ruleBundleInventory).toMatchObject({
+      state: 'held',
+      registrySnapshotId: material.registry.snapshot.registrySnapshotId,
+      inventoryHash: handoff.source.ruleBundleInventoryHash,
+      sourceAuthority: 'NOT_EVALUATED',
+      semanticOutputAuthority: 'NOT_EVALUATED',
+      canPersist: false, canDisclose: false, canSell: false,
+    });
+    expect(handoff.ruleBundleInventory.ruleRefs.length).toBeGreaterThan(0);
+    expect(handoff.ruleBundleInventory.methodologyRefs.length).toBeGreaterThan(0);
+    expect(handoff.ruleBundleInventory.sourceRefs.length).toBeGreaterThan(0);
     expect(handoff.inventory.segments.length).toBeGreaterThan(0);
     expect(handoff.inventory.segments.every(unit =>
       /^response\.reading\.sections\.\d+\.blocks\.\d+/.test(unit.sourceRef)
@@ -108,6 +120,8 @@ describe('Saju private source fingerprint handoff to Reader / Records', () => {
     expect(Object.isFrozen(handoff)).toBe(true);
     expect(Object.isFrozen(handoff.source)).toBe(true);
     expect(Object.isFrozen(handoff.inventory.segments)).toBe(true);
+    expect(Object.isFrozen(handoff.ruleBundleInventory)).toBe(true);
+    expect(Object.isFrozen(handoff.ruleBundleInventory.ruleRefs)).toBe(true);
     const again = inspectSajuReaderRecordsSourceHandoffV1(material);
     expect(again).toEqual(result);
   });
@@ -140,12 +154,36 @@ describe('Saju private source fingerprint handoff to Reader / Records', () => {
       records: handoff.source,
     })).toMatchObject({ state: 'blocked', canDisclose: false });
 
+    const tamperedRuleBundle = {
+      ...handoff,
+      ruleBundleInventory: {
+        ...handoff.ruleBundleInventory,
+        ruleRefs: handoff.ruleBundleInventory.ruleRefs.map((ref, index) =>
+          index === 0 ? { ...ref, contentHash: 'f'.repeat(64) } : ref),
+      },
+    };
+    expect(sameSajuReadingForReaderAndRecordsV1({
+      handoff: tamperedRuleBundle,
+      reader: handoff.source,
+      records: handoff.source,
+    })).toMatchObject({ state: 'blocked', canDisclose: false });
+    const wrongRuleBundleHash = {
+      ...handoff,
+      source: { ...handoff.source, ruleBundleInventoryHash: '0'.repeat(64) },
+    };
+    expect(sameSajuReadingForReaderAndRecordsV1({
+      handoff: wrongRuleBundleHash,
+      reader: wrongRuleBundleHash.source,
+      records: wrongRuleBundleHash.source,
+    })).toMatchObject({ state: 'blocked', canDisclose: false });
+
     for (const altered of [
       { readingId: 'another-reading' },
       { responseId: 'another-response' },
       { responseVersion: 'myeonghwa-product-reading-response-v3' },
       { responseBodyHash: 'f'.repeat(64) },
       { inventoryHash: 'a'.repeat(64) },
+      { ruleBundleInventoryHash: '0'.repeat(64) },
       { registrySnapshotId: 'other-registry' },
       { readingVersion: 'different-reading-version' },
       { profileRef: { ...handoff.source.profileRef, contentHash: '0'.repeat(64) } },

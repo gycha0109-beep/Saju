@@ -10,6 +10,8 @@ import { buildProductReadingResponse } from '../src/reading/product-reading-resp
 import {
   inspectSourceReadingProofReadinessV1,
 } from '../src/reading/source-reading-proof-readiness.js';
+import { inspectSajuSelectedRuleBundleV1 } from
+  '../src/reading/source-reading-selected-rule-bundle.js';
 
 const policy: CalculationPolicySnapshot = {
   policyId: 'myeonghwa/source-reading-proof-readiness-test',
@@ -210,6 +212,104 @@ describe('2B-3A source Reading in-process proof readiness inventory', () => {
     (changed.execution.preparation as { state: string }).state = 'insufficient_evidence';
     expect(inspectSourceReadingProofReadinessV1(changed)).toMatchObject({
       state: 'blocked', reason: 'incomplete_execution', canSell: false,
+    });
+  });
+});
+
+describe('2B-3C Source Owner versioned Rule/Methodology/Source lineage', () => {
+  it('reconstructs selected Claim and upstream dependencies without promoting research meaning', async () => {
+    const input = await fixture();
+    const selectedClaimIds = input.execution.preparation.composition?.selection.selectedClaimIds;
+    expect(selectedClaimIds?.length).toBeGreaterThan(0);
+    const manifest = inspectSajuSelectedRuleBundleV1({
+      registry: input.registry, interpretation: input.interpretation,
+      selectedClaimIds: selectedClaimIds!,
+    });
+    expect(manifest.state).toBe('held');
+    if (manifest.state !== 'held') return;
+    expect(manifest.packRef).toEqual(input.registry.snapshot.packRef);
+    expect(manifest.registrySnapshotId).toBe(input.registry.snapshot.registrySnapshotId);
+    expect(manifest.ruleRefs.length).toBeGreaterThan(0);
+    expect(manifest.methodologyRefs.length).toBeGreaterThan(0);
+    expect(manifest.sourceRefs.length).toBeGreaterThan(0);
+    expect(manifest.sourceRefs.every((source) =>
+      /^[a-f0-9]{64}$/u.test(source.contentHash))).toBe(true);
+    expect(manifest.inventoryHash).toMatch(/^[a-f0-9]{64}$/u);
+    expect(manifest.productionInterpretationAuthority).toBe('NOT_EVALUATED');
+    expect(manifest.semanticOutputAuthority).toBe('NOT_EVALUATED');
+    expect(manifest.canExecute).toBe(false);
+    expect(manifest.canDisclose).toBe(false);
+    expect(manifest.canSell).toBe(false);
+    expect(JSON.stringify(manifest)).not.toContain('2024-03-10');
+    expect(JSON.stringify(manifest)).not.toContain('저장된 사용자');
+  });
+
+  it('does not hold a selected complete domain for unrelated partial interpreter groups', async () => {
+    const input = structuredClone(await fixture());
+    input.interpretation.run.status = 'partial';
+    input.interpretation.run.completeness.state = 'partial';
+    const selectedClaimIds =
+      input.execution.preparation.composition?.selection.selectedClaimIds ?? [];
+    expect(inspectSajuSelectedRuleBundleV1({
+      registry: input.registry, interpretation: input.interpretation,
+      selectedClaimIds,
+    }).state).toBe('held');
+    // Only the selected Claim lineage is required; unrelated research
+    // groups must not become a global gate on complete domain coverage.
+    expect(inspectSourceReadingProofReadinessV1(input).state).toBe('held');
+  });
+
+  it('blocks modified Registry rule content with a stale snapshot ID', async () => {
+    const input = structuredClone(await fixture());
+    const rule = input.registry.rules[0];
+    expect(rule).toBeDefined();
+    (rule as { description: string }).description += ' forged';
+    const selectedClaimIds = input.execution.preparation.composition?.selection.selectedClaimIds ?? [];
+    expect(inspectSajuSelectedRuleBundleV1({
+      registry: input.registry, interpretation: input.interpretation, selectedClaimIds,
+    })).toMatchObject({ state: 'blocked', reason: 'registry_or_run_mismatch' });
+    expect(inspectSourceReadingProofReadinessV1(input)).toMatchObject({
+      state: 'blocked', reason: 'invalid_source_identity', canSell: false,
+    });
+  });
+
+  it('blocks invented, duplicated and tampered selections before issuing proof', async () => {
+    for (const ids of [['claim_untrusted'], ['claim_untrusted', 'claim_untrusted']]) {
+      const input = structuredClone(await fixture());
+      const selection = input.execution.preparation.composition?.selection;
+      if (!selection) throw new Error('Expected selected Claim evidence');
+      (selection as { selectedClaimIds: readonly string[] }).selectedClaimIds = ids;
+      expect(inspectSourceReadingProofReadinessV1(input)).toMatchObject({
+        state: 'blocked', reason: 'invalid_selected_claim_lineage',
+        canPublish: false, canSell: false,
+      });
+    }
+  });
+
+  it('rejects a matched Claim whose evaluation no longer emitted it', async () => {
+    const input = structuredClone(await fixture());
+    const selected = input.execution.preparation.composition?.selection.selectedClaimIds ?? [];
+    const selectedClaim = input.interpretation.claims.find((claim) =>
+      selected.includes(claim.claimId));
+    if (!selectedClaim) throw new Error('Expected selected Claim');
+    const evaluation = input.interpretation.evaluations.find((value) =>
+      value.evaluationId === selectedClaim.ruleRefs[0]?.evaluationId);
+    if (!evaluation) throw new Error('Expected selected matched evaluation');
+    (evaluation as { emittedClaimIds: readonly string[] }).emittedClaimIds = ['claim_forged'];
+    expect(inspectSourceReadingProofReadinessV1(input)).toMatchObject({
+      state: 'blocked', reason: 'invalid_selected_claim_lineage',
+    });
+  });
+
+  it('blocks missing source reference for a selected Claim', async () => {
+    const input = structuredClone(await fixture());
+    const selected = input.execution.preparation.composition?.selection.selectedClaimIds ?? [];
+    const selectedClaim = input.interpretation.claims.find((claim) =>
+      selected.includes(claim.claimId));
+    if (!selectedClaim) throw new Error('Expected selected Claim');
+    (selectedClaim as { sourceRefs: readonly string[] }).sourceRefs = ['SRC-FORGED-NOT-IN-REGISTRY'];
+    expect(inspectSourceReadingProofReadinessV1(input)).toMatchObject({
+      state: 'blocked', reason: 'invalid_selected_claim_lineage',
     });
   });
 });
