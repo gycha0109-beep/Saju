@@ -184,6 +184,17 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **회귀:** 남성·여성·성별 미지정의 부모/자녀, 출생시각 미상 자녀에서 제목·누락 종류·원전 적용 조건·재실행 결정성을 대조한다. 동일 연월일에 시각을 제거하면 자녀 시주 미확정 안내가 추가되지만 방법론·권한 안내는 없어지지 않는다. 정확한 메뉴·명식 ID·해시가 바뀌면 문단 작성 전에 `TypeError`로 거부한다.
 
+### R070 엔진 수신 무결성 — 동일 명식 ID라도 원문·메뉴·권한이 다르면 거부
+
+`selectR070FamilyResearchTransferForContext`의 기존 명식 `snapshotId`·`calculationHash`·`parents|children` 검사에 더해, 이제 **인계 자료 내부의 항목끼리도 정확히 일치해야만** 수신한다. 연구 자료를 JSON으로 전달할 때도 항목 배열의 구조·내용을 비교하므로 기존 전달 포맷의 정상 인계는 그대로 허용한다.
+
+- `menuSupportHandoff`의 요청 메뉴·역사적 성별·`UNAVAILABLE_RESEARCH_ONLY`·허가 불가 플래그·승인 Claim 0건을 원본 보고의 범위와 함께 확인한다.
+- 메뉴의 `unsupportedReasons`를 다시 분류해 **정확히 하나**인 공식 `R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED`, 계산 입력/개념 보류, 역사적 원전·방법 보류와 `engineTransferBoundary`의 해당 항목이 모두 같은지 확인한다.
+- 이미 만든 `unresolvedCanonicalInputs`, 역사적 성별에서 제외된 원문, 미배속 구성, 두 종류의 선행조건 및 출처 색인이 `menuSupportHandoff`와 `engineTransferBoundary` 사이에서 어긋나지 않는지 확인한다. 전체 `missingPrerequisites`는 원래 두 조건군의 합집합이어야 한다.
+- 명식과 해시만 일치하도록 남겨 두고 **출처나 권한 데이터를 다른 메뉴·과거 계산에서 섞어 넣은 경우**, 안전한 연구 내용으로 묵인하지 않고 `TypeError`로 중단한다. `researchEvidenceMayBecomeFamilyClaim=false`도 별도로 검사한다.
+
+**실제 명식 회귀:** 남성·여성·성별 미지정, 부모·자녀, 출생시각 미상의 실계산 자료에서 정상 JSON 직렬화-역직렬화 자료는 수신하고, 메뉴 변경·미지원 상태 변조·공식 보류 삭제·원문/방법 배열 오염·미상 경로 누락·조건군 누락·권한 변경은 모두 거부한다. 기존 한국어 `explainR070FamilyResearchUnavailabilityKo`도 동일한 수신 관문을 사용한다. 이 검증은 자료 혼용 방지이며 Source Authority 승인, T8 가족 해석 생성, 제품 메뉴 활성화·저장·공개·판매를 뜻하지 않는다.
+
 ### R070 엔진 인계 수신: 같은 메뉴·같은 명식·같은 계산 정책 결과만 선택
 
 기존 `engineTransferBoundary`는 원국의 `snapshotId`·`calculationHash`와 `parents|children` 범위를 보존하지만, 다른 메뉴 또는 다른 명식의 연구 결과를 수신자가 실수로 재사용하지 않도록 별도 선택 경로가 필요하다. 이번 구현은 기존 연구용 전달 자료를 다시 계산하거나 새 의미 Claim을 만들지 않고, 공개 함수 `selectR070FamilyResearchTransferForContext(report, expected)`를 추가한다.
