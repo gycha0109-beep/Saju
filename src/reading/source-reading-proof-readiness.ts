@@ -2,6 +2,7 @@ import type { CanonicalSajuSnapshot } from '../contracts/calculation.js';
 import type { InterpretationExecutionResult } from '../interpretation/interpretation-engine.js';
 import {
   deterministicContentHash,
+  verifyResolvedRegistryContentIntegrity,
   type ResolvedRuleRegistrySnapshot,
 } from '../interpretation/rule-registry.js';
 import type { GovernedReadingExecutionResult } from './governed-reading-execution.js';
@@ -121,7 +122,8 @@ export function inspectSourceReadingProofReadinessV1(
     || !nonEmpty(registry?.snapshot?.registrySnapshotId)
     || !interpretation.integrity.valid
     || interpretation.run.snapshotId !== snapshot.snapshotId
-    || interpretation.run.registrySnapshotId !== registry.snapshot.registrySnapshotId) {
+    || interpretation.run.registrySnapshotId !== registry.snapshot.registrySnapshotId
+    || verifyResolvedRegistryContentIntegrity(registry).length > 0) {
     return inspection('blocked', 'invalid_source_identity');
   }
 
