@@ -56,6 +56,7 @@
     "preview:natal:audit": "npm run build && node scripts/natal-personalization-audit.mjs",
     "preview:natal:demo": "npm run build && node scripts/natal-personalized-preview.mjs",
     "preview:research": "npm run build && node scripts/research-ux-preview.mjs",
+    "research:r083:preflight": "npm run build && node scripts/r083-classical-replay-preflight.mjs",
     "preview:research:smoke": "MYEONGHWA_PREVIEW_SMOKE=1 node scripts/research-ux-preview.mjs",
     "face:verify:manifest": "node scripts/verify-face-reading-migration.mjs",
     "face:typecheck": "tsc -p tsconfig.face-reading.json --noEmit",
