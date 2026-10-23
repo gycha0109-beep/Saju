@@ -24,6 +24,11 @@ function completedResearchEvidence() {
       exactWitnessHashReproducedFromScan: true,
       exactTranscriptionIdentityEstablished: true,
       fullSourceIntegrityQualificationEstablished: true,
+      // Hypothetical future evidence: the printed glyphs and registered witness
+      // are independently reconciled, unlike the current historical record.
+      observedSourceGlyphs: '兄弟者即刼財比肩',
+      frozenRegisteredGlyphs: '兄弟者即刼財比肩',
+      literalIdentityWithFrozenRecordEstablished: true,
     },
   };
 }
@@ -80,6 +85,34 @@ describe('General Natal source-bounded Bridge re-entry readiness', () => {
     expect(result.sourceIntegrity.fixedWitnessReady).toBe(true);
     expect(result.sourceIntegrity.peerTaxonomyReady).toBe(false);
     expect(result.nextDisposition).toBe('RETURN_TO_RESEARCH');
+  });
+
+  it('rejects full scan flags when peer glyphs still diverge from the frozen record', () => {
+    const completed = completedResearchEvidence();
+    const variants = [
+      {
+        ...completed.peerTaxonomy,
+        frozenRegisteredGlyphs: '兄弟者即劫財比肩',
+      },
+      {
+        ...completed.peerTaxonomy,
+        literalIdentityWithFrozenRecordEstablished: false,
+      },
+    ];
+
+    for (const peerTaxonomy of variants) {
+      const result = evaluateGeneralNatalBridgeReentryReadiness({
+        ...completed,
+        peerTaxonomy,
+      });
+      expect(result.sourceIntegrity.fixedWitnessReady).toBe(true);
+      expect(result.sourceIntegrity.peerTaxonomyReady).toBe(false);
+      expect(result.bridgeReentryReady).toBe(false);
+      expect(result.nextDisposition).toBe('RETURN_TO_RESEARCH');
+      expect(result.remainingResearchBlockers).toContain(
+        'SAMYEONG_V7_PEER_SOURCE_INTEGRITY_INCOMPLETE',
+      );
+    }
   });
 
   it('allows only Bridge re-review after all Research source-integrity work is complete', () => {
