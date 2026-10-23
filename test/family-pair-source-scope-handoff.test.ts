@@ -823,6 +823,36 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
         ].join(' '));
         expect(explanation.methodNotice).toContain('선택·조정 근거');
         expect(explanation.authorityNotice).toContain('공식 가족 T8 해석 권한');
+        expect(explanation.sourceReasons).toHaveLength(
+          report.menuSupportHandoff.unsupportedReasons.length,
+        );
+        for (const [i, detail] of explanation.sourceReasons.entries()) {
+          const original = report.menuSupportHandoff.unsupportedReasons[i];
+          if (original === undefined) throw new TypeError('Missing original R070 reason.');
+          expect(detail.reasonCode).toBe(original.reasonCode);
+          expect(detail.category).toBe(original.category);
+          expect(detail.sourceSurfaces).toEqual(original.sourceSurfaces);
+          expect(detail.observedFactPaths).toEqual(original.observedFactPaths);
+          expect(detail.unresolvedFactPaths).toEqual(original.unresolvedFactPaths);
+          expect(detail.missingPrerequisites).toEqual(original.missingPrerequisites);
+          expect(detail.koreanExplanation.length).toBeGreaterThan(15);
+          for (const surface of original.sourceSurfaces) {
+            expect(detail.koreanExplanation).toContain('「' + surface + '」');
+          }
+          if (detail.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED') {
+            for (const path of detail.unresolvedFactPaths) {
+              expect(detail.koreanExplanation).toContain(path);
+            }
+          }
+        }
+        const excludedSourceSurfaces = new Set<string>(
+          report.menuSupportHandoff.excludedHistoricalSources.map(source => source.sourceSurface),
+        );
+        expect(explanation.sourceReasons.every(reason =>
+          reason.sourceSurfaces.every(surface => !excludedSourceSurfaces.has(surface))))
+          .toBe(true);
+        expect(explanation.sourceReasons[0]?.reasonCode)
+          .toBe('R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED');
         expect(explanation.unresolvedCanonicalFactPaths).toEqual(
           report.engineTransferBoundary.unresolvedCanonicalInputs.map(item => item.factPath),
         );
@@ -864,6 +894,18 @@ describe('R070 family source scope against actual Canonical birth evidence', () 
       scope: 'children', snapshotId: unknown.snapshotId, calculationHash: unknown.calculationHash,
     });
     expect(unknownNotice.unresolvedCanonicalFactPaths).toContain('pillars.hour');
+    const hourReason = unknownNotice.sourceReasons.find(reason =>
+      reason.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED' &&
+      reason.sourceSurfaces.includes('時為子息'));
+    expect(hourReason?.koreanExplanation).toContain('pillars.hour');
+    expect(hourReason?.koreanExplanation).toContain('입력이 미확정');
+    expect(knownNotice.sourceReasons.some(reason =>
+      reason.reasonCode === 'R070_MENU_CANONICAL_REFERENCE_INPUT_UNRESOLVED' &&
+      reason.sourceSurfaces.includes('時為子息'))).toBe(false);
+    const femaleMethods = unknownNotice.sourceReasons.find(reason =>
+      reason.reasonCode === 'R070_MENU_HISTORICAL_METHODS_NOT_RECONCILED' &&
+      reason.sourceSurfaces.includes('我生者為子'));
+    expect(femaleMethods?.koreanExplanation).toContain('선택·조정 규칙');
     expect(unknownNotice.inputNotices.some(notice =>
       notice.includes('기둥이 확정되지 않았습니다'))).toBe(true);
     expect(knownNotice.unresolvedCanonicalFactPaths).not.toContain('pillars.hour');
