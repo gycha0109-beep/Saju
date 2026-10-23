@@ -159,15 +159,56 @@ describe('question menu: link only preexisting real-chart natal evidence', () =>
     expect(reading.missing.join(' ')).toContain('다른 관점으로 답하지 않습니다');
   });
 
-  it('asks for a single evidence axis rather than mixing separate question lenses', () => {
+  it('reads two requested axes independently in one domain without inventing a combined T11 conclusion', () => {
     const { snapshot, reports } = run();
     const x = buildQuestionRelatedNatalReading(
       snapshot, question('사업의 준비와 실행 관점은 어떤가요?'), reports);
-    expect(x.status).toBe('ambiguous');
-    expect(x.sections).toHaveLength(0);
-    expect(x.missing.join(' ')).toContain('준비');
-    expect(x.missing.join(' ')).toContain('실행');
+    const expected = reports.business.sections.filter(section =>
+      section.axis === 'preparation' || section.axis === 'execution');
+    expect(x.status).toBe(expected.length > 0 ? 'related_evidence' : 'insufficient');
+    expect(x.topic).toBe('business');
+    expect(x.focusAxis).toBeUndefined();
+    expect(x.focusAxes).toEqual([
+      { axis: 'execution', label: '실행' },
+      { axis: 'preparation', label: '준비' },
+    ]);
+    expect(x.sections.map(section => section.paragraph)).toEqual(
+      expected.map(section => section.paragraph));
+    expect(x.sections.every(section => section.ruleId && section.sourceIds.length > 0 &&
+      section.factPaths.length >= 2)).toBe(true);
+    expect(x.caveats.join(' ')).toContain('T11 풀이가 아닙니다');
+    expect(x.usefulComplete).toBe(false);
+    expect(x.mayPublish).toBe(false);
     expect(x.maySell).toBe(false);
+  });
+
+  it('shows a supported axis while explicitly holding a missing companion axis', () => {
+    const { snapshot, reports } = run();
+    const available = reports.business.sections.find(section =>
+      section.axis === 'execution' || section.axis === 'preparation');
+    if (!available) return; // The chart has no qualifying requested axis.
+    const excludedAxis = available.axis === 'execution' ? 'preparation' : 'execution';
+    const partialReports = {
+      ...reports,
+      business: {
+        ...reports.business,
+        sections: reports.business.sections.filter(section => section.axis !== excludedAxis),
+      },
+    };
+    const reading = buildQuestionRelatedNatalReading(snapshot,
+      question('사업의 준비와 실행 관점은 어떤가요?'), partialReports);
+    expect(reading.status).toBe('related_evidence');
+    expect(reading.sections.some(section => section.claimType === available.claimType)).toBe(true);
+    expect(reading.missing.join(' ')).toContain(excludedAxis === 'preparation' ? '준비 관점' : '실행 관점');
+    expect(reading.caveats.join(' ')).toContain('T11 풀이가 아닙니다');
+  });
+
+  it('still asks to choose one domain if the question spans distinct natal topics', () => {
+    const { snapshot, reports } = run();
+    const reading = buildQuestionRelatedNatalReading(snapshot,
+      question('사업과 재물의 준비를 함께 알려주세요'), reports);
+    expect(reading.status).toBe('ambiguous');
+    expect(reading.sections).toHaveLength(0);
   });
 
   it('preserves ambiguity and refuses unsupported future timing or third-party predictions', () => {
