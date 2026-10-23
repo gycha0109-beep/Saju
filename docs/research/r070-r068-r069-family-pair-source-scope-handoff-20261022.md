@@ -171,6 +171,19 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 1990년 남성·여성·성별 미지정 및 1997년 여성 시각 미상 명식의 부모/자녀에 대해 구성 원문별 참조와 원래 상태를 대조한다. 메뉴/구성 두 목록 간의 교집합 및 출처 2계층 분리, 허가 플래그의 불변 여부를 확인한다. 이 자료는 수신 엔진의 **연구용 미충족 조건 출처 추적**에만 사용한다.
 
+### R070 한국어 미지원 사유 문단 — 연구 자료에서만 생성, 실제 가족운 풀이 아님
+
+`explainR070FamilyResearchUnavailabilityKo(report, {scope,snapshotId,calculationHash})`는 기존 `selectR070FamilyResearchTransferForContext`의 **정확한 메뉴·명식·계산 해시 수신 조건**을 먼저 적용하고, R070 연구 보고의 이미 결속된 미충족 사유를 결정론적인 **한국어 미지원 상태 안내**로 반환한다. 이는 새로운 독립 해석기나 T8 한국어 본문이 아니다. `availability='unsupported'`, `locale='ko'`이며 `readingMeaningAdmitted=false`, `officialReadingAuthorized=false`, `productMenuCanBeEnabled=false`, 저장·공개·판매 모두 `false`로 고정한다. 별도 UX/Reader/Commerce 라우트는 변경하지 않는다.
+
+- **부모·자녀 메뉴 구분:** 제목은 `부모 풀이를 아직 제공할 수 없습니다.` 또는 `자녀 풀이를 아직 제공할 수 없습니다.`다. 두 메뉴의 이탈 사유를 상대 메뉴나 다른 명식에 전용할 수 없다.
+- **실제 계산 입력의 부족:** `unresolvedCanonicalInputs` 중 확정되지 않은 `pillars.*`, `derivedFacts.tenGods.*`, `derivedFacts.hiddenStems.*`가 있을 때만 그 종류에 해당하는 문장을 추가한다. 확정되지 않은 값에서 가족 구성원의 유무·상태를 추론하지 않는다. 시주 미상에 해당하는 기둥 안내는 정확한 미확정 경로가 없으면 출력하지 않는다.
+- **현재 계산에 정의되지 않은 개념:** 역사 남성 명식의 `胎為母`처럼 기존 `R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE`인 원문은 태주 부재를 별도 설명한다. `pillars.fetus` 같은 가짜 계산 경로는 만들지 않으며 원래 성별 범위 밖에서는 이 안내도 추가하지 않는다.
+- **입력 보완과 무관하게 남는 보류:** 실제 계산 입력을 모두 확인하더라도 역사적 기둥 배속과 십신 배속의 선택·조정 규칙과 **공식 가족 T8 승인**은 여전히 없다. 따라서 `methodNotice`와 `authorityNotice`는 항상 포함한다. 출생시각 보완을 해석 허가의 충분조건으로 제시하지 않는다.
+
+`explanation`은 제목·실제 누락 입력 안내·방법론 미선정·공식 권한 부재를 동일한 순서로 결합한 문단이고, `unresolvedCanonicalFactPaths`와 `missingCanonicalConceptSourceSurfaces`는 설명의 정확한 계산·원전 출처로 남는다. 이는 로드맵의 **명식별 구체적인 미지원 이유 제공**에 대한 R070 연구용 한국어 전달 재료이며, **소비자용 유효 가족 T8 해석 또는 메뉴 완료**로 간주하지 않는다.
+
+**회귀:** 남성·여성·성별 미지정의 부모/자녀, 출생시각 미상 자녀에서 제목·누락 종류·원전 적용 조건·재실행 결정성을 대조한다. 동일 연월일에 시각을 제거하면 자녀 시주 미확정 안내가 추가되지만 방법론·권한 안내는 없어지지 않는다. 정확한 메뉴·명식 ID·해시가 바뀌면 문단 작성 전에 `TypeError`로 거부한다.
+
 ### R070 엔진 인계 수신: 같은 메뉴·같은 명식·같은 계산 정책 결과만 선택
 
 기존 `engineTransferBoundary`는 원국의 `snapshotId`·`calculationHash`와 `parents|children` 범위를 보존하지만, 다른 메뉴 또는 다른 명식의 연구 결과를 수신자가 실수로 재사용하지 않도록 별도 선택 경로가 필요하다. 이번 구현은 기존 연구용 전달 자료를 다시 계산하거나 새 의미 Claim을 만들지 않고, 공개 함수 `selectR070FamilyResearchTransferForContext(report, expected)`를 추가한다.
