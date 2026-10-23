@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { BirthInput } from '../src/contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/production/production-calculation-runtime.js';
 import { buildCompatibilityTwoBirthResearchReading } from '../src/preview/compatibility-two-birth-research-runtime.js';
+import { evaluatePairwiseSourceScopeV1 } from '../src/research/family-pair-source-scope-handoff.js';
 import { renderCompatibilityTwoChartIntakeHtml } from '../src/preview/compatibility-two-chart-intake-preview.js';
 
 function escapedHtmlText(value: string): string {
@@ -69,6 +70,75 @@ describe('real two-birth compatibility intake remains facts only', () => {
     expect(result.html).toContain('첫 번째 명식');
     expect(result.html).toContain('두 번째 명식');
     expect(result.html).toContain('source-qualified T10 Claim');
+  });
+
+  it('connects exact R068/R069 pairwise source HOLDS without changing the existing preview or personal readings', () => {
+    const cases: readonly (readonly [BirthInput, BirthInput])[] = [
+      [FIRST, SECOND],
+      [SECOND, FIRST],
+      [FIRST, FIRST],
+      [FIRST, { ...SECOND, time: { known: false } }],
+      [{ ...FIRST, time: { known: false } }, SECOND],
+    ];
+    for (const [firstBirth, secondBirth] of cases) {
+      const output = read(firstBirth, secondBirth);
+      const firstSnapshot = calculateAuthorizedMyeonghwaProductionSnapshot(
+        firstBirth, { now: new Date(REFERENCE) },
+      ).snapshot;
+      const secondSnapshot = calculateAuthorizedMyeonghwaProductionSnapshot(
+        secondBirth, { now: new Date(REFERENCE) },
+      ).snapshot;
+      const expected = evaluatePairwiseSourceScopeV1(
+        { personRef: QUERY.subjectPersonRef, snapshot: firstSnapshot },
+        { personRef: QUERY.targetPersonRef, snapshot: secondSnapshot },
+      );
+      expect(output.sourceScopeHandoff).toEqual(expected);
+      expect(output.sourceScopeHandoff.owner).toBe('R068_R069');
+      expect(output.sourceScopeHandoff.subject.snapshotId)
+        .toBe(output.report.subject.snapshotId);
+      expect(output.sourceScopeHandoff.target.snapshotId)
+        .toBe(output.report.target.snapshotId);
+      expect(output.sourceScopeHandoff.subject.calculationHash)
+        .toBe(output.report.subject.calculationHash);
+      expect(output.sourceScopeHandoff.target.calculationHash)
+        .toBe(output.report.target.calculationHash);
+      expect(output.sourceScopeHandoff.subject.birthTimeKnown)
+        .toBe(output.report.subject.birthTimeKnown);
+      expect(output.sourceScopeHandoff.target.birthTimeKnown)
+        .toBe(output.report.target.birthTimeKnown);
+      expect(output.sourceScopeHandoff.pairwiseDisposition).toBe('INCONCLUSIVE');
+      expect(output.sourceScopeHandoff.pairwiseT10Admitted).toBe(false);
+      expect(output.sourceScopeHandoff.researchOnly).toBe(true);
+      expect(output.sourceScopeHandoff.mayMarkMenuAvailable).toBe(false);
+      expect(output.sourceScopeHandoff.mayGrantOfficialAuthority).toBe(false);
+      expect(output.sourceScopeHandoff.mayPersist).toBe(false);
+      expect(output.sourceScopeHandoff.mayPublish).toBe(false);
+      expect(output.sourceScopeHandoff.maySell).toBe(false);
+      expect(output.sourceScopeHandoff.comparedSourceSurfaces.every(item =>
+        item.eligiblePairwiseClaim === false)).toBe(true);
+      expect(output.sourceScopeHandoff.factualPairObservations.every(item =>
+        item.pairwiseMeaningAuthorized === false)).toBe(true);
+      expect(output.sourceScopeHandoff.factualPairObservations.map(item =>
+        item.pillarSlot)).toEqual(['year', 'month', 'day', 'hour']);
+      for (const [i, observation] of output.sourceScopeHandoff.factualPairObservations.entries()) {
+        const oldObservation = output.report.comparisons[i];
+        if (!oldObservation) throw new TypeError('Expected bounded old comparison slot.');
+        expect(oldObservation.slot).toBe(observation.pillarSlot);
+        expect(oldObservation.observation === 'insufficient_input')
+          .toBe(observation.status === 'incomplete');
+        if (observation.status === 'both_resolved') {
+          expect(oldObservation.observation === 'same_calculated_pillar')
+            .toBe(observation.exactPillarIdentity === 'same');
+        }
+      }
+      // Existing consumer HTML remains a bounded calculation-only preview.
+      expect(output.html).toBe(renderCompatibilityTwoChartIntakeHtml(
+        output.report, output.personalRelationship,
+      ));
+      expect(output.availability).toBe('partial');
+      expect(output.mayClaimInterpersonalMeaning).toBe(false);
+      expect(read(firstBirth, secondBirth)).toEqual(output);
+    }
   });
 
   it('includes existing chart-specific T8 Korean narratives separately for each person', () => {
