@@ -50,10 +50,23 @@ export interface VerifiedHeldSajuSourceUnitClosureV1 {
   readonly canSell: false;
 }
 
+/** Independently approved version pins from authenticated SERVER configuration.
+ * Never populate from a caller's proof, request, or response. Equality to a
+ * signature is necessary but cannot itself confer semantic/Production authority.
+ */
+export interface VerifyHeldSajuSourceUnitClosureOptionsV1
+  extends SourceReadingProofVerifierOptionsV1 {
+  readonly expectedInterpretationPolicy: Readonly<{
+    registrySnapshotId: string;
+    profileRef: SourceReadingProofMaterialV1['profileRef'];
+  }>;
+}
+
 export type VerifyHeldSajuSourceUnitClosureResultV1 =
   | Readonly<{
       state: 'blocked';
-      reason: 'transport_not_verified' | 'source_units_incomplete';
+      reason: 'transport_not_verified' | 'source_units_incomplete' |
+        'interpretation_policy_version_mismatch';
       canExecute: false;
       canPersist: false;
       canDisclose: false;
@@ -63,7 +76,8 @@ export type VerifyHeldSajuSourceUnitClosureResultV1 =
   | VerifiedHeldSajuSourceUnitClosureV1;
 
 function blocked(
-  reason: 'transport_not_verified' | 'source_units_incomplete',
+  reason: 'transport_not_verified' | 'source_units_incomplete' |
+    'interpretation_policy_version_mismatch',
 ): VerifyHeldSajuSourceUnitClosureResultV1 {
   return Object.freeze({
     state: 'blocked' as const,
@@ -89,8 +103,27 @@ function blocked(
  */
 export async function verifyHeldSajuSourceUnitClosureV1(
   proof: unknown,
-  options: SourceReadingProofVerifierOptionsV1,
+  options: VerifyHeldSajuSourceUnitClosureOptionsV1,
 ): Promise<VerifyHeldSajuSourceUnitClosureResultV1> {
+  // Compare against independently trusted version pins BEFORE replay ledger
+  // consumption. A correctly signed but stale Registry/Profile is not a match.
+  // This is only an identity check, never an authorization decision.
+  const expected = options?.expectedInterpretationPolicy;
+  const candidate = (proof as Partial<SourceReadingSignedTransportProofV1> | null)
+    ?.payload?.material;
+  if (typeof expected?.registrySnapshotId !== 'string'
+    || expected.registrySnapshotId.length === 0
+    || typeof expected.profileRef?.id !== 'string'
+    || expected.profileRef.id.length === 0
+    || typeof expected.profileRef.version !== 'string'
+    || expected.profileRef.version.length === 0
+    || !/^[a-f0-9]{64}$/u.test(expected.profileRef.contentHash ?? '')
+    || candidate?.registrySnapshotId !== expected.registrySnapshotId
+    || candidate?.profileRef?.id !== expected.profileRef.id
+    || candidate?.profileRef?.version !== expected.profileRef.version
+    || candidate?.profileRef?.contentHash !== expected.profileRef.contentHash) {
+    return blocked('interpretation_policy_version_mismatch');
+  }
   const verification = await verifyHeldSourceReadingTransportProofV1(proof, options);
   if (verification.state !== 'held' || verification.transportIntegrity !== 'VERIFIED') {
     return blocked('transport_not_verified');
