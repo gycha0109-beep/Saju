@@ -209,6 +209,16 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **회귀:** 실제 남성·여성·미지정 부모·자녀 명식과 출생시각 미상 여성 자녀 명식에서 원본 fact path 및 원문 소유권의 순서가 보존됨을 검사한다. 시주가 확정된 명식에는 출생시각 재입력 유도를 하지 않고, 미상 시주에는 재계산 안내를 부여하되 다른 십신·지장간 부족을 사용자 수기 수정으로 전환하지 않는다.
 
+### R070 한국어 미지원 본문의 메뉴·역사적 성별별 원문 검토 범위 표시
+
+기존 `explainR070FamilyResearchUnavailabilityKo`의 `sourceReasons[]`에는 원전별 세부 사유가 있었지만, `explanation` 본문에는 공통 미지원 이유만 표시됐다. 이제 본문에 `sourceScopeNotice`를 추가하고, `reviewedOriginalSourceSurfaces[]`에 **실제 요청한 메뉴와 역사적 성별에서 검토 대상인 원문만** 원래 `menuSupportHandoff.unsupportedReasons` 순서대로 중복 제거해 반환한다. `excludedHistoricalSources[]`의 문구는 검토 범위 문장에도 포함하지 않으며, 포함되면 TypeError로 중단한다.
+
+이 문장은 계산 결과로 가족 상태를 판단하지 않고 **어떤 기존 원전 문구의 적용 범위와 미지원 사유를 검토했는지만** 보여 준다. 부모의 남성 명식에서는 `年為父`·`胎為母` 등이 원전 검토 대상에 포함되지만 여성 명식에는 들어가지 않는다. 자녀의 역사 남성 명식에서는 `時為子孫`이, 역사 여성 명식에서는 `我生者為子`가 각각 검토 대상에 들어간다. 두 문구가 서로 다른 상황에 적용된다는 사실을 가족운 해석 차이로 승격하지 않는다.
+
+본문 구성은 **제목 → 원문 검토 범위 → 실제 미해결 계산 입력 안내 → 역사 방법론 미선정 → 공식 가족 T8 권한 부재** 순서다. 시주 미상·십신/지장간 미상 및 기존 `inputRemediation`의 다음 조치는 그대로 유지하며, 출생 정보를 보충해도 가족 T8이 자동 허가되지 않는다. `availability=unsupported`, `readingMeaningAdmitted=false`, `officialReadingAuthorized=false`, `productMenuCanBeEnabled=false`, 저장·공개·판매 불가 및 원본 명식/해시 수신 게이트는 변경하지 않는다. 이 출력은 연구용 미지원 문단이며 공식 가족 Reading이나 12메뉴 중 가족 메뉴 완료를 뜻하지 않는다.
+
+**회귀:** 같은 출생 연월일의 역사 남성/여성 명식을 부모·자녀 메뉴에 각각 넣어 `年為父`/`胎為母` 및 `時為子孫`/`我生者為子`의 원문 포함·제외를 검사한다. 시간 미상 자녀는 기존 `pillars.hour` 입력 부족 안내를 그대로 받으며, 검토 대상 원문 차이는 별도의 인식 가능한 한국어 문장으로 반환한다.
+
 ### R070 한국어 미지원 안내 — 기존 함수에 원문별 구체적 사유 연결
 
 기존 `explainR070FamilyResearchUnavailabilityKo(report, expected)`는 부모·자녀별 **계산 입력 미상 / 역사 방법 미선정 / 공식 T8 미승인**을 한국어 문단으로 반환한다. 여기에 `sourceReasons[]`를 추가해 `menuSupportHandoff.unsupportedReasons[]`와 **원본 순서 및 원문 출처**를 그대로 대응한다. 새로운 공개 한국어 안내 함수나 Family T8 의미 판정기는 만들지 않는다.
