@@ -1763,6 +1763,107 @@ export function selectR070FamilyResearchTransferForContext(
   return transfer;
 }
 
+/**
+ * Korean, deterministic research-only explanation of why an R070 family
+ * reading cannot be supplied. This is not a family interpretation narrative
+ * and may not be forwarded as an Official Reading or product availability.
+ */
+export interface R070FamilyResearchUnavailableExplanationKo {
+  locale: 'ko';
+  scope: FamilyResearchScope;
+  snapshotId: string;
+  calculationHash: string;
+  availability: 'unsupported';
+  heading: string;
+  /** Human-readable status, not a T8 claim about any real relative. */
+  explanation: string;
+  /** Only Canonical facts that are actually unresolved can cause this notice. */
+  inputNotices: readonly string[];
+  /** No input supplied later can itself select a historical family method. */
+  methodNotice: string;
+  authorityNotice: string;
+  /** A precise, research-only pointer to the input and authority explanation. */
+  unresolvedCanonicalFactPaths: readonly string[];
+  missingCanonicalConceptSourceSurfaces: readonly string[];
+  readingMeaningAdmitted: false;
+  officialReadingAuthorized: false;
+  productMenuCanBeEnabled: false;
+  mayPersist: false;
+  mayPublish: false;
+  maySell: false;
+}
+
+/**
+ * Produces an actual Korean unsupported-state paragraph rather than asking a
+ * Consumer/Reader to invent what missing Canonical facts or sources mean.
+ * The existing scope/hash/snapshot guard must pass before any text is built.
+ */
+export function explainR070FamilyResearchUnavailabilityKo(
+  report: FamilySourceScopeHandoff,
+  expected: Readonly<{
+    scope: FamilyResearchScope;
+    snapshotId: string;
+    calculationHash: string;
+  }>,
+): R070FamilyResearchUnavailableExplanationKo {
+  const transfer = selectR070FamilyResearchTransferForContext(report, expected);
+  const unresolved = transfer.unresolvedCanonicalInputs;
+  const inputNotices: string[] = [];
+  if (unresolved.some(item => item.canonicalInputKind === 'pillar')) {
+    inputNotices.push(
+      '일부 명식의 기둥이 확정되지 않았습니다. 출생시각 등 해당 계산 입력을 확인해도 가족 해석 방법이 자동으로 승인되지는 않습니다.',
+    );
+  }
+  if (unresolved.some(item => item.canonicalInputKind === 'visible_t5')) {
+    inputNotices.push(
+      '십신 조회에 필요한 계산값 중 확정되지 않은 위치가 있습니다. 확인되지 않은 값을 가족 구성원의 유무나 상태로 해석할 수 없습니다.',
+    );
+  }
+  if (unresolved.some(item => item.canonicalInputKind === 'hidden_stem_membership')) {
+    inputNotices.push(
+      '일부 지장간 소속 정보가 확정되지 않았으며, 지장간을 부모·자녀 역할로 해석하는 규칙도 승인되지 않았습니다.',
+    );
+  }
+  const missingCanonicalConceptSourceSurfaces = transfer.canonicalInputAndConceptHolds
+    .filter(item => item.reasonCode === 'R070_MENU_CANONICAL_CONCEPT_NOT_AVAILABLE')
+    .flatMap(item => item.sourceSurfaces);
+  if (missingCanonicalConceptSourceSurfaces.includes('胎為母')) {
+    inputNotices.push(
+      '일부 역사적 부모 원문은 태(胎)를 참조하지만 현행 Canonical 명식에는 태주 계산 사실이 정의되지 않았습니다.',
+    );
+  }
+  const topic = expected.scope === 'parents' ? '부모' : '자녀';
+  const heading = topic + ' 풀이를 아직 제공할 수 없습니다.';
+  const methodNotice = topic +
+    '에 관한 역사적 기둥 배속과 십신 배속의 선택·조정 근거가 아직 확립되지 않았습니다.';
+  const authorityNotice =
+    '현재 공식 가족 T8 해석 권한이 없어 계산 입력을 모두 채우더라도 가족운 결론을 발행할 수 없습니다.';
+  if (transfer.officialAuthorityHold.reasonCode !==
+      'R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED') {
+    throw new TypeError('R070 Korean research explanation requires the official family hold.');
+  }
+  return {
+    locale: 'ko',
+    scope: expected.scope,
+    snapshotId: expected.snapshotId,
+    calculationHash: expected.calculationHash,
+    availability: 'unsupported',
+    heading,
+    explanation: [heading, ...inputNotices, methodNotice, authorityNotice].join(' '),
+    inputNotices,
+    methodNotice,
+    authorityNotice,
+    unresolvedCanonicalFactPaths: unresolved.map(item => item.factPath),
+    missingCanonicalConceptSourceSurfaces: [...new Set(missingCanonicalConceptSourceSurfaces)],
+    readingMeaningAdmitted: false,
+    officialReadingAuthorized: false,
+    productMenuCanBeEnabled: false,
+    mayPersist: false,
+    mayPublish: false,
+    maySell: false,
+  };
+}
+
 export interface R069SingleChartScopeObservation {
   personRole: 'subject' | 'target';
   originalHistoricalSexScope: string;
