@@ -46,7 +46,7 @@ export const KOREAN_SOURCE_BOUND_READING_RENDERER_V1: ReadingLocalizationRendere
     locale: 'ko-KR',
     rendererVersion: KOREAN_SOURCE_BOUND_RENDERER_VERSION_V1,
     glossaryVersion: KOREAN_SOURCE_BOUND_COPY_POLICY_VERSION_V1,
-    render({ semantics, plan }) {
+    render({ semantics, plan }: Parameters<ReadingLocalizationRendererV1['render']>[0]) {
       if (plan.locale !== 'ko-KR' || plan.semanticHash !== semantics.semanticHash ||
         plan.rendererVersion !== KOREAN_SOURCE_BOUND_RENDERER_VERSION_V1 ||
         plan.glossaryVersion !== KOREAN_SOURCE_BOUND_COPY_POLICY_VERSION_V1) {
