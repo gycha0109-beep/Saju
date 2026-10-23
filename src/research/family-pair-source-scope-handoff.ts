@@ -1724,6 +1724,45 @@ export function evaluateFamilySourceScopeV1(
   };
 }
 
+/**
+ * R070-only engine ingress: a research handoff can be consumed only for its
+ * exact menu and original Canonical calculation. Never silently recycle a
+ * parent's observation for children or another person's snapshot.
+ */
+export function selectR070FamilyResearchTransferForContext(
+  report: FamilySourceScopeHandoff,
+  expected: Readonly<{
+    scope: FamilyResearchScope;
+    snapshotId: string;
+    calculationHash: string;
+  }>,
+): R070FamilyEngineTransferBoundary {
+  const transfer = report.engineTransferBoundary;
+  if (report.version !== FAMILY_PAIR_SOURCE_SCOPE_HANDOFF_VERSION ||
+      report.owner !== 'R070' ||
+      report.scope !== expected.scope ||
+      report.snapshotId !== expected.snapshotId ||
+      report.calculationHash !== expected.calculationHash ||
+      transfer.route !== 'R070_RESEARCH_ONLY_NOT_EXECUTABLE' ||
+      transfer.requestedScope !== expected.scope ||
+      transfer.sourceSnapshotId !== expected.snapshotId ||
+      transfer.sourceCalculationHash !== expected.calculationHash ||
+      report.researchOnly !== true ||
+      report.familyT8Admitted !== false ||
+      report.mayGrantOfficialAuthority !== false ||
+      report.mayMarkMenuAvailable !== false ||
+      report.mayPersist !== false ||
+      report.mayPublish !== false ||
+      report.maySell !== false ||
+      transfer.canSelectHistoricalMethod !== false ||
+      transfer.canGrantFamilyT8Authority !== false ||
+      transfer.canEnableMenu !== false ||
+      transfer.canPublishOrSell !== false) {
+    throw new TypeError('R070 family research handoff does not match the requested Canonical context or authority boundary.');
+  }
+  return transfer;
+}
+
 export interface R069SingleChartScopeObservation {
   personRole: 'subject' | 'target';
   originalHistoricalSexScope: string;
