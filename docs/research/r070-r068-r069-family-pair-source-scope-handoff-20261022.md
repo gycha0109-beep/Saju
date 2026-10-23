@@ -194,6 +194,17 @@ R070의 `父以偏財論`, `母以印綬論`, `子嗣者即官星也`, 여성 �
 
 **실계산 회귀:** 남성·여성·성별 미지정, 출생시각 제공·미상 실제 명식에 대해 두 메뉴의 동일 문맥 정상 선택, 메뉴 오연결, 다른 명식 ID, 다른 계산 해시, 외부/내부 권한 플래그 변경의 실패를 다룬다. 선택에 성공해도 `menuBlockingPrerequisites`와 `unassignedConfigurationPrerequisites`의 원래 구분 및 개인별 결핍 경로가 보존된다. 별도의 Production/Official/Reader/Product/Commerce 승인은 발생하지 않는다.
 
+### R070 한국어 미지원 안내 — 기존 함수에 원문별 구체적 사유 연결
+
+기존 `explainR070FamilyResearchUnavailabilityKo(report, expected)`는 부모·자녀별 **계산 입력 미상 / 역사 방법 미선정 / 공식 T8 미승인**을 한국어 문단으로 반환한다. 여기에 `sourceReasons[]`를 추가해 `menuSupportHandoff.unsupportedReasons[]`와 **원본 순서 및 원문 출처**를 그대로 대응한다. 새로운 공개 한국어 안내 함수나 Family T8 의미 판정기는 만들지 않는다.
+
+- 각 `sourceReasons[]`는 원본의 `reasonCode`, `category`, `sourceSurfaces`, `observedFactPaths`, `unresolvedFactPaths`, `missingPrerequisites`와 해당 **원문별 한국어 미지원 설명**을 보유한다. 원문 적용 범위에서 제외된 역사적 성별 문구는 기존 제외 목록에만 남고 미지원 원인으로 전용하지 않는다.
+- 확정된 기둥 위치(`月為父母兄弟門戶`·`時為子息` 등)는 곧바로 부모·자녀의 상황을 해석할 허가가 아니라는 이유를 표시한다. 미상 시주에는 정확한 `pillars.hour` 경로를 덧붙이고, 역사적 `胎為母`의 미구현 태주 개념은 없는 Canonical 경로를 생성하지 않고 별도 안내한다.
+- 부모의 역사적 별 배속 원문과 여성 자녀 별 배속 문구는 실제 원문 이름으로 방법론 **선택·조정 미완료**를 설명한다. 복수 원문의 공존은 검증된 모순이나 독립 가족운 근거가 아니다. 공식 `R070_MENU_OFFICIAL_FAMILY_T8_NOT_ADMITTED` 안내는 항상 별도로 존재한다.
+- 기존 `locale=ko`, `availability=unsupported`, `officialReadingAuthorized=false`, `productMenuCanBeEnabled=false`, `mayPersist/mayPublish/maySell=false` 및 `selectR070FamilyResearchTransferForContext`의 명식·범위·계산 해시 검사는 그대로 유지한다. **연구용 한국어 불가 설명이지 사용자 공식 Reading이 아니다.**
+
+남성/여성/미지정, 출생시각 제공/미상 명식에서 `sourceReasons[]`가 원본의 각 계산 경로와 원문 ID를 보존하고, 시각이 미상일 때만 해당 기둥 부족 문장을 만들며, 역사 성별 적용 밖 원문은 설명 목록에 섞이지 않는 회귀 테스트를 추가한다.
+
 ### R070 메뉴 직접 차단 조건과 미배속 구성 연구 조건의 분리
 
 기존 `menuSupportHandoff.missingPrerequisites`는 과거 연구 수신 호환성을 위해 **원문·방법론·공식 권한 차단 조건과 가족 대상이 아직 정해지지 않은 구성 연구 조건을 합친 배열**이었다. 수신 측에서 이것을 모두 메뉴 활성화의 직접 선행조건으로 받아들이면 `CONFIGURATION-OUTCOME`의 `旺衰`·`生旺死絕`·`刑沖破害`·`官煞混雜`·`財印` 전체를 특정 부모/자녀 메뉴에 잘못 결속하게 된다. 그 해석을 막기 위해 다음 두 경로를 별도 반환한다.
