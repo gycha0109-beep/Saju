@@ -9,7 +9,7 @@ import { promisify } from 'node:util';
 import process from 'node:process';
 import {
   SAJU_READING_MENUS, validateSajuMenuForm,
-  renderLocalSelectedSajuMenuReading,
+  renderLocalSelectedSajuMenuReading, focusNatalReadingHtml,
 } from './natal-browser-menu-reading.mjs';
 
 const scriptPath = fileURLToPath(import.meta.url);
@@ -195,9 +195,12 @@ export function createLocalNatalReaderServer(render = renderLocalNatalReading) {
       return;
     }
     try {
-      const html = SAJU_READING_MENUS.slice(0, 5).some(item => item.id === selection.menu)
-        ? await render(birth.date, birth.time, birth.calendarType,
-          birth.isLeapMonth, birth.sex)
+      const isNatal = SAJU_READING_MENUS.slice(0, 5).some(
+        item => item.id === selection.menu);
+      const html = isNatal
+        ? focusNatalReadingHtml(
+          await render(birth.date, birth.time, birth.calendarType,
+            birth.isLeapMonth, birth.sex), selection.menu)
         : await renderLocalSelectedSajuMenuReading(birth, selection);
       res.writeHead(200);
       res.end(html);
