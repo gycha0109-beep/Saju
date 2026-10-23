@@ -52,6 +52,13 @@
 - `state=internal_preview_only`, `mayRecalculate=false`, `mayGenerateClaims=false`, `mayPromoteResearchAuthority=false`, `mayExposeInternalIdsToConsumers=false`. 호출자가 **이미 승인된 요청/대상 범위**를 검증하고 불투명 `requestScopeKey`를 넘겨야 하며, 이 함수 자체는 Auth·저장·공개·판매 권한을 다루지 않는다.
 - **아직 E-3 전체 완료 아님:** 기존 Official/Research `ProductReadingResponse` 단락/레닥션과의 실제 제품 end-to-end 패리티 및 MyeongHa Host/Reader 연결은 미완료. 외국어 Renderer와 사용자 선택 UI도 아직 없음.
 
+### E-3 한국어 Product Reading 섹션 미리보기 (2026-10-23)
+
+- `projectHeldKoreanReadingProductSectionsV1`은 기존 언어 중립 Semantic Bundle + `LocalizedReadingInternalV1`에서 **기존 `ProductReadingResponseSection`의 paragraph 및 `ProductReadingResponseDisclosure`의 필수 한정 문구**만 정확히 추출한다.
+- 한국어 원문과 각 qualifier 원문이 완전히 같고, 같은 서버 신뢰 Renderer policy·캐시 스코프·semanticHash/contentHash에 묶인 경우에만 반환한다. 다른 텍스트나 버전/출처/비밀 내부 ID가 섞이면 차단한다.
+- `state=internal_preview_only`와 `canPersist/canDisclose/canPublish/canSell=false` 고정. 완성 `ProductReadingResponse` / Reader API / S5 저장 객체를 만들지 않는다. 독립 Subject/Auth/Production Release 검증 없이 공개 또는 Reader에 전달하는 것이 금지된다.
+- #2709에서 병합된 한국어 Renderer와 연결 가능한 별도 ProductSection 어댑터이며, 실제 Auth/MyeongHa Reader 연결과 공개용 redaction 완료는 별도 작업이다.
+
 ## 4. 기존 Authority/HOLD 유지
 
 A 원국, B 시간, C 관계, D 질문의 source-qualified T5/T6/T8/T9/T10/T11 및 MUR 기준은 변경하지 않는다. 특히 연구용 의미, 대운/연운/월운, 궁합, 배우자 등 scope 미승인 결과는 외국어로 표현해도 여전히 HOLD이다. `internal_preview_only` 출력은 Official/Production/Public/저장/판매 권한을 추가하지 않는다.
