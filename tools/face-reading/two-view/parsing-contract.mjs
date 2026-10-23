@@ -1,0 +1,333 @@
+export const PARSING_LEGACY_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.1.0';
+export const PARSING_CROP_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.2.0';
+export const PARSING_EAR_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.3.0';
+import { validateProfile } from './profile-metrics.mjs';
+import { validateEyeDirection } from './eye-direction.mjs';
+import { validateMorphology } from './morphology-geometry.mjs';
+export const PARSING_INSTANCE_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.4.0';
+export const PARSING_SCREENED_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.5.0';
+export const PARSING_EYE_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.6.0';
+export const PARSING_VERSION = 'engineering.face-parsing.yakhyo-resnet18@0.7.0';
+export const PARSING_PIN = Object.freeze({
+  repository: 'yakhyo/face-parsing',
+  sourceRevision: '8a4729d95118d0e97c44185f9bdef3d6bfeaaf99',
+  release: 'v0.0.2',
+  asset: 'resnet18.onnx',
+  sha256: '0d9bd318e46987c3bdbfacae9e2c0f461cae1c6ac6ea6d43bbe541a91727e33f',
+  runtime: '1.23.2',
+  size: 512,
+});
+// Provider label order. l/r names are never promoted to anatomical laterality.
+export const PARSING_LABELS = Object.freeze([
+  'background',
+  'skin',
+  'l_brow',
+  'r_brow',
+  'l_eye',
+  'r_eye',
+  'eye_g',
+  'l_ear',
+  'r_ear',
+  'ear_r',
+  'nose',
+  'mouth',
+  'u_lip',
+  'l_lip',
+  'neck',
+  'neck_l',
+  'cloth',
+  'hair',
+  'hat',
+]);
+export const PARSING_GROUPS = Object.freeze([
+  { id: 'hair', label: '머리카락', classes: [17], color: [255, 95, 70] },
+  { id: 'skin', label: '피부', classes: [1], color: [90, 210, 215] },
+  { id: 'ears', label: '귀 후보', classes: [7, 8], color: [255, 190, 65] },
+  { id: 'brows', label: '눈썹', classes: [2, 3], color: [70, 245, 130] },
+  { id: 'lips', label: '입술', classes: [12, 13], color: [255, 85, 190] },
+  { id: 'nose', label: '코', classes: [10], color: [145, 140, 255] },
+  { id: 'interface', label: '머리–피부 접경', classes: [], color: [255, 45, 45] },
+]);
+export function containSize(imageWidth, imageHeight, viewportWidth, viewportHeight) {
+  if (
+    [imageWidth, imageHeight, viewportWidth, viewportHeight].some(
+      (n) => !Number.isFinite(n) || n <= 0,
+    )
+  )
+    throw Error('PARSING_DISPLAY_INVALID');
+  const scale = Math.min(viewportWidth / imageWidth, viewportHeight / imageHeight);
+  return { width: imageWidth * scale, height: imageHeight * scale };
+}
+export function rgbTensor(rgba, width, height) {
+  if (
+    !Number.isInteger(width) ||
+    !Number.isInteger(height) ||
+    width <= 0 ||
+    height <= 0 ||
+    rgba.length !== width * height * 4
+  )
+    throw Error('PARSING_INPUT_INVALID');
+  const n = width * height,
+    out = new Float32Array(n * 3);
+  const mean = [0.485, 0.456, 0.406],
+    std = [0.229, 0.224, 0.225];
+  for (let c = 0; c < 3; c++)
+    for (let p = 0; p < n; p++) out[c * n + p] = (rgba[p * 4 + c] / 255 - mean[c]) / std[c];
+  return out;
+}
+export function classifyLogits(data, dims) {
+  const size = PARSING_PIN.size,
+    n = size * size;
+  if (!Array.isArray(dims) || dims.join(',') !== `1,19,${size},${size}` || data.length !== 19 * n)
+    throw Error('PARSING_OUTPUT_INVALID');
+  const mask = new Uint8Array(n),
+    counts = Array(19).fill(0);
+  for (let p = 0; p < n; p++) {
+    let best = -Infinity,
+      label = 0;
+    for (let c = 0; c < 19; c++) {
+      const value = data[c * n + p];
+      if (!Number.isFinite(value)) throw Error('PARSING_OUTPUT_INVALID');
+      if (value > best) {
+        best = value;
+        label = c;
+      }
+    }
+    mask[p] = label;
+    counts[label]++;
+  }
+  return { mask, counts };
+}
+export function contactPixels(mask, width, height) {
+  if (mask.length !== width * height || mask.some((n) => n > 18))
+    throw Error('PARSING_MASK_INVALID');
+  const contact = new Uint8Array(mask.length);
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      const p = y * width + x;
+      if (mask[p] !== 1) continue;
+      if (
+        (x > 0 && mask[p - 1] === 17) ||
+        (x + 1 < width && mask[p + 1] === 17) ||
+        (y > 0 && mask[p - width] === 17) ||
+        (y + 1 < height && mask[p + width] === 17)
+      )
+        contact[p] = 1;
+    }
+  return contact;
+}
+export function validateParsingSummary(input, { allowLegacy = false, viewRole } = {}) {
+  const crop = input?.methodVersion === PARSING_CROP_VERSION;
+  const legacy =
+    allowLegacy &&
+    [
+      PARSING_LEGACY_VERSION,
+      PARSING_CROP_VERSION,
+      PARSING_EAR_VERSION,
+      PARSING_INSTANCE_VERSION,
+      PARSING_SCREENED_VERSION,
+      PARSING_EYE_VERSION,
+    ].includes(input?.methodVersion);
+  const hasEars = [
+    PARSING_EAR_VERSION,
+    PARSING_INSTANCE_VERSION,
+    PARSING_SCREENED_VERSION,
+    PARSING_EYE_VERSION,
+    PARSING_VERSION,
+  ].includes(input?.methodVersion);
+  const hasInstances = [
+    PARSING_INSTANCE_VERSION,
+    PARSING_SCREENED_VERSION,
+    PARSING_EYE_VERSION,
+    PARSING_VERSION,
+  ].includes(input?.methodVersion);
+  const hasScreening = [PARSING_SCREENED_VERSION, PARSING_EYE_VERSION, PARSING_VERSION].includes(
+    input?.methodVersion,
+  );
+  const hasEye = [PARSING_EYE_VERSION, PARSING_VERSION].includes(input?.methodVersion);
+  if (
+    !input ||
+    (!legacy && input.methodVersion !== PARSING_VERSION) ||
+    input.candidateOnly !== true
+  )
+    throw Error('PARSING_SUMMARY_INVALID');
+  if (
+    legacy &&
+    crop &&
+    input.status === 'unavailable' &&
+    ['NO_SINGLE_FACE', 'MULTIPLE_FACES', 'ANCHOR_DISAGREEMENT', 'FACE_FRAME_INVALID'].includes(
+      input.reason,
+    )
+  )
+    return {
+      methodVersion: input.methodVersion,
+      candidateOnly: true,
+      status: 'unavailable',
+      reason: input.reason,
+      accuracyValidated: false,
+      canonicalReceiptIssued: false,
+    };
+  if (
+    input.status === 'failed' &&
+    ['PARSING_FAILED', 'PARSING_TIMEOUT', 'PARSING_MODEL_UNAVAILABLE'].includes(input.reason)
+  )
+    return {
+      methodVersion: input.methodVersion,
+      candidateOnly: true,
+      status: 'failed',
+      reason: input.reason,
+    };
+  if (
+    input.status !== 'completed' ||
+    !Array.isArray(input.counts) ||
+    input.counts.length !== 19 ||
+    input.counts.some((n) => !Number.isInteger(n) || n < 0) ||
+    input.counts.reduce((a, b) => a + b, 0) !== 512 * 512 ||
+    !Number.isInteger(input.interfacePixels) ||
+    input.interfacePixels < 0 ||
+    input.interfacePixels > input.counts[1]
+  )
+    throw Error('PARSING_SUMMARY_INVALID');
+  if (
+    crop &&
+    (input.checks?.singleFace !== true ||
+      input.checks?.eyesAligned !== true ||
+      input.checks?.lipsAligned !== true)
+  )
+    throw Error('PARSING_SUMMARY_INVALID');
+  let earRefinement;
+  if (hasEars) {
+    const ear = input.earRefinement;
+    if (
+      ear?.status === 'applied' &&
+      Number.isInteger(ear.pixels) &&
+      ear.pixels > 0 &&
+      ear.pixels <= 512 * 512 &&
+      ear.checks?.singleFace === true &&
+      ear.checks?.eyesAligned === true &&
+      ear.checks?.lipsAligned === true
+    )
+      earRefinement = {
+        status: 'applied',
+        pixels: ear.pixels,
+        checks: { singleFace: true, eyesAligned: true, lipsAligned: true },
+      };
+    else if (
+      ear?.status === 'unavailable' &&
+      ear.pixels === 0 &&
+      [
+        'NO_SINGLE_FACE',
+        'MULTIPLE_FACES',
+        'FACE_FRAME_INVALID',
+        'ANCHOR_DISAGREEMENT',
+        'EAR_FRAGMENT_ONLY',
+        'REFINEMENT_FAILED',
+      ].includes(ear.reason)
+    )
+      earRefinement = { status: 'unavailable', reason: ear.reason, pixels: 0 };
+    else throw Error('PARSING_SUMMARY_INVALID');
+  }
+  let instanceRefinement;
+  if (hasInstances) {
+    const value = input.instanceRefinement;
+    if (value?.status === 'not_requested') instanceRefinement = { status: 'not_requested' };
+    else if (
+      value?.status === 'unavailable' &&
+      [
+        'MODEL_UNAVAILABLE',
+        'DETECTION_FAILED',
+        'NO_FACES',
+        'TOO_MANY_FACES',
+        'ANCHOR_DISAGREEMENT',
+      ].includes(value.reason)
+    )
+      instanceRefinement = { status: 'unavailable', reason: value.reason };
+    else if (
+      value?.status === 'applied' &&
+      Number.isInteger(value.faces) &&
+      value.faces >= 1 &&
+      value.faces <= 4 &&
+      Number.isInteger(value.lipChecksPassed) &&
+      value.lipChecksPassed >= 0 &&
+      value.lipChecksPassed <= value.faces &&
+      Array.isArray(value.counts) &&
+      value.counts.length === 19 &&
+      value.counts.every((n) => Number.isInteger(n) && n >= 0) &&
+      value.counts.reduce((a, b) => a + b, 0) === 512 * 512 &&
+      Number.isInteger(value.interfacePixels) &&
+      value.interfacePixels >= 0 &&
+      value.interfacePixels <= value.counts[1]
+    )
+      instanceRefinement = {
+        status: 'applied',
+        faces: value.faces,
+        lipChecksPassed: value.lipChecksPassed,
+        counts: [...value.counts],
+        interfacePixels: value.interfacePixels,
+      };
+    else throw Error('PARSING_SUMMARY_INVALID');
+    if (
+      instanceRefinement.status !== 'not_requested' &&
+      !['MULTIPLE_FACES', 'NO_SINGLE_FACE'].includes(earRefinement?.reason)
+    )
+      throw Error('PARSING_SUMMARY_INVALID');
+    if (
+      instanceRefinement.status === 'not_requested' &&
+      ['MULTIPLE_FACES', 'NO_SINGLE_FACE'].includes(earRefinement?.reason)
+    )
+      throw Error('PARSING_SUMMARY_INVALID');
+  }
+  let regionScreening, profile, eyeDirection, morphology;
+  if (hasScreening) {
+    const q = input.regionScreening;
+    if (
+      !q ||
+      !Number.isInteger(q.backgroundRemoved) ||
+      q.backgroundRemoved < 0 ||
+      q.backgroundRemoved > 512 * 512 ||
+      !q.regions ||
+      Object.keys(q.regions).length !== 5
+    )
+      throw Error('PARSING_SUMMARY_INVALID');
+    const regions = Object.fromEntries(
+      ['skin', 'nose', 'lips', 'brows', 'ears'].map((id) => {
+        const r = q.regions[id];
+        if (
+          !r ||
+          !['screened', 'unchecked', 'suppressed'].includes(r.status) ||
+          !Number.isInteger(r.removedPixels) ||
+          r.removedPixels < 0 ||
+          r.removedPixels > 512 * 512 ||
+          (r.status === 'unchecked' && r.removedPixels !== 0)
+        )
+          throw Error('PARSING_SUMMARY_INVALID');
+        return [id, { status: r.status, removedPixels: r.removedPixels }];
+      }),
+    );
+    regionScreening = { backgroundRemoved: q.backgroundRemoved, regions };
+    profile = validateProfile(input.profile);
+    if (
+      viewRole !== undefined &&
+      (!['frontal', 'profile'].includes(viewRole) ||
+        (viewRole === 'profile') !== (profile.status === 'completed'))
+    )
+      throw Error('PARSING_SUMMARY_INVALID');
+  }
+  if (hasEye) eyeDirection = validateEyeDirection(input.eyeDirection, { viewRole });
+  if (!legacy) morphology = validateMorphology(input.morphology, { viewRole });
+  return {
+    methodVersion: input.methodVersion,
+    candidateOnly: true,
+    status: 'completed',
+    counts: [...input.counts],
+    interfacePixels: input.interfacePixels,
+    ...(crop ? { checks: { singleFace: true, eyesAligned: true, lipsAligned: true } } : {}),
+    ...(hasEars ? { earRefinement } : {}),
+    ...(hasInstances ? { instanceRefinement } : {}),
+    ...(hasScreening ? { regionScreening, profile } : {}),
+    ...(hasEye ? { eyeDirection } : {}),
+    ...(!legacy ? { morphology } : {}),
+    accuracyValidated: false,
+    canonicalReceiptIssued: false,
+  };
+}
