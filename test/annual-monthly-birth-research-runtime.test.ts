@@ -40,6 +40,15 @@ describe('actual birth → internal annual + both monthly Jeol research reading'
     expect(result.report.monthly.sections
       .filter(x => x.kind === 'theme').map(x => x.segmentId))
       .toEqual(['before_jeol', 'after_jeol']);
+    const current = result.report.monthly.referenceReading;
+    expect(current.state).toBe('in_period');
+    expect(result.monthlyMenu.menuId).toBe('monthly');
+    expect(result.monthlyMenu.referenceFocus?.state).toBe('in_period');
+    expect(result.monthlyMenu.referenceFocus?.currentSection?.text).toBe(current.theme?.text);
+    expect(result.monthlyMenu.referenceFocus?.currentSection?.claimId).toBe(current.theme?.claimId);
+    expect(result.monthlyMenu.referenceFocus?.currentSection?.sourceIds).toEqual(current.theme?.sourceIds);
+    expect(result.monthlyMenu.authority.mayPublish).toBe(false);
+    expect(result.monthlyMenu.authority.mayMarkMenuAvailable).toBe(false);
     expect(result.report.researchOnly).toBe(true);
     expect(result.report.usefulComplete).toBe(false);
     expect(result.html).toContain('id="year-reading"');
@@ -59,6 +68,9 @@ describe('actual birth → internal annual + both monthly Jeol research reading'
     const october = read(BIRTH, 2026, 10);
     expect(replay).toEqual(september);
     expect(september.report.annual).toEqual(october.report.annual);
+    expect(september.monthlyMenu.referenceFocus?.state).toBe('in_period');
+    expect(october.monthlyMenu.referenceFocus?.state).toBe('outside_target_month');
+    expect(october.monthlyMenu.referenceFocus?.currentSection).toBeUndefined();
     expect(september.report.monthly.jeolBoundary.at)
       .not.toEqual(october.report.monthly.jeolBoundary.at);
     expect(september.report.monthly.sections.filter(x => x.kind === 'theme')
