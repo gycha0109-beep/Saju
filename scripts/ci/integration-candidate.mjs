@@ -27,7 +27,7 @@ export function execGhApiWithTransientRetry(
       return run('gh', ['api', ...args], { encoding: 'utf8' });
     } catch (error) {
       const stderr = String(error?.stderr ?? '');
-      const transientServerFailure = /(?:^|\\n)gh: HTTP (?:500|502|503|504)(?:\\s|$)/u.test(stderr);
+      const transientServerFailure = /gh: HTTP (?:500|502|503|504)\b/u.test(stderr);
       if (!transientServerFailure || attempt >= maxAttempts) throw error;
       wait(ghApiRetryDelayMs * attempt);
     }
