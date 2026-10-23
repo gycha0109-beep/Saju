@@ -1882,10 +1882,9 @@ export function explainR070FamilyResearchUnavailabilityKo(
     '에 관한 역사적 기둥 배속과 십신 배속의 선택·조정 근거가 아직 확립되지 않았습니다.';
   const authorityNotice =
     '현재 공식 가족 T8 해석 권한이 없어 계산 입력을 모두 채우더라도 가족운 결론을 발행할 수 없습니다.';
-  const reviewedOriginalSourceSurfaces = [...new Set([
-    ...transfer.canonicalInputAndConceptHolds.flatMap(item => item.sourceSurfaces),
-    ...transfer.sourceAndMethodHolds.flatMap(item => item.sourceSurfaces),
-  ])];
+  const reviewedOriginalSourceSurfaces = [...new Set(
+    report.menuSupportHandoff.unsupportedReasons.flatMap(item => item.sourceSurfaces),
+  )];
   const excludedSources = new Set(transfer.excludedHistoricalSources.map(
     item => item.sourceSurface));
   if (reviewedOriginalSourceSurfaces.some(surface => excludedSources.has(surface))) {
