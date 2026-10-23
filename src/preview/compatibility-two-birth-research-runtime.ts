@@ -1,4 +1,8 @@
 import type { BirthInput } from '../contracts/calculation.js';
+import {
+  evaluatePairwiseSourceScopeV1,
+  type PairwiseSourceScopeHandoff,
+} from '../research/family-pair-source-scope-handoff.js';
 import type { ReadingRequest } from '../contracts/reading.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../production/production-calculation-runtime.js';
 import { runInterpretation } from '../interpretation/interpretation-engine.js';
@@ -40,6 +44,8 @@ export interface CompatibilityTwoBirthResearchReading {
   maySell: false;
   report: CompatibilityTwoChartIntakePreview;
   personalRelationship: CompatibilityPersonalRelationshipContext;
+  /** R068/R069 original source applicability only, never pairwise T10 meaning. */
+  sourceScopeHandoff: PairwiseSourceScopeHandoff;
   html: string;
 }
 
@@ -147,6 +153,32 @@ export function buildCompatibilityTwoBirthResearchReading(
       report.target.calculationHash !== target.calculationHash) {
     throw new TypeError('Two-birth intake cannot admit an ungrounded compatibility meaning.');
   }
+  // R068/R069 historical wording belongs to the exact two separately
+  // calculated people. It must not be confused with authorized dyadic T10.
+  const sourceScopeHandoff = evaluatePairwiseSourceScopeV1(
+    { personRef: subjectRef, snapshot: subject },
+    { personRef: targetRef, snapshot: target },
+  );
+  if (sourceScopeHandoff.subject.personRef !== subjectRef ||
+      sourceScopeHandoff.target.personRef !== targetRef ||
+      sourceScopeHandoff.subject.snapshotId !== subject.snapshotId ||
+      sourceScopeHandoff.target.snapshotId !== target.snapshotId ||
+      sourceScopeHandoff.subject.calculationHash !== subject.calculationHash ||
+      sourceScopeHandoff.target.calculationHash !== target.calculationHash ||
+      sourceScopeHandoff.pairwiseDisposition !== 'INCONCLUSIVE' ||
+      sourceScopeHandoff.pairwiseT10Admitted !== false ||
+      sourceScopeHandoff.researchOnly !== true ||
+      sourceScopeHandoff.mayGrantOfficialAuthority !== false ||
+      sourceScopeHandoff.mayMarkMenuAvailable !== false ||
+      sourceScopeHandoff.mayPersist !== false ||
+      sourceScopeHandoff.mayPublish !== false ||
+      sourceScopeHandoff.maySell !== false ||
+      sourceScopeHandoff.factualPairObservations.some(item =>
+        item.pairwiseMeaningAuthorized !== false) ||
+      sourceScopeHandoff.comparedSourceSurfaces.some(item =>
+        item.eligiblePairwiseClaim !== false)) {
+    throw new TypeError('R068/R069 source research cannot authorize two-person T10 meaning.');
+  }
   const personalRelationship: CompatibilityPersonalRelationshipContext = {
     subject: individualRelationshipContext(subject, subjectRef, now),
     target: individualRelationshipContext(target, targetRef, now),
@@ -166,6 +198,7 @@ export function buildCompatibilityTwoBirthResearchReading(
     maySell: false,
     report,
     personalRelationship,
+    sourceScopeHandoff,
     html: renderCompatibilityTwoChartIntakeHtml(report, personalRelationship),
   };
 }

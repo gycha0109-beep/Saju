@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { BirthInput } from '../src/contracts/calculation.js';
 import { calculateAuthorizedMyeonghwaProductionSnapshot } from '../src/production/production-calculation-runtime.js';
-import { buildFamilyCanonicalObservationPreview } from '../src/preview/family-parents-children-observation-preview.js';
+import {
+  buildFamilyCanonicalObservationPreview,
+  renderFamilyCanonicalObservationHtml,
+} from '../src/preview/family-parents-children-observation-preview.js';
 import { buildFamilyBirthResearchReading, buildFamilyMemberBirthResearchReading } from '../src/preview/family-birth-research-runtime.js';
+import {
+  evaluateFamilySourceScopeV1,
+  explainR070FamilyResearchUnavailabilityKo,
+} from '../src/research/family-pair-source-scope-handoff.js';
 
 function escapedHtmlText(value: string): string {
   return value.replace(/[&<>"']/gu, char => ({
@@ -94,6 +101,52 @@ describe('actual birth to bounded parent/child family observation', () => {
       .not.toBe(first.report.observations[0]?.observedPillar);
   });
 
+  it('passes through exact R070 source-scoped unavailability to the existing internal family runtime', () => {
+    for (const sex of ['male', 'female', 'unspecified'] as const) {
+      for (const scope of ['parents', 'children'] as const) {
+        for (const timeKnown of [true, false]) {
+          const birth: BirthInput = {
+            ...BIRTH, sexForTraditionalCalculation: sex,
+            time: timeKnown ? BIRTH.time : { known: false },
+          };
+          const result = read(birth, scope);
+          const { snapshot } = calculateAuthorizedMyeonghwaProductionSnapshot(
+            birth, { now: new Date(REFERENCE) },
+          );
+          const source = evaluateFamilySourceScopeV1(snapshot, scope);
+          const expectedResearch = explainR070FamilyResearchUnavailabilityKo(source, {
+            scope, snapshotId: snapshot.snapshotId, calculationHash: snapshot.calculationHash,
+          });
+          expect(result.researchUnavailability).toEqual(expectedResearch);
+          expect(result.researchUnavailability.scope).toBe(scope);
+          expect(result.researchUnavailability.availability).toBe('unsupported');
+          expect(result.researchUnavailability.officialReadingAuthorized).toBe(false);
+          expect(result.researchUnavailability.productMenuCanBeEnabled).toBe(false);
+          expect(result.researchUnavailability.readingMeaningAdmitted).toBe(false);
+          expect(result.researchUnavailability.mayPersist).toBe(false);
+          expect(result.researchUnavailability.mayPublish).toBe(false);
+          expect(result.researchUnavailability.maySell).toBe(false);
+          expect(result.meaning).toBe(timeKnown || scope === 'parents'
+            ? 'calculation_facts_only' : 'none');
+          // Existing internal rendering remains the same bounded pillar preview.
+          expect(result.html).toBe(renderFamilyCanonicalObservationHtml(result.report));
+          const excluded = source.menuSupportHandoff.excludedHistoricalSources.map(
+            entry => entry.sourceSurface);
+          expect(result.researchUnavailability.reviewedOriginalSourceSurfaces.every(
+            item => !excluded.includes(item))).toBe(true);
+          if (scope === 'children' && !timeKnown) {
+            expect(result.researchUnavailability.unresolvedCanonicalFactPaths)
+              .toContain('pillars.hour');
+            expect(result.researchUnavailability.inputRemediation.some(item =>
+              item.factPath === 'pillars.hour' &&
+              item.nextStep === 'CHECK_BIRTH_TIME_AND_RECALCULATE')).toBe(true);
+          }
+          expect(read(birth, scope)).toEqual(result);
+        }
+      }
+    }
+  });
+
   it('rejects absent family scope and timestamps that could silently change the chart', () => {
     expect(() => buildFamilyBirthResearchReading(BIRTH, {
       scope: 'family' as 'parents',
@@ -131,6 +184,13 @@ describe('two separate family members with already sourced personal natal T8', (
     expect(output.member.snapshotId).toBe(realMember.snapshotId);
     expect(output.member.calculationHash).toBe(realMember.calculationHash);
     expect(output.subject.scope).toBe('parents');
+    expect(output.subject.researchUnavailability.snapshotId)
+      .toBe(output.subject.report.snapshotId);
+    expect(output.subject.researchUnavailability.calculationHash)
+      .toBe(output.subject.report.calculationHash);
+    expect(output.subject.researchUnavailability.snapshotId)
+      .not.toBe(realMember.snapshotId);
+    expect(output.subject.researchUnavailability.officialReadingAuthorized).toBe(false);
     expect(output.subject.report.observations.map(x => x.pillarSlot))
       .toEqual(['year', 'month']);
     expect(output.member.coverage).toBe('bounded_natal_t8_research');
