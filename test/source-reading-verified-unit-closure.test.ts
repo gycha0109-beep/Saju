@@ -16,10 +16,10 @@ import { inspectSourceReadingProofReadinessV1 } from
   '../src/reading/source-reading-proof-readiness.js';
 import {
   issueHeldSourceReadingTransportProofV1,
-  type SourceReadingProofVerifierOptionsV1,
 } from '../src/reading/source-reading-transport-proof.js';
 import {
   verifyHeldSajuSourceUnitClosureV1,
+  type VerifyHeldSajuSourceUnitClosureOptionsV1,
 } from '../src/reading/source-reading-verified-unit-closure.js';
 
 const KEY = Buffer.alloc(32, 97);
@@ -86,8 +86,9 @@ async function actualReading() {
 }
 function verifier(
   response: Awaited<ReturnType<typeof actualReading>>['response'],
-  overrides: Partial<SourceReadingProofVerifierOptionsV1> = {},
-): SourceReadingProofVerifierOptionsV1 {
+  trustedPolicy: Awaited<ReturnType<typeof actualReading>>['handoff']['source'],
+  overrides: Partial<VerifyHeldSajuSourceUnitClosureOptionsV1> = {},
+): VerifyHeldSajuSourceUnitClosureOptionsV1 {
   const seen = new Set<string>();
   return {
     trustedIssuer: 'saju-source-proof-owner',
@@ -96,6 +97,10 @@ function verifier(
     keyBytes: KEY,
     expectedNonce: NONCE, expectedRequestBody: REQUEST,
     response, nowMs: ISSUE_TIME + 5_000,
+    expectedInterpretationPolicy: {
+      registrySnapshotId: trustedPolicy.registrySnapshotId,
+      profileRef: trustedPolicy.profileRef,
+    },
     claimNonceOnce: vi.fn(async (key: string) => {
       if (seen.has(key)) return false;
       seen.add(key);
@@ -108,7 +113,7 @@ function verifier(
 describe('Saju 2B-3C Preview signed response and Reader S3 source-unit closure', () => {
   it('reconstructs the exact original Source Unit ref/hash inventory from one signed actual response', async () => {
     const { response, proof, handoff } = await actualReading();
-    const result = await verifyHeldSajuSourceUnitClosureV1(proof, verifier(response));
+    const result = await verifyHeldSajuSourceUnitClosureV1(proof, verifier(response, handoff.source));
     expect(result.state).toBe('held');
     if (result.state !== 'held') return;
     expect(result.transportIntegrity).toBe('VERIFIED');
@@ -144,13 +149,13 @@ describe('Saju 2B-3C Preview signed response and Reader S3 source-unit closure',
   });
 
   it('rejects response mutation, wrong caller request, nonce or issuer and never discloses units', async () => {
-    const { response, proof } = await actualReading();
+    const { response, proof, handoff } = await actualReading();
     // Tamper with an unconditional v2 response field: the fixture's first
     // block can legitimately be a non-paragraph while still being delivered.
     const mutated = { ...response, responseId: response.responseId + '-tampered' };
     for (const options of [
-      verifier(mutated),
-      verifier(response, { expectedRequestBody: {
+      verifier(mutated, handoff.source),
+      verifier(response, handoff.source, { expectedRequestBody: {
         ...REQUEST, reading: { text: '재물운' },
       } }),
       verifier(response, { expectedNonce: 'z'.repeat(30) }),
@@ -167,12 +172,40 @@ describe('Saju 2B-3C Preview signed response and Reader S3 source-unit closure',
     }
   });
 
+  it('rejects stale independent Registry/Profile version pins before claiming nonce', async () => {
+    const { response, proof, handoff } = await actualReading();
+    const correct = verifier(response, handoff.source);
+    for (const expectedInterpretationPolicy of [
+      { ...correct.expectedInterpretationPolicy, registrySnapshotId: 'registry-stale' },
+      { ...correct.expectedInterpretationPolicy, profileRef: {
+        ...correct.expectedInterpretationPolicy.profileRef, version: 'stale-version',
+      } },
+      { ...correct.expectedInterpretationPolicy, profileRef: {
+        ...correct.expectedInterpretationPolicy.profileRef, contentHash: '0'.repeat(64),
+      } },
+    ]) {
+      const options = verifier(response, handoff.source, {
+        expectedInterpretationPolicy,
+      });
+      const verdict = await verifyHeldSajuSourceUnitClosureV1(proof, options);
+      expect(verdict).toMatchObject({
+        state: 'blocked', reason: 'interpretation_policy_version_mismatch',
+        canExecute: false, canPersist: false, canDisclose: false, canSell: false,
+      });
+      expect(options.claimNonceOnce).not.toHaveBeenCalled();
+      expect('sourceUnitInventory' in verdict).toBe(false);
+    }
+    // The valid exact version must still be independently signed/MAC-checked.
+    expect((await verifyHeldSajuSourceUnitClosureV1(proof, correct)).state).toBe('held');
+    expect(correct.claimNonceOnce).toHaveBeenCalledTimes(1);
+  });
+
   it('allows only one atomic nonce claim and blocks ledger failure', async () => {
     const { response, proof } = await actualReading();
-    const options = verifier(response);
+    const options = verifier(response, handoff.source);
     expect((await verifyHeldSajuSourceUnitClosureV1(proof, options)).state).toBe('held');
     expect((await verifyHeldSajuSourceUnitClosureV1(proof, options)).state).toBe('blocked');
-    const unavailableLedger = verifier(response, {
+    const unavailableLedger = verifier(response, handoff.source, {
       claimNonceOnce: async () => { throw new Error('ledger unavailable'); },
     });
     expect((await verifyHeldSajuSourceUnitClosureV1(proof, unavailableLedger)).state)
@@ -180,7 +213,7 @@ describe('Saju 2B-3C Preview signed response and Reader S3 source-unit closure',
   });
 
   it('keeps incomplete or synthetic-fallback content from becoming S3 source coverage', async () => {
-    const { response, readiness } = await actualReading();
+    const { response, readiness, handoff } = await actualReading();
     const fallback = {
       ...response, state: 'delivered_with_fallback' as const,
       messageCode: 'READING_DELIVERED_WITH_GROUNDED_FALLBACK' as const,
@@ -200,7 +233,7 @@ describe('Saju 2B-3C Preview signed response and Reader S3 source-unit closure',
     });
     expect(proof).not.toBeNull();
     if (!proof) return;
-    const result = await verifyHeldSajuSourceUnitClosureV1(proof, verifier(fallback));
+    const result = await verifyHeldSajuSourceUnitClosureV1(proof, verifier(fallback, handoff.source));
     expect(result.state).toBe('blocked');
     expect(result).toMatchObject({ reason: 'source_units_incomplete' });
     expect('sourceUnitInventory' in result).toBe(false);
