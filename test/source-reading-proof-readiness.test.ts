@@ -263,7 +263,7 @@ describe('2B-3C Source Owner versioned Rule/Methodology/Source lineage', () => {
       const input = structuredClone(await fixture());
       const selection = input.execution.preparation.composition?.selection;
       if (!selection) throw new Error('Expected selected Claim evidence');
-      (selection as { selectedClaimIds: string[] }).selectedClaimIds = ids;
+      (selection as { selectedClaimIds: readonly string[] }).selectedClaimIds = ids;
       expect(inspectSourceReadingProofReadinessV1(input)).toMatchObject({
         state: 'blocked', reason: 'invalid_selected_claim_lineage',
         canPublish: false, canSell: false,
@@ -280,7 +280,7 @@ describe('2B-3C Source Owner versioned Rule/Methodology/Source lineage', () => {
     const evaluation = input.interpretation.evaluations.find((value) =>
       value.evaluationId === selectedClaim.ruleRefs[0]?.evaluationId);
     if (!evaluation) throw new Error('Expected selected matched evaluation');
-    (evaluation as { emittedClaimIds: string[] }).emittedClaimIds = ['claim_forged'];
+    (evaluation as { emittedClaimIds: readonly string[] }).emittedClaimIds = ['claim_forged'];
     expect(inspectSourceReadingProofReadinessV1(input)).toMatchObject({
       state: 'blocked', reason: 'invalid_selected_claim_lineage',
     });
@@ -292,7 +292,7 @@ describe('2B-3C Source Owner versioned Rule/Methodology/Source lineage', () => {
     const selectedClaim = input.interpretation.claims.find((claim) =>
       selected.includes(claim.claimId));
     if (!selectedClaim) throw new Error('Expected selected Claim');
-    (selectedClaim as { sourceRefs: string[] }).sourceRefs = ['SRC-FORGED-NOT-IN-REGISTRY'];
+    (selectedClaim as { sourceRefs: readonly string[] }).sourceRefs = ['SRC-FORGED-NOT-IN-REGISTRY'];
     expect(inspectSourceReadingProofReadinessV1(input)).toMatchObject({
       state: 'blocked', reason: 'invalid_selected_claim_lineage',
     });
