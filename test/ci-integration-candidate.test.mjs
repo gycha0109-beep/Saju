@@ -228,7 +228,7 @@ describe('integration workflow current-base execution', () => {
 
 describe('GitHub API transient failure recovery for integration verification', () => {
   const serverError = status => Object.assign(new Error('GitHub API failed'), {
-    stderr: `gh: HTTP ${status}\\n`,
+    stderr: `gh: HTTP ${status}\n`,
   });
 
   it('retries an HTTP 500 check-runs fetch and preserves the exact API arguments', () => {
