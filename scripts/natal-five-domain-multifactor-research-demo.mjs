@@ -66,7 +66,7 @@ const input = {
   sexForTraditionalCalculation: sex,
   ...(lunar ? { isLeapMonth: leap } : {}),
 };
-const now = new Date('2026-10-19T00:00:00.000Z');
+const now = readingMode ? new Date() : new Date('2026-10-19T00:00:00.000Z');
 const snapshot = calculateCanonicalSajuSnapshot(input, PRODUCTION_DEFAULT_CALCULATION_POLICY, { now });
 const registries = {
   general: createGeneralNatalMultifactorRegistry(),
