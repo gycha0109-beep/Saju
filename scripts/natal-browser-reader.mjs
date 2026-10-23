@@ -1,9 +1,10 @@
 import { createServer } from 'node:http';
+import { Buffer } from 'node:buffer';
 import { execFile } from 'node:child_process';
 import { readFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, URLSearchParams } from 'node:url';
 import { promisify } from 'node:util';
 import process from 'node:process';
 
